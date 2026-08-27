@@ -114,3 +114,28 @@ machine was carrying two unrelated computations (SCHWINGER-2's DMRG and
 this run's own siblings), so shard speedup is not measurable here and is
 not claimed; the demonstrated property is invariance, not scaling. Scaling
 curves belong to a quiet-machine session, already owed by entry four.
+
+## 2026-08-27, sixth entry: the bake-off — ahead of stim at every n
+
+Run on a quiet CI runner (the `bakeoff` workflow, run 33110694325; AVX2,
+stim 1.16.0, medians of 5, engine-only timing both sides, same circuits,
+full terminal measurement both sides):
+
+| n | ours | stim | ours/stim |
+|---:|---:|---:|---:|
+| 64 | 0.076 ms | 0.110 ms | 0.689 |
+| 128 | 0.208 ms | 0.300 ms | 0.694 |
+| 256 | 0.655 ms | 1.151 ms | 0.569 |
+| 512 | 2.487 ms | 5.301 ms | 0.469 |
+| 1024 | 13.615 ms | 25.678 ms | 0.530 |
+| 2048 | 73.631 ms | 156.465 ms | 0.471 |
+| 4096 | 481.711 ms | 1102.582 ms | **0.437** |
+
+**Ahead at 7/7 sizes: 1.44× faster at the smallest, 2.29× at the largest,
+margin growing with n.** The stack that did it: the transposed flat column
+engine (gates ~2n/64 word ops), the fused AVX2 rowsum kernel (bit-identical
+to scalar by gate), and the one-pass canonical terminal sampler on flat
+planes. Whether the margin is the MAXIMUM theoretical amount is a separate
+roofline question, deliberately not claimed here; the reached claim is
+"faster than stim at every measured n on a quiet machine, reproducible by
+workflow dispatch."

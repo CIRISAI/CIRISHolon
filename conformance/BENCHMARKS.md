@@ -86,3 +86,31 @@ one allocation, then re-measure). Entry three's absolute stim numbers differ
 from today's because circuits, seeds, and machine load differ; the paired
 same-session ratio is the honest quantity, and it now brackets 1× —
 the tier-1 target (stim ≤ 1×) is REACHED at n=1024 and remains open below it.
+
+## 2026-08-27, fifth entry: the flag-plant — the category, demonstrated at n=1000
+
+The demonstration the category claim was waiting for
+(`conformance/qasm/flagplant.qasm`, results `flagplant_results.txt`):
+**n = 1000 qubits, t = 28, 7663 gates, exact amplitude** — a scale no
+statevector simulator reaches at any cost (2^1000 amplitudes), computed as
+an exact algebraic number:
+
+| shards | amplitude | wall |
+|---:|---|---:|
+| 1 | exactly 1 (re 1.000000000000, im 0.000000000000) | 2106.6 s |
+| 8 | identical | 2056.6 s |
+| 32 | identical | 2062.4 s |
+| corrupted control | **p = 0.000000000000** | 2528.8 s |
+
+Three shard counts, one answer, bit-identical — the merge law doing in
+practice what `MergeLaw.lean` proves in principle. The corrupted control
+(one tampered gate) flips the exact amplitude from 1 to 0: the corruption
+is not estimated to be probable, it is exhibited. A float engine at this
+scale reports ≈1 to some tolerance; the exact engine reports 1, the
+rational number.
+
+Honest notes: wall time is flat across shard counts on this run — the
+machine was carrying two unrelated computations (SCHWINGER-2's DMRG and
+this run's own siblings), so shard speedup is not measurable here and is
+not claimed; the demonstrated property is invariance, not scaling. Scaling
+curves belong to a quiet-machine session, already owed by entry four.

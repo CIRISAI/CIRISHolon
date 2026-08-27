@@ -18,3 +18,17 @@ jobs:
           auto-config: false
           use-github-cache: true
           use-mathlib-cache: true
+
+  engine:
+    name: Engine gates (Rust)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: engine
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install WebAssembly targets
+        run: rustup target add wasm32-unknown-unknown wasm32-wasip1
+      - name: ci-gates
+        run: ./ci-gates.sh

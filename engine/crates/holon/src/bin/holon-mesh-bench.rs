@@ -15,7 +15,10 @@
 //! `H^⊗n · (Clifford+T with no further H)`. That restriction is what buys the
 //! brevity — with no H after the opening layer the column count `k` never
 //! changes, so the reference's `fold` / `dependent_subset` / `gauss_sum_out`
-//! machinery is never reachable and is therefore not transcribed. The opening
+//! machinery is never reachable and is therefore not transcribed. (What IS
+//! shared is shared: `i_pow` and the splitmix stream come from
+//! `holon::affine`, a normal lib module this target may use — only the
+//! bit-packed state, which is the thing being benchmarked, is local.) The opening
 //! `H^⊗n` layer is branch-INDEPENDENT, so it is materialised once
 //! (`Affine::plus_state`, which is exactly what n `h_gate` calls produce from
 //! a fresh state: R = I, h = 0, d = 0, J = 0, γ = 2^{−n/2}); everything after
@@ -26,24 +29,10 @@
 //! `holon_qasm::magic::magic_amplitude` on the equivalent `Circuit`. The
 //! fixture is certified by the same referee as the mesh itself.
 
+use holon::affine::{i_pow, Rng};
 use holon::ledger::Cyc;
 use holon::mesh;
 use holon::BranchSource;
-
-// ------------------------------------------------------------------ scalars
-
-/// i^k = ω^{2k}, exact (the reference's `Cyc::i_pow`; `ledger::Cyc` does not
-/// export one, so it is rebuilt here from the same table).
-fn i_pow(k: u8) -> Cyc {
-    let mut c = [0i128; 4];
-    match k % 4 {
-        0 => c[0] = 1,
-        1 => c[2] = 1,
-        2 => c[0] = -1,
-        _ => c[2] = -1,
-    }
-    Cyc { c, m: 0 }
-}
 
 // ------------------------------------------------------------------- affine
 
@@ -206,7 +195,7 @@ pub struct CircuitSource {
 impl CircuitSource {
     pub fn new(n: usize, t_count: usize, clifford_depth: usize, seed: u64) -> Self {
         assert!(t_count < 63, "branch index is a u64");
-        let mut rng = SplitMix(seed);
+        let mut rng = Rng::new(seed);
         let mut gates: Vec<G> = Vec::with_capacity(clifford_depth + t_count);
         // T-gates evenly spaced through the Clifford body, so the branch bits
         // enter early AND late (a T at the very end would leave most of the
@@ -285,23 +274,6 @@ impl BranchSource for CircuitSource {
             }
         }
         coeff.mul(st.amplitude(ybits))
-    }
-}
-
-// ---------------------------------------------------------------------- rng
-
-pub struct SplitMix(pub u64);
-
-impl SplitMix {
-    fn next(&mut self) -> u64 {
-        self.0 = self.0.wrapping_add(0x9E37_79B9_7F4A_7C15);
-        let mut z = self.0;
-        z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
-        z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
-        z ^ (z >> 31)
-    }
-    fn below(&mut self, n: usize) -> usize {
-        (self.next() % n as u64) as usize
     }
 }
 

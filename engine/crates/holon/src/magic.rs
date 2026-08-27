@@ -42,70 +42,17 @@
 use crate::ledger::Cyc;
 use crate::BranchSource;
 
-// ---------------------------------------------------------------- ring helpers
+// ---------------------------------------------------------------- the engine
 //
-// `ledger::Cyc` carries mul/add/to_complex; the powers of ω and i, and an
-// equality that is honest across denominators, live here.
+// The affine stabilizer engine — the state `(R, h, d, J, γ)`, the Clifford
+// updates, the block loader `Affine::attach`, and the ring helpers — lives in
+// `crate::affine`, the ONE port of `holon-qasm::magic::Affine` in this crate.
+// `attach` was this lane's contribution to that union. Re-exported here under
+// the names this module and its referees were written against.
 
-/// i^k = ω^{2k}.
-pub fn i_pow(k: u8) -> Cyc {
-    let mut c = [0i128; 4];
-    match k % 4 {
-        0 => c[0] = 1,
-        1 => c[2] = 1,
-        2 => c[0] = -1,
-        _ => c[2] = -1,
-    }
-    Cyc { c, m: 0 }
-}
-
-/// ω^k, ω = e^{iπ/4}, ω⁴ = −1.
-pub fn omega_pow(k: u8) -> Cyc {
-    let mut c = [0i128; 4];
-    let k = k % 8;
-    if k < 4 {
-        c[k as usize] = 1;
-    } else {
-        c[(k - 4) as usize] = -1;
-    }
-    Cyc { c, m: 0 }
-}
-
-pub fn is_zero(a: Cyc) -> bool {
-    a.c.iter().all(|&x| x == 0)
-}
-
-fn neg(a: Cyc) -> Cyc {
-    a.mul(Cyc { c: [-1, 0, 0, 0], m: 0 })
-}
-
-/// Exact equality ACROSS denominators: {1,ω,ω²,ω³} is a Z-basis, so at a
-/// common m the coefficient vector is unique — and `add` aligns denominators
-/// before adding. Comparing the structs directly would call 1 and (ω−ω³)/√2
-/// different, which they are not.
-pub fn cyc_eq(a: Cyc, b: Cyc) -> bool {
-    is_zero(a.add(neg(b)))
-}
+pub use crate::affine::{cyc_eq, cyc_is_zero as is_zero, i_pow, omega_pow, Affine, Gate};
 
 // ---------------------------------------------------------------- circuits
-
-#[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Gate {
-    X(usize),
-    Z(usize),
-    H(usize),
-    S(usize),
-    Sdg(usize),
-    Cx(usize, usize),
-    T(usize),
-    Tdg(usize),
-}
-
-impl Gate {
-    pub fn is_t(&self) -> bool {
-        matches!(self, Gate::T(_) | Gate::Tdg(_))
-    }
-}
 
 #[derive(Clone, Debug)]
 pub struct Circuit {
@@ -120,7 +67,10 @@ impl Circuit {
 }
 
 /// Planted mutations for the gauge: a conformance harness that cannot fail is
-/// not a conformance harness. Both are ported from the certified reference.
+/// not a conformance harness. Both are ported from the certified reference,
+/// which names them in exactly this pair — kept as its own two-field type so
+/// that this tier's gauge vocabulary stays the reference's, and widened to the
+/// engine's union on the way in.
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Default)]
 pub struct Mutation {
     /// Drop the S gate's pairwise J flips.
@@ -129,423 +79,13 @@ pub struct Mutation {
     pub wrong_gauss: bool,
 }
 
-// ---------------------------------------------------------------- affine state
-
-/// A phase-tracked stabilizer state in affine form: x = R u ⊕ h.
-#[derive(Clone)]
-pub struct Affine {
-    n: usize,
-    /// R: n rows × k columns.
-    r: Vec<Vec<bool>>,
-    h: Vec<bool>,
-    /// d_a mod 4 (the i-power linear part), one per column.
-    d: Vec<u8>,
-    /// J_{ab}, symmetric, diagonal unused: (−1)^{J u_a u_b}.
-    j: Vec<Vec<bool>>,
-    gamma: Cyc,
-    zero: bool,
-    mutation: Mutation,
-}
-
-impl Affine {
-    pub fn new(n: usize) -> Self {
-        Affine::with_mutation(n, Mutation::default())
-    }
-
-    pub fn with_mutation(n: usize, mutation: Mutation) -> Self {
-        Affine {
-            n,
-            r: vec![Vec::new(); n],
-            h: vec![false; n],
-            d: Vec::new(),
-            j: Vec::new(),
-            gamma: Cyc::ONE,
-            zero: false,
-            mutation,
+impl From<Mutation> for crate::affine::Mutations {
+    fn from(m: Mutation) -> Self {
+        crate::affine::Mutations {
+            drop_s_cross: m.drop_s_cross,
+            wrong_gauss: m.wrong_gauss,
+            ..crate::affine::Mutations::default()
         }
-    }
-
-    pub fn n_qubits(&self) -> usize {
-        self.n
-    }
-
-    fn k(&self) -> usize {
-        self.d.len()
-    }
-
-    /// Number of free affine coordinates — the state's support is 2^k wide.
-    pub fn rank(&self) -> usize {
-        self.k()
-    }
-
-    pub fn is_zero(&self) -> bool {
-        self.zero
-    }
-
-    /// u_a := u_a ⊕ u_b (fold a's dependence into b).
-    fn fold(&mut self, a: usize, b: usize) {
-        assert_ne!(a, b);
-        for row in 0..self.n {
-            let ra = self.r[row][a];
-            self.r[row][b] ^= ra;
-        }
-        let da = self.d[a];
-        let jab_old = self.j[a][b];
-        let ja_row: Vec<bool> = self.j[a].clone();
-        self.d[b] = (self.d[b] + da) % 4;
-        self.j[a][b] ^= da & 1 == 1;
-        self.j[b][a] = self.j[a][b];
-        for c in 0..self.k() {
-            if c != a && c != b && ja_row[c] {
-                self.j[b][c] = !self.j[b][c];
-                self.j[c][b] = self.j[b][c];
-            }
-        }
-        self.d[b] = (self.d[b] + if jab_old { 2 } else { 0 }) % 4;
-    }
-
-    /// Remove column a with u_a pinned to val.
-    fn pin_remove(&mut self, a: usize, val: bool) {
-        if val {
-            for row in 0..self.n {
-                if self.r[row][a] {
-                    self.h[row] = !self.h[row];
-                }
-            }
-            self.gamma = self.gamma.mul(i_pow(self.d[a]));
-            for c in 0..self.k() {
-                if c != a && self.j[a][c] {
-                    self.d[c] = (self.d[c] + 2) % 4;
-                }
-            }
-        }
-        self.remove_col(a);
-    }
-
-    fn remove_col(&mut self, a: usize) {
-        for row in 0..self.n {
-            self.r[row].remove(a);
-        }
-        self.d.remove(a);
-        self.j.remove(a);
-        for jr in &mut self.j {
-            jr.remove(a);
-        }
-    }
-
-    /// Sum out phase-only column a (its R column is all-zero):
-    /// Σ_w i^{δw} (−1)^{w·Λ}, Λ = Σ_{b∈L} u_b, L = the J-neighbours of a.
-    fn gauss_sum_out(&mut self, a: usize) {
-        let delta = self.d[a];
-        let l: Vec<usize> = (0..self.k()).filter(|&b| b != a && self.j[a][b]).collect();
-        match delta % 4 {
-            0 | 2 => {
-                let eps = delta == 2; // the constraint Λ ≡ eps
-                if l.is_empty() {
-                    if eps {
-                        self.zero = true;
-                        self.remove_col(a);
-                        return;
-                    }
-                    self.gamma.m -= 2; // ×2
-                    self.remove_col(a);
-                } else {
-                    // impose Σ_L u = eps: fold L onto c = l[0], then pin it.
-                    let c = l[0];
-                    for &b in &l[1..] {
-                        self.fold(c, b);
-                    }
-                    self.gamma.m -= 2;
-                    self.remove_col(a);
-                    let c_adj = if c > a { c - 1 } else { c };
-                    self.pin_remove(c_adj, eps);
-                }
-            }
-            _ => {
-                // δ odd: ×(1+i^δ), and each b∈L gets d_b += δ+2.
-                let phase = if self.mutation.wrong_gauss {
-                    i_pow(delta) // PLANTED WRONG: drops the 1+ structure
-                } else {
-                    Cyc::ONE.add(i_pow(delta))
-                };
-                self.gamma = self.gamma.mul(phase);
-                // (−i^δ)^{Λ mod 2} with Λ = Σ_L u: the XOR expansion — the
-                // identity (1+i^δ(−1)^Λ) = (1+i^δ)(−i^δ)^Λ holds only for
-                // Λ ∈ {0,1}, and Λ here is an integer sum, so the factorised
-                // form needs i^{(δ+2)(⊕_L u)}: per-variable phases PLUS
-                // pairwise (−1)^{u_a u_b} flips across L (measured upstream as
-                // a sign error on amp(1,1) of h,cx,h,s,h — the entangled HSH
-                // sandwich).
-                for &b in &l {
-                    self.d[b] = (self.d[b] + delta + 2) % 4;
-                }
-                for i1 in 0..l.len() {
-                    for i2 in i1 + 1..l.len() {
-                        let (b1, b2) = (l[i1], l[i2]);
-                        self.j[b1][b2] = !self.j[b1][b2];
-                        self.j[b2][b1] = self.j[b1][b2];
-                    }
-                }
-                self.remove_col(a);
-            }
-        }
-    }
-
-    pub fn x(&mut self, q: usize) {
-        self.h[q] = !self.h[q];
-    }
-
-    pub fn z(&mut self, q: usize) {
-        if self.h[q] {
-            self.gamma = self.gamma.mul(i_pow(2));
-        }
-        for a in 0..self.k() {
-            if self.r[q][a] {
-                self.d[a] = (self.d[a] + 2) % 4;
-            }
-        }
-    }
-
-    pub fn s(&mut self, q: usize) {
-        // i^{x_q}: γ·i^h, d_a += 1+2h for a ∈ A, J_ab ^= 1 for a<b ∈ A.
-        let a_set: Vec<usize> = (0..self.k()).filter(|&a| self.r[q][a]).collect();
-        if self.h[q] {
-            self.gamma = self.gamma.mul(i_pow(1));
-        }
-        let bump = if self.h[q] { 3 } else { 1 };
-        for &a in &a_set {
-            self.d[a] = (self.d[a] + bump) % 4;
-        }
-        if !self.mutation.drop_s_cross {
-            for i in 0..a_set.len() {
-                for jj in i + 1..a_set.len() {
-                    let (a, b) = (a_set[i], a_set[jj]);
-                    self.j[a][b] = !self.j[a][b];
-                    self.j[b][a] = self.j[a][b];
-                }
-            }
-        }
-    }
-
-    pub fn cx(&mut self, c: usize, t: usize) {
-        for a in 0..self.k() {
-            let rc = self.r[c][a];
-            self.r[t][a] ^= rc;
-        }
-        let hc = self.h[c];
-        self.h[t] ^= hc;
-    }
-
-    pub fn h_gate(&mut self, q: usize) {
-        // Reduce row q to at most one supporting column a*.
-        let support: Vec<usize> = (0..self.k()).filter(|&a| self.r[q][a]).collect();
-        let a_star = if support.is_empty() {
-            None
-        } else {
-            let a = support[0];
-            for &b in &support[1..] {
-                self.fold(a, b);
-            }
-            Some(a)
-        };
-        // New variable v; phase (−1)^{(u_{a*} ⊕ h_q)·v}.
-        let v = self.k();
-        for row in 0..self.n {
-            self.r[row].push(false);
-        }
-        self.d.push(if self.h[q] { 2 } else { 0 });
-        for jr in &mut self.j {
-            jr.push(false);
-        }
-        self.j.push(vec![false; v + 1]);
-        if let Some(a) = a_star {
-            self.j[a][v] = true;
-            self.j[v][a] = true;
-        }
-        for a in 0..self.k() {
-            self.r[q][a] = false;
-        }
-        self.r[q][v] = true;
-        self.h[q] = false;
-        self.gamma.m += 1;
-        // Row-clearing can break column independence: col a* may now equal an
-        // XOR of other columns (two columns that differed only at row q
-        // collide once the row is cleared — measured upstream as err 0.375 on
-        // h,h,h,h,cx,h). If so, fold that subset into a* until it is all-zero,
-        // then Gauss-sum it out; the amplitude query REQUIRES independent
-        // columns and says so, loudly.
-        if let Some(a) = a_star {
-            if !(0..self.n).all(|row| !self.r[row][a]) {
-                if let Some(subset) = self.dependent_subset(a) {
-                    for b in subset {
-                        self.fold(b, a);
-                    }
-                }
-            }
-            if (0..self.n).all(|row| !self.r[row][a]) {
-                self.gauss_sum_out(a);
-            }
-        }
-    }
-
-    /// If column a is an XOR of other columns, return that subset.
-    fn dependent_subset(&self, a: usize) -> Option<Vec<usize>> {
-        let k = self.k();
-        let others: Vec<usize> = (0..k).filter(|&b| b != a).collect();
-        // Solve [cols others] x = col a over F2.
-        let mut rows: Vec<(Vec<bool>, bool)> = (0..self.n)
-            .map(|r| (others.iter().map(|&b| self.r[r][b]).collect(), self.r[r][a]))
-            .collect();
-        let m = others.len();
-        let mut piv = vec![usize::MAX; m];
-        let mut rr = 0;
-        for col in 0..m {
-            if let Some(p) = (rr..self.n).find(|&p| rows[p].0[col]) {
-                rows.swap(rr, p);
-                for p2 in 0..self.n {
-                    if p2 != rr && rows[p2].0[col] {
-                        let src = rows[rr].clone();
-                        rows[p2].0.iter_mut().zip(&src.0).for_each(|(x, y)| *x ^= *y);
-                        rows[p2].1 ^= src.1;
-                    }
-                }
-                piv[col] = rr;
-                rr += 1;
-            }
-        }
-        if rows[rr..].iter().any(|r| r.1) {
-            return None; // independent
-        }
-        let mut subset = Vec::new();
-        for col in 0..m {
-            if piv[col] != usize::MAX && rows[piv[col]].1 {
-                subset.push(others[col]);
-            }
-        }
-        Some(subset)
-    }
-
-    pub fn apply(&mut self, g: Gate) {
-        if self.zero {
-            return;
-        }
-        match g {
-            Gate::X(q) => self.x(q),
-            Gate::Z(q) => self.z(q),
-            Gate::S(q) => self.s(q),
-            Gate::Sdg(q) => {
-                self.s(q);
-                self.s(q);
-                self.s(q);
-            }
-            Gate::H(q) => self.h_gate(q),
-            Gate::Cx(c, t) => self.cx(c, t),
-            Gate::T(_) | Gate::Tdg(_) => panic!("magic tier branches must be Clifford"),
-        }
-    }
-
-    /// Tensor a stabilizer term onto the named qubits. Used to load the magic
-    /// register at branch construction; the qubits must be untouched (|0⟩,
-    /// no columns) or the affine invariant is not this method's to keep.
-    pub fn attach(&mut self, qubits: &[usize], term: &StabTerm) {
-        assert_eq!(qubits.len(), term.nq, "attach: qubit count vs term width");
-        let base = self.k();
-        for (ci, &mask) in term.cols.iter().enumerate() {
-            let v = self.k();
-            for row in 0..self.n {
-                self.r[row].push(false);
-            }
-            self.d.push(term.d[ci]);
-            for jr in &mut self.j {
-                jr.push(false);
-            }
-            self.j.push(vec![false; v + 1]);
-            for (bi, &q) in qubits.iter().enumerate() {
-                if (mask >> bi) & 1 == 1 {
-                    self.r[q][v] = true;
-                }
-            }
-        }
-        let kt = term.cols.len();
-        for a in 0..kt {
-            for b in a + 1..kt {
-                if term.j[a][b] {
-                    self.j[base + a][base + b] = true;
-                    self.j[base + b][base + a] = true;
-                }
-            }
-        }
-        for (bi, &q) in qubits.iter().enumerate() {
-            if (term.h >> bi) & 1 == 1 {
-                self.h[q] = !self.h[q];
-            }
-        }
-    }
-
-    /// Exact amplitude of basis state y (bit i = qubit i).
-    pub fn amplitude(&self, y: &[bool]) -> Cyc {
-        if self.zero {
-            return Cyc::ZERO;
-        }
-        // Solve R u = y ⊕ h.
-        let k = self.k();
-        let mut aug: Vec<(Vec<bool>, bool)> = (0..self.n)
-            .map(|row| (self.r[row].clone(), y[row] ^ self.h[row]))
-            .collect();
-        let mut u = vec![false; k];
-        let mut pivot_row = vec![usize::MAX; k];
-        let mut rr = 0;
-        for col in 0..k {
-            if let Some(p) = (rr..self.n).find(|&p| aug[p].0[col]) {
-                aug.swap(rr, p);
-                for p2 in 0..self.n {
-                    if p2 != rr && aug[p2].0[col] {
-                        let (head, tail) = if p2 < rr {
-                            let (a, b) = aug.split_at_mut(rr);
-                            (&mut a[p2], &mut b[0])
-                        } else {
-                            let (a, b) = aug.split_at_mut(p2);
-                            (&mut b[0], &mut a[rr])
-                        };
-                        for cc in 0..k {
-                            head.0[cc] ^= tail.0[cc];
-                        }
-                        head.1 ^= tail.1;
-                    }
-                }
-                pivot_row[col] = rr;
-                rr += 1;
-            }
-        }
-        for row in rr..self.n {
-            if aug[row].1 {
-                return Cyc::ZERO; // y is not in the affine subspace
-            }
-        }
-        assert!(
-            (0..k).all(|col| pivot_row[col] != usize::MAX),
-            "affine invariant broken: R has dependent columns (rank < k)"
-        );
-        for col in 0..k {
-            u[col] = aug[pivot_row[col]].1;
-        }
-        let mut ip: u8 = 0;
-        let mut sign = false;
-        for a in 0..k {
-            if u[a] {
-                ip = (ip + self.d[a]) % 4;
-                for b in a + 1..k {
-                    if u[b] && self.j[a][b] {
-                        sign = !sign;
-                    }
-                }
-            }
-        }
-        let mut amp = self.gamma.mul(i_pow(ip));
-        if sign {
-            amp = amp.mul(i_pow(2));
-        }
-        amp
     }
 }
 
@@ -837,7 +377,7 @@ impl NaiveSource {
     }
 
     fn run_branch(&self, branch: u64) -> (Cyc, Affine) {
-        let mut st = Affine::with_mutation(self.n, self.mutation);
+        let mut st = Affine::with_mutations(self.n, self.mutation.into());
         let mut coeff = Cyc::ONE;
         let mut ti = 0usize;
         for g in &self.gates {
@@ -1004,7 +544,7 @@ impl BgSource {
     }
 
     fn run_branch(&self, branch: u64) -> (Cyc, Affine) {
-        let mut st = Affine::with_mutation(self.n_ext, self.mutation);
+        let mut st = Affine::with_mutations(self.n_ext, self.mutation.into());
         // 2^{t/2} from the post-selected gadgets, exact.
         let mut coeff = Cyc { c: [1, 0, 0, 0], m: -(self.t as i32) };
         let mut rest = branch;
@@ -1012,7 +552,8 @@ impl BgSource {
             let digit = (rest % terms.len() as u64) as usize;
             rest /= terms.len() as u64;
             let term = &terms[digit];
-            st.attach(qs, term);
+            assert_eq!(qs.len(), term.nq, "attach: qubit count vs term width");
+            st.attach(qs, &term.cols, term.h, &term.d, &term.j);
             coeff = coeff.mul(term.coeff);
         }
         for g in &self.ext_gates {

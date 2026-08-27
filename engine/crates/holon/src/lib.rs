@@ -13,6 +13,7 @@
 //! both credited), tier 2 ledger ring (exact Z[ω]). Conformance referees:
 //! the certified holon-qasm tiers (QASM-1/2 records) as dev-dependencies.
 
+pub mod affine;
 pub mod ledger;
 pub mod magic;
 pub mod merge;

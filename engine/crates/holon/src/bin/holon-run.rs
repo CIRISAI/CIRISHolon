@@ -50,9 +50,43 @@ fn parse(src: &str) -> Result<(usize, Vec<Gate>), String> {
     Ok((n, gates))
 }
 
+fn clifford_sample(n: usize, gates: &[Gate]) {
+    use holon::tableau::PackedTableau;
+    let t0 = std::time::Instant::now();
+    let mut t = PackedTableau::new(n);
+    for g in gates {
+        match *g {
+            Gate::X(q) => t.x_gate(q),
+            Gate::Z(q) => t.z_gate(q),
+            Gate::H(q) => t.h(q),
+            Gate::S(q) => t.s(q),
+            Gate::Sdg(q) => t.sdg(q),
+            Gate::Cx(c, q) => t.cx(c, q),
+            _ => panic!("clifford-sample requires a Clifford circuit"),
+        }
+    }
+    let mut ones = 0usize;
+    for q in 0..n {
+        match t.measure_peek(q) {
+            Some(o) => ones += o as usize,
+            None => t.collapse(q, false),
+        }
+    }
+    println!(
+        "{{\"seconds\": {:.6}, \"ones\": {ones}}}",
+        t0.elapsed().as_secs_f64()
+    );
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    assert_eq!(args[1], "amp", "usage: holon-run amp <file.qasm>");
+    if args[1] == "clifford-sample" {
+        let src = std::fs::read_to_string(&args[2]).expect("read");
+        let (n, gates) = parse(&src).expect("parse");
+        clifford_sample(n, &gates);
+        return;
+    }
+    assert_eq!(args[1], "amp", "usage: holon-run amp|clifford-sample <file.qasm>");
     let src = std::fs::read_to_string(&args[2]).expect("read");
     let (n, gates) = parse(&src).expect("parse");
     let y = vec![false; n];

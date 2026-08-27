@@ -41,3 +41,23 @@ coupled matter on the same object, where SCHWINGER-2's verdict is the next
 rung's referee. Optimization of the assumed tiers (stim-gap closure via
 SIMD/transposed layouts) is ordinary engineering with a named target and
 never blocks the climb.
+
+## 2026-08-27, third entry: the packed tableau vs stim, honest triangulation
+
+Three methodologies measured, two rejected with their failure modes named:
+per-Python-call driving charges stim ~15 µs/gate of interpreter overhead
+(rejected, unfair to stim); compile-inclusive timing charges stim its one-
+time ~130 ms circuit compilation (rejected, wrong denominator for long-run
+use). The rig's per-call engine timings stand as the stim reference. Against
+them, the packed Pauli-plane tableau (holon-run clifford-sample, medians of
+3):
+
+| n | packed (ours) | stim (rig reference) | stim leads |
+|---|---:|---:|---:|
+| 64 | 0.54 ms | 0.2 ms | 2.7× |
+| 256 | 8.9 ms | 1.6 ms | 5.6× |
+| 1024 | 93.6 ms | 26 ms | 3.6× |
+
+**The gap closed from 28–318× (unpacked) to 2.7–5.6× (packed).** The
+remainder is SIMD width and layout transposition — named, mechanical, and
+not a blocker for anything above tier 1.

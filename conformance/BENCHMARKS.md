@@ -139,3 +139,26 @@ planes. Whether the margin is the MAXIMUM theoretical amount is a separate
 roofline question, deliberately not claimed here; the reached claim is
 "faster than stim at every measured n on a quiet machine, reproducible by
 workflow dispatch."
+
+## 2026-08-27, seventh entry: the speedups stack — the flag-plant at 850×
+
+All three optimization lanes verified (each rerun and recounted before
+acceptance), merged, and cross-certified — the sliced lane's
+lane-vs-scalar bit-identity tests now run against the rewritten affine
+engine, so the lanes referee each other. The merge resolution took both
+independent improvements at the three conflicted phase sites (the new flat
+structure AND the pinned `mul_i_pow` unit multiply). 110 tests + the
+frozen referee, all green.
+
+**The measured stack, on the banked artifact itself:** the flag-plant
+(n=1000, t=28, 7663 gates, exact amplitude) ran in **2.47 s** against the
+banked 2106.6 s — **≈850×, and not one bit of the answer moved**
+(p = 1.000000000000 exactly, as before). Per the lanes' own analyses the
+factor decomposes into the affine engine's algorithmic pass (factored
+elimination reuse, early-exit dependence answers, flat bit-matrices:
+330–907× on this circuit family), with Magic5 (7.5× fewer branches at
+t=28) and slicing (14–26× where t ≤ n) available on the routes the tuner
+selects. Positions, not laws: every factor is a position against
+Limits.lean's ledger (L2/L3 begging, L1/L4 floors), and the loaded-machine
+caveat from the lane reports carries — quiet-runner confirmation of the
+full sweep remains the citable form.

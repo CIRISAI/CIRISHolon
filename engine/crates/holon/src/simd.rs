@@ -11,6 +11,14 @@
 //!   +1: (~xs&zs&xt&~zt) | (xs&zs&~xt&zt) | (xs&~zs&xt&zt)
 //!   −1: (~xs&zs&xt&zt)  | (xs&zs&xt&~zt) | (xs&~zs&~xt&zt)
 //! as popcounts, and fold xt ^= xs, zt ^= zs — one pass, no second read.
+//!
+//! A second shape lives here for the same reason: [`fused_row_xor`], the
+//! packed-F₂ row operation of the BRANCH-SLICED elimination (`src/sliced.rs`).
+//! There, one Gaussian elimination serves 64 branches at once: `R` is shared
+//! across the block, and each branch's right-hand side rides in one bit of a
+//! 64-lane word. So the row op is a packed row XOR AND a lane-word XOR, and
+//! doing them in one pass is what keeps the RHS from being a second traversal.
+//! Same three variants, same runtime dispatch, same bit-identity requirement.
 
 /// Fused rowsum over word slices: returns (plus, minus) popcounts and
 /// updates the target in place. Dispatches to the widest available kernel.
@@ -53,6 +61,74 @@ pub fn fused_rowsum_scalar(
         zt[i] = z2 ^ z1;
     }
     (plus, minus)
+}
+
+/// Fused packed-row XOR: `dst ^= src` over the F₂ row words, and the 64-lane
+/// right-hand side `dst_rhs ^= src_rhs` in the same pass. Returns the new RHS.
+///
+/// The one row operation of the branch-sliced amplitude solve. `dst` and `src`
+/// are the same length; the RHS is a single word because 64 branches is
+/// exactly one word — that is the whole trick, and it costs one instruction.
+#[inline]
+pub fn fused_row_xor(dst: &mut [u64], dst_rhs: u64, src: &[u64], src_rhs: u64) -> u64 {
+    debug_assert_eq!(dst.len(), src.len());
+    #[cfg(target_arch = "x86_64")]
+    {
+        if avx2_available() {
+            // SAFETY: guarded by runtime CPUID detection.
+            return unsafe { fused_row_xor_avx2(dst, dst_rhs, src, src_rhs) };
+        }
+    }
+    #[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
+    {
+        return fused_row_xor_wasm128(dst, dst_rhs, src, src_rhs);
+    }
+    #[allow(unreachable_code)]
+    fused_row_xor_scalar(dst, dst_rhs, src, src_rhs)
+}
+
+/// Portable fallback. Stride-1, so LLVM vectorizes it on targets that can.
+pub fn fused_row_xor_scalar(dst: &mut [u64], dst_rhs: u64, src: &[u64], src_rhs: u64) -> u64 {
+    for (d, s) in dst.iter_mut().zip(src) {
+        *d ^= *s;
+    }
+    dst_rhs ^ src_rhs
+}
+
+/// AVX2: 4 row words per vector op.
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+unsafe fn fused_row_xor_avx2(dst: &mut [u64], dst_rhs: u64, src: &[u64], src_rhs: u64) -> u64 {
+    use std::arch::x86_64::*;
+    let n = dst.len();
+    let chunks = n / 4;
+    for c in 0..chunks {
+        let i = c * 4;
+        let a = _mm256_loadu_si256(dst.as_ptr().add(i) as *const __m256i);
+        let b = _mm256_loadu_si256(src.as_ptr().add(i) as *const __m256i);
+        _mm256_storeu_si256(
+            dst.as_mut_ptr().add(i) as *mut __m256i,
+            _mm256_xor_si256(a, b),
+        );
+    }
+    fused_row_xor_scalar(&mut dst[chunks * 4..], dst_rhs, &src[chunks * 4..], src_rhs)
+}
+
+/// WASM SIMD128: 2 row words per vector op.
+#[cfg(all(target_arch = "wasm32", target_feature = "simd128"))]
+fn fused_row_xor_wasm128(dst: &mut [u64], dst_rhs: u64, src: &[u64], src_rhs: u64) -> u64 {
+    use std::arch::wasm32::*;
+    let n = dst.len();
+    let chunks = n / 2;
+    for c in 0..chunks {
+        let i = c * 2;
+        unsafe {
+            let a = v128_load(dst.as_ptr().add(i) as *const v128);
+            let b = v128_load(src.as_ptr().add(i) as *const v128);
+            v128_store(dst.as_mut_ptr().add(i) as *mut v128, v128_xor(a, b));
+        }
+    }
+    fused_row_xor_scalar(&mut dst[chunks * 2..], dst_rhs, &src[chunks * 2..], src_rhs)
 }
 
 #[cfg(target_arch = "x86_64")]
@@ -225,6 +301,28 @@ mod kernel_conformance {
             assert_eq!(a, b, "len={len}: phase counts differ");
             assert_eq!(xa, xb, "len={len}: X words differ");
             assert_eq!(za, zb, "len={len}: Z words differ");
+        }
+    }
+
+    /// The dispatched packed-row XOR must agree with the scalar reference on
+    /// random data, bit for bit — row words AND the 64-lane right-hand side.
+    #[test]
+    fn dispatched_row_xor_matches_scalar() {
+        let mut seed = 0x0f1e_2d3c_4b5a_6978u64;
+        let mut next = || {
+            seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            seed
+        };
+        for len in [1usize, 2, 3, 4, 5, 7, 8, 9, 16, 33, 64] {
+            let src: Vec<u64> = (0..len).map(|_| next()).collect();
+            let dst0: Vec<u64> = (0..len).map(|_| next()).collect();
+            let (drhs, srhs) = (next(), next());
+            let mut da = dst0.clone();
+            let mut db = dst0.clone();
+            let ra = fused_row_xor(&mut da, drhs, &src, srhs);
+            let rb = fused_row_xor_scalar(&mut db, drhs, &src, srhs);
+            assert_eq!(da, db, "len={len}: row words differ");
+            assert_eq!(ra, rb, "len={len}: lane RHS differs");
         }
     }
 }

@@ -14,10 +14,14 @@
 //! the certified holon-qasm tiers (QASM-1/2 records) as dev-dependencies.
 
 pub mod ledger;
+pub mod magic;
 pub mod merge;
 pub mod mesh;
 pub mod plane;
+pub mod prune;
 pub mod real;
+pub mod run;
+pub mod sample;
 pub mod tableau;
 pub mod transport;
 

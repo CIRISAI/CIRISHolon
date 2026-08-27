@@ -330,7 +330,7 @@ impl Affine {
     /// does for the value it pins — this keeps the column.)
     fn flip(&mut self, p: usize) {
         if !self.mutations.flip_drops_gamma {
-            self.gamma = self.gamma.mul(i_pow(self.d[p]));
+            self.gamma = self.gamma.mul_i_pow(self.d[p]);
         }
         for a in 0..self.k() {
             if a != p && self.j[p][a] {
@@ -367,7 +367,7 @@ impl Affine {
                     self.h[row] = !self.h[row];
                 }
             }
-            self.gamma = self.gamma.mul(i_pow(self.d[a]));
+            self.gamma = self.gamma.mul_i_pow(self.d[a]);
             for c in 0..self.k() {
                 if c != a && self.j[a][c] {
                     self.d[c] = (self.d[c] + 2) % 4;
@@ -471,7 +471,7 @@ impl Affine {
 
     pub fn z(&mut self, q: usize) {
         if self.h[q] {
-            self.gamma = self.gamma.mul(i_pow(2));
+            self.gamma = self.gamma.mul_i_pow(2);
         }
         for a in 0..self.k() {
             if self.r[q][a] {
@@ -484,7 +484,7 @@ impl Affine {
         // i^{x_q}: γ·i^h, d_a += 1+2h for a ∈ A, J_ab ^= 1 for a<b ∈ A.
         let a_set: Vec<usize> = (0..self.k()).filter(|&a| self.r[q][a]).collect();
         if self.h[q] {
-            self.gamma = self.gamma.mul(i_pow(1));
+            self.gamma = self.gamma.mul_i_pow(1);
         }
         let bump = if self.h[q] { 3 } else { 1 };
         for &a in &a_set {
@@ -733,9 +733,9 @@ impl Affine {
                 }
             }
         }
-        let mut amp = self.gamma.mul(i_pow(ip));
+        let mut amp = self.gamma.mul_i_pow(ip);
         if sign {
-            amp = amp.mul(i_pow(2));
+            amp = amp.mul_i_pow(2);
         }
         amp
     }

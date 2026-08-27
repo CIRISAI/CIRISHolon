@@ -139,6 +139,36 @@ impl Cyc {
         .normalize()
     }
 
+    /// `self · i^k`, exactly — and BIT-IDENTICALLY to `self.mul(i_pow(k))`.
+    ///
+    /// `i^k = ω^{2k}` is a UNIT with a single ±1 coefficient, so multiplying
+    /// by it is a permutation of the coefficient vector with signs: the
+    /// convolution `Cyc::mul` performs has exactly one contributing term per
+    /// output slot, `out[(a+e) mod 4] = ±c[a]` with the sign negative iff
+    /// `a + e ≥ 4` (that is `ω⁴ = −1`, which is the only reduction there is).
+    /// The same `normalize` runs afterwards, so this is not an approximation
+    /// of the general multiply and not a fast path with different rounding —
+    /// there is no rounding. `unit_multiply_is_the_general_multiply` pins the
+    /// identity on random inputs across every `k` and both parities of `m`.
+    ///
+    /// It is here rather than in a consumer because the ring is the ring's
+    /// business, and because both the per-branch engine (`affine::Affine`'s
+    /// phase updates) and the branch-sliced one (`sliced`, once per lane per
+    /// phase update) spend most of their ring time in exactly this shape.
+    pub fn mul_i_pow(self, k: u8) -> Cyc {
+        let e = (2 * (k % 4)) as usize; // i = ω²
+        let mut out = [0i128; 4];
+        for a in 0..4 {
+            let t = (a + e) % 8;
+            if t >= 4 {
+                out[t - 4] = -self.c[a];
+            } else {
+                out[t] = self.c[a];
+            }
+        }
+        Cyc { c: out, m: self.m }.normalize()
+    }
+
     pub fn to_complex(self) -> (f64, f64) {
         let s = std::f64::consts::FRAC_1_SQRT_2;
         let w = [(1.0, 0.0), (s, s), (0.0, 1.0), (-s, s)];
@@ -180,6 +210,49 @@ mod envelope_tests {
         let a = Cyc { c: [i128::MAX / 2, 0, 0, 0], m: 0 };
         let b = Cyc { c: [1, 0, 0, 0], m: 40 };
         let _ = a.add(b);
+    }
+
+    /// The unit multiply is the general multiply, bit for bit — coefficient
+    /// vector and denominator exponent alike, for every power of i, on random
+    /// coefficients at both parities of `m`.
+    #[test]
+    fn unit_multiply_is_the_general_multiply() {
+        fn i_pow(k: u8) -> Cyc {
+            let mut c = [0i128; 4];
+            match k % 4 {
+                0 => c[0] = 1,
+                1 => c[2] = 1,
+                2 => c[0] = -1,
+                _ => c[2] = -1,
+            }
+            Cyc { c, m: 0 }
+        }
+        let mut seed = 0xdead_beef_1234_5678u64;
+        let mut next = || {
+            seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            (seed >> 33) as i128 - (1 << 30)
+        };
+        for _ in 0..2000 {
+            for m in [-3i32, -2, -1, 0, 1, 2, 3, 8, 9] {
+                let x = Cyc { c: [next(), next(), next(), next()], m };
+                for k in 0..8u8 {
+                    assert_eq!(
+                        x.mul_i_pow(k),
+                        x.mul(i_pow(k)),
+                        "x = {x:?}, k = {k}"
+                    );
+                }
+            }
+        }
+        // Including the degenerate operands, where `normalize` has opinions.
+        for m in [0i32, 1, 2, 5] {
+            for k in 0..4u8 {
+                let z = Cyc { c: [0, 0, 0, 0], m };
+                assert_eq!(z.mul_i_pow(k), z.mul(i_pow(k)));
+                let e = Cyc { c: [4, 4, -8, 0], m };
+                assert_eq!(e.mul_i_pow(k), e.mul(i_pow(k)));
+            }
+        }
     }
 
     // In-envelope arithmetic is bit-for-bit what it was before the guards.

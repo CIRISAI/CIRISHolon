@@ -25,6 +25,7 @@ pub mod residue;
 pub mod run;
 pub mod sample;
 pub mod simd;
+pub mod sliced;
 pub mod coltableau;
 pub mod tableau;
 pub mod transport;

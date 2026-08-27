@@ -282,7 +282,10 @@ pub fn naive_branch_count(gates: &[Gate]) -> u128 {
 }
 
 /// `T = ((1+ω)/2) I + ((1−ω)/2) Z`; `T† ` with `ω ↦ ω⁻¹ = −ω³`.
-fn t_coeffs(dagger: bool) -> (Cyc, Cyc) {
+///
+/// Public so the branch-sliced evaluator (`crate::sliced`) resolves T-sites
+/// through THE T-expansion rather than a second copy of it.
+pub fn t_coeffs(dagger: bool) -> (Cyc, Cyc) {
     if !dagger {
         (Cyc { c: [1, 1, 0, 0], m: 2 }, Cyc { c: [1, -1, 0, 0], m: 2 })
     } else {

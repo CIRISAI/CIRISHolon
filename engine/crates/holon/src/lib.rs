@@ -18,6 +18,17 @@ pub mod plane;
 pub mod real;
 pub mod tableau;
 
+/// THE INTEGRATION CONTRACT for the magic-tier workstreams (BG decomposition,
+/// pruning, sampling, mesh): a branch source enumerates stabilizer branches;
+/// consumers fold amplitudes. Exact Z[ω] sums are order-independent, so any
+/// sharding of the fold is deterministic — the mesh's whole warrant.
+pub trait BranchSource: Sync {
+    fn n_branches(&self) -> u64;
+    /// coeff_b · ⟨y|φ_b⟩, exact. Cheap to call per (branch, y).
+    fn amplitude_of(&self, branch: u64, y: &[bool]) -> ledger::Cyc;
+    fn n_qubits(&self) -> usize;
+}
+
 use plane::BitPlane;
 
 /// The chart: a partition with its conditioning DECLARED (lean/Object.lean's

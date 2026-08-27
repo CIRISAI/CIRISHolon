@@ -112,3 +112,60 @@ The IBM utility experiment is settled; Willow RCS refutation is crowded.
 Labib–Russo 2026 MATCHES the qubit exponent on a different orbit (face
 state) — it is not a 4→3 block for Clifford+T (verified twice,
 independently: `conformance/srank/verify.py`).
+
+
+## Unlocked 2026-08-27 — by the speed program and the bridge campaigns
+
+**Feasibility re-grades on the standing five** (the 850×/437× magic-tier
+stack, the fastest-at-every-n Clifford kernel, Born sampling, the residue
+carrier, and the certified tuner all landed after the original grading):
+
+- **#1 (beat α=0.3963)**: the 907× per-branch engine makes the
+  decomposition search's exact-rank verifications cheap; the code-family
+  sweep is now comfortably mesh-sized. UPGRADED.
+- **#2 (IBM tracker fstate)**: the pilot's cost collapsed with the stack;
+  the full 2.2e8-term evaluation moves from campaign-scale to
+  routine-scale on the mesh. STRONGLY UPGRADED — the pre-staked pilot
+  gate is unchanged and still gates the submission.
+- **#3 (stabilizer-fidelity multiplicativity)**: exact max-reduction now
+  rides the proved merge law with two-directional certificates end to
+  end; |S₆| is trivial, |S₈| remains the mesh's job. UPGRADED.
+- **#4 (3-qubit T-count frontier)**: the affine rewrite is exactly the
+  MITM's inner loop. UPGRADED.
+- Side bets: the Clifford-obfuscation cryptanalysis (we are the named
+  adversary) got 850× cheaper; MQT Bench #924's pointwise oracle now
+  exists as `amplitude_tuned` + Born sampling — the answer can be a PR,
+  not a design sketch.
+
+### 6. The ω-curve as a laboratory observable — unitary gravity vs collapse
+
+**Opened by BRIDGE-2/3's measured ω = 0,1,0,1.** The interference
+visibility of a mass superposition under gravitational which-path
+recording is a real observable (the BMV gravitationally-induced-
+entanglement program measures its initial slope; Penrose–Diósi stakes
+where it first leaves 1). Our exact systems exhibit the FULL curve for a
+unitary matter–geometry coupling — including the REVIVAL, which every
+collapse model forbids. **Campaign: a prereg staking the ω-curve shapes**
+— unitary (revival at the derived time) vs collapse (monotone loss) vs
+discrete-time/Floquet (harmonic/aliasing structure) — as exact templates
+computed on the bridge instruments, published as the discriminating
+observable for the gravitational-decoherence experiments. The toy's
+frequency is a parameter and is never quoted as nature's; the CLAIM is
+the observable's existence, its shape families, and the revival as the
+kill condition between theory classes. Referee: the derivations
+two-routed on the exact instruments. Kill: a shape family shown
+degenerate (unitary and collapse curves indistinguishable at realizable
+sensitivity) kills the discriminator claim.
+
+### 7. The exact gauge-dynamics harness as an instrument
+
+The bridge campaigns left behind a reusable instrument: exact unitary
+Floquet dynamics of quantum doubles with charged matter, full-scope
+constraint gates, two-route verification, and closure-defect measurement.
+Two niches it opens: **exact anyon/topological-quantum-computing
+verification** (braiding and fusion as exact statements, a referee for
+TQC hardware claims in the same sense the Clifford engine referees
+circuit claims), and **closure-defect measurement as a portable method**
+— the same v∘T vs T_cl∘v defect, posed on the crystal tier's gauge
+dynamics (SCHWINGER's instrument) and on stabilizer dynamics, connecting
+the bridge programme back to the Ω campaigns that started it.

@@ -159,3 +159,25 @@ no-post-RESULT-rescue rule is untouched (no result exists).
    matches T_cl identically.
 4. B2, B5, B6, B7 unchanged. Step counts k ≤ 4; the overflow refusal
    stands.
+
+## AMENDMENT A2 — 2026-08-27, pre-instrument, pre-data
+
+Two more derivation defects found while designing the instrument, both
+corrected before it exists; both are physics the exact arithmetic
+surfaces, recorded as such:
+
+1. **A lone charge is forbidden by Gauss on a disk** (irrep orthogonality:
+   Σ_g ρ₂(g) = 0, so the gauge average annihilates a single ρ₂-charged
+   spinor — the staked one-site matter register has EMPTY charged physical
+   space). Corrected: matter = an occupation qubit plus a SCREENED PAIR of
+   ρ₂ spinors at vertices 1 and 2, initialized in the pair singlet (the
+   invariant of ρ₂⊗ρ₂, integer vector |00⟩+|11⟩); Gauss at vertices 1 and
+   2 acts jointly on gauge and the respective spinor. The spinor pair is
+   inert in B1/B2/B4's readings (it exists to make the matter genuinely
+   charged and B3 genuinely joint); the refined-graph runs use the
+   occupation-only register, and the results must say so.
+2. **The staked U_geo→mat phases cancel on the central ladder**
+   (i^{κ(r²)}·(−1)^{κ₂(r²)} = (−1)(−1) = +1 — inert exactly where the
+   dynamics lives). Corrected: U_geo→mat = i^{κ(c)} alone; on the r²
+   class the controlled phase is i² = −1, giving B2 its observable
+   relative phase.

@@ -69,14 +69,10 @@ fn clifford_sample(n: usize, gates: &[Gate]) {
         }
     }
     let gates_s = t0.elapsed().as_secs_f64();
-    let mut t = col.to_packed();
-    let mut ones = 0usize;
-    for q in 0..n {
-        match t.measure_peek(q) {
-            Some(o) => ones += o as usize,
-            None => t.collapse(q, false),
-        }
-    }
+    // Terminal sample entirely on flat planes: one canonical elimination
+    // pass through the dispatched fused kernel — no row objects anywhere.
+    let y = col.sample_all();
+    let ones: usize = y.iter().map(|&b| b as usize).sum();
     println!(
         "{{\"seconds\": {:.6}, \"gates_s\": {gates_s:.6}, \"ones\": {ones}}}",
         t0.elapsed().as_secs_f64()

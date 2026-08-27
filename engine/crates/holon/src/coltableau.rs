@@ -327,3 +327,205 @@ mod conformance {
         }
     }
 }
+
+impl ColTableau {
+    /// Terminal computational-basis sample, entirely on FLAT planes — the
+    /// full-throated path: stabilizer rows extracted by block transpose into
+    /// two contiguous buffers, RREF driven by the dispatched `fused_rowsum`
+    /// kernel (AVX2 / WASM-SIMD128 / scalar, bit-identical), constraints
+    /// solved word-parallel. Same canonical convention as the reference
+    /// (`PackedTableau::sample_all`): free bits false on X-pivot columns.
+    /// The conformance gate requires the two paths to return the SAME vector.
+    pub fn sample_all(&self) -> Vec<bool> {
+        let n = self.n;
+        let rw = n.div_ceil(64); // words per row (qubit axis)
+        // 1. Extract stabilizer rows n..2n into flat row-major planes.
+        let mut rx = vec![0u64; n * rw];
+        let mut rz = vec![0u64; n * rw];
+        let mut bx = [0u64; 64];
+        let mut bz = [0u64; 64];
+        for qb in 0..rw {
+            for rb in 0..self.words {
+                for i in 0..64 {
+                    let q = qb * 64 + i;
+                    if q < n {
+                        bx[63 - i] = self.x[q * self.words + rb];
+                        bz[63 - i] = self.z[q * self.words + rb];
+                    } else {
+                        bx[63 - i] = 0;
+                        bz[63 - i] = 0;
+                    }
+                }
+                transpose64(&mut bx);
+                transpose64(&mut bz);
+                let base = rb * 64;
+                for j in 0..64 {
+                    let row = base + j;
+                    if row >= n && row < 2 * n {
+                        let s = row - n;
+                        rx[s * rw + qb] = bx[63 - j];
+                        rz[s * rw + qb] = bz[63 - j];
+                    }
+                }
+            }
+        }
+        // Signs: mod-4 during elimination; physical rows enter at 0 or 2.
+        let mut rs: Vec<u8> = (0..n)
+            .map(|s| {
+                let row = n + s;
+                ((self.r[row >> 6] >> (row & 63) & 1) as u8) * 2
+            })
+            .collect();
+
+        // 2. RREF on the X part with the fused kernel.
+        #[inline(always)]
+        fn two_rows(plane: &mut [u64], a: usize, b: usize, rw: usize) -> (&mut [u64], &mut [u64]) {
+            debug_assert_ne!(a, b);
+            if a < b {
+                let (lo, hi) = plane.split_at_mut(b * rw);
+                (&mut lo[a * rw..(a + 1) * rw], &mut hi[..rw])
+            } else {
+                let (lo, hi) = plane.split_at_mut(a * rw);
+                let (bb, aa) = (&mut lo[b * rw..(b + 1) * rw], &mut hi[..rw]);
+                (aa, bb)
+            }
+        }
+        let mut pivot_col = vec![false; n];
+        let mut next = 0usize;
+        for q in 0..n {
+            let (w, bit) = (q >> 6, q & 63);
+            if let Some(pr) = (next..n).find(|&s| rx[s * rw + w] >> bit & 1 == 1) {
+                if pr != next {
+                    for i in 0..rw {
+                        rx.swap(next * rw + i, pr * rw + i);
+                        rz.swap(next * rw + i, pr * rw + i);
+                    }
+                    rs.swap(next, pr);
+                }
+                for s in 0..n {
+                    if s != next && rx[s * rw + w] >> bit & 1 == 1 {
+                        let (tx, sxr) = two_rows(&mut rx, s, next, rw);
+                        let (tz, szr) = two_rows(&mut rz, s, next, rw);
+                        let (plus, minus) = crate::simd::fused_rowsum(tx, tz, sxr, szr);
+                        let g = (plus as i64 - minus as i64).rem_euclid(4) as u8;
+                        rs[s] = (rs[s] + rs[next] + g) % 4;
+                    }
+                }
+                pivot_col[q] = true;
+                next += 1;
+            }
+        }
+        let k = next; // rows k..n are pure-Z parity constraints
+
+        // 3. Mask pivot columns out of the constraints, word-parallel.
+        let mut pivmask = vec![0u64; rw];
+        for (q, &is_p) in pivot_col.iter().enumerate() {
+            if is_p {
+                pivmask[q >> 6] |= 1 << (q & 63);
+            }
+        }
+        let ncons = n - k;
+        let mut cz = vec![0u64; ncons * rw];
+        let mut rhs = vec![false; ncons];
+        for c in 0..ncons {
+            let s = k + c;
+            debug_assert!(rx[s * rw..(s + 1) * rw].iter().all(|&w| w == 0));
+            for i in 0..rw {
+                cz[c * rw + i] = rz[s * rw + i] & !pivmask[i];
+            }
+            rhs[c] = rs[s] % 4 == 2;
+        }
+
+        // 4. Jordan elimination over non-pivot columns, word-parallel XORs.
+        let mut used = vec![false; ncons];
+        for q in (0..n).filter(|&q| !pivot_col[q]) {
+            let (w, bit) = (q >> 6, q & 63);
+            let ci = (0..ncons)
+                .find(|&c| !used[c] && cz[c * rw + w] >> bit & 1 == 1)
+                .expect("full-rank parity system (see PackedTableau::sample_all)");
+            used[ci] = true;
+            let src: Vec<u64> = cz[ci * rw..(ci + 1) * rw].to_vec();
+            let srhs = rhs[ci];
+            for c in 0..ncons {
+                if c != ci && cz[c * rw + w] >> bit & 1 == 1 {
+                    for i in 0..rw {
+                        cz[c * rw + i] ^= src[i];
+                    }
+                    rhs[c] ^= srhs;
+                }
+            }
+        }
+
+        // 5. Read the settled values: each used constraint pins one column.
+        let mut y = vec![false; n];
+        for c in 0..ncons {
+            if used[c] && rhs[c] {
+                for i in 0..rw {
+                    let wv = cz[c * rw + i];
+                    if wv != 0 {
+                        y[i * 64 + wv.trailing_zeros() as usize] = true;
+                        break;
+                    }
+                }
+            }
+        }
+        y
+    }
+}
+
+#[cfg(test)]
+mod sample_agreement {
+    use super::*;
+
+    struct Rng(u64);
+    impl Rng {
+        fn next(&mut self) -> u64 {
+            self.0 = self
+                .0
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            self.0 >> 11
+        }
+        fn below(&mut self, n: usize) -> usize {
+            (self.next() % n as u64) as usize
+        }
+    }
+
+    /// The flat sampler must return the SAME vector as the certified
+    /// reference path, and replay cleanly through peek/collapse.
+    #[test]
+    fn flat_sampler_matches_reference() {
+        let mut rng = Rng(0xFEED_5EED);
+        for n in [3usize, 8, 24, 61, 130] {
+            for _trial in 0..3 {
+                let mut col = ColTableau::new(n);
+                for _ in 0..12 * n {
+                    let q = rng.below(n);
+                    let mut q2 = rng.below(n);
+                    while q2 == q {
+                        q2 = rng.below(n);
+                    }
+                    match rng.below(6) {
+                        0 => col.h(q),
+                        1 => col.s(q),
+                        2 => col.sdg(q),
+                        3 => col.x_gate(q),
+                        4 => col.z_gate(q),
+                        _ => col.cx(q, q2),
+                    }
+                }
+                let y_flat = col.sample_all();
+                let packed = col.to_packed();
+                let y_ref = packed.sample_all();
+                assert_eq!(y_flat, y_ref, "n={n}: flat and reference samples differ");
+                let mut replay = packed;
+                for q in 0..n {
+                    match replay.measure_peek(q) {
+                        Some(b) => assert_eq!(y_flat[q], b, "n={n} q={q}: marginal"),
+                        None => replay.collapse(q, y_flat[q]),
+                    }
+                }
+            }
+        }
+    }
+}

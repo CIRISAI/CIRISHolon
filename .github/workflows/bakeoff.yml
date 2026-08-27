@@ -1,0 +1,29 @@
+# The quiet-machine bake-off: CI runners carry no background load, so the
+# paired holon-vs-stim ratios measured here are the citable ones. Manual
+# trigger only — a benchmark run is a decision, not a side effect.
+name: bakeoff
+on:
+  workflow_dispatch:
+
+jobs:
+  clifford-vs-stim:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the engine (release)
+        working-directory: engine
+        run: cargo build --release -p holon
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install stim
+        run: pip install stim
+      - name: CPU features on this runner (for the record)
+        run: grep -o -m1 'avx2\|avx512[a-z]*' /proc/cpuinfo | sort -u || true
+      - name: Run the bake-off
+        run: python conformance/qasm/bakeoff.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bakeoff-results
+          path: conformance/qasm/bakeoff_results.json

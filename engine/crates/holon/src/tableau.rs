@@ -162,3 +162,144 @@ impl PackedTableau {
         self.rows[p] = fresh;
     }
 }
+
+impl PackedTableau {
+    /// Terminal computational-basis sample of ALL qubits in ONE canonical
+    /// pass — replacing n independent peek/collapse cascades (each up to n
+    /// rowsums) with a single Gaussian elimination of the stabilizer half.
+    ///
+    /// Semantics, pinned: the returned outcome is the unique valid sample
+    /// with every FREE bit false in the canonical frame (free = X-pivot
+    /// columns of the RREF). Deterministic marginals are forced, so any
+    /// qubit whose `measure_peek` is `Some(b)` reads `b` here; the sample as
+    /// a whole satisfies every stabilizer parity constraint (the conformance
+    /// gate replays it through the sequential reference).
+    ///
+    /// Why the solve is always well-posed: a nontrivial pure-Z combination
+    /// supported only on pivot columns would anticommute with the pivot row
+    /// of any column it touches (RREF clears pivot columns elsewhere), and
+    /// stabilizers commute — so the pure-Z constraints restricted to
+    /// non-pivot columns have full rank, and "free bits on pivot columns,
+    /// solve the rest" always has exactly one answer.
+    pub fn sample_all(&self) -> Vec<bool> {
+        let n = self.n;
+        let mut stab: Vec<PauliRow> = self.rows[n..2 * n].to_vec();
+
+        // RREF on the X part.
+        let mut is_pivot_col = vec![false; n];
+        let mut next_row = 0usize;
+        for q in 0..n {
+            if let Some(pr) = (next_row..n).find(|&r| stab[r].x.get(q)) {
+                stab.swap(next_row, pr);
+                let pivot = stab[next_row].clone();
+                for r in 0..n {
+                    if r != next_row && stab[r].x.get(q) {
+                        stab[r].mul_assign(&pivot);
+                    }
+                }
+                is_pivot_col[q] = true;
+                next_row += 1;
+            }
+        }
+        let k = next_row; // rows k..n are pure-Z: the parity constraints
+
+        // Solve the parity system on non-pivot coordinates (pivot bits are
+        // the free ones, chosen false, so they contribute nothing).
+        let mut cons: Vec<(crate::plane::BitPlane, bool)> = stab[k..]
+            .iter()
+            .map(|g| {
+                debug_assert!(g.x.words.iter().all(|&w| w == 0), "pure-Z row expected");
+                let mut zp = g.z.clone();
+                for q in 0..n {
+                    if is_pivot_col[q] {
+                        zp.set(q, false);
+                    }
+                }
+                (zp, g.r % 4 == 2)
+            })
+            .collect();
+
+        let mut y = vec![false; n];
+        let mut used = vec![false; cons.len()];
+        for q in (0..n).filter(|&q| !is_pivot_col[q]) {
+            let ci = (0..cons.len())
+                .find(|&ci| !used[ci] && cons[ci].0.get(q))
+                .expect("full-rank parity system (see doc comment)");
+            used[ci] = true;
+            let (sup, rhs) = (cons[ci].0.clone(), cons[ci].1);
+            for cj in 0..cons.len() {
+                if cj != ci && cons[cj].0.get(q) {
+                    cons[cj].0.xor_assign(&sup);
+                    cons[cj].1 ^= rhs;
+                }
+            }
+            let _ = (q, rhs);
+        }
+        // After the full Jordan pass each used constraint retains exactly its
+        // pinning column; read the settled values.
+        for (ci, (sup, rhs)) in cons.iter().enumerate() {
+            if used[ci] {
+                for q in 0..n {
+                    if !is_pivot_col[q] && sup.get(q) {
+                        y[q] = *rhs;
+                    }
+                }
+            }
+        }
+        y
+    }
+}
+
+#[cfg(test)]
+mod sample_conformance {
+    use super::*;
+
+    struct Rng(u64);
+    impl Rng {
+        fn next(&mut self) -> u64 {
+            self.0 = self
+                .0
+                .wrapping_mul(6364136223846793005)
+                .wrapping_add(1442695040888963407);
+            self.0 >> 11
+        }
+        fn below(&mut self, n: usize) -> usize {
+            (self.next() % n as u64) as usize
+        }
+    }
+
+    /// The gate: the one-pass sample must (a) agree with every deterministic
+    /// marginal, and (b) be accepted bit-for-bit by the sequential
+    /// peek/collapse reference when its outcomes are forced to the sample.
+    #[test]
+    fn sample_all_replays_through_reference() {
+        let mut rng = Rng(0xBEEF_CAFE);
+        for n in [3usize, 8, 24, 61] {
+            for _trial in 0..4 {
+                let mut t = PackedTableau::new(n);
+                for _ in 0..12 * n {
+                    let q = rng.below(n);
+                    let mut q2 = rng.below(n);
+                    while q2 == q {
+                        q2 = rng.below(n);
+                    }
+                    match rng.below(5) {
+                        0 => t.h(q),
+                        1 => t.s(q),
+                        2 => t.x_gate(q),
+                        3 => t.cx(q, q2),
+                        _ => t.z_gate(q),
+                    }
+                }
+                let y = t.sample_all();
+                let mut replay = PackedTableau { n, rows: t.rows.clone() };
+                for q in 0..n {
+                    match replay.measure_peek(q) {
+                        Some(b) => assert_eq!(y[q], b, "n={n} q={q}: deterministic marginal"),
+                        None => replay.collapse(q, y[q]),
+                    }
+                }
+            }
+        }
+    }
+}

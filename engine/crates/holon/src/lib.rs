@@ -30,6 +30,7 @@ pub mod sliced;
 pub mod coltableau;
 pub mod tableau;
 pub mod transport;
+pub mod tune;
 
 /// THE INTEGRATION CONTRACT for the magic-tier workstreams (BG decomposition,
 /// pruning, sampling, mesh): a branch source enumerates stabilizer branches;

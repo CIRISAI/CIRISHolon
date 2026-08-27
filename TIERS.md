@@ -11,7 +11,7 @@ only the plan exists.*
 |---|---|---|---|---|
 | 0 — classical bit-planes | **ASSUMED (core)** — NOT DONE until the front-end exceeds OpenQASM (see front-end row) | exact statevector | word-parallel batching (64 shots per word op, free) | batch mode |
 | 1 — stabilizer (packed Pauli planes) | **ASSUMED (core)** — NOT DONE until the front-end exceeds OpenQASM (see front-end row) | certified unpacked tableau + qiskit + stim | **stim ≤ 1× — REACHED AT EVERY n** (quiet-runner bake-off, 7/7 sizes ahead: 0.69× at n=64 down to 0.437× at n=4096 — 1.4–2.3× faster, margin growing with n; `conformance/BENCHMARKS.md` entry six, reproducible via the `bakeoff` workflow). Stack: transposed flat column engine + fused AVX2/WASM-SIMD128/scalar rowsum kernel (bit-identical by gate) + one-pass canonical terminal sampler | roofline analysis: is the margin maximal? |
-| 2 — magic (exact Z[ω] branch sums) | **BUILT** — measured exponent 0.500, orbit-bound dedup, exact sampling; **behind published SOTA and stated so** | frozen holon-qasm + qiskit/Aer | the published exact-exponent ladder (numerically verified in `conformance/srank/`): Bravyi–Smith–Smolin 2016 6→7 α≤0.4679 (the simulator on it is Bravyi–Gosset 2016) → **Qassim–Pashayan–Gosset 2021 α≤0.3963** (Quantum 5, 606; explicit closed-form cat construction — realized α at t=64 is 0.4027, quote it with the finite-t caveat) → **Magic5FromCat** (Kissinger–van de Wetering–Vilmart, TQC 2022: 4-to-3 partial rule, 0.3963 CONCRETELY at finite t, Apache-2.0 Rust in quizx over our exact ring — 74.8× at t=64) → opportunistic cat₄/cat₆ 0.25–0.264 where circuit structure allows → T-count preprocessing (PyZX full_reduce) multiplicative on top. Trap defused: Labib–Russo 2026's χ=3 at 4 copies is the FACE state, not π/8 — do not import | port Magic5FromCat — and the rule being RECURSIVE (N(t)=3·N(t−4), each term keeps a T) is native, not a risk: a branch IS a child holon, so the decomposition interface should be recursive like the object itself |
+| 2 — magic (exact Z[ω] branch sums) | **BUILT, and the exponent moved**: Magic5FromCat LANDED (magic5.rs, exact-equality-gated against both prior paths and the frozen referee, planted defects caught) — realized α 0.4111 at t=28, 0.4027 at t=64 (74.8× fewer branches), asymptote 0.3963 never quoted as a measurement; AND branch-slicing LANDED (sliced.rs, 64 branches/word on a proved structural sharing theorem, bit-identical at every lane) — 14–26× where t ≤ n. **Positions against the lake's limits (Limits.lean): the slicing factor is an L2 (word width, BEGGING) position at 22–41% of the 64-wide bound, the residual being L4-flavored (exact γ coefficients are not bits — ring fraction 3–6% at n=64); the exponent is an L3 (BEGGING) position above the open floor.** Pruned×sliced are ALTERNATIVES (dedup destroys shared structure; measured both ways); magic5×sliced is UNSWEPT and the tuner refuses to guess | frozen holon-qasm + qiskit/Aer | the published exact-exponent ladder (numerically verified in `conformance/srank/`): Bravyi–Smith–Smolin 2016 6→7 α≤0.4679 (the simulator on it is Bravyi–Gosset 2016) → **Qassim–Pashayan–Gosset 2021 α≤0.3963** (Quantum 5, 606; explicit closed-form cat construction — realized α at t=64 is 0.4027, quote it with the finite-t caveat) → **Magic5FromCat** (Kissinger–van de Wetering–Vilmart, TQC 2022: 4-to-3 partial rule, 0.3963 CONCRETELY at finite t, Apache-2.0 Rust in quizx over our exact ring — 74.8× at t=64) → opportunistic cat₄/cat₆ 0.25–0.264 where circuit structure allows → T-count preprocessing (PyZX full_reduce) multiplicative on top. Trap defused: Labib–Russo 2026's χ=3 at 4 copies is the FACE state, not π/8 — do not import | port Magic5FromCat — and the rule being RECURSIVE (N(t)=3·N(t−4), each term keeps a T) is native, not a risk: a branch IS a child holon, so the decomposition interface should be recursive like the object itself |
 | 2.5 — exact shots | **BUILT** | brute-force overlaps + certified branch sums | Aer ext-stab shot throughput, at exactness Aer cannot match at any speed | O(branches²) → orbit-aware Gram |
 | mesh (CPU shards / GPU / cluster) | **BUILT** intra-node (shard-invariant CPU; 4090 at 336–396×, struct-determinism); the merge law is now a THEOREM, not a test result (`lean/CIRISHolon/MergeLaw.lean`: `shardedFold_invariant`, `digest_convicts` — zero-false-positive corruption conviction) | the merge law's Lean proof + its Rust tests | **near-linear to 1024 shards multi-node**; quiet-machine efficiency curves owed | inter-machine transport via the one transport square |
 | bulk — MPS/DMRG | **SCAFFOLD** (MpsHolon shape; python DMRG upstream, ED-certified) | exact ED ≤ 20 sites; Schwinger closed forms | **ITensor/TeNPy** sweep-time parity on Schwinger-class Hamiltonians | port DMRG onto the holon object + merge law |
@@ -81,3 +81,24 @@ exact tiers' semantics.
   (phase-randomization null, clip artifacts, 0.227/N floor) and the
   classical cap expected to bind — a stance instrument, not an engine
   feature.
+
+## The tuning module — organic degradation under a declared policy
+
+`engine/crates/holon/src/tune.rs` + `lean/CIRISHolon/Tune.lean`. The DX
+declares what is HELD (exactness, or a latency/frame budget) and what may
+DEGRADE, in order, to declared degrees; the certificate records what
+degraded; refusal is the total fallback. The law is machine-checked:
+`select_sound` (the hold is held), `select_complete` (refusal only when
+nothing lawful remains), `exact_never_degraded`, and `frame_budget_held` —
+the referee face and the graphics face are one selector with the hold
+swapped. **This gate is what real-time browser rendering rides on**: the
+graphics tier holds the frame budget and degrades detail organically
+(level-of-detail generalized), and every tier's banked speedup widens what
+fits inside the frame. The selector's v1 routing encodes only MEASURED
+rules (t>n → pruned; t≤n → sliced; t≥5 beyond n → magic5); unswept
+interactions are named (`Unswept::Magic5TimesSliced`) and never guessed.
+WHY a held configuration is ideal on given hardware is Limits.lean's half:
+sweeps stop where the HARD floors (L1, L4) say there is nothing left, and
+keep finding wins exactly on the BEGGING axes (L2, L3). Calibration is
+rented: sweep tables carry host fingerprint + epoch, foreign tables are
+ignored.

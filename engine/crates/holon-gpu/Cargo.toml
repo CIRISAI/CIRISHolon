@@ -1,0 +1,46 @@
+# holon-gpu: the CUDA executor for the branch-amplitude fold.
+#
+# DELIBERATELY OUTSIDE the main workspace, and it carries its own EMPTY
+# `[workspace]` table to say so — the same device the manifest comment at
+# engine/Cargo.toml prescribes for engine-compare/wasm-probe/ciris-sim-component.
+# The reason is the reason gate 2 exists: `cudarc` drags a non-trivial dependency
+# graph (libloading, and a build script that probes the CUDA install), and this
+# crate's build script SHELLS OUT TO nvcc. In-workspace, resolver-2 feature
+# unification could route any of that into `ciris-sim-core`'s graph and falsify
+# the isolation gates in `ci-gates.sh`, which is exactly the failure mode the
+# workspace manifest documents. Excluded means `cargo build` at the root never
+# sees this crate; build it with `cargo build --manifest-path
+# crates/holon-gpu/Cargo.toml`.
+#
+# The empty `[workspace]` table (not an `exclude` entry in the root) is the
+# correct device HERE and NOT for the crates the root manifest names: an empty
+# table makes `-p holon-gpu` from the root resolve to nothing, which for
+# holon-swarm/holon-mesh was a BUG (ci-gates.sh silently never reached them).
+# For this crate that is the intent — ci-gates.sh must not reach a crate that
+# needs a CUDA device to test.
+[package]
+name = "holon-gpu"
+version = "0.1.0"
+edition = "2021"
+description = "GPU executor for the holon branch fold: the same merge law, on CUDA. Exact Z[omega] integer reduction, so the schedule is not an input."
+
+[workspace]
+
+[dependencies]
+holon = { path = "../holon" }
+
+# dynamic-loading: libcuda.so is dlopen'd at RUN time, so a build needs no CUDA
+# stub libraries and no toolkit — only running does. cuda-13000 matches the
+# installed driver (580.142 = CUDA 13.0); the PTX is produced by nvcc 12.0 and
+# JIT-compiled by that driver, which is the supported forward direction.
+[dependencies.cudarc]
+version = "0.19"
+default-features = false
+features = ["std", "driver", "nvrtc", "dynamic-loading", "cuda-13000"]
+
+[profile.release]
+debug = true
+
+[[bin]]
+name = "gpu-bench"
+path = "src/bin/gpu-bench.rs"

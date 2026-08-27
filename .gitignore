@@ -1,1 +1,3 @@
 /lean/.lake/
+engine/crates/holon-gpu/target/
+engine/crates/holon-gpu/Cargo.lock

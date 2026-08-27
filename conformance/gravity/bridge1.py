@@ -279,7 +279,7 @@ def combinatorial_route(mk, occ, k_steps):
     from fractions import Fraction
     edges, plaq, loop, p0, e_star = mk()
     P = len(plaq)
-    members = [[p for p, w in enumerate(plaq) if any(e == ei for ei, _ in w)]
+    members = [[p for p, w in enumerate(plaq) if any(we == ei for we, _ in w)]
                for ei in range(len(edges))]
     # amplitude over parity bitmasks, entries (Fraction re, Fraction im), /sqrt2^j
     amp = {0: (Fraction(1), Fraction(0))}
@@ -328,7 +328,7 @@ def markov_route(mk, occ, k_steps):
     k=1 quantum weight 1/2."""
     from fractions import Fraction
     edges, plaq, loop, p0, e_star = mk()
-    members = [[p for p, w in enumerate(plaq) if any(e == ei for ei, _ in w)]
+    members = [[p for p, w in enumerate(plaq) if any(we == ei for we, _ in w)]
                for ei in range(len(edges))]
     prob = {0: Fraction(1)}
     for _ in range(k_steps):

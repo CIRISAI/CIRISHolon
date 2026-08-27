@@ -59,6 +59,32 @@ The payoff is engineering, not philosophy:
   working and gated by their own CI script, not yet certified tier by tier;
   any crate touched enters the battery at that touch.
 
+## License and ethical use
+
+CIRISHolon is licensed under the **GNU AGPL-3.0** (see `LICENSE`). This
+project is intended for **ethical use cases only**, as understood by the
+[CIRIS Covenant](https://ciris.ai). We state precisely how that intention
+binds, because pretending a copyright license can carry it would be false:
+
+- **The code license is pure AGPL-3.0, with no added restrictions.** The AGPL
+  grants its freedoms without discrimination by field of use, and its terms
+  (§7, §10) do not permit bolting an ethics clause onto it; a license modified
+  to do so would no longer be the AGPL and would be incompatible with the
+  ecosystem this project belongs to. We do not pretend otherwise. The AGPL's
+  network copyleft is itself the structural safeguard we rely on most: anyone
+  operating a modified CIRISHolon as a service must offer its source to that
+  service's users.
+- **The name is where the ethics gate is enforceable.** "CIRISHolon" and the
+  CIRIS marks may be used only by deployments consistent with the CIRIS
+  Covenant. Forks are welcome under the AGPL; calling an unethical deployment
+  by this project's name is not.
+- **The community is governed by the Covenant.** Contribution, maintainer
+  support, partnership, and any commercial licensing beyond the AGPL are
+  extended only to Covenant-aligned uses, at the maintainers' discretion.
+
+If your use case needs a grant the AGPL does not give, the ethical-use
+review IS the licensing conversation: contact the maintainers.
+
 ## Relationship to CIRISOntology
 
 The theorems in `lean/` are transplanted verbatim from

@@ -1,0 +1,7 @@
+[base] G1=PASS  G7_vac=PASS  G2_tau=PASS  G7_tau=PASS  G3_tau=PASS  G2_rho=PASS  G7_rho=PASS  G3_rho=PASS  G5=PASS  G4=PASS
+[refined] G1=PASS  G7_vac=PASS  G2_tau=PASS  G7_tau=PASS  G3_tau=PASS  G2_rho=PASS  G7_rho=PASS  G3_rho=PASS  G5=PASS  G4=PASS
+[G6 refinement] PASS
+[plant i] wrong-side action -> G5 FIRES (Gauss fails at 1)
+[plant ii] broken word (rho flux) -> reading FIRES (classes {0, 1})
+
+VERDICT: gates ALL PASS; plants both FIRE (harness can fail)

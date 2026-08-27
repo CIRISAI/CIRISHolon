@@ -16,6 +16,7 @@
 pub mod affine;
 pub mod ledger;
 pub mod magic;
+pub mod magic5;
 pub mod merge;
 pub mod mesh;
 pub mod plane;

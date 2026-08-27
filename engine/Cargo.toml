@@ -19,6 +19,9 @@ members = [
   # q8-mps: same isolation profile as q-seam — zero runtime deps, dev-dep on
   # q-seam only (the live exact reference), no feature perturbation possible.
   "crates/q8-mps",
+  # holon-qasm: ZERO runtime deps (same isolation profile as q-seam) — the
+  # stratified QASM simulator; its conformance harness lives upstream.
+  "crates/holon-qasm",
   # holon-swarm, holon-mesh: alloc-only (ciris-sim-core { features = ["alloc"] }),
   # holon-swarm has no other deps and holon-mesh's only other dep is holon-swarm — no
   # optional features to unify, so neither can perturb the core's feature resolution or

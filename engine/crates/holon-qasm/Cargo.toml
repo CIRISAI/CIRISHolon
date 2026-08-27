@@ -1,0 +1,9 @@
+[package]
+name = "holon-qasm"
+version = "0.1.0"
+edition = "2021"
+description = "Stratified QASM simulator: circuits routed to the cheapest tier whose view stays Closed. Zero runtime deps."
+
+[[bin]]
+name = "holon-qasm"
+path = "src/main.rs"

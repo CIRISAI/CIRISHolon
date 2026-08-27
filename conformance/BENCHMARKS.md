@@ -218,3 +218,24 @@ The audit's summary formula is adopted as the standing claim: unusually
 fast exact amplitudes for large-n low-effective-magic Clifford+T, a highly
 competitive Clifford kernel, and the novelty in the exact certified
 COMPOSITION of structural reductions — not a universally faster solver.
+
+## 2026-08-27, tenth entry: Born-vs-Born — the honest stim comparison, and we still lead at every n
+
+Quiet CI runner, both engines performing BORN-RANDOM terminal measurement
+(ours: `sample_born_flat`, seeded free bits folded exactly into the
+constraint RHS, seed in the output JSON; stim: its native sampler):
+
+| n | ours | stim | ours/stim |
+|---:|---:|---:|---:|
+| 64 | 0.083 ms | 0.123 ms | 0.677 |
+| 128 | 0.220 ms | 0.348 ms | 0.632 |
+| 256 | 0.615 ms | 1.095 ms | 0.562 |
+| 512 | 2.340 ms | 4.695 ms | 0.498 |
+| 1024 | 14.234 ms | 22.987 ms | 0.619 |
+| 2048 | 73.473 ms | 137.539 ms | 0.534 |
+| 4096 | 588.342 ms | 1150.893 ms | 0.511 |
+
+**Ahead at 7/7 sizes, 1.48–2.01× faster, semantics matched.** Entry nine's
+qualification is discharged: the citable claim is now "faster random
+stabilizer sampler at every measured n," with entries six/eight kept as
+the narrower canonical-witness measurements they were.

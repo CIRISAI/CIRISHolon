@@ -69,12 +69,19 @@ fn clifford_sample(n: usize, gates: &[Gate]) {
         }
     }
     let gates_s = t0.elapsed().as_secs_f64();
-    // Terminal sample entirely on flat planes: one canonical elimination
-    // pass through the dispatched fused kernel — no row objects anywhere.
-    let y = col.sample_all();
+    // Terminal sample entirely on flat planes — BORN-RANDOM (free bits from
+    // a seeded stream, semantically the same work as stim's random
+    // measurement), seed logged for replay. External review caught the
+    // earlier version comparing a deterministic canonical witness against
+    // stim's Born sampler; this closes that gap at the same one-pass cost.
+    let seed: u64 = std::env::var("HOLON_SAMPLE_SEED")
+        .ok()
+        .and_then(|v| v.parse().ok())
+        .unwrap_or(0x5EED_0F_B0121);
+    let y = col.sample_born_flat(seed);
     let ones: usize = y.iter().map(|&b| b as usize).sum();
     println!(
-        "{{\"seconds\": {:.6}, \"gates_s\": {gates_s:.6}, \"ones\": {ones}}}",
+        "{{\"seconds\": {:.6}, \"gates_s\": {gates_s:.6}, \"ones\": {ones}, \"born_seed\": {seed}}}",
         t0.elapsed().as_secs_f64()
     );
 }

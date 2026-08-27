@@ -337,6 +337,27 @@ impl ColTableau {
     /// (`PackedTableau::sample_all`): free bits false on X-pivot columns.
     /// The conformance gate requires the two paths to return the SAME vector.
     pub fn sample_all(&self) -> Vec<bool> {
+        self.sample_all_with(&mut || false)
+    }
+
+    /// Born-random terminal sample on the FLAT path: free bits drawn from a
+    /// seeded splitmix64 stream (uniform independent free bits in the
+    /// canonical frame IS the Born distribution for a full computational-
+    /// basis measurement), their contribution folded exactly into the
+    /// constraint right-hand sides. Same one-pass cost as the canonical
+    /// sample; replayable from the logged seed.
+    pub fn sample_born_flat(&self, seed: u64) -> Vec<bool> {
+        let mut s = seed;
+        self.sample_all_with(&mut move || {
+            s = s.wrapping_add(0x9E3779B97F4A7C15);
+            let mut z = s;
+            z = (z ^ (z >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
+            z = (z ^ (z >> 27)).wrapping_mul(0x94D049BB133111EB);
+            (z ^ (z >> 31)) & 1 == 1
+        })
+    }
+
+    fn sample_all_with(&self, free_bit: &mut dyn FnMut() -> bool) -> Vec<bool> {
         let n = self.n;
         let rw = n.div_ceil(64); // words per row (qubit axis)
         // 1. Extract stabilizer rows n..2n into flat row-major planes.
@@ -417,11 +438,20 @@ impl ColTableau {
         }
         let k = next; // rows k..n are pure-Z parity constraints
 
-        // 3. Mask pivot columns out of the constraints, word-parallel.
+        // 3. Draw the free (pivot-column) bits, then mask pivot columns out
+        // of the constraints with their contribution folded into the RHS:
+        // <y, z> = rhs with y's pivot part now chosen, so each constraint's
+        // rhs flips by the parity of (support ∧ chosen pivot bits).
         let mut pivmask = vec![0u64; rw];
+        let mut freebits = vec![0u64; rw];
+        let mut y = vec![false; n];
         for (q, &is_p) in pivot_col.iter().enumerate() {
             if is_p {
                 pivmask[q >> 6] |= 1 << (q & 63);
+                if free_bit() {
+                    freebits[q >> 6] |= 1 << (q & 63);
+                    y[q] = true;
+                }
             }
         }
         let ncons = n - k;
@@ -430,10 +460,12 @@ impl ColTableau {
         for c in 0..ncons {
             let s = k + c;
             debug_assert!(rx[s * rw..(s + 1) * rw].iter().all(|&w| w == 0));
+            let mut par = 0u32;
             for i in 0..rw {
                 cz[c * rw + i] = rz[s * rw + i] & !pivmask[i];
+                par ^= (rz[s * rw + i] & freebits[i]).count_ones() & 1;
             }
-            rhs[c] = rs[s] % 4 == 2;
+            rhs[c] = (rs[s] % 4 == 2) ^ (par == 1);
         }
 
         // 4. Jordan elimination over non-pivot columns, word-parallel XORs.
@@ -457,7 +489,6 @@ impl ColTableau {
         }
 
         // 5. Read the settled values: each used constraint pins one column.
-        let mut y = vec![false; n];
         for c in 0..ncons {
             if used[c] && rhs[c] {
                 for i in 0..rw {
@@ -613,5 +644,86 @@ mod born_tests {
             assert_eq!(y[5], true);
             assert!(y.iter().enumerate().all(|(q, &b)| b == (q == 2 || q == 5)));
         }
+    }
+}
+
+#[cfg(test)]
+mod born_flat_tests {
+    use super::*;
+
+    struct Rng(u64);
+    impl Rng {
+        fn next(&mut self) -> u64 {
+            self.0 = self.0.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            self.0 >> 11
+        }
+        fn below(&mut self, n: usize) -> usize {
+            (self.next() % n as u64) as usize
+        }
+    }
+
+    /// Every Born sample must replay through the sequential reference
+    /// (validity + deterministic marginals), vary across seeds on states
+    /// with free bits, and replay identically for one seed.
+    #[test]
+    fn born_flat_is_valid_varied_and_replayable() {
+        let mut rng = Rng(0xB0C4);
+        for n in [5usize, 24, 61] {
+            let mut col = ColTableau::new(n);
+            for _ in 0..10 * n {
+                let q = rng.below(n);
+                let mut q2 = rng.below(n);
+                while q2 == q {
+                    q2 = rng.below(n);
+                }
+                match rng.below(5) {
+                    0 => col.h(q),
+                    1 => col.s(q),
+                    2 => col.x_gate(q),
+                    3 => col.cx(q, q2),
+                    _ => col.z_gate(q),
+                }
+            }
+            let mut distinct = std::collections::HashSet::new();
+            for seed in 0..12u64 {
+                let y = col.sample_born_flat(seed);
+                assert_eq!(y, col.sample_born_flat(seed), "n={n}: replay differs");
+                distinct.insert(y.clone());
+                let mut replay = col.to_packed();
+                for q in 0..n {
+                    match replay.measure_peek(q) {
+                        Some(b) => assert_eq!(y[q], b, "n={n} q={q}: marginal"),
+                        None => replay.collapse(q, y[q]),
+                    }
+                }
+            }
+            // Random circuits at these depths essentially always leave free
+            // bits; a single repeated outcome across 12 seeds would mean the
+            // free bits never engaged.
+            assert!(distinct.len() > 1, "n={n}: outcomes never varied");
+        }
+    }
+
+    /// With the all-false source the parameterized path IS the canonical
+    /// sample — bit-for-bit.
+    #[test]
+    fn all_false_source_matches_canonical() {
+        let mut rng = Rng(7);
+        let n = 24;
+        let mut col = ColTableau::new(n);
+        for _ in 0..200 {
+            let q = rng.below(n);
+            let mut q2 = rng.below(n);
+            while q2 == q {
+                q2 = rng.below(n);
+            }
+            match rng.below(4) {
+                0 => col.h(q),
+                1 => col.s(q),
+                2 => col.cx(q, q2),
+                _ => col.z_gate(q),
+            }
+        }
+        assert_eq!(col.sample_all(), col.sample_all_with(&mut || false));
     }
 }

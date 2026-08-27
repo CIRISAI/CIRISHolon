@@ -24,7 +24,7 @@ Aer 0.17.2, all on this machine, medians of 3):
 | Clifford | n=64 d=1280 | 4.3 ms (unpacked) | stim 0.2 ms | stim leads 28× (their SIMD lane); qiskit StabilizerState 1,093× behind us and TIMEOUT ≥ n=256 |
 | Clifford | n=1024 d=20480 | 8.3 s (unpacked) | stim 26 ms | stim leads 318×; packed planes close ~6.7× of it (next re-run) |
 | statevector | n=24 d=192 | 9.1 s (scalar) | Aer 1.7 s (C++/threads) | Aer leads 5.5×; we lead qiskit-numpy 9.6× |
-| hidden shift | n=40 t=14 | **0.086 s exact p=1.0** | Aer ext-stab 47.4 s, top outcome 1% (fails) | **550× faster AND exact where approximate sampling fails** |
+| hidden shift | n=40 t=14 | **0.086 s exact p=1.0** | Aer ext-stab 47.4 s, top outcome 1% (fails) | NARROWED 2026-08-27 (external audit): the two tools answer DIFFERENT questions — one exact selected amplitude vs approximate sampling with an accuracy/runtime dial Aer documents. The honest claim is the exact-amplitude niche (exact where the approximate sampler's dial fails at this setting), not a 550× like-for-like victory |
 | hidden shift | n=60 t=28 | **1.09 s exact p=1.0** | nothing finishes | **a column no other tool populates** |
 | corrupted control | n=20 t=14 | p = 0.000000 | — | two-sided: the exactness is not a constant-1 artifact |
 | GPU fold | 10⁶ branches, n=32 | **6.7 ms** | CPU 32-shard 197 ms (loadavg 29–37) | 336–396× vs serial; struct-level determinism across launch shapes |
@@ -185,3 +185,36 @@ interactions instead of one, alternatives callable explicitly and
 exactness-pinned (`tests/tuned.rs`) so a future sweep can promote them on
 speed alone. A routing rule died by measurement within hours of being
 written — that is the tuner working exactly as designed.
+
+## 2026-08-27, ninth entry: audit-driven corrections and the Born upgrade
+
+An external audit (accepted as a fix list) qualified two headlines and
+named a gap; all three are actioned:
+
+1. **The stim comparison was not semantically equivalent** — our
+   `clifford-sample` returned the deterministic canonical witness (free
+   bits false) while stim Born-samples. Fixed at the same one-pass cost:
+   `sample_born_flat` draws the canonical frame's free bits from a seeded
+   stream (which IS the Born distribution for full computational-basis
+   measurement), folds their contribution exactly into the constraint
+   right-hand sides, logs the seed for replay, and replays through the
+   sequential reference in tests. The CLI now Born-samples by default;
+   entries six/eight's ratios are re-measured under Born-vs-Born below
+   (entry ten, CI). Until then the banked ratios read as "canonical
+   support witness vs Born sampler" — established, but narrower.
+2. **The Aer line is narrowed in place** (entry one): different questions,
+   exact-amplitude niche, no like-for-like 550×.
+3. **The 437×/850× numbers are self-relative** — improvements over this
+   engine's own banked artifact, never a claimed victory over an external
+   solver; entries five and seven now say so explicitly by this entry.
+
+**Owed and named: a QuiZX head-to-head** on structured instances
+(hidden-shift class, where graphical simplification reports large exact
+results with related decompositions) — the one serious structured exact
+solver not yet in the manifest. Until it runs, no claim ranks us against
+QuiZX-style simplification.
+
+The audit's summary formula is adopted as the standing claim: unusually
+fast exact amplitudes for large-n low-effective-magic Clifford+T, a highly
+competitive Clifford kernel, and the novelty in the exact certified
+COMPOSITION of structural reductions — not a universally faster solver.

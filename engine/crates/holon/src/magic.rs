@@ -33,6 +33,16 @@
 //! of three pair blocks (rank 8 = 2³) — which is why [`block_plan`] declines
 //! six-wide blocks entirely. See [`A6_PROVENANCE`].
 //!
+//! A THIRD source now lives next door: [`crate::magic5`]'s `Magic5Source`, the
+//! Kissinger–van de Wetering–Vilmart partial rule (arXiv:2202.09202), which
+//! reaches α = log₂(3)/4 ≈ 0.3963 concretely at finite t. It does NOT replace
+//! this file and it does not contradict it: it is a RECURSIVE PARTIAL rule
+//! whose terms are not stabilizer states (each keeps one magic state), so it is
+//! not a rank-7-per-six table and says nothing about the search recorded in
+//! [`A6_PROVENANCE`]. Below five magic states it falls back to THIS module's
+//! verified `a2_terms`/`a1_terms`, so short circuits are byte-for-byte the path
+//! below. Both sources remain, and both are refereed against `NaiveSource`.
+//!
 //! THE DECOMPOSITION IS NOT TRUSTED TO MEMORY. `decomposition_is_exact`
 //! re-derives Σ_j c_j φ_j(x) in the exact ring and compares it to ω^{|x|}·2^{−k/2}
 //! at every one of the 2^k basis states; the conformance test calls it and

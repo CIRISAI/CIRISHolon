@@ -123,3 +123,35 @@ the standing rule: **a performance claim without a moved benchmark ratio does
 not merge.** Current measured baselines: statevector 15× over qiskit-numpy;
 tableau 0.45× of qiskit StabilizerState; magic tier exact where no reference
 offers exactness at all; DMRG unbenchmarked against ITensor (owed).
+
+---
+
+## DESIGN LOCK v1 (2026-08-27) — what implementation taught
+
+The object shipped as designed, in ONE crate (`engine/crates/holon`): planes,
+ledger, chart, certificate, arena — with tier instances certified against the
+QASM-suite reference tiers and three deltas the implementation surfaced,
+recorded here so the lock is honest:
+
+1. **Row-product role order is part of the object.** Pauli phases
+   anticommute, so `rowsum`'s source-vs-target slot assignment is
+   load-bearing; it is now documented AT the operation, and the conformance
+   suite is what caught the transposed draft.
+2. **Signs live mod 4 in intermediates** even though physical rows are ±:
+   the ledger's ring is wider in flight than at rest. This is the tier-1
+   miniature of the general ledger law (rest ring ⊂ flight ring), and it is
+   why the ledger is typed, not implicit.
+3. **The conditioning declaration is COMPUTED, not asserted**: `RealHolon`
+   derives its chart's coherences from the planes at construction. The
+   season's measured pattern (signed near-cancelling ill-conditioned,
+   all-nonnegative exactly 1) is a standing test.
+
+Viability, tested: tier 0 (bit-planes), tier 1 (packed Pauli planes —
+conformant to the certified tableau at peek and distribution level), tier 2
+ledger (Z[ω] ring isomorphic in action to the certified magic tier's over 500
+random elements), carrier/physics ℝ-planes (conditioning measured), bulk MPS
+shape (minimal instance exact), recursion (arena-index identity, coarse
+Closed view of children). Measured benchmark movement at lock:
+**packed tableau 7.8 ms at n=256, depth 5120 including full measurement —
+6.7× over the unpacked tier, 3.1× faster than qiskit's StabilizerState**;
+Stim remains the named target (est. 1–2 orders; SIMD + transposed layouts).

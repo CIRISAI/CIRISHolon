@@ -22,6 +22,9 @@ members = [
   # holon-qasm: ZERO runtime deps (same isolation profile as q-seam) — the
   # stratified QASM simulator; its conformance harness lives upstream.
   "crates/holon-qasm",
+  # holon: THE recursive data object -- planes, ledger, chart, certificate,
+  # arena. Dev-dep on holon-qasm only (its certified tiers are the referees).
+  "crates/holon",
   # holon-swarm, holon-mesh: alloc-only (ciris-sim-core { features = ["alloc"] }),
   # holon-swarm has no other deps and holon-mesh's only other dep is holon-swarm — no
   # optional features to unify, so neither can perturb the core's feature resolution or

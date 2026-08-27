@@ -1,0 +1,8 @@
+[package]
+name = "holon"
+version = "0.1.0"
+edition = "2021"
+description = "THE holon: one recursive data object for every tier. Planes, ledger, chart, certificate, arena. Zero runtime deps."
+
+[dev-dependencies]
+holon-qasm = { path = "../holon-qasm" }

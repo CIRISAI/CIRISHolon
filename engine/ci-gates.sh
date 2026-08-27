@@ -184,6 +184,13 @@ cargo test -q -p holon-swarm 2>/dev/null >/dev/null \
 cargo build -q -p holon-swarm --release 2>/dev/null \
   && ok "holon-swarm swarm_bench builds" || no "holon-swarm swarm_bench builds"
 
+# holon: THE recursive data object (planes/ledger/chart/certificate/arena).
+# Its tiers certify against the QASM-suite reference tiers; the recursion,
+# conditioning, and ledger-ring tests are the design lock's standing evidence.
+cargo test -q -p holon 2>/dev/null >/dev/null \
+  && ok "holon object: tier conformance, ledger ring, conditioning, recursion" \
+  || no "holon object: tier conformance, ledger ring, conditioning, recursion"
+
 # holon-qasm: the stratified QASM simulator. The in-crate three-way tier
 # conformance (each cheap tier vs the statevector carrier, exact) plus
 # planted-mutation detection is the CI backbone of the QASM suite; the

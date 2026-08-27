@@ -52,3 +52,32 @@ a theorem exists to state (`lean/CIRISHolon/Boundaries.lean`):
 | sampler scope (t≤8..10) | **BENDABLE** — the O(branches²) Gram is an algorithm choice, not a law; orbit-aware Gram is the milestone | — (no law of its own) |
 | no-adaptivity | **REMOVABLE, and now COMPLETION DEBT** — adaptive Clifford stays efficient (Aaronson–Gottesman §III; measurement-update closure mechanization OWED, named in `Boundaries.lean`); arbitrary angles enter exactly via Ross–Selinger synthesis at the front door | `Boundaries.lean` header (debt named) |
 | CI exemptions | **NO LAW AT ALL** — process debt; write the gates. Listed apart so a chore is never laundered into a limit | — |
+
+## TODO — Ossicle integrations (trust and entropy; none of these buy speed)
+
+Parked until the speed program lands; each is additive and none touches the
+exact tiers' semantics.
+
+- **Certificate-logged measurement entropy**: CIRISOssicle's on-GPU TRNG
+  (timing LSBs, 7.99 bits/byte) feeds terminal-sample outcome selection;
+  the draw is logged in the certificate so runs are unpredictable in
+  advance and replayable after. Requires SP 800-90B-style conditioning and
+  health tests before the certificate may cite the source. The fence,
+  stated once: entropy buys ZERO magic — no TRNG pays a T-gate's price.
+- **Shard sole-tenancy attestation**: Ossicle's VALIDATED workload detector
+  (100% TP / 0% FP, 2.5 ms latency, 1% floor) runs beside each GPU shard
+  and appends a "sole-tenant during the fold window" attestation to the
+  shard certificate — the algebraic digest proves the arithmetic, the
+  strain gauge attests the environment. The engine's own fold must be
+  whitelisted by signature (the shard thereby proves it ran ONLY the
+  engine).
+- **Certified-randomness audit demo**: an Ossicle-sourced stream whose
+  expansion is audited by the exact engine — the sharpest form of the
+  "who referees the referee" critique of float-certified randomness
+  pipelines (CAMPAIGNS.md side-bets).
+- **Critical-ridge share measurement on the timing stream**: the
+  edge-of-chaos jitter is a wild near-critical substrate; measure its
+  whole-only share on the 4090 with the full timeseries discipline
+  (phase-randomization null, clip artifacts, 0.227/N floor) and the
+  classical cap expected to bind — a stance instrument, not an engine
+  feature.

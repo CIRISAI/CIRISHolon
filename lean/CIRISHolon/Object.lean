@@ -251,8 +251,7 @@ noncomputable def ρmix : Matrix (Fin 2) (Fin 2) ℝ := !![1/2, 0; 0, 1/2]
 /-- Hadamard conjugation, kept rational: `(1/2)·H′ρH′` with unnormalized `H′`. -/
 noncomputable def hadamardMap (ρ : Matrix (Fin 2) (Fin 2) ℝ) :
     Matrix (Fin 2) (Fin 2) ℝ :=
-  let H' : Matrix (Fin 2) (Fin 2) ℝ := !![1, 1; 1, -1]
-  (1 / 2 : ℝ) • (H' * ρ * H')
+  (1 / 2 : ℝ) • (!![1, 1; 1, -1] * ρ * !![1, 1; 1, -1])
 
 /-- **THE WALL**: same Born view, split by a coherent motion. -/
 theorem hadamard_splits_diagonal :

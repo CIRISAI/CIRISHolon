@@ -1,0 +1,18 @@
+id,name,formula,kind,configuration_hint,molar_mass_g_mol,mass_basis,source_id
+water,water,H2O,molecule,bent,18.0153,NIST_WebBook,nist_webbook_water
+carbon_dioxide,carbon dioxide,CO2,molecule,linear,44.0095,NIST_WebBook,nist_webbook_co2
+methane,methane,CH4,molecule,tetrahedral,16.0425,NIST_WebBook,nist_webbook_methane
+ammonia,ammonia,NH3,molecule,trigonal_pyramidal,17.0305,NIST_WebBook,nist_webbook_ammonia
+sodium_chloride,sodium chloride,NaCl,ionic_species,rocksalt_hint,58.443,NIST_WebBook,nist_webbook_nacl
+quartz,quartz,SiO2,mineral,tectosilicate,60.083,computed_from_CIAAW_abridged_2024,usgs_mineral_formulas_2010
+orthoclase,orthoclase,KAlSi3O8,mineral,K_feldspar,278.327,computed_from_CIAAW_abridged_2024,usgs_mineral_formulas_2010
+albite,albite,NaAlSi3O8,mineral,plagioclase_endmember,262.219,computed_from_CIAAW_abridged_2024,usgs_mineral_formulas_2010
+anorthite,anorthite,CaAl2Si2O8,mineral,plagioclase_endmember,278.204,computed_from_CIAAW_abridged_2024,usgs_mineral_formulas_2010
+calcite,calcite,CaCO3,mineral,carbonate,100.086,computed_from_CIAAW_abridged_2024,usgs_mineral_formulas_2010
+dolomite,dolomite,CaMg(CO3)2,mineral,carbonate,184.399,computed_from_CIAAW_abridged_2024,usgs_mineral_formulas_2010
+hematite,hematite,Fe2O3,mineral,iron_oxide,159.687,computed_from_CIAAW_abridged_2024,usgs_mineral_formulas_2010
+magnetite,magnetite,Fe3O4,mineral,spinel_oxide,231.531,computed_from_CIAAW_abridged_2024,usgs_mineral_formulas_2010
+pyrite,pyrite,FeS2,mineral,sulfide,119.965,computed_from_CIAAW_abridged_2024,usgs_mineral_formulas_2010
+titanite,titanite,CaTiSiO5,mineral,silicate,196.025,computed_from_CIAAW_abridged_2024,usgs_mineral_formulas_2010
+ilmenite,ilmenite,FeTiO3,mineral,oxide,151.709,computed_from_CIAAW_abridged_2024,usgs_mineral_formulas_2010
+fluorapatite,fluorapatite,Ca5(PO4)3F,mineral,phosphate,504.298,computed_from_CIAAW_abridged_2024,usgs_mineral_formulas_2010

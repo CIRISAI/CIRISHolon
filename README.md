@@ -41,13 +41,23 @@ The payoff is engineering, not philosophy:
 
 ## Repository layout
 
-- `lean/` — the object: the engine's contract as machine-checked theorems.
-  One file, `CIRISHolon/Object.lean`, verified under Lean 4 / Mathlib
-  (toolchain and revision pinned).
+- `lean/` — the object: the engine's contract as machine-checked theorems,
+  verified under Lean 4 / Mathlib (toolchain and revision pinned).
+  `Object.lean` (the question, conditioning, rent, the diagonal and its
+  wall), `Tiers.lean` (stacking algebra), `Tier.lean` (the certified
+  boundary as a bundle), `Transport.lean` (re-rooting and the certificate
+  fence), `Mixing.lean` (why stochastic tiers self-heal and deterministic
+  ones never do), `Budget.lean` (error composition; the K ≤ 1 linear
+  budget), `Stabilizer.lean` (the Clifford stratum's closure kernel and the
+  magic wall).
 - `OBJECT.md` — the contract in prose: definitions, design rules, and the
   conformance obligations every tier owes.
 - `LESSONS.md` — binding design rules distilled from the predecessor
   sandbox's measured failures. Read before writing any tier.
+- `conformance/` — the acceptance battery, transplanted with its bands.
+- `engine/` — the predecessor crates, grandfathered (see `engine/ENGINE.md`):
+  working and gated by their own CI script, not yet certified tier by tier;
+  any crate touched enters the battery at that touch.
 
 ## Relationship to CIRISOntology
 

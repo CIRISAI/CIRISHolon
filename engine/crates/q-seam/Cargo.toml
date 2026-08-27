@@ -1,0 +1,21 @@
+[package]
+name = "q-seam"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/CIRISAI/CIRISOntology"
+description = "The certified seam: an exact quantum reference and a Boolean-occupancy chart over the same system, with a staked refusal"
+
+# Deliberately ZERO runtime dependencies. The reference is the product's warrant, so nothing
+# it computes may depend on a crate this repository does not audit. JSON is written by hand.
+[dependencies]
+
+# ciris-sim-core is a DEV dependency only: it supplies the vacuum-tier Jacobi solver that
+# validates this crate's dense solver on 3x3/4x4 fixtures (gate G-E4c). Keeping it out of the
+# normal build graph means q-seam cannot perturb the core's feature resolution.
+[dev-dependencies]
+ciris-sim-core = { path = "../ciris-sim-core" }
+
+# No [profile.release] here: Cargo ignores profiles in non-root workspace members
+# (with a warning, which the warnings-as-errors discipline would then trip on).
+# The values it asked for (opt-level 3, no debug) are release defaults anyway.

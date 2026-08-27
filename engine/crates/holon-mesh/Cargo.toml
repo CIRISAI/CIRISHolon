@@ -1,0 +1,23 @@
+# 2026-08-24: joined the sim_engine workspace (see its Cargo.toml `members` comment),
+# same reason and same day as `holon-swarm` — the two share a workspace root because
+# this crate path-depends on holon-swarm, and cargo refuses two workspace roots in the
+# same graph. `[profile.release] debug = true` (for mesh_bench's symbolication) moved to
+# the workspace root: a non-root member's own `[profile.*]` section is silently ignored.
+
+[package]
+name = "holon-mesh"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+description = "Local mesh: ONE holon scene sharded across cores, gated bit-identical against the unsharded run"
+
+[features]
+# Off by default. Flip ON the moment SANDBOX_4090's G5 lands (the !Send refactor of
+# FractureModel/ImpactModel), which switches tests/g5_send.rs from asserting the
+# before-state to asserting the after-state. The expectation is committed in BOTH
+# directions before the refactor exists; see that file's header.
+g5 = []
+
+[dependencies]
+ciris-sim-core = { path = "../ciris-sim-core", features = ["alloc"] }
+holon-swarm = { path = "../holon-swarm" }

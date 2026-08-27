@@ -1,0 +1,19 @@
+[package]
+name = "holon-sandbox"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "Certified multiscale sandbox: one holon, one recursive engine, every zoom tier"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+ciris-sim-core = { path = "../ciris-sim-core", features = ["alloc"] }
+
+# NOTE: no `[profile.release]` here on purpose. A workspace member's profile section is
+# ignored by Cargo (only the workspace root's applies), so declaring one would be a
+# stand-in that looks like it works. `build-web.sh` sets the size profile through
+# `CARGO_PROFILE_RELEASE_*` environment variables instead, where it actually takes
+# effect, and the measured byte count in the report is from that path.

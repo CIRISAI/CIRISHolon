@@ -1,0 +1,10 @@
+# Pinned so the committed viewer wasm is REPRODUCIBLE: ci-gates gate 10 requires the
+# artifact to match its source byte-for-byte, and that invariant only holds under one
+# compiler. An unpinned CI runner produced different bytes within an hour of the gate
+# existing (verify run on 180e712) — which is F6's lesson completing itself: the gate
+# without the pin is a coin flip, the pin without the gate is unenforced.
+# Bump deliberately: changing this channel changes the committed wasm; do both in one
+# commit, with build-web.sh re-run.
+[toolchain]
+channel = "1.95.0"
+targets = ["wasm32-unknown-unknown", "wasm32-wasip1"]

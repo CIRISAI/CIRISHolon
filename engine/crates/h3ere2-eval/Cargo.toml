@@ -1,0 +1,15 @@
+[package]
+name = "h3ere2-eval"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ciris-sim-core = { path = "../ciris-sim-core" }
+ciris-nl = { path = "../ciris-nl", features = ["native"] }
+serde_json = "1"
+libm = "0.2"
+
+[profile.release]
+opt-level = 3
+
+[workspace]

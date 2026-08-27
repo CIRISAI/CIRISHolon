@@ -1,0 +1,66 @@
+# Virtual manifest for the physics core and the NL bridge.
+#
+# `resolver = "2"` is stated EXPLICITLY and must stay that way. A virtual manifest does
+# not inherit `edition`, so resolver 2 is NOT implied here — and without it Cargo unifies
+# features across members, which would let `ciris-nl`'s optional native inference deps
+# (llama-cpp-2, and its cmake/C++ build script) leak into `ciris-sim-core`'s graph and
+# silently falsify the isolation gates in `ci-gates.sh`.
+[workspace]
+resolver = "2"
+members = [
+  "crates/ciris-sim-core",
+  "crates/ciris-nl",
+  "crates/sphere-demo",
+  "crates/holon-ball-game",
+  "crates/holon-sandbox",
+  # q-seam: ZERO runtime deps (dev-dep on ciris-sim-core only, no features), so it
+  # cannot perturb the core's feature resolution or the isolation gates.
+  "crates/q-seam",
+  # q8-mps: same isolation profile as q-seam — zero runtime deps, dev-dep on
+  # q-seam only (the live exact reference), no feature perturbation possible.
+  "crates/q8-mps",
+  # holon-swarm, holon-mesh: alloc-only (ciris-sim-core { features = ["alloc"] }),
+  # holon-swarm has no other deps and holon-mesh's only other dep is holon-swarm — no
+  # optional features to unify, so neither can perturb the core's feature resolution or
+  # the isolation gates (unlike engine-compare/wasm-probe/ciris-sim-component below).
+  # They were NOT excluded like those three: each carried its own empty `[workspace]`
+  # table instead, which made `-p holon-swarm`/`-p holon-mesh` from this root resolve to
+  # NOTHING — neither crate had ever been reached by ci-gates.sh. holon-mesh path-depends
+  # on holon-swarm, so joining one alone fails cargo metadata with "multiple workspace
+  # roots found" (holon-mesh lane, measured); both join together, both empty
+  # `[workspace]` tables removed. Each crate's `[profile.release] debug = true` (for
+  # bench-binary symbolication) is consolidated below — a non-root member's own
+  # `[profile.*]` section is silently ignored by Cargo once it joins a workspace.
+  "crates/holon-swarm",
+  "crates/holon-mesh",
+]
+
+# Deliberately OUTSIDE the workspace, each for its own reason:
+#   engine-compare  pulls Rapier, which needs std + alloc; in-workspace it could unify
+#                   with the core and falsify PORTABILITY.md's zero-allocation evidence.
+#   wasm-probe      carries its own target/profile configuration for the tri-target
+#                   bit-identity probe and must not inherit workspace settings.
+#   ciris-sim-component is a WIT adapter with its own release profile and dependency
+#                        graph; keeping it separate preserves the core isolation gate.
+#   h3ere2-eval     K2's instrument; depends on ciris-nl with the `native` feature
+#                   (llama-cpp-2 + its cmake/C++ build script) — in-workspace it would
+#                   drag a C++ toolchain requirement into every workspace gate,
+#                   including gate 3's "default build pulls no engine" check. Deliberately
+#                   not build-verified by this script yet, to avoid contending with the
+#                   q8-mps run for the build lock; that check is owed separately.
+exclude = [
+  "crates/engine-compare",
+  "crates/wasm-probe",
+  "crates/ciris-sim-component",
+  "crates/h3ere2-eval",
+]
+
+# Consolidated from holon-swarm's and holon-mesh's own (now-removed) `[profile.release]`
+# sections: both carried `debug = true` for their bench binaries' symbolication, and a
+# non-root workspace member's `[profile.*]` table is silently ignored once it joins —
+# declaring one there would look like it worked and would not (same trap build-web.sh's
+# header already documents for holon-sandbox). This applies workspace-wide; holon-sandbox's
+# browser build overrides it back to STRIP=true/DEBUG unset via build-web.sh's own
+# CARGO_PROFILE_RELEASE_* env vars, which take precedence over the manifest.
+[profile.release]
+debug = true

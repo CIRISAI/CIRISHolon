@@ -1,0 +1,54 @@
+[package]
+name = "ciris-sim-core"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/CIRISAI/CIRISOntology"
+description = "Deterministic no_std Newtonian core and certified adaptive-grain runtime for CIRISHolon"
+
+[dependencies]
+libm = "0.2"
+
+[features]
+default = []
+# Runtime-sized holon arenas use `alloc` but never require `std`. This is the
+# integration shape used by browser WASM and deterministic replay hosts.
+alloc = []
+std = ["alloc"]
+
+[[example]]
+name = "runtime_materialization"
+required-features = ["alloc"]
+
+[[example]]
+name = "descriptor_materialization"
+required-features = ["alloc"]
+
+[[example]]
+name = "fracture_adaptive"
+required-features = ["alloc"]
+
+[[example]]
+name = "impact_composed"
+required-features = ["alloc"]
+
+# Benchmarks. The library is `no_std`; a bench target is a separate crate and may use
+# `std` freely, so no feature gymnastics are needed and the `std` feature stays unused
+# by them. `harness = false` because libtest's `#[bench]` is nightly-only and these are
+# plain `fn main()` reports meant to be read, not regression-gated.
+[[bench]]
+name = "profile_reduction"
+harness = false
+
+[[bench]]
+name = "step_cost"
+harness = false
+
+[[bench]]
+name = "runtime_refinement"
+harness = false
+required-features = ["alloc"]
+
+[[bench]]
+name = "newton_vs_sr"
+harness = false

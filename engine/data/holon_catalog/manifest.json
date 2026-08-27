@@ -1,0 +1,36 @@
+{
+  "catalog_id": "ciris-holon-material-catalog",
+  "schema_version": 1,
+  "catalog_version": "2026-08-23.3",
+  "units": "SI unless a column name explicitly states otherwise",
+  "files": {
+    "elements": "elements.csv",
+    "electron_configurations": "electron_configurations.csv",
+    "species": "species.csv",
+    "chemistry_validation_targets": "chemistry_validation_targets.jsonl",
+    "materials": "materials.jsonl",
+    "mixture_rules": "mixture_rules.json",
+    "provenance": "provenance.json"
+  },
+  "resolution_policy": {
+    "missing_numeric_value": "unresolved; never coerce to zero",
+    "radioactive_element_without_standard_atomic_weight": "unresolved standard atomic weight; caller must select an isotope/mass basis explicitly",
+    "condition_dependent_property": "interpolate only inside the source-declared validity range using the declared model",
+    "out_of_range_property": "refuse unless another warranted source/model resolves it",
+    "composition_only_material": "may materialize descriptor composition but may not populate an IsotropicMaterial mechanical chart without separately warranted properties",
+    "strength_or_fracture_mixing": "refuse generic rule-of-mixtures; require an explicitly named empirical/constitutive model",
+    "chemical_bond_topology": "must be produced by holonic dynamics from allowed local state/interactions; known atom/bond graphs are withheld validation targets and must never parameterize that dynamics",
+    "crystal_topology": "must likewise emerge from phase/interactions; known unit cells belong in validation/reference data rather than being injected as simulator structure",
+    "multiple_sources": "retain source identity and conditions; do not silently average incompatible specimens or standards"
+  },
+  "holon_mapping": {
+    "element_identity_and_electronic_state": "Identity/Facts",
+    "stoichiometric_inventory": "gross conserved/input ledger",
+    "emergent_atom_bond_graph": "derived Structure outcome, not descriptor input",
+    "temperature_pressure_phase_heat_treatment": "Circumstances",
+    "mixture_or_homogenization_equation": "Model/Rules",
+    "source_id_and_specimen_record": "Record/Warrant",
+    "uncertainty_or_range": "Confidence",
+    "materialization_seed_and_history": "Record"
+  }
+}

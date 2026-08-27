@@ -1,0 +1,286 @@
+done N=2 U=0
+done N=2 U=0.125
+done N=2 U=0.25
+done N=2 U=0.5
+done N=2 U=0.75
+done N=2 U=1
+done N=2 U=1.5
+done N=2 U=2
+done N=2 U=3
+done N=2 U=4
+done N=2 U=6
+done N=2 U=8
+done N=2 U=12
+done N=2 U=16
+done N=4 U=0
+done N=4 U=0.125
+done N=4 U=0.25
+done N=4 U=0.5
+done N=4 U=0.75
+done N=4 U=1
+done N=4 U=1.5
+done N=4 U=2
+done N=4 U=3
+done N=4 U=4
+done N=4 U=6
+done N=4 U=8
+done N=4 U=12
+done N=4 U=16
+done N=6 U=0
+done N=6 U=0.125
+done N=6 U=0.25
+done N=6 U=0.5
+done N=6 U=0.75
+done N=6 U=1
+done N=6 U=1.5
+done N=6 U=2
+done N=6 U=3
+done N=6 U=4
+done N=6 U=6
+done N=6 U=8
+done N=6 U=12
+done N=6 U=16
+done N=8 U=0
+done N=8 U=0.125
+done N=8 U=0.25
+done N=8 U=0.5
+done N=8 U=0.75
+done N=8 U=1
+done N=8 U=1.5
+done N=8 U=2
+done N=8 U=3
+done N=8 U=4
+done N=8 U=6
+done N=8 U=8
+done N=8 U=12
+done N=8 U=16
+done N=10 U=0
+done N=10 U=0.125
+done N=10 U=0.25
+done N=10 U=0.5
+done N=10 U=0.75
+done N=10 U=1
+done N=10 U=1.5
+done N=10 U=2
+done N=10 U=3
+done N=10 U=4
+done N=10 U=6
+done N=10 U=8
+done N=10 U=12
+done N=10 U=16
+VOID configurations: 0 of 70
+
+chart-honest: 15 of 70 (six-observable, Q5)
+chart-honest: 15 of 70 (five-observable, Q6 per A1/H2)
+
+  N      U         e         d       n_i       m_i      bond    D_bool    E_tot honest
+  2      0    0.0000    0.0000    0.0000    0.0000    0.0000    0.0000    0.000    yes
+  2  0.125    0.0244    0.3904    0.0000    0.0000    0.0488    0.0049    0.390    yes
+  2   0.25    0.0976    0.7797    0.0000    0.0000    0.1947    0.0195    0.780    yes
+  2    0.5    0.3891    1.5504    0.0000    0.0000    0.7722    0.0772    1.550     no
+  2   0.75    0.8713    2.3036    0.0000    0.0000    1.7128    0.1713    2.304     no
+  2      1    1.5388    3.0317    0.0000    0.0000    2.9857    0.2986    3.032     no
+  2    1.5    3.4000    4.3890    0.0000    0.0000    6.3671    0.6367    6.367     no
+  2      2    5.9017    5.5902    0.0000    0.0000   10.5573    1.0557   10.557     no
+  2      3    8.3333    0.5556    0.0000   14.9071   13.3333    2.0000   14.907     no
+  2      4    8.2107    0.5362    0.0000   17.3205   20.7107    2.9289   20.711     no
+  2      6    6.8054    0.7105    0.0000   18.8562   22.1367    4.4530   22.137     no
+  2      8    5.5534    0.5384    0.0000   19.3649   19.7214    5.5279   19.721     no
+  2     12    3.9472    0.2942    0.0000   19.7203   14.9561    6.8377   19.720     no
+  2     16    3.0303    0.1779    0.0000   19.8431   11.7536    7.5746   19.843     no
+  4      0    0.0000    0.0000    0.0000    0.0000    0.0000    0.0000    0.000    yes
+  4  0.125    0.0203    0.3249    0.0000    0.0000    0.0341    0.0065    0.325    yes
+  4   0.25    0.0812    0.6493    0.0000    0.0000    0.1361    0.0258    0.649    yes
+  4    0.5    0.3243    1.2951    0.0000    0.0000    0.5417    0.1025    1.295     no
+  4   0.75    0.7281    1.9338    0.0000    0.0000    1.2095    0.2275    1.934     no
+  4      1    1.2904    2.5619    0.0000    0.0000    2.1268    0.3969    2.562     no
+  4    1.5    2.8767    3.7714    0.0000    0.0000    4.6363    0.8470    4.636     no
+  4      2    4.7363    2.8764    0.0000    9.5092    7.5320    1.4023    9.509     no
+  4      3    6.3179    0.6604    0.0000   15.5865   14.5477    2.6254   15.586     no
+  4      4    6.4853    0.1869    0.0000   17.5085   18.8905    3.7636   18.890     no
+  4      6    5.6367    0.5081    0.0000   18.8897   19.3898    5.4461   19.390     no
+  4      8    4.6888    0.4251    0.0000   19.3752   17.1762    6.4906   19.375     no
+  4     12    3.3800    0.2456    0.0000   19.7222   12.9858    7.6270   19.722     no
+  4     16    2.6077    0.1510    0.0000   19.8438   10.1941    8.2145   19.844     no
+  6      0    0.0000    0.0000    0.0000    0.0000    0.0000    0.0000    0.000    yes
+  6  0.125    0.0184    0.2943    0.0000    0.0000    0.0300    0.0074    0.294    yes
+  6   0.25    0.0736    0.5885    0.0000    0.0000    0.1201    0.0297    0.589    yes
+  6    0.5    0.2942    1.1762    0.0000    0.0000    0.4792    0.1181    1.176     no
+  6   0.75    0.6615    1.7618    0.0000    0.0000    1.0735    0.2627    1.762     no
+  6      1    1.1748    2.3437    0.0000    0.0000    1.8962    0.4597    2.344     no
+  6    1.5    2.6338    3.4866    0.0000    0.0000    4.1806    0.9877    4.181     no
+  6      2    4.1607    2.4403    0.0000   10.4996    8.7711    1.6441   10.500     no
+  6      3    5.7078    0.7862    0.0000   15.6269   13.8450    3.0800   15.627     no
+  6      4    6.0010    0.0751    0.0000   17.5118   17.8469    4.3644   17.847     no
+  6      6    5.3127    0.4524    0.0000   18.8898   18.5357    6.1116   18.890     no
+  6      8    4.4486    0.3937    0.0000   19.3752   16.4814    7.0960   19.375     no
+  6     12    3.2226    0.2320    0.0000   19.7222   12.4931    8.0895   19.722     no
+  6     16    2.4906    0.1435    0.0000   19.8438    9.8164    8.5776   19.844     no
+  8      0    0.0000    0.0000    0.0000    0.0000    0.0000    0.0000    0.000    yes
+  8  0.125    0.0173    0.2768    0.0000    0.0000    0.0284    0.0081    0.277    yes
+  8   0.25    0.0692    0.5536    0.0000    0.0000    0.1136    0.0324    0.554    yes
+  8    0.5    0.2768    1.1077    0.0000    0.0000    0.4535    0.1290    1.108     no
+  8   0.75    0.6231    1.6624    0.0000    0.0000    1.0176    0.2879    1.662     no
+  8      1    1.1081    2.2174    0.0000    0.0000    1.8013    0.5058    2.217     no
+  8    1.5    2.4918    3.2012    0.0000    2.7123    3.3761    1.0959    3.376     no
+  8      2    3.8625    2.3353    0.0000   10.7592    9.4391    1.8374   10.759     no
+  8      3    5.4324    0.8484    0.0000   15.6299   13.1703    3.4522   15.630     no
+  8      4    5.7822    0.0261    0.0000   17.5118   17.4145    4.8425   17.512     no
+  8      6    5.1655    0.4270    0.0000   18.8898   18.1913    6.5981   18.890     no
+  8      8    4.3398    0.3793    0.0000   19.3752   16.2025    7.5139   19.375     no
+  8     12    3.1516    0.2258    0.0000   19.7222   12.2958    8.3923   19.722     no
+  8     16    2.4379    0.1401    0.0000   19.8438    9.6652    8.8104   19.844     no
+ 10      0    0.0000    0.0000    0.0000    0.0000    0.0000    0.0000    0.000    yes
+ 10  0.125    0.0166    0.2654    0.0000    0.0000    0.0276    0.0086    0.265    yes
+ 10   0.25    0.0663    0.5309    0.0000    0.0000    0.1103    0.0344    0.531    yes
+ 10    0.5    0.2656    1.0631    0.0000    0.0000    0.4406    0.1374    1.063     no
+ 10   0.75    0.5981    1.5977    0.0000    0.0000    0.9892    0.3076    1.598     no
+ 10      1    1.0646    2.1350    0.0000    0.0000    1.7529    0.5424    2.135     no
+ 10    1.5    2.3870    2.8921    0.0000    4.5895    4.1100    1.1858    4.590     no
+ 10      2    3.6877    2.3058    0.0000   10.8418    9.2238    2.0031   10.842     no
+ 10      3    5.2781    0.8820    0.0000   15.6301   12.9258    3.7738   15.630     no
+ 10      4    5.6588    0.0011    0.0000   17.5118   17.1965    5.2394   17.512     no
+ 10      6    5.0825    0.4126    0.0000   18.8898   18.0173    6.9702   18.890     no
+ 10      8    4.2787    0.3711    0.0000   19.3752   16.0617    7.8195   19.375     no
+ 10     12    3.1118    0.2223    0.0000   19.7222   12.1962    8.6057   19.722     no
+ 10     16    2.4085    0.1382    0.0000   19.8438    9.5888    8.9723   19.844     no
+
+=== JOINT GATE ===
+C1 self-audit              FP=20 cov=0.667 U0=ok plant=CERTIFIED -> fail
+                             boundary by N [16.0, 16.0, 16.0, 16.0, 16.0]
+                             FP N=2 U=6 worst=O5 E_tot=22.14
+                             FP N=2 U=8 worst=O5 E_tot=19.72
+                             FP N=2 U=12 worst=O4 E_tot=19.72
+                             FP N=2 U=16 worst=O4 E_tot=19.84
+                             FP N=4 U=6 worst=O5 E_tot=19.39
+                             FP N=4 U=8 worst=O4 E_tot=19.38
+                             FP N=4 U=12 worst=O4 E_tot=19.72
+                             FP N=4 U=16 worst=O4 E_tot=19.84
+                             FP N=6 U=6 worst=O4 E_tot=18.89
+                             FP N=6 U=8 worst=O4 E_tot=19.38
+                             FP N=6 U=12 worst=O4 E_tot=19.72
+                             FP N=6 U=16 worst=O4 E_tot=19.84
+                             FP N=8 U=6 worst=O4 E_tot=18.89
+                             FP N=8 U=8 worst=O4 E_tot=19.38
+                             FP N=8 U=12 worst=O4 E_tot=19.72
+                             FP N=8 U=16 worst=O4 E_tot=19.84
+                             FP N=10 U=6 worst=O4 E_tot=18.89
+                             FP N=10 U=8 worst=O4 E_tot=19.38
+                             FP N=10 U=12 worst=O4 E_tot=19.72
+                             FP N=10 U=16 worst=O4 E_tot=19.84
+C2 stability               FP=10 cov=1.000 U0=ok plant=refused -> fail
+                             boundary by N [0.75, 0.75, 0.75, 0.75, 0.75]
+                             FP N=2 U=0.5 worst=O2 E_tot=1.55
+                             FP N=2 U=0.75 worst=O2 E_tot=2.30
+                             FP N=4 U=0.5 worst=O2 E_tot=1.30
+                             FP N=4 U=0.75 worst=O2 E_tot=1.93
+                             FP N=6 U=0.5 worst=O2 E_tot=1.18
+                             FP N=6 U=0.75 worst=O2 E_tot=1.76
+                             FP N=8 U=0.5 worst=O2 E_tot=1.11
+                             FP N=8 U=0.75 worst=O2 E_tot=1.66
+                             FP N=10 U=0.5 worst=O2 E_tot=1.06
+                             FP N=10 U=0.75 worst=O2 E_tot=1.60
+C3 theorem-pinned          FP=19 cov=1.000 U0=ok plant=refused -> fail
+                             boundary by N [2.0, 1.5, 1.5, 1.0, 1.0]
+                             FP N=2 U=0.5 worst=O2 E_tot=1.55
+                             FP N=2 U=0.75 worst=O2 E_tot=2.30
+                             FP N=2 U=1 worst=O2 E_tot=3.03
+                             FP N=2 U=1.5 worst=O5 E_tot=6.37
+                             FP N=2 U=2 worst=O5 E_tot=10.56
+                             FP N=4 U=0.5 worst=O2 E_tot=1.30
+                             FP N=4 U=0.75 worst=O2 E_tot=1.93
+                             FP N=4 U=1 worst=O2 E_tot=2.56
+                             FP N=4 U=1.5 worst=O5 E_tot=4.64
+                             FP N=6 U=0.5 worst=O2 E_tot=1.18
+                             FP N=6 U=0.75 worst=O2 E_tot=1.76
+                             FP N=6 U=1 worst=O2 E_tot=2.34
+                             FP N=6 U=1.5 worst=O5 E_tot=4.18
+                             FP N=8 U=0.5 worst=O2 E_tot=1.11
+                             FP N=8 U=0.75 worst=O2 E_tot=1.66
+                             FP N=8 U=1 worst=O2 E_tot=2.22
+                             FP N=10 U=0.5 worst=O2 E_tot=1.06
+                             FP N=10 U=0.75 worst=O2 E_tot=1.60
+                             FP N=10 U=1 worst=O2 E_tot=2.13
+C4 = C1 AND C3             FP=0 cov=0.667 U0=ok plant=refused -> PASS
+                             boundary by N [0.125, 0.125, 0.125, 0.125, 0.125]
+M1 certify-everywhere      FP=55 cov=1.000 U0=ok plant=CERTIFIED -> fail
+                             boundary by N [16.0, 16.0, 16.0, 16.0, 16.0]
+                             FP N=2 U=0.5 worst=O2 E_tot=1.55
+                             FP N=2 U=0.75 worst=O2 E_tot=2.30
+                             FP N=2 U=1 worst=O2 E_tot=3.03
+                             FP N=2 U=1.5 worst=O5 E_tot=6.37
+                             FP N=2 U=2 worst=O5 E_tot=10.56
+                             FP N=2 U=3 worst=O4 E_tot=14.91
+                             FP N=2 U=4 worst=O5 E_tot=20.71
+                             FP N=2 U=6 worst=O5 E_tot=22.14
+                             FP N=2 U=8 worst=O5 E_tot=19.72
+                             FP N=2 U=12 worst=O4 E_tot=19.72
+                             FP N=2 U=16 worst=O4 E_tot=19.84
+                             FP N=4 U=0.5 worst=O2 E_tot=1.30
+                             FP N=4 U=0.75 worst=O2 E_tot=1.93
+                             FP N=4 U=1 worst=O2 E_tot=2.56
+                             FP N=4 U=1.5 worst=O5 E_tot=4.64
+                             FP N=4 U=2 worst=O4 E_tot=9.51
+                             FP N=4 U=3 worst=O4 E_tot=15.59
+                             FP N=4 U=4 worst=O5 E_tot=18.89
+                             FP N=4 U=6 worst=O5 E_tot=19.39
+                             FP N=4 U=8 worst=O4 E_tot=19.38
+                             FP N=4 U=12 worst=O4 E_tot=19.72
+                             FP N=4 U=16 worst=O4 E_tot=19.84
+                             FP N=6 U=0.5 worst=O2 E_tot=1.18
+                             FP N=6 U=0.75 worst=O2 E_tot=1.76
+                             FP N=6 U=1 worst=O2 E_tot=2.34
+                             FP N=6 U=1.5 worst=O5 E_tot=4.18
+                             FP N=6 U=2 worst=O4 E_tot=10.50
+                             FP N=6 U=3 worst=O4 E_tot=15.63
+                             FP N=6 U=4 worst=O5 E_tot=17.85
+                             FP N=6 U=6 worst=O4 E_tot=18.89
+                             FP N=6 U=8 worst=O4 E_tot=19.38
+                             FP N=6 U=12 worst=O4 E_tot=19.72
+                             FP N=6 U=16 worst=O4 E_tot=19.84
+                             FP N=8 U=0.5 worst=O2 E_tot=1.11
+                             FP N=8 U=0.75 worst=O2 E_tot=1.66
+                             FP N=8 U=1 worst=O2 E_tot=2.22
+                             FP N=8 U=1.5 worst=O5 E_tot=3.38
+                             FP N=8 U=2 worst=O4 E_tot=10.76
+                             FP N=8 U=3 worst=O4 E_tot=15.63
+                             FP N=8 U=4 worst=O4 E_tot=17.51
+                             FP N=8 U=6 worst=O4 E_tot=18.89
+                             FP N=8 U=8 worst=O4 E_tot=19.38
+                             FP N=8 U=12 worst=O4 E_tot=19.72
+                             FP N=8 U=16 worst=O4 E_tot=19.84
+                             FP N=10 U=0.5 worst=O2 E_tot=1.06
+                             FP N=10 U=0.75 worst=O2 E_tot=1.60
+                             FP N=10 U=1 worst=O2 E_tot=2.13
+                             FP N=10 U=1.5 worst=O4 E_tot=4.59
+                             FP N=10 U=2 worst=O4 E_tot=10.84
+                             FP N=10 U=3 worst=O4 E_tot=15.63
+                             FP N=10 U=4 worst=O4 E_tot=17.51
+                             FP N=10 U=6 worst=O4 E_tot=18.89
+                             FP N=10 U=8 worst=O4 E_tot=19.38
+                             FP N=10 U=12 worst=O4 E_tot=19.72
+                             FP N=10 U=16 worst=O4 E_tot=19.84
+M2 refuse-everywhere       FP=0 cov=0.000 U0=FAIL plant=refused -> fail
+                             boundary by N [-1.0, -1.0, -1.0, -1.0, -1.0]
+
+=== SEVERITY BASELINES (post-hoc optimal, pin A1/P3) ===
+M3 best fixed cutoff U<=0.25: FP=0 cov=1.000 U0=ok plant=refused -> PASS
+M4 best U<=0.25+0/(N+1): FP=0 cov=1.000 U0=ok plant=refused -> PASS
+
+=== ROBUSTNESS: the FROZEN G-E4b reading (N=6 VOID, 14 configurations) ===
+configurations under the frozen reading: 56 (honest 12)
+C1 self-audit              FP=16 cov=0.667 U0=ok plant=CERTIFIED -> fail
+C2 stability               FP=8 cov=1.000 U0=ok plant=refused -> fail
+C3 theorem-pinned          FP=15 cov=1.000 U0=ok plant=refused -> fail
+C4 = C1 AND C3             FP=0 cov=0.667 U0=ok plant=refused -> PASS
+M1 certify-everywhere      FP=44 cov=1.000 U0=ok plant=CERTIFIED -> fail
+M2 refuse-everywhere       FP=0 cov=0.000 U0=FAIL plant=refused -> fail
+M3 best fixed cutoff U<=0.25: FP=0 cov=1.000 U0=ok plant=refused -> PASS
+M4 best U<=0.25+0/(N+1): FP=0 cov=1.000 U0=ok plant=refused -> PASS
+
+full reading   : criteria passing = ["C4 = C1 AND C3"]; kill fires = false
+frozen reading : criteria passing = ["C4 = C1 AND C3"]; kill fires = false
+ADJUDICATIONS AGREE -> the Q5 kill verdict does not depend on amendment A2.
+severity under the frozen reading: C4 cov 0.667 vs M3 cov 1.000 -> still CORRECT BUT UNINFORMATIVE
+
+wrote /home/emoore/CIRISOntology/sim_engine/output/q_seam/q5.json

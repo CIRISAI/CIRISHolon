@@ -1,0 +1,93 @@
+atomic_number,symbol,neutral_ground_configuration,source_id
+1,H,1s1,nist_econfig_h_u
+2,He,1s2,nist_econfig_h_u
+3,Li,[He] 2s1,nist_econfig_h_u
+4,Be,[He] 2s2,nist_econfig_h_u
+5,B,[He] 2s2 2p1,nist_econfig_h_u
+6,C,[He] 2s2 2p2,nist_econfig_h_u
+7,N,[He] 2s2 2p3,nist_econfig_h_u
+8,O,[He] 2s2 2p4,nist_econfig_h_u
+9,F,[He] 2s2 2p5,nist_econfig_h_u
+10,Ne,[He] 2s2 2p6,nist_econfig_h_u
+11,Na,[Ne] 3s1,nist_econfig_h_u
+12,Mg,[Ne] 3s2,nist_econfig_h_u
+13,Al,[Ne] 3s2 3p1,nist_econfig_h_u
+14,Si,[Ne] 3s2 3p2,nist_econfig_h_u
+15,P,[Ne] 3s2 3p3,nist_econfig_h_u
+16,S,[Ne] 3s2 3p4,nist_econfig_h_u
+17,Cl,[Ne] 3s2 3p5,nist_econfig_h_u
+18,Ar,[Ne] 3s2 3p6,nist_econfig_h_u
+19,K,[Ar] 4s1,nist_econfig_h_u
+20,Ca,[Ar] 4s2,nist_econfig_h_u
+21,Sc,[Ar] 3d1 4s2,nist_econfig_h_u
+22,Ti,[Ar] 3d2 4s2,nist_econfig_h_u
+23,V,[Ar] 3d3 4s2,nist_econfig_h_u
+24,Cr,[Ar] 3d5 4s1,nist_econfig_h_u
+25,Mn,[Ar] 3d5 4s2,nist_econfig_h_u
+26,Fe,[Ar] 3d6 4s2,nist_econfig_h_u
+27,Co,[Ar] 3d7 4s2,nist_econfig_h_u
+28,Ni,[Ar] 3d8 4s2,nist_econfig_h_u
+29,Cu,[Ar] 3d10 4s1,nist_econfig_h_u
+30,Zn,[Ar] 3d10 4s2,nist_econfig_h_u
+31,Ga,[Ar] 3d10 4s2 4p1,nist_econfig_h_u
+32,Ge,[Ar] 3d10 4s2 4p2,nist_econfig_h_u
+33,As,[Ar] 3d10 4s2 4p3,nist_econfig_h_u
+34,Se,[Ar] 3d10 4s2 4p4,nist_econfig_h_u
+35,Br,[Ar] 3d10 4s2 4p5,nist_econfig_h_u
+36,Kr,[Ar] 3d10 4s2 4p6,nist_econfig_h_u
+37,Rb,[Kr] 5s1,nist_econfig_h_u
+38,Sr,[Kr] 5s2,nist_econfig_h_u
+39,Y,[Kr] 4d1 5s2,nist_econfig_h_u
+40,Zr,[Kr] 4d2 5s2,nist_econfig_h_u
+41,Nb,[Kr] 4d4 5s1,nist_econfig_h_u
+42,Mo,[Kr] 4d5 5s1,nist_econfig_h_u
+43,Tc,[Kr] 4d5 5s2,nist_econfig_h_u
+44,Ru,[Kr] 4d7 5s1,nist_econfig_h_u
+45,Rh,[Kr] 4d8 5s1,nist_econfig_h_u
+46,Pd,[Kr] 4d10,nist_econfig_h_u
+47,Ag,[Kr] 4d10 5s1,nist_econfig_h_u
+48,Cd,[Kr] 4d10 5s2,nist_econfig_h_u
+49,In,[Kr] 4d10 5s2 5p1,nist_econfig_h_u
+50,Sn,[Kr] 4d10 5s2 5p2,nist_econfig_h_u
+51,Sb,[Kr] 4d10 5s2 5p3,nist_econfig_h_u
+52,Te,[Kr] 4d10 5s2 5p4,nist_econfig_h_u
+53,I,[Kr] 4d10 5s2 5p5,nist_econfig_h_u
+54,Xe,[Kr] 4d10 5s2 5p6,nist_econfig_h_u
+55,Cs,[Xe] 6s1,nist_econfig_h_u
+56,Ba,[Xe] 6s2,nist_econfig_h_u
+57,La,[Xe] 5d1 6s2,nist_econfig_h_u
+58,Ce,[Xe] 4f1 5d1 6s2,nist_econfig_h_u
+59,Pr,[Xe] 4f3 6s2,nist_econfig_h_u
+60,Nd,[Xe] 4f4 6s2,nist_econfig_h_u
+61,Pm,[Xe] 4f5 6s2,nist_econfig_h_u
+62,Sm,[Xe] 4f6 6s2,nist_econfig_h_u
+63,Eu,[Xe] 4f7 6s2,nist_econfig_h_u
+64,Gd,[Xe] 4f7 5d1 6s2,nist_econfig_h_u
+65,Tb,[Xe] 4f9 6s2,nist_econfig_h_u
+66,Dy,[Xe] 4f10 6s2,nist_econfig_h_u
+67,Ho,[Xe] 4f11 6s2,nist_econfig_h_u
+68,Er,[Xe] 4f12 6s2,nist_econfig_h_u
+69,Tm,[Xe] 4f13 6s2,nist_econfig_h_u
+70,Yb,[Xe] 4f14 6s2,nist_econfig_h_u
+71,Lu,[Xe] 4f14 5d1 6s2,nist_econfig_h_u
+72,Hf,[Xe] 4f14 5d2 6s2,nist_econfig_h_u
+73,Ta,[Xe] 4f14 5d3 6s2,nist_econfig_h_u
+74,W,[Xe] 4f14 5d4 6s2,nist_econfig_h_u
+75,Re,[Xe] 4f14 5d5 6s2,nist_econfig_h_u
+76,Os,[Xe] 4f14 5d6 6s2,nist_econfig_h_u
+77,Ir,[Xe] 4f14 5d7 6s2,nist_econfig_h_u
+78,Pt,[Xe] 4f14 5d9 6s1,nist_econfig_h_u
+79,Au,[Xe] 4f14 5d10 6s1,nist_econfig_h_u
+80,Hg,[Xe] 4f14 5d10 6s2,nist_econfig_h_u
+81,Tl,[Xe] 4f14 5d10 6s2 6p1,nist_econfig_h_u
+82,Pb,[Xe] 4f14 5d10 6s2 6p2,nist_econfig_h_u
+83,Bi,[Xe] 4f14 5d10 6s2 6p3,nist_econfig_h_u
+84,Po,[Xe] 4f14 5d10 6s2 6p4,nist_econfig_h_u
+85,At,[Xe] 4f14 5d10 6s2 6p5,nist_econfig_h_u
+86,Rn,[Xe] 4f14 5d10 6s2 6p6,nist_econfig_h_u
+87,Fr,[Rn] 7s1,nist_econfig_h_u
+88,Ra,[Rn] 7s2,nist_econfig_h_u
+89,Ac,[Rn] 6d1 7s2,nist_econfig_h_u
+90,Th,[Rn] 6d2 7s2,nist_econfig_h_u
+91,Pa,[Rn] 5f2 6d1 7s2,nist_econfig_h_u
+92,U,[Rn] 5f3 6d1 7s2,nist_econfig_h_u

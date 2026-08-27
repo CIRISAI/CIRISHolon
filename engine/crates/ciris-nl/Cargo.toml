@@ -1,0 +1,29 @@
+[package]
+name = "ciris-nl"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+default = []
+# native inference: llama.cpp via llama-cpp-2. Needs cmake + a C++ toolchain.
+native = ["dep:llama-cpp-2", "dep:llguidance", "dep:encoding_rs"]
+# browser/wasm inference: rten, pure Rust, loads .onnx directly (no conversion step).
+web = ["dep:rten", "dep:rten-generate", "dep:tokenizers"]
+
+[dependencies]
+llama-cpp-2 = { version = "=0.1.154", features = ["llguidance"], optional = true }
+llguidance  = { version = "1.8", optional = true }
+encoding_rs = { version = "0.8", optional = true }
+rten           = { version = "0.25", optional = true }
+rten-generate  = { version = "0.25", optional = true }
+# NOT rten-text: its `encode` silently DROPS newlines (encode("\n") -> []),
+# which corrupts every prompt invisibly. See web.rs.
+tokenizers     = { version = "0.21", optional = true, default-features = false, features = ["unstable_wasm"] }
+
+[[bin]]
+name = "ciris_nl_demo"
+required-features = ["native"]
+
+[[bin]]
+name = "ciris_nl_web_demo"
+required-features = ["web"]

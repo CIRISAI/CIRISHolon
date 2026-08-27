@@ -1,0 +1,115 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.04s
+     Running tests/full_grid_gates.rs (target/release/deps/full_grid_gates-2e74a070731d7c3c)
+
+running 1 test
+=== N=8 U=0 — running DMRG (chi=256) ===
+N=8 U=0: E=-9.5175409663 sweeps=5 converged=true discarded_max=0e0
+N=8 U=0: G7 sweeps_used=5/20 converged=true (band: converge by sweep 20)
+N=8 U=0: calling q-seam exact reference (dev-dependency, live, forced (per-run spot-check))...
+N=8 U=0: G3-secondary margin=-2.433608869978343e-13 (band: >= -1e-9)
+N=8 U=0: G3-primary floor worst_margin=-7.016609515630989e-13 over 5 sweeps (band: >= -1e-9)
+N=8 U=0: G3-primary monotonicity worst_rise=4.583000645652646e-13 (band: <= 1e-9)
+N=8 U=0: G2 energy rel_err=2.5569723089173545e-14 (band: <= 1e-6)
+N=8 U=0: G2 density max|Δn_i|=2.336020266113792e-12 (band: <= 1e-6)
+N=8 U=0: G2 double-occ max|Δd_i|=1.3532508447156033e-12 (band: <= 1e-6)
+N=8 U=0: G6 max|m_i|=1.964206575166747e-12 (band: <= 1e-6)
+test full_grid_g2_g3_g6_g0_2_g7 has been running for over 60 seconds
+N=8 U=0: G0-2 |N_tot-8|=8.881784197001252e-15 |Sz|=1.6653345369376672e-15 Sz^2=1.065814103640107e-14 (band: <= 1e-6 each)
+N=8 U=0: particle-hole max|<n_j_sigma>-0.5|=2.1426194152240896e-12 (band: <= 1e-6)
+=== N=8 U=1 — running DMRG (chi=256) ===
+N=8 U=1: E=-7.6948332001 sweeps=5 converged=true discarded_max=0e0
+N=8 U=1: G7 sweeps_used=5/20 converged=true (band: converge by sweep 20)
+N=8 U=1: using cached q-seam exact reference
+N=8 U=1: G3-secondary margin=-2.1316282072803006e-13 (band: >= -1e-9)
+N=8 U=1: G3-primary floor worst_margin=-2.1316282072803006e-13 over 5 sweeps (band: >= -1e-9)
+N=8 U=1: G3-primary monotonicity worst_rise=-1.1546319456101628e-13 (band: <= 1e-9)
+N=8 U=1: G2 energy rel_err=2.770207166091405e-14 (band: <= 1e-8)
+N=8 U=1: G2 density max|Δn_i|=5.204725539442734e-13 (band: <= 1e-6)
+N=8 U=1: G2 double-occ max|Δd_i|=6.53116449811364e-13 (band: <= 1e-6)
+N=8 U=1: G6 max|m_i|=4.0676351176215185e-12 (band: <= 1e-6)
+N=8 U=1: G0-2 |N_tot-8|=3.552713678800501e-15 |Sz|=2.331468351712754e-15 Sz^2=1.2434497875801356e-14 (band: <= 1e-6 each)
+N=8 U=1: particle-hole max|<n_j_sigma>-0.5|=2.2327695248236523e-12 (band: <= 1e-6)
+=== N=8 U=4 — running DMRG (chi=256) ===
+N=8 U=4: E=-4.2358069991 sweeps=5 converged=true discarded_max=0e0
+N=8 U=4: G7 sweeps_used=5/20 converged=true (band: converge by sweep 20)
+N=8 U=4: using cached q-seam exact reference
+N=8 U=4: G3-secondary margin=-1.4832579608992091e-13 (band: >= -1e-9)
+N=8 U=4: G3-primary floor worst_margin=-1.4921397450962104e-13 over 5 sweeps (band: >= -1e-9)
+N=8 U=4: G3-primary monotonicity worst_rise=-1.0658141036401503e-13 (band: <= 1e-9)
+N=8 U=4: G2 energy rel_err=3.501712805148896e-14 (band: <= 1e-8)
+N=8 U=4: G2 density max|Δn_i|=1.2656542480726785e-14 (band: <= 1e-6)
+N=8 U=4: G2 double-occ max|Δd_i|=1.3860995684567001e-12 (band: <= 1e-6)
+N=8 U=4: G6 max|m_i|=3.605982179521966e-11 (band: <= 1e-6)
+N=8 U=4: G0-2 |N_tot-8|=1.7763568394002505e-15 |Sz|=8.88178419700113e-16 Sz^2=1.776356839400226e-15 (band: <= 1e-6 each)
+N=8 U=4: particle-hole max|<n_j_sigma>-0.5|=1.8031465209844555e-11 (band: <= 1e-6)
+=== N=8 U=16 — running DMRG (chi=256) ===
+N=8 U=16: E=-1.2621361323 sweeps=5 converged=true discarded_max=0e0
+N=8 U=16: G7 sweeps_used=5/20 converged=true (band: converge by sweep 20)
+N=8 U=16: using cached q-seam exact reference
+N=8 U=16: G3-secondary margin=-7.607248164731573e-13 (band: >= -1e-9)
+N=8 U=16: G3-primary floor worst_margin=-1.0231815394945443e-12 over 5 sweeps (band: >= -1e-9)
+N=8 U=16: G3-primary monotonicity worst_rise=2.5579538487363607e-13 (band: <= 1e-9)
+N=8 U=16: G2 energy rel_err=6.027280235343704e-13 (band: <= 1e-8)
+N=8 U=16: G2 density max|Δn_i|=7.105427357601002e-15 (band: <= 1e-6)
+N=8 U=16: G2 double-occ max|Δd_i|=2.1619858681098947e-13 (band: <= 1e-6)
+N=8 U=16: G6 max|m_i|=7.111037314544338e-10 (band: <= 1e-6)
+N=8 U=16: G0-2 |N_tot-8|=1.7763568394002505e-15 |Sz|=2.553512956637826e-15 Sz^2=8.881784197001134e-15 (band: <= 1e-6 each)
+N=8 U=16: particle-hole max|<n_j_sigma>-0.5|=3.555533645283049e-10 (band: <= 1e-6)
+=== N=10 U=0 — running DMRG (chi=256) ===
+N=10 U=0: E=-12.0533483666 sweeps=8 converged=true discarded_max=1.6702965784297965e-12
+N=10 U=0: G7 sweeps_used=8/20 converged=true (band: converge by sweep 20)
+N=10 U=0: using cached q-seam exact reference
+N=10 U=0: G3-secondary margin=2.6396662633487722e-11 (band: >= -1e-9)
+N=10 U=0: G3-primary floor worst_margin=2.6057378477162274e-11 over 8 sweeps (band: >= -1e-9)
+N=10 U=0: G3-primary monotonicity worst_rise=3.3928415632544784e-13 (band: <= 1e-9)
+N=10 U=0: G2 energy rel_err=2.1899858720164077e-12 (band: <= 1e-6)
+N=10 U=0: G2 density max|Δn_i|=4.440892098500626e-14 (band: <= 1e-6)
+N=10 U=0: G2 double-occ max|Δd_i|=2.5146551507759796e-14 (band: <= 1e-6)
+N=10 U=0: G6 max|m_i|=5.2291504459837445e-14 (band: <= 1e-6)
+N=10 U=0: G0-2 |N_tot-10|=1.5987211554602254e-14 |Sz|=4.329869796037495e-15 Sz^2=1.0658141036399988e-14 (band: <= 1e-6 each)
+N=10 U=0: particle-hole max|<n_j_sigma>-0.5|=4.496403249731884e-14 (band: <= 1e-6)
+=== N=10 U=1 — running DMRG (chi=256) ===
+N=10 U=1: E=-9.7662747256 sweeps=6 converged=true discarded_max=1.6546951083646042e-12
+N=10 U=1: G7 sweeps_used=6/20 converged=true (band: converge by sweep 20)
+N=10 U=1: using cached q-seam exact reference
+N=10 U=1: G3-secondary margin=2.241407059955236e-11 (band: >= -1e-9)
+N=10 U=1: G3-primary floor worst_margin=2.1579182885034243e-11 over 6 sweeps (band: >= -1e-9)
+N=10 U=1: G3-primary monotonicity worst_rise=8.348877145181177e-13 (band: <= 1e-9)
+N=10 U=1: G2 energy rel_err=2.2950481354617786e-12 (band: <= 1e-8)
+N=10 U=1: G2 density max|Δn_i|=9.348077867343818e-14 (band: <= 1e-6)
+N=10 U=1: G2 double-occ max|Δd_i|=1.1549011746936344e-11 (band: <= 1e-6)
+N=10 U=1: G6 max|m_i|=9.89208714940864e-14 (band: <= 1e-6)
+N=10 U=1: G0-2 |N_tot-10|=1.5987211554602254e-14 |Sz|=1.0658141036399882e-14 Sz^2=1.2434497875799862e-14 (band: <= 1e-6 each)
+N=10 U=1: particle-hole max|<n_j_sigma>-0.5|=8.248957072964913e-14 (band: <= 1e-6)
+=== N=10 U=4 — running DMRG (chi=256) ===
+N=10 U=4: E=-5.3806188204 sweeps=6 converged=true discarded_max=7.262361259121767e-14
+N=10 U=4: G7 sweeps_used=6/20 converged=true (band: converge by sweep 20)
+N=10 U=4: using cached q-seam exact reference
+N=10 U=4: G3-secondary margin=-1.1963763313360687e-12 (band: >= -1e-9)
+N=10 U=4: G3-primary floor worst_margin=-1.1972645097557688e-12 over 6 sweeps (band: >= -1e-9)
+N=10 U=4: G3-primary monotonicity worst_rise=-1.6399326341343112e-11 (band: <= 1e-9)
+N=10 U=4: G2 energy rel_err=2.2234920764074025e-13 (band: <= 1e-8)
+N=10 U=4: G2 density max|Δn_i|=2.4202861936828413e-14 (band: <= 1e-6)
+N=10 U=4: G2 double-occ max|Δd_i|=7.009531843849004e-13 (band: <= 1e-6)
+N=10 U=4: G6 max|m_i|=1.102784530360054e-12 (band: <= 1e-6)
+N=10 U=4: G0-2 |N_tot-10|=8.881784197001252e-15 |Sz|=1.0547118733937899e-14 Sz^2=3.019806626980114e-14 (band: <= 1e-6 each)
+N=10 U=4: particle-hole max|<n_j_sigma>-0.5|=5.585532036889163e-13 (band: <= 1e-6)
+=== N=10 U=16 — running DMRG (chi=256) ===
+N=10 U=16: E=-1.6027850219 sweeps=5 converged=true discarded_max=3.5723620351007e-21
+N=10 U=16: G7 sweeps_used=5/20 converged=true (band: converge by sweep 20)
+N=10 U=16: using cached q-seam exact reference
+N=10 U=16: G3-secondary margin=-3.447242491461111e-12 (band: >= -1e-9)
+N=10 U=16: G3-primary floor worst_margin=-3.453237695794087e-12 over 5 sweeps (band: >= -1e-9)
+N=10 U=16: G3-primary monotonicity worst_rise=-1.7905676941154525e-12 (band: <= 1e-9)
+N=10 U=16: G2 energy rel_err=2.150782821321306e-12 (band: <= 1e-8)
+N=10 U=16: G2 density max|Δn_i|=5.129230373768223e-14 (band: <= 1e-6)
+N=10 U=16: G2 double-occ max|Δd_i|=1.138903207853481e-12 (band: <= 1e-6)
+N=10 U=16: G6 max|m_i|=1.2940325477827634e-9 (band: <= 1e-6)
+N=10 U=16: G0-2 |N_tot-10|=3.552713678800501e-15 |Sz|=2.6645352591002597e-15 Sz^2=0e0 (band: <= 1e-6 each)
+N=10 U=16: particle-hole max|<n_j_sigma>-0.5|=6.470183278040054e-10 (band: <= 1e-6)
+
+=== SWEEP KILL: 0 of 8 configurations VOID under G7 — absolute reading (>2) holds, proportional reading (>2/12 of grid) holds — SWEEP KILL DOES NOT FIRE ===
+test full_grid_g2_g3_g6_g0_2_g7 ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 8872.21s
+

@@ -1,0 +1,26 @@
+    Finished `release` profile [optimized] target(s) in 0.01s
+     Running tests/full_grid_gates.rs (target/release/deps/full_grid_gates-1958ea71445940c1)
+
+running 1 test
+=== N=8 U=0 — running DMRG (chi=256) ===
+N=8 U=0: E=-9.5175409663 sweeps=5 converged=true discarded_max=0e0
+N=8 U=0: calling q-seam exact reference (dev-dependency, live)...
+test full_grid_g2_g3_g6_g0_2_g7 has been running for over 60 seconds
+=== N=8 U=1 — running DMRG (chi=256) ===
+N=8 U=1: E=-7.6948332001 sweeps=5 converged=true discarded_max=0e0
+N=8 U=1: calling q-seam exact reference (dev-dependency, live)...
+=== N=8 U=4 — running DMRG (chi=256) ===
+N=8 U=4: E=-4.2358069991 sweeps=5 converged=true discarded_max=0e0
+N=8 U=4: calling q-seam exact reference (dev-dependency, live)...
+=== N=8 U=16 — running DMRG (chi=256) ===
+N=8 U=16: E=-1.2547352594 sweeps=20 converged=false discarded_max=0e0
+N=8 U=16: calling q-seam exact reference (dev-dependency, live)...
+=== N=10 U=0 — running DMRG (chi=256) ===
+N=10 U=0: E=-12.0533474414 sweeps=20 converged=false discarded_max=1.059459717717188e-14
+N=10 U=0: calling q-seam exact reference (dev-dependency, live)...
+=== N=10 U=1 — running DMRG (chi=256) ===
+N=10 U=1: E=-9.7662722327 sweeps=20 converged=false discarded_max=1.5270365703369044e-18
+N=10 U=1: calling q-seam exact reference (dev-dependency, live)...
+=== N=10 U=4 — running DMRG (chi=256) ===
+N=10 U=4: E=-5.3805997534 sweeps=20 converged=false discarded_max=7.695689841360627e-19
+N=10 U=4: calling q-seam exact reference (dev-dependency, live)...

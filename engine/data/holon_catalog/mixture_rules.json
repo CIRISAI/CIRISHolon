@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "fraction_conventions": {
+    "mass_fraction": {
+      "symbol": "w_i",
+      "definition": "m_i / sum_j(m_j)",
+      "source_id": "iupac_mass_fraction_2025"
+    },
+    "amount_fraction": {
+      "symbol": "x_i",
+      "definition": "n_i / sum_j(n_j)",
+      "source_id": "iupac_amount_fraction_2025"
+    },
+    "volume_fraction": {
+      "symbol": "phi_i",
+      "definition": "V_i / sum_j(V_j)",
+      "source_id": "iupac_fraction_2025"
+    }
+  },
+  "conversion_rules": [
+    {
+      "id": "mass_to_amount_fraction",
+      "input_basis": "mass_fraction",
+      "output_basis": "amount_fraction",
+      "formula": "x_i = (w_i / M_i) / sum_j(w_j / M_j)",
+      "requirements": ["all M_i > 0"],
+      "status": "definition_derived"
+    },
+    {
+      "id": "amount_to_mass_fraction",
+      "input_basis": "amount_fraction",
+      "output_basis": "mass_fraction",
+      "formula": "w_i = (x_i * M_i) / sum_j(x_j * M_j)",
+      "requirements": ["all M_i > 0"],
+      "status": "definition_derived"
+    },
+    {
+      "id": "mass_to_volume_fraction_additive_volume",
+      "input_basis": "mass_fraction",
+      "output_basis": "volume_fraction",
+      "formula": "phi_i = (w_i / rho_i) / sum_j(w_j / rho_j)",
+      "requirements": ["all rho_i > 0", "component volumes additive at stated T,P"],
+      "status": "model",
+      "refuse_if": ["excess_volume_not_negligible", "phase_change", "porosity_unspecified"]
+    }
+  ],
+  "effective_property_models": [
+    {
+      "id": "density_additive_specific_volume",
+      "property": "density",
+      "basis": "mass_fraction",
+      "formula": "rho_eff = 1 / sum_i(w_i / rho_i)",
+      "assumptions": ["no excess volume", "same T and P", "no unresolved porosity"],
+      "status": "model",
+      "refuse_if": ["reactive_mixing", "unknown_porosity", "unknown_phase_fraction"]
+    },
+    {
+      "id": "voigt_elastic",
+      "property": "scalar elastic modulus",
+      "basis": "volume_fraction",
+      "formula": "M_V = sum_i(phi_i * M_i)",
+      "interpretation": "uniform-strain upper bound for compatible scalarized stiffness",
+      "source_id": "voigt_1889",
+      "status": "bound_model"
+    },
+    {
+      "id": "reuss_elastic",
+      "property": "scalar elastic modulus",
+      "basis": "volume_fraction",
+      "formula": "1 / M_R = sum_i(phi_i / M_i)",
+      "interpretation": "uniform-stress lower bound for compatible scalarized stiffness",
+      "source_id": "reuss_1929",
+      "status": "bound_model"
+    },
+    {
+      "id": "voigt_reuss_hill",
+      "property": "scalar elastic modulus",
+      "basis": "volume_fraction",
+      "formula": "M_H = (M_V + M_R) / 2",
+      "source_id": "hill_1952",
+      "status": "estimate_model",
+      "warning": "Not a fracture/strength law and not guaranteed for arbitrary morphology or anisotropy."
+    },
+    {
+      "id": "parallel_conductivity",
+      "property": "thermal_or_electrical_conductivity",
+      "basis": "volume_fraction",
+      "formula": "k_parallel = sum_i(phi_i * k_i)",
+      "status": "geometry_bound_model",
+      "geometry": "phases parallel to flux"
+    },
+    {
+      "id": "series_conductivity",
+      "property": "thermal_or_electrical_conductivity",
+      "basis": "volume_fraction",
+      "formula": "1 / k_series = sum_i(phi_i / k_i)",
+      "status": "geometry_bound_model",
+      "geometry": "phases normal to flux"
+    }
+  ],
+  "never_mix_without_explicit_model": [
+    "tensile_strength",
+    "compressive_strength",
+    "fracture_energy",
+    "fracture_toughness",
+    "fatigue_strength",
+    "damping_ratio",
+    "coefficient_of_friction",
+    "plastic_yield_surface",
+    "reaction_rate",
+    "phase_transition_temperature"
+  ],
+  "holon_semantics": {
+    "composition": "Descriptor child fractions are Facts/Structure of the descriptor holon.",
+    "mixing_rule": "A selected effective-property law is Model/Rules, not a property of the ingredients.",
+    "conditions": "Temperature, pressure, phase, porosity, heat treatment and loading mode are Circumstances.",
+    "provenance": "Every source_id resolves through provenance.json; null means unresolved and must not be guessed."
+  }
+}

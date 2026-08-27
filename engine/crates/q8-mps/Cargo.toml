@@ -1,0 +1,18 @@
+[package]
+name = "q8-mps"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/CIRISAI/CIRISOntology"
+description = "MPS/DMRG ground-state engine with ledgered bonds: chi as a declared boundary ledger, discarded weight as the honest certificate, entanglement-over-budget as a typed floor refusal"
+
+# Zero runtime dependencies, same discipline as q-seam: nothing the certificate
+# rests on may come from a crate this repository does not audit.
+[dependencies]
+
+# The exact reference stays LIVE, never copied: gates call q-seam's solver directly.
+[dev-dependencies]
+q-seam = { path = "../q-seam" }
+
+# No [profile.release]: ignored in non-root workspace members (with a warning the
+# warnings-as-errors discipline would trip on); requested values are defaults anyway.

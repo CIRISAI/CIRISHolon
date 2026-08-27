@@ -1,0 +1,140 @@
+done N=10 a=1 U=0
+done N=10 a=1 U=0.5
+done N=10 a=1 U=1
+done N=10 a=1 U=2
+done N=10 a=1 U=4
+done N=10 a=1 U=8
+done N=10 a=1 U=16
+done N=10 a=2 U=0
+done N=10 a=2 U=0.5
+done N=10 a=2 U=1
+done N=10 a=2 U=2
+done N=10 a=2 U=4
+done N=10 a=2 U=8
+done N=10 a=2 U=16
+done N=10 a=3 U=0
+done N=10 a=3 U=0.5
+done N=10 a=3 U=1
+done N=10 a=3 U=2
+done N=10 a=3 U=4
+done N=10 a=3 U=8
+done N=10 a=3 U=16
+done N=10 a=4 U=0
+done N=10 a=4 U=0.5
+done N=10 a=4 U=1
+done N=10 a=4 U=2
+done N=10 a=4 U=4
+done N=10 a=4 U=8
+done N=10 a=4 U=16
+done N=10 a=6 U=0
+done N=10 a=6 U=0.5
+done N=10 a=6 U=1
+done N=10 a=6 U=2
+done N=10 a=6 U=4
+done N=10 a=6 U=8
+done N=10 a=6 U=16
+done N=10 a=8 U=0
+done N=10 a=8 U=0.5
+done N=10 a=8 U=1
+done N=10 a=8 U=2
+done N=10 a=8 U=4
+done N=10 a=8 U=8
+done N=10 a=8 U=16
+done N=10 a=12 U=0
+done N=10 a=12 U=0.5
+done N=10 a=12 U=1
+done N=10 a=12 U=2
+done N=10 a=12 U=4
+done N=10 a=12 U=8
+done N=10 a=12 U=16
+done N=10 a=16 U=0
+done N=10 a=16 U=0.5
+done N=10 a=16 U=1
+done N=10 a=16 U=2
+done N=10 a=16 U=4
+done N=10 a=16 U=8
+done N=10 a=16 U=16
+=== EXACTNESS (Q7) ===
+G7-E7 free-fermion ruler, worst rel: 2.546e-14  (gate 1e-12)
+G7-E9 mirror identity E0(v)=E0(-v)+2sum(v), worst rel: 9.332e-14  (gate 1e-11)
+G-E5b spin residual, worst: 4.404e-12  (gate 1e-11)
+<S^2> worst (MEASURED, no anchor depends on it): 1.299e-23
+
+=== VOID BUDGET (A1(Q7)/P4) ===
+VOID: 0 of 56  (underpowered if > 12)
+
+=== G7-FIT: the family-fitness precondition ===
+spatially split (min E_r <= 0.5 AND max E_r >= 2.0): 22 of 56  (need >= 8)
+verdict: PASS - the family posed the question
+  split N=10 U=1 a=2: E_r = [0.33 0.53 2.27 0.53 0.33]
+  split N=10 U=1 a=3: E_r = [0.03 0.09 2.56 0.09 0.03]
+  split N=10 U=2 a=3: E_r = [0.25 0.39 7.45 0.39 0.25]
+  split N=10 U=1 a=4: E_r = [0.00 0.06 2.71 0.06 0.00]
+  split N=10 U=2 a=4: E_r = [0.03 0.27 8.58 0.27 0.03]
+  split N=10 U=1 a=6: E_r = [0.00 0.03 2.86 0.03 0.00]
+  split N=10 U=2 a=6: E_r = [0.00 0.11 9.63 0.11 0.00]
+  split N=10 U=4 a=6: E_r = [0.02 0.46 19.87 0.46 0.02]
+  split N=10 U=1 a=8: E_r = [0.00 0.01 2.93 0.01 0.00]
+  split N=10 U=2 a=8: E_r = [0.00 0.05 10.04 0.05 0.00]
+  split N=10 U=4 a=8: E_r = [0.00 0.26 20.23 0.26 0.00]
+  split N=10 U=8 a=8: E_r = [0.05 0.30 19.77 0.30 0.05]
+
+=== THE REFUSAL MAP, at V=4 ===
+  V=4 U=   0: truth .....   D3 CCCCC   D4 CCRCC
+  V=4 U= 0.5: truth ..X..   D3 CCCCC   D4 CCRCC
+  V=4 U=   1: truth ..X..   D3 CCRCC   D4 CCRCC
+  V=4 U=   2: truth ..X..   D3 CCRCC   D4 CCRCC
+  V=4 U=   4: truth ..X..   D3 RRRRR   D4 CCRCC
+  V=4 U=   8: truth XXXXX   D3 RRRRR   D4 RRRRR
+  V=4 U=  16: truth XXXXX   D3 RRRRR   D4 RRRRR
+
+=== JOINT GATE (5 clauses) ===
+D1 spin anchor             FP=32 cov=0.988 U0=ok plant=refused discrim=9 -> fail
+                             FP N=10 U=1 a=1 worst=R1 E_r=1.42
+                             FP N=10 U=1 a=1 worst=R2 E_r=1.81
+                             FP N=10 U=1 a=1 worst=R2 E_r=1.89
+                             FP N=10 U=1 a=1 worst=R2 E_r=1.81
+                             ... and 28 more FPs
+D1b reflection anchor      FP=106 cov=1.000 U0=ok plant=CERTIFIED discrim=0 -> fail
+                             FP N=10 U=1 a=1 worst=R1 E_r=1.42
+                             FP N=10 U=1 a=1 worst=R2 E_r=1.81
+                             FP N=10 U=1 a=1 worst=R2 E_r=1.89
+                             FP N=10 U=1 a=1 worst=R2 E_r=1.81
+                             ... and 102 more FPs
+D2 self-residual           FP=33 cov=0.909 U0=ok plant=CERTIFIED discrim=16 -> fail
+                             FP N=10 U=8 a=1 worst=R3 E_r=18.74
+                             FP N=10 U=16 a=1 worst=R3 E_r=19.84
+                             FP N=10 U=16 a=1 worst=R3 E_r=19.69
+                             FP N=10 U=16 a=1 worst=R3 E_r=19.69
+                             ... and 29 more FPs
+D3 = D1 AND D1b AND D2     FP=6 cov=0.909 U0=ok plant=refused discrim=21 -> fail
+                             FP N=10 U=0.5 a=3 worst=R2 E_r=1.31
+                             FP N=10 U=0.5 a=4 worst=R2 E_r=1.39
+                             FP N=10 U=0.5 a=6 worst=R2 E_r=1.46
+                             FP N=10 U=0.5 a=8 worst=R2 E_r=1.50
+                             ... and 2 more FPs
+D4 density heuristic       FP=4 cov=0.897 U0=FAIL plant=refused discrim=22 -> fail
+                             FP N=10 U=8 a=6 worst=R1 E_r=1.18
+                             FP N=10 U=8 a=6 worst=R2 E_r=1.28
+                             FP N=10 U=8 a=6 worst=R2 E_r=1.28
+                             FP N=10 U=8 a=6 worst=R1 E_r=1.18
+D5 = D4 AND D1b            FP=4 cov=0.897 U0=FAIL plant=refused discrim=22 -> fail
+                             FP N=10 U=8 a=6 worst=R1 E_r=1.18
+                             FP N=10 U=8 a=6 worst=R2 E_r=1.28
+                             FP N=10 U=8 a=6 worst=R2 E_r=1.28
+                             FP N=10 U=8 a=6 worst=R1 E_r=1.18
+N1 certify-everywhere      FP=115 cov=1.000 U0=ok plant=CERTIFIED discrim=0 -> fail
+                             FP N=10 U=1 a=1 worst=R1 E_r=1.42
+                             FP N=10 U=1 a=1 worst=R2 E_r=1.81
+                             FP N=10 U=1 a=1 worst=R2 E_r=1.89
+                             FP N=10 U=1 a=1 worst=R2 E_r=1.81
+                             ... and 111 more FPs
+N2 refuse-everywhere       FP=0 cov=0.000 U0=FAIL plant=refused discrim=0 -> fail
+
+=== SEVERITY BASELINES (post-hoc optimal, A1(Q7)/P3) ===
+N3 global U<=0 [1 param]: FP=0 cov=0.242 U0=ok plant=refused discrim=0 -> fail
+N4 per-region U<=u*(r) [5 params, joint across all a]: FP=0 cov=0.436 U0=ok plant=refused discrim=0 -> fail
+   thresholds (N, region, u*): [(10, 0, 0.5), (10, 1, 0.5), (10, 2, 0.0), (10, 3, 0.5), (10, 4, 0.5)]
+N5 U<=0+1*d(r) [2 params]: FP=0 cov=0.339 U0=ok plant=refused discrim=0 -> fail
+
+wrote /home/emoore/CIRISOntology/sim_engine/output/q7b_seam/q7b.json

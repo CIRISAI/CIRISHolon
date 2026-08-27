@@ -1,0 +1,28 @@
+[package]
+name = "ciris-sim-component"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "Zero-import WebAssembly Component adapter for the CIRISHolon engine"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+ciris-sim-core = { path = "../ciris-sim-core", features = ["alloc"] }
+wit-bindgen = "0.58"
+
+[dev-dependencies]
+wit-component = "0.251"
+
+[profile.release]
+panic = "abort"
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+strip = true
+
+# Stand-alone package: component bindings must not feature-unify with the allocator-free
+# core gates in the parent workspace.
+[workspace]

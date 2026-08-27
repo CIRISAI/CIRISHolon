@@ -1,0 +1,76 @@
+N=8 U=0 chi=4 REFUSED bond=3 weight=2.7786404500042047e-2
+N=8 U=0 chi=8 REFUSED bond=4 weight=1.6883278807407987e-4
+N=8 U=0 chi=16 sweeps=20/20 converged=false FENCE_min=4.666284e-3 FENCE_max=9.949274e-1 anchor_ph=1.049368e-2 anchor_mag=1.303125e-2 anchor_sz=2.007029e-6 anchor_sz2=1.196400e-4 anchor_N=1.422438e-6
+N=8 U=0 chi=32 sweeps=20/20 converged=false FENCE_min=9.415830e-6 FENCE_max=9.998593e-1 anchor_ph=1.093503e-4 anchor_mag=3.822363e-5 anchor_sz=1.186083e-7 anchor_sz2=2.137121e-5 anchor_N=1.192341e-7
+N=8 U=0 chi=64 sweeps=10/20 converged=true FENCE_min=8.561802e-6 FENCE_max=9.999980e-1 anchor_ph=2.818592e-6 anchor_mag=1.817298e-6 anchor_sz=8.514633e-12 anchor_sz2=5.443550e-9 anchor_N=7.318590e-13
+N=8 U=0 chi=128 sweeps=5/20 converged=true FENCE_min=2.296886e-9 FENCE_max=1.000000e0 anchor_ph=1.660231e-10 anchor_mag=2.760496e-10 anchor_sz=3.480549e-14 anchor_sz2=1.690870e-10 anchor_N=5.506706e-14
+N=8 U=0 chi=256 sweeps=5/20 converged=true FENCE_min=1.424654e-11 FENCE_max=1.000000e0 anchor_ph=2.142619e-12 anchor_mag=1.964207e-12 anchor_sz=1.665335e-15 anchor_sz2=1.065814e-14 anchor_N=8.881784e-15
+N=8 U=1 chi=4 REFUSED bond=2 weight=4.6658201430213185e-4
+N=8 U=1 chi=8 REFUSED bond=8 weight=1.666222545799228e-4
+N=8 U=1 chi=16 sweeps=20/20 converged=false FENCE_min=4.387594e-3 FENCE_max=9.747380e-1 anchor_ph=1.294742e-2 anchor_mag=2.423294e-2 anchor_sz=1.246020e-6 anchor_sz2=1.019452e-3 anchor_N=1.292393e-6
+N=8 U=1 chi=32 sweeps=20/20 converged=false FENCE_min=3.188541e-4 FENCE_max=9.999853e-1 anchor_ph=9.557794e-6 anchor_mag=3.245847e-6 anchor_sz=1.137407e-11 anchor_sz2=2.664615e-10 anchor_N=1.148770e-11
+N=8 U=1 chi=64 sweeps=11/20 converged=true FENCE_min=7.160409e-6 FENCE_max=1.000000e0 anchor_ph=2.868816e-13 anchor_mag=1.305622e-13 anchor_sz=6.383782e-15 anchor_sz2=4.440892e-14 anchor_N=3.552714e-15
+N=8 U=1 chi=128 sweeps=5/20 converged=true FENCE_min=1.165749e-7 FENCE_max=1.000000e0 anchor_ph=7.993606e-15 anchor_mag=1.243450e-14 anchor_sz=2.331468e-15 anchor_sz2=1.776357e-15 anchor_N=3.552714e-15
+N=8 U=1 chi=256 sweeps=5/20 converged=true FENCE_min=1.501228e-11 FENCE_max=1.000000e0 anchor_ph=2.232770e-12 anchor_mag=4.067635e-12 anchor_sz=2.331468e-15 anchor_sz2=1.243450e-14 anchor_N=3.552714e-15
+N=8 U=4 chi=4 REFUSED bond=2 weight=4.883393922669594e-4
+N=8 U=4 chi=8 sweeps=5/20 converged=true FENCE_min=1.708740e-17 FENCE_max=6.108651e-1 anchor_ph=3.379654e-1 anchor_mag=6.451073e-1 anchor_sz=4.440892e-16 anchor_sz2=3.552714e-15 anchor_N=0.000000e0
+N=8 U=4 chi=16 sweeps=20/20 converged=false FENCE_min=1.529510e-3 FENCE_max=9.879740e-1 anchor_ph=6.630898e-3 anchor_mag=1.317691e-2 anchor_sz=9.926669e-7 anchor_sz2=1.600406e-5 anchor_N=6.409874e-9
+N=8 U=4 chi=32 sweeps=7/20 converged=true FENCE_min=1.374728e-4 FENCE_max=9.848377e-1 anchor_ph=7.768174e-3 anchor_mag=1.540681e-2 anchor_sz=8.548717e-15 anchor_sz2=1.598721e-14 anchor_N=1.776357e-15
+N=8 U=4 chi=64 sweeps=7/20 converged=true FENCE_min=1.053668e-6 FENCE_max=1.000000e0 anchor_ph=7.100986e-13 anchor_mag=1.346923e-12 anchor_sz=2.065015e-14 anchor_sz2=4.618528e-14 anchor_N=2.131628e-14
+N=8 U=4 chi=128 sweeps=5/20 converged=true FENCE_min=2.271923e-8 FENCE_max=1.000000e0 anchor_ph=3.420597e-13 anchor_mag=6.835643e-13 anchor_sz=6.661338e-16 anchor_sz2=1.776357e-15 anchor_N=7.105427e-15
+N=8 U=4 chi=256 sweeps=5/20 converged=true FENCE_min=1.071625e-12 FENCE_max=1.000000e0 anchor_ph=1.803147e-11 anchor_mag=3.605982e-11 anchor_sz=8.881784e-16 anchor_sz2=1.776357e-15 anchor_N=1.776357e-15
+N=8 U=16 chi=4 sweeps=4/20 converged=true FENCE_min=1.427582e-4 FENCE_max=8.441915e-1 anchor_ph=4.972840e-1 anchor_mag=9.937996e-1 anchor_sz=1.110223e-16 anchor_sz2=2.664535e-15 anchor_N=0.000000e0
+N=8 U=16 chi=8 sweeps=16/20 converged=true FENCE_min=7.015130e-3 FENCE_max=1.000000e0 anchor_ph=4.400591e-12 anchor_mag=8.799739e-12 anchor_sz=2.806977e-12 anchor_sz2=2.837783e-10 anchor_N=5.329071e-15
+N=8 U=16 chi=16 sweeps=10/20 converged=true FENCE_min=2.767921e-5 FENCE_max=1.000000e0 anchor_ph=1.937589e-10 anchor_mag=3.875142e-10 anchor_sz=8.881784e-16 anchor_sz2=5.329071e-15 anchor_N=7.105427e-15
+N=8 U=16 chi=32 sweeps=6/20 converged=true FENCE_min=7.697974e-7 FENCE_max=1.000000e0 anchor_ph=2.717826e-13 anchor_mag=5.398459e-13 anchor_sz=2.275957e-15 anchor_sz2=5.329071e-15 anchor_N=1.421085e-14
+N=8 U=16 chi=64 sweeps=5/20 converged=true FENCE_min=2.004479e-10 FENCE_max=1.000000e0 anchor_ph=1.077718e-10 anchor_mag=2.136010e-10 anchor_sz=1.887379e-15 anchor_sz2=5.329071e-15 anchor_N=5.329071e-15
+N=8 U=16 chi=128 sweeps=5/20 converged=true FENCE_min=3.743757e-13 FENCE_max=1.000000e0 anchor_ph=3.440571e-10 anchor_mag=6.881131e-10 anchor_sz=1.110223e-16 anchor_sz2=5.329071e-15 anchor_N=1.776357e-15
+N=8 U=16 chi=256 sweeps=5/20 converged=true FENCE_min=2.119368e-23 FENCE_max=1.000000e0 anchor_ph=3.555534e-10 anchor_mag=7.111037e-10 anchor_sz=2.553513e-15 anchor_sz2=8.881784e-15 anchor_N=1.776357e-15
+N=10 U=0 chi=4 REFUSED bond=3 weight=2.7786404500042012e-2
+N=10 U=0 chi=8 REFUSED bond=15 weight=4.604422705901131e-4
+N=10 U=0 chi=16 REFUSED bond=10 weight=1.0746274338252605e-4
+N=10 U=0 chi=32 sweeps=20/20 converged=false FENCE_min=1.183562e-5 FENCE_max=9.996988e-1 anchor_ph=2.099752e-4 anchor_mag=7.142132e-5 anchor_sz=2.565141e-7 anchor_sz2=5.483583e-5 anchor_N=2.756335e-7
+N=10 U=0 chi=64 sweeps=20/20 converged=false FENCE_min=1.192362e-5 FENCE_max=9.999858e-1 anchor_ph=1.108947e-5 anchor_mag=3.966808e-6 anchor_sz=5.501025e-8 anchor_sz2=2.528673e-7 anchor_N=5.422564e-8
+N=10 U=0 chi=128 sweeps=8/20 converged=true FENCE_min=1.565351e-9 FENCE_max=1.000000e0 anchor_ph=2.359058e-8 anchor_mag=4.516795e-9 anchor_sz=1.304512e-14 anchor_sz2=3.245226e-11 anchor_N=3.375078e-14
+N=10 U=0 chi=256 TIMEOUT_OR_ERROR
+N=10 U=1 chi=4 REFUSED bond=2 weight=4.5920628025579934e-4
+N=10 U=1 chi=8 REFUSED bond=12 weight=1.228549890264013e-4
+N=10 U=1 chi=16 sweeps=20/20 converged=false FENCE_min=4.455332e-3 FENCE_max=9.681437e-1 anchor_ph=1.788337e-2 anchor_mag=3.182927e-2 anchor_sz=1.328965e-4 anchor_sz2=4.083131e-3 anchor_N=1.229081e-4
+N=10 U=1 chi=32 sweeps=20/20 converged=false FENCE_min=3.668034e-4 FENCE_max=9.999968e-1 anchor_ph=1.832691e-5 anchor_mag=3.612726e-5 anchor_sz=1.873459e-8 anchor_sz2=2.280257e-6 anchor_N=1.689572e-8
+N=10 U=1 chi=64 sweeps=9/20 converged=true FENCE_min=1.033298e-5 FENCE_max=1.000000e0 anchor_ph=6.869960e-11 anchor_mag=7.898959e-11 anchor_sz=6.822320e-14 anchor_sz2=3.332445e-11 anchor_N=5.151435e-14
+N=10 U=1 chi=128 sweeps=8/20 converged=true FENCE_min=1.992416e-7 FENCE_max=1.000000e0 anchor_ph=1.911252e-8 anchor_mag=3.124597e-8 anchor_sz=1.043443e-12 anchor_sz2=1.066326e-9 anchor_N=6.750156e-14
+N=10 U=1 chi=256 TIMEOUT_OR_ERROR
+N=10 U=4 chi=4 REFUSED bond=2 weight=4.871419974551007e-4
+N=10 U=4 chi=8 sweeps=6/20 converged=true FENCE_min=6.137791e-18 FENCE_max=5.132902e-1 anchor_ph=3.334609e-1 anchor_mag=6.380459e-1 anchor_sz=3.330669e-16 anchor_sz2=1.776357e-15 anchor_N=0.000000e0
+N=10 U=4 chi=16 REFUSED bond=5 weight=1.0276520322379281e-4
+N=10 U=4 chi=32 sweeps=20/20 converged=false FENCE_min=1.735776e-4 FENCE_max=9.999950e-1 anchor_ph=1.123947e-5 anchor_mag=1.967488e-5 anchor_sz=1.187927e-8 anchor_sz2=1.265590e-7 anchor_N=1.187929e-8
+N=10 U=4 chi=64 sweeps=14/20 converged=true FENCE_min=1.278737e-6 FENCE_max=9.999999e-1 anchor_ph=1.212093e-7 anchor_mag=2.403829e-7 anchor_sz=4.607426e-15 anchor_sz2=3.552714e-14 anchor_N=1.776357e-15
+N=10 U=4 chi=128 sweeps=7/20 converged=true FENCE_min=3.430133e-8 FENCE_max=1.000000e0 anchor_ph=4.212741e-12 anchor_mag=7.857659e-12 anchor_sz=9.880985e-15 anchor_sz2=2.842171e-14 anchor_N=1.598721e-14
+N=10 U=4 chi=256 TIMEOUT_OR_ERROR
+N=10 U=16 chi=4 sweeps=4/20 converged=true FENCE_min=1.575338e-4 FENCE_max=7.802421e-1 anchor_ph=4.975302e-1 anchor_mag=9.941068e-1 anchor_sz=5.551115e-16 anchor_sz2=1.243450e-14 anchor_N=0.000000e0
+N=10 U=16 chi=8 sweeps=20/20 converged=false FENCE_min=7.331899e-3 FENCE_max=1.000000e0 anchor_ph=5.214162e-12 anchor_mag=1.042755e-11 anchor_sz=5.058287e-12 anchor_sz2=5.249604e-8 anchor_N=0.000000e0
+N=10 U=16 chi=16 sweeps=11/20 converged=true FENCE_min=2.905604e-5 FENCE_max=1.000000e0 anchor_ph=3.407413e-11 anchor_mag=6.814765e-11 anchor_sz=7.216450e-16 anchor_sz2=1.776357e-15 anchor_N=5.329071e-15
+N=10 U=16 chi=32 sweeps=6/20 converged=true FENCE_min=7.715387e-7 FENCE_max=9.999925e-1 anchor_ph=4.686558e-6 anchor_mag=9.373109e-6 anchor_sz=7.369660e-13 anchor_sz2=1.611156e-11 anchor_N=4.618528e-14
+N=10 U=16 chi=64 sweeps=5/20 converged=true FENCE_min=2.025581e-10 FENCE_max=1.000000e0 anchor_ph=5.058998e-11 anchor_mag=1.011766e-10 anchor_sz=7.438494e-15 anchor_sz2=5.329071e-15 anchor_N=1.598721e-14
+N=10 U=16 chi=128 sweeps=5/20 converged=true FENCE_min=4.204856e-17 FENCE_max=1.000000e0 anchor_ph=1.029979e-10 anchor_mag=2.059949e-10 anchor_sz=7.771561e-16 anchor_sz2=2.664535e-14 anchor_N=1.776357e-15
+N=10 U=16 chi=256 TIMEOUT_OR_ERROR
+N=12 U=0 chi=4 REFUSED bond=3 weight=2.7786404500041963e-2
+N=12 U=0 chi=8 REFUSED bond=16 weight=1.2650901205738712e-4
+N=12 U=0 chi=16 REFUSED bond=10 weight=1.2074743006030832e-4
+N=12 U=0 chi=32 sweeps=20/20 converged=false FENCE_min=1.423905e-5 FENCE_max=9.992500e-1 anchor_ph=3.945266e-4 anchor_mag=4.453563e-5 anchor_sz=1.139077e-6 anchor_sz2=1.509030e-4 anchor_N=1.447488e-6
+N=12 U=0 chi=64 sweeps=20/20 converged=false FENCE_min=1.401986e-5 FENCE_max=9.999760e-1 anchor_ph=3.200571e-5 anchor_mag=2.039471e-5 anchor_sz=3.797185e-8 anchor_sz2=8.806612e-7 anchor_N=6.885267e-9
+N=12 U=0 chi=128 TIMEOUT_OR_ERROR
+N=12 U=0 chi=256 TIMEOUT_OR_ERROR
+N=12 U=1 chi=4 REFUSED bond=2 weight=4.592071601286186e-4
+N=12 U=1 chi=8 REFUSED bond=16 weight=2.002908909148161e-4
+N=12 U=1 chi=16 REFUSED bond=16 weight=2.598690628254796e-4
+N=12 U=1 chi=32 sweeps=20/20 converged=false FENCE_min=3.911656e-4 FENCE_max=9.999169e-1 anchor_ph=4.614180e-5 anchor_mag=7.834697e-6 anchor_sz=2.390089e-10 anchor_sz2=9.123939e-9 anchor_N=2.438529e-10
+N=12 U=1 chi=64 sweeps=9/20 converged=true FENCE_min=1.231319e-5 FENCE_max=9.999963e-1 anchor_ph=6.067365e-6 anchor_mag=8.465643e-6 anchor_sz=4.939811e-10 anchor_sz2=9.429311e-9 anchor_N=3.638689e-10
+N=12 U=1 chi=128 sweeps=9/20 converged=true FENCE_min=2.551251e-7 FENCE_max=1.000000e0 anchor_ph=2.487848e-8 anchor_mag=2.540334e-8 anchor_sz=1.616463e-11 anchor_sz2=1.934604e-9 anchor_N=1.055511e-11
+N=12 U=1 chi=256 TIMEOUT_OR_ERROR
+N=12 U=4 chi=4 REFUSED bond=2 weight=4.8714188019410794e-4
+N=12 U=4 chi=8 sweeps=6/20 converged=true FENCE_min=1.574344e-15 FENCE_max=6.077193e-1 anchor_ph=3.332849e-1 anchor_mag=6.377864e-1 anchor_sz=1.887379e-15 anchor_sz2=1.776357e-15 anchor_N=3.552714e-15
+N=12 U=4 chi=16 REFUSED bond=13 weight=1.0320618777061217e-4
+N=12 U=4 chi=32 sweeps=16/20 converged=true FENCE_min=1.745556e-4 FENCE_max=9.999802e-1 anchor_ph=2.392800e-5 anchor_mag=4.587517e-5 anchor_sz=4.422577e-9 anchor_sz2=5.606713e-7 anchor_N=1.105125e-9
+N=12 U=4 chi=64 sweeps=20/20 converged=true FENCE_min=1.339983e-6 FENCE_max=9.999996e-1 anchor_ph=3.087841e-7 anchor_mag=6.124869e-7 anchor_sz=2.597453e-10 anchor_sz2=1.014220e-7 anchor_N=1.797229e-10
+N=12 U=4 chi=128 sweeps=6/20 converged=true FENCE_min=3.978298e-8 FENCE_max=1.000000e0 anchor_ph=5.248151e-9 anchor_mag=1.039334e-8 anchor_sz=1.532108e-13 anchor_sz2=7.899459e-12 anchor_N=1.492140e-13

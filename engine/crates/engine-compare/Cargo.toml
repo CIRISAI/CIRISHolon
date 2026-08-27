@@ -1,0 +1,25 @@
+# Cross-engine comparison against Rapier — FSD §10.
+#
+# A SEPARATE crate on purpose. `ciris-sim-core` is `no_std` with `libm` as its only
+# dependency, and PORTABILITY.md's zero-allocation evidence includes "there is no
+# allocator in the dependency graph to call", checked by `cargo tree`. Adding Rapier
+# (which needs std and alloc) as even a dev-dependency of that crate would falsify
+# that check. Here the dependency is one-way and the core's graph is untouched.
+[package]
+name = "engine-compare"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+
+[dependencies]
+ciris-sim-core = { path = "../ciris-sim-core" }
+rapier3d = "0.35.2"
+# f64, to match the core. rapier3d defaults to f32, which would hand Rapier a speed
+# advantage it could never convert into matched accuracy — see the report's note.
+rapier3d-f64 = "0.35"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

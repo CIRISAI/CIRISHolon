@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#071014" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><circle cx=%2232%22 cy=%2232%22 r=%2224%22 fill=%22%2355f1cc%22/><circle cx=%2223%22 cy=%2223%22 r=%226%22 fill=%22%23e7f2ef%22/></svg>" />
+    <title>CIRISHolon sphere laboratory</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow">CIRISHOLON · SPARSE MECHANICAL REALIZATION</p>
+          <h1>Particles on a sphere</h1>
+          <p class="lede">
+            Native Rust dynamics, rendered from recorded frames. Drag the sphere to orbit;
+            scroll to zoom.
+          </p>
+        </div>
+        <div class="pipeline" aria-label="Simulation pipeline">
+          <span>Rust</span><i></i><span>frame bundle</span><i></i><span>Canvas</span>
+        </div>
+      </header>
+
+      <section class="scenario-strip" id="scenario-strip" aria-label="Simulation scenarios"></section>
+
+      <section class="workspace">
+        <div class="stage-card">
+          <canvas id="stage" aria-label="Interactive particles on sphere visualization"></canvas>
+          <div class="stage-overlay top-left">
+            <span class="live-dot"></span>
+            <span id="status-label">LOADING FRAME BUNDLE</span>
+          </div>
+          <div class="stage-overlay top-right">
+            <span id="frame-label">FRAME —</span>
+            <span class="separator"></span>
+            <span id="time-label">T = —</span>
+          </div>
+          <div class="sphere-caption">
+            <strong id="scenario-title">Loading…</strong>
+            <span id="scenario-description">Reading simulation.json</span>
+          </div>
+          <div class="speed-legend" aria-label="Particle speed legend">
+            <span>speed</span>
+            <div class="speed-ramp"></div>
+            <span>low</span><span>high</span>
+          </div>
+        </div>
+
+        <aside class="readout">
+          <div class="readout-heading">
+            <p class="eyebrow">FRAME TELEMETRY</p>
+            <span id="scenario-index">01 / 03</span>
+          </div>
+
+          <div class="metrics">
+            <article>
+              <span>particles</span>
+              <strong id="particle-count">—</strong>
+              <small>fixed capacity</small>
+            </article>
+            <article>
+              <span>sparse edges</span>
+              <strong id="edge-count">—</strong>
+              <small>O(E) force pass</small>
+            </article>
+            <article>
+              <span>contacts</span>
+              <strong id="contact-count">—</strong>
+              <small>this rendered frame</small>
+            </article>
+            <article>
+              <span>mean speed</span>
+              <strong id="mean-speed">—</strong>
+              <small>surface units / t</small>
+            </article>
+          </div>
+
+          <div class="energy-card">
+            <div>
+              <p class="eyebrow">MECHANICAL ENERGY</p>
+              <strong id="energy-total">—</strong>
+            </div>
+            <div class="energy-parts">
+              <span><i class="kinetic"></i>K <b id="energy-kinetic">—</b></span>
+              <span><i class="spring"></i>U <b id="energy-spring">—</b></span>
+            </div>
+            <canvas id="energy-chart" aria-label="Energy over simulation time"></canvas>
+          </div>
+
+          <div class="constraint-card">
+            <span>surface constraint error</span>
+            <strong id="radius-error">—</strong>
+            <div class="constraint-track"><i id="constraint-fill"></i></div>
+            <small>max |‖x‖ − 1| across all particles</small>
+          </div>
+
+          <dl class="method-list">
+            <div><dt>integrator</dt><dd id="integrator-label">—</dd></div>
+            <div><dt>contacts</dt><dd id="contact-label">—</dd></div>
+            <div><dt>boundary</dt><dd id="boundary-label">—</dd></div>
+          </dl>
+        </aside>
+      </section>
+
+      <section class="transport" aria-label="Playback controls">
+        <button id="play-button" type="button" aria-label="Pause simulation">
+          <span id="play-icon">Ⅱ</span>
+        </button>
+        <input id="frame-slider" type="range" min="0" max="1" value="0" aria-label="Simulation frame" />
+        <button id="reset-view" type="button">Reset view</button>
+        <div class="transport-meta">
+          <span id="step-label">step —</span>
+          <span id="duration-label">— seconds simulated</span>
+        </div>
+      </section>
+
+      <footer>
+        <span>PR #7 execution path</span>
+        <span>deterministic replay · no browser-side physics</span>
+      </footer>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

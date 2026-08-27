@@ -1,0 +1,19 @@
+# 2026-08-24: joined the sim_engine workspace (see its Cargo.toml `members` comment) —
+# `-p holon-swarm` could not reach this crate while it carried its own empty
+# `[workspace]` table, so ci-gates.sh had never tested or built it. `[profile.release]
+# debug = true` (for swarm_bench's symbolication) moved to the workspace root: a
+# non-root member's own `[profile.*]` section is silently ignored by Cargo.
+
+[package]
+name = "holon-swarm"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+description = "CPU prototype of sharded holon engines exchanging conserved integer REG+ ledger quantities"
+
+[dependencies]
+ciris-sim-core = { path = "../ciris-sim-core", features = ["alloc"] }
+
+[[bin]]
+name = "swarm_bench"
+path = "src/bin/swarm_bench.rs"

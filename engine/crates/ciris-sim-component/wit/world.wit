@@ -1,0 +1,111 @@
+package ciris:holon@0.1.0;
+
+/// Typed, deterministic boundary for sandboxed CIRIS simulation requests.
+///
+/// This world imports nothing: no clock, random source, filesystem, network, GPU, or
+/// host callback. Rendering remains a host concern. The same `ciris-sim-core` kernel can
+/// instead be linked directly into CIRISGame/browser WASM when the call is on a frame
+/// hot path and canonical-ABI marshalling would be wasteful.
+world ciris-holon {
+  record vec3 {
+    x: f64,
+    y: f64,
+    z: f64,
+  }
+
+  record gross-state {
+    constituents: u64,
+    occupancy: u64,
+    momentum-x: s64,
+    momentum-y: s64,
+  }
+
+  enum decomposition {
+    leaf,
+    latent,
+    expanded,
+  }
+
+  /// One holon. `whole` is variable-width whole-only state; it is flattened into
+  /// one scalar pool by the kernel, not retained as one allocation per holon.
+  record holon {
+    parent: option<u32>,
+    depth: u16,
+    grain-units: u32,
+    gross: gross-state,
+    whole: list<f64>,
+    channels: u32,
+    boundary: bool,
+    decomposition: decomposition,
+  }
+
+  /// A root-relative holarchy. `root` selects a role, not a distinct entity type.
+  record holarchy {
+    root: u32,
+    holons: list<holon>,
+  }
+
+  record sphere-view {
+    root: u32,
+    radius: f64,
+    center: f64,
+    velocity: f64,
+    mass: f64,
+    sample-phase: f64,
+  }
+
+  record sphere-contact {
+    left: sphere-view,
+    right: sphere-view,
+    restitution: f64,
+    normal: vec3,
+    samples-at-floor: u32,
+  }
+
+  record tolerances {
+    macro-error: f64,
+    conservation: f64,
+  }
+
+  enum certification-status {
+    certified,
+    grain-floor,
+    refinement-unavailable,
+  }
+
+  record resolution-certificate {
+    status: certification-status,
+    active-frontier: list<u32>,
+    represented-left-grain: u32,
+    represented-right-grain: u32,
+    contact-time: f64,
+    exact-contact-time: f64,
+    impulse: f64,
+    support: f64,
+    macro-error-bound: f64,
+    conservation-residual: f64,
+    evaluations: u32,
+  }
+
+  enum simulation-error {
+    capacity,
+    invalid-root,
+    multiple-roots,
+    invalid-parent,
+    invalid-depth,
+    invalid-grain,
+    invalid-decomposition,
+    gross-state-does-not-compose,
+    frontier-does-not-cover-root,
+    invalid-holon,
+    invalid-contact,
+    invalid-tolerance,
+  }
+
+  /// Coarse REG+ dynamics plus adaptive mechanical boundary certification.
+  export certify-sphere: func(
+    scene: holarchy,
+    contact: sphere-contact,
+    tolerance: tolerances,
+  ) -> result<resolution-certificate, simulation-error>;
+}

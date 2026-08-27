@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "sources": {
+    "ciaaw_abridged_2024": {
+      "authority": "Commission on Isotopic Abundances and Atomic Weights (CIAAW/IUPAC)",
+      "title": "Abridged Standard Atomic Weights 2024",
+      "url": "https://ciaaw.org/abridged-atomic-weights.htm",
+      "retrieved": "2026-08-23",
+      "scope": "Recommended abridged standard atomic weights for normal materials; radioactive elements without a standard atomic weight remain null.",
+      "notes": "2024 table incorporates revised Gd, Lu, and Zr values while remaining based on the Atomic Weights 2021 report."
+    },
+    "ciaaw_full_2024": {
+      "authority": "CIAAW/IUPAC",
+      "title": "Standard Atomic Weights 2024",
+      "url": "https://ciaaw.org/atomic-weights.htm",
+      "retrieved": "2026-08-23",
+      "scope": "Definitive interval/value table and interpretation of isotopic variability."
+    },
+    "nist_econfig_h_u": {
+      "authority": "National Institute of Standards and Technology",
+      "title": "Atomic Reference Data for Electronic Structure Calculations — Electronic Configurations of the Elements",
+      "url": "https://www.nist.gov/pml/atomic-reference-data-electronic-structure-calculations/atomic-reference-data-electronic-8",
+      "retrieved": "2026-08-23",
+      "scope": "Neutral ground electronic configurations H through U; heavier elements deliberately left unresolved in this seed catalog."
+    },
+    "nist_asd_5_12": {
+      "authority": "National Institute of Standards and Technology",
+      "title": "Atomic Spectra Database, SRD 78, version 5.12",
+      "url": "https://www.nist.gov/pml/atomic-spectra-database",
+      "content_updated": "2024-11",
+      "retrieved": "2026-08-23",
+      "scope": "Ground states, ionization energies, levels, lines, and spectroscopic metadata."
+    },
+    "nist_webbook_water": {
+      "authority": "National Institute of Standards and Technology",
+      "title": "NIST Chemistry WebBook SRD 69 — Water",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?Name=H2O",
+      "retrieved": "2026-08-23",
+      "scope": "Formula, molecular weight, identifiers, thermochemistry and spectroscopy links."
+    },
+    "nist_webbook_co2": {
+      "authority": "National Institute of Standards and Technology",
+      "title": "NIST Chemistry WebBook SRD 69 — Carbon dioxide",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?Formula=CO2&NoIon=on&cMS=on",
+      "retrieved": "2026-08-23",
+      "scope": "Formula, molecular weight, identifiers and spectroscopy/thermochemistry links."
+    },
+    "nist_webbook_methane": {
+      "authority": "National Institute of Standards and Technology",
+      "title": "NIST Chemistry WebBook SRD 69 — Methane",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?Name=CH4",
+      "retrieved": "2026-08-23",
+      "scope": "Formula, molecular weight, identifiers and spectroscopy/thermochemistry links."
+    },
+    "nist_webbook_ammonia": {
+      "authority": "National Institute of Standards and Technology",
+      "title": "NIST Chemistry WebBook SRD 69 — Ammonia",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?Name=NH3&cMS=on",
+      "retrieved": "2026-08-23",
+      "scope": "Formula, molecular weight, identifiers and linked property data."
+    },
+    "nist_webbook_nacl": {
+      "authority": "National Institute of Standards and Technology",
+      "title": "NIST Chemistry WebBook SRD 69 — sodium chloride",
+      "url": "https://webbook.nist.gov/cgi/cbook.cgi?Formula=NaCl&NoIon=on",
+      "retrieved": "2026-08-23",
+      "scope": "Formula, molecular weight, identifiers and condensed/gas property links."
+    },
+    "usgs_mineral_formulas_2010": {
+      "authority": "U.S. Geological Survey",
+      "title": "Open-File Report 2010-1325A, Table 2A-2 — mineral formulas used for XRD analysis",
+      "url": "https://pubs.usgs.gov/of/2010/1325A/pdf/ofr20101325a.pdf",
+      "retrieved": "2026-08-23",
+      "scope": "Quartz, feldspar endmembers, micas, chlorite, amphibole, carbonates, oxides, apatite, titanite and related mineral formulas."
+    },
+    "usgs_granite_03mw2621": {
+      "authority": "U.S. Geological Survey",
+      "title": "Open-File Report 03-221 — bedrock sample 03MW2621",
+      "url": "https://pubs.usgs.gov/of/2003/of03-221/htmldocs/bedrock_photos/03mw2621.htm",
+      "retrieved": "2026-08-23",
+      "scope": "Measured/modal mineral composition of one fine-grained granite sample: quartz 30%, K-feldspar 30%, plagioclase 28%, biotite 5%, epidote 2%, chlorite 2%, sphene 1%, oxides 1%, muscovite 1%."
+    },
+    "usgs_igneous_components": {
+      "authority": "U.S. Geological Survey Volcano Hazards Program",
+      "title": "Components of Igneous Rocks",
+      "url": "https://www.usgs.gov/media/images/components-igneous-rocks",
+      "retrieved": "2026-08-23",
+      "scope": "Illustrative mineral volume fractions versus silica; example 70% SiO2 granite: quartz 22%, alkali feldspar 38%, plagioclase 28%, biotite 12%.",
+      "license_note": "USGS source marks usage public domain."
+    },
+    "nist_al6061_t6": {
+      "authority": "National Institute of Standards and Technology",
+      "title": "Aluminum 6061-T6 (UNS A96061) cryogenic material properties",
+      "url": "https://www.nist.gov/mml/acmd/aluminum-6061-t6-uns-aa96061",
+      "updated": "2026-06-03",
+      "retrieved": "2026-08-23",
+      "scope": "Temperature-dependent Young's modulus, thermal conductivity, specific heat and linear expansion; stated data/equation ranges and fit errors."
+    },
+    "nist_ss304": {
+      "authority": "National Institute of Standards and Technology",
+      "title": "304 Stainless (UNS S30400) cryogenic material properties",
+      "url": "https://trc.nist.gov/cryogenics/materials/304Stainless/304Stainless_rev.htm",
+      "retrieved": "2026-08-23",
+      "scope": "Temperature-dependent Young's modulus, thermal conductivity, specific heat and linear expansion."
+    },
+    "sandia_6061_composition": {
+      "authority": "Sandia National Laboratories / OSTI",
+      "title": "Public report reproducing ASTM B308/B308M Al 6061 chemical composition limits",
+      "url": "https://www.osti.gov/servlets/purl/1028886",
+      "retrieved": "2026-08-23",
+      "scope": "Weight-percent limits for Si, Fe, Cu, Mn, Mg, Cr, Zn, Ti, unspecified elements, with Al remainder.",
+      "note": "The catalog stores the reported composition limits, not copyrighted standard prose."
+    },
+    "sandia_6061_elastic_model": {
+      "authority": "Sandia National Laboratories / OSTI",
+      "title": "SAND2016-5471C — elastic material model properties",
+      "url": "https://www.osti.gov/servlets/purl/1368984",
+      "retrieved": "2026-08-23",
+      "scope": "Room-temperature modeling values for Aluminum 6061/60631: density 2700 kg/m3, Young's modulus 68.9 GPa, Poisson ratio 0.33."
+    },
+    "assda_304_composition": {
+      "authority": "Australian Stainless Steel Development Association",
+      "title": "304: the place to start",
+      "url": "https://www.assda.asn.au/stainless-steel/grade-selection/304-the-place-to-start",
+      "retrieved": "2026-08-23",
+      "scope": "UNS S30400 composition limits and related 304L/304H grades; values identified as ASTM A240 limits."
+    },
+    "osti_terratek_granite_6061": {
+      "authority": "U.S. Department of Energy / OSTI",
+      "title": "DOE/ET/28301-1 — Terra Tek and published thermoelastic data",
+      "url": "https://www.osti.gov/servlets/purl/5624126",
+      "retrieved": "2026-08-23",
+      "scope": "Granite and 6061-T6 aluminum density, wave velocities, Young's modulus and Poisson ratio versus temperature under the stated test conditions."
+    },
+    "iupac_fraction_2025": {
+      "authority": "IUPAC Gold Book, 5th edition online",
+      "title": "fraction",
+      "doi": "10.1351/goldbook.F02494",
+      "url": "https://goldbook.iupac.org/terms/view/F02494",
+      "retrieved": "2026-08-23",
+      "scope": "General fraction definition and the mass/volume/amount-fraction family."
+    },
+    "iupac_mass_fraction_2025": {
+      "authority": "IUPAC Gold Book, 5th edition online",
+      "title": "mass fraction",
+      "doi": "10.1351/goldbook.M03722",
+      "url": "https://goldbook.iupac.org/terms/view/M03722",
+      "retrieved": "2026-08-23",
+      "scope": "Mass of constituent divided by total mixture mass."
+    },
+    "iupac_amount_fraction_2025": {
+      "authority": "IUPAC Gold Book, 5th edition online",
+      "title": "amount fraction (mole fraction)",
+      "doi": "10.1351/goldbook.A00296",
+      "url": "https://goldbook.iupac.org/terms/view/A00296",
+      "retrieved": "2026-08-23",
+      "scope": "Amount of constituent divided by total amount; equivalent to number fraction for entities."
+    },
+    "voigt_1889": {
+      "authority": "canonical model reference",
+      "citation": "W. Voigt, 1889, Ueber die Beziehung zwischen den beiden Elasticitätsconstanten isotroper Körper",
+      "scope": "Uniform-strain upper-bound rule of mixtures for elastic stiffness."
+    },
+    "reuss_1929": {
+      "authority": "canonical model reference",
+      "citation": "A. Reuss, 1929, Berechnung der Fließgrenze von Mischkristallen auf Grund der Plastizitätsbedingung für Einkristalle",
+      "scope": "Uniform-stress lower-bound rule for elastic stiffness/compliance."
+    },
+    "hill_1952": {
+      "authority": "canonical model reference",
+      "citation": "R. Hill, 1952, The Elastic Behaviour of a Crystalline Aggregate, Proceedings of the Physical Society A 65:349",
+      "doi": "10.1088/0370-1298/65/5/307",
+      "scope": "Voigt-Reuss-Hill arithmetic mean estimate."
+    }
+  }
+}

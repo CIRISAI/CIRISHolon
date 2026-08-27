@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CIRISHolon — the certified sandbox</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body data-engine="loading">
+
+<header>
+  <nav class="site-link"><a href="../index.html">&larr; CIRISOntology</a></nav>
+  <h1>Sand, in a box</h1>
+  <p class="lede">
+    One engine, one recursive object, every zoom level. Zoom in until you reach the
+    vacuum, out until you reach the universe, and throw something at any of it. The
+    grain of the picture <em>is</em> the grain of the simulation — and the certificate
+    tells you when the coarse view is honest, or refuses.
+  </p>
+</header>
+
+<main>
+  <section class="stage">
+    <div class="stage-frame">
+      <canvas id="stage" width="900" height="900" aria-label="The sandbox at the current zoom tier"></canvas>
+      <div id="verdict" class="verdict" data-code="0">
+        <span class="verdict-label">READY</span>
+        <span class="verdict-note">Pick a zoom tier, then click the sand to throw.</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <label class="control">
+        <span class="control-name">Zoom</span>
+        <input id="tier" type="range" min="0" max="7" step="1" value="3">
+        <output id="tier-name">sandbox</output>
+      </label>
+      <label class="control">
+        <span class="control-name">Throw speed</span>
+        <input id="speed" type="range" min="0.1" max="1" step="0.05" value="0.6">
+        <output id="speed-out">0.60</output>
+      </label>
+      <label class="control" id="scene-control" hidden>
+        <span class="control-name">Scene</span>
+        <input id="scene" type="range" min="0" max="1" step="1" value="0">
+        <output id="scene-out">—</output>
+      </label>
+      <label class="control">
+        <span class="control-name">Resolution demand</span>
+        <input id="grading" type="range" min="-3" max="2" step="0.25" value="1">
+        <output id="grading-out">2.00</output>
+      </label>
+    </div>
+    <p class="hint" id="hint">Click or tap anywhere in the box to throw.</p>
+  </section>
+
+  <aside class="panel">
+    <section class="card" id="tier-card">
+      <h2 id="tier-title">sandbox</h2>
+      <p id="tier-plain"></p>
+      <dl class="facts">
+        <div><dt>Grain</dt><dd id="fact-g0"></dd></div>
+        <div><dt>Terminal holon</dt><dd id="fact-terminal"></dd></div>
+        <div><dt>Scene</dt><dd id="fact-domain"></dd></div>
+        <div><dt>Ledger</dt><dd id="fact-ledger"></dd></div>
+        <div><dt>Evaluator</dt><dd id="fact-evaluator"></dd></div>
+      </dl>
+      <p class="unlock" id="unlock" hidden></p>
+    </section>
+
+    <section class="card" id="reroot-card">
+      <h2>The zoom itself</h2>
+      <p class="small">
+        Zooming is a <strong>re-root</strong>: a new arena, a new grain constant, a new
+        certificate. Nothing carries across — not identifiers, not the frontier, not the
+        verdict. The one thing that must survive is the ledger, and this is the relation
+        it survives through.
+      </p>
+      <p id="reroot" class="reroot">—</p>
+    </section>
+
+    <section class="card" id="cert-card">
+      <h2>The certificate</h2>
+      <p id="cert-plain">Nothing has been thrown at this tier yet.</p>
+      <dl class="facts">
+        <div><dt>Resident holons</dt><dd id="cert-holons">—</dd></div>
+        <div><dt>Materialized</dt><dd id="cert-mats">—</dd></div>
+        <div><dt>Certify cost</dt><dd id="cert-ms">—</dd></div>
+        <div><dt>Demanded spacing</dt><dd id="cert-required">—</dd></div>
+        <div><dt>Impulse</dt><dd id="cert-impulse">—</dd></div>
+        <div><dt>Disturbance</dt><dd id="cert-disturb">—</dd></div>
+        <div><dt>Cracked relations</dt><dd id="cert-cracked">—</dd></div>
+        <div><dt>Strain rate</dt><dd id="cert-strain">—</dd></div>
+        <div><dt>Weak-field ε</dt><dd id="cert-eps">—</dd></div>
+        <div><dt>Remainder bound</dt><dd id="cert-rem">—</dd></div>
+      </dl>
+      <p class="unlock" id="wf-unlock" hidden></p>
+      <p class="pin" id="strain-pin" hidden></p>
+    </section>
+
+    <section class="card" id="honesty-card">
+      <h2>What this is not</h2>
+      <ul class="honesty" id="honesty"></ul>
+    </section>
+
+    <section class="card">
+      <h2>Count it in atoms</h2>
+      <p class="small">
+        The engine's conservation ledger counts terminal holons in a 64-bit integer. Ask
+        it to count this scene in <em>atoms</em> instead and it either answers or
+        refuses — and the refusal is arithmetic, not policy.
+      </p>
+      <p id="atoms" class="atoms">—</p>
+    </section>
+  </aside>
+</main>
+
+<footer>
+  <p>
+    Rust and WebAssembly own every holon, contact and certificate. Canvas owns pixels
+    and pointer input, and nothing else. AGPL-3.0-or-later.
+  </p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

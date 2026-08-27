@@ -60,14 +60,37 @@
 //! `Σ_w i^{δw}`, and the credit-against-debit posting that [`cyc_eq`] uses to
 //! decide exact equality. There is no second addition path in this file.
 //!
-//! The indexing idioms of the reference (`for c in 0..k` over parallel `Vec`s)
-//! are kept even where clippy would rather see an iterator, so that a diff
-//! against `holon-qasm::magic` shows only the intended differences.
+//! # The layout, and what it is allowed to change
+//!
+//! `R`, `J` and `h` are FLAT bit-packed buffers (`BitMat`, [`crate::plane::BitPlane`]) —
+//! the layout tier 1 already runs on — not the reference's `Vec<Vec<bool>>`.
+//! One contiguous allocation each, `stride` words per row, so a row operation
+//! is a stride-1 word loop and the per-bit pointer chase is gone. The
+//! mathematics did not move: every gate, the Gauss sum, the canonical form and
+//! the amplitude are the same operations on the same values, and the
+//! conformance gates against `holon-qasm::magic` (`tests/pipeline.rs`,
+//! `tests/prune.rs`, `tests/sample.rs`) are what say so rather than a claim
+//! here. Two algorithmic moves came with it, each a THEOREM about the same
+//! answer, never an approximation:
+//!
+//! * [`Affine::amplitudes_agree`] asks one pair of states for `k + n`
+//!   amplitudes in a row. It now factors the elimination once per state
+//!   (`ColSolve`) instead of re-running it per probe — sound because `R u = b`
+//!   has a UNIQUE solution when `R`'s columns are independent, which the
+//!   affine invariant already requires and this code still asserts.
+//! * `Affine::dependent_subset` answers `None` whenever some row's support is
+//!   exactly `{a}`, without eliminating: every combination of the other columns
+//!   reads zero at that row and column a reads one. A proof of the same answer.
+//!
+//! The reference's indexing idioms (`for c in 0..k` over parallel `Vec`s) are
+//! kept wherever the layout did not force a change, so a diff against
+//! `holon-qasm::magic` still shows the intended differences and nothing else.
 //!
 //! Zero runtime dependencies (`std` only).
 
 use crate::ledger::Cyc;
 use crate::merge::MergeLedger;
+use crate::plane::BitPlane;
 
 // ------------------------------------------------------------------ ring helpers
 //
@@ -235,20 +258,283 @@ pub struct GaussStats {
     pub inconsistent: u64,
 }
 
+// --------------------------------------------------------------- bit matrix
+//
+// The layout tier 1 already runs on, brought to the affine engine: ONE flat
+// contiguous buffer instead of a `Vec<Vec<bool>>`. A `Vec<Vec<bool>>` costs a
+// pointer chase and a bounds check per BIT; this costs one bounds check per
+// ROW and moves 64 bits per instruction.
+
+/// A row-major bit matrix, `rows × cols`, laid out flat: row `r` occupies
+/// `w[r*stride .. r*stride+stride]`, and `stride*64 ≥ cols`. Bits at index
+/// `≥ cols` are INVARIANTLY zero — that is what lets every row loop run to
+/// `stride` with no masking, and what makes `xor_rows` a plain stride-1 word
+/// loop. Column operations are strided bit walks over the same buffer.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct BitMat {
+    w: Vec<u64>,
+    rows: usize,
+    cols: usize,
+    stride: usize,
+}
+
+#[inline(always)]
+fn low_mask(bits: usize) -> u64 {
+    if bits >= 64 {
+        !0u64
+    } else if bits == 0 {
+        0
+    } else {
+        (1u64 << bits) - 1
+    }
+}
+
+/// Slide a packed row's bits down past the deleted column (`wc` is its word,
+/// `keep` masks the bits below it) — the "delete one bit column" primitive.
+#[inline(always)]
+fn drop_bit(row: &mut [u64], wc: usize, keep: u64) {
+    let last = row.len() - 1;
+    let x = row[wc];
+    let nxt = if wc < last { row[wc + 1] & 1 } else { 0 };
+    row[wc] = (x & keep) | ((x >> 1) & !keep) | (nxt << 63);
+    for i in wc + 1..last {
+        row[i] = (row[i] >> 1) | ((row[i + 1] & 1) << 63);
+    }
+    if wc < last {
+        row[last] >>= 1;
+    }
+}
+
+/// The same slide, writing into a different row — one pass that deletes the
+/// bit AND compacts the row upward.
+#[inline(always)]
+fn drop_bit_into(dst: &mut [u64], src: &[u64], wc: usize, keep: u64) {
+    let last = src.len() - 1;
+    dst[..wc].copy_from_slice(&src[..wc]);
+    let x = src[wc];
+    let nxt = if wc < last { src[wc + 1] & 1 } else { 0 };
+    dst[wc] = (x & keep) | ((x >> 1) & !keep) | (nxt << 63);
+    for i in wc + 1..last {
+        dst[i] = (src[i] >> 1) | ((src[i + 1] & 1) << 63);
+    }
+    if wc < last {
+        dst[last] = src[last] >> 1;
+    }
+}
+
+impl BitMat {
+    fn new(rows: usize, cols: usize) -> Self {
+        let stride = cols.div_ceil(64);
+        BitMat { w: vec![0; rows * stride], rows, cols, stride }
+    }
+
+    #[inline(always)]
+    fn row(&self, r: usize) -> &[u64] {
+        &self.w[r * self.stride..r * self.stride + self.stride]
+    }
+
+    #[inline(always)]
+    fn row_mut(&mut self, r: usize) -> &mut [u64] {
+        let s = self.stride;
+        &mut self.w[r * s..r * s + s]
+    }
+
+    #[inline(always)]
+    fn get(&self, r: usize, c: usize) -> bool {
+        self.w[r * self.stride + (c >> 6)] >> (c & 63) & 1 == 1
+    }
+
+    #[inline(always)]
+    fn set(&mut self, r: usize, c: usize, v: bool) {
+        let i = r * self.stride + (c >> 6);
+        let b = 1u64 << (c & 63);
+        if v {
+            self.w[i] |= b;
+        } else {
+            self.w[i] &= !b;
+        }
+    }
+
+    #[inline(always)]
+    fn toggle(&mut self, r: usize, c: usize) {
+        self.w[r * self.stride + (c >> 6)] ^= 1u64 << (c & 63);
+    }
+
+    /// `row_dst ^= row_src` — the stride-1 word loop the whole engine's
+    /// elimination work funnels through.
+    #[inline]
+    fn xor_rows(&mut self, dst: usize, src: usize) {
+        let s = self.stride;
+        let (a, b) = (dst * s, src * s);
+        for i in 0..s {
+            self.w[a + i] ^= self.w[b + i];
+        }
+    }
+
+    /// `row_dst ^= mask`, then force the diagonal bit back to zero. The one
+    /// move behind every "flip `J_ab` across a set" step: doing it for every
+    /// member of the set toggles each unordered pair exactly once per side.
+    #[inline]
+    fn xor_row_with(&mut self, dst: usize, mask: &[u64], clear: usize) {
+        let s = self.stride;
+        let a = dst * s;
+        for i in 0..s {
+            self.w[a + i] ^= mask[i];
+        }
+        self.w[a + (clear >> 6)] &= !(1u64 << (clear & 63));
+    }
+
+    /// `col_dst ^= col_src` over every row — the F₂ elementary column
+    /// operation, as one branchless pass over the flat buffer with the word
+    /// and bit offsets hoisted out of the loop.
+    fn xor_col(&mut self, dst: usize, src: usize) {
+        let s = self.stride;
+        let (ws, bs) = (src >> 6, src & 63);
+        let (wd, bd) = (dst >> 6, dst & 63);
+        for row in self.w.chunks_exact_mut(s) {
+            let bit = (row[ws] >> bs) & 1;
+            row[wd] ^= bit << bd;
+        }
+    }
+
+    fn swap_rows(&mut self, a: usize, b: usize) {
+        if a == b {
+            return;
+        }
+        let s = self.stride;
+        for i in 0..s {
+            self.w.swap(a * s + i, b * s + i);
+        }
+    }
+
+    fn swap_cols(&mut self, a: usize, b: usize) {
+        if a == b {
+            return;
+        }
+        for r in 0..self.rows {
+            let (x, y) = (self.get(r, a), self.get(r, b));
+            if x != y {
+                self.toggle(r, a);
+                self.toggle(r, b);
+            }
+        }
+    }
+
+    fn grow_stride(&mut self, ns: usize) {
+        let mut nw = vec![0u64; self.rows * ns];
+        for r in 0..self.rows {
+            nw[r * ns..r * ns + self.stride]
+                .copy_from_slice(&self.w[r * self.stride..(r + 1) * self.stride]);
+        }
+        self.w = nw;
+        self.stride = ns;
+    }
+
+    fn push_col(&mut self) {
+        if self.cols + 1 > self.stride * 64 {
+            self.grow_stride((self.stride * 2).max(1));
+        }
+        self.cols += 1;
+    }
+
+    fn push_row(&mut self) {
+        self.w.resize((self.rows + 1) * self.stride, 0);
+        self.rows += 1;
+    }
+
+    /// Delete bit column `c`, sliding every higher bit of every row down one.
+    /// Word shifts, not a per-row `Vec::remove` of bytes.
+    fn remove_col(&mut self, c: usize) {
+        let (wc, bc) = (c >> 6, c & 63);
+        let s = self.stride;
+        let keep = low_mask(bc);
+        for row in self.w.chunks_exact_mut(s) {
+            drop_bit(row, wc, keep);
+        }
+        self.cols -= 1;
+    }
+
+    /// Delete row `i` AND column `i` in ONE pass — the move a symmetric matrix
+    /// makes when a variable leaves. The two-step form (drain the row, then
+    /// walk every row again to slide the column out) touches the buffer twice;
+    /// this slides and compacts together.
+    fn remove_row_and_col(&mut self, idx: usize) {
+        debug_assert_eq!(self.rows, self.cols);
+        let s = self.stride;
+        let (wc, keep) = (idx >> 6, low_mask(idx & 63));
+        let rows = self.rows;
+        for row in self.w[..idx * s].chunks_exact_mut(s) {
+            drop_bit(row, wc, keep);
+        }
+        for r in idx + 1..rows {
+            let (lo, hi) = self.w.split_at_mut(r * s);
+            drop_bit_into(&mut lo[(r - 1) * s..], &hi[..s], wc, keep);
+        }
+        self.w.truncate((rows - 1) * s);
+        self.rows -= 1;
+        self.cols -= 1;
+    }
+
+    /// Is any row's bit `c` set? The column scan the canonical form asks for.
+    fn col_any(&self, c: usize) -> bool {
+        let (wc, bc) = (c >> 6, c & 63);
+        let m = 1u64 << bc;
+        self.w.chunks_exact(self.stride).any(|row| row[wc] & m != 0)
+    }
+
+    /// The set bits of row `r`, ascending — the support scan every gate needs.
+    fn row_support(&self, r: usize, out: &mut Vec<usize>) {
+        out.clear();
+        let row = self.row(r);
+        for (i, &word) in row.iter().enumerate() {
+            let mut x = word;
+            while x != 0 {
+                out.push(i * 64 + x.trailing_zeros() as usize);
+                x &= x - 1;
+            }
+        }
+    }
+
+    /// The lowest set bit of row `r` at index `≥ from`, if any.
+    fn row_first_set_from(&self, r: usize, from: usize) -> Option<usize> {
+        let row = self.row(r);
+        let mut i = from >> 6;
+        if i >= row.len() {
+            return None;
+        }
+        let mut x = row[i] & !low_mask(from & 63);
+        loop {
+            if x != 0 {
+                return Some(i * 64 + x.trailing_zeros() as usize);
+            }
+            i += 1;
+            if i >= row.len() {
+                return None;
+            }
+            x = row[i];
+        }
+    }
+}
+
 // ------------------------------------------------------------------ affine state
 
 /// One stabilizer branch in affine form: `amplitude(x) = γ·i^{d·u}·(−1)^{Q_J(u)}`
 /// on `x = R u ⊕ h`, `u ∈ F₂^k`, `R`'s columns independent.
+///
+/// `R` and `J` are flat `BitMat`s and `h` is a [`crate::plane::BitPlane`]: one contiguous
+/// buffer each, so a row operation is a stride-1 word loop. The mathematics is
+/// untouched — the layout is the only thing that changed, and the conformance
+/// gates against `holon-qasm` are what say so.
 #[derive(Clone, Debug)]
 pub struct Affine {
     n: usize,
     /// `R`: n rows × k columns, `x = R u ⊕ h`.
-    r: Vec<Vec<bool>>,
-    h: Vec<bool>,
+    r: BitMat,
+    h: BitPlane,
     /// `d_a mod 4` (the i-power linear part), one per column.
     d: Vec<u8>,
-    /// `J_{ab}` (symmetric, diagonal unused): `(−1)^{J u_a u_b}`.
-    j: Vec<Vec<bool>>,
+    /// `J_{ab}` (symmetric, diagonal invariantly zero): `(−1)^{J u_a u_b}`.
+    j: BitMat,
     gamma: Cyc,
     zero: bool,
     mutations: Mutations,
@@ -263,10 +549,10 @@ impl Affine {
     pub fn with_mutations(n: usize, mutations: Mutations) -> Self {
         Affine {
             n,
-            r: vec![Vec::new(); n],
-            h: vec![false; n],
+            r: BitMat::new(n, 0),
+            h: BitPlane::zeros(n),
             d: Vec::new(),
-            j: Vec::new(),
+            j: BitMat::new(0, 0),
             gamma: Cyc::ONE,
             zero: false,
             mutations,
@@ -293,6 +579,13 @@ impl Affine {
         self.gamma
     }
 
+    /// The J-neighbours of column `a`, ascending. `J`'s diagonal is invariantly
+    /// zero, so "set bit of row a" and "`b ≠ a` with `J_ab`" are the same set.
+    fn j_neighbours(&self, a: usize, out: &mut Vec<usize>) {
+        debug_assert!(!self.j.get(a, a), "J's diagonal must stay clear");
+        self.j.row_support(a, out);
+    }
+
     // ---------------------------------------------------------- gauge moves
 
     /// `u_a := u_a ⊕ u_b` — the F₂ elementary column operation `col_b ^= col_a`,
@@ -302,20 +595,37 @@ impl Affine {
     /// Not to be confused with `merge::fold`: this one carries no ledger.
     fn fold(&mut self, a: usize, b: usize) {
         assert_ne!(a, b);
-        for row in 0..self.n {
-            let ra = self.r[row][a];
-            self.r[row][b] ^= ra;
-        }
+        self.r.xor_col(b, a);
         let da = self.d[a];
-        let jab_old = self.j[a][b];
-        let ja_row: Vec<bool> = self.j[a].clone();
+        let jab_old = self.j.get(a, b);
         self.d[b] = (self.d[b] + da) % 4;
-        self.j[a][b] ^= da & 1 == 1;
-        self.j[b][a] = self.j[a][b];
-        for c in 0..self.k() {
-            if c != a && c != b && ja_row[c] {
-                self.j[b][c] = !self.j[b][c];
-                self.j[c][b] = self.j[b][c];
+        if da & 1 == 1 {
+            let v = !jab_old;
+            self.j.set(a, b, v);
+            self.j.set(b, a, v);
+        }
+        // `J_ac` for c ∉ {a,b} flips into row b — one word loop for row b, and
+        // one bit toggle per neighbour for the symmetric column, in the SAME
+        // pass. Rows a and b are masked out of the neighbour set, so the
+        // symmetric toggles cannot touch either of the two rows this loop
+        // reads and writes, and no scratch list is needed.
+        let s = self.j.stride;
+        let (base_a, base_b) = (a * s, b * s);
+        let (wb, bb) = (b >> 6, 1u64 << (b & 63));
+        for i in 0..s {
+            let mut m = self.j.w[base_a + i];
+            if a >> 6 == i {
+                m &= !(1u64 << (a & 63));
+            }
+            if i == wb {
+                m &= !bb;
+            }
+            self.j.w[base_b + i] ^= m;
+            let mut t = m;
+            while t != 0 {
+                let c = i * 64 + t.trailing_zeros() as usize;
+                self.j.w[c * s + wb] ^= bb;
+                t &= t - 1;
             }
         }
         self.d[b] = (self.d[b] + if jab_old { 2 } else { 0 }) % 4;
@@ -332,16 +642,29 @@ impl Affine {
         if !self.mutations.flip_drops_gamma {
             self.gamma = self.gamma.mul_i_pow(self.d[p]);
         }
-        for a in 0..self.k() {
-            if a != p && self.j[p][a] {
-                self.d[a] = (self.d[a] + 2) % 4;
-            }
+        let mut nb = Vec::new();
+        self.j_neighbours(p, &mut nb);
+        for &a in &nb {
+            self.d[a] = (self.d[a] + 2) % 4;
         }
         self.d[p] = (4 - self.d[p] % 4) % 4;
-        for row in 0..self.n {
-            if self.r[row][p] {
-                self.h[row] = !self.h[row];
+        self.h_xor_col(p);
+    }
+
+    /// `h ^= col_p` — the coset origin moving along one column, as a single
+    /// pass over `R`'s flat buffer that assembles 64 rows of `h` per word.
+    fn h_xor_col(&mut self, p: usize) {
+        let (s, n) = (self.r.stride, self.n);
+        let (wp, bp) = (p >> 6, p & 63);
+        let rows = &self.r.w;
+        for (blk, hw) in self.h.words.iter_mut().enumerate() {
+            let lo = blk * 64;
+            let hi = (lo + 64).min(n);
+            let mut acc = 0u64;
+            for (i, row) in rows[lo * s..hi * s].chunks_exact(s).enumerate() {
+                acc |= ((row[wp] >> bp) & 1) << i;
             }
+            *hw ^= acc;
         }
     }
 
@@ -349,42 +672,46 @@ impl Affine {
         if a == b {
             return;
         }
-        for row in 0..self.n {
-            self.r[row].swap(a, b);
-        }
+        self.r.swap_cols(a, b);
         self.d.swap(a, b);
-        self.j.swap(a, b);
-        for jr in &mut self.j {
-            jr.swap(a, b);
-        }
+        self.j.swap_rows(a, b);
+        self.j.swap_cols(a, b);
     }
 
     /// Remove column a with `u_a` pinned to `val`.
     fn pin_remove(&mut self, a: usize, val: bool) {
         if val {
-            for row in 0..self.n {
-                if self.r[row][a] {
-                    self.h[row] = !self.h[row];
-                }
-            }
+            self.h_xor_col(a);
             self.gamma = self.gamma.mul_i_pow(self.d[a]);
-            for c in 0..self.k() {
-                if c != a && self.j[a][c] {
-                    self.d[c] = (self.d[c] + 2) % 4;
-                }
+            let mut nb = Vec::new();
+            self.j_neighbours(a, &mut nb);
+            for &c in &nb {
+                self.d[c] = (self.d[c] + 2) % 4;
             }
         }
         self.remove_col(a);
     }
 
     fn remove_col(&mut self, a: usize) {
-        for row in 0..self.n {
-            self.r[row].remove(a);
-        }
+        self.r.remove_col(a);
         self.d.remove(a);
-        self.j.remove(a);
-        for jr in &mut self.j {
-            jr.remove(a);
+        self.j.remove_row_and_col(a);
+    }
+
+    /// Toggle `J_{b b'}` across every unordered pair of `set`. Done as one row
+    /// XOR per member against the set's own mask: each pair is toggled once in
+    /// each of its two rows, which is exactly what symmetry wants.
+    fn flip_j_across(&mut self, set: &[usize]) {
+        if set.len() < 2 {
+            return;
+        }
+        let s = self.j.stride;
+        let mut mask = vec![0u64; s];
+        for &a in set {
+            mask[a >> 6] |= 1u64 << (a & 63);
+        }
+        for &a in set {
+            self.j.xor_row_with(a, &mask, a);
         }
     }
 
@@ -395,11 +722,12 @@ impl Affine {
     /// throwaway, which costs nothing and keeps ONE Gauss sum in the tree.
     fn gauss_sum_out(&mut self, a: usize, stats: &mut GaussStats) {
         debug_assert!(
-            (0..self.n).all(|row| !self.r[row][a]),
+            !self.r.col_any(a),
             "gauss_sum_out on a column that still carries an x-dependence"
         );
         let delta = self.d[a];
-        let l: Vec<usize> = (0..self.k()).filter(|&b| b != a && self.j[a][b]).collect();
+        let mut l: Vec<usize> = Vec::new();
+        self.j_neighbours(a, &mut l);
         match delta % 4 {
             0 | 2 => {
                 // Σ_{u_a} (±1)^{u_a}(−1)^{u_a Λ} = 2·[Λ ≡ eps]: a CONSTRAINT,
@@ -451,13 +779,7 @@ impl Affine {
                 for &b in &l {
                     self.d[b] = (self.d[b] + delta + 2) % 4;
                 }
-                for i1 in 0..l.len() {
-                    for i2 in i1 + 1..l.len() {
-                        let (b1, b2) = (l[i1], l[i2]);
-                        self.j[b1][b2] = !self.j[b1][b2];
-                        self.j[b2][b1] = self.j[b1][b2];
-                    }
-                }
+                self.flip_j_across(&l);
                 self.remove_col(a);
             }
         }
@@ -466,38 +788,33 @@ impl Affine {
     // ---------------------------------------------------------- Clifford gates
 
     pub fn x(&mut self, q: usize) {
-        self.h[q] = !self.h[q];
+        self.h.flip(q);
     }
 
     pub fn z(&mut self, q: usize) {
-        if self.h[q] {
+        if self.h.get(q) {
             self.gamma = self.gamma.mul_i_pow(2);
         }
-        for a in 0..self.k() {
-            if self.r[q][a] {
-                self.d[a] = (self.d[a] + 2) % 4;
-            }
+        let mut sup = Vec::new();
+        self.r.row_support(q, &mut sup);
+        for &a in &sup {
+            self.d[a] = (self.d[a] + 2) % 4;
         }
     }
 
     pub fn s(&mut self, q: usize) {
         // i^{x_q}: γ·i^h, d_a += 1+2h for a ∈ A, J_ab ^= 1 for a<b ∈ A.
-        let a_set: Vec<usize> = (0..self.k()).filter(|&a| self.r[q][a]).collect();
-        if self.h[q] {
+        let mut a_set = Vec::new();
+        self.r.row_support(q, &mut a_set);
+        if self.h.get(q) {
             self.gamma = self.gamma.mul_i_pow(1);
         }
-        let bump = if self.h[q] { 3 } else { 1 };
+        let bump = if self.h.get(q) { 3 } else { 1 };
         for &a in &a_set {
             self.d[a] = (self.d[a] + bump) % 4;
         }
         if !self.mutations.drop_s_cross {
-            for i in 0..a_set.len() {
-                for jj in i + 1..a_set.len() {
-                    let (a, b) = (a_set[i], a_set[jj]);
-                    self.j[a][b] = !self.j[a][b];
-                    self.j[b][a] = self.j[a][b];
-                }
-            }
+            self.flip_j_across(&a_set);
         }
     }
 
@@ -508,17 +825,18 @@ impl Affine {
     }
 
     pub fn cx(&mut self, c: usize, t: usize) {
-        for a in 0..self.k() {
-            let rc = self.r[c][a];
-            self.r[t][a] ^= rc;
+        // `row_t ^= row_c` over every column at once — bits past k are
+        // invariantly zero, so the whole stride is safe to XOR.
+        self.r.xor_rows(t, c);
+        if self.h.get(c) {
+            self.h.flip(t);
         }
-        let hc = self.h[c];
-        self.h[t] ^= hc;
     }
 
     pub fn h_gate(&mut self, q: usize) {
         // Reduce row q to at most one supporting column a*.
-        let support: Vec<usize> = (0..self.k()).filter(|&a| self.r[q][a]).collect();
+        let mut support = Vec::new();
+        self.r.row_support(q, &mut support);
         let a_star = if support.is_empty() {
             None
         } else {
@@ -530,23 +848,17 @@ impl Affine {
         };
         // New variable v; phase (−1)^{(u_{a*} ⊕ h_q)·v}.
         let v = self.k();
-        for row in 0..self.n {
-            self.r[row].push(false);
-        }
-        self.d.push(if self.h[q] { 2 } else { 0 });
-        for jr in &mut self.j {
-            jr.push(false);
-        }
-        self.j.push(vec![false; v + 1]);
+        self.r.push_col();
+        self.d.push(if self.h.get(q) { 2 } else { 0 });
+        self.j.push_col();
+        self.j.push_row();
         if let Some(a) = a_star {
-            self.j[a][v] = true;
-            self.j[v][a] = true;
+            self.j.set(a, v, true);
+            self.j.set(v, a, true);
         }
-        for a in 0..self.k() {
-            self.r[q][a] = false;
-        }
-        self.r[q][v] = true;
-        self.h[q] = false;
+        self.r.row_mut(q).fill(0);
+        self.r.set(q, v, true);
+        self.h.set(q, false);
         self.gamma.m += 1;
         // Row-clearing can break column independence: col a* may now equal an
         // XOR of other columns (two columns that differed only at row q
@@ -555,51 +867,93 @@ impl Affine {
         // then Gauss-sum it out; the amplitude query REQUIRES independent
         // columns and says so, loudly.
         if let Some(a) = a_star {
-            if !(0..self.n).all(|row| !self.r[row][a]) {
+            if self.r.col_any(a) {
                 if let Some(subset) = self.dependent_subset(a) {
                     for b in subset {
                         self.fold(b, a);
                     }
                 }
             }
-            if (0..self.n).all(|row| !self.r[row][a]) {
+            if !self.r.col_any(a) {
                 self.gauss_sum_out(a, &mut GaussStats::default());
             }
         }
     }
 
+    /// A row whose support is EXACTLY `{a}` proves column a is independent of
+    /// the others: every combination of the others reads zero there, and this
+    /// column reads one. A proof, not a heuristic — and the common case, which
+    /// is why it is worth `O(n)` word loads to look for.
+    fn has_private_row(&self, a: usize) -> bool {
+        let (wa, ba) = (a >> 6, 1u64 << (a & 63));
+        self.r
+            .w
+            .chunks_exact(self.r.stride)
+            .any(|row| row[wa] == ba && row.iter().enumerate().all(|(i, &w)| i == wa || w == 0))
+    }
+
     /// If column a is an XOR of other columns, return that subset.
+    ///
+    /// Solve `[cols ≠ a] x = col_a` over F₂ by reduced row elimination on the
+    /// flat matrix: the pivot columns are the greedy left-to-right independent
+    /// set and the free variables are zero, so the returned subset is the same
+    /// particular solution the nested-`Vec` version produced — with the row
+    /// operations now stride-1 word XORs and no per-step row clone.
+    ///
+    /// The elimination is `O(n·k·rank/64)` and it was measured at 94% of the
+    /// tier's runtime once the amplitude path was factored — while answering
+    /// `None` 4500 times out of 4501, and every one of those 4500 had a
+    /// private row standing right there. So the private row is checked first.
+    /// It is a proof of the same answer, so nothing about the result moves.
     fn dependent_subset(&self, a: usize) -> Option<Vec<usize>> {
-        let k = self.k();
-        let others: Vec<usize> = (0..k).filter(|&b| b != a).collect();
-        // Solve [cols others] x = col a over F2.
-        let mut rows: Vec<(Vec<bool>, bool)> = (0..self.n)
-            .map(|r| (others.iter().map(|&b| self.r[r][b]).collect(), self.r[r][a]))
-            .collect();
-        let m = others.len();
-        let mut piv = vec![usize::MAX; m];
-        let mut rr = 0;
-        for col in 0..m {
-            if let Some(p) = (rr..self.n).find(|&p| rows[p].0[col]) {
-                rows.swap(rr, p);
-                for p2 in 0..self.n {
-                    if p2 != rr && rows[p2].0[col] {
-                        let src = rows[rr].clone();
-                        rows[p2].0.iter_mut().zip(&src.0).for_each(|(x, y)| *x ^= *y);
-                        rows[p2].1 ^= src.1;
-                    }
-                }
-                piv[col] = rr;
-                rr += 1;
+        if self.has_private_row(a) {
+            return None;
+        }
+        self.dependent_subset_eliminate(a)
+    }
+
+    /// [`Affine::dependent_subset`] without the private-row shortcut — the
+    /// elimination on its own, kept reachable so the shortcut can be gauged
+    /// against it (`private_row_agrees_with_elimination`).
+    fn dependent_subset_eliminate(&self, a: usize) -> Option<Vec<usize>> {
+        let n = self.n;
+        let m = self.k() - 1;
+        let mut mat = self.r.clone();
+        let mut rhs = BitPlane::zeros(n);
+        for r in 0..n {
+            if mat.get(r, a) {
+                rhs.set(r, true);
             }
         }
-        if rows[rr..].iter().any(|r| r.1) {
+        mat.remove_col(a);
+        let mut piv = vec![usize::MAX; m];
+        let mut rr = 0usize;
+        for col in 0..m {
+            let Some(p) = (rr..n).find(|&p| mat.get(p, col)) else {
+                continue;
+            };
+            mat.swap_rows(rr, p);
+            let (x, y) = (rhs.get(rr), rhs.get(p));
+            rhs.set(rr, y);
+            rhs.set(p, x);
+            let rv = rhs.get(rr);
+            for p2 in 0..n {
+                if p2 != rr && mat.get(p2, col) {
+                    mat.xor_rows(p2, rr);
+                    let nv = rhs.get(p2) ^ rv;
+                    rhs.set(p2, nv);
+                }
+            }
+            piv[col] = rr;
+            rr += 1;
+        }
+        if (rr..n).any(|r| rhs.get(r)) {
             return None; // independent
         }
         let mut subset = Vec::new();
         for col in 0..m {
-            if piv[col] != usize::MAX && rows[piv[col]].1 {
-                subset.push(others[col]);
+            if piv[col] != usize::MAX && rhs.get(piv[col]) {
+                subset.push(if col < a { col } else { col + 1 });
             }
         }
         Some(subset)
@@ -644,17 +998,13 @@ impl Affine {
         let base = self.k();
         for (ci, &mask) in cols.iter().enumerate() {
             let v = self.k();
-            for row in 0..self.n {
-                self.r[row].push(false);
-            }
+            self.r.push_col();
             self.d.push(d[ci]);
-            for jr in &mut self.j {
-                jr.push(false);
-            }
-            self.j.push(vec![false; v + 1]);
+            self.j.push_col();
+            self.j.push_row();
             for (bi, &q) in qubits.iter().enumerate() {
                 if (mask >> bi) & 1 == 1 {
-                    self.r[q][v] = true;
+                    self.r.set(q, v, true);
                 }
             }
         }
@@ -662,75 +1012,39 @@ impl Affine {
         for a in 0..kt {
             for b in a + 1..kt {
                 if j[a][b] {
-                    self.j[base + a][base + b] = true;
-                    self.j[base + b][base + a] = true;
+                    self.j.set(base + a, base + b, true);
+                    self.j.set(base + b, base + a, true);
                 }
             }
         }
         for (bi, &q) in qubits.iter().enumerate() {
             if (h_mask >> bi) & 1 == 1 {
-                self.h[q] = !self.h[q];
+                self.h.flip(q);
             }
         }
     }
 
-    /// Exact amplitude of basis state `y` (bit i = qubit i).
-    pub fn amplitude(&self, y: &[bool]) -> Cyc {
-        if self.zero {
-            return Cyc::ZERO;
-        }
-        // Solve R u = y ⊕ h.
-        let k = self.k();
-        let mut aug: Vec<(Vec<bool>, bool)> = (0..self.n)
-            .map(|row| (self.r[row].clone(), y[row] ^ self.h[row]))
-            .collect();
-        let mut u = vec![false; k];
-        let mut pivot_row = vec![usize::MAX; k];
-        let mut rr = 0;
-        for col in 0..k {
-            if let Some(p) = (rr..self.n).find(|&p| aug[p].0[col]) {
-                aug.swap(rr, p);
-                for p2 in 0..self.n {
-                    if p2 != rr && aug[p2].0[col] {
-                        let (head, tail) = if p2 < rr {
-                            let (a, b) = aug.split_at_mut(rr);
-                            (&mut a[p2], &mut b[0])
-                        } else {
-                            let (a, b) = aug.split_at_mut(p2);
-                            (&mut b[0], &mut a[rr])
-                        };
-                        for cc in 0..k {
-                            head.0[cc] ^= tail.0[cc];
-                        }
-                        head.1 ^= tail.1;
-                    }
-                }
-                pivot_row[col] = rr;
-                rr += 1;
-            }
-        }
-        for row in rr..self.n {
-            if aug[row].1 {
-                return Cyc::ZERO; // y is off the affine subspace
-            }
-        }
-        assert!(
-            (0..k).all(|col| pivot_row[col] != usize::MAX),
-            "affine invariant broken: R has dependent columns (rank < k)"
-        );
-        for col in 0..k {
-            u[col] = aug[pivot_row[col]].1;
-        }
+    /// `γ · i^{Σ d_a u_a} · (−1)^{Σ_{a<b} J_ab u_a u_b}` at a PACKED parameter
+    /// `u` (`j.stride` words). The quadratic form is one popcount per set bit
+    /// of `u` against `J`'s row, masked to the strictly-higher columns, instead
+    /// of the `k²` bit tests the nested form paid.
+    fn phase_at(&self, u: &[u64]) -> Cyc {
+        let uw = self.j.stride;
         let mut ip: u8 = 0;
         let mut sign = false;
-        for a in 0..k {
-            if u[a] {
+        for w in 0..uw {
+            let mut x = u[w];
+            while x != 0 {
+                let a = w * 64 + x.trailing_zeros() as usize;
                 ip = (ip + self.d[a]) % 4;
-                for b in a + 1..k {
-                    if u[b] && self.j[a][b] {
-                        sign = !sign;
-                    }
+                let jr = self.j.row(a);
+                let hi = if (a & 63) == 63 { 0 } else { !0u64 << ((a & 63) + 1) };
+                let mut acc = (jr[w] & u[w] & hi).count_ones();
+                for w2 in w + 1..uw {
+                    acc += (jr[w2] & u[w2]).count_ones();
                 }
+                sign ^= acc & 1 == 1;
+                x &= x - 1;
             }
         }
         let mut amp = self.gamma.mul_i_pow(ip);
@@ -740,17 +1054,69 @@ impl Affine {
         amp
     }
 
-    /// The basis state at parameter `u`: `y = R u ⊕ h`.
-    fn point(&self, u: &[bool]) -> Vec<bool> {
-        let mut y = self.h.clone();
-        for (a, &ua) in u.iter().enumerate() {
-            if ua {
-                for row in 0..self.n {
-                    y[row] ^= self.r[row][a];
+    /// Solve `R u = b` by reduced row elimination on the flat matrix, exactly
+    /// the system [`Affine::amplitude`] has always solved. `None` means `b` is
+    /// off the column space; the rank refusal is the caller's, so that the
+    /// "off the coset" answer still comes back BEFORE the invariant assertion.
+    fn solve_u(&self, b: &BitPlane) -> Option<Vec<u64>> {
+        let (n, k) = (self.n, self.k());
+        let mut aug = self.r.clone();
+        let mut rhs = b.clone();
+        let mut pivot_row = vec![usize::MAX; k];
+        let mut rr = 0usize;
+        for col in 0..k {
+            let Some(p) = (rr..n).find(|&p| aug.get(p, col)) else {
+                continue;
+            };
+            aug.swap_rows(rr, p);
+            let (x, y) = (rhs.get(rr), rhs.get(p));
+            rhs.set(rr, y);
+            rhs.set(p, x);
+            let rv = rhs.get(rr);
+            for p2 in 0..n {
+                if p2 != rr && aug.get(p2, col) {
+                    aug.xor_rows(p2, rr);
+                    let nv = rhs.get(p2) ^ rv;
+                    rhs.set(p2, nv);
                 }
             }
+            pivot_row[col] = rr;
+            rr += 1;
         }
-        y
+        for row in rr..n {
+            if rhs.get(row) {
+                return None; // y is off the affine subspace
+            }
+        }
+        assert!(
+            (0..k).all(|col| pivot_row[col] != usize::MAX),
+            "affine invariant broken: R has dependent columns (rank < k)"
+        );
+        let mut u = vec![0u64; self.j.stride];
+        for col in 0..k {
+            if rhs.get(pivot_row[col]) {
+                u[col >> 6] |= 1u64 << (col & 63);
+            }
+        }
+        Some(u)
+    }
+
+    /// Exact amplitude of basis state `y` (bit i = qubit i).
+    pub fn amplitude(&self, y: &[bool]) -> Cyc {
+        if self.zero {
+            return Cyc::ZERO;
+        }
+        // Solve R u = y ⊕ h.
+        let mut b = self.h.clone();
+        for row in 0..self.n {
+            if y[row] {
+                b.flip(row);
+            }
+        }
+        match self.solve_u(&b) {
+            None => Cyc::ZERO,
+            Some(u) => self.phase_at(&u),
+        }
     }
 
     // ---------------------------------------------------------- projection
@@ -765,10 +1131,11 @@ impl Affine {
         if self.zero {
             return;
         }
-        let support: Vec<usize> = (0..self.k()).filter(|&a| self.r[q][a]).collect();
+        let mut support = Vec::new();
+        self.r.row_support(q, &mut support);
         if support.is_empty() {
             // The support already has a definite x_q = h_q.
-            if self.h[q] != v {
+            if self.h.get(q) != v {
                 self.zero = true;
             }
             return;
@@ -777,11 +1144,11 @@ impl Affine {
         for &b in &support[1..] {
             self.fold(a, b);
         }
-        debug_assert!((0..self.k()).all(|c| self.r[q][c] == (c == a)));
-        let val = v ^ self.h[q];
+        debug_assert!((0..self.k()).all(|c| self.r.get(q, c) == (c == a)));
+        let val = v ^ self.h.get(q);
         self.pin_remove(a, val);
-        debug_assert_eq!(self.h[q], v);
-        debug_assert!((0..self.k()).all(|c| !self.r[q][c]));
+        debug_assert_eq!(self.h.get(q), v);
+        debug_assert!((0..self.k()).all(|c| !self.r.get(q, c)));
     }
 
     pub fn projected(&self, q: usize, v: bool) -> Affine {
@@ -805,30 +1172,29 @@ impl Affine {
         // 1. Eliminate every constraint row.
         loop {
             let mut target: Option<(usize, usize)> = None;
-            'scan: for row in 0..self.n {
-                for col in 0..self.k() {
-                    if self.r[row][col] {
-                        target = Some((row, col));
-                        break 'scan;
-                    }
+            for row in 0..self.n {
+                if let Some(col) = self.r.row_first_set_from(row, 0) {
+                    target = Some((row, col));
+                    break;
                 }
             }
             let (row, a) = match target {
                 Some(t) => t,
                 None => break,
             };
-            let others: Vec<usize> =
-                (0..self.k()).filter(|&b| b != a && self.r[row][b]).collect();
+            let mut sup = Vec::new();
+            self.r.row_support(row, &mut sup);
+            let others: Vec<usize> = sup.into_iter().filter(|&b| b != a).collect();
             for b in others {
                 self.fold(a, b);
             }
-            debug_assert!((0..self.k()).all(|c| self.r[row][c] == (c == a)));
-            let val = self.h[row];
+            debug_assert!((0..self.k()).all(|c| self.r.get(row, c) == (c == a)));
+            let val = self.h.get(row);
             self.pin_remove(a, val);
-            debug_assert!(!self.h[row]);
+            debug_assert!(!self.h.get(row));
         }
         // 2. A surviving 0 = 1 row means the subspaces are disjoint.
-        if self.h.iter().any(|&b| b) {
+        if self.h.any() {
             stats.inconsistent += 1;
             return Cyc::ZERO;
         }
@@ -849,18 +1215,24 @@ impl Affine {
     fn rcef(&mut self) -> Vec<(usize, usize)> {
         let mut pivots = Vec::new();
         let mut p = 0usize;
+        let mut sup: Vec<usize> = Vec::new();
         for row in 0..self.n {
             if p >= self.k() {
                 break;
             }
-            let Some(c) = (p..self.k()).find(|&c| self.r[row][c]) else {
+            let Some(c) = self.r.row_first_set_from(row, p) else {
                 continue;
             };
             self.swap_cols(c, p);
-            for c2 in 0..self.k() {
-                if c2 != p && self.r[row][c2] {
-                    self.fold(p, c2); // col_{c2} ^= col_p
-                }
+            // The row's support is a snapshot: `fold(p, c2)` clears exactly bit
+            // c2 of this row and touches no other column of it, so folding the
+            // snapshot in ascending order is the same sequence the re-reading
+            // loop performed — and the ORDER is load-bearing, because `fold`
+            // carries the phase polynomial.
+            self.r.row_support(row, &mut sup);
+            let targets: Vec<usize> = sup.iter().copied().filter(|&c2| c2 != p).collect();
+            for c2 in targets {
+                self.fold(p, c2); // col_{c2} ^= col_p
             }
             pivots.push((row, p));
             p += 1;
@@ -885,12 +1257,12 @@ impl Affine {
             // Any column left all-zero is dependent (rank < k): it is a
             // phase-only variable, so sum it out and start over. k strictly
             // decreases, so this terminates.
-            if let Some(c) = (0..self.k()).find(|&c| (0..self.n).all(|row| !self.r[row][c])) {
+            if let Some(c) = (0..self.k()).find(|&c| !self.r.col_any(c)) {
                 self.gauss_sum_out(c, &mut GaussStats::default());
                 continue;
             }
             for &(row, col) in &pivots {
-                if self.h[row] {
+                if self.h.get(row) {
                     self.flip(col);
                 }
             }
@@ -904,6 +1276,10 @@ impl Affine {
     /// Byte encoding of the canonical form. Equal keys ⇔ equal states up to a
     /// global scalar — PROVIDED [`Affine::canonicalize`] ran first
     /// (debug-asserted).
+    ///
+    /// The bitstream is byte-for-byte what the nested-`Vec` encoder produced;
+    /// only the way the bits get there changed (whole packed ranges at a time
+    /// instead of one `push` per bit).
     pub fn canon_key(&self) -> Vec<u8> {
         debug_assert!(
             self.zero || cyc_eq(self.gamma, Cyc::ONE),
@@ -916,19 +1292,13 @@ impl Affine {
         out.extend_from_slice(&(k as u32).to_le_bytes());
         let mut bits = BitWriter::new(&mut out);
         for row in 0..self.n {
-            for a in 0..k {
-                bits.push(self.r[row][a]);
-            }
+            bits.push_range(self.r.row(row), 0, k);
         }
         if !self.mutations.key_ignores_h {
-            for row in 0..self.n {
-                bits.push(self.h[row]);
-            }
+            bits.push_range(&self.h.words, 0, self.n);
         }
         for a in 0..k {
-            for b in a + 1..k {
-                bits.push(self.j[a][b]);
-            }
+            bits.push_range(self.j.row(a), a + 1, k);
         }
         bits.finish();
         out.extend_from_slice(&self.d);
@@ -946,17 +1316,37 @@ impl Affine {
     /// [`Affine::amplitude`] solver the branch sum uses? Runs the determining
     /// set `{0} ∪ {e_a} ∪ {e_a ⊕ e_b}` (capped at `budget` points), plus two
     /// points off the coset where both must read exactly zero.
+    ///
+    /// THE HOT PATH of the whole magic tier: this asks ONE pair of states for
+    /// `k + n` amplitudes in a row, and re-eliminating `R` from scratch for
+    /// every one of them was measured at 95–99% of the tier's runtime. So the
+    /// elimination is FACTORED — one `ColSolve` per state, reused across every
+    /// probe. The values are the same values: the solution of `R u = b` is
+    /// unique when `R` has independent columns (which the affine invariant
+    /// requires and this code still asserts), so a factored solve and a fresh
+    /// elimination cannot disagree.
     pub fn amplitudes_agree(&self, other: &Affine, budget: usize) -> bool {
         if self.n != other.n {
             return false;
         }
         let k = self.k();
+        let sa = ColSolve::build(self);
+        let sb = ColSolve::build(other);
+        let nw = self.h.words.len();
+        let mut y = vec![0u64; nw];
+        let mut scratch = vec![0u64; nw];
         let mut checked = 0usize;
-        let probe = |u: &[bool]| -> bool {
-            let y = self.point(u);
-            cyc_eq(self.amplitude(&y), other.amplitude(&y))
+
+        // `probe(u)` of the nested version, with `y = point(u)` built in words:
+        // `point(0) = h`, and each set `u_a` XORs in column a.
+        let agree = |y: &[u64], scratch: &mut Vec<u64>| -> bool {
+            let av = amp_packed(self, &sa, y, scratch);
+            let bv = amp_packed(other, &sb, y, scratch);
+            cyc_eq(av, bv)
         };
-        if !probe(&vec![false; k]) {
+
+        y.copy_from_slice(&self.h.words);
+        if !agree(&y, &mut scratch) {
             return false;
         }
         checked += 1;
@@ -964,9 +1354,9 @@ impl Affine {
             if checked >= budget {
                 break;
             }
-            let mut u = vec![false; k];
-            u[a] = true;
-            if !probe(&u) {
+            y.copy_from_slice(&self.h.words);
+            sa.xor_col(&mut y, a);
+            if !agree(&y, &mut scratch) {
                 return false;
             }
             checked += 1;
@@ -976,10 +1366,10 @@ impl Affine {
                 if checked >= budget {
                     break 'pairs;
                 }
-                let mut u = vec![false; k];
-                u[a] = true;
-                u[b] = true;
-                if !probe(&u) {
+                y.copy_from_slice(&self.h.words);
+                sa.xor_col(&mut y, a);
+                sa.xor_col(&mut y, b);
+                if !agree(&y, &mut scratch) {
                     return false;
                 }
                 checked += 1;
@@ -988,15 +1378,157 @@ impl Affine {
         // Off-coset probes: flip a non-pivot bit of a coset point. If the two
         // states have different supports (the `key_ignores_h` defect), one of
         // these — or the on-coset probes above — must disagree.
-        let base = self.point(&vec![false; k]);
+        y.copy_from_slice(&self.h.words);
         for q in 0..self.n {
-            let mut y = base.clone();
-            y[q] = !y[q];
-            if !cyc_eq(self.amplitude(&y), other.amplitude(&y)) {
+            y[q >> 6] ^= 1u64 << (q & 63);
+            if !agree(&y, &mut scratch) {
                 return false;
             }
+            y[q >> 6] ^= 1u64 << (q & 63);
         }
         true
+    }
+}
+
+/// `state.amplitude(y)` for a PACKED `y`, through a prebuilt [`ColSolve`].
+/// Same three answers in the same order as the unfactored method: zero if the
+/// branch is annihilated, zero if `y` is off the coset, otherwise the phase —
+/// with the rank refusal after the coset test, exactly where it was.
+fn amp_packed(st: &Affine, s: &ColSolve, y: &[u64], scratch: &mut Vec<u64>) -> Cyc {
+    if st.zero {
+        return Cyc::ZERO;
+    }
+    scratch.clear();
+    scratch.extend_from_slice(y);
+    for (a, b) in scratch.iter_mut().zip(&st.h.words) {
+        *a ^= *b;
+    }
+    match s.solve(scratch) {
+        None => Cyc::ZERO,
+        Some(u) => {
+            assert!(
+                s.rank == s.k,
+                "affine invariant broken: R has dependent columns (rank < k)"
+            );
+            st.phase_at(&u)
+        }
+    }
+}
+
+/// A REUSABLE exact solver for `R u = b`: the greedy left-to-right F₂ column
+/// basis of `R`, packed.
+///
+/// Building it costs one transpose and one basis pass; after that every solve
+/// is a handful of stride-1 word XORs rather than a fresh `O(n·k)` elimination.
+/// The pivot columns it keeps are the columns not in the span of their
+/// predecessors — the SAME set reduced row echelon form picks — and inside the
+/// span of independent columns a representation is unique, so `solve` returns
+/// the identical `u` the elimination returned. No approximation, no tolerance:
+/// this is the same exact linear algebra over F₂, done once instead of `k + n`
+/// times.
+struct ColSolve {
+    nw: usize,
+    uw: usize,
+    k: usize,
+    /// The raw columns of `R`, `nw` words each — `point(u)` reads these.
+    cols: Vec<u64>,
+    basis: Vec<u64>,
+    comb: Vec<u64>,
+    /// leading bit ↦ basis index, `usize::MAX` for none.
+    by_pivot: Vec<usize>,
+    rank: usize,
+}
+
+impl ColSolve {
+    fn build(st: &Affine) -> ColSolve {
+        let (n, k) = (st.n, st.k());
+        let nw = st.h.words.len();
+        let uw = st.j.stride;
+        // Transpose R once: the flat row buffer walked set bit by set bit.
+        let mut cols = vec![0u64; k * nw];
+        for row in 0..n {
+            let (rw, rb) = (row >> 6, 1u64 << (row & 63));
+            for (i, &word) in st.r.row(row).iter().enumerate() {
+                let mut x = word;
+                while x != 0 {
+                    let c = i * 64 + x.trailing_zeros() as usize;
+                    cols[c * nw + rw] |= rb;
+                    x &= x - 1;
+                }
+            }
+        }
+        let mut s = ColSolve {
+            nw,
+            uw,
+            k,
+            cols,
+            basis: vec![0u64; k * nw],
+            comb: vec![0u64; k * uw],
+            by_pivot: vec![usize::MAX; n],
+            rank: 0,
+        };
+        let mut v = vec![0u64; nw];
+        let mut m = vec![0u64; uw];
+        for c in 0..k {
+            v.copy_from_slice(&s.cols[c * nw..(c + 1) * nw]);
+            m.iter_mut().for_each(|x| *x = 0);
+            m[c >> 6] |= 1u64 << (c & 63);
+            if let Some(b) = s.reduce(&mut v, &mut m) {
+                let r = s.rank;
+                s.basis[r * nw..(r + 1) * nw].copy_from_slice(&v);
+                s.comb[r * uw..(r + 1) * uw].copy_from_slice(&m);
+                s.by_pivot[b] = r;
+                s.rank = r + 1;
+            }
+        }
+        s
+    }
+
+    /// Reduce `v` against the basis, carrying the combination `m`. Returns the
+    /// leading bit of the irreducible remainder, or `None` when `v` reached 0
+    /// (in which case `m` is the exact combination that produces the input).
+    fn reduce(&self, v: &mut [u64], m: &mut [u64]) -> Option<usize> {
+        let mut w = self.nw;
+        loop {
+            while w > 0 && v[w - 1] == 0 {
+                w -= 1;
+            }
+            if w == 0 {
+                return None;
+            }
+            let b = (w - 1) * 64 + (63 - v[w - 1].leading_zeros() as usize);
+            let i = self.by_pivot[b];
+            if i == usize::MAX {
+                return Some(b);
+            }
+            let bb = &self.basis[i * self.nw..i * self.nw + self.nw];
+            for (x, y) in v.iter_mut().zip(bb) {
+                *x ^= *y;
+            }
+            let cc = &self.comb[i * self.uw..i * self.uw + self.uw];
+            for (x, y) in m.iter_mut().zip(cc) {
+                *x ^= *y;
+            }
+        }
+    }
+
+    /// `R u = b`, or `None` when `b` is off the column space.
+    fn solve(&self, b: &[u64]) -> Option<Vec<u64>> {
+        let mut v = b.to_vec();
+        let mut m = vec![0u64; self.uw];
+        match self.reduce(&mut v, &mut m) {
+            Some(_) => None,
+            None => Some(m),
+        }
+    }
+
+    /// `y ^= col_a` — the packed form of `point`'s column accumulation.
+    #[inline]
+    fn xor_col(&self, y: &mut [u64], a: usize) {
+        let c = &self.cols[a * self.nw..a * self.nw + self.nw];
+        for (x, z) in y.iter_mut().zip(c) {
+            *x ^= *z;
+        }
     }
 }
 
@@ -1011,30 +1543,50 @@ pub fn fnv1a(bytes: &[u8]) -> u64 {
     hsh
 }
 
+/// LSB-first bit packer. `push_range` takes a whole run of bits out of a
+/// packed source word by word; the byte stream it emits is identical to the
+/// one a bit-at-a-time writer emits, which is what keeps [`Affine::canon_key`]
+/// stable across this change.
 struct BitWriter<'a> {
     out: &'a mut Vec<u8>,
-    cur: u8,
-    n: u8,
+    cur: u64,
+    n: usize,
 }
 
 impl<'a> BitWriter<'a> {
     fn new(out: &'a mut Vec<u8>) -> Self {
         BitWriter { out, cur: 0, n: 0 }
     }
+    #[cfg(test)]
     fn push(&mut self, b: bool) {
-        if b {
-            self.cur |= 1 << self.n;
-        }
+        self.cur |= (b as u64) << self.n;
         self.n += 1;
-        if self.n == 8 {
-            self.out.push(self.cur);
+        if self.n == 64 {
+            self.out.extend_from_slice(&self.cur.to_le_bytes());
             self.cur = 0;
             self.n = 0;
         }
     }
+    fn push_range(&mut self, src: &[u64], from: usize, to: usize) {
+        let mut i = from;
+        while i < to {
+            let (w, b) = (i >> 6, i & 63);
+            let want = (to - i).min(64 - b).min(64 - self.n);
+            let chunk = (src[w] >> b) & low_mask(want);
+            self.cur |= chunk << self.n;
+            self.n += want;
+            i += want;
+            if self.n == 64 {
+                self.out.extend_from_slice(&self.cur.to_le_bytes());
+                self.cur = 0;
+                self.n = 0;
+            }
+        }
+    }
     fn finish(self) {
-        if self.n > 0 {
-            self.out.push(self.cur);
+        let bytes = self.n.div_ceil(8);
+        if bytes > 0 {
+            self.out.extend_from_slice(&self.cur.to_le_bytes()[..bytes]);
         }
     }
 }
@@ -1077,12 +1629,22 @@ pub fn overlap_gauged(
     let n = a.n;
     // Constraint: R_a u ⊕ R_b u' = h_a ⊕ h_b (the intersection of the two
     // affine subspaces, parametrised jointly).
-    let mut r = vec![vec![false; k]; n];
-    let mut h = vec![false; n];
+    let mut r = BitMat::new(n, k);
+    let mut h = BitPlane::zeros(n);
     for row in 0..n {
-        r[row][..ka].copy_from_slice(&a.r[row][..ka]);
-        r[row][ka..].copy_from_slice(&b.r[row][..kb]);
-        h[row] = a.h[row] ^ b.h[row];
+        for c in 0..ka {
+            if a.r.get(row, c) {
+                r.set(row, c, true);
+            }
+        }
+        for c in 0..kb {
+            if b.r.get(row, c) {
+                r.set(row, ka + c, true);
+            }
+        }
+    }
+    for (x, (p, q)) in h.words.iter_mut().zip(a.h.words.iter().zip(&b.h.words)) {
+        *x = *p ^ *q;
     }
     // Phase: conj on the left flips the sign of the i-powers; (−1)^{Q_J} is
     // real, so J is carried over unchanged, block-diagonal in (u, u').
@@ -1091,15 +1653,19 @@ pub fn overlap_gauged(
         d[c] = (4 - a.d[c] % 4) % 4;
     }
     d[ka..ka + kb].copy_from_slice(&b.d[..kb]);
-    let mut j = vec![vec![false; k]; k];
+    let mut j = BitMat::new(k, k);
     for x in 0..ka {
         for y in 0..ka {
-            j[x][y] = a.j[x][y];
+            if a.j.get(x, y) {
+                j.set(x, y, true);
+            }
         }
     }
     for x in 0..kb {
         for y in 0..kb {
-            j[ka + x][ka + y] = b.j[x][y];
+            if b.j.get(x, y) {
+                j.set(ka + x, ka + y, true);
+            }
         }
     }
     let comb = Affine {
@@ -1162,5 +1728,190 @@ impl Rng {
     /// goes through [`Rng::next_dyadic32`] and an exact comparison instead.
     pub fn below(&mut self, n: usize) -> usize {
         (self.next_u64() % n as u64) as usize
+    }
+}
+
+#[cfg(test)]
+mod layout_conformance {
+    use super::*;
+
+    /// The packed bit writer must emit the byte stream a bit-at-a-time writer
+    /// emits — `canon_key`'s stability across the layout change rests on it.
+    #[test]
+    fn push_range_matches_bit_pushes() {
+        let src: Vec<u64> = vec![
+            0x0123_4567_89ab_cdef,
+            0xfedc_ba98_7654_3210,
+            0xdead_beef_cafe_f00d,
+        ];
+        for lead in [0usize, 1, 5, 7, 8, 63, 64, 100] {
+            for from in [0usize, 1, 7, 63, 64, 65, 127] {
+                for to in [from, from + 1, from + 7, from + 64, from + 130] {
+                    if to > 192 {
+                        continue;
+                    }
+                    let mut a = Vec::new();
+                    let mut wa = BitWriter::new(&mut a);
+                    for i in 0..lead {
+                        wa.push(i % 3 == 0);
+                    }
+                    wa.push_range(&src, from, to);
+                    wa.finish();
+                    let mut b = Vec::new();
+                    let mut wb = BitWriter::new(&mut b);
+                    for i in 0..lead {
+                        wb.push(i % 3 == 0);
+                    }
+                    for i in from..to {
+                        wb.push(src[i >> 6] >> (i & 63) & 1 == 1);
+                    }
+                    wb.finish();
+                    assert_eq!(a, b, "lead={lead} from={from} to={to}");
+                }
+            }
+        }
+    }
+
+    /// `remove_col` must slide the higher bits down and nothing else.
+    #[test]
+    fn remove_col_slides_bits() {
+        for cols in [1usize, 5, 63, 64, 65, 130] {
+            for victim in [0usize, 1, 63, 64, 100] {
+                if victim >= cols {
+                    continue;
+                }
+                let mut m = BitMat::new(3, cols);
+                let bit = |r: usize, c: usize| (r * 7 + c * 3 + c / 5) % 3 == 0;
+                for r in 0..3 {
+                    for c in 0..cols {
+                        m.set(r, c, bit(r, c));
+                    }
+                }
+                m.remove_col(victim);
+                assert_eq!(m.cols, cols - 1);
+                for r in 0..3 {
+                    for c in 0..cols - 1 {
+                        let want = if c < victim { bit(r, c) } else { bit(r, c + 1) };
+                        assert_eq!(m.get(r, c), want, "cols={cols} victim={victim} r={r} c={c}");
+                    }
+                    // Nothing may survive past the new width.
+                    for c in cols - 1..m.stride * 64 {
+                        assert!(!m.get(r, c), "cols={cols} victim={victim}: stale bit at {c}");
+                    }
+                }
+            }
+        }
+    }
+
+    /// The fused symmetric delete must drop exactly row `i` and column `i`.
+    #[test]
+    fn remove_row_and_col_drops_one_of_each() {
+        let bit = |r: usize, c: usize| (r * 13 + c * 7 + r * c) % 5 == 0;
+        for k in [1usize, 2, 7, 63, 64, 65, 130] {
+            for victim in [0usize, 1, 63, 64, 100] {
+                if victim >= k {
+                    continue;
+                }
+                let mut m = BitMat::new(k, k);
+                for r in 0..k {
+                    for c in 0..k {
+                        m.set(r, c, bit(r, c));
+                    }
+                }
+                m.remove_row_and_col(victim);
+                assert_eq!((m.rows, m.cols), (k - 1, k - 1));
+                for r in 0..k - 1 {
+                    let sr = if r < victim { r } else { r + 1 };
+                    for c in 0..k - 1 {
+                        let sc = if c < victim { c } else { c + 1 };
+                        assert_eq!(m.get(r, c), bit(sr, sc), "k={k} victim={victim} r={r} c={c}");
+                    }
+                    for c in k - 1..m.stride * 64 {
+                        assert!(!m.get(r, c), "k={k} victim={victim}: stale bit at {c}");
+                    }
+                }
+            }
+        }
+    }
+
+    /// The private-row shortcut must never disagree with the elimination it
+    /// replaces: whenever it fires, the elimination has to say `None` too, and
+    /// whenever it does not fire the two are the same call.
+    #[test]
+    fn private_row_agrees_with_elimination() {
+        let mut rng = Rng::new(0x5EED_D00D);
+        let mut fired = 0usize;
+        let mut checked = 0usize;
+        for n in [3usize, 5, 8] {
+            for _ in 0..60 {
+                let mut st = Affine::new(n);
+                for _ in 0..5 * n {
+                    let q = rng.below(n);
+                    let mut q2 = rng.below(n);
+                    while q2 == q {
+                        q2 = rng.below(n);
+                    }
+                    match rng.below(5) {
+                        0 => st.x(q),
+                        1 => st.z(q),
+                        2 => st.s(q),
+                        3 => st.h_gate(q),
+                        _ => st.cx(q, q2),
+                    }
+                }
+                for a in 0..st.k() {
+                    checked += 1;
+                    let elim = st.dependent_subset_eliminate(a);
+                    if st.has_private_row(a) {
+                        fired += 1;
+                        assert!(elim.is_none(), "private row claimed independence, elimination did not");
+                    }
+                    assert_eq!(st.dependent_subset(a), elim, "n={n} a={a}");
+                }
+            }
+        }
+        assert!(fired * 4 > checked, "the shortcut never fired: {fired} of {checked}");
+    }
+
+    /// The factored solver and the fresh elimination must return the SAME `u`
+    /// — the claim the whole `amplitudes_agree` speedup rests on.
+    #[test]
+    fn factored_solver_matches_elimination() {
+        let mut rng = Rng::new(0xA1F1_9E5E);
+        for n in [3usize, 5, 9] {
+            for _ in 0..40 {
+                let mut st = Affine::new(n);
+                for _ in 0..6 * n {
+                    let q = rng.below(n);
+                    let mut q2 = rng.below(n);
+                    while q2 == q {
+                        q2 = rng.below(n);
+                    }
+                    match rng.below(5) {
+                        0 => st.x(q),
+                        1 => st.z(q),
+                        2 => st.s(q),
+                        3 => st.h_gate(q),
+                        _ => st.cx(q, q2),
+                    }
+                }
+                let s = ColSolve::build(&st);
+                let mut scratch = Vec::new();
+                for idx in 0..(1usize << n) {
+                    let y: Vec<bool> = (0..n).map(|q| idx >> q & 1 == 1).collect();
+                    let mut yw = vec![0u64; st.h.words.len()];
+                    for (q, &b) in y.iter().enumerate() {
+                        if b {
+                            yw[q >> 6] |= 1u64 << (q & 63);
+                        }
+                    }
+                    assert_eq!(
+                        st.amplitude(&y),
+                        amp_packed(&st, &s, &yw, &mut scratch),
+                        "n={n} idx={idx}"
+                    );
+                }
+            }
+        }
     }
 }

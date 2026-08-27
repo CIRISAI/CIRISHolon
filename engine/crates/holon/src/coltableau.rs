@@ -529,3 +529,89 @@ mod sample_agreement {
         }
     }
 }
+
+impl ColTableau {
+    /// Terminal sample with GENUINE Born randomness over the free bits: for
+    /// a full computational-basis measurement of a stabilizer state, the
+    /// outcome distribution is uniform over the valid affine subspace, and
+    /// the free bits of the canonical frame are exactly its free
+    /// coordinates — so independent fair bits there IS the Born
+    /// distribution. The seed is the caller's to log in the certificate:
+    /// unpredictable in advance if drawn from a TRNG, replayable after by
+    /// construction (splitmix64 stream, no global state).
+    pub fn sample_born(&self, seed: u64) -> Vec<bool> {
+        // Canonical sample with free bits false, then XOR a random point of
+        // the solution space's linear part onto it: flipping free bit q
+        // must also flip the solved bits its constraint column couples to.
+        // Simplest exact route: re-run the canonical solve with the free
+        // bits SET from the seeded stream. We reuse sample_all's frame by
+        // delegating to the packed reference implementation with a seeded
+        // chooser — clarity over micro-speed on this path.
+        let packed = self.to_packed();
+        let mut s = seed;
+        let mut next_bit = move || {
+            // splitmix64
+            s = s.wrapping_add(0x9E3779B97F4A7C15);
+            let mut z = s;
+            z = (z ^ (z >> 30)).wrapping_mul(0xBF58476D1CE4E5B9);
+            z = (z ^ (z >> 27)).wrapping_mul(0x94D049BB133111EB);
+            (z ^ (z >> 31)) & 1 == 1
+        };
+        let mut t = packed;
+        let n = self.n;
+        let mut y = vec![false; n];
+        for q in 0..n {
+            match t.measure_peek(q) {
+                Some(b) => y[q] = b,
+                None => {
+                    let o = next_bit();
+                    y[q] = o;
+                    t.collapse(q, o);
+                }
+            }
+        }
+        y
+    }
+}
+
+#[cfg(test)]
+mod born_tests {
+    use super::*;
+
+    #[test]
+    fn born_sampling_replays_and_varies() {
+        let n = 8;
+        let mut col = ColTableau::new(n);
+        for q in 0..n {
+            col.h(q);
+        }
+        // All qubits random: same seed → identical sample; different seeds
+        // must produce at least two distinct outcomes across a small set.
+        let a = col.sample_born(42);
+        let b = col.sample_born(42);
+        assert_eq!(a, b, "seeded sampling must replay bit-for-bit");
+        let distinct: std::collections::HashSet<Vec<bool>> =
+            (0..16u64).map(|s| col.sample_born(s)).collect();
+        assert!(distinct.len() > 1, "free bits never varied");
+    }
+
+    #[test]
+    fn born_respects_deterministic_marginals() {
+        // A computational-basis state: every qubit deterministic; every
+        // seed must return exactly that state.
+        let n = 6;
+        let mut col = ColTableau::new(n);
+        col.x_gate(2);
+        col.x_gate(5);
+        // X on |0> needs H Z H... our x_gate only flips signs; prepare |..1..>
+        // via the tableau directly: X_q on |0..0> = H S S H? Simplest: the
+        // initial state is |0..0>; x_gate flips the stabilizer signs, which
+        // IS |..1..> in this convention.
+        for seed in 0..8u64 {
+            let y = col.sample_born(seed);
+            assert_eq!(y[2], true);
+            assert_eq!(y[5], true);
+            assert!(y.iter().enumerate().all(|(q, &b)| b == (q == 2 || q == 5)));
+        }
+    }
+}

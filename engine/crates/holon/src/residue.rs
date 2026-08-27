@@ -116,10 +116,20 @@ pub fn primes() -> &'static [u64] {
     })
 }
 
-/// How many prime children a coefficient bound of `bits` needs.
+/// How many prime children a coefficient bound of `bits` needs. REFUSES when
+/// the bound exceeds the table — a silent clamp here would shrink the CRT
+/// window below the coefficient bound and reconstruct a WRONG exact value,
+/// which is the one output this engine may never produce. (Caught by external
+/// review, 2026-08-27: the previous `.min(table)` was exactly that clamp.)
 pub fn primes_for_bits(bits: usize) -> usize {
     // +1 for the sign headroom (values live in (−P/2, P/2)).
-    (bits / BITS_PER_PRIME + 2).min(primes().len())
+    let need = bits / BITS_PER_PRIME + 2;
+    assert!(
+        need <= primes().len(),
+        "residue: coefficient bound of {bits} bits needs {need} primes but the          table holds {}; refusing rather than silently shrinking the CRT window          (grow the prime table to proceed)",
+        primes().len()
+    );
+    need
 }
 
 // ---------------------------------------------------------------------------
@@ -724,5 +734,22 @@ mod tests {
         let a = ResCyc::from_cyc(&Cyc { c: [1, 2, 3, 4], m: 1 }, 3);
         let merged = ResCyc::empty().merge(a.clone()).merge(ResCyc::empty());
         assert_eq!(merged, a);
+    }
+}
+
+#[cfg(test)]
+mod saturation_tests {
+    use super::*;
+
+    #[test]
+    fn in_table_bounds_are_served() {
+        assert!(primes_for_bits(60) >= 3);
+        assert!(primes_for_bits(1700) <= primes().len());
+    }
+
+    #[test]
+    #[should_panic(expected = "refusing rather than silently shrinking")]
+    fn oversized_bound_refuses() {
+        let _ = primes_for_bits(10_000);
     }
 }

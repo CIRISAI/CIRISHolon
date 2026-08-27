@@ -126,4 +126,34 @@ theorem lanes_digest_convicts (p : ℕ) [NeZero p]
     claimed ≠ shardedFold shards :=
   digest_convicts (laneDigest p) shards claimed h
 
+/-! ### Both directions, said exactly
+
+`digest_convicts` is the NO-FALSE-ALARM direction: a digest disagreement
+convicts, and the conviction is never wrong. The reverse question — can
+corruption be MISSED? — is answered on the carrier's design window:
+within the coefficient bound (both values smaller than half the prime
+product), digest agreement IS equality, so a miss is impossible in spec.
+Outside the window, or for a cheap spot-check over a subset of primes, only
+the probabilistic guarantee holds and any writeup must say so. (The
+reduction from "equal mod every prime in the table" to "equal mod the
+product" is CRT over the table's pairwise-coprime primes; the table's
+primality and distinctness are pinned by the Rust tests. This lemma pins
+the window-injectivity principle at the product modulus.) -/
+
+/-- **No false negatives on the window.** Two integers inside the signed
+    window (−P/2, P/2) that agree mod P are equal — a corrupted value that
+    the full-carrier digest fails to flag was not a corruption. -/
+theorem digest_window_faithful {P : ℕ} [NeZero P] {x y : ℤ}
+    (hx : 2 * x.natAbs < P) (hy : 2 * y.natAbs < P)
+    (h : (x : ZMod P) = (y : ZMod P)) : x = y := by
+  have hz : ((x - y : ℤ) : ZMod P) = 0 := by push_cast [h]; ring
+  have hdvd : (P : ℤ) ∣ (x - y) := (ZMod.intCast_zmod_eq_zero_iff_dvd _ _).mp hz
+  have hdvd' : P ∣ (x - y).natAbs := by
+    have h2 := Int.natAbs_dvd_natAbs.mpr hdvd
+    rwa [Int.natAbs_ofNat] at h2
+  have hlt : (x - y).natAbs < P := by
+    have hle := Int.natAbs_sub_le x y
+    omega
+  exact sub_eq_zero.mp (Int.natAbs_eq_zero.mp (Nat.eq_zero_of_dvd_of_lt hdvd' hlt))
+
 end CIRISHolon.MergeLaw

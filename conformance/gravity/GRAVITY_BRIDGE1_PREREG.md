@@ -121,3 +121,41 @@ classical sectors and provably FAILS to close under superposition — the
 closure boundary measured exactly." Any gate fires → that rung dies, kept.
 VOID semantics as before. Successors: non-central matter hops (charged
 matter proper, needs the full Z[ζ8] ring), then SU(2).
+
+## AMENDMENT A1 — 2026-08-27, pre-instrument, pre-data
+
+Recorded before `bridge1.py` exists. Two staked derivations above are
+WRONG, provably, and are corrected here with the proofs; the freeze's
+no-post-RESULT-rescue rule is untouched (no result exists).
+
+1. **B3 held constraints are GAUSS ONLY.** In the dynamical theory
+   flatness is not a constraint — it is the magnetic ENERGY (U_B), and
+   [U_E, B_p] ≠ 0 is the quantum dynamics itself. The original B3 carried
+   flatness-as-constraint over from the kinematic campaigns (misfit M7's
+   sibling). B3 now: the JOINT Gauss projector (gauge+matter at vertex 1,
+   gauge elsewhere) holds exactly on every registry state at every step.
+   Plaquette classes become OBSERVABLES.
+2. **B1's sharp-class prediction was false by derivation:** U_E's central
+   right-multiplications toggle plaquette and loop classes in
+   superposition. Corrected B1, with the exact algebra: R := R_{r²}(e) is
+   an involution, so U_E(e) = (1+iR)/√2 = e^{iπR/4} EXACTLY; per edge the
+   k-step electric action is e^{ikπR/4}, giving central-parity toggle
+   weight sin²(kπ/4) — ½, 1, ½, 0 for k = 1..4 (full coherent revival at
+   k=4). Corrected gates: (i) TWO-ROUTE agreement — the state-vector
+   evolution's exact loop-class distribution must equal an INDEPENDENT
+   combinatorial route (the closed 2^E-branch central-sector sum, a
+   separate function sharing no code with the evolution); (ii) occupied vs
+   empty initial occupation give exactly different distributions at every
+   k ∈ 1..4.
+3. **B4, the closure rung, corrected and sharpened:** the coarse view
+   v = the loop's central-parity distribution. The staked classical
+   bookkeeping T_cl is the one-step Markov toggle map (edge toggles with
+   the k=1 weight ½, composed k times — memoryless by construction).
+   STAKED: δ(k=1) = 0 (they agree at ½), δ(k=2) = ½ (quantum toggles with
+   weight 1; Markov mixes to ½), δ(k=4) = ½ (quantum REVIVES to 0; Markov
+   stays ½). The classical geometric description fails by COHERENCE, not
+   noise, and revives — a memoryless view cannot close over a coherent
+   geometry, measured exactly. A DEPHASED control (running T_cl itself)
+   matches T_cl identically.
+4. B2, B5, B6, B7 unchanged. Step counts k ≤ 4; the overflow refusal
+   stands.

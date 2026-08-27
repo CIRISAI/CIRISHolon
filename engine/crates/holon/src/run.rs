@@ -81,3 +81,33 @@ pub fn amplitude_auto(n: usize, gates: &[Gate], y: &[bool], shards: usize) -> Am
         )
     }
 }
+
+/// THE TUNED PRODUCTION PATH: policy in, exact amplitude out, the tuner's
+/// choice surfaced for the certificate. Routing follows `tune::select`'s
+/// MEASURED rules only (t>n → pruned-dedup wins; t≤n → sliced wins; magic5
+/// where slicing does not apply); every route is exact and the routes are
+/// mutually agreement-tested (`tests/tuned.rs`). A refusal carries its
+/// reason — the policy's scope is the caller's own declaration.
+pub fn amplitude_tuned(
+    policy: &crate::tune::Policy,
+    n: usize,
+    gates: &[Gate],
+    y: &[bool],
+    shards: usize,
+) -> Result<(Cyc, crate::tune::Choice), crate::tune::Refusal> {
+    let t = gates.iter().filter(|g| g.is_t()).count() as u32;
+    let choice = crate::tune::select(policy, n, t, shards)?;
+    let amp = match choice.decomp {
+        crate::tune::Decomp::Sliced => crate::sliced::amplitude(n, gates, y, choice.shards),
+        crate::tune::Decomp::Magic5 => {
+            let c = crate::magic::Circuit { n_qubits: n, gates: gates.to_vec() };
+            let src = crate::magic5::Magic5Source::new(&c);
+            mesh::fold_amplitude(&src, y, choice.shards)
+        }
+        crate::tune::Decomp::Pruned => {
+            let sum = run_pruned(n, gates, &default_config());
+            mesh::fold_amplitude(&sum, y, choice.shards)
+        }
+    };
+    Ok((amp, choice))
+}

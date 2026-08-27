@@ -34,7 +34,7 @@ stabilizer extent 2^23.97, defended against tensor networks at Schmidt rank
 tracker's own magic-axis hardness figure is a Qiskit Aer extrapolation
 (1e7 s ≈ one second per stabilizer term) — an implementation constant, not a
 wall. Our exact cost at 70 F-gates: ~2.2e8 terms at the F-state exponent.
-**GATE (pre-staked):** a two-day pilot reproducing their Figure 2 at
+**GATE (pre-staked):** a pilot reproducing their Figure 2 at
 N=20/30/42 and comparing slopes. Run the pilot regardless — it prices the
 exact tier against the incumbent on a public instance.
 **Kills:** the `_checks` ancilla variant carries more magic than counted;
@@ -55,7 +55,7 @@ non-multiplicativity is known only asymptotically and non-constructively
 (Heimendahl et al. 2021) — **no explicit finite counterexample exists, and
 the first open case is 8 qubits.**
 **Why us — best whole-instrument fit:** F(ψ) is a max over a finite
-stabilizer set (|S₆|=3.15e8 a 4090 afternoon; |S₈|=4.18e13 the mesh); the
+stabilizer set (|S₆|=3.15e8 fits one 4090; |S₈|=4.18e13 is the mesh's size); the
 alignment test is exact algebraic equality (needs the CRT carrier); the
 exhaustive max is a distributed max-reduction (needs the machine-checked
 merge law — and the no-miss direction, `digest_window_faithful`, is exactly
@@ -86,13 +86,12 @@ Named as the plan of record by the Lean KS-bound formalization
 obligations tracked as machine-readable goals) and independently as "the
 next concrete engineering target" by Lean-QEC (arXiv:2605.16523). One
 artifact, two papers' stated needs; the machine-checked merge law is already
-a large fraction of its soundness argument. Days-scale first deliverable:
+a large fraction of its soundness argument. Smallest first deliverable:
 the two order-23 obligations.
 
-## Side-bets (a day or two each)
+## Side-bets (small, cheap, high-signal)
 
-- **Cryptanalyse Clifford obfuscation** (Bin Yan, arXiv:2608.15963, days
-  old): a heuristic hardness claim about Clifford-plus-injected-magic where
+- **Cryptanalyse Clifford obfuscation** (Bin Yan, arXiv:2608.15963, fresh): a heuristic hardness claim about Clifford-plus-injected-magic where
   "direct simulation" — us — is the named adversary. High signal either way.
 - **Answer MQT Bench issue #924**: the maintainer asked for a reference-
   output design and said dense statevectors won't scale; a poly(n)-memory

@@ -1,7 +1,17 @@
 # CIRISHolon
 
-A multi-scale simulation engine in which **every level of detail is a
-certified view of the level below**.
+**A decentralized physics and graphics unified engine, designed for
+scalability and performance — from WASM in a browser up through large
+clusters — in which every level of detail is a certified view of the level
+below.**
+
+One recursive object — the holon — carries every tier: bit-exact classical
+and quantum simulation at the bottom (measured against the field's own
+tools; see `conformance/BENCHMARKS.md`), matter and graphics tiers above,
+one merge law and one transport square binding them, and the same
+deterministic, auditable results at every scale from a browser tab to a
+thousand-shard mesh. The tier ladder, its referees, and its benchmark
+targets live in `TIERS.md`.
 
 ## What that means, concretely
 

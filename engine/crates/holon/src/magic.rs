@@ -605,13 +605,11 @@ impl StabTerm {
 /// states, in the exact ring. No tolerance, no sampling.
 pub fn decomposition_is_exact(terms: &[StabTerm], nq: usize) -> bool {
     for x in 0u32..(1u32 << nq) {
-        let mut acc = Cyc::ZERO;
-        for t in terms {
-            let a = t.amplitude(x);
-            if !is_zero(a) {
-                acc = acc.add(t.coeff.mul(a));
-            }
-        }
+        // Accumulation is the ONE merge law (`merge::fold`), not a local sum:
+        // the terms fold associatively and commutatively, so the audit is the
+        // same number in any order. Out-of-support terms contribute ZERO,
+        // which is the ledger's identity.
+        let acc = crate::merge::fold(terms.iter().map(|t| t.coeff.mul(t.amplitude(x))));
         let w = omega_pow((x.count_ones() % 8) as u8);
         let want = Cyc { c: w.c, m: w.m + nq as i32 };
         if !cyc_eq(acc, want) {
@@ -1057,17 +1055,12 @@ impl BranchSource for BgSource {
 
 // ---------------------------------------------------------------- the fold
 
-/// Fold a branch source into one exact amplitude. Exact Z[ω] sums are
-/// order-independent, so this is the same number however it is sharded.
+/// Fold a branch source into one exact amplitude, through THE ONE MERGE LAW
+/// (`merge::fold`, `Cyc: MergeLedger`). Exact Z[ω] sums are associative and
+/// commutative, so this is the same number under any sharding or ordering —
+/// which is the mesh's warrant, and the reason this is not a local loop.
 pub fn amplitude<S: BranchSource + ?Sized>(src: &S, y: &[bool]) -> Cyc {
-    let mut acc = Cyc::ZERO;
-    for b in 0..src.n_branches() {
-        let a = src.amplitude_of(b, y);
-        if !is_zero(a) {
-            acc = acc.add(a);
-        }
-    }
-    acc
+    crate::merge::fold((0..src.n_branches()).map(|b| src.amplitude_of(b, y)))
 }
 
 #[cfg(test)]

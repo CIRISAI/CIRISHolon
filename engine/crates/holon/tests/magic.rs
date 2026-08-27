@@ -207,6 +207,33 @@ fn branch_count_is_the_achieved_rank() {
     }
 }
 
+/// Deeper t, where the plan is many blocks rather than one or two: BG against
+/// naive in the exact ring. The reference is not consulted here because naive
+/// is already pinned to it above — this is the block-composition check.
+#[test]
+fn deep_t_blocks_compose() {
+    let mut rng = Rng(0xDEEE_0000_1234_5678);
+    for (n, t) in [(3usize, 13usize), (4, 14), (2, 15)] {
+        let c = random_circuit(&mut rng, n, 10, t);
+        let naive = NaiveSource::new(&c);
+        let bg = BgSource::new(&c);
+        assert!(bg.n_branches() * 8 < naive.n_branches(), "t={t}: {} branches", bg.n_branches());
+        for idx in 0..(1usize << n) {
+            let y = bits(idx, n);
+            assert!(
+                cyc_eq(magic::amplitude(&naive, &y), magic::amplitude(&bg, &y)),
+                "t={t} state {idx}"
+            );
+        }
+        println!(
+            "[magic deep] n={n} t={t}: naive {} branches, bg {} — exact agreement on all {} states",
+            naive.n_branches(),
+            bg.n_branches(),
+            1usize << n
+        );
+    }
+}
+
 /// The decomposition table is re-derived, not remembered: this recomputes
 /// Σ_j c_j φ_j(x) in the exact ring at all 64 basis states.
 #[test]

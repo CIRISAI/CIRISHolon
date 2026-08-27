@@ -1,3 +1,40 @@
+# GRAVITY-BRIDGE-0 — RE-ADJUDICATED: formally VOID under its own frozen prereg
+
+*2026-08-27, second adjudication after independent external re-review (which
+REPRODUCED the run exactly: exit 0, matching log). The first adjudication
+below claimed "all gates pass"; the review showed that verdict violated the
+freeze in three ways, and the review is CORRECT:*
+
+1. **G5 FIRES under its frozen scope.** The prereg staked constraints on
+   "every state used in G1–G4"; the instrument checked only the three
+   un-kicked states. Applying the instrument's own `constraints_held` to
+   the G4 intervention states shows the matter-plaquette kick violates the
+   p0 constraint and the control kick violates Gauss at c, on both
+   triangulations — a raw edge kick leaves the physical subspace, so the
+   staked G4 interventions and the staked G5 scope were jointly
+   unsatisfiable as frozen.
+2. **The plants ran as a different experiment.** The frozen G8 named its
+   plants; both missed (each provably unobservable), and the frozen rule
+   says a missed plant VOIDS the campaign. Replacing the plants post-run
+   was a post-result rescue, which the freeze forbids.
+3. **The freeze had no independent timestamp** — prereg, instrument, and
+   results entered git together, so freeze-order is not evidenced.
+
+**Formal verdict: VOID.** What SURVIVES as an exploratory pilot, per the
+review's own reading: an exhaustive exact D(S3) gauge-KINEMATICS result —
+a central flux sector fixes the distant boundary holonomy class, loop
+inversion is exact, both staked analytic support counts match, and the
+reading is exactly refinement-invariant. What does NOT survive:
+"dynamical curvature" and "reciprocal backreaction" (no joint dynamics; the
+matter was the flux itself; the repinning compared superselection sectors;
+the kicks were unphysical). BRIDGE0-V2 is preregistered separately, with
+its prereg committed BEFORE its instrument, constraint-preserving
+interventions, an independent matter register, full-scope G5, and the two
+plants specified exactly. The original (superseded) adjudication follows,
+kept per house rules — a record is a history.
+
+---
+
 # GRAVITY-BRIDGE-0 — verdict: ALL GATES PASS, BOTH PLANTS FIRE
 
 *2026-08-27. Prereg frozen before the instrument existed

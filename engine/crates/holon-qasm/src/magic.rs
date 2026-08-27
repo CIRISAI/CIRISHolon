@@ -54,16 +54,53 @@ impl Cyc {
         self
     }
 
+    /// The exactness envelope, enforced: refuse (panic) on i128 overflow
+    /// rather than wrap — a wrapped coefficient is a silently wrong exact
+    /// value, the one output the referee may never produce. Coefficients
+    /// grow like 2^{O(n+t)} (Quist–Coopmans–Laarman, arXiv:2602.17775),
+    /// so the envelope is reachable and the refusal is load-bearing.
+    #[inline]
+    fn refuse() -> ! {
+        panic!(
+            "Cyc: coefficient overflow — the i128 exactness envelope is exceeded; \
+             refusing rather than wrapping"
+        )
+    }
+
+    #[inline]
+    fn cadd(a: i128, b: i128) -> i128 {
+        match a.checked_add(b) {
+            Some(v) => v,
+            None => Self::refuse(),
+        }
+    }
+
+    #[inline]
+    fn cmul(a: i128, b: i128) -> i128 {
+        match a.checked_mul(b) {
+            Some(v) => v,
+            None => Self::refuse(),
+        }
+    }
+
+    #[inline]
+    fn csub(a: i128, b: i128) -> i128 {
+        match a.checked_sub(b) {
+            Some(v) => v,
+            None => Self::refuse(),
+        }
+    }
+
     pub fn mul(self, o: Cyc) -> Cyc {
         let mut c = [0i128; 8];
         for a in 0..4 {
             for b in 0..4 {
-                c[a + b] += self.c[a] * o.c[b];
+                c[a + b] = Self::cadd(c[a + b], Self::cmul(self.c[a], o.c[b]));
             }
         }
         let mut out = [0i128; 4];
         for a in 0..4 {
-            out[a] = c[a] - c[a + 4]; // ω⁴ = −1
+            out[a] = Self::csub(c[a], c[a + 4]); // ω⁴ = −1
         }
         Cyc { c: out, m: self.m + o.m }.normalize()
     }
@@ -89,23 +126,37 @@ impl Cyc {
             std::mem::swap(&mut a, &mut b);
         }
         let delta = (b.m - a.m) as u32;
+        let half = delta / 2;
+        if half >= 127 {
+            Self::refuse();
+        }
+        let pow = 1i128 << half;
         for x in &mut a.c {
-            *x <<= delta / 2;
+            *x = Self::cmul(*x, pow);
         }
         if delta % 2 == 1 {
             // one ring-multiply by √2 = ω − ω³
             let t = a.c;
             let mut acc = [0i128; 8];
             for p in 0..4 {
-                acc[p + 1] += t[p];
-                acc[p + 3] -= t[p];
+                acc[p + 1] = Self::cadd(acc[p + 1], t[p]);
+                acc[p + 3] = Self::csub(acc[p + 3], t[p]);
             }
             for p in 0..4 {
-                a.c[p] = acc[p] - acc[p + 4];
+                a.c[p] = Self::csub(acc[p], acc[p + 4]);
             }
         }
         a.m = b.m;
-        Cyc { c: [a.c[0] + b.c[0], a.c[1] + b.c[1], a.c[2] + b.c[2], a.c[3] + b.c[3]], m: a.m }.normalize()
+        Cyc {
+            c: [
+                Self::cadd(a.c[0], b.c[0]),
+                Self::cadd(a.c[1], b.c[1]),
+                Self::cadd(a.c[2], b.c[2]),
+                Self::cadd(a.c[3], b.c[3]),
+            ],
+            m: a.m,
+        }
+        .normalize()
     }
 
     pub fn to_complex(self) -> (f64, f64) {

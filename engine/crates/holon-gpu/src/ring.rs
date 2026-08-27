@@ -46,19 +46,30 @@ pub fn rot(x: Cyc, r: u8) -> Cyc {
 pub fn align_to(x: Cyc, m: i32) -> [i128; 4] {
     assert!(m >= x.m, "align_to: {m} is below the element's own exponent {}", x.m);
     let delta = (m - x.m) as u32;
+    let half = delta / 2;
+    // The exactness envelope, enforced (matches Cyc::add): refuse on i128
+    // overflow rather than wrap — a wrapped lane is a silently wrong exact
+    // value, and the GPU fold would launder it into the certified result.
+    let refuse = || -> ! {
+        panic!("align_to: coefficient overflow — the i128 exactness envelope is exceeded; refusing rather than wrapping")
+    };
+    if half >= 127 {
+        refuse();
+    }
+    let pow = 1i128 << half;
     let mut c = x.c;
     for v in &mut c {
-        *v <<= delta / 2;
+        *v = v.checked_mul(pow).unwrap_or_else(|| refuse());
     }
     if delta % 2 == 1 {
         let t = c;
         let mut acc = [0i128; 8];
         for p in 0..4 {
-            acc[p + 1] += t[p];
-            acc[p + 3] -= t[p];
+            acc[p + 1] = acc[p + 1].checked_add(t[p]).unwrap_or_else(|| refuse());
+            acc[p + 3] = acc[p + 3].checked_sub(t[p]).unwrap_or_else(|| refuse());
         }
         for p in 0..4 {
-            c[p] = acc[p] - acc[p + 4];
+            c[p] = acc[p].checked_sub(acc[p + 4]).unwrap_or_else(|| refuse());
         }
     }
     c

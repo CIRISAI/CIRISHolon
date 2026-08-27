@@ -184,6 +184,15 @@ cargo test -q -p holon-swarm 2>/dev/null >/dev/null \
 cargo build -q -p holon-swarm --release 2>/dev/null \
   && ok "holon-swarm swarm_bench builds" || no "holon-swarm swarm_bench builds"
 
+# holon-qasm: the stratified QASM simulator. The in-crate three-way tier
+# conformance (each cheap tier vs the statevector carrier, exact) plus
+# planted-mutation detection is the CI backbone of the QASM suite; the
+# externally-refereed record (qiskit ground truth, 12 pre-registered arms,
+# all CONFIDENCE) lives upstream in CIRISOntology scratchpad/qasm.
+cargo test -q -p holon-qasm 2>/dev/null >/dev/null \
+  && ok "holon-qasm tier conformance + mutation detection" \
+  || no "holon-qasm tier conformance + mutation detection"
+
 n_mesh=$(cargo test -q -p holon-mesh -- --list 2>/dev/null | grep -c ': test$')
 [ "${n_mesh:-0}" -gt 0 ] \
   && ok "holon-mesh reaches $n_mesh tests" \
@@ -289,8 +298,15 @@ if [ -n "$repo_root" ]; then
       [ -n "${REF_ALLOW["sim_engine/$f::$r"]:-}" ] && continue
       esc=$(printf '%s' "$r" | sed 's/[.[\*^$]/\\&/g')
       if ! printf '%s\n' "$tracked" | grep -qE "(^|/)${esc}\$"; then
-        echo "    sim_engine/$f: \`$r\` -- no tracked file matches this citation"
-        ref_fail=1
+        # DECOUPLING RULE: these docs migrated from CIRISAI/CIRISOntology and
+        # legitimately cite files tracked THERE (Core/*.lean, campaign
+        # records). UPSTREAM_MANIFEST.txt is a committed snapshot of the
+        # upstream `git ls-files`; refresh it when upstream moves a cited
+        # file. A citation resolving against neither tree is still a failure.
+        if ! grep -qE "(^|/)${esc}\$" UPSTREAM_MANIFEST.txt 2>/dev/null; then
+          echo "    sim_engine/$f: \`$r\` -- no tracked file (local or upstream manifest) matches"
+          ref_fail=1
+        fi
       fi
     done <<< "$refs"
   done

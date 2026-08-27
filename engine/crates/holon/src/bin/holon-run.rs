@@ -51,20 +51,24 @@ fn parse(src: &str) -> Result<(usize, Vec<Gate>), String> {
 }
 
 fn clifford_sample(n: usize, gates: &[Gate]) {
-    use holon::tableau::PackedTableau;
+    // The gate path runs on the TRANSPOSED engine (word-parallel columns,
+    // conformance-gated bit-identical to the reference); measurement flows
+    // through the certified row-major reference after one transpose.
+    use holon::coltableau::ColTableau;
     let t0 = std::time::Instant::now();
-    let mut t = PackedTableau::new(n);
+    let mut col = ColTableau::new(n);
     for g in gates {
         match *g {
-            Gate::X(q) => t.x_gate(q),
-            Gate::Z(q) => t.z_gate(q),
-            Gate::H(q) => t.h(q),
-            Gate::S(q) => t.s(q),
-            Gate::Sdg(q) => t.sdg(q),
-            Gate::Cx(c, q) => t.cx(c, q),
+            Gate::X(q) => col.x_gate(q),
+            Gate::Z(q) => col.z_gate(q),
+            Gate::H(q) => col.h(q),
+            Gate::S(q) => col.s(q),
+            Gate::Sdg(q) => col.sdg(q),
+            Gate::Cx(c, q) => col.cx(c, q),
             _ => panic!("clifford-sample requires a Clifford circuit"),
         }
     }
+    let mut t = col.to_packed();
     let mut ones = 0usize;
     for q in 0..n {
         match t.measure_peek(q) {

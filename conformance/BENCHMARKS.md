@@ -61,3 +61,28 @@ them, the packed Pauli-plane tableau (holon-run clifford-sample, medians of
 **The gap closed from 28–318× (unpacked) to 2.7–5.6× (packed).** The
 remainder is SIMD width and layout transposition — named, mechanical, and
 not a blocker for anything above tier 1.
+
+## 2026-08-27, fourth entry: the transpose lands — crossover at n=1024
+
+The mechanical remainder named in the third entry is built: `coltableau.rs`,
+the column-major tableau (stim's layout, credited: Gidney, Quantum 5, 497),
+every unitary gate ~2n/64 word operations with word-parallel sign masks,
+conformance-gated BIT-IDENTICAL to the certified row-major reference on
+random circuits to n=130 (planes and signs both; measurement flows through
+the reference after one transpose). Same rig methodology as entry three
+(engine-only timing both sides, medians of 3, all n qubits measured), same
+session, same machine, concurrent background load on both sides
+(`conformance/qasm/rerun_stim_h2h.py`, `h2h_col_results.json`):
+
+| n | ours (column) | stim (same-session) | ratio |
+|---|---:|---:|---:|
+| 64 | 0.178 ms | 0.095 ms | 1.88× behind |
+| 256 | 1.995 ms | 0.834 ms | 2.39× behind |
+| 1024 | 35.18 ms | 42.10 ms | **0.84× — we lead** |
+
+The word-parallel scaling wins as n grows; the small-n remainder is a
+per-gate constant (nested-Vec column indirection, bounds checks — flatten to
+one allocation, then re-measure). Entry three's absolute stim numbers differ
+from today's because circuits, seeds, and machine load differ; the paired
+same-session ratio is the honest quantity, and it now brackets 1× —
+the tier-1 target (stim ≤ 1×) is REACHED at n=1024 and remains open below it.

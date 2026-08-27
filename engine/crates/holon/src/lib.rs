@@ -21,8 +21,10 @@ pub mod mesh;
 pub mod plane;
 pub mod prune;
 pub mod real;
+pub mod residue;
 pub mod run;
 pub mod sample;
+pub mod coltableau;
 pub mod tableau;
 pub mod transport;
 

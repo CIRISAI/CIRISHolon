@@ -5,8 +5,7 @@ Convergent art is a HIT, not a strike: every occupied axis below is cited
 generously and strengthens the position by pinning exactly what remains.
 Verification grades: lanes verified load-bearing claims against primary
 sources (arXiv PDFs, shipped source code); the rank lane's numerical
-verifications are banked at `conformance/srank/`. The gauge/tensor-network
-lane's report is pending and will be appended.*
+verifications are banked at `conformance/srank/`. All six lanes are in.*
 
 ## The verdict, in one table
 
@@ -61,3 +60,21 @@ Ranked with referees and kills in `CAMPAIGNS.md`: the QPG linear-code
 exponent hunt (χ(cat₈) ≤ 5?), the IBM tracker fstate instance, the
 stabilizer-fidelity multiplicativity counterexample, the 13-year 3-qubit
 T-count frontier, and the verified streaming LRAT checker.
+
+
+## The gauge/TN lane (appended)
+
+| claimed element | status | occupier / credit |
+|---|---|---|
+| Schwinger-model DMRG/MPS precision | **OCCUPIED, and it is the referee** | Byrnes et al. (PRD 66, 013002: M_V/g=0.56419(4), N≤256 — and their verdict that the Coulomb tail is "no impediment to DMRG"); Bañuls–Cichy–Jansen–Cirac (JHEP 11 (2013) 158); Buyens et al. (arXiv:1411.0020 — condensate to 7 figures); Dempsey et al. (PRR 4, 043133 — the exact mass shift); Arguello Cruz et al. (arXiv:2412.01902 — (m/g)_c to 6 digits at 3000 qubits, and the one published production-cost figure, App. C) |
+| **Bit-reproducible DMRG in tensor networks** | **UNCLAIMED** | Zero determinism goals anywhere in TN (ITensor declares it out of scope, ITensors.jl #1699, with non-last-digit divergence quoted). Prior stake exists IN LATTICE QCD: QUDA `QUDA_DETERMINISTIC_REDUCE`, Kate Clark Lattice 2023; Feltor (arXiv:1807.01971) for bitwise-reproducible fluid codes — credit all three, claim TN only |
+| Determinism-is-cheap (the synthesis) | **NEW — four legs independently sourced, assembly ours** | gauge invariance forces block-sparse; block-sparse gains only 1.44× from 8 BLAS threads; White's noise term and Hubig's expansion are RNG-free; the fastest published Schwinger DMRG already discards the random initial MPS for convergence. Bit-determinism costs ≲1.4× and surrenders nothing the SOTA wants |
+| LGT-specific TN engine | **VACANT** | The canon ran on unnamed in-house codes, then generic ITensor. No incumbent |
+| Exact-arithmetic gauge-sector bookkeeping | **VACANT (arithmetic), occupied (quantum numbers)** | Integer quantum numbers standard (Singh–Pfeifer–Vidal); nearest precedents: Rico et al. (arXiv:1312.3127, literal integer MPS matrices carrying the Gauss constraint), LSH integer charges (Raychowdhury–Stryker) |
+| Free open question we'd answer in passing | — | whether a Gauss-law penalty term ill-conditions DMRG: grepped across the corpus, no coefficient ever published |
+
+Traps staked by the lane: the 2-flavor factor-2.19 convention gap (do not
+stake that rung); the M_S terminology collision (Dempsey's M_S = vector,
+Bañuls's M_S = scalar); scalar errors 10–30× vector; "reproducibility" in
+this community means cross-method physical agreement, not bitwise — define
+our sense explicitly or be misread.

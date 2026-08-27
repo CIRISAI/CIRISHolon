@@ -68,6 +68,7 @@ fn clifford_sample(n: usize, gates: &[Gate]) {
             _ => panic!("clifford-sample requires a Clifford circuit"),
         }
     }
+    let gates_s = t0.elapsed().as_secs_f64();
     let mut t = col.to_packed();
     let mut ones = 0usize;
     for q in 0..n {
@@ -77,7 +78,7 @@ fn clifford_sample(n: usize, gates: &[Gate]) {
         }
     }
     println!(
-        "{{\"seconds\": {:.6}, \"ones\": {ones}}}",
+        "{{\"seconds\": {:.6}, \"gates_s\": {gates_s:.6}, \"ones\": {ones}}}",
         t0.elapsed().as_secs_f64()
     );
 }

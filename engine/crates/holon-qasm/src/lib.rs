@@ -21,6 +21,8 @@
 
 use std::collections::BTreeMap;
 
+pub mod magic;
+
 pub const N_MAX_STATEVECTOR: usize = 24;
 
 #[derive(Clone, Copy, PartialEq, Debug)]
@@ -49,6 +51,7 @@ pub struct Circuit {
 pub enum Tier {
     Classical,
     Tableau,
+    Magic,
     Statevector,
 }
 
@@ -61,6 +64,10 @@ pub enum Mutation {
     TableauCxPhase,
     /// Classical tier applies CX with control/target swapped.
     ClassicalCxSwap,
+    /// Magic tier drops the S gate's pairwise J flips.
+    MagicSCross,
+    /// Magic tier uses the wrong odd-delta Gauss-sum phase.
+    MagicGauss,
 }
 
 // ---------------------------------------------------------------- parsing
@@ -170,16 +177,25 @@ pub fn route(c: &Circuit) -> Result<Tier, String> {
     if clifford_only {
         return Ok(Tier::Tableau);
     }
+    let t_count = c
+        .gates
+        .iter()
+        .filter(|g| matches!(g, Gate::T(_) | Gate::Tdg(_)))
+        .count();
+    if t_count <= 12 && !c.gates.iter().any(|g| matches!(g, Gate::Ccx(..))) {
+        return Ok(Tier::Magic);
+    }
     if c.n_qubits <= N_MAX_STATEVECTOR {
         return Ok(Tier::Statevector);
     }
     Err(format!(
-        "REFUSED by the wall: circuit is non-Clifford (T/Tdg or Ccx present) at \
+        "REFUSED by the wall: non-Clifford circuit with T-count {} > 12 at \
          n = {} > {} qubits. The tableau view is not Closed under non-Clifford \
-         motions (lean/CIRISHolon/Stabilizer.lean: tableau_not_closed_under_rotation), \
-         and the statevector carrier costs 2^n. The stabilizer-rank tier that \
-         would price this by its T-count is owed, not pretended.",
-        c.n_qubits, N_MAX_STATEVECTOR
+         motions (lean/CIRISHolon/Stabilizer.lean: tableau_not_closed_under_rotation); \
+         the magic tier prices such circuits at 2^t branches and this t exceeds \
+         its budget; the statevector carrier costs 2^n. Raising the budget is a \
+         flag away — pretending the cost is not there never is.",
+        t_count, c.n_qubits, N_MAX_STATEVECTOR
     ))
 }
 
@@ -539,6 +555,11 @@ pub fn run(c: &Circuit, tier: Tier, m: Mutation) -> BTreeMap<String, f64> {
     match tier {
         Tier::Classical => run_classical(c, m),
         Tier::Tableau => run_tableau(c, m),
+        Tier::Magic => magic::run_magic(
+            c,
+            m == Mutation::MagicSCross,
+            m == Mutation::MagicGauss,
+        ),
         Tier::Statevector => run_statevector(c),
     }
 }

@@ -381,6 +381,7 @@ fi
 #     recoverable, and the rebuild is proven byte-identical"), so what ships below is the
 #     real gate 13's audit was always meant to end in, not the allowlist entry.
 declare -A CRATE_ALLOW=(
+  ["holon-gpu"]="excluded: requires an NVIDIA GPU (cudarc + nvcc-compiled PTX); GitHub runners have none. Tested on the 4090 dev box: 12/12 determinism tests incl. struct-level shard invariance vs the CPU mesh (crates/holon-gpu/GPU.md). Owner: gpu-mesh lane / team-lead. Exit: a CI runner with a GPU, at which point this entry converts to a real invocation."
   ["q8-mps"]="DEFERRED: live full-grid run, hours deep -- a gate must never run --ignored full-grid tests"
   ["q-seam"]="uncovered, ownership untriaged (chief-of-staff-2, 2026-08-24)"
   ["sphere-demo"]="uncovered, ownership untriaged (chief-of-staff-2, 2026-08-24)"

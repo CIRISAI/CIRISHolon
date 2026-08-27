@@ -155,3 +155,29 @@ Closed view of children). Measured benchmark movement at lock:
 **packed tableau 7.8 ms at n=256, depth 5120 including full measurement —
 6.7× over the unpacked tier, 3.1× faster than qiskit's StabilizerState**;
 Stim remains the named target (est. 1–2 orders; SIMD + transposed layouts).
+
+## The DRY law (v1.1) — one mechanism per concern, or it's a misfit
+
+The theory is a single recursive decentralized holon; the engineering mirrors
+it or convicts it. There are exactly FOUR shared mechanisms, each defined
+once with its law tested once, and **a tier that ships a bespoke alternative
+to any of them is a design defect by definition** — unless it can show the
+shared mechanism genuinely cannot serve, in which case that is a MISFIT
+against the theory and is reported upstream as a finding, not patched around:
+
+1. **Merge** (`merge.rs`): all accumulation is one associative-commutative
+   ledger fold — mesh reduction, branch dedup, sampler sums, child
+   aggregation, rent accounting. Exact rings satisfy the law exactly
+   (tested by struct equality); the ℝ ledger satisfies it to a DECLARED
+   tolerance (its law test would fire on genuine order dependence) — the
+   fence that prices f64, per conditioning. This replaces ACID wholesale:
+   commits are arena appends, ordering needs no locks because the fold is
+   order-free, and validity is the certificate.
+2. **Transport** (`transport.rs`): all movement between roots is the claim-
+   transport square, and the certificate NEVER rides free — `Transported`
+   carries `cert: None` unless a `CertWitness` presents the second square.
+   The lean fence, as a type.
+3. **Identity** (`Arena`): append-only index, forever. No tier gets its own
+   identity scheme.
+4. **Certification** (`Certificate` + the battery pattern): one shape for
+   exact-by-construction and receipt-backed tiers alike.

@@ -14,9 +14,12 @@
 //! the certified holon-qasm tiers (QASM-1/2 records) as dev-dependencies.
 
 pub mod ledger;
+pub mod merge;
+pub mod mesh;
 pub mod plane;
 pub mod real;
 pub mod tableau;
+pub mod transport;
 
 /// THE INTEGRATION CONTRACT for the magic-tier workstreams (BG decomposition,
 /// pruning, sampling, mesh): a branch source enumerates stabilizer branches;

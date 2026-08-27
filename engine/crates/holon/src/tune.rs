@@ -108,6 +108,17 @@ pub enum Unswept {
     /// Sliced evaluation over the Magic5 branch space: structural sharing
     /// plausibly survives (same circuit skeleton) but is UNMEASURED.
     Magic5TimesSliced,
+    /// Sliced vs pruned ON THE REWRITTEN AFFINE ENGINE: the pre-merge rule
+    /// ("sliced wins at t ≤ n") was FALSIFIED by the first quiet-runner
+    /// sweep after the 330–907× per-branch rewrite landed — pruned now
+    /// dominates the measured cases (CI sliced surface, entry eight). The
+    /// sliced path's winning region on the current engine, if any, is
+    /// unmapped.
+    SlicedOnRewrittenEngine,
+    /// Magic5 vs pruned-dedup head-to-head on the rewritten engine: the
+    /// branch-count advantage is proven, the wall-clock crossover is not
+    /// yet measured.
+    Magic5VersusPruned,
 }
 
 /// The chosen configuration, with the report the certificate carries.
@@ -128,13 +139,18 @@ pub struct Refusal {
     pub reason: String,
 }
 
-/// v1 selector over the MEASURED rules:
-///   * t > n  → Pruned (dedup collapses the space; sliced measured 0.1× there)
-///   * t ≤ n  → Sliced (measured 14–26×), Magic5's smaller branch space is
-///     preferred from t ≥ 5 ONLY where slicing does not apply, because
-///     magic5 × sliced is unswept and we do not guess.
-///   * Scope caps refuse above their max_t — a refusal is a result.
+/// v2 selector — corrected by the first quiet-runner sweep, which FALSIFIED
+/// v1's "t ≤ n → sliced" rule: the affine rewrite (330–907×) accelerated the
+/// per-branch engine both alternatives ride on, and on the measured surface
+/// the pruned-dedup path now dominates every swept case. So v2 routes the
+/// certified fast default (Pruned) everywhere and NAMES the unswept
+/// alternatives instead of guessing; sliced and magic5 remain callable
+/// explicitly, and the next sweep can promote them where they win. Scope
+/// caps refuse above their max_t — a refusal is a result. (This correction
+/// is the tuner working as designed: routing follows measurement, and a
+/// merge that moves the surface moves the routes.)
 pub fn select(policy: &Policy, n: usize, t: u32, shards: usize) -> Result<Choice, Refusal> {
+    let _ = n;
     for d in &policy.degrade {
         if let Degrade::Scope { max_t } = d {
             if t > *max_t {
@@ -146,13 +162,14 @@ pub fn select(policy: &Policy, n: usize, t: u32, shards: usize) -> Result<Choice
             }
         }
     }
-    let (decomp, left) = if t as usize <= n {
-        (Decomp::Sliced, vec![Unswept::Magic5TimesSliced])
-    } else if t >= 5 {
-        (Decomp::Magic5, vec![])
-    } else {
-        (Decomp::Pruned, vec![])
-    };
+    let (decomp, left) = (
+        Decomp::Pruned,
+        vec![
+            Unswept::SlicedOnRewrittenEngine,
+            Unswept::Magic5VersusPruned,
+            Unswept::Magic5TimesSliced,
+        ],
+    );
     let degraded = match policy.hold {
         Hold::Exactness => vec!["latency (declared)".to_string()],
         Hold::Latency { .. } => vec![],
@@ -174,18 +191,20 @@ mod tests {
     }
 
     #[test]
-    fn measured_routing_rules() {
+    fn v2_routes_the_certified_default_and_names_the_unswept() {
         let p = Policy::exact();
-        // t <= n: sliced, with the unswept interaction named.
-        let c = select(&p, 64, 12, 8).unwrap();
-        assert_eq!(c.decomp, Decomp::Sliced);
-        assert_eq!(c.left_on_table, vec![Unswept::Magic5TimesSliced]);
-        // t > n, t >= 5: magic5.
-        let c = select(&p, 8, 12, 8).unwrap();
-        assert_eq!(c.decomp, Decomp::Magic5);
-        // tiny t beyond n: pruned default.
-        let c = select(&p, 2, 3, 8).unwrap();
-        assert_eq!(c.decomp, Decomp::Pruned);
+        for (n, t) in [(64usize, 12u32), (8, 12), (2, 3)] {
+            let c = select(&p, n, t, 8).unwrap();
+            assert_eq!(c.decomp, Decomp::Pruned);
+            assert_eq!(
+                c.left_on_table,
+                vec![
+                    Unswept::SlicedOnRewrittenEngine,
+                    Unswept::Magic5VersusPruned,
+                    Unswept::Magic5TimesSliced,
+                ]
+            );
+        }
     }
 
     #[test]

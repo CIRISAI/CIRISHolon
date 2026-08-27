@@ -62,13 +62,29 @@ fn check_route(n: usize, depth: usize, t_cap: usize, seed: u64, expect: Decomp) 
 }
 
 #[test]
-fn every_route_agrees_with_truth() {
-    // t <= n: sliced route.
-    check_route(12, 60, 8, 0xA11CE, Decomp::Sliced);
-    // t > n, t >= 5: magic5 route.
-    check_route(4, 40, 9, 0xB0B, Decomp::Magic5);
-    // t > n, t < 5: pruned default.
+fn selected_route_agrees_with_truth() {
+    // v2 routes the certified default everywhere (the quiet-runner sweep
+    // falsified v1's sliced rule on the rewritten engine).
+    check_route(12, 60, 8, 0xA11CE, Decomp::Pruned);
+    check_route(4, 40, 9, 0xB0B, Decomp::Pruned);
     check_route(2, 20, 3, 0xC0FFEE, Decomp::Pruned);
+}
+
+/// The alternatives stay exact even though v2 does not auto-route them:
+/// explicit calls must agree with the truth so a future sweep can promote
+/// them on speed alone.
+#[test]
+fn unrouted_alternatives_stay_exact() {
+    let mut rng = Rng(0xD1CE);
+    let n = 10;
+    let gates = rand_circuit(&mut rng, n, 60, 8);
+    let y = vec![false; n];
+    let truth = amplitude(n, &gates, &y);
+    let sliced = holon::sliced::amplitude(n, &gates, &y, 2);
+    assert!(cyc_eq(sliced, truth), "sliced diverged");
+    let c = holon::magic::Circuit { n_qubits: n, gates: gates.clone() };
+    let m5 = holon::mesh::fold_amplitude(&holon::magic5::Magic5Source::new(&c), &y, 2);
+    assert!(cyc_eq(m5, truth), "magic5 diverged");
 }
 
 #[test]

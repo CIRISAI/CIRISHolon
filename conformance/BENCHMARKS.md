@@ -162,3 +162,26 @@ selects. Positions, not laws: every factor is a position against
 Limits.lean's ledger (L2/L3 begging, L1/L4 floors), and the loaded-machine
 caveat from the lane reports carries — quiet-runner confirmation of the
 full sweep remains the citable form.
+
+## 2026-08-27, eighth entry: the quiet runner confirms the stack — and falsifies a routing rule
+
+Post-merge quiet-runner sweep (bakeoff run 33119952357, loadavg 0.75):
+
+**Tier 1 vs stim, re-confirmed after all three lane merges — ahead at 7/7,
+better than entry six:** 0.685 at n=64 down to **0.431** at n=4096. No
+regression from the merges; slight improvement.
+
+**The flag-plant on neutral hardware:** 4.82 s (median of 3, identical
+exact answer) on a stock CI runner vs the banked 2106.6 s on the (loaded)
+production box — **437× on hardware we don't own**, alongside 850× locally.
+
+**And the sweep did referee work on our own tuner:** the CI sliced-surface
+table shows the PRUNED path dominating every swept case at t ≤ 12 — v1's
+"t ≤ n → sliced" routing rule, measured against the pre-rewrite engine,
+is FALSIFIED on the post-rewrite engine (the 330–907× affine pass
+accelerated the substrate both alternatives ride on). The tuner is
+corrected to v2: certified default everywhere, three named `Unswept`
+interactions instead of one, alternatives callable explicitly and
+exactness-pinned (`tests/tuned.rs`) so a future sweep can promote them on
+speed alone. A routing rule died by measurement within hours of being
+written — that is the tuner working exactly as designed.

@@ -450,3 +450,42 @@ answer wearing a right one); `exact: false` refuses by name and points at
 the Policy that does lawful degradation. Output is the Qiskit `Result`
 schema with everything no spec has a field for under `metadata` — ring,
 exactness, ζ16 residual, per-pass magic and gate counts, timings.
+
+## 2026-08-27, sixteenth entry: the simplifier head-to-head — the gap is general, and it is large
+
+Entry fifteen's remaining question was whether quizx's collapse-to-1 was a
+general capability or a property of the hidden-shift family. Measured, on
+RANDOM Clifford+T circuits (quizx's own generator, identical circuits to
+both simplifiers, T-count as the metric):
+
+| circuit | raw T | quizx `full_simp` | our local | our local+phase-poly |
+|---|---:|---:|---:|---:|
+| q20 d200 | 25 | **0** | 21 | 21 |
+| q20 d400 | 58 | **19** | 58 | 56 |
+| q30 d400 | 67 | **26** | 65 | 63 |
+| q40 d600 | 90 | **19** | 90 | 86 |
+| q50 d800 | 111 | **41** | 107 | 107 |
+
+**Two findings, both important, and the second is the harder one to say.**
+
+FIRST: the collapse-to-1 is NOT hidden-shift-specific. On random circuits
+ZX rewriting removes **63–79%** of the T-count (and on one instance, all of
+it). That is a general capability, not a family artifact.
+
+SECOND: **on random circuits our passes are nearly useless — 2–8%.** Their
+29–57% on hidden-shift was a property of THAT family (long diagonal runs of
+repeated CZ/CCZ, which is exactly what phase-polynomial normalization
+merges). Random circuits interleave Hadamards constantly, so the
+CNOT+diagonal blocks are short and almost nothing merges within them. The
+honest statement of the ceiling is therefore stronger than entry fifteen's:
+**Hadamards do not merely end a block — on realistic circuits they are so
+frequent that block-local methods have almost nothing to work with.** ZX
+wins because it rewrites the graph where Hadamards are edge decorations
+rather than barriers.
+
+Consequence, recorded for the tier ledger: a T-count reduction of 63–79%
+is worth 2^{0.4·(t_before−t_after)} in our cost model — 2^15 to 2^28 on
+these instances. No branch-summing improvement reaches that. **A real
+graph-rewriting layer is not an optimization for the magic tier; it is the
+tier's prerequisite**, and every exponent gain we have banked multiplies
+against a t that only graph rewriting can lower on realistic input.

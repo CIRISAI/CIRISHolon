@@ -141,3 +141,13 @@ Lean target); S4 needs a stochastic face (denominator provably inert on
 permutation families); S6 runs as a scored anti-pole. Rent-multiset
 incompleteness found and the TOE-NULL-1 wording refined (view-indexed
 profile, never a summary statistic).
+
+## The acuity axis (2026-08-28, the lead's principle, adopted)
+
+Visible dynamics is relative to the acuity/scale of the observer: the
+view lattice is the ZOOM axis and Identity(𝒜) its act-side grading —
+zooming in/out is motion along the coarsening order. Selection questions
+are therefore SCALE-INDEXED, and effective theories are the per-rung
+verdicts. SELECTOR-4 (frozen) runs the gauntlet on the four gauge-torus
+worlds across a declared five-rung acuity ladder, staking the ZOOM LAW:
+selection is monotone along acuity — finer observers exclude more.

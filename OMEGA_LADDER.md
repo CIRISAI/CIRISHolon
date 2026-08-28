@@ -85,11 +85,13 @@ refit — the cross-domain analogue of what CROSS-FACE-1 did across faces)
 and REFUTABILITY (a domain where the receipt format must be replaced).
 Five staked attacks, each a real campaign:
 
-- [ ] **OMEGA-CIRCUITS-1** (rung 6: quantum computation as a domain): the
-      CROSS-FACE-1 rent law — rent = ceiling × (1 − λ), λ from circuit
-      coefficients alone — applied to the ENGINE's own tier-0/1 stabilizer
-      substrates. A new domain class, the same frozen functional, exact
-      rationals staked in advance.
+- [x] **OMEGA-CIRCUITS-1** LANDED (2026-08-28): 13/13 held-out rents
+      exact on the stabilizer tier with zero refit — rung 6's quantum-
+      computation pass — and a derived cross-domain structural law: the
+      mixing dichotomy is ONE statement across ring scales (√3 circulants
+      / √2 coset randomizers), rents quantized to 1 − 2^{−h} over 22,400
+      pairs with zero exceptions. Successor question handed to rung 7:
+      is ring-scale mixing quantization itself an Ω theorem?
 - [x] **OMEGA-RATCHET-1** recon COMPLETE (2026-08-28, note + verifier
       banked): the bridge EXISTS and is not an identity — on the stochastic
       lift, W(v) = 2δ·W*(γ,δ) exactly (regime-mapped, trichotomy exhaustive,

@@ -1,0 +1,97 @@
+==============================================================================
+OMEGA-CIRCUITS-1 -- the frozen CROSS-FACE-1 rent law on the engine's
+own qubit circuits.  Prereg frozen before this file; sha256 in
+FREEZE.sha256.  Exact arithmetic throughout.
+==============================================================================
+
+A.  STAKED FACES (sections 3 and 4 of the freeze)
+------------------------------------------------------------------------------
+  C1   [derivation] full basis (m=1)                   W = 0                      staked 0                      OK    lam = 1              staked 1              OK   [EXACT(convolution on F_2^m)]  h=0/1 -> 1-2^-h = 0
+  C2   [derivation] full basis (m=1)                   W = 1/2                    staked 1/2                    OK    lam = 0              staked 0              OK   [EXACT(M=Pi)]  h=1/1 -> 1-2^-h = 1/2
+  C3   [derivation] parity of [0, 1]                   W = 1/2                    staked 1/2                    OK    lam = 0              staked 0              OK   [EXACT(M=Pi)]  h=1/1 -> 1-2^-h = 1/2
+  C4   [derivation] parity of [0, 1]                   W = 0                      staked 0                      OK    lam = 1              staked 1              OK   [EXACT(convolution on F_2^m)]  h=0/1 -> 1-2^-h = 0
+  C5   [derivation] full basis (m=2)                   W = 1/2                    staked 1/2                    OK    lam = 1              staked 1              OK   [EXACT(convolution on F_2^m)]  h=1/2 -> 1-2^-h = 1/2
+  C9   [derivation] weight-threshold(<= 1) on [0, 1, 2] W = 1/4                    staked 1/4                    OK    lam = 1/2            staked 1/2            OK   [EXACT(convolution on F_2^m)]
+  C10  [derivation] weight-threshold(<= 1) on [0, 1, 2] W = 3/8                    staked 3/8                    OK    lam = 1/4            staked 1/4            OK   [EXACT(convolution on F_2^m)]
+  C12  [derivation] full basis (m=1)                   W = (1/2 + -1/4*sqrt2)     staked (1/2 + -1/4*sqrt2)     OK    lam = (0 + 1/2*sqrt2) staked (0 + 1/2*sqrt2) OK   [EXACT(convolution on F_2^m)]
+  C6   [held-out  ] full basis (m=3)                   W = 1/2                    staked 1/2                    OK    lam = 1              staked 1              OK   [EXACT(B idempotent, nonzero)]  h=1/3 -> 1-2^-h = 1/2
+  C7   [held-out  ] parity of [0, 1, 2]                W = 1/2                    staked 1/2                    OK    lam = 0              staked 0              OK   [EXACT(M=Pi)]  h=1/1 -> 1-2^-h = 1/2
+  C8   [held-out  ] marginal on [1, 2]                 W = 1/2                    staked 1/2                    OK    lam = 1              staked 1              OK   [EXACT(B idempotent, nonzero)]  h=1/2 -> 1-2^-h = 1/2
+  C11  [held-out  ] weight-threshold(<= 1) on [0, 1, 2] W = 1/2                    staked 1/2                    OK    lam = 0              staked 0              OK   [EXACT(M=Pi)]
+  C13  [held-out  ] full basis (m=2)                   W = (5/8 + -1/4*sqrt2)     staked (5/8 + -1/4*sqrt2)     OK    lam = (0 + 1/2*sqrt2) staked (0 + 1/2*sqrt2) OK   [EXACT(convolution on F_2^m)]
+  C14  [held-out  ] weight-threshold(0,1,2) x s3       W = 5/8                    staked 5/8                    OK    lam = 1/2            staked 1/2            OK   [EXACT(convolution on F_2^m)]
+  T1   [held-out  ] full basis (m=3)                   W = 7/8                    staked 7/8                    OK    lam = 0              staked 0              OK   [EXACT(M=Pi)]  h=3/3 -> 1-2^-h = 7/8
+  T2   [held-out  ] parity of [0, 1, 2]                W = 1/2                    staked 1/2                    OK    lam = 0              staked 0              OK   [EXACT(M=Pi)]  h=1/1 -> 1-2^-h = 1/2
+  T3   [held-out  ] marginal on [0, 1]                 W = 3/4                    staked 3/4                    OK    lam = 0              staked 0              OK   [EXACT(M=Pi)]  h=2/2 -> 1-2^-h = 3/4
+  T4   [held-out  ] Hamming weight                     W = 5/8                    staked 5/8                    OK    lam = 0              staked 0              OK   [EXACT(M=Pi)]
+  R1v  [held-out  ] marginal on [0, 1, 2]              W = 1/2                    staked 1/2                    OK    lam = 1              staked 1              OK   [EXACT(convolution on F_2^m)]  h=1/3 -> 1-2^-h = 1/2
+  R2v  [held-out  ] marginal on [3, 4]                 W = 3/4                    staked 3/4                    OK    lam = 0              staked 0              OK   [EXACT(M=Pi)]  h=2/2 -> 1-2^-h = 3/4
+  R3v  [held-out  ] full basis (m=5)                   W = 0                      staked 0                      OK    lam = 1              staked 1              OK   [EXACT(B idempotent, nonzero)]  h=0/5 -> 1-2^-h = 0
+
+B.  S2 -- the quantization sweep
+------------------------------------------------------------------------------
+  control: C9 transfer (lambda = 1/2)     detector says None  want None  OK
+  control: C10 transfer (lambda = 1/4)    detector says None  want None  OK
+  control: identity (lambda = 1)          detector says 1     want 1     OK
+  control: Pi (lambda = 0)                detector says 0     want 0     OK
+  detector control: PASS
+  n=2: 400 circuits x 6 views done (running total 2400 pairs)
+  n=3: 800 circuits x 10 views done (running total 10400 pairs)
+  n=4: 1000 circuits x 12 views done (running total 22400 pairs)
+  pairs read                    : 22400
+  Theorem C1 coset structure    : 22400/22400 exact
+  W == 1 - 2^-h                 : 22400/22400 exact
+  lambda == predicted 0/1       : 22400/22400 exact
+  lambda histogram              : 0 -> 10104, 1 -> 12296, other -> 0
+  rent spectrum observed        : 0(2723), 1/2(11932), 3/4(6519), 7/8(1190), 15/16(36)
+
+C.  PLANTS
+------------------------------------------------------------------------------
+  plant (i)   C9 rent  true 1/4  planted 1/2  FIRES
+  plant (ii)  C2 rent  true 1/2  planted 0  FIRES
+  plant (iii) C5 rent  true 1/2  planted 0  FIRES
+  plant (iv)  Reset column sums  G0 = VOID  FIRES
+
+D.  G2 -- agreement with the engine's own PackedTableau
+------------------------------------------------------------------------------
+  G2 engine agreement: 368/368 (qubit, input) readings match the (c0, A, V) prediction
+
+E.  G1 -- Theorem 2 on every view read
+------------------------------------------------------------------------------
+  C1    PASS(TIGHT: equality)
+  C2    PASS(TIGHT: equality)
+  C3    PASS(TIGHT: equality)
+  C4    PASS(TIGHT: equality)
+  C5    PASS(exact)
+  C9    PASS(TIGHT: equality)
+  C10   PASS(TIGHT: equality)
+  C12   PASS(TIGHT: equality)
+  C6    PASS(exact)
+  C7    PASS(TIGHT: equality)
+  C8    PASS(exact)
+  C11   PASS(TIGHT: equality)
+  C13   PASS(exact)
+  C14   PASS(exact)
+  T1    PASS(TIGHT: equality)
+  T2    PASS(TIGHT: equality)
+  T3    PASS(TIGHT: equality)
+  T4    PASS(TIGHT: equality)
+  R1v   PASS(exact)
+  R2v   PASS(TIGHT: equality)
+  R3v   PASS(TIGHT: equality)
+  G1: 21/21 pass, 0 certified violations
+
+F.  VERDICTS
+------------------------------------------------------------------------------
+  G0  : PASS
+  G1  : PASS  (21 views)
+  G2  : PASS
+  S1  : held-out rents 13/13 exact, held-out lambdas 13/13 exact  -> branch (a)
+        (derivation-side 8/8 rents, 8/8 lambdas)
+        closed form 1-2^-h from the circuit alone: 14/14
+  S2  : detector control PASS; 22400 pairs; structure 22400/22400, W 22400/22400, lambda 22400/22400, unquantized 0  -> branch (a)
+  S3  : intermediate-lambda faces 3/3 exact -> branch (a)
+  S4  : discriminator faces 6/6 took the product-law value -> branch (a)
+  R1  : U_rep is a bijection (micro alpha = 1 for every view); the three view rents are ['1/2', '3/4', '0'] -> 3 distinct values -> branch (a): rival refuted
+  B3  : every reading exhaustive over 2^n states, every view marginal verified stationary (asserted in read_face)
+  plants: 4/4 fire

@@ -13,4 +13,5 @@ import CIRISHolon.Closure
 import CIRISHolon.ClosureDerives
 import CIRISHolon.ClosureLadder
 import CIRISHolon.Omega
+import CIRISHolon.Probe
 import CIRISHolon.Grain

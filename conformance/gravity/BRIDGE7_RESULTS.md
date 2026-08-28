@@ -55,3 +55,7 @@ misfits: contacts M-LOOP-BLIND (now measured), M-PLANT-OBS, M-PLANT-SECTOR
 (plants unchanged from the admitted freeze), M-HOMOG (the bigon preserves
 the structural-difference property), M-BARE-CHARGE (carrier construction
 unchanged).
+
+Gates carried verbatim from the admitted BRIDGE-7 freeze, each
+witness: none (measured gate; the staked theorem-level facts are G0's
+invariance construction and, for the fired R2', the M-LOOP-BLIND record).

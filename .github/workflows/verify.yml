@@ -30,5 +30,11 @@ jobs:
       - uses: actions/checkout@v5
       - name: Install WebAssembly targets
         run: rustup target add wasm32-unknown-unknown wasm32-wasip1
+      # The gravity instruments (gate 10c) are numpy programs; the bare runner has
+      # python3 and nothing else, so without this the gate's import prong fires on
+      # every run regardless of the physics. numpy only -- the prereg audit and the
+      # rest of the record are stdlib-pure and should stay that way.
+      - name: Install numpy (gravity instruments)
+        run: python3 -m pip install --quiet numpy
       - name: ci-gates
         run: ./ci-gates.sh

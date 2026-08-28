@@ -181,9 +181,11 @@ for mod in ("bridge1","bridge5","bridge6","bridge7","wilson1","wilson2",
             "local1","local2","closure2","closure3","einstein_adm1","punctured_torus"):
     importlib.import_module(mod)
 PYEOF
-) >/dev/null 2>&1 || repro_fail=1
-( cd ../conformance/gravity && timeout 600 python3 einstein_adm1.py >/dev/null 2>&1 ) || repro_fail=1
-( cd ../conformance/gravity && timeout 600 python3 punctured_torus.py >/dev/null 2>&1 ) || repro_fail=1
+) >/dev/null 2>&1 || { repro_fail=1; echo "  prong: instrument imports failed"; }
+( cd ../conformance/gravity && timeout 600 python3 einstein_adm1.py >/dev/null 2>&1 ) \
+  || { repro_fail=1; echo "  prong: einstein_adm1 fresh-run failed"; }
+( cd ../conformance/gravity && timeout 600 python3 punctured_torus.py >/dev/null 2>&1 ) \
+  || { repro_fail=1; echo "  prong: punctured_torus fresh-run failed"; }
 [ "$repro_fail" -eq 0 ] && ok "gravity instruments import and fast campaigns fresh-run green" \
   || no "gravity instruments import and fast campaigns fresh-run green"
 
@@ -509,5 +511,16 @@ cargo test -q --manifest-path crates/h3ere2-eval/Cargo.toml 2>/dev/null >/dev/nu
 cargo test -q --manifest-path crates/holon-render-3d/Cargo.toml \
   --no-default-features --features headless 2>/dev/null >/dev/null \
   && ok "holon-render-3d headless gates pass" || no "holon-render-3d headless gates pass"
+
+# 16. the atom world's two workspace crates, which the coverage audit rightly
+#     refused to see uncovered: holon-chem (the browser's own STO-3G FCI chemistry,
+#     pinned 1e-12 to the 50-digit referee; the ELEMENTS-1 cross-check stays
+#     #[ignore]d until the elements-referee files are committed and is not what this
+#     gate waives) and holon-render (the ledger-gated shell whose conservation gates
+#     are one-per-law; holon-render-3d consumes it as an rlib and is gate 15).
+cargo test -q -p holon-chem 2>/dev/null >/dev/null \
+  && ok "holon-chem referee/FCI/pair/E1 gates pass" || no "holon-chem referee/FCI/pair/E1 gates pass"
+cargo test -q -p holon-render 2>/dev/null >/dev/null \
+  && ok "holon-render ledger/amendment/cluster gates pass" || no "holon-render ledger/amendment/cluster gates pass"
 
 exit $fail

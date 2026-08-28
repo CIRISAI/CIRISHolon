@@ -29,8 +29,8 @@ SEPARATION is decided exactly.  For a home T and a candidate T', BFS the
 reachable set of state PAIRS under letters {step, knobs}, step advancing T on
 the left and T' on the right, knobs applied to both.  Separated iff some
 reachable pair is split by the view.  The BFS closes the relation, so this
-quantifies over ALL experiment words with no depth bound (M-FINAL-VIEW-
-COLLISIONS).  Candidates with a different macro map are separated at depth 1
+quantifies over ALL experiment words with no depth bound
+(M-FINAL-VIEW-COLLISIONS).  Candidates with a different macro map are separated at depth 1
 by an EXHIBITED witness (the word [step] from any state of a fiber where the
 macro maps differ) rather than by BFS; at n = 3 and n = 4 the full exhaustive
 pair-BFS is run over every candidate anyway and the two agree — the witness

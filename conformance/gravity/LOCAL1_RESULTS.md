@@ -87,3 +87,32 @@ at a higher ring scale).
    and M-HOMOG; the misstake rule M-NULL-MISSTAKE untouched).
 witness: none (operator substitution with its unitarity check stated; a
 Lean brick for the eigenvalue-norm computation is named, not claimed)
+
+
+## 1D run: hard gates pass, plant (i) misses — and the miss is the finding
+
+L1/L2/B3/G0 all passed (near responds at step 1; pendant zero through step
+4; auto-promotion carried ~10⁵⁷-scale integers exactly). Plant (i) MISSED
+at its staked step — and the diagnostic shows why: the pendant triple's
+response to a DIRECT flux hit is nonzero at steps 0 and 3 and ZERO at
+steps 1–2. The observable is blind at exactly the steps L1 staked, so
+1D's cone zeros were uninformative — the plant proved the staked window
+unobservable, which is M-PLANT-OBS doing precisely what four campaigns of
+misses built it to do.
+
+**Amendment LOCAL-1E (frozen here, before the rerun):**
+- **L1'** — the cone is staked on LIVE steps only: at every step k ≤ 4
+  where the direct-hit control's pendant response is NONZERO, the distant
+  (e*) perturbation's pendant response must be ZERO. (The 1D data already
+  contains this pattern at k = 3; the rerun adjudicates it as a frozen
+  gate, not a retrodiction.)
+- **Plant (i)'** — the direct-hit control must be nonzero at SOME step
+  k ≤ 4, and its live-step set is REPORTED; carrier the zero-flux dressed
+  vacuum, sector the pendant response, asserted nonzero at the live steps
+  per M-PLANT-SECTOR. Plant (ii) unchanged.
+- L2, L3, B3, G0 unchanged (M-KINEMATIC-NONLOCAL, M-HOMOG,
+  M-ELECTRIC-BASIS, M-BARE-CHARGE, M-RING-MIXING, M-PROBE-EIGENSTATE,
+  M-NULL-MISSTAKE all as admitted).
+witness: none (gate re-anchored to the observable's live window; no
+criterion loosened — the zero demanded is the same zero, at steps where a
+zero can mean something)

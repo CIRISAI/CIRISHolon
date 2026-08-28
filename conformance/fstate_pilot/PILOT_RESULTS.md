@@ -16,20 +16,30 @@ face-rotated family, extrapolated from N ≤ 42) physics or tooling?*
    of size** (one qubit, one p gate: 31.1 s; sixteen qubits, sixteen p
    gates: 31.8 s). The tool's cost at small N is dominated by a fixed
    configuration constant, not by the physics of magic.
-3. Our own reproduction attempt of their Figure-2 family (their exact
-   construction recipe, success-checked, medians of 3) produced a
-   *different* curve than theirs before the gate-name sensitivity was
-   even understood — slope 0.094 dec/qubit, extrapolating to ~10³ s at
-   N = 70, four orders below their 10⁷, with R² = 0.82 against their
-   R² > 0.98.
+3. **RETRACTED 2026-08-27, same day, on review** (the retraction caught
+   after the user questioned the four-order discrepancy): our first
+   reproduction placed the face rotations TERMINALLY before measurement —
+   and a diagonal layer immediately before computational-basis
+   measurement does not change the output distribution at all, so that
+   family's sampling was trivially magic-free, which is exactly why its
+   curve was flat. Their actual per-qubit gadget is `tdg; h; rz(θ); h` —
+   the rotation sits BETWEEN Hadamards (verified byte-level in their
+   qasm) and is genuinely non-diagonal in the measured basis. The ~10³ s
+   extrapolation says nothing about their curve and is withdrawn; a
+   corrected-family rerun is below. Findings 1 and 2 (the rz-name
+   rejection and the ~31 s size-independent p-gate cost) stand as
+   measured — they are single-gate discriminators unaffected by family
+   structure.
 
 ## The staked verdict
 
-**The 10⁷-second magic-axis figure is methodology-fragile: it depends on
-gate naming, Aer version, translation choices, and default sampling
-constants — an implementation artifact of one configuration, not a
-physical wall.** This is precisely the audit's earlier caution ("Aer
-documents that tradeoff explicitly") sharpened into measurements.
+**NARROWED after the retraction: what stands is that the tracker's
+figure is not reproducible as published under current Aer** (their
+circuits' literal `rz` is rejected at any angle, and the accepted `p`
+path carries a ~31 s size-independent constant under defaults) — the
+configuration-sensitivity claim survives on findings 1–2 alone. Whether
+their CURVE's shape is right awaits the corrected-family rerun below;
+until it lands, no claim about their slope is made in either direction.
 
 Consequence for Campaign #2, per its pre-staked gate: the submission
 proceeds on OUR cost model, not theirs — the native face-basis build

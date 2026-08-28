@@ -64,3 +64,34 @@ the arena where the selection principle runs.
 GitHub Pages (workflow-deployed from docs/): the README cannot execute
 WASM, so the live demo publishes at cirisai.github.io/CIRISHolon and the
 README carries a GIF linking to it.
+
+## The three fences (external review, adopted before implementation lands)
+
+1. **Boundness must imply MEASURED closure.** The energy threshold proves
+   a bound pair, not an autonomous molecular view. At formation the
+   molecular view's own one-step closure defect is SCORED (and must be
+   zero/bounded); at dissolution the defect/rent must RISE. Formation =
+   closure acquisition is a measurement, not an interpretation.
+2. **Formation is accounting-only.** Creating or dissolving a molecule
+   row redistributes ledger LABELS without touching the state:
+   E_before = E_after exactly across the event, and (E − W_ext) drift
+   stays within the derived bound. THE CAPTURE PLANT: an isolated,
+   initially unbound two-body system with W_ext = 0 must NEVER form a
+   stable molecule — pair energy is conserved, so capture requires a
+   third body or an extraction channel (the user's spring doing negative
+   work counts; nothing else does). A bond formed in that configuration
+   convicts the integrator or the predicate.
+3. **The dt bound must use the curvature ENVELOPE, not E″(R_e).** The
+   repulsive wall's curvature exceeds the equilibrium value; dt derives
+   from the largest Hessian accessible at the current energy (or adaptive
+   substepping with a refusal), else the displayed Verlet bound can read
+   green through a collision that violates it.
+
+Plus: deterministic hysteresis/dwell for formation-dissolution at grain
+boundaries with canonical multi-eligibility resolution; the census's
+"cheap" claim MEASURED (frame cost with census on vs off); any future
+cell-list cutoff certified against the bond predicate's reach; and the W3
+note adopted verbatim — an extensible `kind` enum is schema compatibility,
+NOT lawful extension: a payer-builder kind must be constructed by a
+predicate definable from existing Ω views, interventions and ledgers
+under the frozen extension grammar.

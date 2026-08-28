@@ -50,3 +50,33 @@ M-ELECTRIC-BASIS (discharged), M-PLANT-OBS, M-PLANT-SECTOR (plant (ii)'s
 sector unchanged, its search corrected), M-LOOP-BLIND (W1's pass is its
 first counterexample at separation), M-GAUGE-LAUNDER (W4's unearned note
 kept), M-BARE-CHARGE, M-COND-PROBE (unchanged).
+
+## WILSON-2B — ALL GATES PASS, BOTH PLANTS FIRE
+
+```
+GATES: B3=PASS G0=PASS W1=PASS W2=PASS W3'=PASS
+W4: no-fire; orientation-necessity UNEARNED (the marginal also separates)
+[plant i]  FIRES   [plant ii] FIRES (visible, on the off@T0 asymmetric carrier)
+```
+
+**The second fully green frozen campaign of the gravity programme** (after
+BRIDGE-3), and the first positive R2-line result:
+
+> On an exact Z3 lattice gauge theory with a Wilson-dressed charge pair
+> and a single joint unitary step, a gauge-invariant ORIENTED Wilson
+> observable at a plaquette VERTEX-DISJOINT from the matter detects which
+> matter channel drove the flux pump — while the correctly-staked
+> conservation null holds exactly (every rim component scales by one
+> global factor per step) and both instrument plants fire.
+
+Scope, kept tight: abelian toy; the channel signal reaches the observable
+through the constraint-and-dynamics combination, and W4's honest note
+stands — the class-marginal ALSO separates here, so orientation is
+demonstrated real (W2, plant ii) but NOT proven necessary on this
+instance. The non-abelian successor (the order-21 Frobenius group, where
+class-marginals provably launder orientation and W4 would bite) is the
+named next rung. The D4 loop-blindness (BRIDGE-7B) and this Z3 visibility
+are not in tension: the D4 reading was a class-set over the TOTAL loop on
+an ambivalent group; this is an oriented spectral triple on a separated
+plaquette of a non-ambivalent one — the review's prescribed repair,
+measured to work.

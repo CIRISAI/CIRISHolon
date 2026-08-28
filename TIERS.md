@@ -228,3 +228,11 @@ derived by theorem, measured by instrument, plants firing. Off-shell
 defect not yet demonstrated (E3 branch (b), recorded). Successors in
 order: punctured torus (mass–deficit-angle = requirement 2), SU(2)-via-2T,
 then the 3+1 continuum, which remains open research.
+
+## Requirement 1 status after LOCAL-1E (2026-08-28)
+
+Endogenous ✓ (BRIDGE-6/7B R1) · charged-sourcing-observable ✓ (WILSON-2B)
+· **local ✓ (LOCAL-1E: the response-function cone, all gates, plants
+firing)**. Remaining for requirement 1: ONE model carrying all properties
+simultaneously (LOCAL-2: the reciprocal pump inside the cone-verified
+dynamics), then the non-abelian instance (FROBENIUS-1).

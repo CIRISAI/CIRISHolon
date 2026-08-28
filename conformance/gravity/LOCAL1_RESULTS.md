@@ -116,3 +116,29 @@ misses built it to do.
 witness: none (gate re-anchored to the observable's live window; no
 criterion loosened — the zero demanded is the same zero, at steps where a
 zero can mean something)
+
+## LOCAL-1E — ALL GATES PASS, both plants fire
+
+```
+L1=PASS (cone holds at live steps [3])   L2=PASS   L3=NO-ARRIVAL (recorded)
+G0=PASS  B3=PASS   [plant i] FIRES (live at step 3)   [plant ii] FIRES
+```
+
+**Locality is EARNED, in the only form that survived contact with the
+constraint:** the response function. The near plaquette responds at step 1
+(exact ~10²² integers); the pendant — three plaquette-adjacencies away —
+reads EXACTLY ZERO at the step where the direct-hit control proves the
+observable is live (step 3, ~10⁵⁷ integers, auto-promoted). Kinematic
+constraint correlation is present in both arms and cancels identically;
+what remains is dynamical, and it respects the cone.
+
+The three-campaign arc, kept in one place: BRIDGE-6 staked locality on
+conditioning and read near == far (the term could not distinguish);
+BRIDGE-7B staked it on conditioning at structural distance and read far ≠
+base (the Gauss projector correlates everything — M-KINEMATIC-NONLOCAL);
+LOCAL-1 restaked it as a response cone and it HOLDS, with the observable's
+blind window (M-PLANT-OBS), the ring's forced mixing (M-RING-MIXING), the
+probe-eigenstate trap (M-PROBE-EIGENSTATE), and the misstaked null
+(M-NULL-MISSTAKE) each caught by a plant or a diagnostic on the way. Five
+registered misfits were consumed to pose one claim correctly — which is
+the programme's thesis about how claims get earned.

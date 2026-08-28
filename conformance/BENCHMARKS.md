@@ -239,3 +239,23 @@ constraint RHS, seed in the output JSON; stim: its native sampler):
 qualification is discharged: the citable claim is now "faster random
 stabilizer sampler at every measured n," with entries six/eight kept as
 the narrower canonical-witness measurements they were.
+
+## 2026-08-27, eleventh entry: Magic5 vs pruned — the unswept interaction, swept
+
+`holon-magic-h2h` (exact agreement asserted on every row, medians of 5,
+box carrying the DMRG referee — ratios far exceed load noise):
+
+| n | t | pruned | magic5 | magic5 branches | pruned leads |
+|---:|---:|---:|---:|---:|---:|
+| 16 | 12 | 0.25 ms | 3.6 ms | 36 | 15× |
+| 64 | 16 | 1.1 ms | 115 ms | 108 | 103× |
+| 128 | 20 | 5.2 ms | 1.58 s | 324 | 306× |
+| 256 | 24 | 78 ms | 36.7 s | 972 | 470× |
+
+**Verdict: the tuner's Pruned default stands confirmed by measurement.**
+Magic5's smaller branch space is real (the counts match the DP), but its
+per-branch constant is ~1000× behind — its recursive frames predate the
+affine rewrite. Projected crossover ≈ t=100 at current constants. Named
+optimization: route Magic5's frames through the rewritten affine engine,
+then re-sweep. `Unswept::Magic5VersusPruned` is retired to a measured
+note; `Magic5TimesSliced` and `SlicedOnRewrittenEngine` remain open.

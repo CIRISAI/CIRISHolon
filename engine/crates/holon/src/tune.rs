@@ -125,9 +125,14 @@ pub enum Unswept {
     /// sliced path's winning region on the current engine, if any, is
     /// unmapped.
     SlicedOnRewrittenEngine,
-    /// Magic5 vs pruned-dedup head-to-head on the rewritten engine: the
-    /// branch-count advantage is proven, the wall-clock crossover is not
-    /// yet measured.
+    /// SWEPT 2026-08-27 (holon-magic-h2h, BENCHMARKS entry eleven):
+    /// pruned dominates 15–500× at t ≤ 24 despite magic5's confirmed
+    /// smaller branch space — magic5's per-branch constant is ~1000× off
+    /// because its frames never received the affine rewrite. Crossover
+    /// projected near t≈100 at current constants. Kept as a variant name
+    /// for the CHOICE record; the named optimization is routing magic5's
+    /// frames through the rewritten affine machinery, after which this
+    /// gets re-swept.
     Magic5VersusPruned,
 }
 

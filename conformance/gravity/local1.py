@@ -125,11 +125,33 @@ def u_b(st):
         A, B = wpow_mul(A, B, HOL_P[p][None, :])
     return (A, B)
 
+# LOCAL-1D: Eisenstein multiply by a fixed (a+bw): (x+yw)(a+bw) =
+# xa - yb + (xb + ya - yb) w
+def emul(X, Y, a, b):
+    return X * a - Y * b, X * b + Y * a - Y * b
+
+# 1D weak coupler: c0=5+4w (diag 21/27), c1=2+w, c2=-1-2w (hop 3/27 each);
+# eigenvalue norms all 27 -- unitary at scale 3*sqrt(3), found by exhaustive
+# ring search (M-RING-MIXING: scale sqrt(3) forces maximal mixing).
+C_DIAG = (5, 4); C_HOP1 = (2, 1); C_HOP2 = (-1, -2)
+
+def promote(st):
+    """LOCAL-1D auto-promotion: scale the carrier to the circuit instead of
+    refusing -- int64 -> arbitrary-precision objects when headroom runs out
+    (the Python analogue of the engine's residue-carrier discipline)."""
+    A, B = st
+    if A.dtype == object:
+        return st
+    if max(np.abs(A).max(), np.abs(B).max()) > 2 ** 50:
+        return (A.astype(object), B.astype(object))
+    return st
+
 def u_e(st, fourier_on_edge=None):
-    """Covariant shift polynomial on EVERY edge; plant (ii) swaps one edge
-    to WILSON-1's convicted Fourier kernel."""
+    """1D weak-coupling covariant term on EVERY edge; plant (ii) swaps one
+    edge to WILSON-1's convicted Fourier kernel."""
     A, B = st
     for e in range(E):
+        A, B = promote((A, B))
         if e == fourier_on_edge:
             A2 = np.zeros_like(A); B2 = np.zeros_like(B)
             for k in range(3):
@@ -140,15 +162,14 @@ def u_e(st, fourier_on_edge=None):
                     np.add.at(B2[m], idx, pb[m])
             A, B = A2, B2
             continue
-        A2 = A.copy(); B2 = B.copy()
-        for k in (1, 2):
+        dA, dB = emul(A, B, *C_DIAG)
+        for k, coef in ((1, C_HOP1), (2, C_HOP2)):
             idx = zshift_idx(e, k)
-            pa, pb = wpow_mul(A, B, 1)
+            pa, pb = emul(A, B, *coef)
             for m in range(9):
-                np.add.at(A2[m], idx, pa[m])
-                np.add.at(B2[m], idx, pb[m])
-        A, B = A2, B2
-    assert max(np.abs(A).max(), np.abs(B).max()) < 2 ** 55, "overflow: REFUSE"
+                np.add.at(dA[m], idx, pa[m])
+                np.add.at(dB[m], idx, pb[m])
+        A, B = dA, dB
     return (A, B)
 
 def step(st, fourier_on_edge=None):
@@ -189,9 +210,7 @@ def run():
     b = perturb(psi0, E_STAR)      # perturbed arm
     reg = [("a0", a), ("b0", b)]
     l1_ok = True; l2 = False; l3 = None
-    # LOCAL-1B: int64 carries exactly the cone's range (steps 1-2); L3 is
-    # UNPOSED at this capacity (see the amendment) rather than measured.
-    for k in range(1, 3):
+    for k in range(1, 5):
         a = step(a); b = step(b)
         reg += [(f"a{k}", a), (f"b{k}", b)]
         r_pend = response(a, b, P_PEND)
@@ -205,7 +224,7 @@ def run():
             l3 = k
     rep["L1"] = "PASS" if l1_ok else "FIRE (influence outran the light cone)"
     rep["L2"] = "PASS" if l2 else "VOID (response function never responds)"
-    rep["L3"] = "UNPOSED (capacity: arrival was staked at steps 3-4; int64 carries 2)"
+    rep["L3"] = f"ARRIVES at step {l3}" if l3 else "NO-ARRIVAL (recorded, not a fire)"
     bad = [nm for nm, s in reg for h, _ in [gauss_holds(s)] if not h]
     rep["B3"] = "PASS" if not bad else f"FIRE {bad}"
     print("GATES: " + "  ".join(f"{k}={v}" for k, v in sorted(rep.items())), flush=True)

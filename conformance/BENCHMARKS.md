@@ -489,3 +489,43 @@ these instances. No branch-summing improvement reaches that. **A real
 graph-rewriting layer is not an optimization for the magic tier; it is the
 tier's prerequisite**, and every exponent gain we have banked multiplies
 against a t that only graph rewriting can lower on realistic input.
+
+## 2026-08-27, seventeenth entry: the graph-rewriting layer — half built, and the half that works taught the lesson
+
+`zx.rs`: our own implementation of the published graph-theoretic
+simplification (Duncan–Kissinger–Perdrix–van de Wetering, Quantum 4, 279
+(2020); quizx, Apache-2.0, is the reference and the benchmark). Graph-like
+form, identity removal, local complementation, pivoting — with the
+CIRIS-native twist that adjacency is BIT-PACKED, so a local complementation
+is a word-parallel XOR sweep rather than a set-of-sets update.
+
+**What works, measured:** the Clifford layer reduces spiders **5–6×**
+(1310 → 209 on q50; 351 → 65 on q20), which is the published behaviour.
+
+**What does not, measured and diagnosed:** T-count is **unchanged** on
+every instance, against quizx's 63–79%. Two distinct reasons, and the first
+is a theorem worth stating:
+
+1. **Clifford simplification CANNOT reduce T-count, by construction.**
+   Local complementation shifts neighbour phases by ±π/2 and pivoting by
+   0 or π — both EVEN in units of π/4 — so no Clifford rewrite can change a
+   phase's parity. T-count is invariant under `clifford_simp`. The
+   reduction lives entirely in gadget fusion, which was not obvious to me
+   before building it and is now recorded so it is obvious to the next
+   reader.
+2. **Our gadget layer produces zero gadgets.** Implemented gadgetization
+   (pivot a T-spider into carrier+hub form) and fusion (group by support —
+   a bitmask hash, which is where the bit-packing pays), and the diagnostic
+   reports **0 gadgets** after Clifford simplification on every instance:
+   the pivot precondition never fires on the split spiders. That is an
+   implementation defect in our gadgetization, not a property of the
+   circuits, and it is the whole distance between 0% and 63–79%.
+
+**Standing recommendation, now evidence-backed rather than argued:** the
+composition route is the honest path. quizx is Apache-2.0 (one-way
+compatible with our AGPL-3.0), it solves this problem well, and our
+distinguishing value — exact rings beyond Z[ζ8], the symbolic-angle
+carrier, distributed certificates, the refusal discipline — sits ON TOP of
+a simplified circuit, not in competition with the simplifier. Building our
+own remains open with the gap now precisely located (gadgetization), which
+is worth far more to a future attempt than the two passes it took to find.

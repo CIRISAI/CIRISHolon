@@ -18,7 +18,8 @@ fn main() {
                 let loc = simplify(&surf);
                 let after_local = magic_weight(&loc);
                 let after_pp = normalized_t_count(n, &loc);
-                println!("{name:28} n={n:3} raw_t={raw:4} local={after_local:4} ours_final={after_pp:4}");
+                let zx = holon::zx::simplified_t_count(n, &surf).unwrap_or(usize::MAX);
+                println!("{name:28} n={n:3} raw_t={raw:4} local={after_local:4} ppoly={after_pp:4} ZX={zx:4}");
             }
             Err(e) => println!("{name:28} REFUSED: {}", e.reason),
         }

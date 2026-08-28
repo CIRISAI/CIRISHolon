@@ -37,6 +37,7 @@ pub mod simplify;
 pub mod sliced;
 pub mod coltableau;
 pub mod tableau;
+pub mod zx;
 pub mod transport;
 pub mod tune;
 

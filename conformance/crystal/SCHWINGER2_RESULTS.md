@@ -52,3 +52,24 @@ SCHWINGER-3, frozen fresh: N scaled PER COLUMN as N >~ 20*sqrt(x) (roughly
 since it was never the binding constraint - saturated at every point
 measured; same S1 band and kill. The checkpoint machinery carries over, so
 recomputation is the only cost.
+
+## A forward prediction, staked at checkpoint 13/18 — before the data
+
+The diagnosis above ("the grid's fixed N under-resolves large x, and the
+requirement is N ≳ 20√x") makes a testable claim about the column now
+running, and the run is being allowed to finish for exactly that reason.
+
+**Staked now, before x=16's N-convergence is computed:** since x=16 needs
+N ≳ 80 and the grid provides only 64, its N-convergence gap must be
+**WORSE than x=9's 0.01169** — the under-resolution is monotone in x.
+
+- Gap > 0.01169 → the diagnosis is confirmed by forward prediction (house
+  rule 6: support comes only from confirmed advance predictions), and
+  SCHWINGER-3's per-column N is warranted rather than merely plausible.
+- Gap ≤ 0.01169 → the diagnosis is WRONG or incomplete, the x=9 failure
+  needs another explanation, and SCHWINGER-3 must not be frozen on this
+  reasoning. That would be the more interesting outcome and it is recorded
+  as such in advance.
+
+Either way the campaign's verdict is unchanged: SCHWINGER-2 is VOID. This
+prediction adjudicates the CAUSE, not the campaign.

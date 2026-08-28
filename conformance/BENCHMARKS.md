@@ -315,3 +315,48 @@ Magic5's honest regime is now precisely stated: circuits whose naive
 branch space does NOT collapse under canonical merge. Finding that regime
 (structured/hidden-shift families are the candidates) is the next sweep,
 not another optimization.
+
+## 2026-08-27, thirteenth entry: QuiZX head-to-head — WE LOSE, and the reason matters more than the ratio
+
+The manifest's one owed comparison against a serious structured exact
+solver. Identical circuits (quizx's own Bravyi–Gosset hidden-shift
+generator), identical task (one exact amplitude ⟨shift|C|0⟩), both arms
+exact, medians of 3, same machine:
+
+| qubits | T-count | quizx | holon | quizx leads |
+|---:|---:|---:|---:|---:|
+| 12 | 56 | 1.7 ms | 25 ms | 15× |
+| 16 | 84 | 3.2 ms | 230 ms | 73× |
+| 20 | 112 | 4.3 ms | 866 ms | 202× |
+| 24 | 140 | 5.7 ms | 7.29 s | **1285×** |
+
+**The gap is not a constant — it is a complexity-class gap on this family,
+and the diagnosis is one number: quizx's reported term count is 1.** Its
+ZX-calculus simplification rewrites the whole hidden-shift diagram to a
+SINGLE stabilizer term before any decomposition happens. There is no
+exponential left to price. Our times grow ~3× per +28 T gates (an
+exponential we then fight with dedup); quizx's grow linearly in circuit
+size, because it is not doing the same kind of work at all.
+
+**What this says about our engine, stated plainly: we have no
+diagram-simplification layer.** Every gain banked today — the affine
+rewrite, branch slicing, Magic5, the rank factorization — makes the
+*branch sum* faster or smaller. None of them can beat an algorithm that
+deletes the branch sum. On structured families (hidden-shift, and by
+extension the CCZ-rich circuits ZX rewriting was designed for), a
+simplification pass is not an optimization but a prerequisite.
+
+**Named import, now the magic tier's top priority** (it was already in
+`PRIOR_ART.md` as multiplicative preprocessing and this measurement
+promotes it): ZX/graph simplification as a front-end pass — at minimum
+Clifford simplification and phase teleportation (Kissinger–van de Wetering,
+arXiv:1903.10477), which reduce T-count *before* any exponent applies. Our
+exponent work then multiplies against a smaller t, which is exactly the
+composition the sweep predicted and this benchmark forces.
+
+**What the loss does NOT touch:** the stim comparison (tier 1, ahead 7/7,
+Born-vs-Born), the exact-ring tower and generic-angle carrier (quizx is
+Clifford+T-only; it has no face-angle or symbolic-θ capability), the
+distributed certificates, and the refusal discipline. Different axes —
+which is precisely why the head-to-head was owed rather than assumed, and
+why it is recorded here in full.

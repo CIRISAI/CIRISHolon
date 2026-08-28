@@ -50,13 +50,16 @@ now instrument rules.
       class(C) ≠ class(C⁻¹): the oriented reading detects loop orientation
       and the deliberately ambivalent (D4-style) projection is provably
       blind. Depends on: nothing. NEXT.
-- [ ] **PT-2T**: the deficit LADDER — the punctured-torus instrument with
+- [x] **PT-2T**: the deficit LADDER — the punctured-torus instrument with
       the binary tetrahedral group 2T ⊂ SU(2) (order 24, commutator
       subgroup Q8): mass spectrum = Q8's classes = deficits {0, 2π, π×3},
       a genuine multi-rung mass–deficit relation, refinement-stable.
       Depends on: PT-1B (done). NEXT.
-- [ ] Continuous 2+1 connection limit: 2T → finer SU(2) subgroup chain,
-      independently derived mass/deficit. Depends on PT-2T.
+- [x] PT-2OI (2026-08-28): the chain runs D4:2 → 2T:3 → 2O:5 → 2I:9 with
+      advance-staked exact occupancies, ALL PASS both groups; mass is the
+      CLASS (the deficit label degenerates at 2O), the perfect group has
+      no forbidden sector, and refinement is provably a pullback. The
+      continuum question remains, owned by no finite rung.
 - [ ] 3+1 constraints; GR as the closed coarse view. Open research.
 
 ## Rung 5½ — the reopened memory ladder (adequacy of Ω's fiber structure)

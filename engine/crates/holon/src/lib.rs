@@ -22,6 +22,7 @@ pub mod merge;
 pub mod mesh;
 pub mod plane;
 pub mod prune;
+pub mod qasm;
 pub mod real;
 pub mod residue;
 pub mod run;

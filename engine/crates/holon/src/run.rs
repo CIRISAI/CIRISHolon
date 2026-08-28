@@ -111,3 +111,16 @@ pub fn amplitude_tuned(
     };
     Ok((amp, choice))
 }
+
+/// Exact amplitude of a parsed front-end Program: the lowered core circuit
+/// through the production path, times the LEDGER's ω-phase — exactly. The
+/// ζ16 residual (outside the ring) rides along declared; probabilities
+/// never see it, and amplitude consumers compose it or refuse.
+pub fn amplitude_program(p: &crate::qasm::Program, y: &[bool]) -> (Cyc, u8) {
+    let amp = amplitude(p.n_qubits, &p.gates, y);
+    let mut w = Cyc::ONE;
+    for _ in 0..p.phase_omega {
+        w = w.mul(crate::affine::omega_pow(1));
+    }
+    (amp.mul(w), p.residual_zeta16)
+}

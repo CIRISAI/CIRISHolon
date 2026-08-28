@@ -3,52 +3,7 @@
 //! exact all-zeros amplitude and seconds, matching holon-qasm's `amp` output
 //! shape so the battle-rig can swap binaries.
 use holon::prune::Gate;
-use holon::run::{amplitude, amplitude_sharded};
 
-fn parse(src: &str) -> Result<(usize, Vec<Gate>), String> {
-    let mut n = 0usize;
-    let mut gates = Vec::new();
-    let idx = |tok: &str| -> Result<usize, String> {
-        let o = tok.find('[').ok_or("bad operand")?;
-        let c = tok.find(']').ok_or("bad operand")?;
-        tok[o + 1..c].parse().map_err(|_| "bad index".into())
-    };
-    for raw in src.lines() {
-        let line = raw.split("//").next().unwrap_or("").trim();
-        for stmt in line.split(';') {
-            let stmt = stmt.trim();
-            if stmt.is_empty()
-                || stmt.starts_with("OPENQASM")
-                || stmt.starts_with("include")
-                || stmt.starts_with("creg")
-                || stmt.starts_with("measure")
-            {
-                continue;
-            }
-            if let Some(rest) = stmt.strip_prefix("qreg ") {
-                n = idx(rest.trim())?;
-                continue;
-            }
-            let (op, args) = stmt.split_once(' ').ok_or(format!("bad: {stmt}"))?;
-            let a: Vec<usize> = args
-                .split(',')
-                .map(|s| idx(s.trim()))
-                .collect::<Result<_, _>>()?;
-            gates.push(match (op.trim(), a.len()) {
-                ("x", 1) => Gate::X(a[0]),
-                ("z", 1) => Gate::Z(a[0]),
-                ("h", 1) => Gate::H(a[0]),
-                ("s", 1) => Gate::S(a[0]),
-                ("sdg", 1) => Gate::Sdg(a[0]),
-                ("t", 1) => Gate::T(a[0]),
-                ("tdg", 1) => Gate::Tdg(a[0]),
-                ("cx", 2) => Gate::Cx(a[0], a[1]),
-                _ => return Err(format!("unsupported: {stmt}")),
-            });
-        }
-    }
-    Ok((n, gates))
-}
 
 fn clifford_sample(n: usize, gates: &[Gate]) {
     // The gate path runs on the TRANSPOSED engine (word-parallel columns,
@@ -90,24 +45,39 @@ fn main() {
     let args: Vec<String> = std::env::args().collect();
     if args[1] == "clifford-sample" {
         let src = std::fs::read_to_string(&args[2]).expect("read");
-        let (n, gates) = parse(&src).expect("parse");
-        clifford_sample(n, &gates);
+        let p = holon::qasm::parse(&src).unwrap_or_else(|e| {
+            eprintln!("REFUSED (line {}): {}", e.line, e.reason);
+            std::process::exit(2);
+        });
+        // Clifford path still requires a Clifford circuit; T's panic below.
+        let gates: Vec<Gate> = p.gates;
+        clifford_sample(p.n_qubits, &gates);
         return;
     }
-    assert_eq!(args[1], "amp", "usage: holon-run amp|clifford-sample <file.qasm>");
+    assert_eq!(args[1], "amp", "usage: holon-run amp|clifford-sample <file.qasm> [y-bits]");
     let src = std::fs::read_to_string(&args[2]).expect("read");
-    let (n, gates) = parse(&src).expect("parse");
-    let y = vec![false; n];
-    let shards: Option<usize> = args.get(3).map(|s| s.parse().expect("shards"));
-    let t0 = std::time::Instant::now();
-    let a = match shards {
-        Some(k) => amplitude_sharded(n, &gates, &y, k),
-        None => amplitude(n, &gates, &y),
+    let p = holon::qasm::parse(&src).unwrap_or_else(|e| {
+        eprintln!("REFUSED (line {}): {}", e.line, e.reason);
+        std::process::exit(2);
+    });
+    let y: Vec<bool> = if args.len() > 3 {
+        let bits = args[3].trim();
+        assert_eq!(bits.len(), p.n_qubits, "y-bits length must equal qubit count");
+        // convention: leftmost char = qubit 0
+        bits.chars().map(|c| c == '1').collect()
+    } else {
+        vec![false; p.n_qubits]
     };
-    let dt = t0.elapsed().as_secs_f64();
-    let (re, im) = a.to_complex();
+    let t0 = std::time::Instant::now();
+    let (amp, residual) = holon::run::amplitude_program(&p, &y);
+    let (re, im) = amp.to_complex();
+    let pr = re * re + im * im;
     println!(
-        "{{\"seconds\": {dt:.6}, \"re\": {re:.12}, \"im\": {im:.12}, \"p\": {:.12}}}",
-        re * re + im * im
+        "{{\"seconds\": {:.6}, \"re\": {:.12}, \"im\": {:.12}, \"p\": {:.12}, \"residual_zeta16\": {}}}",
+        t0.elapsed().as_secs_f64(),
+        re,
+        im,
+        pr,
+        residual
     );
 }

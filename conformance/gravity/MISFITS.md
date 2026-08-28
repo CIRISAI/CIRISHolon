@@ -18,3 +18,4 @@ into "we applied this": the registry is grep-armed, not advisory.*
 | **M-ONE-MODEL-DELTA** | a defect measured against one chosen model earns "worse than that model"; the collision/minimax form earns "best memoryless" | BRIDGE-2 (external review) |
 | **M-KINEMATIC-NONLOCAL** | the Gauss projector correlates every region; conditioning on ANY plaquette of a constrained state touches matter — a locality stake must separate dynamical propagation from kinematic constraint correlation | BRIDGE-7B |
 | **M-ELECTRIC-BASIS** | an electric term must be a FUNCTION OF SHIFT OPERATORS; a basis-change (Fourier) kernel is not gauge-covariant and B3 fires at once — the freeze must carry an invariance argument per operator | WILSON-1 |
+| **M-NULL-MISSTAKE** | a conservation null must be staked on the quantity the law constrains (per-carrier invariance across steps), not on a quantity it never constrained (equality between different carriers) | WILSON-2 |

@@ -472,3 +472,34 @@ The sawtooth is in a third currency and this bridge does not reach it.
   reported as plainly as §7.4's agreements.
 - Nothing here is a claim about any wild process, and nothing here modifies CIRISOntology's
   stance. CIRISOntology was read only; no commit was made in any repository.
+
+---
+
+## R-A / R-B executed (2026-08-28, GiniRent.lean, sorry-free, builds green)
+
+**R-A landed, narrowly quoted:** GINI RENT is mechanized — on the kernel
+class M = λI + (1−λ)Π the exact rent is `(1 − Σμ_i²)·(1 − λ)` under its
+stated fence (rent = Gini × (1 − retention)), with CROSS-FACE-1's Theorem
+3 recovered as the uniform corollary and the freeze's measured D4 3/4
+reproduced from class sizes — AND used as a refuter: the pattern-match
+extension off the uniform line gives 25/32, wrong. What this does NOT
+discharge, stated in the file: Theorem 2's witness line (the general
+inequality), Theorems 4 and 6, and Theorem 1's (≤) policy construction.
+
+**R-B: THE STAKE IS DEAD, by its own author's counterexample.** The
+informed-rent 0/∞ dichotomy as staked is FALSE —
+`staked_R_B_dichotomy_is_false` exhibits the memory-carrying restore
+policy R(s,s') = s: Γ-equivariant, holds the FINEST view closed, finite
+cost. Equivariance of the policy is not the obstruction. What survives,
+proved: a Γ-equivariant kernel with Γ transitive is DOUBLY STOCHASTIC
+(`equivariant_uniform_invariant`) — the actual mechanism of the measured
+1/d fiber floor: a repair that names no point of the fiber cannot prefer
+one. The design-knowing separator is exact (`knowing_stationary`, f* > 1/2
+for q > 0), and the staked forward number is proved:
+**`fiber_surcharge`: W(v_full) − W(v_view) = p(1−γ) exactly** — the
+surcharge for holding the design is the fiber's own rent.
+
+The informed-rent object survives with its definition corrected: the
+restriction that binds is not equivariance of the policy but MEMORYLESSNESS
+plus fiber-blindness — the next stake, if taken, must restrict the policy's
+INFORMATION about the fiber, not its symmetry.

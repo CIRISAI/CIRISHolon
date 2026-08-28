@@ -17,5 +17,6 @@ import CIRISHolon.Probe
 import CIRISHolon.ProbeConverse
 import CIRISHolon.Identity
 import CIRISHolon.Break
+import CIRISHolon.GiniRent
 import CIRISHolon.Grain
 import CIRISHolon.GiniRent

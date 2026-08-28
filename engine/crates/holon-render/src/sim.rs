@@ -1039,4 +1039,54 @@ impl Sim {
             .filter(|p| p.bonded)
             .count()
     }
+
+    /// The CLUSTER reading: connected components of the bonded-pair graph.
+    ///
+    /// `bonded_count()` counts PAIRS, and the pair criterion is deliberately two-body:
+    /// a pair reads BONDED when that pair, considered alone, is a bound system. Both
+    /// facts are correct and together they mislead — 16 atoms collapsed into one cold
+    /// droplet read 120 BONDED, because every one of the C(16,2) pairs genuinely is
+    /// mutually bound (delete the other fourteen atoms and any pair you kept would stay
+    /// bound; the 12-bohr tail of the well is still ~6e-6 Ha deep, so a cold pair at any
+    /// separation the box allows has `E_rel < 0`). A field screenshot asking "16 atoms,
+    /// 120 bonds?" is what surfaced the mismatch between the number and the noun.
+    ///
+    /// The chemically meaningful headline object is the component, not the edge: that
+    /// droplet is ONE cluster of 16 atoms. This reading introduces no new criterion —
+    /// the edge set is exactly the pairs already reading `bonded`, so it cannot disagree
+    /// with the pair layer, and there is still no distance cutoff and no fitted
+    /// threshold anywhere. Union-find with path halving; components of one atom are
+    /// free atoms, not clusters.
+    ///
+    /// Returns `(clusters, atoms_in_clusters)`. Distinct from the census's MOLECULE
+    /// count on purpose: a cluster is a statement about boundness, a molecule row is a
+    /// statement about closure, and how far those disagree (the droplet: one cluster,
+    /// few or no closed pair-composites, rejections climbing) is the boundness-vs-
+    /// closure fence made visible.
+    pub fn cluster_count(&self) -> (usize, usize) {
+        let mut parent: [usize; MAX_ATOMS] = [0; MAX_ATOMS];
+        for (i, p) in parent.iter_mut().enumerate() {
+            *p = i;
+        }
+        fn find(parent: &mut [usize; MAX_ATOMS], mut i: usize) -> usize {
+            while parent[i] != i {
+                parent[i] = parent[parent[i]]; // path halving
+                i = parent[i];
+            }
+            i
+        }
+        for p in self.pairs[..self.pair_count].iter().filter(|p| p.bonded) {
+            let (a, b) = (find(&mut parent, p.i), find(&mut parent, p.j));
+            if a != b {
+                parent[a] = b;
+            }
+        }
+        let mut size = [0usize; MAX_ATOMS];
+        for i in 0..self.n {
+            size[find(&mut parent, i)] += 1;
+        }
+        let clusters = size[..self.n].iter().filter(|&&s| s >= 2).count();
+        let atoms = size[..self.n].iter().filter(|&&s| s >= 2).sum();
+        (clusters, atoms)
+    }
 }

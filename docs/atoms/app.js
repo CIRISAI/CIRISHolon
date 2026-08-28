@@ -530,7 +530,15 @@ function drawLedger() {
   ui["bond-count"].textContent = bonded;
   ui["temperature"].textContent = `${w.holon_temperature().toFixed(0)} K`;
   ui["clock"].textContent = `t = ${w.holon_time().toFixed(0)} a.u.`;
-  ui["stage-status"].textContent = bonded > 0 ? `${bonded} BONDED` : "NO BOND";
+  // The headline names the CLUSTER, not the pair: on a collapsed droplet every
+  // pair reads mutually bound (16 atoms -> 120 bonded pairs, all of them true
+  // two-body statements), so the pair count is a diagnostic, not a headline.
+  const clusters = w.holon_cluster_count();
+  const clusterAtoms = w.holon_cluster_atoms();
+  ui["stage-status"].textContent =
+    bonded === 0 ? "NO BOND"
+    : clusters === 1 && clusterAtoms === 2 ? "BONDED"
+    : `${clusters} CLUSTER${clusters > 1 ? "S" : ""} · ${clusterAtoms} ATOMS`;
 }
 
 const RUNGS = [

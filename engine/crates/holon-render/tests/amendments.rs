@@ -811,3 +811,87 @@ fn a_pair_held_by_the_spring_is_bound_but_not_closed() {
         "boundness and closure never disagreed, so the gate was never exercised"
     );
 }
+
+// ================================================================ the cluster reading
+//
+// FIELD REPORT (the lead's phone, second screenshot): a scene of 16 atoms collapsed
+// into one droplet ran with the headline "120 BONDED". The number was correct — the
+// pair criterion is exactly two-body, and in a cold droplet every one of the C(16,2)
+// pairs genuinely is mutually bound (the 12-bohr tail of the well is still ~6e-6 Ha
+// deep, so any cold pair reads E_rel < 0). The NOUN was wrong: 120 is the edge count
+// of the bonded graph, and the chemically meaningful headline object is its component
+// count — one cluster of 16 atoms. These gates pin both facts so neither can drift:
+// the pair layer keeps reading all 120 edges, and the cluster reading names them one.
+
+/// The droplet that was on the phone: all pairs bonded, ONE cluster.
+#[test]
+fn a_collapsed_droplet_is_one_cluster_with_120_bonded_pairs() {
+    let mut s = loaded_sim();
+    s.reset(16);
+    let (cx, cy, cz) = (0.5 * s.width, 0.5 * s.height, 0.5 * s.depth);
+    // A cold 4x4 grid at 2.6 bohr spacing: every pair separation lies in
+    // [2.6, ~11] bohr where U(R) < 0. A grid EXACTLY at rest sits exactly ON each
+    // pair's outer turning point (E_rel = U(r), so the solve returns r itself and the
+    // strict `r < r_outer` leg falls either way by solver rounding — a measure-zero
+    // boundary the field scene never occupies). The droplet on the phone was in
+    // thermal motion, so give the grid a tiny radial contraction: every pair gains
+    // nonzero relative kinetic energy (strictly inside its turning point) while the
+    // farthest pair's E_rel stays below zero (KE_rel ~ 1.4e-6 Ha against a ~1e-5 Ha
+    // tail at 11 bohr).
+    for i in 0..16 {
+        let (gx, gy) = (2.6 * ((i % 4) as f64 - 1.5), 2.6 * ((i / 4) as f64 - 1.5));
+        s.set_position_3d(i, cx + gx, cy + gy, cz);
+        s.set_velocity_3d(i, -5e-6 * gx, -5e-6 * gy, 0.0);
+    }
+    s.refresh_pairs();
+    assert_eq!(s.bonded_count(), 120, "every pair of a cold droplet is mutually bound");
+    assert_eq!(
+        s.cluster_count(),
+        (1, 16),
+        "and the headline object is ONE cluster of 16 atoms, not 120 of anything"
+    );
+}
+
+/// Two diatomics flying apart are TWO clusters — relative kinetic energy across the
+/// gap exceeds the tail, so the cross pairs read unbound with no cutoff anywhere.
+#[test]
+fn two_departing_diatomics_are_two_clusters_of_two() {
+    let mut s = loaded_sim();
+    s.reset(4);
+    let (cx, cy, cz) = (0.5 * s.width, 0.5 * s.height, 0.5 * s.depth);
+    let r_e = s.table.r_e;
+    // Each pair at its own equilibrium separation, centres 10 bohr apart, drifting
+    // in opposite directions at 1e-3 a.u.: cross-pair E_rel = mu*(2e-3)^2/2 ~ 1.8e-3 Ha
+    // of relative kinetic energy against a tail of ~1e-5 Ha — unbound by four orders,
+    // still with no distance cutoff in the criterion.
+    for (i, (dx, side)) in [
+        (-5.0 - 0.5 * r_e, -1.0),
+        (-5.0 + 0.5 * r_e, -1.0),
+        (5.0 - 0.5 * r_e, 1.0),
+        (5.0 + 0.5 * r_e, 1.0),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        s.set_position_3d(i, cx + dx, cy, cz);
+        s.set_velocity_3d(i, side * 1e-3, 0.0, 0.0);
+    }
+    s.refresh_pairs();
+    assert_eq!(s.bonded_count(), 2, "each diatomic is bonded, no cross pair is");
+    assert_eq!(s.cluster_count(), (2, 4), "two clusters of two");
+}
+
+/// Free atoms are not clusters: a hot dilute gas reads zero of both.
+#[test]
+fn a_hot_dilute_gas_has_no_clusters() {
+    let mut s = loaded_sim();
+    s.reset(4);
+    let (cx, cy, cz) = (0.5 * s.width, 0.5 * s.height, 0.5 * s.depth);
+    for i in 0..4 {
+        s.set_position_3d(i, cx + 8.0 * (i as f64 - 1.5), cy, cz);
+        s.set_velocity_3d(i, (i as f64 - 1.5) * 2e-3, 0.0, 0.0);
+    }
+    s.refresh_pairs();
+    assert_eq!(s.bonded_count(), 0);
+    assert_eq!(s.cluster_count(), (0, 0));
+}

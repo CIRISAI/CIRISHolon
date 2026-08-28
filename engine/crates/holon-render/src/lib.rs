@@ -85,12 +85,21 @@ pub extern "C" fn holon_table_knot(index: u32, r: f64, e: f64, f: f64) -> u32 {
 /// is what keeps this path out of the wasm's (absent) allocator.
 #[no_mangle]
 pub extern "C" fn holon_table_generate(r_min: f64, r_max: f64, count: u32) -> u32 {
-    let mut guard = sim();
-    let s = &mut *guard;
-    if !s.table.begin(count as usize) {
+    generate_table(&mut sim(), r_min, r_max, count as usize)
+}
+
+/// The Rust-side entry point behind [`holon_table_generate`], for a caller that owns its
+/// own [`Sim`] rather than driving the static one through the ABI — the 3D shell in
+/// `holon-render-3d` is that caller.
+///
+/// Defined once and called by the export above rather than the other way round, because
+/// two copies of "generate, validate, adopt the clocks" is exactly how one of them ends
+/// up forgetting to adopt the clocks. Returns the same status code the ABI returns.
+pub fn generate_table(s: &mut Sim, r_min: f64, r_max: f64, count: usize) -> u32 {
+    if !s.table.begin(count) {
         return status_code(s.table.status);
     }
-    let meta = holon_chem::stream_table(r_min, r_max, count as usize, |i, r, e, f, e2| {
+    let meta = holon_chem::stream_table(r_min, r_max, count, |i, r, e, f, e2| {
         s.table.knot(i, r, e, f) && s.table.knot_curvature(i, e2)
     });
     let Some(meta) = meta else {
@@ -98,10 +107,16 @@ pub extern "C" fn holon_table_generate(r_min: f64, r_max: f64, count: u32) -> u3
     };
     let status = s.table.finish(meta.r_e, meta.d_e, meta.e_asymptote);
     if status == table::LoadStatus::Ok {
+        // Every clock is a function of the curve, so a new curve re-derives all of them
+        // here rather than leaving the previous table's timestep in place.
         s.adopt_table_timescale();
     }
     status_code(status)
 }
+
+/// `LoadStatus::Ok`'s discriminant, so a caller of [`generate_table`] can name the
+/// success code rather than repeating the number.
+pub const TABLE_OK: u32 = 1;
 
 /// Status code for "the generator would not produce a curve for this request" — a range
 /// or a knot count that is not a grid. Distinct from the table's own refusals so the
@@ -710,6 +725,21 @@ pub extern "C" fn holon_pair_bonded(k: u32) -> u32 {
 #[no_mangle]
 pub extern "C" fn holon_bonded_count() -> u32 {
     sim().bonded_count() as u32
+}
+
+/// Number of CLUSTERS: connected components (size >= 2) of the bonded-pair graph.
+/// The headline object — `holon_bonded_count` counts edges of this graph, and on a
+/// collapsed droplet the edge count is C(n,2) while the cluster count is 1. See
+/// [`Sim::cluster_count`] for why both are true and only one belongs in a headline.
+#[no_mangle]
+pub extern "C" fn holon_cluster_count() -> u32 {
+    sim().cluster_count().0 as u32
+}
+
+/// Number of atoms that belong to some cluster (the rest are free atoms).
+#[no_mangle]
+pub extern "C" fn holon_cluster_atoms() -> u32 {
+    sim().cluster_count().1 as u32
 }
 
 // ------------------------------------------------------------------ THE LEDGER

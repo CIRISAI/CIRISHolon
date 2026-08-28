@@ -26,6 +26,13 @@ crate-type = ["cdylib", "rlib"]
 [dependencies]
 holon = { path = "../holon" }
 
+# The curve itself. `holon-chem` has zero dependencies of its own (see its manifest), so
+# this adds nothing to the graph but its own code, and that code is the reason the crate
+# header's "the file is data" paragraph is now historical: the browser computes the
+# potential at load and the file is the FALLBACK. Unlike `holon`, this one is NOT stripped
+# by LTO — it is reached from `holon_table_generate` and is meant to be.
+holon-chem = { path = "../holon-chem" }
+
 # NOTE: no `[profile.release]` here on purpose. A workspace member's profile section is
 # silently ignored by Cargo (only the workspace root's applies), so declaring one would
 # look like it worked and would not. `build-web.sh` sets the size profile through

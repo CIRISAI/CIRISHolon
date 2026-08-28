@@ -45,6 +45,14 @@ members = [
   # cannot perturb the core's feature resolution or the isolation gates. No other deps,
   # runtime or dev (raw extern "C" ABI; the host parses its own JSON).
   "crates/holon-render",
+  # holon-chem: the in-engine quantum chemistry tier -- STO-3G closed-form Gaussian
+  # integrals, full CI, and the analytic derivatives of both. ZERO dependencies, runtime
+  # and dev alike, and no optional features, so like `holon` it cannot perturb the core's
+  # feature resolution or the isolation gates. It IS linked into holon-render's browser
+  # artifact (that is the point -- the viewer computes the curve instead of fetching it),
+  # so a dependency added here would be shipped to every visitor as well as unified into
+  # the workspace; the crate's own manifest says so where someone editing it will look.
+  "crates/holon-chem",
 ]
 
 # Deliberately OUTSIDE the workspace, each for its own reason:

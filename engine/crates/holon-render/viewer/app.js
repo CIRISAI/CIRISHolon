@@ -60,8 +60,52 @@ const state = {
 };
 
 // ---------------------------------------------------------------- loading
+//
+// TWO routes to the same table, and the engine-computed one is the default.
+//
+// `holon_table_generate` asks the wasm to SOLVE the H2 potential -- STO-3G full CI from
+// closed-form Gaussian integrals, analytic forces and curvature -- and push the knots
+// straight into its own interpolator. Nothing is fetched and nothing is parsed. The file
+// route below stays as a fallback for a host that cannot run the generator, or for an
+// A/B against a different curve, and both routes end in the same interpolator and the
+// same sign-convention check.
+
+const GRID = { rMin: 0.3, rMax: 10.0, knots: 492 };
+
+const LOAD_STATUS = [
+  "empty", "ok", "too many knots", "too few knots", "R not increasing",
+  "non-finite value", "the generator refused the requested grid",
+];
 
 async function loadPotential(w) {
+  if (typeof w.holon_table_generate === "function") {
+    const t0 = performance.now();
+    const status = w.holon_table_generate(GRID.rMin, GRID.rMax, GRID.knots);
+    const ms = performance.now() - t0;
+    if (status === 1) {
+      reportTable(w);
+      const residual = w.holon_chem_referee_residual();
+      const digest = (w.holon_chem_referee_digest() >>> 0).toString(16).padStart(8, "0");
+      const points = w.holon_chem_referee_points();
+      showProvenance(
+        "ENGINE-COMPUTED (STO-3G FCI, f64)",
+        `${GRID.knots} knots solved in ${ms.toFixed(0)} ms. Referee residual: ` +
+        `max |dE| <= ${residual.toExponential(1)} Eh over ${points} separations, against ` +
+        `the 50-digit curve 0x${digest}. R_e, D_e and the dissociation asymptote are ` +
+        `computed here, not quoted. EXACT-IN-MODEL for STO-3G, not a prediction of ` +
+        `experiment.`,
+        false,
+      );
+      return { generated: true, ms };
+    }
+    // Fall through to the file. Saying so is the point: a silent fallback would leave
+    // the viewer showing a curve nobody asked for and no way to notice.
+    showError(
+      `the engine generator was refused (${LOAD_STATUS[status] ?? status}); ` +
+      `falling back to h2_potential.json.`,
+    );
+  }
+
   const response = await fetch("h2_potential.json");
   if (!response.ok) {
     throw new Error(
@@ -80,19 +124,32 @@ async function loadPotential(w) {
   if (!w.holon_table_begin(R.length)) {
     throw new Error(`the table refused ${R.length} knots`);
   }
+  const D2 = file.d2E_hartree_per_bohr2 ?? file.E2_hartree_per_bohr2;
   for (let i = 0; i < R.length; i += 1) {
     if (!w.holon_table_knot(i, R[i], E[i], F[i])) throw new Error(`the table refused knot ${i}`);
+    if (Array.isArray(D2) && D2.length === R.length) w.holon_table_knot_curvature(i, D2[i]);
   }
   const status = w.holon_table_finish(file.R_e, file.D_e, file.E_asymptote);
   if (status !== 1) {
-    const why = ["empty", "ok", "too many knots", "too few knots", "R not increasing", "non-finite value"];
-    throw new Error(`the table refused the curve: ${why[status] ?? status}`);
+    throw new Error(`the table refused the curve: ${LOAD_STATUS[status] ?? status}`);
   }
+  reportTable(w);
 
-  // Surface the sign-convention check rather than trusting it. `residual` assumes
-  // dE/dR = -F; `residual_alt` is the same statistic with the opposite hypothesis and
-  // sits near 2.0 for any consistent table. If they ever swap, the file means the other
-  // thing and the curve being simulated is mirrored.
+  const provenance = String(file.provenance ?? "");
+  showProvenance(
+    /placeholder/i.test(provenance) ? "PLACEHOLDER CURVE" : "FILE CURVE",
+    provenance,
+    /placeholder/i.test(provenance),
+  );
+  return { generated: false, file };
+}
+
+// Surface the sign-convention check rather than trusting it. `residual` assumes
+// dE/dR = -F; `residual_alt` is the same statistic with the opposite hypothesis and sits
+// near 2.0 for any consistent table. If they ever swap, the table means the other thing
+// and the curve being simulated is mirrored. This runs on BOTH routes: the generator is
+// no more exempt from it than a file is.
+function reportTable(w) {
   const res = w.holon_table_residual();
   const alt = w.holon_table_residual_alt();
   ui["t-knots"].textContent = w.holon_table_knots();
@@ -106,13 +163,14 @@ async function loadPotential(w) {
       `vs ${alt.toExponential(2)}); the curve may be mirrored.`,
     );
   }
+}
 
-  const provenance = String(file.provenance ?? "");
-  if (/placeholder/i.test(provenance)) {
-    document.querySelector("#placeholder-banner").hidden = false;
-    ui.provenance.textContent = provenance;
-  }
-  return file;
+function showProvenance(label, text, warn) {
+  const banner = document.querySelector("#provenance-banner");
+  banner.hidden = false;
+  banner.classList.toggle("warn", Boolean(warn));
+  document.querySelector("#provenance-label").textContent = label;
+  ui.provenance.textContent = text;
 }
 
 function showError(message) {

@@ -67,6 +67,10 @@ body[data-engine="failed"] .runtime-pill i { background: var(--rust); }
 .banner[hidden] { display: none; }
 .banner b { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; white-space: nowrap; }
 .banner.error { border-color: rgba(187, 76, 46, 0.5); border-left-color: var(--rust); background: rgba(187, 76, 46, 0.12); }
+/* The provenance banner is neutral when the curve was computed here and warns only when
+   it was not -- a placeholder or a fallback file. Colour carries the same information the
+   label does, so the two cannot drift apart. */
+.banner.warn { border-color: rgba(187, 76, 46, 0.5); border-left-color: var(--rust); background: rgba(187, 76, 46, 0.12); }
 
 .intro { display: flex; align-items: center; justify-content: space-between; gap: 28px; margin: 18px 0 20px; }
 .intro p { margin: 0; max-width: 74ch; line-height: 1.6; font-size: 14.5px; }

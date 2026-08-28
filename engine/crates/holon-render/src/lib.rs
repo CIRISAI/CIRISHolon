@@ -18,11 +18,20 @@
 //!
 //! # The curve
 //!
-//! Every force and energy comes from `h2_potential.json` (see `table.rs` for the
-//! contract). The file is data: replacing it with a different curve changes the physics
-//! and touches no code. Until the exact table lands, the shipped file is a Morse
-//! placeholder, labelled as one in its own `provenance` field and surfaced as a banner
-//! in the viewer.
+//! Every force and energy comes from the potential table (see `table.rs` for the
+//! contract), and there are two ways to fill it.
+//!
+//! The DEFAULT is `holon_table_generate`: `holon-chem` solves H2 in the STO-3G basis
+//! exactly (full CI) from closed-form Gaussian integrals, differentiates it analytically
+//! for forces and curvature, and finds its own equilibrium and dissociation asymptote —
+//! in the browser, at load, in tens of milliseconds. The sandbox therefore does not
+//! *play* a curve somebody computed; it *solves* the one it is showing, and the residual
+//! against a pinned 50-digit referee is on the banner rather than in a footnote.
+//!
+//! The FALLBACK is `h2_potential.json` pushed through `holon_table_begin`/`knot`/
+//! `finish`. It is still a supported mode: a host that cannot run the generator, or an
+//! A/B against a different curve, wants it. Both routes end in the same interpolator and
+//! the same validation, so nothing downstream can tell which one filled the table.
 
 // The JSON reader is NATIVE ONLY. The browser has a JSON parser already and pushes
 // knots through the ABI below; shipping a second one inside the wasm would be pure
@@ -56,6 +65,90 @@ pub extern "C" fn holon_table_begin(count: u32) -> u32 {
 #[no_mangle]
 pub extern "C" fn holon_table_knot(index: u32, r: f64, e: f64, f: f64) -> u32 {
     u32::from(sim().table.knot(index as usize, r, e, f))
+}
+
+// ------------------------------------------------- the engine-computed curve
+//
+// The other way to fill the table, and the default one: rather than parsing somebody's
+// file, compute the curve here. `holon-chem` solves H2 in the STO-3G basis exactly (full
+// CI) from closed-form Gaussian integrals, differentiates it analytically for the forces
+// and the curvature, and finds its own equilibrium and dissociation asymptote. The knots
+// go straight into the same interpolator the file path fills, through the same
+// validation, so nothing downstream can tell which route filled it — which is the point:
+// the physics is one implementation, and the source of the numbers is a mode.
+
+/// Compute the curve and load it, in one call. Returns the `LoadStatus` discriminant
+/// (1 = Ok); 6 means the generator itself refused the request.
+///
+/// Allocation-free: `holon_chem::stream_table` hands over one knot at a time and each is
+/// pushed as it arrives, so no copy of the curve exists anywhere but in the table. That
+/// is what keeps this path out of the wasm's (absent) allocator.
+#[no_mangle]
+pub extern "C" fn holon_table_generate(r_min: f64, r_max: f64, count: u32) -> u32 {
+    let mut guard = sim();
+    let s = &mut *guard;
+    if !s.table.begin(count as usize) {
+        return status_code(s.table.status);
+    }
+    let meta = holon_chem::stream_table(r_min, r_max, count as usize, |i, r, e, f, e2| {
+        s.table.knot(i, r, e, f) && s.table.knot_curvature(i, e2)
+    });
+    let Some(meta) = meta else {
+        return GENERATOR_REFUSED;
+    };
+    let status = s.table.finish(meta.r_e, meta.d_e, meta.e_asymptote);
+    if status == table::LoadStatus::Ok {
+        s.adopt_table_timescale();
+    }
+    status_code(status)
+}
+
+/// Status code for "the generator would not produce a curve for this request" — a range
+/// or a knot count that is not a grid. Distinct from the table's own refusals so the
+/// viewer can say which half declined, and public so the tests and `app.js` name it
+/// rather than repeating the number.
+pub const GENERATOR_REFUSED: u32 = 6;
+
+/// The worst disagreement, in hartree, between this engine's f64 curve and the pinned
+/// 50-digit referee, measured over all 492 of the referee's separations and enforced by
+/// `holon-chem`'s `tests/referee.rs` on every build. Baked in as a constant so the
+/// viewer's banner states a measured number rather than an adjective.
+#[no_mangle]
+pub extern "C" fn holon_chem_referee_residual() -> f64 {
+    holon_chem::REFEREE_MEASURED_E
+}
+
+/// FNV-1a digest of the pinned referee curve the residual above was measured against.
+/// Displayed with the residual: a residual without the identity of what it is a residual
+/// FROM is not a claim about anything.
+#[no_mangle]
+pub extern "C" fn holon_chem_referee_digest() -> u32 {
+    holon_chem::REFEREE_DIGEST
+}
+
+/// Number of separations in that referee curve.
+#[no_mangle]
+pub extern "C" fn holon_chem_referee_points() -> u32 {
+    holon_chem::REFEREE_GRID_POINTS as u32
+}
+
+/// The MODEL at `r`, bypassing the table and its interpolant: total energy in hartree.
+///
+/// The table is a sampled, interpolated view of this, and the two answer different
+/// questions. Asking the table how well the browser reproduces the referee measures the
+/// GRID (a few times 1e-10); asking this measures the ARITHMETIC (a few times 1e-15),
+/// which is what the banner's residual is about. Without this export the browser-side
+/// half of the referee gate could not be measured at all — only inferred from the native
+/// build, whose libm is a different one.
+#[no_mangle]
+pub extern "C" fn holon_chem_energy(r: f64) -> f64 {
+    holon_chem::h2_energy(r)
+}
+
+/// The model's force at `r`, `-dE/dR`, differentiated analytically rather than sampled.
+#[no_mangle]
+pub extern "C" fn holon_chem_force(r: f64) -> f64 {
+    holon_chem::h2_point(r).f
 }
 
 /// Returns the `LoadStatus` discriminant: 1 = Ok, anything else is a refusal.

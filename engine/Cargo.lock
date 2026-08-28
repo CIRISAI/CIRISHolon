@@ -884,6 +884,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "holon-chem"
+version = "0.1.0"
+
+[[package]]
 name = "holon-mesh"
 version = "0.1.0"
 dependencies = [
@@ -900,6 +904,7 @@ name = "holon-render"
 version = "0.1.0"
 dependencies = [
  "holon",
+ "holon-chem",
 ]
 
 [[package]]

@@ -1,0 +1,5 @@
+GATES: B3=PASS  G0=PASS  U1=PASS  U2'=PASS (matter responds at steps [1, 2, 3, 4])  U2''=PASS (line-disjoint zero exact)  U3=PASS (cone at live steps [3])
+[plant i] direct-hit live steps: [3] -> FIRES
+[plant ii] Fourier kernel on edge 3 -> B3 FIRES (Gauss fails at c)
+
+VERDICT: ALL PASS; plants both FIRE

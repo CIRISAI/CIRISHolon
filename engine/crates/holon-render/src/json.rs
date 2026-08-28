@@ -100,11 +100,23 @@ pub fn parse(src: &str) -> Result<PotentialFile, String> {
         return Err(format!("contract violation: only {} knots", r.len()));
     }
     // Optional: absence is not an error, and a present-but-wrong-length column is.
-    let d2 = match array(src, "d2E_hartree_per_bohr2") {
+    //
+    // TWO accepted names, which is not indulgence. This reader was written expecting
+    // `d2E_hartree_per_bohr2`; the referee curve and `holon-chem`'s emitter both write
+    // `E2_hartree_per_bohr2`. A file carrying the column under the other name was parsed
+    // without complaint and silently loaded WITHOUT its curvature — an optional field
+    // that is present and ignored looks exactly like an optional field that is absent,
+    // which is why nothing caught it. Accepting both is the fix; refusing the file for
+    // having the wrong spelling of an optional column would not be.
+    let (d2_key, d2_raw) = match array(src, "d2E_hartree_per_bohr2") {
+        Ok(v) => ("d2E_hartree_per_bohr2", Ok(v)),
+        Err(_) => ("E2_hartree_per_bohr2", array(src, "E2_hartree_per_bohr2")),
+    };
+    let d2 = match d2_raw {
         Ok(v) if v.len() == r.len() => v,
         Ok(v) => {
             return Err(format!(
-                "d2E_hartree_per_bohr2 has {} entries against {} grid points",
+                "{d2_key} has {} entries against {} grid points",
                 v.len(),
                 r.len()
             ))

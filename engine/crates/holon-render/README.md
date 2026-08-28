@@ -38,15 +38,44 @@ consistent. Consistency is a separate question and gets a separate readout: `res
 swap, the file means the other thing and the viewer says so instead of quietly
 simulating a mirror-image molecule.
 
-**The shipped file is a PLACEHOLDER** — a Morse potential fitted to H<sub>2</sub>'s
-spectroscopic constants. It has the right well depth, bond length and vibrational
-frequency, and it is wrong everywhere those three do not pin it, badly so on the
-repulsive wall. It says so in its own `provenance` field, and the viewer shows that as a
-banner. Regenerate with:
+### The curve is COMPUTED, not loaded
+
+The default route does not read a file at all. At load the wasm calls
+`holon_table_generate`, and `holon-chem` solves H<sub>2</sub> in the STO-3G basis
+exactly — full CI from closed-form Gaussian integrals, forces and curvature by analytic
+differentiation, `R_e`, `D_e` and the dissociation asymptote all located by the same
+code. 492 knots in **24.6 ms** in the browser (12.3 ms native). Nothing about the physics is fetched.
+
+The claim that this is the right curve is gated rather than asserted. `holon-chem` is
+checked point by point against an independent 50-digit mpmath implementation of the same
+model, pinned by digest, at all 492 of its separations:
+
+| | staked | measured (native) | measured (wasm/V8) |
+|---|---|---|---|
+| `max abs dE` | `1e-12` Eh | `2.46e-15` | `2.44e-15` |
+| `max abs dF` | — | `2.84e-14` Eh/a0 | `2.84e-14` |
+| `max abs dR_e` | — | `5.8e-16` a0 | — |
+
+The viewer's banner states that residual and the referee's digest, because a residual
+without the identity of what it is a residual *from* is not a claim about anything. The
+wasm column is measured separately by `check-wasm.mjs`: the browser runs Rust's own libm,
+not the host's, so the native number is an inference about it rather than a measurement
+of it (the two differ, at `9.7e-16`).
+
+**The file path is still a supported FALLBACK** — a host that cannot run the generator,
+or a deliberate A/B against a different curve. The shipped `viewer/h2_potential.json` is
+still the Morse **PLACEHOLDER** and the viewer labels it as one if it is ever reached.
+Replace it with the real curve using:
 
 ```sh
-cargo run -p holon-render --example make_placeholder
+cargo run -p holon-chem --release --example emit_curve -- viewer/h2_potential.json 492
 ```
+
+but note that doing so is not free: `a_pair_held_by_the_spring_is_bound_but_not_closed`
+in `tests/amendments.rs` was staked against the placeholder's exponential wall and does
+not survive the real `1/R` one (the driven pair is admitted as a molecule instead of
+being rejected on closure, so `closure_rejections` stays 0). Every other gate in the
+crate passes on either curve. That scenario needs re-staking before the swap lands.
 
 ## The three clocks
 
@@ -56,7 +85,7 @@ defect.
 1. **Physics dt — DERIVED, never chosen.** `omega_e = sqrt(|U''(R_e)| / mu)` is read off
    the curve's own curvature at its own minimum; `dt = period / 64`. Change the JSON and
    every clock moves. Measured on the placeholder: period 7.58 fs, `dt_reference`
-   4.8988 a.u.
+   4.8988 a.u. The engine-computed curve is stiffer and re-derives all of them.
 2. **Frame rate — MEASURED.** The host passes the wall interval it actually observed.
    Nothing assumes 60 Hz, or any Hz. A fixed-timestep accumulator converts sim-time into
    whole substeps and CARRIES the remainder; dt is never stretched to fit a frame.
@@ -205,10 +234,15 @@ wasm point by point — the same function the integrator differentiates, not a c
 | `src/lib.rs` | the raw `extern "C"` ABI |
 | `tests/ledger.rs` | the ledger and bond gates (12) |
 | `tests/amendments.rs` | clocks, capacity, the capture plant, composite holons (16) |
-| `examples/make_placeholder.rs` | writes the placeholder curve |
+| `tests/engine_curve.rs` | the engine-computed curve: both routes, the interpolant, NVE, the ABI (7) |
+| `examples/make_placeholder.rs` | writes the placeholder fallback curve |
+| `check-wasm.mjs` | measures the SHIPPED wasm: generation time, and its residual against the referee |
 | `examples/diagnose.rs` | the probe that set the test thresholds from measurement |
 | `viewer/` | `index.html`, `styles.css`, `app.js` — input and pixels, no physics |
 
-One dependency: `holon`, for the tuner's `Policy`/`Hold`/`Degrade` and `grain`'s `Grain` —
-the real types, not a copy. LTO strips everything else it carries. No wasm-bindgen: the ABI is raw `extern "C"` scalars
+Two dependencies, both dependency-free themselves: `holon`, for the tuner's
+`Policy`/`Hold`/`Degrade` and `grain`'s `Grain` (the real types, not a copy; LTO strips
+everything else it carries), and `holon-chem`, for the curve. `holon-chem` is NOT
+stripped — it is reached from `holon_table_generate` and is meant to be; it costs
+**+13,240 bytes** of wasm, 100,800 to 114,040 (+13.1%). No wasm-bindgen: the ABI is raw `extern "C"` scalars
 over a shared static, the same shape `holon-ball-game` and `holon-sandbox` use.

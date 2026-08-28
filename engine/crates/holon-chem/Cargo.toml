@@ -1,0 +1,21 @@
+[package]
+name = "holon-chem"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "H2/STO-3G/FCI potential computed in-engine from closed-form Gaussian integrals"
+
+# ZERO dependencies, runtime and dev alike, and that is load-bearing rather than tidy.
+# This crate is linked into `holon-render`'s browser artifact, so anything it pulls in
+# is shipped to the viewer and unified into the workspace's feature resolution — the
+# exact failure the isolation gates in `ci-gates.sh` exist to catch. Everything it needs
+# is arithmetic: `erf`, `erfc` and the Boys function are written here and unit-tested
+# against known values, `f64::exp`/`f64::sqrt` come from core, and the differentiation
+# is a 20-line dual number rather than a crate.
+[dependencies]
+
+# NOTE: no `[profile.release]` here on purpose — a workspace member's profile section is
+# silently ignored by Cargo (only the workspace root's applies). `holon-render`'s
+# `build-web.sh` sets the size profile through `CARGO_PROFILE_RELEASE_*` environment
+# variables, and that is the path this crate's wasm bytes are measured on.

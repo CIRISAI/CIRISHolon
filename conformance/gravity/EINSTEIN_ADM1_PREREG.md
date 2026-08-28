@@ -98,3 +98,26 @@ shell." What this is NOT: 3+1, continuum, or curvature-with-local-dof —
 the named successors, in order: punctured torus with conjugacy-class
 particles (mass–deficit-angle, requirement 2's rung), then SU(2)-via-2T,
 then the continuum question, which remains open research.
+
+## Amendment ADM-1B (frozen 2026-08-28, before the rerun; first run's log kept)
+
+First run: E1 PASS (28 consistent collisions), E2 PASS, plant (ii) FIRES —
+but E3 was VOID (the kicked sector was built with a wrong element index:
+the D4 commutator subgroup is {1, r²} and the instrument's guess for r²'s
+encoding was wrong) and plant (i) MISSED because its FROZEN carrier, the
+fully symmetric flat vacuum, has a perturbed image whose support happens
+to be conjugation-closed — the defect is invisible on a maximally
+symmetric state. That is M-PLANT-SECTOR's sixth appearance, in the
+sharpest form yet: symmetry of the carrier can close the very sector the
+plant needs open.
+
+1. E3's kicked carrier is the Gauss projection of the [g_a,g_b] = r²
+   sector using the instrument's OWN R2 constant (imported, not guessed);
+   its off-flat support is asserted nonzero per M-PROBE-EIGENSTATE.
+2. Plant (i)'s carrier is the Gauss projection of the single flat
+   configuration (s, 1) with s a reflection — chosen because the broken
+   twist's image of THIS orbit is provably not conjugation-closed (the
+   conjugator that inverts r moves the planted r), so the defect is
+   visible; sector (the non-closed support difference) asserted nonzero.
+All gates and criteria unchanged. witness: none (carrier corrections; no
+criterion moves)

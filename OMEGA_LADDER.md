@@ -123,3 +123,21 @@ Five staked attacks, each a real campaign:
       Identity(𝒜) — and the tuple grows by a DERIVED law (the intervention
       face), the first measured instance of maximality-by-lawful-extension.
       Successor: the general converse of T1 as a Lean brick.
+
+## The selector programme (2026-08-28, SELECTOR_MAP banked)
+
+Census on the 48-world model, verified in-session: the candidates are
+DISJOINT where live (union 29/48, intersection 0 — they pick different
+worlds). S3 (observer bootstrap) ranked first — identity excluded by
+criterion, half already a theorem (Break T3), mechanism staked forward:
+bootstrap ⟺ fixed-point-free macro law ∧ trivial holonomy — SELECTOR-3
+frozen with the falling-fraction gate as the only admissible upward
+hard-TOE evidence. S5 given teeth: the automorphism-orbit CEILING (no
+Ω functional resolves finer than orbits; unique-T selection impossible in
+principle — unique-up-to-Ω-iso is the only coherent target), with the
+saturation test as the null's positive route. S2 deferred until a
+two-rung descent tower exists (its Z₂ holonomy invariant banked as a
+Lean target); S4 needs a stochastic face (denominator provably inert on
+permutation families); S6 runs as a scored anti-pole. Rent-multiset
+incompleteness found and the TOE-NULL-1 wording refined (view-indexed
+profile, never a summary statistic).

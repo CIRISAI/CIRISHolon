@@ -37,3 +37,16 @@ The hard-TOE tail returns to its prior; the cut was double-counting an
 acknowledged open. Ω separates the presented worlds (measured); does not
 yet select (open); pure rent minimization selects stasis (demonstrated);
 W3 stands as a wager under its newly frozen extension grammar (STANCE.md).
+
+## Scope refinement from SELECTOR-MAP (2026-08-28): view-indexed, not multiset
+
+The selector census found the rent MULTISET incomplete on the full
+48-world family: 8 distinct sorted-multiset values for 10 conjugation
+orbits, with both collisions merging a macro-static world with a period-2
+world (TOE-NULL-1's own period-2 witness is one half of a collision). The
+three DESIGNATED witnesses' totals (0/50/63) are pairwise distinct, so
+the published claim stands exactly as worded — but the general repair of
+the underdetermination is carried by the **view-INDEXED rent profile up
+to the automorphism group** (complete: 10 classes for 10 orbits), and
+"the rent spectrum separates" must never be abbreviated to a total or a
+multiset.

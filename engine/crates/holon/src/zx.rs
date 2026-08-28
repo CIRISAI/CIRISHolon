@@ -897,6 +897,24 @@ impl ZxGraph {
         self.outputs.clear();
     }
 
+    /// Is this diagram the bare identity — every input wired straight to its
+    /// own output by a plain edge, and no spiders left at all?
+    pub fn is_identity_wiring(&self) -> bool {
+        if self.inputs.len() != self.outputs.len() {
+            return false;
+        }
+        let live: Vec<usize> = (0..self.phase.len()).filter(|&v| self.alive[v]).collect();
+        if live.len() != self.inputs.len() + self.outputs.len() {
+            return false;
+        }
+        if live.iter().any(|&v| !self.boundary[v]) {
+            return false;
+        }
+        self.inputs.iter().zip(&self.outputs).all(|(&i, &o)| {
+            self.degree(i) == 1 && self.degree(o) == 1 && self.has_edge(i, o) && !self.is_h(i, o)
+        })
+    }
+
     pub fn is_closed(&self) -> bool {
         (0..self.phase.len()).all(|v| !self.alive[v] || !self.boundary[v])
     }
@@ -1080,6 +1098,476 @@ impl ZxGraph {
         scalar
     }
 }
+
+// ---------------------------------------------------------------- extraction
+
+/// A dense GF(2) matrix with bit-packed rows — the same discipline as the
+/// diagram's adjacency, because frontier Gaussian elimination is the same
+/// word-parallel XOR sweep.
+#[derive(Clone)]
+struct BitMat {
+    rows: usize,
+    cols: usize,
+    words: usize,
+    d: Vec<u64>,
+}
+
+impl BitMat {
+    fn zero(rows: usize, cols: usize) -> BitMat {
+        let words = cols.div_ceil(64).max(1);
+        BitMat { rows, cols, words, d: vec![0u64; rows * words] }
+    }
+
+    fn identity(n: usize) -> BitMat {
+        let mut m = BitMat::zero(n, n);
+        for i in 0..n {
+            m.set(i, i);
+        }
+        m
+    }
+
+    #[inline]
+    fn get(&self, r: usize, c: usize) -> bool {
+        self.d[r * self.words + (c >> 6)] >> (c & 63) & 1 == 1
+    }
+
+    #[inline]
+    fn set(&mut self, r: usize, c: usize) {
+        self.d[r * self.words + (c >> 6)] |= 1u64 << (c & 63);
+    }
+
+    /// `row[dst] ^= row[src]`
+    fn add_row(&mut self, src: usize, dst: usize) {
+        let (a, b) = (src * self.words, dst * self.words);
+        for i in 0..self.words {
+            self.d[b + i] ^= self.d[a + i];
+        }
+    }
+
+    fn swap_rows(&mut self, a: usize, b: usize) {
+        if a == b {
+            return;
+        }
+        for i in 0..self.words {
+            self.d.swap(a * self.words + i, b * self.words + i);
+        }
+    }
+
+    fn row_weight(&self, r: usize) -> u32 {
+        self.d[r * self.words..(r + 1) * self.words].iter().map(|w| w.count_ones()).sum()
+    }
+
+    fn row_bits(&self, r: usize) -> Vec<usize> {
+        bits_of(&self.d[r * self.words..(r + 1) * self.words])
+    }
+}
+
+/// Gauss–Jordan over GF(2), mirroring every row operation into `proxy` so
+/// that `proxy[i]` names exactly which ORIGINAL rows XOR to give `self[i]`.
+fn gauss_jordan(m: &mut BitMat, proxy: &mut BitMat) {
+    let mut pivot = 0;
+    for col in 0..m.cols {
+        if pivot == m.rows {
+            break;
+        }
+        let Some(r) = (pivot..m.rows).find(|&r| m.get(r, col)) else { continue };
+        m.swap_rows(pivot, r);
+        proxy.swap_rows(pivot, r);
+        for r2 in 0..m.rows {
+            if r2 != pivot && m.get(r2, col) {
+                m.add_row(pivot, r2);
+                proxy.add_row(pivot, r2);
+            }
+        }
+        pivot += 1;
+    }
+}
+
+/// The result of extraction: a circuit in the surface alphabet, plus the
+/// residual global scalar. The contract is an EQUATION, not an
+/// approximation — the original diagram equals `scalar · circuit`.
+#[derive(Clone, Debug)]
+pub struct Extraction {
+    pub gates: Vec<Surface>,
+    pub scalar: Cyc,
+}
+
+impl ZxGraph {
+    /// Toggle the Hadamard neighbourhood of `v` by `mask`, keeping the
+    /// mirrored halves in step, and return how many edges the flip
+    /// DESTROYED. Unlike `xor_row_h` this is ASYMMETRIC — only `v`'s
+    /// neighbourhood changes — which is what a frontier row operation is.
+    fn xor_neighbourhood(&mut self, v: usize, mask: &[u64]) -> u32 {
+        let destroyed = self.xor_row_h(v, mask);
+        for w in bits_of(mask) {
+            let on = bit(&self.adj[v], w);
+            set_bit(&mut self.adj[w], v, on);
+            set_bit(&mut self.had[w], v, on);
+        }
+        destroyed
+    }
+
+    /// A frontier vertex is a boundary-adjacent Pauli spider — the
+    /// precondition for pivoting a gadget off the frontier.
+    fn is_boundary_pauli(&self, v: usize) -> bool {
+        matches!(self.phase[v].rem_euclid(8), 0 | 4)
+            && self.neighbours(v).into_iter().any(|n| self.boundary[n])
+    }
+
+    fn check_boundary_pivot(&self, v0: usize, v1: usize) -> bool {
+        v0 != v1
+            && self.alive[v0]
+            && self.alive[v1]
+            && !self.boundary[v0]
+            && !self.boundary[v1]
+            && self.has_edge(v0, v1)
+            && self.is_h(v0, v1)
+            && self.gen_pivot_shape(v0)
+            && self.gen_pivot_shape(v1)
+            && self.is_boundary_pauli(v0)
+    }
+
+    /// CIRCUIT EXTRACTION — hand the reduced diagram back as a circuit.
+    ///
+    /// ALGORITHM CREDIT: the frontier/gflow extraction of Duncan, Kissinger,
+    /// Perdrix and van de Wetering (Quantum 4, 279 (2020) §5), in the refined
+    /// form of Backens, Miller-Bakewell, de Felice, Lorenz and van de Wetering
+    /// ("There and back again: A circuit extraction tale", Quantum 5, 421
+    /// (2021)); quizx's `extract.rs` (Apache-2.0) is the reference
+    /// implementation and the benchmark. This is our own implementation of
+    /// their published procedure over the bit-packed representation.
+    ///
+    /// The shape: walk a FRONTIER of spiders adjacent to the outputs inward.
+    /// At each step peel off what is already a gate (a Hadamard edge to the
+    /// output, a phase on the frontier, an edge between two frontier
+    /// vertices), pivot away any phase gadget touching the frontier, and then
+    /// consume any frontier spider that has become a plain wire. When none
+    /// has, Gaussian elimination over GF(2) on the frontier's biadjacency
+    /// MAKES one — and the row operations that do it are exactly the CNOTs.
+    ///
+    /// EXACTNESS: every step pays its scalar into `self.scalar`, including
+    /// the two that are easy to miss — a frontier–frontier Hadamard edge
+    /// traded for a CZ owes a √2⁻¹ (the edge is normalized, the gate is not),
+    /// and a row operation owes `√2^{destroyed − created}` because it changes
+    /// how many Hadamard edges the diagram contains. The returned `scalar`
+    /// closes the equation.
+    pub fn extract(&mut self) -> Result<Extraction, String> {
+        let nq = self.outputs.len();
+        if nq == 0 {
+            return Err("zx: cannot extract a circuit from a diagram with no outputs".into());
+        }
+        let mut circuit: std::collections::VecDeque<Surface> = std::collections::VecDeque::new();
+
+        // Phase gadgets present at the start. Extraction only ever removes
+        // them; it never creates one, so this set is a shrinking budget.
+        let mut gadgets: std::collections::HashSet<usize> = std::collections::HashSet::new();
+        for v in 0..self.phase.len() {
+            if self.alive[v] && !self.boundary[v] && self.degree(v) == 1 {
+                let hub = self.neighbours(v)[0];
+                if !self.boundary[hub] {
+                    gadgets.insert(hub);
+                }
+            }
+        }
+
+        // frontier[i] = (qubit, spider)
+        let mut frontier: Vec<(usize, usize)> = Vec::new();
+        let fence = 64 * self.n_spiders() + 1024;
+        for _ in 0..fence {
+            // ---- PREPROCESSING: peel gates off the outputs, build the frontier
+            frontier.clear();
+            for q in 0..nq {
+                let o = self.outputs[q];
+                let nbrs = self.neighbours(o);
+                if nbrs.len() != 1 {
+                    return Err(format!(
+                        "zx: output {o} has degree {} — the diagram is not a circuit",
+                        nbrs.len()
+                    ));
+                }
+                let v = nbrs[0];
+                if self.is_h(o, v) {
+                    circuit.push_front(Surface::H(q));
+                    self.set_edge(o, v, Some(false));
+                }
+                if self.boundary[v] {
+                    continue; // this wire is fully extracted
+                }
+                frontier.push((q, v));
+                let p = self.phase[v].rem_euclid(8);
+                if p != 0 {
+                    circuit.push_front(Surface::DiagPow(p, q));
+                    self.phase[v] = 0;
+                }
+            }
+            // Frontier-to-frontier edges and input padding need the frontier
+            // complete, so they run in a second sweep.
+            for i in 0..frontier.len() {
+                let (q, v) = frontier[i];
+                for n in self.neighbours(v) {
+                    if n == self.outputs[q] {
+                        continue;
+                    }
+                    if self.boundary[n] {
+                        if !self.inputs.contains(&n) {
+                            return Err(format!("zx: spider {v} joins two outputs"));
+                        }
+                        // A frontier vertex that is more than a bare wire
+                        // needs its input pushed one hop away.
+                        if self.degree(v) > 2 {
+                            self.unfuse_boundary(v, n);
+                        }
+                    } else if let Some(&(r, _)) = frontier.iter().find(|&&(_, w)| w == n) {
+                        self.set_edge(v, n, None);
+                        self.scalar.m += 1; // the edge is normalized, CZ is not
+                        circuit.push_front(Surface::Cz(q, r));
+                    }
+                }
+            }
+            if frontier.is_empty() {
+                // ---- FINAL PERMUTATION
+                self.permutation_to_gates(&mut circuit)?;
+                return Ok(Extraction {
+                    gates: circuit.into_iter().collect(),
+                    scalar: self.scalar,
+                });
+            }
+
+            // ---- GADGET PHASE: pivot any gadget touching the frontier away
+            let mut fixed = false;
+            'gad: for &(_, v) in &frontier {
+                for n in self.neighbours(v) {
+                    if gadgets.contains(&n) {
+                        if !self.check_boundary_pivot(v, n) {
+                            return Err(format!(
+                                "zx: gadget {n} on the frontier at {v} is not pivotable"
+                            ));
+                        }
+                        self.gen_pivot(v, n);
+                        gadgets.remove(&n);
+                        fixed = true;
+                        break 'gad;
+                    }
+                }
+            }
+            if fixed {
+                continue;
+            }
+
+            // ---- MAIN PHASE: consume frontier spiders that are now wires
+            if self.consume_frontier(&frontier) {
+                continue;
+            }
+            // ...and if none is, make one with CNOTs.
+            self.frontier_gauss(&frontier, &mut circuit)?;
+            if self.consume_frontier(&frontier) {
+                continue;
+            }
+            return Err("zx: no extractable vertex — the diagram has no gflow".into());
+        }
+        Err("zx: extraction hit its iteration fence".into())
+    }
+
+    /// A frontier spider that is a phase-free degree-2 wire is removed, which
+    /// walks the output one step inward.
+    fn consume_frontier(&mut self, frontier: &[(usize, usize)]) -> bool {
+        let mut found = false;
+        for &(_, v) in frontier {
+            if self.check_remove_id(v) {
+                self.remove_id(v);
+                found = true;
+            }
+        }
+        found
+    }
+
+    /// Gaussian elimination on the frontier's biadjacency matrix. The row
+    /// operations that isolate one frontier spider ARE the CNOTs, and the
+    /// √2 they move is read off the same popcount that performs them.
+    fn frontier_gauss(
+        &mut self,
+        frontier: &[(usize, usize)],
+        circuit: &mut std::collections::VecDeque<Surface>,
+    ) -> Result<(), String> {
+        // Columns: every spider the frontier reaches by a Hadamard edge.
+        let mut cols: Vec<usize> = Vec::new();
+        for &(_, v) in frontier {
+            for w in bits_of(&self.had[v]) {
+                if !cols.contains(&w) {
+                    cols.push(w);
+                }
+            }
+        }
+        if cols.is_empty() {
+            return Err("zx: frontier has no interior neighbours".into());
+        }
+        let mut m = BitMat::zero(frontier.len(), cols.len());
+        for (i, &(_, v)) in frontier.iter().enumerate() {
+            for (j, &w) in cols.iter().enumerate() {
+                if self.is_h(v, w) {
+                    m.set(i, j);
+                }
+            }
+        }
+        let mut reduced = m.clone();
+        let mut ops = BitMat::identity(frontier.len());
+        gauss_jordan(&mut reduced, &mut ops);
+
+        // The extractable rows are the weight-1 ones; take the one whose
+        // recipe touches the fewest frontier qubits, so the fewest CNOTs.
+        let mut best: Option<(u32, usize)> = None;
+        for i in 0..reduced.rows {
+            if reduced.row_weight(i) == 1 {
+                let w = ops.row_weight(i);
+                if best.is_none_or(|(bw, _)| w < bw) {
+                    best = Some((w, i));
+                }
+            }
+        }
+        let Some((_, row)) = best else {
+            return Err("zx: no frontier vertex can be isolated — the diagram has no gflow".into());
+        };
+        let recipe = ops.row_bits(row);
+        if recipe.len() < 2 {
+            return Err("zx: frontier elimination made no progress".into());
+        }
+        // The control is the row we accumulate into; every other row in the
+        // recipe is a CNOT target.
+        let control = recipe[0];
+        let (cq, cv) = frontier[control];
+        for &i in &recipe[1..] {
+            let (tq, tv) = frontier[i];
+            let mask = self.had[tv].clone();
+            let size = mask.iter().map(|w| w.count_ones()).sum::<u32>() as i32;
+            let destroyed = self.xor_neighbourhood(cv, &mask) as i32;
+            // √2^{destroyed − created}, created = size − destroyed
+            self.scalar.m += 2 * destroyed - size;
+            circuit.push_front(Surface::Cx(cq, tq));
+        }
+        Ok(())
+    }
+
+    /// The residual diagram is a PERMUTATION of wires — every output reaches
+    /// exactly one input and vice versa, because a circuit is unitary. Sort
+    /// it to the identity; each transposition is a SWAP gate.
+    ///
+    /// This deliberately does NOT do general Gaussian elimination. The first
+    /// version did, mirroring the reference implementation, and mutation
+    /// testing showed its CNOT branch was UNREACHABLE: a permutation matrix
+    /// has exactly one 1 per column, so after the swap there is never a
+    /// second row to clear, and reversing that CNOT's direction changed
+    /// nothing any test could see. An unreachable branch is an untestable
+    /// branch, so the condition that would have entered it is a REFUSAL now —
+    /// if it ever fires the diagram was not a unitary circuit, and the caller
+    /// needs to hear that rather than receive gates.
+    fn permutation_to_gates(
+        &self,
+        circuit: &mut std::collections::VecDeque<Surface>,
+    ) -> Result<(), String> {
+        let nq = self.outputs.len();
+        // src[q] = the input feeding output q
+        let mut src = vec![usize::MAX; nq];
+        for (i, &o) in self.outputs.iter().enumerate() {
+            let nbrs = self.neighbours(o);
+            if nbrs.len() != 1 {
+                return Err(format!("zx: residual output {o} has degree {}", nbrs.len()));
+            }
+            let inp = nbrs[0];
+            if self.is_h(o, inp) {
+                return Err("zx: residual wire is not a plain edge".into());
+            }
+            let Some(j) = self.inputs.iter().position(|&x| x == inp) else {
+                return Err(format!("zx: residual output {o} is not wired to an input"));
+            };
+            if src.contains(&j) {
+                return Err("zx: two outputs share an input — the diagram is not unitary".into());
+            }
+            src[i] = j;
+        }
+        // Sort `src` to the identity by transpositions; each one is a SWAP.
+        for q in 0..nq {
+            if src[q] == q {
+                continue;
+            }
+            let Some(r) = (q + 1..nq).find(|&r| src[r] == q) else {
+                return Err("zx: residual wiring is not a permutation".into());
+            };
+            src.swap(q, r);
+            circuit.push_front(Surface::Swap(q, r));
+        }
+        Ok(())
+    }
+}
+
+/// Reduce a circuit as a ZX diagram and hand it back as a circuit.
+pub fn extract_circuit(n: usize, surface: &[Surface]) -> Result<Extraction, String> {
+    let mut g = from_surface(n, surface)?;
+    g.full_reduce();
+    g.extract()
+}
+
+/// The ADJOINT of a surface circuit: reverse the order, invert each gate.
+/// Every gate in the Clifford+T surface alphabet has an inverse in it.
+pub fn adjoint(surface: &[Surface]) -> Vec<Surface> {
+    use Surface::*;
+    surface
+        .iter()
+        .rev()
+        .map(|&g| match g {
+            S(q) => Sdg(q),
+            Sdg(q) => S(q),
+            T(q) => Tdg(q),
+            Tdg(q) => T(q),
+            Sx(q) => Sxdg(q),
+            Sxdg(q) => Sx(q),
+            DiagPow(k, q) => DiagPow(-k, q),
+            RzPow(k, q) => RzPow(-k, q),
+            Face(s, q) => Face(-s, q),
+            // self-inverse: X, Y, Z, H, CX, CZ, SWAP, CCX, CCZ
+            other => other,
+        })
+        .collect()
+}
+
+/// CERTIFY AN EXTRACTION AT ANY SIZE.
+///
+/// `tests/zx.rs` checks extraction against the certified runner entry by
+/// entry over the whole 2^n × 2^n matrix — but only to five qubits, because
+/// the runner sums branches and the benchmark circuits carry hundreds of T
+/// gates. This is the check that does not care about size: compose the
+/// original circuit with the ADJOINT of its own extraction and reduce. If
+/// extraction was exact the composite is the identity times a scalar, and
+/// reduction says so; the returned scalar must equal the extraction's.
+///
+/// This is not a tautology — the composite goes through the reduction path,
+/// which never calls the extractor, so it is an independent reader of the
+/// extractor's output. It is the same shape as quizx's own `full1` test.
+pub fn certify_extraction(n: usize, surface: &[Surface]) -> Result<Cyc, String> {
+    let ex = extract_circuit(n, surface)?;
+    let mut composed = surface.to_vec();
+    composed.extend(adjoint(&ex.gates));
+    let mut g = from_surface(n, &composed)?;
+    g.full_reduce();
+    if !g.is_identity_wiring() {
+        return Err(format!(
+            "extraction is NOT exact: circuit · extracted† reduced to {} spiders with T-count {}, \
+             not to the identity",
+            g.n_spiders(),
+            g.t_count()
+        ));
+    }
+    // circuit = s·extracted  ⟹  circuit · extracted† = s·(extracted·extracted†) = s·I,
+    // and the composite's own scalar is that s.
+    if !cyc_eq(g.scalar, ex.scalar) {
+        return Err(format!(
+            "extraction's scalar {:?} disagrees with the composite's {:?}",
+            ex.scalar.to_complex(),
+            g.scalar.to_complex()
+        ));
+    }
+    Ok(ex.scalar)
+}
+
 
 // ------------------------------------------------------------- construction
 

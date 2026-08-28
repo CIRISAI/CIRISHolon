@@ -722,3 +722,28 @@ circuits, exact ring arithmetic end to end. For strong simulation
 (amplitudes), the four-order gap on the family we lost on is GONE; what
 remains behind quizx is T-count minimization for circuit handoff, which
 is the extractor's job and is named as owed.
+
+## 2026-08-28, twenty-third entry: the extractor lands — tier 2's capability set is complete, and the residual gap is located
+
+*By the zx-native opus track; verified here (full test suite green;
+extractor examples re-run).*
+
+**Extraction, certified at the UNITARY level** — stronger than amplitude
+sampling: the composite C·extracted† is verified to be the IDENTITY (with
+the global phase tracked through the certified scalar) on all 12 benchmark
+circuits and a 252-circuit random sweep to n=50, depth=1250. Zero wrong,
+zero refused; extraction cost 0.1–3.6 ms per circuit.
+
+**The gap's location, settled by measurement**: extracted T-count equals
+the oracle's exactly (extraction creates no T's), re-simplifying the
+extracted circuit finds nothing (`round2` stable), and **quizx extracting
+OUR reduced diagrams returns the same counts** (`q-extract` column) — so
+the remaining distance to quizx's 0/19/26/19/41 lives entirely in
+REDUCTION DEPTH (their full_simp's teleportation-era interplay reaches
+lower T before extraction), not in extraction. Ours: 15/40/51/44/71.
+
+**Tier-2 status after this entry**: the magic tier now EVALUATES exactly
+(entry twenty-two: the q=40 timeout became 0.03 s) and EXTRACTS exactly
+(this entry) — the capability set is complete; what remains against quizx
+is a reduction-depth performance delta with a named location, not a
+missing capability.

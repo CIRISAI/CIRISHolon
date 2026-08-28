@@ -114,11 +114,12 @@ Five staked attacks, each a real campaign:
       FrameEntropy (fiber log-count, extensive) IS Ω's fiber structure —
       Lean bridge + a staked inequality between closure defect and coarse
       entropy production on an exact model.
-- [ ] **OMEGA-BREAK-1** (rung 7's falsifier, the adversarial adequacy
-      hunt): exhaustive small-size search for structure that is invisible
-      to every current face yet NOT gauge — observably consequential
-      through a channel outside the tuple. Rung 3 found fibers invisible
-      AND quotient-able; the break-hunt demands invisible AND consequential.
-      Found ⇒ the tuple grows (maximality survives by extension). Absent
-      at exhaustive sizes ⇒ adequacy evidence of the strongest finite
-      kind. Either branch advances rung 7; neither claims it.
+- [x] **OMEGA-BREAK-1** ANSWERED (2026-08-28): breaks exist — the rung-3
+      counterexample falls to one blind transposition — and are EXACTLY
+      characterized by T1 (tight, zero exceptions, ~9M pairs, both halves
+      in Lean: gauge_safety + omega_break): separation iff a knob fails to
+      descend to the gauge quotient. Identity is a function of the ACT
+      vocabulary — SameHolon is the empty-knob end of the graded family
+      Identity(𝒜) — and the tuple grows by a DERIVED law (the intervention
+      face), the first measured instance of maximality-by-lawful-extension.
+      Successor: the general converse of T1 as a Lean brick.

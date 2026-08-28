@@ -262,3 +262,12 @@ whole-pattern direction is un-bounded again.
 Endogenous, charged, reciprocal (both directions), and local (cone +
 coupling-locality), all in ONE exact model, all gates, plants firing.
 Seventh green campaign. Successor: FROBENIUS-1 (non-abelian).
+
+## Rung 5½ adjudicated (2026-08-28, CLOSURE-4B): the memory is EXACTLY third-order
+
+v_triple is closed on the trajectory with the strong plant firing (the
+measured (1,7) pair-collision itself is triple-separated). Ladder:
+one-body fails, pairs fail at (1,7), triples close. The whole-pattern
+direction is bounded at this size, one rung above CLOSURE-3's corrected
+floor. Ladder rungs 2 (Omega.lean), 5-orientation (FROB-ORIENT-1),
+5-deficit (PT-2T, three rungs), and 5½ all landed today.

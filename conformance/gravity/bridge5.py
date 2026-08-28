@@ -14,7 +14,29 @@ from bridge1 import MUL, INV, CLASS, KAPPA, R2, rho2, base_graph, refined_graph
 # matter index: m = (channel_bit, s1, s2) is NOT used; we keep the full
 # 4-dim spinor pair space m = s1*2 + s2, and the CHANNEL is a derived,
 # gauge-invariant label: the singlet |00>+|11> vs its orthogonal complement.
-SINGLET = np.array([1, 0, 0, 1], dtype=np.int64)  # unnormalized |00>+|11>
+SINGLET = np.array([1, 0, 0, 1], dtype=np.int64)  # BARE |00>+|11> (diagonal-invariant ONLY)
+
+def dressed_singlet(M):
+    """M14: a charged pair is gauge-invariant only when DRESSED BY A WILSON
+    LINE. The physical state is  Sum_ij rho2(U_gamma)_ij |ij>  for a path
+    gamma from vertex 1 to vertex 2 -- the gauge field carries the
+    invariance, which is what 'screened' means. Returns the per-configuration
+    coefficient of each matter component, so the projector is CONFIGURATION
+    DEPENDENT (it must be: the dressing is the gauge field)."""
+    # path 1 -> c -> 2 : U = u(c,1)^{-1} u(c,2), read off the spokes
+    e1 = next(i for i, (a, b) in enumerate(M.edges) if (a, b) == ("c", 1))
+    e2 = next(i for i, (a, b) in enumerate(M.edges) if (a, b) == ("c", 2))
+    u = MUL[INV[M.dig[e1]], M.dig[e2]]           # group element per config
+    coef = np.zeros((4, M.N), dtype=np.int64)
+    for g in range(8):
+        m = rho2(g)
+        sel = u == g
+        if not np.any(sel):
+            continue
+        for i in range(2):
+            for j in range(2):
+                coef[(i << 1) | j][sel] = m[i, j]
+    return coef
 
 class Model5:
     def __init__(self, mk, broken_action=False, broken_pump=False):

@@ -214,6 +214,7 @@ def run():
     a, b = dressed, off
     w1 = w2 = False
     w3_ok = True
+    prev_ra = prev_rb = None
     w4_margin_blind_somewhere = False
     w4_needed = False
     for k in range(1, 5):
@@ -227,8 +228,13 @@ def run():
         if ta[1] * sa != ta[2] * sa and ta[1] != ta[2]: w2 = True
         if tb[1] != tb[2]: w2 = True
         ra, rb = weight_triple(a, HOL_LOOP), weight_triple(b, HOL_LOOP)
-        if any(ra[i] * sum(rb) != rb[i] * sum(ra) for i in range(3)):
-            w3_ok = False
+        # W3' (2B): per-carrier conservation -- this step's rim triple must be
+        # the previous step's, scaled by one global factor (cross-mult exact).
+        for prev, cur in ((prev_ra, ra), (prev_rb, rb)):
+            if prev is not None:
+                if any(cur[i] * prev[(i + 1) % 3] != cur[(i + 1) % 3] * prev[i] for i in range(3)):
+                    w3_ok = False
+        prev_ra, prev_rb = ra, rb
         ma, mb = marginal(ta), marginal(tb)
         m_diff = any(ma[i] * sb != mb[i] * sa for i in range(2))
         if diff and not m_diff:
@@ -282,20 +288,26 @@ def plants(dressed):
     assert support >= 0
     # WILSON-2: the plant is scored ONLY on a carrier in the ASYMMETRY
     # sector (M-PLANT-SECTOR: the sector of the EFFECT). Search 4 steps.
+    # 2B: search the FULL registry (both carriers, all steps) per the freeze.
     carrier = None
-    st = dressed
-    for k in range(5):
-        t = weight_triple(st, HOL_P[P_FAR])
-        if t[1] != t[2]:
-            carrier = (k, st, t); break
-        st = step(st)
+    gen = generic_state(11)
+    _, off = channel_split(gen)
+    for name, st0 in (("dressed", dressed), ("off", off)):
+        st = st0
+        for k in range(5):
+            t = weight_triple(st, HOL_P[P_FAR])
+            if t[1] != t[2]:
+                carrier = (f"{name}@T{k}", st, t); break
+            st = step(st)
+        if carrier:
+            break
     if carrier is None:
         print("[plant ii] UNPOSABLE: no asymmetric carrier within 4 steps -> VOID")
         ok = False
     else:
-        k, st, t = carrier
+        tag, st, t = carrier
         flipped = (t[0], t[2], t[1]) != t
-        print(f"[plant ii] conjugated readout at step {k} -> {'FIRES (visible)' if flipped else 'MISSED'} {t}")
+        print(f"[plant ii] conjugated readout on {tag} -> {'FIRES (visible)' if flipped else 'MISSED'} {t}")
         ok &= flipped
     return ok
 

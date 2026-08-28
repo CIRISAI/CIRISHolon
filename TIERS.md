@@ -60,6 +60,14 @@ only the plan exists.*
 | open systems — noise and channels | **NAMED** — no density matrices, Kraus channels, or noise models anywhere yet | exact small-system channel truth; Aer noise simulations | match Aer's noise-model results exactly where the channel is Clifford-representable; refuse elsewhere | design: the ledger's channel form (mixed stabilizer / CH-form prior art first) |
 | verification scope — the Lean layer | kernel theorems PROVED (closure walls, tier structure, one-rebit stabilizer kernel); **the running Rust engine is NOT verified** and the claim discipline forbids saying otherwise | Lean CI on the theorems; the engine's own referees for the engine | **VOQC/SQIR's extraction discipline** (arXiv:1912.02250) — a verified path from proof to running kernel; nearest structural precedent to cite: **Lean-QEC** (arXiv:2605.16523) | state-and-prove stabilizer closure ABOUT the tableau implementation (axis found vacant by the sweep) |
 
+---
+
+*Everything below this line is the RUNNING RECORD — appended as it was
+earned, never edited, per the frozen-history rule. Rows there such as
+"adaptivity owed" or "referee VOID" reflect the state AT THEIR TIME and
+are superseded by the consolidated table above wherever they conflict.
+The table above is the authoritative machine-readable state.*
+
 ## The honest boundary — envelopes, caps, exemptions, refusals
 
 *The goal is to find the EDGES of what the holon can do by robust simulation of

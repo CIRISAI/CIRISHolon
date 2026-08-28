@@ -8,3 +8,4 @@ conformance/gravity/*.DONE
 conformance/gravity/launch_*.sh
 conformance/gravity/__pycache__/
 .claude/
+conformance/omega/engine_probe/target/

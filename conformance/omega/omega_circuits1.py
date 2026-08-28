@@ -1125,6 +1125,24 @@ def main():
     log(f"  plants: {sum(1 for v in plants.values() if v[2])}/{len(plants)} fire")
     logf.close()
 
+    # EXIT CONTRACT (tightened after external review): a missing or failed
+    # referee must REFUSE, never masquerade as a successful fresh run.
+    # 3 = referee VOID (G2 could not run); 1 = a gate or plant failed; 0 = green.
+    rc = 0
+    if g2.get("status") != "PASS":
+        rc = 3
+    if not all(r["g0"] for r in rows):
+        rc = max(rc, 1)
+    if not all(v[2] for v in plants.values()):
+        rc = max(rc, 1)
+    if not all(r["okW"] and r["okL"] for r in s3):
+        rc = max(rc, 1)
+    if not all(r["okW"] for r in s4):
+        rc = max(rc, 1)
+    if len({str(v) for v in rv.values()}) != 3:
+        rc = max(rc, 1)
+    sys.exit(rc)
+
 
 if __name__ == "__main__":
     main()

@@ -66,9 +66,9 @@ now instrument rules.
 - [ ] 3+1 constraints; GR as the closed coarse view. Open research.
 
 ## Rung 5½ — the reopened memory ladder (adequacy of Ω's fiber structure)
-- [ ] **CLOSURE-4**: the triple-correlator channel, with own-collision
-      enumeration from the start. Depends on: CLOSURE-3 corrected (done).
-      NEXT. Outcome open: closure at third order, or another push upward.
+- [x] **CLOSURE-4** CLOSED (2026-08-28, 4B): v_triple closed on the
+      trajectory with the strong plant firing on the measured (1,7)
+      collision itself — the memory is EXACTLY third-order at this size.
 
 ## Rung 6 — larger evaluations (frozen Ω, only boundary data changes)
 - [ ] Interacting fields / renormalized scales (SCHWINGER-3 is the entry:

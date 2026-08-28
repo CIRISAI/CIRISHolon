@@ -21,10 +21,16 @@ now instrument rules.
       "maximal object"). Depends on: nothing. Structural definitions +
       basic laws only — completeness is rung 3's question, not assumed.
 
-## Rung 3 — representational completeness
-- [ ] Probe-equivalence theorem or counterexample: same Ω ⟺ every
-      admissible probe agrees. One direction provable; the converse gets a
-      counterexample hunt on small exact models. Depends on rung 2.
+## Rung 3 — representational completeness: SETTLED both ways (2026-08-28)
+- [x] Provable direction machine-checked (Probe.lean); the CONVERSE is
+      FALSE in general (minimal |S|=3 counterexample, machine-checked in
+      ProbeConverse.lean, all iso candidates refuted) and TRUE exactly on
+      the observable sector (exhaustive to |S|=6; Lean converse with
+      identical witnesses). Ω's identity exceeds its probe behaviour by
+      fiber-internal structure — the fork this opens (a face that measures
+      fibers, or fiber-content declared gauge / Moore-quotient identity)
+      is a rung-2 definition commitment, recorded in
+      conformance/omega/RUNG3_RESULTS.md.
 - [ ] Recovery notes: lumpability (= Bartlett/collision machinery, partly
       done), Mori–Zwanzig (cited), computational mechanics, contextual
       presheaves, RG. Each a short document tying an existing theorem to

@@ -360,3 +360,46 @@ Clifford+T-only; it has no face-angle or symbolic-θ capability), the
 distributed certificates, and the refusal discipline. Different axes —
 which is precisely why the head-to-head was owed rather than assumed, and
 why it is recorded here in full.
+
+## 2026-08-27, fourteenth entry: the simplification pass — 4× faster, and it names its own ceiling
+
+Entry thirteen's forced fix, built and measured. `simplify.rs`: three exact
+rewrites at the surface level (diagonal-run cancellation — all diagonal
+gates commute so the multiset is all that matters; involution cancellation;
+magic cancellation, the only one that lowers the exponent), exactness-gated
+on every basis state (`tests/simplify.rs`), on by default in the CLI.
+
+Same circuits as entry thirteen, simplification ON:
+
+| q | gates | magic (T-equiv) | holon before | holon after | our speedup |
+|---:|---:|---:|---:|---:|---:|
+| 12 | 2061 → **79** | 56 → **28** | 25 ms | 5.6 ms | 4.5× |
+| 16 | 2884 → **114** | 84 → 84 | 230 ms | 73 ms | 3.2× |
+| 20 | 2496 → **150** | 70 → 70 | 866 ms | 293 ms | 3.0× |
+| 24 | 4530 → **202** | 140 → **112** | 7.29 s | 1.40 s | 5.2× |
+| 30 | 6164 → **272** | 196 → 196 | 49.9 s | 12.4 s | 4.0× |
+
+**A real, exact, ~4× win for 0.1–0.4 ms of work — and an honest ceiling.**
+The gate count collapses 20–26× every time, but the MAGIC weight only drops
+when CCZ triples happen to repeat inside one diagonal run (q=12 and q=24);
+at q=16, 20, 30 it does not move at all. That is exactly what local
+cancellation can do and no more: **we shrank the Clifford bulk, not the
+exponent.**
+
+So the standing against quizx improves from 15–8000× to roughly 4–2000×,
+and the diagnosis is unchanged: their term count is still 1. The remaining
+gap is precisely the non-local rewriting this pass does not attempt —
+spider fusion, local complementation, pivoting, and phase teleportation
+(Kissinger–van de Wetering, arXiv:1903.10477), which move phases between
+distant gadgets and can cancel magic that never meets in a diagonal run.
+That is now the named next rung, with this pass as its provable floor.
+
+### Output format: Qiskit's Result schema, with our extras under `metadata`
+
+INTERFACE.md found no spec with a type for our answers. The pragmatic
+resolution, now shipping: emit the **Qiskit `Result` shape** (`backend_name`
+/ `success` / `results[]` / `data` / `metadata`) so standard tooling reads
+us without adaptation, and carry everything no spec has a field for under
+`metadata` — `exact`, `ring`, `residual_zeta16`, and the full simplify
+record (gates and magic before/after, pass time). Nothing is dropped
+silently, and nothing is smuggled into a field that means something else.

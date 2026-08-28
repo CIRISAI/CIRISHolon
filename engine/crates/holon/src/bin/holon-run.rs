@@ -86,11 +86,30 @@ fn main() {
         return;
     }
     assert_eq!(args[1], "amp", "usage: holon-run amp|face-amp|clifford-sample <file.qasm> [y-bits]");
+    // SIMPLIFY-then-run is the default (BENCHMARKS entry thirteen): the pass
+    // is exact and cuts t before any exponent applies. HOLON_NO_SIMPLIFY=1
+    // disables it for A/B measurement.
     let src = std::fs::read_to_string(&args[2]).expect("read");
-    let p = holon::qasm::parse(&src).unwrap_or_else(|e| {
+    let (nq, surf, _meas) = holon::qasm::parse_surface(&src).unwrap_or_else(|e| {
         eprintln!("REFUSED (line {}): {}", e.line, e.reason);
         std::process::exit(2);
     });
+    let simplify_on = std::env::var("HOLON_NO_SIMPLIFY").is_err();
+    let t_before = holon::simplify::magic_weight(&surf);
+    let gates_before = surf.len();
+    let t_simp = std::time::Instant::now();
+    let surf = if simplify_on { holon::simplify::simplify(&surf) } else { surf };
+    let simplify_s = t_simp.elapsed().as_secs_f64();
+    let t_after = holon::simplify::magic_weight(&surf);
+    let (core, phase16) = holon::qasm::lower(&surf);
+    let p16 = phase16.rem_euclid(16);
+    let p = holon::qasm::Program {
+        n_qubits: nq,
+        gates: core,
+        measured: vec![],
+        phase_omega: (p16 / 2) as u8,
+        residual_zeta16: (p16 % 2) as u8,
+    };
     let y: Vec<bool> = if args.len() > 3 {
         let bits = args[3].trim();
         assert_eq!(bits.len(), p.n_qubits, "y-bits length must equal qubit count");
@@ -103,12 +122,15 @@ fn main() {
     let (amp, residual) = holon::run::amplitude_program(&p, &y);
     let (re, im) = amp.to_complex();
     let pr = re * re + im * im;
+    // OUTPUT: the Qiskit Result schema's shape (success/results/data +
+    // metadata), so standard tooling can read it, with everything this
+    // engine knows that no spec has a field for living under `metadata`
+    // (INTERFACE.md's four undefined types, carried honestly rather than
+    // silently dropped).
     println!(
-        "{{\"seconds\": {:.6}, \"re\": {:.12}, \"im\": {:.12}, \"p\": {:.12}, \"residual_zeta16\": {}}}",
-        t0.elapsed().as_secs_f64(),
-        re,
-        im,
-        pr,
-        residual
+        "{{\"backend_name\": \"cirisholon\", \"success\": true, \"results\": [{{\"shots\": 1, \"status\": \"DONE\", \"data\": {{\"amplitude\": {{\"re\": {re:.12}, \"im\": {im:.12}}}, \"probability\": {pr:.12}}}, \"metadata\": {{\"exact\": true, \"ring\": \"Z[omega]\", \"residual_zeta16\": {residual}, \"n_qubits\": {}, \"simplify\": {{\"enabled\": {simplify_on}, \"seconds\": {simplify_s:.6}, \"gates_before\": {gates_before}, \"gates_after\": {}, \"magic_before\": {t_before}, \"magic_after\": {t_after}}}, \"seconds\": {:.6}}}}}]}}",
+        p.n_qubits,
+        surf.len(),
+        t0.elapsed().as_secs_f64()
     );
 }

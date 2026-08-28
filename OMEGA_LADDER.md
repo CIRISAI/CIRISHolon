@@ -77,7 +77,39 @@ now instrument rules.
       boundaries · living autonomy · institutional holons. Listed, not
       started; each must reuse the same structural components.
 
-## Rung 7 — maximality
-- [ ] Criterion (recorded): every successful domain theory a projection or
-      closed quotient of Ω, plus joint predictions unavailable from the
-      projections separately. Not claimable from any finite prefix.
+## Rung 7 — maximality: the experimental programme (2026-08-28)
+
+Maximality is unclaimable from any prefix but has two measurable faces:
+JOINT LAWS (one frozen functional landing in a new domain with zero
+refit — the cross-domain analogue of what CROSS-FACE-1 did across faces)
+and REFUTABILITY (a domain where the receipt format must be replaced).
+Five staked attacks, each a real campaign:
+
+- [ ] **OMEGA-CIRCUITS-1** (rung 6: quantum computation as a domain): the
+      CROSS-FACE-1 rent law — rent = ceiling × (1 − λ), λ from circuit
+      coefficients alone — applied to the ENGINE's own tier-0/1 stabilizer
+      substrates. A new domain class, the same frozen functional, exact
+      rationals staked in advance.
+- [ ] **OMEGA-RATCHET-1** (rung 6: thermodynamic maintenance): the
+      predecessor programme's measured rent record (coherence-ratchet:
+      sawtooth, maintained-holonomy) reread through Ω — stake the exact
+      relation between the MAGNITUDE face (Object.lean's Wstar) and the
+      PARTITION face (CROSS-FACE-1's W) on one model where both are
+      defined. Two programmes, one object, a staked identity.
+- [ ] **MESH-HOLON-1** (rung 6: multi-agent/institutional): the Rust
+      engine's merge law read as Ω — shard-invariance IS W = 0 closure of
+      the ledger view under concurrent dynamics; a deliberately broken
+      shard schedule must pay measurable rent. The engine becomes its own
+      Ω substrate.
+- [ ] **OMEGA-ENTROPY-1** (rung 6: horizons/entropy): the predecessor's
+      FrameEntropy (fiber log-count, extensive) IS Ω's fiber structure —
+      Lean bridge + a staked inequality between closure defect and coarse
+      entropy production on an exact model.
+- [ ] **OMEGA-BREAK-1** (rung 7's falsifier, the adversarial adequacy
+      hunt): exhaustive small-size search for structure that is invisible
+      to every current face yet NOT gauge — observably consequential
+      through a channel outside the tuple. Rung 3 found fibers invisible
+      AND quotient-able; the break-hunt demands invisible AND consequential.
+      Found ⇒ the tuple grows (maximality survives by extension). Absent
+      at exhaustive sizes ⇒ adequacy evidence of the strongest finite
+      kind. Either branch advances rung 7; neither claims it.

@@ -54,4 +54,6 @@ instrument's gate, and the process lesson is the reviewer's phrase,
 adopted: a green process gate must not hide a scientific overcall.
 witness: collision_refutes_memoryless (the (1,7) fire is itself an
 instance). misfits: contacts M-FINAL-VIEW-COLLISIONS (registered here),
-M-ONE-MODEL-DELTA, M-PLANT-OBS, M-PLANT-SECTOR, M-LOOP-BLIND (as before).
+M-ONE-MODEL-DELTA, M-PLANT-OBS, M-PLANT-SECTOR (plants unchanged from the
+admitted freeze; each plant's carrier is asserted nonzero in the sector
+the plant acts on), M-LOOP-BLIND (as before).

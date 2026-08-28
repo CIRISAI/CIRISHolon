@@ -1016,9 +1016,9 @@ impl Sim {
                 let ly = mu * (dz * vx - dx * vz);
                 let lz = mu * (dx * vy - dy * vx);
                 let l_sq = lx * lx + ly * ly + lz * lz;
-                let r_outer =
-                    self.table
-                        .outer_turning_point(e_rel, l_sq, mu, r, TURNING_POINT_CAP);
+                let r_outer = self
+                    .table
+                    .outer_turning_point(e_rel, l_sq, mu, r, TURNING_POINT_CAP);
                 self.pairs[k] = PairReading {
                     i,
                     j,

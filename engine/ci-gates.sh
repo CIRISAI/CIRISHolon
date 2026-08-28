@@ -490,4 +490,24 @@ done
 cargo test -q --manifest-path crates/h3ere2-eval/Cargo.toml 2>/dev/null >/dev/null \
   && ok "h3ere2-eval builds and its unit tests pass" || no "h3ere2-eval builds and its unit tests pass"
 
+# 15. holon-render-3d, HEADLESS ONLY -- the 3D atom world's conservation gates, run where
+#     there is no GPU.
+#
+#     `--no-default-features --features headless` is the whole point of the feature split
+#     and not a convenience: the default (`native`) links bevy_render, wgpu and winit and
+#     needs X11/Wayland/ALSA development headers, none of which a gate script should
+#     require. `headless` enables `bevy/std` and nothing else, so what this compiles is
+#     bevy_app + bevy_ecs + the physics -- and the gates it asserts (energy, momentum, the
+#     capture plant, the drag ledger) are properties of the physics, which is exactly why
+#     they can be asserted without pixels.
+#
+#     `--manifest-path` because the crate is deliberately OUTSIDE this workspace (see the
+#     `exclude` block in Cargo.toml: Bevy's feature set would unify with the no_std core's
+#     and falsify gates 1-3). This invocation is also what satisfies gate 13's audit for
+#     the crate, rather than a CRATE_ALLOW entry -- there is no break here to own and no
+#     exit to wait for, so an allowlist entry would be suppression.
+cargo test -q --manifest-path crates/holon-render-3d/Cargo.toml \
+  --no-default-features --features headless 2>/dev/null >/dev/null \
+  && ok "holon-render-3d headless gates pass" || no "holon-render-3d headless gates pass"
+
 exit $fail

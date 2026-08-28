@@ -1,8 +1,29 @@
 <!doctype html>
 <meta charset="utf-8">
 <title>CIRISHolon — live demos</title>
-<style>body{font-family:system-ui;max-width:640px;margin:4rem auto;padding:0 1rem;color:#222}</style>
+<style>
+  body{font-family:system-ui;max-width:640px;margin:4rem auto;padding:0 1rem;color:#222}
+  ul{list-style:none;padding:0}
+  li{margin:1.4rem 0}
+  a{color:#236957;font-weight:600;text-decoration:none}
+  a:hover{text-decoration:underline}
+  p.note{color:#69736e;font-size:.9rem;margin:.3rem 0 0}
+</style>
 <h1>CIRISHolon — live demos</h1>
-<p>The interactive atom world (exact H&#8322; chemistry, ledger-gated) publishes
-here when its build lands. Engine and record:
+<p>Hydrogen atoms under the exact STO&#8209;3G pair potential, solved by full CI in your
+browser rather than fetched, integrated symplectically, with every energy and momentum
+flow on a gated ledger. Two views of one core.</p>
+<ul>
+  <li>
+    <a href="atoms/">The atom world — 2D</a>
+    <p class="note">Canvas. About 115&nbsp;KB of WebAssembly: the browser owns input and
+    pixels, the wasm owns the physics.</p>
+  </li>
+  <li>
+    <a href="atoms3d/">The atom world — 3D</a>
+    <p class="note">Bevy. Orbit the box, drag an atom through the spring, watch the same
+    ledger. Megabytes rather than kilobytes — it brings its own renderer.</p>
+  </li>
+</ul>
+<p>Engine and record:
 <a href="https://github.com/CIRISAI/CIRISHolon">github.com/CIRISAI/CIRISHolon</a>.</p>

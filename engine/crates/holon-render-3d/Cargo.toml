@@ -1,0 +1,123 @@
+# holon-render-3d — the Bevy 0.19 view layer for the atom world in three dimensions.
+#
+# The physics is NOT here. `holon-render` owns the potential table, the integrator, the
+# ledger, the gates, the bond predicate and the composite-holon census; this crate owns a
+# camera, some spheres, some cylinders and a HUD. That split is the whole point: the 3D
+# shell and the 2D canvas shell are two views of ONE certified core, so a number on the
+# overlay cannot disagree with the same number in the browser.
+#
+# ── Why this crate is OUTSIDE the engine workspace ────────────────────────────────────
+#
+# It is in the workspace root's `exclude` list and carries its own `[workspace]` table,
+# for exactly the reason `engine-compare` gives for Rapier and more so. Bevy brings ~400
+# crates, `std`, an allocator, a C toolchain in places, and a great many optional
+# features. Cargo unifies features across a workspace, so joining would put wgpu/winit/
+# ash in reach of `ciris-sim-core`'s dependency graph and silently falsify the isolation
+# gates in `ci-gates.sh` (gates 1-3) and PORTABILITY.md's zero-allocation evidence.
+# Depending on `holon-render` by path from outside is one-way: the engine workspace's
+# resolution is untouched, and `cargo test -p holon-render` from the engine root still
+# builds the same graph it built before this crate existed.
+#
+# ── Feature shape (mirrors CIRISGame's ciris-game-engine, deliberately) ───────────────
+#
+#   native (default)  →  windowed PBR via winit (macOS/Linux/Windows)
+#   webgpu / webgl2   →  the two wasm32-unknown-unknown artifacts (build-web.sh)
+#   headless          →  MinimalPlugins, NO bevy_render, no wgpu, no window. What CI
+#                        and `cargo test` link, and what the gate tests run under.
+#
+# Cargo features are additive, so `render` and `headless` are only ever built one at a
+# time; `headless` enables `bevy/std` and nothing else.
+[package]
+name = "holon-render-3d"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "Bevy 0.19 view layer for the CIRISHolon atom world in 3D: ledger-gated dynamics over the exact STO-3G pair potential."
+
+# Its own workspace root. See the header: joining the engine workspace would let Bevy's
+# feature set unify with the no_std core's and break the isolation gates.
+[workspace]
+
+[lib]
+name = "holon_render_3d"
+path = "src/lib.rs"
+
+# Named to match the wasm the build script post-processes: wasm-bindgen reads
+# target/wasm32-unknown-unknown/release/holon-atoms-3d.wasm.
+[[bin]]
+name = "holon-atoms-3d"
+path = "src/main.rs"
+
+[dependencies]
+# THE PHYSICS. Path dependency on the certified core; this crate adds no physics of its
+# own and re-exports the API unchanged (see `lib.rs`).
+holon-render = { path = "../holon-render" }
+bevy = { version = "0.19", default-features = false }
+bevy_panorbit_camera = { version = "0.35", optional = true }
+
+[features]
+default = ["native"]
+
+# Native desktop: the full render machinery plus the Linux window backends.
+native = [
+    "render",
+    "bevy/multi_threaded",
+    "bevy/x11",
+    "bevy/wayland",
+    "tonemapping_luts",
+    "bloom",
+]
+
+# Shared render machinery. Everything GPU-facing is gated here so `headless` links none
+# of it. `default_font` embeds a face so the HUD renders on a bare wasm host where no
+# system family resolves — the overlay carries the gates, so it must never fail to draw.
+render = [
+    "dep:bevy_panorbit_camera",
+    "bevy/std",
+    "bevy/bevy_winit",
+    "bevy/bevy_window",
+    "bevy/bevy_render",
+    "bevy/bevy_core_pipeline",
+    "bevy/bevy_pbr",
+    "bevy/bevy_ui",
+    "bevy/bevy_ui_render",
+    "bevy/bevy_text",
+    "bevy/default_font",
+    "bevy/bevy_asset",
+    "bevy/bevy_log",
+    # bevy_image pulls zstd (KTX2 supercompression); the pure-Rust backend keeps both
+    # wasm artifacts buildable without a C toolchain.
+    "bevy/zstd_rust",
+]
+
+# The two wasm artifacts. `webgpu` is primary; `webgl2` is the phone-compatible
+# fallback. Bevy issue #13168 blocks one binary from selecting the backend at runtime,
+# which is why there are two and why `docs/atoms3d/index.html` picks between them.
+webgpu = ["render", "bevy/webgpu", "tonemapping_luts", "bloom"]
+# NO `bloom` on webgl2, and that is not an oversight. WebGL2 cannot do HDR in the browser
+# (bevy #7352 — a camera marked `Hdr` renders magenta), so `render.rs` withholds `Hdr`
+# from this build, and bloom with nothing above 1.0 to bloom is a post-process pass that
+# costs a phone frame time to do nothing. Leaving the feature off keeps bevy_post_process
+# out of the artifact the phone downloads.
+webgl2 = ["render", "bevy/webgl2", "tonemapping_luts"]
+
+# There is no bevy `bloom` feature in 0.19 — Bloom moved into `bevy_post_process`.
+tonemapping_luts = ["render", "bevy/tonemapping_luts"]
+bloom = ["render", "bevy/bevy_post_process"]
+
+# Headless: links NO rendering. Just enough bevy for an App + MinimalPlugins, which is
+# what the gate tests in `tests/` run under.
+headless = ["bevy/std"]
+
+# Applies, unlike a workspace member's own profile section: this crate is its own
+# workspace root (see the `[workspace]` table above). opt-level 3 rather than `z` — the
+# per-frame O(N^2) force loop is the entire compute budget, and trading its speed for a
+# few percent of a multi-megabyte artifact would show up as a lower measured N_max on
+# every device. `build-web.sh` runs wasm-opt -Oz on the finished module for size, which
+# costs no runtime speed. `strip` because a browser has no use for the symbols.
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = true

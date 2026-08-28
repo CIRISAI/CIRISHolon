@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- viewport-fit=cover + user-scalable=no: the canvas owns the gestures. Bevy's
+         window is configured with prevent_default_event_handling, so a pinch is a
+         camera zoom rather than a browser zoom, and a drag is an atom rather than a
+         page scroll. -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#17201d" />
+    <meta
+      name="description"
+      content="Hydrogen atoms in a box under the exact STO-3G pair potential, integrated symplectically, with every energy and momentum flow on a gated ledger."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cline x1='22' y1='32' x2='42' y2='32' stroke='%23236957' stroke-width='5'/%3E%3Ccircle cx='22' cy='32' r='11' fill='%23236957'/%3E%3Ccircle cx='42' cy='32' r='11' fill='%2370a68e'/%3E%3C/svg%3E"
+    />
+    <title>CIRISHolon · atom world (3D)</title>
+    <style>
+      :root {
+        --ink: #17201d;
+        --paper: #ede9df;
+        --muted: #69736e;
+        --green: #236957;
+        --green-soft: #70a68e;
+        --rust: #bb4c2e;
+        --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background: var(--ink);
+        color: var(--paper);
+        font-family: var(--sans);
+        /* No text selection or callout on a long-press: this is a control surface. */
+        -webkit-user-select: none;
+        user-select: none;
+        -webkit-touch-callout: none;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        outline: none;
+        touch-action: none;
+      }
+      #boot {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        padding: 2rem;
+        text-align: center;
+        background: var(--ink);
+        z-index: 10;
+      }
+      #boot[hidden] { display: none; }
+      .mark {
+        display: grid;
+        place-items: center;
+        width: 46px;
+        height: 46px;
+        margin: 0 auto 1.1rem;
+        border-radius: 13px;
+        background: var(--green);
+        color: var(--paper);
+        font-family: var(--mono);
+        font-weight: 700;
+        letter-spacing: 0.06em;
+      }
+      h1 {
+        font-size: 1.05rem;
+        font-weight: 600;
+        letter-spacing: 0.01em;
+        margin: 0 0 0.5rem;
+      }
+      p { margin: 0.4rem 0; max-width: 38rem; line-height: 1.5; font-size: 0.9rem; }
+      .muted { color: var(--muted); font-size: 0.8rem; }
+      .mono { font-family: var(--mono); font-size: 0.78rem; }
+      .bar {
+        width: min(22rem, 70vw);
+        height: 3px;
+        margin: 1.2rem auto 0;
+        background: rgba(112, 166, 142, 0.22);
+        overflow: hidden;
+      }
+      .bar i {
+        display: block;
+        height: 100%;
+        width: 34%;
+        background: var(--green-soft);
+        animation: slide 1.15s ease-in-out infinite;
+      }
+      @keyframes slide {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(320%); }
+      }
+      .error { color: var(--rust); font-weight: 600; }
+      a { color: var(--green-soft); }
+      @media (prefers-reduced-motion: reduce) {
+        .bar i { animation: none; width: 100%; }
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="atoms3d"></canvas>
+
+    <div id="boot">
+      <div>
+        <div class="mark">CH</div>
+        <h1>The atom world</h1>
+        <p>
+          Hydrogen atoms in a box under the exact STO&#8209;3G pair potential — solved by
+          full CI in your browser, not fetched — integrated symplectically, with every
+          energy and momentum flow on a gated ledger.
+        </p>
+        <p class="muted" id="boot-note">choosing a graphics backend&hellip;</p>
+        <div class="bar" id="boot-bar"><i></i></div>
+        <p class="muted mono" id="boot-detail"></p>
+      </div>
+    </div>
+
+    <script type="module">
+      // Backend selection. Bevy issue #13168 blocks one wasm binary from choosing its
+      // wgpu backend at runtime, so there are two binaries and the choice is made here.
+      //
+      //   webgpu  primary: HDR + Bloom, the emissive bonds glow.
+      //   webgl2  fallback: no HDR (bevy #7352 renders magenta on that backend in the
+      //           browser), therefore no bloom. Same geometry, same physics, same
+      //           overlay, plain LDR.
+      //
+      // `?backend=webgpu` / `?backend=webgl2` forces one, which is how each path gets
+      // tested on a machine that would have chosen the other.
+      //
+      // THE CHOICE IS MADE BEFORE LOADING, and that is the whole design of this block.
+      // Two things make the obvious "try webgpu, catch, fall back" shape wrong, and both
+      // were found by running the page rather than by reading it:
+      //
+      //   1. `navigator.gpu` existing does not mean an ADAPTER exists. A browser in a VM,
+      //      or on a machine with no usable driver, exposes the API and then hands back
+      //      null. The only honest probe is to ask for the adapter.
+      //   2. Bevy's `init()` RESOLVES before the renderer is up. A backend failure
+      //      arrives later, from inside the winit event loop, as an uncaught panic --
+      //      long after any try/catch around `init()` has already succeeded. So a
+      //      catch-based fallback silently does nothing and the page shows a black
+      //      canvas, which is the worst of the available outcomes.
+      //
+      // Hence: probe the adapter first, and treat a late panic as a REPORT rather than
+      // something to recover from, because by then the wasm has taken the canvas.
+      const note = document.getElementById("boot-note");
+      const detail = document.getElementById("boot-detail");
+      const bar = document.getElementById("boot-bar");
+      const boot = document.getElementById("boot");
+
+      let chosen = null;
+      // Once a failure is on screen, nothing may take it back off. Without this flag the
+      // queued `requestAnimationFrame` below hides the overlay AFTER the panic handler
+      // has shown it, and the page goes back to a black rectangle -- which is exactly
+      // what happened the first time this fallback was tested against a machine with no
+      // WebGPU adapter.
+      let failed = false;
+
+      function fail(message, hint) {
+        failed = true;
+        boot.hidden = false;
+        bar.hidden = true;
+        note.className = "error";
+        note.textContent = message;
+        detail.textContent = hint || "";
+      }
+
+      // A LATE failure -- one that happens after the module has been handed the canvas --
+      // is detected by watching whether the app is still drawing, NOT by catching an
+      // error. Measured: a wgpu backend failure reaches the console as
+      // "panicked at ... Unable to find a GPU!" followed by a wasm trap, and NEITHER
+      // fires `window.onerror`, because the trap unwinds inside a requestAnimationFrame
+      // callback that wasm-bindgen owns. A page that relied on catching it showed a black
+      // rectangle and said nothing, which is the worst of the available outcomes.
+      //
+      // So the signal is the symptom itself: Bevy schedules a frame every frame, and a
+      // dead app stops. Counting the scheduler is one line, works whatever the cause of
+      // death is, and cannot be fooled by an error that never surfaces.
+      let frames = 0;
+      const rawRaf = requestAnimationFrame.bind(window);
+      window.requestAnimationFrame = (cb) => {
+        frames += 1;
+        return rawRaf(cb);
+      };
+
+      function watchdog() {
+        const other = chosen === "webgpu" ? "webgl2" : "webgpu";
+        const before = frames;
+        setTimeout(() => {
+          if (failed || frames > before) return;
+          fail(
+            `The ${chosen} build stopped drawing.`,
+            `Nothing rendered after it started \u2014 see the console. Try ?backend=${other}`
+          );
+        }, 2500);
+      }
+
+      // Kept as well: on a browser where an uncaught error DOES surface, saying so at
+      // once beats waiting for the watchdog.
+      addEventListener("error", (e) =>
+        fail(
+          `The ${chosen} build stopped.`,
+          `${e.message || "uncaught error"} \u2014 try ?backend=${chosen === "webgpu" ? "webgl2" : "webgpu"}`
+        )
+      );
+
+      async function pickBackend() {
+        const forced = new URLSearchParams(location.search).get("backend");
+        if (forced === "webgpu" || forced === "webgl2") return forced;
+        if (!navigator.gpu) return "webgl2";
+        try {
+          const adapter = await navigator.gpu.requestAdapter();
+          if (adapter) return "webgpu";
+          console.warn("navigator.gpu exists but requestAdapter() returned null");
+        } catch (error) {
+          console.warn("requestAdapter() threw", error);
+        }
+        return "webgl2";
+      }
+
+      async function start() {
+        // A canvas element must exist before Bevy's winit binding looks for `#atoms3d`;
+        // it is in the markup above rather than created here for that reason.
+        note.textContent = "checking for a WebGPU adapter\u2026";
+        chosen = await pickBackend();
+        note.textContent = `loading the ${chosen} build\u2026`;
+        try {
+          const module = await import(`./${chosen}/atoms3d.js`);
+          await module.default();
+        } catch (error) {
+          console.error(`${chosen} failed to load`, error);
+          fail(
+            `The ${chosen} build would not load.`,
+            String((error && error.message) || error)
+          );
+          return;
+        }
+        // Bevy has taken the canvas. The overlay goes away a couple of frames later so
+        // the first painted frame is not hidden behind it.
+        rawRaf(() =>
+          rawRaf(() => {
+            if (!failed) {
+              boot.hidden = true;
+            }
+            // Start watching only once the app has had a chance to draw, so a slow first
+            // frame is not mistaken for a dead one.
+            watchdog();
+          })
+        );
+      }
+
+      start();
+    </script>
+  </body>
+</html>

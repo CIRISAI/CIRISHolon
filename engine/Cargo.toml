@@ -68,11 +68,22 @@ members = [
 #                   including gate 3's "default build pulls no engine" check. Deliberately
 #                   not build-verified by this script yet, to avoid contending with the
 #                   q8-mps run for the build lock; that check is owed separately.
+#   holon-render-3d the Bevy 0.19 view layer for the atom world. Same disease as
+#                   engine-compare's and worse: Bevy brings ~400 crates, std, an
+#                   allocator and a large optional-feature surface, and Cargo unifies
+#                   features across a workspace — in-workspace it would put wgpu/winit
+#                   within reach of `ciris-sim-core`'s graph and falsify gates 1-3 here
+#                   and PORTABILITY.md's zero-allocation evidence. It path-depends on
+#                   `holon-render` one-way, so the engine workspace's own resolution is
+#                   untouched and `cargo test -p holon-render` builds what it always did.
+#                   The crate carries its own `[workspace]` table; build and test it with
+#                   --manifest-path crates/holon-render-3d/Cargo.toml.
 exclude = [
   "crates/engine-compare",
   "crates/wasm-probe",
   "crates/ciris-sim-component",
   "crates/h3ere2-eval",
+  "crates/holon-render-3d",
 ]
 
 # Consolidated from holon-swarm's and holon-mesh's own (now-removed) `[profile.release]`

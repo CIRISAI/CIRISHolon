@@ -2,6 +2,13 @@
 engine/crates/holon-gpu/target/
 engine/crates/holon-gpu/Cargo.lock
 
+# holon-render-3d is its own workspace root (Bevy's feature set must not unify with the
+# no_std core's — see engine/Cargo.toml's `exclude` block), so it builds into its own
+# target/ rather than the workspace one. Its Cargo.lock IS tracked, unlike holon-gpu's:
+# the lock pins the wasm-bindgen version that build-web.sh checks the CLI against, and an
+# untracked lock would make that check depend on whatever resolved last.
+engine/crates/holon-render-3d/target/
+
 # Run markers and launchers are session-local scaffolding, not record:
 # the RESULTS documents and run logs are the record.
 conformance/gravity/*.DONE
@@ -9,3 +16,10 @@ conformance/gravity/launch_*.sh
 conformance/gravity/__pycache__/
 .claude/
 conformance/omega/engine_probe/target/
+
+# The 3D shell's browser artifacts are ~30 MB EACH and are BUILT by .github/workflows/
+# pages.yml on every deploy, never committed — git would carry 60 MB per rebuild forever.
+# Only docs/atoms3d/index.html is record. (docs/atoms/'s 115 KB wasm IS committed: small
+# enough that having the exact deployed bytes in the record is worth the diff noise.)
+docs/atoms3d/webgpu/
+docs/atoms3d/webgl2/

@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#ede9df" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cline x1='22' y1='32' x2='42' y2='32' stroke='%23236957' stroke-width='5'/%3E%3Ccircle cx='22' cy='32' r='11' fill='%23236957'/%3E%3Ccircle cx='42' cy='32' r='11' fill='%2370a68e'/%3E%3C/svg%3E" />
+    <title>CIRISHolon · atom renderer</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-engine="loading">
+    <main class="shell">
+      <header class="masthead">
+        <div class="brand-lockup">
+          <span class="mark">CH</span>
+          <div>
+            <p class="eyebrow">CIRISHOLON / EXACT PAIR POTENTIAL</p>
+            <h1>Push two atoms together.</h1>
+          </div>
+        </div>
+        <div class="runtime-pill"><i></i><span id="runtime-status">loading Rust/WASM</span></div>
+      </header>
+
+      <div id="placeholder-banner" class="banner" hidden>
+        <b>PLACEHOLDER CURVE</b><span id="provenance"></span>
+      </div>
+      <div id="error-banner" class="banner error" hidden><b>REFUSED</b><span id="error-text"></span></div>
+
+      <section class="intro">
+        <p>
+          Drag an atom into the other one. They will <strong>not</strong> stick — two
+          isolated atoms approach with their relative energy above the dissociation
+          asymptote, and the dynamics conserve it, so they climb the repulsive wall and
+          come straight back out. To make H<sub>2</sub> you have to take energy
+          <em>away</em>: brake one atom with the spring and let go while the pair is
+          bound, add a third atom to carry the surplus off, or switch the thermostat on.
+          Every joule your hand moves is on the ledger below.
+        </p>
+        <div class="pipeline" aria-label="Execution pipeline">
+          <span>drag</span><b>→</b><span>spring work</span><b>→</b><span>velocity&nbsp;Verlet</span><b>→</b><span>ledger</span><b>→</b><span>Canvas</span>
+        </div>
+      </section>
+
+      <section class="laboratory">
+        <div class="stage-wrap">
+          <canvas id="stage" aria-label="Drag a hydrogen atom to push it into another" tabindex="0"></canvas>
+          <div class="stage-topline">
+            <span><i class="live-dot"></i><b id="stage-status">READY</b></span>
+            <span id="clock">t = 0.0 a.u.</span>
+          </div>
+          <div class="aim-copy" id="aim-copy">
+            <span>DRAG AN ATOM</span>
+            <small>the pointer pulls through a spring, and the spring is on the ledger</small>
+          </div>
+        </div>
+
+        <aside class="inspector">
+          <section class="gate-card">
+            <p class="eyebrow">GATE 1 · ENERGY</p>
+            <div class="gate-row">
+              <b id="energy-gate" class="verdict">—</b>
+              <span>E − W<sub>ext</sub> is constant</span>
+            </div>
+            <dl class="ledger">
+              <div><dt>E<sub>kin</sub></dt><dd id="e-kin">—</dd></div>
+              <div><dt>E<sub>pair</sub></dt><dd id="e-pair">—</dd></div>
+              <div><dt>E<sub>wall</sub></dt><dd id="e-wall">—</dd></div>
+              <div><dt>E<sub>spring</sub></dt><dd id="e-spring">—</dd></div>
+              <div class="rule"><dt>W<sub>ext</sub> (your hand)</dt><dd id="w-ext">—</dd></div>
+              <div><dt>E − W<sub>ext</sub></dt><dd id="ledger">—</dd></div>
+              <div><dt>drift (peak)</dt><dd id="drift">—</dd></div>
+              <div><dt>bound (ω·dt)²/4</dt><dd id="drift-bound">—</dd></div>
+            </dl>
+            <div class="meter"><i id="drift-fill"></i></div>
+            <small>drift as a fraction of its derived bound — <span id="drift-ratio">—</span></small>
+          </section>
+
+          <section class="gate-card">
+            <p class="eyebrow">GATE 2 · MOMENTUM</p>
+            <div class="gate-row">
+              <b id="momentum-gate" class="verdict">—</b>
+              <span>P − J<sub>ext</sub> is constant</span>
+            </div>
+            <dl class="ledger">
+              <div><dt>|P|</dt><dd id="p-mag">—</dd></div>
+              <div><dt>residual (peak)</dt><dd id="p-res">—</dd></div>
+              <div><dt>roundoff bound</dt><dd id="p-bound">—</dd></div>
+            </dl>
+            <small>A separate gate on purpose: energy can be right while momentum is wrong.</small>
+          </section>
+
+
+          <section class="gate-card">
+            <p class="eyebrow">THE THREE CLOCKS</p>
+            <div class="gate-row">
+              <b id="rung" class="verdict">—</b>
+              <span id="rung-note">accuracy held, time dilates</span>
+            </div>
+            <dl class="ledger">
+              <div><dt>1 · physics dt <i>(derived)</i></dt><dd id="dt">—</dd></div>
+              <div><dt>&nbsp;&nbsp;reference = period/64</dt><dd id="dt-ref">—</dd></div>
+              <div><dt>&nbsp;&nbsp;&omega;<sub>e</sub> at R<sub>e</sub></dt><dd id="omega-e">—</dd></div>
+              <div><dt>&nbsp;&nbsp;&omega;<sub>env</sub> (envelope)</dt><dd id="omega-env">—</dd></div>
+              <div><dt>&nbsp;&nbsp;&omega;<sub>env</sub>·dt <i>(&lt;2 stable)</i></dt><dd id="omega-dt">—</dd></div>
+              <div class="rule"><dt>2 · frame</dt><dd id="frame-ms">—</dd></div>
+              <div><dt>&nbsp;&nbsp;substeps / frame</dt><dd id="substeps-frame">—</dd></div>
+              <div class="rule"><dt>3 · sim-speed</dt><dd id="sim-speed">—</dd></div>
+              <div><dt>&nbsp;&nbsp;one vibration in</dt><dd id="vib-wall">—</dd></div>
+              <div><dt>&nbsp;&nbsp;dilation</dt><dd id="dilation">—</dd></div>
+            </dl>
+            <small>dt is read off the curve&rsquo;s own curvature, never chosen. The bound
+            above is re-derived from it on every frame.</small>
+          </section>
+          <section class="curve-card">
+            <p class="eyebrow">THE CURVE · U(R)</p>
+            <canvas id="curve" height="190"></canvas>
+            <dl class="ledger">
+              <div><dt>R</dt><dd id="pair-r">—</dd></div>
+              <div><dt>E<sub>rel</sub></dt><dd id="pair-erel">—</dd></div>
+              <div><dt>outer turning point</dt><dd id="pair-router">—</dd></div>
+              <div><dt>bonded pairs</dt><dd id="bond-count">—</dd></div>
+            </dl>
+            <small id="curve-note">
+              Bonded means E<sub>rel</sub> below the asymptote and R inside the turning
+              point. Both read off this curve; no distance cutoff anywhere.
+            </small>
+          </section>
+
+
+          <section class="gate-card">
+            <p class="eyebrow">HOLON CENSUS</p>
+            <dl class="ledger">
+              <div><dt>micro · atoms</dt><dd id="c-atoms">—</dd></div>
+              <div><dt>composite · molecules</dt><dd id="c-molecules">—</dd></div>
+              <div><dt>candidate · evals/frame</dt><dd id="c-candidates">—</dd></div>
+              <div><dt>global · views</dt><dd id="c-global">—</dd></div>
+              <div class="rule"><dt>formations</dt><dd id="c-formations">—</dd></div>
+              <div><dt>dissolutions</dt><dd id="c-dissolutions">—</dd></div>
+              <div><dt>bound but not closed</dt><dd id="c-rejections">—</dd></div>
+              <div><dt>bond-sector energy</dt><dd id="c-bondsector">—</dd></div>
+            </dl>
+            <small>Being matter is expensive &mdash; the O(N&sup2;) force loop is the whole
+            budget. Being a holon is cheap: measured at under 1% of a frame.</small>
+          </section>
+
+          <section class="gate-card">
+            <p class="eyebrow">THIS DEVICE (MEASURED)</p>
+            <dl class="ledger">
+              <div><dt>substeps / sec</dt><dd id="d-sps">—</dd></div>
+              <div><dt>pairs / sec</dt><dd id="d-pps">—</dd></div>
+              <div><dt>required substeps/sec</dt><dd id="d-req">—</dd></div>
+              <div><dt>N<sub>max</sub> at this speed</dt><dd id="d-nmax">—</dd></div>
+            </dl>
+            <small>Calibrated by a burst of pure physics on load. Not a guess, and not
+            this developer&rsquo;s machine.</small>
+          </section>
+          <section class="curve-card">
+            <p class="eyebrow">TABLE PROVENANCE</p>
+            <dl class="ledger">
+              <div><dt>knots</dt><dd id="t-knots">—</dd></div>
+              <div><dt>R<sub>e</sub> / D<sub>e</sub></dt><dd id="t-re">—</dd></div>
+              <div><dt>E<sub>asymptote</sub></dt><dd id="t-asym">—</dd></div>
+              <div><dt>consistency dE/dR = −F</dt><dd id="t-res">—</dd></div>
+              <div><dt>same, with +F</dt><dd id="t-res-alt">—</dd></div>
+            </dl>
+          </section>
+        </aside>
+      </section>
+
+      <section class="controls" aria-label="Scene controls">
+        <div class="control-group">
+          <button id="reset-button" type="button">Reset</button>
+          <label for="atom-count">atoms <output id="atom-count-out">2</output></label>
+          <input id="atom-count" type="range" min="2" max="16" step="1" value="2" />
+        </div>
+        <div class="control-group">
+          <label for="sim-speed-control">sim-speed <output id="sim-speed-out">—</output> fs/s</label>
+          <input id="sim-speed-control" type="range" min="-1" max="3" step="0.05" value="0" />
+        </div>
+        <div class="control-group">
+          <label class="check"><input id="open-boundary" type="checkbox" /> walls off</label>
+          <label class="check"><input id="thermostat" type="checkbox" /> thermostat</label>
+          <label for="target-t">target <output id="target-t-out">300</output> K</label>
+          <input id="target-t" type="range" min="10" max="2000" step="10" value="300" />
+          <span class="telemetry">T <b id="temperature">—</b></span>
+        </div>
+        <div class="control-group degrade-group">
+          <label class="check" title="Rung (ii): accuracy degraded DECLAREDLY, with the re-derived bound shown.">
+            <input id="allow-dt-growth" type="checkbox" /> let dt grow (declare accuracy loss)
+          </label>
+          <label for="dt-mult">dt &times; <output id="dt-mult-out">1.0</output> ref</label>
+          <input id="dt-mult" type="range" min="1" max="8" step="0.5" value="1" disabled />
+          <label class="check"><input id="census-enabled" type="checkbox" checked /> composite layer</label>
+        </div>
+      </section>
+
+      <footer>
+        <p><b>Every force here is the analytic gradient of the tabulated energy.</b> The
+        ledger closes because of that, not in spite of it.</p>
+        <span>AGPL-3.0-or-later</span>
+      </footer>
+    </main>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

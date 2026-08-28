@@ -40,6 +40,11 @@ members = [
   # `[profile.*]` section is silently ignored by Cargo once it joins a workspace.
   "crates/holon-swarm",
   "crates/holon-mesh",
+  # holon-render: the interactive atom renderer. Depends ONLY on `holon`, and only for
+  # its tuner/grain TYPES; `holon` has no runtime deps and no optional features, so this
+  # cannot perturb the core's feature resolution or the isolation gates. No other deps,
+  # runtime or dev (raw extern "C" ABI; the host parses its own JSON).
+  "crates/holon-render",
 ]
 
 # Deliberately OUTSIDE the workspace, each for its own reason:

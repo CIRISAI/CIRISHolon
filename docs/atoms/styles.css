@@ -1,0 +1,165 @@
+:root {
+  color-scheme: light;
+  --ink: #17201d;
+  --muted: #69736e;
+  --paper: #ede9df;
+  --paper-deep: #e2ddd1;
+  --panel: rgba(249, 247, 241, 0.82);
+  --line: rgba(27, 42, 36, 0.16);
+  --green: #236957;
+  --green-soft: #70a68e;
+  --rust: #bb4c2e;
+  --amber: #d49a36;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; margin: 0; }
+
+body {
+  color: var(--ink);
+  font-family: var(--sans);
+  background:
+    radial-gradient(circle at 9% 4%, rgba(38, 105, 87, 0.09), transparent 28rem),
+    radial-gradient(circle at 92% 84%, rgba(187, 76, 46, 0.08), transparent 32rem),
+    var(--paper);
+}
+
+button, input { font: inherit; }
+
+.shell { width: min(1500px, calc(100% - 52px)); margin: 0 auto; padding: 30px 0 22px; }
+
+.masthead { display: flex; align-items: center; justify-content: space-between; gap: 28px; }
+
+.brand-lockup { display: flex; align-items: center; gap: 16px; }
+.mark {
+  display: grid; place-items: center;
+  width: 46px; height: 46px; border-radius: 13px;
+  background: var(--green); color: var(--paper);
+  font-family: var(--mono); font-weight: 700; letter-spacing: 0.06em;
+}
+.eyebrow {
+  margin: 0 0 2px; font-family: var(--mono); font-size: 11px;
+  letter-spacing: 0.16em; color: var(--muted);
+}
+h1 { margin: 0; font-size: 26px; letter-spacing: -0.015em; }
+
+.runtime-pill {
+  display: inline-flex; align-items: center; gap: 9px;
+  padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--panel); font-family: var(--mono); font-size: 12px;
+}
+.runtime-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); }
+body[data-engine="ready"] .runtime-pill i { background: var(--green); }
+body[data-engine="failed"] .runtime-pill i { background: var(--rust); }
+
+.banner {
+  display: flex; align-items: baseline; gap: 12px;
+  margin: 18px 0 0; padding: 11px 16px;
+  border: 1px solid rgba(212, 154, 54, 0.5); border-left: 4px solid var(--amber);
+  border-radius: 8px; background: rgba(212, 154, 54, 0.12);
+  font-size: 13px; line-height: 1.5;
+}
+/* `display: flex` above outranks the user-agent's `[hidden] { display: none }` rule, so
+   without this the hidden banners render anyway -- which showed a permanent REFUSED bar
+   over a page that had refused nothing. Measured in the browser, not reasoned about. */
+.banner[hidden] { display: none; }
+.banner b { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; white-space: nowrap; }
+.banner.error { border-color: rgba(187, 76, 46, 0.5); border-left-color: var(--rust); background: rgba(187, 76, 46, 0.12); }
+
+.intro { display: flex; align-items: center; justify-content: space-between; gap: 28px; margin: 18px 0 20px; }
+.intro p { margin: 0; max-width: 74ch; line-height: 1.6; font-size: 14.5px; }
+.pipeline {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--mono); font-size: 11px; color: var(--muted); white-space: nowrap;
+}
+.pipeline span { padding: 4px 9px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel); }
+.pipeline b { color: var(--green-soft); }
+
+.laboratory { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 22px; align-items: start; }
+
+.stage-wrap { position: relative; }
+#stage {
+  display: block; width: 100%; aspect-ratio: 40 / 24;
+  border: 1px solid var(--line); border-radius: 14px;
+  background: linear-gradient(180deg, #f7f4ec, #e9e4d8);
+  cursor: grab; touch-action: none;
+}
+#stage:active { cursor: grabbing; }
+
+.stage-topline {
+  position: absolute; top: 12px; left: 14px; right: 14px;
+  display: flex; justify-content: space-between;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--muted);
+  pointer-events: none;
+}
+.stage-topline b { color: var(--ink); }
+.live-dot {
+  display: inline-block; width: 7px; height: 7px; margin-right: 7px;
+  border-radius: 50%; background: var(--green);
+}
+.aim-copy {
+  position: absolute; bottom: 14px; left: 14px;
+  font-family: var(--mono); font-size: 11px; color: var(--muted); pointer-events: none;
+}
+.aim-copy span { display: block; letter-spacing: 0.12em; color: var(--ink); }
+
+.inspector { display: grid; gap: 14px; }
+.gate-card, .curve-card {
+  padding: 14px 16px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel);
+}
+.gate-row { display: flex; align-items: baseline; gap: 10px; margin: 2px 0 10px; }
+.verdict { font-family: var(--mono); font-size: 20px; letter-spacing: 0.04em; }
+.verdict[data-state="pass"] { color: var(--green); }
+.verdict[data-state="fail"] { color: var(--rust); }
+.gate-row span { font-size: 12px; color: var(--muted); }
+
+dl.ledger { display: grid; gap: 3px; margin: 0; font-family: var(--mono); font-size: 11.5px; }
+dl.ledger > div { display: flex; justify-content: space-between; gap: 10px; padding: 1px 0; }
+dl.ledger > div.rule { margin-top: 4px; padding-top: 5px; border-top: 1px solid var(--line); }
+dl.ledger dt { color: var(--muted); }
+dl.ledger dd { margin: 0; font-variant-numeric: tabular-nums; }
+
+.meter { height: 5px; margin: 10px 0 5px; border-radius: 999px; background: var(--paper-deep); overflow: hidden; }
+.meter i { display: block; height: 100%; width: 0; background: var(--green); transition: width 90ms linear; }
+.meter i[data-state="fail"] { background: var(--rust); }
+
+.gate-card small, .curve-card small { display: block; margin-top: 6px; font-size: 11px; line-height: 1.5; color: var(--muted); }
+
+#curve { display: block; width: 100%; margin-bottom: 8px; }
+
+.controls { display: flex; flex-wrap: wrap; align-items: center; gap: 26px; margin: 20px 0 8px; }
+.control-group { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.controls label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--muted); }
+.controls output { color: var(--ink); font-variant-numeric: tabular-nums; }
+.controls input[type="range"] { width: 118px; accent-color: var(--green); }
+.controls .check { display: inline-flex; align-items: center; gap: 6px; }
+button {
+  padding: 8px 16px; border: 1px solid var(--green); border-radius: 8px;
+  background: var(--green); color: var(--paper); cursor: pointer;
+  font-family: var(--mono); font-size: 12px; letter-spacing: 0.06em;
+}
+button:hover { background: #1c5647; }
+.telemetry { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+.telemetry b { color: var(--ink); }
+
+footer {
+  display: flex; align-items: center; justify-content: space-between; gap: 28px;
+  margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line);
+  font-size: 12px; color: var(--muted);
+}
+footer p { margin: 0; }
+footer span { font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em; }
+
+@media (max-width: 1080px) {
+  .laboratory { grid-template-columns: 1fr; }
+  .intro { flex-direction: column; align-items: flex-start; }
+}
+
+dl.ledger dt i { font-style: normal; opacity: 0.7; }
+.verdict[data-state="dilated"] { color: var(--amber); }
+.verdict[data-state="declared"] { color: var(--rust); }
+.verdict[data-state="refused"] { color: var(--rust); }
+.degrade-group { padding: 6px 12px; border: 1px dashed var(--line); border-radius: 8px; }
+.controls input[type="range"][disabled] { opacity: 0.4; }

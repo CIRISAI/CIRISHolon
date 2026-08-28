@@ -1,0 +1,33 @@
+[package]
+name = "holon-render"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "Interactive hydrogen-atom renderer: exact pair potential, symplectic dynamics, gated ledger"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# ONE dependency, and only for its TYPES: `holon::tune::{Policy, Hold, Degrade}` is the
+# engine's own degradation contract and `holon::grain::Grain` its closure-aligned
+# schedule. Using the real types rather than a local copy is the point — in particular
+# `Policy::new` REFUSES `Degrade::Accuracy` under `Hold::Exactness`, which is what makes
+# "accuracy never degrades silently" a construction error instead of a convention.
+#
+# `holon` itself has zero runtime dependencies and no optional features, so it cannot
+# perturb the core's feature resolution or the isolation gates. It is a large crate
+# (tableau, ZX, magic states) but LTO strips everything unreachable: the browser artifact
+# measured the same 69,764 bytes with the dependency added and unused as without it.
+#
+# Everything else is still absent by design. The potential arrives as data, the host
+# parses its own JSON, and the ABI is raw extern "C" — so there is nothing for
+# wasm-bindgen or a serde derive to do, and nothing for either to add to the artifact.
+[dependencies]
+holon = { path = "../holon" }
+
+# NOTE: no `[profile.release]` here on purpose. A workspace member's profile section is
+# silently ignored by Cargo (only the workspace root's applies), so declaring one would
+# look like it worked and would not. `build-web.sh` sets the size profile through
+# `CARGO_PROFILE_RELEASE_*` environment variables instead, where it takes effect, and
+# the byte count in the report comes from that path.

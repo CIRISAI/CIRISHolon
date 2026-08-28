@@ -7,6 +7,7 @@
 use crate::plane::BitPlane;
 
 #[derive(Clone)]
+#[derive(Debug)]
 pub struct PauliRow {
     pub x: BitPlane,
     pub z: BitPlane,
@@ -44,6 +45,7 @@ impl PauliRow {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct PackedTableau {
     pub n: usize,
     /// rows 0..n destabilizers, n..2n stabilizers.
@@ -300,6 +302,164 @@ mod sample_conformance {
                     }
                 }
             }
+        }
+    }
+}
+
+impl PackedTableau {
+    /// THE TIER'S CANONICAL FORM, made explicit.
+    ///
+    /// TIERS.md's per-tier analysis names the universal need: every tier has
+    /// a PRESENTATION (an ordering or gauge) and a CONTENT (the invariant),
+    /// and the tiers we do well on are exactly the ones whose canonicalizer
+    /// exists. For Clifford that canonicalizer is the tableau itself — the
+    /// stabilizer GROUP is the invariant and the gate order is presentation
+    /// — but "the tableau is canonical" was implicit until now, which meant
+    /// two tableaux for the same state could compare unequal.
+    ///
+    /// This makes it explicit: reduce the stabilizer half to row-reduced
+    /// echelon form over F₂ (X block then Z block), fixing signs along the
+    /// way. Two states are then EQUAL as states iff their canonical forms
+    /// are equal bit-for-bit — the same contract `Affine::canon_key` gives
+    /// the branch layer, and the reason dedup can collapse a branch space.
+    pub fn canonicalize(&mut self) {
+        let n = self.n;
+        let mut pivot = 0usize;
+        // X block, then Z block: 2n columns over the n stabilizer rows.
+        for col in 0..2 * n {
+            let get = |r: &PauliRow, c: usize| {
+                if c < n {
+                    r.x.get(c)
+                } else {
+                    r.z.get(c - n)
+                }
+            };
+            let Some(p) = (pivot..n).find(|&i| get(&self.rows[n + i], col)) else {
+                continue;
+            };
+            // Every operation on the stabilizer half must be mirrored on the
+            // destabilizer half by its SYMPLECTIC PARTNER operation, or the
+            // pairing `measure_peek` relies on is destroyed: a swap pairs
+            // with a swap, and `stab[i] *= stab[pivot]` pairs with
+            // `destab[pivot] *= destab[i]` (note the reversed indices).
+            self.rows.swap(n + pivot, n + p);
+            self.rows.swap(pivot, p);
+            for i in 0..n {
+                if i != pivot && get(&self.rows[n + i], col) {
+                    let src = self.rows[n + pivot].clone();
+                    self.rows[n + i].mul_assign(&src);
+                    let dsrc = self.rows[i].clone();
+                    self.rows[pivot].mul_assign(&dsrc);
+                }
+            }
+            pivot += 1;
+            if pivot == n {
+                break;
+            }
+        }
+    }
+
+    /// A canonical byte key: equal keys ⟺ equal stabilizer states. The
+    /// caller must have canonicalized first (this hashes the form, it does
+    /// not impose it) — the split is deliberate, so a caller cannot pay for
+    /// canonicalization twice by accident.
+    pub fn canon_key(&self) -> Vec<u8> {
+        let mut out = Vec::with_capacity(self.n * (2 * self.n / 8 + 2));
+        for r in &self.rows[self.n..] {
+            for w in &r.x.words {
+                out.extend_from_slice(&w.to_le_bytes());
+            }
+            for w in &r.z.words {
+                out.extend_from_slice(&w.to_le_bytes());
+            }
+            out.push(r.r % 4);
+        }
+        out
+    }
+}
+
+#[cfg(test)]
+mod canonical_tests {
+    use super::*;
+
+    struct Rng(u64);
+    impl Rng {
+        fn next(&mut self) -> u64 {
+            self.0 = self.0.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            self.0 >> 11
+        }
+        fn below(&mut self, n: usize) -> usize {
+            (self.next() % n as u64) as usize
+        }
+    }
+
+    /// THE CONTRACT: the same state reached by DIFFERENT gate orders must
+    /// canonicalize to the same key — presentation stripped, content kept.
+    #[test]
+    fn different_presentations_same_canonical_form() {
+        let n = 4;
+        // Two orderings of commuting operations that reach the same state.
+        let mut a = PackedTableau::new(n);
+        a.h(0);
+        a.h(2);
+        a.cx(0, 1);
+        a.cx(2, 3);
+        let mut b = PackedTableau::new(n);
+        b.h(2);
+        b.cx(2, 3);
+        b.h(0);
+        b.cx(0, 1);
+        a.canonicalize();
+        b.canonicalize();
+        assert_eq!(a.canon_key(), b.canon_key(), "commuting reorder changed the key");
+    }
+
+    /// Canonicalization must be IDEMPOTENT and must not change the state:
+    /// every measurement outcome is preserved.
+    #[test]
+    fn canonicalization_is_idempotent_and_state_preserving() {
+        let mut rng = Rng(0xCA_11);
+        for _ in 0..20 {
+            let n = 5;
+            let mut t = PackedTableau::new(n);
+            for _ in 0..40 {
+                let q = rng.below(n);
+                let mut q2 = rng.below(n);
+                while q2 == q {
+                    q2 = rng.below(n);
+                }
+                match rng.below(4) {
+                    0 => t.h(q),
+                    1 => t.s(q),
+                    2 => t.cx(q, q2),
+                    _ => t.z_gate(q),
+                }
+            }
+            let before: Vec<Option<bool>> = (0..n).map(|q| t.measure_peek(q)).collect();
+            t.canonicalize();
+            let k1 = t.canon_key();
+            let after: Vec<Option<bool>> = (0..n).map(|q| t.measure_peek(q)).collect();
+            assert_eq!(before, after, "canonicalization changed the state");
+            t.canonicalize();
+            assert_eq!(k1, t.canon_key(), "canonicalization is not idempotent");
+        }
+    }
+
+    /// Distinct states must NOT collide — a canonical form that maps
+    /// everything to one key would pass the tests above and be useless.
+    #[test]
+    fn distinct_states_have_distinct_keys() {
+        let n = 3;
+        let mut keys = std::collections::HashSet::new();
+        for bits in 0..8u32 {
+            let mut t = PackedTableau::new(n);
+            for q in 0..n {
+                if bits >> q & 1 == 1 {
+                    t.x_gate(q);
+                }
+            }
+            t.canonicalize();
+            assert!(keys.insert(t.canon_key()), "distinct basis states collided");
         }
     }
 }

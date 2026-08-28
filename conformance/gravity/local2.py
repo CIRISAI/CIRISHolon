@@ -301,17 +301,23 @@ def run_local2():
             if any(ta[i] * sb != tb[i] * sa for i in range(3)):
                 seen = True
         rep["U1"] = "PASS" if seen else "FIRE (channels indistinct at the separated plaquette)"
-    # U2: matter responds to a geometry perturbation (response form)
-    a, b = psi0, perturb(psi0, E_STAR)
-    resp = False
-    for k in range(1, 5):
-        a = step(a); b = step(b)
-        wa, wb = matter_weight(a), matter_weight(b)
-        # exact scale-free comparison via total weights
-        na = int(np.sum(norm2(*a))); nb = int(np.sum(norm2(*b)))
-        if wa * nb != wb * na:
-            resp = True
-    rep["U2"] = "PASS" if resp else "FIRE (matter blind to geometry perturbation)"
+    # LOCAL-2B U2': reciprocity where the coupling lives (spoke 1 is read
+    # by the dressing line); U2'': the line-disjoint e* perturbation must
+    # leave matter EXACTLY unchanged -- the coupling is itself local.
+    def matter_responds(edge):
+        a, b = psi0, perturb(psi0, edge)
+        hits = []
+        for k in range(1, 5):
+            a = step(a); b = step(b)
+            wa, wb = matter_weight(a), matter_weight(b)
+            na = int(np.sum(norm2(*a))); nb = int(np.sum(norm2(*b)))
+            if wa * nb != wb * na:
+                hits.append(k)
+        return hits
+    on_line = matter_responds(1)
+    off_line = matter_responds(E_STAR)
+    rep["U2'"] = "PASS (matter responds at steps %s)" % on_line if on_line else "FIRE (blind even on the line)"
+    rep["U2''"] = "PASS (line-disjoint zero exact)" if not off_line else f"FIRE (moved at {off_line})"
     # U3: the cone, re-asserted (live steps from the direct-hit control)
     a2, b2, c2 = psi0, perturb(psi0, E_STAR), perturb(psi0, 10)
     live, dist = set(), {}

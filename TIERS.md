@@ -142,3 +142,42 @@ any angle into them:
 | face / T-type magic, arccos(1/√3) | NOT a root of unity, but `(1+i√2)/√3 ∈ ℚ(ζ24)` | `Z[ζ8][√3]` = `face::R3` | ✓ **the door to the IBM tracker's instances** |
 | qutrit ζ3 and every 24th root | ζ3, ζ6, ζ12, ζ24 | ALSO `face::R3` — it already carries i, √3, ½, so ζ3 = (−1+i√3)/2 is in it | ✓ free, verified |
 | ζ9-class qutrit magic (Strange state) | ζ9 | `Z[ζ9]`, degree 6, Φ₉ = x⁶+x³+1 | ✓ **BUILT** (`cyclon.rs`) — and generalized: the ring is `Z[ζ_n]` for ANY n, with Φ_n derived from scratch by exact recursive division (no tables, no trusted constants), agreeing with the 2-power tower where they overlap. **The classification now has no unimplemen
+## What quizx is for, per tier — and the universal need underneath it
+
+The direct answer first, because it is narrower than the question implies:
+**quizx itself is usable at exactly one tier.** It is Clifford+T-specific —
+it has no face ring, no symbolic angle, no qudits, no distributed
+certificates — so it is the magic tier's canonicalizer and nothing else.
+At every other tier it would be a category error.
+
+But the PRINCIPLE it embodies is needed at every tier, and naming it
+correctly is what makes the rest of the ladder cheaper:
+
+> **A circuit's gate order is PRESENTATION, not content.** ZX rewriting
+> wins because moving to a graph dissolves the sequence: Hadamards stop
+> being barriers because there is no "before" left for them to bar. The
+> redundancy that ordering hid becomes visible, and cancels.
+
+That is the engine's own vocabulary from the predecessor lake:
+`gauge_sector_is_order_degeneracy` (`Core/FrameOrder.lean`) — the gauge
+sector is the corpus's own presentation. **The universal need at every tier
+is a canonicalization pass that strips the presentation and leaves the
+invariant.** Where the engine already has one, that tier is fast; where it
+does not, that tier is where we lose.
+
+| tier | the presentation | the invariant | canonicalizer | status |
+|---|---|---|---|---|
+| 0/1 Clifford | gate order | the stabilizer group | the tableau itself — a tableau IS the canonical form, which is WHY Clifford is easy | ✓ have it (and it beat stim) |
+| 2 magic | gate order + branch order | the ZX graph / the phase-polynomial content | graph rewriting | ✗ **missing — and this is precisely the measured loss** (entries 13–17) |
+| 2 magic, branch layer | which branch subset | the canonical affine state | `Affine::canonicalize` + `canon_key` | ✓ have it — it is why dedup collapses 2^t to O(1) on some families |
+| bulk / MPS | the bond-index gauge | the Schmidt spectrum | MPS canonical form (left/right orthogonalization) | ✓ standard, ours inherits it |
+| crystal / gauge | the lattice's gate schedule | holonomy and the constraint sector | the BRIDGE campaigns' own reading: the Floquet SEQUENCE is presentation, the closure/holonomy structure is content | ✓ that is what rung 0 measured |
+| physics / graphics | draw and update order | the spatial structure | BVH + the grain schedule (`grain.rs`) — a LOD refresh on a closure boundary is exactly this move | ✓ have the law, tier not built |
+
+So the composition recommendation sharpens: **use quizx at tier 2 only, and
+read it as the tier's missing canonical form rather than as a faster
+competitor.** Every tier that already has its canonicalizer is a tier we do
+well on; the one that lacks it is the one we lose on, and the loss was
+measurable to three orders of magnitude precisely because canonicalization
+is not an optimization — it is the thing that decides which quantities are
+even computable.

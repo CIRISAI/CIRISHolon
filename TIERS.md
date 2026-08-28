@@ -236,3 +236,14 @@ Endogenous ✓ (BRIDGE-6/7B R1) · charged-sourcing-observable ✓ (WILSON-2B)
 firing)**. Remaining for requirement 1: ONE model carrying all properties
 simultaneously (LOCAL-2: the reciprocal pump inside the cone-verified
 dynamics), then the non-abelian instance (FROBENIUS-1).
+
+## CLOSURE-2B adjudicated (2026-08-28): the missing memory is not one-body
+
+On a validated instrument (both plants firing): the configuration
+channel's minimax defect is positive and exact (C1); inheritance holds
+exactly (C3); and the (Wilson, 't Hooft) channel — the honest discrete
+(h, π) — is STILL blind at every firing collision (C2 dead). Requirement
+3's toy statement sharpens: closure derives the dynamics where it holds
+(EINSTEIN-ADM-1), and where it fails, the missing memory is provably not
+one-body phase-space data — it is correlational. Successor: the
+pair-correlator channel, outcome open.

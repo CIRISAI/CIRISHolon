@@ -55,3 +55,36 @@ plant (ii) in the raw total weight), M-ONE-MODEL-DELTA (C1 remains the
 collision/minimax form), M-PROBE-EIGENSTATE (the carrier is the zero-flux
 vacuum, named, non-uniform in the dual), M-NULL-MISSTAKE and M-COND-PROBE
 and M-BARE-CHARGE (as admitted, unchanged).
+
+## CLOSURE-2B — plants both fire; C2's fire stands on a validated instrument
+
+```
+C1=BRANCH(a): defect > 0 at (1,5),(2,4),(5,7)   C2=FIRE (v_PS blind at all three)
+C3=PASS (inheritance exact)   G0/B3=PASS
+[plant i] FIRES ('t Hooft triple visibly shifts: (1,0,0) -> (0,0,1))
+[plant ii] FIRES
+```
+
+The 't Hooft channel is demonstrably sensitive — the dual-charge insertion
+moves its triple by exactly one sector — so this time the fire is not an
+artifact. **Adjudication, final:**
+
+- **EARNED (C1)**: the configuration channel's minimax defect is positive,
+  exactly, at three collisions — the collision theorem's measured face on
+  this model.
+- **EARNED (C3)**: inherited conservation holds exactly — the derivation
+  template's inheritance theorem, measured.
+- **DEAD (C2), and the death is the discovery**: even the full
+  (Wilson, 't Hooft) channel — the conjugate pair of gauge-invariant
+  one-body data, the honest discrete (h, π) — is blind at every firing
+  collision. The memory that closure lacks is NOT one-body phase-space
+  data. It lives in higher correlators: multi-loop correlations the
+  one-body channel integrates out.
+
+A reading, labelled as one: this is the predecessor programme's
+whole-pattern thesis surfacing inside the gravity campaign uninvited —
+the discarded memory is carried by correlational structure that no
+one-body marginal set sees, on an exact instrument with firing plants. The
+successor channel (v_PS'' = one-body + PAIR correlators) is the named next
+rung, and its outcome is genuinely open: pair-sufficiency would locate the
+memory at second order; a further fire would push it to whole-only.

@@ -8,13 +8,15 @@ from bridge1 import MUL, INV, CLASS, base_graph
 from bridge6 import Model6, nonzero
 
 def pendant_graph():
-    """The base fan disk PLUS a pendant plaquette hung off rim vertex 3 by a
-    bridge edge: pendant cycle 3 -> d1 -> d2 -> 3. Its holonomy uses edges
-    no fan plaquette touches (M-HOMOG: structural, not parity, distance)."""
+    """BRIDGE-7B amendment (frozen in BRIDGE7_RESULTS.md before this rerun):
+    the 3-edge pendant OOM'd at 8^9 configs, so the pendant is a BIGON --
+    two new parallel edges 3->d1 and d1->3. The meaning-bearing property is
+    intact: its holonomy uses edges no fan plaquette touches. 8 edges =
+    8^8 ~ 16.7M configs, the size the refined graph already ran."""
     edges, plaq, loop, p0, e_star = base_graph()
     base_e = len(edges)
-    edges = edges + [(3, "d1"), ("d1", "d2"), ("d2", 3)]
-    pend = [(base_e, +1), (base_e + 1, +1), (base_e + 2, +1)]
+    edges = edges + [(3, "d1"), ("d1", 3)]
+    pend = [(base_e, +1), (base_e + 1, +1)]
     plaq = plaq + [pend]
     return edges, plaq, loop, p0, e_star
 

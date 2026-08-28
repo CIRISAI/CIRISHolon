@@ -255,3 +255,9 @@ v_pair separates every firing collision on a validated instrument (the
 pair-sensitivity plant's states are one-body-equal, pair-distinct). The
 coarse bookkeeping that closes this model is (one-body + pair); 2B's
 whole-pattern reading is BOUNDED accordingly. Sixth green campaign.
+
+## Requirement 1: COMPLETE on the abelian instance (2026-08-28, LOCAL-2B)
+
+Endogenous, charged, reciprocal (both directions), and local (cone +
+coupling-locality), all in ONE exact model, all gates, plants firing.
+Seventh green campaign. Successor: FROBENIUS-1 (non-abelian).

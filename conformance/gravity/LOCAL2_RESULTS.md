@@ -45,3 +45,28 @@ M-RING-MIXING, M-LOOP-BLIND, M-GAUGE-LAUNDER, M-STALE-INSTRUMENT
 (instrument and results committed together), M-GAUGE-UNIFORM-MOMENTUM
 (no per-edge momentum reading).
 witness: none (amendment header; gate witnesses above)
+
+## LOCAL-2B — ALL GATES PASS, both plants fire
+
+```
+U1=PASS (charged→geometry at the separated plaquette)
+U2'=PASS (matter responds to on-line geometry at EVERY step 1–4)
+U2''=PASS (the line-disjoint zero holds EXACTLY — the coupling is itself local)
+U3=PASS (cone at live steps [3])   G0/B3=PASS   plants both FIRE
+```
+
+**Requirement 1 is complete on the abelian instance, in one model:**
+a single exact Z3 gauge theory with a Wilson-dressed charge pair and one
+endogenous Floquet step in which — simultaneously — charged matter sources
+geometry visibly at a matter-disjoint observable (U1), geometry acts back
+on matter through exactly the coupling the dressing defines (U2′), that
+coupling is itself local (U2″: the line-disjoint perturbation leaves
+matter EXACTLY unchanged at every step), and dynamical influence respects
+an exact light cone at the observable's live steps (U3). Every zero is an
+integer identity; every response is exact; both plants fire.
+
+The original U2 fire is thereby upgraded rather than erased: what died was
+"matter responds to geometry ANYWHERE"; what lives is sharper — matter
+responds exactly where the gauge coupling puts it, and nowhere else.
+Successor: FROBENIUS-1 (non-abelian, where orientation-necessity and
+charged non-abelian sourcing become posable).

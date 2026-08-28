@@ -51,14 +51,30 @@ randomizer at minimal instances.
   scale, the mixing moduli of in-ring unitaries are QUANTIZED (the √2 and
   √3 dichotomies are two rungs of one law). *Kill: an in-ring unitary
   with intermediate modulus at a scale where the quantization is staked.*
-- **W3 — MAXIMALITY, as the review formulated it.** One frozen Ω
-  continues to work on every larger evaluation WITHOUT structural
-  replacement — extensions happen by derivable law (as measured once:
-  the intervention face arrived with T1 as its adequacy criterion), never
-  by format replacement. *Kill, separable and honest: a domain exhibiting
-  a break for which NO adequacy criterion is derivable — a knob class
-  that separates identities and admits no lawful extension. One such
-  domain kills the wager without touching W1, W2, or any measured claim.*
+- **W3 — MAXIMALITY, as the review formulated it, under a FROZEN
+  extension grammar.** One frozen Ω continues to work on every larger
+  evaluation WITHOUT structural replacement — extensions happen by
+  derivable law (measured once: the intervention face arrived with T1 as
+  its adequacy criterion), never by format replacement. **The extension
+  grammar, frozen 2026-08-28 so this wager is genuinely killable** (an
+  extension is LAWFUL only when it is): (1) definable from the existing Ω
+  signature, admissible act vocabulary, and boundary data; (2) functorial
+  under Ω-isomorphism; (3) conservative — previous receipts and
+  equivalences remain valid; (4) parameter-free apart from independently
+  measured boundary data; (5) domain-independent — the same constructor
+  applies to every domain satisfying its premises; (6) preregistered
+  before inspecting the domain's verdict data. A FORMAT REPLACEMENT is
+  any required primitive or discriminator not derivable under these six
+  rules. *Kill: a domain requiring one. Separable — it kills W3 without
+  touching W1, W2, or any measured claim.*
+  **Fence, from TOE-NULL-1 (adjudicated adversarially, converged): W3 is
+  logically independent of "Ω uniquely generates the contents of
+  physics." Ω separates the presented worlds (measured: the view-lattice
+  rent spectrum, 0/50/63); it does not select among them (open); and the
+  STASIS THEOREM instance is exact — any monotone rent-minimizing
+  selector picks the identity, the dead world — so cost-alone generation
+  is dead by demonstration, and any selection principle must balance
+  maintenance against productive organization (SELECTOR-1).*
 - **W4 — the crystal referee will hold.** The exact-first stack
   reproduces continuum QED₂'s vector mass under the volume-correct grid.
   *Kill: SCHWINGER-3's S1 gate, running now — branch (b) kills this

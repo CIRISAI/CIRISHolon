@@ -90,12 +90,19 @@ Five staked attacks, each a real campaign:
       coefficients alone — applied to the ENGINE's own tier-0/1 stabilizer
       substrates. A new domain class, the same frozen functional, exact
       rationals staked in advance.
-- [ ] **OMEGA-RATCHET-1** (rung 6: thermodynamic maintenance): the
-      predecessor programme's measured rent record (coherence-ratchet:
-      sawtooth, maintained-holonomy) reread through Ω — stake the exact
-      relation between the MAGNITUDE face (Object.lean's Wstar) and the
-      PARTITION face (CROSS-FACE-1's W) on one model where both are
-      defined. Two programmes, one object, a staked identity.
+- [x] **OMEGA-RATCHET-1** recon COMPLETE (2026-08-28, note + verifier
+      banked): the bridge EXISTS and is not an identity — on the stochastic
+      lift, W(v) = 2δ·W*(γ,δ) exactly (regime-mapped, trichotomy exhaustive,
+      all checks machine-verified) — the two prices are ANTI-correlated,
+      the deterministic carrier is a fatal point-mass obstruction, and the
+      maintained-holonomy finding is NOT the rent theorem: W(v)'s minimiser
+      is exactly the design-blind class the campaign measured to fail —
+      rent prices CLOSURE, not IDENTITY, and the missing object is the
+      informed rent W(v|𝒫). Four separable follow-ups staked (R-A Lean
+      brick; R-B informed-rent dichotomy with a forward number; R-C
+      advance predictions on the frozen predecessor instrument at held-out
+      q, incl. the 1/d floor on a second d; R-D the rate-law disanalogy
+      staked to fail honestly).
 - [ ] **MESH-HOLON-1** (rung 6: multi-agent/institutional): the Rust
       engine's merge law read as Ω — shard-invariance IS W = 0 closure of
       the ledger view under concurrent dynamics; a deliberately broken

@@ -1,0 +1,85 @@
+# The CIRISHolon stance — claims at the strength the evidence carries
+
+*2026-08-28. Four statuses, per the seed's epistemology: **proved**
+(machine-checked here), **measured** (exact instrument, record cited),
+**wager** (a chosen position, not a result — with its own separable
+kill), **open** (named, unclaimed). A claim with no kill is not a claim.
+This document exists because "open by design" was under-claiming: the
+evidence now carries positions, and positions must be stated plainly.*
+
+## Proved (machine-checked in lean/CIRISHolon, 25 files, sorry-free)
+
+The merge law; the closure/collision theorems and δ = ½ derived; the
+derivation template (inheritance, uniqueness — "derives, not fits" IS
+uniqueness); probe-completeness settled both ways; the identity
+commitment (fibers gauge, Moore quotient); the break law both halves
+(gauge_safety + the exhibited break); GINI RENT with the D4 refuter and
+the fiber surcharge p(1−γ); the R-B kill's own counterexample; the
+bare-charge annihilation and the Wilson dressing's survival; the √3
+mixing dichotomy AS A FULL THEOREM; the ADM quotient descent; the coset
+randomizer at minimal instances.
+
+## Measured (exact instruments, plants firing, records in conformance/)
+
+- The tier ladder: ahead of stim 7/7; the exact ring tower complete;
+  refusal-or-exact everywhere. Kill: any silently wrong exact value.
+- The gravity sequence on finite groups: curvature, dressed charge,
+  endogenous reciprocity, the response-function light cone, mass = the
+  puncture CLASS (not the angle — the label degenerates at 2O), the
+  deficit ladder 2 → 3 → 5 → 9 with advance-staked occupancies, no
+  forbidden sector at the perfect group. Kill, each campaign's own gates.
+- **The cross-face law**: rent = ceiling × (1 − retention), carried by
+  the VIEW mixing modulus, with a perimeter law for holonomy views and a
+  derived conditioned-edge correction — 21+ held-out exact rationals
+  across THREE domains (group tori, Z3 lattice gauge, the stabilizer
+  tier) with zero refit; the micro-mixing rival refuted three times.
+  Kill: one exact-rational counterexample on any staked substrate.
+- The memory ladder on the Z3 model: one-body fails, pairs fail at
+  (1,7), triples close — the missing memory is exactly third-order AT
+  THIS SIZE. Kill: a firing v_triple collision on the staked trajectory.
+- The ratchet bridge: W = 2δ·W* in its regime; the prices anti-correlate;
+  rent prices CLOSURE not IDENTITY. Kill: the verifier's checks.
+
+## Wagers (positions we now choose to hold, each with its kill)
+
+- **W1 — the law is substrate-general.** The cross-face rent law holds on
+  EVERY exact finite substrate this engine can host, with λ computable
+  from structure alone wherever the substrate's symmetry class is one the
+  freeze names. *Kill: one held-out substrate where a staked exact
+  rational misses.*
+- **W2 — mixing quantization is a ring phenomenon.** At every exact ring
+  scale, the mixing moduli of in-ring unitaries are QUANTIZED (the √2 and
+  √3 dichotomies are two rungs of one law). *Kill: an in-ring unitary
+  with intermediate modulus at a scale where the quantization is staked.*
+- **W3 — MAXIMALITY, as the review formulated it.** One frozen Ω
+  continues to work on every larger evaluation WITHOUT structural
+  replacement — extensions happen by derivable law (as measured once:
+  the intervention face arrived with T1 as its adequacy criterion), never
+  by format replacement. *Kill, separable and honest: a domain exhibiting
+  a break for which NO adequacy criterion is derivable — a knob class
+  that separates identities and admits no lawful extension. One such
+  domain kills the wager without touching W1, W2, or any measured claim.*
+- **W4 — the crystal referee will hold.** The exact-first stack
+  reproduces continuum QED₂'s vector mass under the volume-correct grid.
+  *Kill: SCHWINGER-3's S1 gate, running now — branch (b) kills this
+  wager the day it lands.*
+
+## Open (named, unclaimed, no shame in the list)
+
+Theorem 2's general mechanization; T1's general converse; the continuum
+limit of the deficit ladder; 3+1 constraints; deriving the dynamics FROM
+closure (the ADM remainder, precisely worded); the informed-rent object
+with its corrected restriction (information, not symmetry).
+
+## The one-paragraph position
+
+On exact finite models — the only regime where every claim above lives —
+the Ω structure is no longer a proposal: its closure defect is an order
+parameter (proved + measured), its maintenance cost is a law that
+predicts across domains (measured, thrice), its identity is act-relative
+with the extension mechanism itself derived (proved + exhausted), and its
+geometry sequence carries discrete general relativity through the densest
+finite rungs (measured, advance-staked). We now WAGER, with separable
+kills, that this does not stop: that the receipt format survives every
+larger evaluation by lawful extension. That is a position, not a proof —
+which is exactly what a stance is for.

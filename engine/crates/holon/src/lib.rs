@@ -15,6 +15,7 @@
 
 pub mod affine;
 pub mod cyclo;
+pub mod cyclon;
 pub mod face;
 pub mod grain;
 pub mod ledger;

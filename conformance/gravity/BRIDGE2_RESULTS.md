@@ -40,3 +40,32 @@ oracles two-route (B6′), refinement-invariant (B5′), harness falsifiable
 (plants). OPEN: the geometry→matter direction (B2 family), owed to
 BRIDGE-3 with a pilot-informed stake. The fence is unchanged: finite
 D4 toy; SU(2) is the ladder.
+
+
+## Upgrade, 2026-08-28: from δ-against-one-model to the COLLISION theorem
+
+An external review made a correct and sharp point: the measured δ compares
+the coarse view against ONE preregistered Markov model, so it earns "worse
+than that model", not "best memoryless". The measured sequence already
+proves the stronger thing, and it is now machine-checked
+(`lean/CIRISHolon/Closure.lean`):
+
+    v₁ = v₃ = (½,½),  v₂ = (0,1),  v₄ = (1,0)
+
+Any time-homogeneous memoryless map F would need F(v₁)=v₂ AND F(v₃)=v₄
+simultaneously — but v₁ = v₃ while v₂ ≠ v₄, and a function cannot send one
+input to two outputs. `collision_refutes_memoryless` is that argument and
+uses nothing about geometry: it is the pigeonhole for functions, which is
+exactly why it beats any model-specific comparison.
+`minimax_error_at_least_half` gives the quantitative half: the two required
+successors are at maximal total-variation distance, so the best single
+prediction is wrong by ≥ ½ — which is where the measured δ = ½ comes from,
+now derived rather than compared.
+
+**Scope, kept explicit because the review was right to insist:** this
+refutes MEMORYLESS closure of the DECLARED view. A classical model carrying
+extra memory (a phase label) can reproduce the sequence, and
+coarse-graining-induced memory is standard (Mori–Zwanzig; process-tensor
+memory witnesses). The claim is that the declared coarse view is
+non-autonomous and its missing memory has a measured cost — not that no
+classical model exists.

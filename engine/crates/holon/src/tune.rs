@@ -175,6 +175,19 @@ pub struct Refusal {
 /// is the tuner working as designed: routing follows measurement, and a
 /// merge that moves the surface moves the routes.)
 pub fn select(policy: &Policy, n: usize, t: u32, shards: usize) -> Result<Choice, Refusal> {
+    select_at(policy, n, t, shards, 0)
+}
+
+/// The same selection, at an explicit step index — what a grain-carrying
+/// caller must use, because a closure schedule is meaningless without
+/// knowing where you are in it.
+pub fn select_at(
+    policy: &Policy,
+    n: usize,
+    t: u32,
+    shards: usize,
+    step: u64,
+) -> Result<Choice, Refusal> {
     let _ = n;
     for d in &policy.degrade {
         if let Degrade::Scope { max_t } = d {
@@ -205,7 +218,10 @@ pub fn select(policy: &Policy, n: usize, t: u32, shards: usize) -> Result<Choice
         shards: shards.max(1),
         degraded,
         left_on_table: left,
-        steps_to_close: policy.grain.map(|g| g.steps_to_close(0)),
+        // The CURRENT step, not 0 — an external review caught this
+        // hand-pinned zero, which made every Choice report "you are at a
+        // closure boundary" regardless of where the caller actually was.
+        steps_to_close: policy.grain.map(|g| g.steps_to_close(step)),
     })
 }
 
@@ -247,11 +263,14 @@ mod tests {
     }
 
     #[test]
-    fn grain_reaches_the_choice() {
+    fn grain_reports_the_distance_from_the_CURRENT_step() {
         let mut p = Policy::exact();
         p.grain = Some(crate::grain::Grain::from_bridge_family());
-        let c = select(&p, 8, 3, 4).unwrap();
-        assert_eq!(c.steps_to_close, Some(0), "step 0 is a closure point");
+        // step 0 IS a boundary; step 1 is three away; step 4 is a boundary.
+        assert_eq!(select_at(&p, 8, 3, 4, 0).unwrap().steps_to_close, Some(0));
+        assert_eq!(select_at(&p, 8, 3, 4, 1).unwrap().steps_to_close, Some(3));
+        assert_eq!(select_at(&p, 8, 3, 4, 2).unwrap().steps_to_close, Some(2));
+        assert_eq!(select_at(&p, 8, 3, 4, 4).unwrap().steps_to_close, Some(0));
     }
 
     #[test]

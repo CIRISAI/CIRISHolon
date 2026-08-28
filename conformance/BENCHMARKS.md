@@ -636,3 +636,42 @@ The tier now has all three things the per-tier analysis requires — the
 capability, the adaptivity, and the canonical form — with the honest note
 that the third is COMPOSED rather than ours, our own attempt having reached
 the Clifford half only (entry seventeen, gap located at gadgetization).
+
+## 2026-08-28, twenty-first entry: the composed ladder — the owed experiment, and it refutes the assumption behind it
+
+Entry twenty measured the canonicalizer's T-count reduction and stopped
+there; an external review correctly noted the end-to-end runtime was never
+measured. It is now (`holon-zx/examples/composed_ladder.rs`, canonicalize →
+evaluate, exact amplitudes throughout):
+
+| q | T raw | T after canon | canon time | eval time | composed total | our own passes (entry 15) |
+|---:|---:|---:|---:|---:|---:|---:|
+| 12 | 56 | **16** | 5 ms | 5 ms | 9 ms | **2.0 ms** |
+| 16 | 84 | **40** | 5 ms | 60 ms | 65 ms | **41 ms** |
+| 20 | 112 | 48 | 7 ms | 262 ms | 269 ms | — |
+| 24 | 140 | **64** | 8 ms | 1.77 s | 1.78 s | **0.66 s** |
+| 30 | 196 | **84** | 12 ms | 10.16 s | 10.17 s | **4.35 s** |
+
+**Two findings, and the first one refutes what I expected.**
+
+1. **On this family our own phase-polynomial pass already matches quizx's
+   full ZX rewriting on T-count, exactly** — 16, 40, 64, 84 from both,
+   every rung. The composed pipeline is nonetheless **2–2.6× SLOWER**,
+   because quizx's circuit EXTRACTION emits a larger circuit (154–2164
+   gates) than our simplified form, and the evaluator pays for gates. The
+   canonicalizer is not the bottleneck (5–12 ms); extraction's gate
+   inflation is.
+
+2. **Entry sixteen still stands and is the real dividing line.** On RANDOM
+   circuits quizx cuts 63–79% where we cut 2–8%; on this STRUCTURED family
+   we tie. So the honest statement is family-dependent, and neither
+   "quizx dominates" nor "our passes suffice" survives alone: **ZX wins
+   where Hadamards fragment the blocks; phase-polynomial normalization ties
+   where long CNOT+diagonal blocks exist.**
+
+Consequence for the tuner, and it is the tuner's own discipline: the
+canonicalizer is NOT an unconditional win, so it must be a MEASURED route
+like every other — `Unswept::ComposedCanonicalizer` is the honest state
+until a sweep says which family gets which pass. The q=40 row (where the
+engine alone times out past 900 s) is still running and will be appended
+either way.

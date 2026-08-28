@@ -25,3 +25,27 @@ M-HOMOG (the locality stake remains the response-function cone, not a
 conditioning claim), M-KINEMATIC-NONLOCAL, M-ELECTRIC-BASIS,
 M-NULL-MISSTAKE (all as admitted); no new contact — an overflow refusal is
 the engine's declared behaviour, not a misfit.
+
+
+## First 1B run: L2 VOID with a one-line cause, and amendment LOCAL-1C
+
+The rerun produced R ≡ 0 everywhere — including plant (i)'s DIRECT HIT.
+Cause, exact: the instrument seeded the dressed vacuum as the UNIFORM
+superposition over all configurations (the strong-coupling electric
+vacuum), and a flux shift on a uniformly-summed edge is the IDENTITY —
+`L₁(e*)|ψ₀⟩ = |ψ₀⟩`, so the two arms are equal and every response is zero
+by construction. The carrier was an eigenstate of the perturbation:
+M-PLANT-SECTOR's rule surfacing on the MAIN gate's own carrier, and the
+freeze's phrase "the dressed vacuum" was ambiguous between two vacua, one
+of which is probe-blind.
+
+**LOCAL-1C (frozen here, before the rerun):** the carrier is the
+ZERO-FLUX dressed vacuum — the Gauss projection of the all-zero-flux
+configuration with the dressed pair (the BF vacuum the BRIDGE instruments
+always used), on which the flux shift acts nontrivially. Every gate,
+plant, and criterion is otherwise unchanged. The general rule is
+registered: **M-PROBE-EIGENSTATE** — a response probe's carrier must not
+be an eigenstate of the perturbation, and the freeze must name the vacuum.
+witness: none (carrier specification; no criterion changes). The pair
+remains Wilson-dressed per M-BARE-CHARGE, unchanged; only the FLUX sector
+of the vacuum changes.

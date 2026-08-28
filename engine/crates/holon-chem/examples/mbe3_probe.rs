@@ -68,14 +68,23 @@ fn main() {
     let approach = [[0.0, 0.0, 0.0], [s, 0.0, 0.0], [s + 2.0, 0.0, 0.0]];
     println!("dE3 H2 + H at 2.0 bohr, collinear = {:+.6} Ha", de3(&approach));
 
-    // 2. MBE consistency: the third atom leaves, dE3 must vanish
+    // 2. MBE consistency: the third atom leaves, dE3 must fall below f64 resolution.
+    // The 50-digit referee showed the true value here is NOT zero: the equilateral
+    // large-R trimer is SPIN-FRUSTRATED and dE3 -> 3J/2 (J the H2 singlet-triplet
+    // gap), ~4.4e-29 Ha at 20 bohr - real physics 14 decades below f64's floor.
     let far = [[0.0, 0.0, 0.0], [s, 0.0, 0.0], [s + 20.0, 0.0, 0.0]];
-    println!("dE3 H2 + H at 20 bohr             = {:+.3e} Ha (must -> 0)", de3(&far));
+    println!("dE3 H2 + H at 20 bohr             = {:+.3e} Ha (f64 floor; truth ~ 3J/2)", de3(&far));
     println!();
 
     // 3. the product: two dimers vs a compact tetrahedron, both as TOTAL energies
     let e_2h2 = 2.0 * e_tot(&[[0.0, 0.0, 0.0], [R_E, 0.0, 0.0]]);
-    let t = R_E / 2.0_f64.sqrt();
+    // GEOMETRY BUG, caught by the 50-digit referee and owned here: the first
+    // version used t = R_E/sqrt(2), whose vertex spacing is 2*sqrt(2)*t = 2*R_E -
+    // an edge of TWO r_e wearing an "edge r_e" label. The +0.426 Ha gap disclosed
+    // in the SATURATION-1 prereg belongs to edge 2*r_e; at the true r_e edge the
+    // referee (and this corrected probe) read ~ +1.163 Ha. Sign unchanged at every
+    // edge - two dimers always win - so no conclusion moved, only the label.
+    let t = R_E / (2.0 * 2.0_f64.sqrt());
     let tet = [
         [t, t, t],
         [t, -t, -t],

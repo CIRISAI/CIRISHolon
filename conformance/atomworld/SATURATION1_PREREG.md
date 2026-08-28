@@ -118,3 +118,62 @@ not nature's 9.6 kcal/mol, and the record will print both, labelled);
 not a claim that order 3 suffices beyond the gauged domain; not
 heteronuclear; not a claim about liquid hydrogen at scale (MAX_ATOMS is
 16 and the box is a pedagogy).
+
+---
+
+## AMENDMENT A1 — 2026-08-28, before any engine measurement
+
+*Recorded when the 50-digit referee (commit 6da9b58) delivered its
+pre-measurements and four of them contacted the freeze. The engine has
+not yet built the table or run any gate; every change below either
+executes a branch the freeze pre-committed or corrects a disclosed label
+against the referee's evidence, and the original text above stands
+unedited with this amendment as its record.*
+
+1. **T2 FIRED at the referee, and the pre-committed response executes:
+   the domain grows — and changes shape.** Max |dE3| on the staked
+   any-side-7.0 shell is 1.9002e-2 Ha at the collinear (3.50, 3.50,
+   7.00) edge — 1900x the kill — because an "any side" cutoff severs
+   collinear chains whose atoms are all CLOSE: the long side of a
+   near-collinear triple is the sum of two short ones, not a distance
+   anything decays over. The quantity dE3 actually decays in is the
+   SECOND-SMALLEST sorted side b (b large ⟺ some atom is far from BOTH
+   others; verified by the referee's T5 additivity check). Re-staked
+   domain: sorted sides a ≤ b ≤ c with a ≥ 0.9, b ≤ R_cut, c ≤ a + b
+   (the triangle bound, so the domain is finite with no cut on c).
+   R_cut = 9.0 bohr, MEASURED with the referee instrument on the
+   b-shell worst cases (collinear/isoceles/equilateral): shell max
+   6.4e-5 at b = 7, 6.1e-6 at b = 8, 4.7e-7 at b = 9 — a 21x margin
+   under the unchanged 1e-5 bar. T2 is re-pointed at the b = 9.0 shell,
+   same bar, and the collinear probe is its named worst-case instrument.
+2. **F1's ratio denominator is pinned before the engine computes it:**
+   |dE4| / |sum of the four triple contributions| — the sum IS the
+   expansion's order-3 term for a tetramer. Both columns (sum and
+   largest-single-triple) are published, as the referee already does.
+   Referee context: against the sum the six compact ratios read
+   0.36–0.48 (kill would not fire); dE4 < 0 at all six while dE3 > 0
+   everywhere — order 4 partially OPPOSES order 3, and a 36–48%
+   correction is slow convergence, reported as such whatever F1 decides.
+3. **The H4 subsystem energy convention is pinned:** the Sz = 0 block
+   minimum, which is the molecule's true ground energy since every S
+   has an Sz = 0 member. The referee finds that ground state is a
+   TRIPLET (⟨S²⟩ = 2 exactly) at the r_e tetrahedron and r_e square —
+   published alongside the S = 0 reading; the F1 ratios move by ≤ 0.013
+   between conventions.
+4. **Plant (i)'s disclosed carrier is corrected:** the feasibility
+   probe's tetrahedron construction used t = r_e/sqrt(2), which gives
+   edge 2·r_e wearing an "edge r_e" label. At the true r_e edge the gap
+   is +1.16259 Ha (probe corrected in-place, now agreeing with the
+   referee digit for digit; the old +0.426 Ha belongs to edge ~2.78
+   bohr). Sign unchanged at every edge — the carrier stays nonzero and
+   the plant scoreable. The mislabel is owned by the probe, not the
+   engine or referee.
+5. **A precision fence for the engine's tests:** "dE3 vanishes far away"
+   is an f64 statement only. The referee's T13 shows the true
+   equilateral tail is spin frustration, dE3 → 3J/2 (J the H2
+   singlet–triplet gap), +4.4e-29 Ha at 20 bohr, matching the
+   parameter-free Heisenberg prediction to 6.1e-16 relative. Engine
+   tests must assert f64-floor, never "zero", and the arithmetic-closure
+   check belongs at 40 bohr. (Convergent art, credited: Heisenberg
+   exchange emerging from the FCI, and quadrupole–quadrupole R^-5 as
+   the leading H2–H2 force living entirely at order 4 in this basis.)

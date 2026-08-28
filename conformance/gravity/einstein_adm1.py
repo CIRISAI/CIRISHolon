@@ -70,6 +70,14 @@ def flat_weight(psi):
     w = psi.astype(object) ** 2
     return (int(np.sum(w[FLAT])), int(np.sum(w)))
 
+def apply_perm_index():
+    """the microscopic step as an index map: config -> step(config)."""
+    out = np.empty(N, dtype=np.int64)
+    for c in range(N):
+        e = np.zeros(N, dtype=np.int64); e[c] = 1
+        out[c] = int(np.argmax(step(e)))
+    return out
+
 def collisions(vs):
     hits = []
     for i in range(len(vs) - 1):
@@ -85,23 +93,44 @@ def run():
         print("G0=FIRE"); return None
     rep["G0"] = "PASS" if gauss_holds(flat_vac) else "FIRE"
 
-    # E1/E2 on the flat carrier
-    psi = flat_vac.copy()
+    # ADM-1C E1': UNIVERSAL closure -- exhaustive over all 64 configs,
+    # carrier-free (M-FIXED-POINT-TRAJECTORY).
+    stepped = apply_perm_index()
+    descend = {}
+    well = True
+    for c in range(N):
+        o, o2 = int(ORBIT[c]), int(ORBIT[stepped[c]])
+        if o in descend and descend[o] != o2:
+            well = False
+        descend[o] = o2
+    nontrivial = any(descend[o] != o for o in descend)
+    perm = len(set(descend.values())) == N_ORBITS
+    flat_orbits = {int(ORBIT[c]) for c in range(N) if FLAT[c]}
+    flat_pres = all(descend[o] in flat_orbits for o in flat_orbits)
+    rep["E1'"] = ("PASS (descends well-defined, nontrivial, a permutation, flat-preserving)"
+                  if well and nontrivial and perm and flat_pres
+                  else f"FIRE well={well} nontrivial={nontrivial} perm={perm} flatpres={flat_pres}")
+
+    # ADM-1C E2': inheritance on a MOVING carrier -- the (s,1)-orbit state.
+    refl = next(x for x in range(8) if INV[x] == x and x not in (0, R2))
+    delta = np.zeros(N, dtype=np.int64); delta[IDX(refl, 0)] = 1
+    psi = gauss_project(delta)
     vs = [v_adm(psi)]
     fw0 = flat_weight(psi)
     fw_drift = []
     reg = [psi.copy()]
+    moved = False
     for k in range(1, 9):
         psi = step(psi)
         reg.append(psi.copy())
         vs.append(v_adm(psi))
+        if vs[-1] != vs[0]:
+            moved = True
         fw = flat_weight(psi)
         if fw[0] * fw0[1] != fw0[0] * fw[1]:
             fw_drift.append(k)
-    hits = collisions(vs)
-    firing = [(i, j) for (i, j, cons) in hits if not cons]
-    rep["E1"] = "PASS (closed: %d collisions, all consistent)" % len(hits) if not firing else f"FIRE {firing}"
-    rep["E2"] = "PASS (flatness inherited exactly)" if not fw_drift else f"FIRE (drift at {fw_drift})"
+    assert moved, "E2' carrier stationary -- M-FIXED-POINT-TRAJECTORY refuses"
+    rep["E2'"] = "PASS (flatness inherited on a moving trajectory)" if not fw_drift else f"FIRE {fw_drift}"
 
     # E3: kicked carrier off the flat sector
     kick = gauss_project((comm(GA, GB) == R2).astype(np.int64))  # r^2-curved sector (ADM-1B)

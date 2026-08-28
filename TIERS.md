@@ -218,16 +218,17 @@ lacks the third, which is exactly where it loses.
 
 ## Requirement-3 structure: complete at toy scale (2026-08-28)
 
-`ClosureDerives.lean` (inheritance, uniqueness — "derives, not fits" IS
-the uniqueness theorem — and the finite symplectic instance by decide) +
-CLOSURE-2 (the phase-space channel campaign, admitted, running) +
-**EINSTEIN-ADM-1 (ALL GATES PASS)**: on the discrete 2+1 instance the
-reduced ADM channel is closed under the mapping-class dynamics and the
-Einstein equation (flatness) is inherited through the channel exactly —
-derived by theorem, measured by instrument, plants firing. Off-shell
-defect not yet demonstrated (E3 branch (b), recorded). Successors in
-order: punctured torus (mass–deficit-angle = requirement 2), SU(2)-via-2T,
-then the 3+1 continuum, which remains open research.
+`ClosureDerives.lean` + CLOSURE-2B + **EINSTEIN-ADM-1C** (re-adjudicated
+after external re-review: the original E1 was VACUOUS on a stationary
+carrier — claim withdrawn, M-FIXED-POINT-TRAJECTORY registered; the
+corrected E1' checks closure UNIVERSALLY, by exhaustion over all
+configurations, and passes: the quantum step descends exactly to a
+nontrivial classical dynamics on the discrete ADM phase space, preserving
+the 2+1 Einstein constraint at the quotient level, with inheritance
+demonstrated on a provably moving trajectory). Precise remainder: the
+dynamics is INPUT and its closure is the theorem — deriving the dynamics
+FROM closure is the open rung. Successors: SU(2)-via-2T, the 3+1
+continuum.
 
 ## Requirement 1 status after LOCAL-1E (2026-08-28)
 

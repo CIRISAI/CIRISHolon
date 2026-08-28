@@ -15,7 +15,7 @@ only the plan exists.*
 | 2.5 — exact shots | **BUILT** | brute-force overlaps + certified branch sums | Aer ext-stab shot throughput, at exactness Aer cannot match at any speed | O(branches²) → orbit-aware Gram |
 | mesh (CPU shards / GPU / cluster) | **BUILT** intra-node (shard-invariant CPU; 4090 at 336–396×, struct-determinism); the merge law is now a THEOREM, not a test result (`lean/CIRISHolon/MergeLaw.lean`: `shardedFold_invariant`, `digest_convicts` — zero-false-positive corruption conviction) | the merge law's Lean proof + its Rust tests | **near-linear to 1024 shards multi-node**; quiet-machine efficiency curves owed | inter-machine transport via the one transport square |
 | bulk — MPS/DMRG | **SCAFFOLD** (MpsHolon shape; python DMRG upstream, ED-certified) | exact ED ≤ 20 sites; Schwinger closed forms | **ITensor/TeNPy** sweep-time parity on Schwinger-class Hamiltonians | port DMRG onto the holon object + merge law |
-| crystal — gauge-coupled matter | **NAMED** — entry gated on SCHWINGER-2's verdict (running); recursion is the OPPORTUNITY: RG/coarse-graining IS the holon's recursive chart, so the tier is built ON internal recursion under the one merge law | the staked five-rung ladder (gauge sweep, verified anchors): R0 ED+mass-shift `m_lat = m − N_F g²a/8` (Dempsey PRR 4, 043133 — an exact discrete chiral symmetry, not a fit; 0.06% on ≤16 sites); R1 M_V/g → 1/√π = 0.5641895835 (parity 0.56419(4) Byrnes PRD 66; 0.56421(9) Bañuls JHEP 11 (2013) 158); R2 condensate → e^γ/2π^{3/2} = 0.1599288349 (parity 0.159928(1) Buyens arXiv:1411.0020 — 7 figures, the programme's tightest); R3 M_S/g → 2/√π staked at 3–4 digits ONLY (published scalar errors are 10–30× vector); R4 (m/g)_c at θ=π = 0.333561(4) / 0.333556(5) (two independent methods, 0.78σ — carries its own internal refuter). Compute parity line: N=1000 sites machine-precision on one machine (Arguello Cruz arXiv:2412.01902 App. C — whose speed comes from DISCARDING the random initial MPS: determinism and speed aligned, citable). **TRAP staked: do NOT stake 2-flavor until the factor-2.19 Hosotani-convention gap is closed** (Schwägerl PRD 112 vs Itou arXiv:2307.16655) | SCHWINGER-2 verdict → port to bulk tier |
+| crystal — gauge-coupled matter | **ENTRY EARNED, verdict pending**: the bridge campaigns (`conformance/gravity`, five frozen preregs, two VOID by their own gates) closed rung 0 of the curvature module on exact unitary gauge dynamics with charged matter — matter→geometry (ω=0,1,0,1), the closure rung (δ=0,½,0,½, thrice replicated), geometry→matter (silent/flip/silent/inert), all two-routed on two triangulations with plants firing; the DMRG referee (SCHWINGER-2) is running its staked grid with checkpoint 1 converged to 7e-10, far inside its 1e-3 premise; recursion is the OPPORTUNITY: RG/coarse-graining IS the holon's recursive chart, so the tier is built ON internal recursion under the one merge law | the staked five-rung ladder (gauge sweep, verified anchors): R0 ED+mass-shift `m_lat = m − N_F g²a/8` (Dempsey PRR 4, 043133 — an exact discrete chiral symmetry, not a fit; 0.06% on ≤16 sites); R1 M_V/g → 1/√π = 0.5641895835 (parity 0.56419(4) Byrnes PRD 66; 0.56421(9) Bañuls JHEP 11 (2013) 158); R2 condensate → e^γ/2π^{3/2} = 0.1599288349 (parity 0.159928(1) Buyens arXiv:1411.0020 — 7 figures, the programme's tightest); R3 M_S/g → 2/√π staked at 3–4 digits ONLY (published scalar errors are 10–30× vector); R4 (m/g)_c at θ=π = 0.333561(4) / 0.333556(5) (two independent methods, 0.78σ — carries its own internal refuter). Compute parity line: N=1000 sites machine-precision on one machine (Arguello Cruz arXiv:2412.01902 App. C — whose speed comes from DISCARDING the random initial MPS: determinism and speed aligned, citable). **TRAP staked: do NOT stake 2-flavor until the factor-2.19 Hosotani-convention gap is closed** (Schwägerl PRD 112 vs Itou arXiv:2307.16655) | SCHWINGER-2 verdict → port to bulk tier |
 | physics/graphics — grain → cosmic | grandfathered engine (battery-at-touch) | the conformance battery per tier | **browser: 60 fps at 10⁶ grains in WASM** (the sandbox viewer builds and is gated on every commit; the hosted tab was retired from the thesis page with the spin-out — hosting it HERE is owed); native: Rapier/PhysX-class rigid-body throughput, measured not claimed | per-tier battery certification |
 | deployment range | WASM **builds and is gated today** (hosted demo owed here since the thesis page's tab retired) → laptop GPU (4090, measured) → clusters (mesh law, multi-node owed) | determinism at every rung | identical certified results at every scale — the range IS the product | multi-node demo |
 
@@ -102,3 +102,27 @@ sweeps stop where the HARD floors (L1, L4) say there is nothing left, and
 keep finding wins exactly on the BEGGING axes (L2, L3). Calibration is
 rented: sweep tables carry host fingerprint + epoch, foreign tables are
 ignored.
+
+## The grain: closure-aligned scheduling (the curvature module, banked)
+
+The bridge campaigns gave the engine a LAW, not just a result:
+`lean/CIRISHolon/Grain.lean` machine-checks its kernel — for an involution
+R and imaginary unit i, (1+iR)² = 2iR (deterministic toggle) and
+(1+iR)⁴ = −4 (revival up to global phase) — and
+`engine/crates/holon/src/grain.rs` carries it as a scheduling primitive:
+
+- **A `Grain` is a measured closure schedule**, not a clock. It names the
+  steps where a coarse view is EXACT (zero defect), and it REFUSES to be
+  constructed without provenance. `Grain::from_bridge_family()` is the one
+  named constant (period 4, θ=π/4) and cites its frozen preregs; the
+  period belongs to that coupling and never to nature.
+- **The tuner consumes it**: a `Policy` may carry a grain, and every
+  `Choice` reports `steps_to_close` — so coarse tiers (level-of-detail
+  under a frame budget) refresh ON closure boundaries where the view is
+  exact, instead of every frame, with a stated bound between them. Same
+  law, two faces: the quantum face is the closure rung, the graphics face
+  is when a level-of-detail refresh is free.
+- **The measured constants are pinned in CI** (`BRIDGE_OMEGA`,
+  `BRIDGE_DEFECT_HALVES`, `BRIDGE_BACKREACTION`): the engine holds the
+  gravity record's numbers as a test, so editing them without a new frozen
+  campaign fails the build.

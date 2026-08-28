@@ -60,6 +60,12 @@ pub enum Degrade {
 pub struct Policy {
     pub hold: Hold,
     pub degrade: Vec<Degrade>,
+    /// Optional closure-aligned schedule (`grain.rs`): when present, coarse
+    /// tiers refresh on grain boundaries — where the coarse view is EXACT —
+    /// instead of every step, and the between-boundary defect is a stated
+    /// bound rather than an unmeasured hope. The period is always a
+    /// measured parameter carrying its provenance, never a universal clock.
+    pub grain: Option<crate::grain::Grain>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -76,13 +82,17 @@ impl Policy {
         {
             return Err(PolicyError::AccuracyUnderExactness);
         }
-        Ok(Policy { hold, degrade })
+        Ok(Policy { hold, degrade, grain: None })
     }
 
     /// The referee default: exact, latency degrades unboundedly, scope caps
     /// only where the caller says so.
     pub fn exact() -> Policy {
-        Policy { hold: Hold::Exactness, degrade: vec![Degrade::Latency { up_to_factor: f64::INFINITY }] }
+        Policy {
+            hold: Hold::Exactness,
+            degrade: vec![Degrade::Latency { up_to_factor: f64::INFINITY }],
+            grain: None,
+        }
     }
 }
 
@@ -131,6 +141,10 @@ pub struct Choice {
     pub degraded: Vec<String>,
     /// Interactions deliberately not exploited because they are unswept.
     pub left_on_table: Vec<Unswept>,
+    /// If the policy carries a grain: steps until the next exact closure
+    /// point, so a coarse consumer knows when it may refresh with zero
+    /// defect (`grain.rs`, and the bridge campaigns behind it).
+    pub steps_to_close: Option<u64>,
 }
 
 /// Refusal, the total fallback — with its reason, never silent.
@@ -174,7 +188,14 @@ pub fn select(policy: &Policy, n: usize, t: u32, shards: usize) -> Result<Choice
         Hold::Exactness => vec!["latency (declared)".to_string()],
         Hold::Latency { .. } => vec![],
     };
-    Ok(Choice { decomp, defer_phase: true, shards: shards.max(1), degraded, left_on_table: left })
+    Ok(Choice {
+        decomp,
+        defer_phase: true,
+        shards: shards.max(1),
+        degraded,
+        left_on_table: left,
+        steps_to_close: policy.grain.map(|g| g.steps_to_close(0)),
+    })
 }
 
 #[cfg(test)]
@@ -212,6 +233,14 @@ mod tests {
         let p = Policy::new(Hold::Exactness, vec![Degrade::Scope { max_t: 20 }]).unwrap();
         let r = select(&p, 100, 28, 8).unwrap_err();
         assert!(r.reason.contains("max_t=20"));
+    }
+
+    #[test]
+    fn grain_reaches_the_choice() {
+        let mut p = Policy::exact();
+        p.grain = Some(crate::grain::Grain::from_bridge_family());
+        let c = select(&p, 8, 3, 4).unwrap();
+        assert_eq!(c.steps_to_close, Some(0), "step 0 is a closure point");
     }
 
     #[test]

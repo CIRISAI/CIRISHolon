@@ -1,0 +1,5 @@
+GATES: B3=PASS  G0=PASS  K1=PASS (collisions reproduce: [(1, 5), (2, 4), (5, 7)])  K2=BRANCH(a): v_pair separates every firing pair -- memory is second-order  K3=PASS
+[plant i] one-body equal=True, pair differs=True -> FIRES
+[plant ii] mis-scale -> FIRES
+
+VERDICT: no gate fired; K2=BRANCH(a): v_pair separates every firing pair -- mem; plants both FIRE

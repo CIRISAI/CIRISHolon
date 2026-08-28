@@ -155,6 +155,19 @@ fi
 rm -f "$built_wasm"
 trap - EXIT
 
+# 10a1. MISFIT REGISTRY INTEGRITY: every M- id cited anywhere in the
+#      conformance record exists in MISFITS.md, and registry ids are
+#      unique. A ghost citation is a broken cross-reference in the
+#      record's load-bearing index (see also the cross-reference gate).
+reg_fail=0
+reg_ids=$(grep -oE '\*\*(M-[A-Z0-9-]+)\*\*' ../conformance/gravity/MISFITS.md | tr -d '*' | sort)
+[ "$(echo "$reg_ids" | wc -l)" -eq "$(echo "$reg_ids" | sort -u | wc -l)" ] || { reg_fail=1; echo "  duplicate misfit ids in registry"; }
+for id in $(grep -rhoE '\bM-[A-Z0-9-]+\b' ../conformance/ ../Audit/ 2>/dev/null | sort -u); do
+  echo "$reg_ids" | grep -qx "$id" || { reg_fail=1; echo "  ghost misfit citation: $id"; }
+done
+[ "$reg_fail" -eq 0 ] && ok "misfit registry: unique ids, no ghost citations" \
+  || no "misfit registry: unique ids, no ghost citations"
+
 # 10a2. CONFORMANCE REPRODUCIBILITY (added after an external re-review found
 #      three banked verdicts whose instruments were working-tree-only, one
 #      of them never committed at all -- M-STALE-INSTRUMENT). Every gravity

@@ -56,7 +56,7 @@ def gauge_at(st, v, g):
         if a == v: d = (d + g) % 3
         if b == v: d = (d - g) % 3
         idx = idx + d * POW3[e]
-    A2 = np.zeros_like(A); B2 = np.zeros_like(B)
+    A2 = np.zeros(A.shape, dtype=A.dtype); B2 = np.zeros(B.shape, dtype=B.dtype)
     for m in range(9):
         q1, q2 = m // 3, m % 3
         pa, pb = A[m], B[m]
@@ -100,10 +100,10 @@ def dressed_state():
 
 def channel_split(st):
     A, B = st
-    pA = np.zeros(N, dtype=np.int64); pB = np.zeros(N, dtype=np.int64)
+    pA = np.zeros(N, dtype=A.dtype); pB = np.zeros(N, dtype=A.dtype)
     for q in range(3):
         a, b = wpow_mul(A[3 * q + q], B[3 * q + q], (-q * LINE) % 3)
-        pA += a; pB += b
+        pA = pA + a; pB = pB + b
     onA = np.zeros_like(A); onB = np.zeros_like(B)
     for q in range(3):
         a, b = wpow_mul(pA, pB, (q * LINE) % 3)

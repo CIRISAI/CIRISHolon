@@ -1,0 +1,6 @@
+[base] B3=FIRE ['T1_singlet', 'T2_singlet', 'T3_singlet']  R1=FIRE (channel inert under T: [0, 0, 0, 0])  R2=PASS  R3=FIRE base=0 near=0 far=0
+[refined] B3=FIRE ['T1_singlet', 'T2_singlet', 'T3_singlet']  R1=FIRE (channel inert under T: [0, 0, 0, 0])  R2=PASS  R3=FIRE base=0 near=0 far=0
+[plant i] wrong-side action -> B3 FIRES (Gauss fails at 1)
+[plant ii] non-central pump -> B3 MISSED (held)
+
+VERDICT: gates FIRED; plants VOID - plant missed

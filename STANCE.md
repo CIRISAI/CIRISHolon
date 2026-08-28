@@ -87,6 +87,18 @@ limit of the deficit ladder; 3+1 constraints; deriving the dynamics FROM
 closure (the ADM remainder, precisely worded); the informed-rent object
 with its corrected restriction (information, not symmetry).
 
+## Credits and priority (2026-08-28)
+
+The narrowed originality claim of conformance/omega/PRIOR_ART_CONVERGENCE.md
+is adopted: the closure/autonomy/defect/organisational-closure concepts have
+established ancestors (Barnett–Seth, Rosas, Shalizi–Crutchfield, Krakauer,
+Montévil–Mossio, Kolchinsky–Wolpert, Kabernik, Dittrich, Livine — credited
+there and in the Lean headers), and a reported 2026 parallel programme
+("Six Birds", verification owed) may have independently converged on much
+of the direction. What this stance claims as its own is the SYNTHESIS as
+one continuously extending, kill-disciplined instrument — and convergence,
+where confirmed, is corroboration that the underlying object is real.
+
 ## The one-paragraph position
 
 On exact finite models — the only regime where every claim above lives —

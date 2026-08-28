@@ -13,6 +13,15 @@ coarsenings of a chosen root, which reconciles "no absolute maximal holon"
 programme's "maximal object" usage (maximal over a root's coarsening
 poset). Completeness — whether Ω captures everything a probe can see — is
 rung 3's QUESTION and is deliberately not assumed by any definition here.
+
+Convergent art, credited per the house rule: closure-as-measured-autonomy
+has established ancestors — Barnett–Seth's dynamical independence,
+Shalizi–Crutchfield's causal states (the stochastic ancestor of the Moore
+identity), Kabernik's quantum coarse-graining consistency, Krakauer's
+informational individuality, Montévil–Mossio's closure of constraints,
+Kolchinsky–Wolpert's semantic information (SELECTOR-1's closest ancestor).
+See conformance/omega/PRIOR_ART_CONVERGENCE.md for the full map and the
+narrowed originality claim.
 -/
 import Mathlib.Tactic
 import CIRISHolon.ClosureLadder

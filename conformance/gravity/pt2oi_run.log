@@ -1,0 +1,36 @@
+[2O] order 48, 8 classes, 2304 configs, base lifts bijective by exhaustion
+  [2O] occupancies measured over 2304 configs, 5 rungs staked, 3 classes staked empty
+      deficit   2*pi/3  size   8  occupancy    864   RUNG
+      deficit       pi  size   6  occupancy    672   RUNG
+      deficit        0  size   1  occupancy    384   RUNG
+      deficit   4*pi/3  size   8  occupancy    288   RUNG
+      deficit     2*pi  size   1  occupancy     96   RUNG
+      deficit     pi/2  size   6  occupancy      0   empty
+      deficit   3*pi/2  size   6  occupancy      0   empty
+      deficit       pi  size  12  occupancy      0   empty
+[2I] order 120, 9 classes, 14400 configs, base lifts bijective by exhaustion
+  [2I] occupancies measured over 14400 configs, 9 rungs staked, 0 classes staked empty
+      deficit   2*pi/3  size  20  occupancy   4320   RUNG
+      deficit   2*pi/5  size  12  occupancy   2400   RUNG
+      deficit   6*pi/5  size  12  occupancy   2400   RUNG
+      deficit       pi  size  30  occupancy   1920   RUNG
+      deficit        0  size   1  occupancy   1080   RUNG
+      deficit   4*pi/3  size  20  occupancy    720   RUNG
+      deficit   8*pi/5  size  12  occupancy    720   RUNG
+      deficit   4*pi/5  size  12  occupancy    720   RUNG
+      deficit     2*pi  size   1  occupancy    120   RUNG
+  [2O] refined 5308416 configs; live classes 5 (projector agrees: True); occupancy = base x |G|^2 exactly: True
+  [2I] certificate lemmas at <= |G|^3 = 1728000: L-A=True, L-B=True, L-C=True, L-D=True, L-E=True, L-F=True
+
+LADDER (measured): D4=2 -> 2T=3 -> 2O=5 -> 2I=9   staked {'D4': 2, '2T': 3, '2O': 5, '2I': 9}  OK
+
+GATES: B3=[2O:PASS (30 trajectory states); 2I:PASS (54 trajectory states)]  G0=[2O:PASS; 2I:PASS]  L1=[2O:PASS (5 rungs, occupancies exact); 2I:PASS (9 rungs, occupancies exact)]  L1b=[2O:PASS (pi/size6=672, pi/size12=0)]  L2=[2O:PASS (class conserved pointwise on all 2304 configs; weight ratio held on every rung); 2I:PASS (class conserved pointwise on all 14400 configs; weight ratio held on every rung)]  L3=[2O:PASS (dense 5308416: bijective, spectrum identical, occupancies x|G|^2, conserved, refined Gauss held); 2I:PASS (pullback certificate: L-A..L-F all exhaustive, dense 207360000 run NOT required)]
+[plant i/2O] closed-torus control: live twin=384 (staked 384), 7/7 other sectors exactly empty (staked 7), carrier weight in identity sector=18432 -> FIRES
+[plant i/2I] closed-torus control: live twin=1080 (staked 1080), 8/8 other sectors exactly empty (staked 8), carrier weight in identity sector=129600 -> FIRES
+[plant ii/2O] broken twist: carrier orbit weight=48, Gauss after twist held=False -> FIRES
+[plant ii/2I] broken twist: carrier orbit weight=120, Gauss after twist held=False -> FIRES
+
+RESOURCES: peak base array 14400 cells, peak refined array 5308416 cells (40.5 MiB per int64 vector), certificate peak 28800 cells; 2I dense 207360000 NEVER allocated
+
+VERDICT: ALL PASS; plants all FIRE
+EXIT=0

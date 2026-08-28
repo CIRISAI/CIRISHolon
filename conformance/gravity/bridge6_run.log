@@ -1,0 +1,6 @@
+[base] B3=PASS  G0=PASS  R1=PASS  R2=FIRE (off-channel carrier empty — cannot pose)  R3=FIRE base=2251799813 near=9007199254 far=9007199254
+[refined] B3=PASS  G0=PASS  R1=PASS  R2=FIRE (off-channel carrier empty — cannot pose)  R3=FIRE base=1844674407 near=7378697629 far=7378697629
+[plant i] wrong-side action -> B3 FIRES (Gauss fails at 1)
+[plant ii] non-central pump -> B3 MISSED (held)
+
+VERDICT: gates FIRED; plants VOID - plant missed

@@ -1,0 +1,13 @@
+  step 1: v_conf[0..1]=((1, 1, 1), (1, 1, 1))
+  step 2: v_conf[0..1]=((1, 1, 1), (5, 2, 2))
+  step 3: v_conf[0..1]=((1, 6, 2), (7, 1, 1))
+  step 4: v_conf[0..1]=((1, 1, 1), (5, 2, 2))
+  step 5: v_conf[0..1]=((1, 1, 1), (1, 1, 1))
+  step 6: v_conf[0..1]=((1, 4, 4), (1, 0, 0))
+  step 7: v_conf[0..1]=((1, 1, 1), (1, 1, 1))
+  step 8: v_conf[0..1]=((1, 1, 1), (5, 2, 2))
+GATES: B3=PASS  C1=BRANCH(a): defect > 0 at collisions [(1, 5), (2, 4), (5, 7)]  C2=FIRE (v_PS blind at [(1, 5), (2, 4), (5, 7)])  C3=PASS (inherited conservation exact)  C4=ledger: 1 consistent, 3 firing  G0=PASS
+[plant i] dual-charge insertion: v_conf equal=True, 't Hooft shifted=True ((1, 0, 0) -> (0, 0, 1)) -> FIRES
+[plant ii] mis-scaled step raw totals differ -> FIRES
+
+VERDICT: GATES FIRED; C1=BRANCH(a): defect > 0 at collisions [(1,; plants both FIRE

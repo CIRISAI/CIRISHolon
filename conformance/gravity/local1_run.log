@@ -1,0 +1,9 @@
+  step 1: R(near)=(-7878167217468889863048, 0, 7878167217468889863048)  R(pendant)=(0, 0, 0)  ctrl_live=False
+  step 2: R(near)=(0, 0, 0)  R(pendant)=(0, 0, 0)  ctrl_live=False
+  step 3: R(near)=(-5257919025675557986023748390046622153288391650944082866877, 2928461229490184194747404166608245249932775096728349951172, 2329457796185373791276344223438376903355616554215732915705)  R(pendant)=(0, 0, 0)  ctrl_live=True
+  step 4: R(near)=(0, 0, 0)  R(pendant)=(0, 0, 0)  ctrl_live=False
+GATES: B3=PASS  G0=PASS  L1=PASS (cone holds at live steps [3])  L2=PASS  L3=NO-ARRIVAL (recorded, not a fire)
+[plant i] direct-hit live steps: [3] -> FIRES
+[plant ii] Fourier kernel on edge 3 -> B3 FIRES (Gauss fails at c)
+
+VERDICT: gates ALL PASS; L3=NO-ARRIVAL (recorded, not a fire); plants both FIRE

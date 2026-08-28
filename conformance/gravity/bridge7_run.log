@@ -1,0 +1,6 @@
+[base] B3=PASS  G0=PASS  R1=PASS  R2'=FIRE (charged channel does not reach the loop)
+[pendant] B3=PASS  G0=PASS  R1=PASS  R2'=FIRE (charged channel does not reach the loop)  R3'=FIRE far moved: base=9223372036 far=3689348814
+[plant i] wrong-side action -> B3 FIRES (Gauss fails at 1)
+[plant ii] non-central pump on LIVE off-channel carrier -> B3 FIRES (Gauss fails at 1)
+
+VERDICT: gates FIRED/VOID; plants both FIRE

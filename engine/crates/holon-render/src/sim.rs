@@ -27,6 +27,7 @@
 use crate::clock::Timescale;
 use crate::holon::HolonLayer;
 use crate::table::PotentialTable;
+use holon_chem::trimer::TrimerTable;
 
 /// Mass of a protium ATOM (proton + electron) in electron masses:
 /// 1.00782503207 u x 1822.888486 m_e/u. The atom, not the proton — the pair curve is
@@ -136,6 +137,10 @@ impl PairReading {
 
 pub struct Sim {
     pub table: PotentialTable,
+    /// The three-body surface. Empty until [`crate::generate_trimer_table`] fills it, and
+    /// an empty one contributes an EXACT zero to every term below — so a scene that never
+    /// asks for it is bit-for-bit the scene this file simulated before the term existed.
+    pub trimer: TrimerTable,
     pub atoms: [Atom; MAX_ATOMS],
     pub n: usize,
     pub boundary: Boundary,
@@ -168,6 +173,10 @@ pub struct Sim {
     // --- THE LEDGER ---
     pub e_kin: f64,
     pub e_pair: f64,
+    /// The many-body sector: the sum of the tabulated three-body term over every triple
+    /// inside the table's domain. Its OWN ledger row, never folded into `e_pair` — one
+    /// reader per term, because a combined number cannot say which sector moved.
+    pub e_three: f64,
     pub e_wall: f64,
     pub e_spring: f64,
     /// Every joule the outside world put in: anchor motion, spring teardown on release,
@@ -184,6 +193,11 @@ pub struct Sim {
 
     // --- running maxima that define the drift bound (set by the trajectory, not by hand) ---
     k_pair_max: f64,
+    /// Largest per-triple three-body stiffness the force loop has actually evaluated.
+    /// See [`Sim::drift_bound`] for the bound this feeds and where the expression comes
+    /// from. LIVE, like `k_pair_max`, and for the same reason: a static envelope taken
+    /// from the table alone cannot know which triples the trajectory brings together.
+    k_three_max: f64,
     wall_engaged: bool,
     spring_engaged: bool,
     /// Largest energy scale the ledger has held; the bound's amplitude factor.
@@ -209,6 +223,7 @@ impl Sim {
     pub const fn empty() -> Self {
         Self {
             table: PotentialTable::empty(),
+            trimer: TrimerTable::empty(),
             atoms: [Atom {
                 x: 0.0,
                 y: 0.0,
@@ -233,6 +248,7 @@ impl Sim {
             thermostat_tau: 2000.0,
             e_kin: 0.0,
             e_pair: 0.0,
+            e_three: 0.0,
             e_wall: 0.0,
             e_spring: 0.0,
             w_ext: 0.0,
@@ -242,6 +258,7 @@ impl Sim {
             time: 0.0,
             steps: 0,
             k_pair_max: 0.0,
+            k_three_max: 0.0,
             wall_engaged: false,
             spring_engaged: false,
             e_ref: 0.0,
@@ -294,7 +311,7 @@ impl Sim {
     /// (one `D_e` per bonded pair) and it errs toward a wider bound, which is the safe
     /// direction for a term that multiplies a bound.
     pub fn mode_energy(&self) -> f64 {
-        self.e_kin + self.e_pair.abs() + self.e_wall + self.e_spring
+        self.e_kin + self.e_pair.abs() + self.e_three.abs() + self.e_wall + self.e_spring
     }
 
     /// Largest pair curvature the force loop has actually evaluated since reset. Exposed
@@ -303,9 +320,53 @@ impl Sim {
         self.k_pair_max
     }
 
+    /// Largest per-triple three-body stiffness the force loop has evaluated since reset,
+    /// hartree/bohr^2. Exposed for the same reason `k_pair_max` is: so the attribution
+    /// probe can separate the two halves of the drift bound.
+    pub fn k_three_max(&self) -> f64 {
+        self.k_three_max
+    }
+
+    /// The three-body stiffness the drift bound actually uses: the worst per-triple
+    /// stiffness times the number of triples ONE atom belongs to.
+    ///
+    /// # The derivation
+    ///
+    /// The bound needs `|d2E/dx_i^2|` — the stiffest curvature one atom's displacement can
+    /// meet. For a single triple, with `E = F(s_a, s_b, s_c)` a function of the three
+    /// sides,
+    ///
+    /// ```text
+    /// d2F/dx_i^2 = sum_{a,b} F_ab (ds_a/dx_i)(ds_b/dx_i) + sum_a F_a (d2 s_a/dx_i^2)
+    /// ```
+    ///
+    /// Atom `i` touches exactly TWO of the three sides, `|ds_a/dx_i| <= 1` because it is a
+    /// component of a unit vector, and `||d2 s_a/dx_i^2|| <= 2/s_a` for a distance. So per
+    /// triple
+    ///
+    /// ```text
+    /// |d2F/dx_i^2| <= 4 G2 + 2 sum_a |F_a| / s_a
+    /// ```
+    ///
+    /// with `G2` the table's own second-derivative envelope (measured from the
+    /// interpolant, widened — see `TrimerTable::curvature_envelope`) and the second sum
+    /// taken over ALL THREE sides rather than the two at `i`, which only widens it. The
+    /// force loop evaluates that expression on every triple it touches and keeps the
+    /// maximum; atom `i` belongs to at most `C(n-1, 2)` triples, and curvatures add.
+    ///
+    /// Zero when no table is loaded or the scene has fewer than three atoms, so the pair
+    /// bound is returned unchanged — adding an exact zero to a finite float changes no bit.
+    pub fn k_three(&self) -> f64 {
+        if !self.trimer.loaded || self.n < 3 {
+            return 0.0;
+        }
+        let per_atom = ((self.n - 1) * (self.n - 2) / 2) as f64;
+        per_atom * self.k_three_max
+    }
+
     /// Total energy currently held by the scene.
     pub fn energy(&self) -> f64 {
-        self.e_kin + self.e_pair + self.e_wall + self.e_spring
+        self.e_kin + self.e_pair + self.e_three + self.e_wall + self.e_spring
     }
 
     /// The conserved quantity. `E - W_ext` is constant for an exact integrator, with or
@@ -368,7 +429,11 @@ impl Sim {
         // `k_pair_max` costs nothing — the force loop already computes every curvature it
         // maximises over — and it closes that gap.
         let mu = 0.5 * M_H;
-        let k = self.timescale.k_env.max(self.k_pair_max);
+        // The three-body stiffness is ADDED to the pair envelope rather than maxed with
+        // it: both potentials act on the same coordinate, so their curvatures add, and a
+        // max would understate the sum. With no table loaded `k_three()` is an exact zero
+        // and the sum is bit-for-bit the pair bound this line computed before.
+        let k = self.timescale.k_env.max(self.k_pair_max) + self.k_three();
         let mut omega_sq: f64 = k / mu;
         if self.wall_engaged {
             omega_sq = omega_sq.max(K_WALL / M_H);
@@ -520,6 +585,7 @@ impl Sim {
         self.steps = 0;
         self.frame = 0;
         self.k_pair_max = 0.0;
+        self.k_three_max = 0.0;
         self.wall_engaged = false;
         self.spring_engaged = false;
         self.e_ref = 0.0;
@@ -749,6 +815,8 @@ impl Sim {
         self.k_pair_max = k_pair_max;
         self.e_pair = e_pair;
 
+        self.accumulate_three_body();
+
         let mut e_wall = 0.0;
         for i in 0..self.n {
             let (u, fx, fy, fz, touched) =
@@ -776,6 +844,87 @@ impl Sim {
                 self.spring_engaged = true;
             }
         }
+    }
+
+    /// THE MANY-BODY SECTOR: the tabulated three-body term over every triple, and the
+    /// forces it exerts.
+    ///
+    /// Nothing here is a new constant. The value comes from the interpolant, the three
+    /// side-derivatives come from differentiating that same interpolant analytically, and
+    /// the force on each atom is assembled from them by the chain rule
+    /// `dE/dx_i = sum_a (dE/ds_a)(ds_a/dx_i)`, where `ds_a/dx_i` is a unit vector along
+    /// the side. Each side contributes to its TWO atoms as one computed value with
+    /// opposite signs — exactly the shape the pair loop uses — so the triple's total force
+    /// is zero by construction and the momentum ledger has nothing new to subtract.
+    ///
+    /// The accelerations go into `a_pair`, which holds INTERNAL forces (those that cancel
+    /// from the momentum sum) as opposed to `a_ext` (walls, spring, thermostat). The
+    /// energy is kept in its own ledger row.
+    ///
+    /// A triple whose middle side is past the table's domain returns an exact zero and
+    /// costs one comparison; in a dispersed gas that is almost every triple, which is what
+    /// keeps the N^3 loop from being the whole budget when there is nothing to compute.
+    fn accumulate_three_body(&mut self) {
+        self.e_three = 0.0;
+        if !self.trimer.loaded || self.n < 3 {
+            return;
+        }
+        // One distance matrix, read three times per triple instead of nine square roots.
+        let mut d = [[0.0f64; MAX_ATOMS]; MAX_ATOMS];
+        for i in 0..self.n {
+            for j in (i + 1)..self.n {
+                let dx = self.atoms[j].x - self.atoms[i].x;
+                let dy = self.atoms[j].y - self.atoms[i].y;
+                let dz = self.atoms[j].z - self.atoms[i].z;
+                let r = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+                d[i][j] = r;
+                d[j][i] = r;
+            }
+        }
+        let env = self.trimer.curvature_envelope;
+        let mut e_three = 0.0;
+        let mut k_three_max = self.k_three_max;
+        for i in 0..self.n {
+            for j in (i + 1)..self.n {
+                for k in (j + 1)..self.n {
+                    let (rij, rik, rjk) = (d[i][j], d[i][k], d[j][k]);
+                    let (v, g) = self.trimer.eval([rij, rik, rjk]);
+                    if v == 0.0 && g[0] == 0.0 && g[1] == 0.0 && g[2] == 0.0 {
+                        continue;
+                    }
+                    e_three += v;
+                    self.push_side(i, j, g[0], rij);
+                    self.push_side(i, k, g[1], rik);
+                    self.push_side(j, k, g[2], rjk);
+                    // The per-triple stiffness the drift bound is built from; the
+                    // derivation is in `Sim::k_three`.
+                    let kt = 4.0 * env
+                        + 2.0 * (g[0].abs() / rij + g[1].abs() / rik + g[2].abs() / rjk);
+                    if kt > k_three_max {
+                        k_three_max = kt;
+                    }
+                }
+            }
+        }
+        self.e_three = e_three;
+        self.k_three_max = k_three_max;
+    }
+
+    /// One side's share of a triple's force, applied equal and opposite. `g` is
+    /// `dE/dr_ab`, the same convention the pair loop's `slope` carries, so the sign logic
+    /// is the one line it already is there and not a second one to keep true.
+    #[inline]
+    fn push_side(&mut self, a: usize, b: usize, g: f64, r: f64) {
+        let f_over_r = g / r;
+        let fx = f_over_r * (self.atoms[b].x - self.atoms[a].x);
+        let fy = f_over_r * (self.atoms[b].y - self.atoms[a].y);
+        let fz = f_over_r * (self.atoms[b].z - self.atoms[a].z);
+        self.a_pair[a].0 += fx;
+        self.a_pair[a].1 += fy;
+        self.a_pair[a].2 += fz;
+        self.a_pair[b].0 -= fx;
+        self.a_pair[b].1 -= fy;
+        self.a_pair[b].2 -= fz;
     }
 
     fn accumulate_energy(&mut self) {

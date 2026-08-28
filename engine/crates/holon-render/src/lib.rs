@@ -114,6 +114,77 @@ pub fn generate_table(s: &mut Sim, r_min: f64, r_max: f64, count: usize) -> u32 
     status_code(status)
 }
 
+// ------------------------------------------------- the three-body surface
+//
+// SATURATION-1's product. `holon-chem` solves H3 at every node of its own grid, subtracts
+// the pair sum, and streams the residue in; the interpolator here differentiates it
+// analytically for the forces. Same shape as the pair route above and for the same
+// reasons: allocation-free, one implementation, and the source of the numbers is a mode
+// rather than a fork in the physics.
+
+/// Compute the three-body table and load it, in one call. Returns 1 on success, 0 if the
+/// generator refused.
+///
+/// The table is a fixed array inside the `Sim`, so this fills storage that already exists
+/// rather than allocating; and until it is called the three-body term contributes an
+/// EXACT zero, so a host that never calls it gets the pairwise sandbox unchanged.
+#[no_mangle]
+pub extern "C" fn holon_trimer_generate() -> u32 {
+    generate_trimer_table(&mut sim())
+}
+
+/// The Rust-side entry point behind [`holon_trimer_generate`], for a caller that owns its
+/// own [`Sim`] — the 3D shell in `holon-render-3d` is that caller. Defined once and called
+/// by the export, for the same reason [`generate_table`] is.
+pub fn generate_trimer_table(s: &mut Sim) -> u32 {
+    s.trimer.begin();
+    let meta = holon_chem::trimer::stream_trimer_table(|i, _x, _y, _u, v| s.trimer.knot(i, v));
+    let Some(meta) = meta else {
+        return 0;
+    };
+    if !s.trimer.finish(meta) {
+        return 0;
+    }
+    // The ledger's origin was frozen without the three-body term in it; adopting a surface
+    // changes the potential, so the run has to be re-based or the drift would be measured
+    // against the wrong zero and would read a JUMP that is not integration error. Doing it
+    // here rather than asking every caller to remember is the same reasoning that puts
+    // `adopt_table_timescale` inside `generate_table`.
+    s.rebase();
+    1
+}
+
+/// Is a three-body surface loaded?
+#[no_mangle]
+pub extern "C" fn holon_trimer_loaded() -> u32 {
+    u32::from(sim().trimer.loaded)
+}
+
+/// Nodes in the three-body table.
+#[no_mangle]
+pub extern "C" fn holon_trimer_nodes() -> u32 {
+    holon_chem::trimer::N_NODES as u32
+}
+
+/// Largest `|dE3|` anywhere on the table's grid, hartree — the compact corner's value.
+#[no_mangle]
+pub extern "C" fn holon_trimer_peak() -> f64 {
+    sim().trimer.meta.peak
+}
+
+/// The table's measured second-derivative envelope, hartree/bohr^2. The drift bound's
+/// three-body term is built from it.
+#[no_mangle]
+pub extern "C" fn holon_trimer_curvature_envelope() -> f64 {
+    sim().trimer.curvature_envelope
+}
+
+/// The truncation radius on the two shortest sides, bohr.
+#[no_mangle]
+pub extern "C" fn holon_trimer_r_max() -> f64 {
+    holon_chem::trimer::R_HI
+}
+
 /// `LoadStatus::Ok`'s discriminant, so a caller of [`generate_table`] can name the
 /// success code rather than repeating the number.
 pub const TABLE_OK: u32 = 1;
@@ -755,6 +826,13 @@ pub extern "C" fn holon_e_kin() -> f64 {
 #[no_mangle]
 pub extern "C" fn holon_e_pair() -> f64 {
     sim().e_pair
+}
+
+/// The many-body sector. Its own reader, never folded into `E_pair`: a combined number
+/// could not say which sector moved.
+#[no_mangle]
+pub extern "C" fn holon_e_three() -> f64 {
+    sim().e_three
 }
 
 #[no_mangle]

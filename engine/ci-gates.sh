@@ -155,6 +155,18 @@ fi
 rm -f "$built_wasm"
 trap - EXIT
 
+# 10b. holon-zx: the magic tier's canonicalizer, composed (quizx simplifies,
+#      holon evaluates). The DEFAULT build is gated here — it must compile
+#      and pass with no external dependency, because the whole point of the
+#      separate crate is that `holon`'s core stays zero-dep and 65 KB. The
+#      `--features zx` build pulls quizx from git and is NOT run in CI: a
+#      network fetch is not a gate, it is a flake. Its amplitude certificate
+#      (crates/holon-zx/tests/composed.rs) runs locally and its result is
+#      recorded in conformance/BENCHMARKS.md entry twenty.
+cargo test -q -p holon-zx --release 2>/dev/null >/dev/null \
+  && ok "holon-zx default (no-dep passthrough) builds and tests" \
+  || no "holon-zx default (no-dep passthrough) builds and tests"
+
 # 11. holon-swarm and holon-mesh each USED TO carry their own empty `[workspace]` table,
 #     which made `-p holon-swarm`/`-p holon-mesh` from this root resolve to nothing — no
 #     such package existed in this workspace's graph — so neither crate had ever been

@@ -1,0 +1,20 @@
+[package]
+name = "holon-zx"
+version = "0.1.0"
+edition = "2021"
+description = "The magic tier's canonicalizer, composed: quizx simplifies the ZX graph, holon evaluates exactly."
+
+# DELIBERATELY A SEPARATE CRATE. `holon` has ZERO external dependencies and
+# ships as a 65 KB wasm module (BENCHMARKS entry eighteen); quizx brings
+# thirteen transitive deps and 390 KB. Keeping the bridge here means the
+# core stays small and dependency-free, and a caller opts into the
+# canonicalizer by depending on THIS crate instead.
+[dependencies]
+holon = { path = "../holon" }
+quizx = { git = "https://github.com/zxcalc/quizx", optional = true }
+
+[features]
+default = []
+# `zx` pulls quizx in. Without it this crate is a no-op passthrough that
+# still type-checks, so downstream code compiles either way.
+zx = ["dep:quizx"]

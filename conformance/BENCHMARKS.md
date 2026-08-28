@@ -594,3 +594,45 @@ structural fact explains both columns.
 
 Recorded as the campaign's clearest measured loss, alongside its clearest
 measured win, in the same document.
+
+## 2026-08-27, twentieth entry: the canonicalizer, actually integrated
+
+Entry seventeen RECOMMENDED composition and never did it — the composed
+build measured in entry eighteen was a size experiment in /tmp, not an
+integration. It is integrated now: `crates/holon-zx`, a SEPARATE crate
+behind a `zx` feature so `holon`'s core stays zero-dependency and 65 KB
+while callers opt into the canonicalizer here. quizx canonicalizes, holon
+evaluates exactly. (quizx: Apache-2.0, one-way compatible with AGPL-3.0;
+credit Kissinger–van de Wetering and the DKPvdW rewrite rules.)
+
+**The certificate, and the bug it caught.** The gate is amplitude equality
+on every basis state — the same bar our own passes carry, applied to a
+third-party simplifier we do not control — and it FAILED on first run.
+Diagnosis: probabilities matched exactly and the amplitude ratio was a
+CONSISTENT global phase (ω^{−1}, ω^{+1} on different trials), i.e. quizx's
+circuit extraction returns the state up to the graph's scalar, which it
+does not re-insert. Benign, expected, and fatal for us — **amplitudes are
+the product**. Fixed exactly, not tolerated: the scalar is read from
+quizx's own `exact_phase_and_sqrt2_pow`, converted to a ζ8 exponent, and
+REFUSED if it is not one ("outside Z[ω]; refusing rather than rounding").
+With the phase carried, amplitude equality passes.
+
+**What it buys on the ladder (T-count, and the whole pass costs ms):**
+
+| q | T before | T after | gates | pass time |
+|---:|---:|---:|---:|---:|
+| 12 | 56 | **16** | 2061 → 154 | 20 ms |
+| 16 | 84 | **40** | 2884 → 373 | 28 ms |
+| 24 | 140 | **64** | 4530 → 634 | 49 ms |
+| 30 | 196 | **84** | 6164 → 905 | 71 ms |
+| 40 | 350 | **186** | 10636 → 2164 | **154 ms** |
+
+**47–71% of the T-count, for milliseconds** — against our own passes' 2–8%
+on random circuits. At q=40, where the engine timed out past 900 s, the
+canonicalizer alone cuts t from 350 to 186 in 154 ms; at the magic tier's
+cost model that is a factor of 2^{0.4·164} ≈ 2^65 off the exponent.
+
+The tier now has all three things the per-tier analysis requires — the
+capability, the adaptivity, and the canonical form — with the honest note
+that the third is COMPOSED rather than ours, our own attempt having reached
+the Clifford half only (entry seventeen, gap located at gadgetization).

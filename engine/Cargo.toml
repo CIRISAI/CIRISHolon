@@ -8,6 +8,7 @@
 [workspace]
 resolver = "2"
 members = [
+    "crates/holon-zx",
   "crates/ciris-sim-core",
   "crates/ciris-nl",
   "crates/sphere-demo",

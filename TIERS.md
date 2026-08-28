@@ -215,3 +215,16 @@ This is what "complete" means for a tier under the per-tier analysis: the
 capability, the adaptivity the use case needs, and the canonicalizer that
 strips presentation from content. The magic tier has the first two and
 lacks the third, which is exactly where it loses.
+
+## Requirement-3 structure: complete at toy scale (2026-08-28)
+
+`ClosureDerives.lean` (inheritance, uniqueness — "derives, not fits" IS
+the uniqueness theorem — and the finite symplectic instance by decide) +
+CLOSURE-2 (the phase-space channel campaign, admitted, running) +
+**EINSTEIN-ADM-1 (ALL GATES PASS)**: on the discrete 2+1 instance the
+reduced ADM channel is closed under the mapping-class dynamics and the
+Einstein equation (flatness) is inherited through the channel exactly —
+derived by theorem, measured by instrument, plants firing. Off-shell
+defect not yet demonstrated (E3 branch (b), recorded). Successors in
+order: punctured torus (mass–deficit-angle = requirement 2), SU(2)-via-2T,
+then the 3+1 continuum, which remains open research.

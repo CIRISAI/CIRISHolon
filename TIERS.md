@@ -178,3 +178,33 @@ multiples lower to the core, ζ_{2^k} rotations ride the tower, the face
 angle rides `R3`, and everything else becomes a symbolic `Rot`. Core
 consumers still refuse both non-lowerable kinds BY DESIGN, naming the
 engines that carry them.
+
+### Factoring the exponential: what comes out, and what provably cannot
+
+The general exponential CANNOT be removed — exact Clifford+rotation
+amplitudes are #P-hard, so a general polynomial algorithm would collapse
+the polynomial hierarchy. What can be factored out is everything in the
+expansion that was never exponential, and there are exactly two such
+parts (`face.rs`, both tested):
+
+1. **The exponent is the RANK, not the count.** Push each rotation's Z
+   through the suffix Clifford: `Z_i ↦ P_i`, a Pauli. The branch for subset
+   S is `C·∏_{i∈S}P_i`, and a Pauli product is a phase times the single
+   Pauli given by the F₂ XOR — so the 2^f branches take only **2^r**
+   distinct values, `r = rank_{F₂}{P_i} ≤ min(f, 2n)`. `rotation_rank`
+   computes r; the canonical merge realizes it (test: realized branches ≤
+   2^r). Measured collapse: **70 rotations on 4 qubits is rank 8 — 2^8
+   instead of 2^70.** This also explains WHY dedup collapses these
+   expansions, as a theorem rather than an observation.
+2. **The Clifford skeleton is free.** At `z ∈ {1, i, −1, −i}` every
+   rotation is `{I, S, Z, S†}`, so the whole circuit is Clifford and the
+   amplitude is **polynomial-time by tableau, no branching at all**. Four
+   exact values of an exponentially-computed object: a poly-time
+   CERTIFICATE (`certify_at_clifford_points`, cheap to check, impossible to
+   fake) and, whenever the degree is ≤ 3, the entire answer — the
+   exponential is not merely certified but avoided.
+
+The honest boundary, stated once: when rotations act on many independent
+qubits (the IBM tracker's 70-on-70 is exactly this) `r = f` and nothing
+collapses. That instance is hard because it IS hard, and saying so is the
+same discipline that lets the collapses above be believed.

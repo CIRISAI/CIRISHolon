@@ -62,3 +62,46 @@ impl MergeLedger for RentLedger {
 pub fn fold<L: MergeLedger>(items: impl IntoIterator<Item = L>) -> L {
     items.into_iter().fold(L::empty(), |a, b| a.merge(b))
 }
+
+/// Symbolic-tier ledger: exact amplitude polynomials in a rotation phase
+/// (`face::Poly`). Generic angles therefore fold through THE SAME merge law
+/// as every other tier — mesh sharding, dedup, and the certificate machinery
+/// all apply unchanged, which is what makes the symbolic carrier a first-
+/// class tier rather than a side path.
+impl MergeLedger for crate::face::Poly {
+    fn empty() -> Self {
+        crate::face::Poly::zero()
+    }
+    fn merge(self, other: Self) -> Self {
+        self.add(&other)
+    }
+}
+
+/// √3-tier ledger: exact face-ring values (`face::R3`), same law.
+impl MergeLedger for crate::face::R3 {
+    fn empty() -> Self {
+        crate::face::R3::ZERO
+    }
+    fn merge(self, other: Self) -> Self {
+        crate::face::R3::add(self, other)
+    }
+}
+
+/// The general cyclotomic tower's ledger (`cyclo::Cyclo`) — one law across
+/// every rung. `empty()` needs a rung, so the identity is the k=3 zero and
+/// merging across rungs is refused loudly (a ring mismatch is a bug, not a
+/// silent coercion).
+impl MergeLedger for crate::cyclo::Cyclo {
+    fn empty() -> Self {
+        crate::cyclo::Cyclo::zero(3)
+    }
+    fn merge(self, other: Self) -> Self {
+        if self.is_zero() && self.k != other.k {
+            return other;
+        }
+        if other.is_zero() && self.k != other.k {
+            return self;
+        }
+        crate::cyclo::Cyclo::add(&self, &other)
+    }
+}

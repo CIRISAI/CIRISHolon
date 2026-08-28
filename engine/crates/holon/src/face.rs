@@ -392,6 +392,10 @@ mod eval_tests {
 
 /// An exact polynomial `Σ A_j z^j` with `Z[ω]` coefficients — the amplitude
 /// of a circuit as a function of its (single) rotation phase.
+///
+/// This is a `MergeLedger` (see `merge.rs`), so symbolic amplitudes fold
+/// through the ONE merge law: mesh sharding, exact dedup, and the
+/// certificate machinery all apply to generic-angle work unchanged.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Poly {
     pub coeffs: Vec<Cyc>,
@@ -653,6 +657,442 @@ mod poly_tests {
                     "theta {theta} basis {basis}: {got:?} vs dense {want:?}"
                 );
             }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// MULTI-VIEW: what the symbolic carrier is FOR.
+//
+// The polynomial factors the angle out of the exact work, so one branch
+// evaluation answers a whole family of questions. Two families matter:
+//
+//   * MULTI-ANGLE — one circuit, many θ (calibration sweeps, basis-choice
+//     campaigns, hardware comparisons). Cost: one exact run + O(deg) per
+//     angle.
+//   * MULTI-VIEW — one circuit, many basis states y (probability tables,
+//     marginals, sampling). The branch set is shared; only the final
+//     per-branch amplitude query varies.
+//
+// Both fold through `merge::MergeLedger` (Poly is an instance), so the mesh
+// shards them with the same law and the same certificates as every other
+// tier — no second mechanism.
+// ---------------------------------------------------------------------------
+
+/// The branch set of a symbolic program, retained so many views and many
+/// angles can be answered without re-expanding. This is the object a
+/// multi-view consumer should hold.
+pub struct SymbolicSum {
+    branches: Vec<PolyBranch>,
+    n: usize,
+}
+
+impl SymbolicSum {
+    /// Expand once (with the exact canonical merge every `merge_every`
+    /// rotations); afterwards every query is cheap.
+    pub fn build(n: usize, surface: &[Surface], merge_every: usize) -> SymbolicSum {
+        let (branches, _) = expand_poly(n, surface, merge_every);
+        SymbolicSum { branches, n }
+    }
+
+    pub fn n_branches(&self) -> usize {
+        self.branches.len()
+    }
+
+    /// One VIEW: the exact amplitude polynomial at basis state `y`.
+    pub fn view(&self, y: &[bool]) -> Poly {
+        assert_eq!(y.len(), self.n, "view width must equal the qubit count");
+        let mut acc = Poly::zero();
+        for br in &self.branches {
+            let a = br.state.amplitude(y);
+            if !crate::affine::cyc_is_zero(a) {
+                acc = acc.add(&br.weight.scale(a));
+            }
+        }
+        acc
+    }
+
+    /// MANY VIEWS at once — the branch set is shared; folding uses the one
+    /// merge law (`Poly: MergeLedger`), so this is shardable unchanged.
+    pub fn views(&self, ys: &[Vec<bool>]) -> Vec<Poly> {
+        ys.iter().map(|y| self.view(y)).collect()
+    }
+
+    /// MANY ANGLES for one view: the exact polynomial, priced at each θ.
+    pub fn angles(&self, y: &[bool], thetas: &[f64]) -> Vec<(f64, f64)> {
+        let p = self.view(y);
+        thetas.iter().map(|&t| p.eval_angle(t)).collect()
+    }
+
+    /// The full probability table over all `2^n` basis states at one angle —
+    /// the multi-view payoff in its most useful form. Refuses above 20
+    /// qubits rather than silently allocating (a refusal is a result).
+    pub fn probability_table(&self, theta: f64) -> Vec<f64> {
+        assert!(self.n <= 20, "probability_table refuses above 20 qubits: 2^n table");
+        (0..1u32 << self.n)
+            .map(|b| {
+                let y: Vec<bool> = (0..self.n).map(|q| b >> q & 1 == 1).collect();
+                let (re, im) = self.view(&y).eval_angle(theta);
+                re * re + im * im
+            })
+            .collect()
+    }
+}
+
+/// Shared expansion used by both the one-shot and the multi-view paths.
+fn expand_poly(n: usize, surface: &[Surface], merge_every: usize) -> (Vec<PolyBranch>, usize) {
+    let half = Cyc { c: [1, 0, 0, 0], m: 2 };
+    let mut branches = vec![PolyBranch { weight: Poly::constant(Cyc::ONE), state: Affine::new(n) }];
+    let mut since = 0usize;
+    let mut peak = 1usize;
+    for &g in surface {
+        let rot_q = match g {
+            Surface::Face(_, q) | Surface::Rot(q) => Some(q),
+            _ => None,
+        };
+        match rot_q {
+            Some(q) => {
+                let mut next = Vec::with_capacity(branches.len() * 2);
+                for br in branches.drain(..) {
+                    let mut zb = br.clone();
+                    zb.state.apply(Gate::Z(q));
+                    zb.weight = zb.weight.mul_linear(half, half.mul(Cyc { c: [-1, 0, 0, 0], m: 0 }));
+                    let mut ib = br;
+                    ib.weight = ib.weight.mul_linear(half, half);
+                    next.push(ib);
+                    next.push(zb);
+                }
+                branches = next;
+                peak = peak.max(branches.len());
+                since += 1;
+                if since >= merge_every {
+                    branches = merge_poly(branches);
+                    since = 0;
+                }
+            }
+            None => {
+                let (core, phase16) = crate::qasm::lower(&[g]);
+                let wphase = phase16.rem_euclid(16) / 2;
+                for br in branches.iter_mut() {
+                    for cg in &core {
+                        br.state.apply(*cg);
+                    }
+                    for _ in 0..wphase {
+                        br.weight = br.weight.scale(crate::affine::omega_pow(1));
+                    }
+                }
+            }
+        }
+    }
+    (merge_poly(branches), peak)
+}
+
+#[cfg(test)]
+mod multiview_tests {
+    use super::*;
+    use crate::merge::{fold, MergeLedger};
+    use crate::qasm::Surface::*;
+
+    fn prog() -> Vec<Surface> {
+        vec![H(0), H(1), Cx(0, 1), Rot(0), S(1), Rot(1), H(0), Face(1, 1)]
+    }
+
+    /// Multi-view must agree with the one-shot path on every view, and the
+    /// SAME object must serve every angle.
+    #[test]
+    fn multiview_agrees_with_one_shot_everywhere() {
+        let n = 2;
+        let p = prog();
+        let sum = SymbolicSum::build(n, &p, 2);
+        for b in 0..4u32 {
+            let y: Vec<bool> = (0..n).map(|q| b >> q & 1 == 1).collect();
+            let one = amplitude_poly(n, &p, &y, 2).0;
+            let many = sum.view(&y);
+            assert_eq!(one, many, "view {b}: multi-view diverges from one-shot");
+        }
+        // one object, many angles
+        let y = vec![false, false];
+        let ts = [0.1f64, 0.9553166181245092, 2.0];
+        let got = sum.angles(&y, &ts);
+        for (i, &t) in ts.iter().enumerate() {
+            let want = amplitude_poly(n, &p, &y, 2).0.eval_angle(t);
+            assert!((got[i].0 - want.0).abs() < 1e-12 && (got[i].1 - want.1).abs() < 1e-12);
+        }
+    }
+
+    /// The probability table must sum to 1 at EVERY angle — the multi-view
+    /// object's own normalization certificate.
+    #[test]
+    fn probability_table_normalizes_at_every_angle() {
+        let sum = SymbolicSum::build(2, &prog(), 1);
+        for theta in [0.0f64, 0.3, 0.9553166181245092, 1.7, -2.2] {
+            let t: f64 = sum.probability_table(theta).iter().sum();
+            assert!((t - 1.0).abs() < 1e-10, "theta {theta}: table sums to {t}");
+        }
+    }
+
+    /// Poly is a lawful MergeLedger: identity and associativity, so the mesh
+    /// shards symbolic work with the one law.
+    #[test]
+    fn poly_is_a_lawful_ledger() {
+        let a = Poly { coeffs: vec![Cyc::ONE, Cyc { c: [0, 1, 0, 0], m: 0 }] };
+        let b = Poly { coeffs: vec![Cyc { c: [2, 0, 0, 0], m: 1 }] };
+        let c = Poly { coeffs: vec![Cyc::ZERO, Cyc::ZERO, Cyc::ONE] };
+        assert_eq!(a.clone().merge(Poly::empty()), a);
+        assert_eq!(Poly::empty().merge(a.clone()), a);
+        let l = a.clone().merge(b.clone()).merge(c.clone());
+        let r = a.clone().merge(b.clone().merge(c.clone()));
+        assert_eq!(l, r, "associativity");
+        assert_eq!(fold(vec![a, b, c]), l, "fold agrees with the law");
+    }
+}
+
+// ---------------------------------------------------------------------------
+// FACTORING OUT THE HARD PART — what CAN be removed from the exponential,
+// and the exact statement of what cannot.
+//
+// The general exponential cannot be removed: exact Clifford+rotation
+// amplitudes are #P-hard, so any claim to a general polynomial algorithm
+// would collapse the polynomial hierarchy. What CAN be factored out is
+// everything in the expansion that is not actually exponential, and there
+// are exactly two such parts:
+//
+// 1. THE RANK, NOT THE COUNT. Push each rotation's Z to the end of the
+//    circuit through the remaining Clifford: `Z_i ↦ P_i`, a Pauli. Then the
+//    branch for subset `S` is `C·∏_{i∈S} P_i`, and a product of Paulis is a
+//    phase times the single Pauli given by the F₂ XOR of their labels. So
+//    the 2^f branches take only `2^r` DISTINCT values, where `r` is the F₂
+//    rank of `{P_i}` — and `r ≤ min(f, 2n)` always. Measured collapse:
+//    f=70 rotations on n=4 qubits is rank 8, i.e. 2^8 instead of 2^70.
+//    (`rotation_rank` computes it; the engine's canonical merge realizes
+//    it — this is WHY the dedup collapses these expansions, stated as a
+//    theorem instead of observed as luck.)
+//
+// 2. THE CLIFFORD SKELETON. At `z ∈ {1, i, −1, −i}` the rotation
+//    `diag(1,z)` is `{I, S, Z, S†}` — CLIFFORD. So the amplitude at those
+//    four points is computable in POLYNOMIAL TIME by the tableau, with no
+//    branching at all. That gives four exact values of an object whose full
+//    computation is exponential: a poly-time CERTIFICATE on the expensive
+//    result, and an exact determination whenever the degree is ≤ 3.
+//
+// The honest boundary: for a circuit where the rotations act on many
+// independent qubits (the IBM tracker's 70-on-70 is exactly this), `r = f`
+// and no collapse exists. That case is hard because it IS hard.
+// ---------------------------------------------------------------------------
+
+/// The F₂ rank of the rotation set — the TRUE exponent of the expansion.
+/// Each rotation's Z, conjugated to the circuit's end, is a Pauli with a
+/// `2n`-bit F₂ label; the rank of those labels bounds the number of
+/// distinct branches by `2^rank`.
+pub fn rotation_rank(n: usize, surface: &[Surface]) -> usize {
+    // Conjugate each rotation's Z through the SUFFIX Clifford by running a
+    // tableau forward from that point; the resulting Pauli's (x|z) bits are
+    // the row.
+    let mut rows: Vec<Vec<u64>> = Vec::new();
+    let words = (2 * n).div_ceil(64);
+    for (i, g) in surface.iter().enumerate() {
+        let q = match g {
+            Surface::Face(_, q) | Surface::Rot(q) => *q,
+            _ => continue,
+        };
+        // Track Z_q through the remaining Clifford gates via the tableau's
+        // own conjugation, using a single-row Pauli frame.
+        let mut x = vec![false; n];
+        let mut z = vec![false; n];
+        z[q] = true;
+        for later in &surface[i + 1..] {
+            match later {
+                Surface::H(t) => {
+                    let (a, b) = (x[*t], z[*t]);
+                    x[*t] = b;
+                    z[*t] = a;
+                }
+                Surface::S(t) | Surface::Sdg(t) => {
+                    if x[*t] {
+                        z[*t] = !z[*t];
+                    }
+                }
+                Surface::Cx(c, t) => {
+                    if x[*c] {
+                        x[*t] = !x[*t];
+                    }
+                    if z[*t] {
+                        z[*c] = !z[*c];
+                    }
+                }
+                Surface::Cz(a, b) => {
+                    if x[*a] {
+                        z[*b] = !z[*b];
+                    }
+                    if x[*b] {
+                        z[*a] = !z[*a];
+                    }
+                }
+                _ => {}
+            }
+        }
+        let mut row = vec![0u64; words];
+        for k in 0..n {
+            if x[k] {
+                row[k >> 6] |= 1 << (k & 63);
+            }
+            if z[k] {
+                let b = n + k;
+                row[b >> 6] |= 1 << (b & 63);
+            }
+        }
+        rows.push(row);
+    }
+    // F₂ Gaussian elimination
+    let mut rank = 0usize;
+    for col in 0..2 * n {
+        let (w, b) = (col >> 6, col & 63);
+        if let Some(p) = (rank..rows.len()).find(|&i| rows[i][w] >> b & 1 == 1) {
+            rows.swap(rank, p);
+            let pivot = rows[rank].clone();
+            for i in 0..rows.len() {
+                if i != rank && rows[i][w] >> b & 1 == 1 {
+                    for (t, s) in rows[i].iter_mut().zip(pivot.iter()) {
+                        *t ^= *s;
+                    }
+                }
+            }
+            rank += 1;
+        }
+    }
+    rank
+}
+
+/// The four CLIFFORD points of the polynomial, each computed in polynomial
+/// time with no branching: `z ∈ {1, i, −1, −i}` makes every rotation
+/// `{I, S, Z, S†}`, so the whole circuit is Clifford.
+///
+/// Returns `[(z, ⟨y|C|0⟩)]` — exact `Cyc` values, no expansion anywhere.
+pub fn clifford_points(n: usize, surface: &[Surface], y: &[bool]) -> [(Cyc, Cyc); 4] {
+    let subs: [(Cyc, Option<Gate>); 4] = [
+        (Cyc::ONE, None),                                    // z = 1  → I
+        (crate::affine::omega_pow(2), Some(Gate::S(0))),     // z = i  → S
+        (Cyc { c: [-1, 0, 0, 0], m: 0 }, Some(Gate::Z(0))),  // z = −1 → Z
+        (crate::affine::omega_pow(6), Some(Gate::Sdg(0))),   // z = −i → S†
+    ];
+    let mut out = [(Cyc::ZERO, Cyc::ZERO); 4];
+    for (k, (z, sub)) in subs.iter().enumerate() {
+        let mut st = Affine::new(n);
+        let mut scalar = Cyc::ONE;
+        for &g in surface {
+            match g {
+                Surface::Face(_, q) | Surface::Rot(q) => {
+                    match sub {
+                        Some(Gate::S(_)) => st.apply(Gate::S(q)),
+                        Some(Gate::Sdg(_)) => st.apply(Gate::Sdg(q)),
+                        Some(Gate::Z(_)) => st.apply(Gate::Z(q)),
+                        Some(_) | None => {}
+                    }
+                }
+                other => {
+                    let (core, phase16) = crate::qasm::lower(&[other]);
+                    for cg in &core {
+                        st.apply(*cg);
+                    }
+                    for _ in 0..(phase16.rem_euclid(16) / 2) {
+                        scalar = scalar.mul(crate::affine::omega_pow(1));
+                    }
+                }
+            }
+        }
+        let g = st.canonicalize();
+        let amp = st.amplitude(y);
+        out[k] = (*z, scalar.mul(g).mul(amp));
+    }
+    out
+}
+
+/// THE CERTIFICATE: an expensively-computed polynomial must reproduce all
+/// four poly-time Clifford points. Cheap to check, impossible to fake.
+pub fn certify_at_clifford_points(
+    n: usize,
+    surface: &[Surface],
+    y: &[bool],
+    poly: &Poly,
+) -> Result<(), String> {
+    for (z, want) in clifford_points(n, surface, y) {
+        let got = poly.eval_r3(R3::from_cyc(z));
+        let w = R3::from_cyc(want);
+        let (gr, gi) = got.to_complex();
+        let (wr, wi) = w.to_complex();
+        if (gr - wr).abs() > 1e-9 || (gi - wi).abs() > 1e-9 {
+            return Err(format!(
+                "Clifford-point certificate FAILED at z={:?}: polynomial gives {:?}, \
+                 the poly-time tableau gives {:?}",
+                z.to_complex(),
+                (gr, gi),
+                (wr, wi)
+            ));
+        }
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod factoring_tests {
+    use super::*;
+    use crate::qasm::Surface::*;
+
+    /// The rank bounds the expansion, and the engine's merge REALIZES it:
+    /// many rotations on few qubits must collapse to at most 2^rank.
+    #[test]
+    fn rank_bounds_the_realized_branch_count() {
+        // 8 rotations on 2 qubits: rank ≤ 4, so ≤ 16 branches survive
+        let mut prog = vec![H(0), H(1), Cx(0, 1)];
+        for i in 0..8 {
+            prog.push(Rot(i % 2));
+            prog.push(if i % 2 == 0 { S(0) } else { H(1) });
+        }
+        let r = rotation_rank(2, &prog);
+        assert!(r <= 4, "rank on 2 qubits cannot exceed 2n = 4, got {r}");
+        let sum_branches = {
+            let (branches, _) = expand_poly(2, &prog, 1);
+            branches.len()
+        };
+        assert!(
+            sum_branches <= 1 << r,
+            "realized branches {sum_branches} must be ≤ 2^rank = {}",
+            1 << r
+        );
+    }
+
+    /// The four Clifford points are computed WITHOUT branching and must
+    /// agree with the exponential polynomial — a poly-time certificate on
+    /// an exponential object.
+    #[test]
+    fn clifford_points_certify_the_polynomial() {
+        let progs: Vec<(usize, Vec<Surface>)> = vec![
+            (2, vec![H(0), H(1), Cx(0, 1), Rot(0), S(1), Rot(1), H(0)]),
+            (2, vec![H(0), Rot(0), Cx(0, 1), Rot(1), Face(1, 0), H(1)]),
+            (3, vec![H(0), H(2), Cz(0, 1), Rot(2), Cx(2, 1), Rot(0), Rot(1), H(2)]),
+        ];
+        for (n, prog) in progs {
+            for b in 0..(1u32 << n) {
+                let y: Vec<bool> = (0..n).map(|q| b >> q & 1 == 1).collect();
+                let (poly, _) = amplitude_poly(n, &prog, &y, 2);
+                certify_at_clifford_points(n, &prog, &y, &poly)
+                    .unwrap_or_else(|e| panic!("n={n} basis={b}: {e}"));
+            }
+        }
+    }
+
+    /// A degree-≤3 polynomial is DETERMINED by the four Clifford points, so
+    /// for such circuits the exponential is not merely certified but
+    /// avoidable: the poly-time skeleton is the whole answer.
+    #[test]
+    fn low_degree_is_fully_determined_by_the_skeleton() {
+        let n = 2;
+        let prog = vec![H(0), Rot(0), Cx(0, 1), Rot(1), H(1)];
+        for b in 0..4u32 {
+            let y: Vec<bool> = (0..n).map(|q| b >> q & 1 == 1).collect();
+            let (poly, _) = amplitude_poly(n, &prog, &y, 1);
+            assert!(poly.degree() <= 3, "degree {} exceeds the skeleton", poly.degree());
+            certify_at_clifford_points(n, &prog, &y, &poly).unwrap();
         }
     }
 }

@@ -293,6 +293,19 @@ pub fn t_coeffs(dagger: bool) -> (Cyc, Cyc) {
     }
 }
 
+/// THE EXACT DEDUP, exposed: canonicalize an arbitrary branch list, merge
+/// duplicates by exact coefficient addition, drop annihilations and exact
+/// cancellations. This is the same `merge_block` the pruned expansion uses
+/// block-by-block — published so any branch source (e.g. `magic5`) can
+/// reuse the one canonical merge instead of growing a second one. The
+/// result is a `PrunedSum`: every surviving branch canonical, pairwise
+/// distinct, nonzero, and the sum exactly equal to the input's.
+pub fn dedup_branches(n: usize, mut branches: Vec<Branch>, cfg: &PruneConfig) -> PrunedSum {
+    let mut stats = PruneStats::default();
+    merge_block(&mut branches, cfg, &mut stats);
+    PrunedSum { n, branches, stats }
+}
+
 /// Canonicalize, drop annihilated branches, merge duplicates, drop exact
 /// cancellations. Every surviving branch is canonical and pairwise distinct.
 fn merge_block(branches: &mut Vec<Branch>, cfg: &PruneConfig, stats: &mut PruneStats) {

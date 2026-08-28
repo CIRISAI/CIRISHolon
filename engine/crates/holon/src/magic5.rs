@@ -504,3 +504,129 @@ mod tests {
         assert_eq!(expected_branches(64), 57_395_628);
     }
 }
+
+// ---------------------------------------------------------------------------
+// THE DEDUPED SOURCE — the reframed optimization (BENCHMARKS entry eleven's
+// corrected finding: the pruned path's 15–500× lead is the canonical merge
+// collapsing the branch space, not a per-branch constant). Magic5's recursion
+// produces branches that are frequently equal up to a global scalar; the one
+// canonical merge (`prune::dedup_branches`) collapses them exactly.
+// ---------------------------------------------------------------------------
+
+/// Magic5's branch space after the exact canonical merge. Building it costs
+/// one pass over the recursion's branches; every amplitude query afterwards
+/// costs the SURVIVING branch count. Exactly equal to the undeduped sum.
+pub struct Magic5Deduped {
+    sum: crate::prune::PrunedSum,
+    n: usize,
+    n_ext: usize,
+}
+
+impl Magic5Source {
+    /// Materialize and exactly merge this source's branch space.
+    pub fn deduped(&self) -> Magic5Deduped {
+        let cfg = crate::prune::PruneConfig::default();
+        let branches: Vec<crate::prune::Branch> = (0..self.n_branches())
+            .map(|b| {
+                let (weight, state) = self.run_branch(b);
+                crate::prune::Branch { weight, state }
+            })
+            .collect();
+        Magic5Deduped {
+            sum: crate::prune::dedup_branches(self.n_ext, branches, &cfg),
+            n: self.n,
+            n_ext: self.n_ext,
+        }
+    }
+}
+
+impl Magic5Deduped {
+    /// Surviving branches after the merge.
+    pub fn surviving(&self) -> u64 {
+        self.sum.branches.len() as u64
+    }
+}
+
+impl BranchSource for Magic5Deduped {
+    fn n_branches(&self) -> u64 {
+        self.sum.branches.len() as u64
+    }
+
+    fn amplitude_of(&self, branch: u64, y: &[bool]) -> Cyc {
+        let mut y_ext = vec![false; self.n_ext];
+        y_ext[..self.n].copy_from_slice(y);
+        self.sum.amplitude_of(branch, &y_ext)
+    }
+
+    fn n_qubits(&self) -> usize {
+        self.n
+    }
+}
+
+#[cfg(test)]
+mod dedup_tests {
+    use super::*;
+    use crate::magic::cyc_eq;
+    use crate::mesh;
+
+    struct Rng(u64);
+    impl Rng {
+        fn next(&mut self) -> u64 {
+            self.0 = self.0.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            self.0 >> 11
+        }
+        fn below(&mut self, n: usize) -> usize {
+            (self.next() % n as u64) as usize
+        }
+    }
+
+    /// The deduped source must equal the undeduped one EXACTLY, on every
+    /// basis state of small circuits and at multiple shard counts.
+    #[test]
+    fn dedup_preserves_the_exact_amplitude() {
+        let mut rng = Rng(0xDED_9527);
+        for trial in 0..6 {
+            let n = 3 + rng.below(3);
+            let t = 5 + rng.below(5);
+            let mut gates = Vec::new();
+            let mut tc = 0;
+            for _ in 0..8 * n {
+                let q = rng.below(n);
+                let mut q2 = rng.below(n);
+                while q2 == q {
+                    q2 = rng.below(n);
+                }
+                match rng.below(7) {
+                    0 => gates.push(Gate::X(q)),
+                    1 => gates.push(Gate::Z(q)),
+                    2 => gates.push(Gate::H(q)),
+                    3 => gates.push(Gate::S(q)),
+                    4 if tc < t => {
+                        tc += 1;
+                        gates.push(Gate::T(q));
+                    }
+                    _ => gates.push(Gate::Cx(q, q2)),
+                }
+            }
+            while tc < t {
+                gates.push(Gate::T(rng.below(n)));
+                tc += 1;
+            }
+            let c = Circuit { n_qubits: n, gates };
+            let raw = Magic5Source::new(&c);
+            let ded = raw.deduped();
+            assert!(ded.surviving() <= raw.n_branches());
+            for basis in 0..(1u32 << n) {
+                let y: Vec<bool> = (0..n).map(|q| basis >> q & 1 == 1).collect();
+                for shards in [1usize, 4] {
+                    let a = mesh::fold_amplitude(&raw, &y, shards);
+                    let b = mesh::fold_amplitude(&ded, &y, shards);
+                    assert!(
+                        cyc_eq(a, b),
+                        "trial {trial} basis {basis} shards {shards}: dedup changed the amplitude"
+                    );
+                }
+            }
+        }
+    }
+}

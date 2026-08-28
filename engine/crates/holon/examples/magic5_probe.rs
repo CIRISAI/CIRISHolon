@@ -45,9 +45,20 @@ fn main() {
         let t1 = std::time::Instant::now();
         for b in 0..nm { let _ = src.amplitude_of(b, &y); }
         let mb = t1.elapsed().as_secs_f64() / nm as f64 * 1e6;
+        let tb = std::time::Instant::now();
+        let ded = src.deduped();
+        let build_ms = tb.elapsed().as_secs_f64() * 1e3;
+        let nd = ded.n_branches().min(64);
+        let t2 = std::time::Instant::now();
+        for b in 0..nd { let _ = ded.amplitude_of(b, &y); }
+        let db = t2.elapsed().as_secs_f64() / nd.max(1) as f64 * 1e6;
         println!(
-            "n={} t={}  pruned branches={}  magic5 branches={}  per-branch us: pruned={:.1} magic5={:.1}  ratio={:.1}",
-            n, t, sum.n_branches(), src.n_branches(), pb, mb, mb / pb.max(1e-9)
+            "n={} t={}  pruned br={}  magic5 br={} -> deduped br={} (collapse {:.1}x)  per-branch us: pruned={:.1} magic5={:.1} deduped={:.1}  dedup build={:.1} ms  per-query after: {:.3} ms vs magic5 {:.3} ms",
+            n, t, sum.n_branches(), src.n_branches(), ded.n_branches(),
+            src.n_branches() as f64 / ded.n_branches().max(1) as f64,
+            pb, mb, db, build_ms,
+            db * ded.n_branches() as f64 / 1e3,
+            mb * src.n_branches() as f64 / 1e3
         );
     }
 }

@@ -132,8 +132,13 @@ pub enum Unswept {
     /// pruned's canonical merge collapses these random-circuit branch
     /// spaces to ONE or TWO surviving branches, which no exponent
     /// advantage can beat. Named optimization: give magic5's recursion
-    /// the same canonical dedup, then re-sweep; its regime meanwhile is
-    /// circuits whose branch space does not collapse.
+    /// the same canonical dedup — IMPLEMENTED AND REFUTED (entry twelve):
+    /// nothing collapses (1.0× at every measured point), because branch
+    /// redundancy and decomposition efficiency are in TENSION — the naive
+    /// expansion collapses precisely because it is redundant, and Magic5's
+    /// near-minimal spanning set has no redundancy left to merge. Magic5's
+    /// regime is circuits whose naive branch space does NOT collapse;
+    /// finding that regime is a sweep, not an optimization.
     Magic5VersusPruned,
 }
 

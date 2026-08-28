@@ -278,3 +278,40 @@ to global scalar — exactly what `prune.rs` already merges exactly).
 Until then Magic5's regime is circuits whose branch space does NOT
 collapse. `Unswept::Magic5VersusPruned` retires to this measured note;
 `Magic5TimesSliced` and `SlicedOnRewrittenEngine` remain open.
+
+
+## 2026-08-27, twelfth entry: the reframed optimization, implemented and REFUTED
+
+Entry eleven's corrected diagnosis named the fix: give Magic5's recursion
+the same exact canonical dedup that collapses the pruned path's branch
+space. Implemented (`prune::dedup_branches` exposed — one canonical merge,
+no second mechanism; `Magic5Source::deduped()`), exactness-gated (every
+basis state of random Clifford+T circuits, multiple shard counts, exact
+`Cyc` equality), and measured:
+
+| n | t | magic5 branches | after exact dedup | collapse |
+|---:|---:|---:|---:|---:|
+| 64 | 16 | 108 | **108** | **1.0×** |
+| 128 | 20 | 324 | **324** | **1.0×** |
+| 256 | 24 | 972 | **972** | **1.0×** |
+
+**Nothing collapses. The hypothesis is refuted, and the reason is a law
+worth having: branch-space redundancy and decomposition efficiency are in
+TENSION.** The pruned path's naive 2^{t/2} expansion collapses to 1–2
+branches precisely because it is redundant — many of its branches evolve
+to the same canonical stabilizer state. Magic5's cat-state decomposition
+is *designed* to be an efficient near-minimal spanning set, so its
+branches are pairwise distinct by construction and there is nothing left
+to merge. **An exponent advantage and a dedup advantage compete for the
+same redundancy; you cannot bank both.** That is why the pruned default
+wins here, and it is not fixable by adding dedup to Magic5.
+
+Residual win, kept: canonicalized branches query ~2× faster
+(11.3 vs 19.3 µs at n=64; 127 vs 260 µs at n=256), so `deduped()` pays for
+itself when one source answers many queries (sampling, mesh sweeps) —
+build cost is one pass over the branch space.
+
+Magic5's honest regime is now precisely stated: circuits whose naive
+branch space does NOT collapse under canonical merge. Finding that regime
+(structured/hidden-shift families are the candidates) is the next sweep,
+not another optimization.

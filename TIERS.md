@@ -142,8 +142,39 @@ any angle into them:
 | face / T-type magic, arccos(1/√3) | NOT a root of unity, but `(1+i√2)/√3 ∈ ℚ(ζ24)` | `Z[ζ8][√3]` = `face::R3` | ✓ **the door to the IBM tracker's instances** |
 | qutrit ζ3 and every 24th root | ζ3, ζ6, ζ12, ζ24 | ALSO `face::R3` — it already carries i, √3, ½, so ζ3 = (−1+i√3)/2 is in it | ✓ free, verified |
 | **ζ9-class qutrit magic (Strange state)** | ζ9 | a CUBIC extension | **NAMED, not implemented** — the one rung outside the tower |
-| generic angles | transcendental-in-practice | none | refuse; Ross–Selinger synthesis under an accuracy-degrading Policy |
+| **generic angles (any θ)** | outside every ring | **the SYMBOLIC carrier** (`face::amplitude_poly`) | ✓ **UNLOCKED** — see below |
 
 Every rung refuses on i128 overflow exactly as the base ring does, and the
 classification is data (`RingFor`), so a caller can ask which ring a
 circuit needs before running it.
+
+### Generic angles: unlocked by factoring θ out, not by approximating it
+
+For a circuit whose non-Clifford content is rotations at one angle, the
+exact amplitude is a POLYNOMIAL in `z = e^{iθ}` with `Z[ω]` coefficients:
+
+```text
+    ⟨y|C|0⟩ = Σ_j A_j · z^j,     A_j ∈ Z[ω]
+```
+
+because every rotation contributes `((1+z)/2)·I + ((1−z)/2)·Z` and the
+branch sum collects powers of z. `face::amplitude_poly` computes that
+polynomial exactly; the angle is applied LAST (`eval_angle`) or never
+(`eval_r3` at a ring element). So the honest claim is not "we carry
+e^{iθ} exactly for transcendental θ" — nothing can — but:
+
+> **no approximation ever enters the circuit evaluation; it enters only
+> when a numeric angle is chosen, at the very end.**
+
+And the object is strictly stronger than a single answer: **one run prices
+the entire angle family**, which is exactly what a calibration sweep, a
+basis-choice campaign, or a hardware comparison needs. Certified two ways:
+the polynomial evaluated at the face phase equals the √3-ring engine's own
+exact answer (two independent routes to one value), and evaluated at
+angles in no ring it matches dense simulation to 1e-10.
+
+The surface therefore no longer refuses ANY diagonal rotation: π/4
+multiples lower to the core, ζ_{2^k} rotations ride the tower, the face
+angle rides `R3`, and everything else becomes a symbolic `Rot`. Core
+consumers still refuse both non-lowerable kinds BY DESIGN, naming the
+engines that carry them.

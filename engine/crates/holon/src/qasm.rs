@@ -56,6 +56,11 @@ pub enum Surface {
     /// alphabet, so it is a REFUSAL for core consumers and a first-class
     /// gate for the face engine. Sign is the rotation's sign.
     Face(i8, usize),
+    /// A GENERIC diagonal rotation `diag(1, z)` with `z = e^{iθ}` left
+    /// SYMBOLIC — the angle never enters the exact computation. Consumed by
+    /// `face::amplitude_poly`, which returns the amplitude as an exact
+    /// polynomial in z; the numeric angle is applied last, or never.
+    Rot(usize),
 }
 
 /// One rewrite step: a surface gate is either CORE (transport ends) or a
@@ -104,9 +109,10 @@ pub fn rule(g: Surface) -> Result<Gate, (Vec<Surface>, i64)> {
         Ccz(a, b, c) => Err((vec![H(c), Ccx(a, b, c), H(c)], 0)),
         DiagPow(k, q) => Err((diag_word(k, q), 0)),
         RzPow(k, q) => Err((vec![DiagPow(k, q)], -k)),
-        // Not lowerable: the face phase lives one quadratic extension out.
-        // `lower` refuses it; the face engine consumes it directly.
-        Face(..) => Err((vec![], 0)),
+        // Not lowerable: the face phase lives one quadratic extension out,
+        // and a generic rotation lives outside every ring. `lower` refuses
+        // both; the face/poly engines consume them directly.
+        Face(..) | Rot(_) => Err((vec![], 0)),
     }
 }
 
@@ -134,9 +140,10 @@ pub fn lower(surface: &[Surface]) -> (Vec<Gate>, i64) {
     fn go(g: Surface, core: &mut Vec<Gate>, phase: &mut i64, depth: u32) {
         assert!(depth < 8, "lowering must terminate: rule cycle detected");
         assert!(
-            !matches!(g, Surface::Face(..)),
-            "Face gates are not lowerable to the core alphabet — route the \
-             program to the face engine (face.rs) instead of `lower`"
+            !matches!(g, Surface::Face(..) | Surface::Rot(_)),
+            "Face/Rot gates are not lowerable to the core alphabet — route \
+             the program to the face engine (face.rs: amplitude_face for the \
+             √3 ring, amplitude_poly for symbolic generic angles)"
         );
         match rule(g) {
             Ok(cg) => core.push(cg),
@@ -283,17 +290,10 @@ pub fn parse_surface(src: &str) -> Result<(usize, Vec<Surface>, Vec<usize>), Ref
                 None if face_angle(angle(line, param)?).is_some() => {
                     Face(face_angle(angle(line, param)?).unwrap(), *q)
                 }
-                None => {
-                    return Err(refuse(
-                        line,
-                        format!(
-                            "rz({}) is not a π/4 multiple: the exact ring cannot carry it. \
-                             Named routes: native basis-change (CAMPAIGNS.md #2) or \
-                             Ross–Selinger synthesis under an accuracy-degrading Policy",
-                            param.unwrap_or("?")
-                        ),
-                    ))
-                }
+                // A generic angle is not refused any more: it becomes a
+                // SYMBOLIC rotation, and `amplitude_poly` returns the exact
+                // polynomial in z = e^{iθ}. The angle is applied last.
+                None => Rot(*q),
             },
             ("p" | "u1", [q]) => match pi4_multiple(angle(line, param)?) {
                 Some(k) => DiagPow(k, *q),
@@ -320,14 +320,17 @@ pub fn parse_surface(src: &str) -> Result<(usize, Vec<Surface>, Vec<usize>), Ref
 /// Text → lowered Program: parse, then the one rewriter, scalar to ledger.
 pub fn parse(src: &str) -> Result<Program, Refusal> {
     let (n_qubits, surface, measured) = parse_surface(src)?;
-    if let Some(i) = surface.iter().position(|g| matches!(g, Surface::Face(..))) {
+    let faces = surface.iter().filter(|g| matches!(g, Surface::Face(..))).count();
+    let rots = surface.iter().filter(|g| matches!(g, Surface::Rot(_))).count();
+    if faces + rots > 0 {
         return Err(refuse(
             0,
             format!(
-                "program carries {} face rotation(s) (first at surface index {i}): EXACT in \
-                 Z[ω][√3] (face.rs) but not lowerable to the core alphabet. Route it to the \
-                 face engine via `parse_surface`; core consumers refuse by design",
-                surface.iter().filter(|g| matches!(g, Surface::Face(..))).count()
+                "program carries {faces} face rotation(s) and {rots} generic rotation(s): not \
+                 lowerable to the core alphabet, but BOTH are carried exactly elsewhere — the \
+                 face engine (face::amplitude_face, exact in Z[ω][√3]) and the symbolic \
+                 carrier (face::amplitude_poly, exact as a polynomial in z = e^{{iθ}}, angle \
+                 applied last). Route via `parse_surface`; core consumers refuse by design"
             ),
         ));
     }

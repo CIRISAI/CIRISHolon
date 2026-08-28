@@ -176,7 +176,7 @@ impl Dense {
                     }
                 }
             }
-            Face(..) => unreachable!("Face is not in the core oracle's alphabet — the face engine (face.rs) carries it, with its own exact-ring tests"),
+            Face(..) | Rot(_) => unreachable!("Face is not in the core oracle's alphabet — the face engine (face.rs) carries it, with its own exact-ring tests"),
             DiagPow(k, q) => self.diag1(q, zeta16_pow(2 * k)),
             RzPow(k, q) => {
                 self.diag1(q, zeta16_pow(2 * k));
@@ -310,9 +310,16 @@ fn text_surface_accepts_and_refuses_as_declared() {
     assert!(matches!(surf[0], Surface::Face(1, 0)), "face angle must become a Face gate");
     let e = parse(face).unwrap_err();
     assert!(e.reason.contains("face engine"), "core refusal must name the face engine");
-    // A genuinely unrepresentable angle still refuses at the surface, with
-    // its named routes.
-    let bad = "qreg q[1];\nrz(0.3) q[0];\n";
-    let e2 = parse(bad).unwrap_err();
-    assert!(e2.reason.contains("CAMPAIGNS.md #2"), "refusal must name the route");
+    // A generic angle is no longer refused at the SURFACE: it becomes a
+    // symbolic Rot, exact-in-z, and only CORE consumers refuse it (naming
+    // the engines that do carry it).
+    let generic = "qreg q[1];\nrz(0.3) q[0];\n";
+    let (_, gs, _) = holon::qasm::parse_surface(generic).expect("generic angle must parse");
+    assert!(matches!(gs[0], Surface::Rot(0)), "generic angle must become a symbolic Rot");
+    let e2 = parse(generic).unwrap_err();
+    assert!(
+        e2.reason.contains("face engine") || e2.reason.contains("symbolic"),
+        "core refusal must name where generic angles DO go: {}",
+        e2.reason
+    );
 }

@@ -228,6 +228,10 @@ pub fn amplitude_face(
                 if sign >= 0 { (ci, cz) } else { (conj3(ci), conj3(cz)) },
                 q,
             )),
+            Surface::Rot(_) => panic!(
+                "amplitude_face carries only ring-exact rotations; a generic \
+                 angle must go to amplitude_poly (symbolic carrier)"
+            ),
             Surface::T(q) => Some((t_split, q)),
             Surface::Tdg(q) => Some((tdg_split, q)),
             _ => None,
@@ -360,5 +364,295 @@ mod eval_tests {
             tot += r * r + i * i;
         }
         assert!((tot - 1.0).abs() < 1e-10, "probabilities sum to {tot}");
+    }
+}
+
+// ---------------------------------------------------------------------------
+// GENERIC ANGLES, UNLOCKED — the symbolic carrier.
+//
+// The observation that opens it: for a circuit whose non-Clifford content is
+// f rotations `diag(1, z)` all at the SAME angle, the exact amplitude is a
+// POLYNOMIAL in z with Z[ω] coefficients:
+//
+//     ⟨y|C|0⟩ = Σ_{j=0}^{f} A_j · z^j,      A_j ∈ Z[ω],
+//
+// because each rotation contributes `((1+z)/2)·I + ((1−z)/2)·Z` and the
+// branch sum collects powers of z. The polynomial is ANGLE-FREE: computing
+// it once answers EVERY angle, exactly for angles in the ring tower and to
+// full float precision for the rest. That is the honest sense in which
+// generic angles are unlocked — not "we can carry e^{iθ} exactly for
+// transcendental θ" (nothing can), but "the θ-dependence is factored out
+// into an exact object, so no approximation ever enters the circuit
+// evaluation; it enters only when you choose a numeric θ, at the very end."
+//
+// Cost is unchanged (2^f branches before dedup) but the RESULT is strictly
+// stronger: one run prices a whole angle family, which is exactly what a
+// calibration sweep, a basis-choice campaign, or a hardware-comparison needs.
+// ---------------------------------------------------------------------------
+
+/// An exact polynomial `Σ A_j z^j` with `Z[ω]` coefficients — the amplitude
+/// of a circuit as a function of its (single) rotation phase.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Poly {
+    pub coeffs: Vec<Cyc>,
+}
+
+impl Poly {
+    pub fn zero() -> Poly {
+        Poly { coeffs: vec![] }
+    }
+
+    pub fn constant(c: Cyc) -> Poly {
+        Poly { coeffs: vec![c] }
+    }
+
+    pub fn is_zero(&self) -> bool {
+        self.coeffs.iter().all(|c| crate::affine::cyc_is_zero(*c))
+    }
+
+    pub fn degree(&self) -> usize {
+        self.coeffs.len().saturating_sub(1)
+    }
+
+    pub fn add(&self, o: &Poly) -> Poly {
+        let n = self.coeffs.len().max(o.coeffs.len());
+        let mut c = Vec::with_capacity(n);
+        for i in 0..n {
+            let a = self.coeffs.get(i).copied().unwrap_or(Cyc::ZERO);
+            let b = o.coeffs.get(i).copied().unwrap_or(Cyc::ZERO);
+            c.push(a.add(b));
+        }
+        Poly { coeffs: c }
+    }
+
+    pub fn scale(&self, s: Cyc) -> Poly {
+        Poly { coeffs: self.coeffs.iter().map(|c| c.mul(s)).collect() }
+    }
+
+    /// Multiply by `(a + b·z)` — the only multiply the expansion needs.
+    pub fn mul_linear(&self, a: Cyc, b: Cyc) -> Poly {
+        let mut out = vec![Cyc::ZERO; self.coeffs.len() + 1];
+        for (i, &c) in self.coeffs.iter().enumerate() {
+            out[i] = out[i].add(c.mul(a));
+            out[i + 1] = out[i + 1].add(c.mul(b));
+        }
+        Poly { coeffs: out }
+    }
+
+    /// Evaluate at an exact ring element (face phase, any ζ_n, …).
+    pub fn eval_r3(&self, z: R3) -> R3 {
+        let mut acc = R3::ZERO;
+        let mut zp = R3::ONE;
+        for &c in &self.coeffs {
+            acc = acc.add(R3::from_cyc(c).mul(zp));
+            zp = zp.mul(z);
+        }
+        acc
+    }
+
+    /// Evaluate at ANY angle — the only place a float ever appears, and it
+    /// appears AFTER all exact work is finished.
+    pub fn eval_angle(&self, theta: f64) -> (f64, f64) {
+        let (mut re, mut im) = (0.0, 0.0);
+        for (j, &c) in self.coeffs.iter().enumerate() {
+            let (cr, ci) = c.to_complex();
+            let (zr, zi) = ((theta * j as f64).cos(), (theta * j as f64).sin());
+            re += cr * zr - ci * zi;
+            im += cr * zi + ci * zr;
+        }
+        (re, im)
+    }
+}
+
+/// One symbolic branch: an exact polynomial weight and an affine state.
+#[derive(Clone)]
+struct PolyBranch {
+    weight: Poly,
+    state: Affine,
+}
+
+/// THE GENERIC-ANGLE EVALUATOR: the amplitude of `surface` at `y` as an
+/// exact polynomial in the rotation phase `z`, with every `Rot` surface gate
+/// treated as `diag(1,z)` for the SAME symbolic z. `T`/`Tdg` are lowered
+/// normally (they are Clifford+T, in-ring); only the generic rotations
+/// become symbolic. Halves of the ½ per rotation ride in the coefficients.
+pub fn amplitude_poly(n: usize, surface: &[Surface], y: &[bool], merge_every: usize) -> (Poly, usize) {
+    let half = Cyc { c: [1, 0, 0, 0], m: 2 }; // ½
+    let mut branches = vec![PolyBranch { weight: Poly::constant(Cyc::ONE), state: Affine::new(n) }];
+    let mut since = 0usize;
+    let mut peak = 1usize;
+
+    for &g in surface {
+        let rot_q = match g {
+            Surface::Face(_, q) => Some(q),
+            Surface::Rot(q) => Some(q),
+            _ => None,
+        };
+        match rot_q {
+            Some(q) => {
+                // diag(1,z) = ((1+z)/2) I + ((1−z)/2) Z
+                let mut next = Vec::with_capacity(branches.len() * 2);
+                for br in branches.drain(..) {
+                    let mut zb = br.clone();
+                    zb.state.apply(Gate::Z(q));
+                    // (1 − z)/2 : a = ½, b = −½
+                    zb.weight = zb.weight.mul_linear(half, half.mul(Cyc { c: [-1, 0, 0, 0], m: 0 }));
+                    let mut ib = br;
+                    ib.weight = ib.weight.mul_linear(half, half);
+                    next.push(ib);
+                    next.push(zb);
+                }
+                branches = next;
+                peak = peak.max(branches.len());
+                since += 1;
+                if since >= merge_every {
+                    branches = merge_poly(branches);
+                    since = 0;
+                }
+            }
+            None => {
+                let (core, phase16) = crate::qasm::lower(&[g]);
+                let wphase = phase16.rem_euclid(16) / 2;
+                for br in branches.iter_mut() {
+                    for cg in &core {
+                        br.state.apply(*cg);
+                    }
+                    for _ in 0..wphase {
+                        br.weight = br.weight.scale(crate::affine::omega_pow(1));
+                    }
+                }
+            }
+        }
+    }
+    branches = merge_poly(branches);
+    let mut acc = Poly::zero();
+    for br in &branches {
+        let a = br.state.amplitude(y);
+        if !crate::affine::cyc_is_zero(a) {
+            acc = acc.add(&br.weight.scale(a));
+        }
+    }
+    (acc, peak)
+}
+
+fn merge_poly(mut branches: Vec<PolyBranch>) -> Vec<PolyBranch> {
+    let mut kept: Vec<PolyBranch> = Vec::with_capacity(branches.len());
+    let mut keys: Vec<Vec<u8>> = Vec::new();
+    for mut br in branches.drain(..) {
+        let g = br.state.canonicalize();
+        if br.state.is_zero() {
+            continue;
+        }
+        br.weight = br.weight.scale(g);
+        if br.weight.is_zero() {
+            continue;
+        }
+        let key = br.state.canon_key();
+        match keys.iter().position(|k| *k == key) {
+            Some(i) => {
+                kept[i].weight = kept[i].weight.add(&br.weight);
+                if kept[i].weight.is_zero() {
+                    kept.remove(i);
+                    keys.remove(i);
+                }
+            }
+            None => {
+                keys.push(key);
+                kept.push(br);
+            }
+        }
+    }
+    kept
+}
+
+#[cfg(test)]
+mod poly_tests {
+    use super::*;
+    use crate::qasm::Surface::*;
+
+    /// The polynomial evaluated at the FACE phase must equal the face
+    /// engine's own exact answer — two independent routes to one value.
+    #[test]
+    fn polynomial_at_the_face_phase_matches_the_face_engine() {
+        let progs: Vec<Vec<Surface>> = vec![
+            vec![H(0), Face(1, 0)],
+            vec![H(0), H(1), Cx(0, 1), Face(1, 0), Face(1, 1), H(0)],
+            vec![H(0), Cx(0, 1), Face(1, 1), S(0), Face(1, 0), H(1)],
+        ];
+        for (t, prog) in progs.iter().enumerate() {
+            let n = 2.min(prog.iter().filter_map(|g| match g {
+                Cx(a, b) => Some(a.max(b) + 1),
+                H(q) | S(q) | Face(_, q) => Some(q + 1),
+                _ => None,
+            }).max().unwrap_or(1)).max(1);
+            for basis in 0..(1u32 << n) {
+                let y: Vec<bool> = (0..n).map(|q| basis >> q & 1 == 1).collect();
+                let (poly, _) = amplitude_poly(n, prog, &y, 2);
+                let (face, _) = amplitude_face(n, prog, &y, 2);
+                let pv = poly.eval_r3(face_phase()).to_complex();
+                let fv = face.to_complex();
+                assert!(
+                    (pv.0 - fv.0).abs() < 1e-12 && (pv.1 - fv.1).abs() < 1e-12,
+                    "trial {t} basis {basis}: poly {pv:?} vs face engine {fv:?}"
+                );
+            }
+        }
+    }
+
+    /// GENERIC ANGLES: the same polynomial, evaluated at angles in NO ring,
+    /// must equal a direct dense simulation at that angle — so one exact
+    /// object prices the whole family.
+    #[test]
+    fn one_polynomial_prices_every_angle() {
+        let n = 2;
+        let prog = vec![H(0), H(1), Cx(0, 1), Rot(0), Rot(1), H(0)];
+        for theta in [0.3f64, 1.0, 2.7, -0.9, 0.955_316_618_124_509_2] {
+            // dense reference at this angle
+            let mut v = vec![(0.0f64, 0.0f64); 1 << n];
+            v[0] = (1.0, 0.0);
+            let apply_h = |v: &mut Vec<(f64, f64)>, q: usize| {
+                let s = 1.0 / 2f64.sqrt();
+                for i in 0..v.len() {
+                    if i >> q & 1 == 0 {
+                        let j = i | (1 << q);
+                        let (a, b) = (v[i], v[j]);
+                        v[i] = ((a.0 + b.0) * s, (a.1 + b.1) * s);
+                        v[j] = ((a.0 - b.0) * s, (a.1 - b.1) * s);
+                    }
+                }
+            };
+            for &g in &prog {
+                match g {
+                    H(q) => apply_h(&mut v, q),
+                    Cx(a, b) => {
+                        for i in 0..v.len() {
+                            if i >> a & 1 == 1 && i >> b & 1 == 0 {
+                                v.swap(i, i | (1 << b));
+                            }
+                        }
+                    }
+                    Rot(q) => {
+                        let (zr, zi) = (theta.cos(), theta.sin());
+                        for i in 0..v.len() {
+                            if i >> q & 1 == 1 {
+                                let (a, b) = v[i];
+                                v[i] = (a * zr - b * zi, a * zi + b * zr);
+                            }
+                        }
+                    }
+                    _ => unreachable!(),
+                }
+            }
+            for basis in 0..(1u32 << n) {
+                let y: Vec<bool> = (0..n).map(|q| basis >> q & 1 == 1).collect();
+                let (poly, _) = amplitude_poly(n, &prog, &y, 2);
+                let got = poly.eval_angle(theta);
+                let want = v[basis as usize];
+                assert!(
+                    (got.0 - want.0).abs() < 1e-10 && (got.1 - want.1).abs() < 1e-10,
+                    "theta {theta} basis {basis}: {got:?} vs dense {want:?}"
+                );
+            }
+        }
     }
 }

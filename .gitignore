@@ -13,7 +13,7 @@ engine/crates/holon-render-3d/target/
 # the RESULTS documents and run logs are the record.
 conformance/gravity/*.DONE
 conformance/gravity/launch_*.sh
-conformance/gravity/__pycache__/
+conformance/**/__pycache__/
 .claude/
 conformance/omega/engine_probe/target/
 

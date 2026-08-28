@@ -98,7 +98,14 @@ fn main() {
     let t_before = holon::simplify::magic_weight(&surf);
     let gates_before = surf.len();
     let t_simp = std::time::Instant::now();
+    // Two passes compose: local cancellation shrinks the bulk, then the
+    // phase-polynomial pass cancels magic AT A DISTANCE (the ceiling entry
+    // fourteen named). HOLON_NO_PHASEPOLY=1 isolates the local pass.
     let surf = if simplify_on { holon::simplify::simplify(&surf) } else { surf };
+    let t_local = holon::simplify::magic_weight(&surf);
+    let ppoly_on = simplify_on && std::env::var("HOLON_NO_PHASEPOLY").is_err();
+    let surf = if ppoly_on { holon::phasepoly::optimize(nq, &surf) } else { surf };
+    let surf = if ppoly_on { holon::simplify::simplify(&surf) } else { surf };
     let simplify_s = t_simp.elapsed().as_secs_f64();
     let t_after = holon::simplify::magic_weight(&surf);
     let (core, phase16) = holon::qasm::lower(&surf);
@@ -128,7 +135,7 @@ fn main() {
     // (INTERFACE.md's four undefined types, carried honestly rather than
     // silently dropped).
     println!(
-        "{{\"backend_name\": \"cirisholon\", \"success\": true, \"results\": [{{\"shots\": 1, \"status\": \"DONE\", \"data\": {{\"amplitude\": {{\"re\": {re:.12}, \"im\": {im:.12}}}, \"probability\": {pr:.12}}}, \"metadata\": {{\"exact\": true, \"ring\": \"Z[omega]\", \"residual_zeta16\": {residual}, \"n_qubits\": {}, \"simplify\": {{\"enabled\": {simplify_on}, \"seconds\": {simplify_s:.6}, \"gates_before\": {gates_before}, \"gates_after\": {}, \"magic_before\": {t_before}, \"magic_after\": {t_after}}}, \"seconds\": {:.6}}}}}]}}",
+        "{{\"backend_name\": \"cirisholon\", \"success\": true, \"results\": [{{\"shots\": 1, \"status\": \"DONE\", \"data\": {{\"amplitude\": {{\"re\": {re:.12}, \"im\": {im:.12}}}, \"probability\": {pr:.12}}}, \"metadata\": {{\"exact\": true, \"ring\": \"Z[omega]\", \"residual_zeta16\": {residual}, \"n_qubits\": {}, \"simplify\": {{\"enabled\": {simplify_on}, \"seconds\": {simplify_s:.6}, \"gates_before\": {gates_before}, \"gates_after\": {}, \"magic_before\": {t_before}, \"magic_after_local\": {t_local}, \"magic_after\": {t_after}, \"phasepoly\": {ppoly_on}}}, \"seconds\": {:.6}}}}}]}}",
         p.n_qubits,
         surf.len(),
         t0.elapsed().as_secs_f64()

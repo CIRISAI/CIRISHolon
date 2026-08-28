@@ -403,3 +403,50 @@ us without adaptation, and carry everything no spec has a field for under
 `metadata` — `exact`, `ring`, `residual_zeta16`, and the full simplify
 record (gates and magic before/after, pass time). Nothing is dropped
 silently, and nothing is smuggled into a field that means something else.
+
+## 2026-08-27, fifteenth entry: the non-local pass breaks entry fourteen's ceiling
+
+`phasepoly.rs` — the phase-polynomial normalization entry fourteen named as
+its own ceiling (credited: Amy–Maslov–Mosca). Inside a maximal CNOT+diagonal
+block every qubit carries an F₂ linear form and every diagonal gate is a
+phase on one of them, so **terms on the same form merge no matter how far
+apart the gates were**: `CZ` contributes three terms via
+`a·b = (a+b−(a⊕b))/2`, `CCZ` seven via the cubic identity (which IS the 7-T
+decomposition), and a form whose total power is even costs no T at all.
+Exactness gated on every basis state, plus two tests that pin genuine
+distance-cancellation the local pass provably cannot reach.
+
+Same circuits, both passes composed:
+
+| q | magic: raw | after LOCAL | after PHASE-POLY | time (entry 13 → 14 → now) |
+|---:|---:|---:|---:|---|
+| 12 | 56 | 28 | **16** | 25 ms → 5.6 ms → **2.0 ms** |
+| 16 | 84 | **84 (local blind)** | **40** | 230 ms → 73 ms → **41 ms** |
+| 20 | 70 | **70 (local blind)** | **50** | 866 ms → 293 ms → **272 ms** |
+| 24 | 140 | 112 | **64** | 7.29 s → 1.40 s → **0.66 s** |
+| 30 | 196 | **196 (local blind)** | **84** | 49.9 s → 12.4 s → **4.35 s** |
+
+**The ceiling is broken exactly where it was named.** At q=16, 20 and 30 the
+local pass moved the magic weight by ZERO; the non-local pass cuts it by
+52%, 29% and 57%. Cumulative against entry thirteen: **11–12× faster**, all
+amplitudes still exactly 1.000000, and the standing against quizx improves
+from 15–8000× to roughly 1.2–700×.
+
+Honest reading of what remains: quizx's term count is still 1 and ours is
+not. Phase-polynomial normalization is exact for CNOT+diagonal blocks and
+Hadamards END a block — full ZX rewriting (spider fusion, local
+complementation, pivoting) acts ACROSS Hadamards, which is the rest of the
+gap. Named, not implied.
+
+## The job API and output schema
+
+`job.rs`: a job is a circuit plus an OPTIONAL config beside it. Config keys
+follow the shapes standard runners already use (`shots`, `seed_simulator`,
+`method`, `target`) so a Qiskit/Cirq-literate caller needs no new
+vocabulary, with a `holon` section for what no standard has (which passes
+run, exactness policy). Unknown keys are IGNORED (forward compatibility with
+runners' extra fields); malformed values REFUSE (a silent default is a wrong
+answer wearing a right one); `exact: false` refuses by name and points at
+the Policy that does lawful degradation. Output is the Qiskit `Result`
+schema with everything no spec has a field for under `metadata` — ring,
+exactness, ζ16 residual, per-pass magic and gate counts, timings.

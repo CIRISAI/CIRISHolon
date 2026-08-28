@@ -210,8 +210,18 @@ def run_c3():
     rep["K1"] = ("PASS (collisions reproduce: %s)" % firing
                  if firing == [(1, 5), (2, 4), (5, 7)] else f"FIRE got {firing}")
     blind = [(i, j) for (i, j) in firing if vp[i] == vp[j]]
-    rep["K2"] = ("BRANCH(a): v_pair separates every firing pair -- memory is second-order"
-                 if not blind else f"BRANCH(b): v_pair blind at {blind} -- memory beyond second order")
+    # M-FINAL-VIEW-COLLISIONS: "restores closure" requires the REFINED
+    # view's OWN collisions to be consistent, not merely separation of the
+    # coarse view's. Both are scored; the verdict needs both.
+    own_firing = [(i, j) for i in range(8) for j in range(i + 1, 8)
+                  if vp[i] == vp[j] and vp[i + 1] != vp[j + 1]]
+    if blind:
+        rep["K2"] = f"BRANCH(b): v_pair blind at {blind} -- memory beyond second order"
+    elif own_firing:
+        rep["K2"] = (f"BRANCH(b'): v_pair separates the coarse collisions but has OWN "
+                     f"firing collisions {own_firing} -- memory AT LEAST third-order")
+    else:
+        rep["K2"] = "BRANCH(a): v_pair closed on the trajectory -- memory is second-order"
     drift = [k for k in range(1, 9) if tot[k] != tot[0]]
     rep["K3"] = "PASS" if not drift else f"FIRE {drift}"
     rep["B3"] = "PASS" if all(W.gauss_holds(s)[0] for s in traj) else "FIRE"

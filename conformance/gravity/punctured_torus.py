@@ -27,45 +27,63 @@ def collisions(vs):
                 hits.append((i, j, vs[i + 1] == vs[j + 1]))
     return hits
 
-# ---- refined instance: subdivide edge a: (a1, a2, b), g_a = a1*a2
-NR = 512
-A1 = np.arange(NR) % 8
-A2 = (np.arange(NR) // 8) % 8
-BB = np.arange(NR) // 64
-RIDX = lambda a1, a2, b: a1 + 8 * a2 + 64 * b
-R_GA = MUL[A1, A2]
+# ---- PT-1B refined instance: BOTH edges split (a1,a2,b1,b2), 4096 configs.
+# Bijective lifts with explicit inverses (M-NONBIJECTIVE-STEP):
+#   T_ref: (a1,a2,b1,b2) -> (a1,a2, a1a2 b1, b2)
+#     inverse: (a1,a2, (a1a2)^-1 b1', b2)
+#   S_ref: (a1,a2,b1,b2) -> (b1,b2, c a1 c^-1, c a2 c^-1), c = b1 b2
+#     inverse: from (p1,p2,q1,q2): b=(p1,p2), c=p1p2, a=(c^-1 q1 c, c^-1 q2 c)
+NR = 4096
+RA1 = np.arange(NR) % 8
+RA2 = (np.arange(NR) // 8) % 8
+RB1 = (np.arange(NR) // 64) % 8
+RB2 = np.arange(NR) // 512
+RIDX = lambda a1, a2, b1, b2: a1 + 8 * a2 + 64 * b1 + 512 * b2
+R_GA = MUL[RA1, RA2]
+R_GB = MUL[RB1, RB2]
 
 def r_comm():
-    return MUL[MUL[R_GA, BB], MUL[INV[R_GA], INV[BB]]]
+    return MUL[MUL[R_GA, R_GB], MUL[INV[R_GA], INV[R_GB]]]
 
-def r_gauss_project(psi):
-    out = np.zeros_like(psi)
-    # vertex v0 (base point): conjugates a1 on left, a2 on right, b both
-    for x in range(8):
-        perm = RIDX(MUL[x, A1], MUL[A2, INV[x]], MUL[MUL[x, BB], INV[x]])
-        out += apply_perm(psi, perm)
-    # vertex v1 (midpoint of a): acts between a1 and a2
-    out2 = np.zeros_like(out)
-    for x in range(8):
-        perm = RIDX(MUL[A1, INV[x]], MUL[x, A2], BB)
-        out2 += apply_perm(out, perm)
-    return out2
-
-def r_gauss_holds(psi):
-    for x in range(8):
-        p1 = RIDX(MUL[x, A1], MUL[A2, INV[x]], MUL[MUL[x, BB], INV[x]])
-        p2 = RIDX(MUL[A1, INV[x]], MUL[x, A2], BB)
-        if not (np.array_equal(apply_perm(psi, p1), psi) and np.array_equal(apply_perm(psi, p2), psi)):
-            return False
-    return True
+T_REF = RIDX(RA1, RA2, MUL[R_GA, RB1], RB2)
+_c = R_GB
+S_REF = RIDX(RB1, RB2, MUL[MUL[_c, RA1], INV[_c]], MUL[MUL[_c, RA2], INV[_c]])
 
 def r_step(psi):
-    # T: b -> g_a b = a1 a2 b ; S: (a,b) -> (b, b a b^-1) with a as the pair.
-    # Realize on the refined chart: T leaves a1,a2, maps b -> a1 a2 b.
-    tmap = RIDX(A1, A2, MUL[R_GA, BB])
-    # S: new a = b (put in a1, set a2 = 1), new b = b (a1 a2) b^-1
-    smap = RIDX(BB, np.zeros(NR, dtype=np.int64), MUL[MUL[BB, R_GA], INV[BB]])
-    return apply_perm(apply_perm(psi, tmap), smap)
+    return apply_perm(apply_perm(psi, T_REF), S_REF)
+
+def r_gauss_project(psi):
+    # base vertex v0: left on a1, right on a2? Chart: a = a1 a2 with midpoint
+    # va between them; b = b1 b2 with midpoint vb. v0 conjugates a and b at
+    # their ends: a1 -> x a1, a2 -> a2 x^-1, b1 -> x b1, b2 -> b2 x^-1.
+    out = psi.copy()
+    for perm_fn in (
+        lambda x: RIDX(MUL[x, RA1], MUL[RA2, INV[x]], MUL[x, RB1], MUL[RB2, INV[x]]),
+        lambda x: RIDX(MUL[RA1, INV[x]], MUL[x, RA2], RB1, RB2),
+        lambda x: RIDX(RA1, RA2, MUL[RB1, INV[x]], MUL[x, RB2]),
+    ):
+        acc = np.zeros_like(out)
+        for x in range(8):
+            acc += apply_perm(out, perm_fn(x))
+        out = acc
+    return out
+
+def r_gauss_holds(psi):
+    for perm_fn in (
+        lambda x: RIDX(MUL[x, RA1], MUL[RA2, INV[x]], MUL[x, RB1], MUL[RB2, INV[x]]),
+        lambda x: RIDX(MUL[RA1, INV[x]], MUL[x, RA2], RB1, RB2),
+        lambda x: RIDX(RA1, RA2, MUL[RB1, INV[x]], MUL[x, RB2]),
+    ):
+        for x in range(8):
+            if not np.array_equal(apply_perm(psi, perm_fn(x)), psi):
+                return False
+    return True
+
+def r_bijective():
+    for M in (T_REF, S_REF):
+        if len(set(M.tolist())) != NR:
+            return False
+    return True
 
 def run():
     rep = {}
@@ -99,27 +117,34 @@ def run():
                 drift.append((int(CLASS[m]), k))
     rep["D2"] = "PASS (mass conserved exactly)" if not drift else f"FIRE {drift}"
 
-    # D3: refinement — D1 and D2 on the refined chart
-    r_real = []
-    for rep_el in range(8):
-        tgt = CLASS[r_comm()] == CLASS[rep_el]
-        sec = r_gauss_project(tgt.astype(np.int64))
-        if np.count_nonzero(sec):
-            r_real.append(int(CLASS[rep_el]))
-    r_real = sorted(set(r_real))
-    r_drift = []
-    for m in (0, R2):
-        tgt = CLASS[r_comm()] == CLASS[m]
-        psi = r_gauss_project(tgt.astype(np.int64))
-        w0 = sector_weight(psi, tgt)
-        for k in range(1, 5):
-            psi = r_step(psi)
-            w = sector_weight(psi, tgt)
-            if w[0] * w0[1] != w0[0] * w[1]:
-                r_drift.append((int(CLASS[m]), k))
-    rep["D3"] = ("PASS (refined spectrum and conservation identical)"
-                 if r_real == want and not r_drift else f"FIRE spectrum={r_real} drift={r_drift}")
-
+    # D3 (PT-1B): bijectivity checked FIRST; refined spectrum, conservation,
+    # and refined B3 on every trajectory state.
+    if not r_bijective():
+        rep["D3"] = "VOID (refined step not bijective -- refuse to call it dynamics)"
+    else:
+        r_real = []
+        for rep_el in range(8):
+            tgt = CLASS[r_comm()] == CLASS[rep_el]
+            sec = r_gauss_project(tgt.astype(np.int64))
+            if np.count_nonzero(sec):
+                r_real.append(int(CLASS[rep_el]))
+        r_real = sorted(set(r_real))
+        r_drift = []
+        r_b3_ok = True
+        for m in (0, R2):
+            tgt = CLASS[r_comm()] == CLASS[m]
+            psi = r_gauss_project(tgt.astype(np.int64))
+            w0 = sector_weight(psi, tgt)
+            for k in range(1, 5):
+                psi = r_step(psi)
+                if not r_gauss_holds(psi):
+                    r_b3_ok = False
+                w = sector_weight(psi, tgt)
+                if w[0] * w0[1] != w0[0] * w[1]:
+                    r_drift.append((int(CLASS[m]), k))
+        rep["D3"] = ("PASS (bijective lift; refined spectrum and conservation identical; refined B3 held)"
+                     if r_real == want and not r_drift and r_b3_ok
+                     else f"FIRE spectrum={r_real} drift={r_drift} refined_B3={r_b3_ok}")
     # D4g: off-shell channel defect on the r^2 sector
     psi, _ = mass_sector(R2)
     vs = [v_adm(psi)]

@@ -249,12 +249,13 @@ exactly (C3); and the (Wilson, 't Hooft) channel — the honest discrete
 one-body phase-space data — it is correlational. Successor: the
 pair-correlator channel, outcome open.
 
-## CLOSURE-3 adjudicated (2026-08-28): the memory ladder terminates at second order
+## CLOSURE-3 re-adjudicated (2026-08-28, external review confirmed): memory AT LEAST third-order
 
-v_pair separates every firing collision on a validated instrument (the
-pair-sensitivity plant's states are one-body-equal, pair-distinct). The
-coarse bookkeeping that closes this model is (one-body + pair); 2B's
-whole-pattern reading is BOUNDED accordingly. Sixth green campaign.
+The frozen gate scored separation of the coarse view's collisions but not
+the refined view's OWN closure; direct enumeration shows v_pair fires at
+(1,7). The corrected instrument scores both (M-FINAL-VIEW-COLLISIONS).
+The ladder stands OPEN upward: one-body fails, one-body+pair fails; the
+whole-pattern direction is un-bounded again.
 
 ## Requirement 1: COMPLETE on the abelian instance (2026-08-28, LOCAL-2B)
 

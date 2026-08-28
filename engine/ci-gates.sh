@@ -155,6 +155,25 @@ fi
 rm -f "$built_wasm"
 trap - EXIT
 
+# 10a2. CONFORMANCE REPRODUCIBILITY (added after an external re-review found
+#      three banked verdicts whose instruments were working-tree-only, one
+#      of them never committed at all -- M-STALE-INSTRUMENT). Every gravity
+#      instrument must IMPORT from the committed tree, and the fast ones
+#      must fresh-run green.
+repro_fail=0
+( cd ../conformance/gravity && python3 - <<'PYEOF'
+import sys, importlib
+sys.path.insert(0, ".")
+for mod in ("bridge1","bridge5","bridge6","bridge7","wilson1","wilson2",
+            "local1","local2","closure2","closure3","einstein_adm1","punctured_torus"):
+    importlib.import_module(mod)
+PYEOF
+) >/dev/null 2>&1 || repro_fail=1
+( cd ../conformance/gravity && timeout 600 python3 einstein_adm1.py >/dev/null 2>&1 ) || repro_fail=1
+( cd ../conformance/gravity && timeout 600 python3 punctured_torus.py >/dev/null 2>&1 ) || repro_fail=1
+[ "$repro_fail" -eq 0 ] && ok "gravity instruments import and fast campaigns fresh-run green" \
+  || no "gravity instruments import and fast campaigns fresh-run green"
+
 # 10b. holon-zx: the magic tier's canonicalizer, composed (quizx simplifies,
 #      holon evaluates). The DEFAULT build is gated here — it must compile
 #      and pass with no external dependency, because the whole point of the

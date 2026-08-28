@@ -40,6 +40,21 @@ randomizer at minimal instances.
 - The ratchet bridge: W = 2δ·W* in its regime; the prices anti-correlate;
   rent prices CLOSURE not IDENTITY. Kill: the verifier's checks.
 
+## Measured, added 2026-08-28 (SELECTOR-3)
+
+- **The observer-bootstrap selection principle**: a world contains its own
+  sufficient observers iff its macro law is fixed-point-free with
+  vanishing Z₂ holonomy — staked before its instrument, zero deviations
+  across all cycle types at n = 4 and 5, with the selected fraction
+  falling under the derived law [xⁿ](1−x)^{−1/2}e^{−x/2} → 0. The first
+  Ω-internal, lawful, stasis-excluding selection principle with rule-6
+  support. Scope: selection-up-to-Ω-isomorphism on finite fiber models;
+  it does not select our universe and does not derive T uniquely (the
+  automorphism-orbit ceiling stands). Kill: any cycle type at any tested
+  n violating the biconditional, or the fraction ceasing to fall.
+  (The same run KILLED the RENT-RECORD rider — equal-period collisions —
+  reported at full strength in SELECTOR3_RESULTS.md.)
+
 ## Wagers (positions we now choose to hold, each with its kill)
 
 - **W1 — the law is substrate-general.** The cross-face rent law holds on

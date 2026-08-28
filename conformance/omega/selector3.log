@@ -1,0 +1,112 @@
+==============================================================================
+SELECTOR-3 — the observer bootstrap, forward-staked
+prereg: conformance/omega/SELECTOR3_PREREG.md (frozen before this file)
+==============================================================================
+
+A.  THE STAKED MECHANISM (quoted from the freeze)
+------------------------------------------------------------------------------
+    |Ident_A(T)(T)| = 1  iff  the macro map is FIXED-POINT-FREE
+                              and the Z2 holonomy vanishes on every cycle.
+
+B.  n = 3  (DERIVATION — generated the hypothesis, not evidence)
+------------------------------------------------------------------------------
+    worlds (closed dynamics)      : 48
+    gauge orbits                  : 10  (brute conjugation, = the label)
+    |Ident| values observed       : section acts [1, 2, 8], view-aligned acts [8]
+    bootstrap passes              : 8/48 = 1/6 = 0.166667
+    mechanism deviations          : 0
+    separation route              : FULL exhaustive pair-BFS over every candidate, agreeing with the witness route
+    closed form [x^n](1-x)^-1/2 e^-x/2 : 1/6 -> MATCHES the measured fraction
+    S6: 203 views; closed-view count 4..203; argmin on 8 worlds of order [6] (max order in family = 6)
+
+B.  n = 4  (FORWARD TEST)
+------------------------------------------------------------------------------
+    worlds (closed dynamics)      : 384
+    gauge orbits                  : 20  (brute conjugation, = the label)
+    |Ident| values observed       : section acts [1, 2, 4, 16], view-aligned acts [16]
+    bootstrap passes              : 60/384 = 5/32 = 0.156250
+    mechanism deviations          : 0
+    separation route              : FULL exhaustive pair-BFS over every candidate, agreeing with the witness route
+    closed form [x^n](1-x)^-1/2 e^-x/2 : 5/32 -> MATCHES the measured fraction
+    S6: 4140 views; closed-view count 4..4140; argmin on 48 worlds of order [8] (max order in family = 8)
+
+B.  n = 5  (FORWARD TEST)
+------------------------------------------------------------------------------
+    worlds (closed dynamics)      : 3840
+    gauge orbits                  : 36  (holonomy label; brute verified at n<=4)
+    |Ident| values observed       : section acts [1, 2, 4, 8, 32], view-aligned acts [32]
+    bootstrap passes              : 544/3840 = 17/120 = 0.141667
+    mechanism deviations          : 0
+    separation route              : exhibited depth-1 witness for cross-macro pairs + exhaustive pair-BFS within the macro class
+    closed form [x^n](1-x)^-1/2 e^-x/2 : 17/120 -> MATCHES the measured fraction
+    S6: 115975 views; closed-view count 4..115975; argmin on 384 worlds of order [10] (max order in family = 12)
+
+C.  VERDICTS
+------------------------------------------------------------------------------
+  B0  : PASS — all dynamics bijective; identity sets by exhaustive pair-BFS (full at n=3,4; witness+BFS at n=5, the witness exhibited per pair); |Ident| verified orbit-invariant at every n
+  M1  : mechanism deviations at n=4: 0, n=5: 0 -> branch (a)
+        the biconditional holds across ALL cycle types at n=4 AND n=5:
+        rule-6 support for a selection principle — staked before the instrument existed.
+  M2  : fraction 1/6 (0.166667) > 5/32 (0.156250) > 17/120 (0.141667) -> branch (a): FALLING
+        derived law (a CONSEQUENCE of the mechanism, not independent evidence): fraction = [x^n](1-x)^-1/2 e^-x/2, matching enumeration at all three n: True
+        that law falls like e^-1/2/sqrt(pi n) ~ 0.342/sqrt(n) -> 0, so the selected class vanishes in the limit rather than stalling at a constant.
+  N1  : worlds [48, 384, 3840] vs gauge orbits [10, 20, 36]; worlds/orbits [4.8, 19.2, 106.7]
+        orbits GROW against growing worlds -> no positive support for S5; but the resolvable fraction collapses 10/48 -> 36/3840, so the CEILING on any Ω-internal selector loosens far slower than the world count.
+  N2  : S6 argmin orders per n: [[6], [8], [10]] vs family max order [6, 8, 12]
+        the map's advance prediction, as OPERATIONALISED there (minimising accidental closure selects the MAXIMAL-ORDER world), is FALSIFIED — it holds at n=3,4 and FAILS at n=5, where order 10 wins and the family reaches order 12.
+        POST-HOC characterisation, recorded as post-hoc and NOT as support (rule 6): the argmin is exactly the SINGLE-CYCLE world (the micro permutation transitive on all 2n states) at every n: True.
+        The two readings of 'maximal scrambler' coincide at n=3,4 and SEPARATE at n=5: coincide [True, True, False]. n=5 is the first model that could tell them apart, and it did — which is why the prediction had to be scored on a family it was not built on.
+        the identity is the argMAX at every n: True (it closes every view — the stasis pole seen from S6's side).
+  N3  : rent-multiset classes vs orbits: [(8, 10), (14, 20), (24, 36)]; collisions per n [2, 7, 14]
+        n=3: cycle types (1, 1, 1)/(1, 2) — macro periods (1, 2), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=3: cycle types (1, 1, 1)/(1, 2) — macro periods (1, 2), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=4: cycle types (1, 1, 1, 1)/(1, 1, 2) — macro periods (1, 2), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=4: cycle types (1, 1, 1, 1)/(1, 1, 2) — macro periods (1, 2), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=4: cycle types (1, 1, 1, 1)/(1, 1, 2) — macro periods (1, 2), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=4: cycle types (1, 1, 1, 1)/(2, 2) — macro periods (1, 2), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=4: cycle types (1, 1, 2)/(2, 2) — macro periods (2, 2), EQUAL >>> branch (b); view-indexed profile up to gauge separates: True
+        n=4: cycle types (1, 1, 2)/(2, 2) — macro periods (2, 2), EQUAL >>> branch (b); view-indexed profile up to gauge separates: True
+        n=4: cycle types (2, 2)/(4,) — macro periods (2, 4), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 1, 1, 1, 1)/(1, 1, 1, 2) — macro periods (1, 2), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 1, 1, 1, 1)/(1, 1, 1, 2) — macro periods (1, 2), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 1, 1, 1, 1)/(1, 1, 1, 2) — macro periods (1, 2), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 1, 1, 1, 1)/(1, 2, 2) — macro periods (1, 2), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 1, 1, 2)/(1, 2, 2) — macro periods (2, 2), EQUAL >>> branch (b); view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 1, 1, 1, 1)/(1, 1, 1, 2) — macro periods (1, 2), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 1, 1, 1, 1)/(1, 2, 2) — macro periods (1, 2), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 1, 1, 2)/(1, 2, 2) — macro periods (2, 2), EQUAL >>> branch (b); view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 1, 1, 2)/(1, 2, 2) — macro periods (2, 2), EQUAL >>> branch (b); view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 1, 1, 2)/(1, 2, 2) — macro periods (2, 2), EQUAL >>> branch (b); view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 1, 3)/(2, 3) — macro periods (3, 6), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 1, 3)/(2, 3) — macro periods (3, 6), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 2, 2)/(1, 4) — macro periods (2, 4), DIFFERENT; view-indexed profile up to gauge separates: True
+        n=5: cycle types (1, 2, 2)/(1, 4) — macro periods (2, 4), DIFFERENT; view-indexed profile up to gauge separates: True
+        -> branch (b) at n=4 and n=5 (n=3 is the derivation the conjecture was read from, not evidence)
+        the conjecture is DEAD as staked.  6 collisions merge worlds of EQUAL macro period, so the residue the frame-free summary loses is NOT always motion-memory:
+          n=4: cycle types (1, 1, 2) vs (2, 2), both macro period 2 — same motion, different world
+          n=4: cycle types (1, 1, 2) vs (2, 2), both macro period 2 — same motion, different world
+          n=5: cycle types (1, 1, 1, 2) vs (1, 2, 2), both macro period 2 — same motion, different world
+          n=5: cycle types (1, 1, 1, 2) vs (1, 2, 2), both macro period 2 — same motion, different world
+          n=5: cycle types (1, 1, 1, 2) vs (1, 2, 2), both macro period 2 — same motion, different world
+          n=5: cycle types (1, 1, 1, 2) vs (1, 2, 2), both macro period 2 — same motion, different world
+        The surviving weaker reading, stated as a reading and NOT as a result: every equal-period collision pairs cycle types with the SAME number of moved fibers but a different partition of them, so the lost bit is how the motion is DIVIDED, not whether it exists.
+        recoverability half (the FULL view-indexed profile up to gauge, not a coarsening): every collision separated at n=3,4,5: True; computed at every n: True.
+        So the frame-free summary loses distinctions at every size while the frame-KEEPING profile loses none — the rider's second half survives its own first half's death, and is the part worth carrying.
+  plants: (i) stasis FIRES — the identity's generated acts collapse to the identity map at every n, so it fails on emptiness of ACTION, not of structure
+          (ii) theorem control FIRES — the view-aligned vocabulary separates nothing at every n: |Ident| is exactly the macro class [8, 16, 32] (Break.lean T3, live)
+
+D.  VERDICT
+------------------------------------------------------------------------------
+  M1 (a), M2 (a), N3 (b) — a MIXED result, reported as one.
+  SELECTOR-3's OWN gates both passed: the observer-bootstrap
+  mechanism was staked before this instrument existed, holds across
+  every macro cycle type at n = 4 and n = 5, and the selected
+  fraction falls at every step under a derived law going to zero.
+  That is the programme's first rule-6 support for an Ω-internal
+  SELECTION principle, and it stands.
+  The RIDER died: N3's RENT-RECORD conjecture is falsified as
+  staked, by equal-period collisions at BOTH n = 4 and n = 5, named
+  above.  The rider is separable — it kills itself and touches
+  neither M1 nor M2 nor S3's ranking.
+
+  exit 2  (0 = gates passed and plants fired; 2 = valid run, staked gate killed; 1 = instrument invalid)

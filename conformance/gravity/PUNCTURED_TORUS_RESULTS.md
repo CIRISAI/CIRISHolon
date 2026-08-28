@@ -42,3 +42,28 @@ Core relation: EARNED (discrete instance, refinement-stable, plants
 firing). Remaining: the continuous deficit ladder (SU(2)-via-2T) and
 local-degree-of-freedom models where mass–deficit coexists with
 propagation. Named, unclaimed.
+
+
+## Re-adjudication after external re-review: D3's refined leg is VOID
+
+Confirmed by direct check: the refined step is NON-BIJECTIVE (it collapsed
+the a1·a2 splitting to (product, identity) — not a permutation, hence not
+dynamics) and the stepped refined state BREAKS the refined Gauss
+constraint. D3's "identical under refinement" is therefore VOID — the
+refined leg never ran valid dynamics, and the refined B3 was never in the
+registry (a second defect of the same run). D1 and D2 stand: the base
+instrument is sound (its step is a verified permutation and base B3 held).
+Registered as M-NONBIJECTIVE-STEP. **Requirement 2's "under refinement"
+clause is hereby returned to OWED.** The repair (frozen here, before the
+rerun, as amendment PT-1B): refine BOTH edges (a1,a2,b1,b2; 4096
+configurations), with the bijective lifts
+T_ref: (a1,a2,b1,b2) ↦ (a1,a2, a1a2·b1, b2) and
+S_ref: (a1,a2,b1,b2) ↦ (b1,b2, c·a1·c⁻¹, c·a2·c⁻¹) with c = b1b2 —
+each with an explicit inverse (stated in the instrument), bijectivity
+CHECKED by exhaustion before any gate is scored, refined Gauss at all
+three vertices, and refined B3 on every trajectory state.
+witness: none (amendment; carriers and plants as admitted, each plant's
+carrier asserted nonzero in the sector the plant acts on).
+misfits: contacts M-NONBIJECTIVE-STEP (registered here),
+M-FIXED-POINT-TRAJECTORY, M-PLANT-OBS, M-PLANT-SECTOR, M-GAUGE-LAUNDER,
+M-STALE-INSTRUMENT (instrument and re-adjudication committed together).

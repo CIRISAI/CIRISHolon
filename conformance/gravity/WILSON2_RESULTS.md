@@ -80,3 +80,16 @@ are not in tension: the D4 reading was a class-set over the TOTAL loop on
 an ambivalent group; this is an oriented spectral triple on a separated
 plaquette of a non-ambivalent one — the review's prescribed repair,
 measured to work.
+
+
+## Narrowing, per external re-review (2026-08-28)
+
+W1's earned claim is DISTINGUISHABILITY, not propagation: two DIFFERENT
+initial carriers evolve to states a separated observable tells apart. The
+causal-propagation claim (same carrier, local perturbation, response at a
+distance) is LOCAL-1E/2B's, where it was posed and passed in response
+form. The record's earlier phrase "the channel signal reaches the
+observable" is retired in favor of: the separated observable distinguishes
+the matter channels. misfits: this note contacts M-KINEMATIC-NONLOCAL
+(the propagation/correlation distinction it enforces) and M-LOOP-BLIND.
+witness: none (wording narrowed; no number changes).

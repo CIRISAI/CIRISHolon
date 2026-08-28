@@ -330,6 +330,26 @@ if [ -n "$repo_root" ]; then
     done <<< "$refs"
   done
 fi
+# 9c. THE PREREG AUDIT (ported from CIRISOntology after it was NOT used for
+#     BRIDGE-5/6/SCHWINGER-2 -- all three retro-refused). Every NEW freeze
+#     must pass Audit/prereg_audit.py: witnesses resolve in lean/, misfit
+#     registry contact is cited, gates carry numeric-or-EXACT criteria, and
+#     plants state the sector their carrier must be nonzero in. Historical
+#     freezes are FROZEN HISTORY: they cannot be edited to comply, so they
+#     are exempted BY NAME with their retro-refusals recorded in the results
+#     documents. Adding a name to this list requires a results document
+#     explaining why.
+PREREG_EXEMPT="GRAVITY_BRIDGE0_PREREG.md GRAVITY_BRIDGE0_V2_PREREG.md GRAVITY_BRIDGE1_PREREG.md GRAVITY_BRIDGE3_PREREG.md GRAVITY_BRIDGE5_PREREG.md GRAVITY_BRIDGE6_PREREG.md"
+audit_fail=0
+for pre in conformance/gravity/*_PREREG.md conformance/crystal/*_PREREG.md; do
+  [ -f "$pre" ] || continue
+  base=$(basename "$pre")
+  case " $PREREG_EXEMPT " in *" $base "*) continue;; esac
+  python3 ../Audit/prereg_audit.py "$pre" >/dev/null 2>&1 || { audit_fail=1; echo "  prereg audit refuses: $base"; }
+done
+[ "$audit_fail" -eq 0 ] && ok "every non-exempt prereg passes the prereg audit" \
+  || no "every non-exempt prereg passes the prereg audit"
+
 [ "$ref_fail" -eq 0 ] && ok "prereg cross-references resolve to a tracked file" \
   || no "prereg cross-references resolve to a tracked file (see missing targets above)"
 

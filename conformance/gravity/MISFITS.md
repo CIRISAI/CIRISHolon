@@ -1,0 +1,18 @@
+# The misfit registry — every named defect the bridge campaigns have produced
+
+*The prereg audit refuses a freeze whose text contacts a registered misfit's
+keywords without citing it. That is the mechanism that turns "we knew this"
+into "we applied this": the registry is grep-armed, not advisory.*
+
+| id | one line | born in |
+|---|---|---|
+| **M-GAUGE-LAUNDER** | a conjugacy-class observable cannot see orientation; ambivalent classes launder the sign | BRIDGE-1 |
+| **M-PARITY-PROTECT** | the parity sector is dynamically protected; observables inside it read constants | BRIDGE-1 |
+| **M-LOOP-BLIND** | every staked loop-class marginal was blind to the branch difference; "curvature at a distance" needs a separated gauge-invariant observable, not a global state distinction | BRIDGE-1 (M10) |
+| **M-PLANT-OBS** | observability is instrument-relative: a plant must be re-derived for THIS instrument and pre-checked to fire — four occurrences (BRIDGE0-V2, BRIDGE-5, BRIDGE-6 twice) | BRIDGE0-V2 (M8) |
+| **M-PLANT-SECTOR** | a plant's carrier must be nonzero IN THE SECTOR THE PLANT ACTS ON, not merely nonzero overall | BRIDGE-6 |
+| **M-BARE-CHARGE** | a bare charged pair is diagonal-invariant only; Gauss acts per vertex and annihilates it — dress with a Wilson line and VERIFY invariance before use | BRIDGE-5 (M14) |
+| **M-HOMOG** | the fan-disk Floquet family is parity-homogeneous and one term substitution does not break it; spatial locality needs a structurally inhomogeneous graph | BRIDGE-3, confirmed BRIDGE-6 |
+| **M-VOLUME-SCALE** | a lattice grid's N must scale with the coupling (N ≳ 20√x for the Schwinger family, per Bañuls et al. in our own sweep); one N range for every x under-resolves the fine columns | SCHWINGER-2 |
+| **M-COND-PROBE** | an operator applied AFTER the step is a conditioned probe, not endogenous dynamics; reciprocity claims need the operator inside T | BRIDGE-3 (external review) |
+| **M-ONE-MODEL-DELTA** | a defect measured against one chosen model earns "worse than that model"; the collision/minimax form earns "best memoryless" | BRIDGE-2 (external review) |

@@ -52,3 +52,36 @@ this pilot; the magic axis is the one we contest.
 Artifacts: the discriminator transcripts are reproducible from this
 file's commands; the tracker's circuits are public at their repo, pinned
 by the instance names in CAMPAIGNS.md.
+
+## Corrected-family rerun (v3 + v4), and the verdict's final form
+
+Corrected family (their gadget byte-structure: `tdg; h; p(θf); h`),
+defaults reported, success-checked, medians of 3:
+
+| N | 2 | 4 | 6 | 8 | 10 | 12 | 14 | 16 | 18 | 20 | 22 | 24 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| t (s) | 31.4 | 31.7 | 31.3 | 31.5 | 31.1 | 31.4 | 31.6 | 32.2 | 31.8 | 33.4 | 40.9 | 66.1 |
+
+**Structure: a ~31.4 s configuration floor through N≈18, then liftoff.**
+A whole-range straight-line fit is meaningless (it fits the floor; R²
+0.62). The honest fit is on FLOOR-SUBTRACTED excess at the liftoff points
+(N = 20, 22, 24: excess ≈ 2.0, 9.5, 34.6 s): slope ≈ 0.25–0.35
+decades/qubit — which extrapolates the excess at N = 70 to roughly
+**10¹³–10¹⁸ s under these defaults**, far ABOVE their 10⁷.
+
+**The pilot's staked question is now answered in its strongest form: the
+10⁷-second figure is not a stable property of the problem in either
+direction.** The same published recipe yields ~10³ s (a family defect —
+retracted above), ~10¹³⁺ s (corrected family, current-Aer defaults), or
+their 10⁷ (their configuration/version) — three answers spanning ten-plus
+orders, all "Aer extended stabilizer on the N×N face family."
+Three-point caveat carried: the liftoff slope rests on three points and
+is quoted as a bracket, not a constant.
+
+Consequence for Campaign #2, sharpened: the only configuration-free cost
+for this instance is the EXACT one — the face-native stabilizer-rank
+evaluation (~2.2×10⁸ branches at the face exponent) — and if
+current-Aer defaults genuinely sit at 10¹³⁺ for N = 70, an exact
+mesh-scale evaluation beats the incumbent tool by construction, not by
+tuning. The submission path is unchanged: build the face-native engine,
+price it on our own measured constants.

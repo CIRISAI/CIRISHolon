@@ -51,6 +51,11 @@ pub enum Surface {
     DiagPow(i64, usize),
     /// rz(kπ/4) = ζ16^{−k} · diag(1, ω^k) — carries its scalar.
     RzPow(i64, usize),
+    /// rz(±θ_F), θ_F = arccos(1/√3): EXACT in Z[ω][√3] (`face.rs`), not in
+    /// Z[ω]. Kept as a surface gate — it is not lowerable to the core
+    /// alphabet, so it is a REFUSAL for core consumers and a first-class
+    /// gate for the face engine. Sign is the rotation's sign.
+    Face(i8, usize),
 }
 
 /// One rewrite step: a surface gate is either CORE (transport ends) or a
@@ -99,6 +104,9 @@ pub fn rule(g: Surface) -> Result<Gate, (Vec<Surface>, i64)> {
         Ccz(a, b, c) => Err((vec![H(c), Ccx(a, b, c), H(c)], 0)),
         DiagPow(k, q) => Err((diag_word(k, q), 0)),
         RzPow(k, q) => Err((vec![DiagPow(k, q)], -k)),
+        // Not lowerable: the face phase lives one quadratic extension out.
+        // `lower` refuses it; the face engine consumes it directly.
+        Face(..) => Err((vec![], 0)),
     }
 }
 
@@ -125,6 +133,11 @@ pub fn lower(surface: &[Surface]) -> (Vec<Gate>, i64) {
     let mut phase_16: i64 = 0;
     fn go(g: Surface, core: &mut Vec<Gate>, phase: &mut i64, depth: u32) {
         assert!(depth < 8, "lowering must terminate: rule cycle detected");
+        assert!(
+            !matches!(g, Surface::Face(..)),
+            "Face gates are not lowerable to the core alphabet — route the \
+             program to the face engine (face.rs) instead of `lower`"
+        );
         match rule(g) {
             Ok(cg) => core.push(cg),
             Err((word, p)) => {
@@ -173,6 +186,19 @@ fn pi4_multiple(theta: f64) -> Option<i64> {
     let kr = k.round();
     if (k - kr).abs() < 4.0 * f64::EPSILON * kr.abs().max(1.0) {
         Some(kr as i64)
+    } else {
+        None
+    }
+}
+
+/// θ = ±arccos(1/√3) — the face angle, recognized EXACTLY (the value is
+/// then used symbolically; the float only classifies).
+fn face_angle(theta: f64) -> Option<i8> {
+    const TF: f64 = 0.955_316_618_124_509_2;
+    if (theta - TF).abs() < 1e-12 {
+        Some(1)
+    } else if (theta + TF).abs() < 1e-12 {
+        Some(-1)
     } else {
         None
     }
@@ -254,6 +280,9 @@ pub fn parse_surface(src: &str) -> Result<(usize, Vec<Surface>, Vec<usize>), Ref
             ("id" | "u0", _) => continue,
             ("rz", [q]) => match pi4_multiple(angle(line, param)?) {
                 Some(k) => RzPow(k, *q),
+                None if face_angle(angle(line, param)?).is_some() => {
+                    Face(face_angle(angle(line, param)?).unwrap(), *q)
+                }
                 None => {
                     return Err(refuse(
                         line,
@@ -291,6 +320,17 @@ pub fn parse_surface(src: &str) -> Result<(usize, Vec<Surface>, Vec<usize>), Ref
 /// Text → lowered Program: parse, then the one rewriter, scalar to ledger.
 pub fn parse(src: &str) -> Result<Program, Refusal> {
     let (n_qubits, surface, measured) = parse_surface(src)?;
+    if let Some(i) = surface.iter().position(|g| matches!(g, Surface::Face(..))) {
+        return Err(refuse(
+            0,
+            format!(
+                "program carries {} face rotation(s) (first at surface index {i}): EXACT in \
+                 Z[ω][√3] (face.rs) but not lowerable to the core alphabet. Route it to the \
+                 face engine via `parse_surface`; core consumers refuse by design",
+                surface.iter().filter(|g| matches!(g, Surface::Face(..))).count()
+            ),
+        ));
+    }
     let (gates, phase_16) = lower(&surface);
     let p16 = phase_16.rem_euclid(16);
     Ok(Program {

@@ -126,3 +126,24 @@ R and imaginary unit i, (1+iR)² = 2iR (deterministic toggle) and
   `BRIDGE_DEFECT_HALVES`, `BRIDGE_BACKREACTION`): the engine holds the
   gravity record's numbers as a test, so editing them without a new frozen
   campaign fails the build.
+
+## The exact-ring tower — complete, classified, and named where it ends
+
+The front-end's question "which rotations can be exact?" has a COMPLETE
+theoretical answer (Kronecker–Weber): `diag(1,z)` is exactly representable
+iff `z` lies in an abelian extension of ℚ, i.e. `z ∈ ℚ(ζ_n)` for some n.
+The wild families sort into four rungs, and `cyclo.rs::ring_for` classifies
+any angle into them:
+
+| family | phase | ring | status |
+|---|---|---|---|
+| Clifford+T (T, S, Z, CCZ, Toffoli) | ζ8 | `Z[ζ8]` = `ledger::Cyc` | ✓ the base |
+| Clifford hierarchy: rz(π/8), rz(π/16), … | ζ16, ζ32, ζ64 | `Z[ζ_{2^k}]` = `cyclo::Cyclo` | ✓ **the general 2-power tower**, with `Cyc` proved to embed into every rung (arithmetic commutes with the inclusion) |
+| face / T-type magic, arccos(1/√3) | NOT a root of unity, but `(1+i√2)/√3 ∈ ℚ(ζ24)` | `Z[ζ8][√3]` = `face::R3` | ✓ **the door to the IBM tracker's instances** |
+| qutrit ζ3 and every 24th root | ζ3, ζ6, ζ12, ζ24 | ALSO `face::R3` — it already carries i, √3, ½, so ζ3 = (−1+i√3)/2 is in it | ✓ free, verified |
+| **ζ9-class qutrit magic (Strange state)** | ζ9 | a CUBIC extension | **NAMED, not implemented** — the one rung outside the tower |
+| generic angles | transcendental-in-practice | none | refuse; Ross–Selinger synthesis under an accuracy-degrading Policy |
+
+Every rung refuses on i128 overflow exactly as the base ring does, and the
+classification is data (`RingFor`), so a caller can ask which ring a
+circuit needs before running it.

@@ -169,6 +169,12 @@ impl Cyc {
         Cyc { c: out, m: self.m }.normalize()
     }
 
+    /// Complex conjugate: ω̄ = −ω³, so conjugation reverses and negates the
+    /// odd part — exact, no floats.
+    pub fn conj(self) -> Cyc {
+        Cyc { c: [self.c[0], -self.c[3], -self.c[2], -self.c[1]], m: self.m }
+    }
+
     pub fn to_complex(self) -> (f64, f64) {
         let s = std::f64::consts::FRAC_1_SQRT_2;
         let w = [(1.0, 0.0), (s, s), (0.0, 1.0), (-s, s)];

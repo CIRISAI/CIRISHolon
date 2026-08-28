@@ -176,6 +176,7 @@ impl Dense {
                     }
                 }
             }
+            Face(..) => unreachable!("Face is not in the core oracle's alphabet — the face engine (face.rs) carries it, with its own exact-ring tests"),
             DiagPow(k, q) => self.diag1(q, zeta16_pow(2 * k)),
             RzPow(k, q) => {
                 self.diag1(q, zeta16_pow(2 * k));
@@ -302,7 +303,16 @@ fn text_surface_accepts_and_refuses_as_declared() {
     assert_eq!(p.n_qubits, 3);
     assert_eq!(p.measured, vec![0]);
     assert_eq!(p.residual_zeta16, 1, "one odd rz leaves the declared residual");
-    let bad = "qreg q[1];\nrz(0.9553166181245092) q[0];\n";
-    let e = parse(bad).unwrap_err();
-    assert!(e.reason.contains("CAMPAIGNS.md #2"), "refusal must name the route");
+    // The tracker's face angle is now RECOGNIZED exactly (face.rs's ring),
+    // and core consumers refuse it by design, naming the face engine.
+    let face = "qreg q[1];\nrz(0.9553166181245092) q[0];\n";
+    let (_, surf, _) = holon::qasm::parse_surface(face).expect("face angle must parse");
+    assert!(matches!(surf[0], Surface::Face(1, 0)), "face angle must become a Face gate");
+    let e = parse(face).unwrap_err();
+    assert!(e.reason.contains("face engine"), "core refusal must name the face engine");
+    // A genuinely unrepresentable angle still refuses at the surface, with
+    // its named routes.
+    let bad = "qreg q[1];\nrz(0.3) q[0];\n";
+    let e2 = parse(bad).unwrap_err();
+    assert!(e2.reason.contains("CAMPAIGNS.md #2"), "refusal must name the route");
 }

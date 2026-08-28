@@ -54,7 +54,38 @@ fn main() {
         clifford_sample(p.n_qubits, &gates);
         return;
     }
-    assert_eq!(args[1], "amp", "usage: holon-run amp|clifford-sample <file.qasm> [y-bits]");
+    if args[1] == "face-amp" {
+        // The face engine: exact amplitudes for programs carrying face
+        // rotations (Z[ω][√3]), with the canonical merge between rounds.
+        let src = std::fs::read_to_string(&args[2]).expect("read");
+        let (n, surface, _) = holon::qasm::parse_surface(&src).unwrap_or_else(|e| {
+            eprintln!("REFUSED (line {}): {}", e.line, e.reason);
+            std::process::exit(2);
+        });
+        let y: Vec<bool> = if args.len() > 3 {
+            args[3].trim().chars().map(|c| c == '1').collect()
+        } else {
+            vec![false; n]
+        };
+        let merge_every: usize = std::env::var("HOLON_FACE_MERGE")
+            .ok()
+            .and_then(|v| v.parse().ok())
+            .unwrap_or(1);
+        let faces = surface
+            .iter()
+            .filter(|g| matches!(g, holon::qasm::Surface::Face(..) | holon::qasm::Surface::T(_) | holon::qasm::Surface::Tdg(_)))
+            .count();
+        let t0 = std::time::Instant::now();
+        let (amp, peak) = holon::face::amplitude_face(n, &surface, &y, merge_every);
+        let (re, im) = amp.to_complex();
+        println!(
+            "{{\"seconds\": {:.6}, \"n\": {n}, \"magic_gates\": {faces}, \"peak_branches\": {peak}, \"re\": {re:.12}, \"im\": {im:.12}, \"p\": {:.12}}}",
+            t0.elapsed().as_secs_f64(),
+            re * re + im * im
+        );
+        return;
+    }
+    assert_eq!(args[1], "amp", "usage: holon-run amp|face-amp|clifford-sample <file.qasm> [y-bits]");
     let src = std::fs::read_to_string(&args[2]).expect("read");
     let p = holon::qasm::parse(&src).unwrap_or_else(|e| {
         eprintln!("REFUSED (line {}): {}", e.line, e.reason);

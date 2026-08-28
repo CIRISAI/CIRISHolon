@@ -14,6 +14,8 @@
 //! the certified holon-qasm tiers (QASM-1/2 records) as dev-dependencies.
 
 pub mod affine;
+pub mod cyclo;
+pub mod face;
 pub mod grain;
 pub mod ledger;
 pub mod magic;

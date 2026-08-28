@@ -49,3 +49,41 @@ be an eigenstate of the perturbation, and the freeze must name the vacuum.
 witness: none (carrier specification; no criterion changes). The pair
 remains Wilson-dressed per M-BARE-CHARGE, unchanged; only the FLUX sector
 of the vacuum changes.
+
+
+## 1C run: R ≡ 0 again — the true cause found, and amendment LOCAL-1D
+
+The 1C rerun still read zero response. The step-0 diagnostic proves the
+carrier and probe are now RIGHT (the perturbation moves the near triple
+from (1,0,0) to (0,0,1) exactly, pendant untouched); the response dies at
+step 1 because the electric term is a MAXIMALLY-MIXING unitary. This is a
+ring rigidity fact, verified by exhaustive search: at scale √3 every Z[ω]
+circulant unitary is either a pure permutation-phase (no mixing) or has
+all entries of equal modulus (maximal mixing — one application
+thermalizes the flux distribution and the observable saturates). At scale
+3 only trivial circulants exist. **At scale 3√3 weak couplers exist**, and
+the search finds `U_E = (c₀ + c₁L₁ + c₂L₂)/3√3` with
+`c₀ = 5+4ω, c₁ = 2+ω, c₂ = −1−2ω`: eigenvalue norms all exactly 27
+(unitary), diagonal weight 21/27, hopping 3/27 per direction — a genuine
+weak-coupling electric term, exact in the ring. Registered:
+**M-RING-MIXING** (a ring-scale constraint can force a unitary to be
+maximal-mixing; a propagation probe needs a weak coupler, which may live
+at a higher ring scale).
+
+**LOCAL-1D (frozen here, before the rerun):**
+1. `U_E` is the weak coupler above, gauge-covariant for the same
+   shift-polynomial reason as 1B's term (M-ELECTRIC-BASIS unchanged); the
+   dressed pair and every other operator unchanged (M-BARE-CHARGE
+   unchanged).
+2. Overflow REFUSAL is replaced by AUTO-PROMOTION (the engine's own
+   scale-the-carrier-to-the-circuit discipline, per the residue carrier's
+   design): when int64 headroom runs out the instrument promotes to
+   arbitrary-precision integers and CONTINUES, exactly. L3 (arrival,
+   steps 3–4) is therefore POSABLE again and reinstated as staked in the
+   admitted freeze.
+3. All criteria unchanged; plants unchanged, carriers and sectors as
+   admitted (M-PLANT-OBS, M-PLANT-SECTOR, M-PROBE-EIGENSTATE all carried;
+   the locality stake remains the response cone per M-KINEMATIC-NONLOCAL
+   and M-HOMOG; the misstake rule M-NULL-MISSTAKE untouched).
+witness: none (operator substitution with its unitarity check stated; a
+Lean brick for the eigenvalue-norm computation is named, not claimed)

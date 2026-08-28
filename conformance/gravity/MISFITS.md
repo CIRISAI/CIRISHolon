@@ -16,3 +16,5 @@ into "we applied this": the registry is grep-armed, not advisory.*
 | **M-VOLUME-SCALE** | a lattice grid's N must scale with the coupling (N ≳ 20√x for the Schwinger family, per Bañuls et al. in our own sweep); one N range for every x under-resolves the fine columns | SCHWINGER-2 |
 | **M-COND-PROBE** | an operator applied AFTER the step is a conditioned probe, not endogenous dynamics; reciprocity claims need the operator inside T | BRIDGE-3 (external review) |
 | **M-ONE-MODEL-DELTA** | a defect measured against one chosen model earns "worse than that model"; the collision/minimax form earns "best memoryless" | BRIDGE-2 (external review) |
+| **M-KINEMATIC-NONLOCAL** | the Gauss projector correlates every region; conditioning on ANY plaquette of a constrained state touches matter — a locality stake must separate dynamical propagation from kinematic constraint correlation | BRIDGE-7B |
+| **M-ELECTRIC-BASIS** | an electric term must be a FUNCTION OF SHIFT OPERATORS; a basis-change (Fourier) kernel is not gauge-covariant and B3 fires at once — the freeze must carry an invariance argument per operator | WILSON-1 |

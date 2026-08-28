@@ -59,3 +59,34 @@ unchanged).
 Gates carried verbatim from the admitted BRIDGE-7 freeze, each
 witness: none (measured gate; the staked theorem-level facts are G0's
 invariance construction and, for the fired R2', the M-LOOP-BLIND record).
+
+
+## BRIDGE-7B — completed, plants BOTH FIRE, and both staked claims die quotably
+
+```
+[base]    B3=PASS G0=PASS R1=PASS R2'=FIRE (channel does not reach the loop)
+[pendant] B3=PASS G0=PASS R1=PASS R2'=FIRE  R3'=FIRE (far MOVED: base=9223372036, far=3689348814)
+[plant i]  FIRES   [plant ii] FIRES (on the live off-channel carrier)
+```
+
+With the two-sided gauge demonstrated, the provisional fire is now final:
+
+1. **R2' is DEAD, validated.** On both graphs, with live carriers, the
+   loop-class observable cannot see which matter channel drove the pump.
+   M-LOOP-BLIND is measured, plant-validated physics.
+2. **R3' is DEAD in the OPPOSITE direction from BRIDGE-6.** There,
+   near == far (the term could not distinguish position). Here the pendant
+   plaquette's condition MOVED the matter reading — so the influence is not
+   local either. The honest reading: the Gauss projector KINEMATICALLY
+   correlates the pendant's holonomy with the matter channel (constraints
+   correlate at a distance — that is what a Gauss law is), so conditioning
+   on ANY plaquette of a constrained state touches matter. "Local" as
+   staked conflated dynamical propagation with kinematic constraint
+   correlation, and the experiment separated them: the DYNAMICAL signal is
+   invisible to coarse observables (R2'), while the KINEMATIC correlation
+   is everywhere (R3'). Registered as **M-KINEMATIC-NONLOCAL**.
+
+**Verdict: the CAMPAIGN completes with G0/R1/B3 earned on both graphs and
+both target claims dead by validated fires.** In this programme that is a
+successful campaign: two wrong beliefs converted into two named theorems-
+in-waiting. The successor observable (WILSON-1/2) inherits both lessons.

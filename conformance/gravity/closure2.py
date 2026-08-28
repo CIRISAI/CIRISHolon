@@ -72,8 +72,28 @@ def v_conf(st):
     parts.append(normalize(triple(st, W.HOL_LOOP)))
     return tuple(parts)
 
+def thooft_triple(st):
+    """CLOSURE-2B: the 't Hooft triple -- exact weights of the eigen-sectors
+    of the joint spoke shift D_m (gauge-invariant: the joint shift commutes
+    with every Gauss action). P_k = (1/3) sum_m w^{-km} D_m."""
+    A, B = st
+    out = []
+    for k in range(3):
+        accA = np.zeros(A.shape, dtype=object); accB = np.zeros(B.shape, dtype=object)
+        for m in range(3):
+            idx = W.BASE.copy()
+            for e in range(5):
+                idx = idx - W.DIG[e] * W.POW3[e] + ((W.DIG[e] + m) % 3) * W.POW3[e]
+            pa, pb = W.wpow_mul(A, B, (-k * m) % 3)
+            for mm in range(9):
+                np.add.at(accA[mm], idx, pa[mm])
+                np.add.at(accB[mm], idx, pb[mm])
+        n2 = accA * accA - accA * accB + accB * accB
+        out.append(int(np.sum(n2)))
+    return normalize(tuple(out))
+
 def v_ps(st):
-    return (v_conf(st),) + tuple(electric_triple(st, e) for e in range(5))
+    return (v_conf(st), thooft_triple(st))
 
 def nonzero(st):
     return int(np.count_nonzero(st[0]) + np.count_nonzero(st[1]))
@@ -131,18 +151,19 @@ def run():
 def plants(traj):
     ok = True
     psi0 = traj[0]
-    # (i) channel-blindness control: U_E on ONE edge changes electric, not conf?
-    # A single flux SHIFT (diagonal in nothing)... use the exact electric
-    # rotation: multiply by w^{DIG[e]} — DIAGONAL in flux, so v_conf triples
-    # (norms over flux classes) are unchanged; electric triples change.
+    # (i)' 2B: the flux-diagonal phase on a SPOKE is a dual-charge insertion
+    # and must SHIFT the 't Hooft triple; carrier sector = the triple's
+    # non-uniformity, asserted before scoring (M-PLANT-SECTOR).
+    t0 = thooft_triple(psi0)
+    assert len(set(t0)) > 1, f"plant (i) carrier 't Hooft triple uniform: {t0}"
     A, B = psi0
     pa, pb = W.wpow_mul(A, B, W.DIG[2][None, :] % 3)
     other = (pa, pb)
     same_conf = v_conf(other) == v_conf(psi0)
-    diff_ps = v_ps(other) != v_ps(psi0)
-    assert nonzero(other) > 0, "plant (i) carrier empty in its sector"
-    print(f"[plant i] flux-diagonal phase: v_conf equal={same_conf}, v_PS differ={diff_ps} -> "
-          f"{'FIRES' if same_conf and diff_ps else 'MISSED'}")
+    diff_ps = thooft_triple(other) != t0
+    assert nonzero(other) > 0, "plant (i) carrier empty"
+    print(f"[plant i] dual-charge insertion: v_conf equal={same_conf}, 't Hooft shifted={diff_ps} "
+          f"({t0} -> {thooft_triple(other)}) -> {'FIRES' if same_conf and diff_ps else 'MISSED'}")
     ok &= same_conf and diff_ps
     # (ii) conservation mutant: drop a ring factor at one step
     x = step(traj[0])

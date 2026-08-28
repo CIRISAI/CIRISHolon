@@ -1,3 +1,10 @@
 /lean/.lake/
 engine/crates/holon-gpu/target/
 engine/crates/holon-gpu/Cargo.lock
+
+# Run markers and launchers are session-local scaffolding, not record:
+# the RESULTS documents and run logs are the record.
+conformance/gravity/*.DONE
+conformance/gravity/launch_*.sh
+conformance/gravity/__pycache__/
+.claude/

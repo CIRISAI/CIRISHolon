@@ -1,0 +1,82 @@
+
+============================================================================
+A.  2T torus -- host conformance/gravity/pt2t.py, 576 configs, permutation
+============================================================================
+  G0 step bijective on all 576: True
+  G0 T_MAP bijective: True
+  G0 S_MAP bijective: True
+  G0 counting measure invariant (bijection): True
+  v_orbit      blocks=76  W = 0          lambda^2 = 1          [EXACT(permutation)]  G1=PASS(lower bound)
+  v_comm       blocks=3   W = 0          lambda^2 = 1          [EXACT(permutation)]  G1=PASS(lower bound)
+  v_classA     blocks=7   W = 3/4        lambda^2 = 0          [EXACT(M=Pi)]  G1=PASS(trivial: ceiling <= rent)
+  v_classpair  blocks=49  W = 43/144     lambda^2 = 83314400955958023823219723324755934805713423/83314400955958034348322121019121926842189884 [power-iteration lower bound]  G1=PASS(lower bound)
+  S1  W(v_orbit)=0  W(v_comm)=0  lambda=1 both: True
+      realised commutator classes [0, 1, 2], transfer counts [[168, 0, 0], [0, 24, 0], [0, 0, 384]]
+      transfer is exactly I3: True  ->  BRANCH(a)
+  S2  W(v_classA)=3/4 (staked 3/4, True);  W(v_classpair)=43/144 (staked 43/144, True)  ->  BRANCH(a)
+  R1  the four 2T rents = ['0', '0', '3/4', '43/144']; the rival (micro
+      mixing rate = 1 for every view) predicts ONE cost; measured 3 distinct  ->  BRANCH(a) rival refuted
+  B3  pt2t.gauss_holds on 12 projected states + step images: True
+      (the 576 configs are basis elements of mu, not registry states)
+
+============================================================================
+B.  tailed graph -- host conformance/gravity/local1.py, 12 edges,
+    531441 configs x 9 matter, unitary; mu uniform over basis states
+============================================================================
+  carriers for config 0 done (9 of 54)
+  carriers for config 1 done (18 of 54)
+  carriers for config 7 done (27 of 54)
+  carriers for config 271 done (36 of 54)
+  carriers for config 12345 done (45 of 54)
+  carriers for config 531440 done (54 of 54)
+
+  G0 total Born weight = 3^38 on all 54 carriers: True
+  S5 carrier-independence over 54 basis states (>= 54 required): distinct laws per view = {'v_e8': 1, 'v_pend': 1, 'v_rim': 1, 'v_p1': 1}  ->  BRANCH(a)
+
+  S3 perimeter law  W(L) = (2/3)(1 - (2/3)^L), lambda_e = 2/3 from the circuit alone
+     v_e8     L=1  staked 2/9        measured 2/9        MATCH   law=('7/9', '1/9', '1/9')
+     v_pend   L=3  staked 38/81      measured 38/81      MATCH   law=('43/81', '19/81', '19/81')
+     v_rim    L=5  staked 422/729    measured 422/729    MATCH   law=('307/729', '211/729', '211/729')
+     v_p1     L=3  staked 38/81      measured 38/81      MATCH   law=('43/81', '19/81', '19/81')
+     ->  BRANCH(a)
+
+  S4 conditioned plaquette (edges 4,9,0): 2 distinct laws
+     ('81', '57', '105') /243  on 18 carriers  matter=['diag']
+     ('57', '57', '129') /243  on 36 carriers  matter=['off']
+     mu-mixture (6 off : 3 diag) = ('65', '57', '121') /243   W = 122/243
+     staked 122/243, naive rival 114/243  ->  BRANCH(a) conditioned-operator correction confirmed
+
+  B3 local1.gauss_holds on the dressed vacuum + 2 step images: True
+     (basis carriers are elements of mu, not registry states -- they are
+      not gauge-invariant by construction and are not claimed to be)
+
+============================================================================
+PLANTS -- frozen carriers, on the DERIVATION substrates (held-out
+         discipline: no plant is scored on a held-out step map)
+============================================================================
+  [plant i]  carrier v_classA transfer rows; sector = row spread,
+             nonzero in the sector the plant acts on: 1/20
+             max-model 3/4 vs mean-model 4/5 -> FIRES
+  [plant ii] carrier v_ADM (28-block orbit view); sector = the twisted
+             transfer's off-diagonal, nonzero in the sector the plant
+             acts on: 64 of 64 configs re-routed
+             clean 0 -> twisted 7/32 -> FIRES
+  [plant iii] carrier the 3-edge pendant loop's increment law; sector =
+             that loop's mixing modulus, nonzero in the sector the plant
+             acts on: lambda_e 2/3 -> 0
+             W 38/81 -> 2/3 -> FIRES
+
+============================================================================
+G1 -- Theorem 2 on every view read:
+     2T/v_orbit         PASS(lower bound)
+     2T/v_comm          PASS(lower bound)
+     2T/v_classA        PASS(trivial: ceiling <= rent)
+     2T/v_classpair     PASS(lower bound)
+     TG/v_e8            PASS(exact)
+     TG/v_pend          PASS(exact)
+     TG/v_rim           PASS(exact)
+     TG/v_p1            PASS(exact)
+     TG/v_near          PASS(exact)
+============================================================================
+GATES: B3-2T=PASS  B3-TG=PASS  G0-2T=PASS  G0-TG=PASS  G1=PASS (9 views, all exact)  R1=BRANCH(a) rival refuted  S1=BRANCH(a)  S2=BRANCH(a)  S3=BRANCH(a)  S4=BRANCH(a) conditioned-operator correction confirmed  S5=BRANCH(a)
+VERDICT: no gate killed, no gate VOID; plants all FIRE

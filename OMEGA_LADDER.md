@@ -36,12 +36,14 @@ now instrument rules.
       presheaves, RG. Each a short document tying an existing theorem to
       the Ω vocabulary. Depends on rung 2.
 
-## Rung 4 — one cross-face compatibility law
-- [ ] Candidate: (T_c, μ_c) → mixing rate → g_c and minimum maintenance
-      cost. Prereg must DERIVE the functional form before any instrument,
-      then test on held-out exact substrates (Z3 fan, D4 torus, tailed
-      graph, 2T torus) with no per-domain refit. Depends on rung 2 for
-      vocabulary; instruments exist.
+## Rung 4 — one cross-face compatibility law: LANDED (2026-08-28)
+- [x] CROSS-FACE-1: rent = ceiling × (1 − retention), carried by the VIEW
+      mixing modulus (the micro rate is provably vacuous on permutations —
+      the ladder's literal wording was refuted as the campaign's own rival
+      gate, branch (a)). Eight exact-rational held-out predictions landed
+      with no refit, including a perimeter law for holonomy rent and a
+      derived conditioned-edge correction (122/243 over the naive
+      114/243). conformance/omega/CROSSFACE1_RESULTS.md.
 
 ## Rung 5 — the geometry sequence (the quantum-gravity pass)
 - [x] Finite-group holonomy (BRIDGE-2/3, WILSON-2B distinguishability)

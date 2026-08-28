@@ -89,11 +89,13 @@ def nonzero(st):
     return int(np.count_nonzero(st[0]) + np.count_nonzero(st[1]))
 
 def dressed_state():
+    """LOCAL-1C: the ZERO-FLUX dressed vacuum (Gauss projection of the
+    all-zero configuration) -- the BF vacuum, on which the flux shift acts
+    nontrivially. The uniform electric vacuum is shift-invariant and made
+    every response vacuously zero (M-PROBE-EIGENSTATE)."""
     A = np.zeros((9, N), dtype=np.int64); B = np.zeros_like(A)
     for q in range(3):
-        a = np.ones(N, dtype=np.int64); b = np.zeros(N, dtype=np.int64)
-        a, b = wpow_mul(a, b, (q * LINE) % 3)
-        A[3 * q + q] = a; B[3 * q + q] = b
+        A[3 * q + q][0] = 1   # LINE(config 0) = 0, so the dressing phase is 1
     return gauss_project((A, B))
 
 def channel_split(st):

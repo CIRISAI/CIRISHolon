@@ -13,13 +13,14 @@ distinguishability, ADM-1C confirmed sound. M-FINAL-VIEW-COLLISIONS and
 M-NONBIJECTIVE-STEP registered; identical-scorer-path and full-registry-B3
 now instrument rules.
 
-## Rung 2 — holon identity (freeze the category)
-- [ ] `lean/CIRISHolon/Omega.lean`: the Ω-object (fibers, measure,
-      dynamics, transport, cost), morphisms (coarse-grainings/re-rootings),
-      composition + identity laws, recursive closure; maximality defined
-      RELATIVE TO A ROOT (reconciling "no absolute maximal holon" with
-      "maximal object"). Depends on: nothing. Structural definitions +
-      basic laws only — completeness is rung 3's question, not assumed.
+## Rung 2 — holon identity: CLOSED (2026-08-28)
+- [x] `Omega.lean` (the skeleton, coarsenings, closure descent,
+      root-relative maximality) + `Identity.lean` (the fork resolved:
+      holon identity IS the observable/Moore quotient — fiber-internal
+      dynamics is GAUGE, as gauge theory treats orbit data; rung 3's
+      counterexample and rung 4's rent measurement jointly justify it, and
+      the definitions are written so a future fiber-measuring face REFINES
+      rather than contradicts). Machine-checked; builds green.
 
 ## Rung 3 — representational completeness: SETTLED both ways (2026-08-28)
 - [x] Provable direction machine-checked (Probe.lean); the CONVERSE is

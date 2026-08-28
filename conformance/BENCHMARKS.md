@@ -252,10 +252,29 @@ box carrying the DMRG referee — ratios far exceed load noise):
 | 128 | 20 | 5.2 ms | 1.58 s | 324 | 306× |
 | 256 | 24 | 78 ms | 36.7 s | 972 | 470× |
 
-**Verdict: the tuner's Pruned default stands confirmed by measurement.**
-Magic5's smaller branch space is real (the counts match the DP), but its
-per-branch constant is ~1000× behind — its recursive frames predate the
-affine rewrite. Projected crossover ≈ t=100 at current constants. Named
-optimization: route Magic5's frames through the rewritten affine engine,
-then re-sweep. `Unswept::Magic5VersusPruned` is retired to a measured
-note; `Magic5TimesSliced` and `SlicedOnRewrittenEngine` remain open.
+**Verdict: the tuner's Pruned default stands confirmed by measurement —
+but the CAUSE I first wrote was wrong, and the probe corrected it.**
+
+I first attributed the gap to Magic5's per-branch constant (~1000×
+behind). A diagnostic probe (`examples/magic5_probe.rs`) measured both
+arms directly and refutes that:
+
+| n | t | pruned branches AFTER DEDUP | magic5 branches | per-branch µs (pruned / magic5) |
+|---:|---:|---:|---:|---:|
+| 64 | 16 | **1** | 108 | 8.8 / 18.5 |
+| 128 | 20 | **1** | 324 | 33.2 / 64.8 |
+| 256 | 24 | **2** | 972 | 118 / 268 |
+
+Magic5's per-branch cost is only **2.0–2.3×** pruned's — both ride the
+rewritten affine engine. The entire 15–500× gap is **DEDUPLICATION**: on
+these random circuits the pruned path's canonical merge collapses a
+2^{t/2} branch space to ONE or TWO surviving branches, while Magic5
+evaluates all 108–972 of its (genuinely smaller-than-naive) branches.
+An exponent advantage cannot beat a collapse to O(1).
+
+Named optimization, corrected: give Magic5's branch space the SAME
+canonical dedup (its recursion produces many branches that are equal up
+to global scalar — exactly what `prune.rs` already merges exactly).
+Until then Magic5's regime is circuits whose branch space does NOT
+collapse. `Unswept::Magic5VersusPruned` retires to this measured note;
+`Magic5TimesSliced` and `SlicedOnRewrittenEngine` remain open.

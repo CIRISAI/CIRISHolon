@@ -339,15 +339,23 @@ fi
 #     are exempted BY NAME with their retro-refusals recorded in the results
 #     documents. Adding a name to this list requires a results document
 #     explaining why.
-PREREG_EXEMPT="GRAVITY_BRIDGE0_PREREG.md GRAVITY_BRIDGE0_V2_PREREG.md GRAVITY_BRIDGE1_PREREG.md GRAVITY_BRIDGE3_PREREG.md GRAVITY_BRIDGE5_PREREG.md GRAVITY_BRIDGE6_PREREG.md"
+# (Path bug caught by direct test: the first version globbed from engine/
+#  where conformance/ does not exist, audited ZERO files, and passed
+#  vacuously -- while the commit banking it claimed BRIDGE-2 passed. It is
+#  REFUSED like the others. A gate that inspects zero artifacts must refuse,
+#  and now does.)
+PREREG_EXEMPT="GRAVITY_BRIDGE0_PREREG.md GRAVITY_BRIDGE0_V2_PREREG.md GRAVITY_BRIDGE1_PREREG.md GRAVITY_BRIDGE2_PREREG.md GRAVITY_BRIDGE3_PREREG.md GRAVITY_BRIDGE5_PREREG.md GRAVITY_BRIDGE6_PREREG.md"
 audit_fail=0
-for pre in conformance/gravity/*_PREREG.md conformance/crystal/*_PREREG.md; do
+audit_seen=0
+for pre in ../conformance/gravity/*_PREREG.md ../conformance/crystal/*_PREREG.md; do
   [ -f "$pre" ] || continue
+  audit_seen=$((audit_seen+1))
   base=$(basename "$pre")
   case " $PREREG_EXEMPT " in *" $base "*) continue;; esac
   python3 ../Audit/prereg_audit.py "$pre" >/dev/null 2>&1 || { audit_fail=1; echo "  prereg audit refuses: $base"; }
 done
-[ "$audit_fail" -eq 0 ] && ok "every non-exempt prereg passes the prereg audit" \
+[ "$audit_seen" -gt 0 ] || { audit_fail=1; echo "  prereg audit saw ZERO preregs -- a vacuous gate is a failed gate"; }
+[ "$audit_fail" -eq 0 ] && ok "every non-exempt prereg passes the prereg audit (saw $audit_seen)" \
   || no "every non-exempt prereg passes the prereg audit"
 
 [ "$ref_fail" -eq 0 ] && ok "prereg cross-references resolve to a tracked file" \

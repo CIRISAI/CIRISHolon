@@ -3,6 +3,43 @@
 *Every tier: its status, the referee that certifies it, the benchmark target
 it is measured against, and the next milestone. A tier without a referee and
 a target is not scaffolded — it's a wish. Statuses are honest: ASSUMED means
+
+---
+
+## WHERE WE ARE — consolidated status, 2026-08-28
+
+*(This section supersedes the running appendices below for at-a-glance
+state; the appendices remain as the record of how each line was earned.)*
+
+| tier | status | referee & evidence | what banks it / next |
+|---|---|---|---|
+| 0 — classical bit-planes | **BANKED** | superset front-end certified per-rule; adaptive circuits (teleportation ×32 seeds, QEC cycle); explicit canonical form | done — inherits upward |
+| 1 — stabilizer | **BANKED** | ahead of stim 7/7 Born-vs-Born; canonicalizer explicit; rent law confirmed on this tier (OMEGA-CIRCUITS-1, 13/13 held-out) | done |
+| 2 — magic (Clifford+T + rings) | **BUILT, honestly second on structured circuits** | exact ring tower complete (ζ8→ζ_{2^k}→√3→any n); generic angles symbolic; simplifier + phase-poly passes; composed canonicalizer certified | native ZX canonical form (gadgetization gap located) — the tier's one missing leg |
+| mesh / GPU | **BUILT** | shard-invariant, bit-identical, 336–396× on 4090; merge law machine-checked | done — carries all tiers |
+| **crystal — gauge-coupled matter** | **ENTRY EARNED; REFEREE PENDING — the current gate** | instrument certified two-sided (ED 5e-14, mutation fires); grid diagnosis established by CONFIRMED forward prediction; SCHWINGER-3 running (per-column N, 18 points, checkpointed) | **BANKS when SCHWINGER-3's S1 lands branch (a): extrapolated M_V/g within 1/√π ± 0.05.** Branch (b) kills the referee claim; VOID re-examines the volume standard. No other dependency remains |
+| bulk — MPS | **INHABITED via crystal** | the crystal referee IS an MPS method (DMRG); canonical form standard | formalize as its own tier after crystal banks: staked targets + a Lean canonical-form brick |
+| physics / graphics | **LAW BANKED, TIER NAMED** | grain law (closure-aligned scheduling) machine-checked; browser WASM 65 KB | build depends on: crystal banked (the speed budget) + tuner Choice wired to render loop |
+
+**Gravity/Ω conformance riding the ladder** (not a tier, the programme that
+tests them): seven-plus green campaigns; rungs 1–5½ closed; rung 6 passed
+on quantum computation, field theory pending on SCHWINGER-3; rung 7 owns
+three artifacts (ring-scale mixing law, informed-rent discovery, the
+extension mechanism observed). Twenty registered misfits; every
+mechanizable kill has or is receiving its Lean brick.
+
+**The move-up graph (dependencies only, no calendar):**
+
+```
+SCHWINGER-3 completes ──> S1 branch (a) ──> CRYSTAL BANKED
+                                              ├─> bulk/MPS tier formalized (staked targets + canonical-form brick)
+                                              └─> physics/graphics build unblocked (grain-scheduled render loop,
+                                                    tuner Choice as the degradation contract)
+magic tier's ZX canonical form (independent) ──> tier 2 fully closed
+```
+
+SCHWINGER-3 is the sole blocking computation for the crystal bank; its
+grid is checkpointed, so the cost of any interruption is narration only.
 proven and no longer under test; BUILT means certified against its referee;
 SCAFFOLD means the object shape exists and the target is named; NAMED means
 only the plan exists.*

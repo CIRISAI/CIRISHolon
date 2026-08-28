@@ -568,3 +568,29 @@ engine's whole surface is larger; what this measures is the cost of
 *shipping a working exact simulator to a browser*, which is the number that
 matters for the WASM tier and is the honest comparison against quizx's
 equivalent export.
+
+## 2026-08-27, nineteenth entry: the QuiZX ladder, completed — final table
+
+The sweep finished. Its holon column was measured BEFORE the simplifier
+passes landed, so the honest table pairs quizx against BOTH: the engine as
+the sweep found it, and the engine as it stands with both passes wired.
+
+| qubits | T-count | quizx | holon (sweep, pre-passes) | holon (both passes) | quizx leads (current) |
+|---:|---:|---:|---:|---:|---:|
+| 12 | 56 | 1.7 ms | 25 ms | **2.0 ms** | 1.2× |
+| 16 | 84 | 3.2 ms | 230 ms | **41 ms** | 13× |
+| 20 | 112 | 4.3 ms | 866 ms | **272 ms** | 63× |
+| 24 | 140 | 5.7 ms | 7.29 s | **0.66 s** | 116× |
+| 30 | 196 | 6.2 ms | 49.9 s | **4.35 s** | 700× |
+| 40 | 350 | 21.5 ms | TIMEOUT >900 s | **TIMEOUT >900 s** | **≥42,000×** |
+
+**The passes bought 3–11× and did not change the shape.** At q=40 the
+engine still times out where quizx answers in 21 ms — a gap of at least
+four orders, and the honest reading is the one entries 16–17 established:
+this is the tier's missing canonical form, not a constant factor. The
+Clifford tier has its canonicalizer (the tableau, now explicit) and leads
+stim; the magic tier lacks its own (the ZX graph) and loses here. One
+structural fact explains both columns.
+
+Recorded as the campaign's clearest measured loss, alongside its clearest
+measured win, in the same document.

@@ -1,5 +1,10 @@
 //! Simplifier head-to-head: OUR passes vs quizx's full_simp, T-count
 //! reduction on identical random Clifford+T circuits.
+//!
+//! SUPERSEDED for the ZX column by `examples/zx_h2h.rs`, which reports the
+//! native pass on both the open and the CLOSED diagram (the closed reading is
+//! the one that prices a decomposition, and the one quizx was measured by).
+//! What is left here is the block-local ladder plus the ZX open reading.
 use holon::phasepoly::normalized_t_count;
 use holon::simplify::{magic_weight, simplify};
 fn main() {
@@ -18,7 +23,7 @@ fn main() {
                 let loc = simplify(&surf);
                 let after_local = magic_weight(&loc);
                 let after_pp = normalized_t_count(n, &loc);
-                let zx = holon::zx::simplified_t_count(n, &surf).unwrap_or(usize::MAX);
+                let zx = holon::zx::full_reduced_t_count(n, &surf).unwrap_or(usize::MAX);
                 println!("{name:28} n={n:3} raw_t={raw:4} local={after_local:4} ppoly={after_pp:4} ZX={zx:4}");
             }
             Err(e) => println!("{name:28} REFUSED: {}", e.reason),

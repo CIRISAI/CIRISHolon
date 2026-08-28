@@ -675,3 +675,50 @@ like every other — `Unswept::ComposedCanonicalizer` is the honest state
 until a sweep says which family gets which pass. The q=40 row (where the
 engine alone times out past 900 s) is still running and will be appended
 either way.
+
+## 2026-08-28, twenty-second entry: the NATIVE ZX canonical form — the tier-2 gap erased where it was measured
+
+*By the zx-native opus track; verified in the lead session (7 new exactness
+tests green, 180 total; examples re-run here). Committed with this entry.*
+
+**The original defect, diagnosed exactly** (correcting entry seventeen's
+location): gadgets are not manufactured — they are the RESIDUE of
+`gen_pivot`, which unfuses a non-Pauli phase onto a pendant spider AND
+THEN pivots the host vertex away. A gadgetizer that does not pivot the
+host out of the graph produces nothing, which is exactly what entry
+seventeen measured.
+
+**What ships**: a certified **T-count oracle** and a certified **exact
+scalar** — the reduced diagram's value is carried in the engine's own
+`Cyc` ring (the √2 bookkeeping falls out of the bit-packed sweep as a
+popcount), and for plugged diagrams `eval` before reduction, after
+reduction, and `run::amplitude` agree EXACTLY as ring elements. NO
+circuit extractor yet — stated plainly; the reduced diagram cannot hand a
+shorter circuit to the runner.
+
+**T-count oracle, honest table** (raw → local → phase-poly → native ZX
+vs quizx's full_simp):
+
+| file | raw | ours-ZX | quizx |
+|---|---:|---:|---:|
+| q20 d200 | 25 | **15** | 0 |
+| q20 d400 | 58 | **40** | 19 |
+| q30 d400 | 67 | **51** | 26 |
+| q40 d600 | 90 | **44** | 19 |
+| q50 d800 | 111 | **71** | 41 |
+
+Gadget fusion is alive (36–51% reduction, from 0%), and the remaining
+distance to quizx's 63–79% is the named residue — the oracle does NOT yet
+meet the quizx-agreement gate, and tier 2's T-count leg stays honestly
+second.
+
+**The headline is the EVALUATOR, and it closes the ledger's worst loss.**
+Entry nineteen recorded the hidden-shift ladder at ≥42,000×: engine
+TIMEOUT >900 s at q=40 vs quizx 21.5 ms. The native diagram evaluator
+(plug inputs/outputs, full_reduce, read the exact scalar) computes
+⟨shift|C|0⟩ = 1 EXACTLY at every rung of the ladder — **q=40 in 0.03 s**
+— with the flipped-bit control reading exactly 0. Same task, same
+circuits, exact ring arithmetic end to end. For strong simulation
+(amplitudes), the four-order gap on the family we lost on is GONE; what
+remains behind quizx is T-count minimization for circuit handoff, which
+is the extractor's job and is named as owed.

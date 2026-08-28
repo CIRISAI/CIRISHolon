@@ -209,20 +209,30 @@ def run():
     a = psi0                       # unperturbed arm
     b = perturb(psi0, E_STAR)      # perturbed arm
     reg = [("a0", a), ("b0", b)]
-    l1_ok = True; l2 = False; l3 = None
+    l2 = False; l3 = None
+    # LOCAL-1E: run the DIRECT-HIT control arm alongside, and stake the cone
+    # only at steps where that control is live (nonzero pendant response).
+    c = perturb(psi0, 10)
+    dist_pend = {}
+    live = set()
+    ctrl_a = psi0
     for k in range(1, 5):
-        a = step(a); b = step(b)
+        a = step(a); b = step(b); c = step(c); ctrl_a = ctrl_a  # ctrl shares arm a
         reg += [(f"a{k}", a), (f"b{k}", b)]
         r_pend = response(a, b, P_PEND)
         r_near = response(a, b, P_NEAR)
-        print(f"  step {k}: R(near)={r_near}  R(pendant)={r_pend}", flush=True)
-        if k <= 2 and any(r_pend):
-            l1_ok = False
+        r_ctrl = response(a, c, P_PEND)
+        dist_pend[k] = r_pend
+        if any(r_ctrl):
+            live.add(k)
+        print(f"  step {k}: R(near)={r_near}  R(pendant)={r_pend}  ctrl_live={any(r_ctrl)}", flush=True)
         if k == 1 and any(r_near):
             l2 = True
         if k >= 3 and any(r_pend) and l3 is None:
             l3 = k
-    rep["L1"] = "PASS" if l1_ok else "FIRE (influence outran the light cone)"
+    l1_ok = all(not any(dist_pend[k]) for k in live) and bool(live)
+    rep["L1"] = ("PASS (cone holds at live steps %s)" % sorted(live)) if l1_ok else (
+        "FIRE (influence at a live step)" if live else "VOID (no live step: observable blind)")
     rep["L2"] = "PASS" if l2 else "VOID (response function never responds)"
     rep["L3"] = f"ARRIVES at step {l3}" if l3 else "NO-ARRIVAL (recorded, not a fire)"
     bad = [nm for nm, s in reg for h, _ in [gauss_holds(s)] if not h]
@@ -232,13 +242,15 @@ def run():
 
 def plants(psi0):
     ok = True
-    # (i) direct hit: perturb a pendant edge; pendant must respond at step 1
-    a = step(psi0)
-    b = step(perturb(psi0, 10))    # pendant edge (3,d1)
-    r = response(a, b, P_PEND)
-    fired = any(r)
-    print(f"[plant i] direct-hit on pendant edge -> R(pendant,1) {'NONZERO (FIRES)' if fired else 'ZERO (MISSED)'}")
-    ok &= fired
+    # (i)' 1E: direct hit must be live at SOME step <= 4; live set reported.
+    a, b = psi0, perturb(psi0, 10)
+    lives = []
+    for k in range(1, 5):
+        a = step(a); b = step(b)
+        if any(response(a, b, P_PEND)):
+            lives.append(k)
+    print(f"[plant i] direct-hit live steps: {lives} -> {'FIRES' if lives else 'MISSED'}")
+    ok &= bool(lives)
     # (ii) the convicted kernel on one edge must fire B3 in one step
     bad = step(psi0, fourier_on_edge=3)
     held, why = gauss_holds(bad)

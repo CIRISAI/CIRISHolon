@@ -248,3 +248,10 @@ exactly (C3); and the (Wilson, 't Hooft) channel — the honest discrete
 (EINSTEIN-ADM-1), and where it fails, the missing memory is provably not
 one-body phase-space data — it is correlational. Successor: the
 pair-correlator channel, outcome open.
+
+## CLOSURE-3 adjudicated (2026-08-28): the memory ladder terminates at second order
+
+v_pair separates every firing collision on a validated instrument (the
+pair-sensitivity plant's states are one-body-equal, pair-distinct). The
+coarse bookkeeping that closes this model is (one-body + pair); 2B's
+whole-pattern reading is BOUNDED accordingly. Sixth green campaign.

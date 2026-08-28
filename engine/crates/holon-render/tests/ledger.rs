@@ -241,13 +241,15 @@ fn nve_momentum_gate() {
         s.momentum_residual_peak / bound
     );
     println!(
-        "  P0 = ({:.6e}, {:.6e})  P = ({:.6e}, {:.6e})",
-        p0.0, p0.1, p.0, p.1
+        "  P0 = ({:.6e}, {:.6e}, {:.6e})  P = ({:.6e}, {:.6e}, {:.6e})",
+        p0.0, p0.1, p0.2, p.0, p.1, p.2
     );
     // Walls off and no spring: the external impulse is not merely small, it is absent.
+    // The third component is asserted with the other two: this scene is the mid-plane
+    // slice of the 3D box, and a non-zero z impulse would mean the slice had leaked.
     assert_eq!(
         s.j_ext,
-        (0.0, 0.0),
+        (0.0, 0.0, 0.0),
         "no external force acted but impulse accrued"
     );
     assert!(

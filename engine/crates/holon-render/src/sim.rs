@@ -1,9 +1,28 @@
-//! Hydrogen atoms in a 2D box, integrated symplectically, with every energy and
-//! momentum flow written to a ledger.
+//! Hydrogen atoms in a box, integrated symplectically, with every energy and momentum
+//! flow written to a ledger.
 //!
 //! Units are Hartree atomic units throughout: length in bohr, energy in hartree, mass
 //! in electron masses, time in hbar/E_h (24.189 as). Nothing is converted for display
 //! except in the viewer, so no unit constant is ever applied twice.
+//!
+//! # Two dimensions and three, in ONE integrator
+//!
+//! The state carries three components per atom and the box has three pairs of faces.
+//! The 2D scene is not a separate code path: it is the exact z = depth/2 SLICE of the
+//! same 3D world. Every atom starts on that plane with `vz = 0`; the pair force along z
+//! is `(slope/r) * dz` with `dz = 0`, the z faces are never reached, so `az` is
+//! identically `0.0` and the plane is invariant — not approximately, exactly, because a
+//! float times zero is zero and adding zero to a finite float changes no bit. Every
+//! sum that grew a third term grew it in the order `(xx + yy) + zz`, so the 2D
+//! arithmetic is bit-for-bit what it was before the lift. That is what lets the canvas
+//! shell, the browser ABI and the existing gate tests carry over untouched.
+//!
+//! Exactly two things are genuinely dimension-dependent, and both are named rather than
+//! inferred: the equipartition denominator in [`Sim::temperature`] (2 translational
+//! degrees of freedom per atom against 3), and the opening scene in [`Sim::reset`].
+//! Both read [`Sim::dims`]. Everything else — the curve, the force law, the bond
+//! predicate, the turning point, the drift bound, the clocks — is RADIAL, a function of
+//! the scalar separation alone, and so carries into 3D with nothing to re-derive.
 
 use crate::clock::Timescale;
 use crate::holon::HolonLayer;
@@ -51,19 +70,42 @@ pub const DRIFT_SAFETY: f64 = 4.0;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum Boundary {
-    /// Soft quadratic walls on all four sides.
+    /// Soft quadratic walls on every face of the box: four sides in 2D, six in 3D.
     Walls,
     /// No walls at all. Translation invariance is exact, so total momentum is conserved
     /// to roundoff and the momentum gate has nothing to subtract.
     Open,
 }
 
+/// How many spatial dimensions the SCENE uses. The integrator always carries three
+/// components; this says how many of them the scene is allowed to move in, and it is
+/// read by exactly the two places where the answer differs (see the module header).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Dims {
+    /// The z = depth/2 plane. The default, and what the canvas shell draws.
+    Two,
+    /// The full box.
+    Three,
+}
+
+impl Dims {
+    /// Translational degrees of freedom per atom — the equipartition denominator.
+    pub fn dof(self) -> f64 {
+        match self {
+            Dims::Two => 2.0,
+            Dims::Three => 3.0,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Default)]
 pub struct Atom {
     pub x: f64,
     pub y: f64,
+    pub z: f64,
     pub vx: f64,
     pub vy: f64,
+    pub vz: f64,
 }
 
 /// One pair's bond reading, computed from the table alone.
@@ -99,17 +141,24 @@ pub struct Sim {
     pub boundary: Boundary,
     pub width: f64,
     pub height: f64,
+    /// The box's z extent. Unreachable in [`Dims::Two`], where every atom sits on the
+    /// mid-plane and no force can move it off — kept anyway, because the mid-plane is
+    /// defined as `depth / 2` and a scene that flips to [`Dims::Three`] must find a box
+    /// already centred on it rather than one that starts at a face.
+    pub depth: f64,
     /// The walls act on atom centres, inset by the drawn radius so the picture and the
     /// physics agree about where the edge is.
     pub wall_inset: f64,
+    /// Which dimensions the scene moves in. See the module header.
+    pub dims: Dims,
 
     // --- accelerations, kept split so the momentum ledger can name what is external ---
-    a_pair: [(f64, f64); MAX_ATOMS],
-    a_ext: [(f64, f64); MAX_ATOMS],
+    a_pair: [(f64, f64, f64); MAX_ATOMS],
+    a_ext: [(f64, f64, f64); MAX_ATOMS],
 
     // --- the user's spring ---
     pub grabbed: Option<usize>,
-    pub anchor: (f64, f64),
+    pub anchor: (f64, f64, f64),
 
     // --- thermostat (off by default) ---
     pub thermostat_on: bool,
@@ -127,8 +176,8 @@ pub struct Sim {
     /// The ledger's invariant at reset. `ledger() - w_ext` must equal this forever.
     pub l0: f64,
     /// Total momentum at reset, and the external impulse since.
-    pub p0: (f64, f64),
-    pub j_ext: (f64, f64),
+    pub p0: (f64, f64, f64),
+    pub j_ext: (f64, f64, f64),
 
     pub time: f64,
     pub steps: u64,
@@ -137,7 +186,8 @@ pub struct Sim {
     k_pair_max: f64,
     wall_engaged: bool,
     spring_engaged: bool,
-    e_ref: f64,
+    /// Largest energy scale the ledger has held; the bound's amplitude factor.
+    pub e_ref: f64,
     pub drift_peak: f64,
     pub momentum_residual_peak: f64,
 
@@ -162,18 +212,22 @@ impl Sim {
             atoms: [Atom {
                 x: 0.0,
                 y: 0.0,
+                z: 0.0,
                 vx: 0.0,
                 vy: 0.0,
+                vz: 0.0,
             }; MAX_ATOMS],
             n: 0,
             boundary: Boundary::Walls,
             width: 40.0,
             height: 24.0,
+            depth: 24.0,
             wall_inset: 0.6,
-            a_pair: [(0.0, 0.0); MAX_ATOMS],
-            a_ext: [(0.0, 0.0); MAX_ATOMS],
+            dims: Dims::Two,
+            a_pair: [(0.0, 0.0, 0.0); MAX_ATOMS],
+            a_ext: [(0.0, 0.0, 0.0); MAX_ATOMS],
             grabbed: None,
-            anchor: (0.0, 0.0),
+            anchor: (0.0, 0.0, 0.0),
             thermostat_on: false,
             target_temperature: 300.0,
             thermostat_tau: 2000.0,
@@ -183,8 +237,8 @@ impl Sim {
             e_spring: 0.0,
             w_ext: 0.0,
             l0: 0.0,
-            p0: (0.0, 0.0),
-            j_ext: (0.0, 0.0),
+            p0: (0.0, 0.0, 0.0),
+            j_ext: (0.0, 0.0, 0.0),
             time: 0.0,
             steps: 0,
             k_pair_max: 0.0,
@@ -219,6 +273,34 @@ impl Sim {
     pub fn adopt_table_timescale(&mut self) {
         let mu = 0.5 * M_H;
         self.timescale.from_table(&self.table, mu);
+    }
+
+    /// The scene's MODE-ENERGY scale: the amplitude factor the drift bound needs.
+    ///
+    /// This is deliberately NOT `energy()`. The harmonic derivation bounds the total
+    /// error by the sum over modes of each mode's own energy, and `energy()` is the
+    /// SIGNED total, in which kinetic energy and (negative) bond potential cancel. In a
+    /// scene with bonds they cancel almost exactly — which is precisely the situation the
+    /// gate is meant to police — so the signed total tracks the CONSERVED quantity while
+    /// the oscillation amplitudes it is supposed to stand for grow underneath it.
+    ///
+    /// Measured on the field-report repro (examples/gate_repro.rs, N = 11 walls on):
+    /// `|E| = 0.49` against modes carrying 5.3 Eh, and up to 37x apart on the
+    /// configuration that actually breached. Summing magnitudes is positive-definite, so
+    /// no cancellation is possible.
+    ///
+    /// It is an OVER-estimate by construction: a pair resting at the bottom of its well
+    /// carries no vibrational energy but contributes `D_e` here. That slack is bounded
+    /// (one `D_e` per bonded pair) and it errs toward a wider bound, which is the safe
+    /// direction for a term that multiplies a bound.
+    pub fn mode_energy(&self) -> f64 {
+        self.e_kin + self.e_pair.abs() + self.e_wall + self.e_spring
+    }
+
+    /// Largest pair curvature the force loop has actually evaluated since reset. Exposed
+    /// so the attribution probe can separate the two halves of the drift-bound fix.
+    pub fn k_pair_max(&self) -> f64 {
+        self.k_pair_max
     }
 
     /// Total energy currently held by the scene.
@@ -278,7 +360,16 @@ impl Sim {
     /// changed timestep cannot leave a stale bound behind — there is no stored bound to
     /// go stale.
     pub fn drift_bound(&self) -> f64 {
-        let mut omega_sq: f64 = self.timescale.omega_env * self.timescale.omega_env;
+        // Reachable curvature (the envelope, from the largest pair energy seen) OR
+        // VISITED curvature (the running max the force loop has actually evaluated),
+        // whichever is larger. The envelope is normally the bigger of the two, but it is
+        // refreshed from pair energies sampled at grain BOUNDARIES, so a brief excursion
+        // between two boundaries can be stiffer than anything the envelope knows about.
+        // `k_pair_max` costs nothing — the force loop already computes every curvature it
+        // maximises over — and it closes that gap.
+        let mu = 0.5 * M_H;
+        let k = self.timescale.k_env.max(self.k_pair_max);
+        let mut omega_sq: f64 = k / mu;
         if self.wall_engaged {
             omega_sq = omega_sq.max(K_WALL / M_H);
         }
@@ -301,10 +392,11 @@ impl Sim {
     /// impulse is accumulated as it enters the velocities. What is left is floating-point
     /// cancellation error only.
     pub fn momentum_residual(&self) -> f64 {
-        let (px, py) = self.momentum();
+        let (px, py, pz) = self.momentum();
         let dx = px - self.p0.0 - self.j_ext.0;
         let dy = py - self.p0.1 - self.j_ext.1;
-        (dx * dx + dy * dy).sqrt()
+        let dz = pz - self.p0.2 - self.j_ext.2;
+        (dx * dx + dy * dy + dz * dz).sqrt()
     }
 
     /// Roundoff bound for the momentum ledger. Each step commits O(N) floating-point
@@ -315,7 +407,7 @@ impl Sim {
         let mut p_scale: f64 = 0.0;
         for i in 0..self.n {
             let a = &self.atoms[i];
-            p_scale += M_H * (a.vx * a.vx + a.vy * a.vy).sqrt();
+            p_scale += M_H * (a.vx * a.vx + a.vy * a.vy + a.vz * a.vz).sqrt();
         }
         let p_scale = p_scale.max(1e-12);
         8.0 * (self.steps.max(1) as f64) * f64::EPSILON * p_scale
@@ -325,22 +417,31 @@ impl Sim {
         self.momentum_residual_peak <= self.momentum_bound()
     }
 
-    pub fn momentum(&self) -> (f64, f64) {
+    pub fn momentum(&self) -> (f64, f64, f64) {
         let mut px = 0.0;
         let mut py = 0.0;
+        let mut pz = 0.0;
         for i in 0..self.n {
             px += M_H * self.atoms[i].vx;
             py += M_H * self.atoms[i].vy;
+            pz += M_H * self.atoms[i].vz;
         }
-        (px, py)
+        (px, py, pz)
     }
 
+    /// Kinetic temperature by equipartition: `E_kin = (dof/2) N k_B T`.
+    ///
+    /// DIMENSION-DEPENDENT, and one of only two places in this file that is. The
+    /// degrees of freedom are the scene's, not the state vector's: a 2D scene has two
+    /// per atom even though the integrator carries three components, because the third
+    /// is frozen at zero and a frozen coordinate holds no thermal energy. At `dof = 2`
+    /// the factor `0.5 * dof` is exactly `1.0`, so the 2D reading is the same float it
+    /// has always been.
     pub fn temperature(&self) -> f64 {
         if self.n == 0 {
             return 0.0;
         }
-        // Two translational degrees of freedom per atom.
-        self.e_kin / (self.n as f64 * K_B)
+        self.e_kin / (0.5 * self.dims.dof() * self.n as f64 * K_B)
     }
 
     /// Place `n` atoms and zero the ledger. Deterministic: no RNG, so a reported run can
@@ -351,8 +452,14 @@ impl Sim {
         self.thermostat_on = false;
         let cx = 0.5 * self.width;
         let cy = 0.5 * self.height;
+        // The mid-plane. In `Dims::Two` this is the plane the whole scene lives on and
+        // never leaves; in `Dims::Three` it is just the box's centre.
+        let cz = 0.5 * self.depth;
+        let three = self.dims == Dims::Three;
         for i in 0..self.n {
             let a = &mut self.atoms[i];
+            a.z = cz;
+            a.vz = 0.0;
             if self.n <= 2 {
                 // The headline scene: two atoms drifting slowly TOWARD each other. They
                 // will collide, climb the repulsive wall, and separate again without
@@ -370,6 +477,29 @@ impl Sim {
                 a.y = cy;
                 a.vx = -sign * 0.0004;
                 a.vy = 0.0;
+            } else if three {
+                // The 3D counterpart of the ring: a deterministic Fibonacci SPHERE, at
+                // rest. Same properties that made the ring the right 2D opener — no RNG,
+                // so a reported run re-runs byte-for-byte, and near-uniform spacing so no
+                // pair opens inside the repulsive wall — and the same honest consequence:
+                // like the ring, a shell at rest opens with pairs already reading BONDED,
+                // because two atoms at rest at any finite separation have `E_rel = U(R) <
+                // 0`. That is the criterion telling the truth, not a defect; the two-atom
+                // scene is the one built to make the point, and it is the default.
+                //
+                // 6 bohr is the ring's radius kept: at N = 16 the nearest-neighbour
+                // spacing is ~3.4 bohr, comfortably outside the wall and inside the well.
+                let n = self.n as f64;
+                let golden = core::f64::consts::PI * (3.0 - 5.0f64.sqrt());
+                let w = 1.0 - 2.0 * (i as f64 + 0.5) / n;
+                let rho = (1.0 - w * w).max(0.0).sqrt();
+                let phi = (i as f64) * golden;
+                let radius = 6.0;
+                a.x = cx + radius * rho * phi.cos();
+                a.y = cy + radius * rho * phi.sin();
+                a.z = cz + radius * w;
+                a.vx = 0.0;
+                a.vy = 0.0;
             } else {
                 // A deterministic ring, at rest.
                 let theta = (i as f64) * core::f64::consts::TAU / (self.n as f64);
@@ -385,7 +515,7 @@ impl Sim {
 
     fn zero_ledger(&mut self) {
         self.w_ext = 0.0;
-        self.j_ext = (0.0, 0.0);
+        self.j_ext = (0.0, 0.0, 0.0);
         self.time = 0.0;
         self.steps = 0;
         self.frame = 0;
@@ -400,7 +530,7 @@ impl Sim {
         self.accumulate_energy();
         self.l0 = self.ledger();
         self.p0 = self.momentum();
-        self.e_ref = self.energy().abs().max(self.table.d_e.abs());
+        self.e_ref = self.mode_energy().max(self.table.d_e.abs());
         self.refresh_pairs();
         // Seed the curvature envelope from the pair energies this scene actually starts
         // with, not from zero: a scene of loosely bound pairs cannot reach the wall, and
@@ -439,7 +569,7 @@ impl Sim {
         self.refresh_pairs();
         self.refresh_envelope();
 
-        let e_now = self.energy().abs();
+        let e_now = self.mode_energy();
         if e_now > self.e_ref {
             self.e_ref = e_now;
         }
@@ -472,6 +602,8 @@ impl Sim {
         self.close_grain();
     }
 
+    /// Set an atom's in-plane velocity, leaving `vz` alone. On the mid-plane `vz` is
+    /// zero and stays zero, which is what keeps a scripted 2D scene two-dimensional.
     pub fn set_velocity(&mut self, i: usize, vx: f64, vy: f64) {
         if i < self.n {
             self.atoms[i].vx = vx;
@@ -479,10 +611,28 @@ impl Sim {
         }
     }
 
+    pub fn set_velocity_3d(&mut self, i: usize, vx: f64, vy: f64, vz: f64) {
+        if i < self.n {
+            self.atoms[i].vx = vx;
+            self.atoms[i].vy = vy;
+            self.atoms[i].vz = vz;
+        }
+    }
+
+    /// Set an atom's in-plane position, leaving `z` alone — same reasoning as
+    /// [`Sim::set_velocity`].
     pub fn set_position(&mut self, i: usize, x: f64, y: f64) {
         if i < self.n {
             self.atoms[i].x = x;
             self.atoms[i].y = y;
+        }
+    }
+
+    pub fn set_position_3d(&mut self, i: usize, x: f64, y: f64, z: f64) {
+        if i < self.n {
+            self.atoms[i].x = x;
+            self.atoms[i].y = y;
+            self.atoms[i].z = z;
         }
     }
 
@@ -494,16 +644,27 @@ impl Sim {
 
     // ---------------------------------------------------------------- forces
 
-    fn wall_energy_force(&self, x: f64, y: f64) -> (f64, f64, f64, bool) {
+    /// The soft quadratic box: `U = K_WALL * d^2 / 2` per face the atom has passed.
+    ///
+    /// The z faces are applied UNCONDITIONALLY, with no `dims` branch, and that is the
+    /// lift's load-bearing simplification rather than an oversight. A 2D scene sits at
+    /// `z = depth/2`, which is inside `[inset, depth - inset]` for any box deeper than
+    /// twice the inset, so neither z branch is taken, `u` and `fz` keep the exact zeros
+    /// they were initialised with, and `touched` is decided by x and y alone. The 2D
+    /// wall energy is therefore the same float it was before the box grew a lid — and
+    /// the box needs no mode flag to know which world it is in.
+    fn wall_energy_force(&self, x: f64, y: f64, z: f64) -> (f64, f64, f64, f64, bool) {
         if self.boundary == Boundary::Open {
-            return (0.0, 0.0, 0.0, false);
+            return (0.0, 0.0, 0.0, 0.0, false);
         }
         let lo = self.wall_inset;
         let hi_x = self.width - self.wall_inset;
         let hi_y = self.height - self.wall_inset;
+        let hi_z = self.depth - self.wall_inset;
         let mut u = 0.0;
         let mut fx = 0.0;
         let mut fy = 0.0;
+        let mut fz = 0.0;
         let mut touched = false;
         if x < lo {
             let d = lo - x;
@@ -527,7 +688,18 @@ impl Sim {
             fy -= K_WALL * d;
             touched = true;
         }
-        (u, fx, fy, touched)
+        if z < lo {
+            let d = lo - z;
+            u += 0.5 * K_WALL * d * d;
+            fz += K_WALL * d;
+            touched = true;
+        } else if z > hi_z {
+            let d = z - hi_z;
+            u += 0.5 * K_WALL * d * d;
+            fz -= K_WALL * d;
+            touched = true;
+        }
+        (u, fx, fy, fz, touched)
     }
 
     /// Recompute `a_pair` and `a_ext` from the current positions, and refresh the
@@ -535,8 +707,8 @@ impl Sim {
     /// internal forces (which cancel) from the external ones (which do not).
     fn compute_forces(&mut self) {
         for i in 0..self.n {
-            self.a_pair[i] = (0.0, 0.0);
-            self.a_ext[i] = (0.0, 0.0);
+            self.a_pair[i] = (0.0, 0.0, 0.0);
+            self.a_ext[i] = (0.0, 0.0, 0.0);
         }
         let mut e_pair = 0.0;
         let mut k_pair_max = self.k_pair_max;
@@ -545,7 +717,10 @@ impl Sim {
             for j in (i + 1)..self.n {
                 let dx = self.atoms[j].x - self.atoms[i].x;
                 let dy = self.atoms[j].y - self.atoms[i].y;
-                let r2 = dx * dx + dy * dy;
+                let dz = self.atoms[j].z - self.atoms[i].z;
+                // `(xx + yy) + zz`, in that order: on the mid-plane `zz` is an exact
+                // zero and adding it changes no bit of the 2D result.
+                let r2 = dx * dx + dy * dy + dz * dz;
                 // Two atoms at exactly the same point have no defined direction; the
                 // repulsive wall makes this unreachable dynamically, and the guard keeps
                 // it from being a NaN source if a caller places them there.
@@ -556,12 +731,15 @@ impl Sim {
                 let f_over_r = slope / r;
                 let fx = f_over_r * dx;
                 let fy = f_over_r * dy;
+                let fz = f_over_r * dz;
                 // Newton's third law, applied as one computed value with opposite signs:
                 // this is what makes the pair contribution cancel from the momentum sum.
                 self.a_pair[i].0 += fx;
                 self.a_pair[i].1 += fy;
+                self.a_pair[i].2 += fz;
                 self.a_pair[j].0 -= fx;
                 self.a_pair[j].1 -= fy;
+                self.a_pair[j].2 -= fz;
                 let ac = curv.abs();
                 if ac > k_pair_max {
                     k_pair_max = ac;
@@ -573,10 +751,12 @@ impl Sim {
 
         let mut e_wall = 0.0;
         for i in 0..self.n {
-            let (u, fx, fy, touched) = self.wall_energy_force(self.atoms[i].x, self.atoms[i].y);
+            let (u, fx, fy, fz, touched) =
+                self.wall_energy_force(self.atoms[i].x, self.atoms[i].y, self.atoms[i].z);
             e_wall += u;
             self.a_ext[i].0 += fx;
             self.a_ext[i].1 += fy;
+            self.a_ext[i].2 += fz;
             if touched {
                 self.wall_engaged = true;
             }
@@ -588,9 +768,11 @@ impl Sim {
             if g < self.n {
                 let dx = self.atoms[g].x - self.anchor.0;
                 let dy = self.atoms[g].y - self.anchor.1;
-                self.e_spring = 0.5 * K_SPRING * (dx * dx + dy * dy);
+                let dz = self.atoms[g].z - self.anchor.2;
+                self.e_spring = 0.5 * K_SPRING * (dx * dx + dy * dy + dz * dz);
                 self.a_ext[g].0 += -K_SPRING * dx;
                 self.a_ext[g].1 += -K_SPRING * dy;
+                self.a_ext[g].2 += -K_SPRING * dz;
                 self.spring_engaged = true;
             }
         }
@@ -600,7 +782,7 @@ impl Sim {
         let mut e_kin = 0.0;
         for i in 0..self.n {
             let a = &self.atoms[i];
-            e_kin += 0.5 * M_H * (a.vx * a.vx + a.vy * a.vy);
+            e_kin += 0.5 * M_H * (a.vx * a.vx + a.vy * a.vy + a.vz * a.vz);
         }
         self.e_kin = e_kin;
     }
@@ -621,32 +803,39 @@ impl Sim {
 
         let mut jx = 0.0;
         let mut jy = 0.0;
+        let mut jz = 0.0;
         for i in 0..self.n {
-            let (px, py) = self.a_pair[i];
-            let (ex, ey) = self.a_ext[i];
+            let (px, py, pz) = self.a_pair[i];
+            let (ex, ey, ez) = self.a_ext[i];
             self.atoms[i].vx += half * (px + ex);
             self.atoms[i].vy += half * (py + ey);
+            self.atoms[i].vz += half * (pz + ez);
             jx += 0.5 * dt * ex;
             jy += 0.5 * dt * ey;
+            jz += 0.5 * dt * ez;
         }
 
         for i in 0..self.n {
             self.atoms[i].x += dt * self.atoms[i].vx;
             self.atoms[i].y += dt * self.atoms[i].vy;
+            self.atoms[i].z += dt * self.atoms[i].vz;
         }
 
         self.compute_forces();
 
         for i in 0..self.n {
-            let (px, py) = self.a_pair[i];
-            let (ex, ey) = self.a_ext[i];
+            let (px, py, pz) = self.a_pair[i];
+            let (ex, ey, ez) = self.a_ext[i];
             self.atoms[i].vx += half * (px + ex);
             self.atoms[i].vy += half * (py + ey);
+            self.atoms[i].vz += half * (pz + ez);
             jx += 0.5 * dt * ex;
             jy += 0.5 * dt * ey;
+            jz += 0.5 * dt * ez;
         }
         self.j_ext.0 += jx;
         self.j_ext.1 += jy;
+        self.j_ext.2 += jz;
 
         self.accumulate_energy();
 
@@ -675,6 +864,14 @@ impl Sim {
         if d > self.drift_peak {
             self.drift_peak = d;
         }
+        // The amplitude factor is tracked here, not only at boundaries, for the same
+        // reason and at the same price: a collision that peaks between two boundaries
+        // raises the mode energy the bound has to cover, and a boundary sample of it
+        // would miss exactly the events that matter.
+        let m = self.mode_energy();
+        if m > self.e_ref {
+            self.e_ref = m;
+        }
     }
 
     /// Berendsen velocity rescaling. Whatever kinetic energy it adds or removes is
@@ -695,16 +892,18 @@ impl Sim {
         }
         let lambda: f64 = lambda_sq.sqrt();
         let before = self.e_kin;
-        let (pbx, pby) = self.momentum();
+        let (pbx, pby, pbz) = self.momentum();
         for i in 0..self.n {
             self.atoms[i].vx *= lambda;
             self.atoms[i].vy *= lambda;
+            self.atoms[i].vz *= lambda;
         }
         self.accumulate_energy();
         self.w_ext += self.e_kin - before;
-        let (pax, pay) = self.momentum();
+        let (pax, pay, paz) = self.momentum();
         self.j_ext.0 += pax - pbx;
         self.j_ext.1 += pay - pby;
+        self.j_ext.2 += paz - pbz;
     }
 
     // ---------------------------------------------------------------- the hand
@@ -716,7 +915,7 @@ impl Sim {
             return;
         }
         self.grabbed = Some(i);
-        self.anchor = (self.atoms[i].x, self.atoms[i].y);
+        self.anchor = (self.atoms[i].x, self.atoms[i].y, self.atoms[i].z);
         self.spring_engaged = true;
         self.compute_forces();
     }
@@ -726,16 +925,26 @@ impl Sim {
     /// energy by exactly `dU`, and `dU` IS the work the user's hand did. Posting it here
     /// is what keeps `E - W_ext` constant through a drag, with no path integral to
     /// approximate and no second-order error of its own.
+    ///
+    /// The 2D form holds the anchor's z, which on the mid-plane is the atom's own z, so
+    /// `dz` stays an exact zero and the work posted is the float it always was.
     pub fn move_anchor(&mut self, x: f64, y: f64) {
+        self.move_anchor_3d(x, y, self.anchor.2);
+    }
+
+    /// [`Sim::move_anchor`] with the third component. The work accounting is identical —
+    /// it is `dU` of one spring term either way.
+    pub fn move_anchor_3d(&mut self, x: f64, y: f64, z: f64) {
         let Some(g) = self.grabbed else { return };
         if g >= self.n {
             return;
         }
         let before = self.e_spring;
-        self.anchor = (x, y);
+        self.anchor = (x, y, z);
         let dx = self.atoms[g].x - x;
         let dy = self.atoms[g].y - y;
-        let after = 0.5 * K_SPRING * (dx * dx + dy * dy);
+        let dz = self.atoms[g].z - z;
+        let after = 0.5 * K_SPRING * (dx * dx + dy * dy + dz * dz);
         self.w_ext += after - before;
         self.compute_forces();
     }
@@ -789,17 +998,27 @@ impl Sim {
                 }
                 let dx = self.atoms[j].x - self.atoms[i].x;
                 let dy = self.atoms[j].y - self.atoms[i].y;
-                let r = (dx * dx + dy * dy).sqrt().max(1e-9);
+                let dz = self.atoms[j].z - self.atoms[i].z;
+                let r = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
                 let vx = self.atoms[j].vx - self.atoms[i].vx;
                 let vy = self.atoms[j].vy - self.atoms[i].vy;
-                let ke_rel = 0.5 * mu * (vx * vx + vy * vy);
+                let vz = self.atoms[j].vz - self.atoms[i].vz;
+                let ke_rel = 0.5 * mu * (vx * vx + vy * vy + vz * vz);
                 let u = self.table.u(r);
                 let e_rel = ke_rel + u;
-                // z-component of the relative angular momentum, for the centrifugal term.
-                let l = mu * (dx * vy - dy * vx);
+                // |L|^2 of the relative motion, for the centrifugal term. In 3D the
+                // relative motion of an isolated pair is planar but the plane is not the
+                // scene's, so the full cross product is needed — and it costs the 2D case
+                // nothing, because on the mid-plane `dz` and `vz` are exact zeros, the
+                // two transverse components are exactly `0.0`, and `l_sq` reduces to the
+                // `L_z^2` this line used to compute, bit for bit.
+                let lx = mu * (dy * vz - dz * vy);
+                let ly = mu * (dz * vx - dx * vz);
+                let lz = mu * (dx * vy - dy * vx);
+                let l_sq = lx * lx + ly * ly + lz * lz;
                 let r_outer =
                     self.table
-                        .outer_turning_point(e_rel, l * l, mu, r, TURNING_POINT_CAP);
+                        .outer_turning_point(e_rel, l_sq, mu, r, TURNING_POINT_CAP);
                 self.pairs[k] = PairReading {
                     i,
                     j,

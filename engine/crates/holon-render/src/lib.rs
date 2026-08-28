@@ -526,6 +526,11 @@ pub extern "C" fn holon_height() -> f64 {
 }
 
 #[no_mangle]
+pub extern "C" fn holon_depth() -> f64 {
+    sim().depth
+}
+
+#[no_mangle]
 pub extern "C" fn holon_wall_inset() -> f64 {
     sim().wall_inset
 }
@@ -557,12 +562,27 @@ pub extern "C" fn holon_atom_y(i: u32) -> f64 {
     }
 }
 
+/// The third component. Every 2D host can ignore it: in a [`sim::Dims::Two`] scene it
+/// reads `depth / 2` for every atom, forever, because nothing can move an atom off the
+/// mid-plane (see `sim.rs`'s header).
+#[no_mangle]
+pub extern "C" fn holon_atom_z(i: u32) -> f64 {
+    let s = sim();
+    let i = i as usize;
+    if i < s.n {
+        s.atoms[i].z
+    } else {
+        0.0
+    }
+}
+
 #[no_mangle]
 pub extern "C" fn holon_atom_speed(i: u32) -> f64 {
     let s = sim();
     let i = i as usize;
     if i < s.n {
-        (s.atoms[i].vx * s.atoms[i].vx + s.atoms[i].vy * s.atoms[i].vy).sqrt()
+        let a = &s.atoms[i];
+        (a.vx * a.vx + a.vy * a.vy + a.vz * a.vz).sqrt()
     } else {
         0.0
     }
@@ -574,8 +594,44 @@ pub extern "C" fn holon_set_velocity(i: u32, vx: f64, vy: f64) {
 }
 
 #[no_mangle]
+pub extern "C" fn holon_set_velocity_3d(i: u32, vx: f64, vy: f64, vz: f64) {
+    sim().set_velocity_3d(i as usize, vx, vy, vz);
+}
+
+#[no_mangle]
 pub extern "C" fn holon_set_position(i: u32, x: f64, y: f64) {
     sim().set_position(i as usize, x, y);
+}
+
+#[no_mangle]
+pub extern "C" fn holon_set_position_3d(i: u32, x: f64, y: f64, z: f64) {
+    sim().set_position_3d(i as usize, x, y, z);
+}
+
+// ------------------------------------------------------------------ dimensionality
+//
+// A MODE, not a second physics. The integrator carries three components either way;
+// this says how many the scene moves in, and it is read by exactly two things (the
+// equipartition denominator and the opening scene). See `sim.rs`'s header.
+
+/// 0 = the mid-plane (2D, the default and what the canvas shell draws), 1 = the full
+/// box. Takes effect at the next `holon_reset`, which is what places the atoms.
+#[no_mangle]
+pub extern "C" fn holon_set_dims(three: u32) {
+    let mut s = sim();
+    s.dims = if three == 0 {
+        sim::Dims::Two
+    } else {
+        sim::Dims::Three
+    };
+}
+
+#[no_mangle]
+pub extern "C" fn holon_dims() -> u32 {
+    match sim().dims {
+        sim::Dims::Two => 2,
+        sim::Dims::Three => 3,
+    }
 }
 
 // ------------------------------------------------------------------ pairs and bonds
@@ -735,6 +791,11 @@ pub extern "C" fn holon_momentum_y() -> f64 {
 }
 
 #[no_mangle]
+pub extern "C" fn holon_momentum_z() -> f64 {
+    sim().momentum().2
+}
+
+#[no_mangle]
 pub extern "C" fn holon_momentum_residual() -> f64 {
     sim().momentum_residual()
 }
@@ -800,6 +861,11 @@ pub extern "C" fn holon_move_anchor(x: f64, y: f64) {
 }
 
 #[no_mangle]
+pub extern "C" fn holon_move_anchor_3d(x: f64, y: f64, z: f64) {
+    sim().move_anchor_3d(x, y, z);
+}
+
+#[no_mangle]
 pub extern "C" fn holon_release() {
     sim().release();
 }
@@ -820,6 +886,11 @@ pub extern "C" fn holon_anchor_x() -> f64 {
 #[no_mangle]
 pub extern "C" fn holon_anchor_y() -> f64 {
     sim().anchor.1
+}
+
+#[no_mangle]
+pub extern "C" fn holon_anchor_z() -> f64 {
+    sim().anchor.2
 }
 
 // ------------------------------------------------------------------ thermostat

@@ -135,6 +135,15 @@ down), so the true energy swings by exactly `(w dt)^2 / 4` of the turning-point 
 does not drift secularly. Validated against the real curve: predicted 2.963e-8 Eh, measured
 2.869e-8 Eh, **ratio 0.968**.
 
+**The amplitude factor is the MODE energy, not the signed total.** The derivation bounds
+the error by the sum over modes of each mode's own energy. Using `|E_kin + E_pair + ...|`
+instead — the signed total — reads the CONSERVED quantity, and in a bonded scene the
+kinetic and (negative) bond terms cancel almost exactly, so it collapses while the
+oscillation amplitudes underneath it grow. That shipped, and it produced a live FALSE
+ALARM: the gate read 114.4% of bound on physics that was correct. Measured on the repro,
+the two are 8.4x apart at N = 11 and up to 37x on the configuration that breached.
+`Sim::mode_energy()` sums magnitudes, so no cancellation is possible. See `tests/longrun.rs`.
+
 > One thing worth knowing if you touch the scheduling: the drift EXTREMUM is tracked per
 > substep even though the gate VERDICT is evaluated at boundaries. Boundary-only sampling
 > is stroboscopic against the vibration — with `dt = period/64`, a 64-substep frame is
@@ -234,6 +243,8 @@ wasm point by point — the same function the integrator differentiates, not a c
 | `src/lib.rs` | the raw `extern "C"` ABI |
 | `tests/ledger.rs` | the ledger and bond gates (12) |
 | `tests/amendments.rs` | clocks, capacity, the capture plant, composite holons (16) |
+| `tests/longrun.rs` | the long-run many-body repro for the live gate failure (5) |
+| `examples/gate_repro.rs` · `gate_scaling.rs` · `gate_sweep.rs` | the diagnosis: instrumented repro, secularity + dt-scaling, and the sweep that found the breaching configuration |
 | `tests/engine_curve.rs` | the engine-computed curve: both routes, the interpolant, NVE, the ABI (7) |
 | `examples/make_placeholder.rs` | writes the placeholder fallback curve |
 | `check-wasm.mjs` | measures the SHIPPED wasm: generation time, and its residual against the referee |

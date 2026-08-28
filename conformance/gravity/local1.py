@@ -187,7 +187,9 @@ def run():
     b = perturb(psi0, E_STAR)      # perturbed arm
     reg = [("a0", a), ("b0", b)]
     l1_ok = True; l2 = False; l3 = None
-    for k in range(1, 5):
+    # LOCAL-1B: int64 carries exactly the cone's range (steps 1-2); L3 is
+    # UNPOSED at this capacity (see the amendment) rather than measured.
+    for k in range(1, 3):
         a = step(a); b = step(b)
         reg += [(f"a{k}", a), (f"b{k}", b)]
         r_pend = response(a, b, P_PEND)
@@ -201,7 +203,7 @@ def run():
             l3 = k
     rep["L1"] = "PASS" if l1_ok else "FIRE (influence outran the light cone)"
     rep["L2"] = "PASS" if l2 else "VOID (response function never responds)"
-    rep["L3"] = f"ARRIVES at step {l3}" if l3 else "NO-ARRIVAL (recorded, not a fire)"
+    rep["L3"] = "UNPOSED (capacity: arrival was staked at steps 3-4; int64 carries 2)"
     bad = [nm for nm, s in reg for h, _ in [gauss_holds(s)] if not h]
     rep["B3"] = "PASS" if not bad else f"FIRE {bad}"
     print("GATES: " + "  ".join(f"{k}={v}" for k, v in sorted(rep.items())), flush=True)

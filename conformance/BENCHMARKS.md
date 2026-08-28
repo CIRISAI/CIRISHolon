@@ -529,3 +529,42 @@ carrier, distributed certificates, the refusal discipline — sits ON TOP of
 a simplified circuit, not in competition with the simplifier. Building our
 own remains open with the gap now precisely located (gadgetization), which
 is worth far more to a future attempt than the two passes it took to find.
+
+## 2026-08-27, eighteenth entry: WASM size — 65 KB vs 390 KB, and why
+
+Identical build settings both sides (`opt-level = "z"`, LTO, one codegen
+unit, `panic = "abort"`, stripped), `wasm32-unknown-unknown`, each exposing
+one entry point that exercises its own engine end to end:
+
+| build | raw | gzipped | what it contains |
+|---|---:|---:|---|
+| **holon alone** | **64.8 KB** | **35.5 KB** | QASM superset parser, both simplifier passes, affine engine, exact ring, job API, merge law |
+| quizx alone | 390.1 KB | 138.3 KB | graph rewriter + decomposer + its dependency tree |
+| **composed** (quizx simplifies, holon evaluates) | **335.6 KB** | **118.1 KB** | quizx's simplifier + all of holon |
+
+**Two facts worth separating.**
+
+FIRST — **the composed build is SMALLER than quizx alone (336 vs 390 KB).**
+Not a paradox: the composition needs only quizx's *simplifier*, because
+holon does the evaluation, so quizx's decomposer never links. That is the
+composition working as designed — take the layer they do better, keep ours
+for the rest — and it shows up as bytes rather than as an argument.
+
+SECOND — **holon is 6× smaller than quizx, and the reason is the
+dependency tree, not cleverness.** `holon` has **zero external
+dependencies**; quizx pulls `num`, `rustc-hash`, `rayon`, `ndarray`,
+`approx`, `regex`, `rand`, `itertools`, `openqasm`, `rstest`, `serde`,
+`serde_json`, `derive_more`. Ours is small because of choices the exactness
+discipline forced anyway: exact integer arithmetic needs no float or bignum
+library, bit-packed representations are code-light, and the QASM parser was
+written rather than pulled in (which is also why its lowering rules could
+each be certified individually).
+
+**One honest qualifier, stated because it flatters us otherwise:** 64.8 KB
+is what is REACHABLE from that entry point after dead-code elimination —
+the residue carrier, the cyclotomic tower, the sliced evaluator, the ZX
+graph and the GPU path are not linked by this particular export. The
+engine's whole surface is larger; what this measures is the cost of
+*shipping a working exact simulator to a browser*, which is the number that
+matters for the WASM tier and is the honest comparison against quizx's
+equivalent export.

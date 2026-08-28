@@ -73,3 +73,16 @@ N ≳ 80 and the grid provides only 64, its N-convergence gap must be
 
 Either way the campaign's verdict is unchanged: SCHWINGER-2 is VOID. This
 prediction adjudicates the CAUSE, not the campaign.
+
+## The forward prediction: CONFIRMED at 18/18
+
+Staked at checkpoint 13, before the data: x=16's N-convergence gap must be
+WORSE than x=9's 0.01169, because the grid's fixed N under-resolves large
+x (N ≳ 20√x). Measured at 18/18: **0.02096 > 0.01169 — CONFIRMED**, and
+the runner's own frozen adjudication returns VOID (fewer than 3 posable
+x), matching the early call. Per house rule 6, the under-resolution
+diagnosis is now SUPPORTED by a confirmed advance prediction, and
+SCHWINGER-3's per-column N grid is warranted rather than merely plausible.
+The gap ordering across the grid — 0.0049 (x=4, resolved), 0.0117 (x=9,
+marginal), 0.0210 (x=16, under-resolved) — is monotone in x exactly as
+the finite-volume standard requires.

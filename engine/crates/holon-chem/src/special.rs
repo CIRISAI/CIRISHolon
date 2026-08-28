@@ -222,3 +222,85 @@ pub fn boys0_d2(t: D2) -> D2 {
     let [f0, f1, f2] = boys012(t.v);
     t.compose(f0, -f1, f2)
 }
+
+// ----------------------------------------------------------- the general Boys ladder
+//
+// The H2 path above needs `F_0`, `F_1`, `F_2` and nothing else, because s-type integrals
+// reach `F_0` and second-order differentiation reaches two rungs past it. The first row
+// brings p functions, and a (pp|pp) quartet's Hermite Coulomb tensor reaches `F_4`; two
+// more rungs for `D2` puts the requirement at `F_6`. The ladder below is the same two
+// branches, at general order.
+//
+// `boys012` is left EXACTLY as it was. It is the function the pinned H2 referee gate
+// grades, and a "generalisation" that changed its arithmetic by one rounding would move
+// a number the gate has already measured. The two are checked against each other in
+// `tests/md.rs` instead, at the same argument, which is the honest way to claim they are
+// the same function.
+
+/// Highest Boys order this module supplies: `F_0 .. F_8`.
+///
+/// Set by the worst case the first row can present, plus the derivative rungs: a
+/// (pp|pp) quartet needs `F_4`, `D2` needs `F_{m+2}` to close its chain rule, and one
+/// spare rung is kept so a future d-function does not silently index past the end.
+pub const BOYS_MAX_M: usize = 8;
+
+/// `F_0(t) .. F_{m_max}(t)`, all orders returned together because they share their work
+/// and the recursions need each other.
+///
+/// Same two branches and the same reasoning as [`boys012`]: below `BOYS_SERIES_MAX_T`
+/// the top order comes from its own all-positive series and the rest by DOWNWARD
+/// recursion (an addition of two positive numbers); above it `F_0` comes from the
+/// closed form and the rest by UPWARD recursion (a subtraction that is safe only once
+/// `e^{-t}` is negligible against `F_0`).
+///
+/// Orders above `m_max` are returned as zero and must not be read.
+pub fn boys_upto(m_max: usize, t: f64) -> [f64; BOYS_MAX_M + 1] {
+    assert!(m_max <= BOYS_MAX_M, "Boys order {m_max} above BOYS_MAX_M");
+    let mut f = [0.0f64; BOYS_MAX_M + 1];
+    let et = (-t).exp();
+    if t <= BOYS_SERIES_MAX_T {
+        // F_m(t) = e^{-t} sum_{i>=0} (2t)^i (2m-1)!! / (2m+2i+1)!!, whose i = 0 term is
+        // 1/(2m+1) and whose every later term is positive.
+        let m = m_max;
+        let mut term = 1.0 / ((2 * m + 1) as f64);
+        let mut sum = term;
+        let mut i = 0usize;
+        loop {
+            i += 1;
+            term *= (2.0 * t) / ((2 * m + 2 * i + 1) as f64);
+            sum += term;
+            if term < CONVERGE * sum || i > 4000 {
+                break;
+            }
+        }
+        f[m] = et * sum;
+        for k in (0..m).rev() {
+            f[k] = (2.0 * t * f[k + 1] + et) / ((2 * k + 1) as f64);
+        }
+    } else {
+        f[0] = (PI / (4.0 * t)).sqrt() * (1.0 - erfc_cf(t.sqrt()));
+        for k in 0..m_max {
+            f[k + 1] = (((2 * k + 1) as f64) * f[k] - et) / (2.0 * t);
+        }
+    }
+    f
+}
+
+/// The same ladder of a differentiated argument: `F_m(t(R))` carrying `d/dR` and
+/// `d2/dR2`, for every `m` up to `m_max`.
+///
+/// `dF_m/dt = -F_{m+1}` and `d2F_m/dt2 = +F_{m+2}` — which is why the value array is
+/// computed two rungs higher than the caller asked for, and why an order-`m` request
+/// costs nothing beyond that.
+pub fn boys_d2_upto(m_max: usize, t: D2) -> [D2; BOYS_MAX_M + 1] {
+    assert!(
+        m_max + 2 <= BOYS_MAX_M,
+        "Boys order {m_max} + 2 derivative rungs above BOYS_MAX_M"
+    );
+    let f = boys_upto(m_max + 2, t.v);
+    let mut out = [D2::c(0.0); BOYS_MAX_M + 1];
+    for (m, o) in out.iter_mut().enumerate().take(m_max + 1) {
+        *o = t.compose(f[m], -f[m + 1], f[m + 2]);
+    }
+    out
+}

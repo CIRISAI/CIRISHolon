@@ -38,7 +38,11 @@
 //! about arithmetic, not about hydrogen.
 
 pub mod dual;
+pub mod elements;
+pub mod fci;
 pub mod h2;
+pub mod md;
+pub mod pair;
 pub mod special;
 pub mod sto3g;
 pub mod table;

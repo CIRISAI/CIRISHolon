@@ -167,6 +167,31 @@
         </aside>
       </section>
 
+      <section class="palette-section" aria-label="Species palette">
+        <div class="palette-head">
+          <p class="eyebrow">THE PERIODIC PALETTE &middot; H&hellip;Ne</p>
+          <span class="palette-note" id="palette-provenance">loading&hellip;</span>
+        </div>
+        <div class="palette" id="palette" role="radiogroup" aria-label="Element to spawn"></div>
+        <div class="palette-detail">
+          <dl class="ledger" id="palette-facts">
+            <div><dt>element</dt><dd id="sp-name">&mdash;</dd></div>
+            <div><dt>Z <i>(declared)</i></dt><dd id="sp-z">&mdash;</dd></div>
+            <div><dt>mass <i>(declared, measured)</i></dt><dd id="sp-mass">&mdash;</dd></div>
+            <div><dt>basis functions</dt><dd id="sp-basis">&mdash;</dd></div>
+            <div class="rule"><dt>homonuclear pair</dt><dd id="sp-pair">&mdash;</dd></div>
+            <div><dt>&nbsp;&nbsp;determinants</dt><dd id="sp-ndet">&mdash;</dd></div>
+            <div><dt>&nbsp;&nbsp;separation</dt><dd id="sp-sep">&mdash;</dd></div>
+            <div><dt>drawn radius <i>(derived)</i></dt><dd id="sp-radius">&mdash;</dd></div>
+          </dl>
+          <p class="palette-rule" id="palette-rule">&mdash;</p>
+        </div>
+        <div class="banner warn" id="spawn-banner" hidden>
+          <b>SELECTOR ONLY</b>
+          <span id="spawn-note"></span>
+        </div>
+      </section>
+
       <section class="controls" aria-label="Scene controls">
         <div class="control-group">
           <button id="reset-button" type="button">Reset</button>

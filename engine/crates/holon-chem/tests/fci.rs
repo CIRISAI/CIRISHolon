@@ -515,63 +515,58 @@ fn the_spin_check_rejects_a_state_that_is_not_an_eigenstate() {
     assert!(multiplicity(3.0, 1e-9).is_none(), "3.0 is not S(S+1) either");
 }
 
-/// The spin sector along a whole CURVE — and the separation past which the question stops
-/// having an answer, measured rather than assumed.
+/// The multiplicity of the ground state along a whole CURVE, settled by DENSE
+/// diagonalisation, and the separation at which it changes.
 ///
-/// # What the sweep is for
+/// # The defect in this test's first version, which is the point of its second
 ///
-/// The single-geometry test converges each species once and checks `<S^2>` there. That is
-/// the shape of every defect this campaign has produced: a question asked where the answer
-/// was already known to be fine. THE PLACE A SOLVER SLIPS IS THE DISSOCIATION TAIL, where
-/// the singlet and the lowest triplet approach each other and a Davidson space that has
-/// drifted into the wrong sector converges with a residual that looks perfect. A check at
-/// `R_e`, where the gap is an electronvolt wide, cannot see any of it. The sibling
-/// `elements-referee` lane found exactly this on its own files — it had built `<S^2>` for
-/// the atoms and shipped four curves it had never checked were singlets.
+/// It swept `<S^2>` along each curve and, where the `S_z = 0` and `S_z = 1` sector floors
+/// coincided, declared the state "degenerate, spin unresolved". That inference is WRONG,
+/// and wrong in this campaign's recurring way: it used a quantity that cannot tell two
+/// causes apart, and then named one of them.
 ///
-/// # What the sweep FOUND, and why it does not assert purity everywhere
+/// `E_min(S_z = 1) - E_min(S_z = 0)` is not a singlet–triplet gap. A spin-`S` multiplet
+/// appears in every sector with `|S_z| <= S`, so a TRIPLET ground state sits at the floor
+/// of both sectors and the difference is zero — not because the two states are degenerate,
+/// but because they are the same state. The difference is therefore a detector for "is the
+/// ground state a singlet", nothing more.
 ///
-/// It fired, at HF and 12 bohr, reading `<S^2> = 1.0007` — not `S(S+1)` for any `S`. That
-/// is not a broken solve. It is a DEGENERACY, and the sweep now measures it instead of
-/// tripping over it: the `S_z = 1` sector cannot contain a singlet, so its lowest state is
-/// the lowest triplet, and the difference between the two sectors' ground energies IS the
-/// singlet–triplet gap. Measured along HF it runs 3.09e-1 at 2 bohr, 2.76e-7 at 8, 1.04e-10
-/// at 10, and 1.29e-12 at 12 — below the Davidson residual tolerance. Past that point the
-/// two states are numerically the same state, Davidson returns an arbitrary vector from the
-/// degenerate manifold, and the spin quantum number is simply not resolved.
+/// F2 is where that mattered. Its ground state genuinely CHANGES MULTIPLICITY: singlet
+/// near equilibrium, triplet from about 4.7 bohr outward, because at long range the
+/// two-centre exchange favours high-spin coupling between the two open-shell fluorines
+/// while the bonding term favours the singlet at short range. The first version read the
+/// triplet region as "unresolved" and asserted `<S^2> = 0` for F2 everywhere — an
+/// assumption that is simply false, and which passed only because its grid stepped over
+/// the crossing. The sibling `elements-referee` lane found the crossing independently, by
+/// dense diagonalisation, and its own emitter had the mirror-image bug: a guard refusing
+/// any species whose spin was not constant, which would have rejected F2 for being right.
 ///
-/// The ENERGY is right throughout — the two sectors agree to 1e-12, which is what
-/// degeneracy means — so nothing this crate reports is affected. What changes is which
-/// question the gate may ask:
+/// # What this version does instead
 ///
-/// * gap above [`GAP_RESOLVED`]: the state must be the ground multiplet, asserted.
-/// * gap below it: the two sectors must be DEGENERATE to that tolerance, asserted; and
-///   `<S^2>` is reported without an assertion, because there is nothing to assert.
+/// Every species here is at most 225 determinants, so the question is settled rather than
+/// inferred: the `S_z = 0` block is built from raw ladder operators and diagonalised
+/// densely, `<S^2>` is taken of every eigenvector, and the ground multiplicity is read off
+/// directly. No subspace method is involved, so nothing can be trapped in a spin sector.
 ///
-/// F2 crosses over by 6 bohr and HF by about 10, so both halves of this are exercised.
-/// A check that cannot distinguish two causes should say to look, not conclude.
+/// Asserted: the iterative solve agrees with the dense ground energy at every separation
+/// (a dual-route check along a whole curve, which the single-geometry test cannot give);
+/// the dense ground state is a spin eigenstate; and each species is a SINGLET at its
+/// equilibrium, which is the region every reported `R_e` and `D_e` comes from. The
+/// crossing separation is REPORTED as the derived quantity it is, not asserted.
 #[test]
-fn the_spin_sector_holds_along_the_whole_curve() {
-    use holon_chem::fci::{multiplicity, s_squared};
-
-    /// The singlet–triplet gap below which the two states are numerically one state.
-    ///
-    /// DECLARED, and set two orders above `davidson`'s 1e-11 residual tolerance: a gap the
-    /// solver cannot resolve is a gap it cannot choose a side of. Conservative on purpose
-    /// — HF at 10 bohr has a gap of 1.04e-10 and still returns a nearly pure singlet, so
-    /// this rule declines to assert in a case that would in fact have passed.
-    const GAP_RESOLVED: f64 = 1e-9;
+fn the_ground_multiplicity_along_the_curve_is_settled_densely() {
+    use holon_chem::fci::{dense_hamiltonian_ladder, multiplicity, s_squared};
 
     let sweeps: Vec<(&str, Species, Species, f64, Vec<f64>)> = vec![
-        ("H2", HYDROGEN, HYDROGEN, 0.0, vec![0.8, 1.0, 1.4, 2.0, 3.0, 4.5, 6.0, 8.0, 10.0, 14.0]),
-        ("LiH", LITHIUM, HYDROGEN, 0.0, vec![2.0, 2.5, 2.92, 3.5, 4.5, 6.0, 8.0, 10.0, 14.0]),
-        ("HF", HYDROGEN, FLUORINE, 0.0, vec![1.2, 1.6, 1.88, 2.4, 3.2, 4.5, 6.0, 8.0, 12.0]),
-        ("F2", FLUORINE, FLUORINE, 0.0, vec![2.0, 2.4, 2.62, 3.2, 4.0, 5.5, 7.0, 9.0, 12.0]),
+        ("H2", HYDROGEN, HYDROGEN, 1.4, vec![0.8, 1.4, 2.0, 3.0, 4.5, 6.0, 9.0]),
+        ("LiH", LITHIUM, HYDROGEN, 2.92, vec![2.0, 2.92, 4.0, 6.0, 9.0]),
+        ("HF", HYDROGEN, FLUORINE, 1.88, vec![1.2, 1.88, 2.6, 3.6, 5.0, 8.0]),
+        // Dense through the crossing the referee lane located at 4.7277 bohr.
+        ("F2", FLUORINE, FLUORINE, 2.62, vec![2.0, 2.62, 3.5, 4.4, 4.6, 4.8, 5.5, 8.0]),
     ];
 
-    for (label, a, b, want, rs) in sweeps {
-        let (mut resolved, mut degenerate) = (0usize, 0usize);
-        let (mut worst, mut worst_r, mut last_gap) = (0.0f64, 0.0f64, f64::NAN);
+    for (label, a, b, r_e, rs) in sweeps {
+        let mut trail: Vec<(f64, usize)> = Vec::new();
         for &r in rs.iter() {
             let species = [a, b];
             let basis = build_basis(&species, centers(Some(r)));
@@ -580,65 +575,143 @@ fn the_spin_sector_holds_along_the_whole_curve() {
             let x = cholesky_orthonormaliser(&ao.s, n).unwrap();
             let mo = transform(&ao, &x, n);
             let (_, na, nb) = electron_counts(&species);
-
             let space = FciSpace::new(n, na, nb);
-            let ground = solve(&space, &mo);
             assert!(
-                ground.residual < 1e-8,
-                "{label} at R = {r}: not converged ({:.3e}); a spin reading off an \
-                 unconverged vector says nothing",
-                ground.residual
+                space.n_det <= 256,
+                "{label}: {} determinants is too many to settle densely",
+                space.n_det
             );
-            // The S_z + 1 sector holds no singlet, so its floor IS the lowest triplet.
-            let triplet_space = FciSpace::new(n, na + 1, nb - 1);
-            let triplet = solve(&triplet_space, &mo);
-            let gap = triplet.e.v - ground.e.v;
-            last_gap = gap;
 
-            let s_sq = s_squared(&space, &ground.vector);
-            if gap > GAP_RESOLVED {
-                resolved += 1;
-                let (_, mult) = multiplicity(s_sq, 1e-6).unwrap_or_else(|| {
+            // The whole block, from raw ladder operators. No subspace method anywhere, so
+            // no spin sector can trap it.
+            let ci = ci_ints(&mo, Order::Value);
+            let dense = dense_hamiltonian_ladder(&space, &ci, n);
+            let (evals, evecs) = jacobi_eigh(&dense, space.n_det);
+            let ground: Vec<f64> = (0..space.n_det)
+                .map(|row| evecs[row * space.n_det])
+                .collect();
+            let s_sq = s_squared(&space, &ground);
+
+            // Whether the ground LEVEL is degenerate is a fact the dense spectrum already
+            // holds, so it is read rather than inferred. A Hamiltonian commuting with S^2
+            // has spin-eigenstate eigenvectors ONLY where its levels are simple: inside a
+            // degenerate level any basis is an eigenbasis, and Jacobi returns an arbitrary
+            // one, which need not be a spin eigenstate. F2 at 8 bohr reads
+            // <S^2> = 1.99991 for exactly that reason -- 99.995% triplet with a trace of
+            // singlet mixed in by the rotation order, not a defect and not a measurement.
+            const LEVEL_SIMPLE: f64 = 1e-9;
+            let level_gap = evals[1] - evals[0];
+            let mult = if level_gap > LEVEL_SIMPLE {
+                let (_, m) = multiplicity(s_sq, 1e-6).unwrap_or_else(|| {
                     panic!(
-                        "{label} at R = {r}: <S^2> = {s_sq} is not S(S+1) for any \
-                         half-integer S, and the gap {gap:.3e} is wide enough that it \
-                         should be — the converged vector is not a spin eigenstate"
+                        "{label} at R = {r}: the DENSE ground eigenvector has \
+                         <S^2> = {s_sq}, which is not S(S+1) for any half-integer S, and \
+                         the level is SIMPLE (gap to the next state {level_gap:.3e}). A \
+                         simple eigenvector of a Hamiltonian that commutes with S^2 must \
+                         be a spin eigenstate."
                     )
                 });
-                let dev = (s_sq - want).abs();
-                if dev > worst {
-                    worst = dev;
-                    worst_r = r;
-                }
-                assert!(
-                    dev < 1e-6,
-                    "{label} at R = {r} bohr: <S^2> = {s_sq:.9}, wanted {want} \
-                     (multiplicity {mult}), with a resolved gap of {gap:.3e}. The solve is \
-                     in the wrong spin sector."
-                );
+                m
             } else {
-                degenerate += 1;
-                // The claim that survives degeneracy: the two sectors are the SAME energy.
-                // That is the whole content of the tail, and it is checkable.
-                assert!(
-                    gap.abs() <= GAP_RESOLVED,
-                    "{label} at R = {r}: the sectors are neither resolved nor degenerate \
-                     (gap {gap:.3e})"
-                );
+                // A degenerate level does not automatically defeat the question. Any basis
+                // of it is an eigenbasis, so no single vector's <S^2> means anything by
+                // itself — but if EVERY vector in the level reports the same multiplicity,
+                // the level is spin-pure and the multiplicity is resolved regardless. That
+                // is not a corner case here: F2 has degenerate pi orbitals, so its triplet
+                // region is spatially two-fold and every vector in it reads exactly 2.
+                // Only where the level actually spans different multiplicities -- F2's
+                // four-fold level at 8 bohr, where singlet and triplet have come together
+                // -- is the question genuinely unanswerable.
                 assert!(
                     (0.0..=2.0 + 1e-6).contains(&s_sq),
-                    "{label} at R = {r}: <S^2> = {s_sq} is outside the singlet-triplet \
-                     manifold the degeneracy spans"
+                    "{label} at R = {r}: <S^2> = {s_sq} lies outside the singlet-triplet \
+                     manifold the degenerate level spans"
                 );
-            }
+                let order = evals
+                    .iter()
+                    .take_while(|e| **e - evals[0] <= LEVEL_SIMPLE)
+                    .count();
+                let mults: Vec<Option<usize>> = (0..order)
+                    .map(|k| {
+                        let v: Vec<f64> = (0..space.n_det)
+                            .map(|row| evecs[row * space.n_det + k])
+                            .collect();
+                        multiplicity(s_squared(&space, &v), 1e-6).map(|x| x.1)
+                    })
+                    .collect();
+                let agreed = mults[0].filter(|m| mults.iter().all(|x| x == &Some(*m)));
+                match agreed {
+                    Some(m) => {
+                        println!(
+                            "    {label} R = {r}: ground level {order}-fold degenerate \
+                             (gap {level_gap:.2e}) but SPIN-PURE -- every vector reads \
+                             multiplicity {m}, so it is resolved"
+                        );
+                        m
+                    }
+                    None => {
+                        println!(
+                            "    {label} R = {r}: ground level {order}-fold degenerate \
+                             (gap {level_gap:.2e}) and spans multiplicities {mults:?} -- \
+                             not resolved, not asserted"
+                        );
+                        0
+                    }
+                }
+            };
+
+            // The iterative solve must land on the same energy. This is the dual-route
+            // check the single-geometry test makes, made along the whole curve — including
+            // the tail, where it is hardest.
+            let iterative = solve(&space, &mo);
+            let delta = (iterative.e.v - evals[0]).abs();
+            assert!(
+                delta < 1e-9,
+                "{label} at R = {r}: Davidson gives {:.12} against the dense {:.12}, a \
+                 difference of {delta:.3e}. The iterative solve is not on the ground state.",
+                iterative.e.v,
+                evals[0]
+            );
+            trail.push((r, mult));
         }
-        println!(
-            "  {label:>4}: {} separations — {resolved} with a resolved gap (multiplicity \
-             asserted, worst |<S^2> - {want}| = {worst:.2e} at R = {worst_r}), {degenerate} \
-             degenerate past the solver's resolution (gap at the tail {last_gap:.2e}, spin \
-             reported not asserted)",
-            rs.len()
+
+        // Every species reported here is a singlet at equilibrium, and that is the region
+        // every published R_e and D_e comes from.
+        let at_eq = trail
+            .iter()
+            .find(|(r, _)| (*r - r_e).abs() < 1e-9)
+            .unwrap_or_else(|| panic!("{label}: the sweep does not visit its equilibrium"));
+        assert_eq!(
+            at_eq.1, 1,
+            "{label} at its equilibrium R = {}: ground multiplicity {} — every reported \
+             well depth for this species assumes a singlet there",
+            at_eq.0, at_eq.1
         );
-        assert!(resolved >= 4, "{label}: too few resolved separations to be a test");
+
+        // Crossings are read only across separations where the multiplicity was actually
+        // resolved; an unresolved point is a gap in the record, not a change in it.
+        let resolved: Vec<(f64, usize)> = trail.iter().copied().filter(|(_, m)| *m > 0).collect();
+        assert!(
+            resolved.len() >= 3,
+            "{label}: only {} separations resolved a multiplicity; too few to be a test",
+            resolved.len()
+        );
+        let changes: Vec<String> = resolved
+            .windows(2)
+            .filter(|w| w[0].1 != w[1].1)
+            .map(|w| format!("{} -> {} between {} and {} bohr", w[0].1, w[1].1, w[0].0, w[1].0))
+            .collect();
+        println!(
+            "  {label:>4}: multiplicity along the curve {:?}{}",
+            trail
+                .iter()
+                .map(|(r, m)| if *m > 0 { format!("{r}:{m}") } else { format!("{r}:?") })
+                .collect::<Vec<_>>(),
+            if changes.is_empty() {
+                " — constant".to_string()
+            } else {
+                format!(" — CHANGES {}", changes.join(", "))
+            }
+        );
     }
 }

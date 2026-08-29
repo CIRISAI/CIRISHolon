@@ -114,10 +114,21 @@ def v1_dual_route(pot):
                   "the two routes' own bounds (A %.2e, B %.2e)"
                   % (d, unex, dg.get("eigen_temple_bound_max", 0.0),
                      dg.get("route_B_bound_max", 0.0)))
+        # An ABSENT third-route agreement used to skip silently, so a route
+        # that ran and disagreed would have looked the same as a route that
+        # never ran.  Tie the check to the availability flag instead: if the
+        # record says route C was available, its agreement must be present.
         c = s["diagnostics"].get("route_C_agreement_max_abs")
-        if c is not None:
+        avail = bool(s["diagnostics"].get("route_C_available"))
+        if avail:
             check("%-4s vs route C (Fock-space ladder operators)" % nm,
-                  c < 1e-40, "max |E_A - E_C| = %.2e" % c)
+                  c is not None and c < 1e-40,
+                  "max |E_A - E_C| = %s" % ("%.2e" % c if c is not None
+                                            else "ABSENT while declared "
+                                                 "available"))
+        elif c is not None:
+            check("%-4s route C agreement recorded though unavailable" % nm,
+                  False, "agreement %.2e with route_C_available false" % c)
     print("  worst dual-route deviation over all species: %.2e" % worst)
 
 

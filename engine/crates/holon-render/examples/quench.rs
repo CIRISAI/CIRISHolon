@@ -52,8 +52,8 @@ const TAU: f64 = 2000.0;
 
 /// Grain boundaries per run, and substeps per boundary. `dt` is derived from the curve, so
 /// the sim time this buys is printed rather than assumed.
-const FRAMES: usize = 3000;
-const SUBSTEPS: u32 = 24;
+const FRAMES: usize = 20000;
+const SUBSTEPS: u32 = 64;
 
 /// Jitter on the opening lattice, bohr. Keeps every opening separation outside the
 /// repulsive wall while still making eight seeds eight different scenes.

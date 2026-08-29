@@ -370,7 +370,7 @@ pub const ELEMENTS1_STAKED_PAIRS: [&str; 9] = [
 /// Re-pin deliberately whenever the referee delivers, and re-read the residuals rather
 /// than only bumping the number — that is what the H2 gate's digest exists to force and
 /// this one inherits the rule.
-pub const ELEMENTS1_REFEREE_DIGEST: u32 = 0xfa54_2056;
+pub const ELEMENTS1_REFEREE_DIGEST: u32 = 0x54ef_d889;
 
 /// The staked separation-wise agreement on the ENERGY for the first row, hartree.
 ///
@@ -402,6 +402,28 @@ pub const DERIVATIVE_MARGIN: f64 = 2.0;
 /// deliberately rather than by a parse that silently returns nothing.
 fn src_has(src: &str, key: &str) -> bool {
     src.contains(&format!("\"{key}\""))
+}
+
+/// A bare JSON NUMBER, as distinct from the decimal strings every physical quantity in
+/// this schema uses.
+///
+/// The distinction is load-bearing and it caught me: `emitted_knots` is a count, so the
+/// referee emits it as a number, and I read a probe that had stringified it for display and
+/// wrote a string reader. Reading a formatted display as if it were the data is the same
+/// error one scale down from everything else this campaign has turned up.
+fn json_number(src: &str, key: &str) -> usize {
+    let needle = format!("\"{key}\":");
+    let at = src
+        .find(&needle)
+        .unwrap_or_else(|| panic!("no \"{key}\" in this file"))
+        + needle.len();
+    let rest = src[at..].trim_start();
+    let end = rest
+        .find(|c: char| !c.is_ascii_digit())
+        .unwrap_or(rest.len());
+    rest[..end]
+        .parse()
+        .unwrap_or_else(|e| panic!("\"{key}\" is not a bare integer: {e}"))
 }
 
 fn referee_dir() -> std::path::PathBuf {
@@ -582,7 +604,39 @@ fn r2_the_first_row_matches_the_fifty_digit_referee() {
             );
         }
 
+        // The grid the file DECLARES must be the grid it ships. The referee's
+        // grid_provenance block exists so a sparse curve cannot be a chosen curve — N2 and
+        // CO land on 13 of 28 staked knots — and the cheapest thing a consumer can do with
+        // it is refuse a file whose own declared count disagrees with its column. A block
+        // that describes a grid nobody compares against the grid is the campaign's
+        // recurring shape one more time.
+        assert!(
+            src.contains("\"grid_provenance\""),
+            "{name}.json declares no grid_provenance. A sparse or dense grid with no stated \
+             rule cannot be told apart from a chosen one."
+        );
+        let emitted = json_number(&src, "emitted_knots");
+        let full = json_number(&src, "full_grid_knots");
+        let subset_rule = string_scalar(&src, "subset_rule");
+        assert!(
+            emitted <= full,
+            "{name}: declares {emitted} emitted knots out of a full grid of {full}"
+        );
+        if subset_rule.starts_with("none") {
+            assert_eq!(
+                emitted, full,
+                "{name}: declares no subset rule but emits {emitted} of {full} knots"
+            );
+        }
+
         let rs = string_array(&src, "R_grid_bohr");
+        assert_eq!(
+            rs.len(),
+            emitted,
+            "{name}: declares {emitted} emitted knots and ships {} — the grid provenance \
+             describes a grid this file does not contain",
+            rs.len()
+        );
         let es = string_array(&src, "E_hartree");
         let fs = string_array(&src, "F_hartree_per_bohr");
         let e2s = string_array(&src, "E2_hartree_per_bohr2");

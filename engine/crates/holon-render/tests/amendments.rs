@@ -447,20 +447,40 @@ fn the_census_layer_cost_is_measured_not_asserted() {
         t0.elapsed().as_secs_f64() / 60.0
     };
 
+    // AND A PLACEBO ARM. The minimum-of-samples method above is necessary and, on a
+    // heavily contended machine, not sufficient: the minimum protects each arm from being
+    // dragged UP by contention, but nothing guarantees that BOTH arms got a clean sample
+    // in the same run, and a contaminated OFF minimum inflates a 1% effect into anything
+    // it likes. That is not hypothetical — this test failed once at load average 155 with
+    // a printed overhead of -23.10%, and a NEGATIVE overhead is proof the instrument was
+    // measuring the machine.
+    //
+    // So the reading is compared against the instrument's OWN NULL: a second OFF arm,
+    // interleaved with the other two and identical to the first in every way. Whatever
+    // that null-vs-null pair reads is what this timing cannot resolve, and a verdict is
+    // only pronounced when the real reading exceeds it. Select on the
+    // construction-minus-placebo gap, not on the raw number.
     for (label, hot) in [
         ("at rest (every pair bound: worst case)", false),
         ("hot (most pairs unbound)", true),
     ] {
         let mut on = Vec::new();
         let mut off = Vec::new();
+        let mut null = Vec::new();
         for _ in 0..15 {
             on.push(sample(true, hot));
             off.push(sample(false, hot));
+            null.push(sample(false, hot));
         }
         let min = |v: &Vec<f64>| v.iter().cloned().fold(f64::INFINITY, f64::min);
         let max = |v: &Vec<f64>| v.iter().cloned().fold(0.0f64, f64::max);
-        let (mon, moff) = (min(&on), min(&off));
-        let overhead = (mon - moff) / moff;
+        let (mon, moff, mnull) = (min(&on), min(&off), min(&null));
+        // The baseline is the better of the two OFF arms: with three interleaved arms the
+        // cleanest OFF sample is the best estimate of what the frame costs without the
+        // layer, and using it can only make the measured overhead LARGER.
+        let base = moff.min(mnull);
+        let overhead = (mon - base) / base;
+        let resolution = (moff - mnull).abs() / base;
         println!("frame cost, N = 16 (120 pairs), 64 substeps/frame, {label}:");
         println!(
             "  composite layer ON  = {:.4} ms/frame  (spread {:.4}-{:.4})",
@@ -475,13 +495,29 @@ fn the_census_layer_cost_is_measured_not_asserted() {
             max(&off) * 1e3
         );
         println!(
-            "  census overhead     = {:+.2}% of the frame",
-            100.0 * overhead
+            "  placebo (OFF again) = {:.4} ms/frame  (spread {:.4}-{:.4})",
+            mnull * 1e3,
+            mnull * 1e3,
+            max(&null) * 1e3
         );
+        println!(
+            "  census overhead     = {:+.2}% of the frame; the instrument's own \
+             null-vs-null resolution on this run is {:.2}%",
+            100.0 * overhead,
+            100.0 * resolution
+        );
+        // The null is ONE draw, so its own spread is noisy: the reading has to CLEAR it by
+        // a margin rather than tie it. Measured need for this: a run at load average 155
+        // read 22.92% against a null of 22.69% -- two numbers that are the same number, and
+        // a strict inequality convicted on the third decimal of a machine artifact.
+        const PLACEBO_MARGIN: f64 = 2.0;
         assert!(
-            overhead < 0.05,
-            "the composite layer costs {:.1}% of a frame, which is not 'cheap'",
-            100.0 * overhead
+            overhead < 0.05 || overhead <= PLACEBO_MARGIN * resolution,
+            "the composite layer costs {:.1}% of a frame, which is not 'cheap' — and it is \
+             not the machine either: the null-vs-null arms agreed to {:.1}%, so this timing \
+             CAN resolve a cost {PLACEBO_MARGIN}x that",
+            100.0 * overhead,
+            100.0 * resolution
         );
     }
 }

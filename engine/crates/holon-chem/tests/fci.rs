@@ -514,3 +514,131 @@ fn the_spin_check_rejects_a_state_that_is_not_an_eigenstate() {
     assert!(multiplicity(1.0, 1e-9).is_none(), "1.0 is not S(S+1) for any half-integer S");
     assert!(multiplicity(3.0, 1e-9).is_none(), "3.0 is not S(S+1) either");
 }
+
+/// The spin sector along a whole CURVE — and the separation past which the question stops
+/// having an answer, measured rather than assumed.
+///
+/// # What the sweep is for
+///
+/// The single-geometry test converges each species once and checks `<S^2>` there. That is
+/// the shape of every defect this campaign has produced: a question asked where the answer
+/// was already known to be fine. THE PLACE A SOLVER SLIPS IS THE DISSOCIATION TAIL, where
+/// the singlet and the lowest triplet approach each other and a Davidson space that has
+/// drifted into the wrong sector converges with a residual that looks perfect. A check at
+/// `R_e`, where the gap is an electronvolt wide, cannot see any of it. The sibling
+/// `elements-referee` lane found exactly this on its own files — it had built `<S^2>` for
+/// the atoms and shipped four curves it had never checked were singlets.
+///
+/// # What the sweep FOUND, and why it does not assert purity everywhere
+///
+/// It fired, at HF and 12 bohr, reading `<S^2> = 1.0007` — not `S(S+1)` for any `S`. That
+/// is not a broken solve. It is a DEGENERACY, and the sweep now measures it instead of
+/// tripping over it: the `S_z = 1` sector cannot contain a singlet, so its lowest state is
+/// the lowest triplet, and the difference between the two sectors' ground energies IS the
+/// singlet–triplet gap. Measured along HF it runs 3.09e-1 at 2 bohr, 2.76e-7 at 8, 1.04e-10
+/// at 10, and 1.29e-12 at 12 — below the Davidson residual tolerance. Past that point the
+/// two states are numerically the same state, Davidson returns an arbitrary vector from the
+/// degenerate manifold, and the spin quantum number is simply not resolved.
+///
+/// The ENERGY is right throughout — the two sectors agree to 1e-12, which is what
+/// degeneracy means — so nothing this crate reports is affected. What changes is which
+/// question the gate may ask:
+///
+/// * gap above [`GAP_RESOLVED`]: the state must be the ground multiplet, asserted.
+/// * gap below it: the two sectors must be DEGENERATE to that tolerance, asserted; and
+///   `<S^2>` is reported without an assertion, because there is nothing to assert.
+///
+/// F2 crosses over by 6 bohr and HF by about 10, so both halves of this are exercised.
+/// A check that cannot distinguish two causes should say to look, not conclude.
+#[test]
+fn the_spin_sector_holds_along_the_whole_curve() {
+    use holon_chem::fci::{multiplicity, s_squared};
+
+    /// The singlet–triplet gap below which the two states are numerically one state.
+    ///
+    /// DECLARED, and set two orders above `davidson`'s 1e-11 residual tolerance: a gap the
+    /// solver cannot resolve is a gap it cannot choose a side of. Conservative on purpose
+    /// — HF at 10 bohr has a gap of 1.04e-10 and still returns a nearly pure singlet, so
+    /// this rule declines to assert in a case that would in fact have passed.
+    const GAP_RESOLVED: f64 = 1e-9;
+
+    let sweeps: Vec<(&str, Species, Species, f64, Vec<f64>)> = vec![
+        ("H2", HYDROGEN, HYDROGEN, 0.0, vec![0.8, 1.0, 1.4, 2.0, 3.0, 4.5, 6.0, 8.0, 10.0, 14.0]),
+        ("LiH", LITHIUM, HYDROGEN, 0.0, vec![2.0, 2.5, 2.92, 3.5, 4.5, 6.0, 8.0, 10.0, 14.0]),
+        ("HF", HYDROGEN, FLUORINE, 0.0, vec![1.2, 1.6, 1.88, 2.4, 3.2, 4.5, 6.0, 8.0, 12.0]),
+        ("F2", FLUORINE, FLUORINE, 0.0, vec![2.0, 2.4, 2.62, 3.2, 4.0, 5.5, 7.0, 9.0, 12.0]),
+    ];
+
+    for (label, a, b, want, rs) in sweeps {
+        let (mut resolved, mut degenerate) = (0usize, 0usize);
+        let (mut worst, mut worst_r, mut last_gap) = (0.0f64, 0.0f64, f64::NAN);
+        for &r in rs.iter() {
+            let species = [a, b];
+            let basis = build_basis(&species, centers(Some(r)));
+            let n = basis.n;
+            let ao = ao_integrals(&basis);
+            let x = cholesky_orthonormaliser(&ao.s, n).unwrap();
+            let mo = transform(&ao, &x, n);
+            let (_, na, nb) = electron_counts(&species);
+
+            let space = FciSpace::new(n, na, nb);
+            let ground = solve(&space, &mo);
+            assert!(
+                ground.residual < 1e-8,
+                "{label} at R = {r}: not converged ({:.3e}); a spin reading off an \
+                 unconverged vector says nothing",
+                ground.residual
+            );
+            // The S_z + 1 sector holds no singlet, so its floor IS the lowest triplet.
+            let triplet_space = FciSpace::new(n, na + 1, nb - 1);
+            let triplet = solve(&triplet_space, &mo);
+            let gap = triplet.e.v - ground.e.v;
+            last_gap = gap;
+
+            let s_sq = s_squared(&space, &ground.vector);
+            if gap > GAP_RESOLVED {
+                resolved += 1;
+                let (_, mult) = multiplicity(s_sq, 1e-6).unwrap_or_else(|| {
+                    panic!(
+                        "{label} at R = {r}: <S^2> = {s_sq} is not S(S+1) for any \
+                         half-integer S, and the gap {gap:.3e} is wide enough that it \
+                         should be — the converged vector is not a spin eigenstate"
+                    )
+                });
+                let dev = (s_sq - want).abs();
+                if dev > worst {
+                    worst = dev;
+                    worst_r = r;
+                }
+                assert!(
+                    dev < 1e-6,
+                    "{label} at R = {r} bohr: <S^2> = {s_sq:.9}, wanted {want} \
+                     (multiplicity {mult}), with a resolved gap of {gap:.3e}. The solve is \
+                     in the wrong spin sector."
+                );
+            } else {
+                degenerate += 1;
+                // The claim that survives degeneracy: the two sectors are the SAME energy.
+                // That is the whole content of the tail, and it is checkable.
+                assert!(
+                    gap.abs() <= GAP_RESOLVED,
+                    "{label} at R = {r}: the sectors are neither resolved nor degenerate \
+                     (gap {gap:.3e})"
+                );
+                assert!(
+                    (0.0..=2.0 + 1e-6).contains(&s_sq),
+                    "{label} at R = {r}: <S^2> = {s_sq} is outside the singlet-triplet \
+                     manifold the degeneracy spans"
+                );
+            }
+        }
+        println!(
+            "  {label:>4}: {} separations — {resolved} with a resolved gap (multiplicity \
+             asserted, worst |<S^2> - {want}| = {worst:.2e} at R = {worst_r}), {degenerate} \
+             degenerate past the solver's resolution (gap at the tail {last_gap:.2e}, spin \
+             reported not asserted)",
+            rs.len()
+        );
+        assert!(resolved >= 4, "{label}: too few resolved separations to be a test");
+    }
+}

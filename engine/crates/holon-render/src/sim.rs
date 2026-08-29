@@ -891,7 +891,10 @@ impl Sim {
             return;
         }
         // One distance matrix, read three times per triple instead of nine square roots.
+        // Indexed rather than iterated: each separation is written to BOTH `d[i][j]` and
+        // `d[j][i]`, which an iterator over one row cannot express.
         let mut d = [[0.0f64; MAX_ATOMS]; MAX_ATOMS];
+        #[allow(clippy::needless_range_loop)]
         for i in 0..self.n {
             for j in (i + 1)..self.n {
                 let dx = self.atoms[j].x - self.atoms[i].x;

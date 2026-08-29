@@ -103,6 +103,9 @@ fn place(s: &mut Sim, seed: u64) {
     let mut px = 0.0;
     let mut py = 0.0;
     let sigma = (K_B * T_INIT / M_H).sqrt();
+    // Indexed rather than iterated: the index is the ATOM's, addressing the sim as well as
+    // the velocity buffer, and it also decides the lattice cell.
+    #[allow(clippy::needless_range_loop)]
     for i in 0..N_ATOMS {
         let (col, row) = (i % 4, i / 4);
         let x = BOX_W * (col as f64 + 0.5) / 4.0 + JITTER * (2.0 * lcg(&mut st) - 1.0);
@@ -114,7 +117,9 @@ fn place(s: &mut Sim, seed: u64) {
         py += vy;
     }
     // Remove the net drift: the box has walls, so a drifting scene would just heat itself
-    // against them, and the quench would be measuring the walls.
+    // against them, and the quench would be measuring the walls. Indexed rather than
+    // iterated: the index addresses the SIM, not the buffer being read.
+    #[allow(clippy::needless_range_loop)]
     for i in 0..N_ATOMS {
         s.set_velocity(
             i,

@@ -153,7 +153,7 @@ fn prim_pairs(ca: &[f64; 3], cb: &[f64; 3], b: &Contraction, out: &mut [PrimPair
 /// declared choice: H is a doublet, H2 a singlet, H3 a doublet.
 pub fn hydrogen_energy(centers: &[[f64; 3]]) -> f64 {
     let n = centers.len();
-    debug_assert!(n >= 1 && n <= MAX_ORB);
+    debug_assert!((1..=MAX_ORB).contains(&n));
     let basis = sto3g_hydrogen();
 
     // --- primitive-pair data for every centre pair -------------------------------
@@ -455,6 +455,9 @@ fn fci_ground(
     };
 
     let mut hm = [0.0f64; MAX_DET * MAX_DET];
+    // Indexed rather than iterated: `col` is a function of BOTH loop variables, and the
+    // determinant masks are read from two different string tables.
+    #[allow(clippy::needless_range_loop)]
     for ia in 0..n_a {
         for ib in 0..n_b {
             let col = ia * n_b + ib;
@@ -635,8 +638,8 @@ pub const STRETCH_A: f64 = 2.0;
 /// triangle inequality, so there is no node to put beyond it and the last interval uses
 /// the one-sided node slope. The held-out draw includes that edge, so the T1 number
 /// already carries whatever it costs.
-pub const C_LO: f64 = 0.632_455_532_033_675_9;
-pub const C_HI: f64 = 1.414_213_562_373_095_1;
+pub const C_LO: f64 = 0.632_455_532_033_675_9; // sqrt(1 - U_HI), U_HI = 0.6
+pub const C_HI: f64 = core::f64::consts::SQRT_2; // sqrt(1 - U_LO), U_LO = -1: collinear
 
 /// Nodes per side axis and per `c`. These sizes ARE the T1 measurement's product: at
 /// 33 x 33 x 13 the held-out maximum is 6.3e-5 Ha, sixteen times inside the prereg's
@@ -885,7 +888,7 @@ pub struct TrimerTable {
 }
 
 /// Widening factor on the measured curvature envelope. See
-/// [`TrimerTable::measure_curvature_envelope`].
+/// `TrimerTable::measure_envelopes`, whose doc comment carries the derivation.
 pub const ENVELOPE_WIDENING: f64 = 4.0;
 
 impl TrimerTable {
@@ -1000,6 +1003,10 @@ impl TrimerTable {
     /// Returns an exact zero outside the domain — the truncation the prereg's T2 gauges —
     /// and below `R_LO` extends the surface linearly in the short sides, C1 at the edge,
     /// so a violent collision meets a continuous force rather than a cliff.
+    // The negated comparisons in `eval_branch` reject NaN as well as an out-of-domain
+    // triangle, which `a <= b` would silently accept and hand to the interpolator. Same
+    // fence, same reason, as `holon_chem::table::stream_table`'s.
+    #[allow(clippy::neg_cmp_op_on_partial_ord)]
     pub fn eval(&self, r: [f64; 3]) -> (f64, [f64; 3]) {
         if !self.loaded {
             return (0.0, [0.0; 3]);
@@ -1028,6 +1035,7 @@ impl TrimerTable {
     /// is indexed by and `z` as the third, whatever their order. Public to the module's
     /// own envelope measurement, which must stay on one branch to see a curvature rather
     /// than the kink where two branches meet.
+    #[allow(clippy::neg_cmp_op_on_partial_ord)]
     fn eval_branch(&self, x: f64, y: f64, z: f64) -> (f64, [f64; 3]) {
         // The MIDDLE side is what makes dE3 vanish; see the module header. The negated
         // comparisons reject NaN as well as an out-of-domain triangle.

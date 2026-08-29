@@ -17,7 +17,7 @@ const R_HI: f64 = trimer::R_HI;
 // while staying a box, staying symmetric in `x <-> y`, and staying smooth (unlike a
 // coordinate normalised by `min(x, y)`, which kinks on the diagonal).
 const C_LO: f64 = 0.632_455_532_033_675_9; // sqrt(1 - 0.6)
-const C_HI: f64 = 1.414_213_562_373_095_1; // sqrt(1 + 1)
+const C_HI: f64 = core::f64::consts::SQRT_2; // sqrt(1 + 1)
 const U_LO: f64 = C_LO;
 const U_HI: f64 = C_HI;
 const NR: usize = 41;

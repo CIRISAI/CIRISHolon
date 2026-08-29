@@ -358,7 +358,7 @@ pub const ELEMENTS1_STAKED_PAIRS: [&str; 9] = [
 /// Re-pin deliberately whenever the referee delivers, and re-read the residuals rather
 /// than only bumping the number — that is what the H2 gate's digest exists to force and
 /// this one inherits the rule.
-pub const ELEMENTS1_REFEREE_DIGEST: u32 = 0x9340_b1d8;
+pub const ELEMENTS1_REFEREE_DIGEST: u32 = 0xd4e9_e8c3;
 
 /// The staked separation-wise agreement on the ENERGY for the first row, hartree.
 ///

@@ -1,0 +1,10 @@
+# SATURATION-1 D1 quench — arm = mbe3
+# tables: pair curve 492 knots in 44 ms; trimer 14157 nodes (7293 solves) in 2.29 s; curvature envelope 46.9343 Ha/bohr^2
+# protocol: N = 16, box 40 x 24 bohr, T_init 3000 K, T_target 300 K, tau 2000, 20000 frames x 64 substeps, dt = 1.0769 a.u. -> 33343.6 fs of sim time
+seed              largest modal clusters free  hist(2..)         T(K)     E_three     drift/bound  dP/bound  minPerim  inPlant       s
+0x0000000053415401       4     2        7    0  6x2 1x4            303.0   +0.00095     0.0035    0.0000     9.873        0    94.0
+0x0000000053415402       2     2        8    0  8x2                307.0   +0.00070     0.0064    0.0000     8.584        0    93.7
+# CONTROL criterion (largest >= 8): 0/2 seeds
+# BRANCH (a) criterion (modal == 2 and largest <= 4): 2/2 seeds
+# worst energy drift / bound = 0.0064; worst momentum residual / bound = 0.0000
+# closest approach of any domain triple: perimeter 8.584 bohr; boundaries with a triple inside the staked plant's 4 bohr: 0 of 40000

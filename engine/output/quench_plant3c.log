@@ -1,0 +1,13 @@
+# SATURATION-1 D1 quench — arm = plant3c
+# tables: pair curve 492 knots in 39 ms; trimer 14157 nodes (7293 solves) in 10.82 s; curvature envelope 385.6676 Ha/bohr^2
+# protocol: N = 16, box 40 x 24 bohr, T_init 3000 K, T_target 300 K, tau 2000, 20000 frames x 64 substeps, dt = 1.0769 a.u. -> 33343.6 fs of sim time
+# PLANT (iii-c), POST-HOC DIAGNOSTIC, not the staked plant: dE3 zeroed OUTSIDE a 6-bohr perimeter
+seed              largest modal clusters free  hist(2..)         T(K)     E_three     drift/bound  dP/bound  minPerim  inPlant       s
+0x0000000053415401      14     2        2    0  1x2 1x14           278.7   -1.07815     0.0010    0.0003     4.852        0   120.9
+    largest cluster's separations, bohr: 1.21 1.43 1.70 1.71 1.72 1.85 1.85 1.85 1.86 1.86 1.87 1.87 1.87 2.01 2.02 2.02 2.03 2.22 2.34 2.38 2.55 2.56 2.57 2.58 2.58 2.58 2.58 2.59 2.84 2.89 3.00 3.06 3.11 3.17 3.18 3.55 3.57 3.63 3.69 3.70 3.71 3.72 3.88 3.96 3.98 4.00 4.01 4.01 4.08 4.16 4.23 4.38 4.42 4.56 4.66 4.68 4.73 4.80 5.12 5.14 5.37 5.37 5.40 5.49 5.54 5.58 5.74 5.74 5.85 5.85 6.15 6.26 6.35 6.48 6.55 6.68 6.72 7.04 7.11 7.13 7.39 7.49 7.69 7.83 7.85 8.18 8.27 8.48 8.55 8.86 9.53
+0x0000000053415402      10     6        2    0  1x6 1x10           254.9   -1.03978     0.0012    0.0001     5.846        0    66.8
+    largest cluster's separations, bohr: 1.44 1.57 1.57 1.57 1.69 1.70 1.70 1.71 1.85 2.02 2.19 2.19 2.45 2.46 2.48 2.55 2.58 2.58 2.69 3.09 3.10 3.10 3.14 3.15 3.19 3.25 3.40 3.49 3.82 3.86 3.98 4.23 4.49 4.54 4.71 4.76 4.92 5.08 5.42 5.50 6.05 6.19 6.33 7.12 7.57
+# CONTROL criterion (largest >= 8): 2/2 seeds
+# BRANCH (a) criterion (modal == 2 and largest <= 4): 0/2 seeds
+# worst energy drift / bound = 0.0012; worst momentum residual / bound = 0.0003
+# closest approach of any domain triple: perimeter 4.852 bohr; boundaries with a triple inside the staked plant's 4 bohr: 0 of 40000

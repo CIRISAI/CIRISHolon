@@ -1,0 +1,15 @@
+# SATURATION-1 D1 quench — arm = pair
+# tables: pair curve 492 knots in 35 ms; trimer 14157 nodes (7293 solves) in 5.21 s; curvature envelope 46.9343 Ha/bohr^2
+# protocol: N = 16, box 40 x 24 bohr, T_init 3000 K, T_target 300 K, tau 2000, 20000 frames x 64 substeps, dt = 1.0769 a.u. -> 33343.6 fs of sim time
+seed              largest modal clusters free  hist(2..)         T(K)     E_three     drift/bound  dP/bound   s
+0x0000000053415401       9     7        2    0  1x7 1x9            253.8   +0.00000     0.0045     0.0001  19.3
+0x0000000053415402       9     7        2    0  1x7 1x9            293.0   +0.00000     0.0075     0.0000  22.9
+0x0000000053415403      15    15        1    1  1x15               356.6   +0.00000     0.0115     0.0001  37.8
+0x0000000053415404       8     3        3    0  1x3 1x5 1x8        273.7   +0.00000     0.0051     0.0001  38.5
+0x0000000053415405       8     3        3    0  1x3 1x5 1x8        296.8   +0.00000     0.0051     0.0001  37.5
+0x0000000053415406      11     4        2    1  1x4 1x11           321.6   +0.00000     0.0096     0.0002  43.0
+0x0000000053415407       9     7        2    0  1x7 1x9            316.1   +0.00000     0.0064     0.0000  23.1
+0x0000000053415408      10     6        2    0  1x6 1x10           363.2   +0.00000     0.0057     0.0002  33.4
+# CONTROL criterion (largest >= 8): 8/8 seeds
+# BRANCH (a) criterion (modal == 2 and largest <= 4): 0/8 seeds
+# worst energy drift / bound = 0.0115; worst momentum residual / bound = 0.0002

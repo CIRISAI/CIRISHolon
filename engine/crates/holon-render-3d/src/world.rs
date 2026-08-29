@@ -76,6 +76,18 @@ impl AtomWorld {
     pub fn new(atoms: usize) -> Self {
         let mut sim = Sim::empty();
         let status = holon_render::generate_table(&mut sim, CURVE_R_MIN, CURVE_R_MAX, CURVE_KNOTS);
+        // THE THIRD BODY MUST PAY HERE TOO. `generate_trimer_table` was written with
+        // this exact caller named in its doc comment — and nothing called it, so the
+        // 3D shell ran pair-only physics while the 2D shell ran MBE3, and a field
+        // screenshot of a compact linked H4 is what surfaced it. That is standing
+        // question 1 (is the thing that passes the thing that RUNS?) failing in
+        // production the same night it was written down. The headless suite now
+        // asserts the table is loaded INSIDE this constructor's product, per the
+        // question's own enforcement rule — and that gate demonstrated its failing
+        // case against this exact line removed, before it was trusted.
+        if status == holon_render::TABLE_OK {
+            holon_render::generate_trimer_table(&mut sim);
+        }
         sim.dims = Dims::Three;
         sim.boundary = Boundary::Walls;
         sim.width = BOX_SIDE;

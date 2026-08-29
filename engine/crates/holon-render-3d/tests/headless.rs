@@ -508,3 +508,37 @@ fn a_clockless_host_is_reported_rather_than_invented() {
     assert!(!w.sim.timescale.calibrated);
     assert_eq!(w.n_max(), MAX_ATOMS as f64);
 }
+
+
+/// STANDING QUESTION 1 — is the thing that passes the thing that RUNS? The MBE3
+/// tier existed, was gated, and was verified, while this shell integrated
+/// pair-only forces because nothing here called `generate_trimer_table`. This
+/// asserts the connection INSIDE the constructor's product, not in a sibling
+/// that imports the same module: the world the app actually builds must carry a
+/// loaded three-body table, and a compact triple must feel it.
+#[test]
+fn the_world_the_app_builds_carries_the_three_body_law() {
+    let w = AtomWorld::new(3);
+    assert!(w.table_ok(), "curve failed to build");
+    assert!(
+        w.sim.trimer.loaded,
+        "the 3D world's Sim has no trimer table: the shell is running pair-only physics"
+    );
+    // And the term is live, not merely resident: a compact equilateral triple
+    // must carry positive three-body energy through the same Sim the app steps.
+    let mut s = w.sim;
+    let (cx, cy, cz) = (0.5 * s.width, 0.5 * s.height, 0.5 * s.depth);
+    let r = 1.4;
+    s.set_position_3d(0, cx, cy, cz);
+    s.set_position_3d(1, cx + r, cy, cz);
+    s.set_position_3d(2, cx + 0.5 * r, cy + r * 0.8660254037844386, cz);
+    for i in 0..3 {
+        s.set_velocity_3d(i, 0.0, 0.0, 0.0);
+    }
+    s.step_frame(1);
+    assert!(
+        s.e_three > 0.1,
+        "a compact equilateral trimer must pay the three-body term, read {:.6}",
+        s.e_three
+    );
+}

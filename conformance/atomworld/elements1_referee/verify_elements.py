@@ -53,6 +53,20 @@ FAIL = []
 NOTE = []
 
 
+def _ensure_precision():
+    """Set the working precision this file's comparisons assume.
+
+    main() sets it, so every section inherited it and none of them said so.
+    Called directly -- from a test, or by anyone reusing a section -- they ran
+    at mpmath's default 15 digits and compared 50-digit strings that had already
+    collapsed, which reads as a real disagreement at 1e-49.  A section whose
+    answer depends on ambient state nobody can see is the same defect as a guard
+    that depends on being switched on.
+    """
+    if mp.dps < R.DPS:
+        mp.dps = R.DPS
+
+
 def check(name, ok, detail=""):
     print(("  PASS  " if ok else "  FAIL  ") + name + ("   " + detail
                                                        if detail else ""),
@@ -155,6 +169,7 @@ def v2_banked_h2(quick):
 
 
 def v3_certificates(pot):
+    _ensure_precision()
     print("\n[V3] eigenvalue certificates")
     for nm, s in pot["species"].items():
         d = s["diagnostics"]
@@ -280,6 +295,7 @@ def v8_spin(pot):
     the deviation from S(S+1), which is the number that says whether a spin
     reading is a reading at all.  A diagnostic nobody must read is not a check.
     """
+    _ensure_precision()
     print("\n[V8] the spin block is consumed, not just carried")
     for nm, s in pot["species"].items():
         sp = s.get("spin")
@@ -544,6 +560,7 @@ def v10_grid_provenance(dropdir=None):
     rule, and compares the result to the file's `R_grid_bohr`.  A rule that
     does not reproduce the grid it describes is a chosen grid with a story.
     """
+    _ensure_precision()
     print("\n[V10] the emitted grid rule reproduces the emitted grid")
     # FIND THE DROP, AND FAIL IF THERE ISN'T ONE.  Returning quietly when the
     # directory is missing made this section check nothing at all in the
@@ -601,6 +618,67 @@ def v10_grid_provenance(dropdir=None):
               len(want) == gp["emitted_knots"])
 
 
+def v11_record_verdicts(pot, atoms):
+    """The verdicts the record COMPUTES, consumed rather than carried.
+
+    The engine lane found a `converged()` that was correct, tested, serialised,
+    and consulted by nothing on the production path -- an unread NUMBER replaced
+    by an unread VERDICT.  Running that question over this side's assembled
+    record turned up the same shape: the dissociation limit, the extremum
+    counts, the repulsive-monotone verdict, the third route's availability and
+    the tail's sign were all computed, stored, and branched on by nobody.
+    """
+    _ensure_precision()
+    print("\n[V11] the record's own verdicts are acted on")
+    A = atoms["atoms"]
+    for nm, r in sorted(pot["species"].items()):
+        pr = r["provenance"]
+        z1, z2 = pr["Z1"], pr["Z2"]
+        s1 = EC.ELEMENT_SYMBOL[z1]
+        s2 = EC.ELEMENT_SYMBOL[z2]
+        # 1. the dissociation limit IS the two atoms, at full precision
+        want = mpf(A[s1]["E"]) + mpf(A[s2]["E"])
+        got = mpf(r["exact"]["E_asymptote"])
+        # The tolerance is the STORED precision, not a round number: the atom
+        # energies and the asymptote are each written to 50 significant digits,
+        # so three units in the last place is the whole budget.  A magic 1e-45
+        # would have passed a discrepancy a hundred times larger than anything
+        # rounding can produce here.
+        ulp = mpf(10) ** (int(mp.floor(mp.log10(abs(want)))) - 49)
+        check("%-4s asymptote is E(%s)+E(%s) to the stored precision"
+              % (nm, s1, s2),
+              abs(got - want) < 4 * ulp,
+              "difference %s, budget %s"
+              % (nstr(abs(got - want), 4), nstr(4 * ulp, 3)))
+        # 2. the extremum counts are a claim about the curve's shape
+        bound = bool(r["bound"])
+        check("%-4s extremum counts match boundness" % nm,
+              r["n_minima"] == (1 if bound else 0) and r["n_maxima"] == 0,
+              "%d minima, %d maxima, bound=%s"
+              % (r["n_minima"], r["n_maxima"], bound))
+        # 3. monotone_repulsive is the E1 controls' whole claim
+        check("%-4s monotone-repulsive verdict matches boundness" % nm,
+              bool(r["monotone_repulsive"]) == (not bound),
+              "monotone_repulsive=%s, bound=%s"
+              % (r["monotone_repulsive"], bound))
+        # 4. an unbound control must approach dissociation FROM ABOVE
+        tail = mpf(r["diagnostics"]["E_at_Rmax_minus_asymptote"])
+        if not bound:
+            check("%-4s sits ABOVE dissociation at the far end" % nm,
+                  tail > 0, "E(Rmax) - E_asymptote = %s" % nstr(tail, 6))
+        # 5. the third route either ran or is declared unavailable
+        rc = SP.DIATOMICS[nm].get("routeC", "full")
+        check("%-4s route-C availability matches its declaration" % nm,
+              bool(r["diagnostics"]["route_C_available"]) == (rc != "none"),
+              "declared %r, available %s"
+              % (rc, r["diagnostics"]["route_C_available"]))
+        # 6. the agreement that gate R1 rests on names TWO different routes
+        line = r["diagnostics"]["route_agreement_route"]
+        check("%-4s the R1 agreement names two distinct routes" % nm,
+              " vs " in line and line.split(" vs ")[0] != line.split(" vs ")[1],
+              line[:52])
+
+
 def main():
     quick = "--quick" in sys.argv
     mp.dps = R.DPS
@@ -632,6 +710,7 @@ def main():
     v7_plants(quick)
     v9_guards_are_connected()
     v10_grid_provenance()
+    v11_record_verdicts(pot, atoms)
     if NOTE:
         print("\nNOTES")
         for n in NOTE:

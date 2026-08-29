@@ -6,12 +6,12 @@
  "pairs_present": [
   "H2",
   "LiH",
+  "HF",
   "He2",
   "Ne2"
  ],
  "pairs_owed": [
   "Li2",
-  "HF",
   "N2",
   "F2",
   "CO"

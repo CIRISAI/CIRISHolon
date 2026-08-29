@@ -467,7 +467,7 @@ fn the_census_layer_cost_is_measured_not_asserted() {
         let mut on = Vec::new();
         let mut off = Vec::new();
         let mut null = Vec::new();
-        for _ in 0..15 {
+        for _ in 0..21 {
             on.push(sample(true, hot));
             off.push(sample(false, hot));
             null.push(sample(false, hot));
@@ -475,12 +475,38 @@ fn the_census_layer_cost_is_measured_not_asserted() {
         let min = |v: &Vec<f64>| v.iter().cloned().fold(f64::INFINITY, f64::min);
         let max = |v: &Vec<f64>| v.iter().cloned().fold(0.0f64, f64::max);
         let (mon, moff, mnull) = (min(&on), min(&off), min(&null));
-        // The baseline is the better of the two OFF arms: with three interleaved arms the
-        // cleanest OFF sample is the best estimate of what the frame costs without the
-        // layer, and using it can only make the measured overhead LARGER.
-        let base = moff.min(mnull);
-        let overhead = (mon - base) / base;
-        let resolution = (moff - mnull).abs() / base;
+        // THE STATISTIC IS A PAIRED MEDIAN RATIO, not a ratio of minima, and that is the
+        // second thing this test had to learn. A minimum over 15 samples is an order
+        // statistic with a heavy tail: on a machine at load average 155 one arm can be
+        // starved for all fifteen while its neighbour is not, and the ratio of two
+        // separately-unlucky minima is anything at all — measured on consecutive runs
+        // here, -14.87% and +50.18% for the same code. Samples `on[i]` and `off[i]` are
+        // taken ADJACENTLY, so whatever the machine was doing during one it was mostly
+        // doing during the other, and their ratio cancels it to first order. The median
+        // over the pairs then throws away the runs where it did not.
+        let median = |v: &[f64]| {
+            let mut w = v.to_vec();
+            w.sort_by(|a, b| a.partial_cmp(b).expect("finite"));
+            w[w.len() / 2]
+        };
+        let ratios: Vec<f64> = on.iter().zip(off.iter()).map(|(a, b)| a / b).collect();
+        let nulls: Vec<f64> = null.iter().zip(off.iter()).map(|(a, b)| a / b).collect();
+        let overhead = median(&ratios) - 1.0;
+        // The null's RESOLUTION is its central value plus three standard errors of its own
+        // median, not the central value alone. One point estimate says nothing about how
+        // far the next one would land: measured over eight consecutive runs on this
+        // machine the paired median read +0.87, +0.94, +1.67, +1.96, +2.24, +2.85, −4.01
+        // and +7.73 percent for the SAME code, while the null's central value stayed
+        // inside ±2. A criterion built on the central value alone convicts on the tail.
+        //
+        // sigma is estimated from the median absolute deviation (1.4826 MAD, the
+        // consistency factor for a normal), and the standard error of a median is
+        // 1.253 sigma / sqrt(n).
+        let null_centre = median(&nulls) - 1.0;
+        let devs: Vec<f64> = nulls.iter().map(|r| (r - 1.0 - null_centre).abs()).collect();
+        let sigma = 1.4826 * median(&devs);
+        let stderr = 1.253 * sigma / (nulls.len() as f64).sqrt();
+        let resolution = null_centre.abs() + 3.0 * stderr;
         println!("frame cost, N = 16 (120 pairs), 64 substeps/frame, {label}:");
         println!(
             "  composite layer ON  = {:.4} ms/frame  (spread {:.4}-{:.4})",
@@ -501,16 +527,26 @@ fn the_census_layer_cost_is_measured_not_asserted() {
             max(&null) * 1e3
         );
         println!(
-            "  census overhead     = {:+.2}% of the frame; the instrument's own \
-             null-vs-null resolution on this run is {:.2}%",
+            "  census overhead     = {:+.2}% of the frame (paired median of {} sample \
+             pairs); the instrument's own null-vs-null resolution on this run is {:.2}% \
+             ({:+.2}% centre + 3 x {:.2}% standard error)",
             100.0 * overhead,
-            100.0 * resolution
+            ratios.len(),
+            100.0 * resolution,
+            100.0 * null_centre,
+            100.0 * stderr
         );
-        // The null is ONE draw, so its own spread is noisy: the reading has to CLEAR it by
-        // a margin rather than tie it. Measured need for this: a run at load average 155
-        // read 22.92% against a null of 22.69% -- two numbers that are the same number, and
-        // a strict inequality convicted on the third decimal of a machine artifact.
-        const PLACEBO_MARGIN: f64 = 2.0;
+        println!(
+            "  for reference, the ratio of the three MINIMA would have read {:+.2}% \
+             against a null of {:+.2}% — the statistic this test used to use",
+            100.0 * (mon - moff.min(mnull)) / moff.min(mnull),
+            100.0 * (moff - mnull) / moff.min(mnull)
+        );
+        // Measured need for the margin, separately from the standard errors above: an
+        // earlier form compared overhead to the null's central value with a strict
+        // inequality and convicted on 22.92% against 22.69% — two numbers that are the same
+        // number, separated in the third decimal by a machine artifact.
+        const PLACEBO_MARGIN: f64 = 1.0;
         assert!(
             overhead < 0.05 || overhead <= PLACEBO_MARGIN * resolution,
             "the composite layer costs {:.1}% of a frame, which is not 'cheap' — and it is \

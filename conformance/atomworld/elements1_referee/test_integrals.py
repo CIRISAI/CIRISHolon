@@ -34,12 +34,12 @@ The tests are of four kinds, in increasing strength:
 import os
 import sys
 import itertools
-from mpmath import mp, mpf, sqrt, exp, erf, pi, diff, nstr, matrix
 
 # h2_core.py is the BANKED foundation and lives one level up beside the freeze
 # it belongs to; import it from there rather than keeping a second copy.
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(1, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from mpmath import mp, mpf, sqrt, exp, erf, pi, diff, nstr, matrix
 
 import elements_core as E
 import h2_core as H

@@ -976,6 +976,23 @@ impl TrimerTable {
         self.measure_envelopes();
     }
 
+    /// Zero the surface wherever the triangle's perimeter is ABOVE `p` — the far-field
+    /// plant with the opposite sign, which is the one that turns out to be aimed at the
+    /// sector the saturation physics occupies. See `SATURATION1_RESULTS.md`, plant (iii).
+    pub fn zero_outside_perimeter(&mut self, p: f64) {
+        for i in 0..NR {
+            for j in 0..NR {
+                for k in 0..NU {
+                    let (x, y, z) = node_geometry(i, j, k);
+                    if x + y + z > p {
+                        self.v[node_index(i, j, k)] = 0.0;
+                    }
+                }
+            }
+        }
+        self.measure_envelopes();
+    }
+
     /// The surface and its three side-derivatives at a triangle, hartree and
     /// hartree/bohr. `r` is the three sides in ANY order; the returned gradient is in the
     /// same order.

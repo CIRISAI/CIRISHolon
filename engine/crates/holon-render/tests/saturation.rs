@@ -472,3 +472,69 @@ fn plant_iii_the_force_loop_reads_the_zeroed_region() {
          reading the table where the plant acts"
     );
 }
+
+/// PLANT (iii), the DRIVEN half: a trajectory that DOES pass through the zeroed sector
+/// diverges, and the divergence is the plant's purpose discharged.
+///
+/// The staked plant is scored on the D1 outcome shifting, and it does not shift, because
+/// the MBE3 trajectories never enter the sector it zeroes: measured over 40,000 grain
+/// boundaries on two seeds, the closest any domain triple comes is a perimeter of 8.584
+/// bohr, and the count of boundaries with a triple inside the plant's 4 is ZERO. That is
+/// M-PLANT-SECTOR's empty sector, and the reason it is empty is the term being tested —
+/// the three-body repulsion is what keeps the trajectory out.
+///
+/// So the sector is entered on purpose here instead. Three atoms are STARTED inside it, at
+/// rest, and integrated; with the table intact they are flung apart by a surface worth
+/// ~1 Ha, and with the sector zeroed they are not. Same integrator, same seeds, same
+/// everything else.
+#[test]
+fn plant_iii_a_driven_entry_diverges() {
+    let mut plain = scene();
+    let mut planted = scene();
+    planted.trimer.zero_inside_perimeter(4.0);
+    let mut readings = Vec::new();
+    for s in [&mut plain, &mut planted] {
+        s.boundary = Boundary::Open;
+        s.reset(3);
+        let (cx, cy) = (0.5 * s.width, 0.5 * s.height);
+        // A compact equilateral trimer of side 1.2 bohr: perimeter 3.6, well inside the
+        // plant's 4, and at rest so the only thing that can move it is the surface.
+        s.set_position(0, cx - 0.6, cy - 0.3464);
+        s.set_position(1, cx + 0.6, cy - 0.3464);
+        s.set_position(2, cx, cy + 0.6928);
+        s.set_velocity(0, 0.0, 0.0);
+        s.set_velocity(1, 0.0, 0.0);
+        s.set_velocity(2, 0.0, 0.0);
+        s.rebase();
+        let e0 = s.e_three;
+        run(s, 60, 64);
+        s.refresh_pairs();
+        let spread = s.pairs[..s.pair_count]
+            .iter()
+            .map(|p| p.r)
+            .fold(0.0f64, f64::max);
+        readings.push((e0, spread, s.e_kin));
+    }
+    let (e0_plain, spread_plain, kin_plain) = readings[0];
+    let (e0_planted, spread_planted, kin_planted) = readings[1];
+    println!(
+        "plant (iii) driven entry (compact trimer, side 1.2 bohr, at rest, 60 x 64):\n  \
+         intact:  E_three(0) = {e0_plain:+.6} Eh -> widest separation {spread_plain:.3} bohr, \
+         E_kin = {kin_plain:.6} Eh\n  \
+         planted: E_three(0) = {e0_planted:+.6} Eh -> widest separation {spread_planted:.3} \
+         bohr, E_kin = {kin_planted:.6} Eh"
+    );
+    assert!(
+        e0_plain > 0.5,
+        "the driven scene did not start inside a live sector: E_three = {e0_plain:.3e}"
+    );
+    assert!(
+        e0_planted.abs() < 0.05,
+        "the plant did not empty the sector the scene starts in: {e0_planted:.3e}"
+    );
+    assert!(
+        spread_plain > 2.0 * spread_planted,
+        "the two trajectories did not diverge ({spread_plain:.3} vs {spread_planted:.3} \
+         bohr): the dynamics is not reading the table where the plant acts"
+    );
+}

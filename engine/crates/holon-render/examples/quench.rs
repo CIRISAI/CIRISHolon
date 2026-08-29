@@ -59,8 +59,24 @@ const SUBSTEPS: u32 = 64;
 /// repulsive wall while still making eight seeds eight different scenes.
 const JITTER: f64 = 0.8;
 
-/// Plant (iii): the perimeter below which the table is zeroed, bohr.
+/// Plant (iii): the perimeter below which the table is zeroed, bohr. The prereg's number.
 const PLANT3_PERIMETER: f64 = 4.0;
+
+/// POST-HOC DIAGNOSTIC, and labelled as one. Added after the staked plant (iii) returned
+/// cluster readings IDENTICAL to the MBE3 arm on both of its seeds — which is what a plant
+/// aimed at a sector the trajectory never enters looks like, the case M-PLANT-SECTOR names
+/// as a VOID rather than a miss. The `arm = plant3b` run zeroes a perimeter the dynamics
+/// demonstrably DOES visit (see the `min perimeter` column every arm now prints), so the
+/// instrument's ability to fire is shown rather than assumed. It is not the staked plant
+/// and is never reported as one.
+const PLANT3B_PERIMETER: f64 = 9.0;
+
+/// POST-HOC DIAGNOSTIC, the far-field plant with the sign the measurement says it wants.
+/// `arm = plant3c` keeps the compact core and zeroes everything ABOVE this perimeter —
+/// the shell where a third atom meets an existing bond, which is where the MBE3 dynamics
+/// actually lives (its closest domain triple over 40,000 boundaries has perimeter 8.58
+/// bohr, and it never once enters the staked plant's 4). Not the staked plant.
+const PLANT3C_PERIMETER: f64 = 6.0;
 
 // ------------------------------------------------------------------ deterministic setup
 
@@ -151,7 +167,84 @@ struct Outcome {
     momentum_bound: f64,
     temperature: f64,
     e_three: f64,
+    /// Smallest triangle PERIMETER any triple reached during the run, bohr, over triples
+    /// inside the table's domain. A pure read of the trajectory: it changes nothing.
+    min_perimeter: f64,
+    /// The separations INSIDE the largest cluster, sorted, bohr. A cluster is a statement
+    /// about boundness, not about closure: two H2 molecules whose cross pair happens to
+    /// read `bonded` are ONE component of four, and the only way to tell that from a
+    /// tetramer is to look at the distances. Printed, never scored.
+    largest_bonds: Vec<f64>,
+    /// Grain boundaries at which some triple was inside the staked plant's 4-bohr
+    /// perimeter, out of `FRAMES`.
+    frames_inside_plant: usize,
     seconds: f64,
+}
+
+/// The smallest triangle perimeter among triples whose MIDDLE side is inside the table's
+/// domain — i.e. among the triples the three-body term is actually being read for.
+fn largest_cluster_bonds(s: &Sim) -> Vec<f64> {
+    let sizes = s.cluster_sizes();
+    let mut root = usize::MAX;
+    let mut best = 1usize;
+    for (i, &sz) in sizes[..s.n].iter().enumerate() {
+        if sz > best {
+            best = sz;
+            root = i;
+        }
+    }
+    if root == usize::MAX {
+        return Vec::new();
+    }
+    // Re-derive membership from the same edge set the sizes came from.
+    let mut member = vec![false; s.n];
+    let mut changed = true;
+    member[root] = true;
+    while changed {
+        changed = false;
+        for p in s.pairs[..s.pair_count].iter().filter(|p| p.bonded) {
+            if member[p.i] != member[p.j] {
+                member[p.i] = true;
+                member[p.j] = true;
+                changed = true;
+            }
+        }
+    }
+    let mut out = Vec::new();
+    for i in 0..s.n {
+        for j in (i + 1)..s.n {
+            if member[i] && member[j] {
+                let (a, b) = (&s.atoms[i], &s.atoms[j]);
+                out.push(((a.x - b.x).powi(2) + (a.y - b.y).powi(2) + (a.z - b.z).powi(2)).sqrt());
+            }
+        }
+    }
+    out.sort_by(|a, b| a.partial_cmp(b).expect("finite"));
+    out
+}
+
+fn min_domain_perimeter(s: &Sim, r_cut: f64) -> f64 {
+    let mut best = f64::INFINITY;
+    for i in 0..s.n {
+        for j in (i + 1)..s.n {
+            for k in (j + 1)..s.n {
+                let d = |a: usize, b: usize| {
+                    let (p, q) = (&s.atoms[a], &s.atoms[b]);
+                    ((p.x - q.x).powi(2) + (p.y - q.y).powi(2) + (p.z - q.z).powi(2)).sqrt()
+                };
+                let mut sides = [d(i, j), d(i, k), d(j, k)];
+                sides.sort_by(|a, b| a.partial_cmp(b).expect("finite"));
+                if sides[1] > r_cut {
+                    continue;
+                }
+                let p = sides[0] + sides[1] + sides[2];
+                if p < best {
+                    best = p;
+                }
+            }
+        }
+    }
+    best
 }
 
 fn run(arm: &str, seed: u64, template: &Sim) -> Outcome {
@@ -174,9 +267,19 @@ fn run(arm: &str, seed: u64, template: &Sim) -> Outcome {
     }
     place(&mut s, seed);
 
+    let r_cut = holon_chem::trimer::R_HI;
     let t0 = Instant::now();
+    let mut min_perimeter = f64::INFINITY;
+    let mut frames_inside_plant = 0usize;
     for _ in 0..FRAMES {
         s.step_frame(SUBSTEPS);
+        let p = min_domain_perimeter(&s, r_cut);
+        if p < min_perimeter {
+            min_perimeter = p;
+        }
+        if p < PLANT3_PERIMETER {
+            frames_inside_plant += 1;
+        }
     }
     let seconds = t0.elapsed().as_secs_f64();
     let (largest, modal, clusters, free, hist) = reading(&s);
@@ -193,6 +296,9 @@ fn run(arm: &str, seed: u64, template: &Sim) -> Outcome {
         momentum_bound: s.momentum_bound(),
         temperature: s.temperature(),
         e_three: s.e_three,
+        min_perimeter,
+        largest_bonds: largest_cluster_bonds(&s),
+        frames_inside_plant,
         seconds,
     }
 }
@@ -230,6 +336,12 @@ fn main() {
     if arm == "plant3" {
         template.trimer.zero_inside_perimeter(PLANT3_PERIMETER);
     }
+    if arm == "plant3b" {
+        template.trimer.zero_inside_perimeter(PLANT3B_PERIMETER);
+    }
+    if arm == "plant3c" {
+        template.trimer.zero_outside_perimeter(PLANT3C_PERIMETER);
+    }
 
     println!("# SATURATION-1 D1 quench — arm = {arm}");
     println!(
@@ -250,9 +362,21 @@ fn main() {
     if arm == "plant3" {
         println!("# PLANT (iii): dE3 zeroed inside a {PLANT3_PERIMETER}-bohr perimeter");
     }
+    if arm == "plant3c" {
+        println!(
+            "# PLANT (iii-c), POST-HOC DIAGNOSTIC, not the staked plant: dE3 zeroed \
+             OUTSIDE a {PLANT3C_PERIMETER}-bohr perimeter"
+        );
+    }
+    if arm == "plant3b" {
+        println!(
+            "# PLANT (iii-b), POST-HOC DIAGNOSTIC, not the staked plant: dE3 zeroed inside \
+             a {PLANT3B_PERIMETER}-bohr perimeter"
+        );
+    }
     println!(
         "seed              largest modal clusters free  hist(2..)         T(K)     \
-         E_three     drift/bound  dP/bound   s"
+         E_three     drift/bound  dP/bound  minPerim  inPlant       s"
     );
 
     let mut outcomes = Vec::new();
@@ -263,7 +387,7 @@ fn main() {
             .map(|k| format!("{}x{}", o.hist[k], k))
             .collect();
         println!(
-            "{:#018x} {:>7} {:>5} {:>8} {:>4}  {:<16} {:>7.1} {:>+10.5} {:>10.4} {:>10.4} {:>5.1}",
+            "{:#018x} {:>7} {:>5} {:>8} {:>4}  {:<16} {:>7.1} {:>+10.5} {:>10.4} {:>9.4} {:>9.3} {:>8} {:>7.1}",
             o.seed,
             o.largest,
             o.modal,
@@ -274,8 +398,14 @@ fn main() {
             o.e_three,
             o.drift / o.bound,
             o.momentum / o.momentum_bound,
+            o.min_perimeter,
+            o.frames_inside_plant,
             o.seconds
         );
+        if o.largest >= 3 {
+            let d: Vec<String> = o.largest_bonds.iter().map(|x| format!("{x:.2}")).collect();
+            println!("    largest cluster's separations, bohr: {}", d.join(" "));
+        }
         outcomes.push(o);
     }
 
@@ -303,4 +433,15 @@ fn main() {
         .map(|o| o.momentum / o.momentum_bound)
         .fold(0.0f64, f64::max);
     println!("# worst energy drift / bound = {worst_e:.4}; worst momentum residual / bound = {worst_p:.4}");
+    let closest = outcomes
+        .iter()
+        .map(|o| o.min_perimeter)
+        .fold(f64::INFINITY, f64::min);
+    let inside: usize = outcomes.iter().map(|o| o.frames_inside_plant).sum();
+    println!(
+        "# closest approach of any domain triple: perimeter {closest:.3} bohr; \
+         boundaries with a triple inside the staked plant's {PLANT3_PERIMETER} bohr: \
+         {inside} of {}",
+        outcomes.len() * FRAMES
+    );
 }

@@ -1,0 +1,29 @@
+{
+ "model": "ELEMENTS1/STO-3G/FCI",
+ "basis_fingerprint": "bf9cd64f6fec4907",
+ "basis": "STO-3G, 8 decimals, ties to even; hydrogen verbatim from the banked H2 referee h2_core.py",
+ "atoms": "atoms.json (all ten, H through Ne, referee-grade)",
+ "pairs_present": [
+  "H2",
+  "LiH",
+  "He2",
+  "Ne2"
+ ],
+ "pairs_owed": [
+  "Li2",
+  "HF",
+  "N2",
+  "F2",
+  "CO"
+ ],
+ "grading": {
+  "E_hartree": "referee-grade for every emitted pair; the declared bound is max(Temple, measured route A vs route B)",
+  "F_hartree_per_bohr": "grade varies per pair; read derivative_provenance.route and gate against the declared uncertainty, not a flat bound",
+  "E2_hartree_per_bohr2": "as F"
+ },
+ "rules": [
+  "no column declares a zero uncertainty; a zero is a missing bound that passes a presence check",
+  "every number is a plain fixed-point decimal string, never a JSON number and never exponent notation",
+  "R_grid_bohr is authoritative and is an exact short decimal, so the published R IS the R the energy was computed at"
+ ]
+}

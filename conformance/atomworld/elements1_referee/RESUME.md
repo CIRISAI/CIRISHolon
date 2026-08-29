@@ -7,7 +7,11 @@ Repo drop:       `/home/emoore/CIRISHolon/engine/crates/holon-chem/tests/data/el
 
 H2 · He2 · LiH · HF · F2 · Ne2 — plus `atoms.json` and `manifest.json`.
 Last pin: **56a8141** (grid_provenance added; every number byte-identical). Re-emitting today reproduced all eight files byte-for-byte.
-`verify_elements.py --quick` → 263 checks, 0 FAIL, exit 0.
+`verify_elements.py --quick` → 264 checks, 0 FAIL, exit 0.
+Referee SOURCE is committed at `conformance/atomworld/elements1_referee/`
+(18869af); refresh it with `sync_repo_copy.sh`, which re-applies the h2_core
+import shim the committed copy needs. Cache backed up to
+`$HOME/elements1_referee_backup/` — /tmp is not durable.
 
 ## Owed (three)
 

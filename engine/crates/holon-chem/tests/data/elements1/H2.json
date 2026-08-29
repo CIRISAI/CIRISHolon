@@ -1179,5 +1179,21 @@
   "E2_max_abs_uncertainty_hartree_per_bohr2": "0.00000000000000000000000000000000000034390536",
   "E_max_abs_uncertainty_hartree": "0.0000000000000000000000000000000000000000000000000000000000052896",
   "basis": "STO-3G, 8 decimals, ties to even; fingerprint bf9cd64f6fec4907"
+ },
+ "grid_provenance": {
+  "rule": "uniform in R^(-1/4) between rmin and rmax from nbase points, refined by nsplit inside the staked well window",
+  "staked_parameters": {
+   "rmin_bohr": "0.30",
+   "rmax_bohr": "10.0",
+   "nbase": 110,
+   "nsplit": 2,
+   "well_window_bohr": [
+    "1.0",
+    "2.2"
+   ]
+  },
+  "full_grid_knots": 158,
+  "emitted_knots": 158,
+  "subset_rule": "none -- every knot of the staked grid is emitted"
  }
 }

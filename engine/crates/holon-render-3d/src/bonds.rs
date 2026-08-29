@@ -62,10 +62,17 @@ pub fn sync_bonds(
         let a = &s.atoms[p.i];
         let b = &s.atoms[p.j];
         if let Ok(mut tf) = transforms.get_mut(*e) {
+            // The rod's thickness is the bond's DEPTH — |e_bond| as a fraction of
+            // the well, exactly the encoding the 2D shell has always drawn. A pair
+            // grazing the tail at 1e-4 Ha renders as a hair; a pair at the bottom
+            // of the well renders as the full rod. Continuous and physical: no
+            // threshold decides what is "really" a bond, the energy does — the
+            // field report about entry-scene bonds is why this is not cosmetic.
+            let depth = (-p.e_bond() / s.table.d_e.max(1e-12)).clamp(0.0, 1.0) as f32;
             *tf = rod_between(
                 to_world(a.x, a.y, a.z),
                 to_world(b.x, b.y, b.z),
-                bond_radius(),
+                bond_radius() * (0.15 + 0.85 * depth),
             );
         }
     }

@@ -1021,3 +1021,37 @@ fn a_hot_dilute_gas_has_no_clusters() {
     assert_eq!(s.bonded_count(), 0);
     assert_eq!(s.cluster_count(), (0, 0));
 }
+
+/// FIELD REPORT (the lead's phone, third screenshot): "the 3d render bonds the
+/// atoms upon entering the scene erroneously." It did — a shell at rest opens
+/// with every pair below its dissociation asymptote AND exactly on its outer
+/// turning point, so the opener handed out bonds nobody paid for, against the
+/// capture plant's own lesson. The opener now opens in derived-velocity uniform
+/// expansion: every pair strictly unbound, in both dimensionalities, at every
+/// scene size, from the first frame.
+#[test]
+fn the_opener_hands_out_no_bonds() {
+    for three in [false, true] {
+        for n in [3usize, 5, 8, 16] {
+            let mut s = loaded_sim();
+            if three {
+                s.dims = holon_render::sim::Dims::Three;
+            }
+            s.reset(n);
+            s.refresh_pairs();
+            assert_eq!(
+                s.bonded_count(),
+                0,
+                "{}D opener at n = {n} hands out bonds",
+                if three { 3 } else { 2 }
+            );
+            assert_eq!(s.cluster_count(), (0, 0));
+            // And the two-atom headline scene still opens unbound the way it
+            // always did: approaching, above its asymptote.
+            let mut two = loaded_sim();
+            two.reset(2);
+            two.refresh_pairs();
+            assert_eq!(two.bonded_count(), 0, "the two-atom opener regressed");
+        }
+    }
+}

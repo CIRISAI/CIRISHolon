@@ -564,14 +564,14 @@ impl Sim {
                 a.vx = -sign * 0.0004;
                 a.vy = 0.0;
             } else if three {
-                // The 3D counterpart of the ring: a deterministic Fibonacci SPHERE, at
-                // rest. Same properties that made the ring the right 2D opener — no RNG,
-                // so a reported run re-runs byte-for-byte, and near-uniform spacing so no
-                // pair opens inside the repulsive wall — and the same honest consequence:
-                // like the ring, a shell at rest opens with pairs already reading BONDED,
-                // because two atoms at rest at any finite separation have `E_rel = U(R) <
-                // 0`. That is the criterion telling the truth, not a defect; the two-atom
-                // scene is the one built to make the point, and it is the default.
+                // The 3D counterpart of the ring: a deterministic Fibonacci SPHERE.
+                // No RNG, so a reported run re-runs byte-for-byte, and near-uniform
+                // spacing so no pair opens inside the repulsive wall. Velocities are
+                // assigned by the expansion pass below the loop — a shell at REST
+                // opens with every pair already reading BONDED (E_rel = U(R) < 0 at
+                // any finite separation, and exactly ON its turning point besides),
+                // which a field report rightly called out: an opener that hands out
+                // bonds nobody paid for contradicts the capture plant's own lesson.
                 //
                 // 6 bohr is the ring's radius kept: at N = 16 the nearest-neighbour
                 // spacing is ~3.4 bohr, comfortably outside the wall and inside the well.
@@ -587,13 +587,54 @@ impl Sim {
                 a.vx = 0.0;
                 a.vy = 0.0;
             } else {
-                // A deterministic ring, at rest.
+                // A deterministic ring; velocities come from the expansion pass below.
                 let theta = (i as f64) * core::f64::consts::TAU / (self.n as f64);
                 let radius = 6.0;
                 a.x = cx + radius * theta.cos();
                 a.y = cy + radius * theta.sin();
                 a.vx = 0.0;
                 a.vy = 0.0;
+            }
+        }
+        // THE OPENER HANDS OUT NO BONDS. For n > 2 the scene opens in uniform
+        // (Hubble-style) expansion about the centre: v_i = v * (x_i - c) / R, so
+        // every pairwise separation grows in proportion and pair (i, j)'s relative
+        // speed is v * d_ij / R. Unboundness for every pair needs
+        //     0.5 * mu * (v * d / R)^2 > |U(d)|,
+        // and v is DERIVED from that inequality by scanning the actual opening
+        // pairs against the loaded curve — worst pair wins, margin 1.5 on the
+        // speed. No fitted constant, no distance cutoff, deterministic; and being
+        // strictly unbound also clears the measure-zero at-rest boundary where a
+        // pair sits exactly ON its outer turning point and the strict criterion
+        // falls by solver rounding. Bonds then cost what they always cost: energy,
+        // paid out through a third body, the spring, or the thermostat.
+        //
+        // The two-atom headline scene keeps its own deliberate approach and is
+        // untouched; with no curve loaded there is no U to clear and the scene
+        // stays at rest (there are no forces either).
+        if self.n > 2 && self.table.is_loaded() {
+            let mu = 0.5 * M_H;
+            let shell_r = 6.0; // both openers place atoms on a 6-bohr shell
+            let mut v2_needed = 0.0f64;
+            for i in 0..self.n {
+                for j in (i + 1)..self.n {
+                    let dx = self.atoms[j].x - self.atoms[i].x;
+                    let dy = self.atoms[j].y - self.atoms[i].y;
+                    let dz = self.atoms[j].z - self.atoms[i].z;
+                    let d2 = dx * dx + dy * dy + dz * dz;
+                    let d = d2.sqrt().max(1e-9);
+                    let u = self.table.u(d);
+                    if u < 0.0 {
+                        v2_needed = v2_needed.max(2.0 * (-u) * shell_r * shell_r / (mu * d2));
+                    }
+                }
+            }
+            let v = 1.5 * v2_needed.sqrt();
+            for i in 0..self.n {
+                let a = &mut self.atoms[i];
+                a.vx = v * (a.x - cx) / shell_r;
+                a.vy = v * (a.y - cy) / shell_r;
+                a.vz = v * (a.z - cz) / shell_r;
             }
         }
         self.zero_ledger();

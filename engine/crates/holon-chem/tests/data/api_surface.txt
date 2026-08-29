@@ -1,0 +1,45 @@
+# Public items of `holon-chem` that NOTHING inside the library references.
+#
+# This file is deliberately NOT a .rs file and NOT under src/. The audit that reads it
+# scans src/ for references, so an allowlist living there would make naming an item count
+# as referencing it — an allowlist that launders its own entries out of the bucket it is
+# exempting them from is not an allowlist. The sibling elements-referee lane learned that
+# the hard way with its prose-field list; this is the same fix applied in advance.
+#
+# Every line is NAME <tab-or-spaces> WHY. A public item unreferenced inside the library is
+# not automatically a defect — most of these are the crate's actual API — but each one has
+# to be a decision. The shape this audit exists to catch is the opposite: a computation or
+# a guard reachable only from a test, which looks alive and is not on any path that runs.
+
+# --- consumed by holon-render, over the wasm ABI ---
+REFEREE_DIGEST          holon-render exports it; the viewer banner names the pinned referee
+REFEREE_GRID_POINTS     same banner
+REFEREE_MEASURED_E      same banner
+REFEREE_MEASURED_F      pinned residual, enforced by tests/referee.rs
+REFEREE_MEASURED_E2     as above
+REFEREE_MEASURED_R_E    as above
+REFEREE_MEASURED_D_E    as above
+REFEREE_STAKE_E         the staked bound; read by tests/referee.rs and tests/pair.rs
+fnv1a32                 digest helper for the referee pins, used by both gate tests
+
+# --- the emit/report surface, consumed by examples that produce artifacts ---
+to_json                 campaign.rs and the pair-table contract; the renderer's file format
+hermite_error           emit_curve.rs reports the interpolant's departure from the model
+homonuclear_size        emit_palette.rs; both branches covered by tests/pair.rs
+declared_colour         emit_palette.rs; monotonicity covered by tests/pair.rs
+by_symbol               h3_barrier.rs, and the R2 gate resolves referee symbols with it
+by_z                    the registry lookup; used by the plants and the element gates
+
+# --- measurement API, exercised by the gates rather than by the library ---
+s_squared               the spin instrument; the library computes energies, not multiplicities
+solve_geometry_detailed returns the pieces a gate needs; production uses solve_geometry
+g_at                    MO integral accessor for tests that check the transform
+SQRT_PI_FOR_TEST        exists only so tests/special.rs can pin the literal
+
+# --- the three-body module (SATURATION-1 lane; classified by that lane) ---
+TRIMER_PROVENANCE       label emitted with the trimer table
+de3_xyu                 the three-body surface evaluator
+negate                  trimer helper
+set_node                trimer table construction
+zero_inside_perimeter   trimer boundary condition
+zero_outside_perimeter  trimer boundary condition

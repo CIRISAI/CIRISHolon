@@ -896,6 +896,28 @@ pub struct Solution {
     pub cg_residual: f64,
 }
 
+/// Iteration cap for [`davidson`], as a settable global.
+///
+/// # Why this exists, and why it is not a tuning knob
+///
+/// `PairCache::get` refuses a curve whose solve gave up. That refusal needs a test that goes
+/// in the FRONT DOOR — driving the production entry point and requiring it to come back
+/// refused — because the failure it guards against is not "the verdict is computed wrongly"
+/// but "nothing acts on the verdict", and only a plant through the real path can tell those
+/// apart. A test that plants a bad `PairMeta` directly would be testing the unit under the
+/// entry point, which is exactly the level at which this defect hid.
+///
+/// So a solve has to be made to genuinely fail. Capping the iterations does that honestly:
+/// the eigenvector really is unconverged, the residual really is large, and everything
+/// downstream sees the failure it would see in the wild. Faking the residual instead would
+/// test the plumbing while leaving the physics path unexercised.
+///
+/// Production never touches it. `tests/front_door.rs` is its only caller, and it lives in
+/// its own test binary so the global cannot leak into a parallel test.
+#[doc(hidden)]
+pub static DAVIDSON_MAX_ITER: std::sync::atomic::AtomicUsize =
+    std::sync::atomic::AtomicUsize::new(1200);
+
 /// Lowest eigenpair by Davidson, matrix-free.
 pub fn davidson(
     space: &FciSpace,
@@ -1132,7 +1154,13 @@ pub fn solve(space: &FciSpace, mo: &MoIntegrals) -> Solution {
     let ci1 = ci_ints(mo, Order::First);
     let ci2 = ci_ints(mo, Order::Second);
     let diag = space.diagonal(&ci0);
-    let (e, v, iters, residual) = davidson(space, &ci0, &diag, 1e-11, 1200);
+    let (e, v, iters, residual) = davidson(
+        space,
+        &ci0,
+        &diag,
+        1e-11,
+        DAVIDSON_MAX_ITER.load(std::sync::atomic::Ordering::Relaxed),
+    );
 
     // E' = <v|H'|v>: exact for a variational eigenvector, with no response needed,
     // because the eigenvector's own derivative enters at second order.

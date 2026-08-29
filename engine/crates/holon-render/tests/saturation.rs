@@ -398,3 +398,77 @@ fn the_triple_loop_cost_is_measured() {
     );
     assert!(with > 0.0 && without > 0.0);
 }
+
+// ------------------------------------------------------------------ plant (iii)
+
+/// PLANT (iii), the structural half: the dynamics provably READS the table inside the
+/// perimeter the plant zeroes.
+///
+/// The prereg's plant is a D1 spot check — zero `dE3` below a 4-bohr perimeter and the
+/// MBE3 arm must move back toward the droplet — and that lives in the quench runner, not
+/// in a unit test, because it is two full 33-ps runs. What belongs here is the half that
+/// can be measured in milliseconds and that the spot check would otherwise be assuming:
+/// that the mutation lands on a nonempty sector of the SURFACE and that the force loop
+/// reads it. If this fails, the spot check is scored on nothing.
+///
+/// The perimeter matters and is worth stating plainly: 4 bohr is an equilateral triangle
+/// of side 1.33, TIGHTER than the H2 equilibrium separation of 1.389, so the region the
+/// plant removes is the compact core and not the approach geometries where a third atom
+/// meets a bond. Whether the dynamics visits it is the spot check's question; whether the
+/// engine can see it at all is this one's.
+#[test]
+fn plant_iii_the_force_loop_reads_the_zeroed_region() {
+    let mut plain = scene();
+    let mut planted = scene();
+    planted.trimer.zero_inside_perimeter(4.0);
+
+    // The carrier: the surface inside the perimeter must be nonzero before the plant and
+    // exactly zero after it.
+    let compact = [1.2f64, 1.2, 1.2]; // perimeter 3.6
+    let (v_plain, g_plain) = plain.trimer.eval(compact);
+    let (v_planted, _) = planted.trimer.eval(compact);
+    println!(
+        "plant (iii) carrier: dE3 at the compact triple (perimeter {:.2}) = {v_plain:+.6} Ha \
+         before, {v_planted:+.6} Ha after",
+        compact.iter().sum::<f64>()
+    );
+    assert!(
+        v_plain > 1e-3,
+        "the sector the plant acts on is empty: nothing to zero"
+    );
+    assert!(
+        g_plain.iter().any(|g| g.abs() > 1e-3),
+        "the surface is flat where the plant acts: no force to remove"
+    );
+
+    // And the force loop reads it: an identical scene differs in E_three and in the force
+    // on every atom.
+    for s in [&mut plain, &mut planted] {
+        s.boundary = Boundary::Open;
+        s.reset(3);
+        let (cx, cy) = (0.5 * s.width, 0.5 * s.height);
+        s.set_position(0, cx - 0.6, cy - 0.35);
+        s.set_position(1, cx + 0.6, cy - 0.35);
+        s.set_position(2, cx, cy + 0.69);
+        s.rebase();
+    }
+    let df = {
+        let a = plain.internal_force(2);
+        let b = planted.internal_force(2);
+        ((a.0 - b.0).powi(2) + (a.1 - b.1).powi(2)).sqrt()
+    };
+    println!(
+        "plant (iii): E_three {:+.6} -> {:+.6} Ha, and the force on atom 2 moves by \
+         {df:.4} Ha/bohr",
+        plain.e_three, planted.e_three
+    );
+    assert!(
+        (plain.e_three - planted.e_three).abs() > 1e-3,
+        "the plant did not change the energy the ledger sums"
+    );
+    assert!(
+        df > 1e-3,
+        "the plant did not change the force the integrator pushes with: the loop is not \
+         reading the table where the plant acts"
+    );
+}

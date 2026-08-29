@@ -52,6 +52,32 @@ into read / guarded-at-write / inert, and V9 fails on any inert field not named
 in `prose_fields.txt`. The allowlist is a separate file because naming a field
 inside the verifier made the audit think it was consumed.
 
+## A limitation, stated rather than left to be discovered
+
+Cache records are stamped with the BASIS fingerprint and refused when it
+changes. They are not stamped with a fingerprint of the SOLVER, and the solver
+did change during this campaign (cluster deflation for near-degenerate levels,
+a gated stall-stop, a one-determinant space returning its vector). So a curve
+can be assembled from records computed by different versions of `fci.py`.
+
+What makes that safe rather than merely unnoticed, and where the argument stops:
+
+* every record was checked by TWO independent routes at the moment it was
+  written, and the third route agrees to 5e-48 or better wherever it ran;
+* `--recertify` re-runs any geometry whose stored bound does not cover the
+  50th significant digit, which is what caught a stale over-optimistic bound of
+  1.30e-17 on HF;
+* the emitter refuses a file whose declared uncertainty does not cover the
+  digits it prints;
+* V2 checks H2 against the banked `h2_core.py` run LIVE, so a solver change
+  that moved both routes together would have to move the bank too.
+
+The gap that leaves is a change making both routes wrong in the same direction
+by less than the declared bound. Two independent implementations make that
+unlikely; nothing here makes it impossible. A solver fingerprint on each record
+would close it and would also invalidate about 45 MB of exact solves, so it is
+recorded as a known limitation rather than paid for mid-campaign.
+
 ## Not committed
 
 The point cache (about 45 MB, tens of thousands of CPU-hours of exact solves)

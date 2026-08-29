@@ -539,6 +539,17 @@
  "E_asymptote": "-253.20905010599789027533691404505494259505839522186",
  "R_e": "unbound",
  "D_e": "unbound",
+ "spin": {
+  "n_geometries": 132,
+  "two_S": [
+   0
+  ],
+  "S2_min": "0.0",
+  "S2_max": "0.0",
+  "max_abs_deviation_from_exact_S_S_plus_1": "0.0",
+  "geometries_differing_in_S": [],
+  "note": "<S^2> = ||S_+ psi||^2 + Sz(Sz+1) of the converged route-A vector, at EVERY staked geometry. H commutes with S^2, so a subspace method can converge cleanly inside the WRONG spin sector and every number it reports about itself will look right; this is the one quantity that sees it. Checked at every geometry rather than spot ones because the place it would slip is the dissociation tail, where the singlet and triplet come together."
+ },
  "derivative_provenance": {
   "route": "local Newton interpolant at every grid point; stencil cross-check at 0 of 132",
   "F_max_abs_uncertainty_hartree_per_bohr": "0.0000000000075104215",

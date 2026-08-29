@@ -18,7 +18,7 @@ const curveCtx = curveCanvas.getContext("2d");
 const ui = Object.fromEntries(
   [
     "runtime-status", "stage-status", "clock", "provenance", "error-text",
-    "energy-gate", "e-kin", "e-pair", "e-wall", "e-spring", "w-ext", "ledger",
+    "energy-gate", "e-kin", "e-pair", "e-three", "e-wall", "e-spring", "w-ext", "ledger",
     "drift", "drift-bound", "drift-fill", "drift-ratio",
     "momentum-gate", "p-mag", "p-res", "p-bound",
     "pair-r", "pair-erel", "pair-router", "bond-count",
@@ -29,6 +29,7 @@ const ui = Object.fromEntries(
     "c-atoms", "c-molecules", "c-candidates", "c-global", "c-formations",
     "c-dissolutions", "c-rejections", "c-bondsector",
     "d-sps", "d-pps", "d-req", "d-nmax",
+    "t3-nodes", "t3-peak", "t3-rmax", "t3-ms", "t3-note",
     "sim-speed-out", "dt-mult-out",
     "palette-provenance", "palette-rule", "spawn-note",
     "sp-name", "sp-z", "sp-mass", "sp-basis", "sp-pair", "sp-ndet", "sp-sep", "sp-radius",
@@ -153,6 +154,36 @@ async function loadPotential(w) {
     /placeholder/i.test(provenance),
   );
   return { generated: false, file };
+}
+
+// The THREE-BODY surface, solved at load by the same engine.
+//
+// Feature-detected rather than assumed, so this file needs no edit on a build that does
+// not carry it, and a refusal is SAID rather than swallowed: a sandbox running with the
+// pairwise force loop alone is a different physics, and the panel should not imply
+// otherwise. The cost is reported because it is the one load-time number this term adds
+// and it is not small -- thousands of full-CI solves, not the pair curve's hundreds.
+function loadTrimer(w) {
+  if (typeof w.holon_trimer_generate !== "function") {
+    ui["t3-nodes"].textContent = "absent";
+    ui["t3-note"].textContent =
+      "This build carries no three-body table: the force loop is pairwise-additive, so a "
+      + "cluster has nothing to stop it growing. The ledger below is still closed; it is "
+      + "closed around a different physics.";
+    return;
+  }
+  const t0 = performance.now();
+  const ok = w.holon_trimer_generate();
+  const ms = performance.now() - t0;
+  if (ok !== 1) {
+    ui["t3-nodes"].textContent = "refused";
+    showError("the three-body generator refused; the sandbox is running pairwise-additive.");
+    return;
+  }
+  ui["t3-nodes"].textContent = w.holon_trimer_nodes().toLocaleString();
+  ui["t3-peak"].textContent = `${w.holon_trimer_peak().toFixed(4)} Eh`;
+  ui["t3-rmax"].textContent = `${w.holon_trimer_r_max().toFixed(1)} a0`;
+  ui["t3-ms"].textContent = `${ms.toFixed(0)} ms`;
 }
 
 // Surface the sign-convention check rather than trusting it. `residual` assumes
@@ -313,6 +344,7 @@ async function boot() {
   state.speciesAware = typeof w.holon_atom_z === "function"
     && typeof w.holon_set_atom_z === "function";
   await loadPotential(w);
+  loadTrimer(w);
   await loadPalette();
   if (!state.speciesAware) {
     document.querySelector("#spawn-banner").hidden = false;
@@ -646,6 +678,7 @@ function drawLedger() {
   const w = state.w;
   ui["e-kin"].textContent = eh(w.holon_e_kin());
   ui["e-pair"].textContent = eh(w.holon_e_pair());
+  ui["e-three"].textContent = eh(w.holon_e_three ? w.holon_e_three() : 0);
   ui["e-wall"].textContent = eh(w.holon_e_wall());
   ui["e-spring"].textContent = eh(w.holon_e_spring());
   ui["w-ext"].textContent = eh(w.holon_w_ext());

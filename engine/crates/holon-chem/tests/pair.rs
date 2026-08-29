@@ -189,7 +189,17 @@ fn e3_every_pair_emits_the_renderer_contract() {
                 assert!(t.r[i] > t.r[i - 1], "{label}: the grid is not increasing at {i}");
             }
         }
+        let json = t.to_json();
         assert_eq!(t.meta.well.is_some(), expect_bound, "{label}: boundness");
+        // A curve must carry a VERDICT on its own solves, not only a number nobody reads.
+        assert!(
+            t.meta.converged(),
+            "{label}: emitted with worst Davidson residual {:.3e}, past the declared \
+             {:.0e}. A curve whose solve gave up must not ship looking healthy.",
+            t.meta.worst_residual,
+            holon_chem::pair::CONVERGED_RESIDUAL
+        );
+        assert!(json.contains("\"converged\": true"), "{label}: the verdict must be emitted");
         // Species metadata, which is the extension the multi-element sandbox needs.
         assert_eq!(t.meta.z_a, a.z, "{label}: the table's first species");
         assert_eq!(t.meta.z_b, b.z, "{label}: the table's second species");
@@ -210,7 +220,6 @@ fn e3_every_pair_emits_the_renderer_contract() {
 
         // The JSON contract. Parsed by pattern rather than by a parser, for the reason
         // `common/mod.rs` gives: the file is a fixture this crate owns.
-        let json = t.to_json();
         for key in [
             "\"provenance\"", "\"species\"", "\"E_asymptote\"", "\"bound\"", "\"R_e\"",
             "\"D_e\"", "\"R_grid_bohr\"", "\"E_hartree\"", "\"F_hartree_per_bohr\"",
@@ -361,7 +370,7 @@ pub const ELEMENTS1_STAKED_PAIRS: [&str; 9] = [
 /// Re-pin deliberately whenever the referee delivers, and re-read the residuals rather
 /// than only bumping the number — that is what the H2 gate's digest exists to force and
 /// this one inherits the rule.
-pub const ELEMENTS1_REFEREE_DIGEST: u32 = 0x81d4_18a7;
+pub const ELEMENTS1_REFEREE_DIGEST: u32 = 0x24c5_a63d;
 
 /// The staked separation-wise agreement on the ENERGY for the first row, hartree.
 ///
@@ -605,6 +614,9 @@ fn r2_the_first_row_matches_the_fifty_digit_referee() {
         let mut my_r = Vec::with_capacity(rs.len());
         let mut my_e = Vec::with_capacity(rs.len());
         let (mut spin_agree, mut spin_unresolved) = (0usize, 0usize);
+        // Derivative residuals at geometries where the branch is ambiguous: reported, never
+        // asserted, and never silently folded into the graded maxima.
+        let (mut wf_deg, mut w2_deg) = (0.0f64, 0.0f64);
         for (i, rstr) in rs.iter().enumerate() {
             let r = rstr.parse::<f64>().unwrap();
             // The DETAILED solve rather than `pair_point`, because it hands back the CI
@@ -624,8 +636,6 @@ fn r2_the_first_row_matches_the_fifty_digit_referee() {
                 we = de;
                 at = i;
             }
-            wf = wf.max(decimal_minus_f64(&fs[i], f).abs());
-            w2 = w2.max(decimal_minus_f64(&e2s[i], e2).abs());
             my_r.push(r);
             my_e.push(e);
 
@@ -636,7 +646,34 @@ fn r2_the_first_row_matches_the_fifty_digit_referee() {
             let theirs: usize = their_two_s[i].parse().unwrap_or_else(|_| {
                 panic!("{name}: two_S_by_geometry[{i}] = {:?} is not an integer", their_two_s[i])
             });
-            match multiplicity(s_squared(&space, &sol.vector), (a.z + b.z) as usize, 1e-6) {
+            // The derivative columns are graded only where the state is SPIN-RESOLVED, and
+            // that is a statement about what a derivative IS rather than a tolerance being
+            // relaxed. Hellmann–Feynman gives `<v|H'|v>`, the slope of the branch `v` sits
+            // on. Inside a degenerate level any member is an eigenvector, the branches have
+            // DIFFERENT slopes, and which member an eigensolver lands on depends on the
+            // orbital basis — this crate's constant SCF rotation is exactly energy-invariant
+            // and is not branch-invariant. So `dE/dR` of "the ground state" is not
+            // single-valued there, and neither implementation is wrong about it.
+            //
+            // Measured on F2, whose tail is degenerate past 7.3 bohr: through the
+            // unrotated basis my forces match the referee at 1e-12 to 1e-15 at every
+            // geometry, and through the rotated production basis they differ by 3.4e-10 at
+            // 7.738 — same geometry, same referee number, different branch. The ENERGY is
+            // graded everywhere regardless, because the lowest eigenvalue is invariant even
+            // where its derivative is not.
+            let spin_resolved = multiplicity(
+                s_squared(&space, &sol.vector),
+                (a.z + b.z) as usize,
+                1e-6,
+            );
+            if spin_resolved.is_some() {
+                wf = wf.max(decimal_minus_f64(&fs[i], f).abs());
+                w2 = w2.max(decimal_minus_f64(&e2s[i], e2).abs());
+            } else {
+                wf_deg = wf_deg.max(decimal_minus_f64(&fs[i], f).abs());
+                w2_deg = w2_deg.max(decimal_minus_f64(&e2s[i], e2).abs());
+            }
+            match spin_resolved {
                 Some((mine_s, _)) => {
                     let mine_two_s = (2.0 * mine_s).round() as usize;
                     assert_eq!(
@@ -673,6 +710,13 @@ fn r2_the_first_row_matches_the_fifty_digit_referee() {
              {spin_unresolved} degenerate and unresolved",
             rs.len()
         );
+        if spin_unresolved > 0 {
+            println!(
+                "        derivatives at the {spin_unresolved} degenerate geometries: \
+                 |dF| up to {wf_deg:.3e}, |dE2| up to {w2_deg:.3e} — REPORTED, not graded: \
+                 dE/dR is not single-valued where the level is degenerate"
+            );
+        }
         assert!(
             spin_agree * 2 >= rs.len(),
             "{name}: only {spin_agree} of {} geometries resolved a multiplicity to compare; \

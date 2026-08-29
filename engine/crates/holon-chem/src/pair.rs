@@ -412,6 +412,22 @@ pub fn pair_point(a: Species, b: Species, r: f64) -> PairPoint {
 // curve — extended with the species metadata a multi-element sandbox needs, and with the
 // well made OPTIONAL so an unbound pair can say so in the schema rather than in a comment.
 
+/// The worst Davidson residual a generated curve may carry and still be called converged.
+///
+/// # Why a curve needs a verdict and not only a number
+///
+/// `PairMeta` has always RECORDED `worst_residual`, and nothing ever checked it. A curve
+/// whose solve hit its iteration cap at some geometry would be emitted looking perfectly
+/// healthy, carrying a wrong energy, with the evidence sitting in a field no consumer is
+/// required to read. That is a dead result presenting as a live one — the same shape as an
+/// exception that cannot cross a process boundary, and the sibling referee lane lost two
+/// hours of a loaded machine to exactly that before asking whether this side had an
+/// equivalent. It did, and this is it.
+///
+/// Set an order above `davidson`'s own 1e-11 target, so an ordinary solve clears it and a
+/// solve that gave up does not.
+pub const CONVERGED_RESIDUAL: f64 = 1e-10;
+
 /// The declared threshold below which a dip in the curve is not called a well.
 ///
 /// ELEMENTS-1's gate E1 stakes the negative controls at this depth ("no well deeper than
@@ -737,6 +753,19 @@ pub fn locate_well(
     })
 }
 
+impl PairMeta {
+    /// Did every solve behind this curve converge?
+    ///
+    /// A VERDICT, not a number. See [`CONVERGED_RESIDUAL`]: the residual was recorded here
+    /// long before anything asked it a question, which is how a curve that gave up could
+    /// have shipped looking healthy.
+    pub fn converged(&self) -> bool {
+        self.worst_residual <= CONVERGED_RESIDUAL
+            && self.worst_residual.is_finite()
+            && self.worst_cg_residual.is_finite()
+    }
+}
+
 impl PairTable {
     /// Serialise to the renderer's contract, extended with the species block.
     ///
@@ -796,6 +825,7 @@ impl PairTable {
                 s.push_str("  \"k_e\": null,\n");
             }
         }
+        s.push_str(&format!("  \"converged\": {},\n", m.converged()));
         s.push_str(&format!(
             "  \"convergence\": {{\"worst_davidson_residual\": {:?}, \
              \"worst_response_residual\": {:?}, \"min_overlap_eigenvalue\": {:?}, \

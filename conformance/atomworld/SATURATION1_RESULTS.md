@@ -2,7 +2,8 @@
 
 *The record for `SATURATION1_PREREG.md` (frozen 2026-08-28, commit 7f47d76) as
 amended by AMENDMENT A1 (commit 482da68). Gates R1, T1, T2, C1, D1 and plants
-(i), (ii), (iii) are the engine lane's; F1 is not.*
+(i), (ii), (iii) are the engine lane's; F1 is discharged by the lead from the
+referee's committed artifact, below.*
 
 ---
 
@@ -159,7 +160,11 @@ digest `0xd5b107ba`.
 | max `|E(H3) − referee|` | **8.99e-15 Ha** at (1.6, 1.6, 1.6) | 1e-10 |
 | max `|dE3 − referee|` | **8.11e-15 Ha** at (7.0, 0.9, 7.0) | 1e-10 |
 
-75 geometries, 11,118× inside the stake. The referee shares no code, no language
+75 rows — the 68 staked geometries plus the referee's 7-point T2 shell probe,
+which its header labels a probe and not part of the staked set; every row is a
+referee-grade 50-digit value, so the comparison is valid at all 75 and the
+STAKED set alone (68 ≥ the prereg's 64) discharges the gate — 11,118× inside
+the stake at the worst row. The referee shares no code, no language
 and no arithmetic with the engine — only the model definition.
 
 The prereg's three DISCLOSED priors are reproduced by the table-building path:
@@ -473,6 +478,47 @@ the outside-zero shape**, and this campaign's number for it is `plant3c` above.
 
 ---
 
+## F1 — the truncation gauge at order 4 · **HOLDS**, with the finding reported
+
+*Discharged by the lead from the referee's committed artifact
+(`conformance/atomworld/h4_referee.json`, commit 6da9b58), because the numbers
+are the referee's to stand behind and the engine lane rightly declined to sign
+them. Denominator per AMENDMENT A1: the sum of the four triple contributions —
+the expansion's order-3 term for a tetramer. Both columns published.*
+
+| geometry | |dE4| / Σ triples | / max triple | dE4 sign | Sz=0 ground |
+|---|---|---|---|---|
+| tetrahedron @ r_e | 0.4234 | 1.6935 | − | TRIPLET |
+| square @ r_e | 0.3979 | 1.5915 | − | TRIPLET |
+| rhombus60 @ r_e | 0.4838 | 1.4594 | − | singlet |
+| tetrahedron @ 1.5 r_e | 0.4160 | 1.6639 | − | singlet |
+| square @ 1.5 r_e | 0.3597 | 1.4389 | − | singlet |
+| rhombus60 @ 1.5 r_e | 0.4361 | 1.2060 | − | singlet |
+
+**The kill (|dE4| > |Σ dE3| at a majority of the compact set): 0 of 6 — it does
+not fire.** F1 holds.
+
+And the finding it obliges the record to carry, stated as prominently as the
+verdict: **order 4 is a 36–48% correction that OPPOSES order 3** — dE4 is
+negative at all six geometries while dE3 is positive at every one of the 68
+staked grid points. That is slow convergence, not a negligible tail. Against
+the largest single triple the ratio runs 1.21–1.69, which is why A1 had to pin
+the denominator before the verdict could mean anything. Two corroborations from
+elsewhere in this record: plant (i)'s MBE3-vs-exact gap (2.573 − 1.163 =
+1.41 Ha against a triple sum of 3.43 Ha reads 0.41 from the other side), and
+the referee's far-field finding that the H2–H2 quadrupole force lives ENTIRELY
+at order 4 in this basis. The compact Sz=0 ground state is a TRIPLET at the r_e
+tetrahedron and square (referee's ⟨S²⟩ = 2 exactly), published beside the S=0
+reading per A1; the F1 ratios move ≤ 0.013 between conventions.
+
+Scope, restated: the D1 product is unaffected — the quench's saturation
+physics lives at moderate perimeters where the four-body term is small; what F1
+gauges is that COMPACT four-atom energetics need order 4, so any successor that
+cares about compact clusters (the 1×4's cross-bonds, condensed phases) owes an
+MBE4 term or an exact N-body treatment there.
+
+---
+
 ## What the campaign says, in one page
 
 **All of the engine lane's gates hold, one plant VOIDs on an empty sector, and
@@ -481,13 +527,14 @@ remedy.**
 
 | gate | verdict | the number |
 |---|---|---|
-| R1 · 50-digit referee | **HOLDS** | 8.99e-15 Ha over 75 geometries, 11,118× inside the stake |
+| R1 · 50-digit referee | **HOLDS** | 8.99e-15 Ha over 68 staked + 7 probe rows, 11,118× inside the stake |
 | T1 · interpolant fidelity | **HOLDS** | 4.6005e-5 Ha held out over 256 staked-seed geometries, 21.7× inside the kill |
 | T2 · as staked (any side = 7) | **FIRED** | 1.7720e-2 Ha, 1772× over — and the test asserts its own firing |
 | T2 · as amended (middle side = 9) | **HOLDS** | 4.6758e-7 Ha, 21× margin |
 | C1 · energy | **HOLDS** | ≤ 1.15% of the derived bound, across 3, 8 and 16-atom scenes |
 | C1 · momentum | **HOLDS** | ≤ 0.05% of the roundoff bound |
 | D1 · the product | **BRANCH (a), 8/8** | control 8/8, MBE3 8/8, zero free atoms |
+| F1 · order-4 gauge | **HOLDS** | 0/6 over unity on the pinned denominator; 0.36–0.48 reported as slow convergence |
 | plant (i) · sign flip | **CAUGHT** | +2.573 Ha → −4.207 Ha under negation |
 | plant (ii) · symmetry | **CAUGHT** | six permutations bit-identical; the break moves 7.825e-4 Ha |
 | plant (iii) · far field | **VOID** | its sector is entered 0 times in 40,000 boundaries |

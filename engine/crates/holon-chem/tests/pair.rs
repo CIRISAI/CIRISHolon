@@ -333,9 +333,32 @@ fn the_colour_rule_is_declared_monotone_and_distinguishable() {
 //     "symbols":               ["H", "He", ...]        Z ascending
 //     "E_hartree":             [...]                   one per symbol
 
-/// FNV-1a of the concatenated referee files, in the order listed below. Zero until the
-/// files exist; the digest check prints the value to pin.
-pub const ELEMENTS1_REFEREE_DIGEST: u32 = 0;
+/// The nine pairs ELEMENTS-1 stakes, in the freeze's own order.
+///
+/// # Why this one list stays hardcoded when everything else is read from the drop
+///
+/// The referee's `manifest.json` declares which pairs it has delivered and which it still
+/// owes, and coverage is read from THAT rather than from a list here — a list of delivered
+/// pairs maintained beside the files drifts out of step with them, which is the referee
+/// lane's point and it is correct.
+///
+/// But coverage read entirely from the data has the failure this whole campaign keeps
+/// meeting: if a file disappears and the manifest shrinks with it, the gate covers less and
+/// says nothing, because the data it is checking against shrank too. So exactly one thing
+/// is frozen here — the STAKED SET, which comes from the prereg and cannot legitimately
+/// change — and the test asserts `pairs_present + pairs_owed` is exactly this. A pair may
+/// move from present to owed; it cannot vanish from both.
+pub const ELEMENTS1_STAKED_PAIRS: [&str; 9] = [
+    "H2", "LiH", "Li2", "HF", "N2", "F2", "CO", "He2", "Ne2",
+];
+
+/// FNV-1a over the drop: each STAKED pair that is present, in the order above, then
+/// `atoms.json`, then `manifest.json`. Filesystem order never enters it.
+///
+/// Re-pin deliberately whenever the referee delivers, and re-read the residuals rather
+/// than only bumping the number — that is what the H2 gate's digest exists to force and
+/// this one inherits the rule.
+pub const ELEMENTS1_REFEREE_DIGEST: u32 = 0xeb8c_4d9a;
 
 /// The staked separation-wise agreement on the ENERGY for the first row, hartree.
 ///
@@ -380,46 +403,90 @@ fn f64_scalar(src: &str, key: &str) -> f64 {
 }
 
 #[test]
-#[ignore = "waiting on the elements-referee lane's 50-digit output; see the note above"]
 fn r2_the_first_row_matches_the_fifty_digit_referee() {
     let dir = referee_dir();
     let is_committed = std::env::var("ELEMENTS1_REFEREE_DIR").is_err();
-    let pairs = ["H2", "LiH", "Li2", "HF", "N2", "F2", "CO", "He2", "Ne2"];
-    // A preview drop carries only some species; the committed set must carry all nine.
-    let present: Vec<&str> = pairs
-        .iter()
-        .copied()
-        .filter(|n| dir.join(format!("{n}.json")).exists())
-        .collect();
-    if is_committed {
-        assert_eq!(
-            present.len(),
-            pairs.len(),
-            "the committed referee set is incomplete: {:?} present of {:?}. Un-ignore this \
-             test only once the whole set is there.",
-            present,
-            pairs
+
+    // Coverage comes from the drop's own manifest, never from a list maintained here.
+    let manifest = std::fs::read_to_string(dir.join("manifest.json"))
+        .expect("manifest.json: the drop must declare its own coverage");
+    let present = string_array(&manifest, "pairs_present");
+    let owed = string_array(&manifest, "pairs_owed");
+    let fingerprint = string_scalar(&manifest, "basis_fingerprint");
+
+    // The invariant that makes shrinkage impossible: present + owed IS the staked set.
+    let mut union: Vec<&str> = present.iter().chain(owed.iter()).map(|s| s.as_str()).collect();
+    union.sort_unstable();
+    let mut staked: Vec<&str> = ELEMENTS1_STAKED_PAIRS.to_vec();
+    staked.sort_unstable();
+    assert_eq!(
+        union, staked,
+        "the manifest's pairs_present + pairs_owed is not the staked set. A pair may move \
+         from present to owed, but it cannot leave both lists — that would shrink this \
+         gate's coverage with nothing to say so."
+    );
+    assert!(!fingerprint.is_empty(), "the manifest declares no basis_fingerprint");
+
+    // Every declared pair has a file, and every pair file is declared. Neither direction
+    // is redundant: the first catches a manifest that promises what it did not ship, the
+    // second catches a file being graded that nobody declared.
+    for name in present.iter() {
+        assert!(
+            dir.join(format!("{name}.json")).exists(),
+            "manifest declares {name} present but {name}.json is not in the drop"
         );
+    }
+    for entry in std::fs::read_dir(&dir).expect("referee directory").flatten() {
+        let file = entry.file_name().to_string_lossy().to_string();
+        let Some(stem) = file.strip_suffix(".json") else { continue };
+        if stem == "atoms" || stem == "manifest" {
+            continue;
+        }
+        assert!(
+            present.iter().any(|p| p == stem),
+            "{file} is in the drop but the manifest does not declare {stem} present; an \
+             undeclared file would be graded with nothing stating what it is"
+        );
+    }
+
+    println!(
+        "referee drop at {} — basis {fingerprint}\n  COVERED ({} of {}): {}\n  OWED  ({}): {}",
+        dir.display(),
+        present.len(),
+        ELEMENTS1_STAKED_PAIRS.len(),
+        present.join(" "),
+        owed.len(),
+        owed.join(" ")
+    );
+    if !owed.is_empty() {
+        println!(
+            "  R2 IS PARTIALLY DISCHARGED. The staked pointwise bound is measured on the \
+             {} pair(s) above and on all ten atoms; the {} owed pair(s) are NOT yet graded \
+             against a 50-digit referee by this gate.",
+            present.len(),
+            owed.len()
+        );
+    }
+
+    if is_committed {
         let mut all = Vec::new();
-        for name in pairs.iter() {
-            all.extend(std::fs::read(dir.join(format!("{name}.json"))).unwrap());
+        for name in ELEMENTS1_STAKED_PAIRS.iter() {
+            if present.iter().any(|p| p == name) {
+                all.extend(std::fs::read(dir.join(format!("{name}.json"))).unwrap());
+            }
         }
         all.extend(std::fs::read(dir.join("atoms.json")).unwrap());
+        all.extend(std::fs::read(dir.join("manifest.json")).unwrap());
         let digest = fnv1a32(&all);
         assert_eq!(
             digest, ELEMENTS1_REFEREE_DIGEST,
-            "the ELEMENTS-1 referee set has changed (digest {digest:#010x}). If that was \
-             deliberate, re-derive the residuals against the new files rather than \
-             re-pinning the digest alone."
+            "the ELEMENTS-1 referee drop has changed (digest {digest:#010x}). If that was \
+             deliberate — a delivery, or a re-emission — re-pin to that value AND re-read \
+             the residuals below, rather than bumping the number alone."
         );
     } else {
-        println!(
-            "reading an UNPINNED drop at {} ({} of {} pairs present); the digest gate is \
-             enforced only on the committed set",
-            dir.display(),
-            present.len(),
-            pairs.len()
-        );
+        println!("  UNPINNED drop (ELEMENTS1_REFEREE_DIR set); the digest gate is enforced \
+                  only on the committed set");
     }
 
     // --- the atoms, which every curve's asymptote is built from ---

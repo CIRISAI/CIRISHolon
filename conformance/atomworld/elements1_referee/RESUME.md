@@ -7,7 +7,7 @@ Repo drop:       `/home/emoore/CIRISHolon/engine/crates/holon-chem/tests/data/el
 
 H2 · He2 · LiH · HF · F2 · Ne2 — plus `atoms.json` and `manifest.json`.
 Last pin: **56a8141** (grid_provenance added; every number byte-identical). Re-emitting today reproduced all eight files byte-for-byte.
-`verify_elements.py --quick` → 264 checks, 0 FAIL, exit 0.
+`verify_elements.py --quick` → 296 checks, 0 FAIL, exit 0.
 Referee SOURCE is committed at `conformance/atomworld/elements1_referee/`
 (18869af); refresh it with `sync_repo_copy.sh`, which re-applies the h2_core
 import shim the committed copy needs. Cache backed up to
@@ -70,7 +70,18 @@ determinants are expensive".
 9. **V10** — rebuilds each emitted grid from the file's OWN declared parameters
    and subset rule. Its sparse branch is exercised on a synthetic N2 drop
    (`test_verify_sections.py`) because N2 lands last.
-10. **The audit stopped counting the writer as a reader** — `_inert_audit.py`
+10. **V11** — consumes the record's own verdicts: asymptote = E(atom1)+E(atom2)
+   to the STORED precision, extremum counts vs boundness, monotone-repulsive
+   vs boundness, an unbound control above dissociation, route C available
+   matching its declaration, and the R1 line naming two DIFFERENT routes.
+   Seven failing cases in `test_verify_sections.py`.
+11. **Sections set their own working precision.** They inherited it from
+   `main()` and said so nowhere; called directly at mpmath's default 15 they
+   compared collapsed 50-digit strings and read a real disagreement at 1e-49.
+12. **Route C's agreement is tied to its availability flag** — an absent
+   agreement used to skip silently, so a third route that ran and disagreed
+   looked exactly like one that never ran.
+13. **The audit stopped counting the writer as a reader** — `_inert_audit.py`
    had `emit_engine.py` in its reader set, so every key the emitter names
    literally looked consumed. Corrected, the buckets are read / guarded-at-
    write / inert; V8 now re-derives every spin summary from the per-geometry

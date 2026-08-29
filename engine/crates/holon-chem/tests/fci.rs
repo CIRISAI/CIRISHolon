@@ -590,9 +590,15 @@ fn the_ground_multiplicity_along_the_curve_is_settled_densely() {
     use holon_chem::fci::{dense_hamiltonian_ladder, multiplicity, s_squared};
 
     let sweeps: Vec<(&str, Species, Species, f64, Vec<f64>)> = vec![
-        ("H2", HYDROGEN, HYDROGEN, 1.4, vec![0.8, 1.4, 2.0, 3.0, 4.5, 6.0, 9.0]),
-        ("LiH", LITHIUM, HYDROGEN, 2.92, vec![2.0, 2.92, 4.0, 6.0, 9.0]),
-        ("HF", HYDROGEN, FLUORINE, 1.88, vec![1.2, 1.88, 2.6, 3.6, 5.0, 8.0]),
+        // H2 runs to 12 deliberately. The referee lane's beyond-grid probe measures H2 as
+        // resolved out to 10 bohr and DEGENERATE BY 12 — a claim boundary two bohr past
+        // where its staked grid stops. This sweep ended at 9 and so could not have seen
+        // that: "resolved everywhere" would have been a fact about the sweep. Extended so
+        // the two lanes' boundaries are comparable rather than each bounded by its own
+        // design choice.
+        ("H2", HYDROGEN, HYDROGEN, 1.4, vec![0.8, 1.4, 2.0, 3.0, 4.5, 6.0, 9.0, 10.0, 12.0]),
+        ("LiH", LITHIUM, HYDROGEN, 2.92, vec![2.0, 2.92, 4.0, 6.0, 9.0, 14.0, 16.8]),
+        ("HF", HYDROGEN, FLUORINE, 1.88, vec![1.2, 1.88, 2.6, 3.6, 5.0, 8.0, 9.7, 12.0]),
         // Dense through the crossing the referee lane located at 4.7277 bohr.
         ("F2", FLUORINE, FLUORINE, 2.62, vec![2.0, 2.62, 3.5, 4.4, 4.6, 4.8, 5.5, 8.0, 9.5, 12.0]),
     ];

@@ -361,7 +361,7 @@ pub const ELEMENTS1_STAKED_PAIRS: [&str; 9] = [
 /// Re-pin deliberately whenever the referee delivers, and re-read the residuals rather
 /// than only bumping the number — that is what the H2 gate's digest exists to force and
 /// this one inherits the rule.
-pub const ELEMENTS1_REFEREE_DIGEST: u32 = 0xd4e9_e8c3;
+pub const ELEMENTS1_REFEREE_DIGEST: u32 = 0x81d4_18a7;
 
 /// The staked separation-wise agreement on the ENERGY for the first row, hartree.
 ///
@@ -388,6 +388,12 @@ pub const ELEMENTS1_STAKE_E: f64 = 1e-10;
 /// A file with no declaration is REFUSED rather than given the flat bound: an absent
 /// uncertainty must never read as zero uncertainty.
 pub const DERIVATIVE_MARGIN: f64 = 2.0;
+
+/// Whether a JSON source carries a key at all, so an optional cross-check can be skipped
+/// deliberately rather than by a parse that silently returns nothing.
+fn src_has(src: &str, key: &str) -> bool {
+    src.contains(&format!("\"{key}\""))
+}
 
 fn referee_dir() -> std::path::PathBuf {
     match std::env::var("ELEMENTS1_REFEREE_DIR") {
@@ -418,10 +424,11 @@ fn r2_the_first_row_matches_the_fifty_digit_referee() {
     let fingerprint = string_scalar(&manifest, "basis_fingerprint");
 
     // The invariant that makes shrinkage impossible: present + owed IS the staked set.
-    let mut union: Vec<&str> = present.iter().chain(owed.iter()).map(|s| s.as_str()).collect();
-    union.sort_unstable();
-    let mut staked: Vec<&str> = ELEMENTS1_STAKED_PAIRS.to_vec();
-    staked.sort_unstable();
+    let mut union: Vec<String> = present.iter().chain(owed.iter()).cloned().collect();
+    union.sort();
+    let mut staked: Vec<String> =
+        ELEMENTS1_STAKED_PAIRS.iter().map(|s| s.to_string()).collect();
+    staked.sort();
     assert_eq!(
         union, staked,
         "the manifest's pairs_present + pairs_owed is not the staked set. A pair may move \
@@ -429,6 +436,20 @@ fn r2_the_first_row_matches_the_fifty_digit_referee() {
          gate's coverage with nothing to say so."
     );
     assert!(!fingerprint.is_empty(), "the manifest declares no basis_fingerprint");
+
+    // The referee's drop now declares the staked set too. Cross-check it against the
+    // constant frozen here rather than replacing one with the other: two lanes that
+    // disagree about WHICH pairs are staked is a disagreement worth firing on, and it is
+    // invisible if either side simply reads the other's list.
+    if src_has(&manifest, "staked_nine") {
+        let mut theirs = string_array(&manifest, "staked_nine");
+        theirs.sort();
+        assert_eq!(
+            theirs, staked,
+            "the referee's declared staked set differs from this gate's frozen one. One of \
+             the two lanes is grading a different campaign."
+        );
+    }
 
     // Every declared pair has a file, and every pair file is declared. Neither direction
     // is redundant: the first catches a manifest that promises what it did not ship, the
@@ -615,7 +636,7 @@ fn r2_the_first_row_matches_the_fifty_digit_referee() {
             let theirs: usize = their_two_s[i].parse().unwrap_or_else(|_| {
                 panic!("{name}: two_S_by_geometry[{i}] = {:?} is not an integer", their_two_s[i])
             });
-            match multiplicity(s_squared(&space, &sol.vector), 1e-6) {
+            match multiplicity(s_squared(&space, &sol.vector), (a.z + b.z) as usize, 1e-6) {
                 Some((mine_s, _)) => {
                     let mine_two_s = (2.0 * mine_s).round() as usize;
                     assert_eq!(

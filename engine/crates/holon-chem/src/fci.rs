@@ -1280,12 +1280,28 @@ pub fn s_squared(space: &FciSpace, c: &[f64]) -> f64 {
     raised.iter().map(|x| x * x).sum::<f64>() + floor
 }
 
-/// Total spin `S` read back from `<S^2> = S(S+1)`, and the multiplicity `2S+1`.
+/// Total spin `S` read back from `<S^2> = S(S+1)`, and the multiplicity `2S+1` — refused
+/// unless the value is a spin eigenvalue AND a spin this many electrons can actually have.
 ///
-/// Returns `None` if `<S^2>` is not `S(S+1)` for any half-integer `S` to `tol` — which is
-/// a state that is not a spin eigenstate, and therefore a solver that has gone wrong
-/// rather than a chemistry result.
-pub fn multiplicity(s_sq: f64, tol: f64) -> Option<(f64, usize)> {
+/// # Three conditions, and the third is the one that is easy to leave out
+///
+/// 1. `2S` must be (near) an integer, and 2. `S(S+1)` must reproduce `<S^2>`. Together
+///    those say the reading is a spin eigenvalue rather than a mixture that happens to land
+///    somewhere plausible.
+/// 3. `2S` must have the SAME PARITY as the electron count. An even number of electrons can
+///    only make integer `S`, an odd number only half-integer. Nothing about conditions 1 and
+///    2 knows this, so without it a reading of exactly `0.75` reads back as a clean doublet
+///    — for an eighteen-electron molecule, which is impossible.
+///
+/// The sibling `elements-referee` lane hit exactly that: past 8.9 bohr every vector of F2's
+/// degenerate ground level agreed on a doublet, its "all vectors agree" test passed them,
+/// and all of them were arbitrary mixtures. AGREEMENT IS A CONSISTENCY PROPERTY AND
+/// VALIDITY IS A DIFFERENT QUESTION — a set of readings can be unanimous and jointly
+/// meaningless. This crate's reader already refused their particular values by condition 2
+/// (F2's far tail here reads `<S^2> = 1.000000`, which is not `S(S+1)` for any half-integer
+/// `S`), so the defect did not bite; condition 3 is what makes it unreachable rather than
+/// unlucky.
+pub fn multiplicity(s_sq: f64, n_electrons: usize, tol: f64) -> Option<(f64, usize)> {
     // S(S+1) = s_sq  =>  S = (-1 + sqrt(1 + 4 s_sq)) / 2.
     let s = 0.5 * ((1.0 + 4.0 * s_sq).max(0.0).sqrt() - 1.0);
     let twice = (2.0 * s).round();
@@ -1294,6 +1310,10 @@ pub fn multiplicity(s_sq: f64, tol: f64) -> Option<(f64, usize)> {
     }
     let s = 0.5 * twice;
     if (s * (s + 1.0) - s_sq).abs() > tol {
+        return None;
+    }
+    // The parity condition. `2S` and the electron count must agree mod 2.
+    if (twice as usize) % 2 != n_electrons % 2 {
         return None;
     }
     Some((s, (twice as usize) + 1))

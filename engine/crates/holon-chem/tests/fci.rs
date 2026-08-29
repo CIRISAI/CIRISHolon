@@ -401,7 +401,7 @@ fn the_converged_state_is_in_the_right_spin_sector() {
         let n = basis.n;
         let ao = ao_integrals(&basis);
         let x = cholesky_orthonormaliser(&ao.s, n).unwrap();
-        let (_, na, nb) = electron_counts(&species);
+        let (n_elec, na, nb) = electron_counts(&species);
         let space = FciSpace::new(n, na, nb);
         let mo = transform(&ao, &x, n);
         let sol = solve(&space, &mo);
@@ -416,7 +416,7 @@ fn the_converged_state_is_in_the_right_spin_sector() {
         );
 
         let s_sq = s_squared(&space, &sol.vector);
-        let (s, mult) = multiplicity(s_sq, 1e-6).unwrap_or_else(|| {
+        let (s, mult) = multiplicity(s_sq, n_elec, 1e-6).unwrap_or_else(|| {
             panic!(
                 "{label}: <S^2> = {s_sq} is not S(S+1) for any half-integer S — the \
                  converged state is not a spin eigenstate, which is a broken solve rather \
@@ -463,7 +463,7 @@ fn the_spin_check_rejects_a_state_that_is_not_an_eigenstate() {
     // Carbon: 6 electrons, 5 orbitals, S_z = 0. Floor 0, ground state 2.
     let basis = build_basis(&[CARBON], centers(None));
     let n = basis.n;
-    let (_, na, nb) = electron_counts(&[CARBON]);
+    let (n_elec, na, nb) = electron_counts(&[CARBON]);
     let space = FciSpace::new(n, na, nb);
     assert_eq!(space.alpha.n_elec, space.beta.n_elec, "S_z must be 0 for this probe");
     let nb_len = space.beta.len();
@@ -502,17 +502,49 @@ fn the_spin_check_rejects_a_state_that_is_not_an_eigenstate() {
              eigenstate; the check cannot distinguish sectors and every other assertion \
              about it is empty"
         );
+        // The reader, on the two cases these determinants actually produce. One beta-only
+        // orbital gives <S^2> = 1, which is not S(S+1) for any half-integer S and must be
+        // refused; two gives exactly 2, a triplet, which carbon's six electrons can have.
+        let read = multiplicity(s_sq, n_elec, 1e-9);
+        match beta_only {
+            1 => assert!(
+                read.is_none(),
+                "<S^2> = 1 is not S(S+1) for any half-integer S and must not read back as \
+                 a multiplicity"
+            ),
+            2 => assert_eq!(
+                read.map(|x| x.1),
+                Some(3),
+                "<S^2> = 2 is a triplet, and six electrons can have one"
+            ),
+            _ => {}
+        }
         checked += 1;
     }
     println!("  {checked} open-shell determinants: <S^2> = (# beta-only orbitals), exactly");
 
     // The multiplicity reader, on values that are and are not S(S+1).
-    assert_eq!(multiplicity(0.0, 1e-9).map(|x| x.1), Some(1));
-    assert_eq!(multiplicity(0.75, 1e-9).map(|x| x.1), Some(2));
-    assert_eq!(multiplicity(2.0, 1e-9).map(|x| x.1), Some(3));
-    assert_eq!(multiplicity(3.75, 1e-9).map(|x| x.1), Some(4));
-    assert!(multiplicity(1.0, 1e-9).is_none(), "1.0 is not S(S+1) for any half-integer S");
-    assert!(multiplicity(3.0, 1e-9).is_none(), "3.0 is not S(S+1) either");
+    // Valid readings, each with an electron count of the parity it requires.
+    assert_eq!(multiplicity(0.0, 6, 1e-9).map(|x| x.1), Some(1), "singlet, even count");
+    assert_eq!(multiplicity(0.75, 7, 1e-9).map(|x| x.1), Some(2), "doublet, odd count");
+    assert_eq!(multiplicity(2.0, 6, 1e-9).map(|x| x.1), Some(3), "triplet, even count");
+    assert_eq!(multiplicity(3.75, 7, 1e-9).map(|x| x.1), Some(4), "quartet, odd count");
+
+    // Not S(S+1) for any half-integer S. F2's far tail reads exactly 1.0 here, which is
+    // why the referee lane's doublet defect could not reproduce in this crate.
+    assert!(multiplicity(1.0, 6, 1e-9).is_none(), "1.0 is not S(S+1) for any half-integer S");
+    assert!(multiplicity(3.0, 6, 1e-9).is_none(), "3.0 is not S(S+1) either");
+
+    // THE PARITY CONDITION, which is the one that is easy to leave out. Each of these IS a
+    // spin eigenvalue and is still impossible for an electron count of that parity.
+    assert!(
+        multiplicity(0.75, 18, 1e-9).is_none(),
+        "a doublet is impossible for eighteen electrons, however clean the value looks — \
+         this is the reading that passed the sibling lane's agreement test"
+    );
+    assert!(multiplicity(0.0, 7, 1e-9).is_none(), "a singlet is impossible for seven electrons");
+    assert!(multiplicity(2.0, 9, 1e-9).is_none(), "a triplet is impossible for nine electrons");
+    assert!(multiplicity(3.75, 8, 1e-9).is_none(), "a quartet is impossible for eight electrons");
 }
 
 /// The multiplicity of the ground state along a whole CURVE, settled by DENSE
@@ -562,7 +594,7 @@ fn the_ground_multiplicity_along_the_curve_is_settled_densely() {
         ("LiH", LITHIUM, HYDROGEN, 2.92, vec![2.0, 2.92, 4.0, 6.0, 9.0]),
         ("HF", HYDROGEN, FLUORINE, 1.88, vec![1.2, 1.88, 2.6, 3.6, 5.0, 8.0]),
         // Dense through the crossing the referee lane located at 4.7277 bohr.
-        ("F2", FLUORINE, FLUORINE, 2.62, vec![2.0, 2.62, 3.5, 4.4, 4.6, 4.8, 5.5, 8.0]),
+        ("F2", FLUORINE, FLUORINE, 2.62, vec![2.0, 2.62, 3.5, 4.4, 4.6, 4.8, 5.5, 8.0, 9.5, 12.0]),
     ];
 
     for (label, a, b, r_e, rs) in sweeps {
@@ -574,7 +606,7 @@ fn the_ground_multiplicity_along_the_curve_is_settled_densely() {
             let ao = ao_integrals(&basis);
             let x = cholesky_orthonormaliser(&ao.s, n).unwrap();
             let mo = transform(&ao, &x, n);
-            let (_, na, nb) = electron_counts(&species);
+            let (n_elec, na, nb) = electron_counts(&species);
             let space = FciSpace::new(n, na, nb);
             assert!(
                 space.n_det <= 256,
@@ -602,7 +634,7 @@ fn the_ground_multiplicity_along_the_curve_is_settled_densely() {
             const LEVEL_SIMPLE: f64 = 1e-9;
             let level_gap = evals[1] - evals[0];
             let mult = if level_gap > LEVEL_SIMPLE {
-                let (_, m) = multiplicity(s_sq, 1e-6).unwrap_or_else(|| {
+                let (_, m) = multiplicity(s_sq, n_elec, 1e-6).unwrap_or_else(|| {
                     panic!(
                         "{label} at R = {r}: the DENSE ground eigenvector has \
                          <S^2> = {s_sq}, which is not S(S+1) for any half-integer S, and \
@@ -636,7 +668,7 @@ fn the_ground_multiplicity_along_the_curve_is_settled_densely() {
                         let v: Vec<f64> = (0..space.n_det)
                             .map(|row| evecs[row * space.n_det + k])
                             .collect();
-                        multiplicity(s_squared(&space, &v), 1e-6).map(|x| x.1)
+                        multiplicity(s_squared(&space, &v), n_elec, 1e-6).map(|x| x.1)
                     })
                     .collect();
                 let agreed = mults[0].filter(|m| mults.iter().all(|x| x == &Some(*m)));

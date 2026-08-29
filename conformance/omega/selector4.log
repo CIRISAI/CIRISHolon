@@ -1,0 +1,117 @@
+==============================================================================
+SELECTOR-4 — the bootstrap gauntlet on gauge worlds, scale-indexed
+prereg: conformance/omega/SELECTOR4_PREREG.md (frozen before this file)
+==============================================================================
+
+A.  DECLARED CONSTRUCTIONS (the freeze's delegated degrees of freedom)
+------------------------------------------------------------------------------
+    acuity ladder : cumulative joins A0<A1<A2<A3<A4 (chain verified, B0)
+    act vocabulary: invariant PARTIAL sections (fiber-injective cycles).
+                    Forced: the literal SELECTOR-3 transversal rule gives
+                    ZERO sections above A0 on all four groups (measured).
+    family        : {gauge_r o step^d : d | ord(step), r a class rep}
+    separation    : exact rho-closure, no word-length cut, budget 2000
+
+B.  D4   |G|=8  states=64  ord(step)=6  family=16
+------------------------------------------------------------------------------
+    acuity blocks A0..A4 : [1, 2, 2, 25, 28]
+    fiber-injective cycles of the step per rung : [0, 0, 0, 9, 11]
+    A0: selected    0/16 = 0.0000   groups=   1 (max  16)   voids=0   [0.0s]
+    A1: selected    0/16 = 0.0000   groups=   1 (max  16)   voids=0   [0.0s]
+    A2: selected    0/16 = 0.0000   groups=   1 (max  16)   voids=0   [0.0s]
+    A3: selected    4/16 = 0.2500   groups=   4 (max   4)   voids=0   [0.0s]
+    A4: selected    4/16 = 0.2500   groups=   4 (max   4)   voids=0   [0.0s]
+    [total 0.1s]
+
+B.  2T   |G|=24  states=576  ord(step)=48  family=60
+------------------------------------------------------------------------------
+    acuity blocks A0..A4 : [1, 2, 3, 66, 76]
+    fiber-injective cycles of the step per rung : [0, 0, 0, 9, 15]
+    A0: selected    0/60 = 0.0000   groups=   1 (max  60)   voids=0   [0.0s]
+    A1: selected    0/60 = 0.0000   groups=   1 (max  60)   voids=0   [0.0s]
+    A2: selected    0/60 = 0.0000   groups=   1 (max  60)   voids=0   [0.0s]
+    A3: selected   35/60 = 0.5833   groups=   9 (max  12)   voids=0   [0.9s]
+    A4: selected   35/60 = 0.5833   groups=   9 (max  12)   voids=0   [1.2s]
+    [total 2.1s]
+
+B.  2O   |G|=48  states=2304  ord(step)=144  family=105
+------------------------------------------------------------------------------
+    acuity blocks A0..A4 : [1, 2, 5, 89, 136]
+    fiber-injective cycles of the step per rung : [0, 0, 0, 25, 199]
+    A0: selected    0/105 = 0.0000   groups=   1 (max 105)   voids=0   [0.0s]
+    A1: selected    0/105 = 0.0000   groups=   1 (max 105)   voids=0   [0.1s]
+    A2: selected    0/105 = 0.0000   groups=   1 (max 105)   voids=0   [0.1s]
+    A3: selected   44/105 = 0.4190   groups=  12 (max  21)   voids=0   [8.1s]
+    A4: selected   48/105 = 0.4571   groups=  12 (max  21)   voids=0   [10.9s]
+    [total 19.4s]
+
+B.  2I   |G|=120  states=14400  ord(step)=8400  family=480
+------------------------------------------------------------------------------
+    acuity blocks A0..A4 : [1, 2, 9, 153, 296]
+    fiber-injective cycles of the step per rung : [0, 0, 0, 61, 451]
+    A0: selected    0/480 = 0.0000   groups=   1 (max 480)   voids=0   [0.0s]
+    A1: selected    0/480 = 0.0000   groups=   1 (max 480)   voids=0   [16.1s]
+    A2: selected    0/480 = 0.0000   groups=   1 (max 480)   voids=0   [18.9s]
+    A3: selected  189/480 = 0.3937   groups=  49 (max  48)   voids=351   [565.7s]
+    A4: selected  191/480 = 0.3979   groups=  53 (max  32)   voids=367   [529.5s]
+    [total 1137.1s]
+
+C.  VERDICTS
+------------------------------------------------------------------------------
+  B0  : PASS — step and gauge action bijective on all four worlds; the acuity ladder verified a chain of coarsenings at every rung; identity sets by the exact rho-closure (pair-BFS reorganised)
+        budget exhaustions (VOID pairs): 718
+        VOIDED CELLS (budget exhausted, verdict refused): [('2I', 3), ('2I', 4)]
+        A voided cell is excluded from EVERY gate below, not just G1:
+        its selected count is reported for information and carries no
+        verdict, because an undecided pair could only ever ADD to a
+        world's identity set, so the printed count is a lower bound.
+  G1  : (G, Ak) cells selecting a PROPER NONEMPTY subset: 6/20 -> branch (a)
+        D4 A3: 4/16
+        D4 A4: 4/16
+        2T A3: 35/60
+        2T A4: 35/60
+        2O A3: 44/105
+        2O A4: 48/105
+  Z1  : selected-set sizes along A1->A4 (the zoom law, staked NON-INCREASING)
+        D4: [0, 0, 0, 4, 4]  monotone-non-increasing(A1..A4)=False  nested=False
+        2T: [0, 0, 0, 35, 35]  monotone-non-increasing(A1..A4)=False  nested=False
+        2O: [0, 0, 0, 44, 48]  monotone-non-increasing(A1..A4)=False  nested=False
+        2I: [0, 0, 0, 189, 191]  monotone-non-increasing(A1..A4)=False  nested=False
+        -> branch (b)
+        INVERSIONS at [('D4', 2), ('2T', 2), ('2O', 2), ('2O', 3), ('2I', 2), ('2I', 3)].
+        The direction is forced by the declared construction and was
+        derivable before the run: refining the view refines the
+        fiber-injectivity test, so BOTH the view and the vocabulary
+        grow with acuity, separation is monotone, |Ident| is
+        non-increasing and the SELECTED set is non-DEcreasing.  The
+        monotone quantity the lead's intuition names is |Ident|; the
+        passing set moves the other way.  Z1 is therefore a statement
+        about which quantity nests, and as staked it is false here.
+  F1  : selected fraction at each rung, per group (group discrimination)
+        A0: D4=0.0000  2T=0.0000  2O=0.0000  2I=0.0000
+        A1: D4=0.0000  2T=0.0000  2O=0.0000  2I=0.0000
+        A2: D4=0.0000  2T=0.0000  2O=0.0000  2I=0.0000
+        A3: D4=0.2500  2T=0.5833  2O=0.4190  2I=0.3937[VOID]
+        A4: D4=0.2500  2T=0.5833  2O=0.4571  2I=0.3979[VOID]
+        (decided cells only; VOID cells carry no verdict)
+        -> branch (a): the criterion DISCRIMINATES gauge structures
+  FR1 : finest rung (A4) fraction across |G| = 8, 24, 48, 120
+        |G|=  8: 4/16 = 0.2500
+        |G|= 24: 35/60 = 0.5833
+        |G|= 48: 48/105 = 0.4571
+        |G|=120: 191/480 = 0.3979   VOID — lower bound only, no verdict
+        The sequence is COMPLETE only for |G| = 8, 24, 48; the |G| = 120
+        entry is undecided at the declared budget and is not a data point.
+        any law fitted to four points is POST-HOC by the freeze's own
+        honesty clause; none was derived in advance and none is claimed.
+  plants: (i) stasis FIRES — the identity fails at every rung of every group, and its generated acts are all the identity map (emptiness of ACTION, not of structure)
+          (ii) T3 control FIRES — the view-aligned vocabulary separates nothing on closed views; carriers 20, candidate pairs scored 115
+          (iii) blind rung FIRES — at A0 every act is the identity map for every world, and NOTHING is selected in any group
+
+D.  VERDICT
+------------------------------------------------------------------------------
+  MIXED: G1 (a), Z1 (b), F1 (a) — each banked at its exact strength.
+  What no outcome here claims: leptons, groups-of-nature, kinematics,
+  constants.  The chain's rungs 3-4 remain open regardless.
+
+  exit 2  (0 = all gates passed and plants fired; 2 = valid run, a staked gate killed; 1 = instrument invalid)

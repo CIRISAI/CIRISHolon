@@ -818,3 +818,54 @@ fn pair_file_names_parse_to_their_elements() {
         assert!(holon_chem::elements::by_symbol(b).is_some(), "{b}");
     }
 }
+
+/// The palette's size rule, on BOTH its branches — because until now no test called it.
+///
+/// # Why this is here
+///
+/// `homonuclear_size` was reachable from exactly one place: `examples/emit_palette.rs`.
+/// No test exercised it, so the whole contact-radius branch — the one that decides how big
+/// helium, beryllium and neon are drawn, and the only branch that runs `bisect`'s refusal
+/// path in anger — had never been run by anything that checks its answer. An example is not
+/// a test: it proves the code runs, not that it is right.
+///
+/// Both branches are asserted here against properties rather than against remembered
+/// numbers: a bound element's radius must be half its own equilibrium separation, and an
+/// unbound one's must be half a separation where the repulsion really does reach the
+/// declared contact energy.
+#[test]
+fn the_palette_size_rule_runs_both_of_its_branches() {
+    use holon_chem::pair::{homonuclear_size, RadiusRule, CONTACT_ENERGY};
+
+    // H2 binds; He2 does not. One of each, so neither branch can be silently dead.
+    let h = homonuclear_size(HYDROGEN);
+    assert_eq!(h.rule, RadiusRule::HalfEquilibrium, "H2 binds, so the well rule applies");
+    assert!(h.d_e.is_some_and(|d| d > WELL_MIN_DEPTH));
+    assert!(
+        (h.radius_bohr * 2.0 - h.separation_bohr).abs() < 1e-12,
+        "a derived radius must be half the separation it was derived from"
+    );
+    // The separation IS the equilibrium: the force there is zero, not merely small.
+    assert!(
+        pair_point(HYDROGEN, HYDROGEN, h.separation_bohr).f.abs() < 1e-9,
+        "H2's reported equilibrium carries a force of {:.3e}",
+        pair_point(HYDROGEN, HYDROGEN, h.separation_bohr).f
+    );
+
+    let he = homonuclear_size(HELIUM);
+    assert_eq!(he.rule, RadiusRule::HalfContact, "He2 does not bind, so the fallback applies");
+    assert!(he.d_e.is_none());
+    assert!((he.radius_bohr * 2.0 - he.separation_bohr).abs() < 1e-12);
+    // The contact separation must be where the repulsion actually reaches the declared
+    // energy — the property the rule claims, not a number to memorise.
+    let u = pair_point(HELIUM, HELIUM, he.separation_bohr).e - 2.0 * atom_energy(HELIUM);
+    assert!(
+        (u - CONTACT_ENERGY).abs() < 1e-9,
+        "He2's contact separation sits at {u:.3e} above the asymptote, not the declared \
+         {CONTACT_ENERGY:.0e}"
+    );
+    println!(
+        "  H  {:?} radius {:.4} a0 from sep {:.4};  He {:?} radius {:.4} a0 from sep {:.4}",
+        h.rule, h.radius_bohr, h.separation_bohr, he.rule, he.radius_bohr, he.separation_bohr
+    );
+}

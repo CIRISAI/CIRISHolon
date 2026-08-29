@@ -897,6 +897,18 @@ impl PairCache {
     /// for. The key is ordered so `(H, F)` and `(F, H)` are one entry: the curve is a
     /// function of the unordered pair, and storing it twice would be two things to keep
     /// in step.
+    /// # The convergence verdict is ENFORCED here, not merely emitted
+    ///
+    /// [`PairMeta::converged`] existed for an hour reachable from exactly two places: the
+    /// serialiser, which wrote it into the JSON, and a test, which asserted it. No
+    /// production path consulted it — so a caller taking a `PairTable` straight from this
+    /// cache would have received a curve whose solve gave up, with the verdict sitting in
+    /// a field it never read. That is the guard-not-connected shape, reproduced within an
+    /// hour of being warned about it, in the very code written to answer the warning.
+    ///
+    /// This is the sandbox's entry point to the chemistry, so it is where the refusal
+    /// belongs. It refuses rather than warns: a curve that did not converge is a wrong
+    /// curve, and handing one back with a flag set is how the flag stays unread.
     pub fn get(&mut self, a: Species, b: Species) -> &PairTable {
         let key = if a.z <= b.z { (a.z, b.z) } else { (b.z, a.z) };
         if let Some(pos) = self.entries.iter().position(|(k, _)| *k == key) {
@@ -905,6 +917,15 @@ impl PairCache {
         }
         let (lo, hi) = if a.z <= b.z { (a, b) } else { (b, a) };
         let table = generate_pair_table(lo, hi, self.knots);
+        assert!(
+            table.meta.converged(),
+            "{}{} did not converge: worst Davidson residual {:.3e} against the declared \
+             {CONVERGED_RESIDUAL:.0e}. Refusing to cache a curve whose solve gave up — its \
+             energies are wrong and a flag on a table nobody reads is not a safeguard.",
+            lo.symbol,
+            hi.symbol,
+            table.meta.worst_residual
+        );
         self.misses += 1;
         self.total_ms += table.meta.generation_ms;
         self.entries.push((key, table));

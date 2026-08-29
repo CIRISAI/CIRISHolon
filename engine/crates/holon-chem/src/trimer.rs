@@ -864,9 +864,24 @@ pub struct TrimerTable {
     filled: usize,
     pub loaded: bool,
     pub meta: TrimerMeta,
-    /// Envelope of the interpolant's second derivatives in SIDE coordinates,
-    /// hartree/bohr^2. The drift bound's three-body term is built from it.
+    /// ABSOLUTE cap on the interpolant's second derivative in SIDE coordinates,
+    /// hartree/bohr^2 — the row-sum norm of the 3x3 side-space Hessian, maximised over the
+    /// grid and widened.
     pub curvature_envelope: f64,
+    /// LOCAL cap, per bohr: `||H|| <= curvature_per_gradient * max_a |dF/ds_a|` everywhere
+    /// the sample reached. The drift bound takes the smaller of the two, which is what
+    /// makes it a live reading of the configuration rather than a constant pinned to a
+    /// corner of the table the trajectory never visits.
+    pub curvature_per_gradient: f64,
+    /// Largest jump in `dF/ds` across a SORT boundary (two sides equal), hartree/bohr.
+    ///
+    /// Reported rather than bounded away. The tabulated surface is exactly symmetric in
+    /// its first two arguments but only symmetric-to-interpolation-error in the third, so
+    /// the composed function of three unsorted sides is continuous — the sorted triple is
+    /// a continuous function of the unsorted one — with a KINK where two sides cross. The
+    /// potential is therefore still conservative; what the kink costs is a small
+    /// discontinuity in the force, and this is its size.
+    pub sort_kink: f64,
 }
 
 /// Widening factor on the measured curvature envelope. See
@@ -890,6 +905,8 @@ impl TrimerTable {
                 solves: 0,
             },
             curvature_envelope: 0.0,
+            curvature_per_gradient: 0.0,
+            sort_kink: 0.0,
         }
     }
 
@@ -897,6 +914,8 @@ impl TrimerTable {
         self.filled = 0;
         self.loaded = false;
         self.curvature_envelope = 0.0;
+        self.curvature_per_gradient = 0.0;
+        self.sort_kink = 0.0;
     }
 
     pub fn knot(&mut self, index: usize, value: f64) -> bool {
@@ -916,7 +935,7 @@ impl TrimerTable {
         }
         self.meta = meta;
         self.loaded = true;
-        self.curvature_envelope = self.measure_curvature_envelope();
+        self.measure_envelopes();
         true
     }
 
@@ -929,7 +948,7 @@ impl TrimerTable {
     /// dynamics does.
     pub fn set_node(&mut self, i: usize, j: usize, k: usize, value: f64) {
         self.v[node_index(i, j, k)] = value;
-        self.curvature_envelope = self.measure_curvature_envelope();
+        self.measure_envelopes();
     }
 
     /// Negate the whole surface — the sign-flip plant, and only the plant.
@@ -937,7 +956,7 @@ impl TrimerTable {
         for x in self.v.iter_mut() {
             *x = -*x;
         }
-        self.curvature_envelope = self.measure_curvature_envelope();
+        self.measure_envelopes();
     }
 
     /// Zero the surface wherever the triangle's perimeter is below `p`. The far-field
@@ -954,7 +973,7 @@ impl TrimerTable {
                 }
             }
         }
-        self.curvature_envelope = self.measure_curvature_envelope();
+        self.measure_envelopes();
     }
 
     /// The surface and its three side-derivatives at a triangle, hartree and
@@ -980,7 +999,19 @@ impl TrimerTable {
         if r[o[0]] > r[o[1]] {
             o.swap(0, 1);
         }
-        let (x, y, z) = (r[o[0]], r[o[1]], r[o[2]]);
+        let (v, g) = self.eval_branch(r[o[0]], r[o[1]], r[o[2]]);
+        let mut out = [0.0f64; 3];
+        for a in 0..3 {
+            out[o[a]] = g[a];
+        }
+        (v, out)
+    }
+
+    /// The surface on ONE branch of the sort: `x` and `y` are taken as the two the table
+    /// is indexed by and `z` as the third, whatever their order. Public to the module's
+    /// own envelope measurement, which must stay on one branch to see a curvature rather
+    /// than the kink where two branches meet.
+    fn eval_branch(&self, x: f64, y: f64, z: f64) -> (f64, [f64; 3]) {
         // The MIDDLE side is what makes dE3 vanish; see the module header. The negated
         // comparisons reject NaN as well as an out-of-domain triangle.
         if !(y <= R_HI) || !(x > 0.0) {
@@ -1012,10 +1043,11 @@ impl TrimerTable {
         let du_dx = (x2 - y2 + z2) / (2.0 * x2 * y);
         let du_dy = (y2 - x2 + z2) / (2.0 * x * y2);
         let du_dz = -z / (x * y);
-        let mut g = [0.0f64; 3];
-        g[o[0]] = fx + fc * dc_du * du_dx;
-        g[o[1]] = fy + fc * dc_du * du_dy;
-        g[o[2]] = fc * dc_du * du_dz;
+        let g = [
+            fx + fc * dc_du * du_dx,
+            fy + fc * dc_du * du_dy,
+            fc * dc_du * du_dz,
+        ];
         (f, g)
     }
 
@@ -1064,11 +1096,28 @@ impl TrimerTable {
         (f, fx, fy, fc)
     }
 
-    /// Largest second derivative of the interpolant in SIDE coordinates, hartree/bohr^2,
-    /// as the row-sum norm of the 3x3 side-space Hessian, MEASURED at the centre of every
-    /// grid cell and then widened.
+    /// Measure the two curvature envelopes and the sort kink, once, when the table closes.
     ///
-    /// # Why a sample and a widening factor rather than a closed form
+    /// # What is being bounded, and why there are two numbers
+    ///
+    /// [`crate::trimer::TrimerTable::eval`] composes the interpolant with a SORT, and a
+    /// sort is not differentiable where two of its arguments cross. The composed potential
+    /// is still continuous — the sorted triple is a continuous function of the unsorted
+    /// one — but its gradient has a kink there, because the table is exactly symmetric in
+    /// its first two arguments and only symmetric-to-interpolation-error in the third. A
+    /// finite difference straddling that kink reports a second derivative that diverges as
+    /// `1/h` and means nothing: measured here at 1283 Ha/bohr^2 with `h = 1e-4`, 152 with
+    /// `h = 1e-3`, 37 with `h = 1e-2`, which is the signature of a jump rather than a
+    /// curvature. The sampling therefore stays on ONE branch, via `eval_branch`, and the
+    /// kink is measured separately and reported as what it is.
+    ///
+    /// The two envelopes are an ABSOLUTE cap and a LOCAL one, `||H|| <= B max_a |dF/ds_a|`.
+    /// The drift bound takes whichever is smaller at the configuration in hand, which is
+    /// what keeps it a live reading: a dispersed scene has tiny three-body gradients and
+    /// therefore a tiny three-body stiffness, where the absolute cap alone would quote the
+    /// compact corner's number forever.
+    ///
+    /// # The widening, and what it covers
     ///
     /// The interpolant is a tensor-product cubic, so along any one axis its second
     /// derivative is LINEAR — extremal at the cell edges, which the node lattice pins —
@@ -1077,9 +1126,16 @@ impl TrimerTable {
     /// `1.25^2 = 1.6` for the two. [`ENVELOPE_WIDENING`] is 4, which clears that by 2.5x
     /// and covers the cell-centre-versus-edge difference along the third axis with it.
     /// Erring wide is the safe direction for a term that multiplies a bound.
-    fn measure_curvature_envelope(&self) -> f64 {
-        const HH: f64 = 1e-4;
-        let mut worst = 0.0f64;
+    fn measure_envelopes(&mut self) {
+        // The step is 1e-3 bohr: small against the grid's own spacing (0.06 bohr at the
+        // compact end) and large enough that the C1-not-C2 jump at a cell boundary is
+        // averaged rather than resolved.
+        const HH: f64 = 1e-3;
+        // How far from a sort boundary a sample has to sit for the difference to stay on
+        // one branch. Forty steps, so the stencil clears it by a wide margin.
+        const CLEAR: f64 = 40.0 * HH;
+        let mut k_abs = 0.0f64;
+        let mut per_grad = 0.0f64;
         for i in 0..(NR - 1) {
             for j in i..(NR - 1) {
                 for k in 0..(NU - 1) {
@@ -1088,25 +1144,67 @@ impl TrimerTable {
                     let c = 0.5 * (node_c(k) + node_c(k + 1));
                     let u = 1.0 - c * c;
                     let z = (x * x + y * y - 2.0 * x * y * u).max(0.0).sqrt();
-                    let sides = [x, y, z];
+                    let mut sorted = [x, y, z];
+                    sorted.sort_by(|a, b| a.partial_cmp(b).expect("finite sides"));
+                    if sorted[1] - sorted[0] < CLEAR || sorted[2] - sorted[1] < CLEAR {
+                        continue;
+                    }
+                    if sorted[1] > R_HI {
+                        continue;
+                    }
+                    // Row sums of the side-space Hessian, by central differences of the
+                    // analytic gradient ON ONE BRANCH. Symmetric by construction, so the
+                    // row-sum norm bounds the spectral norm.
+                    let mut rows = 0.0f64;
                     for a in 0..3 {
-                        let mut lo = sides;
-                        let mut hi = sides;
+                        let mut lo = [x, y, z];
+                        let mut hi = [x, y, z];
                         lo[a] -= HH;
                         hi[a] += HH;
-                        let (_, glo) = self.eval(lo);
-                        let (_, ghi) = self.eval(hi);
+                        let (_, glo) = self.eval_branch(lo[0], lo[1], lo[2]);
+                        let (_, ghi) = self.eval_branch(hi[0], hi[1], hi[2]);
                         let row: f64 = (0..3)
                             .map(|b| ((ghi[b] - glo[b]) / (2.0 * HH)).abs())
                             .sum();
-                        if row > worst {
-                            worst = row;
-                        }
+                        rows = rows.max(row);
+                    }
+                    if rows > k_abs {
+                        k_abs = rows;
+                    }
+                    let (_, g) = self.eval_branch(x, y, z);
+                    let gmax = g.iter().fold(0.0f64, |m, v| m.max(v.abs()));
+                    if gmax > 1e-9 {
+                        per_grad = per_grad.max(rows / gmax);
                     }
                 }
             }
         }
-        ENVELOPE_WIDENING * worst
+        self.curvature_envelope = ENVELOPE_WIDENING * k_abs;
+        self.curvature_per_gradient = ENVELOPE_WIDENING * per_grad;
+        self.sort_kink = self.measure_sort_kink();
+    }
+
+    /// The force discontinuity at a sort boundary: the largest `|dF/ds|` jump across the
+    /// surface where the second and third sorted sides cross. Reported, not bounded away.
+    fn measure_sort_kink(&self) -> f64 {
+        const EPS: f64 = 1e-6;
+        let mut worst = 0.0f64;
+        for i in 0..NR {
+            for j in i..NR {
+                let x = node_r(i);
+                let y = node_r(j);
+                if x < R_LO || y > R_HI || y - x < 0.05 {
+                    continue;
+                }
+                // Two triangles either side of `z = y`, i.e. of the s2 <-> s3 crossing.
+                let (_, ga) = self.eval([x, y, y - EPS]);
+                let (_, gb) = self.eval([x, y, y + EPS]);
+                for a in 0..3 {
+                    worst = worst.max((ga[a] - gb[a]).abs());
+                }
+            }
+        }
+        worst
     }
 }
 

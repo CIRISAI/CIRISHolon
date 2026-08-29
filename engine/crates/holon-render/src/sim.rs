@@ -193,10 +193,10 @@ pub struct Sim {
 
     // --- running maxima that define the drift bound (set by the trajectory, not by hand) ---
     k_pair_max: f64,
-    /// Largest per-triple three-body stiffness the force loop has actually evaluated.
-    /// See [`Sim::drift_bound`] for the bound this feeds and where the expression comes
-    /// from. LIVE, like `k_pair_max`, and for the same reason: a static envelope taken
-    /// from the table alone cannot know which triples the trajectory brings together.
+    /// Largest PER-ATOM summed three-body stiffness the force loop has actually
+    /// evaluated. See [`Sim::k_three`] for the derivation. LIVE, like `k_pair_max`, and
+    /// for the same reason: a static envelope taken from the table alone cannot know which
+    /// triples the trajectory brings together, nor how many of them.
     k_three_max: f64,
     wall_engaged: bool,
     spring_engaged: bool,
@@ -314,21 +314,27 @@ impl Sim {
         self.e_kin + self.e_pair.abs() + self.e_three.abs() + self.e_wall + self.e_spring
     }
 
+    /// The INTERNAL force on atom `i`, hartree/bohr: the pair loop's contribution plus the
+    /// triple loop's, which are the two that cancel from the momentum sum. Exposed so a
+    /// gate can check that the force the integrator pushes with is minus the gradient of
+    /// the energy the ledger sums — the precondition that makes an energy gate a
+    /// measurement of integration error rather than of an inconsistency.
+    pub fn internal_force(&self, i: usize) -> (f64, f64, f64) {
+        if i < self.n {
+            self.a_pair[i]
+        } else {
+            (0.0, 0.0, 0.0)
+        }
+    }
+
     /// Largest pair curvature the force loop has actually evaluated since reset. Exposed
     /// so the attribution probe can separate the two halves of the drift-bound fix.
     pub fn k_pair_max(&self) -> f64 {
         self.k_pair_max
     }
 
-    /// Largest per-triple three-body stiffness the force loop has evaluated since reset,
-    /// hartree/bohr^2. Exposed for the same reason `k_pair_max` is: so the attribution
-    /// probe can separate the two halves of the drift bound.
-    pub fn k_three_max(&self) -> f64 {
-        self.k_three_max
-    }
-
-    /// The three-body stiffness the drift bound actually uses: the worst per-triple
-    /// stiffness times the number of triples ONE atom belongs to.
+    /// The three-body stiffness the drift bound uses, hartree/bohr^2: the largest
+    /// PER-ATOM total the force loop has evaluated since reset.
     ///
     /// # The derivation
     ///
@@ -340,19 +346,29 @@ impl Sim {
     /// d2F/dx_i^2 = sum_{a,b} F_ab (ds_a/dx_i)(ds_b/dx_i) + sum_a F_a (d2 s_a/dx_i^2)
     /// ```
     ///
-    /// Atom `i` touches exactly TWO of the three sides, `|ds_a/dx_i| <= 1` because it is a
-    /// component of a unit vector, and `||d2 s_a/dx_i^2|| <= 2/s_a` for a distance. So per
-    /// triple
+    /// Atom `i` touches exactly TWO of the three sides, `|ds_a/dx_i| <= 1` because each is
+    /// a component of a unit vector, and `||d2 s_a/dx_i^2|| <= 2/s_a` for a distance. So
+    /// per triple
     ///
     /// ```text
     /// |d2F/dx_i^2| <= 4 G2 + 2 sum_a |F_a| / s_a
     /// ```
     ///
-    /// with `G2` the table's own second-derivative envelope (measured from the
-    /// interpolant, widened — see `TrimerTable::curvature_envelope`) and the second sum
-    /// taken over ALL THREE sides rather than the two at `i`, which only widens it. The
-    /// force loop evaluates that expression on every triple it touches and keeps the
-    /// maximum; atom `i` belongs to at most `C(n-1, 2)` triples, and curvatures add.
+    /// with the second sum taken over ALL THREE sides rather than the two at `i`, which
+    /// only widens it. `G2` is the table's own second-derivative envelope, and it is taken
+    /// as the SMALLER of the table's absolute cap and its local one,
+    /// `curvature_per_gradient * max_a |F_a|` — both measured from the interpolant and
+    /// widened. Taking the local form is what keeps the bound a reading of the
+    /// configuration: a dispersed scene has tiny three-body gradients, so a tiny
+    /// three-body stiffness, where the absolute cap alone would quote the compact corner's
+    /// number forever.
+    ///
+    /// Curvatures ADD over the triples an atom belongs to, so the force loop accumulates
+    /// the per-triple bound into a per-atom total and keeps the largest. Bounding instead
+    /// by `C(n-1, 2)` times the worst single triple — every triple simultaneously at the
+    /// worst geometry — is valid and was the first form written here; it is a factor of
+    /// tens looser on any scene that is not a single compact droplet, which is a bound
+    /// that cannot fail rather than a bound that says anything.
     ///
     /// Zero when no table is loaded or the scene has fewer than three atoms, so the pair
     /// bound is returned unchanged — adding an exact zero to a finite float changes no bit.
@@ -360,8 +376,13 @@ impl Sim {
         if !self.trimer.loaded || self.n < 3 {
             return 0.0;
         }
-        let per_atom = ((self.n - 1) * (self.n - 2) / 2) as f64;
-        per_atom * self.k_three_max
+        self.k_three_max
+    }
+
+    /// The same number, exposed under the `_max` name for the attribution probe, so it can
+    /// separate the two halves of the drift bound the way it separates `k_pair_max`.
+    pub fn k_three_max(&self) -> f64 {
+        self.k_three_max
     }
 
     /// Total energy currently held by the scene.
@@ -881,9 +902,11 @@ impl Sim {
                 d[j][i] = r;
             }
         }
-        let env = self.trimer.curvature_envelope;
+        let env_abs = self.trimer.curvature_envelope;
+        let env_per_grad = self.trimer.curvature_per_gradient;
         let mut e_three = 0.0;
-        let mut k_three_max = self.k_three_max;
+        // Per-atom stiffness totals: curvatures ADD over the triples an atom is in.
+        let mut k_atom = [0.0f64; MAX_ATOMS];
         for i in 0..self.n {
             for j in (i + 1)..self.n {
                 for k in (j + 1)..self.n {
@@ -898,16 +921,22 @@ impl Sim {
                     self.push_side(j, k, g[2], rjk);
                     // The per-triple stiffness the drift bound is built from; the
                     // derivation is in `Sim::k_three`.
-                    let kt = 4.0 * env
+                    let gmax = g[0].abs().max(g[1].abs()).max(g[2].abs());
+                    let g2 = env_abs.min(env_per_grad * gmax);
+                    let kt = 4.0 * g2
                         + 2.0 * (g[0].abs() / rij + g[1].abs() / rik + g[2].abs() / rjk);
-                    if kt > k_three_max {
-                        k_three_max = kt;
-                    }
+                    k_atom[i] += kt;
+                    k_atom[j] += kt;
+                    k_atom[k] += kt;
                 }
             }
         }
         self.e_three = e_three;
-        self.k_three_max = k_three_max;
+        for k in k_atom[..self.n].iter() {
+            if *k > self.k_three_max {
+                self.k_three_max = *k;
+            }
+        }
     }
 
     /// One side's share of a triple's force, applied equal and opposite. `g` is
@@ -1213,6 +1242,21 @@ impl Sim {
     /// few or no closed pair-composites, rejections climbing) is the boundness-vs-
     /// closure fence made visible.
     pub fn cluster_count(&self) -> (usize, usize) {
+        let size = self.cluster_sizes();
+        let clusters = size[..self.n].iter().filter(|&&s| s >= 2).count();
+        let atoms = size[..self.n].iter().filter(|&&s| s >= 2).sum();
+        (clusters, atoms)
+    }
+
+    /// The component SIZES behind [`Sim::cluster_count`], indexed by the component's root
+    /// atom: entry `i` is the number of atoms in the component rooted at `i`, and zero for
+    /// an atom that is not a root. Entries of 1 are free atoms; entries of 2 or more are
+    /// clusters.
+    ///
+    /// Split out rather than duplicated so the quench's histogram and the headline count
+    /// read ONE union-find over ONE edge set. Two implementations of a cluster reading is
+    /// how the two of them come to disagree.
+    pub fn cluster_sizes(&self) -> [usize; MAX_ATOMS] {
         let mut parent: [usize; MAX_ATOMS] = [0; MAX_ATOMS];
         for (i, p) in parent.iter_mut().enumerate() {
             *p = i;
@@ -1234,8 +1278,6 @@ impl Sim {
         for i in 0..self.n {
             size[find(&mut parent, i)] += 1;
         }
-        let clusters = size[..self.n].iter().filter(|&&s| s >= 2).count();
-        let atoms = size[..self.n].iter().filter(|&&s| s >= 2).sum();
-        (clusters, atoms)
+        size
     }
 }

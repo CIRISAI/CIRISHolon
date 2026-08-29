@@ -1,0 +1,78 @@
+{
+ "plant_i_Z_mutation": [
+  {
+   "case": "N atom",
+   "Z_from": 7,
+   "Z_to": 8,
+   "carrier_max_abs_dV": "6.5979949",
+   "carrier_nonzero": true,
+   "E_baseline": "-53.719010183795994584336164548445799737239395868306",
+   "E_mutated": "-72.512613233649294542940365617092091578230431036013",
+   "shift_hartree": "18.7936030499",
+   "referee_tolerance": "1.0e-10",
+   "orders_of_magnitude_above_tolerance": 11.274010049640811,
+   "fired": true,
+   "verdict": "FIRED"
+  },
+  {
+   "case": "N2 at 2.1",
+   "Z_from": 7,
+   "Z_to": 8,
+   "carrier_max_abs_dV": "6.5979949",
+   "carrier_nonzero": true,
+   "E_baseline": "-107.65986834640231106837572170795519665559055126487",
+   "E_mutated": "-125.88791791198031215575098219984504156241635704634",
+   "shift_hartree": "18.2280495656",
+   "referee_tolerance": "1.0e-10",
+   "orders_of_magnitude_above_tolerance": 11.26074020084237,
+   "fired": true,
+   "verdict": "FIRED"
+  }
+ ],
+ "plant_ii_basis_mutation": [
+  {
+   "case": "H2 at 1.4",
+   "perturbed": "hydrogen 1s, middle primitive",
+   "relative_perturbation": "1.0e-6",
+   "element_present": true,
+   "carrier_max_abs_dS": "5.8436082e-8",
+   "carrier_nonzero": true,
+   "E_baseline": "-1.1372759436170653800280821357357390262825737602210",
+   "E_mutated": "-1.1372759429289297435524202879321282228450603243280",
+   "shift_hartree": "6.88135636476e-10",
+   "referee_tolerance": "1.0e-10",
+   "fired": true,
+   "verdict": "FIRED"
+  },
+  {
+   "case": "N2 at 2.1",
+   "perturbed": "nitrogen 2p, first primitive",
+   "relative_perturbation": "1.0e-6",
+   "element_present": true,
+   "carrier_max_abs_dS": "3.6009057e-8",
+   "carrier_nonzero": true,
+   "E_baseline": "-107.65986834640231106837572170795519665559055126487",
+   "E_mutated": "-107.65986869564326501779292774110325467697129780688",
+   "shift_hartree": "3.49240953949e-7",
+   "referee_tolerance": "1.0e-10",
+   "fired": true,
+   "verdict": "FIRED"
+  },
+  {
+   "case": "EMPTY-SECTOR CONTROL: H2, nitrogen coefficient",
+   "perturbed": "nitrogen 2p perturbed, but no nitrogen in H2",
+   "relative_perturbation": "1.0e-6",
+   "element_present": false,
+   "carrier_max_abs_dS": "0.0",
+   "carrier_nonzero": false,
+   "E_baseline": "-1.1372759436170653800280821357357390262825737602210",
+   "E_mutated": "-1.1372759436170653800280821357357390262825737602210",
+   "shift_hartree": "0.0",
+   "referee_tolerance": "1.0e-10",
+   "fired": false,
+   "verdict": "VOID (empty sector, as designed)"
+  }
+ ],
+ "all_live_plants_fired": true,
+ "basis_fingerprint": "bf9cd64f6fec4907"
+}

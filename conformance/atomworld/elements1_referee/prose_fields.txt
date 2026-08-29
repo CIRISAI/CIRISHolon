@@ -1,0 +1,14 @@
+# Emitted keys that are PROSE for a human reader: no consumer reads them and no
+# guard fires on them, and that is deliberate.
+#
+# This list lives in its own file rather than in verify_elements.py because the
+# inert-field audit looks for a key's NAME in the reader source -- so writing
+# the allowlist into the verifier laundered two fields out of the inert bucket
+# by naming them there.  An allowlist that makes its own entries look consumed
+# is not an allowlist.
+derivative_provenance.F_uncertainty_scope
+derivative_provenance.branch_dependence
+grading
+grid_provenance.rule
+rules
+spin.sector_ordering_test

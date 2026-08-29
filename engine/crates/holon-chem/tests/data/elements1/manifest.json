@@ -3,6 +3,18 @@
  "basis_fingerprint": "bf9cd64f6fec4907",
  "basis": "STO-3G, 8 decimals, ties to even; hydrogen verbatim from the banked H2 referee h2_core.py",
  "atoms": "atoms.json (all ten, H through Ne, referee-grade)",
+ "staked_nine": [
+  "H2",
+  "LiH",
+  "Li2",
+  "HF",
+  "N2",
+  "F2",
+  "CO",
+  "He2",
+  "Ne2"
+ ],
+ "staked_nine_note": "the species the freeze names. present + owed is this set, always: a pair may move from present to owed, it may not leave both. Coverage read purely from a manifest can shrink silently when a file goes missing, because the thing the gate checks against shrank with it.",
  "pairs_present": [
   "H2",
   "LiH",

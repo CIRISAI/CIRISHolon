@@ -6,7 +6,7 @@ a target is not scaffolded — it's a wish. Statuses are honest: ASSUMED means
 
 ---
 
-## WHERE WE ARE — consolidated status, 2026-08-28
+## WHERE WE ARE — consolidated status, 2026-08-29
 
 *(This section supersedes the running appendices below for at-a-glance
 state; the appendices remain as the record of how each line was earned.)*
@@ -17,16 +17,23 @@ state; the appendices remain as the record of how each line was earned.)*
 | 1 — stabilizer | **BANKED** | ahead of stim 7/7 Born-vs-Born; canonicalizer explicit; rent law confirmed on this tier (OMEGA-CIRCUITS-1, 13/13 held-out) | done |
 | 2 — magic (Clifford+T + rings) | **CAPABILITY-COMPLETE** | ring tower; symbolic angles; native ZX evaluation (q=40 exact in 0.03 s) AND extraction (unitary-level certified, 252-circuit sweep, zero wrong; quizx extracting our diagrams matches our counts) | remaining: reduction-depth parity only (their full_simp reaches lower T pre-extraction) — a performance delta with a named location, not a capability hole |
 | mesh / GPU | **BUILT** | shard-invariant, bit-identical, 336–396× on 4090; merge law machine-checked | done — carries all tiers |
-| **crystal — gauge-coupled matter** | **ENTRY EARNED; REFEREE PENDING — the current gate** | instrument certified two-sided (ED 5e-14, mutation fires); grid diagnosis established by CONFIRMED forward prediction; SCHWINGER-3 running (per-column N, 18 points, checkpointed) | **BANKS when SCHWINGER-3's S1 lands branch (a): extrapolated M_V/g within 1/√π ± 0.05.** Branch (b) kills the referee claim; VOID re-examines the volume standard. No other dependency remains |
+| **crystal — gauge-coupled matter** | **ENTRY EARNED; REFEREE PENDING — the current gate** | instrument certified two-sided (ED 5e-14, mutation fires); grid diagnosis established by CONFIRMED forward prediction; SCHWINGER-3 at checkpoint 5/18 (x=4 column 5 of 6 points, M/g readings 0.678–0.682; the sixth has been compute-starved by the chemistry campaigns at load 150+) | **BANKS when SCHWINGER-3's S1 lands branch (a): extrapolated M_V/g within 1/√π ± 0.05.** Branch (b) kills the referee claim; VOID re-examines the volume standard. No other dependency remains |
 | bulk — MPS | **INHABITED via crystal** | the crystal referee IS an MPS method (DMRG); canonical form standard | formalize as its own tier after crystal banks: staked targets + a Lean canonical-form brick |
-| physics / graphics | **LAW BANKED, TIER NAMED** | grain law (closure-aligned scheduling) machine-checked; browser WASM 65 KB | build depends on: crystal banked (the speed budget) + tuner Choice wired to render loop |
+| **chemical — emergent matter (the atom world)** | **BANKED, 2026-08-28/29** | ELEMENTS-1: first row (H–Ne) emerges from Z + masses + STO-3G by exact FCI — E1's negatives HELD emphatically (He₂/Ne₂ refuse to bind at 1e-10 of the stake), E2 branch (b) with all three deviations moving TOWARD experiment; R2 armed LIVE at 4/9 pairs vs the 50-digit referee (146× inside; derivatives at f64 roundoff — their first-ever external check), coverage manifest-declared, owed pairs printed every run. SATURATION-1: the MBE3 three-body tier — R1/T1/T2/C1/F1 hold, D1 branch (a) 8/8 (same seeds: pair-only 0/8 on molecules, MBE3 0/8 on droplets — the gas becomes H₂), plant (iii) the instructive VOID, saturation physics LOCALISED to the 7–12 bohr shell | referee's 5 owed pairs (progressive re-pins); ELEMENTS1_RESULTS.md; successor items named in the record (MBE4 for compact clusters, closure-vs-boundness reading, outside-zero plant) |
+| physics / graphics | **LAW BANKED; ATOM WORLD SHIPPED** | grain law (closure-aligned scheduling) machine-checked; the atom world is LIVE on Pages in 2D (252 KB wasm, 35.8 KB gzipped — computes its own chemistry at load) and 3D (Bevy shell, same rlib, 10/10 headless conservation gates, dual webgpu/webgl2 built in CI); ledger gates field-hardened by two phone screenshots | full grain-engine build (10⁶ grains) still depends on: crystal banked (the speed budget) + tuner Choice wired to render loop |
 
 **Gravity/Ω conformance riding the ladder** (not a tier, the programme that
-tests them): seven-plus green campaigns; rungs 1–5½ closed; rung 6 passed
-on quantum computation, field theory pending on SCHWINGER-3; rung 7 owns
-three artifacts (ring-scale mixing law, informed-rent discovery, the
-extension mechanism observed). Twenty registered misfits; every
-mechanizable kill has or is receiving its Lean brick.
+tests them): rungs 1–5½ closed; rung 6 passed on quantum computation, field
+theory pending on SCHWINGER-3; rung 7 owns the stasis theorem, the extension
+mechanism, SELECTOR-3 (the first rule-6-supported Ω-internal selection
+principle), and now SELECTOR-4: the gauntlet reaches gauge worlds — G1 holds
+(the bootstrap criterion SELECTS: nothing at coarse acuity, a proper subset
+at fine), F1 holds (it DISCRIMINATES gauge structures: 2T 0.583 > 2O 0.457 >
+2I ≥0.398 > D4 0.250), and Z1 — the zoom law as staked — is DEAD, killed by
+its own construction (what nests under acuity is the IDENTITY set, not the
+selected set; the corrected quantity is a successor's stake). 2I's fine
+rungs VOID at the declared budget; no law fitted to four points. Twenty-two
+registered misfits; every mechanizable kill has or is receiving its brick.
 
 **The move-up graph (dependencies only, no calendar):**
 
@@ -36,6 +43,7 @@ SCHWINGER-3 completes ──> S1 branch (a) ──> CRYSTAL BANKED
                                               └─> physics/graphics build unblocked (grain-scheduled render loop,
                                                     tuner Choice as the degradation contract)
 magic tier's ZX canonical form (independent) ──> tier 2 fully closed
+chemical tier BANKED (independent of crystal) ──> successor campaigns only
 ```
 
 SCHWINGER-3 is the sole blocking computation for the crystal bank; its

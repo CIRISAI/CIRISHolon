@@ -346,3 +346,171 @@ fn the_stored_diagonal_is_the_hamiltonians_own() {
         );
     }
 }
+
+/// THE SPIN SECTOR, MEASURED. The converged state must be a spin eigenstate, and the
+/// RIGHT one.
+///
+/// # Why an assumption was not enough here
+///
+/// Every diatomic and atom in this crate is solved in the MINIMAL `S_z` sector, on the
+/// argument that a multiplet of total spin `S` has a component in every sector with
+/// `|S_z| <= S`, so the smallest one contains every state whatever its spin. That argument
+/// is sound and it is about the SPACE. It says nothing about which state the solver
+/// returned — and `H` commutes with `S^2`, so a Krylov space started from one determinant
+/// can converge cleanly, with a tiny residual and two independent sigma routes agreeing,
+/// to the lowest state of the WRONG multiplet.
+///
+/// That is not hypothetical: this crate did it. Under a rotated orbital basis, carbon came
+/// back converged 0.07 hartree above its ground state, and `davidson`'s generic start
+/// vector was added to break the sector. But a perturbation is a mitigation — nothing
+/// checked that it worked, and a future edit could remove it silently. So the sector is
+/// measured now, and CARBON IS THE DISCRIMINATING CASE: its `S_z = 0` sector holds both
+/// the singlet and the `S_z = 0` component of the triplet, so a solver in the wrong one
+/// reads 0 where the truth is 2.
+///
+/// The check also earns something the crate did not have: the multiplicity as a DERIVED
+/// quantity. Nothing here declares that nitrogen is a quartet — it comes out of the
+/// converged vector.
+#[test]
+fn the_converged_state_is_in_the_right_spin_sector() {
+    use holon_chem::elements::{BERYLLIUM, BORON, HELIUM, NEON};
+    use holon_chem::fci::{multiplicity, s_squared};
+
+    // Expected S(S+1) for each ground state. The ATOMS are the periodic table's own
+    // multiplicities and the DIATOMICS staked here are all closed-shell singlets; neither
+    // is computed by this crate, which is what makes them a check on it.
+    let expected: Vec<(&str, Vec<Species>, Option<f64>, f64)> = vec![
+        ("H  doublet", vec![HYDROGEN], None, 0.75),
+        ("He singlet", vec![HELIUM], None, 0.0),
+        ("Li doublet", vec![LITHIUM], None, 0.75),
+        ("Be singlet", vec![BERYLLIUM], None, 0.0),
+        ("B  doublet", vec![BORON], None, 0.75),
+        ("C  TRIPLET", vec![CARBON], None, 2.0),
+        ("N  quartet", vec![NITROGEN], None, 3.75),
+        ("O  triplet", vec![OXYGEN], None, 2.0),
+        ("F  doublet", vec![FLUORINE], None, 0.75),
+        ("Ne singlet", vec![NEON], None, 0.0),
+        ("H2 singlet", vec![HYDROGEN, HYDROGEN], Some(1.4), 0.0),
+        ("LiH singlet", vec![LITHIUM, HYDROGEN], Some(3.0), 0.0),
+        ("HF singlet", vec![HYDROGEN, FLUORINE], Some(1.8), 0.0),
+        ("F2 singlet", vec![FLUORINE, FLUORINE], Some(2.6), 0.0),
+    ];
+
+    for (label, species, r, want) in expected {
+        let basis = build_basis(&species, centers(r));
+        let n = basis.n;
+        let ao = ao_integrals(&basis);
+        let x = cholesky_orthonormaliser(&ao.s, n).unwrap();
+        let (_, na, nb) = electron_counts(&species);
+        let space = FciSpace::new(n, na, nb);
+        let mo = transform(&ao, &x, n);
+        let sol = solve(&space, &mo);
+        assert!(sol.residual < 1e-8, "{label}: not converged ({:.3e})", sol.residual);
+
+        // The vector Davidson returns is normalised; assert it rather than trusting it,
+        // because <S^2> is a ratio to the norm and a drifted norm would fake a multiplet.
+        let norm_sq: f64 = sol.vector.iter().map(|x| x * x).sum();
+        assert!(
+            (norm_sq - 1.0).abs() < 1e-10,
+            "{label}: the CI vector is not normalised (|c|^2 = {norm_sq})"
+        );
+
+        let s_sq = s_squared(&space, &sol.vector);
+        let (s, mult) = multiplicity(s_sq, 1e-6).unwrap_or_else(|| {
+            panic!(
+                "{label}: <S^2> = {s_sq} is not S(S+1) for any half-integer S — the \
+                 converged state is not a spin eigenstate, which is a broken solve rather \
+                 than a chemistry result"
+            )
+        });
+        println!("  {label:>11}: <S^2> = {s_sq:.12}  ->  S = {s}, multiplicity {mult}");
+        assert!(
+            (s_sq - want).abs() < 1e-6,
+            "{label}: <S^2> = {s_sq:.9}, wanted {want} (multiplicity {mult}). The solve \
+             converged in the wrong spin sector."
+        );
+    }
+}
+
+/// The spin check must be able to FAIL, or it is decoration — and the probe has to be
+/// DERIVED rather than guessed.
+///
+/// # Two things this catches
+///
+/// A `s_squared` that returned the floor `S_z(S_z + 1)` unconditionally would pass every
+/// row of the test above except carbon's, and one discriminating row is thin cover for a
+/// whole gate. So a state that is provably NOT a spin eigenstate is fed in and must read
+/// above the floor.
+///
+/// The first version of this probe took determinant index 0 and asserted a nonzero
+/// reading. It failed — correctly. Index 0 of carbon's `S_z = 0` space is the CLOSED-SHELL
+/// determinant, which is a perfectly good singlet, and `<S^2> = 0` was the right answer to
+/// a question that tested nothing. Picking an index and assuming what it holds is the same
+/// error as planting a defect without checking it is observable. So the determinant is now
+/// derived from its occupation, and the expected value is derived too: for a single
+/// determinant `|| S_+ D ||^2` counts the orbitals holding a beta electron and no alpha
+/// one, so
+///
+/// ```text
+/// <S^2> = (# beta-only orbitals) + S_z(S_z + 1)
+/// ```
+///
+/// which is an exact integer this test can demand rather than a bound it can hope for.
+#[test]
+fn the_spin_check_rejects_a_state_that_is_not_an_eigenstate() {
+    use holon_chem::fci::{multiplicity, s_squared};
+
+    // Carbon: 6 electrons, 5 orbitals, S_z = 0. Floor 0, ground state 2.
+    let basis = build_basis(&[CARBON], centers(None));
+    let n = basis.n;
+    let (_, na, nb) = electron_counts(&[CARBON]);
+    let space = FciSpace::new(n, na, nb);
+    assert_eq!(space.alpha.n_elec, space.beta.n_elec, "S_z must be 0 for this probe");
+    let nb_len = space.beta.len();
+
+    // Find an OPEN-SHELL determinant: alpha and beta occupations that differ. Searched
+    // rather than indexed, so the test cannot be silently testing the wrong object.
+    let mut probes = Vec::new();
+    for (ia, &ma) in space.alpha.masks.iter().enumerate() {
+        for (ib, &mb) in space.beta.masks.iter().enumerate() {
+            let beta_only = (mb & !ma).count_ones();
+            if beta_only > 0 {
+                probes.push((ia * nb_len + ib, beta_only));
+            }
+        }
+    }
+    assert!(
+        probes.len() > 10,
+        "carbon's S_z = 0 space should be full of open-shell determinants; found {}",
+        probes.len()
+    );
+
+    let mut checked = 0usize;
+    for &(det, beta_only) in probes.iter().take(24) {
+        let mut single = vec![0.0f64; space.n_det];
+        single[det] = 1.0;
+        let s_sq = s_squared(&space, &single);
+        let want = beta_only as f64; // + S_z(S_z+1), which is 0 here
+        assert!(
+            (s_sq - want).abs() < 1e-12,
+            "a determinant with {beta_only} beta-only orbitals must read <S^2> = {want}, \
+             got {s_sq}"
+        );
+        assert!(
+            s_sq > 1e-6,
+            "s_squared returned the S_z floor for a determinant that is not a spin \
+             eigenstate; the check cannot distinguish sectors and every other assertion \
+             about it is empty"
+        );
+        checked += 1;
+    }
+    println!("  {checked} open-shell determinants: <S^2> = (# beta-only orbitals), exactly");
+
+    // The multiplicity reader, on values that are and are not S(S+1).
+    assert_eq!(multiplicity(0.0, 1e-9).map(|x| x.1), Some(1));
+    assert_eq!(multiplicity(0.75, 1e-9).map(|x| x.1), Some(2));
+    assert_eq!(multiplicity(2.0, 1e-9).map(|x| x.1), Some(3));
+    assert_eq!(multiplicity(3.75, 1e-9).map(|x| x.1), Some(4));
+    assert!(multiplicity(1.0, 1e-9).is_none(), "1.0 is not S(S+1) for any half-integer S");
+    assert!(multiplicity(3.0, 1e-9).is_none(), "3.0 is not S(S+1) either");
+}

@@ -1194,3 +1194,107 @@ fn normalised(a: &[f64]) -> Vec<f64> {
     }
     v
 }
+
+// ------------------------------------------------------------------ the spin sector
+//
+// A CHECK on the multiplicity of the converged state, not an assumption about it.
+
+/// `<S^2>` of a normalised CI vector.
+///
+/// # Why this exists, and why the mitigation it backs up was not enough
+///
+/// `H` commutes with `S^2`, so a Krylov or Davidson space never leaves the spin sector of
+/// the vector it started from. `davidson` perturbs its start vector precisely to break
+/// that — but a perturbation is a MITIGATION, and nothing downstream could tell whether it
+/// had worked. A small residual, a converged Ritz value and two independent sigma routes
+/// agreeing are all statements about the subspace the solve happened to be in. That is how
+/// carbon came back cleanly converged 0.07 hartree above its ground state: the solve was
+/// correct, in the wrong sector.
+///
+/// So the sector is now measured. From `S^2 = S_- S_+ + S_z(S_z + 1)` and `S_- = S_+^†`,
+///
+/// ```text
+/// <S^2> = || S_+ psi ||^2 + S_z (S_z + 1),      S_+ = sum_p a+_{p,alpha} a_{p,beta}
+/// ```
+///
+/// which is one pass over the determinants — negligible even at 14 400. The result is
+/// `S(S+1)` for the state's actual total spin, so it also hands back the multiplicity as a
+/// DERIVED quantity rather than an assumed one.
+///
+/// Credit where it is due: the sibling `elements-referee` lane built this check first,
+/// from this crate's carbon failure, and its `<S^2>` agrees with the periodic table's
+/// multiplicities for all ten atoms.
+///
+/// # The one sign that does not matter
+///
+/// `S_+` raises `n_alpha` by one for every term, so the factor `(-1)^{n_alpha}` that a
+/// beta annihilation picks up crossing the alpha block is common to all of them. It is
+/// dropped: the result is a NORM, and a global sign cannot survive squaring.
+pub fn s_squared(space: &FciSpace, c: &[f64]) -> f64 {
+    let n = space.n_orb;
+    let (na, nb) = (space.alpha.n_elec, space.beta.n_elec);
+    let sz = 0.5 * (na as f64 - nb as f64);
+    let floor = sz * (sz + 1.0);
+    // `S_+` annihilates the state when there is no beta electron to raise, or no alpha
+    // hole to raise it into. Both are real cases here (neon, and any fully alpha-filled
+    // sector), and both would build a degenerate target space if not caught.
+    if nb == 0 || na + 1 > n {
+        return floor;
+    }
+
+    let target = FciSpace::new(n, na + 1, nb - 1);
+    let mut raised = vec![0.0f64; target.n_det];
+    let nb_src = space.beta.len();
+    let nb_dst = target.beta.len();
+    for (ia, &ma) in space.alpha.masks.iter().enumerate() {
+        for (ib, &mb) in space.beta.masks.iter().enumerate() {
+            let amp = c[ia * nb_src + ib];
+            if amp == 0.0 {
+                continue;
+            }
+            for p in 0..n {
+                // The orbital must hold a beta electron and no alpha one.
+                if (mb >> p) & 1 == 0 || (ma >> p) & 1 == 1 {
+                    continue;
+                }
+                let sgn_b = if (mb & ((1u32 << p) - 1)).count_ones() & 1 == 1 {
+                    -1.0
+                } else {
+                    1.0
+                };
+                let sgn_a = if (ma & ((1u32 << p) - 1)).count_ones() & 1 == 1 {
+                    -1.0
+                } else {
+                    1.0
+                };
+                let (Some(ja), Some(jb)) = (
+                    target.alpha.index_of(ma | (1 << p)),
+                    target.beta.index_of(mb ^ (1 << p)),
+                ) else {
+                    continue;
+                };
+                raised[ja * nb_dst + jb] += sgn_a * sgn_b * amp;
+            }
+        }
+    }
+    raised.iter().map(|x| x * x).sum::<f64>() + floor
+}
+
+/// Total spin `S` read back from `<S^2> = S(S+1)`, and the multiplicity `2S+1`.
+///
+/// Returns `None` if `<S^2>` is not `S(S+1)` for any half-integer `S` to `tol` — which is
+/// a state that is not a spin eigenstate, and therefore a solver that has gone wrong
+/// rather than a chemistry result.
+pub fn multiplicity(s_sq: f64, tol: f64) -> Option<(f64, usize)> {
+    // S(S+1) = s_sq  =>  S = (-1 + sqrt(1 + 4 s_sq)) / 2.
+    let s = 0.5 * ((1.0 + 4.0 * s_sq).max(0.0).sqrt() - 1.0);
+    let twice = (2.0 * s).round();
+    if twice < 0.0 || (2.0 * s - twice).abs() > tol {
+        return None;
+    }
+    let s = 0.5 * twice;
+    if (s * (s + 1.0) - s_sq).abs() > tol {
+        return None;
+    }
+    Some((s, (twice as usize) + 1))
+}

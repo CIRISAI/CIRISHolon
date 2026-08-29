@@ -686,6 +686,33 @@
    1,
    1
   ],
+  "beyond_grid_probe": [
+   {
+    "R": "14.400000000000",
+    "two_S": 0,
+    "resolved": true,
+    "level_size": 1
+   },
+   {
+    "R": "18.000000000000",
+    "two_S": 0,
+    "resolved": true,
+    "level_size": 1
+   },
+   {
+    "R": "24.000000000000",
+    "two_S": 0,
+    "resolved": true,
+    "level_size": 1
+   },
+   {
+    "R": "36.000000000000",
+    "two_S": 0,
+    "resolved": true,
+    "level_size": 1
+   }
+  ],
+  "beyond_grid_note": "the staked grid's last point and a few separations past it: a curve resolved at every staked geometry may be telling you about the physics or only about where the grid stops",
   "resolved_note": "A multiplicity read off ONE vector inside a degenerate level is meaningless -- the solver returns whatever its path produced. It is resolved when every vector of the level agrees AND each <S^2> really is S(S+1) with the right parity for the electron count. Agreement alone is not enough: past 8.9 bohr F2's vectors all reported 2S = 1, a doublet for an eighteen-electron molecule, agreeing because they were equally meaningless.",
   "two_S_by_geometry": [
    0,
@@ -827,7 +854,7 @@
   "note": "A CURVE MAY CHANGE MULTIPLICITY ALONG R AND THIS ONE MAY DO SO: for two open-shell atoms the two-centre exchange integral favours the high-spin coupling at long range, Hund's rule between centres, while the bonding term favours the singlet at short range, so the two cross. Read two_S_by_geometry before assuming one term symbol. <S^2> = ||S_+ psi||^2 + Sz(Sz+1) of the converged route-A vector, at EVERY staked geometry. H commutes with S^2, so a subspace method can converge cleanly inside the WRONG spin sector and every number it reports about itself will look right; this is the one quantity that sees it. Checked at every geometry rather than spot ones because the place it would slip is the dissociation tail, where the singlet and triplet come together."
  },
  "derivative_provenance": {
-  "route": "local Newton interpolant at every grid point; stencil cross-check at 103 of 132",
+  "route": "local Newton interpolant at every grid point; stencil cross-check at 109 of 132",
   "F_max_abs_uncertainty_hartree_per_bohr": "0.0000000000075104215",
   "E2_max_abs_uncertainty_hartree_per_bohr2": "0.0000000016282767",
   "E_max_abs_uncertainty_hartree": "0.0000000000000000000000000000000000000000000000000000000009956820",

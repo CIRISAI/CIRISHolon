@@ -699,6 +699,33 @@
    4,
    4
   ],
+  "beyond_grid_probe": [
+   {
+    "R": "12.000000000000",
+    "two_S": 2,
+    "resolved": false,
+    "level_size": 4
+   },
+   {
+    "R": "15.000000000000",
+    "two_S": 1,
+    "resolved": false,
+    "level_size": 4
+   },
+   {
+    "R": "20.000000000000",
+    "two_S": 1,
+    "resolved": false,
+    "level_size": 4
+   },
+   {
+    "R": "30.000000000000",
+    "two_S": 1,
+    "resolved": false,
+    "level_size": 4
+   }
+  ],
+  "beyond_grid_note": "the staked grid's last point and a few separations past it: a curve resolved at every staked geometry may be telling you about the physics or only about where the grid stops",
   "resolved_note": "A multiplicity read off ONE vector inside a degenerate level is meaningless -- the solver returns whatever its path produced. It is resolved when every vector of the level agrees AND each <S^2> really is S(S+1) with the right parity for the electron count. Agreement alone is not enough: past 8.9 bohr F2's vectors all reported 2S = 1, a doublet for an eighteen-electron molecule, agreeing because they were equally meaningless.",
   "two_S_by_geometry": [
    0,

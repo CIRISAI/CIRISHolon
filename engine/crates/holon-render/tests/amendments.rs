@@ -314,26 +314,59 @@ fn n_max_solves_the_pair_budget_exactly() {
     assert!((exact / p.sqrt() - 2.0f64.sqrt()).abs() < 0.01);
 }
 
+/// Headroom the machine must have over the sim's OWN real-time requirement.
+///
+/// The assertion is deliberately against a DERIVED number rather than an absolute one.
+/// `required_substeps_per_second` is what this curve's `dt` and the design sim-speed
+/// demand for real time; a machine that clears it by 10x can run the demo with the
+/// tuner's Hold::Exactness contract intact. The previous form asserted `sps > 1e4`, a
+/// constant frozen under the pairwise cost model, and it read 1.97e4 on this machine at
+/// load average 153 — one busy runner from red, and it would have gone red for a reason
+/// that has nothing to do with the code.
+const PERF_HEADROOM: f64 = 10.0;
+
+/// Backstop, substeps/sec: a catastrophic-regression tripwire, not a performance target.
+///
+/// Set from the MEASURED cost rather than guessed: 3.3 us/substep pairwise at N = 16 and
+/// 31.8 us with the three-body loop on (`holon-render/tests/saturation.rs::
+/// the_triple_loop_cost_is_measured`) are 3.0e5 and 3.1e4 substeps/sec. 1e3 is 30x below
+/// the slower of the two, so contention cannot reach it and a real 30x regression cannot
+/// hide under it.
+const PERF_BACKSTOP: f64 = 1.0e3;
+
 #[test]
 fn perf_substeps_per_second_native() {
     // The native numbers the device classes get projected from.
+    //
+    // MEASURED AS THE MINIMUM OF SHORT PAIRED SAMPLES, not as one long run. Contention can
+    // only ever make a sample SLOWER than the code is, so the minimum is the reading least
+    // contaminated by it, while a single long sample is at the mercy of whatever else the
+    // box does during it. `the_census_layer_cost_is_measured_not_asserted` below learned
+    // that the hard way — it read a NEGATIVE overhead three times — and its method is
+    // copied here rather than re-derived.
     use std::time::Instant;
     let mut s = loaded_sim();
     s.boundary = Boundary::Open;
     s.reset(holon_render::sim::MAX_ATOMS);
     let pairs = (s.n * (s.n - 1) / 2) as f64;
 
-    // Warm up, then measure.
     for _ in 0..2_000 {
         s.step();
     }
-    let n = 40_000;
-    let t0 = Instant::now();
-    for _ in 0..n {
-        s.step();
+    const SAMPLES: usize = 9;
+    const PER_SAMPLE: usize = 5_000;
+    let mut best = f64::INFINITY;
+    let mut worst = 0.0f64;
+    for _ in 0..SAMPLES {
+        let t0 = Instant::now();
+        for _ in 0..PER_SAMPLE {
+            s.step();
+        }
+        let per_step = t0.elapsed().as_secs_f64() / PER_SAMPLE as f64;
+        best = best.min(per_step);
+        worst = worst.max(per_step);
     }
-    let elapsed = t0.elapsed().as_secs_f64();
-    let sps = n as f64 / elapsed;
+    let sps = 1.0 / best;
     let pps = sps * pairs;
     s.timescale.substeps_per_second = sps;
     s.timescale.calibrated = true;
@@ -341,18 +374,39 @@ fn perf_substeps_per_second_native() {
     let required = s.timescale.required_substeps_per_second();
     let nmax = n_max(pps, required);
     println!(
-        "PERF (native, N = {}, {pairs} pairs, O(N^2) exact table):",
+        "PERF (native, N = {}, {pairs} pairs, O(N^2) exact table, pairwise only):",
         s.n
     );
-    println!("  substeps/sec = {sps:.3e}");
+    println!(
+        "  substeps/sec = {sps:.3e}  (best of {SAMPLES} x {PER_SAMPLE}; slowest sample was \
+         {:.2}x slower, which is the machine, not the code)",
+        worst / best
+    );
     println!("  pairs/sec    = {pps:.3e}");
     println!(
         "  dt = {:.4} a.u.; sim-speed {:.4} fs/wall-s => required {required:.3e} substeps/sec",
         s.dt(),
         s.timescale.sim_speed_fs_per_wallsec
     );
+    println!(
+        "  headroom over the derived requirement = {:.1}x (floor {PERF_HEADROOM}x)",
+        sps / required
+    );
     println!("  N_max at that sim-speed on THIS machine = {nmax}");
-    assert!(sps > 1.0e4, "suspiciously slow: {sps:.3e} substeps/sec");
+    // The three-body loop's own cost is NOT measured here — it is measured, with the table
+    // actually loaded, in `tests/saturation.rs::the_triple_loop_cost_is_measured`, and this
+    // scene deliberately carries no three-body table so that this number stays the
+    // pairwise one the device projections were built from.
+    assert!(
+        sps > PERF_HEADROOM * required,
+        "this machine cannot run the design sim-speed with {PERF_HEADROOM}x headroom: \
+         {sps:.3e} substeps/sec against a derived requirement of {required:.3e}"
+    );
+    assert!(
+        sps > PERF_BACKSTOP,
+        "suspiciously slow: {sps:.3e} substeps/sec, past the {PERF_BACKSTOP:.0e} \
+         catastrophic-regression backstop"
+    );
 }
 
 #[test]

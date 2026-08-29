@@ -19,13 +19,13 @@
   "H2",
   "LiH",
   "HF",
+  "F2",
   "He2",
   "Ne2"
  ],
  "pairs_owed": [
   "Li2",
   "N2",
-  "F2",
   "CO"
  ],
  "grading": {

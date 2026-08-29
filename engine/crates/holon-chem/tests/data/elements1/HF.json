@@ -828,9 +828,9 @@
  },
  "derivative_provenance": {
   "route": "stencil at every grid point",
-  "F_max_abs_uncertainty_hartree_per_bohr": "0.000000000000000000000000000000000000029004167",
-  "E2_max_abs_uncertainty_hartree_per_bohr2": "0.0000000000000000000000000090515098",
-  "E_max_abs_uncertainty_hartree": "0.00000000000000000000000000000000000000000000000013922000",
+  "F_max_abs_uncertainty_hartree_per_bohr": "0.000000000000000000000000000000000000029004049",
+  "E2_max_abs_uncertainty_hartree_per_bohr2": "0.0000000000000000000000000090514733",
+  "E_max_abs_uncertainty_hartree": "0.00000000000000000000000000000000000000000000000013921944",
   "basis": "STO-3G, 8 decimals, ties to even; fingerprint bf9cd64f6fec4907"
  }
 }

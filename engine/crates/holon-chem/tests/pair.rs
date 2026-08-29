@@ -14,9 +14,12 @@ mod common;
 
 use common::{decimal_minus_f64, string_array, string_scalar};
 use holon_chem::elements::{FLUORINE, HELIUM, HYDROGEN, LITHIUM, NEON};
+use holon_chem::dual::D2;
 use holon_chem::fnv1a32;
+use holon_chem::fci::{multiplicity, s_squared};
 use holon_chem::pair::{
-    atom_energy, declared_colour, generate_pair_table, pair_point, PairCache, WELL_MIN_DEPTH,
+    atom_energy, declared_colour, generate_pair_table, pair_point, solve_geometry_detailed,
+    PairCache, WELL_MIN_DEPTH,
 };
 
 /// R2, the H2 half: the general first-row path against the banked closed form, at every
@@ -557,24 +560,79 @@ fn r2_the_first_row_matches_the_fifty_digit_referee() {
         assert_eq!(rs.len(), fs.len(), "{name}: F column length");
         assert_eq!(rs.len(), e2s.len(), "{name}: E2 column length");
 
+        // The referee's per-geometry multiplicity, to cross-check against my own. Absent is
+        // refused rather than skipped: a spin audit that is not there must not read like
+        // one that passed.
+        assert!(
+            src.contains("\"two_S_by_geometry\""),
+            "{name}.json carries no per-geometry spin audit. A missing audit is not a \
+             passing one."
+        );
+        let their_two_s = string_array(&src, "two_S_by_geometry");
+        assert_eq!(
+            their_two_s.len(),
+            rs.len(),
+            "{name}: the spin audit covers {} geometries against {} on the grid",
+            their_two_s.len(),
+            rs.len()
+        );
+
         let (mut we, mut wf, mut w2, mut at) = (0.0f64, 0.0f64, 0.0f64, 0usize);
         // My own curve ON THE REFEREE'S GRID, kept so the boundness cross-check below can
         // be made from it. Re-deriving a table of my own would compare two curves sampled
         // at different separations, and would cost a full generation per pair on top.
         let mut my_r = Vec::with_capacity(rs.len());
         let mut my_e = Vec::with_capacity(rs.len());
+        let (mut spin_agree, mut spin_unresolved) = (0usize, 0usize);
         for (i, rstr) in rs.iter().enumerate() {
             let r = rstr.parse::<f64>().unwrap();
-            let mine = pair_point(a, b, r);
-            let de = decimal_minus_f64(&es[i], mine.e).abs();
+            // The DETAILED solve rather than `pair_point`, because it hands back the CI
+            // vector alongside the energy — so the spin cross-check below costs no extra
+            // solve, only one pass over the determinants.
+            let (space, _mo, sol, nuc) = solve_geometry_detailed(
+                &[a, b],
+                vec![
+                    [D2::c(0.0), D2::c(0.0), D2::c(0.0)],
+                    [D2::c(0.0), D2::c(0.0), D2::var(r)],
+                ],
+            );
+            let total = sol.e + nuc;
+            let (e, f, e2) = (total.v, -total.d, total.e);
+            let de = decimal_minus_f64(&es[i], e).abs();
             if de > we {
                 we = de;
                 at = i;
             }
-            wf = wf.max(decimal_minus_f64(&fs[i], mine.f).abs());
-            w2 = w2.max(decimal_minus_f64(&e2s[i], mine.e2).abs());
+            wf = wf.max(decimal_minus_f64(&fs[i], f).abs());
+            w2 = w2.max(decimal_minus_f64(&e2s[i], e2).abs());
             my_r.push(r);
-            my_e.push(mine.e);
+            my_e.push(e);
+
+            // Two implementations must agree about the SPIN of the state they each
+            // converged to, at every separation — not only about its energy. This is the
+            // check that has something to say the day a curve changes multiplicity along
+            // R, which F2 does at 4.7277 bohr; until then it is a standing null.
+            let theirs: usize = their_two_s[i].parse().unwrap_or_else(|_| {
+                panic!("{name}: two_S_by_geometry[{i}] = {:?} is not an integer", their_two_s[i])
+            });
+            match multiplicity(s_squared(&space, &sol.vector), 1e-6) {
+                Some((mine_s, _)) => {
+                    let mine_two_s = (2.0 * mine_s).round() as usize;
+                    assert_eq!(
+                        mine_two_s, theirs,
+                        "{name} at R = {r}: the referee converged to 2S = {theirs} and this \
+                         engine to 2S = {mine_two_s}. Two implementations agreeing on an \
+                         energy while disagreeing on its spin means at least one is on the \
+                         wrong state."
+                    );
+                    spin_agree += 1;
+                }
+                None => {
+                    // A degenerate level returns an arbitrary basis vector, which need not
+                    // be a spin eigenstate. Counted and reported, never silently skipped.
+                    spin_unresolved += 1;
+                }
+            }
         }
         // The asymptote, and the well when the referee reports one.
         let d_asym = decimal_minus_f64(
@@ -589,6 +647,17 @@ fn r2_the_first_row_matches_the_fifty_digit_referee() {
             rs[at]
         );
         println!("        derivative route: {route}");
+        println!(
+            "        spin: {spin_agree} of {} geometries agree with the referee's 2S, \
+             {spin_unresolved} degenerate and unresolved",
+            rs.len()
+        );
+        assert!(
+            spin_agree * 2 >= rs.len(),
+            "{name}: only {spin_agree} of {} geometries resolved a multiplicity to compare; \
+             the cross-check is not covering the curve",
+            rs.len()
+        );
 
         assert!(
             we <= ELEMENTS1_STAKE_E + unc_e,

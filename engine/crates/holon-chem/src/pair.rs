@@ -508,11 +508,21 @@ pub struct PairTable {
     pub meta: PairMeta,
 }
 
-/// Bisect for the separation at which `f` changes sign, given a bracket. Returns the
-/// midpoint after `steps` halvings; the caller is responsible for the bracket being one.
-fn bisect(lo: f64, hi: f64, steps: usize, f: &mut dyn FnMut(f64) -> f64) -> f64 {
+/// Bisect for the separation at which `f` changes sign. Returns `None` if the interval is
+/// not a bracket.
+///
+/// The refusal is the point. Bisection on an interval whose endpoints share a sign does
+/// not fail — it converges, to whichever endpoint the halving walks toward, and returns a
+/// number that looks like a root. Every caller here feeds it a bracket it believes in for
+/// a physical reason, and every one of those reasons could be wrong for a species nobody
+/// has run yet, which is exactly when a plausible wrong number is worst.
+pub fn bisect(lo: f64, hi: f64, steps: usize, f: &mut dyn FnMut(f64) -> f64) -> Option<f64> {
     let (mut lo, mut hi) = (lo, hi);
     let flo = f(lo);
+    let fhi = f(hi);
+    if !(flo.is_finite() && fhi.is_finite()) || flo * fhi > 0.0 {
+        return None;
+    }
     for _ in 0..steps {
         let mid = 0.5 * (lo + hi);
         if f(mid) * flo > 0.0 {
@@ -521,7 +531,7 @@ fn bisect(lo: f64, hi: f64, steps: usize, f: &mut dyn FnMut(f64) -> f64) -> f64 
             hi = mid;
         }
     }
-    0.5 * (lo + hi)
+    Some(0.5 * (lo + hi))
 }
 
 /// Derive the grid range for a pair from its own curve.
@@ -555,7 +565,12 @@ pub fn derive_range(a: Species, b: Species, e_asymptote: f64) -> (f64, f64) {
         // Nothing in range reaches the ceiling: keep the whole bracket.
         return (inner_lo, R_SEARCH_MAX.min(12.0));
     }
-    let r_min = bisect(inner_lo, inner_hi, 24, &mut |r| u(r) - WALL_CEILING);
+    let Some(r_min) = bisect(inner_lo, inner_hi, 24, &mut |r| u(r) - WALL_CEILING) else {
+        // The wall was never bracketed between 0.2 bohr and the outward walk's cap. That
+        // is not a geometry this model describes, so the whole scanned interval is
+        // returned rather than a root that is not one.
+        return (inner_lo, R_SEARCH_MAX.min(12.0));
+    };
     inner_lo = r_min;
 
     // Outer end: the first separation past the wall where the interaction has fallen
@@ -970,7 +985,9 @@ pub fn homonuclear_size(sp: Species) -> SpeciesSize {
         hi = lo;
         lo *= 0.8;
     }
-    let sep = bisect(lo, hi, 30, &mut |r| u(r) - CONTACT_ENERGY);
+    // If the contact energy is never bracketed the pair is too soft to have a contact
+    // separation on this interval, and the outermost scanned point is the honest answer.
+    let sep = bisect(lo, hi, 30, &mut |r| u(r) - CONTACT_ENERGY).unwrap_or(hi);
     SpeciesSize {
         radius_bohr: 0.5 * sep,
         rule: RadiusRule::HalfContact,
@@ -1013,4 +1030,46 @@ fn hsl_to_rgb(h: f64, s: f64, l: f64) -> (u8, u8, u8) {
     let m = l - 0.5 * c;
     let q = |v: f64| ((v + m).clamp(0.0, 1.0) * 255.0).round() as u8;
     (q(r1), q(g1), q(b1))
+}
+
+#[cfg(test)]
+mod bisect_tests {
+    use super::bisect;
+
+    /// A bracketed root is found, and to the precision the halvings buy.
+    #[test]
+    fn a_bracketed_root_is_located() {
+        // sqrt(2) on [1, 2]: 40 halvings of a unit interval is 1e-12.
+        let r = bisect(1.0, 2.0, 40, &mut |x| x * x - 2.0).expect("bracketed");
+        assert!(
+            (r - std::f64::consts::SQRT_2).abs() < 1e-11,
+            "bisection landed at {r}, not sqrt(2)"
+        );
+        // Either orientation of the same bracket.
+        let r2 = bisect(2.0, 1.0, 40, &mut |x| x * x - 2.0).expect("bracketed, reversed");
+        assert!((r2 - std::f64::consts::SQRT_2).abs() < 1e-11);
+    }
+
+    /// An interval whose endpoints share a sign is REFUSED rather than converged on.
+    ///
+    /// This is the whole reason the signature returns an `Option`. Without the check,
+    /// bisection on `x^2 + 1` over `[1, 2]` does not error — it walks to an endpoint and
+    /// returns it, and the caller receives a number indistinguishable from a root.
+    #[test]
+    fn an_unbracketed_interval_is_refused() {
+        assert!(bisect(1.0, 2.0, 40, &mut |x| x * x + 1.0).is_none(), "no root, both positive");
+        assert!(bisect(1.0, 2.0, 40, &mut |x| -(x * x) - 1.0).is_none(), "no root, both negative");
+        // A root outside the interval is still not a root inside it.
+        assert!(bisect(1.0, 2.0, 40, &mut |x| x - 5.0).is_none());
+        // And a non-finite endpoint is a refusal rather than a NaN comparison.
+        assert!(bisect(1.0, 2.0, 40, &mut |x| if x < 1.5 { f64::NAN } else { 1.0 }).is_none());
+    }
+
+    /// A root exactly at an endpoint is a bracket, because the product is zero rather
+    /// than positive — the boundary case the `> 0.0` test is written for.
+    #[test]
+    fn a_root_on_the_endpoint_is_still_bracketed() {
+        assert!(bisect(2.0, 3.0, 30, &mut |x| x - 2.0).is_some());
+        assert!(bisect(2.0, 3.0, 30, &mut |x| x - 3.0).is_some());
+    }
 }

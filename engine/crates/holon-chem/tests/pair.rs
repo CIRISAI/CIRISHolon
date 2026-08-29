@@ -302,97 +302,318 @@ fn the_colour_rule_is_declared_monotone_and_distinguishable() {
 //
 // IGNORED UNTIL THE REFEREE LANDS. The sibling lane (`elements-referee`) is building the
 // 50-digit mpmath implementation of this same model. When its output is committed to
-// `tests/data/elements1/`, DELETE the `#[ignore]` below and re-pin ELEMENTS1_REFEREE_DIGEST
-// from the failure message the digest check prints. Do not do one without the other: a
-// gate that grades against a file it does not identify can be satisfied by editing the
-// file, which is the whole reason the H2 gate pins its referee by digest.
+// `tests/data/elements1/`, DELETE the `#[ignore]` below and re-pin
+// ELEMENTS1_REFEREE_DIGEST from the failure message the digest check prints. Do not do one
+// without the other: a gate that grades against a file it does not identify can be
+// satisfied by editing the file, which is the whole reason the H2 gate pins its referee by
+// digest.
 //
-// THE SCHEMA THIS TEST EXPECTS, one file per pair, numbers as decimal STRINGS so the 50
-// digits survive JSON:
+// To exercise it against a drop that is not committed yet:
+//   ELEMENTS1_REFEREE_DIR=/path/to/drop cargo test -p holon-chem --release --test pair \
+//       -- --ignored --nocapture
+// The digest is enforced only when reading the committed default path, because a preview
+// drop is not a thing to pin.
 //
-//   tests/data/elements1/<A><B>.json
+// THE SCHEMA, one file per pair, numbers as decimal STRINGS so the 50 digits survive JSON:
+//
+//   <PAIR>.json
 //     "model":                 "<A><B>/STO-3G/FCI"
-//     "R_grid_bohr":           ["1.0", ...]            (decimal strings)
+//     "R_grid_bohr":           ["1.0", ...]            (plain fixed point, no exponent)
 //     "E_hartree":             ["-1.13...", ...]
 //     "F_hartree_per_bohr":    [...]                   (the FORCE, -dE/dR)
 //     "E2_hartree_per_bohr2":  [...]
-//     "E_asymptote":           "..."                   (scalar string)
+//     "E_asymptote":           "..."
 //     "R_e", "D_e":            "..." or the string "unbound"
+//     "derivative_provenance": {"route": "...",
+//                               "E_max_abs_uncertainty_hartree": "...",
+//                               "F_max_abs_uncertainty_hartree_per_bohr": "...",
+//                               "E2_max_abs_uncertainty_hartree_per_bohr2": "..."}
 //
-//   tests/data/elements1/atoms.json
-//     "symbols":               ["H", "He", ...]
-//     "E_hartree":             [...]                   (one per symbol, Z ascending)
-//
-// Strings rather than JSON numbers throughout, because a JSON number is an f64 the moment
-// anything reads it and the point of a 50-digit referee is the digits past the 17th.
+//   atoms.json
+//     "symbols":               ["H", "He", ...]        Z ascending
+//     "E_hartree":             [...]                   one per symbol
 
 /// FNV-1a of the concatenated referee files, in the order listed below. Zero until the
 /// files exist; the digest check prints the value to pin.
 pub const ELEMENTS1_REFEREE_DIGEST: u32 = 0;
 
-/// The staked separation-wise agreement for the first row, hartree.
+/// The staked separation-wise agreement on the ENERGY for the first row, hartree.
 ///
-/// Looser than H2's 1e-12 by the freeze's own reasoning: p-function integrals go through
-/// the Hermite `R` tensor, whose recursion accumulates cancellation that s-only closed
-/// forms do not have. The MEASURED residual is the reportable product and becomes the
-/// successor's stake.
+/// This is R2's stake, not E1's — E1 is the well-depth gate at 1e-4 and has nothing to do
+/// with this number. Looser than H2's own 1e-12 by the freeze's reasoning: p-function
+/// integrals go through the Hermite `R` tensor, whose recursion accumulates cancellation
+/// that s-only closed forms do not have. The MEASURED residual is the reportable product
+/// and becomes the successor's stake.
 pub const ELEMENTS1_STAKE_E: f64 = 1e-10;
+
+/// How many times its own DECLARED uncertainty a derivative column may miss by.
+///
+/// # Why the derivative columns are not gated at `ELEMENTS1_STAKE_E`
+///
+/// Because that would grade the referee's interpolant rather than this engine's
+/// arithmetic. The referee supplies `E` at full working precision everywhere, but `F` and
+/// `E2` are only referee-grade where a raised-precision stencil covers the knot; elsewhere
+/// they come from a local interpolant, which is worst at the outermost knot — exactly
+/// where a dissociation tail's `E'` is smallest. Measured on H2 by the referee lane, the
+/// interpolant reads `F(10 bohr) = +1.54e-7` where the stencil reads `-3.82e-8`: the WRONG
+/// SIGN, and three orders above this gate's energy stake. So each file declares what its
+/// own derivative columns are worth and they are graded against that.
+///
+/// A file with no declaration is REFUSED rather than given the flat bound: an absent
+/// uncertainty must never read as zero uncertainty.
+pub const DERIVATIVE_MARGIN: f64 = 2.0;
+
+fn referee_dir() -> std::path::PathBuf {
+    match std::env::var("ELEMENTS1_REFEREE_DIR") {
+        Ok(d) => std::path::PathBuf::from(d),
+        Err(_) => std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/elements1"),
+    }
+}
+
+/// A scalar the referee wrote in ordinary f64 notation (an uncertainty, not a value).
+/// Exponent notation is fine here and is not fine in the columns — the exact-decimal
+/// comparator handles only plain fixed point, which is why the two are read differently.
+fn f64_scalar(src: &str, key: &str) -> f64 {
+    string_scalar(src, key)
+        .parse::<f64>()
+        .unwrap_or_else(|e| panic!("\"{key}\" is not a number: {e}"))
+}
 
 #[test]
 #[ignore = "waiting on the elements-referee lane's 50-digit output; see the note above"]
 fn r2_the_first_row_matches_the_fifty_digit_referee() {
-    let dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/data/elements1");
+    let dir = referee_dir();
+    let is_committed = std::env::var("ELEMENTS1_REFEREE_DIR").is_err();
     let pairs = ["H2", "LiH", "Li2", "HF", "N2", "F2", "CO", "He2", "Ne2"];
-
-    let mut all = Vec::new();
-    for name in pairs.iter() {
-        all.extend(std::fs::read(dir.join(format!("{name}.json"))).unwrap_or_else(|e| {
-            panic!("referee file for {name} is missing ({e}); un-ignore this test only \
-                    once the whole set is committed")
-        }));
+    // A preview drop carries only some species; the committed set must carry all nine.
+    let present: Vec<&str> = pairs
+        .iter()
+        .copied()
+        .filter(|n| dir.join(format!("{n}.json")).exists())
+        .collect();
+    if is_committed {
+        assert_eq!(
+            present.len(),
+            pairs.len(),
+            "the committed referee set is incomplete: {:?} present of {:?}. Un-ignore this \
+             test only once the whole set is there.",
+            present,
+            pairs
+        );
+        let mut all = Vec::new();
+        for name in pairs.iter() {
+            all.extend(std::fs::read(dir.join(format!("{name}.json"))).unwrap());
+        }
+        all.extend(std::fs::read(dir.join("atoms.json")).unwrap());
+        let digest = fnv1a32(&all);
+        assert_eq!(
+            digest, ELEMENTS1_REFEREE_DIGEST,
+            "the ELEMENTS-1 referee set has changed (digest {digest:#010x}). If that was \
+             deliberate, re-derive the residuals against the new files rather than \
+             re-pinning the digest alone."
+        );
+    } else {
+        println!(
+            "reading an UNPINNED drop at {} ({} of {} pairs present); the digest gate is \
+             enforced only on the committed set",
+            dir.display(),
+            present.len(),
+            pairs.len()
+        );
     }
-    all.extend(std::fs::read(dir.join("atoms.json")).expect("atoms.json"));
-    let digest = fnv1a32(&all);
-    assert_eq!(
-        digest, ELEMENTS1_REFEREE_DIGEST,
-        "the ELEMENTS-1 referee set has changed (digest {digest:#010x}). If that was \
-         deliberate, re-derive the residuals against the new files rather than re-pinning \
-         the digest alone."
+
+    // --- the atoms, which every curve's asymptote is built from ---
+    let atoms_src = std::fs::read_to_string(dir.join("atoms.json")).expect("atoms.json");
+    let symbols = string_array(&atoms_src, "symbols");
+    let atom_e = string_array(&atoms_src, "E_hartree");
+    assert_eq!(symbols.len(), atom_e.len());
+    let mut worst_atom = 0.0f64;
+    for (sym, estr) in symbols.iter().zip(atom_e.iter()) {
+        let sp = holon_chem::elements::by_symbol(sym).expect("first-row symbol");
+        let d = decimal_minus_f64(estr, atom_energy(sp)).abs();
+        println!("  atom {sym:>2}: |dE| = {d:.4e} hartree");
+        worst_atom = worst_atom.max(d);
+    }
+    assert!(
+        worst_atom <= ELEMENTS1_STAKE_E,
+        "THE STAKE FIRED on an atomic energy: {worst_atom:.4e} hartree, past the staked \
+         {ELEMENTS1_STAKE_E:.0e}"
     );
 
+    // --- the curves ---
     let species = |sym: &str| holon_chem::elements::by_symbol(sym).expect("first-row symbol");
-    let mut worst_overall = 0.0f64;
-    for name in pairs.iter() {
+    let (mut worst_e, mut worst_f, mut worst_e2) = (0.0f64, 0.0f64, 0.0f64);
+    for name in present.iter() {
         let src = std::fs::read_to_string(dir.join(format!("{name}.json"))).unwrap();
         let (a, b) = split_pair(name);
+        let (a, b) = (species(&a), species(&b));
+
+        // The declared worth of this file's own derivative columns. Absent means refused.
+        assert!(
+            src.contains("\"derivative_provenance\""),
+            "{name}.json carries no derivative_provenance block. Its F and E2 columns \
+             cannot be graded: an absent uncertainty is not a zero uncertainty."
+        );
+        let route = string_scalar(&src, "route");
+        let unc_e = f64_scalar(&src, "E_max_abs_uncertainty_hartree");
+        let unc_f = f64_scalar(&src, "F_max_abs_uncertainty_hartree_per_bohr");
+        let unc_e2 = f64_scalar(&src, "E2_max_abs_uncertainty_hartree_per_bohr2");
+        // An EXACT zero is not an uncertainty, it is a missing one wearing a number. It is
+        // more dangerous than an absent block because it passes a presence check, and
+        // refusing it here is the same rule as refusing the absence.
+        //
+        // ALL THREE columns, and the third one is the lesson. This check first covered only
+        // F and E2, on the reasoning that a numerically differentiated column can never be
+        // exact — and the energy column was praised in the same breath for declaring a real
+        // 6e-62 bound. It was not doing so everywhere: the referee's He2 and Ne2 declared
+        // E uncertainty ZERO, because their eigensolve genuinely is exact for a
+        // one-determinant space. But an exact eigensolve of inexact integrals is not an
+        // exact energy, and the zero claimed it was. The referee lane found that by
+        // applying this rule to a column this rule did not yet cover, which is the whole
+        // argument for making the rule uniform rather than reasoning per column about
+        // which ones "could" be exact.
+        for (col, unc) in [("E", unc_e), ("F", unc_f), ("E2", unc_e2)] {
+            assert!(
+                unc > 0.0 && unc.is_finite(),
+                "{name}.json declares a {col} uncertainty of {unc:?}. An exact zero is not \
+                 a bound, it is a missing bound wearing a number: no column here is \
+                 computed exactly, and grading against zero would assert the referee is \
+                 perfect. Declared route: {route}"
+            );
+        }
+
         let rs = string_array(&src, "R_grid_bohr");
         let es = string_array(&src, "E_hartree");
-        assert_eq!(rs.len(), es.len(), "{name}: column length mismatch");
-        let mut worst = 0.0f64;
-        let mut at = 0usize;
-        for (i, (rstr, estr)) in rs.iter().zip(es.iter()).enumerate() {
+        let fs = string_array(&src, "F_hartree_per_bohr");
+        let e2s = string_array(&src, "E2_hartree_per_bohr2");
+        assert_eq!(rs.len(), es.len(), "{name}: E column length");
+        assert_eq!(rs.len(), fs.len(), "{name}: F column length");
+        assert_eq!(rs.len(), e2s.len(), "{name}: E2 column length");
+
+        let (mut we, mut wf, mut w2, mut at) = (0.0f64, 0.0f64, 0.0f64, 0usize);
+        // My own curve ON THE REFEREE'S GRID, kept so the boundness cross-check below can
+        // be made from it. Re-deriving a table of my own would compare two curves sampled
+        // at different separations, and would cost a full generation per pair on top.
+        let mut my_r = Vec::with_capacity(rs.len());
+        let mut my_e = Vec::with_capacity(rs.len());
+        for (i, rstr) in rs.iter().enumerate() {
             let r = rstr.parse::<f64>().unwrap();
-            let mine = pair_point(species(&a), species(&b), r).e;
-            let d = decimal_minus_f64(estr, mine).abs();
-            if d > worst {
-                worst = d;
+            let mine = pair_point(a, b, r);
+            let de = decimal_minus_f64(&es[i], mine.e).abs();
+            if de > we {
+                we = de;
                 at = i;
             }
+            wf = wf.max(decimal_minus_f64(&fs[i], mine.f).abs());
+            w2 = w2.max(decimal_minus_f64(&e2s[i], mine.e2).abs());
+            my_r.push(r);
+            my_e.push(mine.e);
         }
-        println!("  {name}: max |dE| = {worst:.4e} hartree at R = {}", rs[at]);
-        assert!(
-            worst <= ELEMENTS1_STAKE_E,
-            "THE STAKE FIRED: {name} disagrees with the 50-digit referee by {worst:.4e} \
-             hartree at R = {}, past the staked {ELEMENTS1_STAKE_E:.0e}",
+        // The asymptote, and the well when the referee reports one.
+        let d_asym = decimal_minus_f64(
+            &string_scalar(&src, "E_asymptote"),
+            atom_energy(a) + atom_energy(b),
+        )
+        .abs();
+        let r_e = string_scalar(&src, "R_e");
+        println!(
+            "  {name:>4}: |dE| {we:.3e} at R = {}  |dF| {wf:.3e} (declared {unc_f:.1e})  \
+             |dE2| {w2:.3e} (declared {unc_e2:.1e})  |dAsym| {d_asym:.3e}  R_e = {r_e}",
             rs[at]
         );
-        worst_overall = worst_overall.max(worst);
+        println!("        derivative route: {route}");
+
+        assert!(
+            we <= ELEMENTS1_STAKE_E + unc_e,
+            "THE STAKE FIRED: {name}'s energy disagrees with the 50-digit referee by \
+             {we:.4e} hartree at R = {}, past the staked {ELEMENTS1_STAKE_E:.0e}",
+            rs[at]
+        );
+        assert!(
+            d_asym <= ELEMENTS1_STAKE_E,
+            "{name}: the dissociation asymptote disagrees by {d_asym:.4e} hartree"
+        );
+        // Graded against what the file says its own columns are worth, plus this engine's
+        // energy stake, because the residual carries both implementations' error.
+        let allow_f = DERIVATIVE_MARGIN * unc_f + ELEMENTS1_STAKE_E;
+        let allow_e2 = DERIVATIVE_MARGIN * unc_e2 + ELEMENTS1_STAKE_E;
+        assert!(
+            wf <= allow_f,
+            "{name}: the force column disagrees by {wf:.4e} hartree/bohr, past \
+             {DERIVATIVE_MARGIN}x the referee's own declared {unc_f:.3e} plus the energy \
+             stake. That is this engine's defect, not the interpolant's."
+        );
+        assert!(
+            w2 <= allow_e2,
+            "{name}: the curvature column disagrees by {w2:.4e} hartree/bohr^2, past \
+             {DERIVATIVE_MARGIN}x the referee's declared {unc_e2:.3e}"
+        );
+        // R_e is a root and is reported as "unbound" where there is none. The two
+        // implementations must AGREE about which pairs bind — that is E1's substance
+        // arriving through R2's file.
+        let mine_well = holon_chem::pair::locate_well(
+            a,
+            b,
+            &my_r,
+            &my_e,
+            atom_energy(a) + atom_energy(b),
+        );
+        assert_eq!(
+            r_e == "unbound",
+            mine_well.is_none(),
+            "{name}: the referee says R_e = {r_e} and this engine says well = {:?}. The \
+             two implementations disagree about whether this pair binds.",
+            mine_well.map(|w| w.d_e)
+        );
+        if r_e != "unbound" {
+            let w = mine_well.unwrap();
+            let d_re = decimal_minus_f64(&r_e, w.r_e).abs();
+            let d_de = decimal_minus_f64(&string_scalar(&src, "D_e"), w.d_e).abs();
+            println!("        |dR_e| = {d_re:.3e} bohr, |dD_e| = {d_de:.3e} hartree");
+            // R_e is a root, so an energy error `dE` displaces it by `sqrt(2 dE / E'')`.
+            let displacement = (2.0 * ELEMENTS1_STAKE_E / w.k_e.abs()).sqrt();
+            assert!(
+                d_re <= 10.0 * displacement,
+                "{name}: R_e differs by {d_re:.3e} bohr against a root displacement of \
+                 {displacement:.3e} implied by the energy stake and this well's curvature"
+            );
+            assert!(d_de <= 10.0 * ELEMENTS1_STAKE_E, "{name}: D_e differs by {d_de:.3e}");
+        }
+        worst_e = worst_e.max(we);
+        worst_f = worst_f.max(wf);
+        worst_e2 = worst_e2.max(w2);
     }
-    println!("worst over the whole first row: {worst_overall:.4e} hartree");
+    println!(
+        "worst over the drop: E {worst_e:.4e} hartree, F {worst_f:.4e}, E2 {worst_e2:.4e}; \
+         atoms {worst_atom:.4e}"
+    );
 }
 
-/// `"LiH"` to `("Li", "H")`. Two-letter symbols start with the only capital.
+/// A pair's file name to its two element symbols.
+///
+/// Two forms, because chemistry writes them differently: a homonuclear pair is a FORMULA
+/// with a subscript (`"H2"`, `"He2"`, `"Ne2"`) and a heteronuclear one is two symbols run
+/// together (`"LiH"`, `"CO"`). Getting this wrong is not subtle — it panics rather than
+/// silently grading the wrong molecule — but it does have to handle both.
 fn split_pair(name: &str) -> (String, String) {
-    let cut = 1 + name[1..].find(char::is_uppercase).expect("two symbols");
+    if let Some(sym) = name.strip_suffix('2') {
+        return (sym.to_string(), sym.to_string());
+    }
+    let cut = 1 + name[1..]
+        .find(char::is_uppercase)
+        .unwrap_or_else(|| panic!("{name:?} is neither <symbol>2 nor two run-together symbols"));
     (name[..cut].to_string(), name[cut..].to_string())
+}
+
+#[test]
+fn pair_file_names_parse_to_their_elements() {
+    for (name, a, b) in [
+        ("H2", "H", "H"), ("He2", "He", "He"), ("Ne2", "Ne", "Ne"), ("Li2", "Li", "Li"),
+        ("N2", "N", "N"), ("F2", "F", "F"), ("LiH", "Li", "H"), ("HF", "H", "F"),
+        ("CO", "C", "O"),
+    ] {
+        assert_eq!(split_pair(name), (a.to_string(), b.to_string()), "{name}");
+        assert!(holon_chem::elements::by_symbol(a).is_some(), "{a}");
+        assert!(holon_chem::elements::by_symbol(b).is_some(), "{b}");
+    }
 }

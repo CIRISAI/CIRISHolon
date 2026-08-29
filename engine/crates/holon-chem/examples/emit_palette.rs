@@ -7,7 +7,13 @@ use holon_chem::pair::{
 };
 
 fn main() {
-    let out = std::env::var("PALETTE_OUT").unwrap_or_else(|_| ".".into());
+    // Default under `target/`, which is gitignored, NOT the working directory. Defaulting
+    // to "." put nine untracked result files in the repository root the first time
+    // somebody ran this without the variable set, where they sat looking like committed
+    // artifacts and carried a superseded basis. An example that writes results should not
+    // be able to litter the tree by being run the obvious way.
+    let out = std::env::var("PALETTE_OUT").unwrap_or_else(|_| "target/elements1".into());
+    std::fs::create_dir_all(&out).expect("output directory");
     let mut s = String::new();
     s.push_str("{\n");
     s.push_str(&format!("  \"provenance\": \"{PAIR_PROVENANCE}\",\n"));

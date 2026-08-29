@@ -285,3 +285,113 @@ fn the_degenerate_atoms_are_exactly_their_single_configuration_energies() {
         println!("  {} ({} determinants): {e:.12} hartree", sp.symbol, n_det);
     }
 }
+
+/// The exponent ratios within a shell must be element-independent, to the precision the
+/// declaration's own rounding allows. This is the check that caught a real defect.
+///
+/// # The physics
+///
+/// STO-3G is ONE universal three-Gaussian fit to a Slater orbital, rescaled per element by
+/// `zeta^2`. The rescaling multiplies every exponent in a shell by the same factor, so the
+/// RATIO of two exponents within a shell is a property of the universal fit and not of the
+/// element: the same constant, ten times over.
+///
+/// # The tolerance is DERIVED, not fitted
+///
+/// The ratios do not agree exactly, because the exponents are declared to eight decimals.
+/// The size of that disagreement is predictable rather than empirical: an exponent `a`
+/// carries an absolute rounding of at most half a unit in its last place, so a ratio
+/// `a / b` carries a RELATIVE rounding of at most `0.5e-8 * (1/a + 1/b)`. That bound is
+/// tiny for neon's `207.0` and large for hydrogen's `0.624`, which is exactly why an
+/// empirical band across the row is the wrong statistic — it is dominated by the lightest
+/// element and lets the heaviest ones drift unchallenged.
+///
+/// So each element is compared against the element whose bound is SMALLEST, and required
+/// to agree within the two bounds added. Measured, the whole corrected row sits inside
+/// `1.3x` its own bound.
+///
+/// # What it caught, and the mutation that proves it would again
+///
+/// Oxygen's leading 1s exponent was transcribed here as `130.70932000` against a published
+/// `130.70932140` — a relative error of 1.1e-8 that no eyeball catches, that every energy
+/// absorbs silently, and that moved the oxygen atom by 6.3e-9 hartree, SIXTY-THREE TIMES
+/// the referee gate's 1e-10 stake. Under this statistic it reads `25x` its own bound
+/// against the row's worst honest `1.3x` — a twentyfold separation. An empirical
+/// min/max band, which is what this test contained first, read the same defect at 1.1e-8
+/// relative spread and PASSED it: the range over ten elements is a scale estimator that
+/// the outlier itself inflates. The threshold below sits between the two measurements
+/// with room on both sides, and `oxygens_leading_exponent_is_the_published_one` pins the
+/// value so a failure names the number instead of only the symptom.
+#[test]
+fn the_exponent_ratios_are_element_independent() {
+    /// Half a unit in the last place of an eight-decimal exponent.
+    const HALF_ULP: f64 = 0.5e-8;
+    /// How many times its own derived rounding bound an element may miss the reference by.
+    /// The corrected row's worst is 1.26 and the defect this caught read 25.
+    const MARGIN: f64 = 4.0;
+
+    for kind in [ShellKind::S1, ShellKind::S2] {
+        for (label, i, j) in [("alpha_0/alpha_1", 0usize, 1usize), ("alpha_1/alpha_2", 1, 2)] {
+            // (symbol, ratio, the relative rounding bound that ratio carries)
+            let rows: Vec<(&str, f64, f64)> = FIRST_ROW
+                .iter()
+                .filter_map(|sp| {
+                    let sh = sp.shells.iter().find(|s| s.kind == kind)?;
+                    let (a, b) = (sh.alpha[i], sh.alpha[j]);
+                    Some((sp.symbol, a / b, HALF_ULP * (1.0 / a + 1.0 / b)))
+                })
+                .collect();
+            assert!(rows.len() >= 8, "too few elements carry a {kind:?} shell to test");
+
+            // The reference is the best-determined element, picked by the derived bound
+            // rather than by position — no element is privileged by hand.
+            let reference = rows
+                .iter()
+                .min_by(|x, y| x.2.partial_cmp(&y.2).unwrap())
+                .copied()
+                .unwrap();
+            let mut worst = 0.0f64;
+            let mut worst_el = "";
+            for &(symbol, ratio, bound) in rows.iter() {
+                if symbol == reference.0 {
+                    continue;
+                }
+                let n = ((ratio - reference.1).abs() / reference.1) / (bound + reference.2);
+                if n > worst {
+                    worst = n;
+                    worst_el = symbol;
+                }
+            }
+            println!(
+                "  {kind:?} {label}: reference {}, worst {worst:.2}x its own rounding bound ({worst_el})",
+                reference.0
+            );
+            assert!(
+                worst < MARGIN,
+                "{worst_el}'s {kind:?} {label} misses the universal ratio by {worst:.2}x the \
+                 rounding its own eight-decimal declaration allows. STO-3G rescales ONE fit \
+                 per element, so this ratio is a constant across the row: an outlier this \
+                 far out is a transcription error in one exponent, not rounding. Reference \
+                 element {} at {:.12}.",
+                reference.0,
+                reference.1
+            );
+        }
+    }
+}
+
+/// Oxygen specifically, pinned by the value the ratio test selects.
+///
+/// A regression pin rather than a structural check: the band test above would catch the
+/// old value again, but it would not say WHICH element or which number, and the next
+/// reader deserves the defect named rather than re-derived.
+#[test]
+fn oxygens_leading_exponent_is_the_published_one() {
+    let o = by_z(8).unwrap();
+    let s1 = o.shells.iter().find(|s| s.kind == ShellKind::S1).unwrap();
+    assert_eq!(
+        s1.alpha[0], 130.70932140,
+        "oxygen's leading 1s exponent was once transcribed as 130.70932000, which moved \
+         the oxygen atom by 6.3e-9 hartree — 63x the referee gate's stake"
+    );
+}

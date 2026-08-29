@@ -15,7 +15,13 @@ fn main() {
         ("He2", HELIUM,   HELIUM),
         ("Ne2", NEON,     NEON),
     ];
-    let outdir = std::env::var("ELEMENTS1_OUT").unwrap_or_else(|_| ".".into());
+    // Default under `target/`, which is gitignored, NOT the working directory. Defaulting
+    // to "." put nine untracked result files in the repository root the first time
+    // somebody ran this without the variable set, where they sat looking like committed
+    // artifacts and carried a superseded basis. An example that writes results should not
+    // be able to litter the tree by being run the obvious way.
+    let outdir = std::env::var("ELEMENTS1_OUT").unwrap_or_else(|_| "target/elements1".into());
+    std::fs::create_dir_all(&outdir).expect("output directory");
     println!("knots per curve: {knots}\n");
     println!("{:>5} {:>6} {:>6} {:>7} {:>13} {:>10} {:>10} {:>9} {:>9} {:>9}",
              "pair","nbas","ndet","bound","E_asym (Ha)","R_e (a0)","D_e (Ha)","D_e (eV)","k_e","gen (s)");

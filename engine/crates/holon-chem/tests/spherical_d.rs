@@ -21,7 +21,7 @@
 use holon_chem::dual::D2;
 use holon_chem::elements::{by_z, ALL_ELEMENTS, ShellKind};
 use holon_chem::md::{ao_integrals, spherical_components, SPHERICAL_D};
-use holon_chem::pair::{build_basis, electron_counts};
+use holon_chem::pair::{build_basis, electron_counts, solve_basis};
 use holon_chem::fci::{jacobi_eigh, FciSpace};
 
 /// The projection annihilates exactly the spherically symmetric direction, and nothing else.
@@ -88,6 +88,39 @@ fn cartesian_gram() -> Vec<f64> {
         g[j * 6 + i] = 1.0 / 3.0;
     }
     g
+}
+
+/// The registry's own basis-size arithmetic agrees with what the engine actually assembles.
+///
+/// # Why this gate exists
+///
+/// `Species::n_basis()` sums `ShellKind::n_functions()`, and `pair::feasibility` uses it to
+/// decide -- before computing anything -- whether a species is reachable and by which
+/// route. Nothing tied it to `build_basis`. When the projection landed, `n_functions` went
+/// on reporting six per d shell for a while: the registry said xenon was 29 functions, the
+/// engine built 27, and the two never met. A check that establishes one direction is not a
+/// check on the other, so this asserts the equality for EVERY element rather than for the
+/// eighteen that happen to have no d shell.
+#[test]
+fn the_registrys_basis_size_is_the_one_the_engine_assembles() {
+    for sp in ALL_ELEMENTS {
+        let built = build_basis(&[sp], vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]]).n;
+        assert_eq!(
+            sp.n_basis(),
+            built,
+            "{} declares {} basis functions and the engine assembles {built}",
+            sp.symbol,
+            sp.n_basis()
+        );
+    }
+    // And the two spellings of "how many functions is a d shell" agree.
+    for kind in [ShellKind::D3, ShellKind::D4] {
+        assert_eq!(
+            kind.n_functions(),
+            spherical_components(kind.l()),
+            "{kind:?} disagrees with md::spherical_components"
+        );
+    }
 }
 
 /// Every element's basis is one function per occupied orbital, which is what "minimal" means.
@@ -216,4 +249,71 @@ fn elements_without_d_shells_are_untouched() {
     let basis = build_basis(&[sc], vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]]);
     assert!(basis.sph.is_some(), "scandium carries a 3d shell and must be projected");
     assert_eq!(basis.n_cart - basis.n, 1);
+}
+
+
+/// The projected basis is a SUBSPACE of the Cartesian one, and the variational principle
+/// says so out loud.
+///
+/// # Why this is the strongest check available without an external table
+///
+/// Every other gate here is structural: the rows annihilate `r^2`, they are orthonormal in
+/// the Cartesian metric, the counts come out right. All of those would still pass if the
+/// projection were an orthonormal map onto the WRONG five-dimensional subspace, or onto the
+/// right one with a sign error that left the metric intact.
+///
+/// This one cannot. The five spherical functions span a strict subspace of the six
+/// Cartesian ones, so a full CI in the smaller space is variationally ABOVE a full CI in
+/// the larger -- necessarily, with no tolerance and no appeal. If the projection corrupted
+/// the integrals in any way that mattered, the "smaller" calculation would be free to come
+/// out below the larger one, which nothing in physics permits.
+///
+/// The gap is also reported rather than merely bounded, because its SIZE is the content of
+/// the whole change: it is what the spurious `l = 0` function was contributing, and it is
+/// what a minimal basis is not supposed to have.
+#[test]
+fn the_projected_basis_sits_variationally_above_the_cartesian_one() {
+    for (z, sym) in [(36u32, "Kr"), (54, "Xe")] {
+        let sp = by_z(z).unwrap();
+        let (_, na, nb) = electron_counts(&[sp]);
+        let centre = vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]];
+
+        let spherical = build_basis(&[sp], centre.clone());
+        let n_d = sp.shells.iter().filter(|s| s.kind.l() == 2).count();
+        assert!(n_d > 0, "carrier: {sym} must have d shells for this to test anything");
+        assert_eq!(
+            spherical.n_cart - spherical.n,
+            n_d,
+            "carrier: the two bases must actually differ in size"
+        );
+        let e_sph = solve_basis(&spherical, na, nb).e.v;
+
+        // The same basis with the projection switched off: every Cartesian component kept.
+        let mut cartesian = build_basis(&[sp], centre);
+        cartesian.n = cartesian.n_cart;
+        cartesian.sph = None;
+        let e_cart = solve_basis(&cartesian, na, nb).e.v;
+
+        assert!(
+            e_cart.is_finite() && e_sph.is_finite(),
+            "{sym}: one of the two solves did not return a number"
+        );
+        assert!(
+            e_cart <= e_sph,
+            "{sym}: the {}-function projected basis gave {e_sph:.12} and the \
+             {}-function Cartesian basis gave {e_cart:.12}. The projected space is a strict \
+             SUBSPACE, so its variational minimum cannot lie below -- an inversion here \
+             means the projection is not an isometry onto a subspace of the original, which \
+             no structural check would catch.",
+            spherical.n,
+            cartesian.n
+        );
+        println!(
+            "{sym}: spherical ({} fn) {e_sph:.9} Ha, Cartesian ({} fn) {e_cart:.9} Ha, \
+             the spurious l=0 functions are worth {:.3e} Ha",
+            spherical.n,
+            cartesian.n,
+            e_sph - e_cart
+        );
+    }
 }

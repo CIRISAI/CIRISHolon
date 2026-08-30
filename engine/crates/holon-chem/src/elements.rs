@@ -198,12 +198,26 @@ impl ShellKind {
         }
     }
 
-    /// Cartesian components: 1 for s, 3 for p, 6 for d.
+    /// Basis functions this shell contributes: 1 for s, 3 for p, 5 for d.
+    ///
+    /// # Five for d, not six
+    ///
+    /// The integral recursions are Cartesian and a d shell computes as six components, but
+    /// the sixth is `(x^2+y^2+z^2) exp(-a r^2)` — spherically symmetric, so `l = 0` — and
+    /// the engine projects it out (see `md::SPHERICAL_D`). What a shell contributes to the
+    /// BASIS is therefore five, and this function answers that question, because every
+    /// caller of it is asking how big the problem is rather than how the integrals are
+    /// evaluated. `md::cartesian_components` answers the other question.
+    ///
+    /// These two counts disagreeing is not hypothetical: this function returned six for a
+    /// while after the projection landed, which made `pair::feasibility` overstate xenon by
+    /// two orbitals and the palette report a basis size the engine never builds.
+    /// `tests/spherical_d.rs` now ties it to what `build_basis` actually assembles.
     pub fn n_functions(self) -> usize {
         match self {
             ShellKind::S1 | ShellKind::S2 | ShellKind::S3 | ShellKind::S4 | ShellKind::S5 => 1,
             ShellKind::P2 | ShellKind::P3 | ShellKind::P4 | ShellKind::P5 => 3,
-            ShellKind::D3 | ShellKind::D4 => 6,
+            ShellKind::D3 | ShellKind::D4 => 5,
         }
     }
 }

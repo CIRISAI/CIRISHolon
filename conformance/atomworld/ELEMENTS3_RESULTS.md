@@ -307,8 +307,9 @@ fixed by patience. `Solution::davidson_iters` tells them apart and nothing read 
 | 51 | Sb | 9,477 | 1.07e-10 | 16 | STAGNATED | **REFUSED** |
 | 52 | Te | 729 | 1.07e-10 | 23 | STAGNATED | **REFUSED** |
 | 50 | Sn | 123,201 | 2.06e-10 | 334 | STAGNATED | **REFUSED** |
+| 30 | Zn | 665,856 | 2.72e-10 | 379 | STAGNATED | **REFUSED** |
 
-**The cap is 1200 and the largest count anywhere is 334. Not one atom reached it.** Every solve
+**The cap is 1200 and the largest count anywhere is 379. Not one atom reached it.** Every solve
 stopped with hundreds of iterations unspent and could not use them, so **more iterations buy
 nothing** — the constant reserved in `DAVIDSON_MAX_ITER` would not have rescued a single row.
 
@@ -400,47 +401,53 @@ determinants — to "automatic route available", on the strength of a rung measu
 germanium's filling. Germanium itself does not move: at 23,409 determinants it is already
 inside the threshold, which is the same arithmetic that makes it S2's twin.
 
-**But the successor cannot lift them, and that is knowable before it arrives.** The ladder
-being run to derive it is seven two-centre pairs topping out at S2, which is 18 orbitals —
-so the 22- and 27-orbital species, fourteen of the sixteen, are above anything it can
-return. And its one 18-orbital rung is at the wrong filling: S2 is 32 electrons in 18
-orbitals, C(18,16)² = 23,409 determinants, which is **germanium's FCI space exactly** — a row
-this record already solves by determinant. The refused rows share the orbital count and
-nothing else. Scandium is 1,392,554,592 determinants at the same 18 orbitals, **59,500×
-larger**; the block spans four and a half orders of magnitude between its cheapest and most
-expensive member. A new constant will therefore license the MPO *build* at some orbital
-count; it will not license the *verdict* at these electron counts. The ladder's own rule is
-that a reach without a budget is not a measurement, and that rule binds on the electron-count
-axis too.
+**A4 IS NOW SETTLED, AND THE ANSWER IS THAT NOTHING MOVES.** mixtures-engine re-derived the
+constant as a measurement (5ebaf16) and it came back a different *shape* from the one it
+replaced:
 
-**And while this section was being written, the ladder measured exactly that.** Its fourth
-rung is NaH: 10 orbitals — the *same* orbital count as HCl, which reached the stake in 55.9 s
-— but 12 electrons instead of 18, so 44,100 determinants instead of 100. NaH spent its entire
-300 s budget and stopped **4.391e-3 from the stake, five orders short**. Same orbital count,
-441× apart in determinants, opposite verdicts.
+| n_det | pair | n_orb | delta | secs | verdict |
+|---|---|---|---|---|---|
+| 4 | H2 | 2 | +1.8e-15 | 0.0 | REACHED |
+| 100 | HCl | 10 | +6.1e-11 | 63.0 | REACHED |
+| 196 | ClF | 14 | +5.5e-12 | 472.2 | REACHED |
+| 225 | LiH | 6 | +3.9e-14 | 2.8 | REACHED |
+| 23,409 | S2 | 18 | +3.5e-3 | 575.3 | **BUDGET** |
+| 44,100 | NaH | 10 | +4.9e-3 | 364.5 | **BUDGET** |
+| 132,496 | SiO | 14 | +1.1e-2 | 663.9 | **BUDGET** |
 
-I have to correct myself here rather than quietly strengthen: the paragraph above originally
-said that no measurement bore on the filling axis in either direction, and that was true when
-written and false forty minutes later. It is now measured, once, and it points the way the
-argument above only conjectured. That does not upgrade the conjecture to a result — one rung
-is one rung, and NaH's failure is a *time* limit at a declared budget rather than a
-demonstrated limit of the method. What it does establish is narrower and harder: **orbital
-count alone does not determine the verdict**, so a routing door keyed on orbital count alone
-cannot be sound, whatever number is put in it.
+**There is no orbital threshold to rescope on.** Sorted by determinant count the verdict is
+monotone; sorted by orbital count it is not — ten orbitals both reaches (HCl) and fails (NaH),
+fourteen both reaches (ClF) and fails (SiO). The operative bound is
+`pair::MPS_MAX_DETERMINANTS = 1024`, sitting inside the untested gap between LiH's 225 and S2's
+23,409, and their doc says plainly that nothing on this evidence distinguishes 500 from 5,000.
+It is not sharp and is not treated as sharp here.
 
-Fixed in advance, so the rescope cannot be tuned to whatever lands: when the number arrives,
-route labels move from "no automatic route" to "automatic route available" for species at or
-below it, and **nothing else moves**. No refused row becomes a measured row. If the number
-comes back below 18, this table does not change at all.
+**So this lane's pre-committed rescope executes as the "nothing changes" branch.** The sixteen
+route-less species stay route-less. What changes is only the *backing*: the refusals no longer
+rest on a stale orbital constant, they rest on a measurement. That is the outcome A1.2's
+amendment wanted either way, and it is the branch fixed in advance rather than chosen after.
 
-With one reading rule, stated now because NaH forces it. The ladder reports two numbers: the
-largest orbital count that *reached* the stake, and the smallest that *did not*. Its closing
-line nominates the first as the new constant — but `pair.rs` uses the constant as a door that
-admits **everything at or below** it, and NaH has already put a failure at 10 orbitals while
-HCl reached at 10. A maximum taken over a set that contains a failure is not a bound on that
-set. This lane will therefore read the constant as the **wall minus one** — the largest count
-at which every tested rung reached — and if the ladder's two numbers disagree, that
-disagreement is reported here rather than resolved in this lane's favour.
+**The honest headline is stronger than "still blocked", and it is theirs:** the MPS route
+succeeds exactly where it is not needed and fails exactly where it would be useful. Every pair
+the route reaches has an exact FCI that is already free — 0.0 s for all four. Every pair whose
+exact FCI costs anything is a pair the route does not reach. Combined with
+`MPS_ROUTE_THRESHOLD` = 50,000, that makes `AutomaticRoute::Mps` **unreachable**: a space big
+enough to be routed there is necessarily past the determinant bound. The arm was kept rather
+than deleted, with the unreachability recorded as the measurement, so the day the sweeps improve
+it is one constant to move.
+
+**And the wall this campaign should stop pointing at.** It is not the MPO — that fell, SiO
+builds in 0.31 s where it once took twelve hours. It is the **sweep implementation**: SiO is
+1.1e-2 hartree from exact after 664 s, six orders from the stake and not a near miss. Scope
+caveat carried from their run rather than smoothed away: chi = 32, 300 s per cell, and the
+ladder deliberately stops climbing chi after a BUDGET because a larger chi is strictly slower
+per sweep. A much larger budget at a much larger chi was never tested.
+
+**This lane's earlier reading rule is withdrawn as moot.** It said to read the constant as the
+wall minus one, on the reasoning that a maximum over a set containing a failure is not a bound
+on that set. The reasoning was right and the harness's own summary reproduced the contradiction
+it predicted — "largest reaching 14, smallest that did not 10" — but the resolution was better
+than the rule: there is no orbital threshold to take a minimum or a maximum of.
 
 A3.1 corrected this lane's own over-claim here: A1.2 said "no route at all", which read
 `automatic_route`'s refusal as a statement about reachability. SiO at 132,496 determinants

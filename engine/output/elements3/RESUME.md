@@ -682,3 +682,54 @@ confirmation as provisional until the new run's SiO row prints:
 
 The stake itself is untouched by the restart. It named SiO and S2 as pairs, not as rows of a
 particular run, and all four outcomes still carry the meanings fixed at e16acb7.
+
+## GRADING THE STAKE: outcome (d). Not support, by my own pre-registration.
+
+mixtures-engine's completed ladder:
+
+    n_det      pair  n_orb   delta      sweeps  secs    verdict
+         4     H2      2    +1.8e-15      2      0.0    REACHED
+       100     HCl    10    +6.1e-11      3     63.0    REACHED
+       196     ClF    14    +5.5e-12      5    472.2    REACHED
+       225     LiH     6    +3.9e-14      3      2.8    REACHED
+    23,409     S2     18    +3.5e-3       3    575.3    BUDGET
+    44,100     NaH    10    +4.9e-3       9    364.5    BUDGET
+   132,496     SiO    14    +1.1e-2       6    663.9    BUDGET
+
+I staked SiO BUDGET and S2 REACHED. **SiO BUDGET is right; S2 REACHED is WRONG.** Both
+budgeted, which is the outcome I labelled (d) at e16acb7 and whose meaning I fixed there as:
+
+> consistent with H_det on SiO but S2 confounds with per-sweep cost at 18 orbitals; **NOT
+> support for H_det, and I will say so.**
+
+So I say so. **The stake does not support the hypothesis.** The load-bearing leg — ClF against
+SiO, same 14 orbitals, 676x apart in determinants, opposite verdicts — held, and it was staked
+in advance and has now replicated across two runs. But the stake as written is (d), and rule 6
+does not let me keep the half I won and discard the half I lost.
+
+### The S2 leg was wrong in a way worth naming, because the error is one I had been policing
+
+Under H_det, what did the evidence at staking time actually predict for S2? The REACHED set was
+4, 100, 196, 225 determinants. The one BUDGET was 44,100. **S2's 23,409 sits in the untested
+gap between them, so H_det predicted NOTHING there.** I should have said the pair did not
+discriminate on that leg and staked SiO alone.
+
+Instead I predicted REACHED, and my reason was that 23,409 is germanium's FCI space — a row
+this record solves exactly and cheaply. That is an *FCI-cost* intuition standing in for a
+*DMRG-difficulty* one. It is the same two-axes conflation I spent the morning warning
+mixtures-engine about, and I made it inside my own pre-registration while believing I was being
+careful.
+
+mixtures-engine's own conclusion lands in exactly that gap: `MPS_MAX_DETERMINANTS = 1024`,
+placed "inside the measured gap between LiH's 225 and S2's 23,409", with the explicit caveat
+that nothing on this evidence distinguishes 500 from 5,000. The gap was untested; my prediction
+across it was unwarranted; the number now sits in it.
+
+### What survives, and whose it is
+
+The axis conclusion survives and it is THEIRS, not my stake's: sorted by determinant count the
+verdict is monotone, sorted by orbital count it is not — ten orbitals both reaches (HCl) and
+fails (NaH), fourteen both reaches (ClF) and fails (SiO). That is their measurement over seven
+rungs. My contribution was the two same-orbital-count comparisons that make the
+non-monotonicity visible, and one confirmed advance prediction on the second of them. I am not
+claiming the axis result as a confirmed prediction of mine, because outcome (d) is not support.

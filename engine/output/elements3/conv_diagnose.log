@@ -1,0 +1,18 @@
+# Davidson exit taken, per atom. cap = 1200, target = 1e-11, bar = 1e-10
+# exit CONVERGED: resid < target | CAP: iters == cap | STAGNATED: neither
+  Z sym      n_det            E (hartree)       resid   iters        exit   vs bar
+  9   F          5       -97.986505000188    5.68e-14       3   CONVERGED     pass   # CONTROL: the only atom in the record that converges inside the loop
+ 10  Ne          1      -126.604525052999      0.00e0       0   CONVERGED     pass   # CONTROL: one determinant, exact without ever iterating
+  3  Li         50        -7.315836576618    7.03e-11       8   STAGNATED     pass   # 50 determinants -- and still short of the target
+  4  Be        100       -14.403655041094    1.12e-11      10   STAGNATED     pass   # 100 determinants
+ 19   K     204490      -593.093052049426    9.95e-11     177   STAGNATED     pass   # published: 9.95e-11, just inside the bar
+ 32  Ge      23409     -2051.649918026932    8.85e-11      50   STAGNATED     pass   # published: 8.85e-11
+ 33  As       2754     -2209.263793608119    9.80e-11      28   STAGNATED     pass   # published: 9.80e-11, just inside the bar
+ 51  Sb       9477     -6251.362514224755    1.07e-10      16   STAGNATED  REFUSED   # REFUSED: 1.07e-10, just outside the bar
+ 52  Te        729     -6547.122368855257    1.07e-10      23   STAGNATED  REFUSED   # REFUSED: 1.07e-10, just outside the bar
+ 50  Sn     123201     -5963.220001599594    2.06e-10     334   STAGNATED  REFUSED   # REFUSED: 2.06e-10
+ 30  Zn     665856     -1757.457601384721    2.72e-10     379   STAGNATED  REFUSED   # REFUSED: 2.72e-10
+#
+# All 2 light controls reached the target, so the CONVERGED branch is live and a heavy atom missing it is a fact about the atom, not about this classifier. Heavy atoms that reached it: 0.
+# Read the `exit` column against the `vs bar` column. If they disagree -- if rows that PASS the bar took the same exit as rows the bar REFUSES -- then the bar is sorting a class that uniformly failed to converge, rather than separating the converged from the rest, and the record has to say so.
+EXIT=0

@@ -135,3 +135,45 @@ and the honest state of rung 7 either way. NOT claimed under any branch:
 that these orders are nature's, that embeddability is physics, that any
 group IS the Standard Model, or anything about orders this census does
 not cover.
+
+---
+
+## AMENDMENT A1 — 2026-08-30, at design re-audit, before any census or run
+
+*Three items, each decided at the design review (SELECTOR6_DESIGN.md,
+commit 1d5b23b) and none after any number existed.*
+
+1. **The I1 mechanism clause is corrected by proof.** The freeze suggested
+   aggregating verdicts over conjugacy-class representatives of the step
+   choice. The design traced the criterion and showed (a) the step itself
+   is canonical — written in the group operation, commuting with every
+   isomorphism — and the only non-canonical construction was the family's
+   representative choice; and (b) representative aggregation is NOT a
+   class function (changing one class's representative conjugates one
+   family member independently, so no gauge element relates the families).
+   The mechanism that ships instead is stronger: the FULL family
+   F(G) = {GAUGE[g] ∘ step^d : g in G, d | ord(step)}, deduplicated as
+   permutations — no choice exists, an isomorphism carries F(G) onto
+   F(G'), and I1 holds by construction. The representatives' economy is
+   recovered as a proved gauge-orbit decomposition, with orbit constancy
+   re-checked at a second random representative per group and any
+   disagreement a loud VOID. The gate I1 is unchanged; only the freeze's
+   suggested mechanism is superseded, and this note is its record.
+2. **T1's stasis half is pinned to the criterion's own quantity:**
+   "SELECT(G) = False for every abelian G", with (k*, |sel|, |F|) printed
+   per group. The design's trace shows abelian groups fail selection in
+   TWO modes — sel empty at coarse views, sel = F(G) (everything) at the
+   discrete view — and both are non-selection since neither is a proper
+   nonempty subset. A literal "sel is empty" assertion would VOID the
+   abelian half of the census on the second mode; the pinned reading
+   keeps the theorem's prediction exact while putting the select-
+   everything behaviour on the page. The results doc must report the two
+   failure modes' counts separately.
+3. **A000001's provenance is a three-legged pin:** the primary-source
+   b-file fetched by the lead and committed as A000001.pin (sha256
+   54358f9b…1ad5a0f3), cross-audited by the census's two internal
+   theorems (exact abelian counts from partition products; Holder's
+   formula on squarefree orders). A typed-from-memory sequence is
+   exactly the unchecked constant this programme distrusts, and the
+   completeness gate S1 now checks an argument against an external
+   record, not a hope against a builder list.

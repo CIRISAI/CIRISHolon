@@ -1138,3 +1138,28 @@ accurate when `z_string_value` is not called. The 14.36 GB seen in the QEC
 demo was that function's second tableau, exactly as the twenty-sixth entry
 above says, and the fix targets the right thing.
 
+
+### Twenty-sixth entry, the memory fix verified: the guard is honest again
+
+`z_string_value` rewritten to reuse the single reference buffer, and to answer
+the undetermined case with no buffer at all (the anticommutation test is a XOR
+of the string's X columns). Re-run at d=221, same seed, same box:
+
+| | before | after | model |
+|---|---:|---:|---:|
+| peak RSS | 14.358 GB | **9.571 GB** | 9.545 GB |
+| wall | 111.25 s | **73.98 s** | — |
+| verifications | 7/7 | 7/7 | — |
+
+**The guard now predicts peak RSS to 0.3%**, which is the property that
+matters: a memory guard that understates is a licence to OOM a sibling, and
+this one was understating by 50%. The 33% wall-time drop is a side effect —
+the second tableau was also being TRANSPOSED into, twice per demo.
+
+Gated by a new conformance test that runs the column-side path and the
+row-major reference implementation (`z_string_value_of`) on random states and
+random strings and requires agreement, including on the `None` verdict — which
+is now decided without materializing a tableau and so has no shared code left
+to protect it. Both branches asserted non-vacuous. 12 gates in the file, 101
+lib tests, both profiles.
+

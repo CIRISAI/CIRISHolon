@@ -50,15 +50,24 @@
 //! which the seeded stream is consumed are all unchanged. The conformance
 //! gate checks exactly that, against the reference, tableau and all.
 //!
-//! STALENESS, stated honestly: a RANDOM outcome collapses the state through
-//! the row-major tableau, which leaves the column engine's mirror stale for
-//! the rest of the batch. Rather than patch it per collapse, the engine
-//! FALLS BACK to the reference's own row-major scan for the remainder of
-//! that batch and rebuilds once at the end. Deterministic measurements are
-//! read-only, so a batch with no coins never falls back — which is every
-//! round after the first in a QEC memory experiment, and the ones that
-//! dominate. `scan_fast` / `scan_fallback` count it so the split is
-//! reported, never assumed.
+//! STALENESS, and the patch that removes it. A RANDOM outcome collapses the
+//! state through the row-major tableau, which leaves the column engine's
+//! mirror stale. The first version FELL BACK to the reference's own row-major
+//! scan for the rest of that batch — correct, and it cost 10199 slow scans in
+//! a 4-round d=101 run, all of them in round one. So the mirror is PATCHED
+//! through the collapse instead: seen column-side, multiplying a whole set of
+//! rows by one pivot changes column `c` only where the pivot is non-identity
+//! there, and then by exactly the mask of updated rows. The pivot's X-weight
+//! is measured at mean 1.5 and **max 2, independent of d**, so the patch is a
+//! couple of column XORs. Fallback scans went 10199 → 0, and the fallback
+//! itself is kept for the case the patch would cost more than it saves
+//! (`PATCH_BUDGET`), with `scan_fast` / `scan_fallback` / `mirror_patched` /
+//! `mirror_dropped` counting the split so it is reported, never assumed.
+//!
+//! Only the X PLANE is patched — Z and the signs are not — so the single-term
+//! sign shortcut, which reads a sign bit directly, stands down until the next
+//! full rebuild. That is what `mirror_x_valid` and `mirror_full_valid`
+//! separate, and conflating them would be a fast wrong answer.
 
 use crate::coltableau::ColTableau;
 use crate::tableau::{PackedTableau, PauliRow};
@@ -459,10 +468,74 @@ impl ColAdaptive {
     ///
     /// `None` if the observable is not determined (the state is in a
     /// superposition of its eigenvalues).
-    pub fn z_string_value(&self, qubits: &[usize]) -> Option<bool> {
-        debug_assert!(!self.in_batch, "z_string_value inside an open batch");
-        let packed = self.col.to_packed();
-        z_string_value_of(&packed, qubits)
+    /// Measured on the d=221 flagship, the first version of this was the
+    /// single largest memory consumer in the whole run: it called
+    /// `col.to_packed()`, allocating a SECOND full row-major tableau beside
+    /// the lazily-held one — 4.77 GB extra at that size, which is why peak
+    /// RSS read 14.36 GB against a 9.54 GB working-set model. It now reuses
+    /// the one buffer, and answers the common case without any buffer at all:
+    /// the anticommutation test is a XOR of the string's X COLUMNS, so
+    /// "is this observable even determined?" is `|string| · 2n/64` words and
+    /// no allocation.
+    pub fn z_string_value(&mut self, qubits: &[usize]) -> Option<bool> {
+        assert!(!self.in_batch, "z_string_value inside an open batch");
+        let n = self.n;
+        let words = self.col.row_words();
+
+        // Which rows anticommute with ∏ Z_q? An all-Z observable anticommutes
+        // with a row exactly when the row's X-support meets the string an ODD
+        // number of times — so the whole answer is the XOR of those columns.
+        let mut mask = vec![0u64; words];
+        for &q in qubits {
+            let col = self.col.x_column(q);
+            for (m, c) in mask.iter_mut().zip(col) {
+                *m ^= *c;
+            }
+        }
+
+        // Any STABILIZER anticommuting ⇒ the observable is not determined.
+        // This exits before a single row is read.
+        for row in n..2 * n {
+            if mask[row >> 6] >> (row & 63) & 1 == 1 {
+                return None;
+            }
+        }
+
+        // Deterministic: the value is the sign of the product over the
+        // anticommuting DESTABILIZERS' matching stabilizers.
+        let mut hits = Vec::new();
+        for w in 0..=((n.saturating_sub(1)) >> 6) {
+            let mut bits = mask[w];
+            if w == (n - 1) >> 6 {
+                let b = n & 63;
+                if b != 0 {
+                    bits &= !(!0u64 << b);
+                }
+            }
+            while bits != 0 {
+                hits.push(w * 64 + bits.trailing_zeros() as usize);
+                bits &= bits - 1;
+            }
+        }
+        match hits.len() {
+            0 => return Some(false),
+            1 => return Some(self.col.sign_bit(hits[0] + n)),
+            _ => {}
+        }
+
+        // Several terms: reuse the one reference buffer, never a second.
+        if !self.packed_valid {
+            let buf = self.packed.get_or_insert_with(|| PackedTableau::new(n));
+            self.col.store_to_packed(buf);
+            self.packed_valid = true;
+            self.stats.transposes += 1;
+        }
+        let packed = self.packed.as_ref().expect("materialized");
+        let mut scratch = PauliRow::identity(n);
+        for i in hits {
+            scratch.mul_assign(&packed.rows[i + n]);
+        }
+        Some(scratch.r % 4 == 2)
     }
 }
 
@@ -744,7 +817,7 @@ mod conformance {
     #[test]
     fn z_string_reads_the_logical_observable() {
         // |0…0⟩: every Z string is +1 (false).
-        let a = ColAdaptive::new(8, 1);
+        let mut a = ColAdaptive::new(8, 1);
         assert_eq!(a.z_string_value(&[0, 1, 2, 3]), Some(false));
 
         // One X flips the string's parity; two X's inside it restore it.
@@ -769,6 +842,52 @@ mod conformance {
             Some(false),
             "the GHZ parity is forced"
         );
+    }
+
+    /// The column-side rewrite of `z_string_value` must agree with the
+    /// row-major reference implementation it replaced, on random states and
+    /// random strings — including the `None` (undetermined) verdict, which is
+    /// now decided WITHOUT materializing a tableau at all and is therefore
+    /// the part with no shared code left to protect it.
+    #[test]
+    fn z_string_column_path_agrees_with_the_row_major_reference() {
+        let mut rng = Rng(0x2570_1146);
+        let (mut determined, mut undetermined) = (0u32, 0u32);
+        for n in [4usize, 9, 20, 64, 70] {
+            for seed in 0..6u64 {
+                let mut a = ColAdaptive::new(n, seed);
+                for _ in 0..(4 * n) {
+                    let q = rng.below(n);
+                    let mut q2 = rng.below(n);
+                    while q2 == q {
+                        q2 = rng.below(n);
+                    }
+                    match rng.below(5) {
+                        0 => a.h(q),
+                        1 => a.s(q),
+                        2 => a.x_gate(q),
+                        3 => a.z_gate(q),
+                        _ => a.cx(q, q2),
+                    }
+                }
+                let reference = a.to_packed();
+                for _ in 0..8 {
+                    let k = 1 + rng.below(n);
+                    let mut qs: Vec<usize> = (0..k).map(|_| rng.below(n)).collect();
+                    qs.sort_unstable();
+                    qs.dedup();
+                    let want = z_string_value_of(&reference, &qs);
+                    let got = a.z_string_value(&qs);
+                    assert_eq!(got, want, "n={n} seed={seed} string {qs:?}");
+                    match want {
+                        Some(_) => determined += 1,
+                        None => undetermined += 1,
+                    }
+                }
+            }
+        }
+        assert!(determined > 0, "no determined case — test is vacuous");
+        assert!(undetermined > 0, "no undetermined case — test is vacuous");
     }
 
     /// The seeded stream is still a stream: same seed replays, different

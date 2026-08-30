@@ -39,13 +39,16 @@
 
 use holon_chem::dual::D2;
 use holon_chem::elements::by_z;
-use holon_chem::fci::{solve_determinant, DAVIDSON_MAX_ITER};
+use holon_chem::fci::{solve_determinant, SolveExit, DAVIDSON_MAX_ITER, DAVIDSON_REQUESTED_TOLERANCE};
 use holon_chem::pair::{geometry_problem, CONVERGED_RESIDUAL};
 
-/// Davidson's own target inside `solve_determinant`. Not a constant this crate exports --
-/// it is a literal at the call site -- so it is repeated here and its provenance named.
-/// If the call site moves, this diagnostic is reading a stale number and says so wrongly.
-const DAVIDSON_TARGET: f64 = 1e-11;
+/// The hazard the old local constant warned about ("if the call site moves, this
+/// diagnostic is reading a stale number") fired: the call site moved to 1e-10 when the
+/// unreachable 1e-11 ask was retired, and `solve_determinant` now exports both the ask
+/// (`DAVIDSON_REQUESTED_TOLERANCE`) and the exit it actually took (`Solution::exit`).
+/// So this diagnostic no longer re-derives the exit from the residual -- it reads the
+/// recorded one, and keeps the old derivation only as an audit that must agree.
+const DAVIDSON_TARGET: f64 = DAVIDSON_REQUESTED_TOLERANCE;
 
 /// The atoms to ask, and why each one is in the list.
 ///
@@ -124,18 +127,30 @@ fn main() {
             geometry_problem(&[sp], vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]]);
         let sol = solve_determinant(&space, &mo);
 
-        let exit = if sol.residual < DAVIDSON_TARGET {
-            if CONTROLS.contains(&z) {
-                controls_converged += 1;
-            } else {
-                heavy_converged += 1;
+        let exit = match sol.exit {
+            SolveExit::Converged | SolveExit::Trivial => {
+                if CONTROLS.contains(&z) {
+                    controls_converged += 1;
+                } else {
+                    heavy_converged += 1;
+                }
+                "CONVERGED"
             }
+            SolveExit::IterationCap => "CAP",
+            SolveExit::Stagnated => "STAGNATED",
+        };
+        // Audit: the recorded exit and the residual-derived one must tell the same story.
+        // They can differ legitimately in one direction only (a residual that dipped under
+        // the ask on the final iteration the derivation cannot see); anything else means
+        // the recorded exit and the numbers beside it disagree, which is a finding.
+        let derived = if sol.residual < DAVIDSON_TARGET {
             "CONVERGED"
         } else if sol.davidson_iters >= cap {
             "CAP"
         } else {
             "STAGNATED"
         };
+        let audit = if exit == derived { "" } else { "   # RECORDED != DERIVED" };
         println!(
             "{:>3} {:>3} {:>10} {:>22.12} {:>11.2e} {:>7} {:>11} {:>8}   # {}",
             sp.z,
@@ -148,6 +163,9 @@ fn main() {
             if sol.residual <= CONVERGED_RESIDUAL { "pass" } else { "REFUSED" },
             why
         );
+        if !audit.is_empty() {
+            println!("#{audit}: recorded {exit} but residual/iters derive {derived}");
+        }
     }
 
     println!("#");

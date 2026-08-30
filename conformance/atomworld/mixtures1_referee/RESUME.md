@@ -6,6 +6,19 @@ Sibling lane:    `elements1/` — a symlink to `../elements_referee`; this lane
                  RUNS that code rather than copying it.
 Source before any Python here: `. ./env.sh` (one BLAS thread per process).
 
+## Gate R1: DONE
+
+H through Ar, 50 digits, dual route, every Sz sector. Worst |A−B| across the
+eighteen: 3.1e-55. Ground multiplicity derived TWICE — from the Sz degeneracy
+pattern and from ⟨S²⟩ of the converged vector — agreeing on all eighteen, which
+is the only check that can see a subspace method converging cleanly onto a
+spin-EXCITED state. What came out is Hund's rules down both rows (C/Si triplets,
+N/P quartets, O/S triplets, closed shells at He/Ne/Ar) from Z and a basis table.
+
+**Ten of ten first-row energies are BIT-IDENTICAL to ELEMENTS-1's** at all 50
+digits, so extending the table to Z = 18 provably touched nothing the first row
+uses. Product: `mixtures_atoms.json`.
+
 ## Built and green, before any energy exists
 
 | | checks |
@@ -34,15 +47,27 @@ matches the referee" is VACUOUSLY true for any pair the referee cannot compute,
 so `basis2.shells_for` raises on an out-of-scope Z and the manifest states the
 bound as a fact.
 
-**SiO's cost is the campaign's real risk, and it is being measured, not
-estimated.** The determinant count understates the spread by an order of
-magnitude. Measured: N2's working-precision matvec is 78.69 s for 8,784,000
-nonzeros (9.0 µs/element), and the nonzero estimator reproduces N2's 8.8e6 and
-HCl's 10,000 exactly. SiO has 1.97e8 nonzeros — 22× — and a memory-flat
-streaming pass (`_sio_stream.py`) measures ~12 µs/element on the real operator,
-so one working-precision matvec is about 40 minutes and one geometry is tens of
-hours. **D1 stakes S2 AND SiO as the overlap species.** S2 is fine. SiO needs a
-decision from the lead, not a unilateral one here.
+**SiO is NOT FEASIBLE as staked, measured and with both obvious remedies
+tested.** Full writeup in `FEASIBILITY.md`. Measured, not projected: nnz =
+196,889,056 (the estimator predicted exactly that, as it did N2's 8,784,000 and
+HCl's 10,000), 12.08 µs/element, ONE working-precision matvec = 2378 s. N2's
+real dual-route points cost 25–116 matvecs, putting SiO at 20–91 hours per
+geometry × 15 knots, ~5.6 GB peak per worker. Roughly 1000–4000 core-hours.
+
+Both remedies came back negative. HOISTING the generator's redundant work
+(`_fast_elements.py`, stream verified IDENTICAL element-for-element on H2, HCl,
+ClF) gives 1.34× / 1.19× / **0.93×** — the excitation bookkeeping is not the
+cost, the 2e8 Python tuple yields and mpf multiply-adds are. ROUTE B
+(`_routeb_cost.py`) measures B/A = 17.3× at ndet 100, 45.2× at 324, 1.38× at
+14,400 — it closes with size but never wins. The cost is structural to the
+design; only a string-driven sigma that never enumerates an element would move
+it, and that is a rewrite of arithmetic two live campaigns depend on.
+
+Reported to the lead with three options; recommended amending D1's second
+overlap species to **NaH** (44,100 determinants — the largest FEASIBLE space in
+the staked set, larger than S2's 23,409 — whose table is being built anyway for
+R2, so D1 gets its second species at zero extra cost). A frozen stake is not
+this lane's to change.
 
 ## How this lane runs ELEMENTS-1's machinery without forking it
 
@@ -74,10 +99,8 @@ checked by CONTENT — the model string — before anything reads them.
   for `mixtures_atoms.json`, then the five cheap pairs together, then S2 and
   NaH one at a time. **SiO is deliberately not in it.** `NPROC_LIGHT=4
   NPROC_HEAVY=3`: ELEMENTS-1 is priority one on this machine and holds twelve.
-- `build_atoms2.py` — gate R1. 16 of 18 atoms cached; Na and Mg are the two
-  large ones (10,584 and 7,056 determinants in their biggest sectors) and are
-  the only ones still running.
-- `_sio_stream.py` — the SiO feasibility measurement.
+- `build_atoms2.py` — gate R1, DONE (2877 s, 4 workers).
+- `_sio_stream.py` — the SiO feasibility measurement, DONE.
 
 Cheapest-first is not impatience: it means the engine lane has real referee
 tables long before the expensive tail, and any defect in the shared pipeline

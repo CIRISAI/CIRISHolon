@@ -38,7 +38,11 @@ coherent self-erasure (ω revival), the classical view's closure failure
 through coherence (B4, thrice), constraints held throughout (B3), all
 oracles two-route (B6′), refinement-invariant (B5′), harness falsifiable
 (plants). OPEN: the geometry→matter direction (B2 family), owed to
-BRIDGE-3 with a pilot-informed stake. The fence is unchanged: finite
+BRIDGE-3 with a pilot-informed stake. *[Annotation 2026-08-30: this debt
+was PAID — BRIDGE-3 ran 2026-08-27, pilot-designed then frozen (prereg
+8b12296), and passed all gates with both plants firing; see
+BRIDGE3_RESULTS.md. The line above is kept as written because a record is
+a history; it stopped being current the day after it was written.]* The fence is unchanged: finite
 D4 toy; SU(2) is the ladder.
 
 

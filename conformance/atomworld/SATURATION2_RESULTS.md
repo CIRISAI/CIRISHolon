@@ -785,3 +785,85 @@ TABULATED exact-in-model surface. `E(OHHH)` is 1568 determinants — about four
 times a water point — over a six-coordinate space with `S3` symmetry, which is
 the real cost and the real successor. This lane's `-0.183`-scale measurement is
 its sizing, and the 40 geometries here are a ready-made held-out set for it.
+
+
+---
+
+## What the campaign says, in one page
+
+**All seven gates discharged.** R1, T1, T2, G1, G2 and C1 HOLD; P1 is branch (b),
+reported and investigated.
+
+The first heteronuclear three-body surface exists and is what it claims to be.
+`(O,H,H)`, exact-in-model STO-3G full CI, 105,105 solves, checked against an
+independent 50-digit referee at 5.9e−12 Ha over 84 result-blind staked
+geometries. Out of `Z`, the masses and a basis, with no molecular preset
+anywhere:
+
+* **water's SHAPE emerges.** Minimising pairs-plus-`dE3` lands at 1.943467 bohr
+  and 96.7738°, against the model's own full CI at 1.9435740105 and 96.75788837 —
+  a reference computed by a different route before a single node of the table
+  existed. (G1)
+* **water's VALENCE emerges.** The third hydrogen refuses at every one of 40
+  staked full-CI geometries; there is no well anywhere, against a second O-H bond
+  of +0.163077 Ha. (G2)
+* **water's FORMATION does not.** No seed of the quench made H2O. (P1, branch b)
+
+### What is NOT claimed
+
+`(O,O,H)` and `(O,O,O)` completeness — the fence is displayed and counted, and P1
+shows it is decisive. Quantitative agreement with nature's 104.5° (STO-3G's
+in-model angle is the claim, and nature's numbers appear only as labelled
+context). Liquid water, hydrogen bonding, anything at scale. And nothing at
+order four: the one four-body surface offered to this campaign was verified
+against these referee numbers and did not verify.
+
+### The three things this campaign got wrong and caught
+
+1. **`R_HI = 14` would have passed T2 on its own resolution.** A grid maximum is a
+   lower bound on its supremum, and the shell re-swept at 5× reads 1.0091e−5
+   against a 1e−5 stake.
+2. **The tail is not dispersion.** `R^-6` was staked and measured −5.01; the
+   discriminator was sharper than the prediction, since closed-shell neon removes
+   the algebraic sector entirely rather than leaving an `R^-6` behind.
+3. **A conservation gate passed on a box that never moved**, and a spin gate would
+   have fired on correct physics. Both now assert the thing they assumed.
+
+And one published number was stated in a convention it did not name — `−0.183` —
+which a downstream lane then read backwards.
+
+### THE SATURATION LADDER — a wager-shaped observation, labelled as one
+
+Not a claim. Two points, and the shape they make:
+
+    pair-only cannot saturate HYDROGEN's valence; order three can       (SATURATION-1)
+    order three cannot saturate OXYGEN's valence; order four would      (this campaign, G2)
+
+which suggests *valence `v` needs order `v+2`*. That is a wager with two data
+points and it is written here as one. Its kill is cheap and named: a valence-three
+centre should need order five, so a nitrogen trimer table that saturated NH3 at
+order four would falsify it.
+
+Worth keeping separate from P1's result, which is about something else entirely —
+P1 is limited by two MISSING THREE-BODY tables, not by the order of the expansion.
+
+### A convergence, credited
+
+The `mbe3-referee` lane measured H2–H2's long range living entirely at order four
+as `R^-5` quadrupole–quadrupole. This lane measured `(O,H,H)`'s algebraic tail at
+−5.01 and showed the closed-shell swap removes it. Two campaigns, two systems, one
+long-range law — and this lane's FIRED `R^-6` stake stays in the source as the
+honest route to it. STO-3G has no dispersion to speak of; the model's true tail is
+quadrupolar.
+
+### The successors, in the order the measurements put them
+
+1. **`(O,O,H)` and `(O,O,O)` three-body tables.** P1 says these, not order four,
+   are what stand between this campaign and its product.
+2. **A tabulated exact-in-model `(O,H,H,H)` surface.** 1568 determinants a point,
+   six coordinates, `S3` symmetry. The 40 geometries here are a ready-made
+   held-out set and G2's 0.183 Ha is its sizing.
+3. **The angle as a third coordinate.** `s2_third.rs` measures it beating both `u`
+   and `c` on the worst slice by 2.2×; the shipped table's angle axis converges at
+   5× per doubling where a C1 cubic should give 16×, and this campaign has not
+   explained that.

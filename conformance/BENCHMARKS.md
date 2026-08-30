@@ -812,3 +812,55 @@ That is not a tuning gap, it is a layout gap, and it is the whole reason
 the next entry exists. Recorded here first, with the engine unchanged, so
 the finding has its evidence before its fix.
 
+
+## 2026-08-30 — SATURATION-3 G2: the FCI sigma kernel at the (O,O,O) scale, GPU vs CPU
+
+The dominant kernel of an all-electron STO-3G FCI table point: the sparse
+Hamiltonian matvec at 207,025 determinants (15 orbitals, 24 electrons, 455×455
+alpha/beta strings), f64. Measured on the REAL problem — index structures and
+integrals exported from `pair::geometry_problem`, and the GPU answer checked
+against `fci::sigma_direct`'s own output rather than against a re-derivation.
+
+| arm | sigma/s | GFLOP/s FP64 | ratio |
+|---|---:|---:|---:|
+| **GPU, RTX 4090 Laptop (sm_89)** | **65.7** | 318.4 | **3.2× the CPU** |
+| GPU incl. host round trip | 69.8 | — | PCIe is 0.5 ms against 15 ms of compute |
+| CPU, `sigma_direct`, 32 threads | 20.8 | ~97 | the baseline (loadavg 32) |
+| CPU, `sigma_direct`, 32 threads | 17.2 | ~80 | same, loadavg 18 — the spread is the machine |
+| CPU, same GEMM reformulation, OpenBLAS, 1 thread | 1.40 | 6.8 | **slower than the hand-written kernel** |
+| CPU, `sigma_direct`, 1 thread | 2.20 | 10.7 | — |
+
+Device ceilings measured on the same card, for reading the above: FP64 FMA
+**416.1 GFLOP/s**, FP64 DAXPY **462.7 GB/s** (38.6 GFLOP/s, memory-bound), PCIe
+round trip for one 1.58 MiB CI vector **0.50 ms**. Consumer Ada runs FP64 at 1/64
+of FP32, so 318 GFLOP/s is 77% of this card's FP64 FMA peak.
+
+**The baseline was checked, not assumed.** The GPU arm gets a reformulation
+(sigma as three GEMMs) *and* a tuned library, so quoting it against a hand-written
+loop would attribute the whole difference to the device — `holon-gpu/src/cpu.rs`'s
+own warning. Running the identical reformulation on the CPU through OpenBLAS is
+**slower** than `sigma_direct`: materialising the intermediate `T` costs 372 MB of
+bandwidth per sigma, which the GPU has and the CPU does not. `sigma_direct` is a
+good cache-blocked algorithm and is the honest CPU arm, so the 3.2× stands.
+
+**Determinism, which is an adoption condition and not a nicety.** There is not one
+atomic in the kernel: both scatters invert into gathers, because the excitation
+maps are invertible (`a⁺_p a_q |jb⟩ = s|ib⟩` inverts, so the source string is
+unique). Every sum is over a fixed range in a fixed order. Five repeat runs
+**bit-identical**.
+
+**Agreement, and why the kernel is measured but NOT adopted.** Against
+`sigma_direct`: max absolute difference 4.547e−13, **3.033e−15 relative** to the
+scale of |sigma| — and **188,363 of 207,025 entries (91.0%) differ BITWISE**. Both
+are correct answers; they are not the same bits. So a GPU-built table is a
+different artifact from a CPU-built one, the two can never be mixed inside one
+table, and adopting the GPU idles 32 cores rather than adding to them. Adoption is
+deferred until P2's fence counter rules the `(O,O,O)` table necessary; see
+`SATURATION3_RESULTS.md` G2 and `engine/RESOURCE_DESIGN.md` D0, where this
+measurement becomes the general rule that device class belongs to the artifact
+rather than to the schedule.
+
+Instruments: `holon-chem/examples/s3_sigma_cost.rs` (CPU),
+`holon-chem/examples/s3_sigma_export.rs` (the real problem),
+`scratchpad/s3gpu/{probe,sigma,cpu_fair}.{cu,py}` (device ceilings, GPU kernel,
+fair CPU arm).

@@ -430,6 +430,21 @@ out of reach of this engine's MPO construction, and no amount of running it
 longer changes that — the cost is in a fixed preprocessing step, not in
 convergence.
 
+**The refusal is being measured on a staked species rather than extrapolated.**
+`d1_staked_SiO_cost.log` runs SiO's own MPO build against a twelve-hour budget, so
+D1's blocked state rests on the staked thing and not on an inference from HCl.
+
+**S2 is not repeated, by inference rather than by measurement, and that is stated
+rather than hidden.** S2 is 18 orbitals against SiO's 14, and this builder's cost
+rises monotonically and steeply in the orbital count (0.00 s → 528 s → past two
+hours across 2 → 6 → 10). A refusal at 14 therefore settles 18. The S2 run was
+queued and was deliberately stopped before it started; if the SiO build ever
+*does* complete, that inference is void and S2 must be run.
+
+Should SiO's build complete inside its budget, D1's blocked state weakens from
+structural to a scheduling question and this section is wrong — which is the
+outcome the twelve hours are being spent to find out about.
+
 ### A live hazard this exposed, and its fix
 
 `fci::solve` routes any determinant space past `MPS_ROUTE_THRESHOLD` (50,000) to

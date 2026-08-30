@@ -52,3 +52,20 @@ FOURTH_ROW              the fourth-row species array (Rb..Xe), same; the two are
 C_3D                    universal STO-3G 3d contraction coefficients for d-shell basis functions
 is_exact_in_model       solver route classification predicate for method provenance
 geometry_problem        split-out assembly for D1 comparison without solving twice
+
+# --- the heteronuclear three-body module and its pins (SATURATION-2 lane) ---
+WATER_REFEREE_DIGEST    pins tests/data/s2/water_referee.json by digest; read by tests/water_referee.rs
+WATER_REFEREE_GEOMETRIES the staked geometry count, enforced against the file and against the prereg's >= 48
+WATER_R1_STAKE_E        R1's staked agreement with the 50-digit referee, written before the comparison ran
+WATER_R1_MEASURED_E     the measured residual, checked in BOTH directions so a stale pin fails too
+WATER_T1_KILL_E         T1's staked kill on the held-out interpolation error
+WATER_T1_MEASURED_E     the measured held-out maximum; same two-directional check
+WATER_T2_KILL_E         T2's staked kill on the truncation systematic
+WATER_T2_MEASURED_E     the measured systematic on the truncation shell; same two-directional check
+WATER_G2_STAKED_RATIO   G2's staked factor: how much shallower a third hydrogen must bind
+WATER_PROVENANCE        label emitted with the (O,H,H) table, the way TRIMER_PROVENANCE is
+U_FENCE                 the cosine the closed-angle fence stands for; read by the gate that checks the extension
+de3                     the solve-everything-from-scratch entry point, for a gate that wants one named geometry
+to_text                 renders the committed artifact; examples/s2_build.rs --emit is the producer
+from_text               parses it back, refusing a foreign grid rule; holon-render's load_water_table is the consumer
+set_node_asymmetric     plant (ii) ONLY: breaks the H<->H symmetry on purpose. Nothing in the dynamics calls it

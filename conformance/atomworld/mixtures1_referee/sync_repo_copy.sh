@@ -12,7 +12,8 @@ R="$(cd "$(dirname "$0")" && pwd)"
 FILES="README.md RESUME.md basis2.py species2.py species.py m1core.py
        build_atoms2.py curves2.py emit2.py env.sh run_pairs.sh
        test_basis_matches_engine.py test_species_shim.py
-       _cost_probe.py _sio_stream.py _conditioning.py _rss_guard.sh"
+       _cost_probe.py _sio_stream.py _conditioning.py _rss_guard.sh
+       FEASIBILITY.md _fast_elements.py _routeb_cost.py mixtures_atoms.json"
 [ -d "$D" ] || { echo "working copy not found: $D"; exit 1; }
 changed=0
 for f in $FILES; do

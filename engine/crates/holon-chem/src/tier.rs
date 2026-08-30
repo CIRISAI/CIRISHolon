@@ -394,9 +394,19 @@ pub struct RefinedSolution {
     pub exit: SolveExit,
 }
 
-/// The tolerance the DD refinement asks for: two orders above [`crate::scalar::DD_EXPANSION_FLOOR`],
-/// the same reachable-ask discipline the f64 tier settled on.
-pub const DD_REQUESTED_TOLERANCE: f64 = 1e-22;
+/// The DEFAULT tolerance for DD refinement — REACHABLE, by measurement, which is the
+/// whole point. The first value here was 1e-22 ("two orders above the DD floor"), and
+/// the 2026-08-30 deep calibration showed it was the f64 tier's original disease
+/// reproduced one rung up: no practical budget reaches it (Sb crawled to 1.99e-15 in
+/// 4000 iterations with the eigenvalue identical to 21 digits from iteration ~400;
+/// Te to 2.97e-13), so `Converged` could never fire and the exit label would have
+/// stopped discriminating — an unreachable ask is a typo with force, wherever it
+/// lives. 1e-12 is crossed comfortably by BOTH measured degeneracy classes, sits four
+/// orders below any staked chemistry precision, and restores `Converged`'s meaning.
+/// A caller wanting deeper passes its own ask through [`refine_determinant_dd`]'s
+/// `tol` parameter — per-class, from the lease layer's measured boundaries, which is
+/// where depth negotiation belongs.
+pub const DD_REQUESTED_TOLERANCE: f64 = 1e-12;
 
 /// Refine an f64-tier solution on the DOUBLE-DOUBLE tier.
 ///
@@ -411,6 +421,7 @@ pub fn refine_determinant_dd(
     diag: &[f64],
     e_f64: f64,
     start: &[f64],
+    tol: f64,
     max_iter: usize,
 ) -> RefinedSolution {
     let kdd: Vec<Dd> = ci.k.iter().map(|&v| Dd::from_f64(v)).collect();
@@ -422,7 +433,7 @@ pub fn refine_determinant_dd(
         &kdd,
         &gdd,
         &ddiag,
-        DD_REQUESTED_TOLERANCE,
+        tol,
         max_iter,
         Some(&sdd),
     );

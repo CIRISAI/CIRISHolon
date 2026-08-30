@@ -47,7 +47,7 @@ fn main() {
         let ci0 = ci_ints(&mo, Order::Value);
         let diag = space.diagonal(&ci0);
         let t1 = std::time::Instant::now();
-        let r = refine_determinant_dd(&space, &ci0, &diag, sol.e.v, &sol.vector, 4000);
+        let r = refine_determinant_dd(&space, &ci0, &diag, sol.e.v, &sol.vector, holon_chem::tier::DD_REQUESTED_TOLERANCE, 4000);
         let t_dd = t1.elapsed().as_secs_f64();
 
         println!(

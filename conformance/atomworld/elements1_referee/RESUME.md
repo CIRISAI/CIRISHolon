@@ -52,13 +52,34 @@ Two more found by the byte-stability check that the repair required:
   IndexError: the old code accepted a one-vector ARPACK partial then indexed
   `w[o[1]]`.  `test_seed_ladder.py` — 10 checks, 0 FAIL, every rung forced.
 
+## What the migration recovered, and what the two contaminated points turned out to be
+
+The `fd_` migration did not only vacate the two bad Li2 keys; it also moved 66
+stencil energies into the namespace the stencil stage now reads, so the stage
+that had been blocked for a day starts almost done: **Li2 34 of 36 stencil
+energies already cached, N2 32 of 36.** CO has none — its stage never ran.
+
+And the two contaminated Li2 geometries were NUMERICALLY FINE. R = 7.490376922377
+recomputed dual-route agrees with the migrated single-route value to 3.6e-49 —
+which is the reporting precision, not a disagreement — with route A vs B at
+3.7e-59 and a Temple bound of 4.1e-65. So what was missing was never the number;
+it was the WARRANT. A single-route energy with no bound, no route B and no spin
+sector, wearing a certified point's key, is wrong about what it is rather than
+about what it says. That is the harder kind to notice and the reason the repair
+is a raise and not a fallback.
+
 ## Owed (three) — CORRECTED STATE
 
 | species | state |
 |---|---|
 | Li2 | **23 of 42 grid points valid**, not 42.  17 carry `basis_fingerprint: null` (they predate the stamp; `cache_get` refuses them) and 2 were the silent collisions.  19 dual-route recomputes owed, then spin/stencil/hermite/probe. |
 | N2  | 13 of 13 grid points done.  Owed: stencil (was blocked by the defect), hermite, spin ×13, recertify, probe. |
-| CO  | 12 of 13 grid points done; **R = 9.000000000000 owed** and needs the seed ladder.  Then the same tail as N2. |
+| CO  | 12 of 13 grid points done; **R = 9.000000000000 owed** and needs the seed ladder.  Then the same tail as N2, plus all 36 stencil energies. |
+
+Remaining heavy work, counted: Li2 needs 7 more grid points, 2 stencil, 12
+hermite, 42 spin, 4 probes; N2 needs 4 stencil, 12 hermite, 13 spin, 4 probes;
+CO needs 1 grid point, 36 stencil, 12 hermite, 13 spin, 4 probes.  The spin
+audit is the long pole at roughly 190,000 core-seconds across the three.
 
 ## Live
 

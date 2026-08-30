@@ -283,6 +283,14 @@ cargo test -q -p holon-tables --lib 2>/dev/null >/dev/null \
 cargo build -q -p holon-tables --release --tests 2>/dev/null \
   && ok "holon-tables G1 gate builds (run is a campaign run, not a CI gate)" \
   || no "holon-tables G1 gate builds (run is a campaign run, not a CI gate)"
+# The LEASED path IS enforced: it runs the mesh through holon-resource with a REAL worker
+# probe (spawn/run/join, not a capacity reading) on a 32-node H3 grid in seconds, and it is
+# the only place the lease books are checked against real concurrent work. Its
+# leasing_does_not_change_the_table case is the one that would catch the resource layer
+# reaching the numbers.
+cargo test -q -p holon-tables --test leased 2>/dev/null >/dev/null \
+  && ok "holon-tables leased path: real worker probe, books balance, table unchanged" \
+  || no "holon-tables leased path: real worker probe, books balance, table unchanged"
 
 # holon-resource: RESOURCE-1's leasing tier. Unlike holon-tables, this one is FULLY
 # enforced here — its whole suite is arithmetic and bookkeeping with no chemistry in

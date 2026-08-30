@@ -933,6 +933,7 @@ name = "holon-tables"
 version = "0.1.0"
 dependencies = [
  "holon-chem",
+ "holon-resource",
 ]
 
 [[package]]

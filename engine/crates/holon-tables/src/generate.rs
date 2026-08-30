@@ -1,8 +1,10 @@
 //! The sharded generator: regions to workers, warm chains inside regions, one record and
 //! one digest lane per node.
 
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::sync::Mutex;
+
+use holon_resource::{Arena, LeaseError, LeaseId, Probe, Receipt, ResourceKind};
 
 use holon_chem::dual::D2;
 use holon_chem::elements::Species;
@@ -63,6 +65,7 @@ impl GenSpec {
 }
 
 /// What a run produced.
+#[derive(Debug)]
 pub struct GenOutcome {
     /// The assembled table, in canonical node order. This is the artifact compared
     /// bit-for-bit across worker counts.
@@ -205,7 +208,26 @@ fn solve_node(spec: &GenSpec, node: NodeId, start: Start<'_>) -> (NodeRecord, Ve
 /// shard-invariance claim a statement about an actually-varying schedule rather than about
 /// a fixed assignment that happens to be reproducible.
 pub fn generate(spec: &GenSpec, workers: usize) -> GenOutcome {
+    let counters: Vec<AtomicU64> = (0..workers.max(1)).map(|_| AtomicU64::new(0)).collect();
+    generate_with_progress(spec, workers, &counters)
+}
+
+/// [`generate`], with a live per-worker progress counter each worker bumps as nodes land.
+///
+/// Separate rather than an `Option` parameter because the counters are what let a reaper tell a
+/// slow holder from an idle one, and a run that could silently omit them is a run whose holders
+/// look dead.
+pub fn generate_with_progress(
+    spec: &GenSpec,
+    workers: usize,
+    progress: &[AtomicU64],
+) -> GenOutcome {
     assert!(workers >= 1, "a run needs at least one worker");
+    assert_eq!(
+        progress.len(),
+        workers,
+        "one progress counter per worker, or a worker's work is invisible to the reaper"
+    );
     let grid = spec.grid;
     let n_regions = grid.n_regions();
     let n_nodes = grid.n_nodes();
@@ -301,6 +323,10 @@ pub fn generate(spec: &GenSpec, workers: usize) -> GenOutcome {
                             "node {node} was solved twice; the partition is not a partition"
                         );
                         s[node as usize] = Some(record);
+                        drop(s);
+                        // Rent, paid as the work lands rather than at the end: a shard that
+                        // reported nothing for hours would look IDLE to the reaper.
+                        progress[w].fetch_add(1, Ordering::Relaxed);
                     }
                 }
                 worker_digests.lock().unwrap()[w] = mine;
@@ -362,5 +388,111 @@ pub fn generate(spec: &GenSpec, workers: usize) -> GenOutcome {
         warm_solves,
         total_davidson_iters,
         voided,
+    }
+}
+
+/// Generate a table **through the resource layer**: a probed worker lease per shard, receipts
+/// paid as real work lands, and books that must balance before the table is handed back.
+///
+/// This is the production entry point; [`generate`] remains the bare one the G1 gate drives.
+///
+/// # Why the receipts accrue LIVE rather than at the end
+///
+/// Receipts are the rent (RESOURCE_DESIGN §9 Q1). If a shard paid its rent only on completion,
+/// a multi-hour shard would be a holder that has produced no receipt for hours — which is
+/// exactly what the reaper's rung 1 is looking at, and it would be reaping the campaign's own
+/// tables while they were running. So each worker owns an [`AtomicU64`] it bumps as every node
+/// lands, and [`LeasedRun::progress`] exposes those counters so a reaper can read PROGRESS
+/// rather than SILENCE.
+///
+/// The honest limit of this first integration: the arena's rent is settled from those counters
+/// after the scope joins, because `Arena` is not `Sync` and a lease-per-node round trip would
+/// cost more than the node. The counters are live; the ledger's copy of them is not yet. A
+/// reaper wired to the counters would be correct today; one wired to the ledger would not.
+///
+/// # Errors
+///
+/// Refuses if any worker's lease is refused, and refuses AFTER the run if the books do not
+/// balance — a table whose leases leaked is not published on the grounds that its numbers
+/// looked fine.
+pub fn generate_leased<P: Probe>(
+    spec: &GenSpec,
+    workers: usize,
+    arena: &mut Arena,
+    probe: &mut P,
+) -> Result<LeasedRun, LeaseError> {
+    assert!(workers >= 1, "a run needs at least one worker");
+
+    // Lease every worker BEFORE any work starts: probe first, then spawn. A refusal here costs
+    // nothing and leaves no entry.
+    let mut leases = Vec::with_capacity(workers);
+    for _ in 0..workers {
+        match arena.lease(probe, None, ResourceKind::Worker, 1) {
+            Ok(id) => leases.push(id),
+            Err(e) => {
+                // Release what we took. A partial lease that is abandoned is the leak the
+                // ledger identity exists to catch, so we do not create one on the way out.
+                for l in leases.drain(..) {
+                    let _ = arena.release(l);
+                }
+                return Err(e);
+            }
+        }
+    }
+
+    let progress: Vec<AtomicU64> = (0..workers).map(|_| AtomicU64::new(0)).collect();
+    let outcome = generate_with_progress(spec, workers, &progress);
+
+    // Settle the rent from the live counters, then release leaf-to-root.
+    let mut paid = Vec::with_capacity(workers);
+    for (lease, counter) in leases.iter().zip(progress.iter()) {
+        let n = counter.load(Ordering::Relaxed);
+        arena.pay_rent(*lease, Receipt(n))?;
+        paid.push(n);
+    }
+    for l in &leases {
+        arena.release(*l)?;
+    }
+
+    // The books must balance before the table is published. M-VACUOUS-SUCCESS at the resource
+    // layer: a run that leaked a lease has not done what it says it did.
+    if !arena.balances() {
+        return Err(LeaseError::Refused {
+            kind: ResourceKind::Worker,
+            amount: workers as u64,
+            why: "the run's lease books did not balance; a table whose leases leaked is not \
+                  published on the grounds that its numbers looked fine",
+        });
+    }
+    // And the rent must account for every node, or the counters and the table disagree.
+    let total_paid: u64 = paid.iter().sum();
+    assert_eq!(
+        total_paid as usize,
+        outcome.records.len(),
+        "receipts total {total_paid} against {} solved nodes; the rent and the table disagree, \
+         so one of them is not counting the work",
+        outcome.records.len()
+    );
+
+    Ok(LeasedRun {
+        outcome,
+        leases,
+        nodes_per_worker: paid,
+    })
+}
+
+/// A run and the leases it was made under.
+#[derive(Debug)]
+pub struct LeasedRun {
+    pub outcome: GenOutcome,
+    pub leases: Vec<LeaseId>,
+    /// Nodes solved per worker — the receipts, and the load-balance reading for free.
+    pub nodes_per_worker: Vec<u64>,
+}
+
+impl LeasedRun {
+    /// The live progress counters' final values. A reaper reads these to tell SLOW from IDLE.
+    pub fn progress(&self) -> &[u64] {
+        &self.nodes_per_worker
     }
 }

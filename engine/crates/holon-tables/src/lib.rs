@@ -90,9 +90,11 @@ pub mod generate;
 pub mod grid;
 pub mod mutation;
 pub mod node;
+pub mod worker;
 
 pub use digest::Digest;
 pub use generate::{generate, GenOutcome, GenSpec, WarmPolicy};
 pub use grid::{NodeId, RegionId, TableGrid};
 pub use mutation::Mutation;
 pub use node::{NodeRecord, NodeStatus, VoidReason};
+pub use worker::WorkerProbe;

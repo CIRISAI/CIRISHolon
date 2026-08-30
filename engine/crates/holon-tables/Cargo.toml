@@ -22,3 +22,7 @@ description = "Sharded table generation under the merge law: bit-identical acros
 
 [dependencies]
 holon-chem = { path = "../holon-chem" }
+# holon-resource: RESOURCE-1's leasing tier. Zero-dep itself, so this adds nothing to the
+# graph but the lease discipline -- workers are leased and probed rather than spawned, and
+# the run's books have to balance before a table is published.
+holon-resource = { path = "../holon-resource" }

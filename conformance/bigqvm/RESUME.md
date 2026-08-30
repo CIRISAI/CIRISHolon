@@ -57,9 +57,11 @@ the hour). Both remaining items need a window and neither may be forced.
    DONE for a run the binary had REFUSED. The binary's exit code 2 is now the
    only authority; the marker is written only on rc = 0.
 
-2. **The head-to-head re-run.** The banked h2h table (`surface_h2h_results
-   .json`) was taken BEFORE the transpose blocking landed, so it understates
-   the current engine. Re-run when memory allows:
+2. ~~**The head-to-head re-run.**~~ DONE 2026-08-30 — banked as the update to
+   BENCHMARKS entry twenty-five. With the transpose blocking in, the ratios
+   moved from 1.4–2.1× against us to **0.82–1.26×**, i.e. parity, with d=101
+   reading 0.822 in our favour. Command, for the quiet-runner repeat that is
+   still owed:
 
        stimvenv/bin/python conformance/qasm/surface_h2h.py \
            --d 21,45,101,141 --rounds 3 --reps 5

@@ -986,3 +986,36 @@ spread 2–4× at the large distances. None of these ratios is a quiet-machine
 number, and the banked bake-offs (entries six/eight/ten) used a quiet CI
 runner — this comparison deserves the same before it is quoted.
 
+
+### Twenty-fifth entry, UPDATE (same day): the head-to-head re-run — the gap was mine, and it mostly closed
+
+The re-run owed above has run, with the transpose blocking in (min of 5, arms
+interleaved, identical circuits, same loaded box at load 42–49):
+
+| d | n | measurements | ours | stim | ours/stim | previous |
+|---:|---:|---:|---:|---:|---:|---:|
+| 21 | 881 | 1320 | 0.003 s | 0.002 s | 1.130 | 0.766 |
+| 45 | 4049 | 6072 | 0.052 s | 0.041 s | 1.264 | 2.093 |
+| 101 | 20401 | 30600 | 1.319 s | 1.605 s | **0.822** | 1.427 |
+| 141 | 39761 | 59640 | 8.264 s | 7.174 s | 1.152 | 1.944 |
+
+**The honest verdict moves from "stim leads 1.4–2.1×" to "parity, 0.82–1.26×,
+with one size where we lead" — and it is still not a clean win for anyone.**
+The 1.4–2.1× banked an hour earlier was measuring an engine that no longer
+exists; the table above is the current one and the earlier table stays put,
+marked, because a record is a history and the warrant for the blocking is in
+the numbers it beat.
+
+**Why these minima are usable where the earlier medians were not:** the
+per-repetition distributions are bimodal — clean runs cluster tightly at the
+bottom, then contention outliers. At d=101 ours reads 1.319, 1.349, 1.908,
+2.039, 8.457 and stim 1.605, 1.615, 1.623, 4.015, 4.398: both minima are
+confirmed by a near-identical second sample (2% and 0.6% apart), so those two
+numbers are well determined even though the medians are not. At d=141 ours is
+weaker — min 8.264 with the next at 10.556, 28% away — so that row's ratio is
+the softest in the table and is not the one to quote.
+
+No claim of a trend across d is made: four points, three of them with a
+neighbour more than 20% away, on a box at load 42–49. The defensible statement
+is parity at these sizes, the quiet-runner measurement still owed.
+

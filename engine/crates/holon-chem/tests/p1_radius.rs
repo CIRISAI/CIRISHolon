@@ -2,10 +2,16 @@
 //!
 //! # Why a third rule at all
 //!
-//! P1 derives each element's drawn radius from its own homonuclear curve. By AMENDMENT
-//! A1.2 most mid-row homonuclear dimers cannot be computed at all — scandium's is 36
-//! orbitals and 42 electrons — so the choice was a third DERIVED rule or a remembered
-//! constant, and this crate has no table of remembered constants.
+//! P1 derives each element's drawn radius from its own homonuclear curve, and most mid-row
+//! homonuclear dimers have no AUTOMATIC route: `automatic_route` refuses them and
+//! `generate_pair_table` will not produce them. So the choice was a third DERIVED rule or a
+//! remembered constant, and this crate has no table of remembered constants.
+//!
+//! "No automatic route" is not "unreachable". AMENDMENT A1.2 said the latter and A3.1
+//! corrected it, after the MIXTURES-1 lane measured SiO's 132,496 determinants at 34
+//! seconds through `solve_determinant`. What justifies the second rule is cost and the
+//! absence of a production path: selenium's dimer is 396,900 determinants and a curve is
+//! about a hundred geometries.
 //!
 //! # The rule that was specified, and why it is not the rule that shipped
 //!
@@ -108,10 +114,10 @@ fn every_radius_is_labelled_with_the_rule_that_produced_it() {
         assert_eq!(
             sz.rule.is_dimer_derived(),
             !infeasible,
-            "{}: the radius is labelled {:?} but its homonuclear pair is {}",
+            "{}: the radius is labelled {:?} but its homonuclear pair {}",
             sp.symbol,
             sz.rule,
-            if infeasible { "not computable" } else { "computable" }
+            if infeasible { "has no automatic route" } else { "has one" }
         );
         let _ = ALL_ELEMENTS.len();
         if sz.rule.is_dimer_derived() {
@@ -153,15 +159,15 @@ fn every_radius_is_labelled_with_the_rule_that_produced_it() {
 #[test]
 fn plant_a_density_radius_presented_as_dimer_derived_is_refused() {
     // Carrier: the sector must be non-empty.
-    // Selenium: its dimer is 36 orbitals and 396,900 determinants, so the pair route is
-    // genuinely out of reach, while its ATOM is 324 determinants and costs nothing. Named
+    // Selenium: its dimer is 36 orbitals and 396,900 determinants, so it has no automatic
+    // route, while its ATOM is 324 determinants and costs nothing. Named
     // rather than searched, so the plant runs on the same species every time and a change
     // in the registry shows up as this assertion rather than as a slower test.
     let victim = by_symbol("Se").unwrap();
     assert!(
         !automatic_route(victim, victim).exists(),
-        "carrier: {}'s homonuclear pair is computable, so the density rule would not be \
-         used for it and the plant would be scored on a case that cannot arise",
+        "carrier: {}'s homonuclear pair HAS an automatic route, so the density rule would \
+         not be used for it and the plant would be scored on a case that cannot arise",
         victim.symbol
     );
     let honest = homonuclear_size(victim);

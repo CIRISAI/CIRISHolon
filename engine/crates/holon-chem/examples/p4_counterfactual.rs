@@ -87,7 +87,7 @@ fn main() {
         let (_, na, nb) = electron_counts(&[sp]);
         println!("== {sym} (Z = {}), {na}/{nb} electrons ==", sp.z);
         println!(
-            "{:>8} {:>20} {:>10} {:>8} {:>11}",
+            "{:>8} {:>20} {:>10} {:>8} {:>21}",
             "lambda", "E (hartree)", "<S^2>", "2S+1", "verdict"
         );
         for &lam in LAMBDAS {
@@ -100,12 +100,21 @@ fn main() {
             let sol = solve_determinant(&space, &mo);
             let s2 = s_squared(&space, &sol.vector);
             let mult = (1.0 + 4.0 * s2).sqrt();
-            // The declared basis reads 5 for zinc and 4 for gallium; anything a full unit
-            // below is the reversion the prediction stakes.
+            // TWO-SIDED. The first version of this asked only `mult < base - 0.5`, which
+            // is the reversion the prediction stakes -- and it printed "unchanged" against
+            // gallium at lambda = 0.12, where the multiplicity had gone UP from 4 to 6. A
+            // check that can only see the direction it expects reports every other
+            // direction as nothing happening, which is worse than not checking.
             let base = if sp.z == 30 { 5.0 } else { 4.0 };
-            let verdict = if mult < base - 0.5 { "FLIPPED" } else { "unchanged" };
+            let verdict = if mult < base - 0.5 {
+                "REVERTED (predicted)"
+            } else if mult > base + 0.5 {
+                "ROSE (not predicted)"
+            } else {
+                "unchanged"
+            };
             println!(
-                "{lam:>8.2} {:>20.9} {s2:>10.6} {mult:>8.3} {verdict:>11}",
+                "{lam:>8.2} {:>20.9} {s2:>10.6} {mult:>8.3} {verdict:>21}",
                 sol.e.v + basis.nuclear_repulsion().v
             );
         }

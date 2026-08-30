@@ -1378,10 +1378,18 @@ pub enum RadiusRule {
     /// DERIVED from the ATOM, not from a pair: the root-mean-square radius of the
     /// outermost occupied orbital. See [`atomic_valence_rms_radius`].
     ///
-    /// A different rule, not a fallback value, and it exists because most mid-row
-    /// homonuclear dimers cannot be computed at all -- scandium's is 36 orbitals and 42
-    /// electrons (AMENDMENT A1.2). The alternative was a remembered constant, which is
-    /// what this crate has no table of.
+    /// A different rule, not a fallback value. It exists because most mid-row homonuclear
+    /// dimers have NO AUTOMATIC ROUTE -- `automatic_route` refuses them and
+    /// `generate_pair_table` will not produce them -- and because a curve costs about a
+    /// hundred geometries even where `solve_determinant` could reach one. Selenium's dimer
+    /// is 396,900 determinants.
+    ///
+    /// "No automatic route" is NOT "unreachable", and the distinction is one this lane got
+    /// wrong: AMENDMENT A1.2 said the latter and A3.1 corrected it, after the MIXTURES-1
+    /// lane measured SiO's 132,496 determinants at 34 seconds through `solve_determinant`.
+    /// What justifies a second rule here is cost and the absence of a production path, not
+    /// impossibility. The alternative was a remembered constant, which is what this crate
+    /// has no table of.
     ///
     /// It is NOT comparable to the other two on the same axis: those measure where two
     /// atoms sit relative to each other and this measures how far one atom's valence

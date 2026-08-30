@@ -18,7 +18,7 @@
 use holon_chem::dual::D2;
 use holon_chem::elements::ALL_ELEMENTS;
 use holon_chem::fci::{ci_ints, s_squared, solve_determinant, Order};
-use holon_chem::pair::{electron_counts, geometry_problem};
+use holon_chem::pair::{electron_counts, geometry_problem, CONVERGED_RESIDUAL};
 
 /// Determinant count this record is willing to SPEND on one atom. DECLARED, and a budget
 /// rather than a limit: Davidson holds a subspace of order twenty vectors, so a million
@@ -54,6 +54,13 @@ fn main() {
     println!("# solve_determinant, which has no threshold. 'OVER BUDGET' is this record's");
     println!("# spending cap, NOT a statement that no route exists.");
     println!(
+        "# A row reading NOT CONVERGED hit the Davidson iteration cap: its energy and its"
+    );
+    println!(
+        "# multiplicity are both meaningless and it is refused rather than reported. The bar"
+    );
+    println!("# is pair::CONVERGED_RESIDUAL ({CONVERGED_RESIDUAL:.0e}), and 2S+1 must be an integer.");
+    println!(
         "{:>3} {:>3} {:>5} {:>14} {:>22} {:>10} {:>6} {:>11} {:>13}",
         "Z", "sym", "nbas", "n_det", "E (hartree)", "resid", "2S+1", "dual route", "route"
     );
@@ -76,11 +83,26 @@ fn main() {
         );
         let sol = solve_determinant(&space, &mo);
 
+        // THE VERDICT, not just the number. `CONVERGED_RESIDUAL` is the crate's declared
+        // bar and its doc comment describes precisely the failure this line prevents: a
+        // solve that hit its iteration cap emitted "looking perfectly healthy, carrying a
+        // wrong energy, with the evidence sitting in a field no consumer is required to
+        // read." This record printed the residual and checked nothing, and indium came back
+        // at 3.98e-1 -- nine orders above the bar -- in a row otherwise indistinguishable
+        // from a measurement.
+        let converged = sol.residual <= CONVERGED_RESIDUAL;
+
         // <S^2> is DERIVED from the converged vector, never assumed from a term symbol.
         let s2 = s_squared(&space, &sol.vector);
         // S(S+1) = s2  =>  S = (-1 + sqrt(1 + 4 s2)) / 2, and 2S+1 follows.
         let s = 0.5 * ((1.0 + 4.0 * s2).max(0.0).sqrt() - 1.0);
         let mult = 2.0 * s + 1.0;
+        // A SECOND, independent tell, and it costs nothing. The Hamiltonian is spin-free,
+        // so a converged eigenvector is a spin eigenstate and 2S+1 is an INTEGER. Indium
+        // returned 4.216, which is not a multiplicity at all -- it says "not an eigenstate"
+        // without reference to any residual, and would catch the same failure for a reader
+        // who never looks at the residual column.
+        let integral = (mult - mult.round()).abs() < 1e-6;
 
         // The second route: apply H to a fixed probe vector both ways and compare. This is
         // a matrix-VECTOR comparison, which sees a disagreement an eigenvalue cannot --
@@ -103,6 +125,23 @@ fn main() {
             "too large".to_string()
         };
 
+        if !converged || !integral {
+            // Refused rather than printed as a row. A non-converged energy in a column of
+            // converged ones is a dead result presenting as a live one.
+            println!(
+                "{:>3} {:>3} {:>5} {:>14} {:>22} {:>10.2e} {:>6.3} {:>11} {:>13}",
+                sp.z,
+                sp.symbol,
+                n_basis,
+                space.n_det,
+                "NOT CONVERGED",
+                sol.residual,
+                mult,
+                if integral { "-" } else { "2S+1 not integral" },
+                "refused"
+            );
+            continue;
+        }
         println!(
             "{:>3} {:>3} {:>5} {:>14} {:>22.12} {:>10.2e} {:>6.3} {:>11} {:>13}",
             sp.z,

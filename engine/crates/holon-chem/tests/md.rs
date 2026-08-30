@@ -457,3 +457,277 @@ fn d_orbitals_obey_permutational_and_translational_symmetries() {
     println!("d-orbital translational invariance 1e: {worst_1e:.3e}");
     assert!(worst_1e < 1e-12, "d-orbital 1e integrals moved with origin");
 }
+
+/// Verify f-orbitals (l=3, 10 Cartesian -> 7 spherical components):
+/// unit diagonal overlap, positive definiteness, 8-fold ERI permutational symmetry,
+/// and origin translational invariance.
+#[test]
+fn f_orbitals_obey_permutational_and_translational_symmetries() {
+    let alpha_f = [0.45, 0.15, 0.05];
+    let coeff_f = [0.25, 0.60, 0.30];
+    let decls = vec![
+        (0usize, 0u8, elements::HYDROGEN.shells[0].alpha, elements::HYDROGEN.shells[0].coeff),
+        (0usize, 3u8, alpha_f, coeff_f),
+        (1usize, 3u8, alpha_f, coeff_f),
+    ];
+    let r = 2.8;
+    let b = Basis::assemble(
+        vec![
+            [D2::c(0.0), D2::c(0.0), D2::c(0.0)],
+            [D2::c(0.0), D2::c(0.0), D2::var(r)],
+        ],
+        vec![1.0, 1.0],
+        &decls,
+    );
+    let g = ao_integrals(&b);
+    let n = g.n;
+    // 1 s function + 7 spherical f + 7 spherical f = 15 basis functions.
+    // 10 Cartesian components per f shell are projected down to 7 real spherical harmonics,
+    // eliminating 3 spurious l=1 radial contaminants per f shell.
+    assert_eq!(n, 15);
+    assert_eq!(b.n_cart, 21); // 1 + 10 + 10 = 21 Cartesian functions
+
+    // 1. Overlap diagonal is 1.0 (self-normalized)
+    for i in 0..n {
+        assert!(
+            (g.s[i * n + i].v - 1.0).abs() < 1e-12,
+            "diagonal overlap at {i} is {}, expected 1.0",
+            g.s[i * n + i].v
+        );
+    }
+
+    // 2. Overlap is positive definite
+    let s_vals: Vec<f64> = g.s.iter().map(|d| d.v).collect();
+    let (eigs, _) = holon_chem::fci::jacobi_eigh(&s_vals, n);
+    for (i, &eig) in eigs.iter().enumerate() {
+        assert!(eig > 0.0, "overlap eigenvalue {i} is {eig} <= 0");
+    }
+
+    // 3. Permutational symmetry of ERIs (8-fold)
+    let mut worst = 0.0f64;
+    for i in 0..n {
+        for j in 0..n {
+            for k in 0..n {
+                for l in 0..n {
+                    let x = g.g(i, j, k, l).v;
+                    for &(p, q, r, s) in &[
+                        (j, i, k, l),
+                        (i, j, l, k),
+                        (j, i, l, k),
+                        (k, l, i, j),
+                        (l, k, i, j),
+                        (k, l, j, i),
+                        (l, k, j, i),
+                    ] {
+                        worst = worst.max((x - g.g(p, q, r, s).v).abs());
+                    }
+                }
+            }
+        }
+    }
+    println!("f-orbital ERI permutational symmetry: worst |delta| = {worst:.3e}");
+    assert_eq!(worst, 0.0, "f-orbital ERI permutational symmetry broken");
+
+    // 4. Translational invariance
+    let shift = [1.2f64, -0.9, 1.5];
+    let b_shifted = Basis::assemble(
+        vec![
+            [D2::c(shift[0]), D2::c(shift[1]), D2::c(shift[2])],
+            [D2::c(shift[0]), D2::c(shift[1]), D2::c(shift[2] + r)],
+        ],
+        vec![1.0, 1.0],
+        &decls,
+    );
+    let g_shifted = ao_integrals(&b_shifted);
+    let mut worst_1e = 0.0f64;
+    for i in 0..n * n {
+        worst_1e = worst_1e.max((g.s[i].v - g_shifted.s[i].v).abs());
+        worst_1e = worst_1e.max((g.t[i].v - g_shifted.t[i].v).abs());
+        worst_1e = worst_1e.max((g.v[i].v - g_shifted.v[i].v).abs());
+    }
+    println!("f-orbital translational invariance 1e: {worst_1e:.3e}");
+    assert!(worst_1e < 1e-12, "f-orbital 1e integrals moved with origin");
+}
+
+/// Verify that the 7x10 SPHERICAL_F transformation matrix produces orthonormal
+/// spherical harmonics in the 10-dimensional Cartesian Gaussian metric, and annihilates
+/// all three l=1 (p-type) radial contaminants x r^2, y r^2, z r^2.
+#[test]
+fn f_orbitals_spherical_transformation_orthonormality_and_contaminant_removal() {
+    use holon_chem::md::SPHERICAL_F;
+
+    // The 10 Cartesian components in crate basis order:
+    // 0: xxx, 1: yyy, 2: zzz, 3: xxy, 4: xxz, 5: xyy, 6: yyz, 7: xzz, 8: yzz, 9: xyz
+    // Construct the exact 10x10 Cartesian Gram matrix G:
+    let mut g = vec![0.0f64; 100];
+    for i in 0..10 {
+        g[i * 10 + i] = 1.0;
+    }
+    let inv_sqrt5 = 1.0 / 5.0f64.sqrt();
+    let one_third = 1.0 / 3.0;
+
+    // x-odd block: (xxx, xyy, xzz) = (0, 5, 7)
+    g[0 * 10 + 5] = inv_sqrt5;
+    g[5 * 10 + 0] = inv_sqrt5;
+    g[0 * 10 + 7] = inv_sqrt5;
+    g[7 * 10 + 0] = inv_sqrt5;
+    g[5 * 10 + 7] = one_third;
+    g[7 * 10 + 5] = one_third;
+
+    // y-odd block: (yyy, xxy, yzz) = (1, 3, 8)
+    g[1 * 10 + 3] = inv_sqrt5;
+    g[3 * 10 + 1] = inv_sqrt5;
+    g[1 * 10 + 8] = inv_sqrt5;
+    g[8 * 10 + 1] = inv_sqrt5;
+    g[3 * 10 + 8] = one_third;
+    g[8 * 10 + 3] = one_third;
+
+    // z-odd block: (zzz, xxz, yyz) = (2, 4, 6)
+    g[2 * 10 + 4] = inv_sqrt5;
+    g[4 * 10 + 2] = inv_sqrt5;
+    g[2 * 10 + 6] = inv_sqrt5;
+    g[6 * 10 + 2] = inv_sqrt5;
+    g[4 * 10 + 6] = one_third;
+    g[6 * 10 + 4] = one_third;
+
+    // 1. Check orthonormality: P G P^T = I_7
+    for a in 0..7 {
+        for b in 0..7 {
+            let mut acc = 0.0;
+            for i in 0..10 {
+                for j in 0..10 {
+                    acc += SPHERICAL_F[a][i] * g[i * 10 + j] * SPHERICAL_F[b][j];
+                }
+            }
+            let want = if a == b { 1.0 } else { 0.0 };
+            assert!(
+                (acc - want).abs() < 1e-14,
+                "spherical f overlap ({a},{b}) is {acc}, expected {want}"
+            );
+        }
+    }
+
+    // 2. Check annihilation of the three l=1 radial contaminants:
+    // x r^2 = xxx + xyy + xzz  -> in normalized basis: (1, 1/sqrt(5), 1/sqrt(5)) on indices (0, 5, 7)
+    // y r^2 = yyy + xxy + yzz  -> in normalized basis: (1, 1/sqrt(5), 1/sqrt(5)) on indices (1, 3, 8)
+    // z r^2 = zzz + xxz + yyz  -> in normalized basis: (1, 1/sqrt(5), 1/sqrt(5)) on indices (2, 4, 6)
+    let mut cont_x = [0.0f64; 10];
+    cont_x[0] = 1.0;
+    cont_x[5] = inv_sqrt5;
+    cont_x[7] = inv_sqrt5;
+
+    let mut cont_y = [0.0f64; 10];
+    cont_y[1] = 1.0;
+    cont_y[3] = inv_sqrt5;
+    cont_y[8] = inv_sqrt5;
+
+    let mut cont_z = [0.0f64; 10];
+    cont_z[2] = 1.0;
+    cont_z[4] = inv_sqrt5;
+    cont_z[6] = inv_sqrt5;
+
+    for (name, cont) in [("x r^2", cont_x), ("y r^2", cont_y), ("z r^2", cont_z)] {
+        for (r, row) in SPHERICAL_F.iter().enumerate() {
+            let mut overlap = 0.0f64;
+            for i in 0..10 {
+                for j in 0..10 {
+                    overlap += row[i] * g[i * 10 + j] * cont[j];
+                }
+            }
+            assert!(
+                overlap.abs() < 1e-14,
+                "spherical f row {r} has nonzero overlap {overlap:.3e} with contaminant {name}"
+            );
+        }
+    }
+}
+
+/// Rotational invariance: rotating the nuclear coordinates preserves the eigenvalues of
+/// the one-electron Hamiltonian and overlap matrices for f-orbitals.
+#[test]
+fn f_orbitals_rotational_invariance() {
+    let alpha_f = [0.45, 0.15, 0.05];
+    let coeff_f = [0.25, 0.60, 0.30];
+    let decls = vec![
+        (0usize, 0u8, elements::HYDROGEN.shells[0].alpha, elements::HYDROGEN.shells[0].coeff),
+        (0usize, 3u8, alpha_f, coeff_f),
+        (1usize, 3u8, alpha_f, coeff_f),
+    ];
+    let r = 2.6;
+
+    // Original orientation along Z axis: (0, 0, 0) and (0, 0, r)
+    let b_z = Basis::assemble(
+        vec![
+            [D2::c(0.0), D2::c(0.0), D2::c(0.0)],
+            [D2::c(0.0), D2::c(0.0), D2::c(r)],
+        ],
+        vec![1.0, 1.0],
+        &decls,
+    );
+    let g_z = ao_integrals(&b_z);
+
+    // Rotated orientation along X axis: (0, 0, 0) and (r, 0, 0)
+    let b_x = Basis::assemble(
+        vec![
+            [D2::c(0.0), D2::c(0.0), D2::c(0.0)],
+            [D2::c(r), D2::c(0.0), D2::c(0.0)],
+        ],
+        vec![1.0, 1.0],
+        &decls,
+    );
+    let g_x = ao_integrals(&b_x);
+
+    // Rotated orientation along arbitrary direction: (0, 0, 0) and (r/sqrt(3), r/sqrt(3), r/sqrt(3))
+    let u = r / 3.0f64.sqrt();
+    let b_diag = Basis::assemble(
+        vec![
+            [D2::c(0.0), D2::c(0.0), D2::c(0.0)],
+            [D2::c(u), D2::c(u), D2::c(u)],
+        ],
+        vec![1.0, 1.0],
+        &decls,
+    );
+    let g_diag = ao_integrals(&b_diag);
+
+    let n = g_z.n;
+    assert_eq!(n, 15);
+
+    // Check overlap matrix eigenvalues invariance under rotation
+    let s_z: Vec<f64> = g_z.s.iter().map(|d| d.v).collect();
+    let s_x: Vec<f64> = g_x.s.iter().map(|d| d.v).collect();
+    let s_diag: Vec<f64> = g_diag.s.iter().map(|d| d.v).collect();
+
+    let (eig_sz, _) = holon_chem::fci::jacobi_eigh(&s_z, n);
+    let (eig_sx, _) = holon_chem::fci::jacobi_eigh(&s_x, n);
+    let (eig_sdiag, _) = holon_chem::fci::jacobi_eigh(&s_diag, n);
+
+    for i in 0..n {
+        let diff_x = (eig_sz[i] - eig_sx[i]).abs();
+        let diff_diag = (eig_sz[i] - eig_sdiag[i]).abs();
+        assert!(
+            diff_x < 1e-11,
+            "overlap eigenvalue {i} differs by {diff_x:.3e} under 90-deg rotation"
+        );
+        assert!(
+            diff_diag < 1e-11,
+            "overlap eigenvalue {i} differs by {diff_diag:.3e} under diagonal rotation"
+        );
+    }
+
+    // Check trace of kinetic energy T and Hamiltonian H = T + V invariance
+    let trace = |mat: &[D2]| -> f64 {
+        (0..n).map(|i| mat[i * n + i].v).sum()
+    };
+    let tr_tz = trace(&g_z.t);
+    let tr_tx = trace(&g_x.t);
+    let tr_tdiag = trace(&g_diag.t);
+    assert!((tr_tz - tr_tx).abs() < 1e-11, "kinetic energy trace differs under rotation");
+    assert!((tr_tz - tr_tdiag).abs() < 1e-11, "kinetic energy trace differs under rotation");
+
+    let tr_vz = trace(&g_z.v);
+    let tr_vx = trace(&g_x.v);
+    let tr_vdiag = trace(&g_diag.v);
+    assert!((tr_vz - tr_vx).abs() < 1e-11, "nuclear attraction trace differs under rotation");
+    assert!((tr_vz - tr_vdiag).abs() < 1e-11, "nuclear attraction trace differs under rotation");
+}
+

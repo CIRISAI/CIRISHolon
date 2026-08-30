@@ -44,22 +44,23 @@ const PI: f64 = core::f64::consts::PI;
 pub const PI_POW_2_5: f64 = crate::sto3g::PI_POW_2_5;
 
 /// Highest angular momentum per basis function. `1` is the first row, `2` supports
-/// d-orbitals for the second row and transition elements.
-pub const LMAX: usize = 2;
+/// d-orbitals for the second row and transition elements, `3` supports f-orbitals
+/// for the lanthanides and actinides.
+pub const LMAX: usize = 3;
 
 /// Largest Cartesian power the `E` table must reach.
 ///
 /// Not `2 * LMAX`. The kinetic-energy operator differentiates the KET twice, so the
-/// overlap table is asked for `j + 2`, which at `LMAX = 2` is 4.
-const IMAX: usize = 4;
+/// overlap table is asked for `j + 2`, which at `LMAX = 3` is 5.
+const IMAX: usize = 5;
 
 /// Hermite index bound: `t <= i + j <= 2 * IMAX`, plus one slot the recursion reads past
 /// its own top.
-const TMAX: usize = 12;
+const TMAX: usize = 16;
 
-/// Largest total Hermite order the `R` tensor is built to: a `(dd|dd)` quartet has bra
-/// order `<= 4` and ket order `<= 4`.
-const RMAX: usize = 8;
+/// Largest total Hermite order the `R` tensor is built to: a `(ff|ff)` quartet has bra
+/// order `<= 6` and ket order `<= 6`.
+const RMAX: usize = 12;
 
 /// `E_t^{ij}` for one Cartesian direction, indexed `[i][j][t]`.
 ///
@@ -207,6 +208,7 @@ pub fn prim_norm_l(a: f64, l: u8) -> f64 {
         0 => base,
         1 => base * (4.0 * a).sqrt(),
         2 => base * (4.0 * a),
+        3 => base * (4.0 * a) * (4.0 * a).sqrt(),
         _ => panic!("md.rs: l = {l} is not supported"),
     }
 }
@@ -215,6 +217,7 @@ pub fn prim_norm_l(a: f64, l: u8) -> f64 {
 ///
 /// `p` is ordered `px, py, pz`.
 /// `d` has 6 Cartesian components: `xx, yy, zz, xy, xz, yz`.
+/// `f` has 10 Cartesian components: `xxx, yyy, zzz, xxy, xxz, xyy, yyz, xzz, yzz, xyz`.
 pub fn cartesian_components(l: u8) -> &'static [[u8; 3]] {
     match l {
         0 => &[[0, 0, 0]],
@@ -226,6 +229,18 @@ pub fn cartesian_components(l: u8) -> &'static [[u8; 3]] {
             [1, 1, 0],
             [1, 0, 1],
             [0, 1, 1],
+        ],
+        3 => &[
+            [3, 0, 0],
+            [0, 3, 0],
+            [0, 0, 3],
+            [2, 1, 0],
+            [2, 0, 1],
+            [1, 2, 0],
+            [0, 2, 1],
+            [1, 0, 2],
+            [0, 1, 2],
+            [1, 1, 1],
         ],
         _ => panic!("md.rs: l = {l} is not supported"),
     }
@@ -277,21 +292,61 @@ pub const SPHERICAL_D: [[f64; 6]; 5] = [
     [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
 ];
 
-/// Spherical functions per shell: 1 for s, 3 for p, 5 for d.
+/// The 7x10 matrix taking an f shell's ten normalised CARTESIAN components to its seven
+/// normalised SPHERICAL ones, in the crate's component order:
+/// `xxx, yyy, zzz, xxy, xxz, xyy, yyz, xzz, yzz, xyz`.
+///
+/// # Real spherical f-orbitals
+///
+/// The ten Cartesian f functions span the seven real solid harmonics ($l = 3$) PLUS three
+/// spurious $l = 1$ (p-type) radial contaminants $\propto r^2 \times p$, specifically
+/// $(x^2+y^2+z^2)x$, $(x^2+y^2+z^2)y$, and $(x^2+y^2+z^2)z$.
+///
+/// The 7 pure real spherical harmonics:
+/// 0: z(5z^2 - 3r^2) = 2z^3 - 3x^2 z - 3y^2 z       (m = 0)
+/// 1: x(5z^2 - r^2)  = 4xz^2 - x^3 - xy^2           (m = +1)
+/// 2: y(5z^2 - r^2)  = 4yz^2 - x^2y - y^3           (m = -1)
+/// 3: z(x^2 - y^2)   = x^2z - y^2z                  (m = +2)
+/// 4: xyz                                           (m = -2)
+/// 5: x(x^2 - 3y^2)  = x^3 - 3xy^2                  (m = +3)
+/// 6: y(3x^2 - y^2)  = 3x^2y - y^3                  (m = -3)
+pub const SPHERICAL_F: [[f64; 10]; 7] = [
+    // z(5z^2 - 3r^2): zzz (index 2), xxz (index 4), yyz (index 6)
+    [0.0, 0.0, 1.0, 0.0, -0.6708203932499369, 0.0, -0.6708203932499369, 0.0, 0.0, 0.0],
+    // x(5z^2 - r^2): xxx (index 0), xyy (index 5), xzz (index 7)
+    [-0.6123724356957945, 0.0, 0.0, 0.0, 0.0, -0.27386127875258307, 0.0, 1.0954451150103321, 0.0, 0.0],
+    // y(5z^2 - r^2): yyy (index 1), xxy (index 3), yzz (index 8)
+    [0.0, -0.6123724356957945, 0.0, -0.27386127875258307, 0.0, 0.0, 0.0, 0.0, 1.0954451150103321, 0.0],
+    // z(x^2 - y^2): xxz (index 4), yyz (index 6)
+    [0.0, 0.0, 0.0, 0.0, 0.8660254037844386, 0.0, -0.8660254037844386, 0.0, 0.0, 0.0],
+    // xyz: xyz (index 9)
+    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+    // x(x^2 - 3y^2): xxx (index 0), xyy (index 5)
+    [0.7905694150420948, 0.0, 0.0, 0.0, 0.0, -1.0606601717798212, 0.0, 0.0, 0.0, 0.0],
+    // y(3x^2 - y^2): yyy (index 1), xxy (index 3)
+    [0.0, -0.7905694150420948, 0.0, 1.0606601717798212, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+];
+
+/// Spherical functions per shell: 1 for s, 3 for p, 5 for d, 7 for f.
 pub fn spherical_components(l: u8) -> usize {
     match l {
         0 => 1,
         1 => 3,
         2 => 5,
+        3 => 7,
         _ => panic!("md.rs: l = {l} is not supported"),
     }
 }
 
-/// Normalization scale factor for off-diagonal Cartesian components (e.g. sqrt(3) for xy, xz, yz).
+/// Normalization scale factor for off-diagonal Cartesian components.
 #[inline]
 pub fn cart_factor(p: [u8; 3]) -> f64 {
     match p {
+        // d-orbitals (l=2)
         [1, 1, 0] | [1, 0, 1] | [0, 1, 1] => 1.7320508075688772,
+        // f-orbitals (l=3)
+        [2, 1, 0] | [2, 0, 1] | [1, 2, 0] | [0, 2, 1] | [1, 0, 2] | [0, 1, 2] => 2.23606797749979,
+        [1, 1, 1] => 3.872983346207417,
         _ => 1.0,
     }
 }
@@ -420,6 +475,8 @@ impl Basis {
                         s /= 2.0 * p;
                     } else if l == 2 {
                         s *= 3.0 / (4.0 * p * p);
+                    } else if l == 3 {
+                        s *= 15.0 / (8.0 * p * p * p);
                     }
                     raw += c[i] * c[j] * s;
                 }
@@ -463,6 +520,15 @@ impl Basis {
                         }
                         row += 5;
                         col += 6;
+                    }
+                    3 => {
+                        for (r, coeffs) in SPHERICAL_F.iter().enumerate() {
+                            for (c, &x) in coeffs.iter().enumerate() {
+                                p[(row + r) * n_cart + col + c] = x;
+                            }
+                        }
+                        row += 7;
+                        col += 10;
                     }
                     _ => {
                         let k = cartesian_components(sh.l).len();
@@ -820,7 +886,7 @@ fn accumulate_shell_quartet(
 
     // One accumulator per basis-function combination in this quartet, so the eight-fold
     // permutation write happens once with a fully contracted value.
-    let mut acc = [[[[D2::c(0.0); 6]; 6]; 6]; 6];
+    let mut acc = [[[[D2::c(0.0); 10]; 10]; 10]; 10];
 
     let zero = HTerm {
         t: 0,

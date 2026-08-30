@@ -26,13 +26,16 @@
 //! disagreed on `H c` by 50%. See the convention note at the top of `fci.rs`.
 
 use holon_chem::dual::D2;
-use holon_chem::elements::{Species, CARBON, FLUORINE, HYDROGEN, LITHIUM, NITROGEN, OXYGEN};
+use holon_chem::elements::{
+    Species, BERYLLIUM, BORON, CARBON, FLUORINE, GERMANIUM, HELIUM, HYDROGEN, LITHIUM, NEON,
+    NITROGEN, OXYGEN,
+};
 use holon_chem::fci::{
-    ci_ints, cholesky_orthonormaliser, dense_hamiltonian_ladder, jacobi_eigh, solve, solve_mps, transform,
-    FciSpace, Order,
+    ci_ints, cholesky_orthonormaliser, davidson_eigh, dense_hamiltonian_ladder, jacobi_eigh,
+    s_squared, sigma_direct, solve, solve_mps, transform, FciSpace, Order,
 };
 use holon_chem::md::ao_integrals;
-use holon_chem::pair::{build_basis, electron_counts, pair_point};
+use holon_chem::pair::{build_basis, electron_counts, geometry_problem, pair_point};
 
 /// A deterministic pseudo-random vector. Deterministic so a failure reproduces;
 /// pseudo-random so the comparison is not accidentally made on a vector both routes
@@ -809,5 +812,113 @@ fn test_solve_routes_large_spaces_to_mps() {
     // solve() should automatically route to solve_mps() rather than attempting 63,504-dim Davidson
     let sol = solve(&space, &mo);
     assert!(sol.e.v.is_finite());
+}
+
+#[test]
+fn test_sigma_direct_n2_and_atomic_ground_states() {
+    let species_list: [(Species, f64); 10] = [
+        (HYDROGEN, -0.46658184955727546),
+        (HELIUM, -2.807783957539975),
+        (LITHIUM, -7.315836576618031),
+        (BERYLLIUM, -14.403655041094132),
+        (BORON, -24.18926497514655),
+        (CARBON, -37.21873352468449),
+        (NITROGEN, -53.719010183796),
+        (OXYGEN, -73.80415024579707),
+        (FLUORINE, -97.98650500018774),
+        (NEON, -126.60452505299895),
+    ];
+
+    for &(sp, ref_val) in species_list.iter() {
+        let (space, mo, _) = geometry_problem(&[sp], vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]]);
+        let ci0 = ci_ints(&mo, Order::Value);
+        let diag = space.diagonal(&ci0);
+        let (e, vec, _iters, resid) = davidson_eigh(&space, &ci0, &diag, 1e-12, 1200);
+        assert!(resid < 1e-10, "{}: Davidson did not reach precision (resid = {resid:.3e})", sp.symbol);
+
+        // Also test sigma_direct against sigma
+        let mut sig1 = vec![0.0f64; space.n_det];
+        let mut sig2 = vec![0.0f64; space.n_det];
+        sigma_direct(&space, &ci0, &vec, &mut sig1);
+        space.sigma(&ci0, &vec, &mut sig2);
+        for (s1, s2) in sig1.iter().zip(sig2.iter()) {
+            assert!((s1 - s2).abs() < 1e-13);
+        }
+
+        let diff = (e - ref_val).abs();
+        println!(
+            "  Atom {:>2}: E = {:>16.12} Ha (ref {:>16.12}), diff = {diff:.3e}, resid = {resid:.3e}, dets = {}",
+            sp.symbol, e, ref_val, space.n_det
+        );
+        assert!(
+            diff < 1e-12,
+            "Atom {} ground state eigenvalue differs from referee by {diff:.3e} (limit 1e-12)",
+            sp.symbol
+        );
+    }
+
+    // Now test N_2 (14,400 determinants)
+    let (n2_space, n2_mo, _) = geometry_problem(
+        &[NITROGEN, NITROGEN],
+        centers(Some(2.074)), // equilibrium separation ~ 2.074 bohr
+    );
+    assert_eq!(n2_space.n_det, 14400);
+    let ci0 = ci_ints(&n2_mo, Order::Value);
+    let diag = n2_space.diagonal(&ci0);
+    let (e_n2, vec_n2, _iters, resid_n2) = davidson_eigh(&n2_space, &ci0, &diag, 1e-12, 1200);
+    assert!(resid_n2 < 1e-10, "N_2 Davidson did not converge: resid = {resid_n2:.3e}");
+
+    let mut sig_n2 = vec![0.0f64; 14400];
+    sigma_direct(&n2_space, &ci0, &vec_n2, &mut sig_n2);
+    let h_exp: f64 = vec_n2.iter().zip(sig_n2.iter()).map(|(a, b)| a * b).sum();
+    let eig_diff = (h_exp - e_n2).abs();
+    println!(
+        "  N_2 (14,400 det): E = {:.12} Ha, <v|H|v> = {:.12}, diff = {eig_diff:.3e}, resid = {resid_n2:.3e}",
+        e_n2, h_exp
+    );
+    assert!(
+        eig_diff < 1e-12,
+        "N_2 Rayleigh quotient <v|H|v> differs from eigenvalue by {eig_diff:.3e} (limit 1e-12)"
+    );
+}
+
+#[test]
+fn test_sigma_direct_germanium_ground_state() {
+    let sp = GERMANIUM;
+    assert_eq!(sp.z, 32);
+    let (n_elec, na, nb) = electron_counts(&[sp]);
+    assert_eq!(n_elec, 32);
+    assert_eq!(na, 16);
+    assert_eq!(nb, 16);
+
+    let (space, mo, _) = geometry_problem(&[sp], vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]]);
+    assert_eq!(
+        space.n_det, 23409,
+        "Germanium STO-3G FCI space must have exactly 23,409 determinants (found {})",
+        space.n_det
+    );
+
+    let ci0 = ci_ints(&mo, Order::Value);
+    let diag = space.diagonal(&ci0);
+    let (e, vec, iters, resid) = davidson_eigh(&space, &ci0, &diag, 1e-11, 1200);
+
+    // Verify matrix-vector multiplication with sigma_direct
+    let mut sig = vec![0.0f64; space.n_det];
+    sigma_direct(&space, &ci0, &vec, &mut sig);
+    let rayleigh: f64 = vec.iter().zip(sig.iter()).map(|(a, b)| a * b).sum();
+    let rayleigh_diff = (rayleigh - e).abs();
+
+    let s2 = s_squared(&space, &vec);
+    let mult = (1.0 + 4.0 * s2).sqrt();
+
+    println!(
+        "  Germanium (Z=32, {} det): E = {:.12} Ha, resid = {:.3e}, iters = {}, <S^2> = {:.6}, 2S+1 = {:.4} (diff {:.3e})",
+        space.n_det, e, resid, iters, s2, mult, rayleigh_diff
+    );
+
+    assert!(resid < 1e-10, "Germanium solve did not converge: residual {resid:.3e}");
+    assert!(rayleigh_diff < 1e-10, "Germanium Rayleigh quotient differs from eigenvalue by {rayleigh_diff:.3e}");
+    assert!(rayleigh_diff / e.abs() < 1e-14, "Germanium relative Rayleigh diff is {:.3e}", rayleigh_diff / e.abs());
+    assert!((mult - 3.0).abs() < 1e-4, "Germanium ground state must be 3P (multiplicity 3), got {mult:.4}");
 }
 

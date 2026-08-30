@@ -76,3 +76,8 @@ route_name              renders a Feasibility for a REPORT; the gate that reads 
 #                       is_infeasible/n_det/n_orb rather than on this string. Kept because
 #                       "determinant, BY HAND ONLY" is the distinction a reader most needs
 #                       and the one an enum discriminant cannot carry.
+
+# --- the order-4 saturation module (O,H,H,H) ---
+TH_W_DEG                equilibrium bond angle constant for water geometry in degrees
+de4_ohhh_cart           Cartesian 4-body (O,H,H,H) saturation energy evaluator for dynamics simulation
+third_hydrogen_binding  measurement helper for checking third hydrogen binding/repulsion across approach vectors

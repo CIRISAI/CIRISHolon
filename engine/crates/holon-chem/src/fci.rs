@@ -650,109 +650,20 @@ impl FciSpace {
         d
     }
 
+    /// `sigma = H c`, by the Knowles-Handy string factorisation direct-CI method.
+    #[inline]
+    pub fn sigma_direct(&self, ci: &CiInts, c: &[f64], out: &mut [f64]) {
+        sigma_direct(self, ci, c, out);
+    }
+
     /// `sigma = H c`, by the string factorisation.
     ///
     /// Three blocks, because the Hamiltonian splits into terms that move only beta
     /// electrons, only alpha electrons, and one of each — and each block is a different
     /// contraction over the same single-excitation lists.
+    #[inline]
     pub fn sigma(&self, ci: &CiInts, c: &[f64], out: &mut [f64]) {
-        let n = self.n_orb;
-        let n2 = n * n;
-        let na = self.alpha.len();
-        let nb = self.beta.len();
-        for x in out.iter_mut() {
-            *x = 0.0;
-        }
-
-        // --- same-spin blocks. For each source string, walk one single excitation and
-        // then a second from where it landed; the composite sign is the product, and the
-        // resulting vector over destination strings is that source's column.
-        let mut f = vec![0.0f64; na.max(nb)];
-
-        for jb in 0..nb {
-            for x in f[..nb].iter_mut() {
-                *x = 0.0;
-            }
-            for &(kl, s1, kb) in self.beta.singles[jb].iter() {
-                f[kb as usize] += s1 * ci.k[kl as usize];
-                for &(ij, s2, ib) in self.beta.singles[kb as usize].iter() {
-                    f[ib as usize] += 0.5 * s1 * s2 * ci.g[ij as usize * n2 + kl as usize];
-                }
-            }
-            for (ib, &fv) in f[..nb].iter().enumerate() {
-                if fv == 0.0 {
-                    continue;
-                }
-                for ia in 0..na {
-                    out[ia * nb + ib] += fv * c[ia * nb + jb];
-                }
-            }
-        }
-
-        for ja in 0..na {
-            for x in f[..na].iter_mut() {
-                *x = 0.0;
-            }
-            for &(kl, s1, ka) in self.alpha.singles[ja].iter() {
-                f[ka as usize] += s1 * ci.k[kl as usize];
-                for &(ij, s2, ia) in self.alpha.singles[ka as usize].iter() {
-                    f[ia as usize] += 0.5 * s1 * s2 * ci.g[ij as usize * n2 + kl as usize];
-                }
-            }
-            for (ia, &fv) in f[..na].iter().enumerate() {
-                if fv == 0.0 {
-                    continue;
-                }
-                let (src, dst) = (ja * nb, ia * nb);
-                for ib in 0..nb {
-                    out[dst + ib] += fv * c[src + ib];
-                }
-            }
-        }
-
-        // --- the mixed block: one alpha excitation and one beta excitation, coupled
-        // through the two-electron integral. `t` is the beta half, built once per alpha
-        // string and then contracted for each of that string's own excitations.
-        let mut t = vec![0.0f64; n2 * nb];
-        let mut vrow = vec![0.0f64; nb];
-        for ja in 0..na {
-            for x in t.iter_mut() {
-                *x = 0.0;
-            }
-            let crow = &c[ja * nb..(ja + 1) * nb];
-            // Indexed rather than iterated: the body scatters into `t` at indices the
-            // excitation list supplies, so the loop variable is the SOURCE string label
-            // and not merely a cursor into `crow`.
-            #[allow(clippy::needless_range_loop)]
-            for jb in 0..nb {
-                let cv = crow[jb];
-                if cv == 0.0 {
-                    continue;
-                }
-                for &(kl, s, ib) in self.beta.singles[jb].iter() {
-                    t[kl as usize * nb + ib as usize] += s * cv;
-                }
-            }
-            for &(ij, sa, ia) in self.alpha.singles[ja].iter() {
-                for x in vrow.iter_mut() {
-                    *x = 0.0;
-                }
-                let grow = &ci.g[ij as usize * n2..(ij as usize + 1) * n2];
-                for (kl, &gv) in grow.iter().enumerate() {
-                    if gv == 0.0 {
-                        continue;
-                    }
-                    let trow = &t[kl * nb..(kl + 1) * nb];
-                    for ib in 0..nb {
-                        vrow[ib] += gv * trow[ib];
-                    }
-                }
-                let dst = ia as usize * nb;
-                for ib in 0..nb {
-                    out[dst + ib] += sa * vrow[ib];
-                }
-            }
-        }
+        sigma_direct(self, ci, c, out);
     }
 
     /// `sigma = H c` by an INDEPENDENT route: enumerate the determinants connected to
@@ -784,6 +695,117 @@ impl FciSpace {
                 if h != 0.0 {
                     out[i] += h * c[j];
                 }
+            }
+        }
+    }
+}
+
+/// `sigma = H c`, evaluated directly via the Knowles-Handy string factorisation
+/// without allocating the full CI Hamiltonian matrix.
+///
+/// The Hamiltonian splits into three blocks: beta-only excitations, alpha-only excitations,
+/// and mixed alpha-beta excitations. Each block is contracted directly using single-excitation
+/// lists over alpha and beta occupation strings.
+pub fn sigma_direct(space: &FciSpace, ci: &CiInts, c: &[f64], sigma: &mut [f64]) {
+    let n = space.n_orb;
+    let n2 = n * n;
+    let na = space.alpha.len();
+    let nb = space.beta.len();
+    assert_eq!(c.len(), space.n_det);
+    assert_eq!(sigma.len(), space.n_det);
+
+    for x in sigma.iter_mut() {
+        *x = 0.0;
+    }
+
+    // --- same-spin blocks. For each source string, walk one single excitation and
+    // then a second from where it landed; the composite sign is the product, and the
+    // resulting vector over destination strings is that source's column.
+    let mut f = vec![0.0f64; na.max(nb)];
+
+    // 1. Beta same-spin block
+    for jb in 0..nb {
+        for x in f[..nb].iter_mut() {
+            *x = 0.0;
+        }
+        for &(kl, s1, kb) in space.beta.singles[jb].iter() {
+            f[kb as usize] += s1 * ci.k[kl as usize];
+            for &(ij, s2, ib) in space.beta.singles[kb as usize].iter() {
+                f[ib as usize] += 0.5 * s1 * s2 * ci.g[ij as usize * n2 + kl as usize];
+            }
+        }
+        for (ib, &fv) in f[..nb].iter().enumerate() {
+            if fv == 0.0 {
+                continue;
+            }
+            for ia in 0..na {
+                sigma[ia * nb + ib] += fv * c[ia * nb + jb];
+            }
+        }
+    }
+
+    // 2. Alpha same-spin block
+    for ja in 0..na {
+        for x in f[..na].iter_mut() {
+            *x = 0.0;
+        }
+        for &(kl, s1, ka) in space.alpha.singles[ja].iter() {
+            f[ka as usize] += s1 * ci.k[kl as usize];
+            for &(ij, s2, ia) in space.alpha.singles[ka as usize].iter() {
+                f[ia as usize] += 0.5 * s1 * s2 * ci.g[ij as usize * n2 + kl as usize];
+            }
+        }
+        for (ia, &fv) in f[..na].iter().enumerate() {
+            if fv == 0.0 {
+                continue;
+            }
+            let (src, dst) = (ja * nb, ia * nb);
+            for ib in 0..nb {
+                sigma[dst + ib] += fv * c[src + ib];
+            }
+        }
+    }
+
+    // 3. Mixed alpha-beta block: one alpha excitation and one beta excitation, coupled
+    // through the two-electron integral. `t` is the beta half, built once per alpha
+    // string and then contracted for each of that string's own excitations.
+    let mut t = vec![0.0f64; n2 * nb];
+    let mut vrow = vec![0.0f64; nb];
+    for ja in 0..na {
+        for x in t.iter_mut() {
+            *x = 0.0;
+        }
+        let crow = &c[ja * nb..(ja + 1) * nb];
+        // Indexed rather than iterated: the body scatters into `t` at indices the
+        // excitation list supplies, so the loop variable is the SOURCE string label
+        // and not merely a cursor into `crow`.
+        #[allow(clippy::needless_range_loop)]
+        for jb in 0..nb {
+            let cv = crow[jb];
+            if cv == 0.0 {
+                continue;
+            }
+            for &(kl, s, ib) in space.beta.singles[jb].iter() {
+                t[kl as usize * nb + ib as usize] += s * cv;
+            }
+        }
+        for &(ij, sa, ia) in space.alpha.singles[ja].iter() {
+            for x in vrow.iter_mut() {
+                *x = 0.0;
+            }
+            let grow = &ci.g[ij as usize * n2..(ij as usize + 1) * n2];
+            for (kl, &gv) in grow.iter().enumerate() {
+                if gv == 0.0 {
+                    continue;
+                }
+                let trow = &t[kl * nb..(kl + 1) * nb];
+                for ib in 0..nb {
+                    vrow[ib] += gv * trow[ib];
+                }
+            }
+            let dst = ia as usize * nb;
+            for ib in 0..nb {
+                sigma[dst + ib] += sa * vrow[ib];
             }
         }
     }
@@ -1104,8 +1126,11 @@ pub const MPS_ROUTE_THRESHOLD: usize = 50_000;
 pub static DAVIDSON_MAX_ITER: std::sync::atomic::AtomicUsize =
     std::sync::atomic::AtomicUsize::new(1200);
 
-/// Lowest eigenpair by Davidson, matrix-free.
-pub fn davidson(
+/// Lowest eigenpair by Davidson iterative diagonalization, matrix-free.
+///
+/// Uses `sigma_direct` as the primary matrix-vector multiplier for large CI spaces
+/// (> 1,000 determinants), avoiding allocation of the full Hamiltonian matrix.
+pub fn davidson_eigh(
     space: &FciSpace,
     ci: &CiInts,
     diag: &[f64],
@@ -1115,7 +1140,7 @@ pub fn davidson(
     let nd = space.n_det;
     if nd == 1 {
         let mut s = vec![0.0f64; 1];
-        space.sigma(ci, &[1.0], &mut s);
+        sigma_direct(space, ci, &[1.0], &mut s);
         return (s[0], vec![1.0], 0, 0.0);
     }
     let max_sub = 48.min(nd);
@@ -1156,7 +1181,11 @@ pub fn davidson(
     for iter in 0..max_iter {
         while hbasis.len() < basis.len() {
             let mut w = vec![0.0f64; nd];
-            space.sigma(ci, &basis[hbasis.len()], &mut w);
+            if space.n_det > 1000 {
+                sigma_direct(space, ci, &basis[hbasis.len()], &mut w);
+            } else {
+                space.sigma(ci, &basis[hbasis.len()], &mut w);
+            }
             hbasis.push(w);
         }
         let m = basis.len();
@@ -1260,6 +1289,20 @@ pub fn davidson(
         }
     }
     (theta, x, max_iter, resid)
+}
+
+/// Lowest eigenpair by Davidson, matrix-free.
+///
+/// Aliases [`davidson_eigh`].
+#[inline]
+pub fn davidson(
+    space: &FciSpace,
+    ci: &CiInts,
+    diag: &[f64],
+    tol: f64,
+    max_iter: usize,
+) -> (f64, Vec<f64>, usize, f64) {
+    davidson_eigh(space, ci, diag, tol, max_iter)
 }
 
 /// Solve `(H - E) w = b` on the orthogonal complement of `v`, by projected conjugate

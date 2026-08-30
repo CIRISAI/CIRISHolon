@@ -50,6 +50,7 @@ fn expected_coeff(z: u32, kind: ShellKind) -> [f64; 3] {
         ShellKind::D4 => C_4D,
         ShellKind::S5 => C_5S,
         ShellKind::P5 => C_5P,
+        ShellKind::F4 | ShellKind::F5 => unreachable!("f shells not present in elements 1..54"),
     }
 }
 

@@ -209,6 +209,21 @@ fn main() {
                 reached_here = true;
                 break;
             }
+            // CLIMBING THE LADDER ONLY MAKES SENSE AFTER A PLATEAU.
+            //
+            // A PLATEAU says the BOND DIMENSION is the limit -- the state stopped improving
+            // inside its own tolerance and is still short of the stake -- and a larger chi
+            // is exactly the right response. A BUDGET says TIME is the limit, and a larger
+            // chi is strictly slower per sweep, so it can only do worse in the same wall
+            // clock. Climbing after a budget burns the budget again to learn nothing, which
+            // this run was doing to NaH when it was stopped.
+            if verdict == "BUDGET" || verdict == "REFUSED" {
+                say!(
+                    "#   {name}: stopping the chi ladder at {chi} -- {verdict} is a limit \
+                     that a larger chi makes worse, not better."
+                );
+                break;
+            }
         }
 
         if reached_here {

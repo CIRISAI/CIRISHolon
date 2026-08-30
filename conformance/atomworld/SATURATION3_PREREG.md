@@ -179,6 +179,17 @@ clause — the assembled table BIT-IDENTICAL across shard counts, a corrupted
 shard CONVICTED by the merge digest — is untouched; it is what G1 means, and
 it is the clause the campaign measured (32 nodes, 1/4/8 workers, digest
 d83e5c14, on the real geometry_problem → solve_determinant_from path).
+*[Digest annotation, 2026-08-30, closing an M-STALE-INSTRUMENT the mesh lane
+caught in this very amendment: d83e5c14 was measured under the digest scope
+current at discharge, which folded iteration counts and exit reasons. Commit
+3d5ea03 then narrowed the digest to table CONTENT (index, energy, both
+derivatives, status) — deliberately, because a certificate over how a number
+was reached fires on any solver refactor that changes bookkeeping while
+changing no physics. Under the content scope the same discharge measurement
+reads 1504da0f896a57b47bb2e286ed0ee34212986adcb0a85ba3ef0821402ba057b3,
+reproduced from two separate process invocations. d83e5c14 stays in the text
+above because A2 describes what was measured at discharge; SATURATION3_RESULTS.md
+carries both values and the scope move's reason.]*
 
 **The premise that failed.** The freeze wrote "the WARM result bit-identical
 to cold at every node (a warm start may change the path, never the answer)".

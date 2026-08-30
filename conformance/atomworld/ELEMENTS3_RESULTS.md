@@ -284,7 +284,14 @@ verdicts are stale **in the direction of under-promising**.
 A3.1 corrected this lane's own over-claim here: A1.2 said "no route at all", which read
 `automatic_route`'s refusal as a statement about reachability. SiO at 132,496 determinants
 solves in 33.9 s through `solve_determinant`. The sixteen span 2.6e7 to 1.97e12 and do not
-share a verdict — cobalt is plausibly reachable, yttrium needs a sixteen-terabyte vector.
+share a verdict — yttrium's 1.97e12 determinants need a sixteen-terabyte CI vector, which
+is a storage argument and sound; cobalt's reachability is a COST argument and determinants
+are the wrong axis for it. mixtures-referee measured that from the other end: the working-
+precision cost tracks NONZERO Hamiltonian elements, not determinants, and their calibrated
+estimator puts germanium's 23,409 determinants at roughly 3.1e7 nonzeros. The crossing for
+the As/Sb/Ge tier will be predicted by nonzeros; `mixtures1_referee/FEASIBILITY.md` carries
+the method. The boundary stays **unmeasured**, and this record no longer implies
+determinants are the axis to measure it on.
 
 **The named successor is shared.** `mixtures1_referee/FEASIBILITY.md` records the same wall
 from the other side (SiO's 196,889,056 nonzeros re-walked per matvec, measured not
@@ -448,14 +455,36 @@ smallest DIAGONAL element of H is the best single determinant in the same orbita
 variational upper bound on the true ground state; above it means the solver missed, below
 means the answer is real.
 
-| | dets | E_FCI | best single determinant | gap | 2S+1 |
-|---|---|---|---|---|---|
-| Zn | 665,856 | −1757.457601385 | −1757.416112914 | **4.149e-2 below** | 5 |
-| Ga | 124,848 | −1900.978972651 | −1900.941032919 | **3.794e-2 below** | 4 |
-| Ge *(control)* | 23,409 | −2051.649918027 | −2051.609656646 | 4.026e-2 below | 3 ✓ |
-| Ca *(control)* | 81,796 | −670.021880540 | −669.988870398 | 3.301e-2 below | 1 ✓ |
+| | dets | E_FCI | best single determinant | gap | 2S+1 | residual |
+|---|---|---|---|---|---|---|
+| Zn | 665,856 | −1757.457601385 | −1757.416112914 | **4.149e-2 below** | 5 | **2.72e-10** ⚠ |
+| Ga | 124,848 | −1900.978972651 | −1900.941032919 | **3.794e-2 below** | 4 | 7.04e-11 ✓ |
+| Ge *(control)* | 23,409 | −2051.649918027 | −2051.609656646 | 4.026e-2 below | 3 ✓ | 8.85e-11 ✓ |
+| Ca *(control)* | 81,796 | −670.021880540 | −669.988870398 | 3.301e-2 below | 1 ✓ | 8.51e-11 ✓ |
 
 Both controls are below theirs too, so the check discriminates rather than always passing.
+
+### The finding rests on GALLIUM, because zinc's solve does not meet the declared bar
+
+Added after the convergence verdict of defect 5 was applied to the record — **it caught
+zinc as well as indium, and zinc was already published in this document.**
+
+Zinc's residual is **2.72e-10 against `CONVERGED_RESIDUAL` = 1e-10**. Not the nine orders
+indium missed by, but above the bar, so the record now refuses the row. It is reproducible:
+two independent runs give 2.72e-10 to the digit.
+
+What still supports the quintet, and it is not nothing: 2S+1 comes back **5.000, exactly
+integral**, so the vector IS a spin eigenstate; and its energy sits 4.149e-2 Ha below the
+best single determinant in the same orbital basis, so the variational bound holds. But
+"probably converged, and the supporting evidence is strong" is not "converged", and the
+declared bar is the declared bar.
+
+**Gallium carries the finding.** Its residual is 7.04e-11, comfortably inside, its 2S+1 is
+4.000, and it sits 3.794e-2 below its best determinant. The high-spin anomaly at the 3d/4s
+boundary therefore stands on a fully converged solve, with zinc as corroboration that
+carries a convergence caveat rather than as a second independent leg.
+
+The 4p counterfactual is unaffected: it was run on gallium.
 
 ### The mechanism was proposed, tested by its own counterfactual, and REJECTED
 
@@ -514,7 +543,7 @@ what it expected — and each is recorded with the instrument it produced.
 | 2 | AMENDMENT A1.2 read `feasibility`'s refusal — a statement about the AUTOMATIC route — as "unreachable" | the refusal is correct about what it says; the over-reading was in the prose around it | A3.1, plus corrected doc comments on `RadiusRule::ValenceDensity` and `homonuclear_size` |
 | 3 | the 4p counterfactual's verdict column tested only `mult < base − 0.5` and printed **"unchanged"** against the row where the multiplicity had risen from 4 to 6 | the check was written to detect the direction the prediction staked | two-sided verdict; the log carries a header recording the wrong label rather than being regenerated clean |
 | 4 | in the f-projection review, a **support-only** row pin (blind to a sign flip) with a `\|\| p != SPHERICAL_F` fallback in its own plant, which made "caught" trivially true for any mutation | the plant was written to guard against exactly this and reproduced it one level down | value pin; the plant calls the same function the pin test calls, so it cannot pass by testing something weaker |
-| 5 | the R1 record printed `sol.residual` and **checked nothing**, so indium — Davidson stopped at its 1200-iteration cap, residual **3.98e-1** against ~1e-10 elsewhere — appeared as a row indistinguishable from a measurement | the crate had ALREADY written `pair::CONVERGED_RESIDUAL` for exactly this, with a doc comment describing it word for word; I did not reach for it | the row is REFUSED on two independent checks — the declared residual bar, **and** 2S+1 integrality, which is free and catches the same failure for a reader who never looks at the residual column |
+| 5 | the R1 record printed `sol.residual` and **checked nothing**, so indium — Davidson stopped at its 1200-iteration cap, residual **3.98e-1** against ~1e-10 elsewhere — appeared as a row indistinguishable from a measurement. Applying the fix then caught **zinc** too, at 2.72e-10, a number this document had already published | the crate had ALREADY written `pair::CONVERGED_RESIDUAL` for exactly this, with a doc comment describing it word for word; I did not reach for it | the row is REFUSED on two independent checks — the declared residual bar, **and** 2S+1 integrality, which is free and catches the failure for a reader who never looks at the residual column |
 
 The fifth is the sharpest: **the fix already existed and was walked past.** The constant, the
 bar and the doc comment naming this exact failure were all in the crate before this campaign

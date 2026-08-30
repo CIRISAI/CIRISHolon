@@ -189,11 +189,20 @@ tables take (M-FOREIGN-DOMAIN-CORROBORATION: never a toy).*
 
 | claim | result |
 |---|---|
-| table bit-identical at 1, 4, 8 workers over 32 nodes | ✓ digest `d83e5c14…` |
+| table bit-identical at 1, 4, 8 workers over 32 nodes | ✓ digest `1504da0f…` |
+| the same digest from a SEPARATE process invocation | ✓ reproduces |
 | plant (iv): one flipped mantissa bit CONVICTED by the digest | ✓ |
 | plant (iv): zero false positives on clean runs at 1/2/3/4/8 workers | ✓ |
 | plant (iii): 12 of 32 nodes trapped, worst 7.572 Ha | 12 of 12 VOIDed |
 | plant (iii): the other 20 nodes converged correctly | none falsely voided |
+
+*The digest recorded here is `1504da0f896a57b47bb2e286ed0ee34212986adcb0a85ba3ef0821402ba057b3`,
+measured twice from separate process invocations. An earlier value (`d83e5c14…`)
+appears in commits 19c0060 and e40ed8c and is STALE, not wrong: it was computed
+before 3d5ea03 narrowed the digest to the table's content (index, energy, both
+derivatives, status), dropping the iteration counts and exit reason. Recorded
+rather than quietly replaced — a digest that no longer reproduces is a stale
+instrument, and the reason it moved belongs next to the number.*
 
 ### What the merge law covers here, and what it does not
 

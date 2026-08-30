@@ -168,6 +168,21 @@ fn reordering_the_regions_does_not_move_the_table() {
 /// central design argument is wrong.
 #[test]
 fn worker_local_warm_start_breaks_bit_identity() {
+    // THE PRECONDITION. With a single region there is one chunk, so every worker count
+    // processes it in the same canonical order and `worker_last` follows exactly the same
+    // chain as the region's own — the mutation cannot change anything, and this test would
+    // fail for a configuration reason rather than a code one. Measured: it did, at
+    // S3_GATE_N=2, where a 2x2x2 grid in 2x2x2 regions is ONE region.
+    //
+    // Refused rather than asserted-around, in the same shape as plant (iii)'s empty sector:
+    // a gate that cannot fire must say so instead of reporting either colour.
+    assert!(
+        grid().n_regions() >= 2,
+        "this grid has {} region(s), so the worker count cannot change which chain a node \
+         sits on and this mutation has nothing to move. Raise S3_GATE_N (or shrink the \
+         region shape) so the grid cuts into at least two regions.",
+        grid().n_regions()
+    );
     let m = Some(Mutation::WorkerLocalWarmStart);
     let one = generate(&spec().with_mutation(m), 1);
     let four = generate(&spec().with_mutation(m), 4);

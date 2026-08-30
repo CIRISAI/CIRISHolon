@@ -122,9 +122,24 @@ pub fn exit_code(e: SolveExit) -> u8 {
 /// # Why stagnation is not itself a VOID
 ///
 /// It would be the obvious rule and it is the wrong one. Measured on `(H,H,Cl)`: EVERY
-/// solve on that system exits `Stagnated`, cold and warm alike, because the hard-coded
-/// `1e-11` Davidson tolerance is below the residual floor for all-electron energies near
-/// -467 hartree. If stagnation VOIDed, no chlorine table would build at all.
+/// solve on that system exits `Stagnated`, cold and warm alike. If stagnation VOIDed, no
+/// chlorine table would build at all.
+///
+/// THE MECHANISM, corrected. This lane first attributed the floor to an absolute `1e-11`
+/// tolerance not transferring to all-electron energies near -467 hartree. That was wrong,
+/// and the tables lane's G0 data discriminates it: `(O,O,H)` and `(Cl,Cl,Cl)` have nearly
+/// equal `n_det` (9,075 vs 9,477) and energies differing 8.6x (192 vs 1651 Ha), and an
+/// `eps*|E|*sqrt(n_det)` floor predicts their residuals differ by 8.6x. Measured ratio:
+/// 1.21. Across all five staked combos the scale-dependent prediction spans 14x and the
+/// observed residuals span 1.21x.
+///
+/// The real cause is SCALE-FREE and is in `davidson_eigh`: a new expansion direction is
+/// accepted only when its norm exceeds a hardcoded `1e-10` after Gram-Schmidt, so every
+/// system stops in the same place regardless of its energy or space size. The solves are
+/// ACCURATE — the eigenvalue error is `~resid^2/gap`, about 1e-20 Ha — and only the label
+/// is wrong. It is deliberately NOT changed here or upstream: moving that threshold shifts
+/// every energy's last bits, and SATURATION-2's committed 105,105-node table is gated on
+/// bit-identity, so relabelling would cost a full regeneration.
 ///
 /// So stagnation is RECORDED and not judged (M-SORTS-NOT-SEPARATES: it sorts these solves
 /// without separating them). What is judged is the variational bound, which does separate

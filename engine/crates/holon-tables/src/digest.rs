@@ -67,14 +67,25 @@ impl Digest {
 
     /// The monoid element of a single node record.
     ///
-    /// Every field that is part of the table's identity goes in, INCLUDING the node index —
-    /// without it the digest could not tell a swap from a no-op — and including the
-    /// status, so a VOIDed node cannot be quietly replaced by a scored one.
+    /// # What is in, and what is deliberately out
     ///
-    /// The exit reason and iteration counts are deliberately included as well: they are
-    /// part of the record the campaign publishes (M-EXIT-DISCRIMINATOR), so a run that
-    /// reproduced the energies while losing the exit reasons is a different artifact and
-    /// the certificate should say so.
+    /// IN: the node index — without it the digest could not tell a swap of two values from
+    /// a no-op — the energy and its two derivatives, and the STATUS, so a VOIDed node can
+    /// never be quietly replaced by a scored one.
+    ///
+    /// OUT: the iteration counts and the exit reason. They are in the RECORD, and they are
+    /// not in the certificate, because they describe HOW the number was reached rather than
+    /// WHAT the table contains. A certificate over "how" fires on any solver refactor that
+    /// changes an iteration count while changing no physics — a committed table's
+    /// certificate would break for a reason that is not a corruption, and a detector that
+    /// cries wolf on benign change is one nobody keeps.
+    ///
+    /// (The tables lane proposed this split — index + value bit-exact, provenance carried
+    /// but uncertified — and it is the more robust of the two. The stricter comparison is
+    /// still available and still used: [`crate::GenOutcome::table_bytes`] covers every
+    /// field including iterations, and the shard-invariance gate compares THAT, because
+    /// under canonical chains the iteration counts are deterministic too and a difference
+    /// there would be a real signal.)
     pub fn of_record(r: &NodeRecord) -> Digest {
         // Four independent lanes from four different salts. Splitmix64's finalizer is used
         // as the mixing function: it is a bijection on u64, so no field can be lost, and
@@ -85,13 +96,11 @@ impl Digest {
             0x94d0_49bb_1331_11eb,
             0x2545_f491_4f6c_dd1d,
         ];
-        let fields: [u64; 7] = [
+        let fields: [u64; 5] = [
             r.node as u64,
             r.energy_bits,
             r.d1_bits,
             r.d2_bits,
-            ((r.davidson_iters as u64) << 32) | (r.cg_iters as u64),
-            r.exit_code as u64,
             r.status_code(),
         ];
         let mut lanes = [0u64; 4];
@@ -230,6 +239,40 @@ mod tests {
                 "a clean {cut}-shard run was convicted"
             );
         }
+    }
+
+    /// The other half of the scoping decision: provenance-only changes must NOT move the
+    /// digest.
+    ///
+    /// Asserted because it is a DELIBERATE property and deliberate properties rot. Without
+    /// this test, putting the iteration counts back into `of_record` would silently
+    /// re-couple every committed table's certificate to solver internals, and every other
+    /// test here would still pass.
+    #[test]
+    fn provenance_only_changes_do_not_move_the_digest() {
+        let base = rec(11, -4.25);
+        let mut spun = base;
+        spun.davidson_iters = base.davidson_iters + 97;
+        spun.cg_iters = base.cg_iters + 43;
+        spun.exit_code = base.exit_code + 2;
+        spun.warm = !base.warm;
+        assert_ne!(base, spun, "the two records must actually differ, or this proves nothing");
+        assert_eq!(
+            Digest::of_record(&base),
+            Digest::of_record(&spun),
+            "the digest moved on a provenance-only change; it has been re-coupled to how \
+             the number was reached rather than what it is"
+        );
+
+        // And the physical content still moves it, so the insensitivity above is a scoping
+        // decision rather than a dead hash.
+        let mut moved = base;
+        moved.energy_bits ^= 1;
+        assert_ne!(
+            Digest::of_record(&base),
+            Digest::of_record(&moved),
+            "the digest is insensitive to the ENERGY, which makes it no certificate at all"
+        );
     }
 
     /// Every corruption the certificate is supposed to catch, caught. A single flipped bit

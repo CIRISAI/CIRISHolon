@@ -484,17 +484,28 @@ Staked ordering: `N2 > SiO > HCl > ClF > S2 > Cl2 > NaH >> (Ar2, NeAr)`.
 Measured so far, `D_e` in hartree from `locate_well` (bisection then Newton on the
 SOLVER, not on the interpolant, so these do not depend on knot count):
 
-| pair | `n_basis` | `n_det` | `D_e` / Ha | `R_e` / a₀ |
-|---|---|---|---|---|
-| N2 | 10 | 14,400 | 0.239388030 | 2.256729 |
-| HCl | 10 | 100 | 0.148293175 | 2.536888 |
-| Cl2 | 18 | 324 | 0.064577385 | 4.024124 |
-| SiO | 14 | 132,496 | **OWED** — no automatic route | |
+| pair | `n_basis` | `n_det` | `D_e` / Ha | `R_e` / a₀ | source |
+|---|---|---|---|---|---|
+| N2 | 10 | 14,400 | 0.239388030 | 2.256729 | `e2_ordering`, 24 knots |
+| HCl | 10 | 100 | 0.148293175 | 2.536888 | `e2_ordering`, 24 knots |
+| ClF | 14 | 196 | 0.060622391 | 3.341873 | `e2_ordering`, 24 knots |
+| Cl2 | 18 | 324 | 0.064577385 | 4.024124 | `emit_pair_tables`, 192 knots — **a different run**, quoted here because the shipped table was already paid for; `e2_ordering`'s own Cl2 row supersedes it when it lands |
+| S2, NaH, Ar2, NeAr | | | running | | |
+| SiO | 14 | 132,496 | **OWED** — no automatic route | | |
+
+**One inversion is already visible, and it is small.** The stake orders
+`ClF > Cl2`; the measurement has `Cl2 0.064577385 > ClF 0.060622391`, an adjacent
+swap of two values 6.6% apart. E2's branch (b) is worded for a GROSS inversion,
+and a 6.6% swap between neighbours is not obviously that — it is reported as what
+it is rather than rounded into either verdict, and the ordering over the pairs
+measured so far (`N2 > HCl > Cl2 > ClF`) otherwise follows the stake.
 
 Nothing here is told which pairs bind: `locate_well` looks for a minimum deeper
 than the declared `WELL_MIN_DEPTH` and reports `None` when there is not one, so
 the closed-shell negatives come out unbound through the same code path that
-produces N2's curve. The remaining pairs are running.
+produces N2's curve. `R_e` and `D_e` do not depend on knot count — `locate_well`
+runs bisection and Newton on the SOLVER, not on the interpolant — which is what
+makes the two runs above comparable at the precision quoted.
 
 ---
 

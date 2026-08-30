@@ -53,6 +53,12 @@ members = [
   # so a dependency added here would be shipped to every visitor as well as unified into
   # the workspace; the crate's own manifest says so where someone editing it will look.
   "crates/holon-chem",
+  # holon-tables: SATURATION-3's mesh tier -- table generation sharded across workers,
+  # bit-identical across shard counts, corruption convicted by an exact digest. Depends
+  # ONLY on holon-chem (itself zero-dep, no optional features), so it cannot perturb the
+  # core's feature resolution or the isolation gates. It is separate from holon-chem
+  # because it needs std::thread and holon-chem ships into the browser artifact.
+  "crates/holon-tables",
 ]
 
 # Deliberately OUTSIDE the workspace, each for its own reason:

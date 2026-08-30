@@ -1,0 +1,24 @@
+# holon-tables: SATURATION-3 G1 — table generation sharded across workers under the
+# machine-checked merge law.
+#
+# Joins the sim_engine workspace. Its ONLY dependency is `holon-chem`, which itself has
+# zero runtime dependencies and no optional features, so this crate cannot perturb the
+# core's feature resolution or the isolation gates in `ci-gates.sh` — the same argument
+# `holon-render` carries.
+#
+# It is a SEPARATE crate rather than a module of `holon-chem` for one hard reason:
+# `holon-chem` is linked into `holon-render`'s browser artifact, so everything in it is
+# shipped to the viewer. The sharding needs `std::thread`, which no viewer will ever
+# run. The physics stays shippable; the mesh lives here.
+#
+# `[profile.release] debug = true` is NOT set here — a non-root member's own
+# `[profile.*]` section is silently ignored by Cargo; the workspace root carries it.
+[package]
+name = "holon-tables"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+description = "Sharded table generation under the merge law: bit-identical across shard counts, corruption convicted by digest"
+
+[dependencies]
+holon-chem = { path = "../holon-chem" }

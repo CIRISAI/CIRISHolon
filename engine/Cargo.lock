@@ -925,6 +925,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "holon-tables"
+version = "0.1.0"
+dependencies = [
+ "holon-chem",
+]
+
+[[package]]
 name = "holon-zx"
 version = "0.1.0"
 dependencies = [

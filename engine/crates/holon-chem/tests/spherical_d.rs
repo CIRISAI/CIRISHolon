@@ -271,9 +271,17 @@ fn elements_without_d_shells_are_untouched() {
 /// The gap is also reported rather than merely bounded, because its SIZE is the content of
 /// the whole change: it is what the spurious `l = 0` function was contributing, and it is
 /// what a minimal basis is not supposed to have.
+/// # Why krypton and not xenon
+///
+/// Krypton is the cheapest element that exercises the whole statement: it has a d shell, so
+/// the projection is built, and its Cartesian counterpart is 19 functions and 361
+/// determinants -- seconds. Xenon would say the same thing about the same code and costs
+/// 164,836 determinants to say it, because dropping two spurious functions from 29 turns a
+/// closed shell into one with four holes. A suite that takes minutes to re-establish a fact
+/// it already has gets run less often, which is a worse outcome than the coverage is worth.
 #[test]
 fn the_projected_basis_sits_variationally_above_the_cartesian_one() {
-    for (z, sym) in [(36u32, "Kr"), (54, "Xe")] {
+    for (z, sym) in [(36u32, "Kr")] {
         let sp = by_z(z).unwrap();
         let (_, na, nb) = electron_counts(&[sp]);
         let centre = vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]];

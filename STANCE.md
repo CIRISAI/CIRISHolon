@@ -1,6 +1,6 @@
 # The CIRISHolon stance — claims at the strength the evidence carries
 
-*2026-08-28. Four statuses, per the seed's epistemology: **proved**
+*2026-08-28, updated 2026-08-30. Four statuses, per the seed's epistemology: **proved**
 (machine-checked here), **measured** (exact instrument, record cited),
 **wager** (a chosen position, not a result — with its own separable
 kill), **open** (named, unclaimed). A claim with no kill is not a claim.
@@ -55,6 +55,48 @@ randomizer at minimal instances.
   (The same run KILLED the RENT-RECORD rider — equal-period collisions —
   reported at full strength in SELECTOR3_RESULTS.md.)
 
+## Measured, added 2026-08-30 (the chemistry arc, the mesh law at scale, and the selector landscape)
+
+- **The vacuum-to-chemistry tower**: from the engine's own exact-in-model
+  FCI, with no molecular input anywhere — H₂ binds and the H₃ barrier is
+  emergent at the committed arithmetic (SATURATION-1, D1 8/8); water
+  arrives BENT and SATURATED with aggregation on the staked branch
+  (SATURATION-2); Hund's rules emerge across H–Xe with five rows REFUSED
+  on the convergence bar and the record saying so first (ELEMENTS-3);
+  multi-element valence priced and exact, five of five determinant counts
+  matching committed arithmetic (SATURATION-3 G0). Kill: each campaign's
+  own frozen gates; every record names its refusals and its dead branches.
+- **The merge law carries table generation**: sharded FCI table assembly
+  is bit-identical across 1/4/8 workers with a corrupted shard CONVICTED
+  and a wrong warm start VOIDed by the variational bound, 12 of 12
+  (SATURATION-3 G1; prereg amended at A2, post-data, with the ruling
+  recorded). The GPU kernel wins 3.2× bit-deterministically on the real
+  (O,O,O) problem and adoption is DEFERRED as recorded judgment, not
+  gate (G2). Kill: any assembled table differing across shard schedules.
+- **The selection claim, refuted then measured to the bone**: SELECTOR-5's
+  funnel died on its own base rate (94.4%); SELECTOR-6, run uniformly over
+  ALL 319 isomorphism types of order ≤ 63 with the verdict made an
+  isomorphism invariant, finds the bootstrap criterion is EXTENSIONALLY
+  the non-abelian test — it selects nothing within the non-abelian world
+  and does not enrich toward SM-embeddable structure (E1 branch (b),
+  p = 1). The H1 forward test on held-out orders 65–71 plus the named
+  2-swamp panel is running against predictions committed before any
+  held-out table existed. Kill: H1's own P1 is all-or-nothing — one
+  disagreement kills it.
+- **The solver tells the truth about itself now**: every heavy-atom FCI
+  solve exits by SUBSPACE STAGNATION, never convergence — a scale-free
+  1e-10 acceptance floor, mechanism separated from the rival by an 8.6×
+  predicted vs 1.21× observed discriminator — so the exit reason is
+  recorded on the Solution, the unreachable 1e-11 ask is retired, and
+  residual-vs-bar sorting inside a uniformly-stagnated class is named in
+  the record rather than laundered (ELEMENTS-3 convergence section;
+  conv_diagnose). Kill: a heavy atom exiting CONVERGED under the recorded
+  classifier would falsify the mechanism as stated.
+
+*(In flight, stance unchanged until they land: SCHWINGER-3's final
+checkpoint decides W4; BRIDGE-7B's rerun decides whether the provisional
+R2′ fire becomes quotable; indium's exit-reason row; H1's fold.)*
+
 ## Wagers (positions we now choose to hold, each with its kill)
 
 - **W1 — the law is substrate-general.** The cross-face rent law holds on
@@ -108,9 +150,14 @@ The narrowed originality claim of conformance/omega/PRIOR_ART_CONVERGENCE.md
 is adopted: the closure/autonomy/defect/organisational-closure concepts have
 established ancestors (Barnett–Seth, Rosas, Shalizi–Crutchfield, Krakauer,
 Montévil–Mossio, Kolchinsky–Wolpert, Kabernik, Dittrich, Livine — credited
-there and in the Lean headers), and a reported 2026 parallel programme
-("Six Birds", verification owed) may have independently converged on much
-of the direction. What this stance claims as its own is the SYNTHESIS as
+there and in the Lean headers), and a 2026 parallel programme
+(**"Six Birds"**, Tsiokos — verified 2026-08-30: arXiv 2602.00134 and
+2604.03239, repo with hash contract, Lean anchor) has independently
+converged on the core objects — lens/view, idempotence defect/closure
+defect, ledgered maintenance, and a measured repair-collapses-the-defect
+result that is maintenance-creates-what-it-maintains from the other side;
+see conformance/omega/PRIOR_ART_CONVERGENCE.md for the two-way map and
+the now-unblocked cross-validation protocol. What this stance claims as its own is the SYNTHESIS as
 one continuously extending, kill-disciplined instrument — and convergence,
 where confirmed, is corroboration that the underlying object is real.
 

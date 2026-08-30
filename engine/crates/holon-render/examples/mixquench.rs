@@ -408,11 +408,17 @@ fn main() {
         cost();
         return;
     }
+    if arm_name == "diagnose" {
+        diagnose(seeds[0]);
+        return;
+    }
     let arm = match arm_name {
         "mixed" => Arm::Mixed,
         "hydrogen" => Arm::Hydrogen,
         "chlorine" => Arm::Chlorine,
-        other => panic!("unknown arm {other}; expected mixed | hydrogen | chlorine | cost"),
+        other => panic!(
+            "unknown arm {other}; expected mixed | hydrogen | chlorine | cost | diagnose"
+        ),
     };
 
     say!("# MIXTURES-1 P1 — {}", arm.label());
@@ -518,6 +524,93 @@ fn summarise(arm: Arm, os: &[Outcome]) {
              its own element, and it must produce molecules at all."
         ),
     }
+}
+
+/// POST-HOC, AND LABELLED AS SUCH. Not part of the frozen protocol and scoring nothing.
+///
+/// The mixed arm came back BRANCH (b): one sixteen-atom component on every seed rather
+/// than HCl dimers. The freeze requires branch (b) to be investigated, and the first
+/// question is whether that component is a CONDENSED PHASE — atoms sitting at their pairs'
+/// own equilibria — or an artefact of the measurement rule, which defines an edge by
+/// BOUNDNESS and therefore counts a pair whose interaction is a thousandth of `kT` deep
+/// exactly as it counts a chemical bond.
+///
+/// So this prints, for the final configuration: every bonded edge with its separation, its
+/// pair type's own `R_e`, its potential depth, and whether that depth is above or below
+/// `k_B T_target`. It also prints the CENSUS reading — the closure-based molecule count the
+/// holon layer maintains — because a cluster is a statement about boundness and a census
+/// row is a statement about closure, and how far the two disagree is the fence the code
+/// already documents made visible.
+///
+/// Nothing here is a criterion. The gate's reading is the frozen one.
+fn diagnose(seed: u64) {
+    let arm = Arm::Mixed;
+    say!("# POST-HOC DIAGNOSTIC, not the gate. Arm: {}, seed {seed:#018x}", arm.label());
+    let curves = Curves::build(arm);
+    let mut s = build(arm, seed, &curves);
+    for _ in 0..FRAMES {
+        s.step_frame(SUBSTEPS);
+    }
+    let kt = K_B * T_TARGET;
+    say!("# k_B T_target = {kt:.6e} Ha at T_target = {T_TARGET} K; measured T = {:.1} K", s.temperature());
+    say!("#   R_e per pair type, from the curves themselves:");
+    for (a, b) in arm.pair_types() {
+        let pt = curves.get(a, b);
+        say!(
+            "#     {}{}: R_e {:?}  D_e {:?}",
+            a.symbol,
+            b.symbol,
+            pt.meta.well.map(|w| w.r_e),
+            pt.meta.well.map(|w| w.d_e)
+        );
+    }
+    say!("i\tj\tpair\tr_bohr\tR_e\tu_Ha\te_rel_Ha\tdepth/kT\tbonded");
+    let mut bonded = 0usize;
+    let mut tail_bonded = 0usize;
+    let mut near_re = 0usize;
+    for k in 0..s.pair_count {
+        let p = s.pairs[k];
+        if !p.bonded {
+            continue;
+        }
+        bonded += 1;
+        let (za, zb) = (s.atoms[p.i].species, s.atoms[p.j].species);
+        let pt = curves.get(za, zb);
+        let slot = s.bank.slot_of_z(za.z, zb.z).unwrap();
+        let u = s.bank.table_slot(slot).u(p.r);
+        let r_e = pt.meta.well.map(|w| w.r_e).unwrap_or(f64::NAN);
+        let ratio = u.abs() / kt;
+        if ratio < 1.0 {
+            tail_bonded += 1;
+        }
+        if (p.r - r_e).abs() < 0.5 {
+            near_re += 1;
+        }
+        say!(
+            "{}\t{}\t{}{}\t{:.4}\t{:.4}\t{:+.4e}\t{:+.4e}\t{:.3}\t{}",
+            p.i, p.j, za.symbol, zb.symbol, p.r, r_e, u, p.e_rel, ratio, p.bonded
+        );
+    }
+    say!(
+        "# {bonded} bonded edges. {tail_bonded} of them are shallower than k_B T_target          ({:.1}%), and {near_re} sit within 0.5 bohr of their own pair's R_e ({:.1}%).",
+        100.0 * tail_bonded as f64 / bonded.max(1) as f64,
+        100.0 * near_re as f64 / bonded.max(1) as f64
+    );
+    let sizes = s.cluster_sizes();
+    let largest = sizes[..s.n].iter().copied().max().unwrap_or(0);
+    say!(
+        "# CLUSTER reading (boundness): largest component {largest} of {} atoms.",
+        s.n
+    );
+    say!(
+        "# CENSUS reading (closure): {} live molecule rows, bond-sector energy {:+.6e} Ha.",
+        s.holons.molecule_count(),
+        s.holons.bond_sector_energy()
+    );
+    say!(
+        "# The two answer different questions and are expected to differ. Neither is the \
+         gate's reading, which is the frozen composition rule."
+    );
 }
 
 /// The `cost` arm: the schedule's inputs, measured. Scores nothing; it exists so `FRAMES`

@@ -118,10 +118,24 @@ impl PotentialTable {
             residual_alt: 0.0,
             lo_a: 0.0,
             lo_b: 0.0,
-            lo_linear: true,
+            // FALSE, and the value is never read — see below. It is `false` rather than
+            // the `true` it used to be so that `empty()` is ALL ZEROS, which is what lets
+            // a static array of these live in zero-initialised memory instead of in a
+            // data segment.
+            //
+            // Measured: with two `true` bytes per table, a ten-table `PairBank` inside the
+            // static `Sim` cost the browser artifact 330,206 bytes — 253 KB to 610 KB —
+            // because the linker emitted the whole 329 KB region as initialised data
+            // rather than the twenty bytes that were actually non-zero. Zeroing them
+            // returns the artifact to its size.
+            //
+            // Never read: `eval` returns early when `!is_loaded()`, and `finish` calls
+            // `build_extrapolations`, which assigns both flags unconditionally. So every
+            // table that reaches a branch testing them has set them itself.
+            lo_linear: false,
             hi_a: 0.0,
             hi_b: 0.0,
-            hi_linear: true,
+            hi_linear: false,
         }
     }
 

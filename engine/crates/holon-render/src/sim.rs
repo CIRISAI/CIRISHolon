@@ -1055,6 +1055,24 @@ impl Sim {
         });
     }
 
+    /// Forget every curve AND return every atom to hydrogen.
+    ///
+    /// `PairBank::clear` alone leaves the atoms carrying species the bank has just
+    /// forgotten, and a scene in that state stops dead: `pairs_ready` refuses it, because
+    /// an unregistered species resolves to slot 0 and slot 0 is some other pair's curve.
+    /// Refusing is right — silently serving the wrong curve is the defect plant (i) is
+    /// about — but a host that called `clear` and then wondered why nothing moved would be
+    /// debugging a consistency it never agreed to maintain.
+    ///
+    /// So the scene-level operation does both halves. Callers that want only the bank half
+    /// can still reach `sim.bank.clear()`.
+    pub fn clear_bank(&mut self) {
+        self.bank.clear();
+        for i in 0..self.n {
+            self.atoms[i].species = HYDROGEN;
+        }
+    }
+
     /// Re-take the curvature envelope at a given energy after it has been reset.
     ///
     /// The exactness-hold toggle clears `k_env` and `e_rel_max` and then needs the

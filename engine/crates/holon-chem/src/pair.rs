@@ -668,10 +668,12 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
     let f = feasibility(a, b);
     assert!(
         !f.is_infeasible(),
-        "{}{}: no route in this engine produces this curve. {} determinants is past the \
-         determinant route's budget of {}, and {} orbitals is past the MPS route's measured \
-         reach of {} (see pair::MPS_MAX_ORBITALS for the timings). Refusing rather than \
-         starting a solve that does not return.",
+        "{}{}: this engine has no AUTOMATIC route to this curve. {} determinants is past \
+         fci::MPS_ROUTE_THRESHOLD ({}), so `fci::solve` would route it to DMRG, and {} \
+         orbitals is past the MPS route's measured reach of {} (see pair::MPS_MAX_ORBITALS \
+         for the timings) — so that route would not return. The determinant route CAN \
+         enumerate this space; call `fci::solve_determinant` directly and budget for it. \
+         Refusing here rather than starting a solve that does not return.",
         a.symbol,
         b.symbol,
         f.n_det(),
@@ -797,13 +799,43 @@ pub enum Feasibility {
     /// Past the determinant threshold but inside the MPS route's measured reach. Costly
     /// (see [`MPS_MAX_ORBITALS`]) and NOT exact in model.
     Mps { n_det: usize, n_orb: usize },
-    /// Past both. No route in this engine produces this curve.
+    /// Past both. No route the ORDINARY entry point will take.
+    ///
+    /// # What this does and does not say
+    ///
+    /// It says: [`crate::fci::solve`] would route this space to DMRG, and the MPO builder
+    /// cannot be driven at this orbital count, so [`generate_pair_table`] would not
+    /// return. That is a fact about the automatic route.
+    ///
+    /// It does NOT say the space is unsolvable. The determinant route has no cap of its
+    /// own beyond time and memory, and [`crate::fci::solve_determinant`] will enumerate
+    /// it. SiO is the case that matters: 132,496 determinants is past
+    /// [`crate::fci::MPS_ROUTE_THRESHOLD`] and fourteen orbitals is past
+    /// [`MPS_MAX_ORBITALS`], so it lands here — and it is nonetheless the pair gate D1
+    /// stakes as an EXACT overlap species, reached by calling the determinant route by
+    /// hand. The referee lane measured the cost of that route at 196,889,056 nonzero
+    /// Hamiltonian elements; this map does not bound it.
+    ///
+    /// So a caller that sees this must not report "impossible". It means "not
+    /// automatically, and not cheaply".
     Infeasible { n_det: usize, n_orb: usize },
 }
 
 impl Feasibility {
+    /// Whether the ORDINARY entry point refuses. See [`Feasibility::Infeasible`] — this is
+    /// not the same as "unsolvable".
     pub fn is_infeasible(self) -> bool {
         matches!(self, Feasibility::Infeasible { .. })
+    }
+
+    /// The route's name, for a report. `Infeasible` prints as what it is: the determinant
+    /// route, reachable only by calling it directly.
+    pub fn route_name(self) -> &'static str {
+        match self {
+            Feasibility::Determinant { .. } => "determinant (automatic)",
+            Feasibility::Mps { .. } => "MPS/DMRG (automatic)",
+            Feasibility::Infeasible { .. } => "determinant, BY HAND ONLY (solve_determinant)",
+        }
     }
 
     pub fn n_det(self) -> usize {
@@ -955,6 +987,35 @@ impl PairTable {
         let mut s = String::with_capacity(64 * self.r.len() + 4096);
         s.push_str("{\n");
         s.push_str(&format!("  \"provenance\": \"{}\",\n", m.provenance));
+        // THE THREE THINGS A SHIPPED TABLE MUST DECLARE, each in its own named field
+        // rather than folded into the prose line above: a consumer has to be able to GATE
+        // on them, and a gate cannot parse a sentence.
+        //
+        //   producer    -- who computed it, already `provenance`;
+        //   solver route -- determinant or DMRG, which decides whether it may be called
+        //                   exact in the model at all;
+        //   grid rule   -- how the knots were placed, so a reader can regenerate them;
+        //   uncertainty -- one number, nonzero. The convergence block below carries the
+        //                  detail; this is the scalar the provenance gate reads, and an
+        //                  absent one must never be read as a zero one.
+        s.push_str(&format!(
+            "  \"solver_route\": \"{}\",\n",
+            match m.route {
+                SolverRoute::Determinant => "determinant",
+                SolverRoute::Dmrg => "DMRG",
+            }
+        ));
+        s.push_str(&format!(
+            "  \"exact_in_model\": {},\n",
+            m.route.is_exact_in_model()
+        ));
+        s.push_str(
+            "  \"grid_rule\": \"uniform in R^(-1/4) between R_min and R_max              (table::grid_point); R_min is where the repulsion reaches WALL_CEILING = 1 Ha              above the asymptote and R_max is where the interaction falls inside              TAIL_TOLERANCE = 1e-8 Ha of it, both solved on this curve              (pair::derive_range). The grid is a consequence of the curve, not a choice              about it.\",\n",
+        );
+        s.push_str(&format!(
+            "  \"uncertainty_hartree\": {:?},\n",
+            m.worst_residual
+        ));
         s.push_str(
             "  \"units\": \"Hartree atomic units: R in bohr, E in hartree, \
              F in hartree/bohr, masses in electron masses. F is the FORCE, so dE/dR = -F.\",\n",

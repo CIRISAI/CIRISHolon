@@ -199,6 +199,42 @@
           <b>SELECTOR ONLY</b>
           <span id="spawn-note"></span>
         </div>
+        <p class="palette-rule" id="brush-note">&mdash;</p>
+      </section>
+
+      <!-- THE PAIR-TABLE BANK.
+           One curve per unordered species pair, and what each curve says about itself.
+           MIXTURES-1 requires the producer, the grid rule and the uncertainty to be
+           DISPLAYED for a shipped table, and requires the three-body fence to be visible
+           rather than assumed; both are here, and the fence is read from the engine
+           (`holon_trimer_h_only`) rather than written into this page as a caption. -->
+      <section class="palette-section" aria-label="Pair-table bank">
+        <div class="palette-head">
+          <p class="eyebrow">THE PAIR-TABLE BANK</p>
+          <span class="palette-note" id="bank-summary">&mdash;</span>
+        </div>
+        <div class="banner" id="fence-banner">
+          <b>FENCE</b>
+          <span id="fence-note">&mdash;</span>
+        </div>
+        <div class="banner warn" id="bank-refusal" hidden>
+          <b>REFUSED</b>
+          <span id="bank-refusal-note"></span>
+        </div>
+        <div class="palette-detail">
+          <table class="bank-table" id="bank-table">
+            <thead>
+              <tr>
+                <th>pair</th><th>route</th><th>source</th><th>n_basis</th>
+                <th>n_det</th><th>uncertainty / Ha</th><th>knots</th>
+                <th>R_e / a<sub>0</sub></th><th>D_e / Ha</th>
+              </tr>
+            </thead>
+            <tbody id="bank-rows"></tbody>
+          </table>
+          <p class="palette-rule" id="bank-rule">&mdash;</p>
+          <p class="palette-rule" id="d1-note">&mdash;</p>
+        </div>
       </section>
 
       <section class="controls" aria-label="Scene controls">

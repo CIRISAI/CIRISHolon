@@ -452,8 +452,17 @@ function selectSpecies(z) {
 }
 
 function atomStyle(w, i) {
-  const z = typeof w.holon_atom_z === "function" && typeof w.holon_set_atom_z === "function"
-    ? w.holon_atom_z(i) : 1;
+  // `holon_atom_species_z`, NOT `holon_atom_z`.
+  //
+  // `holon_atom_z` is the atom's Z COORDINATE in bohr — the same three-letter name as its
+  // nuclear charge, exported by the same module, and used four lines further down this
+  // file for the 3D projection. This lookup asked for it by that name and was saved only
+  // by its second guard, `holon_set_atom_z`, which the engine has never exported: the
+  // condition was false, so the fallback ran and every atom was drawn as hydrogen. The
+  // day anything exported that name, every atom would have been coloured by its height in
+  // the box. The species reading is `holon_atom_species_z`.
+  const z = typeof w.holon_atom_species_z === "function"
+    ? w.holon_atom_species_z(i) : 1;
   const sp = state.byZ.get(z);
   if (!sp) return { colour: "#236957", scale: 1 };
   const h = state.byZ.get(1);

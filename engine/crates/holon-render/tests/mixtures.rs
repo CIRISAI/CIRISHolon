@@ -584,6 +584,7 @@ fn plant_iii_a_dmrg_curve_presented_as_exact_is_refused() {
         route: Route::Dmrg,
         source: Source::Shipped,
         n_det: 132_496, // SiO, the freeze's own overlap species
+        n_basis: 14,
         uncertainty_ha: 1e-9,
         claimed_exact: true, // THE PLANT
     };
@@ -633,7 +634,7 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
     };
 
     // POSITIVE CONTROL: a light, solved, determinant curve is admitted.
-    let good = TableProvenance::solved_exact(4, 0.0);
+    let good = TableProvenance::solved_exact(4, 2, 0.0);
     assert_eq!(good.admit(&d1_none, Host::Browser), Ok(()));
 
     // Undeclared route.
@@ -649,6 +650,7 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
         route: Route::Dmrg,
         source: Source::Shipped,
         n_det: 132_496,
+        n_basis: 14,
         uncertainty_ha: 1e-9,
         claimed_exact: false,
     };
@@ -673,6 +675,7 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
         route: Route::Determinant,
         source: Source::Shipped,
         n_det: 132_496,
+        n_basis: 14,
         uncertainty_ha: 0.0,
         claimed_exact: true,
     };
@@ -682,7 +685,7 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
     );
 
     // The browser split, both directions, and only in the browser.
-    let heavy_solved = TableProvenance::solved_exact(132_496, 1e-11);
+    let heavy_solved = TableProvenance::solved_exact(132_496, 14, 1e-11);
     assert_eq!(
         heavy_solved.admit(&d1_none, Host::Browser),
         Err(Refusal::SplitViolated)
@@ -696,12 +699,30 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
         route: Route::Determinant,
         source: Source::Shipped,
         n_det: 4,
+        n_basis: 2,
         uncertainty_ha: 1e-14,
         claimed_exact: true,
     };
     assert_eq!(
         light_shipped.admit(&d1_none, Host::Browser),
         Err(Refusal::SplitViolated)
+    );
+
+    // THE MEASURED HALF OF THE SPLIT. Cl2 has 324 determinants -- comfortably under
+    // IN_BROWSER_DET_LIMIT -- and 18 basis functions, and costs 96 s to solve. A split on
+    // the determinant count alone, which is the criterion the freeze names, would have
+    // sent it to the browser and hung the page for a minute and a half.
+    let cl2_solved = TableProvenance::solved_exact(324, 18, 1e-11);
+    assert!(
+        cl2_solved.n_det < holon_render::bank::IN_BROWSER_DET_LIMIT,
+        "the Cl2 case no longer exercises the basis half of the split: its determinant \
+         count now trips the determinant half on its own"
+    );
+    assert_eq!(
+        cl2_solved.admit(&d1_none, Host::Browser),
+        Err(Refusal::SplitViolated),
+        "a curve under the determinant limit but over the measured basis limit was \
+         admitted for in-browser solving"
     );
 
     // A D1 record whose flag and whose measurement disagree admits nothing.
@@ -738,6 +759,7 @@ fn a_refused_curve_does_not_stay_in_the_bank() {
         route: Route::Dmrg,
         source: Source::Shipped,
         n_det: 132_496,
+        n_basis: 14,
         uncertainty_ha: 1e-9,
         claimed_exact: true,
     };
@@ -777,6 +799,7 @@ fn the_committed_d1_record_says_what_it_measured() {
             route: Route::Dmrg,
             source: Source::Shipped,
             n_det: 132_496,
+            n_basis: 14,
             uncertainty_ha: 1e-9,
             claimed_exact: false,
         };

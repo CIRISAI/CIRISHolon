@@ -69,15 +69,43 @@ pub const MAX_SPECIES: usize = 3;
 /// Unordered pairs over [`MAX_SPECIES`], including the homonuclear diagonal.
 pub const MAX_TABLES: usize = MAX_SPECIES * (MAX_SPECIES + 1) / 2;
 
-/// Determinant count below which a pair is solved IN THE BROWSER at load, the way H2 has
-/// always been, and at or above which it must arrive as a shipped, referee-pinned table.
+/// Determinant count at or above which a pair must arrive as a shipped, referee-pinned
+/// table rather than being solved in the browser at load.
 ///
-/// DECLARED, and measured rather than guessed: see `MIXTURES1_RESULTS.md` for the per-knot
-/// cost this is derived from. The quantity is the determinant count because that is what
-/// the cost actually scales with — a threshold on the element's row would put Ar2 (ONE
-/// determinant, a closed shell) on the expensive side of a line it has no business near,
-/// and Li2 (14,400 determinants from two atoms lighter than neon) on the cheap side.
+/// This is the criterion the freeze names, and it is necessary but NOT sufficient — see
+/// [`IN_BROWSER_BASIS_LIMIT`], which was added after the cost was measured and the
+/// determinant count turned out not to be the driver.
 pub const IN_BROWSER_DET_LIMIT: u64 = 1024;
+
+/// Basis-function count above which a pair must arrive as a shipped table, whatever its
+/// determinant count.
+///
+/// # The freeze's criterion, and what measuring it showed
+///
+/// MIXTURES-1 says "light pairs (declared determinant count below a stated threshold) are
+/// solved in-browser". Measured on the campaign machine, 24 knots, release, the cost is
+/// not a function of the determinant count:
+///
+/// | pair | `n_basis` | `n_det` | curve |
+/// |---|---|---|---|
+/// | H-H   | 2  | 4      | 0.22 s |
+/// | H-He  | 2  | 2      | 0.15 s |
+/// | He-He | 2  | 1      | 0.11 s |
+/// | H-Li  | 6  | 225    | 3.19 s |
+/// | H-Cl  | 10 | 100    | 9.97 s |
+/// | Li-Li | 10 | 14,400 | 40.73 s |
+/// | Cl-Cl | 18 | 324    | 95.95 s |
+///
+/// Cl-Cl has 324 determinants — fewer than lithium hydride's neighbours and forty times
+/// fewer than Li2 — and costs the most of any of them, because the integral transform is
+/// a high power of the BASIS SIZE and runs before any determinant is enumerated. A split
+/// on `n_det` alone would have sent Cl2 to the browser and hung the page for a minute and
+/// a half.
+///
+/// So both are declared and BOTH must pass. Six admits H2, He2, H-He and every
+/// first-row-with-hydrogen pair at a few seconds; ten and up is shipped. The threshold is
+/// where it is because 3.19 s is a load a page can absorb once and 9.97 s is not.
+pub const IN_BROWSER_BASIS_LIMIT: u64 = 6;
 
 /// Which solver produced a curve. Mirrors `holon_chem::fci::SolverRoute`, restated here
 /// because a table can also arrive from a FILE, where the route is a declaration the file
@@ -242,8 +270,11 @@ pub const D1_RECORD: D1Admission = D1Admission::NONE;
 pub struct TableProvenance {
     pub route: Route,
     pub source: Source,
-    /// Determinant count the solver faced. Drives the in-browser split.
+    /// Determinant count the solver faced.
     pub n_det: u64,
+    /// Contracted basis functions the solve carried. With `n_det`, decides the browser
+    /// split — see [`IN_BROWSER_BASIS_LIMIT`] for why one of them is not enough.
+    pub n_basis: u64,
     /// Declared absolute uncertainty on the energy column, hartree. Zero means NOT
     /// DECLARED and is refused for anything but a solved determinant curve, whose
     /// uncertainty is its own reported residual.
@@ -260,19 +291,28 @@ impl TableProvenance {
         route: Route::Undeclared,
         source: Source::Solved,
         n_det: 0,
+        n_basis: 0,
         uncertainty_ha: 0.0,
         claimed_exact: false,
     };
 
     /// A curve this process solved on the determinant route.
-    pub fn solved_exact(n_det: u64, residual_ha: f64) -> Self {
+    pub fn solved_exact(n_det: u64, n_basis: u64, residual_ha: f64) -> Self {
         Self {
             route: Route::Determinant,
             source: Source::Solved,
             n_det,
+            n_basis,
             uncertainty_ha: residual_ha,
             claimed_exact: true,
         }
+    }
+
+    /// Whether this curve is too expensive to solve at page load.
+    ///
+    /// EITHER threshold is enough to make it heavy. See [`IN_BROWSER_BASIS_LIMIT`].
+    pub fn is_heavy(&self) -> bool {
+        self.n_det >= IN_BROWSER_DET_LIMIT || self.n_basis > IN_BROWSER_BASIS_LIMIT
     }
 
     /// THE PROVENANCE GATE. `Ok(())` admits the curve; `Err` says which rule it broke.
@@ -310,7 +350,7 @@ impl TableProvenance {
         if host == Host::Native {
             return Ok(());
         }
-        let heavy = self.n_det >= IN_BROWSER_DET_LIMIT;
+        let heavy = self.is_heavy();
         match (self.source, heavy) {
             (Source::Solved, true) => Err(Refusal::SplitViolated),
             (Source::Shipped, false) => Err(Refusal::SplitViolated),
@@ -403,11 +443,20 @@ impl PairBank {
         Some(i)
     }
 
-    /// Forget every species and every curve. Used when a scene is rebuilt from scratch,
-    /// so a species that has left the scene cannot keep a slot warm.
+    /// Forget every curve and return to the hydrogen-seeded state.
+    ///
+    /// Used when a scene is rebuilt from scratch, so a species that has left the scene
+    /// cannot keep a slot warm — which matters because the cap is three, and a shell that
+    /// cycled through presets without clearing would be full after the third one.
+    ///
+    /// Re-seeds hydrogen rather than emptying the species list, for the same reason
+    /// [`PairBank::hydrogen_seeded`] exists: slot 0 is the H-H pair everywhere in this
+    /// crate, and a `clear` that left slot 0 belonging to nobody would break the legacy
+    /// single-curve door the moment it was used after one.
     pub fn clear(&mut self) {
-        self.n_species = 0;
+        self.n_species = 1;
         self.z = [0; MAX_SPECIES];
+        self.z[0] = 1;
         for s in 0..MAX_TABLES {
             self.tables[s] = PotentialTable::empty();
             self.provenance[s] = TableProvenance::UNKNOWN;

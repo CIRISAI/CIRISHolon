@@ -33,6 +33,8 @@ const ui = Object.fromEntries(
     "sim-speed-out", "dt-mult-out",
     "palette-provenance", "palette-rule", "spawn-note",
     "sp-name", "sp-z", "sp-mass", "sp-basis", "sp-pair", "sp-ndet", "sp-sep", "sp-radius",
+    "brush-note", "bank-summary", "bank-rows", "bank-rule", "fence-note",
+    "bank-refusal-note", "d1-note",
   ].map((id) => [id, document.querySelector(`#${id}`)]),
 );
 
@@ -307,6 +309,14 @@ function selectSpecies(z) {
   ui["sp-sep"].textContent = `${sp.homonuclear_separation_bohr.toFixed(4)} a₀`;
   ui["sp-radius"].textContent =
     `${sp.radius_bohr.toFixed(4)} a₀ (${(sp.radius_bohr * BOHR).toFixed(3)} Å)`;
+  if (ui["brush-note"]) {
+    ui["brush-note"].textContent = state.speciesAware
+      ? `SHIFT-click (or ALT-click) an atom on the stage to make it ${sp.symbol}. `
+        + "A plain click still grabs and drags. The bank below then holds one curve per "
+        + "species pair the scene forms, and the scene will not step until every one of "
+        + "them is loaded."
+      : "This build cannot put a chosen element in the scene; see the banner above.";
+  }
   ui["palette-rule"].textContent =
     `radius — ${sp.radius_rule}. colour — ${sp.colour_rule}. ` +
     (sp.homonuclear_bound
@@ -318,13 +328,302 @@ function selectSpecies(z) {
         `are noble.`);
 }
 
+// ---------------------------------------------------------------- the pair-table bank
+//
+// The engine holds one curve per unordered species pair. This section does three things:
+// puts a chosen element into the scene, makes sure every pair the scene now forms has a
+// curve, and DISPLAYS what each curve says about itself.
+//
+// The split is the engine's, not this page's: `holon_bank_pair_is_heavy` answers whether
+// a pair may be solved at load, and heavy pairs are fetched from `tables/`. Asking the
+// engine rather than re-deriving the rule here is what keeps the page and the gate from
+// disagreeing about which pairs are affordable.
+
+/// Shipped curves, by "ZaZb" with Za <= Zb. Filled from `tables/manifest.json` at boot.
+const shipped = new Map();
+
+/// Refusal codes the engine's provenance gate returns, in plain words. The numbers are
+/// `PROVENANCE_REFUSED + variant` from `lib.rs`; they are listed rather than computed so a
+/// new variant shows up here as "unknown refusal" instead of silently reading as another.
+const REFUSALS = {
+  14: "no route in this engine produces that pair's curve",
+  15: "the bank is full — it holds three species at a time",
+  16: "that curve does not say which solver produced it, so nothing can grade it",
+  17: "that curve was produced by DMRG and presented as EXACT in the model, which it is not",
+  18: "that curve was produced by DMRG, and gate D1's validation of the bridge is not recorded",
+  19: "that shipped table declares no uncertainty; an absent bound must not read as a zero one",
+  20: "that DMRG curve declares no convergence-derived uncertainty",
+  21: "that curve is on the wrong side of the declared in-browser cost limits",
+  22: "there is no usable curve in that slot",
+};
+
+function refusalText(code) {
+  return REFUSALS[code] ?? `unknown refusal (code ${code})`;
+}
+
+async function loadShippedTables() {
+  try {
+    const response = await fetch("tables/manifest.json");
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const manifest = await response.json();
+    for (const entry of manifest.pairs) {
+      const [za, zb] = entry.Z.slice().sort((a, b) => a - b);
+      shipped.set(`${za}:${zb}`, entry);
+    }
+    state.shippedKnots = manifest.knots;
+  } catch (error) {
+    // Not fatal: the light pairs are still solved here, and saying which pairs are now
+    // unavailable is better than a swatch that fails when clicked.
+    state.shippedError = error.message;
+  }
+}
+
+/// Push one shipped table into a bank slot, provenance and all.
+///
+/// The engine's `holon_bank_table_finish` takes the route, the counts and the uncertainty
+/// as ARGUMENTS: there is no way to load a shipped curve without saying what produced it,
+/// which is the point. A file that omits any of them is refused rather than defaulted.
+async function loadShippedPair(w, entry) {
+  const response = await fetch(`tables/${entry.file}`);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  const file = await response.json();
+  const slot = w.holon_bank_slot(entry.Z[0], entry.Z[1]);
+  if (slot < 0) throw new Error("neither species is registered with the bank");
+  const r = file.R_grid_bohr;
+  if (!w.holon_bank_table_begin(slot, r.length)) throw new Error("the interpolator refused the grid");
+  for (let i = 0; i < r.length; i += 1) {
+    if (!w.holon_bank_table_knot(slot, i, r[i], file.E_hartree[i], file.F_hartree_per_bohr[i])) {
+      throw new Error(`knot ${i} refused`);
+    }
+    if (file.E2_hartree_per_bohr2) {
+      w.holon_bank_table_knot_curvature(slot, i, file.E2_hartree_per_bohr2[i]);
+    }
+  }
+  // 1 = determinant/FCI, 2 = DMRG. Anything else is undeclared and the engine refuses it.
+  const route = file.solver_route === "determinant" ? 1 : file.solver_route === "DMRG" ? 2 : 0;
+  const status = w.holon_bank_table_finish(
+    slot,
+    file.bound ? file.R_e : 0,
+    file.bound ? file.D_e : 0,
+    file.E_asymptote,
+    route,
+    file.species.n_determinants,
+    file.species.n_basis,
+    file.uncertainty_hartree,
+    file.exact_in_model ? 1 : 0,
+  );
+  if (status !== 1) throw new Error(refusalText(status));
+  // Keep the file's prose for the panel: the producer line and the grid rule are strings,
+  // the engine holds numbers, and this is the half the page is responsible for.
+  entry.provenance = file.provenance;
+  entry.grid_rule = file.grid_rule;
+  entry.file_data = { R_e: file.R_e, D_e: file.D_e, n_grid: r.length };
+}
+
+/// Every species pair the scene now forms, as [Za, Zb] with Za <= Zb.
+function activePairs(w) {
+  const zs = new Set();
+  for (let i = 0; i < w.holon_atom_count(); i += 1) zs.add(w.holon_atom_species_z(i));
+  const list = [...zs].sort((a, b) => a - b);
+  const out = [];
+  for (let i = 0; i < list.length; i += 1) {
+    for (let j = i; j < list.length; j += 1) {
+      // A homonuclear pair is only formed if TWO atoms carry that species.
+      if (i === j) {
+        let n = 0;
+        for (let k = 0; k < w.holon_atom_count(); k += 1) {
+          if (w.holon_atom_species_z(k) === list[i]) n += 1;
+        }
+        if (n < 2) continue;
+      }
+      out.push([list[i], list[j]]);
+    }
+  }
+  return out;
+}
+
+/// Make sure every pair the scene forms has a curve. Light pairs are solved here; heavy
+/// ones are fetched. Returns a list of human-readable problems, empty when all is well.
+async function ensureCurves(w) {
+  const problems = [];
+  for (const [za, zb] of activePairs(w)) {
+    const slot = w.holon_bank_slot(za, zb);
+    if (slot >= 0 && w.holon_bank_filled(slot)) continue;
+    const key = `${za}:${zb}`;
+    if (w.holon_bank_pair_route(za, zb) === 0) {
+      problems.push(`${symbolOf(za)}–${symbolOf(zb)}: ${refusalText(14)}`);
+      continue;
+    }
+    if (w.holon_bank_pair_is_heavy(za, zb) === 1) {
+      const entry = shipped.get(key);
+      if (!entry) {
+        problems.push(
+          `${symbolOf(za)}–${symbolOf(zb)} is too expensive to solve at load `
+          + `(${w.holon_bank_pair_n_basis(za, zb)} basis functions, `
+          + `${w.holon_bank_pair_n_det(za, zb).toLocaleString()} determinants) and no shipped `
+          + `table was found${state.shippedError ? ` (${state.shippedError})` : ""}`,
+        );
+        continue;
+      }
+      try {
+        await loadShippedPair(w, entry);
+      } catch (error) {
+        problems.push(`${symbolOf(za)}–${symbolOf(zb)}: ${error.message}`);
+      }
+      continue;
+    }
+    const status = w.holon_bank_generate_pair(za, zb, 96);
+    if (status !== 1) problems.push(`${symbolOf(za)}–${symbolOf(zb)}: ${refusalText(status)}`);
+  }
+  return problems;
+}
+
+function symbolOf(z) {
+  return state.byZ.get(z)?.symbol ?? `Z=${z}`;
+}
+
+/// Put the selected element on atom `index`, then make the bank whole again.
+async function paintSpecies(w, index) {
+  const z = state.selectedZ;
+  if (w.holon_atom_species_z(index) === z) return;
+  if (!w.holon_set_atom_species(index, z)) {
+    showRefusal(`${symbolOf(z)} was refused: ${refusalText(15)}`);
+    return;
+  }
+  const problems = await ensureCurves(w);
+  if (problems.length > 0) showRefusal(problems.join("; "));
+  else hideRefusal();
+  // The clocks are a function of the curves, so a changed scene re-derives them.
+  w.holon_rebase();
+  refreshBank();
+  buildPaletteAvailability(w);
+}
+
+function showRefusal(text) {
+  document.querySelector("#bank-refusal").hidden = false;
+  ui["bank-refusal-note"].textContent = text;
+}
+
+function hideRefusal() {
+  document.querySelector("#bank-refusal").hidden = true;
+}
+
+/// Grey out the elements this scene cannot take: the bank is full, or the pair with a
+/// species already present has no route, or it is heavy and nothing was shipped for it.
+function buildPaletteAvailability(w) {
+  const present = new Set();
+  for (let i = 0; i < w.holon_atom_count(); i += 1) present.add(w.holon_atom_species_z(i));
+  const full = w.holon_bank_species_count() >= w.holon_bank_max_species();
+  for (const button of document.querySelectorAll(".swatch")) {
+    const z = Number(button.dataset.z);
+    let ok = true;
+    let why = "";
+    if (full && !present.has(z)) {
+      ok = false;
+      why = `the bank holds ${w.holon_bank_max_species()} species at a time`;
+    } else {
+      for (const other of [...present, z]) {
+        const [a, b] = z <= other ? [z, other] : [other, z];
+        if (w.holon_bank_pair_route(a, b) === 0) {
+          ok = false;
+          why = `${symbolOf(a)}–${symbolOf(b)} is past every solver this engine has`;
+          break;
+        }
+        if (w.holon_bank_pair_is_heavy(a, b) === 1 && !shipped.has(`${a}:${b}`)) {
+          ok = false;
+          why = `${symbolOf(a)}–${symbolOf(b)} is too expensive to solve at load and is not shipped`;
+          break;
+        }
+      }
+    }
+    button.dataset.available = String(ok);
+    button.disabled = !ok;
+    if (!ok) button.title = `${button.title} — unavailable: ${why}`;
+  }
+}
+
+/// Draw the bank: one row per loaded curve, plus the fence and gate D1's record.
+function refreshBank() {
+  const w = state.w;
+  if (!state.speciesAware) return;
+  const body = ui["bank-rows"];
+  body.textContent = "";
+  const slots = w.holon_bank_slot_count();
+  const species = [];
+  for (let i = 0; i < w.holon_bank_species_count(); i += 1) species.push(w.holon_bank_species_z(i));
+  let rows = 0;
+  for (let i = 0; i < species.length; i += 1) {
+    for (let j = i; j < species.length; j += 1) {
+      const slot = w.holon_bank_slot(species[i], species[j]);
+      if (slot < 0 || slot >= slots || !w.holon_bank_filled(slot)) continue;
+      rows += 1;
+      const routeCode = w.holon_bank_route(slot);
+      const routeName = ["undeclared", "FCI (determinant)", "DMRG"][routeCode] ?? "undeclared";
+      const source = w.holon_bank_source(slot) === 1 ? "shipped file" : "solved here";
+      const key = `${Math.min(species[i], species[j])}:${Math.max(species[i], species[j])}`;
+      const entry = shipped.get(key);
+      const tr = document.createElement("tr");
+      const cells = [
+        [`${symbolOf(species[i])}–${symbolOf(species[j])}`, false],
+        [routeName, false],
+        [source, false],
+        [String(w.holon_bank_pair_n_basis(species[i], species[j])), true],
+        [w.holon_bank_n_det(slot).toLocaleString(), true],
+        [w.holon_bank_uncertainty(slot).toExponential(3), true],
+        [String(w.holon_bank_knots(slot)), true],
+        [w.holon_bank_d_e(slot) > 0 ? w.holon_bank_r_e(slot).toFixed(4) : "—", true],
+        [w.holon_bank_d_e(slot) > 0 ? w.holon_bank_d_e(slot).toExponential(4) : "does not bind", true],
+      ];
+      for (const [text, numeric] of cells) {
+        const td = document.createElement("td");
+        td.textContent = text;
+        if (numeric) td.className = "num";
+        tr.append(td);
+      }
+      if (routeCode === 2) tr.classList.add("route-dmrg");
+      if (entry) tr.title = `${entry.provenance} — grid rule: ${entry.grid_rule}`;
+      body.append(tr);
+    }
+  }
+  ui["bank-summary"].textContent =
+    `${rows} curve${rows === 1 ? "" : "s"} loaded, ${w.holon_bank_species_count()} of `
+    + `${w.holon_bank_max_species()} species`;
+
+  // THE FENCE, read from the engine rather than written here.
+  ui["fence-note"].textContent = w.holon_trimer_h_only()
+    ? "The tabulated three-body term is H3 ONLY. A triple containing any non-hydrogen atom "
+      + "contributes exactly zero, so nothing on this page is beyond-pair-complete for such "
+      + "a triple. Heteronuclear trimer surfaces are a named successor."
+    : "The three-body term covers every triple.";
+
+  const anyShipped = [...shipped.values()].some((e) => e.provenance);
+  ui["bank-rule"].textContent = anyShipped
+    ? [...shipped.values()]
+        .filter((e) => e.provenance)
+        .map((e) => `${e.pair}: ${e.provenance} · grid rule — ${e.grid_rule}`)
+        .join("  ")
+    : "Every curve above was solved in this browser at load, from Z and the declared "
+      + "STO-3G basis. Pairs too expensive to solve here arrive as shipped tables and "
+      + "state their producer, grid rule and uncertainty when they do.";
+
+  const d1 = w.holon_d1_validated() === 1;
+  ui["d1-note"].textContent = d1
+    ? `Gate D1: the DMRG bridge is ADMITTED — worst overlap `
+      + `${w.holon_d1_worst_overlap().toExponential(3)} Ha against a stake of `
+      + `${w.holon_d1_stake().toExponential(0)} Ha on ${w.holon_d1_overlap_species()} species. `
+      + `A DMRG curve may enter the bank, labelled DMRG, never as exact.`
+    : "Gate D1: the DMRG bridge is NOT admitted — its validation is not recorded. Every "
+      + "DMRG-labelled curve is refused by the provenance gate, so every curve above was "
+      + "produced by the determinant route.";
+}
+
 /// The colour and radius one atom is drawn with.
 ///
 /// Reads the atom's species from the wasm when the ABI offers it and falls back to
 /// hydrogen when it does not, so the day `holon_atom_z` appears this becomes correct with
 /// no edit here.
 function atomStyle(w, i) {
-  const z = state.speciesAware ? w.holon_atom_z(i) : 1;
+  const z = state.speciesAware ? w.holon_atom_species_z(i) : 1;
   const sp = state.byZ.get(z);
   if (!sp) return { colour: "#236957", scale: 1 };
   const h = state.byZ.get(1);
@@ -341,19 +640,30 @@ async function boot() {
   }
   const w = instance.exports;
   state.w = w;
-  state.speciesAware = typeof w.holon_atom_z === "function"
-    && typeof w.holon_set_atom_z === "function";
+  // FEATURE DETECTION, against the exports that actually exist.
+  //
+  // This read `holon_atom_z` / `holon_set_atom_z` for as long as the palette has been on
+  // the page, and the engine has never exported either — the names are
+  // `holon_atom_species_z` and `holon_set_atom_species`. So `speciesAware` was false for
+  // reasons that had nothing to do with whether the engine could carry a species, and the
+  // "SELECTOR ONLY" banner was telling the truth for the wrong reason. It is now gated on
+  // the bank, which is the thing that actually decides whether a species can be put in the
+  // scene: a sim with one table has nowhere to put the second pair's curve.
+  state.speciesAware = typeof w.holon_atom_species_z === "function"
+    && typeof w.holon_set_atom_species === "function"
+    && typeof w.holon_bank_generate_pair === "function";
   await loadPotential(w);
   loadTrimer(w);
   await loadPalette();
   if (!state.speciesAware) {
     document.querySelector("#spawn-banner").hidden = false;
     ui["spawn-note"].textContent =
-      "The palette selects an element and reports what the engine computed about it, but "
-      + "cannot put one in the scene: the simulation carries one potential table and one "
-      + "mass for every atom, so it has nowhere to record what an atom IS. The exact API "
-      + "extension needed is written up in ELEMENTS_SIM_API_REQUEST.md. Every atom on "
-      + "the stage below is hydrogen, and is drawn as hydrogen.";
+      "This build's engine carries one potential table, so it has nowhere to record what "
+      + "an atom IS. The palette still reports what the engine computed about each "
+      + "element; every atom on the stage is hydrogen, and is drawn as hydrogen.";
+  } else {
+    await loadShippedTables();
+    refreshBank();
   }
 
   state.world = { width: w.holon_width(), height: w.holon_height() };
@@ -478,6 +788,17 @@ stage.addEventListener("pointerdown", (event) => {
   // like reaching for one, not like hitting a target.
   const index = state.w.holon_nearest_atom(p.x, p.y, 2.5 * state.radius);
   if (index < 0) return;
+  // SHIFT (or ALT) PAINTS THE SELECTED ELEMENT; a plain press still grabs and drags.
+  //
+  // A modifier rather than a mode, because the two actions want the same gesture on the
+  // same target and a mode would mean the same click did different things depending on
+  // state the user cannot see. Painting is async — a heavy pair has to be fetched, a
+  // light one solved — so it deliberately does not start a drag.
+  if (state.speciesAware && (event.shiftKey || event.altKey)) {
+    event.preventDefault();
+    void paintSpecies(state.w, index);
+    return;
+  }
   state.w.holon_grab(index);
   state.dragging = true;
   // Pointer capture is a convenience (it keeps the drag alive when the pointer leaves

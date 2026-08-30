@@ -13,7 +13,7 @@
 
 use bevy::ecs::resource::Resource;
 use holon_chem::elements::{
-    Species, CARBON, FLUORINE, HELIUM, HYDROGEN, LITHIUM, NEON, NITROGEN, OXYGEN,
+    Species, CARBON, CHLORINE, FLUORINE, HELIUM, HYDROGEN, LITHIUM, NEON, NITROGEN, OXYGEN,
 };
 use holon_render::clock::{Rung, AU_TO_FS};
 use holon_render::sim::{Boundary, Dims, Sim, MAX_ATOMS};
@@ -41,10 +41,23 @@ pub enum Preset {
     He2,
     /// Ne₂: Neon dimer (closed-shell negative control, non-binding).
     Ne2,
+    /// HCl: hydrogen chloride, MIXTURES-1's own heteronuclear dimer. Two species, one
+    /// curve — the smallest scene the pair-table bank is needed for.
+    HCl,
+    /// A MIXED GAS: eight hydrogens and eight heliums in the box. THREE pair types at
+    /// once — H-H, H-He and He-He — so the bank is dispatching on every force evaluation,
+    /// and the reading is vivid: the hydrogens pair off and the heliums bind to nothing,
+    /// in one scene, under one integrator.
+    ///
+    /// Helium rather than chlorine because a preset has to LOAD: Cl2 is eighteen basis
+    /// functions and about a hundred seconds of solve, which is not an interactive scene
+    /// change. The campaign's own H + Cl gas is the `mixquench` example, where the curves
+    /// are generated once and the run is detached.
+    MixedGas,
 }
 
 impl Preset {
-    pub const ALL: [Preset; 10] = [
+    pub const ALL: [Preset; 12] = [
         Preset::H2,
         Preset::Quench16,
         Preset::LiH,
@@ -55,6 +68,8 @@ impl Preset {
         Preset::CO,
         Preset::He2,
         Preset::Ne2,
+        Preset::HCl,
+        Preset::MixedGas,
     ];
 
     pub fn name(&self) -> &'static str {
@@ -69,6 +84,8 @@ impl Preset {
             Preset::CO => "CO (Carbon Monoxide)",
             Preset::He2 => "He₂ (Closed-shell bounce)",
             Preset::Ne2 => "Ne₂ (Closed-shell bounce)",
+            Preset::HCl => "HCl (Hydrogen Chloride, 2 species)",
+            Preset::MixedGas => "Mixed Gas: 8 H + 8 He (3 pair types)",
         }
     }
 
@@ -84,6 +101,8 @@ impl Preset {
             Preset::CO => "CO",
             Preset::He2 => "He₂",
             Preset::Ne2 => "Ne₂",
+            Preset::HCl => "HCl",
+            Preset::MixedGas => "8H+8He",
         }
     }
 
@@ -98,7 +117,9 @@ impl Preset {
             Preset::F2 => Preset::CO,
             Preset::CO => Preset::He2,
             Preset::He2 => Preset::Ne2,
-            Preset::Ne2 => Preset::H2,
+            Preset::Ne2 => Preset::HCl,
+            Preset::HCl => Preset::MixedGas,
+            Preset::MixedGas => Preset::H2,
         }
     }
 }
@@ -193,7 +214,13 @@ impl AtomWorld {
     }
 
     /// Load a scene preset dynamically.
+    ///
+    /// The bank is CLEARED first. It holds three species at a time, so a shell that cycled
+    /// presets without clearing would be full after the third one and would refuse the
+    /// fourth — and the refusal would arrive as an unexplained missing curve rather than
+    /// as anything a user could read. Clearing returns it to the hydrogen-seeded state.
     pub fn load_preset(&mut self, preset: Preset) {
+        self.sim.clear_bank();
         let status = match preset {
             Preset::H2 => {
                 let s = holon_render::generate_table(
@@ -307,15 +334,61 @@ impl AtomWorld {
                 self.setup_dimer(NEON, NEON);
                 s
             }
+            Preset::HCl => {
+                let s = holon_render::generate_pair_table(
+                    &mut self.sim,
+                    HYDROGEN,
+                    CHLORINE,
+                    64,
+                );
+                self.setup_dimer(HYDROGEN, CHLORINE);
+                s
+            }
+            Preset::MixedGas => self.setup_mixed_gas(),
         };
         self.preset = preset;
         self.table_status = status;
     }
 
+    /// THE MIXED SCENE: eight hydrogens and eight heliums, every pair type banked.
+    ///
+    /// Three curves are needed and all three are generated here — H-H, H-He and He-He —
+    /// because `Sim::pairs_ready` refuses to step a scene that is missing any of them.
+    /// That refusal is the point of the bank: the old question, "is the table loaded",
+    /// answers yes for a scene with one curve out of three.
+    ///
+    /// Atoms alternate along a Fibonacci sphere, so neither species is clustered on one
+    /// side and every helium has hydrogen neighbours.
+    fn setup_mixed_gas(&mut self) -> u32 {
+        let mut status = holon_render::TABLE_OK;
+        for (a, b) in [(HYDROGEN, HYDROGEN), (HYDROGEN, HELIUM), (HELIUM, HELIUM)] {
+            let s = holon_render::generate_pair_table(&mut self.sim, a, b, 64);
+            if s != holon_render::TABLE_OK {
+                status = s;
+            }
+        }
+        self.sim.reset(MAX_ATOMS);
+        for i in 0..self.sim.n {
+            let sp = if i % 2 == 0 { HYDROGEN } else { HELIUM };
+            assert!(self.sim.set_species(i, sp), "the bank refused the mixed scene");
+        }
+        // The opener's escape-speed derivation reads each pair's OWN curve, so it has to
+        // run after the species are assigned, not before.
+        self.sim.reset(MAX_ATOMS);
+        self.sim.adopt_table_timescale();
+        self.sim.rebase();
+        status
+    }
+
     fn setup_dimer(&mut self, sp_a: Species, sp_b: Species) {
         self.sim.reset(2);
-        self.sim.set_species(0, sp_a);
-        self.sim.set_species(1, sp_b);
+        assert!(
+            self.sim.set_species(0, sp_a) && self.sim.set_species(1, sp_b),
+            "the bank refused {}{}: it holds {} species and this preset needs two",
+            sp_a.symbol,
+            sp_b.symbol,
+            holon_render::bank::MAX_SPECIES
+        );
         let cx = 0.5 * self.sim.width;
         let cy = 0.5 * self.sim.height;
         let cz = 0.5 * self.sim.depth;

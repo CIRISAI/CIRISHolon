@@ -48,10 +48,12 @@ use sim::{Boundary, Sim};
 
 use std::sync::{Mutex, MutexGuard};
 
-static SIM: Mutex<Sim> = Mutex::new(Sim::empty());
+static SIM: std::sync::OnceLock<Mutex<Box<Sim>>> = std::sync::OnceLock::new();
 
-fn sim() -> MutexGuard<'static, Sim> {
-    SIM.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+fn sim() -> MutexGuard<'static, Box<Sim>> {
+    SIM.get_or_init(|| Mutex::new(Box::new(Sim::empty())))
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 // ------------------------------------------------------------------ table loading
@@ -102,6 +104,12 @@ pub fn generate_table(s: &mut Sim, r_min: f64, r_max: f64, count: usize) -> u32 
     // there is no such thing as the table. `Sim::empty` seeds hydrogen as species 0, so
     // for every scene this function has ever been called on, the slot it targets is the
     // one the single-table sandbox filled.
+    // Register hydrogen rather than assuming it is already there. `Sim::empty` seeds it
+    // and `PairBank::clear` restores it, but a caller that built its bank some other way
+    // is entitled to call this and get H2 rather than a refusal it cannot act on.
+    if s.bank.register(1).is_none() {
+        return BANK_FULL;
+    }
     let Some(slot) = s.bank.slot_of_z(1, 1) else {
         return GENERATOR_REFUSED;
     };
@@ -125,7 +133,7 @@ pub fn generate_table(s: &mut Sim, r_min: f64, r_max: f64, count: usize) -> u32 
         // is graded by the same gate every other curve is.
         if let Err(r) = s.bank.commit(
             slot,
-            bank::TableProvenance::solved_exact(4, 0.0),
+            bank::TableProvenance::solved_exact(4, 2, 0.0),
             &bank::D1_RECORD,
             bank::Host::Browser,
         ) {
@@ -212,6 +220,7 @@ pub fn load_pair_table(s: &mut Sim, pt: &holon_chem::pair::PairTable, host: bank
             },
             source: bank::Source::Solved,
             n_det: pt.meta.n_det as u64,
+            n_basis: pt.meta.n_basis as u64,
             uncertainty_ha: pt.meta.worst_residual,
             claimed_exact: pt.meta.route.is_exact_in_model(),
         };
@@ -227,12 +236,16 @@ pub fn load_pair_table(s: &mut Sim, pt: &holon_chem::pair::PairTable, host: bank
 /// reason [`PROVENANCE_REFUSED`] is: a full bank and a bad curve are different problems.
 pub const BANK_FULL: u32 = 15;
 
-/// No route in this engine produces this pair's curve. See
-/// [`holon_chem::pair::MPS_MAX_ORBITALS`] for the measurement behind it.
+/// This engine has no AUTOMATIC route to this pair's curve.
 ///
-/// Distinct from `GENERATOR_REFUSED` (which means the grid request was malformed) and from
-/// `BANK_FULL`: this one says the chemistry is out of reach, which is a fact about the
-/// engine's solvers and not about the caller's arguments.
+/// NOT "impossible": the determinant route can still enumerate the space if it is driven
+/// directly, at a cost nothing here bounds. See [`holon_chem::pair::Feasibility::Infeasible`]
+/// for what the distinction costs — SiO lands here and is nonetheless one of gate D1's
+/// staked EXACT species.
+///
+/// Distinct from `GENERATOR_REFUSED` (the grid request was malformed) and from `BANK_FULL`:
+/// this one is a fact about the engine's automatic routing, not about the caller's
+/// arguments.
 pub const CURVE_INFEASIBLE: u32 = 14;
 
 /// Solve and load any pair potential table (e.g. LiH, HF, Li2, etc.) dynamically.
@@ -321,6 +334,67 @@ pub extern "C" fn holon_trimer_curvature_envelope() -> f64 {
 #[no_mangle]
 pub extern "C" fn holon_trimer_r_max() -> f64 {
     holon_chem::trimer::R_HI
+}
+
+// ---------------------------------------------------------- the (O, H, H) surface
+//
+// SATURATION-2's table does NOT generate in the browser the way `trimer` does, and the
+// reason is arithmetic rather than taste: an H3 point is nine determinants on a bespoke
+// s-only path and a water point is 441 through the general N-centre route, about a
+// thousand times the cost. So the surface is generated natively by
+// `holon-chem --example s2_build`, committed as a text artifact, and LOADED here. What
+// keeps that from making the sandbox a player of someone's curve is `tests/water.rs`,
+// which recomputes a staked subset of the committed nodes through the crate's own solver
+// and requires bit-identity.
+
+/// Load the committed (O, H, H) three-body table from its artifact text.
+///
+/// Returns 1 on success and 0 if the text is not a table this build can read — a grid rule
+/// that is not this build's is REFUSED rather than interpolated on the wrong axes, which
+/// is the difference between loading a table and loading numbers.
+pub fn load_water_table(s: &mut Sim, text: &str) -> u32 {
+    match holon_chem::water::from_text(text) {
+        Some(t) => {
+            s.water = t;
+            1
+        }
+        None => 0,
+    }
+}
+
+/// Whether the (O, H, H) surface is loaded.
+#[no_mangle]
+pub extern "C" fn holon_water_loaded() -> u32 {
+    u32::from(sim().water.loaded)
+}
+
+/// Nodes the (O, H, H) table carries.
+#[no_mangle]
+pub extern "C" fn holon_water_nodes() -> u32 {
+    holon_chem::water::N_NODES as u32
+}
+
+/// Largest `|dE3|` on any node of the loaded (O, H, H) table.
+#[no_mangle]
+pub extern "C" fn holon_water_peak() -> f64 {
+    sim().water.meta.peak
+}
+
+/// The (O, H, H) truncation radius on the larger O-H side, bohr.
+#[no_mangle]
+pub extern "C" fn holon_water_r_max() -> f64 {
+    holon_chem::water::R_HI
+}
+
+/// Triples the three-body sector refused for want of a table in the last force pass —
+/// (O, O, H) and (O, O, O), which SATURATION-2 does not tabulate.
+///
+/// DISPLAYED and COUNTED rather than silently absorbed: the prereg requires the fence's
+/// incidence in the quench runs to be reported, and a truncation nobody counts is a
+/// truncation nobody can weigh.
+#[no_mangle]
+pub extern "C" fn holon_fence_untabulated() -> f64 {
+    sim().fence_untabulated as f64
 }
 
 /// `LoadStatus::Ok`'s discriminant, so a caller of [`generate_table`] can name the
@@ -1344,6 +1418,44 @@ pub extern "C" fn holon_bank_in_browser_det_limit() -> f64 {
     bank::IN_BROWSER_DET_LIMIT as f64
 }
 
+/// Basis-function count above which a pair must be shipped rather than solved at load.
+/// The measured half of the split; see `bank::IN_BROWSER_BASIS_LIMIT`.
+#[no_mangle]
+pub extern "C" fn holon_bank_in_browser_basis_limit() -> u32 {
+    bank::IN_BROWSER_BASIS_LIMIT as u32
+}
+
+/// The basis-function count a pair's solve would carry.
+#[no_mangle]
+pub extern "C" fn holon_bank_pair_n_basis(za: u32, zb: u32) -> u32 {
+    let (Some(a), Some(b)) = (
+        holon_chem::elements::by_z(za),
+        holon_chem::elements::by_z(zb),
+    ) else {
+        return 0;
+    };
+    (a.n_basis() + b.n_basis()) as u32
+}
+
+/// Whether a pair is too heavy to solve at page load, by either declared threshold.
+/// `1` = must be shipped.
+#[no_mangle]
+pub extern "C" fn holon_bank_pair_is_heavy(za: u32, zb: u32) -> u32 {
+    let (Some(a), Some(b)) = (
+        holon_chem::elements::by_z(za),
+        holon_chem::elements::by_z(zb),
+    ) else {
+        return 0;
+    };
+    let f = holon_chem::pair::feasibility(a, b);
+    let prov = bank::TableProvenance {
+        n_det: f.n_det() as u64,
+        n_basis: f.n_orb() as u64,
+        ..bank::TableProvenance::UNKNOWN
+    };
+    u32::from(prov.is_heavy())
+}
+
 #[no_mangle]
 pub extern "C" fn holon_bank_species_count() -> u32 {
     sim().bank.species_count() as u32
@@ -1364,10 +1476,14 @@ pub extern "C" fn holon_bank_register(z: u32) -> u32 {
     u32::from(sim().bank.register(z).is_some())
 }
 
-/// Forget every species and every curve. The scene must be rebuilt afterwards.
+/// Forget every curve and return every atom to hydrogen.
+///
+/// Both halves, because the bank half alone leaves atoms carrying species the bank has
+/// just forgotten and the scene stops dead — correctly, but for a reason a host would have
+/// to go looking for. See `Sim::clear_bank`.
 #[no_mangle]
 pub extern "C" fn holon_bank_clear() {
-    sim().bank.clear();
+    sim().clear_bank();
 }
 
 /// The slot serving the pair `(za, zb)`, or `-1` if either species is unregistered.
@@ -1416,6 +1532,13 @@ pub extern "C" fn holon_bank_generate_pair(za: u32, zb: u32, knots: u32) -> u32 
     // instead, and the ABI never reaches the assert.
     if holon_chem::pair::feasibility(a, b).is_infeasible() {
         return CURVE_INFEASIBLE;
+    }
+    // The split, checked BEFORE the solve rather than after it. `load_pair_table` would
+    // refuse a heavy curve too, but only once it had been computed — which for Cl2 is a
+    // minute and a half of a browser's main thread spent on a curve that is then thrown
+    // away.
+    if holon_bank_pair_is_heavy(za, zb) == 1 {
+        return refusal_code(bank::Refusal::SplitViolated);
     }
     let pt = holon_chem::pair::generate_pair_table(a, b, knots as usize);
     load_pair_table(&mut sim(), &pt, bank::Host::Browser)
@@ -1513,6 +1636,7 @@ pub extern "C" fn holon_bank_table_finish(
     e_asymptote: f64,
     route: u32,
     n_det: f64,
+    n_basis: u32,
     uncertainty_ha: f64,
     claimed_exact: u32,
 ) -> u32 {
@@ -1540,6 +1664,7 @@ pub extern "C" fn holon_bank_table_finish(
         } else {
             0
         },
+        n_basis: n_basis as u64,
         uncertainty_ha,
         claimed_exact: claimed_exact != 0,
     };

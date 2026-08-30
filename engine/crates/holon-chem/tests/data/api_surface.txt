@@ -69,3 +69,10 @@ de3                     the solve-everything-from-scratch entry point, for a gat
 to_text                 renders the committed artifact; examples/s2_build.rs --emit is the producer
 from_text               parses it back, refusing a foreign grid rule; holon-render's load_water_table is the consumer
 set_node_asymmetric     plant (ii) ONLY: breaks the H<->H symmetry on purpose. Nothing in the dynamics calls it
+
+# --- the solver-route feasibility map (MIXTURES-1 lane; classified by that lane) ---
+route_name              renders a Feasibility for a REPORT; the gate that reads the map is
+#                       tests/mixtures_referee.rs, and holon-render's bank gates on
+#                       is_infeasible/n_det/n_orb rather than on this string. Kept because
+#                       "determinant, BY HAND ONLY" is the distinction a reader most needs
+#                       and the one an enum discriminant cannot carry.

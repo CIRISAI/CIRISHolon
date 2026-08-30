@@ -1,0 +1,31 @@
+# E(O) = -73.804150245797  E(H) = -0.466581849557  threads = 8
+# box: x, y in [0.7, 14] bohr, c in [0.05, 1.414214]
+# fine grid 49 x 49 x 25, held-out 384 points, seed 0x5341545552415432
+
+## stretch a = 2   fine table built in 641.6 s, peak |dE3| = 7.6389e-1 Ha
+   first three side nodes: 0.7000 0.7886 0.8809 bohr  (spacing 0.0886 at the compact end)
+   nr \ nu           25          13           9           7      solves(sorted half)
+       49      7.839e-4    5.696e-3    1.114e-2    1.523e-2      1225
+       25      1.106e-2    1.108e-2    1.264e-2    1.706e-2      325
+       17      1.435e-2    1.470e-2    1.499e-2    1.541e-2      153
+       13      2.838e-2    2.857e-2    2.895e-2    2.956e-2      91
+        9      2.851e-2    2.889e-2    2.985e-2    3.114e-2      45
+
+## stretch a = 3   fine table built in 576.5 s, peak |dE3| = 7.6398e-1 Ha
+   first three side nodes: 0.7000 0.7449 0.7928 bohr  (spacing 0.0449 at the compact end)
+   nr \ nu           25          13           9           7      solves(sorted half)
+       49      6.723e-4    5.796e-3    1.129e-2    1.540e-2      1225
+       25      1.936e-3    6.010e-3    8.736e-3    1.298e-2      325
+       17      9.577e-3    9.570e-3    1.067e-2    1.548e-2      153
+       13      1.126e-2    1.178e-2    1.208e-2    1.445e-2      91
+        9      2.535e-2    2.558e-2    2.597e-2    2.658e-2      45
+
+## stretch a = 4   fine table built in 477.1 s, peak |dE3| = 7.6412e-1 Ha
+   first three side nodes: 0.7000 0.7216 0.7450 bohr  (spacing 0.0216 at the compact end)
+   nr \ nu           25          13           9           7      solves(sorted half)
+       49      7.999e-4    6.205e-3    1.197e-2    1.625e-2      1225
+       25      3.246e-3    7.147e-3    1.349e-2    1.809e-2      325
+       17      6.669e-3    6.894e-3    6.520e-3    1.086e-2      153
+       13      8.253e-3    7.621e-3    1.297e-2    1.744e-2      91
+        9      1.986e-2    1.992e-2    2.023e-2    1.996e-2      45
+

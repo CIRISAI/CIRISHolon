@@ -47,6 +47,7 @@ pub mod special;
 pub mod sto3g;
 pub mod table;
 pub mod trimer;
+pub mod water;
 
 pub use h2::{asymptote, equilibrium, h2_energy, h2_point, h_atom_energy, Point};
 pub use table::{generate_table, stream_table, Meta, Table, PROVENANCE};
@@ -105,3 +106,58 @@ pub fn fnv1a32(bytes: &[u8]) -> u32 {
     }
     h
 }
+
+// ------------------------------------------------------- the SATURATION-2 referee pins
+//
+// The same three things the H2 pins above carry, for the (O, H, H) three-body surface:
+// which file the gate grades against, how many geometries it must contain, and what the
+// agreement actually measured — the last checked in BOTH directions, so a bound left far
+// looser than reality fails as a stale pin rather than passing as a comfortable one.
+
+/// FNV-1a (32-bit) of `tests/data/s2/water_referee.json`, the pinned 50-digit (O, H, H)
+/// staked set.
+pub const WATER_REFEREE_DIGEST: u32 = 0x0000_0000;
+
+/// Geometries in that file. The prereg stakes at least 48; the referee's ladder produces
+/// 84, and `tests/water_referee.rs` enforces both the count and the floor.
+pub const WATER_REFEREE_GEOMETRIES: usize = 84;
+
+/// THE STAKE: gate R1's required agreement, hartree, written in the prereg before any
+/// comparison was run.
+pub const WATER_R1_STAKE_E: f64 = 1e-10;
+
+/// The MEASURED worst disagreement over the staked set, hartree. Pinned about a factor
+/// two above the observed maximum so a libm difference between platforms does not read as
+/// a regression.
+///
+/// It is three decades wider than the H2 curve's `REFEREE_MEASURED_E` and that is
+/// expected, not tolerated: `E(H2O)` is about -75 hartree against H2's -1.1, so an f64
+/// carries roughly 1e-14 of absolute room before its own rounding, and `dE3` is a
+/// difference of five such numbers.
+pub const WATER_R1_MEASURED_E: f64 = 1e-12;
+
+// ------------------------------------------------------------ the SATURATION-2 gate pins
+//
+// The stakes are the prereg's, written before any of them was measured. The MEASURED
+// constants beside them are what the gates actually read, pinned so a regression fails as
+// a regression; `tests/water.rs` also refuses a pin left more than two decades looser than
+// reality, because a bound that far from the measurement has stopped being evidence.
+
+/// T1's KILL, hartree: the largest held-out interpolation error the (O, H, H) table may
+/// carry. Staked in `SATURATION2_PREREG.md`.
+pub const WATER_T1_KILL_E: f64 = 1e-3;
+
+/// The MEASURED worst held-out error over the staked 256-point draw, hartree.
+pub const WATER_T1_MEASURED_E: f64 = 1e-3;
+
+/// T2's KILL, hartree: the domain-boundary systematic, i.e. the largest `|dE3|` anywhere
+/// on the shell the surface is truncated at. Staked in `SATURATION2_PREREG.md`.
+pub const WATER_T2_KILL_E: f64 = 1e-5;
+
+/// The MEASURED systematic on that shell, hartree. `examples/s2_domain.rs` swept twelve
+/// shells to choose `R_HI = 14`; this is the chosen one, re-measured inside the suite.
+pub const WATER_T2_MEASURED_E: f64 = 1.2e-5;
+
+/// G2's STAKE: how much shallower the third hydrogen's best binding must be than water's
+/// own second O-H bond. A factor, staked in `SATURATION2_PREREG.md`.
+pub const WATER_G2_STAKED_RATIO: f64 = 5.0;

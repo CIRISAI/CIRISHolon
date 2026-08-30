@@ -1,0 +1,6 @@
+# The referee's per-geometry point cache and the fine node set are INTERMEDIATES: both
+# are re-derivable by re-running their producers (see RESUME.md), and both are large.
+# What is committed is the PRODUCT — `tests/data/s2/water_referee.json` and
+# `tests/data/s2/s2_water_table.txt` — plus the logs that record how it was produced.
+referee_cache/
+s2_fine_*.txt

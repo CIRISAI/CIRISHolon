@@ -49,6 +49,25 @@
 //!   declaration carries, because rescaling one fit cannot change them. This is the check
 //!   that caught the oxygen defect, and `tests/elements.rs` runs it over every fit family.
 //!
+//! # DECLARED: d shells are five spherical components, not six Cartesian
+//!
+//! The basis is one of the three declared inputs, so the COMPONENT CONVENTION is part of
+//! the declaration and is stated here rather than left to be inferred from whichever
+//! integral routine a reader happens to open. **A d shell contributes five functions: the
+//! five real solid harmonics.**
+//!
+//! The integral recursions are Cartesian and evaluate a d shell as six components, but the
+//! six do not span an `l = 2` space -- they span the five plus
+//! `(x^2 + y^2 + z^2) exp(-a r^2)`, which is spherically symmetric and therefore `l = 0`.
+//! `md::SPHERICAL_D` projects that sixth function out, and `ShellKind::n_functions` reports
+//! five because five is what the basis has.
+//!
+//! Leaving this implicit is exactly how it went wrong. The convention was never written
+//! down, the engine carried six, and ELEMENTS-3's freeze had been written against five --
+//! its own arithmetic (xenon's atom at ONE determinant, Br2 at ~1.3e3, Xe2 at 54 orbitals)
+//! is derivable under no other convention. Under six, krypton is not a closed shell at all.
+//! See AMENDMENT A1.1 of `conformance/atomworld/ELEMENTS3_PREREG.md`.
+//!
 //! # The rows below argon are generated, not typed
 //!
 //! Z = 19..54 adds 130 shells and some eight hundred declared digits. At that volume a

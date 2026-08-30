@@ -19,7 +19,7 @@
 //! projection is the right one rather than merely a smaller one.
 
 use holon_chem::dual::D2;
-use holon_chem::elements::{by_z, ALL_ELEMENTS, ShellKind};
+use holon_chem::elements::{by_symbol, by_z, ALL_ELEMENTS, ShellKind};
 use holon_chem::md::{ao_integrals, spherical_components, SPHERICAL_D};
 use holon_chem::pair::{build_basis, electron_counts, solve_basis};
 use holon_chem::fci::{jacobi_eigh, FciSpace};
@@ -324,4 +324,121 @@ fn the_projected_basis_sits_variationally_above_the_cartesian_one() {
             e_sph - e_cart
         );
     }
+}
+
+/// PLANT: a wrong transform -- the sixth row left in -- must FIRE against the freeze's counts.
+///
+/// # What is being planted, and against what
+///
+/// ELEMENTS3_PREREG states five determinant counts as model properties: xenon's atom is ONE
+/// determinant, Br2 is ~1.3e3, HBr ~3.6e2, HI ~784, and Xe2 is up to 54 spatial orbitals.
+/// Those numbers are the freeze's, written before this lane existed, and they are what
+/// AMENDMENT A1.1 identifies the component convention from.
+///
+/// The plant is the transform that keeps all six Cartesian components -- which is what a
+/// projection with the spurious `l = 0` row left in reduces to. The requirement is
+/// two-sided and that is the whole point: the correct transform must REPRODUCE every one of
+/// the freeze's counts, and the planted one must MISS every one of them. A gate that only
+/// checked the first would pass on any convention that happened to be self-consistent.
+///
+/// # Why the counts are computed and not solved
+///
+/// Under the plant, Xe2 is 58 orbitals with 108 electrons, which is about 1.8e11
+/// determinants -- building that string list would not return. The count is a binomial and
+/// is computed as one, which also makes this gate instant.
+#[test]
+fn plant_a_wrong_transform_fires_against_the_freezes_own_counts() {
+    /// The freeze's stated counts. `None` means the freeze stated an orbital count only.
+    /// (species, expected n_orb, expected n_det or None)
+    const FROZEN: [(&str, &str, usize, Option<u128>); 5] = [
+        ("Xe", "", 27, Some(1)),          // "Xe's atom is ONE determinant"
+        ("Br", "Br", 36, Some(1296)),     // "Br2 ~1.3e3"
+        ("H", "Br", 19, Some(361)),       // "HBr ~3.6e2"
+        ("H", "I", 28, Some(784)),        // "HI ~784"
+        ("Xe", "Xe", 54, None),           // "up to 54 spatial orbitals for Xe2"
+    ];
+
+    let mut fired = 0usize;
+    for (a, b, want_orb, want_det) in FROZEN {
+        let sa = by_symbol(a).unwrap();
+        let species: Vec<_> = if b.is_empty() {
+            vec![sa]
+        } else {
+            vec![sa, by_symbol(b).unwrap()]
+        };
+        let name = format!("{a}{b}");
+
+        // The declared basis: five components per d shell.
+        let n_sph: usize = species.iter().map(|s| s.n_basis()).sum();
+        // The plant: the sixth row retained, so one extra function per d shell.
+        let n_d: usize = species
+            .iter()
+            .map(|s| s.shells.iter().filter(|x| x.kind.l() == 2).count())
+            .sum();
+        let n_cart = n_sph + n_d;
+
+        // Carrier, per M-PLANT-SECTOR: the plant must actually act. A species with no d
+        // shell would leave the two identical and the plant would be scored on nothing.
+        assert!(
+            n_d > 0 && n_cart > n_sph,
+            "{name}: the plant has no sector to act on -- no d shells, so retaining the \
+             sixth row changes nothing"
+        );
+
+        let (n_elec, na, nb) = electron_counts(&species);
+        let _ = n_elec;
+        assert_eq!(
+            n_sph, want_orb,
+            "{name} is {n_sph} orbitals under the declared convention and the freeze says \
+             {want_orb}"
+        );
+        assert_ne!(
+            n_cart, want_orb,
+            "{name}: PLANT MISSED on the orbital count -- the wrong transform gives \
+             {n_cart}, the same number the freeze states, so this count does not \
+             discriminate the convention"
+        );
+
+        if let Some(want) = want_det {
+            let got_sph = binom(n_sph as u128, na as u128) * binom(n_sph as u128, nb as u128);
+            let got_cart = binom(n_cart as u128, na as u128) * binom(n_cart as u128, nb as u128);
+            assert_eq!(
+                got_sph, want,
+                "{name} is {got_sph} determinants under the declared convention and the \
+                 freeze says {want}"
+            );
+            assert_ne!(
+                got_cart, want,
+                "{name}: PLANT MISSED on the determinant count"
+            );
+            println!(
+                "plant: {name} declared {n_sph} orb / {got_sph} dets (freeze: {want_orb} / \
+                 {want}); wrong transform {n_cart} orb / {got_cart} dets -- FIRES"
+            );
+        } else {
+            println!(
+                "plant: {name} declared {n_sph} orb (freeze: {want_orb}); wrong transform \
+                 {n_cart} orb -- FIRES"
+            );
+        }
+        fired += 1;
+    }
+    assert_eq!(
+        fired, FROZEN.len(),
+        "every one of the freeze's counts has to discriminate the convention, or the \
+         amendment's identification rests on fewer numbers than it claims"
+    );
+}
+
+/// Binomial coefficient in `u128`, exact for everything this file asks of it.
+fn binom(n: u128, k: u128) -> u128 {
+    if k > n {
+        return 0;
+    }
+    let k = k.min(n - k);
+    let mut acc: u128 = 1;
+    for i in 0..k {
+        acc = acc * (n - i) / (i + 1);
+    }
+    acc
 }

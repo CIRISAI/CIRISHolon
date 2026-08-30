@@ -103,3 +103,86 @@ and the model's relativistic edge measured and displayed rather than
 denied." NOT claimed: lanthanides or anything needing f functions;
 relativistic fidelity; quantitative thermochemistry; mid-row exactness
 (DMRG-labelled means DMRG-labelled).
+
+## AMENDMENT A1 — 2026-08-30, before any E1/E2/F1 gate runs
+
+*Recorded after W1, T1 and R1's heavy half landed and before a single E1, E2 or F1
+gate has been evaluated. Disclosure of what was already known when this was
+written, because that is what pre-registration integrity turns on: the in-model
+`D_e` values for HCl, HBr and HI have been MEASURED under the corrected convention
+below and appear in the lane's record. The convention was chosen on DETERMINANT
+COUNTS alone, before any well depth existed, and this amendment changes no stake,
+no bar and no direction. The E1 negatives, Br2, and every gate verdict are unrun.
+The original text above stands unedited.*
+
+**A1.1 — the d-shell component convention was implicit at freeze, and is now
+DECLARED: five spherical components, not six Cartesian.** The engine evaluated
+d shells as six Cartesian components when this freeze was written. The freeze's
+own determinant arithmetic is derivable only under FIVE: "Xe's atom is ONE
+determinant", "Br2 ~1.3e3", "HBr ~3.6e2", HI ~784, and "up to 54 spatial orbitals
+for Xe2". Under six the engine measures Kr 361 determinants, Xe 164836, Br2
+71166096, HBr 36100, HI 16483600 and Xe2 58 orbitals — not one of which this
+freeze could have written down. Five is therefore the convention the freeze
+declared, and implementing it executes the contract rather than revising it; the
+measured six-component counts above are the discriminating evidence and are
+recorded here as such.
+
+The mechanism, because the arithmetic alone would not explain it: the six
+Cartesian d functions do not span an `l = 2` space. They span the five real solid
+harmonics PLUS `(x^2+y^2+z^2) exp(-a r^2)`, which is spherically symmetric and
+therefore `l = 0`. Carrying it gives every d shell a spurious sixth function of
+the wrong symmetry — which in a MINIMAL basis is a different model and not a
+larger one, and is exactly what turned single-determinant closed shells into
+361-determinant problems with no chemistry in the difference. The basis is a
+DECLARED INPUT, so its component convention is part of the declaration and the
+registry header now states it instead of leaving it to be inferred.
+
+Gates on the transformation, all three demonstrated before trust: every element
+below Z = 21 bit-identical (no element below scandium has a d shell, so the
+projection is never built there); per-species basis dimensions asserted against
+what the engine assembles; and a PLANTED wrong transform — the sixth row left in —
+which must fire against this freeze's own counts. witness: none (measured gate
+plus plant; the transformation is checked by the variational subspace ordering,
+which is an inequality rather than a Lean statement)
+
+**A1.2 — R1 is restated to what has a route, and the route-less set is NAMED.**
+The freeze assumed mid-row species would cross on the DMRG bridge. Measured, that
+bridge reaches six orbitals: `pair::MPS_MAX_ORBITALS = 6`, from the MPO-builder
+logs in `engine/output/mixtures1/` — LiH at six orbitals took 528 s to build its
+MPO and HCl at ten did not complete in over an hour, the construction and not the
+sweep being the whole budget. Every atom in this freeze's range is 13 to 27
+orbitals, so no DMRG cross-check is producible for any of them today.
+
+R1 restated: every atom WITH A ROUTE is dual-routed and labelled; every refusal is
+NAMED per the route-label discipline; and the referee-eligible set is the nine
+measured at or under 3e4 determinants — Ge, As, Se, Br, Kr, Sb, Te, I, Xe. The 16
+atoms with no route at all are Z = 21..27 and Z = 39..47, determinant counts 2.6e7
+to 2.0e12 (yttrium is 1971493202250). witness: none (measured)
+
+Named successor, so today's refusals become tomorrow's routes without a re-freeze:
+an MPO-builder upgrade inside the `q8-mps` crate, whose acceptance test is MPO
+construction for a 27-orbital atom in minutes followed by D1-grade validation.
+Until that exists the refusals stand as refusals.
+
+Recorded neutrally as a finding about a claim: a sprint report states Sc–Fe DMRG
+convergence. Scandium through iron are 18 orbitals each, and the measured reach is
+six, so that claim and this measurement cannot both describe the same atoms. The
+discrepancy is logged here for whoever reconciles it; nothing in this freeze
+depends on its resolution.
+
+**A1.3 — P1 gains a third radius rule, for species whose homonuclear dimer is
+infeasible.** P1's radius is DERIVED from each element's own homonuclear curve,
+and by A1.2 most mid-row homonuclear dimers cannot be computed at all. Rather than
+substitute a remembered constant, a third DECLARED rule is added: the radius is
+derived from the atom's own computed electron density, as the expectation of `r`
+over the 1-RDM. It is still derived and still per-element; it is a different rule
+and is labelled as one. A new declared `RadiusRule` variant carries it, the
+registry states it, and every surface that shows a radius — the picker included —
+distinguishes dimer-derived from density-derived per species. witness: none
+(contract gate plus plant)
+
+Plant, added to the plants section's discipline above: presenting a
+density-derived radius as dimer-derived must be REFUSED by the label machinery,
+demonstrated firing. Carrier: the refusal, asserted nonzero in the sector the
+plant acts on — a species that actually carries a density-derived radius — before
+the plant is scored. A missed plant VOIDs.

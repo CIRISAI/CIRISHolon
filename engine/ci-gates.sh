@@ -284,6 +284,22 @@ cargo build -q -p holon-tables --release --tests 2>/dev/null \
   && ok "holon-tables G1 gate builds (run is a campaign run, not a CI gate)" \
   || no "holon-tables G1 gate builds (run is a campaign run, not a CI gate)"
 
+# holon-resource: RESOURCE-1's leasing tier. Unlike holon-tables, this one is FULLY
+# enforced here — its whole suite is arithmetic and bookkeeping with no chemistry in
+# it, so it runs in milliseconds and there is no excuse for CI not to run the plants.
+#
+# The plants are the point (RESOURCE_DESIGN D13: a rule that has never fired has never
+# been demonstrated to gate). Each was mutation-checked when written — remove rung 3
+# and D10 fires; make Receipt round instead of refuse and D8 fires; remove the depth
+# check and D7 fires — so these are tests that can fail, not tests that pass.
+n_res=$(cargo test -q -p holon-resource -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_res:-0}" -gt 0 ] \
+  && ok "holon-resource reaches $n_res tests" \
+  || no "holon-resource reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q -p holon-resource 2>/dev/null >/dev/null \
+  && ok "holon-resource plants: depth cap, smuggled float, convicted child, reaper stand-down" \
+  || no "holon-resource plants: depth cap, smuggled float, convicted child, reaper stand-down"
+
 # 12. A CROSS-REFERENCE IS A WARRANT ONLY IF ITS TARGET EXISTS (team-lead's ruling,
 #     2026-08-24). Q10_PREREG.md §10 cites "M1-M6 carry over from Q9's brief unchanged" —
 #     there is no Q9 file anywhere in the repository, so that citation warrants nothing,

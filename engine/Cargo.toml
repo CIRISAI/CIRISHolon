@@ -59,6 +59,11 @@ members = [
   # core's feature resolution or the isolation gates. It is separate from holon-chem
   # because it needs std::thread and holon-chem ships into the browser artifact.
   "crates/holon-tables",
+  # holon-resource: RESOURCE-1's leasing tier -- probe before allocating, integer
+  # receipts under the merge law, the rent clause as lifecycle, a reaper that stands
+  # down on a stalled machine. ZERO dependencies (std only), so like holon-chem it
+  # cannot perturb the core's feature resolution or the isolation gates.
+  "crates/holon-resource",
 ]
 
 # Deliberately OUTSIDE the workspace, each for its own reason:

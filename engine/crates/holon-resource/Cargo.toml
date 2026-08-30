@@ -1,0 +1,18 @@
+# holon-resource: RESOURCE-1 — an allocation is a child holon, and its lifecycle is
+# the rent clause. Design: engine/RESOURCE_DESIGN.md (ADMITTED 2026-08-30).
+#
+# ZERO dependencies, std only. Nothing here may pull a crate: this layer sits under
+# everything else in the engine, so a dependency added here is a dependency added to
+# every workload that ever leases a byte. It cannot perturb the core's feature
+# resolution or the isolation gates in ci-gates.sh.
+#
+# `[profile.release]` is deliberately absent — a non-root member's own profile section
+# is silently ignored by Cargo; the workspace root carries it.
+[package]
+name = "holon-resource"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+description = "Resource holons: probe before allocating, integer receipts, the rent clause as lifecycle, and a reaper that stands down"
+
+[dependencies]

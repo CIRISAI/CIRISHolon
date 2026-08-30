@@ -15,7 +15,7 @@ looked at**, as the prereg requires.
 | **plant (ii)** the wrong mass | **CAUGHT** | derived `dt` moves by exactly `sqrt(mu'/mu)`, to 1.1e−16 relative, predicted from the masses rather than written down |
 | **plant (iii)** the DMRG label | **CAUGHT** | refused at both doors, with the slot evicted, each with a positive control |
 | **E1** the emergent negatives | **evidence, not discharged** | Ar2 and NeAr unbound — but on the engine's derived grid, not the grid E1 stakes |
-| **E2** the emergent chemical contrast | **BRANCH (b)** | N2 deepest and the nobles refuse, as staked; but NaH moves five places and ClF two |
+| **E2** the emergent chemical contrast | **BRANCH (b)** | the middle (HCl > S2 > Cl2) and the unbound tail are exactly as staked; both ends are not — NaH up four, ClF down three, SiO and N2 swapped |
 | **P1** THE PRODUCT: emergent hetero-chemistry | **BRANCH (b)** | HCl modal in 0 of 8 seeds; both controls pass, so not VOID. HCl bonds ARE forming — the *reading* cannot see them in a condensed phase |
 | **D1** the DMRG bridge earns admission | **NOT ADMITTED** | the exact side is cheap (SiO 33.9 s); the MPO builder does not finish at 10 orbitals and D1 stakes 14 and 18 |
 | **R2** the staked-pair referee gate | **OWED** | gate built and scope-refusing; blocked on the referee lane's drop, and cheap when it lands |
@@ -457,10 +457,13 @@ grid, one MPO per geometry and the chi ladder walked against it:
 | species | `n_orb` | `n_det` | points | worst \|E_dmrg − E_fci\| at χ=64 | stake |
 |---|---|---|---|---|---|
 | H2 | 2 | 4 | 16 | **5.05e−13 Ha** | 1e−8 ✔ |
-| LiH | 6 | 225 | 12 (in flight) | ≈1e−12 Ha per point so far | 1e−8 ✔ |
+| LiH | 6 | 225 | 12 | **5.59e−12 Ha** | 1e−8 ✔ |
 
 At χ=8 LiH is off by 1e−4 to 3e−4 Ha and at χ=16 and above it is at 1e−12, so
-the ladder is resolving convergence rather than reading a fixed offset. **This
+the ladder is resolving convergence rather than reading a fixed offset. The LiH
+grid cost 7,151 s for twelve points — 596 s each, essentially all of it MPO
+construction, which is the same wall D1's staked species run into and the reason
+the number above is not a discharge. **This
 says the bridge is correct where it runs. It does not say the bridge is
 admitted**, and the record the gate reads still says NONE.
 
@@ -550,19 +553,24 @@ SOLVER, not on the interpolant, so these do not depend on knot count):
 
 | pair | `n_basis` | `n_det` | `D_e` / Ha | `R_e` / a₀ | staked rank | measured rank |
 |---|---|---|---|---|---|---|
-| N2 | 10 | 14,400 | 0.239388030 | 2.256729 | 1 | **1** |
-| **NaH** | 10 | 44,100 | **0.193188744** | 3.133867 | **7** | **2** |
-| HCl | 10 | 100 | 0.148293175 | 2.536888 | 3 | 3 |
-| S2 | 18 | 23,409 | 0.133253157 | 3.706603 | 5 | 4 |
-| Cl2 | 18 | 324 | 0.064577385 | 4.024124 | 6 | 5 |
-| **ClF** | 14 | 196 | **0.060622391** | 3.341873 | **4** | **6** |
+| **SiO** | 14 | 132,496 | **0.263676281** | 2.908134 | **2** | **1** |
+| **N2** | 10 | 14,400 | **0.239388030** | 2.256729 | **1** | **2** |
+| **NaH** | 10 | 44,100 | **0.193188744** | 3.133867 | **7** | **3** |
+| HCl | 10 | 100 | 0.148293175 | 2.536888 | 3 | 4 |
+| S2 | 18 | 23,409 | 0.133253157 | 3.706603 | 5 | 5 |
+| Cl2 | 18 | 324 | 0.064577385 | 4.024124 | 6 | 6 |
+| **ClF** | 14 | 196 | **0.060622391** | 3.341873 | **4** | **7** |
 | Ar2 | 18 | 1 | **UNBOUND** | — | 8 | 8 |
 | NeAr | 14 | 1 | **UNBOUND** | — | 9 | 9 |
-| SiO | 14 | 132,496 | running (by hand) | | 2 | |
+
+SiO was measured by hand on the determinant route (`examples/e2_byhand.rs`), 41
+points at 1,463 s total, because `generate_pair_table` refuses it — see D1's
+section on why "no automatic route" is not "unreachable".
 
 ### What holds
 
-* **N2 is deepest**, as staked.
+* **The two deepest bonds are SiO and N2**, and they are the two the stake puts
+  at the top — in the other order.
 * **Both closed-shell negatives are UNBOUND** — no minimum deeper than the
   declared `WELL_MIN_DEPTH = 1e-4 Ha`. Nothing in the engine knows argon and neon
   are noble: `locate_well` looks for a minimum and reports `None`, through the
@@ -577,12 +585,20 @@ SOLVER, not on the interpolant, so these do not depend on knot count):
   re-read on the grid the drop declares.
 * **S2 > Cl2**, as staked.
 
-### The two inversions, and one of them is gross
+### The three inversions, and one of them is gross
 
-* **NaH moves from seventh to second** — five places. At 0.193 Ha it comes out
+* **NaH moves from seventh to third** — four places. At 0.193 Ha it comes out
   deeper than HCl, where the stake puts it shallowest of every bound pair. This
   is a GROSS inversion by any reading, and it is branch (b).
-* **ClF moves from fourth to sixth**, below both S2 and Cl2 — two places.
+* **ClF moves from fourth to seventh**, below both S2 and Cl2 — three places, and
+  it ends up the shallowest bound pair in the set.
+* **SiO and N2 swap** the top two places. Adjacent, and the two are 10% apart
+  (0.2637 against 0.2394), so this one is the least of the three — but it is an
+  inversion of the stake's headline claim, and it is reported rather than rounded
+  into "N2 and SiO are the deepest, broadly".
+
+The middle of the ordering — HCl > S2 > Cl2 — is exactly as staked, and so is the
+unbound tail. What the stake gets wrong is both ends and NaH.
 
 ### Investigated, as far as this lane can honestly take it
 

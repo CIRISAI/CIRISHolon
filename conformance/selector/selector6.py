@@ -56,6 +56,67 @@ class Refused(Exception):
     pass
 
 
+class LabelAdapter:
+    """refute_lib's RULE-B expects landscape_sweep's FiniteGroup interface;
+    the census carries its own group object.  This adapts one to the other and
+    nothing more -- it exposes only what RULE-B reads, so a construction tag
+    cannot reach the label even by accident (there is none to reach)."""
+
+    def __init__(self, MUL, INV, IDE, n):
+        self.MUL = np.asarray(MUL, dtype=np.int64)
+        self.INV = np.asarray(INV, dtype=np.int64)
+        self.IDE = int(IDE)
+        self.order = int(n)
+        self._cls = None
+        self._comm = None
+        self._ord = None
+
+    @property
+    def classes(self):
+        if self._cls is None:
+            n, M, I = self.order, self.MUL, self.INV
+            lab = [-1] * n
+            out = []
+            for g in range(n):
+                if lab[g] >= 0:
+                    continue
+                orb = {int(M[M[x, g], I[x]]) for x in range(n)}
+                for h in orb:
+                    lab[h] = len(out)
+                out.append(orb)
+            self._cls = out
+        return self._cls
+
+    @property
+    def commutator_subgroup(self):
+        if self._comm is None:
+            n, M, I = self.order, self.MUL, self.INV
+            S = {int(M[M[a, b], M[I[a], I[b]]]) for a in range(n) for b in range(n)}
+            changed = True
+            while changed:
+                changed = False
+                new = {int(M[x, y]) for x in S for y in S} - S
+                if new:
+                    S |= new
+                    changed = True
+            self._comm = S
+        return self._comm
+
+    @property
+    def element_orders(self):
+        if self._ord is None:
+            M, ide = self.MUL, self.IDE
+            out = []
+            for g in range(self.order):
+                o, cur = 1, g
+                while cur != ide:
+                    cur = int(M[cur, g])
+                    o += 1
+                out.append(o)
+            self._ord = out
+        return self._ord
+
+
 def build_family(W):
     """F(G) = {GAUGE[g] . step^d : g in G, d | ord(step)}, deduplicated, with
     its gauge-orbit partition.  A function of (MUL, INV) with no choices."""
@@ -191,16 +252,21 @@ def run_group(W, members, perms, orbit_of, reps, sizes, powers, homes=None,
 
 
 def verdict(per_rung, Fsize):
-    """SELECT(G) at the finest decided rung, with ruling 3's refusal."""
-    kstar = None
-    for k in range(4, -1, -1):
+    """SELECT(G) at the finest decided rung, with ruling 3's refusal.
+
+    Ruling 3: a VOID at rung k removes rung k AND EVERY FINER RUNG.  So the
+    surviving rungs are 0..(coarsest voiding rung - 1) -- NOT "the finest rung
+    that happens to have no VOIDs".  The distinction bites when a coarse rung
+    voids and a finer one does not: taking the finer one would report a verdict
+    computed above a rung the run could not decide.
+    """
+    kstar = 4
+    for k in range(5):
         r = per_rung.get(k)
-        if r is None or r["sel"] is None:
-            continue
-        if r["voids"] == 0:
-            kstar = k
+        if r is None or r["sel"] is None or r["voids"] > 0:
+            kstar = k - 1
             break
-    if kstar is None or kstar < MIN_DECIDED_RUNG:
+    if kstar < MIN_DECIDED_RUNG:
         return None, kstar, None
     sel = per_rung[kstar]["sel"]
     return (0 < sel < Fsize), kstar, sel

@@ -11,7 +11,7 @@ use std::io::Write;
 
 fn main() {
     let names = ["H2", "HHe", "He2", "HLi", "Li2", "HCl", "ClF", "Cl2", "N2"];
-    println!("pair\tknots\texit\tworst_resid\tconverged()");
+    println!("pair\tknots\texit\tworst_resid\tconverged()\tE_bits\tE_value");
     let _ = std::io::stdout().flush();
     for n in names {
         let (a, b) = if let Some(stem) = n.strip_suffix('2') {
@@ -22,12 +22,23 @@ fn main() {
             (by_symbol(&n[..at]).unwrap(), by_symbol(&n[at..]).unwrap())
         };
         let pt = generate_pair_table(a, b, 24);
+        // Every knot's energy as a RAW BIT PATTERN, folded into one digest, plus the
+        // last knot's value. A tolerance change that alters WHEN Davidson stops alters the
+        // energy it stops at, and only bits can say whether it did.
+        let mut digest: u64 = 0xcbf2_9ce4_8422_2325;
+        for e in pt.e.iter() {
+            for b in e.to_bits().to_le_bytes() {
+                digest ^= b as u64;
+                digest = digest.wrapping_mul(0x1000_0000_01b3);
+            }
+        }
         println!(
-            "{n}\t{}\t{}\t{:.4e}\t{}",
+            "{n}\t{}\t{}\t{:.4e}\t{}\t{digest:016x}\t{:.15}",
             pt.r.len(),
             pt.meta.exit.label(),
             pt.meta.worst_residual,
-            pt.meta.converged()
+            pt.meta.converged(),
+            pt.e.last().copied().unwrap_or(f64::NAN)
         );
         let _ = std::io::stdout().flush();
         let _ = SolveExit::Converged;

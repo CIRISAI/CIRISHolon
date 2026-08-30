@@ -672,6 +672,66 @@ and Na2 do not enter the sandbox.
 
 ---
 
+## The solver was asked for a tolerance it cannot deliver
+
+Found by adding the exit-reason enum the lead requested, which is not what it was
+requested for.
+
+`davidson_eigh_from` accepts a new subspace direction only if its norm after
+orthogonalisation exceeds **1e-10**. `solve_determinant` was asking for **1e-11** —
+an order of magnitude below the solver's own expansion floor, and therefore
+unreachable by construction on any system whose subspace has to keep growing.
+
+Every multi-determinant curve in the campaign was stopping in a band far too tight
+to be six independent limits:
+
+| pair | worst residual | exit (old ask) |
+|---|---|---|
+| H2 | 4.74e−13 | converged |
+| H-He | 2.67e−15 | converged |
+| He2 | 0 | trivial |
+| H-Li | 9.75e−11 | **stagnated** |
+| Li2 | 9.79e−11 | **stagnated** |
+| H-Cl | 9.71e−11 | **stagnated** |
+| ClF | 10.00e−11 | **stagnated** |
+| Cl2 | 9.51e−11 | **stagnated** |
+| N2 | 9.82e−11 | **stagnated** |
+
+The heavy atoms were not failing to converge. They were being asked for something
+the solver cannot give.
+
+### The fix taken, and the one deferred
+
+Per the lead's ruling: **raise the ask to 1e-10** (`DAVIDSON_REQUESTED_TOLERANCE`),
+which is truth-in-labeling — the delivered tolerance is bounded below by the
+expansion floor, and a deeper ask is a claim the solver cannot honour. Lowering
+the floor is the real improvement and is a named successor carrying a re-banking
+campaign; it is deliberately not done here and must never be done as a side effect.
+
+### One correction to the ruling's premise, measured
+
+The ruling expected zero numerical blast radius. **That is true for six of nine
+curves and false for three.** Where a knot's residual crosses 1e-10 at an earlier
+iteration than the one it would have stagnated on, Davidson now returns earlier,
+with a slightly different vector:
+
+| artifact | knots changed | worst \|dE\| |
+|---|---|---|
+| shipped `HCl.json` | **0 of 192** | 0 |
+| shipped `Cl2.json` | **48 of 192** | **1.489e−11 Ha** |
+
+1.489e−11 is 150× inside R2's 1e−10 pointwise stake and inside Cl2's own declared
+uncertainty, which is itself **unchanged** at 1.000525e−10 — so the provenance gate
+reads the same number and no gate moves. B1's bit-identity reference is untouched
+(the H2 path does not move). The shipped tables were REGENERATED rather than left
+as artifacts their own emitter no longer produces.
+
+So the ruling stands on its reasoning; only "zero" needed to become "1.489e−11 on
+one of two shipped curves", and that is in the record because a premise checked and
+found slightly wrong is worth more than a premise inherited.
+
+---
+
 ## Naming the sprint team's N2 number
 
 Their Track-2 receipt quotes `E = -131.278565811 Ha` for "N2". This engine's N2

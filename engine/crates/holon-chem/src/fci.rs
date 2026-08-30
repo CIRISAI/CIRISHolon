@@ -1171,6 +1171,34 @@ impl SolveExit {
     }
 }
 
+/// The residual [`solve_determinant`] asks Davidson for.
+///
+/// # Why 1e-10 and not 1e-11, which is what it used to ask
+///
+/// It asked for 1e-11 and could never get it. `davidson_eigh_from` accepts a new subspace
+/// direction only if its norm after orthogonalisation exceeds **1e-10** (see the
+/// `if nw > 1e-10` guard in its expansion block), so **the delivered tolerance is bounded
+/// below by that expansion floor**: any ask deeper than 1e-10 is unreachable by
+/// construction on a system whose subspace has to keep growing. Every multi-determinant
+/// curve this crate ships was stopping between 9.5e-11 and 10.0e-11 with
+/// [`SolveExit::Stagnated`] — six systems in a band far too tight to be six independent
+/// limits.
+///
+/// Raising the ask to the floor is truth-in-labeling. It changes no solver behaviour that
+/// was reachable before, and it restores meaning to [`crate::pair::CONVERGED_RESIDUAL`]:
+/// at a REACHABLE target a solve below the bar genuinely exits `Converged`, so the bar
+/// separates converged from not instead of sorting gave-up solves in with finished ones.
+/// Solves that stagnate ABOVE 1e-10 still stagnate and are still refused.
+///
+/// # This is the label, not the fix
+///
+/// Lowering the expansion floor is the real solver improvement and is a named successor
+/// with its own re-banking campaign — B1's bit-identity reference, the banked records, the
+/// referee pins all move when it lands. It is deliberately not done here and must never be
+/// done as a side effect. Until it lands, an ask deeper than this constant is a claim the
+/// solver cannot honour.
+pub const DAVIDSON_REQUESTED_TOLERANCE: f64 = 1e-10;
+
 /// Determinant count past which [`solve_determinant`] REFUSES outright.
 ///
 /// Distinct from [`MPS_ROUTE_THRESHOLD`], which is a routing preference: this one is a
@@ -1728,7 +1756,7 @@ pub fn solve_determinant_from(
         space,
         &ci0,
         &diag,
-        1e-11,
+        DAVIDSON_REQUESTED_TOLERANCE,
         DAVIDSON_MAX_ITER.load(std::sync::atomic::Ordering::Relaxed),
         start_vector,
     );

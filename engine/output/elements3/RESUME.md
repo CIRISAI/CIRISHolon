@@ -889,3 +889,36 @@ and for four of these five stagnation came first anyway.
 Publishing the unqualified generalisation would have made a claim about germanium that
 germanium does not support. It was my framing, endorsed before it was checked; checking it cost
 one minute.
+
+### Suite verdict against fe18572: RED, and it is not my test
+
+    149 passed, 1 FAILED, EXIT=101
+    the_committed_table_is_this_build_s_own_output  (water.rs:204)
+      committed node (51,51,39)  -7.21533943703889236e-13
+      this build's solver        -1.17628129459035335e-12
+
+The water lane's banked-table liveness gate, the same shape as my dimer gate, doing its job.
+
+**My reading of the cause, a lead and not a verdict: this is the germanium effect one lane
+over.** Raising the requested tolerance from 1e-11 to 1e-10 (100c971) changes WHERE a solve
+stops, not merely how it is labelled — germanium exited one iteration early at 9.17e-11 where
+the tighter ask reached 8.85e-11. Any banked artifact holding a quantity sensitive to the last
+iteration is exposed to that. The water node is a near-zero (~1e-12) where one iteration is the
+whole value, and the shift is 4.5e-13, the same order as germanium's 3e-12. Consistent, NOT
+proved: `fe18572`'s genericization is the other candidate, asserted arithmetic-unchanged but not
+demonstrated against a near-zero.
+
+**Opposite disposition from mine, by the same rule.** My record was ANNOTATED because no energy
+moved, only a threshold. Here a NUMBER moved, so water's table must be REGENERATED — which is
+what my own dimer gate's message already says ("if the engine has moved... the record must be
+regenerated, not adjusted"). Same principle, opposite outcomes, and the discriminator is whether
+an energy changed or a label did.
+
+**Not touched.** It is their record, and regenerating discards the old table. Offered a cheap
+discriminator instead: re-emit one node under the pre-100c971 ask. Reproducing the committed
+-7.215e-13 makes the tolerance change the cause and regeneration correct; failing to reproduce
+means the genericization moved something, and regenerating would erase the only artifact that
+shows it.
+
+My own gates are green in that run — multiplicity with the emptied exemption list, the
+route-scope tripwire, W1 masks, the dimer bank, P1 radius labels.

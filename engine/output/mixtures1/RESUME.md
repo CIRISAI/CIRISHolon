@@ -27,6 +27,27 @@ orbitals, 528.48 s at 6, did not finish in over an hour at 10. `mpo_cost_HCl.log
 has no `.DONE` by design — "did not complete" IS the reading, and finishing it
 would only sharpen a number already past the point of usefulness.
 
+## A solver constant moved, and one shipped table moved with it
+
+`DAVIDSON_REQUESTED_TOLERANCE` is now **1e-10**, replacing an unreachable 1e-11
+ask (`cd9971c`). If you regenerate anything, know that:
+
+* **`docs/atoms/tables/Cl2.json` moved on 48 of 192 knots, worst 1.489e-11 Ha.**
+  Both shipped tables were regenerated at that commit, so the tree is
+  reproducible from its emitter as it stands. `HCl.json` did not move at all.
+* Nothing else did. B1's bit-identity reference is untouched (the H2 path does
+  not shift), Cl2's declared uncertainty is unchanged at 1.000525e-10, and the
+  movement is 150x inside R2's 1e-10 pointwise stake.
+* **The successor will move everything.** Lowering the expansion floor at
+  `davidson_eigh_from`'s `nw > 1e-10` guard is the real fix and carries a
+  re-banking campaign: B1's reference, the banked records, the referee pins. It is
+  deliberately not done, and it must not be done as a side effect of anything.
+
+`examples/exit_scope.rs` is the instrument for this: per-curve FNV digests over
+raw energy bit patterns. Run it before and after any solver change — "identical"
+is a claim only bits can settle, and this one was 6-of-9 identical, which is the
+shape that passes a spot check.
+
 ## Nothing is running
 
 Every detached run has landed or been deliberately stopped. The `d1_staked*` and

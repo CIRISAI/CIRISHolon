@@ -47,6 +47,8 @@ zero_outside_perimeter  trimer boundary condition
 # --- periodic table row slices and basis coefficients ---
 FIRST_ROW               the first-row species array, preserved for backward compatibility and row-specific tools
 SECOND_ROW              the second-row species array (Na..Ar), consumed by row-specific tools and tests
+THIRD_ROW               the third-row species array (K..Kr), consumed by ELEMENTS-3's row-specific gates and examples
+FOURTH_ROW              the fourth-row species array (Rb..Xe), same; the two are separate so a row can be swept alone
 C_3D                    universal STO-3G 3d contraction coefficients for d-shell basis functions
 is_exact_in_model       solver route classification predicate for method provenance
 geometry_problem        split-out assembly for D1 comparison without solving twice

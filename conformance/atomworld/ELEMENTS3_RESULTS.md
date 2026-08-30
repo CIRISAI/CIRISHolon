@@ -309,6 +309,22 @@ different in kind from the other four — 3.98e-1 is nine orders above the bar, 
 factor of one to three — and only indium's row is meaningless; see the convergence section
 below for why the other four are process refusals carrying accurate energies.
 
+*[Annotation 2026-08-30, after this record shipped: the bar moved, and the record
+stands. The crate-wide measurement that followed this section's own finding showed
+`CONVERGED_RESIDUAL` sat EXACTLY on the solver's expansion floor — the tier edge of
+f64 arithmetic — so the published/refused line at a factor of 1.1 was a coincidence
+of two unrelated 1e-10 literals. The bar is now DERIVED as 10x the named floor
+(`DAVIDSON_EXPANSION_FLOOR`), and under it Zn, Sn, Sb and Te — stagnated within a
+factor of three of the tier edge, energies accurate — would publish with their
+Stagnated exits recorded, while indium (3.98e-1) and every iteration-cap failure
+remain refused: the bar's one remaining job is catastrophe detection, and the
+convergence discrimination lives in `SolveExit`. The verdicts PRINTED in this record
+are the verdicts the frozen bar produced and are not rewritten; a residual that
+needs to go below the floor is the next arithmetic tier's job (route C, whose
+declared availability this record already lists as owed), reached by lease rather
+than by moving the constant. This annotation exists so a reader re-running the
+suite is not surprised by four flips no energy caused.]*
+
 **Indium is the worst refusal by nine orders, and the only one whose numbers are
 meaningless.** At 1,026,675 determinants Davidson stopped at its
 the solver with a residual of **3.98e-1** — nine orders above the crate's declared

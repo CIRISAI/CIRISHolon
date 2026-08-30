@@ -1197,7 +1197,24 @@ impl SolveExit {
 /// referee pins all move when it lands. It is deliberately not done here and must never be
 /// done as a side effect. Until it lands, an ask deeper than this constant is a claim the
 /// solver cannot honour.
-pub const DAVIDSON_REQUESTED_TOLERANCE: f64 = 1e-10;
+/// The f64 tier's declared arithmetic boundary for this solver: the norm below which a
+/// Gram-Schmidt'd candidate direction is roundoff rather than information, and therefore
+/// the floor under every deliverable residual. This is a TIER EDGE, not a tolerance
+/// choice — three formerly independent 1e-10 literals (both orthogonalisation guards and
+/// the requested tolerance) were this one boundary written three times, and the
+/// publication bar sat exactly ON it, which made six of nine staked curves' verdicts a
+/// coin flip against ambient perturbation (measured 2026-08-30: every non-trivial
+/// all-electron curve stagnates at 96-100% of it).
+///
+/// A solve that exits `SolveExit::Stagnated` with its residual near this floor has not
+/// failed — it has EXHAUSTED THIS TIER. Anything that genuinely needs a deeper residual
+/// does not get it by editing this constant: it overflows to the next tier of arithmetic
+/// (the high-precision referee route, the same boundary ELEMENTS-3 recorded as "route C,
+/// availability owed") through a resource lease, per the holon lifecycle. Editing this
+/// number moves no energy and every verdict; it is load-bearing for every lane's gates.
+pub const DAVIDSON_EXPANSION_FLOOR: f64 = 1e-10;
+
+pub const DAVIDSON_REQUESTED_TOLERANCE: f64 = DAVIDSON_EXPANSION_FLOOR;
 
 /// Determinant count past which [`solve_determinant`] REFUSES outright.
 ///
@@ -1437,7 +1454,7 @@ pub fn davidson_eigh_from(
             basis.clear();
             hbasis.clear();
             basis.push(normalised(&x));
-            if nd_ > 1e-10 {
+            if nd_ > DAVIDSON_EXPANSION_FLOOR {
                 scale(1.0 / nd_, &mut d);
                 basis.push(d);
             }
@@ -1478,7 +1495,7 @@ pub fn davidson_eigh_from(
                 axpy(-p, b, &mut w);
             }
             let nw = norm(&w);
-            if nw > 1e-10 {
+            if nw > DAVIDSON_EXPANSION_FLOOR {
                 scale(1.0 / nw, &mut w);
                 basis.push(w);
                 added = true;

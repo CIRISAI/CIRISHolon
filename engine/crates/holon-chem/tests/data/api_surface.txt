@@ -82,10 +82,19 @@ CONVERGED_RESIDUAL      the convergence bar a generated curve is judged against;
 
 # --- the solve-exit reason (MIXTURES-1 lane; classified by that lane) ---
 solve_finished          the HONEST convergence verdict, reported and deliberately not
-#                       enforced: it consults SolveExit as well as the residual, and every
-#                       multi-determinant curve this crate ships currently fails it because
-#                       davidson's subspace-expansion floor (1e-10) sits an order of
-#                       magnitude above the tolerance solve_determinant asks for (1e-11).
-#                       Enforcing it is a decision about the SOLVER, so the fact is exposed
-#                       here for a consumer that wants it while `converged` stays as it was.
+#                       enforced: it consults SolveExit as well as the residual. Updated
+#                       2026-08-30: the ask now equals the named tier edge
+#                       (DAVIDSON_EXPANSION_FLOOR) so solves that squeak under the floor
+#                       exit Converged, those pinned at it exit Stagnated, and the
+#                       publication bar is derived a decade above the edge — see the two
+#                       constants' doc comments for the ruling. Enforcing this verdict is
+#                       a decision about the SOLVER, so the fact is exposed here for a
+#                       consumer that wants it while `converged` stays as it was.
+UNDECLARED_RADIUS       real API whose consumer is outside this crate: holon-render's
+#                       sandbox draw path takes it as the NAMED fallback for a species
+#                       whose homonuclear equilibrium was never measured — deliberately
+#                       larger than every declared radius but beryllium's, so an
+#                       undeclared species looks odd rather than plausibly small. The
+#                       library itself must not read it: inside the library the honest
+#                       answer is the Option::None it accompanies.
 #                       Nothing in the library reads it BECAUSE that is the point.

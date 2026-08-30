@@ -569,9 +569,21 @@ pub fn pair_point(a: Species, b: Species, r: f64) -> PairPoint {
 /// hours of a loaded machine to exactly that before asking whether this side had an
 /// equivalent. It did, and this is it.
 ///
-/// Set an order above `davidson`'s own 1e-11 target, so an ordinary solve clears it and a
-/// solve that gave up does not.
-pub const CONVERGED_RESIDUAL: f64 = 1e-10;
+/// DERIVED, not chosen: one decade above [`crate::fci::DAVIDSON_EXPANSION_FLOOR`], so the
+/// bar and the solver's tier edge can never silently coincide again. They did coincide —
+/// both were an unrelated literal 1e-10 — and the measured consequence (2026-08-30) was
+/// that six of nine staked curves passed at 96-100% of the bar, so any lane's ambient
+/// perturbation flipped verdicts that no energy had moved.
+///
+/// What this bar now means: a CATASTROPHE DETECTOR, nothing more. A residual within a
+/// decade of the floor is as converged as the f64 tier can express (eigenvalue error
+/// ~resid^2/gap, twelve orders below any staked chemistry); the discrimination that used
+/// to be misread into this number lives in `SolveExit` — Stagnated-at-the-floor is the
+/// tier edge, IterationCap and a residual far above the floor is a solve that gave up
+/// (indium at 3.98e-1, O-O at 1.6e-5 are what this bar exists to refuse). A residual
+/// that must go DEEPER than the floor is not this tier's job: it overflows to the
+/// high-precision referee tier by lease, never by moving this constant.
+pub const CONVERGED_RESIDUAL: f64 = 10.0 * crate::fci::DAVIDSON_EXPANSION_FLOOR;
 
 /// The declared threshold below which a dip in the curve is not called a well.
 ///

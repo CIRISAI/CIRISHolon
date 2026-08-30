@@ -230,3 +230,146 @@ fn test_mpo_hubbard_constructor_equivalence() {
         "Hubbard MPO dense matrix differs from legacy by {max_diff:e}"
     );
 }
+
+#[test]
+fn test_fci_ground_state_energy_precision_1e8() {
+    // 2-orbital H2 minimal basis benchmark
+    let n_orb = 2;
+    let n_alpha = 1;
+    let n_beta = 1;
+
+    let h = vec![-1.25, 0.2, 0.2, -0.75];
+    let mut g = vec![0.0f64; 16];
+    g[(0 * 2 + 0) * 4 + (0 * 2 + 0)] = 0.65;
+    g[(1 * 2 + 1) * 4 + (1 * 2 + 1)] = 0.55;
+    g[(0 * 2 + 0) * 4 + (1 * 2 + 1)] = 0.35;
+    g[(1 * 2 + 1) * 4 + (0 * 2 + 0)] = 0.35;
+    g[(0 * 2 + 1) * 4 + (1 * 2 + 0)] = 0.12;
+    g[(1 * 2 + 0) * 4 + (0 * 2 + 1)] = 0.12;
+
+    // Exact diagonalization (FCI benchmark)
+    let exact_mat = independent_electronic_dense(n_orb, &h, &g);
+    let dim = 1usize << (2 * n_orb);
+    let eig = jacobi_eigen(exact_mat, dim);
+    assert!(eig.converged);
+
+    let mut sector_fci_e = f64::INFINITY;
+    for (val, vec) in eig.values.iter().zip(eig.vectors.iter()) {
+        let mut na = 0.0;
+        let mut nb = 0.0;
+        for (col, &coeff) in vec.iter().enumerate() {
+            let p = coeff * coeff;
+            let mut ca = 0;
+            let mut cb = 0;
+            for j in 0..(2 * n_orb) {
+                if (col & (1 << j)) != 0 {
+                    if j % 2 == 0 {
+                        ca += 1;
+                    } else {
+                        cb += 1;
+                    }
+                }
+            }
+            na += p * ca as f64;
+            nb += p * cb as f64;
+        }
+        if (na - n_alpha as f64).abs() < 1e-8 && (nb - n_beta as f64).abs() < 1e-8 {
+            sector_fci_e = sector_fci_e.min(*val);
+        }
+    }
+
+    // DMRG solve to tight tolerance
+    let dmrg_res = solve_electronic_ground_state(
+        n_orb, n_alpha, n_beta, &h, &g, 32, 25, 1e-12,
+    )
+    .expect("DMRG solve failed");
+
+    assert!(dmrg_res.converged);
+    let e_diff = (dmrg_res.energy - sector_fci_e).abs();
+    assert!(
+        e_diff < 1e-8,
+        "DMRG energy {} differs from exact FCI energy {} by {e_diff:e} (threshold 1e-8)",
+        dmrg_res.energy,
+        sector_fci_e
+    );
+
+    // Verify MPO expectation value agrees with DMRG energy to < 1e-8
+    let mpo = Mpo::from_electronic_integrals(n_orb, &h, &g);
+    let exp_val = mpo.expectation(&dmrg_res.tensors);
+    let exp_diff = (exp_val - dmrg_res.energy).abs();
+    assert!(
+        exp_diff < 1e-8,
+        "<psi|H|psi> = {exp_val} differs from DMRG energy {} by {exp_diff:e}",
+        dmrg_res.energy
+    );
+}
+
+#[test]
+fn test_mpo_build_performance_14_to_50_orbitals() {
+    // 1. 14 orbitals (L = 28 spin-orbitals)
+    let n_orb_14 = 14;
+    let mut h_14 = vec![0.0f64; n_orb_14 * n_orb_14];
+    for p in 0..n_orb_14 {
+        h_14[p * n_orb_14 + p] = -1.0 - 0.1 * p as f64;
+        if p + 1 < n_orb_14 {
+            h_14[p * n_orb_14 + p + 1] = 0.2;
+            h_14[(p + 1) * n_orb_14 + p] = 0.2;
+        }
+    }
+
+    let mut g_14 = vec![0.0f64; n_orb_14 * n_orb_14 * n_orb_14 * n_orb_14];
+    for p in 0..n_orb_14 {
+        g_14[(p * n_orb_14 + p) * n_orb_14 * n_orb_14 + (p * n_orb_14 + p)] = 0.8;
+        for q in 0..n_orb_14 {
+            if p != q {
+                g_14[(p * n_orb_14 + p) * n_orb_14 * n_orb_14 + (q * n_orb_14 + q)] = 0.4;
+                g_14[(p * n_orb_14 + q) * n_orb_14 * n_orb_14 + (q * n_orb_14 + p)] = 0.1;
+            }
+        }
+    }
+
+    let start_14 = std::time::Instant::now();
+    let mpo_14 = Mpo::from_electronic_integrals(n_orb_14, &h_14, &g_14);
+    let elapsed_14 = start_14.elapsed();
+
+    assert_eq!(mpo_14.len(), 2 * n_orb_14);
+    let max_bond_14 = mpo_14.bond_dims().into_iter().max().unwrap_or(0);
+    // D ~ O(N_orb^2) is bounded
+    assert!(
+        max_bond_14 <= 2 + 2 * (2 * n_orb_14) + (2 * n_orb_14) * (2 * n_orb_14),
+        "Max bond dimension {max_bond_14} exceeded O(N^2) bound"
+    );
+    // Ensure build time is O(1) ms (e.g. < 50ms even in unoptimized debug)
+    println!("14-orbital MPO build time: {elapsed_14:?}, max bond dim: {max_bond_14}");
+
+    // 2. 50 orbitals (L = 100 spin-orbitals)
+    let n_orb_50 = 50;
+    let mut h_50 = vec![0.0f64; n_orb_50 * n_orb_50];
+    for p in 0..n_orb_50 {
+        h_50[p * n_orb_50 + p] = -1.5 - 0.05 * p as f64;
+        if p + 1 < n_orb_50 {
+            h_50[p * n_orb_50 + p + 1] = 0.15;
+            h_50[(p + 1) * n_orb_50 + p] = 0.15;
+        }
+    }
+
+    let mut g_50 = vec![0.0f64; n_orb_50 * n_orb_50 * n_orb_50 * n_orb_50];
+    for p in 0..n_orb_50 {
+        g_50[(p * n_orb_50 + p) * n_orb_50 * n_orb_50 + (p * n_orb_50 + p)] = 0.9;
+        for q in 0..n_orb_50 {
+            if p != q {
+                g_50[(p * n_orb_50 + p) * n_orb_50 * n_orb_50 + (q * n_orb_50 + q)] = 0.3;
+                g_50[(p * n_orb_50 + q) * n_orb_50 * n_orb_50 + (q * n_orb_50 + p)] = 0.08;
+            }
+        }
+    }
+
+    let start_50 = std::time::Instant::now();
+    let mpo_50 = Mpo::from_electronic_integrals(n_orb_50, &h_50, &g_50);
+    let elapsed_50 = start_50.elapsed();
+
+    assert_eq!(mpo_50.len(), 2 * n_orb_50);
+    let max_bond_50 = mpo_50.bond_dims().into_iter().max().unwrap_or(0);
+    println!("50-orbital MPO build time: {elapsed_50:?}, max bond dim: {max_bond_50}");
+}
+

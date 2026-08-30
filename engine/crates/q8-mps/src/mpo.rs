@@ -209,239 +209,374 @@ fn term_operator_at_site(factors: &[(usize, bool)], k: usize) -> Op2 {
     op
 }
 
-#[derive(Clone)]
-struct Term {
-    coeff: f64,
-    ops: Vec<Op2>,
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
+pub enum Channel {
+    Start,
+    Finish,
+    LeftCd(usize),
+    LeftCm(usize),
+    LeftN(usize),
+    LeftCdCd(usize, usize),
+    LeftCmCm(usize, usize),
+    LeftPair(usize, usize),    // CD at x1, CM at x2
+    LeftPairRev(usize, usize), // CM at x1, CD at x2
+    RightCd(usize),
+    RightCm(usize),
 }
 
-impl Mpo {
-    /// Build an MPO from a list of local operator strings and compress it with SVD.
-    fn from_terms(l: usize, terms_in: Vec<Term>) -> Self {
-        if l == 0 {
+impl Channel {
+    #[inline]
+    pub fn idle_op(&self) -> Op2 {
+        match self {
+            Channel::Start | Channel::Finish => I2,
+            Channel::LeftCd(_) | Channel::LeftCm(_) => Z2,
+            Channel::LeftN(_)
+            | Channel::LeftCdCd(_, _)
+            | Channel::LeftCmCm(_, _)
+            | Channel::LeftPair(_, _)
+            | Channel::LeftPairRev(_, _) => I2,
+            Channel::RightCd(_) | Channel::RightCm(_) => Z2,
+        }
+    }
+}
+
+#[inline]
+fn canonicalize_and_add_term(
+    builder: &mut MpoBuilder,
+    mut factors: [(usize, bool); 4],
+    len: usize,
+    mut coeff: f64,
+) {
+    if coeff.abs() < 1e-15 || len == 0 {
+        return;
+    }
+
+    // Sort factors into ascending site order by adjacent transpositions
+    let n = len;
+    let mut i = 0;
+    while i < n {
+        let mut swapped = false;
+        for j in 0..(n - 1) {
+            if factors[j].0 > factors[j + 1].0 {
+                factors.swap(j, j + 1);
+                coeff = -coeff;
+                swapped = true;
+            } else if factors[j].0 == factors[j + 1].0 {
+                // If same site: ensure (true) is before (false)
+                // (false, true) -> c_s c_s^\dagger = 1 - c_s^\dagger c_s
+                if !factors[j].1 && factors[j + 1].1 {
+                    // Split: coeff * (1 - c^\dagger c)
+                    // Part 1: coeff * 1 (remove both factors)
+                    let mut rem = factors;
+                    for k in (j + 2)..n {
+                        rem[k - 2] = rem[k];
+                    }
+                    canonicalize_and_add_term(builder, rem, n - 2, coeff);
+
+                    // Part 2: -coeff * c^\dagger c
+                    factors[j].1 = true;
+                    factors[j + 1].1 = false;
+                    coeff = -coeff;
+                    swapped = true;
+                }
+            }
+        }
+        if !swapped {
+            break;
+        }
+        i += 1;
+    }
+
+    // Check for duplicate creation or annihilation at the same site (e.g. c_s^\dagger c_s^\dagger = 0)
+    for j in 0..(n.saturating_sub(1)) {
+        if factors[j].0 == factors[j + 1].0 && factors[j].1 == factors[j + 1].1 {
+            return;
+        }
+    }
+
+    builder.add_sorted_term_factors(&factors[..n], coeff);
+}
+
+/// A direct Finite-State Machine / Auto-MPO builder for fermionic and electronic Hamiltonians.
+pub struct MpoBuilder {
+    pub l: usize,
+    structural_transitions: Vec<std::collections::BTreeMap<(Channel, Channel), Op2>>,
+    coupling_transitions: Vec<std::collections::BTreeMap<(Channel, Channel), Op2>>,
+    active_channels: Vec<std::collections::BTreeSet<Channel>>,
+}
+
+impl MpoBuilder {
+    pub fn new(l: usize) -> Self {
+        let mut active = vec![std::collections::BTreeSet::new(); l + 1];
+        if l > 0 {
+            active[0].insert(Channel::Start);
+            for b in 1..l {
+                active[b].insert(Channel::Start);
+                active[b].insert(Channel::Finish);
+            }
+            active[l].insert(Channel::Finish);
+        }
+        Self {
+            l,
+            structural_transitions: vec![std::collections::BTreeMap::new(); l],
+            coupling_transitions: vec![std::collections::BTreeMap::new(); l],
+            active_channels: active,
+        }
+    }
+
+    fn mark_active(&mut self, ch: Channel, from_bond: usize, to_bond: usize) {
+        for b in from_bond..=to_bond {
+            self.active_channels[b].insert(ch);
+        }
+    }
+
+    fn set_structural(&mut self, site: usize, from: Channel, to: Channel, op: Op2) {
+        self.structural_transitions[site].insert((from, to), op);
+    }
+
+    fn add_coupling(&mut self, site: usize, from: Channel, to: Channel, op: Op2, coeff: f64) {
+        let entry = self.coupling_transitions[site]
+            .entry((from, to))
+            .or_insert([[0.0; 2]; 2]);
+        for s in 0..2 {
+            for sp in 0..2 {
+                entry[s][sp] += coeff * op[s][sp];
+            }
+        }
+    }
+
+    pub fn add_term_factors(&mut self, factors: &[(usize, bool)], coeff: f64) {
+        assert!(factors.len() <= 4, "Up to 4 fermionic factors supported");
+        let mut arr = [(0, false); 4];
+        let len = factors.len();
+        arr[..len].copy_from_slice(factors);
+        canonicalize_and_add_term(self, arr, len, coeff);
+    }
+
+    pub fn add_sorted_term_factors(&mut self, factors: &[(usize, bool)], coeff: f64) {
+        if coeff.abs() < 1e-15 {
+            return;
+        }
+        if factors.is_empty() {
+            if self.l > 0 {
+                self.add_coupling(0, Channel::Start, Channel::Finish, I2, coeff);
+            }
+            return;
+        }
+
+        let mut sites: Vec<usize> = factors.iter().map(|&(s, _)| s).collect();
+        sites.dedup();
+
+        let k = sites.len();
+        if k == 1 {
+            let x1 = sites[0];
+            let op1 = term_operator_at_site(factors, x1);
+            self.add_coupling(x1, Channel::Start, Channel::Finish, op1, coeff);
+        } else if k == 2 {
+            let (x1, x2) = (sites[0], sites[1]);
+            let op1 = term_operator_at_site(factors, x1);
+            let op2 = term_operator_at_site(factors, x2);
+            let count_x1 = factors.iter().filter(|&&(s, _)| s == x1).count();
+            let c1 = if count_x1 == 1 {
+                let (_, is_dagger) = factors.iter().find(|&&(s, _)| s == x1).unwrap();
+                if *is_dagger {
+                    Channel::LeftCd(x1)
+                } else {
+                    Channel::LeftCm(x1)
+                }
+            } else {
+                Channel::LeftN(x1)
+            };
+            self.set_structural(x1, Channel::Start, c1, op1);
+            self.mark_active(c1, x1 + 1, x2);
+            self.add_coupling(x2, c1, Channel::Finish, op2, coeff);
+        } else if k == 3 {
+            let (x1, x2, x3) = (sites[0], sites[1], sites[2]);
+            let op1 = term_operator_at_site(factors, x1);
+            let op2 = term_operator_at_site(factors, x2);
+            let op3 = term_operator_at_site(factors, x3);
+
+            let count_x1 = factors.iter().filter(|&&(s, _)| s == x1).count();
+            let count_x2 = factors.iter().filter(|&&(s, _)| s == x2).count();
+
+            if count_x1 == 2 {
+                let c1 = Channel::LeftN(x1);
+                let (_, d3) = factors.iter().find(|&&(s, _)| s == x3).unwrap();
+                let c2 = if *d3 {
+                    Channel::RightCd(x3)
+                } else {
+                    Channel::RightCm(x3)
+                };
+                self.set_structural(x1, Channel::Start, c1, op1);
+                self.mark_active(c1, x1 + 1, x2);
+                self.add_coupling(x2, c1, c2, op2, coeff);
+                self.mark_active(c2, x2 + 1, x3);
+                self.set_structural(x3, c2, Channel::Finish, op3);
+            } else if count_x2 == 2 {
+                let (_, d1) = factors.iter().find(|&&(s, _)| s == x1).unwrap();
+                let c1 = if *d1 {
+                    Channel::LeftCd(x1)
+                } else {
+                    Channel::LeftCm(x1)
+                };
+                let (_, d3) = factors.iter().find(|&&(s, _)| s == x3).unwrap();
+                let c2 = if *d3 {
+                    Channel::RightCd(x3)
+                } else {
+                    Channel::RightCm(x3)
+                };
+                self.set_structural(x1, Channel::Start, c1, op1);
+                self.mark_active(c1, x1 + 1, x2);
+                self.add_coupling(x2, c1, c2, op2, coeff);
+                self.mark_active(c2, x2 + 1, x3);
+                self.set_structural(x3, c2, Channel::Finish, op3);
+            } else {
+                let (_, d1) = factors.iter().find(|&&(s, _)| s == x1).unwrap();
+                let (_, d2) = factors.iter().find(|&&(s, _)| s == x2).unwrap();
+                let c1 = if *d1 {
+                    Channel::LeftCd(x1)
+                } else {
+                    Channel::LeftCm(x1)
+                };
+                let c2 = match (*d1, *d2) {
+                    (true, true) => Channel::LeftCdCd(x1, x2),
+                    (false, false) => Channel::LeftCmCm(x1, x2),
+                    (true, false) => Channel::LeftPair(x1, x2),
+                    (false, true) => Channel::LeftPairRev(x1, x2),
+                };
+                self.set_structural(x1, Channel::Start, c1, op1);
+                self.mark_active(c1, x1 + 1, x2);
+                self.set_structural(x2, c1, c2, op2);
+                self.mark_active(c2, x2 + 1, x3);
+                self.add_coupling(x3, c2, Channel::Finish, op3, coeff);
+            }
+        } else if k == 4 {
+            let (x1, x2, x3, x4) = (sites[0], sites[1], sites[2], sites[3]);
+            let op1 = term_operator_at_site(factors, x1);
+            let op2 = term_operator_at_site(factors, x2);
+            let op3 = term_operator_at_site(factors, x3);
+            let op4 = term_operator_at_site(factors, x4);
+
+            let (_, d1) = factors.iter().find(|&&(s, _)| s == x1).unwrap();
+            let (_, d2) = factors.iter().find(|&&(s, _)| s == x2).unwrap();
+            let (_, d4) = factors.iter().find(|&&(s, _)| s == x4).unwrap();
+
+            let c1 = if *d1 {
+                Channel::LeftCd(x1)
+            } else {
+                Channel::LeftCm(x1)
+            };
+            let c2 = match (*d1, *d2) {
+                (true, true) => Channel::LeftCdCd(x1, x2),
+                (false, false) => Channel::LeftCmCm(x1, x2),
+                (true, false) => Channel::LeftPair(x1, x2),
+                (false, true) => Channel::LeftPairRev(x1, x2),
+            };
+            let c3 = if *d4 {
+                Channel::RightCd(x4)
+            } else {
+                Channel::RightCm(x4)
+            };
+
+            self.set_structural(x1, Channel::Start, c1, op1);
+            self.mark_active(c1, x1 + 1, x2);
+            self.set_structural(x2, c1, c2, op2);
+            self.mark_active(c2, x2 + 1, x3);
+            self.add_coupling(x3, c2, c3, op3, coeff);
+            self.mark_active(c3, x3 + 1, x4);
+            self.set_structural(x4, c3, Channel::Finish, op4);
+        }
+    }
+
+    pub fn build(self) -> Mpo {
+        if self.l == 0 {
             return Mpo { sites: vec![] };
         }
 
-        // Merge identical operator strings
-        use std::collections::BTreeMap;
-        let mut grouped: BTreeMap<Vec<[i32; 4]>, (f64, Vec<Op2>)> = BTreeMap::new();
-        for t in terms_in {
-            if t.coeff.abs() < 1e-15 {
-                continue;
-            }
-            let key: Vec<[i32; 4]> = t
-                .ops
-                .iter()
-                .map(|op| {
-                    [
-                        (op[0][0] * 2.0).round() as i32,
-                        (op[0][1] * 2.0).round() as i32,
-                        (op[1][0] * 2.0).round() as i32,
-                        (op[1][1] * 2.0).round() as i32,
-                    ]
-                })
-                .collect();
-            match grouped.get_mut(&key) {
-                Some(entry) => entry.0 += t.coeff,
-                None => {
-                    grouped.insert(key, (t.coeff, t.ops));
-                }
-            }
-        }
+        let mut bond_index_maps = Vec::with_capacity(self.l + 1);
+        let mut bond_dims = Vec::with_capacity(self.l + 1);
 
-        let terms: Vec<Term> = grouped
-            .into_values()
-            .filter(|(c, _)| c.abs() > 1e-15)
-            .map(|(coeff, ops)| Term { coeff, ops })
-            .collect();
-
-        let m = terms.len();
-        if m == 0 {
-            // Trivial zero MPO
-            let sites = (0..l).map(|_| MpoSite::zeros(1, 1)).collect();
-            return Mpo { sites };
-        }
-
-        // 1. Site 0 forward SVD
-        let mut x0 = vec![0.0f64; m * 4];
-        for (t_idx, t) in terms.iter().enumerate() {
-            for s in 0..2 {
-                for sp in 0..2 {
-                    x0[t_idx * 4 + s * 2 + sp] = t.coeff * t.ops[0][s][sp];
-                }
-            }
-        }
-
-        let svd0 = crate::svd::jacobi_svd(&x0, m, 4);
-        let s0_max = svd0.s.first().copied().unwrap_or(0.0).max(1e-15);
-        let mut r1 = 0;
-        for &s in &svd0.s {
-            if s > 1e-13 * s0_max {
-                r1 += 1;
-            }
-        }
-        r1 = r1.max(1);
-
-        let mut w0 = MpoSite::zeros(1, r1);
-        for alpha in 0..r1 {
-            for s in 0..2 {
-                for sp in 0..2 {
-                    w0.set(0, alpha, s, sp, svd0.v[alpha][s * 2 + sp]);
-                }
-            }
-        }
-
-        let mut c_coeffs: Vec<Vec<f64>> = (0..m)
-            .map(|t| (0..r1).map(|alpha| svd0.u[alpha][t] * svd0.s[alpha]).collect())
-            .collect();
-
-        let mut mpo_sites = vec![w0];
-        let mut r_prev = r1;
-
-        // 2. Intermediate sites 1..L-2
-        for k in 1..(l - 1) {
-            let cols = 4 * r_prev;
-            let mut xk = vec![0.0f64; m * cols];
-            for (t_idx, t) in terms.iter().enumerate() {
-                for alpha in 0..r_prev {
-                    let ca = c_coeffs[t_idx][alpha];
-                    if ca == 0.0 {
-                        continue;
+        for b in 0..=self.l {
+            let mut map = std::collections::BTreeMap::new();
+            if b == 0 {
+                map.insert(Channel::Start, 0);
+            } else if b == self.l {
+                map.insert(Channel::Finish, 0);
+            } else {
+                map.insert(Channel::Start, 0);
+                map.insert(Channel::Finish, 1);
+                for &ch in &self.active_channels[b] {
+                    if ch != Channel::Start && ch != Channel::Finish {
+                        let next_idx = map.len();
+                        map.insert(ch, next_idx);
                     }
+                }
+            }
+            bond_dims.push(map.len());
+            bond_index_maps.push(map);
+        }
+
+        let mut mpo_sites = Vec::with_capacity(self.l);
+
+        for m in 0..self.l {
+            let d_l = bond_dims[m];
+            let d_r = bond_dims[m + 1];
+            let mut site_tensor = MpoSite::zeros(d_l, d_r);
+
+            let map_l = &bond_index_maps[m];
+            let map_r = &bond_index_maps[m + 1];
+
+            // 1. Idle self-transitions
+            for (&ch, &idx_l) in map_l {
+                if let Some(&idx_r) = map_r.get(&ch) {
+                    let op = ch.idle_op();
                     for s in 0..2 {
                         for sp in 0..2 {
-                            let op_val = t.ops[k][s][sp];
-                            if op_val == 0.0 {
-                                continue;
-                            }
-                            let col = (alpha * 2 + s) * 2 + sp;
-                            xk[t_idx * cols + col] += ca * op_val;
+                            let val = site_tensor.get(idx_l, idx_r, s, sp) + op[s][sp];
+                            site_tensor.set(idx_l, idx_r, s, sp, val);
                         }
                     }
                 }
             }
 
-            let svd_k = crate::svd::jacobi_svd(&xk, m, cols);
-            let sk_max = svd_k.s.first().copied().unwrap_or(0.0).max(1e-15);
-            let mut r_next = 0;
-            for &s in &svd_k.s {
-                if s > 1e-13 * sk_max {
-                    r_next += 1;
-                }
-            }
-            r_next = r_next.max(1);
-
-            let mut wk = MpoSite::zeros(r_prev, r_next);
-            for alpha in 0..r_prev {
-                for beta in 0..r_next {
+            // 2. Structural transitions at site m
+            for (&(ch_from, ch_to), &op) in &self.structural_transitions[m] {
+                if let (Some(&idx_l), Some(&idx_r)) = (map_l.get(&ch_from), map_r.get(&ch_to)) {
                     for s in 0..2 {
                         for sp in 0..2 {
-                            let col = (alpha * 2 + s) * 2 + sp;
-                            wk.set(alpha, beta, s, sp, svd_k.v[beta][col]);
+                            let val = site_tensor.get(idx_l, idx_r, s, sp) + op[s][sp];
+                            site_tensor.set(idx_l, idx_r, s, sp, val);
                         }
                     }
                 }
             }
 
-            c_coeffs = (0..m)
-                .map(|t| (0..r_next).map(|beta| svd_k.u[beta][t] * svd_k.s[beta]).collect())
-                .collect();
-
-            mpo_sites.push(wk);
-            r_prev = r_next;
-        }
-
-        // 3. Site L-1 (last site)
-        if l > 1 {
-            let mut w_last = MpoSite::zeros(r_prev, 1);
-            for alpha in 0..r_prev {
-                for s in 0..2 {
-                    for sp in 0..2 {
-                        let mut sum = 0.0f64;
-                        for (t_idx, t) in terms.iter().enumerate() {
-                            let ca = c_coeffs[t_idx][alpha];
-                            let op_val = t.ops[l - 1][s][sp];
-                            sum += ca * op_val;
-                        }
-                        w_last.set(alpha, 0, s, sp, sum);
-                    }
-                }
-            }
-            mpo_sites.push(w_last);
-        }
-
-        // 4. Backward SVD compression sweep (sites L-1 down to 1)
-        for k in (1..l).rev() {
-            let r_k = mpo_sites[k].d_l;
-            let r_kp1 = mpo_sites[k].d_r;
-            let cols = 4 * r_kp1;
-            let mut yk = vec![0.0f64; r_k * cols];
-            for alpha in 0..r_k {
-                for beta in 0..r_kp1 {
+            // 3. Coupling transitions at site m
+            for (&(ch_from, ch_to), &op_sum) in &self.coupling_transitions[m] {
+                if let (Some(&idx_l), Some(&idx_r)) = (map_l.get(&ch_from), map_r.get(&ch_to)) {
                     for s in 0..2 {
                         for sp in 0..2 {
-                            let col = (beta * 2 + s) * 2 + sp;
-                            yk[alpha * cols + col] = mpo_sites[k].get(alpha, beta, s, sp);
+                            let val = site_tensor.get(idx_l, idx_r, s, sp) + op_sum[s][sp];
+                            site_tensor.set(idx_l, idx_r, s, sp, val);
                         }
                     }
                 }
             }
 
-            let svd_b = crate::svd::jacobi_svd(&yk, r_k, cols);
-            let sb_max = svd_b.s.first().copied().unwrap_or(0.0).max(1e-15);
-            let mut r_new = 0;
-            for &s in &svd_b.s {
-                if s > 1e-13 * sb_max {
-                    r_new += 1;
-                }
-            }
-            r_new = r_new.max(1);
-
-            let mut new_wk = MpoSite::zeros(r_new, r_kp1);
-            for alpha_p in 0..r_new {
-                for beta in 0..r_kp1 {
-                    for s in 0..2 {
-                        for sp in 0..2 {
-                            let col = (beta * 2 + s) * 2 + sp;
-                            new_wk.set(alpha_p, beta, s, sp, svd_b.v[alpha_p][col]);
-                        }
-                    }
-                }
-            }
-            mpo_sites[k] = new_wk;
-
-            // Contract (U * S) into left neighbour's right bond
-            let r_km1 = mpo_sites[k - 1].d_l;
-            let mut new_wkm1 = MpoSite::zeros(r_km1, r_new);
-            for gamma in 0..r_km1 {
-                for alpha_p in 0..r_new {
-                    let s_val = svd_b.s[alpha_p];
-                    for s in 0..2 {
-                        for sp in 0..2 {
-                            let mut acc = 0.0f64;
-                            for alpha in 0..r_k {
-                                let old_val = mpo_sites[k - 1].get(gamma, alpha, s, sp);
-                                if old_val != 0.0 {
-                                    acc += old_val * svd_b.u[alpha_p][alpha] * s_val;
-                                }
-                            }
-                            new_wkm1.set(gamma, alpha_p, s, sp, acc);
-                        }
-                    }
-                }
-            }
-            mpo_sites[k - 1] = new_wkm1;
+            mpo_sites.push(site_tensor);
         }
 
         Mpo { sites: mpo_sites }
     }
+}
 
+impl Mpo {
     /// Construct a 1D Matrix Product Operator from 1-electron and 2-electron molecular orbital integrals.
     /// `h` is `K x K` (1-electron integrals), `g` is `K^4` (chemist notation `(pq|rs)` indexed `[(p*K+q)*K^2 + r*K+s]`).
     /// The resulting MPO has `2*K` sites in interleaved Jordan–Wigner ordering: `2p` = `(p,up)`, `2p+1` = `(p,down)`.
     pub fn from_electronic_integrals(n_orb: usize, h: &[f64], g: &[f64]) -> Self {
         let l = 2 * n_orb;
-        let mut raw_terms = Vec::new();
+        let mut builder = MpoBuilder::new(l);
 
         // 1-body terms: sum_{pq, sigma} h_{pq} c_{p sigma}^\dagger c_{q sigma}
         for p in 0..n_orb {
@@ -454,8 +589,7 @@ impl Mpo {
                     let i = 2 * p + sigma;
                     let j = 2 * q + sigma;
                     let factors = [(i, true), (j, false)];
-                    let ops: Vec<Op2> = (0..l).map(|k| term_operator_at_site(&factors, k)).collect();
-                    raw_terms.push(Term { coeff: hpq, ops });
+                    builder.add_term_factors(&factors, hpq);
                 }
             }
         }
@@ -480,9 +614,7 @@ impl Mpo {
                                     continue;
                                 }
                                 let factors = [(i, true), (k, true), (l_spin, false), (j, false)];
-                                let ops: Vec<Op2> =
-                                    (0..l).map(|m| term_operator_at_site(&factors, m)).collect();
-                                raw_terms.push(Term { coeff, ops });
+                                builder.add_term_factors(&factors, coeff);
                             }
                         }
                     }
@@ -490,51 +622,49 @@ impl Mpo {
             }
         }
 
-        Self::from_terms(l, raw_terms)
+        builder.build()
     }
 
     /// Construct an MPO for the 1D Hubbard model on `sites` chain sites (2*sites spin-orbitals).
     pub fn from_hubbard(sites: usize, t: f64, u: f64, mu: f64) -> Self {
         let l = 2 * sites;
-        let mut raw_terms = Vec::new();
+        let mut builder = MpoBuilder::new(l);
 
         // On-site chemical potential: -mu * sum_i n_i
-        if mu != 0.0 {
+        if mu.abs() > 1e-15 {
             for i in 0..l {
                 let factors = [(i, true), (i, false)];
-                let ops: Vec<Op2> = (0..l).map(|k| term_operator_at_site(&factors, k)).collect();
-                raw_terms.push(Term { coeff: -mu, ops });
+                builder.add_term_factors(&factors, -mu);
             }
         }
 
         // Hopping: -t sum_{<cs, cs'>, sigma} (c_{cs, sigma}^\dagger c_{cs', sigma} + h.c.)
-        for cs in 0..(sites - 1) {
-            for sigma in 0..2 {
-                let i = 2 * cs + sigma;
-                let j = 2 * (cs + 1) + sigma;
-                // Forward hop
-                let fwd = [(i, true), (j, false)];
-                let ops_fwd: Vec<Op2> = (0..l).map(|k| term_operator_at_site(&fwd, k)).collect();
-                raw_terms.push(Term { coeff: -t, ops: ops_fwd });
-                // Backward hop
-                let bwd = [(j, true), (i, false)];
-                let ops_bwd: Vec<Op2> = (0..l).map(|k| term_operator_at_site(&bwd, k)).collect();
-                raw_terms.push(Term { coeff: -t, ops: ops_bwd });
+        if t.abs() > 1e-15 {
+            for cs in 0..(sites - 1) {
+                for sigma in 0..2 {
+                    let i = 2 * cs + sigma;
+                    let j = 2 * (cs + 1) + sigma;
+                    // Forward hop
+                    let fwd = [(i, true), (j, false)];
+                    builder.add_term_factors(&fwd, -t);
+                    // Backward hop
+                    let bwd = [(j, true), (i, false)];
+                    builder.add_term_factors(&bwd, -t);
+                }
             }
         }
 
         // On-site interaction: U sum_{cs} n_{cs, up} n_{cs, down}
-        if u != 0.0 {
+        if u.abs() > 1e-15 {
             for cs in 0..sites {
                 let i = 2 * cs;
                 let j = 2 * cs + 1;
                 let factors = [(i, true), (i, false), (j, true), (j, false)];
-                let ops: Vec<Op2> = (0..l).map(|k| term_operator_at_site(&factors, k)).collect();
-                raw_terms.push(Term { coeff: u, ops });
+                builder.add_term_factors(&factors, u);
             }
         }
 
-        Self::from_terms(l, raw_terms)
+        builder.build()
     }
 
     /// Dense `2^L x 2^L` contraction of the MPO, row-major.

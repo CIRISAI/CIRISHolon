@@ -38,7 +38,7 @@ use common::decimal_minus_f64;
 use holon_chem::dual::D2;
 use holon_chem::elements::by_z;
 use holon_chem::fci::{ci_ints, s_squared, solve_determinant, Order};
-use holon_chem::pair::{electron_counts, geometry_problem};
+use holon_chem::pair::{electron_counts, geometry_problem, CONVERGED_RESIDUAL};
 
 /// `(Z, 2S+1)` for the heavy atoms cheap enough to solve in a test.
 ///
@@ -97,6 +97,37 @@ const EXPECTED_MULTIPLICITY: [(u32, u32); 9] = [
 /// clear one.
 const KNOWN_DISAGREEMENTS: [u32; 2] = [30, 31];
 
+/// The atoms above whose solve MISSES the crate's declared convergence bar, with the
+/// residual measured rather than remembered.
+///
+/// # Why this list has to exist
+///
+/// This gate said its multiplicity was "DERIVED from the converged vector" and then checked
+/// nothing about convergence. It was blessing antimony and tellurium at the same moment the
+/// R1 record REFUSED them for missing `CONVERGED_RESIDUAL` — two instruments in one campaign
+/// disagreeing about the same two atoms, with the gate's own doc comment asserting the thing
+/// it had not looked at.
+///
+/// # What is and is not claimed about these two
+///
+/// The bar is a PROCESS verdict: `solve_determinant` targets 1e-11 and these stop above
+/// 1e-10, so the solve did not finish its job. It is NOT an accuracy verdict. For a
+/// symmetric eigenproblem `|theta - lambda| <= ||r||`, so a residual of 1.07e-10 bounds the
+/// energy error at 1.07e-10 hartree even before a gap is used to sharpen it — six orders
+/// inside anything this campaign reports. The multiplicity is asserted for them on that
+/// basis, and it is CORROBORATION rather than a clean pass; the record's refusal stands.
+///
+/// # Two-sided on purpose
+///
+/// Membership is asserted in BOTH directions. An atom here must still miss the bar — so if
+/// a solver improvement fixes it, this test fails and says to delete the entry rather than
+/// letting a stale exemption hide a repair. And the residual must not have grown by more
+/// than a decade, so a real regression cannot hide inside an accepted exception.
+const MISSES_CONVERGENCE_BAR: [(u32, f64); 2] = [
+    (51, 1.07e-10), // Sb
+    (52, 1.07e-10), // Te
+];
+
 /// Both rows' p-blocks reproduce Hund's rules, with nothing about spin supplied.
 #[test]
 fn the_heavy_ground_multiplicities_come_out_rather_than_in() {
@@ -125,6 +156,45 @@ fn the_heavy_ground_multiplicities_come_out_rather_than_in() {
 
         let (space, mo, _) = geometry_problem(&[sp], vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]]);
         let sol = solve_determinant(&space, &mo);
+        // THE CONVERGENCE STATEMENT, kept separate from the multiplicity one. A residual
+        // alone cannot say WHY a solve stopped (target, iteration cap, or subspace
+        // stagnation are three different facts), so this asserts only what a residual can
+        // support: whether the declared bar was met, in both directions.
+        let recorded = MISSES_CONVERGENCE_BAR
+            .iter()
+            .find(|(zz, _)| *zz == z)
+            .map(|(_, r)| *r);
+        match recorded {
+            None => assert!(
+                sol.residual <= CONVERGED_RESIDUAL,
+                "{}: residual {:.3e} misses the declared bar {CONVERGED_RESIDUAL:.0e}, and \
+                 this atom is not in MISSES_CONVERGENCE_BAR. Either the solve regressed or \
+                 the list is out of date — and a multiplicity read off a vector whose solve \
+                 did not finish is not the clean result this gate reports.",
+                sp.symbol,
+                sol.residual
+            ),
+            Some(r) => {
+                assert!(
+                    sol.residual > CONVERGED_RESIDUAL,
+                    "{}: residual {:.3e} now MEETS the bar {CONVERGED_RESIDUAL:.0e}, so its \
+                     entry in MISSES_CONVERGENCE_BAR is stale. Delete the entry — an \
+                     exemption that outlives the defect it documents is how a repair goes \
+                     unnoticed.",
+                    sp.symbol,
+                    sol.residual
+                );
+                assert!(
+                    sol.residual < 10.0 * r,
+                    "{}: residual {:.3e} is more than a decade worse than the {r:.3e} this \
+                     exception was written against. An accepted exception is not a place for \
+                     a regression to hide.",
+                    sp.symbol,
+                    sol.residual
+                );
+            }
+        }
+
         let s2 = s_squared(&space, &sol.vector);
         // S(S+1) = <S^2>  =>  2S+1 = sqrt(1 + 4 <S^2>).
         let mult = (1.0 + 4.0 * s2).sqrt();
@@ -136,13 +206,20 @@ fn the_heavy_ground_multiplicities_come_out_rather_than_in() {
              mislabelled input.",
             sp.symbol
         );
+        // Three separate statements per row, each carrying its own evidence: what the
+        // solve DID (residual against the declared bar), how good the ENERGY is regardless
+        // (|theta - lambda| <= ||r||), and the multiplicity. A process verdict must not be
+        // readable as an accuracy verdict in either direction.
         println!(
             "R1: {:>2} {:>2}  {:>6} dets  E = {:>18.9} Ha  <S^2> = {s2:.6}  2S+1 = {mult:.3} \
-             (table: {want})",
+             (table: {want})  resid {:.2e} [{}]  |dE| <= {:.1e} Ha",
             z,
             sp.symbol,
             space.n_det,
-            sol.e.v
+            sol.e.v,
+            sol.residual,
+            if recorded.is_some() { "MISSES BAR (process)" } else { "meets bar" },
+            sol.residual
         );
     }
 }

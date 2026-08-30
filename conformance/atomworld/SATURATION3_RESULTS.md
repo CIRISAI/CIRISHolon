@@ -174,3 +174,249 @@ rule built on it would have staked the three chlorine combos at a hydrogen lengt
 and reported the resulting speed as a chlorine measurement. A fallback that
 returns a plausible number for an out-of-range input is the same defect shape as
 a stagnated solve reported as converged.
+
+---
+
+## G1 — MESH GENERATION UNDER THE MERGE LAW · **HOLDS**
+
+*The `saturation3-mesh` lane. Instrument: `engine/crates/holon-tables`, gate in
+`tests/g1_gate.rs`. 15 tests green in release (8 unit, 7 gate). Exercised on
+`(H,H,Cl)` — a staked triple at 605 determinants — through
+`pair::geometry_problem` into `fci::solve_determinant_from`, the same path the
+tables take (M-FOREIGN-DOMAIN-CORROBORATION: never a toy).*
+
+### The gate
+
+| claim | result |
+|---|---|
+| table bit-identical at 1, 4, 8 workers over 32 nodes | ✓ digest `d83e5c14…` |
+| plant (iv): one flipped mantissa bit CONVICTED by the digest | ✓ |
+| plant (iv): zero false positives on clean runs at 1/2/3/4/8 workers | ✓ |
+| plant (iii): 12 of 32 nodes trapped, worst 7.572 Ha | 12 of 12 VOIDed |
+| plant (iii): the other 20 nodes converged correctly | none falsely voided |
+
+### What the merge law covers here, and what it does not
+
+`MergeLaw.lean` proves `shardedFold_invariant` and `digest_convicts` over an
+`AddCommMonoid`, exactly. A table of `f64` energies is not one — float addition
+is not associative, and a table is not a sum in the first place. So the theorems
+are instantiated where they apply and the rest is named:
+
+| | how it is carried |
+|---|---|
+| the table's CONTENTS | **not a fold at all** — a disjoint union of independent node solves. Shard-invariance is a statement that no node's value depends on its shard, and that is a CONSTRUCTION (`grid.rs`), not a theorem. |
+| the table's CERTIFICATE | a genuine fold in a genuine monoid: `(Z/2^64)^4` under wrapping addition, associative and commutative unconditionally. `shardedFold_invariant` and `digest_convicts` apply literally. |
+
+Claiming the Lean covers the `f64` table would launder an integer theorem into a
+claim about floats. It does not.
+
+### The design, and why the obvious one is wrong
+
+The obvious generator warm-starts each node from whatever the worker solved
+last. **A warm start moves the answer**: on `(H,H,Cl)`, warm and cold solves of
+the same geometry were bit-identical in **0 of 5** pairs, differing by 3.4e−13 to
+4.3e−12 Ha (`examples/s3_warm_probe.rs`). Under the obvious design every node's
+value is therefore a function of the WORKER COUNT, and the table silently differs
+between a 1-worker and a 32-worker run — precisely what G1 forbids.
+
+So the region partition and the traversal inside a region are **canonical
+functions of the grid**, fixed before any worker exists. A region is
+self-contained: a cold seed, then a serpentine (boustrophedon) chain, so
+consecutive nodes in the traversal are always grid-adjacent — a plain
+lexicographic walk would hand one node per row the worst guess in the region.
+Regions are handed out from a shared atomic counter, so which worker takes which
+region genuinely varies run to run; the invariance is not a fixed assignment that
+happens to reproduce. The cost is one cold seed per region.
+
+### The mutation set, and why it is split
+
+`holon-mesh`'s header names the trap: a reorder over an exact carrier gives the
+IDENTICAL result, so "reorder the work and assert the answer moved" cannot fail
+against a correct implementation. The set is therefore split, and only the pair
+proves anything:
+
+| mutation | must the table move? | measured |
+|---|---|---|
+| `ReverseRegionOrder` | **no** | does not |
+| `WorkerLocalWarmStart` | **yes** | does, at 1 vs 4 workers |
+| `CorruptNode` | convicted | convicted |
+| `WrongWarmStartAll` | the trapped nodes VOID | 12 of 12 |
+
+### THE PREREG'S G1 CONTAINS A REQUIREMENT THAT IS FALSE
+
+G1 is staked as requiring "the WARM result bit-identical to cold at every node",
+and plant (iii) as "must yield the bit-identical converged energy or VOID".
+**Measured false, 0 of 5 pairs, and believed unachievable** — a warm start always
+moves the last bits, because the Ritz value is computed by `jacobi_eigh` over a
+subspace accumulated from a different basis and that arithmetic carries
+`~eps·||H||`, about one ulp at these energies. If bit-identity were the only
+alternative to VOID, every warm-started node in the campaign would have to VOID,
+which is not a table.
+
+This lane has NOT quietly reinterpreted the freeze. What is built achieves G1's
+evident intent — the table is bit-identical across shard counts — by the
+canonical-chain route instead, and plant (iii) is scored on **three** outcomes
+rather than two:
+
+1. the wrong start converges to the CORRECT eigenvector at ulp scale — benign;
+2. it converges elsewhere and the node VOIDs — the plant firing;
+3. it converges elsewhere and the node SCORES — the silent wrong entry, the
+   only failure.
+
+The wording is referred to the lead for amendment.
+
+### The trap is geometry-dependent, which cost this gate a false alarm
+
+The same random start vector that traps a `(H,H,Cl)` solve 7.47 Ha above the
+ground state at one geometry converges to within 3.3e−12 Ha at another on the
+same grid. Whether a wrong start gets lost is a property of the level spacing
+where it is dropped. Planting ONE node therefore samples the trap rather than
+testing it; the gate plants every node and asserts the guard fires on every
+occasion the sector is non-empty (M-PLANT-SECTOR — a plant on an empty sector
+VOIDs rather than passes, and the gate says so instead of going green).
+
+### The warm start's value GROWS WITH THE SPACE, and changes sign
+
+The prereg asks for "cold vs warm Davidson iterations along a locality sweep,
+speedup reported". Measured, same instrument, same grid shape, one cold seed per
+region:
+
+| table | `n_det` | cold iters | warm iters | saving | cold-seed fraction |
+|---|---|---|---|---|---|
+| (H,H,Cl) | 605 | 744 | 771 | **−3.6%** (a slowdown) | 4/32 = 0.12 |
+| (Cl,Cl,Cl) | 9,477 | 509 | 465 | **+8.6%** | 4/18 = 0.22 |
+| (O,O,O) | 207,025 | *pending* | | | |
+
+The sign changes with the size of the determinant space, which is why this must
+be sized on the expensive table and not on chlorine — the tables lane's point,
+and the measurement agrees with it. On (H,H,Cl) the cold start (lowest-diagonal
+determinant plus a deterministic perturbation) is already as good as a
+neighbour's converged vector, and the warm start's dense first basis vector
+costs slightly more to refine than it saves.
+
+Two things keep this honest. The saving is quoted per TABLE and is diluted by the
+cold seeds — on (Cl,Cl,Cl), backing the four cold seeds out puts the per-warm-node
+saving nearer 11%. And iterations are not wall-clock: on (H,H,Cl) the CI is only
+3.8% of node cost (G0), so neither sign matters there at all.
+
+### NEGATIVE RESULT: neither the residual nor the exit reason can see a wrong solve
+
+| start | E (Ha) | error | residual | exit |
+|---|---|---|---|---|
+| cold | −467.207401633682 | — | 5.240e−11 | subspace stagnated |
+| neighbour (good) | −467.207401633683 | 8.5e−13 | 5.999e−11 | subspace stagnated |
+| **random (planted)** | **−459.735448873** | **7.472 Ha** | **5.984e−11** | subspace stagnated |
+
+It converged CLEANLY onto the wrong eigenvector. A residual is small for any
+eigenvector, so no residual threshold can separate these, and the exit reasons
+are identical. This is the carbon incident's shape reached through the
+warm-start channel.
+
+The tables lane swept this rather than leaving it at one instance: **16 of 60
+`(H,H,Cl)` geometries, 27%, at 7.3–8.1 Ha**, independently matching the 7.47 Ha
+found here. Two instruments, two lanes, one number. Geometry-dependent and
+COMMON — not rare, not universal — which is what makes the guard mandatory
+rather than prudent on a 34,500-node warm-started table.
+
+*(This lane's first diagnosis of the universal `stagnated` exit — an absolute
+1e-11 tolerance not transferring to chlorine-scale energies — was WRONG, and the
+tables lane's G0 data discriminates it: `(O,O,H)` and `(Cl,Cl,Cl)` sit at nearly
+equal `n_det` with 8.6× different `|E|`, and a scale-dependent floor predicts
+their residuals differ by 8.6× where the measured ratio is 1.21. The real cause
+is scale-free — `davidson_eigh` accepts an expansion direction only when its norm
+clears a hardcoded 1e-10 after Gram-Schmidt. It is deliberately not changed:
+the eigenvalue error is ~1e-20 Ha, so only the label is wrong, and moving the
+threshold would shift every energy's last bits and cost SATURATION-2 a
+105,105-node regeneration.)*
+
+The guard that works is free and rigorous: `E <= min_i H_ii`, since a single
+determinant is itself a trial vector. It fires on the plant by 7.4 Ha and passes
+both good solves by 5.4e−2. The tables lane has since put it on
+`Solution::variational_margin`; `holon-tables` reads that field rather than
+keeping a second copy of the rule, and inherits its scope honestly — **necessary,
+not sufficient**: an excited state BELOW `min_i H_ii` still passes.
+
+---
+
+## G2 — GPU ADOPTION, MEASURED · **CONDITION MET, ADOPTION DEFERRED**
+
+*Measured on the real `(O,O,O)` problem — 207,025 determinants, the scale the
+prereg names — with the index structures and integrals exported from
+`geometry_problem` (`examples/s3_sigma_export.rs`) and the answer checked against
+`sigma_direct`'s own. Device: RTX 4090 Laptop (Ada, sm_89, 76 SMs).*
+
+### The kernel, and why it is three GEMMs
+
+Written out, two of `sigma_direct`'s three blocks are dense GEMMs against
+matrices that do not depend on `c` at all, so they are built once per geometry:
+
+```
+  beta  same-spin :  Sigma += C · F_b            F_b (nb × nb)
+  alpha same-spin :  Sigma += F_aᵀ · C           F_a (na × na)
+  mixed           :  D[ja] = A[ja] · T[ja],  then a gather
+```
+
+Only `T` depends on `c`, and `T[ja][kl][ib] = sign · c[ja][jb(kl,ib)]` is a pure
+GATHER, because for a fixed excitation and destination the source string is
+UNIQUE (`a⁺_p a_q |jb⟩ = s|ib⟩` inverts).
+
+### The determinism gate: PASSES, structurally
+
+There is **not one atomic in the kernel**. The obvious implementation scatters
+through both excitation lists, both scatters collide, and floating-point
+`atomicAdd` accumulates in completion order — a table built that way would not be
+bit-identical even to itself across two runs. Both scatters are inverted into
+gathers, which the invertibility above makes possible, so every sum is over a
+fixed range in a fixed order. **Five repeat runs bit-identical.**
+
+### The measurement
+
+| arm | sigma/s | GFLOP/s FP64 | note |
+|---|---|---|---|
+| **GPU, whole kernel** | **65.7** | 318.4 | 15.2 ms/sigma |
+| GPU + host round trip | 69.8 | — | PCIe is 0.5 ms, negligible |
+| CPU, `sigma_direct`, 32 threads | 17.2 – 20.8 | ~97 | two runs, loadavg 18 and 32 |
+| CPU, same GEMM reformulation, OpenBLAS 1 thread | 1.40 | 6.8 | **slower than the hand-written kernel** |
+
+**Speedup 3.2× against the best CPU number.**
+
+The baseline was checked rather than assumed, because the GPU arm gets a
+reformulation AND a tuned library, and quoting that against a hand-written loop
+would attribute the whole difference to the device (`holon-gpu/src/cpu.rs`'s own
+warning). The same three-GEMM formulation on the CPU is **slower** than
+`sigma_direct` — materialising `T` costs 372 MB of bandwidth per sigma, which the
+GPU has (462 GB/s measured) and the CPU does not. `sigma_direct` is a good
+cache-blocked algorithm and is the honest CPU arm.
+
+### Agreement, and what adoption would cost G1
+
+| | |
+|---|---|
+| max abs difference vs `sigma_direct` | 4.547e−13 |
+| relative to max abs sigma (1.499e2) | **3.033e−15** |
+| entries differing **BITWISE** | **188,363 of 207,025 (91.0%)** |
+
+That last row is the one that matters. The two sigmas are numerically the same
+answer and are not the same BITS, so a Davidson driven by one follows a different
+path from the other and **a GPU-built table is a different artifact from a
+CPU-built one**. G1's guarantee would survive only WITHIN a device class, and CPU
+and GPU nodes could never be mixed inside one table — which also means adopting
+the GPU idles the 32 cores rather than adding to them.
+
+### The verdict, with gate and judgment kept apart
+
+The prereg's adoption condition — "it wins, with a determinism gate stated" — is
+**MET**: 3.2× with a fixed reduction order that is a property of the
+construction. This is not the refusal branch; the kernels fit these sizes.
+
+The recommendation to DEFER is engineering judgment, not the gate:
+
+* the whole benefit lands on `(O,O,O)`, the one table P2's fence counter may
+  demote without ever building — G0 prices it at ~380 core-hours, which the GPU
+  would take to roughly a fifth;
+* adoption makes the table device-dependent (91% of entries differ bitwise);
+* the kernel is measured but not integrated — integration means `cudarc`
+  plumbing plus pinning a cuBLAS version, since determinism rests on stable
+  kernel selection.
+
+Hold it until P2 branch (b) fires; spend nothing on integration before then.

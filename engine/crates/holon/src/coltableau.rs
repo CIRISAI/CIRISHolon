@@ -196,6 +196,39 @@ impl ColTableau {
         None
     }
 
+    /// Column `q` of the X plane, as a bitvector over all `2n` rows.
+    #[inline]
+    pub fn x_column(&self, q: usize) -> &[u64] {
+        &self.x[q * self.words..(q + 1) * self.words]
+    }
+
+    /// XOR a row-mask into column `q` of the X plane. This is the collapse
+    /// cascade seen from the column side: multiplying a whole SET of rows by
+    /// one pivot row changes column `c` only when the pivot is non-identity
+    /// there, and then it changes it by exactly the mask of updated rows.
+    #[inline]
+    pub fn xor_into_x_column(&mut self, q: usize, mask: &[u64]) {
+        let w = self.words;
+        debug_assert_eq!(mask.len(), w);
+        let col = &mut self.x[q * w..(q + 1) * w];
+        for (c, m) in col.iter_mut().zip(mask) {
+            *c ^= *m;
+        }
+    }
+
+    /// Flip one bit of the X plane.
+    #[inline]
+    pub fn flip_x_bit(&mut self, q: usize, row: usize) {
+        debug_assert!(row < self.nrows);
+        self.x[q * self.words + (row >> 6)] ^= 1 << (row & 63);
+    }
+
+    /// Words per column — the length any row-mask must have.
+    #[inline]
+    pub fn row_words(&self) -> usize {
+        self.words
+    }
+
     /// The sign of row `row`: `false` = +1, `true` = −1. Physical rows carry
     /// ±1 only, so one bit is the whole answer — which is what makes a
     /// single-term destabilizer product an O(1) read rather than a rowsum.
@@ -269,26 +302,37 @@ impl ColTableau {
         let nq_words = n.div_ceil(64);
         let mut bx = [0u64; 64];
         let mut bz = [0u64; 64];
-        for qb in 0..nq_words {
-            for rb in 0..words {
-                let base = rb * 64;
-                for j in 0..64 {
-                    let row = base + j;
-                    if row < self.nrows {
-                        bx[63 - j] = p.rows[row].x.words[qb];
-                        bz[63 - j] = p.rows[row].z.words[qb];
-                    } else {
-                        bx[63 - j] = 0;
-                        bz[63 - j] = 0;
-                    }
-                }
-                transpose64(&mut bx);
-                transpose64(&mut bz);
-                for i in 0..64 {
-                    let q = qb * 64 + i;
-                    if q < n {
-                        self.x[q * words + rb] = bx[63 - i];
-                        self.z[q * words + rb] = bz[63 - i];
+        // BLOCKED. The unblocked nest gathers 64 words with a stride of
+        // `words * 8` bytes (9.9 KB at d=141), using 8 bytes of every 64-byte
+        // line it pulls and then discarding the line before the next `rb`
+        // iteration wants the very next word from it. Blocking both loops by
+        // TILE keeps the tile's reads AND writes inside L2, so each line is
+        // used TILE times instead of once. Pure loop order — the arithmetic
+        // below is untouched, and the round-trip conformance gate holds it.
+        for qb0 in (0..nq_words).step_by(TILE) {
+            for rb0 in (0..words).step_by(TILE) {
+                for qb in qb0..nq_words.min(qb0 + TILE) {
+                    for rb in rb0..words.min(rb0 + TILE) {
+                        let base = rb * 64;
+                        for j in 0..64 {
+                            let row = base + j;
+                            if row < self.nrows {
+                                bx[63 - j] = p.rows[row].x.words[qb];
+                                bz[63 - j] = p.rows[row].z.words[qb];
+                            } else {
+                                bx[63 - j] = 0;
+                                bz[63 - j] = 0;
+                            }
+                        }
+                        transpose64(&mut bx);
+                        transpose64(&mut bz);
+                        for i in 0..64 {
+                            let q = qb * 64 + i;
+                            if q < n {
+                                self.x[q * words + rb] = bx[63 - i];
+                                self.z[q * words + rb] = bz[63 - i];
+                            }
+                        }
                     }
                 }
             }
@@ -310,26 +354,31 @@ impl ColTableau {
         let nq_words = self.n.div_ceil(64);
         let mut bx = [0u64; 64];
         let mut bz = [0u64; 64];
-        for qb in 0..nq_words {
-            for rb in 0..self.words {
-                for i in 0..64 {
-                    let q = qb * 64 + i;
-                    if q < self.n {
-                        bx[63 - i] = self.x[q * self.words + rb];
-                        bz[63 - i] = self.z[q * self.words + rb];
-                    } else {
-                        bx[63 - i] = 0;
-                        bz[63 - i] = 0;
-                    }
-                }
-                transpose64(&mut bx);
-                transpose64(&mut bz);
-                let base = rb * 64;
-                for j in 0..64 {
-                    let row = base + j;
-                    if row < self.nrows {
-                        out.rows[row].x.words[qb] = bx[63 - j];
-                        out.rows[row].z.words[qb] = bz[63 - j];
+        // Blocked for the same reason as `load_from_packed`.
+        for qb0 in (0..nq_words).step_by(TILE) {
+            for rb0 in (0..self.words).step_by(TILE) {
+                for qb in qb0..nq_words.min(qb0 + TILE) {
+                    for rb in rb0..self.words.min(rb0 + TILE) {
+                        for i in 0..64 {
+                            let q = qb * 64 + i;
+                            if q < self.n {
+                                bx[63 - i] = self.x[q * self.words + rb];
+                                bz[63 - i] = self.z[q * self.words + rb];
+                            } else {
+                                bx[63 - i] = 0;
+                                bz[63 - i] = 0;
+                            }
+                        }
+                        transpose64(&mut bx);
+                        transpose64(&mut bz);
+                        let base = rb * 64;
+                        for j in 0..64 {
+                            let row = base + j;
+                            if row < self.nrows {
+                                out.rows[row].x.words[qb] = bx[63 - j];
+                                out.rows[row].z.words[qb] = bz[63 - j];
+                            }
+                        }
                     }
                 }
             }
@@ -387,6 +436,11 @@ impl ColTableau {
         PackedTableau { n: self.n, rows }
     }
 }
+
+/// Blocking factor for the transpose loop nests. Each 64×64 block moves one
+/// word per column, so TILE consecutive blocks along either axis share a
+/// 64-byte cache line exactly TILE ways at TILE = 8.
+const TILE: usize = 8;
 
 /// In-register 64×64 bit-matrix transpose (Hacker's Delight §7-3): after the
 /// call, bit i of `a[j]` is what bit j of `a[i]` was.

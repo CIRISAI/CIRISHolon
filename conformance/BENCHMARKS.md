@@ -864,3 +864,125 @@ Instruments: `holon-chem/examples/s3_sigma_cost.rs` (CPU),
 `holon-chem/examples/s3_sigma_export.rs` (the real problem),
 `scratchpad/s3gpu/{probe,sigma,cpu_fair}.{cu,py}` (device ceilings, GPU kernel,
 fair CPU arm).
+
+## 2026-08-30, twenty-fifth entry: the adaptive port lands — 30× per measurement, a 65,521-qubit surface code verified, and stim still ahead on the total
+
+*By the bigqvm-demo lane. Engine: `engine/crates/holon/src/coladaptive.rs`.
+Demo: `cargo run --release --example surface_flagship -- --d 181 --seed 1`.
+Head-to-head: `conformance/qasm/surface_h2h.py`. Every run guards its
+allocation against `MemAvailable` and refuses rather than OOM a sibling.*
+
+**STAKED BEFORE MEASURING:** (1) moving the adaptive path onto the column
+engine closes most of entry twenty-four's 343× layout gap; (2) a rotated
+surface code at d ≥ 141 executes full adaptive syndrome-extraction cycles
+with every verification passing; (3) against stim on the identical circuit we
+land within a small factor either way, and whichever way it lands gets banked.
+All three stand. (3) landed on stim's side.
+
+### The port, measured on the same workload and the same box
+
+| quantity, d=101 | before | after | |
+|---|---:|---:|---|
+| steady-state round | 0.834 s | **0.065 s** | 13× |
+| one measurement in a steady-state batch | 47.19 µs | **1.55 µs** | 30× |
+| fallback (row-major) scans in a 4-round run | 10199 | **0** | — |
+| whole 4-round QEC demo | 10.6 s | **4.3 s** | 2.5× |
+
+Three things did it, and only the first was designed — the other two were
+forced by `examples/measure_profile.rs` after the cost model and the clock
+disagreed by 16×:
+
+1. **The determinism scan moves column-side.** "Does any stabilizer
+   anticommute with Z_q?" costs the row-major reference `n` scalar bit-gets
+   across `2n` separate allocations; it is `⌈2n/64⌉` contiguous words here.
+2. **The single-term shortcut.** The destabilizer product has |H| = 1 in the
+   steady state (mean 1.85 over a whole run, max 5, measured), and a product
+   of one row is that row's SIGN BIT. 71.4% of deterministic measurements —
+   at every d — read one bit and touch no row at all. So the row-major
+   reference is materialized LAZILY and a clean round transposes zero times.
+   The profile that forced this: scan 0.90 µs, hit set 0.97 µs, product
+   2.90 µs — against 47.19 µs for the engine call. The gap was never the
+   measurement; it was the 0.6 s per-round transpose the measurement was
+   dragging behind it.
+3. **The mirror patch.** A collapse used to invalidate the column mirror and
+   send the rest of the batch back to row-major scanning. The pivot's X-weight
+   is 1.5 mean / **2 max, independent of d**, so the mirror is PATCHED
+   through the collapse for a couple of column XORs instead. Fallback scans
+   went 10199 → 0.
+
+Also: the transpose loop nests are now blocked (TILE = 8), worth ~1.7× on the
+inverse direction; the unblocked gather used 8 bytes of every 64-byte line it
+pulled and dropped the line before the next iteration wanted the next word.
+
+### The flagship: full adaptive syndrome extraction, verified
+
+Rotated surface code, four-step conflict-free schedule, real mid-circuit
+measurement, injected X errors, a decoder reading the mid-circuit outcomes,
+feed-forward correction, seeded and replayable:
+
+| d | n | data + ancilla | measurements | wall | peak RSS | verifications |
+|---:|---:|---|---:|---:|---:|---|
+| 141 | 39761 | 19881 + 19880 | 79520 | 25.8 s | 2.39 GB | **7/7 PASS** |
+| 181 | **65521** | 32761 + 32760 | **131040** | 49.5 s | 6.47 GB | **7/7 PASS** |
+
+The seven are not restatements of one check: Z syndromes silent on |0…0⟩;
+the logical Z determined and +1; a noiseless round reproducing the previous
+one EXACTLY; injected errors lighting exactly the plaquettes that contain
+them and no others; the decoder explaining every fired plaquette with none
+left over; syndromes returning to their pre-error values after correction;
+and the LOGICAL observable still determined and unchanged — the difference
+between "the syndromes look right" and "the encoded bit survived".
+
+### Against stim, on the identical circuit — WE LOSE, and where is located
+
+`--stim` emits the same circuit the engine runs, so this compares engines and
+not circuit generators. Both arms do full exact adaptive simulation (state
+collapsing, not Pauli-frame sampling). Minimum of 7, arms interleaved:
+
+| d | n | measurements | ours | stim | ours/stim |
+|---:|---:|---:|---:|---:|---:|
+| 21 | 881 | 1320 | 0.002 s | 0.002 s | 0.766 |
+| 45 | 4049 | 6072 | 0.051 s | 0.024 s | 2.093 |
+| 101 | 20401 | 30600 | 2.211 s | 1.549 s | 1.427 |
+| 141 | 39761 | 59640 | 10.191 s | 5.243 s | 1.944 |
+
+**stim leads at 3 of 4 sizes, 1.4–2.1×.** Two disclosures that matter more
+than the numbers. First, an earlier median-of-3 pass reported us AHEAD at
+d=101 and d=181; taking the minimum instead — the right estimator under
+contention, since interference can only add time — reversed it. The
+flattering number was noise. Second, this table predates the transpose
+blocking and so understates the current engine; the re-run is owed and queued
+(`conformance/bigqvm/RESUME.md`).
+
+**Where it goes**, by differencing round counts at d=101 (minimum of 5):
+
+| | fixed cost | marginal per round |
+|---|---:|---:|
+| ours | 1.054 s | 0.328 s |
+| stim | 1.167 s | 0.119 s |
+
+Our fixed cost is slightly BETTER and our marginal round is ~2.75× worse —
+and a clean round is 0.065 s, five times cheaper than that average. The
+average is dragged up by the rounds that are not clean: a random outcome or a
+multi-term product forces the O(n²/64) transpose. Checked rather than
+assumed: at d=101 there are ~2550 multi-term measurements per round, and
+serving those by extracting rows from the column engine instead would cost
+~8 s against the transpose's ~0.35 s, so the current policy is right and the
+remaining gap is the transpose's own constant. Closing it needs a faster
+transpose or a measurement layout that needs none — named, not attempted.
+
+### Honest limits on everything above
+
+**d = 221 (n = 97681), the commissioned headline, IS NOT IN THIS ENTRY.** Its
+working set is 9.54 GB and this box's MemAvailable swung between 2.9 GB and
+20 GB during the session as siblings grew; the run has never had its window.
+A detached waiter is polling for one (`conformance/bigqvm/run_when_memory.sh`)
+and will write `d221.DONE` only on a real success. The largest VERIFIED run
+is d = 181 at 65,521 qubits, and that is what is claimed.
+
+**Machine caveat, standing:** every number here was taken at load 33–54 with
+siblings competing for memory and CPU. Repetitions of the SAME measurement
+spread 2–4× at the large distances. None of these ratios is a quiet-machine
+number, and the banked bake-offs (entries six/eight/ten) used a quiet CI
+runner — this comparison deserves the same before it is quoted.
+

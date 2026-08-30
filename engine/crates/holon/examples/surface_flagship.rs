@@ -342,9 +342,18 @@ fn main() {
         total_meas, st.deterministic, st.random, st.scan_fast, st.scan_fallback
     );
     eprintln!(
-        "  destabilizer product terms: {} total, mean {:.2}",
+        "  destabilizer product terms: {} total, mean {:.2}; single-term {} ({:.1}%)",
         st.product_terms,
-        st.product_terms as f64 / st.deterministic.max(1) as f64
+        st.product_terms as f64 / st.deterministic.max(1) as f64,
+        st.single_term,
+        100.0 * st.single_term as f64 / st.deterministic.max(1) as f64
+    );
+    eprintln!(
+        "  transposes {}; cascade terms mean {:.1}; pivot X-weight mean {:.1} max {}",
+        st.transposes,
+        st.cascade_terms as f64 / st.random.max(1) as f64,
+        st.pivot_weight as f64 / st.random.max(1) as f64,
+        st.pivot_weight_max
     );
     eprintln!(
         "  throughput: {:.0} qubit-rounds/s, {:.0} measurements/s, {:.0} gate-ops/s",

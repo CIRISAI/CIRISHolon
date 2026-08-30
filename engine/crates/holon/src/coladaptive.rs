@@ -81,6 +81,19 @@ pub struct ScanStats {
     pub single_term: u64,
     /// How many times the row-major reference had to be materialized.
     pub transposes: u64,
+    /// Rows actually updated by collapse cascades.
+    pub cascade_terms: u64,
+    /// Total X-weight of the pivot rows those cascades multiplied by — the
+    /// quantity that decides whether the column mirror can be PATCHED
+    /// through a collapse instead of abandoned.
+    pub pivot_weight: u64,
+    /// Largest single pivot X-weight seen.
+    pub pivot_weight_max: u64,
+    /// Collapses after which the X mirror was PATCHED and stayed usable.
+    pub mirror_patched: u64,
+    /// Collapses after which the patch was too expensive and the mirror was
+    /// dropped, sending the rest of the batch to the row-major scan.
+    pub mirror_dropped: u64,
 }
 
 pub struct ColAdaptive {
@@ -95,8 +108,11 @@ pub struct ColAdaptive {
     packed_valid: bool,
     /// Is a measurement batch open?
     in_batch: bool,
-    /// Is `col`'s X plane still a faithful mirror of `packed`?
-    mirror_valid: bool,
+    /// Is `col`'s X PLANE a faithful mirror? Enough for every scan.
+    mirror_x_valid: bool,
+    /// Is ALL of `col` (X, Z and signs) faithful? Required by the
+    /// single-term sign shortcut, which reads a sign bit directly.
+    mirror_full_valid: bool,
     /// Did anything in this batch modify `packed`?
     dirty: bool,
     rng: u64,
@@ -120,7 +136,8 @@ impl ColAdaptive {
             packed: None,
             packed_valid: false,
             in_batch: false,
-            mirror_valid: false,
+            mirror_x_valid: false,
+            mirror_full_valid: false,
             dirty: false,
             rng: seed,
             seed,
@@ -173,7 +190,8 @@ impl ColAdaptive {
     pub fn begin_batch(&mut self) {
         assert!(!self.in_batch, "batch already open");
         self.in_batch = true;
-        self.mirror_valid = true;
+        self.mirror_x_valid = true;
+        self.mirror_full_valid = true;
         self.dirty = false;
     }
 
@@ -184,7 +202,8 @@ impl ColAdaptive {
         if self.dirty {
             let packed = self.packed.as_ref().expect("dirty without a reference");
             self.col.load_from_packed(packed);
-            self.mirror_valid = true;
+            self.mirror_x_valid = true;
+            self.mirror_full_valid = true;
             self.dirty = false;
         }
         self.in_batch = false;
@@ -214,7 +233,7 @@ impl ColAdaptive {
         let n = self.n;
 
         // ---- the determinism question, column-side where it is cheap ----
-        let pivot = if self.mirror_valid {
+        let pivot = if self.mirror_x_valid {
             self.stats.scan_fast += 1;
             self.col.first_x_row_in(q, n, 2 * n)
         } else {
@@ -232,7 +251,7 @@ impl ColAdaptive {
         // holds as a single bit. No row is read, so no transpose is needed
         // and the reference is never materialized. |H| = 0 is the empty
         // product, +1.
-        if pivot.is_none() && self.mirror_valid {
+        if pivot.is_none() && self.mirror_full_valid {
             let mut hits = Vec::new();
             self.col.x_rows_in(q, 0, n, &mut hits);
             if hits.len() <= 1 {
@@ -253,23 +272,123 @@ impl ColAdaptive {
 
         match pivot {
             // ---- RANDOM: a fair coin, then the rowsum cascade ----
+            //
+            // The cascade is driven by the COLUMN when the mirror can supply
+            // it: the set of rows to update is literally column `q` of the X
+            // plane, so the reference's `for i in 0..2n { if x[i][q] }` scan —
+            // 2n cache-missing bit-gets — becomes a read of `2n/64`
+            // contiguous words. The mirror is then PATCHED rather than
+            // abandoned, which is what keeps the rest of the batch fast.
             Some(p) => {
                 let outcome = splitmix(&mut self.rng);
                 let pivot_row = packed.rows[p].clone();
-                for i in 0..2 * n {
-                    if i != p && packed.rows[i].x.get(q) {
-                        // `pivot_row` is an owned local, so the borrow of the
-                        // row being updated is disjoint — no clone per term.
-                        packed.rows[i].mul_assign(&pivot_row);
+                let pw = pivot_row.x.popcount() as u64;
+                self.stats.pivot_weight += pw;
+                self.stats.pivot_weight_max = self.stats.pivot_weight_max.max(pw);
+
+                // The update mask: column q over all 2n rows, minus the pivot.
+                let mask: Option<Vec<u64>> = if self.mirror_x_valid {
+                    let mut m = self.col.x_column(q).to_vec();
+                    m[p >> 6] &= !(1u64 << (p & 63));
+                    Some(m)
+                } else {
+                    None
+                };
+
+                let mut cterms = 0u64;
+                match &mask {
+                    Some(m) => {
+                        for (w, &word) in m.iter().enumerate() {
+                            let mut bits = word;
+                            while bits != 0 {
+                                let i = w * 64 + bits.trailing_zeros() as usize;
+                                bits &= bits - 1;
+                                packed.rows[i].mul_assign(&pivot_row);
+                                cterms += 1;
+                            }
+                        }
+                    }
+                    None => {
+                        for i in 0..2 * n {
+                            if i != p && packed.rows[i].x.get(q) {
+                                packed.rows[i].mul_assign(&pivot_row);
+                                cterms += 1;
+                            }
+                        }
                     }
                 }
-                packed.rows[p - n] = pivot_row;
+                self.stats.cascade_terms += cterms;
+
+                let old_destab_x = packed.rows[p - n].x.clone();
+                packed.rows[p - n] = pivot_row.clone();
                 let mut fresh = PauliRow::identity(n);
                 fresh.z.set(q, true);
                 fresh.r = if outcome { 2 } else { 0 };
                 packed.rows[p] = fresh;
 
-                self.mirror_valid = false; // the collapse outran the mirror
+                // ---- patch the X mirror, or give up on it honestly ----
+                //
+                // Step 1 (the cascade): column c changes by `mask` exactly
+                // where the pivot's X part is set.
+                // Step 2 (row p−n := pivot): its X bits must become the
+                // pivot's. After step 1 the bit holds `old ^ (pivot if p−n was
+                // in the mask)`, so the flip set is `old` when it was in the
+                // mask and `old ^ pivot` when it was not.
+                // Step 3 (row p := Z_q): its X bits must become zero, and
+                // after step 1 they still hold the pivot's, so flip exactly
+                // the pivot's support.
+                //
+                // The whole patch is bounded by the pivot's X-weight plus the
+                // old destabilizer's — measured at mean 1.5 and max 2 for the
+                // pivot on a surface code. Past `PATCH_BUDGET` columns the
+                // patch would cost more than the scan it saves, so the mirror
+                // is dropped instead and the batch says so in `scan_fallback`.
+                const PATCH_BUDGET: u32 = 256;
+                // `old_destab_x` is read AFTER the cascade and BEFORE the
+                // overwrite, so it already equals what the mirror's bit
+                // (p−n) holds once step 1 has run — the cascade's effect on
+                // that row is baked in on both sides. The flip set is
+                // therefore just "what it is" XOR "what it must become",
+                // with no separate correction for whether p−n was in the
+                // mask. Applying one anyway double-counts, which is the bug
+                // the bit-identity gate caught.
+                let mut flip2 = old_destab_x;
+                flip2.xor_assign(&pivot_row.x);
+                let patch_cost = pivot_row.x.popcount() * 2 + flip2.popcount();
+
+                match mask {
+                    Some(m) if patch_cost <= PATCH_BUDGET => {
+                        // Set bits only — walking all n columns here would
+                        // reintroduce the O(n) per measurement this exists to
+                        // remove.
+                        for (w, &word) in pivot_row.x.words.iter().enumerate() {
+                            let mut bits = word;
+                            while bits != 0 {
+                                let c = w * 64 + bits.trailing_zeros() as usize;
+                                bits &= bits - 1;
+                                self.col.xor_into_x_column(c, &m);
+                                self.col.flip_x_bit(c, p);
+                            }
+                        }
+                        for (w, &word) in flip2.words.iter().enumerate() {
+                            let mut bits = word;
+                            while bits != 0 {
+                                let c = w * 64 + bits.trailing_zeros() as usize;
+                                bits &= bits - 1;
+                                self.col.flip_x_bit(c, p - n);
+                            }
+                        }
+                        self.stats.mirror_patched += 1;
+                        self.mirror_x_valid = true;
+                    }
+                    _ => {
+                        self.mirror_x_valid = false;
+                        self.stats.mirror_dropped += 1;
+                    }
+                }
+                // Z and signs are NOT patched, so the sign shortcut stands
+                // down until the next full rebuild.
+                self.mirror_full_valid = false;
                 self.dirty = true;
                 self.stats.random += 1;
                 (outcome, false)
@@ -278,7 +397,7 @@ impl ColAdaptive {
             None => {
                 let mut scratch = PauliRow::identity(n);
                 let mut terms = 0u64;
-                if self.mirror_valid {
+                if self.mirror_x_valid {
                     let mut hits = Vec::new();
                     self.col.x_rows_in(q, 0, n, &mut hits);
                     for i in hits {
@@ -703,6 +822,70 @@ mod conformance {
             );
             let _ = &mut t;
         }
+    }
+
+    /// THE MIRROR PATCH'S OWN INVARIANT, gated directly.
+    ///
+    /// After every collapse that reports `mirror_x_valid`, the column
+    /// engine's X plane must equal the reference's X plane BIT FOR BIT —
+    /// mid-batch, not merely after the end-of-batch rebuild papers over it.
+    /// The downstream tests would catch a violation only when it happened to
+    /// change an outcome; this catches it where it happens. (A first version
+    /// of the patch applied a correction for whether row p−n was in the
+    /// update mask when the value it corrected already had the cascade baked
+    /// in — a double-count that survived until a gate looked here.)
+    #[test]
+    fn the_patched_mirror_stays_bit_identical_to_the_reference() {
+        let mut rng = Rng(0x8817_6072);
+        let mut collapses = 0u64;
+        let mut checked = 0u64;
+        for n in [5usize, 13, 32, 64, 96] {
+            for seed in 0..5u64 {
+                let mut a = ColAdaptive::new(n, seed);
+                for _ in 0..(5 * n) {
+                    let q = rng.below(n);
+                    let mut q2 = rng.below(n);
+                    while q2 == q {
+                        q2 = rng.below(n);
+                    }
+                    match rng.below(4) {
+                        0 => a.h(q),
+                        1 => a.s(q),
+                        2 => a.x_gate(q),
+                        _ => a.cx(q, q2),
+                    }
+                }
+                a.begin_batch();
+                for q in 0..n {
+                    let (_o, det) = a.measure(q);
+                    if !det {
+                        collapses += 1;
+                    }
+                    // Only comparable when a reference actually exists — a
+                    // batch of single-term measurements never builds one, and
+                    // there is nothing to diverge from.
+                    if a.mirror_x_valid && a.packed_valid {
+                        let packed = a.packed.as_ref().expect("packed_valid implies present");
+                        checked += 1;
+                        for c in 0..n {
+                            let col = a.col.x_column(c);
+                            for row in 0..2 * n {
+                                let mirror = col[row >> 6] >> (row & 63) & 1 == 1;
+                                assert_eq!(
+                                    mirror,
+                                    packed.rows[row].x.get(c),
+                                    "n={n} seed={seed} after measuring {q}: \
+                                     mirror X[{row}][{c}] diverged"
+                                );
+                            }
+                        }
+                    }
+                }
+                a.end_batch();
+            }
+        }
+        assert!(collapses > 0, "no collapse happened — the test is vacuous");
+        assert!(checked > 0, "the mirror was never compared — the test is vacuous");
     }
 
     /// RESET SEMANTICS, ported: a reset is a real reset. After measure-and-

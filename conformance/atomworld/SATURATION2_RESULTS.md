@@ -808,6 +808,21 @@ space with `S3` symmetry, which is the real cost. Its sizing is already here:
 * and the domain, from the credited far-field finding below: **start from a
   six-bohr cut, not from this lane's fifteen.**
 
+### The refutation, confirming itself from the other direction
+
+That last point was not in the verification when it was written. It fell out of
+converting the instrument, after the module was removed, and it closes the
+question rather than merely restating it.
+
+The reference column reports the true four-body term is **attractive at 11 of the
+40** geometries. Those are the **same eleven** at which the removed surface had
+the wrong sign — not eleven points where a fit was mistuned, but eleven points
+lying on the far side of a zero that `positive constant × positive envelopes` has
+no way to cross. The structural argument said the form could not change sign; the
+data says the eleven failures are exactly the eleven sign changes. Two
+independent readings of one fact, and the second was found by looking at what
+survived rather than at what was being refuted.
+
 
 ---
 

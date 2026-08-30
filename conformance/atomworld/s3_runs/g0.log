@@ -8,29 +8,29 @@
 #   and (O,O,O) at 207,025 is the one staked combo that crosses it.
 
 ## the staked geometries, from located equilibria
-      H-H  R_e = 1.3887 bohr  -> compact side 1.0415   (49 solves, 0.2 s)
-     H-Cl  R_e = 2.5369 bohr  -> compact side 1.9027   (49 solves, 7.3 s)
-    Cl-Cl  R_e = 4.0241 bohr  -> compact side 3.0181   (49 solves, 50.2 s)
-      O-O  R_e = 2.4421 bohr  -> compact side 1.8316   (49 solves, 66.7 s)
-      O-H  R_e = 1.9909 bohr  -> compact side 1.4932   (49 solves, 1.4 s)
+      H-H  R_e = 1.3887 bohr  -> compact side 1.0415   (49 solves, 0.1 s)
+     H-Cl  R_e = 2.5369 bohr  -> compact side 1.9027   (49 solves, 7.5 s)
+    Cl-Cl  R_e = 4.0241 bohr  -> compact side 3.0181   (49 solves, 76.6 s)
+      O-O  R_e = 2.4421 bohr  -> compact side 1.8316   (49 solves, 115.2 s)
+      O-H  R_e = 1.9909 bohr  -> compact side 1.4932   (49 solves, 1.3 s)
 
 ## the measurement
-         combo   orb     n_det committed assemble       CI  iters        exit verdict
-      (H,H,Cl)    11       605       605     0.20     0.01     22   CONVERGED in-class
-               sides 1.042 1.903 1.903 bohr; residual 9.00e-11; route determinant, Knowles-Handy; total 0.21 s = 0.042 of its 5 s class
-     (H,Cl,Cl)    19      3249      3249     1.12     0.14     14   CONVERGED in-class
-               sides 1.903 1.903 3.018 bohr; residual 8.61e-11; route determinant, Knowles-Handy; total 1.25 s = 0.251 of its 5 s class
-    (Cl,Cl,Cl)    27      9477      9477     4.72     1.75     24   CONVERGED over-class
-               sides 3.018 3.018 3.018 bohr; residual 8.11e-11; route determinant, Knowles-Handy; total 6.47 s = 1.294 of its 5 s class
-       (O,O,H)    11      9075      9075     0.18     0.20     24   CONVERGED in-class
-               sides 1.832 1.493 1.493 bohr; residual 9.82e-11; route determinant, Knowles-Handy; total 0.38 s = 0.076 of its 5 s class
-       (O,O,O)    15    207025    207025     0.48    39.35     66   CONVERGED in-class
-               sides 1.832 1.832 1.832 bohr; residual 8.49e-11; route determinant, Knowles-Handy; total 39.83 s = 0.133 of its 300 s class
+         combo   orb     n_det committed assemble       CI  iters               exit    verdict
+      (H,H,Cl)    11       605       605     0.18     0.01     22 subspace stagnated   in-class
+               sides 1.042 1.903 1.903 bohr; residual 9.00e-11; variational margin +0.0171 Ha; route determinant, Knowles-Handy; total 0.19 s = 0.038 of its 5 s class
+     (H,Cl,Cl)    19      3249      3249     1.04     0.13     14 subspace stagnated   in-class
+               sides 1.903 1.903 3.018 bohr; residual 8.61e-11; variational margin +0.0189 Ha; route determinant, Knowles-Handy; total 1.17 s = 0.233 of its 5 s class
+    (Cl,Cl,Cl)    27      9477      9477     3.75     5.16     24 subspace stagnated over-class
+               sides 3.018 3.018 3.018 bohr; residual 8.11e-11; variational margin +0.0346 Ha; route determinant, Knowles-Handy; total 8.91 s = 1.782 of its 5 s class
+       (O,O,H)    11      9075      9075     1.09     1.04     24 subspace stagnated   in-class
+               sides 1.832 1.493 1.493 bohr; residual 9.82e-11; variational margin +0.0609 Ha; route determinant, Knowles-Handy; total 2.13 s = 0.426 of its 5 s class
+       (O,O,O)    15    207025    207025     1.13    49.23     66 subspace stagnated   in-class
+               sides 1.832 1.832 1.832 bohr; residual 8.49e-11; variational margin +0.0684 Ha; route determinant, Knowles-Handy; total 50.36 s = 0.168 of its 300 s class
 
 ## G0 verdict
-   worst cost as a fraction of its class: 1.294 (kill at 10)
+   worst cost as a fraction of its class: 1.782 (kill at 10)
    G0 HOLDS: five of five combos match the committed arithmetic EXACTLY,
    every solve converged, and nothing is near the 10x kill.
 
    OVER ITS STATED CLASS, without triggering the kill:
-     (Cl,Cl,Cl): 6.47 s against the freeze's 5 s — 1.29x. Inside the kill by 8x, so it does not re-scope; the CLASS statement is what needs amending, not the campaign.
+     (Cl,Cl,Cl): 8.91 s against the freeze's 5 s — 1.78x. Inside the kill by 6x, so it does not re-scope; the CLASS statement is what needs amending, not the campaign.

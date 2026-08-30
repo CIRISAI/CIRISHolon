@@ -1046,6 +1046,38 @@ pub struct Solution {
     /// caller from `n_det`, because [`solve`] switches routes on a size threshold and a
     /// caller that re-derives the switch is a second copy of the rule.
     pub route: SolverRoute,
+    /// HOW FAR BELOW `min_i H_ii` the returned energy sits, when the route computed the
+    /// diagonal. `None` from a route that does not (the MPS path), so a caller must decide
+    /// what to do about a missing check rather than reading a default as a pass.
+    ///
+    /// # The one thing a residual cannot tell you
+    ///
+    /// A residual is small for ANY eigenvector, so no residual threshold can detect a solve
+    /// that converged cleanly onto the WRONG one. Measured on this crate by the
+    /// `saturation3-mesh` lane: a deliberately wrong warm start landed 7.47 hartree above
+    /// the ground state and reported a residual of 5.98e-11 against the correct solve's
+    /// 5.24e-11 — indistinguishable — with an identical exit reason.
+    ///
+    /// This is the cheap bound that does detect it. For any normalised trial vector,
+    /// `E_0 <= <psi|H|psi>`; a single determinant is such a vector and gives `H_ii`; so
+    /// `E_0 <= min_i H_ii` rigorously, with no assumption about the solver. `diag` is
+    /// already computed for the preconditioner, so it costs one pass over an array the
+    /// solve is holding anyway.
+    ///
+    /// A NEGATIVE margin means the answer cannot be the ground state and the node must
+    /// VOID. Measured across every triple type SATURATION-3 builds, correct solves sit
+    /// 0.018 to 0.073 hartree BELOW the bound — nine orders above the residual scale, so
+    /// this is not a threshold that can drift into firing (`examples/s3_variational_guard.rs`,
+    /// zero false positives in five of five).
+    ///
+    /// WHAT IT DOES NOT CATCH, because a guard oversold is worse than none: an excited
+    /// state lying BELOW `min_i H_ii` passes. The bound is NECESSARY, not sufficient — the
+    /// `<S^2>` audit and dual-route agreement remain what catch the rest.
+    pub variational_margin: Option<f64>,
+    /// WHY the solve stopped. See [`SolveExit`]: `residual` says where it ended, this says
+    /// whether it was finished, and reading the first as the second is what this field
+    /// exists to prevent.
+    pub exit: SolveExit,
 }
 
 /// Which solver produced a [`Solution`], and therefore what the number is worth.
@@ -1085,6 +1117,56 @@ impl SolverRoute {
         match self {
             SolverRoute::Determinant => "determinant, Knowles-Handy",
             SolverRoute::Dmrg => "DMRG",
+        }
+    }
+}
+
+/// WHY an iterative solve stopped.
+///
+/// # The distinction this exists to keep
+///
+/// `davidson_eigh` has three exits and reported one number: the residual. So a solve that
+/// CONVERGED at 9e-12 and one that hit its ITERATION CAP at 9e-12 were indistinguishable in
+/// every record downstream, and a campaign lost the ability to say why thirteen heavy atoms
+/// stopped short of their 1e-11 target — the publication bar at 1e-10 was sorting
+/// gave-up solves rather than separating converged from not.
+///
+/// A residual is a measurement of where a solve ENDED. It is not a statement about whether
+/// the solve was finished, and the two were being read as one.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum SolveExit {
+    /// The residual fell below the requested tolerance. The only exit that means "done".
+    Converged,
+    /// The iteration cap was reached with the residual still above tolerance. The answer is
+    /// the best available, and it is NOT converged however small the residual looks.
+    IterationCap,
+    /// The Krylov subspace stopped growing: no new direction survived orthogonalisation
+    /// against the existing basis. More iterations cannot help — this one is a property of
+    /// the space and the start vector, not of the budget.
+    Stagnated,
+    /// A one-determinant space. Exact by construction with no iteration performed, so
+    /// "converged" would overstate what happened.
+    Trivial,
+}
+
+// There is deliberately no `Dmrg` variant. The MPS route's own convergence flag is mapped
+// onto `Converged`/`IterationCap` in `solve_mps`, and `Solution::route` already says which
+// solver produced the answer — a variant meaning "ask the other field" would be a second
+// place for the same fact to be stored and a first place for it to disagree.
+
+impl SolveExit {
+    /// Whether the solve reached its tolerance. `false` for every exit that stopped early,
+    /// however small the residual it stopped at.
+    pub fn is_converged(self) -> bool {
+        matches!(self, SolveExit::Converged | SolveExit::Trivial)
+    }
+
+    pub fn label(self) -> &'static str {
+        match self {
+            SolveExit::Converged => "converged",
+            SolveExit::IterationCap => "iteration cap",
+            SolveExit::Stagnated => "subspace stagnated",
+            SolveExit::Trivial => "trivial (one determinant)",
         }
     }
 }
@@ -1137,11 +1219,86 @@ pub fn davidson_eigh(
     tol: f64,
     max_iter: usize,
 ) -> (f64, Vec<f64>, usize, f64) {
+    let (e, v, iters, resid, _) = davidson_eigh_with_exit(space, ci, diag, tol, max_iter);
+    (e, v, iters, resid)
+}
+
+/// [`davidson_eigh`], reporting WHY it stopped.
+///
+/// Additive: `davidson_eigh` calls this and drops the reason, so every existing caller is
+/// unchanged. New callers should prefer this one — see [`SolveExit`] for why a residual
+/// alone cannot answer the question.
+pub fn davidson_eigh_with_exit(
+    space: &FciSpace,
+    ci: &CiInts,
+    diag: &[f64],
+    tol: f64,
+    max_iter: usize,
+) -> (f64, Vec<f64>, usize, f64, SolveExit) {
+    davidson_eigh_from(space, ci, diag, tol, max_iter, None)
+}
+
+/// [`davidson_eigh_with_exit`], with the start vector supplied by the caller — the WARM
+/// START.
+///
+/// # What a warm start may and may not change
+///
+/// A neighbouring geometry's converged CI vector is an excellent guess at this one's, and
+/// starting there is worth a large fraction of the iterations on a smooth surface. That is
+/// a statement about the PATH. It is not a statement about the ANSWER, and the distinction
+/// is the whole of SATURATION-3's plant (iii): a warm start may change how the solve gets
+/// there, never where it arrives. A table whose entries depended on which neighbour
+/// happened to be solved first would not be a function of geometry at all, and nothing
+/// downstream could tell.
+///
+/// This entry point therefore relaxes nothing. Same tolerance, same iteration cap, same
+/// convergence test, same exit reasons, same returned residual. `start = None` reproduces
+/// [`davidson_eigh_with_exit`]'s own start vector bit-for-bit, so every existing caller is
+/// unaffected — that delegation is the only change to the cold path.
+///
+/// # The perturbation is kept, and it is not belt-and-braces
+///
+/// `H` commutes with `S^2`, so a Krylov space never leaves the spin sector of the vector
+/// it started from. The cold start breaks that symmetry deliberately, because a solve that
+/// stays in the wrong sector converges CLEANLY to the wrong answer — carbon came back 0.07
+/// hartree above its ground state with a small residual and nothing in the solve to say so.
+///
+/// A warm start inherits its NEIGHBOUR's spin sector, which is usually the sector wanted
+/// and is exactly why warm starting works at all. But "usually" is not a guarantee, and a
+/// warm start that had silently walked a table into the wrong multiplet would be the carbon
+/// failure again with a longer fuse and a whole surface behind it. So the same
+/// deterministic perturbation is added ON TOP of the supplied vector rather than in place
+/// of it: the guess is kept, the symmetry is still broken, and the `<S^2>` audit downstream
+/// still has something to find.
+///
+/// # Panics
+///
+/// If `start` is `Some(v)` and `v.len() != space.n_det`. A start vector of the wrong length
+/// is a caller that has confused two geometries' spaces; padding or truncating it silently
+/// would turn that mistake into a wrong number instead of a stopped process.
+pub fn davidson_eigh_from(
+    space: &FciSpace,
+    ci: &CiInts,
+    diag: &[f64],
+    tol: f64,
+    max_iter: usize,
+    start_vector: Option<&[f64]>,
+) -> (f64, Vec<f64>, usize, f64, SolveExit) {
     let nd = space.n_det;
+    if let Some(v) = start_vector {
+        assert_eq!(
+            v.len(),
+            nd,
+            "davidson warm start carries {} entries for a space of {} determinants; that \
+             is a start vector from a different geometry's space, not a guess at this one",
+            v.len(),
+            nd
+        );
+    }
     if nd == 1 {
         let mut s = vec![0.0f64; 1];
         sigma_direct(space, ci, &[1.0], &mut s);
-        return (s[0], vec![1.0], 0, 0.0);
+        return (s[0], vec![1.0], 0, 0.0, SolveExit::Trivial);
     }
     let max_sub = 48.min(nd);
     let mut basis: Vec<Vec<f64>> = Vec::new();
@@ -1165,13 +1322,23 @@ pub fn davidson_eigh(
     // state, with nothing in the solve to say so. Breaking the symmetry of the start
     // guarantees a nonzero overlap with every eigenvector, which is what makes "lowest
     // eigenvalue found" mean the lowest one. Deterministic, so a run is reproducible.
-    let mut v0 = vec![0.0f64; nd];
+    //
+    // With a warm start the perturbation is added to the SUPPLIED vector instead of to
+    // zero, and the `+= 1.0` on the lowest-diagonal determinant is dropped: the guess
+    // already carries its own weight there, and forcing an extra unit onto one component
+    // would corrupt a good guess rather than seed an absent one.
+    let mut v0 = match start_vector {
+        Some(w) => w.to_vec(),
+        None => vec![0.0f64; nd],
+    };
     let mut seed = 0x9e37_79b9_7f4a_7c15u64;
     for x in v0.iter_mut() {
         seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-        *x = 1e-3 * (((seed >> 33) as f64 / (1u64 << 30) as f64) - 1.0);
+        *x += 1e-3 * (((seed >> 33) as f64 / (1u64 << 30) as f64) - 1.0);
     }
-    v0[start] += 1.0;
+    if start_vector.is_none() {
+        v0[start] += 1.0;
+    }
     basis.push(normalised(&v0));
 
     let mut theta = diag[start];
@@ -1222,8 +1389,14 @@ pub fn davidson_eigh(
         let mut r = hx;
         axpy(-theta, &x, &mut r);
         resid = norm(&r);
-        if resid < tol || iter + 1 == max_iter {
-            return (theta, x, iter + 1, resid);
+        // THE TWO EXITS THAT WERE ONE. Converged and out-of-iterations returned through
+        // the same branch and were indistinguishable afterwards, whatever the residual
+        // happened to be.
+        if resid < tol {
+            return (theta, x, iter + 1, resid, SolveExit::Converged);
+        }
+        if iter + 1 == max_iter {
+            return (theta, x, iter + 1, resid, SolveExit::IterationCap);
         }
         if basis.len() >= max_sub {
             // Thick restart: the Ritz vector AND the direction the solve was moving in.
@@ -1285,10 +1458,10 @@ pub fn davidson_eigh(
             }
         }
         if !added {
-            return (theta, x, iter + 1, resid);
+            return (theta, x, iter + 1, resid, SolveExit::Stagnated);
         }
     }
-    (theta, x, max_iter, resid)
+    (theta, x, max_iter, resid, SolveExit::IterationCap)
 }
 
 /// Lowest eigenpair by Davidson, matrix-free.
@@ -1304,6 +1477,10 @@ pub fn davidson(
 ) -> (f64, Vec<f64>, usize, f64) {
     davidson_eigh(space, ci, diag, tol, max_iter)
 }
+
+// There is deliberately no `davidson_with_exit` alias mirroring `davidson`. Nothing calls
+// it, and the dead-API audit was right to say so: `davidson_eigh_with_exit` is the API, and
+// a parallel name kept for symmetry is one more public item nobody consumes.
 
 /// Solve `(H - E) w = b` on the orthogonal complement of `v`, by projected conjugate
 /// gradients with a Jacobi preconditioner.
@@ -1448,11 +1625,24 @@ pub fn solve_mps_with(
     Solution {
         e: D2::new(res.energy, e1, e2),
         vector: vec![],
+        // NONE, not a default that reads as a pass: this route never forms the determinant
+        // diagonal, so the variational bound is genuinely unavailable here rather than
+        // satisfied. A caller that needs the check on an MPS result has to say so.
+        variational_margin: None,
         davidson_iters: res.sweeps_used,
         cg_iters: 0,
         residual: max_dw.max(res.worst_lanczos_residual),
         cg_residual: 0.0,
         route: SolverRoute::Dmrg,
+        // The DMRG route has no Krylov subspace to stagnate and no Davidson cap; its own
+        // convergence flag is the only thing it can report, and it is mapped rather than
+        // invented. `SolveExit::Dmrg` would lose the flag, so the flag wins and the route
+        // field already says which solver produced this.
+        exit: if res.converged {
+            SolveExit::Converged
+        } else {
+            SolveExit::IterationCap
+        },
     }
 }
 
@@ -1484,6 +1674,28 @@ pub fn solve(space: &FciSpace, mo: &MoIntegrals) -> Solution {
 /// hypothetical: SiO is 132,496 determinants, past the threshold, and is one of D1's two
 /// staked overlap species.
 pub fn solve_determinant(space: &FciSpace, mo: &MoIntegrals) -> Solution {
+    solve_determinant_from(space, mo, None)
+}
+
+/// [`solve_determinant`], starting the Davidson from a caller-supplied vector.
+///
+/// This is the table generator's entry point: SATURATION-3 walks a grid whose neighbouring
+/// nodes differ by one small step in one coordinate, and the converged CI vector at the
+/// previous node is a very good guess at this one's. `start = None` is exactly
+/// [`solve_determinant`], so the cold path is unchanged.
+///
+/// # What this does NOT change
+///
+/// Only the Davidson's first basis vector. The tolerance, the iteration cap, the exit
+/// reasons, the response solve for the second derivative, and the hard determinant cap all
+/// behave identically — a warm start is an optimisation of the path and must never be an
+/// argument for accepting a looser answer. Whether the answer it reaches is the same answer
+/// is a MEASUREMENT, not an assumption, and it is SATURATION-3's plant (iii).
+pub fn solve_determinant_from(
+    space: &FciSpace,
+    mo: &MoIntegrals,
+    start_vector: Option<&[f64]>,
+) -> Solution {
     // THE REFUSAL, because removing the routing threshold removed the only thing standing
     // between a caller and an astronomically large space.
     //
@@ -1512,12 +1724,13 @@ pub fn solve_determinant(space: &FciSpace, mo: &MoIntegrals) -> Solution {
     let ci1 = ci_ints(mo, Order::First);
     let ci2 = ci_ints(mo, Order::Second);
     let diag = space.diagonal(&ci0);
-    let (e, v, iters, residual) = davidson(
+    let (e, v, iters, residual, exit) = davidson_eigh_from(
         space,
         &ci0,
         &diag,
         1e-11,
         DAVIDSON_MAX_ITER.load(std::sync::atomic::Ordering::Relaxed),
+        start_vector,
     );
 
     // E' = <v|H'|v>: exact for a variational eigenvector, with no response needed,
@@ -1540,14 +1753,21 @@ pub fn solve_determinant(space: &FciSpace, mo: &MoIntegrals) -> Solution {
         cg_response(space, &ci0, &diag, e, &v, &rhs, 1e-10, 2000);
     let e2 = e2_direct + 2.0 * dot(&w, &h1v);
 
+    // The variational bound, from the diagonal the preconditioner already built. See
+    // `Solution::variational_margin`: this is the only check in the record that can catch a
+    // solve which converged cleanly onto the wrong eigenvector, because a residual is small
+    // for any eigenvector at all.
+    let min_diag = diag.iter().copied().fold(f64::INFINITY, f64::min);
     Solution {
         e: D2::new(e, e1, e2),
         vector: v,
+        variational_margin: Some(min_diag - e),
         davidson_iters: iters,
         cg_iters,
         residual,
         cg_residual,
         route: SolverRoute::Determinant,
+        exit,
     }
 }
 

@@ -282,6 +282,8 @@ pub struct PointSolution {
     pub s_min_eigenvalue: f64,
     /// Which solver actually ran. See [`SolverRoute`].
     pub route: SolverRoute,
+    /// WHY the solve stopped. See [`crate::fci::SolveExit`].
+    pub exit: crate::fci::SolveExit,
 }
 
 /// Solve one geometry: assemble, orthonormalise, rotate, transform, diagonalise.
@@ -338,6 +340,7 @@ pub fn solve_basis(basis: &Basis, n_alpha: usize, n_beta: usize) -> PointSolutio
         scf_converged,
         s_min_eigenvalue: s_eigs[0],
         route: sol.route,
+        exit: sol.exit,
     }
 }
 
@@ -642,6 +645,9 @@ pub struct PairMeta {
     /// existed the switch was invisible downstream — a DMRG curve arrived in the sandbox
     /// wearing a provenance string that said "determinant".
     pub route: SolverRoute,
+    /// The WORST exit over the curve's knots. See [`crate::fci::SolveExit`] — and
+    /// [`PairMeta::converged`], which this field exists to make honest.
+    pub exit: crate::fci::SolveExit,
     /// The provenance line, DERIVED from `route` by [`provenance_for`] rather than being
     /// one constant for every curve. A field that cannot vary cannot be wrong, and cannot
     /// be right either.
@@ -825,6 +831,10 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
     // single label cannot describe it. Downgrading on any DMRG knot is the safe
     // direction: it can only understate the curve's exactness, never overstate it.
     let mut route = SolverRoute::Determinant;
+    // The WORST exit over the curve's knots, in the same downgrading spirit as `route`: one
+    // knot that gave up makes the curve one that gave up, because the curve is only as good
+    // as its worst point and a single label cannot describe a mixture.
+    let mut worst_exit = crate::fci::SolveExit::Trivial;
 
     for i in 0..n_knots {
         let ri = crate::table::grid_point(r_min, r_max, n_knots, i);
@@ -845,6 +855,13 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
         scf_ok &= sol.scf_converged;
         if sol.route == SolverRoute::Dmrg {
             route = SolverRoute::Dmrg;
+        }
+        if worst_exit.is_converged() && !sol.exit.is_converged() {
+            worst_exit = sol.exit;
+        } else if worst_exit == crate::fci::SolveExit::Trivial
+            && sol.exit == crate::fci::SolveExit::Converged
+        {
+            worst_exit = sol.exit;
         }
         n_det = sol.n_det;
         n_basis = sol.n_basis;
@@ -879,6 +896,7 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
             e_asymptote,
             well,
             route,
+            exit: worst_exit,
             provenance: provenance_for(route),
             worst_residual,
             worst_cg_residual: worst_cg,
@@ -1200,10 +1218,53 @@ impl PairMeta {
     /// A VERDICT, not a number. See [`CONVERGED_RESIDUAL`]: the residual was recorded here
     /// long before anything asked it a question, which is how a curve that gave up could
     /// have shipped looking healthy.
+    /// # What this verdict does NOT include, and why not yet
+    ///
+    /// It tests the residual against [`CONVERGED_RESIDUAL`] and deliberately does NOT
+    /// consult [`PairMeta::exit`], even though the exit is the half that says whether the
+    /// solve finished. Making it consult the exit was tried and reverted, because of what
+    /// it turned up:
+    ///
+    /// | pair | worst residual | exit |
+    /// |---|---|---|
+    /// | H2 | 4.74e-13 | converged |
+    /// | H-He | 2.67e-15 | converged |
+    /// | He2 | 0 | trivial |
+    /// | H-Li | 9.75e-11 | **subspace stagnated** |
+    /// | Li2 | 9.79e-11 | **subspace stagnated** |
+    /// | H-Cl | 9.71e-11 | **subspace stagnated** |
+    /// | ClF | 10.00e-11 | **subspace stagnated** |
+    /// | Cl2 | 9.51e-11 | **subspace stagnated** |
+    /// | N2 | 9.82e-11 | **subspace stagnated** |
+    ///
+    /// **Every multi-determinant curve in the campaign stagnates**, and all of them stop
+    /// in 9.5–10.0e-11 — a spread far too tight to be six independent systems each finding
+    /// their own limit. The mechanism is a constant mismatch in `davidson_eigh_from`: a new
+    /// subspace direction is accepted only if its norm after orthogonalisation exceeds
+    /// **1e-10**, while `solve_determinant` asks for a residual of **1e-11**. The requested
+    /// tolerance sits an order of magnitude below the solver's own expansion floor, so it
+    /// is unreachable by construction on any system that needs the subspace to keep
+    /// growing.
+    ///
+    /// So the honest verdict would fail every multi-determinant curve this crate ships,
+    /// which is a campaign-level decision about the SOLVER and not a verdict change to make
+    /// from here. `exit` is recorded so the fact is available; this stays as it was so
+    /// nothing breaks while it is decided.
     pub fn converged(&self) -> bool {
         self.worst_residual <= CONVERGED_RESIDUAL
             && self.worst_residual.is_finite()
             && self.worst_cg_residual.is_finite()
+    }
+
+    /// The verdict [`PairMeta::converged`] would give if it consulted the exit reason:
+    /// did the solve FINISH, as opposed to stopping somewhere acceptable?
+    ///
+    /// Reported rather than enforced, for the reason that function's header gives. A
+    /// consumer that needs to know whether a curve's solves ran to completion asks this;
+    /// a consumer that needs to know whether the numbers are inside the crate's declared
+    /// bar asks the other.
+    pub fn solve_finished(&self) -> bool {
+        self.exit.is_converged() && self.converged()
     }
 }
 

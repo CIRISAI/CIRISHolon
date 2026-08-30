@@ -46,12 +46,28 @@
 //! declared only for Z <= 10 and silently returns hydrogen's value for chlorine, which
 //! would have staked the chlorine geometries at a hydrogen length without saying so.
 //!
-//! # Exit reasons (M-EXIT-DISCRIMINATOR)
+//! # Exit reasons (M-EXIT-DISCRIMINATOR), and a correction to this gate's first version
 //!
-//! Every solve records its iteration count, its final residual, and an EXIT REASON derived
-//! from the crate's own declared bar `pair::CONVERGED_RESIDUAL`. A solve that stopped
-//! without reaching it is reported as NOT CONVERGED and is never counted as a cost
-//! measurement of a converged solve — a stagnated solve that ran fast is not a cheap solve.
+//! Every solve records its iteration count, its final residual, its VARIATIONAL MARGIN and
+//! the SOLVER'S OWN exit reason.
+//!
+//! The first version of this gate derived an exit reason itself, by comparing the residual
+//! against `pair::CONVERGED_RESIDUAL` (1e-10), and reported all five combos "CONVERGED".
+//! The solver's own target is 1e-11 and it reaches none of them: every one of these solves
+//! exits `subspace stagnated`. So the column was reporting THIS FILE'S threshold and
+//! calling it the solve's outcome — a second copy of a rule, disagreeing with the first.
+//!
+//! The mechanism, since it matters for every table this campaign builds: the residual
+//! floors just under 1e-10 because `davidson_eigh` accepts a new expansion direction only
+//! when its norm exceeds a hardcoded 1e-10, and that threshold is SCALE-FREE. It is not an
+//! energy-scale noise floor — across these five combos `|E|` spans 192 to 1651 hartree and
+//! `n_det` spans 605 to 207,025, so an `eps*|E|*sqrt(n_det)` floor would span 14x, while
+//! the observed residuals span 1.21x. One threshold dominates all five.
+//!
+//! The eigenvalue error that costs is `~resid^2/gap`, about 1e-20 hartree — twelve orders
+//! below anything this campaign measures. These solves are ACCURATE; the label is what is
+//! wrong, and the label is not worth changing a shared tolerance for, because every energy's
+//! last bits would move and SATURATION-2's committed table is gated on bit-identity.
 //!
 //! ```text
 //! cargo run --release -p holon-chem --example s3_g0
@@ -183,7 +199,7 @@ fn main() {
 
     println!("\n## the measurement");
     println!(
-        "   {:>11} {:>5} {:>9} {:>9} {:>8} {:>8} {:>6} {:>11} {:>7}",
+        "   {:>11} {:>5} {:>9} {:>9} {:>8} {:>8} {:>6} {:>18} {:>10}",
         "combo", "orb", "n_det", "committed", "assemble", "CI", "iters", "exit", "verdict"
     );
     let mut fired = Vec::new();
@@ -206,8 +222,16 @@ fn main() {
         let class = if name == "(O,O,O)" { CLASS_OOO_S } else { CLASS_CHEAP_S };
         let ratio = total / class;
         worst_ratio = worst_ratio.max(ratio);
-        let converged = sol.residual <= CONVERGED_RESIDUAL;
-        let exit = if converged { "CONVERGED" } else { "NOT-CONV" };
+        // The SOLVER's exit, not this file's opinion of it.
+        let exit = sol.exit.label();
+        // What "converged" has to mean here: the solver reached its own target, OR it
+        // stopped at the orthogonalisation floor with a residual inside the crate's
+        // publication bar. Both are stated so neither is implied.
+        let converged = sol.exit.is_converged() || sol.residual <= CONVERGED_RESIDUAL;
+        // The variational bound. A solve above `min_i H_ii` is not the ground state, and
+        // neither the residual nor the exit reason can tell — measured on this crate at
+        // sixteen of sixty (H,H,Cl) geometries.
+        let margin = sol.variational_margin.expect("the determinant route reports it");
         // THREE distinct outcomes, not two. The freeze states a cost CLASS ("<= 5 seconds
         // per point") and separately a KILL ("over 10x its class re-scopes the campaign").
         // A combo can miss the class without triggering the kill, and collapsing those into
@@ -227,15 +251,22 @@ fn main() {
             fired.push((name, verdict, total, class, space.n_det, committed, sol.residual));
         }
         println!(
-            "   {name:>11} {:>5} {:>9} {committed:>9} {asm:>8.2} {ci:>8.2} {:>6} {exit:>11} {verdict:>7}",
+            "   {name:>11} {:>5} {:>9} {committed:>9} {asm:>8.2} {ci:>8.2} {:>6} {:>18} {verdict:>10}",
             space.n_orb,
             space.n_det,
             sol.davidson_iters,
+            exit,
         );
         println!(
-            "               sides {:.3} {:.3} {:.3} bohr; residual {:.2e}; route {}; \
-             total {:.2} s = {:.3} of its {class:.0} s class",
+            "               sides {:.3} {:.3} {:.3} bohr; residual {:.2e}; variational margin \
+             {margin:+.4} Ha; route {}; total {:.2} s = {:.3} of its {class:.0} s class",
             sides[0], sides[1], sides[2], sol.residual, sol.route.label(), total, ratio
+        );
+        assert!(
+            margin > 0.0,
+            "{name}: the solve is {:.4} Ha ABOVE min_i H_ii, so it is not the ground state \
+             and this cost measurement is of the wrong eigenvector",
+            -margin
         );
     }
 

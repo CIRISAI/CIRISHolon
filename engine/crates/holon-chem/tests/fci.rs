@@ -922,3 +922,305 @@ fn test_sigma_direct_germanium_ground_state() {
     assert!((mult - 3.0).abs() < 1e-4, "Germanium ground state must be 3P (multiplicity 3), got {mult:.4}");
 }
 
+
+// ------------------------------------------------------------------ why a solve stopped
+
+/// A small many-determinant problem: nitrogen's atom, 5 basis functions and enough
+/// determinants that Davidson genuinely iterates rather than finishing immediately.
+fn h2_like_problem() -> (FciSpace, holon_chem::fci::CiInts, Vec<f64>) {
+    let (space, mo, _) = geometry_problem(
+        &[holon_chem::elements::NITROGEN],
+        vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]],
+    );
+    let ci0 = ci_ints(&mo, Order::Value);
+    let diag = space.diagonal(&ci0);
+    (space, ci0, diag)
+}
+
+/// A one-determinant problem: argon's atom, a closed shell.
+fn one_determinant_problem() -> (FciSpace, holon_chem::fci::CiInts, Vec<f64>) {
+    let (space, mo, _) = geometry_problem(
+        &[holon_chem::elements::ARGON],
+        vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]],
+    );
+    let ci0 = ci_ints(&mo, Order::Value);
+    let diag = space.diagonal(&ci0);
+    (space, ci0, diag)
+}
+
+/// The three exits are DISTINGUISHABLE, and the residual alone cannot tell them apart.
+///
+/// # The defect this addition answers
+///
+/// `davidson_eigh` had three exits and reported one number. A solve that reached tolerance
+/// and a solve that ran out of iterations returned through the same branch, so every record
+/// downstream had to infer "did this finish?" from "where did it stop?" — which is not the
+/// same question. A campaign lost thirteen heavy atoms to that: at a 1e-10 publication bar,
+/// solves that had given up sorted in alongside solves that had converged.
+///
+/// # What writing this test found
+///
+/// One system, three exits, differing only in the tolerance and the cap. The middle case is
+/// not a contrivance — **nitrogen's atom does not reach 1e-11 on this engine.** It stops at
+/// 8.1e-11 after eleven iterations because the Krylov subspace stops growing: no new
+/// direction survives orthogonalisation against the basis. That is `Stagnated`, and it is a
+/// property of the space and the start vector rather than of the budget, so more iterations
+/// cannot fix it.
+///
+/// It also sits UNDER a 1e-10 publication bar while being OVER its own 1e-11 tolerance,
+/// which is exactly the confusion the enum exists to remove: a bar on the residual sorts it
+/// with the converged solves, and only the exit reason says it gave up.
+#[test]
+fn the_three_exits_are_distinguishable() {
+    use holon_chem::fci::{davidson_eigh_with_exit, SolveExit};
+
+    let (space, ci0, diag) = h2_like_problem();
+    assert!(
+        space.n_det > 1,
+        "this test needs a space Davidson actually iterates on"
+    );
+
+    // CONVERGED: a tolerance this system can reach.
+    let (e_c, _, it_c, rd_c, ex_c) = davidson_eigh_with_exit(&space, &ci0, &diag, 1e-9, 400);
+    println!("tol 1e-9,  cap 400: E = {e_c:.12}  resid = {rd_c:.3e}  iters = {it_c}  exit = {}", ex_c.label());
+    assert_eq!(ex_c, SolveExit::Converged, "a reachable tolerance did not report Converged");
+    assert!(ex_c.is_converged());
+
+    // STAGNATED: a tolerance it cannot reach, stopped by the subspace rather than the cap.
+    let (_, _, it_s, rd_s, ex_s) = davidson_eigh_with_exit(&space, &ci0, &diag, 1e-11, 400);
+    println!("tol 1e-11, cap 400: resid = {rd_s:.3e}  iters = {it_s}  exit = {}", ex_s.label());
+    assert_eq!(
+        ex_s,
+        SolveExit::Stagnated,
+        "nitrogen's atom used to stop at 8.1e-11 by subspace stagnation with 400 iterations \
+         available; it now reports {ex_s:?}. If the solver improved, this test should be \
+         re-pointed at a system that still stagnates rather than deleted — the exit is the \
+         thing under test, not nitrogen."
+    );
+    assert!(it_s < 400, "it reported Stagnated but used its whole budget, which is a cap");
+    assert!(!ex_s.is_converged());
+
+    // ITERATION CAP: the same reachable tolerance, starved of iterations.
+    let (_, _, it_i, rd_i, ex_i) = davidson_eigh_with_exit(&space, &ci0, &diag, 1e-9, 1);
+    println!("tol 1e-9,  cap 1:   resid = {rd_i:.3e}  iters = {it_i}  exit = {}", ex_i.label());
+    assert_eq!(ex_i, SolveExit::IterationCap, "a one-iteration solve reported {ex_i:?}");
+    assert_eq!(it_i, 1);
+    assert!(!ex_i.is_converged());
+
+    // THE POINT, and it is sharper than "hard to separate": the converged solve and the
+    // stagnated one stop at the SAME PLACE. Same system, same eleven iterations, same
+    // 8.105e-11 residual — the only difference is what was asked of them. NO threshold on
+    // the residual can distinguish these two, at any value, because there is no difference
+    // in the residual to threshold.
+    println!(
+        "  converged at {rd_c:.3e}, STAGNATED at {rd_s:.3e} — the SAME residual. No bar on \
+         the residual can separate them at any value; only the exit reason does."
+    );
+    assert_eq!(
+        rd_c.to_bits(),
+        rd_s.to_bits(),
+        "the two solves no longer stop at the identical residual ({rd_c:.6e} vs \
+         {rd_s:.6e}), so this test has weakened from 'no threshold can separate them' to \
+         'a threshold would have to be well chosen'. Still worth having, but re-read the \
+         claim above before trusting it."
+    );
+}
+
+/// A one-determinant space reports `Trivial`, not `Converged`.
+///
+/// It is exact by construction with no iteration performed, and calling that "converged"
+/// would claim an iterative result where none happened. `is_converged()` is still true,
+/// because for a consumer asking "can I trust this number" the answer is yes.
+#[test]
+fn a_one_determinant_space_reports_trivial() {
+    use holon_chem::elements::ARGON;
+    use holon_chem::fci::{davidson_eigh_with_exit, SolveExit};
+    use holon_chem::pair::automatic_route;
+
+    // Ar2 is one determinant: a closed shell at both centres.
+    assert_eq!(
+        automatic_route(ARGON, ARGON).n_det(),
+        1,
+        "Ar2 is no longer a one-determinant space; pick another for this test"
+    );
+
+    let (space, ci0, diag) = one_determinant_problem();
+    let (_, _, iters, resid, exit) = davidson_eigh_with_exit(&space, &ci0, &diag, 1e-11, 400);
+    println!("one determinant: iters = {iters}  resid = {resid:.3e}  exit = {}", exit.label());
+    assert_eq!(exit, SolveExit::Trivial);
+    assert_eq!(iters, 0, "a trivial space performed iterations");
+    assert!(exit.is_converged(), "a trivial space's answer is exact and should read as usable");
+}
+
+// ============================================================ the variational guard
+//
+// A residual is small for ANY eigenvector, so no residual threshold can detect a solve that
+// converged cleanly onto the wrong one. The `saturation3-mesh` lane measured exactly that
+// on this crate: a deliberately wrong warm start landing 7.47 hartree above the ground
+// state, reporting a residual of 5.98e-11 against the correct solve's 5.24e-11 and an
+// IDENTICAL exit reason. Both of the record's existing discriminators were blind to it.
+//
+// `Solution::variational_margin` is the cheap bound that is not: `E_0 <= min_i H_ii`,
+// rigorously, because a single determinant is itself a normalised trial vector. These two
+// tests are the halves that make it trustworthy — it FIRES on the defect, and it is SILENT
+// on a correct solve. A guard demonstrated only in one direction is half a guard.
+
+/// An (H, H, Cl) problem at 605 determinants, at a named geometry.
+fn hhcl_problem(hh: f64, hcl: f64, deg: f64) -> (holon_chem::fci::FciSpace, holon_chem::fci::MoIntegrals) {
+    use holon_chem::dual::D2;
+    use holon_chem::elements::{CHLORINE, HYDROGEN};
+    let c = |x: f64, y: f64| [D2::c(x), D2::c(y), D2::c(0.0)];
+    let th = deg * core::f64::consts::PI / 180.0;
+    let (space, mo, _) = holon_chem::pair::geometry_problem(
+        &[HYDROGEN, HYDROGEN, CHLORINE],
+        vec![c(0.0, 0.0), c(hh, 0.0), c(hcl * th.cos(), hcl * th.sin())],
+    );
+    (space, mo)
+}
+
+/// SATURATION-3's G0 compact staked geometry: H-H and H-Cl at 0.75 of their located
+/// equilibria. Robust — Davidson recovers the ground state here from ANY start tried.
+fn hhcl_g0_compact() -> (holon_chem::fci::FciSpace, holon_chem::fci::MoIntegrals) {
+    hhcl_problem(1.0415, 1.9027, 60.0)
+}
+
+/// A geometry where Davidson DOES converge to the wrong eigenvector from a bad start —
+/// one of sixteen found in a sixty-geometry scan (`examples/s3_wrongstate_hunt.rs`).
+/// Named separately from the compact one because the plant needs a non-empty sector and
+/// the guard's silence needs a correct solve, and those are different geometries.
+fn hhcl_wrong_state_prone() -> (holon_chem::fci::FciSpace, holon_chem::fci::MoIntegrals) {
+    hhcl_problem(1.50, 1.90, 90.0)
+}
+
+#[test]
+fn the_variational_guard_is_silent_on_a_correct_solve() {
+    let (space, mo) = hhcl_g0_compact();
+    let sol = holon_chem::fci::solve_determinant(&space, &mo);
+    let margin = sol
+        .variational_margin
+        .expect("the determinant route computes the diagonal and must report the margin");
+    assert!(
+        margin > 0.0,
+        "the guard FIRED on a correct solve: energy {:.9} sits {:.3e} ABOVE min_i H_ii. A \
+         guard that voids good nodes is worse than no guard.",
+        sol.e.v,
+        -margin
+    );
+    // Not merely positive: far enough above zero that it cannot drift into firing. The
+    // residual these solves live at is ~1e-10, so a margin at 1e-2 is eight orders clear.
+    assert!(
+        margin > 1e-3,
+        "the margin is only {margin:.3e} Ha. That is close enough to the residual scale \
+         that ordinary numerical variation could cross it, and a guard whose threshold \
+         floats in the noise is a source of false VOIDs rather than a check."
+    );
+    println!(
+        "guard silent: E = {:.9}, margin below min_i H_ii = {margin:.6} Ha",
+        sol.e.v
+    );
+}
+
+#[test]
+fn the_variational_guard_fires_on_a_solve_that_converged_to_the_wrong_state() {
+    let (space, mo) = hhcl_wrong_state_prone();
+    let good = holon_chem::fci::solve_determinant(&space, &mo);
+
+    // THE PLANT, and it had to be RE-STAKED once.
+    //
+    // The first version used a random start at G0's COMPACT geometry, and VOIDed on an
+    // empty sector — the test said so rather than passing. A deterministic worst-case start
+    // (the highest-diagonal determinant) voided there too. Davidson is simply robust at
+    // that geometry: it recovers the ground state from any start tried.
+    //
+    // So the sector was SEARCHED rather than assumed empty. `examples/s3_wrongstate_hunt.rs`
+    // scans sixty (H,H,Cl) geometries and finds the failure at SIXTEEN of them — 27% — with
+    // energies 7.3 to 8.1 hartree above the ground state, matching the 7.47 Ha
+    // `saturation3-mesh` measured independently. The guard catches all sixteen. The
+    // conclusion that matters for a 34,500-node table is that the wrong-eigenvector failure
+    // is GEOMETRY-DEPENDENT and common, not rare and not universal.
+    //
+    // So the plant is now deterministic and aimed: start from the single determinant with
+    // the LARGEST diagonal element. It is a legitimate normalised trial vector, it is as
+    // far from the ground state as a single determinant gets, and it needs no seed. If
+    // Davidson converges anywhere near it, the energy is above `min_i H_ii` by
+    // construction and the guard must fire.
+    let ci = holon_chem::fci::ci_ints(&mo, holon_chem::fci::Order::Value);
+    let diag = space.diagonal(&ci);
+    let (hi_i, hi_v) = diag
+        .iter()
+        .enumerate()
+        .fold((0usize, f64::NEG_INFINITY), |acc, (i, &v)| {
+            if v > acc.1 {
+                (i, v)
+            } else {
+                acc
+            }
+        });
+    let lo_v = diag.iter().copied().fold(f64::INFINITY, f64::min);
+    let mut wrong = vec![0.0f64; space.n_det];
+    wrong[hi_i] = 1.0;
+
+    // M-PLANT-OBS: the carrier is asserted before the plant is scored. A start whose own
+    // expectation value already sits below `min_i H_ii` could not produce an above-bound
+    // answer and would prove nothing.
+    assert!(
+        hi_v > lo_v + 1.0,
+        "the plant's carrier is empty: the highest diagonal ({hi_v:.4}) is only \
+         {:.3e} above the lowest ({lo_v:.4}), so no start can put the solve meaningfully \
+         above the bound",
+        hi_v - lo_v
+    );
+    let overlap = good.vector[hi_i].abs();
+    assert!(
+        overlap < 0.2,
+        "the plant's carrier is empty: the planted determinant carries {overlap:.3} of the \
+         true ground state, which is a warm start rather than a wrong one"
+    );
+
+    let planted = holon_chem::fci::solve_determinant_from(&space, &mo, Some(&wrong));
+    let margin = planted.variational_margin.expect("determinant route");
+    println!(
+        "plant: E = {:.6} against a true {:.6} ({:.3} Ha above); residual {:.3e} against \
+         {:.3e}; exit {} against {}; margin {:.4}",
+        planted.e.v,
+        good.e.v,
+        planted.e.v - good.e.v,
+        planted.residual,
+        good.residual,
+        planted.exit.label(),
+        good.exit.label(),
+        margin
+    );
+
+    // The two claims that make this the RIGHT guard, in order.
+    //
+    // First: the existing discriminators are blind. If the plant were catchable by residual
+    // or exit reason there would be no case for a new field, and this assertion is what
+    // stops the guard being justified by a defect that something else already caught.
+    if planted.e.v > good.e.v + 1e-3 {
+        assert!(
+            planted.residual < 1e-8 && planted.exit == good.exit,
+            "the plant was caught by the EXISTING record (residual {:.3e}, exit {}), so the \
+             variational margin is not what is needed here",
+            planted.residual,
+            planted.exit.label()
+        );
+        // Second: the guard sees it.
+        assert!(
+            margin < 0.0,
+            "plant MISSED: the solve landed {:.3} Ha above the ground state and the \
+             variational margin is still {margin:.4}, so the guard does not catch the one \
+             failure it exists for",
+            planted.e.v - good.e.v
+        );
+    } else {
+        // The plant did not fire. That is a VOID, not a pass: it means this start was not
+        // wrong enough on this system, and the guard is untested rather than validated.
+        panic!(
+            "PLANT VOID (empty sector): the wrong start converged to within {:.3e} Ha of the \
+             true ground state, so there is no wrong-eigenvector failure here to catch and \
+             this test validates nothing. Re-stake the plant.",
+            (planted.e.v - good.e.v).abs()
+        );
+    }
+}

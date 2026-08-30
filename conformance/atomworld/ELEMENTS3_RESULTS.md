@@ -9,7 +9,13 @@ should be read: the declared convergence bar **sorts** this class rather than se
 every multi-determinant heavy atom stops by subspace stagnation, none within eight hundred
 iterations of its cap, and the line between published and refused falls at a factor of 1.1 in
 residual. It is written up under R1's route scope rather than in FINDINGS because it changes
-what the refusals mean, not what any gate concluded.*
+what the refusals mean, not what any gate concluded — and it is the one finding here that
+changed the engine rather than only the record: a crate-wide measurement followed it, found
+`CONVERGED_RESIDUAL` sitting exactly on the solver's expansion floor, and the bar is now derived
+a decade above that floor instead of coinciding with it. Four of this record's five refusals
+would not be refused under the replacement. The printed verdicts are not rewritten, because no
+energy moved and a record is what an instrument produced under a declared rule, not a
+current-best-state.*
 
 ---
 
@@ -19,7 +25,7 @@ what the refusals mean, not what any gate concluded.*
 |---|---|---|
 | **W1** — the mask widening costs nothing | **VERIFIED** (not implemented — see below) | 18 atoms + 40 pair points bit-identical; plant fires 1.12e-2 Ha at 36 orbitals, silent at 18 |
 | **T1** — the transcription gates, generalized | **DISCHARGED** | worst ratio deviation 0.806x its own bound against a 4x threshold; 407 contractions pinned; 240/240 resolvable mutations fire |
-| **R1** — atoms, dual-route and referee-pinned | **DISCHARGED ON THE RESCOPE** (A1.2, A3.1), with **five rows REFUSED** | nine multiplicities exact; two sigma routes to 2.13e-14; referee 1.0e-11 / 5.3e-11 Ha on two of nine; Zn, In, Sn, Sb, Te refused on the declared convergence bar |
+| **R1** — atoms, dual-route and referee-pinned | **DISCHARGED ON THE RESCOPE** (A1.2, A3.1), with **five rows REFUSED** under the bar frozen at the time — **one** under the bar that replaced it | nine multiplicities exact; two sigma routes to 2.13e-14; referee 1.0e-11 / 5.3e-11 Ha on two of nine; Zn, In, Sn, Sb, Te refused as printed, of which only In survives the re-derived bar — see the dated annotation under R1, no energy changed |
 | **E1** — the emergent nobles | **DISCHARGED** | Kr and Xe one determinant; Kr2 and Xe2 unbound on the A3.2 grid |
 | **E2** — the emergent column trend | **DISCHARGED** | 0.148293 > 0.145398 > 0.132360 Ha; Br2 binds at 0.079640 |
 | **F1** — the relativistic fence, measured | **FIRED**, kept marked dead | deficit +0.0214 → −0.0013 → −0.0148 Ha: falls, does not grow |

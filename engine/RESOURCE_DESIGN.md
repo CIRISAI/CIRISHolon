@@ -1,7 +1,7 @@
 # RESOURCE_DESIGN — an allocation is a child holon, and its lifecycle is the rent clause
 
-Status: **ADMITTED FOR IMPLEMENTATION** (lead's audit, 2026-08-30) — design complete, code not
-started, and D13 requires the plants BEFORE the mechanisms they guard. Numbers marked **HARD**
+Status: **ADMITTED, FIRST IMPLEMENTATION LANDED** (lead's audit 2026-08-30; `holon-resource`).
+All nine §8 plants fire; seven mutation-checked. Not yet exercised against a real device. Numbers marked **HARD**
 are measured on this machine and named with their instrument; **PENDING** are owed and are used
 in no argument below.
 Scope: in-process resource discovery, leasing and dispatch — cores, RAM, VRAM, disk, worker
@@ -334,9 +334,13 @@ and VOIDs rather than passes (M-PLANT-SECTOR).
 * **No claim that `Dd`'s `1e-24` expansion floor is calibrated** — it is provisional, and under
   D3b a rung whose boundary is provisional says so in its ledger entry rather than being relied
   on as measured. The `f64` rung's `1e-10` is measured; the rung above it is not yet.
-* **No claim that any plant in §8 has fired**, because none has: the mechanisms do not exist
-  yet. D13 requires each to be demonstrated failing before the rule it guards is trusted, and
-  until then this table is a commitment, not evidence.
+* ~~No claim that any plant in §8 has fired~~ — **superseded 2026-08-30: all nine now fire.**
+  `holon-resource` implements the set (30 tests, release and debug, CI-enforced), and seven were
+  mutation-checked — the mechanism was broken on purpose and the right plant failed each time.
+  The remaining two (D2's liveness foil, D4's refusal) are demonstrated by construction against
+  a deliberately-wrong probe kept in-crate. What is still a commitment rather than evidence: no
+  REAL device, pool or filesystem has been leased through this layer yet — the probes are
+  injected, which is what makes the plants possible and what keeps them short of a field test.
 
 ## 7b. Misfit contacts
 

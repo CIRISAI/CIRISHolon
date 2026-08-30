@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0f1513" />
+    <meta
+      name="description"
+      content="CIRISHolon Unified Studio: Mobile-First Symplectic Molecular Physics + Stratified Quantum Virtual Machine Studio + Live Retract Bridge & ZX Spider Graph."
+    />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cline x1='22' y1='32' x2='42' y2='32' stroke='%23236957' stroke-width='5'/%3E%3Ccircle cx='22' cy='32' r='11' fill='%23236957'/%3E%3Ccircle cx='42' cy='32' r='11' fill='%2370a68e'/%3E%3C/svg%3E"
+    />
+    <title>CIRISHolon · Unified Studio (Physics Sim + QVM Studio)</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-engine="loading" data-mobile-view="physics">
+    <div class="app-shell">
+      
+      <!-- Top Navigation / Header -->
+      <header class="top-nav">
+        <div class="brand-section">
+          <div class="brand-badge">CH</div>
+          <div class="brand-titles">
+            <h1>CIRISHolon Unified Studio</h1>
+            <div class="subtitle">STO-3G Physics · Stratified QVM · Live Retract Bridge</div>
+          </div>
+        </div>
+
+        <div class="nav-actions">
+          <div class="view-mode-toggle" role="group" aria-label="Viewport Render Mode">
+            <button id="btn-mode-2d" class="active" type="button" title="2D Symplectic Canvas View">2D</button>
+            <button id="btn-mode-3d" type="button" title="3D Spatial Perspective View">3D</button>
+          </div>
+
+          <div class="fps-guard-badge" id="fps-badge">
+            <span id="fps-count">60 FPS</span> · <span id="fps-status">15 FPS Guard Active</span>
+          </div>
+
+          <button class="btn secondary" id="btn-open-theory" type="button" style="min-height: 30px; padding: 3px 8px; font-size: 0.7rem;">
+            📖 Theory
+          </button>
+
+          <div class="status-pill">
+            <span class="pulse-dot"></span>
+            <span id="runtime-status">loading WASM…</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- Quick Discoveries Carousel (One-Touch Interactive Demonstrations) -->
+      <div class="discoveries-bar" id="discoveries-bar" aria-label="Quick Interactive Discoveries">
+        <span class="discovery-label">DISCOVER:</span>
+        <button class="discovery-chip" id="chip-bond-cleavage" type="button">
+          <span class="icon">⚡</span> Bond Cleavage & Radical Flip
+        </button>
+        <button class="discovery-chip" id="chip-teleport" type="button">
+          <span class="icon">🔮</span> Quantum Teleportation
+        </button>
+        <button class="discovery-chip" id="chip-quench" type="button">
+          <span class="icon">❄️</span> 16-Atom Valence Quench
+        </button>
+        <button class="discovery-chip" id="chip-zx-fusion" type="button">
+          <span class="icon">🕸️</span> ZX Spider Fusion (-60% Gates)
+        </button>
+      </div>
+
+      <!-- Banners -->
+      <div id="provenance-banner" class="banner-strip" hidden>
+        <div><b id="provenance-label">PROVENANCE</b><span id="provenance-text">—</span></div>
+      </div>
+      <div id="error-banner" class="banner-strip error" hidden>
+        <div><b>REFUSED:</b><span id="error-text">—</span></div>
+      </div>
+
+      <!-- Main Split Studio Workspace -->
+      <div class="studio-split-container">
+        
+        <!-- ================= LEFT PANE: Molecular Physics Sim ================= -->
+        <section class="pane physics-pane" id="pane-physics" aria-label="Molecular Physics Simulation">
+          <!-- Viewport -->
+          <div class="viewport-wrap" id="viewport-container">
+            <canvas id="stage" class="viewport-canvas" tabindex="0"></canvas>
+            
+            <div class="viewport-overlay-top">
+              <span class="overlay-tag" id="sim-status-tag"><b id="stage-status">READY</b></span>
+              <span class="overlay-tag" id="clock-tag">t = 0.0 a.u.</span>
+            </div>
+
+            <div class="viewport-overlay-hint" id="viewport-hint">
+              Touch atom to drag spring · 2-finger pinch zoom · Orbit in 3D
+            </div>
+          </div>
+
+          <!-- Physics Controls & Telemetry Tray -->
+          <div class="scroll-tray">
+            
+            <!-- Controls Card -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Live Physics & Environment Controls</span>
+                <button class="btn secondary" id="reset-sim-btn" type="button">Reset Scene</button>
+              </div>
+
+              <!-- Sliders Grid -->
+              <div class="controls-grid">
+                <div class="control-item">
+                  <label for="atom-count">Atoms <span class="val" id="atom-count-out">2</span></label>
+                  <input id="atom-count" type="range" min="2" max="16" step="1" value="2" />
+                </div>
+
+                <div class="control-item">
+                  <label for="sim-speed-control">Sim Speed <span class="val" id="sim-speed-out">—</span> fs/s</label>
+                  <input id="sim-speed-control" type="range" min="-1" max="3" step="0.05" value="0" />
+                </div>
+
+                <div class="control-item">
+                  <label for="target-t">Target Temp <span class="val" id="target-t-out">300</span> K</label>
+                  <input id="target-t" type="range" min="10" max="3000" step="10" value="300" />
+                </div>
+
+                <div class="control-item" style="justify-content: flex-end; gap: 8px;">
+                  <label class="check-label"><input id="thermostat" type="checkbox" /> Thermostat</label>
+                  <label class="check-label"><input id="open-boundary" type="checkbox" /> Open Walls</label>
+                </div>
+              </div>
+
+              <!-- Quick Temperature Preset Pills -->
+              <div style="margin-top: 0.5rem; padding-top: 0.35rem; border-top: 1px solid rgba(255,255,255,0.06);">
+                <span style="font-family: var(--mono); font-size: 0.68rem; color: var(--muted);">QUICK TEMPERATURE:</span>
+                <div class="pill-selector-group" id="temp-pills">
+                  <button class="quick-pill" data-temp="10" type="button">🧊 Cryo (10 K)</button>
+                  <button class="quick-pill active" data-temp="300" type="button">❄️ Room (300 K)</button>
+                  <button class="quick-pill" data-temp="600" type="button">☕ Warm (600 K)</button>
+                  <button class="quick-pill" data-temp="1500" type="button">🔥 Flame (1500 K)</button>
+                  <button class="quick-pill" data-temp="3000" type="button">⚡ Plasma (3000 K)</button>
+                </div>
+              </div>
+
+              <!-- Quick Simulation Speed Preset Pills -->
+              <div style="margin-top: 0.4rem;">
+                <span style="font-family: var(--mono); font-size: 0.68rem; color: var(--muted);">QUICK SIM SPEED:</span>
+                <div class="pill-selector-group" id="speed-pills">
+                  <button class="quick-pill" data-speed="slow" type="button">🐢 Slow-Mo (0.1 ps/s)</button>
+                  <button class="quick-pill active" data-speed="real" type="button">🚶 Real-Pacing (1.0 ps/s)</button>
+                  <button class="quick-pill" data-speed="fast" type="button">⚡ Fast Rxn (5.0 ps/s)</button>
+                  <button class="quick-pill" data-speed="turbo" type="button" id="pill-turbo">🚀 Max Turbo (15 FPS Safe)</button>
+                </div>
+              </div>
+
+              <div style="margin-top: 0.5rem; padding-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; align-items: center;">
+                <label class="check-label" title="Rung (ii): Accuracy degraded declaredly, with derived drift bound shown live.">
+                  <input id="allow-dt-growth" type="checkbox" /> Let dt grow (accuracy loss)
+                </label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-family: var(--mono); font-size: 0.72rem; color: var(--muted);">dt &times; <span id="dt-mult-out" class="val">1.0</span></span>
+                  <input id="dt-mult" type="range" min="1" max="8" step="0.5" value="1" disabled style="width: 75px;" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Species Palette -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Periodic Palette · H…Ne</span>
+                <span style="font-family: var(--mono); font-size: 0.68rem; color: var(--muted);" id="palette-prov">STO-3G Computed</span>
+              </div>
+              <div class="palette-strip" id="palette-strip" role="radiogroup" aria-label="Element Selector"></div>
+              <div class="data-grid" style="margin-top: 0.4rem;" id="species-info">
+                <div class="data-row"><dt>Selected Species</dt><dd id="sp-name">H (1H)</dd></div>
+                <div class="data-row"><dt>Atomic Number (Z)</dt><dd id="sp-z">1</dd></div>
+                <div class="data-row"><dt>Mass</dt><dd id="sp-mass">1837.2 mₑ</dd></div>
+                <div class="data-row"><dt>Drawn Radius</dt><dd id="sp-radius">0.529 a₀</dd></div>
+              </div>
+            </div>
+
+            <!-- Symplectic Conservation Gates Card -->
+            <div class="card" id="card-gates">
+              <div class="card-header">
+                <span class="card-title">Conservation Gates (1 & 2)</span>
+                <div style="display: flex; gap: 6px;">
+                  <span class="verdict-badge" id="energy-gate" data-state="pass">E-GATE: —</span>
+                  <span class="verdict-badge" id="momentum-gate" data-state="pass">P-GATE: —</span>
+                </div>
+              </div>
+
+              <div class="data-grid dense">
+                <div class="data-row"><dt>E<sub>kin</sub></dt><dd id="e-kin">—</dd></div>
+                <div class="data-row"><dt>E<sub>pair</sub></dt><dd id="e-pair">—</dd></div>
+                <div class="data-row"><dt>E<sub>three</sub></dt><dd id="e-three">—</dd></div>
+                <div class="data-row"><dt>E<sub>wall</sub></dt><dd id="e-wall">—</dd></div>
+                <div class="data-row"><dt>E<sub>spring</sub></dt><dd id="e-spring">—</dd></div>
+                <div class="data-row"><dt>W<sub>ext</sub> (hand)</dt><dd id="w-ext">—</dd></div>
+                <div class="data-row highlight"><dt>E − W<sub>ext</sub> (Ledger)</dt><dd id="ledger">—</dd></div>
+                <div class="data-row"><dt>Peak Drift</dt><dd id="drift">—</dd></div>
+                <div class="data-row"><dt>Drift Bound (ω·dt)²/4</dt><dd id="drift-bound">—</dd></div>
+              </div>
+
+              <div class="meter-bar"><div class="meter-fill" id="drift-fill" style="width: 5%;"></div></div>
+              <div style="display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.68rem; color: var(--muted);">
+                <span>Drift / Bound: <b id="drift-ratio" style="color: var(--paper);">—</b></span>
+                <span>Momentum Residual: <b id="p-res" style="color: var(--paper);">—</b></span>
+              </div>
+            </div>
+
+            <!-- Potential Curve & Clocks -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Exact STO-3G Potential U(R) & Clocks</span>
+                <span class="verdict-badge" id="rung-badge">EXACT</span>
+              </div>
+              <canvas id="curve-canvas" height="120" style="width: 100%; display: block; border-radius: 4px; background: #0c1210; margin-bottom: 0.4rem;"></canvas>
+              
+              <div class="data-grid dense">
+                <div class="data-row"><dt>Current Sep (R)</dt><dd id="pair-r">—</dd></div>
+                <div class="data-row"><dt>Relative Energy</dt><dd id="pair-erel">—</dd></div>
+                <div class="data-row"><dt>Outer Turning Pt</dt><dd id="pair-router">—</dd></div>
+                <div class="data-row"><dt>Physics dt</dt><dd id="clock-dt">—</dd></div>
+                <div class="data-row"><dt>Reference dt</dt><dd id="clock-dt-ref">—</dd></div>
+                <div class="data-row"><dt>Vibration Period</dt><dd id="clock-period">—</dd></div>
+              </div>
+            </div>
+
+            <!-- Holon Census -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Holon Census (Composite Layer)</span>
+                <span style="font-family: var(--mono); font-size: 0.72rem; color: var(--green-bright);"><b id="census-molecules">0</b> Molecules</span>
+              </div>
+              <div class="data-grid dense">
+                <div class="data-row"><dt>Micro (Atoms)</dt><dd id="c-atoms">—</dd></div>
+                <div class="data-row"><dt>Candidate Evals</dt><dd id="c-candidates">—</dd></div>
+                <div class="data-row"><dt>Formations</dt><dd id="c-formations">—</dd></div>
+                <div class="data-row"><dt>Dissolutions</dt><dd id="c-dissolutions">—</dd></div>
+                <div class="data-row"><dt>Closure Rejections</dt><dd id="c-rejections">—</dd></div>
+                <div class="data-row"><dt>Bond Sector Energy</dt><dd id="c-bondsector">—</dd></div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ================= RIGHT PANE: QVM Studio + Retract Bridge ================= -->
+        <section class="pane quantum-pane" id="pane-quantum" aria-label="Quantum Virtual Machine Studio">
+          
+          <!-- Tabs Navigation -->
+          <nav class="tabs-nav" role="tablist">
+            <button class="tab-btn active" data-tab="qvm-studio" role="tab" aria-selected="true">QVM Circuit</button>
+            <button class="tab-btn" data-tab="zx-graph" role="tab" aria-selected="false">ZX Spider Graph</button>
+            <button class="tab-btn" data-tab="retract-bridge" role="tab" aria-selected="false">Retract Bridge</button>
+            <button class="tab-btn" data-tab="born-hist" role="tab" aria-selected="false">Born Histogram</button>
+          </nav>
+
+          <!-- TAB 1: QVM Circuit Studio -->
+          <div class="tab-panel active" id="tab-qvm-studio" role="tabpanel">
+            
+            <div class="card">
+              <div class="editor-toolbar">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--muted);">PRESET:</span>
+                  <select class="preset-select" id="circuit-presets">
+                    <option value="h2_vqe">H₂ Molecular VQE Ansatz (2Q)</option>
+                    <option value="bell">Bell State Entanglement |Φ⁺⟩</option>
+                    <option value="ghz">GHZ 3-Qubit State</option>
+                    <option value="teleport">Quantum Teleportation Protocol</option>
+                    <option value="grover">Grover Search Iteration</option>
+                    <option value="qpe">Quantum Phase Estimation</option>
+                    <option value="qft">Quantum Fourier Transform (3Q)</option>
+                    <option value="magic">Clifford+T Magic State</option>
+                    <option value="stabilizer">Parity Check Stabilizer</option>
+                  </select>
+                </div>
+
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                  <button class="btn rust" id="inject-bond-btn" type="button" title="Map molecular bond separation R to QVM circuit parameter">
+                    ⇄ Bind Bond R
+                  </button>
+                  <button class="btn" id="run-circuit-btn" type="button">▶ Run Circuit</button>
+                </div>
+              </div>
+
+              <!-- Interactive Gate Insertion Palette -->
+              <div style="margin-top: 0.4rem;">
+                <span style="font-family: var(--mono); font-size: 0.68rem; color: var(--muted);">INSERT GATE:</span>
+                <div class="gate-palette">
+                  <button class="gate-btn" data-gate="h" title="Hadamard gate">H</button>
+                  <button class="gate-btn" data-gate="x" title="Pauli-X (NOT)">X</button>
+                  <button class="gate-btn" data-gate="y" title="Pauli-Y">Y</button>
+                  <button class="gate-btn" data-gate="z" title="Pauli-Z (Phase Flip)">Z</button>
+                  <button class="gate-btn" data-gate="s" title="S gate (π/2 phase)">S</button>
+                  <button class="gate-btn" data-gate="sdg" title="S† gate (-π/2 phase)">S†</button>
+                  <button class="gate-btn tgate" data-gate="t" title="T gate (π/4 phase)">T</button>
+                  <button class="gate-btn tgate" data-gate="tdg" title="T† gate (-π/4 phase)">T†</button>
+                  <button class="gate-btn cnot" data-gate="cx" title="Controlled-NOT (CNOT)">CX</button>
+                  <button class="gate-btn cnot" data-gate="cz" title="Controlled-Z">CZ</button>
+                  <button class="gate-btn cnot" data-gate="ccx" title="Toffoli (CCX)">CCX</button>
+                  <button class="gate-btn" data-gate="measure" title="Measure all qubits">M</button>
+                </div>
+              </div>
+
+              <!-- OpenQASM Code Editor -->
+              <div class="code-editor-wrap">
+                <textarea id="qasm-code" class="code-editor" spellcheck="false" aria-label="OpenQASM 2.0 Circuit Source"></textarea>
+              </div>
+
+              <!-- Tier Router & Analysis Bar -->
+              <div style="margin-top: 0.4rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-family: var(--mono); font-size: 0.7rem; color: var(--muted);">TIER ROUTER:</span>
+                  <span id="tier-badge" class="tier-route-badge statevector">STATEVECTOR (2^N)</span>
+                </div>
+                <div style="font-family: var(--mono); font-size: 0.7rem; color: var(--muted);" id="circuit-summary-text">
+                  2 Qubits · 4 Gates · T-count: 0
+                </div>
+              </div>
+            </div>
+
+            <!-- Execution Telemetry Card -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">QVM Execution Engine Status</span>
+                <span class="verdict-badge" data-state="pass" id="qvm-exec-status">CONVERGED</span>
+              </div>
+              <div class="data-grid dense">
+                <div class="data-row"><dt>Routing Tier</dt><dd id="qvm-tier-name">Statevector Exact</dd></div>
+                <div class="data-row"><dt>Complexity</dt><dd id="qvm-cost">O(2ᴺ) carrier</dd></div>
+                <div class="data-row"><dt>Hilbert Space Dim</dt><dd id="qvm-dim">4</dd></div>
+                <div class="data-row"><dt>State Purity Tr(ρ²)</dt><dd id="qvm-purity">1.000000</dd></div>
+                <div class="data-row"><dt>Von Neumann Entropy</dt><dd id="qvm-entropy">0.0000 bit</dd></div>
+                <div class="data-row"><dt>Retract Status</dt><dd id="qvm-retract">Closed</dd></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- TAB 2: ZX Spider Graph -->
+          <div class="tab-panel" id="tab-zx-graph" role="tabpanel">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Interactive ZX-Calculus Spider Diagram</span>
+                <span style="font-family: var(--mono); font-size: 0.68rem; color: var(--green-bright);" id="zx-reduction-stat">T-count: 0 → 0</span>
+              </div>
+
+              <!-- ZX Diagram Canvas -->
+              <div class="zx-canvas-container">
+                <canvas id="zx-canvas" class="zx-canvas"></canvas>
+              </div>
+
+              <!-- ZX Controls & Rewriting Actions -->
+              <div class="zx-controls-bar">
+                <button class="btn" id="zx-simplify-btn" type="button">⚡ Full Simplify (Duncan-Kissinger)</button>
+                <button class="btn secondary" id="zx-fuse-btn" type="button">Fuse Spiders</button>
+                <button class="btn secondary" id="zx-id-btn" type="button">Remove Identities</button>
+                <button class="btn secondary" id="zx-reset-btn" type="button">Reset Diagram</button>
+              </div>
+
+              <div class="data-grid dense" style="margin-top: 0.5rem;">
+                <div class="data-row"><dt>Z-Spiders (Green)</dt><dd id="zx-z-count">0</dd></div>
+                <div class="data-row"><dt>X-Spiders (Red)</dt><dd id="zx-x-count">0</dd></div>
+                <div class="data-row"><dt>Hadamard Edges</dt><dd id="zx-had-count">0</dd></div>
+                <div class="data-row"><dt>T-Count Before/After</dt><dd id="zx-t-count">0 / 0</dd></div>
+                <div class="data-row"><dt>Gate Reduction</dt><dd id="zx-gate-red">0%</dd></div>
+                <div class="data-row"><dt>Exact Global Phase</dt><dd id="zx-phase-omega">ω⁰ (+1)</dd></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: Live Retract Bridge & Commuting Square -->
+          <div class="tab-panel" id="tab-retract-bridge" role="tabpanel">
+            
+            <!-- Selected Object Inspector -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Selected Micro / Bond Subsystem</span>
+                <span class="verdict-badge" data-state="pass" id="subsystem-badge">H₂ BOND (0-1)</span>
+              </div>
+              <div class="data-grid dense">
+                <div class="data-row"><dt>Bond Separation R</dt><dd id="bridge-r">1.4010 a₀</dd></div>
+                <div class="data-row"><dt>Equilibrium Rₑ</dt><dd id="bridge-re">1.4010 a₀</dd></div>
+                <div class="data-row"><dt>Bond Energy E_bond</dt><dd id="bridge-ebond">-0.1652 Eh</dd></div>
+                <div class="data-row"><dt>Well Depth Dₑ</dt><dd id="bridge-de">0.1652 Eh</dd></div>
+                <div class="data-row"><dt>Pair Rel Velocity</dt><dd id="bridge-vrel">0.0000 a.u.</dd></div>
+                <div class="data-row"><dt>Outer Turning Point</dt><dd id="bridge-router">3.2450 a₀</dd></div>
+              </div>
+            </div>
+
+            <!-- Quantum FCI Statevector & Spin Sector -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Quantum FCI / MPS Statevector & Spin Sector</span>
+                <span class="verdict-badge" data-state="pass" id="spin-badge">⟨S²⟩ = 0.000 (Singlet)</span>
+              </div>
+              
+              <div class="amp-grid" id="amplitudes-display">
+                <div class="amp-box">
+                  <div class="ket">|1σg²⟩ (|00⟩)</div>
+                  <div class="val" id="amp-cg">0.9930</div>
+                  <div class="phase">Prob: 98.6% · Singlet</div>
+                </div>
+                <div class="amp-box">
+                  <div class="ket">|1σu²⟩ (|11⟩)</div>
+                  <div class="val" id="amp-cu">-0.1181</div>
+                  <div class="phase">Prob: 1.4% · Antibonding</div>
+                </div>
+                <div class="amp-box">
+                  <div class="ket">|σg σu⟩ (open)</div>
+                  <div class="val" id="amp-cross">0.0000</div>
+                  <div class="phase">Prob: 0.0% · Singlet S=0</div>
+                </div>
+                <div class="amp-box">
+                  <div class="ket">MPS Bond (χ=2)</div>
+                  <div class="val" id="mps-singval">λ₀=0.993, λ₁=0.118</div>
+                  <div class="phase">Entanglement S: 0.10</div>
+                </div>
+              </div>
+
+              <div class="data-grid dense" style="margin-top: 0.4rem;">
+                <div class="data-row"><dt>Spin Sector ⟨S²⟩</dt><dd id="val-s2">0.00000</dd></div>
+                <div class="data-row"><dt>Total Spin S</dt><dd id="val-s">0.0 (Singlet)</dd></div>
+                <div class="data-row"><dt>Magnetic Sz</dt><dd id="val-sz">0.0000</dd></div>
+                <div class="data-row"><dt>Bonding Occup n_σg</dt><dd id="val-ng">1.972</dd></div>
+                <div class="data-row"><dt>Antibonding n_σu</dt><dd id="val-nu">0.028</dd></div>
+                <div class="data-row"><dt>Heitler-London Covalent</dt><dd id="val-hl">99.3%</dd></div>
+              </div>
+            </div>
+
+            <!-- Holon Commuting Square Telemetry -->
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Holon Commuting Square Telemetry (OBJECT.md)</span>
+                <span class="verdict-badge" data-state="pass" id="square-verdict">CLOSED (v∘T = h∘v)</span>
+              </div>
+
+              <div class="commuting-square-wrap">
+                <div class="square-node-row">
+                  <div class="square-node micro">Micro State X(t)</div>
+                  <div class="square-arrow">─── Verlet Step T ───▶</div>
+                  <div class="square-node micro">Micro State X(t+dt)</div>
+                </div>
+                <div class="square-vertical-arrows">
+                  <span>▼ View v</span>
+                  <span>▼ View v</span>
+                </div>
+                <div class="square-node-row">
+                  <div class="square-node coarse">Coarse Holon C(t)</div>
+                  <div class="square-arrow">─── Holon Step h ───▶</div>
+                  <div class="square-node coarse">Coarse Holon C(t+dt)</div>
+                </div>
+                <div class="commuting-status-text" id="commuting-summary">
+                  Closure Defect δ = 2.4e-6 &lt; 0.01 · Condition Number κ = 1.02
+                </div>
+              </div>
+
+              <div class="data-grid dense" style="margin-top: 0.5rem;">
+                <div class="data-row"><dt>Closure Defect (δ)</dt><dd id="val-delta">2.41e-6</dd></div>
+                <div class="data-row"><dt>Defect Max Bound</dt><dd id="val-delta-max">1.00e-2</dd></div>
+                <div class="data-row"><dt>Condition Number (κ)</dt><dd id="val-kappa">1.024</dd></div>
+                <div class="data-row"><dt>Chart Coherence</dt><dd id="val-coherence">0.976</dd></div>
+                <div class="data-row"><dt>Maintenance Rent (W*)</dt><dd id="val-wstar">4.18e-5 Eh/s</dd></div>
+                <div class="data-row"><dt>Retention Fixed Pt G∞</dt><dd id="val-ginf">0.9998</dd></div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- TAB 4: Born Measurement Histogram -->
+          <div class="tab-panel" id="tab-born-hist" role="tabpanel">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">Born Measurement Live Histogram</span>
+                <div style="display: flex; gap: 5px;">
+                  <button class="btn secondary" id="btn-sample-100" type="button">100</button>
+                  <button class="btn secondary" id="btn-sample-1000" type="button">1k</button>
+                  <button class="btn" id="btn-sample-10000" type="button">10k Shots</button>
+                </div>
+              </div>
+
+              <div class="histogram-chart" id="histogram-container"></div>
+
+              <div class="data-grid dense" style="margin-top: 0.75rem; padding-top: 0.4rem; border-top: 1px solid rgba(255,255,255,0.06);">
+                <div class="data-row"><dt>Sampled Shots</dt><dd id="hist-total-shots">0</dd></div>
+                <div class="data-row"><dt>Empirical Fidelity</dt><dd id="hist-fidelity">100.0%</dd></div>
+                <div class="data-row"><dt>Sampling Mode</dt><dd id="hist-mode">Exact + Monte Carlo</dd></div>
+                <div class="data-row"><dt>Most Probable State</dt><dd id="hist-max-state">|00⟩</dd></div>
+              </div>
+            </div>
+          </div>
+
+        </section>
+
+      </div>
+
+      <!-- Mobile Bottom Navigation Dock (Visible on Screens < 768px) -->
+      <nav class="mobile-bottom-dock" id="mobile-bottom-dock" aria-label="Mobile Navigation">
+        <button class="dock-item active" data-view="physics" type="button">
+          <span class="dock-icon">⚛️</span>
+          <span>Physics</span>
+        </button>
+        <button class="dock-item" data-view="quantum" data-tab="qvm-studio" type="button">
+          <span class="dock-icon">🎛️</span>
+          <span>QVM</span>
+        </button>
+        <button class="dock-item" data-view="quantum" data-tab="zx-graph" type="button">
+          <span class="dock-icon">🕸️</span>
+          <span>ZX Graph</span>
+        </button>
+        <button class="dock-item" data-view="quantum" data-tab="retract-bridge" type="button">
+          <span class="dock-icon">🌉</span>
+          <span>Retract</span>
+        </button>
+        <button class="dock-item" data-view="quantum" data-tab="born-hist" type="button">
+          <span class="dock-icon">📊</span>
+          <span>Histogram</span>
+        </button>
+      </nav>
+
+      <!-- Theory & Proofs Drawer Modal -->
+      <div class="theory-modal-backdrop" id="theory-modal">
+        <div class="theory-drawer">
+          <div class="drawer-header">
+            <h2>Deep Theory & Lean 4 Proofs</h2>
+            <button class="btn secondary" id="btn-close-theory" type="button">✕ Close</button>
+          </div>
+          <div class="drawer-body">
+            <h3>1. The Commuting Square Contract (lean/CIRISHolon/Object.lean)</h3>
+            <p>
+              A tier is a <b>Closed view</b> of the micro-state below: <code>Closed v T ≔ ∃ h, v ∘ T = h ∘ v</code>.
+              Failure has a normal form: a view fails closure if and only if there exist micro-states it cannot distinguish that the motion sends to distinguishable coarse readings (a witness pair).
+            </p>
+
+            <h3>2. Quantum Retract Relation (BornView.lean, Stabilizer.lean)</h3>
+            <p>
+              The quantum-classical bridge is the retract: classical basis states embed diagonally, and Born readout is closed under classical operations. Coherence is the exact boundary where the classical tier ends:
+              <code>diag_not_closed_under_coherence</code> proves why superposition requires stratified quantum carriers.
+            </p>
+
+            <h3>3. Chart Conditioning & Coherence (sum_perturb_le)</h3>
+            <p>
+              A signed aggregate amplifies per-term perturbations by condition number <code>κ = 1 / coherence</code>.
+              During thermalization, signed momentum charts exhibit coherence decay (e.g. <code>0.998 → 0.125</code>), while non-negative charts remain exactly 1.0.
+            </p>
+
+            <h3>4. Maintenance Rent Law (Rent.lean: Wstar, Ginf)</h3>
+            <p>
+              Structure retention under decay rate <code>λ</code> and dose <code>q</code> converges to fixed point
+              <code>G∞ = q / ((1 - λ) + q·λ)</code>. Maintaining autonomous composite holons against kinetic noise requires active work flow <code>W*</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Application Script -->
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

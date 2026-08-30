@@ -99,7 +99,9 @@ impl Dims {
     }
 }
 
-#[derive(Clone, Copy, Default)]
+use holon_chem::elements::{Species, HYDROGEN};
+
+#[derive(Clone, Copy, Debug)]
 pub struct Atom {
     pub x: f64,
     pub y: f64,
@@ -107,6 +109,37 @@ pub struct Atom {
     pub vx: f64,
     pub vy: f64,
     pub vz: f64,
+    pub species: Species,
+}
+
+impl Default for Atom {
+    fn default() -> Self {
+        Self {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.0,
+            species: HYDROGEN,
+        }
+    }
+}
+
+impl Atom {
+    #[inline]
+    pub fn mass(&self) -> f64 {
+        if self.species.z == 1 {
+            M_H
+        } else {
+            self.species.mass_me()
+        }
+    }
+
+    #[inline]
+    pub fn radius(&self) -> f64 {
+        self.species.homonuclear_radius()
+    }
 }
 
 /// One pair's bond reading, computed from the table alone.
@@ -231,6 +264,7 @@ impl Sim {
                 vx: 0.0,
                 vy: 0.0,
                 vz: 0.0,
+                species: HYDROGEN,
             }; MAX_ATOMS],
             n: 0,
             boundary: Boundary::Walls,
@@ -288,8 +322,21 @@ impl Sim {
 
     /// Re-derive every clock from the table. Call after loading a curve.
     pub fn adopt_table_timescale(&mut self) {
-        let mu = 0.5 * M_H;
+        let mu = if self.n >= 2 {
+            let m0 = self.atoms[0].mass();
+            let m1 = self.atoms[1].mass();
+            (m0 * m1) / (m0 + m1)
+        } else {
+            0.5 * M_H
+        };
         self.timescale.from_table(&self.table, mu);
+    }
+
+    /// Set the species for atom `i`.
+    pub fn set_species(&mut self, i: usize, species: Species) {
+        if i < self.n {
+            self.atoms[i].species = species;
+        }
     }
 
     /// The scene's MODE-ENERGY scale: the amplitude factor the drift bound needs.
@@ -449,7 +496,26 @@ impl Sim {
         // between two boundaries can be stiffer than anything the envelope knows about.
         // `k_pair_max` costs nothing — the force loop already computes every curvature it
         // maximises over — and it closes that gap.
-        let mu = 0.5 * M_H;
+        let mu = if self.n >= 2 {
+            let mut min_mu = f64::INFINITY;
+            for i in 0..self.n {
+                for j in (i + 1)..self.n {
+                    let mi = self.atoms[i].mass();
+                    let mj = self.atoms[j].mass();
+                    let pmu = (mi * mj) / (mi + mj);
+                    if pmu < min_mu {
+                        min_mu = pmu;
+                    }
+                }
+            }
+            if min_mu.is_finite() {
+                min_mu
+            } else {
+                0.5 * M_H
+            }
+        } else {
+            0.5 * M_H
+        };
         // The three-body stiffness is ADDED to the pair envelope rather than maxed with
         // it: both potentials act on the same coordinate, so their curvatures add, and a
         // max would understate the sum. With no table loaded `k_three()` is an exact zero
@@ -457,10 +523,14 @@ impl Sim {
         let k = self.timescale.k_env.max(self.k_pair_max) + self.k_three();
         let mut omega_sq: f64 = k / mu;
         if self.wall_engaged {
-            omega_sq = omega_sq.max(K_WALL / M_H);
+            let min_m = (0..self.n)
+                .map(|i| self.atoms[i].mass())
+                .fold(M_H, f64::min);
+            omega_sq = omega_sq.max(K_WALL / min_m);
         }
         if self.spring_engaged {
-            omega_sq = omega_sq.max(K_SPRING / M_H);
+            let m_grab = self.grabbed.map(|g| self.atoms[g].mass()).unwrap_or(M_H);
+            omega_sq = omega_sq.max(K_SPRING / m_grab);
         }
         let e_ref = self.e_ref.max(self.table.d_e.abs());
         let dt = self.dt();
@@ -493,7 +563,7 @@ impl Sim {
         let mut p_scale: f64 = 0.0;
         for i in 0..self.n {
             let a = &self.atoms[i];
-            p_scale += M_H * (a.vx * a.vx + a.vy * a.vy + a.vz * a.vz).sqrt();
+            p_scale += a.mass() * (a.vx * a.vx + a.vy * a.vy + a.vz * a.vz).sqrt();
         }
         let p_scale = p_scale.max(1e-12);
         8.0 * (self.steps.max(1) as f64) * f64::EPSILON * p_scale
@@ -508,9 +578,10 @@ impl Sim {
         let mut py = 0.0;
         let mut pz = 0.0;
         for i in 0..self.n {
-            px += M_H * self.atoms[i].vx;
-            py += M_H * self.atoms[i].vy;
-            pz += M_H * self.atoms[i].vz;
+            let m = self.atoms[i].mass();
+            px += m * self.atoms[i].vx;
+            py += m * self.atoms[i].vy;
+            pz += m * self.atoms[i].vz;
         }
         (px, py, pz)
     }
@@ -954,6 +1025,12 @@ impl Sim {
         for i in 0..self.n {
             for j in (i + 1)..self.n {
                 for k in (j + 1)..self.n {
+                    if self.atoms[i].species.z != 1
+                        || self.atoms[j].species.z != 1
+                        || self.atoms[k].species.z != 1
+                    {
+                        continue;
+                    }
                     let (rij, rik, rjk) = (d[i][j], d[i][k], d[j][k]);
                     let (v, g) = self.trimer.eval([rij, rik, rjk]);
                     if v == 0.0 && g[0] == 0.0 && g[1] == 0.0 && g[2] == 0.0 {
@@ -1004,7 +1081,7 @@ impl Sim {
         let mut e_kin = 0.0;
         for i in 0..self.n {
             let a = &self.atoms[i];
-            e_kin += 0.5 * M_H * (a.vx * a.vx + a.vy * a.vy + a.vz * a.vz);
+            e_kin += 0.5 * a.mass() * (a.vx * a.vx + a.vy * a.vy + a.vz * a.vz);
         }
         self.e_kin = e_kin;
     }
@@ -1021,7 +1098,6 @@ impl Sim {
             return;
         }
         let dt = self.dt();
-        let half = 0.5 * dt / M_H;
 
         let mut jx = 0.0;
         let mut jy = 0.0;
@@ -1029,6 +1105,7 @@ impl Sim {
         for i in 0..self.n {
             let (px, py, pz) = self.a_pair[i];
             let (ex, ey, ez) = self.a_ext[i];
+            let half = 0.5 * dt / self.atoms[i].mass();
             self.atoms[i].vx += half * (px + ex);
             self.atoms[i].vy += half * (py + ey);
             self.atoms[i].vz += half * (pz + ez);
@@ -1048,6 +1125,7 @@ impl Sim {
         for i in 0..self.n {
             let (px, py, pz) = self.a_pair[i];
             let (ex, ey, ez) = self.a_ext[i];
+            let half = 0.5 * dt / self.atoms[i].mass();
             self.atoms[i].vx += half * (px + ex);
             self.atoms[i].vy += half * (py + ey);
             self.atoms[i].vz += half * (pz + ez);
@@ -1211,7 +1289,6 @@ impl Sim {
     /// atom to carry it away, a thermostat, or the user's own spring braking one of them
     /// — and the ledger says exactly how much left.
     pub fn refresh_pairs(&mut self) {
-        let mu = 0.5 * M_H;
         let mut k = 0usize;
         for i in 0..self.n {
             for j in (i + 1)..self.n {
@@ -1225,6 +1302,9 @@ impl Sim {
                 let vx = self.atoms[j].vx - self.atoms[i].vx;
                 let vy = self.atoms[j].vy - self.atoms[i].vy;
                 let vz = self.atoms[j].vz - self.atoms[i].vz;
+                let mi = self.atoms[i].mass();
+                let mj = self.atoms[j].mass();
+                let mu = (mi * mj) / (mi + mj);
                 let ke_rel = 0.5 * mu * (vx * vx + vy * vy + vz * vz);
                 let u = self.table.u(r);
                 let e_rel = ke_rel + u;

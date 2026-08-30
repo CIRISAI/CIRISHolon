@@ -53,6 +53,7 @@ path = "src/main.rs"
 # THE PHYSICS. Path dependency on the certified core; this crate adds no physics of its
 # own and re-exports the API unchanged (see `lib.rs`).
 holon-render = { path = "../holon-render" }
+holon-chem = { path = "../holon-chem" }
 bevy = { version = "0.19", default-features = false }
 bevy_panorbit_camera = { version = "0.35", optional = true }
 

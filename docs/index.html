@@ -1,29 +1,42 @@
 <!doctype html>
-<meta charset="utf-8">
-<title>CIRISHolon — live demos</title>
-<style>
-  body{font-family:system-ui;max-width:640px;margin:4rem auto;padding:0 1rem;color:#222}
-  ul{list-style:none;padding:0}
-  li{margin:1.4rem 0}
-  a{color:#236957;font-weight:600;text-decoration:none}
-  a:hover{text-decoration:underline}
-  p.note{color:#69736e;font-size:.9rem;margin:.3rem 0 0}
-</style>
-<h1>CIRISHolon — live demos</h1>
-<p>Hydrogen atoms under the exact STO&#8209;3G pair potential, solved by full CI in your
-browser rather than fetched, integrated symplectically, with every energy and momentum
-flow on a gated ledger. Two views of one core.</p>
-<ul>
-  <li>
-    <a href="atoms/">The atom world — 2D</a>
-    <p class="note">Canvas. About 115&nbsp;KB of WebAssembly: the browser owns input and
-    pixels, the wasm owns the physics.</p>
-  </li>
-  <li>
-    <a href="atoms3d/">The atom world — 3D</a>
-    <p class="note">Bevy. Orbit the box, drag an atom through the spring, watch the same
-    ledger. Megabytes rather than kilobytes — it brings its own renderer.</p>
-  </li>
-</ul>
-<p>Engine and record:
-<a href="https://github.com/CIRISAI/CIRISHolon">github.com/CIRISAI/CIRISHolon</a>.</p>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CIRISHolon — live demos</title>
+  <style>
+    body{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;max-width:680px;margin:3.5rem auto;padding:0 1.25rem;color:#17201d;background:#ede9df;line-height:1.5}
+    ul{list-style:none;padding:0}
+    li{margin:1.4rem 0;background:#e2ddd1;padding:1rem 1.25rem;border-radius:8px;border:1px solid #cfc9bb}
+    li.featured{background:#d3e5dc;border-color:#70a68e}
+    a{color:#236957;font-weight:700;text-decoration:none;font-size:1.05rem}
+    a:hover{text-decoration:underline}
+    p.note{color:#525e59;font-size:.9rem;margin:.35rem 0 0}
+    .badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:.7rem;font-weight:bold;background:#236957;color:#fff;margin-left:.5rem;vertical-align:middle}
+  </style>
+</head>
+<body>
+  <h1>CIRISHolon — live demos</h1>
+  <p>Hydrogen atoms under the exact STO&#8209;3G pair potential, solved by full CI in your
+  browser rather than fetched, integrated symplectically, with every energy and momentum
+  flow on a gated ledger.</p>
+  <ul>
+    <li class="featured">
+      <a href="unified/">Unified Studio (Physics Sim + QVM Studio)</a><span class="badge">NEW · SCAFFOLD</span>
+      <p class="note">Unified split-screen interface: 2D/3D Molecular Physics viewport paired with Interactive Stratified QVM & ZX Spider Graph editor. Real-time Retract Bridge connects atoms and bonds directly to quantum FCI/MPS statevector amplitudes, spin sector &lang;S&sup2;&rang;, and Holon Commuting Square telemetry (&delta;, &kappa;, W*).</p>
+    </li>
+    <li>
+      <a href="atoms/">The atom world — 2D</a>
+      <p class="note">Canvas. About 115&nbsp;KB of WebAssembly: the browser owns input and
+      pixels, the wasm owns the physics.</p>
+    </li>
+    <li>
+      <a href="atoms3d/">The atom world — 3D</a>
+      <p class="note">Bevy. Orbit the box, drag an atom through the spring, watch the same
+      ledger. Megabytes rather than kilobytes — it brings its own renderer.</p>
+    </li>
+  </ul>
+  <p>Engine and record:
+  <a href="https://github.com/CIRISAI/CIRISHolon">github.com/CIRISAI/CIRISHolon</a>.</p>
+</body>
+</html>

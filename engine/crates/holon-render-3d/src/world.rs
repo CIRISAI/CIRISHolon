@@ -12,8 +12,96 @@
 //! business and neither of which is physics.
 
 use bevy::ecs::resource::Resource;
+use holon_chem::elements::{
+    Species, CARBON, FLUORINE, HELIUM, HYDROGEN, LITHIUM, NEON, NITROGEN, OXYGEN,
+};
 use holon_render::clock::{Rung, AU_TO_FS};
 use holon_render::sim::{Boundary, Dims, Sim, MAX_ATOMS};
+
+/// Scene preset selector for the 3D atom world.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Preset {
+    /// 2-atom H₂ approach and collision.
+    H2,
+    /// 16-atom quench gas cluster with 3-body saturation active.
+    Quench16,
+    /// LiH: Lithium Hydride (Li + H).
+    LiH,
+    /// HF: Hydrogen Fluoride (H + F).
+    HF,
+    /// Li₂: Dilithium (Li + Li).
+    Li2,
+    /// N₂: Dinitrogen (N + N).
+    N2,
+    /// F₂: Difluorine (F + F).
+    F2,
+    /// CO: Carbon Monoxide (C + O).
+    CO,
+    /// He₂: Helium dimer (closed-shell negative control, non-binding).
+    He2,
+    /// Ne₂: Neon dimer (closed-shell negative control, non-binding).
+    Ne2,
+}
+
+impl Preset {
+    pub const ALL: [Preset; 10] = [
+        Preset::H2,
+        Preset::Quench16,
+        Preset::LiH,
+        Preset::HF,
+        Preset::Li2,
+        Preset::N2,
+        Preset::F2,
+        Preset::CO,
+        Preset::He2,
+        Preset::Ne2,
+    ];
+
+    pub fn name(&self) -> &'static str {
+        match self {
+            Preset::H2 => "H₂ (2 atoms, approach)",
+            Preset::Quench16 => "16-H Quench Gas (3-body active)",
+            Preset::LiH => "LiH (Lithium Hydride)",
+            Preset::HF => "HF (Hydrogen Fluoride)",
+            Preset::Li2 => "Li₂ (Dilithium)",
+            Preset::N2 => "N₂ (Dinitrogen)",
+            Preset::F2 => "F₂ (Difluorine)",
+            Preset::CO => "CO (Carbon Monoxide)",
+            Preset::He2 => "He₂ (Closed-shell bounce)",
+            Preset::Ne2 => "Ne₂ (Closed-shell bounce)",
+        }
+    }
+
+    pub fn short_name(&self) -> &'static str {
+        match self {
+            Preset::H2 => "H₂",
+            Preset::Quench16 => "16-H Quench",
+            Preset::LiH => "LiH",
+            Preset::HF => "HF",
+            Preset::Li2 => "Li₂",
+            Preset::N2 => "N₂",
+            Preset::F2 => "F₂",
+            Preset::CO => "CO",
+            Preset::He2 => "He₂",
+            Preset::Ne2 => "Ne₂",
+        }
+    }
+
+    pub fn next(&self) -> Preset {
+        match self {
+            Preset::H2 => Preset::Quench16,
+            Preset::Quench16 => Preset::LiH,
+            Preset::LiH => Preset::HF,
+            Preset::HF => Preset::Li2,
+            Preset::Li2 => Preset::N2,
+            Preset::N2 => Preset::F2,
+            Preset::F2 => Preset::CO,
+            Preset::CO => Preset::He2,
+            Preset::He2 => Preset::Ne2,
+            Preset::Ne2 => Preset::H2,
+        }
+    }
+}
 
 /// The box, in bohr. A CUBE, unlike the canvas shell's 40 x 24 letterbox: a 3D scene has
 /// no preferred axis to be wide along, and an orbiting camera looks at the short side as
@@ -64,6 +152,7 @@ pub struct AtomWorld {
     /// Set when the curve failed to generate; the HUD says so instead of drawing a
     /// scene whose forces came from nowhere.
     pub table_status: u32,
+    pub preset: Preset,
 }
 
 impl AtomWorld {
@@ -74,34 +163,185 @@ impl AtomWorld {
     /// Gaussian integrals and differentiates it analytically, here, at startup. The
     /// shell does not play a curve somebody computed; it solves the one it is showing.
     pub fn new(atoms: usize) -> Self {
+        let preset = if atoms > 2 {
+            Preset::Quench16
+        } else {
+            Preset::H2
+        };
+        Self::new_with_preset(preset)
+    }
+
+    /// Construct a new [`AtomWorld`] with a specific scene preset.
+    pub fn new_with_preset(preset: Preset) -> Self {
         let mut sim = Sim::empty();
-        let status = holon_render::generate_table(&mut sim, CURVE_R_MIN, CURVE_R_MAX, CURVE_KNOTS);
-        // THE THIRD BODY MUST PAY HERE TOO. `generate_trimer_table` was written with
-        // this exact caller named in its doc comment — and nothing called it, so the
-        // 3D shell ran pair-only physics while the 2D shell ran MBE3, and a field
-        // screenshot of a compact linked H4 is what surfaced it. That is standing
-        // question 1 (is the thing that passes the thing that RUNS?) failing in
-        // production the same night it was written down. The headless suite now
-        // asserts the table is loaded INSIDE this constructor's product, per the
-        // question's own enforcement rule — and that gate demonstrated its failing
-        // case against this exact line removed, before it was trusted.
-        if status == holon_render::TABLE_OK {
-            holon_render::generate_trimer_table(&mut sim);
-        }
         sim.dims = Dims::Three;
         sim.boundary = Boundary::Walls;
         sim.width = BOX_SIDE;
         sim.height = BOX_SIDE;
         sim.depth = BOX_SIDE;
         sim.wall_inset = ATOM_RADIUS;
-        sim.reset(atoms.clamp(2, MAX_ATOMS));
-        Self {
+        let mut world = Self {
             sim,
             calibration: Calibration::Pending,
             last_substeps: 0,
             last_frame_seconds: 0.0,
-            table_status: status,
-        }
+            table_status: 0,
+            preset,
+        };
+        world.load_preset(preset);
+        world
+    }
+
+    /// Load a scene preset dynamically.
+    pub fn load_preset(&mut self, preset: Preset) {
+        let status = match preset {
+            Preset::H2 => {
+                let s = holon_render::generate_table(
+                    &mut self.sim,
+                    CURVE_R_MIN,
+                    CURVE_R_MAX,
+                    CURVE_KNOTS,
+                );
+                if s == holon_render::TABLE_OK {
+                    holon_render::generate_trimer_table(&mut self.sim);
+                }
+                self.sim.reset(2);
+                for i in 0..self.sim.n {
+                    self.sim.atoms[i].species = HYDROGEN;
+                }
+                s
+            }
+            Preset::Quench16 => {
+                let s = holon_render::generate_table(
+                    &mut self.sim,
+                    CURVE_R_MIN,
+                    CURVE_R_MAX,
+                    CURVE_KNOTS,
+                );
+                if s == holon_render::TABLE_OK {
+                    holon_render::generate_trimer_table(&mut self.sim);
+                }
+                self.sim.reset(MAX_ATOMS);
+                for i in 0..self.sim.n {
+                    self.sim.atoms[i].species = HYDROGEN;
+                }
+                s
+            }
+            Preset::LiH => {
+                let s = holon_render::generate_pair_table(
+                    &mut self.sim,
+                    LITHIUM,
+                    HYDROGEN,
+                    64,
+                );
+                self.setup_dimer(LITHIUM, HYDROGEN);
+                s
+            }
+            Preset::HF => {
+                let s = holon_render::generate_pair_table(
+                    &mut self.sim,
+                    HYDROGEN,
+                    FLUORINE,
+                    64,
+                );
+                self.setup_dimer(HYDROGEN, FLUORINE);
+                s
+            }
+            Preset::Li2 => {
+                let s = holon_render::generate_pair_table(
+                    &mut self.sim,
+                    LITHIUM,
+                    LITHIUM,
+                    64,
+                );
+                self.setup_dimer(LITHIUM, LITHIUM);
+                s
+            }
+            Preset::N2 => {
+                let s = holon_render::generate_pair_table(
+                    &mut self.sim,
+                    NITROGEN,
+                    NITROGEN,
+                    64,
+                );
+                self.setup_dimer(NITROGEN, NITROGEN);
+                s
+            }
+            Preset::F2 => {
+                let s = holon_render::generate_pair_table(
+                    &mut self.sim,
+                    FLUORINE,
+                    FLUORINE,
+                    64,
+                );
+                self.setup_dimer(FLUORINE, FLUORINE);
+                s
+            }
+            Preset::CO => {
+                let s = holon_render::generate_pair_table(
+                    &mut self.sim,
+                    CARBON,
+                    OXYGEN,
+                    64,
+                );
+                self.setup_dimer(CARBON, OXYGEN);
+                s
+            }
+            Preset::He2 => {
+                let s = holon_render::generate_pair_table(
+                    &mut self.sim,
+                    HELIUM,
+                    HELIUM,
+                    64,
+                );
+                self.setup_dimer(HELIUM, HELIUM);
+                s
+            }
+            Preset::Ne2 => {
+                let s = holon_render::generate_pair_table(
+                    &mut self.sim,
+                    NEON,
+                    NEON,
+                    64,
+                );
+                self.setup_dimer(NEON, NEON);
+                s
+            }
+        };
+        self.preset = preset;
+        self.table_status = status;
+    }
+
+    fn setup_dimer(&mut self, sp_a: Species, sp_b: Species) {
+        self.sim.reset(2);
+        self.sim.set_species(0, sp_a);
+        self.sim.set_species(1, sp_b);
+        let cx = 0.5 * self.sim.width;
+        let cy = 0.5 * self.sim.height;
+        let cz = 0.5 * self.sim.depth;
+        self.sim.atoms[0].x = cx - 5.0;
+        self.sim.atoms[0].y = cy;
+        self.sim.atoms[0].z = cz;
+        self.sim.atoms[1].x = cx + 5.0;
+        self.sim.atoms[1].y = cy;
+        self.sim.atoms[1].z = cz;
+        let ma = self.sim.atoms[0].mass();
+        let mb = self.sim.atoms[1].mass();
+        let mu = (ma * mb) / (ma + mb);
+        let v_rel = 0.0004;
+        self.sim.atoms[0].vx = v_rel * (mu / ma);
+        self.sim.atoms[0].vy = 0.0;
+        self.sim.atoms[0].vz = 0.0;
+        self.sim.atoms[1].vx = -v_rel * (mu / mb);
+        self.sim.atoms[1].vy = 0.0;
+        self.sim.atoms[1].vz = 0.0;
+        self.sim.adopt_table_timescale();
+        self.sim.rebase();
+    }
+
+    /// Cycle to the next scene preset.
+    pub fn next_preset(&mut self) {
+        self.load_preset(self.preset.next());
     }
 
     pub fn table_ok(&self) -> bool {

@@ -41,12 +41,14 @@ pub enum Slot {
     LabelThermostat,
     LabelCensus,
     LabelDtGrowth,
+    LabelPreset,
 }
 
 /// What a control button does.
 #[derive(Component, Clone, Copy, PartialEq, Eq)]
 pub enum Action {
     Reset,
+    NextPreset,
     FewerAtoms,
     MoreAtoms,
     Slower,
@@ -168,6 +170,13 @@ fn setup_hud(mut commands: Commands) {
         ))
         .id();
     button(&mut commands, row, Action::Reset, "reset", None);
+    button(
+        &mut commands,
+        row,
+        Action::NextPreset,
+        "preset: H₂",
+        Some(Slot::LabelPreset),
+    );
     button(&mut commands, row, Action::FewerAtoms, "-", None);
     button(
         &mut commands,
@@ -370,6 +379,9 @@ fn handle_actions(
                 let n = world.sim.n;
                 world.reset(n);
             }
+            Action::NextPreset => {
+                world.next_preset();
+            }
             Action::FewerAtoms => {
                 let n = world.sim.n.saturating_sub(1).max(2);
                 world.reset(n);
@@ -456,8 +468,9 @@ fn update_hud(world: Res<AtomWorld>, mut texts: Query<(&Slot, &mut Text, &mut Te
                     )
                 } else {
                     format!(
-                        "t = {:.1} a.u. ({:.3} fs)  |  {} atoms  |  {} clusters  |  {} bonded pairs  |  \
+                        "[{}]  t = {:.1} a.u. ({:.3} fs)  |  {} atoms  |  {} clusters  |  {} bonded pairs  |  \
                          drag an atom; the spring is on the ledger",
+                        world.preset.short_name(),
                         s.time,
                         s.time * AU_TO_FS,
                         s.n,
@@ -568,23 +581,30 @@ fn update_hud(world: Res<AtomWorld>, mut texts: Query<(&Slot, &mut Text, &mut Te
                     .iter()
                     .min_by(|a, b| a.r.total_cmp(&b.r));
                 let pair = match closest {
-                    Some(p) => format!(
-                        "closest pair {}-{}\n\
-                         |  R         {:.4} bohr\n\
-                         |  E_rel     {:+.4e} Eh\n\
-                         |  r_outer   {:.4}\n\
-                         |  bonded    {}",
-                        p.i,
-                        p.j,
-                        p.r,
-                        p.e_rel,
-                        p.r_outer,
-                        if p.bonded { "yes" } else { "no" }
-                    ),
+                    Some(p) => {
+                        let sym_i = s.atoms[p.i].species.symbol;
+                        let sym_j = s.atoms[p.j].species.symbol;
+                        format!(
+                            "closest pair {}{}-{}{}\n\
+                             |  R         {:.4} bohr\n\
+                             |  E_rel     {:+.4e} Eh\n\
+                             |  r_outer   {:.4}\n\
+                             |  bonded    {}",
+                            sym_i,
+                            p.i,
+                            sym_j,
+                            p.j,
+                            p.r,
+                            p.e_rel,
+                            p.r_outer,
+                            if p.bonded { "yes" } else { "no" }
+                        )
+                    }
                     None => "closest pair  (none)".to_string(),
                 };
                 text.0 = format!(
-                    "R_e        {:.5} bohr\n\
+                    "preset     {}\n\
+                     R_e        {:.5} bohr\n\
                      D_e        {:.6} Eh\n\
                      asymptote  {:.6} Eh\n\
                      knots      {}\n\
@@ -593,6 +613,7 @@ fn update_hud(world: Res<AtomWorld>, mut texts: Query<(&Slot, &mut Text, &mut Te
                      Bonded means E_rel below the\n\
                      asymptote and R inside the turning\n\
                      point. No distance cutoff anywhere.",
+                    world.preset.name(),
                     s.table.r_e,
                     s.table.d_e,
                     s.table.e_asymptote,
@@ -644,6 +665,9 @@ fn update_hud(world: Res<AtomWorld>, mut texts: Query<(&Slot, &mut Text, &mut Te
                     s.timescale.required_substeps_per_second(),
                     world.n_max() as u64,
                 );
+            }
+            Slot::LabelPreset => {
+                text.0 = format!("preset: {}", world.preset.short_name());
             }
             Slot::LabelAtoms => text.0 = format!("+  ({} atoms)", s.n),
             Slot::LabelSpeed => {

@@ -866,6 +866,9 @@ fn pair_file_names_parse_to_their_elements() {
         ("H2", "H", "H"), ("He2", "He", "He"), ("Ne2", "Ne", "Ne"), ("Li2", "Li", "Li"),
         ("N2", "N", "N"), ("F2", "F", "F"), ("LiH", "Li", "H"), ("HF", "H", "F"),
         ("CO", "C", "O"),
+        ("Na2", "Na", "Na"), ("Mg2", "Mg", "Mg"), ("Al2", "Al", "Al"), ("Si2", "Si", "Si"),
+        ("P2", "P", "P"), ("S2", "S", "S"), ("Cl2", "Cl", "Cl"), ("Ar2", "Ar", "Ar"),
+        ("NaCl", "Na", "Cl"), ("SiH", "Si", "H"),
     ] {
         assert_eq!(split_pair(name), (a.to_string(), b.to_string()), "{name}");
         assert!(holon_chem::elements::by_symbol(a).is_some(), "{a}");

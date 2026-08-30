@@ -262,3 +262,263 @@ fn two_site_update(
 
     (gs.energy, discarded, gs.residual, spectrum_floor)
 }
+
+// ------------------------------------------------------------------ General MPO DMRG Solver
+
+/// Configuration for general MPO DMRG sweeps.
+#[derive(Debug, Clone)]
+pub struct DmrgConfig {
+    pub chi_max: usize,
+    pub max_sweeps: usize,
+    pub sweep_tol: f64,
+    pub policy: RefusalPolicy,
+}
+
+impl Default for DmrgConfig {
+    fn default() -> Self {
+        Self {
+            chi_max: 64,
+            max_sweeps: 20,
+            sweep_tol: 1e-8,
+            policy: RefusalPolicy::Silent,
+        }
+    }
+}
+
+/// Results of a DMRG ground-state eigensolver run.
+#[derive(Debug, Clone)]
+pub struct DmrgResult {
+    /// Ground-state energy E_0.
+    pub energy: f64,
+    /// Converged MPS site tensors.
+    pub tensors: Vec<TensorSite>,
+    pub sweeps_used: usize,
+    pub converged: bool,
+    /// Discarded weight per bond from the last sweep.
+    pub discarded_weight: Vec<f64>,
+    /// Kept-spectrum floor (s_min / s_max) per bond.
+    pub spectrum_floor: Vec<f64>,
+    /// Energy history per sweep.
+    pub energy_history: Vec<f64>,
+    /// Spatial orbital occupations <n_p> = <n_{p,up}> + <n_{p,down}>.
+    pub occupation_profile: Vec<f64>,
+    /// Local spin-orbital occupations <n_i> for i in 0..2*n_orb.
+    pub spin_orbital_occupations: Vec<f64>,
+    /// Bond dimensions along the chain.
+    pub bond_dims: Vec<usize>,
+    /// Worst Lanczos residual across all two-site solves.
+    pub worst_lanczos_residual: f64,
+}
+
+/// Compute right environments for an arbitrary MPO.
+fn all_right_envs_mpo(tensors: &[TensorSite], mpo: &crate::mpo::Mpo) -> Vec<Env> {
+    let l = tensors.len();
+    let d_last = if l > 0 { mpo.sites[l - 1].d_r } else { 1 };
+    let mut envs: Vec<Env> = vec![mps::trivial_right_env_mpo(d_last); l + 1];
+    for k in (0..l).rev() {
+        envs[k] = mps::grow_right_mpo(&envs[k + 1], &mpo.sites[k], &tensors[k]);
+    }
+    envs
+}
+
+/// Compute left environments for an arbitrary MPO.
+fn all_left_envs_mpo(tensors: &[TensorSite], mpo: &crate::mpo::Mpo) -> Vec<Env> {
+    let l = tensors.len();
+    let d_first = if l > 0 { mpo.sites[0].d_l } else { 1 };
+    let mut envs: Vec<Env> = vec![mps::trivial_left_env_mpo(d_first); l + 1];
+    for k in 0..l {
+        envs[k + 1] = mps::grow_left_mpo(&envs[k], &mpo.sites[k], &tensors[k]);
+    }
+    envs
+}
+
+fn two_site_update_mpo(
+    tensors: &mut [TensorSite],
+    w1: &crate::mpo::MpoSite,
+    w2: &crate::mpo::MpoSite,
+    j: usize,
+    chi_max: usize,
+    absorb_s_left: bool,
+    left_env: &Env,
+    right_env: &Env,
+) -> (f64, f64, f64, f64) {
+    let chi_l = tensors[j].chi_l;
+    let chi_r = tensors[j + 1].chi_r;
+    let mid = tensors[j].chi_r;
+    debug_assert_eq!(mid, tensors[j + 1].chi_l, "adjacent bond dimensions out of sync");
+
+    let mut seed = vec![0.0; chi_l * 2 * 2 * chi_r];
+    for lft in 0..chi_l {
+        for a in 0..2 {
+            for m in 0..mid {
+                let av = tensors[j].get(a, lft, m);
+                if av == 0.0 {
+                    continue;
+                }
+                let base = (lft * 2 + a) * 2 * chi_r;
+                for b in 0..2 {
+                    for r in 0..chi_r {
+                        seed[base + b * chi_r + r] += av * tensors[j + 1].get(b, m, r);
+                    }
+                }
+            }
+        }
+    }
+
+    let dim = chi_l * 2 * 2 * chi_r;
+    let gs = lanczos::ground_state(
+        |psi| mps::apply_effective_h_mpo(left_env, w1, w2, right_env, psi, chi_l, chi_r),
+        &seed,
+        dim,
+    )
+    .expect("local Lanczos failed to converge");
+
+    let (a_left, a_right, discarded, spectrum_floor) =
+        mps::split_two_site(&gs.vector, chi_l, chi_r, chi_max, absorb_s_left);
+    tensors[j] = a_left;
+    tensors[j + 1] = a_right;
+
+    (gs.energy, discarded, gs.residual, spectrum_floor)
+}
+
+/// Run two-site DMRG optimization sweeps for an arbitrary Matrix Product Operator (MPO).
+pub fn dmrg_sweep(
+    mpo: &crate::mpo::Mpo,
+    initial_tensors: Vec<TensorSite>,
+    config: &DmrgConfig,
+) -> Result<DmrgResult, Refusal> {
+    let l = mpo.sites.len();
+    assert_eq!(initial_tensors.len(), l, "tensors length must match MPO length");
+    let mut tensors = initial_tensors;
+    let mut prev_energy = f64::INFINITY;
+    let mut last_energy = 0.0;
+    let mut converged = false;
+    let mut sweeps_used = 0;
+    let mut discarded = vec![0.0; l.saturating_sub(1)];
+    let mut spectrum_floor = vec![0.0; l.saturating_sub(1)];
+    let mut energy_history = Vec::with_capacity(config.max_sweeps);
+    let mut worst_lanczos_residual = 0.0f64;
+
+    for sweep in 0..config.max_sweeps {
+        sweeps_used = sweep + 1;
+
+        // Left-to-right pass
+        let right_envs = all_right_envs_mpo(&tensors, mpo);
+        let mut left_env = mps::trivial_left_env_mpo(mpo.sites[0].d_l);
+        for j in 0..(l - 1) {
+            let (e, dw, resid, sf) = two_site_update_mpo(
+                &mut tensors,
+                &mpo.sites[j],
+                &mpo.sites[j + 1],
+                j,
+                config.chi_max,
+                false,
+                &left_env,
+                &right_envs[j + 2],
+            );
+            last_energy = e;
+            discarded[j] = dw;
+            spectrum_floor[j] = sf;
+            worst_lanczos_residual = worst_lanczos_residual.max(resid);
+            if config.policy == RefusalPolicy::Typed && dw > REFUSAL_THRESHOLD {
+                return Err(Refusal { bond: j, weight: dw });
+            }
+            left_env = mps::grow_left_mpo(&left_env, &mpo.sites[j], &tensors[j]);
+        }
+
+        // Right-to-left pass
+        let left_envs = all_left_envs_mpo(&tensors, mpo);
+        let mut right_env = mps::trivial_right_env_mpo(mpo.sites[l - 1].d_r);
+        for j in (0..(l - 1)).rev() {
+            let (e, dw, resid, sf) = two_site_update_mpo(
+                &mut tensors,
+                &mpo.sites[j],
+                &mpo.sites[j + 1],
+                j,
+                config.chi_max,
+                true,
+                &left_envs[j],
+                &right_env,
+            );
+            last_energy = e;
+            discarded[j] = dw;
+            spectrum_floor[j] = sf;
+            worst_lanczos_residual = worst_lanczos_residual.max(resid);
+            if config.policy == RefusalPolicy::Typed && dw > REFUSAL_THRESHOLD {
+                return Err(Refusal { bond: j, weight: dw });
+            }
+            right_env = mps::grow_right_mpo(&right_env, &mpo.sites[j + 1], &tensors[j + 1]);
+        }
+
+        energy_history.push(last_energy);
+
+        if (last_energy - prev_energy).abs() <= config.sweep_tol {
+            converged = true;
+            break;
+        }
+        prev_energy = last_energy;
+    }
+
+    let occ = crate::observables::occupation_profile(&tensors, l / 2);
+    let spin_occ = crate::observables::spin_orbital_occupations(&tensors);
+    let bond_dims = tensors[..l.saturating_sub(1)].iter().map(|t| t.chi_r).collect();
+
+    Ok(DmrgResult {
+        energy: last_energy,
+        tensors,
+        sweeps_used,
+        converged,
+        discarded_weight: discarded,
+        spectrum_floor,
+        energy_history,
+        occupation_profile: occ,
+        spin_orbital_occupations: spin_occ,
+        bond_dims,
+        worst_lanczos_residual,
+    })
+}
+
+/// DMRG eigensolver for multi-orbital molecular electronic Hamiltonians.
+/// Computes ground-state energy E_0, bond dimension convergence, and local occupations.
+pub fn solve_electronic_ground_state(
+    n_orb: usize,
+    n_alpha: usize,
+    n_beta: usize,
+    h: &[f64],
+    g: &[f64],
+    chi_max: usize,
+    max_sweeps: usize,
+    tol: f64,
+) -> Result<DmrgResult, Refusal> {
+    let mpo = crate::mpo::Mpo::from_electronic_integrals(n_orb, h, g);
+    let init_state = mps::initial_state_hf(n_orb, n_alpha, n_beta);
+
+    // Warm-start schedule if chi_max is larger than initial stage
+    if chi_max > 16 {
+        let warm_config_1 = DmrgConfig {
+            chi_max: 16.min(chi_max),
+            max_sweeps: 4.min(max_sweeps),
+            sweep_tol: tol.max(1e-5),
+            policy: RefusalPolicy::Silent,
+        };
+        if let Ok(warm_res) = dmrg_sweep(&mpo, init_state.clone(), &warm_config_1) {
+            let padded = mps::pad_to_chi(&warm_res.tensors, chi_max);
+            let final_config = DmrgConfig {
+                chi_max,
+                max_sweeps,
+                sweep_tol: tol,
+                policy: RefusalPolicy::Silent,
+            };
+            return dmrg_sweep(&mpo, padded, &final_config);
+        }
+    }
+
+    let config = DmrgConfig {
+        chi_max,
+        max_sweeps,
+        sweep_tol: tol,
+        policy: RefusalPolicy::Silent,
+    };
+    dmrg_sweep(&mpo, init_state, &config)
+}
+

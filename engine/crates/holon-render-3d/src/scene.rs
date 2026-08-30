@@ -56,11 +56,14 @@ pub fn to_sim(v: Vec3) -> (f64, f64, f64) {
 /// Shared handles, built once at startup and cloned per entity.
 #[derive(Resource)]
 pub struct SceneAssets {
+    /// Unit sphere (radius 1.0). Scaled per atom by each element's derived homonuclear radius.
     pub atom_mesh: Handle<Mesh>,
     /// Unit cylinder (radius 1, height 1, along +Y). Scaled per bond and per spring.
     pub rod_mesh: Handle<Mesh>,
     /// Unit cube. Scaled per box edge.
     pub edge_mesh: Handle<Mesh>,
+    pub element_free_mats: [Handle<StandardMaterial>; 10],
+    pub element_bonded_mats: [Handle<StandardMaterial>; 10],
     pub free_mat: Handle<StandardMaterial>,
     pub bonded_mat: Handle<StandardMaterial>,
     pub held_mat: Handle<StandardMaterial>,
@@ -70,7 +73,7 @@ pub struct SceneAssets {
 }
 
 /// How an atom is being drawn. Tracked so the material is only swapped on a change.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum AtomLook {
     Free,
     Bonded,
@@ -83,7 +86,7 @@ pub enum AtomLook {
 #[derive(Resource)]
 pub struct AtomEntities {
     pub atoms: Vec<Entity>,
-    pub look: Vec<AtomLook>,
+    pub look: Vec<(u32, AtomLook)>,
     /// The rod drawn from the held atom to the anchor, and the little marker on the
     /// anchor itself. Hidden unless something is grabbed.
     pub spring: Entity,
@@ -95,12 +98,25 @@ pub fn setup_scene(
     meshes: &mut Assets<Mesh>,
     materials: &mut Assets<StandardMaterial>,
 ) {
+    let mut free_vec = Vec::with_capacity(10);
+    let mut bonded_vec = Vec::with_capacity(10);
+    for sp in holon_chem::elements::FIRST_ROW.iter() {
+        let (r, g, b) = sp.colour_rgb();
+        let color = Color::srgb(r, g, b);
+        free_vec.push(materials.add(atom_material(color, 0.0)));
+        bonded_vec.push(materials.add(atom_material(color, 0.35)));
+    }
+    let element_free_mats: [Handle<StandardMaterial>; 10] = free_vec.try_into().unwrap();
+    let element_bonded_mats: [Handle<StandardMaterial>; 10] = bonded_vec.try_into().unwrap();
+
     let assets = SceneAssets {
-        atom_mesh: meshes.add(Sphere::new(ATOM_RADIUS as f32).mesh().ico(4).unwrap()),
+        atom_mesh: meshes.add(Sphere::new(1.0).mesh().ico(4).unwrap()),
         rod_mesh: meshes.add(Cylinder::new(1.0, 1.0)),
         edge_mesh: meshes.add(Cuboid::new(1.0, 1.0, 1.0)),
-        free_mat: materials.add(atom_material(GREEN_SOFT, 0.0)),
-        bonded_mat: materials.add(atom_material(GREEN, 0.35)),
+        free_mat: element_free_mats[0].clone(),
+        bonded_mat: element_bonded_mats[0].clone(),
+        element_free_mats,
+        element_bonded_mats,
         held_mat: materials.add(atom_material(AMBER, 0.9)),
         bond_mat: materials.add(atom_material(GREEN, 1.4)),
         spring_mat: materials.add(atom_material(RUST, 0.8)),
@@ -120,8 +136,8 @@ pub fn setup_scene(
             commands
                 .spawn((
                     Mesh3d(assets.atom_mesh.clone()),
-                    MeshMaterial3d(assets.free_mat.clone()),
-                    Transform::default(),
+                    MeshMaterial3d(assets.element_free_mats[0].clone()),
+                    Transform::from_scale(Vec3::splat(ATOM_RADIUS as f32)),
                     Visibility::Hidden,
                 ))
                 .id(),
@@ -153,7 +169,7 @@ pub fn setup_scene(
 
     commands.insert_resource(AtomEntities {
         atoms,
-        look: vec![AtomLook::Free; MAX_ATOMS],
+        look: vec![(1, AtomLook::Free); MAX_ATOMS],
         spring,
         anchor,
     });
@@ -235,9 +251,12 @@ pub fn sync_atoms(
             continue;
         }
         let a = &s.atoms[i];
+        let radius = a.radius() as f32;
         if let Ok(mut tf) = transforms.get_mut(e) {
             tf.translation = to_world(a.x, a.y, a.z);
+            tf.scale = Vec3::splat(radius);
         }
+        let z = a.species.z;
         let look = if s.grabbed == Some(i) {
             AtomLook::Held
         } else if bonded[i] {
@@ -245,14 +264,15 @@ pub fn sync_atoms(
         } else {
             AtomLook::Free
         };
-        if look != table.look[i] {
+        if (z, look) != table.look[i] {
+            let z_idx = (z.clamp(1, 10) - 1) as usize;
             let mat = match look {
-                AtomLook::Free => assets.free_mat.clone(),
-                AtomLook::Bonded => assets.bonded_mat.clone(),
+                AtomLook::Free => assets.element_free_mats[z_idx].clone(),
+                AtomLook::Bonded => assets.element_bonded_mats[z_idx].clone(),
                 AtomLook::Held => assets.held_mat.clone(),
             };
             commands.entity(e).insert(MeshMaterial3d(mat));
-            table.look[i] = look;
+            table.look[i] = (z, look);
         }
     }
 
@@ -279,6 +299,7 @@ pub fn sync_atoms(
         }
         if let Ok(mut tf) = transforms.get_mut(table.anchor) {
             tf.translation = to;
+            tf.scale = Vec3::splat(0.25);
         }
     }
 }

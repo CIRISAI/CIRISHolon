@@ -542,3 +542,94 @@ fn the_world_the_app_builds_carries_the_three_body_law() {
         s.e_three
     );
 }
+
+#[test]
+fn species_radii_and_colours_match_palette() {
+    use holon_chem::elements::FIRST_ROW;
+    for sp in FIRST_ROW.iter() {
+        let r = sp.homonuclear_radius();
+        assert!(
+            r > 0.5 && r < 4.0,
+            "species {} has unphysical homonuclear radius {:.4}",
+            sp.symbol,
+            r
+        );
+        let hex = sp.colour_hex();
+        assert!(
+            hex.starts_with('#') && hex.len() == 7,
+            "species {} has invalid hex colour {}",
+            sp.symbol,
+            hex
+        );
+        let (cr, cg, cb) = sp.colour_rgb();
+        assert!(
+            cr >= 0.0 && cr <= 1.0 && cg >= 0.0 && cg <= 1.0 && cb >= 0.0 && cb <= 1.0,
+            "species {} has out-of-range RGB: ({cr}, {cg}, {cb})",
+            sp.symbol
+        );
+    }
+}
+
+#[test]
+fn all_presets_load_and_conserve_energy() {
+    use holon_render_3d::world::Preset;
+
+    // Test representative presets covering homonuclear, heteronuclear, 16-atom quench, and negative controls.
+    let test_presets = [Preset::H2, Preset::Quench16, Preset::LiH, Preset::He2];
+    for preset in test_presets.iter() {
+        println!("Testing preset: {}", preset.name());
+        let mut w = AtomWorld::new_with_preset(*preset);
+        assert!(
+            w.table_ok(),
+            "preset {} failed to load potential table: status {}",
+            preset.name(),
+            w.table_status
+        );
+        assert_eq!(w.preset, *preset);
+        let mut app = app_with(w);
+        run(&mut app, 100);
+
+        let w = world(&app);
+        let s = &w.sim;
+        assert!(
+            s.energy_gate(),
+            "preset {} failed energy gate: drift {:.3e} > bound {:.3e}",
+            preset.name(),
+            s.drift_peak,
+            s.drift_bound()
+        );
+        assert!(
+            s.momentum_gate(),
+            "preset {} failed momentum gate: residual {:.3e} > bound {:.3e}",
+            preset.name(),
+            s.momentum_residual_peak,
+            s.momentum_bound()
+        );
+    }
+}
+
+#[test]
+fn closed_shell_negative_controls_refuse_to_bind() {
+    use holon_render_3d::world::Preset;
+
+    for preset in [Preset::He2, Preset::Ne2] {
+        let mut w = AtomWorld::new_with_preset(preset);
+        w.sim.boundary = Boundary::Open;
+        let mut app = app_with(w);
+        run(&mut app, 300);
+
+        let s = &world(&app).sim;
+        assert_eq!(
+            s.holons.molecule_count(),
+            0,
+            "closed-shell control {} bound into a molecule",
+            preset.name()
+        );
+        assert_eq!(
+            s.bonded_count(),
+            0,
+            "closed-shell control {} has bonded pairs",
+            preset.name()
+        );
+    }
+}

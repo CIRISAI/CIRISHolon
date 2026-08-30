@@ -59,9 +59,9 @@ use crate::md::AoIntegrals;
 
 /// Largest orbital count the determinant machinery accepts.
 ///
-/// Twenty spin orbitals fit a `u32` mask with room to spare, and ten spatial orbitals is
-/// a first-row diatomic in a minimal basis — the whole of what ELEMENTS-1 stakes.
-pub const MAX_ORB: usize = 16;
+/// Thirty-two spatial orbitals fit a `u32` mask per spin string, accommodating both
+/// first- and second-row diatomics and larger minimal-basis spaces.
+pub const MAX_ORB: usize = 32;
 
 // ------------------------------------------------- the spin-orbital ordering convention
 //
@@ -399,23 +399,51 @@ impl Strings {
     pub fn new(n_orb: usize, n_elec: usize) -> Strings {
         assert!(n_orb <= MAX_ORB);
         let mut masks = Vec::new();
-        for m in 0u32..(1u32 << n_orb) {
-            if m.count_ones() as usize == n_elec {
-                masks.push(m);
+        if n_elec <= n_orb {
+            if n_elec == 0 {
+                masks.push(0);
+            } else {
+                let mut v = if n_elec == 32 { u32::MAX } else { (1u32 << n_elec) - 1 };
+                let limit = if n_orb == 32 { u64::MAX } else { 1u64 << n_orb };
+                while (v as u64) < limit {
+                    masks.push(v);
+                    let c = v & (!v).wrapping_add(1);
+                    let r = v.wrapping_add(c);
+                    if r == 0 || (r as u64) >= limit {
+                        break;
+                    }
+                    v = (((r ^ v) >> 2) / c) | r;
+                }
             }
         }
-        let mut lookup = vec![-1i32; 1usize << n_orb];
-        for (i, &m) in masks.iter().enumerate() {
-            lookup[m as usize] = i as i32;
-        }
+        let lookup = if n_orb <= 16 {
+            let mut lk = vec![-1i32; 1usize << n_orb];
+            for (i, &m) in masks.iter().enumerate() {
+                lk[m as usize] = i as i32;
+            }
+            lk
+        } else {
+            Vec::new()
+        };
+        let get_idx = |m: u32, lk: &[i32], ms: &[u32]| -> Option<usize> {
+            if !lk.is_empty() {
+                let idx = lk[m as usize];
+                if idx >= 0 {
+                    Some(idx as usize)
+                } else {
+                    None
+                }
+            } else {
+                ms.binary_search(&m).ok()
+            }
+        };
         let mut singles = Vec::with_capacity(masks.len());
         for &m in masks.iter() {
             let mut list = Vec::new();
             for q in 0..n_orb {
                 for p in 0..n_orb {
                     if let Some((sgn, m2)) = excite(m, p, q) {
-                        let idx = lookup[m2 as usize];
-                        debug_assert!(idx >= 0);
+                        let idx = get_idx(m2, &lookup, &masks).expect("valid excitation");
                         list.push(((p * n_orb + q) as u16, sgn, idx as u32));
                     }
                 }
@@ -440,11 +468,19 @@ impl Strings {
     }
 
     pub fn index_of(&self, mask: u32) -> Option<usize> {
-        let i = self.lookup[mask as usize];
-        if i < 0 {
-            None
+        if !self.lookup.is_empty() {
+            if (mask as usize) < self.lookup.len() {
+                let i = self.lookup[mask as usize];
+                if i >= 0 {
+                    Some(i as usize)
+                } else {
+                    None
+                }
+            } else {
+                None
+            }
         } else {
-            Some(i as usize)
+            self.masks.binary_search(&mask).ok()
         }
     }
 }
@@ -796,8 +832,8 @@ pub fn dense_hamiltonian_ladder(space: &FciSpace, ci: &CiInts, n: usize) -> Vec<
         x
     };
 
-    let combine = |ma: u32, mb: u32| -> u32 { ma | (mb << n) };
-    let dets: Vec<u32> = (0..nd)
+    let combine = |ma: u32, mb: u32| -> u64 { (ma as u64) | ((mb as u64) << n) };
+    let dets: Vec<u64> = (0..nd)
         .map(|d| combine(space.alpha.masks[d / nb], space.beta.masks[d % nb]))
         .collect();
     let mut index = std::collections::HashMap::new();
@@ -806,16 +842,16 @@ pub fn dense_hamiltonian_ladder(space: &FciSpace, ci: &CiInts, n: usize) -> Vec<
     }
 
     // Ladder primitives. `true` creates.
-    fn ladder(det: u32, is_create: bool, so: u32) -> Option<(f64, u32)> {
+    fn ladder(det: u64, is_create: bool, so: u32) -> Option<(f64, u64)> {
         let occupied = (det >> so) & 1 == 1;
         if is_create == occupied {
             return None;
         }
-        let below = (det & ((1u32 << so) - 1)).count_ones();
+        let below = (det & ((1u64 << so) - 1)).count_ones();
         let sgn = if below & 1 == 1 { -1.0 } else { 1.0 };
-        Some((sgn, det ^ (1 << so)))
+        Some((sgn, det ^ (1u64 << so)))
     }
-    fn apply(det: u32, ops: &[(bool, u32)]) -> Option<(f64, u32)> {
+    fn apply(det: u64, ops: &[(bool, u32)]) -> Option<(f64, u64)> {
         let mut sgn = 1.0f64;
         let mut cur = det;
         for &(is_create, so) in ops.iter().rev() {
@@ -1148,8 +1184,70 @@ fn cg_response(
     (w, max_iter, norm(&r) / b_norm)
 }
 
+/// MPS/DMRG solver route for ground state and energy derivatives.
+/// Maps molecular orbital integrals (h_pq, g_pqrs) to a 1D Matrix Product Operator
+/// and computes ground state energy and Hellmann-Feynman derivatives with DMRG.
+pub fn solve_mps(space: &FciSpace, mo: &MoIntegrals, max_bond_dim: usize) -> Solution {
+    let n_orb = mo.n;
+    let n_alpha = space.alpha.n_elec;
+    let n_beta = space.beta.n_elec;
+
+    let h0: Vec<f64> = mo.h.iter().map(|d| d.v).collect();
+    let g0: Vec<f64> = mo.g.iter().map(|d| d.v).collect();
+    let h1: Vec<f64> = mo.h.iter().map(|d| d.d).collect();
+    let g1: Vec<f64> = mo.g.iter().map(|d| d.d).collect();
+    let h2: Vec<f64> = mo.h.iter().map(|d| d.e).collect();
+    let g2: Vec<f64> = mo.g.iter().map(|d| d.e).collect();
+
+    let res = q8_mps::dmrg::solve_electronic_ground_state(
+        n_orb,
+        n_alpha,
+        n_beta,
+        &h0,
+        &g0,
+        max_bond_dim,
+        25,
+        1e-9,
+    )
+    .expect("MPS DMRG ground state solver failed");
+
+    let last_de = if res.energy_history.len() >= 2 {
+        (res.energy_history[res.energy_history.len() - 1] - res.energy_history[res.energy_history.len() - 2]).abs()
+    } else {
+        0.0
+    };
+
+    assert!(
+        res.converged || last_de < 1e-6,
+        "MPS DMRG ground state solver did not reach energy convergence: dE = {:.3e}",
+        last_de
+    );
+
+    let mpo1 = q8_mps::mpo::Mpo::from_electronic_integrals(n_orb, &h1, &g1);
+    let e1 = mpo1.expectation(&res.tensors);
+
+    let mpo2 = q8_mps::mpo::Mpo::from_electronic_integrals(n_orb, &h2, &g2);
+    let e2 = mpo2.expectation(&res.tensors);
+
+    let max_dw = res.discarded_weight.iter().copied().fold(0.0f64, f64::max);
+
+    Solution {
+        e: D2::new(res.energy, e1, e2),
+        vector: vec![],
+        davidson_iters: res.sweeps_used,
+        cg_iters: 0,
+        residual: max_dw.max(res.worst_lanczos_residual),
+        cg_residual: 0.0,
+    }
+}
+
 /// Solve for the ground state and both derivatives of its energy.
+/// Automatically routes large determinant spaces (> 50,000 determinants) to the MPS/DMRG solver.
 pub fn solve(space: &FciSpace, mo: &MoIntegrals) -> Solution {
+    if space.n_det > 50_000 {
+        return solve_mps(space, mo, 64);
+    }
+
     let ci0 = ci_ints(mo, Order::Value);
     let ci1 = ci_ints(mo, Order::First);
     let ci2 = ci_ints(mo, Order::Second);
@@ -1191,6 +1289,7 @@ pub fn solve(space: &FciSpace, mo: &MoIntegrals) -> Solution {
         cg_residual,
     }
 }
+
 
 // --- small vector helpers, written here because the crate has no linear algebra dep ---
 

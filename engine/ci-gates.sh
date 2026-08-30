@@ -508,7 +508,7 @@ cargo test -q --manifest-path crates/h3ere2-eval/Cargo.toml 2>/dev/null >/dev/nu
 #     and falsify gates 1-3). This invocation is also what satisfies gate 13's audit for
 #     the crate, rather than a CRATE_ALLOW entry -- there is no break here to own and no
 #     exit to wait for, so an allowlist entry would be suppression.
-cargo test -q --manifest-path crates/holon-render-3d/Cargo.toml \
+cargo test -q --manifest-path crates/holon-render-3d/Cargo.toml --release \
   --no-default-features --features headless 2>/dev/null >/dev/null \
   && ok "holon-render-3d headless gates pass" || no "holon-render-3d headless gates pass"
 
@@ -518,9 +518,9 @@ cargo test -q --manifest-path crates/holon-render-3d/Cargo.toml \
 #     #[ignore]d until the elements-referee files are committed and is not what this
 #     gate waives) and holon-render (the ledger-gated shell whose conservation gates
 #     are one-per-law; holon-render-3d consumes it as an rlib and is gate 15).
-cargo test -q -p holon-chem 2>/dev/null >/dev/null \
+cargo test -q --release -p holon-chem 2>/dev/null >/dev/null \
   && ok "holon-chem referee/FCI/pair/E1 gates pass" || no "holon-chem referee/FCI/pair/E1 gates pass"
-cargo test -q -p holon-render 2>/dev/null >/dev/null \
+cargo test -q --release -p holon-render 2>/dev/null >/dev/null \
   && ok "holon-render ledger/amendment/cluster gates pass" || no "holon-render ledger/amendment/cluster gates pass"
 
 exit $fail

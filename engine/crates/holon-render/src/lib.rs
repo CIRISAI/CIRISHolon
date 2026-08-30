@@ -114,6 +114,42 @@ pub fn generate_table(s: &mut Sim, r_min: f64, r_max: f64, count: usize) -> u32 
     status_code(status)
 }
 
+/// Load a pre-computed [`holon_chem::pair::PairTable`] into the simulation's potential interpolator.
+pub fn load_pair_table(s: &mut Sim, pt: &holon_chem::pair::PairTable) -> u32 {
+    let n = pt.r.len();
+    if !s.table.begin(n) {
+        return status_code(s.table.status);
+    }
+    for i in 0..n {
+        if !s.table.knot(i, pt.r[i], pt.e[i], pt.f[i]) {
+            return status_code(s.table.status);
+        }
+        if i < pt.e2.len() {
+            s.table.knot_curvature(i, pt.e2[i]);
+        }
+    }
+    let (r_e, d_e) = match pt.meta.well {
+        Some(w) => (w.r_e, w.d_e),
+        None => (0.0, 0.0),
+    };
+    let status = s.table.finish(r_e, d_e, pt.meta.e_asymptote);
+    if status == table::LoadStatus::Ok {
+        s.adopt_table_timescale();
+    }
+    status_code(status)
+}
+
+/// Solve and load any pair potential table (e.g. LiH, HF, Li2, etc.) dynamically.
+pub fn generate_pair_table(
+    s: &mut Sim,
+    a: holon_chem::elements::Species,
+    b: holon_chem::elements::Species,
+    count: usize,
+) -> u32 {
+    let pt = holon_chem::pair::generate_pair_table(a, b, count);
+    load_pair_table(s, &pt)
+}
+
 // ------------------------------------------------- the three-body surface
 //
 // SATURATION-1's product. `holon-chem` solves H3 at every node of its own grid, subtracts
@@ -671,6 +707,26 @@ pub extern "C" fn holon_atom_speed(i: u32) -> f64 {
         (a.vx * a.vx + a.vy * a.vy + a.vz * a.vz).sqrt()
     } else {
         0.0
+    }
+}
+
+/// The atomic number (nuclear charge Z) of atom `i`.
+#[no_mangle]
+pub extern "C" fn holon_atom_species_z(i: u32) -> u32 {
+    let s = sim();
+    let i = i as usize;
+    if i < s.n {
+        s.atoms[i].species.z
+    } else {
+        1
+    }
+}
+
+/// Set the species of atom `i` by nuclear charge Z.
+#[no_mangle]
+pub extern "C" fn holon_set_atom_species(i: u32, z: u32) {
+    if let Some(sp) = holon_chem::elements::by_z(z) {
+        sim().set_species(i as usize, sp);
     }
 }
 

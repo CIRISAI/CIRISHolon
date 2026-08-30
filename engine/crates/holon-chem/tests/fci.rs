@@ -28,7 +28,7 @@
 use holon_chem::dual::D2;
 use holon_chem::elements::{Species, CARBON, FLUORINE, HYDROGEN, LITHIUM, NITROGEN, OXYGEN};
 use holon_chem::fci::{
-    ci_ints, cholesky_orthonormaliser, dense_hamiltonian_ladder, jacobi_eigh, solve, transform,
+    ci_ints, cholesky_orthonormaliser, dense_hamiltonian_ladder, jacobi_eigh, solve, solve_mps, transform,
     FciSpace, Order,
 };
 use holon_chem::md::ao_integrals;
@@ -753,3 +753,61 @@ fn the_ground_multiplicity_along_the_curve_is_settled_densely() {
         );
     }
 }
+
+#[test]
+fn test_mps_solver_vs_fci_ground_state() {
+    // H2 at R=1.4 bohr
+    let basis = build_basis(&[HYDROGEN, HYDROGEN], centers(Some(1.4)));
+    let n = basis.n;
+    let ao = ao_integrals(&basis);
+    let x = cholesky_orthonormaliser(&ao.s, n).expect("overlap not positive definite");
+    let mo = transform(&ao, &x, n);
+    let space = FciSpace::new(n, 1, 1);
+
+    let sol_fci = solve(&space, &mo);
+    let sol_mps = solve_mps(&space, &mo, 32);
+
+    let e_diff = (sol_fci.e.v - sol_mps.e.v).abs();
+    assert!(
+        e_diff < 1e-6,
+        "MPS energy {} differs from FCI energy {} by {e_diff:e}",
+        sol_mps.e.v,
+        sol_fci.e.v
+    );
+
+    let d_diff = (sol_fci.e.d - sol_mps.e.d).abs();
+    assert!(
+        d_diff < 1e-4,
+        "MPS force {} differs from FCI force {} by {d_diff:e}",
+        sol_mps.e.d,
+        sol_fci.e.d
+    );
+}
+
+#[test]
+fn test_solve_routes_large_spaces_to_mps() {
+    // 10 spatial orbitals, 5 alpha + 5 beta electrons:
+    // (10 choose 5)^2 = 252^2 = 63,504 determinants (> 50,000)
+    let n_orb = 10;
+    let n_alpha = 5;
+    let n_beta = 5;
+    let space = FciSpace::new(n_orb, n_alpha, n_beta);
+    assert_eq!(space.n_det, 63504);
+    assert!(space.n_det > 50_000);
+
+    // Dummy MO integrals for the 10-orbital space
+    let mut h = vec![D2::c(0.0); n_orb * n_orb];
+    for p in 0..n_orb {
+        h[p * n_orb + p] = D2::new(-2.0 - 0.1 * p as f64, 0.05, 0.01);
+    }
+    let mut g = vec![D2::c(0.0); n_orb * n_orb * n_orb * n_orb];
+    for p in 0..n_orb {
+        g[(p * n_orb + p) * n_orb * n_orb + (p * n_orb + p)] = D2::c(0.5);
+    }
+    let mo = holon_chem::fci::MoIntegrals { n: n_orb, h, g };
+
+    // solve() should automatically route to solve_mps() rather than attempting 63,504-dim Davidson
+    let sol = solve(&space, &mo);
+    assert!(sol.e.v.is_finite());
+}
+

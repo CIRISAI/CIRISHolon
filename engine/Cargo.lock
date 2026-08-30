@@ -886,6 +886,9 @@ dependencies = [
 [[package]]
 name = "holon-chem"
 version = "0.1.0"
+dependencies = [
+ "q8-mps",
+]
 
 [[package]]
 name = "holon-mesh"

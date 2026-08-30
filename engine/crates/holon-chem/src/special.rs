@@ -237,12 +237,13 @@ pub fn boys0_d2(t: D2) -> D2 {
 // `tests/md.rs` instead, at the same argument, which is the honest way to claim they are
 // the same function.
 
-/// Highest Boys order this module supplies: `F_0 .. F_8`.
+/// Highest Boys order this module supplies: `F_0 .. F_12`.
 ///
-/// Set by the worst case the first row can present, plus the derivative rungs: a
-/// (pp|pp) quartet needs `F_4`, `D2` needs `F_{m+2}` to close its chain rule, and one
-/// spare rung is kept so a future d-function does not silently index past the end.
-pub const BOYS_MAX_M: usize = 8;
+/// Set by the worst case the first and second rows can present, plus the derivative
+/// rungs: a (dd|dd) quartet needs `F_8`, `D2` needs `F_{m+2}` to close its chain rule,
+/// and spare rungs are kept so future higher angular momentum functions do not
+/// silently index past the end.
+pub const BOYS_MAX_M: usize = 12;
 
 /// `F_0(t) .. F_{m_max}(t)`, all orders returned together because they share their work
 /// and the recursions need each other.

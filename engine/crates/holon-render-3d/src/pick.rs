@@ -146,8 +146,8 @@ fn drag_atom(
             }
             let perp = (ray.origin + dir * t).distance(centre);
             // Angular tolerance, floored at the drawn radius so a very near atom is
-            // still pickable at its own size.
-            let tolerance = (t * PICK_SLOP).max(ATOM_RADIUS as f32 * 1.2);
+            // still pickable at its own size across all species.
+            let tolerance = (t * PICK_SLOP).max(a.radius() as f32 * 1.2);
             if perp < tolerance && best.is_none_or(|(bt, _, _)| t < bt) {
                 best = Some((t, i, centre));
             }

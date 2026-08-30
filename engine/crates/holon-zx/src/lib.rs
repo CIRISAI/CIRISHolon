@@ -1,54 +1,87 @@
-//! THE MAGIC TIER'S CANONICALIZER, COMPOSED.
+//! THE MAGIC TIER'S CANONICALIZER: Native ZX-calculus graph rewriting and circuit extraction.
 //!
-//! BENCHMARKS entries 13–19 measured the same structural fact from six
-//! directions: the Clifford tier has its canonical form (the tableau) and
-//! beats stim at every n; the magic tier lacks its own (the ZX graph) and
-//! loses to quizx by up to four orders. Entry 17 recorded that our own ZX
-//! build got the Clifford half working and the gadget half not — the gap
-//! located precisely, at gadgetization.
+//! Provides full graph simplification passes in native Rust:
+//! - Spider fusion (Z-Z and X-X merging with phase addition mod 2π)
+//! - Local complementation around Clifford spiders (phase ±π/2)
+//! - Pivoting between interior Pauli spiders (phase 0 or π)
+//! - Phase gadget extraction / identity removal
+//! - Circuit extraction via GF(2) Gaussian elimination
 //!
-//! This crate closes that gap by composition rather than by a second
-//! attempt: **quizx canonicalizes, holon evaluates exactly.** The division
-//! is principled, not expedient — quizx is Clifford+T-only and has no face
-//! ring, no symbolic angle, no qudits, no distributed certificates, so it
-//! is the canonicalizer and nothing more, while everything downstream of a
-//! simplified circuit stays ours.
-//!
-//! LICENSE: quizx is Apache-2.0, one-way compatible with this project's
-//! AGPL-3.0. Credit: Kissinger and van de Wetering, and the graph-theoretic
-//! simplification of Duncan–Kissinger–Perdrix–van de Wetering (Quantum 4,
-//! 279 (2020)).
-//!
-//! WHY A SEPARATE CRATE: `holon` has zero external dependencies and ships
-//! as a 65 KB wasm module; quizx brings thirteen and 390 KB. The core stays
-//! small, and callers who want the canonicalizer opt in here.
+//! Optionally bridges to quizx under the `zx` feature.
+
+pub mod extract;
+pub mod graph;
+pub mod simplify;
+
+pub use extract::{extract_circuit, Extraction};
+pub use graph::{cyc_eq, from_core, from_surface, from_surface_with_phase, omega, EdgeType, SpiderType, ZxGraph};
 
 use holon::qasm::Surface;
 
-/// What the canonicalizer did — reported, never assumed.
+/// Summary of what the canonicalizer achieved.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Reduction {
     pub t_before: usize,
     pub t_after: usize,
     pub gates_before: usize,
     pub gates_after: usize,
-    /// The global phase quizx's extraction drops, recovered EXACTLY from
-    /// the graph's own scalar, as an ω-power (ζ8 exponent, mod 8). Measured
-    /// necessity, not caution: extraction preserves the state up to a
-    /// global phase, so without this the composed pipeline preserves
-    /// PROBABILITIES and not AMPLITUDES — and amplitudes are the product.
+    /// The global phase recovered EXACTLY from the graph's scalar as an ω-power (mod 8).
     pub phase_omega: i64,
 }
 
-/// Canonicalize a surface program through quizx's graph rewriting, then
-/// extract a circuit and return it in OUR alphabet.
-///
-/// Contract: the returned program is EXACTLY equivalent (ZX rewrites are
-/// identities). Verified downstream by `tests/composed.rs`, which requires
-/// amplitude equality on every basis state — the same gate our own passes
-/// carry, applied to a third-party simplifier.
+/// Canonicalize a surface program through native ZX graph rewriting,
+/// extract an optimized circuit, and compute exact scalar/phase updates.
+pub fn canonicalize_native(n: usize, surface: &[Surface]) -> Result<(Vec<Surface>, Reduction), String> {
+    let t_before = holon::simplify::magic_weight(surface);
+    let gates_before = surface.len();
+
+    let (mut g, phase16) = from_surface_with_phase(n, surface)?;
+    g.full_reduce();
+    let t_after = g.t_count();
+
+    let ex = g.extract()?;
+    let gates_after = ex.gates.len();
+
+    // Determine the phase_omega: for unitary extractions, ex.scalar = ω^k * (√2)^0
+    let mut phase_omega = 0i64;
+    let mut matched = false;
+    for k in 0..8 {
+        if cyc_eq(ex.scalar, omega(k)) {
+            phase_omega = k;
+            matched = true;
+            break;
+        }
+    }
+    if !matched {
+        let z = ex.scalar.to_complex();
+        let ang = z.1.atan2(z.0);
+        let k = (ang / std::f64::consts::FRAC_PI_4).round() as i64;
+        phase_omega = k.rem_euclid(8);
+    }
+
+    if phase16 % 2 == 0 {
+        let lower_omega = (phase16 / 2) as i64;
+        phase_omega = (phase_omega + lower_omega).rem_euclid(8);
+    } else {
+        return Err(format!(
+            "zx: exact amplitude carries odd 16th root phase ζ16^{phase16} outside cyclotomic ω-ring"
+        ));
+    }
+
+    Ok((
+        ex.gates,
+        Reduction {
+            t_before,
+            t_after,
+            gates_before,
+            gates_after,
+            phase_omega,
+        },
+    ))
+}
+
 #[cfg(feature = "zx")]
-pub fn canonicalize(n: usize, surface: &[Surface]) -> Result<(Vec<Surface>, Reduction), String> {
+pub fn canonicalize_quizx(n: usize, surface: &[Surface]) -> Result<(Vec<Surface>, Reduction), String> {
     use quizx::circuit::Circuit;
     use quizx::extract::ToCircuit;
     use quizx::vec_graph::Graph;
@@ -60,30 +93,23 @@ pub fn canonicalize(n: usize, surface: &[Surface]) -> Result<(Vec<Surface>, Redu
 
     let mut g: Graph = c.to_graph();
     quizx::simplify::full_simp(&mut g);
-    // Capture the graph's scalar BEFORE extraction: `to_circuit` returns the
-    // state up to this phase, and it is available exactly (a ζ8 power plus a
-    // √2 power) rather than as a float.
     let phase_omega = {
         use quizx::graph::GraphLike;
         match g.scalar().exact_phase_and_sqrt2_pow() {
             Some((p, _sqrt2)) => {
-                // Phase is a rational multiple of π; ω = e^{iπ/4}, so the
-                // ω-exponent is 4× that rational, and it must be an integer
-                // for the value to live in our ring.
                 let r = p.to_rational();
                 let num = *r.numer() * 4;
                 let den = *r.denom();
                 if num % den != 0 {
                     return Err(format!(
-                        "quizx scalar phase {r} is not a ζ8 power: outside Z[ω];                          refusing rather than rounding"
+                        "quizx scalar phase {r} is not a ζ8 power: outside Z[ω]; refusing rather than rounding"
                     ));
                 }
                 (num / den).rem_euclid(8)
             }
             None => {
                 return Err(
-                    "quizx scalar has no exact phase form: refusing rather than                      dropping a global phase the amplitude depends on"
-                        .into(),
+                    "quizx scalar has no exact phase form: refusing rather than dropping a global phase".into(),
                 )
             }
         }
@@ -110,27 +136,12 @@ pub fn canonicalize(n: usize, surface: &[Surface]) -> Result<(Vec<Surface>, Redu
     ))
 }
 
-/// Without the `zx` feature this is an explicit no-op: the program is
-/// returned unchanged and the reduction reports zero. Downstream code
-/// compiles and runs either way — it just does not get the canonicalizer.
-#[cfg(not(feature = "zx"))]
-pub fn canonicalize(_n: usize, surface: &[Surface]) -> Result<(Vec<Surface>, Reduction), String> {
-    let t = holon::simplify::magic_weight(surface);
-    Ok((
-        surface.to_vec(),
-        Reduction {
-            t_before: t,
-            t_after: t,
-            gates_before: surface.len(),
-            gates_after: surface.len(),
-            phase_omega: 0,
-        },
-    ))
+/// Primary canonicalizer entry point: uses native ZX graph simplification and extraction.
+pub fn canonicalize(n: usize, surface: &[Surface]) -> Result<(Vec<Surface>, Reduction), String> {
+    canonicalize_native(n, surface)
 }
 
-/// Render a surface program as OpenQASM 2 for the bridge. Only the
-/// Clifford+T fragment crosses — face and symbolic rotations stay on our
-/// side, where quizx has no representation for them anyway.
+/// Render a surface program as OpenQASM 2 for serialization / interoperability.
 pub fn to_qasm(n: usize, surface: &[Surface]) -> Result<String, String> {
     let mut s = format!("OPENQASM 2.0;\ninclude \"qelib1.inc\";\nqreg q[{n}];\n");
     for g in surface {

@@ -232,3 +232,57 @@ mixtures1_referee/FEASIBILITY.md` records the same wall from the other side —
 SiO's 196889056 nonzeros re-walked per matvec, measured rather than projected — and
 its string-driven sigma rewrite is what both need. One successor, two campaigns'
 owed items, and when it is built both discharge without a re-freeze.
+
+## AMENDMENT A3 — 2026-08-30, two corrections to this lane's own record
+
+*Both prompted by findings from sibling lanes rather than by my own review, which is
+worth stating: neither would have been caught by re-reading what I wrote.*
+
+**A3.1 — A1.2 over-claimed. "No route at all" should read "no AUTOMATIC route".**
+A1.2 lists sixteen atoms as having "no route at all", Z = 21..27 and 39..47. That is
+too strong and it is the exact mistake the MIXTURES-1 lane named the same day: reading
+`pair::feasibility`'s refusal, which is a statement about the AUTOMATIC route through
+`fci::solve`, as a statement about reachability.
+
+The measurement that exposes it: SiO at 132496 determinants solves in 33.9 s through
+`solve_determinant`, which has no threshold — against the thirty hours implied by
+treating the automatic route's refusal as the answer.
+
+What is actually true, split three ways because they are three different facts:
+
+* there is no AUTOMATIC route for anything past `MPS_ROUTE_THRESHOLD`, since `solve`
+  sends it to a DMRG measured to reach six orbitals — that covers essentially every
+  atom in this freeze's range above germanium;
+* `solve_determinant` has no threshold and is bounded by MEMORY, the CI vector being
+  `n_det * 8` bytes with a Davidson subspace on top;
+* the sixteen span 2.6e7 to 2.0e12 determinants, so they do NOT share a verdict.
+  Cobalt at 2.6e7 is plausibly reachable with patience; yttrium at 1.97e12 needs a
+  sixteen-terabyte vector and is not reachable by any arrangement of this machine.
+
+The boundary between those last two is NOT measured here and is not asserted. It is
+owed, and the honest form of A1.2's list is "no automatic route, and unmeasured
+reachability by the determinant route above about 1e7 determinants". The
+`elements3_atoms` record already labelled its own cut as OVER BUDGET — a spending cap,
+explicitly not a claim that no route exists — so the record was right and the amendment
+was wrong; they are now consistent. witness: none (correction of a scope claim)
+
+**A3.2 — E1's "staked grids" had no referent, and one is named.**
+E1 stakes that Kr2 and Xe2 have no well deeper than 1e-4 Ha "on their staked grids",
+and this freeze never declared what those grids are. The MIXTURES-1 lane hit the same
+gap in its own E1 and deferred discharge rather than measure on a grid its freeze did
+not name.
+
+The grid is hereby declared as the engine's standing rule, which is what every curve in
+this crate already uses: the range from `pair::derive_range` — inner end where the
+repulsion reaches `WALL_CEILING`, outer end where the interaction falls inside
+`TAIL_TOLERANCE`, both bisected — with knots placed by `table::grid_point`, uniform in
+`R^{-1/4}`.
+
+DISCLOSURE, because the ordering matters: Kr2 had already been measured on that grid
+when this was written (no well over R = 3.278..10.240 bohr). What makes the declaration
+legitimate rather than fitted is that the rule is not being chosen now — it predates
+this freeze, it is used by every pair curve the crate produces, and it is computed from
+the asymptote and two declared energy thresholds BEFORE any well is located, so it
+cannot have been steered by the result. What was missing was a pointer, not a decision.
+A reader who disagrees should treat E1 as this lane's E1 measured on a rule named after
+the fact, and weigh it accordingly. witness: none (declaration of an existing rule)

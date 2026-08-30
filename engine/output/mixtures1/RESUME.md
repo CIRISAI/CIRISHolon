@@ -20,24 +20,25 @@ Frozen protocol: committed at `0851ccb`, **before** any P1 arm ran.
 | `e2_ordering.DONE` | E2's well depths, 8 of 9 pairs | **branch (b)**: three inversions |
 | `e2_byhand.DONE` | SiO's well, determinant route by hand | D_e 0.263676281 Ha — deepest in the set |
 | `d1_overlap_LiH.DONE` | D1 accuracy on LiH, 12 points | worst 5.59e−12 Ha vs 1e−8 stake |
+| `mps_ladder.DONE` | **MPS_MAX_ORBITALS re-derived** | no orbital threshold exists; the operative bound is `MPS_MAX_DETERMINANTS = 1024` and the route unblocks nothing |
 
 `mpo_cost_*.log` carry the MPO-builder cost that decides D1: 0.00 s at 2
 orbitals, 528.48 s at 6, did not finish in over an hour at 10. `mpo_cost_HCl.log`
 has no `.DONE` by design — "did not complete" IS the reading, and finishing it
 would only sharpen a number already past the point of usefulness.
 
-## Still running
+## Nothing is running
 
-| log | what | how to read it |
-|---|---|---|
-| `d1_staked_SiO_cost.log` | **the staked D1 refusal, measured on the staked species** | SiO's MPO build against a 12-hour budget. Replaces an extrapolation from HCl. |
-| `d1_staked_S2_cost.log` | same for S2 (18 orbitals) | queued behind SiO; S2 is strictly larger, so an SiO refusal settles it |
-| `mpo_cost_HCl.log` | the 10-orbital MPO build, still going | **past two hours** as of the last check, which is a sharper reading than the "over an hour" the results doc quotes. If it ever completes, quote the real number |
+Every detached run has landed or been deliberately stopped. The `d1_staked*` and
+`mpo_cost_HCl` logs all carry a line saying they measured the PRE-REBUILD MPO
+builder and were superseded; `d1_staked2_*` carry a line saying they produced zero
+rows under a ladder that could not complete a grid point.
 
-Every gate's verdict is already committed and none of these can change one. The
-SiO and S2 builds would replace an extrapolated D1 refusal with a measured one;
-if either MPO *does* build, the refusal weakens from structural to a scheduling
-question and the D1 section should say so.
+**D1's blocker moved rather than lifted.** The MPO wall fell (SiO: over twelve
+hours → 0.31 s). Behind it is convergence: SiO is 1.1e−2 Ha from exact after 664 s
+at chi = 32, six orders from the 1e−8 stake. `bank::D1_RECORD` stays `NONE`.
+Re-running D1 is only worth it if the SWEEP implementation changes — the MPO no
+longer is the cost.
 
 ## A FOURTH exposure, and I caused it: NEVER EDIT A RUNNING SHELL SCRIPT
 

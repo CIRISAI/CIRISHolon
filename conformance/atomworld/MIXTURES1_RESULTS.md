@@ -578,6 +578,41 @@ sandbox**. That is the freeze's "only then", enforced.
 
 ---
 
+## Naming the sprint team's N2 number
+
+Their Track-2 receipt quotes `E = -131.278565811 Ha` for "N2". This engine's N2
+TOTAL energy at 3.0 bohr is `-107.546741772` Ha — 23.73 Ha away — so the two were
+not the same quantity and the gap had to be named before the code producing it
+was trusted.
+
+**Named, to 4.8e−11 Ha.** It is N2's **ELECTRONIC** energy — total minus nuclear
+repulsion — at **R = 2.0740 bohr**, in this engine's own STO-3G FCI model:
+
+| R / a₀ | E_total / Ha | V_nn / Ha | E_electronic / Ha | minus theirs |
+|---|---|---|---|---|
+| 2.0720 | −107.652110873 | 23.648648649 | −131.300759521 | −2.22e−2 |
+| **2.0740** | **−107.652722031** | **23.625843780** | **−131.278565811** | **−4.83e−11** |
+| 2.0760 | −107.653324169 | 23.603082852 | −131.256407021 | +2.22e−2 |
+
+`4.8e−11 Ha` is the Davidson residual level, so this is an identity, not a
+coincidence: the number is ours.
+
+**Two things it is not labelled as, and both matter.**
+
+* It is **electronic-only**. Quoted beside total energies it reads as a 23.6 Ha
+  discrepancy, which is exactly how it reached the lead as a blocker.
+* It is at the **experimental** bond length — 1.09768 Å = 2.07431 bohr — and not
+  at the model's own equilibrium. This campaign measured STO-3G's own N2 minimum
+  at **R_e = 2.256729 bohr** (E2), 0.18 bohr further out. Evaluating a model at a
+  geometry the model does not predict is a legitimate thing to do and an easy
+  thing to misread, and it is the same distinction E2's whole branch (b) turns on.
+
+**As a cross-check it is a good one.** Agreement at 4.8e−11 Ha between their route
+and this engine's `solve_determinant`, at a geometry neither side chose to make
+them agree, is independent corroboration that the two solvers describe one model.
+
+---
+
 ## R2 — the staked-pair referee gate · **OWED (the drop has not landed)**
 
 The engine half is built and two of its three tests run today; the third is

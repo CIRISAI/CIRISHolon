@@ -148,3 +148,28 @@ const code2 = loadShipped("Cl2.json", 17, 17, (f) => { f.solver_route = "DMRG"; 
 console.log("Cl2 relabelled DMRG, honest, D1 not admitted ->", code2, "(18 = DmrgUnvalidated)");
 const code3 = loadShipped("Cl2.json", 17, 17, (f) => { f.uncertainty_hartree = 0; });
 console.log("Cl2 with its uncertainty removed ->", code3, "(19 = UncertaintyMissing)");
+
+console.log("\n=== 3. every engine call each page makes resolves against this wasm ===");
+//
+// A page calling an export that does not exist fails at the moment a user touches the
+// control that calls it, which is the worst time to find out. This does not catch a
+// SEMANTIC mismatch — `holon_atom_z` exists and is the atom's z COORDINATE, and the
+// unified viewer read it as the species for months — but it catches the whole class where
+// the name is simply gone, which is what an ABI rename does.
+{
+  const have = new Set(Object.keys(w));
+  for (const page of [
+    "../../../../docs/atoms/app.js",
+    "../../../../docs/unified/app.js",
+    "app.js",
+    "unified/app.js",
+  ]) {
+    const js = readFileSync(join(here, page), "utf8");
+    const used = new Set([...js.matchAll(/\bw\.(holon_[a-z0-9_]+)/g)].map((m) => m[1]));
+    const missing = [...used].filter((n) => !have.has(n));
+    console.log(
+      `  ${page.replace("../../../../", "").padEnd(20)} ${String(used.size).padStart(3)} engine calls, `
+      + `missing: ${missing.length ? missing.join(" ") : "none"}`,
+    );
+  }
+}

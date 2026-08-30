@@ -1,0 +1,7 @@
+HCl  n_orb 10  sites 20  n_det 100
+exit=143 pair=HCl
+# SUPERSEDED and killed at 2h41m without completing. This measured the PRE-REBUILD MPO
+# builder (raw O(n_orb^4) operator strings + per-site SVD). That builder is gone: the
+# external team's channel-based rewrite landed at bb1a07a, and the same 10-orbital build
+# is now sub-second. The reading this log was taken for -- "did not complete" -- stands as
+# a fact about the old construction and about nothing else.

@@ -1,0 +1,3 @@
+SiO  n_orb 14  sites 28  n_det 132496
+# SUPERSEDED: this run measured the PRE-REBUILD MPO builder. Killed deliberately when the
+# external team's channel-based rebuild landed; see d1_staked2_*.log for the real measurement.

@@ -299,9 +299,17 @@ fn probe(a: Species, b: Species, name: &str) {
 /// the ladder is walked against one MPO here.
 fn overlap(a: Species, b: Species, name: &str, n_points: usize) {
     let t_start = Instant::now();
+    let ladder = chi_ladder();
+    // THE HEADER GOES FIRST, before the grid derivation and not after it.
+    //
+    // The exact-route range search is ~30 solves, and on SiO that is seventeen minutes
+    // during which the log was empty and a watcher could not tell a running job from a
+    // dead one. A run should announce what it is before it spends anything, not after.
+    say!("# D1 overlap: {name}  (deriving the grid on the exact route first; ~30 solves)");
+    say!("#   ladder {ladder:?}  sweeps {}  tol {DMRG_TOL:.0e}", sweeps());
+    say!("#   stake          |E_dmrg - E_fci| <= {D1_STAKE:.0e} Ha at chi = {}", ladder[ladder.len() - 1]);
     let e_asymptote = holon_chem::pair::atom_energy(a) + holon_chem::pair::atom_energy(b);
     let (r_min, r_max) = exact_range(a, b, e_asymptote);
-    let ladder = chi_ladder();
     say!("# D1 overlap: {name}");
     say!("#   grid rule      uniform in R^-1/4 (table::grid_point), {n_points} knots");
     say!("#   range (exact)  [{r_min:.9}, {r_max:.9}] bohr");

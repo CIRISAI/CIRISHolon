@@ -387,6 +387,24 @@ the eigenvalue error is ~1e-20 Ha, so only the label is wrong, and moving the
 threshold would shift every energy's last bits and cost SATURATION-2 a
 105,105-node regeneration.)*
 
+**A POSTSCRIPT ON THIS DISCRIMINATOR, recorded because it is the same lane
+failing the same test later the same day.** Exit reason and residual carry
+different facts, and this section is built on reading them apart. Hours after
+writing it, in RESOURCE-1, this lane read the DD tier's calibration numbers
+(Sb 3.37e-15, Te 2.97e-13) as *floor* readings and reported to the lead that
+`DD_EXPANSION_FLOOR` was contradicted by nine to eleven orders and owed a move.
+Both solves had exited **`IterationCap` while still descending** — they ran out
+of iterations, not of arithmetic. Capped-while-descending is a budget reading;
+stagnated-at-the-floor is a floor reading; nothing was owed. Retracted at
+`613404c`, settled independently by the lead at `665a342`.
+
+M-EXIT-DISCRIMINATOR, self-inflicted, one lane over from where it was first
+applied: **the tool in hand, not turned on one's own claim.** The repair is in
+the type rather than in a resolution — `Limit::{Floor, Budget}` now rides on
+every measured boundary, because a budget-limited reading wearing a wall's
+clothes would make the lease layer refuse work that a larger budget would
+finish.
+
 The guard that works is free and rigorous: `E <= min_i H_ii`, since a single
 determinant is itself a trial vector. It fires on the plant by 7.4 Ha and passes
 both good solves by 5.4e−2. The tables lane has since put it on

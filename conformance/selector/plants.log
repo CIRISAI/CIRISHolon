@@ -1,0 +1,24 @@
+[    0.1s] census loaded: 319 groups
+[    0.1s] panel: 26 groups
+[    0.1s] PLANT (ii) REFUSAL — a corrupted table must be refused, not scored
+[    0.1s]     carrier 36 corruptions, refused 36, silent 0
+[    0.1s] 
+[    0.1s] PLANT (ii) RE-PRESENTATION — one group, two presentations, one verdict
+[    0.7s]     A_4 vs Delta(12) [MANDATORY] A:(select=True, k*=4, sel=48, F=120)  B:(select=True, k*=4, sel=48, F=120)  identical=True
+[    1.3s]     D_12 vs Z_2xD_6              A:(select=True, k*=4, sel=18, F=48)  B:(select=True, k*=4, sel=18, F=48)  identical=True
+[    3.6s]     D_20 vs Z_2xD_10             A:(select=True, k*=4, sel=26, F=120)  B:(select=True, k*=4, sel=26, F=120)  identical=True
+[    3.7s]     n6#0 vs relabelled           A:(select=False, k*=4, sel=8, F=8)  B:(select=False, k*=4, sel=8, F=8)  identical=True
+[    3.8s]     n6#1 vs relabelled           A:(select=True, k*=4, sel=15, F=48)  B:(select=True, k*=4, sel=15, F=48)  identical=True
+[    3.8s]     n8#0 vs relabelled           A:(select=False, k*=4, sel=2, F=2)  B:(select=False, k*=4, sel=2, F=2)  identical=True
+[    3.8s]     n8#1 vs relabelled           A:(select=False, k*=4, sel=4, F=4)  B:(select=False, k*=4, sel=4, F=4)  identical=True
+[    3.9s]     n8#2 vs relabelled           A:(select=True, k*=4, sel=4, F=16)  B:(select=True, k*=4, sel=4, F=16)  identical=True
+[    3.9s]     n8#3 vs relabelled           A:(select=False, k*=4, sel=6, F=6)  B:(select=False, k*=4, sel=6, F=6)  identical=True
+[    3.9s] 
+[    3.9s] PLANT (i) TAG BLINDNESS — permuting names and serials moves no verdict
+[    5.2s]     10 groups renamed and reordered, 0 verdicts moved
+[    5.2s] 
+[    5.2s] PLANT (iii) NULL INTEGRITY — the null must say nothing when there is nothing
+[   18.8s]     300 trials x 10000 draws on random labels: fired 2 (0.67%); staked ceiling 1%, tolerance 2%
+[   18.8s]     mean null spread 0.0601 (a degenerate null would read 0)
+[   18.8s] 
+[   18.8s] ALL PLANTS FIRED AS STAKED

@@ -29,9 +29,9 @@ fn potential_source() -> String {
     })
 }
 
-fn loaded_sim() -> Sim {
-    let mut s = Sim::empty();
-    holon_render::json::load_into(&mut s.table, &potential_source()).expect("table loads");
+fn loaded_sim() -> Box<Sim> {
+    let mut s = Box::new(Sim::empty());
+    holon_render::json::load_into(s.table_mut(), &potential_source()).expect("table loads");
     s.adopt_table_timescale();
     s
 }
@@ -44,7 +44,7 @@ fn refining_the_observer_never_merges_what_it_could_already_split() {
     s.boundary = Boundary::Open;
     s.reset(4);
     let (cx, cy, cz) = (0.5 * s.width, 0.5 * s.height, 0.5 * s.depth);
-    let r_e = s.table.r_e;
+    let r_e = s.table().r_e;
     // Pair A centred 3 bohr left of centre, pair B 3 bohr right; each at its
     // own equilibrium separation, drifting together at 5e-6 a.u. so the
     // cross pairs sit STRICTLY inside their turning points (an exactly-at-rest

@@ -73,17 +73,17 @@ fn the_shell_solves_its_own_curve() {
         "the curve did not load: status {}",
         w.table_status
     );
-    assert_eq!(w.sim.table.knots(), 492);
+    assert_eq!(w.sim.table().knots(), 492);
     // The STO-3G/FCI equilibrium, which is NOT the experimental 1.401 bohr — a minimal
     // basis is a real model with a real error, and the number asserted here is the
     // model's own, so a change in the basis shows up as a failure rather than passing
     // by being close to experiment.
     assert!(
-        (1.3..1.5).contains(&w.sim.table.r_e),
+        (1.3..1.5).contains(&w.sim.table().r_e),
         "R_e = {} bohr is not near the STO-3G minimum",
-        w.sim.table.r_e
+        w.sim.table().r_e
     );
-    assert!(w.sim.table.d_e > 0.0, "the well has no depth");
+    assert!(w.sim.table().d_e > 0.0, "the well has no depth");
     // Every clock is derived from that curve.
     assert!(w.sim.timescale.omega_e > 0.0, "omega_e was never derived");
     let t = &w.sim.timescale;

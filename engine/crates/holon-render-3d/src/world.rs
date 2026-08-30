@@ -344,8 +344,13 @@ impl AtomWorld {
         self.load_preset(self.preset.next());
     }
 
+    /// Whether the scene has every curve it needs.
+    ///
+    /// `pairs_ready` and not `table().is_loaded()`: a mixed scene needs a curve for EVERY
+    /// pair type its atoms form, and the old question — is THE table loaded — answers yes
+    /// for a scene with one curve out of three.
     pub fn table_ok(&self) -> bool {
-        self.table_status == holon_render::TABLE_OK && self.sim.table.is_loaded()
+        self.table_status == holon_render::TABLE_OK && self.sim.pairs_ready()
     }
 
     /// Advance one frame of `wall_dt` MEASURED wall-seconds and close the grain.

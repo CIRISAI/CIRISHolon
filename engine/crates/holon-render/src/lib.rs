@@ -36,6 +36,7 @@
 // The JSON reader is NATIVE ONLY. The browser has a JSON parser already and pushes
 // knots through the ABI below; shipping a second one inside the wasm would be pure
 // weight. This cfg is what makes the module header's claim true rather than aspirational.
+pub mod bank;
 pub mod clock;
 pub mod holon;
 #[cfg(not(target_arch = "wasm32"))]
@@ -44,6 +45,7 @@ pub mod sim;
 pub mod table;
 
 use sim::{Boundary, Sim};
+
 use std::sync::{Mutex, MutexGuard};
 
 static SIM: Mutex<Sim> = Mutex::new(Sim::empty());
@@ -59,12 +61,12 @@ fn sim() -> MutexGuard<'static, Sim> {
 
 #[no_mangle]
 pub extern "C" fn holon_table_begin(count: u32) -> u32 {
-    u32::from(sim().table.begin(count as usize))
+    u32::from(sim().table_mut().begin(count as usize))
 }
 
 #[no_mangle]
 pub extern "C" fn holon_table_knot(index: u32, r: f64, e: f64, f: f64) -> u32 {
-    u32::from(sim().table.knot(index as usize, r, e, f))
+    u32::from(sim().table_mut().knot(index as usize, r, e, f))
 }
 
 // ------------------------------------------------- the engine-computed curve
@@ -96,17 +98,39 @@ pub extern "C" fn holon_table_generate(r_min: f64, r_max: f64, count: u32) -> u3
 /// two copies of "generate, validate, adopt the clocks" is exactly how one of them ends
 /// up forgetting to adopt the clocks. Returns the same status code the ABI returns.
 pub fn generate_table(s: &mut Sim, r_min: f64, r_max: f64, count: usize) -> u32 {
-    if !s.table.begin(count) {
-        return status_code(s.table.status);
+    // H2 goes into the H-H slot BY NAME rather than into "the table", because in a bank
+    // there is no such thing as the table. `Sim::empty` seeds hydrogen as species 0, so
+    // for every scene this function has ever been called on, the slot it targets is the
+    // one the single-table sandbox filled.
+    let Some(slot) = s.bank.slot_of_z(1, 1) else {
+        return GENERATOR_REFUSED;
+    };
+    if !s.bank.table_slot_mut(slot).begin(count) {
+        return status_code(s.bank.table_slot(slot).status);
     }
     let meta = holon_chem::stream_table(r_min, r_max, count, |i, r, e, f, e2| {
-        s.table.knot(i, r, e, f) && s.table.knot_curvature(i, e2)
+        let t = s.bank.table_slot_mut(slot);
+        t.knot(i, r, e, f) && t.knot_curvature(i, e2)
     });
     let Some(meta) = meta else {
         return GENERATOR_REFUSED;
     };
-    let status = s.table.finish(meta.r_e, meta.d_e, meta.e_asymptote);
+    let status = s
+        .bank
+        .table_slot_mut(slot)
+        .finish(meta.r_e, meta.d_e, meta.e_asymptote);
     if status == table::LoadStatus::Ok {
+        // H2 in the STO-3G minimal basis is FOUR determinants on the determinant route.
+        // The provenance is stamped from those facts rather than assumed, so the H2 curve
+        // is graded by the same gate every other curve is.
+        if let Err(r) = s.bank.commit(
+            slot,
+            bank::TableProvenance::solved_exact(4, 0.0),
+            &bank::D1_RECORD,
+            bank::Host::Browser,
+        ) {
+            return refusal_code(r);
+        }
         // Every clock is a function of the curve, so a new curve re-derives all of them
         // here rather than leaving the previous table's timestep in place.
         s.adopt_table_timescale();
@@ -114,32 +138,99 @@ pub fn generate_table(s: &mut Sim, r_min: f64, r_max: f64, count: usize) -> u32 
     status_code(status)
 }
 
-/// Load a pre-computed [`holon_chem::pair::PairTable`] into the simulation's potential interpolator.
-pub fn load_pair_table(s: &mut Sim, pt: &holon_chem::pair::PairTable) -> u32 {
+/// The `LoadStatus`-space code a provenance refusal reports through the scalar ABI.
+///
+/// Distinct from every `LoadStatus` discriminant and from [`GENERATOR_REFUSED`], so a host
+/// can tell "the curve would not parse" from "the curve parsed and was not allowed in".
+/// The two are different problems and a single failure code would merge them.
+pub const PROVENANCE_REFUSED: u32 = 16;
+
+/// The refusal's own code, offset above [`PROVENANCE_REFUSED`] so the REASON survives the
+/// trip through a `u32`. `holon_bank_refusal_reason` reads it back.
+pub fn refusal_code(r: bank::Refusal) -> u32 {
+    PROVENANCE_REFUSED
+        + match r {
+            bank::Refusal::RouteUndeclared => 0,
+            bank::Refusal::DmrgClaimedExact => 1,
+            bank::Refusal::DmrgUnvalidated => 2,
+            bank::Refusal::UncertaintyMissing => 3,
+            bank::Refusal::DmrgUncertaintyMissing => 4,
+            bank::Refusal::SplitViolated => 5,
+            bank::Refusal::CurveNotLoaded => 6,
+        }
+}
+
+/// Load a pre-computed [`holon_chem::pair::PairTable`] into ITS OWN SLOT in the bank.
+///
+/// The species come from the table's own metadata rather than from a separate argument:
+/// a curve knows which pair it is, and a caller passing the species alongside it is a
+/// second statement of the same fact that can disagree with the first. Plant (i) is
+/// exactly that disagreement — serving the (A,A) curve where (A,B) belongs — and the way
+/// to make it a plant rather than an ordinary hazard is to leave only one place it can be
+/// introduced.
+///
+/// `host` decides whether the browser's in-browser/shipped split is enforced; see
+/// [`bank::Host`].
+pub fn load_pair_table(s: &mut Sim, pt: &holon_chem::pair::PairTable, host: bank::Host) -> u32 {
+    let (za, zb) = (pt.meta.z_a, pt.meta.z_b);
+    if s.bank.register(za).is_none() || s.bank.register(zb).is_none() {
+        return BANK_FULL;
+    }
+    let Some(slot) = s.bank.slot_of_z(za, zb) else {
+        return BANK_FULL;
+    };
     let n = pt.r.len();
-    if !s.table.begin(n) {
-        return status_code(s.table.status);
+    if !s.bank.table_slot_mut(slot).begin(n) {
+        return status_code(s.bank.table_slot(slot).status);
     }
     for i in 0..n {
-        if !s.table.knot(i, pt.r[i], pt.e[i], pt.f[i]) {
-            return status_code(s.table.status);
+        let t = s.bank.table_slot_mut(slot);
+        if !t.knot(i, pt.r[i], pt.e[i], pt.f[i]) {
+            return status_code(s.bank.table_slot(slot).status);
         }
         if i < pt.e2.len() {
-            s.table.knot_curvature(i, pt.e2[i]);
+            t.knot_curvature(i, pt.e2[i]);
         }
     }
     let (r_e, d_e) = match pt.meta.well {
         Some(w) => (w.r_e, w.d_e),
         None => (0.0, 0.0),
     };
-    let status = s.table.finish(r_e, d_e, pt.meta.e_asymptote);
+    let status = s
+        .bank
+        .table_slot_mut(slot)
+        .finish(r_e, d_e, pt.meta.e_asymptote);
     if status == table::LoadStatus::Ok {
+        // THE PROVENANCE COMES OFF THE CURVE, not off a constant. `PairMeta::route` is
+        // what the solver actually did — including the size threshold in `fci::solve`
+        // that switches to DMRG — so a DMRG curve arriving here is labelled DMRG and is
+        // graded as one.
+        let prov = bank::TableProvenance {
+            route: match pt.meta.route {
+                holon_chem::fci::SolverRoute::Determinant => bank::Route::Determinant,
+                holon_chem::fci::SolverRoute::Dmrg => bank::Route::Dmrg,
+            },
+            source: bank::Source::Solved,
+            n_det: pt.meta.n_det as u64,
+            uncertainty_ha: pt.meta.worst_residual,
+            claimed_exact: pt.meta.route.is_exact_in_model(),
+        };
+        if let Err(r) = s.bank.commit(slot, prov, &bank::D1_RECORD, host) {
+            return refusal_code(r);
+        }
         s.adopt_table_timescale();
     }
     status_code(status)
 }
 
+/// The bank has no room for another species. Distinct from every other code for the same
+/// reason [`PROVENANCE_REFUSED`] is: a full bank and a bad curve are different problems.
+pub const BANK_FULL: u32 = 15;
+
 /// Solve and load any pair potential table (e.g. LiH, HF, Li2, etc.) dynamically.
+///
+/// NATIVE host: this is the entry point the desktop shells use, and they have no page
+/// load budget. The browser's own entry point is [`holon_bank_generate_pair`].
 pub fn generate_pair_table(
     s: &mut Sim,
     a: holon_chem::elements::Species,
@@ -147,7 +238,7 @@ pub fn generate_pair_table(
     count: usize,
 ) -> u32 {
     let pt = holon_chem::pair::generate_pair_table(a, b, count);
-    load_pair_table(s, &pt)
+    load_pair_table(s, &pt, bank::Host::Native)
 }
 
 // ------------------------------------------------- the three-body surface
@@ -277,7 +368,7 @@ pub extern "C" fn holon_chem_force(r: f64) -> f64 {
 #[no_mangle]
 pub extern "C" fn holon_table_finish(r_e: f64, d_e: f64, e_asymptote: f64) -> u32 {
     let mut s = sim();
-    let status = s.table.finish(r_e, d_e, e_asymptote);
+    let status = s.table_mut().finish(r_e, d_e, e_asymptote);
     if status == table::LoadStatus::Ok {
         // Every clock is a function of the curve, so a new curve re-derives all of them
         // here rather than leaving the previous table's timestep in place.
@@ -290,12 +381,12 @@ pub extern "C" fn holon_table_finish(r_e: f64, d_e: f64, e_asymptote: f64) -> u3
 /// `finish`; entirely optional (see `table.rs` on why the envelope does not need it).
 #[no_mangle]
 pub extern "C" fn holon_table_knot_curvature(index: u32, d2: f64) -> u32 {
-    u32::from(sim().table.knot_curvature(index as usize, d2))
+    u32::from(sim().table_mut().knot_curvature(index as usize, d2))
 }
 
 #[no_mangle]
 pub extern "C" fn holon_table_has_curvature() -> u32 {
-    u32::from(sim().table.has_supplied_curvature())
+    u32::from(sim().table().has_supplied_curvature())
 }
 
 /// Worst relative disagreement between a supplied d2 column and the interpolant's own
@@ -303,7 +394,7 @@ pub extern "C" fn holon_table_has_curvature() -> u32 {
 /// curvature is discontinuous at knots and a mismatch is expected structure.
 #[no_mangle]
 pub extern "C" fn holon_table_d2_mismatch() -> f64 {
-    sim().table.d2_mismatch
+    sim().table().d2_mismatch
 }
 
 fn status_code(status: table::LoadStatus) -> u32 {
@@ -319,63 +410,63 @@ fn status_code(status: table::LoadStatus) -> u32 {
 
 #[no_mangle]
 pub extern "C" fn holon_table_status() -> u32 {
-    status_code(sim().table.status)
+    status_code(sim().table().status)
 }
 
 #[no_mangle]
 pub extern "C" fn holon_table_knots() -> u32 {
-    sim().table.knots() as u32
+    sim().table().knots() as u32
 }
 
 /// RMS mismatch between the file's derivatives and the secant slopes of its values,
 /// under the assumed convention `dE/dR = -F`. Near zero for a consistent table.
 #[no_mangle]
 pub extern "C" fn holon_table_residual() -> f64 {
-    sim().table.residual
+    sim().table().residual
 }
 
 /// The same statistic under `dE/dR = +F`. Should be LARGE; if it is the smaller of the
 /// two, the file uses the opposite sign convention and the viewer says so.
 #[no_mangle]
 pub extern "C" fn holon_table_residual_alt() -> f64 {
-    sim().table.residual_alt
+    sim().table().residual_alt
 }
 
 #[no_mangle]
 pub extern "C" fn holon_table_r_e() -> f64 {
-    sim().table.r_e
+    sim().table().r_e
 }
 
 #[no_mangle]
 pub extern "C" fn holon_table_d_e() -> f64 {
-    sim().table.d_e
+    sim().table().d_e
 }
 
 #[no_mangle]
 pub extern "C" fn holon_table_asymptote() -> f64 {
-    sim().table.e_asymptote
+    sim().table().e_asymptote
 }
 
 #[no_mangle]
 pub extern "C" fn holon_table_r_min() -> f64 {
-    sim().table.r_min()
+    sim().table().r_min()
 }
 
 #[no_mangle]
 pub extern "C" fn holon_table_r_max() -> f64 {
-    sim().table.r_max()
+    sim().table().r_max()
 }
 
 /// Asymptote-zeroed pair energy at separation `r`. Exposed so the viewer can draw the
 /// very curve the integrator is using, rather than a second copy of it in JS.
 #[no_mangle]
 pub extern "C" fn holon_curve_u(r: f64) -> f64 {
-    sim().table.u(r)
+    sim().table().u(r)
 }
 
 #[no_mangle]
 pub extern "C" fn holon_curve_force(r: f64) -> f64 {
-    sim().table.force(r)
+    sim().table().force(r)
 }
 
 // ------------------------------------------------------------------ scene
@@ -481,9 +572,10 @@ pub extern "C" fn holon_set_allow_dt_growth(on: u32) {
         let e = s.timescale.e_rel_max;
         s.timescale.e_rel_max = f64::NEG_INFINITY;
         s.timescale.k_env = 0.0;
-        let table = core::mem::replace(&mut s.table, table::PotentialTable::empty());
-        s.timescale.refresh_envelope(&table, e);
-        s.table = table;
+        // Over ALL active curves, not just the primary: the envelope that comes back has
+        // to be the same one `Sim::refresh_envelope` would have produced, or returning to
+        // the exactness hold would quietly narrow the bound in a mixed scene.
+        s.reseed_envelope(e);
     }
 }
 
@@ -724,10 +816,11 @@ pub extern "C" fn holon_atom_species_z(i: u32) -> u32 {
 
 /// Set the species of atom `i` by nuclear charge Z.
 #[no_mangle]
-pub extern "C" fn holon_set_atom_species(i: u32, z: u32) {
-    if let Some(sp) = holon_chem::elements::by_z(z) {
-        sim().set_species(i as usize, sp);
-    }
+pub extern "C" fn holon_set_atom_species(i: u32, z: u32) -> u32 {
+    let Some(sp) = holon_chem::elements::by_z(z) else {
+        return 0;
+    };
+    u32::from(sim().set_species(i as usize, sp))
 }
 
 #[no_mangle]
@@ -1209,4 +1302,411 @@ pub extern "C" fn holon_row_closure_defect_at_formation(k: u32) -> f64 {
 #[no_mangle]
 pub extern "C" fn holon_frame() -> f64 {
     sim().frame as f64
+}
+
+// ================================================================== the pair-table bank
+//
+// MIXTURES-1's engine product, exposed. Everything above that reads "the table" is the
+// SINGLE-CURVE view — correct for a pure scene and a display convenience in a mixed one.
+// These read the bank itself: which species the scene holds, which curve serves which
+// pair, and what each curve says about where it came from.
+//
+// The host displays the strings (producer, grid rule); the engine holds the parts a gate
+// acts on. See `bank.rs` for why the split falls there.
+
+/// How many distinct species the bank can hold before it REFUSES a new one.
+#[no_mangle]
+pub extern "C" fn holon_bank_max_species() -> u32 {
+    bank::MAX_SPECIES as u32
+}
+
+/// How many slots the bank has, which is the unordered pairs over `max_species`.
+#[no_mangle]
+pub extern "C" fn holon_bank_slot_count() -> u32 {
+    bank::MAX_TABLES as u32
+}
+
+/// Determinant count at or above which a pair must arrive as a shipped table rather than
+/// being solved at page load. Returned as `f64` because the count can exceed `u32`.
+#[no_mangle]
+pub extern "C" fn holon_bank_in_browser_det_limit() -> f64 {
+    bank::IN_BROWSER_DET_LIMIT as f64
+}
+
+#[no_mangle]
+pub extern "C" fn holon_bank_species_count() -> u32 {
+    sim().bank.species_count() as u32
+}
+
+#[no_mangle]
+pub extern "C" fn holon_bank_species_z(i: u32) -> u32 {
+    sim().bank.species_z(i as usize)
+}
+
+/// Register a species with the bank. `1` on success, `0` if the bank is full or `z` is not
+/// an element this engine knows.
+#[no_mangle]
+pub extern "C" fn holon_bank_register(z: u32) -> u32 {
+    if holon_chem::elements::by_z(z).is_none() {
+        return 0;
+    }
+    u32::from(sim().bank.register(z).is_some())
+}
+
+/// Forget every species and every curve. The scene must be rebuilt afterwards.
+#[no_mangle]
+pub extern "C" fn holon_bank_clear() {
+    sim().bank.clear();
+}
+
+/// The slot serving the pair `(za, zb)`, or `-1` if either species is unregistered.
+#[no_mangle]
+pub extern "C" fn holon_bank_slot(za: u32, zb: u32) -> i32 {
+    sim()
+        .bank
+        .slot_of_z(za, zb)
+        .map_or(-1, |s| s as i32)
+}
+
+#[no_mangle]
+pub extern "C" fn holon_bank_filled(slot: u32) -> u32 {
+    let s = sim();
+    let slot = slot as usize;
+    u32::from(slot < bank::MAX_TABLES && s.bank.is_filled(slot))
+}
+
+#[no_mangle]
+pub extern "C" fn holon_bank_filled_count() -> u32 {
+    sim().bank.filled_count() as u32
+}
+
+/// Whether every pair the scene contains has a curve to be evaluated on. The bank's
+/// version of `holon_table_status() == 1`, and what `holon_step_frame` now gates on.
+#[no_mangle]
+pub extern "C" fn holon_pairs_ready() -> u32 {
+    u32::from(sim().pairs_ready())
+}
+
+/// Solve a pair's curve IN THE BROWSER and bank it.
+///
+/// Refuses a pair past `holon_bank_in_browser_det_limit` — that is the split, and it is
+/// enforced here rather than left to the host to remember. Returns `LoadStatus` (1 = Ok),
+/// `BANK_FULL`, `GENERATOR_REFUSED`, or a `PROVENANCE_REFUSED` code.
+#[no_mangle]
+pub extern "C" fn holon_bank_generate_pair(za: u32, zb: u32, knots: u32) -> u32 {
+    let (Some(a), Some(b)) = (
+        holon_chem::elements::by_z(za),
+        holon_chem::elements::by_z(zb),
+    ) else {
+        return GENERATOR_REFUSED;
+    };
+    let pt = holon_chem::pair::generate_pair_table(a, b, knots as usize);
+    load_pair_table(&mut sim(), &pt, bank::Host::Browser)
+}
+
+// ---- pushing a SHIPPED table into a slot -------------------------------------------
+//
+// Same three-call shape as the legacy `holon_table_begin/knot/finish`, with the slot named
+// and the provenance mandatory. There is no way to push a shipped curve without saying
+// what produced it: `finish` takes the route, the determinant count and the uncertainty,
+// and refuses the lot if they do not add up.
+
+#[no_mangle]
+pub extern "C" fn holon_bank_table_begin(slot: u32, count: u32) -> u32 {
+    let mut s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0;
+    }
+    u32::from(s.bank.table_slot_mut(slot).begin(count as usize))
+}
+
+#[no_mangle]
+pub extern "C" fn holon_bank_table_knot(slot: u32, index: u32, r: f64, e: f64, f: f64) -> u32 {
+    let mut s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0;
+    }
+    u32::from(s.bank.table_slot_mut(slot).knot(index as usize, r, e, f))
+}
+
+#[no_mangle]
+pub extern "C" fn holon_bank_table_knot_curvature(slot: u32, index: u32, d2: f64) -> u32 {
+    let mut s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0;
+    }
+    u32::from(
+        s.bank
+            .table_slot_mut(slot)
+            .knot_curvature(index as usize, d2),
+    )
+}
+
+/// Finish a shipped table AND declare its provenance, in one call.
+///
+/// `route`: 1 = determinant/FCI, 2 = DMRG. Anything else is `Route::Undeclared` and is
+/// refused — which is the point: a host that does not know what it is loading cannot load
+/// it.
+///
+/// `claimed_exact` is what the FILE says about itself, kept apart from what `route`
+/// implies. A DMRG table arriving with `claimed_exact = 1` is the plant (iii) defect, and
+/// the refusal it earns is `PROVENANCE_REFUSED + 1`.
+#[no_mangle]
+#[allow(clippy::too_many_arguments)]
+pub extern "C" fn holon_bank_table_finish(
+    slot: u32,
+    r_e: f64,
+    d_e: f64,
+    e_asymptote: f64,
+    route: u32,
+    n_det: f64,
+    uncertainty_ha: f64,
+    claimed_exact: u32,
+) -> u32 {
+    let mut s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0;
+    }
+    let status = s
+        .bank
+        .table_slot_mut(slot)
+        .finish(r_e, d_e, e_asymptote);
+    if status != table::LoadStatus::Ok {
+        return status_code(status);
+    }
+    let prov = bank::TableProvenance {
+        route: match route {
+            1 => bank::Route::Determinant,
+            2 => bank::Route::Dmrg,
+            _ => bank::Route::Undeclared,
+        },
+        source: bank::Source::Shipped,
+        n_det: if n_det.is_finite() && n_det >= 0.0 {
+            n_det as u64
+        } else {
+            0
+        },
+        uncertainty_ha,
+        claimed_exact: claimed_exact != 0,
+    };
+    if let Err(r) = s.bank.commit(slot, prov, &bank::D1_RECORD, bank::Host::Browser) {
+        return refusal_code(r);
+    }
+    s.adopt_table_timescale();
+    status_code(status)
+}
+
+// ---- per-slot readouts ---------------------------------------------------------------
+
+macro_rules! slot_scalar {
+    ($name:ident, $field:ident) => {
+        #[no_mangle]
+        pub extern "C" fn $name(slot: u32) -> f64 {
+            let s = sim();
+            let slot = slot as usize;
+            if slot >= bank::MAX_TABLES {
+                return 0.0;
+            }
+            s.bank.table_slot(slot).$field
+        }
+    };
+}
+
+slot_scalar!(holon_bank_r_e, r_e);
+slot_scalar!(holon_bank_d_e, d_e);
+slot_scalar!(holon_bank_asymptote, e_asymptote);
+slot_scalar!(holon_bank_residual, residual);
+slot_scalar!(holon_bank_residual_alt, residual_alt);
+
+#[no_mangle]
+pub extern "C" fn holon_bank_knots(slot: u32) -> u32 {
+    let s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0;
+    }
+    s.bank.table_slot(slot).knots() as u32
+}
+
+#[no_mangle]
+pub extern "C" fn holon_bank_r_min(slot: u32) -> f64 {
+    let s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0.0;
+    }
+    s.bank.table_slot(slot).r_min()
+}
+
+#[no_mangle]
+pub extern "C" fn holon_bank_r_max(slot: u32) -> f64 {
+    let s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0.0;
+    }
+    s.bank.table_slot(slot).r_max()
+}
+
+/// The slot's curve at `r`, asymptote-zeroed. What the viewer plots per pair.
+#[no_mangle]
+pub extern "C" fn holon_bank_u(slot: u32, r: f64) -> f64 {
+    let s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0.0;
+    }
+    s.bank.table_slot(slot).u(r)
+}
+
+#[no_mangle]
+pub extern "C" fn holon_bank_force(slot: u32, r: f64) -> f64 {
+    let s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0.0;
+    }
+    s.bank.table_slot(slot).force(r)
+}
+
+// ---- per-slot provenance -------------------------------------------------------------
+
+/// `0` undeclared, `1` determinant/FCI, `2` DMRG.
+#[no_mangle]
+pub extern "C" fn holon_bank_route(slot: u32) -> u32 {
+    let s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0;
+    }
+    match s.bank.provenance_slot(slot).route {
+        bank::Route::Undeclared => 0,
+        bank::Route::Determinant => 1,
+        bank::Route::Dmrg => 2,
+    }
+}
+
+/// `0` solved by this process, `1` loaded from a shipped table.
+#[no_mangle]
+pub extern "C" fn holon_bank_source(slot: u32) -> u32 {
+    let s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0;
+    }
+    match s.bank.provenance_slot(slot).source {
+        bank::Source::Solved => 0,
+        bank::Source::Shipped => 1,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn holon_bank_n_det(slot: u32) -> f64 {
+    let s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0.0;
+    }
+    s.bank.provenance_slot(slot).n_det as f64
+}
+
+#[no_mangle]
+pub extern "C" fn holon_bank_uncertainty(slot: u32) -> f64 {
+    let s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0.0;
+    }
+    s.bank.provenance_slot(slot).uncertainty_ha
+}
+
+#[no_mangle]
+pub extern "C" fn holon_bank_claimed_exact(slot: u32) -> u32 {
+    let s = sim();
+    let slot = slot as usize;
+    if slot >= bank::MAX_TABLES {
+        return 0;
+    }
+    u32::from(s.bank.provenance_slot(slot).claimed_exact)
+}
+
+/// Whether every loaded curve's provenance was admitted by the gate.
+#[no_mangle]
+pub extern "C" fn holon_bank_provenance_ok() -> u32 {
+    u32::from(sim().provenance_ok(bank::Host::Browser))
+}
+
+/// The first refused slot, or `-1`.
+#[no_mangle]
+pub extern "C" fn holon_bank_refusal_slot() -> i32 {
+    sim()
+        .provenance_refusal(bank::Host::Browser)
+        .map_or(-1, |(s, _)| s as i32)
+}
+
+/// The first refusal's reason as a `PROVENANCE_REFUSED` code, or `0` if there is none.
+#[no_mangle]
+pub extern "C" fn holon_bank_refusal_reason() -> u32 {
+    sim()
+        .provenance_refusal(bank::Host::Browser)
+        .map_or(0, |(_, r)| refusal_code(r))
+}
+
+// ---- gate D1's record ----------------------------------------------------------------
+//
+// Read by both viewers so the DMRG bridge's admission is on the page rather than in a
+// results file. While `validated` is 0, every DMRG curve is refused and the viewer says so.
+
+#[no_mangle]
+pub extern "C" fn holon_d1_validated() -> u32 {
+    u32::from(bank::D1_RECORD.admits())
+}
+
+#[no_mangle]
+pub extern "C" fn holon_d1_worst_overlap() -> f64 {
+    bank::D1_RECORD.worst_overlap_ha
+}
+
+#[no_mangle]
+pub extern "C" fn holon_d1_stake() -> f64 {
+    bank::D1_RECORD.stake_ha
+}
+
+#[no_mangle]
+pub extern "C" fn holon_d1_overlap_species() -> u32 {
+    bank::D1_RECORD.overlap_species as u32
+}
+
+// ---- the three-body fence, DECLARED by the engine ------------------------------------
+
+/// `1` while the tabulated three-body term covers H3 ONLY.
+///
+/// The force loop already skips any triple containing a non-hydrogen atom. This makes the
+/// fact readable, so both viewers can DISPLAY the fence rather than each hardcoding a
+/// sentence that would go stale the day a heteronuclear trimer surface lands. MIXTURES-1
+/// requires the fence to be shown; a viewer asserting it independently of the engine is a
+/// caption, not a fence.
+#[no_mangle]
+pub extern "C" fn holon_trimer_h_only() -> u32 {
+    1
+}
+
+/// Which bank slot pair reading `k` was evaluated on, or `-1`.
+///
+/// Lets the viewer name the curve behind each pair row — the reason a mixed scene's two
+/// rows can honestly report different `bonded` verdicts at the same separation.
+#[no_mangle]
+pub extern "C" fn holon_pair_slot(k: u32) -> i32 {
+    let s = sim();
+    let k = k as usize;
+    if k >= s.pair_count {
+        return -1;
+    }
+    let p = s.pairs[k];
+    let slots = s.species_slots();
+    s.bank.slot(slots[p.i], slots[p.j]) as i32
 }

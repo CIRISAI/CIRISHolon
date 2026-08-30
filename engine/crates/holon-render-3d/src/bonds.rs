@@ -68,7 +68,7 @@ pub fn sync_bonds(
             // of the well renders as the full rod. Continuous and physical: no
             // threshold decides what is "really" a bond, the energy does — the
             // field report about entry-scene bonds is why this is not cosmetic.
-            let depth = (-p.e_bond() / s.table.d_e.max(1e-12)).clamp(0.0, 1.0) as f32;
+            let depth = (-p.e_bond() / s.table().d_e.max(1e-12)).clamp(0.0, 1.0) as f32;
             *tf = rod_between(
                 to_world(a.x, a.y, a.z),
                 to_world(b.x, b.y, b.z),

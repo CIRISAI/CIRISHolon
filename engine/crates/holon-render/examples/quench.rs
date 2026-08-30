@@ -352,7 +352,7 @@ fn main() {
     println!(
         "# tables: pair curve {} knots in {pair_ms:.0} ms; trimer {} nodes ({} solves) in \
          {trimer_s:.2} s; curvature envelope {:.4} Ha/bohr^2",
-        template.table.knots(),
+        template.table().knots(),
         template.trimer.meta.n_nodes,
         template.trimer.meta.solves,
         template.trimer.curvature_envelope

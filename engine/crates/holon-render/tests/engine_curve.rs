@@ -160,7 +160,7 @@ fn energy_is_conserved_on_the_curve_the_viewer_actually_uses() {
     })
     .expect("curve");
     assert_eq!(t.finish(meta.r_e, meta.d_e, meta.e_asymptote), LoadStatus::Ok);
-    s.table = t;
+    *s.table_mut() = t;
     s.adopt_table_timescale();
 
     s.boundary = Boundary::Open;

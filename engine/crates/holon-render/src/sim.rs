@@ -24,6 +24,7 @@
 //! predicate, the turning point, the drift bound, the clocks — is RADIAL, a function of
 //! the scalar separation alone, and so carries into 3D with nothing to re-derive.
 
+use crate::bank::PairBank;
 use crate::clock::Timescale;
 use crate::holon::HolonLayer;
 use crate::table::PotentialTable;
@@ -169,7 +170,16 @@ impl PairReading {
 }
 
 pub struct Sim {
-    pub table: PotentialTable,
+    /// THE PAIR-TABLE BANK: one curve per unordered species pair. See `bank.rs`.
+    ///
+    /// Replaces the single `table` this struct used to hold. Read it through
+    /// [`Sim::table`] for the single-curve views that have always existed (the banner, the
+    /// curve plot, `r_e`/`d_e`), and through [`Sim::table_for`] for anything dynamical —
+    /// the force loop, the bond criterion, the envelope. The distinction is not
+    /// stylistic: "the curve" is a display convenience in a mixed scene and a physical
+    /// quantity in a pure one, and the second kind of reader must never get the first
+    /// kind of answer.
+    pub bank: PairBank,
     /// The three-body surface. Empty until [`crate::generate_trimer_table`] fills it, and
     /// an empty one contributes an EXACT zero to every term below — so a scene that never
     /// asks for it is bit-for-bit the scene this file simulated before the term existed.
@@ -255,7 +265,7 @@ pub struct Sim {
 impl Sim {
     pub const fn empty() -> Self {
         Self {
-            table: PotentialTable::empty(),
+            bank: PairBank::hydrogen_seeded(),
             trimer: TrimerTable::empty(),
             atoms: [Atom {
                 x: 0.0,
@@ -320,23 +330,247 @@ impl Sim {
         self.timescale.dt
     }
 
-    /// Re-derive every clock from the table. Call after loading a curve.
-    pub fn adopt_table_timescale(&mut self) {
-        let mu = if self.n >= 2 {
-            let m0 = self.atoms[0].mass();
-            let m1 = self.atoms[1].mass();
-            (m0 * m1) / (m0 + m1)
-        } else {
-            0.5 * M_H
-        };
-        self.timescale.from_table(&self.table, mu);
+    // ------------------------------------------------------------ the bank, read
+
+    /// THE SINGLE-CURVE VIEW: the first loaded curve in the bank.
+    ///
+    /// For a pure scene this IS the scene's curve, which is what keeps every reading the
+    /// sandbox has ever shown — `r_e`, `d_e`, the asymptote, the plotted curve, the
+    /// residual on the banner — the same number it was before the bank existed.
+    ///
+    /// For a MIXED scene it is one of several, and nothing dynamical may read it. The
+    /// force loop, the bond criterion, the drift bound and the timescale all go through
+    /// [`Sim::table_for`] or iterate the active slots instead. A mixed scene's viewer says
+    /// which pair this curve belongs to rather than implying there is only one.
+    pub fn table(&self) -> &PotentialTable {
+        self.bank.primary()
     }
 
-    /// Set the species for atom `i`.
-    pub fn set_species(&mut self, i: usize, species: Species) {
-        if i < self.n {
-            self.atoms[i].species = species;
+    /// The LEGACY DOOR: slot 0, which is the H-H pair.
+    ///
+    /// `Sim::empty` seeds hydrogen as species 0, so slot 0 is the pair the single-table
+    /// sandbox always simulated, and every existing caller that loads "the table" —
+    /// `json::load_into`, the ABI's knot pusher, the tests' fixtures — keeps loading the
+    /// curve it was loading. A write through here declares no provenance, which
+    /// [`Sim::provenance_ok`] reports as `Route::Undeclared` rather than treating as fine.
+    pub fn table_mut(&mut self) -> &mut PotentialTable {
+        self.bank.table_slot_mut(0)
+    }
+
+    /// The curve for the pair of atoms `i` and `j`.
+    ///
+    /// The lookup is by SPECIES SLOT, resolved once per force evaluation into
+    /// [`Sim::species_slots`] rather than per pair, because the inner loop runs `N^2/2`
+    /// times and the species list does not change inside it.
+    pub fn table_for(&self, slots: &[usize; MAX_ATOMS], i: usize, j: usize) -> &PotentialTable {
+        self.bank.table_at(slots[i], slots[j])
+    }
+
+    /// Each atom's index into the bank's species list.
+    ///
+    /// Computed fresh on every force evaluation rather than cached on the atom. The cache
+    /// would be one more thing that can be stale, and a stale species index does not read
+    /// as an error — it reads as the wrong curve, quietly, which is precisely the defect
+    /// plant (i) fires on. At `N <= 16` atoms over `<= 6` species this is at most 96
+    /// integer compares against a force loop that evaluates cubic Hermite interpolants.
+    ///
+    /// An atom whose species is not registered maps to slot 0. That case cannot reach the
+    /// force loop: [`Sim::pairs_ready`] refuses to step a scene with an unregistered
+    /// species, because slot 0 would be some other pair's curve.
+    pub fn species_slots(&self) -> [usize; MAX_ATOMS] {
+        let mut out = [0usize; MAX_ATOMS];
+        for i in 0..self.n {
+            out[i] = self.bank.index_of(self.atoms[i].species.z).unwrap_or(0);
         }
+        out
+    }
+
+    /// Register every species the scene currently holds. `false` if the scene needs more
+    /// distinct species than the bank can hold — a REFUSAL, never a silent reuse.
+    pub fn sync_species(&mut self) -> bool {
+        for i in 0..self.n {
+            if self.bank.register(self.atoms[i].species.z).is_none() {
+                return false;
+            }
+        }
+        true
+    }
+
+    /// The slots this scene's ATOMS actually use, deduplicated.
+    ///
+    /// Derived from the atoms rather than from the bank's registration list, and that is
+    /// the load-bearing part: a species that has been registered but has no atom in the
+    /// scene contributes no pair, and a bound taken over its curve would be a bound for a
+    /// collision that cannot happen. "Active" is a fact about the scene.
+    pub fn active_slots(&self) -> ([usize; crate::bank::MAX_TABLES], usize) {
+        let mut out = [0usize; crate::bank::MAX_TABLES];
+        let mut n = 0usize;
+        let slots = self.species_slots();
+        for i in 0..self.n {
+            for j in (i + 1)..self.n {
+                let s = self.bank.slot(slots[i], slots[j]);
+                if !out[..n].contains(&s) {
+                    out[n] = s;
+                    n += 1;
+                }
+            }
+        }
+        // A one-atom scene has no pair and therefore no active curve. A scene with no
+        // atoms likewise. Both are handled by `n == 0` at every call site rather than by
+        // inventing a curve neither of them uses.
+        (out, n)
+    }
+
+    /// Whether every pair the scene contains has a curve to be evaluated on.
+    ///
+    /// This is the bank's version of `table.is_loaded()`, and it replaces it in
+    /// [`Sim::step`]. The old test asked whether THE table was loaded; in a mixed scene
+    /// the question is whether EVERY active pair's table is, and a scene missing one would
+    /// otherwise integrate the pairs it can and silently apply no force to the rest.
+    pub fn pairs_ready(&self) -> bool {
+        for i in 0..self.n {
+            if self.bank.index_of(self.atoms[i].species.z).is_none() {
+                return false;
+            }
+        }
+        let (slots, n) = self.active_slots();
+        if n == 0 {
+            // No pairs: nothing to evaluate, and the single-atom scene is not "not ready".
+            // It is still gated on a loaded primary curve, exactly as it was, so a scene
+            // with no curve at all does not start stepping.
+            return self.table().is_loaded();
+        }
+        slots[..n].iter().all(|&s| self.bank.is_filled(s))
+    }
+
+    /// Whether every loaded curve's provenance was admitted by the gate.
+    pub fn provenance_ok(&self, host: crate::bank::Host) -> bool {
+        self.bank.provenance_admitted(&crate::bank::D1_RECORD, host)
+    }
+
+    /// The first provenance refusal in the bank, if there is one.
+    pub fn provenance_refusal(
+        &self,
+        host: crate::bank::Host,
+    ) -> Option<(usize, crate::bank::Refusal)> {
+        self.bank.first_refusal(&crate::bank::D1_RECORD, host)
+    }
+
+    /// The deepest well among the curves this scene actually uses, hartree.
+    ///
+    /// The amplitude factor in the drift bound and the bond-depth scale the holon layer
+    /// reads. `table().d_e` served both when there was one curve; in a mixed scene the
+    /// bound must cover the deepest well any active pair can fall into, so it is a MAX
+    /// over the active slots. With one active slot it is that slot's `d_e`, bit for bit.
+    pub fn active_d_e(&self) -> f64 {
+        let (slots, n) = self.active_slots();
+        if n == 0 {
+            return self.table().d_e;
+        }
+        let mut d = 0.0f64;
+        for &s in slots[..n].iter() {
+            let v = self.bank.table_slot(s).d_e.abs();
+            if v > d {
+                d = v;
+            }
+        }
+        d
+    }
+
+    /// Re-derive every clock from the curves the scene actually uses. Call after loading.
+    ///
+    /// # The criterion is the FASTEST MODE, not the stiffest curve
+    ///
+    /// `dt` exists to resolve a vibration, and a vibration's frequency is
+    /// `sqrt(k_e / mu)` — so the pair that constrains the timestep is the one maximising
+    /// THAT, not the one with the largest `k_e`. The two differ in a mixed scene by
+    /// exactly the mass ratio: a Cl-Cl bond is stiffer than an H-H bond and oscillates far
+    /// more slowly, because chlorine is 35 times heavier. Picking on stiffness alone would
+    /// hand a hydrogen-bearing scene chlorine's clock and under-resolve the fastest thing
+    /// in the box.
+    ///
+    /// It is also what makes plant (ii) fire: run chlorine at hydrogen's mass and every
+    /// `mu` containing a chlorine drops by the mass ratio, so the derived `dt` moves by
+    /// its square root — a quantity computed here, not asserted anywhere.
+    ///
+    /// With ONE active pair this reduces to what it always was: `mu` is that pair's
+    /// reduced mass, computed by the same `(mi*mj)/(mi+mj)` in the same order, and the
+    /// curve is that pair's curve. A pure-hydrogen scene therefore gets the identical
+    /// float.
+    pub fn adopt_table_timescale(&mut self) {
+        let species = self.species_slots();
+
+        // The reduced mass of every ACTIVE pair type, alongside its slot. Pair types, not
+        // pairs: every H-Cl pair in the box has the same reduced mass and the same curve.
+        let mut best: Option<(usize, f64, f64)> = None; // (slot, mu, omega^2)
+        let mut mu_min = f64::INFINITY;
+        for i in 0..self.n {
+            for j in (i + 1)..self.n {
+                let mi = self.atoms[i].mass();
+                let mj = self.atoms[j].mass();
+                let mu = (mi * mj) / (mi + mj);
+                if mu < mu_min {
+                    mu_min = mu;
+                }
+                let slot = self.bank.slot(species[i], species[j]);
+                let t = self.bank.table_slot(slot);
+                if !t.is_loaded() {
+                    continue;
+                }
+                let k_e = t.curvature(t.r_e).abs();
+                let omega_sq = k_e / mu;
+                if best.map_or(true, |(_, _, w)| omega_sq > w) {
+                    best = Some((slot, mu, omega_sq));
+                }
+            }
+        }
+
+        let (slot, mu) = match best {
+            Some((slot, mu, _)) => (slot, mu),
+            // No loaded active pair: fall back to the primary curve and the two-body
+            // reduced mass the single-table sandbox used, so a scene that has not been
+            // populated yet behaves exactly as it did.
+            None => {
+                let mu = if self.n >= 2 {
+                    let m0 = self.atoms[0].mass();
+                    let m1 = self.atoms[1].mass();
+                    (m0 * m1) / (m0 + m1)
+                } else {
+                    0.5 * M_H
+                };
+                (self.bank.primary_slot(), mu)
+            }
+        };
+        if !mu_min.is_finite() {
+            mu_min = mu;
+        }
+
+        // Field-level borrow split: `from_table` needs the timescale mutably and one of
+        // the bank's curves immutably, and those are disjoint fields of `self`.
+        let Sim { bank, timescale, .. } = self;
+        timescale.from_table(bank.table_slot(slot), mu);
+        // `from_table` seeds the envelope from ONE curve. The envelope over ALL active
+        // curves — what the freeze asks the drift bound to be built from — is taken by
+        // `refresh_envelope` below.
+        timescale.mu_min = mu_min;
+        self.refresh_envelope();
+    }
+
+    /// Set the species for atom `i`, registering it with the bank.
+    ///
+    /// Returns `false` if the bank is full — a REFUSAL, and the species is not applied.
+    /// Silently accepting a seventh species would leave an atom resolving to slot 0 and
+    /// being served hydrogen's curve, which is plant (i)'s defect arriving through the
+    /// front door.
+    pub fn set_species(&mut self, i: usize, species: Species) -> bool {
+        if i >= self.n {
+            return false;
+        }
+        if self.bank.register(species.z).is_none() {
+            return false;
+        }
+        self.atoms[i].species = species;
+        true
     }
 
     /// The scene's MODE-ENERGY scale: the amplitude factor the drift bound needs.
@@ -532,7 +766,7 @@ impl Sim {
             let m_grab = self.grabbed.map(|g| self.atoms[g].mass()).unwrap_or(M_H);
             omega_sq = omega_sq.max(K_SPRING / m_grab);
         }
-        let e_ref = self.e_ref.max(self.table.d_e.abs());
+        let e_ref = self.e_ref.max(self.active_d_e());
         let dt = self.dt();
         DRIFT_SAFETY * 0.25 * omega_sq * dt * dt * e_ref
     }
@@ -605,6 +839,10 @@ impl Sim {
     /// be re-run byte-for-byte.
     pub fn reset(&mut self, n: usize) {
         self.n = n.clamp(0, MAX_ATOMS);
+        // Register whatever species the scene is carrying before anything asks the bank
+        // for a slot. An unregistered species resolves to slot 0, which is some OTHER
+        // pair's curve, so this has to happen first rather than at the first lookup.
+        self.sync_species();
         self.grabbed = None;
         self.thermostat_on = false;
         let cx = 0.5 * self.width;
@@ -683,9 +921,9 @@ impl Sim {
         // The two-atom headline scene keeps its own deliberate approach and is
         // untouched; with no curve loaded there is no U to clear and the scene
         // stays at rest (there are no forces either).
-        if self.n > 2 && self.table.is_loaded() {
-            let mu = 0.5 * M_H;
+        if self.n > 2 && self.pairs_ready() {
             let shell_r = 6.0; // both openers place atoms on a 6-bohr shell
+            let species = self.species_slots();
             let mut v2_needed = 0.0f64;
             for i in 0..self.n {
                 for j in (i + 1)..self.n {
@@ -694,7 +932,16 @@ impl Sim {
                     let dz = self.atoms[j].z - self.atoms[i].z;
                     let d2 = dx * dx + dy * dy + dz * dz;
                     let d = d2.sqrt().max(1e-9);
-                    let u = self.table.u(d);
+                    // The pair's OWN well and the pair's OWN reduced mass. The uniform
+                    // expansion speed below is then whatever clears the worst of them, so
+                    // a hydrogen in a chlorine gas is not handed an escape speed derived
+                    // from a well it is not in. For a pure-hydrogen scene `mu` here is
+                    // `(M_H*M_H)/(M_H+M_H)`, which is bit-for-bit the `0.5 * M_H` this
+                    // line used to read — checked, not assumed.
+                    let mi = self.atoms[i].mass();
+                    let mj = self.atoms[j].mass();
+                    let mu = (mi * mj) / (mi + mj);
+                    let u = self.bank.table_at(species[i], species[j]).u(d);
                     if u < 0.0 {
                         v2_needed = v2_needed.max(2.0 * (-u) * shell_r * shell_r / (mu * d2));
                     }
@@ -729,7 +976,7 @@ impl Sim {
         self.accumulate_energy();
         self.l0 = self.ledger();
         self.p0 = self.momentum();
-        self.e_ref = self.mode_energy().max(self.table.d_e.abs());
+        self.e_ref = self.mode_energy().max(self.active_d_e());
         self.refresh_pairs();
         // Seed the curvature envelope from the pair energies this scene actually starts
         // with, not from zero: a scene of loosely bound pairs cannot reach the wall, and
@@ -741,7 +988,14 @@ impl Sim {
         self.refresh_envelope();
     }
 
-    /// Widen the curvature envelope to cover the largest pair energy seen so far.
+    /// Widen the curvature envelope to cover the largest pair energy seen so far, over
+    /// EVERY curve the scene's atoms can meet each other on.
+    ///
+    /// The freeze's C1 asks for exactly this — "the curvature envelope taken over ALL
+    /// active tables" — and the reason is that the bound has to cover the stiffest
+    /// encounter the scene permits, which in a mixed box need not be on the curve that set
+    /// the timestep. An unloaded slot is skipped rather than contributing a zero: a zero
+    /// from an empty interpolator is not a statement that the pair is soft.
     fn refresh_envelope(&mut self) {
         let mut e_max = self.e_rel_max;
         for p in &self.pairs[..self.pair_count] {
@@ -753,7 +1007,47 @@ impl Sim {
             e_max = 0.0;
         }
         self.e_rel_max = e_max;
-        self.timescale.refresh_envelope(&self.table, e_max);
+        let (slots, n) = self.active_slots();
+        let Sim { bank, timescale, .. } = self;
+        if n == 0 {
+            let t = bank.primary();
+            timescale.refresh_envelope(t, e_max);
+            return;
+        }
+        timescale.refresh_envelope_over(e_max, |e| {
+            let mut k = 0.0f64;
+            let mut r_inner = f64::INFINITY;
+            for &s in slots[..n].iter() {
+                let t = bank.table_slot(s);
+                if !t.is_loaded() {
+                    continue;
+                }
+                let (kk, rr) = t.curvature_envelope(e);
+                if kk > k {
+                    k = kk;
+                }
+                if rr < r_inner {
+                    r_inner = rr;
+                }
+            }
+            if !r_inner.is_finite() {
+                r_inner = 0.0;
+            }
+            (k, r_inner)
+        });
+    }
+
+    /// Re-take the curvature envelope at a given energy after it has been reset.
+    ///
+    /// The exactness-hold toggle clears `k_env` and `e_rel_max` and then needs the
+    /// envelope rebuilt at the energy the scene had reached. Exposed rather than
+    /// duplicated at the call site, because the "max over all active tables" rule has to
+    /// live in exactly one place.
+    pub fn reseed_envelope(&mut self, e_rel_max: f64) {
+        self.e_rel_max = e_rel_max;
+        self.timescale.e_rel_max = f64::NEG_INFINITY;
+        self.timescale.k_env = 0.0;
+        self.refresh_envelope();
     }
 
     /// ONE GRAIN BOUNDARY: the closure-aligned checkpoint where every coarse view is
@@ -787,7 +1081,7 @@ impl Sim {
         let count = self.pair_count;
         let frame = self.frame;
         let time = self.time;
-        let d_e = self.table.d_e;
+        let d_e = self.active_d_e();
         let n = self.n;
         let (pairs, holons) = (&self.pairs, &mut self.holons);
         holons.step_boundary(&pairs[..count], n, frame, time, d_e);
@@ -911,6 +1205,8 @@ impl Sim {
         }
         let mut e_pair = 0.0;
         let mut k_pair_max = self.k_pair_max;
+        // Each atom's species slot, resolved ONCE. See `Sim::species_slots`.
+        let species = self.species_slots();
 
         for i in 0..self.n {
             for j in (i + 1)..self.n {
@@ -924,7 +1220,10 @@ impl Sim {
                 // repulsive wall makes this unreachable dynamically, and the guard keeps
                 // it from being a NaN source if a caller places them there.
                 let r = r2.sqrt().max(1e-9);
-                let (value, slope, curv) = self.table.eval(r);
+                // THE BANK DISPATCH. One lookup, the same `eval`, the same Hermite
+                // coefficients, the same arithmetic in the same order — which is what
+                // makes an all-hydrogen scene bit-for-bit what it was (gate B1).
+                let (value, slope, curv) = self.bank.table_at(species[i], species[j]).eval(r);
                 e_pair += value;
                 // F = -dE/dR along the separation; positive slope pulls the pair together.
                 let f_over_r = slope / r;
@@ -1094,7 +1393,7 @@ impl Sim {
     /// enter the velocities, so the momentum ledger is not an independent estimate of
     /// the impulse — it is the impulse.
     pub fn step(&mut self) {
-        if self.n == 0 || !self.table.is_loaded() {
+        if self.n == 0 || !self.pairs_ready() {
             return;
         }
         let dt = self.dt();
@@ -1290,6 +1589,11 @@ impl Sim {
     /// — and the ledger says exactly how much left.
     pub fn refresh_pairs(&mut self) {
         let mut k = 0usize;
+        // Every reading below — `e_rel`, `r_outer`, and therefore `bonded` — comes from
+        // THE PAIR'S OWN CURVE. This is B1's second half: a mixed scene where the H-H and
+        // X-X criteria differ must show them differing, and it does because `u` and
+        // `outer_turning_point` are asked of the table this pair is served by.
+        let species = self.species_slots();
         for i in 0..self.n {
             for j in (i + 1)..self.n {
                 if k >= MAX_PAIRS {
@@ -1306,7 +1610,8 @@ impl Sim {
                 let mj = self.atoms[j].mass();
                 let mu = (mi * mj) / (mi + mj);
                 let ke_rel = 0.5 * mu * (vx * vx + vy * vy + vz * vz);
-                let u = self.table.u(r);
+                let table = self.bank.table_at(species[i], species[j]);
+                let u = table.u(r);
                 let e_rel = ke_rel + u;
                 // |L|^2 of the relative motion, for the centrifugal term. In 3D the
                 // relative motion of an isolated pair is planar but the plane is not the
@@ -1318,9 +1623,7 @@ impl Sim {
                 let ly = mu * (dz * vx - dx * vz);
                 let lz = mu * (dx * vy - dy * vx);
                 let l_sq = lx * lx + ly * ly + lz * lz;
-                let r_outer = self
-                    .table
-                    .outer_turning_point(e_rel, l_sq, mu, r, TURNING_POINT_CAP);
+                let r_outer = table.outer_turning_point(e_rel, l_sq, mu, r, TURNING_POINT_CAP);
                 self.pairs[k] = PairReading {
                     i,
                     j,

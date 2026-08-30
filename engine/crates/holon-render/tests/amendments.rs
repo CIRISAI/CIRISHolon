@@ -11,9 +11,9 @@ fn potential_source() -> String {
     std::fs::read_to_string(path).expect("placeholder curve present")
 }
 
-fn loaded_sim() -> Sim {
-    let mut s = Sim::empty();
-    holon_render::json::load_into(&mut s.table, &potential_source()).expect("table loads");
+fn loaded_sim() -> Box<Sim> {
+    let mut s = Box::new(Sim::empty());
+    holon_render::json::load_into(s.table_mut(), &potential_source()).expect("table loads");
     s.adopt_table_timescale();
     s
 }
@@ -24,7 +24,7 @@ fn loaded_sim() -> Sim {
 fn dt_is_derived_from_the_curve_not_chosen() {
     let s = loaded_sim();
     let mu = 0.5 * M_H;
-    let k_e = s.table.curvature(s.table.r_e).abs();
+    let k_e = s.table().curvature(s.table().r_e).abs();
     let omega_e = (k_e / mu).sqrt();
 
     println!(
@@ -85,7 +85,7 @@ fn the_bound_uses_the_curvature_envelope_not_the_equilibrium_curvature() {
 
     let omega_e = s.timescale.omega_e;
     let omega_env = s.timescale.omega_env;
-    let k_e = s.table.curvature(s.table.r_e).abs();
+    let k_e = s.table().curvature(s.table().r_e).abs();
     println!(
         "e_rel_max = {:.4e} Eh -> inner turning point {:.4} bohr",
         s.timescale.e_rel_max, s.timescale.r_inner
@@ -630,7 +630,7 @@ fn capture_plant_an_isolated_pair_never_forms_a_molecule() {
 /// approach, holds while the pair separates (the spring loads at the atoms' expense), and
 /// releases once the pair is bound, carrying the stored energy out of the scene. That
 /// extraction is the third-body channel — the capture plant above shows there is no other.
-fn form_a_molecule() -> Sim {
+fn form_a_molecule() -> Box<Sim> {
     let mut s = loaded_sim();
     s.boundary = Boundary::Open;
     s.reset(2);
@@ -985,7 +985,7 @@ fn two_departing_diatomics_are_two_clusters_of_two() {
     let mut s = loaded_sim();
     s.reset(4);
     let (cx, cy, cz) = (0.5 * s.width, 0.5 * s.height, 0.5 * s.depth);
-    let r_e = s.table.r_e;
+    let r_e = s.table().r_e;
     // Each pair at its own equilibrium separation, centres 10 bohr apart, drifting
     // in opposite directions at 1e-3 a.u.: cross-pair E_rel = mu*(2e-3)^2/2 ~ 1.8e-3 Ha
     // of relative kinetic energy against a tail of ~1e-5 Ha — unbound by four orders,

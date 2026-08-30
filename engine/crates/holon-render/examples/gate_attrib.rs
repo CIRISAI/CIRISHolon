@@ -8,7 +8,7 @@ fn scene(n: usize, radius: f64) -> Sim {
     ))
     .unwrap();
     let mut s = Sim::empty();
-    holon_render::json::load_into(&mut s.table, &src).unwrap();
+    holon_render::json::load_into(s.table_mut(), &src).unwrap();
     s.adopt_table_timescale();
     s.boundary = Boundary::Walls;
     s.reset(n);
@@ -32,7 +32,7 @@ fn main() {
         let k_env = s.timescale.k_env;
         let k_vis = s.k_pair_max();
         let e_ref = s.e_ref;
-        let signed = s.energy().abs().max(s.table.d_e.abs());
+        let signed = s.energy().abs().max(s.table().d_e.abs());
         let dt = s.dt();
 
         // The four candidate bounds, same drift in every case.

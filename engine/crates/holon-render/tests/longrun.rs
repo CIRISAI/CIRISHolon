@@ -31,9 +31,9 @@ fn potential_source() -> String {
 }
 
 /// N atoms on a ring of `radius`, at rest, in a walled box. Deterministic.
-fn scene(n: usize, radius: f64) -> Sim {
-    let mut s = Sim::empty();
-    holon_render::json::load_into(&mut s.table, &potential_source()).expect("table loads");
+fn scene(n: usize, radius: f64) -> Box<Sim> {
+    let mut s = Box::new(Sim::empty());
+    holon_render::json::load_into(s.table_mut(), &potential_source()).expect("table loads");
     s.adopt_table_timescale();
     s.boundary = Boundary::Walls;
     s.reset(n);

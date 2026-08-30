@@ -28,9 +28,9 @@ fn potential_source() -> String {
     })
 }
 
-fn loaded_sim() -> Sim {
-    let mut s = Sim::empty();
-    holon_render::json::load_into(&mut s.table, &potential_source()).expect("table loads");
+fn loaded_sim() -> Box<Sim> {
+    let mut s = Box::new(Sim::empty());
+    holon_render::json::load_into(s.table_mut(), &potential_source()).expect("table loads");
     s.adopt_table_timescale();
     s
 }
@@ -58,7 +58,7 @@ fn rotate(v: (f64, f64, f64)) -> (f64, f64, f64) {
 /// vibrating pair at R = 2.2 bohr with the same drifting centre of mass, rotated so that
 /// every coordinate, every velocity component and the pair's angular momentum vector all
 /// carry all three components.
-fn staked_nve_3d() -> Sim {
+fn staked_nve_3d() -> Box<Sim> {
     let mut s = loaded_sim();
     s.dims = Dims::Three;
     s.boundary = Boundary::Open;

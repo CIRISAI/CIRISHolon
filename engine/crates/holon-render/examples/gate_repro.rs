@@ -17,7 +17,7 @@ fn loaded() -> Sim {
     ))
     .unwrap();
     let mut s = Sim::empty();
-    holon_render::json::load_into(&mut s.table, &src).unwrap();
+    holon_render::json::load_into(s.table_mut(), &src).unwrap();
     s.adopt_table_timescale();
     s
 }
@@ -33,11 +33,11 @@ fn true_maxima(s: &Sim) -> (f64, f64, f64) {
             let dx = s.atoms[j].x - s.atoms[i].x;
             let dy = s.atoms[j].y - s.atoms[i].y;
             let r = (dx * dx + dy * dy).sqrt().max(1e-9);
-            k_max = k_max.max(s.table.curvature(r).abs());
+            k_max = k_max.max(s.table().curvature(r).abs());
             r_min = r_min.min(r);
             let vx = s.atoms[j].vx - s.atoms[i].vx;
             let vy = s.atoms[j].vy - s.atoms[i].vy;
-            let e = 0.5 * mu * (vx * vx + vy * vy) + s.table.u(r);
+            let e = 0.5 * mu * (vx * vx + vy * vy) + s.table().u(r);
             if e > e_rel_max {
                 e_rel_max = e;
             }
@@ -150,14 +150,14 @@ fn main() {
     );
     println!(
         "bound with TRUE curvature would be {:.4e} vs displayed {:.4e}; drift {:.4e}",
-        4.0 * 0.25 * (true_k_max / mu) * s.dt() * s.dt() * s.e_ref.max(s.table.d_e.abs()),
+        4.0 * 0.25 * (true_k_max / mu) * s.dt() * s.dt() * s.e_ref.max(s.table().d_e.abs()),
         s.drift_bound(),
         s.drift_peak
     );
     let modes = s.e_kin + s.e_pair.abs() + s.e_wall + s.e_spring;
     println!(
         "AMPLITUDE FACTOR: e_ref = {:.4} (max |E_kin + E_pair + ...| over the run, floored at D_e = {:.4})",
-        s.e_ref, s.table.d_e
+        s.e_ref, s.table().d_e
     );
     println!(
         "  but the modes actually carry E_kin {:.4} + |E_pair| {:.4} + E_wall {:.4} = {:.4}  ({:.1}x e_ref)",

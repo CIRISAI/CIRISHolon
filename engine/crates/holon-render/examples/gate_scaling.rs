@@ -16,7 +16,7 @@ fn loaded(n: usize) -> Sim {
     ))
     .unwrap();
     let mut s = Sim::empty();
-    holon_render::json::load_into(&mut s.table, &src).unwrap();
+    holon_render::json::load_into(s.table_mut(), &src).unwrap();
     s.adopt_table_timescale();
     s.boundary = Boundary::Walls;
     s.reset(n);

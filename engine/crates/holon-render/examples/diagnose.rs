@@ -90,7 +90,7 @@ fn main() {
         ))
         .unwrap();
         let mut s = Sim::empty();
-        holon_render::json::load_into(&mut s.table, &src).unwrap();
+        holon_render::json::load_into(s.table_mut(), &src).unwrap();
         s.boundary = Boundary::Open;
         s.reset(2);
         let (cx, cy) = (0.5 * s.width, 0.5 * s.height);
@@ -150,19 +150,19 @@ fn alias_probe() {
     println!("\n== 5. grain-boundary sampling vs the vibration period ==");
     for substeps in [16u32, 32, 48, 61, 63, 64, 65, 96, 128] {
         let mut s = Sim::empty();
-        holon_render::json::load_into(&mut s.table, &src).unwrap();
+        holon_render::json::load_into(s.table_mut(), &src).unwrap();
         s.adopt_table_timescale();
         s.boundary = Boundary::Open;
         s.reset(2);
         let (cx, cy) = (0.5 * s.width, 0.5 * s.height);
         let delta = 0.02_f64;
-        let r0 = s.table.r_e + delta;
+        let r0 = s.table().r_e + delta;
         s.set_position(0, cx - 0.5 * r0, cy);
         s.set_position(1, cx + 0.5 * r0, cy);
         s.set_velocity(0, 0.0, 0.0);
         s.set_velocity(1, 0.0, 0.0);
         s.rebase();
-        let k = s.table.curvature(s.table.r_e);
+        let k = s.table().curvature(s.table().r_e);
         let mu = 0.5 * M_H;
         let omega = (k / mu).sqrt();
         let e0 = 0.5 * k * delta * delta;

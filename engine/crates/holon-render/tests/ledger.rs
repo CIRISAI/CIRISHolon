@@ -22,9 +22,9 @@ fn loaded_table() -> PotentialTable {
     t
 }
 
-fn loaded_sim() -> Sim {
-    let mut s = Sim::empty();
-    holon_render::json::load_into(&mut s.table, &potential_source()).expect("table loads");
+fn loaded_sim() -> Box<Sim> {
+    let mut s = Box::new(Sim::empty());
+    holon_render::json::load_into(s.table_mut(), &potential_source()).expect("table loads");
     // Every clock is derived from the curve, so adopting the table is what sets dt.
     s.adopt_table_timescale();
     s
@@ -185,7 +185,7 @@ fn placeholder_reproduces_its_own_constants() {
 
 /// The staked initial condition for the 10k-step NVE run. Frozen here so the run is
 /// reproducible: no RNG anywhere in this crate.
-fn staked_nve() -> Sim {
+fn staked_nve() -> Box<Sim> {
     let mut s = loaded_sim();
     s.boundary = Boundary::Open;
     s.reset(2);
@@ -272,14 +272,14 @@ fn drift_obeys_the_harmonic_law_it_was_derived_from() {
     let cx = 0.5 * s.width;
     let cy = 0.5 * s.height;
     let delta = 0.02_f64;
-    let r0 = s.table.r_e + delta;
+    let r0 = s.table().r_e + delta;
     s.set_position(0, cx - 0.5 * r0, cy);
     s.set_position(1, cx + 0.5 * r0, cy);
     s.set_velocity(0, 0.0, 0.0);
     s.set_velocity(1, 0.0, 0.0);
     s.rebase();
 
-    let k = s.table.curvature(s.table.r_e);
+    let k = s.table().curvature(s.table().r_e);
     let mu = 0.5 * M_H;
     let omega = (k / mu).sqrt();
     // Starting from rest at maximum displacement, so E_0 is the turning-point energy.

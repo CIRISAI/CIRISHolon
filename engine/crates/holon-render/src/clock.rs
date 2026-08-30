@@ -68,8 +68,17 @@ pub struct FramePlan {
 
 pub struct Timescale {
     // ---- derived from the model ----
-    /// Reduced mass of the pair.
+    /// Reduced mass of the pair whose vibration sets `dt` — the FASTEST active mode, not
+    /// the stiffest curve. See `Sim::adopt_table_timescale`.
     pub mu: f64,
+    /// The SMALLEST reduced mass over the scene's active pairs.
+    ///
+    /// Separate from `mu` because the two answer different questions and in a mixed scene
+    /// they are different pairs. `mu` sets the timestep, which the fastest vibration
+    /// decides. `mu_min` sets the ENVELOPE frequency, which is a bound and therefore wants
+    /// the mass that makes it largest. In a pure scene there is one pair type and they are
+    /// the same number, so nothing about a single-species scene moves.
+    pub mu_min: f64,
     /// Harmonic angular frequency at the well minimum: sqrt(|U''(R_e)| / mu).
     pub omega_e: f64,
     /// Vibrational period, atomic time units.
@@ -115,6 +124,7 @@ impl Timescale {
     pub const fn empty() -> Self {
         Self {
             mu: 0.0,
+            mu_min: 0.0,
             omega_e: 0.0,
             period: 0.0,
             dt_reference: 1.0,
@@ -147,6 +157,10 @@ impl Timescale {
     /// Nothing here is a hardcoded number: change the file and every clock below moves.
     pub fn from_table(&mut self, table: &PotentialTable, mu: f64) {
         self.mu = mu;
+        // Default the envelope mass to the timestep mass. A caller with a mixed scene
+        // overwrites it immediately (see `Sim::adopt_table_timescale`); a caller with a
+        // pure one is already correct, because the two pairs are the same pair.
+        self.mu_min = mu;
         let k_e = table.curvature(table.r_e).abs();
         self.omega_e = (k_e / mu).sqrt();
         self.period = if self.omega_e > 0.0 {
@@ -182,15 +196,38 @@ impl Timescale {
     /// curvature, so it stays valid through a collision instead of going green right
     /// across the encounter that violates it.
     pub fn refresh_envelope(&mut self, table: &PotentialTable, e_rel_max: f64) -> bool {
+        self.refresh_envelope_over(e_rel_max, |e| table.curvature_envelope(e))
+    }
+
+    /// The same, over MORE THAN ONE curve.
+    ///
+    /// `envelope` is handed the energy and returns the pair `(k, r_inner)` the caller
+    /// wants the bound built from — for a mixed scene, the LARGEST curvature and the
+    /// INNERMOST reach across every table the scene's atoms can meet each other on. The
+    /// callback shape is what keeps the monotonicity rule in ONE place: a caller that
+    /// looped over tables calling `refresh_envelope` per table would be stopped by the
+    /// guard below after the first one, and would silently bound a mixed scene by whichever
+    /// curve it happened to visit first.
+    ///
+    /// With a single curve the callback is that curve's own `curvature_envelope` and every
+    /// float below is what it always was.
+    pub fn refresh_envelope_over(
+        &mut self,
+        e_rel_max: f64,
+        mut envelope: impl FnMut(f64) -> (f64, f64),
+    ) -> bool {
         if e_rel_max <= self.e_rel_max && self.k_env > 0.0 {
             return false;
         }
         self.e_rel_max = e_rel_max.max(self.e_rel_max);
-        let (k, r_inner) = table.curvature_envelope(self.e_rel_max);
+        let (k, r_inner) = envelope(self.e_rel_max);
         self.k_env = k;
         self.r_inner = r_inner;
-        self.omega_env = if self.mu > 0.0 {
-            (k / self.mu).sqrt()
+        // `mu_min`, not `mu`: the envelope is a BOUND, so it takes the mass that makes
+        // the frequency largest. Equal to `mu` in a pure scene, so this line is the same
+        // float it was.
+        self.omega_env = if self.mu_min > 0.0 {
+            (k / self.mu_min).sqrt()
         } else {
             0.0
         };

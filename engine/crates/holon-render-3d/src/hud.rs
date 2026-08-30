@@ -425,11 +425,11 @@ fn handle_actions(
                     world.sim.timescale.e_rel_max = f64::NEG_INFINITY;
                     world.sim.timescale.k_env = 0.0;
                     let table = core::mem::replace(
-                        &mut world.sim.table,
+                        world.sim.table_mut(),
                         holon_render::table::PotentialTable::empty(),
                     );
                     world.sim.timescale.refresh_envelope(&table, e);
-                    world.sim.table = table;
+                    *world.sim.table_mut() = table;
                 }
             }
             Action::ToggleHud => {
@@ -614,10 +614,10 @@ fn update_hud(world: Res<AtomWorld>, mut texts: Query<(&Slot, &mut Text, &mut Te
                      asymptote and R inside the turning\n\
                      point. No distance cutoff anywhere.",
                     world.preset.name(),
-                    s.table.r_e,
-                    s.table.d_e,
-                    s.table.e_asymptote,
-                    s.table.knots(),
+                    s.table().r_e,
+                    s.table().d_e,
+                    s.table().e_asymptote,
+                    s.table().knots(),
                     s.temperature(),
                     s.dims.dof() as u32,
                 );

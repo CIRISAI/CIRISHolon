@@ -1,0 +1,45 @@
+[     0.1s] census loaded: 319 groups, orders 1..63
+[     0.1s] criterion s4core (selector4 blob d33f0469); label ruleb (blob cbaf2b47)
+[     0.1s] MIN_DECIDED_RUNG = 3; BUDGET = 2000; seed 20260830; null draws 100000
+[     1.5s]   25/319 scored (last n13#0, |F|=6)
+[     9.3s]   50/319 scored (last n20#0, |F|=12)
+[    37.9s]   75/319 scored (last n25#0, |F|=6)
+[    81.7s]   100/319 scored (last n32#6, |F|=6)
+[   134.1s]   125/319 scored (last n32#31, |F|=24)
+[   226.6s]   150/319 scored (last n36#1, |F|=8)
+[   429.3s]   175/319 scored (last n40#7, |F|=120)
+[   952.1s]   200/319 scored (last n48#1, |F|=8)
+[  1211.5s]   225/319 scored (last n48#26, |F|=192)
+[  1801.6s]   250/319 scored (last n48#51, |F|=576)
+[  3161.5s]   275/319 scored (last n54#10, |F|=432)
+[  4163.3s]   300/319 scored (last n60#0, |F|=16)
+[  5317.2s] scored 319 groups
+[  5317.2s] 
+[  5317.2s] === T1 THEOREM AUDIT ===
+[  5317.2s]   stasis half   : 106 abelian groups, none SELECTED — PASS
+[  5317.2s]   orientation   : 74 ambivalent groups, all oriented sectors empty — PASS
+[  5317.2s]   abelian failure modes (A1 item 2): fail-EMPTY 1, fail-EVERYTHING 105, other 0
+[  5317.2s] 
+[  5317.2s] === VOIDs (B1) ===
+[  5317.2s]   0/319 groups VOID
+[  5317.2s]   eligible pool (decided verdict AND decided label): 319
+[  5317.2s] 
+[  5317.2s] === E1 — THE STAKE ===
+[  5318.0s]   selected            : 213/319
+[  5318.0s]   RULE-B among SELECT : 0.8028  (171/213)
+[  5318.0s]   eligible base rate  : 0.8652  (276/319)
+[  5318.0s]   null mean 0.8652 sd 0.0135  99th pct 0.8967
+[  5318.0s]   p(null >= observed) = 1
+[  5318.0s] 
+[  5318.0s]   E1 BRANCH (b): observed enrichment does NOT exceed the null's 99th
+[  5318.0s]   percentile. The landscape's answer is 'the bootstrap criterion does
+[  5318.0s]   not preferentially select SM-embeddable structure at these orders'.
+[  5318.0s]   recall (the half SELECTOR-5 never printed): 171/276 of SM-embeddable groups
+[  5318.0s] 
+[  5318.0s] === SENSITIVITY (labelled diagnostic, NOT an alternative result) ===
+[  5318.0s]   Under the coarse-rung fallback that ruling 3 forbids -- letting a group
+[  5318.0s]   whose fine rungs VOID be scored False on a coarse rung -- the eligible
+[  5318.0s]   pool would grow by 0 groups, every one of them a False, and
+[  5318.0s]   those Falses would be budget exhaustions rather than measurements.
+[  5318.0s] 
+[  5318.0s] PRIMARY COMPLETE — E1 branch (b)

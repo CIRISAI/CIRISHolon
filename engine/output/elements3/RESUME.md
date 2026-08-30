@@ -651,3 +651,34 @@ how correlated the space is, not how many orbitals it has.
 **S2 is still pending and it is the weak leg**, graded weak before the run and still graded
 weak now: at 18 orbitals a BUDGET confounds a harder state with slower sweeps, so only a
 REACHED there is informative for me. Not grading the stake until it prints.
+
+### The log I cited for SiO was overwritten by a restart — treating the rerun as replication
+
+At 15:42 `mps_ladder.log` went from seven data rows back to three: mixtures-engine restarted
+the ladder (new process 1000621 under `timeout 21600`, fresh log beginning again at H2, with
+different timings — LiH 2.8 s against 2.4 s, HCl MPO 0.02 s against 0.01 s, so a new run and
+not a resumed one). The header is byte-identical in every parameter that matters: stake 1e-8,
+budget 300 s per cell, chi ladder [32,64,128,256,512], sweeps in chunks of 3, tol 1e-11.
+
+**So the SiO row I cited as confirming leg one no longer exists in any log.** What survives
+is my transcription of it, in the section above and in commit fd88711:
+
+    SiO   14 orb  132,496 det   chi 32   +1.118e-2   6 sweeps   587.3 s   BUDGET
+
+A transcription is not the artifact. By this lane's own rule — a cross-reference needs a
+target, and a claim is checked against the primary record rather than against my report of
+it — that citation is currently unsupported, and it is unsupported in the direction that
+favours me, since SiO BUDGET is the result I predicted.
+
+**The repair is better than the original**, and costs nothing but patience: the restart runs
+the same configuration over the same ladder, so it will reach SiO again. That makes the
+rerun a REPLICATION of the staked leg rather than a reconstruction of it. Holding the
+confirmation as provisional until the new run's SiO row prints:
+
+* if it comes back BUDGET, leg one is confirmed twice, on two runs, and the transcription is
+  validated by something other than my own note;
+* if it comes back REACHED, my transcription or my reading of it was wrong, and I report that
+  the staked leg FAILED — the same way I committed to reporting it before any row existed.
+
+The stake itself is untouched by the restart. It named SiO and S2 as pairs, not as rows of a
+particular run, and all four outcomes still carry the meanings fixed at e16acb7.

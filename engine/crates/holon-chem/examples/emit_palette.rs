@@ -42,15 +42,27 @@ fn main() {
         s.push_str(&format!("\"n_basis\": {}, ", sp.n_basis()));
         s.push_str(&format!("\"homonuclear_n_determinants\": {}, ", sz.n_det));
         s.push_str(&format!("\"radius_bohr\": {:?}, ", sz.radius_bohr));
+        // The wording comes from the rule itself, not from a match written here. Two
+        // surfaces describing one distinction in their own words is how they come to
+        // disagree about it, and this distinction is the one P1's plant guards.
+        s.push_str(&format!("\"radius_rule\": \"{}\", ", sz.rule.describe()));
+        // The distinction a consumer must be able to read WITHOUT parsing prose: a
+        // dimer-derived radius is half a measured inter-atomic separation, a
+        // density-derived one is one atom's own extent, and they are not the same axis.
         s.push_str(&format!(
-            "\"radius_rule\": \"{}\", ",
-            match sz.rule {
-                RadiusRule::HalfEquilibrium => "derived: half R_e of the homonuclear pair",
-                RadiusRule::HalfContact =>
-                    "derived: half the contact separation (the homonuclear pair does not bind)",
-            }
+            "\"radius_from_dimer\": {}, ",
+            sz.rule.is_dimer_derived()
         ));
-        s.push_str(&format!("\"homonuclear_separation_bohr\": {:?}, ", sz.separation_bohr));
+        // NaN is not JSON. A density-derived radius has no separation at all, and `null`
+        // says that; a zero would read as a measurement of a curve that never ran.
+        if sz.separation_bohr.is_finite() {
+            s.push_str(&format!(
+                "\"homonuclear_separation_bohr\": {:?}, ",
+                sz.separation_bohr
+            ));
+        } else {
+            s.push_str("\"homonuclear_separation_bohr\": null, ");
+        }
         match sz.d_e {
             Some(d) => s.push_str(&format!("\"homonuclear_bound\": true, \"homonuclear_D_e\": {d:?}, ")),
             None => s.push_str("\"homonuclear_bound\": false, \"homonuclear_D_e\": null, "),

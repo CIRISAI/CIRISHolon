@@ -925,3 +925,119 @@ fn accumulate_shell_quartet(
         }
     }
 }
+
+/// `<chi_mu| r^2 |chi_nu>` for a basis whose shells all sit on ONE centre at the origin.
+///
+/// # Why this exists and why it is restricted
+///
+/// P1's third radius rule needs a size derived from the atom's own electron density rather
+/// than from a homonuclear curve, because most mid-row homonuclear dimers cannot be
+/// computed at all. The quantity is `sqrt(<r^2> / N)`, the root-mean-square distance of an
+/// electron from the nucleus, and `<r^2>` is a ONE-ELECTRON operator — so it needs one
+/// matrix and no new solver.
+///
+/// The restriction to a single centre at the origin is what makes it four lines of closed
+/// form instead of a second moment-integral recursion. With every function on the same
+/// centre, `x` and `x_A` and `x_B` are the same variable, so multiplying by `x^2` is
+/// exactly raising the Cartesian power by two — and the same-centre integral of a Gaussian
+/// monomial is elementary:
+///
+/// ```text
+/// int x^L exp(-p x^2) dx = (L-1)!! / (2p)^{L/2} * sqrt(pi/p)   for even L, 0 for odd
+/// ```
+///
+/// An atom is at the origin, which is the only case P1 asks for. The assertion below
+/// refuses anything else rather than returning a number computed for a geometry it does
+/// not describe.
+pub fn atomic_r2(b: &Basis) -> Vec<f64> {
+    for c in b.centers.iter() {
+        assert!(
+            c[0].v == 0.0 && c[1].v == 0.0 && c[2].v == 0.0,
+            "atomic_r2 is the SINGLE-CENTRE form and every shell must sit at the origin; \
+             a centre at ({}, {}, {}) would need the general moment recursion",
+            c[0].v,
+            c[1].v,
+            c[2].v
+        );
+    }
+    // int x^L exp(-p x^2) dx, zero for odd L.
+    fn moment(l: usize, p: f64) -> f64 {
+        if l % 2 == 1 {
+            return 0.0;
+        }
+        let mut df = 1.0f64; // (l-1)!!
+        let mut k = l as i64 - 1;
+        while k > 1 {
+            df *= k as f64;
+            k -= 2;
+        }
+        df / (2.0 * p).powi((l / 2) as i32) * (PI / p).sqrt()
+    }
+
+    let n = b.n_cart;
+    let mut out = vec![0.0f64; n * n];
+    for (si, sa) in b.shells.iter().enumerate() {
+        for (sj, sb) in b.shells.iter().enumerate() {
+            let _ = (si, sj);
+            for (fa, &la) in cartesian_components(sa.l).iter().enumerate() {
+                for (fb, &lb) in cartesian_components(sb.l).iter().enumerate() {
+                    let (i, j) = (sa.first + fa, sb.first + fb);
+                    let w = cart_factor(la) * cart_factor(lb);
+                    let mut acc = 0.0f64;
+                    for pa in 0..3 {
+                        for pb in 0..3 {
+                            let p = sa.alpha[pa] + sb.alpha[pb];
+                            let c = sa.coeff[pa] * sb.coeff[pb];
+                            // r^2 = x^2 + y^2 + z^2: three terms, each raising one
+                            // Cartesian power by two and leaving the other two alone.
+                            for dir in 0..3 {
+                                let mut t = c;
+                                for k in 0..3 {
+                                    let bump = if k == dir { 2 } else { 0 };
+                                    t *= moment(la[k] as usize + lb[k] as usize + bump, p);
+                                }
+                                acc += t;
+                            }
+                        }
+                    }
+                    out[i * n + j] += acc * w;
+                }
+            }
+        }
+    }
+
+    // Project to the declared basis, exactly as `ao_integrals` does, so the matrix is
+    // indexed the same way as everything else the CI sees.
+    match &b.sph {
+        None => out,
+        Some(p) => {
+            let m = n;
+            let k = b.n;
+            let mut px = vec![0.0f64; k * m];
+            for a in 0..k {
+                for i in 0..m {
+                    let wv = p[a * m + i];
+                    if wv != 0.0 {
+                        for jj in 0..m {
+                            px[a * m + jj] += wv * out[i * m + jj];
+                        }
+                    }
+                }
+            }
+            let mut res = vec![0.0f64; k * k];
+            for a in 0..k {
+                for bq in 0..k {
+                    let mut acc = 0.0;
+                    for jj in 0..m {
+                        let wv = p[bq * m + jj];
+                        if wv != 0.0 {
+                            acc += px[a * m + jj] * wv;
+                        }
+                    }
+                    res[a * k + bq] = acc;
+                }
+            }
+            res
+        }
+    }
+}

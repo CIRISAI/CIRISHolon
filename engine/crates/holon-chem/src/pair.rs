@@ -371,7 +371,131 @@ pub fn geometry_problem(species: &[Species], centers: Vec<[D2; 3]>) -> (FciSpace
     }
     let mo = transform(&ao, &c, n);
     let space = FciSpace::new(n, n_alpha, n_beta);
+    ORBITALS.with(|slot| *slot.borrow_mut() = Some(c.iter().map(|d| d.v).collect()));
     (space, mo, basis.nuclear_repulsion())
+}
+
+thread_local! {
+    /// The orbital coefficients of the last [`geometry_problem`] call, values only.
+    ///
+    /// # Why a slot rather than a return value
+    ///
+    /// `geometry_problem` is public and has callers in three test files, two examples and
+    /// another lane's bridge. Widening its tuple to carry `C` would edit all of them for
+    /// one consumer, and a second entry point duplicating its preamble is the copy the
+    /// module header already complains about having removed once.
+    ///
+    /// Only [`atomic_rms_radius`] reads this, immediately after the call that fills it, on
+    /// the same thread. It is not a cache and nothing may treat it as one.
+    static ORBITALS: std::cell::RefCell<Option<Vec<f64>>> = const { std::cell::RefCell::new(None) };
+}
+
+/// The root-mean-square distance of an electron from the nucleus, in bohr.
+///
+/// # What this is for
+///
+/// P1's third radius rule. The first two rules derive an element's drawn radius from its
+/// own homonuclear curve, and by AMENDMENT A1.2 most mid-row homonuclear dimers cannot be
+/// computed at all -- scandium's is 36 orbitals and 42 electrons. Rather than substitute a
+/// remembered constant, this derives a size from the atom itself.
+///
+/// # Why it needs no density matrix
+///
+/// `sum_i r_i^2` is a ONE-ELECTRON operator, and the expectation of a one-electron operator
+/// in a CI state is `c . (O c)` -- so feeding the operator through the existing sigma with
+/// the two-electron integrals set to ZERO gives it exactly, with no 1-RDM to build and no
+/// second contraction routine to get wrong. `ci_ints` folds exchange into `k`; that fold is
+/// a function of `g`, so with `g = 0` the folded `k` is the bare operator and constructing
+/// [`CiInts`] directly is the same thing.
+///
+/// The radius is `sqrt(<r^2> / N)`: a per-electron RMS distance, so it is a size rather
+/// than a total, and comparable across elements with very different electron counts.
+pub fn atomic_rms_radius(sp: Species) -> f64 {
+    let centre = || vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]];
+    let basis = build_basis(&[sp], centre());
+    let (space, mo, _nuc) = geometry_problem(&[sp], centre());
+    let c = ORBITALS
+        .with(|slot| slot.borrow_mut().take())
+        .expect("geometry_problem fills the orbital slot");
+    let sol = crate::fci::solve_determinant(&space, &mo);
+
+    let n = basis.n;
+    let r2_ao = crate::md::atomic_r2(&basis);
+    // C^T R2 C, values only: the CI vector lives in this orbital basis, so the operator
+    // has to be expressed in it or the expectation is of a different operator.
+    let mut t = vec![0.0f64; n * n];
+    for p in 0..n {
+        for j in 0..n {
+            let mut acc = 0.0;
+            for i in 0..n {
+                acc += c[i * n + p] * r2_ao[i * n + j];
+            }
+            t[p * n + j] = acc;
+        }
+    }
+    let mut r2_mo = vec![0.0f64; n * n];
+    for p in 0..n {
+        for q in 0..n {
+            let mut acc = 0.0;
+            for j in 0..n {
+                acc += t[p * n + j] * c[j * n + q];
+            }
+            r2_mo[p * n + q] = acc;
+        }
+    }
+
+    let ci = crate::fci::CiInts {
+        n,
+        k: r2_mo.clone(),
+        g: vec![0.0f64; n * n * n * n],
+    };
+    let mut out = vec![0.0f64; space.n_det];
+    space.sigma(&ci, &sol.vector, &mut out);
+    let r2: f64 = sol.vector.iter().zip(out.iter()).map(|(a, b)| a * b).sum();
+    let n_elec = sp.n_electrons() as f64;
+    let _ = &r2_mo;
+    (r2 / n_elec).sqrt()
+}
+
+/// The root-mean-square radius of the atom's OUTERMOST OCCUPIED orbital, in bohr.
+///
+/// # Why the whole-density average is the wrong size
+///
+/// [`atomic_rms_radius`] averages `r^2` over every electron, and a heavy atom keeps most
+/// of its electrons in a tight core. Measured, it is flat at about one bohr from hydrogen
+/// to xenon and is not even monotone -- xenon reads SMALLER than hydrogen. That is not a
+/// defect in the arithmetic; it is the correct value of a quantity that does not mean what
+/// a drawing radius needs to mean.
+///
+/// What sets an atom's chemical size is its valence shell, so this reports that orbital
+/// alone: `sqrt(<phi|r^2|phi>)` for the highest occupied orbital of the SCF that fixed the
+/// CI's orbital basis. It is one column of `C` against the same `r^2` matrix, so it costs
+/// nothing beyond what the whole-density figure already computed.
+///
+/// The honest caveat, which travels with the number: the orbital is the SCF's, and "which
+/// orbital is outermost" is therefore a property of that reference rather than of the
+/// correlated state. For a drawn radius that is adequate and is declared; it is not a
+/// physical observable and must not be presented as one.
+pub fn atomic_valence_rms_radius(sp: Species) -> f64 {
+    let centre = || vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]];
+    let basis = build_basis(&[sp], centre());
+    let (_space, _mo, _nuc) = geometry_problem(&[sp], centre());
+    let c = ORBITALS
+        .with(|slot| slot.borrow_mut().take())
+        .expect("geometry_problem fills the orbital slot");
+    let n = basis.n;
+    let r2_ao = crate::md::atomic_r2(&basis);
+    let (_, n_alpha, _) = electron_counts(&[sp]);
+    // The outermost occupied column. `orbital_rotation` orders by orbital energy, so the
+    // occupied set is the first `n_alpha` columns and the last of them is the HOMO.
+    let homo = n_alpha - 1;
+    let mut acc = 0.0f64;
+    for i in 0..n {
+        for j in 0..n {
+            acc += c[i * n + homo] * r2_ao[i * n + j] * c[j * n + homo];
+        }
+    }
+    acc.max(0.0).sqrt()
 }
 
 /// Solve one geometry and hand back the MO integrals and CI space as well, for the tests
@@ -551,8 +675,10 @@ pub const PAIR_PROVENANCE: &str = "engine-computed STO-3G FCI (determinant, Know
 /// switches, and every such curve used to be stamped [`PAIR_PROVENANCE`] regardless. It
 /// also says what the number IS — a variational upper bound inside a bond-dimension
 /// budget — because "DMRG" alone still lets a reader assume exactness.
-pub const PAIR_PROVENANCE_DMRG: &str =
-    "engine-computed STO-3G DMRG (MPS, variational within a bond-dimension budget; NOT      exact in model), f64";
+pub const PAIR_PROVENANCE_DMRG: &str = concat!(
+    "engine-computed STO-3G DMRG (MPS, variational within a bond-dimension budget; ",
+    "NOT exact in model), f64"
+);
 
 /// The provenance line for a route. ONE function, so the label and the fact cannot drift:
 /// a curve's stamp is computed from the route it actually took.
@@ -1009,9 +1135,19 @@ impl PairTable {
             "  \"exact_in_model\": {},\n",
             m.route.is_exact_in_model()
         ));
-        s.push_str(
-            "  \"grid_rule\": \"uniform in R^(-1/4) between R_min and R_max              (table::grid_point); R_min is where the repulsion reaches WALL_CEILING = 1 Ha              above the asymptote and R_max is where the interaction falls inside              TAIL_TOLERANCE = 1e-8 Ha of it, both solved on this curve              (pair::derive_range). The grid is a consequence of the curve, not a choice              about it.\",\n",
-        );
+        // `concat!` and not a `\`-continued literal. This string was written as a
+        // continuation and ended up flattened onto ONE source line with the continuation
+        // indentation still inside it, so runs of spaces landed IN THE SHIPPED JSON -- a
+        // defect in a referee-pinnable artifact, not an untidy source file. `concat!`
+        // joins exactly what is quoted and cannot acquire whitespace.
+        s.push_str(concat!(
+            "  \"grid_rule\": \"uniform in R^(-1/4) between R_min and R_max ",
+            "(table::grid_point); R_min is where the repulsion reaches WALL_CEILING = ",
+            "1 Ha above the asymptote and R_max is where the interaction falls inside ",
+            "TAIL_TOLERANCE = 1e-8 Ha of it, both solved on this curve ",
+            "(pair::derive_range). The grid is a consequence of the curve, not a choice ",
+            "about it.\",\n"
+        ));
         s.push_str(&format!(
             "  \"uncertainty_hartree\": {:?},\n",
             m.worst_residual
@@ -1204,6 +1340,45 @@ pub enum RadiusRule {
     /// pair's repulsion reaches [`CONTACT_ENERGY`] above the asymptote. Used for the
     /// elements whose homonuclear pair does not bind.
     HalfContact,
+    /// DERIVED from the ATOM, not from a pair: the root-mean-square radius of the
+    /// outermost occupied orbital. See [`atomic_valence_rms_radius`].
+    ///
+    /// A different rule, not a fallback value, and it exists because most mid-row
+    /// homonuclear dimers cannot be computed at all -- scandium's is 36 orbitals and 42
+    /// electrons (AMENDMENT A1.2). The alternative was a remembered constant, which is
+    /// what this crate has no table of.
+    ///
+    /// It is NOT comparable to the other two on the same axis: those measure where two
+    /// atoms sit relative to each other and this measures how far one atom's valence
+    /// electron is from its own nucleus. Every surface that shows a radius must say which
+    /// rule produced it, which is what [`RadiusRule::is_dimer_derived`] is for.
+    ValenceDensity,
+}
+
+impl RadiusRule {
+    /// Whether this radius came from a computed PAIR curve.
+    ///
+    /// The distinction the label machinery turns on: the first two rules measure a
+    /// separation between two atoms, the third measures one atom's own extent, and
+    /// presenting the third as the first would be describing a computation that never ran.
+    pub fn is_dimer_derived(self) -> bool {
+        matches!(self, RadiusRule::HalfEquilibrium | RadiusRule::HalfContact)
+    }
+
+    /// The rule in words, for a record or a picker. One function, so a surface cannot
+    /// invent its own phrasing for a distinction that has to be read the same everywhere.
+    pub fn describe(self) -> &'static str {
+        match self {
+            RadiusRule::HalfEquilibrium => "derived: half R_e of the homonuclear pair",
+            RadiusRule::HalfContact => {
+                "derived: half the contact separation (the homonuclear pair does not bind)"
+            }
+            RadiusRule::ValenceDensity => {
+                "derived from the ATOM: RMS radius of the outermost occupied orbital \
+                 (the homonuclear pair is not computable)"
+            }
+        }
+    }
 }
 
 /// One element's drawing size, and how it was obtained.
@@ -1230,6 +1405,23 @@ pub struct SpeciesSize {
 /// bracket.
 pub fn homonuclear_size(sp: Species) -> SpeciesSize {
     let t0 = Stopwatch::start();
+    // The pair route is asked for FIRST and refused at the door, rather than attempted and
+    // abandoned: `feasibility` reads counts off the registry and computes nothing, so a
+    // species whose homonuclear dimer is out of reach costs nothing to find out about.
+    if feasibility(sp, sp).is_infeasible() {
+        let r = atomic_valence_rms_radius(sp);
+        return SpeciesSize {
+            radius_bohr: r,
+            rule: RadiusRule::ValenceDensity,
+            // There is no separation, and reporting one would be inventing a number for a
+            // curve that was never computed. NaN says "not applicable" loudly; a zero
+            // would read as a measurement.
+            separation_bohr: f64::NAN,
+            d_e: None,
+            n_det: feasibility(sp, sp).n_det(),
+            ms: t0.ms(),
+        };
+    }
     let asym = 2.0 * atom_energy(sp);
     let scan: Vec<f64> = (0..15).map(|i| 1.0 + 0.5 * i as f64).collect();
     let mut e = Vec::with_capacity(scan.len());

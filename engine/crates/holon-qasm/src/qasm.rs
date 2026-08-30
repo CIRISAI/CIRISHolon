@@ -527,7 +527,11 @@ impl Tableau {
                             tab.z[n + r2][col - n]
                         };
                         if has_bit {
+                            // S_{r2} <- S_{r2} * S_{pivot}
                             tab.rowsum(n + r2, n + pivot_row);
+                            // To preserve symplectic commutation [S_a, D_b] = delta_{ab},
+                            // apply dual transformation on destabilizers: D_{pivot} <- D_{pivot} * D_{r2}
+                            tab.rowsum(pivot_row, r2);
                         }
                     }
                 }

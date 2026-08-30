@@ -325,7 +325,19 @@ def main():
           "the two campaigns' tables fingerprint differently, so neither can "
           "read the other's cache")
 
+    # A WORK COUNT, ASSERTED RATHER THAN REPORTED.
+    #
+    # An early return, a regex that stops matching after a refactor, or a loop
+    # over a dict that is not there all produce a run with no checks in it --
+    # and a run with no checks in it prints no failures and exits 0.  So the
+    # count has a floor: seventeen elements, five coefficient sets, three fences and five demonstrated failing cases cannot be checked in fewer.
+    FLOOR = 20
     print("\n%d checks, %d FAIL" % (CHECKS[0], len(FAILED)))
+    if CHECKS[0] < FLOOR:
+        print("   REFUSING TO PASS: %d checks is below this suite's floor of "
+              "%d. A suite that stops checking stops failing, which is the "
+              "same output as a suite that passes." % (CHECKS[0], FLOOR))
+        return 1
     for f in FAILED:
         print("   FAILED: %s" % f)
     return 1 if FAILED else 0

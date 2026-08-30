@@ -13,9 +13,10 @@ D="${MIXTURES1_WORKING:-/tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa
 R="${MIXTURES1_REPO:-/home/emoore/CIRISHolon/conformance/atomworld/mixtures1_referee}"
 FILES="README.md RESUME.md FEASIBILITY.md basis2.py species2.py species.py
        m1core.py build_atoms2.py curves2.py emit2.py env.sh run_pairs.sh
-       test_basis_matches_engine.py test_species_shim.py
+       test_basis_matches_engine.py test_species_shim.py verify2.py
        _cost_probe.py _sio_stream.py _conditioning.py _rss_guard.sh
-       _fast_elements.py _routeb_cost.py mixtures_atoms.json"
+       _fast_elements.py _routeb_cost.py mixtures_atoms.json
+       _inert_audit2.py prose_fields2.txt sync_repo_copy.sh"
 [ -d "$D" ] || { echo "working copy not found: $D"; exit 1; }
 [ -d "$R" ] || { echo "repo copy not found: $R"; exit 1; }
 if [ "$(cd "$D" && pwd -P)" = "$(cd "$R" && pwd -P)" ]; then

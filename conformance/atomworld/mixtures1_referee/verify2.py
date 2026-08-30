@@ -142,6 +142,54 @@ def v_scope(pot):
           "elements used: %s" % sorted(zs))
 
 
+def v_manifest(dropdir):
+    """The manifest's own claims, read and checked rather than shipped.
+
+    Every field checked here was in the INERT bucket of `_inert_audit2.py`
+    before this section existed -- written, shipped, and consumed by nothing.
+    A coverage invariant nobody evaluates is a sentence, not a gate.
+    """
+    print("\n[MAN] the manifest's claims are read, not just written")
+    p = os.path.join(dropdir, "manifest.json")
+    if not os.path.exists(p):
+        check("a manifest is present in the drop", False, dropdir)
+        return
+    man = json.load(open(p))
+    staked = man.get("staked_eight") or []
+    present = man.get("pairs_present") or []
+    owed = man.get("pairs_owed") or []
+    check("the manifest names the staked set", sorted(staked) == sorted(
+        ["Cl2", "S2", "Ar2", "HCl", "ClF", "NaH", "SiO", "NeAr"]),
+        "%s" % sorted(staked))
+    # THE INVARIANT the freeze actually turns on.
+    check("present + owed = staked, exactly",
+          sorted(present + owed) == sorted(staked),
+          "present %s | owed %s" % (present, owed))
+    check("present and owed do not overlap",
+          not (set(present) & set(owed)),
+          "both: %s" % sorted(set(present) & set(owed)))
+    check("every present pair has a file in the drop",
+          all(os.path.exists(os.path.join(dropdir, "%s.json" % n))
+              for n in present),
+          "missing: %s" % [n for n in present
+                           if not os.path.exists(
+                               os.path.join(dropdir, "%s.json" % n))])
+    neg = (man.get("negatives") or {}).get("pairs") or []
+    check("the manifest names the E1 negatives",
+          sorted(neg) == sorted(SP2.E2_UNBOUND), "%s" % sorted(neg))
+    sc = man.get("scope") or {}
+    import basis2
+    check("the declared scope bound matches the table it describes",
+          sc.get("max_Z") == max(basis2.STO3G_18),
+          "manifest %s, table %s" % (sc.get("max_Z"), max(basis2.STO3G_18)))
+    br = man.get("d1_bridge_references") or []
+    marked = [n for n in SP2.D1_BRIDGE
+              if os.path.exists(os.path.join(dropdir, "%s.json" % n))]
+    check("the manifest's bridge list matches the files actually marked",
+          sorted(br) == sorted(marked),
+          "manifest %s, marked %s" % (sorted(br), sorted(marked)))
+
+
 def v_d1_bridge(dropdir):
     """S2 and SiO carry the bridge marking in their own files, or say why not."""
     print("\n[D1] the bridge's reference values are marked as such")
@@ -158,6 +206,10 @@ def v_d1_bridge(dropdir):
         check("%s says in its own header that it is the D1 reference" % name,
               isinstance(b, dict) and "gate" in b,
               (b or {}).get("gate", "MISSING")[:60])
+        check("%s carries the do-not-regenerate flag, so nobody rebuilds a "
+              "1e-8 reference at 1e-8 precision" % name,
+              (b or {}).get("do_not_regenerate_at_lower_precision") is True,
+              "%r" % (b or {}).get("do_not_regenerate_at_lower_precision"))
         n += 1
     if not n:
         VE.NOTE.append("gate D1 has no reference file yet; S2 and SiO are the "
@@ -224,6 +276,7 @@ def main():
     section("V6", VE.v6_atoms, 3, atoms)
     section("V8", VE.v8_spin, npair, pot)
     if os.path.isdir(drop):
+        section("MAN", v_manifest, 7, drop)
         section("V10", VE.v10_grid_provenance, npair, drop)
         section("D1", v_d1_bridge, 0, drop)
     else:

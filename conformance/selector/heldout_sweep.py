@@ -1,5 +1,13 @@
 #!/usr/bin/env python3
 """
+VOID BY DESIGN — DO NOT RUN AS A FORWARD TEST. There is no committed
+prediction to score against, and build_heldout_groups() constructs its
+population from the SAME eleven tag-assigning builders that define the
+label, so the base rate is fixed by the builder list before any group is
+scored and precision on it cannot discriminate (M-POPULATION-CHOICE,
+M-TAG-AS-PROPERTY). Kept as the record of what SELECTOR-5 offered in
+place of a forward test; SELECTOR-6s S1/H1 are the real thing.
+
 heldout_sweep.py — Frozen SELECTOR-5 evaluation on held-out orders |G| in [129, 256].
 
 Tests the forward prediction of the frozen SELECTOR-4 bootstrap criteria (C1..C4)

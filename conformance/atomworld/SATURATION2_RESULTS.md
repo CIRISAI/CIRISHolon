@@ -379,7 +379,17 @@ says a third hydrogen binds to relaxed water by +0.0939 Ha. Branch (b) is
 
 At the very geometry the MBE3 scan calls deepest, the model's own full CI says
 the third hydrogen is repelled by 0.0890 Ha. **The two disagree in SIGN.** The
-missing four-body term is −0.183 Ha there, comparable to the O-H bond itself.
+missing four-body term is **+0.183 Ha** there — repulsive, comparable to the O-H
+bond itself.
+
+*A correction to this file's own wording.* That number was first written here as
+−0.183, which is the same quantity expressed as a difference of BINDINGS rather
+than of energies. Both are correct; neither was named. The energy convention
+`ΔE4 = E_FCI − E_MBE3` is the one used from here on, because it is the sign a
+four-body TERM would be added with, and `examples/s2_mbe4_verify.rs` prints the
+identity from one computation so the reader does not have to take it on trust. A
+number stated in a convention it does not name is a number that can be read
+backwards, and a downstream lane read this one backwards.
 
 So the firing is a fact about the EXPANSION, not about the model and not about
 the table. Re-reading the prereg, `E(H3O)` is the model's own four-atom energy —
@@ -402,7 +412,8 @@ The table is fine. The expansion runs out at four atoms.
     at O-H3 = 2.250 bohr on the C2 axis:
       the MBE3 sandbox BINDS a third hydrogen by  +0.051973 Ha
       the model REPELS it by                       0.079962 Ha
-      the missing four-body term                  -0.131935 Ha  = 81% of the O-H bond
+      the missing four-body term                  +0.131935 Ha  = 81% of the O-H bond
+      (ENERGY convention, E_FCI - E_MBE3; repulsive, which is what saturation needs)
 
 SATURATION-1 found this shape one order down: a pair-only sandbox cannot saturate
 hydrogen's valence, and order three is where the saturation appears. Here an
@@ -589,3 +600,88 @@ So **branch (a) is predicted to FAIL**: the mixed arm is expected to produce H3O
 and heavier rather than H2O as the modal O-containing molecule. Staked here,
 before the run, with the mechanism named and measured. P1 is where it gets to be
 wrong.
+
+
+---
+
+## ASSIGNED VERIFICATION — `src/quaternary.rs`'s four-body surface · **DOES NOT VERIFY**
+
+*Assigned to this lane because G2 is its gate and the (O, H, H, H) full CI is its
+measurement. Instrument: `examples/s2_mbe4_verify.rs`. Scored on the SAME 40
+staked geometries gate G2 uses — eight directions by five radii around relaxed
+water — so the comparison is against referee numbers already in the record.*
+
+### 1. The sign: a CONVENTION difference, and this file's own wording was the fault
+
+`quaternary.rs` carries `G2_DEFICIT = +0.183`; this file said −0.183. Computed
+from one evaluation at `O-H3 = 2.25` bohr on the C2 axis:
+
+    dE4_energy  = E_FCI - E_MBE3 = +0.182863 Ha    <- quaternary.rs's convention
+    dE4_binding = E_MBE3 - E_FCI = -0.182863 Ha    <- this file's earlier wording
+
+Same magnitude, opposite sign, and the two sum to 0.0e0. **Their constant is
+right and this lane's wording was the ambiguous one** — a number stated in a
+convention it does not name is a number that can be read backwards, and a
+downstream lane read it backwards. Corrected above.
+
+### 2. Against full CI it does not verify, and the failure is structural
+
+The assignment's bar: the artifact must flip sign AND land within a stated
+tolerance of full CI, not merely become repulsive. Measured, with
+`residual = [E_MBE3 + dE4_theirs] − E_FCI`:
+
+| | |
+|---|---|
+| worst \|residual\| over 40 geometries | **0.2755 Ha** |
+| mean \|dE4_true\| over the same 40 | 0.1119 Ha |
+| T1's interpolation scale, for reference | 2.47e−4 Ha |
+| geometries where their term has the **WRONG SIGN** | **11 of 40** |
+| geometries where it overshoots by more than 2× | 8 of 40 |
+
+The residual is a **thousand times** T1's scale and **2.5× the mean magnitude of
+the term being modelled**. Adding this surface would not correct the MBE3
+sandbox; it would make it wrong in a new direction.
+
+**The failure is structural, not a tuning question.** The true `dE4` CHANGES SIGN
+with geometry and their form cannot: `G2_DEFICIT * radial_env * hh_env * s1*s2*s3`
+is a positive constant times positive envelopes, so it is repulsive everywhere by
+construction. Direction 1 — the C2 axis *between* the two hydrogens — is where
+that bites:
+
+    r      dE4 true      dE4 theirs     residual
+    1.4   -0.026923       0.183000      +0.209923
+    1.8   -0.030727       0.183000      +0.213727
+    2.2   -0.102448       0.173052      +0.275500
+    2.8   -0.172557       0.098105      +0.270662
+
+The true four-body term is **attractive** along that approach, by up to 0.17 Ha,
+and their surface returns its maximum repulsion there. It reproduces the ONE
+geometry it was anchored to and inverts the physics on a whole approach direction.
+
+### 3. The far field is the part that holds
+
+`R_CUT_4BODY = 6.0` bohr was the item this lane expected to fail, given that its
+own three-body table needed `R_HI = 15` for an algebraic tail. It does not fail:
+the true `dE4` is 7.8e−5 Ha at 5.9 bohr and 4.9e−5 just outside the cut, falling
+to 1.7e−6 by 9 bohr. A 6-bohr cut on the four-body term costs about 5e−5 Ha,
+which is inside T1's own scale. The four-body term is genuinely shorter-ranged
+than the three-body one, and their cut is defensible.
+
+### The verdict, and the reason it is not a close call
+
+**Does not verify. P1 gains no supplementary arm**, per the assignment's own
+condition.
+
+Beyond the numbers there is a discipline point the numbers happen to confirm.
+`G2_DEFICIT = 0.183` is this lane's single measured value at one geometry,
+hard-coded; `ALPHA_OH = 0.85`, `BETA_HH = 0.15` and `R_CUT_4BODY = 6.0` are
+hand-chosen widths. `holon-chem`'s own header says "There is no fitted parameter
+anywhere in this crate and no table of chemical results." This module introduces
+five. The residual above is what a five-parameter fit to one point does when it
+meets forty.
+
+**What would verify.** The same thing that made the three-body term work: a
+TABULATED exact-in-model surface. `E(OHHH)` is 1568 determinants — about four
+times a water point — over a six-coordinate space with `S3` symmetry, which is
+the real cost and the real successor. This lane's `-0.183`-scale measurement is
+its sizing, and the 40 geometries here are a ready-made held-out set for it.

@@ -145,6 +145,21 @@ fn place(s: &mut Sim, arm: Arm, seed: u64) {
     for i in 0..N_ATOMS {
         assert!(s.set_species(i, arm.species(i)), "species {i} did not register");
     }
+    // DERIVE THE TIMESTEP FROM THE SCENE, not from the empty box.
+    //
+    // `adopt_table_timescale` walks the ACTIVE pair types — every (i, j) in the box — and
+    // takes the stiffest mode's `omega^2 = k_e / mu`. `load_pair_table` calls it too, but
+    // that happens while the box is still empty, so its loop body never runs and it falls
+    // through to a default: one curve and a hydrogen reduced mass. Placing the atoms and
+    // not re-deriving leaves that default in force.
+    //
+    // It is not a small effect and it was not visible from the outside. As first run, the
+    // three arms took dt = 1.0772 (12 H), 0.8490 (12 O) and 4.3088 (mixed) — the MIXED
+    // arm four times the hydrogen one, though it contains the same H-H mode. A protocol
+    // whose whole design is "hold N fixed so the arms are comparable" cannot have the
+    // arms integrating at different timesteps.
+    s.adopt_table_timescale();
+
     let mut vs = [(0.0f64, 0.0f64); MAX_ATOMS];
     let (mut px, mut py) = (0.0, 0.0);
     #[allow(clippy::needless_range_loop)]
@@ -284,6 +299,11 @@ struct Outcome {
     /// The (O,O,H) and (O,O,O) fence's incidence: triples the three-body sector refused
     /// for want of a table, at the final force evaluation. The prereg requires it counted.
     fenced: u64,
+    /// The timestep the run ACTUALLY used, recorded per seed rather than printed once
+    /// from the header. Reading it off the scene before the seeds are placed reports the
+    /// empty box's fallback, which is how a four-times-too-coarse timestep can be
+    /// reported as the protocol's own number.
+    dt: f64,
     seconds: f64,
 }
 
@@ -301,8 +321,10 @@ fn run(s: &mut Sim, arm: Arm, seed: u64) -> Outcome {
     for _ in 0..FRAMES {
         s.step_frame(SUBSTEPS);
     }
+    let dt = s.dt();
     Outcome {
         seed,
+        dt,
         r: reading(s),
         drift: s.drift_peak,
         bound: s.drift_bound(),
@@ -376,6 +398,10 @@ fn main() {
     .expect("the committed (O,H,H) table");
     base.water = holon_chem::water::from_text(&src).expect("it parses");
 
+    // The timestep is reported from a PLACED scene, because that is where it is derived
+    // from; reading `base.dt()` on the empty box reports the fallback rather than the
+    // protocol's own number.
+    place(&mut base, arm, seeds[0]);
     println!(
         "# arm = {}   seeds = {}   {N_ATOMS} atoms in {BOX_W} x {BOX_H} bohr\n\
          # {FRAMES} boundaries x {SUBSTEPS} substeps, dt = {:.4} a.u. -> {:.2} ps\n\
@@ -392,9 +418,11 @@ fn main() {
     for &seed in &seeds {
         let o = run(&mut base, arm, seed);
         println!(
-            "seed {:#018x}  modal-O {:>4}  free O {}  free H {}  largest {}  molecules [{}]  \
-             fenced {}  drift {:.2e}/{:.2e}  |p| {:.2e}/{:.2e}  T {:.0} K  {:.0} s",
+            "seed {:#018x}  dt {:.4}  modal-O {:>4}  free O {}  free H {}  largest {}  \
+             molecules [{}]  fenced {}  drift {:.2e}/{:.2e}  |p| {:.2e}/{:.2e}  T {:.0} K  \
+             {:.0} s",
             o.seed,
+            o.dt,
             o.r.modal_o.map(fmt_comp).unwrap_or_else(|| "-".into()),
             o.r.free_o,
             o.r.free_h,

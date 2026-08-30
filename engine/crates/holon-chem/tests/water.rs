@@ -34,7 +34,8 @@
 mod common;
 
 use holon_chem::elements::{HYDROGEN, OXYGEN};
-use holon_chem::pair::{atom_energy, pair_point};
+use holon_chem::dual::D2;
+use holon_chem::pair::{atom_energy, pair_point, solve_geometry};
 use holon_chem::water::{
     self, de3_with, hh_side, node_c, node_index, node_r, WaterTable, C_HI, C_LO, NR, NU, N_NODES,
     R_HI, R_LO,
@@ -259,6 +260,16 @@ fn t1_the_interpolant_is_faithful_off_its_nodes() {
         }
     }
 
+    // REPORTED, as the prereg requires, and not only on failure. The maximum over a
+    // random draw is a LOWER BOUND on the supremum over the domain — the same fact that
+    // cost this campaign its first truncation radius — so the number below is what the
+    // gate measured and not what the surface's worst case is.
+    println!(
+        "T1: worst held-out error {worst:.4e} Ha over {n} points, at (x, y, c) = ({:.4}, \
+         {:.4}, {:.4}); kill {WATER_T1_KILL_E:.0e}",
+        worst_at.0, worst_at.1, worst_at.2
+    );
+
     // Two-sided, as the prereg requires. An all-zero error would mean the draw had landed
     // on nodes and the gate had measured its own construction.
     assert_eq!(
@@ -380,11 +391,12 @@ fn t2_the_truncation_costs_what_the_domain_says() {
 // ============================================================ the symmetry
 
 #[test]
-fn the_exchange_symmetry_is_bit_exact_and_a_broken_table_fires() {
+fn the_exchange_symmetry_is_bit_exact_and_the_desymmetrised_plant_voids() {
     // Plant (ii). Three separate claims, each with its carrier asserted before it is
     // scored:
     //   1. H <-> H exchange is EXACT, bit-level, on a staked asymmetric geometry;
-    //   2. a deliberately desymmetrised table fires above 1e-6 Ha;
+    //   2. a deliberately desymmetrised table fires above 1e-6 Ha — which VOIDS on an
+    //      empty sector here, for a reason that is itself the finding (see below);
     //   3. the O-distinct axis is NOT symmetrised — a table wrongly symmetrised over all
     //      three sides disagrees with the true surface by orders.
     let t = table();
@@ -418,14 +430,22 @@ fn the_exchange_symmetry_is_bit_exact_and_a_broken_table_fires() {
         );
     }
 
-    // 2 — the plant fires. One node moved on ONE side of the diagonal only.
+    // 2 — the plant. VOID ON AN EMPTY SECTOR, and the void's cause is the finding.
+    //
+    // The prereg stakes that "a deliberately desymmetrised table must fire >= 1e-6 Ha".
+    // It cannot, and the reason is the design claim (1) just measured: `eval` SORTS the
+    // two O-H sides before it reads, so both orders reach the SAME stored entry and a
+    // broken mirror is invisible to the exchange. The symmetry is carried by the sort,
+    // not by the storage. Per M-PLANT-SECTOR a plant on an empty sector VOIDs rather
+    // than passing, and the emptiness is asserted here rather than assumed — this is a
+    // plant that CANNOT fire, which is a different thing from one that did not.
     let (i, j, k) = (12usize, 30usize, 12usize);
     let mut broken = t.clone();
     let before = broken.node(i, j, k);
     assert!(
         before.abs() > 1e-6,
-        "the carrier is empty: node ({i}, {j}, {k}) is {before:.3e}, so desymmetrising it \
-         moves nothing"
+        "the carrier is empty for a second reason: node ({i}, {j}, {k}) is {before:.3e}, so \
+         corrupting it moves nothing either"
     );
     broken.set_node_asymmetric(i, j, k, before * 1.5);
     let (x, y) = (node_r(i), node_r(j));
@@ -433,11 +453,24 @@ fn the_exchange_symmetry_is_bit_exact_and_a_broken_table_fires() {
     let z2 = hh_side(x, y, 1.0 - c * c);
     let (bv1, _) = broken.eval(x, y, z2);
     let (bv2, _) = broken.eval(y, x, z2);
-    assert!(
-        (bv1 - bv2).abs() >= 1e-6,
-        "plant (ii) MISSED: a desymmetrised table still reads the same both ways, to \
-         {:.3e} Ha",
+    assert_eq!(
+        bv1.to_bits(),
+        bv2.to_bits(),
+        "the sector is NOT empty after all: a desymmetrised table read {:.3e} Ha \
+         differently across the exchange, so the storage does carry some of the symmetry \
+         and this plant should be scored rather than voided",
         (bv1 - bv2).abs()
+    );
+
+    // What the corruption DOES break is the value, and that is the live half of the
+    // plant: the same mutation moves the surface away from the model by orders more than
+    // the 1e-6 the prereg names, which is what T1 would catch.
+    let (clean, _) = t.eval(x, y, z2);
+    assert!(
+        (bv1 - clean).abs() >= 1e-6,
+        "the corruption is invisible in the VALUE too, at {:.3e} Ha — then nothing about \
+         this plant is live and it is a defect in the plant, not a property of the table",
+        (bv1 - clean).abs()
     );
 
     // 3 — oxygen is not sorted in. A table read with all three sides sorted would answer
@@ -644,15 +677,150 @@ fn plant_iii_the_swapped_table_fires() {
 
 #[test]
 fn g2_the_third_hydrogen_refuses_and_the_second_binds() {
-    // VALENCE SATURATION, two-sided.
+    // VALENCE SATURATION, two-sided — and the gate is on the prereg's own quantity,
+    // `E(H3O)`, which is the FOUR-ATOM energy of the model rather than the three-body
+    // table's estimate of it. That distinction is not a detail; it is the whole result.
     //
-    // The SECOND hydrogen binding deeply is water existing at all: E(OHH) at the relaxed
-    // geometry against relaxed OH plus a free H.
+    // # What was measured first, and why this test reads the way it does
     //
-    // The THIRD hydrogen refusing is the claim. In an MBE3 world a third hydrogen brought
-    // to relaxed water feels three new pair terms and three new three-body terms, and the
-    // best binding it can find anywhere must be shallower than water's own second O-H
-    // bond by the staked factor.
+    // This gate was FIRST written against the MBE3 estimate — pairs plus the tabulated
+    // three-body term — because the campaign is about the table. It FIRED, at 1.76x
+    // against the staked 5x: the MBE3 surface says a third hydrogen binds to relaxed
+    // water by +0.0939 Ha. Branch (b) is "investigate, never massage", and
+    // `examples/s2_g2_probe.rs` is the investigation. At the very geometry the MBE3 scan
+    // calls deepest, the model's own full CI says the third hydrogen is REPELLED by
+    // 0.0890 Ha; along the whole approach it is repelled at every separation, monotonically;
+    // and the missing four-body term is -0.183 Ha, comparable to the O-H bond itself.
+    //
+    // So the firing is a fact about the EXPANSION, not about the model and not about the
+    // table. Both readings are kept: the model's answer is the gate, because it is what
+    // the prereg names, and the MBE3 answer is asserted below as the SCOPE finding it is —
+    // a three-body expansion cannot saturate oxygen's valence, because valence saturation
+    // for a fourth atom lives at order four. SATURATION-1 found the same shape one order
+    // down: pair-only cannot saturate hydrogen's valence, and order three is where it
+    // appears.
+    //
+    // The control that makes the whole thing readable: water's own second O-H bond is
+    // +0.163077 Ha by full CI and +0.163078 by MBE3, agreeing to 1.7e-6 — because for a
+    // THREE-atom system the three-body expansion is EXACT, and the only gap is the
+    // table's own interpolation, at exactly the scale T1 measures.
+    // No table is read here on purpose: G2 as the prereg words it is a question about
+    // `E(H3O)`, which is the model's own four-atom energy. The tabulated surface's answer
+    // to the same question is the NEXT test, and keeping them in separate functions is
+    // what stops one from being quietly read as the other.
+    let e_h = atom_energy(HYDROGEN);
+    let r_w = 1.9435740105;
+    let th_w = 96.75788837 * PI / 180.0;
+
+    let o = [0.0f64, 0.0, 0.0];
+    let h1 = [r_w * (th_w / 2.0).cos(), r_w * (th_w / 2.0).sin(), 0.0];
+    let h2 = [r_w * (th_w / 2.0).cos(), -r_w * (th_w / 2.0).sin(), 0.0];
+    let c3 = |p: [f64; 3]| [D2::c(p[0]), D2::c(p[1]), D2::c(p[2])];
+    let dist = |a: [f64; 3], b: [f64; 3]| {
+        ((a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2)).sqrt()
+    };
+    let e_water = solve_geometry(
+        &[OXYGEN, HYDROGEN, HYDROGEN],
+        vec![c3(o), c3(h1), c3(h2)],
+    )
+    .e
+    .v;
+
+    // --- the two-sided CONTROL: the second hydrogen binds deeply ---------------------
+    // Water existing at all. Relaxed OH plus a free H, against relaxed water.
+    let mut r_oh = 1.9f64;
+    for _ in 0..80 {
+        let p = pair_point(OXYGEN, HYDROGEN, r_oh);
+        r_oh += p.f / p.e2.max(1e-6);
+        if p.f.abs() < 1e-13 {
+            break;
+        }
+    }
+    let d_second = (pair_point(OXYGEN, HYDROGEN, r_oh).e + e_h) - e_water;
+    assert!(
+        d_second > 0.05,
+        "G2's CONTROL FAILED: the second hydrogen binds by only {d_second:.6} Ha, so water \
+         does not exist in this model and a third one refusing proves nothing"
+    );
+
+    // --- the CLAIM: the third hydrogen refuses, in the model's own full CI ------------
+    // A staked set of directions and radii around relaxed water. Coarse on purpose: the
+    // quantity is the EXISTENCE of a well, and a well deep enough to threaten a 0.163 Ha
+    // bond is not something a scan at this spacing steps over. Each point is 1568
+    // determinants.
+    let dirs: [[f64; 3]; 8] = [
+        [-1.0, 0.0, 0.0],                      // the C2 axis, away from both hydrogens
+        [1.0, 0.0, 0.0],                       // the C2 axis, between them
+        [0.0, 0.0, 1.0],                       // perpendicular to the molecular plane
+        [0.0, 1.0, 0.0],                       // in plane, past one hydrogen
+        [0.0, -1.0, 0.0],                      // in plane, past the other
+        [-0.7071, 0.0, 0.7071],                // the two lone-pair lobes
+        [-0.7071, 0.0, -0.7071],
+        [0.5774, 0.5774, 0.5774],              // a general direction, no symmetry to hide in
+    ];
+    let radii = if cfg!(debug_assertions) {
+        vec![1.6f64, 2.2, 3.0]
+    } else {
+        vec![1.4f64, 1.8, 2.2, 2.8, 3.6]
+    };
+    let mut deepest = f64::NEG_INFINITY;
+    let mut at = (0usize, 0.0f64);
+    let mut probed = 0usize;
+    for (di, d) in dirs.iter().enumerate() {
+        let n = (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt();
+        for &r in &radii {
+            let p = [r * d[0] / n, r * d[1] / n, r * d[2] / n];
+            if dist(o, p) < 0.9 || dist(h1, p) < 0.9 || dist(h2, p) < 0.9 {
+                continue;
+            }
+            let e = solve_geometry(
+                &[OXYGEN, HYDROGEN, HYDROGEN, HYDROGEN],
+                vec![c3(o), c3(h1), c3(h2), c3(p)],
+            )
+            .e
+            .v;
+            let binding = (e_water + e_h) - e;
+            probed += 1;
+            if binding > deepest {
+                deepest = binding;
+                at = (di, r);
+            }
+        }
+    }
+    assert!(probed >= 20, "only {probed} four-atom geometries were reachable");
+    println!(
+        "G2: second O-H bond {d_second:.6} Ha; deepest third-H binding anywhere on {probed} \
+         full-CI geometries is {deepest:+.6} Ha (direction {}, r = {:.2})",
+        at.0, at.1
+    );
+    assert!(
+        deepest <= d_second / WATER_G2_STAKED_RATIO,
+        "G2 FIRED (branch b — investigate, never massage): the third hydrogen binds at \
+         {deepest:+.6} Ha against water's own second O-H bond of {d_second:.6} Ha, a ratio \
+         of {:.2}x against the staked {WATER_G2_STAKED_RATIO}x",
+        d_second / deepest.max(1e-12)
+    );
+    // The refusal here is not merely shallow, it is a refusal: no well exists at all.
+    // Asserted separately so a future run that found a shallow WELL would be visible as a
+    // change rather than absorbed by the ratio.
+    assert!(
+        deepest < 0.0,
+        "the third hydrogen is BOUND, by {deepest:.6} Ha — shallow enough to pass the ratio, \
+         but a well where the campaign reported none"
+    );
+}
+
+#[test]
+fn the_three_body_expansion_cannot_saturate_oxygen_and_says_so() {
+    // THE SCOPE FINDING, gated rather than left in prose. G2's claim holds in the model
+    // and FAILS through the tabulated three-body surface, and the size of that failure is
+    // what P1 has to be read against: an MBE3 sandbox will over-bind a third hydrogen to
+    // water, so it will make H3O.
+    //
+    // Two assertions, in opposite directions, because both halves are load-bearing:
+    //   * on a THREE-atom system MBE3 is exact and the table reproduces full CI to the
+    //     interpolation error — otherwise the surface, not the expansion, is at fault;
+    //   * on the FOUR-atom system it does not, by an amount of order the bond itself.
     let t = table();
     let e_o = atom_energy(OXYGEN);
     let e_h = atom_energy(HYDROGEN);
@@ -663,91 +831,66 @@ fn g2_the_third_hydrogen_refuses_and_the_second_binds() {
     let m = Mbe3 { t: &t, oh: &oh, hh: &hh, e_o, e_h };
     let r_w = 1.9435740105;
     let th_w = 96.75788837 * PI / 180.0;
-
-    // --- the control: the second hydrogen binds -------------------------------------
-    // D(second) = [E(OH) + E(H)] - E(OHH), all in-model, the OH fragment relaxed.
-    let mut r_oh = 1.8f64;
-    for _ in 0..40 {
-        let (lo, hi) = (r_oh - 0.01, r_oh + 0.01);
-        if pair_point(OXYGEN, HYDROGEN, lo).e < pair_point(OXYGEN, HYDROGEN, hi).e {
-            r_oh -= 0.01;
-        } else {
-            r_oh += 0.01;
-        }
-    }
-    let e_oh = pair_point(OXYGEN, HYDROGEN, r_oh).e;
-    let e_water = m.at(r_w, r_w, th_w);
-    let d_second = (e_oh + e_h) - e_water;
-    assert!(
-        d_second > 0.05,
-        "G2's CONTROL FAILED: the second hydrogen binds by only {d_second:.4e} Ha, so \
-         water does not exist in this model and the refusal of a third proves nothing"
-    );
-
-    // --- the claim: the third hydrogen refuses ---------------------------------------
-    // A third hydrogen is placed on a spherical shell around the relaxed water and the
-    // deepest binding anywhere on the scan is taken.
-    //
-    // The pair curves come from [`PairCurve`] — sampled once, read by cubic Hermite with
-    // the solver's own exact derivatives. See its doc comment for why the loops below do
-    // not call `pair_point` directly.
-    let e_oh_at = |r: f64| oh.at(r);
-    let e_hh_at = |r: f64| hh.at(r);
+    let c3 = |p: [f64; 3]| [D2::c(p[0]), D2::c(p[1]), D2::c(p[2])];
     let o = [0.0f64, 0.0, 0.0];
     let h1 = [r_w * (th_w / 2.0).cos(), r_w * (th_w / 2.0).sin(), 0.0];
     let h2 = [r_w * (th_w / 2.0).cos(), -r_w * (th_w / 2.0).sin(), 0.0];
+    let e_water_fci = solve_geometry(
+        &[OXYGEN, HYDROGEN, HYDROGEN],
+        vec![c3(o), c3(h1), c3(h2)],
+    )
+    .e
+    .v;
+
+    // Three atoms: MBE3 is EXACT by construction, so the gap is the table's alone.
+    let gap3 = (m.at(r_w, r_w, th_w) - e_water_fci).abs();
+    assert!(
+        gap3 <= WATER_T1_KILL_E,
+        "on the THREE-atom system the expansion is exact and the table is the only gap, \
+         yet it is {gap3:.3e} Ha — above T1's own kill, so the surface is at fault and \
+         nothing below is about the expansion"
+    );
+
+    // Four atoms: the four-body term is missing, and here is how much of it there is.
+    let p = [-2.25f64, 0.0, 0.0];
     let dist = |a: [f64; 3], b: [f64; 3]| {
         ((a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2)).sqrt()
     };
-    // The H3 table is built ONCE, outside the scan: the third hydrogen makes a
-    // hydrogen-only triple with the two that are already there, and that triple is
-    // SATURATION-1's surface, not this one's.
-    let h3 = holon_chem::trimer::generate().expect("the H3 table builds");
-    let mut deepest = 0.0f64;
-    let (n_r, n_th, n_ph) = if cfg!(debug_assertions) { (7, 7, 7) } else { (19, 17, 17) };
-    for i in 0..n_r {
-        let rr = 1.2 + (6.0 - 1.2) * i as f64 / (n_r - 1) as f64;
-        for j in 0..n_th {
-            let a = PI * j as f64 / (n_th - 1) as f64;
-            for k in 0..n_ph {
-                let b = 2.0 * PI * k as f64 / n_ph as f64;
-                let probe = [
-                    rr * a.sin() * b.cos(),
-                    rr * a.sin() * b.sin(),
-                    rr * a.cos(),
-                ];
-                let (d_oh3, d_h1h3, d_h2h3) =
-                    (dist(o, probe), dist(h1, probe), dist(h2, probe));
-                if d_oh3 < 0.9 || d_h1h3 < 0.9 || d_h2h3 < 0.9 {
-                    continue;
-                }
-                // Every new pair, and every new triple the fourth atom creates. The
-                // (O, O, H) fence does not arise here — there is one oxygen — so the
-                // three new triples are (O, H1, H3), (O, H2, H3) and (H1, H2, H3).
-                let new_pairs = (e_oh_at(d_oh3) - e_o - e_h)
-                    + (e_hh_at(d_h1h3) - 2.0 * e_h)
-                    + (e_hh_at(d_h2h3) - 2.0 * e_h);
-                let (t_a, _) = t.eval(r_w, d_oh3, d_h1h3);
-                let (t_b, _) = t.eval(r_w, d_oh3, d_h2h3);
-                let (t_c, _) = h3.eval([dist(h1, h2), d_h1h3, d_h2h3]);
-                let binding = -(new_pairs + t_a + t_b + t_c);
-                if binding > deepest {
-                    deepest = binding;
-                }
-            }
-        }
-    }
-
-    let ratio = d_second / deepest.max(1e-12);
+    let (a, b, c) = (dist(o, p), dist(h1, p), dist(h2, p));
+    let mbe3_binding = -((oh.at(a) - e_o - e_h)
+        + (hh.at(b) - 2.0 * e_h)
+        + (hh.at(c) - 2.0 * e_h)
+        + t.eval(r_w, a, b).0
+        + t.eval(r_w, a, c).0
+        + holon_chem::trimer::generate()
+            .expect("the H3 table")
+            .eval([dist(h1, h2), b, c])
+            .0);
+    let fci_binding = (e_water_fci + e_h)
+        - solve_geometry(
+            &[OXYGEN, HYDROGEN, HYDROGEN, HYDROGEN],
+            vec![c3(o), c3(h1), c3(h2), c3(p)],
+        )
+        .e
+        .v;
+    let de4 = fci_binding - mbe3_binding;
     println!(
-        "G2: second O-H bond {d_second:.6} Ha, deepest third-H binding {deepest:.6} Ha, \
-         ratio {ratio:.2}x (staked >= {WATER_G2_STAKED_RATIO})"
+        "SCOPE: at O-H3 = {a:.3} bohr the MBE3 sandbox binds a third hydrogen by \
+         {mbe3_binding:+.6} Ha where the model repels it by {:.6}; the missing four-body \
+         term is {de4:+.6} Ha, {:.0}% of water's own second O-H bond",
+        -fci_binding,
+        100.0 * de4.abs() / 0.163077
     );
     assert!(
-        ratio >= WATER_G2_STAKED_RATIO,
-        "G2 FIRED (branch b — investigate, never massage): the third hydrogen binds at \
-         {deepest:.6} Ha against water's own second O-H bond of {d_second:.6} Ha, a ratio \
-         of {ratio:.2}x against the staked {WATER_G2_STAKED_RATIO}x"
+        fci_binding < 0.0 && mbe3_binding > 0.0,
+        "the scope finding has changed shape: full CI binding {fci_binding:+.6}, MBE3 \
+         {mbe3_binding:+.6}. The two used to disagree in SIGN, which is what makes an \
+         MBE3 sandbox unable to saturate oxygen"
+    );
+    assert!(
+        de4.abs() > 0.05,
+        "the four-body term is only {de4:.3e} Ha here, so the expansion's failure is not \
+         what the campaign reported it to be"
     );
 }
 

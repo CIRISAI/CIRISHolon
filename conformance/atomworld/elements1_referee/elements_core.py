@@ -465,6 +465,14 @@ def _self_overlap(a, na, b, nb, l):
     a, b = mpf(a), mpf(b)
     p = a + b
     v = na * nb * (pi / p) ** mpf(1.5)
+    # `_dfact` here MUST mean (2l-1)!! -- 1, 1, 3, 15 -- not the ordinary double factorial
+    # of its argument, which is what most functions with this name compute and which gives
+    # 1, 1, 2, 3. Under the wrong reading every d self-overlap is off by exactly 3/2, and
+    # SILENTLY: a uniform factor on a normalisation produces no NaN and no refusal, only
+    # converged d energies that are wrong. The name does not carry the convention, so
+    # `test_self_overlap_quadrature.py` pins it against a numerical integral of the
+    # defining integrand -- two closed forms can share a mistake; a quadrature cannot share
+    # it with either -- and plants the wrong convention to show the check catches it.
     return v * _dfact(l) / (2 * p) ** l
 
 

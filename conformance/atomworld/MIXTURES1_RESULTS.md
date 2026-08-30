@@ -542,11 +542,18 @@ SOLVER, not on the interpolant, so these do not depend on knot count):
 ### What holds
 
 * **N2 is deepest**, as staked.
-* **Both closed-shell negatives are UNBOUND**, as staked — no minimum deeper than
-  the declared `WELL_MIN_DEPTH = 1e-4 Ha`. Nothing in the engine knows argon and
-  neon are noble: `locate_well` looks for a minimum and reports `None`, through
-  the same code path that produces N2's curve. That is gate **E1** discharged on
-  its two staked species as well.
+* **Both closed-shell negatives are UNBOUND** — no minimum deeper than the
+  declared `WELL_MIN_DEPTH = 1e-4 Ha`. Nothing in the engine knows argon and neon
+  are noble: `locate_well` looks for a minimum and reports `None`, through the
+  same code path that produces N2's curve.
+
+  This is **evidence for gate E1 and not its discharge**, and the distinction is
+  not pedantry. E1 stakes "no well deeper than 1e-4 Ha *on their staked grids*",
+  and a staked grid is one the referee file declares. What was measured here is
+  the ENGINE's own derived range (`pair::derive_range`, 24 knots) — the same rule
+  every other curve in this crate uses, and therefore result-blind, but not the
+  declared grid E1 names. E1 is discharged when R2's drop lands and these two are
+  re-read on the grid the drop declares.
 * **S2 > Cl2**, as staked.
 
 ### The two inversions, and one of them is gross

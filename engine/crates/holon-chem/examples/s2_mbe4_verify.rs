@@ -1,46 +1,49 @@
-//! VERIFICATION of `src/quaternary.rs`'s four-body surface against this lane's full-CI
-//! referee numbers.
+//! The four-body reference set: `dE4_true = E_FCI - E_MBE3` at gate G2's forty staked
+//! geometries, and the far-field shells beyond them.
 //!
-//! Assigned because G2 is this lane's gate and the (O, H, H, H) full CI is this lane's
-//! measurement. Three questions, in the order they have to be asked.
+//! # What this was, and what it is now
 //!
-//! # 1. The sign
+//! This file was written to VERIFY `src/quaternary.rs`, an analytic four-body surface. It
+//! did not verify — wrong sign at 11 of 40 geometries, worst residual 0.2755 Ha against a
+//! mean `|dE4_true|` of 0.1119 Ha and T1's interpolation scale of 2.47e-4 — and that
+//! module has since been removed from the crate. The numbers, the credit and the reasoning
+//! are in `conformance/atomworld/SATURATION2_RESULTS.md`; the run that produced them is in
+//! git history.
 //!
-//! `quaternary.rs` carries `G2_DEFICIT = +0.183` and this lane's record says `-0.183`.
-//! That is a CONVENTION difference and not an error, and the check is one line of algebra
-//! made explicit here rather than asserted:
+//! What remains here is the half that was never about that module: the exact reference a
+//! four-body surface has to be built against. It is kept rather than deleted because it is
+//! the successor's instrument, already sized —
+//!
+//! * `E_MBE3` assembled for a FOUR-atom system: six pair terms, three `(O,H,H)` triples
+//!   and one `(H,H,H)`, which is the arithmetic a four-body term is defined as the
+//!   remainder of and the easiest thing in this campaign to get subtly wrong;
+//! * `E_FCI` for `(O,H,H,H)` — 1568 determinants in the minimal-|Sz| sector;
+//! * their difference at the SAME forty geometries gate G2 scores, so a candidate surface
+//!   is graded against referee numbers already in the record rather than against a set
+//!   chosen after the fact;
+//! * and the far field, which is where this lane's own expectation was wrong.
+//!
+//! # The sign convention, stated because getting it wrong cost a lane a day
 //!
 //! ```text
-//! binding(X)  = [E(H2O) + E(H)] - E(X)          positive when bound
-//! dE4_binding = binding_FCI - binding_MBE3      = -0.183   (this lane's earlier wording)
-//! dE4_energy  = E_FCI - E_MBE3                  = +0.183   (quaternary.rs's constant)
+//! binding(X)  = [E(H2O) + E(H)] - E(X)        positive when bound
+//! dE4_energy  = E_FCI - E_MBE3                the sign a four-body TERM is ADDED with
+//! dE4_binding = E_MBE3 - E_FCI                the same number, negated
 //! ```
 //!
-//! Both are printed below from one computation so the identity is visible rather than
-//! argued. What is wrong is this lane's own earlier wording, which stated a number in a
-//! convention it did not name.
+//! `dE4_energy` is used throughout and is what part 1 prints from a single evaluation.
+//! This lane once published `-0.183` without naming which of the two it was, and a
+//! downstream lane read it backwards.
 //!
-//! # 2. Does it reproduce full CI, or only change the sign?
+//! # The far-field finding, which survives as a real input to the successor's domain
 //!
-//! The assignment's wording: the artifact must flip sign AND land within a stated
-//! tolerance of full CI, not merely become repulsive. So the residual measured here is
-//!
-//! ```text
-//! residual = [E_MBE3 + dE4_quaternary] - E_FCI
-//! ```
-//!
-//! over the SAME staked geometries gate G2 scores — eight directions by five radii around
-//! relaxed water — so the comparison is against the referee numbers already in the record.
-//! A four-body term that worked would drive this to the interpolation scale T1 measures,
-//! about 1e-4 Ha. `dE4_true = E_FCI - E_MBE3` is printed beside it, because the ratio of
-//! the two is what says whether the form is right or only the magnitude at one point.
-//!
-//! # 3. The far field
-//!
-//! `R_CUT_4BODY = 6.0` bohr with a switch from 3.5. This lane's three-body table needed
-//! `R_HI = 15` because the tail is ALGEBRAIC (`R^-5`, quadrupolar) rather than
-//! exponential, and a truncation is only as good as the worst thing it zeroes. So the true
-//! `dE4` is measured on the shells their cut discards.
+//! This lane expected the four-body term to need a domain like its three-body one, whose
+//! tail is ALGEBRAIC (`R^-5`, quadrupolar) and forced `R_HI = 15` bohr. **It does not.**
+//! Measured in part 3: `dE4_true` is 7.8e-5 Ha at 5.9 bohr, 4.9e-5 at 6.1 and 1.7e-6 by 9.
+//! A six-bohr cut on the four-body term costs about 5e-5 Ha, inside T1's own scale. The
+//! four-body term is genuinely shorter-ranged than the three-body one, and the `R_CUT =
+//! 6.0` bohr the removed module chose was defensible — that much of it was right, and the
+//! successor should start from it rather than from this lane's 15.
 //!
 //! ```text
 //! cargo run --release -p holon-chem --example s2_mbe4_verify
@@ -49,7 +52,6 @@
 use holon_chem::dual::D2;
 use holon_chem::elements::{HYDROGEN, OXYGEN};
 use holon_chem::pair::{atom_energy, pair_point, solve_geometry};
-use holon_chem::quaternary::de4_ohhh_cart;
 use holon_chem::trimer;
 use holon_chem::water;
 
@@ -79,13 +81,6 @@ fn main() {
     let h1 = [R_W * (th / 2.0).cos(), R_W * (th / 2.0).sin(), 0.0];
     let h2 = [R_W * (th / 2.0).cos(), -R_W * (th / 2.0).sin(), 0.0];
     let d_h1h2 = dist(h1, h2);
-    let e_water_fci = solve_geometry(
-        &[OXYGEN, HYDROGEN, HYDROGEN],
-        vec![c3(o), c3(h1), c3(h2)],
-    )
-    .e
-    .v;
-
     // E_MBE3 of the four-atom system: six pair terms, four triples, no four-body term.
     let mbe3 = |p: [f64; 3]| -> f64 {
         let (a, b, c) = (dist(o, p), dist(h1, p), dist(h2, p));
@@ -116,7 +111,7 @@ fn main() {
     println!("   at O-H3 = 2.250 bohr on the C2 axis:");
     println!("     E_FCI                 = {ef:.9} Ha");
     println!("     E_MBE3                = {em:.9} Ha");
-    println!("     dE4_energy  = FCI-MBE3 = {:+.6} Ha   <- quaternary.rs's convention", ef - em);
+    println!("     dE4_energy  = FCI-MBE3 = {:+.6} Ha   <- the convention a term is ADDED with", ef - em);
     // binding(X) = [E(H2O) + E(H)] - E(X), so a difference of BINDINGS is
     // [.. - E_FCI] - [.. - E_MBE3] = E_MBE3 - E_FCI: the same magnitude, opposite sign.
     println!(
@@ -127,11 +122,11 @@ fn main() {
         "     the two sum to {:.1e}, so they differ by a sign and nothing else",
         ((ef - em) + (em - ef)).abs()
     );
-    println!("     quaternary.rs G2_DEFICIT = {:+.6}", holon_chem::quaternary::G2_DEFICIT);
-    println!("   VERDICT: convention, not error. The lane's own doc is what needs the fix.");
+    println!("   dE4_energy is the convention used from here on: it is the sign a four-body");
+    println!("   term is ADDED with, so a surface printing this number needs no translation.");
 
     // ------------------------------------------- 2. does it reproduce full CI?
-    println!("\n## 2 — MBE3 + their dE4 against full CI, on gate G2's own staked geometries");
+    println!("\n## 2 — the reference set: dE4_true at gate G2's own forty staked geometries");
     let dirs: [[f64; 3]; 8] = [
         [-1.0, 0.0, 0.0],
         [1.0, 0.0, 0.0],
@@ -144,11 +139,14 @@ fn main() {
     ];
     let radii = [1.4f64, 1.8, 2.2, 2.8, 3.6];
     println!(
-        "   {:>4} {:>5} {:>13} {:>13} {:>13} {:>13}",
-        "dir", "r", "dE4 true", "dE4 theirs", "residual", "|res|/|true|"
+        "   {:>4} {:>5} {:>14} {:>14} {:>14}",
+        "dir", "r", "E_FCI", "E_MBE3", "dE4_true"
     );
-    let (mut worst, mut n, mut n_signflip, mut n_overshoot) = (0.0f64, 0usize, 0usize, 0usize);
-    let mut sum_true = 0.0f64;
+    // A candidate surface has to reproduce the SIGN as well as the magnitude, and the sign
+    // is not constant: this counts the geometries where the true term is attractive, which
+    // is the property the removed module could not represent.
+    let (mut n, mut n_attractive) = (0usize, 0usize);
+    let (mut sum_true, mut max_true) = (0.0f64, 0.0f64);
     for (di, d) in dirs.iter().enumerate() {
         let nn = (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt();
         for &r in &radii {
@@ -158,45 +156,35 @@ fn main() {
             }
             let (ef, em) = (fci(p), mbe3(p));
             let t = ef - em;
-            let g = de4_ohhh_cart(o, h1, h2, p);
-            let res = (em + g) - ef;
             n += 1;
             sum_true += t.abs();
-            if t * g < 0.0 {
-                n_signflip += 1;
+            max_true = max_true.max(t.abs());
+            if t < 0.0 {
+                n_attractive += 1;
             }
-            if g.abs() > 2.0 * t.abs() && t.abs() > 1e-6 {
-                n_overshoot += 1;
-            }
-            if res.abs() > worst {
-                worst = res.abs();
-            }
-            println!(
-                "   {di:>4} {r:>5.1} {t:>13.6} {g:>13.6} {res:>13.6} {:>13.3}",
-                if t.abs() > 1e-9 { res.abs() / t.abs() } else { f64::NAN }
-            );
+            println!("   {di:>4} {r:>5.1} {ef:>14.6} {em:>14.6} {t:>14.6}");
         }
     }
     println!(
-        "\n   over {n} geometries: worst |residual| = {worst:.6} Ha, mean |dE4_true| = {:.6} Ha",
+        "\n   over {n} geometries: mean |dE4_true| = {:.6} Ha, max {max_true:.6} Ha",
         sum_true / n as f64
     );
     println!(
-        "   their term has the WRONG SIGN at {n_signflip} of {n}, and overshoots by more \
-         than 2x at {n_overshoot}"
+        "   the true term is ATTRACTIVE at {n_attractive} of {n} — it CHANGES SIGN with\n            geometry, which is the property that ended the analytic candidate and which any\n            successor has to carry."
     );
     println!(
-        "   T1's interpolation scale, for reference: 2.47e-4 Ha. A four-body term that \
-         worked\n   would drive the residual there."
+        "   the bar: T1's interpolation scale is 2.47e-4 Ha, so a four-body surface that\n            worked would land the residual against this column there."
     );
 
     // ---------------------------------------------------------------- 3. the far field
-    println!("\n## 3 — the far field their R_CUT_4BODY = 6.0 discards");
-    println!("   {:>6} {:>14} {:>14}", "O-H3", "dE4 true", "dE4 theirs");
+    println!("\n## 3 — the far field, and why a six-bohr cut is defensible here");
+    println!("   {:>6} {:>14}", "O-H3", "dE4_true");
     for r in [4.0f64, 5.0, 5.9, 6.1, 7.0, 9.0, 12.0] {
         let p = [-r, 0.0, 0.0];
         let (ef, em) = (fci(p), mbe3(p));
-        let g = de4_ohhh_cart(o, h1, h2, p);
-        println!("   {r:>6.1} {:>14.3e} {:>14.3e}", ef - em, g);
+        println!("   {r:>6.1} {:>14.3e}", ef - em);
     }
+    println!(
+        "\n   This lane's THREE-body table needed R_HI = 15 bohr for an algebraic R^-5\n            tail. That does NOT transfer: the four-body term is 4.9e-5 Ha just past 6 bohr\n            and 1.7e-6 by 9, so a six-bohr cut costs about 5e-5 Ha — inside T1's own scale."
+    );
 }

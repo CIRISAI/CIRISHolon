@@ -704,12 +704,25 @@ informative half.
 
 ---
 
-## ASSIGNED VERIFICATION — `src/quaternary.rs`'s four-body surface · **DOES NOT VERIFY**
+## ASSIGNED VERIFICATION — `src/quaternary.rs`'s four-body surface · **DID NOT VERIFY; MODULE REMOVED**
 
 *Assigned to this lane because G2 is its gate and the (O, H, H, H) full CI is its
-measurement. Instrument: `examples/s2_mbe4_verify.rs`. Scored on the SAME 40
-staked geometries gate G2 uses — eight directions by five radii around relaxed
-water — so the comparison is against referee numbers already in the record.*
+measurement. Scored on the SAME 40 staked geometries gate G2 uses — eight
+directions by five radii around relaxed water — so the comparison was against
+referee numbers already in the record.*
+
+**The module was removed from the crate on the lead's order following this
+verdict** (`src/quaternary.rs`, its `mod` line, its test, its audit entries), on
+the `selector.rs` precedent: a five-parameter fit in a crate whose header declares
+zero fitted parameters, failed against forty staked geometries, must not remain
+presenting as physics. The record is this section plus git history.
+
+`examples/s2_mbe4_verify.rs` is KEPT and converted. Its verification half is gone
+with the module it verified; what remains is the half that was never about that
+module and is the successor's instrument — `E_MBE3` assembled for a four-atom
+system, `E_FCI` at 1568 determinants, their difference at the same forty
+geometries, and the far field. It prints `dE4_true` as the reference column a
+candidate surface has to reproduce.
 
 ### 1. The sign: a CONVENTION difference, and this file's own wording was the fault
 
@@ -780,11 +793,20 @@ anywhere in this crate and no table of chemical results." This module introduces
 five. The residual above is what a five-parameter fit to one point does when it
 meets forty.
 
-**What would verify.** The same thing that made the three-body term work: a
-TABULATED exact-in-model surface. `E(OHHH)` is 1568 determinants — about four
-times a water point — over a six-coordinate space with `S3` symmetry, which is
-the real cost and the real successor. This lane's `-0.183`-scale measurement is
-its sizing, and the 40 geometries here are a ready-made held-out set for it.
+**What would verify — the successor, MBE4-1.** The same thing that made the
+three-body term work: a TABULATED exact-in-model surface. `E(OHHH)` is 1568
+determinants a point — about four times a water point — over a six-coordinate
+space with `S3` symmetry, which is the real cost. Its sizing is already here:
+
+* the reference column, `dE4_true` at the forty geometries, mean `|dE4|` 0.1119 Ha
+  and max 0.2284 — a ready-made held-out set, produced by
+  `examples/s2_mbe4_verify.rs`;
+* the bar: T1's 2.47e-4 Ha, which is where a working surface lands its residual;
+* the property that ended the analytic candidate and that any successor must
+  carry: **the true term changes sign with geometry**, attractive at 11 of the 40
+  and repulsive at the other 29;
+* and the domain, from the credited far-field finding below: **start from a
+  six-bohr cut, not from this lane's fifteen.**
 
 
 ---

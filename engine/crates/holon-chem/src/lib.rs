@@ -48,7 +48,6 @@ pub mod sto3g;
 pub mod table;
 pub mod trimer;
 pub mod water;
-pub mod quaternary;
 
 pub use h2::{asymptote, equilibrium, h2_energy, h2_point, h_atom_energy, Point};
 pub use table::{generate_table, stream_table, Meta, Table, PROVENANCE};

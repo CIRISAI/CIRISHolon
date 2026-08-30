@@ -155,12 +155,21 @@ def v_manifest(dropdir):
         check("a manifest is present in the drop", False, dropdir)
         return
     man = json.load(open(p))
-    staked = man.get("staked_eight") or []
+    staked = man.get("staked_seven") or []
     present = man.get("pairs_present") or []
     owed = man.get("pairs_owed") or []
-    check("the manifest names the staked set", sorted(staked) == sorted(
-        ["Cl2", "S2", "Ar2", "HCl", "ClF", "NaH", "SiO", "NeAr"]),
-        "%s" % sorted(staked))
+    extra = man.get("also_emitted") or []
+    # R2's staked set is SEVEN.  NeAr is gate E1's second negative control and
+    # is not one of them, so it ships beside the invariant rather than widening
+    # it.  mixtures-engine froze the seven independently and cross-checks rather
+    # than reading ours, which is what made the first version's "eight" visible.
+    check("the manifest names R2's staked SEVEN (NeAr is E1's, not R2's)",
+          sorted(staked) == sorted(
+              ["Cl2", "S2", "Ar2", "HCl", "ClF", "NaH", "SiO"]),
+          "%s" % sorted(staked))
+    check("NeAr is emitted but kept OUT of R2's coverage invariant",
+          "NeAr" not in staked and "NeAr" not in present + owed,
+          "staked %s | also_emitted %s" % (sorted(staked), sorted(extra)))
     # THE INVARIANT the freeze actually turns on.
     check("present + owed = staked, exactly",
           sorted(present + owed) == sorted(staked),
@@ -177,6 +186,12 @@ def v_manifest(dropdir):
     neg = (man.get("negatives") or {}).get("pairs") or []
     check("the manifest names the E1 negatives",
           sorted(neg) == sorted(SP2.E2_UNBOUND), "%s" % sorted(neg))
+    emitted_neg = [n for n in neg
+                   if os.path.exists(os.path.join(dropdir, "%s.json" % n))]
+    check("every E1 negative that has been computed is actually emitted -- a "
+          "negative control with no referee is a stake with no grader",
+          all(n in present + extra for n in emitted_neg),
+          "emitted %s | present %s | also %s" % (emitted_neg, present, extra))
     sc = man.get("scope") or {}
     import basis2
     check("the declared scope bound matches the table it describes",
@@ -276,7 +291,7 @@ def main():
     section("V6", VE.v6_atoms, 3, atoms)
     section("V8", VE.v8_spin, npair, pot)
     if os.path.isdir(drop):
-        section("MAN", v_manifest, 7, drop)
+        section("MAN", v_manifest, 9, drop)
         section("V10", VE.v10_grid_provenance, npair, drop)
         section("D1", v_d1_bridge, 0, drop)
     else:

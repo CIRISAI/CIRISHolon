@@ -48,7 +48,25 @@ import emit_engine as EE                                       # noqa: E402
 import elements_core as EC                                     # noqa: E402
 
 MODEL = "MIXTURES1/STO-3G/FCI"
-STAKED = ["Cl2", "S2", "Ar2", "HCl", "ClF", "NaH", "SiO", "NeAr"]
+
+# R2's STAKED SET IS SEVEN, AND NeAr IS NOT ONE OF THEM.
+#
+# The prereg names, for gate R2, "the staked EXACT set -- Cl2, S2, Ar2, HCl,
+# ClF, NaH, SiO".  That is seven.  NeAr appears in gate E1, alongside Ar2, as a
+# negative control: "Ar2 and NeAr have NO well deeper than 1e-4 Ha".  So NeAr is
+# a pair this referee must EMIT -- a negative control with no referee is a stake
+# with no grader -- and is NOT part of R2's coverage invariant.
+#
+# The first version of this manifest called it "staked_eight" and folded NeAr
+# in.  mixtures-engine froze the seven independently on its side and cross-checks
+# rather than reading ours, which is what made the disagreement visible instead
+# of silently agreeing with whichever list was read.  Two lanes disagreeing about
+# which pairs are staked is exactly the thing that has to fire.
+#
+# present + owed = STAKED_R2, exactly.  NeAr ships beside it, declared.
+STAKED_R2 = ["Cl2", "S2", "Ar2", "HCl", "ClF", "NaH", "SiO"]
+E1_NEGATIVES = ["Ar2", "NeAr"]
+EMITTED = STAKED_R2 + [n for n in E1_NEGATIVES if n not in STAKED_R2]
 DEFAULT_OUT = os.path.join(HERE, "engine_handoff", "mixtures1")
 POTENTIAL = ("elements_potential.json", "elements_potential_partial.json")
 
@@ -115,8 +133,8 @@ def main():
               % (fp, M.FINGERPRINT))
         return 2
 
-    have, bridge = [], []
-    for name in STAKED:
+    have, bridge, extra = [], [], []
+    for name in EMITTED:
         rec = pot["species"].get(name)
         if rec is None:
             print("  %-4s not assembled yet" % name)
@@ -140,9 +158,9 @@ def main():
               "digits)%s" % (name, n, os.path.basename(path), cd, note))
         for c in changes:
             print("         %s" % c)
-        have.append(name)
+        (have if name in STAKED_R2 else extra).append(name)
 
-    owed = [x for x in STAKED if x not in have]
+    owed = [x for x in STAKED_R2 if x not in have]
     man = {
         "model": MODEL,
         "basis_fingerprint": fp,
@@ -166,21 +184,30 @@ def main():
                                "bound before reading a pass."),
         },
         "atoms": "atoms.json (H through Ar, referee-grade, dual route)",
-        "staked_eight": STAKED,
-        "staked_eight_note": ("the species MIXTURES1_PREREG.md's gate R2 names. "
-                              "present + owed is this set, always: a pair may "
-                              "move from present to owed, it may not leave "
-                              "both. Coverage read purely from a manifest can "
-                              "shrink silently when a file goes missing, "
-                              "because the thing the gate checks against shrank "
-                              "with it."),
+        "staked_seven": STAKED_R2,
+        "staked_seven_note": ("the species MIXTURES1_PREREG.md's gate R2 names "
+                              "as the staked EXACT set. present + owed is this "
+                              "set, always: a pair may move from present to "
+                              "owed, it may not leave both. Coverage read "
+                              "purely from a manifest can shrink silently when "
+                              "a file goes missing, because the thing the gate "
+                              "checks against shrank with it."),
         "pairs_present": have,
         "pairs_owed": owed,
+        "also_emitted": extra,
+        "also_emitted_note": ("pairs this referee emits that are NOT in R2's "
+                              "staked set. NeAr is gate E1's second negative "
+                              "control, and a negative control with no referee "
+                              "is a stake with no grader -- so it ships, and it "
+                              "is kept out of the R2 coverage invariant rather "
+                              "than quietly widening it."),
         "negatives": {
-            "pairs": SP2.E2_UNBOUND,
+            "pairs": E1_NEGATIVES,
             "stake": ("gate E1: NO well deeper than 1e-4 hartree anywhere on "
                       "the staked grid. Branch (b) is investigate, never "
                       "massage."),
+            "note": ("Ar2 is in both R2's exact set and E1's negatives; NeAr is "
+                     "E1's only."),
         },
         "d1_bridge_references": bridge,
         "d1_bridge_note": ("S2 and SiO are the overlap species of gate D1. "

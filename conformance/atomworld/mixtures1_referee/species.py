@@ -106,8 +106,56 @@ _DENSITY = {
     "NeAr": (60,    1,      False, "all",   None),
     "S2":   (20,    2,      True,  "none",  dict(well_stride=2, tail_stride=3)),
     "NaH":  (20,    2,      True,  "none",  dict(well_stride=2, tail_stride=3)),
-    "SiO":  (20,    2,      True,  "none",  dict(well_stride=2, tail_stride=3)),
+    # SiO carries the MINIMAL rule instead of a stride subset -- see the note
+    # above the rule itself.  The stride parameters are kept so the file still
+    # declares the grid it decimates FROM.
+    "SiO":  (20,    2,      True,  "none",  dict(well_stride=2, tail_stride=3,
+                                                 minimal=True)),
 }
+
+
+# --------------------------------------------------------------------------
+# SiO's MINIMAL grid, staked before any SiO energy exists.
+#
+# Measured (FEASIBILITY.md): SiO is 196,889,056 nonzero Hamiltonian elements,
+# one working-precision matvec is 2378 s, and a certified point is 20-91 hours.
+# The lead's ruling on the frozen R2 stake is the ELEMENTS-1 precedent: resolve
+# by GRID, never by precision.  Digits do not bend; knots do.
+#
+# THE RULE, AND WHY IT IS BLIND TO EVERY RESULT.  Five knots, chosen from the
+# staked window alone:
+#
+#     the first grid point            -- the repulsive wall
+#     the first knot in the window    -- the near side of the well
+#     the middle knot in the window   -- the well
+#     the last knot in the window     -- the far side of the well
+#     the last grid point             -- the separated-atom limit
+#
+# The window is a design input frozen before any energy was computed, and the
+# base grid is a function of R_ref and the rule.  So the subset is a function of
+# those two and nothing else, and anyone can regenerate it.  It is manifestly
+# not a choice of which points to show: the well window brackets where a
+# minimum would be IF there is one, which is the question, not the answer.
+#
+# WHAT FIVE KNOTS CANNOT SUPPORT, said here rather than discovered downstream:
+# no stencil, so no referee-grade F or E2, and no Newton-refined R_e.  Those
+# columns must ship as a DECLARED ABSENCE or be marked interpolant-grade over
+# five points, which is a weak number honestly labelled.  The ENERGIES and the
+# SPIN AUDIT are exact-in-model at the same 50 digits as every other pair --
+# which is the whole of "a sparse exact referee is a referee".
+# --------------------------------------------------------------------------
+MINIMAL_SPECIES = ("SiO",)
+
+
+def minimal_subset(grid, well):
+    """Wall, three window knots, asymptote -- from the window and grid alone."""
+    from mpmath import mp as _mp
+    lo, hi = mpf(well[0]), mpf(well[1])
+    inwin = [i for i, rs in enumerate(grid) if lo <= mpf(rs) <= hi]
+    keep = {0, len(grid) - 1}
+    if inwin:
+        keep |= {inwin[0], inwin[len(inwin) // 2], inwin[-1]}
+    return [grid[i] for i in sorted(keep)]
 
 
 def _build():
@@ -146,7 +194,10 @@ def grid_for(name):
         g = curve.build_grid(d["rmin"], d["rmax"], d["nbase"], d["well"],
                              d["nsplit"])
         if d.get("sparse"):
-            g = sparse_subset(g, d["well"], d["sparse"])
+            if d["sparse"].get("minimal"):
+                g = minimal_subset(g, d["well"])
+            else:
+                g = sparse_subset(g, d["well"], d["sparse"])
         return g
     finally:
         _mp.dps = old

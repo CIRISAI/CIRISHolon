@@ -8,7 +8,7 @@
 # The bar for adding a line here is that the field is written FOR A PERSON and
 # would be meaningless to a program.
 
-staked_eight_note    # why present+owed is the invariant and not the file list
+staked_seven_note    # why present+owed is the invariant and not the file list
 no_d_shell           # the argument, with the prereg's own arithmetic in it
 grid_rule            # what a grid is a function of, and what it is blind to
 d1_bridge_note       # what the 1e-8 gate means and which side a failure is on
@@ -17,3 +17,5 @@ role                 # what a D1 bridge reference file is for
 kill                 # which claim a D1 disagreement takes down, and which not
 stake                # gate E1's stake, restated where the negatives are listed
 precision            # why 50 digits against a 1e-8 gate is not overkill
+also_emitted_note    # why NeAr ships without widening R2's invariant
+note                 # which negative belongs to which gate

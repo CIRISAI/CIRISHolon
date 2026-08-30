@@ -138,4 +138,57 @@ nothing** — non-selection under the proper-nonempty-subset test, but a literal
 
 ---
 
-*(§5 E1, §6 incidents, and §7 H1 are written when the primary lands.)*
+## §5 — E1, THE STAKE · **BRANCH (b)**, at the prominence the freeze reserved for it
+
+*Folded by the lead from the committed primary record (primary.log /
+primary.json, commit deb0370) — a transcription of evidence, marked as
+such; every number below is in the committed log.*
+
+**The bootstrap criterion does not preferentially select SM-embeddable
+structure at orders 1..63.**
+
+| | |
+|---|---|
+| groups scored | 319 / 319, **zero VOIDs** (B1 never fired) |
+| selected | 213 / 319 |
+| RULE-B fraction among selected | **0.8028** (171/213) |
+| eligible base rate | **0.8652** (276/319) |
+| permutation null | mean 0.8652, sd 0.0135, 99th pct 0.8967 |
+| p(null >= observed) | **1** — at/below the null's mean; no enrichment, a whisper of depletion |
+| recall — the column SELECTOR-5 never printed | 171/276 of SM-embeddable groups select: the criterion selects most of everything, indiscriminately |
+
+The T1 theorem audit inside the same run: 106 abelian groups, none
+SELECTED (105 fail-everything, 1 fail-empty — the two modes A1 pinned);
+74 ambivalent groups, every oriented sector empty. The banked theorems
+audited the running instrument and found it faithful.
+
+**The sensitivity line, verbatim from the log:** under the coarse-rung
+fallback that ruling 3 forbids, the eligible pool would grow by **0
+groups** — the budget-laundering guard cost nothing here, and the run
+says so itself.
+
+What this is: an Omega-internal null with teeth — the one banked
+selection principle, run uniformly over a complete censused landscape
+with an invariant construction, does not point toward the Standard Model
+at small orders. It is the baseline any future selection claim must
+beat, and it is the empirical companion to SELECTOR-5's refutation: the
+methodologically honest version of the same question returns the null.
+
+## §6 — Incidents
+
+One, and it was caught by the external reviewer reading HEAD: the
+primary's verdict sat in UNTRACKED files while §5 was a placeholder —
+the stale-instrument shape inside the campaign built to correct such
+shapes. Repaired at deb0370 (log + json committed with the verdict in
+the commit message); run-state markers stay untracked per the standing
+rule.
+
+## §7 — H1, the forward test (open)
+
+The committed prediction, staked here before any held-out number exists:
+**the null extends** — no enrichment beyond the permutation null's 99th
+percentile on the held-out population (all isomorphism types of orders
+65..71 under the same A000001 completeness gate, plus the named 2-swamp
+panel: both extraspecials of order 32, both of order 64, Q64, Q128).
+The held-out census, run, and scoring belong to the refuter lane; a
+forward-confirmed null is rule-6 support for the null itself.*

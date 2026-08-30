@@ -59,9 +59,47 @@ use crate::md::AoIntegrals;
 
 /// Largest orbital count the determinant machinery accepts.
 ///
-/// Thirty-two spatial orbitals fit a `u32` mask per spin string, accommodating both
-/// first- and second-row diatomics and larger minimal-basis spaces.
-pub const MAX_ORB: usize = 32;
+/// Sixty-four spatial orbitals fit a `u64` mask per spin string. The bound is the mask
+/// width and nothing else: a string is one bit per spatial orbital, so `MAX_ORB` and the
+/// mask type move together and neither may be changed alone.
+///
+/// # Why this was widened, and what it is NOT
+///
+/// It was `u32` (thirty-two orbitals) through ELEMENTS-1 and MIXTURES-1, which covered
+/// every first- and second-row species. It does not cover ELEMENTS-3: a xenon atom is 29
+/// contracted functions in STO-3G with six Cartesian d components per d shell, so Xe2 is
+/// 58 spatial orbitals and could not be REPRESENTED at all, let alone solved.
+///
+/// This is a widening of the address space, not a claim about tractability. Whether a
+/// space of a given size can be solved is a separate question answered by `n_det` and the
+/// route chosen for it; `MAX_ORB` only says which spaces can be written down. Most spaces
+/// this bound now admits are astronomically beyond the determinant route and reach the
+/// answer, if at all, through DMRG under MIXTURES-1's D1 rule.
+pub const MAX_ORB: usize = 64;
+
+/// A whole determinant as ONE integer: the alpha string in bits `0..n`, the beta string in
+/// bits `n..2n`, matching the blocked spin-orbital convention stated below.
+///
+/// # Why this is wider than [`Mask`] and not the same type
+///
+/// A determinant packs TWO strings, so it needs `2 * MAX_ORB` bits where a string needs
+/// `MAX_ORB`. At the old bound those were 64 and 32, and `u64` happened to serve both --
+/// which is exactly why the packing was written as `(ma as u64) | ((mb as u64) << n)` and
+/// read as obviously fine. At the new bound the string is 64 bits and the determinant
+/// needs 128, so the coincidence is gone and the two roles are separate types.
+///
+/// This packing is used only by the two CHECKING routes -- [`FciSpace::sigma_reference`]
+/// and [`dense_hamiltonian_ladder`] -- which are quadratic in the determinant count and
+/// therefore run on small spaces. The production route never forms it.
+pub type Det = u128;
+
+/// One spin string's occupation mask: bit `p` set means spatial orbital `p` is occupied.
+///
+/// Named rather than spelled `u64` at each use, because the width is a load-bearing
+/// invariant shared by [`MAX_ORB`], [`excite`], [`Strings`] and every shift below. When
+/// the two were independent literals, widening one and missing the other is precisely the
+/// defect the W1 plant reproduces.
+pub type Mask = u64;
 
 // ------------------------------------------------- the spin-orbital ordering convention
 //
@@ -362,7 +400,7 @@ pub fn ci_ints(mo: &MoIntegrals, order: Order) -> CiInts {
 pub struct Strings {
     pub n_orb: usize,
     pub n_elec: usize,
-    pub masks: Vec<u32>,
+    pub masks: Vec<Mask>,
     /// Mask to string index, or `-1`.
     lookup: Vec<i32>,
     /// `singles[j]` lists `(pq, sign, i)` with `a+_p a_q |j> = sign |i>`, `pq = p*n+q`.
@@ -374,12 +412,12 @@ pub struct Strings {
 /// The sign is counted, not tabulated: annihilating `q` costs the parity of the occupied
 /// orbitals below it, and creating `p` costs the parity below `p` in what is left.
 #[inline]
-pub fn excite(mask: u32, p: usize, q: usize) -> Option<(f64, u32)> {
+pub fn excite(mask: Mask, p: usize, q: usize) -> Option<(f64, Mask)> {
     if (mask >> q) & 1 == 0 {
         return None;
     }
     let m1 = mask ^ (1 << q);
-    let s1 = if (mask & ((1u32 << q) - 1)).count_ones() & 1 == 1 {
+    let s1 = if (mask & (((1 as Mask) << q) - 1)).count_ones() & 1 == 1 {
         -1.0
     } else {
         1.0
@@ -387,7 +425,7 @@ pub fn excite(mask: u32, p: usize, q: usize) -> Option<(f64, u32)> {
     if (m1 >> p) & 1 == 1 {
         return None;
     }
-    let s2 = if (m1 & ((1u32 << p) - 1)).count_ones() & 1 == 1 {
+    let s2 = if (m1 & (((1 as Mask) << p) - 1)).count_ones() & 1 == 1 {
         -1.0
     } else {
         1.0
@@ -403,13 +441,20 @@ impl Strings {
             if n_elec == 0 {
                 masks.push(0);
             } else {
-                let mut v = if n_elec == 32 { u32::MAX } else { (1u32 << n_elec) - 1 };
-                let limit = if n_orb == 32 { u64::MAX } else { 1u64 << n_orb };
-                while (v as u64) < limit {
+                // Gosper's hack, in the mask width. Both the seed and the stopping
+                // limit are computed in u128 rather than in `Mask`, because at the top of
+                // the range `1 << n_elec` and `1 << n_orb` are exactly the shifts that
+                // overflow the very type being widened -- the u32 code had to special-case
+                // `n_orb == 32` and `n_elec == 32` for the same reason, and a widening
+                // that moved the type but kept the special case at 32 would silently
+                // produce an EMPTY string list at 64.
+                let mut v: Mask = ((1u128 << n_elec) - 1) as Mask;
+                let limit: u128 = 1u128 << n_orb;
+                while (v as u128) < limit {
                     masks.push(v);
                     let c = v & (!v).wrapping_add(1);
                     let r = v.wrapping_add(c);
-                    if r == 0 || (r as u64) >= limit {
+                    if r == 0 || (r as u128) >= limit {
                         break;
                     }
                     v = (((r ^ v) >> 2) / c) | r;
@@ -425,7 +470,7 @@ impl Strings {
         } else {
             Vec::new()
         };
-        let get_idx = |m: u32, lk: &[i32], ms: &[u32]| -> Option<usize> {
+        let get_idx = |m: Mask, lk: &[i32], ms: &[Mask]| -> Option<usize> {
             if !lk.is_empty() {
                 let idx = lk[m as usize];
                 if idx >= 0 {
@@ -467,7 +512,7 @@ impl Strings {
         self.masks.is_empty()
     }
 
-    pub fn index_of(&self, mask: u32) -> Option<usize> {
+    pub fn index_of(&self, mask: Mask) -> Option<usize> {
         if !self.lookup.is_empty() {
             if (mask as usize) < self.lookup.len() {
                 let i = self.lookup[mask as usize];
@@ -533,7 +578,7 @@ impl FciSpace {
             }
             x
         };
-        let occ = |m: u32| -> Vec<usize> { (0..n).filter(|&p| (m >> p) & 1 == 1).collect() };
+        let occ = |m: Mask| -> Vec<usize> { (0..n).filter(|&p| (m >> p) & 1 == 1).collect() };
         for (ia, &ma) in self.alpha.masks.iter().enumerate() {
             let oa = occ(ma);
             for (ib, &mb) in self.beta.masks.iter().enumerate() {
@@ -678,8 +723,8 @@ impl FciSpace {
         for x in out.iter_mut() {
             *x = 0.0;
         }
-        let combine = |ma: u32, mb: u32| -> u64 { (ma as u64) | ((mb as u64) << n) };
-        let dets: Vec<u64> = (0..self.n_det)
+        let combine = |ma: Mask, mb: Mask| -> Det { (ma as Det) | ((mb as Det) << n) };
+        let dets: Vec<Det> = (0..self.n_det)
             .map(|d| combine(self.alpha.masks[d / nb], self.beta.masks[d % nb]))
             .collect();
 
@@ -714,7 +759,7 @@ impl FciSpace {
 /// whenever the two intervals overlap. So it is not stated as a formula here: the
 /// corresponding string of creation and annihilation operators is APPLIED to `dj` and
 /// the sign it produces is used. That is the definition rather than a rule about it.
-pub fn slater_condon(di: u64, dj: u64, ci: &CiInts, n: usize) -> f64 {
+pub fn slater_condon(di: Det, dj: Det, ci: &CiInts, n: usize) -> f64 {
     let n2 = n * n;
     let hph = |p: usize, q: usize| -> f64 {
         let mut x = ci.k[p * n + q];
@@ -749,7 +794,7 @@ pub fn slater_condon(di: u64, dj: u64, ci: &CiInts, n: usize) -> f64 {
             if is_create == occupied {
                 return 0.0;
             }
-            if (cur & ((1u64 << so) - 1)).count_ones() & 1 == 1 {
+            if (cur & (((1 as Det) << so) - 1)).count_ones() & 1 == 1 {
                 sgn = -sgn;
             }
             cur ^= 1 << so;
@@ -832,8 +877,8 @@ pub fn dense_hamiltonian_ladder(space: &FciSpace, ci: &CiInts, n: usize) -> Vec<
         x
     };
 
-    let combine = |ma: u32, mb: u32| -> u64 { (ma as u64) | ((mb as u64) << n) };
-    let dets: Vec<u64> = (0..nd)
+    let combine = |ma: Mask, mb: Mask| -> Det { (ma as Det) | ((mb as Det) << n) };
+    let dets: Vec<Det> = (0..nd)
         .map(|d| combine(space.alpha.masks[d / nb], space.beta.masks[d % nb]))
         .collect();
     let mut index = std::collections::HashMap::new();
@@ -842,16 +887,16 @@ pub fn dense_hamiltonian_ladder(space: &FciSpace, ci: &CiInts, n: usize) -> Vec<
     }
 
     // Ladder primitives. `true` creates.
-    fn ladder(det: u64, is_create: bool, so: u32) -> Option<(f64, u64)> {
+    fn ladder(det: Det, is_create: bool, so: u32) -> Option<(f64, Det)> {
         let occupied = (det >> so) & 1 == 1;
         if is_create == occupied {
             return None;
         }
-        let below = (det & ((1u64 << so) - 1)).count_ones();
+        let below = (det & (((1 as Det) << so) - 1)).count_ones();
         let sgn = if below & 1 == 1 { -1.0 } else { 1.0 };
-        Some((sgn, det ^ (1u64 << so)))
+        Some((sgn, det ^ ((1 as Det) << so)))
     }
-    fn apply(det: u64, ops: &[(bool, u32)]) -> Option<(f64, u64)> {
+    fn apply(det: Det, ops: &[(bool, u32)]) -> Option<(f64, Det)> {
         let mut sgn = 1.0f64;
         let mut cur = det;
         for &(is_create, so) in ops.iter().rev() {
@@ -1480,12 +1525,12 @@ pub fn s_squared(space: &FciSpace, c: &[f64]) -> f64 {
                 if (mb >> p) & 1 == 0 || (ma >> p) & 1 == 1 {
                     continue;
                 }
-                let sgn_b = if (mb & ((1u32 << p) - 1)).count_ones() & 1 == 1 {
+                let sgn_b = if (mb & (((1 as Mask) << p) - 1)).count_ones() & 1 == 1 {
                     -1.0
                 } else {
                     1.0
                 };
-                let sgn_a = if (ma & ((1u32 << p) - 1)).count_ones() & 1 == 1 {
+                let sgn_a = if (ma & (((1 as Mask) << p) - 1)).count_ones() & 1 == 1 {
                     -1.0
                 } else {
                     1.0

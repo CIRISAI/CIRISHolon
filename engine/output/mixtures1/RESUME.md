@@ -39,6 +39,20 @@ SiO and S2 builds would replace an extrapolated D1 refusal with a measured one;
 if either MPO *does* build, the refusal weakens from structural to a scheduling
 question and the D1 section should say so.
 
+## A third exposure, found by tripping over it: STALE DONE-MARKERS
+
+The detached-compute discipline here is `setsid` + a `.DONE` marker + this file.
+The marker is written AFTER a run. Nothing was removing it BEFORE one — so a
+relaunch left the previous invocation's marker in place, and a waiter watching for
+it reported completion instantly for a run that had barely started. That happened
+to the `mps_ladder` run and I read a three-row partial log as a finished ladder
+until the process list disagreed with the marker.
+
+Same shape as the run-lock hazard: a stale artifact from a previous run being read
+as this run's result, with nothing looking broken — the file exists, it parses, and
+it is wrong. **Every launcher here now removes its marker as its first action**, and
+a waiter that fires suspiciously fast should check `ps` before believing it.
+
 ## Two exposures, one closed and one open
 
 **The run lock, OPEN.** `p1.sh` runs its three arms sequentially, one writer per

@@ -1,0 +1,5 @@
+LiH  n_orb 6  sites 12  n_det 225
+  MPO build           528.48 s
+  MPO bond dims       max 46  mean 26
+  one sweep chi=4    0.03 s   E = -8.864897001875
+exit=0 pair=LiH

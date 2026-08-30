@@ -1,0 +1,4 @@
+# E2/R2 by-hand pairs, determinant route (fci::solve_determinant), f64
+pair	n_orb	n_det	E_asymptote	R_e	D_e	k_e	points	seconds
+SiO	14	132496	-359.285248732057	2.908134083	0.263676281	0.596489936	41	1463.2
+exit=0

@@ -1,0 +1,31 @@
+# MIXTURES-1 P1 — control: hydrogen only (16 H)
+#   protocol   conformance/atomworld/MIXTURES1_RESULTS.md, frozen before this ran
+#   scene      16 atoms, 40 x 24 bohr, walls, 2D; 4x4 lattice, jitter +-0.8 bohr
+#   thermostat Berendsen, T_init 3000 K -> T_target 300 K, tau 2000 a.u.
+#   run        20000 boundaries x 64 substeps
+#   curves     96 knots, engine-computed STO-3G FCI
+#   FENCE      3-body: H3 only. Triples containing a non-hydrogen atom contribute exactly zero.
+#   composition rule: lattice cell (col+row) odd is chlorine (checkerboard)
+  curve HH: 96 knots, n_det 4, route Determinant, 0.4 s, well Some((1.3886940180177756, 0.20414235210759035))
+seed 0x000000004d495801  modal     H2  molecules  8  free  0  [H2x8]
+    gates: |dE|_peak 6.5979e-5 / bound 1.1518e-2 = 0.0057   |dP|_peak 1.907e-12 / bound 6.493e-8 = 0.0000   T 309.5 K   E_three +9.9423e-4   dt 0.5386   39.9 s
+seed 0x000000004d495802  modal     H2  molecules  8  free  0  [H2x8]
+    gates: |dE|_peak 8.8690e-5 / bound 1.5054e-2 = 0.0059   |dP|_peak 1.604e-12 / bound 6.246e-8 = 0.0000   T 330.4 K   E_three +5.0289e-4   dt 0.5386   36.3 s
+seed 0x000000004d495803  modal     H2  molecules  7  free  0  [H2x6 H4x1]
+    gates: |dE|_peak 5.7756e-5 / bound 1.4353e-2 = 0.0040   |dP|_peak 2.344e-12 / bound 6.065e-8 = 0.0000   T 305.8 K   E_three +1.4490e-3   dt 0.5386   34.7 s
+seed 0x000000004d495804  modal     H2  molecules  6  free  0  [H2x5 H6x1]
+    gates: |dE|_peak 4.6574e-5 / bound 9.3969e-3 = 0.0050   |dP|_peak 1.397e-12 / bound 6.392e-8 = 0.0000   T 320.3 K   E_three +2.5537e-3   dt 0.5386   43.1 s
+seed 0x000000004d495805  modal     H2  molecules  7  free  0  [H2x6 H4x1]
+    gates: |dE|_peak 7.3387e-5 / bound 1.3723e-2 = 0.0053   |dP|_peak 2.233e-12 / bound 5.955e-8 = 0.0000   T 270.7 K   E_three +1.8842e-3   dt 0.5386   51.3 s
+seed 0x000000004d495806  modal     H2  molecules  8  free  0  [H2x8]
+    gates: |dE|_peak 1.5884e-4 / bound 4.6084e-2 = 0.0034   |dP|_peak 3.880e-12 / bound 6.504e-8 = 0.0001   T 324.1 K   E_three +7.6852e-4   dt 1.0772   52.2 s
+seed 0x000000004d495807  modal     H2  molecules  8  free  0  [H2x8]
+    gates: |dE|_peak 8.1453e-5 / bound 1.0371e-2 = 0.0079   |dP|_peak 2.957e-12 / bound 5.875e-8 = 0.0001   T 299.4 K   E_three +6.7153e-4   dt 0.5386   52.4 s
+seed 0x000000004d495808  modal     H2  molecules  8  free  0  [H2x8]
+    gates: |dE|_peak 7.4598e-5 / bound 1.1049e-2 = 0.0068   |dP|_peak 2.572e-12 / bound 6.027e-8 = 0.0000   T 294.5 K   E_three +3.7558e-4   dt 0.5386   43.8 s
+# POOLED over 8 seeds: [("H2", 57), ("H4", 2), ("H6", 1)]
+# MODAL PER SEED: [("H2", 8)]
+# C1 energy gate over every seed: HOLDS
+# C1 momentum gate over every seed: HOLDS
+# CONTROL READING: this arm is single-species; its formulae must contain only its own element, and it must produce molecules at all.
+exit=0

@@ -1,0 +1,31 @@
+# MIXTURES-1 P1 — control: chlorine only (16 Cl)
+#   protocol   conformance/atomworld/MIXTURES1_RESULTS.md, frozen before this ran
+#   scene      16 atoms, 40 x 24 bohr, walls, 2D; 4x4 lattice, jitter +-0.8 bohr
+#   thermostat Berendsen, T_init 3000 K -> T_target 300 K, tau 2000 a.u.
+#   run        20000 boundaries x 64 substeps
+#   curves     96 knots, engine-computed STO-3G FCI
+#   FENCE      3-body: H3 only. Triples containing a non-hydrogen atom contribute exactly zero.
+#   composition rule: lattice cell (col+row) odd is chlorine (checkerboard)
+  curve ClCl: 96 knots, n_det 324, route Determinant, 178.7 s, well Some((4.0241237935448035, 0.0645773850005753))
+seed 0x000000004d495801  modal   Cl16  molecules  1  free  0  [Cl16x1]
+    gates: |dE|_peak 1.3577e-4 / bound 5.0533e-2 = 0.0027   |dP|_peak 2.392e-11 / bound 3.496e-7 = 0.0001   T 289.0 K   E_three +0.0000e0   dt 9.6424   18.9 s
+seed 0x000000004d495802  modal   Cl16  molecules  1  free  0  [Cl16x1]
+    gates: |dE|_peak 1.2917e-4 / bound 4.9065e-2 = 0.0026   |dP|_peak 2.126e-11 / bound 3.896e-7 = 0.0001   T 316.7 K   E_three +0.0000e0   dt 9.6424   20.0 s
+seed 0x000000004d495803  modal   Cl16  molecules  1  free  0  [Cl16x1]
+    gates: |dE|_peak 1.3718e-4 / bound 5.0223e-2 = 0.0027   |dP|_peak 2.152e-11 / bound 3.189e-7 = 0.0001   T 237.8 K   E_three +0.0000e0   dt 9.6424   29.1 s
+seed 0x000000004d495804  modal   Cl16  molecules  1  free  0  [Cl16x1]
+    gates: |dE|_peak 1.4684e-4 / bound 4.8544e-2 = 0.0030   |dP|_peak 3.150e-11 / bound 3.713e-7 = 0.0001   T 323.9 K   E_three +0.0000e0   dt 9.6424   20.2 s
+seed 0x000000004d495805  modal   Cl16  molecules  1  free  0  [Cl16x1]
+    gates: |dE|_peak 1.4607e-4 / bound 7.9644e-3 = 0.0183   |dP|_peak 1.097e-11 / bound 3.759e-7 = 0.0000   T 301.1 K   E_three +0.0000e0   dt 9.6424   20.1 s
+seed 0x000000004d495806  modal   Cl16  molecules  1  free  0  [Cl16x1]
+    gates: |dE|_peak 1.3577e-4 / bound 5.0218e-2 = 0.0027   |dP|_peak 1.642e-11 / bound 3.561e-7 = 0.0000   T 281.1 K   E_three +0.0000e0   dt 9.6424   18.4 s
+seed 0x000000004d495807  modal   Cl16  molecules  1  free  0  [Cl16x1]
+    gates: |dE|_peak 1.4475e-4 / bound 4.9206e-2 = 0.0029   |dP|_peak 2.130e-11 / bound 3.762e-7 = 0.0001   T 321.9 K   E_three +0.0000e0   dt 9.6424   20.6 s
+seed 0x000000004d495808  modal   Cl16  molecules  1  free  0  [Cl16x1]
+    gates: |dE|_peak 1.5104e-4 / bound 4.9958e-2 = 0.0030   |dP|_peak 1.978e-11 / bound 4.076e-7 = 0.0000   T 378.2 K   E_three +0.0000e0   dt 9.6424   24.5 s
+# POOLED over 8 seeds: [("Cl16", 8)]
+# MODAL PER SEED: [("Cl16", 8)]
+# C1 energy gate over every seed: HOLDS
+# C1 momentum gate over every seed: HOLDS
+# CONTROL READING: this arm is single-species; its formulae must contain only its own element, and it must produce molecules at all.
+exit=0

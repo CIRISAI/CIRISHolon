@@ -1,0 +1,33 @@
+# MIXTURES-1 P1 — mixed (8 H + 8 Cl)
+#   protocol   conformance/atomworld/MIXTURES1_RESULTS.md, frozen before this ran
+#   scene      16 atoms, 40 x 24 bohr, walls, 2D; 4x4 lattice, jitter +-0.8 bohr
+#   thermostat Berendsen, T_init 3000 K -> T_target 300 K, tau 2000 a.u.
+#   run        20000 boundaries x 64 substeps
+#   curves     96 knots, engine-computed STO-3G FCI
+#   FENCE      3-body: H3 only. Triples containing a non-hydrogen atom contribute exactly zero.
+#   composition rule: lattice cell (col+row) odd is chlorine (checkerboard)
+  curve HH: 96 knots, n_det 4, route Determinant, 0.4 s, well Some((1.3886940180177756, 0.20414235210759035))
+  curve HCl: 96 knots, n_det 100, route Determinant, 26.1 s, well Some((2.536888205469792, 0.14829317504643313))
+  curve ClCl: 96 knots, n_det 324, route Determinant, 176.8 s, well Some((4.0241237935448035, 0.0645773850005753))
+seed 0x000000004d495801  modal  H8Cl8  molecules  1  free  0  [H8Cl8x1]
+    gates: |dE|_peak 3.9949e-5 / bound 1.2836e-1 = 0.0003   |dP|_peak 9.712e-12 / bound 1.681e-7 = 0.0001   T 199.4 K   E_three +2.4248e-1   dt 0.5386   38.9 s
+seed 0x000000004d495802  modal  H8Cl8  molecules  1  free  0  [H8Cl8x1]
+    gates: |dE|_peak 2.7801e-5 / bound 1.2413e-1 = 0.0002   |dP|_peak 6.353e-12 / bound 2.256e-7 = 0.0000   T 267.0 K   E_three +3.6331e-1   dt 0.5386   38.9 s
+seed 0x000000004d495803  modal  H8Cl8  molecules  1  free  0  [H8Cl8x1]
+    gates: |dE|_peak 3.6968e-5 / bound 1.3811e-1 = 0.0003   |dP|_peak 6.357e-12 / bound 1.855e-7 = 0.0000   T 231.0 K   E_three +3.3954e-1   dt 0.5386   52.9 s
+seed 0x000000004d495804  modal  H8Cl8  molecules  1  free  0  [H8Cl8x1]
+    gates: |dE|_peak 3.6172e-5 / bound 1.6286e-1 = 0.0002   |dP|_peak 1.152e-11 / bound 1.894e-7 = 0.0001   T 233.2 K   E_three +4.4027e-1   dt 0.5386   39.2 s
+seed 0x000000004d495805  modal  H8Cl8  molecules  1  free  0  [H8Cl8x1]
+    gates: |dE|_peak 3.4612e-5 / bound 1.0973e-1 = 0.0003   |dP|_peak 1.353e-11 / bound 2.570e-7 = 0.0001   T 386.8 K   E_three +2.9437e-1   dt 0.5386   38.3 s
+seed 0x000000004d495806  modal  H8Cl8  molecules  1  free  0  [H8Cl8x1]
+    gates: |dE|_peak 4.1320e-5 / bound 1.2783e-1 = 0.0003   |dP|_peak 1.421e-11 / bound 1.611e-7 = 0.0001   T 268.8 K   E_three +2.9187e-1   dt 0.5386   41.8 s
+seed 0x000000004d495807  modal  H8Cl8  molecules  1  free  0  [H8Cl8x1]
+    gates: |dE|_peak 5.1916e-5 / bound 1.1884e-1 = 0.0004   |dP|_peak 7.094e-12 / bound 2.228e-7 = 0.0000   T 313.6 K   E_three +3.1158e-1   dt 0.5386   45.7 s
+seed 0x000000004d495808  modal  H8Cl8  molecules  1  free  0  [H8Cl8x1]
+    gates: |dE|_peak 3.9324e-5 / bound 1.4652e-1 = 0.0003   |dP|_peak 1.151e-11 / bound 2.005e-7 = 0.0001   T 302.2 K   E_three +2.9475e-1   dt 0.5386   43.6 s
+# POOLED over 8 seeds: [("H8Cl8", 8)]
+# MODAL PER SEED: [("H8Cl8", 8)]
+# C1 energy gate over every seed: HOLDS
+# C1 momentum gate over every seed: HOLDS
+# P1 READING: HCl is the modal molecule in 0 of 8 seeds. Branch (a) needs 6 of 8.
+exit=0

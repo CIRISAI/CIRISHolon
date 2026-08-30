@@ -1,0 +1,5 @@
+H2  n_orb 2  sites 4  n_det 4
+  MPO build           0.00 s
+  MPO bond dims       max 8  mean 4
+  one sweep chi=4    0.00 s   E = -1.318490157701
+exit=0 pair=H2

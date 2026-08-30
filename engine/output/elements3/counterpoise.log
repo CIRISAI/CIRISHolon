@@ -1,0 +1,12 @@
+  pair        R_e      D_e raw       D_e cp         BSSE  deficit raw   deficit cp
+   HCl    2.53689     0.148293     0.132164     0.016129    +0.021415    +0.037545
+   HBr    2.72654     0.145398     0.122989     0.022409    -0.001268    +0.021142
+    HI    3.07998     0.132360     0.112306     0.020054    -0.014836    +0.005218
+
+raw deficit grows down the column:          false   (+0.021415 -> -0.001268 -> -0.014836)
+counterpoise deficit grows down the column: false   (+0.037545 -> +0.021142 -> +0.005218)
+
+Reading: if the raw deficit falls and the counterpoise one grows, F1's stake died
+of a contaminated observable rather than of wrong physics -- a different finding,
+and one that does NOT inherit the dead stake's standing.
+EXIT=0

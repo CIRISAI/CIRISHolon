@@ -1,0 +1,13 @@
+  H atom E = -0.466581849557  (1 dets)
+ Cl atom E = -454.542192398729  (9 dets)
+ Br atom E = -2544.636780643584  (18 dets)
+  I atom E = -6850.676245632542  (27 dets)
+ Kr atom E = -2722.705999502536  (1 dets)
+ Xe atom E = -7162.104208223682  (1 dets)
+HCl: R_e 2.536888 bohr  D_e 0.148293 Ha  k_e 0.34327  100 dets  determinant, Knowles-Handy
+HBr: R_e 2.726538 bohr  D_e 0.145398 Ha  k_e 0.29798  361 dets  determinant, Knowles-Handy
+HI: R_e 3.079982 bohr  D_e 0.132360 Ha  k_e 0.23192  784 dets  determinant, Knowles-Handy
+BrBr: R_e 4.417139 bohr  D_e 0.079640 Ha  k_e 0.20263  1296 dets  determinant, Knowles-Handy
+KrKr: NO WELL over R = 3.278..10.240 bohr, 1 dets  determinant, Knowles-Handy
+XeXe: NO WELL over R = 3.773..12.800 bohr, 1 dets  determinant, Knowles-Handy
+EXIT=0

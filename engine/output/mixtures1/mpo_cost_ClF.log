@@ -1,0 +1,5 @@
+ClF  n_orb 14  sites 28  n_det 196
+  MPO build           0.10 s
+  MPO bond dims       max 943  mean 396
+  one sweep chi=4    1.06 s   E = -603.524973314594
+exit=0 pair=ClF

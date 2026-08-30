@@ -1,0 +1,17 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.06s
+     Running `target/release/examples/elements3_dimers 24`
+== atoms (dissociation references) ==
+sym            E (hartree)            route
+  H        -0.466581849557      determinant
+ Cl      -454.542192398729      determinant
+ Br     -2544.636780643584      determinant
+  I     -6850.676245632542      determinant
+ Kr     -2722.705999502536      determinant
+ Xe     -7162.104208223682      determinant
+
+== pair curves, 24 knots ==
+  pair  nbas     n_det    R range   R_e (bohr)     D_e (Ha)        k_e          route
+   HCl    10       100  1.24-12.8     2.536888     1.483e-1     0.3433 determinant, Knowles-Handy
+   HBr    19       361  1.30-12.8     2.726538     1.454e-1     0.2980 determinant, Knowles-Handy
+    HI    28       784  1.50-12.8     3.079982     1.324e-1     0.2319 determinant, Knowles-Handy
+EXIT=143

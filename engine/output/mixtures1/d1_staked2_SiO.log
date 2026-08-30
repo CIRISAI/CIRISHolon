@@ -1,0 +1,7 @@
+# D1 overlap: SiO
+#   grid rule      uniform in R^-1/4 (table::grid_point), 12 knots
+#   range (exact)  [1.811504489, 20.000000000] bohr
+#   asymptote      -359.285248732057255 hartree
+#   stake          |E_dmrg - E_fci| <= 1e-8 Ha at chi = 512
+#   ladder [64, 128, 256, 512]  sweeps 30  tol 1e-11
+R_bohr	E_fci	res_fci	n_det	E_chi64	d_chi64	E_chi128	d_chi128	E_chi256	d_chi256	E_chi512	d_chi512

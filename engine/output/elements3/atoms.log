@@ -1,0 +1,62 @@
+# max_n_det = 1200000 (budget), max_dual_n_det = 30000
+# route 'det (forced)': the space is past fci::MPS_ROUTE_THRESHOLD (50000),
+# so the PRODUCTION entry point fci::solve would have sent it to DMRG -- which is
+# measured to reach six orbitals and cannot do any atom here. Reached instead via
+# solve_determinant, which has no threshold. 'OVER BUDGET' is this record's
+# spending cap, NOT a statement that no route exists.
+  Z sym  nbas          n_det            E (hartree)      resid   2S+1  dual route         route
+  1   H     1              1        -0.466581849557     0.00e0  2.000      0.00e0   determinant
+  2  He     1              1        -2.807783957540     0.00e0  1.000      0.00e0   determinant
+  3  Li     5             50        -7.315836576618   7.03e-11  2.000    5.59e-16   determinant
+  4  Be     5            100       -14.403655041094   1.12e-11  1.000    6.75e-16   determinant
+  5   B     5            100       -24.189264975147   5.89e-11  2.000    6.97e-16   determinant
+  6   C     5            100       -37.218733524685   3.35e-11  3.000    1.60e-15   determinant
+  7   N     5             50       -53.719010183796   8.10e-11  4.000    1.89e-15   determinant
+  8   O     5             25       -73.804150245797   1.45e-11  3.000    2.50e-15   determinant
+  9   F     5              5       -97.986505000188   5.68e-14  2.000    1.56e-15   determinant
+ 10  Ne     5              1      -126.604525052999     0.00e0  1.000    5.19e-16   determinant
+ 11  Na     9          10584      -159.711462513926   8.79e-11  2.000    5.79e-15   determinant
+ 12  Mg     9           7056      -197.061095812347   8.02e-11  1.000    4.84e-15   determinant
+ 13  Al     9           3024      -238.889219953799   8.25e-11  2.000    5.20e-15   determinant
+ 14  Si     9           1296      -285.481098486260   6.28e-11  3.000    3.65e-15   determinant
+ 15   P     9            324      -336.869183608130   9.52e-11  4.000    4.18e-15   determinant
+ 16   S     9             81      -393.130326083962   9.65e-11  3.000    5.03e-15   determinant
+ 17  Cl     9              9      -454.542192398729   6.51e-11  2.000    4.26e-15   determinant
+ 18  Ar     9              1      -521.222880668447     0.00e0  1.000    8.40e-16   determinant
+ 19   K    13         204490      -593.093052049426   9.95e-11  2.000   too large  det (forced)
+ 20  Ca    13          81796      -670.021880540477   8.51e-11  1.000   too large  det (forced)
+ 21  Sc    18     1392554592            OVER BUDGET          -      -           -          none
+ 22  Ti    18     1012766976            OVER BUDGET          -      -           -          none
+ 23   V    18      590780736            OVER BUDGET          -      -           -          none
+ 24  Cr    18      344622096            OVER BUDGET          -      -           -          none
+ 25  Mn    18      159056352            OVER BUDGET          -      -           -          none
+ 26  Fe    18       73410624            OVER BUDGET          -      -           -          none
+ 27  Co    18       26218080            OVER BUDGET          -      -           -          none
+ 28  Ni    18        9363600            OVER BUDGET          -      -           -          none
+ 29  Cu    18        2496960            OVER BUDGET          -      -           -          none
+ 30  Zn    18         665856     -1757.457601384721   2.72e-10  5.000   too large  det (forced)
+ 31  Ga    18         124848     -1900.978972651258   7.04e-11  4.000   too large  det (forced)
+ 32  Ge    18          23409     -2051.649918026932   8.85e-11  3.000    1.44e-14   determinant
+ 33  As    18           2754     -2209.263793608119   9.80e-11  4.000    9.09e-15   determinant
+ 34  Se    18            324     -2373.527374279188   5.16e-11  3.000    7.91e-15   determinant
+ 35  Br    18             18     -2544.636780643584   3.23e-11  2.000    8.70e-15   determinant
+ 36  Kr    18              1     -2722.705999502536     0.00e0  1.000    2.15e-14   determinant
+ 37  Rb    22       11265100            OVER BUDGET          -      -           -          none
+ 38  Sr    22        2371600            OVER BUDGET          -      -           -          none
+ 39   Y    27  1971493202250            OVER BUDGET          -      -           -          none
+ 40  Zr    27   788597280900            OVER BUDGET          -      -           -          none
+ 41  Nb    27   262865760300            OVER BUDGET          -      -           -          none
+ 42  Mo    27    87621920100            OVER BUDGET          -      -           -          none
+ 43  Tc    27    23896887300            OVER BUDGET          -      -           -          none
+ 44  Ru    27     6517332900            OVER BUDGET          -      -           -          none
+ 45  Rh    27     1416811500            OVER BUDGET          -      -           -          none
+ 46  Pd    27      308002500            OVER BUDGET          -      -           -          none
+ 47  Ag    27       51333750            OVER BUDGET          -      -           -          none
+ 48  Cd    27        8555625            OVER BUDGET          -      -           -          none
+ 49  In    27        1026675     -5677.203746332331    3.98e-1  4.216   too large  det (forced)
+ 50  Sn    27         123201     -5963.220001599594   2.06e-10  3.000   too large  det (forced)
+ 51  Sb    27           9477     -6251.362514224755   1.07e-10  4.000    7.59e-15   determinant
+ 52  Te    27            729     -6547.122368855257   1.07e-10  3.000    1.72e-14   determinant
+ 53   I    27             27     -6850.676245632542   2.47e-11  2.000    6.46e-15   determinant
+ 54  Xe    27              1     -7162.104208223682     0.00e0  1.000    7.43e-15   determinant
+EXIT=0

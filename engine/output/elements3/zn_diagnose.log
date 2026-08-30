@@ -1,0 +1,5 @@
+32 Ge     23409 dets  E_FCI    -2051.649918027  best single det    -2051.609656646  gap     4.026e-2  2S+1 3.000  resid 8.85e-11  OK: below the best determinant
+20 Ca     81796 dets  E_FCI     -670.021880540  best single det     -669.988870398  gap     3.301e-2  2S+1 1.000  resid 8.51e-11  OK: below the best determinant
+31 Ga    124848 dets  E_FCI    -1900.978972651  best single det    -1900.941032919  gap     3.794e-2  2S+1 4.000  resid 7.04e-11  OK: below the best determinant
+30 Zn    665856 dets  E_FCI    -1757.457601385  best single det    -1757.416112914  gap     4.149e-2  2S+1 5.000  resid 2.72e-10  OK: below the best determinant
+EXIT=0

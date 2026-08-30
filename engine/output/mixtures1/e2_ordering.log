@@ -1,0 +1,16 @@
+# MIXTURES-1 E2, engine half. Staked order: ["N2", "SiO", "HCl", "ClF", "S2", "Cl2", "NaH", "Ar2", "NeAr"]
+# knots 24; D_e from locate_well (Newton on the solver, not on the interpolant)
+pair	n_basis	n_det	D_e_Ha	R_e_bohr	seconds
+N2	10	14400	0.239388030	2.256729	109.1
+SiO	14	132496	OWED	OWED	-	# determinant, BY HAND ONLY (solve_determinant) — no automatic route; the determinant route can reach it by hand, at a cost this run does not spend
+HCl	10	100	0.148293175	2.536888	9.1
+ClF	14	196	0.060622391	3.341873	35.0
+S2	18	23409	0.133253157	3.706603	1930.3
+Cl2	18	324	0.064577385	4.024124	137.8
+NaH	10	44100	0.193188744	3.133867	211.9
+Ar2	18	1	UNBOUND	-	48.8	# no minimum deeper than WELL_MIN_DEPTH; nothing here knows it is a closed shell
+NeAr	14	1	UNBOUND	-	11.9	# no minimum deeper than WELL_MIN_DEPTH; nothing here knows it is a closed shell
+# MEASURED ORDER (deepest first): ["N2", "NaH", "HCl", "S2", "Cl2", "ClF", "Ar2", "NeAr"]
+# STAKED ORDER, restricted to what was measured: ["N2", "HCl", "ClF", "S2", "Cl2", "NaH", "Ar2", "NeAr"]
+# The measured order DIFFERS FROM the staked one on the pairs covered.
+exit=0

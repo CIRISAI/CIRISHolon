@@ -1,0 +1,19 @@
+# CORRECTION, added after the run: the `verdict` column below was produced by a
+# ONE-DIRECTIONAL check. It asked only whether the multiplicity had FALLEN (the
+# reversion the prediction stakes) and printed "unchanged" for everything else --
+# including the lambda = 0.12 row, where 2S+1 went UP from 4 to 6. The numbers are
+# correct; the last row's verdict word is not, and the correct reading is:
+#
+#   lambda 1.00, 0.50, 0.25 : unchanged (quartet)
+#   lambda 0.12             : ROSE to a sextet -- NOT the predicted reversion
+#
+# The example has been fixed to test both directions. This header is the record of
+# the label that was wrong, kept rather than regenerated away.
+== Ga (Z = 31), 16/15 electrons ==
+  lambda          E (hartree)      <S^2>     2S+1     verdict
+    1.00      -1900.978972651   3.750000    4.000   unchanged
+    0.50      -1900.899658862   3.750000    4.000   unchanged
+    0.25      -1900.707970083   3.750000    4.000   unchanged
+    0.12      -1899.999959075   8.750000    6.000   unchanged
+
+EXIT=0

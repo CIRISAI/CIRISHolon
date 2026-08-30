@@ -81,3 +81,4 @@ route_name              renders a Feasibility for a REPORT; the gate that reads 
 TH_W_DEG                equilibrium bond angle constant for water geometry in degrees
 de4_ohhh_cart           Cartesian 4-body (O,H,H,H) saturation energy evaluator for dynamics simulation
 third_hydrogen_binding  measurement helper for checking third hydrogen binding/repulsion across approach vectors
+CONVERGED_RESIDUAL      the convergence bar a generated curve is judged against; waterquench.rs names a curve that exceeds it

@@ -1,0 +1,21 @@
+# curve H-H: 96 knots, R_e = 1.3887 bohr, D_e = 0.204142 Ha, worst residual 1.2e-12, 0.6 s
+# arm = hydrogen control (12 H)   seeds = 8   12 atoms in 34.6 x 20.8 bohr
+# 20000 boundaries x 64 substeps, dt = 1.0772 a.u. -> 33.35 ps
+# T_init 3000 K, T_target 300 K, tau 2000
+# setup 2.7 s
+seed 0x0000000053415421  dt 0.5386  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 7.68e-5/6.81e-3  |p| 1.66e-12/4.81e-8  T 291 K  10 s
+seed 0x0000000053415422  dt 1.0772  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 1.24e-4/2.37e-2  |p| 2.23e-12/4.28e-8  T 291 K  11 s
+seed 0x0000000053415423  dt 0.5386  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 5.15e-5/8.01e-3  |p| 1.33e-12/4.55e-8  T 280 K  10 s
+seed 0x0000000053415424  dt 0.5386  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 4.45e-5/1.12e-2  |p| 1.04e-12/4.58e-8  T 293 K  10 s
+seed 0x0000000053415425  dt 1.0772  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 1.23e-4/4.76e-2  |p| 1.34e-12/5.13e-8  T 327 K  10 s
+seed 0x0000000053415426  dt 0.5386  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 7.72e-5/1.18e-2  |p| 1.48e-12/4.44e-8  T 260 K  11 s
+seed 0x0000000053415427  dt 0.5386  modal-O    -  free O 0  free H 0  largest 4  molecules [H2 H2 H2 H2 H4]  fenced 0  drift 6.76e-5/9.80e-3  |p| 2.01e-12/4.16e-8  T 266 K  10 s
+seed 0x0000000053415428  dt 0.5386  modal-O    -  free O 0  free H 0  largest 4  molecules [H2 H2 H2 H2 H4]  fenced 0  drift 6.80e-5/1.36e-2  |p| 1.53e-12/4.82e-8  T 325 K  11 s
+
+# ---- hydrogen control (12 H) ----
+# seeds with the modal O-containing molecule = H2O : 0 / 8
+# seeds with ZERO free oxygen                      : 8 / 8
+# seeds with any molecule at all                   : 8 / 8
+# worst drift / bound = 1.128e-2, worst |p| / bound = 5.212e-5
+# fence incidence (triples refused for want of a table), per seed: [0, 0, 0, 0, 0, 0, 0, 0]
+# molecule census over all seeds: 44xH2  2xH4

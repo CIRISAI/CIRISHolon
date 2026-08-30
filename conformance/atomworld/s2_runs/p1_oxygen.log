@@ -1,0 +1,21 @@
+# curve O-O: 96 knots, R_e = 2.4421 bohr, D_e = 0.147621 Ha, worst residual 1.3e-4, 144.4 s
+# arm = oxygen control (12 O)   seeds = 8   12 atoms in 34.6 x 20.8 bohr
+# 20000 boundaries x 64 substeps, dt = 3.3821 a.u. -> 104.72 ps
+# T_init 3000 K, T_target 300 K, tau 2000
+# setup 145.7 s
+seed 0x0000000053415421  dt 3.3821  modal-O  O12  free O 0  free H 0  largest 12  molecules [O12]  fenced 220  drift 3.23e-4/1.63e-2  |p| 1.09e-11/1.94e-7  T 301 K  5 s
+seed 0x0000000053415422  dt 3.3821  modal-O  O12  free O 0  free H 0  largest 12  molecules [O12]  fenced 220  drift 3.10e-4/1.40e-2  |p| 5.96e-12/1.70e-7  T 251 K  5 s
+seed 0x0000000053415423  dt 3.3821  modal-O  O12  free O 0  free H 0  largest 12  molecules [O12]  fenced 220  drift 2.85e-4/1.58e-2  |p| 9.21e-12/1.94e-7  T 303 K  5 s
+seed 0x0000000053415424  dt 3.3821  modal-O  O12  free O 0  free H 0  largest 12  molecules [O12]  fenced 220  drift 3.02e-4/2.03e-2  |p| 1.64e-11/1.82e-7  T 287 K  5 s
+seed 0x0000000053415425  dt 3.3821  modal-O  O12  free O 0  free H 0  largest 12  molecules [O12]  fenced 220  drift 3.05e-4/1.55e-2  |p| 4.89e-12/1.95e-7  T 325 K  5 s
+seed 0x0000000053415426  dt 3.3821  modal-O  O12  free O 0  free H 0  largest 12  molecules [O12]  fenced 220  drift 3.07e-4/1.41e-2  |p| 5.28e-12/1.91e-7  T 305 K  5 s
+seed 0x0000000053415427  dt 3.3821  modal-O  O12  free O 0  free H 0  largest 12  molecules [O12]  fenced 220  drift 2.97e-4/1.33e-2  |p| 7.57e-12/1.85e-7  T 318 K  5 s
+seed 0x0000000053415428  dt 3.3821  modal-O  O12  free O 0  free H 0  largest 12  molecules [O12]  fenced 220  drift 2.97e-4/1.37e-2  |p| 7.95e-12/1.85e-7  T 306 K  5 s
+
+# ---- oxygen control (12 O) ----
+# seeds with the modal O-containing molecule = H2O : 0 / 8
+# seeds with ZERO free oxygen                      : 8 / 8
+# seeds with any molecule at all                   : 8 / 8
+# worst drift / bound = 2.226e-2, worst |p| / bound = 9.018e-5
+# fence incidence (triples refused for want of a table), per seed: [220, 220, 220, 220, 220, 220, 220, 220]
+# molecule census over all seeds: 8xO12

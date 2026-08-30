@@ -602,6 +602,106 @@ before the run, with the mechanism named and measured. P1 is where it gets to be
 wrong.
 
 
+
+---
+
+## P1 — THE PRODUCT · **BRANCH (b), 0 of 8 seeds. No water.**
+
+*Run after the freeze above was committed. Controls first, then the mixed arm.*
+
+### The controls, both PASS
+
+| arm | outcome |
+|---|---|
+| `hydrogen` (12 H) | **44 × H2, 2 × H4** over 8 seeds; modal size 2 and zero free H in 8/8; largest ≤ 4 in 8/8. SATURATION-1's molecules, reproduced |
+| `oxygen` (12 O) | **8 × O12** — one droplet every seed; zero free O in 8/8; the (O,O,O) fence counted at exactly 220 per force evaluation, which is `C(12,3)`, every triple |
+
+The oxygen control is SATURATION-1's own pair-only finding appearing in a second
+element: with no three-body term at all, twelve atoms over-coordinate into a
+single droplet. It is MBE2 behaviour, labelled as such, and it is what the
+freeze's Scope said it would be.
+
+### The mixed arm
+
+    seeds with H2O as the modal O-containing molecule : 0 / 8
+    seeds with zero free oxygen                       : 8 / 8
+    molecule census over all 8 seeds:  20 x H2   2 x O2H2   4 x O4H2   3 x O4H4
+    fence incidence: 52 triples refused, every seed
+    worst drift / bound 3.6e-6, worst |p| / bound 9.5e-5, T 292-339 K
+
+**No seed made water.** Every seed made hydrogen molecules and an oxygen
+AGGREGATE carrying two to four hydrogens: O4H2 four times, O4H4 three times, and
+one seed splitting into two O2H2. Zero free oxygen and zero free hydrogen
+everywhere — everything is bound to something, just not into H2O.
+
+### The forward stake: RIGHT IN DIRECTION, WRONG IN MECHANISM
+
+The stake committed before this run said branch (a) would fail, and it did, 0 of
+8. But it named the wrong reason, and the distinction is the finding.
+
+**Predicted:** the MBE3 sandbox over-binds a THIRD HYDROGEN to water by ~0.05 Ha
+(G2's measurement), so the quench makes H3O and heavier.
+
+**Observed:** no oxygen ever collects a third hydrogen. The census has no species
+with more than one H per O. What dominates instead is **oxygen–oxygen
+aggregation**, and the mechanism is this campaign's own DECLARED SCOPE FENCE
+rather than the four-body term.
+
+SATURATION-2 tabulates `(O,H,H)` and nothing else. `(O,O,H)` and `(O,O,O)` are
+not tabulated and run pair-only — the freeze says so in its Scope, and the
+sandbox counts every occurrence. In a box with four oxygens that fence fires **52
+times per force evaluation**, and 52 is exactly `C(4,2)·8 + C(4,3)` = 48 + 4:
+every two-oxygen and three-oxygen triple there is. Oxygen–oxygen has no
+three-body term at all, so it over-coordinates for precisely the reason the pure-O
+control demonstrates in isolation, and it does so FASTER than a single oxygen can
+gather hydrogens. The H3O mechanism never got its chance to show.
+
+So the honest reading is that **P1 is limited by the campaign's declared scope,
+not by the order of the expansion.** Both are real; only one is operative here,
+and the prediction that identified the wrong one is on the record above,
+unedited.
+
+### What this does and does not say
+
+It does **not** say water fails to form in this model. G1 says the model's water
+is bent at 96.77° and G2 says it saturates at two hydrogens — both against full CI,
+both holding. What P1 says is that a sandbox with a three-body term for ONE triple
+type out of three cannot assemble that molecule from a gas, because the two
+untabulated types decide the outcome first.
+
+The named successor is therefore not the four-body term this lane's G2 pointed
+at, but the two MISSING THREE-BODY TABLES: `(O,O,H)` and `(O,O,O)`. That is a
+change of successor driven by a measurement, and it is worth saying that G2's
+four-body finding — which was the more interesting physics — is not the thing
+standing between this campaign and its product.
+
+### DISCLOSED
+
+**The O-O curve does not fully converge, and it does not matter — measured, not
+assumed.** Its `worst_residual` is 1.3e-4 Ha against the crate's own
+`CONVERGED_RESIDUAL = 1e-10`, and the harness printed that and did not act on it,
+which is the exact defect shape that constant's doc comment describes. So it was
+located (`examples/s2_oo_residual.rs`): every non-converged knot is at `r ≥ 4.34`
+bohr, in the dissociation tail where O(³P) + O(³P) is near-degenerate — the same
+near-degeneracy the referee met — while the entire well region from 1.6 to 4.07
+bohr, `R_e = 2.44` included, converges at 1e-10. The energy moves 4e-5 Ha between
+5.16 and 9.0 bohr while the residual there is 6e-5, so the unconverged region is
+flat as well as distant. The bond criterion and the aggregation P1 reports do not
+read it.
+
+**The mixed arm was run once before the timestep report was fixed**, and its
+result was identical to every printed digit. The header had been reporting the
+EMPTY box's fallback `dt` rather than the placed scene's; the runs were never
+affected, because `hold_exactness` drives `dt` to the envelope's value whatever it
+starts from. `dt` is now derived from the placed scene and recorded per seed —
+1.0772 at the well bottom, held to 0.5386 once the envelope sees the scene.
+
+**The energy bound is loose by five orders in this arm** (3.6e-6 of a 2.4e1 Ha
+bound), for the reason C1 records: the curvature envelope's compact corner is
+unreachable and sets the absolute cap for every configuration. The momentum
+bound, which does not depend on it, is tight to four decades and is the
+informative half.
+
 ---
 
 ## ASSIGNED VERIFICATION — `src/quaternary.rs`'s four-body surface · **DOES NOT VERIFY**

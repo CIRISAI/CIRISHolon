@@ -379,6 +379,26 @@ fn main() {
             a.symbol,
             b.symbol
         );
+        // The residual is NAMED rather than merely printed. `CONVERGED_RESIDUAL`'s own doc
+        // comment describes the defect this guards: a curve whose solve hit its iteration
+        // cap is emitted looking perfectly healthy, carrying a wrong energy, with the
+        // evidence in a field no consumer is required to read. The O-O curve does exceed
+        // it — 1.3e-4 against 1e-10 — so this is a live warning and not decoration, and
+        // `examples/s2_oo_residual.rs` is where it was located: every offending knot is
+        // past 4.34 bohr, in the near-degenerate dissociation tail, while the whole well
+        // converges at 1e-10. It is reported here so a future run cannot inherit that
+        // conclusion without re-reading it.
+        if pt.meta.worst_residual > holon_chem::pair::CONVERGED_RESIDUAL {
+            println!(
+                "# WARNING {}-{}: worst residual {:.2e} exceeds CONVERGED_RESIDUAL {:.0e}. \
+                 Locate it before trusting anything this arm reports; see \
+                 examples/s2_oo_residual.rs",
+                a.symbol,
+                b.symbol,
+                pt.meta.worst_residual,
+                holon_chem::pair::CONVERGED_RESIDUAL
+            );
+        }
         println!(
             "# curve {}-{}: {CURVE_KNOTS} knots, {}, worst residual {:.1e}, {:.1} s",
             a.symbol,

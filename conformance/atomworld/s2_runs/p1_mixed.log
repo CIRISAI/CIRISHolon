@@ -1,0 +1,23 @@
+# curve H-H: 96 knots, R_e = 1.3887 bohr, D_e = 0.204142 Ha, worst residual 1.2e-12, 0.4 s
+# curve O-H: 96 knots, R_e = 1.9909 bohr, D_e = 0.122901 Ha, worst residual 9.9e-11, 4.3 s
+# curve O-O: 96 knots, R_e = 2.4421 bohr, D_e = 0.147621 Ha, worst residual 1.3e-4, 160.8 s
+# arm = mixed (8 H + 4 O)   seeds = 8   12 atoms in 34.6 x 20.8 bohr
+# 20000 boundaries x 64 substeps, dt = 1.0772 a.u. -> 33.35 ps
+# T_init 3000 K, T_target 300 K, tau 2000
+# setup 166.9 s
+seed 0x0000000053415421  dt 0.5386  modal-O O4H4  free O 0  free H 0  largest 8  molecules [H2 H2 O4H4]  fenced 52  drift 4.10e-5/2.39e1  |p| 2.40e-12/9.78e-8  T 292 K  21 s
+seed 0x0000000053415422  dt 0.5386  modal-O O2H2  free O 0  free H 0  largest 4  molecules [H2 H2 O2H2 O2H2]  fenced 52  drift 4.95e-5/2.21e1  |p| 2.56e-12/1.10e-7  T 303 K  16 s
+seed 0x0000000053415423  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 52  drift 4.50e-5/1.58e1  |p| 3.14e-12/8.39e-8  T 293 K  16 s
+seed 0x0000000053415424  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 52  drift 4.61e-5/1.78e1  |p| 9.39e-12/9.91e-8  T 316 K  17 s
+seed 0x0000000053415425  dt 0.5386  modal-O O4H4  free O 0  free H 0  largest 8  molecules [H2 H2 O4H4]  fenced 52  drift 6.35e-5/2.36e1  |p| 5.67e-12/9.50e-8  T 311 K  18 s
+seed 0x0000000053415426  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 52  drift 5.01e-5/1.47e1  |p| 4.94e-12/9.22e-8  T 299 K  16 s
+seed 0x0000000053415427  dt 0.5386  modal-O O4H4  free O 0  free H 0  largest 8  molecules [H2 H2 O4H4]  fenced 52  drift 5.47e-5/1.50e1  |p| 5.27e-12/1.05e-7  T 294 K  17 s
+seed 0x0000000053415428  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 52  drift 2.87e-5/1.77e1  |p| 6.11e-12/1.11e-7  T 339 K  14 s
+
+# ---- mixed (8 H + 4 O) ----
+# seeds with the modal O-containing molecule = H2O : 0 / 8
+# seeds with ZERO free oxygen                      : 8 / 8
+# seeds with any molecule at all                   : 8 / 8
+# worst drift / bound = 3.649e-6, worst |p| / bound = 9.477e-5
+# fence incidence (triples refused for want of a table), per seed: [52, 52, 52, 52, 52, 52, 52, 52]
+# molecule census over all seeds: 20xH2  2xO2H2  4xO4H2  3xO4H4

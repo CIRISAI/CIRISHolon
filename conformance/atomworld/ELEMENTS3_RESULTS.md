@@ -248,15 +248,34 @@ Three different criteria are in play and this campaign has confused them once al
 | class | criterion | Z | determinants |
 |---|---|---|---|
 | **has an automatic route** | `n_det ≤ MPS_ROUTE_THRESHOLD` (5e4) | 32–36, 51–54 | 1 – 23,409 |
-| no automatic route; solved here via `solve_determinant` | inside this record's 1.2e6 budget | 19, 20, 30, 31, 50 | 8.2e4 – 1.2e5 |
-| no automatic route; **REFUSED, did not converge** | inside the budget but Davidson stopped at its cap | **49 (In)** | 1,026,675 |
+| no automatic route; solved here via `solve_determinant` | inside this record's 1.2e6 budget | 19, 20, 30, 31, 49, 50 | 8.2e4 – 1.0e6 |
 | no automatic route; over this record's **budget** | a spending cap, **not** a claim of no route | 28, 29, 37, 38, 48 | 2.4e6 – 1.1e7 |
 | no automatic route; **A1.2's sixteen** | past 2.6e7, where reachability becomes the open question | 21–27, 39–47 | 2.6e7 – 1.97e12 |
 
 The nine with an automatic route are exactly the nine A1.2 named referee-eligible — the two
 criteria coincide here, which is a fact about this range rather than a definition.
 
-**Indium is the one refusal.** At 1,026,675 determinants Davidson stopped at its
+**The convergence verdict is a SEPARATE axis and it does not follow the route classes.** A
+route says how a space would be reached; convergence says whether the solve that reached it
+finished. Five rows are refused on the convergence verdict, and they fall in two different
+route classes:
+
+| Z | atom | determinants | residual | route class |
+|---|---|---|---|---|
+| 30 | Zn | 665,856 | 2.72e-10 | no automatic route, solved by hand |
+| 49 | In | 1,026,675 | **3.98e-1** | no automatic route, solved by hand |
+| 50 | Sn | 123,201 | 2.06e-10 | no automatic route, solved by hand |
+| 51 | Sb | 9,477 | 1.07e-10 | **has an automatic route** |
+| 52 | Te | 729 | 1.07e-10 | **has an automatic route** |
+
+Antimony and tellurium are refused while sitting in the class the record calls automatically
+routable, which is the clearest demonstration that the two axes are independent. Indium is
+different in kind from the other four — 3.98e-1 is nine orders above the bar, against their
+factor of one to three — and only indium's row is meaningless; see the convergence section
+below for why the other four are process refusals carrying accurate energies.
+
+**Indium is the worst refusal by nine orders, and the only one whose numbers are
+meaningless.** At 1,026,675 determinants Davidson stopped at its
 the solver with a residual of **3.98e-1** — nine orders above the crate's declared
 `CONVERGED_RESIDUAL` — and returned **2S+1 = 4.216**, which is not a multiplicity: the
 Hamiltonian is spin-free, so a converged eigenvector is a spin eigenstate and 2S+1 is an

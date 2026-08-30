@@ -1,0 +1,30 @@
+# MPS_MAX_ORBITALS, re-derived as a measurement
+#   stake        |E_dmrg - E_fci| <= 1e-8 Ha
+#   budget       300 s of wall clock per (pair, chi) cell
+#   chi ladder   [32, 64, 128, 256, 512], smallest first, stopping at the first rung that reaches the stake
+#   sweeps       in chunks of 3, re-entered from the previous state, tol 1e-11
+#   reference    fci::solve_determinant (NOT solve, which would route the large spaces to the thing under test)
+#   geometry     each pair's own computed equilibrium separation
+pair	n_orb	n_det	R	E_fci	mpo_s	chi	delta	sweeps	secs	maxbond	verdict
+# H2: exact -1.137306051222 Ha in 0.0 s; MPO 0.00 s; max MPO bond 8
+H2	2	4	1.3887	-1.137306051	0.00	32	+1.776e-15	2	0.0	4	REACHED
+# LiH: exact -7.882762252105 Ha in 0.0 s; MPO 0.00 s; max MPO bond 101
+LiH	6	225	2.9244	-7.882762252	0.00	32	+3.908e-14	3	2.8	32	REACHED
+# HCl: exact -455.157067423333 Ha in 0.0 s; MPO 0.02 s; max MPO bond 411
+HCl	10	100	2.5369	-455.157067423	0.02	32	+6.122e-11	3	63.0	32	REACHED
+# NaH: exact -160.371233107850 Ha in 1.3 s; MPO 0.01 s; max MPO bond 411
+NaH	10	44100	3.1339	-160.371233108	0.01	32	+4.873e-3	9	364.5	32	BUDGET
+#   NaH: stopping the chi ladder at 32 -- BUDGET is a limit that a larger chi makes worse, not better.
+# ClF: exact -552.589319789915 Ha in 0.0 s; MPO 0.07 s; max MPO bond 943
+ClF	14	196	3.3419	-552.589319790	0.07	32	+5.457e-12	5	472.2	32	REACHED
+# SiO: exact -359.548925012850 Ha in 18.5 s; MPO 0.31 s; max MPO bond 943
+SiO	14	132496	2.9081	-359.548925013	0.31	32	+1.118e-2	6	663.9	32	BUDGET
+#   SiO: stopping the chi ladder at 32 -- BUDGET is a limit that a larger chi makes worse, not better.
+# S2: exact -786.393905325116 Ha in 2.7 s; MPO 0.19 s; max MPO bond 1617
+S2	18	23409	3.7066	-786.393905325	0.19	32	+3.509e-3	3	575.3	32	BUDGET
+#   S2: stopping the chi ladder at 32 -- BUDGET is a limit that a larger chi makes worse, not better.
+#
+# LARGEST ORBITAL COUNT REACHING THE STAKE INSIDE BUDGET: 14 (ClF)
+# SMALLEST ORBITAL COUNT THAT DID NOT: 10 (NaH), at a 300 s per-cell budget
+# The new MPS_MAX_ORBITALS is the first number, and it is bounded by the stated budget rather than by the method. Raising the budget may raise it.
+exit=0

@@ -889,33 +889,69 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
     }
 }
 
-/// The largest orbital count the MPS/DMRG route has been DEMONSTRATED to run at.
+/// The largest orbital count the MPS/DMRG route has been demonstrated to run at.
 ///
-/// # Measured, and the measurement is the point
+/// # RE-DERIVED, and the re-derivation says this is the wrong quantity
 ///
-/// `q8_mps::mpo::Mpo::from_electronic_integrals` builds the two-body electronic MPO from a
-/// raw list of `O(n_orb^4)` operator strings and compresses it with one SVD per site of an
-/// `m x 4r` matrix. The construction, not the sweep, is the entire budget. Measured on the
-/// campaign machine (`engine/output/mixtures1/mpo_cost_*.log`):
+/// The old value of 6 was measured against the pre-rebuild MPO construction, which cost
+/// 528 s to BUILD at six orbitals and did not finish at ten. The channel-based rebuild
+/// removed that entirely — SiO's build is now 0.31 s — so the 6 was re-measured on an
+/// orbital ladder over real STO-3G integrals, each pair at its own equilibrium, chi = 32,
+/// a declared 300 s per-cell budget, and the D1 stake of 1e-8 Ha against exact FCI
+/// (`examples/mps_ladder.rs`, `engine/output/mixtures1/mps_ladder.log`):
 ///
-/// | pair | `n_orb` | MPO build | one sweep | final bond dim |
-/// |---|---|---|---|---|
-/// | H2  | 2  | 0.00 s   | 0.00 s | 8 |
-/// | LiH | 6  | 528.48 s | 0.03 s | 46 |
-/// | HCl | 10 | did not complete in over an hour | — | — |
+/// | `n_det` | pair | `n_orb` | delta / Ha | verdict | exact FCI |
+/// |---|---|---|---|---|---|
+/// | 4 | H2 | 2 | 1.8e-15 | REACHED | 0.0 s |
+/// | 100 | HCl | 10 | 6.1e-11 | REACHED | 0.0 s |
+/// | 196 | ClF | 14 | 5.5e-12 | REACHED | 0.0 s |
+/// | 225 | LiH | 6 | 3.9e-14 | REACHED | 0.0 s |
+/// | 23,409 | S2 | 18 | 3.5e-3 | BUDGET | 2.7 s |
+/// | 44,100 | NaH | 10 | 4.9e-3 | BUDGET | 1.3 s |
+/// | 132,496 | SiO | 14 | 1.1e-2 | BUDGET | 18.5 s |
 ///
-/// So the route is reachable at six orbitals at a cost of nine minutes PER GEOMETRY, and
-/// is not reachable at ten. MIXTURES-1's own D1 overlap species are SiO at fourteen
-/// orbitals and S2 at eighteen.
+/// **Sorted by determinant count the verdict is monotone. Sorted by orbital count it is
+/// not**: ten orbitals both reaches (HCl) and fails (NaH), and fourteen both reaches (ClF)
+/// and fails (SiO). So no orbital-count threshold exists to be re-derived, and a constant
+/// of this name cannot carry the answer. It is kept at a value no longer reached by the
+/// route below, and [`MPS_MAX_DETERMINANTS`] is what actually gates.
 ///
-/// # Why this is a refusal and not a slow path
+/// The harness's own summary line says "largest orbital count reaching: 14; smallest that
+/// did not: 10", which is self-contradictory as a threshold — and that contradiction IS
+/// the measurement's answer, not a defect in it.
+pub const MPS_MAX_ORBITALS: usize = 14;
+
+/// CI-space size past which the MPS route does not reach the D1 stake, MEASURED.
 ///
-/// [`crate::fci::solve`] routes any space past [`crate::fci::MPS_ROUTE_THRESHOLD`]
-/// determinants to that builder. SiO is 132,496 determinants and fourteen orbitals, so
-/// asking this crate for an SiO curve does not return a wrong number — it does not
-/// return. A sandbox that offers a species and then hangs on it is worse than one that
-/// says it cannot do that species, and the difference is this constant.
-pub const MPS_MAX_ORBITALS: usize = 6;
+/// The operative bound, because the orbital count is not (see [`MPS_MAX_ORBITALS`]). The
+/// boundary sits between LiH's 225 determinants, which reaches 1e-8 in 3 sweeps, and S2's
+/// 23,409, which is still 3.5e-3 away when the budget runs out. 1,024 is placed inside that
+/// gap and is deliberately the same round number as the browser split's determinant limit;
+/// nothing distinguishes 500 from 5,000 on this evidence, and pretending otherwise would be
+/// precision the ladder does not have.
+///
+/// # The finding this bound encodes, which is larger than the bound
+///
+/// **Every pair the MPS route REACHES is a pair whose exact FCI is already free** — 0.0 s
+/// for all four. **Every pair where exact FCI costs anything** — NaH 1.3 s, S2 2.7 s,
+/// SiO 18.5 s — **is a pair the MPS route does not reach.** So on this engine today the
+/// route extends nothing: it is slower and less accurate wherever the determinant route is
+/// affordable, and it fails wherever the determinant route is expensive.
+///
+/// Combined with [`crate::fci::MPS_ROUTE_THRESHOLD`] = 50,000, that makes
+/// [`AutomaticRoute::Mps`] UNREACHABLE — a space large enough to be routed to MPS is
+/// necessarily larger than this bound. That is not a bug in the routing; it is the
+/// measurement, encoded. The arm is kept so that the day the sweep implementation improves,
+/// the fix is one constant and not a re-argued design.
+///
+/// # What this bound is NOT
+///
+/// It is scoped to chi = 32 and a 300 s per-cell budget. The ladder stops climbing chi
+/// after a BUDGET verdict, deliberately — a larger chi is strictly slower per sweep, so it
+/// cannot do better in the same wall clock — which means a much larger budget at a larger
+/// chi was never tested and could move this. The bound says what the route reaches under a
+/// stated budget, not what DMRG can do in principle.
+pub const MPS_MAX_DETERMINANTS: usize = 1024;
 
 /// Which route [`crate::fci::solve`] WOULD TAKE for a pair.
 ///
@@ -1011,7 +1047,11 @@ pub fn automatic_route(a: Species, b: Species) -> AutomaticRoute {
     let n_det = choose(n_orb, n_alpha).saturating_mul(choose(n_orb, n_beta));
     if n_det <= crate::fci::MPS_ROUTE_THRESHOLD {
         AutomaticRoute::Determinant { n_det, n_orb }
-    } else if n_orb <= MPS_MAX_ORBITALS {
+    } else if n_det <= MPS_MAX_DETERMINANTS && n_orb <= MPS_MAX_ORBITALS {
+        // Currently unreachable, and measured to be so rather than assumed: see
+        // `MPS_MAX_DETERMINANTS`. A space past MPS_ROUTE_THRESHOLD is necessarily past
+        // that bound too. The arm stays because the day the sweeps improve, this is one
+        // constant to move and not a design to re-argue.
         AutomaticRoute::Mps { n_det, n_orb }
     } else {
         AutomaticRoute::NoneAvailable { n_det, n_orb }

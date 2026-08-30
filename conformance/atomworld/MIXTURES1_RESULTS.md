@@ -17,7 +17,7 @@ looked at**, as the prereg requires.
 | **E1** the emergent negatives | **evidence, not discharged** | Ar2 and NeAr unbound — but on the engine's derived grid, not the grid E1 stakes |
 | **E2** the emergent chemical contrast | **BRANCH (b)** | the middle (HCl > S2 > Cl2) and the unbound tail are exactly as staked; both ends are not — NaH up four, ClF down three, SiO and N2 swapped |
 | **P1** THE PRODUCT: emergent hetero-chemistry | **BRANCH (b)** | HCl modal in 0 of 8 seeds; both controls pass, so not VOID. HCl bonds ARE forming — the *reading* cannot see them in a condensed phase |
-| **D1** the DMRG bridge earns admission | **RUNNING at the stake** | the wall came down: an MPO rebuild took SiO's build from >12 h to **0.07 s** on real integrals, so the staked S2/SiO comparison is running for the first time |
+| **D1** the DMRG bridge earns admission | **NOT ADMITTED** | the MPO wall fell (12 h → 0.3 s) and a second one was behind it: the SWEEPS do not converge. SiO is 1.1e−2 from exact after 664 s, six orders from the stake |
 | **R2** the staked-pair referee gate | **OWED** | gate built and scope-refusing; blocked on the referee lane's drop, and cheap when it lands |
 
 Two gates fire, and neither fires because the model failed. E2's inversion is a
@@ -575,6 +575,70 @@ believing the wall was down — and it is down, by 0.07 s against twelve hours.
 
 Si2 and Na2, the DMRG-only curves D1 would have licensed, **do not enter the
 sandbox**. That is the freeze's "only then", enforced.
+
+---
+
+## The MPS route, re-measured — and it currently buys nothing
+
+Ordered by the lead after the MPO rebuild made `MPS_MAX_ORBITALS = 6` stale. The
+form was specified: an orbital ladder, real integrals, a stated budget, per-rung
+numbers. `examples/mps_ladder.rs`, chi = 32, 300 s per (pair, chi) cell, stake
+1e−8 Ha against exact FCI, each pair at its own equilibrium.
+
+| `n_det` | pair | `n_orb` | delta / Ha | sweeps | secs | verdict | exact FCI |
+|---|---|---|---|---|---|---|---|
+| 4 | H2 | 2 | +1.8e−15 | 2 | 0.0 | REACHED | 0.0 s |
+| 100 | HCl | 10 | +6.1e−11 | 3 | 63.0 | REACHED | 0.0 s |
+| 196 | ClF | 14 | +5.5e−12 | 5 | 472.2 | REACHED | 0.0 s |
+| 225 | LiH | 6 | +3.9e−14 | 3 | 2.8 | REACHED | 0.0 s |
+| 23,409 | S2 | 18 | +3.5e−3 | 3 | 575.3 | BUDGET | 2.7 s |
+| 44,100 | NaH | 10 | +4.9e−3 | 9 | 364.5 | BUDGET | 1.3 s |
+| 132,496 | SiO | 14 | +1.1e−2 | 6 | 663.9 | BUDGET | 18.5 s |
+
+### There is no orbital-count threshold to re-derive
+
+**Sorted by determinant count the verdict column is monotone. Sorted by orbital
+count it is not**: ten orbitals both reaches (HCl) and fails (NaH); fourteen both
+reaches (ClF) and fails (SiO). The harness's own summary — "largest reaching: 14;
+smallest that did not: 10" — is self-contradictory as a threshold, and that
+contradiction is the answer rather than a defect in the instrument.
+
+So `MPS_MAX_ORBITALS` cannot carry this. `MPS_MAX_DETERMINANTS = 1024` is added as
+the operative bound, placed inside the measured gap between LiH's 225 and S2's
+23,409. Nothing on this evidence distinguishes 500 from 5,000, and claiming
+otherwise would be precision the ladder does not have.
+
+### The larger finding: the route extends nothing
+
+**Every pair the MPS route reaches has an exact FCI that is already free** — 0.0 s
+for all four. **Every pair whose exact FCI costs anything** — NaH 1.3 s, S2 2.7 s,
+SiO 18.5 s — **is one the route does not reach.**
+
+DMRG succeeds exactly where it is not needed and fails exactly where it would be
+useful. Combined with `MPS_ROUTE_THRESHOLD = 50,000`, that makes
+`AutomaticRoute::Mps` **unreachable**: a space large enough to be routed to MPS is
+necessarily past the determinant bound. The arm is kept, and the unreachability is
+recorded as the measurement rather than removed as dead code — the day the sweep
+implementation improves, the fix is one constant.
+
+### Scope, so this is not over-read
+
+Chi = 32, 300 s per cell. The ladder deliberately stops climbing chi after a
+BUDGET verdict, because a larger chi is strictly slower per sweep and cannot do
+better in the same wall clock — so a much larger budget at a larger chi was never
+tested and could move this. The bound says what the route reaches under a stated
+budget, not what DMRG can do in principle.
+
+### What this does to D1
+
+**D1 remains NOT ADMITTED, and the reason has changed completely.** Before the
+rebuild it was blocked on building the MPO at all. Now the MPO builds in 0.31 s
+and the blocker is convergence: SiO sits 1.1e−2 Ha from exact after 664 s, which
+is six orders from the 1e−8 stake, and S2 3.5e−3 after 575 s. Two walls, one
+behind the other; the first fell and the second did not.
+
+`bank::D1_RECORD` stays `NONE`, every DMRG-labelled curve stays refused, and Si2
+and Na2 do not enter the sandbox.
 
 ---
 

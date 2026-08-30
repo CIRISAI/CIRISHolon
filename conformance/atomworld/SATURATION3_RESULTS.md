@@ -252,28 +252,44 @@ proves anything:
 | `CorruptNode` | convicted | convicted |
 | `WrongWarmStartAll` | the trapped nodes VOID | 12 of 12 |
 
-### THE PREREG'S G1 CONTAINS A REQUIREMENT THAT IS FALSE
+### The clause that no design could satisfy — AMENDED, NOT REINTERPRETED
 
-G1 is staked as requiring "the WARM result bit-identical to cold at every node",
-and plant (iii) as "must yield the bit-identical converged energy or VOID".
-**Measured false, 0 of 5 pairs, and believed unachievable** — a warm start always
-moves the last bits, because the Ritz value is computed by `jacobi_eigh` over a
-subspace accumulated from a different basis and that arithmetic carries
-`~eps·||H||`, about one ulp at these energies. If bit-identity were the only
-alternative to VOID, every warm-started node in the campaign would have to VOID,
-which is not a table.
+The freeze asked for "the WARM result bit-identical to cold at every node (a warm
+start may change the path, never the answer)". The parenthetical is a factual
+claim about f64 Davidson and it is measured **FALSE at every scale tested**:
 
-This lane has NOT quietly reinterpreted the freeze. What is built achieves G1's
-evident intent — the table is bit-identical across shard counts — by the
-canonical-chain route instead, and plant (iii) is scored on **three** outcomes
-rather than two:
+| table | `n_det` | warm/cold pairs bit-identical | worst \|dE\| |
+|---|---|---|---|
+| (H,H,Cl) | 605 | 0 of 5 | 4.320e−12 Ha |
+| (O,O,O) | 207,025 | 0 of 5 | 3.126e−12 Ha |
 
-1. the wrong start converges to the CORRECT eigenvector at ulp scale — benign;
-2. it converges elsewhere and the node VOIDs — the plant firing;
-3. it converges elsewhere and the node SCORES — the silent wrong entry, the
-   only failure.
+In finite precision the trailing bits of "the answer" ARE a function of the
+iteration path, so no design satisfies the clause as written.
 
-The wording is referred to the lead for amendment.
+This was escalated rather than re-scored, and the lead ruled: **AMENDMENT A2**
+(prereg, 2026-08-30, post-data). A clause that fails EVERY design separates
+nothing, so re-wording it cannot have been selected by a favourable result —
+none was available to select. The cited precedent is the retired 1e-11 Davidson
+ask. The amendment records explicitly that had the clause been achievable by some
+designs and not others, it would have been **REFUSED as a rescue** and the
+campaign re-frozen. The primary clause — bit-identical across shard counts, a
+corrupted shard convicted — is untouched, and is what this gate measured.
+
+### Plant (iii), scored against A2's two-sided gauge
+
+A2 replaced this lane's judgement-based three outcomes with **numbers**, and the
+gate now scores against those rather than against a reading:
+
+| outcome | boundary | measured at discharge |
+|---|---|---|
+| **BENIGN** | \|E_node − E_cold\| ≤ **1e−9 Ha** (one order above the 1e−10 convergence bar) | 20 of 32, worst **4.3e−12 Ha** |
+| **REFUSED to classify** | the dead band between — named, never silently absorbed | **0 of 32; the band is empty on this data** |
+| **TRAPPED** | ≥ **1e−3 Ha** — must VOID via the variational bound or the plant fires AS A FAILURE | 12 of 32, worst **7.572 Ha**, **12 of 12 VOIDed** |
+
+**Separation: twelve orders**, with zero false VOIDs among the benign. The dead
+band being empty is the reading that matters — it means the gauge is not
+straddling the data, and the classification is not a threshold choice dressed as
+a result.
 
 ### The trap is geometry-dependent, which cost this gate a false alarm
 
@@ -422,13 +438,28 @@ fixed range in a fixed order. **Five repeat runs bit-identical.**
 
 **Speedup 3.2× against the best CPU number.**
 
-The baseline was checked rather than assumed, because the GPU arm gets a
-reformulation AND a tuned library, and quoting that against a hand-written loop
-would attribute the whole difference to the device (`holon-gpu/src/cpu.rs`'s own
-warning). The same three-GEMM formulation on the CPU is **slower** than
-`sigma_direct` — materialising `T` costs 372 MB of bandwidth per sigma, which the
-GPU has (462 GB/s measured) and the CPU does not. `sigma_direct` is a good
-cache-blocked algorithm and is the honest CPU arm.
+### The honest-baseline check — what makes the 3.2× a DEVICE result
+
+This is the load-bearing control for the whole gate, so it is stated separately
+rather than left in a caveat. The GPU arm does not merely run on a GPU: it also
+**reformulates** sigma as three GEMMs and hands them to a **tuned library**.
+Quoting that against `holon-chem`'s hand-written loop would credit the device
+with all three, which is the defect `holon-gpu/src/cpu.rs`'s own header warns
+about ("so the GPU's speedup is quoted against the best CPU and not against the
+most convenient one").
+
+So the identical reformulation was run on the CPU through OpenBLAS. **It came
+back SLOWER than `sigma_direct`** — 1.40 against 2.20 sigma/s single-threaded.
+The reason is bandwidth, not tuning: materialising the intermediate `T` costs
+**372 MB per sigma**, which the GPU has (462.7 GB/s measured) and the CPU does
+not. `sigma_direct` avoids it by building `t` one alpha string at a time (819 KB,
+cache-resident) and reusing it across that string's 48 excitations.
+
+Two things follow. `sigma_direct` is a good cache-blocked algorithm and IS the
+honest CPU arm — there was no slow baseline to beat. And the 3.2× is attributable
+to the **device**, specifically to its memory bandwidth, rather than to the
+reformulation or the library; the reformulation on its own is a *pessimisation*
+on CPU.
 
 ### Agreement, and what adoption would cost G1
 

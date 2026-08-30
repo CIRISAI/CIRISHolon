@@ -435,6 +435,29 @@ pub fn excite(mask: Mask, p: usize, q: usize) -> Option<(f64, Mask)> {
 
 impl Strings {
     pub fn new(n_orb: usize, n_elec: usize) -> Strings {
+        Strings::with_mask_width(n_orb, n_elec, MAX_ORB)
+    }
+
+    /// The string list a mask of `mask_width` bits can hold.
+    ///
+    /// # Why the width is a parameter and not a constant
+    ///
+    /// This is the W1 plant's entry point, and it is the honest way to write the plant:
+    /// the quantity the widening changed is the number of bits a string mask has, so the
+    /// plant sets that quantity rather than mutating a result. `Strings::new` passes
+    /// [`MAX_ORB`] and is the only production caller.
+    ///
+    /// With `mask_width >= n_orb` this is exactly `new` -- every string of `n_elec`
+    /// electrons in `n_orb` orbitals fits, and the parameter is inert. With
+    /// `mask_width < n_orb` it produces what a narrower mask could actually have held:
+    /// the strings whose occupied orbitals all lie below bit `mask_width`, and no others.
+    /// That is not an approximation of the old defect, it IS the old defect -- masks that
+    /// cannot address the high orbitals silently enumerate a smaller space and the CI
+    /// solves a different problem without saying so.
+    ///
+    /// Passing a width below `n_orb` outside a plant is a bug; nothing in the production
+    /// path does it.
+    pub fn with_mask_width(n_orb: usize, n_elec: usize, mask_width: usize) -> Strings {
         assert!(n_orb <= MAX_ORB);
         let mut masks = Vec::new();
         if n_elec <= n_orb {
@@ -449,7 +472,10 @@ impl Strings {
                 // that moved the type but kept the special case at 32 would silently
                 // produce an EMPTY string list at 64.
                 let mut v: Mask = ((1u128 << n_elec) - 1) as Mask;
-                let limit: u128 = 1u128 << n_orb;
+                // The reachable range is capped by the mask width as well as by the
+                // orbital count -- for the production width the cap is inert, and for the
+                // plant it is the whole of the defect.
+                let limit: u128 = 1u128 << n_orb.min(mask_width);
                 while (v as u128) < limit {
                     masks.push(v);
                     let c = v & (!v).wrapping_add(1);
@@ -482,13 +508,20 @@ impl Strings {
                 ms.binary_search(&m).ok()
             }
         };
+        // Excitations are generated only WITHIN the addressable orbitals. For the
+        // production width this is every orbital and the bound is inert; for the plant it
+        // is what makes the truncated space closed under the Hamiltonian instead of
+        // leaking to strings the mask cannot name. The integral index below still uses the
+        // full `n_orb`, because `ci.k` and `ci.g` are indexed by the real orbital number.
+        let n_addressable = n_orb.min(mask_width);
         let mut singles = Vec::with_capacity(masks.len());
         for &m in masks.iter() {
             let mut list = Vec::new();
-            for q in 0..n_orb {
-                for p in 0..n_orb {
+            for q in 0..n_addressable {
+                for p in 0..n_addressable {
                     if let Some((sgn, m2)) = excite(m, p, q) {
-                        let idx = get_idx(m2, &lookup, &masks).expect("valid excitation");
+                        let idx = get_idx(m2, &lookup, &masks)
+                            .expect("excitation inside the addressable orbitals stays in the list");
                         list.push(((p * n_orb + q) as u16, sgn, idx as u32));
                     }
                 }
@@ -543,8 +576,20 @@ pub struct FciSpace {
 
 impl FciSpace {
     pub fn new(n_orb: usize, n_alpha: usize, n_beta: usize) -> FciSpace {
-        let alpha = Strings::new(n_orb, n_alpha);
-        let beta = Strings::new(n_orb, n_beta);
+        FciSpace::with_mask_width(n_orb, n_alpha, n_beta, MAX_ORB)
+    }
+
+    /// The determinant space a string mask of `mask_width` bits can address. See
+    /// [`Strings::with_mask_width`]: `new` passes [`MAX_ORB`] and this exists for the W1
+    /// plant, which needs to build the space a 32-bit mask would have built.
+    pub fn with_mask_width(
+        n_orb: usize,
+        n_alpha: usize,
+        n_beta: usize,
+        mask_width: usize,
+    ) -> FciSpace {
+        let alpha = Strings::with_mask_width(n_orb, n_alpha, mask_width);
+        let beta = Strings::with_mask_width(n_orb, n_beta, mask_width);
         let n_det = alpha.len() * beta.len();
         FciSpace {
             n_orb,

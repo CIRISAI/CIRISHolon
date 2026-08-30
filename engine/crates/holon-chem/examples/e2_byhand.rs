@@ -6,7 +6,7 @@
 //!
 //! # Why this exists rather than a flag on `generate_pair_table`
 //!
-//! `pair::feasibility` reports SiO as having no AUTOMATIC route, and
+//! `pair::automatic_route` reports SiO as having no AUTOMATIC route, and
 //! `generate_pair_table` refuses it — correctly, because `fci::solve` would send its
 //! 132,496 determinants to an MPO builder that does not return at fourteen orbitals.
 //!
@@ -24,7 +24,7 @@
 use holon_chem::dual::D2;
 use holon_chem::elements::{by_symbol, Species};
 use holon_chem::fci::solve_determinant;
-use holon_chem::pair::{atom_energy, feasibility, geometry_problem, WELL_MIN_DEPTH};
+use holon_chem::pair::{atom_energy, automatic_route, geometry_problem, WELL_MIN_DEPTH};
 use std::io::Write;
 use std::time::Instant;
 
@@ -68,7 +68,7 @@ fn main() {
 
     for name in names {
         let (a, b) = split(&name);
-        let f = feasibility(a, b);
+        let f = automatic_route(a, b);
         let t0 = Instant::now();
         let mut evals = 0usize;
 

@@ -13,7 +13,7 @@
 use holon_chem::dual::D2;
 use holon_chem::elements::by_symbol;
 use holon_chem::fci::solve_determinant;
-use holon_chem::pair::{feasibility, geometry_problem};
+use holon_chem::pair::{automatic_route, geometry_problem};
 use std::io::Write;
 use std::time::Instant;
 
@@ -42,7 +42,7 @@ fn main() {
                 .unwrap();
             (by_symbol(&name[..at]).unwrap(), by_symbol(&name[at..]).unwrap())
         };
-        let f = feasibility(a, b);
+        let f = automatic_route(a, b);
         let r = 3.0;
         let t0 = Instant::now();
         let (space, mo, nuc) = geometry_problem(

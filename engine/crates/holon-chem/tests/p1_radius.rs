@@ -23,7 +23,7 @@
 
 use holon_chem::elements::{by_symbol, by_z, ALL_ELEMENTS};
 use holon_chem::pair::{
-    atomic_rms_radius, atomic_valence_rms_radius, feasibility, homonuclear_size, RadiusRule,
+    atomic_rms_radius, atomic_valence_rms_radius, automatic_route, homonuclear_size, RadiusRule,
 };
 
 /// The valence radius reproduces the periodic table's size trend, with nothing told to it.
@@ -104,7 +104,7 @@ fn every_radius_is_labelled_with_the_rule_that_produced_it() {
     for sym in cheap {
         let sp = by_symbol(sym).unwrap();
         let sz = homonuclear_size(sp);
-        let infeasible = feasibility(sp, sp).is_infeasible();
+        let infeasible = !automatic_route(sp, sp).exists();
         assert_eq!(
             sz.rule.is_dimer_derived(),
             !infeasible,
@@ -159,7 +159,7 @@ fn plant_a_density_radius_presented_as_dimer_derived_is_refused() {
     // in the registry shows up as this assertion rather than as a slower test.
     let victim = by_symbol("Se").unwrap();
     assert!(
-        feasibility(victim, victim).is_infeasible(),
+        !automatic_route(victim, victim).exists(),
         "carrier: {}'s homonuclear pair is computable, so the density rule would not be \
          used for it and the plant would be scored on a case that cannot arise",
         victim.symbol

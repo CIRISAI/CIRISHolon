@@ -193,15 +193,20 @@ pub enum ShellKind {
     S5,
     /// 5p.
     P5,
+    /// 4f — seven spherical components.
+    F4,
+    /// 5f — seven spherical components.
+    F5,
 }
 
 impl ShellKind {
-    /// Total angular momentum: 0 for s shells, 1 for p shells, 2 for d shells.
+    /// Total angular momentum: 0 for s shells, 1 for p shells, 2 for d shells, 3 for f shells.
     pub fn l(self) -> u8 {
         match self {
             ShellKind::S1 | ShellKind::S2 | ShellKind::S3 | ShellKind::S4 | ShellKind::S5 => 0,
             ShellKind::P2 | ShellKind::P3 | ShellKind::P4 | ShellKind::P5 => 1,
             ShellKind::D3 | ShellKind::D4 => 2,
+            ShellKind::F4 | ShellKind::F5 => 3,
         }
     }
 
@@ -212,31 +217,25 @@ impl ShellKind {
             ShellKind::S1 => 1,
             ShellKind::S2 | ShellKind::P2 => 2,
             ShellKind::S3 | ShellKind::P3 | ShellKind::D3 => 3,
-            ShellKind::S4 | ShellKind::P4 | ShellKind::D4 => 4,
-            ShellKind::S5 | ShellKind::P5 => 5,
+            ShellKind::S4 | ShellKind::P4 | ShellKind::D4 | ShellKind::F4 => 4,
+            ShellKind::S5 | ShellKind::P5 | ShellKind::F5 => 5,
         }
     }
 
-    /// Basis functions this shell contributes: 1 for s, 3 for p, 5 for d.
+    /// Basis functions this shell contributes: 1 for s, 3 for p, 5 for d, 7 for f.
     ///
-    /// # Five for d, not six
+    /// # Seven for f, five for d
     ///
-    /// The integral recursions are Cartesian and a d shell computes as six components, but
-    /// the sixth is `(x^2+y^2+z^2) exp(-a r^2)` — spherically symmetric, so `l = 0` — and
-    /// the engine projects it out (see `md::SPHERICAL_D`). What a shell contributes to the
-    /// BASIS is therefore five, and this function answers that question, because every
-    /// caller of it is asking how big the problem is rather than how the integrals are
-    /// evaluated. `md::cartesian_components` answers the other question.
-    ///
-    /// These two counts disagreeing is not hypothetical: this function returned six for a
-    /// while after the projection landed, which made `pair::feasibility` overstate xenon by
-    /// two orbitals and the palette report a basis size the engine never builds.
-    /// `tests/spherical_d.rs` now ties it to what `build_basis` actually assembles.
+    /// The integral recursions are Cartesian and an f shell computes as ten components, but
+    /// the three extra are $(x^2+y^2+z^2) x_i$ — p-type radial contaminants with $l = 1$ — and
+    /// the engine projects them out (see `md::SPHERICAL_F`). What a shell contributes to the
+    /// BASIS is therefore seven, and this function answers that question.
     pub fn n_functions(self) -> usize {
         match self {
             ShellKind::S1 | ShellKind::S2 | ShellKind::S3 | ShellKind::S4 | ShellKind::S5 => 1,
             ShellKind::P2 | ShellKind::P3 | ShellKind::P4 | ShellKind::P5 => 3,
             ShellKind::D3 | ShellKind::D4 => 5,
+            ShellKind::F4 | ShellKind::F5 => 7,
         }
     }
 }

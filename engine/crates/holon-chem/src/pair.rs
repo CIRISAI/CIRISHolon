@@ -791,9 +791,9 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
     // is past `MPS_MAX_ORBITALS` does not fail — it runs the MPO builder, which at ten
     // orbitals did not finish in an hour on the campaign machine. A caller is entitled to
     // be told no; it is not entitled to be told nothing.
-    let f = feasibility(a, b);
+    let f = automatic_route(a, b);
     assert!(
-        !f.is_infeasible(),
+        f.exists(),
         "{}{}: this engine has no AUTOMATIC route to this curve. {} determinants is past \
          fci::MPS_ROUTE_THRESHOLD ({}), so `fci::solve` would route it to DMRG, and {} \
          orbitals is past the MPS route's measured reach of {} (see pair::MPS_MAX_ORBITALS \
@@ -917,15 +917,29 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
 /// says it cannot do that species, and the difference is this constant.
 pub const MPS_MAX_ORBITALS: usize = 6;
 
-/// Whether a pair's curve can be produced, and by which route.
+/// Which route [`crate::fci::solve`] WOULD TAKE for a pair.
+///
+/// # This describes the ROUTER, not what is solvable
+///
+/// The name matters and the previous one (`Feasibility`, with a variant called
+/// `Infeasible`) did real damage: it was read downstream as "this pair is unreachable",
+/// and two of MIXTURES-1's own deliverables were reported as OWED on that basis when the
+/// determinant route reaches both easily — SiO's exact energy is 33.9 s per geometry. A
+/// representation stood in for the thing it represented, which is a failure this
+/// programme keeps meeting; the fix is to name the representation after what it measures.
+///
+/// So: this answers "what would the automatic router do", and nothing else. Whether a
+/// space can be enumerated at all is a separate question with a different answer, and
+/// [`crate::fci::solve_determinant`] is where it is asked.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
-pub enum Feasibility {
+pub enum AutomaticRoute {
     /// Inside the determinant route's budget: exact in model.
     Determinant { n_det: usize, n_orb: usize },
     /// Past the determinant threshold but inside the MPS route's measured reach. Costly
     /// (see [`MPS_MAX_ORBITALS`]) and NOT exact in model.
     Mps { n_det: usize, n_orb: usize },
-    /// Past both. No route the ORDINARY entry point will take.
+    /// Past both. THE ROUTER HAS NOWHERE TO SEND THIS — which is not the same as the
+    /// space being unsolvable.
     ///
     /// # What this does and does not say
     ///
@@ -944,65 +958,86 @@ pub enum Feasibility {
     ///
     /// So a caller that sees this must not report "impossible". It means "not
     /// automatically, and not cheaply".
-    Infeasible { n_det: usize, n_orb: usize },
+    NoneAvailable { n_det: usize, n_orb: usize },
 }
 
-impl Feasibility {
-    /// Whether the ORDINARY entry point refuses. See [`Feasibility::Infeasible`] — this is
-    /// not the same as "unsolvable".
-    pub fn is_infeasible(self) -> bool {
-        matches!(self, Feasibility::Infeasible { .. })
+impl AutomaticRoute {
+    /// Whether the automatic router has a route for this pair.
+    ///
+    /// `false` does NOT mean unsolvable — see the type's header. It means a caller must
+    /// choose a route deliberately and budget for it.
+    pub fn exists(self) -> bool {
+        !matches!(self, AutomaticRoute::NoneAvailable { .. })
     }
 
     /// The route's name, for a report. `Infeasible` prints as what it is: the determinant
     /// route, reachable only by calling it directly.
     pub fn route_name(self) -> &'static str {
         match self {
-            Feasibility::Determinant { .. } => "determinant (automatic)",
-            Feasibility::Mps { .. } => "MPS/DMRG (automatic)",
-            Feasibility::Infeasible { .. } => "determinant, BY HAND ONLY (solve_determinant)",
+            AutomaticRoute::Determinant { .. } => "determinant (automatic)",
+            AutomaticRoute::Mps { .. } => "MPS/DMRG (automatic)",
+            AutomaticRoute::NoneAvailable { .. } => {
+                "determinant, BY HAND ONLY (solve_determinant)"
+            }
         }
     }
 
     pub fn n_det(self) -> usize {
         match self {
-            Feasibility::Determinant { n_det, .. }
-            | Feasibility::Mps { n_det, .. }
-            | Feasibility::Infeasible { n_det, .. } => n_det,
+            AutomaticRoute::Determinant { n_det, .. }
+            | AutomaticRoute::Mps { n_det, .. }
+            | AutomaticRoute::NoneAvailable { n_det, .. } => n_det,
         }
     }
 
     pub fn n_orb(self) -> usize {
         match self {
-            Feasibility::Determinant { n_orb, .. }
-            | Feasibility::Mps { n_orb, .. }
-            | Feasibility::Infeasible { n_orb, .. } => n_orb,
+            AutomaticRoute::Determinant { n_orb, .. }
+            | AutomaticRoute::Mps { n_orb, .. }
+            | AutomaticRoute::NoneAvailable { n_orb, .. } => n_orb,
         }
     }
 }
 
-/// Which route a pair's curve would take, WITHOUT computing anything.
+/// Which route the automatic router would take for a pair, WITHOUT computing anything.
 ///
 /// Both inputs are counts read off the species registry — the orbital count is the sum of
 /// the two basis sizes and the determinant count is `C(n_orb, n_alpha) * C(n_orb, n_beta)`
 /// — so this is cheap enough to call at a door before deciding to spend hours behind it.
-pub fn feasibility(a: Species, b: Species) -> Feasibility {
+pub fn automatic_route(a: Species, b: Species) -> AutomaticRoute {
     let n_orb = a.n_basis() + b.n_basis();
     let (n, n_alpha, n_beta) = electron_counts(&[a, b]);
     let _ = n;
     let n_det = choose(n_orb, n_alpha).saturating_mul(choose(n_orb, n_beta));
     if n_det <= crate::fci::MPS_ROUTE_THRESHOLD {
-        Feasibility::Determinant { n_det, n_orb }
+        AutomaticRoute::Determinant { n_det, n_orb }
     } else if n_orb <= MPS_MAX_ORBITALS {
-        Feasibility::Mps { n_det, n_orb }
+        AutomaticRoute::Mps { n_det, n_orb }
     } else {
-        Feasibility::Infeasible { n_det, n_orb }
+        AutomaticRoute::NoneAvailable { n_det, n_orb }
     }
 }
 
 /// `C(n, k)`, saturating rather than overflowing. Na2 is `C(18,11)^2` = 1.0e9 and Xe2 would
 /// be far past `usize`, so a count that cannot be represented must come back as "very
 /// large" rather than as a small wrong number wrapping around.
+///
+/// # DO NOT "simplify" this to `saturating_mul`
+///
+/// The obvious refactor — `acc = acc.saturating_mul(n - i) / (i + 1)` — is silently WRONG
+/// in the dangerous direction. Once the multiply saturates, the subsequent divide pulls
+/// the result back DOWN, so the function UNDERSTATES: measured by the elements3 lane,
+/// `C(64,32)` comes back 5.76e17 against a true 1.83e18, a factor of 3.2 low. An
+/// understated determinant count reads as "cheaper than it is", which makes
+/// `automatic_route` call a space reachable that is not — the failure this whole map
+/// exists to prevent.
+///
+/// `checked_mul` with `None => usize::MAX` overstates instead, which is the safe side: the
+/// worst it can do is refuse something that would have been affordable.
+///
+/// Latent rather than live today: the understating form only bites at `n >= 64` with `k`
+/// near `n/2`, and the registry's largest pair is Xe2 at 54 orbitals, where `C(54,27)`
+/// computes exactly. It becomes reachable the day a species hits `fci::MAX_ORB`.
 fn choose(n: usize, k: usize) -> usize {
     if k > n {
         return 0;
@@ -1406,9 +1441,10 @@ pub struct SpeciesSize {
 pub fn homonuclear_size(sp: Species) -> SpeciesSize {
     let t0 = Stopwatch::start();
     // The pair route is asked for FIRST and refused at the door, rather than attempted and
-    // abandoned: `feasibility` reads counts off the registry and computes nothing, so a
-    // species whose homonuclear dimer is out of reach costs nothing to find out about.
-    if feasibility(sp, sp).is_infeasible() {
+    // abandoned: `automatic_route` reads counts off the registry and computes nothing, so
+    // a species whose homonuclear dimer the router cannot place costs nothing to find out
+    // about.
+    if !automatic_route(sp, sp).exists() {
         let r = atomic_valence_rms_radius(sp);
         return SpeciesSize {
             radius_bohr: r,
@@ -1418,7 +1454,7 @@ pub fn homonuclear_size(sp: Species) -> SpeciesSize {
             // would read as a measurement.
             separation_bohr: f64::NAN,
             d_e: None,
-            n_det: feasibility(sp, sp).n_det(),
+            n_det: automatic_route(sp, sp).n_det(),
             ms: t0.ms(),
         };
     }

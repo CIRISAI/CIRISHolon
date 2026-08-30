@@ -43,7 +43,7 @@ use common::{decimal_minus_f64, string_array, string_scalar};
 use holon_chem::elements::by_symbol;
 use holon_chem::dual::D2;
 use holon_chem::fci::solve_determinant;
-use holon_chem::pair::{feasibility, geometry_problem};
+use holon_chem::pair::{automatic_route, geometry_problem};
 
 /// The seven pairs MIXTURES-1 stakes as EXACT, in the freeze's own order.
 pub const MIXTURES1_STAKED_PAIRS: [&str; 7] =
@@ -178,7 +178,7 @@ fn r2_the_staked_set_is_the_freeze_s() {
     );
     for name in MIXTURES1_STAKED_PAIRS {
         let (a, b) = split_pair(name);
-        let f = feasibility(a, b);
+        let f = automatic_route(a, b);
         println!(
             "{name:>5}: {} + {}  n_basis {:>2}  n_det {:>9}  route {}",
             a.symbol,
@@ -205,7 +205,7 @@ fn r2_which_staked_pairs_leave_the_determinant_route() {
     let mut crossing = Vec::new();
     for name in MIXTURES1_STAKED_PAIRS {
         let (a, b) = split_pair(name);
-        let f = feasibility(a, b);
+        let f = automatic_route(a, b);
         if f.n_det() > holon_chem::fci::MPS_ROUTE_THRESHOLD {
             crossing.push((name, f.n_det(), f.n_orb()));
         }

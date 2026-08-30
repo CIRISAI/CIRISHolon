@@ -20,7 +20,7 @@
 //! bank without a hardcoded list.
 
 use holon_chem::elements::{by_symbol, Species};
-use holon_chem::pair::{feasibility, generate_pair_table};
+use holon_chem::pair::{automatic_route, generate_pair_table};
 use std::time::Instant;
 
 /// Knots per shipped curve. Denser than the P1 run's 96 because a shipped file is paid for
@@ -74,11 +74,12 @@ fn main() {
 
     for (k, name) in names.iter().enumerate() {
         let (a, b) = split(name);
-        let f = feasibility(a, b);
+        let f = automatic_route(a, b);
         assert!(
-            !f.is_infeasible(),
-            "{name}: no route in this engine produces this curve ({} determinants, {} \
-             orbitals)",
+            f.exists(),
+            "{name}: the automatic router has no route for this curve ({} determinants, \
+             {} orbitals). The determinant route can still reach it -- see \
+             pair::AutomaticRoute -- but this emitter does not choose routes by hand.",
             f.n_det(),
             f.n_orb()
         );

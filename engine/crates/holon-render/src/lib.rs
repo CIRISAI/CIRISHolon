@@ -239,7 +239,7 @@ pub const BANK_FULL: u32 = 15;
 /// This engine has no AUTOMATIC route to this pair's curve.
 ///
 /// NOT "impossible": the determinant route can still enumerate the space if it is driven
-/// directly, at a cost nothing here bounds. See [`holon_chem::pair::Feasibility::Infeasible`]
+/// directly, at a cost nothing here bounds. See [`holon_chem::pair::AutomaticRoute::NoneAvailable`]
 /// for what the distinction costs — SiO lands here and is nonetheless one of gate D1's
 /// staked EXACT species.
 ///
@@ -258,7 +258,7 @@ pub fn generate_pair_table(
     b: holon_chem::elements::Species,
     count: usize,
 ) -> u32 {
-    if holon_chem::pair::feasibility(a, b).is_infeasible() {
+    if !holon_chem::pair::automatic_route(a, b).exists() {
         return CURVE_INFEASIBLE;
     }
     let pt = holon_chem::pair::generate_pair_table(a, b, count);
@@ -1447,7 +1447,7 @@ pub extern "C" fn holon_bank_pair_is_heavy(za: u32, zb: u32) -> u32 {
     ) else {
         return 0;
     };
-    let f = holon_chem::pair::feasibility(a, b);
+    let f = holon_chem::pair::automatic_route(a, b);
     let prov = bank::TableProvenance {
         n_det: f.n_det() as u64,
         n_basis: f.n_orb() as u64,
@@ -1530,7 +1530,7 @@ pub extern "C" fn holon_bank_generate_pair(za: u32, zb: u32, knots: u32) -> u32 
     // Ask before spending. `generate_pair_table` refuses an infeasible pair by panicking,
     // which in a browser is a trap with no message a user can act on; the host gets a code
     // instead, and the ABI never reaches the assert.
-    if holon_chem::pair::feasibility(a, b).is_infeasible() {
+    if !holon_chem::pair::automatic_route(a, b).exists() {
         return CURVE_INFEASIBLE;
     }
     // The split, checked BEFORE the solve rather than after it. `load_pair_table` would
@@ -1557,10 +1557,10 @@ pub extern "C" fn holon_bank_pair_route(za: u32, zb: u32) -> u32 {
     ) else {
         return 0;
     };
-    match holon_chem::pair::feasibility(a, b) {
-        holon_chem::pair::Feasibility::Infeasible { .. } => 0,
-        holon_chem::pair::Feasibility::Determinant { .. } => 1,
-        holon_chem::pair::Feasibility::Mps { .. } => 2,
+    match holon_chem::pair::automatic_route(a, b) {
+        holon_chem::pair::AutomaticRoute::NoneAvailable { .. } => 0,
+        holon_chem::pair::AutomaticRoute::Determinant { .. } => 1,
+        holon_chem::pair::AutomaticRoute::Mps { .. } => 2,
     }
 }
 
@@ -1574,7 +1574,7 @@ pub extern "C" fn holon_bank_pair_n_det(za: u32, zb: u32) -> f64 {
     ) else {
         return 0.0;
     };
-    holon_chem::pair::feasibility(a, b).n_det() as f64
+    holon_chem::pair::automatic_route(a, b).n_det() as f64
 }
 
 // ---- pushing a SHIPPED table into a slot -------------------------------------------

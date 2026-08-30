@@ -94,7 +94,7 @@ fn cartesian_gram() -> Vec<f64> {
 ///
 /// # Why this gate exists
 ///
-/// `Species::n_basis()` sums `ShellKind::n_functions()`, and `pair::feasibility` uses it to
+/// `Species::n_basis()` sums `ShellKind::n_functions()`, and `pair::automatic_route` uses it to
 /// decide -- before computing anything -- whether a species is reachable and by which
 /// route. Nothing tied it to `build_basis`. When the projection landed, `n_functions` went
 /// on reporting six per d shell for a while: the registry said xenon was 29 functions, the

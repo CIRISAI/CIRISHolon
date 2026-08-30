@@ -25,7 +25,7 @@
 //! than guessed at, and the ordering is scored on its broad strokes over what is measured.
 
 use holon_chem::elements::{by_symbol, Species};
-use holon_chem::pair::{feasibility, generate_pair_table};
+use holon_chem::pair::{automatic_route, generate_pair_table};
 use std::io::Write;
 use std::time::Instant;
 
@@ -73,8 +73,8 @@ fn main() {
     let mut measured: Vec<(String, f64)> = Vec::new();
     for name in names.iter() {
         let (a, b) = split(name);
-        let f = feasibility(a, b);
-        if f.is_infeasible() {
+        let f = automatic_route(a, b);
+        if !f.exists() {
             println!(
                 "{name}\t{}\t{}\tOWED\tOWED\t-\t# {} — no automatic route; the determinant \
                  route can reach it by hand, at a cost this run does not spend",

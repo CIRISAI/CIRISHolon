@@ -180,7 +180,8 @@ a stagnated solve reported as converged.
 ## G1 — MESH GENERATION UNDER THE MERGE LAW · **HOLDS**
 
 *The `saturation3-mesh` lane. Instrument: `engine/crates/holon-tables`, gate in
-`tests/g1_gate.rs`. 15 tests green in release (8 unit, 7 gate). Exercised on
+`tests/g1_gate.rs`. **16 tests green in release AND in debug** (9 unit, 7 gate;
+159 s release, 1,046 s debug — every node is a real FCI solve). Exercised on
 `(H,H,Cl)` — a staked triple at 605 determinants — through
 `pair::geometry_problem` into `fci::solve_determinant_from`, the same path the
 tables take (M-FOREIGN-DOMAIN-CORROBORATION: never a toy).*

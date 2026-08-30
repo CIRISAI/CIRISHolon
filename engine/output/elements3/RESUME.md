@@ -922,3 +922,35 @@ shows it.
 
 My own gates are green in that run — multiplicity with the emptied exemption list, the
 route-scope tripwire, W1 masks, the dimer bank, P1 radius labels.
+
+### Audited my shipped artifact for the peer's guard-not-connected shape: ABSENT, with a reason
+
+mixtures-engine found `converged` computed by the producing crate, written into
+`docs/atoms/tables/Cl2.json`, and read by **no door on the consuming side** — not the bank, not
+the JSON reader, not the viewer. The in-browser cache path refuses a non-converged curve; the
+shipped-file path could not, and that is the door files actually arrive through. Their Cl2 also
+extends this lane's spread family past where atoms could take it: a diatomic curve at
+**1.0005e-10**, five parts in ten thousand above the floor, in a file the sandbox loads at page
+load.
+
+**Audited `species_palette.json`, which this lane emits and ships to `docs/atoms/` and
+`docs/unified/`:**
+
+* `radius_rule` (string) **IS read and surfaced** — `viewer/app.js` puts it in every species
+  tooltip and in the `palette-rule` line. The lead's per-species labelling rider is therefore
+  met at the door files actually arrive through, not only in the emitter.
+* `radius_from_dimer` (boolean) is **read nowhere** — emitted, shipped, unconsumed. Same
+  surface as their `converged`.
+
+**Not the same defect, and the difference is the point.** Both fields derive from a SINGLE
+`rule` value in one emit — the string is `rule.describe()`, the boolean is
+`rule.is_dimer_derived()` — so there is no second source that could drift and the artifact
+cannot carry a contradiction between them. And `is_dimer_derived()` is itself gated in
+`p1_radius.rs`, against `automatic_route`'s verdict and in the A1.3 plant.
+
+So this lane ships a REDUNDANT field, not an unenforced verdict. The distinction their case
+establishes: the danger is not "a field nobody reads", it is **"the only carrier of a verdict is
+a field nobody reads"**. Theirs was the only carrier; mine duplicates one that is read.
+
+Recorded as a checked negative rather than left silent, because an absence checked and an
+absence assumed look identical in a record that does not say which it was.

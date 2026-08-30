@@ -14,7 +14,7 @@ pub mod graph;
 pub mod simplify;
 
 pub use extract::{extract_circuit, Extraction};
-pub use graph::{cyc_eq, from_core, from_surface, omega, EdgeType, SpiderType, ZxGraph};
+pub use graph::{cyc_eq, from_core, from_surface, from_surface_with_phase, omega, EdgeType, SpiderType, ZxGraph};
 
 use holon::qasm::Surface;
 
@@ -35,7 +35,7 @@ pub fn canonicalize_native(n: usize, surface: &[Surface]) -> Result<(Vec<Surface
     let t_before = holon::simplify::magic_weight(surface);
     let gates_before = surface.len();
 
-    let mut g = from_surface(n, surface)?;
+    let (mut g, phase16) = from_surface_with_phase(n, surface)?;
     g.full_reduce();
     let t_after = g.t_count();
 
@@ -57,6 +57,15 @@ pub fn canonicalize_native(n: usize, surface: &[Surface]) -> Result<(Vec<Surface
         let ang = z.1.atan2(z.0);
         let k = (ang / std::f64::consts::FRAC_PI_4).round() as i64;
         phase_omega = k.rem_euclid(8);
+    }
+
+    if phase16 % 2 == 0 {
+        let lower_omega = (phase16 / 2) as i64;
+        phase_omega = (phase_omega + lower_omega).rem_euclid(8);
+    } else {
+        return Err(format!(
+            "zx: exact amplitude carries odd 16th root phase ζ16^{phase16} outside cyclotomic ω-ring"
+        ));
     }
 
     Ok((

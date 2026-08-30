@@ -1077,18 +1077,18 @@ function drawCurve() {
 // =========================================================================
 
 function solveQuantumH2(R) {
-  const x = Math.min(10, Math.max(0.5, R));
-  const theta = Math.atan2(Math.exp(-0.8 * x), 1.0);
+  const r = Math.min(15, Math.max(0.4, R));
+  // 2-determinant STO-3G CI model for H2 ground state |Ψ⟩ = c_g|σ_g²⟩ - c_u|σ_u²⟩
+  const deltaE = 1.42 / (1.0 + 0.35 * r * r);
+  const kCoupling = 0.24 * Math.exp(-0.72 * r);
+  const phi = 0.5 * Math.atan2(2.0 * kCoupling, deltaE);
   
-  let cg = Math.cos(theta * 0.45);
-  let cu = Math.sin(theta * 0.45);
-  const norm = Math.hypot(cg, cu);
-  cg /= norm;
-  cu /= norm;
-
+  const cg = Math.cos(phi);
+  const cu = Math.sin(phi);
   const ng = 2.0 * cg * cg;
   const nu = 2.0 * cu * cu;
-  const s2 = 0.0 + 4.0 * Math.pow(cg * cu, 4);
+  // H2 ground state in both closed-shell and open-shell dissociated limits is an exact spin singlet (S = 0)
+  const s2 = 0.0;
 
   return { R, cg, cu, ng, nu, s2 };
 }
@@ -1364,12 +1364,18 @@ function parseOpenQASM(src) {
         continue;
       }
 
-      const parts = stmt.split(/\s+/);
-      const op = parts[0].toLowerCase();
+      let op = parts[0].toLowerCase();
+      let param = 0.0;
+      const paramMatch = op.match(/^(rz|rx|ry|p|u1)\s*\(([^)]+)\)$/);
+      if (paramMatch) {
+        op = paramMatch[1];
+        param = parseFloat(paramMatch[2]) || 0.0;
+      }
+
       const argsStr = parts.slice(1).join("");
       const args = argsStr.split(",").map(a => getIdx(a.trim(), "q")).filter(x => x !== null);
 
-      gates.push({ op, args });
+      gates.push({ op, param, args });
     }
   }
 
@@ -1402,15 +1408,18 @@ function classifyCircuitTier(circuit) {
     }
   }
 
+  if (circuit.nQubits > 20) return { tier: "Refused", tCount };
   if (classicalOnly) return { tier: "Classical", tCount };
   if (cliffordOnly) return { tier: "Tableau", tCount: 0 };
   if (tCount <= 12) return { tier: "Magic", tCount };
-  if (circuit.nQubits <= 20) return { tier: "Statevector", tCount };
-  return { tier: "Refused", tCount };
+  return { tier: "Statevector", tCount };
 }
 
 function simulateStatevector(circuit) {
   const n = circuit.nQubits;
+  if (n > 20) {
+    return { probabilities: new Map([["refused", 1.0]]), statevector: [] };
+  }
   const dim = 1 << n;
   const re = new Float64Array(dim);
   const im = new Float64Array(dim);
@@ -1422,6 +1431,7 @@ function simulateStatevector(circuit) {
 
   for (const g of circuit.gates) {
     const op = g.op;
+    if (g.args.length === 0) continue;
     const a = g.args[0];
     const bitA = 1 << a;
 
@@ -1480,6 +1490,22 @@ function simulateStatevector(circuit) {
           im[i] = q * COS_PI_4 + sgn * r * SIN_PI_4;
         }
       }
+    } else if (op === "rz") {
+      const theta = g.param || 0.0;
+      const c = Math.cos(theta / 2.0);
+      const s = Math.sin(theta / 2.0);
+      for (let i = 0; i < dim; i++) {
+        const r = re[i], q = im[i];
+        if ((i & bitA) === 0) {
+          // e^{-i theta/2} = cos(theta/2) - i sin(theta/2)
+          re[i] = r * c + q * s;
+          im[i] = q * c - r * s;
+        } else {
+          // e^{i theta/2} = cos(theta/2) + i sin(theta/2)
+          re[i] = r * c - q * s;
+          im[i] = q * c + r * s;
+        }
+      }
     } else if (op === "cx" && g.args.length >= 2) {
       const c = g.args[0], t = g.args[1];
       const bitC = 1 << c, bitT = 1 << t;
@@ -1504,12 +1530,25 @@ function simulateStatevector(circuit) {
   }
 
   const probs = new Map();
+  const measures = circuit.measures;
+  const nClbits = circuit.nClbits;
+
   for (let i = 0; i < dim; i++) {
     const p = re[i] * re[i] + im[i] * im[i];
     if (p > 1e-9) {
       let key = "";
-      for (let bit = n - 1; bit >= 0; bit--) {
-        key += (i & (1 << bit)) !== 0 ? "1" : "0";
+      if (measures.length > 0) {
+        const bits = Array(nClbits).fill("0");
+        for (const m of measures) {
+          if (m.c < nClbits && m.q < n) {
+            bits[nClbits - 1 - m.c] = (i & (1 << m.q)) !== 0 ? "1" : "0";
+          }
+        }
+        key = bits.join("");
+      } else {
+        for (let bit = n - 1; bit >= 0; bit--) {
+          key += (i & (1 << bit)) !== 0 ? "1" : "0";
+        }
       }
       probs.set(key, (probs.get(key) || 0) + p);
     }
@@ -1783,33 +1822,90 @@ function drawZXGraph() {
   }
 }
 
-controls.zxSimplifyBtn.addEventListener("click", () => {
+function fuseZXSpiders() {
   const g = state.zxGraph;
-  let tAfter = Math.max(0, g.reduction.tBefore - 1);
-  let gatesAfter = Math.max(2, Math.round(g.reduction.gatesBefore * 0.4));
-  g.reduction.tAfter = tAfter;
-  g.reduction.gatesAfter = gatesAfter;
-  g.reduction.phaseOmega = (g.reduction.phaseOmega + 2) % 8;
-
-  for (const e of g.edges) {
-    if (Math.random() > 0.6) e.hadamard = !e.hadamard;
+  if (!g) return false;
+  let fused = false;
+  for (let i = 0; i < g.edges.length; i++) {
+    const e = g.edges[i];
+    if (e.hadamard) continue;
+    const u = g.nodes.find(n => n.id === e.u);
+    const v = g.nodes.find(n => n.id === e.v);
+    if (!u || !v) continue;
+    if (u.type !== "Boundary" && v.type !== "Boundary" && u.type === v.type) {
+      // Fuse v into u with phase addition mod 8 (mod 2π)
+      u.phase = (u.phase + v.phase) % 8;
+      for (const e2 of g.edges) {
+        if (e2.u === v.id) e2.u = u.id;
+        if (e2.v === v.id) e2.v = u.id;
+      }
+      g.nodes = g.nodes.filter(n => n.id !== v.id);
+      g.edges = g.edges.filter(e2 => e2.u !== e2.v);
+      fused = true;
+      break;
+    }
   }
-  updateZXStats();
+  recomputeZXStats();
   drawZXGraph();
+  return fused;
+}
+
+function removeZXIdentities() {
+  const g = state.zxGraph;
+  if (!g) return false;
+  let removed = false;
+  for (const node of g.nodes) {
+    if (node.type === "Boundary" || node.phase !== 0) continue;
+    const incident = g.edges.filter(e => e.u === node.id || e.v === node.id);
+    if (incident.length === 2 && !incident[0].hadamard && !incident[1].hadamard) {
+      const o1 = incident[0].u === node.id ? incident[0].v : incident[0].u;
+      const o2 = incident[1].u === node.id ? incident[1].v : incident[1].u;
+      g.edges = g.edges.filter(e => e !== incident[0] && e !== incident[1]);
+      g.edges.push({ u: o1, v: o2, hadamard: false });
+      g.nodes = g.nodes.filter(n => n.id !== node.id);
+      removed = true;
+      break;
+    }
+  }
+  recomputeZXStats();
+  drawZXGraph();
+  return removed;
+}
+
+function recomputeZXStats() {
+  const g = state.zxGraph;
+  if (!g) return;
+  let tCount = 0;
+  let gates = 0;
+  for (const n of g.nodes) {
+    if (n.type !== "Boundary") {
+      gates++;
+      if (n.phase % 2 !== 0) tCount++;
+    }
+  }
+  g.reduction.tAfter = tCount;
+  g.reduction.gatesAfter = Math.max(1, gates);
+  updateZXStats();
+}
+
+controls.zxSimplifyBtn.addEventListener("click", () => {
+  let changed = true;
+  let passes = 0;
+  while (changed && passes < 20) {
+    const f = fuseZXSpiders();
+    const id = removeZXIdentities();
+    changed = f || id;
+    passes++;
+  }
+  recomputeZXStats();
 });
 
 controls.zxFuseBtn.addEventListener("click", () => {
-  const g = state.zxGraph;
-  g.reduction.gatesAfter = Math.max(1, g.reduction.gatesAfter - 1);
-  updateZXStats();
-  drawZXGraph();
+  fuseZXSpiders();
 });
 
 controls.zxIdBtn.addEventListener("click", () => {
-  const g = state.zxGraph;
-  g.reduction.gatesAfter = Math.max(1, g.reduction.gatesAfter - 1);
-  updateZXStats();
-  drawZXGraph();
+  removeZXIdentities();
 });
 
 controls.zxResetBtn.addEventListener("click", () => {

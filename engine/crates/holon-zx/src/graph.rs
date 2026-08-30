@@ -651,8 +651,8 @@ pub fn from_core(n: usize, gates: &[Gate]) -> ZxGraph {
     g
 }
 
-/// Convert a surface gate sequence into a ZxGraph.
-pub fn from_surface(n: usize, surface: &[Surface]) -> Result<ZxGraph, String> {
+/// Convert a surface gate sequence into a ZxGraph and its lowering phase (mod 16).
+pub fn from_surface_with_phase(n: usize, surface: &[Surface]) -> Result<(ZxGraph, i64), String> {
     if let Some(bad) = surface
         .iter()
         .find(|g| matches!(g, Surface::Face(..) | Surface::Rot(_)))
@@ -661,6 +661,12 @@ pub fn from_surface(n: usize, surface: &[Surface]) -> Result<ZxGraph, String> {
             "zx: {bad:?} is outside the graph-rewriting fragment (Clifford+T only)"
         ));
     }
-    let (core, _phase16) = holon::qasm::lower(surface);
-    Ok(from_core(n, &core))
+    let (core, phase16) = holon::qasm::lower(surface);
+    Ok((from_core(n, &core), phase16))
+}
+
+/// Convert a surface gate sequence into a ZxGraph.
+pub fn from_surface(n: usize, surface: &[Surface]) -> Result<ZxGraph, String> {
+    let (g, _phase16) = from_surface_with_phase(n, surface)?;
+    Ok(g)
 }

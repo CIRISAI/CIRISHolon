@@ -206,6 +206,9 @@ impl AtomWorld {
                     holon_render::generate_trimer_table(&mut self.sim);
                 }
                 self.sim.reset(2);
+                for i in 0..self.sim.n {
+                    self.sim.atoms[i].species = HYDROGEN;
+                }
                 s
             }
             Preset::Quench16 => {
@@ -219,6 +222,9 @@ impl AtomWorld {
                     holon_render::generate_trimer_table(&mut self.sim);
                 }
                 self.sim.reset(MAX_ATOMS);
+                for i in 0..self.sim.n {
+                    self.sim.atoms[i].species = HYDROGEN;
+                }
                 s
             }
             Preset::LiH => {
@@ -329,6 +335,7 @@ impl AtomWorld {
         self.sim.atoms[1].vx = -v_rel * (mu / mb);
         self.sim.atoms[1].vy = 0.0;
         self.sim.atoms[1].vz = 0.0;
+        self.sim.adopt_table_timescale();
         self.sim.rebase();
     }
 

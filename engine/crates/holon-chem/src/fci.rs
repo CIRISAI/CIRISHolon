@@ -403,7 +403,7 @@ impl Strings {
             if n_elec == 0 {
                 masks.push(0);
             } else {
-                let mut v = (1u32 << n_elec) - 1;
+                let mut v = if n_elec == 32 { u32::MAX } else { (1u32 << n_elec) - 1 };
                 let limit = if n_orb == 32 { u64::MAX } else { 1u64 << n_orb };
                 while (v as u64) < limit {
                     masks.push(v);
@@ -1210,6 +1210,18 @@ pub fn solve_mps(space: &FciSpace, mo: &MoIntegrals, max_bond_dim: usize) -> Sol
         1e-9,
     )
     .expect("MPS DMRG ground state solver failed");
+
+    let last_de = if res.energy_history.len() >= 2 {
+        (res.energy_history[res.energy_history.len() - 1] - res.energy_history[res.energy_history.len() - 2]).abs()
+    } else {
+        0.0
+    };
+
+    assert!(
+        res.converged || last_de < 1e-6,
+        "MPS DMRG ground state solver did not reach energy convergence: dE = {:.3e}",
+        last_de
+    );
 
     let mpo1 = q8_mps::mpo::Mpo::from_electronic_integrals(n_orb, &h1, &g1);
     let e1 = mpo1.expectation(&res.tensors);

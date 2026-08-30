@@ -51,9 +51,18 @@ fn tokenize_expr(s: &str) -> Result<Vec<String>, String> {
         } else if c.is_ascii_digit() || c == '.' {
             let mut num = String::new();
             while let Some(&ch) = chars.peek() {
-                if ch.is_ascii_digit() || ch == '.' || ch == 'e' || ch == 'E' {
+                if ch.is_ascii_digit() || ch == '.' {
                     num.push(ch);
                     chars.next();
+                } else if ch == 'e' || ch == 'E' {
+                    num.push(ch);
+                    chars.next();
+                    if let Some(&sign) = chars.peek() {
+                        if sign == '+' || sign == '-' {
+                            num.push(sign);
+                            chars.next();
+                        }
+                    }
                 } else {
                     break;
                 }
@@ -205,23 +214,23 @@ pub fn decompose_rx(q: usize, theta: f64) -> Result<Vec<Gate>, String> {
     Ok(out)
 }
 
-/// Decompose Ry(theta) = S H Rz(theta) H Sdg
+/// Decompose Ry(theta) = Sdg H Rz(theta) H S (in application order: Sdg first, S last)
 pub fn decompose_ry(q: usize, theta: f64) -> Result<Vec<Gate>, String> {
     if let Some(k) = is_pi2_multiple(theta) {
         let km = k.rem_euclid(4);
         let gates = match km {
             0 => vec![],
-            1 => vec![Gate::S(q), Gate::H(q), Gate::S(q), Gate::H(q), Gate::Sdg(q)],
+            1 => vec![Gate::Sdg(q), Gate::H(q), Gate::S(q), Gate::H(q), Gate::S(q)],
             2 => vec![Gate::Z(q), Gate::X(q)], // Y gate
-            3 => vec![Gate::S(q), Gate::H(q), Gate::Sdg(q), Gate::H(q), Gate::Sdg(q)],
+            3 => vec![Gate::Sdg(q), Gate::H(q), Gate::Sdg(q), Gate::H(q), Gate::S(q)],
             _ => unreachable!(),
         };
         Ok(gates)
     } else {
-        let mut out = vec![Gate::S(q), Gate::H(q)];
+        let mut out = vec![Gate::Sdg(q), Gate::H(q)];
         out.extend(decompose_rz(q, theta)?);
         out.push(Gate::H(q));
-        out.push(Gate::Sdg(q));
+        out.push(Gate::S(q));
         Ok(out)
     }
 }
@@ -382,6 +391,9 @@ pub fn parse_qasm(src: &str) -> Result<Circuit, String> {
             }
 
             // Gate statements
+            if !measures.is_empty() {
+                return Err("mid-circuit measurement followed by gates is not supported; measurements must be terminal".into());
+            }
             let (name, params, args_str) = if let Some(open) = stmt.find('(') {
                 let close = stmt
                     .find(')')

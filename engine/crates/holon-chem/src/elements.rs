@@ -68,6 +68,19 @@
 //! is derivable under no other convention. Under six, krypton is not a closed shell at all.
 //! See AMENDMENT A1.1 of `conformance/atomworld/ELEMENTS3_PREREG.md`.
 //!
+//! # DECLARED: f shells are seven spherical components, not ten Cartesian
+//!
+//! The same statement one rung up, written down BEFORE any f element exists rather than
+//! after one goes wrong. **An f shell contributes seven functions: the seven real solid
+//! harmonics.** The ten Cartesian components span those seven plus THREE `l = 1`
+//! contaminants -- `r^2 x`, `r^2 y`, `r^2 z` -- and `md::SPHERICAL_F` projects them out.
+//!
+//! No element in this registry has an f shell. [`MAX_Z`] is 54 and the lanthanides are the
+//! named successor, so `ShellKind::F4` and `F5` exist with no constructor reaching them
+//! and the integrals are gated without a consumer. The declaration is here anyway,
+//! because the d lesson was not "we chose wrong" but "nobody wrote the choice down", and
+//! the cost of writing it down before it matters is one paragraph.
+//!
 //! # The rows below argon are generated, not typed
 //!
 //! Z = 19..54 adds 130 shells and some eight hundred declared digits. At that volume a

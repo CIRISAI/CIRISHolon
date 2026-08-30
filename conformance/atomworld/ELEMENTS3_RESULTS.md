@@ -449,6 +449,34 @@ residual and iteration count, exits "converged" at `tol = 1e-9` and "stagnated" 
 `tol = 1e-11`.** Same arithmetic, same vector, opposite verdict — the verdict was never about
 the solve.
 
+**MEASURED: the same solves, relabelled.** The ask was raised, and the band of atoms whose
+residual falls *between* the two tolerances was run under both. Same code, same species, same
+machine; the only difference is which number was requested:
+
+| atom | dets | asked 1e-11 (the record) | asked 1e-10 (after) | |
+|---|---|---|---|---|
+| Li | 50 | 7.03e-11 @ 8 · STAGNATED | 7.03e-11 @ 8 · **CONVERGED** | identical vector |
+| Be | 100 | 1.12e-11 @ 10 · STAGNATED | 1.12e-11 @ 10 · **CONVERGED** | identical vector |
+| As | 2,754 | 9.80e-11 @ 28 · STAGNATED | 9.80e-11 @ 28 · **CONVERGED** | identical vector |
+| K | 204,490 | 9.95e-11 @ 177 · STAGNATED | 9.95e-11 @ 177 · **CONVERGED** | identical vector |
+| Ge | 23,409 | 8.85e-11 @ 50 · STAGNATED | 9.17e-11 @ 49 · **CONVERGED** | **differs** |
+
+**Four of the five are bit-identical in residual and iteration count and differ only in the
+label.** Nothing about the solve changed — same vector, same work, opposite verdict — which is
+as sharp a demonstration as this campaign will produce that the old ask sorted *labels* rather
+than separating *physics*.
+
+**Germanium is the exception, and it is why this was measured rather than asserted.** The
+looser ask intercepted it one iteration early: at iteration 49 its residual had just crossed
+1e-10 (9.17e-11) and the solve exited, where the tighter ask bought one further iteration and
+reached 8.85e-11 before stagnating. So the tighter, unreachable ask is not simply wasted — it
+buys iterations *until stagnation*, and for four of these five stagnation arrived first anyway.
+Germanium's vector genuinely differs between the two runs, by 3e-12 hartree in residual.
+
+The generalisation "same vectors, opposite labels" was this lane's own framing and was endorsed
+before it was checked. It is true four times in five, and publishing it unqualified would have
+been a claim about germanium that germanium does not support.
+
 **Remedy, ruled and scoped.** The ask rises to 1e-10: truth-in-labelling with zero numerical
 blast radius, since it changes no vector and no energy. The floor itself moves only in the
 named successor, with full re-banking, because that one does change numbers. **The bar and this

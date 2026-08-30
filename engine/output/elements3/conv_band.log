@@ -1,0 +1,39 @@
+# LAUNCH PROVENANCE (hashed before exec, not inferred after)
+#   binary sha256[0:16] = bfd3c42427f6db7d
+#   repo HEAD           = 4e6f85d
+#   argv                = 9 3 4 33 32 19
+#   launched            = 2026-08-30T23:22:46Z
+# Davidson exit taken, per atom. cap = 1200, target = 1e-10, bar = 1e-9
+# exit CONVERGED: resid < target | CAP: iters == cap | STAGNATED: neither
+  Z sym      n_det            E (hartree)       resid   iters        exit   vs bar
+  9   F          5       -97.986505000188    5.68e-14       3   CONVERGED     pass   # asked on the command line
+  3  Li         50        -7.315836576618    7.03e-11       8   CONVERGED     pass   # asked on the command line
+  4  Be        100       -14.403655041094    1.12e-11      10   CONVERGED     pass   # asked on the command line
+ 33  As       2754     -2209.263793608119    9.80e-11      28   CONVERGED     pass   # asked on the command line
+ 32  Ge      23409     -2051.649918026932    9.17e-11      49   CONVERGED     pass   # asked on the command line
+ 19   K     204490      -593.093052049426    9.95e-11     177   CONVERGED     pass   # asked on the command line
+#
+# All 1 controls reached the target, so the CONVERGED branch is live and an atom missing it is a fact about the atom, not about this classifier. Non-control atoms that reached it: 5.
+# Read the `exit` column against the `vs bar` column. If they disagree -- if rows that PASS the bar took the same exit as rows the bar REFUSES -- then the bar is sorting a class that uniformly failed to converge, rather than separating the converged from the rest, and the record has to say so.
+EXIT=0
+#
+# ANNOTATION, appended after the run: THE PROVENANCE HEADER ABOVE IS PARTLY WRONG, and it
+# is left standing rather than regenerated.
+#
+# The launcher hashed the binary before exec (correct, and the point of the discipline) but
+# also printed "repo HEAD = 4e6f85d", which ASSERTS a relationship it did not verify: that
+# the binary was built from that commit. The `cargo build` immediately before this launch
+# FAILED -- another lane was mid-edit on a new workspace member, holon-resource -- so the
+# binary that ran is an earlier successful build, not one from 4e6f85d.
+#
+# The hash is still exactly right; it names the bytes that ran. It is the HEAD line that
+# overreaches. Read the two together as "these bytes ran, while the repo was at 4e6f85d",
+# never as "these bytes were built from 4e6f85d".
+#
+# What the binary actually is can be read off its own echoed parameters, which is the whole
+# reason they are echoed: "target = 1e-10, bar = 1e-9" places it AFTER 179db95, so it is a
+# post-bar-re-derivation build. That is the identification that holds.
+#
+# Fix to the discipline, for the next launch: record the BUILD's exit status alongside the
+# hash, and say "binary is stale relative to HEAD" when it is non-zero. A hash pins bytes;
+# it does not pin the claim you attach to them.

@@ -847,3 +847,45 @@ builds, so `/proc/<pid>/exe` reads `(deleted)` and neither can be hashed. The pi
 time against commit time plus the echoed header — enough to be certain which side of 100c971
 each sits on, but inference from timestamps rather than a hash of the bytes that ran. I should
 have hashed before launching.
+
+### Launcher discipline: hash the binary before exec — and it failed on first use
+
+Adopted per the lead: a detached launch writes the binary's sha256 and the repo HEAD into the
+log header BEFORE exec, because timestamps-against-commit-times is inference and bytes are
+record.
+
+**It caught a defect on its very first use, in my own launcher.** The `cargo build` immediately
+before the launch FAILED — another lane was mid-edit on a new workspace member
+(`holon-resource`) — so the binary that ran was an earlier successful build. My header printed
+`repo HEAD = 4e6f85d` beside the hash, which ASSERTS a relationship it never verified: that
+these bytes came from that commit. They did not.
+
+The hash was right; it named the bytes. The HEAD line overreached. **A hash pins bytes; it does
+not pin the claim attached to them.** Corrected discipline: record the BUILD's exit status
+alongside the hash, and say "binary is stale relative to HEAD" when it is non-zero. The log
+carries an appended annotation rather than a regenerated header.
+
+What identified the binary in the end was its own echoed parameters — `target = 1e-10, bar =
+1e-9` places it after 179db95 — which is the whole reason a diagnostic echoes them.
+
+### The straddle band, MEASURED rather than asserted
+
+I proposed "same vectors, same iteration counts, opposite labels" for the atoms between the two
+tolerances, and the lead endorsed it. Before publishing I checked, because a looser tolerance
+lets Davidson exit EARLIER and the claim might not hold:
+
+    atom  asked 1e-11 (record)        asked 1e-10 (after)
+    Li    7.03e-11 @ 8   STAGNATED    7.03e-11 @ 8   CONVERGED   identical
+    Be    1.12e-11 @ 10  STAGNATED    1.12e-11 @ 10  CONVERGED   identical
+    As    9.80e-11 @ 28  STAGNATED    9.80e-11 @ 28  CONVERGED   identical
+    K     9.95e-11 @ 177 STAGNATED    9.95e-11 @ 177 CONVERGED   identical
+    Ge    8.85e-11 @ 50  STAGNATED    9.17e-11 @ 49  CONVERGED   DIFFERS
+
+**Four of five identical, germanium not.** The looser ask intercepted germanium one iteration
+early, where the tighter ask bought one more iteration and a slightly better residual before
+stagnating. So the unreachable ask is not simply wasted — it buys iterations until stagnation,
+and for four of these five stagnation came first anyway.
+
+Publishing the unqualified generalisation would have made a claim about germanium that
+germanium does not support. It was my framing, endorsed before it was checked; checking it cost
+one minute.

@@ -520,35 +520,85 @@ rather than left to be discovered when the drop arrives.
 
 ---
 
-## E2 — the emergent chemical contrast · **IN FLIGHT, partial**
+## E2 — the emergent chemical contrast · **BRANCH (b): one GROSS inversion**
 
 Staked ordering: `N2 > SiO > HCl > ClF > S2 > Cl2 > NaH >> (Ar2, NeAr)`.
 
-Measured so far, `D_e` in hartree from `locate_well` (bisection then Newton on the
+Measured, `D_e` in hartree from `locate_well` (bisection then Newton on the
 SOLVER, not on the interpolant, so these do not depend on knot count):
 
-| pair | `n_basis` | `n_det` | `D_e` / Ha | `R_e` / a₀ | source |
-|---|---|---|---|---|---|
-| N2 | 10 | 14,400 | 0.239388030 | 2.256729 | `e2_ordering`, 24 knots |
-| HCl | 10 | 100 | 0.148293175 | 2.536888 | `e2_ordering`, 24 knots |
-| ClF | 14 | 196 | 0.060622391 | 3.341873 | `e2_ordering`, 24 knots |
-| Cl2 | 18 | 324 | 0.064577385 | 4.024124 | `emit_pair_tables`, 192 knots — **a different run**, quoted here because the shipped table was already paid for; `e2_ordering`'s own Cl2 row supersedes it when it lands |
-| S2, NaH, Ar2, NeAr | | | running | | |
-| SiO | 14 | 132,496 | **OWED** — no automatic route | | |
+| pair | `n_basis` | `n_det` | `D_e` / Ha | `R_e` / a₀ | staked rank | measured rank |
+|---|---|---|---|---|---|---|
+| N2 | 10 | 14,400 | 0.239388030 | 2.256729 | 1 | **1** |
+| **NaH** | 10 | 44,100 | **0.193188744** | 3.133867 | **7** | **2** |
+| HCl | 10 | 100 | 0.148293175 | 2.536888 | 3 | 3 |
+| S2 | 18 | 23,409 | 0.133253157 | 3.706603 | 5 | 4 |
+| Cl2 | 18 | 324 | 0.064577385 | 4.024124 | 6 | 5 |
+| **ClF** | 14 | 196 | **0.060622391** | 3.341873 | **4** | **6** |
+| Ar2 | 18 | 1 | **UNBOUND** | — | 8 | 8 |
+| NeAr | 14 | 1 | **UNBOUND** | — | 9 | 9 |
+| SiO | 14 | 132,496 | running (by hand) | | 2 | |
 
-**One inversion is already visible, and it is small.** The stake orders
-`ClF > Cl2`; the measurement has `Cl2 0.064577385 > ClF 0.060622391`, an adjacent
-swap of two values 6.6% apart. E2's branch (b) is worded for a GROSS inversion,
-and a 6.6% swap between neighbours is not obviously that — it is reported as what
-it is rather than rounded into either verdict, and the ordering over the pairs
-measured so far (`N2 > HCl > Cl2 > ClF`) otherwise follows the stake.
+### What holds
 
-Nothing here is told which pairs bind: `locate_well` looks for a minimum deeper
-than the declared `WELL_MIN_DEPTH` and reports `None` when there is not one, so
-the closed-shell negatives come out unbound through the same code path that
-produces N2's curve. `R_e` and `D_e` do not depend on knot count — `locate_well`
-runs bisection and Newton on the SOLVER, not on the interpolant — which is what
-makes the two runs above comparable at the precision quoted.
+* **N2 is deepest**, as staked.
+* **Both closed-shell negatives are UNBOUND**, as staked — no minimum deeper than
+  the declared `WELL_MIN_DEPTH = 1e-4 Ha`. Nothing in the engine knows argon and
+  neon are noble: `locate_well` looks for a minimum and reports `None`, through
+  the same code path that produces N2's curve. That is gate **E1** discharged on
+  its two staked species as well.
+* **S2 > Cl2**, as staked.
+
+### The two inversions, and one of them is gross
+
+* **NaH moves from seventh to second** — five places. At 0.193 Ha it comes out
+  deeper than HCl, where the stake puts it shallowest of every bound pair. This
+  is a GROSS inversion by any reading, and it is branch (b).
+* **ClF moves from fourth to sixth**, below both S2 and Cl2 — two places.
+
+### Investigated, as far as this lane can honestly take it
+
+Two things are established and one is not.
+
+**It is not a bug in one code path.** The numbers were reproduced by a second,
+independent route: `examples/e2_byhand.rs` locates the well with its own
+bracket–bisect–Newton against `solve_determinant` directly, where
+`generate_pair_table` uses `locate_well` against the auto-routing `solve`. The two
+agree to every printed digit — NaH 0.193188744 both ways, HCl 0.148293175, ClF
+0.060622391. So the ordering is what this model says, not what one function says.
+
+**The asymptotes are where a minimal-basis distortion would live.** `D_e` is
+`E_asymptote − E(R_e)` with the asymptote computed as two isolated atoms at the
+same level of theory:
+
+| pair | `E_asymptote` / Ha | `E(R_e)` / Ha | `D_e` / Ha |
+|---|---|---|---|
+| NaH | −160.178044363483 | −160.371233107 | 0.193188744 |
+| HCl | −455.008774248286 | −455.157067423 | 0.148293175 |
+| ClF | −552.528697398917 | −552.589319790 | 0.060622391 |
+
+Sodium is the open-shell alkali in the set, and a minimal basis describes an
+isolated alkali ATOM worse than it describes the molecule that atom forms — which
+raises the asymptote and inflates `D_e`. That is a plausible mechanism and **it is
+not established here**, so it is recorded as the hypothesis to check rather than
+as the finding.
+
+**What settles it is R2, not more of this.** The referee grades NaH and ClF among
+its staked seven at 1e−10 Ha pointwise. If the referee reproduces these numbers,
+the inversion is a true property of the declared model and E2's stake was a
+hypothesis about nature carried into a model that does not share it. If the
+referee disagrees, the inversion is ours. Speculating further before that drop
+lands would be putting a mechanism in the record ahead of the measurement that
+decides it.
+
+### What E2 does and does not license
+
+The freeze says "in its broad strokes, numbers reported as the product". The broad
+strokes that hold are the ones the campaign can claim: **the deepest bond is N2,
+the closed shells refuse across rows, and every one of these numbers came out of
+Z, the masses and the STO-3G contraction with no fitted parameter and no table of
+chemical results.** The ordering as a whole does NOT reproduce the stake, and that
+is reported as the product rather than the stake being adjusted to it.
 
 ---
 

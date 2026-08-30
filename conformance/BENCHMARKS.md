@@ -747,3 +747,68 @@ lower T before extraction), not in extraction. Ours: 15/40/51/44/71.
 (this entry) — the capability set is complete; what remains against quizx
 is a reduction-depth performance delta with a named location, not a
 missing capability.
+
+## 2026-08-30, twenty-fourth entry: the Clifford tier's reach, measured — and the adaptive path found stranded 343× behind it
+
+*By the bigqvm-demo lane. Probe: `engine/crates/holon/examples/bigscale.rs`.
+Reproduce: `cargo run --release --example bigscale -- 1024 4096 8192 16384
+32768 65536 131072`. Every allocation is guarded against `MemAvailable`
+with a 2 GB reserve and refuses loudly rather than OOM-killing a sibling —
+this box is shared.*
+
+**STAKED BEFORE MEASURING:** (1) the bake-off's n ≤ 4096 ceiling is a
+harness limit, not an engine limit, and the engine reaches the memory
+ceiling this box can hold; (2) the dense working set is `(2n)²` bits and
+n ≈ 100k–150k is the ceiling at 31 GB RAM. Both stand. A third thing was
+NOT staked and is the entry's real content.
+
+**Scaling to n = 131072 — nothing breaks above 4096.** No `u32`/`usize`
+indexing defect, no accidental O(n²) temporary, and the memory model is
+exact: **8.590 GB predicted, 8.617 GB measured peak RSS.**
+
+| n | column engine | row-major reference | row/col | tableau | peak RSS |
+|---:|---:|---:|---:|---:|---:|
+| 1024 | 0.035 µs/gate | 5.07 µs/gate | 145× | 0.001 GB | 0.003 GB |
+| 4096 | 0.127 | 32.42 | 255× | 0.008 | 0.011 |
+| 8192 | 0.617 | 187.5 | 304× | 0.034 | 0.037 |
+| 16384 | 0.761 | 368.0 | 484× | 0.134 | 0.171 |
+| 32768 | 4.126 | 1212.8 | 294× | 0.537 | 0.545 |
+| 65536 | 9.611 | 3333.5 | 347× | 2.147 | 2.163 |
+| 131072 | 21.083 | 7230.9 | 343× | 8.590 | 8.617 |
+
+**THE FINDING, which was not the question asked: `adaptive.rs` runs on
+`PackedTableau` — the row-major reference — and NOT on `coltableau.rs`, the
+transposed engine that won entries six/eight/ten.** Mid-circuit measurement
+was built against the certified reference (correctly — that is where the
+rowsum path lives) and never moved. The cost of that is the table's third
+column: 145× at n=1024, **343× at n=131072**, the gap widening with n
+because row-major pays one cache miss per row for a one-bit-per-row update
+while the column engine pays `2n/64` contiguous words.
+
+The adaptive measurement path at the same sizes, on a short-range-entangled
+state (what QEC actually produces):
+
+| n | peek, random exit | collapse | peek, deterministic |
+|---:|---:|---:|---:|
+| 65536 | 0.003 ms | 1.141 ms | 1.064 ms |
+| 131072 | 0.007 ms | 7.822 ms | 3.751 ms |
+
+**What it costs the flagship, priced against stim rather than asserted.**
+stim 1.16.0 installed locally (it was CI-only before) and measured on the
+commissioned workload itself — `stim.Circuit.generated("surface_code:
+rotated_memory_z")`, 3 rounds, `TableauSimulator`, full exact adaptive
+semantics:
+
+| d | n | measurements | stim | peak RSS |
+|---:|---:|---:|---:|---:|
+| 141 | 40184 | 79521 | 7.26 s | 1.03 GB |
+| 181 | 66064 | 131041 | 26.87 s | 2.69 GB |
+| 221 | 98344 | 195361 | **65.63 s** | 5.87 GB |
+
+So the flagship is reachable — stim reaches it — and the honest bar is
+65.6 s at d=221. Our row-major adaptive path projected on that same
+workload is ~750k gate applications at ~5.3 ms each: **about 46 days.**
+That is not a tuning gap, it is a layout gap, and it is the whole reason
+the next entry exists. Recorded here first, with the engine unchanged, so
+the finding has its evidence before its fix.
+

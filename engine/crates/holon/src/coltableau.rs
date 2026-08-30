@@ -152,6 +152,193 @@ impl ColTableau {
     /// Transpose back to the certified row-major reference (measurement,
     /// rowsum, audit). Signs: bit b ↦ r = 2b (physical rows are ±1).
     ///
+    /// THE COLUMN SCAN — the operation row-major cannot do.
+    ///
+    /// "Does any row in `[lo, hi)` have X-support on qubit `q`?" is the first
+    /// question every measurement asks, and in the row-major reference it
+    /// costs `hi−lo` scalar bit-gets, each landing in a DIFFERENT heap
+    /// allocation — one cache miss per row, and the measured cost of the
+    /// deterministic path at scale (2.2 ms at n≈98k, ~99.5% of it this loop).
+    /// Here the same question is `⌈(hi−lo)/64⌉` contiguous words with an
+    /// early exit, because column `q` IS a bitvector over rows.
+    ///
+    /// Returns the first such row, or `None`.
+    #[inline]
+    pub fn first_x_row_in(&self, q: usize, lo: usize, hi: usize) -> Option<usize> {
+        debug_assert!(lo <= hi && hi <= self.nrows);
+        if lo >= hi {
+            return None;
+        }
+        let col = &self.x[q * self.words..(q + 1) * self.words];
+        let (wlo, whi) = (lo >> 6, (hi - 1) >> 6);
+        for w in wlo..=whi {
+            let mut word = col[w];
+            // Mask off rows outside [lo, hi) in the boundary words. The shift
+            // is guarded: `!0u64 << 64` is undefined, and lo/hi land on word
+            // boundaries often enough that an unguarded version would be a
+            // rare, data-dependent wrong answer rather than a crash.
+            if w == wlo {
+                let b = lo & 63;
+                if b != 0 {
+                    word &= !0u64 << b;
+                }
+            }
+            if w == whi {
+                let b = hi & 63;
+                if b != 0 {
+                    word &= !(!0u64 << b);
+                }
+            }
+            if word != 0 {
+                return Some(w * 64 + word.trailing_zeros() as usize);
+            }
+        }
+        None
+    }
+
+    /// The sign of row `row`: `false` = +1, `true` = −1. Physical rows carry
+    /// ±1 only, so one bit is the whole answer — which is what makes a
+    /// single-term destabilizer product an O(1) read rather than a rowsum.
+    #[inline]
+    pub fn sign_bit(&self, row: usize) -> bool {
+        debug_assert!(row < self.nrows);
+        self.r[row >> 6] >> (row & 63) & 1 == 1
+    }
+
+    /// Every row in `[lo, hi)` with X-support on `q`, appended to `out`.
+    /// Same contiguous scan; this is the destabilizer hit set on the
+    /// deterministic path (measured: mean 1.7, max 5 on a surface code, so
+    /// the caller's work after this call is O(1) in n).
+    pub fn x_rows_in(&self, q: usize, lo: usize, hi: usize, out: &mut Vec<usize>) {
+        debug_assert!(lo <= hi && hi <= self.nrows);
+        if lo >= hi {
+            return;
+        }
+        let col = &self.x[q * self.words..(q + 1) * self.words];
+        let (wlo, whi) = (lo >> 6, (hi - 1) >> 6);
+        for w in wlo..=whi {
+            let mut word = col[w];
+            if w == wlo {
+                let b = lo & 63;
+                if b != 0 {
+                    word &= !0u64 << b;
+                }
+            }
+            if w == whi {
+                let b = hi & 63;
+                if b != 0 {
+                    word &= !(!0u64 << b);
+                }
+            }
+            while word != 0 {
+                let t = word.trailing_zeros() as usize;
+                out.push(w * 64 + t);
+                word &= word - 1;
+            }
+        }
+    }
+
+    /// Rebuild the column-major engine from the row-major reference — the
+    /// inverse of `to_packed`, and the same blocked routine run backwards.
+    /// `transpose64` is an involution, so the two directions are one kernel.
+    pub fn from_packed(p: &PackedTableau) -> ColTableau {
+        let n = p.n;
+        let nrows = 2 * n;
+        let words = nrows.div_ceil(64);
+        let mut t = ColTableau {
+            n,
+            nrows,
+            words,
+            x: vec![0u64; n * words],
+            z: vec![0u64; n * words],
+            r: vec![0u64; words],
+        };
+        t.load_from_packed(p);
+        t
+    }
+
+    /// The same transpose, IN PLACE. At the flagship's size a fresh tableau
+    /// per round would put three of them live at once (old column engine,
+    /// row-major reference, new column engine) — 14 GB where 9.5 GB is the
+    /// honest working set. Every word of both planes is written, so there is
+    /// no stale-bit hazard in reusing the buffer.
+    pub fn load_from_packed(&mut self, p: &PackedTableau) {
+        assert_eq!(self.n, p.n, "load_from_packed: qubit count differs");
+        let n = self.n;
+        let words = self.words;
+        let nq_words = n.div_ceil(64);
+        let mut bx = [0u64; 64];
+        let mut bz = [0u64; 64];
+        for qb in 0..nq_words {
+            for rb in 0..words {
+                let base = rb * 64;
+                for j in 0..64 {
+                    let row = base + j;
+                    if row < self.nrows {
+                        bx[63 - j] = p.rows[row].x.words[qb];
+                        bz[63 - j] = p.rows[row].z.words[qb];
+                    } else {
+                        bx[63 - j] = 0;
+                        bz[63 - j] = 0;
+                    }
+                }
+                transpose64(&mut bx);
+                transpose64(&mut bz);
+                for i in 0..64 {
+                    let q = qb * 64 + i;
+                    if q < n {
+                        self.x[q * words + rb] = bx[63 - i];
+                        self.z[q * words + rb] = bz[63 - i];
+                    }
+                }
+            }
+        }
+        for w in self.r.iter_mut() {
+            *w = 0;
+        }
+        for (row, pr) in p.rows.iter().enumerate() {
+            if pr.r % 4 == 2 {
+                self.r[row >> 6] |= 1 << (row & 63);
+            }
+        }
+    }
+
+    /// `to_packed` into an EXISTING reference tableau, reusing its rows.
+    /// Same completeness argument: every word of every row is written.
+    pub fn store_to_packed(&self, out: &mut PackedTableau) {
+        assert_eq!(self.n, out.n, "store_to_packed: qubit count differs");
+        let nq_words = self.n.div_ceil(64);
+        let mut bx = [0u64; 64];
+        let mut bz = [0u64; 64];
+        for qb in 0..nq_words {
+            for rb in 0..self.words {
+                for i in 0..64 {
+                    let q = qb * 64 + i;
+                    if q < self.n {
+                        bx[63 - i] = self.x[q * self.words + rb];
+                        bz[63 - i] = self.z[q * self.words + rb];
+                    } else {
+                        bx[63 - i] = 0;
+                        bz[63 - i] = 0;
+                    }
+                }
+                transpose64(&mut bx);
+                transpose64(&mut bz);
+                let base = rb * 64;
+                for j in 0..64 {
+                    let row = base + j;
+                    if row < self.nrows {
+                        out.rows[row].x.words[qb] = bx[63 - j];
+                        out.rows[row].z.words[qb] = bz[63 - j];
+                    }
+                }
+            }
+        }
+        for (row, pr) in out.rows.iter_mut().enumerate() {
+            pr.r = ((self.r[row >> 6] >> (row & 63) & 1) as u8) * 2;
+        }
+    }
+
     /// Word-parallel: 64×64 bit blocks through the in-register transpose
     /// (Hacker's Delight §7-3), never a bit alone — the same discipline as
     /// the gate path. The per-bit version this replaces was 87–100% of
@@ -285,6 +472,107 @@ mod conformance {
                 assert_eq!(a.z, b.z, "n={n} row {i}: Z planes differ");
                 assert_eq!(a.r, b.r, "n={n} row {i}: signs differ");
             }
+        }
+    }
+
+    /// The column scan must answer EXACTLY what the row-major loop it
+    /// replaces answers — on every qubit, over every row window, including
+    /// the windows whose ends land off a word boundary (where an unguarded
+    /// mask would silently return a wrong row rather than crash).
+    #[test]
+    fn column_scan_agrees_with_the_row_major_loop() {
+        let mut rng = Rng(0x5CA1_AB1E);
+        for n in [3usize, 17, 64, 65, 100, 130] {
+            let mut col = ColTableau::new(n);
+            let mut refr = PackedTableau::new(n);
+            for _ in 0..400 {
+                let q = rng.below(n);
+                let mut q2 = rng.below(n);
+                while q2 == q {
+                    q2 = rng.below(n);
+                }
+                match rng.below(4) {
+                    0 => {
+                        col.h(q);
+                        refr.h(q);
+                    }
+                    1 => {
+                        col.s(q);
+                        refr.s(q);
+                    }
+                    2 => {
+                        col.z_gate(q);
+                        refr.z_gate(q);
+                    }
+                    _ => {
+                        col.cx(q, q2);
+                        refr.cx(q, q2);
+                    }
+                }
+            }
+            // Windows chosen to straddle word boundaries deliberately.
+            let windows: Vec<(usize, usize)> = vec![
+                (0, 2 * n),
+                (n, 2 * n),
+                (0, n),
+                (1, 2 * n - 1),
+                (n.min(2 * n), (n + 63).min(2 * n)),
+                (3.min(2 * n), (2 * n).min(70)),
+            ];
+            for q in 0..n {
+                for &(lo, hi) in &windows {
+                    if lo > hi {
+                        continue;
+                    }
+                    let want_first = (lo..hi).find(|&p| refr.rows[p].x.get(q));
+                    assert_eq!(
+                        col.first_x_row_in(q, lo, hi),
+                        want_first,
+                        "n={n} q={q} window [{lo},{hi})"
+                    );
+                    let want_all: Vec<usize> =
+                        (lo..hi).filter(|&p| refr.rows[p].x.get(q)).collect();
+                    let mut got = Vec::new();
+                    col.x_rows_in(q, lo, hi, &mut got);
+                    assert_eq!(got, want_all, "n={n} q={q} window [{lo},{hi}) full set");
+                }
+            }
+        }
+    }
+
+    /// `from_packed` must invert `to_packed` exactly — planes and signs —
+    /// or a round trip through the measurement phase would corrupt the state.
+    #[test]
+    fn from_packed_inverts_to_packed() {
+        let mut rng = Rng(0xBEEF_CAFE);
+        for n in [3usize, 17, 64, 65, 130] {
+            let mut col = ColTableau::new(n);
+            for _ in 0..500 {
+                let q = rng.below(n);
+                let mut q2 = rng.below(n);
+                while q2 == q {
+                    q2 = rng.below(n);
+                }
+                match rng.below(5) {
+                    0 => col.h(q),
+                    1 => col.s(q),
+                    2 => col.x_gate(q),
+                    3 => col.z_gate(q),
+                    _ => col.cx(q, q2),
+                }
+            }
+            let packed = col.to_packed();
+            let back = ColTableau::from_packed(&packed);
+            let again = back.to_packed();
+            for (i, (a, b)) in packed.rows.iter().zip(&again.rows).enumerate() {
+                assert_eq!(a.x, b.x, "n={n} row {i}: X plane lost in round trip");
+                assert_eq!(a.z, b.z, "n={n} row {i}: Z plane lost in round trip");
+                assert_eq!(a.r, b.r, "n={n} row {i}: sign lost in round trip");
+            }
+            // And the raw column buffers must match, not merely their image.
+            assert_eq!(back.x, col.x, "n={n}: X plane buffer differs");
+            assert_eq!(back.z, col.z, "n={n}: Z plane buffer differs");
+            assert_eq!(back.r, col.r, "n={n}: sign buffer differs");
         }
     }
 

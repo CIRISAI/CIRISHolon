@@ -36,6 +36,8 @@ pub mod sample;
 pub mod simd;
 pub mod simplify;
 pub mod sliced;
+pub mod surface;
+pub mod coladaptive;
 pub mod coltableau;
 pub mod tableau;
 pub mod zx;

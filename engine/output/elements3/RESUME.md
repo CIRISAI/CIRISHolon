@@ -813,3 +813,37 @@ current-engine version. Both kept, both to be reported.
 command, meaning two different things, distinguishable solely because the diagnostic prints what
 it was asked for. That rule was learned the hard way in this programme and it paid for itself
 inside an hour.
+
+### Provenance of the two indium runs, and a correction to my own framing
+
+Pinned by start time against commit time, per the lead's instruction to echo the tree a
+diagnostic was compiled from:
+
+    run          started    target    bar      binary predates
+    mine        17:27:47    1e-11    1e-10     100c971 (17:34:33) and everything after
+    theirs      17:34:33    1e-10    1e-10     179db95 (17:53:31) and fe18572 (18:14:00)
+    HEAD now         --     1e-10    1e-9      --
+
+**Neither running binary describes the present tense.** Theirs carries the new ASK from 100c971
+but predates the bar re-derivation, so its `vs bar` column is scored against the OLD 1e-10 bar
+rather than the 1e-9 that replaced it. Mine is the record's state; theirs is the state as of
+17:34.
+
+**And for INDIUM the two runs are REPLICATES, not different measurements** — correcting my own
+claim that they answer different questions. True in general, false for the atom I launched them
+for: the target only gates the exit test `resid < tol` and does not touch the iteration path,
+and indium's residual is 3.98e-1, nowhere near either threshold. Both binaries therefore do
+bit-identical arithmetic and must exit identically. That is worth more than a comparison would
+have been, for a claim marked UNMEASURED all afternoon.
+
+Where the target difference does bite is the 1e-11..1e-10 band — Li, Be, K, Ge, As. Mine calls
+them STAGNATED (never reached 1e-11); theirs calls them CONVERGED (reached 1e-10). Same vectors,
+same iteration counts, opposite labels, decided entirely by which number was requested. That is
+the campaign's convergence finding restated as a classification, and the two runs supply the
+nine-row version of it free, because they straddled the change.
+
+**Weakness, recorded rather than papered over:** both binaries were replaced on disk by later
+builds, so `/proc/<pid>/exe` reads `(deleted)` and neither can be hashed. The pinning is start
+time against commit time plus the echoed header — enough to be certain which side of 100c971
+each sits on, but inference from timestamps rather than a hash of the bytes that ran. I should
+have hashed before launching.

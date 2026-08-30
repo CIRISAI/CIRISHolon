@@ -406,6 +406,41 @@ full reorthogonalisation — not restarts and not patience, which the iteration 
 and an exit-reason enum on `Solution`, so nine solves that never approached their cap stop being
 indistinguishable in a record from one that exhausted it.
 
+### The root cause, and there was a third quantity nobody had checked
+
+The exit-reason enum was built and it closed the question. This section identified **two**
+quantities sharing the number 1e-10 — the bar, on the residual, and the expansion gate, on an
+orthogonalised candidate — and was careful to say they were two. It missed a third: what
+`solve_determinant` **asks for**.
+
+    solve_determinant requests   tol = 1e-11
+    davidson accepts a direction only above  1e-10   (fci.rs:1453)
+
+**The ask sits an order of magnitude below the solver's own expansion floor, so it is
+unreachable by construction.** That is the whole cause. It is why not one multi-determinant
+solve in this record reaches its target, why six of mixtures-engine's independent curves stop
+inside the single band 9.5–10.0e-11, and why the atoms here stall without ever approaching
+their iteration cap.
+
+Their demonstration is the cleanest statement of it: **one nitrogen solve, bit-identical
+residual and iteration count, exits "converged" at `tol = 1e-9` and "stagnated" at
+`tol = 1e-11`.** Same arithmetic, same vector, opposite verdict — the verdict was never about
+the solve.
+
+**Remedy, ruled and scoped.** The ask rises to 1e-10: truth-in-labelling with zero numerical
+blast radius, since it changes no vector and no energy. The floor itself moves only in the
+named successor, with full re-banking, because that one does change numbers. **The bar and this
+record's five refusals are untouched** — Sb and Te stagnate at 1.07e-10, above 1e-10 as well as
+above 1e-11, so they are refused by measurement rather than by an unreachable request.
+
+**And the constant's comment must not promise what the floor cannot deliver.** "Unreachable by
+construction" is true of the 1e-11 ask *specifically*; it is not a blanket exoneration, and the
+delivered tolerance is **system-dependent**. One candidate-norm floor maps to different residual
+floors through each system's preconditioner and accumulated basis, which is why this record's
+stagnation residuals span **1.12e-11 to 2.72e-10, a factor of 24**, where a single-system view
+sees a tight band and reads it as one number. The comment should name the floor as the mechanism
+and the delivered tolerance as varying, rather than promise a uniform 1e-10.
+
 The multiplicities and energies for 51–54 in the table above come from
 `tests/elements3_atoms.rs`, which recomputes them, not from the record.
 

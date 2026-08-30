@@ -443,6 +443,49 @@ the ladder is resolving convergence rather than reading a fixed offset. **This
 says the bridge is correct where it runs. It does not say the bridge is
 admitted**, and the record the gate reads still says NONE.
 
+### The EXACT side is cheap, and that changes what is owed
+
+The lead's correction to the referee brief — D1's FCI side is engine f64 at a
+1e-8 comparison, **not** the 50-digit referee — turns "can we have exact SiO"
+from a question about thirty mpmath hours into a question about this crate's
+Davidson. Measured, one geometry each, `solve_determinant` explicitly, through
+the shared `geometry_problem`:
+
+| pair | `n_orb` | `n_det` | assemble | solve | Davidson residual |
+|---|---|---|---|---|---|
+| HCl | 10 | 100 | 0.1 s | 0.0 s | 6.1e−11 |
+| ClF | 14 | 196 | 0.6 s | 0.0 s | 7.7e−11 |
+| Cl2 | 18 | 324 | 0.5 s | 0.0 s | 6.4e−11 |
+| NaH | 10 | 44,100 | 0.1 s | 1.3 s | 7.3e−11 |
+| S2 | 18 | 23,409 | 0.6 s | 3.0 s | 9.3e−11 |
+| **SiO** | 14 | **132,496** | 0.3 s | **33.9 s** | 9.2e−11 |
+
+So the exact half of D1 is done, and two things that were being reported as owed
+are not:
+
+* **R2's engine half is fully feasible on all seven staked pairs**, SiO included
+  — about eleven minutes for a twenty-point SiO grid. It is blocked on the
+  referee's drop and on nothing of ours.
+* **E2's SiO row is not owed.** It had been reported that way because
+  `pair::feasibility` says "no automatic route" and `generate_pair_table` refuses
+  — both correct about the AUTOMATIC route, and both being read downstream as
+  "unreachable". `examples/e2_byhand.rs` locates the well on the determinant route
+  directly, with the same bracket-bisect-Newton discipline `locate_well` uses.
+
+**The blocker is the DMRG side alone, and more compute does not fix it**, because
+the cost is a fixed preprocessing step rather than convergence.
+
+### What the sprint team's validation actually covers
+
+Their report claimed DMRG-vs-FCI agreement "within 1e-6 Eh on overlapping
+sectors". The test is `engine/crates/q8-mps/tests/electronic_dmrg.rs` (which
+landed in 6ceaa74, not in the provenance commit): MPO against an independent
+dense Hamiltonian at **two** orbitals to 1e−13, and DMRG against the exact sector
+ground state at **three** orbitals to 1e−7 — both on hand-written synthetic
+integrals, not a molecule's. All three tests pass. D1 stakes eighteen and fourteen
+orbitals on real STO-3G integrals, so that is a real measurement of a different
+thing, and it does not discharge D1.
+
 ### Consequence for the campaign
 
 Si2 and Na2, the DMRG-only curves D1 would have licensed, **do not enter the

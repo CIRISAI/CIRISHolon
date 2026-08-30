@@ -295,7 +295,12 @@ always already inside the determinant threshold, and **the `Mps` arm is unreacha
 test constructs it; `holon-render` maps it to a viewer route code that can never be
 produced. Every refusal in the table above is therefore a verdict of the *determinant
 threshold*, and the superseded constant is inert — it has no effect on any verdict this
-record contains.
+record contains. Gated, not just asserted:
+`the_mps_arm_is_unreachable_so_the_orbital_constant_decides_nothing` in
+`tests/elements3_atoms.rs` proves the emptiness by arithmetic, confirms it by sweeping all
+54×54 registered pairs, and carries a plant showing the check reads a live arm as live — so
+it is a tripwire that fires the moment the constant is raised, not a tautology that passes
+because nothing can reach it.
 
 That changes what re-deriving it can do here, in both directions. The arm first becomes
 reachable at **10 orbitals**, where the maximum is 63,504 determinants; below ten, no
@@ -303,7 +308,10 @@ orbital count can exceed the threshold at all. And at ten the live window is nar
 between 50,000 and 63,504, which is half-filling and nothing else. So the *first* spaces a
 raised constant would ever route automatically to MPS are ten-orbital half-filled ones,
 which is the exact corner where the ladder's one mid-filled ten-orbital rung, NaH at 44,100
-determinants, came back BUDGET five orders short of the stake. Raised to 18 instead, the
+determinants, came back BUDGET five orders short of the stake. Enumerated, the first
+customers of a constant of ten are eight first-row pairs — BC, BeB, BeN, LiC, LiO at 52,920
+determinants and **B₂**, BeC, LiN at 63,504 — so the automatic router's opening act would be
+B₂, the standard hard multireference diatomic. Raised to 18 instead, the
 constant would flip **eleven** of this record's rows in one step — every 18-orbital species
 past the determinant threshold, Sc through Ga (Z = 21–31), spanning 124,848 to 1,392,554,592
 determinants — to "automatic route available", on the strength of a rung measured at

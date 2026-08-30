@@ -308,3 +308,121 @@ fn the_two_closed_shell_nobles_match_the_fifty_digit_referee() {
         "the referee record is supposed to carry krypton and xenon; it carried {checked}"
     );
 }
+
+/// `C(n, k)`, saturating. Local and deliberately not `pair::choose`: this gate is an
+/// argument about arithmetic, and it should not be able to pass because the thing it is
+/// arguing about supplied its own counter.
+fn binom(n: usize, k: usize) -> usize {
+    if k > n {
+        return 0;
+    }
+    let k = k.min(n - k);
+    let mut acc: usize = 1;
+    for i in 0..k {
+        acc = match acc.checked_mul(n - i) {
+            Some(v) => v / (i + 1),
+            None => return usize::MAX,
+        };
+    }
+    acc
+}
+
+/// The largest determinant count any space of `n_orb` orbitals can have, over every filling.
+/// `C(n, n/2)^2` — half filling, where the binomial peaks.
+fn max_n_det_at(n_orb: usize) -> usize {
+    binom(n_orb, n_orb / 2).saturating_mul(binom(n_orb, n_orb / 2))
+}
+
+/// Is `AutomaticRoute::Mps` selectable at all, at a given pair of constants?
+///
+/// The router asks two questions in order — `n_det <= threshold` first, then
+/// `n_orb <= max_orb` — so the MPS arm needs a space that is past the determinant threshold
+/// AND inside the orbital reach. Whether any such space EXISTS is pure arithmetic: the arm
+/// is live iff some orbital count within reach can hold more determinants than the
+/// threshold admits.
+fn mps_arm_is_selectable(max_orb: usize, threshold: usize) -> bool {
+    (0..=max_orb).any(|m| max_n_det_at(m) > threshold)
+}
+
+/// THE ROUTE VERDICTS IN THIS RECORD ARE THE DETERMINANT THRESHOLD'S, NOT THE ORBITAL
+/// CONSTANT'S — and the orbital constant currently decides nothing at all.
+///
+/// # Why this gate exists
+///
+/// ELEMENTS3_RESULTS.md said, for one day, that this record's sixteen route-less species
+/// "rest on a superseded measurement", meaning `pair::MPS_MAX_ORBITALS = 6`. They do not.
+/// Six orbitals admit at most `C(6,3)^2 = 400` determinants and the threshold is 50,000, so
+/// a space inside the orbital reach is ALWAYS already inside the determinant threshold and
+/// the `Mps` arm cannot be selected for any input whatsoever. The constant enters no verdict
+/// this record contains. That was a claim about a cause that was not carrying the effect,
+/// and this gate is what would have caught it.
+///
+/// # Why it is also a tripwire
+///
+/// The arm goes live at TEN orbitals, where half filling gives 63,504 determinants against a
+/// 50,000 threshold. So the moment `MPS_MAX_ORBITALS` is re-derived to ten or more, spaces
+/// begin routing automatically to MPS — and the FIRST of them are ten-orbital half-filled
+/// ones, which is the immediate neighbourhood of the one rung the re-derivation's own ladder
+/// measured as a failure (NaH, 10 orbitals, 44,100 determinants, five orders short of its
+/// stake). This test fails at that moment, on purpose, naming the window that opened. It is
+/// not asserting the constant must stay 6; it is asserting nobody may raise it without
+/// looking at what the raise switches on.
+#[test]
+fn the_mps_arm_is_unreachable_so_the_orbital_constant_decides_nothing() {
+    let threshold = holon_chem::fci::MPS_ROUTE_THRESHOLD;
+    let max_orb = holon_chem::pair::MPS_MAX_ORBITALS;
+
+    // (a) The arithmetic, stated as the argument rather than as a spot check.
+    assert!(
+        !mps_arm_is_selectable(max_orb, threshold),
+        "MPS_MAX_ORBITALS = {max_orb} and MPS_ROUTE_THRESHOLD = {threshold}: the MPS arm is \
+         now SELECTABLE, which it was not when this record was published. Spaces will begin \
+         routing automatically to MPS/DMRG. At a constant of ten the first customers are \
+         eight first-row pairs at half filling — BC, BeB, BeN, LiC, LiO at 52,920 \
+         determinants and B2, BeC, LiN at 63,504 — which includes B2, the standard hard \
+         multireference diatomic. This record's route table, its sixteen route-less species \
+         and the claim that its verdicts are the determinant threshold's alone all have to \
+         be re-read before this test is updated."
+    );
+
+    // (b) The same fact against the real registry rather than against arithmetic alone: no
+    //     pair of registered elements takes the arm. Both directions of the argument, since
+    //     an arithmetic proof and a concrete sweep fail in different ways.
+    for a in holon_chem::elements::ALL_ELEMENTS {
+        for b in holon_chem::elements::ALL_ELEMENTS {
+            let r = holon_chem::pair::automatic_route(a, b);
+            assert!(
+                !matches!(r, holon_chem::pair::AutomaticRoute::Mps { .. }),
+                "{}{} took the MPS arm ({r:?}) — the arm this gate proves is empty",
+                a.symbol,
+                b.symbol
+            );
+        }
+    }
+
+    // (c) THE PLANT. A check that can only ever pass is decoration, so the discriminator is
+    //     exercised at constants where the arm IS live. Ten orbitals at half filling is
+    //     63,504 determinants, past the 50,000 threshold — so `mps_arm_is_selectable` must
+    //     come back true there, or (a) proves nothing.
+    assert!(
+        mps_arm_is_selectable(10, 50_000),
+        "the emptiness check cannot detect a live arm: at ten orbitals half filling gives \
+         {} determinants against a 50,000 threshold, and this must read as selectable",
+        max_n_det_at(10)
+    );
+    assert!(
+        !mps_arm_is_selectable(9, 50_000),
+        "nine orbitals hold at most {} determinants, which is inside a 50,000 threshold, so \
+         the arm must read as empty there — the check is reading something other than the \
+         window it claims to",
+        max_n_det_at(9)
+    );
+
+    println!(
+        "route scope: MPS arm empty at (max_orb {max_orb}, threshold {threshold}); \
+         max determinants inside the reach is {}, the arm goes live at 10 orbitals ({}); \
+         plant confirms the check discriminates",
+        max_n_det_at(max_orb),
+        max_n_det_at(10)
+    );
+}

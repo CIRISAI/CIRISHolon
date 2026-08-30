@@ -7,9 +7,10 @@ gate. Where the freeze delegates a construction, the construction is stated in f
 with the reason it is forced — a delegated degree of freedom that is not written
 down is a fitted parameter.*
 
-**Status: awaiting the lead's re-audit. Nothing runs until it lands. Two rulings are
-requested in §9 and must be answered before the primary, because each of them is a
-mid-run VOID if it is discovered rather than decided.**
+**Status: awaiting the lead's re-audit. Nothing runs until it lands. THREE rulings
+are requested in §9 and must be answered before the primary, because each is a
+mid-run VOID — or, in ruling 3's case, a silent confound in E1 — if it is discovered
+rather than decided.**
 
 ---
 
@@ -24,10 +25,38 @@ mid-run VOID if it is discovered rather than decided.**
 
 `selector4.py` is **imported, never reimplemented**. Its `build_world`,
 `knobs_partial_sections`, `separates`, `closed_at`, `cycles_of`, `inv_perm`,
-`acts_are_bijections` and `knobs_view_aligned` are used verbatim. SELECTOR-6 adds a
-census, a family constructor, an aggregation layer and the gates — it changes no
-line of the criterion. Drift between "the frozen criterion" and "what runs" is
-M-STALE-INSTRUMENT, and importing at a pinned blob is the only way to foreclose it.
+`acts_are_bijections`, `gauge_invariant_view`, `refines` and `knobs_view_aligned`
+are used verbatim. SELECTOR-6 adds a census, a family constructor, an aggregation
+layer and the gates — it changes no line of the criterion. Drift between "the frozen
+criterion" and "what runs" is M-STALE-INSTRUMENT, and importing at a pinned blob is
+the only way to foreclose it.
+
+### 0.1 Why the import needs a shim, and what the shim is allowed to change
+
+`selector4.py` **cannot be imported as it stands.** Line 113 is
+
+```python
+LOG = open(__file__.replace(".py", ".log"), "w")
+```
+
+at module scope, so `import selector4` truncates `conformance/omega/selector4.log`
+— the committed SELECTOR-4 run record, 117 lines, commit 25eae60. Reaching for the
+predecessor's criterion would have destroyed the predecessor's evidence, silently,
+on the first import.
+
+`make_s4core.py` therefore generates `s4core.py` from the **pinned git blob**
+(never the working tree, which another lane may edit), replacing exactly that one
+line with `LOG = open(os.devnull, "w")`. The generator then proves it did no more:
+it aborts unless the source hashes to the pin, unless exactly one line matches the
+log-open pattern, unless the diff is exactly one line at exactly that index, and
+unless the line count is unchanged. It then imports the result and asserts that
+`selector4.log`'s size is unchanged, and that all eleven criterion entry points are
+present.
+
+Verified: source blob `d33f0469`, sha256 `0c175215…`; derived `s4core.py` sha256
+`1c180b88fab2e7c55a914455c64c4e82fa844a5ee257feb2c87f01549e847339`; single change at
+line 113; `selector4.log` byte-identical before and after (md5 `39c27000…`, 7313
+bytes, 117 lines). `s4core.py` is generated, committed, and never hand-edited.
 
 ---
 
@@ -62,13 +91,13 @@ The freeze says: *"selected = passing a proper nonempty subset test at the fines
 decided rung."* Pinned here, before anything runs:
 
 > **`k*(G)` = the finest rung `k ∈ {0,…,4}` at which the run recorded zero VOIDs.**
-> **`SELECT(G) := 0 < |sel_{k*}| < |F(G)|`.**
->
-> If no rung is decided, `G` VOIDs (B1) and enters every table as VOID.
-> `A₀` is always decided (it is analytic: `sel₀ = ∅`), so `k*` always exists and
-> `SELECT(G) = False` on a group decided only at `A₀` — recorded, with `k* = 0`
-> shown in the per-group record so the reader can see it was the coarse rung
-> talking.
+> **`SELECT(G) := 0 < |sel_{k*}| < |F(G)|`, and only when `k* ∈ {3, 4}`.**
+> **If `k* ≤ 2`, `G` VOIDs.**
+
+The clause `k* ∈ {3,4}` is not a threshold on the criterion; it is the refusal
+that stops a budget from manufacturing a `False`. See ruling 3 in §9 — this is the
+most consequential correction the cost model forced, and I will not code it until
+the lead rules.
 
 `|sel|` and `|F(G)|` are both counted over the **full** family of §2, not over
 orbit representatives. `sel` being empty and `sel` being everything both make
@@ -257,23 +286,90 @@ lookup, and is never available to any scoring function.
 
 ---
 
-## 5. Budgets (B1)
+## 5. The cost model, measured — and the budgets derived from it
 
-Declared in the runner's header, and every exhaustion is a loud VOID that appears in
-every table:
+The lead's requirement: the budget must be *derived* from the aggregation, not
+asserted. `size_cost.py` measures the shape of the work on 23 worst-case-shaped
+groups. It never calls `separates`, so it produces no verdict, no selected set and
+no label — it measures how much work the criterion would do, not what it would say.
 
-| budget | value | scope |
+### 5.1 The two regimes, and which one dominates
+
+At rung `k` the criterion groups candidates by the single-step reading `view ∘ p`;
+only candidates sharing a reading can fail to separate. Within a group, `run_rung`
+takes one of two paths per home candidate:
+
+- **Cheap path** — taken exactly when the view is gauge-invariant *and* the home
+  candidate's act vocabulary is empty. The verdict then depends only on the two
+  step-powers, and reduces to a cached comparison over divisor pairs: at most
+  `(#divisors)²` distinct questions per rung, each `O(ord(step))` integer compares.
+- **Real ρ-BFS** — otherwise. Bounded by `BUDGET` ρ-nodes, each `O(N)`.
+
+The measurement's central finding: **at `A₀`–`A₂` the vocabulary is empty on every
+group measured**, because a near-constant view admits no fiber-injective cycle of
+length > 1. So the enormous coarse-rung pair counts are *all* cheap path, and the
+real cost lives entirely at `A₃`/`A₄`:
+
+| G | \|G\| | N | ord(step) | \|F\| | orbits | real ρ-BFS calls | cheap-path calls |
+|---|---|---|---|---|---|---|---|
+| Z₆₃ | 63 | 3969 | 48 | 10 | 10 | **0** | 0 |
+| Z₆₀, Z₄₈, Z₃₂, (Z₂)⁵ | ≤60 | ≤3600 | ≤120 | ≤16 | ≤16 | **0** | 0 |
+| M₃₂ | 32 | 1024 | 24 | 28 | 28 | 144 | 1,524 |
+| S₃×Z₁₀ | 60 | 3600 | 120 | 96 | 48 | 420 | 9,252 |
+| Z₂×2T | 48 | 2304 | 48 | 120 | 40 | 704 | 9,888 |
+| D₃₂ = Dic₈ = SD₃₂ | 32 | 1024 | 24 | 128 | 56 | 1,470 | 14,434 |
+| Z₅×A₄ | 60 | 3600 | 240 | 240 | 80 | 1,584 | 38,608 |
+| GL(2,3) | 48 | 2304 | 144 | 360 | 75 | 2,446 | 56,774 |
+| D₄₈, Dic₁₂ | 48 | 2304 | 24 | 192 | 72 | 2,898 | 27,918 |
+| D₆₀, Dic₁₅ | 60 | 3600 | 120 | 480 | 144 | 7,772 | 138,532 |
+| Δ(48) | 48 | 2304 | 96 | 576 | 96 | 8,304 | 101,904 |
+| F₃₉ | 39 | 1521 | 728 | 624 | 112 | 8,408 | 116,724 |
+| F₅₅ | 55 | 3025 | 220 | 660 | 84 | 11,636 | 89,668 |
+| D₆₂ | 62 | 3844 | 30 | 496 | 136 | 14,396 | 136,836 |
+| **A₅** | 60 | 3600 | 8400 | **3600** | **300** | 22,010 | **2,192,590** |
+| **F₅₇** | 57 | 3249 | 1368 | 1368 | 216 | **30,408** | 482,784 |
+
+Three things this settles:
+
+1. **The worst case is not the biggest group.** `F₅₇` costs more real BFS than `A₅`,
+   because `|F|` is driven by `|G| × #divisors(ord(step))` and `F₅₇`'s step has
+   order 1368. A budget derived from `|G|` alone would have been wrong.
+2. **Abelian groups cost nothing** — `|F| = #divisors` because `GAUGE` is trivial,
+   and at `A₃`/`A₄` every view-group has size 1. This also settles ruling 1
+   empirically (§9).
+3. **The full family is affordable at these orders.** `A₅` is the largest world in
+   the census (`N = 3600`) and SELECTOR-4 already ran this criterion at `N = 14400`.
+
+### 5.2 What SELECTOR-4's own run log says about time and refusals
+
+From `conformance/omega/selector4.log`, the same criterion, same `BUDGET = 2000`:
+
+| world | \|G\| | N | family | A₃ | A₄ | VOIDs |
+|---|---|---|---|---|---|---|
+| D₄ | 8 | 64 | 16 | 0.0 s | 0.0 s | 0 |
+| 2T | 24 | 576 | 60 | 0.9 s | 1.2 s | 0 |
+| 2O | 48 | 2304 | 105 | 8.1 s | 10.9 s | 0 |
+| 2I | 120 | 14400 | 480 | 565.7 s | 529.5 s | **351 / 367** |
+
+2O is the right calibration point: `N = 2304`, ~2,100 BFS calls, 8.1 s → **≈ 4 ms
+per call**. Scaling to the census's worst case (`F₅₇`, 30,408 calls at `N = 3249`)
+gives ~3 minutes; `A₅` (22,010 calls at `N = 3600`) ~2 minutes. The whole primary is
+comfortably inside a single detached run.
+
+### 5.3 The budgets
+
+| budget | value | derivation |
 |---|---|---|
-| `BUDGET` | 2000 ρ-nodes | per separation pair — **inherited unchanged** from `selector4.py` |
-| `GROUP_PAIR_BUDGET` | 4,000,000 | separation pairs per group summed over all rungs |
-| `GROUP_WALL` | 1800 s | per group, checked between rungs and between orbit reps |
-| `ORBIT_CHECK_S` | 3 | orbit representatives re-checked per group for §2.1 |
+| `BUDGET` | 2000 ρ-nodes | **inherited unchanged** from `selector4.py`; part of the frozen criterion |
+| `GROUP_BFS_BUDGET` | 300,000 real ρ-BFS calls | 10× the measured worst case (`F₅₇`, 30,408) |
+| `GROUP_WALL` | 3600 s | 20× the scaled worst case, at 2O's measured 4 ms/call |
+| `CENSUS_WALL` | 24 h | the primary, detached, with `RESUME.md` |
+| `ORBIT_CHECK_S` | 3 | orbit representatives re-checked per group (§2.1) |
 
-Exhausting `BUDGET` VOIDs the cell, hence the rung, hence removes that rung from
-`k*`. Exhausting `GROUP_PAIR_BUDGET` or `GROUP_WALL` VOIDs the group. A group that
-VOIDs is never silently absent: it appears as VOID in the census table, the E1 table
-and the per-group record, and it is excluded from both the numerator and the
-denominator of E1 with its count stated.
+Exhausting `BUDGET` VOIDs the cell, hence the rung. Exhausting `GROUP_BFS_BUDGET` or
+`GROUP_WALL` VOIDs the group. A VOID group is never silently absent: it appears as
+VOID in the census table, the E1 table and the per-group record, and is excluded
+from E1's numerator and denominator with its count stated.
 
 ---
 
@@ -341,7 +437,7 @@ There is no gate sequence in this campaign to be monotone about.
 
 ---
 
-## 9. Two rulings requested before the primary
+## 9. Three rulings requested before the primary
 
 **Ruling 1 — what "every abelian group selects nothing" means.** The freeze states
 the stasis prediction as *selects nothing*. Traced through the inherited criterion,
@@ -358,6 +454,50 @@ with the per-group record printing `(k*, |sel|, |F|)` so the mechanism is visibl
 and the "selects everything at the discrete view" behaviour is on the page rather
 than hidden inside a boolean. I will not code either reading until the lead rules.
 
+**Ruling 1 is now settled empirically, not just by argument.** `size_cost.py`
+measures that for every abelian group in the sample (`Z₃₂`, `Z₄₈`, `Z₆₀`, `Z₆₃`,
+`(Z₂)⁵`) the `A₃` and `A₄` view-grouping puts **every candidate in a group of size
+1** — 10 groups of 1 for `Z₆₃`, 16 of 1 for `Z₆₀`. `run_rung`'s own single-member
+branch then assigns `Ident(i) = {i}` without calling `separates` at all, so
+`|Ident| = 1` for every candidate and `sel = F(G)`. The abelian half of the census
+selects **everything** at its finest rung, and a literal `assert sel == []` would
+VOID all of it. The proposal stands: read the stasis half as `SELECT(G) = False`.
+
+**Ruling 3 — a refusal must not become a `False`. (NEW, forced by the cost model.)**
+
+This is the one that would have quietly wrecked E1, and I found it only after
+reading SELECTOR-4's run log next to the cost measurement.
+
+SELECTOR-4 measured `selected = 0` at `A₀`, `A₁` and `A₂` on **all four** of its
+worlds. Those rungs are too coarse to select anything — `sel = ∅` there is a fact
+about the view, not about the group. Meanwhile 2I, its largest world, **VOIDed at
+both fine rungs** (351 and 367 budget exhaustions) — the fine rungs are exactly
+where the criterion is expensive, and expense grows with `|F| = |G| × #divisors(ord
+step)`.
+
+Put those together with my §1.1 as originally written — `k*` = the finest rung with
+zero VOIDs, `A₀` always decided — and the consequence is: **every group whose fine
+rungs exhaust falls back to a coarse rung, where `sel = ∅`, and is recorded as
+`SELECT = False`.** Budget exhaustion would be silently converted into a negative
+verdict. Worse, it would not be random: it would hit the groups with the largest
+families hardest, and family size is a structural property that correlates with the
+group's structure — hence, potentially, with SM-embeddability. E1 would then be
+measuring the budget.
+
+That is M-BASE-RATE-OMITTED's cousin wearing a new coat, and it is precisely the
+failure I was commissioned for. The freeze already implies the fix in B1
+("exhaustion → that group VOIDs loudly"); it is only §1.1's "finest decided rung"
+that opens the door. I propose closing it explicitly:
+
+> A VOID at rung `k` removes rung `k` **and every finer rung**. If the surviving
+> finest rung is `A₂` or coarser, the group **VOIDs** — it is not recorded as
+> `SELECT = False`. Equivalently: `k*` must be `A₃` or `A₄`.
+
+VOID counts by order and by `|F|` are then reported in the primary record, so a
+reader can see whether the refusals are structured — and if the VOID rate is high,
+that is a stated limitation of the campaign's reach, not a hidden negative in E1's
+numerator. This costs statistical power and buys the only thing worth having.
+
 **Ruling 2 — the provenance of the A000001 pin.** The freeze requires the sequence
 "pinned as a data file with its own provenance line". I can supply it from the
 published classification, but a sequence I type from memory is exactly the kind of
@@ -372,7 +512,7 @@ the accepted provenance, or whether the pin must come from a fetched primary sou
 ## 10. Build order
 
 1. This document, committed, re-audited. **Nothing below starts before that.**
-2. `census.py`: cyclic-extension constructor, `A₅`, fingerprint + isomorphism dedup,
+2. `make_s4core.py` -> `s4core.py` (done, verified). Then `census.py`: cyclic-extension constructor, `A₅`, fingerprint + isomorphism dedup,
    associativity validator. Run the S1 gate. Commit census + counts + VOID list.
 3. `plants.py`: (i), (ii) both halves, (iii). Each fires or refuses as staked, is
    shown, and only then is trusted. Commit.

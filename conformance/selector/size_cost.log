@@ -1,0 +1,30 @@
+group         |G|      N ordstep   |F|  orb  realBFS   secs  per rung: groups/maxgroup/bfs/cheap
+Z_32           32   1024        48     10      10          0     0.1   A0:g1/m10/bfs0/cheap0 A1:g1/m10/bfs0/cheap0 A2:g1/m10/bfs0/cheap0 A3:g10/m1/bfs0/cheap0 A4:g10/m1/bfs0/cheap0
+Z_48           48   2304        24      8       8          0     0.2   A0:g1/m8/bfs0/cheap0 A1:g1/m8/bfs0/cheap0 A2:g1/m8/bfs0/cheap0 A3:g8/m1/bfs0/cheap0 A4:g8/m1/bfs0/cheap0
+Z_60           60   3600       120     16      16          0     0.3   A0:g1/m16/bfs0/cheap0 A1:g1/m16/bfs0/cheap0 A2:g1/m16/bfs0/cheap0 A3:g16/m1/bfs0/cheap0 A4:g16/m1/bfs0/cheap0
+Z_63           63   3969        48     10      10          0     0.4   A0:g1/m10/bfs0/cheap0 A1:g1/m10/bfs0/cheap0 A2:g1/m10/bfs0/cheap0 A3:g10/m1/bfs0/cheap0 A4:g10/m1/bfs0/cheap0
+Z_2^5          32   1024         3      2       2          0     0.0   A0:g1/m2/bfs0/cheap0 A1:g1/m2/bfs0/cheap0 A2:g1/m2/bfs0/cheap0 A3:g2/m1/bfs0/cheap0 A4:g2/m1/bfs0/cheap0
+D_32           32   1024        24    128      56       1470     0.2   A0:g1/m128/bfs0/cheap0 A1:g1/m128/bfs0/cheap7112 A2:g1/m128/bfs0/cheap7112 A3:g8/m16/bfs735/cheap105 A4:g8/m16/bfs735/cheap105
+D_48           48   2304        24    192      72       2898     0.6   A0:g1/m192/bfs0/cheap0 A1:g1/m192/bfs0/cheap13752 A2:g1/m192/bfs0/cheap13752 A3:g8/m24/bfs1449/cheap207 A4:g8/m24/bfs1449/cheap207
+D_60           60   3600       120    480     144       7772     1.8   A0:g1/m480/bfs0/cheap0 A1:g1/m480/bfs0/cheap68976 A2:g1/m480/bfs0/cheap68976 A3:g16/m30/bfs3886/cheap290 A4:g16/m30/bfs3886/cheap290
+D_62           62   3844        30    496     136      14396     1.2   A0:g1/m496/bfs0/cheap0 A1:g1/m496/bfs0/cheap67320 A2:g1/m496/bfs0/cheap67320 A3:g8/m62/bfs7198/cheap1098 A4:g8/m62/bfs7198/cheap1098
+Dic_8(Q32)     32   1024        24    128      56       1470     0.2   A0:g1/m128/bfs0/cheap0 A1:g1/m128/bfs0/cheap7112 A2:g1/m128/bfs0/cheap7112 A3:g8/m16/bfs735/cheap105 A4:g8/m16/bfs735/cheap105
+Dic_12         48   2304        24    192      72       2898     0.6   A0:g1/m192/bfs0/cheap0 A1:g1/m192/bfs0/cheap13752 A2:g1/m192/bfs0/cheap13752 A3:g8/m24/bfs1449/cheap207 A4:g8/m24/bfs1449/cheap207
+Dic_15         60   3600       120    480     144       7772     1.4   A0:g1/m480/bfs0/cheap0 A1:g1/m480/bfs0/cheap68976 A2:g1/m480/bfs0/cheap68976 A3:g16/m30/bfs3886/cheap290 A4:g16/m30/bfs3886/cheap290
+SD_32          32   1024        24    128      56       1470     0.2   A0:g1/m128/bfs0/cheap0 A1:g1/m128/bfs0/cheap7112 A2:g1/m128/bfs0/cheap7112 A3:g8/m16/bfs735/cheap105 A4:g8/m16/bfs735/cheap105
+M_32           32   1024        24     28      28        144     0.1   A0:g1/m28/bfs0/cheap0 A1:g1/m28/bfs0/cheap756 A2:g1/m28/bfs0/cheap756 A3:g7/m4/bfs72/cheap12 A4:g7/m4/bfs72/cheap12
+Delta(48)      48   2304        96    576      96       8304     0.4   A0:g1/m576/bfs0/cheap0 A1:g1/m576/bfs0/cheap55200 A2:g2/m480/bfs0/cheap39840 A3:g9/m144/bfs4152/cheap3432 A4:g9/m144/bfs4152/cheap3432
+GL(2,3)        48   2304       144    360      75       2446     0.4   A0:g1/m360/bfs0/cheap0 A1:g1/m360/bfs0/cheap26925 A2:g1/m360/bfs0/cheap26925 A3:g12/m72/bfs1223/cheap1462 A4:g12/m72/bfs1223/cheap1462
+F_39           39   1521       728    624     112       8408     0.3   A0:g1/m624/bfs0/cheap0 A1:g1/m624/bfs0/cheap69776 A2:g2/m468/bfs0/cheap43568 A3:g13/m78/bfs4052/cheap1842 A4:g13/m78/bfs4356/cheap1538
+F_55           55   3025       220    660      84      11636     0.8   A0:g1/m660/bfs0/cheap0 A1:g1/m660/bfs0/cheap55356 A2:g2/m440/bfs0/cheap30716 A3:g8/m110/bfs5764/cheap1852 A4:g8/m110/bfs5872/cheap1744
+F_57           57   3249      1368   1368     216      30408     1.3   A0:g1/m1368/bfs0/cheap0 A1:g1/m1368/bfs0/cheap295272 A2:g2/m1026/bfs0/cheap184464 A3:g18/m114/bfs15204/cheap3048 A4:g18/m114/bfs15204/cheap3048
+Z_5xA_4        60   3600       240    240      80       1584     1.0   A0:g1/m240/bfs0/cheap0 A1:g1/m240/bfs0/cheap19120 A2:g1/m240/bfs0/cheap19120 A3:g19/m24/bfs792/cheap184 A4:g19/m24/bfs792/cheap184
+Z_2x2T         48   2304        48    120      40        704     0.4   A0:g1/m120/bfs0/cheap0 A1:g1/m120/bfs0/cheap4760 A2:g1/m120/bfs0/cheap4760 A3:g9/m24/bfs352/cheap184 A4:g9/m24/bfs352/cheap184
+S_3xZ_10       60   3600       120     96      48        420     0.8   A0:g1/m96/bfs0/cheap0 A1:g1/m96/bfs0/cheap4560 A2:g1/m96/bfs0/cheap4560 A3:g15/m12/bfs210/cheap66 A4:g15/m12/bfs210/cheap66
+A_5            60   3600      8400   3600     300      22010     3.8   A0:g1/m3600/bfs0/cheap0 A1:g1/m3600/bfs0/cheap1079700 A2:g1/m3600/bfs0/cheap1079700 A3:g49/m360/bfs11728/cheap19772 A4:g53/m240/bfs10282/cheap13418
+
+worst |F|         : 3600 (A_5)
+worst orbit count : 300 (A_5)
+worst REAL BFS    : 30408 (F_57)
+worst cheap-path  : 2192590
+worst sizing secs : 3.8 (A_5)

@@ -400,7 +400,14 @@ def prim_norm(a, lmn=(0, 0, 0)):
 
 
 CART = {0: ((0, 0, 0),),
-        1: ((1, 0, 0), (0, 1, 0), (0, 0, 1))}
+        1: ((1, 0, 0), (0, 1, 0), (0, 0, 1)),
+        # d, in the SAME component order as the engine's md::cartesian_components(2):
+        # xx, yy, zz, xy, xz, yz. The order is not free — a referee that graded the same
+        # integrals in a different component order would disagree with the engine for a
+        # reason that is not physics, and the disagreement would look like an error in
+        # whichever of the two was checked second.
+        2: ((2, 0, 0), (0, 2, 0), (0, 0, 2),
+            (1, 1, 0), (1, 0, 1), (0, 1, 1))}
 
 
 class Shell:
@@ -440,11 +447,25 @@ def _self_overlap(a, na, b, nb, l):
 
     For l = 0 this is h2_core.prim_overlap(a, x, b, x) expression for
     expression: N_a N_b (pi/p)^{3/2} exp(0), with exp(0) exactly 1.
+
+    General in l: the same-centre integral of x^{2l} exp(-p x^2) carries
+    (2l-1)!! / (2p)^l, so
+
+        l = 0 -> v * 1 / 1        = v          (the expression above, unchanged)
+        l = 1 -> v * 1 / (2p)     = v / (2p)   (the expression above, unchanged)
+        l = 2 -> v * 3 / (4 p^2)
+
+    This was written as `v if l == 0 else v / (2*p)`, which is the l = 1 rule applied to
+    every non-zero l. That is not a missing feature but a silent WRONG ANSWER waiting for
+    a d shell: it would have normalised d by the p rule and returned a plausible number
+    rather than refusing. The general form is inert at l <= 1 by construction — the two
+    reductions above are the previous expressions term for term, and
+    `second_row_baseline.txt` checks that as exact equality rather than as a claim.
     """
     a, b = mpf(a), mpf(b)
     p = a + b
     v = na * nb * (pi / p) ** mpf(1.5)
-    return v if l == 0 else v / (2 * p)
+    return v * _dfact(l) / (2 * p) ** l
 
 
 def build_basis(atoms, table=None):

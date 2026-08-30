@@ -1095,3 +1095,46 @@ and the box offered 3.4–6.4 GB for twenty-five minutes. The detached waiter
 written for a refused attempt — the binary's exit code is the only authority
 there, after a first version of the waiter lost that race in shell.
 
+
+### Twenty-sixth entry, the head-to-head at d = 221: WE LEAD 1.33×, and the ranges do not overlap
+
+Same discipline as the rest: identical circuit (ours, emitted to stim format),
+engine-only timing both sides, full exact adaptive simulation on both, arms
+interleaved, 3 rounds, n = 97,681, 146,520 mid-circuit measurements.
+
+| | run 1 | run 2 | run 3 | min | median |
+|---|---:|---:|---:|---:|---:|
+| **ours** | 59.90 s | 63.23 s | 68.99 s | **59.90** | 63.23 |
+| **stim** | 79.42 s | 83.72 s | 102.11 s | 79.42 | 83.72 |
+
+**ours/stim = 0.754 on minima, 0.755 on medians — the two estimators agree to
+one part in a thousand, and OUR SLOWEST RUN (68.99 s) BEAT STIM'S FASTEST
+(79.42 s).** The distributions are disjoint, so no choice of estimator can
+flip this one, which is exactly what could not be said of the smaller sizes.
+Taken on the same contended box as everything else (load 44–46); the runs are
+long enough here that contention averages out instead of dominating, and the
+spreads show it — 1.15× ours, 1.29× stim, against 2–6× at d ≤ 141.
+
+The full picture across distance, minima, current engine:
+
+| d | n | ours/stim | |
+|---:|---:|---:|---|
+| 21 | 881 | 1.130 | stim leads |
+| 45 | 4049 | 1.264 | stim leads |
+| 101 | 20401 | 0.822 | we lead |
+| 141 | 39761 | 1.152 | stim leads |
+| **221** | **97681** | **0.754** | **we lead, and it is the reliable one** |
+
+**The honest reading: stim is ahead at the small sizes, we are ahead at the
+flagship size, and the middle is inside the noise of this box.** The d=221 row
+is the only one whose two estimators agree and whose distributions separate,
+so it is the one to quote; the small-d rows are stable but tiny (milliseconds,
+where our per-gate constant shows); d=101 and d=141 disagree in direction and
+neither should be cited alone. No smooth trend is claimed from five points.
+
+**And the memory diagnosis is confirmed by this run rather than argued:** peak
+RSS in `--mode bench` was **9.57 GB against the 9.54 GB model** — the guard is
+accurate when `z_string_value` is not called. The 14.36 GB seen in the QEC
+demo was that function's second tableau, exactly as the twenty-sixth entry
+above says, and the fix targets the right thing.
+

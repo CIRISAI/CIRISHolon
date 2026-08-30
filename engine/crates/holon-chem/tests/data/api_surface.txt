@@ -79,3 +79,13 @@ route_name              renders a Feasibility for a REPORT; the gate that reads 
 
 # --- SATURATION-2, the (O,H,H) lane ---
 CONVERGED_RESIDUAL      the convergence bar a generated curve is judged against; waterquench.rs names a curve that exceeds it
+
+# --- the solve-exit reason (MIXTURES-1 lane; classified by that lane) ---
+solve_finished          the HONEST convergence verdict, reported and deliberately not
+#                       enforced: it consults SolveExit as well as the residual, and every
+#                       multi-determinant curve this crate ships currently fails it because
+#                       davidson's subspace-expansion floor (1e-10) sits an order of
+#                       magnitude above the tolerance solve_determinant asks for (1e-11).
+#                       Enforcing it is a decision about the SOLVER, so the fact is exposed
+#                       here for a consumer that wants it while `converged` stays as it was.
+#                       Nothing in the library reads it BECAUSE that is the point.

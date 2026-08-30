@@ -19,14 +19,33 @@
 // It is a script rather than a `#[test]` because the thing under test IS the wasm, and a
 // Rust test would link the native rlib and prove nothing about it.
 //
-// Nothing here asserts: every line prints what it got and what it expected, because the
-// point is to be read after a change to the ABI or to the shipped tables.
+// # It is BOTH a report and a gate
+//
+// Every line still prints what it got and what it expected, because the point is to be
+// read after a change to the ABI or to the shipped tables. On top of that it now FAILS:
+// it exits non-zero on a trap, on a missing export, or on a check that came back wrong, so
+// ci-gates.sh can run it (gate 17).
+//
+// Its demonstrated failing case is not hypothetical and is pinned here: the build from the
+// source that landed W1 (`MAX_ORB` 32 -> 64, `Mask` -> u64, `Det` -> u128) TRAPS with
+// `RuntimeError: memory access out of bounds` on `holon_bank_generate_pair(1, 2, 96)` --
+// helium, two orbitals, the cheapest solve the sandbox does. Measured: default 1 MiB wasm
+// stack traps, `-C link-arg=-zstack-size=8388608` does not, and the pre-W1 source does not.
+// Every native gate was green against that same source. This file is the only thing that
+// caught it, and the earlier `holon_atom_z`-read-as-species defect lived in the same gap.
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
+
+/// Failures, collected rather than thrown, so one run reports everything wrong at once.
+const failures = [];
+function check(condition, what) {
+  if (!condition) failures.push(what);
+  return condition;
+}
 const tables = join(here, "../../../../docs/atoms/tables");
 const { instance } = await WebAssembly.instantiate(
   readFileSync(join(here, "holon_render.wasm")), {});
@@ -43,8 +62,11 @@ const need = ["holon_bank_generate_pair","holon_bank_slot","holon_bank_filled","
   "holon_bank_table_begin","holon_bank_table_knot","holon_bank_table_finish","holon_bank_clear"];
 const missing = need.filter((n) => typeof w[n] !== "function");
 console.log("missing exports:", missing.length ? missing : "none");
+check(missing.length === 0, `missing exports: ${missing.join(" ")}`);
 
-console.log("H2 generate:", w.holon_table_generate(0.3, 10.0, 96), "(1 = Ok)");
+const h2 = w.holon_table_generate(0.3, 10.0, 96);
+console.log("H2 generate:", h2, "(1 = Ok)");
+check(h2 === 1, `H2 did not generate in the browser artifact (status ${h2})`);
 w.holon_reset(4);
 console.log("pairs_ready:", w.holon_pairs_ready(), " provenance_ok:", w.holon_bank_provenance_ok());
 console.log("fence h3-only:", w.holon_trimer_h_only(), " D1 validated:", w.holon_d1_validated());
@@ -72,8 +94,10 @@ w.holon_bank_clear();
 w.holon_reset(2);
 w.holon_set_atom_species(0, 17); w.holon_set_atom_species(1, 17);
 t = Date.now();
-console.log("generate Cl2 in browser:", w.holon_bank_generate_pair(17,17,96),
+const cl2 = w.holon_bank_generate_pair(17,17,96);
+console.log("generate Cl2 in browser:", cl2,
             `(${Date.now()-t} ms; 21 = SplitViolated expected, NOT a 100-second solve)`);
+check(cl2 === 21, `Cl2 was not refused for in-browser solving (status ${cl2}); the split is open`);
 
 // Step the H2 scene and check the ledger.
 w.holon_bank_clear();
@@ -82,6 +106,9 @@ w.holon_reset(2);
 for (let i = 0; i < 200; i += 1) w.holon_step_frame(64);
 console.log(`after 200x64: drift=${w.holon_drift_peak().toExponential(3)} bound=${w.holon_drift_bound().toExponential(3)} `
   + `energy_gate=${w.holon_energy_gate()} momentum_gate=${w.holon_momentum_gate()}`);
+check(w.holon_energy_gate() === 1 && w.holon_momentum_gate() === 1,
+      "the conservation gates do not hold in the browser artifact");
+check(w.holon_drift_peak() > 0, "drift is exactly zero, so the scene never stepped");
 
 console.log("\n=== 2. the shipped-table door, and the provenance gate on it ===");
 
@@ -143,7 +170,10 @@ w.holon_reset(2);
 w.holon_set_atom_species(0, 17); w.holon_set_atom_species(1, 17);
 const code = loadShipped("Cl2.json", 17, 17, (f) => { f.solver_route = "DMRG"; });
 console.log("Cl2 relabelled DMRG-but-still-claiming-exact ->", code, "(17 = DmrgClaimedExact)");
-console.log("  slot filled after refusal:", w.holon_bank_filled(w.holon_bank_slot(17,17)), "(0 = evicted)");
+check(code === 17, `a DMRG table claiming exactness was not refused (status ${code})`);
+const stillThere = w.holon_bank_filled(w.holon_bank_slot(17,17));
+console.log("  slot filled after refusal:", stillThere, "(0 = evicted)");
+check(stillThere === 0, "a refused curve is still in the bank; the force loop would evaluate it");
 const code2 = loadShipped("Cl2.json", 17, 17, (f) => { f.solver_route = "DMRG"; f.exact_in_model = false; });
 console.log("Cl2 relabelled DMRG, honest, D1 not admitted ->", code2, "(18 = DmrgUnvalidated)");
 const code3 = loadShipped("Cl2.json", 17, 17, (f) => { f.uncertainty_hartree = 0; });
@@ -171,5 +201,19 @@ console.log("\n=== 3. every engine call each page makes resolves against this wa
       `  ${page.replace("../../../../", "").padEnd(20)} ${String(used.size).padStart(3)} engine calls, `
       + `missing: ${missing.length ? missing.join(" ") : "none"}`,
     );
+    check(missing.length === 0, `${page} calls exports this wasm does not have: ${missing.join(" ")}`);
   }
 }
+
+// ---------------------------------------------------------------- the verdict
+//
+// Exit code, so ci-gates.sh can run this. A trap anywhere above is an uncaught
+// exception and already exits non-zero; this catches the quieter failures — a page
+// calling an export that is gone, or a behavioural check that came back wrong.
+console.log("");
+if (failures.length > 0) {
+  console.log(`FAIL: ${failures.length} problem(s) with the browser artifact:`);
+  for (const f of failures) console.log(`  - ${f}`);
+  process.exit(1);
+}
+console.log("PASS: the browser artifact loads, solves, refuses, and steps.");

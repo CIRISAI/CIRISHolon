@@ -523,4 +523,46 @@ cargo test -q --release -p holon-chem 2>/dev/null >/dev/null \
 cargo test -q --release -p holon-render 2>/dev/null >/dev/null \
   && ok "holon-render ledger/amendment/cluster gates pass" || no "holon-render ledger/amendment/cluster gates pass"
 
+# 17. THE BROWSER ARTIFACT, RUN RATHER THAN BUILT.
+#
+#     Gate 1 compiles for wasm. Nothing until now RAN a wasm artifact, and that gap has
+#     hidden two defects that every native gate was green through:
+#
+#       * the committed viewer wasm TRAPPED -- `RuntimeError: memory access out of bounds`
+#         on `holon_bank_generate_pair(1, 2, 96)`, which is helium, two orbitals, the
+#         cheapest solve the sandbox does. Cause: a wasm stack overflow, wasm-ld's default
+#         being 1 MiB where a native main thread has 8 MiB. `cargo test` was fully green
+#         for holon-chem and holon-render against the identical source.
+#       * the unified viewer read `holon_atom_z` -- the atom's Z COORDINATE in bohr -- as
+#         its species, for months, guarded by a second export (`holon_set_atom_z`) that has
+#         never existed. The guard was false, so the fallback ran and every atom drew as
+#         hydrogen; the day anything exported that name, atoms would have been coloured by
+#         their height in the box.
+#
+#     So this drives the actual `wasm32-unknown-unknown` artifact through the raw
+#     extern "C" ABI, with the real shipped JSON tables parsed by a host: it solves H2,
+#     changes a species and requires the scene to REFUSE to step until the new pair's curve
+#     is banked, requires Cl2 to be refused for in-browser solving rather than spending
+#     ninety-six seconds of a page's main thread, loads the shipped HCl and Cl2 tables
+#     through the provenance door, fires the three provenance refusals and requires the
+#     refused curve to be EVICTED, steps a mixed scene and requires both conservation gates,
+#     and requires every `holon_*` call each of the four viewer copies makes to resolve.
+#
+#     DEMONSTRATED FAILING CASE (standing question 4): run against the trapping build
+#     described above, this exits 1; against the good build it exits 0. It was not adopted
+#     on the strength of passing.
+#
+#     The `command -v node` check FAILS rather than skips. A wasm gate that quietly skips
+#     itself when the runner lacks node is the vacuous-success shape -- green because it
+#     checked nothing -- which is the exact family this repository keeps catching. Node is
+#     preinstalled on ubuntu-latest, so a missing one means the environment changed and
+#     somebody should look.
+if command -v node >/dev/null 2>&1; then
+  node crates/holon-render/viewer/smoke.mjs >/dev/null 2>&1 \
+    && ok "browser artifact runs (wasm ABI, shipped tables, provenance refusals)" \
+    || no "browser artifact runs (wasm ABI, shipped tables, provenance refusals)"
+else
+  no "browser artifact gate needs node, which is not on PATH (NOT skipped: a wasm gate that skips itself is green for having checked nothing)"
+fi
+
 exit $fail

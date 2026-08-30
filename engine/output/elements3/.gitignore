@@ -1,0 +1,6 @@
+# Done-markers are run state, not record: they tell a detached run's dead shell that it
+# finished. Tracking them means a rerun shows a phantom deletion in the shared tree's
+# porcelain, and a committed marker asserts "this finished" about a run that may be
+# mid-flight. The logs beside them are the record. (Swept in by an unrelated lane's bare
+# commit at 5c7ad74; untracked here.)
+*.DONE

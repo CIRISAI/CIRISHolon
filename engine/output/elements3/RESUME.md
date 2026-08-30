@@ -428,3 +428,41 @@ not a clean function of partner size either.
 measured numbers, the two findings-not-passes sections, the defect ledger (four defects,
 all the same shape), the route-scope table with its three separated criteria, and the
 cross-lane items. The lead verifies it against the prereg and amendments.
+
+
+## R1's record: indium did NOT converge, and the instrument did not say so
+
+The detached run completed (`EXIT=0`), and one row was wrong in a way the record could not
+have told you:
+
+    49  In  27  1026675  -5677.203746332331   3.98e-1  4.216  ...  det (forced)
+
+Residual **3.98e-1** against ~1e-10 everywhere else — nine orders above the crate's declared
+`pair::CONVERGED_RESIDUAL` — so Davidson hit its 1200-iteration cap. Both the energy and the
+multiplicity are meaningless. **2S+1 = 4.216 is the independent tell**: the Hamiltonian is
+spin-free, so a converged eigenvector is a spin eigenstate and 2S+1 must be an INTEGER.
+4.216 is not a multiplicity at all.
+
+`elements3_atoms.rs` printed the residual and **checked nothing**, so the row appeared in a
+column of measurements looking like one. That is precisely the failure
+`CONVERGED_RESIDUAL`'s own doc comment describes — *"emitted looking perfectly healthy,
+carrying a wrong energy, with the evidence sitting in a field no consumer is required to
+read"* — and the crate had already written the constant for it. I did not use it. **Fifth
+instance of the family, and the first where the fix already existed and was not reached
+for.**
+
+The instrument now applies both checks and REFUSES the row rather than printing it:
+
+* `sol.residual <= CONVERGED_RESIDUAL`;
+* 2S+1 integral to 1e-6 — free, and it catches the same failure for a reader who never
+  looks at the residual column.
+
+`atoms_unverdicted.log` preserves the original run. It is kept rather than deleted for the
+same reason the counterfactual log keeps its wrong-label header: a regenerated-clean record
+lies about its own history.
+
+**Indium is therefore NOT a solved row.** The Davidson cap is `#[doc(hidden)]`
+`DAVIDSON_MAX_ITER`, whose doc reserves it for `tests/front_door.rs` and says production
+never touches it — so raising it to force convergence is not available to this record, and
+"did not converge at the production cap" is the honest status rather than a number obtained
+by reaching around the contract.

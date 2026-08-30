@@ -1019,3 +1019,22 @@ No claim of a trend across d is made: four points, three of them with a
 neighbour more than 20% away, on a box at load 42–49. The defensible statement
 is parity at these sizes, the quiet-runner measurement still owed.
 
+
+### Twenty-fifth entry, seed sweep: "every seed" checked rather than assumed
+
+The commission's correctness bar is "the code returns to the codespace, every
+seed", and one seed at scale does not establish that — the random half of the
+outcomes is exactly what a seed changes, so a sign or ordering defect could
+hide in the seeds not run.
+
+| d | seeds | result |
+|---:|---|---|
+| 45 | 1–12 (12 seeds × 7 checks) | **84/84 PASS, 0 FAIL** |
+| 141 | 1, 2, 3, 4 | **28/28 PASS, 0 FAIL** |
+
+Every one of the seven verifications holds on every seed at both distances,
+including the two that depend on the coin outcomes: the noiseless round
+reproducing the previous one exactly (which fixes the round-1 random
+X-syndromes and requires every later round to agree with them), and the
+logical observable staying determined and unchanged.
+

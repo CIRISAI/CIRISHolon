@@ -630,3 +630,24 @@ mixtures-engine rather than taken.
     SiO is the load-bearing comparison -- SAME orbital count, 676x apart in determinants, so
     per-sweep cost is held fixed and only correlation varies. S2 is the weaker leg and I am
     grading it as such in advance.
+
+### Staked leg one CONFIRMED: SiO BUDGET at the same orbital count where ClF reached
+
+The prediction committed at e16acb7, before either row existed, was SiO BUDGET and S2
+REACHED. SiO has printed:
+
+    ClF   14 orb      196 det   chi 32   +5.457e-12   5 sweeps   317.3 s   REACHED
+    SiO   14 orb  132,496 det   chi 32   +1.118e-2    6 sweeps   587.3 s   BUDGET
+
+**Same orbital count. 676x apart in determinants. Opposite verdicts.** SiO stopped six
+orders from the 1e-8 stake. This is the leg I named load-bearing in advance, precisely
+because holding orbital count fixed holds per-sweep cost fixed and leaves correlation as the
+only thing varying. It is now the SECOND same-orbital-count pair to split this way, after
+HCl (100 det, REACHED) against NaH (44,100 det, BUDGET) at 10 orbitals.
+
+Two independent orbital counts, two splits, both in the same direction: the verdict tracks
+how correlated the space is, not how many orbitals it has.
+
+**S2 is still pending and it is the weak leg**, graded weak before the run and still graded
+weak now: at 18 orbitals a BUDGET confounds a harder state with slower sweeps, so only a
+REACHED there is informative for me. Not grading the stake until it prints.

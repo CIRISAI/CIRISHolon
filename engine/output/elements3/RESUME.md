@@ -760,3 +760,56 @@ waiting.
 And the truncation had a cause worth carrying: they had rewritten the launcher **while its shell
 was executing it**, and bash reads scripts incrementally, so it resumed inside the new bytes and
 silently re-ran the ladder. A launcher is immutable while its shell is alive.
+
+### The bar moved under the record, and two indium runs now mean different things
+
+**The bar.** `CONVERGED_RESIDUAL` was re-derived crate-wide after this lane's convergence
+finding: the measurement showed it sat EXACTLY on the solver's expansion floor, so the
+published/refused line at a factor of 1.1 between arsenic and antimony was a coincidence of two
+unrelated 1e-10 literals rather than a fact about either atom. It is now `10.0 *
+DAVIDSON_EXPANSION_FLOOR`, a decade above the named floor.
+
+Under the replacement, **four of this record's five refusals stop being refusals** — Zn, Sn, Sb
+and Te all sit within a factor of three of the old bar. Only indium survives.
+
+**The printed verdicts are NOT rewritten**, and the reason is the load-bearing part: no energy
+moved, only a threshold. A record is what an instrument produced under a declared rule, not a
+current-best-state. Same rule this lane applied to `atoms_unverdicted.log` and to the
+counterfactual log's wrong-label header. The document carries a dated annotation and the
+scorecard now carries both counts, because a scorecard is what a reader reads first and
+"five rows REFUSED" alone would have been an omission-by-summary.
+
+`MISSES_CONVERGENCE_BAR` emptied itself: its two-sided assertion demanded the deletion of the Sb
+and Te exemptions the moment the repair made them stale, which is exactly what a two-sided
+exemption is for.
+
+**The suite verdict I was about to report was stale.** It read 144 passed / 0 failed, EXIT=0 —
+but it launched at 16:20 and six commits landed under it, including the bar change. Its binaries
+came from a tree that no longer exists. Relaunched against `fe18572`. A green suite that
+describes a state nobody is in is worse than no verdict, because it is quotable.
+
+### Two `conv_diagnose` runs, and I nearly killed the one that answers the question
+
+Found a second process and my log seemingly rewritten. First reading was "collision, kill mine."
+Both halves wrong:
+
+* a peer replaced my hardcoded `DAVIDSON_TARGET = 1e-11` with the crate's
+  `DAVIDSON_REQUESTED_TOLERANCE`, fixing **precisely the fragility my own doc comment had
+  named** — "if the call site moves, this diagnostic is reading a stale number and says so
+  wrongly." The call site moved. It would have.
+* they used **`mv`, not truncate**: my run survives as `conv_indium.stale_target.log`, under a
+  name that says why it is superseded. The courtesy I had asked mixtures-engine for, extended
+  unprompted.
+
+And the runs are not redundant — they answer different questions:
+
+    mine    target 1e-11    the tolerance the COMMITTED RECORD was produced under
+    theirs  target 1e-10    the tolerance the engine requests now
+
+My doc's open claim is about the record's indium, so mine settles it; theirs settles the
+current-engine version. Both kept, both to be reported.
+
+**The only thing that made them separable was the echoed header.** Two invocations of one
+command, meaning two different things, distinguishable solely because the diagnostic prints what
+it was asked for. That rule was learned the hard way in this programme and it paid for itself
+inside an hour.

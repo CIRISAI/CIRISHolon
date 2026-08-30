@@ -123,10 +123,14 @@ const KNOWN_DISAGREEMENTS: [u32; 2] = [30, 31];
 /// a solver improvement fixes it, this test fails and says to delete the entry rather than
 /// letting a stale exemption hide a repair. And the residual must not have grown by more
 /// than a decade, so a real regression cannot hide inside an accepted exception.
-const MISSES_CONVERGENCE_BAR: [(u32, f64); 2] = [
-    (51, 1.07e-10), // Sb
-    (52, 1.07e-10), // Te
-];
+/// Emptied 2026-08-30, and the emptiness is load-bearing: Sb and Te lived here while the
+/// publication bar sat exactly on the solver's expansion floor and their stagnated-at-the-
+/// floor residuals (1.07e-10) missed it by 7%. The bar is now DERIVED a decade above the
+/// named floor (see `pair::CONVERGED_RESIDUAL`), their solves meet it, and this test's own
+/// staleness assertion forced the deletion — an exemption must not outlive its defect.
+/// Their exits are still `Stagnated`; what changed is that the bar stopped misreading the
+/// tier edge as a failure. ELEMENTS3_RESULTS.md carries the dated annotation.
+const MISSES_CONVERGENCE_BAR: [(u32, f64); 0] = [];
 
 /// Both rows' p-blocks reproduce Hund's rules, with nothing about spin supplied.
 #[test]

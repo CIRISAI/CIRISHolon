@@ -185,65 +185,8 @@ pub fn cholesky_orthonormaliser(s: &[D2], n: usize) -> Option<Vec<D2>> {
 /// Jacobi rather than anything faster because these matrices are at most 16x16, and this
 /// one has no pivoting, no shifts and no convergence heuristics to get wrong.
 pub fn jacobi_eigh(a_in: &[f64], n: usize) -> (Vec<f64>, Vec<f64>) {
-    let mut a = a_in.to_vec();
-    let mut v = vec![0.0f64; n * n];
-    for i in 0..n {
-        v[i * n + i] = 1.0;
-    }
-    for _ in 0..100 {
-        let mut off = 0.0f64;
-        for i in 0..n {
-            for j in (i + 1)..n {
-                off += a[i * n + j] * a[i * n + j];
-            }
-        }
-        if off <= 1e-30 {
-            break;
-        }
-        for p in 0..n {
-            for q in (p + 1)..n {
-                if a[p * n + q].abs() < 1e-300 {
-                    continue;
-                }
-                let theta = (a[q * n + q] - a[p * n + p]) / (2.0 * a[p * n + q]);
-                let t = if theta >= 0.0 {
-                    1.0 / (theta + (1.0 + theta * theta).sqrt())
-                } else {
-                    -1.0 / (-theta + (1.0 + theta * theta).sqrt())
-                };
-                let c = 1.0 / (1.0 + t * t).sqrt();
-                let s = t * c;
-                for k in 0..n {
-                    let akp = a[k * n + p];
-                    let akq = a[k * n + q];
-                    a[k * n + p] = c * akp - s * akq;
-                    a[k * n + q] = s * akp + c * akq;
-                }
-                for k in 0..n {
-                    let apk = a[p * n + k];
-                    let aqk = a[q * n + k];
-                    a[p * n + k] = c * apk - s * aqk;
-                    a[q * n + k] = s * apk + c * aqk;
-                }
-                for k in 0..n {
-                    let vkp = v[k * n + p];
-                    let vkq = v[k * n + q];
-                    v[k * n + p] = c * vkp - s * vkq;
-                    v[k * n + q] = s * vkp + c * vkq;
-                }
-            }
-        }
-    }
-    let mut idx: Vec<usize> = (0..n).collect();
-    idx.sort_by(|&i, &j| a[i * n + i].partial_cmp(&a[j * n + j]).unwrap());
-    let evals: Vec<f64> = idx.iter().map(|&i| a[i * n + i]).collect();
-    let mut evecs = vec![0.0f64; n * n];
-    for (newc, &oldc) in idx.iter().enumerate() {
-        for r in 0..n {
-            evecs[r * n + newc] = v[r * n + oldc];
-        }
-    }
-    (evals, evecs)
+    // f64 instantiation of the one generic body in `tier`.
+    crate::tier::jacobi_eigh_t::<f64>(a_in, n)
 }
 
 // ------------------------------------------------------------------ MO integrals
@@ -707,108 +650,9 @@ impl FciSpace {
 /// and mixed alpha-beta excitations. Each block is contracted directly using single-excitation
 /// lists over alpha and beta occupation strings.
 pub fn sigma_direct(space: &FciSpace, ci: &CiInts, c: &[f64], sigma: &mut [f64]) {
-    let n = space.n_orb;
-    let n2 = n * n;
-    let na = space.alpha.len();
-    let nb = space.beta.len();
-    assert_eq!(c.len(), space.n_det);
-    assert_eq!(sigma.len(), space.n_det);
-
-    for x in sigma.iter_mut() {
-        *x = 0.0;
-    }
-
-    // --- same-spin blocks. For each source string, walk one single excitation and
-    // then a second from where it landed; the composite sign is the product, and the
-    // resulting vector over destination strings is that source's column.
-    let mut f = vec![0.0f64; na.max(nb)];
-
-    // 1. Beta same-spin block
-    for jb in 0..nb {
-        for x in f[..nb].iter_mut() {
-            *x = 0.0;
-        }
-        for &(kl, s1, kb) in space.beta.singles[jb].iter() {
-            f[kb as usize] += s1 * ci.k[kl as usize];
-            for &(ij, s2, ib) in space.beta.singles[kb as usize].iter() {
-                f[ib as usize] += 0.5 * s1 * s2 * ci.g[ij as usize * n2 + kl as usize];
-            }
-        }
-        for (ib, &fv) in f[..nb].iter().enumerate() {
-            if fv == 0.0 {
-                continue;
-            }
-            for ia in 0..na {
-                sigma[ia * nb + ib] += fv * c[ia * nb + jb];
-            }
-        }
-    }
-
-    // 2. Alpha same-spin block
-    for ja in 0..na {
-        for x in f[..na].iter_mut() {
-            *x = 0.0;
-        }
-        for &(kl, s1, ka) in space.alpha.singles[ja].iter() {
-            f[ka as usize] += s1 * ci.k[kl as usize];
-            for &(ij, s2, ia) in space.alpha.singles[ka as usize].iter() {
-                f[ia as usize] += 0.5 * s1 * s2 * ci.g[ij as usize * n2 + kl as usize];
-            }
-        }
-        for (ia, &fv) in f[..na].iter().enumerate() {
-            if fv == 0.0 {
-                continue;
-            }
-            let (src, dst) = (ja * nb, ia * nb);
-            for ib in 0..nb {
-                sigma[dst + ib] += fv * c[src + ib];
-            }
-        }
-    }
-
-    // 3. Mixed alpha-beta block: one alpha excitation and one beta excitation, coupled
-    // through the two-electron integral. `t` is the beta half, built once per alpha
-    // string and then contracted for each of that string's own excitations.
-    let mut t = vec![0.0f64; n2 * nb];
-    let mut vrow = vec![0.0f64; nb];
-    for ja in 0..na {
-        for x in t.iter_mut() {
-            *x = 0.0;
-        }
-        let crow = &c[ja * nb..(ja + 1) * nb];
-        // Indexed rather than iterated: the body scatters into `t` at indices the
-        // excitation list supplies, so the loop variable is the SOURCE string label
-        // and not merely a cursor into `crow`.
-        #[allow(clippy::needless_range_loop)]
-        for jb in 0..nb {
-            let cv = crow[jb];
-            if cv == 0.0 {
-                continue;
-            }
-            for &(kl, s, ib) in space.beta.singles[jb].iter() {
-                t[kl as usize * nb + ib as usize] += s * cv;
-            }
-        }
-        for &(ij, sa, ia) in space.alpha.singles[ja].iter() {
-            for x in vrow.iter_mut() {
-                *x = 0.0;
-            }
-            let grow = &ci.g[ij as usize * n2..(ij as usize + 1) * n2];
-            for (kl, &gv) in grow.iter().enumerate() {
-                if gv == 0.0 {
-                    continue;
-                }
-                let trow = &t[kl * nb..(kl + 1) * nb];
-                for ib in 0..nb {
-                    vrow[ib] += gv * trow[ib];
-                }
-            }
-            let dst = ia as usize * nb;
-            for ib in 0..nb {
-                sigma[dst + ib] += sa * vrow[ib];
-            }
-        }
-    }
+    // ONE body, in `tier::sigma_direct_t`, generic over the scalar; this is its f64
+    // instantiation and monomorphises to the pre-generic code (same loops, same ops).
+    crate::tier::sigma_direct_t::<f64>(space, &ci.k, &ci.g, c, sigma);
 }
 
 /// `<D_i| H |D_j>` for two determinants given as interleaved spin-orbital masks, by the
@@ -1212,7 +1056,7 @@ impl SolveExit {
 /// (the high-precision referee route, the same boundary ELEMENTS-3 recorded as "route C,
 /// availability owed") through a resource lease, per the holon lifecycle. Editing this
 /// number moves no energy and every verdict; it is load-bearing for every lane's gates.
-pub const DAVIDSON_EXPANSION_FLOOR: f64 = 1e-10;
+pub const DAVIDSON_EXPANSION_FLOOR: f64 = crate::scalar::F64_EXPANSION_FLOOR;
 
 pub const DAVIDSON_REQUESTED_TOLERANCE: f64 = DAVIDSON_EXPANSION_FLOOR;
 
@@ -1329,184 +1173,12 @@ pub fn davidson_eigh_from(
     max_iter: usize,
     start_vector: Option<&[f64]>,
 ) -> (f64, Vec<f64>, usize, f64, SolveExit) {
-    let nd = space.n_det;
-    if let Some(v) = start_vector {
-        assert_eq!(
-            v.len(),
-            nd,
-            "davidson warm start carries {} entries for a space of {} determinants; that \
-             is a start vector from a different geometry's space, not a guess at this one",
-            v.len(),
-            nd
-        );
-    }
-    if nd == 1 {
-        let mut s = vec![0.0f64; 1];
-        sigma_direct(space, ci, &[1.0], &mut s);
-        return (s[0], vec![1.0], 0, 0.0, SolveExit::Trivial);
-    }
-    let max_sub = 48.min(nd);
-    let mut basis: Vec<Vec<f64>> = Vec::new();
-    let mut hbasis: Vec<Vec<f64>> = Vec::new();
-
-    let start = diag
-        .iter()
-        .enumerate()
-        .min_by(|a, b| a.1.partial_cmp(b.1).unwrap())
-        .map(|(i, _)| i)
-        .unwrap();
-
-    // The start vector is the lowest-diagonal determinant PLUS a small generic
-    // perturbation, and the perturbation is not a hedge.
-    //
-    // `H` commutes with `S^2`, so a Krylov space built from a vector lying in one spin
-    // sector never leaves it. A single determinant can be exactly such a vector, and when
-    // it is, Davidson converges cleanly — to the lowest state of the WRONG multiplet,
-    // reporting a small residual the whole way. That is what carbon did here under a
-    // rotated orbital basis: a converged eigenvector 0.07 hartree above the true ground
-    // state, with nothing in the solve to say so. Breaking the symmetry of the start
-    // guarantees a nonzero overlap with every eigenvector, which is what makes "lowest
-    // eigenvalue found" mean the lowest one. Deterministic, so a run is reproducible.
-    //
-    // With a warm start the perturbation is added to the SUPPLIED vector instead of to
-    // zero, and the `+= 1.0` on the lowest-diagonal determinant is dropped: the guess
-    // already carries its own weight there, and forcing an extra unit onto one component
-    // would corrupt a good guess rather than seed an absent one.
-    let mut v0 = match start_vector {
-        Some(w) => w.to_vec(),
-        None => vec![0.0f64; nd],
-    };
-    let mut seed = 0x9e37_79b9_7f4a_7c15u64;
-    for x in v0.iter_mut() {
-        seed = seed.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
-        *x += 1e-3 * (((seed >> 33) as f64 / (1u64 << 30) as f64) - 1.0);
-    }
-    if start_vector.is_none() {
-        v0[start] += 1.0;
-    }
-    basis.push(normalised(&v0));
-
-    let mut theta = diag[start];
-    let mut x = basis[0].clone();
-    let mut resid = f64::INFINITY;
-
-    for iter in 0..max_iter {
-        while hbasis.len() < basis.len() {
-            let mut w = vec![0.0f64; nd];
-            if space.n_det > 1000 {
-                sigma_direct(space, ci, &basis[hbasis.len()], &mut w);
-            } else {
-                space.sigma(ci, &basis[hbasis.len()], &mut w);
-            }
-            hbasis.push(w);
-        }
-        let m = basis.len();
-        let mut sub = vec![0.0f64; m * m];
-        for i in 0..m {
-            for j in 0..m {
-                sub[i * m + j] = dot(&basis[i], &hbasis[j]);
-            }
-        }
-        // Symmetrise: exact in a correct build, and it keeps the Jacobi sweep well posed.
-        for i in 0..m {
-            for j in 0..i {
-                let a = 0.5 * (sub[i * m + j] + sub[j * m + i]);
-                sub[i * m + j] = a;
-                sub[j * m + i] = a;
-            }
-        }
-        let (evals, evecs) = jacobi_eigh(&sub, m);
-        theta = evals[0];
-        x = vec![0.0f64; nd];
-        for i in 0..m {
-            let ci_ = evecs[i * m];
-            if ci_ != 0.0 {
-                axpy(ci_, &basis[i], &mut x);
-            }
-        }
-        let mut hx = vec![0.0f64; nd];
-        for i in 0..m {
-            let ci_ = evecs[i * m];
-            if ci_ != 0.0 {
-                axpy(ci_, &hbasis[i], &mut hx);
-            }
-        }
-        let mut r = hx;
-        axpy(-theta, &x, &mut r);
-        resid = norm(&r);
-        // THE TWO EXITS THAT WERE ONE. Converged and out-of-iterations returned through
-        // the same branch and were indistinguishable afterwards, whatever the residual
-        // happened to be.
-        if resid < tol {
-            return (theta, x, iter + 1, resid, SolveExit::Converged);
-        }
-        if iter + 1 == max_iter {
-            return (theta, x, iter + 1, resid, SolveExit::IterationCap);
-        }
-        if basis.len() >= max_sub {
-            // Thick restart: the Ritz vector AND the direction the solve was moving in.
-            // Restarting on the Ritz vector alone throws away the descent direction and
-            // the next few iterations spend themselves rediscovering it.
-            let mut d = r.clone();
-            let p = dot(&x, &d);
-            axpy(-p, &x, &mut d);
-            let nd_ = norm(&d);
-            basis.clear();
-            hbasis.clear();
-            basis.push(normalised(&x));
-            if nd_ > DAVIDSON_EXPANSION_FLOOR {
-                scale(1.0 / nd_, &mut d);
-                basis.push(d);
-            }
-            continue;
-        }
-
-        // Davidson preconditioner, with the degeneracy case handled rather than
-        // suppressed. A determinant whose diagonal sits ON the Ritz value would be a
-        // division by zero, and this is not a corner: an open-shell first-row ATOM has
-        // exactly degenerate p occupations, so the determinants the reference couples to
-        // are often ALL at the reference's own diagonal. Zeroing them there empties the
-        // correction vector and the solve stops after one iteration reporting a residual
-        // it has not reduced — which is what this code did until nitrogen and oxygen
-        // came back above their own SCF energies. Leaving such a component unscaled
-        // keeps its direction, which is all the preconditioner was ever for.
-        let mut corr = r.clone();
-        for i in 0..nd {
-            let d = theta - diag[i];
-            if d.abs() > 1e-8 {
-                corr[i] = r[i] / d;
-            }
-        }
-        // Two candidate expansion vectors, tried in order: the preconditioned residual,
-        // then the raw one. The raw residual is orthogonal to the current Ritz vector by
-        // construction and cannot be empty unless the solve has actually converged, so
-        // the fallback is what makes "no new direction" mean convergence.
-        let mut added = false;
-        for cand in [corr, r.clone()] {
-            let mut w = cand;
-            for b in basis.iter() {
-                let p = dot(b, &w);
-                axpy(-p, b, &mut w);
-            }
-            // A second pass: one Gram-Schmidt sweep loses orthogonality when the
-            // candidate is nearly in the span already, which is exactly the case here.
-            for b in basis.iter() {
-                let p = dot(b, &w);
-                axpy(-p, b, &mut w);
-            }
-            let nw = norm(&w);
-            if nw > DAVIDSON_EXPANSION_FLOOR {
-                scale(1.0 / nw, &mut w);
-                basis.push(w);
-                added = true;
-                break;
-            }
-        }
-        if !added {
-            return (theta, x, iter + 1, resid, SolveExit::Stagnated);
-        }
-    }
-    (theta, x, max_iter, resid, SolveExit::IterationCap)
+    // ONE driver body, in `tier::davidson_eigh_from_t`, generic over the scalar — the
+    // start-vector policy, thick restart, two-candidate expansion and degeneracy-safe
+    // preconditioner all live there now, once. This is the f64 instantiation. (The old
+    // body's `n_det > 1000` branch chose between `sigma_direct` and `space.sigma`, which
+    // are the same function — the generic driver makes the one call both arms made.)
+    crate::tier::davidson_eigh_from_t::<f64>(space, &ci.k, &ci.g, diag, tol, max_iter, start_vector)
 }
 
 /// Lowest eigenpair by Davidson, matrix-free.
@@ -1820,32 +1492,23 @@ pub fn solve_determinant_from(
 // --- small vector helpers, written here because the crate has no linear algebra dep ---
 
 fn dot(a: &[f64], b: &[f64]) -> f64 {
-    a.iter().zip(b.iter()).map(|(x, y)| x * y).sum()
+    crate::tier::dot_t::<f64>(a, b)
 }
 
 fn axpy(a: f64, x: &[f64], y: &mut [f64]) {
-    for (yi, xi) in y.iter_mut().zip(x.iter()) {
-        *yi += a * xi;
-    }
+    crate::tier::axpy_t::<f64>(a, x, y)
 }
 
 fn scale(a: f64, x: &mut [f64]) {
-    for xi in x.iter_mut() {
-        *xi *= a;
-    }
+    crate::tier::scale_t::<f64>(a, x)
 }
 
 fn norm(a: &[f64]) -> f64 {
-    dot(a, a).sqrt()
+    crate::tier::norm_t::<f64>(a)
 }
 
 fn normalised(a: &[f64]) -> Vec<f64> {
-    let mut v = a.to_vec();
-    let n = norm(&v);
-    if n > 0.0 {
-        scale(1.0 / n, &mut v);
-    }
-    v
+    crate::tier::normalised_t::<f64>(a)
 }
 
 // ------------------------------------------------------------------ the spin sector

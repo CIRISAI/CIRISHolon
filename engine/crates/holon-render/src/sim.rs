@@ -138,9 +138,15 @@ impl Atom {
         }
     }
 
+    /// The drawn radius. `homonuclear_radius` is measured for ten species and `None` for
+    /// the other forty-four in the registry, so this makes the fallback a DECLARED choice
+    /// ([`holon_chem::elements::UNDECLARED_RADIUS`]) instead of the hydrogen value the
+    /// old signature returned silently for every element past neon.
     #[inline]
     pub fn radius(&self) -> f64 {
-        self.species.homonuclear_radius()
+        self.species
+            .homonuclear_radius()
+            .unwrap_or(holon_chem::elements::UNDECLARED_RADIUS)
     }
 }
 

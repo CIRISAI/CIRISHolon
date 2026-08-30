@@ -108,6 +108,17 @@
 
 use crate::sto3g::{H_COEFFS, H_EXPONENTS};
 
+/// The radius a species with no MEASURED one is drawn at, bohr.
+///
+/// NOT a measurement and never to be read as one. [`Species::homonuclear_radius`] is
+/// derived from a located homonuclear equilibrium and exists for ten species; a consumer
+/// that must put SOMETHING on screen for the other forty-four uses this and is thereby
+/// making a declared choice rather than inheriting hydrogen's number by accident.
+///
+/// Deliberately larger than every declared radius except beryllium's, so an undeclared
+/// species is visibly odd rather than plausibly small.
+pub const UNDECLARED_RADIUS: f64 = 2.75;
+
 /// Electron masses per unified atomic mass unit, `m_e/u`.
 ///
 /// A MEASURED input, and the same value `holon-render`'s `sim.rs` uses to build its
@@ -301,19 +312,41 @@ impl Species {
     }
 
     /// The element's derived homonuclear radius in bohr, from `species_palette.json`.
-    pub const fn homonuclear_radius(self) -> f64 {
+    /// The species' radius in bohr — HALF the located `R_e` of its homonuclear pair —
+    /// or `None` for a species this crate has not measured one for.
+    ///
+    /// # Why this returns an Option, and what it used to do
+    ///
+    /// It used to return `f64`, with a `_ => 0.694…` arm falling through to HYDROGEN's
+    /// radius for every species outside the declared ten. The registry now holds
+    /// FIFTY-FOUR, so forty-four of them — everything past neon, including chlorine and
+    /// every element the sandbox can draw — silently received hydrogen's size and no
+    /// caller could tell.
+    ///
+    /// SATURATION-3's G0 nearly staked its three chlorine geometries on it, which would
+    /// have compressed a chlorine trimer to a hydrogen length and reported the resulting
+    /// solve time as a chlorine cost measurement. That is the same defect shape as a
+    /// stagnated solve published as converged: a confident, plausible answer to a question
+    /// outside the function's domain.
+    ///
+    /// The values are DERIVED — half the located `R_e` of the homonuclear pair,
+    /// `docs/atoms/species_palette.json`, which carries ten species — so extending the
+    /// table means MEASURING forty-four more homonuclear equilibria, not writing more
+    /// arms. Until that is done the honest answer outside the ten is that there isn't one,
+    /// and the type says so rather than a comment.
+    pub const fn homonuclear_radius(self) -> Option<f64> {
         match self.z {
-            1 => 0.6943470090088878,
-            2 => 1.9943329366683962,
-            3 => 2.4955224091314747,
-            4 => 3.0220328441262247,
-            5 => 1.411590082275827,
-            6 => 1.1913654992774316,
-            7 => 1.1283647365796021,
-            8 => 1.2210401490051894,
-            9 => 1.3110267541113547,
-            10 => 2.0646444203853607,
-            _ => 0.6943470090088878,
+            1 => Some(0.6943470090088878),
+            2 => Some(1.9943329366683962),
+            3 => Some(2.4955224091314747),
+            4 => Some(3.0220328441262247),
+            5 => Some(1.411590082275827),
+            6 => Some(1.1913654992774316),
+            7 => Some(1.1283647365796021),
+            8 => Some(1.2210401490051894),
+            9 => Some(1.3110267541113547),
+            10 => Some(2.0646444203853607),
+            _ => None,
         }
     }
 

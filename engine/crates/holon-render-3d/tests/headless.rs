@@ -547,7 +547,12 @@ fn the_world_the_app_builds_carries_the_three_body_law() {
 fn species_radii_and_colours_match_palette() {
     use holon_chem::elements::FIRST_ROW;
     for sp in FIRST_ROW.iter() {
-        let r = sp.homonuclear_radius();
+        // `homonuclear_radius` is declared for the first row only and returns None past
+        // it. FIRST_ROW is exactly the declared set, so an unwrap here is a claim this
+        // loop stays inside it — and the message says so rather than panicking blankly.
+        let r = sp
+            .homonuclear_radius()
+            .unwrap_or_else(|| panic!("species {} is in FIRST_ROW but has no declared radius", sp.symbol));
         assert!(
             r > 0.5 && r < 4.0,
             "species {} has unphysical homonuclear radius {:.4}",

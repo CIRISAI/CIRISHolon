@@ -881,3 +881,69 @@ fn oxygens_leading_exponent_is_the_published_one() {
          the oxygen atom by 6.3e-9 hartree — 63x the referee gate's stake"
     );
 }
+
+
+// ============================================================ the declared-domain refusal
+
+#[test]
+fn the_homonuclear_radius_refuses_outside_its_declared_domain() {
+    // It used to return `f64` with a fall-through arm giving HYDROGEN's 0.694 bohr to every
+    // species outside the declared ten. The registry holds fifty-four, so forty-four
+    // received hydrogen's size and no caller could tell — including `Sim::radius`, which
+    // DRAWS them.
+    //
+    // SATURATION-3's G0 nearly staked three chlorine geometries on it, which would have
+    // compressed a chlorine trimer to a hydrogen length and reported the solve time as a
+    // chlorine cost. Same shape as a stagnated solve published as converged: a confident,
+    // plausible answer outside the function's domain.
+    use holon_chem::elements::{ALL_ELEMENTS, by_symbol, FIRST_ROW};
+
+    // The ten that ARE declared: every one answers, and none answers hydrogen's value
+    // except hydrogen.
+    let h = by_symbol("H").unwrap().homonuclear_radius().expect("hydrogen is declared");
+    for sp in FIRST_ROW.iter() {
+        let r = sp
+            .homonuclear_radius()
+            .unwrap_or_else(|| panic!("{}: declared in the palette but returns None", sp.symbol));
+        assert!(r > 0.5 && r < 4.0, "{}: unphysical radius {r:.4}", sp.symbol);
+        if sp.z != 1 {
+            assert_ne!(
+                r.to_bits(),
+                h.to_bits(),
+                "{}: returns HYDROGEN's exact radius, which is the fall-through this test \
+                 exists to forbid",
+                sp.symbol
+            );
+        }
+    }
+
+    // THE NEAR-MISS, named specifically because it is the one that nearly shipped.
+    assert_eq!(
+        by_symbol("Cl").unwrap().homonuclear_radius(),
+        None,
+        "chlorine has no measured homonuclear radius and must say so rather than \
+         returning hydrogen's"
+    );
+
+    // And everything past the declared ten refuses, rather than some of it.
+    let mut refused = 0usize;
+    for sp in ALL_ELEMENTS.iter() {
+        if sp.z > 10 {
+            assert_eq!(
+                sp.homonuclear_radius(),
+                None,
+                "{} (Z = {}) is outside the declared palette and must return None",
+                sp.symbol,
+                sp.z
+            );
+            refused += 1;
+        }
+    }
+    // Both branches non-empty, or the test is decoration: it must actually reach species
+    // that refuse AND species that answer.
+    assert!(
+        refused >= 40 && FIRST_ROW.len() == 10,
+        "the test did not exercise both branches: {refused} refusing, {} answering",
+        FIRST_ROW.len()
+    );
+}

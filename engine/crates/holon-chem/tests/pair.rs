@@ -192,12 +192,22 @@ fn e3_every_pair_emits_the_renderer_contract() {
         let json = t.to_json();
         assert_eq!(t.meta.well.is_some(), expect_bound, "{label}: boundness");
         // A curve must carry a VERDICT on its own solves, not only a number nobody reads.
+        // NAMES THE FAILING CONJUNCT. `converged()` is three conditions and the message
+        // used to blame the residual for all of them, so a curve failing on a non-finite CG
+        // residual reported a Davidson number that was actually inside its bound — a
+        // message misattributing its own cause. That cost a sibling lane an hour.
         assert!(
             t.meta.converged(),
-            "{label}: emitted with worst Davidson residual {:.3e}, past the declared \
-             {:.0e}. A curve whose solve gave up must not ship looking healthy.",
+            "{label}: NOT converged. residual {:.4e} vs bar {:.0e} [{}], residual finite \
+             [{}], cg residual {:.4e} finite [{}], exit {}. A curve whose solve gave up must \
+             not ship looking healthy.",
             t.meta.worst_residual,
-            holon_chem::pair::CONVERGED_RESIDUAL
+            holon_chem::pair::CONVERGED_RESIDUAL,
+            if t.meta.worst_residual <= holon_chem::pair::CONVERGED_RESIDUAL { "ok" } else { "FAILS" },
+            if t.meta.worst_residual.is_finite() { "ok" } else { "FAILS" },
+            t.meta.worst_cg_residual,
+            if t.meta.worst_cg_residual.is_finite() { "ok" } else { "FAILS" },
+            t.meta.exit.label()
         );
         assert!(json.contains("\"converged\": true"), "{label}: the verdict must be emitted");
         // Species metadata, which is the extension the multi-element sandbox needs.

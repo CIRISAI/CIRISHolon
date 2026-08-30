@@ -192,8 +192,14 @@ pub const C_HI: f64 = core::f64::consts::SQRT_2;
 pub const U_FENCE: f64 = 1.0 - C_LO * C_LO;
 
 /// Nodes per side axis, and per `c`.
+///
+/// Both are SUBGRID sizes of the fine node set `examples/s2_build.rs` solves — `NR - 1`
+/// divides 64 and `NU - 1` divides 48 — so the shipped table is a subset of one solved
+/// pass rather than a second pass, and the sizing measurement and the build are one run.
+/// The pair is chosen by a rule stated before the tableau was read: the SMALLEST pair
+/// whose held-out maximum is at most a third of T1's 1e-3 kill.
 pub const NR: usize = 65;
-pub const NU: usize = 33;
+pub const NU: usize = 49;
 
 /// Total node count.
 pub const N_NODES: usize = NR * NR * NU;

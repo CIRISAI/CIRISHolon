@@ -147,8 +147,19 @@ pub const WATER_R1_MEASURED_E: f64 = 1e-12;
 /// carry. Staked in `SATURATION2_PREREG.md`.
 pub const WATER_T1_KILL_E: f64 = 1e-3;
 
-/// The MEASURED worst held-out error over the staked 256-point draw, hartree.
-pub const WATER_T1_MEASURED_E: f64 = 1e-3;
+/// The MEASURED worst held-out error over the staked 256-point draw, hartree: 2.467e-4,
+/// pinned at twice it.
+///
+/// The gate's draw is deterministic — fixed seed, fixed rejection rule, fixed count — so
+/// this number does not drift unless the table or the code does, which is what makes it a
+/// pin rather than a tolerance.
+///
+/// What it is NOT is the surface's worst case. `examples/s2_build.rs` runs an independent
+/// 384-point draw over the same domain and reads 7.68e-4 — three times the gate's — and
+/// the spread between two honest draws IS the evidence that a maximum over a finite draw
+/// understates the supremum it stands for. The same fact cost this campaign its first
+/// truncation radius. Both numbers are inside the 1e-3 kill; neither is the supremum.
+pub const WATER_T1_MEASURED_E: f64 = 5e-4;
 
 /// T2's KILL, hartree: the domain-boundary systematic, i.e. the largest `|dE3|` anywhere
 /// on the shell the surface is truncated at. Staked in `SATURATION2_PREREG.md`.

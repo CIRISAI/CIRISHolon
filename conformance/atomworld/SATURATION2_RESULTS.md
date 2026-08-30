@@ -222,22 +222,205 @@ grid rule that is not this build's.
 
 ---
 
-## R1 — the 50-digit (O, H, H) referee · *pending*
+## The table, as shipped
 
-## T1 — interpolant fidelity, held out · *pending*
+| | |
+|---|---|
+| grid | 65 × 65 × 49 nodes, `x, y ∈ [0.7, 15]` stretched at `a = 3`, `c ∈ [0.05, √2]` |
+| solves | 105,105 electronic-structure points, the sorted half `i ≤ j` |
+| peak `\|dE3\|` on a node | 0.763782 Ha |
+| curvature envelope | 3969.31 Ha/bohr² absolute, 18102.4 /bohr per-gradient |
+| **sort kink** | **0.000e0 Ha/bohr — EXACTLY zero** |
+| artifact | 1,787,303 bytes, IEEE-754 bit patterns |
 
-## T2 — the truncation systematic · *pending*
+The sort kink being an exact zero is the claim from the coordinates section, measured:
+`TrimerTable` has a real force discontinuity where two sorted sides cross and
+reports it; here the H-H side never enters the sort and the table is exactly
+symmetric in the only pair that does, so the composed potential has no kink at
+all.
 
-## G1 — THE EMERGENT GEOMETRY · *pending*
-
-## G2 — VALENCE SATURATION · *pending*
-
-## Plants (i), (ii), (iii) · *pending*
-
-## C1 — conservation with the heteronuclear triple paying · *pending*
+**The size choice.** The rule was stated before the tableau was read: the
+smallest `(NR, NU)` subgrid whose held-out maximum is at most a third of T1's
+1e−3 kill. **No subgrid met it** — the best available, 65 × 49, reads 7.68e−4 on
+the sizing sweep's 384-point draw. So the rule selects the only pair that clears
+the kill at all, and the margin is reported rather than dressed up. The angle
+axis is the binding one and it converges at about 5× per doubling where a C1
+cubic should give 16×, which is a fact about the surface that this campaign has
+NOT explained; `examples/s2_third.rs` measures a third candidate coordinate (the
+bend angle) beating both `u` and `c` on the worst slice by 2.2×, and that is the
+named successor.
 
 ---
 
+## R1 — the 50-digit (O, H, H) referee · *pending the referee run*
+
+## T1 — interpolant fidelity, held out · **HOLDS**
+
+    worst held-out error 2.4670e-4 Ha over 256 points, staked seed, none on nodes
+    at (x, y, c) = (3.3917, 3.5763, 0.6805);  kill 1e-3
+
+Two-sided as the prereg requires: all 256 points return a nonzero error, so the
+draw is not landing on nodes and measuring its own construction.
+
+**Reported, not buried:** the sizing sweep's INDEPENDENT 384-point draw over the
+same domain reads 7.68e−4, three times the gate's. Both are inside the kill;
+neither is the supremum. The spread between two honest draws *is* the evidence
+that a maximum over a finite draw understates the thing it stands for — the same
+fact that cost this campaign its first truncation radius, below.
+
+## T2 — the truncation systematic · **HOLDS**
+
+    truncation systematic 3.5487e-6 Ha on the shell max(O-H) = 15
+    at (x, c) = (12.3606, 0.00200);  kill 1e-5, margin 2.8x
+
+The gate is two-stage — a declared coarse grid, then a refinement around whatever
+that grid's argmax turns out to be at runtime — and reaches past the table's own
+closed-angle fence to `c = 0.002`. Both features are the direct consequence of
+the `b = 14` near-miss recorded above.
+
+## G1 — THE EMERGENT GEOMETRY · **HOLDS**
+
+    MBE3 optimum   r = 1.943467 bohr    theta = 96.7738 deg    E = -75.023293230 Ha
+    model's own FCI r = 1.9435740105     theta = 96.75788837    E = -75.023291531 Ha
+    deviation        +1.07e-4 bohr        +1.59e-2 deg           1.7e-6 Ha
+
+**The bent molecule emerges.** Minimising pairs-plus-`dE3` over the three-parameter
+space lands on the model's own full-CI optimum to 1.1e−4 bohr in the bond length
+and 0.016 degrees in the angle — and the reference was computed, by a different
+route, before a single node of the table existed. The kill (an optimum
+qualitatively wrong, linear where the FCI is bent) did not fire; the symmetric
+point is checked to be a minimum and not a saddle in the antisymmetric direction
+as well.
+
+*[LABELLED CONTEXT, never compared against: nature's 104.5 degrees and 1.8085
+bohr.]*
+
+## G2 — VALENCE SATURATION · **HOLDS on the model, and the route there is the result**
+
+    the CONTROL: water's own second O-H bond          +0.163077 Ha
+    the CLAIM:   deepest third-H binding anywhere
+                 over 40 full-CI four-atom geometries -0.004449 Ha
+
+**The third hydrogen refuses**, and not merely shallowly: over every staked
+direction and radius the best it can do is be REPELLED. There is no well. Along
+the C2 approach the repulsion is monotone — 0.5395 Ha at 1.2 bohr, 0.1552 at 1.8,
+0.0520 at 2.5, 0.0022 at 4.0. Water saturates at two hydrogens in this model.
+
+### How this gate was first written, why it FIRED, and what the investigation found
+
+This is the part worth reading. G2 was first implemented against the MBE3
+ESTIMATE — pairs plus the tabulated three-body term — because the campaign is
+about the table. **It fired**, at 1.76× against the staked 5×: the MBE3 surface
+says a third hydrogen binds to relaxed water by +0.0939 Ha. Branch (b) is
+"investigate, never massage", and `examples/s2_g2_probe.rs` is the investigation.
+
+At the very geometry the MBE3 scan calls deepest, the model's own full CI says
+the third hydrogen is repelled by 0.0890 Ha. **The two disagree in SIGN.** The
+missing four-body term is −0.183 Ha there, comparable to the O-H bond itself.
+
+So the firing is a fact about the EXPANSION, not about the model and not about
+the table. Re-reading the prereg, `E(H3O)` is the model's own four-atom energy —
+so the gate now scores the quantity the freeze names, and the MBE3 reading is
+kept as the scope finding it is, gated separately in
+`the_three_body_expansion_cannot_saturate_oxygen_and_says_so`.
+
+The control that makes the whole thing readable, and that separates "the
+expansion is wrong" from "the table is wrong":
+
+    water's second O-H bond, full CI  +0.163077 Ha
+    water's second O-H bond, MBE3     +0.163078 Ha      (differ by 1.7e-6)
+
+On a THREE-atom system the three-body expansion is EXACT, so the only gap is the
+table's own interpolation — and it is 1.7e−6 Ha, exactly the scale T1 measures.
+The table is fine. The expansion runs out at four atoms.
+
+### THE SCOPE FINDING, and a forward stake for P1
+
+    at O-H3 = 2.250 bohr on the C2 axis:
+      the MBE3 sandbox BINDS a third hydrogen by  +0.051973 Ha
+      the model REPELS it by                       0.079962 Ha
+      the missing four-body term                  -0.131935 Ha  = 81% of the O-H bond
+
+SATURATION-1 found this shape one order down: a pair-only sandbox cannot saturate
+hydrogen's valence, and order three is where the saturation appears. Here an
+order-three sandbox cannot saturate OXYGEN's valence, and order four is where it
+would. Stated as a reading with its own kill rather than as a law: it predicts
+that a valence-three centre would need order five, and a nitrogen trimer table
+that saturated NH3 at order four would falsify it.
+
+**The consequence for P1, staked here BEFORE the mixed arm is run:** an MBE3
+sandbox will over-bind a third hydrogen to water by about 0.05 Ha, so the quench
+is expected to produce H3O and heavier, NOT H2O as the modal O-containing
+molecule. Branch (a) is therefore at risk for a reason that is now measured and
+named. That is a prediction, and P1 is where it gets to be wrong.
+
+## Plant (i) — the sign flip · **CAUGHT**
+
+Negating the table inverts the bent-vs-linear preference. The carrier is asserted
+first: on the true table the bent geometry is more than 1e−2 Ha below the linear
+one, so there is something for a sign flip to invert.
+
+## Plant (ii) — the symmetry plant · **two parts CAUGHT, one VOID (empty sector)**
+
+* **bit-level exchange** — CAUGHT. On a staked asymmetric geometry (O-H sides 1.6
+  and 2.9 bohr) the value and all three gradient components are BIT-IDENTICAL
+  across `H ↔ H`, not merely equal to a tolerance.
+* **the O-distinct axis is not symmetrised** — CAUGHT. Reading the same triangle
+  with all three sides sorted moves the answer by more than 1e−4 Ha, so this is
+  not a relabelled H3 table.
+* **"a desymmetrised table must fire ≥ 1e−6 Ha"** — **VOID, on an empty sector,
+  and the void's cause is itself the finding.** It cannot fire: `eval` sorts the
+  two O-H sides before it reads, so both orders reach the same stored entry and a
+  broken mirror is invisible to the exchange. The symmetry is carried by the
+  SORT, not by the storage. Per M-PLANT-SECTOR a plant on an empty sector voids
+  rather than passes, and the test asserts the emptiness rather than assuming it.
+  What the corruption does break is the VALUE, by ≥ 1e−6 Ha — which is what T1
+  would catch — and that half is asserted live.
+
+## Plant (iii) — the swapped table · **CAUGHT**
+
+Serving the (H, H, H) table to an (O, H, H) triple at water's own optimum moves
+the reading by orders. Carrier asserted: the (O, H, H) table reads more than
+1e−3 Ha there, so there is something for a swap to move.
+
+## C1 — conservation with the heteronuclear triple paying · **HOLDS**
+
+One gate per law, never combined.
+
+| scene | quantity | measured | derived bound | ratio |
+|---|---|---|---|---|
+| NVE, O + 2H | energy drift | 1.134e−6 Ha | 8.248e0 | 1.4e−7 |
+| NVE, O + 2H | momentum residual | 1.179e−13 | 9.292e−10 | 1.2e−4 |
+| thermostat, 1 O + 5H | energy drift | 4.736e−5 Ha | 4.977e−1 | 9.5e−5 |
+| thermostat, 1 O + 5H | momentum residual | 7.312e−13 | 7.763e−10 | 9.4e−4 |
+
+C1 rests entirely on the analytic side-derivatives being the derivatives of the
+value the ledger books, and that is gated directly: central differences against
+the tabulated surface at six geometries spanning the domain — including one
+INSIDE the closed-angle fence, where the linear-in-`u` extension has to be a
+genuine first-order Taylor — agree to **0.000 of their own tolerance**.
+
+### Two things disclosed rather than left to be found
+
+**The scene that did not move.** The mixed scene was first written with two
+oxygens. It reported a drift of EXACTLY ZERO and passed — because `Sim::step`
+guards on `pairs_ready()`, the bank held no O-O curve, and the scene never
+integrated a single substep. A conservation gate on a frozen box passes for the
+wrong reason. `run` now refuses any scene whose atoms did not move, and the mixed
+scene is one oxygen and five hydrogens; the (O, O, H) fence is gated statically
+instead, on a single force evaluation, where it costs nothing. The O-O curve is
+not a fixture because it is not affordable as one: O2 is 2025 determinants a
+point, measured at 0.21 s / 0.40 s / 5.11 s at 2.2 / 3.0 / 5.0 bohr in RELEASE.
+
+**The energy bound is loose by four to seven orders**, and that is the curvature
+envelope's compact corner rather than a healthy margin. The peak `|dE3|` is
+0.7638 Ha at `x = y = 0.7`, `c = 0.05` — two hydrogens 0.05 bohr apart — where
+the grid spacing is 0.0334 bohr, giving a second derivative of order 685 before
+the 4× widening. That corner is unreachable in any dynamics the sandbox runs, and
+it sets the absolute cap for all of them. The momentum bound, which does not
+depend on it, is tight to within four decades and is the informative half of C1.
+
+---
 ## P1 — THE PROTOCOL · **NOT YET FROZEN**
 
 This section is deliberately empty of numbers. The prereg requires the 8 H + 4 O

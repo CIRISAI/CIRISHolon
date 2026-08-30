@@ -44,6 +44,14 @@ use std::time::Instant;
 
 const C_LO: f64 = 0.05;
 const C_HI: f64 = std::f64::consts::SQRT_2;
+/// The THIRD candidate: the bend angle itself, in radians, over the same domain the other
+/// two cover. Added after the fact, and the reason is the tableau: `c` at 49 nodes was
+/// still the LIMITING axis of the shipped table, improving only 5x per doubling where a
+/// C1 cubic should give 16x. That is the signature of a coordinate the surface is not
+/// smooth in — and both ends of the angle range are places where `c` and `u` are singular
+/// parameterisations of the geometry while `theta` is not.
+const T_LO: f64 = 0.0;
+const T_HI: f64 = std::f64::consts::PI;
 /// The `u` the fence stands for: `u = 1 - C_LO^2`, the closed end.
 const U_HI: f64 = 1.0 - C_LO * C_LO;
 const U_LO: f64 = -1.0;
@@ -180,10 +188,10 @@ fn main() {
             let f = (q - lo) / (hi - lo) * (n - 1) as f64;
             (f - f.round()).abs() < 0.05
         };
-        if NQ_TRY
-            .iter()
-            .any(|&n| near(u, U_LO, U_HI, n) || near(c, C_LO, C_HI, n))
-        {
+        let th = u.clamp(-1.0, 1.0).acos();
+        if NQ_TRY.iter().any(|&n| {
+            near(u, U_LO, U_HI, n) || near(c, C_LO, C_HI, n) || near(th, U_HI.acos(), T_HI, n)
+        }) {
             continue;
         }
         held.push(u);
@@ -198,15 +206,19 @@ fn main() {
         let e_oy = pair_point(OXYGEN, HYDROGEN, y).e;
 
         // Exact node values on both candidate grids, and the exact held-out truth.
+        // The angle grid runs over the same geometries the other two cover, so its lower
+        // edge is the angle the closed-angle fence stands for rather than zero.
+        let t_lo = (U_HI).clamp(-1.0, 1.0).acos();
         let mut jobs: Vec<(usize, f64)> = Vec::new();
         for i in 0..NQ_FINE {
             let t = i as f64 / (NQ_FINE - 1) as f64;
             jobs.push((0, U_LO + (U_HI - U_LO) * t)); // u-grid node
             let c = C_LO + (C_HI - C_LO) * t;
             jobs.push((1, 1.0 - c * c)); // c-grid node
+            jobs.push((2, (t_lo + (T_HI - t_lo) * t).cos())); // theta-grid node
         }
         for &u in &held {
-            jobs.push((2, u));
+            jobs.push((3, u));
         }
         let out: Vec<Mutex<(f64, f64)>> = jobs.iter().map(|_| Mutex::new((0.0, 0.0))).collect();
         let next = AtomicUsize::new(0);
@@ -217,30 +229,38 @@ fn main() {
                     if t >= jobs.len() {
                         break;
                     }
-                    let want_d = jobs[t].0 == 2;
+                    let want_d = jobs[t].0 == 3;
                     *out[t].lock().unwrap() =
                         de3_du(x, y, jobs[t].1, e_o, e_h, e_ox, e_oy, want_d);
                 });
             }
         });
         let out: Vec<(f64, f64)> = out.into_iter().map(|m| m.into_inner().unwrap()).collect();
-        let u_nodes: Vec<f64> = (0..NQ_FINE).map(|i| out[2 * i].0).collect();
-        let c_nodes: Vec<f64> = (0..NQ_FINE).map(|i| out[2 * i + 1].0).collect();
-        let truth: Vec<(f64, f64)> = out[2 * NQ_FINE..].to_vec();
+        let u_nodes: Vec<f64> = (0..NQ_FINE).map(|i| out[3 * i].0).collect();
+        let c_nodes: Vec<f64> = (0..NQ_FINE).map(|i| out[3 * i + 1].0).collect();
+        let t_nodes: Vec<f64> = (0..NQ_FINE).map(|i| out[3 * i + 2].0).collect();
+        let truth: Vec<(f64, f64)> = out[3 * NQ_FINE..].to_vec();
 
         for (name, nodes, lo, hi) in [
             ("u", &u_nodes, U_LO, U_HI),
             ("c", &c_nodes, C_LO, C_HI),
+            ("th", &t_nodes, t_lo, T_HI),
         ] {
             for nq in NQ_TRY {
                 let (mut mv, mut md) = (0.0f64, 0.0f64);
                 let (mut sv, mut sd) = (0.0f64, 0.0f64);
                 for (t, &u) in held.iter().enumerate() {
-                    let (q, dq_du) = if name == "u" {
-                        (u, 1.0)
-                    } else {
-                        let c = (1.0 - u).sqrt();
-                        (c, -0.5 / c)
+                    let (q, dq_du) = match name {
+                        "u" => (u, 1.0),
+                        "c" => {
+                            let c = (1.0 - u).sqrt();
+                            (c, -0.5 / c)
+                        }
+                        // theta = acos(u), so dtheta/du = -1/sin(theta).
+                        _ => {
+                            let th = u.clamp(-1.0, 1.0).acos();
+                            (th, -1.0 / th.sin())
+                        }
                     };
                     let (v, dv_dq) = read(nodes, nq, q, lo, hi);
                     let ev = (v - truth[t].0).abs();

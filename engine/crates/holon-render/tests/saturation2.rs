@@ -25,7 +25,7 @@ use holon_chem::elements::{HYDROGEN, OXYGEN};
 use holon_chem::pair::{generate_pair_table, PairTable};
 use holon_render::bank::Host;
 use holon_render::sim::{Boundary, Dims, Sim, K_B};
-use holon_render::{generate_trimer_table, load_pair_table, load_water_table, TABLE_OK};
+use holon_render::{load_pair_table, TABLE_OK};
 use std::sync::OnceLock;
 
 /// Knots per fixture curve. Small on purpose, and for the reason `tests/mixtures.rs`
@@ -40,38 +40,40 @@ fn water_table_text() -> String {
         .unwrap_or_else(|e| panic!("the committed (O,H,H) table is present: {}: {e}", p.display()))
 }
 
+/// The three surfaces this file needs, built ONCE for the whole binary.
+///
+/// # Why this holds boxes and touches no `Sim`
+///
+/// The first version built two whole `Sim`s inside this initialiser — one to generate the
+/// H3 table through `generate_trimer_table`, one to load the (O,H,H) table through
+/// `load_water_table` — and it OVERFLOWED THE STACK in the debug profile. That is the
+/// same wall `crate::bank`'s `MAX_SPECIES` records: a debug build reserves every temporary
+/// in the frame up front and does not elide the copy through `Box::new`, so a `Sim::empty()`
+/// materialises 324 KB on the stack before it reaches the heap, and two of them alongside
+/// a struct literal carrying a 113 KB `TrimerTable` is more than a test thread has.
+///
+/// Neither `Sim` was needed. `holon_chem` hands both tables back directly, and the ABI
+/// wrappers exist for the browser rather than for a fixture. So the tables are taken at
+/// source and the big one is boxed, which keeps this literal three pointers wide.
 struct Bank {
     hh: PairTable,
     oh: PairTable,
-    trimer: holon_chem::trimer::TrimerTable,
-    water: holon_chem::water::WaterTable,
+    trimer: Box<holon_chem::trimer::TrimerTable>,
+    water: Box<holon_chem::water::WaterTable>,
 }
 
-/// The three surfaces this file needs, built ONCE for the whole binary. The (O, H, H)
-/// table is LOADED rather than generated: 441 determinants a node is not a thing a test
-/// suite pays for.
 fn banked() -> &'static Bank {
     static B: OnceLock<Bank> = OnceLock::new();
-    B.get_or_init(|| {
-        let mut probe = Box::new(Sim::empty());
-        assert_eq!(
-            generate_trimer_table(&mut probe),
-            1,
-            "the H3 table did not generate"
-        );
-        let mut w = Box::new(Sim::empty());
-        assert_eq!(
-            load_water_table(&mut w, &water_table_text()),
-            1,
-            "the committed (O,H,H) table did not load; if the grid constants moved it has \
-             to be regenerated, not re-read"
-        );
-        Bank {
-            hh: generate_pair_table(HYDROGEN, HYDROGEN, FIXTURE_KNOTS),
-            oh: generate_pair_table(OXYGEN, HYDROGEN, FIXTURE_KNOTS),
-            trimer: probe.trimer.clone(),
-            water: w.water.clone(),
-        }
+    B.get_or_init(|| Bank {
+        hh: generate_pair_table(HYDROGEN, HYDROGEN, FIXTURE_KNOTS),
+        oh: generate_pair_table(OXYGEN, HYDROGEN, FIXTURE_KNOTS),
+        trimer: Box::new(holon_chem::trimer::generate().expect("the H3 table generates")),
+        water: Box::new(
+            holon_chem::water::from_text(&water_table_text()).expect(
+                "the committed (O,H,H) table parses and matches this build's grid rule; if \
+                 the grid constants moved it has to be regenerated, not re-read",
+            ),
+        ),
     })
 }
 
@@ -81,17 +83,47 @@ fn scene() -> Box<Sim> {
     let mut s = Box::new(Sim::empty());
     assert_eq!(load_pair_table(&mut s, &b.hh, Host::Native), TABLE_OK);
     assert_eq!(load_pair_table(&mut s, &b.oh, Host::Native), TABLE_OK);
-    s.trimer = b.trimer.clone();
-    s.water = b.water.clone();
+    s.trimer = (*b.trimer).clone();
+    s.water = (*b.water).clone();
     s
 }
 
+/// Run, and report the largest `|E_three|` the scene ever held — AND refuse to return at
+/// all if the scene did not move.
+///
+/// The refusal is the point. `Sim::step` returns early when `pairs_ready()` is false, so a
+/// scene whose bank is missing one of its pair types integrates nothing, holds a drift of
+/// exactly zero, and passes every conservation gate in this file. That happened, on the
+/// first version of scene B. A gate that cannot tell "conserved" from "never moved" is not
+/// a conservation gate.
 fn run(s: &mut Sim, frames: usize, substeps: u32) -> f64 {
+    assert!(
+        s.pairs_ready(),
+        "the bank is missing a curve for a pair type this scene contains, so `step` will \
+         return early and nothing will move"
+    );
+    let before: Vec<(f64, f64, f64)> = (0..s.n)
+        .map(|i| (s.atoms[i].x, s.atoms[i].y, s.atoms[i].z))
+        .collect();
     let mut peak = 0.0f64;
     for _ in 0..frames {
         s.step_frame(substeps);
         peak = peak.max(s.e_three.abs());
     }
+    let moved = (0..s.n)
+        .map(|i| {
+            let (x, y, z) = before[i];
+            ((s.atoms[i].x - x).abs())
+                .max((s.atoms[i].y - y).abs())
+                .max((s.atoms[i].z - z).abs())
+        })
+        .fold(0.0f64, f64::max);
+    assert!(
+        moved > 1e-3,
+        "the scene did not move: the largest displacement over {frames} x {substeps} \
+         substeps was {moved:.3e} bohr. Every conservation reading below would be a \
+         reading of a frozen box."
+    );
     peak
 }
 
@@ -125,15 +157,29 @@ fn staked_water_nve() -> Box<Sim> {
     s
 }
 
-/// SCENE B — two oxygens and four hydrogens with the thermostat on: walls, external work,
-/// two masses, and every composition of triple the dispatch has a case for, including the
-/// fenced ones.
+/// SCENE B — ONE oxygen and five hydrogens with the thermostat on: walls, external work,
+/// two masses, and fifteen (O, H, H) triples for the new surface to act on.
+///
+/// # Why one oxygen and not two, and what caught the difference
+///
+/// This scene was FIRST written with two oxygens, to exercise the (O, O, H) fence in the
+/// same run. It reported a drift of EXACTLY ZERO and passed — because `Sim::step` guards
+/// on `pairs_ready()`, the bank held no O-O curve, and the scene never integrated a single
+/// substep. A conservation gate on a frozen scene passes for the wrong reason, and an
+/// asserted zero has to be a fact about the SCENE rather than about the instrument's
+/// coverage. Every C1 test below now asserts that the atoms actually MOVED.
+///
+/// The O-O curve is not loaded because it is not affordable as a fixture: O2 is 2025
+/// determinants a point and measured 0.21 s at 2.2 bohr, 0.40 s at 3.0 and 5.11 s at 5.0
+/// in RELEASE, the long range being where the near-degenerate dissociation makes Davidson
+/// work. The fence is therefore gated where it costs nothing — statically, on a single
+/// force evaluation, in `the_dispatch_serves_each_composition_its_own_surface`.
 fn staked_mixed_thermostat() -> Box<Sim> {
     let mut s = scene();
     s.boundary = Boundary::Walls;
     s.dims = Dims::Two;
     s.reset(6);
-    for (i, sp) in [OXYGEN, OXYGEN, HYDROGEN, HYDROGEN, HYDROGEN, HYDROGEN]
+    for (i, sp) in [OXYGEN, HYDROGEN, HYDROGEN, HYDROGEN, HYDROGEN, HYDROGEN]
         .into_iter()
         .enumerate()
     {
@@ -158,7 +204,7 @@ fn staked_mixed_thermostat() -> Box<Sim> {
 
 #[test]
 fn the_water_table_reports_its_own_scale() {
-    let t = &banked().water;
+    let t = &*banked().water;
     println!(
         "(O,H,H) table: {} nodes from {} solves; peak |dE3| = {:.6} Ha; \
          curvature envelope {:.3} Ha/bohr^2, per-gradient {:.3} /bohr; \
@@ -188,7 +234,7 @@ fn the_triple_force_is_minus_the_gradient_of_the_triple_energy() {
     // derivatives of the value the ledger books, the energy cannot be conserved and no
     // amount of drift-bound tuning would fix it. Checked by central differences against
     // the tabulated surface itself, on geometries that span the domain.
-    let t = &banked().water;
+    let t = &*banked().water;
     const H: f64 = 1e-5;
     let mut worst = 0.0f64;
     let mut worst_at = (0.0, 0.0, 0.0);
@@ -269,6 +315,13 @@ fn the_dispatch_serves_each_composition_its_own_surface() {
     );
 
     // (O, O, H): NOT tabulated. Booked as nothing, counted as one.
+    //
+    // This scene does NOT integrate and is not meant to: the bank holds no O-O curve, so
+    // `pairs_ready()` is false and `step` returns early. What is being read is the FORCE
+    // EVALUATION that `rebase` performs, which is where the composition dispatch runs and
+    // where the fence is counted. Said out loud because the neighbouring C1 gates DO
+    // integrate, and a reader who assumed this one did too would be reading a static
+    // check as a dynamic one.
     let mut f = scene();
     f.boundary = Boundary::Open;
     f.dims = Dims::Two;
@@ -402,7 +455,7 @@ fn c1_energy_gate_mixed_thermostatted() {
     let peak_three = run(&mut s, 300, 64);
     let bound = s.drift_bound();
     println!(
-        "C1 energy (thermostat, 2 O + 4 H): peak |E_three| = {peak_three:.6} Ha, \
+        "C1 energy (thermostat, 1 O + 5 H): peak |E_three| = {peak_three:.6} Ha, \
          drift_peak = {:.3e}, bound = {bound:.3e}, ratio = {:.4}, fenced triples = {}",
         s.drift_peak,
         s.drift_peak / bound,
@@ -413,10 +466,10 @@ fn c1_energy_gate_mixed_thermostatted() {
         "the three-body term never exceeded {peak_three:.3e} Ha; this scene did not \
          exercise the sector"
     );
-    assert!(
-        s.fence_untabulated > 0,
-        "a box with two oxygens produced no (O,O,H) or (O,O,O) triples, so the fence's \
-         incidence in this scene is not being counted"
+    assert_eq!(
+        s.fence_untabulated, 0,
+        "a box with ONE oxygen cannot make an (O,O,H) or (O,O,O) triple, so a nonzero \
+         fence count here would mean the dispatch is fencing something it has a table for"
     );
     assert!(
         s.drift_peak <= bound,
@@ -458,11 +511,14 @@ fn c1_momentum_gate_mixed_thermostatted() {
     // The scene that has never existed before this campaign: two masses in one box, with
     // a thermostat doing external work on both. Oxygen is sixteen times hydrogen, so a
     // ledger that had quietly assumed one mass would show up here.
+    //
+    // `run` refuses a scene that did not move, which is what this test needed and did not
+    // have the first time it was written.
     let mut s = staked_mixed_thermostat();
     let peak_three = run(&mut s, 300, 64);
     let bound = s.momentum_bound();
     println!(
-        "C1 momentum (thermostat, 2 O + 4 H): peak |E_three| = {peak_three:.6} Ha, \
+        "C1 momentum (thermostat, 1 O + 5 H): peak |E_three| = {peak_three:.6} Ha, \
          residual = {:.3e}, bound = {bound:.3e}, ratio = {:.4}",
         s.momentum_residual_peak,
         s.momentum_residual_peak / bound

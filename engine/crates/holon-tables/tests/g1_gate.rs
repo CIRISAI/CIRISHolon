@@ -195,10 +195,37 @@ fn worker_local_warm_start_breaks_bit_identity() {
          warm_start_sensitivity_is_present) or the mutation is not wired through — and in \
          both cases table_is_bit_identical_across_worker_counts is passing vacuously."
     );
+
+    // THE ENERGIES SPECIFICALLY, not merely the bytes.
+    //
+    // `table_bytes()` includes the iteration counts, and those differ between worker counts
+    // under this mutation for a reason that is not interesting: a worker's first node has
+    // nothing to warm-start from, so the cold/warm split moves with the worker count all by
+    // itself. If that were the whole difference, this test would fire while the TABLE — the
+    // thing G1 is about — was identical, and the must-fire half would be proving something
+    // weaker than it claims.
+    let differing_energies = one
+        .records
+        .iter()
+        .zip(four.records.iter())
+        .filter(|(a, b)| a.energy_bits != b.energy_bits)
+        .count();
+    assert!(
+        differing_energies > 0,
+        "worker-local warm starts changed the iteration counts but NOT one energy in {} \
+         nodes. The mutation moved the bookkeeping and not the table, so this test was \
+         about to certify the bit-identity gate on the strength of a difference that does \
+         not reach the numbers.",
+        one.records.len()
+    );
+
     println!(
         "the must-fire half fires: worker-local warm starts give different tables at 1 and \
-         4 workers ({} vs {} Davidson iterations)",
-        one.total_davidson_iters, four.total_davidson_iters
+         4 workers — {differing_energies} of {} node ENERGIES differ ({} vs {} Davidson \
+         iterations)",
+        one.records.len(),
+        one.total_davidson_iters,
+        four.total_davidson_iters
     );
 }
 

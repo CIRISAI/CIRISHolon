@@ -221,6 +221,31 @@ exactly.
 determinant space in mpmath, and germanium's 23,409 is far past it. R1's 3e4 threshold was
 staked result-blind and is a fine threshold; the arithmetic does not follow it that far.
 
+**And the threshold is on the wrong quantity, which is a defect of this design rather than a
+fact about the world.** mixtures-referee found that their route C's cost is governed by the
+**Fock-space dimension**, `2^n_so`, and not by determinant count at all — their `route_c_cost`
+modelled `C(n_so, n_elec)`, the size of the *answer*, while the enumeration walked `2^n_so`
+whatever the answer's size. So the budget guard was blindest exactly where the answer was
+smallest, and **a closed shell is that case by definition**: every spin orbital occupied, one
+determinant, maximal search. Their Ar2 held eight workers for fifty minutes producing nothing
+while looking merely expensive.
+
+That lands on this record's own two exact atoms. Krypton (n_so 36) and xenon (n_so 54) are the
+cheapest species here by determinant count — one each — and the most expensive by basis, so a
+referee eligibility rule inherited from a *determinant* threshold would have licensed exactly
+the two runs that cannot finish. This record escaped only because `elements3_referee.py` never
+enumerates: it goes through the closed-shell contraction above, which is why the nobles
+returned in seconds. **Escaping by construction is not the same as having designed for it**, and
+the rule as written would not have protected the seven owed atoms.
+
+Recorded as owed: route C's availability wants declaring on its own quantity rather than
+inheriting R1's determinant threshold — the same both-thresholds-must-pass shape mixtures-engine
+found on the engine side, arrived at from a third direction. Also flagged back to them: the
+identical filtering pattern survives in `fci.py`'s `strings()`, which the determinant-space
+constructor calls twice. It is milder (`2^n_orb`, the square root of route C's cost) and
+harmless at the Z ≤ 18 they exercise, but it walks 134 million masks twice for xenon — whose
+answer is one determinant — and the seven owed atoms are exactly the range where it bites.
+
 ### The referee had to be built, and its first answer was wrong instructively
 
 The ELEMENTS-1 referee was s/p only: `CART` had no `l = 2` key, and `_self_overlap` returned

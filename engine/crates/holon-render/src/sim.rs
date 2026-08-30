@@ -24,11 +24,12 @@
 //! predicate, the turning point, the drift bound, the clocks — is RADIAL, a function of
 //! the scalar separation alone, and so carries into 3D with nothing to re-derive.
 
-use crate::bank::PairBank;
+use crate::bank::{PairBank, MAX_SPECIES};
 use crate::clock::Timescale;
 use crate::holon::HolonLayer;
 use crate::table::PotentialTable;
 use holon_chem::trimer::TrimerTable;
+use holon_chem::water::WaterTable;
 
 /// Mass of a protium ATOM (proton + electron) in electron masses:
 /// 1.00782503207 u x 1822.888486 m_e/u. The atom, not the proton — the pair curve is
@@ -184,6 +185,21 @@ pub struct Sim {
     /// an empty one contributes an EXACT zero to every term below — so a scene that never
     /// asks for it is bit-for-bit the scene this file simulated before the term existed.
     pub trimer: TrimerTable,
+    /// The HETERONUCLEAR three-body surface, (O, H, H). Empty until
+    /// [`crate::generate_water_table`] fills it, and an empty one contributes an EXACT
+    /// zero exactly as an empty [`Sim::trimer`] does.
+    ///
+    /// Heap-backed where `trimer` is a fixed array, and that is a size decision rather
+    /// than a style one: at 65 x 65 x 33 nodes this surface is 1.1 MB, against the whole
+    /// bank's 193 KB, and `crate::bank`'s `MAX_SPECIES` cap records what happens when a
+    /// `Sim` constructed by value in a nested fixture outgrows the stack. So the nodes
+    /// live behind a pointer and a `Sim` grows by three words.
+    pub water: WaterTable,
+    /// Triples the three-body sector REFUSED for want of a table: (O, O, H) and (O, O, O),
+    /// which SATURATION-2 does not tabulate. Counted rather than ignored, because the
+    /// prereg requires the fence's incidence in the quench runs to be reported, and a
+    /// truncation nobody counts is a truncation nobody can weigh.
+    pub fence_untabulated: u64,
     pub atoms: [Atom; MAX_ATOMS],
     pub n: usize,
     pub boundary: Boundary,
@@ -267,6 +283,8 @@ impl Sim {
         Self {
             bank: PairBank::hydrogen_seeded(),
             trimer: TrimerTable::empty(),
+            water: WaterTable::empty(),
+            fence_untabulated: 0,
             atoms: [Atom {
                 x: 0.0,
                 y: 0.0,
@@ -654,7 +672,7 @@ impl Sim {
     /// Zero when no table is loaded or the scene has fewer than three atoms, so the pair
     /// bound is returned unchanged — adding an exact zero to a finite float changes no bit.
     pub fn k_three(&self) -> f64 {
-        if !self.trimer.loaded || self.n < 3 {
+        if (!self.trimer.loaded && !self.water.loaded) || self.n < 3 {
             return 0.0;
         }
         self.k_three_max
@@ -1298,7 +1316,8 @@ impl Sim {
     /// keeps the N^3 loop from being the whole budget when there is nothing to compute.
     fn accumulate_three_body(&mut self) {
         self.e_three = 0.0;
-        if !self.trimer.loaded || self.n < 3 {
+        self.fence_untabulated = 0;
+        if (!self.trimer.loaded && !self.water.loaded) || self.n < 3 {
             return;
         }
         // One distance matrix, read three times per triple instead of nine square roots.
@@ -1316,38 +1335,82 @@ impl Sim {
                 d[j][i] = r;
             }
         }
-        let env_abs = self.trimer.curvature_envelope;
-        let env_per_grad = self.trimer.curvature_per_gradient;
         let mut e_three = 0.0;
         // Per-atom stiffness totals: curvatures ADD over the triples an atom is in.
         let mut k_atom = [0.0f64; MAX_ATOMS];
         for i in 0..self.n {
             for j in (i + 1)..self.n {
                 for k in (j + 1)..self.n {
-                    if self.atoms[i].species.z != 1
-                        || self.atoms[j].species.z != 1
-                        || self.atoms[k].species.z != 1
-                    {
+                    // THE COMPOSITION DISPATCH. Three cases and no default: a triple is
+                    // served the table for its own composition, or it is FENCED and
+                    // counted. Serving some other composition's table because this one
+                    // has none is exactly the defect plant (iii) exists to catch, and a
+                    // silent fallthrough would be that bug with a shrug in front of it.
+                    //
+                    // The sides are handed over in the order the table expects. For H3
+                    // they are interchangeable and any order does; for (O, H, H) they are
+                    // not, and the two O-H sides go first with the H-H side third.
+                    let (za, zb, zc) = (
+                        self.atoms[i].species.z,
+                        self.atoms[j].species.z,
+                        self.atoms[k].species.z,
+                    );
+                    let n_o = (za == 8) as u32 + (zb == 8) as u32 + (zc == 8) as u32;
+                    let n_h = (za == 1) as u32 + (zb == 1) as u32 + (zc == 1) as u32;
+                    // `(a, b, c)` are the atom slots in the order the chosen table wants
+                    // its three sides: for water, oxygen first.
+                    let (a, b, c) = if n_o == 1 && n_h == 2 {
+                        if za == 8 {
+                            (i, j, k)
+                        } else if zb == 8 {
+                            (j, i, k)
+                        } else {
+                            (k, i, j)
+                        }
+                    } else {
+                        (i, j, k)
+                    };
+                    let (rab, rac, rbc) = (d[a][b], d[a][c], d[b][c]);
+                    let (v, g, env_abs, env_per_grad) = if n_h == 3 {
+                        let (v, g) = self.trimer.eval([rab, rac, rbc]);
+                        (
+                            v,
+                            g,
+                            self.trimer.curvature_envelope,
+                            self.trimer.curvature_per_gradient,
+                        )
+                    } else if n_o == 1 && n_h == 2 {
+                        // `a` is the oxygen, so `rab` and `rac` are the two O-H sides and
+                        // `rbc` is the H-H side — the order `WaterTable::eval` declares.
+                        let (v, g) = self.water.eval(rab, rac, rbc);
+                        (
+                            v,
+                            g,
+                            self.water.curvature_envelope,
+                            self.water.curvature_per_gradient,
+                        )
+                    } else {
+                        // (O, O, H) and (O, O, O): NOT tabulated by SATURATION-2. The
+                        // triple runs pair-only and the truncation is counted.
+                        self.fence_untabulated += 1;
                         continue;
-                    }
-                    let (rij, rik, rjk) = (d[i][j], d[i][k], d[j][k]);
-                    let (v, g) = self.trimer.eval([rij, rik, rjk]);
+                    };
                     if v == 0.0 && g[0] == 0.0 && g[1] == 0.0 && g[2] == 0.0 {
                         continue;
                     }
                     e_three += v;
-                    self.push_side(i, j, g[0], rij);
-                    self.push_side(i, k, g[1], rik);
-                    self.push_side(j, k, g[2], rjk);
+                    self.push_side(a, b, g[0], rab);
+                    self.push_side(a, c, g[1], rac);
+                    self.push_side(b, c, g[2], rbc);
                     // The per-triple stiffness the drift bound is built from; the
                     // derivation is in `Sim::k_three`.
                     let gmax = g[0].abs().max(g[1].abs()).max(g[2].abs());
                     let g2 = env_abs.min(env_per_grad * gmax);
                     let kt = 4.0 * g2
-                        + 2.0 * (g[0].abs() / rij + g[1].abs() / rik + g[2].abs() / rjk);
-                    k_atom[i] += kt;
-                    k_atom[j] += kt;
-                    k_atom[k] += kt;
+                        + 2.0 * (g[0].abs() / rab + g[1].abs() / rac + g[2].abs() / rbc);
+                    k_atom[a] += kt;
+                    k_atom[b] += kt;
+                    k_atom[c] += kt;
                 }
             }
         }
@@ -1684,6 +1747,21 @@ impl Sim {
     /// read ONE union-find over ONE edge set. Two implementations of a cluster reading is
     /// how the two of them come to disagree.
     pub fn cluster_sizes(&self) -> [usize; MAX_ATOMS] {
+        let roots = self.cluster_roots();
+        let mut size = [0usize; MAX_ATOMS];
+        for i in 0..self.n {
+            size[roots[i]] += 1;
+        }
+        size
+    }
+
+    /// Each atom's component root, by union-find over the bonded-pair edge set.
+    ///
+    /// The single implementation everything else here is built from. `cluster_sizes` and
+    /// [`Sim::cluster_species_counts`] are two READINGS of this one partition, not two
+    /// partitions — which is what stops a size histogram and a composition histogram from
+    /// disagreeing about how many molecules there are.
+    fn cluster_roots(&self) -> [usize; MAX_ATOMS] {
         let mut parent: [usize; MAX_ATOMS] = [0; MAX_ATOMS];
         for (i, p) in parent.iter_mut().enumerate() {
             *p = i;
@@ -1701,10 +1779,43 @@ impl Sim {
                 parent[a] = b;
             }
         }
-        let mut size = [0usize; MAX_ATOMS];
-        for i in 0..self.n {
-            size[find(&mut parent, i)] += 1;
+        let mut roots = [0usize; MAX_ATOMS];
+        for (i, r) in roots.iter_mut().enumerate().take(self.n) {
+            *r = find(&mut parent, i);
         }
-        size
+        roots
+    }
+
+    /// THE COMPOSITION READING: how many atoms of each nuclear charge each component holds.
+    ///
+    /// Entry `i` is `[(Z, count); ...]` for the component rooted at atom `i`, with unused
+    /// entries carrying `Z = 0`. Empty for an atom that is not a root.
+    ///
+    /// This is what makes a MOLECULE reading possible in a mixed box: a component of two
+    /// atoms is a dimer, and whether it is H2, HCl or Cl2 is a fact about which nuclei are
+    /// in it. `cluster_sizes` alone cannot tell those three apart, and the whole of gate
+    /// P1 is the difference between them.
+    ///
+    /// Keyed by nuclear charge rather than by the bank's species index deliberately: the
+    /// species index is an artefact of registration order and would make a run's output
+    /// depend on which atom happened to be placed first.
+    pub fn cluster_species_counts(&self) -> [[(u32, usize); MAX_SPECIES]; MAX_ATOMS] {
+        let roots = self.cluster_roots();
+        let mut out = [[(0u32, 0usize); MAX_SPECIES]; MAX_ATOMS];
+        for i in 0..self.n {
+            let z = self.atoms[i].species.z;
+            let row = &mut out[roots[i]];
+            match row.iter_mut().find(|(rz, _)| *rz == z || *rz == 0) {
+                Some(slot) => {
+                    slot.0 = z;
+                    slot.1 += 1;
+                }
+                // Unreachable while the bank caps species at MAX_SPECIES and every atom's
+                // species is registered, which `set_species` enforces. Dropped rather than
+                // panicking in the physics core; the count would be visibly short.
+                None => {}
+            }
+        }
+        out
     }
 }

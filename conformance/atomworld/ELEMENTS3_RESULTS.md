@@ -281,6 +281,26 @@ not been re-derived; mixtures-engine is running gate D1 to derive it properly ra
 inferring it from one species, which is the right order. Until that number lands, these
 verdicts are stale **in the direction of under-promising**.
 
+**But the successor cannot lift them, and that is knowable before it arrives.** The ladder
+being run to derive it is seven two-centre pairs topping out at S2, which is 18 orbitals —
+so the 22- and 27-orbital species, fourteen of the sixteen, are above anything it can
+return. And its one 18-orbital rung is at the wrong filling: S2 is 32 electrons in 18
+orbitals, C(18,16)² = 23,409 determinants, which is **germanium's FCI space exactly** — a row
+this record already solves by determinant. The refused rows share the orbital count and
+nothing else. Scandium is 1,392,554,592 determinants at the same 18 orbitals, **59,500×
+larger**; the block spans four and a half orders of magnitude between its cheapest and most
+expensive member. A new constant will therefore license the MPO *build* at some orbital
+count; it will not license the *verdict* at these electron counts, because nothing measured
+the verdict there. This is **not** a claim that the MPS route fails at mid-filling — no
+measurement here bears on that in either direction, which is the point. The ladder's own rule
+is that a reach without a budget is not a measurement, and that rule binds on the
+electron-count axis too.
+
+Fixed in advance, so the rescope cannot be tuned to whatever lands: when the number arrives,
+route labels move from "no automatic route" to "automatic route available" for species at or
+below it, and **nothing else moves**. No refused row becomes a measured row. If the number
+comes back below 18, this table does not change at all.
+
 A3.1 corrected this lane's own over-claim here: A1.2 said "no route at all", which read
 `automatic_route`'s refusal as a statement about reachability. SiO at 132,496 determinants
 solves in 33.9 s through `solve_determinant`. The sixteen span 2.6e7 to 1.97e12 and do not
@@ -444,9 +464,10 @@ everything. The type system enforced the rider before the plant was written: add
 
 ## 1. The 3d/4s high-spin anomaly — real, and with no explanation
 
-**Zinc comes out a quintet and gallium a quartet.** The periodic table says singlet and
-doublet. Germanium onward is correct again, so it is confined to the two elements immediately
-after the 3d shell fills.
+**Gallium comes out a quartet where the periodic table says doublet** — and zinc a quintet
+against a singlet, on a solve that misses the declared convergence bar and so corroborates
+rather than carries (below). Germanium onward is correct again, so the anomaly is confined to
+the two elements immediately after the 3d shell fills.
 
 **It is a property of the model, not a solver failure.** Two explanations had identical
 signatures — a genuine high-spin ground state, or Davidson converging to an excited state on
@@ -613,12 +634,14 @@ functions — `MAX_Z = 54` and the refusal is in force. Relativistic fidelity: F
 edge and the fence claim **fired**, on both the raw and the counterpoise-corrected observable.
 Quantitative thermochemistry. Mid-row exactness: sixteen atoms have no automatic route, their
 determinant-route reachability is **unmeasured**, and the constant those verdicts rest on has
-been superseded. Seven of nine referee-eligible atoms have no 50-digit reference.
+been superseded by one whose own ladder cannot reach them — its top rung is germanium's FCI
+space wearing a different name. Seven of nine referee-eligible atoms have no 50-digit reference.
 
 **The one thing the campaign found that it cannot explain.** At the 3d/4s boundary the model
-prefers a high-spin ground state — zinc a quintet, gallium a quartet — and this is real by a
-discriminator that clears the solver, while the mechanism proposed for it was falsified by its
-own pre-registered counterfactual. It stands with **no explanation**, which is a better state
+prefers a high-spin ground state — gallium a quartet on a fully converged solve, zinc a
+quintet corroborating from one that misses the bar — and this is real by a discriminator that
+clears the solver, while the mechanism proposed for it was falsified by its own pre-registered
+counterfactual. It stands with **no explanation**, which is a better state
 than a wrong one, and the sextet at λ = 0.12 is a constraint any successor mechanism must
 meet.
 

@@ -466,3 +466,54 @@ lies about its own history.
 never touches it — so raising it to force convergence is not available to this record, and
 "did not converge at the production cap" is the honest status rather than a number obtained
 by reaching around the contract.
+
+
+## Gate (2) is decided in advance: the MPS constant cannot reach my refusals
+
+I am blocked on mixtures-engine's re-derived `MPS_MAX_ORBITALS` before the A4 route
+rescope. While their run was in flight I read the ladder's design instead of waiting on its
+answer, and the answer turns out not to matter for my table. Two reasons, both structural.
+
+**Reach in orbitals.** `mps_ladder.rs`'s `LADDER` is seven two-centre pairs topping out at
+S2. Sulfur is `s1/sp2/sp3` = 9 functions, so S2 is 18 orbitals. My route table's refusals
+sit at 18 orbitals (Sc..Cu), 22 (Rb, Sr) and 27 (Y..Cd). Fourteen of the sixteen route-less
+species are above anything the ladder can return.
+
+**The 18-orbital rung is at the wrong filling.** S2 is 32 electrons in 18 orbitals:
+C(18,16)^2 = 23,409 determinants — *germanium's FCI space exactly*, a row this record
+already solves by determinant at 1.44e-14 residual. The refused rows share the orbital
+count and nothing else:
+
+| species | orb | elec | determinants | vs S2 |
+|---|---|---|---|---|
+| Sc | 18 | 21 | 1,392,554,592 | 59,500x |
+| Ti | 18 | 22 | 1,012,766,976 | 43,300x |
+| Cr | 18 | 24 | 344,622,096 | 14,700x |
+| Fe | 18 | 26 | 73,410,624 | 3,140x |
+| Cu | 18 | 29 | 2,496,960 | 107x |
+| Zn | 18 | 30 | 665,856 | 28x |
+| Ge | 18 | 32 | 23,409 | 1x (= S2) |
+
+(Derived binomials checked against `atoms.log` — they reproduce its counts digit for digit,
+which is what makes this an argument about the record rather than about arithmetic.)
+
+So "18 orbitals" names two problems that differ by four and a half orders of magnitude, and
+the ladder measures the cheap end. **This is not a claim that DMRG fails at mid-filling — I
+have no measurement either way, and neither does the ladder.** That is the whole content:
+the ladder's own header says a reach without a budget is not a measurement, and the same
+rule binds on the electron-count axis. A new constant licenses the MPO *build*; it does not
+license the *verdict*, because nothing measured the verdict there. Third axis, flagged and
+rested on nothing: every ladder rung is a two-centre molecule and every refused row is a
+one-centre atom, where a 1D ansatz has no locality to exploit.
+
+**Consequence for A4, fixed before the number arrives** (so the rescope cannot be tuned to
+whatever lands): route labels move from "no automatic route" to "automatic route available"
+for species at or below the new constant, and nothing else moves. No refused row becomes a
+measured row. If the number comes back below 18 the table does not change at all.
+
+**Offered to mixtures-engine:** the missing mid-filled rung exists in this record. Zinc is
+18 orbitals, 30 electrons, 665,856 determinants, 28x S2 — and an exact reference is
+computable there where at 1.4e9 it is not. Caveat travels with it: zinc is the row the
+convergence gate REFUSED at residual 2.72e-10 against a 1e-10 bar. Different quantity from
+their 1e-8 energy stake and comfortably inside it, but it is not handed over as clean.
+Copper (2,496,960 det) is the next rung if they want more separation.

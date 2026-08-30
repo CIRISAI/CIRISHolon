@@ -45,9 +45,36 @@ use holon_chem::pair::{electron_counts, geometry_problem};
 ///
 /// The list is the p-block of both new rows plus the two nobles, chosen by DETERMINANT
 /// COUNT rather than by which ones pass: everything at or under about 2.4e4 determinants,
-/// which is what keeps this gate seconds rather than minutes. The heavier open shells
-/// (potassium at 2.0e5, gallium at 1.2e5, indium at 1.0e6) are in the banked record and are
-/// left out here for cost, not for result.
+/// which is what keeps this gate seconds rather than minutes. Potassium (2.0e5) and indium
+/// (1.0e6) are in the banked record and are left out here for cost, not for result.
+///
+/// # Zinc and gallium are excluded for RESULT, and that has to be said here
+///
+/// They are the two exceptions in the range and they are left out deliberately, so that
+/// nobody reads this clean sweep as covering the whole table. Measured:
+///
+/// ```text
+///   Zn   2S+1 = 5   (periodic table: 1, a closed 3d10 4s2 singlet)
+///   Ga   2S+1 = 4   (periodic table: 2)
+/// ```
+///
+/// The model prefers a high-spin state for exactly the two elements immediately after the
+/// 3d shell fills, and germanium onward is correct again. That is a property of the model
+/// and not a solver failure, which is the part that needed establishing before it could be
+/// written down: `examples/zn_diagnose.rs` compares each FCI energy against the smallest
+/// DIAGONAL element of the same Hamiltonian, which is the best single determinant in the
+/// same orbital basis and a variational upper bound on the true ground state. Above it
+/// would mean Davidson stepped over the ground state; below means the answer is real.
+/// Both are below -- Zn by 4.149e-2 hartree, Ga by 3.794e-2 -- and both controls (Ge,
+/// whose multiplicity is right, and Ca) are below theirs too, so the check discriminates.
+///
+/// A plausible mechanism, offered as a reading and not as a result: STO-3G gives 4p the
+/// SAME exponents as 4s, which makes 4p artificially compact and therefore artificially
+/// low, and Hund exchange then over-stabilises a high-spin 4s(1)4p(3) configuration over
+/// the closed 4s(2). Nothing here tests that, and it is not what the measurement says.
+///
+/// They are not gated because gating them would cost minutes (Zn is 665,856 determinants)
+/// and would freeze an unexplained number into the suite. The record carries them.
 const EXPECTED_MULTIPLICITY: [(u32, u32); 9] = [
     (32, 3), // Ge  3P
     (33, 4), // As  4S
@@ -60,9 +87,25 @@ const EXPECTED_MULTIPLICITY: [(u32, u32); 9] = [
     (54, 1), // Xe  1S
 ];
 
+/// The two elements whose measured multiplicity DISAGREES with the periodic table.
+///
+/// Present so the exclusion above is enforced rather than trusted: a later hand adding
+/// zinc to the expected list would get a confusing failure, and this turns that into a
+/// clear one.
+const KNOWN_DISAGREEMENTS: [u32; 2] = [30, 31];
+
 /// Both rows' p-blocks reproduce Hund's rules, with nothing about spin supplied.
 #[test]
 fn the_heavy_ground_multiplicities_come_out_rather_than_in() {
+    for (z, _) in EXPECTED_MULTIPLICITY {
+        assert!(
+            !KNOWN_DISAGREEMENTS.contains(&z),
+            "Z = {z} is a MEASURED disagreement with the periodic table (see the doc \
+             comment on EXPECTED_MULTIPLICITY) and cannot be in a list of elements \
+             expected to agree. It is excluded for result, not for cost."
+        );
+    }
+
     for (z, want) in EXPECTED_MULTIPLICITY {
         let sp = by_z(z).unwrap();
         let (n_elec, na, nb) = electron_counts(&[sp]);

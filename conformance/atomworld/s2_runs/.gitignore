@@ -4,3 +4,5 @@
 # `tests/data/s2/s2_water_table.txt` — plus the logs that record how it was produced.
 referee_cache/
 s2_fine_*.txt
+# Done-markers are run state, not record: the LOGS are what is committed.
+*.DONE

@@ -56,6 +56,34 @@ second random member of sampled orbits, and disagreement VOIDs the group.
 group whose finest survivor is coarser than `A₃` **VOIDs and never scores
 False**.
 
+### 2.1 Why that last clause exists, and how it was protected from becoming a choice
+
+The design's first draft defined `k*` as the finest rung with no VOIDs, with `A₀`
+always decided. Two facts from SELECTOR-4's own run log compose that into a
+silent disaster: it measured `selected = 0` at `A₀`, `A₁` and `A₂` on **all four**
+of its worlds, and its largest world **VOIDed at both fine rungs** (351 and 367
+budget exhaustions). Together, every group whose fine rungs exhaust would fall
+back to a coarse rung where `sel = ∅` by construction and be recorded as
+`SELECT = False`. Budget exhaustion would become a negative verdict — and not at
+random, since cost scales with `|F| = |G| × #divisors(ord step)`, a structural
+property of the group and therefore potentially correlated with SM-embeddability.
+**E1 would have been measuring the budget and calling it physics.**
+
+Two independent guards were put on this before any number existed, and both are
+kept here deliberately:
+
+- **A2 (commit `fb899dc`)** ruled the refusal, accepting the proposal verbatim,
+  and it was admitted **before the plants ran**. The sequence in the record is
+  freeze → ruling → plants → primary.
+- **`primary.py`'s header**, written before the run, states that the primary
+  verdict is the one under `MIN_DECIDED_RUNG = 3` and that the coarse-rung
+  fallback is a **labelled sensitivity diagnostic, never an alternative
+  headline** — so that reporting both could not become choosing between them.
+
+The stance that makes the pair safe, and which held: **if the ruling had gone the
+other way, the run would have been redone, not reinterpreted.** A result that
+survives only by being re-read under a second rule is not a result.
+
 ## 3. Census — S1 passes exactly
 
 Completeness is a theorem, not a family list: every group with nontrivial

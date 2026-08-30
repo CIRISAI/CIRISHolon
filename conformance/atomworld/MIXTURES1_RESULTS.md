@@ -5,6 +5,27 @@ record. Sections appear in the order they were written, and the P1 protocol
 below was written and committed **before the mixed arm was run or its output
 looked at**, as the prereg requires.
 
+## Where every gate stands
+
+| gate | verdict | in one line |
+|---|---|---|
+| **B1** the bank is exact where the single table was | **HOLDS** | 693 lines of raw f64 bit patterns, zero diff against the pre-bank commit; and a mixed fixture where the two criteria differ in sign |
+| **C1** conservation in a mixed box | **HOLDS** | drift 4.047e−5 against a 4.058e−3 derived bound; momentum 2.616e−13 against 1.032e−9; and on every seed of all three P1 arms |
+| **plant (i)** the swapped table | **CAUGHT** | `R_e` moves 1.5357 bohr and the energy 8.6 orders above the referee tolerance; and on a non-binding pair it invents a bond |
+| **plant (ii)** the wrong mass | **CAUGHT** | derived `dt` moves by exactly `sqrt(mu'/mu)`, to 1.1e−16 relative, predicted from the masses rather than written down |
+| **plant (iii)** the DMRG label | **CAUGHT** | refused at both doors, with the slot evicted, each with a positive control |
+| **E1** the emergent negatives | **evidence, not discharged** | Ar2 and NeAr unbound — but on the engine's derived grid, not the grid E1 stakes |
+| **E2** the emergent chemical contrast | **BRANCH (b)** | N2 deepest and the nobles refuse, as staked; but NaH moves five places and ClF two |
+| **P1** THE PRODUCT: emergent hetero-chemistry | **BRANCH (b)** | HCl modal in 0 of 8 seeds; both controls pass, so not VOID. HCl bonds ARE forming — the *reading* cannot see them in a condensed phase |
+| **D1** the DMRG bridge earns admission | **NOT ADMITTED** | the exact side is cheap (SiO 33.9 s); the MPO builder does not finish at 10 orbitals and D1 stakes 14 and 18 |
+| **R2** the staked-pair referee gate | **OWED** | gate built and scope-refusing; blocked on the referee lane's drop, and cheap when it lands |
+
+Two gates fire, and neither fires because the model failed. E2's inversion is a
+statement about the declared model that R2 will confirm or refute; P1's is a
+statement about the measurement rule, which cannot resolve molecules in a
+condensed phase. Both are reported as the product rather than adjusted toward the
+stake.
+
 ---
 
 ## P1 — THE PROTOCOL, FROZEN

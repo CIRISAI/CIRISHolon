@@ -174,6 +174,64 @@ at small orders. It is the baseline any future selection claim must
 beat, and it is the empirical companion to SELECTOR-5's refutation: the
 methodologically honest version of the same question returns the null.
 
+### §5.2 — Why. The criterion has no content beyond non-abelianness here
+
+*Added by the refuter lane from `primary.json`; this is analysis the log does not
+state, and every number is recomputable from the committed record.*
+
+The null has a mechanism, and the mechanism is sharper than the null.
+Cross-tabulating the verdict against abelianness over all 319 groups:
+
+| | abelian | non-abelian |
+|---|---|---|
+| **SELECT = True** | 0 | 213 |
+| **SELECT = False** | 106 | 0 |
+
+> **`SELECT(G) = (G is non-abelian)`, exactly, on every one of the 319
+> isomorphism types of order ≤ 63. The symmetric difference between the selected
+> set and the non-abelian set is empty.**
+
+Run uniformly over a complete landscape, with the family's representative choice
+deleted and the verdict made an isomorphism invariant, the bootstrap selection
+principle is **extensionally identical to the predicate "G is non-abelian"** —
+which is exactly `C1`, the first and most trivial gate of the funnel this
+programme refuted in SELECTOR-5. At these orders it does not merely fail to
+enrich toward gauge structure; it does not distinguish anything *within* the
+non-abelian world at all. That is a stronger and more useful statement than the
+aggregate null, and it is what the next selection claim actually has to beat.
+
+It also fixes the direction of the miss. Abelian groups are 105/106
+SM-embeddable — nearly all, since the rank obstruction only bites at rank ≥ 5 —
+against 171/213 = 80.3% for non-abelian groups. Selecting exactly the non-abelian
+groups therefore depresses the SM rate below the pooled base rate **by
+construction**. The observed value sits **4.62 null standard deviations below the
+null mean**, which is more than a whisper and is entirely accounted for.
+
+**That deficit is an observation, not a result.** The staked test is one-sided —
+enrichment above the 99th percentile — and its answer is branch (b). Reading a
+significant *depletion* out of a one-sided stake after seeing the number would be
+precisely the forking path this campaign exists to refuse. The identity above
+plus the abelian SM rate explain it completely; it needs no further hypothesis
+and gets none.
+
+### §5.3 — What survives the collapse, and what is deliberately not tested
+
+The collapse is in the **binary verdict**, not in the criterion's whole output.
+Among the 213 selected groups the selected fraction `|sel| / |F|` ranges from
+0.0714 to 0.8250 across **92 distinct values**. The boolean discards that.
+
+Whether the graded quantity carries anything is a real question. It is **not
+answered here, not tested here, and deliberately not computed as a statistic
+here** — E1 is resolved, and testing a second quantity on the same data after
+seeing the first result is a second bite. It is named as a candidate for a
+successor pre-registration, to be frozen before it is measured. Nothing in this
+document is evidence for or against it.
+
+A third banked theorem confirmed itself in passing: the single abelian group the
+label refuses is `n32#0`, reported as *"abelian rank 5"* — `(Z₂)⁵`, caught by the
+rank obstruction that `FROZEN_LABEL_RULE.md` states as a theorem and that
+SELECTOR-5's construction-tag label got wrong in the other direction.
+
 ## §6 — Incidents
 
 One, and it was caught by the external reviewer reading HEAD: the
@@ -182,6 +240,48 @@ the stale-instrument shape inside the campaign built to correct such
 shapes. Repaired at deb0370 (log + json committed with the verdict in
 the commit message); run-state markers stay untracked per the standing
 rule.
+
+*The refuter lane owns that one: the primary completed and I went idle without
+folding it, so for a period the E1 verdict existed only in files git did not
+hold. **A result that is not in the record is not a result**, and that applies to
+the lane that produced it.*
+
+Four more, all caught during the build and all in instruments this lane wrote or
+pinned. Recorded because a campaign that reports only its successes is not
+reporting.
+
+1. **The criterion could not be imported without destroying its predecessor's
+   evidence.** `selector4.py` opens its log at module scope in mode `"w"`, so
+   `import selector4` truncates `selector4.log`, the committed SELECTOR-4 run
+   record. `make_s4core.py` extracts from the pinned blob, changes exactly one
+   declared line, and proves it did no more — source hash, exactly one matching
+   line, a one-line diff at that index, unchanged line count, and an import that
+   asserts the predecessor's log is byte-identical.
+2. **The label was reading a construction tag, and this lane's own design pinned
+   it.** Another lane's rewrite of `rule_b_sm`, swept in by a bare `git add`,
+   short-circuited on `G.family` — M-TAG-AS-PROPERTY, the misfit whose founding
+   case is the refuted C4, inside the corrective campaign's own label — and
+   crashed outright on A₄, A₅, F₂₁, Δ(27), S₅ and UT(3,5). `make_ruleb.py` now
+   extracts RULE-B at the blob that produced the refutation's numbers and
+   **mechanizes the prohibition**: extraction aborts if the source reads
+   `G.family`, `is_lie_type`, `G.name`, `.aliases` or `G.notes`. Against the
+   broken blob that gate finds 4 sites and refuses.
+3. **A silent infinite loop in the census fingerprint.** Extracting invariant
+   factors by dividing a running order by the largest remaining element order
+   never terminates when that order is 1; the census hung at order 4 with no
+   error. Replaced by the abelianization's element-order multiset — a complete
+   invariant for abelian groups, and one that cannot loop.
+4. **A check that computed a second reading and never compared it.** The
+   orbit-constancy check, which is the runtime half of the equivariance lemma,
+   ran a second pass with different orbit members as homes and discarded the
+   result. Shipping it would have rested the gauge-orbit economy on the proof
+   alone.
+
+Ruling 3 belongs in this list too, and is written up in §2.1: this lane's first
+`k*` rule would have converted budget exhaustions into `False`s, and the run's
+own sensitivity line shows it would have cost **0 groups** here. A guard that
+proves unnecessary is not a guard that was wrong — whether it was needed was not
+knowable until after the run.
 
 ## §7 — H1, the forward test (open)
 

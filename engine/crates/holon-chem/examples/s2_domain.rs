@@ -90,22 +90,30 @@ fn main() {
     println!("# E(O) = {e_o:.12} Ha   E(H) = {e_h:.12} Ha   threads = {threads}");
 
     // ------------------------------------------------------------------ the shell sweep
-    const NX: usize = 21;
-    const NC: usize = 29;
-    /// Closed-angle floor of the sweep. Below this the two hydrogens are inside a bohr of
-    /// each other on the diagonal and the second sweep is what covers that corner.
-    const C_MIN: f64 = 0.05;
-    let bs: Vec<f64> = vec![
-        4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0,
-    ];
+    let nx: usize = std::env::args().nth(3).and_then(|s| s.parse().ok()).unwrap_or(21);
+    let nc: usize = std::env::args().nth(4).and_then(|s| s.parse().ok()).unwrap_or(29);
+    // Closed-angle floor of the sweep. The default matches the table's own fence; the
+    // TRUNCATION measurement wants it lower, because the region the truncation zeroes is
+    // every geometry with `y > R_HI` whatever its angle, and every shell's worst reading
+    // sits at the sweep's own floor — which is the signature of a maximum outside it.
+    let c_min: f64 = std::env::args().nth(5).and_then(|s| s.parse().ok()).unwrap_or(0.05);
+    // `s2_domain [threads] [b] [nx] [nc]`: with a shell named, sweep only that one, at
+    // whatever resolution is asked for. The chosen R_HI's shell has to be re-measured
+    // FINELY before it is trusted — a grid maximum understates its own supremum, and the
+    // first sweep's margin against the 1e-5 stake was three percent.
+    let only: Option<f64> = std::env::args().nth(2).and_then(|s| s.parse().ok());
+    let bs: Vec<f64> = match only {
+        Some(b) => vec![b],
+        None => vec![4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0, 11.0, 12.0, 13.0, 14.0, 15.0],
+    };
     println!(
         "\n## the truncation shell: worst |dE3| anywhere with max(O-H) = b\n\
-         ##   x swept {NX} ways over [{R_LO}, b], cos(theta) swept {NC} ways over \
-         c = sqrt(1-u) in [{C_MIN}, {SQRT2:.4}]\n"
+         ##   x swept {nx} ways over [{R_LO}, b], cos(theta) swept {nc} ways over \
+         c = sqrt(1-u) in [{c_min}, {SQRT2:.4}]\n"
     );
 
     let jobs: Vec<(usize, usize)> = (0..bs.len())
-        .flat_map(|i| (0..NX).map(move |j| (i, j)))
+        .flat_map(|i| (0..nx).map(move |j| (i, j)))
         .collect();
     let next = AtomicUsize::new(0);
     let acc: Vec<Mutex<Worst>> = bs.iter().map(|_| Mutex::new(Worst::default())).collect();
@@ -118,12 +126,12 @@ fn main() {
                 }
                 let (i, j) = jobs[t];
                 let b = bs[i];
-                let x = R_LO + (b - R_LO) * j as f64 / (NX - 1) as f64;
+                let x = R_LO + (b - R_LO) * j as f64 / (nx - 1) as f64;
                 let e_ox = pair_point(OXYGEN, HYDROGEN, x).e;
                 let e_oy = pair_point(OXYGEN, HYDROGEN, b).e;
                 let mut local = Worst::default();
-                for k in 0..NC {
-                    let cc = C_MIN + (SQRT2 - C_MIN) * k as f64 / (NC - 1) as f64;
+                for k in 0..nc {
+                    let cc = c_min + (SQRT2 - c_min) * k as f64 / (nc - 1) as f64;
                     let u: f64 = 1.0 - cc * cc;
                     let (d, z) = de3(x, b, u, e_o, e_h, e_ox, e_oy);
                     if d.abs() > local.d.abs() {

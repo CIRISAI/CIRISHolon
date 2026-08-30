@@ -77,23 +77,43 @@
 //! surface is extended LINEARLY IN `u` — never in `c`, which is what would put the `1/c`
 //! back — so an exactly collinear approach meets a finite force rather than an infinity.
 //!
-//! # Where the tail lives (and why `R_HI` bounds the LARGER O-H side)
+//! # Where the tail lives, and the algebraic law that stopped it being exponential
 //!
-//! `dE3` vanishes exactly when some atom is far from BOTH of the others, which is the
-//! statement that two of the three sides are long — SATURATION-1's AMENDMENT A1, and a
-//! fact about geometry rather than about species, so it transfers unchanged. What does
-//! not transfer is the box: A1's domain is `s2 <= R_cut` on the second-smallest side, and
-//! the smallest box in the two O-H sides that CONTAINS that domain is `x, y <= 2 R_cut`,
-//! because `s2 <= R_cut` forces every side below `2 R_cut` through the triangle
-//! inequality.
+//! `dE3` vanishes when some atom is far from BOTH of the others — two long sides, a long
+//! `s2`, SATURATION-1's AMENDMENT A1. That is geometry, not species, so it transfers. What
+//! does not transfer is the box: A1's domain is `s2 <= R_cut` and the smallest box in the
+//! two O-H sides that CONTAINS it is `x, y <= 2 R_cut`, because `s2 <= R_cut` forces every
+//! side below `2 R_cut` through the triangle inequality.
 //!
-//! Measured (`examples/s2_domain.rs`), the worst `|dE3|` anywhere on the shell
-//! `max(O-H) = b` is 2.29e-3 Ha at `b = 9`, 1.02e-4 at `b = 12`, 3.25e-5 at `b = 13` and
-//! 9.71e-6 at `b = 14` — so `R_HI = 14` is the first integer shell inside the prereg's
-//! 1e-5 truncation stake, and it is `2 x 7` with `R_cut = 7`. The worst point on every
-//! shell is the near-collinear chain `O - H1 - H2` with both links at about `b/2`, which
-//! is what makes a bound on the O-H sides alone the wrong instrument to reason with and
-//! the right one to build with.
+//! Measured on the shell `max(O-H) = b` (`examples/s2_domain.rs`), the worst `|dE3|`
+//! anywhere on it falls about 2.9x per bohr — 2.29e-3 at `b = 9`, 1.02e-4 at 12, 3.25e-5
+//! at 13. On that reading `R_HI = 14` is the first integer shell inside the prereg's 1e-5
+//! stake, and it is `2 x 7`. It is also WRONG, twice, and both ways are worth the space:
+//!
+//! **A grid maximum understates its own supremum.** Re-swept at five times the resolution
+//! and with the angle carried down to `c = 0.002`, the `b = 14` shell reads **1.0091e-5**,
+//! ABOVE the stake, where the coarse sweep had said 9.71e-6. Every shell's worst reading
+//! sat at the sweep's own closed-angle floor, which is the signature of a maximum outside
+//! it, and taking a 3% margin from a grid whose maximum is a lower bound would have been a
+//! gate passing on its own resolution.
+//!
+//! **And the tail is ALGEBRAIC, not exponential.** Past `b = 14` the worst point stops
+//! being the near-collinear chain and becomes a stretched hydrogen MOLECULE with the
+//! oxygen far away: 3.54e-6 at `b = 15`, 2.48e-6 at 16. `examples/s2_dispersion.rs` staked
+//! `R^-6` for that — dipole-dipole dispersion — and MEASURED `-5.01`, with the successive
+//! two-point exponents on the clean tail converging on 5.007. The stake fired. `R^-5` is
+//! the quadrupole-quadrupole law, and both partners have a quadrupole here while an
+//! isolated hydrogen atom does not, which is also why no pair term carries any of it:
+//! `V2_OH(12.41)` is 3.9e-14 against a triple of 3.1e-6 at the same separation.
+//!
+//! The discriminator that reading asked for came back sharper than the prediction.
+//! Replacing the oxygen with NEON — closed shell, no quadrupole — removes the algebraic
+//! sector ENTIRELY rather than leaving an `R^-6` behind: `|dE3|` is 3.5e-8 at 8 bohr,
+//! 8.0e-12 at 10, and in the f64 cancellation floor from 12 out. So dispersion in this
+//! basis is below anything this campaign can resolve, and the tail belongs to the open
+//! shell.
+//!
+//! So `R_HI = 15`, measured at 3.54e-6 with 2.8x of margin.
 //!
 //! # The closed-angle fence
 //!
@@ -143,10 +163,8 @@ use crate::trimer::cr_weights;
 pub const R_LO: f64 = 0.7;
 
 /// Grid upper edge in either O-H side, bohr — the truncation radius. See the module
-/// header: `examples/s2_domain.rs` measures 9.71e-6 Ha as the worst `|dE3|` on this
-/// shell, inside the prereg's 1e-5 stake, and 14 is `2 x 7` with 7 the second-smallest
-/// side's own cut.
-pub const R_HI: f64 = 14.0;
+/// header for what it is measured against, and for why 14 was not it.
+pub const R_HI: f64 = 15.0;
 
 /// Stretch of the side axis: `r = R_LO + (R_HI - R_LO) (e^{a tau} - 1)/(e^a - 1)`. The
 /// surface is steep at contact and flat in the tail, so an exponential stretch puts the
@@ -778,7 +796,11 @@ pub fn to_text(t: &WaterTable) -> String {
     s.push_str(&format!("# e_o_atom: {:016x}\n", m.e_o_atom.to_bits()));
     s.push_str(&format!("# e_h_atom: {:016x}\n", m.e_h_atom.to_bits()));
     s.push_str(&format!("# peak: {:016x}\n", m.peak.to_bits()));
+    // What the PRODUCING RUN paid, which is not the stored node count when the table is a
+    // subgrid of a finer solved pass — `examples/s2_build.rs` solves one fine node set and
+    // reads every candidate table out of it, so the sizing and the build are one run.
     s.push_str(&format!("# solves: {}\n", m.solves));
+    s.push_str(&format!("# nodes_stored: {N_SOLVED}\n"));
     s.push_str("# values: the sorted half i <= j, i slowest then j then k; the mirror\n");
     s.push_str("# node (j, i, k) takes the SAME float and is not stored twice.\n");
     for i in 0..NR {

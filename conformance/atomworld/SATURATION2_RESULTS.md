@@ -72,7 +72,7 @@ so its force carries a small discontinuity where two sorted sides cross. Here th
 H-H side never enters the sort and the table is exactly symmetric in the only
 pair that does.
 
-### Why `R_HI` is 14 bohr, measured
+### Why `R_HI` is 15 bohr — and the two ways 14 was wrong
 
 SATURATION-1's AMENDMENT A1 truncates on the SECOND-SMALLEST side, because `dE3`
 vanishes exactly when some atom is far from BOTH of the others — two long sides,
@@ -81,9 +81,8 @@ transfer is the box: this table's axes are the two O-H sides, and the smallest
 box in those that CONTAINS `{s2 <= R_cut}` is `x, y <= 2 R_cut`, because
 `s2 <= R_cut` forces every side below `2 R_cut` through the triangle inequality.
 
-`examples/s2_domain.rs` swept the shell `max(O-H) = b`, over `x` in
-`[0.9, b]` and the angle across the full range, and reports the worst `|dE3|`
-anywhere on it:
+`examples/s2_domain.rs` swept the shell `max(O-H) = b`, over `x` in `[0.9, b]`
+and the angle across the range, and reported the worst `|dE3|` anywhere on it:
 
 | b | worst \|dE3\| | at x | theta | s2 there |
 |---|---|---|---|---|
@@ -91,22 +90,56 @@ anywhere on it:
 | 6 | 3.86e−2 | 2.94 | 4.1° | 3.07 |
 | 8 | 5.92e−3 | 4.09 | 4.1° | 4.09 |
 | 9 | 2.29e−3 | 4.54 | 4.1° | 4.54 |
-| 10 | 8.54e−4 | 5.00 | 4.1° | 5.03 |
 | 11 | 3.03e−4 | 5.45 | 4.1° | 5.58 |
 | 12 | 1.02e−4 | 5.89 | 4.1° | 6.13 |
 | 13 | 3.25e−5 | 6.34 | 4.1° | 6.69 |
-| **14** | **9.71e−6** | 6.79 | 4.1° | 7.24 |
-| 15 | 3.00e−6 | 12.18 | 4.1° | 12.18 |
+| 14 | 9.71e−6 | 6.79 | 4.1° | 7.24 |
 
-So 14 is the first integer shell inside the prereg's 1e−5 truncation stake, and
-it is `2 x 7` with `R_cut = 7`.
+which reads as "14 is the first integer shell inside the 1e−5 stake, and it is
+`2 x 7`". **Both halves of that were wrong.**
 
-**The finding inside that table.** The worst point on every shell is the SAME
-shape: a near-collinear chain O—H1—H2 with both links at about `b/2`. That is a
-configuration where the two smallest sides are only `b/2` — well inside A1's
-domain — so a bound on the O-H sides alone is the wrong instrument to reason
-with, and the right one to build with. Reading the shell as if it were A1's own
-shell would have licensed `R_HI = 9` and a truncation systematic 230× the stake.
+**One — a grid maximum understates its own supremum.** Every shell's worst
+reading sits at `theta = 4.1°`, the sweep's own closed-angle floor, which is the
+signature of a maximum outside the grid rather than on it. Re-swept at five times
+the `x` resolution and with the angle carried down to `c = 0.002`, the `b = 14`
+shell reads **1.0091e−5** — *above* the stake. A 3% margin taken from a lower
+bound is a gate passing on its own resolution.
+
+**Two — the tail is ALGEBRAIC.** Past `b = 14` the worst point stops being the
+near-collinear chain and becomes a stretched hydrogen MOLECULE with the oxygen
+far away: 3.54e−6 at `b = 15`, 2.48e−6 at `b = 16`. Those fall far too slowly for
+an exponential, so `examples/s2_dispersion.rs` staked the obvious explanation and
+tested it.
+
+#### The staked exponent FIRED, and the discriminator was sharper than the stake
+
+| | |
+|---|---|
+| **staked, before the run** | `dE3 ~ R^-6` — dipole-dipole dispersion |
+| **measured, collinear** | slope **−5.0099** (clean tail, `R > 13` bohr) |
+| **measured, broadside** | slope −4.93 |
+| successive two-point exponents | 5.016, 5.012, 5.008, **5.007** |
+
+`R^-5` is the quadrupole–quadrupole law, not a dispersion law. The stake fired
+and is kept fired: `PREDICTED_SLOPE` in that example is still `-6.0`, because
+re-pinning it would delete the evidence that a prediction was made and missed.
+
+What replaces it: oxygen's open 2p shell has a quadrupole and H2's **bond** has
+one, while an isolated hydrogen atom is spherical in this basis and has none —
+which is the same fact that keeps the whole effect out of the pair terms.
+Measured, `V2_OH(12.41)` is 3.9e−14 against a triple holding 3.1e−6 at the same
+separation.
+
+That reading predicts something falsifiable and cheap: replace the oxygen with
+**neon**, closed-shell and spherical, and the `R^-5` channel should close leaving
+the `R^-6` behind. **It came back sharper than the prediction.** Neon has no
+algebraic tail at all — `|dE3|` is 3.5e−8 at 8 bohr, 8.0e−12 at 10, and inside
+the f64 cancellation floor from 12 out, zero points measurable past 13 bohr. So
+removing the open-shell quadrupole removes the algebraic sector *entirely*, and
+minimal-basis dispersion sits below anything this campaign can resolve: it was
+never the right story at any separation, not merely the wrong exponent.
+
+**So `R_HI = 15`**, measured at 3.54e−6 with 2.8× of margin under the stake.
 
 ### Why the third coordinate is `c`, and where its singularity went
 

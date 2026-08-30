@@ -85,14 +85,23 @@ import fci as F  # noqa: E402
 # ---------------------------------------------------------------- the declared domain
 #
 # These four numbers are the table's box, and they are INPUTS here.  Their
-# provenance is `examples/s2_domain.rs`: the worst |dE3| anywhere on the shell
-# max(O-H) = b is 3.2e-5 Ha at b = 13 and 9.7e-6 at b = 14, so 14 is the first
-# integer shell inside the prereg's 1e-5 truncation stake; and the closed-angle
-# corner stays smooth and saturating down to c = 0.01, so the fence at 0.05 is
-# above anything the surface does.
+# provenance is `examples/s2_domain.rs`.  The truncation radius is 15 and NOT
+# the 14 a coarse shell sweep first licensed: re-swept at five times the
+# resolution and with the angle carried down to c = 0.002, the b = 14 shell
+# reads 1.0091e-5 Ha against a 1e-5 stake, where the coarse sweep had said
+# 9.71e-6 -- a grid maximum understates its own supremum, and every shell's
+# worst reading sat at the sweep's own closed-angle floor.  At b = 15 the worst
+# point stops being the near-collinear chain and becomes a stretched H2 with the
+# oxygen 12 bohr away, 3.54e-6, and that tail is ALGEBRAIC: `s2_dispersion.rs`
+# staked R^-6 for it and measured -5.01, the quadrupole-quadrupole law rather
+# than the dispersion one.  It is purely three-body because an isolated hydrogen
+# is spherical in this basis and carries no quadrupole, so no O-H pair term can
+# hold any of it; replacing the oxygen with closed-shell NEON removes the
+# algebraic sector entirely.  The closed-angle corner stays smooth down to c = 0.005,
+# so the fence at 0.05 is above anything the surface does.
 
 R_DOM_LO = mpf("0.9")          # staked domain floor in either O-H side
-R_HI = mpf("14.0")             # truncation radius on the LARGER O-H side
+R_HI = mpf("15.0")             # truncation radius on the LARGER O-H side
 C_LO = mpf("0.05")             # closed-angle fence, c = sqrt(1 - cos theta)
 C_HI = sqrt(mpf(2))            # the collinear edge, theta = 180 degrees
 
@@ -181,6 +190,77 @@ def solve_atoms(atoms, want_B=True, tol_digits=None, two_sz=None):
         out["dev_AB"] = nstr(abs(out["E"] - EB), 6)
         out["resid_B"] = nstr(rB["resid"], 6)
     return out
+
+
+# ---------------------------------------------------------------- the run lock
+#
+# WHY THIS EXISTS, and it is not hypothetical.  A --grid run was relaunched
+# against a corrected domain while the previous one was still going, and for
+# twenty minutes two processes wrote the same log and were both aimed at the same
+# output file -- so the stale run, finishing later, would have OVERWRITTEN the
+# corrected artifact with a staked set built to the wrong R_HI.  Nothing would
+# have looked broken: the file would have existed, parsed, and been wrong.
+#
+# The sibling `elements1_referee/` has the same guard and a test that fires it
+# against a live process, which is where the idea comes from.
+
+
+class RunLocked(RuntimeError):
+    pass
+
+
+def _lock_path(out):
+    return out + ".lock"
+
+
+def _alive(pid):
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        return False
+    return True
+
+
+def acquire_run_lock(out, force=False):
+    """Refuse to start when another live process is aimed at the same output.
+
+    A lock left behind by a dead process is STALE and is taken over with a note,
+    because refusing forever on a crash would be a guard that costs more than it
+    saves.  A lock held by a live process is a refusal.
+    """
+    p = _lock_path(out)
+    if os.path.exists(p):
+        try:
+            with open(p) as fh:
+                held = json.load(fh)
+            pid = int(held.get("pid", -1))
+        except Exception:
+            pid, held = -1, {}
+        if pid > 0 and _alive(pid) and pid != os.getpid():
+            if not force:
+                raise RunLocked(
+                    "another run (pid %d, started %s) is already aimed at %s. "
+                    "Two runs writing one artifact is how a stale staked set "
+                    "overwrites a corrected one. Kill it, or pass --force-lock."
+                    % (pid, held.get("started", "?"), out)
+                )
+            print("# --force-lock: taking over a lock held by live pid %d" % pid)
+        else:
+            print("# stale lock from pid %s taken over" % pid)
+    os.makedirs(os.path.dirname(os.path.abspath(p)) or ".", exist_ok=True)
+    with open(p, "w") as fh:
+        json.dump(
+            dict(pid=os.getpid(), started=time.strftime("%Y-%m-%d %H:%M:%S"), out=out),
+            fh,
+        )
+    return p
+
+
+def release_run_lock(p):
+    try:
+        os.remove(p)
+    except OSError:
+        pass
 
 
 # ---------------------------------------------------------------- the cache
@@ -448,6 +528,14 @@ def cmd_selftest(args):
 
 def cmd_grid(args):
     mp.dps = args.dps
+    lock = acquire_run_lock(args.out, force=args.force_lock)
+    try:
+        return _grid_body(args)
+    finally:
+        release_run_lock(lock)
+
+
+def _grid_body(args):
     geoms = staked_geometries()
     if args.limit:
         geoms = geoms[: args.limit]
@@ -519,6 +607,11 @@ def main():
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--no-route-b", action="store_true")
+    ap.add_argument(
+        "--force-lock",
+        action="store_true",
+        help="take over a run lock held by a LIVE process; see acquire_run_lock",
+    )
     args = ap.parse_args()
     if args.time:
         return cmd_time(args) or 0

@@ -154,9 +154,14 @@ pub const WATER_T1_MEASURED_E: f64 = 1e-3;
 /// on the shell the surface is truncated at. Staked in `SATURATION2_PREREG.md`.
 pub const WATER_T2_KILL_E: f64 = 1e-5;
 
-/// The MEASURED systematic on that shell, hartree. `examples/s2_domain.rs` swept twelve
-/// shells to choose `R_HI = 14`; this is the chosen one, re-measured inside the suite.
-pub const WATER_T2_MEASURED_E: f64 = 1.2e-5;
+/// The MEASURED systematic on the truncation shell, hartree.
+///
+/// `examples/s2_domain.rs` swept twelve shells to choose `R_HI`; this is the chosen one,
+/// re-measured inside the suite by a two-stage search that reaches past the table's own
+/// closed-angle fence. The first choice of `R_HI` was 14, and re-measuring it at five
+/// times the resolution moved it from 9.71e-6 to 1.0091e-5 and across the stake — which
+/// is why the gate refines rather than reading one grid.
+pub const WATER_T2_MEASURED_E: f64 = 5e-6;
 
 /// G2's STAKE: how much shallower the third hydrogen's best binding must be than water's
 /// own second O-H bond. A factor, staked in `SATURATION2_PREREG.md`.

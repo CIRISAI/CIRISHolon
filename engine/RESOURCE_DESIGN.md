@@ -1,15 +1,19 @@
 # RESOURCE_DESIGN — an allocation is a child holon, and its lifecycle is the rent clause
 
-Status: **design, no code**. Numbers marked **HARD** are measured on this machine and named
-with their instrument; **PENDING** are owed and are used in no argument below.
+Status: **ADMITTED FOR IMPLEMENTATION** (lead's audit, 2026-08-30) — design complete, code not
+started, and D13 requires the plants BEFORE the mechanisms they guard. Numbers marked **HARD**
+are measured on this machine and named with their instrument; **PENDING** are owed and are used
+in no argument below.
 Scope: in-process resource discovery, leasing and dispatch — cores, RAM, VRAM, disk, worker
 pools, table-generation shards. No transport, no cross-machine scheduling, no consent layer.
 Frame: `INTEGRATION_FRAME.md` — one holon, values only.
 Banked machinery this rests on: `CIRISOntology/Core/Maintenance.lean` (`rent_holds`,
 `underpaid_shrinks`, `unpaid_decays`), `lean/CIRISHolon/MergeLaw.lean` (`shardedFold_invariant`,
 `digest_convicts`), the tuner's Hold/Degrade contract, `MESH_DESIGN.md`.
-Date: 2026-08-30. Revised the same day with the lead's lease ruling (D3), the
-precision-as-resource case (§2.3, D3b), and the misfit contacts (§7b).
+Date: 2026-08-30. Revised the same day, three times: the lead's lease ruling (D3), the
+precision-as-resource case (§2.3, D3b), the misfit contacts (§7b), and then the audit's six
+amendments — §2.3 brought up to `fe18572`'s realized DD tier, the plant set (§8, D13), and the
+four open questions answered rather than owed (§9).
 
 *The self-similarity is the design's argument: this is already how the team runs its own
 lanes. A lane is commissioned when there is work, probed against the tree it is about to touch,
@@ -156,11 +160,16 @@ The second live case study, and it is the one that shows a lease has a **quantit
 boundary rather than only a temporal one.
 
 An `f64` Davidson solve that exits `Stagnated` at its expansion floor has **EXHAUSTED ITS TIER**.
-This is measured, not analogical: every heavy solve in SATURATION-3 exits stagnated, because
-`davidson_eigh` accepts a new expansion direction only when its norm clears a hardcoded `1e-10`
-after Gram-Schmidt — a **scale-free** floor, which is why residuals cluster just under `1e-10`
+This is measured, not analogical: every heavy solve in SATURATION-3 exits stagnated, because the
+Davidson accepts a new expansion direction only when its norm clears the tier's expansion floor
+after Gram-Schmidt — a **scale-free** bound, which is why residuals cluster just under `1e-10`
 regardless of energy or space size (the tables lane's discrimination: an `eps·|E|·√n_det` floor
 predicts an 8.6× spread across the staked combos, measured spread 1.21×).
+
+Since `fe18572` that floor is no longer a literal: it is **`Scalar::expansion_floor()`**
+(`scalar.rs`), a declared per-scalar constant — `1e-10` for `f64`, `1e-24` provisional for `Dd`.
+The tier edge is now a named property of the arithmetic class rather than a number buried in a
+loop, which is what makes it leasable at all.
 
 Read in this document's vocabulary: **the lease on f64 arithmetic guarantees residuals down to
 roughly the named floor and nothing below it.** So:
@@ -168,8 +177,20 @@ roughly the named floor and nothing below it.** So:
 * a request for a deeper residual is **not a retry** and **not a constant edit** — hammering the
   same holon past its declared boundary is the arithmetic version of retry-forever, which D3(2)
   already forbids;
-* it is an **overflow**, and it must probe and lease the **next-tier holon** — the high-precision
-  referee route (ELEMENTS-3's route C, whose declared availability is already recorded as owed).
+* it is an **overflow**, and it must probe and lease the **next-tier holon** — which since
+  `fe18572` **EXISTS in-engine** rather than being owed: the double-double tier (`tier.rs`,
+  `refine_determinant_dd`, ~32 digits, warm-started from the f64 solution so the cheap tier does
+  the heavy lifting cold and the expensive one pays only for the refinement). Measured: Sb went
+  from floor-stagnation to **3.37e-15**. That is the **first realized overflow lease target** and
+  the founding case of this rule.
+
+**AND THE LADDER RECURSES, which is the part that makes this a lease structure rather than a
+special case.** The `Dd` tier declares its OWN floor (`1e-24`, provisional). So a tier boundary is
+not *one* boundary between "normal" and "high" precision — it is a **ladder of leases**, each rung
+declaring what it guarantees and where it stops, each overflow routing to the next. The same D3
+horizon logic applies at every rung: `Dd`'s `1e-24` is provisional, which in lease vocabulary
+means its declared guarantee is not yet calibrated, and a rung whose boundary is provisional must
+say so in its ledger entry rather than be relied on as if measured.
 
 **D3b — A LEASE STATES ITS QUANTITATIVE BOUNDARY, THE RECEIPT RECORDS WHERE IT STOPPED, AND THE
 ESCALATION PATH IS LEASED RATHER THAN IMPROVISED.** The ledger entry for an arithmetic lease
@@ -177,13 +198,13 @@ carries *down-to-the-floor, no further*; a solve that stops there has paid its r
 its receipt says so; and a caller needing more routes to a different tier instead of editing a
 constant.
 
-This also explains why the floor must NOT be moved, which is otherwise a puzzling refusal: the
+This also explains why the f64 floor must NOT be moved, which is otherwise a puzzling refusal: the
 eigenvalue error at that floor is `~resid²/gap ≈ 1e−20` Ha, so the solves are ACCURATE and only
 the label is wrong — and moving the threshold would shift every energy's trailing bits and cost
 SATURATION-2's committed 105,105-node table a full regeneration. A tier boundary is part of the
 artifact, exactly as D0 says a device class is.
 
-### 2.3 Refusal is loud, degradation is stated
+### 2.4 Refusal is loud, degradation is stated
 
 **D4 — NO SILENT FALLBACK.** A failed probe produces either a LOUD refusal or a *stated* Degrade
 under the tuner's Hold/Degrade contract, naming what was asked, what was found, and what the
@@ -310,6 +331,12 @@ and VOIDs rather than passes (M-PLANT-SECTOR).
 * **No claim that a lease reserves anything** — see D3.
 * **No claim that GPU dispatch is safe for bit-gated workloads** — see D0; it is explicitly not.
 * Recursion cap 4 is a **declared choice**, not a derived bound.
+* **No claim that `Dd`'s `1e-24` expansion floor is calibrated** — it is provisional, and under
+  D3b a rung whose boundary is provisional says so in its ledger entry rather than being relied
+  on as measured. The `f64` rung's `1e-10` is measured; the rung above it is not yet.
+* **No claim that any plant in §8 has fired**, because none has: the mechanisms do not exist
+  yet. D13 requires each to be demonstrated failing before the rule it guards is trusted, and
+  until then this table is a commitment, not evidence.
 
 ## 7b. Misfit contacts
 
@@ -327,6 +354,11 @@ citing it is refused. Contacted here, with what each one binds:*
   two devices' throughputs must differ by more than the spot-check factor) before it is scored.
 * **M-STALE-INSTRUMENT** — a registered throughput entry IS an instrument, and **D12** exists
   because a registration is a memory of a measurement rather than the measurement.
+* **M-CACHE-KIND** — the dispatch registry is keyed *per workload AT THIS SIZE*, so **size and
+  kind belong IN the key** and a shape mismatch on read must **RAISE**. Otherwise a small-size
+  entry silently admits a large dispatch: existence stands in for certification, which is exactly
+  the cache-kind shape. A registry lookup that returns "close enough" is a lookup wearing a
+  measurement's clothes.
 * **M-SORTS-NOT-SEPARATES / M-EXIT-DISCRIMINATOR** — **§2.3**: `Stagnated` is the normal exit for
   every heavy solve, so it ranks rather than separates, and the informative discriminator is the
   exit reason *plus* the residual against the floor *plus* the variational margin.
@@ -335,15 +367,92 @@ citing it is refused. Contacted here, with what each one binds:*
   a liveness-based probe passes exactly when it is most wrong. Offered to the registry as a
   candidate rather than self-registered.
 
-## 8. Open questions, owed before code
+## 8. THE PLANT SET — every firing rule demonstrates a failing case first
 
-1. **What refreshes a lease?** D3 settles what a lease MEANS; it does not settle the mechanism.
-   "Continued use" needs a definition per resource kind, and it must be cheap enough that paying
-   rent is not itself a cost worth avoiding — a heartbeat that costs more than the work is a
-   resource holon nobody requested (D6).
-2. **Does the reaper's step-3 discriminator have a cheap implementation?** "Is anything else
-   progressing" is the right question and it is not obviously cheap to answer. **PENDING.**
-3. **Where does the ledger live** so the audit can read it after a crash, without becoming a
-   write amplifier on the very disk whose exhaustion started this?
-4. **Is the spot-check's declared factor a constant or per-kernel?** A GPU under thermal throttle
-   can legitimately miss its entry by 2×; a mis-registration by 10× must still be caught.
+**D13 — A RULE THAT HAS NEVER FIRED HAS NEVER BEEN DEMONSTRATED TO GATE.** Same discipline as
+G1's split mutation set, applied to every D-rule that can refuse. Each plant asserts its CARRIER
+non-empty before it is scored (M-PLANT-SECTOR: a plant on an empty sector VOIDs rather than
+passes — measured cost of forgetting this, twice in one afternoon: a wrong-warm-start plant on a
+9-determinant space, and again on `(O,O,O)` where the wrong start found the right eigenvector).
+
+Plants come BEFORE the mechanism they guard, not after it.
+
+| rule | the plant | must do | carrier asserted first |
+|---|---|---|---|
+| **D2** probe the resource | a holder that is alive and scheduling while its resource is exhausted (the disk-full shape, forced by filling a small loopback FS) | REFUSE — a liveness-only probe passes here, which is the defect | the holder's process really is scheduling |
+| **D4** no silent fallback | a GPU dispatch whose probe fails | a LOUD refusal or a *stated* Degrade, never a quiet CPU run | the fast path really was available before the plant |
+| **D5** half-visible hardware | driver present, CUDA broken | REFUSE, never fall back | the driver really is present |
+| **D7** recursion cap | a depth-**5** lease request | VOID **with the lease chain in the message** | depth 4 really is reached and admitted |
+| **D8** integer receipts only | a float smuggled into a certificate field | REFUSED at the type/serialisation boundary | the float really reaches the certificate path |
+| **D9** leaf-to-root | a child deliberately CONVICTED mid-run | surfaces in the PARENT's ledger, never vanishes | the child really was leased and really did convict |
+| **D10** reaper stands down | a stalled machine — rung-3's input mocked to "nothing is progressing" | the reaper **STANDS DOWN and says so**, reclaiming nothing | a holder really is past its grace period and silent |
+| **D12** registry spot-check | the GPU sigma registered at **10×** its measured throughput | CONVICT the entry on observing ~65.7 against a claimed 657 | the two devices' throughputs differ by more than the spot-check factor |
+| **D3b** tier overflow | a residual demanded below `f64`'s `expansion_floor()` | lease the `Dd` tier, never loop on `f64` | the f64 solve really is at its floor (exit `Stagnated`) |
+
+**D10's plant is the one that matters most and is the easiest to get wrong**, which is why rung 3
+is built as an injectable input rather than an internal call: a reaper that can only be tested on
+a healthy machine has never been tested at all, and the failure it guards against — reclaiming
+the whole machine's work during a global stall — is strictly worse than the leak it prevents.
+
+---
+
+## 9. The open questions, answered
+
+*§8 of the first draft asked four. The lead answered all four; each is ADOPTED here with the
+measurement or the argument that carries it, and each remains refutable by measurement.*
+
+### Q1 — What refreshes a lease? **THE RECEIPTS ARE THE RENT.**
+
+A lease refreshes by writing a **receipt of real use** — nodes solved, bytes moved — not by a
+heartbeat. This dissolves the worry D6 raised rather than answering it: a working holder writes
+receipts **anyway** (the detached-compute done-marker discipline already is this), so rent costs
+nothing extra, and there is no separate liveness signal to maintain, tune, or spoof.
+
+**And it sharpens the definition of a leak.** A heartbeat with no work product is NOT rent. A
+holder that pings while producing nothing is exactly the case the reaper should reclaim, and
+under a heartbeat scheme it is the case that would survive longest.
+
+### Q2 — Is rung 3 cheap? **THE REAPER PROBES ITSELF.** O(1), no global scan.
+
+Before convicting a holder for failing operation class *X*, the reaper **attempts *X* itself** —
+write a byte, allocate a page, upload a buffer. If the reaper's own probe fails, the problem is
+the machine and it stands down.
+
+This is **D2 applied to the reaper**, and it collapses a question that looked expensive:
+*"is anything else on this machine progressing?"* reduces to *"can I, right now, do the thing I
+am about to convict someone for failing to do?"* — one syscall, no scan, no registry of other
+holders. It is also the right question rather than a cheap proxy for it: during the disk-full
+window the reaper's own write would have failed, which is precisely when it must not reap.
+
+### Q3 — Where does the ledger live? **ON the resource class it accounts, written atomically.**
+
+Atomic write (temp + `os.replace`) with a bounded in-memory mirror. The pattern is not a guess:
+the referee's ledger survived the 2026-08-30 disk-full window with **zero corruption across
+12,501 records**.
+
+Two consequences worth stating, because they resolve the write-amplifier worry the first draft
+raised rather than trading against it:
+
+* **the ledger write IS the rent payment** (Q1) — one write, not two, so accounting is not an
+  overhead on top of the work;
+* **a ledger that cannot be written IS the exhaustion signal.** Its failure is the authoritative
+  probe under D3(2), not an outage of the accounting. The instinct to treat "cannot write the
+  ledger" as a monitoring failure to be worked around is exactly backwards: it is the reading.
+
+### Q4 — Is the spot-check factor constant? **NO — per-kernel and DERIVED.**
+
+Register **mean AND spread** at registration time; convict outside `k × spread` with `k`
+declared. One constant cannot serve both a 2× thermal throttle (legitimate) and a 10× lie
+(the D12 plant) — a threshold that tolerates the first necessarily tolerates half of the second.
+The spread is measured at registration, so the tolerance is a property of the kernel's own
+observed variability rather than a number chosen to make the plant fire.
+
+---
+
+## 10. Still owed
+
+* The RESOURCE_DESIGN audit is complete and this document is **ADMITTED FOR IMPLEMENTATION**;
+  what remains is code, plants first per D13.
+* `Dd`'s `1e-24` expansion floor is **provisional**, not calibrated. Under D3b a rung whose
+  boundary is provisional must say so in its ledger entry rather than be relied on as measured.
+  The DD-tier calibration is the lead's next item and this document should be re-read against it.

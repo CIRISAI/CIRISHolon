@@ -297,8 +297,8 @@ n_res=$(cargo test -q -p holon-resource -- --list 2>/dev/null | grep -c ': test$
   && ok "holon-resource reaches $n_res tests" \
   || no "holon-resource reaches 0 tests (gate 9's disease: passing without covering anything)"
 cargo test -q -p holon-resource 2>/dev/null >/dev/null \
-  && ok "holon-resource plants: depth cap, smuggled float, convicted child, reaper stand-down" \
-  || no "holon-resource plants: depth cap, smuggled float, convicted child, reaper stand-down"
+  && ok "holon-resource: all nine RESOURCE_DESIGN plants (D2,D4,D5,D7,D8,D9,D10,D12,D3b)" \
+  || no "holon-resource: all nine RESOURCE_DESIGN plants (D2,D4,D5,D7,D8,D9,D10,D12,D3b)"
 
 # 12. A CROSS-REFERENCE IS A WARRANT ONLY IF ITS TARGET EXISTS (team-lead's ruling,
 #     2026-08-24). Q10_PREREG.md §10 cites "M1-M6 carry over from Q9's brief unchanged" —

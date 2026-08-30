@@ -16,9 +16,10 @@
 //! | [`probe`] — attempt the thing, never ask the holder | D1, D2, D4 |
 //! | [`reaper`] — three rungs, the third being the reaper probing itself | D10 |
 //! | [`tier`] — arithmetic precision as a leased resource, and the overflow rule | D3b |
+//! | [`registry`] — consult, then probe, then lease; and the registry those cite | D0, D5, D11, D12 |
 //!
 //! NOT here, and each absence is a decision: no CUDA (the GPU owner supplies its VRAM probe),
-//! no thread pool (the pool owner supplies its worker probe), no dispatch registry yet, and no
+//! no thread pool (the pool owner supplies its worker probe), and no
 //! arithmetic-tier probe — the solver owns its own floors, and `holon-chem`'s
 //! `Scalar::expansion_floor()` is already the declared boundary this design would lease against.
 //! The crate has ZERO dependencies and cannot acquire one: it sits under everything.
@@ -52,10 +53,14 @@ pub mod ledger;
 pub mod lease;
 pub mod probe;
 pub mod reaper;
+pub mod registry;
 pub mod tier;
 
 pub use ledger::{Ledger, Receipt, ReceiptError};
 pub use lease::{Arena, Lease, LeaseError, LeaseId, LeaseState, MAX_DEPTH};
 pub use probe::{AttemptProbe, LivenessProbe, Probe, ProbeVerdict, Response, ResourceKind, ScriptedProbe};
 pub use reaper::{ReapEvidence, ReapVerdict, Reaper, ReaperWorld, ScriptedWorld};
-pub use tier::{Boundary, Ladder, Provenance, Routing, Rung};
+pub use registry::{
+    Determinism, DeviceClass, Dispatch, Entry, Registry, SpotCheck, Step, Workload, WorkloadKey,
+};
+pub use tier::{Boundary, Ladder, Limit, Provenance, Routing, Rung};

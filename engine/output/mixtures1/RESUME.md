@@ -77,26 +77,56 @@ Every parameter these accept is echoed in the run's own header, so a log says
 which run it is. P1's protocol constants are NOT settable — they are `const` in
 `mixquench.rs`, which is what makes a reported run re-runnable byte for byte.
 
-## One artifact owes a rebuild
+## One artifact owes a rebuild, and the rebuild is currently BROKEN
 
-`crates/holon-render/viewer/holon_render.wasm` and its two `docs/` copies were
-last built at `1a13c49`'s source. The `AutomaticRoute` rename (`03acdda`) changed
-`holon-render/src/lib.rs`, so they are no longer byte-reproducible from HEAD.
+`crates/holon-render/viewer/holon_render.wasm` and its two `docs/` copies are the
+build from `1a13c49`'s source. They **work**, and they are what ships. What they
+are not is reproducible from HEAD.
 
-**They are still CORRECT.** The rename is source-level — `exists()` is the
-negation of the old `is_infeasible()` and every call site was flipped to match, so
-no behaviour moved. What is owed is reproducibility, not a fix.
+**Do not rebuild and commit until the regression below is fixed.** A rebuild from
+current source produces a wasm that TRAPS.
 
-The rebuild could not be done at the time because `holon-chem/src/fci.rs` and
-`q8-mps/src/mpo.rs` were mid-edit on the shared tree (W1's mask widening, in
-`sigma_reference` — transiently unparseable, files touched seconds before the
-attempt). When the tree parses:
+### The regression: a wasm stack overflow, invisible to every native test
+
+Rebuilding after W1 landed (`MAX_ORB` 32 → 64, `Mask` → `u64`, `Det` → `u128`)
+gives a 299,007-byte artifact that traps with `RuntimeError: memory access out of
+bounds` on the first in-browser pair solve — `holon_bank_generate_pair(1, 2, 96)`,
+which is helium, two orbitals, the cheapest solve the sandbox does.
+
+Diagnosed, not guessed:
+
+| build | wasm stack | result |
+|---|---|---|
+| current source, default | 1 MiB (wasm-ld default) | **TRAP** |
+| current source, `-C link-arg=-zstack-size=8388608` | 8 MiB | works, 1,204 ms |
+| `1a13c49` source, default | 1 MiB | works, 958 ms |
+
+So it is the stack, and 8 MiB is enough. It is invisible natively because a native
+main thread gets 8 MiB anyway — `cargo test -p holon-chem` and `-p holon-render`
+are both fully green against the same source.
+
+Ruled out: `trimer.rs`'s `MAX_ORB^4` stack arrays, which look alarming and are
+not involved — that module has its own private `const MAX_ORB: usize = 3`.
+`fci.rs` has no large fixed stack arrays either (`Strings::masks` is a `Vec`), so
+the growth is in accumulated frames from the widened `Mask`/`Det` under
+`opt-level=z` + LTO, not in one obvious object.
+
+Two possible fixes, and the choice belongs to the lane that owns the widening:
+raise the stack in `build-web.sh` with a declared `-zstack-size` (honest, and
+masks future growth), or find and shrink the frame. Reported to `elements3-heavy`
+and the lead rather than decided here.
+
+**`viewer/smoke.mjs` is what caught this**, which is the gap it was written for:
+every native gate passes, and the thing the page actually loads does not run.
+
+### When it is fixed
 
 ```
 cd engine && bash crates/holon-render/build-web.sh
 cp crates/holon-render/viewer/holon_render.wasm ../docs/atoms/holon_render.wasm
 cp crates/holon-render/viewer/holon_render.wasm ../docs/unified/holon_render.wasm
-node crates/holon-render/viewer/smoke.mjs      # must still refuse Cl2 with code 21
+node crates/holon-render/viewer/smoke.mjs   # must reach the end without trapping,
+                                            # and still refuse Cl2 with code 21
 ```
 
 ## Blocked on another lane, not on a run

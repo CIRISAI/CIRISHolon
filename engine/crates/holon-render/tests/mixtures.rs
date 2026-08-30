@@ -43,7 +43,7 @@ use holon_chem::elements::{Species, HELIUM, HYDROGEN, LITHIUM};
 use holon_chem::pair::PairTable;
 use holon_render::bank::{
     D1Admission, Host, Refusal, Route, Source, TableProvenance, D1_RECORD, MAX_SPECIES,
-    MAX_TABLES,
+    MAX_TABLES, RESOLVABLE_UNCERTAINTY,
 };
 use holon_render::sim::{Boundary, Dims, Sim, MAX_ATOMS};
 use holon_render::{load_pair_table, TABLE_OK};
@@ -587,6 +587,9 @@ fn plant_iii_a_dmrg_curve_presented_as_exact_is_refused() {
         n_basis: 14,
         uncertainty_ha: 1e-9,
         claimed_exact: true, // THE PLANT
+        // This plant is about a different field; no well is declared, so the
+        // uncertainty-versus-well leg has nothing to weigh.
+        well_depth_ha: 0.0,
     };
     // Even with D1 fully discharged, the false claim is refused: an admitted bridge makes
     // a DMRG curve usable, it does not make it exact.
@@ -776,6 +779,9 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
         n_basis: 14,
         uncertainty_ha: 1e-9,
         claimed_exact: false,
+        // This plant is about a different field; no well is declared, so the
+        // uncertainty-versus-well leg has nothing to weigh.
+        well_depth_ha: 0.0,
     };
     assert_eq!(
         dmrg.admit(&d1_none, Host::Browser),
@@ -801,6 +807,9 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
         n_basis: 14,
         uncertainty_ha: 0.0,
         claimed_exact: true,
+        // This plant is about a different field; no well is declared, so the
+        // uncertainty-versus-well leg has nothing to weigh.
+        well_depth_ha: 0.0,
     };
     assert_eq!(
         shipped_bare.admit(&d1_none, Host::Browser),
@@ -825,6 +834,9 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
         n_basis: 2,
         uncertainty_ha: 1e-14,
         claimed_exact: true,
+        // This plant is about a different field; no well is declared, so the
+        // uncertainty-versus-well leg has nothing to weigh.
+        well_depth_ha: 0.0,
     };
     assert_eq!(
         light_shipped.admit(&d1_none, Host::Browser),
@@ -868,6 +880,100 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
         !too_few.admits(),
         "a D1 record with one overlap species admits, where the freeze stakes two"
     );
+
+    // ---- EXHAUSTIVE BY CONSTRUCTION -------------------------------------------------
+    //
+    // Everything above is a hand-written list, and a hand-written list cannot enforce the
+    // word EVERY in this test's name: plant (iv) added two variants and this test went on
+    // passing without touching either. So the sweep below routes through a match that the
+    // compiler requires to be total — a new `Refusal` stops the crate building until
+    // someone says how it is demonstrated, which is the property the name claims.
+    enum Demo {
+        /// The provenance, and the record and host to grade it against.
+        Admit(TableProvenance, D1Admission, Host),
+        /// Not reachable from `admit` at all: `CurveNotLoaded` is `commit`'s own refusal,
+        /// raised after admission when the slot holds no interpolant. Exercised below.
+        CommitOnly,
+    }
+    let demo_for = |r: Refusal| -> Demo {
+        match r {
+            Refusal::RouteUndeclared => Demo::Admit(p, d1_none, Host::Browser),
+            Refusal::DmrgClaimedExact => Demo::Admit(
+                TableProvenance { claimed_exact: true, ..dmrg },
+                d1_ok,
+                Host::Browser,
+            ),
+            Refusal::DmrgUnvalidated => Demo::Admit(dmrg, d1_none, Host::Browser),
+            Refusal::UncertaintyMissing => Demo::Admit(shipped_bare, d1_none, Host::Browser),
+            Refusal::DmrgUncertaintyMissing => Demo::Admit(dmrg_bare, d1_ok, Host::Browser),
+            Refusal::SplitViolated => Demo::Admit(light_shipped, d1_none, Host::Browser),
+            Refusal::CurveNotLoaded => Demo::CommitOnly,
+            Refusal::UncertaintyExceedsResolution => Demo::Admit(
+                TableProvenance { uncertainty_ha: 1e-3, ..light_shipped },
+                d1_none,
+                Host::Native,
+            ),
+            Refusal::UncertaintyExceedsWell => Demo::Admit(
+                // The narrow window named on the variant: a file declaring a well
+                // SHALLOWER than the schema's own threshold, so the resolution leg stays
+                // silent and this one is the only thing that can speak.
+                TableProvenance {
+                    uncertainty_ha: 1e-5,
+                    well_depth_ha: 5e-6,
+                    ..light_shipped
+                },
+                d1_none,
+                Host::Native,
+            ),
+        }
+    };
+    let all = [
+        Refusal::RouteUndeclared,
+        Refusal::DmrgClaimedExact,
+        Refusal::DmrgUnvalidated,
+        Refusal::UncertaintyMissing,
+        Refusal::DmrgUncertaintyMissing,
+        Refusal::SplitViolated,
+        Refusal::CurveNotLoaded,
+        Refusal::UncertaintyExceedsResolution,
+        Refusal::UncertaintyExceedsWell,
+    ];
+    for r in all {
+        match demo_for(r) {
+            Demo::Admit(prov, d1, host) => assert_eq!(
+                prov.admit(&d1, host),
+                Err(r),
+                "{r:?} has no demonstrated failing case: its fixture produced something                  else, so the refusal is unwatched and may be unreachable"
+            ),
+            Demo::CommitOnly => {
+                let mut sc = scene(&[HYDROGEN]);
+                let slot = sc.bank.slot_of_z(1, 1).unwrap();
+                sc.bank.evict(slot);
+                assert_eq!(
+                    sc.bank.commit(slot, good, &d1_none, Host::Browser),
+                    Err(Refusal::CurveNotLoaded),
+                    "an empty slot accepted a provenance, so a curve's description can                      outlive the curve"
+                );
+            }
+        }
+    }
+    // ...and the list itself is complete. `demo_for` is total by the compiler; this says
+    // the ARRAY names every variant, which the compiler cannot check.
+    let mut seen = all.to_vec();
+    seen.dedup();
+    assert_eq!(seen.len(), all.len(), "a refusal is listed twice in the sweep");
+    for r in all {
+        assert!(
+            all.iter().filter(|x| **x == r).count() == 1,
+            "{r:?} is not listed exactly once"
+        );
+    }
+    assert_eq!(
+        holon_render::refusal_code(all[all.len() - 1]) - holon_render::PROVENANCE_REFUSED,
+        (all.len() - 1) as u32,
+        "the sweep's last variant does not carry the last refusal code, so the array has          fallen out of step with `refusal_code` and a variant is missing from one of them"
+    );
+    println!("  all {} provenance refusals demonstrated firing.", all.len());
 }
 
 /// The refusal EVICTS. A gate that reports a problem and leaves the curve in the slot is a
@@ -885,6 +991,9 @@ fn a_refused_curve_does_not_stay_in_the_bank() {
         n_basis: 14,
         uncertainty_ha: 1e-9,
         claimed_exact: true,
+        // This plant is about a different field; no well is declared, so the
+        // uncertainty-versus-well leg has nothing to weigh.
+        well_depth_ha: 0.0,
     };
     let err = s
         .bank
@@ -925,6 +1034,9 @@ fn the_committed_d1_record_says_what_it_measured() {
             n_basis: 14,
             uncertainty_ha: 1e-9,
             claimed_exact: false,
+            // This plant is about a different field; no well is declared, so the
+            // uncertainty-versus-well leg has nothing to weigh.
+            well_depth_ha: 0.0,
         };
         assert_eq!(
             dmrg.admit(&D1_RECORD, Host::Browser),
@@ -1185,4 +1297,223 @@ fn the_fixtures_fit_the_scene() {
         MAX_SPECIES >= 2,
         "a mixture needs at least two species; the cap is {MAX_SPECIES}"
     );
+}
+
+// ================================================================== plant (iv)
+//
+// THE UNCERTAINTY NOBODY WEIGHED.
+//
+// The provenance gate has asked since it was written whether a shipped table DECLARES an
+// uncertainty. It never asked how big it was. A file could state a whole hartree — sixteen
+// times Cl2's entire well depth — and be admitted, loaded, and integrated, because
+// `uncertainty_ha > 0.0` was the whole test.
+//
+// It surfaced from the other side. The shipped `Cl2.json` carried `"converged": false` in
+// its own metadata from the moment it was first emitted (commit 1a13c49) through two
+// regenerations and three commits, and nothing on this side of the door read the field at
+// any magnitude — `converged` appears nowhere in `holon-render`, not in the bank, not in
+// the JSON reader, not in the viewer. That curve turned out to be FINE: its worst residual
+// is 1.0005e-10, and under the tier ruling of 2026-08-30 that is as converged as f64
+// arithmetic gets. The defect was never the file. It was that nothing here could have told
+// the difference, which is the same guard-not-connected shape `PairCache::get`'s header
+// congratulates itself on having closed — closed on one door of two.
+//
+// So the gate reads the NUMBER, not the producer's flag, for the reason `claimed_exact` is
+// kept apart from `route`: a file's self-assessment is exactly the thing a file can get
+// wrong, and a bar that lives in the other crate can move under this one without a compile
+// error. Both legs below are DERIVED — the schema's own well-resolution, and the curve's
+// own declared depth — so neither is a number this door chose.
+
+/// PLANT (iv) — an uncertainty too large to resolve any well, refused, with the boundary
+/// pinned and the derivation of the bar asserted rather than described.
+#[test]
+fn plant_iv_an_unresolvable_uncertainty_is_refused() {
+    // THE BAR IS DERIVED. If someone gives this door its own number, this fires.
+    assert_eq!(
+        RESOLVABLE_UNCERTAINTY, holon_chem::pair::WELL_MIN_DEPTH,
+        "the door's resolution bar has stopped being the schema's own well threshold; one \
+         of them was edited alone, and a shipped curve can now claim a well the loader \
+         cannot resolve (or be refused for a well it can)"
+    );
+
+    let d1 = D1Admission::NONE;
+    // A heavy shipped determinant curve — Cl2's real shape, so nothing else in the gate
+    // fires and the leg under test is the only thing that can speak.
+    let base = TableProvenance {
+        route: Route::Determinant,
+        source: Source::Shipped,
+        n_det: 324,
+        n_basis: 18,
+        uncertainty_ha: 1.0005e-10, // the shipped Cl2 curve's real worst residual
+        claimed_exact: true,
+        well_depth_ha: 0.064_577_384_997_733_13, // and its real well depth
+    };
+
+    // CARRIER. The real curve is admitted, so a refusal below is the plant and not the
+    // fixture. Cl2's uncertainty is 6.5e8 times smaller than its own well.
+    assert_eq!(
+        base.admit(&d1, Host::Browser),
+        Ok(()),
+        "PLANT (iv) VOID: the unplanted Cl2 provenance is already refused, so the plants \
+         below demonstrate nothing"
+    );
+
+    // LEG ONE: cannot resolve the shallowest well the schema recognises.
+    let unresolvable = TableProvenance {
+        uncertainty_ha: 1e-3,
+        ..base
+    };
+    assert_eq!(
+        unresolvable.admit(&d1, Host::Browser),
+        Err(Refusal::UncertaintyExceedsResolution),
+        "PLANT (iv) MISSED: a curve declaring a millihartree of error was admitted. It \
+         cannot tell a bond from no bond, and the force loop would integrate it anyway."
+    );
+
+    // THE BOUNDARY BELONGS TO THE REFUSAL. Exactly at the bar is not below it.
+    assert_eq!(
+        TableProvenance { uncertainty_ha: RESOLVABLE_UNCERTAINTY, ..base }
+            .admit(&d1, Host::Browser),
+        Err(Refusal::UncertaintyExceedsResolution),
+        "a curve whose uncertainty is EXACTLY the schema's well threshold was admitted; \
+         the comparison has drifted to `<=` and the boundary case is the one that will \
+         arrive"
+    );
+    assert_eq!(
+        TableProvenance {
+            uncertainty_ha: RESOLVABLE_UNCERTAINTY * (1.0 - 1e-12),
+            ..base
+        }
+        .admit(&d1, Host::Browser),
+        Ok(()),
+        "a curve just INSIDE the bar was refused; the leg is firing on the wrong side"
+    );
+
+    // LEG TWO: inside the schema's resolution, but swallowed by its own well. This is a
+    // different curve from leg one's and the reason the two refusals are named apart — a
+    // reader told only 'uncertainty too large' would check it against 1e-4 and find it
+    // comfortably smaller.
+    let swallowed = TableProvenance {
+        uncertainty_ha: 1e-5,
+        well_depth_ha: 5e-6,
+        ..base
+    };
+    assert!(
+        swallowed.uncertainty_ha < RESOLVABLE_UNCERTAINTY,
+        "PLANT (iv) VOID: leg two's fixture also trips leg one, so it cannot show that \
+         the second leg is reachable at all"
+    );
+    assert_eq!(
+        swallowed.admit(&d1, Host::Browser),
+        Err(Refusal::UncertaintyExceedsWell),
+        "PLANT (iv) MISSED: a curve whose error bar is twice the well it reports was \
+         admitted as a bound pair"
+    );
+
+    // A curve that declares NO well is not refused for failing to resolve one. An unbound
+    // pair is a real answer in this schema — He2 and Ne2 are the point — and a gate that
+    // demanded a well would refuse the honest negative.
+    assert_eq!(
+        TableProvenance { uncertainty_ha: 1e-5, well_depth_ha: 0.0, ..base }
+            .admit(&d1, Host::Browser),
+        Ok(()),
+        "an unbound curve was refused for having no well to resolve; He2 and Ne2 are \
+         supposed to say exactly that"
+    );
+
+    println!(
+        "  PLANT (iv) CAUGHT on both legs. Bar {RESOLVABLE_UNCERTAINTY:.0e} Ha, derived \
+         from the schema's well threshold; the real Cl2 curve clears it by 6.5e8."
+    );
+}
+
+/// PLANT (iv) THROUGH THE PRODUCTION LOADER — the same defect on the path the sandbox
+/// actually uses, because a rule demonstrated only against a struct literal is a rule
+/// nothing in the product has to obey.
+#[test]
+fn plant_iv_the_production_loader_refuses_a_curve_swallowed_by_its_own_error_bar() {
+    let mut s = scene(&[HYDROGEN, LITHIUM]);
+    let slot = s.bank.slot_of_z(1, 3).unwrap();
+    assert!(
+        s.bank.is_filled(slot),
+        "the fixture did not load H-Li through the production loader"
+    );
+
+    let clean = curve(HYDROGEN, LITHIUM);
+    let well = clean
+        .meta
+        .well
+        .expect("PLANT (iv) VOID: the H-Li fixture curve declares no well, so an \
+                uncertainty cannot swallow one");
+    // CARRIER: the unplanted curve's residual is far inside its own well, so the refusal
+    // below is the plant.
+    assert!(
+        clean.meta.worst_residual < well.d_e,
+        "PLANT (iv) VOID: the unplanted H-Li curve is ALREADY swallowed by its own error \
+         bar (residual {:.3e}, well {:.3e})",
+        clean.meta.worst_residual,
+        well.d_e
+    );
+
+    // WHICH LEG THIS DOOR CAN REACH, established before the plant rather than discovered
+    // by it. `locate_well` refuses to call anything shallower than WELL_MIN_DEPTH a well,
+    // and the door's bar IS that constant — so any engine-produced curve whose error bar
+    // covers its own well has already exceeded the resolution bar, and leg one speaks
+    // first. Leg two's window is the shipped-file door, where D_e is a declaration.
+    assert!(
+        well.d_e > RESOLVABLE_UNCERTAINTY,
+        "the schema's well threshold and the door's resolution bar have come unpinned \
+         (well {:.3e} against bar {RESOLVABLE_UNCERTAINTY:.0e}): UncertaintyExceedsWell is \
+         now reachable through THIS door too, and this test no longer describes the gate",
+        well.d_e
+    );
+
+    // THE PLANT: the same curve, same energies, reporting an error bar that covers its
+    // own bond. Nothing about the numbers changes — only what the curve says it knows,
+    // which is exactly what a shipped file is free to get wrong.
+    let mut planted = clean.clone();
+    planted.meta.worst_residual = well.d_e * 2.0;
+    let status = load_pair_table(&mut s, &planted, Host::Native);
+    println!(
+        "plant (iv) through load_pair_table: status {status} (expected {}), planted \
+         residual {:.3e} against a well of {:.3e} and a bar of {RESOLVABLE_UNCERTAINTY:.0e}",
+        holon_render::refusal_code(Refusal::UncertaintyExceedsResolution),
+        planted.meta.worst_residual,
+        well.d_e
+    );
+    assert_eq!(
+        status,
+        holon_render::refusal_code(Refusal::UncertaintyExceedsResolution),
+        "PLANT (iv) MISSED: a curve whose declared uncertainty is twice its own well depth \
+         went through the production loader unrefused"
+    );
+    assert!(
+        !s.bank.is_filled(slot),
+        "PLANT (iv) MISSED: the curve was refused and is STILL IN THE BANK, so the force \
+         loop would evaluate it"
+    );
+    assert!(!s.pairs_ready());
+
+    // NATIVE, deliberately. The browser split is not what refused this one — the same
+    // plant must fail on a host where no split rule applies, or the gate above is only
+    // the split wearing a new name. (This call is already Host::Native; the assertion
+    // exists to say that it MUST be, so a later edit to Host::Browser is a visible
+    // weakening rather than a silent one.)
+    assert_eq!(
+        load_pair_table(&mut s, &planted, Host::Browser),
+        holon_render::refusal_code(Refusal::UncertaintyExceedsResolution),
+        "the resolution leg gives different answers on the two hosts, so it is the split \
+         rule wearing a new name rather than a property of the curve"
+    );
+
+    // THE POSITIVE CONTROL. Without it this passes against a loader that refuses
+    // everything.
+    assert_eq!(
+        load_pair_table(&mut s, clean, Host::Native),
+        TABLE_OK,
+        "the loader refused the unplanted curve, so the refusals above say nothing about \
+         the uncertainty"
+    );
+    assert!(s.bank.is_filled(slot) && s.pairs_ready());
+    println!("  PLANT (iv) CAUGHT through the production loader, and the clean curve still loads.");
 }

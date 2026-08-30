@@ -575,6 +575,34 @@ fn species_radii_and_colours_match_palette() {
     }
 }
 
+/// The scene struct stays POINTER-SIZED, so the debug profile can build one.
+///
+/// `Sim` is 331,656 bytes since the pair bank landed (six potential tables where there
+/// was one). `AtomWorld::new_with_preset` builds one, moves it into the struct and
+/// returns the struct by value, and the debug profile elides none of those moves — an
+/// unboxed field put roughly 2 MB of copies on the stack and
+/// `all_presets_load_and_conserve_energy` aborted with a stack overflow. It passed in
+/// RELEASE the whole time, which is how it went unnoticed: a suite run in one profile
+/// cannot see it.
+///
+/// This gate is on the SIZE rather than on the overflow, because an overflow aborts the
+/// process and takes the rest of the suite with it — a defect that destroys the evidence
+/// of its own occurrence. Un-boxing the field fires this instead, with a number.
+#[test]
+fn the_scene_struct_is_not_carried_on_the_stack() {
+    let size = std::mem::size_of::<AtomWorld>();
+    let sim = std::mem::size_of::<holon_render::sim::Sim>();
+    println!("AtomWorld = {size} bytes, Sim = {sim} bytes (boxed away)");
+    assert!(
+        sim > 100_000,
+        "Sim has shrunk to {sim} bytes; this gate was written when it was 331,656 and          its premise should be rechecked rather than the bar quietly passing"
+    );
+    assert!(
+        size < 4_096,
+        "AtomWorld is {size} bytes: the Sim is being carried BY VALUE again. In debug          that is several megabytes of stack copies through new_with_preset, and the          preset test aborts the whole suite with a stack overflow."
+    );
+}
+
 #[test]
 fn all_presets_load_and_conserve_energy() {
     use holon_render_3d::world::Preset;

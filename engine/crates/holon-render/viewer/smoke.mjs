@@ -191,6 +191,31 @@ const code2 = loadShipped("Cl2.json", 17, 17, (f) => { f.solver_route = "DMRG"; 
 console.log("Cl2 relabelled DMRG, honest, D1 not admitted ->", code2, "(18 = DmrgUnvalidated)");
 const code3 = loadShipped("Cl2.json", 17, 17, (f) => { f.uncertainty_hartree = 0; });
 console.log("Cl2 with its uncertainty removed ->", code3, "(19 = UncertaintyMissing)");
+check(code3 === 19, `a shipped table with no uncertainty was not refused (status ${code3})`);
+
+// PLANT (iv), through the door where it matters. Until 2026-08-30 the gate asked only
+// whether an uncertainty EXISTED, so the two files below -- same energies, same forces,
+// a different sentence about what the numbers are worth -- both loaded and both got
+// integrated. The real Cl2 curve declares 1.0e-10 against a 0.0646 Ha well and is fine.
+const code4 = loadShipped("Cl2.json", 17, 17, (f) => { f.uncertainty_hartree = 1e-3; });
+console.log("Cl2 declaring a millihartree of error ->", code4, "(23 = UncertaintyExceedsResolution)");
+check(code4 === 23, `a curve that cannot resolve any well was admitted (status ${code4})`);
+check(w.holon_bank_filled(w.holon_bank_slot(17, 17)) === 0,
+      "the unresolvable curve was refused and left in the bank");
+
+// The second leg, and this door is the ONLY place it is reachable: D_e here is a
+// declaration the file makes, and a file can declare a well shallower than the schema's
+// own threshold. Everywhere else the well comes from `locate_well`, which never returns
+// one below that threshold, so the resolution leg always speaks first.
+const code5 = loadShipped("Cl2.json", 17, 17, (f) => { f.uncertainty_hartree = 1e-5; f.D_e = 5e-6; });
+console.log("Cl2 declaring a well half its own error bar ->", code5, "(24 = UncertaintyExceedsWell)");
+check(code5 === 24, `a well inside its own error bar was admitted (status ${code5})`);
+
+// POSITIVE CONTROL: unmutated, the real file still loads through this same door. Without
+// it the five refusals above are equally consistent with a door that refuses everything.
+const code6 = loadShipped("Cl2.json", 17, 17);
+console.log("Cl2 unmutated, through the same door ->", code6, "(1 = Ok)");
+check(code6 === 1, `the real shipped Cl2 table was refused (status ${code6}); the refusals above say nothing`);
 
 console.log("\n=== 3. every engine call each page makes resolves against this wasm ===");
 //

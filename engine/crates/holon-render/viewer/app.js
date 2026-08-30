@@ -355,6 +355,8 @@ const REFUSALS = {
   20: "that DMRG curve declares no convergence-derived uncertainty",
   21: "that curve is on the wrong side of the declared in-browser cost limits",
   22: "there is no usable curve in that slot",
+  23: "that curve's declared uncertainty is larger than the shallowest well the schema recognises, so it cannot tell a bond from no bond",
+  24: "that curve's declared uncertainty is larger than the well it claims to have found, so the well is inside its own error bar",
 };
 
 function refusalText(code) {

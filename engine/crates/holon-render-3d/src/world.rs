@@ -164,7 +164,19 @@ pub enum Calibration {
 /// The atom world, as the Bevy app sees it.
 #[derive(Resource)]
 pub struct AtomWorld {
-    pub sim: Sim,
+    /// BOXED, and the box is load-bearing rather than stylistic.
+    ///
+    /// `Sim` is 331,656 bytes since MIXTURES-1 gave it a pair BANK — six potential tables
+    /// where there was one, 193 KB of the total. `new_with_preset` builds one, moves it
+    /// into this struct, and returns the struct by value; the debug profile elides none
+    /// of those moves, so an unboxed field put roughly 2 MB of `Sim` copies on the stack
+    /// and `all_presets_load_and_conserve_energy` aborted with a stack overflow — in the
+    /// DEBUG profile only, which is how it survived a release-profile suite run.
+    ///
+    /// One pointer here is the difference. The same class of defect as
+    /// `Box::new(<big array literal>)` in the wasm build: a value that will live on the
+    /// heap is still assembled on the stack unless the type says otherwise.
+    pub sim: Box<Sim>,
     pub calibration: Calibration,
     /// Substeps the last frame actually took, for the clocks readout.
     pub last_substeps: u32,
@@ -194,7 +206,9 @@ impl AtomWorld {
 
     /// Construct a new [`AtomWorld`] with a specific scene preset.
     pub fn new_with_preset(preset: Preset) -> Self {
-        let mut sim = Sim::empty();
+        // Boxed on the first line, not at the end: an unboxed local here is a second
+        // 324 KB stack frame that the debug profile keeps. See the field's own note.
+        let mut sim = Box::new(Sim::empty());
         sim.dims = Dims::Three;
         sim.boundary = Boundary::Walls;
         sim.width = BOX_SIDE;

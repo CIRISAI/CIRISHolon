@@ -165,6 +165,8 @@ pub fn refusal_code(r: bank::Refusal) -> u32 {
             bank::Refusal::DmrgUncertaintyMissing => 4,
             bank::Refusal::SplitViolated => 5,
             bank::Refusal::CurveNotLoaded => 6,
+            bank::Refusal::UncertaintyExceedsResolution => 7,
+            bank::Refusal::UncertaintyExceedsWell => 8,
         }
 }
 
@@ -223,6 +225,7 @@ pub fn load_pair_table(s: &mut Sim, pt: &holon_chem::pair::PairTable, host: bank
             n_basis: pt.meta.n_basis as u64,
             uncertainty_ha: pt.meta.worst_residual,
             claimed_exact: pt.meta.route.is_exact_in_model(),
+            well_depth_ha: d_e,
         };
         if let Err(r) = s.bank.commit(slot, prov, &bank::D1_RECORD, host) {
             return refusal_code(r);
@@ -1667,6 +1670,7 @@ pub extern "C" fn holon_bank_table_finish(
         n_basis: n_basis as u64,
         uncertainty_ha,
         claimed_exact: claimed_exact != 0,
+        well_depth_ha: d_e,
     };
     if let Err(r) = s.bank.commit(slot, prov, &bank::D1_RECORD, bank::Host::Browser) {
         return refusal_code(r);

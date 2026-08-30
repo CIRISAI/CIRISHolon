@@ -107,6 +107,24 @@ pub const IN_BROWSER_DET_LIMIT: u64 = 1024;
 /// where it is because 3.19 s is a load a page can absorb once and 9.97 s is not.
 pub const IN_BROWSER_BASIS_LIMIT: u64 = 6;
 
+/// The largest energy uncertainty a curve may declare and still be loaded, hartree.
+///
+/// DERIVED, not chosen: it is `holon_chem::pair::WELL_MIN_DEPTH`, the depth below which
+/// the schema on the other side of this door does not call a dip a well. A curve whose
+/// declared uncertainty reaches that number cannot tell a well from no well, so its
+/// `bound` field, its `R_e` and its `D_e` are all below its own noise — and the force
+/// loop would integrate it anyway.
+///
+/// # Why the number and not the flag
+///
+/// `PairMeta::converged` is a VERDICT the producer computed against `CONVERGED_RESIDUAL`,
+/// a constant that lives in the other crate and moved by a decade on 2026-08-30. A door
+/// that reads the flag inherits every future move of a bar it does not own, and cannot
+/// refuse a file that simply sets the flag itself — the same reason `claimed_exact` is
+/// kept apart from `route`. So this door reads the NUMBER and compares it to a bound it
+/// derives from the schema it is loading.
+pub const RESOLVABLE_UNCERTAINTY: f64 = holon_chem::pair::WELL_MIN_DEPTH;
+
 /// Which solver produced a curve. Mirrors `holon_chem::fci::SolverRoute`, restated here
 /// because a table can also arrive from a FILE, where the route is a declaration the file
 /// makes rather than a fact this process observed.
@@ -162,6 +180,28 @@ pub enum Refusal {
     SplitViolated,
     /// The slot's interpolator does not hold a usable curve, whatever its provenance says.
     CurveNotLoaded,
+    /// The declared uncertainty reaches [`RESOLVABLE_UNCERTAINTY`]: this curve cannot
+    /// resolve the shallowest feature the schema calls a well, so nothing it says about
+    /// binding is above its own noise.
+    UncertaintyExceedsResolution,
+    /// The declared uncertainty is not smaller than the well the curve itself declares.
+    ///
+    /// # Its reachable window, stated because it is narrow
+    ///
+    /// This leg can only fire where the well depth is a DECLARATION rather than a computed
+    /// field, i.e. `holon_bank_table_finish`, where a host passes the file's own `D_e`.
+    /// `holon_chem::pair::locate_well` returns `None` unless the depth exceeds
+    /// `WELL_MIN_DEPTH`, and [`RESOLVABLE_UNCERTAINTY`] IS that constant — so for every
+    /// curve this engine produces, `uncertainty >= d_e > RESOLVABLE_UNCERTAINTY` and
+    /// [`Refusal::UncertaintyExceedsResolution`] fires first. The window is exactly: a
+    /// shipped file declaring a well SHALLOWER than the schema's own threshold, which is
+    /// the one thing a file can say that this engine never would.
+    ///
+    /// It is kept, and kept separate, because that window is precisely what the shipped
+    /// door exists to accept — files this process did not produce. If the two constants
+    /// are ever unpinned from each other the window widens, and `plant_iv` asserts the
+    /// pinning so the change is announced rather than discovered.
+    UncertaintyExceedsWell,
 }
 
 impl Refusal {
@@ -192,6 +232,14 @@ impl Refusal {
             }
             Refusal::CurveNotLoaded => {
                 "there is no usable curve in this slot; its provenance describes nothing"
+            }
+            Refusal::UncertaintyExceedsResolution => {
+                "this curve's declared uncertainty is larger than the shallowest well the \
+                 schema recognises, so it cannot tell a bond from no bond"
+            }
+            Refusal::UncertaintyExceedsWell => {
+                "this curve's declared uncertainty is larger than the well it claims to \
+                 have found, so the well is inside its own error bar"
             }
         }
     }
@@ -283,6 +331,11 @@ pub struct TableProvenance {
     /// separate is the whole of plant (iii): a DMRG curve arriving with this set is a
     /// curve presented as exact, and the gate must refuse it.
     pub claimed_exact: bool,
+    /// The well depth the curve declares, hartree, or `0.0` for a curve that declares no
+    /// well. Carried here so the gate can weigh the uncertainty against the feature it is
+    /// supposed to resolve — the two numbers already arrive in the same call and nothing
+    /// compared them.
+    pub well_depth_ha: f64,
 }
 
 impl TableProvenance {
@@ -294,9 +347,14 @@ impl TableProvenance {
         n_basis: 0,
         uncertainty_ha: 0.0,
         claimed_exact: false,
+        well_depth_ha: 0.0,
     };
 
     /// A curve this process solved on the determinant route.
+    ///
+    /// `well_depth_ha` is `0.0` — "declares no well". A caller that HAS a well depth
+    /// should build the struct directly so [`Refusal::UncertaintyExceedsWell`] can see
+    /// it; the production loaders both do.
     pub fn solved_exact(n_det: u64, n_basis: u64, residual_ha: f64) -> Self {
         Self {
             route: Route::Determinant,
@@ -305,6 +363,7 @@ impl TableProvenance {
             n_basis,
             uncertainty_ha: residual_ha,
             claimed_exact: true,
+            well_depth_ha: 0.0,
         }
     }
 
@@ -342,6 +401,25 @@ impl TableProvenance {
         }
         if self.source == Source::Shipped && !(self.uncertainty_ha > 0.0) {
             return Err(Refusal::UncertaintyMissing);
+        }
+        // THE MAGNITUDE, not merely the presence. Until 2026-08-30 the only question this
+        // gate asked of an uncertainty was whether it existed, so a shipped file could
+        // declare a whole hartree — sixteen times Cl2's entire well — and be loaded. The
+        // shipped Cl2 table exposed it from the other side: it carried `converged: false`
+        // in its own metadata for three commits and every gate here passed it, because no
+        // door on this side read convergence at any magnitude. That curve was in fact
+        // fine (1.0005e-10, a residual the f64 tier cannot beat); the hole was that
+        // nothing here could have told the difference.
+        //
+        // BOTH sources, deliberately. A curve solved in this process is not trustworthy
+        // for having been solved here — `holon_bank_generate_pair` reaches this same
+        // admission with whatever residual the solver stopped at, and the cache's own
+        // assertion guards a different path.
+        if !(self.uncertainty_ha < RESOLVABLE_UNCERTAINTY) {
+            return Err(Refusal::UncertaintyExceedsResolution);
+        }
+        if self.well_depth_ha > 0.0 && !(self.uncertainty_ha < self.well_depth_ha) {
+            return Err(Refusal::UncertaintyExceedsWell);
         }
         // The browser split, both directions, and only in the browser. A heavy pair
         // solved at page load would be a page that does not load; a light pair shipped as

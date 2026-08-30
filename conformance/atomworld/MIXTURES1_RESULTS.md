@@ -14,6 +14,7 @@ looked at**, as the prereg requires.
 | **plant (i)** the swapped table | **CAUGHT** | `R_e` moves 1.5357 bohr and the energy 8.6 orders above the referee tolerance; and on a non-binding pair it invents a bond |
 | **plant (ii)** the wrong mass | **CAUGHT** | derived `dt` moves by exactly `sqrt(mu'/mu)`, to 1.1e−16 relative, predicted from the masses rather than written down |
 | **plant (iii)** the DMRG label | **CAUGHT** | refused at both doors, with the slot evicted, each with a positive control |
+| **plant (iv)** the unweighed uncertainty | **CAUGHT** | the gate asked only whether an uncertainty EXISTED; a file could declare a whole hartree and be integrated. Two derived legs, refused at both doors |
 | **E1** the emergent negatives | **evidence, not discharged** | Ar2 and NeAr unbound — but on the engine's derived grid, not the grid E1 stakes |
 | **E2** the emergent chemical contrast | **BRANCH (b)** | the middle (HCl > S2 > Cl2) and the unbound tail are exactly as staked; both ends are not — NaH up four, ClF down three, SiO and N2 swapped |
 | **P1** THE PRODUCT: emergent hetero-chemistry | **BRANCH (b)** | HCl modal in 0 of 8 seeds; both controls pass, so not VOID. HCl bonds ARE forming — the *reading* cannot see them in a condensed phase |
@@ -893,6 +894,95 @@ the closed shells refuse across rows, and every one of these numbers came out of
 Z, the masses and the STO-3G contraction with no fitted parameter and no table of
 chemical results.** The ordering as a whole does NOT reproduce the stake, and that
 is reported as the product rather than the stake being adjusted to it.
+
+---
+
+## Plant (iv) — the uncertainty nobody weighed
+
+**The gate asked whether a shipped table declared an uncertainty. It never asked how
+big it was.** `uncertainty_ha > 0.0` was the entire test, so a file declaring a whole
+hartree — sixteen times Cl2's whole well — was admitted, loaded, and integrated by the
+force loop.
+
+### How it surfaced, and the part that is not a catch
+
+It came from the other side, and the honest version is less flattering than the
+headline. The shipped `Cl2.json` has carried `"converged": false` in its own metadata
+since it was first emitted (1a13c49, 09:52) — through two regenerations and three
+commits, mine — and every gate passed it. The reason is a clean negative:
+**`converged` appears nowhere in `holon-render`.** Not in the bank, not in the JSON
+reader, not in the viewer. The producing crate computes the verdict, writes it into
+the file, and no door on the consuming side has ever read it at any magnitude.
+
+That curve was not bad. Its worst residual is **1.0005e−10**, and under the tier
+ruling of 2026-08-30 that is as converged as f64 arithmetic gets here; the flag was
+computed against a bar the ruling has since moved. So this is not "a bad table was
+caught". **It is that nothing on this side could have told the difference** — the
+guard-not-connected shape that `PairCache::get`'s own header describes, closed on one
+door of two.
+
+### The gate reads the number, not the flag
+
+Deliberately, and for the reason `claimed_exact` is kept apart from `route`: a file's
+self-assessment is exactly what a file can get wrong, and `CONVERGED_RESIDUAL` lives
+in the other crate and moved by a decade without a compile error here. So the door
+compares the declared number against bounds it derives:
+
+| leg | bound | derivation |
+|---|---|---|
+| `UncertaintyExceedsResolution` | `RESOLVABLE_UNCERTAINTY` = 1e−4 Ha | it *is* `holon_chem::pair::WELL_MIN_DEPTH` — a curve whose error reaches the depth below which the schema will not call a dip a well cannot tell a bond from no bond |
+| `UncertaintyExceedsWell` | the curve's own declared `D_e` | the well is inside its own error bar |
+
+Neither is a number this door chose. The boundary belongs to the refusal (exactly at
+the bar is refused), and both are pinned by assertion so unpinning them fires a gate
+rather than passing quietly.
+
+### Leg two's window is narrow, and it is stated rather than discovered
+
+`locate_well` returns `None` unless the depth exceeds `WELL_MIN_DEPTH`, and the bar
+IS that constant. So for **every curve this engine produces**, an uncertainty large
+enough to swallow the well has already exceeded the resolution bar, and leg one
+speaks first — leg two is unreachable on the engine-solved door. Its window is
+exactly one thing: **a shipped file declaring a well shallower than the schema's own
+threshold**, which is the one statement a file can make that this engine never would.
+That is what the shipped door exists to accept, so the leg is kept, its window is
+written on the variant, and the test asserts the pinning that keeps it narrow.
+
+The first attempt at the production-loader plant expected leg two and got leg one.
+That was the gate telling the truth about itself; the test now states the preemption
+as a property and would fire if the two constants ever came unpinned.
+
+### Demonstrated firing
+
+- **Unit** (`plant_iv_an_unresolvable_uncertainty_is_refused`): both legs, the exact
+  boundary, a just-inside control, and an unbound curve admitted — He2 and Ne2 declare
+  no well and must not be refused for failing to resolve one.
+- **Production loader** (`..._refuses_a_curve_swallowed_by_its_own_error_bar`): the
+  real H-Li curve, same energies, relabelled with an error bar twice its own well;
+  refused, evicted, scene not ready, and the same answer on both hosts so the refusal
+  is a property of the curve rather than the browser split under a new name.
+- **The real wasm ABI** (`smoke.mjs`, CI gate 17): both legs through the shipped-file
+  door — the only door where leg two is reachable, because `D_e` there is the file's
+  own declaration — each with the unmutated file loading as a positive control.
+
+### And the meta-gate that should have caught this was not one
+
+`every_provenance_refusal_has_a_demonstrated_failing_case` passed after plant (iv)
+added two variants **without covering either**: it was a hand-written list, and a
+hand-written list cannot enforce the word *every* in its own name. It now routes
+through a match the compiler requires to be total, so a new `Refusal` stops the crate
+building until someone says how it is demonstrated. Mutation-tested by adding a tenth
+variant and confirming the build refuses.
+
+### The tree no longer reproduced from its emitter
+
+The tier ruling moved `CONVERGED_RESIDUAL` from 1e−10 to 1e−9, which flips Cl2's
+published `converged` field from `false` to `true` **with no energy moving** — its
+residual is unchanged at 1.0005e−10. Both shipped copies were regenerated from
+`emit_pair_tables` so the tree reproduces from its own source; the only other
+difference is `generation_ms`, which is a wall clock. The pre-ruling artifact is kept
+at `engine/output/mixtures1/Cl2.PRE_TIER_RULING.json` (sha256 88ad657d…) because it is
+the evidence for this section and regenerating it away would delete the warrant.
 
 ---
 

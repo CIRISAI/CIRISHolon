@@ -165,3 +165,46 @@ R2's engine half is built and `#[ignore]`d until `mixtures-referee` commits
 cheap — SiO is 33.9 s per geometry, so a twenty-point grid is about eleven
 minutes — so when the drop lands, R2 is a short run and a digest re-pin, done
 field-diff-first.
+
+## The debug profile was not being run, and it had been red since 09:52
+
+`cargo test --manifest-path crates/holon-render-3d/Cargo.toml --no-default-features
+--features headless` was passing for me in RELEASE and aborting in DEBUG, and I was
+reporting the release run as the contract's 3D check. The abort is a stack overflow in
+`all_presets_load_and_conserve_energy`, and it is MINE: bisected to `a0a665b` — the bank
+commit — which grew `Sim` from one potential table to six, 331,656 bytes, of which the
+bank is 197,504. `AtomWorld` carried it BY VALUE, and `new_with_preset` builds one, moves
+it into the struct and returns the struct, none of which the debug profile elides.
+
+Fixed by boxing the field (`AtomWorld` is now 32 bytes) and gated on the SIZE rather than
+on the overflow, because an overflow aborts the process and takes the rest of the suite
+with it — a defect that destroys the evidence of its own occurrence. The gate is
+mutation-tested: un-boxing reports 331,680 bytes and fires.
+
+Two rules out of it. **Run both profiles or say which one you ran** — the release run
+cannot see a stack defect, and this is the second time the debug profile has caught a
+`Sim`-size problem the release profile could not (MAX_SPECIES=4 was the first). And **a
+big value that will live somewhere else is still assembled on the stack unless the type
+says otherwise** — the same shape as `Box::new(<big array literal>)` in the wasm build,
+now twice.
+
+## The wasm artifact was rebuilt
+
+`crates/holon-render/viewer/holon_render.wasm` is rebuilt from `build-web.sh` (300,756
+bytes) because plant (iv) added two refusal codes to the ABI. Gate 17 exercises both
+through the real ABI: 23 and 24 fire on mutated copies of the shipped Cl2 file, and the
+unmutated file loads as the positive control. A shipped-table change without a wasm
+rebuild leaves smoke.mjs grading a stale engine.
+
+## A shipped artifact stopped reproducing from its emitter, and the check is manual
+
+The tier ruling moved `CONVERGED_RESIDUAL` a decade, which flips `Cl2.json`'s published
+`converged` field with no energy moving. Both shipped copies are regenerated. Note for
+whoever checks this next: **the tables can never be bit-compared against a fresh emitter
+run**, because `generation_ms` is a wall clock written into the artifact. Diff every
+field except that one; a bare `diff` always shows a difference and will train you to
+ignore it. Regenerating Cl2 costs 390 s.
+
+The pre-ruling artifact is kept at `engine/output/mixtures1/Cl2.PRE_TIER_RULING.json`
+(sha256 88ad657d0ffbe854a1c6535d700c9d7c3ec5cd5da26080d4a501dfb2e8872f37). It is the
+evidence for the plant (iv) section and regenerating it away would delete the warrant.

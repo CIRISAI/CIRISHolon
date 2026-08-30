@@ -47,6 +47,7 @@ computed from the operator it was given.
 """
 
 import array
+import itertools
 import warnings
 import math
 from mpmath import mp, mpf, sqrt, matrix, eigsy, nstr
@@ -640,13 +641,48 @@ def route_c_cost(norb, nelec):
     working-precision operations, run as if it were free."""
     nso = 2 * norb
     nd = math.comb(nso, nelec)
+    # Every term here is a function of the DETERMINANT COUNT, which is only an
+    # honest model of the work because `route_c_determinants` enumerates in
+    # O(nd).  While the enumeration walked 2**nso integers this model was blind
+    # to it -- see that function's note.  If the enumeration ever goes back to
+    # filtering, this needs a `1 << nso` term or the guard stops guarding.
     return nd, max(nd * nelec * nelec * norb * norb, nd ** 3)
+
+
+def route_c_determinants(nso, nelec):
+    """Every nso-bit integer with exactly nelec bits set, in increasing order.
+
+    THE ENUMERATION USED TO COST 2**nso REGARDLESS OF HOW FEW SURVIVED.
+
+    It was `[d for d in range(1 << nso) if bin(d).count("1") == nelec]` -- walk
+    every integer, keep the ones with the right population count.  That is
+    2**nso iterations whatever the answer's size, and route_c_cost models the
+    ANSWER (`math.comb(nso, nelec)`) rather than the SEARCH.  So the budget
+    guard was blindest exactly where the answer was smallest:
+
+        Ar2   nso = 36, nelec = 36  ->  1 determinant, 68,719,476,736 iterations
+        NeAr  nso = 28, nelec = 28  ->  1 determinant,     268,435,456 iterations
+
+    Ar2 passed the budget check with a modelled cost of 4.2e5 and then ran eight
+    workers at 98% for fifty minutes without completing ONE geometry.  A guard
+    that fires on the size of the result cannot see a search that is exponential
+    in the basis and trivial in the result -- and a closed shell is precisely
+    that case.
+
+    Choosing the bit patterns directly makes the enumeration O(number of
+    determinants), which is what route_c_cost was modelling all along.  The list
+    is SORTED so the order is identical to the filter's, because `idx` maps
+    determinant to row and a different order would be a different matrix -- same
+    eigenvalue, different everything else, and no reason to accept the risk.
+    """
+    return sorted(sum(1 << p for p in c)
+                  for c in itertools.combinations(range(nso), nelec))
 
 
 def route_c_energy(norb, nelec, h, g):
     """Lowest eigenvalue of H in the full N-electron Fock space, dense."""
     nso = 2 * norb
-    dets = [d for d in range(1 << nso) if bin(d).count("1") == nelec]
+    dets = route_c_determinants(nso, nelec)
     idx = {d: i for i, d in enumerate(dets)}
     n = len(dets)
     H = [[mpf(0)] * n for _ in range(n)]

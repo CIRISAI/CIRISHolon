@@ -15,6 +15,7 @@ $PY -u test_pmap_safety.py
 $PY -u test_emit_refusals.py
 $PY -u test_cache_kinds.py
 $PY -u test_seed_ladder.py
+$PY -u test_route_c_enumeration.py
 $PY -u test_verify_sections.py
 echo
 echo "=== spin audit at every geometry (the emitter refuses without it) ==="

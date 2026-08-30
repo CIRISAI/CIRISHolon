@@ -240,7 +240,7 @@ and they are **different bases**. The table is now PARSED from `elements.rs`. *A
 grades the declared model; regenerating the same numbers beside it is how a referee comes to
 disagree with its subject about something neither got wrong.*
 
-### Route scope — resting on a superseded measurement
+### Route scope — and the constant these verdicts turn out not to rest on
 
 Three different criteria are in play and this campaign has confused them once already
 (A3.1), so they are separated here.
@@ -275,11 +275,37 @@ The multiplicities and energies for 51–54 in the table above come from
 **The third state, named exactly:** these sixteen are **unblocked in principle, unmeasured in
 fact.** `pair::MPS_MAX_ORBITALS = 6` was measured against the OLD MPO builder (LiH at six
 orbitals took 528 s; HCl at ten never finished). That builder has been replaced —
-channel-based, and SiO's MPO build went from "did not finish in 12 hours" to **0.07 s** — so
-every route verdict in the table above rests on a superseded measurement. The constant has
-not been re-derived; mixtures-engine is running gate D1 to derive it properly rather than
-inferring it from one species, which is the right order. Until that number lands, these
-verdicts are stale **in the direction of under-promising**.
+channel-based, and SiO's MPO build went from "did not finish in 12 hours" to **0.07 s** —
+so the constant no longer describes the engine. mixtures-engine is running gate D1 to
+re-derive it properly rather than inferring it from one species, which is the right order.
+
+**Correction to this section's own earlier claim.** It said every route verdict above rests
+on that superseded measurement. It does not, and the reason matters. `automatic_route` tests
+determinant count *first*:
+
+```rust
+if n_det <= MPS_ROUTE_THRESHOLD  { Determinant }      // 50,000
+else if n_orb <= MPS_MAX_ORBITALS { Mps }             // 6
+else                              { NoneAvailable }
+```
+
+Those two conditions cannot both hold. Six orbitals admit at most C(6,3)² = **400**
+determinants, and the threshold is **50,000** — so a space inside `MPS_MAX_ORBITALS` is
+always already inside the determinant threshold, and **the `Mps` arm is unreachable.** No
+test constructs it; `holon-render` maps it to a viewer route code that can never be
+produced. Every refusal in the table above is therefore a verdict of the *determinant
+threshold*, and the superseded constant is inert — it has no effect on any verdict this
+record contains.
+
+That changes what re-deriving it can do here, in both directions. The arm first becomes
+reachable at **10 orbitals**, where the maximum is 63,504 determinants; below ten, no
+orbital count can exceed the threshold at all. And at ten the live window is narrow — n_det
+between 50,000 and 63,504, which is half-filling and nothing else. So the *first* spaces a
+raised constant would ever route automatically to MPS are ten-orbital half-filled ones,
+which is the exact corner where the ladder's one mid-filled ten-orbital rung, NaH at 44,100
+determinants, came back BUDGET five orders short of the stake. Raised to 18 instead, the
+constant would flip this record's 18-orbital refusals (Sc–Cu) to "automatic route available"
+in one step, on the strength of a rung measured at germanium's filling.
 
 **But the successor cannot lift them, and that is knowable before it arrives.** The ladder
 being run to derive it is seven two-centre pairs topping out at S2, which is 18 orbitals —
@@ -655,9 +681,10 @@ at each new shell.
 functions — `MAX_Z = 54` and the refusal is in force. Relativistic fidelity: F1 measured that
 edge and the fence claim **fired**, on both the raw and the counterpoise-corrected observable.
 Quantitative thermochemistry. Mid-row exactness: sixteen atoms have no automatic route, their
-determinant-route reachability is **unmeasured**, and the constant those verdicts rest on has
-been superseded by one whose own ladder cannot reach them — its top rung is germanium's FCI
-space wearing a different name. Seven of nine referee-eligible atoms have no 50-digit reference.
+determinant-route reachability is **unmeasured**. The constant those refusals were attributed
+to turns out not to enter them at all — the route arm it guards is unreachable at the current
+thresholds — and its successor's ladder could not reach these species anyway, topping out at
+germanium's FCI space wearing a different name. Seven of nine referee-eligible atoms have no 50-digit reference.
 
 **The one thing the campaign found that it cannot explain.** At the 3d/4s boundary the model
 prefers a high-spin ground state — gallium a quartet on a fully converged solve, zinc a

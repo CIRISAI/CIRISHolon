@@ -546,3 +546,39 @@ the direction it expects, and the failures at and below it are invisible to it.
 **This lane's reading rule, now in the results doc:** read the constant as the wall minus
 one; if the ladder's two numbers disagree, report the disagreement rather than resolve it in
 this lane's favour.
+
+### And the constant turns out to be inert: the arm it guards is unreachable
+
+Chased down whether a raised `MPS_MAX_ORBITALS` would reroute HCl and break the dimer
+record's bit-identity gate. It would not — `automatic_route` tests determinant count FIRST,
+HCl is 100 determinants, so it stays on the determinant route whatever the constant says.
+But the same reading found something larger:
+
+    if n_det <= MPS_ROUTE_THRESHOLD   { Determinant }    // 50,000
+    else if n_orb <= MPS_MAX_ORBITALS { Mps }            // 6
+    else                              { NoneAvailable }
+
+Both conditions must hold to select `Mps`. Six orbitals admit at most C(6,3)^2 = **400**
+determinants against a threshold of 50,000, so anything inside `MPS_MAX_ORBITALS` is already
+inside the determinant threshold. **The `Mps` arm cannot be selected for any input.** No test
+constructs it; `holon-render/src/lib.rs:1563` maps it to a viewer route code that can never
+be produced.
+
+**My own second error in that paragraph today.** ELEMENTS3_RESULTS.md said my sixteen
+refusals "rest on a superseded measurement". They rest on `MPS_ROUTE_THRESHOLD` alone.
+`MPS_MAX_ORBITALS` enters no verdict this record contains. Corrected in the doc as a
+correction.
+
+Max determinants by orbital count — 6:400, 8:4,900, 9:15,876, **10:63,504** — so the arm
+first goes live at ten orbitals, and at exactly ten the window is n_det in (50,000, 63,504],
+which is half-filling and nothing else. **The first spaces a raised constant would route
+automatically to MPS are ten-orbital half-filled ones — the immediate neighbourhood of NaH,
+the one measured failure.** Raised to 18 instead, it flips Sc–Cu to "automatic route
+available" in one step, on a rung measured at germanium's filling.
+
+**Owed here:** a gate in `tests/elements3_atoms.rs` that my route verdicts are functions of
+the determinant threshold and invariant to `MPS_MAX_ORBITALS` at its present value — the
+fact the published table now rests on. Deliberately NOT written yet: compiling contends for
+CPU with the indium run I am waiting on, and it lands in the same suite pass that verifies
+the regenerated record. The broader exclusivity gate belongs in pair.rs and was offered to
+mixtures-engine rather than taken.

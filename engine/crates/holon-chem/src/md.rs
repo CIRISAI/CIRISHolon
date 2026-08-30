@@ -122,7 +122,15 @@ pub fn e_table(a: f64, b: f64, xa: D2, xb: D2) -> ETable {
 /// The Hermite Coulomb integrals `R_{tuv}`, indexed `[t][u][v]`.
 pub struct RTensor {
     pub r: [[[D2; RMAX + 1]; RMAX + 1]; RMAX + 1],
-    work: Box<[[[[D2; RMAX + 1]; RMAX + 1]; RMAX + 1]; RMAX + 1]>,
+    /// A boxed SLICE, not a boxed array, and the difference is a browser build.
+    ///
+    /// `Box<[T; N]>` can only be built by `Box::new(<literal>)`, which materialises the
+    /// whole literal ON THE STACK before moving it to the heap. At `opt-level=z` that
+    /// temporary is not reliably elided, and at `RMAX = 12` it is 685,464 bytes -- most of
+    /// a wasm-ld default 1 MiB stack, in one struct construction, before any other frame.
+    /// A boxed slice can be built through `vec!`, which puts ONE element on the stack and
+    /// clones it into heap storage. See [`RTensor::zero`].
+    work: Box<[[[[D2; RMAX + 1]; RMAX + 1]; RMAX + 1]]>,
 }
 
 /// Build `R^0_{tuv}(alpha, D)` for every `t + u + v <= lmax`.
@@ -191,7 +199,19 @@ impl RTensor {
     pub fn zero() -> Self {
         RTensor {
             r: [[[D2::c(0.0); RMAX + 1]; RMAX + 1]; RMAX + 1],
-            work: Box::new([[[[D2::c(0.0); RMAX + 1]; RMAX + 1]; RMAX + 1]; RMAX + 1]),
+            // NOT `Box::new([...; RMAX + 1])`. That is a stack allocation wearing a heap
+            // allocation's clothes: the array literal is built in full on the stack and
+            // then moved, so the peak stack cost is the whole 685 KB even though the value
+            // ends up on the heap. It is invisible in review precisely because the type
+            // says `Box`.
+            //
+            // `vec!` builds one element -- 52,728 bytes at RMAX = 12 -- and clones it into
+            // heap storage, so the stack never holds more than that. Measured: with
+            // `Box::new` the browser artifact traps on the cheapest solve it does at the
+            // default 1 MiB stack; with this, `viewer/smoke.mjs` is green at that same
+            // default.
+            work: vec![[[[D2::c(0.0); RMAX + 1]; RMAX + 1]; RMAX + 1]; RMAX + 1]
+                .into_boxed_slice(),
         }
     }
 }

@@ -100,6 +100,12 @@ const D1_STAKE: f64 = 1e-8;
 const DMRG_SWEEPS: usize = 40;
 const DMRG_TOL: f64 = 1e-11;
 
+/// Sweeps per chunk, and the per-GRID-POINT wall budget. Both declared: a point that runs
+/// out of budget is reported as BUDGET and the grid continues, so one hard geometry cannot
+/// consume a whole run the way it did before these existed.
+const SWEEP_CHUNK: usize = 3;
+const POINT_BUDGET_S: f64 = 600.0;
+
 fn pair_of(name: &str) -> (Species, Species) {
     // Split a formula like "SiO" / "S2" / "Na2" into its two species.
     if let Some(stem) = name.strip_suffix('2') {
@@ -289,41 +295,51 @@ fn probe(a: Species, b: Species, name: &str) {
 
 /// D1's overlap comparison on one species' declared grid.
 ///
-/// # The MPO is built ONCE per geometry
+/// # Why this no longer walks a chi ladder at every point
 ///
-/// Measured on this machine (`output/mixtures1/mpo_cost_*.log`): at six orbitals the
-/// electronic MPO costs 528 seconds to construct and 0.03 seconds to sweep. Construction
-/// is the entire budget. `solve_mps` rebuilds the MPO on every call, so walking a
-/// four-rung chi ladder through it would pay that 528 seconds four times over for a
-/// quantity — the bond dimension's effect on the energy — that does not depend on it. So
-/// the ladder is walked against one MPO here.
+/// It used to, and it never finished. Both staked runs — SiO, then S2 for 2h17m —
+/// produced ZERO data rows, because a DMRG sweep's cost grows as the STATE's bond
+/// dimension grows toward `chi_max`, so the 1.07 s first sweep that `cost` mode reports is
+/// not the sweep that sets the budget. Walking [64,128,256,512] at 30 sweeps per grid
+/// point was several hours per point, for a ladder whose lower rungs are thrown away.
+///
+/// The ladder belongs in `examples/mps_ladder.rs`, which walks it ONCE per species and
+/// reports which rung reaches the stake and what it costs. This runs the GRID at that
+/// rung. `D1_CHI` therefore takes a single value here, and the run says so in its header.
+///
+/// # And why sweeps are chunked against a budget
+///
+/// Each point runs DMRG in [`SWEEP_CHUNK`]-sweep chunks, re-entered from its own previous
+/// state, until it reaches the stake, plateaus inside its own tolerance, or exceeds
+/// [`POINT_BUDGET_S`]. A point that runs out of budget is reported as BUDGET and the grid
+/// continues, so one hard geometry cannot silently consume a whole run — which is exactly
+/// what the previous version did.
 fn overlap(a: Species, b: Species, name: &str, n_points: usize) {
     let t_start = Instant::now();
     let ladder = chi_ladder();
-    // THE HEADER GOES FIRST, before the grid derivation and not after it.
-    //
-    // The exact-route range search is ~30 solves, and on SiO that is seventeen minutes
-    // during which the log was empty and a watcher could not tell a running job from a
-    // dead one. A run should announce what it is before it spends anything, not after.
+    let chi = ladder[ladder.len() - 1];
     say!("# D1 overlap: {name}  (deriving the grid on the exact route first; ~30 solves)");
-    say!("#   ladder {ladder:?}  sweeps {}  tol {DMRG_TOL:.0e}", sweeps());
-    say!("#   stake          |E_dmrg - E_fci| <= {D1_STAKE:.0e} Ha at chi = {}", ladder[ladder.len() - 1]);
+    if ladder.len() > 1 {
+        say!(
+            "#   NOTE: {} chi values given; using the LARGEST ({chi}). The ladder belongs \
+             in mps_ladder, not here.",
+            ladder.len()
+        );
+    }
+    say!("#   chi {chi}  sweep chunks of {SWEEP_CHUNK}  budget {POINT_BUDGET_S:.0} s/point  tol {DMRG_TOL:.0e}");
+    say!("#   stake          |E_dmrg - E_fci| <= {D1_STAKE:.0e} Ha");
     let e_asymptote = holon_chem::pair::atom_energy(a) + holon_chem::pair::atom_energy(b);
     let (r_min, r_max) = exact_range(a, b, e_asymptote);
     say!("# D1 overlap: {name}");
     say!("#   grid rule      uniform in R^-1/4 (table::grid_point), {n_points} knots");
     say!("#   range (exact)  [{r_min:.9}, {r_max:.9}] bohr");
     say!("#   asymptote      {e_asymptote:.15} hartree");
-    say!("#   stake          |E_dmrg - E_fci| <= {D1_STAKE:.0e} Ha at chi = {}", ladder[ladder.len() - 1]);
-    say!("#   ladder {ladder:?}  sweeps {}  tol {DMRG_TOL:.0e}", sweeps());
-    let mut header = String::from("R_bohr\tE_fci\tres_fci\tn_det");
-    for chi in ladder.iter() {
-        header.push_str(&format!("\tE_chi{chi}\td_chi{chi}"));
-    }
-    say!("{header}");
+    say!("R_bohr\tE_fci\tres_fci\tn_det\tE_dmrg\tdelta\tsweeps\tsecs\tmaxbond\tverdict");
 
     let mut worst = 0.0f64;
     let mut worst_r = 0.0f64;
+    let mut budget_hit = 0usize;
+    let mut reached = 0usize;
     for i in 0..n_points {
         let r = grid_point(r_min, r_max, n_points, i);
         let (space, mo, nuc) = problem_at(a, b, r);
@@ -332,44 +348,78 @@ fn overlap(a: Species, b: Species, name: &str, n_points: usize) {
 
         let h: Vec<f64> = mo.h.iter().map(|d| d.v).collect();
         let g: Vec<f64> = mo.g.iter().map(|d| d.v).collect();
-        let t_mpo = Instant::now();
         let mpo = q8_mps::mpo::Mpo::from_electronic_integrals(mo.n, &h, &g);
-        let mpo_s = t_mpo.elapsed().as_secs_f64();
 
-        let mut row = format!(
-            "{r:.9}\t{e_fci:.15}\t{:.3e}\t{}",
-            ex.residual, space.n_det
-        );
-        let mut last_delta = f64::INFINITY;
-        for &chi in ladder.iter() {
-            let init = q8_mps::mps::initial_state_hf(mo.n, space.alpha.n_elec, space.beta.n_elec);
+        let t0 = Instant::now();
+        let mut tensors =
+            q8_mps::mps::initial_state_hf(mo.n, space.alpha.n_elec, space.beta.n_elec);
+        let mut sweeps = 0usize;
+        let mut e_dmrg = f64::NAN;
+        let mut delta = f64::INFINITY;
+        let mut max_bond = 0usize;
+        let mut verdict = "BUDGET";
+        loop {
             let cfg = q8_mps::dmrg::DmrgConfig {
                 chi_max: chi,
-                max_sweeps: sweeps(),
+                max_sweeps: SWEEP_CHUNK,
                 sweep_tol: DMRG_TOL,
                 policy: q8_mps::dmrg::RefusalPolicy::Silent,
             };
-            match q8_mps::dmrg::dmrg_sweep(&mpo, init, &cfg) {
+            match q8_mps::dmrg::dmrg_sweep(&mpo, tensors, &cfg) {
                 Ok(res) => {
-                    let e = res.energy + nuc.v;
-                    last_delta = e - e_fci;
-                    row.push_str(&format!("\t{e:.15}\t{:+.3e}", last_delta));
+                    sweeps += res.sweeps_used;
+                    e_dmrg = res.energy + nuc.v;
+                    delta = e_dmrg - e_fci;
+                    max_bond = res.bond_dims.iter().copied().max().unwrap_or(0);
+                    tensors = res.tensors;
+                    if delta.abs() <= D1_STAKE {
+                        verdict = "REACHED";
+                        break;
+                    }
+                    if res.converged {
+                        verdict = "PLATEAU";
+                        break;
+                    }
                 }
                 Err(e) => {
-                    row.push_str(&format!("\tREFUSED\t{e:?}"));
-                    last_delta = f64::INFINITY;
+                    verdict = "REFUSED";
+                    say!("#   {name} R={r:.4} refused: {e:?}");
+                    break;
                 }
             }
+            if t0.elapsed().as_secs_f64() > POINT_BUDGET_S {
+                break;
+            }
         }
-        row.push_str(&format!("\tmpo_s {mpo_s:.1}"));
-        say!("{row}");
-        if last_delta.abs() > worst {
-            worst = last_delta.abs();
+        match verdict {
+            "REACHED" => reached += 1,
+            "BUDGET" => budget_hit += 1,
+            _ => {}
+        }
+        say!(
+            "{r:.9}\t{e_fci:.15}\t{:.3e}\t{}\t{e_dmrg:.15}\t{delta:+.6e}\t{sweeps}\t{:.1}\t{max_bond}\t{verdict}",
+            ex.residual,
+            space.n_det,
+            t0.elapsed().as_secs_f64()
+        );
+        if delta.abs() > worst {
+            worst = delta.abs();
             worst_r = r;
         }
     }
-    let verdict = if worst <= D1_STAKE { "PASS" } else { "FAIL" };
-    say!("# WORST |delta| at largest chi = {worst:.6e} Ha at R = {worst_r:.6} bohr   stake {D1_STAKE:.0e}   {verdict}");
+    // The verdict names what actually happened. A grid where some points ran out of budget
+    // has NOT met the stake across its grid, and saying "worst delta" alone would hide that.
+    let verdict = if reached == n_points {
+        "PASS"
+    } else if budget_hit > 0 {
+        "INCOMPLETE (budget)"
+    } else {
+        "FAIL"
+    };
+    say!(
+        "# {name}: {reached}/{n_points} points reached {D1_STAKE:.0e}; {budget_hit} hit the \
+         {POINT_BUDGET_S:.0} s budget. WORST |delta| = {worst:.6e} Ha at R = {worst_r:.6}. {verdict}"
+    );
     say!("# elapsed {:.1} s", t_start.elapsed().as_secs_f64());
 }
 

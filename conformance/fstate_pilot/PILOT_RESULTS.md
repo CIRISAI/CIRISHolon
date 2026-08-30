@@ -41,6 +41,24 @@ configuration-sensitivity claim survives on findings 1–2 alone. Whether
 their CURVE's shape is right awaits the corrected-family rerun below;
 until it lands, no claim about their slope is made in either direction.
 
+> **Forward-reference discharged, 2026-08-30.** The rerun this paragraph
+> waits on LANDED the same day it was promised (commit `d2a8b9d`) and is
+> the final section of this file. The sentence above is kept as written
+> because it is what was staked, but it no longer describes the state of
+> the work: a slope claim IS now made, as the bracket 0.25–0.35
+> decades/qubit on floor-subtracted excess, with its three-point caveat.
+> Read the last section, not this paragraph, for the standing verdict.
+>
+> What remains genuinely OPEN against the pre-staked gate (CAMPAIGNS.md
+> #2: "a pilot reproducing their Figure 2 at N=20/30/42") is the top of
+> that range. The corrected family was measured to N=24. At the measured
+> growth (excess ×3.6 per +2 qubits) N=30 is ~1.6e3 s per sample and
+> N=42 is ~4e6 s — so N=42 is not reachable under current-Aer defaults at
+> all, which is consistent with the verdict rather than a gap in it, but
+> it does mean the slope is anchored below their extrapolation window and
+> not inside it. Stated so the bracket is not read as wider evidence than
+> it is.
+
 Consequence for Campaign #2, per its pre-staked gate: the submission
 proceeds on OUR cost model, not theirs — the native face-basis build
 (the QPG face-state decompositions already verified in
@@ -52,6 +70,38 @@ this pilot; the magic axis is the one we contest.
 Artifacts: the discriminator transcripts are reproducible from this
 file's commands; the tracker's circuits are public at their repo, pinned
 by the instance names in CAMPAIGNS.md.
+
+> **THAT ARTIFACTS LINE IS FALSE, and this correction is the point of
+> keeping it visible (2026-08-30).** Checked rather than assumed, because
+> a later lane was asked to re-run the rerun and went looking for the
+> means to do it:
+>
+> * **This file contains no commands.** There is nothing here to run.
+> * **No generator is committed.** Nothing in the tree builds the
+>   corrected `tdg; h; p(θf); h` family at any N — `grep -rl` over the
+>   repo for the gadget, `fstate`, or `extended_stabilizer` finds only
+>   prose files and an unrelated battle-rig.
+> * **The tracker's circuits are not vendored.** "Public at their repo" is
+>   a pointer to someone else's server, not an artifact; no copy and no
+>   pinned hash is held here.
+> * **Aer is not installed in this environment at all**, so even a
+>   correct script would not run today without a fresh install whose
+>   version would differ from the one measured — and version is precisely
+>   the variable this pilot's whole verdict turns on.
+>
+> The measurements in the final section STAND as measured; nothing here
+> disputes a number. What is withdrawn is the claim that anyone can
+> reproduce them from this repository, which is a different and weaker
+> position than the file asserted. The work owed to restore it, in order:
+> vendor the tracker instance with a pinned hash, commit the family
+> generator and the timing harness, pin the Aer version, and re-run the
+> N=2…24 table to confirm it reproduces before anything is extended.
+>
+> The general lesson, since this is the third time this shape has cost
+> the programme: a results file that names its own reproduction path must
+> be checked against the tree, not against the author's memory of a
+> scratchpad. Scratchpads are gitignored, and a run that lives only in one
+> is a claim, not a record.
 
 ## Corrected-family rerun (v3 + v4), and the verdict's final form
 

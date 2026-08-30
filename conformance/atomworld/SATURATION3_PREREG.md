@@ -171,3 +171,52 @@ against nature; GPU speedups not measured on this path.
    hours. Sharding pays exactly where P2's fence counter may rule the
    table unnecessary — both halves of the freeze's decision tree carry
    their measured prices.
+
+## AMENDMENT A2 — 2026-08-30, at G1's discharge, POST-DATA, ruled by the lead
+
+**Scope:** G1's subordinate warm-start clause and plant (iii). G1's primary
+clause — the assembled table BIT-IDENTICAL across shard counts, a corrupted
+shard CONVICTED by the merge digest — is untouched; it is what G1 means, and
+it is the clause the campaign measured (32 nodes, 1/4/8 workers, digest
+d83e5c14, on the real geometry_problem → solve_determinant_from path).
+
+**The premise that failed.** The freeze wrote "the WARM result bit-identical
+to cold at every node (a warm start may change the path, never the answer)".
+The parenthetical is a factual claim about f64 Davidson and it is measured
+FALSE: on (H,H,Cl), warm and cold solves of the same geometry were
+bit-identical in 0 of 5 pairs, differing by 3.4e-13 to 4.3e-12 Ha. In finite
+precision the trailing bits of "the answer" are a function of the iteration
+path. No design satisfies the clause as written.
+
+**Why amending post-data is not a forking path here.** The clause as written
+fails EVERY design, so it cannot separate a good campaign from a bad one, and
+re-wording it cannot have been selected by a favourable result — no favourable
+result was available to select. Precedent: the Davidson 1e-11 ask, retired on
+the identical ruling (an ask unreachable by construction is a typo with force,
+not a gate). Had the clause been achievable by some designs and not others,
+this amendment would have been REFUSED as a rescue and the campaign re-frozen.
+
+**The re-staked clause.** Shard-schedule invariance is carried by
+construction — the region partition and the in-region traversal are canonical
+functions of the grid alone, fixed before any worker exists; each region is
+cold-seeded and warm starts live only inside a region's serpentine chain;
+regions are handed out from a shared counter so the schedule genuinely varies
+run to run. Gated by the SPLIT mutation pair, both halves mandatory:
+ReverseRegionOrder must NOT move the assembled table (measured: it does not),
+WorkerLocalWarmStart MUST move it (measured: it does). Neither half alone is
+evidence; the second half is the failing case the original wording could
+never have exhibited.
+
+**Plant (iii), re-scored on three outcomes with a two-sided gauge.** Per
+node: BENIGN iff |E_node − E_cold| <= 1e-9 Ha (one order above the 1e-10
+convergence bar); TRAPPED iff >= 1e-3 Ha; REFUSED-to-classify in the dead
+band between, which is named rather than silently absorbed. A trapped node
+must VOID via the variational bound (E <= min_i H_ii, read from
+Solution::variational_margin — one copy of the rule, not two) or the plant
+fires AS A FAILURE. Measured at discharge: 12/32 trapped (worst 7.572 Ha),
+all 12 VOIDed, zero false VOIDs among the 20 benign (worst 4.3e-12 Ha); the
+dead band is empty on this data and the benign/trapped separation is twelve
+orders. The residual and the exit reason are both measured BLIND to a
+catastrophic wrong solve (5.98e-11 residual on an eigenvector 7.47 Ha high);
+the variational bound is the only guard that worked, which is why it is the
+one the plant requires.

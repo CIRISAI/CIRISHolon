@@ -255,15 +255,41 @@ fn main() {
             if ok { "passes" } else { "VOID -- above the lowest diagonal" }
         );
     }
+    // M-PLANT-SECTOR, and this probe got it wrong once. The verdict below USED to read
+    // "NOT SUFFICIENT: the plant slips past it" whenever the guard did not fire — which
+    // conflates two completely different situations:
+    //
+    //   * the wrong start got TRAPPED and the guard missed it        (the guard failed)
+    //   * the wrong start converged to the RIGHT answer anyway       (nothing to catch)
+    //
+    // On (O,O,O) at this geometry the second happened: the random start reached the
+    // reference energy to 2.1e-12 Ha, so the plant's sector was EMPTY and the guard had
+    // nothing to miss. The old line reported that as a failure of the guard and would have
+    // put "a second guard is owed" into the record on the strength of a solve that was
+    // never wrong. The carrier is now measured FIRST and the guard is only judged where
+    // there is something to judge.
+    let carrier = (planted.e.v - reference.e.v).abs();
+    const CARRIER_FLOOR: f64 = 1e-6;
+    let trapped = carrier >= CARRIER_FLOOR;
     let guard_fires = planted.e.v > min_diag;
     let guard_clean = reference.e.v <= min_diag && good.e.v <= min_diag;
     println!(
+        "plant carrier |E_planted - E_cold| = {carrier:.3e} Ha  ->  the wrong start was {}",
+        if trapped { "TRAPPED" } else { "NOT trapped: it found the right eigenvector" }
+    );
+    println!(
         "guard verdict: fires on the plant = {guard_fires}, clean on both good solves = \
          {guard_clean}  --  {}",
-        if guard_fires && guard_clean {
+        if !trapped {
+            "EMPTY SECTOR at this geometry: the plant did not fire, so this run says \
+             NOTHING about the guard either way. Not a failure of the guard. The trap is \
+             geometry-dependent (measured: 12 of 32 nodes on one (H,H,Cl) grid here, 16 of \
+             60 geometries in the tables lane's sweep), so a single geometry samples it \
+             rather than testing it."
+        } else if guard_fires && guard_clean {
             "USABLE: it separates the classes with zero false positives here"
         } else if !guard_fires {
-            "NOT SUFFICIENT: the plant slips past it; a second guard is owed"
+            "THE GUARD MISSED A GENUINELY TRAPPED SOLVE: a second guard is owed"
         } else {
             "BROKEN: it fires on good solves too"
         }

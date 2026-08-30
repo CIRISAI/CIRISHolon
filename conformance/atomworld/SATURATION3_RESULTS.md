@@ -291,11 +291,34 @@ The prereg asks for "cold vs warm Davidson iterations along a locality sweep,
 speedup reported". Measured, same instrument, same grid shape, one cold seed per
 region:
 
+**Instrument A — the generator**, warm chains with one cold seed per region, so the
+saving is DILUTED by the seeds:
+
 | table | `n_det` | cold iters | warm iters | saving | cold-seed fraction |
 |---|---|---|---|---|---|
 | (H,H,Cl) | 605 | 744 | 771 | **−3.6%** (a slowdown) | 4/32 = 0.12 |
 | (Cl,Cl,Cl) | 9,477 | 509 | 465 | **+8.6%** | 4/18 = 0.22 |
-| (O,O,O) | 207,025 | *pending* | | | |
+
+**Instrument B — the pairwise probe** (`s3_warm_probe`), cold vs warm at the SAME
+five geometries with no seeds in the average, so this is the UNDILUTED per-node
+saving and is not directly comparable to the rows above:
+
+| table | `n_det` | cold iters | warm iters | saving |
+|---|---|---|---|---|
+| (O,O,O) | 207,025 | 579 | 539 | **+6.9%** |
+
+per step: 117→96, 113→111, 97→96, 121→96, 131→**140** — the last one is a
+*slowdown*, at the largest step.
+
+**THE WARM START DOES NOT RESCUE THE EXPENSIVE TABLE.** This gate's warrant
+estimated the warm start could save "up to 99% of `(O,O,O)`'s" cost. Measured, it
+saves **6.9%** of Davidson iterations — undiluted, on the table it was supposed to
+pay on. Backing the cold seeds out of `(Cl,Cl,Cl)`'s 8.6% puts that one near 11%
+undiluted, so the benefit does **not** keep growing with the space: it is roughly
+7–11% on both heavy tables and negative on the cheap one. Against G0's ~380
+core-hours for a full-resolution `(O,O,O)` table, 6.9% is about 26 core-hours —
+real, worth keeping, and not a reason to build a table that was otherwise
+unaffordable.
 
 The sign changes with the size of the determinant space, which is why this must
 be sized on the expensive table and not on chlorine — the tables lane's point,
@@ -327,6 +350,15 @@ The tables lane swept this rather than leaving it at one instance: **16 of 60
 found here. Two instruments, two lanes, one number. Geometry-dependent and
 COMMON — not rare, not universal — which is what makes the guard mandatory
 rather than prudent on a 34,500-node warm-started table.
+
+**And the trap did NOT occur at all on `(O,O,O)`**, which is worth recording
+because the probe's first verdict line got it wrong. The random start there
+reached the reference energy to **2.103e-12 Ha** — it found the right
+eigenvector, took 361 iterations against 97 to do it, and the guard correctly did
+not fire. The probe printed "NOT SUFFICIENT: the plant slips past it; a second
+guard is owed", which conflates *the guard missed a trapped solve* with *there
+was nothing to catch*. The plant's sector was EMPTY at that geometry. The probe
+now measures the carrier before judging the guard, and says so; nothing is owed.
 
 *(This lane's first diagnosis of the universal `stagnated` exit — an absolute
 1e-11 tolerance not transferring to chlorine-scale energies — was WRONG, and the

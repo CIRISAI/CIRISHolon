@@ -362,10 +362,13 @@ citing it is refused. Contacted here, with what each one binds:*
 * **M-SORTS-NOT-SEPARATES / M-EXIT-DISCRIMINATOR** — **§2.3**: `Stagnated` is the normal exit for
   every heavy solve, so it ranks rather than separates, and the informative discriminator is the
   exit reason *plus* the residual against the floor *plus* the variational margin.
-* **PROBE THE RESOURCE, NOT THE HOLDER** (**D2**) is proposed for registration in its own right —
-  during the 2026-08-30 disk-full window every writer on this machine was healthy and failing, so
-  a liveness-based probe passes exactly when it is most wrong. Offered to the registry as a
-  candidate rather than self-registered.
+* **M-PROBE-THE-RESOURCE** *(registered by the lead, `e5f0fd1`, this design's D2 as its founding
+  case)* — a health probe that interrogates the HOLDER ("is the process scheduling") instead of
+  the RESOURCE ("can I actually write") passes exactly while every real operation fails. It binds
+  **D2** and **D10's rung 3**, which are the same rule pointed at a holder and at the reaper
+  itself. Its registered wording also carries D3's horizon, correctly: because a resource probe
+  can pass at lease time and be false milliseconds later, a lease's meaning must carry its own
+  horizon rather than its probe carrying more precision.
 
 ## 8. THE PLANT SET — every firing rule demonstrates a failing case first
 

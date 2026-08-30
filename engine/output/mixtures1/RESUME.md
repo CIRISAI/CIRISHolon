@@ -77,6 +77,28 @@ Every parameter these accept is echoed in the run's own header, so a log says
 which run it is. P1's protocol constants are NOT settable — they are `const` in
 `mixquench.rs`, which is what makes a reported run re-runnable byte for byte.
 
+## One artifact owes a rebuild
+
+`crates/holon-render/viewer/holon_render.wasm` and its two `docs/` copies were
+last built at `1a13c49`'s source. The `AutomaticRoute` rename (`03acdda`) changed
+`holon-render/src/lib.rs`, so they are no longer byte-reproducible from HEAD.
+
+**They are still CORRECT.** The rename is source-level — `exists()` is the
+negation of the old `is_infeasible()` and every call site was flipped to match, so
+no behaviour moved. What is owed is reproducibility, not a fix.
+
+The rebuild could not be done at the time because `holon-chem/src/fci.rs` and
+`q8-mps/src/mpo.rs` were mid-edit on the shared tree (W1's mask widening, in
+`sigma_reference` — transiently unparseable, files touched seconds before the
+attempt). When the tree parses:
+
+```
+cd engine && bash crates/holon-render/build-web.sh
+cp crates/holon-render/viewer/holon_render.wasm ../docs/atoms/holon_render.wasm
+cp crates/holon-render/viewer/holon_render.wasm ../docs/unified/holon_render.wasm
+node crates/holon-render/viewer/smoke.mjs      # must still refuse Cl2 with code 21
+```
+
 ## Blocked on another lane, not on a run
 
 R2's engine half is built and `#[ignore]`d until `mixtures-referee` commits

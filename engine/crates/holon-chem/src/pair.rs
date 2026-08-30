@@ -29,6 +29,7 @@ use crate::dual::D2;
 use crate::elements::{sz2_sector, Species};
 use crate::fci::{
     cholesky_orthonormaliser, jacobi_eigh, solve, transform, FciSpace, MoIntegrals, Solution,
+    SolverRoute,
 };
 use crate::md::{ao_integrals, AoIntegrals, Basis};
 
@@ -279,6 +280,8 @@ pub struct PointSolution {
     /// Smallest eigenvalue of the AO overlap matrix. The conditioning of the Cholesky
     /// orthogonalisation is set by it, so it is reported rather than assumed.
     pub s_min_eigenvalue: f64,
+    /// Which solver actually ran. See [`SolverRoute`].
+    pub route: SolverRoute,
 }
 
 /// Solve one geometry: assemble, orthonormalise, rotate, transform, diagonalise.
@@ -334,15 +337,20 @@ pub fn solve_basis(basis: &Basis, n_alpha: usize, n_beta: usize) -> PointSolutio
         cg_residual: sol.cg_residual,
         scf_converged,
         s_min_eigenvalue: s_eigs[0],
+        route: sol.route,
     }
 }
 
-/// Solve one geometry and hand back the MO integrals and CI space as well, for the tests
-/// that want to run a second, independent route on the same numbers.
-pub fn solve_geometry_detailed(
-    species: &[Species],
-    centers: Vec<[D2; 3]>,
-) -> (FciSpace, MoIntegrals, Solution, D2) {
+/// Everything one geometry needs to be SOLVED, stopping short of solving it: the CI
+/// space, the MO integrals with their derivatives, and the nuclear repulsion.
+///
+/// Split out so a caller can run more than one solver on ONE assembly. Gate D1 is that
+/// caller: it compares the determinant route against DMRG, and a comparison that
+/// assembled the basis twice would be measuring two pipelines rather than two
+/// eigensolvers. It also removes the second copy of this preamble that
+/// [`solve_geometry_detailed`] used to carry — the copy was correct, and a correct copy
+/// is still a thing that can stop being one.
+pub fn geometry_problem(species: &[Species], centers: Vec<[D2; 3]>) -> (FciSpace, MoIntegrals, D2) {
     let basis = build_basis(species, centers);
     let n = basis.n;
     let ao = ao_integrals(&basis);
@@ -363,8 +371,18 @@ pub fn solve_geometry_detailed(
     }
     let mo = transform(&ao, &c, n);
     let space = FciSpace::new(n, n_alpha, n_beta);
+    (space, mo, basis.nuclear_repulsion())
+}
+
+/// Solve one geometry and hand back the MO integrals and CI space as well, for the tests
+/// that want to run a second, independent route on the same numbers.
+pub fn solve_geometry_detailed(
+    species: &[Species],
+    centers: Vec<[D2; 3]>,
+) -> (FciSpace, MoIntegrals, Solution, D2) {
+    let (space, mo, nuc) = geometry_problem(species, centers);
     let sol = solve(&space, &mo);
-    (space, mo, sol, basis.nuclear_repulsion())
+    (space, mo, sol, nuc)
 }
 
 /// The isolated atom's energy in this model, at the same level of theory as the curve.
@@ -495,6 +513,14 @@ pub struct PairMeta {
     /// `None` for a pair with no minimum deeper than [`WELL_MIN_DEPTH`] — the schema's
     /// way of saying "repulsive only", which is the in-model truth for He2 and Ne2.
     pub well: Option<Well>,
+    /// WHICH SOLVER produced this curve. See [`SolverRoute`]: `solve` switches to DMRG
+    /// past [`crate::fci::MPS_ROUTE_THRESHOLD`] determinants, and before this field
+    /// existed the switch was invisible downstream — a DMRG curve arrived in the sandbox
+    /// wearing a provenance string that said "determinant".
+    pub route: SolverRoute,
+    /// The provenance line, DERIVED from `route` by [`provenance_for`] rather than being
+    /// one constant for every curve. A field that cannot vary cannot be wrong, and cannot
+    /// be right either.
     pub provenance: &'static str,
     /// Worst Davidson residual over the knots, and worst response-solve residual. A
     /// curve that did not converge everywhere must say so in its own metadata.
@@ -509,10 +535,33 @@ pub struct PairMeta {
     pub generation_ms: f64,
 }
 
-/// The label every generated pair curve carries. It states the model, the arithmetic and
-/// the route, and deliberately does NOT say "exact", which would be a claim about the
+/// The label a DETERMINANT-route pair curve carries. It states the model, the arithmetic
+/// and the route, and deliberately does NOT say "exact", which would be a claim about the
 /// world rather than about the basis.
+///
+/// Kept under its original name because it is the label the ELEMENTS-1 drop and the
+/// committed JSON tables were written with, and renaming a string that appears in
+/// on-disk artifacts would silently invalidate them.
 pub const PAIR_PROVENANCE: &str = "engine-computed STO-3G FCI (determinant, Knowles-Handy), f64";
+
+/// The label a DMRG-route pair curve carries.
+///
+/// It says DMRG in the first field, because that is the fact a reader most needs and the
+/// one that was missing: past [`crate::fci::MPS_ROUTE_THRESHOLD`] determinants the solver
+/// switches, and every such curve used to be stamped [`PAIR_PROVENANCE`] regardless. It
+/// also says what the number IS — a variational upper bound inside a bond-dimension
+/// budget — because "DMRG" alone still lets a reader assume exactness.
+pub const PAIR_PROVENANCE_DMRG: &str =
+    "engine-computed STO-3G DMRG (MPS, variational within a bond-dimension budget; NOT      exact in model), f64";
+
+/// The provenance line for a route. ONE function, so the label and the fact cannot drift:
+/// a curve's stamp is computed from the route it actually took.
+pub const fn provenance_for(route: SolverRoute) -> &'static str {
+    match route {
+        SolverRoute::Determinant => PAIR_PROVENANCE,
+        SolverRoute::Dmrg => PAIR_PROVENANCE_DMRG,
+    }
+}
 
 /// A generated pair curve: the renderer's four columns plus the metadata above.
 #[derive(Clone, Debug)]
@@ -622,6 +671,13 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
     let (mut worst_residual, mut worst_cg, mut worst_s) = (0.0f64, 0.0f64, f64::INFINITY);
     let mut scf_ok = true;
     let (mut n_det, mut n_basis) = (0usize, 0usize);
+    // The route the whole CURVE travelled, not the last knot's. Every knot of a pair has
+    // the same determinant space, so in practice these agree — but "in practice they
+    // agree" is what a curve stamped from its last point would be relying on, and a
+    // curve that went two ways is worse than one that went the wrong way, because a
+    // single label cannot describe it. Downgrading on any DMRG knot is the safe
+    // direction: it can only understate the curve's exactness, never overstate it.
+    let mut route = SolverRoute::Determinant;
 
     for i in 0..n_knots {
         let ri = crate::table::grid_point(r_min, r_max, n_knots, i);
@@ -640,6 +696,9 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
         worst_cg = worst_cg.max(sol.cg_residual);
         worst_s = worst_s.min(sol.s_min_eigenvalue);
         scf_ok &= sol.scf_converged;
+        if sol.route == SolverRoute::Dmrg {
+            route = SolverRoute::Dmrg;
+        }
         n_det = sol.n_det;
         n_basis = sol.n_basis;
     }
@@ -672,7 +731,8 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
             r_max,
             e_asymptote,
             well,
-            provenance: PAIR_PROVENANCE,
+            route,
+            provenance: provenance_for(route),
             worst_residual,
             worst_cg_residual: worst_cg,
             worst_s_eigenvalue: worst_s,

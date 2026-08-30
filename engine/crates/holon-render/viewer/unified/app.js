@@ -58,6 +58,7 @@ const ui = {
   spZ: document.querySelector("#sp-z"),
   spMass: document.querySelector("#sp-mass"),
   spRadius: document.querySelector("#sp-radius"),
+  spRouteBadge: document.querySelector("#sp-route-badge"),
   paletteProv: document.querySelector("#palette-prov"),
 
   // QVM & Retract Bridge
@@ -439,6 +440,15 @@ function selectSpecies(z) {
   ui.spZ.textContent = sp.Z;
   ui.spMass.textContent = `${sp.mass_me.toFixed(1)} mₑ`;
   ui.spRadius.textContent = `${sp.radius_bohr.toFixed(3)} a₀ (${(sp.radius_bohr * BOHR_TO_ANGSTROM).toFixed(3)} Å)`;
+  
+  if (ui.spRouteBadge) {
+    const route = sp.route || (sp.Z > 10 ? "MPS DMRG" : "FCI Exact");
+    ui.spRouteBadge.textContent = route;
+    ui.spRouteBadge.dataset.state = route === "FCI Exact" ? "pass" : "accent";
+    ui.spRouteBadge.title = route === "FCI Exact" 
+      ? "Direct determinant configuration interaction" 
+      : "Low-entanglement Matrix Product State DMRG (q8-mps)";
+  }
 }
 
 function atomStyle(w, i) {

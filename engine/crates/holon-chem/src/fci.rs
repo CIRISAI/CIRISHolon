@@ -930,7 +930,59 @@ pub struct Solution {
     /// hand back a plausible number.
     pub residual: f64,
     pub cg_residual: f64,
+    /// WHICH SOLVER produced this. Carried on the solution rather than inferred by a
+    /// caller from `n_det`, because [`solve`] switches routes on a size threshold and a
+    /// caller that re-derives the switch is a second copy of the rule.
+    pub route: SolverRoute,
 }
+
+/// Which solver produced a [`Solution`], and therefore what the number is worth.
+///
+/// # Why this is on the solution and not in a comment
+///
+/// [`solve`] routes any space past [`MPS_ROUTE_THRESHOLD`] determinants to DMRG. That is a
+/// defensible engineering choice and it was, until this type existed, INVISIBLE: the curve
+/// came back through the same struct, into a `PairTable` stamped with a provenance string
+/// reading "engine-computed STO-3G FCI (determinant, Knowles-Handy)", and nothing anywhere
+/// could tell a caller that the numbers in front of it were variational within a bond
+/// budget rather than exact in the model. SiO, one of MIXTURES-1's own D1 overlap species,
+/// is 132,496 determinants and was travelling that path wearing the determinant label.
+///
+/// A DMRG energy is an upper bound converged to a declared tolerance, not an exact-in-model
+/// value, and the difference is the entire content of gate D1. So the route travels with
+/// the number.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum SolverRoute {
+    /// Determinant CI: Davidson over the full space in the minimal `S_z` sector. Exact in
+    /// the declared model, up to the Davidson residual the solution reports.
+    Determinant,
+    /// MPS/DMRG: variational inside a bond-dimension budget. NOT exact in model; its error
+    /// is bounded by the discarded weight the solution reports, and its admission to the
+    /// sandbox is gate D1's business.
+    Dmrg,
+}
+
+impl SolverRoute {
+    /// Whether a curve from this route may be presented as exact in the declared model.
+    pub fn is_exact_in_model(self) -> bool {
+        matches!(self, SolverRoute::Determinant)
+    }
+
+    /// The route's own name, for a provenance line.
+    pub fn label(self) -> &'static str {
+        match self {
+            SolverRoute::Determinant => "determinant, Knowles-Handy",
+            SolverRoute::Dmrg => "DMRG",
+        }
+    }
+}
+
+/// Determinant count past which [`solve`] switches to the MPS/DMRG route.
+///
+/// Named rather than inlined because two things now read it: the switch itself, and the
+/// tests that check a species lands on the route its size implies. A literal in the
+/// `if` and a literal in the test is how the two come to disagree.
+pub const MPS_ROUTE_THRESHOLD: usize = 50_000;
 
 /// Iteration cap for [`davidson`], as a settable global.
 ///
@@ -1188,6 +1240,27 @@ fn cg_response(
 /// Maps molecular orbital integrals (h_pq, g_pqrs) to a 1D Matrix Product Operator
 /// and computes ground state energy and Hellmann-Feynman derivatives with DMRG.
 pub fn solve_mps(space: &FciSpace, mo: &MoIntegrals, max_bond_dim: usize) -> Solution {
+    solve_mps_with(space, mo, max_bond_dim, MPS_DEFAULT_SWEEPS, MPS_DEFAULT_TOL)
+}
+
+/// Sweep budget [`solve_mps`] uses when the caller does not say.
+pub const MPS_DEFAULT_SWEEPS: usize = 25;
+/// Per-sweep energy tolerance [`solve_mps`] uses when the caller does not say.
+pub const MPS_DEFAULT_TOL: f64 = 1e-9;
+
+/// [`solve_mps`] with the sweep budget and tolerance under the caller's control.
+///
+/// Gate D1 needs these settable and it needs them REPORTED: a harness that prints
+/// "sweeps 40, tol 1e-11" in its header while the solver runs 25 and 1e-9 is describing a
+/// run that did not happen. The constants above are what the ordinary path uses, named so
+/// that the default is a stated value rather than two literals inside a call.
+pub fn solve_mps_with(
+    space: &FciSpace,
+    mo: &MoIntegrals,
+    max_bond_dim: usize,
+    max_sweeps: usize,
+    tol: f64,
+) -> Solution {
     let n_orb = mo.n;
     let n_alpha = space.alpha.n_elec;
     let n_beta = space.beta.n_elec;
@@ -1206,8 +1279,8 @@ pub fn solve_mps(space: &FciSpace, mo: &MoIntegrals, max_bond_dim: usize) -> Sol
         &h0,
         &g0,
         max_bond_dim,
-        25,
-        1e-9,
+        max_sweeps,
+        tol,
     )
     .expect("MPS DMRG ground state solver failed");
 
@@ -1238,16 +1311,38 @@ pub fn solve_mps(space: &FciSpace, mo: &MoIntegrals, max_bond_dim: usize) -> Sol
         cg_iters: 0,
         residual: max_dw.max(res.worst_lanczos_residual),
         cg_residual: 0.0,
+        route: SolverRoute::Dmrg,
     }
 }
 
-/// Solve for the ground state and both derivatives of its energy.
-/// Automatically routes large determinant spaces (> 50,000 determinants) to the MPS/DMRG solver.
+/// Solve for the ground state and both derivatives of its energy, choosing the route by
+/// the size of the determinant space.
+///
+/// Spaces past [`MPS_ROUTE_THRESHOLD`] go to the MPS/DMRG solver. The returned
+/// [`Solution::route`] says which one ran, and every consumer that presents the number to
+/// anybody is required to read it — see [`SolverRoute`] for what went wrong while nothing
+/// did.
+///
+/// A caller that needs the exact-in-model answer whatever it costs — gate D1's overlap
+/// comparison is exactly that caller — must use [`solve_determinant`] instead, which has no
+/// threshold and no fallback.
 pub fn solve(space: &FciSpace, mo: &MoIntegrals) -> Solution {
-    if space.n_det > 50_000 {
+    if space.n_det > MPS_ROUTE_THRESHOLD {
         return solve_mps(space, mo, 64);
     }
+    solve_determinant(space, mo)
+}
 
+/// The determinant route, unconditionally: Davidson over the whole space, whatever its
+/// size, with no size threshold and no DMRG fallback.
+///
+/// This is what "exact in model" means in this crate, and it exists as its own entry point
+/// because gate D1 compares DMRG against exact FCI on species that are large enough for
+/// [`solve`] to have sent BOTH sides of that comparison to DMRG. A validation whose
+/// reference silently becomes the thing under test measures nothing, and the shape is not
+/// hypothetical: SiO is 132,496 determinants, past the threshold, and is one of D1's two
+/// staked overlap species.
+pub fn solve_determinant(space: &FciSpace, mo: &MoIntegrals) -> Solution {
     let ci0 = ci_ints(mo, Order::Value);
     let ci1 = ci_ints(mo, Order::First);
     let ci2 = ci_ints(mo, Order::Second);
@@ -1287,6 +1382,7 @@ pub fn solve(space: &FciSpace, mo: &MoIntegrals) -> Solution {
         cg_iters,
         residual,
         cg_residual,
+        route: SolverRoute::Determinant,
     }
 }
 

@@ -48,3 +48,5 @@ zero_outside_perimeter  trimer boundary condition
 FIRST_ROW               the first-row species array, preserved for backward compatibility and row-specific tools
 SECOND_ROW              the second-row species array (Na..Ar), consumed by row-specific tools and tests
 C_3D                    universal STO-3G 3d contraction coefficients for d-shell basis functions
+is_exact_in_model       solver route classification predicate for method provenance
+geometry_problem        split-out assembly for D1 comparison without solving twice

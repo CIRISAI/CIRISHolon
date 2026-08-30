@@ -257,17 +257,99 @@ The nine with an automatic route are exactly the nine A1.2 named referee-eligibl
 criteria coincide here, which is a fact about this range rather than a definition.
 
 **Indium is the one refusal.** At 1,026,675 determinants Davidson stopped at its
-1200-iteration cap with a residual of **3.98e-1** — nine orders above the crate's declared
+the solver with a residual of **3.98e-1** — nine orders above the crate's declared
 `CONVERGED_RESIDUAL` — and returned **2S+1 = 4.216**, which is not a multiplicity: the
 Hamiltonian is spin-free, so a converged eigenvector is a spin eigenstate and 2S+1 is an
 integer. Both its energy and its multiplicity are meaningless and the row is refused rather
 than reported. See defect 5 — the record printed the residual and checked nothing, so on the
 first run this appeared as a row indistinguishable from a measurement.
 
-Its status is **"did not converge at the production cap"**, not a number. `DAVIDSON_MAX_ITER`
-is `#[doc(hidden)]` and its own doc reserves it for `tests/front_door.rs`, stating production
-never touches it — so raising it to force convergence would be reaching around a contract to
-obtain a result.
+Its status is **"did not converge"**, not a number. `DAVIDSON_MAX_ITER` is `#[doc(hidden)]`
+and its own doc reserves it for `tests/front_door.rs`, stating production never touches it — so
+raising it to force convergence would be reaching around a contract to obtain a result.
+
+**Corrected:** this section previously said indium "did not converge *at the production cap*",
+which asserted a mechanism nobody had measured. It was inferred from indium being the only atom
+that runs for the better part of an hour while the rest return in seconds — and the diagnostic
+below then found that every other atom exits by STAGNATION at a few hundred iterations or fewer,
+never touching the cap, which makes the inference exactly the kind that needs checking rather
+than repeating. **Whether indium exhausts the cap or stagnates like the rest is unmeasured**,
+and it is queued (`conv_diagnose 49`) rather than asserted. The refusal does not depend on which:
+3.98e-1 is nine orders above the bar and 2S+1 = 4.216 is not a multiplicity on any reading.
+
+### The convergence bar SORTS this class; it does not separate it
+
+The refusals above are read against `pair::CONVERGED_RESIDUAL` = 1e-10, whose own doc says it
+sits "an order above davidson's own 1e-11 target, so an ordinary solve clears it and a solve
+that gave up does not". Measured against the solver, that is not what it does here.
+
+`solve_determinant` calls `davidson(.., 1e-11, ..)`. Across the whole record, exactly one atom
+with more than one determinant reaches that target — **fluorine**, 5.68e-14 on five
+determinants. Every other atom from lithium to indium lands between 1.1e-11 and 1.0e-10, with
+four above the bar. Single-determinant species (H, He, Ne, Ar, Kr, Xe) return exactly zero
+without entering the loop.
+
+`examples/conv_diagnose.rs` asks the question the record could not, because `davidson_eigh` has
+**three** exits and the record kept only the residual: the target, the iteration cap, and
+subspace stagnation when no candidate expansion vector survives orthogonalisation. A residual
+above the target is consistent with the last two and they are different facts — only one is
+fixed by patience. `Solution::davidson_iters` tells them apart and nothing read it.
+
+| Z | atom | dets | residual | iters | exit | vs bar |
+|---|---|---|---|---|---|---|
+| 9 | F *(control)* | 5 | 5.68e-14 | 3 | **CONVERGED** | pass |
+| 10 | Ne *(control)* | 1 | 0.00e0 | 0 | **CONVERGED** | pass |
+| 3 | Li | 50 | 7.03e-11 | 8 | STAGNATED | pass |
+| 4 | Be | 100 | 1.12e-11 | 10 | STAGNATED | pass |
+| 19 | K | 204,490 | 9.95e-11 | 177 | STAGNATED | pass |
+| 32 | Ge | 23,409 | 8.85e-11 | 50 | STAGNATED | pass |
+| 33 | As | 2,754 | 9.80e-11 | 28 | STAGNATED | pass |
+| 51 | Sb | 9,477 | 1.07e-10 | 16 | STAGNATED | **REFUSED** |
+| 52 | Te | 729 | 1.07e-10 | 23 | STAGNATED | **REFUSED** |
+| 50 | Sn | 123,201 | 2.06e-10 | 334 | STAGNATED | **REFUSED** |
+
+**The cap is 1200 and the largest count anywhere is 334. Not one atom reached it.** Every solve
+stopped with hundreds of iterations unspent and could not use them, so **more iterations buy
+nothing** — the constant reserved in `DAVIDSON_MAX_ITER` would not have rescued a single row.
+
+**Published and refused rows take the same exit.** Antimony stagnates at 16 iterations and is
+refused; germanium stagnates at 50 and is published. And the phenomenon is not about size:
+lithium has **fifty determinants** and stalls at 7.03e-11, while potassium's 204,490 stalls at
+9.95e-11 — four orders of magnitude of space, landing in the same place. What separates the
+published from the refused is not chemistry, not difficulty, and not effort.
+
+**Where it comes from.** Davidson tries two candidate expansion vectors, the preconditioned
+residual then the raw one, orthogonalises each against the accumulated basis, and accepts one
+only if its norm exceeds a hard-coded **1e-10**. The source argues this is safe:
+
+> the raw residual is orthogonal to the current Ritz vector by construction and cannot be empty
+> unless the solve has actually converged, so the fallback is what makes "no new direction" mean
+> convergence
+
+The premise holds against *one* Ritz vector and fails against the accumulated basis, which
+carries up to `max_sub` directions plus the previous descent direction after a thick restart. A
+residual lying inside that span orthogonalises to nearly nothing while the residual itself is
+still 7e-11 — ordinary Davidson subspace breakdown. Lithium at eight iterations on fifty
+determinants is the clean demonstration: neither hard nor exhausted.
+
+**Stated precisely, because the tidy version is wrong.** The bar and that threshold are two
+different quantities sharing a number — the bar is on the residual, the gate is on an
+orthogonalised candidate. Were they one quantity every atom would stall at one residual; they
+scatter across an order of magnitude, which is the evidence that they are two.
+
+**What this does and does not change.** It does **not** soften the bar, and the refusals stand:
+a solve that stagnates did not finish, and this record does not publish rows whose solver gave
+up. It is not an accuracy statement either — for a symmetric eigenproblem `|θ−λ| ≤ ‖r‖`, so
+every refused row except indium carries an energy good to better than 3e-10 hartree. What it
+changes is that a **process** verdict must never be read as an accuracy verdict, in either
+direction, and that the line between published and refused here falls between arsenic at
+9.80e-11 and antimony at 1.07e-10 — **a factor of 1.1, decided by the solver's architecture
+rather than by the atom.**
+
+**Owed, and named as a successor rather than done here:** a scaling acceptance threshold and
+full reorthogonalisation — not restarts and not patience, which the iteration counts rule out —
+and an exit-reason enum on `Solution`, so nine solves that never approached their cap stop being
+indistinguishable in a record from one that exhausted it.
 
 The multiplicities and energies for 51–54 in the table above come from
 `tests/elements3_atoms.rs`, which recomputes them, not from the record.

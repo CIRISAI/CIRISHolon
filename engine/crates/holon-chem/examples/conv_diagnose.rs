@@ -54,30 +54,58 @@ const DAVIDSON_TARGET: f64 = 1e-11;
 /// exit it found was a property of failing or a property of the whole class -- which is the
 /// question actually being asked.
 ///
-/// # The light controls are not padding
+/// # The controls are not padding, and choosing them corrected the hypothesis
 ///
-/// If the hypothesis is right, NO heavy atom classifies as CONVERGED -- and then the
-/// classifier's `CONVERGED` branch is never exercised and the run cannot distinguish "the
-/// heavy class uniformly fails to converge" from "this diagnostic cannot recognise
-/// convergence". So three light atoms are included whose spaces are small enough that they
-/// must reach the target. If they do not, the instrument is what is broken, and the heavy
-/// readings mean nothing. That check has to be IN the run rather than assumed about it.
-const ASK: [(u32, &str); 12] = [
-    (3, "light control: must CONVERGE"),
-    (6, "light control: must CONVERGE"),
-    (10, "light control: must CONVERGE"),
-    (30, "refused: residual 2.72e-10"),
-    (50, "refused: residual 2.06e-10"),
-    (51, "refused: residual 1.07e-10"),
-    (52, "refused: residual 1.07e-10"),
-    (34, "published: residual 5.16e-11"),
-    (33, "published: residual 9.80e-11"),
-    (32, "published: residual 8.85e-11"),
-    (31, "published: residual 7.04e-11"),
-    (53, "published: residual 2.47e-11"),
+/// If nothing classifies as CONVERGED then that branch never runs, and the output cannot
+/// distinguish "these solves do not converge" from "this diagnostic cannot recognise
+/// convergence". So controls that MUST converge have to be in the list.
+///
+/// Picking them is what showed the phenomenon is not about heavy atoms at all. The first
+/// three chosen -- Li, C, Ne -- were assumed to converge because their spaces are tiny. Two
+/// of them do not: lithium is FIFTY determinants and stops at 7.03e-11, carbon at 3.35e-11.
+/// Reading the record's whole light block, exactly one atom with more than one determinant
+/// reaches the 1e-11 target: fluorine, at 5.68e-14 on five determinants. Everything else
+/// from lithium to indium piles up between 1.1e-11 and 1.0e-10 with no dependence on space
+/// size across four orders of magnitude.
+///
+/// So the controls are now fluorine (converges inside the loop) and neon (one determinant,
+/// which returns exactly before iterating). Lithium and beryllium are in the list as
+/// EVIDENCE rather than as controls: a fifty-determinant space that misses the target
+/// cannot be explained by "not given long enough".
+const ASK: [(u32, &str); 11] = [
+    (9, "CONTROL: the only atom in the record that converges inside the loop"),
+    (10, "CONTROL: one determinant, exact without ever iterating"),
+    (3, "50 determinants -- and still short of the target"),
+    (4, "100 determinants"),
+    (19, "published: 9.95e-11, just inside the bar"),
+    (32, "published: 8.85e-11"),
+    (33, "published: 9.80e-11, just inside the bar"),
+    (51, "REFUSED: 1.07e-10, just outside the bar"),
+    (52, "REFUSED: 1.07e-10, just outside the bar"),
+    (50, "REFUSED: 2.06e-10"),
+    (30, "REFUSED: 2.72e-10"),
 ];
 
 fn main() {
+    // Optional Z arguments override the default list, so a single expensive atom can be
+    // asked on its own. Indium is the reason this exists: the record calls its status "did
+    // not converge at the production cap", which is an INFERENCE from the fact that it runs
+    // for the better part of an hour while every other atom returns in seconds. Every atom
+    // measured so far stagnated instead, none of them anywhere near the cap, so that
+    // inference needs checking rather than repeating -- and asking indium costs a run of
+    // its own, which is why it is not in the default list.
+    let argv: Vec<u32> = std::env::args()
+        .skip(1)
+        .filter_map(|a| a.parse().ok())
+        .collect();
+    let ask: Vec<(u32, &str)> = if argv.is_empty() {
+        ASK.to_vec()
+    } else {
+        argv.iter()
+            .map(|z| (*z, "asked on the command line"))
+            .collect()
+    };
+
     let cap = DAVIDSON_MAX_ITER.load(std::sync::atomic::Ordering::Relaxed);
     println!("# Davidson exit taken, per atom. cap = {cap}, target = {DAVIDSON_TARGET:.0e}, bar = {CONVERGED_RESIDUAL:.0e}");
     println!("# exit CONVERGED: resid < target | CAP: iters == cap | STAGNATED: neither");
@@ -87,10 +115,10 @@ fn main() {
     );
 
     /// The three light atoms whose job is to prove the CONVERGED branch is reachable.
-    const CONTROLS: [u32; 3] = [3, 6, 10];
+    const CONTROLS: [u32; 2] = [9, 10];
     let mut controls_converged = 0usize;
     let mut heavy_converged = 0usize;
-    for (z, why) in ASK {
+    for (z, why) in ask.iter().copied() {
         let sp = by_z(z).unwrap();
         let (space, mo, _) =
             geometry_problem(&[sp], vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]]);
@@ -123,20 +151,25 @@ fn main() {
     }
 
     println!("#");
-    if controls_converged < CONTROLS.len() {
+    let controls_present = ask.iter().filter(|(z, _)| CONTROLS.contains(z)).count();
+    if controls_present == 0 {
+        println!(
+            "# NO CONTROLS IN THIS RUN: an explicit atom list was given, so the CONVERGED \
+             branch was never required to fire and this run cannot vouch for its own \
+             classifier. Read its exits against a default run that carries the controls."
+        );
+    } else if controls_converged < controls_present {
         println!(
             "# INSTRUMENT FAILURE, not a finding: only {controls_converged} of \
-             {} light controls reached the target. This run cannot tell 'the heavy class \
-             does not converge' from 'this classifier cannot see convergence', and the \
-             heavy readings above are not evidence of anything.",
-            CONTROLS.len()
+             {controls_present} controls reached the target. This run cannot tell 'these \
+             solves do not converge' from 'this classifier cannot see convergence', and \
+             the readings above are not evidence of anything."
         );
     } else {
         println!(
-            "# All {} light controls reached the target, so the CONVERGED branch is live \
-             and a heavy atom missing it is a fact about the atom, not about this \
-             classifier. Heavy atoms that reached it: {heavy_converged}.",
-            CONTROLS.len()
+            "# All {controls_present} controls reached the target, so the CONVERGED branch \
+             is live and an atom missing it is a fact about the atom, not about this \
+             classifier. Non-control atoms that reached it: {heavy_converged}."
         );
     }
     println!(

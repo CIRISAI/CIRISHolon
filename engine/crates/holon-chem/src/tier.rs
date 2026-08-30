@@ -406,6 +406,15 @@ pub struct RefinedSolution {
 /// A caller wanting deeper passes its own ask through [`refine_determinant_dd`]'s
 /// `tol` parameter — per-class, from the lease layer's measured boundaries, which is
 /// where depth negotiation belongs.
+///
+/// CORRECTION from the confirmation run, recorded before anyone leans on the deep
+/// numbers: the residual is NOT MONOTONE across thick restarts. Te crossed 5.75e-13 at
+/// iteration 15, wandered up to 5.53e-12 by 400, and was back to 2.97e-13 at 4000 — so
+/// a budget-CHECKPOINT reading of the residual is not a boundary, and the per-class
+/// deep-tail split (Sb 1.99e-15 vs Te 2.97e-13 at 4000) is real data but NOT yet a
+/// calibrated class boundary: at the reachable ask both classes converge in ~15
+/// iterations, class-independent. Boundaries are measured AT EXIT under an ask that
+/// means something, never read off a wandering sequence mid-flight.
 pub const DD_REQUESTED_TOLERANCE: f64 = 1e-12;
 
 /// Refine an f64-tier solution on the DOUBLE-DOUBLE tier.

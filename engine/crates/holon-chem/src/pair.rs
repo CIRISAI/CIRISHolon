@@ -660,6 +660,25 @@ pub fn derive_range(a: Species, b: Species, e_asymptote: f64) -> (f64, f64) {
 /// equidistributes the cubic Hermite interpolant's error (see `table.rs` for the
 /// derivation).
 pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable {
+    // THE FEASIBILITY REFUSAL, before anything is spent. Without it, asking for a curve
+    // whose determinant space is past `fci::MPS_ROUTE_THRESHOLD` and whose orbital count
+    // is past `MPS_MAX_ORBITALS` does not fail — it runs the MPO builder, which at ten
+    // orbitals did not finish in an hour on the campaign machine. A caller is entitled to
+    // be told no; it is not entitled to be told nothing.
+    let f = feasibility(a, b);
+    assert!(
+        !f.is_infeasible(),
+        "{}{}: no route in this engine produces this curve. {} determinants is past the \
+         determinant route's budget of {}, and {} orbitals is past the MPS route's measured \
+         reach of {} (see pair::MPS_MAX_ORBITALS for the timings). Refusing rather than \
+         starting a solve that does not return.",
+        a.symbol,
+        b.symbol,
+        f.n_det(),
+        crate::fci::MPS_ROUTE_THRESHOLD,
+        f.n_orb(),
+        MPS_MAX_ORBITALS,
+    );
     let t0 = Stopwatch::start();
     let e_asymptote = atom_energy(a) + atom_energy(b);
     let (r_min, r_max) = derive_range(a, b, e_asymptote);
@@ -740,6 +759,105 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
             generation_ms: t0.ms(),
         },
     }
+}
+
+/// The largest orbital count the MPS/DMRG route has been DEMONSTRATED to run at.
+///
+/// # Measured, and the measurement is the point
+///
+/// `q8_mps::mpo::Mpo::from_electronic_integrals` builds the two-body electronic MPO from a
+/// raw list of `O(n_orb^4)` operator strings and compresses it with one SVD per site of an
+/// `m x 4r` matrix. The construction, not the sweep, is the entire budget. Measured on the
+/// campaign machine (`engine/output/mixtures1/mpo_cost_*.log`):
+///
+/// | pair | `n_orb` | MPO build | one sweep | final bond dim |
+/// |---|---|---|---|---|
+/// | H2  | 2  | 0.00 s   | 0.00 s | 8 |
+/// | LiH | 6  | 528.48 s | 0.03 s | 46 |
+/// | HCl | 10 | did not complete in over an hour | — | — |
+///
+/// So the route is reachable at six orbitals at a cost of nine minutes PER GEOMETRY, and
+/// is not reachable at ten. MIXTURES-1's own D1 overlap species are SiO at fourteen
+/// orbitals and S2 at eighteen.
+///
+/// # Why this is a refusal and not a slow path
+///
+/// [`crate::fci::solve`] routes any space past [`crate::fci::MPS_ROUTE_THRESHOLD`]
+/// determinants to that builder. SiO is 132,496 determinants and fourteen orbitals, so
+/// asking this crate for an SiO curve does not return a wrong number — it does not
+/// return. A sandbox that offers a species and then hangs on it is worse than one that
+/// says it cannot do that species, and the difference is this constant.
+pub const MPS_MAX_ORBITALS: usize = 6;
+
+/// Whether a pair's curve can be produced, and by which route.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Feasibility {
+    /// Inside the determinant route's budget: exact in model.
+    Determinant { n_det: usize, n_orb: usize },
+    /// Past the determinant threshold but inside the MPS route's measured reach. Costly
+    /// (see [`MPS_MAX_ORBITALS`]) and NOT exact in model.
+    Mps { n_det: usize, n_orb: usize },
+    /// Past both. No route in this engine produces this curve.
+    Infeasible { n_det: usize, n_orb: usize },
+}
+
+impl Feasibility {
+    pub fn is_infeasible(self) -> bool {
+        matches!(self, Feasibility::Infeasible { .. })
+    }
+
+    pub fn n_det(self) -> usize {
+        match self {
+            Feasibility::Determinant { n_det, .. }
+            | Feasibility::Mps { n_det, .. }
+            | Feasibility::Infeasible { n_det, .. } => n_det,
+        }
+    }
+
+    pub fn n_orb(self) -> usize {
+        match self {
+            Feasibility::Determinant { n_orb, .. }
+            | Feasibility::Mps { n_orb, .. }
+            | Feasibility::Infeasible { n_orb, .. } => n_orb,
+        }
+    }
+}
+
+/// Which route a pair's curve would take, WITHOUT computing anything.
+///
+/// Both inputs are counts read off the species registry — the orbital count is the sum of
+/// the two basis sizes and the determinant count is `C(n_orb, n_alpha) * C(n_orb, n_beta)`
+/// — so this is cheap enough to call at a door before deciding to spend hours behind it.
+pub fn feasibility(a: Species, b: Species) -> Feasibility {
+    let n_orb = a.n_basis() + b.n_basis();
+    let (n, n_alpha, n_beta) = electron_counts(&[a, b]);
+    let _ = n;
+    let n_det = choose(n_orb, n_alpha).saturating_mul(choose(n_orb, n_beta));
+    if n_det <= crate::fci::MPS_ROUTE_THRESHOLD {
+        Feasibility::Determinant { n_det, n_orb }
+    } else if n_orb <= MPS_MAX_ORBITALS {
+        Feasibility::Mps { n_det, n_orb }
+    } else {
+        Feasibility::Infeasible { n_det, n_orb }
+    }
+}
+
+/// `C(n, k)`, saturating rather than overflowing. Na2 is `C(18,11)^2` = 1.0e9 and Xe2 would
+/// be far past `usize`, so a count that cannot be represented must come back as "very
+/// large" rather than as a small wrong number wrapping around.
+fn choose(n: usize, k: usize) -> usize {
+    if k > n {
+        return 0;
+    }
+    let k = k.min(n - k);
+    let mut acc: usize = 1;
+    for i in 0..k {
+        acc = match acc.checked_mul(n - i) {
+            Some(v) => v / (i + 1),
+            None => return usize::MAX,
+        };
+    }
+    acc
 }
 
 /// Find the bound minimum, or report that there is not one.

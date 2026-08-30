@@ -227,6 +227,14 @@ pub fn load_pair_table(s: &mut Sim, pt: &holon_chem::pair::PairTable, host: bank
 /// reason [`PROVENANCE_REFUSED`] is: a full bank and a bad curve are different problems.
 pub const BANK_FULL: u32 = 15;
 
+/// No route in this engine produces this pair's curve. See
+/// [`holon_chem::pair::MPS_MAX_ORBITALS`] for the measurement behind it.
+///
+/// Distinct from `GENERATOR_REFUSED` (which means the grid request was malformed) and from
+/// `BANK_FULL`: this one says the chemistry is out of reach, which is a fact about the
+/// engine's solvers and not about the caller's arguments.
+pub const CURVE_INFEASIBLE: u32 = 14;
+
 /// Solve and load any pair potential table (e.g. LiH, HF, Li2, etc.) dynamically.
 ///
 /// NATIVE host: this is the entry point the desktop shells use, and they have no page
@@ -237,6 +245,9 @@ pub fn generate_pair_table(
     b: holon_chem::elements::Species,
     count: usize,
 ) -> u32 {
+    if holon_chem::pair::feasibility(a, b).is_infeasible() {
+        return CURVE_INFEASIBLE;
+    }
     let pt = holon_chem::pair::generate_pair_table(a, b, count);
     load_pair_table(s, &pt, bank::Host::Native)
 }
@@ -1400,8 +1411,47 @@ pub extern "C" fn holon_bank_generate_pair(za: u32, zb: u32, knots: u32) -> u32 
     ) else {
         return GENERATOR_REFUSED;
     };
+    // Ask before spending. `generate_pair_table` refuses an infeasible pair by panicking,
+    // which in a browser is a trap with no message a user can act on; the host gets a code
+    // instead, and the ABI never reaches the assert.
+    if holon_chem::pair::feasibility(a, b).is_infeasible() {
+        return CURVE_INFEASIBLE;
+    }
     let pt = holon_chem::pair::generate_pair_table(a, b, knots as usize);
     load_pair_table(&mut sim(), &pt, bank::Host::Browser)
+}
+
+/// Which route a pair's curve would take, without computing it: `0` infeasible,
+/// `1` determinant/FCI, `2` MPS/DMRG.
+///
+/// Lets a viewer grey out a species pair it cannot have rather than offering it and
+/// hanging. The determinant count behind the answer is `holon_bank_pair_n_det`.
+#[no_mangle]
+pub extern "C" fn holon_bank_pair_route(za: u32, zb: u32) -> u32 {
+    let (Some(a), Some(b)) = (
+        holon_chem::elements::by_z(za),
+        holon_chem::elements::by_z(zb),
+    ) else {
+        return 0;
+    };
+    match holon_chem::pair::feasibility(a, b) {
+        holon_chem::pair::Feasibility::Infeasible { .. } => 0,
+        holon_chem::pair::Feasibility::Determinant { .. } => 1,
+        holon_chem::pair::Feasibility::Mps { .. } => 2,
+    }
+}
+
+/// The determinant count a pair's solve would face. `f64` because it can exceed `u32` —
+/// Na2 is 1.0e9.
+#[no_mangle]
+pub extern "C" fn holon_bank_pair_n_det(za: u32, zb: u32) -> f64 {
+    let (Some(a), Some(b)) = (
+        holon_chem::elements::by_z(za),
+        holon_chem::elements::by_z(zb),
+    ) else {
+        return 0.0;
+    };
+    holon_chem::pair::feasibility(a, b).n_det() as f64
 }
 
 // ---- pushing a SHIPPED table into a slot -------------------------------------------

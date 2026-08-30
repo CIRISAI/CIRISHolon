@@ -288,53 +288,80 @@ fn probe(a: Species, b: Species, name: &str) {
 }
 
 /// D1's overlap comparison on one species' declared grid.
+///
+/// # The MPO is built ONCE per geometry
+///
+/// Measured on this machine (`output/mixtures1/mpo_cost_*.log`): at six orbitals the
+/// electronic MPO costs 528 seconds to construct and 0.03 seconds to sweep. Construction
+/// is the entire budget. `solve_mps` rebuilds the MPO on every call, so walking a
+/// four-rung chi ladder through it would pay that 528 seconds four times over for a
+/// quantity — the bond dimension's effect on the energy — that does not depend on it. So
+/// the ladder is walked against one MPO here.
 fn overlap(a: Species, b: Species, name: &str, n_points: usize) {
     let t_start = Instant::now();
-    let e_asymptote = exact_total(a, b, 60.0).0.min(f64::INFINITY);
-    // The asymptote the engine itself uses is the sum of two ISOLATED atom energies, not
-    // a far-separation dimer point. Use that one, so the grid rule here is the engine's.
-    let e_asymptote = {
-        let ea = holon_chem::pair::atom_energy(a);
-        let eb = holon_chem::pair::atom_energy(b);
-        let _ = e_asymptote;
-        ea + eb
-    };
+    let e_asymptote = holon_chem::pair::atom_energy(a) + holon_chem::pair::atom_energy(b);
     let (r_min, r_max) = exact_range(a, b, e_asymptote);
-    let (er_min, er_max) = derive_range(a, b, e_asymptote);
+    let ladder = chi_ladder();
     say!("# D1 overlap: {name}");
     say!("#   grid rule      uniform in R^-1/4 (table::grid_point), {n_points} knots");
     say!("#   range (exact)  [{r_min:.9}, {r_max:.9}] bohr");
-    say!("#   range (engine) [{er_min:.9}, {er_max:.9}] bohr   <- engine's auto-routed search");
     say!("#   asymptote      {e_asymptote:.15} hartree");
-    say!("#   stake          |E_dmrg - E_fci| <= {D1_STAKE:.0e} Ha at chi = {}", CHI_LADDER[CHI_LADDER.len() - 1]);
-    say!("#   sweeps {DMRG_SWEEPS}  tol {DMRG_TOL:.0e}");
-    say!("R_bohr\tE_fci\tE_dmrg\tdelta\tdw_dmrg\tres_fci\tn_det");
+    say!("#   stake          |E_dmrg - E_fci| <= {D1_STAKE:.0e} Ha at chi = {}", ladder[ladder.len() - 1]);
+    say!("#   ladder {ladder:?}  sweeps {}  tol {DMRG_TOL:.0e}", sweeps());
+    let mut header = String::from("R_bohr\tE_fci\tres_fci\tn_det");
+    for chi in ladder.iter() {
+        header.push_str(&format!("\tE_chi{chi}\td_chi{chi}"));
+    }
+    say!("{header}");
 
-    let chi = CHI_LADDER[CHI_LADDER.len() - 1];
     let mut worst = 0.0f64;
     let mut worst_r = 0.0f64;
     for i in 0..n_points {
         let r = grid_point(r_min, r_max, n_points, i);
         let (space, mo, nuc) = problem_at(a, b, r);
         let ex = solve_determinant(&space, &mo);
-        let dm = solve_mps_with(&space, &mo, chi, DMRG_SWEEPS, DMRG_TOL);
         let e_fci = (ex.e + nuc).v;
-        let e_dmrg = (dm.e + nuc).v;
-        let d = (e_dmrg - e_fci).abs();
-        if d > worst {
-            worst = d;
+
+        let h: Vec<f64> = mo.h.iter().map(|d| d.v).collect();
+        let g: Vec<f64> = mo.g.iter().map(|d| d.v).collect();
+        let t_mpo = Instant::now();
+        let mpo = q8_mps::mpo::Mpo::from_electronic_integrals(mo.n, &h, &g);
+        let mpo_s = t_mpo.elapsed().as_secs_f64();
+
+        let mut row = format!(
+            "{r:.9}\t{e_fci:.15}\t{:.3e}\t{}",
+            ex.residual, space.n_det
+        );
+        let mut last_delta = f64::INFINITY;
+        for &chi in ladder.iter() {
+            let init = q8_mps::mps::initial_state_hf(mo.n, space.alpha.n_elec, space.beta.n_elec);
+            let cfg = q8_mps::dmrg::DmrgConfig {
+                chi_max: chi,
+                max_sweeps: sweeps(),
+                sweep_tol: DMRG_TOL,
+                policy: q8_mps::dmrg::RefusalPolicy::Silent,
+            };
+            match q8_mps::dmrg::dmrg_sweep(&mpo, init, &cfg) {
+                Ok(res) => {
+                    let e = res.energy + nuc.v;
+                    last_delta = e - e_fci;
+                    row.push_str(&format!("\t{e:.15}\t{:+.3e}", last_delta));
+                }
+                Err(e) => {
+                    row.push_str(&format!("\tREFUSED\t{e:?}"));
+                    last_delta = f64::INFINITY;
+                }
+            }
+        }
+        row.push_str(&format!("\tmpo_s {mpo_s:.1}"));
+        say!("{row}");
+        if last_delta.abs() > worst {
+            worst = last_delta.abs();
             worst_r = r;
         }
-        say!(
-            "{r:.9}\t{e_fci:.15}\t{e_dmrg:.15}\t{:+.6e}\t{:.3e}\t{:.3e}\t{}",
-            e_dmrg - e_fci,
-            dm.residual,
-            ex.residual,
-            space.n_det
-        );
     }
     let verdict = if worst <= D1_STAKE { "PASS" } else { "FAIL" };
-    say!("# WORST |delta| = {worst:.6e} Ha at R = {worst_r:.6} bohr   stake {D1_STAKE:.0e}   {verdict}");
+    say!("# WORST |delta| at largest chi = {worst:.6e} Ha at R = {worst_r:.6} bohr   stake {D1_STAKE:.0e}   {verdict}");
     say!("# elapsed {:.1} s", t_start.elapsed().as_secs_f64());
 }
 

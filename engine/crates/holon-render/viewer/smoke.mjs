@@ -26,13 +26,26 @@
 // it exits non-zero on a trap, on a missing export, or on a check that came back wrong, so
 // ci-gates.sh can run it (gate 17).
 //
-// Its demonstrated failing case is not hypothetical and is pinned here: the build from the
-// source that landed W1 (`MAX_ORB` 32 -> 64, `Mask` -> u64, `Det` -> u128) TRAPS with
-// `RuntimeError: memory access out of bounds` on `holon_bank_generate_pair(1, 2, 96)` --
-// helium, two orbitals, the cheapest solve the sandbox does. Measured: default 1 MiB wasm
-// stack traps, `-C link-arg=-zstack-size=8388608` does not, and the pre-W1 source does not.
-// Every native gate was green against that same source. This file is the only thing that
-// caught it, and the earlier `holon_atom_z`-read-as-species defect lived in the same gap.
+// Its demonstrated failing case is not hypothetical and is pinned here: a build once TRAPPED
+// with `RuntimeError: memory access out of bounds` on `holon_bank_generate_pair(1, 2, 96)`
+// -- helium, two orbitals, the cheapest solve the sandbox does -- while every native gate
+// was green against the identical source.
+//
+// The cause was a wasm STACK OVERFLOW at wasm-ld's 1 MiB default, and the mechanism is
+// worth carrying because it is invisible in review: `Box::new(<big array literal>)` is a
+// stack allocation wearing a heap allocation's clothes. `RTensor::work` was
+// `Box::new([[[[D2; RMAX+1]; RMAX+1]; RMAX+1]; RMAX+1])`, which materialises the whole
+// array on the stack before moving it -- 685 KB of a 1 MiB budget in one construction once
+// the f-shell work took RMAX from 8 to 12. The fix (3b37b8e) builds a boxed SLICE through
+// `vec!` instead, dropping peak construction stack to 52 KB, and the 1 MiB default survives
+// as the growth detector it should be.
+//
+// The attribution took two goes and that is the lesson: the first bisect blamed the FCI
+// mask widening, because its control commit predated two changes at once and could not
+// separate them. Three builds with ONE variable between them is what settled it.
+//
+// This file is the only thing that caught the trap, and the earlier
+// `holon_atom_z`-read-as-species defect lived in the same gap.
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";

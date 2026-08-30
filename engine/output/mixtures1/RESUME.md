@@ -77,57 +77,33 @@ Every parameter these accept is echoed in the run's own header, so a log says
 which run it is. P1's protocol constants are NOT settable — they are `const` in
 `mixquench.rs`, which is what makes a reported run re-runnable byte for byte.
 
-## One artifact owes a rebuild, and the rebuild is currently BROKEN
+## The wasm regression: CLOSED, and my attribution of it was wrong
 
-`crates/holon-render/viewer/holon_render.wasm` and its two `docs/` copies are the
-build from `1a13c49`'s source. They **work**, and they are what ships. What they
-are not is reproducible from HEAD.
+The browser artifact trapped when rebuilt; it no longer does. Fixed at `3b37b8e`,
+artifact rebuilt at `4536244` (double-built from a deleted target dir to identical
+sha256, all three copies hashing the same), and gate 17 runs green at the DEFAULT
+1 MiB stack. Nothing here is owed.
 
-**Do not rebuild and commit until the regression below is fixed.** A rebuild from
-current source produces a wasm that TRAPS.
+**The cause was not what I said it was.** I named W1's mask widening (`MAX_ORB`
+32 → 64, `Mask` → `u64`, `Det` → `u128`). It was another lane's uncommitted
+f-shell constants (`RMAX` 8 → 12), and the mechanism is
+`Box::new(<big array literal>)` — a stack allocation wearing a heap allocation's
+clothes. `RTensor::work` materialised 685 KB on a 1 MiB stack before moving it;
+building a boxed slice through `vec!` instead drops that to 52 KB.
 
-### The regression: a wasm stack overflow, invisible to every native test
+**The flaw in my method, which is the part worth keeping:** my three builds were
+"current source", "current source + 8 MiB stack", and "1a13c49". The first two
+isolate the stack correctly — that finding stands. The third does not isolate the
+CHANGE, because `1a13c49` predates W1 *and* the f-shell work, so "pre-W1 source
+works" was equally consistent with "pre-f-shell source works". A control that
+predates two variables cannot attribute to one. elements3-heavy settled it with
+three builds and one variable between them: clean HEAD green, HEAD + only the four
+f-shell constants trapping.
 
-Rebuilding after W1 landed (`MAX_ORB` 32 → 64, `Mask` → `u64`, `Det` → `u128`)
-gives a 299,007-byte artifact that traps with `RuntimeError: memory access out of
-bounds` on the first in-browser pair solve — `holon_bank_generate_pair(1, 2, 96)`,
-which is helium, two orbitals, the cheapest solve the sandbox does.
-
-Diagnosed, not guessed:
-
-| build | wasm stack | result |
-|---|---|---|
-| current source, default | 1 MiB (wasm-ld default) | **TRAP** |
-| current source, `-C link-arg=-zstack-size=8388608` | 8 MiB | works, 1,204 ms |
-| `1a13c49` source, default | 1 MiB | works, 958 ms |
-
-So it is the stack, and 8 MiB is enough. It is invisible natively because a native
-main thread gets 8 MiB anyway — `cargo test -p holon-chem` and `-p holon-render`
-are both fully green against the same source.
-
-Ruled out: `trimer.rs`'s `MAX_ORB^4` stack arrays, which look alarming and are
-not involved — that module has its own private `const MAX_ORB: usize = 3`.
-`fci.rs` has no large fixed stack arrays either (`Strings::masks` is a `Vec`), so
-the growth is in accumulated frames from the widened `Mask`/`Det` under
-`opt-level=z` + LTO, not in one obvious object.
-
-Two possible fixes, and the choice belongs to the lane that owns the widening:
-raise the stack in `build-web.sh` with a declared `-zstack-size` (honest, and
-masks future growth), or find and shrink the frame. Reported to `elements3-heavy`
-and the lead rather than decided here.
-
-**`viewer/smoke.mjs` is what caught this**, which is the gap it was written for:
-every native gate passes, and the thing the page actually loads does not run.
-
-### When it is fixed
-
-```
-cd engine && bash crates/holon-render/build-web.sh
-cp crates/holon-render/viewer/holon_render.wasm ../docs/atoms/holon_render.wasm
-cp crates/holon-render/viewer/holon_render.wasm ../docs/unified/holon_render.wasm
-node crates/holon-render/viewer/smoke.mjs   # must reach the end without trapping,
-                                            # and still refuse Cl2 with code 21
-```
+I reported the mechanism as measured, and the measurement I had did establish the
+stack — but I attached it to a named change my experiment could not distinguish.
+That is a stronger claim than the evidence carried, made in the same breath as
+"measured, not guessed".
 
 ## Blocked on another lane, not on a run
 

@@ -1,0 +1,16 @@
+# D1 overlap: S2  (deriving the grid on the exact route first; ~30 solves)
+#   ladder [64, 128, 256, 512]  sweeps 30  tol 1e-11
+#   stake          |E_dmrg - E_fci| <= 1e-8 Ha at chi = 512
+# D1 overlap: S2
+#   grid rule      uniform in R^-1/4 (table::grid_point), 12 knots
+#   range (exact)  [2.357239315, 20.000000000] bohr
+#   asymptote      -786.260652167923240 hartree
+#   stake          |E_dmrg - E_fci| <= 1e-8 Ha at chi = 512
+#   ladder [64, 128, 256, 512]  sweeps 30  tol 1e-11
+R_bohr	E_fci	res_fci	n_det	E_chi64	d_chi64	E_chi128	d_chi128	E_chi256	d_chi256	E_chi512	d_chi512
+exit=143
+# KILLED after 2h17m having produced ZERO data rows, as SiO did before it. The ladder
+# [64,128,256,512] at 30 sweeps does not complete a single grid point in hours: sweep cost
+# grows as the state's bond dimension grows toward chi_max, so the 1.07 s FIRST sweep
+# measured by `cost` mode is not the sweep that decides the budget. Re-scoped against a
+# measured ladder rather than re-run hopefully; see mps_ladder.

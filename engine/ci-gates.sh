@@ -528,11 +528,13 @@ cargo test -q --release -p holon-render 2>/dev/null >/dev/null \
 #     Gate 1 compiles for wasm. Nothing until now RAN a wasm artifact, and that gap has
 #     hidden two defects that every native gate was green through:
 #
-#       * the committed viewer wasm TRAPPED -- `RuntimeError: memory access out of bounds`
-#         on `holon_bank_generate_pair(1, 2, 96)`, which is helium, two orbitals, the
-#         cheapest solve the sandbox does. Cause: a wasm stack overflow, wasm-ld's default
-#         being 1 MiB where a native main thread has 8 MiB. `cargo test` was fully green
-#         for holon-chem and holon-render against the identical source.
+#       * a rebuilt viewer wasm TRAPPED -- `RuntimeError: memory access out of bounds` on
+#         `holon_bank_generate_pair(1, 2, 96)`, which is helium, two orbitals, the cheapest
+#         solve the sandbox does -- while `cargo test` was fully green for holon-chem and
+#         holon-render against the identical source. Cause: a wasm stack overflow at
+#         wasm-ld's 1 MiB default, from `Box::new(<big array literal>)` materialising 685 KB
+#         on the stack before moving it to the heap. Fixed at 3b37b8e by building a boxed
+#         slice through `vec!` instead; no stack bump was needed.
 #       * the unified viewer read `holon_atom_z` -- the atom's Z COORDINATE in bohr -- as
 #         its species, for months, guarded by a second export (`holon_set_atom_z`) that has
 #         never existed. The guard was false, so the fallback ran and every atom drew as

@@ -5,3 +5,4 @@
 #   stake          |E_dmrg - E_fci| <= 1e-8 Ha at chi = 512
 #   ladder [64, 128, 256, 512]  sweeps 30  tol 1e-11
 R_bohr	E_fci	res_fci	n_det	E_chi64	d_chi64	E_chi128	d_chi128	E_chi256	d_chi256	E_chi512	d_chi512
+# ZERO data rows. Same cause as S2 below it; see that log's note.

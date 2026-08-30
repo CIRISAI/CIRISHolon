@@ -104,3 +104,19 @@ campaigns (a quantum device, a thermodynamic memory dataset, and the
 predecessor engine). That repository is the research programme; this one is
 the engine. They are deliberately decoupled: the only dependency is the
 pinned conformance contract, and misfits found here are reported back there.
+
+## Convergent work
+
+An independent 2026 programme, **"Six Birds"** (Ioannis Tsiokos — arXiv
+[2602.00134](https://arxiv.org/abs/2602.00134),
+[2604.03239](https://arxiv.org/abs/2604.03239), code at
+[ioannist/six-birds-agent](https://github.com/ioannist/six-birds-agent)),
+arrived at much of the same object from its own direction: objects as
+induced closures under a coarse-graining lens, a computable idempotence
+defect where we compute a closure defect, ledger-gated maintenance where we
+charge rent, and a measured "enabling repair collapses the defect" where we
+prove that maintenance creates what it maintains. No citation links the two
+programmes in either direction; we treat the convergence as corroboration
+that the underlying object is real, not as a priority contest. The verified
+two-way concept map and the cross-validation protocol live in
+`conformance/omega/PRIOR_ART_CONVERGENCE.md`.

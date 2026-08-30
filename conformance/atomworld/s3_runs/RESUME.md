@@ -6,6 +6,18 @@ Sibling: `saturation3-mesh` owns G1 (sharded generation) and G2 (GPU).
 | marker | producer | what it is | restart |
 |---|---|---|---|
 | `g0.DONE` | `holon-chem --example s3_g0` | the blocking cost gate: five staked triple types at their worst compact geometry | `engine/target/release/examples/s3_g0 > s3_runs/g0.log` |
+| `oo_reexam.DONE` | `holon-chem --example s3_oo_reexam` | the O-O re-examination: SATURATION-2 P1's own 96-knot curve, production cap vs raised cap, scored at the derived bar | `s3-oo worktree: engine/target/release/examples/s3_oo_reexam 20000 > s3_runs/oo_reexam.log` |
+| `bar_margin_after.log` | `holon-chem --example s3_bar_margin` | the nine staked curves re-read under the DERIVED bar (no marker; the run is seconds) | `s3-oo worktree: engine/target/release/examples/s3_bar_margin` |
+
+## RUN FROM A PINNED WORKTREE, and why
+
+Both runs above were built and run in `/home/emoore/holon-wt/s3-oo`, a detached
+worktree pinned at `179db95` — NOT in the shared tree. An uncommitted refactor of
+`fci.rs` (371 lines, the eigensolver made generic over a scalar tier) appeared in
+the shared tree at 18:02 today, and a binary built there at 18:03 picked it up. A
+measurement of the SHIPPED solver cannot be taken in a tree where the shipped
+solver is being replaced. Check `grep -c "crate::tier" fci.rs` = 0 before trusting
+a rebuild. Anything reproducing these numbers should use the same pin.
 
 ## G0 banked
 

@@ -1,0 +1,2 @@
+# Done-markers are run state, not record: the LOGS are what is committed.
+*.DONE

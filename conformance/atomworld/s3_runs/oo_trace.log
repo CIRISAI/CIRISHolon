@@ -1,0 +1,17 @@
+# O-O convergence trace at r = 4.2244 bohr, 2025 determinants
+# tolerance 1e-10, one assembly shared by every rung
+# E is TOTAL (electronic + nuclear repulsion 15.150080485)
+# variational bound: min_i H_ii = -162.655256575 electronic
+
+       cap   iters     residual                  E dE vs deepest            exit
+       150     150    1.0625e-4     -147.613232828     6.742e-5   iteration cap
+       300     300    1.5788e-5     -147.613233169     6.708e-5   iteration cap
+       600     600    1.6139e-4     -147.613235369     6.488e-5   iteration cap
+      1200    1200    9.2549e-5     -147.613297341     2.907e-6   iteration cap
+      2400    2400    1.2768e-6     -147.613300248    3.934e-11   iteration cap
+      4800    4141   9.2965e-11     -147.613300248      0.000e0       converged
+      9600    4141   9.2965e-11     -147.613300248      0.000e0       converged
+     19200    4141   9.2965e-11     -147.613300248      0.000e0       converged
+
+   residual over the ladder: 1.063e-4 -> 9.297e-11  (1142953.4x)
+   energy over the ladder:   6.742e-5 Ha total movement

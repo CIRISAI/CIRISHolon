@@ -1230,12 +1230,13 @@ impl PairMeta {
     /// A VERDICT, not a number. See [`CONVERGED_RESIDUAL`]: the residual was recorded here
     /// long before anything asked it a question, which is how a curve that gave up could
     /// have shipped looking healthy.
-    /// # What this verdict does NOT include, and why not yet
+    /// # What this verdict does NOT include, and why not
     ///
     /// It tests the residual against [`CONVERGED_RESIDUAL`] and deliberately does NOT
     /// consult [`PairMeta::exit`], even though the exit is the half that says whether the
     /// solve finished. Making it consult the exit was tried and reverted, because of what
-    /// it turned up:
+    /// it turned up — the reading BEFORE the ruling of 2026-08-30, kept because it is the
+    /// evidence the ruling rests on:
     ///
     /// | pair | worst residual | exit |
     /// |---|---|---|
@@ -1249,19 +1250,35 @@ impl PairMeta {
     /// | Cl2 | 9.51e-11 | **subspace stagnated** |
     /// | N2 | 9.82e-11 | **subspace stagnated** |
     ///
-    /// **Every multi-determinant curve in the campaign stagnates**, and all of them stop
+    /// **Every multi-determinant curve in the campaign stagnated**, and all of them stopped
     /// in 9.5–10.0e-11 — a spread far too tight to be six independent systems each finding
-    /// their own limit. The mechanism is a constant mismatch in `davidson_eigh_from`: a new
-    /// subspace direction is accepted only if its norm after orthogonalisation exceeds
-    /// **1e-10**, while `solve_determinant` asks for a residual of **1e-11**. The requested
-    /// tolerance sits an order of magnitude below the solver's own expansion floor, so it
-    /// is unreachable by construction on any system that needs the subspace to keep
-    /// growing.
+    /// their own limit. The mechanism was a constant mismatch in `davidson_eigh_from`: a
+    /// new subspace direction was accepted only if its norm after orthogonalisation
+    /// exceeded **1e-10**, while `solve_determinant` asked for a residual of **1e-11**. The
+    /// requested tolerance sat an order of magnitude below the solver's own expansion
+    /// floor, so it was unreachable by construction on any system that needs the subspace
+    /// to keep growing.
     ///
-    /// So the honest verdict would fail every multi-determinant curve this crate ships,
-    /// which is a campaign-level decision about the SOLVER and not a verdict change to make
-    /// from here. `exit` is recorded so the fact is available; this stays as it was so
-    /// nothing breaks while it is decided.
+    /// # What the ruling changed, and what it did not
+    ///
+    /// That mismatch is gone: the edge is named once as
+    /// [`crate::fci::DAVIDSON_EXPANSION_FLOOR`], the ask equals it by construction, and
+    /// this module's bar is DERIVED a decade above it. Re-read on the nine staked curves
+    /// (2026-08-30, `examples/s3_bar_margin`), the six that stagnated at 96–100% of the bar
+    /// now exit `Converged` at 9.6–10.0% of it, their residuals essentially unmoved — the
+    /// verdicts changed because the ask became reachable, not because any energy did.
+    ///
+    /// So the objection above no longer applies, and this function STILL does not consult
+    /// the exit — for a different and smaller reason. On the nine staked curves the two
+    /// verdicts now agree everywhere: eight exit `Converged` or `Trivial` under the bar,
+    /// and the one that gave up is refused by the residual alone (O-O exits `IterationCap`
+    /// at 1.6e-5, four orders over the bar). Merging them would change no verdict THERE
+    /// while removing a distinction that
+    /// costs nothing to keep: [`PairMeta::solve_finished`] asks whether the solve FINISHED,
+    /// this one asks whether the numbers are inside the declared bar, and a consumer that
+    /// wants the stricter question should have to name it. If a curve is ever found that
+    /// exits `IterationCap` UNDER the bar, that is the case that forces the merge, and it
+    /// has not been found.
     pub fn converged(&self) -> bool {
         self.worst_residual <= CONVERGED_RESIDUAL
             && self.worst_residual.is_finite()

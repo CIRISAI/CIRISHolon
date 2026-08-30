@@ -1,0 +1,12 @@
+       pair   worst resid           bar    margin         exit
+        H-H    4.7381e-13          1e-9      0.0%    converged
+       Li-H    9.9986e-11          1e-9     10.0%    converged
+        H-F    9.9302e-11          1e-9      9.9%    converged
+        F-F    9.9904e-11          1e-9     10.0%    converged
+      He-He      0.0000e0          1e-9      0.0% trivial (one determinant)
+      Ne-Ne      0.0000e0          1e-9      0.0% trivial (one determinant)
+        O-H    9.9588e-11          1e-9     10.0%    converged
+        O-O     1.6353e-5          1e-9 1635262.1% iteration cap
+       Cl-H    9.6197e-11          1e-9      9.6%    converged
+
+   0 of 9 curves sit within 10% of the bar; 1 of 9 are OVER it.

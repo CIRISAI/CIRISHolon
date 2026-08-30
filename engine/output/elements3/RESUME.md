@@ -582,3 +582,51 @@ fact the published table now rests on. Deliberately NOT written yet: compiling c
 CPU with the indium run I am waiting on, and it lands in the same suite pass that verifies
 the regenerated record. The broader exclusivity gate belongs in pair.rs and was offered to
 mixtures-engine rather than taken.
+
+### PRE-REGISTERED, 2026-08-30T20:27:08Z, before SiO and S2 printed
+
+    STAKED BEFORE THE ROWS EXIST -- the ladder is mid-run, SiO and S2 have not printed.
+    
+    Ladder so far:
+      H2    2 orb        4 det  REACHED
+      LiH   6 orb      225 det  REACHED
+      HCl  10 orb      100 det  REACHED
+      NaH  10 orb   44,100 det  BUDGET   <- the only failure
+      ClF  14 orb      196 det  REACHED
+    
+    Every REACHED has <= 225 determinants. The single BUDGET has 44,100. Across the successes
+    orbital count spans 2..14 and predicts nothing; determinant count separates them perfectly.
+    
+    TWO HYPOTHESES, and the two unrun rungs split them in OPPOSITE directions:
+    
+      H_orb : the verdict tracks ORBITAL COUNT (the constant's own axis)
+      H_det : the verdict tracks how correlated the space is, for which determinant count is
+              the crude proxy and nonzeros the better one
+    
+      SiO   14 orb  132,496 det    H_orb: REACHED (same 14 as ClF)   H_det: BUDGET
+      S2    18 orb   23,409 det    H_orb: BUDGET  (highest in ladder) H_det: REACHED
+    
+    I stake H_det: SiO BUDGET, S2 REACHED.
+    
+    WHAT EACH OUTCOME MEANS, fixed now so no result can be reinterpreted after the fact:
+    
+     (a) SiO BUDGET and S2 REACHED -- H_det confirmed on its own pre-registered discriminator.
+         The ladder's highest orbital count reaches while a lower one fails, so orbital count
+         is demonstrably not the axis. best_reached = 18 with measured failures at 10 and 14
+         INSIDE the door that constant opens. The strongest form of the defect.
+    
+     (b) SiO REACHED and S2 BUDGET -- H_orb confirmed, my argument is wrong, and the constant's
+         axis is sound. I report that as plainly as I would report (a), and the wall-minus-one
+         rule becomes the whole of my correction rather than the axis claim.
+    
+     (c) both REACHED -- no discrimination from this pair; NaH stands alone and the axis
+         question stays open. My reading rule survives on NaH alone, the axis claim does not.
+    
+     (d) both BUDGET -- consistent with H_det on SiO but S2 confounds with per-sweep cost at
+         18 orbitals; NOT support for H_det, and I will say so.
+    
+    The confound I can already name: bigger orbital count means slower sweeps, so a BUDGET at
+    high n_orb is ambiguous between "harder state" and "ran out of clock". This is why ClF vs
+    SiO is the load-bearing comparison -- SAME orbital count, 676x apart in determinants, so
+    per-sweep cost is held fixed and only correlation varies. S2 is the weaker leg and I am
+    grading it as such in advance.

@@ -39,6 +39,23 @@ SiO and S2 builds would replace an extrapolated D1 refusal with a measured one;
 if either MPO *does* build, the refusal weakens from structural to a scheduling
 question and the D1 section should say so.
 
+## A FOURTH exposure, and I caused it: NEVER EDIT A RUNNING SHELL SCRIPT
+
+Bash reads a script INCREMENTALLY, resuming from a byte offset. Rewriting a
+launcher while its shell is still executing it makes bash resume at that offset
+inside the NEW contents — which re-ran the whole `mps_ladder` invocation,
+truncated its log with `>`, and lost the completed SiO row.
+
+I did this while adding the marker-removal fix below, i.e. while writing a note
+about stale artifacts. The data was not corrupted, only lost and recomputed, but a
+run that silently restarts is indistinguishable from one that is merely slow, and
+the numbers changed slightly between invocations (HCl 55.9 s then 63.0 s) which is
+exactly the tell that would make a reader distrust both.
+
+**Rule: a launcher script is immutable while its shell is alive.** Write a new file
+under a new name, or wait. `ps -o ppid=` on the running binary tells you which
+shell owns it.
+
 ## A third exposure, found by tripping over it: STALE DONE-MARKERS
 
 The detached-compute discipline here is `setsid` + a `.DONE` marker + this file.

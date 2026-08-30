@@ -142,4 +142,361 @@ containing chlorine.
 
 ---
 
-*Results sections follow below as each arm lands.*
+## B1 — the bank is exact where the single table was · **HOLDS, both halves**
+
+### The regression half: bit-for-bit
+
+`examples/b1_reference.rs` dumps every energy, drift, bound, clock, position,
+velocity and pair reading of three all-hydrogen scenes as raw `f64` BIT PATTERNS
+— 2 atoms in 2D, 16 atoms in 2D with the three-body term, 16 atoms in 3D; 200 and
+100 frames of 64 substeps each. It was run in a git worktree at the commit BEFORE
+the bank landed and again after.
+
+**693 lines, zero diff.** The output is committed as
+`engine/crates/holon-render/tests/data/b1_hydrogen_reference.txt` and
+`tests/mixtures.rs` re-derives it, so the comparison can be re-run rather than
+believed. Release and debug were checked to agree bit-for-bit before the
+comparison was made a gate — otherwise the test would have been a profile
+detector.
+
+### The mixed half: each pair reads its own criterion
+
+The fixture is hydrogen against HELIUM, because the statement is then structural
+rather than numerical: in this model H2 binds and H-He binds at NO separation
+(`locate_well` returns `None`, and nothing in the code knows helium is noble). At
+1.6 bohr, in one scene, under one integrator:
+
+| pair | `u` / Ha | `e_rel` / Ha | bonded |
+|---|---|---|---|
+| H-H | −1.956587e−1 | −1.497299e−1 | **yes** |
+| H-He | +1.993623e−1 | +2.727431e−1 | **no** |
+
+Opposite in sign and opposite in verdict. One table cannot produce both readings.
+
+Two things the fixture caught, both mine:
+
+* it first asserted H-Li was repulsive at 2.0 bohr. **It is not** — H-Li crosses
+  zero at about 1.87 and its minimum is at 2.924, so 2.0 is already inside the
+  well. The carrier assertion fired and the fixture moved onto measured ground.
+* both pairs were then placed AT REST, and a pair at rest has `E_rel = U(R)`
+  exactly, which puts it exactly ON its own outer turning point — so a hydrogen
+  molecule sitting in its own well read NOT BONDED. `Sim::reset` warns about this
+  in its own comments. The fixtures now place pairs with a RADIAL closing
+  velocity (radial, because transverse motion carries angular momentum and would
+  move the turning point for a reason unrelated to the curve under test).
+
+---
+
+## C1 — conservation in a mixed box · **HOLDS**
+
+One gate per conservation law, on a mixed H, H, Li scene in a walled box over
+200 × 64 substeps:
+
+| | peak | derived bound | ratio |
+|---|---|---|---|
+| energy drift | 4.047243e−5 Eh | 4.058441e−3 Eh | 0.0100 |
+| momentum residual | 2.615606e−13 | 1.032234e−9 | 0.0003 |
+
+And on every seed of every P1 arm, including the 8 H + 8 Cl mixed arm: **energy
+gate HOLDS, momentum gate HOLDS, 8 of 8 seeds, all three arms.**
+
+Two structural gates ride with it, each with its carrier checked first:
+
+* **the envelope is the maximum over ALL active tables.** The two curves are
+  required to differ in reachable stiffness before the maximum is scored (3.895
+  against 0.505 at the run's `E_rel_max`), or taking a maximum would prove
+  nothing.
+* **the clock is the FASTEST MODE, not the stiffest curve.** H-H has
+  `k_e = 4.747e−1` at `mu = 918.58`, giving `omega = 2.273e−2`; H-Li has
+  `k_e = 9.182e−2` at `mu = 1606.40`, giving `7.560e−3`. The scene's clock is the
+  first. In a mixed box `argmax k_e` and `argmax sqrt(k_e/mu)` are different
+  questions with different answers, and `dt` has to resolve the second.
+
+---
+
+## The plants · **ALL THREE CAUGHT**
+
+Each asserts its CARRIER is nonzero in the sector it acts on before it scores
+itself; a plant on an empty sector VOIDs.
+
+### (i) the swapped table — CAUGHT, two instances
+
+Serving the (A,A) curve where (A,B) belongs, reaching past `load_pair_table`
+into the raw interpolator on purpose — that function reads the species off the
+curve's own metadata and would put it in the right slot, which is the correctness
+the plant exists to check.
+
+* **on H-Li**, the freeze's own `R_e` carrier: the equilibrium moves
+  2.924394 → 1.388694 bohr, a shift of **1.5357 bohr**, and the pair energy moves
+  **4.265e−2 Ha — 8.6 orders above the referee's 1e−10.**
+* **on H-He**, where the consequence is not a shifted number but a wrong verdict:
+  the swap **invents a bond helium cannot have**. Carrier asserted first — H-He
+  has no well at all, so a BONDED reading afterwards is created by the plant.
+
+### (ii) the mass plant — CAUGHT
+
+Lithium at hydrogen's mass: same `Z`, so the same curve out of the same slot, and
+only the inertia wrong. The reduced mass moves 1606.398413 → 918.576162 mₑ and
+the derived timestep moves 3.246334443 → 2.454845768 a.u.
+
+| | |
+|---|---|
+| predicted `dt` ratio, `sqrt(mu'/mu)` | 0.756190038858 |
+| measured | 0.756190038858 |
+| agreement | 1.1e−16 relative |
+
+The prediction is COMPUTED from the two reduced masses inside the test, never
+written down. The fixture is one H and one Li deliberately: in a scene that also
+had H-H active, H-H would set the clock (it is three times the faster mode) and
+lithium's mass would not appear in the answer at all — correct physics, and a
+plant on an empty sector.
+
+### (iii) the DMRG label — CAUGHT
+
+A DMRG curve presented as exact in the model is REFUSED, and the refusal is
+demonstrated firing. With the POSITIVE CONTROL that makes it mean something: the
+same curve WITHOUT the false claim is admitted once D1 is discharged, so the gate
+is refusing the claim and not refusing everything.
+
+Every other provenance refusal has its own failing case: undeclared route, DMRG
+with no D1 record, DMRG with no uncertainty, a shipped table with no uncertainty,
+the browser split in both directions, and a D1 record whose flag and whose
+measurement disagree. A refusal EVICTS the curve rather than reporting it and
+leaving it in the slot, because a gate the force loop can walk past is not a gate.
+
+**Plant (iii) had a live target.** Before this campaign, `fci::solve` routed any
+space past 50,000 determinants to DMRG and the resulting curve was stamped
+`PAIR_PROVENANCE = "engine-computed STO-3G FCI (determinant, Knowles-Handy)"`
+regardless. SiO — one of gate D1's own staked overlap species — is 132,496
+determinants and was travelling that path wearing the determinant label. The
+route now travels with the number (`SolverRoute` on `Solution`, `PointSolution`
+and `PairMeta`) and the provenance line is derived from it.
+
+---
+
+## P1 — THE PRODUCT: emergent hetero-chemistry · **BRANCH (b)**
+
+### The controls · both PASS, so P1 is not VOID
+
+| arm | molecules in ≥6 of 8 seeds | own element only | modal per seed | pooled |
+|---|---|---|---|---|
+| hydrogen (16 H) | 8 of 8 | yes | H2 in 8 of 8 | H2×57, H4×2, H6×1 |
+| chlorine (16 Cl) | 8 of 8 | yes | Cl16 in 8 of 8 | Cl16×8 |
+
+The hydrogen control reproduces its banked behaviour: hydrogen quenches to
+diatomic molecules, eight of them from sixteen atoms on most seeds, with no free
+atoms left.
+
+### The mixed arm · HCl is the modal molecule in **0 of 8** seeds
+
+Branch (a) needed 6 of 8.
+
+```
+seed 0x...5801 … 0x...5808   modal H8Cl8   molecules 1   free 0   [H8Cl8x1]
+POOLED over 8 seeds: [("H8Cl8", 8)]
+```
+
+Every seed ends with a SINGLE component containing all sixteen atoms. Not HCl,
+and not Cl2 or H2 either: one object.
+
+### Branch (b), investigated
+
+The chlorine control is the first tell: it does the same thing on its own.
+Sixteen chlorines in this box also end as one sixteen-atom component, while
+sixteen hydrogens in the SAME box end as eight clean dimers. So the droplet is
+not something the mixture does; it is something chlorine does, and the mixture
+inherits it.
+
+The post-hoc diagnostic (`mixquench -- diagnose`, seed `0x…5801`) settles what
+kind of object it is. It reports every bonded edge with its separation against
+that pair type's own `R_e` and its depth against `k_B T_target = 9.500e−4 Ha`:
+
+| pair type | bonded edges | within 0.5 a₀ of its own `R_e` | depth ≥ 10 `kT` |
+|---|---|---|---|
+| H–H | 14 | 3 | 6 |
+| **H–Cl** | **40** | **21** | **27** |
+| Cl–Cl | 20 | 10 | 13 |
+| **total** | **74** | 34 (46%) | 46 |
+
+Only **14 of 74** edges are shallower than `kT`, so this is not mostly the
+tail-of-the-well artefact. And the deepest contacts in the box are these:
+
+```
+  HH   r=1.3473  R_e=1.3887   214.4 kT
+  HH   r=1.1760  R_e=1.3887   200.3 kT
+  HH   r=1.1714  R_e=1.3887   199.5 kT
+  HCl  r=2.5402  R_e=2.5369   156.1 kT
+  HCl  r=2.5296  R_e=2.5369   156.1 kT
+  HCl  r=2.5155  R_e=2.5369   156.0 kT
+  HCl  r=2.5666  R_e=2.5369   155.9 kT
+  HCl  r=2.5064  R_e=2.5369   155.9 kT
+```
+
+**HCl bonds are forming.** Twenty-one hydrogen–chlorine contacts sit within half
+a bohr of hydrogen chloride's own computed equilibrium, five of the eight deepest
+bonds in the box are H–Cl at 2.51–2.57 bohr against an `R_e` of 2.5369, and H–Cl
+is the most numerous near-equilibrium contact of the three types. The chemistry
+P1 went looking for is happening.
+
+What failed is the READING. The frozen measurement rule defines a molecule as a
+connected component of the bonded-pair graph, and an edge exists wherever a pair
+is mutually bound. In a condensed phase every atom is bound to every other, so
+the component is the whole box and its formula is `H8Cl8` — which is a true
+statement about boundness and a useless one about chemistry. The engine's own
+closure-based census, running on the same trajectory, reports **7 live molecule
+rows** where the cluster reading reports one. The code already names this
+distinction — a cluster is a statement about boundness, a census row is a
+statement about closure — and the droplet is exactly where they diverge.
+
+So the honest verdict is two-part, and both parts are the product:
+
+1. **Branch (b) as staked, and it stands.** HCl is not the modal molecule under
+   the frozen rule in any seed. The rule was frozen before the arm ran and is not
+   being changed after seeing the answer.
+2. **The instrument, not the model, is what the rule ran out of.** A
+   boundness-based component reading cannot resolve molecules in a condensed
+   phase, and the mixed arm condensed. The successor is stated rather than
+   performed here: re-run P1's composition rule on the CLOSURE reading, with that
+   choice frozen in advance, and in a box or at a floor temperature where a
+   chlorine gas stays a gas. Whether HCl is the modal molecule under such a rule
+   is not answered by this campaign, and this campaign does not get to claim it.
+
+### What P1 does and does not license
+
+It does NOT license "hydrogen and chlorine make HCl in this model", however
+suggestive the bond table above is — that reading comes from a diagnostic written
+after the answer was seen, and a post-hoc instrument is not a measurement.
+
+The measured statement is narrower and is the one reported: *under this frozen
+protocol, in a 40 × 24 bohr box at these temperatures, a mixed H/Cl gas ends as a
+single bound aggregate, as does a pure chlorine gas, while a pure hydrogen gas
+ends as diatomic molecules. Within that aggregate, hydrogen–chlorine contacts at
+hydrogen chloride's own equilibrium separation are the most numerous strong bond
+present.*
+
+Nothing was massaged and the protocol was not re-run with different constants.
+
+---
+
+## D1 — the DMRG bridge earns admission · **NOT ADMITTED. Cannot be run as staked.**
+
+### The verdict
+
+The bridge is **not admitted**, and the reason is not that it failed the
+comparison — it is that the comparison cannot be run on the species the freeze
+stakes. `bank::D1_RECORD` is `D1Admission::NONE`, so every DMRG-labelled curve is
+refused by the provenance gate, and every curve in the sandbox today is
+determinant-route. The gate and the reality agree, which is the outcome to want
+when a bridge is unvalidated.
+
+### Why it cannot be run as staked, measured
+
+`q8_mps::mpo::Mpo::from_electronic_integrals` builds the two-body electronic MPO
+from a raw list of `O(n_orb^4)` operator strings and compresses it with one SVD
+per site of an `m × 4r` matrix. **The construction, not the sweep, is the entire
+budget.** Measured on the campaign machine
+(`engine/output/mixtures1/mpo_cost_*.log`):
+
+| pair | `n_orb` | MPO build | one sweep | final bond dim |
+|---|---|---|---|---|
+| H2 | 2 | 0.00 s | 0.00 s | 8 |
+| LiH | 6 | **528.48 s** | 0.03 s | 46 |
+| HCl | 10 | did not complete in over an hour | — | — |
+
+D1's staked overlap species are **SiO at 14 orbitals and S2 at 18**. The builder
+is nine minutes at six and does not finish at ten. So the staked comparison is
+out of reach of this engine's MPO construction, and no amount of running it
+longer changes that — the cost is in a fixed preprocessing step, not in
+convergence.
+
+### A live hazard this exposed, and its fix
+
+`fci::solve` routes any determinant space past `MPS_ROUTE_THRESHOLD` (50,000) to
+that builder. **SiO is 132,496 determinants and 14 orbitals**, so asking this
+crate for an SiO curve did not return a wrong number — it did not return. Si2
+(9.4e6 determinants) and Na2 (1.0e9) likewise. The sandbox offered those species
+and would have hung on them.
+
+`pair::feasibility` now answers, from counts alone and before anything is spent,
+which route a pair would take; `generate_pair_table` refuses an unreachable pair
+with the measurement in the message; and the wasm ABI returns a code rather than
+letting the assert reach a browser as a trap. The refusal says "no AUTOMATIC
+route", not "impossible" — the determinant route can still enumerate SiO if it is
+driven directly, which is precisely what gate D1's own harness and the R2 reader
+do. Reporting SiO as having no route at all would have been a wrong claim about
+the engine, and the first version of `Feasibility` made it.
+
+### What was measured where the bridge does run
+
+Not a discharge of D1 — the freeze stakes S2 and SiO — and reported as a separate
+question: given that the bridge runs at all, is it ACCURATE? On the two overlap
+species this engine can drive, exact FCI against DMRG over each pair's declared
+grid, one MPO per geometry and the chi ladder walked against it:
+
+| species | `n_orb` | `n_det` | points | worst \|E_dmrg − E_fci\| at χ=64 | stake |
+|---|---|---|---|---|---|
+| H2 | 2 | 4 | 16 | **5.05e−13 Ha** | 1e−8 ✔ |
+| LiH | 6 | 225 | 12 (in flight) | ≈1e−12 Ha per point so far | 1e−8 ✔ |
+
+At χ=8 LiH is off by 1e−4 to 3e−4 Ha and at χ=16 and above it is at 1e−12, so
+the ladder is resolving convergence rather than reading a fixed offset. **This
+says the bridge is correct where it runs. It does not say the bridge is
+admitted**, and the record the gate reads still says NONE.
+
+### Consequence for the campaign
+
+Si2 and Na2, the DMRG-only curves D1 would have licensed, **do not enter the
+sandbox**. That is the freeze's "only then", enforced.
+
+---
+
+## R2 — the staked-pair referee gate · **OWED (the drop has not landed)**
+
+The engine half is built and two of its three tests run today; the third is
+`#[ignore]`d until the sibling lane commits `tests/data/mixtures1/`.
+
+* the STAKED SEVEN — Cl2, S2, Ar2, HCl, ClF, NaH, SiO — are frozen in
+  `tests/mixtures_referee.rs` and will be cross-checked against the referee's own
+  declared set rather than read from it, because two lanes disagreeing about which
+  pairs a campaign stakes is worth firing on and is invisible if either side reads
+  the other's list;
+* `present + owed = staked` is enforced, so coverage cannot shrink silently;
+* the drop is pinned by FNV-1a digest (currently `0x00000000` = NOT YET PINNED);
+* the comparison is done in exact fixed-point decimal through the shared
+  `tests/common` comparator, because parsing a 50-digit referee into an `f64` and
+  subtracting cannot resolve anything below half an ulp and would report its own
+  rounding as agreement;
+* **the grading loop calls `solve_determinant` directly and NOT `pair_point`.**
+  `pair_point` goes through `fci::solve`, which would route SiO's 132,496
+  determinants to DMRG — grading the bridge against the referee while calling the
+  result exact, and, on this engine's MPO builder, not returning at all.
+
+Of the staked seven, six are on the automatic determinant route; **SiO is the one
+that is not**, and it is reported by `r2_which_staked_pairs_leave_the_determinant_route`
+rather than left to be discovered when the drop arrives.
+
+---
+
+## E2 — the emergent chemical contrast · **IN FLIGHT, partial**
+
+Staked ordering: `N2 > SiO > HCl > ClF > S2 > Cl2 > NaH >> (Ar2, NeAr)`.
+
+Measured so far, `D_e` in hartree from `locate_well` (bisection then Newton on the
+SOLVER, not on the interpolant, so these do not depend on knot count):
+
+| pair | `n_basis` | `n_det` | `D_e` / Ha | `R_e` / a₀ |
+|---|---|---|---|---|
+| N2 | 10 | 14,400 | 0.239388030 | 2.256729 |
+| HCl | 10 | 100 | 0.148293175 | 2.536888 |
+| Cl2 | 18 | 324 | 0.064577385 | 4.024124 |
+| SiO | 14 | 132,496 | **OWED** — no automatic route | |
+
+Nothing here is told which pairs bind: `locate_well` looks for a minimum deeper
+than the declared `WELL_MIN_DEPTH` and reports `None` when there is not one, so
+the closed-shell negatives come out unbound through the same code path that
+produces N2's curve. The remaining pairs are running.
+
+---
+
+*Sections are added as each measurement lands. Nothing above was written before
+its numbers existed.*

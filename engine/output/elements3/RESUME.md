@@ -517,3 +517,32 @@ computable there where at 1.4e9 it is not. Caveat travels with it: zinc is the r
 convergence gate REFUSED at residual 2.72e-10 against a 1e-10 bar. Different quantity from
 their 1e-8 energy stake and comfortably inside it, but it is not handed over as clean.
 Copper (2,496,960 det) is the next rung if they want more separation.
+
+### Correction, same day: the filling axis is measured now, and it breaks the constant
+
+Forty minutes after I wrote that no measurement bore on the filling axis, mixtures-engine's
+ladder produced the rung that does:
+
+    HCl   10 orb   18 elec       100 det   chi 32   +6.122e-11   55.9 s   REACHED
+    NaH   10 orb   12 elec    44,100 det   chi 32   +4.391e-3   396.2 s   BUDGET
+
+Same orbital count, 441x apart in determinants, opposite verdicts, NaH short by five orders.
+The results doc carries this as a correction to my own sentence rather than as a quiet
+strengthening — it was true when written and false shortly after, and which of those it was
+is part of the record.
+
+**The consequence for their constant, sent to them:** `mps_ladder.rs`'s closing line
+nominates `best_reached` (largest orbital count that reached) as the new
+`MPS_MAX_ORBITALS`, but `pair.rs:1014` uses the constant as `n_orb <= MPS_MAX_ORBITALS` — a
+door admitting everything at or BELOW it. With a failure at 10 and a success at 10, and any
+reach at 14 or 18 above them, the printed constant would open a door over a measured
+failure. A maximum over a set containing a failure is not a bound on that set. For this use
+the honest number is `first_wall - 1` = **9** on current data, and their code already
+computes and prints `first_wall`; it is the closing sentence that picks the wrong one.
+
+Same defect family as the one-directional checks in the ledger: `best_reached` can only see
+the direction it expects, and the failures at and below it are invisible to it.
+
+**This lane's reading rule, now in the results doc:** read the constant as the wall minus
+one; if the ladder's two numbers disagree, report the disagreement rather than resolve it in
+this lane's favour.

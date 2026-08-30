@@ -290,16 +290,38 @@ this record already solves by determinant. The refused rows share the orbital co
 nothing else. Scandium is 1,392,554,592 determinants at the same 18 orbitals, **59,500×
 larger**; the block spans four and a half orders of magnitude between its cheapest and most
 expensive member. A new constant will therefore license the MPO *build* at some orbital
-count; it will not license the *verdict* at these electron counts, because nothing measured
-the verdict there. This is **not** a claim that the MPS route fails at mid-filling — no
-measurement here bears on that in either direction, which is the point. The ladder's own rule
-is that a reach without a budget is not a measurement, and that rule binds on the
-electron-count axis too.
+count; it will not license the *verdict* at these electron counts. The ladder's own rule is
+that a reach without a budget is not a measurement, and that rule binds on the electron-count
+axis too.
+
+**And while this section was being written, the ladder measured exactly that.** Its fourth
+rung is NaH: 10 orbitals — the *same* orbital count as HCl, which reached the stake in 55.9 s
+— but 12 electrons instead of 18, so 44,100 determinants instead of 100. NaH spent its entire
+300 s budget and stopped **4.391e-3 from the stake, five orders short**. Same orbital count,
+441× apart in determinants, opposite verdicts.
+
+I have to correct myself here rather than quietly strengthen: the paragraph above originally
+said that no measurement bore on the filling axis in either direction, and that was true when
+written and false forty minutes later. It is now measured, once, and it points the way the
+argument above only conjectured. That does not upgrade the conjecture to a result — one rung
+is one rung, and NaH's failure is a *time* limit at a declared budget rather than a
+demonstrated limit of the method. What it does establish is narrower and harder: **orbital
+count alone does not determine the verdict**, so a routing door keyed on orbital count alone
+cannot be sound, whatever number is put in it.
 
 Fixed in advance, so the rescope cannot be tuned to whatever lands: when the number arrives,
 route labels move from "no automatic route" to "automatic route available" for species at or
 below it, and **nothing else moves**. No refused row becomes a measured row. If the number
 comes back below 18, this table does not change at all.
+
+With one reading rule, stated now because NaH forces it. The ladder reports two numbers: the
+largest orbital count that *reached* the stake, and the smallest that *did not*. Its closing
+line nominates the first as the new constant — but `pair.rs` uses the constant as a door that
+admits **everything at or below** it, and NaH has already put a failure at 10 orbitals while
+HCl reached at 10. A maximum taken over a set that contains a failure is not a bound on that
+set. This lane will therefore read the constant as the **wall minus one** — the largest count
+at which every tested rung reached — and if the ladder's two numbers disagree, that
+disagreement is reported here rather than resolved in this lane's favour.
 
 A3.1 corrected this lane's own over-claim here: A1.2 said "no route at all", which read
 `automatic_route`'s refusal as a statement about reachability. SiO at 132,496 determinants

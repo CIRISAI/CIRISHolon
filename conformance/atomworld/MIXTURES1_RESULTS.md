@@ -17,7 +17,7 @@ looked at**, as the prereg requires.
 | **E1** the emergent negatives | **evidence, not discharged** | Ar2 and NeAr unbound — but on the engine's derived grid, not the grid E1 stakes |
 | **E2** the emergent chemical contrast | **BRANCH (b)** | the middle (HCl > S2 > Cl2) and the unbound tail are exactly as staked; both ends are not — NaH up four, ClF down three, SiO and N2 swapped |
 | **P1** THE PRODUCT: emergent hetero-chemistry | **BRANCH (b)** | HCl modal in 0 of 8 seeds; both controls pass, so not VOID. HCl bonds ARE forming — the *reading* cannot see them in a condensed phase |
-| **D1** the DMRG bridge earns admission | **NOT ADMITTED** | the exact side is cheap (SiO 33.9 s); the MPO builder does not finish at 10 orbitals and D1 stakes 14 and 18 |
+| **D1** the DMRG bridge earns admission | **RUNNING at the stake** | the wall came down: an MPO rebuild took SiO's build from >12 h to **0.07 s** on real integrals, so the staked S2/SiO comparison is running for the first time |
 | **R2** the staked-pair referee gate | **OWED** | gate built and scope-refusing; blocked on the referee lane's drop, and cheap when it lands |
 
 Two gates fire, and neither fires because the model failed. E2's inversion is a
@@ -410,7 +410,31 @@ refused by the provenance gate, and every curve in the sandbox today is
 determinant-route. The gate and the reality agree, which is the outcome to want
 when a bridge is unvalidated.
 
-### Why it cannot be run as staked, measured
+### THE WALL CAME DOWN — this section's verdict is superseded
+
+Everything below was true of the MPO construction as it stood, and that
+construction is gone. The external sprint team replaced `from_terms` — a raw list
+of `O(n_orb^4)` operator strings compressed by one SVD per site — with a
+channel-based finite-state-machine builder (`Channel`, `MpoBuilder`), which is the
+standard chemistry MPO and enumerates no strings. Committed at `bb1a07a` with
+attribution, field-diffed before anything was built on it.
+
+Measured immediately, on the staked species and on REAL STO-3G integrals rather
+than on the rebuild's own synthetic benchmarks:
+
+| | before | after |
+|---|---|---|
+| SiO MPO build (14 orbitals, real integrals) | did not finish in 12 h | **0.07 s** |
+| one DMRG sweep, χ = 8 | — | 1.14 s |
+| max MPO bond dimension | — | 943 |
+
+So the staked D1 comparison — S2 and SiO at ≤ 1e−8 Ha across their declared grids
+— is **runnable for the first time and is running**. Its result replaces the
+verdict below. The pre-rebuild measurements are kept, marked, because the
+campaign's reasoning rested on them for a day and deleting them would make that
+day's decisions unreadable.
+
+### Why it could not be run as staked, measured — SUPERSEDED, kept for the record
 
 `q8_mps::mpo::Mpo::from_electronic_integrals` builds the two-body electronic MPO
 from a raw list of `O(n_orb^4)` operator strings and compresses it with one SVD
@@ -514,16 +538,38 @@ are not:
 **The blocker is the DMRG side alone, and more compute does not fix it**, because
 the cost is a fixed preprocessing step rather than convergence.
 
-### What the sprint team's validation actually covers
+### What the sprint team's tests actually cover
 
-Their report claimed DMRG-vs-FCI agreement "within 1e-6 Eh on overlapping
-sectors". The test is `engine/crates/q8-mps/tests/electronic_dmrg.rs` (which
-landed in 6ceaa74, not in the provenance commit): MPO against an independent
-dense Hamiltonian at **two** orbitals to 1e−13, and DMRG against the exact sector
-ground state at **three** orbitals to 1e−7 — both on hand-written synthetic
-integrals, not a molecule's. All three tests pass. D1 stakes eighteen and fourteen
-orbitals on real STO-3G integrals, so that is a real measurement of a different
-thing, and it does not discharge D1.
+Checked twice, because the first check changed what a claim meant and the second
+was asked for by name.
+
+**The first receipt** claimed DMRG-vs-FCI agreement "within 1e-6 Eh on overlapping
+sectors". That is `tests/electronic_dmrg.rs`: MPO against an independent dense
+Hamiltonian at **two** orbitals to 1e−13, and DMRG against the exact sector ground
+state at **three** orbitals to 1e−7 — both on hand-written synthetic integrals.
+
+**The rebuild's receipt** claims "5 transition metal active spaces (Sc..Fe) solved
+in 0.04 s with Hund's rule high-spin", plus a 14-to-50-orbital performance test.
+Field-diffed:
+
+* `tests/transition_metals.rs` is **five d-orbitals** each, with integrals from
+  `make_transition_metal_integrals(n_orb, e_d, u_val, j_val)` — a parameterised
+  **Hubbard–Kanamori model** with a hand-set on-site energy, `U` and `J` — asserted
+  against answers known in closed form (scandium's d¹ is expected to be exactly
+  `e_d = −3.5`). A legitimate and tight test of the solver against a model whose
+  answer is known. It is **not scandium**: not 21 electrons, not STO-3G integrals,
+  and an ACTIVE SPACE is not an atom.
+* `test_mpo_build_performance_14_to_50_orbitals` **solves nothing**. It builds and
+  checks build time and bond dimension, and its `g` is extremely sparse and
+  structured — only `g[pppp]`, `g[ppqq]` and `g[pqqp]` nonzero. A real STO-3G `g`
+  is dense at `O(n⁴)`, and both build cost and bond dimension scale with the term
+  count.
+* `test_fci_ground_state_energy_precision_1e8` reaches 1e−8, at **two** orbitals on
+  synthetic integrals.
+
+All ten pass and none of them is evidence about MIXTURES-1's staked species. That
+is why this lane measured the rebuilt builder on real SiO integrals itself before
+believing the wall was down — and it is down, by 0.07 s against twelve hours.
 
 ### Consequence for the campaign
 

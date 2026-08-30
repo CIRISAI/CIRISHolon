@@ -1067,6 +1067,14 @@ impl SolverRoute {
     }
 }
 
+/// Determinant count past which [`solve_determinant`] REFUSES outright.
+///
+/// Distinct from [`MPS_ROUTE_THRESHOLD`], which is a routing preference: this one is a
+/// statement that no caller should be waiting on a space this large without having said so
+/// deliberately. Set an order above SiO's 132,496 — the largest space MIXTURES-1 drives on
+/// purpose — so the campaign's own work fits and a careless caller does not.
+pub const HARD_DETERMINANT_CAP: usize = 2_000_000;
+
 /// Determinant count past which [`solve`] switches to the MPS/DMRG route.
 ///
 /// Named rather than inlined because two things now read it: the switch itself, and the
@@ -1433,6 +1441,30 @@ pub fn solve(space: &FciSpace, mo: &MoIntegrals) -> Solution {
 /// hypothetical: SiO is 132,496 determinants, past the threshold, and is one of D1's two
 /// staked overlap species.
 pub fn solve_determinant(space: &FciSpace, mo: &MoIntegrals) -> Solution {
+    // THE REFUSAL, because removing the routing threshold removed the only thing standing
+    // between a caller and an astronomically large space.
+    //
+    // `solve` protects itself with `MPS_ROUTE_THRESHOLD`; this entry point deliberately has
+    // no threshold, which is right for its purpose — gate D1 and gate R2 both need the
+    // exact-in-model answer on spaces `solve` would have routed away — and wrong as a
+    // silent licence. A caller reaching for it on a mid-row species would otherwise get an
+    // attempt rather than an answer, and the attempt does not end.
+    //
+    // The cap is on the DETERMINANT COUNT and not on the orbital count, because the
+    // Davidson vectors are what the space costs: `n_det` doubles of working set per vector,
+    // several vectors, re-walked every iteration. `HARD_DETERMINANT_CAP` is set where the
+    // largest space this campaign deliberately drives — SiO at 132,496 — fits with room,
+    // and anything an order beyond it is a caller that has not priced what it is asking
+    // for. Raise it deliberately, with a measurement, the way `MPS_MAX_ORBITALS` was.
+    assert!(
+        space.n_det <= HARD_DETERMINANT_CAP,
+        "solve_determinant: {} determinants is past this crate's hard cap of {}. That is \
+         not a solve that finishes; it is a process that stops responding. If the space is \
+         genuinely wanted, raise HARD_DETERMINANT_CAP with a measurement attached rather \
+         than calling this and waiting.",
+        space.n_det,
+        HARD_DETERMINANT_CAP
+    );
     let ci0 = ci_ints(mo, Order::Value);
     let ci1 = ci_ints(mo, Order::First);
     let ci2 = ci_ints(mo, Order::Second);

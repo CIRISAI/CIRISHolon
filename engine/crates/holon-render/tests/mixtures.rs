@@ -619,6 +619,129 @@ fn plant_iii_a_dmrg_curve_presented_as_exact_is_refused() {
     );
 }
 
+/// PLANT (iii), THROUGH THE PRODUCTION PATH — a real `PairTable` carrying a DMRG route,
+/// pushed through `load_pair_table`, refused, and EVICTED.
+///
+/// # Why the unit test above is not enough
+///
+/// `plant_iii_a_dmrg_curve_presented_as_exact_is_refused` calls `TableProvenance::admit`
+/// directly. That proves the RULE is right and proves nothing about whether anything calls
+/// it. The path a DMRG curve would actually take into the sandbox is
+/// `generate_pair_table` -> `PairMeta { route, .. }` -> `load_pair_table` -> `commit`, and
+/// the defect this campaign found was precisely a rule that was correct and a path that
+/// did not consult it. Standing question 1: the gate has to be connected where the code
+/// runs.
+///
+/// # The plant is a RELABEL, and that is not a shortcut
+///
+/// No pair on this engine can produce a genuinely DMRG-routed table: `solve` switches
+/// route above 50,000 determinants, and every pair with a determinant count that large has
+/// an orbital count the MPO builder cannot be driven at (see `MPS_MAX_ORBITALS` — 528 s at
+/// six orbitals, and it does not finish at ten). So the honest way to exercise the path is
+/// to take a real curve off the real generator and change the one field the gate reads —
+/// which is a plant in the strict sense: the defect is introduced, and the question is
+/// whether the machinery notices.
+///
+/// # WHICH refusal fires here, and why it is not the one I first expected
+///
+/// I predicted `DmrgClaimedExact` and got `DmrgUnvalidated`. The prediction was wrong for
+/// a good reason: `load_pair_table` DERIVES `claimed_exact` from the route
+/// (`claimed_exact: pt.meta.route.is_exact_in_model()`), so through this door the claim and
+/// the route CANNOT DISAGREE. "A DMRG curve presented as exact" is not a state a
+/// `PairTable` can reach here — it is structurally unrepresentable, which is a stronger
+/// guarantee than a check.
+///
+/// The defect IS reachable through the other door, where a shipped file declares
+/// `exact_in_model` independently of `solver_route`, and there it is refused as
+/// `DmrgClaimedExact`. That case is exercised against the real browser artifact and the
+/// real shipped JSON in `viewer/smoke.mjs`, which relabels `docs/atoms/tables/Cl2.json` as
+/// DMRG and watches the refusal fire and the slot evict.
+///
+/// So plant (iii) has two demonstrations because the sandbox has two doors, and they fail
+/// differently by construction. Both are asserted rather than one being assumed to cover
+/// the other.
+#[test]
+fn plant_iii_a_dmrg_labelled_curve_is_refused_by_the_production_loader() {
+    let mut s = scene(&[HYDROGEN, LITHIUM]);
+    let slot = s.bank.slot_of_z(1, 3).unwrap();
+    assert!(
+        s.bank.is_filled(slot),
+        "the fixture did not load H-Li through the production loader"
+    );
+    // CARRIER: the unplanted curve went in on the determinant route, so the relabel below
+    // changes something. A curve that was already DMRG would make this plant a no-op.
+    assert_eq!(
+        curve(HYDROGEN, LITHIUM).meta.route,
+        holon_chem::fci::SolverRoute::Determinant,
+        "PLANT (iii) VOID: the H-Li curve is already DMRG-routed, so relabelling it plants \
+         nothing"
+    );
+
+    // THE PLANT: the same curve, relabelled DMRG, still claiming exactness — which is what
+    // `PairMeta` does for a determinant route, and what a mislabelled DMRG curve would
+    // therefore carry.
+    let mut planted = curve(HYDROGEN, LITHIUM).clone();
+    planted.meta.route = holon_chem::fci::SolverRoute::Dmrg;
+    let status = load_pair_table(&mut s, &planted, Host::Native);
+    println!(
+        "plant (iii) through load_pair_table: status {status} (expected {}, \
+         PROVENANCE_REFUSED + DmrgUnvalidated — see this test's header for why it is not \
+         DmrgClaimedExact)",
+        holon_render::refusal_code(Refusal::DmrgUnvalidated)
+    );
+    assert_eq!(
+        status,
+        holon_render::refusal_code(Refusal::DmrgUnvalidated),
+        "PLANT (iii) MISSED: a DMRG-labelled curve went through the production loader and \
+         was not refused. The rule is right and nothing consulted it."
+    );
+    assert!(
+        !s.bank.is_filled(slot),
+        "PLANT (iii) MISSED: the curve was refused and is STILL IN THE BANK, so the force \
+         loop would evaluate it"
+    );
+    assert!(
+        !s.pairs_ready(),
+        "the scene reports ready with the refused pair's slot empty"
+    );
+
+    // THE POSITIVE CONTROL. Without it this test passes just as well against a loader that
+    // refuses everything: the unplanted curve must still go in.
+    let clean = curve(HYDROGEN, LITHIUM);
+    assert_eq!(
+        load_pair_table(&mut s, clean, Host::Native),
+        TABLE_OK,
+        "the loader refused the unplanted determinant curve, so the refusal above says \
+         nothing about the label"
+    );
+    assert!(s.bank.is_filled(slot) && s.pairs_ready());
+    println!("  PLANT (iii) CAUGHT through the production loader, and the clean curve still loads.");
+}
+
+/// The provenance strings that reach on-disk artifacts carry no accidental whitespace.
+///
+/// A referee-pinnable file is a thing other people diff. Runs of spaces from a wrapped
+/// string literal are invisible in the source, land in the JSON, and are then annoying to
+/// change because changing them moves the digest. This caught exactly that: both
+/// `PAIR_PROVENANCE_DMRG` and the emitter's `grid_rule` had picked up six- and
+/// fourteen-space runs from `\`-continued literals, and `grid_rule`'s had already shipped.
+#[test]
+fn provenance_strings_carry_no_accidental_whitespace() {
+    for (name, text) in [
+        ("PAIR_PROVENANCE", holon_chem::pair::PAIR_PROVENANCE),
+        ("PAIR_PROVENANCE_DMRG", holon_chem::pair::PAIR_PROVENANCE_DMRG),
+    ] {
+        assert!(
+            !text.contains("  "),
+            "{name} contains a run of spaces and will land in on-disk JSON: {text:?}"
+        );
+        assert!(
+            !text.contains('\n') && !text.contains('\t'),
+            "{name} contains a newline or tab: {text:?}"
+        );
+    }
+}
+
 /// Every other provenance refusal, each fired by a curve that breaks exactly that rule.
 ///
 /// The positive control is first and is not decoration: a gate that refuses everything

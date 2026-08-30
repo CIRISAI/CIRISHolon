@@ -59,6 +59,45 @@ pub const MIXTURES1_REFEREE_DIGEST: u32 = 0x0000_0000;
 /// The staked pointwise agreement on the ENERGY, hartree. The freeze's number.
 pub const MIXTURES1_STAKE_E: f64 = 1e-10;
 
+/// The largest nuclear charge the REFEREE's model covers.
+///
+/// # Why a coverage gate needs a scope, and what happens without one
+///
+/// `elements.rs` now spans Z <= 54. The committed referee's model stops at argon. A gate
+/// that grades "the engine matches the referee" over whatever the drop happens to contain
+/// therefore says nothing at all about Z = 19..54 — and, worse, would keep saying "matches"
+/// as the engine grew, because the pairs it does not cover are pairs it does not check.
+/// That is the vacuous-success shape: a green gate whose greenness is a fact about its own
+/// coverage rather than about the engine.
+///
+/// So the scope is DECLARED here, cross-checked against the drop's own declaration, and a
+/// species above it is REFUSED BY NAME rather than skipped. The refusal is demonstrated
+/// firing in `r2_an_out_of_scope_species_is_refused_by_name`.
+pub const MIXTURES1_REFEREE_Z_MAX: u32 = 18;
+
+/// Why a pair cannot be graded against this referee.
+#[derive(Debug, PartialEq, Eq)]
+pub enum ScopeRefusal {
+    /// One of the pair's species is past the referee's declared model.
+    OutOfScope { symbol: &'static str, z: u32 },
+}
+
+/// Whether this referee can grade a pair at all. `Err` is a REFUSAL, never a skip.
+pub fn in_referee_scope(
+    a: holon_chem::elements::Species,
+    b: holon_chem::elements::Species,
+) -> Result<(), ScopeRefusal> {
+    for sp in [a, b] {
+        if sp.z > MIXTURES1_REFEREE_Z_MAX {
+            return Err(ScopeRefusal::OutOfScope {
+                symbol: sp.symbol,
+                z: sp.z,
+            });
+        }
+    }
+    Ok(())
+}
+
 /// How many times its own DECLARED uncertainty a derivative column may miss by.
 ///
 /// Inherited from ELEMENTS-1 and for its reason: the referee supplies `E` at full working
@@ -182,6 +221,73 @@ fn r2_which_staked_pairs_leave_the_determinant_route() {
     );
 }
 
+/// THE SCOPE REFUSAL, demonstrated firing.
+///
+/// Standing question 4: a refusal nobody has watched fire is indistinguishable from a
+/// refusal that cannot. The positive control comes first and is not decoration — a scope
+/// check that refused everything would pass every negative case below.
+#[test]
+fn r2_an_out_of_scope_species_is_refused_by_name() {
+    use holon_chem::elements::by_symbol;
+
+    // POSITIVE CONTROL: every staked pair is inside the referee's model, so the gate is
+    // not refusing its own campaign.
+    for name in MIXTURES1_STAKED_PAIRS {
+        let (a, b) = split_pair(name);
+        assert_eq!(
+            in_referee_scope(a, b),
+            Ok(()),
+            "{name} is staked by the freeze and outside the referee's declared scope; one \
+             of the two is wrong"
+        );
+    }
+
+    // The engine reaches far past the referee. Each of these must be refused BY NAME.
+    for sym in ["K", "Ca", "Fe", "Zn", "Kr", "Ag", "Xe"] {
+        let Some(sp) = by_symbol(sym) else {
+            panic!("{sym} is not in the engine's registry; this test's premise is gone");
+        };
+        assert!(
+            sp.z > MIXTURES1_REFEREE_Z_MAX,
+            "{sym} (Z = {}) is no longer past the referee's scope of \
+             {MIXTURES1_REFEREE_Z_MAX}; pick a species that is, or the refusal below is \
+             untested",
+            sp.z
+        );
+        let refusal = in_referee_scope(sp, holon_chem::elements::HYDROGEN)
+            .expect_err("an out-of-scope species was admitted for grading");
+        assert_eq!(
+            refusal,
+            ScopeRefusal::OutOfScope { symbol: sp.symbol, z: sp.z },
+            "the refusal does not name the species that caused it"
+        );
+        // And in the other argument position, because a scope check that only looks at one
+        // side of a pair is half a check.
+        assert!(in_referee_scope(holon_chem::elements::HYDROGEN, sp).is_err());
+        println!("  refused {sym} (Z = {}) by name", sp.z);
+    }
+
+    // The engine's reach and the referee's scope are DIFFERENT numbers, and the gap is the
+    // thing this test exists for. If they ever coincide, the refusal above stops being
+    // reachable and somebody should notice deliberately.
+    let engine_z_max = holon_chem::elements::ALL_ELEMENTS
+        .iter()
+        .map(|s| s.z)
+        .max()
+        .unwrap_or(0);
+    println!(
+        "engine reaches Z = {engine_z_max}; this referee's model stops at Z = \
+         {MIXTURES1_REFEREE_Z_MAX}. {} species are out of scope and are refused rather \
+         than skipped.",
+        engine_z_max.saturating_sub(MIXTURES1_REFEREE_Z_MAX)
+    );
+    assert!(
+        engine_z_max > MIXTURES1_REFEREE_Z_MAX,
+        "the engine no longer reaches past the referee, so the scope refusal is \
+         unreachable and this gate has stopped testing anything"
+    );
+}
+
 /// R2 proper. Ignored until the drop lands; see the module header.
 #[test]
 #[ignore = "waiting on the mixtures-referee drop in tests/data/mixtures1/"]
@@ -207,6 +313,26 @@ fn r2_the_staked_pairs_match_the_fifty_digit_referee() {
         "the manifest's pairs_present + pairs_owed is not the staked set"
     );
     assert!(!fingerprint.is_empty(), "the manifest declares no basis_fingerprint");
+
+    // THE DROP DECLARES ITS OWN SCOPE, and it is cross-checked against the constant frozen
+    // here rather than replacing it. Two lanes disagreeing about how far the referee's
+    // model reaches is exactly the disagreement that produces a vacuous pass, and it is
+    // invisible if either side simply reads the other's number.
+    if manifest.contains("\"z_max\"") {
+        let theirs: u32 = string_scalar(&manifest, "z_max")
+            .parse()
+            .expect("z_max is an integer");
+        assert_eq!(
+            theirs, MIXTURES1_REFEREE_Z_MAX,
+            "the referee declares its model reaches Z = {theirs}; this gate is frozen at \
+             Z = {MIXTURES1_REFEREE_Z_MAX}. One of the two is grading a different model."
+        );
+    } else {
+        println!(
+            "  NOTE: the drop declares no z_max. Scope is being enforced from this gate's \
+             frozen {MIXTURES1_REFEREE_Z_MAX} alone, with nothing to cross-check it."
+        );
+    }
 
     // Cross-check the referee's own declared staked list against the constant frozen here,
     // rather than replacing one with the other.
@@ -295,6 +421,13 @@ fn r2_the_staked_pairs_match_the_fifty_digit_referee() {
              zero one."
         );
         let (a, b) = split_pair(name);
+        // The scope refusal, ENFORCED where the grading happens and not only in its own
+        // test. A pair the referee's model does not cover is refused by name; it is never
+        // quietly skipped, which would shrink this gate's coverage and report the
+        // shrinkage as a pass.
+        in_referee_scope(a, b).unwrap_or_else(|e| {
+            panic!("{name} cannot be graded against this referee: {e:?}")
+        });
         let mut worst = 0.0f64;
         let mut worst_at = 0usize;
         for (i, (r_s, e_s)) in grid.iter().zip(energies.iter()).enumerate() {

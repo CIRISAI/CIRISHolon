@@ -231,6 +231,62 @@ pub fn cartesian_components(l: u8) -> &'static [[u8; 3]] {
     }
 }
 
+/// The 5x6 matrix taking a d shell's six normalised CARTESIAN components to its five
+/// normalised SPHERICAL ones, in the crate's component order `xx, yy, zz, xy, xz, yz`.
+///
+/// # Why a minimal basis must do this
+///
+/// The six Cartesian d functions do not span an `l = 2` space. They span the five real
+/// solid harmonics PLUS one more, `(x^2 + y^2 + z^2) exp(-a r^2)`, which is spherically
+/// symmetric and therefore `l = 0`. It is not a 1s Gaussian — its radial factor is `r^2`
+/// — but its angular momentum is zero, so keeping all six gives every d shell a spurious
+/// sixth function of the wrong symmetry.
+///
+/// That is not a small distortion in a MINIMAL basis, where the whole premise is one
+/// function per occupied orbital. It is the difference between krypton being a closed
+/// shell of eighteen functions holding thirty-six electrons — one determinant, exactly —
+/// and krypton being nineteen functions with two holes in them, which is 361 determinants
+/// and no longer a closed shell at all. ELEMENTS-3's E1 asserts the former; the arithmetic
+/// throughout its prereg (Br2 at 36^2, HBr at 19^2, HI at 28^2, Xe2 at 54 orbitals) is the
+/// five-component count. So the five-component basis is what the contract means.
+///
+/// # Where these numbers come from
+///
+/// They are derived, not tabulated. Writing the crate's six normalised Cartesian functions
+/// as `g1..g6`, their overlaps are not zero — `<g1|g2> = 1/3` among the three squares, and
+/// the three products are orthonormal — so the combinations have to be normalised against
+/// that metric rather than by inspection:
+///
+/// ```text
+/// d(z^2)     ∝ 2z^2 - x^2 - y^2   has norm^2 4 in the g metric, so  (2 g3 - g1 - g2) / 2
+/// d(x^2-y^2) ∝ x^2 - y^2          has norm^2 4/3,              so  sqrt(3)/2 (g1 - g2)
+/// d(xy), d(xz), d(yz)                                          are already orthonormal
+/// ```
+///
+/// and the discarded direction is exactly `g1 + g2 + g3`, the s-type one.
+pub const SPHERICAL_D: [[f64; 6]; 5] = [
+    // z^2
+    [-0.5, -0.5, 1.0, 0.0, 0.0, 0.0],
+    // xz
+    [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+    // yz
+    [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+    // x^2 - y^2, with sqrt(3)/2
+    [0.8660254037844386, -0.8660254037844386, 0.0, 0.0, 0.0, 0.0],
+    // xy
+    [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+];
+
+/// Spherical functions per shell: 1 for s, 3 for p, 5 for d.
+pub fn spherical_components(l: u8) -> usize {
+    match l {
+        0 => 1,
+        1 => 3,
+        2 => 5,
+        _ => panic!("md.rs: l = {l} is not supported"),
+    }
+}
+
 /// Normalization scale factor for off-diagonal Cartesian components (e.g. sqrt(3) for xy, xz, yz).
 #[inline]
 pub fn cart_factor(p: [u8; 3]) -> f64 {
@@ -315,9 +371,19 @@ pub struct Basis {
     pub centers: Vec<[D2; 3]>,
     pub charges: Vec<f64>,
     pub shells: Vec<ShellOn>,
-    /// Total contracted basis functions.
+    /// Total contracted basis functions the rest of the engine sees: SPHERICAL, five
+    /// components per d shell. This is the dimension of every integral array and of the
+    /// FCI space built on them.
     pub n: usize,
-    /// `(shell index, Cartesian powers)` for each basis function, in order.
+    /// Total CARTESIAN functions, six per d shell. An internal quantity: the integral
+    /// recursions are Cartesian, so assembly happens at this size and is then projected
+    /// down to `n`. Equal to `n` whenever the basis has no d shell.
+    pub n_cart: usize,
+    /// The `n x n_cart` projection from Cartesian to spherical, row-major, or `None` when
+    /// the two coincide and the projection would be the identity. Block diagonal by shell:
+    /// identity for s and p, [`SPHERICAL_D`] for d.
+    pub sph: Option<Vec<f64>>,
+    /// `(shell index, Cartesian powers)` for each CARTESIAN basis function, in order.
     pub funcs: Vec<(usize, [u8; 3])>,
 }
 
@@ -376,12 +442,48 @@ impl Basis {
             });
             first += nf;
         }
-        let n = funcs.len();
+        let n_cart = funcs.len();
+        let n: usize = shells.iter().map(|sh| spherical_components(sh.l)).sum();
+        // Only build the projection when it would do something. An identity matrix that
+        // every integral is multiplied by is a cost and a place for a bug, and the first
+        // eighteen elements have no d shell at all -- which is also what keeps every
+        // ELEMENTS-1 and MIXTURES-1 number bit-identical under this change.
+        let sph = if n == n_cart {
+            None
+        } else {
+            let mut p = vec![0.0f64; n * n_cart];
+            let (mut row, mut col) = (0usize, 0usize);
+            for sh in shells.iter() {
+                match sh.l {
+                    2 => {
+                        for (r, coeffs) in SPHERICAL_D.iter().enumerate() {
+                            for (c, &x) in coeffs.iter().enumerate() {
+                                p[(row + r) * n_cart + col + c] = x;
+                            }
+                        }
+                        row += 5;
+                        col += 6;
+                    }
+                    _ => {
+                        let k = cartesian_components(sh.l).len();
+                        for i in 0..k {
+                            p[(row + i) * n_cart + col + i] = 1.0;
+                        }
+                        row += k;
+                        col += k;
+                    }
+                }
+            }
+            debug_assert_eq!((row, col), (n, n_cart));
+            Some(p)
+        };
         Basis {
             centers,
             charges,
             shells,
             n,
+            n_cart,
+            sph,
             funcs,
         }
     }
@@ -431,7 +533,7 @@ impl AoIntegrals {
 
 /// Compute every AO integral of a basis.
 pub fn ao_integrals(b: &Basis) -> AoIntegrals {
-    let n = b.n;
+    let n = b.n_cart;
     let mut s = vec![D2::c(0.0); n * n];
     let mut t = vec![D2::c(0.0); n * n];
     let mut v = vec![D2::c(0.0); n * n];
@@ -531,7 +633,141 @@ pub fn ao_integrals(b: &Basis) -> AoIntegrals {
     }
 
     let eri = eri_all(b);
-    AoIntegrals { n, s, t, v, eri }
+    let cart = AoIntegrals { n, s, t, v, eri };
+    match &b.sph {
+        None => cart,
+        Some(p) => project_to_spherical(&cart, p, b.n),
+    }
+}
+
+/// Project a Cartesian integral set through `p` (`n_pure x n_cart`, row-major).
+///
+/// The two-index arrays become `P X P^T`. The four-index array is transformed ONE INDEX AT
+/// A TIME -- four passes of `O(n_cart^3 n_pure)` rather than one contraction of
+/// `O(n_cart^4 n_pure^4)`, which at 58 Cartesian functions is the difference between
+/// seconds and never.
+fn project_to_spherical(cart: &AoIntegrals, p: &[f64], n: usize) -> AoIntegrals {
+    let m = cart.n;
+    let two = |x: &[D2]| -> Vec<D2> {
+        // (P X) then (P X) P^T, so the intermediate is n x m rather than m x m.
+        let mut px = vec![D2::c(0.0); n * m];
+        for a in 0..n {
+            for i in 0..m {
+                if p[a * m + i] == 0.0 {
+                    continue;
+                }
+                let w = p[a * m + i];
+                for j in 0..m {
+                    px[a * m + j] = px[a * m + j] + x[i * m + j] * w;
+                }
+            }
+        }
+        let mut out = vec![D2::c(0.0); n * n];
+        for a in 0..n {
+            for bq in 0..n {
+                let mut acc = D2::c(0.0);
+                for j in 0..m {
+                    let w = p[bq * m + j];
+                    if w != 0.0 {
+                        acc = acc + px[a * m + j] * w;
+                    }
+                }
+                out[a * n + bq] = acc;
+            }
+        }
+        out
+    };
+
+    // Four sweeps over the ERI array, each replacing one Cartesian index by a spherical
+    // one. `cur` shrinks as the sweeps proceed, so the later passes are the cheap ones.
+    let mut cur = cart.eri.clone();
+    let mut dims = [m, m, m, m];
+    for axis in 0..4 {
+        let [_d0, d1, d2, d3] = dims;
+        let old = dims[axis];
+        let mut next_dims = dims;
+        next_dims[axis] = n;
+        let [e0, e1, e2, e3] = next_dims;
+        let mut next = vec![D2::c(0.0); e0 * e1 * e2 * e3];
+        for i0 in 0..e0 {
+            for i1 in 0..e1 {
+                for i2 in 0..e2 {
+                    for i3 in 0..e3 {
+                        let idx = [i0, i1, i2, i3];
+                        let mut acc = D2::c(0.0);
+                        for k in 0..old {
+                            let w = p[idx[axis] * m + k];
+                            if w == 0.0 {
+                                continue;
+                            }
+                            let mut src = idx;
+                            src[axis] = k;
+                            acc = acc
+                                + cur[((src[0] * d1 + src[1]) * d2 + src[2]) * d3 + src[3]] * w;
+                        }
+                        next[((i0 * e1 + i1) * e2 + i2) * e3 + i3] = acc;
+                    }
+                }
+            }
+        }
+        cur = next;
+        dims = next_dims;
+    }
+
+    // Restore the eight-fold symmetry EXACTLY, the same way `eri_all` establishes it.
+    //
+    // The four sweeps above are mathematically symmetric but not numerically: element
+    // (i,j,k,l) and element (j,i,k,l) accumulate the same terms in different orders, so
+    // they can differ in the last bits. `eri_all` deliberately computes each
+    // symmetry-unique quartet once and writes one value to all eight permutations, and
+    // the comment there says why -- the FCI relies on `(ij|kl) == (kl|ij)` being exact in
+    // the output rather than approximate. A projection that quietly downgraded that to
+    // "equal to within rounding" would take the property away and leave the comment.
+    let idx = |i: usize, j: usize, k: usize, l: usize| ((i * n + j) * n + k) * n + l;
+    for i in 0..n {
+        for j in 0..=i {
+            for k in 0..n {
+                for l in 0..=k {
+                    if (i * n + j) < (k * n + l) {
+                        continue;
+                    }
+                    let x = cur[idx(i, j, k, l)];
+                    for &(a, b, c, d) in &[
+                        (i, j, k, l),
+                        (j, i, k, l),
+                        (i, j, l, k),
+                        (j, i, l, k),
+                        (k, l, i, j),
+                        (l, k, i, j),
+                        (k, l, j, i),
+                        (l, k, j, i),
+                    ] {
+                        cur[idx(a, b, c, d)] = x;
+                    }
+                }
+            }
+        }
+    }
+
+    // The one-electron operators are Hermitian over real functions, and `P X P^T` is
+    // symmetric in exact arithmetic but not in floating point for the same reason. Take
+    // the lower triangle as authoritative, again matching `ao_integrals`.
+    let symmetrise = |mut x: Vec<D2>| -> Vec<D2> {
+        for i in 0..n {
+            for j in 0..i {
+                x[j * n + i] = x[i * n + j];
+            }
+        }
+        x
+    };
+
+    AoIntegrals {
+        n,
+        s: symmetrise(two(&cart.s)),
+        t: symmetrise(two(&cart.t)),
+        v: symmetrise(two(&cart.v)),
+        eri: cur,
+    }
 }
 
 /// Every two-electron integral `(ij|kl)`, computed once per symmetry-unique quartet and
@@ -541,7 +777,7 @@ pub fn ao_integrals(b: &Basis) -> AoIntegrals {
 /// number; writing one value everywhere is what makes `(ij|kl) == (kl|ij)` EXACT in the
 /// output rather than approximate, which the FCI code below relies on.
 pub fn eri_all(b: &Basis) -> Vec<D2> {
-    let n = b.n;
+    let n = b.n_cart;
     let mut eri = vec![D2::c(0.0); n * n * n * n];
     let mut rt = RTensor::zero();
 
@@ -569,7 +805,7 @@ fn accumulate_shell_quartet(
     rt: &mut RTensor,
     eri: &mut [D2],
 ) {
-    let n = b.n;
+    let n = b.n_cart;
     let (sa, sb, sc, sd) = (&b.shells[si], &b.shells[sj], &b.shells[sk], &b.shells[sl]);
     let (ca, cb) = (b.centers[sa.center], b.centers[sb.center]);
     let (cc, cd) = (b.centers[sc.center], b.centers[sd.center]);

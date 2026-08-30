@@ -33,7 +33,9 @@
 use holon_chem::dual::D2;
 use holon_chem::elements::by_symbol;
 use holon_chem::fci::{solve_determinant, FciSpace, Strings, MAX_ORB};
-use holon_chem::pair::{electron_counts, geometry_problem, pair_point, solve_geometry};
+use holon_chem::pair::{
+    build_basis, electron_counts, geometry_problem, pair_point, solve_geometry,
+};
 
 /// The mask width the crate had through ELEMENTS-1 and MIXTURES-1, and the plant's setting.
 const OLD_MASK_WIDTH: usize = 32;
@@ -126,21 +128,36 @@ fn the_widening_reproduces_every_banked_species_bit_for_bit() {
     println!("W1: {atoms} atoms and {pairs} pair points reproduce bit-for-bit");
 }
 
-/// The widened bound is the one the heavy dimers actually need.
+/// The widened bound is the one the heaviest species in scope actually needs.
+///
+/// The orbital count is MEASURED from the registry rather than written down. A literal here
+/// would be a second copy of a fact the basis already determines, and it is exactly the
+/// kind of number that goes stale silently: this test asserted 58 while the d shells were
+/// six Cartesian components, and the projection to five moved it to 54 without the
+/// assertion noticing anything.
 #[test]
 fn the_mask_admits_the_species_elements_three_needs() {
     assert_eq!(MAX_ORB, 64, "W1 widened the mask to sixty-four spatial orbitals");
-    // Xe is 29 contracted functions (1s, 2sp, 3spd, 4spd, 5sp with six Cartesian d
-    // components), so the heaviest dimer in scope is 58 orbitals. Stated as the inequality
-    // the gate needs rather than as a number to be trusted.
+    let xe = by_symbol("Xe").unwrap();
+    let heaviest = build_basis(
+        &[xe, xe],
+        vec![
+            [D2::c(0.0), D2::c(0.0), D2::c(0.0)],
+            [D2::c(0.0), D2::c(0.0), D2::var(6.0)],
+        ],
+    )
+    .n;
     assert!(
-        58 <= MAX_ORB,
-        "Xe2 is 58 spatial orbitals and must be representable for ELEMENTS-3 to be possible"
+        heaviest <= MAX_ORB,
+        "Xe2 is {heaviest} spatial orbitals and must be representable for ELEMENTS-3 to be \
+         possible at all"
     );
     assert!(
-        58 > OLD_MASK_WIDTH,
-        "if the heaviest species in scope fit the OLD mask, W1 would be unmotivated"
+        heaviest > OLD_MASK_WIDTH,
+        "Xe2 is {heaviest} orbitals, inside the OLD {OLD_MASK_WIDTH}-bit mask -- if the \
+         heaviest species in scope already fitted, W1 would be unmotivated"
     );
+    println!("W1: heaviest species in scope is Xe2 at {heaviest} orbitals, cap {MAX_ORB}");
 }
 
 /// Plant A, at the level the widening acts on: the string enumeration is exactly what the

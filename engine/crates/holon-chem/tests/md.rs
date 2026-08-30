@@ -391,8 +391,10 @@ fn d_orbitals_obey_permutational_and_translational_symmetries() {
     );
     let g = ao_integrals(&b);
     let n = g.n;
-    // 1 s function + 6 d functions + 6 d functions = 13 basis functions
-    assert_eq!(n, 13);
+    // 1 s function + 5 spherical d + 5 spherical d = 11 basis functions. Five, not six:
+    // the sixth Cartesian component of a d shell is x^2+y^2+z^2, an s function in a d
+    // shell's clothing, and a MINIMAL basis must not carry it. See md::SPHERICAL_D.
+    assert_eq!(n, 11);
 
     // 1. Overlap diagonal is 1.0 (self-normalized)
     for i in 0..n {

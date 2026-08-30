@@ -256,6 +256,32 @@ async function loadWasm() {
 
   if (typeof w.holon_trimer_generate === "function") {
     w.holon_trimer_generate();
+    // THE FENCE, read from the engine and DISPLAYED.
+    //
+    // MIXTURES-1 requires the three-body term's scope to be shown in both viewers'
+    // provenance rather than assumed. `holon_trimer_h_only` is the engine's own answer,
+    // so the day a heteronuclear trimer surface lands this line stops claiming a fence
+    // that has been lifted — which a sentence hardcoded here would not.
+    if (typeof w.holon_trimer_h_only === "function" && w.holon_trimer_h_only()) {
+      appendProvenance(
+        "3-body: H3 ONLY. Any triple containing a non-hydrogen atom contributes exactly "
+        + "zero, so nothing shown here is beyond-pair-complete for such a triple. "
+        + "Heteronuclear trimer surfaces are a named successor.",
+      );
+    }
+    // Gate D1's record, likewise read rather than asserted. While the DMRG bridge is
+    // unadmitted every DMRG-labelled curve is refused by the engine's provenance gate,
+    // so every curve behind this page came off the determinant route.
+    if (typeof w.holon_d1_validated === "function") {
+      appendProvenance(
+        w.holon_d1_validated()
+          ? `DMRG bridge ADMITTED (gate D1): worst overlap `
+            + `${w.holon_d1_worst_overlap().toExponential(2)} Eh against a stake of `
+            + `${w.holon_d1_stake().toExponential(0)} Eh.`
+          : "DMRG bridge NOT admitted (gate D1 unvalidated), so every curve here is "
+            + "determinant-route FCI and DMRG-labelled curves are refused.",
+      );
+    }
   }
 
   await loadPalette();
@@ -282,6 +308,16 @@ function showProvenance(label, text) {
   ui.provenanceBanner.hidden = false;
   ui.provenanceLabel.textContent = label;
   ui.provenanceText.textContent = text;
+}
+
+/// Add a sentence to the provenance strip without displacing what is already there.
+///
+/// `showProvenance` REPLACES, which is right for the curve's own line and wrong for the
+/// fences, because a fence that overwrote the provenance it stands beside would be hiding
+/// the thing it qualifies.
+function appendProvenance(text) {
+  ui.provenanceBanner.hidden = false;
+  ui.provenanceText.textContent = `${ui.provenanceText.textContent} ${text}`.trim();
 }
 
 function showError(msg) {

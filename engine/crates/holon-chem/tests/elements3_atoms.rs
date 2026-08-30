@@ -32,6 +32,9 @@
 //! multiplicity therefore comes OUT. That it comes out matching Hund's rules across two
 //! rows nobody tuned is evidence about the model rather than about the arithmetic.
 
+mod common;
+
+use common::decimal_minus_f64;
 use holon_chem::dual::D2;
 use holon_chem::elements::by_z;
 use holon_chem::fci::{ci_ints, s_squared, solve_determinant, Order};
@@ -224,4 +227,84 @@ fn probe(n: usize, seed: u64) -> Vec<f64> {
             ((s >> 33) as f64 / (1u64 << 30) as f64) - 1.0
         })
         .collect()
+}
+
+/// R1's referee leg, for the two atoms a 50-digit referee can actually reach.
+///
+/// # Why these two and not the nine
+///
+/// R1 stakes a 50-digit referee for every atom at or under 3e4 determinants — nine of
+/// them. The threshold was staked result-blind and is a reasonable threshold; the
+/// ARITHMETIC does not follow it that far. A 50-digit FCI needs an eigensolve over the
+/// determinant space in mpmath, and germanium's 23,409 is far past what that reaches.
+///
+/// Krypton and xenon are different in kind. Every orbital the basis provides is doubly
+/// occupied, so the determinant is unique up to a phase, its energy is invariant under
+/// orbital rotation, and it needs NO eigensolve and NO SCF — the energy is a closed
+/// expression in the AO integrals with `D = 2 S^-1`. So the two atoms E1 asserts
+/// "exactly" turn out to be exactly the two the referee can reach exactly, which is worth
+/// using rather than stepping over.
+///
+/// # What agreement here establishes
+///
+/// The referee is an independent implementation in another language: its own integral
+/// recursions, its own normalisation, its own spherical projection derived rather than
+/// copied, and its basis PARSED from `elements.rs` rather than regenerated beside it
+/// (which is how the first attempt disagreed by 6.3e-7 hartree over a single rounding
+/// tie). Agreement therefore covers the d integrals, the sqrt(3) per-component
+/// normalisation, the 5x6 projection and the heavy basis table at once.
+#[test]
+fn the_two_closed_shell_nobles_match_the_fifty_digit_referee() {
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/data/elements3_referee_nobles.txt");
+    let text = std::fs::read_to_string(&path)
+        .unwrap_or_else(|e| panic!("cannot read {}: {e}", path.display()));
+
+    let mut checked = 0usize;
+    for line in text.lines() {
+        let f: Vec<&str> = line.split_whitespace().collect();
+        if f.first() != Some(&"atom") {
+            continue;
+        }
+        let z: u32 = f[1].parse().unwrap();
+        let n_basis: usize = f[2].parse().unwrap();
+        let dps: usize = f[3].parse().unwrap();
+        assert!(dps >= 50, "the referee ran at only {dps} digits");
+
+        let sp = by_z(z).unwrap();
+        let (space, mo, _) = geometry_problem(&[sp], vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]]);
+        assert_eq!(space.n_orb, n_basis, "{}: basis size", sp.symbol);
+        assert_eq!(
+            space.n_det, 1,
+            "{}: the referee's closed-shell form applies only to a one-determinant space",
+            sp.symbol
+        );
+        let e = solve_determinant(&space, &mo).e.v;
+
+        // Compare in exact decimal against the referee's digits, never by parsing the
+        // referee to f64 first — that would round the reference to the precision of the
+        // thing being graded and the residual would be measuring its own rounding.
+        let resid = decimal_minus_f64(f[4], e);
+        let bar = 1e-9 * e.abs();
+        assert!(
+            resid.abs() < bar,
+            "{}: the engine gives {e:.15} and the 50-digit referee {}, a residual of \
+             {resid:.3e} against a bar of {bar:.3e}. The referee is an independent \
+             implementation, so a disagreement is in one of them and not in the model.",
+            sp.symbol,
+            f[4]
+        );
+        println!(
+            "R1 referee: {} {n_basis} functions, engine {e:.12}, referee {}, residual \
+             {resid:.3e} ({:.1} ulp)",
+            sp.symbol,
+            &f[4][..22.min(f[4].len())],
+            resid.abs() / (e.abs() * f64::EPSILON)
+        );
+        checked += 1;
+    }
+    assert_eq!(
+        checked, 2,
+        "the referee record is supposed to carry krypton and xenon; it carried {checked}"
+    );
 }

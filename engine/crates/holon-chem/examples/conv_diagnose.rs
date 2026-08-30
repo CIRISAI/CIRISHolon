@@ -53,7 +53,19 @@ const DAVIDSON_TARGET: f64 = 1e-11;
 /// five it PUBLISHES. A diagnostic run only on the refused rows could not tell whether the
 /// exit it found was a property of failing or a property of the whole class -- which is the
 /// question actually being asked.
-const ASK: [(u32, &str); 9] = [
+///
+/// # The light controls are not padding
+///
+/// If the hypothesis is right, NO heavy atom classifies as CONVERGED -- and then the
+/// classifier's `CONVERGED` branch is never exercised and the run cannot distinguish "the
+/// heavy class uniformly fails to converge" from "this diagnostic cannot recognise
+/// convergence". So three light atoms are included whose spaces are small enough that they
+/// must reach the target. If they do not, the instrument is what is broken, and the heavy
+/// readings mean nothing. That check has to be IN the run rather than assumed about it.
+const ASK: [(u32, &str); 12] = [
+    (3, "light control: must CONVERGE"),
+    (6, "light control: must CONVERGE"),
+    (10, "light control: must CONVERGE"),
     (30, "refused: residual 2.72e-10"),
     (50, "refused: residual 2.06e-10"),
     (51, "refused: residual 1.07e-10"),
@@ -74,6 +86,10 @@ fn main() {
         "Z", "sym", "n_det", "E (hartree)", "resid", "iters", "exit", "vs bar"
     );
 
+    /// The three light atoms whose job is to prove the CONVERGED branch is reachable.
+    const CONTROLS: [u32; 3] = [3, 6, 10];
+    let mut controls_converged = 0usize;
+    let mut heavy_converged = 0usize;
     for (z, why) in ASK {
         let sp = by_z(z).unwrap();
         let (space, mo, _) =
@@ -81,6 +97,11 @@ fn main() {
         let sol = solve_determinant(&space, &mo);
 
         let exit = if sol.residual < DAVIDSON_TARGET {
+            if CONTROLS.contains(&z) {
+                controls_converged += 1;
+            } else {
+                heavy_converged += 1;
+            }
             "CONVERGED"
         } else if sol.davidson_iters >= cap {
             "CAP"
@@ -102,6 +123,22 @@ fn main() {
     }
 
     println!("#");
+    if controls_converged < CONTROLS.len() {
+        println!(
+            "# INSTRUMENT FAILURE, not a finding: only {controls_converged} of \
+             {} light controls reached the target. This run cannot tell 'the heavy class \
+             does not converge' from 'this classifier cannot see convergence', and the \
+             heavy readings above are not evidence of anything.",
+            CONTROLS.len()
+        );
+    } else {
+        println!(
+            "# All {} light controls reached the target, so the CONVERGED branch is live \
+             and a heavy atom missing it is a fact about the atom, not about this \
+             classifier. Heavy atoms that reached it: {heavy_converged}.",
+            CONTROLS.len()
+        );
+    }
     println!(
         "# Read the `exit` column against the `vs bar` column. If they disagree -- if rows \
          that PASS the bar took the same exit as rows the bar REFUSES -- then the bar is \

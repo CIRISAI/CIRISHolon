@@ -248,8 +248,26 @@ fn main() {
         ),
         None => say!("# every pair in the ladder reached the stake"),
     }
+    // THE DOOR TAKES THE WALL, NOT THE REACH.
+    //
+    // `MPS_MAX_ORBITALS` is spent as a `<=` admission door, so it must BOUND the admitted
+    // set. This line used to nominate `best_reached` -- the largest count that reached --
+    // which is wrong whenever a failure sits below it, and one does: NaH fails at 10 while
+    // HCl reaches at 10. A maximum over a set containing a failure is not a bound on that
+    // set. Caught by elements3-heavy, ruled by the lead, corrected here.
+    match first_wall {
+        Some((orb, name, _)) => say!(
+            "# THE DOOR'S VALUE IS first_wall - 1 = {} (the wall is {orb}, at {name}). The \
+             largest count that REACHED is a different number and is not a bound.",
+            orb.saturating_sub(1)
+        ),
+        None => say!(
+            "# No wall was found in this ladder, so the door is bounded by the largest \
+             count tested and not by a measurement. Extend the ladder before raising it."
+        ),
+    }
     say!(
-        "# The new MPS_MAX_ORBITALS is the first number, and it is bounded by the stated \
-         budget rather than by the method. Raising the budget may raise it."
+        "# Both numbers are bounded by the stated budget rather than by the method. \
+         Raising the budget may raise them."
     );
 }

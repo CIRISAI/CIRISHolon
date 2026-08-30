@@ -494,11 +494,27 @@ fn the_mps_arm_is_unreachable_so_the_orbital_constant_decides_nothing() {
     // (c) THE PLANT. A check that can only ever pass is decoration, so the discriminator is
     //     exercised at constants where the arm IS live: lift the determinant bound above the
     //     routing threshold and the window opens.
+    //     The plant must mutate BOTH bounds, because the arm requires both conditions and
+    //     the orbital one can be the binding half. Written originally as
+    //     `mps_arm_is_selectable(max_orb, 100_000, threshold)` -- taking the ORBITAL bound
+    //     from the live constant -- which was a live-arm scenario while that constant was
+    //     14 and stopped being one when mixtures-engine re-derived it to 9: nine orbitals
+    //     hold at most 15,876 determinants, so no window past a 50,000 threshold is
+    //     reachable there however high the determinant bound is lifted. The plant then
+    //     failed for the right reason and the wrong cause.
+    //
+    //     The orbital bound is DERIVED rather than hardcoded so this cannot go stale again
+    //     the next time either constant moves.
+    let orb_that_can_hold = (0..=64)
+        .find(|&m| max_n_det_at(m) > threshold)
+        .expect("no orbital count up to 64 can hold a space past the routing threshold");
     assert!(
-        mps_arm_is_selectable(max_orb, 100_000, threshold),
+        mps_arm_is_selectable(orb_that_can_hold, 100_000, threshold),
         "the emptiness check cannot detect a live arm: with a determinant bound of 100,000 \
-         against a {threshold} threshold the window (50,000, 100,000] is open and reachable \
-         at {max_orb} orbitals, and this must read as selectable"
+         against a {threshold} threshold, the window ({threshold}, 100,000] is open and IS \
+         reachable at {orb_that_can_hold} orbitals (which hold up to {} determinants), so \
+         this must read as selectable",
+        max_n_det_at(orb_that_can_hold)
     );
     assert!(
         !mps_arm_is_selectable(max_orb, threshold, threshold),

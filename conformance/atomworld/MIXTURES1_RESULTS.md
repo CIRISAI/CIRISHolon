@@ -608,6 +608,36 @@ the operative bound, placed inside the measured gap between LiH's 225 and S2's
 23,409. Nothing on this evidence distinguishes 500 from 5,000, and claiming
 otherwise would be precision the ladder does not have.
 
+### The orbital constant is a WALL, and I first published the wrong one of two numbers
+
+`MPS_MAX_ORBITALS` is spent as a `<=` admission door, so it has to BOUND the
+admitted set. I set it to 14 — the largest count that *reached*. There are measured
+FAILURES at 10 (NaH) and 14 (SiO) sitting inside the door a 14 opens, and **a
+maximum over a set containing a failure is not a bound on that set.** The honest
+value is the smallest failing count minus one: **9**. My own harness computed and
+printed both numbers and its closing line nominated the wrong one; the elements3
+lane caught it and the lead ruled it before the ladder had even finished.
+
+### At 9 the MPS arm is DEAD, and that is now gated
+
+A space reaches the MPS arm only if it is also past `MPS_ROUTE_THRESHOLD` =
+50,000 determinants. Nine orbitals hold at most `C(9,4)·C(9,5)` = **15,876** over
+every filling, so the two conditions cannot both hold: **no input can select
+`AutomaticRoute::Mps`**, and for every reachable input `exists()` is exactly
+`n_det <= MPS_ROUTE_THRESHOLD`.
+
+The arm first goes live at **10** orbitals (max 63,504), and the window it opens
+there is `n_det` in 50,001..=63,504 — near half filling, which is NaH's exact
+neighbourhood, the one measured failure at that orbital count. So raising the
+constant by one would hand the automatic router the neighbourhood of the rung that
+failed.
+
+Two gates in `tests/pair.rs` hold this: one asserts the arm is unreachable and
+**names the window in its failure message**, demonstrated firing at 10 and passing
+at 9; the other asserts that every route verdict this crate publishes is the
+determinant threshold alone, which is the fact the ELEMENTS-3 route table rests
+on — they had believed it rested on the orbital constant, and it never did.
+
 ### The larger finding: the route extends nothing
 
 **Every pair the MPS route reaches has an exact FCI that is already free** — 0.0 s

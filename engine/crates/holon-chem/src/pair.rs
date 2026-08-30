@@ -889,16 +889,17 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
     }
 }
 
-/// The largest orbital count the MPS/DMRG route has been demonstrated to run at.
+/// Orbital-count admission bound for the MPS route. RE-DERIVED, and it is a WALL, not a
+/// reach.
 ///
-/// # RE-DERIVED, and the re-derivation says this is the wrong quantity
+/// # The measurement
 ///
-/// The old value of 6 was measured against the pre-rebuild MPO construction, which cost
-/// 528 s to BUILD at six orbitals and did not finish at ten. The channel-based rebuild
-/// removed that entirely — SiO's build is now 0.31 s — so the 6 was re-measured on an
-/// orbital ladder over real STO-3G integrals, each pair at its own equilibrium, chi = 32,
-/// a declared 300 s per-cell budget, and the D1 stake of 1e-8 Ha against exact FCI
-/// (`examples/mps_ladder.rs`, `engine/output/mixtures1/mps_ladder.log`):
+/// The old 6 was measured against the pre-rebuild MPO construction, which cost 528 s to
+/// BUILD at six orbitals and did not finish at ten. The channel-based rebuild removed that
+/// — SiO's build is now 0.31 s — so it was re-measured on an orbital ladder over real
+/// STO-3G integrals, each pair at its own equilibrium, chi = 32, a declared 300 s per-cell
+/// budget, and the D1 stake of 1e-8 Ha against exact FCI (`examples/mps_ladder.rs`,
+/// `engine/output/mixtures1/mps_ladder.log`):
 ///
 /// | `n_det` | pair | `n_orb` | delta / Ha | verdict | exact FCI |
 /// |---|---|---|---|---|---|
@@ -910,16 +911,45 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
 /// | 44,100 | NaH | 10 | 4.9e-3 | BUDGET | 1.3 s |
 /// | 132,496 | SiO | 14 | 1.1e-2 | BUDGET | 18.5 s |
 ///
-/// **Sorted by determinant count the verdict is monotone. Sorted by orbital count it is
-/// not**: ten orbitals both reaches (HCl) and fails (NaH), and fourteen both reaches (ClF)
-/// and fails (SiO). So no orbital-count threshold exists to be re-derived, and a constant
-/// of this name cannot carry the answer. It is kept at a value no longer reached by the
-/// route below, and [`MPS_MAX_DETERMINANTS`] is what actually gates.
+/// # Why NINE and not fourteen
 ///
-/// The harness's own summary line says "largest orbital count reaching: 14; smallest that
-/// did not: 10", which is self-contradictory as a threshold — and that contradiction IS
-/// the measurement's answer, not a defect in it.
-pub const MPS_MAX_ORBITALS: usize = 14;
+/// This constant is spent as a `<=` ADMISSION DOOR in [`automatic_route`], so it must
+/// BOUND the admitted set. The largest orbital count that *reached* is 14 — but there are
+/// measured FAILURES at 10 (NaH) and 14 (SiO), which sit inside the door a 14 would open.
+/// **A maximum over a set containing a failure is not a bound on that set.** The honest
+/// value is the smallest failing count minus one: the largest count at which every tested
+/// rung reached. That is 9.
+///
+/// The ladder prints both numbers and its closing line used to nominate the wrong one.
+/// elements3-heavy caught it and the lead ruled it; the harness now names the wall.
+///
+/// # And a 9 leaves the MPS arm DEAD, which is the honest state
+///
+/// A space is only routed to MPS if it is ALSO past
+/// [`crate::fci::MPS_ROUTE_THRESHOLD`] = 50,000 determinants. The largest space nine
+/// orbitals can hold, over every filling, is `C(9,4)*C(9,5)` = 15,876 — comfortably inside
+/// that threshold. So no input can select [`AutomaticRoute::Mps`], and this constant is
+/// currently INERT: for every reachable input, `exists()` is exactly
+/// `n_det <= MPS_ROUTE_THRESHOLD`.
+///
+/// The arm first becomes reachable at TEN orbitals (max 63,504 > 50,000), and the window
+/// it would open there is `n_det` in 50,000..63,504 — near half filling, which is NaH's
+/// exact neighbourhood, the one measured failure at that orbital count. Raising this to 10
+/// would hand the automatic router the neighbourhood of the rung that failed.
+///
+/// `the_mps_arm_is_unreachable_at_the_current_constants` in `tests/pair.rs` asserts this
+/// and names the window if it ever opens, so nobody raises the constant and discovers the
+/// arm went live downstream.
+///
+/// # What would move it
+///
+/// Not this constant. The two 10-orbital rungs disagree (HCl reached, NaH did not, 441x
+/// apart in determinants at equal orbital count), so orbital count is the right axis for
+/// MPO BUILD cost and the wrong axis for whether a sweep will reach a stake. A door that
+/// survives NaH is a TWO-PART door — orbitals for the build, a filling-aware second axis
+/// for the reach — which is a designed change with its own measurement, not a bigger
+/// number here.
+pub const MPS_MAX_ORBITALS: usize = 9;
 
 /// CI-space size past which the MPS route does not reach the D1 stake, MEASURED.
 ///

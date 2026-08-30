@@ -926,3 +926,123 @@ fn the_palette_size_rule_runs_both_of_its_branches() {
         h.rule, h.radius_bohr, h.separation_bohr, he.rule, he.radius_bohr, he.separation_bohr
     );
 }
+
+// ------------------------------------------------------------------ the MPS arm's fate
+//
+// Suggested by the elements3 lane, who proved the fact; written here because it is this
+// crate's constant.
+
+/// `C(n, k)`, exact for the sizes this test uses.
+fn choose_exact(n: usize, k: usize) -> u128 {
+    if k > n {
+        return 0;
+    }
+    let k = k.min(n - k);
+    let mut acc: u128 = 1;
+    for i in 0..k {
+        acc = acc * (n - i) as u128 / (i + 1) as u128;
+    }
+    acc
+}
+
+/// The largest determinant space `n_orb` spatial orbitals can hold, over every filling.
+fn max_determinants(n_orb: usize) -> u128 {
+    (0..=n_orb)
+        .flat_map(|a| (0..=n_orb).map(move |b| choose_exact(n_orb, a) * choose_exact(n_orb, b)))
+        .max()
+        .unwrap_or(0)
+}
+
+/// `AutomaticRoute::Mps` is UNREACHABLE at the current constants, and this says so out loud
+/// so that raising either constant makes the arm's revival visible here rather than
+/// downstream.
+///
+/// # The fact
+///
+/// A space reaches the MPS arm only if it is BOTH past
+/// `fci::MPS_ROUTE_THRESHOLD` determinants AND inside `pair::MPS_MAX_ORBITALS` orbitals.
+/// Nine orbitals hold at most `C(9,4)*C(9,5)` = 15,876 determinants over every filling,
+/// against a threshold of 50,000 — so the two conditions cannot both hold, and for every
+/// reachable input `AutomaticRoute::exists()` is exactly `n_det <= MPS_ROUTE_THRESHOLD`.
+///
+/// # Why that is worth a gate rather than a comment
+///
+/// The ELEMENTS-3 lane published a route table believing its refusals rested on
+/// `MPS_MAX_ORBITALS`. They rest on the determinant threshold alone; the orbital constant
+/// enters no verdict any record contains. That was invisible until somebody multiplied two
+/// binomials. Raising the constant to 10 makes the arm live — the window being `n_det` in
+/// 50,001..=63,504, which is near half filling and is NaH's neighbourhood, the one measured
+/// failure at that orbital count. This test names that window in its own failure message.
+#[test]
+fn the_mps_arm_is_unreachable_at_the_current_constants() {
+    let cap = max_determinants(holon_chem::pair::MPS_MAX_ORBITALS);
+    let threshold = holon_chem::fci::MPS_ROUTE_THRESHOLD as u128;
+    println!(
+        "MPS_MAX_ORBITALS = {} holds at most {cap} determinants over every filling; \
+         MPS_ROUTE_THRESHOLD = {threshold}",
+        holon_chem::pair::MPS_MAX_ORBITALS
+    );
+
+    // The first orbital count at which the arm WOULD go live, reported either way so the
+    // distance to it is visible rather than only its absence.
+    let first_live = (1..=64).find(|&n| max_determinants(n) > threshold);
+    match first_live {
+        Some(n) => println!(
+            "  the arm first becomes reachable at {n} orbitals (max {} determinants); \
+             the window there is n_det in {}..={}",
+            max_determinants(n),
+            threshold + 1,
+            max_determinants(n)
+        ),
+        None => println!("  no orbital count up to 64 can reach the arm"),
+    }
+
+    assert!(
+        cap <= threshold,
+        "THE MPS ARM HAS GONE LIVE. MPS_MAX_ORBITALS = {} now admits spaces of up to {cap} \
+         determinants, past MPS_ROUTE_THRESHOLD = {threshold}, so AutomaticRoute::Mps is \
+         selectable for n_det in {}..={cap}. That is a real routing change and not a \
+         constant bump: it sends those spaces to DMRG automatically. The ladder's one \
+         measured failure at ten orbitals (NaH, 44,100 determinants, 4.9e-3 Ha short of the \
+         1e-8 stake after 364 s) sits in that neighbourhood. If this is intended, delete \
+         this test deliberately and say why; do not raise the constant past it by accident.",
+        holon_chem::pair::MPS_MAX_ORBITALS,
+        threshold + 1
+    );
+}
+
+/// The route verdicts this crate publishes are functions of the DETERMINANT threshold, and
+/// invariant to `MPS_MAX_ORBITALS` at its present value.
+///
+/// The companion to the test above: that one says the arm is unreachable, this one says
+/// what follows for every caller — `exists()` is exactly `n_det <= MPS_ROUTE_THRESHOLD`.
+/// The ELEMENTS-3 lane's published table rests on this fact, so it is pinned here rather
+/// than left as a consequence somebody has to re-derive.
+#[test]
+fn route_verdicts_are_the_determinant_threshold_alone() {
+    use holon_chem::elements::ALL_ELEMENTS;
+    let mut checked = 0usize;
+    for a in ALL_ELEMENTS.iter().copied() {
+        for b in ALL_ELEMENTS.iter().copied() {
+            if b.z < a.z {
+                continue;
+            }
+            let route = holon_chem::pair::automatic_route(a, b);
+            let by_threshold = route.n_det() <= holon_chem::fci::MPS_ROUTE_THRESHOLD;
+            assert_eq!(
+                route.exists(),
+                by_threshold,
+                "{}{}: exists() = {} but n_det <= MPS_ROUTE_THRESHOLD = {}. The two have \
+                 come apart, which means the MPS arm is live and every published route \
+                 table that assumed otherwise needs re-reading.",
+                a.symbol,
+                b.symbol,
+                route.exists(),
+                by_threshold
+            );
+            checked += 1;
+        }
+    }
+    println!("{checked} unordered pairs: exists() is the determinant threshold, exactly");
+    assert!(checked > 100, "the registry shrank; this gate is covering less than it was");
+}

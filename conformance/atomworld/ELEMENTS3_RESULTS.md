@@ -304,8 +304,11 @@ between 50,000 and 63,504, which is half-filling and nothing else. So the *first
 raised constant would ever route automatically to MPS are ten-orbital half-filled ones,
 which is the exact corner where the ladder's one mid-filled ten-orbital rung, NaH at 44,100
 determinants, came back BUDGET five orders short of the stake. Raised to 18 instead, the
-constant would flip this record's 18-orbital refusals (Sc–Cu) to "automatic route available"
-in one step, on the strength of a rung measured at germanium's filling.
+constant would flip **eleven** of this record's rows in one step — every 18-orbital species
+past the determinant threshold, Sc through Ga (Z = 21–31), spanning 124,848 to 1,392,554,592
+determinants — to "automatic route available", on the strength of a rung measured at
+germanium's filling. Germanium itself does not move: at 23,409 determinants it is already
+inside the threshold, which is the same arithmetic that makes it S2's twin.
 
 **But the successor cannot lift them, and that is knowable before it arrives.** The ladder
 being run to derive it is seven two-centre pairs topping out at S2, which is 18 orbitals —

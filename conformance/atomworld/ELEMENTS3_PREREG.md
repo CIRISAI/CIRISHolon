@@ -186,3 +186,49 @@ density-derived radius as dimer-derived must be REFUSED by the label machinery,
 demonstrated firing. Carrier: the refusal, asserted nonzero in the sector the
 plant acts on — a species that actually carries a density-derived radius — before
 the plant is scored. A missed plant VOIDs.
+
+## AMENDMENT A2 — 2026-08-30, declaring P1's rule as SHIPPED
+
+*A1.3 approved a third radius rule and named the quantity: an r-expectation over the
+atom's electron density. That quantity was built first, measured, and does not do the
+job. The rule that shipped is a different expectation, and the declaration has to say
+which one — for the same reason A1.1 exists, that a convention nobody wrote down is
+how the last one went wrong. Recorded before the E1/E2/F1 gates run.*
+
+**A2.1 — the shipped rule is the OUTERMOST OCCUPIED ORBITAL's r-expectation, not the
+whole density's.** The all-electron quantity `sqrt(<r^2>/N)` is dominated by the tight
+core: measured across the registry it is flat at about one bohr from hydrogen to xenon
+and is not monotone — xenon reads 1.026 against hydrogen's 1.396. That is the correct
+value of a quantity that does not mean what a drawn radius has to mean, and it is the
+reason for the substitution rather than a defect to be repaired.
+
+The shipped rule is `sqrt(<phi|r^2|phi>)` for the highest occupied orbital of the SCF
+that fixes the CI's orbital basis. It reproduces two facts about the periodic table
+that are not inputs to it: size FALLS across a period (Na 2.261, Ar 1.640; K 3.499,
+Kr 1.901 bohr) and JUMPS when a new shell opens (Na > Ne, K > Ar).
+
+Two declarations travel with it. The orbital is the SCF's, so "which orbital is
+outermost" is a property of that reference and not of the correlated state — adequate
+for a drawn radius, and NOT a physical observable. And the quantity is not on the same
+axis as the other two rules: those measure where two atoms sit relative to each other,
+this measures how far one atom's valence electron sits from its own nucleus, which is
+why every surface carries `radius_from_dimer` rather than a radius alone. The
+all-electron function is KEPT in the crate under a gate asserting it still has the
+defect it was rejected for. witness: none (measured rule plus the A1.3 label plant,
+which is unchanged and fires on selenium)
+
+**A2.2 — the referee leg reaches TWO of the nine, and the successor is shared.**
+A1.2 named the referee-eligible set as the nine atoms at or under 3e4 determinants.
+The threshold stands; the arithmetic does not reach it. A 50-digit referee needs an
+eigensolve over the determinant space, and germanium's 23409 is far past what mpmath
+does. Krypton and xenon are reachable for a structural reason rather than a size one —
+every orbital doubly occupied, so the determinant is unique up to a phase, its energy
+is invariant under orbital rotation, and it is a closed expression in the AO integrals
+with `D = 2 S^-1`, needing no eigensolve and no SCF. Measured against the engine:
+1.0e-11 and 5.3e-11 hartree. The remaining seven are OWED, not delivered.
+
+The successor that unlocks them is not a new one. `conformance/atomworld/
+mixtures1_referee/FEASIBILITY.md` records the same wall from the other side —
+SiO's 196889056 nonzeros re-walked per matvec, measured rather than projected — and
+its string-driven sigma rewrite is what both need. One successor, two campaigns'
+owed items, and when it is built both discharge without a re-freeze.

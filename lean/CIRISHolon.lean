@@ -19,10 +19,11 @@ import CIRISHolon.Identity
 import CIRISHolon.Break
 import CIRISHolon.GiniRent
 import CIRISHolon.Grain
-import CIRISHolon.GiniRent
 import CIRISHolon.BareCharge
 import CIRISHolon.RingMixing
 import CIRISHolon.AdmDescent
 import CIRISHolon.CosetRandomizer
 import CIRISHolon.SectionHolonomy
 import CIRISHolon.Zoom
+import CIRISHolon.FrobOrient
+import CIRISHolon.Vacuum

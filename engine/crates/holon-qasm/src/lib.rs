@@ -22,6 +22,9 @@
 use std::collections::BTreeMap;
 
 pub mod magic;
+pub mod qasm;
+
+pub use qasm::{are_tableaux_equivalent, canonicalize_circuit, parse_qasm};
 
 pub const N_MAX_STATEVECTOR: usize = 24;
 
@@ -73,82 +76,7 @@ pub enum Mutation {
 // ---------------------------------------------------------------- parsing
 
 pub fn parse(src: &str) -> Result<Circuit, String> {
-    let mut n_qubits = 0usize;
-    let mut n_clbits = 0usize;
-    let mut gates = Vec::new();
-    let mut measures: Vec<(usize, usize)> = Vec::new();
-    let idx = |tok: &str, name: &str| -> Result<usize, String> {
-        let open = tok.find('[').ok_or_else(|| format!("bad operand {tok}"))?;
-        let close = tok.find(']').ok_or_else(|| format!("bad operand {tok}"))?;
-        if !tok.starts_with(name) {
-            return Err(format!("expected register {name} in {tok}"));
-        }
-        tok[open + 1..close].parse().map_err(|_| format!("bad index {tok}"))
-    };
-    for raw in src.lines() {
-        let line = raw.split("//").next().unwrap_or("").trim();
-        if line.is_empty() {
-            continue;
-        }
-        for stmt in line.split(';') {
-            let stmt = stmt.trim();
-            if stmt.is_empty()
-                || stmt.starts_with("OPENQASM")
-                || stmt.starts_with("include")
-            {
-                continue;
-            }
-            if let Some(rest) = stmt.strip_prefix("qreg ") {
-                // qreg q[n]; the bracket holds the SIZE
-                n_qubits = rest.trim()[rest.trim().find('[').unwrap() + 1
-                    ..rest.trim().find(']').unwrap()]
-                    .parse()
-                    .map_err(|_| "bad qreg".to_string())?;
-                continue;
-            }
-            if let Some(rest) = stmt.strip_prefix("creg ") {
-                n_clbits = rest.trim()[rest.trim().find('[').unwrap() + 1
-                    ..rest.trim().find(']').unwrap()]
-                    .parse()
-                    .map_err(|_| "bad creg".to_string())?;
-                continue;
-            }
-            if let Some(rest) = stmt.strip_prefix("measure ") {
-                let parts: Vec<&str> = rest.split("->").collect();
-                if parts.len() != 2 {
-                    return Err(format!("bad measure: {stmt}"));
-                }
-                measures.push((idx(parts[0].trim(), "q")?, idx(parts[1].trim(), "c")?));
-                continue;
-            }
-            let (op, args) = stmt
-                .split_once(' ')
-                .ok_or_else(|| format!("bad statement: {stmt}"))?;
-            if !measures.is_empty() {
-                return Err("measurements must be terminal in this subset".into());
-            }
-            let a: Vec<&str> = args.split(',').map(|s| s.trim()).collect();
-            let g = match (op.trim(), a.len()) {
-                ("x", 1) => Gate::X(idx(a[0], "q")?),
-                ("z", 1) => Gate::Z(idx(a[0], "q")?),
-                ("h", 1) => Gate::H(idx(a[0], "q")?),
-                ("s", 1) => Gate::S(idx(a[0], "q")?),
-                ("sdg", 1) => Gate::Sdg(idx(a[0], "q")?),
-                ("t", 1) => Gate::T(idx(a[0], "q")?),
-                ("tdg", 1) => Gate::Tdg(idx(a[0], "q")?),
-                ("cx", 2) => Gate::Cx(idx(a[0], "q")?, idx(a[1], "q")?),
-                ("ccx", 3) => {
-                    Gate::Ccx(idx(a[0], "q")?, idx(a[1], "q")?, idx(a[2], "q")?)
-                }
-                _ => return Err(format!("unsupported gate: {stmt}")),
-            };
-            gates.push(g);
-        }
-    }
-    if n_qubits == 0 {
-        return Err("no qreg".into());
-    }
-    Ok(Circuit { n_qubits, n_clbits, gates, measures })
+    qasm::parse_qasm(src)
 }
 
 // ---------------------------------------------------------------- routing
@@ -235,13 +163,13 @@ pub fn run_classical(c: &Circuit, m: Mutation) -> BTreeMap<String, f64> {
 // ---------------------------------------------------------------- tableau
 
 /// Aaronson–Gottesman CHP tableau: rows 0..n destabilizers, n..2n stabilizers.
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Tableau {
-    n: usize,
-    x: Vec<Vec<bool>>,
-    z: Vec<Vec<bool>>,
-    r: Vec<bool>,
-    m: Mutation,
+    pub n: usize,
+    pub x: Vec<Vec<bool>>,
+    pub z: Vec<Vec<bool>>,
+    pub r: Vec<bool>,
+    pub m: Mutation,
 }
 
 impl Tableau {
@@ -255,7 +183,7 @@ impl Tableau {
         Tableau { n, x, z, r: vec![false; 2 * n], m }
     }
 
-    fn g(x1: bool, z1: bool, x2: bool, z2: bool) -> i32 {
+    pub fn g(x1: bool, z1: bool, x2: bool, z2: bool) -> i32 {
         match (x1, z1) {
             (false, false) => 0,
             (true, true) => (z2 as i32) - (x2 as i32),
@@ -264,7 +192,7 @@ impl Tableau {
         }
     }
 
-    fn rowsum(&mut self, h: usize, i: usize) {
+    pub fn rowsum(&mut self, h: usize, i: usize) {
         let mut s = 2 * (self.r[h] as i32) + 2 * (self.r[i] as i32);
         for j in 0..self.n {
             s += Self::g(self.x[i][j], self.z[i][j], self.x[h][j], self.z[h][j]);

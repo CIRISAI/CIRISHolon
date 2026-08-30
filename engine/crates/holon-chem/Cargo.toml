@@ -14,6 +14,7 @@ description = "H2/STO-3G/FCI potential computed in-engine from closed-form Gauss
 # against known values, `f64::exp`/`f64::sqrt` come from core, and the differentiation
 # is a 20-line dual number rather than a crate.
 [dependencies]
+q8-mps = { path = "../q8-mps" }
 
 # NOTE: no `[profile.release]` here on purpose — a workspace member's profile section is
 # silently ignored by Cargo (only the workspace root's applies). `holon-render`'s

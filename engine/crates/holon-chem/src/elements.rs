@@ -70,6 +70,15 @@ pub const C_2S: [f64; 3] = [-0.09996723, 0.39951283, 0.70011547];
 /// The universal STO-3G 2p contraction coefficients.
 pub const C_2P: [f64; 3] = [0.15591627, 0.60768372, 0.39195739];
 
+/// The universal STO-3G 3s contraction coefficients.
+pub const C_3S: [f64; 3] = [-0.21962037, 0.22559543, 0.90039843];
+
+/// The universal STO-3G 3p contraction coefficients.
+pub const C_3P: [f64; 3] = [0.01058760, 0.59516701, 0.46200101];
+
+/// The universal STO-3G 3d contraction coefficients.
+pub const C_3D: [f64; 3] = [0.21976795, 0.65554736, 0.28657326];
+
 /// Which shells an element carries, in the order they enter the basis.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShellKind {
@@ -79,22 +88,30 @@ pub enum ShellKind {
     S2,
     /// 2p — three Cartesian components, `px`, `py`, `pz`.
     P2,
+    /// 3s.
+    S3,
+    /// 3p — three Cartesian components, `px`, `py`, `pz`.
+    P3,
+    /// 3d — Cartesian components (xy, yz, zx, x^2-y^2, z^2 or 6 Cartesian components).
+    D3,
 }
 
 impl ShellKind {
-    /// Total angular momentum: 0 for either s shell, 1 for the p shell.
+    /// Total angular momentum: 0 for s shells, 1 for p shells, 2 for d shells.
     pub fn l(self) -> u8 {
         match self {
-            ShellKind::S1 | ShellKind::S2 => 0,
-            ShellKind::P2 => 1,
+            ShellKind::S1 | ShellKind::S2 | ShellKind::S3 => 0,
+            ShellKind::P2 | ShellKind::P3 => 1,
+            ShellKind::D3 => 2,
         }
     }
 
-    /// Cartesian components: 1 for s, 3 for p.
+    /// Cartesian components: 1 for s, 3 for p, 6 for d.
     pub fn n_functions(self) -> usize {
         match self {
-            ShellKind::S1 | ShellKind::S2 => 1,
-            ShellKind::P2 => 3,
+            ShellKind::S1 | ShellKind::S2 | ShellKind::S3 => 1,
+            ShellKind::P2 | ShellKind::P3 => 3,
+            ShellKind::D3 => 6,
         }
     }
 }
@@ -146,6 +163,57 @@ impl Species {
         self.shells.iter().map(|s| s.kind.n_functions()).sum()
     }
 
+    /// The element's derived homonuclear radius in bohr, from `species_palette.json`.
+    pub const fn homonuclear_radius(self) -> f64 {
+        match self.z {
+            1 => 0.6943470090088878,
+            2 => 1.9943329366683962,
+            3 => 2.4955224091314747,
+            4 => 3.0220328441262247,
+            5 => 1.411590082275827,
+            6 => 1.1913654992774316,
+            7 => 1.1283647365796021,
+            8 => 1.2210401490051894,
+            9 => 1.3110267541113547,
+            10 => 2.0646444203853607,
+            _ => 0.6943470090088878,
+        }
+    }
+
+    /// The element's declared colour as `#rrggbb` hex string, from `species_palette.json`.
+    pub const fn colour_hex(self) -> &'static str {
+        match self.z {
+            1 => "#72c0b0",
+            2 => "#6bbf9b",
+            3 => "#63bf82",
+            4 => "#5cbe66",
+            5 => "#62be54",
+            6 => "#76be4c",
+            7 => "#8dbe44",
+            8 => "#a7bc3e",
+            9 => "#b9b03a",
+            10 => "#b58f36",
+            _ => "#72c0b0",
+        }
+    }
+
+    /// The element's declared colour as linear sRGB `(r, g, b)` floats in `[0.0, 1.0]`.
+    pub const fn colour_rgb(self) -> (f32, f32, f32) {
+        match self.z {
+            1 => (0.44705883, 0.7529412, 0.6901961),
+            2 => (0.41960785, 0.7490196, 0.60784316),
+            3 => (0.3882353, 0.7490196, 0.50980395),
+            4 => (0.36078432, 0.74509805, 0.4),
+            5 => (0.38431373, 0.74509805, 0.32941177),
+            6 => (0.4627451, 0.74509805, 0.29803923),
+            7 => (0.5529412, 0.74509805, 0.26666668),
+            8 => (0.654902, 0.7372549, 0.24313726),
+            9 => (0.7254902, 0.6901961, 0.22745098),
+            10 => (0.70980394, 0.56078434, 0.21176471),
+            _ => (0.44705883, 0.7529412, 0.6901961),
+        }
+    }
+
     pub const HYDROGEN: Species = Species {
         symbol: "H",
         z: 1,
@@ -158,6 +226,14 @@ impl Species {
         }],
     };
 }
+
+impl PartialEq for Species {
+    fn eq(&self, other: &Self) -> bool {
+        self.z == other.z
+    }
+}
+
+impl Eq for Species {}
 
 /// Build the two-shell (H, He) or three-shell (Li..Ne) declaration in one line each.
 macro_rules! first_row {
@@ -198,6 +274,46 @@ macro_rules! first_row {
                 alpha: $s1,
                 coeff: C_1S,
             }],
+        };
+    };
+}
+
+/// Build the five-shell declaration for second-row elements (Na..Ar).
+macro_rules! second_row {
+    ($name:ident, $sym:literal, $z:literal, $mass:literal, $iso:literal,
+     s1 = $s1:expr, sp2 = $sp2:expr, sp3 = $sp3:expr) => {
+        pub const $name: Species = Species {
+            symbol: $sym,
+            z: $z,
+            mass_u: $mass,
+            isotope: $iso,
+            shells: &[
+                Shell {
+                    kind: ShellKind::S1,
+                    alpha: $s1,
+                    coeff: C_1S,
+                },
+                Shell {
+                    kind: ShellKind::S2,
+                    alpha: $sp2,
+                    coeff: C_2S,
+                },
+                Shell {
+                    kind: ShellKind::P2,
+                    alpha: $sp2,
+                    coeff: C_2P,
+                },
+                Shell {
+                    kind: ShellKind::S3,
+                    alpha: $sp3,
+                    coeff: C_3S,
+                },
+                Shell {
+                    kind: ShellKind::P3,
+                    alpha: $sp3,
+                    coeff: C_3P,
+                },
+            ],
         };
     };
 }
@@ -249,26 +365,84 @@ first_row!(
     sp = [8.24631512, 1.91626629, 0.62322927]
 );
 
+second_row!(
+    SODIUM, "Na", 11, 22.9897692820, "23Na",
+    s1 = [250.77243000, 45.67851117, 12.36238776],
+    sp2 = [12.04019274, 2.79788186, 0.90995802],
+    sp3 = [1.47874062, 0.41256488, 0.16147510]
+);
+second_row!(
+    MAGNESIUM, "Mg", 12, 23.985041697, "24Mg",
+    s1 = [299.23741370, 54.50646845, 14.75157752],
+    sp2 = [15.12182352, 3.51398658, 1.14285750],
+    sp3 = [1.39544829, 0.38932653, 0.15237977]
+);
+second_row!(
+    ALUMINUM, "Al", 13, 26.98153853, "27Al",
+    s1 = [351.42147670, 64.01186067, 17.32410761],
+    sp2 = [18.89939621, 4.39181323, 1.42835397],
+    sp3 = [1.39544829, 0.38932653, 0.15237977]
+);
+second_row!(
+    SILICON, "Si", 14, 27.976926535, "28Si",
+    s1 = [407.79755140, 74.28083305, 20.10329229],
+    sp2 = [23.19365606, 5.38970687, 1.75289995],
+    sp3 = [1.47874062, 0.41256488, 0.16147510]
+);
+second_row!(
+    PHOSPHORUS, "P", 15, 30.973761998, "31P",
+    s1 = [468.36563780, 85.31338559, 23.08913156],
+    sp2 = [28.03263958, 6.51418258, 2.11861435],
+    sp3 = [1.74310323, 0.48632138, 0.19034289]
+);
+second_row!(
+    SULFUR, "S", 16, 31.972071174, "32S",
+    s1 = [533.12573590, 97.10951830, 26.28162542],
+    sp2 = [33.32975173, 7.74511752, 2.51895260],
+    sp3 = [2.02919427, 0.56614005, 0.22158338]
+);
+second_row!(
+    CHLORINE, "Cl", 17, 34.968852682, "35Cl",
+    s1 = [601.34561360, 109.53585420, 29.64467686],
+    sp2 = [38.96041889, 9.05356348, 2.94449983],
+    sp3 = [2.12938650, 0.59409343, 0.23252414]
+);
+second_row!(
+    ARGON, "Ar", 18, 39.9623831225, "40Ar",
+    s1 = [674.44651840, 122.85127530, 33.24834945],
+    sp2 = [45.16424392, 10.49519900, 3.41336445],
+    sp3 = [2.62136652, 0.73135461, 0.28624724]
+);
+
 /// The first row, indexed by `Z - 1`.
 pub const FIRST_ROW: [Species; 10] = [
     HYDROGEN, HELIUM, LITHIUM, BERYLLIUM, BORON, CARBON, NITROGEN, OXYGEN, FLUORINE, NEON,
 ];
 
-/// Look an element up by nuclear charge. `None` outside 1..=10 — the model is the first
-/// row and d functions are a successor's problem, so a silent extrapolation would be a
-/// worse answer than a refusal.
+/// The second row, indexed by `Z - 11`.
+pub const SECOND_ROW: [Species; 8] = [
+    SODIUM, MAGNESIUM, ALUMINUM, SILICON, PHOSPHORUS, SULFUR, CHLORINE, ARGON,
+];
+
+/// All registered elements (first and second row), indexed by `Z - 1`.
+pub const ALL_ELEMENTS: [Species; 18] = [
+    HYDROGEN, HELIUM, LITHIUM, BERYLLIUM, BORON, CARBON, NITROGEN, OXYGEN, FLUORINE, NEON,
+    SODIUM, MAGNESIUM, ALUMINUM, SILICON, PHOSPHORUS, SULFUR, CHLORINE, ARGON,
+];
+
+/// Look an element up by nuclear charge. `None` outside 1..=18.
 pub fn by_z(z: u32) -> Option<Species> {
-    if (1..=10).contains(&z) {
-        Some(FIRST_ROW[(z - 1) as usize])
+    if (1..=18).contains(&z) {
+        Some(ALL_ELEMENTS[(z - 1) as usize])
     } else {
         None
     }
 }
 
 /// Look an element up by symbol. Case-sensitive, because "CO" is a molecule and "Co" is
-/// not in the first row.
+/// not in the table.
 pub fn by_symbol(sym: &str) -> Option<Species> {
-    FIRST_ROW.iter().copied().find(|s| s.symbol == sym)
+    ALL_ELEMENTS.iter().copied().find(|s| s.symbol == sym)
 }
 
 /// Twice the `S_z` sector a species or pair is solved in: 0 for an even electron count,

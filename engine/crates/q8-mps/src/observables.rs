@@ -137,3 +137,23 @@ pub fn total_sz_squared(tensors: &[TensorSite]) -> f64 {
     }
     (n_tot + 2.0 * cross) / norm
 }
+
+/// Local occupation numbers `<n_i>` for every spin-orbital `i` in `0..L` (0-indexed).
+pub fn spin_orbital_occupations(tensors: &[TensorSite]) -> Vec<f64> {
+    let norm = norm_squared(tensors);
+    let l = tensors.len();
+    (0..l)
+        .map(|j| expectation(tensors, &[(j, N2)]) / norm)
+        .collect()
+}
+
+/// Spatial orbital occupations `<n_p> = <n_{p,up}> + <n_{p,down}>` for `p` in `0..n_orb`.
+pub fn spatial_orbital_occupations(tensors: &[TensorSite], n_orb: usize) -> Vec<f64> {
+    occupation_profile(tensors, n_orb)
+}
+
+/// Local spin polarization `<m_p> = <n_{p,up}> - <n_{p,down}>` for `p` in `0..n_orb`.
+pub fn spin_polarization_profile(tensors: &[TensorSite], n_orb: usize) -> Vec<f64> {
+    magnetization_profile(tensors, n_orb)
+}
+

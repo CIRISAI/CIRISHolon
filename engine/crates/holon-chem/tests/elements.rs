@@ -14,7 +14,8 @@
 
 use holon_chem::dual::D2;
 use holon_chem::elements::{
-    by_symbol, by_z, sz2_sector, ShellKind, C_1S, C_2P, C_2S, FIRST_ROW, M_E_PER_U,
+    by_symbol, by_z, sz2_sector, ShellKind, ALL_ELEMENTS, C_1S, C_2P, C_2S, C_3D, C_3P, C_3S,
+    FIRST_ROW, M_E_PER_U, SECOND_ROW,
 };
 use holon_chem::md::Basis;
 use holon_chem::pair::{atom_energy, solve_basis};
@@ -22,12 +23,15 @@ use holon_chem::sto3g::{H_COEFFS, H_EXPONENTS};
 
 #[test]
 fn the_contraction_coefficients_are_universal() {
-    for sp in FIRST_ROW {
+    for sp in ALL_ELEMENTS {
         for sh in sp.shells {
             let expected = match sh.kind {
                 ShellKind::S1 => C_1S,
                 ShellKind::S2 => C_2S,
                 ShellKind::P2 => C_2P,
+                ShellKind::S3 => C_3S,
+                ShellKind::P3 => C_3P,
+                ShellKind::D3 => C_3D,
             };
             assert_eq!(
                 sh.coeff, expected,
@@ -52,6 +56,23 @@ fn the_sp_shell_shares_its_exponents() {
             sp.symbol
         );
     }
+    for sp in SECOND_ROW {
+        let s2 = sp.shells.iter().find(|s| s.kind == ShellKind::S2).unwrap();
+        let p2 = sp.shells.iter().find(|s| s.kind == ShellKind::P2).unwrap();
+        assert_eq!(
+            s2.alpha, p2.alpha,
+            "{}'s 2s and 2p exponents differ",
+            sp.symbol
+        );
+        let s3 = sp.shells.iter().find(|s| s.kind == ShellKind::S3).unwrap();
+        let p3 = sp.shells.iter().find(|s| s.kind == ShellKind::P3).unwrap();
+        assert_eq!(
+            s3.alpha, p3.alpha,
+            "{}'s 3s and 3p exponents differ; STO-3G's second row is a 3sp shell and they \
+             are one set",
+            sp.symbol
+        );
+    }
 }
 
 #[test]
@@ -68,11 +89,11 @@ fn hydrogen_is_not_re_declared() {
 #[test]
 fn exponents_rise_with_z_and_masses_do_too() {
     // Two more free structural facts. The 1s exponent scales roughly as Z^2 because a
-    // 1s orbital contracts onto the nucleus, and the first row's most abundant isotopes
-    // get heavier along it. Neither is used by the engine; both catch a swapped row.
+    // 1s orbital contracts onto the nucleus, and the most abundant isotopes
+    // get heavier along the periodic table. Neither is used by the engine; both catch a swapped row.
     let mut last_alpha = 0.0f64;
     let mut last_mass = 0.0f64;
-    for sp in FIRST_ROW {
+    for sp in ALL_ELEMENTS {
         let a = sp.shells[0].alpha[0];
         assert!(
             a > last_alpha,
@@ -93,13 +114,13 @@ fn exponents_rise_with_z_and_masses_do_too() {
 #[test]
 fn the_registry_refuses_what_it_does_not_have() {
     assert!(by_z(0).is_none());
-    assert!(by_z(11).is_none(), "sodium is not the first row and d functions are a successor");
-    for sp in FIRST_ROW {
+    assert!(by_z(19).is_none(), "potassium is not in the first or second row");
+    for sp in ALL_ELEMENTS {
         assert_eq!(by_symbol(sp.symbol).unwrap().z, sp.z);
         assert_eq!(by_z(sp.z).unwrap().symbol, sp.symbol);
     }
-    assert!(by_symbol("Co").is_none());
-    for n in 0..12u32 {
+    assert!(by_symbol("K").is_none());
+    for n in 0..20u32 {
         assert_eq!(sz2_sector(n), n % 2);
     }
 }
@@ -113,6 +134,10 @@ fn the_basis_and_electron_counts_are_what_the_row_gives() {
     assert_eq!(by_z(2).unwrap().n_basis(), 1);
     for z in 3..=10 {
         assert_eq!(by_z(z).unwrap().n_basis(), 5, "Z = {z} should carry 1s, 2s and 2p");
+        assert_eq!(by_z(z).unwrap().n_electrons(), z);
+    }
+    for z in 11..=18 {
+        assert_eq!(by_z(z).unwrap().n_basis(), 9, "Z = {z} should carry 1s, 2s, 2p, 3s and 3p");
         assert_eq!(by_z(z).unwrap().n_electrons(), z);
     }
 }
@@ -260,7 +285,7 @@ fn the_degenerate_atoms_are_exactly_their_single_configuration_energies() {
         (h - banked).abs() < 1e-15,
         "the general path's hydrogen atom {h:.17} differs from the banked {banked:.17}"
     );
-    for z in [2u32, 9, 10] {
+    for z in [2u32, 9, 10, 18] {
         let sp = by_z(z).unwrap();
         let n_orb = sp.n_basis();
         let na = ((z + z % 2) / 2) as usize;
@@ -286,48 +311,60 @@ fn the_degenerate_atoms_are_exactly_their_single_configuration_energies() {
     }
 }
 
+/// Verify atomic ground states across the second row.
+#[test]
+fn second_row_atomic_ground_states() {
+    for sp in SECOND_ROW {
+        let e = atom_energy(sp);
+        assert!(
+            e.is_finite() && e < 0.0,
+            "{}'s atomic energy came back {e}",
+            sp.symbol
+        );
+        println!("  {} atomic energy: {e:.12} hartree", sp.symbol);
+    }
+}
+
+/// Noble gas unbinding for Argon (Ar2 dimer in minimal basis STO-3G).
+#[test]
+fn argon_dimer_refuses_to_bind() {
+    let ar = by_symbol("Ar").unwrap();
+    let table = holon_chem::pair::generate_pair_table(ar, ar, 16);
+    let deepest = table.e.iter().cloned().fold(f64::INFINITY, f64::min);
+    let depth = table.meta.e_asymptote - deepest;
+    println!(
+        "  Ar2: {} knots over [{:.3}, {:.3}] bohr; deepest point {:+.4e} hartree relative to asymptote; well = {:?}",
+        table.r.len(),
+        table.meta.r_min,
+        table.meta.r_max,
+        depth,
+        table.meta.well.map(|w| w.d_e)
+    );
+    assert!(
+        table.meta.well.is_none(),
+        "Ar2 reported a well of depth {:?} hartree. In STO-3G minimal basis, noble gas dimers are purely repulsive.",
+        table.meta.well.map(|w| w.d_e)
+    );
+    assert!(
+        depth <= holon_chem::pair::WELL_MIN_DEPTH,
+        "Ar2 deepest point {depth:.4e} is below asymptote"
+    );
+    for (i, &f) in table.f.iter().enumerate() {
+        assert!(
+            f >= -1e-9,
+            "Ar2 pulls inward at R = {} (F = {f:.3e}); curve must be monotonically repulsive",
+            table.r[i]
+        );
+    }
+}
+
 /// The exponent ratios within a shell must be element-independent, to the precision the
 /// declaration's own rounding allows. This is the check that caught a real defect.
-///
-/// # The physics
-///
-/// STO-3G is ONE universal three-Gaussian fit to a Slater orbital, rescaled per element by
-/// `zeta^2`. The rescaling multiplies every exponent in a shell by the same factor, so the
-/// RATIO of two exponents within a shell is a property of the universal fit and not of the
-/// element: the same constant, ten times over.
-///
-/// # The tolerance is DERIVED, not fitted
-///
-/// The ratios do not agree exactly, because the exponents are declared to eight decimals.
-/// The size of that disagreement is predictable rather than empirical: an exponent `a`
-/// carries an absolute rounding of at most half a unit in its last place, so a ratio
-/// `a / b` carries a RELATIVE rounding of at most `0.5e-8 * (1/a + 1/b)`. That bound is
-/// tiny for neon's `207.0` and large for hydrogen's `0.624`, which is exactly why an
-/// empirical band across the row is the wrong statistic — it is dominated by the lightest
-/// element and lets the heaviest ones drift unchallenged.
-///
-/// So each element is compared against the element whose bound is SMALLEST, and required
-/// to agree within the two bounds added. Measured, the whole corrected row sits inside
-/// `1.3x` its own bound.
-///
-/// # What it caught, and the mutation that proves it would again
-///
-/// Oxygen's leading 1s exponent was transcribed here as `130.70932000` against a published
-/// `130.70932140` — a relative error of 1.1e-8 that no eyeball catches, that every energy
-/// absorbs silently, and that moved the oxygen atom by 6.3e-9 hartree, SIXTY-THREE TIMES
-/// the referee gate's 1e-10 stake. Under this statistic it reads `25x` its own bound
-/// against the row's worst honest `1.3x` — a twentyfold separation. An empirical
-/// min/max band, which is what this test contained first, read the same defect at 1.1e-8
-/// relative spread and PASSED it: the range over ten elements is a scale estimator that
-/// the outlier itself inflates. The threshold below sits between the two measurements
-/// with room on both sides, and `oxygens_leading_exponent_is_the_published_one` pins the
-/// value so a failure names the number instead of only the symptom.
 #[test]
 fn the_exponent_ratios_are_element_independent() {
     /// Half a unit in the last place of an eight-decimal exponent.
     const HALF_ULP: f64 = 0.5e-8;
     /// How many times its own derived rounding bound an element may miss the reference by.
-    /// The corrected row's worst is 1.26 and the defect this caught read 25.
     const MARGIN: f64 = 4.0;
 
     for kind in [ShellKind::S1, ShellKind::S2] {
@@ -343,8 +380,6 @@ fn the_exponent_ratios_are_element_independent() {
                 .collect();
             assert!(rows.len() >= 8, "too few elements carry a {kind:?} shell to test");
 
-            // The reference is the best-determined element, picked by the derived bound
-            // rather than by position — no element is privileged by hand.
             let reference = rows
                 .iter()
                 .min_by(|x, y| x.2.partial_cmp(&y.2).unwrap())
@@ -381,10 +416,6 @@ fn the_exponent_ratios_are_element_independent() {
 }
 
 /// Oxygen specifically, pinned by the value the ratio test selects.
-///
-/// A regression pin rather than a structural check: the band test above would catch the
-/// old value again, but it would not say WHICH element or which number, and the next
-/// reader deserves the defect named rather than re-derived.
 #[test]
 fn oxygens_leading_exponent_is_the_published_one() {
     let o = by_z(8).unwrap();

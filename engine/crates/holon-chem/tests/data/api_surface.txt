@@ -43,3 +43,8 @@ negate                  trimer helper
 set_node                trimer table construction
 zero_inside_perimeter   trimer boundary condition
 zero_outside_perimeter  trimer boundary condition
+
+# --- periodic table row slices and basis coefficients ---
+FIRST_ROW               the first-row species array, preserved for backward compatibility and row-specific tools
+SECOND_ROW              the second-row species array (Na..Ar), consumed by row-specific tools and tests
+C_3D                    universal STO-3G 3d contraction coefficients for d-shell basis functions

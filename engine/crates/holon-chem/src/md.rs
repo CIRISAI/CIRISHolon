@@ -43,23 +43,23 @@ const PI: f64 = core::f64::consts::PI;
 /// `sto3g.rs` declares, referenced rather than re-typed.
 pub const PI_POW_2_5: f64 = crate::sto3g::PI_POW_2_5;
 
-/// Highest angular momentum per basis function. `1` is the whole of the first row in a
-/// minimal basis; a d function would need `2` and is a successor's problem.
-pub const LMAX: usize = 1;
+/// Highest angular momentum per basis function. `1` is the first row, `2` supports
+/// d-orbitals for the second row and transition elements.
+pub const LMAX: usize = 2;
 
 /// Largest Cartesian power the `E` table must reach.
 ///
 /// Not `2 * LMAX`. The kinetic-energy operator differentiates the KET twice, so the
-/// overlap table is asked for `j + 2`, which at `LMAX = 1` is 3.
-const IMAX: usize = 3;
+/// overlap table is asked for `j + 2`, which at `LMAX = 2` is 4.
+const IMAX: usize = 4;
 
 /// Hermite index bound: `t <= i + j <= 2 * IMAX`, plus one slot the recursion reads past
 /// its own top.
-const TMAX: usize = 8;
+const TMAX: usize = 12;
 
-/// Largest total Hermite order the `R` tensor is built to: a `(pp|pp)` quartet has bra
-/// order `<= 2` and ket order `<= 2`.
-const RMAX: usize = 4;
+/// Largest total Hermite order the `R` tensor is built to: a `(dd|dd)` quartet has bra
+/// order `<= 4` and ket order `<= 4`.
+const RMAX: usize = 8;
 
 /// `E_t^{ij}` for one Cartesian direction, indexed `[i][j][t]`.
 ///
@@ -121,6 +121,7 @@ pub fn e_table(a: f64, b: f64, xa: D2, xb: D2) -> ETable {
 /// The Hermite Coulomb integrals `R_{tuv}`, indexed `[t][u][v]`.
 pub struct RTensor {
     pub r: [[[D2; RMAX + 1]; RMAX + 1]; RMAX + 1],
+    work: Box<[[[[D2; RMAX + 1]; RMAX + 1]; RMAX + 1]; RMAX + 1]>,
 }
 
 /// Build `R^0_{tuv}(alpha, D)` for every `t + u + v <= lmax`.
@@ -138,9 +139,7 @@ pub fn r_tensor(lmax: usize, alpha: f64, d: [D2; 3], out: &mut RTensor) {
     let t2 = (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]) * alpha;
     let f = boys_d2_upto(lmax, t2);
 
-    // `work[n][t][u][v]`. Full-size and zeroed: the recursion reads `t-2` and the
-    // untouched entries must be zero rather than whatever the stack held.
-    let mut work = [[[[D2::c(0.0); RMAX + 1]; RMAX + 1]; RMAX + 1]; RMAX + 1];
+    let work = &mut *out.work;
     let mut scale = 1.0f64;
     for (n, fw) in work.iter_mut().enumerate().take(lmax + 1) {
         fw[0][0][0] = f[n] * scale;
@@ -178,13 +177,20 @@ pub fn r_tensor(lmax: usize, alpha: f64, d: [D2; 3], out: &mut RTensor) {
             }
         }
     }
-    out.r = work[0];
+    for t in 0..=lmax {
+        for u in 0..=(lmax - t) {
+            for v in 0..=(lmax - t - u) {
+                out.r[t][u][v] = work[0][t][u][v];
+            }
+        }
+    }
 }
 
 impl RTensor {
     pub fn zero() -> Self {
         RTensor {
             r: [[[D2::c(0.0); RMAX + 1]; RMAX + 1]; RMAX + 1],
+            work: Box::new([[[[D2::c(0.0); RMAX + 1]; RMAX + 1]; RMAX + 1]; RMAX + 1]),
         }
     }
 }
@@ -200,20 +206,37 @@ pub fn prim_norm_l(a: f64, l: u8) -> f64 {
     match l {
         0 => base,
         1 => base * (4.0 * a).sqrt(),
-        _ => panic!("md.rs is an s/p implementation; l = {l} is not supported"),
+        2 => base * (4.0 * a),
+        _ => panic!("md.rs: l = {l} is not supported"),
     }
 }
 
-/// The three Cartesian components of a shell, in basis order.
+/// The Cartesian components of a shell, in basis order.
 ///
-/// `p` is ordered `px, py, pz`. Nothing derives from that order except the
-/// reproducibility of every index in every table, which is reason enough to fix it here
-/// rather than at each use.
+/// `p` is ordered `px, py, pz`.
+/// `d` has 6 Cartesian components: `xx, yy, zz, xy, xz, yz`.
 pub fn cartesian_components(l: u8) -> &'static [[u8; 3]] {
     match l {
         0 => &[[0, 0, 0]],
         1 => &[[1, 0, 0], [0, 1, 0], [0, 0, 1]],
-        _ => panic!("md.rs is an s/p implementation; l = {l} is not supported"),
+        2 => &[
+            [2, 0, 0],
+            [0, 2, 0],
+            [0, 0, 2],
+            [1, 1, 0],
+            [1, 0, 1],
+            [0, 1, 1],
+        ],
+        _ => panic!("md.rs: l = {l} is not supported"),
+    }
+}
+
+/// Normalization scale factor for off-diagonal Cartesian components (e.g. sqrt(3) for xy, xz, yz).
+#[inline]
+pub fn cart_factor(p: [u8; 3]) -> f64 {
+    match p {
+        [1, 1, 0] | [1, 0, 1] | [0, 1, 1] => 1.7320508075688772,
+        _ => 1.0,
     }
 }
 
@@ -229,7 +252,7 @@ struct HTerm {
 /// Expand one Cartesian function pair into its Hermite terms.
 ///
 /// The `E` factorises over the three directions, so the term list is the product of
-/// three short lists — at `l <= 1` never more than four entries, which is why the double
+/// three short lists — at `l <= 2` never more than 125 entries, which is why the double
 /// loop over bra and ket terms below is cheap enough to sit inside the primitive quartet
 /// loop.
 fn hermite_terms(
@@ -238,7 +261,7 @@ fn hermite_terms(
     ez: &ETable,
     la: [u8; 3],
     lb: [u8; 3],
-    out: &mut [HTerm; 27],
+    out: &mut [HTerm],
 ) -> usize {
     let (ix, jx) = (la[0] as usize, lb[0] as usize);
     let (iy, jy) = (la[1] as usize, lb[1] as usize);
@@ -329,6 +352,8 @@ impl Basis {
                     let mut s = (PI / p).powf(1.5);
                     if l == 1 {
                         s /= 2.0 * p;
+                    } else if l == 2 {
+                        s *= 3.0 / (4.0 * p * p);
                     }
                     raw += c[i] * c[j] * s;
                 }
@@ -420,7 +445,6 @@ pub fn ao_integrals(b: &Basis) -> AoIntegrals {
             for pa in 0..3 {
                 for pb in 0..3 {
                     let (a, bb) = (sa.alpha[pa], sb.alpha[pb]);
-                    let w = sa.coeff[pa] * sb.coeff[pb];
                     let p = a + bb;
                     let ex = e_table(a, bb, ca[0], cb[0]);
                     let ey = e_table(a, bb, ca[1], cb[1]);
@@ -439,6 +463,7 @@ pub fn ao_integrals(b: &Basis) -> AoIntegrals {
                             if j > i {
                                 continue;
                             }
+                            let w = sa.coeff[pa] * sb.coeff[pb] * cart_factor(la) * cart_factor(lb);
                             // --- overlap: the product of three 1-D Hermite zeroth terms
                             let sx = ex.e[la[0] as usize][lb[0] as usize][0];
                             let sy = ey.e[la[1] as usize][lb[1] as usize][0];
@@ -475,7 +500,7 @@ pub fn ao_integrals(b: &Basis) -> AoIntegrals {
                                 u: 0,
                                 v: 0,
                                 c: D2::c(0.0),
-                            }; 27];
+                            }; 64];
                             let nt = hermite_terms(&ex, &ey, &ez, la, lb, &mut terms);
                             let order = (sa.l + sb.l) as usize;
                             let mut vacc = D2::c(0.0);
@@ -559,7 +584,7 @@ fn accumulate_shell_quartet(
 
     // One accumulator per basis-function combination in this quartet, so the eight-fold
     // permutation write happens once with a fully contracted value.
-    let mut acc = [[[[D2::c(0.0); 3]; 3]; 3]; 3];
+    let mut acc = [[[[D2::c(0.0); 6]; 6]; 6]; 6];
 
     let zero = HTerm {
         t: 0,
@@ -567,8 +592,8 @@ fn accumulate_shell_quartet(
         v: 0,
         c: D2::c(0.0),
     };
-    let mut bra_terms = [zero; 27];
-    let mut ket_terms = [zero; 27];
+    let mut bra_terms = [zero; 64];
+    let mut ket_terms = [zero; 64];
 
     for pa in 0..3 {
         for pb in 0..3 {
@@ -635,11 +660,12 @@ fn accumulate_shell_quartet(
         }
     }
 
-    for (ia, _) in comp_a.iter().enumerate() {
-        for (ib, _) in comp_b.iter().enumerate() {
-            for (ic, _) in comp_c.iter().enumerate() {
-                for (id, _) in comp_d.iter().enumerate() {
-                    let val = acc[ia][ib][ic][id];
+    for (ia, &la) in comp_a.iter().enumerate() {
+        for (ib, &lb) in comp_b.iter().enumerate() {
+            for (ic, &lc) in comp_c.iter().enumerate() {
+                for (id, &ld) in comp_d.iter().enumerate() {
+                    let fabcd = cart_factor(la) * cart_factor(lb) * cart_factor(lc) * cart_factor(ld);
+                    let val = acc[ia][ib][ic][id] * fabcd;
                     let (i, j, k, l) = (
                         sa.first + ia,
                         sb.first + ib,

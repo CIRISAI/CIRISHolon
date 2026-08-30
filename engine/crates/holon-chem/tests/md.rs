@@ -368,3 +368,90 @@ fn the_one_electron_matrices_do_not_depend_on_shell_order() {
     assert!(wv < 1e-13, "nuclear attraction depends on shell order by {wv:.3e}");
     assert!(we < 1e-14, "two-electron integrals depend on shell order by {we:.3e}");
 }
+
+/// Verify d-orbitals (l=2) integrals: unit diagonal overlap, positive definiteness,
+/// 8-fold ERI permutational symmetry, and origin translational invariance.
+#[test]
+fn d_orbitals_obey_permutational_and_translational_symmetries() {
+    let alpha_d = [0.55170007, 0.16828611, 0.06493001];
+    let coeff_d = [0.21976795, 0.65554736, 0.28657326];
+    let decls = vec![
+        (0usize, 0u8, elements::HYDROGEN.shells[0].alpha, elements::HYDROGEN.shells[0].coeff),
+        (0usize, 2u8, alpha_d, coeff_d),
+        (1usize, 2u8, alpha_d, coeff_d),
+    ];
+    let r = 2.5;
+    let b = Basis::assemble(
+        vec![
+            [D2::c(0.0), D2::c(0.0), D2::c(0.0)],
+            [D2::c(0.0), D2::c(0.0), D2::var(r)],
+        ],
+        vec![1.0, 1.0],
+        &decls,
+    );
+    let g = ao_integrals(&b);
+    let n = g.n;
+    // 1 s function + 6 d functions + 6 d functions = 13 basis functions
+    assert_eq!(n, 13);
+
+    // 1. Overlap diagonal is 1.0 (self-normalized)
+    for i in 0..n {
+        assert!(
+            (g.s[i * n + i].v - 1.0).abs() < 1e-12,
+            "diagonal overlap at {i} is {}, expected 1.0",
+            g.s[i * n + i].v
+        );
+    }
+
+    // 2. Overlap is positive definite
+    let s_vals: Vec<f64> = g.s.iter().map(|d| d.v).collect();
+    let (eigs, _) = holon_chem::fci::jacobi_eigh(&s_vals, n);
+    for (i, &eig) in eigs.iter().enumerate() {
+        assert!(eig > 0.0, "overlap eigenvalue {i} is {eig} <= 0");
+    }
+
+    // 3. Permutational symmetry of ERIs
+    let mut worst = 0.0f64;
+    for i in 0..n {
+        for j in 0..n {
+            for k in 0..n {
+                for l in 0..n {
+                    let x = g.g(i, j, k, l).v;
+                    for &(p, q, r, s) in &[
+                        (j, i, k, l),
+                        (i, j, l, k),
+                        (j, i, l, k),
+                        (k, l, i, j),
+                        (l, k, i, j),
+                        (k, l, j, i),
+                        (l, k, j, i),
+                    ] {
+                        worst = worst.max((x - g.g(p, q, r, s).v).abs());
+                    }
+                }
+            }
+        }
+    }
+    println!("d-orbital ERI permutational symmetry: worst |delta| = {worst:.3e}");
+    assert_eq!(worst, 0.0, "d-orbital ERI permutational symmetry broken");
+
+    // 4. Translational invariance
+    let shift = [1.1f64, -0.8, 1.7];
+    let b_shifted = Basis::assemble(
+        vec![
+            [D2::c(shift[0]), D2::c(shift[1]), D2::c(shift[2])],
+            [D2::c(shift[0]), D2::c(shift[1]), D2::c(shift[2] + r)],
+        ],
+        vec![1.0, 1.0],
+        &decls,
+    );
+    let g_shifted = ao_integrals(&b_shifted);
+    let mut worst_1e = 0.0f64;
+    for i in 0..n * n {
+        worst_1e = worst_1e.max((g.s[i].v - g_shifted.s[i].v).abs());
+        worst_1e = worst_1e.max((g.t[i].v - g_shifted.t[i].v).abs());
+        worst_1e = worst_1e.max((g.v[i].v - g_shifted.v[i].v).abs());
+    }
+    println!("d-orbital translational invariance 1e: {worst_1e:.3e}");
+    assert!(worst_1e < 1e-12, "d-orbital 1e integrals moved with origin");
+}

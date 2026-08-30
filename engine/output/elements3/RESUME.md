@@ -954,3 +954,37 @@ a field nobody reads"**. Theirs was the only carrier; mine duplicates one that i
 
 Recorded as a checked negative rather than left silent, because an absence checked and an
 absence assumed look identical in a record that does not say which it was.
+
+### The water-gate lead is PROVED, not merely consistent — and the discriminator was the one I said was missing
+
+I reported the water lane's failure as "the germanium effect one lane over", explicitly labelled
+a lead rather than a verdict, and named the gap: `fe18572`'s genericization was the other
+candidate, "asserted arithmetic-unchanged but not demonstrated against a near-zero."
+
+That demonstration has now been run. A pinned worktree at **179db95 — pre-generic, post-ask —
+fails the water gate with BIT-IDENTICAL numbers to HEAD's build**: same panic value, same raw
+bit pattern (13651731533780746240). Two builds straddling the genericization agree to the bit on
+exactly the near-zero in question. **The genericization is exonerated and the ask change is
+convicted.**
+
+Worth keeping as method rather than as a result: the lead was stated as a lead, the missing
+discriminator was named IN the report rather than discovered later, and someone ran it. A
+correct guess reported as a verdict would have been indistinguishable from this on the day and
+worthless the first time a guess was wrong.
+
+**Artifacts preserved rather than overwritten**, which was my only real concern: the committed
+table stays in git history, and the fine cache survives as
+`s2_fine_65x49.stale_ask_1e-11.txt` — `mv`, the same courtesy the lead extended to my own
+diagnostic log. Nothing that could re-litigate the cause was discarded. The regeneration runs
+with the binary's sha256 and HEAD in its log header: the hash-at-launch rule's first use
+elsewhere.
+
+### M-PROVENANCE-OVERREACH registered
+
+Registered at 9895b98 under the proposed name, with the law verbatim: **"a pin names what it
+measured, never what you inferred alongside it."** The build-exit-status field is adopted
+programme-wide — a non-zero build prints "binary is stale relative to HEAD".
+
+It is narrower than M-STALE-INSTRUMENT and the distinction is the content: the *instrument* was
+fine, the *provenance claim* went stale. And it fired on the discipline's own first use, in the
+launcher of the lane that proposed it.

@@ -294,7 +294,10 @@ route classes:
 | 52 | Te | 729 | 1.07e-10 | **has an automatic route** |
 
 Antimony and tellurium are refused while sitting in the class the record calls automatically
-routable, which is the clearest demonstration that the two axes are independent. Indium is
+routable, which is the clearest demonstration that the two axes are independent. The regenerated record
+confirms all five, and every residual matches `conv_diagnose`'s independent recomputation to the
+digit — the instrument that refuses and the instrument that diagnoses agree without being told
+to. Indium is
 different in kind from the other four — 3.98e-1 is nine orders above the bar, against their
 factor of one to three — and only indium's row is meaningless; see the convergence section
 below for why the other four are process refusals carrying accurate energies.

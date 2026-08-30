@@ -733,3 +733,30 @@ fails (NaH), fourteen both reaches (ClF) and fails (SiO). That is their measurem
 rungs. My contribution was the two same-orbital-count comparisons that make the
 non-monotonicity visible, and one confirmed advance prediction on the second of them. I am not
 claiming the axis result as a confirmed prediction of mine, because outcome (d) is not support.
+
+
+## The record landed: five refusals, and the SiO citation is now twice-measured
+
+`atoms.log` completed at EXIT=0. The convergence verdict refuses **five** rows, and every
+residual matches `conv_diagnose`'s independent recomputation to the digit:
+
+    30  Zn     665,856   NOT CONVERGED   2.72e-10   5.000
+    49  In   1,026,675   NOT CONVERGED    3.98e-1   4.216  2S+1 not integral
+    50  Sn     123,201   NOT CONVERGED   2.06e-10   3.000
+    51  Sb       9,477   NOT CONVERGED   1.07e-10   4.000
+    52  Te         729   NOT CONVERGED   1.07e-10   3.000
+
+Indium is the only one refused on TWO grounds — the residual and the non-integral 2S+1 — and
+the only one whose numbers are meaningless. The other four are process refusals whose energies
+are bounded by their own residuals at better than 3e-10 hartree.
+
+**The SiO citation is repaired, and by replication rather than by my note.** mixtures-engine's
+rerun produced `+1.118e-2` again, identically, and the full ladder is committed at 5ebaf16, so
+the row my staked leg rests on now has a primary record to point at. The provisional downgrade
+at d290a2e is lifted: **twice measured, on two independent runs.** It exists in that form
+because I refused to let a transcription stand in for the artifact — the repair cost nothing but
+waiting.
+
+And the truncation had a cause worth carrying: they had rewritten the launcher **while its shell
+was executing it**, and bash reads scripts incrementally, so it resumed inside the new bytes and
+silently re-ran the ladder. A launcher is immutable while its shell is alive.

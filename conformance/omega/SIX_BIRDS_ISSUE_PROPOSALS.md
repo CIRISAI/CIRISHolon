@@ -1,6 +1,11 @@
 # Six Birds ↔ CIRISHolon — proposed cross-programme issues
 
-> **STATUS: DRAFTS. NOTHING HAS BEEN POSTED ANYWHERE.**
+> **STATUS UPDATE 2026-08-30: Issue 1 (the convergence notice) was POSTED with Eric's
+> explicit approval — https://github.com/ioannist/six-birds-agent/issues/1 — posted
+> verbatim from the draft below. Issues 2-8 remain DRAFTS, unposted, awaiting both
+> Eric's approval and (per the notice's own protocol) a welcome signal from their side.**
+>
+> **Original status: DRAFTS. NOTHING HAS BEEN POSTED ANYWHERE.**
 > These are proposed GitHub issue bodies awaiting Eric's explicit approval before any
 > of them is opened on `ioannist/six-birds-agent` or on `CIRISAI/CIRISHolon`. No
 > comment, issue, PR, email, or other external communication has been sent. Nothing in

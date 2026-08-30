@@ -255,6 +255,35 @@ cargo test -q -p holon-mesh 2>/dev/null >/dev/null \
 cargo build -q -p holon-mesh --release 2>/dev/null \
   && ok "holon-mesh mesh_bench builds" || no "holon-mesh mesh_bench builds"
 
+# holon-tables: SATURATION-3's G1 tier — table generation sharded across workers,
+# bit-identical across shard counts, corruption convicted by an exact digest.
+#
+# WHAT IS ENFORCED HERE AND WHAT IS NOT, because the difference is the whole point.
+# This crate's suite has two halves with very different costs:
+#
+#   --lib        the partition, the traversal, the digest algebra and the conviction
+#                cases. Pure arithmetic, no chemistry, runs in milliseconds. ENFORCED.
+#   tests/g1_gate.rs
+#                the gate itself: every node is a REAL all-electron FCI solve, so the
+#                suite is ~126 s in release and minutes-to-hours in debug. NOT enforced
+#                here — it is a campaign run, recorded in
+#                conformance/atomworld/SATURATION3_RESULTS.md, and a human runs it.
+#
+# Advertising the gate as CI-enforced when CI cannot afford to run it would be exactly
+# the "recorded commitment presented as a proof" this repo refuses elsewhere. The
+# vacuity count below covers BOTH halves (--list collects without running), so a crate
+# that stopped reaching its gate still shows up as a drop in the count.
+n_tables=$(cargo test -q -p holon-tables -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_tables:-0}" -gt 0 ] \
+  && ok "holon-tables reaches $n_tables tests" \
+  || no "holon-tables reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q -p holon-tables --lib 2>/dev/null >/dev/null \
+  && ok "holon-tables merge-law digest: fold invariance, conviction, no false positives" \
+  || no "holon-tables merge-law digest: fold invariance, conviction, no false positives"
+cargo build -q -p holon-tables --release --tests 2>/dev/null \
+  && ok "holon-tables G1 gate builds (run is a campaign run, not a CI gate)" \
+  || no "holon-tables G1 gate builds (run is a campaign run, not a CI gate)"
+
 # 12. A CROSS-REFERENCE IS A WARRANT ONLY IF ITS TARGET EXISTS (team-lead's ruling,
 #     2026-08-24). Q10_PREREG.md §10 cites "M1-M6 carry over from Q9's brief unchanged" —
 #     there is no Q9 file anywhere in the repository, so that citation warrants nothing,

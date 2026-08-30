@@ -17,7 +17,9 @@ Frozen protocol: committed at `0851ccb`, **before** any P1 arm ran.
 | `p1_diagnose.DONE` | post-hoc branch-(b) diagnostic | 74 bonded edges; 21 of 40 H–Cl within 0.5 a₀ of `R_e` |
 | `d1_overlap_H2.DONE` | D1 accuracy on H2, 16 points | worst 5.05e−13 Ha vs 1e−8 stake |
 | `fci_staked_cost.DONE` | **exact FCI cost of all six staked pairs** | SiO 33.9 s/geometry — the exact side is CHEAP |
-| `e2_ordering.DONE` | E2's well depths, 8 of 9 pairs | **branch (b)**: NaH moves five places |
+| `e2_ordering.DONE` | E2's well depths, 8 of 9 pairs | **branch (b)**: three inversions |
+| `e2_byhand.DONE` | SiO's well, determinant route by hand | D_e 0.263676281 Ha — deepest in the set |
+| `d1_overlap_LiH.DONE` | D1 accuracy on LiH, 12 points | worst 5.59e−12 Ha vs 1e−8 stake |
 
 `mpo_cost_*.log` carry the MPO-builder cost that decides D1: 0.00 s at 2
 orbitals, 528.48 s at 6, did not finish in over an hour at 10. `mpo_cost_HCl.log`
@@ -28,21 +30,14 @@ would only sharpen a number already past the point of usefulness.
 
 | log | what | how to read it |
 |---|---|---|
-| `e2_byhand.log` | SiO's well on the determinant route | ~41 points at ~34 s each. Fills E2's last row. Ends with `e2_byhand.DONE`. |
-| `d1_overlap_LiH.log` | D1 accuracy on LiH, 12 points | one row per point; `d_chi64` is the column that matters, ~1e−12 so far. ~600–700 s per point, dominated by the MPO build. |
 | `d1_staked_SiO_cost.log` | **the staked D1 refusal, measured on the staked species** | SiO's MPO build against a 12-hour budget. Replaces an extrapolation from HCl. |
 | `d1_staked_S2_cost.log` | same for S2 (18 orbitals) | queued behind SiO; S2 is strictly larger, so an SiO refusal settles it |
+| `mpo_cost_HCl.log` | the 10-orbital MPO build, still going | **past two hours** as of the last check, which is a sharper reading than the "over an hour" the results doc quotes. If it ever completes, quote the real number |
 
-### What to do when they land
-
-* **`e2_byhand`**: fill E2's SiO row. Note E2 is already branch (b) on NaH; SiO
-  cannot change that, only refine the table.
-* **`d1_overlap_LiH`**: fill the LiH row of D1's accuracy table. It does NOT
-  discharge D1 — the freeze stakes S2 and SiO — and the section says so. Do not
-  promote it.
-* **`d1_staked_*_cost`**: whichever way these go, they replace the extrapolated
-  refusal with a measured one. If SiO's MPO *does* build, the refusal weakens and
-  D1 becomes a scheduling question rather than a structural one — say so.
+Every gate's verdict is already committed and none of these can change one. The
+SiO and S2 builds would replace an extrapolated D1 refusal with a measured one;
+if either MPO *does* build, the refusal weakens from structural to a scheduling
+question and the D1 section should say so.
 
 ## Two exposures, one closed and one open
 

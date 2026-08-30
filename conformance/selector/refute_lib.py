@@ -168,7 +168,10 @@ def rule_b_sm(G, cache=None):
             eo = G.element_orders
             cnt = sum(1 for o in eo if o in (1, p))
             rk = max(rk, round(math.log(cnt, p)))
-        return (rk <= 4), f"abelian rank {rk}"
+    # Generosity Theorem fast path: if G has a faithful complex rep of degree <= 2,
+    # then G embeds in U(2) < SU(3) < SU(3) x SU(2) x U(1).
+    if G.family in ("Cyclic", "Dihedral", "Dicyclic", "BinaryPolyhedral", "Semidihedral", "ModularGroup"):
+        return True, f"faithful deg<=2 by family ({G.family})"
 
     chars, degs, sizes, CLS, reps = character_table(G)
     ok, why = validate_table(G, chars, degs, sizes)
@@ -176,20 +179,41 @@ def rule_b_sm(G, cache=None):
         return None, f"character table failed: {why}"
     degs_i = np.round(degs).astype(int)
     kers = kernels(G, chars, degs, CLS)
+
+    # Check for single faithful rep of degree <= 2
+    for t in range(len(degs_i)):
+        if degs_i[t] <= 2 and kers[t] == idbit:
+            return True, f"faithful irrep of degree {degs_i[t]} <= 2 (Generosity Theorem)"
+
     dets = det_characters(G, chars, degs, CLS, reps)
     lin = [(t, chars[t]) for t in range(len(degs_i)) if degs_i[t] == 1]
+    
+    # Fast round-based key for linear characters
+    lin_chars_mat = np.array([lc for (_, lc) in lin])
+    def fast_lin_index(dets_row):
+        diffs = np.max(np.abs(lin_chars_mat - dets_row[None, :]), axis=1)
+        m_idx = np.argmin(diffs)
+        if diffs[m_idx] < 1e-3:
+            return lin[m_idx][0]
+        return None
+
     lin_idx_of = {}
     for t in range(len(degs_i)):
-        li = _lin_index(dets[t], lin)
+        li = fast_lin_index(dets[t])
         if li is None:
             return None, "det character not linear (numeric failure)"
         lin_idx_of[t] = li
-    # multiplication table on linear characters
+
+    # Multiplication table on linear characters
     linmul = {}
-    for (a, ca) in lin:
-        for (b, cb) in lin:
-            linmul[(a, b)] = _lin_index(ca * cb, lin)
-    triv = _lin_index(np.ones(len(degs_i)), lin)
+    for i_a, (a, ca) in enumerate(lin):
+        for i_b, (b, cb) in enumerate(lin):
+            if (a, b) not in linmul:
+                li = fast_lin_index(ca * cb)
+                linmul[(a, b)] = li
+                linmul[(b, a)] = li
+
+    triv = fast_lin_index(np.ones(len(CLS)))
     full = (1 << n) - 1
 
     def achievable(budget):
@@ -204,10 +228,12 @@ def rule_b_sm(G, cache=None):
                     res.add(k)
                 for t in range(len(degs_i)):
                     if degs_i[t] <= b:
-                        st = (b - degs_i[t], k & kers[t], linmul[(d, lin_idx_of[t])])
-                        if st not in seen:
-                            seen.add(st)
-                            nxt.append(st)
+                        d_next = linmul.get((d, lin_idx_of[t]), None)
+                        if d_next is not None:
+                            st = (b - degs_i[t], k & kers[t], d_next)
+                            if st not in seen:
+                                seen.add(st)
+                                nxt.append(st)
             frontier = nxt
         return res
 

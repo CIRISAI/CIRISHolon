@@ -19,6 +19,19 @@ coordinates under `referee_cache/` and stamps it with the basis fingerprint
 costs no solves. Both caches are gitignored: they are re-derivable intermediates,
 and what is committed is the product.
 
+**Route B is declared UNAVAILABLE at degenerate geometries, and the skip is
+recorded per geometry.** The referee's independence check re-solves in a randomly
+rotated orbital basis, and at a dissociated geometry — oxygen with its hydrogens
+eight bohr away — the ground state is near-degenerate (O's 3P times two hydrogen
+doublets), so the Temple bound has no gap to certify against and the rotated route
+grinds. Measured at `x = y = 8.545, c = 0.959`: route A converges in 36 s at dps
+30 and 45 and 32 s at dps 60; route A PLUS route B was still running after twenty
+minutes and was killed. The decision is now made from route A's OWN gap, before
+route B is paid for, deterministically and with no wall clock consulted — at that
+geometry the gap is 7.42e-08 Ha against a declared 1e-6 threshold. A referee that
+stalls on a tenth of its staked set is not a referee; one that says which tenth it
+could not double-check is.
+
 **The referee holds a RUN LOCK** (`<out>.lock`). It exists because it was needed:
 a `--grid` run was relaunched against a corrected domain while the previous one
 was still going, and for twenty minutes two processes wrote one log and were both

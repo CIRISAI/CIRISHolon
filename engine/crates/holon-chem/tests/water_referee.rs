@@ -160,6 +160,40 @@ fn the_spin_audit_asserts_where_resolved_and_reports_where_degenerate() {
 }
 
 #[test]
+fn the_referee_says_where_it_could_not_check_itself() {
+    // The referee's own independence check re-solves each geometry in a randomly rotated
+    // orbital basis. It cannot run everywhere, and the reason is physical: at a
+    // DISSOCIATED geometry the ground state is near-degenerate — oxygen's 3P times two
+    // hydrogen doublets — so the Temple bound has no gap to certify against and the
+    // rotated route does not converge. Measured, it was still running after twenty minutes
+    // on a geometry route A finishes in thirty-two seconds.
+    //
+    // The referee therefore DECLARES route B unavailable wherever route A's own gap says
+    // it cannot be certified, decided before route B is paid for and recorded per
+    // geometry. This gate reads that record rather than letting it sit in a field nobody
+    // is required to look at: a referee that says which geometries it could not
+    // double-check is worth more than one that quietly checked some of them.
+    let src = referee_text();
+    let dual = string_array(&src, "col_dual_route");
+    assert_eq!(dual.len(), WATER_REFEREE_GEOMETRIES);
+    let n_dual = dual.iter().filter(|d| d.as_str() == "1").count();
+    println!(
+        "R1: {n_dual} of {WATER_REFEREE_GEOMETRIES} staked geometries carry the referee's \
+         second CI route; {} are single-route, where the ground state is degenerate",
+        WATER_REFEREE_GEOMETRIES - n_dual
+    );
+    // Both branches have to be non-empty or the record is decoration: an all-dual set
+    // would mean the skip never fired, and an all-single set would mean the referee never
+    // checked itself at all.
+    assert!(
+        n_dual > WATER_REFEREE_GEOMETRIES / 2,
+        "only {n_dual} of {WATER_REFEREE_GEOMETRIES} geometries were double-checked by the \
+         referee's second route; that is not an independence check, it is a single \
+         implementation with a note"
+    );
+}
+
+#[test]
 fn engine_matches_the_referee_at_every_staked_geometry() {
     let src = referee_text();
     let xs = floats(&src, "col_x");
@@ -226,6 +260,12 @@ fn engine_matches_the_referee_at_every_staked_geometry() {
         }
     }
 
+    println!(
+        "R1: worst engine-vs-referee disagreement {worst:.4e} Ha over \
+         {WATER_REFEREE_GEOMETRIES} staked geometries x 5 columns (worst on {worst_col}, \
+         geometry {worst_at}: x = {}, y = {}, u = {}); stake {WATER_R1_STAKE_E:.0e}",
+        xs[worst_at], ys[worst_at], us[worst_at]
+    );
     assert!(
         worst <= WATER_R1_STAKE_E,
         "R1 FIRED: worst disagreement {worst:.3e} hartree (column {worst_col}, geometry \

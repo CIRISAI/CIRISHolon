@@ -108,6 +108,12 @@ C_HI = sqrt(mpf(2))            # the collinear edge, theta = 180 degrees
 DPS = 60
 REPORT = 50
 
+# Below this route-A gap the ground state is treated as degenerate and the second
+# CI route is declared unavailable rather than attempted.  See `solve_atoms`.
+# In hartree, and set well above the solver's own certified accuracy so it names
+# a physical degeneracy rather than a numerical one.
+DEGENERACY_GAP = mpf("1e-6")
+
 CACHE = os.path.join(HERE, "s2_runs", "referee_cache")
 
 Z_O, Z_H = 8, 1
@@ -117,17 +123,38 @@ def s(x, n=REPORT):
     return nstr(mpf(x), n, strip_zeros=False)
 
 
-def sfix(x, n=REPORT):
-    """The same digits in PLAIN fixed point, never exponent notation.
+# The engine-side comparator's fixed-point width (`tests/common/mod.rs`,
+# FRAC_DIGITS). The columns below are rendered to fit it exactly.
+GATE_FRAC_DIGITS = 60
 
-    The engine-side gate compares in exact decimal (`tests/common/mod.rs`'s
-    `decimal_minus_f64`) rather than parsing the referee into an f64 first, and
-    that comparator refuses exponent notation on purpose — a silent
-    `parse::<f64>()` of the referee is exactly the contamination it exists to
-    avoid.  `dE3` runs down to 1e-9 on the far shells, so the columns the gate
-    reads are written fixed here rather than left to mpmath's default.
+
+def sfix(x, n=REPORT):
+    """The gate's view of a number: PLAIN fixed point, never exponent notation,
+    and never wider than the comparator can hold.
+
+    Two separate constraints, both learned by being violated.
+
+    NO EXPONENTS.  The engine-side gate compares in exact decimal
+    (`tests/common/mod.rs`'s `decimal_minus_f64`) rather than parsing the referee
+    into an f64 first, and that comparator refuses exponent notation on purpose:
+    a silent `parse::<f64>()` of a 50-digit referee is exactly the contamination
+    it exists to avoid.
+
+    NO MORE THAN `GATE_FRAC_DIGITS` PLACES.  `dE3` runs down to 5.7e-23 on the
+    dissociated shells, and 50 SIGNIFICANT digits of a number that small is 72
+    DECIMAL PLACES -- wider than the comparator's fixed-point buffer, which
+    refuses rather than silently truncating.  So the fraction is trimmed here, to
+    the comparator's own width, and the trimming costs at most 1e-60 against a
+    stake of 1e-10.
+
+    `rows` keeps the full significant-digit strings; this is the gate's column
+    view and says so.
     """
-    return nstr(mpf(x), n, strip_zeros=False, min_fixed=-(10 ** 6), max_fixed=10 ** 6)
+    t = nstr(mpf(x), n, strip_zeros=False, min_fixed=-(10 ** 6), max_fixed=10 ** 6)
+    if "." not in t:
+        return t
+    head, frac = t.split(".", 1)
+    return head + "." + frac[:GATE_FRAC_DIGITS]
 
 
 # ---------------------------------------------------------------- the point solver
@@ -181,7 +208,34 @@ def solve_atoms(atoms, want_B=True, tol_digits=None, two_sz=None):
     out["S2_expectation"] = nstr(s2, 12)
     out["two_S_from_S2"] = twoS
     out["S2_deviation_from_exact"] = nstr(s2dev, 6)
-    if want_B:
+    # ---- the second route, and where it is DECLARED UNAVAILABLE --------------
+    #
+    # Route B re-solves in a randomly rotated orbital basis, which is the
+    # referee's own independence check: two CI routes over the same integrals
+    # landing on one number.  It cannot be run everywhere, and the reason is
+    # physical rather than budgetary.
+    #
+    # At a DISSOCIATED geometry -- oxygen with its hydrogens eight bohr away --
+    # the ground state is near-degenerate (O's 3P times two hydrogen doublets),
+    # so the Temple bound has no gap to certify against and the rotated route
+    # grinds.  MEASURED on x = y = 8.545, c = 0.959: route A converges in about
+    # 36 s at dps 30 and 45 and roughly a minute at 60; route A PLUS route B was
+    # still running after twenty minutes and had to be killed.  A referee that
+    # stalls on a tenth of its staked set is not a referee.
+    #
+    # So route B is skipped where route A's own gap says it cannot be certified,
+    # and the skip is RECORDED per geometry rather than absorbed.  The decision is
+    # made from a quantity route A already computed, before route B is paid for,
+    # and it is deterministic: no wall clock is consulted.
+    gap = rA.get("gap")
+    out["gap_A"] = nstr(gap, 6) if gap is not None else None
+    if want_B and gap is not None and gap < DEGENERACY_GAP:
+        out["route_B_skipped"] = (
+            "ground state is near-degenerate: route-A gap %s < %s Ha, so the "
+            "Temple bound has nothing to certify against and the rotated route "
+            "does not converge" % (nstr(gap, 6), nstr(DEGENERACY_GAP, 3))
+        )
+    elif want_B:
         Q = F.rotation_matrix(norb)
         hB, gB = F.mo_integrals(mol, F.rotate_orbitals(C, Q))
         rB = F.solve_certified(F.RouteBOp(sp, hB, gB), tol_digits=tol_digits)
@@ -416,7 +470,9 @@ def de3(x, y, u, force=False, want_B=True):
         two_S_O=eo["two_S_from_S2"],
         resid_OHH=w["resid_A"],
         bound_OHH=w["bound_A"],
+        gap_OHH=w.get("gap_A"),
         dev_AB_OHH=w.get("dev_AB"),
+        route_B_skipped=w.get("route_B_skipped"),
         seconds_OHH=w.get("seconds"),
     )
 
@@ -587,6 +643,7 @@ def _grid_body(args):
         col_dE3=[sfix(mpf(r["dE3"])) for r in rows],
         col_family=[r["family"] for r in rows],
         col_two_S_OHH=[str(r["two_S_OHH"]) for r in rows],
+        col_dual_route=["0" if r.get("route_B_skipped") else "1" for r in rows],
         col_spin_gap=[sfix(mpf(r["spin_gap"]), 20) for r in rows],
         col_spin_resolved=["1" if r["spin_resolved"] else "0" for r in rows],
         rows=rows,

@@ -252,7 +252,70 @@ named successor.
 
 ---
 
-## R1 — the 50-digit (O, H, H) referee · *pending the referee run*
+## R1 — the 50-digit (O, H, H) referee · **HOLDS**
+
+    worst engine-vs-referee disagreement 5.9214e-12 Ha
+    over 84 staked geometries x 5 energy columns
+    worst on dE3, at x = 4.868, y = 15, u = 0.745;   stake 1e-10 — 17x inside
+
+The referee (`conformance/atomworld/saturation2_referee.py`, mpmath at 60 working
+digits reported to 50) shares its integrals, its determinant CI and its certified
+eigensolver with the committed `elements1_referee/` **by import rather than by
+copy** — a second transcription of a bank is how a bank stops being one. What is
+written for this campaign is the (O, H, H) geometry construction, the many-body
+decomposition, the staked set and the comparison. It shares the MODEL with the
+engine and nothing else.
+
+5.9e−12 is what the arithmetic predicts rather than a number to be relieved
+about: `E(H2O)` is about −75 hartree, so an f64 carries roughly 1e−14 of absolute
+room, and `dE3` is a difference of FIVE such numbers, four of them near −75.
+
+**The staked set, result-blind.** 84 geometries against the prereg's ≥ 48, every
+one a function of the declared domain constants and a fixed integer ladder — a
+six-rung geometric ladder of O-H sides from 0.9 to `R_HI`, crossed with itself
+under `x ≤ y`, crossed with four staked angles. Nothing in it consults an energy,
+a minimum, a bond length or an angle. Coverage, computed by the referee from the
+geometry alone and asserted non-empty per family: compact 4, closed 11, bent 22,
+linear 11, near-boundary 24, stretched 12.
+
+### The spin audit: asserted where resolved, reported where degenerate
+
+M-PARITY-PROTECT, in the prereg's own words. The multiplicity is measured from
+`<S²>` of the converged vector, and whether it MEANS anything is measured too:
+the referee solves the `Sz = 1` sector as well, where the lowest state is by
+construction the lowest triplet, so the difference is the exact singlet-triplet
+gap.
+
+    28 of 84 geometries have a RESOLVED gap — every one of them a singlet
+    56 are degenerate — 2S = 0, 1 and 2 all occur, and none is asserted on
+
+Both branches are non-empty and the gate requires that. A bonded geometry is a
+resolved singlet; a geometry with one hydrogen at the far edge of the domain is a
+dissociated OH + H whose singlet and triplet are exactly degenerate, and there
+the label is a fact about which component the eigensolver returned, not about the
+state. **A gate that demanded "singlet everywhere" would have fired on correct
+physics** — and the first version of this one did.
+
+### Where the referee could not check itself, and why it says so
+
+The referee's independence check re-solves each geometry in a randomly rotated
+orbital basis. At a dissociated geometry the ground state is near-degenerate
+(oxygen's ³P times two hydrogen doublets), so the Temple bound has no gap to
+certify against and the rotated route does not converge: measured at
+`x = y = 8.545, c = 0.959`, route A finishes in 32 s at dps 60 while route A plus
+route B was **still running after twenty minutes** and had to be killed.
+
+So route B is declared unavailable wherever route A's own gap says it cannot be
+certified — decided from a quantity route A already computed, before route B is
+paid for, deterministically, with no wall clock consulted. At that geometry the
+gap is 7.42e−08 Ha against a declared 1e−6 threshold.
+
+    74 of 84 geometries carry the second CI route
+    10 are single-route, all of them degenerate, each recording its own reason
+
+A referee that stalls on a tenth of its staked set is not a referee. One that
+says which tenth it could not double-check is, and the gate reads that record
+rather than letting it sit in a field nobody is required to look at.
 
 ## T1 — interpolant fidelity, held out · **HOLDS**
 

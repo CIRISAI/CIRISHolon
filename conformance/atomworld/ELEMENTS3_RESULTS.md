@@ -248,15 +248,28 @@ Three different criteria are in play and this campaign has confused them once al
 | class | criterion | Z | determinants |
 |---|---|---|---|
 | **has an automatic route** | `n_det ≤ MPS_ROUTE_THRESHOLD` (5e4) | 32–36, 51–54 | 1 – 23,409 |
-| no automatic route; solved here via `solve_determinant` | inside this record's 1.2e6 budget | 19, 20, 30, 31 · *49, 50 pending* | 8.2e4 – 1.0e6 |
+| no automatic route; solved here via `solve_determinant` | inside this record's 1.2e6 budget | 19, 20, 30, 31, 50 | 8.2e4 – 1.2e5 |
+| no automatic route; **REFUSED, did not converge** | inside the budget but Davidson stopped at its cap | **49 (In)** | 1,026,675 |
 | no automatic route; over this record's **budget** | a spending cap, **not** a claim of no route | 28, 29, 37, 38, 48 | 2.4e6 – 1.1e7 |
 | no automatic route; **A1.2's sixteen** | past 2.6e7, where reachability becomes the open question | 21–27, 39–47 | 2.6e7 – 1.97e12 |
 
 The nine with an automatic route are exactly the nine A1.2 named referee-eligible — the two
 criteria coincide here, which is a fact about this range rather than a definition.
 
-The record itself is still completing: indium onward is computing at the time of writing, and
-nothing gates on it. The multiplicities and energies for 51–54 in the table above come from
+**Indium is the one refusal.** At 1,026,675 determinants Davidson stopped at its
+1200-iteration cap with a residual of **3.98e-1** — nine orders above the crate's declared
+`CONVERGED_RESIDUAL` — and returned **2S+1 = 4.216**, which is not a multiplicity: the
+Hamiltonian is spin-free, so a converged eigenvector is a spin eigenstate and 2S+1 is an
+integer. Both its energy and its multiplicity are meaningless and the row is refused rather
+than reported. See defect 5 — the record printed the residual and checked nothing, so on the
+first run this appeared as a row indistinguishable from a measurement.
+
+Its status is **"did not converge at the production cap"**, not a number. `DAVIDSON_MAX_ITER`
+is `#[doc(hidden)]` and its own doc reserves it for `tests/front_door.rs`, stating production
+never touches it — so raising it to force convergence would be reaching around a contract to
+obtain a result.
+
+The multiplicities and energies for 51–54 in the table above come from
 `tests/elements3_atoms.rs`, which recomputes them, not from the record.
 
 **The third state, named exactly:** these sixteen are **unblocked in principle, unmeasured in
@@ -501,9 +514,14 @@ what it expected — and each is recorded with the instrument it produced.
 | 2 | AMENDMENT A1.2 read `feasibility`'s refusal — a statement about the AUTOMATIC route — as "unreachable" | the refusal is correct about what it says; the over-reading was in the prose around it | A3.1, plus corrected doc comments on `RadiusRule::ValenceDensity` and `homonuclear_size` |
 | 3 | the 4p counterfactual's verdict column tested only `mult < base − 0.5` and printed **"unchanged"** against the row where the multiplicity had risen from 4 to 6 | the check was written to detect the direction the prediction staked | two-sided verdict; the log carries a header recording the wrong label rather than being regenerated clean |
 | 4 | in the f-projection review, a **support-only** row pin (blind to a sign flip) with a `\|\| p != SPHERICAL_F` fallback in its own plant, which made "caught" trivially true for any mutation | the plant was written to guard against exactly this and reproduced it one level down | value pin; the plant calls the same function the pin test calls, so it cannot pass by testing something weaker |
+| 5 | the R1 record printed `sol.residual` and **checked nothing**, so indium — Davidson stopped at its 1200-iteration cap, residual **3.98e-1** against ~1e-10 elsewhere — appeared as a row indistinguishable from a measurement | the crate had ALREADY written `pair::CONVERGED_RESIDUAL` for exactly this, with a doc comment describing it word for word; I did not reach for it | the row is REFUSED on two independent checks — the declared residual bar, **and** 2S+1 integrality, which is free and catches the same failure for a reader who never looks at the residual column |
 
-The fourth is the one worth keeping: **the plant caught the author before it caught anything
-else.** The best statement of the family is the one it produced — *a check that can only see
+The fifth is the sharpest: **the fix already existed and was walked past.** The constant, the
+bar and the doc comment naming this exact failure were all in the crate before this campaign
+started. Writing a new instrument is not the hard part; reaching for the one already there is.
+
+The fourth is the other one worth keeping: **the plant caught the author before it caught
+anything else.** The best statement of the family is the one it produced — *a check that can only see
 the direction it expects reports every other direction as nothing happening, which is worse
 than not checking at all.*
 

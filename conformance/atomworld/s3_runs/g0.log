@@ -1,0 +1,36 @@
+# SATURATION-3 gate G0 — cost validation, blocking
+
+# staked rule: each side = 0.75 x that pair's own located R_e
+# cost classes: 5 s/point, except (O,O,O) at 300 s/point
+# kill: 10x its class re-scopes the campaign before tables start
+# every solve goes through solve_determinant EXPLICITLY: fci::solve routes past
+#   MPS_ROUTE_THRESHOLD = 50000 into an MPO builder that hangs,
+#   and (O,O,O) at 207,025 is the one staked combo that crosses it.
+
+## the staked geometries, from located equilibria
+      H-H  R_e = 1.3887 bohr  -> compact side 1.0415   (49 solves, 0.2 s)
+     H-Cl  R_e = 2.5369 bohr  -> compact side 1.9027   (49 solves, 7.3 s)
+    Cl-Cl  R_e = 4.0241 bohr  -> compact side 3.0181   (49 solves, 50.2 s)
+      O-O  R_e = 2.4421 bohr  -> compact side 1.8316   (49 solves, 66.7 s)
+      O-H  R_e = 1.9909 bohr  -> compact side 1.4932   (49 solves, 1.4 s)
+
+## the measurement
+         combo   orb     n_det committed assemble       CI  iters        exit verdict
+      (H,H,Cl)    11       605       605     0.20     0.01     22   CONVERGED in-class
+               sides 1.042 1.903 1.903 bohr; residual 9.00e-11; route determinant, Knowles-Handy; total 0.21 s = 0.042 of its 5 s class
+     (H,Cl,Cl)    19      3249      3249     1.12     0.14     14   CONVERGED in-class
+               sides 1.903 1.903 3.018 bohr; residual 8.61e-11; route determinant, Knowles-Handy; total 1.25 s = 0.251 of its 5 s class
+    (Cl,Cl,Cl)    27      9477      9477     4.72     1.75     24   CONVERGED over-class
+               sides 3.018 3.018 3.018 bohr; residual 8.11e-11; route determinant, Knowles-Handy; total 6.47 s = 1.294 of its 5 s class
+       (O,O,H)    11      9075      9075     0.18     0.20     24   CONVERGED in-class
+               sides 1.832 1.493 1.493 bohr; residual 9.82e-11; route determinant, Knowles-Handy; total 0.38 s = 0.076 of its 5 s class
+       (O,O,O)    15    207025    207025     0.48    39.35     66   CONVERGED in-class
+               sides 1.832 1.832 1.832 bohr; residual 8.49e-11; route determinant, Knowles-Handy; total 39.83 s = 0.133 of its 300 s class
+
+## G0 verdict
+   worst cost as a fraction of its class: 1.294 (kill at 10)
+   G0 HOLDS: five of five combos match the committed arithmetic EXACTLY,
+   every solve converged, and nothing is near the 10x kill.
+
+   OVER ITS STATED CLASS, without triggering the kill:
+     (Cl,Cl,Cl): 6.47 s against the freeze's 5 s — 1.29x. Inside the kill by 8x, so it does not re-scope; the CLASS statement is what needs amending, not the campaign.

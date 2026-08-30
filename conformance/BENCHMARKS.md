@@ -1038,3 +1038,60 @@ reproducing the previous one exactly (which fixes the round-1 random
 X-syndromes and requires every later round to agree with them), and the
 logical observable staying determined and unchanged.
 
+
+## 2026-08-30, twenty-sixth entry: d = 221 — 97,681 qubits, 195,360 adaptive measurements, verified
+
+The commissioned headline, run and verified. `conformance/bigqvm/
+flagship_d221.json`; reproduce with `cargo run --release --example
+surface_flagship -- --d 221 --seed 1`.
+
+| | |
+|---|---|
+| distance | **221** |
+| qubits | **97,681** (48,841 data + 48,840 ancilla) |
+| stabilizers | 48,840 |
+| rounds | 4 full adaptive syndrome-extraction cycles |
+| mid-circuit measurements | **195,360** |
+| wall (rounds) | **111.25 s** |
+| verifications | **7 / 7 PASS** |
+
+Per round: establish 36.39 s, noiseless repeat 2.13 s, errors injected
+12.94 s, corrected 4.17 s. Errors were injected on three data qubits, lit
+exactly their plaquettes and no others, the decoder read the mid-circuit
+outcomes and explained every fired plaquette with none left over, the
+correction was fed forward, the syndromes returned to their pre-error values,
+and the LOGICAL observable came through determined and unchanged.
+
+**The design constants held at full scale**, which is the part worth keeping:
+destabilizer product mean **1.8533** terms and pivot X-weight **max 2** at
+d=221 — the same numbers measured at d=11, d=45 and d=101. Fallback scans:
+**0 of 195,360**. Transposes: **2** for the entire run. The two shortcuts the
+profiler forced were structural, not small-n luck.
+
+**A DEFECT THE RUN EXPOSED, recorded because the guard is a safety claim.**
+Peak RSS was **14.36 GB against the 9.54 GB working-set model the memory guard
+enforces** — the guard UNDERSTATES, so it could admit a run that then OOMs a
+sibling, which is the one failure mode this lane was told to avoid. Cause:
+`z_string_value`, the logical-observable reader, called `col.to_packed()` and
+allocated a SECOND full row-major tableau beside the lazily-held one — 4.77 GB
+extra, twice per demo. Fixed by reusing the single buffer and answering the
+common case with none at all (the anticommutation test is a XOR of the
+string's X columns, so "is this observable even determined?" costs
+`|string|·2n/64` words and no allocation). The 111.25 s and 7/7 above are the
+run AS IT HAPPENED and are not restated; the memory figure is the one the fix
+moves.
+
+**Also measured, and it is not simulation:** `SurfaceCode::new` spends
+**61.8 s** of startup in `verify_commuting`, which is O(stabilizers²) —
+1.19e9 pairs at this distance. That is the price of checking the layout
+rather than trusting it, and it is worth paying; but it re-runs on every
+invocation and at d=221 it exceeds half the wall time, which is why the
+head-to-head at this size is slow. A spatial index makes it linear. Named.
+
+**Scheduling, since it is part of the result:** the run needed 11.5 GB free
+and the box offered 3.4–6.4 GB for twenty-five minutes. The detached waiter
+(`conformance/bigqvm/run_when_memory.sh`) was refused six times, then took a
+17.9 GB window unattended. No sibling was disturbed, and no done-marker was
+written for a refused attempt — the binary's exit code is the only authority
+there, after a first version of the waiter lost that race in shell.
+

@@ -177,3 +177,45 @@ commit 1d5b23b) and none after any number existed.*
    exactly the unchecked constant this programme distrusts, and the
    completeness gate S1 now checks an argument against an external
    record, not a hope against a builder list.
+
+---
+
+## AMENDMENT A2 — 2026-08-30, at design v2 re-audit, before any census or run
+
+*Two items from the design's second pass (SELECTOR6_DESIGN.md v2, commit
+be7092f), the first being the campaign's most important pre-run catch.*
+
+1. **The decided-rung rule, corrected before it could confound E1.** The
+   v1 definition ("k* = the finest rung with zero VOIDs, A0 always
+   decided") composed with two facts of the predecessor's own log —
+   coarse rungs select nothing BY CONSTRUCTION on every world, and the
+   largest world VOIDs its fine rungs on budget — into a silent
+   disaster: budget exhaustion would fall back to a coarse rung and be
+   recorded as SELECT = False, with the expense scaling in
+   |F| = |G| x #divisors(ord step), a structural property plausibly
+   correlated with the label. E1 would have measured the budget and
+   called it physics. The rule that ships: a VOID at rung k removes k
+   AND every finer rung; if the finest survivor is coarser than A3, the
+   group VOIDs — it never scores False. VOID counts are reported by
+   order and by |F| so a structured refusal pattern is visible on the
+   page. This is B1's "exhaustion VOIDs loudly" made airtight against
+   the one composition that would have laundered it.
+2. **The criterion is imported by proved extraction, because importing
+   it directly would have destroyed the predecessor's evidence.**
+   selector4.py opens its committed run log at module scope in mode
+   "w"; a bare `import selector4` TRUNCATES conformance/omega/
+   selector4.log — the banked SELECTOR-4 record. The extractor
+   (make_s4core.py) reads the PINNED BLOB (never the working tree),
+   neutralises exactly that one line, and proves it did no more: refuses
+   unless the source hashes to the pin, unless exactly one line matches,
+   unless the diff is exactly that line, unless the line count is
+   unchanged; and asserts the log's byte size after import. The log is
+   verified byte-identical. Recorded as the general lesson: importing an
+   instrument executes its side effects, and a predecessor's record must
+   be reachable only through a proof-carrying door.
+
+Budgets declared per the measured cost model (worst real shape F_57 at
+~30,408 closure calls — |F| tracks |G| x #divisors(ord step), so a
+budget derived from |G| alone would have been wrong): BUDGET = 2000
+(inherited), GROUP_BFS_BUDGET = 300,000 (10x measured worst),
+GROUP_WALL = 3600 s (20x scaled worst), CENSUS_WALL = 24 h.

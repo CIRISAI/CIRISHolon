@@ -1364,6 +1364,7 @@ function parseOpenQASM(src) {
         continue;
       }
 
+      const parts = stmt.split(/\s+/);
       let op = parts[0].toLowerCase();
       let param = 0.0;
       const paramMatch = op.match(/^(rz|rx|ry|p|u1)\s*\(([^)]+)\)$/);

@@ -14,6 +14,25 @@
 //! It is a story, not a measurement, and a story that explains a result is not evidence
 //! for itself. This is its discriminator.
 //!
+//! # How the spin is read, and the shortcut that does not exist
+//!
+//! `<S^2>` on the converged vector, from `solve_determinant` over a basis this file
+//! assembles itself. It is slow: without the crate's private SCF rotation the orbitals are
+//! only Cholesky-orthonormalised, and the module header says what that costs -- Davidson
+//! converging in hundreds of iterations rather than tens. Measured here at several minutes
+//! per point.
+//!
+//! There is an obvious-looking shortcut, and it is a trap worth recording because I took
+//! it. Two ENERGIES settle the spin with no vector at all: the minimal `S_z` sector holds
+//! every state of every multiplicity while a sector one unit higher holds only
+//! `S >= S_z + 1`, so equal energies mean the ground state carries the higher spin. The
+//! reading is correct. It cannot be taken through `solve_basis`, because `solve_basis`
+//! calls `solve`, which routes anything past `MPS_ROUTE_THRESHOLD` to the MPS/DMRG path --
+//! and that path is measured to reach six orbitals. Gallium's minimal sector is 124,848
+//! determinants and its raised sector 55,080, both past the threshold, so both hang in the
+//! MPO builder rather than returning anything. `solve_determinant` is the entry point with
+//! no threshold, and it needs the hand assembly below.
+//!
 //! # The counterfactual, and the PRE-REGISTERED prediction
 //!
 //! Give 4p its own exponents instead of its partner's: scale the 4p shell's three
@@ -48,7 +67,10 @@ use holon_chem::pair::electron_counts;
 /// Scale factors on the 4p exponents. 1.0 is the declared basis and is the control: it must
 /// reproduce the high-spin reading, or the counterfactual machinery is not computing the
 /// same thing the registry does.
-const LAMBDAS: &[f64] = &[1.0, 0.7, 0.5, 0.35, 0.25, 0.15];
+/// Trimmed from six points to four after measuring the cost. 1.0 is the control; 0.5,
+/// 0.25 and 0.12 span a factor of eight in exponent below it, far more than the mechanism
+/// needs if it is real. 0.7 was measured in an earlier run and read unchanged.
+const LAMBDAS: &[f64] = &[1.0, 0.5, 0.25, 0.12];
 
 fn main() {
     let syms: Vec<String> = {
@@ -64,24 +86,26 @@ fn main() {
         let sp = by_symbol(&sym).unwrap_or_else(|| panic!("unknown element {sym}"));
         let (_, na, nb) = electron_counts(&[sp]);
         println!("== {sym} (Z = {}), {na}/{nb} electrons ==", sp.z);
-        println!("{:>8} {:>20} {:>10} {:>8}", "lambda", "E (hartree)", "<S^2>", "2S+1");
+        println!(
+            "{:>8} {:>20} {:>10} {:>8} {:>11}",
+            "lambda", "E (hartree)", "<S^2>", "2S+1", "verdict"
+        );
         for &lam in LAMBDAS {
             let basis = scaled_4p_basis(sp, lam);
             let n = basis.n;
             let ao = ao_integrals(&basis);
-            // The Cholesky orthonormaliser WITHOUT the SCF rotation. Full CI is invariant
-            // under any unitary transformation of the orbitals it is full in, so the
-            // energy and <S^2> are identical either way; only Davidson's conditioning
-            // suffers. That is a cost, not a bias, and it keeps this example off the
-            // crate's private SCF path.
             let x = cholesky_orthonormaliser(&ao.s, n).expect("overlap positive definite");
             let mo = transform(&ao, &x, n);
             let space = FciSpace::new(n, na, nb);
             let sol = solve_determinant(&space, &mo);
             let s2 = s_squared(&space, &sol.vector);
             let mult = (1.0 + 4.0 * s2).sqrt();
+            // The declared basis reads 5 for zinc and 4 for gallium; anything a full unit
+            // below is the reversion the prediction stakes.
+            let base = if sp.z == 30 { 5.0 } else { 4.0 };
+            let verdict = if mult < base - 0.5 { "FLIPPED" } else { "unchanged" };
             println!(
-                "{lam:>8.2} {:>20.9} {s2:>10.6} {mult:>8.3}",
+                "{lam:>8.2} {:>20.9} {s2:>10.6} {mult:>8.3} {verdict:>11}",
                 sol.e.v + basis.nuclear_repulsion().v
             );
         }

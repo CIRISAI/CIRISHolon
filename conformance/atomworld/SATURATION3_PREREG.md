@@ -140,3 +140,34 @@ one expensive table built only if the fence counter says the physics
 needs it." NOT claimed: (O,O,O) unless built and gated; ozone chemistry;
 any mixed system beyond H/Cl and H/O; quantitative thermochemistry
 against nature; GPU speedups not measured on this path.
+
+---
+
+## AMENDMENT A1 — 2026-08-30, at G0's discharge, before any table node exists
+
+*Three items from G0's measurement (commit e5d19ca), none touching a kill.*
+
+1. **The cost-class boundary is restated at the instrument's own
+   resolution.** (Cl,Cl,Cl) measured 1.29x the "<= 5 s" class — and the
+   same solve, identical residual and iteration count, spread 14% in wall
+   time across two runs under shared load. A five-second boundary is not
+   resolvable by this instrument on this machine. Restated: the four
+   cheap types are <= 10 s a point, (O,O,O) <= 1 minute. The 10x kill is
+   untouched and nothing came within 8x of it. The gate's verdict column
+   now distinguishes in-class, over-class, and kill (its first version
+   conflated the first two — corrected before commit).
+2. **The unpredicted finding redirects both engineering gates: the two
+   cost classes are bound by DIFFERENT things.** (Cl,Cl,Cl) is 73%
+   integral/assemble (basis-bound, 27 orbitals); (O,O,O) is 99% CI
+   (determinant-bound). Warm-start and the GPU kernel accelerate Davidson
+   only, so BOTH size on (O,O,O) — sizing either on chlorine would
+   measure 27% of the wrong thing. G2's benchmark target is pinned to the
+   (O,O,O) CI kernel accordingly. The chlorine-class accelerator is the
+   ASSEMBLE path, recorded as a named successor — the third independent
+   instrument (after SATURATION-2's 74/5 split and mixtures-engine's
+   nonzero counts) to land on one answer: size by basis, not determinants.
+3. **G1's warrant is now a number**: a full-resolution S3 (O,O,O) table
+   is ~380 core-hours single-threaded; the four cheap tables together are
+   hours. Sharding pays exactly where P2's fence counter may rule the
+   table unnecessary — both halves of the freeze's decision tree carry
+   their measured prices.

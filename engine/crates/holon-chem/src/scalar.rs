@@ -21,14 +21,30 @@ use core::ops::{Add, Div, Mul, Neg, Sub};
 /// (the name every gate reads) — ONE numeric source, aliased, never repeated.
 pub const F64_EXPANSION_FLOOR: f64 = 1e-10;
 
-/// The double-double tier's expansion floor, PROVISIONAL until calibrated.
+/// The double-double tier's expansion floor — the MECHANISM guard, PROVISIONAL, and as
+/// of the first calibration UNREACHED and therefore untested.
 ///
 /// eps for double-double is 2⁻¹⁰⁴ ≈ 4.9e-32; accumulated roundoff at the largest staked
 /// scale (|E| ~ 6e3 Ha, n_det ~ 1e6) sits near 5e-26·‖H‖-ish. 1e-24 leaves two orders of
-/// headroom. Calibration protocol: solve the two SMALL formerly-refused atoms (Te 729
-/// dets, Sb 9,477) and read where their residuals actually pin before staking anything on
-/// the large ones. If measured stagnation sits above this floor, the constant moves and
-/// says so in its own history — that is instrument calibration, not result-gating.
+/// headroom.
+///
+/// # Two quantities, two homes — do not conflate them again
+///
+/// The 2026-08-30 calibration (Te 729 dets, Sb 9,477, warm-started refinement) read
+/// Sb to 3.37e-15 and Te to 2.97e-13 — and BOTH exits were `IterationCap` while still
+/// descending, never `Stagnated`. So those numbers are NOT this floor: they are the
+/// tier's DELIVERABLE boundary per ground-term-degeneracy class under a declared budget
+/// (Sb's ⁴S is orbitally nondegenerate and refines deep; Te's ³P is degenerate and
+/// crawls — two orders apart ON THE SAME RUNG). The deliverable boundary is a LEASE
+/// contract and lives where it is measured, per-class with provenance, in
+/// holon-resource's tier-overflow module (D3b). THIS constant is the internal
+/// Gram-Schmidt acceptance guard — the mechanism, not the promise — and its move
+/// trigger is unchanged and has NOT fired: it moves when a DD solve exits `Stagnated`
+/// with its residual above this floor, and says so in its own history. Wording
+/// tightened 2026-08-30 because the first calibration report said "pins at", which
+/// invited exactly the conflation this comment now forbids: capped-while-descending is
+/// a budget reading, stagnated-at-the-floor is a floor reading, and they are different
+/// facts (the same distinction `SolveExit` exists to carry).
 pub const DD_EXPANSION_FLOOR: f64 = 1e-24;
 
 /// What the generic solver needs from a number. Implemented by `f64` (the production

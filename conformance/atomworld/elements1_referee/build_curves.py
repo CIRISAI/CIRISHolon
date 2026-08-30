@@ -59,6 +59,15 @@ def tag_for(name, rs, dps):
     return "%s_%s_d%d" % (name, hh, dps)
 
 
+# The three record kinds get three tag NAMESPACES.  "spin_" was already
+# separate; the stencil's single-route energies were not, and for a heavy
+# species (stencil dps == R.DPS) that put them on the grid points' own keys.
+# See the note in runner.py -- one Li2 grid point in three was silently a
+# stencil record wearing a certified point's key.
+def fd_tag(name, rs, dps):
+    return "fd_" + tag_for(name, rs, dps)
+
+
 def spec_for(name, rs):
     d = SP.DIATOMICS[name]
     return ("diatomic", d["Z1"], d["Z2"], rs)
@@ -101,7 +110,7 @@ def stage_recertify(names, nproc_light, nproc_heavy, target=None):
         grid = SP.grid_for(name)
         weak = []
         for i, rs in enumerate(grid):
-            c = R.cache_get(tag_for(name, rs, R.DPS), R.DPS)
+            c = R.cache_get(tag_for(name, rs, R.DPS), R.DPS, kind="point")
             if c is None:
                 continue
             sec = list(c["sectors"].values())[0]
@@ -126,7 +135,7 @@ def stage_recertify(names, nproc_light, nproc_heavy, target=None):
         pmap(_w_point, weak, nproc_heavy if d["heavy"] else nproc_light)
         still = 0
         for (_, rs, _, _, _) in weak:
-            c = R.cache_get(tag_for(name, rs, R.DPS), R.DPS)
+            c = R.cache_get(tag_for(name, rs, R.DPS), R.DPS, kind="point")
             sec = list(c["sectors"].values())[0]
             tgt = float(target if target is not None
                         else cert_target(mpf(sec["E_A"])))
@@ -145,7 +154,7 @@ def stage_recertify(names, nproc_light, nproc_heavy, target=None):
 def _w_energy(payload):
     name, rs, dps = payload
     mp.dps = dps
-    Ev, obj = R.energy_only(spec_for(name, rs), tag_for(name, rs, dps), dps=dps)
+    Ev, obj = R.energy_only(spec_for(name, rs), fd_tag(name, rs, dps), dps=dps)
     return obj
 
 
@@ -363,7 +372,8 @@ def read_fd(name, rs, dps=None):
         dps = stencil_dps(name)
     vals = []
     for k in (-4, -3, -2, -1, 0, 1, 2, 3, 4):
-        c = R.cache_get(tag_for(name, curve.dec_shift(rs, k), dps), dps)
+        c = R.cache_get(fd_tag(name, curve.dec_shift(rs, k), dps), dps,
+                        kind="energy")
         if c is None:
             return None
         vals.append(mpf(c["E"]))
@@ -487,7 +497,8 @@ def read_spin(name, gs):
     """The spin audit over a whole grid, or None if it has not been run."""
     recs = []
     for rs in gs:
-        c = R.cache_get("spin_" + tag_for(name, rs, R.DPS), R.DPS)
+        c = R.cache_get("spin_" + tag_for(name, rs, R.DPS), R.DPS,
+                        kind="spin")
         if c is None:
             return None
         # A record predating the sector-ordering test has no verdict, and a
@@ -546,7 +557,8 @@ def read_probe(name):
     """The beyond-grid spin probe, or None if it has not been run."""
     out = []
     for rs in beyond_grid_points(name):
-        c = R.cache_get("spin_" + tag_for(name, rs, R.DPS), R.DPS)
+        c = R.cache_get("spin_" + tag_for(name, rs, R.DPS), R.DPS,
+                        kind="spin")
         if c is None:
             return None
         out.append(dict(R=rs, two_S=c["two_S"], resolved=c["level_resolved"],
@@ -592,17 +604,19 @@ def assemble(name, atoms):
 
     spin_recs = {}
     for rs in gs:
-        spin_recs[rs] = R.cache_get("spin_" + tag_for(name, rs, R.DPS), R.DPS)
+        spin_recs[rs] = R.cache_get("spin_" + tag_for(name, rs, R.DPS),
+                                    R.DPS, kind="spin")
 
     missing = [rs for rs in gs
-               if R.cache_get(tag_for(name, rs, R.DPS), R.DPS) is None]
+               if R.cache_get(tag_for(name, rs, R.DPS), R.DPS,
+                               kind="point") is None]
     if missing:
         raise Incomplete("%s: %d of %d staked geometries not yet computed"
                          % (name, len(missing), len(gs)))
     EA, EB, devAB, res_A, ndet, E_C, devAC = [], [], [], [], None, [], []
     bnd_A, bnd_B = [], []
     for rs in gs:
-        c = R.cache_get(tag_for(name, rs, R.DPS), R.DPS)
+        c = R.cache_get(tag_for(name, rs, R.DPS), R.DPS, kind="point")
         sec = list(c["sectors"].values())[0]
         ndet = sec["ndet"]
         EA.append(mpf(sec["E_A"]))
@@ -708,16 +722,37 @@ def assemble(name, atoms):
         De = E_asym - E_at_Re
 
     # ---- Hermite renderer contract --------------------------------------
+    # The probe geometries are INTERIOR to the grid intervals, so they never
+    # collided with a grid point's key -- but they are single-route ENERGY
+    # records and were being fetched under the certified-point tag, which only
+    # worked because the two kinds shared a namespace.  They now live in the
+    # stencil's own namespace, like every other energy_only record.
     eE = mpf(0)
     nprobe = 0
+    npts = 0
     for (i, rs) in hermite_probe_points(name, gs, d["heavy"]):
-        c = R.cache_get(tag_for(name, rs, R.DPS), R.DPS)
+        npts += 1
+        c = R.cache_get(fd_tag(name, rs, R.DPS), R.DPS, kind="energy")
         if c is None:
             continue
         nprobe += 1
         hv, hd = curve.hermite_interval(grid[i], grid[i + 1], EA[i], EA[i + 1],
                                         d1[i], d1[i + 1], mpf(rs))
         eE = max(eE, abs(hv - mpf(c["E"])))
+
+    # A ZERO HERE IS A MISSING MEASUREMENT, NOT A PERFECT ONE.
+    #
+    # Every species stakes probe geometries, so nprobe == 0 means the records
+    # were not found -- and the column it produces is max_abs_error = 0.0, which
+    # reads as an interpolant that is exact everywhere and passes any presence
+    # check.  The cache migration that separated the tag namespaces produced
+    # exactly this on all six landed species, and the numbers were the only
+    # thing that showed it.  (The campaign's own rule: no column declares a zero
+    # uncertainty.)
+    if npts and not nprobe:
+        raise Incomplete("%s: %d Hermite probe geometries staked, 0 found in "
+                         "the cache; a zero interpolant error here would be a "
+                         "missing measurement wearing a number" % (name, npts))
 
     def herm(x):
         lo, hi = 0, n - 1
@@ -790,7 +825,7 @@ def assemble_minimum_only(name):
     grid = [mpf(x) for x in gs]
     EA = []
     for rs in gs:
-        c = R.cache_get(tag_for(name, rs, R.DPS), R.DPS)
+        c = R.cache_get(tag_for(name, rs, R.DPS), R.DPS, kind="point")
         if c is None:
             raise RuntimeError("missing grid point %s for %s" % (rs, name))
         EA.append(mpf(list(c["sectors"].values())[0]["E_A"]))

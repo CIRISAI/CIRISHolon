@@ -18267,5 +18267,9 @@
     "envelope_n_rungs": 52
    }
   }
+ },
+ "incomplete_species": {
+  "Li2": "Li2: 17 of 42 staked geometries not yet computed",
+  "Ne2": "Ne2: 393 Hermite probe geometries staked, 0 found in the cache; a zero interpolant error here would be a missing measurement wearing a number"
  }
 }

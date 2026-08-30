@@ -47,6 +47,7 @@ computed from the operator it was given.
 """
 
 import array
+import warnings
 import math
 from mpmath import mp, mpf, sqrt, matrix, eigsy, nstr
 
@@ -907,6 +908,82 @@ def _rayleigh_ritz(V, W):
     return theta, c, r
 
 
+# THE DOUBLE-PRECISION SEED IS ONLY A SEED, AND MUST ALWAYS PRODUCE ONE.
+#
+# The working-precision Jacobi-Davidson loop below does the real work; ARPACK's
+# job is to hand it a starting subspace and a rough gap.  But `tol=0` asks
+# ARPACK for MACHINE precision on all k vectors, and at a dissociation limit the
+# lowest levels are degenerate to about 1e-14 -- so it cannot separate them, and
+# the request fails for a reason that has nothing to do with the quality of the
+# seed.  CO at R = 9 bohr (14400 determinants, dissociated to C + O, both open
+# shell) does exactly this: neither the k=6 tol=0 attempt nor the k=2 tol=1e-12
+# retry converges, and stage 1 died on it with no fallback left.
+#
+# Each rung is tried only when the one above it produced nothing, so a geometry
+# that succeeded on rung (a) computes bit-identically to before this ladder
+# existed.  The rung actually used is recorded in the artifact's `seed` field,
+# because a seed that needed the last resort is a fact about that geometry.
+#
+# The failing case is exercised in test_fci.py rather than assumed: rung (a) is
+# forced to fail and the ladder is required to return a usable subspace.
+def _lowest_diag_block(op, n, k):
+    """Unit vectors on the k determinants of lowest diagonal: the Davidson
+    start for a CI matrix, and deterministic (no RNG in a referee)."""
+    d = getattr(op, "diag_f64", None)
+    if d is None:
+        idx = np.arange(min(k, n))
+    else:
+        idx = np.argsort(np.asarray(d, dtype=float))[:k]
+    X = np.zeros((n, len(idx)))
+    for c, i in enumerate(idx):
+        X[i, c] = 1.0
+    return X
+
+
+def _f64_seed(op, Lop, n, k):
+    """(eigenvalues, eigenvectors, label) -- at least two of each, always."""
+    # (a) what every geometry before this ladder used
+    try:
+        w, V = spl.eigsh(Lop, k=k, which="SA", tol=0, maxiter=20000)
+        return w, V, "sparse f64 Lanczos (ARPACK)"
+    except spl.ArpackNoConvergence as exc:
+        # (b) ARPACK's partial result carries the vectors that DID converge
+        if exc.eigenvalues is not None and len(exc.eigenvalues) >= 2:
+            return (exc.eigenvalues, exc.eigenvectors,
+                    "sparse f64 Lanczos (ARPACK, partial: %d of %d converged)"
+                    % (len(exc.eigenvalues), k))
+    # (c) a wider Krylov basis and a tolerance appropriate to a SEED
+    ncv = int(min(n - 1, max(2 * k + 1, 120)))
+    for tol, mi in ((1e-10, 200000), (1e-8, 400000)):
+        try:
+            w, V = spl.eigsh(Lop, k=k, which="SA", tol=tol, ncv=ncv,
+                             maxiter=mi)
+            return w, V, ("sparse f64 Lanczos (ARPACK, ncv=%d, seed tol %g)"
+                          % (ncv, tol))
+        except spl.ArpackNoConvergence as exc:
+            if exc.eigenvalues is not None and len(exc.eigenvalues) >= 2:
+                return (exc.eigenvalues, exc.eigenvectors,
+                        "sparse f64 Lanczos (ARPACK, ncv=%d, partial %d)"
+                        % (ncv, len(exc.eigenvalues)))
+    # (d) last resort: LOBPCG, Jacobi-preconditioned, from the lowest-diagonal
+    # block.  It is the standard cure for a CI matrix and it always returns.
+    X = _lowest_diag_block(op, n, max(k, 4))
+    d = getattr(op, "diag_f64", None)
+    M = None
+    if d is not None:
+        dv = np.asarray(d, dtype=float)
+        shift = dv - dv.min() + 1.0
+        M = spl.LinearOperator((n, n), matvec=lambda x: x / shift[:, None]
+                               if x.ndim > 1 else x / shift, dtype=float)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        w, V = spl.lobpcg(Lop, X, M=M, largest=False, tol=1e-9, maxiter=2000)
+    w = np.asarray(w).ravel()
+    if len(w) < 2:
+        raise RuntimeError("f64 seed ladder exhausted: no usable subspace")
+    return w, V, "LOBPCG, Jacobi-preconditioned, lowest-diagonal block"
+
+
 def solve_certified(op, tol_digits=55, max_outer=6, verbose=False):
     """Ground-state energy of op at the working precision, with a certificate.
 
@@ -944,17 +1021,9 @@ def solve_certified(op, tol_digits=55, max_outer=6, verbose=False):
         # thread and leaves the job LOOKING alive with every process still up.
         # Its partial result is perfectly usable: it carries the vectors that
         # did converge, and one is all the seed needs.
-        try:
-            w, V = spl.eigsh(Lop, k=k, which="SA", tol=0, maxiter=20000)
-        except spl.ArpackNoConvergence as exc:
-            if exc.eigenvalues is not None and len(exc.eigenvalues) >= 1:
-                w, V = exc.eigenvalues, exc.eigenvectors
-            else:
-                w, V = spl.eigsh(Lop, k=min(2, n - 1), which="SA",
-                                 tol=1e-12, maxiter=100000)
+        w, V, seed = _f64_seed(op, Lop, n, k)
         o = np.argsort(w)
         lam0, lam1, v0 = w[o[0]], w[o[1]], V[:, o[0]]
-        seed = "sparse f64 Lanczos (ARPACK)"
     gap = float(lam1 - lam0)
 
     # ---- the working-precision subspace.  Seeded with the double-precision

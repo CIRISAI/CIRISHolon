@@ -13,6 +13,8 @@ echo "=== the guards, each fired on the case it exists for ==="
 $PY -u test_runlock.py
 $PY -u test_pmap_safety.py
 $PY -u test_emit_refusals.py
+$PY -u test_cache_kinds.py
+$PY -u test_seed_ladder.py
 $PY -u test_verify_sections.py
 echo
 echo "=== spin audit at every geometry (the emitter refuses without it) ==="

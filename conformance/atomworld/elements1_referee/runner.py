@@ -28,8 +28,54 @@ def _key(tag, dps):
     return "%s__dps%d" % (tag, dps)
 
 
-def cache_get(tag, dps, table=None):
-    """Read a cached record, refusing any computed under a different basis."""
+# THREE KINDS OF RECORD SHARE ONE CACHE; THEY MUST NOT SHARE A KEY.
+#
+# run_point writes a dual-route record keyed by "sectors"; energy_only writes a
+# single route-A energy keyed by "E"; spin_only writes an <S^2> record.  The tag
+# carries species, geometry and dps but said NOTHING about which of the three a
+# record is, and for the three HEAVY species the stencil precision equals the
+# grid precision (FD_DPS_CHEAP == DPS == 60), so a stencil evaluated AT a grid
+# point produced exactly the grid point's tag.  Two failures came out of that,
+# and only one of them was loud:
+#
+#   loud   -- energy_only reading a run_point record raises KeyError: 'E'.
+#             That killed the N2 and CO stencil stages and, earlier, Li2's.
+#   silent -- when the stencil got there FIRST, its single-route record sat
+#             under the grid point's key, and run_point returned it from cache
+#             without ever looking at its shape.  Li2 carried two such points
+#             (R = 7.490376922377 and R = 18.000000000000): no route B, no
+#             Temple bound, no spin sector, no dev_AB -- and nothing downstream
+#             could tell, because the assemble only asked whether the record
+#             EXISTED.
+#
+# The repair is two-part and both parts are load-bearing.  The tags are
+# separated by a per-kind prefix so the collision cannot arise; and cache_get
+# checks the shape it got against the shape the caller asked for, so if a
+# collision is ever reintroduced it fails LOUDLY at the read.  A shape mismatch
+# RAISES rather than returning None on purpose: None means "stale, recompute",
+# and recomputing under a clashing key would overwrite the other kind's record
+# -- a repair that destroys data is worse than the fault.
+def record_kind(obj):
+    """Which of the three kinds a cached record is, read from its own shape."""
+    if "sectors" in obj:
+        return "point"
+    if "S2" in obj:            # before "E": a spin record carries both
+        return "spin"
+    if "E" in obj:
+        return "energy"
+    return None
+
+
+class CacheKindClash(RuntimeError):
+    """A cache key holds a record of a different kind than the caller's."""
+
+
+def cache_get(tag, dps, table=None, kind=None):
+    """Read a cached record, refusing any computed under a different basis.
+
+    `kind`, when given, is the record shape the caller will read; a stored
+    record of another shape is a key collision and raises.
+    """
     p = os.path.join(CACHE, _key(tag, dps) + ".json")
     if not os.path.exists(p):
         return None
@@ -43,14 +89,23 @@ def cache_get(tag, dps, table=None):
     if got != want:
         cache_get.refused += 1
         return None
+    if kind is not None:
+        have = obj.get("record_kind") or record_kind(obj)
+        if have != kind:
+            cache_get.kind_clashes += 1
+            raise CacheKindClash(
+                "%s holds a %r record but a %r record was asked for"
+                % (_key(tag, dps), have, kind))
     return obj
 
 
 cache_get.refused = 0
+cache_get.kind_clashes = 0
 
 
 def cache_put(tag, dps, obj, table=None):
     obj["basis_fingerprint"] = E.basis_fingerprint(table)
+    obj["record_kind"] = record_kind(obj)
     os.makedirs(CACHE, exist_ok=True)
     p = os.path.join(CACHE, _key(tag, dps) + ".json")
     tmp = p + ".tmp%d" % os.getpid()
@@ -101,7 +156,7 @@ ROUTE_C_BUDGET = 4.0e7
 def run_point(spec, tag, want_C=True, want_B=True, dps=DPS, table=None,
               force=False, sectors=None, max_outer=9):
     """Compute one geometry.  Returns a JSON-safe dict; caches to disk."""
-    cached = None if force else cache_get(tag, dps, table)
+    cached = None if force else cache_get(tag, dps, table, kind="point")
     if cached is not None:
         return cached
     mp.dps = dps
@@ -183,7 +238,7 @@ def spin_only(spec, tag, dps=DPS, table=None, na=None, nb=None, force=False):
     energy.  The engine lane's planted defect fired on F2, a species neither of
     us had spin-tested, not on the carbon case we both knew about.
     """
-    cached = None if force else cache_get(tag, dps, table)
+    cached = None if force else cache_get(tag, dps, table, kind="spin")
     if cached is not None:
         return cached
     mp.dps = dps
@@ -247,7 +302,7 @@ def spin_only(spec, tag, dps=DPS, table=None, na=None, nb=None, force=False):
 def energy_only(spec, tag, dps=DPS, table=None, na=None, nb=None,
                 max_outer=12, force=False):
     """Route A energy at one geometry -- the workhorse for FD stencils."""
-    cached = None if force else cache_get(tag, dps, table)
+    cached = None if force else cache_get(tag, dps, table, kind="energy")
     if cached is not None:
         return mpf(cached["E"]), cached
     mp.dps = dps

@@ -1,0 +1,32 @@
+# SATURATION-2 Frozen P2 Water Quench Run Log
+# Launch Command: cargo run --release -p holon-render --example waterquench -- mixed
+# Composition: 8 H + 4 O (12 atoms in 34.6 x 20.8 bohr)
+# Frames: 20,000 boundaries x 64 substeps (dt = 0.5386 - 1.0772 a.u. -> 33.35 ps)
+# Thermostat: T_init 3000 K, T_target 300 K, tau 2000
+# Physics Path: Pairs (H-H, O-H, O-O) + Triples (H-H-H, O-H-H, O-O-H) + OOO Fence Guard
+
+# curve H-H: 96 knots, R_e = 1.3887 bohr, D_e = 0.204142 Ha, worst residual 8.7e-11, 0.4 s
+# curve O-H: 96 knots, R_e = 1.9909 bohr, D_e = 0.122901 Ha, worst residual 9.9e-11, 3.9 s
+# WARNING O-O: worst residual 6.70e-6 exceeds CONVERGED_RESIDUAL 1e-9. Locate it before trusting anything this arm reports; see examples/s2_oo_residual.rs
+# curve O-O: 96 knots, R_e = 2.4421 bohr, D_e = 0.147621 Ha, worst residual 6.7e-6, 366.8 s
+# arm = mixed (8 H + 4 O)   seeds = 8   12 atoms in 34.6 x 20.8 bohr
+# 20000 boundaries x 64 substeps, dt = 1.0772 a.u. -> 33.35 ps
+# T_init 3000 K, T_target 300 K, tau 2000
+# setup 372.5 s
+
+seed 0x0000000053415421  dt 0.5386  modal-O O4H4  free O 0  free H 0  largest 8  molecules [H2 H2 O4H4]     fenced 4  drift 1.56e-4/1.87e1  |p| 5.84e-12/1.08e-7  T 316 K  37 s
+seed 0x0000000053415422  dt 0.5386  modal-O O4H4  free O 0  free H 0  largest 8  molecules [H2 H2 O4H4]     fenced 4  drift 4.99e-5/1.57e1  |p| 5.39e-12/9.04e-8  T 327 K  34 s
+seed 0x0000000053415423  dt 0.5386  modal-O O4H4  free O 0  free H 0  largest 8  molecules [H2 H2 O4H4]     fenced 4  drift 1.83e-4/1.43e1  |p| 5.28e-12/9.95e-8  T 313 K  30 s
+seed 0x0000000053415424  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 4  drift 1.83e-4/1.23e1  |p| 8.49e-12/9.47e-8  T 245 K  24 s
+seed 0x0000000053415425  dt 1.0772  modal-O O4H4  free O 0  free H 0  largest 8  molecules [H2 H2 O4H4]     fenced 4  drift 1.62e-4/5.78e1  |p| 1.05e-11/7.42e-8  T 161 K  25 s
+seed 0x0000000053415426  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 4  drift 1.97e-4/1.18e1  |p| 3.95e-12/8.55e-8  T 296 K  25 s
+seed 0x0000000053415427  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 4  drift 1.06e-4/7.54e0  |p| 4.80e-12/1.03e-7  T 326 K  20 s
+seed 0x0000000053415428  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 4  drift 5.07e-5/7.93e0  |p| 3.20e-12/8.22e-8  T 319 K  28 s
+
+# ---- mixed (8 H + 4 O) ----
+# seeds with the modal O-containing molecule = H2O : 0 / 8
+# seeds with ZERO free oxygen                      : 8 / 8
+# seeds with any molecule at all                   : 8 / 8
+# worst drift / bound = 1.670e-5, worst |p| / bound = 1.413e-4
+# fence incidence (triples refused for want of a table), per seed: [4, 4, 4, 4, 4, 4, 4, 4]
+# molecule census over all seeds: 20xH2  4xO4H2  4xO4H4

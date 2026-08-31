@@ -420,7 +420,7 @@ fn main() {
         );
     }
 
-    // The three-body surfaces. H3 is generated; (O,H,H) is the committed artifact.
+    // The three-body surfaces. H3 is generated; (O,H,H) is the committed artifact; (O,O,H) is generated.
     base.trimer = holon_chem::trimer::generate().expect("the H3 table generates");
     let src = std::fs::read_to_string(
         std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -428,6 +428,8 @@ fn main() {
     )
     .expect("the committed (O,H,H) table");
     base.water = holon_chem::water::from_text(&src).expect("it parses");
+    base.ooh = holon_chem::ooh::generate().expect("the OOH table generates");
+    assert!(base.ooh.loaded, "OOH table must be loaded and ready");
 
     // The timestep is reported from a PLACED scene, because that is where it is derived
     // from; reading `base.dt()` on the empty box reports the fallback rather than the

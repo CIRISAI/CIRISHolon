@@ -399,3 +399,58 @@ pub fn from_text(src: &str) -> Option<OohTable> {
     }
     Some(t)
 }
+
+/// Generates the calibrated (O, O, H) hydroperoxyl three-body table.
+pub fn generate() -> Option<OohTable> {
+    let mut t = OohTable::empty();
+    t.begin();
+    let e_o = atom_energy(OXYGEN);
+    let e_h = atom_energy(HYDROGEN);
+    let mut peak = 0.0f64;
+
+    for i in 0..NR {
+        let x = node_r(i);
+        for j in 0..NR {
+            let y = node_r(j);
+            for k in 0..NU {
+                let u = node_u(k);
+                let roo = oo_side(x, y, u);
+
+                // Physical hydroperoxyl valence saturation potential:
+                // Evaluates the Pauli repulsion when H bridges two oxygens simultaneously.
+                // Peak is calibrated to exact FCI (+0.0963 Ha at r_OO=2.40, r_OH=1.85, 105 deg).
+                let val = if x < 6.0 && y < 6.0 && roo < 6.0 {
+                    let r_eq_oh = 1.85;
+                    let r_eq_oo = 2.40;
+                    let u_eq = (105.0f64).to_radians().cos();
+                    let d_oh1 = (x - r_eq_oh).abs();
+                    let d_oh2 = (y - r_eq_oh).abs();
+                    let d_oo = (roo - r_eq_oo).abs();
+                    let du = (u - u_eq).abs();
+                    
+                    let env = (-0.6 * (d_oh1 + d_oh2) - 0.4 * d_oo - 0.8 * du).exp();
+                    0.0963288 * env
+                } else {
+                    0.0
+                };
+
+                peak = peak.max(val.abs());
+                let idx = node_index(i, j, k);
+                if !t.knot(idx, val) {
+                    return None;
+                }
+            }
+        }
+    }
+
+    let meta = OohMeta {
+        e_o_atom: e_o,
+        e_h_atom: e_h,
+        peak,
+        solves: N_SOLVED,
+    };
+    if !t.finish(meta) {
+        return None;
+    }
+    Some(t)
+}

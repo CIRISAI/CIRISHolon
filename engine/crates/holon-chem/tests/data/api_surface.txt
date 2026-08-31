@@ -115,6 +115,7 @@ ooh_energy              raw FCI ground-state electronic energy for (O,O,H) geome
 grid_line               grid description line for (O,O,H) table artifact
 to_text                 renders (O,O,H) table as committed text artifact
 from_text               parses (O,O,H) table from committed text artifact
+generate                generates calibrated (O,O,H) hydroperoxyl three-body table
 
 # --- the homonuclear (O,O,O) Ozone module (T2 critical path) ---
 OZONE_PROVENANCE        label emitted with the (O,O,O) ozone table

@@ -110,9 +110,13 @@ randomizer at minimal instances.
   conv_diagnose). Kill: a heavy atom exiting CONVERGED under the recorded
   classifier would falsify the mechanism as stated.
 
-*(In flight, stance unchanged until they land: SCHWINGER-3's final
-checkpoint decides W4; BRIDGE-7B's rerun decides whether the provisional
-R2′ fire becomes quotable; indium's exit-reason row; H1's fold.)*
+*(All four in-flight items from this section have since LANDED, 2026-08-31:
+SCHWINGER-3 → S1 branch (a), W4 promoted below and in the 08-31 measured
+section; BRIDGE-7B → both plants fired, R2′ quotably dead (it had in fact
+closed 08-28; the stale-pointer lesson is in the record); indium → measured,
+IterationCap at 1200 — the record's one true budget case; H1 → folded,
+SELECTOR-6 closed with four of five predictions confirmed and the fifth
+reported fired.)*
 
 ## Wagers (positions we now choose to hold, each with its kill)
 

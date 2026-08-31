@@ -90,6 +90,12 @@ solve_finished          the HONEST convergence verdict, reported and deliberatel
 #                       constants' doc comments for the ruling. Enforcing this verdict is
 #                       a decision about the SOLVER, so the fact is exposed here for a
 #                       consumer that wants it while `converged` stays as it was.
+DD_REQUESTED_TOLERANCE  the DD tier's REACHABLE default ask (1e-12), consumed by callers
+#                       outside the library: refine_determinant_dd takes the ask as a
+#                       parameter (depth negotiation belongs to the lease layer), so the
+#                       library itself never reads the default -- examples and future
+#                       lease-layer callers do. Same classification shape as
+#                       UNDECLARED_RADIUS below: real API, consumer beyond the crate.
 UNDECLARED_RADIUS       real API whose consumer is outside this crate: holon-render's
 #                       sandbox draw path takes it as the NAMED fallback for a species
 #                       whose homonuclear equilibrium was never measured — deliberately

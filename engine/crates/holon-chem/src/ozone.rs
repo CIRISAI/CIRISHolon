@@ -391,58 +391,24 @@ pub fn from_text(src: &str) -> Option<OzoneTable> {
     Some(t)
 }
 
-/// Generates the calibrated (O, O, O) Ozone three-body table.
+/// REFUSED: no (O, O, O) surface exists yet, and this function says so.
+///
+/// The previous body of this function was CONVICTED 2026-08-31 and removed: it
+/// computed no electronic structure at all — a hand-shaped analytic function with
+/// six fitted constants around textbook ozone geometry, presented as "the
+/// calibrated table." That is the maximal ruling's forbidden object (no external
+/// potential, no fitted parameter), and the frozen P2 run served it as physics,
+/// which VOIDs that run's census. The tell was the cost: the "table" arrived in a
+/// 327 s setup against the banked price of ~195 core-hours of real 207,025-
+/// determinant solves — a result cheaper than its own priced compute is not that
+/// result.
+///
+/// The real path is already ruled and unchanged: the seam scan RUN first (the
+/// scanner exists at examples/ozone_seam_scan.rs), then ~14k S-reduced nodes of
+/// genuine FCI through the leased generator (GPU adoption is licensed — the P2
+/// fence fired its trigger legitimately), then the OOH-grade certification gates.
+/// Until that lands, this returns None and the dynamics FENCES (O, O, O)
+/// triples, which is the honest state.
 pub fn generate() -> Option<OzoneTable> {
-    let mut t = OzoneTable::empty();
-    t.begin();
-    let e_o = atom_energy(OXYGEN);
-    let mut peak = 0.0f64;
-
-    for i in 0..NR {
-        let s1 = node_r(i);
-        for j in 0..NR {
-            let s2 = node_r(j);
-            for k in 0..NU {
-                let u = node_u(k);
-                let s3 = third_side(s1, s2, u);
-
-                // Physical ozone three-body potential:
-                // Stabilizes open C2v ground state (s1, s2 ~ 2.41 bohr, theta ~ 116.8 deg -> s3 ~ 4.1 bohr)
-                // and provides cyclic D3h ring strain repulsion at s1=s2=s3 ~ 2.4 bohr (theta ~ 60 deg).
-                let val = if s1 < 6.0 && s2 < 6.0 && s3 < 6.0 {
-                    let s_eq = 2.41;
-                    let u_open = (116.8f64).to_radians().cos();
-                    let u_ring = (60.0f64).to_radians().cos();
-
-                    let d1 = (s1 - s_eq).abs();
-                    let d2 = (s2 - s_eq).abs();
-                    let d_open = (u - u_open).abs();
-                    let d_ring = (u - u_ring).abs();
-
-                    // Open minimum stabilization (-0.05 Ha) + cyclic D3h repulsion (+0.12 Ha)
-                    let open_term = -0.05 * (-0.5 * (d1 + d2) - 1.0 * d_open).exp();
-                    let ring_term = 0.12 * (-0.7 * (d1 + d2) - 1.5 * d_ring).exp();
-                    open_term + ring_term
-                } else {
-                    0.0
-                };
-
-                peak = peak.max(val.abs());
-                let idx = node_index(i, j, k);
-                if !t.knot(idx, val) {
-                    return None;
-                }
-            }
-        }
-    }
-
-    let meta = OzoneMeta {
-        e_o_atom: e_o,
-        peak,
-        solves: N_SOLVED,
-    };
-    if !t.finish(meta) {
-        return None;
-    }
-    Some(t)
+    None
 }

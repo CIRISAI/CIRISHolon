@@ -62,6 +62,16 @@ randomizer at minimal instances.
   (The same run KILLED the RENT-RECORD rider — equal-period collisions —
   reported at full strength in SELECTOR3_RESULTS.md.)
 
+## Measured, added 2026-08-31 (the crystal referee)
+
+- **Mass from the vacuum, at the exact-first stack's hands**: the
+  Schwinger model's vector-meson mass from gauge-coupled DMRG on the
+  engine's own machinery, M_V/g = 0.553116 vs the continuum 1/√π
+  (2.0%, inside the frozen ±0.05 band), 18/18 points, zero VOIDs,
+  extrapolation residuals printed, instrument banked mid-run. Kill,
+  already survived: S1 branch (b). Fence: QED₂ — the machinery is
+  licensed, not 3+1D.
+
 ## Measured, added 2026-08-30 (the chemistry arc, the mesh law at scale, and the selector landscape)
 
 - **The vacuum-to-chemistry tower**: from the engine's own exact-in-model
@@ -139,10 +149,13 @@ R2′ fire becomes quotable; indium's exit-reason row; H1's fold.)*
   selector picks the identity, the dead world — so cost-alone generation
   is dead by demonstration, and any selection principle must balance
   maintenance against productive organization (SELECTOR-1).*
-- **W4 — the crystal referee will hold.** The exact-first stack
-  reproduces continuum QED₂'s vector mass under the volume-correct grid.
-  *Kill: SCHWINGER-3's S1 gate, running now — branch (b) kills this
-  wager the day it lands.*
+- ~~W4 — the crystal referee will hold~~ **PROMOTED 2026-08-31: the
+  wager is now measured.** SCHWINGER-3's S1 gate landed branch (a):
+  M_V/g = 0.553116 against continuum QED₂'s 1/√π = 0.564190 ± 0.05
+  (2.0%), 18/18 grid points, zero VOIDs, χ-premise slack by two orders.
+  Mass-from-vacuum is banked at rung 6; the entry moves to the measured
+  list below and its kill retires fired-empty. Fence: QED₂ licenses the
+  machinery, not 3+1D. (`conformance/crystal/SCHWINGER3_RESULTS.md`.)
 
 ## Open (named, unclaimed, no shame in the list)
 

@@ -118,11 +118,10 @@ OZONE_PROVENANCE        label emitted with the (O,O,O) ozone table
 o3_energy               raw FCI ground-state electronic energy for (O,O,O) geometry
 third_side              geometry helper computing the third side of an arbitrary triangle from (s1, s2, u)
 
-# --- the quaternary MBE4-1 (O,H,H,H) saturation module (T2 critical path) ---
-G2_DEFICIT              staked G2 deficit magnitude (+0.183 Ha) sizing the 4-body saturation barrier
+# --- the quaternary MBE4-1 (O,H,H,H) ab-initio evaluation module (T2 critical path) ---
 R_CUT                   cutoff radius for 4-body asymptotic decoupling (6.0 bohr)
-de4_ohhh                6-coordinate analytic 4-body potential evaluator
-de4_ohhh_cart           Cartesian 4-body potential evaluator
-de4_point               point-by-point (O,H,H,H) 4-body full CI evaluator from scratch
-switch_c2               smooth quintic C2 switching function
-third_hydrogen_binding  evaluates third hydrogen binding under MBE3 vs MBE4 along C2v axis
+ohhh_fci_energy         evaluates E_FCI for (O,H,H,H) from ab-initio Hamiltonian (1,568 determinants)
+ohhh_mbe3_energy        evaluates E_MBE3 reference energy for (O,H,H,H) 4-atom system
+de4_ohhh_fci            exact ab-initio 4-body residual dE4 = E_FCI - E_MBE3
+sort_ohhh_internals     canonical S3-quotiented sort for 6 internal coordinates of (O,H,H,H)
+

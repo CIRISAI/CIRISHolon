@@ -34,6 +34,10 @@ fn ozone_s3_exchange_symmetry_is_bit_exact() {
     assert_eq!(g_123[0].to_bits(), g_312[1].to_bits());
     assert_eq!(g_123[1].to_bits(), g_312[2].to_bits());
     assert_eq!(g_123[2].to_bits(), g_312[0].to_bits());
+
+    assert_eq!(g_123[0].to_bits(), g_321[2].to_bits());
+    assert_eq!(g_123[1].to_bits(), g_321[1].to_bits());
+    assert_eq!(g_123[2].to_bits(), g_321[0].to_bits());
 }
 
 #[test]

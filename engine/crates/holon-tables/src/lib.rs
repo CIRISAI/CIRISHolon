@@ -88,6 +88,7 @@
 pub mod digest;
 pub mod generate;
 pub mod grid;
+pub mod mesh_reaper;
 pub mod mutation;
 pub mod node;
 pub mod worker;
@@ -97,4 +98,5 @@ pub use generate::{generate, GenOutcome, GenSpec, WarmPolicy};
 pub use grid::{NodeId, RegionId, TableGrid};
 pub use mutation::Mutation;
 pub use node::{NodeRecord, NodeStatus, VoidReason};
+pub use mesh_reaper::MeshWorld;
 pub use worker::WorkerProbe;

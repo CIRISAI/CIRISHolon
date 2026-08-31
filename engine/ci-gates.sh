@@ -291,6 +291,13 @@ cargo build -q -p holon-tables --release --tests 2>/dev/null \
 cargo test -q -p holon-tables --test leased 2>/dev/null >/dev/null \
   && ok "holon-tables leased path: real worker probe, books balance, table unchanged" \
   || no "holon-tables leased path: real worker probe, books balance, table unchanged"
+# The reaper against REAL long-running holders. Its false-positive count against genuine work
+# is a measurement, and zero is the only acceptable answer -- a reaper that reaps live holders
+# is worse than the leak it prevents. It also self-calibrates grace from each worker's OWN
+# observed step, which is what took the count from 1115 to 0.
+cargo test -q -p holon-tables --test live_reaper 2>/dev/null >/dev/null \
+  && ok "holon-tables live reaper: zero false reaps against real generation" \
+  || no "holon-tables live reaper: zero false reaps against real generation"
 
 # holon-resource: RESOURCE-1's leasing tier. Unlike holon-tables, this one is FULLY
 # enforced here — its whole suite is arithmetic and bookkeeping with no chemistry in

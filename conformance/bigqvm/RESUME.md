@@ -33,7 +33,30 @@ compare against stim on the identical circuit.
 | 141 | 39761 | 79520 | 25.8 s | 7/7 PASS |
 | 181 | 65521 | 131040 | 49.5 s | 7/7 PASS |
 
-## OWED — the two open items, both blocked on the same thing
+## STATUS: both items CLOSED 2026-08-30
+
+**d = 221 RAN AND PASSED.** The waiter was refused six times over 25 minutes,
+then took a 17.9 GB window unattended: 97,681 qubits, 195,360 adaptive
+measurements, 7/7 verifications, on seeds 1, 2 and 3. Against stim on the
+identical circuit **we lead 1.33× (0.754)** — the one row in this lane whose
+distributions do not overlap (our slowest run beat stim's fastest) and whose
+min and median agree to one part in a thousand.
+
+A defect the run exposed and that is now fixed: the memory guard UNDERSTATED
+peak RSS by 50% (14.36 GB actual against a 9.54 GB model) because
+`z_string_value` allocated a second full row-major tableau. It now reuses the
+one buffer; peak RSS 9.571 GB against the 9.545 GB model, and wall fell from
+111 s to 74 s.
+
+**The head-to-head re-run is done** and moved the smaller-d verdict from
+"stim leads 1.4–2.1×" to parity (0.82–1.26×).
+
+Still owed, and neither blocks anything: a QUIET-MACHINE repeat of the whole
+comparison (everything here was taken at load 33–54), and
+`SurfaceCode::new`'s O(stabilizers²) `verify_commuting`, which costs 62–89 s
+of startup at d=221 and would be linear with a spatial index.
+
+## Historical — the two items as they stood while blocked
 
 The box is under heavy memory pressure from siblings (a python3 process has
 been holding 12–13 GB; MemAvailable has swung between 2.9 GB and 20 GB within

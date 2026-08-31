@@ -1,0 +1,35 @@
+# the corner on the slice x = 1.766, y = 2.576, c in [1.4125, 1.4135]
+# E is the TOTAL (O,H,H) energy; margin is min_i H_ii - E (electronic)
+
+            c     theta            E cold E warm-from-below dE warm-cold     margin
+     1.412500  174.3584     -74.799005837     -74.799005837   -4.690e-13    0.07071
+     1.412625  174.5681     -74.798366189     -74.798366189    3.553e-13    0.07030
+     1.412750  174.7862     -74.797702345     -74.797702345   -4.263e-14    0.06986
+     1.412875  175.0139     -74.797396445     -74.797396445   -1.137e-13    0.06977
+     1.413000  175.2524     -74.797394841     -74.797394841   -1.165e-12    0.07000
+     1.413125  175.5036     -74.797393229     -74.797393229    7.105e-14    0.07022
+     1.413250  175.7697     -74.797391609     -74.797391609   -1.847e-13    0.07044
+     1.413375  176.0536     -74.797389980     -74.797389980   -1.279e-13    0.07067
+     1.413500  176.3596     -74.797388344     -74.797388344   -1.563e-13    0.07089
+
+   No warm start beat its cold solve anywhere across the corner. The cold
+   answers are the lower envelope, so the corner is a real crossing of two
+   states and belongs to the surface, not to the eigensolver.
+
+# the corner on the slice x = 2.621, y = 2.703, c in [0.425, 0.45]
+# E is the TOTAL (O,H,H) energy; margin is min_i H_ii - E (electronic)
+
+            c     theta            E cold E warm-from-below dE warm-cold     margin
+     0.425000   34.9777     -74.839799022     -74.839799022   -4.974e-13    0.06307
+     0.428125   35.2433     -74.839286348     -74.839286348      0.000e0    0.06276
+     0.431250   35.5091     -74.838752228     -74.838752228    2.842e-13    0.06245
+     0.434375   35.7751     -74.838197956     -74.838197956   -5.969e-13    0.06214
+     0.437500   36.0412     -74.838164263     -74.838164263    4.547e-13    0.06238
+     0.440625   36.3076     -74.838546490     -74.838546490    4.263e-14    0.06305
+     0.443750   36.5742     -74.838922459     -74.838922459   -6.111e-13    0.06373
+     0.446875   36.8410     -74.839293270     -74.839293270   -1.990e-13    0.06443
+     0.450000   37.1080     -74.839659967     -74.839659967    1.990e-13    0.06514
+
+   No warm start beat its cold solve anywhere across the corner. The cold
+   answers are the lower envelope, so the corner is a real crossing of two
+   states and belongs to the surface, not to the eigensolver.

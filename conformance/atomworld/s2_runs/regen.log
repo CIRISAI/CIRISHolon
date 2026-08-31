@@ -1,0 +1,99 @@
+# regeneration under the reachable ask (cd9971c) + derived bar (179db95) + generic solver (fe18572)
+# binary sha256: fe74eb18c86a18dadad867ec1d3aed9b1bb3fe1713e8e38bc2fe98e392beade1
+# HEAD: d2f0a8c831905a1600b69a6ee0f512fec5ee880d
+# launched: 2026-08-30T18:26:23-05:00
+# fine 65 x 65 x 49, stretch a = 3
+# box x, y in [0.7, 15], c in [0.05, 1.414214]
+# E(O) = -73.80415024579725980  E(H) = -0.46658184955727550  threads = 8
+  row   6 done (1/65, 431 s)
+  row   7 done (2/65, 432 s)
+  row   5 done (3/65, 439 s)
+  row   3 done (4/65, 454 s)
+  row   2 done (5/65, 457 s)
+  row   4 done (6/65, 465 s)
+  row   1 done (7/65, 470 s)
+  row   0 done (8/65, 493 s)
+  row  12 done (9/65, 858 s)
+  row   9 done (10/65, 862 s)
+  row  14 done (11/65, 864 s)
+  row  10 done (12/65, 871 s)
+  row   8 done (13/65, 872 s)
+  row  11 done (14/65, 879 s)
+  row  13 done (15/65, 880 s)
+  row  15 done (16/65, 897 s)
+  row  17 done (17/65, 1162 s)
+  row  16 done (18/65, 1172 s)
+  row  18 done (19/65, 1191 s)
+  row  21 done (20/65, 1199 s)
+  row  22 done (21/65, 1214 s)
+  row  20 done (22/65, 1235 s)
+  row  19 done (23/65, 1252 s)
+  row  23 done (24/65, 1271 s)
+  row  25 done (25/65, 1608 s)
+  row  24 done (26/65, 1617 s)
+  row  26 done (27/65, 1652 s)
+  row  27 done (28/65, 1665 s)
+  row  28 done (29/65, 1728 s)
+  row  29 done (30/65, 1750 s)
+  row  30 done (31/65, 1775 s)
+  row  31 done (32/65, 1799 s)
+  row  32 done (33/65, 2151 s)
+  row  33 done (34/65, 2287 s)
+  row  35 done (35/65, 2431 s)
+  row  39 done (36/65, 2437 s)
+  row  36 done (37/65, 2490 s)
+  row  34 done (38/65, 2491 s)
+  row  37 done (39/65, 2609 s)
+  row  40 done (40/65, 2631 s)
+  row  38 done (41/65, 2688 s)
+  row  41 done (42/65, 2710 s)
+  row  42 done (43/65, 2803 s)
+  row  43 done (44/65, 2813 s)
+  row  45 done (45/65, 2822 s)
+  row  44 done (46/65, 2855 s)
+  row  46 done (47/65, 2974 s)
+  row  47 done (48/65, 3003 s)
+  row  48 done (49/65, 3064 s)
+  row  49 done (50/65, 3068 s)
+  row  52 done (51/65, 3128 s)
+  row  53 done (52/65, 3140 s)
+  row  50 done (53/65, 3152 s)
+  row  51 done (54/65, 3160 s)
+  row  57 done (55/65, 3205 s)
+  row  60 done (56/65, 3218 s)
+  row  59 done (57/65, 3220 s)
+  row  61 done (58/65, 3220 s)
+  row  58 done (59/65, 3228 s)
+  row  64 done (60/65, 3229 s)
+  row  55 done (61/65, 3232 s)
+  row  62 done (62/65, 3239 s)
+  row  63 done (63/65, 3239 s)
+  row  54 done (64/65, 3257 s)
+  row  56 done (65/65, 3311 s)
+# fine node set built in 3311 s
+# peak |dE3| on a node = 7.637817e-1 Ha
+
+  nr   nu     max |dV|     rms |dV|     solves                 worst at (x, y, c)   true dE3
+  65   49     7.680e-4     6.326e-5     105105              (1.766, 2.576, 1.373)   7.111e-2
+  65   25     3.876e-3     2.710e-4      53625              (1.766, 2.576, 1.373)   7.111e-2
+  65   13     1.607e-2     1.033e-3      27885              (1.766, 2.576, 1.373)   7.111e-2
+  65    9     2.378e-2     1.685e-3      19305              (1.766, 2.576, 1.373)   7.111e-2
+  33   49     1.061e-3     9.796e-5      27489              (1.000, 1.155, 0.065)   7.420e-1
+  33   25     3.754e-3     2.731e-4      14025              (1.766, 2.576, 1.373)   7.111e-2
+  33   13     1.591e-2     1.021e-3       7293              (1.766, 2.576, 1.373)   7.111e-2
+  33    9     2.359e-2     1.679e-3       5049              (1.766, 2.576, 1.373)   7.111e-2
+  17   49     1.040e-2     6.871e-4       7497              (1.000, 1.155, 0.065)   7.420e-1
+  17   25     1.060e-2     7.229e-4       3825              (1.000, 1.155, 0.065)   7.420e-1
+  17   13     1.069e-2     9.985e-4       1989              (1.000, 1.155, 0.065)   7.420e-1
+  17    9     1.372e-2     1.467e-3       1377              (1.766, 2.576, 1.373)   7.111e-2
+   9   49     2.715e-2     2.986e-3       2205              (1.000, 1.155, 0.065)   7.420e-1
+   9   25     2.719e-2     2.969e-3       1125              (1.000, 1.155, 0.065)   7.420e-1
+   9   13     2.742e-2     2.990e-3        585              (1.000, 1.155, 0.065)   7.420e-1
+   9    9     2.783e-2     3.143e-3        405              (1.000, 1.155, 0.065)   7.420e-1
+
+# total 3338 s
+wrote /home/emoore/CIRISHolon/engine/crates/holon-chem/tests/data/s2/s2_water_table.txt (1787303 bytes)
+  peak |dE3|             = 7.637817e-1 Ha
+  curvature_envelope     = 3.969306e3 Ha/bohr^2
+  curvature_per_gradient = 1.810238e4 /bohr
+  sort_kink              = 0.000e0 Ha/bohr

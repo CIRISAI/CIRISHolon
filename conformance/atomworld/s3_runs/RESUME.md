@@ -8,6 +8,9 @@ Sibling: `saturation3-mesh` owns G1 (sharded generation) and G2 (GPU).
 | `g0.DONE` | `holon-chem --example s3_g0` | the blocking cost gate: five staked triple types at their worst compact geometry | `engine/target/release/examples/s3_g0 > s3_runs/g0.log` |
 | `oo_reexam.DONE` | `holon-chem --example s3_oo_reexam` | the O-O re-examination: SATURATION-2 P1's own 96-knot curve, production cap vs raised cap, scored at the derived bar | `s3-oo worktree: engine/target/release/examples/s3_oo_reexam 20000 > s3_runs/oo_reexam.log` |
 | `bar_margin_after.log` | `holon-chem --example s3_bar_margin` | the nine staked curves re-read under the DERIVED bar (no marker; the run is seconds) | `s3-oo worktree: engine/target/release/examples/s3_bar_margin` |
+| `angle_gauge.log` | `holon-chem --example s2_build -- --gauge 4` | the interpolator's own rate on planted analytic functions, and the three c-axis masks on the real surface. Costs no solves for the planted rows | `engine/target/release/examples/s2_build --gauge 4` |
+| `angle_slice_collinear.log`, `angle_slice_h2seam.log` | `--example s3_angle_slice` | dE3 walked across each seam, with centred d2/d3 | `s3_angle_slice 41 1.4125` and `s3_angle_slice 61 0.30 0.62 2.621 2.703` |
+| `angle_cross_check.log` | `--example s3_cross_check` | the discriminator: a warm start carried across each corner, to tell a real crossing from a wrong-root solve | `s3_cross_check` and `s3_cross_check 2.621 2.703 0.425 0.450 9` |
 
 ## RUN FROM A PINNED WORKTREE, and why
 
@@ -60,6 +63,25 @@ Z <= 10 and silently returns hydrogen's 0.694 bohr for Z = 17.
 builder that reaches six orbitals and HANGS rather than erroring. (O,O,O) at
 207,025 over fifteen orbitals is the one staked combo that crosses it. Call
 `solve_determinant` explicitly anywhere the space size is not statically obvious.
+
+## The angle-axis obligation is DISCHARGED
+
+Full record in `../SATURATION3_RESULTS.md`. In three lines: the owed rate was
+never 16x — gauged on planted functions with the same eval and draw, this
+interpolator gives 9.3-10.9x per doubling; the end condition costs nothing (the
+masked columns are identical on planted data); and the shortfall is TWO REAL
+ELECTRONIC STATE CROSSINGS inside the domain, at theta ~ 174.9 deg on
+(1.766, 2.576) and theta ~ 36 deg on (2.621, 2.703), both confirmed physics by a
+warm start that never found a lower state. `c = sqrt(1 - cos theta)` compresses
+the collinear seam into the LAST grid cell, which is why the bend angle beat it
+by 2.2x.
+
+**The ruling this forces on every grid still to be frozen:** uniform angle
+refinement cannot beat a corner, so locate each table's seams first and either
+put a grid line on one or accept its floor deliberately. Every trimer type here
+has a reactive channel; this is not water-specific. STILL OWED: the seam LOCUS.
+Two slices found two points on two seams; where the seams run is unmeasured, and
+the ruling above needs it before an angle axis is frozen.
 
 ## Next, per the freeze's sequence
 

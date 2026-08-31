@@ -524,3 +524,107 @@ The recommendation to DEFER is engineering judgment, not the gate:
   kernel selection.
 
 Hold it until P2 branch (b) fires; spend nothing on integration before then.
+
+---
+
+## THE ANGLE-AXIS OBLIGATION — **DISCHARGED: it is two state crossings, and no grid buys them back**
+
+*The freeze makes this a design-time obligation: "the angle-axis convergence
+anomaly from SATURATION-2's hand-off (5x per doubling where C1 cubic owes 16x) is
+a STAKED INVESTIGATION at design time: the builder must either explain it or show
+the chosen coordinate beats it before committing any grid." Explained. Nothing
+below required a new electronic-structure campaign — the gauge costs no solves at
+all, and the two slices cost about four hundred (O,H,H) points between them.*
+
+### The owed rate was wrong, and it is now gauged rather than argued
+
+"A C1 cubic should give 16x" is `h^4`, and it was asserted. Catmull-Rom takes its
+node slopes from centred differences, whose `O(h^2)` error enters the Hermite
+form multiplied by one factor of `h`, so the scheme is third order — Keys' cubic
+convolution result for `a = −1/2` says the same. Rather than argue it, `s2_build
+--gauge` plants two analytic functions on the same fine grid, interpolates them
+with the SAME `eval` on the SAME subgrids at the SAME 384-point held-out draw,
+and reads the rate off:
+
+| planted | 13 → 25 | 25 → 49 |
+|---|---|---|
+| `exp-cos` | 10.13× | 6.68× (floored by the radial axis) |
+| `c-bump` (curvature deliberately on the angle axis) | 10.92× | 9.32× |
+
+**So the interpolator delivers 9.3–10.9× per doubling of the angle axis, not 16×.**
+The shortfall being explained is therefore 5.05 against ~9.3, not against 16.
+
+### It is not the end condition
+
+`slope_weights` uses a one-sided three-point slope at both ends of every axis, so
+the first and last intervals were the obvious suspects — and the tableau's worst
+point does sit in an end interval on three of the four angle rungs. But on
+planted data the "all points" and "no end interval" columns are **identical to
+every digit on every row**. The one-sided slope costs nothing on smooth data. It
+is not the mechanism.
+
+### It is two electronic state crossings, inside the tabulated domain
+
+At the shipped 65 × 49 both axes stall at the same value, 7.68e-4, at the same
+held-out point: refining the radial axis 33 → 65 buys 1.38× and refining the
+angle axis 25 → 49 buys 1.35×, where the planted functions buy 9× on those rungs.
+A feature that survives refinement in BOTH directions is not a resolution
+problem. Walking the surface through it (`s3_angle_slice`) finds why:
+
+* **Seam 1, near collinear.** On the worst point's slice (x = 1.766, y = 2.576)
+  `dE3` has a corner at `c ≈ 1.4128`, `theta ≈ 174.9°`: the bending slope changes
+  by a factor of about 400 across roughly `1e-4` of the `c` axis, against a grid
+  spacing there of `0.0284`. The corner sits inside the LAST cell, at 98% of the
+  way across it, and the Catmull-Rom stencil for the worst held-out point
+  (c = 1.373) reaches the endpoint node ACROSS it — which is why refining either
+  axis changes nothing.
+* **Seam 2, where H₂ forms.** Masking out every point whose stencil touches the
+  last node leaves a floor of 4.90e-4 converging at 2.11×, and its worst point is
+  (2.621, 2.703, 0.461) — `theta ≈ 38°`, H-H side 1.74 bohr, the H₂-formation
+  region. That slice has its own corner at `c ≈ 0.4375`, where the slope in `c`
+  changes by about 4× and the energy turns over.
+
+**Both are physics, not the eigensolver, and that was measured rather than
+assumed.** `s3_cross_check` carries a converged eigenvector across each corner and
+re-solves from it: if cold Davidson had been sitting on the upper branch anywhere,
+a warm start would find a lower energy at the same geometry and the variational
+bound would say so without appeal. Across both corners, **no warm start beat its
+cold solve at any geometry** (differences ≤ 1e-12, i.e. noise), with variational
+margins healthy throughout (0.062–0.071 Ha). The ground state is the lower
+envelope of two branches, so the corner is where they cross.
+
+### The coordinate is complicit, and this is why the bend angle won
+
+`c = sqrt(1 − cos θ)` compresses the near-collinear region: `dθ/dc → ∞` as
+`c → √2`, so near the top of the axis one grid cell of width 0.0284 in `c` spans
+about 6° of θ, while the same width near `c = 1.37` spans under a third of a
+degree. Seam 1 is squeezed into the last cell by the coordinate itself. That is
+the mechanism behind SATURATION-2's measurement that the bend angle beats `u` and
+`c` on the worst slice by 2.2× — a coordinate uniform in θ gives the collinear
+region roughly an order of magnitude more grid. It does not remove the corner; it
+stops hiding it inside one cell.
+
+### What this rules for SATURATION-3's grids
+
+1. **Uniform refinement of an angle axis cannot beat a corner.** A cubic
+   interpolant across a slope discontinuity has an error floor set by the jump,
+   and the 5×-per-doubling reading was that floor arriving. Paying for angle
+   resolution past the point where the seam dominates buys nothing, and the
+   held-out tableau will say so by stalling.
+2. **The design question is where the seams are, not how fine the grid is.** The
+   options are to place a grid line ON a seam (splitting the domain into two
+   smooth patches, which restores the gauged rate on each), or to accept a floor
+   and stop paying. Both need the seam LOCATED first, which is now a cheap
+   instrument (`s3_angle_slice` is ~60 points a slice).
+3. **This is not a water-specific hazard.** Every trimer type this campaign
+   tabulates has a reactive channel — (H,H,Cl) and (H,Cl,Cl) most obviously — so
+   a seam scan belongs in each table's design step BEFORE its grid is frozen,
+   which is what the obligation was protecting against.
+
+### What is still owed
+
+The seam LOCUS, as opposed to two points on it. Both seams were found by walking
+one slice each, chosen because the held-out tableau pointed at them. Whether they
+are surfaces cutting the whole domain, and where, is a scan this has not paid for
+— and the grid ruling in (2) needs it before any angle axis is frozen.
+

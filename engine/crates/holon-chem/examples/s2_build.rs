@@ -136,10 +136,180 @@ fn read_cache() -> Option<Vec<f64>> {
     }
 }
 
+
+/// The interpolation variables the grid is uniform in: `eval` walks `tau` and a
+/// normalised `c`, so a gauge function must be smooth in THOSE and not in `(x, y, c)`,
+/// or the stretch is being graded along with the interpolant.
+fn planted(name: &str, tx: f64, ty: f64, ch: f64) -> f64 {
+    match name {
+        // Smooth, non-polynomial, and of the surface's own scale (peak |dE3| is 0.76 Ha).
+        // Nothing here can be reproduced exactly by a cubic, so the measured rate is the
+        // scheme's and not an artifact of the test function being too easy.
+        "exp-cos" => 0.75 * (-2.0 * tx).exp() * (-2.0 * ty).exp() * (std::f64::consts::PI * ch).cos(),
+        // A bump with real curvature ACROSS the angle axis, which is the axis under
+        // investigation: if the shortfall were the c direction specifically, this is the
+        // function that would show it on a surface with no physics in it at all.
+        "c-bump" => {
+            let g = (-((ch - 0.5) / 0.15).powi(2)).exp();
+            0.75 * g * (1.0 + 0.3 * (3.0 * tx).sin() * (2.0 * ty).cos())
+        }
+        _ => unreachable!(),
+    }
+}
+
+/// THE GAUGE: what rate does this interpolator, on THIS grid family, deliver on a function
+/// with no physics in it?
+///
+/// # Why this exists
+///
+/// SATURATION-2 published that the shipped table's angle axis "converges at 5x per
+/// doubling where a C1 cubic should give 16x", and SATURATION-3's freeze makes explaining
+/// that a design-time obligation. 16x is `h^4`, and it was asserted rather than measured.
+/// Catmull-Rom takes its node slopes from centred differences, whose `O(h^2)` error enters
+/// the Hermite form multiplied by one factor of `h` — so the scheme is third order, `8x`,
+/// and Keys' cubic convolution result for `a = -1/2` says the same. A gauge settles it
+/// without an argument: plant a function whose truth is analytic, interpolate it with the
+/// SAME `eval` on the SAME subgrids at the SAME held-out draw, and read the rate off.
+///
+/// It also separates the two candidate causes of whatever shortfall remains. The
+/// tableau's worst held-out point sits at `c = 1.373` (the last c interval on every grid
+/// but the finest) or at `c = 0.065` (the first), and `slope_weights` uses a ONE-SIDED
+/// three-point slope at both ends. So the columns below report the max over ALL held-out
+/// points and the max over points in no END interval, and the difference between those
+/// two rates is the end condition's contribution.
+///
+/// Costs no electronic-structure solves for the planted rows.
+fn gauge(threads: usize, e_o: f64, e_h: f64) {
+    let held = held_out();
+    println!("# GAUGE: the interpolator's own rate, on functions with no physics in them");
+    println!("# same eval(), same subgrids, same {N_HELD}-point held-out draw as the tableau");
+    println!("# 'interior' excludes any point in the FIRST or LAST interval of the c axis,");
+    println!("# which is where slope_weights uses a one-sided three-point slope.\n");
+
+    for name in ["exp-cos", "c-bump"] {
+        let mut fine = vec![0.0f64; NR_FINE * NR_FINE * NU_FINE];
+        for i in 0..NR_FINE {
+            let tx = i as f64 / (NR_FINE - 1) as f64;
+            for j in 0..NR_FINE {
+                let ty = j as f64 / (NR_FINE - 1) as f64;
+                for k in 0..NU_FINE {
+                    let ch = k as f64 / (NU_FINE - 1) as f64;
+                    fine[fine_index(i, j, k)] = planted(name, tx, ty, ch);
+                }
+            }
+        }
+        let truth: Vec<f64> = held
+            .iter()
+            .map(|&(x, y, c)| {
+                planted(name, tau_of_r(x), tau_of_r(y), (c - C_LO) / (C_HI - C_LO))
+            })
+            .collect();
+        println!("## planted `{name}`");
+        tableau(&fine, &held, &truth);
+    }
+
+    match read_cache() {
+        Some(fine) => {
+            let truth: Vec<Mutex<f64>> = held.iter().map(|_| Mutex::new(0.0)).collect();
+            let next = AtomicUsize::new(0);
+            std::thread::scope(|sc| {
+                for _ in 0..threads {
+                    sc.spawn(|| loop {
+                        let t = next.fetch_add(1, Ordering::SeqCst);
+                        if t >= held.len() {
+                            break;
+                        }
+                        let (x, y, c) = held[t];
+                        *truth[t].lock().unwrap() = de3_with(
+                            x,
+                            y,
+                            1.0 - c * c,
+                            e_o,
+                            e_h,
+                            pair_point(OXYGEN, HYDROGEN, x).e,
+                            pair_point(OXYGEN, HYDROGEN, y).e,
+                        );
+                    });
+                }
+            });
+            let truth: Vec<f64> = truth.into_iter().map(|m| m.into_inner().unwrap()).collect();
+            println!("## the real (O, H, H) surface, same columns");
+            tableau(&fine, &held, &truth);
+        }
+        None => println!("## the real surface: SKIPPED, no fine node set cached"),
+    }
+}
+
+/// One planted or real surface's held-out tableau, with the end-interval split.
+fn tableau(fine: &[f64], held: &[(f64, f64, f64)], truth: &[f64]) {
+    // Three masks, because they answer three different questions. ALL is the published
+    // number. INTERIOR drops points sitting IN an end interval, which is where the
+    // one-sided slope lives. CLEAR drops every point whose four-wide Catmull-Rom stencil
+    // REACHES the last node — a corner inside the final cell corrupts the interval below
+    // it too, and only this mask separates "the grid is too coarse" from "the stencil is
+    // reading across something it cannot represent".
+    println!(
+        "   {:>4} {:>4} {:>12} {:>7} {:>12} {:>7} {:>12} {:>7} {:>6}",
+        "nr", "nu", "max all", "rate", "max interior", "rate", "max clear", "rate", "n_end"
+    );
+    for nr in NR_TRY {
+        let mut prev_all: Option<f64> = None;
+        let mut prev_int: Option<f64> = None;
+        let mut prev_clear: Option<f64> = None;
+        // Coarse to fine, so a "rate" is the improvement from the row above.
+        let mut nus = NU_TRY;
+        nus.reverse();
+        for nu in nus {
+            let (mut all, mut interior, mut clear, mut n_end) = (0.0f64, 0.0f64, 0.0f64, 0usize);
+            let mut clear_at = 0usize;
+            for (t, &(x, y, c)) in held.iter().enumerate() {
+                let e = (eval(fine, nr, nu, x, y, c) - truth[t]).abs();
+                all = all.max(e);
+                let tc = (c - C_LO) / (C_HI - C_LO) * (nu - 1) as f64;
+                if tc < 1.0 || tc > (nu - 2) as f64 {
+                    n_end += 1;
+                } else {
+                    interior = interior.max(e);
+                }
+                if tc >= 1.0 && tc <= (nu - 3) as f64 && e > clear {
+                    clear = e;
+                    clear_at = t;
+                }
+            }
+            let ra = prev_all.map(|p| p / all);
+            let ri = prev_int.map(|p| p / interior);
+            let rc = prev_clear.map(|p| p / clear);
+            println!(
+                "   {nr:>4} {nu:>4} {all:>12.4e} {:>7} {interior:>12.4e} {:>7} {clear:>12.4e} {:>7} {n_end:>6}",
+                ra.map(|v| format!("{v:.2}x")).unwrap_or_else(|| "-".into()),
+                ri.map(|v| format!("{v:.2}x")).unwrap_or_else(|| "-".into()),
+                rc.map(|v| format!("{v:.2}x")).unwrap_or_else(|| "-".into()),
+            );
+            let (cx, cy, cc) = held[clear_at];
+            println!("        clear worst at ({cx:.3}, {cy:.3}, {cc:.3})");
+            prev_all = Some(all);
+            prev_int = Some(interior);
+            prev_clear = Some(clear);
+        }
+        println!();
+    }
+    println!(
+        "   For reference: h^2 is 4x per doubling of (nu-1), h^3 is 8x, h^4 is 16x. The\n   \
+         (nu-1) ladder here is 8, 12, 24, 48, so 9->17 is not a doubling and only the\n   \
+         13->25 and 25->49 rungs are.\n"
+    );
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let e_o = atom_energy(OXYGEN);
     let e_h = atom_energy(HYDROGEN);
+
+    if args.first().map(String::as_str) == Some("--gauge") {
+        let threads: usize = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(6);
+        gauge(threads, e_o, e_h);
+        return;
+    }
 
     if args.first().map(String::as_str) == Some("--emit") {
         let nr: usize = args[1].parse().expect("NR");

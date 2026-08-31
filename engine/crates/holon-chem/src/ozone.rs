@@ -1,47 +1,45 @@
-//! The three-body term of the many-body expansion for hydroperoxyl (O, O, H), tabulated.
+//! The three-body term of the many-body expansion for Ozone (O, O, O), tabulated.
 //!
 //! # What this is for
 //!
-//! The 8H + 4O water quench simulation scored 0/8 in the frozen P2 protocol because
-//! 52 triples were fenced without a table: 48 (O, O, H) + 4 (O, O, O).
-//! (O, O, H) represents the missing reactive channels (OH + O <-> O2 + H) needed for
-//! complete water synthesis.
+//! In the cooling 8H + 4O gas, 4 unrepresented (O, O, O) triples were fenced during
+//! force evaluation: C(4, 3) = 4. Ozone represents the homonuclear tri-oxygen sector,
+//! governing oxygen clustering and intermediate radical recombination.
 //!
 //! ```text
-//! V_tot(3) = E(OOH) - 2 E(O) - E(H)
-//! dE3(OOH) = V_tot(3) - V2_OO(r_OO) - V2_OH(r_OH1) - V2_OH(r_OH2)
+//! V_tot(3) = E(O3) - 3 E(O)
+//! dE3(O3)  = V_tot(3) - V2_OO(s1) - V2_OO(s2) - V2_OO(s3)
 //! ```
 //!
-//! # Coordinates and Exchange Symmetry
+//! # Symmetry and Coordinates
 //!
-//! Geometry is AB_2 where A is Hydrogen (Z=1) and B1, B2 are Oxygen (Z=8).
-//! The coordinates are:
+//! Ozone has full S3 permutation symmetry across all three oxygen atoms.
+//! Following `trimer.rs`, the table is built on the sorted sides:
 //! ```text
-//! x = min(r_OH1, r_OH2),  y = max(r_OH1, r_OH2),  u = cos theta_OHO
+//! s1 <= s2 <= s3
+//! x = s1,  y = s2,  u = (s1^2 + s2^2 - s3^2) / (2 s1 s2)
 //! ```
 //! gridded through `c = sqrt(1 - u)`.
-//! Permuting the two oxygens swaps r_OH1 <-> r_OH2 and leaves r_OO invariant, so
-//! the surface has exact S2 exchange symmetry.
+//! Sorting the three sides before evaluation guarantees bit-exact S3 permutation invariance.
 
 use crate::dual::D2;
-use crate::elements::{HYDROGEN, OXYGEN};
+use crate::elements::OXYGEN;
 use crate::pair::{atom_energy, pair_point, solve_geometry};
 use crate::trimer::cr_weights;
 
-pub const R_LO: f64 = 0.8;
+pub const R_LO: f64 = 1.6;
 pub const R_HI: f64 = 14.0;
 pub const STRETCH_A: f64 = 3.0;
 pub const C_LO: f64 = 0.05;
 pub const C_HI: f64 = core::f64::consts::SQRT_2;
-pub const U_FENCE: f64 = 1.0 - C_LO * C_LO;
 
 pub const NR: usize = 33;
 pub const NU: usize = 25;
 pub const N_NODES: usize = NR * NR * NU;
 pub const N_SOLVED: usize = NR * (NR + 1) / 2 * NU;
 
-pub const OOH_PROVENANCE: &str =
-    "engine-computed STO-3G FCI (O,O,H) three-body term, general N-centre route, f64";
+pub const OZONE_PROVENANCE: &str =
+    "engine-computed STO-3G FCI (O,O,O) three-body term, general N-centre route, f64";
 
 #[inline]
 pub const fn node_index(i: usize, j: usize, k: usize) -> usize {
@@ -91,103 +89,90 @@ pub fn node_u(k: usize) -> f64 {
 }
 
 #[inline]
-pub fn oo_side(roh1: f64, roh2: f64, u: f64) -> f64 {
-    (roh1 * roh1 + roh2 * roh2 - 2.0 * roh1 * roh2 * u).max(0.0).sqrt()
+pub fn third_side(s1: f64, s2: f64, u: f64) -> f64 {
+    (s1 * s1 + s2 * s2 - 2.0 * s1 * s2 * u).max(0.0).sqrt()
 }
 
 #[inline]
-pub fn ooh_energy(x: f64, y: f64, u: f64) -> f64 {
+pub fn o3_energy(s1: f64, s2: f64, u: f64) -> f64 {
     let sn = (1.0 - u * u).max(0.0).sqrt();
-    let species = [HYDROGEN, OXYGEN, OXYGEN];
+    let species = [OXYGEN, OXYGEN, OXYGEN];
     let centers = vec![
         [D2::c(0.0), D2::c(0.0), D2::c(0.0)],
-        [D2::c(x), D2::c(0.0), D2::c(0.0)],
-        [D2::c(y * u), D2::c(y * sn), D2::c(0.0)],
+        [D2::c(s1), D2::c(0.0), D2::c(0.0)],
+        [D2::c(s2 * u), D2::c(s2 * sn), D2::c(0.0)],
     ];
     solve_geometry(&species, centers).e.v
 }
 
-/// The three-body interaction at O-H sides `(x, y)` and angle cosine `u`, hartree, with
-/// the reference energies supplied by the caller.
-pub fn de3_with(x: f64, y: f64, u: f64, e_o: f64, e_h: f64, e_ox: f64, e_oy: f64) -> f64 {
-    let z = oo_side(x, y, u);
-    ooh_energy(x, y, u) + 2.0 * e_o + e_h
-        - e_ox
-        - e_oy
-        - pair_point(OXYGEN, OXYGEN, z).e
+/// The three-body interaction for Ozone at sides `(s1, s2, s3)` given reference values.
+pub fn de3_with(s1: f64, s2: f64, s3: f64, e_o: f64, e_s1: f64, e_s2: f64, e_s3: f64) -> f64 {
+    let mut s = [s1, s2, s3];
+    s.sort_by(|a, b| a.partial_cmp(b).unwrap_or(core::cmp::Ordering::Equal));
+    let (x, y, z) = (s[0], s[1], s[2]);
+    let denom = 2.0 * x * y;
+    let u = if denom < 1e-12 {
+        1.0
+    } else {
+        ((x * x + y * y - z * z) / denom).clamp(-1.0, 1.0)
+    };
+    o3_energy(x, y, u) + 3.0 * e_o - e_s1 - e_s2 - e_s3
 }
 
-/// The same, solving everything from scratch.
-pub fn de3(x: f64, y: f64, u: f64) -> f64 {
-    de3_with(
-        x,
-        y,
-        u,
-        atom_energy(OXYGEN),
-        atom_energy(HYDROGEN),
-        pair_point(OXYGEN, HYDROGEN, x).e,
-        pair_point(OXYGEN, HYDROGEN, y).e,
-    )
-}
-
-/// Exact FCI point calculation for (O, O, H) given 3 side lengths (roh1, roh2, roo).
-pub fn de3_point(roh1: f64, roh2: f64, roo: f64) -> f64 {
+/// Exact FCI point calculation for Ozone (O, O, O) given 3 side lengths (s1, s2, s3).
+pub fn de3_point(s1: f64, s2: f64, s3: f64) -> f64 {
     let e_o = atom_energy(OXYGEN);
-    let e_h = atom_energy(HYDROGEN);
-    let v2_oo = pair_point(OXYGEN, OXYGEN, roo).e - 2.0 * e_o;
-    let v2_oh1 = pair_point(OXYGEN, HYDROGEN, roh1).e - e_o - e_h;
-    let v2_oh2 = pair_point(OXYGEN, HYDROGEN, roh2).e - e_o - e_h;
+    let v2_s1 = pair_point(OXYGEN, OXYGEN, s1).e - 2.0 * e_o;
+    let v2_s2 = pair_point(OXYGEN, OXYGEN, s2).e - 2.0 * e_o;
+    let v2_s3 = pair_point(OXYGEN, OXYGEN, s3).e - 2.0 * e_o;
 
-    let u = ((roh1 * roh1 + roh2 * roh2 - roo * roo) / (2.0 * roh1 * roh2)).clamp(-1.0, 1.0);
-    let s = (1.0 - u * u).max(0.0).sqrt();
+    let mut s = [s1, s2, s3];
+    s.sort_by(|a, b| a.partial_cmp(b).unwrap_or(core::cmp::Ordering::Equal));
+    let (x, y, z) = (s[0], s[1], s[2]);
+    let denom = 2.0 * x * y;
+    let u = if denom < 1e-12 {
+        1.0
+    } else {
+        ((x * x + y * y - z * z) / denom).clamp(-1.0, 1.0)
+    };
 
-    let species = [HYDROGEN, OXYGEN, OXYGEN];
-    let centers = vec![
-        [D2::c(0.0), D2::c(0.0), D2::c(0.0)],            // H at origin
-        [D2::c(roh1), D2::c(0.0), D2::c(0.0)],           // O1 on x-axis
-        [D2::c(roh2 * u), D2::c(roh2 * s), D2::c(0.0)],  // O2 in xy-plane
-    ];
-
-    let sol = solve_geometry(&species, centers);
-    let e_ooh = sol.e.v;
-    let v_tot_3 = e_ooh - 2.0 * e_o - e_h;
-    v_tot_3 - (v2_oo + v2_oh1 + v2_oh2)
+    let e_o3 = o3_energy(x, y, u);
+    let v_tot_3 = e_o3 - 3.0 * e_o;
+    v_tot_3 - (v2_s1 + v2_s2 + v2_s3)
 }
 
 #[derive(Clone, Copy, Debug, Default)]
-pub struct OohMeta {
+pub struct OzoneMeta {
     pub e_o_atom: f64,
-    pub e_h_atom: f64,
     pub peak: f64,
     pub solves: usize,
 }
 
-impl OohMeta {
+impl OzoneMeta {
     pub const fn empty() -> Self {
         Self {
             e_o_atom: 0.0,
-            e_h_atom: 0.0,
             peak: 0.0,
             solves: 0,
         }
     }
 }
 
-pub struct OohTable {
+pub struct OzoneTable {
     nodes: Box<[f64; N_NODES]>,
     filled: Box<[bool; N_NODES]>,
-    pub meta: OohMeta,
+    pub meta: OzoneMeta,
     pub loaded: bool,
     pub curvature_envelope: f64,
     pub curvature_per_gradient: f64,
 }
 
-impl OohTable {
+impl OzoneTable {
     pub fn empty() -> Self {
         Self {
             nodes: vec![0.0; N_NODES].into_boxed_slice().try_into().unwrap(),
             filled: vec![false; N_NODES].into_boxed_slice().try_into().unwrap(),
-            meta: OohMeta::empty(),
+            meta: OzoneMeta::empty(),
             loaded: false,
             curvature_envelope: 0.0,
             curvature_per_gradient: 0.0,
@@ -209,14 +194,14 @@ impl OohTable {
         true
     }
 
-    pub fn finish(&mut self, meta: OohMeta) -> bool {
+    pub fn finish(&mut self, meta: OzoneMeta) -> bool {
         if !self.filled.iter().all(|&f| f) {
             return false;
         }
         self.meta = meta;
         self.loaded = true;
-        self.curvature_envelope = 1.0;
-        self.curvature_per_gradient = 1.5;
+        self.curvature_envelope = 1.2;
+        self.curvature_per_gradient = 1.6;
         true
     }
 
@@ -225,13 +210,25 @@ impl OohTable {
         self.nodes[node_index(i, j, k)]
     }
 
-    /// Evaluates (dE3, [dE3/droh1, dE3/droh2, dE3/droo]).
-    pub fn eval(&self, roh1: f64, roh2: f64, roo: f64) -> (f64, [f64; 3]) {
+    /// Evaluates (dE3, [dE3/ds1, dE3/ds2, dE3/ds3]) with S3 permutation invariance.
+    pub fn eval(&self, s1: f64, s2: f64, s3: f64) -> (f64, [f64; 3]) {
         if !self.loaded {
             return (0.0, [0.0; 3]);
         }
-        let swapped = roh1 > roh2;
-        let (x, y) = if swapped { (roh2, roh1) } else { (roh1, roh2) };
+        // S3 sort with permutation tracking
+        let mut idx = [0usize, 1, 2];
+        let s = [s1, s2, s3];
+        if s[idx[0]] > s[idx[1]] {
+            idx.swap(0, 1);
+        }
+        if s[idx[1]] > s[idx[2]] {
+            idx.swap(1, 2);
+        }
+        if s[idx[0]] > s[idx[1]] {
+            idx.swap(0, 1);
+        }
+        let (x, y, z) = (s[idx[0]], s[idx[1]], s[idx[2]]);
+
         if x > R_HI || y > R_HI || x < R_LO || y < R_LO {
             return (0.0, [0.0; 3]);
         }
@@ -239,20 +236,20 @@ impl OohTable {
         if denom < 1e-12 {
             return (0.0, [0.0; 3]);
         }
-        let u = ((x * x + y * y - roo * roo) / denom).clamp(-1.0, 1.0);
+        let u = ((x * x + y * y - z * z) / denom).clamp(-1.0, 1.0);
         let (v, grad_xyu) = self.eval_sorted(x, y, u);
 
-        // Chain rule from (x, y, u) back to (x, y, roo):
-        // u = (x^2 + y^2 - roo^2)/(2xy)
-        // du/dx = 1/y - u/x
-        // du/dy = 1/x - u/y
-        // du/droo = -roo / (xy)
+        // Chain rule from (x, y, u) back to (x, y, z):
         let df_dx = grad_xyu[0] + grad_xyu[2] * (1.0 / y - u / x);
         let df_dy = grad_xyu[1] + grad_xyu[2] * (1.0 / x - u / y);
-        let df_droo = grad_xyu[2] * (-roo / (x * y));
+        let df_dz = grad_xyu[2] * (-z / (x * y));
 
-        let (g1, g2) = if swapped { (df_dy, df_dx) } else { (df_dx, df_dy) };
-        (v, [g1, g2, df_droo])
+        let mut grad = [0.0; 3];
+        grad[idx[0]] = df_dx;
+        grad[idx[1]] = df_dy;
+        grad[idx[2]] = df_dz;
+
+        (v, grad)
     }
 
     fn eval_sorted(&self, x: f64, y: f64, u: f64) -> (f64, [f64; 3]) {
@@ -294,7 +291,6 @@ impl OohTable {
         let df_dy = df_dtau_y * dtau_dy;
         let df_dc = df_dnorm_c * dnorm_dc;
 
-        // Convert df/dc to df/du: c = sqrt(1-u) => dc/du = -1 / (2c)
         let df_du = if c_clamped > 1e-4 {
             df_dc * (-0.5 / c_clamped)
         } else {

@@ -109,3 +109,20 @@ UNDECLARED_RADIUS       real API whose consumer is outside this crate: holon-ren
 OOH_PROVENANCE          label emitted with the (O,O,H) hydroperoxyl table
 de3_point               point-by-point (O,O,H) 3-body evaluator for tests and held-out checks
 oo_side                 geometric distance calculation between oxygens in the OOH parameterization
+de3                     single geometry (O,O,H) 3-body evaluator from scratch
+de3_with                cached evaluation of (O,O,H) 3-body term with caller-supplied atom and pair reference energies
+ooh_energy              raw FCI ground-state electronic energy for (O,O,H) geometry
+
+# --- the homonuclear (O,O,O) Ozone module (T2 critical path) ---
+OZONE_PROVENANCE        label emitted with the (O,O,O) ozone table
+o3_energy               raw FCI ground-state electronic energy for (O,O,O) geometry
+third_side              geometry helper computing the third side of an arbitrary triangle from (s1, s2, u)
+
+# --- the quaternary MBE4-1 (O,H,H,H) saturation module (T2 critical path) ---
+G2_DEFICIT              staked G2 deficit magnitude (+0.183 Ha) sizing the 4-body saturation barrier
+R_CUT                   cutoff radius for 4-body asymptotic decoupling (6.0 bohr)
+de4_ohhh                6-coordinate analytic 4-body potential evaluator
+de4_ohhh_cart           Cartesian 4-body potential evaluator
+de4_point               point-by-point (O,H,H,H) 4-body full CI evaluator from scratch
+switch_c2               smooth quintic C2 switching function
+third_hydrogen_binding  evaluates third hydrogen binding under MBE3 vs MBE4 along C2v axis

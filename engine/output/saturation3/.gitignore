@@ -1,0 +1,11 @@
+# Same convention as elements3/: done-markers are run state, not record. They tell a
+# detached run's dead shell that it finished; tracking them makes a rerun show a phantom
+# deletion in the shared tree's porcelain, and a committed marker asserts "this finished"
+# about a run that may be mid-flight. The logs beside them are the record.
+*.DONE
+
+# Tables generated on a SMOKE domain are not campaign artifacts and must not sit here
+# looking like ones. The real tables arrive with domains derived from each species pair's
+# own curve; anything named smoke_* was generated on an invented domain to exercise the
+# instrument and is deliberately not kept.
+smoke_*.tbl

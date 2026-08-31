@@ -1,0 +1,44 @@
+=== SATURATION-3 TABLE LAUNCH: smoke_h3 ===
+launched          2026-08-30T19:00:03-05:00
+binary            /home/emoore/CIRISHolon/engine/target/release/s3_tables
+binary sha256     44fbc19d6b016bf38f23c274eab6ff4db81ca03d6df36d34fe066fe98cab4186                     [MEASURED]
+build exit status 0                     [MEASURED — 0, so the bytes above are of HEAD's source]
+repo HEAD         b1afd889f1c4ca119014e9cee21130c3b0ee475f  [MEASURED]
+working tree      DIRTY, 29 path(s)          [MEASURED]
+                  ^ the binary was built from the WORKING TREE, not from HEAD.
+                    HEAD above is context, NOT a claim that these bytes are HEAD's.
+host loadavg      41.74                       [MEASURED at launch]
+command           s3_tables --species H,H,H --x 1.6:2.2 --y 1.8:2.4 --u 0.1:0.5 --grid 4x4x2 --region 2x2x2 --warm chain --workers 4 --out /home/emoore/CIRISHolon/engine/output/saturation3/smoke_h3.tbl
+=== end header; the binary's own parameter echo follows ===
+
+=== s3_tables: parameters as parsed ===
+species       H,H,H
+x (short)     1.6 .. 2.2
+y (middle)    1.8 .. 2.4
+u (cosine)    0.1 .. 0.5
+grid          4x4x2
+region        2x2x2
+nodes         32
+regions       4  (cold seeds; cold fraction 0.1250)
+warm          CanonicalChain
+workers       4
+out           /home/emoore/CIRISHolon/engine/output/saturation3/smoke_h3.tbl
+device class  Cpu (DECLARED — this table is bit-gated, so D0 pins it here)
+loadavg       41.74  (at launch; the machine runs other campaigns)
+
+available_parallelism reports 32 (REPORTED, not the admission test — every worker is admitted by a probe that spawns, runs and joins a thread)
+
+=== result ===
+nodes         32
+wall          0.2 s  (0.008 s/node)
+cold / warm   4 / 28
+davidson      285 iterations total
+VOIDed        0
+digest        e763ba089be1ccbb0c22dd9a1cde69445e4af533562a78954382b5326a1ecc1d
+certificate   CLEAN
+ledger        opened 4 released 4 convicted 0 rent 32
+books balance true
+per-worker    [8, 8, 8, 8]
+
+wrote /home/emoore/CIRISHolon/engine/output/saturation3/smoke_h3.tbl
+exit=0

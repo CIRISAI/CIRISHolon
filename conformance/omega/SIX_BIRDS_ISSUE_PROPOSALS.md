@@ -599,7 +599,7 @@ stronger.
 
 ---
 
-## Own-issue B — "Register `M-MAINTENANCE-LENS-HIDES-THE-REPAIRED-VARIABLE` and re-audit our own maintenance exhibits against it"
+## Own-issue B — "Register the maintenance-lens misfit and re-audit our own maintenance exhibits against it" *(DONE 2026-08-30: registered as `M-MAINTENANCE-LENS`; the re-audit ran — one of five families passed cleanly, findings at 9eca789)*
 
 **Type:** transferable instrument lesson (inbound)
 

@@ -1,297 +1,232 @@
-# WATER PHASE OBSERVATORY — the build brief
+# WATER, MAXIMALLY — the sprint tasking, v2
 
-*2026-08-31. Commissioned by the operator. The flagship pivots: not a generic
-universe sandbox, not 118 differently colored atoms — 128 H₂O molecules, 384
-atoms, ONE Hamiltonian across every view and state, and the phases of water
-inferred from the trajectory by a classifier that has never seen a preset
-button. The three-atom water scene the programme already owns becomes the
-observatory's diagnostic panel. SELECTOR-7 is parked, its commission note
-preserved; this brief supersedes it in priority.*
+*2026-08-31. SUPERSEDES v1 of this brief (git history), which proposed a
+two-backend design with a pinned published potential (TIP4P/2005) as the
+reference. The operator rejected that scope, and the rejection is a ruling
+about the OBJECT: under the maximal interpretation, arbitrary H/O dynamics —
+every ice polymorph, the liquid, supercritical fluid, proton-ordered and
+-disordered phases, nuclear quantum effects (zero-point motion, tunnelling,
+isotope effects), and continuum thermodynamics — must emerge as successive
+CERTIFIED CLOSED VIEWS of one recursive holon whose only primitive inputs
+are nuclear charges Z, masses, and a fixed electronic basis or its exact
+enlargement. **No external potential, force field, or phase-specific
+parameter is admitted.** A published water model may be CITED in reports as
+a literature anchor beside experimental values; it never executes as a
+backend, and nothing in the object depends on it.*
 
-*Style: this is a sprint brief, so it is complete rather than terse. Every
-hazard is stated as a design requirement with its gate, never as a refusal.
-Sizes are in compute and scope; no calendar estimates anywhere, per standing
-order.*
-
----
-
-## 0. The mission, and the three principles that are the mission
-
-**Build four reproducible experiments over one Hamiltonian:**
-
-1. **VAPOR** — expanding molecular gas; droplet evaporation.
-2. **LIQUID** — stable density, molecular diffusion, hydrogen-bond turnover.
-3. **ICE Ih** — persistent tetrahedral/crystalline order.
-4. **DIRECT TRANSITION** — heat ice until the interface retreats; heat a
-   liquid slab into vapor; walk temperature and pressure through the full
-   state diagram, including the ice polymorph ladder on the reference
-   backend.
-
-**Principle 1 — one Hamiltonian.** The same energy function runs every
-experiment and every lens. A phase is a *state* of one system, never a
-different simulation. Any per-experiment special-casing in the force path is
-a defect by definition.
-
-**Principle 2 — the classifier is blind.** The phase label is inferred from
-the trajectory (order parameters over sliding windows), never from which
-preset was clicked. This is enforced by a plant, not a promise (§6, P-1):
-feed the classifier a liquid trajectory launched from the "ice" preset
-button and it must say LIQUID.
-
-**Principle 3 — the macro lenses are the holon demonstration.** Each lens —
-density, tetrahedral order, diffusion, H-bond network, largest domain,
-energy, and the **closure defect** — is a lossy view `v : X → C` in exactly
-`OBJECT.md`'s sense, and the observatory *measures* whether each view is
-Closed under the dynamics (witness-pair search on the trajectory). "A phase
-is a Closed view of molecular dynamics, and here is its measured closure
-defect" is the claim that makes this a holon flagship rather than a demo:
-quantum-informed molecular structure → collective organization →
-macroscopic phase, with the commuting square checked at each rung.
+*What survives from v1 unchanged: the blind classifier and its plants, the
+seeded-coexistence experiment design, the closure-defect instrument, the
+seam law, deterministic checkpointing, the launch/provenance discipline,
+and the misfit contacts. What changes: the Hamiltonian is singular and
+native; the emergence road is the critical path, not a parallel campaign;
+NQE is a tier, not a fence; and scale is an engineering work package, not a
+research gap.*
 
 ---
 
-## 0.5 Emergence scope — what is and is not claimed, so nobody conflates rungs
+## 0. The construction, in one paragraph
 
-**Claimed as emergent here:** collective order from molecular terms. No
-phase, network, or crystal structure is programmed in; ice Ih's stability,
-liquid structure, and the transitions must come OUT of pair + few-body
-surfaces under statistical mechanics, and the blind classifier finds them
-or does not. This is chemistry-rung emergence: classical dynamics over
-quantum-INFORMED surfaces (every table point is an exact-in-model
-electronic-structure solve; the dynamics on top is classical, per
-Born–Oppenheimer).
+The programme continues exactly as it began: one recursive object, one
+merge law, every claim killable by a witness pair or an exact
+counter-example on a staked substrate. The banked tiers already produce
+atoms from Z (ELEMENTS: Hund's rules out, never in), molecules from
+three-body residuals (H₂ saturation modal at 2; bent, saturated H₂O from
+the (O,H,H) surface), and table generation under the merge law
+(bit-identical across shards, corrupted shards convicted). Everything
+above — condensed phases, quantum nuclei, thermodynamics — is not an
+additional module: it is the next certified coarsening of the same holon.
+Each new tier must satisfy the Object contract (`v ∘ T = h ∘ v` within a
+measured, non-expansive budget) and the merge law; where closure fails,
+the failure is witnessed by an explicit non-factoring pair, and where
+coherence makes classical closure impossible, the wall REFUSES BY NAME or
+pays the known exponential cost — exactly as the electronic wall already
+does.
 
-**Not claimed, and not assumed:** that ice is derived from or predicted by
-the CRYSTAL TIER. SCHWINGER-3 and the crystal bank live on a different rung
-— quantum lattice field theory, DMRG/MPS, mass-from-vacuum — with its own
-provenance. Schwinger predicts a meson mass from a vacuum; it does not
-predict ice, and this observatory's ice inherits nothing from it. The two
-share the holon SHAPE (a macro quantity as a Closed view of a lower rung,
-which is why the closure-defect lens runs at both rungs) and share no
-machinery. The observatory neither waits on the crystal tier nor claims
-its authority.
+## 1. The tier ladder (each rung = one commuting square, certified)
 
-**The one real quantum gap, fenced now rather than found later:** nuclear
-quantum effects. Real water's protons delocalize enough to shift bulk
-properties, melting point included. Backend A absorbs NQE implicitly (its
-parameters are experiment-tuned); Backend B, fit purely to
-electronic-structure solves, will MISS them — so a backend-B disagreement
-with experiment on absolute numbers is the missing quantum nuclei, not a
-defect, and it is read that way. The named successor if the gap ever
-matters to a claim: path-integral dynamics. Until then, backend-B claims
-are about THE MODEL's phases, exactly as the rent clause's theorems are
-about the model.
+```
+T0  vacuum / QVM / exact arithmetic          BANKED (0–2 + crystal entry)
+T1  electronic structure: Z → atoms          BANKED (ELEMENTS, exact-in-model FCI)
+T2  chemical surface: MBE(2,3) → molecules   BANKED for H₂/H₂O; OOH/OOO/OHHH owed
+T3  nuclear classical dynamics on T2         PARTIAL (quench scenes; scale WP)
+T4  nuclear QUANTUM carrier (ring polymers)  NEW TIER — the beads are a holon
+T5  condensed phases & polymorphs            NEW TIER — phases as Closed views
+T6  continuum / thermodynamic charts         NEW TIER — constitutive relations derived
+     (+ crystal/geometry coupling after SCHWINGER banks the referee)
+```
 
-## 1. What already exists and is REUSED, not rebuilt
+The view at each rung is a lossy chart of the rung below; the admission
+test is always the same: the commuting square within a measured budget,
+the merge law across shards, refusal where the budget cannot be met.
 
-| Asset | State | Role here |
+## 2. T2 completion — the critical path (the emergence road, absorbed)
+
+The blocker is already isolated by measurement: water formation scored 0/8
+in the frozen P2 protocol, and every force pass fenced exactly 52
+unrepresented triples — 48 OOH + 4 OOO, a compositional identity of the
+box (C(4,2)·8 + C(4,3)), so OOH is the missing physics, not dynamics.
+
+Sequence, strictly ordered:
+
+1. **Seam loci** — the two known (O,H,H) electronic state crossings
+   (θ≈174.9°, θ≈36°) get their complete loci mapped (~60 points/slice);
+   and the seam law is PER TABLE: every new composition's grid, OOH
+   included (its own reactive channels: OH+O, O₂+H), gets its own seam
+   scan before that grid freezes — split into smooth patches at the seams
+   or accept the floor with a written reason.
+2. **Species-general trimer dispatch** — replace the hardcoded HHH/OHH
+   branches in the dynamics with the bank keyed by nuclear composition and
+   symmetry. The loading side is closed (e99735f); the dynamics must
+   consume it generically.
+3. **OOH generated and certified** — 9,075 determinants/node, seconds per
+   point in the measured cost class; its own symmetry, referee, held-out
+   interpolation, derivative, spin, and boundary gates; through the leased
+   generator under full launch provenance.
+4. **Rerun the frozen 8H+4O P2 protocol** — then let the measured OOO
+   fence decide: if O-aggregation disappears and water becomes modal, OOO
+   remains an explicit ozone successor; if OOO still controls aggregation,
+   build it (~34,500 symmetry-reduced nodes; ~380 core-hours at the
+   measured CPU rate, ~125 with the GPU lever, whose adoption trigger —
+   P2 branch (b) — fires in exactly this case at the measured 3.05×
+   table-level, not the folkloric 5×).
+5. **Closure census, not formula-matching** — the product is one
+   persistent three-member QUOTIENT satisfying the closure test, never a
+   graph component whose formula happens to be H₂O. Promotion through
+   closure is what "the molecule emerged" MEANS here.
+6. **Order four: OHHH (MBE4-1)** — mandatory for unrestricted H/O. The
+   banked record: the four-body residual reaches 0.2755 Ha, wrong-signed
+   on 11 of 40 held-out geometries, and the positive-envelope
+   approximation was REJECTED as sign-rigid by construction — the sign
+   structure, not the magnitude, is why no shortcut exists. Tabulate
+   dE₄(OHHH) over its six-coordinate S₃-quotiented domain; the existing
+   40 geometries are the held-out witnesses; begin at the measured
+   six-bohr cutoff; require value AND force accuracy; census compact
+   OOHH/OOOH/OOOO/HHHH encounters and build further composition tables
+   only where the dynamics enters their domains (the fence counters make
+   this demand-driven and loud, never silent).
+7. **The fifth-order remainder is measured before order four is declared
+   sufficient** — and its instrument is staked as f64-with-DD-refinement
+   from the start: the remainder is small differences of small
+   differences, and the measured f64 evaluation-noise floor
+   (≈ eps·|E|·√n_det) is a real fraction of it at these scales.
+8. **Basis enlargement as certified transport** — the electronic basis
+   grows beyond STO-3G by exact enlargement only: the same FCI machinery
+   on a larger orbital set, certified as a transport from the STO-3G
+   carrier (the banked model-superset law applies: a larger basis is a
+   DIFFERENT model, so the transport is a named, gated map between
+   models, never a silent upgrade). Truncation error staked against
+   energy-per-molecule and structure-factor observables; kill: any
+   held-out exact or dynamical counter-example on the staked substrate.
+
+## 3. T3 at scale — engineering, not research
+
+The operator's correction is adopted: high N is NOT a gap. The machinery
+is proven — merge-law sharding is bit-identical with convicted corruption,
+the leased generator runs real multi-hour workloads with receipts, and the
+engine's own QVM verifies 97,681-qubit circuits. What remains is a scene
+constant and its consequences:
+
+* replace `MAX_ATOMS = 16` fixed arrays with dynamic storage;
+* cell/neighbor lists so pair and triple enumeration is local
+  (at 384 atoms the naive triple count is 9,363,584 per substep; with
+  cutoff-local lists it is thousands);
+* 3D periodic boundaries; long-range electrostatics enters as a Closed
+  chart of the Coulomb holon that is ALREADY inside every FCI energy —
+  Ewald or multipole as certified transport, never as an imported model;
+* exact equal-and-opposite force assembly preserved, conservation gated
+  PER LAW with the planted-mutation discipline;
+* deterministic checkpoint/replay (bit-exact) as a CI gate;
+* shard the nuclear configuration space exactly as the electronic tables
+  are sharded — target: 10²–10³ waters, bit-identical across shard counts.
+
+## 4. T4 — the nuclear quantum carrier (the recursive move)
+
+Each nucleus becomes a ring-polymer holon: beads plus springs, an
+EXTENDED CLASSICAL HOLON realizing the quantum nucleus (PIMD/RPMD), with
+the present point-particle as its classical limit. This mirrors, at the
+nuclear level, the classical–quantum retract already proved for the
+electronic sector — the classical trajectory is the diagonal retract of
+the quantum carrier.
+
+* The bead-forgetting view must commute with the dynamics inside a
+  measured budget — the commuting square is proved or the tier is not
+  admitted.
+* The budget is MEASURED on zero-point energies and tunnelling rates of
+  H₂O and small ice clusters against exact references.
+* Isotope effects are automatic (bead masses), which is the tier's free
+  falsifiable prediction: H₂O/D₂O shifts come out or the tier is wrong.
+* The wall where nuclear coherence makes classical closure impossible is
+  a THEOREM with a named refusal, not a policy.
+
+## 5. T5 — phases as certified macroscopic views
+
+* Candidate crystal holons (proton-disordered Ih under the ice rules with
+  the ordered-slab plant; ordered polymorphs VIII, X; the ladder II, III,
+  V, VI, VII; superionic as a stretch) are GENERATED from the same
+  surface and relaxed under T3/T4 dynamics — configurations are
+  admissible initial conditions; parameters are not.
+* Each phase is admitted only when its structure factor, lattice
+  parameters, transition pressures/temperatures, and latent heats are
+  Closed views of the fine dynamics within measured budgets.
+* **A phase boundary is the point at which one Closed view ceases to be
+  the minimal-error chart of the fine dynamics** — the transition is a
+  certified chart handover, and the seeded ice|liquid coexistence slab
+  (v1's design, kept) is its measuring instrument: the interface's
+  direction of motion reads which chart is winning.
+* The blind classifier (kept, with plant P-1) is the discovery half; the
+  closure certification is the admission half. Both run on every
+  trajectory.
+* Molecule promotion/demotion (H₂O quotient ↔ atomic dynamics on
+  rupture) is a chart seam and inherits the house seam laws: continuity
+  AND the constitutive limit both gated and mutation-tested, the energy
+  ledger using the force law's own zero, the balance gate refusing where
+  the chart seam breaks time-translation.
+* The derived V(H₂O–H₂O) on the promoted quotient — solver-derived from
+  the same electronic model — is T5's coarse interaction chart: nuclei →
+  closure → derived interaction → networks and phases, end to end, with
+  no imported number anywhere in the chain.
+
+## 6. T6 — continuum charts, and the crystal coupling
+
+Density, polarisation, stress, and entropy fields whose constitutive
+relations are DERIVED from T5 statistics, never fitted; the rent law
+prices the maintenance of each chart, and frame entropy is already free
+from the base frame. Ensemble control (certified NPT, grand-canonical,
+free-energy charts) enters here as its own increment with its own
+freezes. The crystal/geometry coupling — the chemical surface as a matter
+source under a single transport square — waits on SCHWINGER-3's bank (in
+its final solve as this brief is written) or its successor, and blocks
+NOTHING in T2–T5.
+
+## 7. Gap table (the operator's, with the scale row corrected)
+
+| Gap | Nature | Status |
 |---|---|---|
-| OHH three-body surface, 65×49×49, regenerated under the current solver | committed, gate green (`tests/data/s2/s2_water_table.txt`) | the flexible **intramolecular** term of every water molecule |
-| O-O, O-H, H-H pair curves | committed (SATURATION-2 machinery) | intramolecular pair terms; O-O's iteration-cap tail knots are documented (budget case, energies accurate) |
-| The two SEAM findings (state crossings at θ≈174.9° and θ≈36°) | measured, 9c2ac72 | grid-design law for ANY new surface: locate seams first, split into smooth patches or accept the floor with a reason (§5, WP-2) |
-| `SATURATION3/trimer-table/v1` artifact class | shipped (a40209b) | the manifest discipline (producer, route, grid rule, weighed uncertainty, REQUIRED seam record, no top-level converged boolean) — the intermolecular tables ship under a sibling schema |
-| The leased mesh generator + launch discipline | shipped, CI-enforced | ALL table generation for this campaign runs through it: leases, receipts, digests, binary hash + build exit status in every log |
-| DD overflow tier (`refine_determinant_dd`) | shipped, calibrated | hard dimer/trimer reference solves that cap at f64 get resolved, not refused |
-| Provenance gates (uncertainty read as a NUMBER; refusal demonstrated both doors) | shipped (mixtures-engine) | the loader-side standard the water tables must meet from birth |
-| The self-lifting fence + trimer loader | render-3d, in progress | the sandbox path that puts OXYGEN on screen — WP-0 rides it |
-| 2D/3D sandbox + pages pipeline | live | the observatory's delivery surface |
-| Misfit registry, 41 entries, forward-armed grep audit | live | every prereg in this campaign cites what it contacts (§7) |
+| Electronic basis | STO-3G banked; enlargement = certified transport | open, §2.8 |
+| MBE beyond order 3 | OOH/OOO/OHHH per §2; 5th-order remainder measured | open, critical path |
+| Nuclear quantum carrier | ring-polymer holon + diagonal retract | absent, §4 |
+| **Scale** | **engineering WP (§3): sharding/leasing/mesh machinery proven; MAX_ATOMS is a scene constant** | **not a research gap** |
+| Periodic/long-range | Closed chart of the in-model Coulomb holon | missing, §3 |
+| Non-adiabatic dynamics | seams are mapped and split (§2.1); multi-surface hops beyond that refuse by name | fenced, named successor |
+| Crystal/continuum coupling | SCHWINGER bank pending; blocks only T6's coupling | in flight |
+| Ensemble control | certified NPT/free-energy charts | open, T6 |
+| Response/spectra | phonon/linear-response charts inheriting from the holon | open, T6 |
 
-## 2. What main lacks, stated as the work
+## 8. Discipline (unchanged, and it is the falsifiability)
 
-Bulk water physics is not a scaling-up of the atomic model. Releasing
-hundreds of O and H atoms under the present atomic MBE3 would be
-misleading: the known missing four-body contribution can overbind extra
-atoms (the MBE4 instrument was removed for exactly this), and OOH/OOO
-coverage is incomplete. Therefore:
+Prereg per tier increment with the forward-armed misfit contacts
+(M-DEVICE-CLASS, M-PLACEMENT-LOTTERY, M-IDLE-CALIBRATED-TIMEOUT,
+M-VACUOUS-SUCCESS, M-PLANT-SECTOR, M-CACHE-KIND, M-MAINTENANCE-LENS,
+M-STALE-INSTRUMENT, M-PROVENANCE-OVERREACH, M-EXIT-DISCRIMINATOR, the
+seam law); plants that fire before mechanisms are trusted; VOIDs loud;
+fired kills reported at survival volume; every timeout learned in the
+regime it runs in; every citable ratio pinned and core-class-declared;
+no calendar estimates — size by compute and scope.
 
-* **molecules are instantiated, not assembled** — 128 flexible waters are
-  placed as molecules; spontaneous O/H assembly is not relied on and
-  cross-molecule energies never route through the atomic MBE3;
-* the missing physics is added as a separately provenance-gated
-  **intermolecular layer**: water–water attraction/repulsion, molecular
-  dipoles with long-range electrostatics, polarization/many-body effects;
-* the missing infrastructure is added as engine work: periodic boundaries,
-  neighbor/cell lists, a long-range solver, deterministic checkpointing,
-  and a controlled-volume phase protocol (barostat later, §5 WP-6).
-
-## 3. The Hamiltonian: two backends, one analysis stack
-
-**Backend A — the pinned reference (first, fastest honest route).**
-A published water potential implemented EXACTLY as published, clearly
-marked as the reference backend: **TIP4P/2005** (rigid, 4-site, Ewald
-electrostatics; pinned parameter block with citation in the manifest).
-Chosen because its phase diagram is the best-mapped of any classical water
-model — melting point ≈252 K, density maximum, and a published ice ladder
-(Ih, Ic, II, III, V, VI) to compare the observatory's readings against.
-The model-superset law applies with force: Backend A is TIP4P/2005 *as
-published* — rigid, its own geometry — never a hybrid with our OHH surface.
-A mixed model is a THIRD model and does not exist in this campaign.
-
-**Backend B — the repository-native surface (in parallel).**
-`NativeWater-1`: our flexible OHH intramolecular surface per molecule, plus
-an intermolecular layer built from engine-computed water-dimer
-configurations (a staked grid of O–O distance × mutual orientations, each
-point an engine solve with counterpoise correction — the ELEMENTS-3 F1
-machinery exists), a polarization term (staked functional form, fit only on
-the dimer/trimer data, held-out validation mandatory), and long-range
-electrostatics from the surface's own fitted dipoles. Ships as tables under
-the trimer-class manifest discipline WITH seam records: the dimer surface
-gets the seam treatment before its grid freezes (the θ-crossing lesson says
-reactive/rearrangement channels put corners inside tabulated domains).
-
-**Both backends run the identical phase-analysis stack, lenses, classifier,
-and CI gates.** Where they disagree, the disagreement is a *reading* (model
-difference), displayed, never averaged.
-
-## 4. Physics scope and honest feasibility
-
-* N = 384 atoms (128 molecules). Ewald at this size is cheap; a real-space
-  cutoff + reaction-field variant is the wasm fallback, declared per build,
-  never silently swapped (M-DEVICE-CLASS's shape: the electrostatics
-  treatment is part of the artifact).
-* Timescales: diffusion and H-bond turnover are ps-scale — interactive.
-  Interface motion (melting/freezing direction) needs long runs —
-  detached campaign jobs with checkpoints, replayed in the observatory.
-  **Spontaneous nucleation of ice from cooled liquid is NOT the primary
-  test** — nucleation can exceed any interactive timescale. The **seeded
-  coexistence slab** is the stronger experiment: build ice|liquid in one
-  box, run at a ladder of temperatures, and the interface's direction of
-  motion measures which phase the model favors; the crossing estimates the
-  model's melting point, compared against TIP4P/2005's published 252 K as
-  the backend-A validation gate.
-* Ice Ih seeds are generated proton-disordered under the Bernal–Fowler ice
-  rules with near-zero cell dipole (gate: ice rules satisfied exactly on
-  the seed; plant: a proton-ORDERED slab fed to the ice-rules gate must be
-  flagged as ordered). Ice Ic and the high-pressure ladder (II, III, V,
-  VI) are backend-A experiments — the native surface earns high-pressure
-  trust later or not at all, and says so on its manifest.
-
-## 5. Build order — work packages
-
-Mirrors the operator's build order exactly; each WP names deliverables,
-gates, plants, and kills. Preregs: one short freeze per WP with a measured
-gate (this campaign's discipline is CI-gate-first rather than
-hypothesis-first — the hypotheses live in WP-7's experiments).
-
-**WP-0 — OXYGEN IN THE SANDBOX (the diagnostic panel).** Land the trimer
-loader + fence lift (render-3d, in flight), ship the regenerated OHH
-surface + O-H/O-O/H-H pairs to the page, and the three-atom water scene
-becomes the observatory's diagnostic panel: one molecule, bend/stretch
-modes visible, the intramolecular surface inspectable. DONE-when: the
-sandbox renders H₂O with the fence lifted and the provenance panel showing
-the table's manifest. *(Mostly already in flight — this WP is the
-integration.)*
-
-**WP-1 — PERIODIC WORLD.** Periodic boxes (orthorhombic first), minimum-
-image convention, cell lists sized to the largest cutoff, and
-DETERMINISTIC CHECKPOINTING: fixed-seed, fixed-order reductions,
-checkpoint = bit-exact state, replay identity as a CI gate (same seed +
-checkpoint → bit-identical trajectory segment; the debug/release
-bit-identity check from the tables work is the precedent and applies
-here). Kill for the WP: any gate that passes with the box un-wrapped
-(plant: an atom translated by one box vector must produce bit-identical
-energies).
-
-**WP-2 — THE INTERMOLECULAR LAYER.** Backend A implemented and validated
-against published TIP4P/2005 numbers (energy of published dimer geometry,
-density at 298 K/1 bar within the published model's value, RDF g_OO peak
-positions). Backend B's dimer campaign: staked configuration grid → engine
-solves through the leased generator (launch discipline, DD tier for
-cap-cases) → seam scan on the orientation axes BEFORE the grid freezes →
-fit with held-out validation → tables under the manifest discipline.
-Gates: provenance loader refuses missing/oversized uncertainty and missing
-seam record (both doors demonstrated firing). Kill: held-out dimer error
-above the staked bound re-scopes the fit, never widens the bound.
-
-**WP-3 — 128 FLEXIBLE WATERS INSTANTIATED.** Molecule objects (Backend B:
-flexible via OHH surface; Backend A: rigid constraints as published —
-SETTLE/RATTLE, constraint residual gated). NVT thermostat, deterministic
-(seeded, reproducible; thermostat choice documented with its known
-artifacts). Energy conservation gated PER CONSERVED QUANTITY (the
-one-gate-per-law lesson): energy drift bound on NVE segments, momentum
-zero, and the energy ledger's zero-point from the force law's own zero.
-
-**WP-4 — BLIND CENSUS LAYERS.** Molecule census (O-H connectivity by
-distance criterion, gated against instantiation count — with the fence
-that it must also RUN on trajectories where molecules could dissociate on
-Backend B, and report, not assume); H-bond census (geometric criterion,
-stated; turnover rate lens); tetrahedral order q per O (Errington–
-Debenedetti); Steinhardt q6/local-structure for crystal recognition; MSD →
-diffusion D; density field and largest connected domain; energy per
-molecule; and the CLOSURE-DEFECT lens: for each macro view, the measured
-witness-pair defect over trajectory windows — the holon reading.
-
-**WP-5 — REFERENCE STATES SHIPPED.** Vapor, liquid, ice Ih equilibrated
-states committed as checkpoints with manifests (backend, T, density, seed,
-binary hash, generation log). The observatory loads them instantly;
-regeneration is a leased detached job, never a page load.
-
-**WP-6 — SWEEPS.** Heating and density sweeps as scripted protocols
-(controlled-volume first: fixed-V temperature ladders, slab geometries;
-NPT barostat is a later increment and its own prereg). Each sweep writes a
-trajectory + census record the classifier and lenses replay.
-
-**WP-7 — THE FOUR EXPERIMENTS + COEXISTENCE.** The four reproducible
-experiments wired as observatory presets over the SAME Hamiltonian, plus
-the ice|liquid coexistence slab ladder → interface-direction readout →
-model melting point (backend A gate: brackets 252 K within a staked
-window; backend B: reported as the native surface's measured melting
-point, whatever it is — that number is a RESULT, not a target).
-
-**WP-8 — CI GATES.** RDF against reference (backend A), diffusion in
-liquid window, density stability, per-law conservation, phase separation
-(the slab stays separated below melting, mixes above), replay identity,
-ice-rules on seeds, classifier blindness plant P-1, and the provenance
-refusals — all in ci-gates.sh with the affordable-half discipline (short
-gates in CI; long campaigns detached with committed logs).
-
-## 6. Plants (the gates must be seen to fire)
-
-* **P-1 preset-blindness**: liquid trajectory from the "ice" button →
-  classifier says LIQUID.
-* **P-2 box plant**: one-box-vector translation → bit-identical energy.
-* **P-3 ice-rules plant**: proton-ordered slab → flagged.
-* **P-4 provenance plants**: oversized uncertainty and missing seam record
-  → loader refuses (both doors, positive controls beside them).
-* **P-5 classifier null**: high-T vapor windows → never ICE (false-crystal
-  rate bound staked).
-* **P-6 conservation mutation**: the old accounting (a known-wrong force
-  zero-point) planted → energy gate fires.
-* **P-7 backend integrity**: a hybrid configuration (flexible molecule
-  under backend A) must REFUSE — the third-model trap made structural.
-
-## 7. Misfit contacts (forward-armed audit will demand these)
-
-M-DEVICE-CLASS (electrostatics treatment + device class are part of the
-artifact); M-PLACEMENT-LOTTERY (any perf ratio pinned + both core types);
-M-IDLE-CALIBRATED-TIMEOUT (every timeout/patience constant learned in the
-running environment); M-VACUOUS-SUCCESS (census gates assert work counts);
-M-PLANT-SECTOR (every plant's carrier asserted non-empty); M-CACHE-KIND
-(state/table registries key kind+backend+size); M-MAINTENANCE-LENS (any
-equilibration/annealing "repair" claim names the lens and runs the
-issue-the-command-restore-nothing control); M-STALE-INSTRUMENT +
-M-PROVENANCE-OVERREACH (launch headers: hash, HEAD, build exit status);
-M-EXIT-DISCRIMINATOR (every solver/fit records why it stopped); the seam
-ruling (no grid freezes before its seam scan or an accepted-floor note).
-
-## 8. Sequencing and the two teams
-
-Sprint team takes WP-1 through WP-3 plus backend A end-to-end — it is
-self-contained engine work with published validation targets. Local lanes,
-when they return: render-3d finishes WP-0's loader (in flight); the water
-lane owns backend B's dimer campaign design and seam scans (their
-instrument, their state-crossing law); the mesh lane's leased generator
-runs all of backend B's solves; mixtures-engine's provenance-gate pattern
-is the WP-2 loader standard. WP-4's closure-defect lens is lead work (it
-touches OBJECT.md's contract). Nothing in WP-1..3 waits on anything local.
-
-**The demo, when it stands:** drag the temperature slider on a seeded
-ice|liquid box and watch the interface choose a direction; the lenses show
-tetrahedral order collapsing, diffusion switching on, the H-bond network
-fragmenting, density stepping — and the classifier, which has never seen
-the slider, calls the phase from the trajectory alone, with the closure
-defect of each macro view printed beside it. From a quantum-informed
-molecular surface to a macroscopic phase, one Hamiltonian, every rung
-measured. That is the holon claim with something genuinely difficult to
-predict and measure.
+**The maximal statement, carried as the mission:** all forms of ice, the
+liquid, nuclear quantum effects, and continuum H/O thermodynamics are the
+successive certified coarsenings of the single holon that already
+produces atoms from Z, molecules from three-body residuals, and
+saturation from the sign of those residuals. Each gap is a missing
+commuting square with a measured budget; each is filled by constructing
+the next Closed view — never by importing a force field.

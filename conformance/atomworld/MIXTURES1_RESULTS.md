@@ -986,5 +986,65 @@ the evidence for this section and regenerating it away would delete the warrant.
 
 ---
 
+## The file declares one uncertainty and ships three columns
+
+Plant (iv) raised a question it did not answer: `Cl2.json`'s convergence block also
+carries `worst_response_residual` = **2.06e-2**, against HCl's 9.96e-11 — eight
+orders apart, on a shipped artifact, in a field nothing reads. Measured rather than
+assumed, because a 2% residual on a shipped curve is either harmless or serious and
+the difference is *where* it is.
+
+### What that residual belongs to
+
+Not the energy, and not the force. The CG solve produces the first-order wavefunction
+for `E'' = <v|H''|v> + 2<v¹|H'|v>` — the **second derivative only**. The energy is
+Davidson's and the force is Hellmann–Feynman (`e1 = <v|H'|v>`), and neither touches
+the response solve.
+
+### Where it is, on the shipped grid itself
+
+A fourteen-point hand-picked sweep found nothing worse than 9.6e-11, which proved only
+that I had not sampled the right knot. Walking the shipped grid exactly
+(`examples/cl2_response_probe`, 192 knots) reproduces the declared number to every
+printed digit — `2.063208e-2` at knot 154 — and finds **six knots above 1e-9, all of
+them in the dissociation tail**:
+
+| knot | R (bohr) | cg residual | d²E/dR² |
+|---|---|---|---|
+| 154 | 12.187 | 2.0632e−2 | −7.86e−6 |
+| 162 | 13.496 | 8.4439e−5 | −3.84e−6 |
+| 172 | 15.390 | 1.6799e−5 | −1.53e−6 |
+| 177 | 16.461 | 7.7476e−5 | −9.56e−7 |
+| 179 | 16.916 | 4.9266e−6 | −7.90e−7 |
+| 187 | 18.899 | 1.1194e−5 | −3.63e−7 |
+
+The worst sits at **3.03 × R_e**, where the curvature is 7.9e−6 against 5.37 at the
+inner wall — six orders down. The mechanism is the referee lane's ClF tail finding in
+another costume: at dissociation the gap collapses, and `(H − E)v¹ = −(H' − E')v` is
+ill-conditioned by exactly that gap.
+
+### Why it does not reach the product, established rather than assumed
+
+The supplied curvature column **never enters the force loop**. `PotentialTable::d2` is
+read in exactly two places (`table.rs:303` and `:308`), both inside the `d2_mismatch`
+diagnostic; `curvature()` returns `self.eval(r).2`, the interpolant's own second
+derivative. So a bad d2 knot can inflate a reported disagreement and nothing else —
+it cannot move a force, a timestep, or the drift envelope.
+
+**The disclosure that is owed anyway**: the file declares ONE `uncertainty_hartree`,
+and it describes the energy column. The curvature column's own residual lives in the
+convergence block and is not gated. The manifest note now says so, and says that the
+uncertainty is weighed rather than merely required — so a host authoring a file learns
+the actual rule instead of the old one.
+
+**Not fixed, and deliberately.** Making the tail's curvature converge means either
+lifting the CG iteration cap where the gap collapses or declaring a per-column
+uncertainty in the schema — the second is the referee lane's file format, not mine to
+move unilaterally, and neither is worth doing for a column consumed as a cross-check
+six orders below the scale of anything that reads it. Recorded with its numbers so the
+next person inherits a measurement rather than a surprise.
+
+---
+
 *Sections are added as each measurement lands. Nothing above was written before
 its numbers existed.*

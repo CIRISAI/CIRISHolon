@@ -943,7 +943,8 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
             Demo::Admit(prov, d1, host) => assert_eq!(
                 prov.admit(&d1, host),
                 Err(r),
-                "{r:?} has no demonstrated failing case: its fixture produced something                  else, so the refusal is unwatched and may be unreachable"
+                "{r:?} has no demonstrated failing case: its fixture produced something \
+                 else, so the refusal is unwatched and may be unreachable"
             ),
             Demo::CommitOnly => {
                 let mut sc = scene(&[HYDROGEN]);
@@ -952,7 +953,8 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
                 assert_eq!(
                     sc.bank.commit(slot, good, &d1_none, Host::Browser),
                     Err(Refusal::CurveNotLoaded),
-                    "an empty slot accepted a provenance, so a curve's description can                      outlive the curve"
+                    "an empty slot accepted a provenance, so a curve's description can \
+                     outlive the curve"
                 );
             }
         }
@@ -971,7 +973,9 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
     assert_eq!(
         holon_render::refusal_code(all[all.len() - 1]) - holon_render::PROVENANCE_REFUSED,
         (all.len() - 1) as u32,
-        "the sweep's last variant does not carry the last refusal code, so the array has          fallen out of step with `refusal_code` and a variant is missing from one of them"
+        "the sweep's last variant does not carry the last refusal code, so the array \
+         has fallen out of step with `refusal_code` and a variant is missing from one \
+         of them"
     );
     println!("  all {} provenance refusals demonstrated firing.", all.len());
 }
@@ -1421,9 +1425,62 @@ fn plant_iv_an_unresolvable_uncertainty_is_refused() {
          supposed to say exactly that"
     );
 
+    // NOT-A-NUMBER, and WHICH LEG OWNS IT. A malformed file is the reason this door
+    // exists, and NaN is what a malformed number parses to. I expected the resolution leg
+    // to catch it and it does not: on a SHIPPED curve the absent-bound rule fires first,
+    // because `!(NaN > 0.0)` is true. That is the better name — an unparseable bound is
+    // an absent one — and it is asserted here so a reordering of the legs cannot change
+    // which refusal a malformed file earns without saying so.
+    assert_eq!(
+        TableProvenance { uncertainty_ha: f64::NAN, ..base }.admit(&d1, Host::Browser),
+        Err(Refusal::UncertaintyMissing),
+        "a NaN uncertainty no longer reads as an absent bound on the shipped door"
+    );
+    // On the SOLVED path there is no absent-bound rule — a solved curve may legitimately
+    // report zero — so NaN falls through to the resolution leg, and must still be caught.
+    // This is why the comparison is written `!(u < bar)` and not `u >= bar`: every
+    // comparison against NaN is false, so the negated form rejects and the direct form
+    // would admit. Same idiom, same reason, as the grid check in `table.rs`.
+    assert_eq!(
+        TableProvenance {
+            source: Source::Solved,
+            uncertainty_ha: f64::NAN,
+            ..base
+        }
+        .admit(&d1, Host::Native),
+        Err(Refusal::UncertaintyExceedsResolution),
+        "a SOLVED curve with a NaN uncertainty was ADMITTED. Nothing upstream of this leg \
+         rejects NaN on that path, so the comparison has been rewritten in the `u >= bar` \
+         form and a malformed number now reads as a good one"
+    );
+    assert_eq!(
+        TableProvenance {
+            uncertainty_ha: 1e-5,
+            well_depth_ha: f64::NAN,
+            ..base
+        }
+        .admit(&d1, Host::Browser),
+        Ok(()),
+        "a NaN WELL DEPTH refused the curve. It should not: `well_depth > 0.0` is false \
+         for NaN, so the leg does not apply, and the curve is judged on its uncertainty \
+         alone rather than on a number the file failed to state"
+    );
+
+    // A NEGATIVE error bar is nonsense, and the shipped door already refuses it — as
+    // MISSING rather than as too large, which is the right name: `!(u > 0.0)` is the
+    // absent-bound rule and a negative bound is an absent one. Asserted so a future
+    // reordering of these legs cannot silently change which refusal a malformed file
+    // earns.
+    assert_eq!(
+        TableProvenance { uncertainty_ha: -1.0, ..base }.admit(&d1, Host::Browser),
+        Err(Refusal::UncertaintyMissing),
+        "a negative uncertainty no longer reads as an absent one"
+    );
+
     println!(
         "  PLANT (iv) CAUGHT on both legs. Bar {RESOLVABLE_UNCERTAINTY:.0e} Ha, derived \
-         from the schema's well threshold; the real Cl2 curve clears it by 6.5e8."
+         from the schema's well threshold; the real Cl2 curve clears it by 6.5e8. NaN \
+         refused, NaN well depth ignored, negative bound reads as absent."
     );
 }
 

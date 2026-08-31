@@ -595,11 +595,14 @@ fn the_scene_struct_is_not_carried_on_the_stack() {
     println!("AtomWorld = {size} bytes, Sim = {sim} bytes (boxed away)");
     assert!(
         sim > 100_000,
-        "Sim has shrunk to {sim} bytes; this gate was written when it was 331,656 and          its premise should be rechecked rather than the bar quietly passing"
+        "Sim has shrunk to {sim} bytes; this gate was written when it was 331,656, and \
+         its premise should be rechecked rather than the bar quietly passing"
     );
     assert!(
         size < 4_096,
-        "AtomWorld is {size} bytes: the Sim is being carried BY VALUE again. In debug          that is several megabytes of stack copies through new_with_preset, and the          preset test aborts the whole suite with a stack overflow."
+        "AtomWorld is {size} bytes: the Sim is being carried BY VALUE again. In debug \
+         that is several megabytes of stack copies through new_with_preset, and the \
+         preset test aborts the whole suite with a stack overflow."
     );
 }
 

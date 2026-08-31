@@ -67,7 +67,13 @@ fn main() {
         "  \"note\": \"Shipped pair curves for the pairs the browser cannot afford to \
          solve at load. Each file declares its producer, its solver route, its grid rule \
          and one uncertainty; the engine's provenance gate refuses a table that does not. \
-         Light pairs are absent on purpose: the sandbox solves those itself.\",\n",
+         The uncertainty is also WEIGHED, not merely required to exist: a file is refused \
+         if it declares an error bar at or above the depth below which this schema will \
+         not call a dip a well (1e-4 hartree), or at or above the well the file itself \
+         declares. That uncertainty describes the ENERGY column; the curvature column \
+         carries its own residual in the convergence block and is consumed as a \
+         cross-check rather than as a source. Light pairs are absent on purpose: the \
+         sandbox solves those itself.\",\n",
     );
     manifest.push_str(&format!("  \"knots\": {KNOTS},\n"));
     manifest.push_str("  \"pairs\": [\n");

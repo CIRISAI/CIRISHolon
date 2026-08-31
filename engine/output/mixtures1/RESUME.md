@@ -208,3 +208,22 @@ ignore it. Regenerating Cl2 costs 390 s.
 The pre-ruling artifact is kept at `engine/output/mixtures1/Cl2.PRE_TIER_RULING.json`
 (sha256 88ad657d0ffbe854a1c6535d700c9d7c3ec5cd5da26080d4a501dfb2e8872f37). It is the
 evidence for the plant (iv) section and regenerating it away would delete the warrant.
+
+## The tool I write Rust with reintroduced a defect I had already fixed
+
+Twice in one session, and a sibling lane caught one of them. Writing Rust through a
+Python heredoc, a line-continuation backslash inside a Python `'''...'''` string is
+consumed by PYTHON — so the Rust source receives one joined line with the indentation
+still in it, and the string literal ships with a ten-space run inside a sentence. That
+is exactly the defect that reached disk in `PAIR_PROVENANCE_DMRG` and forced the tables
+to be regenerated.
+
+Four instances: one in the 3D size gate (found and fixed by render-3d, in my code) and
+three in the refusal sweep's assertion messages. The cure in the heredoc is `\\` where
+a Rust continuation is wanted, or a raw `r'''...'''` block.
+
+**No new gate for it, deliberately.** The strings that reach an ARTIFACT are already
+gated (`provenance_strings_carry_no_accidental_whitespace`), and that is the case with
+consequences; these were developer-facing assertion messages, where the cost is an ugly
+line rather than a corrupt shipped file. The check that matters exists; the lesson is
+about the tool, so it belongs here.

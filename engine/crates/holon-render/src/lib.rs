@@ -131,9 +131,25 @@ pub fn generate_table(s: &mut Sim, r_min: f64, r_max: f64, count: usize) -> u32 
         // H2 in the STO-3G minimal basis is FOUR determinants on the determinant route.
         // The provenance is stamped from those facts rather than assumed, so the H2 curve
         // is graded by the same gate every other curve is.
+        //
+        // TWO DOORS SERVE THIS SLOT, AND THEY DO NOT MEASURE THE SAME THINGS.
+        // `holon_bank_generate_pair` reaches H-H through `generate_pair_table`, whose
+        // `PairMeta` carries a measured `worst_residual`. This one goes through
+        // `holon_chem::table::stream_table`, whose `Meta` carries no residual at all — so
+        // the uncertainty below is a declared zero standing in for a number that was never
+        // computed, not a measurement of a very good solve. `Source::Solved` permits a
+        // zero (see `TableProvenance::uncertainty_ha`), which is why the gate does not
+        // catch it; it is recorded here because an unmeasured quantity and an excellent
+        // one look identical in this field, and that is the shape plant (iv) is about.
+        // Fixing it properly means giving `Meta` a residual, which is a shared type and
+        // another lane's to move. The well depth, by contrast, IS in scope on this path
+        // and is now passed rather than zeroed.
         if let Err(r) = s.bank.commit(
             slot,
-            bank::TableProvenance::solved_exact(4, 2, 0.0),
+            bank::TableProvenance {
+                well_depth_ha: meta.d_e,
+                ..bank::TableProvenance::solved_exact(4, 2, 0.0)
+            },
             &bank::D1_RECORD,
             bank::Host::Browser,
         ) {

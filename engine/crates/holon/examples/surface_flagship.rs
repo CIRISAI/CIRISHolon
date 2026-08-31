@@ -187,6 +187,10 @@ fn main() {
     let stim_path: String = arg(&args, "--stim", String::new());
     let json_path: String = arg(&args, "--json", String::new());
     let no_guard = args.iter().any(|a| a == "--no-guard");
+    // Test hook, symmetric to --no-guard: refuse unconditionally, so the
+    // harness's per-size skip path can be EXERCISED rather than assumed. A
+    // fallback nothing ever runs is an untested claim.
+    let force_refuse = args.iter().any(|a| a == "--force-refuse");
 
     let build = Instant::now();
     let code = SurfaceCode::new(d);
@@ -212,6 +216,10 @@ fn main() {
         need as f64 / 1e9,
         avail as f64 / 1e9
     );
+    if force_refuse {
+        eprintln!("REFUSED: --force-refuse (test hook for the harness skip path)");
+        std::process::exit(2);
+    }
     if !no_guard && need + (2u64 << 30) > avail {
         eprintln!(
             "REFUSED: needs {:.2} GB + 2.0 GB reserve, only {:.2} GB available. \

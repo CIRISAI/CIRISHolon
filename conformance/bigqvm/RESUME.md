@@ -51,10 +51,38 @@ one buffer; peak RSS 9.571 GB against the 9.545 GB model, and wall fell from
 **The head-to-head re-run is done** and moved the smaller-d verdict from
 "stim leads 1.4–2.1×" to parity (0.82–1.26×).
 
-Still owed, and neither blocks anything: a QUIET-MACHINE repeat of the whole
-comparison (everything here was taken at load 33–54), and
-`SurfaceCode::new`'s O(stabilizers²) `verify_commuting`, which costs 62–89 s
-of startup at d=221 and would be linear with a spatial index.
+Still owed, and neither blocks anything:
+
+**(a) The QUIET-MACHINE repeat** — everything in this lane was taken at load
+33–54, and per the standing ruling the ratios are not bankable against
+CI-runner baselines until they are re-taken in a quiet window. A detached
+waiter is armed for it:
+
+    conformance/bigqvm/run_when_quiet.sh   (setsid)
+    -> h2h_quiet.json      the citable table, written only if the window HELD
+    -> quiet.DONE          success marker
+    -> h2h_window_broke_*.json   kept, but explicitly NOT citable as quiet
+    -> quiet.GAVEUP        no window inside MAX_WAIT
+
+It does not trust loadavg. It gates on a CALIBRATION RUN of known cost and
+proceeds only when that job comes in within 1.15× of its record. The first
+gate used d=45 and was REJECTED by measurement: at loadavg 46 it read 0.055 s
+against a 0.052 s record (1.06×), because a 55 ms job gets an idle core even
+on a saturated box — it could not tell quiet from loaded, which was its only
+job. d=101 reads 1.79–2.02 s at loadavg 45 against a 1.319 s record
+(1.36–1.53×) and does separate. The sweep also records loadavg at BOTH ends
+and refuses to label a run "quiet" that started quiet and finished loaded.
+
+A memory refusal at one size now SKIPS that size instead of aborting the
+sweep — otherwise d=221 not fitting would throw away the other four sizes and
+the window with them. That path is exercised, not assumed: the demo binary
+carries `--force-refuse` (symmetric to `--no-guard`) so the harness's skip can
+be tested on demand.
+
+**(b) `SurfaceCode::new`'s O(stabilizers²) `verify_commuting`**, which costs
+62–89 s of startup at d=221 and would be linear with a spatial index. It is
+startup, not simulation, and it is separated from simulation time everywhere
+it is reported.
 
 ## Historical — the two items as they stood while blocked
 

@@ -17,6 +17,10 @@ Usage: surface_h2h.py [--d 21,45,101] [--rounds 3] [--reps 3]
 """
 import argparse, json, os, statistics, subprocess, sys, time
 
+class MemoryRefusal(Exception):
+    """One size does not fit in memory right now; the others may."""
+
+
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 FLAGSHIP = os.environ.get(
@@ -33,6 +37,12 @@ def ours(d, rounds, tmp):
          "--json", tmp],
         capture_output=True, text=True,
     )
+    if out.returncode == 2:
+        # The engine's own memory guard refused. That is one SIZE being
+        # unaffordable right now, not the sweep being invalid — aborting here
+        # would throw away the other sizes' measurements (and, in a quiet
+        # window, the window itself).
+        raise MemoryRefusal(out.stderr.strip().splitlines()[-1] if out.stderr.strip() else "refused")
     if out.returncode != 0:
         raise RuntimeError(f"ours failed (rc={out.returncode}): {out.stderr[-2000:]}")
     m = json.loads(out.stdout)["results"][0]["metadata"]
@@ -40,11 +50,20 @@ def ours(d, rounds, tmp):
 
 
 def emit_stim(d, rounds, path):
-    subprocess.run(
+    # The binary writes the circuit BEFORE its memory guard runs, so a
+    # refusal (rc=2) still leaves a usable file — `check=True` here would
+    # abort the whole sweep on a size that merely does not fit right now,
+    # which is exactly what the per-size skip is meant to avoid.
+    out = subprocess.run(
         [FLAGSHIP, "--d", str(d), "--mode", "bench", "--rounds", str(rounds),
          "--stim", path, "--json", os.devnull],
-        capture_output=True, text=True, check=True,
+        capture_output=True, text=True,
     )
+    if not os.path.exists(path) or os.path.getsize(path) == 0:
+        raise RuntimeError(
+            f"emit_stim d={d} produced no circuit (rc={out.returncode}): "
+            f"{out.stderr[-500:]}"
+        )
     return path
 
 
@@ -77,7 +96,8 @@ def main():
     print(f"surface-code head-to-head: holon coladaptive vs stim {stim.__version__}")
     print(f"medians of {args.reps}, arms interleaved, {args.rounds} rounds, "
           f"identical circuits (ours, emitted to stim format)")
-    print(f"loadavg at start: {os.getloadavg()}")
+    load_start = os.getloadavg()
+    print(f"loadavg at start: {load_start}")
     print()
 
     rows = []
@@ -88,10 +108,16 @@ def main():
         tmpjson = os.path.join(args.tmpdir, f"sc_h2h_d{d}.json")
 
         o_times, s_times, meta = [], [], None
-        for _ in range(args.reps):
-            t, meta = ours(d, args.rounds, tmpjson)
-            o_times.append(t)
-            s_times.append(stim_time(circ))
+        try:
+            for _ in range(args.reps):
+                t, meta = ours(d, args.rounds, tmpjson)
+                o_times.append(t)
+                s_times.append(stim_time(circ))
+        except MemoryRefusal as e:
+            print(f"d={d:4d} SKIPPED — engine refused for memory: {e}")
+            rows.append({"d": d, "n": 2 * d * d - 1, "skipped": "memory refusal"})
+            os.remove(path)
+            continue
         # On a CONTENDED box the median still carries the contention; the
         # MINIMUM is the standard robust estimator because interference can
         # only ever add time, never remove it. Both are reported, and the
@@ -119,14 +145,26 @@ def main():
               f"{max(s_times)/min(s_times):.2f}x]")
         os.remove(path)
 
-    lead = sum(1 for r in rows if r["ratio"] < 1.0)
+    rows_ok = [r for r in rows if "ratio" in r]
+    if not rows_ok:
+        print("VERDICT: no size completed (all refused for memory)")
+        json.dump({"stim_version": stim.__version__, "rows": rows}, open(args.out, "w"), indent=1)
+        return
+    lead = sum(1 for r in rows_ok if r["ratio"] < 1.0)
     print()
-    print(f"VERDICT: ahead at {lead}/{len(rows)} distances; "
-          f"best {min(r['ratio'] for r in rows):.3f}, "
-          f"worst {max(r['ratio'] for r in rows):.3f}")
+    print(f"VERDICT: ahead at {lead}/{len(rows_ok)} distances; "
+          f"best {min(r['ratio'] for r in rows_ok):.3f}, "
+          f"worst {max(r['ratio'] for r in rows_ok):.3f}"
+          + (f"; {len(rows) - len(rows_ok)} size(s) skipped for memory" if len(rows) != len(rows_ok) else ""))
+    # Load at BOTH ends. A sweep that starts quiet and ends loaded is not a
+    # quiet-machine measurement, and only recording the start would let it
+    # pass as one.
     json.dump({"stim_version": stim.__version__, "reps": args.reps,
-               "rounds": args.rounds, "loadavg": os.getloadavg(), "rows": rows},
+               "rounds": args.rounds, "loadavg_start": load_start,
+               "loadavg_end": os.getloadavg(), "loadavg": load_start,
+               "rows": rows},
               open(args.out, "w"), indent=1)
+    print(f"loadavg start {load_start[0]:.1f} -> end {os.getloadavg()[0]:.1f}")
     print(f"wrote {args.out}")
 
 

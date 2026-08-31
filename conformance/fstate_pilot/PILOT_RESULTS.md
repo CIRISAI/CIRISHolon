@@ -102,6 +102,24 @@ by the instance names in CAMPAIGNS.md.
 > be checked against the tree, not against the author's memory of a
 > scratchpad. Scratchpads are gitignored, and a run that lives only in one
 > is a claim, not a record.
+>
+> **TRIGGER CONDITION for the rebuild (ruled 2026-08-30, and it is a gate,
+> not a backlog item).** The reproduction path is owed BEFORE any future
+> claim leans on this pilot's numbers again — and not before. The reasons
+> it is not urgent are specific rather than convenient: the pilot's verdict
+> stands on its own measured numbers, which nothing here disputes; and
+> Campaign #2 proceeds on OUR cost model by its own pre-staked gate, so
+> nothing downstream is currently resting on the tracker-side figures.
+>
+> So: if a later claim cites the 31.4 s floor, the N=20 liftoff, the
+> 0.25–0.35 decades/qubit bracket, or the 10¹³–10¹⁸ s extrapolation as
+> EVIDENCE for anything, the rebuild runs first, in this order — vendor the
+> tracker instance with a pinned hash, commit the family generator and the
+> timing harness, pin the Aer version, and confirm the N=2…24 table
+> reproduces before extending it. Citing this file for what it RETRACTS
+> (findings 1–2, the family defect, the non-reproducibility itself) needs
+> no rebuild, because those are claims about the tooling that the tooling's
+> absence cannot undermine.
 
 ## Corrected-family rerun (v3 + v4), and the verdict's final form
 

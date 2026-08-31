@@ -283,12 +283,54 @@ own sensitivity line shows it would have cost **0 groups** here. A guard that
 proves unnecessary is not a guard that was wrong — whether it was needed was not
 knowable until after the run.
 
-## §7 — H1, the forward test (open)
+## §7 — H1, the forward test: RUN, and four of five predictions confirmed
 
-The committed prediction, staked here before any held-out number exists:
+The committed prediction, staked here before any held-out number existed:
 **the null extends** — no enrichment beyond the permutation null's 99th
 percentile on the held-out population (all isomorphism types of orders
 65..71 under the same A000001 completeness gate, plus the named 2-swamp
 panel: both extraspecials of order 32, both of order 64, Q64, Q128).
-The held-out census, run, and scoring belong to the refuter lane; a
-forward-confirmed null is rule-6 support for the null itself.*
+*(The order-64 extraspecials do not exist — 2^(1+2n) has no solution at 64 —
+and the pre-run substitution of the order-128 pair is recorded in
+HELDOUT_PREDICTIONS.md at 2b6d94a, before any table was built.)*
+
+**Executed 2026-08-30** (instrument frozen at 1f023de before the run; log
+`heldout.log`, rows `heldout.json`; predictions P1–P5 from 2b6d94a scored
+unrevised):
+
+- **S1 on the held-out census: PASS exactly.** Orders 65..71 built by the
+  same extension machinery, 17 types against the A000001 pin
+  (1, 4, 1, 5, 1, 4, 1), zero census VOIDs. Every panel member verified to
+  be what it is named (extraspecial predicate, unique-involution test,
+  non-isomorphism of the ± types) before scoring.
+- **P1 — SELECT = non-abelian, all-or-nothing: CONFIRMED.** 19 decided
+  groups, zero disagreements. The primary's finding — the bootstrap
+  criterion is extensionally the non-abelian test — extends to the held-out
+  population without exception.
+- **P2 — the aggregate null extends: CONFIRMED.** Selected 11/19; RULE-B
+  among selected 0.7273 against an eligible base rate of 0.8421; the
+  permutation null's 99th percentile is 1.0000 on this small population.
+  No enrichment. Rule-6 support for the null: a prediction staked in
+  advance, confirmed on data that did not exist when it was staked.
+- **P3 — the miss stays downward: CONFIRMED** (0.7273 ≤ 0.8421), the
+  by-construction depression of the SM rate among the selected, again.
+- **P4 — the panel labels: CONFIRMED, six of six.** All four extraspecials
+  (32±, 128±) read NOT SM-embeddable; Q64 and Q128 read SM-embeddable —
+  exactly as staked.
+- **P5 — zero VOIDs at orders 65..71: FALSIFIED.** One group — `h70#2`
+  (|G| = 70, |F| = 200) — returned an undecided verdict under the frozen
+  budgets. The prediction was about instrument capacity and it was wrong by
+  one group; it is reported at the same prominence as the four
+  confirmations, per rule 7. The three panel VOIDs (Q128, ES128+, ES128−,
+  all |G| = 128, N = 16,384 states) were anticipated in the prediction
+  itself and are not failures. P5's miss touches no scientific claim: P1
+  scored 19 decided groups and h70#2 is simply absent from every rate above,
+  its VOID structure visible rather than laundered (the M-BUDGET-LAUNDER
+  rule holding on its own campaign).
+
+**Verdict: H1 confirms the null with teeth.** The criterion's collapse to
+the non-abelian test, the absence of SM enrichment, the downward direction
+of the miss, and all six panel labels were predicted before the population
+existed and confirmed on it. The one falsified prediction is a capacity
+statement, reported as fired. SELECTOR-6 is CLOSED: E1 branch (b) with its
+forward test discharged.

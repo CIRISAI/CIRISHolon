@@ -1,0 +1,65 @@
+[     0.0s] H1 — held-out run. Predictions committed at 2b6d94a, before this built anything.
+[     0.1s] panel verification (each group must be what it is named):
+[     0.1s]   ES32+    |G|=  32  extraspecial=True  |Z|=2  involutions=19
+[     0.1s]   ES32-    |G|=  32  extraspecial=True  |Z|=2  involutions=11
+[     0.1s]   Q64      |G|=  64  involutions=1 (generalized quaternion needs exactly 1)
+[     0.1s]   Q128     |G|= 128  involutions=1 (generalized quaternion needs exactly 1)
+[     0.1s]   ES128+   |G|= 128  extraspecial=True  |Z|=2  involutions=71
+[     0.1s]   ES128-   |G|= 128  extraspecial=True  |Z|=2  involutions=55
+[     0.1s]   ES32+ vs ES32-: isomorphic=False (must be False)
+[     0.2s]   ES128+ vs ES128-: isomorphic=False (must be False)
+[     0.2s] 
+[     0.2s] rebuilding orders 1..35 as extension inputs
+[     0.7s] order  65:   1 types from    18 candidates  (pin 1)
+[     2.5s] order  66:   4 types from   104 candidates  (pin 4)
+[     2.6s] order  67:   1 types from     1 candidates  (pin 1)
+[     7.1s] order  68:   5 types from   112 candidates  (pin 5)
+[     8.3s] order  69:   1 types from    26 candidates  (pin 1)
+[    12.2s] order  70:   4 types from    96 candidates  (pin 4)
+[    12.4s] order  71:   1 types from     1 candidates  (pin 1)
+[    12.4s] 
+[    12.4s] S1 on held-out orders 65..71: PASS, zero VOIDs
+[    12.4s] held-out complete-order groups: 17
+[    12.9s]   h65#0      |G|=  65 abelian=True  select=False sel=12 F=12 sm=True
+[    13.9s]   h66#0      |G|=  66 abelian=True  select=False sel=16 F=16 sm=True
+[    82.2s]   h66#1      |G|=  66 abelian=False select=True  sel=146 F=352 sm=True
+[   105.0s]   h66#2      |G|=  66 abelian=False select=True  sel=47 F=96 sm=True
+[   375.1s]   h66#3      |G|=  66 abelian=False select=True  sel=222 F=1056 sm=True
+[   375.7s]   h67#0      |G|=  67 abelian=True  select=False sel=8 F=8 sm=True
+[   376.2s]   h68#0      |G|=  68 abelian=True  select=False sel=9 F=9 sm=True
+[   376.5s]   h68#1      |G|=  68 abelian=True  select=False sel=9 F=9 sm=True
+[   399.5s]   h68#2      |G|=  68 abelian=False select=True  sel=37 F=306 sm=True
+[   489.5s]   h68#3      |G|=  68 abelian=False select=True  sel=73 F=306 sm=True
+[   724.3s]   h68#4      |G|=  68 abelian=False select=True  sel=260 F=1224 sm=False
+[   724.9s]   h69#0      |G|=  69 abelian=True  select=False sel=10 F=10 sm=True
+[   725.6s]   h70#0      |G|=  70 abelian=True  select=False sel=20 F=20 sm=True
+[   784.0s]   h70#1      |G|=  70 abelian=False select=True  sel=87 F=280 sm=True
+[   823.1s]   h70#2      |G|=  70 abelian=False select=None  sel=None F=200 sm=True
+[  1147.3s]   h70#3      |G|=  70 abelian=False select=True  sel=290 F=1400 sm=True
+[  1148.0s]   h71#0      |G|=  71 abelian=True  select=False sel=8 F=8 sm=True
+[  1148.0s] 
+[  1148.0s] panel:
+[  1152.9s]   ES32+      |G|=  32 abelian=False select=True  sel=33 F=64 sm=False void=None
+[  1161.3s]   ES32-      |G|=  32 abelian=False select=True  sel=33 F=64 sm=False void=None
+[  1237.3s]   Q64        |G|=  64 abelian=False select=True  sel=88 F=320 sm=True void=None
+[  1621.6s]   Q128       |G|= 128 abelian=False select=None  sel=None F=768 sm=True void=None
+[  3442.4s]   ES128+     |G|= 128 abelian=False select=None  sel=None F=256 sm=False void=None
+[  5746.0s]   ES128-     |G|= 128 abelian=False select=None  sel=None F=256 sm=False void=None
+[  5746.1s] 
+[  5746.1s] ======================================================================
+[  5746.1s] H1 SCORING — against HELDOUT_PREDICTIONS.md, unrevised
+[  5746.1s] ======================================================================
+[  5746.1s] P1 (SELECT == non-abelian, zero exceptions): 19 decided, 0 disagreements -> CONFIRMED
+[  5746.2s] P2 (aggregate null extends): selected 11/19, RULE-B among selected 0.7273, base 0.8421, null 99th 1.0000 -> CONFIRMED
+[  5746.2s] P3 (miss stays downward): observed 0.7273 vs base 0.8421 -> CONFIRMED
+[  5746.2s] P4 (panel labels):
+[  5746.2s]     ES32+    predicted RULE-B=False got False -> ok
+[  5746.2s]     ES32-    predicted RULE-B=False got False -> ok
+[  5746.2s]     ES128+   predicted RULE-B=False got False -> ok
+[  5746.2s]     ES128-   predicted RULE-B=False got False -> ok
+[  5746.2s]     Q64      predicted RULE-B=True  got True  -> ok
+[  5746.2s]     Q128     predicted RULE-B=True  got True  -> ok
+[  5746.2s] P4 -> CONFIRMED
+[  5746.2s] P5 (budgets): VOIDs at orders 65..71 = 1 (predicted 0) -> FALSIFIED
+[  5746.2s]     panel VOIDs = 3 (Q128, ES128+, ES128-) — anticipated for the order-128 members, not a failure
+[  5746.2s] H1 COMPLETE

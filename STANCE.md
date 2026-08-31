@@ -34,6 +34,13 @@ randomizer at minimal instances.
   across THREE domains (group tori, Z3 lattice gauge, the stabilizer
   tier) with zero refit; the micro-mixing rival refuted three times.
   Kill: one exact-rational counterexample on any staked substrate.
+  Scope, added 2026-08-31 under M-MAINTENANCE-LENS's standing re-audit:
+  the instrument's W is a MINIMUM over repair kernels and is therefore
+  design-blind by construction (the programme's own O3 note said so
+  first) — this law measures the cost structure and says nothing about
+  any repair's efficacy; repair-efficacy claims rest on the
+  maintained-holonomy campaign, which passed the same re-audit with
+  three-way controls.
 - The memory ladder on the Z3 model: one-body fails, pairs fail at
   (1,7), triples close — the missing memory is exactly third-order AT
   THIS SIZE. Kill: a firing v_triple collision on the staked trajectory.

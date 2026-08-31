@@ -23,7 +23,7 @@ repair efficacy; it can only report that the command was issued.
 | 1 | **Cross-face rent law** — `W(v) = 1 − Σᵢ maxⱼ Pᵢⱼ` is the minimum per-step displaced mass of a repair holding view `v` closed | the microstate `s''` produced by the maintenance kernel `R(s''\|s,s')` (`CROSSFACE1_PREREG.md:98`) | the view-level joint `Pᵢⱼ` built from the **unrepaired** step map (`crossface1.py:216`), then a closed form (`:43`) | **PARTIAL** — the block *label* yes, within-block content no | **ABSENT** |
 | 2 | **Ratchet bridge** — `W(v) = 2δ·W*(γ,δ)`; the maintained-holonomy split is the fiber floor | the fiber coordinate `f` (`omega_ratchet1_verify.py:142`) | the fiber marginal `Pr[f=0]` (`:152`); campaign-side, *fidelity* | **YES** | **RUN**, three ways |
 | 3 | **Tuner Hold/Degrade** — one axis is HELD and never degrades; nothing degrades silently | the held axis: exactness (bool) or latency (`budget_ms`) | **only `t` vs `Degrade::Scope{max_t}`** (`tune.rs:192`) | **PARTIAL** — exactness yes but not via the selector; **latency NO** | **ABSENT for latency** |
-| 4 | **holon-tables plant (iii)** — the variational guard catches a bad warm start; a warm start is an optimisation | the Davidson **start vector**, and through it the converged energy and iteration count | `Solution`: energy, `variational_margin`, `davidson_iters`, residual, exit | **YES** | **RUN (mis-targeted variant); strict no-op ABSENT** |
+| 4 | **holon-tables plant (iii)** — the variational guard catches a bad warm start; a warm start is an optimisation | the Davidson **start vector**, and through it the converged energy and iteration count | `Solution`: energy, `variational_margin`, `davidson_iters`, residual, exit | **YES** | **RUN — both kinds; strict no-op added 2026-08-30, 4/4 bit-identical** |
 | 5 | **RESOURCE-1 rent-refresh** — receipts are the rent; a working holder pays by working | the lease's liveness (receipt counter → `Active`/`Idle`, and the reaper's rung 1) | the receipt counter itself (`AtomicU64` per worker), and `Ledger::rent` | **YES** | **RUN (strict no-op)** |
 
 ---
@@ -110,10 +110,23 @@ The control is `wrong_start` (`generate.rs:126`): a deterministic **random** vec
 warm start. Command issued, no restorative content — and the metric reported the truth: iterations
 went *up* (361 against 97) and 12 of 32 nodes landed 7.47 Ha wrong and VOIDed.
 
-**But it is a MIS-TARGETED repair, not a strict no-op**, and the distinction is the one this
-misfit is about. The strict null — warm-start from the *cold* start vector, so the command is
-issued and the state is unchanged — has **not** been run. On this instrument I expect it to be
-benign, but expecting is what the obligation exists to replace.
+That was a MIS-TARGETED repair rather than a strict no-op, so the lead ruled the row mine to
+complete. **Done, and it passes.** `examples/s3_strict_noop.rs`:
+
+The strict no-op is not the obvious vector. Passing the converged solution would be the
+*strongest* warm start, not a null; the null is the vector the COLD path would have built for
+itself. Cold builds `perturbation + e_argmin`; warm builds `w + perturbation` with no `+= 1.0`.
+So `w = e_argmin` — a unit spike on the lowest-diagonal determinant — makes the two routes
+construct the same first basis vector by different paths, and only a bit-identical energy is
+acceptable.
+
+**4 of 4 geometries bit-identical, worst `|dE|` exactly 0.000e0.**
+
+The result is worth more than closing the row. It means the warm-start machinery contributes
+**no shift of its own**, so every warm/cold difference measured in this campaign — the
+3.4e-13 to 4.3e-12 that forced the canonical-region design — is attributable to the vector's
+CONTENT and not to the code path. Had this failed, every warm-started table entry would have
+carried a difference its warm start never justified.
 
 ### 5. RESOURCE-1 rent-refresh — the only strict no-op in the set
 

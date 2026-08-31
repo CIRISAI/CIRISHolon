@@ -1164,3 +1164,67 @@ is now decided without materializing a tableau and so has no shared code left
 to protect it. Both branches asserted non-vacuous. 12 gates in the file, 101
 lib tests, both profiles.
 
+
+### Twenty-sixth entry, CORRECTION: core placement is a third axis, and it flips one banked row
+
+*Prompted by counter-evidence from the mesh lane, verified here against this
+box's own hardware. Their datum: a 26.7 ms job of theirs reads 3.5× its record
+at loadavg 46 — SHORTER than my calibration probe and far MORE sensitive,
+which falsifies the mechanism I had proposed ("a short job gets an idle core").*
+
+**The box is a hybrid part and I never controlled for it.** 13th Gen Intel
+i9-13900HX: P-cores are CPUs 0–15 (8 physical, SMT), E-cores are 16–31, and
+`lscpu` reports scaling at 57% of a 5400 MHz max. Every ratio banked above was
+taken with the scheduler free to place either arm on either core type, run to
+run. That is not a controlled comparison, and it is not fixed by waiting for a
+quiet machine.
+
+**Both arms pinned to the SAME core, 3 rounds, minima:**
+
+| d | placement | ours | stim | ours/stim | banked (unpinned) |
+|---:|---|---:|---:|---:|---:|
+| 101 | P-core | 1.452 s | 1.209 s | **1.201** | 0.822 |
+| 101 | E-core | 1.776 s | 1.795 s | **0.989** | 0.822 |
+| 221 | P-core | 30.24 s | 33.77 s | **0.895** | 0.754 |
+| 221 | E-core | 47.29 s | 65.38 s | **0.723** | 0.754 |
+
+**RETRACTED: "d=101, we lead 0.822".** On a P-core the same comparison reads
+1.201 — stim ahead by 20%. The direction of that row depends on where the
+scheduler put the two arms, so it was never a result. It is withdrawn, not
+re-stated with a caveat.
+
+**STANDS, with its margin corrected: d=221.** We lead on every placement
+tested — 0.895 on a P-core, 0.723 on an E-core, 0.754 unpinned. The direction
+is robust; the MARGIN is not, and the honest headline number is the
+adversarial one, **0.895 (we lead ~12%)**, not the 0.754 banked above. The
+"our slowest beat stim's fastest" framing stands only for the unpinned
+sampling it described, and that sampling is now known to be confounded, so it
+should not be quoted as the strength of the result.
+
+**And the estimator I argued for was wrong too.** I banked "the minimum is the
+robust estimator under contention, since interference can only add time." On a
+hybrid part it recovers the luckiest PLACEMENT, not the uncontended time — and
+the demonstration is direct: d=141's banked "record" of 8.264 s (min of 5,
+unpinned) is beaten by **6.274 s pinned to a P-core at loadavg 44.6**. A
+minimum taken over a placement lottery is not a floor.
+
+**Pinning beats waiting.** Pinned repetition spreads are 1.1–1.7% against
+15–29% unpinned, and at d=221 pinning roughly HALVED both arms (ours 59.90 →
+30.24 s, stim 79.42 → 33.77 s), so the unpinned runs were losing more to
+migration and placement than to the neighbours. **A quiet window fixes
+contention; it does not fix heterogeneity.** The citable table therefore needs
+`taskset`, not just an idle box — the waiter's quiet gate is necessary and was
+never sufficient.
+
+**My proposed mechanism is withdrawn.** I claimed a short probe cannot see
+load because it gets an idle core. Three things say otherwise: the mesh lane's
+26.7 ms job is shorter and 3.5× more affected; the E-core penalty on MY
+workload is duration-INDEPENDENT (1.16× at d=45, 1.22× at d=101, 1.16× at
+d=141), so duration is not the axis it varies along; and the probe's CPU time
+tracks its wall time (user 0.07 of wall 0.07–0.11), so it was never waiting
+for a core in the first place. The surviving statement is the mesh lane's:
+**a probe is blind to contention it does not itself experience** — match the
+probe to the measurement in working set and core placement, not merely in
+duration. Lengthening my probe worked here only because d=101's 416 MB working
+set competes for bandwidth that d=45's 16.5 MB does not.
+

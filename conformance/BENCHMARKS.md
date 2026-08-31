@@ -1031,6 +1031,7 @@ hide in the seeds not run.
 |---:|---|---|
 | 45 | 1–12 (12 seeds × 7 checks) | **84/84 PASS, 0 FAIL** |
 | 141 | 1, 2, 3, 4 | **28/28 PASS, 0 FAIL** |
+| **221** | 1, 2, 3 | **21/21 PASS, 0 FAIL** (added after the memory fix; peak RSS 9.571 GB on every seed, wall 74.0 / 74.3 / 99.6 s) |
 
 Every one of the seven verifications holds on every seed at both distances,
 including the two that depend on the coin outcomes: the noiseless round

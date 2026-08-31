@@ -50,6 +50,38 @@ macroscopic phase, with the commuting square checked at each rung.
 
 ---
 
+## 0.5 Emergence scope — what is and is not claimed, so nobody conflates rungs
+
+**Claimed as emergent here:** collective order from molecular terms. No
+phase, network, or crystal structure is programmed in; ice Ih's stability,
+liquid structure, and the transitions must come OUT of pair + few-body
+surfaces under statistical mechanics, and the blind classifier finds them
+or does not. This is chemistry-rung emergence: classical dynamics over
+quantum-INFORMED surfaces (every table point is an exact-in-model
+electronic-structure solve; the dynamics on top is classical, per
+Born–Oppenheimer).
+
+**Not claimed, and not assumed:** that ice is derived from or predicted by
+the CRYSTAL TIER. SCHWINGER-3 and the crystal bank live on a different rung
+— quantum lattice field theory, DMRG/MPS, mass-from-vacuum — with its own
+provenance. Schwinger predicts a meson mass from a vacuum; it does not
+predict ice, and this observatory's ice inherits nothing from it. The two
+share the holon SHAPE (a macro quantity as a Closed view of a lower rung,
+which is why the closure-defect lens runs at both rungs) and share no
+machinery. The observatory neither waits on the crystal tier nor claims
+its authority.
+
+**The one real quantum gap, fenced now rather than found later:** nuclear
+quantum effects. Real water's protons delocalize enough to shift bulk
+properties, melting point included. Backend A absorbs NQE implicitly (its
+parameters are experiment-tuned); Backend B, fit purely to
+electronic-structure solves, will MISS them — so a backend-B disagreement
+with experiment on absolute numbers is the missing quantum nuclei, not a
+defect, and it is read that way. The named successor if the gap ever
+matters to a claim: path-integral dynamics. Until then, backend-B claims
+are about THE MODEL's phases, exactly as the rent clause's theorems are
+about the model.
+
 ## 1. What already exists and is REUSED, not rebuilt
 
 | Asset | State | Role here |

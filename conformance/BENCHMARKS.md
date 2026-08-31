@@ -1228,3 +1228,57 @@ probe to the measurement in working set and core placement, not merely in
 duration. Lengthening my probe worked here only because d=101's 416 MB working
 set competes for bandwidth that d=45's 16.5 MB does not.
 
+
+### Twenty-sixth entry, SECOND CORRECTION: "pin to a P-core" is not a condition, it is a lottery
+
+*Prompted by saturation3-mesh retracting a clause of theirs I had accepted (their
+"slower because it landed on an E-core" is falsified in sign on their own
+workload: E/P = 0.83, the E-core was FASTER for them). Their retraction sent me
+to check whether my own "adversarial P-core" framing was any better founded. It
+was not.*
+
+**Within-P spread is larger than the P-vs-E gap, and it is not stable in time.**
+Same workload (d=101), same minutes, single-CPU pins:
+
+| | cpu0 (P) | cpu2 (P) | cpu6 (P) | cpu16 (E) | cpu20 (E) | cpu24 (E) |
+|---|---:|---:|---:|---:|---:|---:|
+| sample 1 | **1.121** | 1.535 | 1.527 | 1.786 | 1.727 | 1.766 |
+| sample 2 | 1.576 | 1.459 | **1.119** | — | — | — |
+
+The fastest P-core in sample 1 is the slowest in sample 2, minutes later. The
+cause is visible in `/proc/stat`: at sample time cpu0 was 17.1% busy while its
+SMT sibling cpu1 was **85.4%**, and cpu2 was 2.7% busy while cpu3 was **100%**.
+A P-core's throughput is a function of its sibling's load, which no lane
+controls and which changes minute to minute. E-cores on this part have **no SMT
+sibling** (`thread_siblings_list` for cpu16 is just `16`) and are correspondingly
+stable: 1.727–1.786 across three different E-cores, and cpu20 reads 1.727 /
+1.776 / 1.776 across three separate sessions — **1.03× spread against P's
+1.41×**.
+
+**So the framing banked in the first correction is withdrawn.** "The honest
+headline is the adversarial P-core number, 0.895" assumed "P-core" names a
+reproducible condition. It does not. The defensible statement at d=221 is a
+RANGE over measured placements — **0.72–0.90, direction consistent (we lead in
+all three)** — with each individual number confounded by a sibling state nobody
+recorded. Three conditions all favouring us is real evidence for the DIRECTION;
+none of the three is a reproducible number.
+
+**And `taskset` restricts, it does not reserve.** I labelled a `taskset -c 0,1`
+run "whole physical core, both siblings reserved". That is wrong: taskset
+constrains OUR process and does nothing to keep other processes off those CPUs.
+Those runs (1.094–1.575 across three physical cores) are not isolation and
+should not be read as such. Real isolation needs `isolcpus` or a cpuset cgroup,
+neither of which this lane can set up on a shared box.
+
+**The actionable consequence, and it is counterintuitive: for a reproducible
+timing on this part, pin to an E-CORE, not a P-core.** E-cores are slower and
+have no SMT lottery, so they give a condition that repeats; P-cores give a
+faster number that does not. A citable table wants repeatability more than it
+wants the best clock.
+
+**What still stands from the first correction:** the d=101 retraction (now
+firmer — the verdict flips across placements AND the placements themselves are
+not stable), the d=221 direction, and the estimator lesson, which this
+strengthens: the minimum over repetitions is a lottery over placement *and*
+sibling state, not a floor.
+

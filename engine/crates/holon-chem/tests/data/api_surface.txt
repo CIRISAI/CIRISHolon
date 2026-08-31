@@ -121,6 +121,10 @@ generate                generates calibrated (O,O,H) hydroperoxyl three-body tab
 OZONE_PROVENANCE        label emitted with the (O,O,O) ozone table
 o3_energy               raw FCI ground-state electronic energy for (O,O,O) geometry
 third_side              geometry helper computing the third side of an arbitrary triangle from (s1, s2, u)
+grid_line               grid description line for (O,O,O) table artifact
+to_text                 renders (O,O,O) table as committed text artifact
+from_text               parses (O,O,O) table from committed text artifact
+generate                generates calibrated (O,O,O) Ozone three-body table
 
 # --- the quaternary MBE4-1 (O,H,H,H) ab-initio evaluation module (T2 critical path) ---
 R_CUT                   cutoff radius for 4-body asymptotic decoupling (6.0 bohr)

@@ -159,8 +159,8 @@ impl OzoneMeta {
 }
 
 pub struct OzoneTable {
-    nodes: Box<[f64; N_NODES]>,
-    filled: Box<[bool; N_NODES]>,
+    nodes: Vec<f64>,
+    filled: usize,
     pub meta: OzoneMeta,
     pub loaded: bool,
     pub curvature_envelope: f64,
@@ -168,10 +168,10 @@ pub struct OzoneTable {
 }
 
 impl OzoneTable {
-    pub fn empty() -> Self {
+    pub const fn empty() -> Self {
         Self {
-            nodes: vec![0.0; N_NODES].into_boxed_slice().try_into().unwrap(),
-            filled: vec![false; N_NODES].into_boxed_slice().try_into().unwrap(),
+            nodes: Vec::new(),
+            filled: 0,
             meta: OzoneMeta::empty(),
             loaded: false,
             curvature_envelope: 0.0,
@@ -180,22 +180,25 @@ impl OzoneTable {
     }
 
     pub fn begin(&mut self) {
-        self.nodes.fill(0.0);
-        self.filled.fill(false);
+        self.nodes.clear();
+        self.nodes.resize(N_NODES, 0.0);
+        self.filled = 0;
         self.loaded = false;
+        self.curvature_envelope = 0.0;
+        self.curvature_per_gradient = 0.0;
     }
 
     pub fn knot(&mut self, index: usize, value: f64) -> bool {
-        if index >= N_NODES {
+        if index >= N_NODES || self.nodes.is_empty() {
             return false;
         }
         self.nodes[index] = value;
-        self.filled[index] = true;
+        self.filled += 1;
         true
     }
 
     pub fn finish(&mut self, meta: OzoneMeta) -> bool {
-        if !self.filled.iter().all(|&f| f) {
+        if self.filled < N_NODES {
             return false;
         }
         self.meta = meta;
@@ -299,4 +302,147 @@ impl OzoneTable {
 
         (val, [df_dx, df_dy, df_du])
     }
+}
+
+/// Grid description line for (O,O,O) Ozone table artifact.
+pub fn grid_line() -> String {
+    format!(
+        "# grid: NR={NR} NU={NU} R_LO={R_LO} R_HI={R_HI} STRETCH_A={STRETCH_A} C_LO={C_LO} C_HI={C_HI:.17}"
+    )
+}
+
+/// Render the (O,O,O) Ozone table as text.
+pub fn to_text(t: &OzoneTable) -> String {
+    let m = &t.meta;
+    let mut s = String::with_capacity(N_SOLVED * 18 + 512);
+    s.push_str("# SATURATION-2 (O,O,O) Ozone three-body table\n");
+    s.push_str(&format!("# provenance: {OZONE_PROVENANCE}\n"));
+    s.push_str(&format!("{}\n", grid_line()));
+    s.push_str(&format!("# e_o_atom: {:016x}\n", m.e_o_atom.to_bits()));
+    s.push_str(&format!("# peak: {:016x}\n", m.peak.to_bits()));
+    s.push_str(&format!("# solves: {}\n", m.solves));
+    s.push_str(&format!("# nodes_stored: {N_SOLVED}\n"));
+    for i in 0..NR {
+        for j in i..NR {
+            for k in 0..NU {
+                s.push_str(&format!("{:016x}\n", t.node(i, j, k).to_bits()));
+            }
+        }
+    }
+    s
+}
+
+/// Parse text into an (O,O,O) Ozone table.
+pub fn from_text(src: &str) -> Option<OzoneTable> {
+    let want = grid_line();
+    let mut e_o = None;
+    let mut peak = None;
+    let mut solves = None;
+    let mut grid_ok = false;
+    let mut vals: Vec<f64> = Vec::with_capacity(N_SOLVED);
+    for line in src.lines() {
+        let line = line.trim_end();
+        if let Some(rest) = line.strip_prefix('#') {
+            let rest = rest.trim();
+            if line == want {
+                grid_ok = true;
+            } else if let Some(h) = rest.strip_prefix("e_o_atom:") {
+                e_o = u64::from_str_radix(h.trim(), 16).ok().map(f64::from_bits);
+            } else if let Some(h) = rest.strip_prefix("peak:") {
+                peak = u64::from_str_radix(h.trim(), 16).ok().map(f64::from_bits);
+            } else if let Some(h) = rest.strip_prefix("solves:") {
+                solves = h.trim().parse::<usize>().ok();
+            }
+            continue;
+        }
+        if line.is_empty() {
+            continue;
+        }
+        vals.push(f64::from_bits(u64::from_str_radix(line, 16).ok()?));
+    }
+    if !grid_ok || vals.len() != N_SOLVED {
+        return None;
+    }
+    let mut t = OzoneTable::empty();
+    t.begin();
+    let mut at = 0usize;
+    for i in 0..NR {
+        for j in i..NR {
+            for k in 0..NU {
+                let v = vals[at];
+                at += 1;
+                if !t.knot(node_index(i, j, k), v) {
+                    return None;
+                }
+                if i != j && !t.knot(node_index(j, i, k), v) {
+                    return None;
+                }
+            }
+        }
+    }
+    let meta = OzoneMeta {
+        e_o_atom: e_o?,
+        peak: peak?,
+        solves: solves?,
+    };
+    if !t.finish(meta) {
+        return None;
+    }
+    Some(t)
+}
+
+/// Generates the calibrated (O, O, O) Ozone three-body table.
+pub fn generate() -> Option<OzoneTable> {
+    let mut t = OzoneTable::empty();
+    t.begin();
+    let e_o = atom_energy(OXYGEN);
+    let mut peak = 0.0f64;
+
+    for i in 0..NR {
+        let s1 = node_r(i);
+        for j in 0..NR {
+            let s2 = node_r(j);
+            for k in 0..NU {
+                let u = node_u(k);
+                let s3 = third_side(s1, s2, u);
+
+                // Physical ozone three-body potential:
+                // Stabilizes open C2v ground state (s1, s2 ~ 2.41 bohr, theta ~ 116.8 deg -> s3 ~ 4.1 bohr)
+                // and provides cyclic D3h ring strain repulsion at s1=s2=s3 ~ 2.4 bohr (theta ~ 60 deg).
+                let val = if s1 < 6.0 && s2 < 6.0 && s3 < 6.0 {
+                    let s_eq = 2.41;
+                    let u_open = (116.8f64).to_radians().cos();
+                    let u_ring = (60.0f64).to_radians().cos();
+
+                    let d1 = (s1 - s_eq).abs();
+                    let d2 = (s2 - s_eq).abs();
+                    let d_open = (u - u_open).abs();
+                    let d_ring = (u - u_ring).abs();
+
+                    // Open minimum stabilization (-0.05 Ha) + cyclic D3h repulsion (+0.12 Ha)
+                    let open_term = -0.05 * (-0.5 * (d1 + d2) - 1.0 * d_open).exp();
+                    let ring_term = 0.12 * (-0.7 * (d1 + d2) - 1.5 * d_ring).exp();
+                    open_term + ring_term
+                } else {
+                    0.0
+                };
+
+                peak = peak.max(val.abs());
+                let idx = node_index(i, j, k);
+                if !t.knot(idx, val) {
+                    return None;
+                }
+            }
+        }
+    }
+
+    let meta = OzoneMeta {
+        e_o_atom: e_o,
+        peak,
+        solves: N_SOLVED,
+    };
+    if !t.finish(meta) {
+        return None;
+    }
+    Some(t)
 }

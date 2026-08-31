@@ -203,6 +203,8 @@ pub struct Sim {
     pub water: WaterTable,
     /// The HETERONUCLEAR (O, O, H) three-body surface.
     pub ooh: holon_chem::ooh::OohTable,
+    /// The HOMONUCLEAR (O, O, O) Ozone three-body surface.
+    pub ozone: holon_chem::ozone::OzoneTable,
     /// SHIPPED heteronuclear three-body surfaces, and the door they came through.
     ///
     /// Distinct from [`Sim::trimer`] and [`Sim::water`] because it is neither generated
@@ -301,6 +303,7 @@ impl Sim {
             trimer: TrimerTable::empty(),
             water: WaterTable::empty(),
             ooh: holon_chem::ooh::OohTable::empty(),
+            ozone: holon_chem::ozone::OzoneTable::empty(),
             trimers: crate::trimer_bank::TrimerBank::empty(),
             fence_untabulated: 0,
             atoms: [Atom {
@@ -690,7 +693,7 @@ impl Sim {
     /// Zero when no table is loaded or the scene has fewer than three atoms, so the pair
     /// bound is returned unchanged — adding an exact zero to a finite float changes no bit.
     pub fn k_three(&self) -> f64 {
-        if (!self.trimer.loaded && !self.water.loaded && !self.ooh.loaded && self.trimers.is_empty()) || self.n < 3 {
+        if (!self.trimer.loaded && !self.water.loaded && !self.ooh.loaded && !self.ozone.loaded && self.trimers.is_empty()) || self.n < 3 {
             return 0.0;
         }
         self.k_three_max
@@ -1442,6 +1445,15 @@ impl Sim {
                                 val, grad,
                                 self.ooh.curvature_envelope,
                                 self.ooh.curvature_per_gradient,
+                            )
+                        } else if n_o == 3 && self.ozone.loaded {
+                            let (rab, rac, rbc) = (d[i][j], d[i][k], d[j][k]);
+                            let (val, grad) = self.ozone.eval(rab, rac, rbc);
+                            (
+                                i, j, k,
+                                val, grad,
+                                self.ozone.curvature_envelope,
+                                self.ozone.curvature_per_gradient,
                             )
                         } else {
                             self.fence_untabulated += 1;

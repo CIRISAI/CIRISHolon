@@ -201,6 +201,14 @@ pub struct Sim {
     /// `Sim` constructed by value in a nested fixture outgrows the stack. So the nodes
     /// live behind a pointer and a `Sim` grows by three words.
     pub water: WaterTable,
+    /// SHIPPED heteronuclear three-body surfaces, and the door they came through.
+    ///
+    /// Distinct from [`Sim::trimer`] and [`Sim::water`] because it is neither generated
+    /// here nor a single fixed system: it is a bank of artifacts the mesh computed, each
+    /// carrying its own provenance, each admitted or refused by
+    /// [`crate::trimer_bank::TrimerProvenance::admit`]. Empty until one is loaded, and an
+    /// empty bank contributes an EXACT zero exactly as the two above do.
+    pub trimers: crate::trimer_bank::TrimerBank,
     /// Triples the three-body sector REFUSED for want of a table: (O, O, H) and (O, O, O),
     /// which SATURATION-2 does not tabulate. Counted rather than ignored, because the
     /// prereg requires the fence's incidence in the quench runs to be reported, and a
@@ -290,6 +298,7 @@ impl Sim {
             bank: PairBank::hydrogen_seeded(),
             trimer: TrimerTable::empty(),
             water: WaterTable::empty(),
+            trimers: crate::trimer_bank::TrimerBank::empty(),
             fence_untabulated: 0,
             atoms: [Atom {
                 x: 0.0,

@@ -43,6 +43,7 @@ pub mod holon;
 pub mod json;
 pub mod sim;
 pub mod table;
+pub mod trimer_bank;
 
 use sim::{Boundary, Sim};
 
@@ -1878,16 +1879,178 @@ pub extern "C" fn holon_d1_overlap_species() -> u32 {
 
 // ---- the three-body fence, DECLARED by the engine ------------------------------------
 
-/// `1` while the tabulated three-body term covers H3 ONLY.
+/// `1` while the tabulated three-body term covers H3 ONLY; `0` once a heteronuclear
+/// surface has been admitted.
 ///
-/// The force loop already skips any triple containing a non-hydrogen atom. This makes the
-/// fact readable, so both viewers can DISPLAY the fence rather than each hardcoding a
-/// sentence that would go stale the day a heteronuclear trimer surface lands. MIXTURES-1
-/// requires the fence to be shown; a viewer asserting it independently of the engine is a
-/// caption, not a fence.
+/// THIS IS THE FENCE, and it is now a reading rather than a constant. Both viewers print
+/// their disclaimer from this export precisely so that no sentence has to be hand-edited
+/// the day a heteronuclear surface lands — the design intent written into `app.js`'s own
+/// comment. A viewer asserting the fence independently of the engine is a caption, not a
+/// fence; an engine hardcoding `1` after the successor arrives is a stale caption with
+/// extra steps.
+///
+/// It reads the BANK rather than a flag somebody sets, so the only way to lift it is to
+/// get a surface past [`trimer_bank::TrimerProvenance::admit`]. A refused artifact leaves
+/// the fence up, which is the property that makes the fence worth anything.
 #[no_mangle]
 pub extern "C" fn holon_trimer_h_only() -> u32 {
-    1
+    u32::from(!sim().trimers.any_heteronuclear())
+}
+
+// ---- shipped heteronuclear surfaces: the door -----------------------------------------
+//
+// Same three-call shape as the pair bank's shipped path, and mandatory provenance for the
+// same reason: there is no way to push a surface without saying what produced it, what it
+// is spaced on, what it cites, what it accepts near its seams, and how big its error bar
+// is next to the feature that error bar describes.
+
+/// Base code for a trimer-door refusal, offset so the REASON survives the trip through a
+/// `u32`. Placed above the pair door's block (which runs to `PROVENANCE_REFUSED + 8`) so
+/// the two never collide and a host can tell which door spoke.
+pub const TRIMER_REFUSED: u32 = 64;
+
+/// The refusal's own code. `holon_trimer_refusal()` reads the last one back.
+pub fn trimer_refusal_code(r: trimer_bank::TrimerRefusal) -> u32 {
+    use trimer_bank::TrimerRefusal as T;
+    TRIMER_REFUSED
+        + match r {
+            T::RouteUndeclared => 0,
+            T::GridRuleUnsupported => 1,
+            T::RegionShapeMissing => 2,
+            T::DomainUncited => 3,
+            T::UncertaintyMissing => 4,
+            T::UncertaintyExceedsResolution => 5,
+            T::UncertaintyExceedsFeature => 6,
+            T::ConvergedFieldPresent => 7,
+            T::VoidsCountedNotNamed => 8,
+            T::SeamRecordMissing => 9,
+            T::DigestMissing => 10,
+            T::SurfaceNotLoaded => 11,
+        }
+}
+
+/// Open a shipped surface for filling.
+#[no_mangle]
+pub extern "C" fn holon_trimer_table_begin() {
+    sim().trimers.begin();
+}
+
+/// Push one node of the surface. `index` is the artifact's canonical node index.
+#[no_mangle]
+pub extern "C" fn holon_trimer_table_knot(index: u32, value: f64) -> u32 {
+    u32::from(sim().trimers.knot(index as usize, value))
+}
+
+/// Close a shipped surface AND declare its provenance, in one call.
+///
+/// Every argument is a DECLARATION the artifact makes. None is defaulted to something
+/// permissive: `route = 0`, `axis_rule = 0`, `seam = 0`, a zero region, zero cited curves,
+/// a zero digest and a zero uncertainty are each their own refusal, so a host that omits
+/// a field gets a refusal rather than an admission. That is the one property this door
+/// has that the pair door had to be given later.
+///
+/// `route`: 1 = determinant/FCI, 2 = DMRG, anything else undeclared.
+/// `axis_rule`: 1 = this build's H3 tau-stretch. Anything else is refused rather than
+/// interpolated — see [`trimer_bank::AxisRule`].
+/// `seam`: 1 = a seam locus is carried, 2 = an accepted-floor note is carried, 0 = neither.
+/// `digest_lo`/`digest_hi`: the merge digest in two halves, because a `u64` does not
+/// survive a round trip through a JavaScript number.
+///
+/// Returns `TABLE_OK` on admission, or `TRIMER_REFUSED + n` naming the reason.
+#[no_mangle]
+#[allow(clippy::too_many_arguments)]
+pub extern "C" fn holon_trimer_table_finish(
+    z0: u32,
+    z1: u32,
+    z2: u32,
+    route: u32,
+    n_det: f64,
+    uncertainty_ha: f64,
+    peak_ha: f64,
+    axis_rule: u32,
+    region_x: u32,
+    region_y: u32,
+    region_u: u32,
+    cited_curves: u32,
+    declares_converged: u32,
+    void_count: u32,
+    void_named: u32,
+    seam: u32,
+    digest_lo: u32,
+    digest_hi: u32,
+) -> u32 {
+    let prov = trimer_bank::TrimerProvenance {
+        route: match route {
+            1 => bank::Route::Determinant,
+            2 => bank::Route::Dmrg,
+            _ => bank::Route::Undeclared,
+        },
+        z: [z0 as u8, z1 as u8, z2 as u8],
+        n_det: if n_det.is_finite() && n_det >= 0.0 {
+            n_det as u64
+        } else {
+            0
+        },
+        uncertainty_ha,
+        peak_ha,
+        axis_rule: match axis_rule {
+            1 => trimer_bank::AxisRule::TauStretchH3,
+            _ => trimer_bank::AxisRule::Undeclared,
+        },
+        region: [region_x as u16, region_y as u16, region_u as u16],
+        cited_curves,
+        declares_converged: declares_converged != 0,
+        void_count,
+        void_named,
+        seam: match seam {
+            1 => trimer_bank::SeamRecord::Locus,
+            2 => trimer_bank::SeamRecord::AcceptedFloor,
+            _ => trimer_bank::SeamRecord::Absent,
+        },
+        digest: ((digest_hi as u64) << 32) | digest_lo as u64,
+    };
+    // The metadata the interpolator needs, taken from THIS BUILD's grid rather than from
+    // the artifact — which is sound only because `axis_rule` has already been required to
+    // be this build's, and is refused otherwise. If a second rule is ever admitted, this
+    // is the line that has to learn about it, and the refusal above is what stops that
+    // being discovered by a wrong answer.
+    let meta = holon_chem::trimer::TrimerMeta {
+        n_nodes: holon_chem::trimer::N_NODES,
+        nr: holon_chem::trimer::NR,
+        nu: holon_chem::trimer::NU,
+        r_lo: holon_chem::trimer::R_LO,
+        r_hi: holon_chem::trimer::R_HI,
+        e_h_atom: holon_chem::trimer::atom_energy(),
+        peak: peak_ha,
+        solves: 0,
+    };
+    let mut s = sim();
+    match s.trimers.finish(meta, prov) {
+        Ok(_) => {
+            // A new potential term changes the ledger's origin, so the run is re-based for
+            // the reason `generate_trimer_table` re-bases: otherwise the drift would be
+            // measured against the wrong zero and would read a JUMP that is not
+            // integration error.
+            s.rebase();
+            TABLE_OK
+        }
+        Err(r) => trimer_refusal_code(r),
+    }
+}
+
+/// How many shipped surfaces are admitted.
+#[no_mangle]
+pub extern "C" fn holon_trimer_surfaces() -> u32 {
+    sim().trimers.len() as u32
+}
+
+/// The last refusal this door issued, or 0 if the last artifact was admitted.
+#[no_mangle]
+pub extern "C" fn holon_trimer_refusal() -> u32 {
+    sim()
+        .trimers
+        .last_refusal
+        .map_or(0, trimer_refusal_code)
 }
 
 /// Which bank slot pair reading `k` was evaluated on, or `-1`.

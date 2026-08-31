@@ -18,24 +18,35 @@
 //! that rung's honest boundary: the reach is a function of the rung AND the problem class,
 //! which is why [`Boundary`] is class-keyed and this module holds **no floor constant at all**.
 //!
-//! # The correction that matters, and this lane got it wrong first
+//! # Two corrections, and this lane needed both
 //!
-//! These numbers are NOT `holon-chem`'s `DD_EXPANSION_FLOOR`, and reading them as a
-//! contradiction of it — as this lane initially reported to the lead — conflates two different
-//! facts:
+//! **First**, the numbers are not `holon-chem`'s `DD_EXPANSION_FLOOR`. That constant is the
+//! **mechanism** — the internal Gram-Schmidt acceptance guard — and its move trigger is a DD
+//! solve exiting `Stagnated` above it, which has not fired. What a calibration measures is the
+//! **promise**: what the rung DELIVERS. Reading one as the other conflates a floor reading with
+//! a budget reading, and this lane reported exactly that conflation to the lead before the DD
+//! lane corrected it.
 //!
-//! * `DD_EXPANSION_FLOOR` is the **mechanism**: the internal Gram-Schmidt acceptance guard. Its
-//!   move trigger is a DD solve exiting **`Stagnated`** with its residual above the floor, and
-//!   that has **NOT fired**.
-//! * `3.37e-15` / `2.97e-13` are the **promise**: what the rung DELIVERS per class *under a
-//!   declared budget*. Both solves exited `IterationCap` **while still descending** — they ran
-//!   out of iterations, not of arithmetic.
+//! **Second, and it invalidated this module's first numbers: a CHECKPOINT IS NOT AN EXIT.** The
+//! readings originally recorded here — `Sb 3.37e-15`, `Te 2.97e-13`, two orders apart and read
+//! as a class boundary — were samples taken from a *running* sequence, and the Davidson residual
+//! is **non-monotone across thick restarts**. Te's own trace makes it plain:
 //!
-//! Capped-while-descending is a budget reading; stagnated-at-the-floor is a floor reading. They
-//! are different facts, and the distinction is the one `SolveExit` exists to carry — the same
-//! discriminator G1 relied on when every heavy solve exited `Stagnated`. The deliverable
-//! boundary is a LEASE CONTRACT and lives here, per-class with provenance; the mechanism guard
-//! stays in `scalar.rs` where the arithmetic is.
+//! | iteration | Te residual |
+//! |---|---|
+//! | 15 | 5.75e-13 — crossed the ask, CONVERGED |
+//! | 400 | 5.53e-12 — wandered back UP |
+//! | 4000 | 2.97e-13 |
+//!
+//! A number picked off that sequence mid-flight says where the walk happened to be, not what the
+//! rung delivers. **A boundary is measured AT EXIT, under an ask that means something** — which
+//! is this module's own [`Limit`] discipline extended one step, and the step it had missed.
+//!
+//! At the reachable ask (`1e-12`), the deliverable turns out to be **CLASS-INDEPENDENT**: both
+//! degeneracy classes converge in ~15 iterations to ~6e-13 from an f64 warm start. The deep-tail
+//! split (⁴S reaching 1.99e-15 at 4000 where ³P did not) is real data and **not** a calibrated
+//! boundary — it may be class physics or restart-wander luck — so it carries
+//! [`Provenance::Provisional`] until something measures it at exit under a deep ask.
 //!
 //! [`Limit`] carries the difference, because it changes the ANSWER a caller gets: a
 //! budget-limited boundary moves if you buy more budget, and a floor-limited one never does —
@@ -58,6 +69,17 @@ pub enum Limit {
     /// The solve STAGNATED at the tier's own arithmetic floor. More budget buys nothing here;
     /// only the next rung does.
     Floor,
+    /// The solve **CONVERGED to what was asked** and stopped because it was satisfied.
+    ///
+    /// This is neither of the above and the distinction is not pedantry: it is a **LOWER BOUND**
+    /// on the rung's reach, not its boundary. The rung reached at least this far; where it would
+    /// have stopped was never tested, because nobody asked it to go further.
+    ///
+    /// Treating an ask-limited reading as a ceiling is the error the DD calibration nearly
+    /// bequeathed to this module — both classes converge at `1e-12` in ~15 iterations, and
+    /// recording that as "the Dd rung reaches 1e-12 and no further" would invent a wall out of
+    /// a satisfied request.
+    Ask,
 }
 
 /// How well a rung's reach is known for a class. The distinction is load-bearing: a provisional
@@ -88,6 +110,18 @@ impl Provenance {
             self,
             Provenance::Measured {
                 limit: Limit::Budget,
+                ..
+            }
+        )
+    }
+
+    /// Whether this reading is a LOWER BOUND rather than a boundary — the rung reached at least
+    /// this far and was never asked for more. A router must not read it as a ceiling.
+    pub fn is_lower_bound_only(&self) -> bool {
+        matches!(
+            self,
+            Provenance::Measured {
+                limit: Limit::Ask,
                 ..
             }
         )
@@ -197,6 +231,16 @@ pub enum Routing {
         last: &'static str,
         asked_exp: u32,
     },
+    /// The ask is past what this rung has been MEASURED to reach, but that measurement was a
+    /// lower bound (the solve converged to what it was asked and stopped). The rung may well do
+    /// it; nobody has tried. Refusing would give up on a rung that might deliver, and satisfying
+    /// would invent a guarantee — so the honest answer is neither, and it names the measurement
+    /// that is owed.
+    Unmeasured {
+        rung: &'static str,
+        asked_exp: u32,
+        known_at_least_exp: u32,
+    },
 }
 
 impl Routing {
@@ -216,6 +260,13 @@ impl Routing {
                     } => format!(
                         "measured by {instrument}, BUDGET-limited — still descending when it \
                          stopped, so a larger budget moves this"
+                    ),
+                    Provenance::Measured {
+                        instrument,
+                        limit: Limit::Ask,
+                    } => format!(
+                        "measured by {instrument}, ASK-limited — it converged to what it was \
+                         asked, so this is a LOWER BOUND and not the rung's ceiling"
                     ),
                     Provenance::Provisional { why } => format!("PROVISIONAL: {why}"),
                 },
@@ -241,6 +292,15 @@ impl Routing {
             Routing::Exhausted { last, asked_exp } => format!(
                 "REFUSED: 1e-{asked_exp} is past the top of the ladder ({last}); there is no rung \
                  above it to lease."
+            ),
+            Routing::Unmeasured {
+                rung,
+                asked_exp,
+                known_at_least_exp,
+            } => format!(
+                "UNMEASURED: {rung} is known to reach at least 1e-{known_at_least_exp}, but that \
+                 reading is a converged-to-the-ask LOWER BOUND and nobody has asked it for \
+                 1e-{asked_exp}. Neither refuse nor promise — measure it at exit under this ask."
             ),
         }
     }
@@ -294,6 +354,15 @@ impl Ladder {
                 boundary: b,
             };
         }
+        // A lower-bound reading is not a ceiling: the rung was never asked for more, so
+        // overflowing off it would be giving up on a rung that has not refused.
+        if b.provenance.is_lower_bound_only() {
+            return Routing::Unmeasured {
+                rung: rung.name,
+                asked_exp,
+                known_at_least_exp: b.reach_exp,
+            };
+        }
         match rung.next {
             Some(to) => Routing::Overflow {
                 from: rung.name,
@@ -313,38 +382,38 @@ impl Ladder {
 mod tests {
     use super::*;
 
-    /// The ladder as the engine actually measures it, built from residuals rather than from
-    /// declared constants. NOTHING here is hard-coded as a floor.
+    /// The ladder as the engine actually measures it, built from EXIT readings rather than from
+    /// declared constants or mid-flight checkpoints. NOTHING here is hard-coded as a floor.
     ///
-    /// **The class key is the GROUND TERM, not the element.** That is the lead's calibration
-    /// finding stated precisely: Sb reached 3.37e-15 on a `⁴S` ground term (degeneracy 4) and Te
-    /// pins at 2.97e-13 on a `³P` (degeneracy 9), at the same budget. The discriminator is the
-    /// degeneracy of the ground term, so keying by element would need a fresh calibration for
-    /// every atom while keying by term lets a newly-solved atom inherit a boundary already
-    /// measured on its class — and, more importantly, stops a `³P` atom silently borrowing a
-    /// `⁴S` number.
+    /// The Dd rung's entry is **class-independent** and **ask-limited**: at the reachable ask of
+    /// `1e-12` both degeneracy classes converged in ~15 iterations to ~6e-13 from an f64 warm
+    /// start. That is a LOWER bound — the rung reached at least there and was never asked for
+    /// more — so `Limit::Ask`, and a request past it routes to `Unmeasured` rather than
+    /// pretending either way.
+    ///
+    /// The deep-tail split is registered SEPARATELY and as `Provisional`, because it was read
+    /// off a running sequence: ⁴S reached 1.99e-15 at iteration 4000 where ³P did not, and the
+    /// residual is non-monotone across thick restarts, so that may be class physics or it may be
+    /// restart-wander luck. Nothing routes on it until it is measured at exit under a deep ask.
     fn engine_ladder() -> Ladder {
-        // f64: every heavy solve pins just under 1e-10 (the scale-free expansion-floor
-        // acceptance test), on both classes.
-        // f64 is FLOOR-limited: every heavy solve exits `Stagnated` at the scale-free
-        // expansion floor, so more budget buys nothing and only the next rung does.
+        // f64 is FLOOR-limited: every heavy solve exits `Stagnated` at the scale-free expansion
+        // floor, so more budget buys nothing and only the next rung does.
         let f64_reach =
             Boundary::from_measured_residual(9.8e-11, "SATURATION-3 G0", Limit::Floor).unwrap();
-        // Dd: the live calibration, keyed by ground term.
-        // Dd is BUDGET-limited: both calibration solves exited `IterationCap` while STILL
-        // DESCENDING, so these are contracts under a declared budget rather than the rung's
-        // arithmetic floor — buying more budget moves them.
-        let s4 = Boundary::from_measured_residual(3.37e-15, "DD calibration, Sb (4S)", Limit::Budget)
-            .unwrap();
-        let p3 = Boundary::from_measured_residual(2.97e-13, "DD calibration, Te (3P)", Limit::Budget)
-            .unwrap();
+        // Dd, at the reachable ask, measured AT EXIT and identical for both classes.
+        let dd = Boundary::from_measured_residual(
+            6.19e-13,
+            "DD confirmation at the 1e-12 ask, converged ~15 iters, both classes",
+            Limit::Ask,
+        )
+        .unwrap();
         Ladder::new(vec![
             Rung::new("f64", Some("Dd"))
                 .with_boundary("4S", f64_reach)
                 .with_boundary("3P", f64_reach),
             Rung::new("Dd", None)
-                .with_boundary("4S", s4)
-                .with_boundary("3P", p3),
+                .with_boundary("4S", dd)
+                .with_boundary("3P", dd),
         ])
     }
 
@@ -407,7 +476,7 @@ mod tests {
         }
         assert!(r.message().contains("not a retry"));
 
-        // And the next rung takes it.
+        // And the next rung takes it — measured at exit, at the ask that means something.
         assert!(matches!(
             l.route("Dd", "4S", 12),
             Routing::Satisfied { rung: "Dd", .. }
@@ -427,87 +496,108 @@ mod tests {
         }
     }
 
-    /// **PLANT — THE BOUNDARY IS PER-CLASS, so one constant cannot serve the rung.**
+    /// **The per-class machinery still works, and is now exercised on a HYPOTHETICAL split**
+    /// rather than on the DD numbers — because at the reachable ask the two classes are the
+    /// same, and the deep-tail split is not calibrated.
     ///
-    /// The lead's calibration note as a test: the SAME request routes differently for Te and Sb
-    /// on the SAME rung. A hard-coded `DD_EXPANSION_FLOOR` cannot produce both answers, which is
-    /// why this module has no floor constant in it.
+    /// The mechanism is what is under test: two classes on one rung must be able to carry
+    /// different boundaries and must never borrow each other's. What changed is that the DD
+    /// calibration no longer supplies the example.
     #[test]
-    fn plant_the_same_request_routes_differently_for_two_classes() {
-        let l = engine_ladder();
-        let asked = 13; // 1e-13
+    fn plant_two_classes_on_one_rung_never_borrow_each_others_boundary() {
+        let deep = Boundary::from_measured_residual(1.0e-15, "deep ask, at exit", Limit::Floor)
+            .unwrap();
+        let shallow = Boundary::from_measured_residual(1.0e-13, "deep ask, at exit", Limit::Floor)
+            .unwrap();
+        let l = Ladder::new(vec![Rung::new("Dd", None)
+            .with_boundary("4S", deep)
+            .with_boundary("3P", shallow)]);
 
-        let sb = l.route("Dd", "4S", asked);
-        let te = l.route("Dd", "3P", asked);
-
-        // Sb's class reaches 1e-14, so Dd covers it.
-        assert!(
-            matches!(sb, Routing::Satisfied { rung: "Dd", .. }),
-            "Dd should cover 1e-13 for the 4S class (Sb pinned at 3.37e-15): {sb:?}"
-        );
-        // Te's degenerate ground term pins at 2.97e-13, so Dd does NOT cover 1e-13 — and there
-        // is no rung above, so it is refused rather than silently promised.
-        assert!(
-            matches!(te, Routing::Exhausted { last: "Dd", .. }),
-            "Dd claimed 1e-13 for the 3P class, which measurement says it does not reach: {te:?}"
-        );
+        let a = l.route("Dd", "4S", 14);
+        let b = l.route("Dd", "3P", 14);
+        assert!(matches!(a, Routing::Satisfied { rung: "Dd", .. }), "{a:?}");
+        assert!(matches!(b, Routing::Exhausted { last: "Dd", .. }), "{b:?}");
         assert_ne!(
-            sb, te,
-            "the two classes routed identically, so the per-class boundary is not being read — a \
-             single constant would produce exactly this, and it is wrong by two orders"
+            a, b,
+            "the two classes routed identically, so the per-class boundary is not being read — \
+             a single constant would produce exactly this"
         );
-        assert!(te.message().contains("no rung above"));
+    }
+
+    /// **THE CORRECTION, as a test: an ask-limited reading is a LOWER BOUND, never a ceiling.**
+    ///
+    /// The DD confirmation converged to what it was asked and stopped. Recording that as "the
+    /// rung reaches 1e-12 and no further" would invent a wall out of a satisfied request, and
+    /// routing a deeper ask off the rung would give up on one that has not refused.
+    #[test]
+    fn an_ask_limited_reading_routes_to_unmeasured_rather_than_overflowing() {
+        let l = engine_ladder();
+
+        // Within the measured reach: satisfied, and flagged as a lower bound.
+        match l.route("Dd", "3P", 12) {
+            Routing::Satisfied { boundary, .. } => {
+                assert!(boundary.provenance.is_lower_bound_only());
+                assert!(!boundary.provenance.budget_would_help());
+            }
+            other => panic!("{other:?}"),
+        }
+
+        // PAST it: neither promised nor refused.
+        let r = l.route("Dd", "4S", 15);
+        match &r {
+            Routing::Unmeasured {
+                rung,
+                asked_exp,
+                known_at_least_exp,
+            } => {
+                assert_eq!((*rung, *asked_exp, *known_at_least_exp), ("Dd", 15, 12));
+            }
+            other => panic!(
+                "a request past an ask-limited reading was resolved as {other:?}. Exhausted \
+                 would give up on a rung that never refused; Satisfied would invent a guarantee."
+            ),
+        }
+        assert!(r.message().contains("LOWER BOUND") && r.message().contains("measure it at exit"));
+    }
+
+    /// The deep-tail split is real data and NOT a calibrated boundary, so it stays Provisional
+    /// and says so wherever it is cited.
+    #[test]
+    fn the_deep_tail_split_is_provisional_until_measured_at_exit() {
+        let split = Boundary {
+            reach_exp: 14, // 4S reached 1.99e-15 at iteration 4000
+            provenance: Provenance::Provisional {
+                why: "read at an iteration CHECKPOINT of a non-monotone sequence, not at exit; \
+                      may be class physics or restart-wander luck",
+            },
+        };
+        assert!(!split.provenance.is_measured());
+        assert!(!split.provenance.is_lower_bound_only());
+        let l = Ladder::new(vec![Rung::new("Dd", None).with_boundary("4S", split)]);
+        let m = l.route("Dd", "4S", 13).message();
+        assert!(m.contains("PROVISIONAL") && m.contains("ledger entry must say so"), "{m}");
     }
 
     /// Keying by GROUND TERM rather than by element is what makes a calibration reusable: a
-    /// newly-solved atom sharing a class inherits the boundary already measured on it, and — the
-    /// half that matters — an atom of a DIFFERENT class cannot borrow it.
-    #[test]
-    fn a_boundary_is_shared_by_class_and_never_across_classes() {
-        let l = engine_ladder();
-        // Two different atoms, same ⁴S class: one calibration serves both, no new entry needed.
-        let for_sb = l.route("Dd", "4S", 14);
-        let for_another_4s_atom = l.route("Dd", "4S", 14);
-        assert_eq!(for_sb, for_another_4s_atom);
-        assert!(matches!(for_sb, Routing::Satisfied { rung: "Dd", .. }));
-
-        // The ³P class does NOT inherit it, which is the two-order error being prevented.
-        assert!(
-            !matches!(l.route("Dd", "3P", 14), Routing::Satisfied { .. }),
-            "a 3P request was satisfied by a boundary measured on 4S"
-        );
-    }
-
-    /// **The correction this lane got wrong first**, as a test: a BUDGET-limited boundary and a
-    /// FLOOR-limited one are different promises, and a caller's next move differs.
+    /// newly-solved atom sharing a class inherits the boundary already measured on it.
     ///
-    /// Both DD calibration solves exited `IterationCap` while still descending, so their reach
-    /// is a contract under a budget — buy more and it moves. f64's reach is stagnation at the
-    /// arithmetic floor — buy all the budget in the world and it does not.
+    /// At the reachable ask the two classes agree, so this checks the SHARING half here and
+    /// leaves the never-borrow-across-classes half to
+    /// [`plant_two_classes_on_one_rung_never_borrow_each_others_boundary`], which supplies a
+    /// split the DD calibration no longer does.
     #[test]
-    fn a_budget_limited_boundary_is_a_different_promise_from_a_floor_limited_one() {
+    fn a_boundary_is_shared_by_class() {
         let l = engine_ladder();
-
-        let f64_b = l.rung("f64").unwrap().boundary_for("3P").unwrap();
-        assert!(!f64_b.provenance.budget_would_help(),
-            "f64's floor was reported as improvable by budget; it stagnates, it does not run out");
-
-        let dd_b = l.rung("Dd").unwrap().boundary_for("3P").unwrap();
-        assert!(
-            dd_b.provenance.budget_would_help(),
-            "the Dd boundary was reported as a hard floor. Both calibration solves exited \
-             IterationCap WHILE STILL DESCENDING — treating that as the rung's arithmetic limit \
-             would refuse work a larger budget would have finished"
-        );
-
-        // And the message says which, because it changes what the caller should do next.
-        let m = l.route("Dd", "3P", 12).message();
-        assert!(m.contains("BUDGET-limited") && m.contains("larger budget moves this"), "{m}");
-        let m2 = l.route("f64", "3P", 10).message();
-        assert!(m2.contains("FLOOR-limited") && m2.contains("more budget buys nothing"), "{m2}");
+        // Within the measured reach, both classes are satisfied and identically so — one
+        // calibration serves every atom of either class, no new entry needed.
+        let a = l.route("Dd", "4S", 12);
+        let b = l.route("Dd", "3P", 12);
+        assert!(matches!(a, Routing::Satisfied { rung: "Dd", .. }), "{a:?}");
+        assert_eq!(a, b, "the two classes disagreed at the reachable ask, where they were \
+                          measured to agree");
     }
 
-    /// A rung that makes no calibrated claim about a class REFUSES rather than borrowing another
+    /// A rung that makes no calibrated claim about a class REFUSES rather than borrowing another    /// A rung that makes no calibrated claim about a class REFUSES rather than borrowing another
     /// class's number.
     #[test]
     fn an_unregistered_class_is_refused_not_guessed() {

@@ -456,6 +456,19 @@ fixed range in a fixed order. **Five repeat runs bit-identical.**
 
 **Speedup 3.2× against the best CPU number.**
 
+### A property banked rather than assumed: the table is profile-independent
+
+Checked while wiring the generator through the resource layer, and it had never
+been checked before: the same table generated in DEBUG and in RELEASE has the
+**identical digest** (`e763ba08…` on the H3 smoke grid, both profiles). No
+reassociation, no fast-math drift, no optimisation-level dependence.
+
+That matters more than its size suggests. Every digest in this record — G1's
+`1504da0f…` included — is a bit-identity claim, and had this gone the other way
+every one of them would have been silently profile-dependent: green in whichever
+profile it was recorded under, red in the other, for a reason nothing in the
+gate would have named.
+
 ### The honest-baseline check — what makes the 3.2× a DEVICE result
 
 This is the load-bearing control for the whole gate, so it is stated separately

@@ -687,7 +687,7 @@ impl Sim {
     /// Zero when no table is loaded or the scene has fewer than three atoms, so the pair
     /// bound is returned unchanged — adding an exact zero to a finite float changes no bit.
     pub fn k_three(&self) -> f64 {
-        if (!self.trimer.loaded && !self.water.loaded) || self.n < 3 {
+        if (!self.trimer.loaded && !self.water.loaded && self.trimers.is_empty()) || self.n < 3 {
             return 0.0;
         }
         self.k_three_max
@@ -1350,7 +1350,7 @@ impl Sim {
     fn accumulate_three_body(&mut self) {
         self.e_three = 0.0;
         self.fence_untabulated = 0;
-        if (!self.trimer.loaded && !self.water.loaded) || self.n < 3 {
+        if (!self.trimer.loaded && !self.water.loaded && self.trimers.is_empty()) || self.n < 3 {
             return;
         }
         // One distance matrix, read three times per triple instead of nine square roots.
@@ -1374,63 +1374,66 @@ impl Sim {
         for i in 0..self.n {
             for j in (i + 1)..self.n {
                 for k in (j + 1)..self.n {
-                    // THE COMPOSITION DISPATCH. Three cases and no default: a triple is
-                    // served the table for its own composition, or it is FENCED and
-                    // counted. Serving some other composition's table because this one
-                    // has none is exactly the defect plant (iii) exists to catch, and a
-                    // silent fallthrough would be that bug with a shrug in front of it.
-                    //
-                    // The sides are handed over in the order the table expects. For H3
-                    // they are interchangeable and any order does; for (O, H, H) they are
-                    // not, and the two O-H sides go first with the H-H side third.
+                    // THE COMPOSITION DISPATCH.
+                    // 1. Shipped / generic trimer bank first (keyed by composition).
+                    // 2. Primary / in-memory generated tables (H3 and H2O).
+                    // 3. Otherwise FENCED and counted.
                     let (za, zb, zc) = (
-                        self.atoms[i].species.z,
-                        self.atoms[j].species.z,
-                        self.atoms[k].species.z,
+                        self.atoms[i].species.z as u8,
+                        self.atoms[j].species.z as u8,
+                        self.atoms[k].species.z as u8,
                     );
-                    let n_o = (za == 8) as u32 + (zb == 8) as u32 + (zc == 8) as u32;
-                    let n_h = (za == 1) as u32 + (zb == 1) as u32 + (zc == 1) as u32;
-                    // `(a, b, c)` are the atom slots in the order the chosen table wants
-                    // its three sides: for water, oxygen first.
-                    let (a, b, c) = if n_o == 1 && n_h == 2 {
-                        if za == 8 {
-                            (i, j, k)
-                        } else if zb == 8 {
-                            (j, i, k)
+                    let (a, b, c, v, g, env_abs, env_per_grad) = if let Some(surf) = self.trimers.find([za, zb, zc]) {
+                        // Align the 3 atom slots to the surface's declared species order
+                        let perm = match_triple_slots(i, za, j, zb, k, zc, surf.prov.z)
+                            .unwrap_or((i, j, k));
+                        let (sa, sb, sc) = perm;
+                        let (rab, rac, rbc) = (d[sa][sb], d[sa][sc], d[sb][sc]);
+                        let (val, grad) = surf.table.eval([rab, rac, rbc]);
+                        (
+                            sa, sb, sc,
+                            val, grad,
+                            surf.table.curvature_envelope,
+                            surf.table.curvature_per_gradient,
+                        )
+                    } else {
+                        let n_o = (za == 8) as u32 + (zb == 8) as u32 + (zc == 8) as u32;
+                        let n_h = (za == 1) as u32 + (zb == 1) as u32 + (zc == 1) as u32;
+                        if n_h == 3 && self.trimer.loaded {
+                            let (rab, rac, rbc) = (d[i][j], d[i][k], d[j][k]);
+                            let (val, grad) = self.trimer.eval([rab, rac, rbc]);
+                            (
+                                i, j, k,
+                                val, grad,
+                                self.trimer.curvature_envelope,
+                                self.trimer.curvature_per_gradient,
+                            )
+                        } else if n_o == 1 && n_h == 2 && self.water.loaded {
+                            let (sa, sb, sc) = if za == 8 {
+                                (i, j, k)
+                            } else if zb == 8 {
+                                (j, i, k)
+                            } else {
+                                (k, i, j)
+                            };
+                            let (rab, rac, rbc) = (d[sa][sb], d[sa][sc], d[sb][sc]);
+                            let (val, grad) = self.water.eval(rab, rac, rbc);
+                            (
+                                sa, sb, sc,
+                                val, grad,
+                                self.water.curvature_envelope,
+                                self.water.curvature_per_gradient,
+                            )
                         } else {
-                            (k, i, j)
+                            self.fence_untabulated += 1;
+                            continue;
                         }
-                    } else {
-                        (i, j, k)
                     };
-                    let (rab, rac, rbc) = (d[a][b], d[a][c], d[b][c]);
-                    let (v, g, env_abs, env_per_grad) = if n_h == 3 {
-                        let (v, g) = self.trimer.eval([rab, rac, rbc]);
-                        (
-                            v,
-                            g,
-                            self.trimer.curvature_envelope,
-                            self.trimer.curvature_per_gradient,
-                        )
-                    } else if n_o == 1 && n_h == 2 {
-                        // `a` is the oxygen, so `rab` and `rac` are the two O-H sides and
-                        // `rbc` is the H-H side — the order `WaterTable::eval` declares.
-                        let (v, g) = self.water.eval(rab, rac, rbc);
-                        (
-                            v,
-                            g,
-                            self.water.curvature_envelope,
-                            self.water.curvature_per_gradient,
-                        )
-                    } else {
-                        // (O, O, H) and (O, O, O): NOT tabulated by SATURATION-2. The
-                        // triple runs pair-only and the truncation is counted.
-                        self.fence_untabulated += 1;
-                        continue;
-                    };
+
                     if v == 0.0 && g[0] == 0.0 && g[1] == 0.0 && g[2] == 0.0 {
                         continue;
                     }
+                    let (rab, rac, rbc) = (d[a][b], d[a][c], d[b][c]);
                     e_three += v;
                     self.push_side(a, b, g[0], rab);
                     self.push_side(a, c, g[1], rac);
@@ -1454,7 +1457,32 @@ impl Sim {
             }
         }
     }
+}
 
+#[inline]
+fn match_triple_slots(
+    i: usize, zi: u8,
+    j: usize, zj: u8,
+    k: usize, zk: u8,
+    target: [u8; 3],
+) -> Option<(usize, usize, usize)> {
+    let perms = [
+        (i, zi, j, zj, k, zk),
+        (i, zi, k, zk, j, zj),
+        (j, zj, i, zi, k, zk),
+        (j, zj, k, zk, i, zi),
+        (k, zk, i, zi, j, zj),
+        (k, zk, j, zj, i, zi),
+    ];
+    for (a, za, b, zb, c, zc) in perms {
+        if za == target[0] && zb == target[1] && zc == target[2] {
+            return Some((a, b, c));
+        }
+    }
+    None
+}
+
+impl Sim {
     /// One side's share of a triple's force, applied equal and opposite. `g` is
     /// `dE/dr_ab`, the same convention the pair loop's `slope` carries, so the sign logic
     /// is the one line it already is there and not a second one to keep true.

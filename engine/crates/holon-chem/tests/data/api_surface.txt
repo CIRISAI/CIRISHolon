@@ -104,3 +104,8 @@ UNDECLARED_RADIUS       real API whose consumer is outside this crate: holon-ren
 #                       library itself must not read it: inside the library the honest
 #                       answer is the Option::None it accompanies.
 #                       Nothing in the library reads it BECAUSE that is the point.
+
+# --- the heteronuclear (O,O,H) module (T2 critical path) ---
+OOH_PROVENANCE          label emitted with the (O,O,H) hydroperoxyl table
+de3_point               point-by-point (O,O,H) 3-body evaluator for tests and held-out checks
+oo_side                 geometric distance calculation between oxygens in the OOH parameterization

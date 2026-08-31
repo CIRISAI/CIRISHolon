@@ -42,6 +42,7 @@ pub mod elements;
 pub mod fci;
 pub mod h2;
 pub mod md;
+pub mod ooh;
 pub mod pair;
 pub mod scalar;
 pub mod special;

@@ -1268,17 +1268,32 @@ impl PairMeta {
     /// now exit `Converged` at 9.6–10.0% of it, their residuals essentially unmoved — the
     /// verdicts changed because the ask became reachable, not because any energy did.
     ///
-    /// So the objection above no longer applies, and this function STILL does not consult
-    /// the exit — for a different and smaller reason. On the nine staked curves the two
-    /// verdicts now agree everywhere: eight exit `Converged` or `Trivial` under the bar,
-    /// and the one that gave up is refused by the residual alone (O-O exits `IterationCap`
-    /// at 1.6e-5, four orders over the bar). Merging them would change no verdict THERE
-    /// while removing a distinction that
-    /// costs nothing to keep: [`PairMeta::solve_finished`] asks whether the solve FINISHED,
-    /// this one asks whether the numbers are inside the declared bar, and a consumer that
-    /// wants the stricter question should have to name it. If a curve is ever found that
-    /// exits `IterationCap` UNDER the bar, that is the case that forces the merge, and it
-    /// has not been found.
+    /// So the objection above no longer applies. This function still does not consult the
+    /// exit, and the reason is now the opposite of comfortable: on the nine staked curves
+    /// the two verdicts agree — eight exit `Converged` or `Trivial` under the bar, and the
+    /// one that gave up is refused by the residual alone (O-O exits `IterationCap` at
+    /// 1.6e-5, four orders over the bar) — but that agreement is GRID LUCK, and the
+    /// re-examination that measured it says so.
+    ///
+    /// A first draft of this comment claimed no solve had been found that exits
+    /// `IterationCap` with a residual UNDER the bar. The next run found two, on the O-O
+    /// production grid (`examples/s3_oo_reexam`, 2026-08-30): knot 48 at r = 4.5673 bohr
+    /// stops at the cap with residual 2.36e-10, and knot 70 at r = 8.5269 with 2.32e-10 —
+    /// both a quarter of the bar, both solves that gave up. The residual a capped solve
+    /// reports is a SAMPLE of a non-monotone sequence (under thick restart the same knot
+    /// reads 1.0797e-4, 1.3299e-5, 8.8651e-5, 1.3206e-4, 1.1029e-6 at caps
+    /// 150/300/600/1200/2400 before reaching 9.5346e-11 — the shipped cap's residual is TEN
+    /// TIMES the one the same solve had already passed through at cap 300),
+    /// so a capped knot landing under the bar is a coincidence waiting to happen and it has
+    /// now happened twice on one curve.
+    ///
+    /// What saves the CURVE-level verdict is only that `worst_residual` is a maximum: O-O
+    /// has another knot at 1.3e-4, so the curve fails either way. A curve whose every knot
+    /// stopped under the bar with one of them capped would pass here and fail
+    /// [`PairMeta::solve_finished`], and nothing in the physics forbids one. Until that is
+    /// resolved the two verdicts stay separate and named: this one asks whether the numbers
+    /// are inside the declared bar, `solve_finished` asks whether the solve FINISHED, and a
+    /// consumer that needs the second must say so rather than be given it silently.
     pub fn converged(&self) -> bool {
         self.worst_residual <= CONVERGED_RESIDUAL
             && self.worst_residual.is_finite()

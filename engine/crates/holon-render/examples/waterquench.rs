@@ -383,11 +383,22 @@ fn main() {
         // comment describes the defect this guards: a curve whose solve hit its iteration
         // cap is emitted looking perfectly healthy, carrying a wrong energy, with the
         // evidence in a field no consumer is required to read. The O-O curve does exceed
-        // it — 1.3e-4 against 1e-10 — so this is a live warning and not decoration, and
-        // `examples/s2_oo_residual.rs` is where it was located: every offending knot is
-        // past 4.34 bohr, in the near-degenerate dissociation tail, while the whole well
-        // converges at 1e-10. It is reported here so a future run cannot inherit that
-        // conclusion without re-reading it.
+        // it — 1.3e-4 against a bar now derived at 1e-9 — so this is a live warning and
+        // not decoration.
+        //
+        // CORRECTED 2026-08-30, and the correction is why the warning is worth keeping.
+        // What stood here cited `examples/s2_oo_residual.rs` for "every offending knot is
+        // past 4.34 bohr, in the near-degenerate dissociation tail". That probe swept a
+        // 28-point UNIFORM grid over [1.6, 9.0]; this curve is 96 knots placed by
+        // `table::grid_point` over [1.5261, 20.0], and 4.34 was simply the first PROBE
+        // point that failed. Re-read on the production grid
+        // (`holon-chem --example s3_oo_reexam`), the worst knot is at 4.2244 bohr — below
+        // the boundary that was published — and 21 of the 96 exit `IterationCap`. Nor is
+        // it a floor: at that knot the solve converges at 3738 iterations against a cap of
+        // 1200 (`--example s3_oo_trace`), so it is out of BUDGET, not out of arithmetic.
+        // A reader wanting the size of the error, and the argument that P1's verdict
+        // survives it, should go to SATURATION2_RESULTS.md's corrected disclosure rather
+        // than inherit a conclusion from this comment.
         if pt.meta.worst_residual > holon_chem::pair::CONVERGED_RESIDUAL {
             println!(
                 "# WARNING {}-{}: worst residual {:.2e} exceeds CONVERGED_RESIDUAL {:.0e}. \

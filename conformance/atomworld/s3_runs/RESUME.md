@@ -19,6 +19,12 @@ measurement of the SHIPPED solver cannot be taken in a tree where the shipped
 solver is being replaced. Check `grep -c "crate::tier" fci.rs` = 0 before trusting
 a rebuild. Anything reproducing these numbers should use the same pin.
 
+That refactor has since landed as `fe18572`, and both readings were re-taken
+against it in the shared tree: `bar_margin_after.log` and `oo_trace.log` are
+BIT-IDENTICAL to the pinned worktree's. So the numbers transfer to main, and the
+f64 instantiation of the generic solver reproduces the crate's hardest solve —
+the O-O iteration-capped knot — exactly, which is a check that lane did not have.
+
 ## G0 banked
 
 Determinant counts exact, five of five, against the freeze's committed arithmetic.

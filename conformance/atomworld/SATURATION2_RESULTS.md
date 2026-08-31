@@ -689,6 +689,129 @@ bohr, `R_e = 2.44` included, converges at 1e-10. The energy moves 4e-5 Ha betwee
 flat as well as distant. The bond criterion and the aggregation P1 reports do not
 read it.
 
+#### CORRECTION (2026-08-30): three of those sentences are wrong, and the verdict survives anyway
+
+*The paragraph above is left exactly as it was published. It was written before
+`SolveExit` existed, so its central word was an inference from a residual, and
+the lane that wrote it owes the re-reading rather than a defence. Instruments:
+`holon-chem --example s3_oo_reexam` (the production 96-knot grid, solved twice)
+and `--example s3_oo_trace` (one knot across a ladder of iteration caps), both
+built and run in a worktree pinned at `179db95` — an uncommitted refactor of
+`fci.rs` was live in the shared tree at the time and a measurement of the shipped
+solver cannot be taken in a tree where the shipped solver is being replaced. That
+refactor has since landed (`fe18572`) and both readings were re-taken against it:
+bit-identical, so the numbers below are main's as well as the pin's.*
+
+**Wrong 1 — it does not stagnate; it gives up.** Of the 96 knots, 21 exit
+`IterationCap` and **zero** exit `Stagnated`. "Stagnation" means the subspace
+stopped producing new directions — the f64 tier exhausted, which under the
+2026-08-30 ruling is the case that overflows to a higher-precision tier.
+`IterationCap` means the solve ran out of budget at 1200 iterations with the
+residual still falling. Those have opposite remedies and the record named the
+wrong one. The ladder settles it: at the worst knot the residual falls
+1.08e-4 → 9.53e-11 and the energy settles, converging at **3738 iterations
+against a cap of 1200**. Same arithmetic tier, more iterations. This is an
+underspend, not an overflow. It is also worse than "not yet finished": the
+residual at the shipped cap of 1200 (1.3206e-4) is **ten times worse than the
+same solve's residual at cap 300** (1.3299e-5), because under thick restart the
+sequence is not monotone. The number the curve publishes is where an oscillation
+happened to be standing when the budget ran out.
+
+**Wrong 2 — the boundary is 4.1173 bohr, not 4.34.** The 4.34 came from
+`s2_oo_residual.rs`, which sweeps 28 UNIFORM points over [1.6, 9.0]; the curve
+`waterquench.rs` loads is 96 knots placed by `table::grid_point` over
+[1.5261, 20.0]. 4.34 was the first point of the PROBE that failed, and it was
+reported as though it were a property of the curve. The failures are also not a
+tail: they run from 4.1173 to 8.5269 bohr **interleaved with converged knots**
+(49–52, 54–55 converge inside the band), and every knot from 8.7938 out to 20.0
+converges. "Distant and flat" describes a shape the curve does not have.
+
+**Wrong 3 — the bond criterion does read it.** `Sim::refresh_pairs` computes
+`e_rel = ke_rel + u(r)` and `bonded = e_rel < 0 && r < r_outer`, where `u` is the
+knot energy minus the asymptote and `outer_turning_point` searches for a crossing
+in exactly the region that fails. The honest claim is quantitative, not
+categorical, and it is below.
+
+**What was right, and is the load-bearing half.** Zero non-converged knots at
+`r <= R_e = 2.4309` bohr. The repulsive wall, the well bottom and the whole
+binding region converge at ≤ 1e-10. The part of the curve that decides whether a
+pair is bound is exact-in-model.
+
+### The score
+
+Both runs are the same code path with one difference — the iteration cap — so
+`dE = E_prod − E_ref` is a lower bound on production's error at that knot, and an
+equality wherever the reference exits `Converged`.
+
+| | |
+|---|---|
+| knots exiting `IterationCap` | 21 of 96 |
+| of those, scored (reference converged) | 12 |
+| unresolved (both runs capped, 6.72–8.53 bohr) | 9 — reference residual 1e-9…3.5e-7, all with \|dE\| ≤ 2.04e-7 Ha |
+| worst \|dE\| | **4.315e-6 Ha** at r = 4.2244 bohr |
+| worst \|dF\| | **5.362e-5 Ha/bohr**, same knot |
+| against kT at the quench's 300 K target | 0.45% |
+| against kT at its 3000 K start | 0.045% |
+| against the O-O well depth `D_e` = 0.1476 Ha | 2.9e-5 |
+| shift it puts on an outer turning point (dU/dR ≈ 1.18e-2 there) | ≈ 3.7e-4 bohr |
+
+### WHY P1's verdict survives, against the corrected characterisation
+
+**Leg 1, and it is exact rather than a margin: the named blocker cannot be moved
+by an energy error of any size.** P1's finding is that the mixed arm is limited
+by the campaign's declared SCOPE — `(O,O,H)` and `(O,O,O)` are not tabulated and
+run pair-only. `Sim::accumulate_three_body` loops over every `i < j < k` with **no
+distance gate**, and every triple whose composition has two or more oxygens
+increments `fence_untabulated`. That is why the count is exactly
+`C(4,2)·8 + C(4,3) = 52` per force evaluation in the mixed arm and exactly
+`C(12,3) = 220` in the oxygen control: the fence incidence is an identity of the
+box's COMPOSITION, not a function of any potential. A perfect O-O curve leaves
+all 52 triples running pair-only. The blocker is a scope fact.
+
+**Leg 2, for the half that is dynamical: the census.** "No seed made water; every
+seed made an oxygen aggregate" is an outcome a wrong force could in principle
+change. The force that could change it is wrong by 5.4e-5 Ha/bohr at worst, on a
+part of the curve where `u` is already within 5e-3 Ha of the asymptote, while the
+well that decides binding is converged. 0.45% of the thermal energy the quench is
+holding the scene at is not a lever on which aggregate forms.
+
+So the verdict stands and the reason it stands is not the reason the DISCLOSED
+paragraph gave. It gave "the criterion does not read the bad region", which is
+false. The true reason is "the criterion reads it, and the error there is three
+orders below the thermal scale it competes with, while the blocker itself is
+combinatorial".
+
+### What does NOT survive, and is separable from the verdict
+
+**P1 ran a curve the crate's own guard would have refused.** `PairCache::get`
+asserts `meta.converged()` and panics on a curve whose solve gave up — "a curve
+that did not converge is a wrong curve, and handing one back with a flag set is
+how the flag stays unread". `waterquench.rs` does not go through the cache; it
+calls `generate_pair_table` directly and only WARNS. The score above says the
+refusal would have been conservative HERE. The bypass is still a hole, it is
+independent of whether this particular curve mattered, and it is named for the
+successor rather than patched under a frozen protocol.
+
+**A capped solve can report a residual under the bar.** Knot 48 (r = 4.5673)
+exits `IterationCap` at 2.36e-10 and knot 70 (r = 8.5269) at 2.32e-10 — both a
+quarter of the derived bar of 1e-9. Under thick restart the residual is not
+monotone (the ladder at r = 4.224364 reads 1.0797e-4, 1.3299e-5, 8.8651e-5,
+1.3206e-4, 1.1029e-6 at caps 150/300/600/1200/2400 before reaching 9.5346e-11),
+so where a capped solve stops is a sample of an oscillating sequence. O-O's curve-level verdict is saved only by `worst_residual` being a
+maximum over knots — another knot reads 1.3e-4. A curve whose every knot stopped
+under the bar with one of them capped would pass `converged()` and fail
+`solve_finished()`, and nothing in the physics forbids one. That is the argument
+for keeping the two verdicts separate, and it is now measured rather than
+asserted.
+
+**The remedy is a budget, not a tier.** `DAVIDSON_MAX_ITER = 1200` is the binding
+constraint at 12 of the 21 knots. Raising it re-banks every artifact that pins
+these energies, which is the same cost the ruling attached to lowering the
+expansion floor, so it is a campaign decision and not this lane's. Recorded with
+its measurement so nobody prices a high-precision referee for a solve that only
+needed to keep going. The other 9 knots do not converge at 20000 either; what
+they need is not yet known.
+
 **The mixed arm was run once before the timestep report was fixed**, and its
 result was identical to every printed digit. The header had been reporting the
 EMPTY box's fallback `dt` rather than the placed scene's; the runs were never

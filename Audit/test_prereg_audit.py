@@ -93,6 +93,40 @@ def main() -> int:
             )
         checked += 1
 
+    # ---- 2b. THE DATE RULE, both directions. "Refuses forward, never backward" is two
+    #          claims and only the pair is evidence: a rule that never refuses is vacuous,
+    #          and one that refuses backward is the absurdity the ruling removed.
+    dated = [(m, d) for m, d in A.REG_DATES.items() if m in A.CONTACT.values()]
+    if not dated:
+        failures.append("no dated misfit is armed, so the date rule cannot be exercised")
+    for mid, mdate in dated[:3]:
+        kw = next(k for k, v in A.CONTACT.items() if v == mid)
+        body = f"The design's approach to {kw} is described here at length."
+
+        # BACKWARD: a freeze frozen the SAME DAY must NOT be refused. Same-day is the
+        # motivating case -- M-DEVICE-CLASS was registered from SATURATION-3's own result
+        # on SATURATION-3's own freeze date -- so "on or after" would not have resolved it.
+        same_day = run(skeleton(body).replace("# Synthetic freeze", f"# Synthetic freeze\n\nFrozen {mdate}"))
+        if [e for e in same_day if "keyword contact" in e and mid in e]:
+            failures.append(
+                f"REFUSED BACKWARD: a freeze frozen {mdate}, the same day {mid} was "
+                f"registered, was refused for not citing it — an audit refuses forward only"
+            )
+
+        # A freeze from well before it: likewise untouched.
+        before = run(skeleton(body).replace("# Synthetic freeze", "# Synthetic freeze\n\nFrozen 2020-01-01"))
+        if [e for e in before if "keyword contact" in e and mid in e]:
+            failures.append(f"REFUSED BACKWARD: a 2020 freeze was refused for not citing {mid}")
+
+        # FORWARD: a freeze dated after it MUST still be refused, or the cutoff has
+        # disabled the gate rather than bounded it.
+        after = run(skeleton(body).replace("# Synthetic freeze", "# Synthetic freeze\n\nFrozen 2099-01-01"))
+        if not [e for e in after if "keyword contact" in e and mid in e]:
+            failures.append(
+                f"NOT REFUSED FORWARD: a freeze dated after {mid}'s registration contacted "
+                f"'{kw}' uncited and was admitted — the date cutoff disabled the gate"
+            )
+
     # ---- 3. M-VACUOUS-SUCCESS: this file must have done work proportional to the table.
     if checked != len(A.CONTACT):
         failures.append(f"checked {checked} keywords against a table of {len(A.CONTACT)}")

@@ -18,6 +18,39 @@ import re, sys, pathlib
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 REG = (ROOT / "conformance/gravity/MISFITS.md").read_text()
 REG_IDS = set(re.findall(r"\*\*(M-[A-Z0-9-]+)\*\*", REG))
+
+
+def registry_dates():
+    """Each misfit's registration date, where its row carries one.
+
+    AN AUDIT REFUSES FORWARD, NEVER BACKWARD (lead's ruling, 2026-08-30). A freeze that
+    predates a misfit's registration cannot be refused for failing to cite it, and several
+    of this registry's newest ids were BORN FROM the very campaigns whose freezes now
+    contact them — refusing those would be absurd.
+
+    The comparison is STRICTLY AFTER, and that is not a detail. The motivating case is
+    same-day: SATURATION-3 froze on 2026-08-30 and M-DEVICE-CLASS was registered on
+    2026-08-30 out of that campaign's own G2 result. Under "on or after" the ruling would
+    not have resolved the case that prompted it.
+    """
+    out = {}
+    for row in REG.splitlines():
+        m = re.match(r"\|\s*\*\*(M-[A-Z0-9-]+)\*\*\s*\|", row)
+        if not m:
+            continue
+        d = re.findall(r"(20\d\d-\d\d-\d\d)", row)
+        if d:
+            out[m.group(1)] = max(d)
+    return out
+
+
+REG_DATES = registry_dates()
+
+
+def freeze_date(text):
+    """The freeze's own date, or None. `Frozen YYYY-MM-DD` is this corpus's form."""
+    m = re.search(r"[Ff]rozen\s+(20\d\d-\d\d-\d\d)", text)
+    return m.group(1) if m else None
 CONTACT = {
     "conjugacy": "M-GAUGE-LAUNDER", "class-diagonal": "M-GAUGE-LAUNDER",
     "parity": "M-PARITY-PROTECT",
@@ -81,9 +114,18 @@ def audit(path):
     if "misfits:" not in t.lower():
         errs.append("no `misfits:` line — the freeze must state which registered misfits it contacts")
     low = t.lower()
+    fdate = freeze_date(t)
     for kw, mid in CONTACT.items():
-        if kw.lower() in low and mid not in cited:
-            errs.append(f"keyword contact '{kw}' -> {mid} without citing it")
+        if kw.lower() not in low or mid in cited:
+            continue
+        mdate = REG_DATES.get(mid)
+        # Refuse FORWARD only. An undated freeze gets the strict treatment -- a document
+        # that will not date itself cannot claim precedence -- and an undated MISFIT is
+        # reported rather than silently exempting every freeze that contacts it.
+        if fdate and mdate and fdate <= mdate:
+            continue
+        note = "" if mdate else "  [misfit carries no registration date; precedence unverifiable]"
+        errs.append(f"keyword contact '{kw}' -> {mid} without citing it{note}")
     gates = [ln for ln in t.splitlines() if re.match(r"\s*-\s*\*\*(G|R|B|S)\d*", ln)]
     for ln in gates:
         if not (re.search(r"\d", ln) or "EXACT" in ln.upper()):

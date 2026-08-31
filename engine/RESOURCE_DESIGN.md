@@ -280,6 +280,29 @@ The ladder, in order, all three required before reclamation:
 Every reaping is logged with all three answers. A lease with no release, no rent and no reaping
 is a ledger violation the audit must surface.
 
+### What the live exercise measured, and the rung it actually vindicated
+
+Run against a REAL 72-node generation with the reaper polling in flight (not scripted answers):
+
+| configuration | false reaps |
+|---|---:|
+| rung 2 absent | **1115** |
+| rung 2 = "did the CPU tick advance since last poll" | 108 |
+| rung 2 debounced over its 10 ms sensor | 495 |
+| **grace sized by the holder's OWN observed step** | **0** |
+
+**Rungs 2 and 3 are the BACKSTOP, not the mechanism — asserted, not hoped.** With grace sized by
+the design's own rule, rung 1 does not fire on healthy work at all and the later rungs are never
+consulted. Every attempt to fix this in rung 2 made it worse or barely better; the defect was that
+rung 1's grace was a flat constant when this document's own text says it must be a multiple of the
+holder's own step. See **M-IDLE-CALIBRATED-TIMEOUT**: the holders' real step was ~400× the
+idle-machine figure, so no fixed grace derived from idle timings could have survived.
+
+**D10b — THE REAPER STAYS OFF UNTIL ITS FALSE-POSITIVE RATE IS MEASURED ACROSS AT LEAST ONE FULL
+REAL GENERATION.** Nothing in the generator calls it. A component that convicted 1115 live holders
+the first time it met real work does not get switched on because its tests are green; the 72-node
+exercise is an exercise, not the campaign.
+
 ---
 
 ## 6. Dispatch: three steps, each of which can refuse
@@ -358,6 +381,9 @@ citing it is refused. Contacted here, with what each one binds:*
   two devices' throughputs must differ by more than the spot-check factor) before it is scored.
 * **M-STALE-INSTRUMENT** — a registered throughput entry IS an instrument, and **D12** exists
   because a registration is a memory of a measurement rather than the measurement.
+* **M-IDLE-CALIBRATED-TIMEOUT** *(born of this design's own reaper, 2026-08-30)* — binds **D10**
+  and the grace in §5. Every patience constant here is learned from the holder's receipts in the
+  environment where it runs; none is imported from an idle measurement.
 * **M-CACHE-KIND** — the dispatch registry is keyed *per workload AT THIS SIZE*, so **size and
   kind belong IN the key** and a shape mismatch on read must **RAISE**. Otherwise a small-size
   entry silently admits a large dispatch: existence stands in for certification, which is exactly

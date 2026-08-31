@@ -1,16 +1,23 @@
-//! ozone_seam_scan.rs — Seam scanner across the ring-closure and reactive channels in Ozone (O, O, O).
+//! ozone_seam_scan.rs — Multi-threaded Checkpointed Seam Scanner across Ozone (O, O, O) reactive channels.
 //!
-//! Evaluates dE3, 2nd and 3rd divided differences in c = sqrt(1 - u), and tests for
-//! lower-envelope electronic state crossings between the cyclic D3h ring minimum (theta ~ 60 deg)
-//! and open C2v ground state (theta ~ 116.8 deg) via warm-start cross-checks.
+//! Evaluates ab-initio dE3, 2nd and 3rd divided differences along reaction coordinates,
+//! tests for electronic state crossings between cyclic D3h (theta ~ 60 deg) and open C2v (theta ~ 116.8 deg),
+//! logs every intermediate point to an append-only checkpoint log, running all 3 slices concurrently in parallel threads.
 
 use holon_chem::dual::D2;
 use holon_chem::elements::OXYGEN;
 use holon_chem::fci::{ci_ints, davidson_eigh_from, Order, DAVIDSON_MAX_ITER, DAVIDSON_REQUESTED_TOLERANCE};
-use holon_chem::ozone::{de3_with, C_HI, C_LO};
+use holon_chem::ozone::{C_HI, C_LO};
 use holon_chem::pair::{atom_energy, geometry_problem, pair_point};
+use std::collections::HashMap;
+use std::fs::{File, OpenOptions};
+use std::io::{BufRead, BufReader, Write};
+use std::path::Path;
 use std::sync::atomic::Ordering;
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
+
+const PROGRESS_PATH: &str = "output/ozone_seam_scan_progress.log";
 
 fn geom(s1: f64, s2: f64, c: f64) -> Vec<[D2; 3]> {
     let u = (1.0 - c * c).clamp(-1.0, 1.0);
@@ -37,11 +44,57 @@ fn solve_fci(s1: f64, s2: f64, c: f64, start: Option<&[f64]>) -> (f64, Vec<f64>,
     (e + nuc.v, v, iters, resid)
 }
 
-fn scan_slice(name: &str, s1: f64, s2: f64, n_points: usize) {
-    println!("\n================================================================================");
-    println!("OZONE SEAM SCAN: {} (s1 = {:.3} bohr, s2 = {:.3} bohr, {} points)", name, s1, s2, n_points);
-    println!("================================================================================");
+#[derive(Clone, Debug)]
+struct CachedPoint {
+    e_o3: f64,
+    de3: f64,
+    d_warm: f64,
+}
 
+fn load_progress() -> HashMap<(usize, usize), CachedPoint> {
+    let mut map = HashMap::new();
+    if let Ok(file) = File::open(PROGRESS_PATH) {
+        let reader = BufReader::new(file);
+        for line in reader.lines().flatten() {
+            if let Some(rest) = line.strip_prefix("POINT:") {
+                let mut slice_idx = None;
+                let mut pt_idx = None;
+                let mut e_o3 = None;
+                let mut de3 = None;
+                let mut d_warm = None;
+
+                for part in rest.split_whitespace() {
+                    if let Some(v) = part.strip_prefix("slice=") {
+                        slice_idx = v.parse::<usize>().ok();
+                    } else if let Some(v) = part.strip_prefix("i=") {
+                        pt_idx = v.parse::<usize>().ok();
+                    } else if let Some(v) = part.strip_prefix("E_o3=") {
+                        e_o3 = v.parse::<f64>().ok();
+                    } else if let Some(v) = part.strip_prefix("dE3=") {
+                        de3 = v.parse::<f64>().ok();
+                    } else if let Some(v) = part.strip_prefix("d_warm=") {
+                        d_warm = v.parse::<f64>().ok();
+                    }
+                }
+
+                if let (Some(s), Some(i), Some(e), Some(d), Some(w)) = (slice_idx, pt_idx, e_o3, de3, d_warm) {
+                    map.insert((s, i), CachedPoint { e_o3: e, de3: d, d_warm: w });
+                }
+            }
+        }
+    }
+    map
+}
+
+fn scan_slice(
+    slice_idx: usize,
+    name: &str,
+    s1: f64,
+    s2: f64,
+    n_points: usize,
+    cached: &HashMap<(usize, usize), CachedPoint>,
+    log_file: &Arc<Mutex<File>>,
+) {
     let e_o = atom_energy(OXYGEN);
     let e_s1 = pair_point(OXYGEN, OXYGEN, s1).e;
     let e_s2 = pair_point(OXYGEN, OXYGEN, s2).e;
@@ -49,14 +102,11 @@ fn scan_slice(name: &str, s1: f64, s2: f64, n_points: usize) {
     let h = (C_HI - C_LO) / (n_points - 1) as f64;
     let cs: Vec<f64> = (0..n_points).map(|i| C_LO + h * i as f64).collect();
 
-    println!("   {:>8} {:>8} {:>8} {:>15} {:>12} {:>12} {:>10}", "c", "theta", "s3", "dE3 (Ha)", "d2", "d3", "dE(warm)");
-
-    let t0 = Instant::now();
     let mut vals = Vec::with_capacity(n_points);
     let mut warm_diffs = Vec::with_capacity(n_points);
+    let mut carrier: Option<Vec<f64>> = None;
 
-    // Initial carrier vector from first node
-    let (_, mut carrier, _, _) = solve_fci(s1, s2, cs[0], None);
+    let t_slice = Instant::now();
 
     for (i, &c) in cs.iter().enumerate() {
         let u = (1.0 - c * c).clamp(-1.0, 1.0);
@@ -64,23 +114,63 @@ fn scan_slice(name: &str, s1: f64, s2: f64, n_points: usize) {
         let s3 = (s1 * s1 + s2 * s2 - 2.0 * s1 * s2 * u).max(0.0).sqrt();
         let e_s3 = pair_point(OXYGEN, OXYGEN, s3).e;
 
-        let (e_cold, v_cold, _iters, _resid) = solve_fci(s1, s2, c, None);
-        let (e_warm, v_warm, _, _) = solve_fci(s1, s2, c, Some(&carrier));
+        if let Some(cp) = cached.get(&(slice_idx, i)) {
+            println!(
+                "  [{}] pt {:>2}/{:>2}: c={:.4} theta={:>6.2}° s3={:.4} -> E={:.8} Ha, dE3={:+.8} Ha (CACHED)",
+                name, i + 1, n_points, c, theta, s3, cp.e_o3, cp.de3
+            );
+            std::io::stdout().flush().unwrap();
+            vals.push(cp.de3);
+            warm_diffs.push(cp.d_warm);
+            continue;
+        }
 
-        let de3 = de3_with(s1, s2, s3, e_o, e_s1, e_s2, e_s3);
+        let t_pt = Instant::now();
+
+        // 1. Cold solve
+        let (e_cold, v_cold, _, _) = solve_fci(s1, s2, c, None);
+
+        // 2. Warm solve (if carrier available)
+        let (e_best, v_best, d_warm_cold) = match carrier.as_ref() {
+            Some(w) => {
+                let (e_warm, v_warm, _, _) = solve_fci(s1, s2, c, Some(w));
+                let diff = e_warm - e_cold;
+                if e_warm <= e_cold {
+                    (e_warm, v_warm, diff)
+                } else {
+                    (e_cold, v_cold, diff)
+                }
+            }
+            None => (e_cold, v_cold, 0.0),
+        };
+
+        carrier = Some(v_best);
+
+        let de3 = e_best + 3.0 * e_o - e_s1 - e_s2 - e_s3;
         vals.push(de3);
-
-        let d_warm_cold = e_warm - e_cold;
         warm_diffs.push(d_warm_cold);
 
-        carrier = if e_warm <= e_cold { v_warm } else { v_cold };
+        let pt_ms = t_pt.elapsed().as_millis();
 
-        if i % 5 == 0 || i == n_points - 1 {
-            println!("   {:>8.4} {:>8.2}° {:>8.4} {:>15.8} {:>12} {:>12} {:>10.2e}", c, theta, s3, de3, "-", "-", d_warm_cold);
+        // Thread-safe append to checkpoint log
+        {
+            let mut f = log_file.lock().unwrap();
+            writeln!(
+                f,
+                "POINT: slice={} i={} c={:.8} theta={:.6} s1={:.6} s2={:.6} s3={:.6} E_o3={:.12} dE3={:.12} d_warm={:.6e} time_ms={}",
+                slice_idx, i, c, theta, s1, s2, s3, e_best, de3, d_warm_cold, pt_ms
+            ).unwrap();
+            f.flush().unwrap();
         }
+
+        println!(
+            "  [{}] pt {:>2}/{:>2}: c={:.4} theta={:>6.2}° s3={:.4} -> E={:.8} Ha, dE3={:+.8} Ha (d_warm={:+.2e}, {:.1}s)",
+            name, i + 1, n_points, c, theta, s3, e_best, de3, d_warm_cold, t_pt.elapsed().as_secs_f64()
+        );
+        std::io::stdout().flush().unwrap();
     }
 
-    // Compute divided differences
+    // 3. Compute divided differences
     let mut max_d3 = 0.0f64;
     let mut max_d3_c = 0.0f64;
     for i in 2..(n_points - 2) {
@@ -91,32 +181,57 @@ fn scan_slice(name: &str, s1: f64, s2: f64, n_points: usize) {
         }
     }
 
-    let elapsed = t0.elapsed();
     let min_warm_diff = warm_diffs.iter().cloned().fold(f64::INFINITY, f64::min);
     let max_warm_diff = warm_diffs.iter().cloned().fold(f64::NEG_INFINITY, f64::max);
 
     println!("--------------------------------------------------------------------------------");
-    println!("Scan results for {}:", name);
-    println!("  Points scanned       = {}", n_points);
-    println!("  Time elapsed         = {:.2?}", elapsed);
-    println!("  Max |d3|             = {:.4e} (at c = {:.4})", max_d3, max_d3_c);
-    println!("  Warm - Cold diff min = {:+.3e} Ha", min_warm_diff);
-    println!("  Warm - Cold diff max = {:+.3e} Ha", max_warm_diff);
-    println!("  Electronic stability = {}", if min_warm_diff >= -1e-8 { "STABLE VARIATIONAL GROUND STATE" } else { "BRANCH FLIP DETECTED" });
+    println!("Summary for Slice {} ({}):", slice_idx, name);
+    println!("  Points: {} | Wall time: {:.1?}", n_points, t_slice.elapsed());
+    println!("  Max |d3|: {:.4e} (at c = {:.4})", max_d3, max_d3_c);
+    println!("  Warm-Cold Delta: min={:+.3e} Ha, max={:+.3e} Ha", min_warm_diff, max_warm_diff);
+    println!("  Ground State Stability: {}", if min_warm_diff >= -1e-8 { "VARIATIONALLY STABLE" } else { "BRANCH CROSSING DETECTED" });
+    println!("--------------------------------------------------------------------------------");
+    std::io::stdout().flush().unwrap();
 }
 
 fn main() {
     println!("================================================================================");
-    println!("OZONE (O, O, O) ELECTRONIC SEAM SCANNER — D3h / C2v REACTIVE CHANNELS");
+    println!("OZONE (O, O, O) ELECTRONIC SEAM SCANNER — PARALLEL CHECKPOINT ENGINE");
     println!("================================================================================");
 
-    // Slice 1: Near-equilibrium ozone (s1 = s2 = 2.41 bohr), sweeping theta from 20 deg to 180 deg
-    // Encompasses the cyclic D3h minimum (theta = 60 deg) and open C2v minimum (theta = 116.8 deg)
-    scan_slice("Slice 1: Cyclic D3h <-> Open C2v Bend (s1 = 2.41 bohr, s2 = 2.41 bohr)", 2.41, 2.41, 25);
+    if let Some(parent) = Path::new(PROGRESS_PATH).parent() {
+        std::fs::create_dir_all(parent).ok();
+    }
 
-    // Slice 2: Compressed ring region (s1 = 2.10 bohr, s2 = 2.10 bohr)
-    scan_slice("Slice 2: Compressed Ring Channel (s1 = 2.10 bohr, s2 = 2.10 bohr)", 2.10, 2.10, 25);
+    let cached = load_progress();
+    println!("# Loaded {} cached seam points from {}", cached.len(), PROGRESS_PATH);
 
-    // Slice 3: Asymmetric dissociation path (s1 = 2.28 bohr, s2 = 3.20 bohr)
-    scan_slice("Slice 3: Asymmetric Reactive Channel (s1 = 2.28 bohr, s2 = 3.20 bohr)", 2.28, 3.20, 25);
+    let log_file = Arc::new(Mutex::new(
+        OpenOptions::new()
+            .create(true)
+            .append(true)
+            .open(PROGRESS_PATH)
+            .expect("cannot open progress log"),
+    ));
+
+    let t0 = Instant::now();
+
+    // Execute all 3 slices concurrently in parallel threads
+    std::thread::scope(|sc| {
+        let (cached_ref, log_ref) = (&cached, &log_file);
+
+        sc.spawn(move || {
+            scan_slice(1, "Cyclic D3h <-> Open C2v Bend", 2.41, 2.41, 17, cached_ref, log_ref);
+        });
+
+        sc.spawn(move || {
+            scan_slice(2, "Compressed Ring Channel", 2.10, 2.10, 17, cached_ref, log_ref);
+        });
+
+        sc.spawn(move || {
+            scan_slice(3, "Asymmetric Reactive Channel", 2.28, 3.20, 17, cached_ref, log_ref);
+        });
+    });
+
+    println!("\n# All 3 ozone seam scan slices completed in {:.1?}.", t0.elapsed());
 }

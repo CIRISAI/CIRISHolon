@@ -119,11 +119,13 @@ pub fn sigma_direct_t<T: Scalar>(space: &FciSpace, k: &[T], g: &[T], c: &[T], si
     // 3. Mixed alpha-beta block
     let mut t = vec![T::ZERO; n2 * nb];
     let mut vrow = vec![T::ZERO; nb];
+    let mut touched_kl: Vec<usize> = Vec::with_capacity(n2);
+    let mut is_touched = vec![false; n2];
+
     for ja in 0..na {
-        for x in t.iter_mut() {
-            *x = T::ZERO;
-        }
         let crow = &c[ja * nb..(ja + 1) * nb];
+        touched_kl.clear();
+
         #[allow(clippy::needless_range_loop)]
         for jb in 0..nb {
             let cv = crow[jb];
@@ -131,15 +133,26 @@ pub fn sigma_direct_t<T: Scalar>(space: &FciSpace, k: &[T], g: &[T], c: &[T], si
                 continue;
             }
             for &(kl, s, ib) in space.beta.singles[jb].iter() {
-                t[kl as usize * nb + ib as usize] = t[kl as usize * nb + ib as usize] + cv.scale(s);
+                let kl_u = kl as usize;
+                if !is_touched[kl_u] {
+                    is_touched[kl_u] = true;
+                    touched_kl.push(kl_u);
+                }
+                t[kl_u * nb + ib as usize] = t[kl_u * nb + ib as usize] + cv.scale(s);
             }
         }
+
+        if touched_kl.is_empty() {
+            continue;
+        }
+
         for &(ij, sa, ia) in space.alpha.singles[ja].iter() {
             for x in vrow.iter_mut() {
                 *x = T::ZERO;
             }
             let grow = &g[ij as usize * n2..(ij as usize + 1) * n2];
-            for (kl, &gv) in grow.iter().enumerate() {
+            for &kl in &touched_kl {
+                let gv = grow[kl];
                 if gv.is_zero() {
                     continue;
                 }
@@ -151,6 +164,14 @@ pub fn sigma_direct_t<T: Scalar>(space: &FciSpace, k: &[T], g: &[T], c: &[T], si
             let dst = ia as usize * nb;
             for ib in 0..nb {
                 sigma[dst + ib] = sigma[dst + ib] + vrow[ib].scale(sa);
+            }
+        }
+
+        // Clean up only touched slices of t
+        for &kl in &touched_kl {
+            is_touched[kl] = false;
+            for x in t[kl * nb..(kl + 1) * nb].iter_mut() {
+                *x = T::ZERO;
             }
         }
     }

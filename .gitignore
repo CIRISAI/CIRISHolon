@@ -14,6 +14,10 @@ engine/crates/holon-render-3d/target/
 conformance/gravity/*.DONE
 conformance/gravity/launch_*.sh
 conformance/**/__pycache__/
+# Audit/ gained an importable module on 2026-08-30 (test_prereg_audit.py imports
+# prereg_audit), so it now produces bytecode too. On a shared tree an untracked
+# __pycache__ shows up in everyone's porcelain as noise they have to read past.
+Audit/__pycache__/
 .claude/
 conformance/omega/engine_probe/target/
 

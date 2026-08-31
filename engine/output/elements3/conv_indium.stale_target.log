@@ -1,0 +1,8 @@
+# Davidson exit taken, per atom. cap = 1200, target = 1e-11, bar = 1e-10
+# exit CONVERGED: resid < target | CAP: iters == cap | STAGNATED: neither
+  Z sym      n_det            E (hartree)       resid   iters        exit   vs bar
+  9   F          5       -97.986505000188    5.68e-14       3   CONVERGED     pass   # asked on the command line
+ 49  In    1026675     -5677.203746332331     3.98e-1    1200         CAP  REFUSED   # asked on the command line
+#
+# All 1 controls reached the target, so the CONVERGED branch is live and an atom missing it is a fact about the atom, not about this classifier. Non-control atoms that reached it: 0.
+# Read the `exit` column against the `vs bar` column. If they disagree -- if rows that PASS the bar took the same exit as rows the bar REFUSES -- then the bar is sorting a class that uniformly failed to converge, rather than separating the converged from the rest, and the record has to say so.

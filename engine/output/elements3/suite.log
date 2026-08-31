@@ -1,0 +1,361 @@
+warning: function `referee_path` is never used
+  --> crates/holon-chem/tests/common/mod.rs:17:8
+   |
+17 | pub fn referee_path() -> PathBuf {
+   |        ^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `referee_bytes` is never used
+  --> crates/holon-chem/tests/common/mod.rs:21:8
+   |
+21 | pub fn referee_bytes() -> Vec<u8> {
+   |        ^^^^^^^^^^^^^
+
+warning: function `referee_text` is never used
+  --> crates/holon-chem/tests/common/mod.rs:25:8
+   |
+25 | pub fn referee_text() -> String {
+   |        ^^^^^^^^^^^^
+
+warning: function `string_array` is never used
+  --> crates/holon-chem/tests/common/mod.rs:32:8
+   |
+32 | pub fn string_array(src: &str, key: &str) -> Vec<String> {
+   |        ^^^^^^^^^^^^
+
+warning: function `string_scalar` is never used
+  --> crates/holon-chem/tests/common/mod.rs:53:8
+   |
+53 | pub fn string_scalar(src: &str, key: &str) -> String {
+   |        ^^^^^^^^^^^^^
+
+warning: function `worst` is never used
+   --> crates/holon-chem/tests/common/mod.rs:181:8
+    |
+181 | pub fn worst(referee: &[String], mine: &[f64]) -> (f64, usize) {
+    |        ^^^^^
+
+warning: unused import: `RadiusRule`
+ --> crates/holon-chem/examples/emit_palette.rs:6:40
+  |
+6 |     declared_colour, homonuclear_size, RadiusRule, CONTACT_ENERGY, PAIR_PROVENANCE, WELL_MIN_DEPTH,
+  |                                        ^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: constant `T_LO` is never used
+  --> crates/holon-chem/examples/s2_third.rs:53:7
+   |
+53 | const T_LO: f64 = 0.0;
+   |       ^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `holon-chem` (test "elements3_atoms") generated 6 warnings
+warning: `holon-chem` (example "emit_palette") generated 1 warning (run `cargo fix --example "emit_palette" -p holon-chem` to apply 1 suggestion)
+warning: `holon-chem` (test "mixtures_referee") generated 4 warnings (4 duplicates)
+warning: `holon-chem` (example "s2_third") generated 1 warning
+warning: variable does not need to be mutable
+  --> crates/holon-chem/examples/h3_barrier.rs:33:9
+   |
+33 |     let mut scan = |lo: f64, hi: f64, n: usize, best_r: &mut f64, best_e: &mut f64| {
+   |         ----^^^^
+   |         |
+   |         help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: `holon-chem` (example "h3_barrier") generated 1 warning (run `cargo fix --example "h3_barrier" -p holon-chem` to apply 1 suggestion)
+warning: unused variable: `na`
+  --> crates/holon-chem/examples/zn_diagnose.rs:25:17
+   |
+25 |         let (_, na, nb) = electron_counts(&[sp]);
+   |                 ^^ help: if this is intentional, prefix it with an underscore: `_na`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `nb`
+  --> crates/holon-chem/examples/zn_diagnose.rs:25:21
+   |
+25 |         let (_, na, nb) = electron_counts(&[sp]);
+   |                     ^^ help: if this is intentional, prefix it with an underscore: `_nb`
+
+warning: `holon-chem` (example "zn_diagnose") generated 2 warnings (run `cargo fix --example "zn_diagnose" -p holon-chem` to apply 2 suggestions)
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.07s
+     Running unittests src/lib.rs (target/release/deps/holon_chem-92e4d383eff2cdd2)
+
+running 3 tests
+test pair::bisect_tests::a_bracketed_root_is_located ... ok
+test pair::bisect_tests::a_root_on_the_endpoint_is_still_bracketed ... ok
+test pair::bisect_tests::an_unbracketed_interval_is_refused ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/api_surface.rs (target/release/deps/api_surface-019b2261fb1b4c31)
+
+running 1 test
+test every_unreferenced_public_item_is_a_decision ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.35s
+
+     Running tests/elements.rs (target/release/deps/elements-0bb9d96b3d105c10)
+
+running 17 tests
+test plant_the_historical_oxygen_defect_fires_the_ratio_band ... ok
+test the_contraction_coefficients_are_universal ... ok
+test oxygens_leading_exponent_is_the_published_one ... ok
+test the_basis_and_electron_counts_are_what_the_row_gives ... ok
+test hydrogen_is_not_re_declared ... ok
+test exponents_rise_with_z_and_masses_do_too ... ok
+test the_d_shells_report_whether_they_share_an_sp_set ... ok
+test the_exponent_ratios_are_element_independent ... ok
+test every_declared_number_is_the_pinned_tabulations ... ok
+test the_sp_shell_shares_its_exponents ... ok
+test the_registry_refuses_what_it_does_not_have ... ok
+test plant_basis_mutation_fires_the_referee_tolerance ... ok
+test plant_a_single_digit_typo_in_a_new_element_fires_the_ratio_band ... ok
+test the_degenerate_atoms_are_exactly_their_single_configuration_energies ... ok
+test plant_z_mutation_moves_the_energy_by_orders_of_magnitude ... ok
+test second_row_atomic_ground_states ... ok
+test argon_dimer_refuses_to_bind ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 58.34s
+
+     Running tests/elements3_atoms.rs (target/release/deps/elements3_atoms-9cd6dc283892db10)
+
+running 4 tests
+test the_mps_arm_is_unreachable_so_the_orbital_constant_decides_nothing ... ok
+test the_two_closed_shell_nobles_match_the_fifty_digit_referee ... ok
+test the_heavy_ground_multiplicities_come_out_rather_than_in ... ok
+test the_heavy_atoms_agree_between_two_independent_sigma_routes ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 51.08s
+
+     Running tests/elements3_dimers.rs (target/release/deps/elements3_dimers-7da23c140f4a788c)
+
+running 6 tests
+test e1_the_heavy_nobles_are_closed_shells_exactly ... ok
+test e2_the_bromine_dimer_binds_exactly ... ok
+test e1_the_noble_dimers_do_not_bind ... ok
+test f1_the_fence_stake_fired_the_deficit_falls_down_the_column ... ok
+test e2_the_hydrogen_halide_well_depths_fall_down_the_column ... ok
+test the_banked_record_still_describes_this_engine ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 19.66s
+
+     Running tests/fci.rs (target/release/deps/fci-d903a8d342043c34)
+
+running 17 tests
+test the_spin_check_rejects_a_state_that_is_not_an_eigenstate ... ok
+test test_mps_solver_vs_fci_ground_state ... ok
+test the_three_exits_are_distinguishable ... ok
+test a_one_determinant_space_reports_trivial ... ok
+test the_two_sigma_routes_agree_on_a_general_vector ... ok
+test the_stored_diagonal_is_the_hamiltonians_own ... ok
+test the_orthonormaliser_orthonormalises ... ok
+test the_variational_guard_is_silent_on_a_correct_solve ... ok
+test the_converged_state_is_in_the_right_spin_sector ... ok
+test the_variational_guard_fires_on_a_solve_that_converged_to_the_wrong_state ... ok
+test the_ladder_route_reproduces_the_iterative_ground_state ... ok
+test test_sigma_direct_n2_and_atomic_ground_states ... ok
+test test_solve_routes_large_spaces_to_mps ... ok
+test the_energy_does_not_depend_on_the_orbital_basis ... ok
+test the_analytic_derivatives_match_a_finite_difference ... ok
+test the_ground_multiplicity_along_the_curve_is_settled_densely ... ok
+test test_sigma_direct_germanium_ground_state ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.19s
+
+     Running tests/front_door.rs (target/release/deps/front_door-b94ea184f8332650)
+
+running 1 test
+test the_cache_refuses_a_curve_whose_solve_gave_up ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.87s
+
+     Running tests/md.rs (target/release/deps/md-271e2c158b985b30)
+
+running 9 tests
+test f_orbitals_spherical_transformation_orthonormality_and_contaminant_removal ... ok
+test general_scheme_reproduces_the_s_only_closed_forms ... ok
+test eri_obeys_its_eight_permutational_symmetries ... ok
+test the_two_electron_zeros_are_the_ones_symmetry_forces ... ok
+test integrals_do_not_depend_on_where_the_origin_is ... ok
+test the_one_electron_matrices_do_not_depend_on_shell_order ... ok
+test d_orbitals_obey_permutational_and_translational_symmetries ... ok
+test f_orbitals_obey_permutational_and_translational_symmetries ... ok
+test f_orbitals_rotational_invariance ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 29.46s
+
+     Running tests/mixtures_referee.rs (target/release/deps/mixtures_referee-1a1bf2fa4834e044)
+
+running 4 tests
+test r2_the_staked_pairs_match_the_fifty_digit_referee ... ignored, waiting on the mixtures-referee drop in tests/data/mixtures1/
+test r2_an_out_of_scope_species_is_refused_by_name ... ok
+test r2_the_staked_set_is_the_freeze_s ... ok
+test r2_which_staked_pairs_leave_the_determinant_route ... ok
+
+test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/model.rs (target/release/deps/model-1b0784cbe7f8642f)
+
+running 11 tests
+test a_refused_request_is_refused_rather_than_defaulted ... ok
+test the_asymptote_is_the_curve_it_claims_to_be ... ok
+test the_grid_is_uniform_in_the_variable_it_says_it_is ... ok
+test the_pieces_add_up_to_the_total ... ok
+test the_force_sign_convention_is_the_renderers ... ok
+test the_two_ci_routes_agree ... ok
+test the_emitted_json_round_trips_bit_for_bit ... ok
+test the_analytic_derivatives_are_derivatives_of_this_function ... ok
+test the_streaming_and_collecting_paths_are_the_same_numbers ... ok
+test the_curve_has_the_shape_a_bound_diatomic_must_have ... ok
+test the_interpolant_the_renderer_integrates_tracks_the_model ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.78s
+
+     Running tests/p1_radius.rs (target/release/deps/p1_radius-b879269de8d9d753)
+
+running 5 tests
+test the_three_rules_describe_themselves_distinctly ... ok
+test plant_a_density_radius_presented_as_dimer_derived_is_refused ... ok
+test the_valence_radius_reproduces_the_periodic_size_trend ... ok
+test the_whole_density_radius_is_core_dominated_and_says_so ... ok
+test every_radius_is_labelled_with_the_rule_that_produced_it has been running for over 60 seconds
+test every_radius_is_labelled_with_the_rule_that_produced_it ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 96.03s
+
+     Running tests/pair.rs (target/release/deps/pair-c3a4ad8cf85229e1)
+
+running 11 tests
+test pair_file_names_parse_to_their_elements ... ok
+test route_verdicts_are_the_determinant_threshold_alone ... ok
+test the_colour_rule_is_declared_monotone_and_distinguishable ... ok
+test the_mps_arm_is_unreachable_at_the_current_constants ... ok
+test the_palette_size_rule_runs_both_of_its_branches ... ok
+test the_pair_cache_is_lazy_and_unordered ... ok
+test the_general_path_reproduces_the_banked_h2_curve ... ok
+test e3_every_pair_emits_the_renderer_contract ... ok
+test the_well_finder_is_not_simply_silent ... ok
+test e1_the_closed_shells_refuse_to_bind ... ok
+test r2_the_first_row_matches_the_fifty_digit_referee has been running for over 60 seconds
+test r2_the_first_row_matches_the_fifty_digit_referee ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 107.98s
+
+     Running tests/referee.rs (target/release/deps/referee-8a3e20ab13825705)
+
+running 5 tests
+test the_stake_is_stated_where_the_gate_can_see_it ... ok
+test the_contraction_is_the_referees_contraction ... ok
+test referee_is_the_pinned_file ... ok
+test equilibrium_and_asymptote_match_the_referee ... ok
+test engine_curve_matches_the_referee_at_every_separation ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.03s
+
+     Running tests/special.rs (target/release/deps/special-6c5d88f40f6f55a2)
+
+running 8 tests
+test boys_against_reference_values ... ok
+test boys_at_zero_is_the_exact_rational ... ok
+test boys_derivative_rules_hold ... ok
+test the_hoisted_constants_still_equal_the_expressions_they_replace ... ok
+test the_two_boys_branches_agree_where_the_crossover_puts_them ... ok
+test erf_and_erfc_against_known_values ... ok
+test boys_is_ordered_and_positive_across_the_branch_change ... ok
+test erf_and_erfc_sum_to_one ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/spherical_d.rs (target/release/deps/spherical_d-a61d579bbc155ec9)
+
+running 8 tests
+test plant_a_wrong_transform_fires_against_the_freezes_own_counts ... ok
+test elements_without_d_shells_are_untouched ... ok
+test the_basis_is_one_function_per_shell_component ... ok
+test the_heavy_nobles_are_single_determinant_closed_shells ... ok
+test the_projection_removes_the_spherically_symmetric_direction_and_only_that ... ok
+test the_registrys_basis_size_is_the_one_the_engine_assembles ... ok
+test the_projected_basis_sits_variationally_above_the_cartesian_one ... ok
+test the_projected_integrals_are_a_well_formed_basis ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.43s
+
+     Running tests/spherical_f.rs (target/release/deps/spherical_f-fa639d3df1283d3f)
+
+running 4 tests
+test the_determinant_count_plant_has_no_carrier_for_f ... ok
+test plant_wrong_row_transforms_pass_the_subspace_tests_and_fail_the_row_pin ... ok
+test the_f_projection_rows_are_pinned_and_not_merely_the_subspace ... ok
+test the_shipped_f_projection_spans_the_right_subspace ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/trimer.rs (target/release/deps/trimer-45f30a7911cf50c7)
+
+running 11 tests
+test the_disclosed_probe_priors_are_reproduced ... ok
+test r1_the_trimer_matches_the_fifty_digit_referee ... ok
+test the_fast_path_agrees_with_the_general_n_centre_route ... ok
+test t2_the_originally_staked_longest_side_shell_fires ... ok
+test the_analytic_gradient_is_the_interpolants_own_gradient ... ok
+test outside_the_domain_the_reading_is_exactly_zero ... ok
+test the_interpolant_is_c1_across_its_nodes ... ok
+test plant_i_the_sign_flip_inverts_saturation ... ok
+test plant_ii_symmetry_and_its_deliberate_break ... ok
+test t1_interpolant_fidelity_on_held_out_geometries ... ok
+test t2_the_shipped_truncation_systematic ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.14s
+
+     Running tests/w1_masks.rs (target/release/deps/w1_masks-cb7ba70aa9840e25)
+
+running 4 tests
+test the_mask_admits_the_species_elements_three_needs ... ok
+test the_string_enumeration_is_bounded_by_the_mask_width ... ok
+test the_mask_plant_fires_above_thirty_two_orbitals_and_is_silent_below ... ok
+test the_widening_reproduces_every_banked_species_bit_for_bit ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 34.09s
+
+     Running tests/water.rs (target/release/deps/water-47a4520ddf351457)
+
+running 11 tests
+test the_table_is_zero_outside_its_domain_and_finite_inside ... ok
+test the_sort_kink_is_at_roundoff_because_oxygen_is_never_sorted ... ok
+test the_exchange_symmetry_is_bit_exact_and_the_desymmetrised_plant_voids ... ok
+test plant_iii_the_swapped_table_fires ... ok
+test the_three_body_expansion_cannot_saturate_oxygen_and_says_so ... ok
+test g2_the_third_hydrogen_refuses_and_the_second_binds ... ok
+test plant_i_the_sign_flip_inverts_the_bend ... ok
+test the_committed_table_is_this_build_s_own_output ... ok
+test g1_the_bent_geometry_emerges ... ok
+test t1_the_interpolant_is_faithful_off_its_nodes has been running for over 60 seconds
+test t2_the_truncation_costs_what_the_domain_says has been running for over 60 seconds
+test t1_the_interpolant_is_faithful_off_its_nodes ... ok
+test t2_the_truncation_costs_what_the_domain_says ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 176.12s
+
+     Running tests/water_referee.rs (target/release/deps/water_referee-2b484ca3c3be1207)
+
+running 5 tests
+test the_referee_says_where_it_could_not_check_itself ... ok
+test the_staked_set_spans_the_domain_it_claims_to ... ok
+test the_spin_audit_asserts_where_resolved_and_reports_where_degenerate ... ok
+test referee_is_the_pinned_file ... ok
+test engine_matches_the_referee_at_every_staked_geometry ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 15.40s
+
+   Doc-tests holon_chem
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+EXIT=0

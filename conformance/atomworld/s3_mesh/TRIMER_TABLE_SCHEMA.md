@@ -1,8 +1,8 @@
 # `SATURATION3/trimer-table/v1` — proposed shipped artifact for heteronuclear three-body surfaces
 
-*A PROPOSAL, not a shipped schema. Placement and ownership are the lead's to rule; this
-exists so the ruling is made against a concrete shape rather than a description. Written by
-`saturation3-mesh`, 2026-08-30.*
+*RULED AND BUILDING (lead, 2026-08-30): this lane owns the schema and the emitter;
+`render-3d` owns the wasm loader and the fence lift, working against this document as the
+interface. Written by `saturation3-mesh`.*
 
 ## Why a new class rather than a row in the pair manifest
 
@@ -75,6 +75,27 @@ mean nothing.
   // M-BUDGET-LAUNDER: VOIDs are listed, never averaged away.
   "voided": {"count": 0, "nodes": [], "reasons": {}},
 
+  // THE SEAM RECORD (water's state-crossing ruling, adopted by the lead 2026-08-30).
+  // A seam is a STATE CROSSING -- a slope discontinuity where a reactive channel opens.
+  // A cubic interpolant across one has an error floor set by the jump, so uniform
+  // refinement CANNOT beat it: paying for resolution past the seam buys nothing. Every
+  // trimer type here has a reactive channel ((H,H,Cl) and (H,Cl,Cl) most obviously), so a
+  // shipped surface must say where its corners are or that it knowingly accepted a floor.
+  // EXACTLY ONE of `loci` or `accepted_floor` must be present and non-empty.
+  "seams": {
+    "scanned": true,
+    "instrument": "s3_angle_slice",
+    "loci": [
+      {"axis": "u", "at": 1.37, "kind": "state-crossing",
+       "grid_line_placed_on_it": true,   // the domain is split into smooth patches here
+       "jump_hartree": 0.0}
+    ],
+    // ...OR, when the seam is located and the floor is taken deliberately:
+    "accepted_floor": null
+    // {"hartree": 1e-4, "why": "seam sits inside the last cell; splitting costs more grid
+    //  than the feature is worth", "located_by": "s3_angle_slice, slice u=…"}
+  },
+
   "units": "Hartree atomic units: x,y in bohr, u dimensionless, dE3 in hartree",
   "generation": {
     "workers": 32, "wall_s": 0.0, "cold_solves": 0, "warm_solves": 0,
@@ -97,16 +118,19 @@ mean nothing.
 | a top-level `converged: true` | see above — this schema has no such field, and one appearing means somebody derived an outcome from a threshold |
 | `voided.count > 0` with an empty `nodes` list | a VOID that is counted but not named has been averaged away |
 | `grid.region` absent | the table's identity is incomplete and two different artifacts could collide on one digest |
+| `seams` absent, or carrying **neither** `loci` nor `accepted_floor` | a shipped surface with a **hidden corner** is exactly what this gate exists to see. Uniform refinement cannot beat a state crossing, so a table that has not located its seams is claiming a smoothness it has not checked |
+| `seams.scanned: false` with a non-empty `loci` | the loci came from somewhere other than a scan and the source is unstated |
 
 ## Owner split, as I read it
 
 | piece | owner |
 |---|---|
-| the schema and the emitter (this document, and `s3_tables` writing JSON instead of `.tbl`) | mine |
-| a loader so the wasm consumes shipped surfaces | `holon-render`'s |
-| `holon_trimer_h_only()` returning false once a heteronuclear surface is loaded — **the thing that actually lifts the fence** | `holon-render`'s |
+| the schema and the emitter (this document, and `s3_tables` writing JSON instead of `.tbl`) | **mine — ruled 2026-08-30, building now** |
+| a loader so the wasm consumes shipped surfaces | **`render-3d`'s — ruled, assigned, working against this spec** |
+| `holon_trimer_h_only()` returning false once a heteronuclear surface is loaded — **the thing that actually lifts the fence** | **`render-3d`'s** |
 
-I have built none of the second or third and will not without a ruling.
+The interface between us is this document at its commit; nothing waits on all four tables,
+since the loader can land against the schema with the first one.
 
 ## Status
 

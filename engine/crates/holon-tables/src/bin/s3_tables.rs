@@ -138,6 +138,29 @@ fn main() {
     }
     let out = required(&args, "--out", "Where the table is written.");
 
+    // THE SEAM RECORD. Required, and one of the two forms, because a shipped surface with a
+    // HIDDEN CORNER is exactly what the provenance gate exists to see. A state crossing is a
+    // slope discontinuity: a cubic interpolant across one has an error floor set by the jump,
+    // so uniform refinement cannot beat it and paying for resolution past a seam buys nothing.
+    // Every trimer type this campaign tabulates has a reactive channel.
+    let seam_loci = arg(&args, "--seam-loci");
+    let seam_floor = arg(&args, "--seam-accepted-floor");
+    let seam_instrument = arg(&args, "--seam-instrument");
+    if seam_loci.is_none() && seam_floor.is_none() {
+        fail(
+            "a seam record is required: pass --seam-loci 'axis=value,…' for located state \
+             crossings, or --seam-accepted-floor '<hartree>:<why>' to declare a floor taken \
+             knowingly. Uniform refinement cannot beat a state crossing, so a table with \
+             neither has not checked the smoothness it is about to claim.",
+        );
+    }
+    if seam_loci.is_some() && seam_floor.is_some() {
+        fail("--seam-loci and --seam-accepted-floor are alternatives; pass exactly one");
+    }
+    if seam_loci.is_some() && seam_instrument.is_none() {
+        fail("--seam-loci needs --seam-instrument: loci from an unnamed source are not a scan");
+    }
+
     let tg = TableGrid::new(
         grid[0],
         grid[1],
@@ -168,6 +191,12 @@ fn main() {
     println!("workers       {workers}");
     println!("out           {out}");
     println!("device class  Cpu (DECLARED — this table is bit-gated, so D0 pins it here)");
+    match (&seam_loci, &seam_floor) {
+        (Some(l), _) => println!("seams         LOCATED: {l}  (instrument {})",
+                                 seam_instrument.as_deref().unwrap_or("?")),
+        (_, Some(f)) => println!("seams         ACCEPTED FLOOR: {f}"),
+        _ => unreachable!("checked above"),
+    }
     println!("loadavg       {:.2}  (at launch; the machine runs other campaigns)", loadavg());
 
     // A region shape that cuts into fewer regions than there are workers is not an error, but it
@@ -237,20 +266,62 @@ fn main() {
         std::process::exit(5);
     }
 
+    // ---- the shipped artifact: SATURATION3/trimer-table/v1.
+    //
+    // JSON with the same provenance discipline the pair tables carry, and deliberately WITHOUT
+    // their `converged: true` field -- that is the M-EXIT-DISCRIMINATOR shape. Every heavy
+    // all-electron solve here exits `stagnated` at a residual just under the expansion floor,
+    // so a boolean derived from a residual would be a threshold masquerading as an outcome.
+    // Exit reasons ship as a histogram instead.
+    let mut hist = [0u64; 4];
+    for r in &o.records {
+        hist[(r.exit_code as usize).min(3)] += 1;
+    }
+    let esc = |v: &str| v.replace('\\', "\\\\").replace('"', "\\\"");
     let mut f = std::fs::File::create(&out)
         .unwrap_or_else(|e| fail(&format!("cannot create {out}: {e}")));
-    writeln!(f, "# SATURATION-3 table: {species_s}").unwrap();
-    writeln!(f, "# grid {}x{}x{} region {}x{}x{} warm {warm:?}",
-        grid[0], grid[1], grid[2], region[0], region[1], region[2]).unwrap();
-    writeln!(f, "# x {x_lo}:{x_hi} y {y_lo}:{y_hi} u {u_lo}:{u_hi}").unwrap();
-    writeln!(f, "# digest {}", o.digest().hex()).unwrap();
-    writeln!(f, "# nodes {} voided {voided}", o.records.len()).unwrap();
-    writeln!(f, "# node energy d1 d2 iters exit status").unwrap();
-    for r in &o.records {
-        writeln!(f, "{} {:.17e} {:.17e} {:.17e} {} {} {}",
-            r.node, r.energy(), f64::from_bits(r.d1_bits), f64::from_bits(r.d2_bits),
-            r.davidson_iters, r.exit_code, r.status_code()).unwrap();
+    writeln!(f, "{{").unwrap();
+    writeln!(f, "  \"schema\": \"SATURATION3/trimer-table/v1\",").unwrap();
+    writeln!(f, "  \"provenance\": \"engine-computed STO-3G FCI (determinant, Knowles-Handy), f64, generated through holon-tables' leased mesh\",").unwrap();
+    writeln!(f, "  \"solver_route\": \"determinant\",").unwrap();
+    writeln!(f, "  \"exact_in_model\": true,").unwrap();
+    writeln!(f, "  \"model\": \"({})/STO-3G/FCI\",", esc(&species_s)).unwrap();
+    writeln!(f, "  \"species\": [{}],",
+        species.iter().zip(species_s.split(','))
+            .map(|(sp, sym)| format!("{{\"symbol\": \"{}\", \"Z\": {}}}", esc(sym), sp.z))
+            .collect::<Vec<_>>().join(", ")).unwrap();
+    writeln!(f, "  \"domain\": {{\"x_bohr\": [{x_lo}, {x_hi}], \"y_bohr\": [{y_lo}, {y_hi}], \"u\": [{u_lo}, {u_hi}]}},").unwrap();
+    writeln!(f, "  \"grid\": {{\"nx\": {}, \"ny\": {}, \"nu\": {}, \"region\": [{}, {}, {}], \"n_nodes\": {}}},",
+        grid[0], grid[1], grid[2], region[0], region[1], region[2], tg.n_nodes()).unwrap();
+    writeln!(f, "  \"warm_policy\": \"{warm:?}\",").unwrap();
+    match (&seam_loci, &seam_floor) {
+        (Some(l), _) => writeln!(f, "  \"seams\": {{\"scanned\": true, \"instrument\": \"{}\", \"loci\": \"{}\", \"accepted_floor\": null}},",
+            esc(seam_instrument.as_deref().unwrap_or("")), esc(l)).unwrap(),
+        (_, Some(fl)) => writeln!(f, "  \"seams\": {{\"scanned\": true, \"loci\": [], \"accepted_floor\": \"{}\"}},", esc(fl)).unwrap(),
+        _ => unreachable!(),
     }
+    writeln!(f, "  \"digest\": \"{}\",", o.digest().hex()).unwrap();
+    writeln!(f, "  \"digest_covers\": [\"node\", \"energy\", \"d1\", \"d2\", \"status\"],").unwrap();
+    writeln!(f, "  \"exit_histogram\": {{\"converged\": {}, \"iteration_cap\": {}, \"stagnated\": {}, \"trivial\": {}}},",
+        hist[0], hist[1], hist[2], hist[3]).unwrap();
+    writeln!(f, "  \"voided\": {{\"count\": {}, \"nodes\": [{}]}},", voided,
+        o.records.iter().filter(|r| !r.is_ok()).map(|r| r.node.to_string())
+            .collect::<Vec<_>>().join(", ")).unwrap();
+    writeln!(f, "  \"units\": \"Hartree atomic units: x,y in bohr, u dimensionless, energies in hartree\",").unwrap();
+    writeln!(f, "  \"generation\": {{\"workers\": {workers}, \"wall_s\": {secs:.3}, \"cold_solves\": {}, \"warm_solves\": {}, \"davidson_iters\": {}}},",
+        o.cold_solves, o.warm_solves, o.total_davidson_iters).unwrap();
+    let col = |name: &str, f2: &dyn Fn(&holon_tables::NodeRecord) -> f64, last: bool| {
+        format!("  \"{name}\": [{}]{}",
+            o.records.iter().map(|r| format!("{:?}", f2(r))).collect::<Vec<_>>().join(", "),
+            if last { "" } else { "," })
+    };
+    writeln!(f, "  \"node\": [{}],",
+        o.records.iter().map(|r| r.node.to_string()).collect::<Vec<_>>().join(", ")).unwrap();
+    writeln!(f, "{}", col("energy_hartree", &|r| r.energy(), false)).unwrap();
+    writeln!(f, "{}", col("d1", &|r| f64::from_bits(r.d1_bits), false)).unwrap();
+    writeln!(f, "{}", col("d2", &|r| f64::from_bits(r.d2_bits), true)).unwrap();
+    writeln!(f, "}}").unwrap();
+
     println!();
     println!("wrote {out}");
 }

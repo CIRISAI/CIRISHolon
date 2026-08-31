@@ -29,7 +29,32 @@ CONTACT = {
     "lattice": "M-VOLUME-SCALE", "N-convergence": "M-VOLUME-SCALE",
     "endogenous": "M-COND-PROBE", "inside T": "M-COND-PROBE",
     "memoryless": "M-ONE-MODEL-DELTA", "Markov": "M-ONE-MODEL-DELTA",
+    # --- 2026-08-30: the registry had grown five ids past this table, which made those
+    # entries decoration -- a freeze contacting their shapes would not have been refused.
+    # Keywords are chosen NARROW on purpose: an over-broad contact refuses honest freezes,
+    # and an audit people switch off gates nothing.
+    "gpu": "M-DEVICE-CLASS", "cuda": "M-DEVICE-CLASS",
+    "device class": "M-DEVICE-CLASS", "accelerator": "M-DEVICE-CLASS",
+    "bitwise": "M-DEVICE-CLASS",
+    "liveness": "M-PROBE-THE-RESOURCE", "heartbeat": "M-PROBE-THE-RESOURCE",
+    "health check": "M-PROBE-THE-RESOURCE",
+    "launch header": "M-PROVENANCE-OVERREACH", "sha256": "M-PROVENANCE-OVERREACH",
+    "provenance line": "M-PROVENANCE-OVERREACH",
+    "repair": "M-MAINTENANCE-LENS", "maintenance": "M-MAINTENANCE-LENS",
+    "rent clause": "M-MAINTENANCE-LENS",
+    "timeout": "M-IDLE-CALIBRATED-TIMEOUT", "grace period": "M-IDLE-CALIBRATED-TIMEOUT",
+    "quiet machine": "M-IDLE-CALIBRATED-TIMEOUT", "loadavg": "M-IDLE-CALIBRATED-TIMEOUT",
 }
+
+def contact_table_is_sound():
+    """Every id this table maps to must EXIST in the registry.
+
+    A typo in `CONTACT` cannot be caught by any freeze: the keyword would fire, the id
+    would never appear in `cited`, and every freeze mentioning that word would be refused
+    for a misfit nobody can look up. Checked at import so the gate cannot rot silently.
+    """
+    return sorted({m for m in CONTACT.values() if m not in REG_IDS})
+
 
 def lean_resolves(name):
     if name == "none":
@@ -72,6 +97,23 @@ def audit(path):
     return errs
 
 if __name__ == "__main__":
+    unknown = contact_table_is_sound()
+    if unknown:
+        print("REFUSED  Audit/prereg_audit.py's own CONTACT table")
+        for u in unknown:
+            print(f"    - maps a keyword to {u}, which is not in MISFITS.md")
+        sys.exit(2)
+    # The grep-arm's own coverage, reported on every run. On 2026-08-30 the registry had
+    # grown five ids past the CONTACT table and nobody noticed, because nothing said so --
+    # a gate whose coverage is invisible drifts behind the thing it gates. This line does
+    # NOT refuse: some misfits are about process rather than about a word a freeze would
+    # use, and manufacturing keywords for those would produce false refusals, which is how
+    # an audit gets switched off.
+    unarmed = sorted(REG_IDS - set(CONTACT.values()))
+    if unarmed:
+        print(f"note: {len(unarmed)} of {len(REG_IDS)} registered misfits have NO contact "
+              f"keyword and cannot be caught by this audit:")
+        print("      " + ", ".join(unarmed))
     bad = 0
     for p in sys.argv[1:]:
         errs = audit(p)

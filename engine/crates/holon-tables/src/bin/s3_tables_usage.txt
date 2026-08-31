@@ -1,0 +1,21 @@
+s3_tables — SATURATION-3 cheap-class table generation, through the resource layer.
+
+Every parameter is REQUIRED. There are no defaults, and specifically no default
+domain: a domain is a physics claim derived from each species pair's own curve,
+and a plausible-looking wrong one is the shape that produced the
+homonuclear_radius near-miss (a fallback quietly returning hydrogen's radius for
+chlorine).
+
+  --species A,B,C     three element symbols
+  --x lo:hi           the SHORT side's domain, bohr
+  --y lo:hi           the MIDDLE side's domain, bohr (A1 bounds this one, not s3)
+  --u lo:hi           cosine between the two short sides
+  --grid AxBxC        node extents, sized by this table's own T1 kill
+  --region AxBxC      region shape — part of the TABLE's identity, since it fixes
+                      the warm chains and therefore the trailing bits
+  --warm cold|chain   cold seeds everywhere, or one cold seed per region
+  --workers N         worker count (leases, each admitted by a real probe)
+  --out PATH          where the table is written
+
+Exit codes: 2 bad/missing parameter, 3 refused at the resource layer,
+4 merge digest convicted the run, 5 lease books did not balance.

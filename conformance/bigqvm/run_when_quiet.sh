@@ -51,6 +51,15 @@ POLL=${POLL:-300}
 MAX_WAIT=${MAX_WAIT:-172800}
 DS=${DS:-21,45,101,141,221}
 REPS=${REPS:-5}
+# PIN BOTH ARMS. This box is an i9-13900HX: P-cores 0-15, E-cores 16-31.
+# Measured 2026-08-30, both arms on the SAME core: the d=101 verdict FLIPS
+# between placements (0.822 unpinned, 1.201 on a P-core, 0.989 on an E-core),
+# and pinning cut repetition spread from 15-29% to 1.1-1.7% while HALVING both
+# arms at d=221. A quiet window fixes contention and does nothing about
+# heterogeneity, so quiet was necessary and never sufficient. PIN_P is the
+# adversarial placement for our engine and is the one to report.
+PIN_P=${PIN_P:-0}
+PIN_E=${PIN_E:-20}
 
 load1() { awk '{print $1}' /proc/loadavg; }
 
@@ -74,8 +83,15 @@ while [ "$waited" -lt "$MAX_WAIT" ]; do
       echo "[$(date -Is)] QUIET: load $l, calibration ${cal}s vs best ${CAL_BEST}s — running the sweep"
       {
         echo "=== quiet-window sweep $(date -Is), load $l, calibration ${cal}s ==="
+        # Both core types, because the ratio is placement-dependent and
+        # reporting one of them alone is how the d=101 row got banked wrong.
         nice -n 5 "$STIMPY" "$H2H" --d "$DS" --rounds 3 --reps "$REPS" \
-             --tmpdir /tmp --out "$HERE/h2h_quiet.json"
+             --pin "$PIN_P" --tmpdir /tmp --out "$HERE/h2h_quiet_pcore.json"
+        echo "--- P-core rc=$? ---"
+        nice -n 5 "$STIMPY" "$H2H" --d "$DS" --rounds 3 --reps "$REPS" \
+             --pin "$PIN_E" --tmpdir /tmp --out "$HERE/h2h_quiet_ecore.json"
+        echo "--- E-core rc=$? ---"
+        cp -f "$HERE/h2h_quiet_pcore.json" "$HERE/h2h_quiet.json"
         echo "rc=$?"
       } >> "$HERE/quiet.log" 2>&1
 

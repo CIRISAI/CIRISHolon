@@ -89,7 +89,20 @@ def main():
     ap.add_argument("--reps", type=int, default=3)
     ap.add_argument("--out", default=os.path.join(HERE, "surface_h2h_results.json"))
     ap.add_argument("--tmpdir", default="/tmp")
+    ap.add_argument("--pin", type=int, default=None,
+                    help="pin BOTH arms to this CPU. On a hybrid part "
+                         "(P-cores 0-15, E-cores 16-31 on this box) the "
+                         "scheduler's placement moves ratios more than the "
+                         "margin does, and it flipped one banked verdict — "
+                         "so a controlled comparison pins.")
     args = ap.parse_args()
+
+    if args.pin is not None:
+        # Set affinity on the HARNESS; the engine subprocess inherits it, so
+        # both arms are pinned identically without taskset on either side.
+        os.sched_setaffinity(0, {args.pin})
+        kind = "P-core" if args.pin < 16 else "E-core"
+        print(f"pinned both arms to CPU {args.pin} ({kind})")
 
     import stim
     ds = [int(x) for x in args.d.split(",")]

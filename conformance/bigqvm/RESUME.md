@@ -64,6 +64,16 @@ waiter is armed for it:
     -> h2h_window_broke_*.json   kept, but explicitly NOT citable as quiet
     -> quiet.GAVEUP        no window inside MAX_WAIT
 
+**CORRECTED 2026-08-30 after mesh-lane counter-evidence: it also PINS.** This
+box is an i9-13900HX (P-cores 0-15, E-cores 16-31, scaling 57%), and with both
+arms on the SAME core the d=101 verdict FLIPS — 0.822 unpinned, 1.201 on a
+P-core, 0.989 on an E-core. That row is RETRACTED. Pinning also cut repetition
+spread from 15-29% to 1.1-1.7% and HALVED both arms at d=221. A quiet window
+fixes contention and does nothing about heterogeneity, so the quiet gate was
+necessary and never sufficient; the sweep now runs BOTH core types and the
+adversarial one is the number to report. See BENCHMARKS' correction to the
+twenty-sixth entry.
+
 It does not trust loadavg. It gates on a CALIBRATION RUN of known cost and
 proceeds only when that job comes in within 1.15× of its record. The first
 gate used d=45 and was REJECTED by measurement: at loadavg 46 it read 0.055 s

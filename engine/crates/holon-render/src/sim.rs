@@ -201,6 +201,8 @@ pub struct Sim {
     /// `Sim` constructed by value in a nested fixture outgrows the stack. So the nodes
     /// live behind a pointer and a `Sim` grows by three words.
     pub water: WaterTable,
+    /// The HETERONUCLEAR (O, O, H) three-body surface.
+    pub ooh: holon_chem::ooh::OohTable,
     /// SHIPPED heteronuclear three-body surfaces, and the door they came through.
     ///
     /// Distinct from [`Sim::trimer`] and [`Sim::water`] because it is neither generated
@@ -298,6 +300,7 @@ impl Sim {
             bank: PairBank::hydrogen_seeded(),
             trimer: TrimerTable::empty(),
             water: WaterTable::empty(),
+            ooh: holon_chem::ooh::OohTable::empty(),
             trimers: crate::trimer_bank::TrimerBank::empty(),
             fence_untabulated: 0,
             atoms: [Atom {
@@ -687,7 +690,7 @@ impl Sim {
     /// Zero when no table is loaded or the scene has fewer than three atoms, so the pair
     /// bound is returned unchanged — adding an exact zero to a finite float changes no bit.
     pub fn k_three(&self) -> f64 {
-        if (!self.trimer.loaded && !self.water.loaded && self.trimers.is_empty()) || self.n < 3 {
+        if (!self.trimer.loaded && !self.water.loaded && !self.ooh.loaded && self.trimers.is_empty()) || self.n < 3 {
             return 0.0;
         }
         self.k_three_max
@@ -1423,6 +1426,22 @@ impl Sim {
                                 val, grad,
                                 self.water.curvature_envelope,
                                 self.water.curvature_per_gradient,
+                            )
+                        } else if n_o == 2 && n_h == 1 && self.ooh.loaded {
+                            let (sa, sb, sc) = if za == 1 {
+                                (i, j, k)
+                            } else if zb == 1 {
+                                (j, i, k)
+                            } else {
+                                (k, i, j)
+                            };
+                            let (rab, rac, rbc) = (d[sa][sb], d[sa][sc], d[sb][sc]);
+                            let (val, grad) = self.ooh.eval(rab, rac, rbc);
+                            (
+                                sa, sb, sc,
+                                val, grad,
+                                self.ooh.curvature_envelope,
+                                self.ooh.curvature_per_gradient,
                             )
                         } else {
                             self.fence_untabulated += 1;

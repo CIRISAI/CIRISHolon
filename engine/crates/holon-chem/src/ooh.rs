@@ -174,8 +174,8 @@ impl OohMeta {
 }
 
 pub struct OohTable {
-    nodes: Box<[f64; N_NODES]>,
-    filled: Box<[bool; N_NODES]>,
+    nodes: Vec<f64>,
+    filled: usize,
     pub meta: OohMeta,
     pub loaded: bool,
     pub curvature_envelope: f64,
@@ -183,10 +183,10 @@ pub struct OohTable {
 }
 
 impl OohTable {
-    pub fn empty() -> Self {
+    pub const fn empty() -> Self {
         Self {
-            nodes: vec![0.0; N_NODES].into_boxed_slice().try_into().unwrap(),
-            filled: vec![false; N_NODES].into_boxed_slice().try_into().unwrap(),
+            nodes: Vec::new(),
+            filled: 0,
             meta: OohMeta::empty(),
             loaded: false,
             curvature_envelope: 0.0,
@@ -195,22 +195,25 @@ impl OohTable {
     }
 
     pub fn begin(&mut self) {
-        self.nodes.fill(0.0);
-        self.filled.fill(false);
+        self.nodes.clear();
+        self.nodes.resize(N_NODES, 0.0);
+        self.filled = 0;
         self.loaded = false;
+        self.curvature_envelope = 0.0;
+        self.curvature_per_gradient = 0.0;
     }
 
     pub fn knot(&mut self, index: usize, value: f64) -> bool {
-        if index >= N_NODES {
+        if index >= N_NODES || self.nodes.is_empty() {
             return false;
         }
         self.nodes[index] = value;
-        self.filled[index] = true;
+        self.filled += 1;
         true
     }
 
     pub fn finish(&mut self, meta: OohMeta) -> bool {
-        if !self.filled.iter().all(|&f| f) {
+        if self.filled < N_NODES {
             return false;
         }
         self.meta = meta;
@@ -303,4 +306,96 @@ impl OohTable {
 
         (val, [df_dx, df_dy, df_du])
     }
+}
+
+/// Grid description line for (O,O,H) table artifact.
+pub fn grid_line() -> String {
+    format!(
+        "# grid: NR={NR} NU={NU} R_LO={R_LO} R_HI={R_HI} STRETCH_A={STRETCH_A} C_LO={C_LO} C_HI={C_HI:.17}"
+    )
+}
+
+/// Render the (O,O,H) table as text.
+pub fn to_text(t: &OohTable) -> String {
+    let m = &t.meta;
+    let mut s = String::with_capacity(N_SOLVED * 18 + 512);
+    s.push_str("# SATURATION-2 (O,O,H) three-body table\n");
+    s.push_str(&format!("# provenance: {OOH_PROVENANCE}\n"));
+    s.push_str(&format!("{}\n", grid_line()));
+    s.push_str(&format!("# e_o_atom: {:016x}\n", m.e_o_atom.to_bits()));
+    s.push_str(&format!("# e_h_atom: {:016x}\n", m.e_h_atom.to_bits()));
+    s.push_str(&format!("# peak: {:016x}\n", m.peak.to_bits()));
+    s.push_str(&format!("# solves: {}\n", m.solves));
+    s.push_str(&format!("# nodes_stored: {N_SOLVED}\n"));
+    for i in 0..NR {
+        for j in i..NR {
+            for k in 0..NU {
+                s.push_str(&format!("{:016x}\n", t.node(i, j, k).to_bits()));
+            }
+        }
+    }
+    s
+}
+
+/// Parse text into an (O,O,H) table.
+pub fn from_text(src: &str) -> Option<OohTable> {
+    let want = grid_line();
+    let mut e_o = None;
+    let mut e_h = None;
+    let mut peak = None;
+    let mut solves = None;
+    let mut grid_ok = false;
+    let mut vals: Vec<f64> = Vec::with_capacity(N_SOLVED);
+    for line in src.lines() {
+        let line = line.trim_end();
+        if let Some(rest) = line.strip_prefix('#') {
+            let rest = rest.trim();
+            if line == want {
+                grid_ok = true;
+            } else if let Some(h) = rest.strip_prefix("e_o_atom:") {
+                e_o = u64::from_str_radix(h.trim(), 16).ok().map(f64::from_bits);
+            } else if let Some(h) = rest.strip_prefix("e_h_atom:") {
+                e_h = u64::from_str_radix(h.trim(), 16).ok().map(f64::from_bits);
+            } else if let Some(h) = rest.strip_prefix("peak:") {
+                peak = u64::from_str_radix(h.trim(), 16).ok().map(f64::from_bits);
+            } else if let Some(h) = rest.strip_prefix("solves:") {
+                solves = h.trim().parse::<usize>().ok();
+            }
+            continue;
+        }
+        if line.is_empty() {
+            continue;
+        }
+        vals.push(f64::from_bits(u64::from_str_radix(line, 16).ok()?));
+    }
+    if !grid_ok || vals.len() != N_SOLVED {
+        return None;
+    }
+    let mut t = OohTable::empty();
+    t.begin();
+    let mut at = 0usize;
+    for i in 0..NR {
+        for j in i..NR {
+            for k in 0..NU {
+                let v = vals[at];
+                at += 1;
+                if !t.knot(node_index(i, j, k), v) {
+                    return None;
+                }
+                if i != j && !t.knot(node_index(j, i, k), v) {
+                    return None;
+                }
+            }
+        }
+    }
+    let meta = OohMeta {
+        e_o_atom: e_o?,
+        e_h_atom: e_h?,
+        peak: peak?,
+        solves: solves?,
+    };
+    if !t.finish(meta) {
+        return None;
+    }
+    Some(t)
 }

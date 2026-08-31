@@ -112,6 +112,9 @@ oo_side                 geometric distance calculation between oxygens in the OO
 de3                     single geometry (O,O,H) 3-body evaluator from scratch
 de3_with                cached evaluation of (O,O,H) 3-body term with caller-supplied atom and pair reference energies
 ooh_energy              raw FCI ground-state electronic energy for (O,O,H) geometry
+grid_line               grid description line for (O,O,H) table artifact
+to_text                 renders (O,O,H) table as committed text artifact
+from_text               parses (O,O,H) table from committed text artifact
 
 # --- the homonuclear (O,O,O) Ozone module (T2 critical path) ---
 OZONE_PROVENANCE        label emitted with the (O,O,O) ozone table

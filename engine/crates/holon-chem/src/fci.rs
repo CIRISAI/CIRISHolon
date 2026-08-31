@@ -1095,7 +1095,7 @@ pub const MPS_ROUTE_THRESHOLD: usize = 50_000;
 /// its own test binary so the global cannot leak into a parallel test.
 #[doc(hidden)]
 pub static DAVIDSON_MAX_ITER: std::sync::atomic::AtomicUsize =
-    std::sync::atomic::AtomicUsize::new(1200);
+    std::sync::atomic::AtomicUsize::new(4000);
 
 /// Lowest eigenpair by Davidson iterative diagonalization, matrix-free.
 ///

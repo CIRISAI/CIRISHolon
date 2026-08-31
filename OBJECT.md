@@ -75,6 +75,19 @@ against a tier should ship one.
 9. **Refusal is a feature.** A tier or stratum outside its certified scope
    refuses, naming the gate whose passing would lift the refusal.
 
+## How potential-energy tables are produced
+
+**Shipped path, 2026-08-30:** every potential-energy table this engine vouches for is
+generated through `holon-tables`' leased generator — probed worker leases, receipts that
+accrue while the work runs, a merge-digest certificate, and a launch header carrying the
+binary's sha256 and the *build's exit status*. It is bit-identical across worker counts,
+across separate process invocations, and across debug and release.
+
+The caller supplies the physics and the layer refuses to invent it: a domain is a claim
+derived from a species pair's own curve and must cite the curve files it read, so the
+generator exits rather than defaulting one. Details, guarantees and the full refusal list:
+**`engine/RESOURCE_DESIGN.md` §11**.
+
 ## Conformance obligations (CI, per tier)
 
 - The closure battery (construction premise, budget, witness-pair hunt).

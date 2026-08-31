@@ -1,7 +1,11 @@
 # RESOURCE_DESIGN — an allocation is a child holon, and its lifecycle is the rent clause
 
-Status: **ADMITTED, FIRST IMPLEMENTATION LANDED** (lead's audit 2026-08-30; `holon-resource`).
-All nine §8 plants fire; seven mutation-checked. Not yet exercised against a real device. Numbers marked **HARD**
+Status: **SHIPPED** for the table path (user directive, 2026-08-30) — `holon-tables`'
+leased generator is the production route for potential-energy tables from now on; see §11.
+The rest of the layer is ADMITTED with its first implementation landed (`holon-resource`,
+all nine §8 plants firing, seven mutation-checked). **Honesty line, kept:** the WORKER probe
+is real (it spawns, runs and joins a thread); the VRAM and disk probes in the plants are
+still injected, and **no GPU has ever been leased through this layer**. Numbers marked **HARD**
 are measured on this machine and named with their instrument; **PENDING** are owed and are used
 in no argument below.
 Scope: in-process resource discovery, leasing and dispatch — cores, RAM, VRAM, disk, worker
@@ -489,3 +493,80 @@ observed variability rather than a number chosen to make the plant fire.
 * `Dd`'s `1e-24` expansion floor is **provisional**, not calibrated. Under D3b a rung whose
   boundary is provisional must say so in its ledger entry rather than be relied on as measured.
   The DD-tier calibration is the lead's next item and this document should be re-read against it.
+
+
+---
+
+## 11. SHIPPED — this is how potential-energy tables are generated from now on
+
+*Promoted from campaign machinery to the production path by user directive, 2026-08-30. It
+serves the atoms page and every future experiment; a table produced any other way is not a
+table this engine will vouch for.*
+
+### The entry point
+
+```rust
+use holon_tables::{GenSpec, TableGrid, WarmPolicy, WorkerProbe};
+use holon_tables::generate::generate_leased;
+use holon_resource::Arena;
+
+let grid = TableGrid::new(nx, ny, nu, [rx, ry, ru],
+                          (x_lo, x_hi), (y_lo, y_hi), (u_lo, u_hi));
+let spec = GenSpec::new([a, b, c], grid).with_warm(WarmPolicy::CanonicalChain);
+let mut arena = Arena::new();
+let mut probe = WorkerProbe::new();
+let run = generate_leased(&spec, workers, &mut arena, &mut probe)?;
+```
+
+Or the binary, `holon-tables`'s `s3_tables`, launched through
+`conformance/atomworld/s3_mesh/launch_table.sh <label> <args…>` — which is the only route
+that carries the provenance header.
+
+`generate(&spec, workers)` remains the bare path for tests. Production leases.
+
+### What the CALLER must supply, and why none of it has a default
+
+| input | why it cannot default |
+|---|---|
+| **the domain** (`x`, `y`, `u` spans) | a domain is a **physics claim** derived from each species pair's own curve, and the derivation must **cite the curve files it read** (the shipped pair tables in `docs/atoms/tables/`, at a named state). A plausible-looking wrong domain is the `homonuclear_radius` shape — a fallback that silently returned hydrogen's radius for chlorine, which would have staked three chlorine combos at a hydrogen length. |
+| **the grid** | sized by that table's own held-out kill, never inherited. |
+| **the region shape** | part of the **table's identity**, not a scheduling knob: it fixes the warm chains and therefore the trailing bits. It is never adjusted to fit the machine. |
+| **warm policy** | measured effect is size-dependent and small (−3.6% on (H,H,Cl), +8.6% on (Cl,Cl,Cl), +6.9% undiluted on (O,O,O)); a deliberate choice, not a default. |
+
+### What the layer GUARANTEES
+
+* **Bit-identity across worker counts.** The region partition and in-region traversal are
+  canonical functions of the grid, so the schedule cannot reach the numbers. Gated at 1/4/8
+  workers, and the digest reproduces **across separate process invocations** and **across
+  debug and release**.
+* **A merge-digest certificate** over index, energy, both derivatives and status — exact
+  integer lanes, so a corruption is *convicted* rather than suspected.
+* **Leases and receipts.** Every worker is admitted by a probe that actually starts a
+  worker; receipts accrue per node **while the work runs**; the books must balance
+  (`opened == released + convicted + live`) before a table is handed back.
+* **Launch provenance.** Binary sha256, repo HEAD, **build exit status**, dirty-tree state,
+  and the binary's own echo of the parameters as it parsed them.
+
+### What it REFUSES, and the exit code it refuses with
+
+| refusal | code |
+|---|---|
+| a missing or malformed parameter — **it will not invent a domain** | 2 |
+| the resource layer declines (probe fails, lease refused) | 3 |
+| the merge digest convicts the run | 4 |
+| the lease books do not balance | 5 |
+| the build failed — the launcher will not start a multi-hour run on stale bytes | 70 |
+
+No silent fallbacks anywhere: a failed probe produces a loud refusal or a *stated* Degrade
+naming what was asked, what was found and what path is being taken instead. VOIDed nodes are
+listed individually and never averaged away.
+
+### What is NOT switched on
+
+**The reaper.** Nothing in the generator calls it, per D10b: it convicted 1115 live holders
+the first time it met real work, and it stays off until its false-positive rate is measured
+across at least one full real generation. Grace is self-calibrating now and the exercise
+reads zero, but a 72-node exercise is an exercise, not the campaign.
+
+**GPU dispatch**, for the reason in D0: the two devices agree numerically and differ on 91%
+of entries bitwise, so a bit-gated table declares `Cpu` and dispatch may not move it.

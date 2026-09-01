@@ -18,6 +18,15 @@ jobs:
           auto-config: false
           use-github-cache: true
           use-mathlib-cache: true
+      # The build alone does not gate admitted gaps: `lake build --wfail` relies on
+      # Lean's own "declaration uses 'sorry'" warning, which `#guard_msgs` swallows,
+      # and it cannot see a gap inherited from an import. Asking the proof assistant
+      # what each theorem DEPENDS ON is the check that cannot be talked around.
+      # This file's own elaboration is the gate, and it carries the demonstration
+      # that the gate fires.
+      - name: Axiom audit (no sorries, standard axioms only)
+        working-directory: lean
+        run: lake env lean Audit/AxiomAudit.lean
 
   engine:
     name: Engine gates (Rust)

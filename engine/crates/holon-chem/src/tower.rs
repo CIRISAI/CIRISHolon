@@ -11,7 +11,8 @@
 //!    is a compile error.
 //! 2. Across carriers you TRANSPORT via `CertifiedTransport<A, B>` with an explicit state-lift,
 //!    operator picture-change, and commuting certificate.
-//! 3. Selection is the Corridor Rule (`Corridor.lean`): argmin(price) subject to closure & conservation budgets.
+//! 3. Selection is the Corridor Rule (`lean/CIRISHolon/Carrier.lean`, `select_admissible` /
+//!    `select_min` / `select_eq_none_iff`): argmin(price) subject to closure & conservation budgets.
 //! 4. Angular momentum is $\ell$-generalized (`AngularShell { l: u8 }`): $Z$ prices, $Z$ never branches.
 
 use std::fmt::Debug;
@@ -268,7 +269,7 @@ impl<T> Capability<T> {
 }
 
 // ============================================================================
-// 6. TheoryNode & Corridor Selection (Corridor.lean, WB-8.2)
+// 6. TheoryNode & Corridor Selection (lean/CIRISHolon/Carrier.lean §5, WB-8.2)
 // ============================================================================
 
 /// A concrete node in the theory diagram with its carrier, error budgets, and price.
@@ -302,7 +303,8 @@ impl<C: Carrier> TheoryNode<C> {
     }
 }
 
-/// Evaluates Corridor selection rule (from `Corridor.lean`):
+/// Evaluates Corridor selection rule (proved in `lean/CIRISHolon/Carrier.lean` §5:
+/// `select_admissible` is the refusal, `select_min` the argmin, `select_eq_none_iff` the fence):
 /// $\operatorname{argmin}(\text{price})$ subject to $\text{defect} \le \text{closure\_budget}$ and $\text{drift} \le \text{conservation\_budget}$.
 pub fn select_corridor<'a, C: Carrier>(
     candidates: &'a [TheoryNode<C>],

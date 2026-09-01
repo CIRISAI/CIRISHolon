@@ -220,7 +220,7 @@ sketch; names negotiable, semantics not):
   (the existing refusal pattern, typed);
 - `TheoryNode`/`TheoryDiagram` with dependency-closed term sets, per-node
   error budget and MEASURED price;
-- selection = the corridor rule, already proved (`Corridor.lean`):
+- selection = the corridor rule, proved in `lean/CIRISHolon/Carrier.lean` §5:
   argmin price subject to closure + conservation budgets — cheapness
   alone selects the dead chart and is refused by theorem;
 - `AngularShell { l: u8 }` — kill the S/P/D/F enum; ℓ is a value.

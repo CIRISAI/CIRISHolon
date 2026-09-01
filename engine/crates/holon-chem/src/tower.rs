@@ -5,6 +5,9 @@
 //!   (`Closed v T` / `Object.lean`).
 //! - Horizontal axis: Refinement of the theory carrier (Born-Oppenheimer classical nuclei ->
 //!   ring-polymer quantum nuclei -> real-time MPS electronic dynamics -> spinorial/Dirac -> QED).
+//!   C0, C1 and C2 are MATERIALIZED nodes; C3+ are typed stubs. The C1->C2 CLIMB is still
+//!   fenced even though C2 itself is certified -- a node and an edge are different objects
+//!   and the tower says so with different types.
 //!
 //! # Laws enforced by type system & certification:
 //! 1. Terms ADD only inside one carrier's fiber (`Contribution<C: Carrier>`). Cross-carrier addition
@@ -405,6 +408,14 @@ impl Carrier for C0_ClassicalBO {
 // ============================================================================
 
 /// Quantum nuclear carrier: Ring Polymer Molecular Dynamics (RPMD) with $P$ beads.
+///
+/// THIS TYPE IS THE DECLARATION. The physics is [`crate::rpmd`]: the exact sinc-DVR
+/// referee, the PILE-thermostatted BAOAB sampler, the estimators, and the gates that grade
+/// them (`conformance/water_observatory/C1_GATE_PREREG.md`). `evaluate_energy` below
+/// returns `H_P / P` — the energy conjugate to `beta`, NOT the generator of the dynamics,
+/// which is `H_P` itself and lives in `rpmd::ring_energy_3d`. Both are correct for their
+/// jobs and dividing by `P` rescales time uniformly, which is exactly the sort of silent
+/// factor a commuting square exists to expose.
 #[allow(non_camel_case_types)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct C1_RingPolymer {
@@ -586,16 +597,34 @@ pub fn make_c0_to_c1_transport(num_beads: usize, temperature_k: f64) -> Certifie
             })
         },
     ).with_retract(
-        // Retract: Average beads to centroid
+        // Retract: average beads to centroid — POSITIONS AND VELOCITIES BOTH.
+        //
+        // This used to average the positions and then take bead 0's velocity, which is
+        // the centroid velocity only when every bead already carries the same one — true
+        // of a freshly lifted state and false of every state a trajectory reaches. The
+        // certificate calls this the diagonal retract; a retract that reads one bead is
+        // not one, and `rpmd::commuting_budget` measures the square against this map.
         move |rp_state: &RingPolymerState| -> Result<ClassicalState, TransportRefusal> {
             let n = rp_state.masses.len();
+            let p = rp_state.beads_vel.len() as f64;
             let mut positions = Vec::with_capacity(n);
+            let mut velocities = Vec::with_capacity(n);
             for i in 0..n {
                 positions.push(rp_state.centroid(i));
+                let mut cv = [0.0f64; 3];
+                for bead in rp_state.beads_vel.iter() {
+                    for a in 0..3 {
+                        cv[a] += bead[i][a];
+                    }
+                }
+                for a in 0..3 {
+                    cv[a] /= p;
+                }
+                velocities.push(cv);
             }
             Ok(ClassicalState {
                 positions,
-                velocities: rp_state.beads_vel[0].clone(),
+                velocities,
                 masses: rp_state.masses.clone(),
             })
         },
@@ -603,17 +632,201 @@ pub fn make_c0_to_c1_transport(num_beads: usize, temperature_k: f64) -> Certifie
 }
 
 // ============================================================================
-// 10. C2 & C3+ Stubbed Capabilities with Typed Fences (WB-8.2, WB-8.3)
+// 10. C2: Real-Time MPS Electronic Dynamics (WB-8.3) — MATERIALIZED
 // ============================================================================
 
-/// Real-time MPS electronic dynamics carrier (C2).
-pub fn c2_tdvp_capability() -> Capability<&'static str> {
-    Capability::Stub {
-        name: "C2_TDVP_MPS",
-        fence_reason: "C2 real-time TDVP electronic dynamics staged for crystal DMRG inheritance",
-        required_carrier: "C2_TDVP_MPS",
+/// Real-time MPS electronic dynamics carrier (C2): single-site TDVP on `q8-mps`'s MPO
+/// machinery. This is the node where the tower stops being ground states and becomes
+/// DYNAMICS — the electronic wavefunction acquires a phase and a time.
+///
+/// GATED, not asserted: `q8-mps/tests/c2_tdvp_gates.rs` and
+/// `conformance/water_observatory/C2_TDVP_RESULTS.md`. At the natural bond cap the
+/// integrator reproduces the dense propagator to `3e-13` INDEPENDENT of step size (the
+/// projector-splitting exactness property), below the cap it is second order (measured
+/// 2.006/2.006/2.017 against a staked `[1.70, 2.30]`), and norm and energy are conserved
+/// to `3e-13`. Four planted defects each fire their named prong.
+///
+/// WHAT IS STILL FENCED, by name: (i) `c1_to_c2_transport_capability` — the C1→C2 picture
+/// change (ring-polymer nuclei to a real-time electronic carrier) is not built, so C2 is
+/// reachable as a NODE but not yet as a CLIMB; (ii) single-site TDVP cannot grow a bond
+/// dimension, so a chemically interesting start must already carry its rank — two-site
+/// TDVP is the discharge route and is not built. Both are WB-8.4 fences: transient by
+/// construction, visible while undischarged.
+#[allow(non_camel_case_types)]
+#[derive(Clone, Debug, PartialEq)]
+pub struct C2_MpsTdvp {
+    /// The declared bond ledger. `q8-mps`'s discipline: `chi` is a boundary ledger, not a
+    /// convergence knob that quietly buys accuracy.
+    pub chi_max: usize,
+}
+
+/// The C2 state: a complex MPS and the time it has reached. The time is part of the STATE
+/// because it is: a C2 reading is meaningless without it, and a carrier whose state does
+/// not carry its own time is one `t` away from a silent comparison of two different
+/// instants.
+#[derive(Clone, Debug)]
+pub struct MpsElectronicState {
+    pub tensors: Vec<q8_mps::tdvp::CTensorSite>,
+    pub time_au: f64,
+}
+
+/// C2's additive operator: a list of second-quantised terms in Jordan–Wigner factors,
+/// `(site, is_creation)` products with a coefficient.
+///
+/// The fiber's addition is LIST CONCATENATION, and that is not a shortcut — it is the
+/// tower's first law made literal. Two Hamiltonian pieces add by pooling their terms and
+/// the MPO is compiled once from the pooled list, so a term can never be double counted by
+/// being compiled twice, and a piece belonging to another carrier has no representation
+/// here at all (`Contribution<C2_MpsTdvp> + Contribution<C0_ClassicalBO>` does not typecheck).
+#[derive(Clone, Debug, PartialEq)]
+pub struct SecondQuantisedOp {
+    /// Number of Jordan–Wigner spin-orbitals. `0` is the empty operator's sentinel.
+    pub n_orbitals: usize,
+    /// `(factors, coefficient)`; each factor is `(spin_orbital, is_creation)`.
+    pub terms: Vec<(Vec<(usize, bool)>, f64)>,
+}
+
+impl SecondQuantisedOp {
+    pub fn new(n_orbitals: usize) -> Self {
+        Self { n_orbitals, terms: Vec::new() }
+    }
+
+    pub fn with_term(mut self, factors: &[(usize, bool)], coeff: f64) -> Self {
+        self.terms.push((factors.to_vec(), coeff));
+        self
+    }
+
+    /// Compile the pooled term list into one MPO. `None` when the operator is empty, which
+    /// is the only case a caller has to branch on.
+    pub fn compile(&self) -> Option<q8_mps::mpo::Mpo> {
+        if self.n_orbitals == 0 || self.terms.is_empty() {
+            return None;
+        }
+        let mut builder = q8_mps::mpo::MpoBuilder::new(self.n_orbitals);
+        for (factors, coeff) in &self.terms {
+            builder.add_term_factors(factors, *coeff);
+        }
+        Some(builder.build())
     }
 }
+
+impl AdditiveOperator<C2_MpsTdvp> for SecondQuantisedOp {
+    fn zero() -> Self {
+        Self { n_orbitals: 0, terms: Vec::new() }
+    }
+
+    fn add_assign(&mut self, other: &Self) {
+        if self.n_orbitals == 0 {
+            self.n_orbitals = other.n_orbitals;
+        } else if other.n_orbitals != 0 {
+            assert_eq!(
+                self.n_orbitals, other.n_orbitals,
+                "C2 terms add only within one orbital basis: {} vs {}",
+                self.n_orbitals, other.n_orbitals
+            );
+        }
+        self.terms.extend(other.terms.iter().cloned());
+    }
+
+    fn scale(&mut self, factor: f64) {
+        for (_, c) in self.terms.iter_mut() {
+            *c *= factor;
+        }
+    }
+
+    fn evaluate_energy(&self, state: &MpsElectronicState) -> f64 {
+        match self.compile() {
+            None => 0.0,
+            Some(mpo) => q8_mps::tdvp::expectation(&mpo, &state.tensors),
+        }
+    }
+}
+
+impl Carrier for C2_MpsTdvp {
+    type State = MpsElectronicState;
+    type Operator = SecondQuantisedOp;
+    type Observable = f64;
+
+    fn name(&self) -> &'static str {
+        "C2_MpsTdvp"
+    }
+
+    /// MEASURED, not modelled. One TDVP substep contracts `L` single-site and `L-1`
+    /// zero-site effective Hamiltonians per half-sweep, each through a Krylov subspace, so
+    /// the leading cost is `L * chi^3 * D`. The CONSTANT is a measurement on this box
+    /// (`cargo test --release -p q8-mps --test c2_tdvp_gates -- --ignored c2_price`,
+    /// 2026-09-01, Hubbard MPO `D <= 7`, at the natural cap `chi = 2^(L/2)`):
+    ///
+    /// ```text
+    ///   L= 6 chi= 8  0.004499 s/step   ->  c = 3.7e-7
+    ///   L= 8 chi=16  0.012031 s/step   ->  c = 3.7e-7
+    ///   L=10 chi=32  0.103841 s/step   ->  c = 3.2e-7
+    ///   L=12 chi=64  0.689846 s/step   ->  c = 2.2e-7
+    /// ```
+    ///
+    /// `c = 3.7e-7 s` is banked — the LARGEST of the measured constants, so the price is
+    /// an upper bound rather than an average that a caller can be surprised by. The spread
+    /// is a factor 1.7 over three decades of work, and a wall clock on a heterogeneous box
+    /// carries `M-PLACEMENT-LOTTERY`: this number specifies an ORDER of magnitude and a
+    /// scaling, not a benchmark.
+    ///
+    /// `system_size` is the number of Jordan–Wigner spin-orbitals `L`.
+    fn price_per_substep(&self, system_size: usize) -> f64 {
+        const C_MEASURED: f64 = 3.7e-7;
+        let chi = self.chi_max as f64;
+        C_MEASURED * (system_size as f64) * chi * chi * chi
+    }
+}
+
+impl C2_MpsTdvp {
+    /// Propagate `n_steps` of size `dt_au` under the pooled Hamiltonian. Returns the
+    /// refusal when the operator is empty rather than silently returning the input: an
+    /// empty Hamiltonian is a missing picture change, not a free identity.
+    pub fn propagate(
+        &self,
+        hamiltonian: &SecondQuantisedOp,
+        state: &MpsElectronicState,
+        dt_au: f64,
+        n_steps: usize,
+    ) -> Result<MpsElectronicState, TransportRefusal> {
+        let mpo = hamiltonian.compile().ok_or(TransportRefusal::MissingPictureChange {
+            from: "SecondQuantisedOp::zero()",
+            to: "C2_MpsTdvp",
+        })?;
+        let mut tdvp = q8_mps::tdvp::Tdvp::new(&mpo, state.tensors.clone());
+        for _ in 0..n_steps {
+            tdvp.step(dt_au);
+        }
+        Ok(MpsElectronicState {
+            tensors: tdvp.tensors,
+            time_au: state.time_au + dt_au * n_steps as f64,
+        })
+    }
+}
+
+/// C2 is CERTIFIED: the carrier exists, runs, and is gated
+/// (`q8-mps/tests/c2_tdvp_gates.rs`). What remains fenced is the CLIMB into it, below.
+pub fn c2_tdvp_capability() -> Capability<C2_MpsTdvp> {
+    Capability::Certified(C2_MpsTdvp { chi_max: 64 })
+}
+
+/// The C1 -> C2 picture change is NOT built. Ring-polymer nuclei to a real-time electronic
+/// carrier needs a state lift (nuclear configuration to an electronic MPS in a basis), an
+/// operator picture change (a bead-averaged potential is not a second-quantised
+/// Hamiltonian), and a measured commuting certificate. None of the three exists, so the
+/// fence is typed and visible rather than a comment — WB-8.4: a fence is transient, and
+/// this one's discharge route is named in `DIMER_PREREG.md`'s C2 inheritance stake.
+pub fn c1_to_c2_transport_capability() -> Capability<&'static str> {
+    Capability::Stub {
+        name: "C1_to_C2_PictureChange",
+        fence_reason: "C1->C2 picture change unbuilt: no state lift, no operator picture change, no measured certificate",
+        required_carrier: "C2_MpsTdvp",
+    }
+}
+
+// ============================================================================
+// 11. C3+ Stubbed Capabilities with Typed Fences (WB-8.2, WB-8.3)
+// ============================================================================
 
 /// Spinorial / Relativistic QED carrier (C3+).
 pub fn c3_qed_capability() -> Capability<&'static str> {

@@ -155,6 +155,37 @@ fi
 rm -f "$built_wasm"
 trap - EXIT
 
+# 10c. THE WORKBENCH'S COMMITTED WASM IS WHAT ITS SOURCE BUILDS.
+#
+#     Same contract as gate 10 above and for the identical reason: pages.yml ships
+#     docs/ verbatim with no Rust toolchain in CD, so "what ships is what was gated"
+#     holds for the workbench only if this comparison holds. The workbench needs its
+#     OWN copy rather than a reference to docs/atoms/holon_render.wasm, because that
+#     one is not gated by anything and is measurably stale -- at the commit this gate
+#     was added, docs/atoms/ was two commits behind crates/holon-render/viewer/, which
+#     was itself 300,756 bytes against the 310,849 its own source builds on the
+#     reference toolchain. Nothing compared either to its source. This gate is the
+#     first one that does, for any holon-render artifact.
+#
+#     CONSEQUENCE, STATED PLAINLY BECAUSE IT IS A COST: any change to holon-render or
+#     holon-chem now requires rebuilding this artifact, or CI goes red. That is the
+#     gate working, not the gate misfiring, and the rebuild is the one command the
+#     failure message names.
+built_wb=$(mktemp)
+trap 'rm -f "$built_wb"' EXIT
+HOLON_RENDER_WASM_OUT="$built_wb" bash crates/holon-render/build-web.sh >/dev/null 2>&1
+if git show "HEAD:../docs/workbench/holon_render.wasm" 2>/dev/null | cmp -s - "$built_wb"; then
+  ok "workbench committed wasm matches its source"
+else
+  echo "    committed: $(git show "HEAD:../docs/workbench/holon_render.wasm" 2>/dev/null | sha256sum | cut -c1-16) ($(git show "HEAD:../docs/workbench/holon_render.wasm" 2>/dev/null | wc -c) bytes)"
+  echo "    built:     $(sha256sum "$built_wb" | cut -c1-16) ($(wc -c < "$built_wb") bytes)"
+  echo "    rustc:     $(rustc -V)  host: $(rustc -vV | grep host)"
+  echo "    rebuild:   HOLON_RENDER_WASM_OUT=docs/workbench/holon_render.wasm bash engine/crates/holon-render/build-web.sh"
+  no "workbench committed wasm matches its source (rebuild and commit, FROM A CLEAN TREE)"
+fi
+rm -f "$built_wb"
+trap - EXIT
+
 # 10a1. MISFIT REGISTRY INTEGRITY: every M- id cited anywhere in the
 #      conformance record exists in MISFITS.md, and registry ids are
 #      unique. A ghost citation is a broken cross-reference in the
@@ -167,6 +198,20 @@ for id in $(grep -rhoE '\bM-[A-Z0-9-]+\b' ../conformance/ ../Audit/ 2>/dev/null 
 done
 [ "$reg_fail" -eq 0 ] && ok "misfit registry: unique ids, no ghost citations" \
   || no "misfit registry: unique ids, no ghost citations"
+
+# 10a3. NO SESSION-KEYED PATHS IN COMMITTED INSTRUMENTS (M-STALE-INSTRUMENT,
+#      widened 2026-09-01): a committed instrument citing a per-session
+#      scratchpad resolves from inside the session that wrote it and dies
+#      with it -- the defect is invisible to every working-tree check and
+#      fails only when followed from OUTSIDE. Executable files only; prose
+#      records may cite such paths as history.
+sess_hits=$(grep -rln "claude-1000" ../conformance --include="*.py" --include="*.sh" --include="*.rs" 2>/dev/null || true)
+if [ -n "$sess_hits" ]; then
+  echo "$sess_hits" | sed 's/^/  session-keyed path in: /'
+  no "no session-keyed scratch paths in committed instruments"
+else
+  ok "no session-keyed scratch paths in committed instruments"
+fi
 
 # 10a2. CONFORMANCE REPRODUCIBILITY (added after an external re-review found
 #      three banked verdicts whose instruments were working-tree-only, one
@@ -516,7 +561,7 @@ done
 #     real gate 13's audit was always meant to end in, not the allowlist entry.
 declare -A CRATE_ALLOW=(
   ["holon-gpu"]="excluded: requires an NVIDIA GPU (cudarc + nvcc-compiled PTX); GitHub runners have none. Tested on the 4090 dev box: 12/12 determinism tests incl. struct-level shard invariance vs the CPU mesh (crates/holon-gpu/GPU.md). Owner: gpu-mesh lane / team-lead. Exit: a CI runner with a GPU, at which point this entry converts to a real invocation."
-  ["q8-mps"]="DEFERRED: live full-grid run, hours deep -- a gate must never run --ignored full-grid tests"
+  ["q8-mps"]="PARTIALLY COVERED (2026-09-01): gate 16b runs `--test c2_tdvp_gates` (the C2 carrier). The DEFERRAL still stands for the rest of the crate -- a live full-grid run, hours deep, and a gate must never run --ignored full-grid tests. Owner: the C2/tower lane. Exit: once the grid completes, this entry converts to a plain `-p q8-mps`."
   ["q-seam"]="uncovered, ownership untriaged (chief-of-staff-2, 2026-08-24)"
   ["sphere-demo"]="uncovered, ownership untriaged (chief-of-staff-2, 2026-08-24)"
   ["engine-compare"]="excluded: pulls Rapier, needs std+alloc, would falsify the core's zero-allocation isolation gates"
@@ -583,6 +628,24 @@ cargo test -q --release -p holon-chem 2>/dev/null >/dev/null \
 cargo test -q --release -p holon-render 2>/dev/null >/dev/null \
   && ok "holon-render ledger/amendment/cluster gates pass" || no "holon-render ledger/amendment/cluster gates pass"
 
+# 16b. THE C2 CARRIER (WB-8.3). The tower's third node is real-time MPS electronic
+#      dynamics, and holon-chem's C2_MpsTdvp is a thin shell over q8-mps's integrator --
+#      so the gate that means anything is the integrator's, not the shell's.
+#
+#      NAMED TEST TARGET, on purpose. q8-mps's CRATE_ALLOW entry above defers the crate
+#      because its full-grid tests are a multi-hour job that must never run inside a gate
+#      script; `--test c2_tdvp_gates` cannot reach them (they are `#[ignore]`d and live in
+#      other test binaries), so this covers the new carrier without touching the deferral's
+#      reason. The price measurement in the same file is `#[ignore]`d for the same class of
+#      reason one level down: a wall clock on a heterogeneous box is a placement lottery
+#      (M-PLACEMENT-LOTTERY) and has no business deciding a gate.
+#
+#      --release is not a speed preference: the battery integrates ~1400 TDVP substeps
+#      including a 512-step reference trajectory, which is ~30 s debug and ~3 s optimised.
+cargo test -q --release -p q8-mps --test c2_tdvp_gates 2>/dev/null >/dev/null \
+  && ok "q8-mps C2 TDVP gates pass (exactness, order, 4 planted defects fire)" \
+  || no "q8-mps C2 TDVP gates pass (exactness, order, 4 planted defects fire)"
+
 # 17. THE BROWSER ARTIFACT, RUN RATHER THAN BUILT.
 #
 #     Gate 1 compiles for wasm. Nothing until now RAN a wasm artifact, and that gap has
@@ -625,6 +688,43 @@ if command -v node >/dev/null 2>&1; then
     || no "browser artifact runs (wasm ABI, shipped tables, provenance refusals)"
 else
   no "browser artifact gate needs node, which is not on PATH (NOT skipped: a wasm gate that skips itself is green for having checked nothing)"
+fi
+
+# 17b. THE WORKBENCH ARTIFACT, RUN RATHER THAN BUILT.
+#
+#     The atom viewer's smoke gate above drives the ABI. This one drives the WORKBENCH's
+#     copy through the boot sequence its own page uses, and adds the checks that page is
+#     making claims about: both conservation gates closing under a thermostatted run, the
+#     hand's work landing in the ledger exactly and coming back out on release, the O-O
+#     curve refused by the engine's own in-browser split with the code the page NAMES,
+#     O-bearing triples refused AND counted (with the discriminating arm that proves the
+#     count is not the uninformative "never looked" zero), and the seeded scene replaying
+#     bit-identically.
+#
+#     It also runs two checks of a kind this repository has been short of. The first reads
+#     the page's declared export list out of app.js and requires it to cover every
+#     `holon_*` the page actually calls, so a call added without a declaration is caught
+#     rather than discovered as an undefined function in a frame loop -- the unified
+#     viewer's `holon_atom_z` incident is exactly this defect. The second is INVERTED: the
+#     page fences gravity, the barostat and the phase classifier on the stated grounds that
+#     no such export exists, and the gate FAILS if one ever appears, telling the next lane
+#     to un-fence the panel. A fence justified by an absence rots into a lie the day the
+#     absence ends, and nothing else in the tree would notice.
+#
+#     DEMONSTRATED FAILING CASES: five plants (a declared export that does not exist, a
+#     call missing from the declaration, a SYNTHETIC label reaching the rendered page, a
+#     fence-justifying absence ending, and a Math.random re-entering the telemetry path)
+#     each fire their own prong; a sixth -- the O:2H preset dropping the H3 surface -- fires
+#     the fence-count prong. The first version of that last check PASSED while its defect
+#     was planted, because an earlier section of the same file had left a surface resident;
+#     the block now runs on fresh instances, which is why it can fail at all.
+if command -v node >/dev/null 2>&1; then
+  node ../docs/workbench/smoke.mjs >/dev/null 2>&1 \
+    && ok "workbench artifact runs (ledgered hand, fired fences, bit-identical replay)" \
+    || { node ../docs/workbench/smoke.mjs 2>&1 | sed 's/^/    /'; \
+         no "workbench artifact runs (ledgered hand, fired fences, bit-identical replay)"; }
+else
+  no "workbench artifact gate needs node, which is not on PATH (NOT skipped)"
 fi
 
 exit $fail

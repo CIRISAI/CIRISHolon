@@ -2873,17 +2873,30 @@ impl Sim {
                             f_o[1] -= f_h[1];
                             f_o[2] -= f_h[2];
 
+                            // NO MASS DIVISION. `a_pair` holds FORCE — `push_side` stores
+                            // `fx` with no mass anywhere, `internal_force` returns this
+                            // array under that name, and the integrator divides at the
+                            // point of use (`half = 0.5 * dt / mass`). Dividing here put
+                            // `F/m` into a force slot, which the integrator then divided
+                            // again. `mass()` is in ELECTRON MASSES, so the divisions were
+                            // by 1837 (H) and 29165 (O): the four-body force reaching the
+                            // trajectory was three to four orders too weak, and the
+                            // equal-and-opposite pair stopped cancelling because the two
+                            // partners were divided by DIFFERENT masses. Net per quadruple
+                            // = Sum f_h * (1/m_H - 1/m_O), a SYSTEMATIC momentum source
+                            // rather than roundoff, which is why the banked dE4 seeds sat
+                            // at |p|/bound 9.8e3-4.2e5 on 6 of 6 while energy stayed in
+                            // bound: the energy ledger reads `u_four`, which was correct
+                            // all along. Gated by tests/de4_momentum.rs, two-directionally.
                             let h_idx = h_indices[hid];
-                            let m_h = self.atoms[h_idx].mass();
-                            total_forces[h_idx].0 += f_h[0] / m_h;
-                            total_forces[h_idx].1 += f_h[1] / m_h;
-                            total_forces[h_idx].2 += f_h[2] / m_h;
+                            total_forces[h_idx].0 += f_h[0];
+                            total_forces[h_idx].1 += f_h[1];
+                            total_forces[h_idx].2 += f_h[2];
                         }
 
-                        let m_o = self.atoms[o].mass();
-                        total_forces[o].0 += f_o[0] / m_o;
-                        total_forces[o].1 += f_o[1] / m_o;
-                        total_forces[o].2 += f_o[2] / m_o;
+                        total_forces[o].0 += f_o[0];
+                        total_forces[o].1 += f_o[1];
+                        total_forces[o].2 += f_o[2];
                     }
                 }
             }

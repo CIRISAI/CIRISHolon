@@ -245,9 +245,13 @@ pub fn run(traj: &Trajectory, st: &Stakes) -> Census {
         let frames_present = present[&m];
         let series = series_for(&blocks_at, m);
         let longest_run = longest_true_run(&series);
-        // Cheap exact pre-filter: a block never present for `window` frames in total
-        // cannot occupy a window, strictly or within budget.
-        let hit = if frames_present < window {
+        // Cheap exact pre-filter, and the bar is the BUDGETED one. A block present for
+        // fewer than `window` frames in total can still pass the budgeted reading -- that
+        // reading only asks for `(1-beta)*W` present frames INSIDE the window -- so
+        // filtering on `window` would silently reject exactly the blocks the budget
+        // exists for. The correct floor is the budget's own.
+        let need = ((1.0 - st.beta) * window as f64).ceil() as usize;
+        let hit = if frames_present < need {
             None
         } else {
             strict_window(&series, window)
@@ -734,6 +738,30 @@ mod tests {
             s[t] = false;
         }
         assert_eq!(budgeted_window(&s, 50, 0.5, 5), None);
+    }
+
+    /// The pre-filter must use the BUDGET's floor, not the window's.
+    ///
+    /// A block present for 990 of 1200 frames never fills a 1000-frame window strictly,
+    /// but it can fill one within a 2% budget. Filtering candidates on `frames_present <
+    /// window` would drop it before the budgeted reading ever ran -- rejecting precisely
+    /// the blocks the budget was written for, and doing it invisibly.
+    #[test]
+    fn a_block_short_of_the_window_can_still_pass_the_budget() {
+        let mut s = vec![true; 1200];
+        // Ten scattered single-frame breaches inside the first window, plus a long tail
+        // outside it: 1190 present in all, and no 1000-frame strict window anywhere.
+        for k in 0..10 {
+            s[50 + 90 * k] = false;
+        }
+        let present = s.iter().filter(|b| **b).count();
+        assert_eq!(present, 1190);
+        assert_eq!(strict_window(&s, 1000), None, "no strict window exists");
+        let hit = budgeted_window(&s, 1000, 0.02, 10);
+        assert!(hit.is_some(), "but a budgeted one does: {hit:?}");
+        let need = ((1.0 - 0.02) * 1000.0f64).ceil() as usize;
+        assert_eq!(need, 980);
+        assert!(present >= need, "and the pre-filter's floor is {need}, not 1000");
     }
 
     #[test]

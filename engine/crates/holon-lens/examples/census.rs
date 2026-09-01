@@ -16,6 +16,7 @@
 use holon_lens::census::{self, BlockVerdict, Census, Stakes};
 use holon_lens::classifier;
 use holon_lens::lens;
+use holon_lens::quenchlog::QuenchLog;
 use holon_lens::traj::Trajectory;
 use std::path::PathBuf;
 
@@ -40,7 +41,16 @@ fn collect(args: &[String]) -> Vec<PathBuf> {
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let paths = collect(&args);
+    // G2, mechanized: --reference=<quench log> diffs each trajectory's FINAL-FRAME
+    // molecule multiset against that seed's row in a banked run. Comparing by eye is how
+    // two runs come to be called "the same" without anybody checking.
+    let reference: Option<QuenchLog> = args
+        .iter()
+        .find_map(|a| a.strip_prefix("--reference="))
+        .map(|p| {
+            QuenchLog::parse(&std::fs::read_to_string(p).expect("readable reference log"))
+        });
+    let paths = collect(&args.iter().filter(|a| !a.starts_with("--")).cloned().collect::<Vec<_>>());
     if paths.is_empty() {
         eprintln!("usage: census <dir-or-file> [...]");
         std::process::exit(2);
@@ -63,6 +73,14 @@ fn main() {
         st.control_max_rate
     );
 
+    if let Some(r) = &reference {
+        println!(
+            "# G2 reference: {} seeds, header surfaces {:?} (NOT molecules -- see quenchlog)",
+            r.seeds.len(),
+            r.header_tables
+        );
+    }
+    let mut g2 = (0usize, 0usize); // matched, compared
     let mut totals = (0usize, 0usize, 0usize, 0usize); // strict, budgeted, transient, void
     for p in &paths {
         let traj = match Trajectory::read(p) {
@@ -127,6 +145,37 @@ fn main() {
                     .join(" ")
             }
         );
+
+        // ---- G2: does this trajectory reproduce the banked run's reading? -----------
+        if let Some(r) = &reference {
+            match r.seeds.iter().find(|row| row.seed == traj.header.seed) {
+                None => println!(
+                    "#\n# G2: the reference has no row for seed {:#018x} -- NOT COMPARED",
+                    traj.header.seed
+                ),
+                Some(row) => {
+                    let mut mine: Vec<String> = rep
+                        .final_frame_molecules
+                        .iter()
+                        .map(|(_, f)| f.clone())
+                        .collect();
+                    mine.sort();
+                    let mut theirs = row.molecules.clone();
+                    theirs.sort();
+                    g2.1 += 1;
+                    if mine == theirs {
+                        g2.0 += 1;
+                        println!("#\n# G2: MATCHES the reference row  [{}]", mine.join(" "));
+                    } else {
+                        println!(
+                            "#\n# G2: MISMATCH\n#   reference : [{}]\n#   this run  : [{}]",
+                            theirs.join(" "),
+                            mine.join(" ")
+                        );
+                    }
+                }
+            }
+        }
 
         // ---- the closure reader -----------------------------------------------------
         println!("#\n# CLOSURE READER (blocks by longest held run):");
@@ -350,6 +399,12 @@ fn main() {
     }
 
     println!("\n{}", "=".repeat(78));
+    if g2.1 > 0 {
+        println!(
+            "# G2 (final-frame reading vs the banked reference): {} of {} seeds reproduce",
+            g2.0, g2.1
+        );
+    }
     println!(
         "# TOTALS over {} trajectories: {} certified-strict, {} certified-budgeted, \
          {} transient, {} void",

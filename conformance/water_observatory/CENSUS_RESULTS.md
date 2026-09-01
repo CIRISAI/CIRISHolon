@@ -297,3 +297,75 @@ launched under an `ice` label classifies LIQUID.
 * It does not claim these 2D twelve-atom scenes are liquid water. Four of six lenses refuse
   them mechanically, and the classifier's LIQUID is a statement about a bonded mobile
   twelve-atom scene, nothing more.
+
+---
+
+## 10. G2 MECHANIZED, AND A FORWARD PREDICTION STAKED BEFORE ITS DATA
+
+*Added after the hydrogen arm and BEFORE the mixed arms finished. The prediction in §10.3
+is staked against seeds that had not printed when this was committed; git is the check.*
+
+### 10.1 The gate
+
+Comparing two runs "by eye" is how they come to be called the same without anyone
+checking, so G2 is now a flag on the census runner: `--reference=<quench log>` parses a
+banked log with `quenchlog` and diffs each trajectory's FINAL-FRAME molecule multiset
+against that seed's row. It reports per seed and in aggregate.
+
+### 10.2 The result on the hydrogen arm, and why it is 6 of 8
+
+Against `conformance/atomworld/s2_runs/p1_hydrogen.log`: **6 of 8 seeds reproduce.** Seeds
+`0x…5427` and `0x…5428` differ — the reference reads `[H2 H2 H2 H2 H4]` and my run reads
+`[H2 H2 H2 H2 H2 H2]`.
+
+**The cause is identified and it is not the instrument.** The H–H curve changed between
+that reference and my pin:
+
+| run | H–H worst residual |
+|---|---|
+| banked P1, Aug 30 (`p1_hydrogen.log`, `p1_mixed.log`) | **1.2e-12** |
+| committed P2, Aug 31 (`p2_waterquench.log`) | **8.7e-11** |
+| this lane, pinned at `a3b3d4b` | **8.7e-11** |
+
+Same `R_e = 1.3887` and `D_e = 0.204142` to six digits, different solver convergence — so
+the potential differs at the 1e-11 level. Over 20,000 frames of contact dynamics that is a
+Lyapunov divergence, not a bug, and on two of eight seeds it lands the final frame on a
+different side of the bond criterion: one H₄ or two H₂.
+
+**The finding, stated as its own claim: the final-frame molecule census is not reproducible
+across builds whose potential differs at 1e-11.** The AGGREGATE survives it — six H₂ per
+seed, no heavier molecule anywhere, on both builds — and the PER-SEED DETAIL does not.
+
+That is an argument for this census and against formula-matching, and it is worth saying
+plainly: a persistence statistic integrates a block's membership over thousands of frames,
+while a final-frame formula reads one instant at the end of a chaotic trajectory. The two
+seeds that disagree about H₄ agree completely about every H₂ that held.
+
+My pin sits in the SAME potential class as the committed P2 run (8.7e-11 both), which is
+the relevant fact for the mixed arms.
+
+### 10.3 THE PREDICTION, staked before the data
+
+`ozone.rs` changed between `45a513a` (the commit behind `p2_waterquench.log`) and my pin
+`a3b3d4b` — 19 insertions, 53 deletions. So **the `--ozone=served` arm cannot be a clean G2
+at this pin**: it would be comparing two different ozone surfaces, and a mismatch would say
+nothing about my runner. That arm is reported as what it is and no G2 verdict is taken from
+it.
+
+The `--ozone=fenced` arm is the informative comparison, because it differs from
+`p2_waterquench.log` in exactly ONE stated way: the four (O,O,O) triples per seed are
+fenced rather than served, on an otherwise same-class potential.
+
+> **STAKED:** the fenced arm reproduces `p2_waterquench.log`'s molecule multiset on a
+> MAJORITY of seeds — **≥ 5 of 8**. Reasoning: the OOO term touches 4 triples of the
+> C(12,3) = 220 in the box, and the H–H curve is the same class, so most seeds' endpoints
+> should be unmoved.
+>
+> **What each answer means.** ≥ 5/8 — the OOO surface is a small correction at this scale
+> and the fence is cheap; the census's aggregate readings transfer between the two
+> configurations. ≤ 4/8 — the OOO term materially steers the endpoint even at four triples,
+> and no reading taken with it fenced may be compared to one taken with it served. Either
+> way the per-seed detail is chaotic (§10.2) and only the aggregate is worth quoting.
+
+Seed `0x…5421` had printed when this was staked and it MATCHES (`[H2 H2 O4H4]` both, fence
+4 against fence 0). Seeds 2–8 had not printed. The remaining seven are the test.

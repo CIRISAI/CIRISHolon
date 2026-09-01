@@ -39,7 +39,21 @@ update, so the ratio is a series rather than an impression.
 | **R-12** | The PAIR sector has two doors to one curve, and one of them is a hardcoded H₂ special case. `holon_table_generate` reaches H–H through `holon_chem::stream_table`'s bespoke s-only path; `holon_bank_generate_pair` reaches the SAME curve through the general N-centre route. One idea — "the pair potential of species (A,B)" — with two implementations, one species-specific. | `holon-render/src/lib.rs::generate_table` vs `::holon_bank_generate_pair` | MEASURED, and the number is why this is a residual rather than a tidy-up: in Chromium on the development machine the two doors cost **0.16 ms/knot** and **~0.5 s fixed + 58 ms/knot** for physics that agrees on R_e and D_e to the six digits the workbench page displays — about **90×** at the 160 knots a page load uses (76 ms against 7.0 s). The workbench cannot simply drop the fast door: 7 s of a main thread for a curve already available in 76 ms fails M-CHEAPER-THAN-ITS-PRICE as a runtime law. It cannot drop the slow one either, because that is the only door for every pair that is not H₂. `lib.rs`'s own header already records that the two doors differ in PROVENANCE (`stream_table`'s `Meta` carries no residual, so the uncertainty it stamps is a declared zero standing in for an unmeasured quantity) — the price gap is a second way they are not one implementation, and it was not recorded anywhere until the workbench timed them. | Give `holon_chem::table::Meta` a measured residual and route H₂ through `generate_pair_table` like everything else, OR keep the fast path and express it as a cache/fast-route INSIDE the general door, so callers see one door and the special case is an optimisation the door owns rather than an API the caller must choose between. The second is cheaper and removes the caller-visible fork, which is the half that bit here. |
 | **R-13** | TWO INTEGRATORS. `Sim::step` is velocity Verlet on the physical Hamiltonian; `Sim::step_npt` is the MTK Trotter factorization on an extended one whose box is a degree of freedom. One `step`, two bodies, chosen by `barostat_on()`. | `holon-render/src/sim.rs::step`, `barostat.rs::step_npt` | Writing NPT as a special case of NVE is precisely how a barostat becomes a rescale hack (WB-7.2's `P^-0.05`), so the duplication is deliberate. The relation that DOES hold is proved rather than assumed: at infinite barostat mass with the chains idle, MTK reproduces Verlet BIT FOR BIT (`tests/t3_barostat.rs::npt_reduces_to_nve_at_infinite_barostat_mass`, worst coordinate difference 0.0 over 320 steps), because every barostat factor is an exact 1.0 in that limit. | Running NVE THROUGH the MTK path with the barostat frozen. It is bit-identical, so it would be sound — and it is not free: the NVE path would then compute three exponentials and two chain updates per step in order to multiply by one, and every banked campaign run would have to be re-pinned against the new call sequence. A COST decision, not a correctness one, and it should be made when someone measures the cost. |
 | **R-14** | `holon-md` depends on `holon-tables` for ONE type, `WorkerProbe` — a table-generation crate pulled into a molecular-dynamics driver for twenty lines of thread probing. | `holon-md/Cargo.toml`, `holon-tables/src/worker.rs` | `holon-resource` deliberately supplies no worker probe ("the pool owner supplies one"), and `holon-tables` is where the workspace's first pool owner wrote it. A second implementation of "can the OS give me a thread" in `holon-md` would be a duplication with no reason behind it, so the dependency is the LESSER residual — but the probe's own refusal message still reads "the table mesh probes workers only", which is now false at one of its two call sites. | Move `WorkerProbe` into `holon-resource` behind a `std` feature, or into a small crate both depend on, and re-word its refusal. Blocked only on `holon-resource`'s zero-dependency stance, which a feature gate preserves. |
+| **R-15** | THE REGISTER THAT MEASURES DUPLICATION EXISTS TWICE. `conformance/gravity/DRY_RESIDUALS.md` and `conformance/water_observatory/DRY_RESIDUALS.md` are both tracked, both opened under WB-8.7, both carry the same headline claim, and both number from R-1 — so R-1…R-13 name two rows each. | the two files | Not a code residual and it is registered anyway, because WB-8.7's definition does not say "in the engine": a special case the build forced us to write, whose growth rate is the falsifier. Two registers is one idea with two implementations, which is the exact shape every row below it describes — and it is the shape in the instrument rather than in the thing measured, which makes it the more serious kind. It could not be folded on the day it was found because the two files have different owners and a third lane rewriting a file two lanes already collided in is how this whole sequence started; `tower-complete` deliberately left it for an owner rather than take it, which was right. | ONE register, or ids namespaced by domain (`GRAV-R-9`, `WO-R-9`) with each file's header saying which it is and pointing at the other. The prefix half is done above as the cheap immediate fix; merging is the real discharge and needs both owners. Until then the SERIES readings at the foot of each file are computed over different domains and are not comparable — which is the concrete cost, not a tidiness argument. |
 
+
+## Citing a row from this register: use the `WO-` prefix
+
+**There are TWO tracked DRY registers in this tree and they both number from R-1.**
+`conformance/gravity/DRY_RESIDUALS.md` runs R-1…R-13 and this one runs R-1…R-15, so every
+bare `R-N` for N ≤ 13 names two different rows. Right now "R-9" is this file's ring-polymer
+propagator fold AND that file's four-entry periodic table; "R-11" is an `unsafe impl Sync`
+fold AND a geometric centroid where the physics wants a mass-weighted one.
+
+**Cite rows from this register as `WO-R-9`, and from the other as `GRAV-R-9`** — or give the
+path. A bare id is ambiguous across the tree, and the tell that it already was: the
+disclosure that produced the provenance section below had to spell out the full path to say
+which R-8 it meant. The duplication itself is registered as WO-R-15.
 
 ## Row provenance — who wrote which row, and a correction to what git says
 
@@ -55,8 +69,7 @@ committed first.
 | rows | lane | what they were measuring |
 |---|---|---|
 | R-1 … R-7, R-13, R-14 | T3 engine-core | the storage/locality/PBC/threading/NPT surface |
-| R-8 | `c1-rpmd` | the ring-polymer carrier's own operator: `RingPolymerOp`'s `Option<fn(f64) -> f64>` cannot carry a potential that owns anything |
-| the folds R-9, R-10, R-11 | `tower-complete` | the propagator, the grid range, and the `unsafe impl Sync` blocks |
+| R-8, and the folds R-9, R-10, R-11 | `c1-rpmd` | the ring-polymer carrier: its operator's field type, and three duplications inside `rpmd.rs` that folded |
 | R-12 | workbench-engine | the pair-curve door, timed from the browser |
 
 This matters for the SERIES below and not only for credit. The register's falsifier is a
@@ -67,14 +80,28 @@ rows would be comparing growth against a domain nobody's work actually doubled. 
 lane's rows against the axis that lane moved; the two readings at the bottom already do
 this and this table is what lets a third one.
 
-**A correction to this table's own first version**, which is the same defect one level in:
-it originally read "R-8, and the folds R-9, R-10, R-11 | C1 / carrier tower", lumping TWO
-lanes into one row on my assumption that adjacent rows about the tower came from one place.
-They did not. Writing a provenance table from inference rather than from asking is how a
-correction acquires its own misattribution, and the fix — the lead naming the two lanes —
-took one question I should have asked before writing the table rather than after.
+**This table has now been wrong in both directions, and the second time was worse.** Its
+first version grouped R-8 with the folds R-9/R-10/R-11 under one lane. I then "corrected" it
+to split them across two lanes, on a name supplied to me from outside the artifact — and the
+split was wrong. The first version had been right. Correcting a correct thing into an
+incorrect one, on someone's recollection, is a worse failure than the original sweep,
+because it carried the authority of a fix.
 
-**The durable fix is upstream of this file**: a register meant to be written by many lanes
+**The rule that ends this, and it is mechanical rather than testimonial: every fold row
+already names its own SYMBOL, and a symbol has a commit.**
+
+    git log -S '<symbol>' -- <file>          # whose row is this
+
+Run for the three folds, all three answer `95d4262` — `c1-rpmd`'s commit, the one that
+landed `rpmd.rs` after main was left declaring a module that did not exist. And the
+converse check is as cheap: `git show --stat --name-only` over a lane's landings says
+whether that lane has ever touched this file at all (`tower-complete`: zero, five times
+out of five). No memory, no inference, and nobody's availability — which matters, because
+asking depends on the right lane being reachable, and that is exactly what delayed this
+disclosure by a session. Credit for the rule: `tower-complete`, who checked it before
+replying to a message crediting them with work they had not done.
+
+**The durable fix is upstream of this file****The durable fix is upstream of this file**: a register meant to be written by many lanes
 should be committed EMPTY on the day it is opened, so that every later row arrives as its
 author's own diff. Untracked is not a neutral state — it is a state in which collaboration
 leaves no trace.

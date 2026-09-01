@@ -551,13 +551,30 @@ It convicted the machine and called it the registration. This is
 [[M-IDLE-CALIBRATED-TIMEOUT]] one layer up from where that misfit was registered, and no
 new id: it is that entry's own remedy applied to a registry.
 
-*Counter-intuitive measured consequence, worth keeping:* applying this law NARROWED the
-entry rather than widening it. Twelve separate invocations gave sd 0.54% against the
-in-process five-run figure of ~1.5%, because each invocation does its own warm-up discard
-and is timed at the same point on the clock ramp, whereas five back-to-back loops straddle
-that ramp's tail. **The "quiet moment" spread was measuring the ramp, not the machine.** So
-the remedy is not "measure a wider spread" — it is "measure the spread of the thing you
-will actually check", which can go either way.
+*The remedy is NOT "measure a wider spread"* — it is *measure the spread of the thing you
+will actually check*, and the justification is the **absolute narrowness of that spread in
+the deployment regime**, not that it beats some other way of measuring. That framing matters
+because the comparison this paragraph originally leaned on has been retracted by the lane
+that supplied it, and the law does not need it.
+
+*What is measured, carrying no mechanism:* twelve separate invocations across loadavg
+67.5–86.6 give sd/mean **0.54%**; four in-process five-run readings give **1.31%, 1.01%,
+0.78%, 0.74%**. That is **1.4×–2.4×**, suggestive and no more.
+
+*Two corrections kept visible, because both are the kind this document exists to prevent.*
+The figure was first reported as "about three times tighter" against an in-process ~1.5% —
+arrived at by quoting the **worst member of the set** (the run contaminated by a cold start)
+as if it were the set, in the direction that flattered the conclusion. And the explanation
+offered for the gap — that five back-to-back loops straddle the clock ramp's tail — is
+**withdrawn as untested**: those readings are taken after the warm-up discard and after the
+main timing block, so they are not on the ramp at all. **Two numbers and no explanation** is
+the honest state, and it is recorded that way rather than with a plausible cause attached.
+
+*What the ramp DOES explain, tested on a second rig:* a warm-up ramp inflates the variance of
+a **short** timing block. 20 reps → 1.23× spread; 200 reps → 1.010×, amortising the ramp
+tenfold. That is a measured result and it is what explains this campaign's inverted timing
+pair. It says nothing about the in-process/between-invocation comparison above, and the two
+were briefly conflated here.
 
 **(ii) THE QUANTITY LAW (gpu-prod's, and the sharper of the two).** *A registered
 throughput must be the quantity the CALLER RECEIVES, and the spot-check must re-time that

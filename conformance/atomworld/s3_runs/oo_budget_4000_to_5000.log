@@ -1,0 +1,123 @@
+# O-O re-examination — the curve SATURATION-2's P1 loaded, scored at the derived bar
+# grid: derive_range(O,O) = [1.5261, 20.0000] bohr, 96 knots, generate_pair_table's own placement
+# production cap 4000, reference cap 5000, tolerance 1e-10 (asked = DAVIDSON_EXPANSION_FLOOR)
+# bar: CONVERGED_RESIDUAL = 1e-9 Ha (10x the floor, derived)
+# E_asymptote = 2 E(O) = -147.608300492 Ha; u(r) = E(r) - E_asymptote is what Sim reads
+# kT = 9.500e-3 Ha at 3000 K, 9.500e-4 Ha at 300 K
+
+# phase A (production) done in 2917.4 s
+# exits: 84 converged, 0 stagnated, 12 ITERATION CAP, of 96
+# worst residual 2.683e-6 Ha at r = 6.9159 bohr (iteration cap)
+
+# phase B (reference) done in 1886.3 s
+
+    i        r          E_prod      resid  iters          exit |   resid_ref  iters      exit_ref |          dE          dF
+    0   1.5261  -146.608300404   9.51e-11     18     converged |           -      -             - |           -           -
+    1   1.5570  -146.737887561   9.80e-11     24     converged |           -      -             - |           -           -
+    2   1.5886  -146.857343304   9.94e-11     22     converged |           -      -             - |           -           -
+    3   1.6211  -146.967079888   8.79e-11     22     converged |           -      -             - |           -           -
+    4   1.6544  -147.067515833   9.12e-11     24     converged |           -      -             - |           -           -
+    5   1.6885  -147.159074513   8.91e-11     24     converged |           -      -             - |           -           -
+    6   1.7236  -147.242182630   7.01e-11     21     converged |           -      -             - |           -           -
+    7   1.7595  -147.317268561   9.88e-11     23     converged |           -      -             - |           -           -
+    8   1.7964  -147.384760619   8.15e-11     24     converged |           -      -             - |           -           -
+    9   1.8343  -147.445085222   8.94e-11     25     converged |           -      -             - |           -           -
+   10   1.8732  -147.498664984   4.79e-11     26     converged |           -      -             - |           -           -
+   11   1.9131  -147.545916752   9.49e-11     23     converged |           -      -             - |           -           -
+   12   1.9541  -147.587249601   9.85e-11     26     converged |           -      -             - |           -           -
+   13   1.9961  -147.623062823   9.11e-11     28     converged |           -      -             - |           -           -
+   14   2.0394  -147.653743959   7.22e-11     26     converged |           -      -             - |           -           -
+   15   2.0837  -147.679666949   8.65e-11     30     converged |           -      -             - |           -           -
+   16   2.1294  -147.701190474   5.92e-11     31     converged |           -      -             - |           -           -
+   17   2.1762  -147.718656625   5.14e-11     32     converged |           -      -             - |           -           -
+   18   2.2244  -147.732389979   8.86e-11     33     converged |           -      -             - |           -           -
+   19   2.2739  -147.742697243   7.65e-11     31     converged |           -      -             - |           -           -
+   20   2.3248  -147.749867542   9.08e-11     32     converged |           -      -             - |           -           -
+   21   2.3771  -147.754173445   7.43e-11     34     converged |           -      -             - |           -           -
+   22   2.4309  -147.755872743   8.27e-11     39     converged |           -      -             - |           -           -
+   23   2.4862  -147.755210974   7.72e-11     41     converged |           -      -             - |           -           -
+   24   2.5431  -147.752424577   6.69e-11     43     converged |           -      -             - |           -           -
+   25   2.6016  -147.747744533   9.42e-11     41     converged |           -      -             - |           -           -
+   26   2.6619  -147.741400245   6.82e-11     49     converged |           -      -             - |           -           -
+   27   2.7239  -147.733623414   9.72e-11     46     converged |           -      -             - |           -           -
+   28   2.7877  -147.724651580   7.11e-11     52     converged |           -      -             - |           -           -
+   29   2.8534  -147.714731035   9.17e-11     55     converged |           -      -             - |           -           -
+   30   2.9210  -147.704118792   9.19e-11     63     converged |           -      -             - |           -           -
+   31   2.9907  -147.693083298   9.78e-11     72     converged |           -      -             - |           -           -
+   32   3.0624  -147.681903558   8.42e-11     85     converged |           -      -             - |           -           -
+   33   3.1363  -147.670866151   9.79e-11    109     converged |           -      -             - |           -           -
+   34   3.2125  -147.660259344   9.44e-11    118     converged |           -      -             - |           -           -
+   35   3.2909  -147.650362893   8.78e-11    168     converged |           -      -             - |           -           -
+   36   3.3718  -147.641431676   9.81e-11    358     converged |           -      -             - |           -           -
+   37   3.4552  -147.635668218   9.62e-11    183     converged |           -      -             - |           -           -
+   38   3.5412  -147.630835127   8.20e-11    217     converged |           -      -             - |           -           -
+   39   3.6298  -147.626739325   8.95e-11    258     converged |           -      -             - |           -           -
+   40   3.7213  -147.623311170   9.20e-11    378     converged |           -      -             - |           -           -
+   41   3.8156  -147.620464731   8.18e-11    424     converged |           -      -             - |           -           -
+   42   3.9130  -147.618110874   8.00e-11    397     converged |           -      -             - |           -           -
+   43   4.0135  -147.616166617   7.97e-11    819     converged |           -      -             - |           -           -
+   44   4.1173  -147.614560350   9.90e-11   2424     converged |           -      -             - |           -           -
+   45   4.2244  -147.613300612   9.66e-11   3569     converged |           -      -             - |           -           -
+   46   4.3350  -147.612276741   9.25e-11   2277     converged |           -      -             - |           -           -
+   47   4.4492  -147.611414773   9.18e-11   1922     converged |           -      -             - |           -           -
+   48   4.5673  -147.610698846   9.81e-11   1261     converged |           -      -             - |           -           -
+   49   4.6893  -147.610113824   9.67e-11   1053     converged |           -      -             - |           -           -
+   50   4.8154  -147.609644713   9.22e-11   1100     converged |           -      -             - |           -           -
+   51   4.9458  -147.609276416   7.97e-11    981     converged |           -      -             - |           -           -
+   52   5.0806  -147.608993841   9.15e-11   1191     converged |           -      -             - |           -           -
+   53   5.2200  -147.608827247   9.92e-11   2086     converged |           -      -             - |           -           -
+   54   5.3642  -147.608778255   8.33e-11    921     converged |           -      -             - |           -           -
+   55   5.5135  -147.608726169   8.09e-11   1168     converged |           -      -             - |           -           -
+   56   5.6680  -147.608675107   7.71e-11   1649     converged |           -      -             - |           -           -
+   57   5.8279  -147.608627443   9.01e-11   2383     converged |           -      -             - |           -           -
+   58   5.9936  -147.608584333   9.41e-11   3660     converged |           -      -             - |           -           -
+   59   6.1651  -147.608546130    3.00e-8   4000 iteration cap |     6.57e-9   5000 iteration cap |   2.274e-13   2.188e-12
+   60   6.3428  -147.608512703    6.15e-8   4000 iteration cap |     1.56e-8   5000 iteration cap |   2.103e-12   7.138e-12
+   61   6.5270  -147.608483663    1.17e-6   4000 iteration cap |     1.99e-6   5000 iteration cap |    3.918e-9    1.525e-8
+   62   6.7179  -147.608458537    1.69e-6   4000 iteration cap |     4.05e-8   5000 iteration cap |   5.984e-10    2.329e-9
+   63   6.9159  -147.608436707    2.68e-6   4000 iteration cap |     4.81e-6   5000 iteration cap |    2.544e-8    1.079e-7
+   64   7.1212  -147.608417986    5.21e-7   4000 iteration cap |     1.40e-6   5000 iteration cap |    1.053e-8    4.687e-8
+   65   7.3341  -147.608401723    6.05e-7   4000 iteration cap |     2.71e-7   5000 iteration cap |   8.372e-10    3.812e-9
+   66   7.5551  -147.608387692    2.65e-7   4000 iteration cap |     3.97e-7   5000 iteration cap |   1.652e-10   7.607e-10
+   67   7.7845  -147.608375522    3.56e-8   4000 iteration cap |     2.46e-7   5000 iteration cap |   2.493e-11   1.249e-10
+   68   8.0226  -147.608364984    9.46e-9   4000 iteration cap |     1.38e-7   5000 iteration cap |   1.648e-12   7.700e-12
+   69   8.2699  -147.608355866    2.68e-9   4000 iteration cap |     1.63e-8   5000 iteration cap |   5.684e-14   4.305e-13
+   70   8.5269  -147.608347984   9.40e-10   4000 iteration cap |     7.52e-9   5000 iteration cap |  -1.705e-13  -1.930e-13
+   71   8.7938  -147.608341178   6.73e-11    424     converged |           -      -             - |           -           -
+   72   9.0713  -147.608335307   9.55e-11    428     converged |           -      -             - |           -           -
+   73   9.3599  -147.608330247   9.49e-11    426     converged |           -      -             - |           -           -
+   74   9.6600  -147.608325892   8.54e-11    462     converged |           -      -             - |           -           -
+   75   9.9722  -147.608322148   9.65e-11    530     converged |           -      -             - |           -           -
+   76  10.2972  -147.608318933   8.33e-11    480     converged |           -      -             - |           -           -
+   77  10.6355  -147.608316175   9.97e-11    575     converged |           -      -             - |           -           -
+   78  10.9878  -147.608313812   8.93e-11    607     converged |           -      -             - |           -           -
+   79  11.3548  -147.608311790   8.47e-11    648     converged |           -      -             - |           -           -
+   80  11.7372  -147.608310063   8.46e-11    743     converged |           -      -             - |           -           -
+   81  12.1359  -147.608308588   8.90e-11    549     converged |           -      -             - |           -           -
+   82  12.5517  -147.608307331   9.79e-11    838     converged |           -      -             - |           -           -
+   83  12.9855  -147.608306261   8.70e-11    988     converged |           -      -             - |           -           -
+   84  13.4381  -147.608305351   8.10e-11    805     converged |           -      -             - |           -           -
+   85  13.9106  -147.608304579   8.83e-11    807     converged |           -      -             - |           -           -
+   86  14.4041  -147.608303925   8.19e-11    758     converged |           -      -             - |           -           -
+   87  14.9197  -147.608303370   9.65e-11    786     converged |           -      -             - |           -           -
+   88  15.4585  -147.608302902   7.30e-11    694     converged |           -      -             - |           -           -
+   89  16.0219  -147.608302507   8.73e-11    627     converged |           -      -             - |           -           -
+   90  16.6112  -147.608302173   8.47e-11    440     converged |           -      -             - |           -           -
+   91  17.2278  -147.608301893   9.01e-11    539     converged |           -      -             - |           -           -
+   92  17.8733  -147.608301657   9.82e-11    663     converged |           -      -             - |           -           -
+   93  18.5493  -147.608301460   9.06e-11    842     converged |           -      -             - |           -           -
+   94  19.2576  -147.608301294   9.78e-11    787     converged |           -      -             - |           -           -
+   95  20.0000  -147.608301156   8.09e-11    943     converged |           -      -             - |           -           -
+
+   R_e (grid minimum)          2.4309 bohr, E = -147.755872743, D_e = 0.147572 Ha
+   first non-converged knot    6.1651 bohr (iteration cap)
+   non-converged knots at r <= R_e   0
+   knots where BOTH runs failed      12 (unresolved: not scored)
+
+   worst |dE| over scored knots  0.000e0 Ha at r = 0.0000 bohr
+   worst |dF|                    0.000e0 Ha/bohr at r = 0.0000 bohr
+   as a fraction of kT(300 K)    0.000e0      of kT(3000 K)  0.000e0
+   as a fraction of D_e          0.000e0
+
+   The variational margin at the worst production knot, as a second opinion:
+   min_i H_ii - E = 0.095076 Ha (positive is necessary, not sufficient)

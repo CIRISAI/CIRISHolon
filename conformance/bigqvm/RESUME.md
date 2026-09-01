@@ -51,12 +51,24 @@ one buffer; peak RSS 9.571 GB against the 9.545 GB model, and wall fell from
 **The head-to-head re-run is done** and moved the smaller-d verdict from
 "stim leads 1.4–2.1×" to parity (0.82–1.26×).
 
+## THE CITABLE TABLE EXISTS (2026-08-31, banked 2207bca)
+
+The quiet-window waiter took its window unattended at loadavg 6.4–6.8, held it
+across both sweeps, and produced the pinned both-core-types table. Headline:
+at d=221 we are **parity (1.005, P-core) to +15% (0.866, E-core)** — NOT the
+1.33× first banked. stim leads clearly at small n (1.46–1.49× at d=45); the arms
+cross near n ≈ 20k. Artifacts: `h2h_quiet_pcore.json`, `h2h_quiet_ecore.json`.
+
+The progression of that one number is the lane's most transferable result:
+0.754 unpinned-and-loaded → 0.895 pinned-and-loaded → 1.005 pinned-and-quiet.
+Contention was a BIAS IN OUR FAVOUR, not noise around a true value, because the
+two engines lose different amounts to it.
+
 Still owed, and neither blocks anything:
 
-**(a) The QUIET-MACHINE repeat** — everything in this lane was taken at load
-33–54, and per the standing ruling the ratios are not bankable against
-CI-runner baselines until they are re-taken in a quiet window. A detached
-waiter is armed for it:
+**(a)** ~~The QUIET-MACHINE repeat~~ — **DONE**, see above. The waiter stays
+armed for a confirming repeat, now with the E-core sweep as PRIMARY (it is the
+reproducible core class: no SMT sibling, 1.03× spread against P's 1.41×):
 
     conformance/bigqvm/run_when_quiet.sh   (setsid)
     -> h2h_quiet.json      the citable table, written only if the window HELD

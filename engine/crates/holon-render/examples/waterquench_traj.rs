@@ -322,6 +322,32 @@ impl Ozone {
     }
 }
 
+/// Whether the exact four-body `dE4(O,H,H,H)` term rides in the force loop.
+#[derive(Clone, Copy, PartialEq)]
+enum De4 {
+    On,
+    Off,
+}
+
+impl De4 {
+    fn parse(s: &str) -> Option<De4> {
+        match s {
+            "on" => Some(De4::On),
+            "off" => Some(De4::Off),
+            _ => None,
+        }
+    }
+    fn label(self) -> &'static str {
+        match self {
+            De4::On => "on",
+            De4::Off => "off",
+        }
+    }
+    fn enabled(self) -> bool {
+        matches!(self, De4::On)
+    }
+}
+
 /// The frame's bond bits, taken from the engine's own `pairs` array.
 ///
 /// `close_grain` calls `refresh_pairs` at every grain boundary, so this reads the same
@@ -440,6 +466,14 @@ fn main() {
             "--ozone=served|fenced is REQUIRED and has no default: the two are different \
              physics and a run that picked one silently could not be attributed",
         );
+    let de4 = args
+        .iter()
+        .find_map(|a| a.strip_prefix("--de4="))
+        .and_then(De4::parse)
+        .expect(
+            "--de4=on|off is REQUIRED and has no default: the four-body term is physics, \
+             and a runner that picked it silently could not be attributed",
+        );
     let out_dir = PathBuf::from(
         args.iter()
             .find_map(|a| a.strip_prefix("--out="))
@@ -519,15 +553,20 @@ fn main() {
         }
     }
 
+    // The four-body term. `Sim::empty()` leaves this FALSE, so omitting this line is how a
+    // runner silently drops the physics it was pointed at.
+    base.de4_enabled = de4.enabled();
+
     place(&mut base, arm, seeds[0]);
     println!(
-        "# arm = {}   ozone = {}   seeds = {}   {N_ATOMS} atoms in {BOX_W} x {BOX_H} bohr\n\
+        "# arm = {}   ozone = {}   dE4 = {}   seeds = {}   {N_ATOMS} atoms in {BOX_W} x {BOX_H} bohr\n\
          # {FRAMES} boundaries x {SUBSTEPS} substeps, dt = {:.4} a.u. -> {:.2} ps\n\
          # T_init {T_INIT} K, T_target {T_TARGET} K, tau {TAU}\n\
          # trajectory dump: every grain boundary, to {}\n\
          # setup {:.1} s",
         arm.label(),
         ozone.label(),
+        de4.label(),
         seeds.len(),
         base.dt(),
         base.dt() * (FRAMES * SUBSTEPS as usize) as f64 * 2.4188843265e-5,

@@ -9,49 +9,62 @@ written up as a finding (§4) rather than repaired in place.*
 
 ## 0. THE HEADLINE
 
-> **CORRECTION — 2026-09-01, the lead; owner to fold in (owner-verification-after).**
-> **The OH₂ exists.** This section was true of the artifact it examined — the MBE3-arm
-> log, where `OH2` is indeed only a table name and no water formed — but the brief's
-> seed 2 ran in the **dE4 arm**, whose logs were captured by the sprint harness OUTSIDE
-> the repo tree and were found and banked after this document was written:
-> `conformance/atomworld/p2_de4_seeds/` (commit 1ae2c1b). Seed `0x53415422`'s census
-> line reads `molecules [H2 H2 OH2 O3H2]`, modal H₂O, 284 K, 1,118 dE4 solves — a
-> molecule line, not the header collision. The observation is UNDER GATE: all six
-> completed dE4 seeds violate the momentum bound by 4–5 orders (energy in bound), so
-> the claim cashes only when a committed, conservation-clean build reproduces it.
-> The closure-census adjudication target for road item 5 is that banked log's
-> regenerated trajectory. Everything below stands as the correct reading of the
-> MBE3 artifact; its headline sentence does not generalize beyond it.
+*This section was rewritten by its owner on 2026-09-01, folding in the lead's correction
+(`c7dd879`) and superseding both it and the original. The original headline said the OH₂
+did not exist; that was true of the artifact it examined and false as a general claim, and
+what replaced it is not a retraction but a stronger measurement.*
 
-**THE OH₂ THIS LANE WAS BRIEFED TO ADJUDICATE DOES NOT EXIST.** The brief said seed 2
-produced the programme's first emergent OH₂. It did not. `OH2` occurs on exactly ONE line
-of `conformance/atomworld/p2_waterquench.log`, and that line is the header:
+### ROAD ITEM 5 IS MET: a certified-strict OH₂ quotient, on conservation-clean physics
 
-```
-# Physics Path: Pairs (H-H, O-H, O-O) + Complete MBE3 Triples (H3, OH2, O2H, O3)
-```
+**Seed `0x53415425`, fenced arm, block `0x0a08` — atoms [3, 9, 11], `Z = [8, 1, 1]`.**
 
-`OH2` there is the NAME OF A TABLE — the (O,H,H) three-body surface, listed beside H3, O2H
-and O3. Every molecule line in that file reads `H2`, `OH`, `O2H`, `O3H3`, `O4H2` or `O4H4`;
-the run's own census is `19xH2 1xOH 4xO2H 1xO3H3 1xO4H2 4xO4H4`; and its own headline is
-**0 of 8 seeds with H₂O as the modal O-containing molecule**, with all four surfaces served
-and the fence at zero. Seed `0x…5422` — "seed 2" — produced **OH**, not OH₂.
+| | |
+|---|---|
+| longest STRICT held run | **893.8 fs** — clears the staked 834 fs window unbroken |
+| share of the whole run it was a block | **72.3%** (14,459 of 20,000 frames, 17.5 ps) |
+| internal RMS displacement | 0.779 bohr (floor 0.100) — a moving carrier |
+| intra-block separation excursion | 0.199 bohr (floor 0.050) — a vibrating O–H, not a passing contact |
+| control rate | **0.000** — of 111 other (1 O, 2 H) atom sets, none reaches the window |
+| momentum, this seed | \|p\|/bound = **5.70e-5** |
+| verdict | **CERTIFIED-STRICT**, and named at the final frame too |
 
-The correction came from the saturation2-water lane and is verified here against the
-primary artifact rather than taken on trust. It is now a gate:
-`holon_lens::quenchlog` parses header surfaces apart from census molecules, and its plant
-asserts BOTH halves — that a grep of the real file DOES hit `OH2`, and that the parsed
-molecule count for `OH2` is zero. A gate that passed because the string was absent would
-be no gate at all; the string is present, and the parser is what separates them.
+That is `CENSUS_PREREG.md`'s **branch (a)**: G3 strict, G5 moving carrier, G8 control floor,
+all met. The product is one persistent three-member QUOTIENT — the thing the road asked
+for — and not a component whose formula happens to read like water. Verified twice: by the
+census, and by `block_probe` reading the block's held series directly (793 held runs, max
+894.7 fs, and the window the budget accepted spelled out frame by frame).
 
-**So there was never a water molecule for the closure census to promote or reject on the
-banked artifact.** That is the result, not a failure of the instrument. The census keyed on
-a (1 O, 2 H) block correctly finds none, because none formed.
+### The OH₂ exists in TWO arms, and only one of them conserves momentum
 
-**The still-running dE₄ arm is a DIFFERENT experiment and is still unverified** (§5). Its
-binary carries `quaternary::de4_ohhh_fci`; mine does not. Whatever it prints will be
-four-body physics, not another sample of the banked run, and its sim.rs dispatch is in no
-commit.
+| arm | OH₂ carrier | \|p\| / bound, all seeds | gate |
+|---|---|---|---|
+| dE₄ (`p2_de4_seeds/`, banked `1ae2c1b`) | seed `0x53415422` | **9.8e3 – 4.2e5** | **FIRED, 4–5 orders over** |
+| MBE3 fenced (this lane, pin `a3b3d4b`) | seed `0x53415425` | **4.7e-5 – 7.9e-5** | passes, nine orders inside |
+
+The lead's correction is confirmed: seed `0x53415422`'s dE₄ line reads
+`molecules [H2 H2 OH2 O3H2]`, modal H₂O, 1,118 dE₄ solves — a molecule line, not the header
+collision. **And it is under a fired gate.** All six banked dE₄ seeds breach the momentum
+bound by four to five orders with energy IN bound, which is the specific signature of a
+force that is not equal-and-opposite: a many-body gradient that does not sum to zero. No
+molecule downstream of that dynamics is a physics result yet (OBJECT.md rule 7).
+
+**The conservation-clean OH₂ is the one measured above, and it does not need the four-body
+term at all.** It arises in MBE3 with the four (O,O,O) triples honestly fenced, on a build
+whose momentum residual sits nearly ten orders of magnitude below the dE₄ arm's. So the
+water claim's adjudication does not have to wait on the dE₄ repair: it has a
+conservation-clean carrier now, and the repair becomes a separate question about whether
+the four-body term changes the answer.
+
+### Scoped, so nothing here over-reaches
+
+* **On the MBE3 banked log (`p2_waterquench.log`) there is genuinely no water**, and the
+  header-collision analysis below is the correct reading of THAT artifact: `OH2` occurs on
+  one line, the surface list, and every molecule line reads H2/OH/O2H/O3H3/O4H2/O4H4. The
+  parser gate that separates the two stands unchanged and is worth keeping regardless.
+* **One seed of eight** produced a certified-strict OH₂ in the fenced arm; two more seeds
+  produced OH₂ blocks that certify only at BUDGET (18.0% and 11.3% of their runs). That is
+  1 of 8 strict, not a formation rate, and this document does not offer one.
+* **The dE₄ observation is not cashed** and this lane does not cash it.
 
 **What IS measured**, on all eight regenerated trajectories of the hydrogen control arm:
 
@@ -481,3 +494,67 @@ wants the OOO question answered has the design rather than an inference.
 **The stake stands as staked** and will be scored against ≥ 5/8 when the arm finishes. What
 this amendment changes is what the number is allowed to MEAN, and the answer is: much less
 than §10.3 claimed.
+
+---
+
+## 11. THE FENCED MIXED ARM — the arm the water result comes from
+
+Eight seeds, 20,000 frames each, `--ozone=fenced` (the four OOO triples honestly fenced),
+pin `a3b3d4b`, momentum residual 4.7e-5 to 7.9e-5 of bound on every seed.
+
+### 11.1 What certified
+
+| verdict | count | compositions |
+|---|---|---|
+| CERTIFIED-STRICT | 15 | 6 H₂, 2 OH, 2 O₄H₂, 2 O₂H, **1 OH₂**, 1 O₃H₂, 1 O₃H |
+| CERTIFIED-BUDGETED | 14 | 4 O₂H, **2 OH₂**, 2 OH, 1 O₄H₄, 1 O₄H₂, 1 O₃H₃, 1 O₃H₂, 1 O₂H₃, 1 O₂ |
+| TRANSIENT | 262 | |
+| VOID | 15 | all "no separation" — the control floor of §4 again |
+
+**Three OH₂ blocks reach a window across the arm: one strict (§0) and two at budget** (18.0%
+and 11.3% of their runs). One of eight seeds carries a strict one. That is the honest
+denominator, and this document does not convert it into a formation rate.
+
+The census certifies things the final-frame reader never names, and declines things it
+does. On seed `0x…5421` the formula reader prints three molecules (`O4H4 H2 H2`) while the
+census certifies six — including an OH and an OH₂ it never mentions — and the O₄H₄ it does
+print was a block for 9.0% of the run. **A final-frame formula and a persistence statistic
+are different readings of the same trajectory, and where they disagree the trajectory says
+the persistence one is carrying more.**
+
+### 11.2 Leg B: the leak is smaller here, and it does NOT expand
+
+| seed | defect | non-expansion (≤ 1.05×) |
+|---|---|---|
+| 5421 | 0.1128 | ok |
+| 5422 | 0.1328 | ok |
+| 5423 | 0.1339 | ok |
+| 5424 | 0.1453 | ok |
+| 5425 | 0.1410 | ok |
+| 5426 | 0.0815 | ok |
+| 5427 | 0.1460 | ok |
+| 5428 | 0.1287 | ok |
+
+**Eight of eight pass**, against the hydrogen arm's six of eight breaching (§3), and the
+defects are lower throughout (0.082–0.146 against 0.157–0.247). The membership view of the
+mixed box is a better-behaved coarse view than the pure-hydrogen box's: its budget holds
+where the other's did not. A plausible reading, offered as one — the mixed box forms heavy
+clusters (O₄H₂, O₃H₂) that pin the partition, while twelve hydrogens keep re-pairing — but
+the measurement is the eight-of-eight, not the explanation.
+
+### 11.3 THE STAKED PREDICTION IS SCORED, AND IT FAILED
+
+§10.3 staked **≥ 5 of 8** seeds reproducing `p2_waterquench.log`'s molecule multisets.
+
+> **MEASURED: 2 of 8.** Seeds `0x…5421` (`[H2 H2 O4H4]`) and `0x…5424`
+> (`[H2 H2 H2 O2H O2H]`) match; the other six do not. **The stake FAILED.**
+
+§10.5, committed at `d2533b0` with two of eight seeds printed, said it would — and said
+why the failure could not be read as an answer about the OOO term, because the O–O curve
+had also moved (6.7e-6 → 2.7e-6). That amendment stands: **2 of 8 is confounded and is not
+evidence that the fence matters.** The clean experiment is the fenced arm at `45a513a`,
+where the only difference IS the fence; it is specified in §10.5 and was not run here.
+
+What 2 of 8 DOES support is §10.2's finding, now on a second arm: a final-frame molecule
+census is not stable across builds whose curves move at 1e-6, while the aggregate — no
+water on the MBE3 banked log, water on one fenced seed, H₂ everywhere — is what survives.

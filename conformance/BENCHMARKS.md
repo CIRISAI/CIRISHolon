@@ -1471,3 +1471,53 @@ mine — they hold the id.
 compare against, or state which regime it came from. A "record" without its
 conditions is not a record.
 
+
+### The four lessons from the bigqvm ↔ mesher exchange, written down because they were message-only
+
+*Named by the lead for mesh's consolidation of M-IDLE-CALIBRATED-TIMEOUT. That
+row is saturation3-mesh's and I am not writing in it — but all four of these
+existed ONLY inside messages, which is the failure mode this lane hit twice
+(the fstate stale forward-reference, and my own stale-grep negative). So they
+are recorded here, attributed, for mesh to lift verbatim or ignore.*
+
+**1. The over-retraction principle (mine, learned the hard way at a15ce08).**
+A retraction needs the same *what exactly does the evidence reach?* discipline
+as the claim it retracts. I withdrew a probe-blindness finding correctly and in
+the same breath discarded a conclusion that stood on baseline-free evidence.
+Retracting too much is a failure of precision too, and I made it in a document
+about precision.
+
+**2. Stamp the CLOCK, not just the load (MESHER's).** Their bench now records
+load AND clock-as-a-fraction-of-advertised-max at both ends of every run. The
+clock moved from **54% to 52% inside a single 30-second run** — a change
+completely invisible in a loadavg number. A run stamped only with load is
+stamped with the wrong variable. On this part: P 2.80/5.20 GHz, E 2.40/3.90 GHz
+under load, read from `/sys/devices/system/cpu/cpuN/cpufreq/scaling_cur_freq`.
+
+**3. The impossible-value detector (MESHER's, and the best instrument idea in
+the exchange).** Their cpu-efficiency column read 0.981, 0.990, 0.990, **1.003**
+— and an efficiency above 100% is *impossible*, which is the instrument
+announcing it has run out of resolution rather than reporting a result.
+`/proc/self/stat` ticks at 10 ms against their ~25 ms arm: ±1 tick is ±40% per
+sample, ~±8% over 25 samples, which is exactly the size of the "2–7% threading
+overhead" they had reported. Corrected to "small, consistent with zero, bounded
+by a noise floor of several percent." **An impossible value cannot be argued
+with, which makes it a stronger detector than any threshold** — and it is
+available free wherever a quantity has a known bound.
+
+**4. The through-line, verbatim, one sentence each.**
+
+> MESHER: *"I keep reporting the shape of my reasoning as though it were the
+> shape of my data."*
+>
+> bigqvm: *I kept reporting the shape of my baseline as though it were the
+> shape of the world.*
+
+Same error, two surfaces. Between the two lanes it produced nine mutual
+retractions — the bandwidth adjective, the E-core mechanism, the false
+precision; the idle-core mechanism, the d=101 verdict, the minimum-estimator
+claim, the adversarial-P-core framing, the probe-blindness datum, and the
+over-retraction of it — and **every single one was caught by the other lane
+measuring something the first had assumed.** Neither instrument found its own
+errors; each found the other's.
+

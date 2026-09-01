@@ -83,14 +83,80 @@ following: a spot-check RE-TIMES the workload rather than comparing the
 registration to whatever number is lying around. Both readings are now warm, the
 warm-up discard is declared, and the cold number is printed rather than dropped.
 
+## The question the lane was asked to evaluate: should the Davidson loop move device-side?
+
+**Measured, and the answer is NO — not because the port is hard, but because the
+port is not the lever.** `holon-gpu/examples/fci_bench.rs --davidson 60`, on
+`(O,O,O)`, pinned to one P-core at loadavg 66:
+
+| quantity | measured |
+|---|---:|
+| 60 Davidson iterations | 24.602 s |
+| one iteration | **410.0 ms** |
+| one device sigma | **14.7 ms** |
+| the sigma's share of an iteration | **4%** |
+| the HOST-SIDE driver's share | **96%** |
+
+The estimate this replaces was "PCIe is 0.5 ms against 15 ms of compute, so
+moving the driver buys about 3%". That counted the transfer and forgot the
+driver. The device made the sigma so fast that the host loop now dominates it by
+a factor of 25.
+
+**The mechanism, located.** `tier::davidson_eigh_from_op` rebuilds the ENTIRE
+`m × m` subspace matrix every iteration:
+
+```rust
+for i in 0..m { for j in 0..m { sub[i*m+j] = dot_t(&basis[i], &hbasis[j]); } }
+```
+
+Only the new row and column changed. At `m = 48` and 207,025 determinants that
+is 2,304 dot products over a 1.6 MB vector — 477 M multiply-adds per iteration,
+single-threaded, to recompute values that were already correct.
+
+**It is a RATE gap, not a work gap, and that distinction picks the fix.** The
+sigma is the bigger computation (4.85 GFLOP against ~0.95 GFLOP for the subspace
+rebuild at `m = 48`); it finishes first because it runs at 331 GFLOP/s on the
+device while the dots run at about 5 GFLOP/s on one contended core. So there are
+three levers and porting the loop is the last of them:
+
+1. **cache the subspace matrix** — carry the previous iteration's entries and
+   compute only the new row and column. Expected bit-identical: the entries are
+   the same dot products of the same operands, and re-symmetrising an
+   already-symmetric pair is exact in IEEE (`(a+a)*0.5 == a`). Expected
+   ~25× on the host share at this size;
+2. **vectorise or parallelise the dots** — they are embarrassingly parallel and
+   the driver is single-threaded by construction (`holon-chem` has no thread
+   dependency, deliberately);
+3. **only then** consider moving the loop device-side.
+
+**None of the three is done here, and (1) must not be done casually.** It is a
+solver change, and every committed table is keyed on the Davidson path's trailing
+bits — `w1_masks`'s banked Be bit pattern and `water`'s committed table are the
+gates that would catch it. "Expected bit-identical" is a prediction, and the
+gates are what would turn it into a fact.
+
+**The adoption consequence, which is the decision-relevant part.** The table
+generator's parallelism is at the NODE level: 32 concurrent single-threaded
+solves. One GPU serialises across all 32 of them. So the device arm helps a
+SINGLE large solve and does not help a table — which confirms G2's "adopting the
+GPU idles 32 cores rather than adding to them" at the SOLVE level, not just at
+the sigma level, and it is a stronger statement than the sigma ratio alone
+supports.
+
+**Measurement caveat, stated rather than buried.** The 96% is the single-core
+figure, taken pinned per M-PLACEMENT-LOTTERY. Pinning does not change the
+driver's parallelism — it has none — but it does expose it to contention:
+wall/CPU-time on the CPU arm in the same run was 1.47, so roughly a third of the
+host time is descheduling on a machine at loadavg 66.
+
 ## What is NOT claimed
 
 * **Not that GPU dispatch is safe for bit-gated work.** It is not, and D0 says so.
   The class is now declarable and checked; it is not chosen by a crossover.
-* **Not that the full Davidson loop belongs on the device.** At this size one
-  sigma is ~15 ms of compute against ~0.5 ms of PCIe, so moving the driver buys
-  about 3% and costs the ability to run one engine under two devices. The
-  question is open for larger spaces and is not answered here.
+* **Not that the full Davidson loop belongs on the device.** It does not, and the
+  reason is measured above rather than estimated: the host driver is 96% of an
+  iteration and the sigma is 4%, so the lever is the driver's quadratic subspace
+  rebuild, not a port.
 * **Not that the CPU baseline was re-measured at 32 threads.** See above.
 * **Not that any committed table should be regenerated.** They declare `Cpu` and
   they stay that way; a GPU-built table would be a different artifact.
@@ -102,6 +168,7 @@ cd engine/crates/holon-gpu
 cargo test --release --test fci_sigma --test gpu_lease -- --test-threads=1
 taskset -c 0  ./target/release/examples/fci_bench --species O,O,O --core-type P --reps 20
 taskset -c 16 ./target/release/examples/fci_bench --species O,O,O --core-type E --reps 20
+taskset -c 0  ./target/release/examples/fci_bench --species O,O,O --core-type P --reps 20 --davidson 60
 ```
 
 The crate is outside the workspace and `ci-gates.sh` cannot reach it, deliberately:

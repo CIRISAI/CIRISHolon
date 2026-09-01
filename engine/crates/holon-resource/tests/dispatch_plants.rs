@@ -3,9 +3,15 @@
 //! Every plant asserts its carrier before it is scored, and every "must refuse" plant carries the
 //! control that would otherwise let "refuse everything" pass.
 //!
-//! The registered numbers are SATURATION-3 G2's real measurements, so these are the actual first
-//! two citizens of the registry rather than invented ones: the `(O,O,O)` sigma kernel at 207,025
-//! determinants, 65.7 sigma/s on the GPU against 20.8 on the 32-thread CPU mesh.
+//! The registered numbers are REAL MEASUREMENTS of the `(O,O,O)` sigma kernel at 207,025
+//! determinants, so these are the registry's actual citizens rather than invented ones.
+//!
+//! **Re-registered 2026-09-01** against the production arm (`holon-gpu/examples/fci_bench.rs`,
+//! the in-crate kernel that `holon-chem`'s solve path now uses) rather than the prototype. A
+//! registration is a MEMORY of a measurement and calibrations are rented, so it is refreshed
+//! when the thing it remembers is replaced. The prototype's own numbers (65.7 sigma/s, 318.4
+//! GFLOP/s) are not lost: they are banked in `conformance/BENCHMARKS.md`, where the three
+//! independent readings of this kernel are compared side by side.
 
 use holon_resource::probe::ProbeVerdict;
 use holon_resource::registry::{
@@ -22,11 +28,20 @@ fn gpu_entry() -> Entry {
             size: SIZE,
             device: DeviceClass::Gpu,
         },
-        mean: 65.7,
-        spread: 2.0,
+        // 68.4-69.1 sigma/s WARM over three runs, sd 0.51-0.91 within a run. The spread here
+        // is the BETWEEN-run figure, which is the wider and therefore the honest one: a
+        // spot-check taken in a different process must not convict an entry for the gap
+        // between two of its own runs.
+        //
+        // COLD is a different number entirely — 54.4 sigma/s, 26% low — and that gap once
+        // convicted a correct entry when the benchmark registered warm and spot-checked cold.
+        // Registration and spot-check are both warm now, and this comment is why.
+        mean: 68.8,
+        spread: 1.0,
         k: 3.0,
-        instrument: "SATURATION-3 G2, s3gpu/sigma.cu",
-        // Atomics-free by construction, five repeat runs bit-identical.
+        instrument: "holon-gpu/examples/fci_bench.rs, (O,O,O), warm, 2026-09-01",
+        // Atomics-free by construction, cuBLAS pinned to pedantic math with a fixed workspace,
+        // five repeat applications bit-identical ON THE OPERATOR THAT RUNS.
         determinism: Determinism::FixedOrder { runs_checked: 5 },
     }
 }
@@ -38,11 +53,17 @@ fn cpu_entry() -> Entry {
             size: SIZE,
             device: DeviceClass::Cpu,
         },
-        // 17.2-20.8 over two runs at loadavg 18 and 32; the spread is the machine.
+        // 17.2-20.8 over two runs at loadavg 18 and 32; the spread is the machine. This is the
+        // 32-thread AGGREGATE and it is deliberately NOT refreshed: the machine has been
+        // carrying an ozone tabulation on 27 cores since 2026-08-31, and a 32-thread arm
+        // measured against that would be measuring the neighbours rather than the kernel.
+        // The single-thread pinned arm WAS re-measured (0.95-1.11 sigma/s on a P-core,
+        // CPU-time, loadavg 66) and is not registered here because dispatch does not place
+        // one thread — it places the mesh.
         mean: 20.8,
         spread: 1.8,
         k: 3.0,
-        instrument: "SATURATION-3 G2, s3_sigma_cost.rs",
+        instrument: "SATURATION-3 G2, s3_sigma_cost.rs (32-thread aggregate, not refreshed)",
         determinism: Determinism::FixedOrder { runs_checked: 2 },
     }
 }
@@ -75,11 +96,11 @@ fn plant_d12_a_mis_registered_entry_is_convicted() {
     let r = registry();
     let key = gpu.key;
     assert!(matches!(
-        r.spot_check(&key, 65.7),
+        r.spot_check(&key, 68.8),
         Some(SpotCheck::Consistent { .. })
     ));
     assert!(
-        matches!(r.spot_check(&key, 61.0), Some(SpotCheck::Consistent { .. })),
+        matches!(r.spot_check(&key, 66.5), Some(SpotCheck::Consistent { .. })),
         "a deviation inside k*spread was convicted; the tolerance is too tight to survive a \
          thermal throttle"
     );
@@ -87,16 +108,16 @@ fn plant_d12_a_mis_registered_entry_is_convicted() {
     // THE PLANT: register the GPU at 10x its measured throughput, then observe the real rate.
     let mut lying = Registry::new();
     let mut liar = gpu_entry();
-    liar.mean = 657.0;
+    liar.mean = 688.0;
     lying.register(liar);
-    match lying.spot_check(&key, 65.7) {
+    match lying.spot_check(&key, 68.8) {
         Some(SpotCheck::Convicted {
             observed,
             mean,
             tolerance,
         }) => {
-            assert_eq!((observed, mean), (65.7, 657.0));
-            assert!(tolerance < 591.3);
+            assert_eq!((observed, mean), (68.8, 688.0));
+            assert!(tolerance < 619.2);
         }
         other => panic!(
             "a 10x mis-registration survived the spot-check: {other:?}. The registry is trusted \

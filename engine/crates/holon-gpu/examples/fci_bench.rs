@@ -145,6 +145,7 @@ fn main() {
     let mut reps = 20usize;
     let mut species = vec!["O".to_string(), "O".to_string(), "O".to_string()];
     let mut core_type_arg = String::from("unset");
+    let mut davidson_iters = 0usize;
     let mut i = 0;
     while i < args.len() {
         let v = || args.get(i + 1).unwrap_or_else(|| panic!("{} needs a value", args[i])).clone();
@@ -152,6 +153,7 @@ fn main() {
             "--reps" => reps = v().parse().expect("--reps"),
             "--species" => species = v().split(',').map(|s| s.to_string()).collect(),
             "--core-type" => core_type_arg = v(),
+            "--davidson" => davidson_iters = v().parse().expect("--davidson"),
             other => panic!("unknown argument {other}; this binary refuses what it cannot parse"),
         }
         i += 2;
@@ -429,4 +431,49 @@ fn main() {
         ),
     }
     println!("PLANT CONTROL held: the honest entry at its own rate is {honest:?}");
+
+    // ---------------- should the whole Davidson loop move device-side? ----------------
+    //
+    // The lane was asked to EVALUATE this, and an estimate would have been wrong. The obvious
+    // argument — "PCIe is 0.5 ms against 15 ms of compute, so moving the driver buys 3%" —
+    // counts only the transfer and ignores what the driver itself costs. Per iteration the
+    // host does O(m) dot products and axpys over `n_det` doubles for a subspace of size m up
+    // to 48, which at this size is over a hundred passes across a 1.6 MB vector, plus a
+    // Rayleigh-Ritz on the m x m subspace. That is not obviously smaller than the sigma.
+    //
+    // So it is measured: run the real driver against the real operator for a fixed iteration
+    // count and subtract the sigma time the same operator reports. What is left is everything
+    // the driver does, and it is the ceiling on what moving the loop device-side could recover.
+    if davidson_iters > 0 {
+        let diag = space.diagonal(&ci);
+        let t0 = Instant::now();
+        let (e, _v, iters, resid, exit) = holon_chem::tier::davidson_eigh_from_op(
+            &mut op,
+            &diag,
+            0.0, // never converge: measure the loop, not the problem
+            davidson_iters,
+            None,
+        );
+        let wall = t0.elapsed().as_secs_f64();
+        let per_iter = wall / iters as f64;
+        // One iteration applies sigma ONCE in the steady state (one new basis vector per
+        // expansion). The restart iteration applies it twice; over `davidson_iters` that is a
+        // small correction and it is NOT smoothed away — the count is reported so the reader
+        // can see what the denominator is.
+        let sigma_share = gpu_kernel / per_iter;
+        println!(
+            "\n--- should the Davidson loop move device-side? MEASURED, not estimated ---\n\
+             {iters} iterations in {wall:.3} s = {:.1} ms/iter (E {e:.9}, resid {resid:.2e}, \
+             exit {exit:?})\n\
+             one device sigma is {:.1} ms, so the sigma is {:.0}% of an iteration and the \
+             HOST-SIDE driver is {:.0}%\n\
+             ceiling on what moving the loop device-side could recover at this size: \
+             {:.0}% of wall, and only if the host work went to ZERO",
+            per_iter * 1e3,
+            gpu_kernel * 1e3,
+            100.0 * sigma_share,
+            100.0 * (1.0 - sigma_share),
+            100.0 * (1.0 - sigma_share)
+        );
+    }
 }

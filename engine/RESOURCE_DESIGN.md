@@ -339,6 +339,17 @@ The GPU entry is the pattern the lead asked for — adoption by measurement, det
 declared, refusal recorded — and it was the first case of **D0**: it wins 3.2×, its gate
 passes, and it was *not* adopted while the workload's class was undeclared.
 
+**What the 3.2x does NOT buy, measured 2026-09-01.** The sigma ratio is not the solve ratio.
+On `(O,O,O)` one Davidson iteration is 410 ms of which the device sigma is 14.7 ms — the
+HOST-SIDE driver is 96%, because `tier::davidson_eigh_from_op` rebuilds the whole `m x m`
+subspace matrix every iteration (2,304 dot products over 207,025 doubles at `m = 48`) when only
+the new row and column changed. And the table generator's parallelism is at the NODE level: 32
+concurrent single-threaded solves, which one GPU serialises. So the device arm helps a SINGLE
+large solve and does not help a table — G2's "adopting the GPU idles 32 cores rather than adding
+to them", confirmed one level up. The lever is the driver, not the device, and it is named in
+`conformance/atomworld/gpu_fci/RESULTS.md` rather than pulled here, because changing it moves
+every committed table's trailing bits.
+
 **Since 2026-09-01 the class is declarable, so the refusal has moved from the kernel to the
 artifact.** `holon_chem::sigma_op::SigmaProvider` binds a whole determinant solve to ONE class
 — Davidson, both derivative sigmas and the CG response all come from it — and

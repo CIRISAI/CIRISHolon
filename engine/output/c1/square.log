@@ -1,0 +1,46 @@
+# C1 GATE CAMPAIGN  (prereg conformance/water_observatory/C1_GATE_PREREG.md)
+# curve: STO-3G FCI H-H, read from h2::h2_point / h2::equilibrium
+R_e 1.388694018018 bohr   D_e 0.204142352108 Ha   V(R_e) -1.137306051222 Ha
+E''(R_e) 0.477097668015 Ha/bohr^2   omega_harm 0.022790089111 a.u. (5001.846 cm^-1)
+mu(H2) 918.576323431 m_e   mu(D2) 1835.741470484 m_e   T 300 K   beta 1052.583416 Ha^-1
+beta*omega(H2) 23.9885   banked inner knot (r_floor) 0.392722459 bohr
+
+## gate (c): P=1 is the classical trajectory
+  5000 steps at dt=4: worst |dR| 0.000e0 bohr   worst |dV| 0.000e0
+  path length 24.494982 bohr (must exceed 0.1 or the gate is VOID)
+  classical energy: E0 -1.116825642  end-of-run |dE| 3.750e-5 Ha
+  worst |dE| over the run, first half 3.937e-5 / second half 3.937e-5 Ha
+  (velocity Verlet's energy error is BOUNDED and oscillatory, not secular;
+   the two halves are printed so a secular drift would be visible as growth)
+  MUTATION CONTROL P=2 (spread ring): worst |dR| 2.340e-1 bohr — must be LARGE
+
+## gate (d)/G5: the bead-forgetting commuting square
+  states are free-ring-polymer draws at 300 K (the shape a LIFTED state has
+  before the potential has acted on it); 32 draws per row, mean +- spread
+     P   Rg(bohr)          force_gap         defect_pos        defect_vel        H_P drift/|H_P|
+     1  0.0000+-0.0000  0.000e0+-0.0e0  0.000e0+-0.0e0  0.000e0+-0.0e0  -1.952e-16
+     2  0.3217+-0.0846  5.871e-2+-5.8e-2  2.557e-4+-2.5e-4  1.267e-4+-1.2e-4  -3.014e-5
+     4  0.3624+-0.0653  5.347e-2+-5.3e-2  2.328e-4+-2.3e-4  1.147e-4+-1.1e-4  -3.764e-5
+     8  0.3767+-0.0515  4.970e-2+-4.6e-2  2.164e-4+-2.0e-4  1.066e-4+-9.8e-5  -3.788e-5
+    16  0.3632+-0.0581  4.231e-2+-3.8e-2  1.843e-4+-1.7e-4  9.072e-5+-8.1e-5  -4.185e-5
+    32  0.3670+-0.0445  5.008e-2+-4.9e-2  2.181e-4+-2.1e-4  1.070e-4+-1.0e-4  -6.482e-5
+    64  0.3789+-0.0415  5.318e-2+-5.4e-2  2.316e-4+-2.3e-4  1.130e-4+-1.1e-4  -1.169e-4
+
+  dt scaling of defect_pos (deterministic ring, P=16, spread 0.08 bohr):
+   dt  8.00  defect_pos 4.512470e-5  force_gap 2.590655e-3
+   dt  4.00  defect_pos 1.128117e-5  force_gap 2.590655e-3
+   dt  2.00  defect_pos 2.820294e-6  force_gap 2.590655e-3
+   dt  1.00  defect_pos 7.050734e-7  force_gap 2.590655e-3
+   dt  0.50  defect_pos 1.762684e-7  force_gap 2.590655e-3
+   fitted exponent 2.0000  (staked window [1.7, 2.3])
+
+  Rg scaling of force_gap (deterministic ring, P=32, dt=4):
+   spread 0.020  Rg 7.071068e-3  force_gap 1.613023e-4  defect_pos 7.024011e-7
+   spread 0.040  Rg 1.414214e-2  force_gap 6.456984e-4  defect_pos 2.811736e-6
+   spread 0.080  Rg 2.828427e-2  force_gap 2.590655e-3  defect_pos 1.128117e-5
+   spread 0.160  Rg 5.656854e-2  force_gap 1.049036e-2  defect_pos 4.568094e-5
+   spread 0.320  Rg 1.131371e-1  force_gap 4.414161e-2  defect_pos 1.922175e-4
+   spread 0.640  Rg 2.262742e-1  force_gap 2.233851e-1  defect_pos 9.727448e-4
+   fitted exponent over spread <= 0.16 bohr: 2.0074  (staked window [1.6, 2.4])
+   the two widest rings are OUTSIDE the quadratic region and are reported as
+   the law's measured domain edge, not folded into the fit

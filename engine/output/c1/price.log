@@ -1,0 +1,21 @@
+### pinned to CPU 0 (P-core)
+
+## G7 price model
+  banked PES           80.38 ns/call     (acc -9667149.640)
+  exact STO-3G FCI  47696.00 ns/call     (593x the table)
+  normal-mode xform   1.9218 ns/element  (P=256, 125946.4 ns per transform)
+  P=  64 1 chain x 100000 steps: predicted    2.09 s  observed    4.47 s  ratio 2.138  (staked: within a factor 3)
+       Vcalls 6400064 (expected 6400000)  ->  observed/predicted per call 1.000
+  P= 256 1 chain x 100000 steps: predicted   27.25 s  observed   40.08 s  ratio 1.471  (staked: within a factor 3)
+       Vcalls 25600256 (expected 25600000)  ->  observed/predicted per call 1.000
+
+### pinned to CPU 24 (E-core)
+
+## G7 price model
+  banked PES          139.11 ns/call     (acc -9667149.640)
+  exact STO-3G FCI  119645.40 ns/call     (860x the table)
+  normal-mode xform   3.0227 ns/element  (P=256, 198098.3 ns per transform)
+  P=  64 1 chain x 100000 steps: predicted    3.37 s  observed    3.30 s  ratio 0.979  (staked: within a factor 3)
+       Vcalls 6400064 (expected 6400000)  ->  observed/predicted per call 1.000
+  P= 256 1 chain x 100000 steps: predicted   43.18 s  observed   47.51 s  ratio 1.100  (staked: within a factor 3)
+       Vcalls 25600256 (expected 25600000)  ->  observed/predicted per call 1.000

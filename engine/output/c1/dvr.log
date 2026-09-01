@@ -1,0 +1,66 @@
+# C1 GATE CAMPAIGN  (prereg conformance/water_observatory/C1_GATE_PREREG.md)
+# curve: STO-3G FCI H-H, read from h2::h2_point / h2::equilibrium
+R_e 1.388694018018 bohr   D_e 0.204142352108 Ha   V(R_e) -1.137306051222 Ha
+E''(R_e) 0.477097668015 Ha/bohr^2   omega_harm 0.022790089111 a.u. (5001.846 cm^-1)
+mu(H2) 918.576323431 m_e   mu(D2) 1835.741470484 m_e   T 300 K   beta 1052.583416 Ha^-1
+beta*omega(H2) 23.9885   banked inner knot (r_floor) 0.392722459 bohr
+
+## banked table (4096 knots)
+hermite max|dE| 3.4084e-14 Ha   max|dF| 2.1381e-10 Ha/bohr
+interpolant minimum R 1.388694044763 (d +2.675e-8)  V -1.137306051222 (d -8.882e-16)
+
+## DVR H2 / exact
+  residuals: ritz 3.609e-12  grid 2.852e-10  box 5.304e-10  numerov 7.142e-10
+  WORK: solves 4  potential_calls 22532
+  E0 -1.126017936372   (E0-Vmin) 0.011288114850
+  E1 -1.104312765189   (E1-Vmin) 0.032993286034
+  E2 -1.083638681240   (E2-Vmin) 0.053667369982
+  E3 -1.063973105737   (E3-Vmin) 0.073332945485
+  E4 -1.045323542369   (E4-Vmin) 0.091982508854
+  E5 -1.027721102692   (E5-Vmin) 0.109584948530
+  ZPE 0.011288114850 Ha   E_thermal(300K) 0.011288114853 Ha   thermal-ZPE +2.597e-12 Ha
+  omega_e (E1-E0) 0.021705171 a.u. = 4763.7344 cm^-1
+  omega_e x_e (from E0,E1,E2) 0.000515544 a.u. = 113.1487 cm^-1
+  ZPE/(omega_harm/2) 0.990616122   ZPE - omega_harm/2 -1.069297e-4 Ha (-0.9384%)
+
+## DVR H2 / banked
+  residuals: ritz 3.566e-12  grid 2.852e-10  box 5.304e-10  numerov 7.142e-10
+  WORK: solves 4  potential_calls 22532
+  E0 -1.126017936372   (E0-Vmin) 0.011288114850
+  E1 -1.104312765189   (E1-Vmin) 0.032993286034
+  E2 -1.083638681240   (E2-Vmin) 0.053667369982
+  E3 -1.063973105737   (E3-Vmin) 0.073332945485
+  E4 -1.045323542369   (E4-Vmin) 0.091982508854
+  E5 -1.027721102692   (E5-Vmin) 0.109584948530
+  ZPE 0.011288114850 Ha   E_thermal(300K) 0.011288114853 Ha   thermal-ZPE +2.597e-12 Ha
+  omega_e (E1-E0) 0.021705171 a.u. = 4763.7344 cm^-1
+  omega_e x_e (from E0,E1,E2) 0.000515544 a.u. = 113.1487 cm^-1
+  ZPE/(omega_harm/2) 0.990616122   ZPE - omega_harm/2 -1.069297e-4 Ha (-0.9384%)
+
+## DVR D2 / exact
+  residuals: ritz 1.410e-14  grid 4.330e-14  box 5.085e-14  numerov 1.235e-13
+  WORK: solves 4  potential_calls 22532
+  E0 -1.129299207205   (E0-Vmin) 0.008006844017
+  E1 -1.113725916020   (E1-Vmin) 0.023580135202
+  E2 -1.098677717625   (E2-Vmin) 0.038628333597
+  E3 -1.084139635932   (E3-Vmin) 0.053166415291
+  E4 -1.070105521958   (E4-Vmin) 0.067200529264
+  E5 -1.056576677163   (E5-Vmin) 0.080729374059
+  ZPE 0.008006844017 Ha   E_thermal(300K) 0.008006845201 Ha   thermal-ZPE +1.184e-9 Ha
+  omega_e (E1-E0) 0.015573291 a.u. = 3417.9423 cm^-1
+  omega_e x_e (from E0,E1,E2) 0.000262546 a.u. = 57.6223 cm^-1
+  ZPE/(omega_harm/2) 0.702660176   ZPE - omega_harm/2 -3.388201e-3 Ha (-29.7340%)
+
+## DVR D2 / banked
+  residuals: ritz 5.882e-15  grid 3.308e-14  box 4.508e-14  numerov 1.219e-13
+  WORK: solves 4  potential_calls 22532
+  E0 -1.129299207205   (E0-Vmin) 0.008006844017
+  E1 -1.113725916020   (E1-Vmin) 0.023580135202
+  E2 -1.098677717625   (E2-Vmin) 0.038628333597
+  E3 -1.084139635932   (E3-Vmin) 0.053166415291
+  E4 -1.070105521958   (E4-Vmin) 0.067200529264
+  E5 -1.056576677163   (E5-Vmin) 0.080729374059
+  ZPE 0.008006844017 Ha   E_thermal(300K) 0.008006845201 Ha   thermal-ZPE +1.184e-9 Ha
+  omega_e (E1-E0) 0.015573291 a.u. = 3417.9423 cm^-1
+  omega_e x_e (from E0,E1,E2) 0.000262546 a.u. = 57.6223 cm^-1
+  ZPE/(omega_harm/2) 0.702660176   ZPE - omega_harm/2 -3.388201e-3 Ha (-29.7340%)

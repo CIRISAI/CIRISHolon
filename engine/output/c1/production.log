@@ -1,0 +1,26 @@
+# C1 GATE CAMPAIGN  (prereg conformance/water_observatory/C1_GATE_PREREG.md)
+# curve: STO-3G FCI H-H, read from h2::h2_point / h2::equilibrium
+R_e 1.388694018018 bohr   D_e 0.204142352108 Ha   V(R_e) -1.137306051222 Ha
+E''(R_e) 0.477097668015 Ha/bohr^2   omega_harm 0.022790089111 a.u. (5001.846 cm^-1)
+mu(H2) 918.576323431 m_e   mu(D2) 1835.741470484 m_e   T 300 K   beta 1052.583416 Ha^-1
+beta*omega(H2) 23.9885   banked inner knot (r_floor) 0.392722458 bohr
+
+## G1/G4 production (banked, 8 chains, 800000 sampled steps/chain)
+H2 P=256 dt=4: ZPE_RPMD 0.0112790306 +- 6.24e-6   ZPE_DVR 0.0112881149
+    E_cv-E_ref -9.0843e-6 Ha = -0.0805% of ZPE_DVR   stat 0.0552%   prim-virial -7.776e-5
+    Rg 0.148524 bohr   tau 18.6   samples 6400000   Vcalls 1802242048   excursions 0   wall 394.3s
+H2 P=256 dt=2: ZPE_RPMD 0.0112731879 +- 8.65e-6   ZPE_DVR 0.0112881149
+    E_cv-E_ref -1.4927e-5 Ha = -0.1322% of ZPE_DVR   stat 0.0766%   prim-virial -1.407e-5
+    Rg 0.148491 bohr   tau 31.5   samples 6400000   Vcalls 1802242048   excursions 0   wall 439.5s
+D2 P=256 dt=4: ZPE_RPMD 0.0080038071 +- 5.98e-6   ZPE_DVR 0.0080068440
+    E_cv-E_ref -3.0381e-6 Ha = -0.0379% of ZPE_DVR   stat 0.0747%   prim-virial -3.645e-5
+    Rg 0.121521 bohr   tau 27.9   samples 6400000   Vcalls 1802242048   excursions 0   wall 431.8s
+D2 P=256 dt=2: ZPE_RPMD 0.0080027206 +- 8.05e-6   ZPE_DVR 0.0080068440
+    E_cv-E_ref -4.1246e-6 Ha = -0.0515% of ZPE_DVR   stat 0.1006%   prim-virial -4.621e-6
+    Rg 0.121502 bohr   tau 41.7   samples 6400000   Vcalls 1802242048   excursions 0   wall 403.1s
+
+## G4 isotope shift
+  harmonic ratio sqrt(mu_H2/mu_D2)      0.707378514
+  RPMD   ZPE(D2)/ZPE(H2) = 0.709618353 +- 6.60e-4
+  DVR    ZPE(D2)/ZPE(H2) = 0.709316314
+  RPMD - harmonic  +2.2398e-3   DVR - harmonic  +1.9378e-3

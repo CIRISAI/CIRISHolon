@@ -132,6 +132,7 @@ ohhh_fci_energy         evaluates E_FCI for (O,H,H,H) from ab-initio Hamiltonian
 ohhh_mbe3_energy        evaluates E_MBE3 reference energy for (O,H,H,H) 4-atom system
 de4_ohhh_fci            exact ab-initio 4-body residual dE4 = E_FCI - E_MBE3
 sort_ohhh_internals     canonical S3-quotiented sort for 6 internal coordinates of (O,H,H,H)
+ohhh_fci_grad           E_FCI(OH3) with its exact Cartesian gradient (9 seeded dual solves, warm-startable); consumer: holon-render sim.rs accumulate_four_body
 
 # --- the Carrier Tower (WB-8 sprint lane) ---
 add_contribution        adds a typed energy/Hamiltonian contribution to a TheoryNode in its own carrier fiber

@@ -16,9 +16,10 @@
 
 use crate::dual::D2;
 use crate::elements::{HYDROGEN, OXYGEN};
-use crate::pair::{atom_energy, pair_point, solve_geometry};
+use crate::pair::{atom_energy, geometry_problem, pair_point, solve_geometry};
 use crate::trimer::TrimerTable;
 use crate::water::WaterTable;
+use std::sync::OnceLock;
 
 /// Measured far-field cutoff (bohr) where dE4 decays below T1 interpolation tolerance (~5e-5 Ha).
 pub const R_CUT: f64 = 6.0;
@@ -49,8 +50,8 @@ pub fn ohhh_mbe3_energy(
     water_table: &WaterTable,
     trimer_table: &TrimerTable,
 ) -> f64 {
-    let e_o = atom_energy(OXYGEN);
-    let e_h = atom_energy(HYDROGEN);
+    let e_o = atom_energy_o();
+    let e_h = atom_energy_h();
 
     let o = &centers[0];
     let h1 = &centers[1];
@@ -80,6 +81,101 @@ pub fn ohhh_mbe3_energy(
         + trimer_table.eval([r12, r23, r31]).0;
 
     e_o + 3.0 * e_h + pairs + triples
+}
+
+
+/// The isolated-atom energies of this model, computed ONCE. They are constants of the
+/// level of theory, and the old path re-solved them ab initio on every MBE3 evaluation —
+/// two full FCI solves per call buying two numbers that never change.
+pub fn atom_energy_o() -> f64 {
+    static E: OnceLock<f64> = OnceLock::new();
+    *E.get_or_init(|| atom_energy(OXYGEN))
+}
+pub fn atom_energy_h() -> f64 {
+    static E: OnceLock<f64> = OnceLock::new();
+    *E.get_or_init(|| atom_energy(HYDROGEN))
+}
+
+/// The FCI half of the four-body term with its EXACT Cartesian gradient.
+pub struct OhhhFciGrad {
+    /// Total energy E_FCI(OH3), hartree (electronic + nuclear repulsion).
+    pub e: f64,
+    /// dE_FCI/d(position), hartree/bohr, per atom in slot order [O, H1, H2, H3].
+    /// The oxygen row is minus the sum of the hydrogen rows BY CONSTRUCTION
+    /// (translation invariance), so the force sum over the quadruple is exactly zero
+    /// in floating point, not approximately.
+    pub grad: [[f64; 3]; 4],
+    /// The converged value-part CI vector — the warm start for the NEXT solve at a
+    /// nearby geometry. 1,568 doubles; cheap to keep per hub.
+    pub ci: Vec<f64>,
+    pub davidson_iters_total: usize,
+    pub worst_residual: f64,
+}
+
+/// E_FCI(OH3) and its exact Cartesian gradient in nine seeded dual solves.
+///
+/// # Why this shape, and what it replaced
+///
+/// The runtime force path used to take FOUR value-only solves per recompute (base plus a
+/// forward difference along each O-H radial), each of which ALSO re-solved two isolated
+/// atoms and six pair diatomics that are constants and loaded tables respectively —
+/// 36 FCI solves per recompute, 4 of them physics, buying HALF a gradient (the radial
+/// projection) with O(h) error and, as landed, a broken momentum ledger.
+///
+/// This is the compressed object: one seeded dual solve per (hydrogen, axis) gives the
+/// EXACT directional derivative through the same forward-mode machinery `pair_point`
+/// has always used (the value slot is identical across the nine, so the first solve's
+/// CI vector warm-starts the other eight, and the caller's per-hub cache warm-starts
+/// the first). The oxygen gradient is imposed by translation invariance rather than
+/// solved for: E(x+t) = E(x) exactly, so grad_O = -(grad_H1 + grad_H2 + grad_H3), and
+/// the quadruple's force sum is zero to the last bit.
+///
+/// No finite-difference step, no radial projection, no mass in sight: the caller gets
+/// -grad as FORCES and applies them raw.
+pub fn ohhh_fci_grad(centers: &[[f64; 3]; 4], warm: Option<&[f64]>) -> OhhhFciGrad {
+    let species = [OXYGEN, HYDROGEN, HYDROGEN, HYDROGEN];
+    let mut grad = [[0.0f64; 3]; 4];
+    let mut e = 0.0f64;
+    let mut ci: Vec<f64> = Vec::new();
+    let mut iters = 0usize;
+    let mut worst = 0.0f64;
+    let mut start: Option<Vec<f64>> = warm.map(|w| w.to_vec());
+    for atom in 1..4usize {
+        for axis in 0..3usize {
+            let dual: Vec<[D2; 3]> = (0..4)
+                .map(|a| {
+                    core::array::from_fn(|x| {
+                        if a == atom && x == axis {
+                            D2::var(centers[a][x])
+                        } else {
+                            D2::c(centers[a][x])
+                        }
+                    })
+                })
+                .collect();
+            let (space, mo, nuc) = geometry_problem(&species, dual);
+            let sol = crate::fci::solve_determinant_from(&space, &mo, start.as_deref());
+            let tot = sol.e + nuc;
+            grad[atom][axis] = tot.d;
+            if atom == 1 && axis == 0 {
+                e = tot.v;
+                ci = sol.vector.clone();
+            }
+            iters += sol.davidson_iters;
+            worst = worst.max(sol.residual);
+            start = Some(sol.vector);
+        }
+    }
+    for x in 0..3 {
+        grad[0][x] = -(grad[1][x] + grad[2][x] + grad[3][x]);
+    }
+    OhhhFciGrad {
+        e,
+        grad,
+        ci,
+        davidson_iters_total: iters,
+        worst_residual: worst,
+    }
 }
 
 /// Exact ab-initio 4-body term dE4 = E_FCI - E_MBE3 from Cartesian coordinates.

@@ -599,6 +599,10 @@ pub struct Sim {
     /// and recomputed the virial would be two answers about one configuration.
     pub de4_cached_virial: f64,
     pub de4_cached_valid: bool,
+    /// Per-hub warm start: the converged CI vector of each oxygen's last four-body
+    /// solve. Consecutive recomputes of a barely-moved quadruple start Davidson from
+    /// the answer instead of from cold.
+    pub de4_ci: Vec<(usize, Vec<f64>)>,
     pub e_wall: f64,
     pub e_spring: f64,
     /// Downward acceleration of the uniform gravitational field, atomic units. Zero
@@ -724,6 +728,7 @@ impl Sim {
             de4_cached_energy: 0.0,
             de4_cached_virial: 0.0,
             de4_cached_valid: false,
+            de4_ci: Vec::new(),
             e_wall: 0.0,
             e_spring: 0.0,
             g: 0.0,
@@ -1414,6 +1419,7 @@ impl Sim {
         self.de4_last_pos.resize(n, [0.0; 3]);
         self.de4_cached_forces.resize(n, (0.0, 0.0, 0.0));
         self.de4_cached_valid = false;
+        self.de4_ci.clear();
         self.slots.resize(n, 0);
         // The pair sector is cutoff-local and is rebuilt from the cell list; it carries no
         // per-atom entry to preserve, so it is cleared rather than resized.
@@ -2342,7 +2348,10 @@ impl Sim {
         }
     }
 
-    pub(crate) fn compute_forces(&mut self) {
+    /// Recompute the whole force ledger at the CURRENT positions, without stepping.
+    /// Public because the conservation gates need forces at a fixed geometry — a
+    /// gradient check that has to integrate to see a force is measuring the integrator.
+    pub fn compute_forces(&mut self) {
         for i in 0..self.n {
             self.a_pair[i] = (0.0, 0.0, 0.0);
             self.a_ext[i] = (0.0, 0.0, 0.0);
@@ -2870,7 +2879,6 @@ impl Sim {
 
         const R_CUT: f64 = DE4_R_CUT;
         const R_IN: f64 = DE4_R_IN;
-        const H_FD: f64 = 1e-4;
 
         let mut e_four = 0.0;
         let mut quad_virial = 0.0f64;
@@ -2892,6 +2900,7 @@ impl Sim {
         // ascending too, so the triples of hydrogens come out in that same order and the
         // floating-point sum is unchanged.
         let geom = self.geom();
+        let species = self.species_slots();
         let nb = core::mem::take(&mut self.neighbours);
         let mut hs: Vec<usize> = Vec::new();
         for o in 0..self.n {
@@ -2939,95 +2948,146 @@ impl Sim {
 
                         // Compact encounter under R_CUT = 6.0 bohr!
                         let r_max = r1.max(r2).max(r3);
-                        let (s, _, _) = crate::cells::switch_c2(r_max, R_IN, R_CUT);
-                        if s <= 0.0 {
+                        let (sw, dsw, _) = crate::cells::switch_c2(r_max, R_IN, R_CUT);
+                        if sw <= 0.0 {
                             continue;
                         }
 
                         self.de4_eval_count += 1;
-                        let de4_base = holon_chem::quaternary::de4_ohhh_fci(
-                            &[po, p1, p2, p3],
-                            &self.water,
-                            &self.trimer,
-                        );
-                        let u_four = s * de4_base;
-                        e_four += u_four;
 
-                        // Radial finite difference forces:
-                        let h_indices = [h1, h2, h3];
-                        let radii_fd = [r1, r2, r3];
-                        let mut mut_centers = [po, p1, p2, p3];
-                        let mut f_o = [0.0f64; 3];
-
-                        for hid in 0..3 {
-                            let local_idx = hid + 1;
-                            let r_val = radii_fd[hid].max(1e-12);
-                            let u_vec = [
-                                (mut_centers[local_idx][0] - po[0]) / r_val,
-                                (mut_centers[local_idx][1] - po[1]) / r_val,
-                                (mut_centers[local_idx][2] - po[2]) / r_val,
-                            ];
-
-                            // Perturb radial coordinate:
-                            mut_centers[local_idx][0] += H_FD * u_vec[0];
-                            mut_centers[local_idx][1] += H_FD * u_vec[1];
-                            mut_centers[local_idx][2] += H_FD * u_vec[2];
-
-                            let r1_p = dist(mut_centers[0], mut_centers[1]);
-                            let r2_p = dist(mut_centers[0], mut_centers[2]);
-                            let r3_p = dist(mut_centers[0], mut_centers[3]);
-                            let rmax_p = r1_p.max(r2_p).max(r3_p);
-                            let (s_p, _, _) = crate::cells::switch_c2(rmax_p, R_IN, R_CUT);
-                            let ep = if s_p > 0.0 {
-                                s_p * holon_chem::quaternary::de4_ohhh_fci(
-                                    &mut_centers,
-                                    &self.water,
-                                    &self.trimer,
-                                )
-                            } else {
-                                0.0
-                            };
-
-                            // restore
-                            mut_centers[local_idx][0] -= H_FD * u_vec[0];
-                            mut_centers[local_idx][1] -= H_FD * u_vec[1];
-                            mut_centers[local_idx][2] -= H_FD * u_vec[2];
-
-                            let f_mag = -(ep - u_four) / H_FD;
-                            // The four-body virial, `r · dE/dr`, with `f_mag = −dE/dr`.
-                            // The coordinate is radial in the O-H distance, so this is the
-                            // same `Σ s · dE/ds` the other two sectors use — the sector
-                            // differs, the formula does not.
-                            quad_virial += -radii_fd[hid] * f_mag;
-                            let f_h = [f_mag * u_vec[0], f_mag * u_vec[1], f_mag * u_vec[2]];
-                            f_o[0] -= f_h[0];
-                            f_o[1] -= f_h[1];
-                            f_o[2] -= f_h[2];
-
-                            // NO MASS DIVISION. `a_pair` holds FORCE — `push_side` stores
-                            // `fx` with no mass anywhere, `internal_force` returns this
-                            // array under that name, and the integrator divides at the
-                            // point of use (`half = 0.5 * dt / mass`). Dividing here put
-                            // `F/m` into a force slot, which the integrator then divided
-                            // again. `mass()` is in ELECTRON MASSES, so the divisions were
-                            // by 1837 (H) and 29165 (O): the four-body force reaching the
-                            // trajectory was three to four orders too weak, and the
-                            // equal-and-opposite pair stopped cancelling because the two
-                            // partners were divided by DIFFERENT masses. Net per quadruple
-                            // = Sum f_h * (1/m_H - 1/m_O), a SYSTEMATIC momentum source
-                            // rather than roundoff, which is why the banked dE4 seeds sat
-                            // at |p|/bound 9.8e3-4.2e5 on 6 of 6 while energy stayed in
-                            // bound: the energy ledger reads `u_four`, which was correct
-                            // all along. Gated by tests/de4_momentum.rs, two-directionally.
-                            let h_idx = h_indices[hid];
-                            total_forces[h_idx].0 += f_h[0];
-                            total_forces[h_idx].1 += f_h[1];
-                            total_forces[h_idx].2 += f_h[2];
+                        // EXACT four-body force. Nine seeded dual solves give the exact
+                        // Cartesian gradient of E_FCI(OH3) — `ohhh_fci_grad` imposes the
+                        // oxygen row by translation invariance, so the FCI force sum is
+                        // zero to the last bit — and the MBE3 half is assembled from THE
+                        // SAME curves the pair and triple sectors apply, so the four-body
+                        // term subtracts exactly what the rest of the ledger adds and its
+                        // gradient is pairwise by construction. This replaced a scheme
+                        // that took 36 value-only solves per recompute (4 of them
+                        // physics: the others re-solved two isolated atoms and six pair
+                        // diatomics that are constants and loaded tables) for HALF a
+                        // gradient — the radial projection — with O(h) forward-difference
+                        // error: every tangential component, including every H-H force
+                        // inside the correction, never reached the trajectory. No
+                        // finite-difference step remains, and no mass appears anywhere:
+                        // `total_forces` holds FORCE, and the integrator divides once.
+                        let centers4 = [po, p1, p2, p3];
+                        let warm = self
+                            .de4_ci
+                            .iter()
+                            .find(|(hub, _)| *hub == o)
+                            .map(|(_, v)| v.clone());
+                        let fci =
+                            holon_chem::quaternary::ohhh_fci_grad(&centers4, warm.as_deref());
+                        match self.de4_ci.iter_mut().find(|(hub, _)| *hub == o) {
+                            Some(slot) => slot.1 = fci.ci,
+                            None => self.de4_ci.push((o, fci.ci)),
                         }
 
-                        total_forces[o].0 += f_o[0];
-                        total_forces[o].1 += f_o[1];
-                        total_forces[o].2 += f_o[2];
+                        // MBE3 value and gradient from the loaded curves, all pairwise.
+                        let e_o = holon_chem::quaternary::atom_energy_o();
+                        let e_h = holon_chem::quaternary::atom_energy_h();
+                        let r12 = dist(p1, p2);
+                        let r23 = dist(p2, p3);
+                        let r31 = dist(p3, p1);
+                        let mut e_mbe3 = e_o + 3.0 * e_h;
+                        let mut gm = [[0.0f64; 3]; 4]; // grad E_MBE3, local slots [O,H1,H2,H3]
+
+                        // The six pair terms, from the bank's own Hermite curves
+                        // (value, slope) — the render table's zero IS the dissociated
+                        // asymptote, which is exactly the `pair - atoms` quantity the
+                        // MBE3 definition subtracts.
+                        {
+                            let pl = [po, p1, p2, p3];
+                            let pair_list: [(usize, usize, f64); 6] = [
+                                (0, 1, r1),
+                                (0, 2, r2),
+                                (0, 3, r3),
+                                (1, 2, r12),
+                                (2, 3, r23),
+                                (3, 1, r31),
+                            ];
+                            let gidx = [o, h1, h2, h3];
+                            for &(a, b, r) in &pair_list {
+                                let t =
+                                    self.bank.table_at(species[gidx[a]], species[gidx[b]]);
+                                let (v, dv, _) = t.eval(r.max(1e-12));
+                                e_mbe3 += v;
+                                add_pair_grad(&mut gm, &pl, a, b, r, dv);
+                            }
+                        }
+
+                        // The four triple terms, from the same tables the triple sector
+                        // serves, each with its analytic gradient in its three distances.
+                        {
+                            let pl = [po, p1, p2, p3];
+                            let (v, g) = self.water.eval(r1, r2, r12);
+                            e_mbe3 += v;
+                            add_pair_grad(&mut gm, &pl, 0, 1, r1, g[0]);
+                            add_pair_grad(&mut gm, &pl, 0, 2, r2, g[1]);
+                            add_pair_grad(&mut gm, &pl, 1, 2, r12, g[2]);
+                            let (v, g) = self.water.eval(r2, r3, r23);
+                            e_mbe3 += v;
+                            add_pair_grad(&mut gm, &pl, 0, 2, r2, g[0]);
+                            add_pair_grad(&mut gm, &pl, 0, 3, r3, g[1]);
+                            add_pair_grad(&mut gm, &pl, 2, 3, r23, g[2]);
+                            let (v, g) = self.water.eval(r3, r1, r31);
+                            e_mbe3 += v;
+                            add_pair_grad(&mut gm, &pl, 0, 3, r3, g[0]);
+                            add_pair_grad(&mut gm, &pl, 0, 1, r1, g[1]);
+                            add_pair_grad(&mut gm, &pl, 3, 1, r31, g[2]);
+                            let (v, g) = self.trimer.eval([r12, r23, r31]);
+                            e_mbe3 += v;
+                            add_pair_grad(&mut gm, &pl, 1, 2, r12, g[0]);
+                            add_pair_grad(&mut gm, &pl, 2, 3, r23, g[1]);
+                            add_pair_grad(&mut gm, &pl, 3, 1, r31, g[2]);
+                        }
+
+                        let de4 = fci.e - e_mbe3;
+                        let u_four = sw * de4;
+                        e_four += u_four;
+
+                        // F = -grad(sw * de4) = -sw*(grad E_FCI - grad E_MBE3)
+                        //     - de4 * dsw * grad r_max, the last pairwise on the
+                        // argmax O-H bond.
+                        let mut fl = [[0.0f64; 3]; 4];
+                        for a in 0..4 {
+                            for x in 0..3 {
+                                fl[a][x] = -sw * (fci.grad[a][x] - gm[a][x]);
+                            }
+                        }
+                        {
+                            let (amax, ra, pa) = if r1 >= r2 && r1 >= r3 {
+                                (1usize, r1, p1)
+                            } else if r2 >= r3 {
+                                (2usize, r2, p2)
+                            } else {
+                                (3usize, r3, p3)
+                            };
+                            let c = de4 * dsw;
+                            let rr = ra.max(1e-12);
+                            for x in 0..3 {
+                                let u = (pa[x] - po[x]) / rr;
+                                fl[amax][x] -= c * u;
+                                fl[0][x] += c * u;
+                            }
+                        }
+
+                        // The four-body virial: -sum p . F over the quadruple's IMAGED
+                        // positions. The force sum is exactly zero, so the origin drops
+                        // out, and for the pairwise decomposition this is the same
+                        // sum r . dU/dr the other sectors accumulate.
+                        let pl = [po, p1, p2, p3];
+                        for a in 0..4 {
+                            quad_virial -=
+                                pl[a][0] * fl[a][0] + pl[a][1] * fl[a][1] + pl[a][2] * fl[a][2];
+                        }
+
+                        let gidx = [o, h1, h2, h3];
+                        for a in 0..4 {
+                            total_forces[gidx[a]].0 += fl[a][0];
+                            total_forces[gidx[a]].1 += fl[a][1];
+                            total_forces[gidx[a]].2 += fl[a][2];
+                        }
                     }
                 }
             }
@@ -3063,6 +3123,19 @@ impl Sim {
 fn image_about(geom: crate::cells::BoxGeom, about: [f64; 3], a: Atom) -> [f64; 3] {
     let (dx, dy, dz) = geom.delta((about[0], about[1], about[2]), (a.x, a.y, a.z));
     [about[0] + dx, about[1] + dy, about[2] + dz]
+}
+
+/// One pairwise share of a scalar potential's gradient: `dv` is dV/dr for the pair
+/// (a, b) at separation `r`; the contribution is `dv` along the unit vector from a to b,
+/// equal and opposite — the same convention `push_side` carries, on imaged coordinates.
+#[inline]
+fn add_pair_grad(g: &mut [[f64; 3]; 4], p: &[[f64; 3]; 4], a: usize, b: usize, r: f64, dv: f64) {
+    let rr = r.max(1e-12);
+    for x in 0..3 {
+        let u = (p[b][x] - p[a][x]) / rr;
+        g[b][x] += dv * u;
+        g[a][x] -= dv * u;
+    }
 }
 
 #[inline]

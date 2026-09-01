@@ -161,3 +161,86 @@ fn the_four_body_forces_sum_to_zero_over_the_quartet() {
         net / scale
     );
 }
+
+
+/// The dE4-only force on each atom: ON minus OFF at identical positions.
+fn de4_force(on: &Sim, off: &Sim, i: usize) -> [f64; 3] {
+    let (fx, fy, fz) = on.internal_force(i);
+    let (gx, gy, gz) = off.internal_force(i);
+    [fx - gx, fy - gy, fz - gz]
+}
+
+/// The law the OLD scheme broke silently: radial-only finite differences summed to
+/// zero (momentum looked fine at the raw-force level) while NOT being -grad U — every
+/// tangential component, including every H-H force inside the correction, was missing.
+/// This measures force-against-gradient directly: displace all four atoms along a fixed
+/// asymmetric direction field, central-difference the four-body energy, and compare
+/// with the analytic four-body force projected on the same field.
+#[test]
+fn the_four_body_force_is_the_gradient_of_the_four_body_energy() {
+    let d: [[f64; 3]; 4] = [
+        [0.31, -0.12, 0.05],
+        [-0.20, 0.44, -0.11],
+        [0.07, -0.33, 0.29],
+        [-0.18, 0.01, -0.23],
+    ];
+    let delta = 5e-4;
+
+    let mut on = quartet(true);
+    on.compute_forces();
+    let mut off = quartet(false);
+    off.compute_forces();
+    let mut proj = 0.0;
+    for i in 0..4 {
+        let f = de4_force(&on, &off, i);
+        proj += f[0] * d[i][0] + f[1] * d[i][1] + f[2] * d[i][2];
+    }
+
+    let e_at = |sign: f64| -> f64 {
+        let mut s = quartet(true);
+        for i in 0..4 {
+            s.atoms[i].x += sign * delta * d[i][0];
+            s.atoms[i].y += sign * delta * d[i][1];
+            s.atoms[i].z += sign * delta * d[i][2];
+        }
+        s.compute_forces();
+        s.e_four
+    };
+    let du_dl = (e_at(1.0) - e_at(-1.0)) / (2.0 * delta);
+
+    let scale = du_dl.abs().max(1e-8);
+    let mismatch = (proj + du_dl).abs() / scale;
+    assert!(
+        mismatch < 1e-4,
+        "four-body force is not the energy's gradient: F.d = {proj:e}, dU/dl = {du_dl:e}, \
+         relative mismatch {mismatch:e} (the radial-only scheme fails this at order one)"
+    );
+}
+
+/// Rotation invariance: the four-body torque sums to zero. The pairwise MBE3 shares
+/// cancel exactly; the FCI gradient's net torque is zero in exact arithmetic and comes
+/// back at solver-residual scale here.
+#[test]
+fn the_four_body_torque_sums_to_zero() {
+    let mut on = quartet(true);
+    on.compute_forces();
+    let mut off = quartet(false);
+    off.compute_forces();
+    let mut t = [0.0f64; 3];
+    let mut scale = 0.0f64;
+    for i in 0..4 {
+        let f = de4_force(&on, &off, i);
+        let r = [on.atoms[i].x, on.atoms[i].y, on.atoms[i].z];
+        t[0] += r[1] * f[2] - r[2] * f[1];
+        t[1] += r[2] * f[0] - r[0] * f[2];
+        t[2] += r[0] * f[1] - r[1] * f[0];
+        let rn = (r[0] * r[0] + r[1] * r[1] + r[2] * r[2]).sqrt();
+        let fn_ = (f[0] * f[0] + f[1] * f[1] + f[2] * f[2]).sqrt();
+        scale = scale.max(rn * fn_);
+    }
+    let tn = (t[0] * t[0] + t[1] * t[1] + t[2] * t[2]).sqrt();
+    assert!(
+        tn <= 1e-6 * scale.max(1e-12),
+        "four-body torque does not cancel: |tau| = {tn:e} against scale {scale:e}"
+    );
+}

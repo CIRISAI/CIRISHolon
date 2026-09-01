@@ -146,7 +146,46 @@ spectroscopic_symbol    returns standard spectroscopic notation character (s, p,
 transport_operator      executes operator picture change under certified transport across carrier fibers
 unwrap_or_refuse        unwraps a certified capability or raises an explicit TransportRefusal fence
 
-
+# --- C2 real-time MPS electronic dynamics (tower.rs section 10) ---
+# The carrier is materialized and gated (C2_TDVP_RESULTS.md); its physics lives in
+# q8-mps, so this crate holds the fiber algebra and the entry point and nothing else in
+# holon-chem calls them -- nothing else in holon-chem is a time-dependent calculation.
+propagate               the C2 carrier's dynamics entry point: the ONE way a caller advances an electronic state in time, and the only place the empty-Hamiltonian refusal is raised. Consumed by tests/carrier_tower.rs today and by the C1->C2 climb when that fence is discharged
+with_term               the SecondQuantisedOp builder. Real API, not a test affordance: it is how a caller states a Hamiltonian term without reaching into the term list, and the fiber's addition law (pooling, never compiling twice) is only expressible because terms are added through it
 
 # --- the device-class arm (RESOURCE_DESIGN D0); the consumer is OUTSIDE this crate ---
 bit_identity_over_runs  holon-gpu's adoption gate: five applications of a device operator, refused unless BITWISE identical. Unreferenced here on purpose -- this crate names the contract and stays portable, and the device that has to pass the gate cannot live in a crate that ships to a browser
+
+# --- C1 quantum nuclei (rpmd.rs): the referee, the sampler, and the plants ---
+# Consumed by tests/c1_quantum_nuclei.rs, examples/c1_campaign.rs and examples/c1_gauge.rs.
+# `tower.rs` DECLARES the C1 carrier and this module is its physics; nothing else in the
+# library calls it, because nothing else in the library is a quantum-nuclear calculation.
+K_B_HARTREE_PER_KELVIN  Boltzmann's constant, stated once; tower.rs carried the literal twice
+MASS_U_DEUTERIUM        declared measured input; the isotope shift is C1's free prediction
+HARTREE_TO_CM_INV       REPORTING only — no gate is stated in wavenumbers
+banked_range            derives the H-H table range from WALL_CEILING/TAIL_TOLERANCE, not from a chosen R
+morse_levels            the anharmonic plant's closed-form spectrum; the referee is graded against it
+harmonic_ring_energy    the exact P-bead ring-polymer energy; the plant the P-ladder is graded against
+harmonic_exact_energy   its P -> infinity limit, the quantum thermal energy
+dvr_reference           the referee that asserts its own convergence and REFUSES otherwise
+numerov_levels          the independent second instrument; agreement with the DVR is the cross-check
+lanczos_lowest          lowest eigenvalues with an adaptive Krylov dimension
+lanczos_lowest_tol      the same with an explicit residual target
+tridiag_eigh            symmetric tridiagonal QL; cross-checked against fci::jacobi_eigh
+run_pimd                one PILE/BAOAB ring-polymer chain
+run_pimd_chains          the threaded multi-chain driver; between-chain spread is the second error bar
+blocked_mean            standard error from the blocking plateau, with the implied tau_int
+pair_forces_3d          pair energy and forces for the 3D tower-state dynamics
+classical_step_3d       C0 velocity-Verlet; the classical limit gate compares against it
+ring_step_3d            NVE RPMD on the C1 state, exact free-ring-polymer evolution
+classical_energy_3d     C0 total energy; its drift is the integrator's conservation error
+ring_energy_3d          H_P, the generator of ring_step_3d, so its drift IS the integrator error
+centroid_state          the diagonal retract done properly (positions AND velocities)
+commuting_budget        the bead-forgetting square's measured defect, with its mechanism
+reduced_mass_me         reduced mass from two declared atomic masses; no reduced mass is tabulated
+homonuclear             a diatomic of one species on a given curve
+thermal_energy          the reference's own thermal energy, so the ZPE correction is computed not waved away
+reset_excursions        clears the banked surface's out-of-domain counter between runs
+from_table              wraps an already-generated banked table
+from_modes              normal-mode to bead coordinates
+to_modes                bead to normal-mode coordinates

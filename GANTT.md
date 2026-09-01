@@ -54,6 +54,16 @@ Browser surface evaluator (mesh) → tables served → dE4 door.
 3D-only page, gravity vector, glow, panels (workbench-engine, FSD-W2).
 Ice seeders · triple-point prereg · C1-browser probe (subagent worktrees).
 
+## The fence law — operator's standing order, 2026-09-01
+
+**Any fence is a bug waiting to be fixed once the GPU solve is the path.**
+A fence without an owner and an exit is suppression (the CRATE_ALLOW ruling,
+generalized to every refusal in the system). Refusing loudly stays a feature
+— but a refusal is a DEBT with a fix path, never architecture. The ledger of
+every fence, classed PHYSICS-HONESTY / COMPUTE-PRICED / MODEL-FENCE with
+owner and exit per row, is node D's first deliverable (FENCES.md); the
+COMPUTE-PRICED class's exit is node F, which is why F multiplies the graph.
+
 ## The law this file lives under
 
 A node with no receipt-gate is a wish (TIERS.md's own rule). No timelines:

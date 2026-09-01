@@ -55,7 +55,8 @@ committed first.
 | rows | lane | what they were measuring |
 |---|---|---|
 | R-1 … R-7, R-13, R-14 | T3 engine-core | the storage/locality/PBC/threading/NPT surface |
-| R-8, and the folds R-9, R-10, R-11 | C1 / carrier tower | the ring-polymer carrier and its operators |
+| R-8 | `c1-rpmd` | the ring-polymer carrier's own operator: `RingPolymerOp`'s `Option<fn(f64) -> f64>` cannot carry a potential that owns anything |
+| the folds R-9, R-10, R-11 | `tower-complete` | the propagator, the grid range, and the `unsafe impl Sync` blocks |
 | R-12 | workbench-engine | the pair-curve door, timed from the browser |
 
 This matters for the SERIES below and not only for credit. The register's falsifier is a
@@ -65,6 +66,13 @@ without touching the domain at all. A ratio computed as if one lane produced all
 rows would be comparing growth against a domain nobody's work actually doubled. Read each
 lane's rows against the axis that lane moved; the two readings at the bottom already do
 this and this table is what lets a third one.
+
+**A correction to this table's own first version**, which is the same defect one level in:
+it originally read "R-8, and the folds R-9, R-10, R-11 | C1 / carrier tower", lumping TWO
+lanes into one row on my assumption that adjacent rows about the tower came from one place.
+They did not. Writing a provenance table from inference rather than from asking is how a
+correction acquires its own misattribution, and the fix — the lead naming the two lanes —
+took one question I should have asked before writing the table rather than after.
 
 **The durable fix is upstream of this file**: a register meant to be written by many lanes
 should be committed EMPTY on the day it is opened, so that every later row arrives as its

@@ -150,3 +150,42 @@ charts + derived V(H₂O–H₂O) → T5 phase certification (reference states =
 WB-3.2's inventory) → T6 continuum charts (WB-1's upper bands). Each
 dependency lands through its own campaign gates; this FSD is their
 integration target and adds no physics of its own.
+
+## 8. The mock law (WB-7) — added 2026-08-31 after review of the first shell
+
+**WB-7.1** Any interface artifact that does not execute certified physics
+MUST self-declare MOCK: on screen, in its manifest, and in its source
+header. A displayed quantity either traces to a computed value or is
+labeled SYNTHETIC beside its digits. A synthesized conservation ledger
+(`sin(performance.now())` presenting as ΔE) is the vacuous-success shape
+in a costume and is the specific incident this law is written from.
+
+**WB-7.2** Commits 84759ca and 2d0fc5e are so marked: a valuable
+interaction/ergonomics prototype (orbit camera, tier dock, touch targets,
+telemetry drawer — the vocabulary survives) whose physics is placeholder
+throughout: 2D canvas presenting as WebGL, `Math.random()` initial states
+(breaks WB-5.4), hardcoded 104.5°/0.096 nm insertion (molecules are
+discovered, not defined — §5 of the tasking), a 450.0 harmonic + 0.015 LJ
+(fitted potentials, banned from ENGINE physics by WB-5.1; tolerated in a
+declared mock's display layer only, and they must never migrate), P^−0.05
+box scaling standing in for NPT, refinement as a banner with no solve,
+and a manifest claiming WebGL2/T6 certification the code does not carry.
+The real shell replaces these with the Rust/wasm engine per §6–7.
+
+**WB-7.3** The naming and identity note: "Molecular Workbench" is
+established prior branding (Concord). The scientific identity of this
+instrument is **closure-certified recursive simulation** — coarse charts
+DERIVED from the same lower dynamics, admitted by measured closure,
+refined locally on budget failure, with ledgered handovers — which is the
+part the prior-art register (AdResS adaptive resolution, Narupa
+interactive MD, MB-pol/Deep-Potential water, Concord's workbench) does
+not contain. The name may say water; the claim says closure.
+
+**WB-7.4 — the acceptance demo (first-publication milestone), staked:**
+(1) H₂O emerges from unrestricted H/O dynamics; (2) promotion to the
+molecular quotient; (3) a DERIVED water–water interaction; (4) a
+perturbation drives the closure defect past its budget; (5) automatic
+local atomistic refinement; (6) the seam crossed with the energy ledger
+still closed; (7) a held-out observable predicted after the handoff.
+Seven steps, no kilometer tier required. When this loop runs live, the
+instrument is the novelty; until then every shell is WB-7.1 MOCK.

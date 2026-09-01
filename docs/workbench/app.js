@@ -1,3 +1,10 @@
+// ============================================================================
+// MOCK — WB-7.1 (FSD-W1 §8): this shell executes NO certified physics.
+// Every displayed quantity is SYNTHETIC unless labeled otherwise. The
+// interaction design is real; the numbers are placeholders. The fitted
+// constants below are display-layer only and must never migrate to engine
+// code. See conformance/water_observatory/WORKBENCH_FSD.md §8.
+// ============================================================================
 /**
  * CIRISHolon — Water Workbench (FSD-W1)
  * 3D Mobile-First Recursive Quantum-to-Bulk Engine

@@ -1,37 +1,229 @@
-# THE DRY-RESIDUAL REGISTER
+# The DRY-residual register — every irreducible special case the build forced
 
-*Opened 2026-09-01 by the closure-census lane, under WB-8.7 (`WORKBENCH_FSD.md` §10):
-"every special case, hardcoded branch, or per-composition carve-out the build FORCES us to
-write is a measurement against the claim — a witness pair at the architecture level."*
+*WB-8.7, the operator's law of 2026-09-01: the tower is not preparation for the
+experiment, it IS the experiment. Every special case, hardcoded branch or
+per-composition carve-out the build FORCES us to write is a measurement against
+the maximal claim — a witness pair at the architecture level. This register is
+where those measurements are banked, and its GROWTH RATE against domain size is
+the claim's live falsifier: short and closed = the fold is winning; growing with
+the domain = the DRY is wrong, said quantitatively.*
 
-**How to read this file.** It is not a to-do list and it is not a shame ledger. Each row is
-a place where the recursive object did NOT fold, recorded with the reason and with the
-fold that would absorb it. The register's **growth rate against domain size** is the live
-falsifier: short and closing as the domain widens means the fold is winning; growing in
-step with the domain means the DRY claim is wrong, said quantitatively.
+Kept beside `MISFITS.md` because it is the same kind of object one level up: that
+registry names defects in how we MEASURE, this one names defects in how the
+object FOLDS. An entry here is not a bug report and not a TODO. It is a place the
+fold did not close, with the reason it did not, and the condition under which it
+would.
 
-So every row carries the **domain it was forced by**, and the register is counted per
-domain rather than in total. A row with no fold named is not admissible: "we could not
-think of one" is itself a finding and must be written as the fold being unknown.
+**How to read the count.** The falsifier is a rate, not a level, so both numbers
+have to be recorded at every reading or the rate is unrecoverable.
 
-| id | residual | domain that forced it | the fold that would absorb it | why not folded now |
+| reading | date | materialized carriers | open residuals | closed since last |
 |---|---|---|---|---|
-| **R-LENS-DIM** | `q_tetrahedral` and `steinhardt_q` refuse 2D; `hexatic_psi6` refuses 3D. Three lenses where the object has one question: how orientationally ordered is the neighbourhood. | H/O dynamics, 2 dimensions and 3 | Bond-orientational order as harmonics on `S^(d−1)`, with `psi6` the `d = 2` instance of the same construction that gives `q6` at `d = 3`. | Written as two hardcoded cases because the 2D and 3D scenes arrived from different tiers and only the 2D one had data. The fold is standard mathematics, not research; this is a debt, not a wall. |
-| **R-SHELL-COUNT** | `want = if dims == 2 { 6 } else { 12 }` in the classifier: the size of a "first shell" is a hardcoded pair of integers. | same | The first coordination number derived from the scene's own radial distribution, not from a table of lattices. | A 12-atom scene has too few atoms for a radial distribution function to have a first minimum. The fold needs the T3 scale-up, which is exactly the axis WB-8.7 wants measured. |
-| **R-Z-SYMBOL** | `partition::symbol` maps nuclear charge to `H`/`C`/`N`/`O` and everything else to `X`. A per-species branch, which WB-8.7 §(2) names by name. | H/O census reporting | `holon_chem::elements`, which already holds the periodic table this duplicates. | `holon-lens` is deliberately zero-dependency so that it stays testable while `holon-render` is mid-refactor — and it WAS written during such a window. The isolation bought a real thing; the cost is this table. Fold when the census moves in-tree, or when `elements` is split into a `no_std` leaf the way `holon-device` was. |
-| **R-DUMP-CAP** | The trajectory format caps scenes at 16 atoms, because `C(16,2) = 120` pair bits fit a `u128`. | trajectory persistence | A variable-length bitset sized by the scene, as the engine's own pair sector already is. | The engine's scene size stopped being capped at T3 (`DEFAULT_SCENE_ATOMS` replaced `MAX_ATOMS`), so the ARTIFACT now carries a limit the OBJECT does not. That is the register's own shape: a representation constraining a thing that has outgrown it. This one will be forced by the first scene above 16 atoms and should be folded before then. |
-| **R-CENTROID-MASS** | `census::carrier_motion` takes a GEOMETRIC centroid where the physics wants a mass-weighted one. | closure census, Leg A | Carry mass in the trajectory header beside `Z`. | The dump carries nuclear charge because that is what the census's composition reading needs. The affected quantity is the split between translation and internal motion; the second motion statistic (the intra-block separation excursion) is centroid-free and settles a frozen carrier on its own, so the residual is bounded rather than load-bearing. Stated in the function's own doc comment as well as here. |
+| 1 | 2026-09-01 | 3 (C0, C1, C2) | 11 | — (first reading) |
 
-## Count, by domain
+Reading 1 is the baseline: it is not evidence for or against the claim, it is the
+zero against which the next reading is a measurement. The next reading is owed at
+the next materialized carrier or the next composition added to the water domain,
+whichever comes first.
 
-| domain | residuals open | closed |
-|---|---|---|
-| H/O chemical dynamics, 2D and 3D | 5 | 0 |
+---
 
-The register opens at five and nothing is closed yet, which is the honest starting point
-rather than a result. The number to watch is what this row does when a SECOND domain
-arrives — a third element, a 3D scene, a scene past sixteen atoms. If the count roughly
-doubles with the domain, the fold is not winning and WB-8.7's falsifier has fired.
+## Open residuals
 
-Two of the five (**R-SHELL-COUNT**, **R-DUMP-CAP**) are already known to be forced by the
-T3 scale-up, so that work package will move this table one way or the other on its own.
+### R-1 — the MPS contraction is written twice, once real and once complex
+
+`q8-mps`'s sweep engine is `f64` throughout (`mps::TensorSite`, `grow_left_mpo`,
+`apply_effective_h_mpo`), and real-time dynamics needs complex amplitudes, so
+`tdvp.rs` carries its own environment growth and its own effective-Hamiltonian
+application. The two are the same contraction with a different scalar.
+
+**Why it did not fold.** The crate has zero runtime dependencies by a
+load-bearing rule, so there is no numeric trait to be generic over that it did
+not write itself; and making the ground-state path generic would edit the live
+full-grid instrument, which `M-STALE-INSTRUMENT` says you do not do while it is
+running.
+
+**The fold that exists and was not used.** This engine already HAS the pattern —
+the Scalar seam (`holon-chem/src/scalar.rs`: one solver body, `f64`/`Dd`
+carriers, promotion as explicit transport, mixing a type error), which
+`tower.rs`'s own header cites as the horizontal axis's existence proof. That the
+C2 build did not reuse it is the honest content of this entry.
+
+**Exit.** Generalise the sweep engine over the Scalar seam once the full grid
+clears; the C2 module then loses roughly 300 lines and the residual closes.
+**Owner:** the C2/tower lane.
+
+### R-2 — C0's and C1's prices are invented; only C2's is measured
+
+`C0_ClassicalBO::price_per_substep` returns `1e-6 · N²` and
+`C1_RingPolymer::price_per_substep` returns `1e-6 · P · N²`. Neither constant was
+ever measured. `C2_MpsTdvp::price_per_substep` is a measurement with its four
+data points and its spread recorded (`C2_TDVP_RESULTS.md` §5).
+
+**Why this belongs here rather than in `MISFITS.md`.** Selection in this tower IS
+the corridor rule — argmin price subject to the budgets, proved in
+`lean/CIRISHolon/Carrier.lean` §5 — so an unmeasured price is not a cosmetic gap:
+it is a free parameter inside the only thing that chooses which carrier runs. Two
+of the three prices being decorative makes `select_min`'s guarantee vacuous on
+those two arms.
+
+**Exit.** Measure both the way C2's was measured, with the spread and the
+placement caveat (`M-PLACEMENT-LOTTERY`) stated. **Owner:** the C1 lane, with
+C1's ZPE gate.
+
+### R-3 — physical dimension 2 is hardcoded through the MPS stack
+
+`TensorSite`, `CTensorSite`, `MpoSite` and every contraction in `q8-mps` assume a
+two-state physical index. Correct for spin-orbitals and wrong the moment a
+carrier needs a bosonic mode, a spin-1 site, or a coarse-grained multi-level
+site.
+
+**The fold that exists.** WB-8.2 already made exactly this move once, and it is
+the tower's own idiom: `AngularShell { l: u8 }` replaced the S/P/D/F enum, on the
+principle that *Z prices, Z never branches*. `d` should be a value for the same
+reason `l` is.
+
+**Exit.** When a carrier needs `d > 2`. Registered now rather than then, so that
+the entry's AGE is visible if it sits here while the domain grows around it.
+**Owner:** unassigned — and that is recorded, not hidden.
+
+### R-4 — the corridor rule hardcodes exactly two budgets
+
+`TheoryNode` carries `closure_budget` and `conservation_budget`, and
+`select_corridor` tests exactly those two. The house rule is one gate per
+conservation law; a third conserved quantity therefore needs a third field and a
+third branch, in Rust and in the Lean both (`Node` in `Carrier.lean` §5 mirrors
+the same two).
+
+**Why it did not fold.** A budget vector is the obvious generalisation and it was
+not written, because the Lean side's `Admissible` becomes a fold over a list and
+the three corridor theorems' proofs change shape. That is a real cost and it was
+not paid; it is not a reason the fold is wrong.
+
+**Exit.** The third conserved quantity. **Owner:** the tower lane.
+
+### R-5 — the planted-defect switch lives in production code
+
+`tdvp::Mutation` is a four-variant enum branched on inside `Tdvp::step`, in
+shipping code, for gate use only.
+
+**Why it stays.** The alternative is a duplicated mutant integrator, which drifts
+from the real one and then stops testing it — the defect that makes a mutation
+battery reassuring instead of informative. Branching the real integrator is the
+cheaper wrong thing, and it is entered here so the register's count is honest
+rather than flattering.
+
+**Exit.** None proposed. This entry is expected to stay open, and an entry that
+is expected to stay open must say so, or the register's growth rate silently
+counts it as a pending win.
+
+### R-6 — the register's own grep-arm is not built
+
+WB-8.7 clause (2) requires the grep-armed audit to extend to code: a hardcoded
+species or composition branch must cite either its fold or its residual entry, or
+the gate refuses. `Audit/prereg_audit.py` does this for freezes against
+`MISFITS.md`; nothing does it for code against this file.
+
+**Consequence, stated plainly.** Until it is built, this register is populated by
+hand, so its count measures what someone remembered rather than what the tree
+contains — and the falsifier in the header is therefore weaker than it reads. A
+register whose coverage is invisible drifts behind the thing it registers, which
+is the same finding that dated `prereg_audit.py`'s own CONTACT table.
+
+**Exit.** A `Audit/dry_audit.py` that greps the engine for
+composition-conditioned branches and requires a citation. **Owner:** the tower
+lane.
+
+### R-7 — bond-orientational order is written twice, once for the plane and once for space
+
+`holon-lens::lens` carries `steinhardt_q` (refuses 2D) and `hexatic_psi6`
+(refuses 3D), and `q_tetrahedral` alongside them. Three functions where the
+object has one question: how orientationally ordered is a neighbourhood.
+
+**Why it did not fold.** The 2D and 3D scenes arrived from different tiers and
+only the 2D one had data, so the general construction was never forced.
+
+**The fold that exists.** Harmonics on `S^(d−1)`, with `psi6` the `d = 2`
+instance of the same sum that gives `q6` at `d = 3`. Standard mathematics, not
+research; this is a debt, not a wall.
+
+**Exit.** The first campaign that needs both dimensions at once.
+**Owner:** the closure-census lane.
+
+### R-8 — the size of a "first shell" is a hardcoded pair of integers
+
+`classifier::classify` uses `want = if dims == 2 { 6 } else { 12 }`.
+
+**The fold.** The first coordination number read off the scene's own radial
+distribution function rather than off a table of lattices.
+
+**Why it did not fold.** A twelve-atom scene has too few atoms for a radial
+distribution function to have a resolvable first minimum. The fold needs the T3
+scale-up, which is exactly the axis WB-8.7 asks to be measured.
+**Owner:** the closure-census lane, after T3.
+
+### R-9 — a second periodic table, four entries long
+
+`partition::symbol` maps nuclear charge to `H`/`C`/`N`/`O` and everything else to
+`X`. WB-8.7 clause (2) names per-species branches specifically.
+
+**The fold that exists.** `holon_chem::elements` already holds the table this
+duplicates.
+
+**Why it did not fold.** `holon-lens` is deliberately zero-dependency so that it
+stays testable while `holon-render` is mid-refactor — and it WAS written during
+exactly such a window, with its whole suite green on a tree where `holon-render`
+did not compile. The isolation bought something real; this table is its price.
+
+**Exit.** Fold when `elements` is split into a `no_std` leaf, the way
+`holon-device` was split out for the same reason one tier down.
+**Owner:** the closure-census lane.
+
+### R-10 — the trajectory artifact caps scenes at sixteen atoms
+
+`traj::MAX_DUMP_ATOMS = 16`, because `C(16,2) = 120` pair bits fit a `u128`.
+
+**Why this one is the register's own shape.** The engine STOPPED capping scene
+size at T3 (`DEFAULT_SCENE_ATOMS` replaced `MAX_ATOMS`), so the artifact now
+carries a limit the object does not: a representation constraining a thing that
+has outgrown it.
+
+**Exit.** A variable-length bitset sized by the scene, as the engine's own pair
+sector already is. Forced by the first scene above sixteen atoms, and it should
+be folded BEFORE then rather than by the failure.
+**Owner:** the closure-census lane.
+
+### R-11 — a geometric centroid where the physics wants a mass-weighted one
+
+`census::carrier_motion` takes an unweighted centroid because the trajectory
+header carries nuclear charge, not mass.
+
+**Bounded rather than load-bearing, and the bound is stated.** The affected
+quantity is the split between translation and internal motion. The second motion
+statistic the same gate uses — the intra-block separation excursion — is
+centroid-free and settles a frozen carrier on its own, so no verdict rests on the
+approximation alone. Declared in the function's own doc comment as well as here.
+
+**Exit.** Carry mass in the header beside `Z`.
+**Owner:** the closure-census lane.
+
+---
+
+## Unevaluated claim-surface (WB-8.7 clause 3)
+
+Not residuals — machinery that does not exist yet, listed because unbuilt
+machinery is unevaluated claim-surface and the standing rule that machinery debt
+gates campaigns is a requirement that the instrument be complete enough for its
+reading to mean something.
+
+* **The C1 → C2 climb.** C2 is a certified node and is not reachable as an edge:
+  no state lift, no operator picture change, no measured commuting certificate
+  (`c1_to_c2_transport_capability`, a typed stub).
+* **Two-site TDVP.** Single-site TDVP cannot grow a bond, so C2 cannot be handed
+  a rank-deficient start. The discharge route is 2TDVP and it is not built.
+* **C3+ (spinorial/Dirac, QED).** Typed stubs with fences, honestly not on the
+  water path.
+
+The founding case for why this list is kept: the dE₄ incident, where an unfolded
+path concealed an 80× price surprise precisely because nothing had forced its
+shape into the open.

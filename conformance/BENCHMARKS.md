@@ -1433,6 +1433,27 @@ replacement "wrong exposure / working set" framing; and the remedy "match the
 probe to the measurement in working set" — all of it. Three successive
 mechanisms for an effect that does not exist.
 
+**WHAT IS *NOT* RETRACTED, and I first over-retracted it (MESHER's catch).**
+The death of my ORIGINAL claim — "a short job gets an idle core and so runs at
+speed under load" — does NOT depend on any of the withdrawn ratios, because the
+evidence against it has no baseline in it:
+
+* MESHER's job burned **100–121 ms of CPU per fold in all three placements**
+  against a quiet ceiling of ≤26.7 ms (single-threaded, so quiet CPU cannot
+  exceed quiet wall). A job handed an idle core burns ~27 ms; descheduling
+  consumes no CPU at all. So it was running SLOWLY ON-CORE, not waiting.
+* My own probe's CPU time tracks its wall (user 0.07 of wall 0.07–0.11) — the
+  same evidence from the other side: never descheduled.
+* And my 4.30× above is itself the direct refutation: the short probe DID see
+  the load, by a factor of four.
+
+So the idle-core mechanism is dead three ways, none of them baseline-dependent.
+What the withdrawn 3.5× was doing was carrying that conclusion in the registry
+row as though the ratio were the evidence. **The row should keep the CPU-time
+clause and drop the 3.5× figure** — the conclusion is sound and its stated
+warrant was not, which is the same substance-survives-warrant-fails shape twice
+in one entry.
+
 **WHAT SURVIVES, and it is the better finding:** my quiet-gate really would have
 certified a saturated box as quiet, but because of its BASELINE, not its probe.
 A calibration gate compares against a record; if the record was taken under

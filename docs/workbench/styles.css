@@ -1,0 +1,780 @@
+/* ==========================================================================
+   CIRISHolon Water Workbench (FSD-W1) — Dark Observatory Design System
+   ========================================================================== */
+
+:root {
+  --bg-primary: #0a0d10;
+  --bg-secondary: #12181f;
+  --bg-card: #161e27;
+  --bg-hover: #1c2633;
+  --border: #223040;
+  --border-focus: #3d5a7d;
+  
+  --text-main: #e2e8f0;
+  --text-muted: #8899a6;
+  --text-dim: #546575;
+
+  --accent-cyan: #00e5ff;
+  --accent-green: #00ff88;
+  --accent-blue: #2979ff;
+  --accent-purple: #b388ff;
+  --accent-amber: #ffd600;
+  --accent-rose: #ff1744;
+
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  user-select: none;
+}
+
+#workbench-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ==========================================================================
+   1. Top Header & Observatory Telemetry Bar
+   ========================================================================== */
+
+#top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 52px;
+  padding: 0 16px;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border);
+  gap: 20px;
+  z-index: 10;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 280px;
+}
+
+.logo-mark {
+  font-size: 20px;
+  color: var(--accent-cyan);
+  text-shadow: 0 0 10px rgba(0, 229, 255, 0.4);
+}
+
+.brand-text .title {
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.8px;
+  color: #fff;
+  display: block;
+}
+
+.brand-text .subtitle {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+}
+
+/* Scale Ribbon (WB-1) */
+#scale-ribbon {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  max-width: 540px;
+  background: var(--bg-primary);
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+}
+
+.tier-indicator {
+  display: flex;
+  flex-direction: column;
+  min-width: 130px;
+}
+
+.tier-tag {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 10px;
+  color: var(--accent-cyan);
+  letter-spacing: 0.5px;
+}
+
+.scale-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #fff;
+}
+
+.zoom-track {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 4px;
+}
+
+.zoom-track input[type="range"] {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: #1c2836;
+  border-radius: 2px;
+  outline: none;
+}
+
+.zoom-track input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-cyan);
+  cursor: ew-resize;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.6);
+}
+
+.scale-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-dim);
+}
+
+.scale-ticks .tick.active {
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+
+/* Sim Rate & Display Honesty Panel (WB-1.4) */
+#sim-rate-panel {
+  display: flex;
+  gap: 16px;
+  background: var(--bg-primary);
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  font-family: var(--font-mono);
+}
+
+.readout-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.readout-label {
+  font-size: 8px;
+  color: var(--text-muted);
+}
+
+.readout-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-green);
+}
+
+.readout-group.secondary .readout-value {
+  color: var(--accent-cyan);
+}
+
+.top-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   2. Buttons, Badges & Sliders
+   ========================================================================== */
+
+button {
+  font-family: var(--font-sans);
+  cursor: pointer;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-main);
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.15s ease;
+}
+
+button:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-focus);
+}
+
+.btn-primary {
+  background: #17382e;
+  border-color: #2b775f;
+  color: var(--accent-green);
+}
+
+.btn-primary:hover {
+  background: #1d4a3d;
+}
+
+.btn-accent {
+  width: 100%;
+  background: #1a273b;
+  border-color: #2b456b;
+  color: var(--accent-cyan);
+  padding: 8px;
+  margin-top: 8px;
+}
+
+.btn-accent:hover {
+  background: #233754;
+}
+
+.btn-ghost {
+  background: transparent;
+}
+
+.badge-live, .badge-reset, .badge-hand, .badge-audit, .badge-holon, .badge-ledger {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+.badge-live { background: rgba(0, 229, 255, 0.15); color: var(--accent-cyan); }
+.badge-reset { background: rgba(255, 23, 68, 0.15); color: var(--accent-rose); }
+.badge-hand { background: rgba(179, 136, 255, 0.15); color: var(--accent-purple); }
+.badge-audit { background: rgba(0, 255, 136, 0.15); color: var(--accent-green); }
+.badge-holon { background: rgba(255, 214, 0, 0.15); color: var(--accent-amber); }
+.badge-ledger { background: rgba(41, 121, 255, 0.15); color: var(--accent-blue); }
+
+/* ==========================================================================
+   3. Main Workspace Layout
+   ========================================================================== */
+
+#workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+#controls-sidebar, #telemetry-sidebar {
+  width: 290px;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#telemetry-sidebar {
+  border-right: none;
+  border-left: 1px solid var(--border);
+  width: 320px;
+}
+
+.control-card, .telemetry-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 6px;
+}
+
+.card-header h3 {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+}
+
+.control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.control-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.control-label-row label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+}
+
+.val-sub {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.unit-toggle {
+  display: flex;
+  gap: 2px;
+}
+
+.unit-btn {
+  padding: 1px 5px;
+  font-size: 9px;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.unit-btn.active {
+  background: var(--bg-primary);
+  border-color: var(--border);
+  color: var(--accent-cyan);
+}
+
+.slider-val-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.slider-val-row input[type="range"] {
+  flex: 1;
+  -webkit-appearance: none;
+  height: 4px;
+  background: #111a24;
+  border-radius: 2px;
+}
+
+.slider-val-row input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: ew-resize;
+}
+
+.val-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent-cyan);
+  min-width: 60px;
+  text-align: right;
+}
+
+.barostat-indicator {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: var(--text-dim);
+}
+
+.btn-toggle {
+  width: 100%;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 6px;
+}
+
+.btn-toggle.active {
+  background: rgba(0, 255, 136, 0.12);
+  border-color: #2b775f;
+  color: var(--accent-green);
+}
+
+.btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.mix-btn {
+  padding: 6px 4px;
+  font-size: 10px;
+  text-align: center;
+}
+
+.mix-btn.active {
+  background: #18283a;
+  border-color: #3b5a80;
+  color: var(--accent-cyan);
+}
+
+/* Settling Status Indicator (WB-3.3) */
+.settling-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin-top: 4px;
+}
+
+.status-indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.status-indicator-dot.settled {
+  background: var(--accent-green);
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.6);
+}
+
+.status-indicator-dot.settling {
+  background: var(--accent-amber);
+  box-shadow: 0 0 6px rgba(255, 214, 0, 0.6);
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  100% { opacity: 1.0; }
+}
+
+.status-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.status-title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.status-desc {
+  font-size: 8px;
+  color: var(--text-muted);
+}
+
+/* The Hand Telemetry (WB-4) */
+.hand-telemetry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.hand-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.hand-row .h-label { color: var(--text-muted); }
+.hand-row .h-val { color: #fff; }
+.hand-row .h-val.highlight { color: var(--accent-purple); }
+
+/* ==========================================================================
+   4. Viewport & Canvas Section
+   ========================================================================== */
+
+#viewport-container {
+  flex: 1;
+  position: relative;
+  background: #05080a;
+  overflow: hidden;
+}
+
+#view-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#viewport-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+#physical-scale-bar {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: #fff;
+}
+
+.scale-line {
+  width: 100px;
+  height: 2px;
+  background: #fff;
+  position: relative;
+}
+
+.scale-line::before, .scale-line::after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 8px;
+  background: #fff;
+}
+
+.scale-line::before { left: 0; }
+.scale-line::after { right: 0; }
+
+#patch-indicator {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 23, 68, 0.2);
+  border: 1px solid var(--accent-rose);
+  color: var(--accent-rose);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 0 15px rgba(255, 23, 68, 0.4);
+}
+
+.hidden { display: none !important; }
+
+/* Hand Cursor Ring (WB-4.1) */
+.hand-cursor {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: none;
+}
+
+.grab-ring {
+  border: 2px dashed var(--accent-purple);
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  background: rgba(179, 136, 255, 0.15);
+  box-shadow: 0 0 12px rgba(179, 136, 255, 0.4);
+}
+
+.grab-label {
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--accent-purple);
+  background: rgba(0, 0, 0, 0.7);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+/* ==========================================================================
+   5. Telemetry, Order Parameters & Ledger Cards (WB-5)
+   ========================================================================== */
+
+.classifier-output {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  background: var(--bg-primary);
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+}
+
+.phase-call {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--accent-green);
+  letter-spacing: 0.5px;
+}
+
+.phase-conf {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.order-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.param-box {
+  background: var(--bg-primary);
+  padding: 6px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+.p-name { font-size: 8px; color: var(--text-muted); }
+.p-val { font-family: var(--font-mono); font-size: 11px; font-weight: 600; color: #fff; }
+
+.defect-metrics, .ledger-table, .hydro-metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.defect-row, .ledger-row, .hydro-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.d-label { color: var(--text-muted); }
+.d-val { color: #fff; }
+.d-val.green, .green { color: var(--accent-green); }
+
+.ledger-row.highlight {
+  color: var(--accent-purple);
+  font-weight: 600;
+}
+
+.ledger-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 3px 0;
+}
+
+.ledger-row.total {
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   6. Manifest & Provenance Modal (WB-3.4)
+   ========================================================================== */
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-focus);
+  border-radius: 8px;
+  width: 640px;
+  max-width: 90vw;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-header h2 {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--accent-cyan);
+}
+
+.btn-close {
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  color: var(--text-muted);
+}
+
+.modal-body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.manifest-section h4 {
+  font-size: 11px;
+  color: #fff;
+  margin-bottom: 6px;
+}
+
+.manifest-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 9px;
+}
+
+.manifest-table th, .manifest-table td {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.manifest-table th {
+  background: var(--bg-primary);
+  color: var(--text-muted);
+}
+
+.gate-tag {
+  background: rgba(0, 255, 136, 0.15);
+  color: var(--accent-green);
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-weight: 700;
+}
+
+.integrity-text {
+  font-size: 10px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}

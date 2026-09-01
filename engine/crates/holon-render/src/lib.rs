@@ -44,6 +44,7 @@ pub mod clock;
 pub mod holon;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod json;
+pub mod lattice;
 pub mod sim;
 pub mod table;
 pub mod trimer_bank;

@@ -29,7 +29,6 @@
 //! it is the pair gate's own history, and the reason this one refuses an unfamiliar grid
 //! rule instead of interpolating on it.
 
-use holon_chem::trimer::TrimerTable;
 
 /// Surfaces the bank will hold. SATURATION-3 ships four; the bound is stated rather than
 /// grown on demand because a fifth arriving should be a decision, not an allocation.
@@ -70,10 +69,43 @@ pub enum AxisRule {
     /// Nothing was declared. Never admissible: an undeclared spacing cannot be checked,
     /// and "unstated" must not read as "the same as ours".
     Undeclared,
-    /// This build's H3 spacing exactly: `trimer::r_of_tau` on both distance axes with the
-    /// crate's own `R_LO`, `R_HI` and `STRETCH_A`, and `trimer::node_c` on `u`. A table
-    /// declaring this is interpolable by the existing evaluator with no new code.
+    /// Equally spaced between the declared endpoints. What `holon-tables`' emitter
+    /// actually produces (`TableGrid::geometry`), confirmed against a real artifact.
+    UniformLinear,
+    /// This build's H3 spacing: `trimer::r_of_tau` with `STRETCH_A`, and `trimer::node_c`
+    /// on `u`. NOT what the shipped artifacts use — recorded because the in-browser
+    /// surface is on it, and because assuming the two agreed is the mistake this whole
+    /// enum exists to prevent.
     TauStretchH3,
+}
+
+impl AxisRule {
+    /// Does a coordinate array actually look like this rule?
+    ///
+    /// The artifact declares a rule AND ships the coordinates, and says the coordinates
+    /// win where they disagree. That makes the declared name checkable rather than
+    /// merely informative, and a disagreement is a REFUSAL: one of the two is wrong and
+    /// nothing on this side can tell which. It is the same principle that keeps
+    /// `claimed_exact` apart from `route` in the pair door — a file's self-assessment is
+    /// exactly what a file can get wrong.
+    pub fn matches(self, nodes: &[f64]) -> bool {
+        match self {
+            AxisRule::Undeclared => false,
+            AxisRule::TauStretchH3 => true, // not cross-checkable here; see `admit`.
+            AxisRule::UniformLinear => {
+                if nodes.len() < 3 {
+                    // Two points are uniform by construction; there is nothing to check.
+                    return true;
+                }
+                let step = nodes[1] - nodes[0];
+                // A relative tolerance, because the endpoints are decimal literals and
+                // the interior is arithmetic on them: exact equality would refuse a
+                // correctly-emitted grid for its last bit.
+                let tol = 1e-9 * step.abs().max(1.0);
+                nodes.windows(2).all(|w| ((w[1] - w[0]) - step).abs() <= tol)
+            }
+        }
+    }
 }
 
 /// What the artifact says about the seams in its domain.
@@ -137,6 +169,29 @@ pub enum TrimerRefusal {
     DigestMissing,
     /// The node array is not filled, whatever the provenance says about it.
     SurfaceNotLoaded,
+    /// An axis shipped no coordinates. Spans and counts do not determine spacing, so a
+    /// surface without its coordinates cannot be interpolated at all.
+    CoordinatesMissing,
+    /// A coordinate array's length disagrees with the grid count it belongs to. One of
+    /// the two is wrong and the artifact does not say which.
+    CoordinateCountMismatch,
+    /// A coordinate array is not strictly increasing. A non-monotone axis has no
+    /// well-defined cell to locate a point in, and a search on it would silently return
+    /// whichever bracket it happened to find first.
+    CoordinatesNotMonotone,
+    /// The declared axis rule and the shipped coordinates disagree. The artifact says the
+    /// coordinates win, but a disagreement means one of its own statements is false and
+    /// nothing here can tell which.
+    AxisRuleContradictsCoordinates,
+    /// The energy array's length is not `nx * ny * nu`.
+    EnergyCountMismatch,
+    /// A `u` node lies outside `[-1, 1]`. `u` is the COSINE of the apex angle, so a value
+    /// past 1 is not a geometry at all — see [`TrimerRefusal::plain`] for the specific
+    /// way this is expected to arrive.
+    AngleCosineOutOfRange,
+    /// An `x` or `y` node is not a positive length. Both are sides of a triangle measured
+    /// from the apex, so zero or negative is not a degenerate geometry, it is not one.
+    SideLengthNotPositive,
 }
 
 impl TrimerRefusal {
@@ -191,6 +246,38 @@ impl TrimerRefusal {
             TrimerRefusal::SurfaceNotLoaded => {
                 "there are no node values in this surface; its provenance describes nothing"
             }
+            TrimerRefusal::CoordinatesMissing => {
+                "this surface ships no node coordinates on one or more axes; spans and \
+                 counts do not determine spacing, so there is nothing here to interpolate \
+                 on"
+            }
+            TrimerRefusal::CoordinateCountMismatch => {
+                "a coordinate array's length disagrees with the grid count it belongs to, \
+                 and the artifact does not say which of the two is right"
+            }
+            TrimerRefusal::CoordinatesNotMonotone => {
+                "a coordinate axis is not strictly increasing, so a point has no \
+                 well-defined cell and a bracket search would return whichever one it \
+                 met first"
+            }
+            TrimerRefusal::AxisRuleContradictsCoordinates => {
+                "this surface's declared axis rule and its own shipped coordinates \
+                 disagree; the coordinates are authoritative, but a disagreement means \
+                 one of the artifact's statements about itself is false"
+            }
+            TrimerRefusal::EnergyCountMismatch => {
+                "the energy array is not nx*ny*nu long, so the grid it claims and the \
+                 values it ships are not the same object"
+            }
+            TrimerRefusal::AngleCosineOutOfRange => {
+                "a u node is outside [-1, 1]; u is the COSINE of the apex angle, and a \
+                 value past 1 is most likely an axis parameterised as sqrt(1 - cos) \
+                 handed over as if it were the cosine itself"
+            }
+            TrimerRefusal::SideLengthNotPositive => {
+                "an x or y node is not a positive length, and both are triangle sides \
+                 measured from the apex"
+            }
         }
     }
 }
@@ -220,8 +307,15 @@ pub struct TrimerProvenance {
     pub void_count: u32,
     pub void_named: u32,
     pub seam: SeamRecord,
-    /// The merge digest. Zero means absent.
-    pub digest: u64,
+    /// The merge digest, as eight 32-bit words — the artifact ships a SHA-256 hex string,
+    /// which is 256 bits and does not survive a trip through a `u64` or a JavaScript
+    /// number. All-zero means absent.
+    ///
+    /// Checked for PRESENCE only. Reproducing it would mean recomputing a merge digest
+    /// over index, energy, BOTH derivatives and status, and this loader takes neither the
+    /// derivatives nor the status — so verification is owed and is named as owed rather
+    /// than implied by carrying the field.
+    pub digest: [u32; 8],
 }
 
 impl TrimerProvenance {
@@ -242,7 +336,7 @@ impl TrimerProvenance {
             void_count: 0,
             void_named: 0,
             seam: SeamRecord::Absent,
-            digest: 0,
+            digest: [0; 8],
         }
     }
 
@@ -258,13 +352,71 @@ impl TrimerProvenance {
     /// The door. Legs run in the schema's own order, so a surface with several faults is
     /// reported against the first one the schema lists rather than whichever happens to be
     /// checked first.
-    pub fn admit(&self, loaded: bool) -> Result<(), TrimerRefusal> {
+    ///
+    /// `grid` is the surface's own shape and coordinates; it is passed in rather than held
+    /// on the provenance because it is a fact about the ARRAYS, and the point of this
+    /// method is to weigh what the artifact SAYS against what it SHIPPED.
+    pub fn admit(&self, grid: &SurfaceGrid) -> Result<(), TrimerRefusal> {
         if self.route == crate::bank::Route::Undeclared {
             return Err(TrimerRefusal::RouteUndeclared);
         }
         if self.axis_rule == AxisRule::Undeclared {
             return Err(TrimerRefusal::GridRuleUnsupported);
         }
+        // ---- what the artifact SHIPPED, before anything it says about it -------------
+        //
+        // These run before the declaration legs because a surface whose arrays do not
+        // describe a grid cannot have its declarations weighed against anything. A door
+        // that checked the paperwork first would report a missing uncertainty on an
+        // artifact whose real fault is that it has no coordinates.
+        if grid.x.is_empty() || grid.y.is_empty() || grid.u.is_empty() {
+            return Err(TrimerRefusal::CoordinatesMissing);
+        }
+        if grid.x.len() != grid.nx || grid.y.len() != grid.ny || grid.u.len() != grid.nu {
+            return Err(TrimerRefusal::CoordinateCountMismatch);
+        }
+        for axis in [&grid.x, &grid.y, &grid.u] {
+            if !axis.iter().all(|v| v.is_finite()) || !axis.windows(2).all(|w| w[1] > w[0]) {
+                return Err(TrimerRefusal::CoordinatesNotMonotone);
+            }
+        }
+        // THE AXES MEAN SOMETHING, and the door checks that they could.
+        //
+        // `saturation3-mesh` stated the convention at 7dff58c: centres are
+        // `[0,0,0]`, `[x,0,0]`, `[y*u, y*s, 0]` with `s = sqrt(1 - u^2)`. So species[0] is
+        // the apex at the origin, `x` and `y` are the two sides measured from it, and `u`
+        // is the COSINE of the angle between them. The third side is not stored; it is
+        // `sqrt(x^2 + y^2 - 2*x*y*u)` by the law of cosines, which those centres satisfy
+        // exactly.
+        //
+        // These two legs exist because of a live near-miss they found while writing that
+        // down: a neighbouring lane parameterises the SAME axis as `c = sqrt(1 - cos)`
+        // over [0.05, 1.4142]. Handed over in `c` and consumed as `u`, the grid runs past
+        // 1, where `s = sqrt(1 - u^2)` is imaginary and clamps to zero — a silent band of
+        // degenerate collinear geometries along the top of the table, smooth and
+        // plausible and wrong. They caught it on the producing side before any handoff.
+        // This catches it on the consuming side, which is where a door belongs: the two
+        // checks are independent, and a hazard that is invisible in the numbers deserves
+        // to be caught twice rather than once.
+        if !grid.u.iter().all(|&u| (-1.0..=1.0).contains(&u)) {
+            return Err(TrimerRefusal::AngleCosineOutOfRange);
+        }
+        if !grid.x.iter().chain(grid.y.iter()).all(|&r| r > 0.0) {
+            return Err(TrimerRefusal::SideLengthNotPositive);
+        }
+        if grid.energy.len() != grid.nx * grid.ny * grid.nu {
+            return Err(TrimerRefusal::EnergyCountMismatch);
+        }
+        // The declared rule, weighed against the coordinates it ships. The artifact says
+        // the coordinates win; this leg is what makes that a checkable statement instead
+        // of a licence for the name to be wrong.
+        if !self.axis_rule.matches(&grid.x)
+            || !self.axis_rule.matches(&grid.y)
+            || !self.axis_rule.matches(&grid.u)
+        {
+            return Err(TrimerRefusal::AxisRuleContradictsCoordinates);
+        }
+        // ---- what the artifact SAYS ---------------------------------------------------
         if self.region.iter().any(|&r| r == 0) {
             return Err(TrimerRefusal::RegionShapeMissing);
         }
@@ -292,41 +444,66 @@ impl TrimerProvenance {
         if self.seam == SeamRecord::Absent {
             return Err(TrimerRefusal::SeamRecordMissing);
         }
-        if self.digest == 0 {
+        if self.digest.iter().all(|&w| w == 0) {
             return Err(TrimerRefusal::DigestMissing);
-        }
-        if !loaded {
-            return Err(TrimerRefusal::SurfaceNotLoaded);
         }
         Ok(())
     }
 }
 
-/// One admitted surface: the nodes, and what the artifact said about them.
+/// The shape and the coordinates a surface actually shipped.
+///
+/// ARBITRARY, not this build's 33 x 33 x 13. The emitter takes `--grid` and `--x/--y/--u`
+/// on the command line, so a shipped surface can be any box at any resolution, and the
+/// first real artifact is 4 x 4 x 2. An earlier draft of this module stored surfaces in
+/// `holon_chem::trimer::TrimerTable`, whose grid is fixed at compile time; that could not
+/// have held the artifact the emitter actually writes, and the mistake came from reading
+/// matching node COUNTS in a schema example as a matching grid RULE.
+#[derive(Clone, Debug, Default)]
+pub struct SurfaceGrid {
+    pub nx: usize,
+    pub ny: usize,
+    pub nu: usize,
+    /// The node coordinates, in the convention `saturation3-mesh` stated at 7dff58c:
+    /// `species[0]` is the APEX at the origin, `x` is the apex-to-`species[1]` side in
+    /// bohr, `y` is the apex-to-`species[2]` side, and `u` is the COSINE of the angle
+    /// between them, dimensionless on `[-1, 1]`. The third side is deliberately NOT
+    /// stored — it is `sqrt(x^2 + y^2 - 2*x*y*u)` — because two copies of one number are
+    /// two numbers that can disagree.
+    ///
+    /// AUTHORITATIVE where they disagree with `axis_rule` — the
+    /// artifact's own statement of precedence, so that an emitter changing its spacing
+    /// and forgetting to rename its rule still ships the truth.
+    pub x: Vec<f64>,
+    pub y: Vec<f64>,
+    pub u: Vec<f64>,
+    /// The energy column, `nx * ny * nu` long in the artifact's canonical node order.
+    pub energy: Vec<f64>,
+}
+
+/// One admitted surface: what it shipped, and what it said about it.
 pub struct TrimerSurface {
-    pub table: TrimerTable,
+    pub grid: SurfaceGrid,
     pub prov: TrimerProvenance,
 }
 
 /// The shipped surfaces this sandbox has admitted.
 ///
-/// HEAP-BACKED, and that is a size decision rather than a style one. A `TrimerTable` is
-/// 14,157 `f64` — 113 KB — and `Sim` is already 331 KB with the pair bank in it. Four
-/// surfaces held inline would take `Sim` past three quarters of a megabyte, which
-/// `holon-render-3d` has already been bitten by once (its `AtomWorld` had to be boxed
-/// after the pair bank landed, or the debug profile overflowed its stack building one).
-/// A `Vec` that is empty until a surface is actually loaded costs 24 bytes in the common
-/// case, which is the same choice `water` made and for the same reason.
+/// HEAP-BACKED throughout, and that is a size decision rather than a style one. `Sim` is
+/// already 331 KB with the pair bank in it, and `holon-render-3d` has been bitten once by
+/// that (its `AtomWorld` had to be boxed after the pair bank landed, or the debug profile
+/// overflowed its stack building one). Surfaces are `Vec`s that are empty until something
+/// is actually loaded, so a `Sim` that never sees one grows by a few words.
 pub struct TrimerBank {
     pub surfaces: Vec<TrimerSurface>,
     /// The last refusal, so a host that got a code can ask what it meant.
     pub last_refusal: Option<TrimerRefusal>,
-    /// The surface currently being pushed, node by node, over the ABI.
-    ///
-    /// Boxed and absent until `begin`, for the size reason in this struct's header: a
-    /// staging table held inline would put 113 KB in every `Sim` whether or not a host
-    /// ever loads a surface.
-    staging: Option<Box<TrimerTable>>,
+    /// The surface currently being pushed over the ABI.
+    staging: Option<SurfaceGrid>,
+    /// The digest words pushed for the staged surface. Held here rather than passed to
+    /// `finish` because a SHA-256 is eight words and `finish` already takes sixteen
+    /// declarations; an argument list nobody can read is its own kind of defect.
+    pub staging_digest: [u32; 8],
 }
 
 impl TrimerBank {
@@ -335,6 +512,7 @@ impl TrimerBank {
             surfaces: Vec::new(),
             last_refusal: None,
             staging: None,
+            staging_digest: [0; 8],
         }
     }
 
@@ -342,55 +520,93 @@ impl TrimerBank {
         self.surfaces.clear();
         self.last_refusal = None;
         self.staging = None;
+        self.staging_digest = [0; 8];
     }
 
-    /// Open a surface for filling. Discards any half-pushed one: an interrupted load must
-    /// not be able to contribute its nodes to the next.
-    pub fn begin(&mut self) {
-        let mut t = Box::new(TrimerTable::empty());
-        t.begin();
-        self.staging = Some(t);
+    /// Open a surface of the declared shape. Discards any half-pushed one: an interrupted
+    /// load must not be able to contribute its nodes to the next.
+    pub fn begin(&mut self, nx: usize, ny: usize, nu: usize) {
+        self.staging_digest = [0; 8];
+        self.staging = Some(SurfaceGrid {
+            nx,
+            ny,
+            nu,
+            x: vec![f64::NAN; nx],
+            y: vec![f64::NAN; ny],
+            u: vec![f64::NAN; nu],
+            energy: vec![f64::NAN; nx.saturating_mul(ny).saturating_mul(nu)],
+        });
     }
 
-    /// Push one node value. False if there is no open surface or the node is rejected.
-    pub fn knot(&mut self, index: usize, value: f64) -> bool {
-        match self.staging.as_mut() {
-            Some(t) => t.knot(index, value),
+    /// Push one coordinate. `axis` is 0 = x, 1 = y, 2 = u.
+    pub fn axis_node(&mut self, axis: usize, index: usize, value: f64) -> bool {
+        let Some(g) = self.staging.as_mut() else {
+            return false;
+        };
+        let target = match axis {
+            0 => &mut g.x,
+            1 => &mut g.y,
+            2 => &mut g.u,
+            _ => return false,
+        };
+        match target.get_mut(index) {
+            Some(slot) => {
+                *slot = value;
+                true
+            }
+            None => false,
+        }
+    }
+
+    /// Push one 32-bit word of the artifact's SHA-256 merge digest.
+    pub fn digest_word(&mut self, word: usize, value: u32) -> bool {
+        match self.staging_digest.get_mut(word) {
+            Some(slot) => {
+                *slot = value;
+                true
+            }
+            None => false,
+        }
+    }
+
+    /// Push one energy value at the artifact's canonical node index.
+    pub fn energy_node(&mut self, index: usize, value: f64) -> bool {
+        let Some(g) = self.staging.as_mut() else {
+            return false;
+        };
+        match g.energy.get_mut(index) {
+            Some(slot) => {
+                *slot = value;
+                true
+            }
             None => false,
         }
     }
 
     /// Close the staged surface and put it to the door.
     ///
-    /// Takes the staging table whatever happens, so a refused artifact cannot be finished
+    /// Takes the staging grid whatever happens, so a refused artifact cannot be finished
     /// twice or leave nodes behind for the next one to inherit.
-    pub fn finish(
-        &mut self,
-        meta: holon_chem::trimer::TrimerMeta,
-        prov: TrimerProvenance,
-    ) -> Result<usize, TrimerRefusal> {
-        let Some(mut t) = self.staging.take() else {
+    pub fn finish(&mut self, prov: TrimerProvenance) -> Result<usize, TrimerRefusal> {
+        let Some(grid) = self.staging.take() else {
             self.last_refusal = Some(TrimerRefusal::SurfaceNotLoaded);
             return Err(TrimerRefusal::SurfaceNotLoaded);
         };
-        // `finish` is false when nodes are missing; the table then reports `loaded =
-        // false` and the door refuses it on that leg rather than here, so there is one
-        // place that decides admissions.
-        t.finish(meta);
-        self.commit(*t, prov)
+        self.commit(grid, prov)
     }
 
     /// Admit a surface, or refuse it and say why.
     ///
-    /// The surface is moved in only on success: a refused artifact leaves NOTHING behind,
-    /// so a host that ignores the return code gets a sandbox with no surface rather than a
-    /// sandbox quietly integrating a refused one.
+    /// The surface is stored only on success: a refused artifact leaves NOTHING behind, so
+    /// a host that ignores the return code gets a sandbox with no surface rather than a
+    /// sandbox quietly integrating a refused one. That is also what keeps the fence
+    /// honest — see [`TrimerBank::any_heteronuclear`].
     pub fn commit(
         &mut self,
-        table: TrimerTable,
+        grid: SurfaceGrid,
         prov: TrimerProvenance,
     ) -> Result<usize, TrimerRefusal> {
-        if let Err(r) = prov.admit(table.loaded) {
+        if let Err(r) = prov.admit(&grid) {
             self.last_refusal = Some(r);
             return Err(r);
         }
@@ -399,7 +615,7 @@ impl TrimerBank {
             // problems, the same distinction `BANK_FULL` draws on the pair side.
             self.surfaces.remove(0);
         }
-        self.surfaces.push(TrimerSurface { table, prov });
+        self.surfaces.push(TrimerSurface { grid, prov });
         self.last_refusal = None;
         Ok(self.surfaces.len() - 1)
     }
@@ -407,7 +623,7 @@ impl TrimerBank {
     /// Is any admitted surface one the browser could not have generated?
     ///
     /// This is the fence, and it is a question about what is LOADED rather than a constant.
-    /// `holon_trimer_h_only` is its negation, and the viewer prints its disclaimer from
+    /// `holon_trimer_h_only` is its negation, and both viewers print their disclaimer from
     /// that export precisely so no sentence has to be hand-edited the day a surface lands.
     pub fn any_heteronuclear(&self) -> bool {
         self.surfaces.iter().any(|s| s.prov.is_heteronuclear())

@@ -2654,23 +2654,39 @@ impl Sim {
             self.atoms[j].species.z as u8,
             self.atoms[k].species.z as u8,
         );
-        let (a, b, c, v, g, env_abs, env_per_grad) = if let Some(surf) =
-            self.trimers.find([za, zb, zc])
+        let (a, b, c, v, g, env_abs, env_per_grad) = if self
+            .trimers
+            .find([za, zb, zc])
+            .is_some()
         {
-            // Align the 3 atom slots to the surface's declared species order
-            let perm = match_triple_slots(i, za, j, zb, k, zc, surf.prov.z).unwrap_or((i, j, k));
-            let (sa, sb, sc) = perm;
-            let (rab, rac, rbc) = (d(sa, sb), d(sa, sc), d(sb, sc));
-            let (val, grad) = surf.table.eval([rab, rac, rbc]);
-            (
-                sa,
-                sb,
-                sc,
-                val,
-                grad,
-                surf.table.curvature_envelope,
-                surf.table.curvature_per_gradient,
-            )
+            // A SHIPPED surface exists for this composition and is deliberately NOT
+            // evaluated. It is fenced and counted, which is what the fence counter is for.
+            //
+            // This branch used to call `TrimerTable::eval` on it. That was wrong in two
+            // independent ways, both found by putting a REAL artifact next to the code
+            // rather than the schema's example:
+            //
+            //   1. GRID RULE. `TrimerTable` is this build's 33x33x13 grid with
+            //      `r_of_tau`'s STRETCH_A = 2.0 spacing. `s3_tables` emits UNIFORM-LINEAR
+            //      spacing on an arbitrary grid -- the first real artifact is 4x4x2.
+            //      Interpolating uniform data on stretched axes is smooth, plausible, and
+            //      wrong everywhere except the boundary, which is the exact failure
+            //      `load_water_table` refuses by construction.
+            //   2. COORDINATES. `eval` takes three SIDE LENGTHS; the artifact's axes are
+            //      (x, y, u) with `u` an angle-like coordinate. Even on a matching grid
+            //      these would not be the same quantities.
+            //
+            // So a shipped surface is admitted, stored and READABLE -- the fence in
+            // `holon_trimer_h_only` lifts off it -- and it is not integrated until an
+            // evaluator exists for the geometry the artifact actually ships. Fencing costs
+            // a counted truncation; the alternative costs a wrong force nobody would see.
+            //
+            // A DEFAULT TripleTerm is `live: false`, which is this function's own way of
+            // saying "no server for this triple" -- the same exit the untabulated
+            // compositions take below. `served` is the other half: it must NOT report a
+            // shipped surface as served, or the census would book these as covered
+            // rather than fenced and the truncation would stop being counted.
+            return TripleTerm::default();
         } else {
             let n_o = (za == 8) as u32 + (zb == 8) as u32 + (zc == 8) as u32;
             let n_h = (za == 1) as u32 + (zb == 1) as u32 + (zc == 1) as u32;
@@ -2828,9 +2844,12 @@ impl Sim {
     /// `accumulate_three_body`, stated once so the fence count and the force loop cannot
     /// disagree about what is served.
     fn served(&self, z: [u8; 3]) -> bool {
-        if self.trimers.find(z).is_some() {
-            return true;
-        }
+        // A SHIPPED SURFACE IS NOT SERVED. It is admitted, stored and readable, and the
+        // three-body dispatch deliberately fences it (see `triple_term`) until an
+        // evaluator exists for the geometry `s3_tables` emits. Reporting it as served here
+        // would book every such triple as covered, and the truncation the fence creates
+        // would vanish from the census -- which is the one thing the census exists to
+        // prevent. This goes back to `true` in the same change that lands the evaluator.
         let n_o = z.iter().filter(|&&v| v == 8).count();
         let n_h = z.iter().filter(|&&v| v == 1).count();
         (n_h == 3 && self.trimer.loaded)
@@ -3144,6 +3163,12 @@ fn dist(a: [f64; 3], b: [f64; 3]) -> f64 {
 }
 
 #[inline]
+// KEPT THOUGH UNCALLED: this is the half of the fenced shipped-surface branch
+// that was RIGHT — a surface declares its species in its own order, and the
+// force loop's i, j, k need permuting to match. The evaluator that is owed will
+// need it. Deleting it would throw away the correct part of a branch removed for
+// its incorrect part.
+#[allow(dead_code)]
 fn match_triple_slots(
     i: usize, zi: u8,
     j: usize, zj: u8,

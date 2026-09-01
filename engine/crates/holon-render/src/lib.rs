@@ -1998,35 +1998,69 @@ pub fn trimer_refusal_code(r: trimer_bank::TrimerRefusal) -> u32 {
             T::SeamRecordMissing => 9,
             T::DigestMissing => 10,
             T::SurfaceNotLoaded => 11,
+            T::CoordinatesMissing => 12,
+            T::CoordinateCountMismatch => 13,
+            T::CoordinatesNotMonotone => 14,
+            T::AxisRuleContradictsCoordinates => 15,
+            T::EnergyCountMismatch => 16,
+            T::AngleCosineOutOfRange => 17,
+            T::SideLengthNotPositive => 18,
         }
 }
 
-/// Open a shipped surface for filling.
+/// Open a shipped surface of the declared shape.
+///
+/// The shape is the ARTIFACT's, not this build's. `s3_tables` takes `--grid` on the
+/// command line and the first real artifact is 4 x 4 x 2, so a loader that assumed the
+/// in-browser surface's fixed 33 x 33 x 13 could not have held it. An earlier draft of
+/// this door did assume exactly that, from reading matching node COUNTS in a schema
+/// example as a matching grid RULE.
 #[no_mangle]
-pub extern "C" fn holon_trimer_table_begin() {
-    sim().trimers.begin();
+pub extern "C" fn holon_trimer_table_begin(nx: u32, ny: u32, nu: u32) {
+    sim()
+        .trimers
+        .begin(nx as usize, ny as usize, nu as usize);
 }
 
-/// Push one node of the surface. `index` is the artifact's canonical node index.
+/// Push one node COORDINATE. `axis` is 0 = x, 1 = y, 2 = u.
+///
+/// The coordinates are what the artifact calls authoritative, and they are the reason
+/// this door can interpolate an artifact whose spacing is not this build's: it reads the
+/// node positions rather than reconstructing them from a rule name.
 #[no_mangle]
-pub extern "C" fn holon_trimer_table_knot(index: u32, value: f64) -> u32 {
-    u32::from(sim().trimers.knot(index as usize, value))
+pub extern "C" fn holon_trimer_table_axis(axis: u32, index: u32, value: f64) -> u32 {
+    u32::from(
+        sim()
+            .trimers
+            .axis_node(axis as usize, index as usize, value),
+    )
+}
+
+/// Push one energy value at the artifact's canonical node index.
+#[no_mangle]
+pub extern "C" fn holon_trimer_table_energy(index: u32, value: f64) -> u32 {
+    u32::from(sim().trimers.energy_node(index as usize, value))
+}
+
+/// Push one 32-bit word of the artifact's SHA-256 merge digest, `word` in `0..8`.
+#[no_mangle]
+pub extern "C" fn holon_trimer_table_digest(word: u32, value: u32) -> u32 {
+    u32::from(sim().trimers.digest_word(word as usize, value))
 }
 
 /// Close a shipped surface AND declare its provenance, in one call.
 ///
 /// Every argument is a DECLARATION the artifact makes. None is defaulted to something
-/// permissive: `route = 0`, `axis_rule = 0`, `seam = 0`, a zero region, zero cited curves,
-/// a zero digest and a zero uncertainty are each their own refusal, so a host that omits
-/// a field gets a refusal rather than an admission. That is the one property this door
-/// has that the pair door had to be given later.
+/// permissive: `route = 0`, `axis_rule = 0`, `seam = 0`, a zero region, zero cited curves
+/// and a zero uncertainty are each their own refusal, so a host that omits a field gets a
+/// refusal rather than an admission. That is the one property this door has that the pair
+/// door had to be given later.
 ///
 /// `route`: 1 = determinant/FCI, 2 = DMRG, anything else undeclared.
-/// `axis_rule`: 1 = this build's H3 tau-stretch. Anything else is refused rather than
-/// interpolated — see [`trimer_bank::AxisRule`].
-/// `seam`: 1 = a seam locus is carried, 2 = an accepted-floor note is carried, 0 = neither.
-/// `digest_lo`/`digest_hi`: the merge digest in two halves, because a `u64` does not
-/// survive a round trip through a JavaScript number.
+/// `axis_rule`: 1 = uniform-linear (what `s3_tables` emits), 2 = this build's H3
+/// tau-stretch. The declared rule is CROSS-CHECKED against the shipped coordinates and a
+/// disagreement is refused, because one of the artifact's two statements is then false.
+/// `seam`: 1 = a seam locus is carried, 2 = an accepted-floor note, 0 = neither.
 ///
 /// Returns `TABLE_OK` on admission, or `TRIMER_REFUSED + n` naming the reason.
 #[no_mangle]
@@ -2048,9 +2082,8 @@ pub extern "C" fn holon_trimer_table_finish(
     void_count: u32,
     void_named: u32,
     seam: u32,
-    digest_lo: u32,
-    digest_hi: u32,
 ) -> u32 {
+    let mut s = sim();
     let prov = trimer_bank::TrimerProvenance {
         route: match route {
             1 => bank::Route::Determinant,
@@ -2066,7 +2099,8 @@ pub extern "C" fn holon_trimer_table_finish(
         uncertainty_ha,
         peak_ha,
         axis_rule: match axis_rule {
-            1 => trimer_bank::AxisRule::TauStretchH3,
+            1 => trimer_bank::AxisRule::UniformLinear,
+            2 => trimer_bank::AxisRule::TauStretchH3,
             _ => trimer_bank::AxisRule::Undeclared,
         },
         region: [region_x as u16, region_y as u16, region_u as u16],
@@ -2079,25 +2113,9 @@ pub extern "C" fn holon_trimer_table_finish(
             2 => trimer_bank::SeamRecord::AcceptedFloor,
             _ => trimer_bank::SeamRecord::Absent,
         },
-        digest: ((digest_hi as u64) << 32) | digest_lo as u64,
+        digest: s.trimers.staging_digest,
     };
-    // The metadata the interpolator needs, taken from THIS BUILD's grid rather than from
-    // the artifact — which is sound only because `axis_rule` has already been required to
-    // be this build's, and is refused otherwise. If a second rule is ever admitted, this
-    // is the line that has to learn about it, and the refusal above is what stops that
-    // being discovered by a wrong answer.
-    let meta = holon_chem::trimer::TrimerMeta {
-        n_nodes: holon_chem::trimer::N_NODES,
-        nr: holon_chem::trimer::NR,
-        nu: holon_chem::trimer::NU,
-        r_lo: holon_chem::trimer::R_LO,
-        r_hi: holon_chem::trimer::R_HI,
-        e_h_atom: holon_chem::trimer::atom_energy(),
-        peak: peak_ha,
-        solves: 0,
-    };
-    let mut s = sim();
-    match s.trimers.finish(meta, prov) {
+    match s.trimers.finish(prov) {
         Ok(_) => {
             // A new potential term changes the ledger's origin, so the run is re-based for
             // the reason `generate_trimer_table` re-bases: otherwise the drift would be

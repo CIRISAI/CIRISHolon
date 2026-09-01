@@ -39,6 +39,15 @@ MBE3 alone stops at hydroxyl; the exact four-body correction carries it to
 water. The broken arm's observation is vindicated in substance while its
 physics stays voided.
 
+**ATTRIBUTION CAVEAT (added hours after banking, before the control landed):**
+the fenced row above was measured at a DIFFERENT commit (a3b3d4b) than this
+arm (21e6be3), and the interval contains the T3 refactor and a solver change
+that moved curves — so the table shows the outcomes but does not yet carry
+the causal reading. The closure census caught this and is running the true
+one-variable control: the same seed at the SAME commit with --de4=off. The
+"term is causal" sentence becomes attributable when that leg lands, and is
+provisional until then.
+
 ## The conservation repair, confirmed in production
 
 Every completed seed's momentum sits at 1e-5-scale of its roundoff bound —

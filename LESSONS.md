@@ -108,3 +108,17 @@ These are binding on all CIRISHolon code.*
     not survive, while `setsid nohup cmd & disown` in a call that exits
     immediately did. Launch, then confirm the process is alive in its own
     session before trusting that it will be there later.
+
+15. **A detached pipeline's tail runs on a corpse.** The lesson underneath
+    (14): SIGTERM killed the work and the cleanup marched on anyway, moving
+    an empty directory to the durable path, appending a hash of a truncated
+    log to a manifest that already had a line for that name, and writing
+    `usage: census <dir-or-file>` under a filename that promises a verdict.
+    Three artifacts, each plausible, each about nothing. **The tail checks
+    the exit code FIRST**: nonzero writes a KILLED marker naming the signal
+    and touches nothing else — never parks, never hashes, never adjudicates.
+    A zero exit with an empty output directory gets the same treatment, since
+    a success nobody can check is not one.
+    `conformance/water_observatory/detached_run.sh` is the pattern, with its
+    three plants (killed, succeeded, empty-success) checked in all three
+    directions.

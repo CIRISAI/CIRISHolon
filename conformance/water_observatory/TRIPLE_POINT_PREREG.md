@@ -190,6 +190,13 @@ descheduling does not inflate.
 > a solid slab from the ice-XI builder, a liquid region beside it, and an empty
 > z-slab (the vapor volume). Nominal split 32 / 32 / 32 molecules, the third
 > region starting empty and filled only by whatever leaves the other two.
+>
+> **Cell geometry at f = 1.00, staked:** cross-section **24 × 24 bohr**; the two
+> condensed regions occupying **≈ 36.6 bohr** of z at the ice-XI molecular volume
+> (≈ 219.4 bohr³ per molecule × 96 / 576 bohr²); the empty gap **14.2 bohr**.
+> Total z extent **≈ 50.8 bohr (26.9 Å)**, which is the axis every quantity below
+> that mentions "the cell" is measured along, because it is the axis the three
+> regions stack on.
 
 Why 96 and not more: the coexistence floor of §3.4 is derived FROM this number
 (0.15 × 96 = 14.4 molecules, the smallest region that can have an interior at all),
@@ -237,12 +244,17 @@ Why that number, stated before it is used, on the same reference motions
 | O–H stretch (3657 cm⁻¹) | 9.12 fs | 914 |
 | H–O–H bend (1595 cm⁻¹) | 20.9 fs | 399 |
 | free rotation of H₂O at 300 K (I ≈ 3.0e-47 kg m²) | 535 fs | 15.6 |
-| sound traversal of a ~25 Å cell at ~1500 m/s | 1.7 ps | 4.9 |
+| sound traversal of the cell's z extent (26.9 Å) at ~1500 m/s | 1.8 ps | 4.6 |
 | the closure census's own certified-molecule window | 834 fs | 10 |
 
 The binding entry is the fourth, not the first. A phase fraction is a property of a
 REGION, and a region cannot be said to persist until the box has had time to
-communicate with itself several times over; 4.9 sound traversals is that. The
+communicate with itself several times over; 4.6 sound traversals is that. The
+~1500 m/s is an ORDER-OF-MAGNITUDE SCALE for a hydrogen-bonded liquid, used to
+size a window and never as a reference value — **this model's own sound speed is
+unmeasured**, and the campaign prints the measured longitudinal relaxation it can
+extract from each run beside the window it used (M-FOREIGN-DOMAIN-CORROBORATION:
+a number borrowed to size an instrument is not a number borrowed to score one). The
 stretch and bend periods are carried because they are what the census's certified
 rows are made of, and W must not be shorter than the window those rows were
 certified over — it is ten times longer. At the fine `dt` this is **W = 10,000
@@ -254,7 +266,7 @@ frames**.
 
 Both `holon_box_scale(f)` and the thermostat set are external pushes: the affine
 scale move launches a compression wave and the thermostat injects or removes energy.
-R is staked at exactly W/2, which is 2.45 sound traversals of the cell — enough for
+R is staked at exactly W/2, which is 2.3 sound traversals of the cell's z extent — enough for
 the scale move's wave to cross the box and return twice. No quantity measured
 inside R appears in any verdict. R's own cost is charged to the budget in full,
 because a discarded frame costs what a scored one costs.
@@ -266,10 +278,13 @@ because a discarded frame costs what a scored one costs.
 > **T ∈ {50, 100, 200, 400, 800, 1600} K.**
 
 * Lower bound 50 K: below this the classical-nuclei chart is not a chart of this
-  system at all. `C1_GATE_RESULTS.md` measures the model's own O–H curve carrying an
-  anharmonic zero-point energy that dwarfs kT at 50 K (kT = 1.58e-4 Ha), so a
-  classical solid below 50 K is an artifact of the tier, not a phase of the model.
-  The bound is honest scope, not convenience.
+  system at all. `C1_GATE_RESULTS.md` measured the anharmonic vibrational zero-point
+  energy of the engine's own STO-3G FCI **H–H** curve (not O–H — the O–H ZPE is
+  OWED, and the argument is stated at the strength the record actually supports): a
+  hydrogenic stretch ZPE on this surface is of order 5e-3 Ha, more than thirty times
+  kT at 50 K (kT = 1.58e-4 Ha). Below that temperature the quantum carrier is doing
+  all the work and a classical solid is an artifact of the tier, not a phase of the
+  model. The bound is honest scope, not convenience.
 * Upper bound 1600 K: kT = 5.07e-3 Ha there, still 24× below the model's own
   measured O–H well depth D_e = 0.122901 Ha (`p2_de4_full/seed_0x53415422.log`
   header), so molecules are not thermally shredded by the pair curve — but it is far
@@ -289,7 +304,9 @@ ice slab sits at its own lattice constant:
 
 * f = 1.00 is the anchor: the seed at its own equilibrium lattice, the only value of
   f at which it is unstrained.
-* Lower bound 0.85: below this the empty z-slab thins below 2 × R_CUT = 12 bohr, so
+* Lower bound 0.85: the staked gap is 14.2 bohr at f = 1.00 and 0.85 × 14.2 = 12.07
+  bohr, so 0.85 is the last point at which the empty z-slab still clears
+  2 × R_CUT = 12 bohr. Below it the gap thins under two cutoffs, so
   the two liquid surfaces see each other through the gap and there is no vapor
   REGION left to measure — only a periodic image contact. The bound is set by the
   cutoff, which is a property of the instrument, so it is checkable.
@@ -710,41 +727,42 @@ not a plant here). Plants run in Stage 0, before any grid point.
 
 | # | number | justification, one line |
 |---|---|---|
-| 1 | W = 8340 fs | ten census windows; 4.9 sound traversals of the cell, the shortest time in which a REGION can be said to persist |
-| 2 | R = 4170 fs, discarded | W/2 = 2.45 sound traversals — the scale move's compression wave crosses and returns twice before measurement opens |
+| 1 | W = 8340 fs | ten census windows; 4.6 traversals of the cell's 26.9 Å z extent at an order-of-magnitude ~1500 m/s, the shortest time in which a REGION can be said to persist |
+| 2 | R = 4170 fs, discarded | W/2 = 2.3 traversals — the scale move's compression wave crosses and returns twice before measurement opens |
 | 3 | T ∈ {50,100,200,400,800,1600} K | geometric ratio 2 because this model's melting boundary is unlocated in this repository; a linear grid around a guessed centre would be M-UNTESTED-GAP |
-| 4 | T lower bound 50 K | kT = 1.58e-4 Ha sits under the model's own measured O–H zero-point energy, so a classical solid below it is a tier artifact, not a phase |
+| 4 | T lower bound 50 K | kT = 1.58e-4 Ha is >30× under a hydrogenic stretch ZPE on this surface (C1 measured the H–H curve's; the O–H ZPE is OWED), so a classical solid below it is a tier artifact, not a phase |
 | 5 | T upper bound 1600 K | kT = 5.07e-3 Ha is 24× below the model's measured D_e(O–H) = 0.122901 Ha but far above every many-body residual — vapor must be unambiguous here |
 | 6 | f ∈ {0.85,1.00,1.20,1.50,2.00} | f = 1.00 is the seed's own lattice; spacing is ~1.2× per step in log, the same bracketing argument on an equally unlocated axis |
-| 7 | f lower bound 0.85 | below it the empty z-slab thins under 2·R_CUT = 12 bohr and the two liquid surfaces see each other — no vapor region left to measure |
-| 8 | f upper bound 2.00 | mean density 1/8 of reference; past it "all vapor" is a fact about our geometry, not about the model |
-| 9 | N = 288 atoms (96 H₂O) | sets the 0.15 floor at 14.4 molecules (the smallest region with an interior); at 48 molecules the floor would be a cluster |
-| 10 | slab ≥ 3 molecular layers | a two-layer slab is entirely surface; its solid fraction measures the interface |
-| 11 | coexistence floor 0.15 | 14.4 molecules at N = 96 — below it a "phase" is an interface |
-| 12 | window-minimum floor 0.10 | 9.6 molecules — the point at which a region is a cluster |
-| 13 | forward-extrapolation clause, one W | stops "has not collapsed yet" from scoring as "coexists"; a monotone decay caught mid-fall is caught |
-| 14 | f_U ≤ 0.20 | above it the unassigned pool competes with the three 0.15 floors for the same molecules |
-| 15 | lens separation ≥ 0.25 | a quarter of the lens's own gated range (exactly 1 on a perfect tetrahedron, 0 on an ideal gas) |
-| 16 | misassignment ≤ 0.05 | one third of the 0.15 floor: an instrument's error must be strictly smaller than the effect it measures |
-| 17 | R_nb = 6.6140 bohr | the Luzar–Chandler O···O cutoff already staked in the census lens stack — reused so both instruments read one ruler |
-| 18 | vapor threshold = ZERO O-neighbours | the weakest possible criterion, so f_V is a LOWER bound and cannot be inflated by threshold choice |
-| 19 | contiguity ≥ 0.60 | a phase in pieces none larger than 60% of its members is a dispersion; at the floor this is ≥ 8.6 molecules in one component |
-| 20 | vapor exempt from contiguity | a vapor is dispersed by definition; stated rather than left silent so the criterion means one thing |
-| 21 | β = 0.02, L_flick = 8.4 fs | inherited unchanged from CENSUS_PREREG so census and campaign read ONE instrument |
-| 22 | informative transitions ≥ 200 | inherited unchanged; below it the closure leg is vacuous by construction |
-| 23 | defect non-expansion 1.10 | the census's 1.05 loosened for a 10× longer window on a genuinely moving interface; the sign of the law (defects must not grow) is untouched and all four quarters print |
-| 24 | thermostat mismatch ≤ 0.20 on the MEAN | the banked P2 log shows instantaneous T at 242–409 K around a 300 K setpoint, so a per-frame bar would fire on a working thermostat |
-| 25 | Stage A: 2 seed configurations, 12 runs | proton-disorder AND velocity seed both differ, so configurational and kinetic sectors are both varied |
-| 26 | spread gate = 1 grid spacing (factor 2 in T) | a boundary varying more than the grid spacing is a resolution fact, so it VOIDs and never kills |
-| 27 | Stage B = 30 points (6 × 5) | the frozen envelope; Stage A can only VOID it, never move it |
-| 28 | Stage C = 25 points (5 × 5), spacing = cell edge / 4 | the only authorised refinement, rule frozen here and numbers derived from the bracketing cell; no second round exists |
-| 29 | B = 400 core-hours CPU | 1.7× the §4.1 prior — knowingly insufficient against the measured 3.5× contention penalty, so the campaign VOIDs rather than overspends |
-| 30 | budget split 4 / 72 / 180 / 144 | G0 / Stage A / Stage B / Stage C, summing to B |
-| 31 | price shortfall refusal 0.5× | measured placement spread within one core class reaches 1.4×, so a factor-of-two shortfall is outside anything placement explains |
-| 32 | N1: 10,000 resamples, block 2 τ_int | whole-frame blocks keep the counts integral; 2 τ_int keeps the measured correlation instead of destroying it |
-| 33 | finite-size leg at 2N = 576 atoms | one doubling at the passing cell only — enough to MEASURE N-dependence, not enough to claim independence of it |
-| 34 | 67 runs total (12 + 30 + 25) | the sizing multiplicand; the multiplier is G0's measured per-point cost and nothing else |
-| 35 | ≈ 235 core-hours | **NOT A STAKE — a labelled PRIOR** extrapolated from wall clock on a loaded box, printed so the budget has something to be justified against |
+| 7 | gap = 14.2 bohr at f = 1.00 | on a 24 × 24 bohr cross-section with 96 molecules at the ice-XI molecular volume, giving a 26.9 Å z extent — the geometry every window justification is measured against |
+| 8 | f lower bound 0.85 | 0.85 × 14.2 = 12.07 bohr, the last point clearing 2·R_CUT = 12 bohr; below it the two liquid surfaces see each other and no vapor region is left to measure |
+| 9 | f upper bound 2.00 | mean density 1/8 of reference; past it "all vapor" is a fact about our geometry, not about the model |
+| 10 | N = 288 atoms (96 H₂O) | sets the 0.15 floor at 14.4 molecules (the smallest region with an interior); at 48 molecules the floor would be a cluster |
+| 11 | slab ≥ 3 molecular layers | a two-layer slab is entirely surface; its solid fraction measures the interface |
+| 12 | coexistence floor 0.15 | 14.4 molecules at N = 96 — below it a "phase" is an interface |
+| 13 | window-minimum floor 0.10 | 9.6 molecules — the point at which a region is a cluster |
+| 14 | forward-extrapolation clause, one W | stops "has not collapsed yet" from scoring as "coexists"; a monotone decay caught mid-fall is caught |
+| 15 | f_U ≤ 0.20 | above it the unassigned pool competes with the three 0.15 floors for the same molecules |
+| 16 | lens separation ≥ 0.25 | a quarter of the lens's own gated range (exactly 1 on a perfect tetrahedron, 0 on an ideal gas) |
+| 17 | misassignment ≤ 0.05 | one third of the 0.15 floor: an instrument's error must be strictly smaller than the effect it measures |
+| 18 | R_nb = 6.6140 bohr | the Luzar–Chandler O···O cutoff already staked in the census lens stack — reused so both instruments read one ruler |
+| 19 | vapor threshold = ZERO O-neighbours | the weakest possible criterion, so f_V is a LOWER bound and cannot be inflated by threshold choice |
+| 20 | contiguity ≥ 0.60 | a phase in pieces none larger than 60% of its members is a dispersion; at the floor this is ≥ 8.6 molecules in one component |
+| 21 | vapor exempt from contiguity | a vapor is dispersed by definition; stated rather than left silent so the criterion means one thing |
+| 22 | β = 0.02, L_flick = 8.4 fs | inherited unchanged from CENSUS_PREREG so census and campaign read ONE instrument |
+| 23 | informative transitions ≥ 200 | inherited unchanged; below it the closure leg is vacuous by construction |
+| 24 | defect non-expansion 1.10 | the census's 1.05 loosened for a 10× longer window on a genuinely moving interface; the sign of the law (defects must not grow) is untouched and all four quarters print |
+| 25 | thermostat mismatch ≤ 0.20 on the MEAN | the banked P2 log shows instantaneous T at 242–409 K around a 300 K setpoint, so a per-frame bar would fire on a working thermostat |
+| 26 | Stage A: 2 seed configurations, 12 runs | proton-disorder AND velocity seed both differ, so configurational and kinetic sectors are both varied |
+| 27 | spread gate = 1 grid spacing (factor 2 in T) | a boundary varying more than the grid spacing is a resolution fact, so it VOIDs and never kills |
+| 28 | Stage B = 30 points (6 × 5) | the frozen envelope; Stage A can only VOID it, never move it |
+| 29 | Stage C = 25 points (5 × 5), spacing = cell edge / 4 | the only authorised refinement, rule frozen here and numbers derived from the bracketing cell; no second round exists |
+| 30 | B = 400 core-hours CPU | 1.7× the §4.1 prior — knowingly insufficient against the measured 3.5× contention penalty, so the campaign VOIDs rather than overspends |
+| 31 | budget split 4 / 72 / 180 / 144 | G0 / Stage A / Stage B / Stage C, summing to B |
+| 32 | price shortfall refusal 0.5× | measured placement spread within one core class reaches 1.4×, so a factor-of-two shortfall is outside anything placement explains |
+| 33 | N1: 10,000 resamples, block 2 τ_int | whole-frame blocks keep the counts integral; 2 τ_int keeps the measured correlation instead of destroying it |
+| 34 | finite-size leg at 2N = 576 atoms | one doubling at the passing cell only — enough to MEASURE N-dependence, not enough to claim independence of it |
+| 35 | 67 runs total (12 + 30 + 25) | the sizing multiplicand; the multiplier is G0's measured per-point cost and nothing else |
+| 36 | ≈ 235 core-hours | **NOT A STAKE — a labelled PRIOR** extrapolated from wall clock on a loaded box, printed so the budget has something to be justified against |
 
 ---
 

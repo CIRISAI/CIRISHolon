@@ -45,7 +45,12 @@ use crate::sim::{Atom, Boundary, Dims, Sim};
 /// with no gate able to see it because every invariant would close around the shifted
 /// values. That is the exact failure this constant exists to make impossible, so bumping
 /// it is not bookkeeping.
-pub const CHECKPOINT_VERSION: u32 = 2;
+/// **3 (2026-09-01, WB-2.4c):** the field became a VECTOR, so one `f64` in that slot
+/// became three. A v2 file read under v3 shears by two slots from `w_ext` onward. Note
+/// what a version check buys that a length check would not: v2 and v3 differ by sixteen
+/// bytes, so a truncated-or-padded v2 could pass a size test and still restore a scene
+/// whose field points somewhere nobody chose.
+pub const CHECKPOINT_VERSION: u32 = 3;
 
 const MAGIC: [u8; 8] = *b"HOLONCK1";
 
@@ -322,7 +327,9 @@ impl Sim {
         // does not, for the same reason no other energy term is stored. A checkpoint that
         // dropped `g` would restore a scene that looks identical and falls differently,
         // and `recompute()` below would rebuild a consistent-but-wrong ledger around it.
-        w.f64(self.g);
+        w.f64(self.g_vec.0);
+        w.f64(self.g_vec.1);
+        w.f64(self.g_vec.2);
 
         // --- the ledger, including the receipt columns ---
         w.f64(self.w_ext);
@@ -439,7 +446,7 @@ impl Sim {
         let thermostat_on = r.bool()?;
         let target_temperature = r.f64()?;
         let thermostat_tau = r.f64()?;
-        let g = r.f64()?;
+        let g_vec = (r.f64()?, r.f64()?, r.f64()?);
 
         let w_ext = r.f64()?;
         let hand = r.f64()?;
@@ -489,7 +496,7 @@ impl Sim {
         self.thermostat_on = thermostat_on;
         self.target_temperature = target_temperature;
         self.thermostat_tau = thermostat_tau;
-        self.g = g;
+        self.g_vec = g_vec;
         self.w_ext = w_ext;
         self.work.hand = hand;
         self.work.thermostat = thermostat;

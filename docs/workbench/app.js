@@ -99,6 +99,27 @@ const State = {
   /// exhibit. Measured: 4.05e-15 of kT for a hydrogen atom raised 1 nm.
   gravityG: 1.0,
 
+  /// WB-2.4c — THE TILTED BUCKET. `tiltDeg` rotates the BOX relative to the world; the
+  /// field stays world-down. The engine's box is axis-aligned, so "the box tilted by θ"
+  /// is expressed as the field pointing at −θ from −y IN BOX COORDINATES, and the render
+  /// rotates the box by −θ so the world looks level. That is not a trick standing in for
+  /// the physics — it IS the physics, because a uniform field has no other content than
+  /// its direction relative to the container.
+  tiltDeg: 0,
+
+  /// The barostat is the BOX (WB-2.2). This is the cumulative factor the user has applied,
+  /// kept only so the panel can show how far from the reference box the scene is; the
+  /// engine owns the box and this never drives it.
+  boxScale: 1.0,
+  lastScaleRefusal: null,
+
+  /// 0 Walls · 1 Open · 2 Periodic. Exposed because it is the knob that makes two fences
+  /// LIVE rather than theoretical: the virial is only a pressure on a wrapping box, and a
+  /// wrapping box is the one that refuses gravity. A user can now watch each fence fire
+  /// for its own reason instead of reading that it would.
+  boundary: 0,
+  gravityRefused: false,
+
   /// The governor's user bias (WB-2.3). Multiplies the engine's DERIVED base sim-speed;
   /// it never touches dt, so accuracy is not on this slider.
   govBias: 1.0,
@@ -364,6 +385,9 @@ const REQUIRED_EXPORTS = [
   "holon_time", "holon_steps", "holon_temperature", "holon_frame",
   "holon_set_thermostat", "holon_thermostat_on",
   "holon_set_gravity", "holon_gravity", "holon_e_grav", "holon_g_earth",
+  "holon_set_gravity_vec", "holon_gravity_x", "holon_gravity_y", "holon_gravity_z",
+  "holon_gravity_available",
+  "holon_box_scale", "holon_pressure", "holon_pressure_defined",
   "holon_advance_frame", "holon_step_frame", "holon_calibration_burst",
   "holon_set_calibration", "holon_substeps_per_second", "holon_n_max",
   "holon_sim_speed", "holon_set_sim_speed", "holon_dilation", "holon_rung",
@@ -650,10 +674,18 @@ function applyControls() {
   const w = State.w;
   if (!w) return;
   w.holon_set_thermostat(State.thermostatOn ? 1 : 0, State.targetK);
-  // Gravity (WB-2.4). The multiple is converted through the ENGINE's own constant, so
-  // there is exactly one statement of what a G is and it is not in this file. A refusal
-  // (code 80) is only reachable on a periodic box, which this shell cannot select.
-  w.holon_set_gravity(State.gravityG * w.holon_g_earth());
+  // Gravity as a WORLD VECTOR (WB-2.4c). The magnitude is converted through the ENGINE's
+  // own constant, so there is exactly one statement of what a G is and it is not in this
+  // file; the direction comes from the box's tilt. A refusal (code 80) is reachable now
+  // that boundary mode 2 selects Periodic, so the panel reads `holon_gravity_available`
+  // rather than assuming.
+  const g = State.gravityG * w.holon_g_earth();
+  const th = (State.tiltDeg * Math.PI) / 180;
+  // Tilting the box by +θ tips the world's "down" toward +x in BOX coordinates. The
+  // return code is READ, not discarded: on a wrapping box this refuses, and a page that
+  // ignored the refusal would leave a gravity slider that appears to work and does not.
+  const gcode = w.holon_set_gravity_vec(g * Math.sin(th), -g * Math.cos(th), 0);
+  State.gravityRefused = gcode !== 1;
   // The governor moves the SIM-SPEED, never dt. `holon_set_allow_dt_growth` is left off,
   // so the engine holds exactness and delivers any shortfall as honest time dilation
   // (WB-6.2: no reduced-accuracy mode, only slower time).
@@ -724,6 +756,20 @@ function resize() {
 /// Project a point given in BOX-CENTRED bohr.
 function project(x, y, z, vw, vh) {
   const { yaw, pitch, distance, fov } = State.camera;
+  // WB-2.4c: the BOX is what tilts. Every point arrives in box coordinates and is rotated
+  // by −θ before projection, so on screen the container leans and the world stays level —
+  // which is what the physics says, because the engine holds an axis-aligned box and the
+  // tilt lives entirely in the field's direction within it. Applying this here rather than
+  // to the atoms means the box, its contents and the hand all lean together by
+  // construction; there is no second place for the rotation to disagree with itself.
+  if (State.tiltDeg !== 0) {
+    const t = (-State.tiltDeg * Math.PI) / 180;
+    const ct = Math.cos(t), st = Math.sin(t);
+    const rx = x * ct - y * st;
+    const ry = x * st + y * ct;
+    x = rx;
+    y = ry;
+  }
   const x1 = x * Math.cos(yaw) - z * Math.sin(yaw);
   const z1 = x * Math.sin(yaw) + z * Math.cos(yaw);
   const y2 = y * Math.cos(pitch) - z1 * Math.sin(pitch);
@@ -760,6 +806,7 @@ function render3D() {
   ctx.clearRect(0, 0, vw, vh);
 
   if (!State.booted) return;
+  drawTemperatureGlow(vw, vh);
   const f = sceneFrame();
   const cx = 0.5 * f.width, cy = 0.5 * f.height, cz = 0.5 * f.depth;
 
@@ -828,6 +875,30 @@ function render3D() {
       ctx.setLineDash([]);
     }
   }
+}
+
+/// WB-9.3 — the temperature glow. A READOUT and never a control: it is keyed to the
+/// engine's MEASURED kinetic temperature, not to the thermostat's setpoint, so a scene
+/// that is still settling glows at where it IS rather than where it was asked to go. The
+/// thermostat panel remains the only control.
+///
+/// The scale is anchored at both ends by physical values rather than by taste: 273.15 K
+/// (ice point) is fully blue and 373.15 K (boiling at 1 atm) is fully red, so the colour
+/// says something about water rather than about a designer's gradient. Outside that range
+/// it saturates, which is honest — the glow is an indicator, not a thermometer, and the
+/// scene panel carries the number.
+function drawTemperatureGlow(vw, vh) {
+  const t = State.w.holon_temperature();
+  if (!Number.isFinite(t)) return;
+  const u = Math.max(0, Math.min(1, (t - 273.15) / (373.15 - 273.15)));
+  const r = Math.round(40 + 180 * u);
+  const b = Math.round(220 - 170 * u);
+  const g = Math.round(90 + 40 * (1 - Math.abs(u - 0.5) * 2));
+  const grad = ctx.createRadialGradient(vw / 2, vh / 2, 0, vw / 2, vh / 2, Math.max(vw, vh) * 0.7);
+  grad.addColorStop(0, `rgba(${r}, ${g}, ${b}, 0.16)`);
+  grad.addColorStop(1, "rgba(0, 0, 0, 0)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, vw, vh);
 }
 
 function drawBox(f, cx, cy, cz, vw, vh) {
@@ -975,6 +1046,25 @@ function renderTelemetry() {
   put("clo-formations", String(w.holon_census_formations()));
   put("clo-dissolutions", String(w.holon_census_dissolutions()));
   put("clo-rejections", String(w.holon_census_closure_rejections()));
+
+  // The CERTIFIED THINGS, one row each (WB-9.5). This is the ontology on screen: each row
+  // is a composite the census ADMITTED, with the closure defect it was admitted on beside
+  // the one it carries now. A candidate whose defect exceeded its budget is not here — it
+  // is in the rejection count above, which is why both are shown together.
+  if (UI["census-rows"]) {
+    const KINDS = ["pair", "triple", "cluster"];
+    let html = "";
+    for (let k = 0; k < Math.min(rows, 24); k++) {
+      const kind = KINDS[w.holon_row_kind(k)] || `kind ${w.holon_row_kind(k)}`;
+      html += `<tr><td>${k}</td><td>${kind}</td><td>${w.holon_row_member_count(k)}</td>`
+        + `<td>${fmtSci(w.holon_row_e_bond(k), 2)}</td>`
+        + `<td>${fmtSci(w.holon_row_closure_defect(k), 2)}</td>`
+        + `<td>${fmtSci(w.holon_row_closure_defect_at_formation(k), 2)}</td></tr>`;
+    }
+    if (!rows) html = `<tr class="none"><td colspan="6">no composite has formed yet — the census admits nothing it has not measured</td></tr>`;
+    else if (rows > 24) html += `<tr class="none"><td colspan="6">…and ${rows - 24} more</td></tr>`;
+    UI["census-rows"].innerHTML = html;
+  }
   tag("tag-closure", "live", "holon_row_closure_defect / holon_census_molecules");
 
   // --- the scene ------------------------------------------------------------
@@ -1027,7 +1117,13 @@ function renderTelemetry() {
 
   // --- gravity (WB-2.4), the tier-separation exhibit -----------------------
   const gAu = w.holon_gravity();
-  put("grav-field", `${State.gravityG.toFixed(2)} G  (${fmtSci(gAu, 3)} a₀/aut²)`);
+  const gx = w.holon_gravity_x(), gy = w.holon_gravity_y(), gz = w.holon_gravity_z();
+  const available = w.holon_gravity_available() === 1;
+  put("grav-field", available
+    ? `${State.gravityG.toFixed(2)} G  (${fmtSci(gAu, 3)} a₀/aut²)`
+    : "REFUSED — a wrapping box has no bottom");
+  put("grav-vector", `(${fmtSci(gx, 2)}, ${fmtSci(gy, 2)}, ${fmtSci(gz, 2)})`);
+  put("grav-tilt", `${State.tiltDeg.toFixed(0)}° — the box, not the world`);
   put("grav-energy", fmtEnergy(w.holon_e_grav()));
   // The exhibit itself, computed from the engine's own constant and its own k_B, at the
   // scene's CURRENT box height rather than a fixed 1 nm — so the number moves when the
@@ -1036,7 +1132,23 @@ function renderTelemetry() {
   const kt = K_B_HA * Math.max(w.holon_temperature(), 1e-9);
   const uDrop = M_H_ME * gAu * boxBohr;
   put("grav-vs-kt", kt > 0 ? `${fmtSci(uDrop / kt, 2)} × kT over the box` : "—");
-  tag("tag-grav", "live", "holon_gravity / holon_e_grav / holon_g_earth");
+  tag("tag-grav", available ? "live" : "fenced",
+    available
+      ? "holon_gravity_x/y/z / holon_e_grav / holon_g_earth"
+      : "this boundary wraps, and a linear potential is not well-posed on a torus");
+
+  // --- pressure, on the landed door (WB-2.2) -------------------------------
+  const pDefined = w.holon_pressure_defined() === 1;
+  put("press-value", pDefined ? `${fmtSci(w.holon_pressure(), 4)} Ha/a₀³` : "NOT A PRESSURE");
+  put("press-box", `${w.holon_width().toFixed(1)} × ${w.holon_height().toFixed(1)} × ${w.holon_depth().toFixed(1)} a₀  (${State.boxScale.toFixed(3)}× reference)`);
+  put("press-hand", fmtEnergy(w.holon_w_ext()));
+  put("press-note", pDefined
+    ? "The virial pressure of the scene. A READOUT, never a setpoint: the control is the box, and this is what the box is doing."
+    : "Under walls the virial is contaminated by the wall term, so the engine declines to call this number a pressure. The box control still works; the readout does not.");
+  tag("tag-press", pDefined ? "live" : "fenced",
+    pDefined ? "holon_pressure / holon_width / holon_w_ext"
+             : "holon_pressure_defined reports the virial is not a pressure under these walls");
+  if (State.lastScaleRefusal) put("press-refusal", State.lastScaleRefusal);
 
   put("dock-temp-lbl", tempIn(State.targetK));
   put("dock-grav-lbl", `${State.gravityG.toFixed(1)} G`);
@@ -1278,6 +1390,45 @@ function initHUD() {
     // existed and would read a JUMP no integrator produced.
     State.w.holon_rebase();
   });
+  UI["sheet-tilt"]?.addEventListener("input", (e) => {
+    State.tiltDeg = Number(e.target.value);
+    put("sheet-tilt-val", `${State.tiltDeg.toFixed(0)}°`);
+    applyControls();
+    // Changing the field's DIRECTION changes the potential, so the origin moves with it —
+    // same reason changing its strength does.
+    State.w.holon_rebase();
+  });
+  // WB-2.2: the control IS the box. Each press applies a multiplicative factor through the
+  // engine's own door, which posts the move's cost to both ledger columns and refuses a
+  // collapse by name. This file never touches the box itself.
+  for (const btn of document.querySelectorAll("[data-boundary]")) {
+    btn.addEventListener("click", () => {
+      State.boundary = Number(btn.dataset.boundary);
+      for (const b of document.querySelectorAll("[data-boundary]")) {
+        b.classList.toggle("active", b === btn);
+      }
+      State.w.holon_set_boundary(State.boundary);
+      // A changed boundary is a changed chart: the wall term appears or vanishes and the
+      // field may be refused, so the ledger's origin has to move with it.
+      applyControls();
+      State.w.holon_rebase();
+    });
+  }
+  for (const [id, factor] of [["btn-compress", 0.98], ["btn-expand", 1.02]]) {
+    UI[id]?.addEventListener("click", () => {
+      const code = State.w.holon_box_scale(factor);
+      if (code === 1) {
+        State.boxScale *= factor;
+        State.lastScaleRefusal = null;
+      } else {
+        State.lastScaleRefusal = code === 91
+          ? "REFUSED: that factor is not a positive finite number."
+          : code === 92
+            ? "REFUSED: that scale would collapse the box onto its own walls."
+            : `REFUSED by the engine, code ${code}.`;
+      }
+    });
+  }
   UI["sheet-gov"]?.addEventListener("input", (e) => {
     // Logarithmic: the useful range spans decades, and a linear slider would spend all
     // its travel at the fast end.

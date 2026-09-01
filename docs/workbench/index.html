@@ -173,6 +173,10 @@
             <div class="lrow"><span>Dissolutions</span><span id="clo-dissolutions">—</span></div>
             <div class="lrow"><span>Closure rejections</span><span id="clo-rejections">—</span></div>
           </div>
+          <table class="bank-table">
+            <thead><tr><th>#</th><th>kind</th><th>members</th><th>E_bond</th><th>defect now</th><th>at formation</th></tr></thead>
+            <tbody id="census-rows"></tbody>
+          </table>
           <p class="card-note">
             How well the coarse view commutes with the dynamics, live, as a number — the
             holon claim on screen. A candidate whose defect exceeds its budget is REJECTED
@@ -253,9 +257,7 @@
               printed "LIQUID WATER · 99.8%"; that number had no source.</span></li>
             <li><b>Order parameters q_tet, Q₆, ⟨H-bonds⟩, MSD</b><span>not computed
               anywhere in this build.</span></li>
-            <li><b>Pressure / NPT barostat (WB-2.2)</b><span>there is no barostat. The box
-              is fixed. The mock scaled the box by P^−0.05, which is not an equation of
-              state and is not NPT.</span></li>
+            
             
             <li><b>Local refinement patch (WB-1.2 / WB-4.4)</b><span>no refinement machinery
               exists. The mock showed a banner with no solve behind it.</span></li>
@@ -338,9 +340,9 @@
           <span class="tab-icon">⏱</span>
           <span class="tab-lbl" id="dock-gov-lbl">—</span>
         </button>
-        <button class="dock-tab fenced" data-tab="press">
+        <button class="dock-tab" data-tab="press">
           <span class="tab-icon">🎚</span>
-          <span class="tab-lbl">P — fenced</span>
+          <span class="tab-lbl">pressure</span>
         </button>
         <button class="dock-tab" data-tab="grav">
           <span class="tab-icon">🌍</span>
@@ -416,12 +418,37 @@
           </p>
         </div>
 
-        <div class="sheet-panel fenced-panel" data-panel="press">
-          <div class="panel-row"><label>Pressure / NPT barostat (WB-2.2)</label></div>
-          <p class="sheet-note fence">
-            FENCED. There is no barostat in this engine and the box does not rescale. The
-            ice-polymorph ladder lives on this knob and the knob does not exist yet.
+        <div class="sheet-panel" data-panel="press">
+          <div class="panel-row">
+            <label>Pressure — the control IS the box (WB-2.2)</label>
+            <span class="tag" id="tag-press">—</span>
+          </div>
+          <div class="ledger-grid tight">
+            <div class="lrow"><span>Virial pressure</span><span id="press-value">—</span></div>
+            <div class="lrow"><span>Box</span><span id="press-box">—</span></div>
+            <div class="lrow accent"><span>Hand column W_ext</span><span id="press-hand">—</span></div>
+          </div>
+          <div class="panel-row">
+            <button class="btn-micro" id="btn-compress">− compress 2%</button>
+            <button class="btn-micro" id="btn-expand">+ expand 2%</button>
+          </div>
+          <div class="panel-row">
+            <label>Boundary</label>
+            <div class="unit-pills">
+              <button class="u-pill active" data-boundary="0">walls</button>
+              <button class="u-pill" data-boundary="1">open</button>
+              <button class="u-pill" data-boundary="2">periodic</button>
+            </div>
+          </div>
+          <p class="sheet-note">
+            The boundary is here because it is what makes two fences live rather than
+            theoretical. The virial is only a PRESSURE on a wrapping box, so under walls
+            the readout above refuses to call itself one. And a wrapping box has no bottom,
+            so it REFUSES gravity — switch to periodic with the field on and watch the
+            gravity panel fence itself for a reason you can check.
           </p>
+          <p class="sheet-note" id="press-note">—</p>
+          <p class="sheet-note fence" id="press-refusal"></p>
         </div>
 
         <div class="sheet-panel" data-panel="grav">
@@ -431,12 +458,25 @@
           </div>
           <div class="ledger-grid tight">
             <div class="lrow"><span>Field</span><span id="grav-field">—</span></div>
+            <div class="lrow"><span>Vector (box frame)</span><span id="grav-vector">—</span></div>
+            <div class="lrow"><span>Box tilt</span><span id="grav-tilt">—</span></div>
             <div class="lrow"><span>Potential V_g</span><span id="grav-energy">—</span></div>
           </div>
           <div class="slider-row">
             <input type="range" id="sheet-grav" min="0" max="5" step="0.1" value="1">
             <span class="sheet-val" id="sheet-grav-val">1.00 G</span>
           </div>
+          <div class="slider-row">
+            <input type="range" id="sheet-tilt" min="-60" max="60" step="1" value="0">
+            <span class="sheet-val" id="sheet-tilt-val">0°</span>
+          </div>
+          <p class="sheet-note">
+            The second slider TILTS THE BOX (WB-2.4c). The field stays pointing world-down;
+            what changes is its direction in the box's own coordinates, which is the entire
+            content of tilting a bucket. At 1 G nothing visible happens — the field is
+            15 orders below the thermal motion — so turn the strength up to see the water
+            actually run downhill.
+          </p>
           <p class="sheet-note">
             One G downward, at every scale. It enters the same external-acceleration array
             the walls and the hand already write to, so its impulse is booked in the

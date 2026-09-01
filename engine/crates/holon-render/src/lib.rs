@@ -1119,6 +1119,41 @@ pub extern "C" fn holon_set_gravity(g_au: f64) -> u32 {
     }
 }
 
+/// WB-2.4c — set the field as a WORLD-FRAME VECTOR, atomic units. Straight down at one G
+/// is `(0, -holon_g_earth(), 0)`.
+///
+/// The door the tilted bucket needs: the shell holds this vector pointing world-down and
+/// rotates the BOX around it, so the field's direction in box coordinates changes and the
+/// water sloshes. Same ledger discipline as the scalar door and not a second
+/// implementation of it -- that one delegates here.
+///
+/// Returns 1, or `GRAVITY_REFUSED + n`. A wrapping box refuses any nonzero field.
+#[no_mangle]
+pub extern "C" fn holon_set_gravity_vec(gx: f64, gy: f64, gz: f64) -> u32 {
+    match sim().set_gravity_vec(gx, gy, gz) {
+        Ok(()) => TABLE_OK,
+        Err(r) => gravity_refusal_code(r),
+    }
+}
+
+/// The field vector's x component, atomic units.
+#[no_mangle]
+pub extern "C" fn holon_gravity_x() -> f64 {
+    sim().gravity_vec().0
+}
+
+/// The field vector's y component, atomic units. Negative is down.
+#[no_mangle]
+pub extern "C" fn holon_gravity_y() -> f64 {
+    sim().gravity_vec().1
+}
+
+/// The field vector's z component, atomic units.
+#[no_mangle]
+pub extern "C" fn holon_gravity_z() -> f64 {
+    sim().gravity_vec().2
+}
+
 /// WB-2.2's door, as the FSD actually specifies it: THE CONTROL IS THE BOX.
 /// The page compresses or expands the world by a factor; pressure is the READOUT,
 /// not a setpoint — no controller chases a target for you, and the work the hand
@@ -1178,7 +1213,10 @@ pub fn gravity_refusal_code(r: sim::GravityRefusal) -> u32 {
         }
 }
 
-/// The field currently set, atomic units. Zero when there is none.
+/// The field's MAGNITUDE, atomic units. Zero when there is none.
+///
+/// A magnitude since WB-2.4c, not the old signed scalar: with a vector field there is no
+/// privileged axis, and a host that wants the direction reads `holon_gravity_x/y/z`.
 #[no_mangle]
 pub extern "C" fn holon_gravity() -> f64 {
     sim().gravity()
@@ -1196,13 +1234,16 @@ pub extern "C" fn holon_e_grav() -> f64 {
 /// Lets a caller render the fence BEFORE offering the control, rather than offering it and
 /// reporting a refusal after the click.
 ///
-/// REACHABILITY, stated because an instrument that cannot fire is worse than none: this
-/// returns 1 for every boundary a BROWSER can currently select. `holon_set_boundary`
-/// exposes only `Walls` (0) and `Open` (anything else) — `Boundary::Periodic` has no ABI
-/// value at all — so the zero branch is reachable today only from a native caller that
-/// sets `Sim::boundary` directly, which is what `tests/gravity.rs` does. The export is
-/// here for those callers and for the day the periodic box is exposed; a browser shell
-/// should NOT advertise this as a live fence, because from there it is a constant.
+/// REACHABILITY — and this paragraph said the OPPOSITE until WB-2.2 landed, which is why
+/// it now carries its own history. When gravity shipped, `holon_set_boundary` exposed only
+/// `Walls` (0) and `Open` (anything else), `Boundary::Periodic` had no ABI value at all,
+/// and this doc correctly told browser shells NOT to advertise the refusal as a live fence
+/// because from there it was a constant. Boundary mode 2 now reaches `Periodic`, so the
+/// zero branch IS browser-reachable and a shell SHOULD render it live.
+///
+/// An absence-justified caveat that outlives its absence is a lie no compiler can catch,
+/// and this one survived two commits past its expiry. That is the argument for keeping the
+/// history in the doc rather than silently rewriting it.
 #[no_mangle]
 pub extern "C" fn holon_gravity_available() -> u32 {
     u32::from(!sim().boundary.wraps())

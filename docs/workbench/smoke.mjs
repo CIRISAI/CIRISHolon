@@ -404,6 +404,96 @@ want(ratioNm > 1e-15 && ratioNm < 1e-14,
   `1 G is ${ratioNm.toExponential(2)} of kT for a hydrogen atom raised 1 nm — correctly invisible`,
   `ratio ${ratioNm.toExponential(3)}`);
 
+// ------------------------------------------- 5d. WB-2.4c: gravity is a WORLD VECTOR
+//
+// The scalar door became a wrapper over a vector one. Three things have to hold, and the
+// third is the one a conservation check cannot see.
+
+const gv = await freshEngine();
+gv.holon_set_dims(1);
+gv.holon_set_boundary(0);
+gv.holon_table_generate(0.6, 12.0, 192);
+gv.holon_reset(12);
+const gE = gv.holon_g_earth();
+const C = Math.SQRT1_2;
+
+want(gv.holon_set_gravity_vec(gE * C, -gE * C, 0) === 1, "a tilted field is accepted on a walled box");
+want(Math.abs(gv.holon_gravity_x() - gE * C) < 1e-30
+  && Math.abs(gv.holon_gravity_y() + gE * C) < 1e-30
+  && gv.holon_gravity_z() === 0,
+  "the field vector reads back component-wise",
+  `(${gv.holon_gravity_x()}, ${gv.holon_gravity_y()}, ${gv.holon_gravity_z()})`);
+want(Math.abs(gv.holon_gravity() / gE - 1) < 1e-15,
+  "holon_gravity reports the vector's MAGNITUDE (a tilted 1 G is still 1 G)",
+  `magnitude ${gv.holon_gravity()} against g ${gE}`);
+
+// THE DIRECTION HAS TO MATTER, and only a strong field over real time can show it. The
+// engine-side test measures 21.5 bohr of x-separation against 3.4e-12 for a projected
+// vector; here the bar is one bohr for the same reason it is there — a threshold at zero
+// passes on float divergence, which is how the engine test's first version was found unable
+// to fail.
+async function tiltRun(gx, gy) {
+  const e = await freshEngine();
+  e.holon_set_dims(1);
+  e.holon_set_boundary(0);
+  e.holon_table_generate(0.6, 12.0, 192);
+  e.holon_reset(12);
+  e.holon_set_gravity_vec(gx, gy, 0);
+  e.holon_rebase();
+  for (let f = 0; f < 200; f++) e.holon_step_frame(64);
+  return e;
+}
+const big = 1e18 * gE;
+const tilted = await tiltRun(big * C, -big * C);
+const down = await tiltRun(0, -big);
+let sep = 0;
+for (let i = 0; i < tilted.holon_atom_count(); i++) {
+  sep = Math.max(sep, Math.abs(tilted.holon_atom_x(i) - down.holon_atom_x(i)));
+}
+want(sep > 1.0,
+  `a tilted field really tilts — ${sep.toFixed(2)} bohr of x-separation from the vertical one`,
+  `only ${sep.toExponential(3)} bohr; below an interatomic distance this is float divergence, `
+  + "not direction, and the vector is being projected somewhere");
+want(tilted.holon_energy_gate() === 1 && tilted.holon_w_ext() === 0,
+  "a tilted field conserves and posts nothing to W_ext");
+
+// The periodic refusal is BROWSER-REACHABLE now that boundary mode 2 selects Periodic.
+// It was not when gravity shipped, and the page's fence said so; this is the check that
+// the page's claim tracks the engine rather than the other way round.
+const per = await freshEngine();
+per.holon_set_dims(1);
+per.holon_table_generate(0.6, 12.0, 192);
+per.holon_set_boundary(2);
+want(per.holon_gravity_available() === 0,
+  "a wrapping box reports the field unavailable, and mode 2 reaches it from the ABI");
+for (const [gx, gy, gz] of [[gE, 0, 0], [0, -gE, 0], [0, 0, gE]]) {
+  const code = per.holon_set_gravity_vec(gx, gy, gz);
+  want(code === 80,
+    `a wrapping box refuses the field along (${gx ? "x" : gy ? "y" : "z"}) with code ${code}`,
+    `expected 80 (GRAVITY_REFUSED + PeriodicBox), got ${code}`);
+}
+
+// ------------------------------------------- 5e. WB-2.2: the control is the box
+const bx = await freshEngine();
+bx.holon_set_dims(1);
+bx.holon_set_boundary(0);
+bx.holon_table_generate(0.6, 12.0, 192);
+bx.holon_reset(12);
+bx.holon_set_gravity_vec(0, -1e18 * gE, 0);
+bx.holon_rebase();
+for (let f = 0; f < 50; f++) bx.holon_step_frame(64);
+const wBox = bx.holon_w_ext();
+const gravBox = bx.holon_e_grav();
+want(bx.holon_box_scale(0.9) === 1, "the box compresses through the engine's own door");
+want(bx.holon_e_grav() !== gravBox,
+  "an affine compression under gravity changes the gravitational potential");
+want(bx.holon_w_ext() !== wBox, "the compression's cost is posted to the ledger");
+for (let f = 0; f < 200; f++) bx.holon_step_frame(64);
+want(bx.holon_energy_gate() === 1,
+  `the energy gate closes after compressing under gravity (drift ${bx.holon_drift().toExponential(2)} vs bound ${bx.holon_drift_bound().toExponential(2)})`);
+want(bx.holon_box_scale(0) !== 1 && bx.holon_box_scale(-1) !== 1,
+  "a nonsense scale factor is refused rather than applied");
+
 // ---------------------------------------------------------------- 6. determinism (WB-5.4)
 
 // `w` already carries the H3 surface from the pure-H section above, and

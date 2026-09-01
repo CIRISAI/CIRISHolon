@@ -605,15 +605,21 @@ pub struct Sim {
     pub de4_ci: Vec<(usize, Vec<f64>)>,
     pub e_wall: f64,
     pub e_spring: f64,
-    /// Downward acceleration of the uniform gravitational field, atomic units. Zero
+    /// The uniform gravitational field as an ACCELERATION VECTOR, atomic units. Zero
     /// unless a caller sets it, so every scene that existed before gravity did is
     /// bit-unchanged -- which is what keeps the standing replay fingerprints valid.
+    ///
+    /// A VECTOR rather than a magnitude, per FSD-W2 WB-2.4c, and the reason is the tilted
+    /// bucket: the field lives in the WORLD, so when the shell rotates the BOX the field's
+    /// direction changes in box coordinates and the water sloshes. A scalar "down" cannot
+    /// express that, because it hard-codes the one direction the box is not allowed to
+    /// leave. Straight down at one G is `(0, -G_EARTH_AU, 0)`.
     ///
     /// A SETTING, not a derived quantity. That is why this is the field the checkpoint
     /// carries and `e_grav` is not: `checkpoint.rs` stores state and RECOMPUTES energies,
     /// so storing `e_grav` would be storing the same fact twice and inviting the copies
     /// to disagree. See [`Sim::set_gravity`] for the one boundary that refuses it.
-    pub g: f64,
+    pub g_vec: (f64, f64, f64),
     /// The field's potential energy, `sum_i m_i g y_i`, hartree.
     ///
     /// The zero is the box's LOWER FACE (`y = 0`), which is the force law's own zero
@@ -731,7 +737,7 @@ impl Sim {
             de4_ci: Vec::new(),
             e_wall: 0.0,
             e_spring: 0.0,
-            g: 0.0,
+            g_vec: (0.0, 0.0, 0.0),
             e_grav: 0.0,
             w_ext: 0.0,
             work: ExternalWork::zero(),
@@ -1054,35 +1060,63 @@ impl Sim {
             + self.e_grav.abs()
     }
 
-    /// Set the uniform gravitational field, atomic units of acceleration, downward.
+    /// Set the uniform gravitational field as a WORLD-FRAME acceleration vector, atomic
+    /// units. Straight down at one G is `(0.0, -G_EARTH_AU, 0.0)`.
     ///
-    /// REFUSES on a periodic box. See [`GravityRefusal::PeriodicBox`] for why that is a
-    /// fact about the chart rather than a policy: the field is not well-posed on a torus,
-    /// and serving it would open the balance gate by `m g H` on every wrap while calling
-    /// the result drift.
+    /// This is the door WB-2.4c asks for and the scalar one below now delegates to it, so
+    /// there is exactly one statement of what the field does to a scene. The shell holds
+    /// this vector pointing world-down and rotates the BOX around it; the field's
+    /// direction in box coordinates then changes, which is what a tilted bucket is.
     ///
-    /// Re-bases nothing. Adding a potential term moves the total energy, so a caller that
-    /// turns gravity on mid-run must `rebase()` for the same reason loading a new surface
-    /// does -- otherwise the drift is measured against an origin taken before this term
-    /// existed and reads a JUMP that no integrator produced. Left to the caller rather
-    /// than done here, because a caller setting the field BEFORE the scene opens (which is
-    /// what `reset` then does anyway) should not pay for a rebase it does not need.
-    pub fn set_gravity(&mut self, g_au: f64) -> Result<(), GravityRefusal> {
-        if g_au != 0.0 && self.boundary.wraps() {
-            return Err(GravityRefusal::PeriodicBox);
-        }
-        if !g_au.is_finite() {
+    /// REFUSES on a wrapping box, per component. See [`GravityRefusal::PeriodicBox`]: a
+    /// linear potential is not well-posed on a torus. This engine's `Boundary::Periodic`
+    /// wraps ALL THREE axes, so the per-axis rule collapses to "any nonzero field is
+    /// refused" -- stated rather than silently simplified, because the day an axis-wise
+    /// periodic boundary exists this is the line that has to learn about it.
+    ///
+    /// Re-bases nothing, for the reason the scalar door did not: adding or turning a
+    /// potential term moves the total energy, so a caller changing the field mid-run must
+    /// `rebase()` or the drift is measured against an origin taken before this field
+    /// existed and reads a JUMP no integrator produced.
+    pub fn set_gravity_vec(&mut self, gx: f64, gy: f64, gz: f64) -> Result<(), GravityRefusal> {
+        if !(gx.is_finite() && gy.is_finite() && gz.is_finite()) {
             return Ok(());
         }
-        self.g = g_au;
+        let nonzero = gx != 0.0 || gy != 0.0 || gz != 0.0;
+        if nonzero && self.boundary.wraps() {
+            return Err(GravityRefusal::PeriodicBox);
+        }
+        self.g_vec = (gx, gy, gz);
         self.compute_forces();
         self.accumulate_energy();
         Ok(())
     }
 
-    /// The field currently set, atomic units.
+    /// Set the field as a DOWNWARD MAGNITUDE, atomic units -- the pre-WB-2.4c door, kept
+    /// because "1 G downward" is what a viewer's slider means and re-deriving the vector
+    /// at every call site is how the two spellings drift apart.
+    ///
+    /// Delegates. `set_gravity(g)` is exactly `set_gravity_vec(0.0, -g, 0.0)`, and
+    /// `tests/gravity.rs` asserts the two produce bit-identical scenes rather than
+    /// trusting the delegation.
+    pub fn set_gravity(&mut self, g_au: f64) -> Result<(), GravityRefusal> {
+        self.set_gravity_vec(0.0, -g_au, 0.0)
+    }
+
+    /// The field vector currently set, atomic units.
+    pub fn gravity_vec(&self) -> (f64, f64, f64) {
+        self.g_vec
+    }
+
+    /// The field's MAGNITUDE, atomic units. Zero when there is none.
+    ///
+    /// Deliberately a magnitude and not the old signed scalar: with a vector field there
+    /// is no privileged axis to take a component along, and returning `-g_vec.1` would be
+    /// right only while the field points down, which is precisely the assumption WB-2.4c
+    /// removes.
     pub fn gravity(&self) -> f64 {
-        self.g
+        let (x, y, z) = self.g_vec;
+        (x * x + y * y + z * z).sqrt()
     }
 
     /// The INTERNAL force on atom `i`, hartree/bohr: the pair loop's contribution plus the
@@ -2469,13 +2503,21 @@ impl Sim {
         // uniform field is conservative, its energy is `e_grav` below, and a `work.gravity`
         // column would be double-counting the same joules the potential already holds.
         self.e_grav = 0.0;
-        if self.g != 0.0 {
+        let (gx, gy, gz) = self.g_vec;
+        if gx != 0.0 || gy != 0.0 || gz != 0.0 {
             for i in 0..self.n {
                 let m = self.atoms[i].mass();
-                // Downward is -y. The potential's zero is y = 0, the box's lower face,
-                // which is this force law's own zero.
-                self.a_ext[i].1 -= m * self.g;
-                self.e_grav += m * self.g * self.atoms[i].y;
+                let a = &self.atoms[i];
+                // Force is `m g`, potential is `-m (g . r)`. The potential's zero is the
+                // box ORIGIN, which is this force law's own zero -- the same choice the
+                // scalar door made when it measured `y` from the lower face, now stated
+                // in a form that does not privilege an axis. For `g = (0, -g, 0)` this
+                // reduces to `+m g y` exactly, which is what the scalar-equivalence test
+                // checks bit for bit.
+                self.a_ext[i].0 += m * gx;
+                self.a_ext[i].1 += m * gy;
+                self.a_ext[i].2 += m * gz;
+                self.e_grav -= m * (gx * a.x + gy * a.y + gz * a.z);
             }
         }
 

@@ -12,13 +12,13 @@
 //! energy ledger already holds its potential; these tests are what make that "already"
 //! checkable instead of asserted.
 
-use holon_render::sim::{Boundary, GravityRefusal, Sim, G_EARTH_AU, G_SI, K_B};
+use holon_render::sim::{Boundary, Dims, GravityRefusal, Sim, G_EARTH_AU, G_SI, K_B};
 
 /// A walled, gravity-free reference scene with a real curve loaded.
 fn scene(n: usize) -> Sim {
     let mut s = Sim::empty();
     holon_render::generate_table(&mut s, 0.6, 12.0, 192);
-    s.dims = holon_render::sim::Dims::Three;
+    s.dims = Dims::Three;
     s.boundary = Boundary::Walls;
     s.reset(n);
     s
@@ -109,7 +109,7 @@ fn a_periodic_box_refuses_the_field() {
         Err(GravityRefusal::PeriodicBox),
         "a periodic box has no bottom and must refuse"
     );
-    assert_eq!(s.g, 0.0, "a refused field must not be stored");
+    assert_eq!(s.gravity_vec(), (0.0, 0.0, 0.0), "a refused field must not be stored");
 
     // Zero is not a field, so it is always accepted: turning gravity OFF on a periodic box
     // must not be an error, or a viewer switching boundary with the control at zero would
@@ -120,7 +120,7 @@ fn a_periodic_box_refuses_the_field() {
     // blanket ban. A test that only showed the refusal could not tell those apart.
     s.boundary = Boundary::Walls;
     assert!(s.set_gravity(G_EARTH_AU).is_ok());
-    assert_eq!(s.g, G_EARTH_AU);
+    assert_eq!(s.gravity_vec(), (0.0, -G_EARTH_AU, 0.0));
 }
 
 /// THE TIER-SEPARATION EXHIBIT, measured — and it does not say what WB-2.4 says.
@@ -261,11 +261,212 @@ fn a_checkpoint_carries_the_field() {
     let mut t = scene(12);
     t.restore(&saved).expect("restore");
 
-    assert_eq!(t.g, s.g, "the field did not survive the round trip");
+    assert_eq!(t.gravity_vec(), s.gravity_vec(), "the field did not survive the round trip");
     assert_eq!(
         t.e_grav.to_bits(),
         e_grav_before.to_bits(),
         "the restored scene recomputed a different potential"
     );
     assert_eq!(t.energy().to_bits(), s.energy().to_bits());
+}
+
+// ---------------------------------------------------------------- WB-2.4c: the vector
+
+/// THE SCALAR DOOR IS THE VECTOR DOOR. Not "agrees to a tolerance" — bit for bit.
+///
+/// `set_gravity(g)` delegates to `set_gravity_vec(0, -g, 0)`, and a delegation nobody
+/// checks is two implementations waiting to drift. Every float in the two scenes is
+/// compared by BITS, because a difference of one ulp here would mean the reduction
+/// `-m (g . r)` to `+m g y` is not exact, and the whole point of routing both through one
+/// force loop is that it is.
+#[test]
+fn the_scalar_door_and_the_vector_door_are_bit_identical() {
+    let mut a = scene(12);
+    let mut b = scene(12);
+    a.set_gravity(1e18 * G_EARTH_AU).unwrap();
+    b.set_gravity_vec(0.0, -1e18 * G_EARTH_AU, 0.0).unwrap();
+    a.rebase();
+    b.rebase();
+    assert_eq!(a.e_grav.to_bits(), b.e_grav.to_bits(), "potential differs at t = 0");
+
+    for _ in 0..200 {
+        a.step_frame(64);
+        b.step_frame(64);
+    }
+    assert_eq!(a.energy().to_bits(), b.energy().to_bits());
+    assert_eq!(a.e_grav.to_bits(), b.e_grav.to_bits());
+    for i in 0..a.n {
+        assert_eq!(a.atoms[i].y.to_bits(), b.atoms[i].y.to_bits(), "atom {i} y");
+        assert_eq!(a.atoms[i].vy.to_bits(), b.atoms[i].vy.to_bits(), "atom {i} vy");
+    }
+    assert_eq!(a.gravity().to_bits(), b.gravity().to_bits());
+}
+
+/// A TILTED FIELD CONSERVES, and it is not secretly the vertical one.
+///
+/// The tilted bucket is the whole reason WB-2.4c exists, so this runs the field at 45° in
+/// the x-y plane and requires two things at once: the ledger still closes (the term is
+/// conservative whatever direction it points), and the scene is measurably DIFFERENT from
+/// the same magnitude pointing straight down. The second half is the one that matters —
+/// a bug that silently projected the vector back onto -y would pass every conservation
+/// check ever written and produce a bucket that cannot be tilted.
+#[test]
+fn a_tilted_field_conserves_and_actually_tilts() {
+    let g = 1e18 * G_EARTH_AU;
+    let c = core::f64::consts::FRAC_1_SQRT_2;
+
+    let mut tilted = scene(12);
+    tilted.set_gravity_vec(g * c, -g * c, 0.0).unwrap();
+    tilted.rebase();
+
+    let mut down = scene(12);
+    down.set_gravity_vec(0.0, -g, 0.0).unwrap();
+    down.rebase();
+
+    for _ in 0..200 {
+        tilted.step_frame(64);
+        down.step_frame(64);
+    }
+
+    assert!(
+        tilted.energy_gate(),
+        "a tilted field must conserve: drift {:.3e} vs bound {:.3e}",
+        tilted.drift(),
+        tilted.drift_bound()
+    );
+    assert!(tilted.momentum_gate(), "momentum gate open under a tilted field");
+    assert_eq!(tilted.w_ext, 0.0, "a tilted field is still conservative");
+
+    // The magnitudes match to float precision, so any difference in the trajectory is
+    // DIRECTION and nothing else. RELATIVE, not absolute: `sqrt((g/sqrt2)^2 * 2)` is not
+    // bit-exactly `g`, and the first version of this line demanded 1e-30 absolute on a
+    // quantity of order 1e-4 — an impossible bar that failed on correct arithmetic. The
+    // bar that means something is "the same to within float rounding".
+    let rel = (tilted.gravity() - down.gravity()).abs() / down.gravity();
+    assert!(
+        rel < 1e-15,
+        "the two fields are not the same strength (relative {rel:.3e}); this test can only \
+         attribute a trajectory difference to direction if the magnitudes agree"
+    );
+    let moved = (0..tilted.n)
+        .map(|i| (tilted.atoms[i].x - down.atoms[i].x).abs())
+        .fold(0.0f64, f64::max);
+    println!("  max |x_tilted - x_down| = {moved:.4e} bohr   (box width {:.1} bohr)", tilted.width);
+
+    // THE BAR IS DERIVED, AND THE FIRST VERSION OF IT WAS USELESS.
+    //
+    // This started as `moved > 0.0`, which a plant proved cannot fail: with the vector
+    // silently projected back onto -y — the exact defect this test exists to catch — the
+    // two scenes still separated by 3.4e-12 bohr, because their field MAGNITUDES differ in
+    // the last bits (`sqrt(2 (g/sqrt2)^2)` is not bit-exactly `g`) and two hundred frames
+    // of a chaotic trajectory amplify that into something merely nonzero. A threshold at
+    // zero cannot tell "the direction matters" from "floats diverged".
+    //
+    // The bar that can: a field whose x-component is ~7.7e-5 a.u. acting for ~1.4e4 a.u.
+    // of simulated time drives atoms across the box and into the +x wall, so the two
+    // scenes must differ by at least an INTERATOMIC distance. One bohr is that scale, and
+    // it sits ten orders above the float-divergence floor and one order below the measured
+    // 21.5 bohr — which is the box width, i.e. exactly the pinned-against-the-wall
+    // behaviour the physics predicts.
+    assert!(
+        moved > 1.0,
+        "the tilted field moved atoms only {moved:.3e} bohr in x against the vertical \
+         field — below an interatomic distance, so the direction is being discarded and \
+         this difference is float divergence rather than physics"
+    );
+}
+
+/// The field's DIRECTION survives a checkpoint, not merely its strength.
+///
+/// The v2 format stored one number. A v3 file that stored only the magnitude would restore
+/// a tilted bucket standing upright — conserving perfectly, gates all green, and wrong.
+#[test]
+fn a_checkpoint_carries_the_field_direction() {
+    let g = 1e18 * G_EARTH_AU;
+    let c = core::f64::consts::FRAC_1_SQRT_2;
+    let mut s = scene(12);
+    s.set_gravity_vec(g * c, -g * c, 0.0).unwrap();
+    s.rebase();
+    for _ in 0..20 {
+        s.step_frame(64);
+    }
+    let saved = s.checkpoint();
+
+    let mut t = scene(12);
+    t.restore(&saved).expect("restore");
+    assert_eq!(t.gravity_vec(), s.gravity_vec(), "the direction did not survive");
+    assert_eq!(t.e_grav.to_bits(), s.e_grav.to_bits());
+    assert_eq!(t.energy().to_bits(), s.energy().to_bits());
+}
+
+/// A WRAPPING BOX REFUSES EVERY NONZERO DIRECTION, not just the vertical one.
+///
+/// The scalar door could only ever offer `-y`, so its refusal test only ever exercised
+/// that axis. With a vector the refusal has three ways to be got wrong, and a check on one
+/// component would pass while a sideways field sailed through onto a torus.
+#[test]
+fn a_wrapping_box_refuses_the_field_in_every_direction() {
+    let g = G_EARTH_AU;
+    for (gx, gy, gz) in [
+        (g, 0.0, 0.0),
+        (0.0, -g, 0.0),
+        (0.0, 0.0, g),
+        (g, -g, g),
+    ] {
+        let mut s = scene(12);
+        s.boundary = Boundary::Periodic;
+        assert_eq!(
+            s.set_gravity_vec(gx, gy, gz),
+            Err(GravityRefusal::PeriodicBox),
+            "a wrapping box accepted ({gx}, {gy}, {gz})"
+        );
+        assert_eq!(s.gravity_vec(), (0.0, 0.0, 0.0), "a refused field was stored");
+    }
+    // And the zero vector is always fine: turning gravity OFF on a torus is not a request
+    // for a field, and refusing it would make a viewer's boundary switch an error.
+    let mut s = scene(12);
+    s.boundary = Boundary::Periodic;
+    assert!(s.set_gravity_vec(0.0, 0.0, 0.0).is_ok());
+}
+
+/// THE CROSS-TERM: compressing the box under gravity keeps the ledger closed.
+///
+/// Neither lane wrote this one, and it is exactly where two correct changes can produce a
+/// wrong sum. `scale_box` moves every atom affinely and posts `energy_after -
+/// energy_before` to both ledger columns; `e_grav` is part of `energy()`, so the work done
+/// against the field during a compression is booked automatically. "Automatically" is a
+/// claim, and this is the check on it: a hand that squeezed a box under gravity and did
+/// not pay for the lift would show up here and nowhere else.
+#[test]
+fn compressing_the_box_under_gravity_keeps_the_ledger_closed() {
+    let mut s = scene(12);
+    s.set_gravity_vec(0.0, -1e18 * G_EARTH_AU, 0.0).unwrap();
+    s.rebase();
+    for _ in 0..50 {
+        s.step_frame(64);
+    }
+
+    let e_grav_before = s.e_grav;
+    let w_before = s.w_ext;
+    s.scale_box(0.9).expect("a 10% compression is not a collapse");
+    assert!(
+        (s.e_grav - e_grav_before).abs() > 0.0,
+        "an affine compression under gravity must change the gravitational potential"
+    );
+    assert!(
+        (s.w_ext - w_before).abs() > 0.0,
+        "the compression's cost was not posted to the ledger"
+    );
+    assert!(s.work_columns_ok(), "the receipt columns parted from w_ext");
+
+    for _ in 0..200 {
+        s.step_frame(64);
+    }
+    assert!(
+        s.energy_gate(),
+        "energy gate open after a compression under gravity: drift {:.3e} vs bound {:.3e}",
+        s.drift(),
+        s.drift_bound()
+    );
+    assert!(s.momentum_gate());
 }

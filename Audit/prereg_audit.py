@@ -40,7 +40,20 @@ def registry_dates():
             continue
         d = re.findall(r"(20\d\d-\d\d-\d\d)", row)
         if d:
-            out[m.group(1)] = max(d)
+            # FIRST date, not last (fixed 2026-09-01, found by arming M-STALE-INSTRUMENT
+            # and M-PLACEMENT-LOTTERY below and watching the new arms NOT fire on a
+            # deliberately stripped freeze). `max` reads the LAST date mentioned in the
+            # row, which is not the registration date: a misfit that is later ANNOTATED
+            # -- a re-occurrence noted, a scope note added -- has its effective date
+            # pushed forward, and every freeze up to that new date is silently exempted
+            # from citing it. Both ids above had picked up a same-day annotation and were
+            # therefore unenforceable on the very day they were needed. An annotation must
+            # never weaken a gate. The forward-only ruling is untouched: a freeze still
+            # cannot be refused for failing to cite something registered after it, and
+            # `min` is the date it was registered. Verified against all 41 freezes in the
+            # tree at the time of the edit: byte-identical output, so this tightens the
+            # gate for the future without retro-refusing anything.
+            out[m.group(1)] = min(d)
     return out
 
 
@@ -77,6 +90,18 @@ CONTACT = {
     "rent clause": "M-MAINTENANCE-LENS",
     "timeout": "M-IDLE-CALIBRATED-TIMEOUT", "grace period": "M-IDLE-CALIBRATED-TIMEOUT",
     "quiet machine": "M-IDLE-CALIBRATED-TIMEOUT", "loadavg": "M-IDLE-CALIBRATED-TIMEOUT",
+    # --- 2026-09-01: the unarmed-coverage note below was reporting 26 of 41, and THREE of
+    # the unarmed ids are the ones the tower brief names as mandatory contacts for any
+    # freeze that prices a path. An id that a freeze must cite but that no keyword can
+    # catch is decoration, which is the same finding that dated this table in the first
+    # place. Keywords stay NARROW on purpose: an over-broad contact refuses honest freezes,
+    # and an audit people switch off gates nothing. Verified against all 41 freezes in the
+    # tree at the time of the edit: zero newly refused.
+    "core-hour": "M-CHEAPER-THAN-ITS-PRICE", "cost model": "M-CHEAPER-THAN-ITS-PRICE",
+    "per-node price": "M-CHEAPER-THAN-ITS-PRICE",
+    "results document": "M-STALE-INSTRUMENT", "instrument's commit": "M-STALE-INSTRUMENT",
+    "taskset": "M-PLACEMENT-LOTTERY", "core class": "M-PLACEMENT-LOTTERY",
+    "wall clock": "M-PLACEMENT-LOTTERY",
 }
 
 def contact_table_is_sound():

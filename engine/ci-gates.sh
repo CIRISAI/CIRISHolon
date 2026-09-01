@@ -483,10 +483,33 @@ fi
 #  vacuously -- while the commit banking it claimed BRIDGE-2 passed. It is
 #  REFUSED like the others. A gate that inspects zero artifacts must refuse,
 #  and now does.)
-PREREG_EXEMPT="GRAVITY_BRIDGE0_PREREG.md GRAVITY_BRIDGE0_V2_PREREG.md GRAVITY_BRIDGE1_PREREG.md GRAVITY_BRIDGE2_PREREG.md GRAVITY_BRIDGE3_PREREG.md GRAVITY_BRIDGE5_PREREG.md GRAVITY_BRIDGE6_PREREG.md"
+#
+# SCOPE, WIDENED 2026-09-01 (tower lane), because the previous glob was the same
+# defect one level up from the path bug recorded above. It named TWO directories --
+# gravity and crystal -- while the tree has SIX, so four whole campaign families
+# (atomworld, omega, selector, water_observatory) were audited by nobody. The gate
+# was green and the question "what would this command NOT catch?" had the answer
+# "most of the freezes". The DIMER-1 freeze that prompted the check was itself
+# outside it. Measured before widening: atomworld (6), selector (4) and
+# water_observatory (3) all pass unchanged; omega has two that do not, named below.
+#
+# STILL UNCOVERED, stated rather than left silent: `engine/*_PREREG.md` (Q7, Q7B,
+# Q8_MPS, Q10, Q_SEAM). All five are frozen history from before this audit existed
+# and all five retro-refuse; covering them would mean five more exemptions and zero
+# coverage gain, which is what the file above calls suppression. Owner: the Q-series
+# lane. Exit: a results document recording the five retro-refusals, after which the
+# glob takes `../engine/*_PREREG.md` too.
+PREREG_EXEMPT="GRAVITY_BRIDGE0_PREREG.md GRAVITY_BRIDGE0_V2_PREREG.md GRAVITY_BRIDGE1_PREREG.md GRAVITY_BRIDGE2_PREREG.md GRAVITY_BRIDGE3_PREREG.md GRAVITY_BRIDGE5_PREREG.md GRAVITY_BRIDGE6_PREREG.md CROSSFACE1_PREREG.md OMEGA_CIRCUITS1_PREREG.md"
+# CROSSFACE1 / OMEGA_CIRCUITS1: added with the widening, NOT to hide them. Both
+# retro-refuse on one contact each -- 'repair'/'maintenance' -> M-MAINTENANCE-LENS
+# uncited -- and both are frozen, so they cannot be edited to comply. Owner: the
+# omega lane. Exit: record the retro-refusal in the omega results documents (the
+# same remedy the seven gravity names took) and delete these two entries. An
+# allowlist entry is legitimate only when the break has an owner and an exit; these
+# have both, and the break is one citation line, not a defect in either campaign.
 audit_fail=0
 audit_seen=0
-for pre in ../conformance/gravity/*_PREREG.md ../conformance/crystal/*_PREREG.md; do
+for pre in ../conformance/*/*_PREREG.md; do
   [ -f "$pre" ] || continue
   audit_seen=$((audit_seen+1))
   base=$(basename "$pre")

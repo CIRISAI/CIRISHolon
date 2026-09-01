@@ -154,3 +154,46 @@ Nothing here is implemented. `s3_tables` currently writes a plain-text `.tbl` wi
 header — adequate for a campaign artifact, **not** adequate for a shipped one the page's
 provenance gate reads. Converting the emitter is small and is mine the moment the shape is
 ruled.
+
+---
+
+## The coordinate convention, stated (render-3d's last blocker, 2026-09-01)
+
+Read from `holon-tables/src/surface.rs::TrimerSurface::realise`, which is the code that
+turns a node's three coordinates into atomic centres. It is authoritative; this section
+restates it and adds nothing.
+
+    centres = [ [0, 0, 0],  [x, 0, 0],  [y*u, y*s, 0] ]      s = sqrt(1 - u^2)
+
+**`u` IS THE COSINE of the angle between the two short sides. It is not the angle, and it
+is not `sqrt(1 - cos theta)`.** The axis is named `u` rather than `cos_theta` for brevity
+and that was a mistake worth naming, because a neighbouring lane's domain sweep
+parameterises the same angle as `c = sqrt(1 - cos theta)` over [0.05, 1.4142]. Those are
+different variables on the same axis. A domain handed over in `c` and consumed as `u`
+would place every grid line in the wrong spot — smooth, plausible, and wrong everywhere.
+The emitter therefore ships `axis_rule` and the explicit `u_nodes` array, and the
+coordinates are authoritative wherever a name and an array disagree.
+
+**Which species x and y are measured from.** `species[0]` sits at the origin and is the
+APEX — the atom the table's symmetry does not exchange. `x` is the apex-to-`species[1]`
+side; `y` is the apex-to-`species[2]` side; `u` is the cosine of the angle between them,
+at the apex. So for `--species Cl,H,H`, Cl is the apex and both axes are Cl-H distances,
+which matches the neighbouring lane's own apex convention.
+
+**The third side is not stored and must be derived** by the law of cosines, which the
+centres above satisfy exactly:
+
+    r_23 = sqrt(x^2 + y^2 - 2*x*y*u)
+
+A consumer that wants three side lengths computes that one; it is not in the artifact
+because storing a derived quantity invites the two copies to disagree.
+
+**Units** are bohr for `x`, `y` and `r_23`; `u` is dimensionless on [-1, 1]; energies are
+hartree.
+
+**Grids are ARBITRARY and uniform-linear.** `nx`, `ny`, `nu` come from the domain and are
+not the engine's `trimer::NR/NU`, and the spacing rule is uniform-linear rather than
+`trimer.rs`'s tau-stretch. A consumer must size its storage from the artifact and
+interpolate on the shipped coordinates. `holon_chem::trimer::TrimerTable::eval` is NOT a
+valid evaluator for these surfaces on two independent counts — it assumes tau-stretched
+axes and it takes three side lengths where these axes are `(x, y, u)`.

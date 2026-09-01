@@ -596,3 +596,206 @@ fn the_truncated_pair_force_is_minus_the_gradient_of_the_truncated_energy() {
          first place to look."
     );
 }
+
+/// THE TRIPLE SECTOR'S ROUTE AGREEMENT, which `the_two_routes_agree_bit_for_bit` above does
+/// NOT test.
+///
+/// That test builds its scene from `loaded_sim()`, which loads a pair curve and nothing
+/// else — so `e_three` is an exact zero throughout it and the comparison certifies the PAIR
+/// sector's two routes while saying nothing about the triple sector's. The gap is the same
+/// shape the dE4 lane found in their own synthetic runs (a gate whose physics half skips,
+/// certifying the pairing and not the magnitude), and it is worth closing here rather than
+/// noting, because the triple enumeration is where the route-dependent bug would actually
+/// live: the hub-centred rule emits a triple at hub `h` when the opposite side is outside
+/// the cutoff, and otherwise only when `h` is the smallest index. Get that wrong and a
+/// triple is emitted twice on one route and once on the other.
+#[test]
+fn the_two_routes_agree_on_the_triple_sector_too() {
+    let build = |complete: bool| {
+        let mut s = lattice(6, 6, 6, 8.0);
+        assert_eq!(
+            holon_render::generate_trimer_table(&mut s),
+            1,
+            "the three-body table did not generate"
+        );
+        assert!(s.set_pair_cutoff(1e-6));
+        if complete {
+            s.force_complete_route();
+        }
+        s
+    };
+
+    let local = build(false);
+    assert_eq!(
+        local.route(),
+        Route::Cells,
+        "the cell decomposition did not engage; this compares one route with itself"
+    );
+    // NON-VACUITY, and it is the whole point of this test existing: the triple sector has to
+    // be CARRYING something. Two routes agreeing that e_three is zero is not agreement about
+    // the triple sector, it is agreement about zero.
+    assert!(
+        local.e_three != 0.0,
+        "the three-body energy is exactly zero, so this test compares two routes through a \
+         sector neither of them entered"
+    );
+    let triples = local.triples().len();
+    assert!(
+        triples > 0,
+        "no triples were enumerated at all ({triples})"
+    );
+
+    let complete = build(true);
+    assert_eq!(complete.route(), Route::Complete);
+
+    println!(
+        "triple sector: e_three = {:.17e} over {triples} triples; cells vs complete",
+        local.e_three
+    );
+    assert_eq!(
+        local.e_three.to_bits(),
+        complete.e_three.to_bits(),
+        "the cell route read e_three = {:.17e} where the complete route read {:.17e}",
+        local.e_three,
+        complete.e_three
+    );
+    assert_eq!(
+        local.triples().len(),
+        complete.triples().len(),
+        "the two routes enumerated different numbers of triples ({} vs {})",
+        local.triples().len(),
+        complete.triples().len()
+    );
+    // And the forces, which is where a double-emitted triple would show up even if the
+    // energies happened to agree.
+    for i in 0..local.n {
+        let a = local.internal_force(i);
+        let b = complete.internal_force(i);
+        assert_eq!(a.0.to_bits(), b.0.to_bits(), "atom {i}: fx {:.17e} vs {:.17e}", a.0, b.0);
+        assert_eq!(a.1.to_bits(), b.1.to_bits());
+        assert_eq!(a.2.to_bits(), b.2.to_bits());
+    }
+}
+
+/// THE HUB RULE AGAINST A TRUE REFERENCE — and this test exists because the one above it is
+/// not the gate I first thought it was.
+///
+/// `the_two_routes_agree_on_the_triple_sector_too` compares the cell route with the complete
+/// route. BOTH run the identical hub-centred enumeration — the route changes how the
+/// neighbour list is BUILT, not how triples are drawn from it — so a hub rule that emitted a
+/// triple twice would emit it twice on both routes and they would agree perfectly. That is
+/// the same "the two agree, so neither is checked" shape I had just written a test to close
+/// in the pair sector, reproduced by me in the triple sector within the hour. It is worth
+/// saying rather than quietly fixing: agreement between two things that share the suspect
+/// code is not evidence about the suspect code, and the reflex to reach for it is strong
+/// enough that knowing about it did not stop me.
+///
+/// The true reference is the enumeration the hub rule REPLACED: every `i < j < k`, evaluated
+/// directly. `O(N³)` and therefore a small scene, which is the price of a reference that
+/// shares no logic with the thing it checks.
+#[test]
+fn the_hub_rule_enumerates_every_triple_exactly_once() {
+    // SPACING 5, NOT 8, and the difference is the whole test. The hub rule's canonical
+    // clause only runs when a triple has ALL THREE sides inside the cutoff — that is when
+    // more than one vertex qualifies as a hub and one of them has to be chosen. In a cubic
+    // lattice at spacing 8 the face diagonal is 11.3 bohr against a 9-bohr three-body
+    // cutoff, so no such triple exists and the clause is never reached: the first version
+    // of this test ran on that scene, and a plant that DELETED the clause outright passed
+    // it unchanged. At spacing 5 the face diagonal is 7.07 and the mutual-neighbour triples
+    // exist.
+    let mut s = lattice(4, 4, 4, 5.0);
+    assert_eq!(
+        holon_render::generate_trimer_table(&mut s),
+        1,
+        "the three-body table did not generate"
+    );
+    s.recompute();
+
+    // THE REFERENCE: the complete `i < j < k` sum, sharing no code with the hub rule beyond
+    // `triple_term` itself — which is the evaluator both must agree about, not the
+    // enumeration under test.
+    let mut reference = 0.0f64;
+    let mut live = 0usize;
+    let mut dead = 0usize;
+    for i in 0..s.n {
+        for j in (i + 1)..s.n {
+            for k in (j + 1)..s.n {
+                let t = s.triple_term([i, j, k]);
+                if t.live {
+                    reference += t.v;
+                    live += 1;
+                } else {
+                    dead += 1;
+                }
+            }
+        }
+    }
+
+    // NON-VACUITY, three ways, and the third is the one this test was missing.
+    //
+    // (1) triples the rule KEEPS and (2) triples it DROPS, or there is no cutoff being
+    // exercised. And (3) triples with ALL THREE sides inside the cutoff — the only case in
+    // which more than one vertex qualifies as a hub and the canonical clause has anything to
+    // decide. Without (3) the clause is dead code during the test and deleting it passes.
+    assert!(
+        live > 0 && dead > 0,
+        "the reference found {live} live and {dead} dead triples; a scene that is all one or \
+         all the other does not exercise the hub rule's cutoff"
+    );
+    let cut3 = s.three_body_cutoff();
+    let geom = s.geom();
+    let sep = |a: usize, b: usize| -> f64 {
+        let (dx, dy, dz) = geom.delta(
+            (s.atoms[a].x, s.atoms[a].y, s.atoms[a].z),
+            (s.atoms[b].x, s.atoms[b].y, s.atoms[b].z),
+        );
+        (dx * dx + dy * dy + dz * dz).sqrt()
+    };
+    let mut all_three_local = 0usize;
+    for i in 0..s.n {
+        for j in (i + 1)..s.n {
+            if sep(i, j) > cut3 {
+                continue;
+            }
+            for k in (j + 1)..s.n {
+                if sep(i, k) <= cut3 && sep(j, k) <= cut3 {
+                    all_three_local += 1;
+                }
+            }
+        }
+    }
+    assert!(
+        all_three_local > 0,
+        "no triple in this scene has all three sides inside the {cut3}-bohr cutoff, so the \
+         canonical-hub clause is never reached and deleting it would pass this test"
+    );
+    assert!(
+        reference != 0.0,
+        "the reference sum is exactly zero, so this compares two enumerations of nothing"
+    );
+
+    println!(
+        "hub rule vs complete i<j<k: {live} live of {} triples ({dead} dead, \
+         {all_three_local} with all three sides local); \
+         e_three = {:.17e}, reference = {:.17e}, delta = {:.3e}",
+        live + dead,
+        s.e_three,
+        reference,
+        (s.e_three - reference).abs()
+    );
+    assert_eq!(
+        s.triples().len(),
+        live,
+        "the hub rule enumerated {} triples where the complete scan found {live} live ones — \
+         a triple is being emitted twice, or dropped",
+        s.triples().len()
+    );
+    // The sums are over the same terms in the same ascending order, so this is exact.
+    assert_eq!(
+        s.e_three.to_bits(),
+        reference.to_bits(),
+        "e_three = {:.17e} against a reference of {:.17e}",
+        s.e_three,
+        reference
+    );
+}

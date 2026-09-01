@@ -1,0 +1,31 @@
+# CENSUS: --ozone=served arm -- NO TRAJECTORIES, AND THAT IS THE READING
+#
+# The arm ran its three pair curves (H-H 8.7e-11, O-H 9.9e-11, O-O 2.7e-6 in 2737.9 s)
+# and then REFUSED at the ozone surface:
+#
+#   thread 'main' panicked at crates/holon-render/examples/waterquench_traj.rs:514:56:
+#   the Ozone table generates
+#
+# Exit code 101. Zero seeds ran and zero trajectories were written, so there is nothing to
+# census and this file records why rather than leaving a bare usage line.
+#
+# CAUSE. At the pin this lane builds from (a3b3d4b), holon_chem::ozone::generate() is:
+#
+#   pub fn generate() -> Option<OzoneTable> { None }
+#
+# The (O,O,O) surface that conformance/atomworld/p2_waterquench.log ran on was convicted by
+# M-CHEAPER-THAN-ITS-PRICE and WITHDRAWN -- not patched. That is the whole of the 19+/53-
+# ozone.rs diff between 45a513a and this pin.
+#
+# WHY THE RUNNER DIED RATHER THAN REPORTING. `--ozone=served|fenced` is a required argument
+# with no default and the table load is an `expect`, both on purpose: the two settings are
+# different physics, and a runner that silently substituted an empty surface would have
+# produced a molecule census indexed to a configuration nobody chose. The refusal is the
+# feature (OBJECT.md rule 9).
+#
+# CONSEQUENCE, and it is larger than this arm: p2_waterquench.log is NOT REPRODUCIBLE from
+# any current commit, because the surface it loaded exists in no tree that still generates
+# it. It remains a valid RECORD; it is no longer a reproducible EXPERIMENT.
+#
+# See CENSUS_RESULTS.md sections 10.3 and 10.4. The run log is parked at
+# /home/emoore/holon-artifacts/census-traj/served.log and hashed in the manifest.

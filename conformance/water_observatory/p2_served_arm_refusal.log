@@ -1,0 +1,8 @@
+# curve H-H: 96 knots, R_e = 1.3887 bohr, D_e = 0.204142 Ha, worst residual 8.7e-11, 2.9 s
+# curve O-H: 96 knots, R_e = 1.9909 bohr, D_e = 0.122901 Ha, worst residual 9.9e-11, 83.7 s
+# WARNING O-O: worst residual 2.68e-6 exceeds CONVERGED_RESIDUAL 1e-9.
+# curve O-O: 96 knots, R_e = 2.4421 bohr, D_e = 0.147621 Ha, worst residual 2.7e-6, 2737.9 s
+
+thread 'main' (3807079) panicked at crates/holon-render/examples/waterquench_traj.rs:514:56:
+the Ozone table generates
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

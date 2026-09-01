@@ -172,8 +172,14 @@ fn test_c0_c1_transport_and_centroid_retract() {
 }
 
 #[test]
-fn test_h2_anharmonic_quantum_nuclear_zpe_gate() {
-    // Certified STO-3G H2 parameters from banked fci / table
+fn test_h2_harmonic_zpe_sanity() {
+    // HONEST SCOPE (renamed from "anharmonic_quantum_nuclear_zpe_gate", which
+    // overclaimed): this checks HARMONIC ZPE arithmetic on a TRANSCRIBED
+    // curvature constant. It runs no RPMD and reads no banked table. C1's real
+    // gate — RPMD zero-point energy on the banked H-H curve against an exact
+    // anharmonic grid reference, plus the D2 isotope shift — is OWED per
+    // WB-8.3 / maximal tasking section 4, and this sanity check is not it.
+    // Certified STO-3G H2 parameters transcribed from banked fci / table
     // Well depth: D_e = 0.1704 Hartree
     // Harmonic curvature at R_e: k = 0.5708 Hartree / bohr^2
     // Reduced mass of H2: mu = 0.5 * 1.007825 * 1822.888486 = 918.57 m_e

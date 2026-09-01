@@ -97,6 +97,18 @@ pub trait AdditiveOperator<C: Carrier>: Clone + Send + Sync + Debug {
 /// A typed energy or Hamiltonian contribution belonging strictly to carrier `C`.
 /// Cross-carrier addition (`Contribution<C0> + Contribution<C1>`) is a compile-time type error.
 #[derive(Clone, Debug)]
+/// Cross-carrier addition is refused BY THE COMPILER, and this doctest is the
+/// demonstrated failing case the claim requires (a type-level gate proven only
+/// by code that compiles has never been seen to fire):
+///
+/// ```compile_fail
+/// use holon_chem::tower::*;
+/// let a = Contribution::<C0_ClassicalBO>::new(
+///     "coulomb", ClassicalPotentialOp { pair_energy_fn: Some(|r| 1.0 / r) });
+/// let rp = RingPolymerOp { pair_energy_fn: None, num_beads: 8, temperature_k: 300.0 };
+/// let b = Contribution::<C1_RingPolymer>::new("beads", rp);
+/// let _ = a + b; // ERROR: mismatched carrier fibers — terms add only within one carrier
+/// ```
 pub struct Contribution<C: Carrier> {
     pub name: &'static str,
     pub operator: C::Operator,

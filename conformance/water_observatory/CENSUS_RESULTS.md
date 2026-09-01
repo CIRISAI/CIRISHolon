@@ -48,12 +48,31 @@ bound by four to five orders with energy IN bound, which is the specific signatu
 force that is not equal-and-opposite: a many-body gradient that does not sum to zero. No
 molecule downstream of that dynamics is a physics result yet (OBJECT.md rule 7).
 
+**Refinement, from the water lane's diagnosis of the defect (relayed by the lead,
+2026-09-01, after this section was first written).** The momentum breach was a DOUBLE MASS
+DIVISION, and it did not only break momentum — it also weakened the dE₄ forces themselves
+by three to four orders. So the six banked dE₄ seeds were not "MBE3 plus a four-body term";
+they were **near-MBE3 physics carrying a biased nudge**. That sharpens the reading in a
+direction worth stating: the dE₄ arm's OH₂ is not independent evidence alongside mine, it
+is a second observation from substantially the same physics. **The first true four-body
+experiment has not been run yet.**
+
 **The conservation-clean OH₂ is the one measured above, and it does not need the four-body
 term at all.** It arises in MBE3 with the four (O,O,O) triples honestly fenced, on a build
 whose momentum residual sits nearly ten orders of magnitude below the dE₄ arm's. So the
 water claim's adjudication does not have to wait on the dE₄ repair: it has a
-conservation-clean carrier now, and the repair becomes a separate question about whether
-the four-body term changes the answer.
+conservation-clean carrier now, and the repair becomes a separate and narrower question:
+**does the four-body term CHANGE the answer.** The fenced arm banked here is the baseline
+that question is measured against, which makes it a one-variable comparison rather than an
+inference — the same shape §10.5 specifies for the OOO fence, and the second such
+experiment this lane leaves specified and not run.
+
+**Two one-variable experiments are therefore owed and named, neither inferred:**
+
+| question | held fixed | the variable | status |
+|---|---|---|---|
+| does the OOO fence move the endpoint? | everything at `45a513a` | served vs fenced | specified §10.5, not run |
+| does the four-body term change the answer? | this fenced arm as baseline | repaired full-strength dE₄ | water lane owns the rerun; this census adjudicates its trajectories when they exist |
 
 ### Scoped, so nothing here over-reaches
 

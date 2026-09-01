@@ -1,0 +1,105 @@
+warning: function `scale` is never used
+    --> crates/holon-chem/src/fci.rs:1502:4
+     |
+1502 | fn scale(a: f64, x: &mut [f64]) {
+     |    ^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `normalised` is never used
+    --> crates/holon-chem/src/fci.rs:1510:4
+     |
+1510 | fn normalised(a: &[f64]) -> Vec<f64> {
+     |    ^^^^^^^^^^
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:352:5
+    |
+350 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+351 | pub struct ClassicalPotentialOp {
+352 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+    = note: `#[warn(unpredictable_function_pointer_comparisons)]` on by default
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:467:5
+    |
+465 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+466 | pub struct RingPolymerOp {
+467 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+
+warning: `holon-chem` (lib) generated 4 warnings
+warning: unused variable: `d`
+   --> crates/holon/src/cyclo.rs:180:13
+    |
+180 |         let d = self.c.len();
+    |             ^ help: if this is intentional, prefix it with an underscore: `_d`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `holon` (lib) generated 1 warning (run `cargo fix --lib -p holon` to apply 1 suggestion)
+warning: fields `e_three` and `e_four` are never read
+   --> crates/holon-render/examples/waterquench.rs:298:5
+    |
+290 | struct Outcome {
+    |        ------- fields in this struct
+...
+298 |     e_three: f64,
+    |     ^^^^^^^
+299 |     e_four: f64,
+    |     ^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `holon-render` (example "waterquench") generated 1 warning
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.10s
+     Running `target/release/examples/waterquench mixed 0x53415424`
+# curve H-H: 96 knots, R_e = 1.3887 bohr, D_e = 0.204142 Ha, worst residual 8.7e-11, 0.9 s
+# curve O-H: 96 knots, R_e = 1.9909 bohr, D_e = 0.122901 Ha, worst residual 9.9e-11, 9.6 s
+# WARNING O-O: worst residual 2.68e-6 exceeds CONVERGED_RESIDUAL 1e-9. Locate it before trusting anything this arm reports; see examples/s2_oo_residual.rs
+# curve O-O: 96 knots, R_e = 2.4421 bohr, D_e = 0.147621 Ha, worst residual 2.7e-6, 746.3 s
+# arm = mixed (8 H + 4 O)   seeds = 1   12 atoms in 34.6 x 20.8 bohr
+# 20000 boundaries x 64 substeps, dt = 1.0772 a.u. -> 33.35 ps
+# T_init 3000 K, T_target 300 K, tau 2000
+# setup 759.6 s
+  [0x0000000053415424] frame  1000/20000 | T  196 K | dE4 solves:    0 | drift: 2.99e-5 | time:   1.4 s
+  [0x0000000053415424] frame  2000/20000 | T  240 K | dE4 solves:    0 | drift: 3.33e-5 | time:   3.0 s
+  [0x0000000053415424] frame  3000/20000 | T  307 K | dE4 solves:    0 | drift: 3.31e-5 | time:   4.5 s
+  [0x0000000053415424] frame  4000/20000 | T 4170 K | dE4 solves:   87 | drift: 2.80e-5 | time: 246.6 s
+  [0x0000000053415424] frame  5000/20000 | T  366 K | dE4 solves:   87 | drift: 3.18e-5 | time: 248.2 s
+  [0x0000000053415424] frame  6000/20000 | T  431 K | dE4 solves:  133 | drift: 3.28e-5 | time: 377.7 s
+  [0x0000000053415424] frame  7000/20000 | T  339 K | dE4 solves:  152 | drift: 3.28e-5 | time: 427.3 s
+  [0x0000000053415424] frame  8000/20000 | T  301 K | dE4 solves:  199 | drift: 2.73e-5 | time: 553.9 s
+  [0x0000000053415424] frame  9000/20000 | T  318 K | dE4 solves:  199 | drift: 2.30e-5 | time: 555.5 s
+  [0x0000000053415424] frame 10000/20000 | T  190 K | dE4 solves:  199 | drift: 1.01e-4 | time: 558.2 s
+  [0x0000000053415424] frame 11000/20000 | T  225 K | dE4 solves:  199 | drift: 1.17e-4 | time: 561.6 s
+  [0x0000000053415424] frame 12000/20000 | T  378 K | dE4 solves:  199 | drift: 1.66e-4 | time: 564.4 s
+  [0x0000000053415424] frame 13000/20000 | T  258 K | dE4 solves:  199 | drift: 1.66e-4 | time: 566.5 s
+  [0x0000000053415424] frame 14000/20000 | T  313 K | dE4 solves:  199 | drift: 1.90e-4 | time: 568.3 s
+  [0x0000000053415424] frame 15000/20000 | T  336 K | dE4 solves:  199 | drift: 1.38e-4 | time: 570.5 s
+  [0x0000000053415424] frame 16000/20000 | T  253 K | dE4 solves:  209 | drift: 1.89e-4 | time: 601.8 s
+  [0x0000000053415424] frame 17000/20000 | T  320 K | dE4 solves:  209 | drift: 1.74e-4 | time: 604.1 s
+  [0x0000000053415424] frame 18000/20000 | T  274 K | dE4 solves:  291 | drift: 1.87e-4 | time: 888.3 s
+  [0x0000000053415424] frame 19000/20000 | T  251 K | dE4 solves:  291 | drift: 1.82e-4 | time: 892.3 s
+  [0x0000000053415424] frame 20000/20000 | T  296 K | dE4 solves:  487 | drift: 2.75e-4 | time: 1602.3 s
+seed 0x0000000053415424  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 4  dE4_evals 487  drift 1.57e-3/7.89e0  |p| 4.50e-3/8.95e-8  T 296 K  1602 s
+
+# ---- mixed (8 H + 4 O) ----
+# seeds with the modal O-containing molecule = H2O : 0 / 1
+# seeds with ZERO free oxygen                      : 1 / 1
+# seeds with any molecule at all                   : 1 / 1
+# worst drift / bound = 1.995e-4, worst |p| / bound = 5.034e4
+# fence incidence (triples refused for want of a table), per seed: [4]
+# dE4 (O,H,H,H) ab-initio solves, per seed: [487]
+# molecule census over all seeds: 3xH2  1xO4H2

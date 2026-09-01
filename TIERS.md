@@ -6,48 +6,46 @@ a target is not scaffolded — it's a wish. Statuses are honest: ASSUMED means
 
 ---
 
-## WHERE WE ARE — consolidated status, 2026-08-29
+## WHERE WE ARE — consolidated status, 2026-09-01
 
 *(This section supersedes the running appendices below for at-a-glance
 state; the appendices remain as the record of how each line was earned.)*
 
 | tier | status | referee & evidence | what banks it / next |
 |---|---|---|---|
-| 0 — classical bit-planes | **BANKED** | superset front-end certified per-rule; adaptive circuits (teleportation ×32 seeds, QEC cycle); explicit canonical form | done — inherits upward |
-| 1 — stabilizer | **BANKED** | ahead of stim 7/7 Born-vs-Born; canonicalizer explicit; rent law confirmed on this tier (OMEGA-CIRCUITS-1, 13/13 held-out) | done |
-| 2 — magic (Clifford+T + rings) | **CAPABILITY-COMPLETE** | ring tower; symbolic angles; native ZX evaluation (q=40 exact in 0.03 s) AND extraction (unitary-level certified, 252-circuit sweep, zero wrong; quizx extracting our diagrams matches our counts) | remaining: reduction-depth parity only (their full_simp reaches lower T pre-extraction) — a performance delta with a named location, not a capability hole |
-| mesh / GPU | **BUILT** | shard-invariant, bit-identical, 336–396× on 4090; merge law machine-checked | done — carries all tiers |
-| **crystal — gauge-coupled matter** | **BANKED 2026-08-31 — S1 branch (a)** | instrument certified two-sided (ED 5e-14, mutation fires); grid complete 18/18, zero VOIDs, χ-premise slack by two orders (worst 6e-6 vs 1e-3 band); extrapolated M_V/g = 0.553116 vs continuum 1/√π = 0.564190 ± 0.05 (2.0%) — mass from the vacuum, `conformance/crystal/SCHWINGER3_RESULTS.md`, instrument banked mid-run at CIRISOntology ac072ce | kill S1(b) survived and retired; fence: QED₂ licenses the machinery, not 3+1D |
-| bulk — MPS | **INHABITED via crystal** | the crystal referee IS an MPS method (DMRG); canonical form standard | formalize as its own tier after crystal banks: staked targets + a Lean canonical-form brick |
-| **chemical — emergent matter (the atom world)** | **BANKED, 2026-08-28/29** | ELEMENTS-1: first row (H–Ne) emerges from Z + masses + STO-3G by exact FCI — E1's negatives HELD emphatically (He₂/Ne₂ refuse to bind at 1e-10 of the stake), E2 branch (b) with all three deviations moving TOWARD experiment; R2 armed LIVE at 4/9 pairs vs the 50-digit referee (146× inside; derivatives at f64 roundoff — their first-ever external check), coverage manifest-declared, owed pairs printed every run. SATURATION-1: the MBE3 three-body tier — R1/T1/T2/C1/F1 hold, D1 branch (a) 8/8 (same seeds: pair-only 0/8 on molecules, MBE3 0/8 on droplets — the gas becomes H₂), plant (iii) the instructive VOID, saturation physics LOCALISED to the 7–12 bohr shell | referee's 5 owed pairs (progressive re-pins); ELEMENTS1_RESULTS.md; successor items named in the record (MBE4 for compact clusters, closure-vs-boundness reading, outside-zero plant) |
-| physics / graphics | **LAW BANKED; ATOM WORLD SHIPPED** | grain law (closure-aligned scheduling) machine-checked; the atom world is LIVE on Pages in 2D (252 KB wasm, 35.8 KB gzipped — computes its own chemistry at load) and 3D (Bevy shell, same rlib, 10/10 headless conservation gates, dual webgpu/webgl2 built in CI); ledger gates field-hardened by two phone screenshots | full grain-engine build (10⁶ grains) still depends on: crystal banked (the speed budget) + tuner Choice wired to render loop |
+| 0 — classical bit-planes | **BANKED** | superset front-end certified per-rule; adaptive circuits; explicit canonical form | done — inherits upward |
+| 1 — stabilizer | **BANKED** | ahead of stim 7/7 Born-vs-Born; canonicalizer explicit; rent law confirmed on-tier | done |
+| 2 — magic (Clifford+T + rings) | **CAPABILITY-COMPLETE** | ring tower; symbolic angles; native ZX evaluation and certified extraction | reduction-depth parity only — a performance delta with a named location |
+| mesh / GPU | **BUILT, and the arithmetic is a declared regime** | shard-invariant, bit-identical, merge law machine-checked; GPU sigma agrees to 3e-15 relative and differs bitwise on 91% of entries — so DEVICE CLASS is part of the artifact (M-DEVICE-CLASS), dispatch chooses only within a class, and a summation-order change is an arithmetic-regime boundary its commit must declare | done — carries all tiers; regime declared per table |
+| **crystal — gauge-coupled matter** | **BANKED 2026-08-31, S1(a)** | M_V/g = 0.553116 vs continuum 1/√π ± 0.05 (2.0%), 18/18, zero VOIDs (`conformance/crystal/SCHWINGER3_RESULTS.md`) | done; fence: QED₂ licenses the machinery, not 3+1D |
+| bulk — MPS | **INHABITED, and now MOVING**: the C2 real-time carrier landed — single-site TDVP with the gate battery that split EXACTNESS AT THE CAP (projector-splitting reproduces the exact trajectory, 3.1e-13 flat) from ORDER BELOW IT (measured 2.006), after the first stake was wrong in the instructive direction | q8-mps TDVP gates; the C2 results record | canonical-form Lean brick; staked bulk targets |
+| **chemical — emergent matter** | **THE LADDER CLIMBED THREE RUNGS.** ELEMENTS-1 (first row from Z + masses + basis) and SATURATION-1 (MBE3; the gas becomes H₂) stand. Since: the three-body tables (H₃, OH₂-surface, OOH) banked through the leased generator, bit-identical, seam-scanned before freezing; the MBE3-complete quench arms ran with fence 0; and the four-body machinery is EXACT — nine seeded dual solves per recompute give the full Cartesian gradient (no finite difference, momentum zero to the last bit by construction), gated two-directionally on momentum, torque, and force-is-the-gradient | per-encounter exact FCI; `conformance/atomworld/` | the OOO table completing its tabulation lifts the last fence; the four-body arm is RUNNING |
+| **molecular matter — the first CERTIFIED tier** | **BANKED 2026-09-01: a water molecule passed the closure test.** The tier ladder's premise — a tier is a Closed view of the tier below — stopped being a definition and became a measurement: on the conservation-audited MBE3 arm, an H₂O held CERTIFIED-STRICT for 893.8 fs against the 834 fs window staked before the instrument existed, 72.3% of the run, 0/111 controls, momentum at 6e-5 of bound. The referee is the closure census (`holon-lens`): leg A holds-over-window, leg B is the empirical `closed_iff_fiber_invariant` with witness pairs by frame index — and it says NO most of the time (transients refused, coarser views failed), which is what makes the yes evidence | `CENSUS_PREREG.md` (frozen pre-instrument), `CENSUS_RESULTS.md`, `census_mixed_fenced.log`, hashed trajectory | whether the exact four-body term CHANGES the answer — the staked one-variable comparison, running now; then the tier above: the hydrogen-bond network as a closed view of molecules |
+| carrier tower — quantum nuclei (C1) | **LANDED**: ring-polymer path (rpmd.rs) with the DVR referee; ZPE real, not scripted | c1 gate battery + `C1_GATE_RESULTS.md` | D2 shift measurement completing the battery |
+| gravity — the ledgered external field | **LANDED 2026-09-01**: uniform field with receipts (potential term, impulse ledgered), REFUSING the one box it cannot be well-posed on (periodic: `m·g·y` is discontinuous at the wrap); measured 4.05e-15 of kT at 1 nm — 25× smaller than the spec staked — and sovereignty at scale is COLLECTIVE (a column sum, ~97 atm over 1e28 particles), not per-particle; the crossover is the 246.6 km scale height, the textbook value, an independent check on the unit chain | `tests/gravity.rs`; clean-checkout suite green | the barostat lands next; the workbench's absence-list fence fires on its export the moment it exists |
+| physics / graphics | **THE WORKBENCH IS REAL**: the mock retired; the deployed page runs the actual engine wasm, with honest fences for what is not yet served (pressure, the water-table door) that FIRE on the export appearing — the gravity fence already fired once, correctly | workbench gate battery (38 checks) + smoke.mjs | un-fencing follows the engine, never precedes it |
+| dynamics infrastructure (T3) | **LANDED**: the sixteen-atom cap is gone and every loop is cutoff-local; PBC with the wrap doing no work by theorem; checkpoint/replay bit-exact with refusal plants; MTK NPT with H′ conserved; leased-worker threading bit-identical across 1/2/3/5/8 workers | per-law gates; clean-checkout 145 tests | a citable speedup number awaits a quiet box (staked, not banked — the contended measurement was visibly corrupt and refused) |
 
-**Gravity/Ω conformance riding the ladder** (not a tier, the programme that
-tests them): rungs 1–5½ closed; rung 6 passed on quantum computation, field
-theory banked by SCHWINGER-3 S1(a) 2026-08-31; rung 7 owns the stasis theorem, the extension
-mechanism, SELECTOR-3 (the first rule-6-supported Ω-internal selection
-principle), and now SELECTOR-4: the gauntlet reaches gauge worlds — G1 holds
-(the bootstrap criterion SELECTS: nothing at coarse acuity, a proper subset
-at fine), F1 holds (it DISCRIMINATES gauge structures: 2T 0.583 > 2O 0.457 >
-2I ≥0.398 > D4 0.250), and Z1 — the zoom law as staked — is DEAD, killed by
-its own construction (what nests under acuity is the IDENTITY set, not the
-selected set; the corrected quantity is a successor's stake). 2I's fine
-rungs VOID at the declared budget; no law fitted to four points. Twenty-two
-registered misfits; every mechanizable kill has or is receiving its brick.
+**Gravity/Ω conformance riding the ladder**: rungs 1–5½ closed; rung 6
+passed on quantum computation AND field theory (SCHWINGER-3); rung 7 owns
+the stasis theorem, SELECTOR-3, and the SELECTOR-4/5/6 record with its
+kills reported at full volume. The registry stands at ~45 misfits; every
+mechanizable kill has or is receiving its brick.
 
 **The move-up graph (dependencies only, no calendar):**
 
 ```
-SCHWINGER-3 completes ──> S1 branch (a) ──> CRYSTAL BANKED
-                                              ├─> bulk/MPS tier formalized (staked targets + canonical-form brick)
-                                              └─> physics/graphics build unblocked (grain-scheduled render loop,
-                                                    tuner Choice as the degradation contract)
-magic tier's ZX canonical form (independent) ──> tier 2 fully closed
-chemical tier BANKED (independent of crystal) ──> successor campaigns only
+OOO tabulation completes ──> ozone table certified (post-4884704 regime declared)
+                               └─> P2 rerun at fence = 0
+four-body full-strength arm completes ──> the staked comparison vs the certified
+                               MBE3 baseline ──> molecular tier's next rung
+                               (does the exact term change the answer?)
+molecule certified ──> hydrogen-bond network as a closed view of molecules
+                               └─> liquid tier; 3D scene
+C2 TDVP landed ──> bulk/MPS tier formalization (canonical-form brick, staked targets)
+barostat.rs lands ──> workbench pressure panel un-fenced by its own gate
 ```
 
-SCHWINGER-3 is the sole blocking computation for the crystal bank; its
-grid is checkpointed, so the cost of any interruption is narration only.
 proven and no longer under test; BUILT means certified against its referee;
 SCAFFOLD means the object shape exists and the target is named; NAMED means
 only the plan exists.*

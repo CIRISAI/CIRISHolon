@@ -96,3 +96,68 @@ generator exits rather than defaulting one. Details, guarantees and the full ref
   (a gate that cannot fire on a planted violation is refused).
 - For quantum strata: the retract test (Born readout = classical step,
   exactly) and the QASM suite up to the stratum's declared boundary.
+
+## The maximal reading — and its first certified instance
+
+*The stance with statuses and kill conditions lives in CIRISAI/CIRISOntology
+(`Stance.lean`, claims `closure`, `water-holon`, `object-rent`). This section
+states the engineering programme's own maximal interpretation of the contract
+above, at the strength the evidence carries — no stronger.*
+
+**The premise, in one line:** some distinctions survive evolution and others
+do not. An OBJECT is a lossy summary the dynamics never splits, and
+everything above the bottom — object, law, scale, gauge, conservation,
+tier — is the one commuting square wearing different clothes.
+
+Two primitives, not one, and the distinction is load-bearing:
+
+1. **The square** (`Closed v T`) gives EXISTENCE, and its algebra is
+   mechanized: the induced coarse law is unique on reachable readings
+   (`closure_determines_dynamics`), closed views compose into tiers
+   (`Tiers.lean`), a reading invariant under the coarse law is conserved by
+   the fine dynamics (`closed_view_inherits_conservation`), maximality is
+   root-relative (`Omega.lean`), and approximate closure carries a budget
+   that grows linearly in the non-expanding case (`Budget.lean`).
+2. **The paid step** gives PERSISTENCE, and it is not a corollary of the
+   square: under noise a closed view decays unless maintained (`rentStep`,
+   `rent_closed_form`), and the repair must know the design — design-blind
+   maintenance holds a structure's size while its identity decays (rule 5).
+
+The physics dictionary — object as persistent closed quotient, gauge as
+fiber motion, entropy as fiber multiplicity, interaction as
+nonfactorization, conservation as a held reading, life as closure paying
+rent — is carried at mixed strength: the rows through conservation are
+theorem-backed here or in the sibling seed; particle, field, spacetime and
+curvature are wagers with finite-model witnesses only. The statuses are not
+decoration. A dictionary row without its status is how a programme misleads
+itself.
+
+**The first certified instance (2026-09-01).** In this engine's own
+first-principles world — nuclear charges, masses, and per-encounter exact
+diagonalization; no fitted potential anywhere; twelve atoms in a
+two-dimensional box, quenched from hot gas on the conservation-audited
+arm — a water molecule assembled itself and PASSED the closure test as
+staked before the instrument existed: longest unbroken closed run 893.8 fs
+against the pre-staked 834 fs window, 72.3% of a 17.5 ps trajectory, a
+genuinely vibrating and tumbling carrier, zero of 111 control groupings
+reaching the window, momentum at 6e-5 of its roundoff bound
+(`conformance/water_observatory/CENSUS_PREREG.md`, `CENSUS_RESULTS.md`,
+`census_mixed_fenced.log`; trajectory under a committed sha256 manifest).
+The instrument says no far more often than yes — formula-reader "molecules"
+are refused as transient, and most candidate summaries the campaign has
+tested fail one leg or the other — which is what makes the yes evidence.
+One certified-strict molecule in eight seeds; no formation-rate claim;
+closure is statistical over the staked window with a declared defect
+budget, never trajectory-exact, which chaos forbids.
+
+**Open and staked, not assumed:** whether the exact four-body term changes
+the answer. The pair-plus-three-body physics produced the certification;
+the four-body arm is a pre-declared one-variable comparison against that
+baseline. Either outcome is a result.
+
+**The join, wagered:** an object is a shared pattern whose closure pays its
+own rent — existence from the square, persistence from the paid step, the
+receipts where the books are kept. Each half is backed at its own strength;
+the join is the bet, and its kills are separable: closure held at zero
+maintenance flux, or identity retained under design-blind repair — either
+fires alone, leaving both halves standing.

@@ -56,12 +56,36 @@ and these are the constants:
 | knots | 1024 | the native campaign used 4096; G2 measured the interpolant's departure from the model at 3.41e-14 Ha there, so the grid is not the error budget. Knots cost `h2_point` calls, which are the expensive ones |
 | temperature | 300 K | the native campaign's |
 | `dt` | 4.0 a.u. | the native campaign's staked step (G1 headline); its `dt/2` control moved the answer by 0.05% |
-| `gamma_centroid` | 0.001 a.u. | the native campaign's |
+| `gamma_centroid` | `omega_harm` = `sqrt(h2_point(R_e).e2 / mu_H2)` | the native campaign's, **corrected — see below** |
 | chains | **1** | `run_pimd_chains` uses `std::thread::scope`; wasm has no threads. The exhibit runs ONE chain via `run_pimd` |
-| steps | 20 000 equilibration + 60 000 sampled | chosen as the largest round number expected to fit the budget at `P = 16`; frozen here before it is timed |
-| seed | `0xC1` | deterministic; the exhibit is reproducible or it is not an exhibit |
-| `r_start` | the interpolant's own minimum, `BankedPes::minimum().0` | computed, not tabulated |
+| steps | `steps_sample` = 60 000, `steps_equil` = `steps_sample / 10` = 6 000 | the sampled count is a browser budget chosen before timing; the 1:10 equilibration ratio is the native campaign's, **corrected — see below** |
+| seed | `0xC1_0001` | the native ladder's, **corrected — see below**; deterministic, because the exhibit is reproducible or it is not an exhibit |
+| `r_start` | `equilibrium().0`, the MODEL's `R_e` | the native campaign's, **corrected — see below** |
 | returned | `e_virial − V_min`, hartree | the centroid-virial estimator, which `C1_GATE_RESULTS.md` names primary |
+
+#### Correction to this freeze, landed BEFORE any timing
+
+The first version of this table stated four knobs as "the native campaign's" that were
+not. Read against `engine/crates/holon-chem/examples/c1_campaign.rs::stage_ladder`, the
+campaign uses `gamma_centroid: s.omega` (the curve's own harmonic frequency, ≈ 2.2e-2
+a.u.) and not `0.001`; `steps_equil: steps / 10` and not a fixed 20 000; `seed:
+0xC1_0001` and not `0xC1`; and `r_start: s.r_e`, the model's equilibrium separation from
+`h2::equilibrium`, and not the interpolant's golden-section minimum. All four are
+corrected above and the corrections are recorded rather than quietly applied.
+
+`gamma_centroid` is the one that could have moved a number: the centroid friction is the
+one thermostat parameter the module calls a free DECLARED choice, and running the exhibit
+at a friction 22× below the campaign's would have lengthened the centroid correlation
+time and widened the error bar on a single short chain — a systematic difference from the
+certified run, dressed as the same configuration. The other three are reproducibility,
+not physics.
+
+**Two knobs remain DELIBERATE departures from the campaign, declared as such:**
+`n_knots` = 1024 against the campaign's 4096, and one chain against eight. The knot count
+is a browser cost decision: the cubic Hermite error scales as `h^4`, so quartering the
+knot count multiplies G2's measured 3.41e-14 Ha interpolation departure by ~256, to
+~9e-12 Ha — six orders below the statistical noise of a single short chain, so the grid
+is still not this exhibit's error budget. The chain count is forced by wasm, not chosen.
 
 `V_min` is `BankedPes::minimum().1` — the INTERPOLANT's own minimum, located by golden
 section on the interpolant, which is what the native campaign refers its ZPE to.

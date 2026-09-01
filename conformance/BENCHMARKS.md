@@ -1277,12 +1277,25 @@ quiet machine.
 
 **Both arms pinned to the SAME core, 3 rounds, minima:**
 
-| d | placement | ours | stim | ours/stim | banked (unpinned) |
-|---:|---|---:|---:|---:|---:|
-| 101 | P-core | 1.452 s | 1.209 s | **1.201** | 0.822 |
-| 101 | E-core | 1.776 s | 1.795 s | **0.989** | 0.822 |
-| 221 | P-core | 30.24 s | 33.77 s | **0.895** | 0.754 |
-| 221 | E-core | 47.29 s | 65.38 s | **0.723** | 0.754 |
+| d | placement | ours | stim | ours/stim | banked (unpinned) | draws (ours) |
+|---:|---|---:|---:|---:|---:|---|
+| 101 | P-core | 1.452 s | 1.209 s | **1.201** | 0.822 | min of 3, spread 1.03× |
+| 101 | E-core | 1.776 s | 1.795 s | **0.989** | 0.822 | min of 3, spread 1.02× |
+| 221 | P-core | 30.24 s | 33.77 s | **0.895** | 0.754 | min of 2, spread 1.02× |
+| 221 | E-core | 47.29 s | 65.38 s | **0.723** | 0.754 | **min of 2, spread 1.24×** |
+
+**DRAW COUNTS ADDED 2026-09-01 (saturation3-mesh's catch, applied to my own
+rows).** They retracted a measurement of their own after finding they had
+reported the top of a distribution as the distribution, and named the tell:
+*a row carrying a single number with no spread beside it hides instability
+completely* — an impossible ordering is at least visible when two rows exist,
+but one row with no spread shows nothing. My rows had that defect. The d=221
+E-core row is the thin one: **two draws, 47.29 and 58.79 s, a 1.24× spread, and
+I quoted the minimum as "the E-core number."** That ratio is a waypoint, not a
+measurement, and the direction-across-placements claim built partly on it should
+be read as three draws of unequal quality rather than three conditions. The
+citable table (entry twenty-seven) is unaffected — 5 reps per point with spreads
+reported and minima agreeing with medians — and it supersedes this table anyway.
 
 **RETRACTED: "d=101, we lead 0.822".** On a P-core the same comparison reads
 1.201 — stim ahead by 20%. The direction of that row depends on where the

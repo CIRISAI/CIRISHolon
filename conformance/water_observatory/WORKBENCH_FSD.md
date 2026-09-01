@@ -61,10 +61,49 @@ never from an idle-machine number).
 
 **WB-2.4 GRAVITY.** 1 G, downward toward the lower face, at every scale.
 Exactly representable, costs nothing — and it is the workbench's cleanest
-tier-separation exhibit: ~10⁻¹³ of kT at 1 nm (correctly invisible), the
-thing that levels interfaces and sags droplets at 1 mm, and the whole
-hydrostatic column at 1 km. One field, silent at the bottom, sovereign at
-the top.
+tier-separation exhibit. **LANDED 2026-09-01** (`Sim::set_gravity`,
+`tests/gravity.rs`, six gates, two plants firing): a uniform field in the
+same external-acceleration array the walls and the hand use, so the momentum
+ledger books its impulse with no new accounting; its energy is a potential
+term `Σ mᵢ g yᵢ` zeroed at the box's lower face, and it posts NOTHING to the
+W_ext receipt columns, because a conservative field's energy is the potential
+and a receipt would count the same joules twice.
+
+**WB-2.4a — the exhibit, MEASURED, and this section's own figure was wrong
+twice.** Both corrections come from `tests/gravity.rs`, which computes the
+numbers rather than quoting them:
+
+- The 1 nm figure staked above as `~10⁻¹³ of kT` **measures 4.05×10⁻¹⁵** — about
+  25× smaller. The claim's substance survives (gravity is invisible there, and
+  more so than advertised) but the exponent was wrong by more than a rounding.
+- **"Sovereign at 1 km" is not a per-particle statement, and reading it as one
+  is wrong by five orders of magnitude.** A hydrogen atom raised a full
+  kilometre gains 0.004 kT — still invisible. The per-atom crossover is the
+  SCALE HEIGHT `kT/(m g)`, measured at **246.6 km**, which is the textbook value
+  for an isothermal hydrogen atmosphere at room temperature and is therefore an
+  independent check on the whole unit chain rather than merely a number.
+  Gravity's sovereignty at the top is **COLLECTIVE**: ~9.8 MPa at 1 km, about 97
+  atmospheres, summed over ~10²⁸ particles.
+
+So the corrected statement of the exhibit, which is stronger than the one it
+replaces: **what changes across the tiers is not the field's strength but
+whether the quantity that matters is a per-particle energy or a sum over the
+column.** The field is the same everywhere; the arithmetic that reads it is not.
+That is a cleaner statement of tier separation than "small here, big there",
+and it is the one the workbench page now makes.
+
+**WB-2.4b — one boundary REFUSES the field, so "at every scale" has an
+exception and it is recorded rather than glossed.** A PERIODIC box has no
+bottom: `m g y` is linear, the wrap makes it discontinuous, and an atom leaving
+the top face re-enters at the bottom with its potential changed by `m g H` and
+nothing having done that work — the balance gate would open by exactly that jump
+on every crossing and the result would be reported as integration drift.
+`Sim::set_gravity` returns `GravityRefusal::PeriodicBox` there rather than
+serving it. Conservation is chart-relative and this chart has no bottom to fall
+toward. Reachability, stated because an instrument that cannot fire is worse
+than none: `holon_set_boundary` exposes only Walls and Open, so this refusal is
+reachable today only from a native caller, and a browser shell must not
+advertise it as a live fence.
 
 ## 3. The reset control (WB-3)
 
@@ -268,6 +307,64 @@ measurement (DMRG-vs-FCI staking) feeds C2. Ozone tabulation,
 certification, and the frozen P2 rerun continue unblocked in parallel —
 the fold does not gate them; they do not gate the fold.
 
+## 9b. FSD-W2 — 2026-09-01: the machinery is fixed, the bench goes full
+
+*Written after the exact four-body landing (21e6be3), the certified water
+(census_mixed_fenced.log:250), and the full-strength reproduction
+(conformance/atomworld/p2_de4_full/). This section records what is BUILT
+against what §1–7 asked for, and stakes the page update.*
+
+### Built and verified (engine + ABI, at HEAD)
+
+| capability | state |
+|---|---|
+| exact four-body (O,H,H,H) | ohhh_fci_grad: nine seeded dual solves, exact Cartesian gradient, momentum zero by construction; gate battery 4/4 (momentum, control, torque, force-is-the-gradient); native only — no ABI door yet (see chain below) |
+| gravity (WB-2.4) | LANDED and LIVE on the page; measured 4.05e-15 of kT at 1 nm; collective sovereignty; refuses periodic by name (WB-2.4a/b above) |
+| the hand on the box (WB-2.2) | **LANDED this pass: the control IS the box.** `holon_box_scale(f)` scales container and contents affinely, posts the move's cost to BOTH ledger columns, refuses bad factors and collapse by name; `holon_pressure`/`holon_pressure_defined` are the READOUT (virial; defined on periodic, and boundary mode 2 now reaches it). Gates: tests/scale_box.rs 4/4 + smoke block 5c. No setpoint door ships — pressure is read, never chased |
+| scene scale (WB-1) | the sixteen-atom cap is GONE (T3): holon_reset(n) arbitrary, cutoff-local loops, cell lists, PBC with a wrap that does no work by theorem, calibration governor unchanged |
+| closure census | IN THE ABI already: holon_census_*, per-row closure defects, formations/dissolutions/rejections — the page can show CERTIFIED THINGS live, which is the whole ontology on screen |
+| trimer surface door | render-3d's SurfaceGrid + explicit-coordinate push door (begin/axis/energy/digest/finish), species-tagged, fence-counted |
+| quantum nuclei (C1) / real-time (C2) | engine carriers landed with their gate batteries; not workbench-facing this pass |
+
+### The page update (WB-9), staked
+
+1. **3D ONLY.** The 2D canvas shell retires from the waterbench page; the
+   Bevy shell (same rlib, 10/10 headless conservation gates, dual
+   webgpu/webgl2) is the only rendering. No 2D fallback — a fence with the
+   reason, not a degraded mode.
+2. **WB-2.4c — GRAVITY LIVES IN THE WORLD, NOT THE BOX.** The engine grows a
+   gravity DIRECTION: `holon_set_gravity_vec(gx, gy, gz)` (uniform field,
+   same ledger discipline — V_g from the vector, conservative, posts
+   nothing to W_ext; the periodic refusal applies per-axis where the field
+   has a component through a wrapping face). The shell keeps the vector
+   pointing WORLD-down while the user rotates the BOX, so tilting the box
+   sloshes the water — the rotation changes the field's direction in box
+   coordinates, which is exactly what a tilted bucket is.
+3. **TEMPERATURE GLOW.** A faint background glow keyed to the measured
+   kinetic temperature (blue cold through red hot), driven by
+   holon_temperature() — a READOUT, never a control; the thermostat panel
+   stays the control.
+4. **PRESSURE PANEL** wired to the landed door: drag compresses/expands the
+   box (holon_box_scale), the readout is holon_pressure with its
+   defined-flag honored (under walls the panel says why the number is not a
+   pressure), and the hand column shows what the compression cost.
+5. **CENSUS PANEL**: live molecule rows with closure defects — formations,
+   dissolutions, rejections — the certified-thing view.
+6. **THE WATER STORY** on the page: the certified molecule and the
+   full-strength reproduction, at the strength the record carries
+   (CERTIFIED-STRICT 893.8 fs vs the 834 fs staked window; the causal
+   reading provisional pending the same-commit control, and the page says
+   so exactly as the README does).
+
+### The dE4-in-browser chain, staked with owners (NOT this pass)
+
+evaluator for pushed (x,y,u) surfaces (mesh, next increment) → the (O,H,H)
+and (O,O,H) tables served through the SurfaceGrid door (page pushes the
+committed artifacts, 207,025 + 9,075 nodes) → `holon_set_de4` +
+`holon_de4_evals` (the functional counter, per the census lane's
+symbol-absence lesson) → four-body water in the browser. Each arrow is a
+gate, not a hope.
+
 ## 10. Status ledger & next steps — 2026-08-31, updated at the operator's reorder
 
 **LANDED:** carrier tower skeleton (WB-8.2) merged at PR #2 — typed fiber
@@ -294,9 +391,25 @@ certification upgrades the fence to served and P2 reruns once more with
 fence 0 — the ozone arm then measures what OOO changes, cleanly separated
 from what dE₄ changed.
 
-**OWED, in order after the P2-with-dE₄ verdict:** C1's real gate (RPMD
-ZPE on the banked H-H curve vs exact anharmonic reference + the D₂
-isotope shift); the C2 crystal-inheritance staking (DMRG vs FCI referee
+**C1'S REAL GATE: DELIVERED 2026-09-01.** `C1_GATE_PREREG.md` (frozen and
+audit-admitted before the first stage ran) and `C1_GATE_RESULTS.md`. Ring-polymer
+dynamics on the engine's own STO-3G FCI H–H curve hits that curve's exact
+anharmonic vibrational zero-point energy, against a sinc-DVR reference that
+certifies its own convergence on four axes and refuses rather than returning a
+number it has not convinced itself of; the D₂ isotope shift is measured with the
+bead masses as the only thing that moved; the bead-convergence law is confirmed
+as a parameter-free forward prediction; `P = 1` reproduces the classical
+trajectory bit for bit; and the bead-forgetting commuting square is exactly
+closed at one bead, open above it, with both of its scaling laws measured. Seven
+of eight gates pass. **G6 — the freeze's own discriminating-power condition —
+FIRED**, because the freeze sized it from a Morse plant 49% more anharmonic than
+the curve it stood in for; the results document reports it as fired and does not
+retro-fit the band. G4's ratio clause also fired, with the wrong sign staked in
+the freeze and the derivation, the reference and the instrument all agreeing
+against it. One row was added to `DRY_RESIDUALS.md` (**R-8**) against a staked
+zero, and three further candidates were folded instead.
+
+**OWED, in order after the P2-with-dE₄ verdict:** the C2 crystal-inheritance staking (DMRG vs FCI referee
 on water-dimer nodes); T3 scale-up (dynamic storage, cell lists, PBC,
 the ledgered-hand column); reference-state inventory (WB-3.2); the real
 wasm engine replacing the WB-7.1 mock.

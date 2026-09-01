@@ -438,12 +438,44 @@ want(dA === dB, `the seeded scene replays bit-identically in this device class (
 
 // ---------------------------------------------------------------- 7. the inverted check
 
+// --------------------------------------------- 5c. the hand on the box (WB-2.2), now served
+//
+// This block exists because holon_box_scale's entry was DELETED from
+// FENCE_JUSTIFYING_ABSENCES below. The control IS the box: the page compresses the
+// world and reads the pressure back; the move's cost is posted to the ledger's hand
+// column, so the energy gate stays a gate through it.
+
+const press = await freshEngine();
+press.holon_set_dims(1);
+press.holon_set_boundary(0);
+press.holon_table_generate(0.6, 12.0, 192);
+press.holon_reset(12);
+
+want(press.holon_pressure_defined() === 0,
+  "under walls the virial is not the pressure, and the engine says so");
+const w0 = press.holon_width();
+want(press.holon_box_scale(0.9) === 1, "a modest compression is accepted");
+want(Math.abs(press.holon_width() - 0.9 * w0) < 1e-9 * w0, "the box actually scales");
+want(press.holon_box_scale(0.0) > 1, "a zero factor is refused by name");
+want(press.holon_box_scale(1e-9) > 1, "collapsing the box below the wall inset is refused");
+
+press.holon_rebase();
+for (let f = 0; f < 50; f++) press.holon_step_frame(64);
+press.holon_box_scale(0.95);
+for (let f = 0; f < 50; f++) press.holon_step_frame(64);
+want(press.holon_energy_gate() === 1,
+  `the energy gate closes across a mid-run compression (drift ${press.holon_drift().toExponential(2)} vs bound ${press.holon_drift_bound().toExponential(2)} Ha) — an unledgered scale opens it by the move's cost`);
+
+press.holon_set_boundary(2);
+want(press.holon_pressure_defined() === 1,
+  "on a periodic box the readout IS a pressure, and boundary mode 2 now reaches it");
+want(Number.isFinite(press.holon_pressure()), "and it reads");
+
 // Exports whose ABSENCE is the stated reason a panel is fenced. If one appears, the fence
 // text on the page has become false and this gate says so. The failure message is an
 // instruction, not a complaint.
 const FENCE_JUSTIFYING_ABSENCES = {
-  holon_set_pressure: "the barostat (WB-2.2) is fenced on the page because no barostat exists",
-  holon_box_scale: "the barostat (WB-2.2) is fenced on the page because no barostat exists",
+  holon_set_pressure: "no setpoint door ships: WB-2.2's control IS the box (holon_box_scale); pressure is the readout, not a target",
   holon_phase_call: "the blind classifier (WB-5.5) is fenced on the page because none exists",
   holon_q_tet: "the order parameters (WB-5.5) are fenced on the page because none are computed",
   holon_water_table_begin: "the (O,H,H) surface is fenced on the page for want of an ABI door",

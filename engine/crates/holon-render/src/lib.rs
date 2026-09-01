@@ -830,10 +830,10 @@ pub extern "C" fn holon_n_max() -> f64 {
 #[no_mangle]
 pub extern "C" fn holon_set_boundary(mode: u32) {
     let mut s = sim();
-    s.boundary = if mode == 0 {
-        Boundary::Walls
-    } else {
-        Boundary::Open
+    s.boundary = match mode {
+        0 => Boundary::Walls,
+        2 => Boundary::Periodic,
+        _ => Boundary::Open,
     };
 }
 
@@ -1117,6 +1117,53 @@ pub extern "C" fn holon_set_gravity(g_au: f64) -> u32 {
         Ok(()) => TABLE_OK,
         Err(r) => gravity_refusal_code(r),
     }
+}
+
+/// WB-2.2's door, as the FSD actually specifies it: THE CONTROL IS THE BOX.
+/// The page compresses or expands the world by a factor; pressure is the READOUT,
+/// not a setpoint — no controller chases a target for you, and the work the hand
+/// does on the box is posted to the ledger's hand column like any other push.
+/// Atom positions scale affinely with the box (the standard volume move), so
+/// nothing ends up outside the walls and relative geometry is preserved; the
+/// energy change the move causes is measured directly (before/after) and
+/// ledgered, so the energy gate stays a gate. Returns [`TABLE_OK`], or a refusal
+/// above [`SCALE_REFUSED`]: a factor that is not a positive finite number, or one
+/// that would collapse the box below the wall inset, is refused by name.
+#[no_mangle]
+pub extern "C" fn holon_box_scale(factor: f64) -> u32 {
+    match sim().scale_box(factor) {
+        Ok(()) => TABLE_OK,
+        Err(r) => scale_refusal_code(r),
+    }
+}
+
+/// The internal-virial pressure readout for the panel: `(2 E_kin − W_virial) / (d·V)`
+/// as `Sim::pressure` defines it. Read `holon_pressure_defined` first — under walls
+/// the container carries flux the virial does not see, and the number is not a
+/// pressure there.
+#[no_mangle]
+pub extern "C" fn holon_pressure() -> f64 {
+    sim().pressure()
+}
+
+/// Whether [`holon_pressure`] is a pressure (periodic box) rather than a walled
+/// box's incomplete reading.
+#[no_mangle]
+pub extern "C" fn holon_pressure_defined() -> u32 {
+    u32::from(sim().pressure_defined())
+}
+
+/// Base code for a box-scale refusal.
+pub const SCALE_REFUSED: u32 = 90;
+
+/// The refusal's own code, offset above [`SCALE_REFUSED`].
+pub fn scale_refusal_code(r: crate::barostat::ScaleRefusal) -> u32 {
+    use crate::barostat::ScaleRefusal as R;
+    SCALE_REFUSED
+        + match r {
+            R::BadFactor => 1,
+            R::CollapsesBox => 2,
+        }
 }
 
 /// Base code for a gravity refusal, placed above the trimer door's block so a host can

@@ -202,6 +202,15 @@ impl Chain {
 }
 
 /// Why the barostat refused to run.
+/// Why a manual box scale was refused.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ScaleRefusal {
+    /// The factor is not a positive finite number.
+    BadFactor,
+    /// The scaled box would collapse below twice the wall inset on some axis.
+    CollapsesBox,
+}
+
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum BarostatRefusal {
     /// The box has walls, so the internal virial is not the pressure.
@@ -514,3 +523,50 @@ impl Sim {
 pub const DEFAULT_TAU_P: f64 = 1000.0;
 /// Default thermostat time constant, atomic units. STAKED, not fitted.
 pub const DEFAULT_TAU_T: f64 = 500.0;
+
+impl crate::sim::Sim {
+    /// THE HAND ON THE BOX: scale the container and everything in it by `factor`,
+    /// with the energy cost measured directly and posted to the ledger's hand
+    /// column. This is WB-2.2's mechanism — the page changes the SIZE of the box
+    /// to change the pressure, and reads the pressure back; no controller, no
+    /// setpoint, no unledgered work. Positions scale affinely (the standard
+    /// volume move), velocities are untouched, and the four-body displacement
+    /// cache is invalidated with everything else by the fresh force pass.
+    pub fn scale_box(&mut self, factor: f64) -> Result<(), ScaleRefusal> {
+        if !(factor.is_finite() && factor > 0.0) {
+            return Err(ScaleRefusal::BadFactor);
+        }
+        let floor = 2.0 * self.wall_inset;
+        if self.width * factor <= floor
+            || self.height * factor <= floor
+            || (self.dims == crate::sim::Dims::Three && self.depth * factor <= floor)
+        {
+            return Err(ScaleRefusal::CollapsesBox);
+        }
+        let before = self.energy();
+        self.width *= factor;
+        self.height *= factor;
+        if self.dims == crate::sim::Dims::Three {
+            self.depth *= factor;
+        }
+        for a in &mut self.atoms {
+            a.x *= factor;
+            a.y *= factor;
+            a.z *= factor;
+        }
+        if self.grabbed.is_some() {
+            self.anchor.0 *= factor;
+            self.anchor.1 *= factor;
+            self.anchor.2 *= factor;
+        }
+        self.compute_forces();
+        self.accumulate_energy();
+        let after = self.energy();
+        // Both ledger lines, the house pattern: `w_ext` is the total the drift gate
+        // reads, `work.hand` the receipt column saying WHO paid, and `work_columns_ok`
+        // checks they never part.
+        self.w_ext += after - before;
+        self.work.hand += after - before;
+        Ok(())
+    }
+}

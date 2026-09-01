@@ -1,7 +1,11 @@
 # P2 four-body arm at FULL STRENGTH — the water result, banked
 
 *Banked 2026-09-01, five of eight seeds complete; the remaining three
-(0x…21, 0x…25, 0x…27) are appended on completion. Logs copied byte-identical
+(0x…21, 0x…25, 0x…27) are appended on completion. Run history: the first
+attempts of those three were externally terminated mid-run in a sweep that
+reaped the superseded arms (seed 27 at frame 19,000 of 20,000); partials are
+preserved beside the logs as `.attempt1_killed`, and the seeds were
+relaunched from the identical parked binary on a quieter box. Logs copied byte-identical
 from the launch directory; each carries its own provenance header (commit
 21e6be3, binary sha256 7790cf3d…, build exit 0, gate battery 4/4, loadavg
 and clock at both ends) and its exit line.*

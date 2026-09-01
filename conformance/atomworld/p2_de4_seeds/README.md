@@ -56,8 +56,12 @@ a fired gate is reported as plainly as a survival.
   `refs/rescue/de4-2026-09-01` (11549dd, census-lens) and
   `rescue/de4-sim-worktree` (7480437). The reconstruction/commit path is
   saturation2-water's, after the T3 refactor lands.
-- In flight, NOT banked here: seeds 0x53415421 (harness task-3130) and
-  0x53415425 (task-4341), same binary, still running. Bank on completion.
+- Seeds 0x53415421 (harness task-3130) and 0x53415425 (task-4341) were
+  TERMINATED BY THEIR OWNER (the sprint team) 2026-09-01 as superseded by
+  the exact-gradient arm, mid-run (frames ~8,000 and ~15,000 of 20,000).
+  Their partial checkpoint logs remain in the harness task directory; no
+  summary lines exist and none will. The same seeds run to completion in
+  ../p2_de4_full/.
 - The census target for census-lens's road item 5 (the OH2 closure leg) is
   seed_0x53415422.log, once a green dE4 commit exists to regenerate its
   trajectory from.

@@ -236,6 +236,23 @@ pub fn hexatic_psi6(dims: u32, center: [f64; 3], neighbours: &[[f64; 3]]) -> Rea
 
 // ---------------------------------------------------------------- 4. MSD / diffusion
 
+/// The MEAN ELAPSED TIME of a `lag`-frame separation, in femtoseconds.
+///
+/// Not `lag * dt * substeps`. The engine's timestep adapts mid-run, so a fixed number of
+/// frames is not a fixed duration, and a diffusion constant fitted against a frame axis is
+/// a diffusion constant divided by whatever the timestep happened to be doing.
+pub fn mean_lag_fs(traj: &Trajectory, lag: usize) -> f64 {
+    let nf = traj.frames.len();
+    if lag == 0 || lag >= nf {
+        return 0.0;
+    }
+    let mut acc = 0.0f64;
+    for t in 0..(nf - lag) {
+        acc += traj.frames[t + lag].time - traj.frames[t].time;
+    }
+    acc / (nf - lag) as f64 * crate::traj::AU_TIME_FS
+}
+
 /// Mean squared displacement at `lag` frames, averaged over atoms and over time origins.
 pub fn msd(traj: &Trajectory, lag: usize) -> f64 {
     let nf = traj.frames.len();
@@ -296,7 +313,7 @@ pub fn diffusion(traj: &Trajectory, max_lag: usize) -> Reading<f64> {
     // Least squares through the origin: MSD = 2 d D tau.
     let (mut sxy, mut sxx) = (0.0f64, 0.0f64);
     for lag in 1..=max_lag {
-        let x = lag as f64 * traj.header.frame_fs();
+        let x = mean_lag_fs(traj, lag);
         let y = msd(traj, lag);
         sxy += x * y;
         sxx += x * x;

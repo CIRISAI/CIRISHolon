@@ -78,6 +78,11 @@ pub struct Header {
     pub dims: u32,
     pub substeps: u32,
     pub n_frames: usize,
+    /// The timestep AT PLACEMENT, in atomic units. It is a record of how the scene was
+    /// set up and NOT a description of the run: `adopt_table_timescale` derives it from
+    /// the placed scene and the engine may halve it later. On hydrogen seed
+    /// `0x53415421` it reads 1.0772 while 19,988 of the 20,000 frames ran at 0.5386.
+    /// Nothing that measures a duration may read this field; read `Frame::time`.
     pub dt: f64,
     pub box_w: f64,
     pub box_h: f64,
@@ -89,19 +94,16 @@ pub struct Header {
 }
 
 impl Header {
-    /// Wall time of one grain boundary, in femtoseconds.
-    ///
-    /// The census stakes its window in PHYSICAL TIME because `dt` is derived per scene and
-    /// differs between seeds of the same protocol — 0.5386 and 1.0772 a.u. both appear in
-    /// the banked P2 log. A window staked in frames would be a different window per seed.
-    pub fn frame_fs(&self) -> f64 {
-        self.dt * self.substeps as f64 * AU_TIME_FS
-    }
-
-    /// How many frames the staked window spans on THIS trajectory.
-    pub fn frames_in(&self, fs: f64) -> usize {
-        (fs / self.frame_fs()).round().max(1.0) as usize
-    }
+    // NOTE: there is deliberately no `frame_fs()` and no `frames_in()` here any more.
+    //
+    // Both existed, both derived a frame duration from `dt`, and both were WRONG on the
+    // first real trajectory this format carried: the engine halves its timestep when the
+    // scene stiffens, so `dt` describes the placement and not the run. A window computed
+    // through them was 417 fs of simulated time while claiming to be the staked 834 fs.
+    //
+    // They are removed rather than documented-around, because a helper that is right on
+    // synthetic data and wrong on real data is worse than no helper: every test passes.
+    // Durations come from `Frame::time`, which is what actually elapsed.
 
     pub fn n_pairs(&self) -> usize {
         self.n_atoms * self.n_atoms.saturating_sub(1) / 2
@@ -111,6 +113,9 @@ impl Header {
 #[derive(Clone, Debug)]
 pub struct Frame {
     pub index: u64,
+    /// Simulated time in ATOMIC UNITS, exactly as `Sim::time` carries it. Multiply by
+    /// [`AU_TIME_FS`] for femtoseconds; the census does its windowing on these values
+    /// rather than on the header's `dt`, because the engine's timestep adapts mid-run.
     pub time: f64,
     pub temperature: f64,
     /// Bit `k` set iff pair `k` read BONDED in the engine at this grain boundary.
@@ -426,24 +431,47 @@ mod tests {
         assert!(!t.is_complete());
     }
 
+    /// The frame timestamps, not the header, are what a duration comes from.
+    ///
+    /// This test replaces one that asserted `dt`-derived frame counts. That test PASSED
+    /// while the instrument it was defending was reading a half-length window on real
+    /// data, because the synthetic fixture it used had a constant timestep and the real
+    /// trajectory did not.
     #[test]
-    fn window_frames_follow_the_timestep_not_the_frame_count() {
-        let mk = |dt: f64| Header {
+    fn a_duration_comes_from_the_timestamps_and_not_from_dt() {
+        let dir = std::env::temp_dir().join(format!("hlens-dt-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("t.traj");
+        let h = Header {
             seed: 0,
             n_atoms: 2,
             dims: 2,
             substeps: 64,
-            n_frames: 20000,
-            dt,
+            n_frames: 5,
+            // The placement value: what the header claims.
+            dt: 1.0772,
             box_w: 1.0,
             box_h: 1.0,
             box_d: 1.0,
             z: vec![1, 1],
         };
-        // The two timesteps the banked P2 log actually used. The staked 834 fs window is
-        // 1000 frames at the fine one and 500 at the coarse one; a window staked in
-        // FRAMES would have been two different physical windows.
-        assert_eq!(mk(0.5386).frames_in(834.0), 1000);
-        assert_eq!(mk(1.0772).frames_in(834.0), 500);
+        let mut w = TrajWriter::create(&path, &h).unwrap();
+        let p = vec![[0.0; 3], [1.4; 3]];
+        // What the run ACTUALLY did: two coarse steps, then three at half the size.
+        let mut t = 0.0f64;
+        for (i, step) in [68.9414, 68.9414, 34.4707, 34.4707, 34.4707].iter().enumerate() {
+            w.push(i as u64, t, 300.0, 1, &p, &p).unwrap();
+            t += step;
+        }
+        w.finish().unwrap();
+        let back = Trajectory::read(&path).unwrap();
+        let fs: Vec<f64> = back.frames.iter().map(|f| f.time * AU_TIME_FS).collect();
+        let span = fs[4] - fs[0];
+        // The header would say 4 gaps x 1.6676 fs = 6.67 fs. The truth is 5.00 fs.
+        let header_would_say = h.dt * h.substeps as f64 * AU_TIME_FS * 4.0;
+        assert!((span - 5.003).abs() < 0.01, "true span {span}");
+        assert!((header_would_say - 6.670).abs() < 0.01);
+        assert!(span < header_would_say, "and the header overstates it");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }

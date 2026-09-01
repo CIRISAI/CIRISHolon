@@ -50,7 +50,13 @@ fn row<'a>(r: &'a census::CensusReport, m: Mask) -> &'a census::BlockReport {
 fn c1_a_permanently_held_moving_block_is_certified_strict() {
     let t = synthetic::vibrating_block(spec(11, 1200), OH2, 0.4, |_| true);
     let r = report(&t);
-    assert_eq!(r.window_frames, 1000, "the staked 834 fs window at this dt");
+    assert!(
+        (r.median_frame_fs - 0.8338).abs() < 1e-3,
+        "median frame {} fs",
+        r.median_frame_fs
+    );
+    assert_eq!(r.distinct_frame_durations, 1, "a synthetic clock is uniform");
+    assert_eq!(r.window_fs, 834.0, "the staked window, in the unit that is enforced");
     let b = row(&r, OH2);
     assert_eq!(b.formula, "OH2");
     assert!(
@@ -91,16 +97,17 @@ fn c2_a_dissociating_block_is_transient() {
 /// run cap alone is loosened — so the refusal is the run clause and nothing else.
 #[test]
 fn c3_a_breach_run_past_the_cap_is_refused_though_the_fraction_passes() {
-    let flicker = 10usize; // floor(8.4 fs / 0.8338 fs)
-    let breach = flicker + 1;
+    // 8.4 fs of flicker cap is ten frames at this clock; eleven is past it.
+    let breach = 11usize;
     let t = synthetic::vibrating_block(spec(13, 1200), OH2, 0.4, move |f| {
         !(500..500 + breach).contains(&f)
     });
     let r = report(&t);
-    assert_eq!(r.flicker_frames, flicker);
+    assert_eq!(r.flicker_fs, 8.4);
     let b = row(&r, OH2);
+    let window_frames = (r.window_fs / r.median_frame_fs).round();
     assert!(
-        (breach as f64) / (r.window_frames as f64) < census::PREREG_BETA,
+        (breach as f64) / window_frames < census::PREREG_BETA,
         "the plant's whole point: {breach} frames is inside the 2% budget"
     );
     assert!(
@@ -187,7 +194,10 @@ fn c5_a_trajectory_shorter_than_the_window_is_refused() {
     match census::run(&t, &Stakes::default()) {
         Census::Refused { gate, reason } => {
             assert_eq!(gate, "G3/G4 window length");
-            assert!(reason.contains("1000"), "the refusal names the window: {reason}");
+            assert!(
+                reason.contains("834"),
+                "the refusal names the window it could not fill: {reason}"
+            );
         }
         Census::Report(_) => panic!("a 100-frame trajectory must not produce a verdict"),
     }

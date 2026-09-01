@@ -74,12 +74,15 @@ fn main() {
         };
         println!("\n{}", "=".repeat(78));
         println!(
-            "# {}\n# seed {:#018x}  {} atoms  {} frames  dt-derived frame = {:.4} fs  complete: {}",
+            "# {}\n# seed {:#018x}  {} atoms  {} frames  {:.3} ps simulated  complete: {}",
             p.display(),
             traj.header.seed,
             traj.header.n_atoms,
             traj.frames.len(),
-            traj.header.frame_fs(),
+            (traj.frames.last().map(|f| f.time).unwrap_or(0.0)
+                - traj.frames.first().map(|f| f.time).unwrap_or(0.0))
+                * holon_lens::traj::AU_TIME_FS
+                / 1000.0,
             traj.is_complete()
         );
 
@@ -92,9 +95,24 @@ fn main() {
         };
 
         println!(
-            "# window = {} frames, flicker cap = {} frames",
-            rep.window_frames, rep.flicker_frames
+            "# window = {:.1} fs, flicker cap = {:.1} fs; median frame {:.4} fs \
+             (about {:.0} frames a window)",
+            rep.window_fs,
+            rep.flicker_fs,
+            rep.median_frame_fs,
+            rep.window_fs / rep.median_frame_fs
         );
+        if rep.distinct_frame_durations > 1 {
+            // The engine's timestep adapts. Saying so is not decoration: a window
+            // converted once from the header `dt` would be the wrong duration for most of
+            // this run, and that is exactly the defect this instrument was corrected for.
+            println!(
+                "#   NOTE: the timestep ADAPTED during this run -- {} distinct frame \
+                 durations, {:.4} to {:.4} fs. Frame columns below are not a uniform \
+                 unit; read the fs columns.",
+                rep.distinct_frame_durations, rep.min_frame_fs, rep.max_frame_fs
+            );
+        }
 
         // ---- what connected-component naming reports -------------------------------
         println!(

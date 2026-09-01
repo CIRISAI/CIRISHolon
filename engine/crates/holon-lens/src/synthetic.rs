@@ -102,7 +102,11 @@ where
         box_d: spec.box_d,
         z: spec.z.clone(),
     };
-    let frame_fs = header.frame_fs();
+    // ATOMIC UNITS, matching `Sim::time`, which is what the real dumper writes. Writing
+    // femtoseconds here instead made every synthetic trajectory read 41x too long and was
+    // caught by the file-path gate rather than by any of the plants -- the plants build
+    // trajectories in memory and never cross this boundary.
+    let frame_au = spec.dt * spec.substeps as f64;
     let mut frames = Vec::with_capacity(spec.n_frames);
     let mut pos = vec![[0.0f64; 3]; spec.n_atoms];
     let mut vel = vec![[0.0f64; 3]; spec.n_atoms];
@@ -110,7 +114,7 @@ where
         let bonded = f(t, &mut pos, &mut vel);
         frames.push(Frame {
             index: t as u64,
-            time: t as f64 * frame_fs,
+            time: t as f64 * frame_au,
             temperature: 300.0,
             bonded,
             pos: pos.clone(),

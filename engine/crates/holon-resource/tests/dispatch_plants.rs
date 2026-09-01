@@ -15,7 +15,8 @@
 
 use holon_resource::probe::ProbeVerdict;
 use holon_resource::registry::{
-    Determinism, DeviceClass, Dispatch, Entry, Registry, SpotCheck, Step, Workload, WorkloadKey,
+    CheckMode, Determinism, DeviceClass, Dispatch, Entry, Registry, SpotCheck, Step, Workload,
+    WorkloadKey,
 };
 use holon_resource::{Arena, ScriptedProbe};
 
@@ -382,4 +383,99 @@ fn every_step_of_the_dispatch_can_refuse_and_says_which() {
     // And nothing was leased.
     assert!(arena.balances());
     assert_eq!(arena.live_count(), 0);
+}
+
+// ---------------------------------------------------------------------------------------
+// D12b — THE RE-READ RUNG. Convict only what REPRODUCES.
+//
+// FOUNDING CASE, measured 2026-09-01 and not invented for the test: a neighbour's honestly
+// registered GPU entry was convicted at its own rate on a box at loadavg 72 — observed 58.9
+// against a registered mean with a 3-sigma tolerance. Nothing was wrong with the entry. The
+// same quantity across twelve separate invocations read 68.25 +/- 0.37.
+//
+// The check could not distinguish "the registration is wrong" from "the host was
+// descheduled", and a check that cannot distinguish two causes is a detector wearing a
+// verdict's clothes. One re-read IS the discriminator: a descheduled reading does not
+// reproduce, a bad registration does.
+// ---------------------------------------------------------------------------------------
+
+/// A descheduled outlier is NOT a conviction: the re-read does not reproduce it.
+#[test]
+fn d12b_live_does_not_convict_an_outlier_that_does_not_reproduce() {
+    let mut reg = Registry::default();
+    reg.register(gpu_entry());
+    let key = gpu_entry().key;
+
+    let mut calls = 0;
+    // 58.9 is the real convicted reading; 68.25 is the real twelve-invocation mean.
+    let v = reg
+        .spot_check_mode(&key, 58.9, CheckMode::Live, &mut || {
+            calls += 1;
+            68.25
+        })
+        .expect("registered");
+
+    assert!(!v.convicted(), "a non-reproducing outlier must not convict: {v:?}");
+    assert!(
+        matches!(v, SpotCheck::Unreproduced { first, .. } if first == 58.9),
+        "the verdict must name the outlier it declined to convict on: {v:?}"
+    );
+    assert_eq!(calls, 1, "exactly one re-read, never more");
+}
+
+/// A genuinely wrong registration still convicts — the rung must not be an amnesty.
+#[test]
+fn d12b_live_still_convicts_what_reproduces() {
+    let mut reg = Registry::default();
+    reg.register(gpu_entry());
+    let key = gpu_entry().key;
+
+    let mut calls = 0;
+    let v = reg
+        .spot_check_mode(&key, 30.0, CheckMode::Live, &mut || {
+            calls += 1;
+            30.2
+        })
+        .expect("registered");
+
+    assert!(v.convicted(), "a reproducing outlier IS the entry being wrong: {v:?}");
+    assert_eq!(calls, 1);
+}
+
+/// GAUGING never re-reads. A plant that needs a second opinion is not firing.
+#[test]
+fn d12b_gauging_is_blunt_and_never_retimes() {
+    let mut reg = Registry::default();
+    reg.register(gpu_entry());
+    let key = gpu_entry().key;
+
+    let mut calls = 0;
+    let v = reg
+        .spot_check_mode(&key, 58.9, CheckMode::Gauging, &mut || {
+            calls += 1;
+            68.25
+        })
+        .expect("registered");
+
+    assert!(v.convicted(), "gauging convicts on the first reading: {v:?}");
+    assert_eq!(calls, 0, "GAUGING must never call retime — bluntness is the point");
+}
+
+/// The consistent path costs nothing: a hot-path caller pays for no timing it did not need.
+#[test]
+fn d12b_consistent_reading_never_retimes() {
+    let mut reg = Registry::default();
+    reg.register(gpu_entry());
+    let key = gpu_entry().key;
+
+    let mut calls = 0;
+    let v = reg
+        .spot_check_mode(&key, 68.5, CheckMode::Live, &mut || {
+            calls += 1;
+            0.0
+        })
+        .expect("registered");
+
+    assert!(matches!(v, SpotCheck::Consistent { .. }), "{v:?}");
+    assert_eq!(calls, 0, "no re-read on the consistent path");
 }

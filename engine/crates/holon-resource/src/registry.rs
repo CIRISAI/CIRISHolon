@@ -94,12 +94,48 @@ pub enum SpotCheck {
         mean: f64,
         tolerance: f64,
     },
+    /// A first reading that would have convicted, and a re-read that did not reproduce it.
+    ///
+    /// This is NOT a conviction and NOT a clean bill: it is the discriminator reporting that
+    /// the outlier was the MACHINE rather than the registration. See [`CheckMode::Live`].
+    Unreproduced {
+        first: f64,
+        reread: f64,
+        mean: f64,
+        tolerance: f64,
+    },
 }
 
 impl SpotCheck {
     pub fn convicted(&self) -> bool {
         matches!(self, SpotCheck::Convicted { .. })
     }
+}
+
+/// Which regime a spot check is running in. **The distinction is MODE, not a bigger `k`.**
+///
+/// Widening the tolerance to stop false convictions would also stop true ones, which is the
+/// whole point of the check. What separates the two cases is not a threshold but a REPEAT.
+///
+/// # Why this exists
+///
+/// A conviction from a single live reading cannot distinguish "the registration is wrong"
+/// from "the host was descheduled" — and a check that cannot distinguish two causes is a
+/// detector wearing a verdict's clothes. Measured founding case, 2026-09-01: a neighbour's
+/// honestly-registered GPU entry was convicted at its own rate (observed 58.9 against a
+/// registered 69.4 ± 3.0) on a box at loadavg 72. Nothing was wrong with the entry. The
+/// same quantity re-measured across twelve separate invocations read 68.25 ± 0.37.
+///
+/// **One re-read IS the discriminator**: a descheduled reading does not reproduce, a bad
+/// registration does. That costs one extra timing on the conviction path only, and never on
+/// the consistent path.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CheckMode {
+    /// Planted probes and gauging runs: bluntness is the point, because a plant that needs a
+    /// second opinion is not firing. NEVER re-reads.
+    Gauging,
+    /// A live reading on a shared machine. Re-reads ONCE before convicting.
+    Live,
 }
 
 /// Which of the three steps refused.
@@ -184,7 +220,54 @@ impl Registry {
         self.entries.iter().find(|e| &e.key == key)
     }
 
+    /// D12 in [`CheckMode::Live`]: convict only what REPRODUCES.
+    ///
+    /// `retime` is called at most once, and only when the first reading would convict. On the
+    /// consistent path it is never called, so a caller in a dispatch hot path pays nothing for
+    /// having this available — and because the mode is a parameter rather than a convention,
+    /// a caller that wants bluntness states so rather than getting it by accident.
+    ///
+    /// **Registration-side law this does not replace:** an entry's spread must be measured in
+    /// the regime its spot-check runs in, and the registered quantity must be the one the
+    /// CALLER RECEIVES — a device-internal rate no caller experiences makes the entry and its
+    /// check agree with each other while both overstate what dispatch delivers. Those are two
+    /// independent conditions and this rung fixes neither; it only stops the machine being
+    /// convicted in the registration's place.
+    pub fn spot_check_mode(
+        &self,
+        key: &WorkloadKey,
+        observed: f64,
+        mode: CheckMode,
+        retime: &mut dyn FnMut() -> f64,
+    ) -> Option<SpotCheck> {
+        let first = self.spot_check(key, observed)?;
+        if mode == CheckMode::Gauging || !first.convicted() {
+            return Some(first);
+        }
+        let e = self.get(key)?;
+        let tolerance = e.k * e.spread;
+        let again = retime();
+        Some(if (again - e.mean).abs() > tolerance {
+            // It reproduced: the entry really is wrong.
+            SpotCheck::Convicted {
+                observed: again,
+                mean: e.mean,
+                tolerance,
+            }
+        } else {
+            SpotCheck::Unreproduced {
+                first: observed,
+                reread: again,
+                mean: e.mean,
+                tolerance,
+            }
+        })
+    }
+
     /// D12: re-time a workload and check it against its registration. Convicts the ENTRY.
+    ///
+    /// Blunt and single-reading. This is [`CheckMode::Gauging`] behaviour and is what the
+    /// plants use; live callers on a shared box want [`Self::spot_check_mode`].
     pub fn spot_check(&self, key: &WorkloadKey, observed: f64) -> Option<SpotCheck> {
         let e = self.get(key)?;
         let tolerance = e.k * e.spread;

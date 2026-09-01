@@ -538,6 +538,58 @@ declared. One constant cannot serve both a 2× thermal throttle (legitimate) and
 The spread is measured at registration, so the tolerance is a property of the kernel's own
 observed variability rather than a number chosen to make the plant fire.
 
+**AMENDED 2026-09-01 after the first FIELD firing, which convicted an honest entry.** Q4's
+answer is necessary and was not sufficient. Three things were learned by a real GPU
+registration being convicted at its own rate on a loaded box, and they are independent —
+an entry can satisfy any one and fail the others.
+
+**(i) THE REGIME LAW.** *An entry's spread must be measured in the regime its spot-check
+runs in, or the entry must state which regime it came from.* The founding entry's spread
+came from five back-to-back runs inside one warm process — a best case — and was then
+checked against a reading taken whenever dispatch happened to ask, on a box at loadavg 72.
+It convicted the machine and called it the registration. This is
+[[M-IDLE-CALIBRATED-TIMEOUT]] one layer up from where that misfit was registered, and no
+new id: it is that entry's own remedy applied to a registry.
+
+*Counter-intuitive measured consequence, worth keeping:* applying this law NARROWED the
+entry rather than widening it. Twelve separate invocations gave sd 0.54% against the
+in-process five-run figure of ~1.5%, because each invocation does its own warm-up discard
+and is timed at the same point on the clock ramp, whereas five back-to-back loops straddle
+that ramp's tail. **The "quiet moment" spread was measuring the ramp, not the machine.** So
+the remedy is not "measure a wider spread" — it is "measure the spread of the thing you
+will actually check", which can go either way.
+
+**(ii) THE QUANTITY LAW (gpu-prod's, and the sharper of the two).** *A registered
+throughput must be the quantity the CALLER RECEIVES, and the spot-check must re-time that
+same quantity.* The founding entry held a device-internal kernel rate produced by a
+benchmark function that is never on the solve path, while every real application is
+`htod + sigma + dtoh + synchronize`. The entry and its spot-check therefore **agreed with
+each other while both overstated what dispatch would deliver** — every plant fired
+correctly and the registry still misinformed placement. That is a self-consistent lie:
+internally coherent, externally wrong, invisible to every test in this crate. Measured gap
+on the founding case: 68.5 kernel-only against 60.3 round-trip at loadavg 82, and the
+round-trip quantity carries a 1.97× spread the kernel quantity does not.
+
+**(iii) THE RE-READ RUNG — D12b, implemented.** A conviction from a single live reading
+cannot distinguish *the registration is wrong* from *the host was descheduled*, and a check
+that cannot distinguish two causes is a detector wearing a verdict's clothes. **One re-read
+IS the discriminator**: a descheduled reading does not reproduce, a bad registration does.
+
+`Registry::spot_check_mode(key, observed, mode, retime)` with `CheckMode::{Gauging, Live}`.
+`Live` re-reads once, and only on the path that would convict; `Gauging` never re-reads,
+because a plant that needs a second opinion is not firing. **The distinction is MODE, not a
+bigger `k`** — widening the tolerance to stop false convictions would stop true ones too,
+which is the entire point of the check. Mode is a parameter rather than a convention so a
+dispatch hot path *states* that it wants bluntness instead of receiving it by accident, and
+the consistent path never calls `retime` at all. New verdict `SpotCheck::Unreproduced`,
+which is neither a conviction nor a clean bill: it reports that the outlier was the machine.
+
+Four plants in `tests/dispatch_plants.rs`, carrying the field numbers rather than invented
+ones (observed 58.9 against the twelve-invocation 68.25): a non-reproducing outlier does
+not convict; a reproducing one still does (the rung is not an amnesty); `Gauging` never
+calls `retime`; the consistent path never calls it. Mutation-checked — forcing `Live` back
+to blunt fails exactly the two `Live` plants and leaves the other two green.
+
 ---
 
 ## 10. Still owed

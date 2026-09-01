@@ -2,382 +2,347 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>CIRISHolon — Water Workbench (FSD-W1)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Water Workbench (FSD-W1) — 3D Recursive Observatory</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div id="workbench-container">
-    <!-- Top Header & Observatory Telemetry Bar -->
-    <header id="top-bar">
-      <div class="brand">
-        <div class="logo-mark">⬡</div>
-        <div class="brand-text">
-          <span class="title">WATER WORKBENCH</span>
-          <span class="subtitle">FSD-W1 · RECURSIVE QUANTUM-TO-BULK OBSERVATORY</span>
+  <div id="app-root">
+    <!-- 3D Fullscreen Canvas Viewport -->
+    <canvas id="webgl-canvas"></canvas>
+
+    <!-- Top Mobile-First HUD Bar -->
+    <header id="hud-top">
+      <div class="hud-brand">
+        <span class="hud-logo">⬡</span>
+        <div class="hud-title-col">
+          <span class="hud-title">WATER WORKBENCH</span>
+          <span class="hud-tier" id="hud-tier-name">TIER 1 · ATOMISTIC 3D</span>
         </div>
       </div>
 
-      <!-- Active Tier & Scale Ribbon -->
-      <div id="scale-ribbon">
-        <div class="tier-indicator" id="tier-indicator">
-          <span class="tier-tag" id="tier-tag">TIER 1: ATOMISTIC</span>
-          <span class="scale-label" id="scale-label">1.2 nm × 1.2 nm</span>
+      <!-- Live Sim Rate & Scale Readout -->
+      <div class="hud-telemetry-pill">
+        <div class="pill-item">
+          <span class="p-label">SCALE</span>
+          <span class="p-val" id="hud-scale-val">1.2 nm</span>
         </div>
-        <div class="zoom-track">
-          <input type="range" id="zoom-slider" min="0" max="3" step="0.001" value="0">
-          <div class="scale-ticks">
-            <span class="tick active" data-tier="0">Å – 4 nm</span>
-            <span class="tick" data-tier="1">4 nm – 1 µm</span>
-            <span class="tick" data-tier="2">1 µm – 1 m</span>
-            <span class="tick" data-tier="3">1 m – 1 km</span>
-          </div>
+        <div class="pill-item">
+          <span class="p-label">RATE</span>
+          <span class="p-val green" id="hud-rate-val">25.0 ps/s</span>
         </div>
-      </div>
-
-      <!-- Display Honesty: Live Sim Rate & Timescale Readout (WB-1.4) -->
-      <div id="sim-rate-panel">
-        <div class="readout-group">
-          <span class="readout-label">SIM RATE (PHYSICAL)</span>
-          <span class="readout-value" id="sim-rate-val">24.5 ps/s</span>
+        <div class="pill-item mobile-hide">
+          <span class="p-label">DEVICE</span>
+          <span class="p-val cyan" id="hud-device-class">AUTO-SCALED</span>
         </div>
-        <div class="readout-group secondary">
-          <span class="readout-label">% REALTIME</span>
-          <span class="readout-value" id="sim-rate-pct">2.45e-11 ×</span>
-        </div>
-        <div class="readout-group">
-          <span class="readout-label">FPS</span>
-          <span class="readout-value" id="fps-val">30.0</span>
+        <div class="pill-item">
+          <span class="p-label">FPS</span>
+          <span class="p-val" id="hud-fps-val">30</span>
         </div>
       </div>
 
-      <!-- Top Action Buttons -->
-      <div class="top-actions">
-        <button id="btn-manifest" class="btn-ghost" title="View Reference Manifest & Provenance (WB-3.4)">📋 Manifest</button>
-        <button id="btn-pause" class="btn-primary" title="Pause / Resume Dynamics">⏸ Pause</button>
+      <!-- Action Toggles -->
+      <div class="hud-actions">
+        <button id="btn-toggle-telemetry" class="icon-btn" title="Toggle Telemetry Lens">📊</button>
+        <button id="btn-toggle-manifest" class="icon-btn" title="Provenance Manifest">📋</button>
+        <button id="btn-play-pause" class="icon-btn highlight" title="Play / Pause">⏸</button>
       </div>
     </header>
 
-    <!-- Main Content: Viewport & Telemetry HUD -->
-    <main id="workspace">
-      <!-- Left Control Panel (WB-2 & WB-3) -->
-      <aside id="controls-sidebar">
-        <!-- Live Controls Section (WB-2) -->
-        <section class="control-card">
-          <div class="card-header">
-            <h3>LIVE CONTROLS (WB-2)</h3>
-            <span class="badge-live">LIVE</span>
+    <!-- Floating Tier Selector (Zoom Slider) -->
+    <div id="floating-tier-selector">
+      <div class="tier-slider-wrap">
+        <span class="tier-btn" data-tier="0">Å</span>
+        <input type="range" id="zoom-range" min="0" max="3" step="0.001" value="0">
+        <span class="tier-btn" data-tier="3">1km</span>
+      </div>
+      <div class="tier-pill-labels">
+        <span class="t-tag active" data-tier="0">Atomistic</span>
+        <span class="t-tag" data-tier="1">Molecular</span>
+        <span class="t-tag" data-tier="2">Continuum</span>
+        <span class="t-tag" data-tier="3">Bulk 1km</span>
+      </div>
+    </div>
+
+    <!-- On-Screen 3D Reticle & Hand Feedback -->
+    <div id="reticle-hud" class="hidden">
+      <div class="reticle-ring"></div>
+      <span class="reticle-label" id="reticle-text">Grab: 0.06 nm</span>
+    </div>
+
+    <!-- Live Refinement Patch Alert (WB-1.2 & WB-4.4) -->
+    <div id="refinement-banner" class="hidden">
+      <span class="alert-icon">⚡</span>
+      <span id="refinement-msg">REFINEMENT PATCH ACTIVE · LOCAL FCI SOLVE ON DEMAND</span>
+    </div>
+
+    <!-- Settling Indicator Pill (WB-3.3) -->
+    <div id="settling-pill" class="settling-pill settled">
+      <div class="dot"></div>
+      <span id="settling-label">PRE-WARMED REFERENCE · 293 K</span>
+    </div>
+
+    <!-- Slide-Out Telemetry Drawer (Right) -->
+    <aside id="telemetry-drawer" class="drawer">
+      <div class="drawer-header">
+        <h3>OBSERVATORY TELEMETRY (WB-5)</h3>
+        <button class="drawer-close" id="close-telemetry">×</button>
+      </div>
+      <div class="drawer-content">
+        <!-- Blind Phase Classifier (WB-5.5) -->
+        <div class="drawer-card">
+          <div class="card-head">
+            <span>BLIND CLASSIFIER (WB-5.5)</span>
+            <span class="tag audit">AUDITED</span>
           </div>
-
-          <!-- Temperature Control (WB-2.1) -->
-          <div class="control-row">
-            <div class="control-label-row">
-              <label for="temp-slider">Temperature</label>
-              <div class="unit-toggle">
-                <button class="unit-btn active" data-unit="K">K</button>
-                <button class="unit-btn" data-unit="C">°C</button>
-                <button class="unit-btn" data-unit="F">°F</button>
-              </div>
-            </div>
-            <div class="slider-val-row">
-              <input type="range" id="temp-slider" min="0" max="1000" step="1" value="293">
-              <span class="val-badge" id="temp-val">293.15 K</span>
-            </div>
+          <div class="phase-display">
+            <span class="phase-name" id="drawer-phase">LIQUID WATER</span>
+            <span class="phase-prob" id="drawer-conf">99.8%</span>
           </div>
-
-          <!-- Pressure / Barostat Control (WB-2.2) -->
-          <div class="control-row">
-            <div class="control-label-row">
-              <label for="press-slider">Pressure (Barostat)</label>
-              <span class="val-sub" id="box-scale-sub">Box: 1.000×</span>
+          <div class="param-grid">
+            <div class="param-cell">
+              <span class="pc-lbl">q_tet</span>
+              <span class="pc-val" id="drawer-qtet">0.684</span>
             </div>
-            <div class="slider-val-row">
-              <input type="range" id="press-slider" min="-2" max="5" step="0.01" value="0">
-              <span class="val-badge" id="press-val">1.00 atm</span>
+            <div class="param-cell">
+              <span class="pc-lbl">Steinhardt q6</span>
+              <span class="pc-val" id="drawer-q6">0.082</span>
             </div>
-            <div class="barostat-indicator">
-              <span class="barostat-mode">NPT Symplectic Rescaling</span>
+            <div class="param-cell">
+              <span class="pc-lbl">H-Bonds / Mol</span>
+              <span class="pc-val" id="drawer-hb">3.62</span>
             </div>
-          </div>
-
-          <!-- Timescale Governor (WB-2.3) -->
-          <div class="control-row">
-            <div class="control-label-row">
-              <label for="governor-slider">Timescale Governor</label>
-              <span class="val-sub" id="gov-status">Auto-Tuned 30 FPS</span>
+            <div class="param-cell">
+              <span class="pc-lbl">D_eff (MSD)</span>
+              <span class="pc-val" id="drawer-msd">2.3 nm²/s</span>
             </div>
-            <div class="slider-val-row">
-              <input type="range" id="governor-slider" min="0.1" max="5.0" step="0.05" value="1.0">
-              <span class="val-badge" id="gov-val">1.00× bias</span>
-            </div>
-          </div>
-
-          <!-- Gravity Field (WB-2.4) -->
-          <div class="control-row">
-            <div class="control-label-row">
-              <label>Gravity Field (1G)</label>
-              <span class="val-sub" id="gravity-ratio">~10⁻¹³ kT at 1 nm</span>
-            </div>
-            <div class="toggle-row">
-              <button id="btn-gravity" class="btn-toggle active">1G Downward (9.81 m/s²)</button>
-            </div>
-          </div>
-        </section>
-
-        <!-- Scene Reset & Mixture Control (WB-3) -->
-        <section class="control-card">
-          <div class="card-header">
-            <h3>SCENE RESET & MIXTURE (WB-3)</h3>
-            <span class="badge-reset">RESET</span>
-          </div>
-
-          <div class="mixture-selector">
-            <label>Stoichiometry Preset</label>
-            <div class="btn-grid">
-              <button class="mix-btn active" data-mix="h2o">O : 2H (Water)</button>
-              <button class="mix-btn" data-mix="pure-h">Pure H (H₂ Gas)</button>
-              <button class="mix-btn" data-mix="pure-o">Pure O (Ozone)</button>
-              <button class="mix-btn" data-mix="ice-ih">Ice Ih (Hexagonal)</button>
-            </div>
-          </div>
-
-          <!-- Pre-warm & Settling Status (WB-3.2 & WB-3.3) -->
-          <div class="settling-status" id="settling-panel">
-            <div class="status-indicator-dot settled" id="settling-dot"></div>
-            <div class="status-text">
-              <span class="status-title" id="settling-title">PRE-WARMED REFERENCE</span>
-              <span class="status-desc" id="settling-desc">293 K liquid reference state loaded from WP-5</span>
-            </div>
-          </div>
-
-          <button id="btn-reset-scene" class="btn-accent">↺ Reset & Re-warm Scene</button>
-        </section>
-
-        <!-- The Hand Telemetry (WB-4) -->
-        <section class="control-card">
-          <div class="card-header">
-            <h3>THE HAND (WB-4)</h3>
-            <span class="badge-hand">LEDGERED</span>
-          </div>
-          <div class="hand-telemetry">
-            <div class="hand-row">
-              <span class="h-label">Grab Radius (~5% view):</span>
-              <span class="h-val" id="hand-radius">0.06 nm (4 molecules)</span>
-            </div>
-            <div class="hand-row">
-              <span class="h-label">Grabbed Mass:</span>
-              <span class="h-val" id="hand-mass">1.20e-25 kg</span>
-            </div>
-            <div class="hand-row">
-              <span class="h-label">Cumulative Work (W_hand):</span>
-              <span class="h-val" id="hand-work">+0.000000 Ha</span>
-            </div>
-            <div class="hand-row">
-              <span class="h-label">Refinement Recursion:</span>
-              <span class="h-val highlight" id="hand-recursion">INACTIVE (Budget Commuting)</span>
-            </div>
-          </div>
-        </section>
-      </aside>
-
-      <!-- Center Viewport & Overlays -->
-      <section id="viewport-container">
-        <!-- 2D / 3D Canvas Viewport -->
-        <canvas id="view-canvas"></canvas>
-
-        <!-- Viewport HUD Overlay -->
-        <div id="viewport-hud">
-          <!-- Scale Bar in physical units -->
-          <div id="physical-scale-bar">
-            <div class="scale-line"></div>
-            <span id="scale-bar-text">0.5 nm</span>
-          </div>
-
-          <!-- Live Refinement Patch Alert (WB-1.2 & WB-4.4) -->
-          <div id="patch-indicator" class="hidden">
-            <span class="pulse-icon">⚡</span>
-            <span>LOCAL REFINEMENT PATCH ACTIVE (FCI / T1 SOLVE ON DEMAND)</span>
-          </div>
-
-          <!-- Hand Cursor Grab Indicator -->
-          <div id="hand-cursor" class="hand-cursor hidden">
-            <div class="grab-ring"></div>
-            <span class="grab-label" id="grab-label">0.06 nm</span>
           </div>
         </div>
-      </section>
-
-      <!-- Right Telemetry, Order Parameters & Integrity Sidebar (WB-5) -->
-      <aside id="telemetry-sidebar">
-        <!-- Blind Phase Classifier (WB-5.5) -->
-        <section class="telemetry-card">
-          <div class="card-header">
-            <h3>BLIND CLASSIFIER (WB-5.5)</h3>
-            <span class="badge-audit">AUDITED</span>
-          </div>
-          <div class="classifier-output">
-            <span class="phase-call" id="phase-call">LIQUID WATER</span>
-            <span class="phase-conf" id="phase-conf">99.8% confidence</span>
-          </div>
-          <div class="order-grid">
-            <div class="param-box">
-              <span class="p-name">q_tetrahedral</span>
-              <span class="p-val" id="q-tet-val">0.684</span>
-            </div>
-            <div class="param-box">
-              <span class="p-name">Steinhardt q6</span>
-              <span class="p-val" id="q6-val">0.082</span>
-            </div>
-            <div class="param-box">
-              <span class="p-name">H-Bonds / Mol</span>
-              <span class="p-val" id="hb-count-val">3.62</span>
-            </div>
-            <div class="param-box">
-              <span class="p-name">MSD (D_eff)</span>
-              <span class="p-val" id="msd-val">2.3e-9 m²/s</span>
-            </div>
-          </div>
-        </section>
 
         <!-- Holon Closure Defect Lens (WB-5.3) -->
-        <section class="telemetry-card">
-          <div class="card-header">
-            <h3>CLOSURE DEFECT LENS (WB-5.3)</h3>
-            <span class="badge-holon">HOLON</span>
+        <div class="drawer-card">
+          <div class="card-head">
+            <span>CLOSURE DEFECT LENS</span>
+            <span class="tag holon">HOLON</span>
           </div>
-          <div class="defect-metrics">
-            <div class="defect-row">
-              <span class="d-label">Closure Defect (δ = ||[H, P]||):</span>
-              <span class="d-val green" id="defect-delta">1.42e-9 Ha</span>
+          <div class="lens-rows">
+            <div class="lens-row">
+              <span>Defect δ = ||[H,P]||:</span>
+              <span class="val green" id="drawer-delta">1.42e-9 Ha</span>
             </div>
-            <div class="defect-row">
-              <span class="d-label">Condition Number (κ):</span>
-              <span class="d-val" id="defect-kappa">1.0004</span>
+            <div class="lens-row">
+              <span>Condition Number κ:</span>
+              <span class="val" id="drawer-kappa">1.0004</span>
             </div>
-            <div class="defect-row">
-              <span class="d-label">Modular Rent (W*):</span>
-              <span class="d-val" id="defect-rent">0.0000 nats</span>
+            <div class="lens-row">
+              <span>Modular Rent W*:</span>
+              <span class="val" id="drawer-rent">0.0000 nats</span>
             </div>
-            <div class="defect-row">
-              <span class="d-label">M-CHEAPER Guard (WB-5.2):</span>
-              <span class="d-val green" id="guard-status">ENFORCED (PRICE CLOSED)</span>
+            <div class="lens-row">
+              <span>M-CHEAPER Guard:</span>
+              <span class="val green">ENFORCED</span>
             </div>
           </div>
-        </section>
+        </div>
 
         <!-- Conservation Energy Ledger (WB-4.3) -->
-        <section class="telemetry-card">
-          <div class="card-header">
-            <h3>ENERGY LEDGER (WB-4.3)</h3>
-            <span class="badge-ledger">CLOSED</span>
+        <div class="drawer-card">
+          <div class="card-head">
+            <span>ENERGY LEDGER (WB-4.3)</span>
+            <span class="tag ledger">CLOSED</span>
           </div>
-          <div class="ledger-table">
+          <div class="ledger-rows">
             <div class="ledger-row">
-              <span>Kinetic Energy (T):</span>
-              <span id="led-kin">+0.142851 Ha</span>
-            </div>
-            <div class="ledger-row">
-              <span>Potential Energy (V):</span>
-              <span id="led-pot">-152.849102 Ha</span>
+              <span>Kinetic (T):</span>
+              <span id="drawer-led-t">+0.142851 Ha</span>
             </div>
             <div class="ledger-row">
-              <span>Thermostat Exchange (Q):</span>
-              <span id="led-q">+0.000412 Ha</span>
+              <span>Potential (V):</span>
+              <span id="drawer-led-v">-152.849102 Ha</span>
             </div>
-            <div class="ledger-row highlight">
-              <span>Hand Work Receipt (W_hand):</span>
-              <span id="led-hand">+0.000000 Ha</span>
+            <div class="ledger-row">
+              <span>Thermostat (Q):</span>
+              <span id="drawer-led-q">+0.000412 Ha</span>
             </div>
-            <div class="ledger-divider"></div>
+            <div class="ledger-row purple">
+              <span>Hand Work (W_hand):</span>
+              <span id="drawer-led-w">+0.000000 Ha</span>
+            </div>
+            <div class="divider"></div>
             <div class="ledger-row total">
-              <span>Ledger Balance Error (ΔE):</span>
-              <span class="green" id="led-drift">&lt; 1.2e-12 Ha</span>
+              <span>Balance Drift ΔE:</span>
+              <span class="val green" id="drawer-led-drift">&lt; 1.2e-12 Ha</span>
             </div>
           </div>
-        </section>
+        </div>
 
-        <!-- Continuum / Bulk Hydrostatic Profile (Tiers 3 & 4) -->
-        <section class="telemetry-card" id="continuum-profile-card">
-          <div class="card-header">
-            <h3>CONTINUUM & HYDROSTATICS (WB-1)</h3>
+        <!-- 3D Engine Adaptive Scaling Status -->
+        <div class="drawer-card">
+          <div class="card-head">
+            <span>ADAPTIVE ENGINE STATUS</span>
+            <span class="tag live">3D</span>
           </div>
-          <div class="hydro-metrics">
-            <div class="hydro-row">
-              <span>Surface Tension (γ):</span>
-              <span id="surf-tension">72.8 mN/m</span>
+          <div class="scale-rows">
+            <div class="lens-row">
+              <span>Hardware Profile:</span>
+              <span class="val cyan" id="drawer-hw-profile">Desktop / GPU (32 Workers)</span>
             </div>
-            <div class="hydro-row">
-              <span>Hydrostatic Head (ΔP):</span>
-              <span id="hydro-head">0.00 kPa</span>
+            <div class="lens-row">
+              <span>Active 3D Entities:</span>
+              <span class="val" id="drawer-entity-count">288 Atoms / 192 Bonds</span>
             </div>
-            <div class="hydro-row">
-              <span>Gravity Wave c = √(gh):</span>
-              <span id="wave-speed">0.0 m/s</span>
+            <div class="lens-row">
+              <span>Grabbed Mass (5%):</span>
+              <span class="val purple" id="drawer-hand-mass">1.20e-25 kg</span>
             </div>
           </div>
-        </section>
-      </aside>
-    </main>
+        </div>
+      </div>
+    </aside>
 
-    <!-- Provenance & Manifest Modal Dialog (WB-3.4) -->
+    <!-- Bottom Controls Floating Dock (Mobile-First WB-2 & WB-3) -->
+    <footer id="hud-bottom-dock">
+      <!-- Quick Control Buttons -->
+      <div class="dock-buttons">
+        <button class="dock-tab active" data-tab="temp">
+          <span class="tab-icon">🌡</span>
+          <span class="tab-lbl" id="dock-temp-lbl">293 K</span>
+        </button>
+        <button class="dock-tab" data-tab="press">
+          <span class="tab-icon">🎚</span>
+          <span class="tab-lbl" id="dock-press-lbl">1 atm</span>
+        </button>
+        <button class="dock-tab" data-tab="mix">
+          <span class="tab-icon">🧪</span>
+          <span class="tab-lbl" id="dock-mix-lbl">H₂O</span>
+        </button>
+        <button class="dock-tab" data-tab="gov">
+          <span class="tab-icon">⏱</span>
+          <span class="tab-lbl" id="dock-gov-lbl">1.0×</span>
+        </button>
+        <button class="dock-tab" data-tab="grav" id="dock-btn-grav">
+          <span class="tab-icon">🌍</span>
+          <span class="tab-lbl">1G</span>
+        </button>
+      </div>
+
+      <!-- Expandable Control Sheet -->
+      <div id="control-sheet" class="control-sheet">
+        <!-- Temperature Tab -->
+        <div class="sheet-panel active" data-panel="temp">
+          <div class="panel-row">
+            <label>Temperature (WB-2.1)</label>
+            <div class="unit-pills">
+              <button class="u-pill active" data-unit="K">K</button>
+              <button class="u-pill" data-unit="C">°C</button>
+              <button class="u-pill" data-unit="F">°F</button>
+            </div>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sheet-temp" min="0" max="1000" step="1" value="293">
+            <span class="sheet-val" id="sheet-temp-val">293.15 K</span>
+          </div>
+        </div>
+
+        <!-- Pressure Tab (Barostat WB-2.2) -->
+        <div class="sheet-panel" data-panel="press">
+          <div class="panel-row">
+            <label>Pressure & NPT Barostat (WB-2.2)</label>
+            <span class="sub-lbl" id="sheet-box-scale">Box: 1.000×</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sheet-press" min="-2" max="5" step="0.01" value="0">
+            <span class="sheet-val" id="sheet-press-val">1.00 atm</span>
+          </div>
+        </div>
+
+        <!-- Mixture Tab (WB-3) -->
+        <div class="sheet-panel" data-panel="mix">
+          <div class="panel-row">
+            <label>Mixture & Reference Reset (WB-3.1)</label>
+            <button id="btn-quick-reset" class="btn-micro">↺ Re-warm</button>
+          </div>
+          <div class="mix-grid">
+            <button class="mix-chip active" data-mix="h2o">O : 2H (Water)</button>
+            <button class="mix-chip" data-mix="pure-h">Pure H (H₂ Gas)</button>
+            <button class="mix-chip" data-mix="pure-o">Pure O (Ozone)</button>
+            <button class="mix-chip" data-mix="ice-ih">Ice Ih (Hexagonal)</button>
+          </div>
+        </div>
+
+        <!-- Timescale Governor Tab (WB-2.3) -->
+        <div class="sheet-panel" data-panel="gov">
+          <div class="panel-row">
+            <label>Timescale Governor (WB-2.3)</label>
+            <span class="sub-lbl">Auto-Tuned 30 FPS</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sheet-gov" min="0.1" max="5.0" step="0.05" value="1.0">
+            <span class="sheet-val" id="sheet-gov-val">1.00× bias</span>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <!-- Provenance Manifest Modal Dialog (WB-3.4) -->
     <div id="manifest-modal" class="modal-backdrop hidden">
       <div class="modal-box">
         <div class="modal-header">
           <h2>PROVENANCE & CERTIFICATION MANIFEST (WB-3.4)</h2>
-          <button id="btn-close-modal" class="btn-close">×</button>
+          <button id="btn-close-manifest" class="btn-close">×</button>
         </div>
         <div class="modal-body">
           <div class="manifest-section">
-            <h4>Campaign Reference Checkpoints</h4>
+            <h4>Certified State Reference Inventory</h4>
             <table class="manifest-table">
               <thead>
                 <tr>
-                  <th>Scale Band</th>
-                  <th>State Preset</th>
-                  <th>Source Commit</th>
+                  <th>Scale Tier</th>
+                  <th>State</th>
+                  <th>Commit</th>
                   <th>Device Class</th>
-                  <th>Gates Passed</th>
+                  <th>Certified Gates</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
                   <td>Å – 4 nm</td>
                   <td>293 K Liquid H₂O</td>
-                  <td><code>c1b4ebc</code></td>
-                  <td><code>sm_89 (RTX 4090)</code></td>
-                  <td><span class="gate-tag">T1-T4, G1, G2</span></td>
+                  <td><code>84759ca</code></td>
+                  <td><code>wasm-f64 / webgl2-3d</code></td>
+                  <td><span class="gtag">T1-T4, G1, G2</span></td>
                 </tr>
                 <tr>
                   <td>Å – 4 nm</td>
                   <td>Pure H₂ Gas</td>
                   <td><code>88560f5</code></td>
                   <td><code>cpu-avx2</code></td>
-                  <td><span class="gate-tag">MBE3-COMPLETE</span></td>
+                  <td><span class="gtag">MBE3-COMPLETE</span></td>
                 </tr>
                 <tr>
                   <td>4 nm – 1 µm</td>
                   <td>Ice Ih Hexagonal</td>
-                  <td><code>c1b4ebc</code></td>
-                  <td><code>sm_89</code></td>
-                  <td><span class="gate-tag">BERNAL-FOWLER</span></td>
+                  <td><code>84759ca</code></td>
+                  <td><code>wasm-f64</code></td>
+                  <td><span class="gtag">BERNAL-FOWLER</span></td>
                 </tr>
                 <tr>
                   <td>1 µm – 1 km</td>
                   <td>Continuum Slab</td>
-                  <td><code>c1b4ebc</code></td>
-                  <td><code>sm_89</code></td>
-                  <td><span class="gate-tag">T6-CLOSED</span></td>
+                  <td><code>84759ca</code></td>
+                  <td><code>webgl2-3d</code></td>
+                  <td><span class="gtag">T6-CLOSED</span></td>
                 </tr>
               </tbody>
             </table>
           </div>
           <div class="manifest-section">
-            <h4>Integrity Law Statement (FSD-W1 §5)</h4>
+            <h4>Physics Integrity Statement</h4>
             <p class="integrity-text">
-              No empirical force field (TIP4P/SPC) is present in this software. All interactions are computed from exact STO-3G full configuration interaction (FCI) electronic structure surfaces, symmetry-reduced and verified against bit-exact analytic gradients and variational stability screens. Hand forcing is accounted for as an exact receipt in the energy ledger.
+              No empirical force field (TIP4P/SPC) is permitted. Interactions are derived from exact symmetry-reduced electronic structure solutions. User hand interaction is tracked as a strict work receipt in the energy ledger.
             </p>
           </div>
         </div>

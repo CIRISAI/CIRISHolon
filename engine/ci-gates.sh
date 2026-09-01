@@ -360,6 +360,25 @@ cargo test -q -p holon-resource 2>/dev/null >/dev/null \
   && ok "holon-resource: all nine RESOURCE_DESIGN plants (D2,D4,D5,D7,D8,D9,D10,D12,D3b)" \
   || no "holon-resource: all nine RESOURCE_DESIGN plants (D2,D4,D5,D7,D8,D9,D10,D12,D3b)"
 
+# holon-device: ONE definition of RESOURCE_DESIGN D0's device class, `no_std` and
+# dependency-free, sitting under both `holon-chem` (which ships into the browser and
+# cannot take a std-only dep) and `holon-resource` (which sits under everything and
+# cannot take a heavy one).
+#
+# A REAL INVOCATION rather than a CRATE_ALLOW entry, because gate 13's own text says an
+# allowlist entry needs an owner and an exit and this crate needs neither: two tests, no
+# dependencies, milliseconds. Both halves matter and both are here — every class round-
+# trips through its tag (so a class added without one fails HERE rather than inside a
+# table six months later), and an unknown tag is REFUSED rather than defaulted (so a
+# foreign artifact cannot be admitted into a bit-gated table under this build's class).
+n_dev=$(cargo test -q -p holon-device -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_dev:-0}" -gt 0 ] \
+  && ok "holon-device reaches $n_dev tests" \
+  || no "holon-device reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q -p holon-device 2>/dev/null >/dev/null \
+  && ok "holon-device: the device class round-trips, and an unknown tag is refused" \
+  || no "holon-device: the device class round-trips, and an unknown tag is refused"
+
 # 12. A CROSS-REFERENCE IS A WARRANT ONLY IF ITS TARGET EXISTS (team-lead's ruling,
 #     2026-08-24). Q10_PREREG.md §10 cites "M1-M6 carry over from Q9's brief unchanged" —
 #     there is no Q9 file anywhere in the repository, so that citation warrants nothing,

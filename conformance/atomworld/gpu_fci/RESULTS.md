@@ -161,6 +161,47 @@ host time is descheduling on a machine at loadavg 66.
 * **Not that any committed table should be regenerated.** They declare `Cpu` and
   they stay that way; a GPU-built table would be a different artifact.
 
+## Verification, including what did NOT run
+
+`engine/ci-gates.sh` was launched against this change and was **killed by its own
+900 s cap at 14:48 without completing**, on a machine at loadavg 66 carrying the
+`(O,O,O)` ozone tabulation on 27 cores. It captured no output (its output is
+piped to `tail`, which loses the buffer on SIGTERM). **A full green from the
+workspace gate is therefore OWED and needs a quiet window** — it is not claimed
+here.
+
+What was verified directly instead, gate by gate, for everything this change
+could reach:
+
+| check | result |
+|---|---|
+| gate 1 — `ciris-sim-core` builds native + wasm32-unknown-unknown + wasm32-wasip1, default AND `alloc` | 6 of 6 PASS |
+| gate 2 — the core's dependency graph | exactly `{ciris-sim-core, libm}` in both feature sets, **unchanged** by the new workspace member |
+| `holon-chem` builds for wasm32-unknown-unknown | PASS — the browser artifact survives the `holon-device` dependency |
+| gate 13 — crate coverage | simulated with the gate's own logic: `holon-device` now covered by a real invocation. `crates/holon-lens` is uncovered and belongs to another lane |
+| `holon-device` | 2 of 2 |
+| `holon-resource` (all nine RESOURCE_DESIGN plants) | 31 of 31 |
+| `holon-gpu` (fci_sigma, gpu_lease, determinism, ring) | 24 of 24 |
+| `holon-chem` full suite | 2 failures, both PRE-EXISTING and reproduced at HEAD with BYTE-IDENTICAL values — see below |
+
+**The two `holon-chem` failures are not this lane's and the check that says so is
+the strongest bit-identity evidence available for the Davidson refactor.**
+`w1_masks`'s banked Be bit pattern (`c02cceabdfa0bae1` against a banked
+`...baea`) and `water`'s committed node (53,53,13)
+(`-6.25814774446453725e-7` against `-6.25815030241838599e-7`) fail identically
+before and after the change, in a HEAD worktree built separately. Those are two
+independent solves through `solve_determinant_from`, one of them a three-body
+residual that is itself a difference of cancelling numbers — and the refactored
+driver reproduces both to the last digit. The lane adding `PairMeta::solver_budget`
+names the cause in its own commit text: a silent 1200 → 4000 change to the
+Davidson iteration default.
+
+A third pre-existing failure, `fci.rs`'s
+`the_variational_guard_fires_on_a_solve_that_converged_to_the_wrong_state`, is a
+self-declared **PLANT VOID (empty sector)** — the wrong warm start converged to
+within 1.023e-12 Ha of the true ground state, so there is no wrong-eigenvector
+failure to catch. It reproduces at HEAD with the same numbers.
+
 ## To re-run
 
 ```bash

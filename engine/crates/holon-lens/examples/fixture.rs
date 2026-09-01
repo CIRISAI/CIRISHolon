@@ -21,10 +21,11 @@ fn main() {
     let mut args = std::env::args().skip(1);
     let dir = PathBuf::from(args.next().expect("out dir"));
     let kind = args.next().unwrap_or_else(|| "held".into());
+    let frames: usize = args.next().and_then(|s| s.parse().ok()).unwrap_or(1200);
     std::fs::create_dir_all(&dir).expect("out dir");
 
     let z = vec![8, 8, 8, 8, 1, 1, 1, 1, 1, 1, 1, 1];
-    let mut spec = Spec::quench_like(1200, z);
+    let mut spec = Spec::quench_like(frames, z);
     spec.seed = 0x5341_5400;
     let n = spec.n_atoms;
 
@@ -45,7 +46,7 @@ fn main() {
         other => panic!("unknown fixture {other}"),
     };
 
-    let path = dir.join(format!("fixture_{kind}.traj"));
+    let path = dir.join(format!("fixture_{kind}_{frames}.traj"));
     let mut w = TrajWriter::create(&path, &traj.header).expect("open");
     for f in &traj.frames {
         w.push(f.index, f.time, f.temperature, f.bonded, &f.pos, &f.vel)

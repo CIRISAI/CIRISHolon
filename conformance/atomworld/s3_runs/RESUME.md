@@ -10,6 +10,7 @@ Sibling: `saturation3-mesh` owns G1 (sharded generation) and G2 (GPU).
 | `bar_margin_after.log` | `holon-chem --example s3_bar_margin` | the nine staked curves re-read under the DERIVED bar (no marker; the run is seconds) | `s3-oo worktree: engine/target/release/examples/s3_bar_margin` |
 | `angle_gauge.log` | `holon-chem --example s2_build -- --gauge 4` | the interpolator's own rate on planted analytic functions, and the three c-axis masks on the real surface. Costs no solves for the planted rows | `engine/target/release/examples/s2_build --gauge 4` |
 | `angle_slice_collinear.log`, `angle_slice_h2seam.log` | `--example s3_angle_slice` | dE3 walked across each seam, with centred d2/d3 | `s3_angle_slice 41 1.4125` and `s3_angle_slice 61 0.30 0.62 2.621 2.703` |
+| `domain.DONE`, `domain_{hhcl,ooh,hclcl,clclcl}.log` | `--example s3_domain` | stage-(1) domain derivation for the four cheap tables: A1 second-smallest-side truncation sweep per triple, apex named on the command line | `s3_domain Cl H H 8 13 17`, `s3_domain H O O ...`, `s3_domain H Cl Cl ...`, `s3_domain Cl Cl Cl ...` (script: scratchpad `dom.sh`) |
 | `angle_cross_check.log` | `--example s3_cross_check` | the discriminator: a warm start carried across each corner, to tell a real crossing from a wrong-root solve | `s3_cross_check` and `s3_cross_check 2.621 2.703 0.425 0.450 9` |
 
 ## RUN FROM A PINNED WORKTREE, and why
@@ -82,6 +83,32 @@ put a grid line on one or accept its floor deliberately. Every trimer type here
 has a reactive channel; this is not water-specific. STILL OWED: the seam LOCUS.
 Two slices found two points on two seams; where the seams run is unmeasured, and
 the ruling above needs it before an angle axis is frozen.
+
+## The four table domains — STAGE (1) IN FLIGHT
+
+Per the lead's two-stage ruling: stage (1) is spans and extents and goes to the
+mesh lane now; stage (2) is the seam-locus scan and gates each table's
+GENERATION, not the handoff.
+
+Rulings already sent to `saturation3-mesh`, not waiting on the sweeps:
+
+  * **WARM IS OFF on all four.** Their own numbers: negative on (H,H,Cl), ~11%
+    undiluted on (Cl,Cl,Cl), 6.9% on (O,O,O) with a slowdown at the largest step,
+    plateauing rather than growing. Against that, warm moves the answer (0 of 5
+    bit-identical) and these are bit-gated artifacts whose identity would then
+    include their warm chains. Reconsidered only if (O,O,O) is ever built.
+  * **Region shape is mine and ships with each domain**, not separately — it is
+    part of the table's identity and must not move to fit the machine.
+
+The apex convention: the two axes are the sides meeting at the atom the table's
+symmetry does NOT exchange. Cl for (H,H,Cl), H for (H,Cl,Cl) and (O,O,H), any
+vertex for the S3 table. `x_lo` comes from `pair::derive_range` on the apex pair
+rather than a new rule, so the table's inner wall and the pair curve's inner wall
+are one claim.
+
+NOTE against the sweep's own header: the reported opposite-pair `R_e` is a coarse
+3-round locate and reads 1.3884 for H-H against G0's 1.3887. It is REPORTED only;
+the shell ladder uses the apex pair, which reproduces G0's 2.5369 exactly.
 
 ## Next, per the freeze's sequence
 

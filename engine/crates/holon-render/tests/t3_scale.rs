@@ -496,3 +496,103 @@ fn the_fence_count_survives_going_local() {
         "moving the atoms a thousand bohr apart changed a composition count"
     );
 }
+
+// ------------------------------------------- 6. the truncation is still a conservative force
+
+/// THE QUESTION THE dE4 LANE ASKED, TURNED ON MY OWN SECTOR: is the gradient the derivative
+/// of the value this call returns?
+///
+/// `the_two_routes_agree_bit_for_bit` above proves the cell route and the complete route
+/// compute the SAME number. It does not prove either is the right one — two routes through
+/// one wrong expression agree perfectly, which is the M-VACUOUS-SUCCESS shape with an extra
+/// step. Nothing gated the switched pair term itself until this test: the C² switch
+/// multiplies the VALUE by `S`, and the slope it hands the force loop is
+/// `S·U' + S'·U` — a product rule that is easy to write with a term missing and impossible
+/// to see afterwards, because the force would still be smooth, still be equal and opposite,
+/// and still conserve momentum. Only ENERGY would be wrong, exactly as it was in
+/// `QuaternaryTable::eval`'s clamped-coordinate-unclamped-slope defect: a constant value
+/// carrying a non-zero force.
+///
+/// So: central-difference the truncated energy and require it to be minus the force the
+/// integrator is actually pushed with.
+#[test]
+fn the_truncated_pair_force_is_minus_the_gradient_of_the_truncated_energy() {
+    let mut s = loaded_sim();
+    s.dims = Dims::Three;
+    s.boundary = Boundary::Open;
+    s.resize_storage(6);
+    // Separations chosen to STRADDLE the switch window, with a deterministic zigzag so no
+    // component of any gradient is accidentally zero.
+    let xs = [0.0f64, 2.2, 9.0, 23.5, 38.0, 53.0];
+    for i in 0..6 {
+        s.atoms[i].x = xs[i];
+        s.atoms[i].y = 20.0 + if i % 2 == 0 { 0.35 } else { -0.35 };
+        s.atoms[i].z = 20.0 + if i % 3 == 0 { 0.25 } else { -0.15 };
+    }
+    s.sync_species();
+    s.rebase();
+    assert!(
+        !s.trimer.loaded && !s.water.loaded,
+        "a three-body table is loaded, so `internal_force` is not the pair term alone"
+    );
+    assert!(s.set_pair_cutoff(1e-6));
+    let (r_in, r_cut) = s.pair_switch().expect("a cutoff was declared");
+
+    // NON-VACUITY: the switch has to be doing something. A scene whose every pair sits
+    // inside `r_in` tests the untruncated curve and says nothing about the product rule.
+    let in_window = s
+        .neighbours()
+        .pairs
+        .iter()
+        .filter(|p| p.r > r_in && p.r < r_cut)
+        .count();
+    assert!(
+        in_window >= 2,
+        "only {in_window} pairs are inside the switch window ({r_in:.3}, {r_cut:.3}); this \
+         scene does not exercise the truncation and the test would pass on the bare curve"
+    );
+
+    // Central difference of the PAIR energy against the force the loop hands the
+    // integrator. `h` is small against the switch window (2 bohr) and large against the
+    // f64 noise floor on an energy of order 1e-3 Ha.
+    const H: f64 = 1e-5;
+    let mut worst_rel: f64 = 0.0;
+    let mut scale: f64 = 0.0;
+    for i in 0..s.n {
+        let f = s.internal_force(i);
+        let analytic = [f.0, f.1, f.2];
+        let p0 = (s.atoms[i].x, s.atoms[i].y, s.atoms[i].z);
+        for axis in 0..3 {
+            let mut shift = |d: f64| -> f64 {
+                let mut p = [p0.0, p0.1, p0.2];
+                p[axis] += d;
+                s.set_position_3d(i, p[0], p[1], p[2]);
+                s.recompute();
+                s.e_pair
+            };
+            let e_plus = shift(H);
+            let e_minus = shift(-H);
+            shift(0.0);
+            let fd = -(e_plus - e_minus) / (2.0 * H);
+            scale = scale.max(analytic[axis].abs());
+            worst_rel = worst_rel.max((analytic[axis] - fd).abs());
+        }
+    }
+    let rel = worst_rel / scale.max(1e-30);
+    println!(
+        "truncated pair force vs -dE/dx: worst absolute {worst_rel:.3e} Ha/bohr against a \
+         force scale of {scale:.3e} ({:.2e} relative); {in_window} pairs in the switch window",
+        rel
+    );
+    assert!(
+        scale > 1e-8,
+        "the scene carries no force worth differentiating ({scale:.3e}); the comparison \
+         would be zero against zero"
+    );
+    assert!(
+        rel < 1e-6,
+        "the truncated force is not minus the gradient of the truncated energy: worst \
+         {worst_rel:.3e} Ha/bohr, {rel:.2e} relative. The C² switch's product rule is the \
+         first place to look."
+    );
+}

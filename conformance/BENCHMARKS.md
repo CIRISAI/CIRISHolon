@@ -1294,3 +1294,48 @@ not stable), the d=221 direction, and the estimator lesson, which this
 strengthens: the minimum over repetitions is a lottery over placement *and*
 sibling state, not a floor.
 
+
+## 2026-08-31, twenty-seventh entry: THE CITABLE TABLE — quiet machine, pinned, both core types
+
+The waiter took its window unattended: **loadavg 6.4 → 6.8, and it held across
+both sweeps** (the run refuses to label itself quiet otherwise). Both arms
+pinned to the same CPU, identical circuits, 3 rounds, 5 reps, minima with
+medians shown for agreement. `conformance/bigqvm/h2h_quiet_{pcore,ecore}.json`.
+
+| d | n | P-core ours/stim | E-core ours/stim | |
+|---:|---:|---:|---:|---|
+| 21 | 881 | 1.375 | 1.324 | stim leads (see caveat) |
+| 45 | 4049 | 1.458 | 1.488 | **stim leads clearly** |
+| 101 | 20401 | 0.991 | 0.942 | parity |
+| 141 | 39761 | 1.238 | 0.956 | **placements disagree** |
+| 221 | 97681 | **1.005** | **0.866** | parity to we-lead-15% |
+
+Spreads 1.01–1.22×, min and median agreeing to ~1% on every row except d=21,
+where both arms run in ~1–2 ms and timer resolution dominates (min ratio 1.375
+against a median of 2.138) — **that row should not be quoted at all.**
+
+**THE HONEST VERDICT, and it is weaker than everything this lane banked
+before.** stim leads clearly at small n (1.46–1.49× at d=45). The arms cross
+somewhere around n ≈ 20k. At the flagship size we are between **parity
+(1.005 on a P-core) and a 15% lead (0.866 on an E-core)** — the direction at
+d=221 is itself placement-dependent even on a quiet box, so the defensible
+claim is "parity-to-modestly-ahead at the largest size, clearly behind at small
+sizes, with the crossover near n ≈ 20k."
+
+**Every contended measurement in this lane flattered us**, and the size of that
+is worth recording: d=221 read 0.754 unpinned-and-loaded, 0.895 pinned-and-
+loaded, and **1.005 pinned-and-quiet on the same core class.** Contention was
+not neutral noise around a true value — it was a bias in our favour, because
+the two engines lose different amounts to it. That is the strongest argument in
+this lane for why a contended A/B is not a measurement at all, and it retires
+the last of the earlier headlines: 1.33×, then 0.895, now parity-to-0.866.
+
+Contention was also costing a factor of ~3.5 in absolute terms (d=221 P-core:
+17.04 s quiet against 30.24 s pinned-but-loaded and 59.90 s unpinned-and-loaded).
+
+**What survives from the whole comparison programme:** our margin GROWS with n
+(clearly behind at d=45, parity at d=101, ahead on the reproducible core class
+at d=221), which is the shape the column-major engine's word-parallel scaling
+predicts, and which every earlier table also showed — the trend was real even
+while its magnitudes were not.
+

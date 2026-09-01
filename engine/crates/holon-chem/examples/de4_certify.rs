@@ -590,8 +590,15 @@ fn probe_interpolant(log: &mut Log, t: &qt::QuaternaryTable) {
              (the value is constant there because the index coordinate is clamped, so the \
              true derivative of the returned function is 0). BELOW the chain factor's pole \
              R1 < {:.4} bohr, at R1={:.2}: analytic {:+.6e}, own central difference {:+.6e}. \
-             tau_of_r/dtau_dr floor their argument at 1e-300, so dtau_dr there is ~1e299 and \
-             the reported force is that times the stencil slope.",
+             Both agree at zero, which is the FIXED behaviour and is what this probe now \
+             records. It was written against the defect: eval chained the slope through \
+             dtau_dr at the UNCLAMPED radius, and since tau_of_r/dtau_dr floor their \
+             argument at 1e-300, dtau_dr below that pole is ~1e299 and the reported force \
+             was that times the stencil slope -- measured +4.6e296 Ha/bohr, one integrator \
+             step from destroying a trajectory. A clamped axis now reports exactly zero \
+             along itself, so the gradient is the derivative of the value the same call \
+             returned. The probe is kept pointing at the repaired place rather than \
+             retired, because that is where it would fire again.",
             rc[0], gc[0], fc, qt::R_LO, ra[0], ga[0], fa, z_zero, rb[0], gb[0], fb
         ),
     );
@@ -1063,6 +1070,64 @@ fn gate_t3c_translation(log: &mut Log, t: &qt::QuaternaryTable, refs: &[Ref], pl
         );
     }
 
+    // --- WHAT THIS READING CANNOT CATCH, measured rather than argued.
+    //
+    // A sibling lane read translation invariance as the stronger of T3c's two halves. It is
+    // the CHEAPER one -- no reference, no finite difference, no electronic structure -- and
+    // cheap and strong are different axes. It is blind to the entire defect family that
+    // lane's own sector was carrying: a term dropped from a product rule.
+    //
+    // The reason is structural. `eval_cartesian` accumulates every contribution as an
+    // already-balanced pair -- the radial term as `f[a] -= g; f[0] += g`, each angular term
+    // as `f[a] -= gu*da; f[b] -= gu*db; f[0] += gu*(da+db)` -- so EACH term sums to zero on
+    // its own. Delete any of them and the remainder still sums to zero. Momentum survives a
+    // wrong force; only the energy moves.
+    //
+    // Demonstrated by building the defect rather than asserting it: the radial-only field
+    // is `eval_cartesian` with all three angular chain-rule terms deleted.
+    {
+        let mut defect_sum = 0.0f64;
+        let mut defect_gap = 0.0f64;
+        let mut full_scale = 0.0f64;
+        for x in refs.iter() {
+            let Some(g) = qt::embed_ohhh(x.r, x.u) else { continue };
+            let (_, full) = t.eval_cartesian(&g);
+            let (_, d) = t.eval(x.r, x.u);
+            let mut rad = [[0.0f64; 3]; 4];
+            for a in 0..3 {
+                let len = x.r[a].max(1e-12);
+                for c in 0..3 {
+                    let e = (g[a + 1][c] - g[0][c]) / len;
+                    let gg = d[a] * e;
+                    rad[a + 1][c] -= gg;
+                    rad[0][c] += gg;
+                }
+            }
+            for c in 0..3 {
+                defect_sum = defect_sum.max((0..4).map(|a| rad[a][c]).sum::<f64>().abs());
+            }
+            for a in 0..4 {
+                for c in 0..3 {
+                    defect_gap = defect_gap.max((rad[a][c] - full[a][c]).abs());
+                    full_scale = full_scale.max(full[a][c].abs());
+                }
+            }
+        }
+        log.say(
+            "T3c",
+            V::Info,
+            format!(
+                "BLIND SPOT, measured: the radial-only field -- eval_cartesian with all \
+                 three angular chain-rule terms DELETED -- still sums to zero at \
+                 {defect_sum:.3e}, passing this reading, while differing from the correct \
+                 field by {defect_gap:.3e} Ha/bohr on a scale of {full_scale:.3e}. Every \
+                 contribution is accumulated as a balanced pair, so momentum survives a \
+                 dropped term. This reading convicts a broken PAIRING (a force divided by a \
+                 per-atom mass); it cannot convict a wrong MAGNITUDE. Only the \
+                 central-difference half sees that family, and that half needs the physics."
+            ),
+        );
+    }
 }
 
 /// The other half of T3c: force equals minus the gradient, in Cartesian coordinates. This

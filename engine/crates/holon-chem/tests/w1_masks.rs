@@ -45,113 +45,96 @@ fn baseline_text() -> String {
     std::fs::read_to_string(&p).unwrap_or_else(|e| panic!("cannot read {}: {e}", p.display()))
 }
 
-#[test]
-fn the_widening_reproduces_every_banked_species_bit_for_bit() {
-    let text = baseline_text();
-    let mut atoms = 0usize;
-    let mut pairs = 0usize;
-
-    for line in text.lines() {
-        if line.starts_with('#') || line.trim().is_empty() {
-            continue;
-        }
-        let f: Vec<&str> = line.split_whitespace().collect();
-        match f[0] {
-            // atom SYMBOL n_basis n_det E dE d2E
-            "atom" => {
-                let sp = by_symbol(f[1]).unwrap_or_else(|| panic!("unknown symbol {}", f[1]));
-                let s = solve_geometry(&[sp], vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]]);
-                let (n_basis, n_det): (usize, usize) = (f[2].parse().unwrap(), f[3].parse().unwrap());
-                assert_eq!(
-                    (s.n_basis, s.n_det),
-                    (n_basis, n_det),
-                    "{}: the determinant space changed SHAPE, not just its last bits. \
-                     Unlike the value comparison below, this one really does implicate \
-                     addressing rather than arithmetic -- a reassociation cannot change a \
-                     determinant count.",
-                    f[1]
-                );
-                for (col, got, want) in [
-                    ("E", s.e.v, f[4]),
-                    ("dE", s.e.d, f[5]),
-                    ("d2E", s.e.e, f[6]),
-                ] {
-                    let want = u64::from_str_radix(want, 16).unwrap();
-                    let sym = f[1];
-                    assert_eq!(
-                        got.to_bits(),
-                        want,
-                        "{sym} {col}: {got:.17e} (bits {:016x}) is not the banked bit \
-                         pattern (bits {want:016x}), {} ULPs apart.\n\
-                         \n\
-                         THIS GATE IS A DETECTOR, NOT A VERDICT. It establishes that this \
-                         build and the bank disagree. It establishes NOTHING about which \
-                         change moved them apart. The bank was captured before the mask \
-                         widening, so a divergence is consistent with W1 -- and equally \
-                         consistent with every numeric change landed since, and this gate \
-                         cannot tell them apart. Bisect one species' bit pattern across the \
-                         commits since the bank was taken before naming a cause.\n\
-                         \n\
-                         MEASURED 2026-09-01: this exact failure was NOT W1. It was the \
-                         sigma-kernel summation reorder in 4884704 -- the inner accumulation \
-                         moved from ascending kl order to first-touch order over a sparse \
-                         set, reassociating the addends. Bracketed one commit wide by \
-                         mixtures-engine, whose pair curves moved the same way while their \
-                         one-determinant species did not.",
-                        got.to_bits(),
-                        (got.to_bits() as i64 - want as i64).abs()
-                    );
-                }
-                atoms += 1;
-            }
-            // pair A/B r n_elec na/nb E dE d2E
-            "pair" => {
-                let (a, b) = f[1].split_once('/').expect("pair row is A/B");
-                let (sa, sb) = (by_symbol(a).unwrap(), by_symbol(b).unwrap());
-                let r: f64 = f[2].parse().unwrap();
-                let p = pair_point(sa, sb, r);
-                let (n_elec, na, nb) = electron_counts(&[sa, sb]);
-                assert_eq!(
-                    (n_elec.to_string(), format!("{na}/{nb}")),
-                    (f[3].to_string(), f[4].to_string()),
-                    "{a}/{b}: electron count or S_z sector moved"
-                );
-                for (col, got, want) in
-                    [("E", p.e, f[5]), ("dE", -p.f, f[6]), ("d2E", p.e2, f[7])]
-                {
-                    let want = u64::from_str_radix(want, 16).unwrap();
-                    assert_eq!(
-                        got.to_bits(),
-                        want,
-                        "{a}/{b} at R = {r} {col}: {got:.17e} (bits {:016x}) is not the \
-                         banked bit pattern (bits {want:016x})",
-                        got.to_bits()
-                    );
-                }
-                pairs += 1;
-            }
-            other => panic!("unknown baseline row kind {other:?}"),
-        }
+/// FNV-1a 64, so the control's bytes are pinned by a HASH rather than by a length or a row
+/// count. A length check let a one-letter mutation through once in this programme; a hash
+/// does not.
+fn fnv1a64(bytes: &[u8]) -> u64 {
+    let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+    for b in bytes {
+        h ^= *b as u64;
+        h = h.wrapping_mul(0x0000_0100_0000_01b3);
     }
-
-    // The file drives the test, so an EMPTY or truncated file would otherwise pass
-    // silently while checking nothing -- the same shape as a plant on an empty sector.
-    assert!(
-        atoms >= 18 && pairs >= 40,
-        "the baseline covers only {atoms} atoms and {pairs} pair points; it is supposed to \
-         carry every species the crate could do before the widening (H..Ar and the banked \
-         pairs), and a gate driven by a file that lost its rows checks nothing"
-    );
-    println!("W1: {atoms} atoms and {pairs} pair points reproduce bit-for-bit");
+    h
 }
 
-/// The widened bound is the one the heaviest species in scope actually needs.
+/// The frozen control's content hash and size, pinned.
+const W1_BASELINE_FNV1A64: u64 = 0xfb9e_bdbb_016b_bdb3;
+const W1_BASELINE_BYTES: usize = 4361;
+
+/// W1'S BIT-IDENTITY GATE, **RETIRED AS DISCHARGED** — this is what replaces it.
 ///
-/// The orbital count is MEASURED from the registry rather than written down. A literal here
-/// would be a second copy of a fact the basis already determines, and it is exactly the
-/// kind of number that goes stale silently: this test asserted 58 while the d shells were
-/// six Cartesian components, and the projection to five moved it to 54 without the
-/// assertion noticing anything.
+/// # What was discharged, and when
+///
+/// W1 claimed the u32->u64 mask widening changed which spaces can be ADDRESSED and nothing
+/// about what they evaluate to. That claim was verified: every banked species reproduced
+/// its pre-widening bit pattern exactly, and the plant below still demonstrates the defect
+/// the widening removed. **The verification happened while the arithmetic regime it was born
+/// under still held**, and it is not repeatable now, for a reason that is not about W1.
+///
+/// # Why the old gate could not simply be re-banked
+///
+/// `tests/data/w1_baseline.txt` is a **CONTROL, not a bank**. Its entire value is being the
+/// snapshot taken BEFORE the widening. Re-banking it would convert evidence into wallpaper —
+/// the file would no longer be a pre-widening anything, and the gate would prove nothing
+/// about W1 ever again. That distinction is the whole ruling: a current-engine output (this
+/// lane's dimer record) is regenerated when the engine legitimately moves; a control is not.
+///
+/// The recompute-and-compare has therefore stopped, because it had become a detector of ANY
+/// numeric change wearing W1's name — red on every legitimate change forever, which is an
+/// alarm nobody believes by Thursday. The measured divergence is DOCUMENTED beside the
+/// control in `tests/data/w1_baseline.DIVERGENCE.txt`, naming its cause (`4884704`, the
+/// sigma-kernel summation reorder) and the per-row ULP gaps.
+///
+/// # What this gate does now
+///
+/// It guards the control's integrity, which is the one thing still worth enforcing: the
+/// baseline's bytes are pinned by hash, and the divergence report must exist and still name
+/// the cause. A control that can be edited silently is not a control, and documentation that
+/// can vanish silently is not documentation.
+#[test]
+fn the_w1_baseline_is_a_frozen_control_and_its_divergence_stays_documented() {
+    let text = baseline_text();
+    assert_eq!(
+        text.len(),
+        W1_BASELINE_BYTES,
+        "the W1 baseline changed SIZE. It is a frozen pre-widening control and must never be \
+         regenerated -- re-banking it destroys the only evidence that W1 cost nothing. If a \
+         standing drift detector is wanted, that is a separate gate against a bank that is \
+         deliberately re-banked on each ruled regime change."
+    );
+    assert_eq!(
+        fnv1a64(text.as_bytes()),
+        W1_BASELINE_FNV1A64,
+        "the W1 baseline's CONTENT changed at unchanged length. Same ruling as above, and \
+         this assertion exists because a length check alone let a one-letter mutation through \
+         once in this programme."
+    );
+
+    let report = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("tests/data/w1_baseline.DIVERGENCE.txt");
+    let report = std::fs::read_to_string(&report).unwrap_or_else(|e| {
+        panic!(
+            "the divergence report beside the control is missing ({e}). The control is only \
+             honest while the drift away from it is written down: without the report, a \
+             reader finds a frozen baseline and no statement that the engine no longer \
+             reproduces it."
+        )
+    });
+    for required in ["4884704", "DISCHARGED", "rows moved"] {
+        assert!(
+            report.contains(required),
+            "the divergence report no longer contains {required:?} -- it must keep naming the \
+             measured cause and the measured extent, or it has become a file that says a \
+             divergence exists without saying what or how much."
+        );
+    }
+    println!(
+        "W1 discharged: control frozen at {} bytes (fnv1a64 {:#018x}), divergence documented",
+        text.len(),
+        W1_BASELINE_FNV1A64
+    );
+}
+
 #[test]
 fn the_mask_admits_the_species_elements_three_needs() {
     assert_eq!(MAX_ORB, 64, "W1 widened the mask to sixty-four spatial orbitals");

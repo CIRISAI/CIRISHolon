@@ -23,7 +23,7 @@ current-best-state.*
 
 | gate | verdict | the number that decides it |
 |---|---|---|
-| **W1** — the mask widening costs nothing | **VERIFIED** (not implemented — see below) | 18 atoms + 40 pair points bit-identical; plant fires 1.12e-2 Ha at 36 orbitals, silent at 18 |
+| **W1** — the mask widening costs nothing | **VERIFIED** (not implemented — see below); the gate is now **RETIRED AS DISCHARGED** | 18 atoms + 40 pair points bit-identical *under the pre-4884704 regime*; plant fires 1.12e-2 Ha at 36 orbitals, silent at 18, and still fires today |
 | **T1** — the transcription gates, generalized | **DISCHARGED** | worst ratio deviation 0.806x its own bound against a 4x threshold; 407 contractions pinned; 240/240 resolvable mutations fire |
 | **R1** — atoms, dual-route and referee-pinned | **DISCHARGED ON THE RESCOPE** (A1.2, A3.1), with **five rows REFUSED** under the bar frozen at the time — **one** under the bar that replaced it | nine multiplicities exact; two sigma routes to 2.13e-14; referee 1.0e-11 / 5.3e-11 Ha on two of nine; Zn, In, Sn, Sb, Te refused as printed, of which only In survives the re-derived bar — see the dated annotation under R1, no energy changed |
 | **E1** — the emergent nobles | **DISCHARGED** | Kr and Xe one determinant; Kr2 and Xe2 unbound on the A3.2 grid |
@@ -67,7 +67,42 @@ Verified anyway, and the verification is what stands:
   types so the coincidence cannot return.
 * **plant (ii) fires and is silent below.** At 36 orbitals a 32-bit mask gives 1024
   determinants against 1296 and an energy 1.12e-2 Ha adrift; at 18 orbitals the two widths
-  are bit-identical.
+  are bit-identical. This one still fires today and is not retired.
+
+### The bit-identity gate is RETIRED AS DISCHARGED, and the control stays frozen
+
+The bit-identity comparison no longer runs. It verified what it was built to verify — **while
+the arithmetic regime it was born under still held** — and it stopped being able to verify it
+when `4884704` reordered the sigma kernel's inner accumulation from ascending `kl` order to
+first-touch order over a sparse set, reassociating the addends. No physics changed; the last
+bits did.
+
+**The baseline could not simply be re-banked, and the distinction is the ruling.**
+`tests/data/w1_baseline.txt` is a **CONTROL, not a bank**: its entire value is being the
+snapshot taken *before* the widening. Regenerating it would convert evidence into wallpaper —
+the file would no longer be a pre-widening anything. A current-engine output is regenerated when
+the engine legitimately moves (this campaign's dimer record was, correctly); a control never is.
+
+Left running, the gate would have been a detector of *any* numeric change wearing W1's name —
+red on every legitimate change forever, which is an alarm nobody believes by Thursday. So:
+
+* the comparison stops, and W1's verification stands as a dated result rather than a standing
+  claim about a regime that has moved;
+* the control stays **byte-frozen**, pinned by hash rather than by length — a length check let
+  a one-letter mutation through once in this programme;
+* the divergence is **documented beside it** in `tests/data/w1_baseline.DIVERGENCE.txt`, naming
+  the cause and the measured extent: **35 of 58 rows moved, 23 unchanged**, energies between 3
+  and 28 ULP;
+* the surviving gate enforces exactly those two things — the control's bytes, and that the
+  report still names its cause — because a control that can be edited silently is not a
+  control, and documentation that can vanish silently is not documentation.
+
+**One trap inside the report, stated there and worth repeating here.** Its worst entry is
+**753,664 ULP**, on F/F at R = 5's second derivative — and that number means almost nothing,
+because the quantity is itself near zero at that separation and a ULP count stops being an error
+magnitude there. The energy column is the one to read for physical size. It is the same trap the
+water lane met from the other side, where 2.558e-13 absolute read as 4.1e-7 relative because an
+MBE residual is a small difference of large totals.
 
 The plant runs at one electron per spin rather than on a real species, deliberately: a
 neutral >32-orbital species has no string a 32-bit mask can hold, so the truncated space is

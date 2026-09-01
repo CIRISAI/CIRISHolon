@@ -66,9 +66,25 @@ two engines lose different amounts to it.
 
 Still owed, and neither blocks anything:
 
-**(a)** ~~The QUIET-MACHINE repeat~~ — **DONE**, see above. The waiter stays
-armed for a confirming repeat, now with the E-core sweep as PRIMARY (it is the
-reproducible core class: no SMT sibling, 1.03× spread against P's 1.41×):
+**(a)** ~~The QUIET-MACHINE repeat~~ — **DONE**, see above.
+
+**The waiter is now STOOD DOWN, deliberately.** It was armed for a confirming
+repeat, but the citable table exists and seven tower-build lanes have since
+spawned: a background job that grabs a scarce quiet window for a nice-to-have,
+while other lanes need the machine, is the resource-discipline failure this lane
+has spent its whole run arguing against. The confirming repeat is worth having
+and is NOT owed — it tests across-session reproducibility, where the banked
+table is already well-sampled WITHIN a session (5 reps, both core types, spreads
+1.01–1.22×, min and median agreeing to ~1%).
+
+Re-arm it deliberately when the box is genuinely free, with the E-core sweep as
+PRIMARY (it is the reproducible core class: no SMT sibling, 1.03× spread against
+P's 1.41×):
+
+    cd conformance/bigqvm && setsid nohup ./run_when_quiet.sh \
+        > quiet_waiter.log 2>&1 &
+
+or run the sweep directly in a known-quiet moment:
 
     conformance/bigqvm/run_when_quiet.sh   (setsid)
     -> h2h_quiet.json      the citable table, written only if the window HELD

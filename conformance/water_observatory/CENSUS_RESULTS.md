@@ -409,3 +409,46 @@ is and it costs about an hour of contended machine.
 
 **The fenced arm is unaffected and still running.** It is the arm the §10.3 prediction is
 staked on.
+
+### 10.5 AMENDMENT, before the data: §10.3's premise is FALSE and its stake is confounded
+
+*Written with two of eight fenced seeds printed. The stake is NOT moved; what follows is a
+correction to its REASONING, recorded before the result so that git can tell which came
+first.*
+
+§10.3 said the fenced arm differs from `p2_waterquench.log` "in exactly ONE stated way:
+the four (O,O,O) triples per seed are fenced rather than served, on an otherwise same-class
+potential". **That is wrong. There are two differences, and I missed the larger one.**
+
+| curve | banked P2 (`45a513a`) | this lane (`a3b3d4b`) |
+|---|---|---|
+| H–H worst residual | 8.7e-11 | 8.7e-11 — same class, as claimed |
+| O–H worst residual | 9.9e-11 | 9.9e-11 — same class |
+| **O–O worst residual** | **6.7e-6** | **2.7e-6** |
+
+`R_e = 2.4421` and `D_e = 0.147621` agree to six digits, but the O–O curve MOVED. The cause
+is in `holon-chem/src/tier.rs`, which gained a sparsity optimisation between the two
+commits — it tracks touched `kl` indices instead of zeroing the whole accumulator, which
+changes the floating-point accumulation ORDER in the CI solve, which changes where the
+solve converges.
+
+**Why this matters more than it looks.** §10.2 measured what a 1e-11 change to the H–H
+curve does: it flipped the final-frame molecule census on 2 of 8 hydrogen seeds. The O–O
+change is at 1e-6 — five orders of magnitude larger — and it sits on the curve that governs
+the oxygen aggregation dominating every mixed-arm scene (the O₄H₄ droplets). So I now
+expect the ≥ 5/8 stake to FAIL, and I am saying so before the seeds print rather than after.
+
+**And the deeper defect: the ≤ 4/8 branch's stated meaning is now CONFOUNDED.** §10.3 said
+a low match rate would mean "the OOO term materially steers the endpoint even at four
+triples". It can no longer mean that, because a moved O–O pair curve would produce the same
+low match rate on its own. The experiment as designed cannot separate the two causes, and
+no rescue after the fact can separate them either.
+
+**What would.** Run the fenced arm at `45a513a`, where the O–O curve is the banked one and
+the ONLY difference is the fence. That is a clean one-variable comparison and it is the
+experiment §10.3 should have specified. It is not run here; it is specified so that whoever
+wants the OOO question answered has the design rather than an inference.
+
+**The stake stands as staked** and will be scored against ≥ 5/8 when the arm finishes. What
+this amendment changes is what the number is allowed to MEAN, and the answer is: much less
+than §10.3 claimed.

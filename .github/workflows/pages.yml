@@ -80,6 +80,34 @@ jobs:
         continue-on-error: true
         run: ./engine/crates/holon-render-3d/build-web.sh
 
+      # The workbench's engine, REBUILT FROM THE COMMIT BEING DEPLOYED.
+      #
+      # docs/workbench/holon_render.wasm is committed — 315 KB, the same order as
+      # docs/atoms', and small enough that the page works from a bare checkout. But a
+      # committed build artifact goes stale the moment holon-render or holon-chem moves,
+      # and both are edited by many lanes: at the time this step was added,
+      # docs/atoms/holon_render.wasm was two commits behind
+      # crates/holon-render/viewer/holon_render.wasm, which was itself 300,756 bytes
+      # against the 310,849 its own source builds — and NOTHING in ci-gates.sh compared
+      # either to its source (gate 10 covers holon-sandbox only).
+      #
+      # Rebuilding here makes "what ships is what the deployed commit's source builds" a
+      # property of the pipeline rather than of anyone remembering. The alternative
+      # considered and rejected was a byte-identity gate in the style of gate 10: on a
+      # main taking dozens of commits a day across holon-chem, that gate would be red for
+      # lanes that have never heard of the workbench, and the guarantee it buys is the one
+      # this step already provides by construction.
+      #
+      # NOT continue-on-error. The 3D step above may fail and still leave a truthful site;
+      # this one cannot. If it fails the committed bytes would be served while the page's
+      # manifest presented them as the current engine, and a stale artifact wearing a
+      # fresh commit's provenance is the exact shape the workbench page exists to refuse.
+      - name: Rebuild the workbench engine from this commit
+        run: |
+          HOLON_RENDER_WASM_OUT="$PWD/docs/workbench/holon_render.wasm" \
+            bash engine/crates/holon-render/build-web.sh
+          sha256sum docs/workbench/holon_render.wasm
+
       - name: Report what is being deployed
         run: |
           echo "docs/ tree:"

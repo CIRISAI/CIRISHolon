@@ -155,37 +155,6 @@ fi
 rm -f "$built_wasm"
 trap - EXIT
 
-# 10c. THE WORKBENCH'S COMMITTED WASM IS WHAT ITS SOURCE BUILDS.
-#
-#     Same contract as gate 10 above and for the identical reason: pages.yml ships
-#     docs/ verbatim with no Rust toolchain in CD, so "what ships is what was gated"
-#     holds for the workbench only if this comparison holds. The workbench needs its
-#     OWN copy rather than a reference to docs/atoms/holon_render.wasm, because that
-#     one is not gated by anything and is measurably stale -- at the commit this gate
-#     was added, docs/atoms/ was two commits behind crates/holon-render/viewer/, which
-#     was itself 300,756 bytes against the 310,849 its own source builds on the
-#     reference toolchain. Nothing compared either to its source. This gate is the
-#     first one that does, for any holon-render artifact.
-#
-#     CONSEQUENCE, STATED PLAINLY BECAUSE IT IS A COST: any change to holon-render or
-#     holon-chem now requires rebuilding this artifact, or CI goes red. That is the
-#     gate working, not the gate misfiring, and the rebuild is the one command the
-#     failure message names.
-built_wb=$(mktemp)
-trap 'rm -f "$built_wb"' EXIT
-HOLON_RENDER_WASM_OUT="$built_wb" bash crates/holon-render/build-web.sh >/dev/null 2>&1
-if git show "HEAD:../docs/workbench/holon_render.wasm" 2>/dev/null | cmp -s - "$built_wb"; then
-  ok "workbench committed wasm matches its source"
-else
-  echo "    committed: $(git show "HEAD:../docs/workbench/holon_render.wasm" 2>/dev/null | sha256sum | cut -c1-16) ($(git show "HEAD:../docs/workbench/holon_render.wasm" 2>/dev/null | wc -c) bytes)"
-  echo "    built:     $(sha256sum "$built_wb" | cut -c1-16) ($(wc -c < "$built_wb") bytes)"
-  echo "    rustc:     $(rustc -V)  host: $(rustc -vV | grep host)"
-  echo "    rebuild:   HOLON_RENDER_WASM_OUT=docs/workbench/holon_render.wasm bash engine/crates/holon-render/build-web.sh"
-  no "workbench committed wasm matches its source (rebuild and commit, FROM A CLEAN TREE)"
-fi
-rm -f "$built_wb"
-trap - EXIT
-
 # 10a1. MISFIT REGISTRY INTEGRITY: every M- id cited anywhere in the
 #      conformance record exists in MISFITS.md, and registry ids are
 #      unique. A ghost citation is a broken cross-reference in the

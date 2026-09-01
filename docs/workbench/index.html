@@ -3,241 +3,359 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <title>Water Workbench (FSD-W1) — 3D Recursive Observatory</title>
+  <title>Water Workbench — Atomistic Tier (FSD-W1)</title>
+  <!--
+    FSD-W1 §8 (WB-7). This page is NOT the mock any more.
+
+    The physics is `holon-render` compiled to wasm32-unknown-unknown and driven through its
+    raw extern "C" ABI: an STO-3G full-CI H2 curve computed in the browser at load, the
+    14,157-node H3 three-body surface generated in the browser, symplectic dynamics, a
+    Berendsen thermostat whose heat is posted to the ledger, and a hand that is a spring
+    term with a work receipt.
+
+    Every displayed quantity carries LIVE or FENCED. There is no SYNTHETIC on this page:
+    a number either traces to an engine readout (named in the tag's tooltip) or the panel
+    fences and shows no digits. WB-5.2 — fences are rendered, never faked.
+
+    What is FENCED here, and why, is not decoration: the pressure barostat, the gravity
+    term, the refinement patch, the blind phase classifier and the upper three scale bands
+    are all absent from this engine build. The mock drew all five. This page draws none of
+    them and says so.
+  -->
   <link rel="stylesheet" href="styles.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,600;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body data-engine="booting">
   <div id="app-root">
-    <!-- 3D Fullscreen Canvas Viewport -->
     <canvas id="webgl-canvas"></canvas>
 
-    <!-- Top Mobile-First HUD Bar -->
+    <!--
+      The stage overlay. The engine's own solves are the page load: the H3 surface is
+      14,157 nodes and takes seconds, and an O-H curve takes tens of them. A page that
+      simply froze there would be indistinguishable from a broken one, so each stage is
+      named while it runs. This is also where the price discipline shows: a solve that
+      will block says so before it blocks.
+    -->
+    <div id="boot-overlay" class="boot-overlay">
+      <div class="boot-spinner"></div>
+      <p id="boot-stage">instantiating the engine…</p>
+    </div>
+
+    <div id="boot-failure" class="boot-failure hidden">
+      <h2>THE ENGINE DID NOT LOAD</h2>
+      <p id="boot-error">—</p>
+      <p class="sub">Nothing is drawn and nothing is claimed. A workbench that cannot run its
+        engine shows you that, rather than a picture it made up.</p>
+    </div>
+
+    <!-- ------------------------------------------------------------------ HUD -->
     <header id="hud-top">
       <div class="hud-brand">
         <span class="hud-logo">⬡</span>
         <div class="hud-title-col">
           <div class="hud-title-row">
             <span class="hud-title">WATER WORKBENCH</span>
-            <span class="hud-mock-badge" title="FSD-W1 §8 (WB-7.1): UI prototype shell. Wasm engine hooked per WB-7.2.">MOCK PROTOTYPE (WB-7.1)</span>
+            <span class="hud-engine-badge" title="The physics core is holon-render compiled to wasm32-unknown-unknown, driven through its extern &quot;C&quot; ABI. Every LIVE number on this page is an engine readout.">REAL ENGINE · ATOMISTIC TIER</span>
           </div>
-          <span class="hud-tier" id="hud-tier-name">TIER 1 · ATOMISTIC 3D</span>
+          <span class="hud-tier" id="hud-mix-name">—</span>
         </div>
       </div>
 
-      <!-- Live Sim Rate & Scale Readout -->
       <div class="hud-telemetry-pill">
         <div class="pill-item">
           <span class="p-label">SCALE</span>
-          <span class="p-val" id="hud-scale-val">1.2 nm</span>
+          <span class="p-val" id="hud-scale-val">—</span>
         </div>
         <div class="pill-item">
-          <span class="p-label">RATE</span>
-          <span class="p-val green" id="hud-rate-val">25.0 ps/s</span>
+          <span class="p-label">SIM RATE</span>
+          <span class="p-val green" id="hud-rate-val">—</span>
+          <span class="p-sub" id="hud-realtime">—</span>
         </div>
         <div class="pill-item mobile-hide">
-          <span class="p-label">DEVICE</span>
-          <span class="p-val cyan" id="hud-device-class">AUTO-SCALED</span>
+          <span class="p-label">DEVICE CLASS</span>
+          <span class="p-val cyan" id="hud-device-class">—</span>
         </div>
         <div class="pill-item">
           <span class="p-label">FPS</span>
-          <span class="p-val" id="hud-fps-val">30</span>
+          <span class="p-val" id="hud-fps-val">—</span>
         </div>
       </div>
 
-      <!-- Action Toggles -->
       <div class="hud-actions">
-        <button id="btn-toggle-telemetry" class="icon-btn" title="Toggle Telemetry Lens">📊</button>
-        <button id="btn-toggle-manifest" class="icon-btn" title="Provenance Manifest">📋</button>
-        <button id="btn-play-pause" class="icon-btn highlight" title="Play / Pause">⏸</button>
+        <button id="btn-toggle-telemetry" class="icon-btn" title="Telemetry lens">📊</button>
+        <button id="btn-toggle-manifest" class="icon-btn" title="Provenance manifest">📋</button>
+        <button id="btn-play-pause" class="icon-btn highlight" title="Play / pause">⏸</button>
       </div>
     </header>
 
-    <!-- Floating Tier Selector (Zoom Slider) -->
+    <!-- --------------------------------------------------- the scale axis (WB-1) -->
+    <!--
+      WB-1.1 asks for four bands. This engine carries ONE certified chart: the atomistic
+      one. The other three bands are not dimmed decorations of a working control — they are
+      fences, and pressing them says so. The mock let the user slide into a continuum tier
+      that did not exist.
+    -->
     <div id="floating-tier-selector">
-      <div class="tier-slider-wrap">
-        <span class="tier-btn" data-tier="0">Å</span>
-        <input type="range" id="zoom-range" min="0" max="3" step="0.001" value="0">
-        <span class="tier-btn" data-tier="3">1km</span>
-      </div>
       <div class="tier-pill-labels">
-        <span class="t-tag active" data-tier="0">Atomistic</span>
-        <span class="t-tag" data-tier="1">Molecular</span>
-        <span class="t-tag" data-tier="2">Continuum</span>
-        <span class="t-tag" data-tier="3">Bulk 1km</span>
+        <span class="t-tag active" data-tier="0" title="Atomistic quantum-emergent chart: tables plus on-demand solves. This is the served band.">Atomistic</span>
+        <span class="t-tag fenced" data-tier="1" title="FENCED: no promoted molecular chart exists in this engine. The H2O quotient and the derived V(H2O-H2O) are owed by T5/T6, per FSD §7.">Molecular</span>
+        <span class="t-tag fenced" data-tier="2" title="FENCED: no T6 continuum charts exist in this engine.">Continuum</span>
+        <span class="t-tag fenced" data-tier="3" title="FENCED: no bulk/hydrostatic chart exists in this engine.">Bulk 1 km</span>
       </div>
+      <span class="tier-note">one certified chart · three fences (WB-1.1)</span>
     </div>
 
-    <!-- On-Screen 3D Reticle & Hand Feedback -->
     <div id="reticle-hud" class="hidden">
       <div class="reticle-ring"></div>
-      <span class="reticle-label" id="reticle-text">Grab: 0.06 nm</span>
+      <span class="reticle-label" id="reticle-text">—</span>
     </div>
 
-    <!-- Live Refinement Patch Alert (WB-1.2 & WB-4.4) -->
-    <div id="refinement-banner" class="hidden">
-      <span class="alert-icon">⚡</span>
-      <span id="refinement-msg">REFINEMENT PATCH ACTIVE · LOCAL FCI SOLVE ON DEMAND</span>
-    </div>
-
-    <!-- Settling Indicator Pill (WB-3.3) -->
     <div id="settling-pill" class="settling-pill settled">
       <div class="dot"></div>
-      <span id="settling-label">PRE-WARMED REFERENCE · 293 K</span>
+      <span id="settling-label">—</span>
     </div>
 
-    <!-- Slide-Out Telemetry Drawer (Right) -->
+    <!-- ------------------------------------------------------------- telemetry -->
     <aside id="telemetry-drawer" class="drawer">
       <div class="drawer-header">
         <h3>OBSERVATORY TELEMETRY (WB-5)</h3>
         <button class="drawer-close" id="close-telemetry">×</button>
       </div>
       <div class="drawer-content">
-        <!-- Blind Phase Classifier (WB-5.5) -->
+
+        <!-- ------------------------------------------------ the energy ledger -->
         <div class="drawer-card">
           <div class="card-head">
-            <span>BLIND CLASSIFIER (WB-5.5)</span>
-            <span class="tag audit">AUDITED · SYNTHETIC</span>
+            <h4>ENERGY LEDGER (WB-4.3)</h4>
+            <span class="tag" id="tag-ledger">—</span>
           </div>
-          <div class="phase-display">
-            <span class="phase-name" id="drawer-phase">LIQUID WATER</span>
-            <span class="phase-prob" id="drawer-conf">99.8%</span>
+          <div class="ledger-grid">
+            <div class="lrow"><span>Kinetic T</span><span id="led-kin">—</span></div>
+            <div class="lrow"><span>Pair V₂</span><span id="led-pair">—</span></div>
+            <div class="lrow"><span>Three-body V₃</span><span id="led-three">—</span></div>
+            <div class="lrow"><span>Wall</span><span id="led-wall">—</span></div>
+            <div class="lrow"><span>Hand spring</span><span id="led-spring">—</span></div>
+            <div class="lrow accent"><span>W_ext receipt</span><span id="led-wext">—</span></div>
+            <div class="lrow"><span>Total E</span><span id="led-total">—</span></div>
+            <div class="lrow"><span>E − W_ext − origin</span><span id="led-invariant">—</span></div>
+            <div class="lrow"><span>Drift |now|</span><span id="led-drift">—</span></div>
+            <div class="lrow"><span>Drift peak</span><span id="led-drift-peak">—</span></div>
+            <div class="lrow"><span>Drift bound</span><span id="led-bound">—</span></div>
+            <div class="lrow verdict"><span>Energy gate</span><span class="val" id="led-gate">—</span></div>
           </div>
-          <div class="param-grid">
-            <div class="param-cell">
-              <span class="pc-lbl">q_tet</span>
-              <span class="pc-val" id="drawer-qtet">0.684</span>
-            </div>
-            <div class="param-cell">
-              <span class="pc-lbl">Steinhardt q6</span>
-              <span class="pc-val" id="drawer-q6">0.082</span>
-            </div>
-            <div class="param-cell">
-              <span class="pc-lbl">H-Bonds / Mol</span>
-              <span class="pc-val" id="drawer-hb">3.62</span>
-            </div>
-            <div class="param-cell">
-              <span class="pc-lbl">D_eff (MSD)</span>
-              <span class="pc-val" id="drawer-msd">2.3 nm²/s</span>
-            </div>
+          <p class="card-note">
+            The hand's work is a COLUMN, not an exemption: dragging the anchor posts exactly
+            dU into W_ext, so the gate stays closed through a drag. Thermostat heat is
+            posted the same way. Conservation is chart-relative and the hand is in the chart.
+          </p>
+          <div class="ledger-grid tight">
+            <div class="lrow"><span>Momentum residual</span><span id="mom-residual">—</span></div>
+            <div class="lrow"><span>Momentum bound</span><span id="mom-bound">—</span></div>
+            <div class="lrow verdict"><span>Momentum gate</span><span class="val" id="mom-gate">—</span></div>
           </div>
         </div>
 
-        <!-- Holon Closure Defect Lens (WB-5.3) -->
+        <!-- ------------------------------------------- the closure-defect lens -->
         <div class="drawer-card">
           <div class="card-head">
-            <span>CLOSURE DEFECT LENS (WB-5.3)</span>
-            <span class="tag holon">HOLON · SYNTHETIC</span>
+            <h4>CLOSURE-DEFECT LENS (WB-5.3)</h4>
+            <span class="tag" id="tag-closure">—</span>
           </div>
-          <div class="lens-rows">
-            <div class="lens-row">
-              <span>Defect δ = ||[H,P]||:</span>
-              <span class="val green" id="drawer-delta">1.42e-9 Ha</span>
-            </div>
-            <div class="lens-row">
-              <span>Condition Number κ:</span>
-              <span class="val" id="drawer-kappa">1.0004</span>
-            </div>
-            <div class="lens-row">
-              <span>Modular Rent W*:</span>
-              <span class="val" id="drawer-rent">0.0000 nats</span>
-            </div>
-            <div class="lens-row">
-              <span>M-CHEAPER Guard:</span>
-              <span class="val green">ENFORCED</span>
-            </div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>Holon rows</span><span id="clo-rows">—</span></div>
+            <div class="lrow"><span>Worst defect now</span><span id="clo-worst">—</span></div>
+            <div class="lrow"><span>Worst at formation</span><span id="clo-at-formation">—</span></div>
+            <div class="lrow"><span>Molecules (census)</span><span id="clo-molecules">—</span></div>
+            <div class="lrow"><span>Formations</span><span id="clo-formations">—</span></div>
+            <div class="lrow"><span>Dissolutions</span><span id="clo-dissolutions">—</span></div>
+            <div class="lrow"><span>Closure rejections</span><span id="clo-rejections">—</span></div>
+          </div>
+          <p class="card-note">
+            How well the coarse view commutes with the dynamics, live, as a number — the
+            holon claim on screen. A candidate whose defect exceeds its budget is REJECTED
+            rather than promoted, and the rejections are counted here.
+          </p>
+        </div>
+
+        <!-- ----------------------------------------------------- the chart -->
+        <div class="drawer-card">
+          <div class="card-head">
+            <h4>THE CHART IN THE VIEWPORT (WB-5.1)</h4>
+            <span class="tag" id="tag-chart">—</span>
+          </div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>Pair knots</span><span id="chart-pair-knots">—</span></div>
+            <div class="lrow"><span>R_e</span><span id="chart-re">—</span></div>
+            <div class="lrow"><span>D_e</span><span id="chart-de">—</span></div>
+            <div class="lrow"><span>vs 50-digit referee</span><span id="chart-referee">—</span></div>
+          </div>
+          <table class="bank-table">
+            <thead><tr><th>pair</th><th>route</th><th>determinants</th><th>price paid</th><th>state</th></tr></thead>
+            <tbody id="bank-rows"></tbody>
+          </table>
+          <p class="card-note">
+            No empirical force field, no fitted parameter, no phase-specific term. The curve
+            is solved from closed-form Gaussian integrals at page load and checked against a
+            pinned 50-digit reference. A pair past the in-browser determinant limit is
+            refused BEFORE it is computed, not after.
+          </p>
+          <p class="card-note">
+            The PRICE column is measured on this device, this session. It is there because
+            the two doors to a curve do not cost the same: H–H arrives through holon-chem's
+            bespoke H₂ path at about 0.16 ms per knot, and the same curve through the
+            general N-centre route costs roughly ninety times that, for physics that agrees
+            to the digits above. Curves the engine permits but has not been paid for are
+            listed below and are solved only when asked. A page that blocks its main thread
+            for tens of seconds has not obeyed M-CHEAPER-THAN-ITS-PRICE just because the
+            number it eventually prints is right.
+          </p>
+          <div id="priced-list" class="priced-list"></div>
+        </div>
+
+        <!-- ------------------------------------------- the three-body sector -->
+        <div class="drawer-card">
+          <div class="card-head">
+            <h4>THREE-BODY SECTOR</h4>
+            <span class="tag" id="tag-trimer">—</span>
+          </div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>State</span><span id="trimer-state">—</span></div>
+            <div class="lrow"><span>Untabulated triples refused<br><small>per force pass</small></span><span id="fence-count">—</span></div>
+          </div>
+          <p class="card-note" id="trimer-detail">—</p>
+        </div>
+
+        <!-- --------------------------------------------- the fence register -->
+        <div class="drawer-card fence-card">
+          <div class="card-head">
+            <h4>FENCE REGISTER (WB-5.2)</h4>
+            <span class="tag" id="tag-fence">—</span>
+          </div>
+          <ul class="fence-list" id="fence-list"></ul>
+        </div>
+
+        <!-- --------------------------------------------------- not served -->
+        <!--
+          The panels the mock filled with invented digits. They are kept, because deleting
+          them would hide the debt; they show a fence and its reason, and no numbers.
+        -->
+        <div class="drawer-card fenced-card">
+          <div class="card-head">
+            <h4>NOT SERVED BY THIS ENGINE</h4>
+            <span class="tag" data-tag="fenced">FENCED</span>
+          </div>
+          <ul class="fence-list">
+            <li><b>Blind phase classifier (WB-5.5)</b><span>no classifier exists in this
+              engine, so there is no phase call to display beside the preset. The mock
+              printed "LIQUID WATER · 99.8%"; that number had no source.</span></li>
+            <li><b>Order parameters q_tet, Q₆, ⟨H-bonds⟩, MSD</b><span>not computed
+              anywhere in this build.</span></li>
+            <li><b>Pressure / NPT barostat (WB-2.2)</b><span>there is no barostat. The box
+              is fixed. The mock scaled the box by P^−0.05, which is not an equation of
+              state and is not NPT.</span></li>
+            <li><b>Gravity (WB-2.4)</b><span>there is no gravitational term in this engine
+              build. Adding one is a small, ledgered change (it enters the same external
+              acceleration the walls and the hand already use, so the momentum receipt
+              follows for free) and it is owed, not done. Until it exists the control is
+              a fence, because a 1G toggle that moves nothing is the vacuous-success
+              shape.</span></li>
+            <li><b>Local refinement patch (WB-1.2 / WB-4.4)</b><span>no refinement machinery
+              exists. The mock showed a banner with no solve behind it.</span></li>
+            <li><b>Molecular / continuum / bulk tiers (WB-1.1)</b><span>one certified chart
+              exists; the other three bands have no chart to hand the viewport to.</span></li>
+          </ul>
+        </div>
+
+        <!-- ------------------------------------------------ clocks & governor -->
+        <div class="drawer-card">
+          <div class="card-head">
+            <h4>THE THREE CLOCKS (WB-1.4 / WB-2.3)</h4>
+            <span class="tag" id="tag-clocks">—</span>
+          </div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>dt (derived)</span><span id="clk-dt">—</span></div>
+            <div class="lrow"><span>ω·dt</span><span id="clk-omega-dt">—</span></div>
+            <div class="lrow"><span>Requested rate</span><span id="clk-requested">—</span></div>
+            <div class="lrow accent"><span>DELIVERED rate</span><span id="clk-delivered">—</span></div>
+            <div class="lrow"><span>Dilation</span><span id="clk-dilation">—</span></div>
+            <div class="lrow verdict"><span>Rung</span><span class="val" id="clk-rung">—</span></div>
+          </div>
+          <p class="card-note">
+            The DELIVERED rate is simulated time actually integrated per wall second,
+            differenced from the engine's own clock — not the rate that was requested. When
+            the device cannot hold the request the governor dilates time and says so; it
+            never degrades accuracy to keep a number looking good (WB-6.2).
+          </p>
+        </div>
+
+        <!-- ------------------------------------------------------ the scene -->
+        <div class="drawer-card">
+          <div class="card-head">
+            <h4>SCENE</h4>
+            <span class="tag" id="tag-scene">—</span>
+          </div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>Atoms</span><span id="scene-atoms">—</span></div>
+            <div class="lrow"><span>Bonded pairs</span><span id="scene-bonds">—</span></div>
+            <div class="lrow"><span>Clusters</span><span id="scene-clusters">—</span></div>
+            <div class="lrow"><span>Temperature</span><span id="scene-temp">—</span></div>
+            <div class="lrow"><span>Simulated time</span><span id="scene-time">—</span></div>
+            <div class="lrow"><span>Substeps</span><span id="scene-steps">—</span></div>
           </div>
         </div>
 
-        <!-- Conservation Energy Ledger (WB-4.3) -->
+        <!-- -------------------------------------------------- determinism -->
         <div class="drawer-card">
           <div class="card-head">
-            <span>ENERGY LEDGER (WB-4.3)</span>
-            <span class="tag ledger">CLOSED · SYNTHETIC</span>
+            <h4>DETERMINISM (WB-5.4)</h4>
+            <button class="btn-micro" id="btn-replay">Run replay check</button>
           </div>
-          <div class="ledger-rows">
-            <div class="ledger-row">
-              <span>Kinetic (T):</span>
-              <span id="drawer-led-t">+0.142851 Ha</span>
-            </div>
-            <div class="ledger-row">
-              <span>Potential (V):</span>
-              <span id="drawer-led-v">-152.849102 Ha</span>
-            </div>
-            <div class="ledger-row">
-              <span>Thermostat (Q):</span>
-              <span id="drawer-led-q">+0.000412 Ha</span>
-            </div>
-            <div class="ledger-row purple">
-              <span>Hand Work (W_hand):</span>
-              <span id="drawer-led-w">+0.000000 Ha</span>
-            </div>
-            <div class="divider"></div>
-            <div class="ledger-row total">
-              <span>Balance Drift ΔE:</span>
-              <span class="val green" id="drawer-led-drift">&lt; 1.2e-12 Ha</span>
-            </div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>Run A digest</span><span id="replay-a">—</span></div>
+            <div class="lrow"><span>Run B digest</span><span id="replay-b">—</span></div>
+            <div class="lrow verdict"><span>Verdict</span><span class="val" id="replay-verdict">—</span></div>
+            <div class="lrow"><span>Each run</span><span id="replay-detail">—</span></div>
           </div>
-        </div>
-
-        <!-- 3D Engine Adaptive Scaling Status -->
-        <div class="drawer-card">
-          <div class="card-head">
-            <span>ADAPTIVE ENGINE STATUS</span>
-            <span class="tag live">3D</span>
-          </div>
-          <div class="scale-rows">
-            <div class="lens-row">
-              <span>Hardware Profile:</span>
-              <span class="val cyan" id="drawer-hw-profile">Desktop / GPU (32 Workers)</span>
-            </div>
-            <div class="lens-row">
-              <span>Active 3D Entities:</span>
-              <span class="val" id="drawer-entity-count">288 Atoms / 192 Bonds</span>
-            </div>
-            <div class="lens-row">
-              <span>Grabbed Mass (5%):</span>
-              <span class="val purple" id="drawer-hand-mass">1.20e-25 kg</span>
-            </div>
-          </div>
+          <p class="card-note">
+            Two runs of the same seeded scene, reset and stepped identically, digested over
+            the RAW f64 bits of every coordinate. A one-ulp difference changes the digest.
+            The claim is per device class, and the class is declared in the manifest.
+          </p>
         </div>
       </div>
     </aside>
 
-    <!-- Bottom Controls Floating Dock (Mobile-First WB-2 & WB-3) -->
+    <!-- ------------------------------------------------------------------ dock -->
     <footer id="hud-bottom-dock">
-      <!-- Quick Control Buttons -->
       <div class="dock-buttons">
         <button class="dock-tab active" data-tab="temp">
           <span class="tab-icon">🌡</span>
-          <span class="tab-lbl" id="dock-temp-lbl">293 K</span>
-        </button>
-        <button class="dock-tab" data-tab="press">
-          <span class="tab-icon">🎚</span>
-          <span class="tab-lbl" id="dock-press-lbl">1 atm</span>
+          <span class="tab-lbl" id="dock-temp-lbl">—</span>
         </button>
         <button class="dock-tab" data-tab="mix">
           <span class="tab-icon">🧪</span>
-          <span class="tab-lbl" id="dock-mix-lbl">H₂O</span>
+          <span class="tab-lbl" id="dock-mix-lbl">—</span>
         </button>
         <button class="dock-tab" data-tab="gov">
           <span class="tab-icon">⏱</span>
-          <span class="tab-lbl" id="dock-gov-lbl">1.0×</span>
+          <span class="tab-lbl" id="dock-gov-lbl">—</span>
         </button>
-        <button class="dock-tab" data-tab="grav" id="dock-btn-grav">
+        <button class="dock-tab fenced" data-tab="press">
+          <span class="tab-icon">🎚</span>
+          <span class="tab-lbl">P — fenced</span>
+        </button>
+        <button class="dock-tab fenced" data-tab="grav">
           <span class="tab-icon">🌍</span>
-          <span class="tab-lbl">1G</span>
+          <span class="tab-lbl">1G — fenced</span>
         </button>
       </div>
 
-      <!-- Expandable Control Sheet -->
       <div id="control-sheet" class="control-sheet">
-        <!-- Temperature Tab -->
         <div class="sheet-panel active" data-panel="temp">
           <div class="panel-row">
-            <label>Temperature (WB-2.1)</label>
+            <label>Temperature — Berendsen thermostat (WB-2.1)</label>
             <div class="unit-pills">
               <button class="u-pill active" data-unit="K">K</button>
               <button class="u-pill" data-unit="C">°C</button>
@@ -245,107 +363,128 @@
             </div>
           </div>
           <div class="slider-row">
-            <input type="range" id="sheet-temp" min="0" max="1000" step="1" value="293">
-            <span class="sheet-val" id="sheet-temp-val">293.15 K</span>
+            <input type="range" id="sheet-temp" min="1" max="3000" step="1" value="293">
+            <span class="sheet-val" id="sheet-temp-val">293.2 K</span>
           </div>
+          <label class="check-row">
+            <input type="checkbox" id="sheet-thermostat" checked>
+            <span>thermostat engaged — heat removed or added is posted to W_ext, so the
+              energy gate still closes</span>
+          </label>
         </div>
 
-        <!-- Pressure Tab (Barostat WB-2.2) -->
-        <div class="sheet-panel" data-panel="press">
-          <div class="panel-row">
-            <label>Pressure & NPT Barostat (WB-2.2)</label>
-            <span class="sub-lbl" id="sheet-box-scale">Box: 1.000×</span>
-          </div>
-          <div class="slider-row">
-            <input type="range" id="sheet-press" min="-2" max="5" step="0.01" value="0">
-            <span class="sheet-val" id="sheet-press-val">1.00 atm</span>
-          </div>
-        </div>
-
-        <!-- Mixture Tab (WB-3) -->
         <div class="sheet-panel" data-panel="mix">
           <div class="panel-row">
-            <label>Mixture & Reference Reset (WB-3.1)</label>
-            <button id="btn-quick-reset" class="btn-micro">↺ Re-warm</button>
+            <label>Mixture — a scene RESET, never a live mutation (WB-3.1)</label>
+            <button id="btn-quick-reset" class="btn-micro">↺ re-warm</button>
           </div>
           <div class="mix-grid">
-            <button class="mix-chip active" data-mix="h2o">O : 2H (Water)</button>
-            <button class="mix-chip" data-mix="pure-h">Pure H (H₂ Gas)</button>
-            <button class="mix-chip" data-mix="pure-o">Pure O (Ozone)</button>
-            <button class="mix-chip" data-mix="ice-ih">Ice Ih (Hexagonal)</button>
+            <button class="mix-chip active" data-mix="pure-h">Pure H · served</button>
+            <button class="mix-chip" data-mix="one-o">1 O + H · runs, triples fenced</button>
+            <button class="mix-chip" data-mix="o-2h">O : 2H · cannot step</button>
+            <button class="mix-chip" data-mix="pure-o">Pure O · cannot step</button>
           </div>
+          <p class="sheet-note">
+            The true O:2H stoichiometry cannot take a step in this build, and the page says
+            so rather than pretending: any two oxygens need the (O,O) curve, which the
+            engine refuses in a browser at 2,025 determinants. A box with exactly one
+            oxygen never forms that pair, so it runs — real O–H chemistry with the
+            O-bearing three-body fences firing on every force pass. It is not offered as a
+            substitute for water; it is offered as the O-bearing scene this engine can
+            honestly serve.
+          </p>
+          <div class="slider-row">
+            <input type="range" id="sheet-atoms" min="2" max="16" step="1" value="12">
+            <span class="sheet-val" id="sheet-atoms-val">12</span>
+          </div>
+          <p class="sheet-note">
+            Composition is identity, so changing it resets the scene rather than mutating
+            it. The atom slider tops out at this engine's own capacity; a count past it
+            would be delivered as time dilation, which is a worse answer than saying so.
+          </p>
         </div>
 
-        <!-- Timescale Governor Tab (WB-2.3) -->
         <div class="sheet-panel" data-panel="gov">
           <div class="panel-row">
-            <label>Timescale Governor (WB-2.3)</label>
-            <span class="sub-lbl">Auto-Tuned 30 FPS</span>
+            <label>Timescale governor (WB-2.3)</label>
+            <span class="sub-lbl">holds framerate by substeps per frame</span>
           </div>
           <div class="slider-row">
-            <input type="range" id="sheet-gov" min="0.1" max="5.0" step="0.05" value="1.0">
-            <span class="sheet-val" id="sheet-gov-val">1.00× bias</span>
+            <input type="range" id="sheet-gov" min="-1" max="3" step="0.05" value="0">
+            <span class="sheet-val" id="sheet-gov-val">1.00×</span>
           </div>
+          <p class="sheet-note">
+            The bias moves the REQUESTED simulated-time rate. It never touches dt: accuracy
+            is not on this slider, and a request the device cannot meet comes back as
+            honest dilation on the clocks panel.
+          </p>
+        </div>
+
+        <div class="sheet-panel fenced-panel" data-panel="press">
+          <div class="panel-row"><label>Pressure / NPT barostat (WB-2.2)</label></div>
+          <p class="sheet-note fence">
+            FENCED. There is no barostat in this engine and the box does not rescale. The
+            ice-polymorph ladder lives on this knob and the knob does not exist yet.
+          </p>
+        </div>
+
+        <div class="sheet-panel fenced-panel" data-panel="grav">
+          <div class="panel-row"><label>Gravity 1 G (WB-2.4)</label></div>
+          <p class="sheet-note fence">
+            FENCED. There is no gravitational force term in this engine build. It is owed:
+            the term belongs in the same external-acceleration array the walls and the hand
+            already write to, which is what would make its momentum impulse and its
+            potential land in the ledger automatically. Shipping a toggle that changes
+            nothing would be the exact shape WB-7.1 was written to forbid.
+          </p>
         </div>
       </div>
     </footer>
 
-    <!-- Provenance Manifest Modal Dialog (WB-3.4) -->
+    <!-- -------------------------------------------------------------- manifest -->
     <div id="manifest-modal" class="modal-backdrop hidden">
       <div class="modal-box">
         <div class="modal-header">
-          <h2>PROVENANCE & CERTIFICATION MANIFEST (WB-3.4)</h2>
+          <h2>PROVENANCE MANIFEST (WB-3.4)</h2>
           <button id="btn-close-manifest" class="btn-close">×</button>
         </div>
         <div class="modal-body">
           <div class="manifest-section">
-            <h4>Certified State Reference Inventory</h4>
-            <table class="manifest-table">
-              <thead>
-                <tr>
-                  <th>Scale Tier</th>
-                  <th>State</th>
-                  <th>Commit</th>
-                  <th>Device Class</th>
-                  <th>Certified Gates</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>Å – 4 nm</td>
-                  <td>293 K Liquid H₂O</td>
-                  <td><code>84759ca</code></td>
-                  <td><code>wasm-f64 / webgl2-3d</code></td>
-                  <td><span class="gtag">T1-T4, G1, G2</span></td>
-                </tr>
-                <tr>
-                  <td>Å – 4 nm</td>
-                  <td>Pure H₂ Gas</td>
-                  <td><code>88560f5</code></td>
-                  <td><code>cpu-avx2</code></td>
-                  <td><span class="gtag">MBE3-COMPLETE</span></td>
-                </tr>
-                <tr>
-                  <td>4 nm – 1 µm</td>
-                  <td>Ice Ih Hexagonal</td>
-                  <td><code>84759ca</code></td>
-                  <td><code>wasm-f64</code></td>
-                  <td><span class="gtag">BERNAL-FOWLER</span></td>
-                </tr>
-                <tr>
-                  <td>1 µm – 1 km</td>
-                  <td>Continuum Slab</td>
-                  <td><code>84759ca</code></td>
-                  <td><code>webgl2-3d</code></td>
-                  <td><span class="gtag">T6-CLOSED</span></td>
-                </tr>
-              </tbody>
-            </table>
+            <h4>The artifact this page instantiated</h4>
+            <div class="ledger-grid">
+              <div class="lrow"><span>Device class (M-DEVICE-CLASS)</span><span id="manifest-device-class">—</span></div>
+              <div class="lrow"><span>Engine bytes</span><span id="manifest-bytes">—</span></div>
+              <div class="lrow"><span>SHA-256 of those bytes</span><span class="mono-wrap" id="manifest-sha">—</span></div>
+              <div class="lrow"><span>Measured throughput</span><span id="manifest-substeps">—</span></div>
+              <div class="lrow"><span>Capacity</span><span id="manifest-capacity">—</span></div>
+            </div>
+            <p class="integrity-text">
+              The digest is computed here, over the bytes this page actually fetched and
+              instantiated — not read from a build record. A commit id is a claim about a
+              build; the digest is the build.
+            </p>
           </div>
           <div class="manifest-section">
-            <h4>Physics Integrity Statement</h4>
+            <h4>Physics integrity statement (WB-5.1)</h4>
             <p class="integrity-text">
-              No empirical force field (TIP4P/SPC) is permitted. Interactions are derived from exact symmetry-reduced electronic structure solutions. User hand interaction is tracked as a strict work receipt in the energy ledger.
+              No empirical force field (TIP4P, SPC, or any other), no fitted parameter, and
+              no phase-specific term executes anywhere in this page. The pair interaction is
+              a full-CI solve in the STO-3G basis from closed-form Gaussian integrals,
+              computed in the browser at load; the three-body term for hydrogen is the
+              engine's own 14,157-node surface, likewise generated at load. Interactions the
+              engine cannot serve are refused and counted, never interpolated across.
+            </p>
+          </div>
+          <div class="manifest-section">
+            <h4>What this page does NOT yet demonstrate</h4>
+            <p class="integrity-text">
+              The WB-7.4 acceptance loop — H₂O emerging from unrestricted H/O dynamics,
+              promotion to the molecular quotient, a derived water–water interaction, a
+              closure defect driven past its budget, automatic local refinement, the seam
+              crossed with the ledger closed, and a held-out observable predicted after the
+              handoff — is seven steps, and this page is the first. Until that loop runs
+              live, the instrument is a real atomistic engine with an honest fence register,
+              and nothing more is claimed for it.
             </p>
           </div>
         </div>

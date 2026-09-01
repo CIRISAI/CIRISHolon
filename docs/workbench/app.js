@@ -1,853 +1,1272 @@
-// ============================================================================
-// MOCK — WB-7.1 (FSD-W1 §8): this shell executes NO certified physics.
-// Every displayed quantity is SYNTHETIC unless labeled otherwise. The
-// interaction design is real; the numbers are placeholders. The fitted
-// constants below are display-layer only and must never migrate to engine
-// code. See conformance/water_observatory/WORKBENCH_FSD.md §8.
-// ============================================================================
-/**
- * CIRISHolon — Water Workbench (FSD-W1)
- * 3D Mobile-First Recursive Quantum-to-Bulk Engine
- *
- * Full 3D Perspective Viewport, Orbit Controls, Touch Gestures,
- * Multi-Tier Scale Selector (0.1 Å to 1 km), Scene-Scaled Ledgered Hand,
- * Adaptive Engine Sizing, Blind Phase Classifier, and Holon Closure Lens.
- */
+// The Water Workbench — the REAL engine.
+//
+// FSD-W1 (conformance/water_observatory/WORKBENCH_FSD.md) is the specification. This file
+// replaces the WB-7.1 MOCK physics core (commits 84759ca / 2d0fc5e) with the Rust engine
+// compiled to wasm32-unknown-unknown: `holon-render`, driven through its raw extern "C"
+// ABI exactly as the atom viewer drives it. Nothing here integrates anything, invents a
+// number, or interpolates a curve.
+//
+// WHAT CHANGED FROM THE MOCK, AND WHY EACH CHANGE IS LOAD-BEARING
+//
+//   `Math.random()` initial states       -> `holon_reset(n)`, a deterministic opener
+//                                           (Fibonacci sphere + a derived unbinding
+//                                           expansion). WB-5.4 replay is a property of
+//                                           the engine, not a promise of this file.
+//   450.0 harmonic + 0.015 LJ            -> `holon_table_generate`: STO-3G full CI on the
+//                                           H2 curve, computed AT LOAD in the browser,
+//                                           agreeing with a pinned 50-digit referee to
+//                                           5e-15 hartree over 492 separations. WB-5.1.
+//   hardcoded 104.5 deg / 0.096 nm       -> nothing. Molecules are DISCOVERED by the
+//                                           engine's census; this file draws what the
+//                                           bond criterion reports and defines no geometry.
+//   `sin(performance.now())` as dE       -> `holon_drift()` against `holon_drift_bound()`,
+//                                           with `holon_energy_gate()` as the verdict.
+//   P^-0.05 box scaling as NPT           -> a FENCE. There is no barostat in this engine.
+//   "refinement patch" banner            -> a FENCE. There is no refinement patch either.
+//   manifest claiming T6 certification   -> the manifest reports the SHA-256 of the wasm
+//                                           bytes this page actually instantiated.
+//
+// THE TAG DISCIPLINE (WB-7.1). Every displayed quantity carries one of two tags and there
+// is no third:
+//
+//   LIVE    the digits are a value this page read out of the engine THIS FRAME, and the
+//           readout function is named in the panel's own `trace` field.
+//   FENCED  the engine cannot serve this quantity. The panel renders the fence and the
+//           REASON, and shows no digits at all. WB-5.2: never faked, never interpolated
+//           across, never silently zeroed.
+//
+// SYNTHETIC does not appear in this file. A number either traces or it is fenced; the
+// third option is the incident WB-7.1 was written from.
 
-// ============================================================================
-// 1. Physical Constants & 4 Scale Bands (FSD-W1 §1)
-// ============================================================================
+"use strict";
+
+// ---------------------------------------------------------------- units
+//
+// CODATA, and the same values the engine's own headers carry. Conversions live here
+// because the engine works in atomic units throughout and refuses to carry a display
+// concern; every number crossing into a label goes through exactly one of these.
 
 const BOHR_TO_M = 0.529177210903e-10;
-const HARTREE_TO_JOULES = 4.3597447222071e-18;
-const G_ACCEL = 9.80665; // m/s^2
+const HARTREE_TO_J = 4.3597447222071e-18;
+/// One atomic unit of time in femtoseconds (hbar / E_h). Pinned to `clock.rs`'s AU_TO_FS;
+/// `boot()` checks the two agree by reading `holon_period_fs() / holon_period()` out of
+/// the artifact rather than trusting this constant.
+const AU_TO_FS = 0.024188843265857;
 
-const TIERS = [
-  { id: 0, name: "TIER 1 · ATOMISTIC 3D", scaleMin: 0.1e-10, scaleMax: 4.0e-9, unit: "nm", baseRate: 25.0, rateUnit: "ps/s", baseDt: 0.5e-15 },
-  { id: 1, name: "TIER 2 · MOLECULAR 3D", scaleMin: 4.0e-9, scaleMax: 1.0e-6, unit: "µm", baseRate: 150.0, rateUnit: "ps/s", baseDt: 2.0e-15 },
-  { id: 2, name: "TIER 3 · CONTINUUM 3D", scaleMin: 1.0e-6, scaleMax: 1.0, unit: "m", baseRate: 0.05, rateUnit: "× realtime", baseDt: 1e-4 },
-  { id: 3, name: "TIER 4 · BULK 1 KM 3D", scaleMin: 1.0, scaleMax: 1000.0, unit: "km", baseRate: 1.0, rateUnit: "× realtime", baseDt: 1e-2 },
-];
-
-// ============================================================================
-// 2. Hardware Detection & Adaptive Resource Sizing
-// ============================================================================
-
-function detectHardwareProfile() {
-  const isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent) || window.innerWidth < 768;
-  const isTablet = window.innerWidth >= 768 && window.innerWidth <= 1024;
-  const cores = navigator.hardwareConcurrency || 4;
-
-  if (isMobile) {
-    return { class: "Mobile / Phone (ARM)", maxAtoms: 96, continuumGrid: 16, label: "Mobile ARM" };
-  } else if (isTablet) {
-    return { class: "Tablet / Laptop (Portable)", maxAtoms: 192, continuumGrid: 24, label: "Tablet / Low-Power" };
-  } else {
-    return { class: "Desktop / GPU (32 Cores)", maxAtoms: 288, continuumGrid: 32, label: `Desktop (${cores} Threads)` };
-  }
-}
-
-const HW_PROFILE = detectHardwareProfile();
-
-// ============================================================================
-// 3. Application & Physics State
-// ============================================================================
+// ---------------------------------------------------------------- state
 
 const State = {
-  tier: 0,
-  zoomVal: 0.0,
-  viewWidthMeters: 1.2e-9,
-  
-  // Live Controls (WB-2)
-  temperature: 293.15,
-  tempUnit: 'K',
-  pressureAtm: 1.0,
-  boxScale: 1.0,
-  governorBias: 1.0,
-  gravityActive: true,
-  
-  // Simulation Loop & Timing
+  /// The wasm exports. Null until `boot()` succeeds; every readout guards on it.
+  w: null,
+  /// SHA-256 of the exact bytes instantiated, and their count. The manifest shows these
+  /// rather than a commit id: a commit id is a claim about the build, the digest is the
+  /// build.
+  artifact: { sha256: "…", bytes: 0 },
+  /// The declared device class (M-DEVICE-CLASS). WB-5.4 makes determinism a per-class
+  /// property, so the class has to be stated before any replay claim is made.
+  deviceClass: "wasm32-unknown-unknown/f64",
+
+  booted: false,
+  bootError: null,
   paused: false,
-  fps: 30.0,
-  lastFrameTime: performance.now(),
-  simRatePhysical: 25.0,
-  
-  // Scene Identity & Reset (WB-3)
-  mixture: 'h2o',
-  settled: true,
 
-  // 3D Camera & Orbit Controls
-  camera: {
-    yaw: 0.35,
-    pitch: 0.25,
-    distance: 2.8,
-    target: [0, 0, 0],
-    fov: 45.0,
-  },
+  /// The active scene preset. See `PRESETS`.
+  mixture: "pure-h",
+  /// What the preset's boot actually achieved, filled in by `loadPreset`.
+  served: null,
 
-  // The Hand (WB-4)
-  hand: {
-    active: false,
-    screenX: 0,
-    screenY: 0,
-    worldPos: [0, 0, 0],
-    lastWorldPos: [0, 0, 0],
-    velocity: [0, 0, 0],
-    radiusMeters: 0.06e-9,
-    cumulativeWorkHa: 0.0,
-    refinementActive: false,
-  },
+  /// Requested atoms. Clamped by the engine to its own capacity; `atomsActual` is what
+  /// came back and is what the panels report.
+  atomsRequested: 12,
+  atomsActual: 0,
 
-  // Telemetry & Ledger (WB-4.3 & WB-5)
-  ledger: {
-    kinetic: 0.142851,
-    potential: -152.849102,
-    thermostatQ: 0.000412,
-    drift: 1.1e-12,
-  },
+  thermostatOn: true,
+  targetK: 293.15,
+  tempUnit: "K",
 
-  // Order Parameters & Classifier (WB-5.5)
-  order: {
-    qTet: 0.684,
-    q6: 0.082,
-    hbCount: 3.62,
-    msd: 2.3e-9,
-    phase: "LIQUID WATER",
-    confidence: 99.8,
-  }
+  /// The governor's user bias (WB-2.3). Multiplies the engine's DERIVED base sim-speed;
+  /// it never touches dt, so accuracy is not on this slider.
+  govBias: 1.0,
+  baseSimSpeed: 0,
+
+  /// Measured, never assumed (WB-1.4). `rate` is delivered simulated femtoseconds per
+  /// wall second, computed from `holon_time()` deltas over a wall-clock window.
+  rate: { fsPerSec: 0, pctRealtime: 0, fps: 0 },
+  clockWindow: { t0: null, simFs0: 0, frames: 0 },
+
+  camera: { yaw: 0.35, pitch: 0.25, distance: 2.8, fov: 45.0 },
+
+  /// The hand (WB-4). `grabbed` is the engine's own index, so the receipt below and the
+  /// atom on screen cannot disagree about who is being pulled.
+  hand: { grabbed: -1, screenX: 0, screenY: 0, radiusBohr: 0 },
+
+  /// The determinism exhibit (WB-5.4). Two runs of the same seeded scene under the same
+  /// device class must produce the same digest.
+  replay: { last: null, prev: null, matched: null },
 };
 
-// ============================================================================
-// 4. 3D Scene Geometry & Particle Pools
-// ============================================================================
+// ---------------------------------------------------------------- scene presets (WB-3.1)
+//
+// Composition is IDENTITY, not a slider: every entry here is a scene RESET. What each
+// preset can honestly serve is not declared here — it is MEASURED at load by
+// `loadPreset`, which asks the engine for each curve and records what it said. A preset
+// whose curves the engine refuses does not fall back to anything; it fences.
 
-const Scene3D = {
-  atoms: [],
-  bonds: [],
-  molecules: [],
-  hBonds: [],
-  continuumSurfaces: [],
-  bulkWaves: new Float32Array(32 * 32),
+// THE TWO DOORS TO A CURVE, AND WHY THIS FILE PICKS ONE.
+//
+// The engine offers two routes to a pair potential and they are NOT interchangeable in
+// price, which is a fact about this build that had to be measured rather than read:
+//
+//   holon_table_generate       H2 only, through holon_chem::stream_table's bespoke s-only
+//                              path.  0.16 ms/knot, linear, measured in Chromium on the
+//                              development machine over 64/192/384 knots.
+//   holon_bank_generate_pair   the general N-centre route.  For the SAME H-H curve:
+//                              ~0.5 s fixed + ~58 ms/knot, i.e. 7.0 s at 160 knots —
+//                              about 90x the first door for physics that agrees with it
+//                              to six digits.  For O-H: ~15 s FIXED, 55 s at 160 knots.
+//
+// So H-H always comes through the cheap door, and it is not a shortcut: the two agree on
+// R_e and D_e to the digits the page displays, and the expensive door's own header says
+// the difference between them is provenance bookkeeping, not physics. Anything the cheap
+// door cannot serve is PRICED — offered with the engine's own declared determinant count
+// and paid only when the user asks, never spent silently on a main thread that would
+// freeze for a quarter of a minute with no explanation. M-CHEAPER-THAN-ITS-PRICE is a
+// runtime law (WB-5.2), and a page that blocks for 55 s has not obeyed it just because
+// the number it eventually shows is right.
 
-  init(preset) {
-    this.atoms = [];
-    this.bonds = [];
-    this.molecules = [];
-    this.hBonds = [];
-
-    const nAtomsTarget = HW_PROFILE.maxAtoms;
-    const nWaters = Math.floor(nAtomsTarget / 3);
-    const boxDim = 1.2e-9;
-    const gridDim = Math.ceil(Math.cbrt(nWaters));
-    const spacing = boxDim / (gridDim + 1);
-
-    if (preset === 'h2o' || preset === 'ice-ih') {
-      for (let ix = 0; ix < gridDim; ix++) {
-        for (let iy = 0; iy < gridDim; iy++) {
-          for (let iz = 0; iz < gridDim; iz++) {
-            if (this.atoms.length + 3 > nAtomsTarget) break;
-
-            const ox = (ix + 1) * spacing - boxDim * 0.5 + (Math.random() - 0.5) * 0.02e-9;
-            const oy = (iy + 1) * spacing - boxDim * 0.5 + (Math.random() - 0.5) * 0.02e-9;
-            const oz = (iz + 1) * spacing - boxDim * 0.5 + (Math.random() - 0.5) * 0.02e-9;
-
-            const theta = Math.random() * Math.PI * 2;
-            const phi = (Math.random() - 0.5) * Math.PI;
-            const bondLen = 0.096e-9; // 0.96 A
-            const hAngle = (104.5 * Math.PI) / 180;
-
-            const oIdx = this.atoms.length;
-            this.atoms.push({
-              element: 'O', x: ox, y: oy, z: oz,
-              vx: (Math.random() - 0.5) * 400, vy: (Math.random() - 0.5) * 400, vz: (Math.random() - 0.5) * 400,
-              fx: 0, fy: 0, fz: 0, mass: 16.0, radius: 0.055e-9, color: [1.0, 0.18, 0.33], molId: oIdx
-            });
-
-            // H1
-            const h1x = ox + bondLen * Math.cos(theta) * Math.cos(phi);
-            const h1y = oy + bondLen * Math.sin(phi);
-            const h1z = oz + bondLen * Math.sin(theta) * Math.cos(phi);
-            const h1Idx = this.atoms.length;
-            this.atoms.push({
-              element: 'H', x: h1x, y: h1y, z: h1z,
-              vx: (Math.random() - 0.5) * 1200, vy: (Math.random() - 0.5) * 1200, vz: (Math.random() - 0.5) * 1200,
-              fx: 0, fy: 0, fz: 0, mass: 1.0, radius: 0.032e-9, color: [0.9, 0.95, 1.0], molId: oIdx
-            });
-
-            // H2
-            const h2x = ox + bondLen * Math.cos(theta + hAngle) * Math.cos(phi);
-            const h2y = oy + bondLen * Math.sin(phi + 0.2);
-            const h2z = oz + bondLen * Math.sin(theta + hAngle) * Math.cos(phi);
-            const h2Idx = this.atoms.length;
-            this.atoms.push({
-              element: 'H', x: h2x, y: h2y, z: h2z,
-              vx: (Math.random() - 0.5) * 1200, vy: (Math.random() - 0.5) * 1200, vz: (Math.random() - 0.5) * 1200,
-              fx: 0, fy: 0, fz: 0, mass: 1.0, radius: 0.032e-9, color: [0.9, 0.95, 1.0], molId: oIdx
-            });
-
-            this.bonds.push([oIdx, h1Idx], [oIdx, h2Idx]);
-
-            // Molecular level representation
-            this.molecules.push({
-              x: ox, y: oy, z: oz,
-              vx: (Math.random() - 0.5) * 300, vy: (Math.random() - 0.5) * 300, vz: (Math.random() - 0.5) * 300,
-              dipole: [Math.cos(theta), Math.sin(phi), Math.sin(theta)],
-            });
-          }
-        }
-      }
-    } else if (preset === 'pure-h') {
-      const nDimers = Math.floor(nAtomsTarget / 2);
-      for (let i = 0; i < nDimers; i++) {
-        const x = (Math.random() - 0.5) * boxDim * 0.8;
-        const y = (Math.random() - 0.5) * boxDim * 0.8;
-        const z = (Math.random() - 0.5) * boxDim * 0.8;
-        const idx = this.atoms.length;
-        this.atoms.push({ element: 'H', x, y, z, vx: (Math.random() - 0.5) * 1500, vy: (Math.random() - 0.5) * 1500, vz: (Math.random() - 0.5) * 1500, fx: 0, fy: 0, fz: 0, mass: 1.0, radius: 0.032e-9, color: [0.9, 0.95, 1.0], molId: i });
-        this.atoms.push({ element: 'H', x: x + 0.074e-9, y, z, vx: (Math.random() - 0.5) * 1500, vy: (Math.random() - 0.5) * 1500, vz: (Math.random() - 0.5) * 1500, fx: 0, fy: 0, fz: 0, mass: 1.0, radius: 0.032e-9, color: [0.9, 0.95, 1.0], molId: i });
-        this.bonds.push([idx, idx + 1]);
-      }
-    } else if (preset === 'pure-o') {
-      const nTrimers = Math.floor(nAtomsTarget / 3);
-      for (let i = 0; i < nTrimers; i++) {
-        const x = (Math.random() - 0.5) * boxDim * 0.8;
-        const y = (Math.random() - 0.5) * boxDim * 0.8;
-        const z = (Math.random() - 0.5) * boxDim * 0.8;
-        const idx = this.atoms.length;
-        this.atoms.push({ element: 'O', x, y, z, vx: (Math.random() - 0.5) * 400, vy: (Math.random() - 0.5) * 400, vz: (Math.random() - 0.5) * 400, fx: 0, fy: 0, fz: 0, mass: 16.0, radius: 0.055e-9, color: [0.0, 0.9, 1.0], molId: i });
-        this.atoms.push({ element: 'O', x: x + 0.127e-9, y, z, vx: (Math.random() - 0.5) * 400, vy: (Math.random() - 0.5) * 400, vz: (Math.random() - 0.5) * 400, fx: 0, fy: 0, fz: 0, mass: 16.0, radius: 0.055e-9, color: [0.0, 0.9, 1.0], molId: i });
-        this.atoms.push({ element: 'O', x: x + 0.063e-9, y: y + 0.10e-9, z, vx: (Math.random() - 0.5) * 400, vy: (Math.random() - 0.5) * 400, vz: (Math.random() - 0.5) * 400, fx: 0, fy: 0, fz: 0, mass: 16.0, radius: 0.055e-9, color: [0.0, 0.9, 1.0], molId: i });
-        this.bonds.push([idx, idx + 1], [idx, idx + 2]);
-      }
-    }
-  }
+const PRESETS = {
+  "pure-h": {
+    label: "Pure H",
+    sub: "H₂ gas — fully banked",
+    species: [1],
+    /// Every unordered pair the scene can meet, in the order they are asked for. H-H is
+    /// absent because it arrives through the cheap door before this list is walked.
+    pairs: [],
+    /// The homonuclear H3 surface generates IN THE BROWSER: nine determinants a node over
+    /// 14,157 nodes. Measured at 4.8 s here, which is why the boot paints a stage line.
+    trimer: "generate",
+  },
+  "o-2h": {
+    label: "O : 2H",
+    sub: "the water-formation experiment",
+    species: [1, 8],
+    pairs: [[8, 1], [8, 8]],
+    /// The H3 surface IS generated here, and that is not decoration: an O:2H box contains
+    /// real H-H-H triples and they are served. It is also what makes the fence real —
+    /// the engine's three-body pass returns early when no surface at all is loaded, so
+    /// without H3 the O-bearing triples would be skipped silently and
+    /// `holon_fence_untabulated` would read a zero that meant "never looked".
+    trimer: "generate",
+    /// Triples the engine will meet and refuse. The (O,H,H) surface is 441 determinants a
+    /// node — about a thousand times an H3 node — so it is computed on the mesh and
+    /// SHIPPED as a text artifact; this wasm exposes no door to push it through (there is
+    /// no `holon_water_table_*` export), and (O,O,H) and (O,O,O) are not tabulated here at
+    /// all. Each encounter is refused and COUNTED.
+    fencedTriples: "(O,H,H), (O,O,H), (O,O,O)",
+  },
+  // ONE OXYGEN, AND THE REASON IT EXISTS.
+  //
+  // The O:2H preset above cannot take a single step in this build, and that is not a bug
+  // in the page: any two oxygens in a box need the (O,O) curve, which the engine refuses
+  // in a browser at 2,025 determinants. So the true stoichiometry is a static fence.
+  //
+  // A box with EXACTLY ONE oxygen never forms an (O,O) pair, so every curve it needs is
+  // served and it runs — real O-H chemistry, with the O-bearing three-body fences firing
+  // on every force pass rather than only at the rebase. It is labelled for what it is: not
+  // the water stoichiometry, and it is not offered as a substitute for it.
+  "one-o": {
+    label: "1 O + H",
+    sub: "one oxygen — the O-bearing scene that actually runs",
+    species: [8, 1],
+    composition: "single-o",
+    pairs: [[8, 1]],
+    trimer: "generate",
+    fencedTriples: "(O,H,H), (O,O,H), (O,O,O)",
+  },
+  "pure-o": {
+    label: "Pure O",
+    sub: "would ride the (O,O,O) surface",
+    species: [8],
+    pairs: [[8, 8]],
+    trimer: "generate",
+    fencedTriples: "(O,O,O)",
+  },
 };
 
-// ============================================================================
-// 5. 3D Physics Step & Symplectic Integrator
-// ============================================================================
+/// Species drawing data, loaded from `species_palette.json`. `radius_bohr` there is
+/// DERIVED by the engine (half the element's own computed homonuclear separation), so the
+/// picture's proportions trace to the same solver as the physics.
+let PALETTE = new Map();
 
-function step3DPhysics(dt) {
-  const tier = State.tier;
-  const boxL = State.viewWidthMeters * State.boxScale;
-  const halfBox = boxL * 0.5;
+// ---------------------------------------------------------------- dom
 
-  if (tier === 0) {
-    const atoms = Scene3D.atoms;
-    const g = State.gravityActive ? G_ACCEL * 1e-13 : 0.0;
+const $ = (id) => document.getElementById(id);
+const UI = {};
+function bindUI() {
+  for (const el of document.querySelectorAll("[id]")) UI[el.id] = el;
+}
 
-    // 1. Half-step velocities & update positions
-    for (const a of atoms) {
-      a.vx += (a.fx / a.mass) * (dt * 0.5) * 1e20;
-      a.vy += (a.fy / a.mass) * (dt * 0.5) * 1e20 - g * dt;
-      a.vz += (a.fz / a.mass) * (dt * 0.5) * 1e20;
+/// Write text into an element only if it exists, so a panel removed from the HTML does
+/// not take the frame loop down with it.
+function put(id, text) {
+  const el = UI[id];
+  if (el && el.textContent !== text) el.textContent = text;
+}
 
-      a.x += a.vx * dt;
-      a.y += a.vy * dt;
-      a.z += a.vz * dt;
+/// Set a panel's honesty tag. `trace` names the export the digits came from, and lands in
+/// the element's tooltip — WB-7.1 asks that a live number be traceable, and a name in the
+/// title attribute is the cheapest form of that which survives into the deployed page.
+function tag(id, kind, trace) {
+  const el = UI[id];
+  if (!el) return;
+  el.dataset.tag = kind;
+  el.textContent = kind === "live" ? "LIVE" : "FENCED";
+  el.title = kind === "live" ? `traces to ${trace}` : trace;
+}
 
-      // 3D periodic boundary reflections
-      if (a.x < -halfBox) { a.x = -halfBox; a.vx = -a.vx * 0.95; }
-      if (a.x > halfBox) { a.x = halfBox; a.vx = -a.vx * 0.95; }
-      if (a.y < -halfBox) { a.y = -halfBox; a.vy = -a.vy * 0.95; }
-      if (a.y > halfBox) { a.y = halfBox; a.vy = -a.vy * 0.95; }
-      if (a.z < -halfBox) { a.z = -halfBox; a.vz = -a.vz * 0.95; }
-      if (a.z > halfBox) { a.z = halfBox; a.vz = -a.vz * 0.95; }
+// ---------------------------------------------------------------- formatting
 
-      a.fx = 0; a.fy = 0; a.fz = 0;
-    }
+function fmtEnergy(ha) {
+  if (!Number.isFinite(ha)) return "—";
+  const a = Math.abs(ha);
+  if (a !== 0 && a < 1e-4) return `${ha.toExponential(3)} Ha`;
+  return `${ha >= 0 ? "+" : ""}${ha.toFixed(6)} Ha`;
+}
 
-    // 2. Intra-molecular harmonic springs + intermolecular STO-3G van der Waals
-    for (let i = 0; i < atoms.length; i++) {
-      for (let j = i + 1; j < atoms.length; j++) {
-        const a1 = atoms[i];
-        const a2 = atoms[j];
-        const dx = a2.x - a1.x;
-        const dy = a2.y - a1.y;
-        const dz = a2.z - a1.z;
-        const r = Math.hypot(dx, dy, dz);
-        if (r < 1e-14) continue;
+function fmtSci(x, digits = 3) {
+  return Number.isFinite(x) ? x.toExponential(digits) : "—";
+}
 
-        let f = 0;
-        const isBonded = (a1.molId === a2.molId && ((a1.element === 'O' && a2.element === 'H') || (a1.element === 'H' && a2.element === 'O')));
+/// WB-1.4: real units, with the %-realtime figure beside them. The unit is chosen from
+/// the magnitude rather than fixed, because this engine's honest rate on a laptop is
+/// femtoseconds per second and a label pinned to "ps/s" would read 0.00 forever — which
+/// is the same lie as the one WB-1.4 names, told in the other direction.
+function fmtRate(fsPerSec) {
+  if (!Number.isFinite(fsPerSec) || fsPerSec <= 0) return "—";
+  if (fsPerSec >= 1e6) return `${(fsPerSec / 1e6).toFixed(2)} ns/s`;
+  if (fsPerSec >= 1e3) return `${(fsPerSec / 1e3).toFixed(2)} ps/s`;
+  return `${fsPerSec.toFixed(2)} fs/s`;
+}
 
-        if (isBonded) {
-          f = -450.0 * (r - 0.096e-9);
-        } else {
-          const sigma = (a1.radius + a2.radius);
-          const sr = sigma / r;
-          if (sr > 0.4 && sr < 2.8) {
-            const sr6 = Math.pow(sr, 6);
-            f = (24 * 0.015 * 1.6e-19 / r) * (2 * sr6 * sr6 - sr6);
-          }
-        }
+function fmtLength(bohr) {
+  const m = bohr * BOHR_TO_M;
+  if (m < 1e-9) return `${(m * 1e12).toFixed(1)} pm`;
+  if (m < 1e-6) return `${(m * 1e9).toFixed(3)} nm`;
+  return `${(m * 1e6).toFixed(3)} µm`;
+}
 
-        const fx = f * (dx / r);
-        const fy = f * (dy / r);
-        const fz = f * (dz / r);
-        a1.fx -= fx; a1.fy -= fy; a1.fz -= fz;
-        a2.fx += fx; a2.fy += fy; a2.fz += fz;
-      }
-    }
+function tempIn(k) {
+  if (State.tempUnit === "C") return `${(k - 273.15).toFixed(1)} °C`;
+  if (State.tempUnit === "F") return `${((k - 273.15) * 9 / 5 + 32).toFixed(1)} °F`;
+  return `${k.toFixed(1)} K`;
+}
 
-    // 3. 3D Hand interaction (WB-4)
-    if (State.hand.active) {
-      const [hx, hy, hz] = State.hand.worldPos;
-      const hr = State.hand.radiusMeters;
-      for (const a of atoms) {
-        const d = Math.hypot(a.x - hx, a.y - hy, a.z - hz);
-        if (d < hr) {
-          const fx = -600.0 * (a.x - hx);
-          const fy = -600.0 * (a.y - hy);
-          const fz = -600.0 * (a.z - hz);
-          a.fx += fx; a.fy += fy; a.fz += fz;
+// ---------------------------------------------------------------- boot
 
-          const dW = (fx * a.vx + fy * a.vy + fz * a.vz) * dt / HARTREE_TO_JOULES;
-          State.hand.cumulativeWorkHa += dW;
-        }
-      }
-    }
+async function boot() {
+  // The artifact, and its digest. Fetched as bytes rather than streamed so the page can
+  // hash exactly what it instantiates — `instantiateStreaming` would leave the manifest
+  // describing bytes nobody here ever held.
+  const response = await fetch("holon_render.wasm");
+  if (!response.ok) throw new Error(`holon_render.wasm: HTTP ${response.status}`);
+  const bytes = await response.arrayBuffer();
+  State.artifact.bytes = bytes.byteLength;
+  try {
+    const digest = await crypto.subtle.digest("SHA-256", bytes);
+    State.artifact.sha256 = [...new Uint8Array(digest)]
+      .map((b) => b.toString(16).padStart(2, "0")).join("");
+  } catch {
+    // `crypto.subtle` is absent on insecure origins. The page still runs; the manifest
+    // says the digest is unavailable rather than showing a number it did not compute.
+    State.artifact.sha256 = "unavailable (crypto.subtle needs a secure origin)";
+  }
+  const { instance } = await WebAssembly.instantiate(bytes, {});
+  const w = instance.exports;
+  State.w = w;
 
-    // 4. Second half-step velocities & thermostat
-    let totalKineticJ = 0;
-    for (const a of atoms) {
-      a.vx += (a.fx / a.mass) * (dt * 0.5) * 1e20;
-      a.vy += (a.fy / a.mass) * (dt * 0.5) * 1e20;
-      a.vz += (a.fz / a.mass) * (dt * 0.5) * 1e20;
-      totalKineticJ += 0.5 * (a.mass * 1.66e-27) * (a.vx * a.vx + a.vy * a.vy + a.vz * a.vz);
-    }
+  // FEATURE DETECTION against exports that actually exist. The atom viewer shipped for
+  // months guarded on `holon_set_atom_z`, a name the engine has never exported, so the
+  // guard was false for a reason unrelated to the capability it named. Every optional
+  // path below is gated on the function it will actually call.
+  const missing = REQUIRED_EXPORTS.filter((n) => typeof w[n] !== "function");
+  if (missing.length) {
+    throw new Error(`this wasm is not the workbench engine — missing ${missing.join(", ")}`);
+  }
 
-    const currentT = (totalKineticJ * 2) / (3 * atoms.length * 1.38e-23);
-    if (currentT > 1e-4) {
-      const lambda = Math.sqrt(1.0 + (dt / 25e-15) * (State.temperature / currentT - 1.0));
-      for (const a of atoms) {
-        a.vx *= Math.max(0.75, Math.min(1.25, lambda));
-        a.vy *= Math.max(0.75, Math.min(1.25, lambda));
-        a.vz *= Math.max(0.75, Math.min(1.25, lambda));
-      }
-    }
+  await loadPalette();
 
-    State.ledger.kinetic = totalKineticJ / HARTREE_TO_JOULES;
-    State.ledger.drift = Math.abs(Math.sin(performance.now() * 0.001)) * 1.2e-12;
+  // Three dimensions. The workbench is a 3D instrument; the 2D mid-plane is the atom
+  // viewer's scene, not this one.
+  w.holon_set_dims(1);
+  // Closed walls: the box is the scene, and an open boundary would let the preset leave.
+  w.holon_set_boundary(0);
+  w.holon_set_census_enabled(1);
 
-  } else if (tier === 1) {
-    // Molecular tier dipole stepping
-    const mols = Scene3D.molecules;
-    for (const m of mols) {
-      m.x += m.vx * dt; m.y += m.vy * dt; m.z += m.vz * dt;
-      if (m.x < -halfBox || m.x > halfBox) m.vx = -m.vx;
-      if (m.y < -halfBox || m.y > halfBox) m.vy = -m.vy;
-      if (m.z < -halfBox || m.z > halfBox) m.vz = -m.vz;
-    }
-  } else if (tier === 3) {
-    // 3D Bulk Surface Wave stepping
-    const waves = Scene3D.bulkWaves;
-    const t = performance.now() * 0.001;
-    for (let i = 0; i < 32; i++) {
-      for (let j = 0; j < 32; j++) {
-        waves[i * 32 + j] = Math.sin(t * 1.8 + i * 0.3) * Math.cos(t * 1.2 + j * 0.3) * 0.4;
-      }
-    }
+  calibrate(w);
+  State.baseSimSpeed = w.holon_sim_speed();
+
+  await loadPreset(State.mixture);
+
+  // The unit constant, checked against the artifact rather than trusted, and checked HERE
+  // rather than earlier: `holon_period` is derived from the loaded curve, so before a
+  // preset exists it is zero and the ratio is NaN. Reading a unit out of an engine that
+  // has no curve yet is asking a question the engine cannot have an answer to; the gate
+  // caught this as a boot-time throw.
+  const ratio = w.holon_period_fs() / w.holon_period();
+  if (!(Math.abs(ratio - AU_TO_FS) < 1e-15)) {
+    throw new Error(`time unit disagreement: engine ${ratio}, page ${AU_TO_FS}`);
+  }
+
+  State.booted = true;
+  document.body.dataset.engine = "ready";
+  requestAnimationFrame(frame);
+}
+
+/// Every export this file calls. Listed rather than discovered so that a wasm which is not
+/// this engine is refused at boot with a name, instead of failing later as an undefined
+/// call inside the frame loop. `smoke.mjs` reads this same list out of this file and
+/// requires each one to resolve in the committed artifact, which is what keeps the list
+/// honest as the page grows.
+const REQUIRED_EXPORTS = [
+  "holon_set_dims", "holon_set_boundary", "holon_set_census_enabled",
+  "holon_table_generate", "holon_trimer_generate", "holon_trimer_loaded",
+  "holon_trimer_nodes", "holon_trimer_peak",
+  "holon_bank_clear", "holon_bank_register", "holon_bank_generate_pair", "holon_bank_pair_route",
+  "holon_bank_pair_n_det", "holon_bank_pair_is_heavy", "holon_bank_slot",
+  "holon_bank_filled_count", "holon_bank_in_browser_det_limit",
+  "holon_bank_in_browser_basis_limit", "holon_bank_species_count",
+  "holon_table_knots", "holon_table_r_e", "holon_table_d_e",
+  "holon_chem_referee_residual", "holon_chem_referee_points",
+  "holon_reset", "holon_rebase", "holon_atom_count", "holon_atom_x", "holon_atom_y",
+  "holon_atom_z", "holon_atom_species_z", "holon_set_atom_species", "holon_atom_speed",
+  "holon_width", "holon_height", "holon_depth", "holon_wall_inset",
+  "holon_pair_count", "holon_pair_i", "holon_pair_j", "holon_pair_r", "holon_pair_bonded",
+  "holon_bonded_count", "holon_cluster_count", "holon_cluster_atoms",
+  "holon_e_kin", "holon_e_pair", "holon_e_three", "holon_e_wall", "holon_e_spring",
+  "holon_w_ext", "holon_energy", "holon_ledger", "holon_ledger_origin",
+  "holon_drift", "holon_drift_peak", "holon_drift_bound", "holon_energy_gate",
+  "holon_momentum_residual", "holon_momentum_bound", "holon_momentum_gate",
+  "holon_time", "holon_steps", "holon_temperature", "holon_frame",
+  "holon_set_thermostat", "holon_thermostat_on",
+  "holon_advance_frame", "holon_step_frame", "holon_calibration_burst",
+  "holon_set_calibration", "holon_substeps_per_second", "holon_n_max",
+  "holon_sim_speed", "holon_set_sim_speed", "holon_dilation", "holon_rung",
+  "holon_dt", "holon_period", "holon_period_fs", "holon_omega_dt",
+  "holon_nearest_atom", "holon_grab", "holon_move_anchor_3d", "holon_release",
+  "holon_grabbed", "holon_anchor_x", "holon_anchor_y", "holon_anchor_z",
+  "holon_row_count", "holon_row_closure_defect", "holon_row_closure_defect_at_formation",
+  "holon_row_kind", "holon_row_e_bond", "holon_row_member_count",
+  "holon_census_molecules", "holon_census_formations", "holon_census_dissolutions",
+  "holon_census_closure_rejections",
+  "holon_fence_untabulated", "holon_water_loaded", "holon_trimer_surfaces",
+  "holon_pairs_ready", "holon_bank_provenance_ok",
+];
+
+async function loadPalette() {
+  try {
+    const r = await fetch("species_palette.json");
+    const d = await r.json();
+    for (const s of d.species) PALETTE.set(s.Z, s);
+  } catch {
+    // The palette is DRAWING data, not physics. Losing it costs colour and proportion,
+    // not correctness, so the page continues and says so in the manifest.
+    PALETTE = new Map();
   }
 }
 
-// ============================================================================
-// 6. 3D WebGL / Perspective Renderer
-// ============================================================================
-
-const canvas = document.getElementById('webgl-canvas');
-const ctx = canvas.getContext('2d'); // High performance 2.5D/3D perspective pipeline
-
-function resize3D() {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2.0);
-  canvas.width = window.innerWidth * dpr;
-  canvas.height = window.innerHeight * dpr;
-  ctx.scale(dpr, dpr);
+/// Measure THIS device rather than assuming it (M-IDLE-CALIBRATED-TIMEOUT / WB-2.3).
+///
+/// "How fast is the browser" is not answerable from a developer's machine, so the page
+/// finds out on load: a burst of pure physics, no rendering, timed on this side because
+/// `std::time` does not exist on wasm32-unknown-unknown. The burst is sized in TIME so a
+/// slow device is not punished with a long stall.
+function calibrate(w) {
+  const targetMs = 200;
+  let substeps = 2000;
+  let elapsed = 0;
+  let total = 0;
+  // Discard the first burst: it pays for JIT warm-up the steady rate should not carry.
+  w.holon_calibration_burst(500);
+  const t0 = performance.now();
+  while (performance.now() - t0 < targetMs) {
+    const a = performance.now();
+    w.holon_calibration_burst(substeps);
+    const b = performance.now();
+    elapsed += b - a;
+    total += substeps;
+    if (b - a < 20) substeps *= 2;
+  }
+  if (elapsed > 0) w.holon_set_calibration((total / elapsed) * 1000);
 }
 
-// 3D Point projection helper
-function project3D(x, y, z, w, h) {
-  const yaw = State.camera.yaw;
-  const pitch = State.camera.pitch;
-  const dist = State.camera.distance;
+// ---------------------------------------------------------------- presets (WB-3.1)
 
-  // Rotate around Y (Yaw)
+/// Reset the scene to a preset, and MEASURE what the engine will serve for it.
+///
+/// Every curve is requested and the engine's answer is recorded verbatim, including its
+/// refusal code. Nothing here decides in advance what is available: the (O,O) refusal
+/// below is the engine's own in-browser split talking, not a rule this file keeps.
+/// Yield to the compositor so a stage line actually paints before the next blocking
+/// wasm call. `requestAnimationFrame` alone is not enough — the frame has to be allowed to
+/// composite — so this waits for the frame AND a macrotask after it.
+function paint(message) {
+  if (message !== undefined) put("boot-stage", message);
+  return new Promise((resolve) => requestAnimationFrame(() => setTimeout(resolve, 0)));
+}
+
+/// Prices this page has actually PAID, keyed by pair. Measured wall-clock milliseconds, so
+/// the second time a user meets a curve the cost is a measurement rather than a warning.
+const PAID_PRICES = new Map();
+const priceKey = (za, zb) => `${Math.min(za, zb)}-${Math.max(za, zb)}`;
+
+async function loadPreset(key, { pay = null } = {}) {
+  const w = State.w;
+  const preset = PRESETS[key];
+  State.mixture = key;
+  UI["boot-overlay"]?.classList.remove("hidden");
+
+  // A fresh bank. Switching composition must not leave the previous preset's curves in
+  // the slots, where they would silently serve the wrong pair.
+  w.holon_bank_clear();
+
+  const served = {
+    label: preset.label,
+    pairs: [],
+    trimer: { state: "none", detail: "" },
+    stepsAllowed: false,
+    fences: [],
+    priced: [],
+  };
+
+  for (const z of preset.species) w.holon_bank_register(z);
+
+  // H-H through the CHEAP DOOR. This also gives the clocks a derived dt before anything
+  // steps, which is why it runs for every preset including the ones with no hydrogen in
+  // the scene.
+  await paint("solving the H–H curve (STO-3G full CI)…");
+  const t0 = performance.now();
+  const hhCode = w.holon_table_generate(0.6, 12.0, 192);
+  const hhMs = performance.now() - t0;
+  PAID_PRICES.set(priceKey(1, 1), hhMs);
+  served.pairs.push({
+    za: 1, zb: 1, route: 1, nDet: w.holon_bank_pair_n_det(1, 1),
+    heavy: false, code: hhCode, ok: hhCode === 1, ms: hhMs, door: "stream_table",
+  });
+
+  for (const [za, zb] of preset.pairs) {
+    const route = w.holon_bank_pair_route(za, zb);
+    const nDet = w.holon_bank_pair_n_det(za, zb);
+    const heavy = w.holon_bank_pair_is_heavy(za, zb) === 1;
+
+    // A pair past the engine's own in-browser split is refused BEFORE it is computed, and
+    // the refusal is instant — so it costs nothing to ask and the answer is the engine's,
+    // not a rule this file keeps.
+    if (heavy) {
+      const code = w.holon_bank_generate_pair(za, zb, 160);
+      served.pairs.push({ za, zb, route, nDet, heavy, code, ok: false, door: "refused" });
+      served.fences.push({ what: `${sym(za)}–${sym(zb)} pair curve`, why: refusalText(code, nDet) });
+      continue;
+    }
+
+    // Within the split, and therefore permitted — but permitted is not free. The engine's
+    // limit is a determinant count and the wall-clock cost varies by two orders of
+    // magnitude underneath it, so this page will not spend an unbounded amount of a main
+    // thread on the user's behalf. The curve is offered at its declared cost and solved
+    // when asked for.
+    const paidBefore = PAID_PRICES.get(priceKey(za, zb));
+    if (pay !== priceKey(za, zb) && paidBefore === undefined) {
+      served.priced.push({ za, zb, nDet, key: priceKey(za, zb) });
+      served.pairs.push({ za, zb, route, nDet, heavy, code: 0, ok: false, door: "priced" });
+      served.fences.push({
+        what: `${sym(za)}–${sym(zb)} pair curve — UNPAID`,
+        why: `the engine permits this solve (${nDet.toExponential(2)} determinants, inside `
+          + `the in-browser limit of ${w.holon_bank_in_browser_det_limit()}) but it is not `
+          + "free: on the development machine it took about fifteen seconds of the main "
+          + "thread. It is offered rather than spent, and the price you pay is measured "
+          + "and reported. Press SOLVE in the mixture panel to buy it.",
+      });
+      continue;
+    }
+
+    await paint(`solving the ${sym(za)}–${sym(zb)} curve — ${nDet.toExponential(2)} determinants, this will block…`);
+    const a = performance.now();
+    const code = w.holon_bank_generate_pair(za, zb, 160);
+    const ms = performance.now() - a;
+    if (code === 1) PAID_PRICES.set(priceKey(za, zb), ms);
+    served.pairs.push({ za, zb, route, nDet, heavy, code, ok: code === 1, ms, door: "generate_pair" });
+    if (code !== 1) {
+      served.fences.push({ what: `${sym(za)}–${sym(zb)} pair curve`, why: refusalText(code, nDet) });
+    }
+  }
+
+  // The three-body sector. The homonuclear H3 surface generates in the browser — nine
+  // determinants a node over 14,157 nodes — so it is loaded for every preset that can
+  // meet an H-H-H triple, and its presence is also what keeps the fence counter honest.
+  await paint(`generating the H₃ three-body surface (14,157 nodes)…`);
+  const t = w.holon_trimer_generate();
+  const loaded = t === 1 && w.holon_trimer_loaded() === 1;
+  if (!loaded) {
+    served.trimer = { state: "refused", detail: "the H₃ generator declined this grid." };
+    served.fences.push({ what: "H₃ three-body surface", why: served.trimer.detail });
+  } else if (preset.fencedTriples) {
+    served.trimer = {
+      state: "partly served",
+      detail:
+        `(H,H,H) is SERVED from the engine's own ${w.holon_trimer_nodes()}-node surface, `
+        + `generated in the browser at load, peak |dE₃| ${fmtSci(w.holon_trimer_peak())} Ha. `
+        + `${preset.fencedTriples} are FENCED: those surfaces are shipped text artifacts `
+        + "computed on the mesh, and this wasm exposes no door to push them through — no "
+        + "`holon_water_table_*` export exists. Every such encounter is refused and counted "
+        + "below rather than interpolated across or zeroed.",
+    };
+    served.fences.push({
+      what: `${preset.fencedTriples} three-body surfaces`,
+      why: "shipped artifacts with no ABI door in this engine build; the encounters are "
+        + "refused and counted, and the count is a live readout.",
+    });
+  } else {
+    served.trimer = {
+      state: "served",
+      detail: `${w.holon_trimer_nodes()} nodes, generated in the browser at load, `
+        + `peak |dE₃| ${fmtSci(w.holon_trimer_peak())} Ha. Every triple this scene can `
+        + "form is on a certified surface.",
+    };
+  }
+
+  // The scene itself, in TWO resets, which is not a redundancy.
+  //
+  // `holon_reset` both places the atoms AND derives the opener's expansion speed from the
+  // curves the atoms will actually meet each other on — the guarantee that the scene opens
+  // handing out no bonds nobody paid for. Species can only be assigned to atoms that
+  // exist, so the first reset establishes how many there are, the assignment says what
+  // they ARE, and the second reset re-derives the opener against the RIGHT curves. Doing
+  // it in one pass would open an O:2H box on hydrogen's well depth.
+  w.holon_reset(State.atomsRequested);
+  State.atomsActual = w.holon_atom_count();
+  applyComposition(preset, State.atomsActual);
+  w.holon_reset(State.atomsRequested);
+  applyComposition(preset, w.holon_atom_count());
+  // A changed composition is a changed scene, so the ledger's origin moves with it;
+  // comparing against an origin taken before this composition existed would report a drift
+  // no integrator produced.
+  w.holon_rebase();
+
+  // MAY THIS SCENE STEP AT ALL — asked AFTER the composition, which is the whole point.
+  //
+  // `holon_pairs_ready` is a question about the pairs THIS SCENE'S ATOMS can meet, so on a
+  // box that is still all hydrogen it answers about hydrogen. Asked before the composition
+  // was applied it returned 1 for an O:2H scene whose (O,O) slot is empty and which cannot
+  // take a single step — and the page then reported a frozen box as "SETTLING · 0.0 K",
+  // which is the vacuous-success shape exactly. Measured either way: 1 before the
+  // composition, 0 after.
+  served.stepsAllowed = w.holon_pairs_ready() === 1;
+  if (!served.stepsAllowed) {
+    served.fences.push({
+      what: "dynamics — this scene cannot step",
+      why: "a curve this scene's atoms can meet each other on is missing, so the engine "
+        + "refuses to integrate. Nothing is drawn moving because nothing is moving, and "
+        + "the temperature reads zero because the opener cannot derive a velocity against "
+        + "a curve that is not there.",
+    });
+  }
+
+  State.served = served;
+  applyControls();
+  State.clockWindow = { t0: null, simFs0: 0, frames: 0 };
+  State.replay = { last: null, prev: null, matched: null };
+  renderStatics();
+  UI["boot-overlay"]?.classList.add("hidden");
+}
+
+/// Stamp the preset's composition onto the atoms that exist.
+///
+/// Unconditional for every preset that is not pure hydrogen — including the SINGLE-species
+/// ones. `Sim::empty` seeds hydrogen, so a pure-O preset that skipped this would be a box
+/// of hydrogen wearing an oxygen label, which is the exact species/curve disagreement the
+/// engine's plant (i) is about.
+function applyComposition(preset, n) {
+  const w = State.w;
+  if (preset.species.length === 1 && preset.species[0] === 1) return;
+  const order = preset.composition === "single-o"
+    ? Array.from({ length: n }, (_, i) => (i === 0 ? 8 : 1))
+    : compositionOrder(preset.species, n);
+  for (let i = 0; i < n; i++) w.holon_set_atom_species(i, order[i]);
+}
+
+/// O:2H means one oxygen per two hydrogens, laid down in that ratio. Deterministic, so
+/// WB-5.4's replay claim covers composition as well as coordinates.
+function compositionOrder(species, n) {
+  if (species.length === 2 && species[0] === 1 && species[1] === 8) {
+    const out = [];
+    for (let i = 0; i < n; i++) out.push(i % 3 === 0 ? 8 : 1);
+    return out;
+  }
+  const out = [];
+  for (let i = 0; i < n; i++) out.push(species[i % species.length]);
+  return out;
+}
+
+const SYMBOLS = { 1: "H", 8: "O" };
+const sym = (z) => SYMBOLS[z] || `Z=${z}`;
+
+/// Turn a `LoadStatus`-space code back into the engine's own reason.
+///
+/// The codes are the engine's, not this file's: `GENERATOR_REFUSED = 6`,
+/// `PROVENANCE_REFUSED = 16` with the reason carried in the offset, `CURVE_INFEASIBLE`
+/// and `BANK_FULL` above them. Reproduced here so the page can NAME a refusal instead of
+/// printing an integer, and kept narrow — an unrecognised code is reported as itself
+/// rather than guessed at.
+function refusalText(code, nDet) {
+  if (code === 21) {
+    return "REFUSED by the engine's in-browser split (Refusal::SplitViolated): this "
+      + `curve is ${nDet.toExponential(3)} determinants, past the in-browser limit of `
+      + `${State.w.holon_bank_in_browser_det_limit()}. It is a mesh job, not a page-load `
+      + "job, and the engine declines BEFORE spending the time rather than after.";
+  }
+  if (code === 6) return "REFUSED: the grid request was not a grid (GENERATOR_REFUSED).";
+  if (code >= 16 && code <= 24) return `REFUSED at the provenance door, reason ${code - 16}.`;
+  return `REFUSED with engine code ${code}.`;
+}
+
+// ---------------------------------------------------------------- controls (WB-2)
+
+function applyControls() {
+  const w = State.w;
+  if (!w) return;
+  w.holon_set_thermostat(State.thermostatOn ? 1 : 0, State.targetK);
+  // The governor moves the SIM-SPEED, never dt. `holon_set_allow_dt_growth` is left off,
+  // so the engine holds exactness and delivers any shortfall as honest time dilation
+  // (WB-6.2: no reduced-accuracy mode, only slower time).
+  w.holon_set_sim_speed(State.baseSimSpeed * State.govBias);
+}
+
+// ---------------------------------------------------------------- frame loop
+
+function frame(now) {
+  const w = State.w;
+
+  // Clock 2, MEASURED. The first frame has no predecessor to measure against, so it
+  // advances nothing rather than guessing an interval.
+  const wallDt = State.lastFrameMs == null ? 0 : (now - State.lastFrameMs) / 1000;
+  State.lastFrameMs = now;
+
+  if (!State.paused && State.served && State.served.stepsAllowed && wallDt > 0) {
+    w.holon_advance_frame(Math.min(wallDt, 0.25));
+  }
+
+  measureRate(now);
+  render3D();
+  renderTelemetry();
+  requestAnimationFrame(frame);
+}
+
+/// WB-1.4, measured. The delivered rate is simulated time actually integrated per wall
+/// second — `holon_time()` differenced over a one-second window — not the sim-speed that
+/// was REQUESTED. The two differ whenever the governor dilates, which is exactly the case
+/// the honest readout exists for.
+function measureRate(now) {
+  const w = State.w;
+  const cw = State.clockWindow;
+  const simFs = w.holon_time() * AU_TO_FS;
+  if (cw.t0 == null) {
+    State.clockWindow = { t0: now, simFs0: simFs, frames: 0 };
+    return;
+  }
+  cw.frames += 1;
+  const wall = (now - cw.t0) / 1000;
+  if (wall >= 0.5) {
+    const fsPerSec = (simFs - cw.simFs0) / wall;
+    State.rate.fsPerSec = fsPerSec;
+    // femtoseconds of simulated time per second of wall time, as a percentage.
+    State.rate.pctRealtime = 100 * fsPerSec * 1e-15;
+    State.rate.fps = cw.frames / wall;
+    State.clockWindow = { t0: now, simFs0: simFs, frames: 0 };
+  }
+}
+
+// ---------------------------------------------------------------- rendering
+//
+// The camera, orbit, dock and drawer are the mock's vocabulary and are kept deliberately:
+// WB-7.2 records that the interaction prototype was the valuable half. What changed is
+// underneath — every coordinate below is read from the engine each frame.
+
+const canvas = $("webgl-canvas");
+const ctx = canvas.getContext("2d");
+let dpr = 1;
+
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.floor(window.innerWidth * dpr);
+  canvas.height = Math.floor(window.innerHeight * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+
+/// Project a point given in BOX-CENTRED bohr.
+function project(x, y, z, vw, vh) {
+  const { yaw, pitch, distance, fov } = State.camera;
   const x1 = x * Math.cos(yaw) - z * Math.sin(yaw);
   const z1 = x * Math.sin(yaw) + z * Math.cos(yaw);
-
-  // Rotate around X (Pitch)
   const y2 = y * Math.cos(pitch) - z1 * Math.sin(pitch);
   const z2 = y * Math.sin(pitch) + z1 * Math.cos(pitch);
+  const zEye = z2 + distance;
+  if (zEye <= 0.05) return null;
+  const f = (vh * 0.8) / Math.tan((fov * Math.PI) / 360);
+  return { sx: (x1 / zEye) * f + vw * 0.5, sy: -(y2 / zEye) * f + vh * 0.5, zEye, scale: f / zEye };
+}
 
-  const zEye = z2 + dist;
-  if (zEye <= 0.1) return null;
+/// The scene's own extent in bohr, and the scale factor that maps it into camera units.
+function sceneFrame() {
+  const w = State.w;
+  const width = w.holon_width();
+  const height = w.holon_height();
+  const depth = w.holon_depth();
+  // Normalise the longest box edge to one camera unit, so the camera distance means the
+  // same thing whatever box the engine is carrying.
+  const span = Math.max(width, height, depth);
+  return { width, height, depth, span, k: 1 / span };
+}
 
-  const fovFactor = (h * 0.8) / Math.tan((State.camera.fov * Math.PI) / 360);
-  const sx = (x1 / zEye) * fovFactor + w * 0.5;
-  const sy = -(y2 / zEye) * fovFactor + h * 0.5;
-
-  return { sx, sy, zEye, scale: fovFactor / zEye };
+function styleFor(z) {
+  const sp = PALETTE.get(z);
+  const h = PALETTE.get(1);
+  if (!sp) return { colour: "#7fd1c0", radiusBohr: 0.69 };
+  return { colour: sp.colour, radiusBohr: sp.radius_bohr };
 }
 
 function render3D() {
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  ctx.clearRect(0, 0, w, h);
+  const w = State.w;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  ctx.clearRect(0, 0, vw, vh);
 
-  const tier = State.tier;
-  const boxL = State.viewWidthMeters * State.boxScale;
-  const halfBox = boxL * 0.5;
+  if (!State.booted) return;
+  const f = sceneFrame();
+  const cx = 0.5 * f.width, cy = 0.5 * f.height, cz = 0.5 * f.depth;
 
-  // 1. Draw 3D Bounding Box
-  const corners = [
-    [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
-    [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]
-  ].map(([cx, cy, cz]) => project3D(cx * 0.5, cy * 0.5, cz * 0.5, w, h));
+  drawBox(f, cx, cy, cz, vw, vh);
 
-  const boxEdges = [
-    [0, 1], [1, 2], [2, 3], [3, 0],
-    [4, 5], [5, 6], [6, 7], [7, 4],
-    [0, 4], [1, 5], [2, 6], [3, 7]
-  ];
-
-  ctx.strokeStyle = 'rgba(34, 50, 69, 0.6)';
-  ctx.lineWidth = 1;
-  for (const [i, j] of boxEdges) {
-    if (corners[i] && corners[j]) {
-      ctx.beginPath();
-      ctx.moveTo(corners[i].sx, corners[i].sy);
-      ctx.lineTo(corners[j].sx, corners[j].sy);
-      ctx.stroke();
-    }
+  // Bonds first, from the engine's own pair readings. The BOND CRITERION is the engine's
+  // (`E_rel < 0` and inside the outer turning point); this file draws the verdict and
+  // does not own a distance threshold of its own.
+  const np = w.holon_pair_count();
+  for (let k = 0; k < np; k++) {
+    if (w.holon_pair_bonded(k) !== 1) continue;
+    const i = w.holon_pair_i(k), j = w.holon_pair_j(k);
+    const a = project((w.holon_atom_x(i) - cx) * f.k, (w.holon_atom_y(i) - cy) * f.k, (w.holon_atom_z(i) - cz) * f.k, vw, vh);
+    const b = project((w.holon_atom_x(j) - cx) * f.k, (w.holon_atom_y(j) - cy) * f.k, (w.holon_atom_z(j) - cz) * f.k, vw, vh);
+    if (!a || !b) continue;
+    ctx.strokeStyle = "rgba(150, 225, 210, 0.55)";
+    ctx.lineWidth = Math.max(1, 3 * Math.min(a.scale, b.scale) * 0.01);
+    ctx.beginPath();
+    ctx.moveTo(a.sx, a.sy);
+    ctx.lineTo(b.sx, b.sy);
+    ctx.stroke();
   }
 
-  if (tier === 0) {
-    // ------------------------------------------------------------------------
-    // Render Tier 1: 3D Atomistic Spheres & Bonds
-    // ------------------------------------------------------------------------
-    const atoms = Scene3D.atoms;
-    const bonds = Scene3D.bonds;
-
-    // Draw 3D Bonds
-    ctx.strokeStyle = 'rgba(241, 245, 249, 0.35)';
-    ctx.lineWidth = 2.5;
-    for (const [i, j] of bonds) {
-      if (!atoms[i] || !atoms[j]) continue;
-      const p1 = project3D(atoms[i].x / boxL, atoms[i].y / boxL, atoms[i].z / boxL, w, h);
-      const p2 = project3D(atoms[j].x / boxL, atoms[j].y / boxL, atoms[j].z / boxL, w, h);
-      if (p1 && p2) {
-        ctx.beginPath();
-        ctx.moveTo(p1.sx, p1.sy);
-        ctx.lineTo(p2.sx, p2.sy);
-        ctx.stroke();
-      }
-    }
-
-    // Sort Atoms by Depth for 3D Painter's Algorithm
-    const atomProj = atoms.map((a, idx) => ({
-      atom: a,
-      proj: project3D(a.x / boxL, a.y / boxL, a.z / boxL, w, h),
-      idx
-    })).filter(item => item.proj !== null);
-
-    atomProj.sort((a, b) => b.proj.zEye - a.proj.zEye);
-
-    // Draw 3D Shaded Atoms
-    for (const item of atomProj) {
-      const a = item.atom;
-      const p = item.proj;
-      const r = Math.max(3, (a.radius / boxL) * p.scale * 1.2);
-
-      // Shaded 3D Sphere (Radial gradient with light source at top-left)
-      const grad = ctx.createRadialGradient(
-        p.sx - r * 0.35, p.sy - r * 0.35, r * 0.1,
-        p.sx, p.sy, r
-      );
-      if (a.element === 'O') {
-        grad.addColorStop(0, '#ff6b8b');
-        grad.addColorStop(0.7, '#ff2a55');
-        grad.addColorStop(1, '#80001a');
-      } else {
-        grad.addColorStop(0, '#ffffff');
-        grad.addColorStop(0.7, '#cbd5e1');
-        grad.addColorStop(1, '#475569');
-      }
-
-      ctx.beginPath();
-      ctx.arc(p.sx, p.sy, r, 0, Math.PI * 2);
-      ctx.fillStyle = grad;
-      ctx.fill();
-
-      // Specular Highlight
-      ctx.beginPath();
-      ctx.arc(p.sx - r * 0.3, p.sy - r * 0.3, r * 0.25, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.fill();
-    }
-
-  } else if (tier === 1) {
-    // ------------------------------------------------------------------------
-    // Render Tier 2: 3D Promoted Molecular Network
-    // ------------------------------------------------------------------------
-    const mols = Scene3D.molecules;
-    for (const m of mols) {
-      const p = project3D(m.x / boxL, m.y / boxL, m.z / boxL, w, h);
-      if (p) {
-        ctx.beginPath();
-        ctx.arc(p.sx, p.sy, 5, 0, Math.PI * 2);
-        ctx.fillStyle = '#00e5ff';
-        ctx.fill();
-
-        // 3D Dipole Vector
-        const [dx, dy, dz] = m.dipole;
-        const pDip = project3D((m.x + dx * 0.08e-9) / boxL, (m.y + dy * 0.08e-9) / boxL, (m.z + dz * 0.08e-9) / boxL, w, h);
-        if (pDip) {
-          ctx.beginPath();
-          ctx.moveTo(p.sx, p.sy);
-          ctx.lineTo(pDip.sx, pDip.sy);
-          ctx.strokeStyle = 'rgba(0, 255, 136, 0.6)';
-          ctx.lineWidth = 1.5;
-          ctx.stroke();
-        }
-      }
-    }
-
-  } else if (tier === 2 || tier === 3) {
-    // ------------------------------------------------------------------------
-    // Render Tiers 3 & 4: 3D Fluid Column & Gravity Wave Mesh
-    // ------------------------------------------------------------------------
-    const waves = Scene3D.bulkWaves;
-    const gridN = 16;
-    ctx.strokeStyle = 'rgba(0, 229, 255, 0.4)';
-    ctx.lineWidth = 1.5;
-
-    for (let i = 0; i < gridN; i++) {
-      ctx.beginPath();
-      for (let j = 0; j < gridN; j++) {
-        const x = (i / (gridN - 1) - 0.5);
-        const z = (j / (gridN - 1) - 0.5);
-        const y = waves[i * 32 + j] * 0.2 - 0.1;
-        const p = project3D(x, y, z, w, h);
-        if (p) {
-          if (j === 0) ctx.moveTo(p.sx, p.sy);
-          else ctx.lineTo(p.sx, p.sy);
-        }
-      }
-      ctx.stroke();
-    }
+  // Atoms, painter-sorted back to front.
+  const n = w.holon_atom_count();
+  const drawn = [];
+  for (let i = 0; i < n; i++) {
+    const p = project((w.holon_atom_x(i) - cx) * f.k, (w.holon_atom_y(i) - cy) * f.k, (w.holon_atom_z(i) - cz) * f.k, vw, vh);
+    if (!p) continue;
+    drawn.push({ i, p, z: w.holon_atom_species_z(i) });
   }
-
-  // 3D Hand Reticle Overlay (WB-4)
-  if (State.hand.active) {
-    const [hx, hy, hz] = State.hand.worldPos;
-    const pHand = project3D(hx / boxL, hy / boxL, hz / boxL, w, h);
-    if (pHand) {
-      const hr = Math.max(20, (State.hand.radiusMeters / boxL) * pHand.scale);
-      ctx.beginPath();
-      ctx.arc(pHand.sx, pHand.sy, hr, 0, Math.PI * 2);
-      ctx.strokeStyle = 'var(--purple)';
-      ctx.setLineDash([4, 4]);
+  drawn.sort((a, b) => b.p.zEye - a.p.zEye);
+  for (const d of drawn) {
+    const st = styleFor(d.z);
+    const r = Math.max(2, st.radiusBohr * f.k * d.p.scale);
+    const grad = ctx.createRadialGradient(
+      d.p.sx - r * 0.3, d.p.sy - r * 0.3, r * 0.1, d.p.sx, d.p.sy, r,
+    );
+    grad.addColorStop(0, "#ffffff");
+    grad.addColorStop(0.35, st.colour);
+    grad.addColorStop(1, "rgba(0,0,0,0.55)");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(d.p.sx, d.p.sy, r, 0, Math.PI * 2);
+    ctx.fill();
+    if (d.i === State.hand.grabbed) {
+      ctx.strokeStyle = "#ffd479";
       ctx.lineWidth = 2;
       ctx.stroke();
-      ctx.fillStyle = 'rgba(179, 136, 255, 0.15)';
-      ctx.fill();
+    }
+  }
+
+  // The hand's anchor and its tether, when the engine says something is held.
+  if (w.holon_grabbed() >= 0) {
+    const a = project((w.holon_anchor_x() - cx) * f.k, (w.holon_anchor_y() - cy) * f.k, (w.holon_anchor_z() - cz) * f.k, vw, vh);
+    const g = w.holon_grabbed();
+    const b = project((w.holon_atom_x(g) - cx) * f.k, (w.holon_atom_y(g) - cy) * f.k, (w.holon_atom_z(g) - cz) * f.k, vw, vh);
+    if (a && b) {
+      ctx.strokeStyle = "rgba(255, 212, 121, 0.8)";
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(a.sx, a.sy);
+      ctx.lineTo(b.sx, b.sy);
+      ctx.stroke();
       ctx.setLineDash([]);
     }
   }
 }
 
-// ============================================================================
-// 7. Touch, Mouse & Orbit Controls (Mobile-First 3D)
-// ============================================================================
-
-let touchStartDist = 0;
-let isOrbiting = false;
-let lastPointerX = 0;
-let lastPointerY = 0;
-
-function initTouchAndMouse() {
-  // Touch Gestures for Mobile
-  canvas.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1) {
-      isOrbiting = true;
-      lastPointerX = e.touches[0].clientX;
-      lastPointerY = e.touches[0].clientY;
-    } else if (e.touches.length === 2) {
-      // Pinch to Zoom across Tiers
-      isOrbiting = false;
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      touchStartDist = Math.hypot(dx, dy);
-    } else if (e.touches.length === 3) {
-      // 3-Finger Hand Grab (WB-4)
-      State.hand.active = true;
-      updateHandWorldPos(e.touches[0].clientX, e.touches[0].clientY);
-    }
-  }, { passive: true });
-
-  canvas.addEventListener('touchmove', (e) => {
-    if (isOrbiting && e.touches.length === 1) {
-      const dx = e.touches[0].clientX - lastPointerX;
-      const dy = e.touches[0].clientY - lastPointerY;
-      State.camera.yaw += dx * 0.008;
-      State.camera.pitch = Math.max(-Math.PI * 0.45, Math.min(Math.PI * 0.45, State.camera.pitch + dy * 0.008));
-      lastPointerX = e.touches[0].clientX;
-      lastPointerY = e.touches[0].clientY;
-    } else if (e.touches.length === 2) {
-      const dx = e.touches[0].clientX - e.touches[1].clientX;
-      const dy = e.touches[0].clientY - e.touches[1].clientY;
-      const dist = Math.hypot(dx, dy);
-      const zoomDelta = (touchStartDist - dist) * 0.005;
-      touchStartDist = dist;
-      setContinuousZoom(Math.max(0, Math.min(3, State.zoomVal + zoomDelta)));
-    }
-  }, { passive: true });
-
-  canvas.addEventListener('touchend', () => {
-    isOrbiting = false;
-    State.hand.active = false;
-  }, { passive: true });
-
-  // Mouse Controls (Desktop)
-  canvas.addEventListener('mousedown', (e) => {
-    if (e.shiftKey || e.button === 2) {
-      State.hand.active = true;
-      updateHandWorldPos(e.clientX, e.clientY);
-    } else {
-      isOrbiting = true;
-      lastPointerX = e.clientX;
-      lastPointerY = e.clientY;
-    }
-  });
-
-  window.addEventListener('mousemove', (e) => {
-    if (isOrbiting) {
-      const dx = e.clientX - lastPointerX;
-      const dy = e.clientY - lastPointerY;
-      State.camera.yaw += dx * 0.006;
-      State.camera.pitch = Math.max(-Math.PI * 0.45, Math.min(Math.PI * 0.45, State.camera.pitch + dy * 0.006));
-      lastPointerX = e.clientX;
-      lastPointerY = e.clientY;
-    } else if (State.hand.active) {
-      updateHandWorldPos(e.clientX, e.clientY);
-    }
-  });
-
-  window.addEventListener('mouseup', () => {
-    isOrbiting = false;
-    State.hand.active = false;
-    document.getElementById('refinement-banner').classList.add('hidden');
-  });
-
-  // Mouse Wheel Pinch-Zoom
-  canvas.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    const zoomDelta = e.deltaY * 0.0015;
-    setContinuousZoom(Math.max(0, Math.min(3, State.zoomVal + zoomDelta)));
-  }, { passive: false });
-}
-
-function updateHandWorldPos(screenX, screenY) {
-  const boxL = State.viewWidthMeters * State.boxScale;
-  const nx = (screenX / window.innerWidth - 0.5) * boxL;
-  const ny = -(screenY / window.innerHeight - 0.5) * boxL;
-
-  State.hand.lastWorldPos = [...State.hand.worldPos];
-  State.hand.worldPos = [nx, ny, 0];
-  State.hand.radiusMeters = State.viewWidthMeters * 0.05; // 5% grab radius
-
-  // Check splash refinement trigger (WB-4.4)
-  const vx = (nx - State.hand.lastWorldPos[0]) / 0.016;
-  const vy = (ny - State.hand.lastWorldPos[1]) / 0.016;
-  const speed = Math.hypot(vx, vy);
-  if (speed > 400.0 && State.tier > 0) {
-    document.getElementById('refinement-banner').classList.remove('hidden');
+function drawBox(f, cx, cy, cz, vw, vh) {
+  const inset = State.w.holon_wall_inset();
+  const hx = (0.5 * f.width - inset) * f.k;
+  const hy = (0.5 * f.height - inset) * f.k;
+  const hz = (0.5 * f.depth - inset) * f.k;
+  const corners = [];
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) {
+    corners.push(project(sx * hx, sy * hy, sz * hz, vw, vh));
+  }
+  const edges = [[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
+  ctx.strokeStyle = "rgba(120, 200, 190, 0.18)";
+  ctx.lineWidth = 1;
+  for (const [a, b] of edges) {
+    if (!corners[a] || !corners[b]) continue;
+    ctx.beginPath();
+    ctx.moveTo(corners[a].sx, corners[a].sy);
+    ctx.lineTo(corners[b].sx, corners[b].sy);
+    ctx.stroke();
   }
 }
 
-// ============================================================================
-// 8. Mobile-First HUD & Controls Wiring
-// ============================================================================
+// ---------------------------------------------------------------- telemetry
 
-function setContinuousZoom(val) {
-  State.zoomVal = val;
-  document.getElementById('zoom-range').value = val;
-  const tierIdx = Math.min(3, Math.floor(val));
-  State.tier = tierIdx;
+/// Panels that do not change frame to frame: the chart's provenance, the preset's served
+/// set, the fences. Re-rendered on a scene change rather than every frame.
+function renderStatics() {
+  const w = State.w;
+  const s = State.served;
 
-  const t = TIERS[tierIdx];
-  const subFrac = val - tierIdx;
-  State.viewWidthMeters = t.scaleMin * Math.pow(t.scaleMax / t.scaleMin, subFrac);
+  put("hud-mix-name", s.label);
+  put("dock-mix-lbl", s.label);
 
-  document.getElementById('hud-tier-name').textContent = t.name;
-  document.getElementById('hud-scale-val').textContent = formatScale(State.viewWidthMeters);
+  // --- the chart in the viewport (WB-5.1)
+  put("chart-pair-knots", String(w.holon_table_knots()));
+  put("chart-re", `${w.holon_table_r_e().toFixed(6)} a₀`);
+  put("chart-de", `${w.holon_table_d_e().toFixed(6)} Ha`);
+  put("chart-referee",
+    `${fmtSci(w.holon_chem_referee_residual())} Ha over ${w.holon_chem_referee_points()} separations`);
+  tag("tag-chart", "live", "holon_table_knots / holon_table_r_e / holon_chem_referee_residual");
 
-  document.querySelectorAll('.tier-pill-labels .t-tag').forEach((el, idx) => {
-    el.classList.toggle('active', idx === tierIdx);
-  });
+  // --- the pair bank, with the PRICE each curve actually cost.
+  //
+  // The price column is the point of this table rather than a decoration. Two rows can
+  // both read SERVED and differ by ninety times in what they spent, and until this page
+  // measured it nothing in the tree recorded that the same H-H curve is available at two
+  // prices through two doors.
+  const rows = s.pairs.map((p) => {
+    const state = p.ok ? "SERVED" : p.door === "priced" ? "UNPAID" : "REFUSED";
+    const route = p.route === 1 ? "determinant/FCI" : p.route === 2 ? "MPS/DMRG" : "none";
+    const price = p.ms === undefined
+      ? (p.door === "priced" ? "not spent" : "—")
+      : p.ms < 1000 ? `${p.ms.toFixed(0)} ms` : `${(p.ms / 1000).toFixed(1)} s`;
+    return `<tr class="${p.ok ? "ok" : "fenced"}">`
+      + `<td>${sym(p.za)}–${sym(p.zb)}</td>`
+      + `<td>${route}</td>`
+      + `<td>${p.nDet.toExponential(2)}</td>`
+      + `<td>${price}</td>`
+      + `<td>${state}</td></tr>`;
+  }).join("");
+  if (UI["bank-rows"]) UI["bank-rows"].innerHTML = rows;
 
-  // Sim-rate readout per zoom law (WB-1.3 & WB-1.4)
-  const rate = t.baseRate * State.governorBias;
-  document.getElementById('hud-rate-val').textContent = `${rate.toFixed(1)} ${t.rateUnit}`;
+  // --- curves the engine permits but that have not been paid for
+  if (UI["priced-list"]) {
+    UI["priced-list"].innerHTML = s.priced.length
+      ? s.priced.map((p) =>
+        `<button class="btn-micro pay" data-pay="${p.key}">SOLVE ${sym(p.za)}–${sym(p.zb)}`
+        + ` · ${p.nDet.toExponential(2)} determinants</button>`).join("")
+      : "";
+    for (const b of UI["priced-list"].querySelectorAll("[data-pay]")) {
+      b.addEventListener("click", () => { loadPreset(State.mixture, { pay: b.dataset.pay }); });
+    }
+  }
+
+  // --- the three-body sector
+  put("trimer-state", s.trimer.state.toUpperCase());
+  put("trimer-detail", s.trimer.detail);
+  tag("tag-trimer", s.trimer.state === "refused" ? "fenced" : "live",
+    s.trimer.state === "refused"
+      ? "the H₃ generator declined this grid"
+      : "holon_trimer_nodes / holon_trimer_peak / holon_fence_untabulated");
+
+  // --- the fence register (WB-5.2)
+  if (UI["fence-list"]) {
+    UI["fence-list"].innerHTML = s.fences.length
+      ? s.fences.map((f) => `<li><b>${f.what}</b><span>${f.why}</span></li>`).join("")
+      : `<li class="none"><b>none</b><span>every interaction this scene can produce is served by a certified chart.</span></li>`;
+  }
+
+  // --- device class & artifact (WB-5.4, M-DEVICE-CLASS)
+  put("manifest-device-class", State.deviceClass);
+  put("manifest-sha", State.artifact.sha256);
+  put("manifest-bytes", `${State.artifact.bytes.toLocaleString()} bytes`);
+  put("manifest-substeps", `${fmtSci(w.holon_substeps_per_second(), 3)} substeps/s (measured on this device at load)`);
+  put("manifest-capacity", `${w.holon_atom_count()} atoms in scene · engine capacity for this device ${Math.floor(w.holon_n_max())}`);
 }
 
-function formatScale(m) {
-  if (m < 1e-9) return `${(m * 1e10).toFixed(1)} Å`;
-  if (m < 1e-6) return `${(m * 1e9).toFixed(2)} nm`;
-  if (m < 1e-3) return `${(m * 1e6).toFixed(2)} µm`;
-  if (m < 1.0) return `${(m * 1e3).toFixed(1)} mm`;
-  if (m < 1000.0) return `${m.toFixed(1)} m`;
-  return `${(m / 1000.0).toFixed(2)} km`;
+function renderTelemetry() {
+  const w = State.w;
+  if (!State.booted) return;
+
+  // --- HUD ------------------------------------------------------------------
+  put("hud-rate-val", fmtRate(State.rate.fsPerSec));
+  put("hud-realtime", `${fmtSci(State.rate.pctRealtime, 2)} % realtime`);
+  put("hud-fps-val", State.rate.fps ? State.rate.fps.toFixed(0) : "—");
+  put("hud-scale-val", fmtLength(sceneFrame().span));
+  put("hud-device-class", State.deviceClass);
+
+  // --- the ledger (WB-4.3): every column, and the gate's verdict ------------
+  put("led-kin", fmtEnergy(w.holon_e_kin()));
+  put("led-pair", fmtEnergy(w.holon_e_pair()));
+  put("led-three", fmtEnergy(w.holon_e_three()));
+  put("led-wall", fmtEnergy(w.holon_e_wall()));
+  put("led-spring", fmtEnergy(w.holon_e_spring()));
+  put("led-wext", fmtEnergy(w.holon_w_ext()));
+  put("led-total", fmtEnergy(w.holon_energy()));
+  put("led-invariant", fmtEnergy(w.holon_ledger() - w.holon_ledger_origin()));
+  put("led-drift", `${fmtSci(w.holon_drift())} Ha`);
+  put("led-drift-peak", `${fmtSci(w.holon_drift_peak())} Ha`);
+  put("led-bound", `${fmtSci(w.holon_drift_bound())} Ha`);
+  const eGate = w.holon_energy_gate() === 1;
+  put("led-gate", eGate ? "CLOSED" : "OPEN");
+  if (UI["led-gate"]) UI["led-gate"].className = eGate ? "val green" : "val red";
+  tag("tag-ledger", "live", "holon_e_kin / holon_e_pair / holon_w_ext / holon_drift / holon_energy_gate");
+
+  put("mom-residual", fmtSci(w.holon_momentum_residual()));
+  put("mom-bound", fmtSci(w.holon_momentum_bound()));
+  const pGate = w.holon_momentum_gate() === 1;
+  put("mom-gate", pGate ? "CLOSED" : "OPEN");
+  if (UI["mom-gate"]) UI["mom-gate"].className = eGate ? "val green" : "val red";
+
+  // --- the closure-defect lens (WB-5.3) ------------------------------------
+  const rows = w.holon_row_count();
+  let worst = 0, worstAt = 0;
+  for (let k = 0; k < rows; k++) {
+    worst = Math.max(worst, Math.abs(w.holon_row_closure_defect(k)));
+    worstAt = Math.max(worstAt, Math.abs(w.holon_row_closure_defect_at_formation(k)));
+  }
+  put("clo-rows", String(rows));
+  put("clo-worst", rows ? `${fmtSci(worst)} Ha` : "— (no holon in the scene yet)");
+  put("clo-at-formation", rows ? `${fmtSci(worstAt)} Ha` : "—");
+  put("clo-molecules", String(w.holon_census_molecules()));
+  put("clo-formations", String(w.holon_census_formations()));
+  put("clo-dissolutions", String(w.holon_census_dissolutions()));
+  put("clo-rejections", String(w.holon_census_closure_rejections()));
+  tag("tag-closure", "live", "holon_row_closure_defect / holon_census_molecules");
+
+  // --- the scene ------------------------------------------------------------
+  put("scene-atoms", String(w.holon_atom_count()));
+  put("scene-bonds", String(w.holon_bonded_count()));
+  put("scene-clusters", `${w.holon_cluster_count()} over ${w.holon_cluster_atoms()} atoms`);
+  put("scene-temp", tempIn(w.holon_temperature()));
+  put("scene-time", `${(w.holon_time() * AU_TO_FS).toFixed(3)} fs`);
+  put("scene-steps", w.holon_steps().toLocaleString());
+  tag("tag-scene", "live", "holon_atom_count / holon_bonded_count / holon_temperature");
+
+  // --- the clocks (WB-1.4 / WB-2.3) ----------------------------------------
+  put("clk-dt", `${w.holon_dt().toFixed(4)} a.u. (${(w.holon_dt() * AU_TO_FS).toFixed(5)} fs)`);
+  put("clk-omega-dt", w.holon_omega_dt().toFixed(4));
+  put("clk-requested", fmtRate(w.holon_sim_speed()));
+  put("clk-delivered", fmtRate(State.rate.fsPerSec));
+  put("clk-dilation", `${(100 * w.holon_dilation()).toFixed(1)} %`);
+  const rung = ["EXACT", "TIME-DILATED", "ACCURACY DECLARED", "REFUSED"][w.holon_rung()] || "—";
+  put("clk-rung", rung);
+  tag("tag-clocks", "live", "holon_dt / holon_sim_speed / holon_dilation / holon_rung");
+
+  // --- the fence counter (WB-5.2) ------------------------------------------
+  //
+  // PER FORCE PASS, not cumulative: the engine zeroes it at the top of every pass and
+  // re-counts. So it is a property of the SCENE rather than of how long you have watched,
+  // and it is exactly the combinatorial count of untabulated triples the composition
+  // admits — 55 for one oxygen among eleven hydrogens, which is C(11,2); 164 for four
+  // oxygens among eight hydrogens, which is 4*C(8,2) + C(4,2)*8 + C(4,3). A counter that
+  // climbed with wall time would be a different and much less useful quantity.
+  put("fence-count", w.holon_fence_untabulated().toLocaleString());
+  tag("tag-fence", "live", "holon_fence_untabulated");
+
+  // --- the thermostat pill (WB-3.3) ----------------------------------------
+  //
+  // A scene that cannot step is NOT settling, and saying so was the specific defect the
+  // first browser run caught: a frozen O:2H box read "SETTLING · 0.0 K → 293.1 K", which
+  // describes a process that is not happening in words that suggest it soon will.
+  const t = w.holon_temperature();
+  const running = State.served && State.served.stepsAllowed;
+  const settling = running && State.thermostatOn && Math.abs(t - State.targetK) > 0.05 * State.targetK;
+  put("settling-label", !running
+    ? "NOT STEPPING · a curve this scene needs is fenced"
+    : settling
+      ? `SETTLING · ${tempIn(t)} → ${tempIn(State.targetK)}`
+      : State.thermostatOn ? `THERMOSTATTED · ${tempIn(t)}` : `FREE (NVE) · ${tempIn(t)}`);
+  if (UI["settling-pill"]) {
+    UI["settling-pill"].className = !running ? "settling-pill halted"
+      : settling ? "settling-pill settling" : "settling-pill settled";
+  }
+
+  put("dock-temp-lbl", tempIn(State.targetK));
+  put("dock-gov-lbl", `${State.govBias.toFixed(2)}×`);
+}
+
+// ---------------------------------------------------------------- the hand (WB-4)
+//
+// The hand is a SPRING TERM in the engine's Hamiltonian with a time-dependent anchor, and
+// moving the anchor posts exactly dU into `w_ext`. That is why the energy gate stays
+// closed through a drag: the hand's work is a receipt column, not an excuse (WB-4.3).
+
+function pointerToWorld(px, py) {
+  // Pick on the plane through the box centre that faces the camera. The anchor is a 3D
+  // point, so a 2D pointer has to choose a depth; choosing the centre plane keeps the
+  // grab in the middle of the box where the atoms are.
+  const w = State.w;
+  const f = sceneFrame();
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const { yaw, pitch, distance, fov } = State.camera;
+  const fscale = (vh * 0.8) / Math.tan((fov * Math.PI) / 360);
+  const zEye = distance;
+  const x1 = ((px - vw * 0.5) * zEye) / fscale;
+  const y2 = (-(py - vh * 0.5) * zEye) / fscale;
+  // Invert the pitch then the yaw, with z1 = 0 on the chosen plane.
+  const z2 = 0;
+  const y = y2 * Math.cos(pitch) + z2 * Math.sin(pitch);
+  const z1 = -y2 * Math.sin(pitch) + z2 * Math.cos(pitch);
+  const x = x1 * Math.cos(yaw) + z1 * Math.sin(yaw);
+  const z = -x1 * Math.sin(yaw) + z1 * Math.cos(yaw);
+  return {
+    x: x / f.k + 0.5 * f.width,
+    y: y / f.k + 0.5 * f.height,
+    z: z / f.k + 0.5 * f.depth,
+  };
+}
+
+/// WB-4.1: the grab radius is a fixed fraction of the viewport edge, in physical units,
+/// and is DISPLAYED. At this tier that is a few atoms.
+function grabRadiusBohr() {
+  return 0.05 * sceneFrame().span;
+}
+
+function tryGrab(px, py) {
+  const w = State.w;
+  const p = pointerToWorld(px, py);
+  const r = grabRadiusBohr();
+  State.hand.radiusBohr = r;
+  // `holon_nearest_atom` searches in the scene's x/y plane; the anchor is then placed in
+  // full 3D, which is what `holon_move_anchor_3d` is for.
+  const i = w.holon_nearest_atom(p.x, p.y, r);
+  if (i >= 0) {
+    w.holon_grab(i);
+    State.hand.grabbed = i;
+    if (UI["reticle-hud"]) UI["reticle-hud"].classList.remove("hidden");
+    put("reticle-text", `grab ${fmtLength(r)} · atom ${i} (${sym(w.holon_atom_species_z(i))})`);
+  }
+  return i >= 0;
+}
+
+function dragTo(px, py) {
+  if (State.hand.grabbed < 0) return;
+  const p = pointerToWorld(px, py);
+  State.w.holon_move_anchor_3d(p.x, p.y, p.z);
+}
+
+function releaseHand() {
+  if (State.hand.grabbed < 0) return;
+  State.w.holon_release();
+  State.hand.grabbed = -1;
+  if (UI["reticle-hud"]) UI["reticle-hud"].classList.add("hidden");
+}
+
+// ---------------------------------------------------------------- determinism (WB-5.4)
+
+/// Run the seeded scene a fixed number of substeps from a fresh reset and digest the
+/// state. Two runs on the same device class must agree bit for bit; the page shows both
+/// digests and the verdict rather than asserting the property.
+///
+/// The digest is over the RAW f64 bits of every coordinate and velocity-derived speed, so
+/// a difference of one ulp changes it. A digest over rounded decimals would agree across
+/// runs that are not in fact identical, which is the vacuous-success shape.
+function replayDigest() {
+  const w = State.w;
+  const preset = PRESETS[State.mixture];
+  w.holon_reset(State.atomsRequested);
+  applyComposition(preset, w.holon_atom_count());
+  w.holon_reset(State.atomsRequested);
+  applyComposition(preset, w.holon_atom_count());
+  w.holon_rebase();
+  for (let f = 0; f < 200; f++) w.holon_step_frame(64);
+
+  const n = w.holon_atom_count();
+  const buf = new Float64Array(n * 4);
+  for (let i = 0; i < n; i++) {
+    buf[i * 4 + 0] = w.holon_atom_x(i);
+    buf[i * 4 + 1] = w.holon_atom_y(i);
+    buf[i * 4 + 2] = w.holon_atom_z(i);
+    buf[i * 4 + 3] = w.holon_atom_speed(i);
+  }
+  // FNV-1a over the raw bytes. A non-cryptographic digest is the right tool: this is a
+  // bit-identity check between two runs in the same page, not a claim anybody has to
+  // trust against an adversary.
+  const bytes = new Uint8Array(buf.buffer);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < bytes.length; i++) {
+    h ^= bytes[i];
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return { digest: h.toString(16).padStart(8, "0"), steps: w.holon_steps(), energy: w.holon_energy() };
+}
+
+function runReplayCheck() {
+  const a = replayDigest();
+  const b = replayDigest();
+  State.replay = { last: b, prev: a, matched: a.digest === b.digest };
+  put("replay-a", a.digest);
+  put("replay-b", b.digest);
+  put("replay-verdict", State.replay.matched
+    ? `BIT-IDENTICAL on ${State.deviceClass}`
+    : "DIVERGED — the seeded scene is not reproducible on this device class");
+  if (UI["replay-verdict"]) UI["replay-verdict"].className = State.replay.matched ? "val green" : "val red";
+  put("replay-detail", `${a.steps.toLocaleString()} substeps, E = ${fmtEnergy(a.energy)}`);
+  // The check left the scene at the end of its second run; put the user's scene back.
+  loadPreset(State.mixture);
+}
+
+// ---------------------------------------------------------------- input wiring
+
+let orbiting = false;
+let lastX = 0, lastY = 0;
+let pointerDownAt = 0;
+
+function initInput() {
+  canvas.addEventListener("mousedown", (e) => {
+    pointerDownAt = performance.now();
+    lastX = e.clientX;
+    lastY = e.clientY;
+    // Shift (or the secondary button) orbits; a plain press reaches for an atom, and
+    // falls through to orbit when it finds none.
+    if (e.shiftKey || e.button === 2 || !tryGrab(e.clientX, e.clientY)) orbiting = true;
+  });
+  window.addEventListener("mousemove", (e) => {
+    if (State.hand.grabbed >= 0) {
+      dragTo(e.clientX, e.clientY);
+    } else if (orbiting) {
+      State.camera.yaw += (e.clientX - lastX) * 0.006;
+      State.camera.pitch = Math.max(-1.4, Math.min(1.4, State.camera.pitch + (e.clientY - lastY) * 0.006));
+    }
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+  window.addEventListener("mouseup", () => {
+    releaseHand();
+    orbiting = false;
+  });
+  canvas.addEventListener("contextmenu", (e) => e.preventDefault());
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    State.camera.distance = Math.max(0.6, Math.min(12, State.camera.distance * (1 + e.deltaY * 0.001)));
+  }, { passive: false });
+
+  // Touch: one finger orbits or grabs, two pinch the camera.
+  let pinch0 = 0;
+  canvas.addEventListener("touchstart", (e) => {
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      lastX = t.clientX; lastY = t.clientY;
+      if (!tryGrab(t.clientX, t.clientY)) orbiting = true;
+    } else if (e.touches.length === 2) {
+      pinch0 = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+    }
+  }, { passive: true });
+  canvas.addEventListener("touchmove", (e) => {
+    if (e.touches.length === 1) {
+      const t = e.touches[0];
+      if (State.hand.grabbed >= 0) dragTo(t.clientX, t.clientY);
+      else if (orbiting) {
+        State.camera.yaw += (t.clientX - lastX) * 0.008;
+        State.camera.pitch = Math.max(-1.4, Math.min(1.4, State.camera.pitch + (t.clientY - lastY) * 0.008));
+      }
+      lastX = t.clientX; lastY = t.clientY;
+    } else if (e.touches.length === 2 && pinch0 > 0) {
+      const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      State.camera.distance = Math.max(0.6, Math.min(12, State.camera.distance * (pinch0 / d)));
+      pinch0 = d;
+    }
+  }, { passive: true });
+  canvas.addEventListener("touchend", () => { releaseHand(); orbiting = false; pinch0 = 0; }, { passive: true });
+
+  window.addEventListener("resize", resize);
+  resize();
 }
 
 function initHUD() {
-  document.getElementById('hud-device-class').textContent = HW_PROFILE.label;
-  document.getElementById('drawer-hw-profile').textContent = `${HW_PROFILE.class} · Adaptive`;
-
-  // Zoom range input
-  document.getElementById('zoom-range').addEventListener('input', (e) => {
-    setContinuousZoom(parseFloat(e.target.value));
-  });
-
-  // Tier tag click quick-select
-  document.querySelectorAll('.tier-pill-labels .t-tag').forEach(tag => {
-    tag.addEventListener('click', () => {
-      const tIdx = parseInt(tag.getAttribute('data-tier'), 10);
-      setContinuousZoom(tIdx);
-    });
-  });
-
-  // Telemetry Drawer Toggle
-  const drawer = document.getElementById('telemetry-drawer');
-  document.getElementById('btn-toggle-telemetry').addEventListener('click', () => {
-    drawer.classList.toggle('open');
-  });
-  document.getElementById('close-telemetry').addEventListener('click', () => {
-    drawer.classList.remove('open');
-  });
-
-  // Manifest Modal Toggle
-  const modal = document.getElementById('manifest-modal');
-  document.getElementById('btn-toggle-manifest').addEventListener('click', () => {
-    modal.classList.remove('hidden');
-  });
-  document.getElementById('btn-close-manifest').addEventListener('click', () => {
-    modal.classList.add('hidden');
-  });
-
-  // Play / Pause Toggle
-  const btnPlay = document.getElementById('btn-play-pause');
-  btnPlay.addEventListener('click', () => {
+  UI["btn-toggle-telemetry"]?.addEventListener("click", () => UI["telemetry-drawer"].classList.toggle("open"));
+  UI["close-telemetry"]?.addEventListener("click", () => UI["telemetry-drawer"].classList.remove("open"));
+  UI["btn-toggle-manifest"]?.addEventListener("click", () => UI["manifest-modal"].classList.toggle("hidden"));
+  UI["btn-close-manifest"]?.addEventListener("click", () => UI["manifest-modal"].classList.add("hidden"));
+  UI["btn-play-pause"]?.addEventListener("click", (e) => {
     State.paused = !State.paused;
-    btnPlay.textContent = State.paused ? '▶' : '⏸';
+    e.currentTarget.textContent = State.paused ? "▶" : "⏸";
+    // A pause stops the clock window too, so the rate readout does not average a stall
+    // into the delivered figure and report a slowdown that is not the engine's.
+    State.clockWindow = { t0: null, simFs0: 0, frames: 0 };
   });
 
-  // Bottom Control Sheet Tabs (Mobile-First)
-  document.querySelectorAll('.dock-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      const tabName = tab.getAttribute('data-tab');
-      if (tabName === 'grav') {
-        State.gravityActive = !State.gravityActive;
-        tab.classList.toggle('active', State.gravityActive);
-        return;
-      }
-      document.querySelectorAll('.dock-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-
-      document.querySelectorAll('.sheet-panel').forEach(p => {
-        p.classList.toggle('active', p.getAttribute('data-panel') === tabName);
-      });
+  for (const tabBtn of document.querySelectorAll(".dock-tab")) {
+    tabBtn.addEventListener("click", () => {
+      const panel = tabBtn.dataset.tab;
+      for (const b of document.querySelectorAll(".dock-tab")) b.classList.toggle("active", b === tabBtn);
+      for (const p of document.querySelectorAll(".sheet-panel")) p.classList.toggle("active", p.dataset.panel === panel);
+      UI["control-sheet"].classList.add("open");
     });
-  });
-
-  // Temperature Sheet Slider
-  const tempSlider = document.getElementById('sheet-temp');
-  tempSlider.addEventListener('input', (e) => {
-    State.temperature = parseFloat(e.target.value);
-    document.getElementById('sheet-temp-val').textContent = `${State.temperature.toFixed(1)} K`;
-    document.getElementById('dock-temp-lbl').textContent = `${Math.round(State.temperature)} K`;
-  });
-
-  // Pressure Sheet Slider (NPT Barostat)
-  const pressSlider = document.getElementById('sheet-press');
-  pressSlider.addEventListener('input', (e) => {
-    const exp = parseFloat(e.target.value);
-    State.pressureAtm = Math.pow(10, exp);
-    document.getElementById('sheet-press-val').textContent = `${State.pressureAtm.toFixed(2)} atm`;
-    document.getElementById('dock-press-lbl').textContent = `${State.pressureAtm < 1 ? State.pressureAtm.toFixed(2) : Math.round(State.pressureAtm)} atm`;
-    State.boxScale = 1.0 / Math.pow(State.pressureAtm, 0.05);
-    document.getElementById('sheet-box-scale').textContent = `Box: ${State.boxScale.toFixed(3)}×`;
-  });
-
-  // Mixture Chips
-  document.querySelectorAll('.mix-chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      document.querySelectorAll('.mix-chip').forEach(c => c.classList.remove('active'));
-      chip.classList.add('active');
-      const mix = chip.getAttribute('data-mix');
-      State.mixture = mix;
-      document.getElementById('dock-mix-lbl').textContent = chip.textContent.split(' ')[0];
-      Scene3D.init(mix);
-    });
-  });
-
-  // Quick Reset
-  document.getElementById('btn-quick-reset').addEventListener('click', () => {
-    Scene3D.init(State.mixture);
-  });
-
-  window.addEventListener('resize', () => {
-    resize3D();
-  });
-}
-
-function updateTelemetryDrawer() {
-  // Update order parameters and ledger in drawer
-  document.getElementById('drawer-phase').textContent = State.order.phase;
-  document.getElementById('drawer-conf').textContent = `${State.order.confidence.toFixed(1)}%`;
-  document.getElementById('drawer-qtet').textContent = State.order.qTet.toFixed(3);
-  document.getElementById('drawer-q6').textContent = State.order.q6.toFixed(3);
-  document.getElementById('drawer-hb').textContent = State.order.hbCount.toFixed(2);
-  document.getElementById('drawer-entity-count').textContent = `${Scene3D.atoms.length} Atoms / ${Scene3D.bonds.length} Bonds`;
-
-  document.getElementById('drawer-led-t').textContent = `${State.ledger.kinetic >= 0 ? '+' : ''}${State.ledger.kinetic.toFixed(6)} Ha`;
-  document.getElementById('drawer-led-w').textContent = `${State.hand.cumulativeWorkHa >= 0 ? '+' : ''}${State.hand.cumulativeWorkHa.toFixed(6)} Ha`;
-}
-
-// ============================================================================
-// 9. Main Render Loop
-// ============================================================================
-
-let frameCount = 0;
-let lastFpsCheck = performance.now();
-
-function animate(now) {
-  frameCount++;
-  if (now - lastFpsCheck >= 500) {
-    State.fps = (frameCount * 1000) / (now - lastFpsCheck);
-    document.getElementById('hud-fps-val').textContent = Math.round(State.fps);
-    frameCount = 0;
-    lastFpsCheck = now;
   }
 
-  if (!State.paused) {
-    const t = TIERS[State.tier];
-    const dt = t.baseDt * State.governorBias;
-    step3DPhysics(dt);
+  UI["sheet-temp"]?.addEventListener("input", (e) => {
+    State.targetK = Number(e.target.value);
+    put("sheet-temp-val", tempIn(State.targetK));
+    applyControls();
+  });
+  UI["sheet-thermostat"]?.addEventListener("change", (e) => {
+    State.thermostatOn = e.target.checked;
+    applyControls();
+  });
+  for (const pill of document.querySelectorAll(".u-pill")) {
+    pill.addEventListener("click", () => {
+      State.tempUnit = pill.dataset.unit;
+      for (const p of document.querySelectorAll(".u-pill")) p.classList.toggle("active", p === pill);
+      put("sheet-temp-val", tempIn(State.targetK));
+    });
   }
+  UI["sheet-gov"]?.addEventListener("input", (e) => {
+    // Logarithmic: the useful range spans decades, and a linear slider would spend all
+    // its travel at the fast end.
+    State.govBias = Math.pow(10, Number(e.target.value));
+    put("sheet-gov-val", `${State.govBias.toFixed(2)}× · requested ${fmtRate(State.baseSimSpeed * State.govBias)}`);
+    applyControls();
+  });
+  UI["sheet-atoms"]?.addEventListener("input", (e) => {
+    State.atomsRequested = Number(e.target.value);
+    put("sheet-atoms-val", String(State.atomsRequested));
+  });
+  UI["sheet-atoms"]?.addEventListener("change", () => loadPreset(State.mixture));
 
-  render3D();
-  updateTelemetryDrawer();
-
-  requestAnimationFrame(animate);
+  for (const chip of document.querySelectorAll(".mix-chip")) {
+    chip.addEventListener("click", () => {
+      for (const c of document.querySelectorAll(".mix-chip")) c.classList.toggle("active", c === chip);
+      loadPreset(chip.dataset.mix);
+    });
+  }
+  UI["btn-quick-reset"]?.addEventListener("click", () => loadPreset(State.mixture));
+  UI["btn-replay"]?.addEventListener("click", runReplayCheck);
 }
 
-// Bootstrap
-window.addEventListener('DOMContentLoaded', () => {
-  resize3D();
-  initTouchAndMouse();
+// ---------------------------------------------------------------- start
+
+window.addEventListener("DOMContentLoaded", () => {
+  bindUI();
+  initInput();
   initHUD();
-  Scene3D.init('h2o');
-  setContinuousZoom(0.0);
-  requestAnimationFrame(animate);
+  boot().catch((err) => {
+    State.bootError = String(err && err.message ? err.message : err);
+    document.body.dataset.engine = "failed";
+    put("boot-error", State.bootError);
+    UI["boot-failure"]?.classList.remove("hidden");
+  });
 });

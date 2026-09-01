@@ -774,3 +774,334 @@ body, html {
     border-right: 1px solid var(--border);
   }
 }
+
+/* ==========================================================================
+   THE REAL-ENGINE SHELL
+   Added when the WB-7.1 mock's physics core was replaced by the wasm engine.
+   The mock's layout vocabulary above is kept deliberately (WB-7.2 records that
+   the interaction prototype was the valuable half); what follows dresses the
+   panels the real engine needs, and above all the two states every displayed
+   quantity is now in: LIVE, or FENCED.
+   ========================================================================== */
+
+/* The honesty tag. There is no third colour on purpose: a quantity either traces
+   to an engine readout or it is fenced, and the eye should be able to sort a
+   drawer full of them at a glance without reading a word. */
+.tag[data-tag="live"] {
+  background: rgba(0, 229, 255, 0.14);
+  color: var(--cyan);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+}
+
+.tag[data-tag="fenced"] {
+  background: rgba(255, 42, 85, 0.12);
+  color: var(--rose);
+  border: 1px solid rgba(255, 42, 85, 0.4);
+  letter-spacing: 0.08em;
+}
+
+.hud-engine-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  padding: 3px 7px;
+  border-radius: 4px;
+  background: rgba(0, 229, 255, 0.12);
+  color: var(--cyan);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  white-space: nowrap;
+}
+
+.p-sub {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  margin-top: 1px;
+}
+
+/* --- the scale axis. Three of the four bands have no chart, so they are shown
+   as fences rather than as a slider the user can travel into. */
+.tier-note {
+  display: block;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  text-align: center;
+  letter-spacing: 0.04em;
+}
+
+.t-tag.fenced,
+.dock-tab.fenced {
+  opacity: 0.55;
+  color: var(--rose);
+  border-style: dashed;
+  cursor: help;
+}
+
+/* --- the readout grid. Label left, value right, monospace on the right only:
+   the numbers have to line up for a drift and a bound to be comparable at a
+   glance, and the labels read better proportionally. */
+.ledger-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
+}
+
+.ledger-grid.tight {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.lrow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.lrow > span:first-child {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.lrow > span:last-child {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  color: var(--text-main);
+  text-align: right;
+  word-break: break-word;
+}
+
+.lrow.accent > span:last-child { color: var(--amber); }
+
+.lrow.verdict {
+  margin-top: 4px;
+  padding-top: 5px;
+  border-top: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.val.green { color: var(--green); }
+.val.red { color: var(--rose); }
+
+.mono-wrap {
+  font-family: var(--font-mono);
+  font-size: 9px !important;
+  word-break: break-all;
+  max-width: 60%;
+}
+
+/* --- the note under a panel. Load-bearing prose, not filler: several of these
+   say what the number does NOT mean, which is the part a reader gets wrong. */
+.card-note,
+.sheet-note {
+  margin-top: 9px;
+  font-size: 10.5px;
+  line-height: 1.55;
+  color: var(--text-muted);
+}
+
+.sheet-note.fence {
+  color: var(--rose);
+  border-left: 2px solid rgba(255, 42, 85, 0.5);
+  padding-left: 9px;
+}
+
+.fenced-panel label { color: var(--rose); }
+
+/* --- the pair bank */
+.bank-table {
+  width: 100%;
+  margin-top: 10px;
+  border-collapse: collapse;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.bank-table th {
+  text-align: left;
+  color: var(--text-dim);
+  font-weight: 500;
+  padding: 3px 6px 3px 0;
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bank-table td {
+  padding: 3px 6px 3px 0;
+  border-bottom: 1px solid rgba(34, 50, 69, 0.5);
+}
+
+.bank-table tr.ok td:last-child { color: var(--green); }
+.bank-table tr.fenced td { color: var(--rose); }
+
+/* --- the fence register (WB-5.2). Fences are RENDERED, and they are rendered
+   as prose with a reason, because a fence whose reason is not readable is a
+   shrug with a border around it. */
+.fence-list {
+  list-style: none;
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.fence-list li {
+  border-left: 2px solid var(--rose);
+  padding-left: 9px;
+}
+
+.fence-list li.none { border-left-color: var(--green); }
+.fence-list li.none b { color: var(--green); }
+
+.fence-list b {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--rose);
+  letter-spacing: 0.03em;
+  margin-bottom: 2px;
+}
+
+.fence-list span {
+  display: block;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.fenced-card { border-color: rgba(255, 42, 85, 0.3); }
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 10.5px;
+  line-height: 1.5;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.check-row input { margin-top: 2px; }
+
+.control-sheet.open { max-height: 210px; }
+
+.manifest-section + .manifest-section {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* --- the boot failure. An engine that did not load draws NOTHING and says so;
+   the mock's failure mode was to keep animating a scene with no physics behind
+   it, which is the vacuous-success shape at its most literal. */
+.boot-failure {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(6, 9, 13, 0.96);
+  z-index: 50;
+}
+
+.boot-failure h2 {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  color: var(--rose);
+}
+
+.boot-failure p {
+  max-width: 520px;
+  font-size: 12px;
+  line-height: 1.6;
+  font-family: var(--font-mono);
+  color: var(--text-main);
+}
+
+.boot-failure .sub {
+  font-family: var(--font-sans);
+  color: var(--text-muted);
+}
+
+/* --- the stage overlay. Named stages while the engine's own solves block the main
+   thread; a frozen page with no explanation is indistinguishable from a broken one. */
+.boot-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(6, 9, 13, 0.9);
+  z-index: 40;
+  pointer-events: none;
+}
+
+.boot-overlay.hidden { display: none; }
+
+.boot-overlay p {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--cyan);
+  text-align: center;
+  max-width: 460px;
+  padding: 0 20px;
+  line-height: 1.6;
+}
+
+.boot-spinner {
+  width: 26px;
+  height: 26px;
+  border: 2px solid rgba(0, 229, 255, 0.2);
+  border-top-color: var(--cyan);
+  border-radius: 50%;
+  animation: boot-spin 0.8s linear infinite;
+}
+
+@keyframes boot-spin { to { transform: rotate(360deg); } }
+
+/* --- curves the engine permits but that have not been paid for. Deliberately a
+   BUTTON: the cost is the user's to spend, and the page does not spend it for them. */
+.priced-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 9px;
+}
+
+.priced-list:empty { display: none; }
+
+.btn-micro.pay {
+  width: 100%;
+  text-align: left;
+  border-color: var(--amber);
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.03em;
+}
+
+/* A scene that cannot step gets its own state, distinct from settling: the two look the
+   same on a still frame and mean opposite things. */
+.settling-pill.halted {
+  border-color: rgba(255, 42, 85, 0.5);
+  color: var(--rose);
+}
+
+.settling-pill.halted .dot { background: var(--rose); }

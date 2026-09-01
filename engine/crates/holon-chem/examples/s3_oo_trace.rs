@@ -20,7 +20,7 @@
 //! `dE` is against the deepest run, so it reads as "how much did the shorter run cost".
 //!
 //! ```text
-//! cargo run --release -p holon-chem --example s3_oo_trace -- [r_bohr]
+//! cargo run --release -p holon-chem --example s3_oo_trace -- [knot_index]
 //! ```
 
 use holon_chem::dual::D2;
@@ -39,18 +39,24 @@ const WORST_KNOT: usize = 45;
 /// slope: enough that the trace's converged energy and the re-examination's disagreed in
 /// the seventh decimal for no reason a reader could see. Two numbers that are supposed to
 /// be the same knot must come from the same expression.
-fn worst_knot_r() -> f64 {
+fn knot_r(i: usize) -> f64 {
     let (r_min, r_max) = derive_range(OXYGEN, OXYGEN, 2.0 * atom_energy(OXYGEN));
-    grid_point(r_min, r_max, N_KNOTS, WORST_KNOT)
+    grid_point(r_min, r_max, N_KNOTS, i)
 }
 
 const CAPS: [usize; 8] = [150, 300, 600, 1200, 2400, 4800, 9600, 19200];
 
 fn main() {
-    let r: f64 = std::env::args()
+    // A KNOT INDEX, not a radius. Passing a typed radius was the trap this file already
+    // paid for once: `4.2244` is 3e-5 bohr off knot 45, which is 3.6e-7 hartree of slope,
+    // and on a near-degenerate dissociation knot it moved the iteration count from 3930 to
+    // past 5000 — enough to read a BUDGET case as a FLOOR case and price a
+    // high-precision tier that was never owed. An index cannot be off by 3e-5.
+    let idx: usize = std::env::args()
         .nth(1)
         .and_then(|s| s.parse().ok())
-        .unwrap_or_else(worst_knot_r);
+        .unwrap_or(WORST_KNOT);
+    let r = knot_r(idx);
 
     // ONE assembly, reused by every cap: the ladder must differ in iterations and in
     // nothing else, and re-assembling per rung would put basis arithmetic in the diff.
@@ -68,7 +74,7 @@ fn main() {
     // Six decimals, because four is the width `s3_oo_reexam` prints and a reader
     // comparing the two files must be able to see that this is the SAME knot rather than
     // a nearby one — the failure this file already paid for once.
-    println!("# O-O convergence trace at r = {r:.6} bohr, {} determinants", space.n_det);
+    println!("# O-O convergence trace at knot {idx} of {N_KNOTS}, r = {r:.9} bohr, {} determinants", space.n_det);
     println!("# tolerance {DAVIDSON_REQUESTED_TOLERANCE:.0e}, one assembly shared by every rung");
     println!("# E is TOTAL (electronic + nuclear repulsion {:.9})", nuc.v);
     println!("# variational bound: min_i H_ii = {:.9} electronic\n", min_diag);

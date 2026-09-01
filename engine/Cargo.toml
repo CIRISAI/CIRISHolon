@@ -45,6 +45,12 @@ members = [
   # cannot perturb the core's feature resolution or the isolation gates. No other deps,
   # runtime or dev (raw extern "C" ABI; the host parses its own JSON).
   "crates/holon-render",
+  # holon-lens: trajectory lenses, the closure census, and the blind phase classifier.
+  # ZERO runtime dependencies (std only), the same isolation profile as q-seam, so it
+  # cannot perturb the core's feature resolution or the isolation gates. It is a
+  # DEV-dependency of holon-render (examples only) and never the reverse: the lens layer
+  # must stay testable while the renderer is mid-refactor, and it has been.
+  "crates/holon-lens",
   # holon-chem: the in-engine quantum chemistry tier -- STO-3G closed-form Gaussian
   # integrals, full CI, and the analytic derivatives of both. ZERO dependencies, runtime
   # and dev alike, and no optional features, so like `holon` it cannot perturb the core's
@@ -64,6 +70,16 @@ members = [
   # down on a stalled machine. ZERO dependencies (std only), so like holon-chem it
   # cannot perturb the core's feature resolution or the isolation gates.
   "crates/holon-resource",
+  # holon-device: ONE definition of the device class (RESOURCE_DESIGN D0). `no_std`, ZERO
+  # dependencies, ~50 lines of enum. It exists because the crate that PRODUCES the artifact
+  # whose class must be declared (`holon-chem`, which ships into the browser and so cannot
+  # take a std-only dep) and the crate that DISPATCHES on it (`holon-resource`, which sits
+  # under everything and so cannot take a heavy one) cannot depend on each other. Declaring
+  # the enum in both with a conversion between them is M-DEVICE-CLASS one level down: a class
+  # added on one side only gives one artifact two answers about what produced it, through a
+  # green suite. Being `no_std` and dependency-free it cannot perturb the core's feature
+  # resolution or the isolation gates, and it adds nothing measurable to the wasm bundle.
+  "crates/holon-device",
 ]
 
 # Deliberately OUTSIDE the workspace, each for its own reason:

@@ -1,0 +1,19 @@
+[package]
+name = "holon-lens"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "Trajectory lenses, the closure census, and the blind phase classifier"
+
+# ZERO dependencies, std only — the same isolation profile as q-seam and holon-qasm.
+#
+# That is not minimalism for its own sake. This crate is READ BY the census and the
+# classifier and WRITTEN BY an example inside `holon-render`; if it depended on
+# `holon-render` the dependency would run backwards and the lens layer could not be
+# tested while the renderer is mid-refactor. It has been tested exactly that way: this
+# crate's whole suite runs green on a tree where `holon-render` does not compile.
+#
+# It also means the crate cannot perturb the workspace's feature resolution or the
+# isolation gates in `ci-gates.sh`.
+[dependencies]

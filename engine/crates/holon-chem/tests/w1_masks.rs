@@ -65,7 +65,10 @@ fn the_widening_reproduces_every_banked_species_bit_for_bit() {
                 assert_eq!(
                     (s.n_basis, s.n_det),
                     (n_basis, n_det),
-                    "{}: the determinant space itself changed shape under the widening",
+                    "{}: the determinant space changed SHAPE, not just its last bits. \
+                     Unlike the value comparison below, this one really does implicate \
+                     addressing rather than arithmetic -- a reassociation cannot change a \
+                     determinant count.",
                     f[1]
                 );
                 for (col, got, want) in [
@@ -79,10 +82,24 @@ fn the_widening_reproduces_every_banked_species_bit_for_bit() {
                         got.to_bits(),
                         want,
                         "{sym} {col}: {got:.17e} (bits {:016x}) is not the banked bit \
-                         pattern (bits {want:016x}). The mask widening was supposed to \
-                         change which spaces can be ADDRESSED and nothing about what they \
-                         evaluate to.",
-                        got.to_bits()
+                         pattern (bits {want:016x}), {} ULPs apart.\n\
+                         \n\
+                         THIS GATE IS A DETECTOR, NOT A VERDICT. It establishes that this \
+                         build and the bank disagree. It establishes NOTHING about which \
+                         change moved them apart. The bank was captured before the mask \
+                         widening, so a divergence is consistent with W1 -- and equally \
+                         consistent with every numeric change landed since, and this gate \
+                         cannot tell them apart. Bisect one species' bit pattern across the \
+                         commits since the bank was taken before naming a cause.\n\
+                         \n\
+                         MEASURED 2026-09-01: this exact failure was NOT W1. It was the \
+                         sigma-kernel summation reorder in 4884704 -- the inner accumulation \
+                         moved from ascending kl order to first-touch order over a sparse \
+                         set, reassociating the addends. Bracketed one commit wide by \
+                         mixtures-engine, whose pair curves moved the same way while their \
+                         one-determinant species did not.",
+                        got.to_bits(),
+                        (got.to_bits() as i64 - want as i64).abs()
                     );
                 }
                 atoms += 1;

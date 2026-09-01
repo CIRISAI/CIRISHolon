@@ -349,9 +349,20 @@ which asserted a mechanism nobody had measured. It was inferred from indium bein
 that runs for the better part of an hour while the rest return in seconds — and the diagnostic
 below then found that every other atom exits by STAGNATION at a few hundred iterations or fewer,
 never touching the cap, which makes the inference exactly the kind that needs checking rather
-than repeating. **Whether indium exhausts the cap or stagnates like the rest is unmeasured**,
-and it is queued (`conv_diagnose 49`) rather than asserted. The refusal does not depend on which:
-3.98e-1 is nine orders above the bar and 2S+1 = 4.216 is not a multiplicity on any reading.
+than repeating. **MEASURED 2026-09-01: indium exhausts the cap.**
+
+    49  In  1,026,675 dets   3.98e-1   1200 iters   CAP
+
+Run twice, independently, on binaries compiled either side of the tolerance change — one asking
+1e-11 (the record's own conditions) and one asking 1e-10 — and they agree on the energy to the
+last digit, on the residual, and on the iteration count. They are replicates rather than a
+comparison, because at 3.98e-1 neither tolerance is anywhere near being reached, so the ask
+gates nothing.
+
+**So indium is the ONLY atom in this record that reaches its cap.** Every other
+multi-determinant species stops by subspace stagnation at 8 to 379 iterations against the same
+1200. That is what makes it different in kind rather than merely in degree, and it is now a
+measurement rather than the inference from run-time that this section carried for an afternoon.
 
 ### The convergence bar SORTS this class; it does not separate it
 
@@ -384,8 +395,10 @@ fixed by patience. `Solution::davidson_iters` tells them apart and nothing read 
 | 52 | Te | 729 | 1.07e-10 | 23 | STAGNATED | **REFUSED** |
 | 50 | Sn | 123,201 | 2.06e-10 | 334 | STAGNATED | **REFUSED** |
 | 30 | Zn | 665,856 | 2.72e-10 | 379 | STAGNATED | **REFUSED** |
+| 49 | In | 1,026,675 | 3.98e-1 | **1200** | **CAP** | **REFUSED** |
 
-**The cap is 1200 and the largest count anywhere is 379. Not one atom reached it.** Every solve
+**The cap is 1200. Indium reaches it; nothing else comes within eight hundred iterations of
+it** — the largest count among the rest is 379. Every solve
 stopped with hundreds of iterations unspent and could not use them, so **more iterations buy
 nothing** — the constant reserved in `DAVIDSON_MAX_ITER` would not have rescued a single row.
 

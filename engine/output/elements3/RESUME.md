@@ -988,3 +988,46 @@ programme-wide — a non-zero build prints "binary is stale relative to HEAD".
 It is narrower than M-STALE-INSTRUMENT and the distinction is the content: the *instrument* was
 fine, the *provenance claim* went stale. And it fired on the discipline's own first use, in the
 launcher of the lane that proposed it.
+
+## Indium MEASURED: CAP at 1200, and it is the record's only one
+
+    49  In  1,026,675 dets   3.98e-1   1200 iters   CAP   REFUSED
+
+Run twice on binaries compiled either side of the tolerance change — mine asking 1e-11 (the
+record's own conditions), the lead's asking 1e-10 — and they agree on the energy to the last
+digit, the residual, and the iteration count. **Replicates, not a comparison**, exactly as
+predicted: at 3.98e-1 neither tolerance is close to being reached, so the ask gates nothing and
+both binaries do identical arithmetic.
+
+So indium is the ONLY atom in this record that reaches its cap; every other multi-determinant
+species stops by stagnation between 8 and 379 iterations against the same 1200. Different in
+KIND, and now measured rather than inferred from run-time. The last UNMEASURED marker in the
+results document is closed.
+
+### The re-banking landed for my dimer record, and what I can and cannot verify about it
+
+5f0b541 landed a regeneration of `tests/data/elements3_dimers.txt`, asking the owning lane to
+confirm it. **I did not run that regeneration**, so I cannot confirm it matches anyone's run —
+and saying so matters more than the confirmation would.
+
+What I CAN check is the property the record must actually have, which is stronger: does it
+reproduce from the engine that exists now? Ran the suite: **6/6 green, including
+`the_banked_record_still_describes_this_engine`**, which recomputes HCl bit-for-bit and checks
+six atomic references. The landing is correct by the only test that matters.
+
+**And the diff carries a finding the accompanying story does not predict.** The re-banked rows:
+
+    atom Cl   9 basis,  9 det   MOVED
+    atom Br  18 basis, 18 det   did NOT move
+    atom I   27 basis, 27 det   MOVED
+    atom H/Kr/Xe, 1 det each    did NOT move
+
+mixtures-engine's account is that a system needs enough determinants for the touched set to be
+a differently-ordered proper subset, and their own smallest three curves did not move — a size
+threshold. **But bromine at 18 determinants did not move while chlorine at 9 did**, and all
+three of Cl, Br and I are one-hole systems of the same structural shape. So the effect is **not
+monotone in determinant count**, and a threshold on that axis will mispredict.
+
+Third time today the same shape: the MPS door was determinants and not orbitals, route C was
+Fock-space and not determinants, and this is not determinant count either. **The count you have
+is rarely the axis you need.**

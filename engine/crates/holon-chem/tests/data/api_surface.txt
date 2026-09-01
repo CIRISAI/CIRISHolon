@@ -134,6 +134,19 @@ de4_ohhh_fci            exact ab-initio 4-body residual dE4 = E_FCI - E_MBE3
 sort_ohhh_internals     canonical S3-quotiented sort for 6 internal coordinates of (O,H,H,H)
 ohhh_fci_grad           E_FCI(OH3) with its exact Cartesian gradient (9 seeded dual solves, warm-startable); consumer: holon-render sim.rs accumulate_four_body
 
+# --- the DE4-TABLE four-body surface: coordinates, canonical form, interpolant ---
+# (campaign: conformance/water_observatory/DE4_TABLE_PREREG.md. These are consumed ACROSS
+# a crate boundary -- holon-tables' OhhhSurface and de4_table binary, plus this crate's own
+# certification examples -- so the library-internal reference count is zero by construction
+# and each still has a named, checkable consumer.)
+QUATERNARY_PROVENANCE   the table's provenance line; written into the artifact by holon-tables/src/bin/de4_table.rs, and read back by examples/de4_certify.rs and de4_synth_artifact.rs
+canonical_index         the S3 orbit map on GRID INDICES; holon-tables/src/ohhh.rs OhhhSurface::canonical delegates to it, which is what makes the generator solve 497,640 representatives instead of 2,924,207 nodes
+embed_ohhh              (R,u) -> Cartesian centres via Cholesky of the cosine Gram matrix; holon-tables/src/ohhh.rs OhhhSurface::realise builds every node's geometry with it, and de4_certify.rs rebuilds witnesses with it
+set_orbit               writes a solved node AND its whole relabelling orbit; de4_synth_artifact.rs fills the synthetic table with it, and holon-tables/src/ohhh.rs is the production filler
+from_artifact           parses the generated table, REFUSING a grid line that is not byte-exact; examples/de4_certify.rs gate L0 is its consumer and also its firing proof
+staked_witnesses        the 40 held-out geometries, one copy; examples/de4_price.rs and de4_certify.rs both read it rather than each rebuilding the set
+eval_cartesian          value and Cartesian force on all four atoms -- the interface the trajectory loop will consume when the table is wired into holon-render's accumulate_four_body. That wiring is NOT yet done (DE4_TABLE_RESUME.md item 2), so until it lands the ONLY consumer is examples/de4_certify.rs gate T3c, which was written for exactly this reason: shipping a Cartesian force path certified only in (R,u) would leave the whole chain rule -- including the angular terms -- on no path that any gate runs
+
 # --- the Carrier Tower (WB-8 sprint lane) ---
 add_contribution        adds a typed energy/Hamiltonian contribution to a TheoryNode in its own carrier fiber
 bead_spring_constant    calculates harmonic spring coupling k_P between adjacent beads in C1_RingPolymer

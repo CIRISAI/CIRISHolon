@@ -729,6 +729,23 @@ struct Ref {
     interp: f64,
 }
 
+/// The witness internals ALONE, with no ab-initio solve.
+///
+/// The translation-invariance half of T3c never reads `ab`, and building the set without a
+/// solve is what lets that half run on a SYNTHETIC artifact — and, on a real one, run over
+/// all forty witnesses rather than the finite-difference subset. `ab` is seeded NaN rather
+/// than zero on purpose: zero is a plausible dE4 and would propagate silently, while a NaN
+/// makes any accidental read of it visible in the first number it touches.
+fn witness_refs() -> Vec<Ref> {
+    qt::staked_witnesses()
+        .into_iter()
+        .map(|g| {
+            let (r, u) = qt::internals_ohhh(&g);
+            Ref { r, u, ab: f64::NAN, interp: 0.0 }
+        })
+        .collect()
+}
+
 fn reference_set(w: &WaterTable, tri: &TrimerTable) -> Vec<Ref> {
     qt::staked_witnesses()
         .into_iter()
@@ -948,6 +965,161 @@ fn gate_t3(log: &mut Log, t: &qt::QuaternaryTable, refs: &[Ref], w: &WaterTable,
              test, not a force test."
         ),
     );
+
+    gate_t3c_gradient(log, t, refs, w, tri, limit);
+}
+
+/// T3c — the CARTESIAN force path, which is the one the trajectory loop actually consumes.
+///
+/// T3 above certifies the six partials in `(R, u)`. Nothing there touches
+/// `eval_cartesian`, and `eval_cartesian` is where the chain rule from `(R, u)` to atom
+/// positions lives — a whole transformation, with the angular terms
+/// `du_ab/dx_a = (e_b - u_ab e_a)/R_a`, that no gate had reached. Certifying the
+/// coordinate-space gradient and shipping the Cartesian one is certifying the half nobody
+/// calls.
+///
+/// Two readings, and the first needs no electronic structure at all:
+///
+/// * **The forces sum to zero.** `dE4` depends only on internal coordinates, so it is
+///   invariant under rigid translation and the four forces MUST cancel exactly. This is a
+///   by-construction property of the chain rule, it costs nothing to check, and it is a
+///   linear-momentum conservation law — the law that has already cost this codebase a
+///   trajectory once, when a sibling sector divided a force by a mass and put the quotient
+///   back in a force slot, so the equal-and-opposite pair stopped cancelling because the
+///   partners carried different masses. A residual here is that shape.
+/// * **The forces are minus the gradient**, against a central difference of
+///   `de4_ohhh_fci` in the Cartesian coordinates themselves. Same band as T3's radial half.
+fn gate_t3c_translation(log: &mut Log, t: &qt::QuaternaryTable, refs: &[Ref], plant: bool) {
+    // Translation invariance. No FCI anywhere in this half, which is why it is separated
+    // from the finite-difference half and runs on a SYNTHETIC artifact too: it is a
+    // property of the chain rule in `eval_cartesian`, not of the physics in the table.
+    let mut worst_sum = 0.0f64;
+    let mut worst_sum_at = String::new();
+    let mut scale = 0.0f64;
+    for x in refs.iter() {
+        let Some(g) = qt::embed_ohhh(x.r, x.u) else { continue };
+        let (_, mut f) = t.eval_cartesian(&g);
+        if plant {
+            // THE FIRING PROOF, and it is a historical defect rather than an invented one.
+            // A sibling sector stored `f / mass` into an array whose entries are FORCES,
+            // leaving the integrator to divide by the mass a second time. The bug that
+            // matters is not the missing factor: it is that the equal-and-opposite pair
+            // STOPS CANCELLING, because the two partners are divided by different masses,
+            // which turns a conservative sector into a systematic momentum source. Masses
+            // in amu; only their RATIO matters here.
+            const M: [f64; 4] = [15.999, 1.008, 1.008, 1.008];
+            for a in 0..4 {
+                for c in 0..3 {
+                    f[a][c] /= M[a];
+                }
+            }
+        }
+        for c in 0..3 {
+            let s: f64 = (0..4).map(|a| f[a][c]).sum();
+            if s.abs() > worst_sum {
+                worst_sum = s.abs();
+                worst_sum_at = format!("R={:?} axis {c}", x.r);
+            }
+        }
+        for a in 0..4 {
+            for c in 0..3 {
+                scale = scale.max(f[a][c].abs());
+            }
+        }
+    }
+    // The bound is relative to the forces actually present: a table whose forces are all
+    // zero would pass an absolute bound while testing nothing.
+    let rel = if scale > 0.0 { worst_sum / scale } else { 0.0 };
+    if scale == 0.0 {
+        log.say(
+            "T3c",
+            V::Void,
+            "every Cartesian force on the witness set is exactly zero, so translation \
+             invariance is untestable here — the gate measured nothing rather than passing"
+                .to_string(),
+        );
+    } else if rel > 1e-12 {
+        log.say(
+            "T3c",
+            V::Fired,
+            format!(
+                "the four Cartesian forces do NOT sum to zero: worst component sum \
+                 {worst_sum:.3e} against a force scale of {scale:.3e} (relative \
+                 {rel:.3e}, band 1e-12), at {worst_sum_at}. dE4 depends only on internal \
+                 coordinates, so this is a linear-momentum source in the chain rule."
+            ),
+        );
+    } else {
+        log.say(
+            "T3c",
+            V::Pass,
+            format!(
+                "the four Cartesian forces sum to zero: worst component sum {worst_sum:.3e} \
+                 against a force scale of {scale:.3e} (relative {rel:.3e}, band 1e-12) over \
+                 {} witnesses. Linear momentum is conserved by the chain rule, measured, \
+                 not by construction.",
+                refs.len()
+            ),
+        );
+    }
+
+}
+
+/// The other half of T3c: force equals minus the gradient, in Cartesian coordinates. This
+/// one differences `de4_ohhh_fci`, so it is physics and is skipped on a synthetic artifact.
+fn gate_t3c_gradient(
+    log: &mut Log,
+    t: &qt::QuaternaryTable,
+    refs: &[Ref],
+    w: &WaterTable,
+    tri: &TrimerTable,
+    limit: usize,
+) {
+    let mut worst = 0.0f64;
+    let mut worst_at = String::new();
+    let mut n = 0usize;
+    for x in refs.iter().take(limit) {
+        let Some(g) = qt::embed_ohhh(x.r, x.u) else { continue };
+        let (_, f) = t.eval_cartesian(&g);
+        for a in 0..4 {
+            for c in 0..3 {
+                let mut gp = g;
+                let mut gm = g;
+                gp[a][c] += T3_H;
+                gm[a][c] -= T3_H;
+                let fd = -(de4_ohhh_fci(&gp, w, tri) - de4_ohhh_fci(&gm, w, tri)) / (2.0 * T3_H);
+                let d = (f[a][c] - fd).abs();
+                if d > worst {
+                    worst = d;
+                    worst_at = format!("atom {a} axis {c}, R={:?}", x.r);
+                }
+                n += 1;
+            }
+        }
+    }
+    if n == 0 {
+        log.say("T3c", V::Void, "no witness was embeddable; nothing differenced".to_string());
+    } else if worst > T3_BAND {
+        log.say(
+            "T3c",
+            V::Fired,
+            format!(
+                "Cartesian force vs central difference of de4_ohhh_fci: worst {worst:.4e} \
+                 Ha/bohr (band {T3_BAND:.1e}) over {n} components, h={T3_H:.0e}; worst at \
+                 {worst_at}"
+            ),
+        );
+    } else {
+        log.say(
+            "T3c",
+            V::Pass,
+            format!(
+                "Cartesian force vs central difference of de4_ohhh_fci: worst {worst:.4e} \
+                 Ha/bohr (band {T3_BAND:.1e}) over {n} components, h={T3_H:.0e}. This is \
+                 the path the trajectory loop consumes."
+            ),
+        );
+    }
 }
 
 // ============================================================== R1, the referee route
@@ -1052,11 +1224,13 @@ fn main() {
     let path = match args.get(1) {
         Some(p) if !p.starts_with("--") => p.clone(),
         _ => {
-            eprintln!("usage: de4_certify <artifact.json> [--synthetic] [--t3-limit N]");
+            eprintln!("usage: de4_certify <artifact.json> [--synthetic] [--t3-limit N] [--plant-mass-divide]");
             std::process::exit(2);
         }
     };
     let synthetic = args.iter().any(|a| a == "--synthetic");
+    // A negative control, not a mode: it plants the mass-division defect so T3c has to fire.
+    let plant_mass_divide = args.iter().any(|a| a == "--plant-mass-divide");
     let t3_limit: usize = args
         .iter()
         .position(|a| a == "--t3-limit")
@@ -1136,6 +1310,13 @@ fn main() {
 
     println!("\n--- B1: boundary decay at R = R_HI ---");
     gate_b1(&mut log, &t);
+
+    // The Cartesian chain rule's translation invariance is a harness-side property like
+    // C1 and B1 -- it needs no electronic structure -- so it runs in BOTH modes.
+    {
+        let refs_all: Vec<Ref> = witness_refs();
+        gate_t3c_translation(&mut log, &t, &refs_all, plant_mass_divide);
+    }
 
     println!("\n--- D: adversarial probes of eval itself (reported, gating nothing) ---");
     probe_interpolant(&mut log, &t);

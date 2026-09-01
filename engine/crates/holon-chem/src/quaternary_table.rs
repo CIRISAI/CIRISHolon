@@ -892,11 +892,6 @@ impl QuaternaryTable {
         }
         Some(t)
     }
-
-    /// Whether node `idx` is a real geometry rather than the equivariant continuation.
-    pub fn is_real(&self, i: [usize; 3], k: [usize; 3]) -> bool {
-        self.real[node_index(i, k)]
-    }
 }
 
 /// The one line that IS this table's manifest: a file whose grid line is not a byte-exact

@@ -267,3 +267,36 @@ maximal tasking §4, with its exact-reference gates). Crystal-inheritance
 measurement (DMRG-vs-FCI staking) feeds C2. Ozone tabulation,
 certification, and the frozen P2 rerun continue unblocked in parallel —
 the fold does not gate them; they do not gate the fold.
+
+## 10. Status ledger & next steps — 2026-08-31, updated at the operator's reorder
+
+**LANDED:** carrier tower skeleton (WB-8.2) merged at PR #2 — typed fiber
+isolation with its compile_fail proof, five refusal tests, ℓ-generalized
+shells, C0↔C1 transport + centroid retract; WB-7 mock law enforced in the
+shell (badge + SYNTHETIC tags); OOH surface certified and seam-scanned;
+ab-initio dE₄ evaluation with the 40-witness gate (11/29 sign structure
+reproduced); ozone seam scan (51 points, no seams, grid frozen); the last
+VALID P2: OOH-complete MBE3, water 0/8, O₄ aggregation, OOO fence fired —
+both pre-committed forks active (build ozone; dE₄ rides).
+
+**IN FLIGHT:** (O,O,O) tabulation (~900/14,025 knots at the measured
+~720/hr, price closing); certification suite banked and waiting on it.
+
+**THE REORDER (operator, 2026-08-31): the water verdict does NOT wait for
+ozone.** The immediate next run is frozen P2 with MBE3(OOH-complete) plus
+dE₄(O,H,H,H) riding in the trajectory loop, cutoff-gated (a quadruple
+solves only when compact under R_CUT = 6; the switch zeroes the rest
+without a solve — the evaluation counter reports how many actually
+fired). The four OOO triples stay HONESTLY FENCED at exactly 4/seed.
+Acceptance: fence = [4×8], dE₄ counter > 0 on compact encounters, census
+with the water count as the headline. When the ozone table lands, its
+certification upgrades the fence to served and P2 reruns once more with
+fence 0 — the ozone arm then measures what OOO changes, cleanly separated
+from what dE₄ changed.
+
+**OWED, in order after the P2-with-dE₄ verdict:** C1's real gate (RPMD
+ZPE on the banked H-H curve vs exact anharmonic reference + the D₂
+isotope shift); the C2 crystal-inheritance staking (DMRG vs FCI referee
+on water-dimer nodes); T3 scale-up (dynamic storage, cell lists, PBC,
+the ledgered-hand column); reference-state inventory (WB-3.2); the real
+wasm engine replacing the WB-7.1 mock.

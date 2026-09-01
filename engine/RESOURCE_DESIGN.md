@@ -39,8 +39,11 @@ and it is measured, not hypothetical:
 > **AUTOMATIC DISPATCH MAKES NUMERICAL OUTPUT A FUNCTION OF A PERFORMANCE MEASUREMENT.**
 >
 > G2 measured the `(O,O,O)` sigma kernel on both devices. They agree to **3.033e-15** relative
-> — and **91.0% of the 207,025 entries differ BITWISE** (HARD, `scratchpad/s3gpu/sigma.cu`
-> against `sigma_direct`). Both answers are correct. They are not the same bits.
+> — and **91.0% of the 207,025 entries differ BITWISE** (HARD,
+> `conformance/atomworld/s3_mesh/gpu/sigma.cu` against `sigma_direct`; the figure was
+> RE-RUN from that instrument on 2026-09-01 and came back identical to the digit, having
+> previously been cited at a `scratchpad/` path that did not resolve). Both answers are
+> correct. They are not the same bits.
 >
 > So a dispatcher that sends a workload to the GPU *above* a size crossover and to the CPU
 > *below* it makes the last bits of every result depend on where that crossover sits — and the

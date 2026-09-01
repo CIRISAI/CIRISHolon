@@ -450,11 +450,36 @@ fixed range in a fixed order. **Five repeat runs bit-identical.**
 | arm | sigma/s | GFLOP/s FP64 | note |
 |---|---|---|---|
 | **GPU, whole kernel** | **65.7** | 318.4 | 15.2 ms/sigma |
-| GPU + host round trip | 69.8 | — | PCIe is 0.5 ms, negligible |
+| GPU + host round trip | 66.0 | — | re-measured 2026-09-01; the old row was impossible |
 | CPU, `sigma_direct`, 32 threads | 17.2 – 20.8 | ~97 | two runs, loadavg 18 and 32 |
 | CPU, same GEMM reformulation, OpenBLAS 1 thread | 1.40 | 6.8 | **slower than the hand-written kernel** |
 
 **Speedup 3.2× against the best CPU number.**
+
+**CORRECTED 2026-09-01, with the instrument rescued.** These GPU numbers were taken
+with instruments cited as `scratchpad/s3gpu/...` — a path that never resolved, because
+they lived in a per-session scratchpad rather than the repository's. They are now at
+`conformance/atomworld/s3_mesh/gpu/` (README there carries the reproduction and the
+`ooo.bin` sha256 pin), and re-running reproduced the correctness figures **identically**:
+4.547474e-13 absolute, 3.033e-15 relative, 188,363 of 207,025 bitwise, five repeats
+bit-identical. The 91.0% divergence that founded M-DEVICE-CLASS is a re-run result now.
+
+The re-run also convicted one datum. `69.8` was reported as the WITH-round-trip figure
+while being faster than the 65.7 it contains, which `sigma.cu` cannot print. The labels
+were **not** swapped, tempting as that reading is: the instrument prints sigma/s and
+GFLOP/s together only on the kernel-only line, and 65.7 ↔ 15.221 ms ↔ 318.6 GFLOP/s is
+the banked 318.4, whereas 69.8 would be 338.5 and appears nowhere. The headline is sound;
+the single bad datum was 69.8 and its provenance is unrecoverable. Nothing else moves.
+
+**The ratio's exposure to contention is now measured, not argued** (M-PLACEMENT-LOTTERY,
+third rung: contention is a bias with a sign, because two arms lose different amounts to
+it). Re-timed at loadavg 61 against the banked loadavg 18–32, the GPU arm moved 65.7 →
+67.5 sigma/s — **+2.7%, in the wrong direction for a contention story**, as the 14.8 ms
+device / 0.32 ms host split predicts. The GPU arm is therefore essentially unexposed and
+the CPU arm fully exposed, so the whole bias sits in the CPU arm and inflates the ratio:
+**3.2× is an upper bound on the quiet-box ratio**, and a quiet-window CPU arm is owed.
+This does not touch the G2 verdict, which was adoption-condition-MET / adoption-DEFERRED
+on the device-class grounds, not on the size of the win.
 
 ### A property banked rather than assumed: the table is profile-independent
 

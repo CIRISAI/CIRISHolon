@@ -82,6 +82,32 @@ pub enum Limit {
     Ask,
 }
 
+/// A FIELD INSTANCE of the [`Limit::Budget`] / [`Limit::Floor`] distinction, on a shipped
+/// production artifact, measured before this type existed.
+///
+/// The water lane traced the O-O pair curve across a ladder of iteration caps. It exits
+/// `IterationCap` at `1.6e-5`, and the residual falls `1.08e-4 → 9.53e-11` with the energy
+/// settling, converging at **3,738 iterations against a shipped cap of 1,200**. That is
+/// `Limit::Budget` unambiguously — and the natural reading of "stagnated near 1e-10" is
+/// `Limit::Floor`, whose remedy is the opposite one. Nobody should price a high-precision
+/// referee for O-O; it needs iterations on the tier it is already on.
+///
+/// Two further readings from the same trace, and both are warnings about reading a residual:
+///
+/// * **the residual is NOT monotone under thick restart.** The same knot reads `1.0797e-4`,
+///   `1.3299e-5`, `8.8651e-5`, `1.3206e-4`, `1.1029e-6` at caps 150/300/600/1200/2400 — the
+///   shipped cap's residual is TEN TIMES the one that solve had already passed through at cap
+///   300. A capped solve's residual is a sample of an oscillation.
+/// * so **a residual-only verdict on a capped solve is luck.** Two O-O knots exit
+///   `IterationCap` at `2.36e-10` and `2.32e-10`, values a residual gate would wave through.
+///
+/// This is why nothing in `holon-tables` grades a solve on a residual: `node::void_reason`
+/// reads the EXIT and the variational margin, never the residual. The rule was adopted from
+/// the wrong-eigenvector finding; this trace is independent evidence for it from a shipped
+/// curve.
+pub const O_O_FIELD_INSTANCE: &str =
+    "O-O pair curve: IterationCap at 1.6e-5, converging at 3738 iterations against a cap of      1200 — Limit::Budget, not Limit::Floor (water lane, 2026-08-31)";
+
 /// How well a rung's reach is known for a class. The distinction is load-bearing: a provisional
 /// boundary relied on as if measured is a lease making a promise nobody checked.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -1,0 +1,640 @@
+   Compiling holon-chem v0.1.0 (/home/emoore/CIRISHolon/engine/crates/holon-chem)
+warning: function `scale` is never used
+    --> crates/holon-chem/src/fci.rs:1664:4
+     |
+1664 | fn scale(a: f64, x: &mut [f64]) {
+     |    ^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `normalised` is never used
+    --> crates/holon-chem/src/fci.rs:1672:4
+     |
+1672 | fn normalised(a: &[f64]) -> Vec<f64> {
+     |    ^^^^^^^^^^
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:357:5
+    |
+355 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+356 | pub struct ClassicalPotentialOp {
+357 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+    = note: `#[warn(unpredictable_function_pointer_comparisons)]` on by default
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:480:5
+    |
+478 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+479 | pub struct RingPolymerOp {
+480 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+
+warning: `holon-chem` (lib test) generated 4 warnings (4 duplicates)
+warning: `holon-chem` (lib) generated 4 warnings
+warning: unused variable: `na`
+  --> crates/holon-chem/examples/zn_diagnose.rs:25:17
+   |
+25 |         let (_, na, nb) = electron_counts(&[sp]);
+   |                 ^^ help: if this is intentional, prefix it with an underscore: `_na`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused variable: `nb`
+  --> crates/holon-chem/examples/zn_diagnose.rs:25:21
+   |
+25 |         let (_, na, nb) = electron_counts(&[sp]);
+   |                     ^^ help: if this is intentional, prefix it with an underscore: `_nb`
+
+warning: unused import: `ohhh_mbe3_energy`
+  --> crates/holon-chem/examples/de4_price.rs:43:61
+   |
+43 | use holon_chem::quaternary::{de4_ohhh_fci, ohhh_fci_energy, ohhh_mbe3_energy, sort_ohhh_internals};
+   |                                                             ^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: variable does not need to be mutable
+  --> crates/holon-chem/examples/h3_barrier.rs:33:9
+   |
+33 |     let mut scan = |lo: f64, hi: f64, n: usize, best_r: &mut f64, best_e: &mut f64| {
+   |         ----^^^^
+   |         |
+   |         help: remove this `mut`
+   |
+   = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `HYDROGEN` and `OXYGEN`
+ --> crates/holon-chem/tests/ooh.rs:1:28
+  |
+1 | use holon_chem::elements::{HYDROGEN, OXYGEN};
+  |                            ^^^^^^^^  ^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `N_NODES`
+ --> crates/holon-chem/tests/ooh.rs:2:73
+  |
+2 | use holon_chem::ooh::{de3_point, OohMeta, OohTable, node_index, NR, NU, N_NODES};
+  |                                                                         ^^^^^^^
+
+warning: unused imports: `atom_energy` and `pair_point`
+ --> crates/holon-chem/tests/ooh.rs:3:24
+  |
+3 | use holon_chem::pair::{atom_energy, pair_point};
+  |                        ^^^^^^^^^^^  ^^^^^^^^^^
+
+warning: unused variable: `n_price`
+   --> crates/holon-chem/examples/de4_price.rs:267:9
+    |
+267 |     let n_price: usize = args.get(1).and_then(|s| s.parse().ok()).unwrap_or(20);
+    |         ^^^^^^^ help: if this is intentional, prefix it with an underscore: `_n_price`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `internals` is never used
+   --> crates/holon-chem/examples/de4_price.rs:183:4
+    |
+183 | fn internals(g: &[[f64; 3]; 4]) -> ([f64; 3], [f64; 3]) {
+    |    ^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `holon-chem` (example "zn_diagnose") generated 2 warnings (run `cargo fix --example "zn_diagnose" -p holon-chem` to apply 2 suggestions)
+warning: `holon-chem` (example "h3_barrier") generated 1 warning (run `cargo fix --example "h3_barrier" -p holon-chem` to apply 1 suggestion)
+warning: variable `acc` is assigned to, but never used
+   --> crates/holon-chem/examples/c1_campaign.rs:476:9
+    |
+476 |     let mut acc = 0.0f64;
+    |         ^^^^^^^
+    |
+    = note: consider using `_acc` instead
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: value assigned to `acc` is never read
+   --> crates/holon-chem/examples/c1_campaign.rs:480:9
+    |
+480 |         acc += v + d;
+    |         ^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: `holon-chem` (test "ooh") generated 3 warnings (run `cargo fix --test "ooh" -p holon-chem` to apply 3 suggestions)
+warning: function `referee_path` is never used
+  --> crates/holon-chem/tests/common/mod.rs:17:8
+   |
+17 | pub fn referee_path() -> PathBuf {
+   |        ^^^^^^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `referee_bytes` is never used
+  --> crates/holon-chem/tests/common/mod.rs:21:8
+   |
+21 | pub fn referee_bytes() -> Vec<u8> {
+   |        ^^^^^^^^^^^^^
+
+warning: function `referee_text` is never used
+  --> crates/holon-chem/tests/common/mod.rs:25:8
+   |
+25 | pub fn referee_text() -> String {
+   |        ^^^^^^^^^^^^
+
+warning: function `worst` is never used
+   --> crates/holon-chem/tests/common/mod.rs:181:8
+    |
+181 | pub fn worst(referee: &[String], mine: &[f64]) -> (f64, usize) {
+    |        ^^^^^
+
+warning: `holon-chem` (example "c1_campaign") generated 2 warnings
+warning: constant `T_LO` is never used
+  --> crates/holon-chem/examples/s2_third.rs:53:7
+   |
+53 | const T_LO: f64 = 0.0;
+   |       ^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused import: `holon_chem::elements::OXYGEN`
+  --> crates/holon-chem/tests/ozone.rs:10:5
+   |
+10 | use holon_chem::elements::OXYGEN;
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: unused imports: `NR`, `NU`, `R_LO`, `de3_point`, `node_r`, `node_u`, and `third_side`
+  --> crates/holon-chem/tests/ozone.rs:12:11
+   |
+12 |     self, de3_point, node_r, node_u, third_side, OzoneTable, NR, NU, R_HI, R_LO,
+   |           ^^^^^^^^^  ^^^^^^  ^^^^^^  ^^^^^^^^^^              ^^  ^^        ^^^^
+
+warning: unused imports: `atom_energy` and `pair_point`
+  --> crates/holon-chem/tests/ozone.rs:14:24
+   |
+14 | use holon_chem::pair::{atom_energy, pair_point};
+   |                        ^^^^^^^^^^^  ^^^^^^^^^^
+
+warning: unused import: `RadiusRule`
+ --> crates/holon-chem/examples/emit_palette.rs:6:40
+  |
+6 |     declared_colour, homonuclear_size, RadiusRule, CONTACT_ENERGY, PAIR_PROVENANCE, WELL_MIN_DEPTH,
+  |                                        ^^^^^^^^^^
+  |
+  = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `string_array` is never used
+  --> crates/holon-chem/tests/common/mod.rs:32:8
+   |
+32 | pub fn string_array(src: &str, key: &str) -> Vec<String> {
+   |        ^^^^^^^^^^^^
+
+warning: function `string_scalar` is never used
+  --> crates/holon-chem/tests/common/mod.rs:53:8
+   |
+53 | pub fn string_scalar(src: &str, key: &str) -> String {
+   |        ^^^^^^^^^^^^^
+
+warning: `holon-chem` (test "ozone") generated 3 warnings (run `cargo fix --test "ozone" -p holon-chem` to apply 3 suggestions)
+warning: `holon-chem` (example "de4_price") generated 3 warnings (run `cargo fix --example "de4_price" -p holon-chem` to apply 2 suggestions)
+warning: `holon-chem` (example "emit_palette") generated 1 warning (run `cargo fix --example "emit_palette" -p holon-chem` to apply 1 suggestion)
+warning: `holon-chem` (test "elements3_atoms") generated 6 warnings (4 duplicates)
+warning: `holon-chem` (example "s2_third") generated 1 warning
+warning: `holon-chem` (test "mixtures_referee") generated 4 warnings
+    Finished `release` profile [optimized + debuginfo] target(s) in 2m 25s
+     Running unittests src/lib.rs (target/release/deps/holon_chem-d8d80a46d76dc4af)
+
+running 22 tests
+test pair::bisect_tests::a_root_on_the_endpoint_is_still_bracketed ... ok
+test pair::bisect_tests::a_bracketed_root_is_located ... ok
+test pair::bisect_tests::an_unbracketed_interval_is_refused ... ok
+test tier::tests::f64_helpers_bit_match_reference ... ok
+test quaternary_table::tests::canonical_form_is_s3_invariant_and_separates_what_sorting_merged ... ok
+test tier::tests::jacobi_dd_deep_eigenvalues ... ok
+test quaternary_table::tests::embedding_reproduces_its_own_coordinates ... ok
+test quaternary_table::tests::the_continuation_commutes_with_relabelling ... ok
+test quaternary_table::tests::the_grid_axes_round_trip ... ok
+test scalar::tests::accumulation_error_bounded ... ok
+test scalar::tests::add_sub_roundtrip_tight ... ok
+test scalar::tests::div_newton_converges ... ok
+test scalar::tests::f64_impl_is_native ... ok
+test scalar::tests::keeps_what_f64_drops ... ok
+test scalar::tests::mul_matches_known_expansion ... ok
+test scalar::tests::ordering_uses_both_limbs ... ok
+test scalar::tests::sqrt_squares_back ... ok
+test sigma_op::tests::the_bit_identity_gate_refuses_a_degenerate_carrier ... ok
+test sigma_op::tests::the_host_operator_passes_the_bit_identity_gate ... ok
+test sigma_op::tests::the_bit_identity_gate_refuses_a_one_ulp_wobble ... ok
+test sigma_op::tests::the_host_operator_is_bit_identical_to_sigma_direct ... ok
+test quaternary_table::tests::an_orbit_fill_makes_eval_bit_exactly_symmetric ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 3.46s
+
+     Running tests/api_surface.rs (target/release/deps/api_surface-92adf5b8e2c21057)
+
+running 1 test
+test every_unreferenced_public_item_is_a_decision ... FAILED
+
+failures:
+
+---- every_unreferenced_public_item_is_a_decision stdout ----
+  385 public items, 71 referenced nowhere in the library, 111 classified, 6 not
+
+thread 'every_unreferenced_public_item_is_a_decision' (4030440) panicked at crates/holon-chem/tests/api_surface.rs:141:5:
+these public items are referenced NOWHERE inside the library, and are not classified in tests/data/api_surface.txt: ["QUATERNARY_PROVENANCE", "canonical_index", "embed_ohhh", "eval_cartesian", "ohhh_fci_grad", "set_orbit"]
+
+Each is either real API with a named consumer, or a computation only a test reaches — which is the defect shape this audit exists for. Name it with a reason; do not delete the line to make this pass.
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    every_unreferenced_public_item_is_a_decision
+
+test result: FAILED. 0 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.23s
+
+error: test failed, to rerun pass `-p holon-chem --test api_surface`
+     Running tests/c1_quantum_nuclei.rs (target/release/deps/c1_quantum_nuclei-3fd6451fb9fa0200)
+
+running 12 tests
+test test_normal_modes_are_orthogonal ... ok
+test test_harmonic_ring_energy_limits ... ok
+test test_isotope_shift_direction_and_its_scaling ... ok
+test test_banked_surface_reports_its_excursions ... ok
+test test_bead_forgetting_square_and_its_budget ... ok
+test test_referee_reproduces_the_harmonic_plant ... ok
+test test_referee_refuses_a_box_that_does_not_hold_the_state ... ok
+test test_banked_interpolant_tracks_the_solver ... ok
+test test_p1_ring_dynamics_is_the_classical_trajectory ... ok
+test test_pimd_reproduces_the_exact_ring_polymer_energy ... ok
+test test_campaign_references_regenerate ... ok
+test test_referee_reproduces_the_morse_plant has been running for over 60 seconds
+test test_referee_reproduces_the_morse_plant ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 72.49s
+
+     Running tests/carrier_tower.rs (target/release/deps/carrier_tower-f908c85cac20ba8b)
+
+running 9 tests
+test test_c0_c1_transport_and_centroid_retract ... ok
+test test_c2_fiber_addition_is_one_compilation ... ok
+test test_angular_shell_generalization ... ok
+test test_capability_stub_fence_enforcement ... ok
+test test_corridor_selection_rule_and_budget_refusal ... ok
+test test_fiber_contribution_addition_within_carrier ... ok
+test test_h2_harmonic_zpe_sanity ... ok
+test test_refusal_missing_picture_change ... ok
+test test_c2_propagation_advances_time_and_holds_energy ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.37s
+
+     Running tests/elements.rs (target/release/deps/elements-6b7132140809283d)
+
+running 18 tests
+test every_declared_number_is_the_pinned_tabulations ... ok
+test exponents_rise_with_z_and_masses_do_too ... ok
+test hydrogen_is_not_re_declared ... ok
+test oxygens_leading_exponent_is_the_published_one ... ok
+test plant_the_historical_oxygen_defect_fires_the_ratio_band ... ok
+test the_basis_and_electron_counts_are_what_the_row_gives ... ok
+test the_contraction_coefficients_are_universal ... ok
+test the_d_shells_report_whether_they_share_an_sp_set ... ok
+test the_exponent_ratios_are_element_independent ... ok
+test the_homonuclear_radius_refuses_outside_its_declared_domain ... ok
+test the_registry_refuses_what_it_does_not_have ... ok
+test the_sp_shell_shares_its_exponents ... ok
+test plant_basis_mutation_fires_the_referee_tolerance ... ok
+test the_degenerate_atoms_are_exactly_their_single_configuration_energies ... ok
+test plant_a_single_digit_typo_in_a_new_element_fires_the_ratio_band ... ok
+test plant_z_mutation_moves_the_energy_by_orders_of_magnitude ... ok
+test second_row_atomic_ground_states ... ok
+test argon_dimer_refuses_to_bind has been running for over 60 seconds
+test argon_dimer_refuses_to_bind ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 216.57s
+
+     Running tests/elements3_atoms.rs (target/release/deps/elements3_atoms-cce1142a6c44e609)
+
+running 4 tests
+test the_mps_arm_is_unreachable_so_the_orbital_constant_decides_nothing ... ok
+test the_two_closed_shell_nobles_match_the_fifty_digit_referee ... ok
+test the_heavy_atoms_agree_between_two_independent_sigma_routes has been running for over 60 seconds
+test the_heavy_ground_multiplicities_come_out_rather_than_in has been running for over 60 seconds
+test the_heavy_ground_multiplicities_come_out_rather_than_in ... ok
+test the_heavy_atoms_agree_between_two_independent_sigma_routes ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 484.58s
+
+     Running tests/elements3_dimers.rs (target/release/deps/elements3_dimers-2ebd6249e5b73918)
+
+running 6 tests
+test e1_the_noble_dimers_do_not_bind ... ok
+test e1_the_heavy_nobles_are_closed_shells_exactly ... ok
+test e2_the_hydrogen_halide_well_depths_fall_down_the_column ... ok
+test e2_the_bromine_dimer_binds_exactly ... ok
+test f1_the_fence_stake_fired_the_deficit_falls_down_the_column ... ok
+test the_banked_record_still_describes_this_engine has been running for over 60 seconds
+test the_banked_record_still_describes_this_engine ... ok
+
+test result: ok. 6 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 278.69s
+
+     Running tests/fci.rs (target/release/deps/fci-2a2ed7d2d603a854)
+
+running 17 tests
+test the_spin_check_rejects_a_state_that_is_not_an_eigenstate ... ok
+test test_mps_solver_vs_fci_ground_state ... ok
+test the_three_exits_are_distinguishable ... ok
+test a_one_determinant_space_reports_trivial ... ok
+test the_converged_state_is_in_the_right_spin_sector ... ok
+test the_two_sigma_routes_agree_on_a_general_vector ... ok
+test test_sigma_direct_n2_and_atomic_ground_states ... ok
+test test_solve_routes_large_spaces_to_mps ... ok
+test the_orthonormaliser_orthonormalises ... ok
+test the_stored_diagonal_is_the_hamiltonians_own ... ok
+test the_analytic_derivatives_match_a_finite_difference ... ok
+test the_variational_guard_fires_on_a_solve_that_converged_to_the_wrong_state ... ok
+test the_energy_does_not_depend_on_the_orbital_basis ... ok
+test the_variational_guard_is_silent_on_a_correct_solve ... ok
+test test_sigma_direct_germanium_ground_state ... ok
+test the_ground_multiplicity_along_the_curve_is_settled_densely has been running for over 60 seconds
+test the_ladder_route_reproduces_the_iterative_ground_state has been running for over 60 seconds
+test the_ladder_route_reproduces_the_iterative_ground_state ... ok
+test the_ground_multiplicity_along_the_curve_is_settled_densely ... ok
+
+test result: ok. 17 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 98.75s
+
+     Running tests/front_door.rs (target/release/deps/front_door-93a1c79f3f1b3d76)
+
+running 1 test
+test the_cache_refuses_a_curve_whose_solve_gave_up ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 5.30s
+
+     Running tests/md.rs (target/release/deps/md-b35a3339a53a8a0a)
+
+running 9 tests
+test f_orbitals_spherical_transformation_orthonormality_and_contaminant_removal ... ok
+test general_scheme_reproduces_the_s_only_closed_forms ... ok
+test integrals_do_not_depend_on_where_the_origin_is ... ok
+test the_one_electron_matrices_do_not_depend_on_shell_order ... ok
+test eri_obeys_its_eight_permutational_symmetries ... ok
+test the_two_electron_zeros_are_the_ones_symmetry_forces ... ok
+test d_orbitals_obey_permutational_and_translational_symmetries ... ok
+test f_orbitals_obey_permutational_and_translational_symmetries has been running for over 60 seconds
+test f_orbitals_rotational_invariance has been running for over 60 seconds
+test f_orbitals_obey_permutational_and_translational_symmetries ... ok
+test f_orbitals_rotational_invariance ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 306.57s
+
+     Running tests/mixtures_referee.rs (target/release/deps/mixtures_referee-18055a16a826895e)
+
+running 4 tests
+test r2_the_staked_pairs_match_the_fifty_digit_referee ... ignored, waiting on the mixtures-referee drop in tests/data/mixtures1/
+test r2_the_staked_set_is_the_freeze_s ... ok
+test r2_which_staked_pairs_leave_the_determinant_route ... ok
+test r2_an_out_of_scope_species_is_refused_by_name ... ok
+
+test result: ok. 3 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/model.rs (target/release/deps/model-fcd7a06b2e3a626f)
+
+running 11 tests
+test a_refused_request_is_refused_rather_than_defaulted ... ok
+test the_asymptote_is_the_curve_it_claims_to_be ... ok
+test the_analytic_derivatives_are_derivatives_of_this_function ... ok
+test the_grid_is_uniform_in_the_variable_it_says_it_is ... ok
+test the_force_sign_convention_is_the_renderers ... ok
+test the_pieces_add_up_to_the_total ... ok
+test the_two_ci_routes_agree ... ok
+test the_emitted_json_round_trips_bit_for_bit ... ok
+test the_streaming_and_collecting_paths_are_the_same_numbers ... ok
+test the_curve_has_the_shape_a_bound_diatomic_must_have ... ok
+test the_interpolant_the_renderer_integrates_tracks_the_model ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.25s
+
+     Running tests/ooh.rs (target/release/deps/ooh-961577da916d0634)
+
+running 3 tests
+test ooh_gradient_tracks_finite_difference ... ok
+test ooh_exchange_symmetry_is_bit_exact ... ok
+test ooh_fci_point_is_saturating_and_bound ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.12s
+
+     Running tests/ozone.rs (target/release/deps/ozone-28afd7a91925ea98)
+
+running 3 tests
+test far_field_boundary ... ok
+test derivative_consistency ... ok
+test s3_permutation_symmetry ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/p1_radius.rs (target/release/deps/p1_radius-37f9430f9fd0fc68)
+
+running 5 tests
+test the_three_rules_describe_themselves_distinctly ... ok
+test plant_a_density_radius_presented_as_dimer_derived_is_refused ... ok
+test the_valence_radius_reproduces_the_periodic_size_trend ... ok
+test every_radius_is_labelled_with_the_rule_that_produced_it has been running for over 60 seconds
+test the_whole_density_radius_is_core_dominated_and_says_so has been running for over 60 seconds
+test the_whole_density_radius_is_core_dominated_and_says_so ... ok
+test every_radius_is_labelled_with_the_rule_that_produced_it ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 459.67s
+
+     Running tests/pair.rs (target/release/deps/pair-ef13aa868bc415f5)
+
+running 11 tests
+test pair_file_names_parse_to_their_elements ... ok
+test route_verdicts_are_the_determinant_threshold_alone ... ok
+test the_colour_rule_is_declared_monotone_and_distinguishable ... ok
+test the_mps_arm_is_unreachable_at_the_current_constants ... ok
+test the_pair_cache_is_lazy_and_unordered ... ok
+test the_palette_size_rule_runs_both_of_its_branches ... ok
+test the_general_path_reproduces_the_banked_h2_curve ... ok
+test e3_every_pair_emits_the_renderer_contract ... ok
+test the_well_finder_is_not_simply_silent ... ok
+test e1_the_closed_shells_refuse_to_bind has been running for over 60 seconds
+test r2_the_first_row_matches_the_fifty_digit_referee has been running for over 60 seconds
+test e1_the_closed_shells_refuse_to_bind ... ok
+test r2_the_first_row_matches_the_fifty_digit_referee ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 550.00s
+
+     Running tests/quaternary.rs (target/release/deps/quaternary-644508f7e8a54f36)
+
+running 3 tests
+test s3_permutation_invariance_is_bit_exact ... ok
+test far_field_decay_validates_six_bohr_cutoff ... ok
+test forty_witnesses_ab_initio_sign_structure_and_bounds has been running for over 60 seconds
+test forty_witnesses_ab_initio_sign_structure_and_bounds ... ok
+
+test result: ok. 3 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 119.43s
+
+     Running tests/referee.rs (target/release/deps/referee-bb79a3c5a9c79100)
+
+running 5 tests
+test referee_is_the_pinned_file ... ok
+test the_contraction_is_the_referees_contraction ... ok
+test the_stake_is_stated_where_the_gate_can_see_it ... ok
+test equilibrium_and_asymptote_match_the_referee ... ok
+test engine_curve_matches_the_referee_at_every_separation ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.89s
+
+     Running tests/special.rs (target/release/deps/special-34cb2d0a370db319)
+
+running 8 tests
+test boys_against_reference_values ... ok
+test boys_at_zero_is_the_exact_rational ... ok
+test boys_derivative_rules_hold ... ok
+test erf_and_erfc_against_known_values ... ok
+test the_hoisted_constants_still_equal_the_expressions_they_replace ... ok
+test the_two_boys_branches_agree_where_the_crossover_puts_them ... ok
+test boys_is_ordered_and_positive_across_the_branch_change ... ok
+test erf_and_erfc_sum_to_one ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/spherical_d.rs (target/release/deps/spherical_d-18c19e54509d55b0)
+
+running 8 tests
+test elements_without_d_shells_are_untouched ... ok
+test plant_a_wrong_transform_fires_against_the_freezes_own_counts ... ok
+test the_basis_is_one_function_per_shell_component ... ok
+test the_projection_removes_the_spherically_symmetric_direction_and_only_that ... ok
+test the_registrys_basis_size_is_the_one_the_engine_assembles ... ok
+test the_heavy_nobles_are_single_determinant_closed_shells ... ok
+test the_projected_basis_sits_variationally_above_the_cartesian_one ... ok
+test the_projected_integrals_are_a_well_formed_basis has been running for over 60 seconds
+test the_projected_integrals_are_a_well_formed_basis ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 68.83s
+
+     Running tests/spherical_f.rs (target/release/deps/spherical_f-56acd018729a8a8c)
+
+running 4 tests
+test plant_wrong_row_transforms_pass_the_subspace_tests_and_fail_the_row_pin ... ok
+test the_determinant_count_plant_has_no_carrier_for_f ... ok
+test the_f_projection_rows_are_pinned_and_not_merely_the_subspace ... ok
+test the_shipped_f_projection_spans_the_right_subspace ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s
+
+     Running tests/trimer.rs (target/release/deps/trimer-bc1c714ab45a6619)
+
+running 11 tests
+test the_disclosed_probe_priors_are_reproduced ... ok
+test r1_the_trimer_matches_the_fifty_digit_referee ... ok
+test the_fast_path_agrees_with_the_general_n_centre_route ... ok
+test t2_the_originally_staked_longest_side_shell_fires ... ok
+test the_analytic_gradient_is_the_interpolants_own_gradient ... ok
+test the_interpolant_is_c1_across_its_nodes ... ok
+test outside_the_domain_the_reading_is_exactly_zero ... ok
+test plant_i_the_sign_flip_inverts_saturation ... ok
+test plant_ii_symmetry_and_its_deliberate_break ... ok
+test t1_interpolant_fidelity_on_held_out_geometries ... ok
+test t2_the_shipped_truncation_systematic ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 32.16s
+
+     Running tests/w1_masks.rs (target/release/deps/w1_masks-77365faade5da77b)
+
+running 4 tests
+test the_mask_admits_the_species_elements_three_needs ... ok
+test the_widening_reproduces_every_banked_species_bit_for_bit ... FAILED
+test the_string_enumeration_is_bounded_by_the_mask_width ... ok
+test the_mask_plant_fires_above_thirty_two_orbitals_and_is_silent_below has been running for over 60 seconds
+test the_mask_plant_fires_above_thirty_two_orbitals_and_is_silent_below ... ok
+
+failures:
+
+---- the_widening_reproduces_every_banked_species_bit_for_bit stdout ----
+
+thread 'the_widening_reproduces_every_banked_species_bit_for_bit' (4111180) panicked at crates/holon-chem/tests/w1_masks.rs:78:21:
+assertion `left == right` failed: Be E: -1.44036550410941704e1 (bits c02cceabdfa0bae1) is not the banked bit pattern (bits c02cceabdfa0baea). The mask widening was supposed to change which spaces can be ADDRESSED and nothing about what they evaluate to.
+  left: 13847670191844014817
+ right: 13847670191844014826
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    the_widening_reproduces_every_banked_species_bit_for_bit
+
+test result: FAILED. 3 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 275.32s
+
+error: test failed, to rerun pass `-p holon-chem --test w1_masks`
+     Running tests/water.rs (target/release/deps/water-3021d29bbdb7dccf)
+
+running 11 tests
+test the_sort_kink_is_at_roundoff_because_oxygen_is_never_sorted ... ok
+test the_exchange_symmetry_is_bit_exact_and_the_desymmetrised_plant_voids ... ok
+test the_table_is_zero_outside_its_domain_and_finite_inside ... ok
+test the_committed_table_is_this_build_s_own_output ... FAILED
+test plant_iii_the_swapped_table_fires ... ok
+test g1_the_bent_geometry_emerges has been running for over 60 seconds
+test g2_the_third_hydrogen_refuses_and_the_second_binds has been running for over 60 seconds
+test plant_i_the_sign_flip_inverts_the_bend has been running for over 60 seconds
+test t1_the_interpolant_is_faithful_off_its_nodes has been running for over 60 seconds
+test t2_the_truncation_costs_what_the_domain_says has been running for over 60 seconds
+test the_three_body_expansion_cannot_saturate_oxygen_and_says_so has been running for over 60 seconds
+test plant_i_the_sign_flip_inverts_the_bend ... ok
+test g1_the_bent_geometry_emerges ... ok
+test the_three_body_expansion_cannot_saturate_oxygen_and_says_so ... ok
+test g2_the_third_hydrogen_refuses_and_the_second_binds ... ok
+test t1_the_interpolant_is_faithful_off_its_nodes ... ok
+test t2_the_truncation_costs_what_the_domain_says ... ok
+
+failures:
+
+---- the_committed_table_is_this_build_s_own_output stdout ----
+
+thread 'the_committed_table_is_this_build_s_own_output' (4114698) panicked at crates/holon-chem/tests/water.rs:204:9:
+assertion `left == right` failed: committed node (53, 53, 13) is -6.25814774446453725e-7, this build's solver says -6.25815030241838599e-7. The artifact and the code have diverged; regenerate it with `--example s2_build -- --emit 65 49`.
+  left: 13737385917283303424
+ right: 13737385919699222528
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+
+
+failures:
+    the_committed_table_is_this_build_s_own_output
+
+test result: FAILED. 10 passed; 1 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1110.18s
+
+error: test failed, to rerun pass `-p holon-chem --test water`
+     Running tests/water_referee.rs (target/release/deps/water_referee-c3cdf420da7ab475)
+
+running 5 tests
+test the_spin_audit_asserts_where_resolved_and_reports_where_degenerate ... ok
+test referee_is_the_pinned_file ... ok
+test the_referee_says_where_it_could_not_check_itself ... ok
+test the_staked_set_spans_the_domain_it_claims_to ... ok
+test engine_matches_the_referee_at_every_staked_geometry has been running for over 60 seconds
+test engine_matches_the_referee_at_every_staked_geometry ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 116.15s
+
+   Doc-tests holon_chem
+
+running 1 test
+test crates/holon-chem/src/tower.rs - tower::Contribution (line 107) - compile fail ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.51s
+
+error: 3 targets failed:
+    `-p holon-chem --test api_surface`
+    `-p holon-chem --test w1_masks`
+    `-p holon-chem --test water`

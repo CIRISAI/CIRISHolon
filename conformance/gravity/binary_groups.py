@@ -19,6 +19,7 @@ inverses, order, classes, commutators.
 """
 import json
 import math
+import os
 import sys
 from itertools import permutations, product
 
@@ -480,9 +481,13 @@ if __name__ == "__main__":
     _, out["2T"] = run("2T (binary tetrahedral, CONTROL)", build_2T,
                        ANGLE_SQRT2, W_LABEL_SQRT2, "sqrt2")
 
-    path = ("/tmp/claude-1000/-home-emoore-CIRISOntology/"
-            "4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/rung5/"
-            "rung5_spectra.json")
+    # M-STALE-INSTRUMENT: this previously wrote into a per-session scratchpad
+    # that dies with its session (the committed results transcribe the numbers;
+    # the raw dump was lost). Default beside the script; override via RUNG5_OUT.
+    path = os.environ.get(
+        "RUNG5_OUT",
+        os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                     "rung5_spectra.json"))
     with open(path, "w") as f:
         json.dump(out, f, indent=2)
     print(f"\nwrote {path}")

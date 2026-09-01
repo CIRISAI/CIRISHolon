@@ -5,10 +5,13 @@ Strata: classical {x,cx,ccx} / clifford {x,z,h,s,sdg,cx} / magic (clifford+t,tdg
 Circuits measure every qubit q[i]->c[i], so holon's key order (c[n-1..0]) equals
 qiskit's probabilities_dict order (q[n-1..0]). Comparison: max abs prob error.
 Modes: gauge (planted mutants must FIRE) | staked <stratum> | bench."""
-import json, random, subprocess, sys, time
+import json, os, random, subprocess, sys, tempfile, time
 
 BIN = "/home/emoore/CIRISHolon/engine/target/release/holon-qasm"
-TMP = "/tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/qasm/_cc.qasm"
+# M-STALE-INSTRUMENT: was a hardcoded per-session scratchpad path that dies
+# with its session; a fresh temp dir is equivalent (the file is a rewritten
+# scratch circuit, never read across runs).
+TMP = os.path.join(tempfile.mkdtemp(prefix="qasm_conformance_"), "_cc.qasm")
 
 GATES = {
     "classical": [("x",1),("cx",2),("ccx",3)],

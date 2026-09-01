@@ -34,14 +34,17 @@ import random
 import statistics
 import subprocess
 import sys
+import tempfile
 import time
 
 BIN = "/home/emoore/CIRISHolon/engine/target/release/holon-qasm"
 PY = "/home/emoore/CIRISOntology/scratchpad/temporal-share/qenv/bin/python"
 SELF = os.path.abspath(__file__)
 OWNED = "/home/emoore/CIRISOntology/scratchpad/qasm"
-TMP = "/tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/qasm"
-os.makedirs(TMP, exist_ok=True)
+# M-STALE-INSTRUMENT: was a hardcoded per-session scratchpad path that dies
+# with its session (durable artifacts live in OWNED; TMP holds regenerable
+# scratch circuits only).
+TMP = tempfile.mkdtemp(prefix="battlerig_")
 
 TIMEOUT = 120.0
 REPS = 3

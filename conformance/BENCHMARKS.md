@@ -1,6 +1,13 @@
 # Benchmark manifest — measured ratios or it didn't happen
 
 Rule: a performance claim without a moved, recorded ratio does not merge.
+Rule (2026-09-01): a timing row carries repeat count and spread, or names the
+log that does — a single number with no spread hides an instability that only
+shows when two rows disagree impossibly (the GPU 65.7/69.8 pair sat bimodal
+6× for two days, visible solely because it happened to print two comparable
+numbers; RESOURCE_DESIGN §9 Q4 already requires mean AND spread of registry
+entries — this record now holds itself to its own crate's rule). Bit-exact
+correctness rows are exempt; timings are not.
 
 | tier | workload | ours | reference | ratio | date |
 |---|---|---|---|---|---|

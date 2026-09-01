@@ -9,7 +9,16 @@
 # It compared every file with itself, reported "0 files refreshed", and exited 0.
 # A sync that silently does nothing is worse than one that fails, because the
 # next thing you do is trust the destination.
-D="${MIXTURES1_WORKING:-/tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/mixtures_referee}"
+# M-STALE-INSTRUMENT (widened): the old default was a per-session scratchpad
+# path that dies with the session that wrote it. There is no durable default;
+# the working dir must be named explicitly.
+if [ -z "${MIXTURES1_WORKING:-}" ]; then
+  echo "REFUSING: MIXTURES1_WORKING is unset and the old default was a dead" >&2
+  echo "per-session scratchpad path. Export your live working dir, e.g.:" >&2
+  echo "  export MIXTURES1_WORKING=/path/to/your/mixtures_referee" >&2
+  exit 2
+fi
+D="$MIXTURES1_WORKING"
 R="${MIXTURES1_REPO:-/home/emoore/CIRISHolon/conformance/atomworld/mixtures1_referee}"
 FILES="README.md RESUME.md FEASIBILITY.md basis2.py species2.py species.py
        m1core.py build_atoms2.py curves2.py emit2.py env.sh run_pairs.sh

@@ -9,6 +9,30 @@ numbers; RESOURCE_DESIGN §9 Q4 already requires mean AND spread of registry
 entries — this record now holds itself to its own crate's rule). Bit-exact
 correctness rows are exempt; timings are not.
 
+Rule (2026-09-01, fleet-wide by the lead's ruling): **A RECORD WITHOUT ITS
+CONDITIONS IS NOT A RECORD.** A timing carries the regime it was measured in —
+loadavg at start AND end, core class, and clock as a fraction of advertised —
+or it may not later serve as a baseline. The founding case is a finding that was
+manufactured out of this gap: three "record" times on this box were each wrong
+by a *different* factor (2.37×, 1.73×, 2.54× against true quiet values), and
+their ratio 2.37/1.73 = 1.37 was published as a property of two probes when it
+was a property of two wrong baselines. Nobody could tell, because no record
+carried its conditions. The reference implementation is
+`conformance/lib/run_conditions.sh`, stamped at both ends by
+`s3_mesh/launch_table.sh`; it infers nothing and every line it prints is
+measured. Note what it shows on a busy box: at loadavg 62 the P-class clock
+reads **54% of advertised**, which no loadavg number tells you.
+
+**PRE-STANDARD BOUNDARY.** Every row dated before 2026-09-01 was recorded
+without its conditions, and much of this campaign ran on a box between loadavg
+18 and 72. Those rows are kept and are not retracted — they were honestly
+measured and most are correctness-adjacent or large-margin — but **conditions
+unrecorded, pre-standard**: do not compute a ratio against one without
+establishing the regime it came from, and do not read any of them as a floor.
+This boundary is stated once here rather than annotated onto each row, because
+the rows belong to several lanes and the defect is a uniformly missing field
+rather than anything wrong in a particular row.
+
 | tier | workload | ours | reference | ratio | date |
 |---|---|---|---|---|---|
 | tableau (packed, holon crate) | n=256 d=5120 + full measure | **0.0078 s** | qiskit StabilizerState 0.024 s | **3.1× faster** | 2026-08-27 |

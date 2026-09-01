@@ -20,6 +20,9 @@
 # kill narration, never computation.
 set -uo pipefail
 
+# The fleet conditions standard: a record without its conditions is not a record.
+source /home/emoore/CIRISHolon/conformance/lib/run_conditions.sh
+
 if [ $# -lt 2 ]; then
     echo "usage: $0 <label> <s3_tables args...>" >&2
     echo "   e.g: $0 hhcl --species H,H,Cl --x 2.0:6.0 ... --out .../hhcl.tbl" >&2
@@ -68,8 +71,8 @@ DIRTY=$(cd "$ENGINE" && git status --porcelain | wc -l)
         echo "working tree      clean                      [MEASURED]"
         echo "                  so the binary corresponds to HEAD [INFERRED from clean+build-ok]"
     fi
-    echo "host loadavg      $(cut -d' ' -f1 /proc/loadavg)                       [MEASURED at launch]"
     echo "command           s3_tables $*"
+    run_conditions "at launch"
     echo "=== end header; the binary's own parameter echo follows ==="
     echo ""
 } | tee "$LOG"
@@ -77,8 +80,11 @@ DIRTY=$(cd "$ENGINE" && git status --porcelain | wc -l)
 # ---- 5: run detached; the binary echoes its parameters as IT parsed them.
 rm -f "$OUTDIR/$LABEL.DONE"
 setsid nice -n 19 bash -c "
+    source /home/emoore/CIRISHolon/conformance/lib/run_conditions.sh
     '$BIN' $* >> '$LOG' 2>&1
-    echo \"exit=\$?\" >> '$LOG'
+    rc=\$?
+    echo \"exit=\$rc\" >> '$LOG'
+    run_conditions 'at exit' >> '$LOG' 2>&1
     touch '$OUTDIR/$LABEL.DONE'
 " < /dev/null > /dev/null 2>&1 &
 

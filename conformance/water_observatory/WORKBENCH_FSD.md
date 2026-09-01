@@ -189,3 +189,81 @@ local atomistic refinement; (6) the seam crossed with the energy ledger
 still closed; (7) a held-out observable predicted after the handoff.
 Seven steps, no kilometer tier required. When this loop runs live, the
 instrument is the novelty; until then every shell is WB-7.1 MOCK.
+
+## 9. THE CARRIER TOWER (WB-8) — prerequisite for full quantum effects
+### Added 2026-08-31 at the operator's direction. This section IS the sprint tasking.
+
+**WB-8.0 — status: PREREQUISITE.** Full quantum effects in the workbench
+(T4 nuclei and everything past them) build on the carrier tower, not
+around it. Land the interfaces before the physics that needs them.
+
+**WB-8.1 — the fold, stated once.** The holon lives in a two-dimensional
+system of certified charts: vertically, quotient by scale (electrons →
+atoms → molecules → phases → continuum) — this axis is the existing
+Object contract, `Closed v T`, unchanged; horizontally, refinement of the
+theory carrier (Born–Oppenheimer classical-nuclear → ring-polymer quantum
+nuclei → real-time MPS electronic dynamics → spinorial/Dirac → QED) — the
+SAME commuting square rotated: a `CertifiedTransport` is lift-state +
+picture-change + commuting certificate. Terms ADD only inside one
+carrier's fiber; across carriers you TRANSPORT, never add. The pattern's
+existence proof already runs in this codebase: the Scalar seam (one
+solver body, f64/Dd carriers, promotion as explicit transport, mixing a
+type error).
+
+**WB-8.2 — the interfaces to land** (architecture per the reviewed
+sketch; names negotiable, semantics not):
+- `Carrier` (State / Operator: AdditiveOperator / Observable) and
+  `Contribution<C: Carrier>` — cross-carrier addition is a COMPILE ERROR;
+- `CertifiedTransport<A, B>` with its commuting certificate — the
+  missing-picture-change refusal test ships with it;
+- `Capability<T>::{Certified, Stub}` — every stub carries a visible fence
+  (the existing refusal pattern, typed);
+- `TheoryNode`/`TheoryDiagram` with dependency-closed term sets, per-node
+  error budget and MEASURED price;
+- selection = the corridor rule, already proved (`Corridor.lean`):
+  argmin price subject to closure + conservation budgets — cheapness
+  alone selects the dead chart and is refused by theorem;
+- `AngularShell { l: u8 }` — kill the S/P/D/F enum; ℓ is a value.
+  Z prices; Z never branches.
+- Refusal test battery: double counting (type-level), missing picture
+  change, budget-violating selection, stub-without-fence. Each
+  demonstrated firing (a gate that has never failed has never gated).
+
+**WB-8.3 — the water tower's carriers**, in build order: C0 the resident
+node (nonrelativistic BO, classical nuclei — today's banked physics,
+untouched, re-expressed as a node); C1 ring-polymer quantum nuclei (T4 —
+ZPE, tunnelling, isotopes; classical limit = C0 as the diagonal retract);
+C2 real-time MPS electronic dynamics (TDVP on the crystal-banked
+machinery — the 0:1:0:1 alternation entering chemistry as dynamics);
+C3+ spinorial/QED nodes exist as visible STUBS with fences — reachable,
+not materialized; not on the water path and honestly so.
+
+**WB-8.4 — THE ACCEPTANCE LAW: the most exotic dynamics, no
+undischargeable refusals — or the DRY is wrong.** The fold's falsifier,
+staked now: within the water domain, EVERY refusal must be dischargeable
+by climbing the tower — a fence is transient (pay the price, transport to
+the adequate carrier, the fence lifts); a refusal that NO reachable
+carrier can discharge falsifies the fold's design, and that verdict is
+recorded, not argued with. Honesty unchanged: fences stay visible while
+undischarged (WB-5.2); "no refusals" means no PERMANENT ones, never
+fake-served ones — the three fabrication convictions of this campaign
+define exactly what this clause does not license.
+
+**WB-8.5 — the exotic showcase, staked as targets** (each lands with its
+carrier and its own gates): proton tunnelling and H/D isotope
+fractionation (C1); Grotthuss proton hopping — autoionization, H₃O⁺/OH⁻
+wires (C0/C1 reactive dynamics + quantum protons); ice X's symmetric
+hydrogen bond (C1 essential — classical nuclei cannot produce it);
+SUPERIONIC ICE — oxygen lattice, liquid protons, the flagship exotic
+(C1 + the pressure knob); supercritical water (C0/C1); thermal seam
+crossings at the tabulated state crossings (C2); coherent proton dynamics
+(C2, the deepest rung). If the tower is right, this list is a tour;
+each entry that instead dead-ends in an undischargeable refusal is a
+WB-8.4 conviction.
+
+**WB-8.6 — division.** Sprint team: WB-8.2 interfaces + refusal battery +
+C0 re-expression + C1 construction (the ring-polymer holon per the
+maximal tasking §4, with its exact-reference gates). Crystal-inheritance
+measurement (DMRG-vs-FCI staking) feeds C2. Ozone tabulation,
+certification, and the frozen P2 rerun continue unblocked in parallel —
+the fold does not gate them; they do not gate the fold.

@@ -46,3 +46,79 @@ mean. See conformance/atomworld/gpu_fci/.
 STILL OWED: the quiet-window measurement, on BOTH arms. The GPU arm's exposure is not
 smaller than the CPU arm's, so the direction of the contention bias in the 3.2x ratio is
 not established. M-PLACEMENT-LOTTERY third rung.
+
+
+================================================================================
+SERIES 2 — 200 reps per block, and the diagnosis above is SUPERSEDED
+================================================================================
+# Run after gpu-prod supplied a rival mechanism and a 12-invocation series. Their
+# hypothesis predicted my kernel spread was an artifact of my own instrument. It is.
+
+run   kernel_only_ms   sigma/s     round_trip_ms   sigma/s      loadavg 66-70
+  1        14.618        68.4          34.581       28.9
+  2        14.604        68.5          33.597       29.8
+  3        14.755        67.8          17.581       56.9
+
+  kernel only, 200 reps    67.8 - 68.5 sigma/s     spread 1.010x   mean 68.22
+  kernel only,  20 reps    55.0 - 67.5 sigma/s     spread 1.23x    (series 1)
+  round trip,  200 reps    28.9 - 56.9 sigma/s     spread 1.97x
+
+CROSS-INSTRUMENT AGREEMENT, which is what makes this trustworthy rather than another
+single-lane story. gpu-prod ran twelve SEPARATE invocations of a DIFFERENT instrument
+(holon-gpu fci_bench, one host wall-clock span over N launches, declared warm-up discard,
+pinned to cpu0) across loadavg 67.5-86.6:
+
+  their kernel-only   mean 68.253   sd 0.366 (0.54%)   spread 1.019x
+  my    kernel-only   mean 68.22    over 3 runs        spread 1.010x
+
+Two instruments, two timing methods, agreeing to 0.05% on the mean.
+
+WHAT THIS OVERTURNS FROM SERIES 1:
+
+1. THE KERNEL BLOCK IS STABLE. The 1.23x I measured was a WARM-UP TRANSIENT, not the
+   kernel and not the host. At 20 reps a cold-clock ramp is ~1/10 of the timed span; at
+   200 reps it is amortised away and the spread collapses to 1.01x. gpu-prod predicted
+   this from their own instrument before I ran it.
+
+2. THE INVERSION IS A COLD-CLOCK ARTIFACT, NOT A HOST STALL. sigma.cu times the
+   kernel-only block FIRST and the round-trip block SECOND, so the first block pays the
+   ramp. The arithmetic closes exactly:
+
+       banked kernel-only   65.7 sigma/s = 15.221 ms    SLOWER than warm (14.60-14.76)
+       banked round trip    69.8 sigma/s = 14.327 ms    at warm speed, host not stalling
+       warm kernel measured today                        14.60-14.76 ms
+
+   A partially-cold first block and a warm second block invert the ordering with no host
+   stall required. gpu-prod saw the identical signature on their own first run
+   (kernel 52.6 vs round trip 62.3) and fixed it with a declared 3-loop warm-up discard,
+   after which their ordering has been correct in every run.
+
+3. SO THE BANKED 65.7 UNDERSTATES THE KERNEL BY 3.7%. The honest warm kernel-only rate is
+   68.2, not 65.7. The GPU arm was quoted BELOW its own rate.
+
+WHAT SURVIVES FROM SERIES 1, and it is the round trip alone:
+
+   The round-trip block IS genuinely host-exposed, and more reps make it WORSE, which is
+   the signature of per-rep host synchronisation rather than of a ramp: 1.97x at 200 reps
+   against 1.23x-with-bimodality at 20. Each rep does htod + dtoh with pageable memory, so
+   each rep is a chance for a descheduled host to be charged. The 66.1 ms excess against a
+   0.50 ms measured PCIe round trip (132x) stands as host descheduling; no device-side
+   mechanism produces it.
+
+TWO MECHANISMS, NOT ONE. Series 1 conflated them and attributed the inversion to the
+host. Cold-clock ramp explains the INVERSION; host descheduling explains the ROUND TRIP's
+instability. Both are real; they are not the same phenomenon and they act on different
+blocks.
+
+WHAT WOULD FALSIFY THIS ACCOUNT: a warm-started run (declared discard, no ramp) that still
+inverts, which would put the inversion back on the host; or a 200-rep kernel block that
+goes bimodal at higher load, which would mean the kernel block is host-exposed after all
+and the amortisation only hid it. Neither is observed up to loadavg 87 across two
+instruments.
+
+HONEST NOTE ON THIS FILE'S OWN HISTORY: this is the FOURTH account of the same two
+numbers, after (i) swapped labels, (ii) an unsourceable 69.8, (iii) two draws from one
+contaminated distribution. The first three were each built on evidence I had and none
+survived contact with more of it. The difference here is that the account is
+cross-validated by an instrument I did not write, and it makes a falsifiable prediction
+that has been checked. That is the only reason to trust it more than its predecessors.

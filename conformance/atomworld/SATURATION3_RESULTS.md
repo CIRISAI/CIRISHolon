@@ -450,7 +450,8 @@ fixed range in a fixed order. **Five repeat runs bit-identical.**
 | arm | sigma/s | GFLOP/s FP64 | note |
 |---|---|---|---|
 | **GPU, whole kernel** | **65.7** | 318.4 | 15.2 ms/sigma |
-| GPU + host round trip | 14.9–89.8 ms | — | bimodal on a loaded box; see below |
+| GPU, kernel only, WARM | 68.2 | 331 | the honest device rate (2026-09-01) |
+| GPU + host round trip | 28.9–56.9 | — | genuinely host-exposed, 1.97× spread |
 | CPU, `sigma_direct`, 32 threads | 17.2 – 20.8 | ~97 | two runs, loadavg 18 and 32 |
 | CPU, same GEMM reformulation, OpenBLAS 1 thread | 1.40 | 6.8 | **slower than the hand-written kernel** |
 
@@ -464,17 +465,21 @@ they lived in a per-session scratchpad rather than the repository's. They are no
 4.547474e-13 absolute, 3.033e-15 relative, 188,363 of 207,025 bitwise, five repeats
 bit-identical. The 91.0% divergence that founded M-DEVICE-CLASS is a re-run result now.
 
-The re-run also exposed a defect, which I diagnosed wrongly twice. `69.8` was reported as
-the WITH-round-trip figure while being faster than the 65.7 it contains. Swapped labels:
-rejected, since `sigma.cu` prints sigma/s and GFLOP/s together only on the kernel-only line
-and 65.7 ↔ 15.221 ms ↔ 318.6 GFLOP/s is the banked 318.4. "69.8 is unsourceable": also
-wrong. **The truth is that on a loaded box neither timing is stable.** Six runs at loadavg
-61–72 gave kernel-only 14.820–18.168 ms (1.23x) and a bimodal round trip — three at ~14.9
-ms, three at 81–90 ms (6.0x), the slow mode's 66.1 ms excess being 132x the measured 0.50
-ms PCIe round trip, i.e. host descheduling rather than any device mechanism. The two banked
-numbers are two draws from that distribution. gpu-production's independent `fci_bench`
-showed the same ordering the same day (58.9 kernel / 65.2 round trip) while measuring
-69.40 ± 1.01 over five timing runs, and its spot-check convicted its own 58.9.
+The re-run exposed a defect I then diagnosed wrongly three times; the fourth account is
+cross-validated. `69.8` was reported as the WITH-round-trip figure while being faster than
+the 65.7 it contains. **Cause: a cold-clock ramp on whichever block runs first.** `sigma.cu`
+times kernel-only first, so it pays the ramp — banked 65.7 = 15.221 ms is SLOWER than the
+warm kernel measured today at 14.60–14.76 ms, while banked 69.8 = 14.327 ms is the warm
+second block. **The kernel block is stable and my earlier 1.23× was my own instrument**: at
+200 reps rather than 20 the ramp amortises and the spread collapses to 1.010× (mean 68.22),
+against gpu-prod's twelve separate invocations of a different instrument at 1.019× (mean
+68.253) over loadavg 67.5–86.6 — two methods agreeing to 0.05%. **So the banked 65.7
+understates the kernel by 3.7%; the honest warm rate is 68.2.** What survives as host
+exposure is the round trip alone, and it worsens with reps (1.97× at 200), the signature of
+per-rep pageable copies rather than a ramp. Previously this record claimed gpu-prod's log as
+independent corroboration of the ordering; that was a transient working-tree state of their
+in-flight file and is WITHDRAWN — their committed logs order correctly, and their
+twelve-invocation series is the better corroboration that replaces it.
 
 **RETRACTED, one hour after I posted it:** that the GPU arm's contention exposure had been
 measured and was negligible (65.7 → 67.5, "+2.7% in the wrong direction"), and that 3.2×

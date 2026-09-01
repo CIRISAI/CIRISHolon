@@ -572,7 +572,7 @@ done
 #     real gate 13's audit was always meant to end in, not the allowlist entry.
 declare -A CRATE_ALLOW=(
   ["holon-gpu"]="excluded: requires an NVIDIA GPU (cudarc + nvcc-compiled PTX); GitHub runners have none. Tested on the 4090 dev box: 12/12 determinism tests incl. struct-level shard invariance vs the CPU mesh (crates/holon-gpu/GPU.md). Owner: gpu-mesh lane / team-lead. Exit: a CI runner with a GPU, at which point this entry converts to a real invocation."
-  ["q8-mps"]="PARTIALLY COVERED (2026-09-01): gate 16b runs `--test c2_tdvp_gates` (the C2 carrier). The DEFERRAL still stands for the rest of the crate -- a live full-grid run, hours deep, and a gate must never run --ignored full-grid tests. Owner: the C2/tower lane. Exit: once the grid completes, this entry converts to a plain `-p q8-mps`."
+  ["q8-mps"]="PARTIALLY COVERED (2026-09-01): gate 16b runs --test c2_tdvp_gates (the C2 carrier). The DEFERRAL still stands for the rest of the crate -- a live full-grid run, hours deep, and a gate must never run --ignored full-grid tests. Owner: the C2/tower lane. Exit: once the grid completes, this entry converts to a plain -p q8-mps. (Backticks removed: inside a double-quoted bash string they are COMMAND SUBSTITUTION -- the prose executed itself and corrupted this entry, failing the coverage audit.)"
   ["q-seam"]="uncovered, ownership untriaged (chief-of-staff-2, 2026-08-24)"
   ["sphere-demo"]="uncovered, ownership untriaged (chief-of-staff-2, 2026-08-24)"
   ["engine-compare"]="excluded: pulls Rapier, needs std+alloc, would falsify the core's zero-allocation isolation gates"

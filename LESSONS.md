@@ -71,3 +71,28 @@ These are binding on all CIRISHolon code.*
     commit; describe the taken hunk in the next commit message and tell the
     owner. This tree goes foreign in minutes, so "I checked when I started"
     is not a check.
+
+12. **A gate that compares one region does not cover the file.** The
+    trajectory runner and its reference were byte-compared on their frozen
+    protocol block; the block matched, and the runner still silently ran
+    different physics, because `de4_enabled = true` is set in the reference's
+    `main` BELOW that block's closing banner. Regenerating "the dE4 seed"
+    with it would have switched the four-body term OFF, written a trajectory
+    of different physics under the right filename, and let a closure census
+    report a confident failure to certify. Every number would have looked
+    reasonable. When two files must agree about PHYSICS, gate the physics —
+    inventory what each one sets and require the stand-in to name every knob
+    its reference names — not just the region you happened to draw a box
+    around. What a runner does not set, it inherits from the constructor's
+    defaults, and the constructor is not the protocol.
+
+13. **Symbol ABSENCE is not evidence; only presence is.** Declaring a build
+    by its symbol table (`nm -C | grep -c <fn>`) is sound when the symbol is
+    THERE — it proves the code is reached. It proves nothing when the symbol
+    is missing: a build that calls `quaternary::de4_ohhh_fci` shows ZERO such
+    symbols because the call is inlined. Two builds were correctly separated
+    this way when one's source could not call the function at all, and the
+    method was adopted house-wide on that success — which is exactly how a
+    one-directional check becomes a rule that misleads. Where the question is
+    "did this term actually fire", use a counter the physics itself
+    increments and read it from the run.

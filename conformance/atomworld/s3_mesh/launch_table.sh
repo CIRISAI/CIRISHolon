@@ -20,9 +20,6 @@
 # kill narration, never computation.
 set -uo pipefail
 
-# The fleet conditions standard: a record without its conditions is not a record.
-source /home/emoore/CIRISHolon/conformance/lib/run_conditions.sh
-
 if [ $# -lt 2 ]; then
     echo "usage: $0 <label> <s3_tables args...>" >&2
     echo "   e.g: $0 hhcl --species H,H,Cl --x 2.0:6.0 ... --out .../hhcl.tbl" >&2
@@ -35,6 +32,47 @@ OUTDIR=/home/emoore/CIRISHolon/engine/output/saturation3
 BIN="$ENGINE/target/release/s3_tables"
 LOG="$OUTDIR/$LABEL.log"
 mkdir -p "$OUTDIR"
+
+# ---- 0: SNAPSHOT EVERY SCRIPT THIS RUN WILL READ, then re-exec from the snapshot.
+#
+# Bash reads a script INCREMENTALLY BY BYTE OFFSET. Editing a running script moves the
+# ground under its read position: the remainder executes from the new bytes at the old
+# offset. gpu-prod lost a summary block to exactly this and the twelve readings under it
+# had to be recomputed by hand.
+#
+# TWO exposures here, and the second is the one that matters:
+#
+#   1. THIS FILE, for as long as the build below takes. Minutes, but real.
+#   2. `run_conditions.sh`, which the DETACHED WRAPPER sources when the binary returns --
+#      possibly HOURS later. That file lives in `conformance/lib/` and was published for
+#      every lane in the fleet to use, so it is not merely mutable, it is EXPECTED to
+#      change. A multi-hour run that reads a shared helper at exit is reading whatever the
+#      fleet happened to leave there, including a half-written file.
+#
+# The existing header pinned the BINARY's sha256 and said nothing about the scripts, so a
+# mutated launcher or helper was invisible to the provenance -- M-PROVENANCE-OVERREACH's
+# shape in the one place that header did not look. Both are now copied read-only into a
+# run-scoped directory, sha256'd into the header, and the run reads ONLY the copies.
+# LIMIT, stated rather than guarded: the snapshot dir is per-LABEL and is cleared on
+# launch, so launching the same label twice concurrently would clear the first run's copies.
+# On Linux the running bash holds the inodes open and survives it, but the provenance dir
+# would then describe the second run. One run per label is the existing assumption; this
+# does not add a lock, because an invented lock is a new thing that can be wrong.
+SNAPDIR="$OUTDIR/$LABEL.launch"
+LIBSRC=/home/emoore/CIRISHolon/conformance/lib/run_conditions.sh
+if [ "${S3_LAUNCH_SNAPSHOT:-}" != "1" ]; then
+    rm -rf "$SNAPDIR"; mkdir -p "$SNAPDIR"
+    cp "$0" "$SNAPDIR/launch_table.sh" || { echo "cannot snapshot the launcher" >&2; exit 71; }
+    cp "$LIBSRC" "$SNAPDIR/run_conditions.sh" || { echo "cannot snapshot run_conditions.sh" >&2; exit 71; }
+    chmod 444 "$SNAPDIR/launch_table.sh" "$SNAPDIR/run_conditions.sh"
+    export S3_LAUNCH_SNAPSHOT=1
+    exec bash "$SNAPDIR/launch_table.sh" "$LABEL" "$@"
+fi
+
+# From here on we ARE the snapshot, and every path below reads the snapshot's copies.
+source "$SNAPDIR/run_conditions.sh"
+LAUNCHER_SHA=$(sha256sum "$SNAPDIR/launch_table.sh" | awk '{print $1}')
+CONDITIONS_SHA=$(sha256sum "$SNAPDIR/run_conditions.sh" | awk '{print $1}')
 
 # ---- 1 & 2: build, capture status, refuse on failure.
 echo "building s3_tables (release)..." >&2
@@ -71,6 +109,10 @@ DIRTY=$(cd "$ENGINE" && git status --porcelain | wc -l)
         echo "working tree      clean                      [MEASURED]"
         echo "                  so the binary corresponds to HEAD [INFERRED from clean+build-ok]"
     fi
+    echo "launcher sha256   $LAUNCHER_SHA  [MEASURED — snapshot, read-only]"
+    echo "conditions sha256 $CONDITIONS_SHA  [MEASURED — snapshot, read-only]"
+    echo "                  ^ both copied into $SNAPDIR and executed from there, so an edit"
+    echo "                    to the shared originals cannot reach this run."
     echo "command           s3_tables $*"
     run_conditions "at launch"
     echo "=== end header; the binary's own parameter echo follows ==="
@@ -80,7 +122,7 @@ DIRTY=$(cd "$ENGINE" && git status --porcelain | wc -l)
 # ---- 5: run detached; the binary echoes its parameters as IT parsed them.
 rm -f "$OUTDIR/$LABEL.DONE"
 setsid nice -n 19 bash -c "
-    source /home/emoore/CIRISHolon/conformance/lib/run_conditions.sh
+    source '$SNAPDIR/run_conditions.sh'
     '$BIN' $* >> '$LOG' 2>&1
     rc=\$?
     echo \"exit=\$rc\" >> '$LOG'

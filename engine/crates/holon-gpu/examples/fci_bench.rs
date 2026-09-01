@@ -146,6 +146,7 @@ fn main() {
     let mut species = vec!["O".to_string(), "O".to_string(), "O".to_string()];
     let mut core_type_arg = String::from("unset");
     let mut davidson_iters = 0usize;
+    let mut rate_only = false;
     let mut i = 0;
     while i < args.len() {
         let v = || args.get(i + 1).unwrap_or_else(|| panic!("{} needs a value", args[i])).clone();
@@ -154,6 +155,13 @@ fn main() {
             "--species" => species = v().split(',').map(|s| s.to_string()).collect(),
             "--core-type" => core_type_arg = v(),
             "--davidson" => davidson_iters = v().parse().expect("--davidson"),
+            // One warm kernel-only rate on stdout and nothing else, so a launcher can build
+            // a BETWEEN-INVOCATION spread. See the registration block below for why that is
+            // the only spread a spot-check may be checked against.
+            "--rate-only" => {
+                rate_only = true;
+                i -= 1;
+            }
             other => panic!("unknown argument {other}; this binary refuses what it cannot parse"),
         }
         i += 2;
@@ -299,6 +307,11 @@ fn main() {
     }
     let gpu_roundtrip = w0.elapsed().as_secs_f64() / reps as f64;
 
+    if rate_only {
+        println!("RATE {:.6}", 1.0 / gpu_kernel);
+        return;
+    }
+
     let n = space.n_orb;
     let n2 = (n * n) as f64;
     let na = space.alpha.len() as f64;
@@ -356,7 +369,15 @@ fn main() {
         .sqrt();
     println!(
         "\n--- registration (mean AND spread, per RESOURCE_DESIGN section 9 Q4) ---\n\
-         gpu sigma/s over {} timing runs: mean {mean:.2}, sd {spread:.3}",
+         gpu sigma/s over {} back-to-back timing runs IN THIS PROCESS: mean {mean:.2}, sd \
+         {spread:.3}\n\
+         WITHIN-PROCESS ONLY. This is NOT the spread a registration may be built from: a \
+         spot-check runs whenever dispatch asks, on whatever the machine is doing then, and \
+         a spread measured over five back-to-back loops inside one warm process describes \
+         the quiet moment rather than the machine. Registering that way convicts the box and \
+         calls it the registration -- M-IDLE-CALIBRATED-TIMEOUT one layer up from the reaper, \
+         surfaced by saturation3-mesh 2026-09-01. Build the entry from `--rate-only` across \
+         SEPARATE invocations instead; `conformance/atomworld/gpu_fci/spread_runs.sh` does it.",
         spread_runs.len()
     );
 

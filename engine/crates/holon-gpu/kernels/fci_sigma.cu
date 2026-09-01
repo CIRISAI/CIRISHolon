@@ -2,10 +2,21 @@
 // reduction order.
 //
 // This is the production form of SATURATION-3 G2's measured kernel
-// (`scratchpad/s3gpu/sigma.cu`, 65.7 sigma/s against the 32-thread CPU mesh's 20.8). Only
-// the two custom kernels live here; the three GEMMs are cuBLAS calls made from the host,
-// so that the tuned library does the work it is good at and the host keeps the driver
-// logic.
+// (`conformance/atomworld/s3_mesh/gpu/sigma.cu`, 65.7 sigma/s against the 32-thread CPU
+// mesh's 20.8). Only the two custom kernels live here; the three GEMMs are cuBLAS calls
+// made from the host, so that the tuned library does the work it is good at and the host
+// keeps the driver logic.
+//
+// THE CITATION ABOVE WAS WRONG WHEN THIS FILE WAS COMMITTED and is corrected here rather
+// than quietly: it read `scratchpad/s3gpu/sigma.cu`, a relative path that reads as the
+// repository's scratch directory and named a location the instruments had never been in
+// — they lived in a per-session scratchpad and were one cleanup from taking the result's
+// reproducibility with them. That is M-STALE-INSTRUMENT's second variant, registered the
+// same day by saturation3-mesh, who rescued the files to the path above and re-ran them
+// (correctness figures identical to the digit). It is invisible to both automated axes:
+// the string is prose-shaped and carries no session key to grep, so it reads as a clean
+// typo rather than as a lost instrument. The enforcement is human and it is the rule that
+// caught this line: FOLLOW EVERY SCRATCH CITATION FROM OUTSIDE THE SESSION THAT WROTE IT.
 //
 // ============================ THE ALGEBRA, AND WHY IT IS THREE GEMMS ======================
 //

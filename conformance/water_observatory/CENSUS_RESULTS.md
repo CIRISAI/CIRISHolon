@@ -155,6 +155,21 @@ TIGHTER exactly as a scene becomes more chemically interesting.
 **The stake is NOT being moved.** The verdicts above stand as VOID. What is recorded beside
 them is the underlying Leg A measurement, which is clean, strong and on moving carriers.
 
+**The sharpest demonstration, from the mixed arm.** The same instrument gives H₂ OPPOSITE
+verdicts in the two arms, and the thing that decides it is how many hydrogens are in the
+box:
+
+| arm | H atoms | pool C(n,2) − 1 | H₂ molecules | peers passing | control rate | H₂ verdict |
+|---|---|---|---|---|---|---|
+| hydrogen | 12 | 65 | 6 | 5 | **0.077** | VOID (no separation) |
+| mixed | 8 | 27 | 2 | 1 | **0.037** | CERTIFIED-STRICT |
+
+Both numbers are exactly the arithmetic — 5/65 and 1/27 — and both appear in the census
+output verbatim. So a molecule that certifies in a box of eight hydrogens is voided in a
+box of twelve, with identical physics, identical thresholds, and no measurement
+distinguishing them. **A floor whose verdict flips on the composition of the box is not
+measuring the block.**
+
 **The defect, named:** the prereg compared a pool rate against a flat constant. This
 programme's own discipline rule 5 says to control estimator bias with a **shuffle or
 permutation floor**, and that rule was not applied. Staked now for the next freeze and not

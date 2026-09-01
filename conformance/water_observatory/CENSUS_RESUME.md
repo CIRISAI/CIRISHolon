@@ -135,41 +135,34 @@ measured above, from MBE3 with the OOO triples fenced, at 4.7e-5–7.9e-5 of bou
 water adjudication did not have to wait on the dE₄ repair.** What still waits on it is a
 different question: whether the four-body term changes the answer.
 
-## THE BLOCKER, and it is not mine to clear## THE BLOCKER, and it is not mine to clear
+## WHAT THIS LANE LEAVES READY FOR THE NEXT ONE
 
-The run that reported the programme's first emergent OH₂ — `waterquench mixed` with
-`dE4(O,H,H,H)` riding — **was built from source that is in no commit**:
+The blocker that opened this lane is cleared: road item 5 did not need the dE₄ repair. What
+remains is two experiments, both SPECIFIED so neither gets answered by inference:
 
-* `git show HEAD:engine/crates/holon-render/src/sim.rs | grep -c de4_enabled` → 0.
-* The working-tree `sim.rs` that had it has since been overwritten in place by the T3
-  refactor. No stash, no backup, no worktree holds the pre-refactor bytes.
+| question | held fixed | the variable | who |
+|---|---|---|---|
+| does the OOO fence move the endpoint? | everything at `45a513a` | served vs fenced | unassigned; design in `CENSUS_RESULTS.md` §10.5 |
+| does the four-body term change the answer? | **this fenced arm as the baseline** | repaired full-strength dE₄ | water lane owns the rerun; this census adjudicates its trajectories |
 
-So the census cannot answer the OH₂ question yet, and saying it could would be inventing a
-verdict from different physics. What is needed, in order:
+The second is the live one. The banked dE₄ seeds were near-MBE3 physics — the momentum
+defect was a double mass division that also weakened the dE₄ forces by 3–4 orders — so the
+first true four-body experiment is the repaired rerun, and its comparison baseline is the
+eight fenced trajectories parked at `/home/emoore/holon-artifacts/census-traj/fenced/` and
+hashed in `census_traj_manifest.sha256`.
 
-1. The dE₄ `sim.rs` committed (red is fine — a red commit is recoverable, an overwritten
-   buffer is not).
-2. One completed seed re-run on that commit, its per-seed line diffed against the running
-   job's line for the same seed. Match ⇒ the physics is reproducible and bankable.
-3. Then: `waterquench_traj mixed --ozone=fenced` on that commit for seeds
-   `0x53415422/23/24/26/27/28`, and the identical census over the dumps.
+**To adjudicate them when they land**, from a clean checkout:
 
-Step 3 is a copy-paste once step 1 lands. Nothing else in this lane is waiting on anything.
+```
+cargo run --release -p holon-lens --example census -- \
+    --reference=conformance/atomworld/p2_waterquench.log <their-traj-dir>
+cargo run --release -p holon-lens --example block_probe -- <traj> <block-hex>
+```
 
-## What the arms can and cannot settle
+The census needs trajectory DUMPS, not logs — `waterquench_traj` produces them and its
+frozen-protocol block is byte-gated against `waterquench.rs`.
 
-* **`served`** reproduces the configuration of the banked `conformance/atomworld/p2_waterquench.log`,
-  so it is the only arm whose G2 (trajectory equality against a banked reference) is
-  checkable. Its physics is the (O,O,O) surface M-CHEAPER-THAN-ITS-PRICE convicted, so it
-  is used as an INSTRUMENT gate and never as evidence about water.
-* **`fenced`** is the last valid P2 configuration (OOH-complete MBE3, the four OOO triples
-  honestly fenced) minus dE₄. Its physics stands; it has no banked reference log, so G2 is
-  unverifiable on it and the report says so.
-
-Neither arm contains an OH₂. The census's headline on them is therefore about the
-INSTRUMENT and about what the engine's components actually do, not about water formation.
-
-## Two corrections this lane made to itself, both worth carrying forward
+## Two corrections this lane made to itself## Two corrections this lane made to itself, both worth carrying forward
 
 1. **A window staked in TIME must be measured against timestamps, never against `dt`.** The
    engine's timestep adapts mid-run; on hydrogen seed `0x53415421` it halves after eleven

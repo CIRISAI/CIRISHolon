@@ -615,6 +615,11 @@ which is the near miss that forced it.
 - **G-dE4-2 — arm A must reproduce the banked run.** Its final-frame molecule multiset must
   equal `engine/output/p2_de4_full/seed_0x53415422.log`'s `[H2 H2 OH2 O3H2]`. If it does
   not, my regeneration is not their run and the census speaks only about mine.
+  *Grounded before the run, by reading the reference runner at `21e6be3` rather than
+  assuming: `waterquench.rs` there sets `base.ozone = OzoneTable::empty()` and
+  `base.de4_enabled = true`, with the same trimer, water and OOH tables. That is exactly
+  arm A's `--ozone=fenced --de4=on`, so G-dE4-2 is comparing like with like. It also has no
+  method-style scene setup that the knob gate's `base.<field>` scan would miss.*
 - **G-dE4-3 — conservation.** Both arms must hold \\|p\\|/bound below 1, as every
   conservation-clean arm in this document has. A breach voids that arm exactly as it voided
   the broken-dE₄ logs.

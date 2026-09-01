@@ -300,3 +300,22 @@ isotope shift); the C2 crystal-inheritance staking (DMRG vs FCI referee
 on water-dimer nodes); T3 scale-up (dynamic storage, cell lists, PBC,
 the ledgered-hand column); reference-state inventory (WB-3.2); the real
 wasm engine replacing the WB-7.1 mock.
+
+**WB-8.7 — THE TOWER IS THE INSTRUMENT (operator's law, 2026-09-01).**
+The machinery is not preparation for the experiment; it IS the experiment.
+Building the complete tower is how the maximal claim gets tested: every
+special case, hardcoded branch, or per-composition carve-out the build
+FORCES us to write is a measurement against the claim — a witness pair at
+the architecture level. Therefore: (1) a **DRY-residual register** is kept
+beside the misfit registry — every irreducible special case is entered
+with its reason, and the register's GROWTH RATE against domain size is the
+claim's live falsifier: short and closed = the fold is winning; growing
+with the domain = the DRY is wrong, said quantitatively; (2) the grep-armed
+audit extends to code: a hardcoded species/composition branch must cite
+either its fold or its residual entry, or the gate refuses; (3) unbuilt
+machinery is UNEVALUATED CLAIM-SURFACE — the standing rule that machinery
+debt gates campaigns is not project hygiene, it is the requirement that
+the instrument be complete enough for its reading to mean something. The
+dE₄ incident is the founding case: the unfolded path concealed an 80×
+price surprise precisely because nothing had forced its shape into the
+open.

@@ -84,6 +84,26 @@ has a reactive channel; this is not water-specific. STILL OWED: the seam LOCUS.
 Two slices found two points on two seams; where the seams run is unmeasured, and
 the ruling above needs it before an angle axis is frozen.
 
+## RESCUED REF, do not delete: `rescue/de4-sim-worktree` (7480437)
+
+The two long-running `waterquench` processes were built from a sim.rs whose dE4
+dispatch exists in NO COMMIT, while a T3 refactor was being layered onto the same
+file in the shared tree — so their source was minutes from being unreconstructible.
+Taken with `git stash create` and ref'd as a branch: it touched neither the working
+tree nor the index, so the refactoring lane was not disturbed and did not need to
+stop. It carries dE4 intact (36 references, 2958 lines).
+
+It is a snapshot of dE4 PLUS PARTIAL T3, not of the binary's source. But the binary
+dates itself: `strings` finds none of the T3 markers (`DEFAULT_SCENE_ATOMS`,
+`complete_pairs`, `ExternalWork`, `Periodic`), while `nm` finds
+`holon_chem::quaternary::de4_ohhh_fci`. So the binary PREDATES the refactor and the
+reconstruction target is this ref minus the T3 hunks — a live diff, not archaeology.
+
+`quaternary.rs` itself is committed and gated: `tests/quaternary.rs` asserts all 40
+of this lane's staked witnesses with exactly 11 attractive, the sign structure the
+referee established when the five-parameter fit was killed. What is uncommitted is
+the DISPATCH, not the physics.
+
 ## The four table domains — STAGE (1) IN FLIGHT
 
 Per the lead's two-stage ruling: stage (1) is spans and extents and goes to the

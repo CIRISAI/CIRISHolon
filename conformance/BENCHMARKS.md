@@ -1201,7 +1201,8 @@ lib tests, both profiles.
 
 ### Twenty-sixth entry, CORRECTION: core placement is a third axis, and it flips one banked row
 
-*Prompted by counter-evidence from the mesh lane, verified here against this
+*Prompted by counter-evidence from MESHER (a separate lane from saturation3-mesh;
+see the attribution correction below), verified here against this
 box's own hardware. Their datum: a 26.7 ms job of theirs reads 3.5× its record
 at loadavg 46 — SHORTER than my calibration probe and far MORE sensitive,
 which falsifies the mechanism I had proposed ("a short job gets an idle core").*
@@ -1251,12 +1252,12 @@ contention; it does not fix heterogeneity.** The citable table therefore needs
 never sufficient.
 
 **My proposed mechanism is withdrawn.** I claimed a short probe cannot see
-load because it gets an idle core. Three things say otherwise: the mesh lane's
+load because it gets an idle core. Three things say otherwise: MESHER's
 26.7 ms job is shorter and 3.5× more affected; the E-core penalty on MY
 workload is duration-INDEPENDENT (1.16× at d=45, 1.22× at d=101, 1.16× at
 d=141), so duration is not the axis it varies along; and the probe's CPU time
 tracks its wall time (user 0.07 of wall 0.07–0.11), so it was never waiting
-for a core in the first place. The surviving statement is the mesh lane's:
+for a core in the first place. The surviving statement is MESHER's:
 **a probe is blind to contention it does not itself experience** — match the
 probe to the measurement in working set and core placement, not merely in
 duration. Lengthening my probe worked here only because d=101's 416 MB working
@@ -1265,7 +1266,7 @@ set competes for bandwidth that d=45's 16.5 MB does not.
 
 ### Twenty-sixth entry, SECOND CORRECTION: "pin to a P-core" is not a condition, it is a lottery
 
-*Prompted by saturation3-mesh retracting a clause of theirs I had accepted (their
+*Prompted by MESHER retracting a clause of theirs I had accepted (their
 "slower because it landed on an E-core" is falsified in sign on their own
 workload: E/P = 0.83, the E-core was FASTER for them). Their retraction sent me
 to check whether my own "adversarial P-core" framing was any better founded. It
@@ -1361,3 +1362,31 @@ at d=221), which is the shape the column-major engine's word-parallel scaling
 predicts, and which every earlier table also showed — the trend was real even
 while its magnitudes were not.
 
+
+
+### ATTRIBUTION CORRECTION (2026-09-01)
+
+Two distinct lanes contributed to the corrections above and I collapsed their
+names. **MESHER** — the lane my registry case was misrouted to, which woke,
+verified my artifacts against the primary source, and tested the claim rather
+than ignoring it — produced ALL of the following, and none of them are
+saturation3-mesh's:
+
+* the 26.7 ms counter-datum (3.5× its record at loadavg 46) that falsified my
+  "a short job gets an idle core" mechanism;
+* the E/P = 0.83 inversion on their workload — the E-core FASTER than the
+  P-core — which is what made core class visibly not the axis either;
+* the suggestion to sample `scaling_cur_freq` beside the timings, which is what
+  ruled clock OUT as the cause of my within-P spread and left the SMT sibling;
+* the drift-bias catch on their own instrument (CPU time measured in a BLOCKED
+  pass, shards swept in increasing order, on a box that heats — so the throttle
+  wore the exact shape of the overhead they were measuring).
+
+**saturation3-mesh** holds M-IDLE-CALIBRATED-TIMEOUT; their contributions here
+were applying the three mechanism strings, ruling M-PLACEMENT-LOTTERY a
+neighbour rather than a fold, declaring their own arm's core class, and
+correcting their own margin note. They flagged this mis-attribution themselves
+rather than accept credit — which is why it is fixed before it set, and the
+last of the four items above is on my own account the best single contribution
+in the exchange, so mis-crediting it would have been the most expensive to
+leave standing.

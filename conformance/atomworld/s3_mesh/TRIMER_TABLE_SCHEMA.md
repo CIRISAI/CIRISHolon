@@ -197,3 +197,42 @@ not the engine's `trimer::NR/NU`, and the spacing rule is uniform-linear rather 
 interpolate on the shipped coordinates. `holon_chem::trimer::TrimerTable::eval` is NOT a
 valid evaluator for these surfaces on two independent counts — it assumes tau-stretched
 axes and it takes three side lengths where these axes are `(x, y, u)`.
+
+---
+
+## `subtraction_basis` — REQUIRED, and the third provenance axis (lead's ruling, 2026-09-01)
+
+Once the artifact serves **dE3** rather than a total, the value is defined by what was
+subtracted from it. Two correct answers exist in this engine and they are not
+interchangeable:
+
+| basis | who uses it | why it is right THERE |
+|---|---|---|
+| `pair_point_exact` | **this generator**, for stored tables | a stored table is re-derivable and long-lived; interpolation error from a served curve would land undiluted in a ~1e-3 quantity and could never be separated from the physics afterwards |
+| `served_tables` | the runtime four-body path | a running ledger's correction must cancel **exactly what the other sectors add**; subtracting a quantity the rest of the ledger never saw would leave a residue that is not physics |
+
+Both are correct in their homes. **The hazard is a consumer assuming one where the other
+holds** — and because the two differ by ~1e-10 today, that assumption would be right for a
+long time and then quietly stop being right.
+
+So the artifact declares which, beside `solver_budget`:
+
+```json
+"provenance": {
+  "device_class":       "cpu",
+  "solver_budget":      5000,
+  "subtraction_basis":  "pair_point_exact",
+  "cited_curves":       [ ... ]
+}
+```
+
+**These three are one law wearing three hats.** A bit-gated artifact must declare its
+DEVICE CLASS because its trailing bits are a function of it; it must declare its SOLVER
+BUDGET because a pair solved at one budget and a trimer at another is two regimes inside
+one subtraction; and it must declare its SUBTRACTION BASIS because a table that does not
+say which MBE3 it subtracted **cannot be re-derived**. In every case the number is right
+and the artifact is unusable without the axis that says what the number is *of*.
+
+**Refusal:** an artifact with no `subtraction_basis` is refused, exactly as one with no
+seam record is. A consumer must never infer the basis from the values — the two bases
+agree to ~1e-10, which is precisely why inference would succeed until it didn't.

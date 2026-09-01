@@ -47,8 +47,30 @@ pub const M_H: f64 = 1837.152;
 /// it should be visible to whoever checks the numbers.
 pub const M_PROTON: f64 = 1836.152673;
 
-pub const MAX_ATOMS: usize = 16;
-pub const MAX_PAIRS: usize = MAX_ATOMS * (MAX_ATOMS - 1) / 2;
+/// The DEFAULT SCENE SIZE, and nothing else.
+///
+/// This used to be `MAX_ATOMS`, a hard capacity: every per-atom array in [`Sim`] was
+/// `[T; 16]` and `reset` clamped to it. That cap is gone — the state is heap-backed and
+/// sized by the scene (T3). What survives is the number the viewer opens with and the
+/// number the device-calibration burst times, which is a CHOICE about a scene, not a
+/// statement about what the engine can hold.
+///
+/// M-DEVICE-CLASS: the calibration burst is a fixed scene on purpose. A burst whose size
+/// varied with the scene would report a rate that could not be compared between devices.
+pub const DEFAULT_SCENE_ATOMS: usize = 16;
+
+/// The number of unordered pairs in a scene of `n` atoms.
+///
+/// A function where there was a constant. `MAX_PAIRS` was `MAX_ATOMS * (MAX_ATOMS - 1)/2`
+/// and sized a fixed array; at the scales T3 exists for that array is both wrong and
+/// enormous (N = 10⁴ is 5·10⁷ entries), so the pair sector is heap-backed and — past the
+/// cell-list work — cutoff-local rather than complete. This helper is what the callers
+/// that genuinely want the COMPLETE count (a ceiling, a cost model, a calibration figure)
+/// call, so that the arithmetic lives in one place instead of being re-derived.
+#[inline]
+pub const fn complete_pairs(n: usize) -> usize {
+    n * n.saturating_sub(1) / 2
+}
 
 /// Boltzmann's constant in hartree per kelvin.
 pub const K_B: f64 = 3.166811563e-6;
@@ -64,6 +86,23 @@ pub const K_SPRING: f64 = 0.05;
 /// Distance beyond which the outer-turning-point search gives up and reports infinity.
 const TURNING_POINT_CAP: f64 = 200.0;
 
+/// The (O,H,H,H) four-body sector's outer radius, bohr: past this every O-H distance puts
+/// the quadruple outside the switch and the term is an exact zero without a solve.
+pub const DE4_R_CUT: f64 = 6.0;
+/// The four-body switch's inner edge, bohr: inside this the term is at full weight.
+pub const DE4_R_IN: f64 = 5.0;
+
+/// Width of the pair truncation's switch window, bohr.
+///
+/// A DECLARED width, and the one number in the truncation that is a choice rather than a
+/// reading. The inner edge is derived from the curve and the energy budget
+/// ([`Sim::derive_pair_cutoff`]); the window then has to be wide enough that the switch's
+/// own curvature — which enters the drift bound through `S''·U` — is small against the
+/// curve's, and narrow enough not to push the cell size up for nothing. Two bohr is about
+/// four times the H-H well width, so `S''·U` at the inner edge is the budget over four
+/// square bohr, i.e. under the budget itself.
+pub const PAIR_SWITCH_WIDTH: f64 = 2.0;
+
 /// Safety factor on the derived drift bound. The (omega*dt)^2/4 result below is EXACT
 /// for a harmonic oscillator and leading-order in dt^2 for anything else; anharmonicity
 /// enters at the same order with a coefficient set by U''' and the amplitude, so a
@@ -78,6 +117,42 @@ pub enum Boundary {
     /// No walls at all. Translation invariance is exact, so total momentum is conserved
     /// to roundoff and the momentum gate has nothing to subtract.
     Open,
+    /// THE PERIODIC BOX: every separation is taken under the minimum-image convention,
+    /// and an atom leaving one face re-enters through the opposite one.
+    ///
+    /// Like [`Boundary::Open`] this does no work and delivers no impulse — the box has no
+    /// walls to push against — so BOTH conservation gates apply in their strict form: the
+    /// energy ledger closes and the momentum residual is roundoff only. That is the point
+    /// of using it for bulk: walls are a boundary artifact, and the periodic box is how a
+    /// finite scene stops pretending it has edges.
+    ///
+    /// Correctness condition, enforced by [`Sim::pbc_ok`] rather than assumed: every
+    /// interaction cutoff must be at most HALF the shortest box edge. Past that an atom
+    /// interacts with two images of the same partner and the minimum image is no longer
+    /// the only image.
+    Periodic,
+}
+
+impl Boundary {
+    /// Does this box push back?
+    ///
+    /// TWO boundaries are wall-less and they are wall-less for different physical reasons:
+    /// [`Boundary::Open`] has no container at all, [`Boundary::Periodic`] has one that
+    /// closes on itself. The code reason is the same one, so it is asked once here rather
+    /// than twice at the call site — which is where PLANT P-2 found it, at 1.7e4 hartree,
+    /// after `Periodic` was added and `wall_energy_force`'s single `== Open` test silently
+    /// kept applying walls to a box that has none. (Folded rather than registered: see
+    /// `conformance/water_observatory/DRY_RESIDUALS.md`, R-1.)
+    #[inline]
+    pub fn has_walls(self) -> bool {
+        matches!(self, Boundary::Walls)
+    }
+
+    /// Does an atom leaving one face re-enter through the opposite one?
+    #[inline]
+    pub fn wraps(self) -> bool {
+        matches!(self, Boundary::Periodic)
+    }
 }
 
 /// How many spatial dimensions the SCENE uses. The integrator always carries three
@@ -176,6 +251,157 @@ impl PairReading {
     }
 }
 
+/// ONE PAIR's evaluated contribution, before anything is added up.
+///
+/// The force loop used to evaluate and accumulate in the same statement. Splitting them is
+/// what makes the loop shardable: EVALUATION is a pure function of the state (hundreds of
+/// flops per pair, and all of the cost), while ACCUMULATION is a sum whose ORDER is part of
+/// the answer. So evaluation goes wide and accumulation stays in one canonical pass — and
+/// the threaded run is then bit-for-bit the serial one, rather than merely close to it.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct PairTerm {
+    pub fx: f64,
+    pub fy: f64,
+    pub fz: f64,
+    pub value: f64,
+    pub curv: f64,
+    /// `r · dU/dr` — this pair's contribution to the internal virial.
+    ///
+    /// Carried on the term rather than recomputed from the force, because recomputing it
+    /// would need the separation again and the two derivations would then be two places for
+    /// the sign to be wrong. The pressure is `(2K − Σ virial) / 3V`, so a sign error here is
+    /// a barostat that expands under compression.
+    pub virial: f64,
+}
+
+/// ONE TRIPLE's evaluated contribution. Same split, same reason.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct TripleTerm {
+    /// The three atoms, in the order the surface's own argument convention wants them.
+    pub a: u32,
+    pub b: u32,
+    pub c: u32,
+    pub v: f64,
+    /// `dE/dr` along `ab`, `ac`, `bc`.
+    pub g: [f64; 3],
+    /// The three side lengths, in the same order.
+    pub r: [f64; 3],
+    /// The per-triple stiffness the drift bound is built from.
+    pub kt: f64,
+    /// False when the triple had no server or evaluated to an exact zero — kept as a slot
+    /// rather than compacted away, so a chunk's output length is a function of its input
+    /// length alone and never of what the physics happened to say.
+    pub live: bool,
+}
+
+/// WHO EVALUATES THE TERMS.
+///
+/// The seam the multithreading goes through, and the reason it is a trait rather than a
+/// thread pool: `holon-render` is linked into the browser artifact, and
+/// `wasm32-unknown-unknown` has no `std::thread`. The engine therefore owns the WORK
+/// (`Sim::eval_pair_chunk`, `Sim::eval_triple_chunk` — pure, `&self`, no allocation) and
+/// something else owns the WORKERS. `holon-tables` made the same split for the same reason
+/// one level down, and says so in its manifest.
+///
+/// An implementation may run the chunks in any order and on any number of threads. It may
+/// NOT change the chunking, because the accumulation pass walks the terms in index order
+/// and that order is the answer.
+pub trait ForceExecutor {
+    /// Evaluate `terms`, whose entry `k` belongs to `sim.neighbours().pairs[k]`.
+    fn eval_pairs(&self, sim: &Sim, terms: &mut [PairTerm], chunk: usize);
+    /// Evaluate `terms`, whose entry `k` belongs to `sim.triples()[k]`.
+    fn eval_triples(&self, sim: &Sim, terms: &mut [TripleTerm], chunk: usize);
+    /// How many workers this executor actually has. Reported for the log; nothing branches
+    /// on it, because a result that depended on the worker count would be the defect the
+    /// whole design exists to prevent.
+    fn workers(&self) -> usize {
+        1
+    }
+}
+
+/// The executor that is always available: this thread, in order.
+///
+/// It is not a fallback or a degraded mode — it is the REFERENCE. `tests/t3_parallel.rs`
+/// holds every other executor against it and requires bit-identical output, which is the
+/// same shape `holon-mesh` uses for its shards and `holon-tables` for its table workers.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct SerialExecutor;
+
+impl ForceExecutor for SerialExecutor {
+    fn eval_pairs(&self, sim: &Sim, terms: &mut [PairTerm], chunk: usize) {
+        let chunk = chunk.max(1);
+        for (ci, part) in terms.chunks_mut(chunk).enumerate() {
+            sim.eval_pair_chunk(ci * chunk, part);
+        }
+    }
+    fn eval_triples(&self, sim: &Sim, terms: &mut [TripleTerm], chunk: usize) {
+        let chunk = chunk.max(1);
+        for (ci, part) in terms.chunks_mut(chunk).enumerate() {
+            sim.eval_triple_chunk(ci * chunk, part);
+        }
+    }
+}
+
+/// Terms per chunk. A COST parameter and never a correctness one: the accumulation walks
+/// the terms in index order whatever the chunking, so changing this changes how the work is
+/// handed out and not one bit of the answer. Sized so a chunk is a few hundred microseconds
+/// of interpolant evaluation — big enough that the handover is noise, small enough that a
+/// straggler cannot hold the frame.
+pub const FORCE_CHUNK: usize = 1024;
+
+/// THE EXTERNAL-WORK RECEIPT COLUMNS (FSD-W1 WB-4.3).
+///
+/// One column per thing that can reach into a closed scene and move its energy. They sum
+/// to [`Sim::w_ext`], and the sum is CHECKED ([`Sim::work_columns_ok`]) rather than
+/// assumed — a column that stops being posted would otherwise leave the balance gate
+/// green and the attribution silently wrong, which is the vacuous-success shape
+/// (M-VACUOUS-SUCCESS).
+///
+/// The columns are separate because they answer different questions and fail differently:
+/// the hand is driven by a person and can inject arbitrarily much; the thermostat is a
+/// controller with a target; the barostat moves the box rather than the atoms. A run that
+/// took 3 mEh from the hand and gave 3 mEh back to the thermostat has a total of zero and
+/// two large receipts, and those are not the same run as one nobody touched.
+#[derive(Clone, Copy, Debug, Default, PartialEq)]
+pub struct ExternalWork {
+    /// THE HAND: anchor motion at fixed atom position (`dU` of the spring term, which is
+    /// exactly the work the user's hand did) and the spring energy that leaves with the
+    /// hand on release.
+    pub hand: f64,
+    /// The thermostat's velocity rescaling.
+    pub thermostat: f64,
+    /// The barostat's box work: the potential energy change produced by moving the box
+    /// walls at fixed scaled coordinates, plus the kinetic change from rescaling.
+    pub barostat: f64,
+}
+
+impl ExternalWork {
+    /// The columns' sum, in a FIXED order so the total is reproducible.
+    #[inline]
+    pub fn total(&self) -> f64 {
+        (self.hand + self.thermostat) + self.barostat
+    }
+
+    #[inline]
+    pub const fn zero() -> Self {
+        Self {
+            hand: 0.0,
+            thermostat: 0.0,
+            barostat: 0.0,
+        }
+    }
+
+    /// The largest column magnitude — the scale a roundoff bound on the sum is taken
+    /// against.
+    #[inline]
+    pub fn scale(&self) -> f64 {
+        self.hand
+            .abs()
+            .max(self.thermostat.abs())
+            .max(self.barostat.abs())
+    }
+}
+
 pub struct Sim {
     /// THE PAIR-TABLE BANK: one curve per unordered species pair. See `bank.rs`.
     ///
@@ -218,7 +444,15 @@ pub struct Sim {
     /// prereg requires the fence's incidence in the quench runs to be reported, and a
     /// truncation nobody counts is a truncation nobody can weigh.
     pub fence_untabulated: u64,
-    pub atoms: [Atom; MAX_ATOMS],
+    /// THE SCENE. Heap-backed and sized by [`Sim::reset`]; `atoms.len() == n` is an
+    /// invariant every mutator maintains and [`Sim::storage_ok`] states.
+    ///
+    /// This was `[Atom; 16]`. The cap is gone, and with it the reason the whole engine
+    /// could not be pointed at a bulk scene. Everything per-atom below moved the same way,
+    /// and each was allocated with `vec![...]` rather than `Box::new([...; N])` on purpose:
+    /// the array form BUILDS THE ARRAY ON THE STACK and then moves it, so a boxed
+    /// `[Atom; 100_000]` overflows the stack before the heap ever sees it.
+    pub atoms: Vec<Atom>,
     pub n: usize,
     pub boundary: Boundary,
     pub width: f64,
@@ -235,8 +469,45 @@ pub struct Sim {
     pub dims: Dims,
 
     // --- accelerations, kept split so the momentum ledger can name what is external ---
-    a_pair: [(f64, f64, f64); MAX_ATOMS],
-    a_ext: [(f64, f64, f64); MAX_ATOMS],
+    a_pair: Vec<(f64, f64, f64)>,
+    a_ext: Vec<(f64, f64, f64)>,
+
+    /// THE CELL LIST: the scene bucketed by position so the interaction loops are
+    /// cutoff-local. Rebuilt by [`Sim::compute_forces`]; see `crate::cells`.
+    /// Scratch: each atom's bank slot, rewritten from the atoms on every force
+    /// evaluation. See [`Sim::refresh_slots`].
+    slots: Vec<usize>,
+    /// THE DECLARED PAIR TRUNCATION: `(r_in, r_cut)` of the C² switch, or `None` for the
+    /// complete pair sum.
+    ///
+    /// `None` is the default and it is not laziness: the pair curve's tail is an
+    /// exponential, never an exact zero, so any pair cutoff DROPS ENERGY. A scene that
+    /// wants `O(N)` pairs says so, and gets told what it paid ([`Sim::truncation_floor`]).
+    /// Set through [`Sim::set_pair_cutoff`], which refuses a cutoff the periodic box
+    /// cannot honour.
+    pub(crate) pair_switch: Option<(f64, f64)>,
+    /// The per-pair energy the declared truncation drops, hartree — the bound the switch
+    /// window was DERIVED from, not a description of it. Zero when there is no
+    /// truncation.
+    pub(crate) pair_floor: f64,
+    /// WHO EVALUATES. `None` is [`SerialExecutor`] — the reference — and is what
+    /// `Sim::empty` starts with, because `empty` is a `const fn` and a box is not.
+    executor: Option<Box<dyn ForceExecutor + Send + Sync>>,
+    /// Evaluated terms, held across calls so a force evaluation allocates nothing once the
+    /// scene has settled at a size.
+    pair_terms: Vec<PairTerm>,
+    triple_terms: Vec<TripleTerm>,
+    /// Scratch for the many-body enumerations, held so a force evaluation allocates
+    /// nothing once the scene has settled at a size. Each is cleared before use and is
+    /// never read across a call.
+    triple_scratch: Vec<[usize; 3]>,
+    k_atom_scratch: Vec<f64>,
+    quad_force_scratch: Vec<(f64, f64, f64)>,
+    pub(crate) cells: crate::cells::CellList,
+    /// The neighbour pairs the cell list produced this force evaluation, and the distance
+    /// alongside each — computed once and read by the pair loop, the triple loop, the
+    /// quadruple loop and the bond reading rather than four times.
+    pub(crate) neighbours: crate::cells::Neighbours,
 
     // --- the user's spring ---
     pub grabbed: Option<usize>,
@@ -254,11 +525,49 @@ pub struct Sim {
     /// inside the table's domain. Its OWN ledger row, never folded into `e_pair` — one
     /// reader per term, because a combined number cannot say which sector moved.
     pub e_three: f64,
+    /// The four-body sector: exact ab-initio (O,H,H,H) valence term.
+    pub e_four: f64,
+    /// THE INTERNAL VIRIAL, `Σ r · dU/dr` over every interacting pair, triple side and
+    /// four-body radial coordinate.
+    ///
+    /// The quantity the pressure is built from and the reason a barostat can exist. It is
+    /// accumulated by the force loop, where the slopes already are, rather than by a second
+    /// pass — a second pass would be a second reading of the same configuration and the two
+    /// would be free to disagree.
+    ///
+    /// Walls and the user's spring are NOT in it. They are the container and the hand, not
+    /// the substance, and a virial that included them would report the box pushing on
+    /// itself as pressure.
+    pub w_virial: f64,
+    /// Whether the ab-initio 4-body (O,H,H,H) valence term is active.
+    pub de4_enabled: bool,
+    /// Counter of compact (O,H,H,H) encounters actually evaluated by the ab-initio solver.
+    pub de4_eval_count: u64,
+    pub de4_last_pos: Vec<[f64; 3]>,
+    pub de4_cached_forces: Vec<(f64, f64, f64)>,
+    pub de4_cached_energy: f64,
+    /// The four-body sector's virial, cached alongside its energy and forces. Cached for
+    /// the same reason and reused on the same condition — a cache that carried the energy
+    /// and recomputed the virial would be two answers about one configuration.
+    pub de4_cached_virial: f64,
+    pub de4_cached_valid: bool,
     pub e_wall: f64,
     pub e_spring: f64,
     /// Every joule the outside world put in: anchor motion, spring teardown on release,
-    /// and thermostat rescaling. The intervention is a term in the ledger, never outside it.
+    /// thermostat rescaling, and the barostat's box work. The intervention is a term in
+    /// the ledger, never outside it.
+    ///
+    /// This is the TOTAL. Which intervention moved it is [`Sim::work`], and the two are
+    /// tied together by [`Sim::work_columns_ok`] rather than by trust — see that gate.
     pub w_ext: f64,
+    /// WB-4.3 — THE RECEIPT COLUMNS. `w_ext` says the ledger closed; this says who paid.
+    ///
+    /// A single total closes the balance gate and answers no question: a run that gained
+    /// energy from the hand and lost the same amount to the thermostat reads identically
+    /// to a run nobody touched. The hand is a moving boundary condition the user drives,
+    /// so it gets its own column and the balance gate still closes over it — conservation
+    /// is chart-relative and the hand is part of the chart.
+    pub work: ExternalWork,
     /// The ledger's invariant at reset. `ledger() - w_ext` must equal this forever.
     pub l0: f64,
     /// Total momentum at reset, and the external impulse since.
@@ -282,9 +591,14 @@ pub struct Sim {
     pub drift_peak: f64,
     pub momentum_residual_peak: f64,
 
-    pub pairs: [PairReading; MAX_PAIRS],
+    /// Bond readings, one per neighbour pair. Heap-backed and CUTOFF-LOCAL: see
+    /// [`Sim::refresh_pairs`] for why dropping the distant pairs cannot change a bond.
+    pub pairs: Vec<PairReading>,
     pub pair_count: usize,
 
+    /// THE BAROSTAT, absent until one is enabled. Boxed because a barostat carries two
+    /// Nosé-Hoover chains and a `Sim` that never uses one should not grow by them.
+    pub barostat: Option<Box<crate::barostat::Barostat>>,
     /// The three clocks and the degradation contract.
     pub timescale: Timescale,
     /// The composite-holon layer. Runs at grain boundaries only.
@@ -306,15 +620,9 @@ impl Sim {
             ozone: holon_chem::ozone::OzoneTable::empty(),
             trimers: crate::trimer_bank::TrimerBank::empty(),
             fence_untabulated: 0,
-            atoms: [Atom {
-                x: 0.0,
-                y: 0.0,
-                z: 0.0,
-                vx: 0.0,
-                vy: 0.0,
-                vz: 0.0,
-                species: HYDROGEN,
-            }; MAX_ATOMS],
+            // Empty, not sixteen-of-something. `Vec::new` allocates nothing, so
+            // `Sim::empty()` stays a `const fn` and stays free; `reset` sizes the scene.
+            atoms: Vec::new(),
             n: 0,
             boundary: Boundary::Walls,
             width: 40.0,
@@ -322,8 +630,19 @@ impl Sim {
             depth: 24.0,
             wall_inset: 0.6,
             dims: Dims::Two,
-            a_pair: [(0.0, 0.0, 0.0); MAX_ATOMS],
-            a_ext: [(0.0, 0.0, 0.0); MAX_ATOMS],
+            a_pair: Vec::new(),
+            a_ext: Vec::new(),
+            slots: Vec::new(),
+            pair_switch: None,
+            pair_floor: 0.0,
+            executor: None,
+            pair_terms: Vec::new(),
+            triple_terms: Vec::new(),
+            triple_scratch: Vec::new(),
+            k_atom_scratch: Vec::new(),
+            quad_force_scratch: Vec::new(),
+            cells: crate::cells::CellList::empty(),
+            neighbours: crate::cells::Neighbours::empty(),
             grabbed: None,
             anchor: (0.0, 0.0, 0.0),
             thermostat_on: false,
@@ -332,9 +651,19 @@ impl Sim {
             e_kin: 0.0,
             e_pair: 0.0,
             e_three: 0.0,
+            e_four: 0.0,
+            w_virial: 0.0,
+            de4_enabled: false,
+            de4_eval_count: 0,
+            de4_last_pos: Vec::new(),
+            de4_cached_forces: Vec::new(),
+            de4_cached_energy: 0.0,
+            de4_cached_virial: 0.0,
+            de4_cached_valid: false,
             e_wall: 0.0,
             e_spring: 0.0,
             w_ext: 0.0,
+            work: ExternalWork::zero(),
             l0: 0.0,
             p0: (0.0, 0.0, 0.0),
             j_ext: (0.0, 0.0, 0.0),
@@ -347,15 +676,9 @@ impl Sim {
             e_ref: 0.0,
             drift_peak: 0.0,
             momentum_residual_peak: 0.0,
-            pairs: [PairReading {
-                i: 0,
-                j: 0,
-                r: 0.0,
-                e_rel: 0.0,
-                r_outer: 0.0,
-                bonded: false,
-            }; MAX_PAIRS],
+            pairs: Vec::new(),
             pair_count: 0,
+            barostat: None,
             timescale: Timescale::empty(),
             holons: HolonLayer::empty(),
             frame: 0,
@@ -401,7 +724,7 @@ impl Sim {
     /// The lookup is by SPECIES SLOT, resolved once per force evaluation into
     /// [`Sim::species_slots`] rather than per pair, because the inner loop runs `N^2/2`
     /// times and the species list does not change inside it.
-    pub fn table_for(&self, slots: &[usize; MAX_ATOMS], i: usize, j: usize) -> &PotentialTable {
+    pub fn table_for(&self, slots: &[usize], i: usize, j: usize) -> &PotentialTable {
         self.bank.table_at(slots[i], slots[j])
     }
 
@@ -416,12 +739,26 @@ impl Sim {
     /// An atom whose species is not registered maps to slot 0. That case cannot reach the
     /// force loop: [`Sim::pairs_ready`] refuses to step a scene with an unregistered
     /// species, because slot 0 would be some other pair's curve.
-    pub fn species_slots(&self) -> [usize; MAX_ATOMS] {
-        let mut out = [0usize; MAX_ATOMS];
+    pub fn species_slots(&self) -> Vec<usize> {
+        let mut out = vec![0usize; self.n];
         for i in 0..self.n {
             out[i] = self.bank.index_of(self.atoms[i].species.z).unwrap_or(0);
         }
         out
+    }
+
+    /// [`Sim::species_slots`] into the reusable scratch buffer.
+    ///
+    /// Same computation, same freshness — it is recomputed from the atoms on every force
+    /// evaluation, so it cannot go stale — and no allocation per evaluation. The buffer is
+    /// scratch and is never read except immediately after this writes it.
+    fn refresh_slots(&mut self) {
+        self.slots.clear();
+        self.slots.reserve(self.n);
+        for i in 0..self.n {
+            let s = self.bank.index_of(self.atoms[i].species.z).unwrap_or(0);
+            self.slots.push(s);
+        }
     }
 
     /// Register every species the scene currently holds. `false` if the scene needs more
@@ -631,7 +968,7 @@ impl Sim {
     /// (one `D_e` per bonded pair) and it errs toward a wider bound, which is the safe
     /// direction for a term that multiplies a bound.
     pub fn mode_energy(&self) -> f64 {
-        self.e_kin + self.e_pair.abs() + self.e_three.abs() + self.e_wall + self.e_spring
+        self.e_kin + self.e_pair.abs() + self.e_three.abs() + self.e_four.abs() + self.e_wall + self.e_spring
     }
 
     /// The INTERNAL force on atom `i`, hartree/bohr: the pair loop's contribution plus the
@@ -645,6 +982,19 @@ impl Sim {
         } else {
             (0.0, 0.0, 0.0)
         }
+    }
+
+    /// The internal and external accelerations on atom `i`, for an integrator that lives
+    /// outside this file. Split exactly as the force loop keeps them, because the momentum
+    /// ledger's whole distinction is which of the two cancels.
+    #[inline]
+    pub(crate) fn a_pair_at(&self, i: usize) -> (f64, f64, f64) {
+        self.a_pair[i]
+    }
+
+    #[inline]
+    pub(crate) fn a_ext_at(&self, i: usize) -> (f64, f64, f64) {
+        self.a_ext[i]
     }
 
     /// Largest pair curvature the force loop has actually evaluated since reset. Exposed
@@ -707,7 +1057,7 @@ impl Sim {
 
     /// Total energy currently held by the scene.
     pub fn energy(&self) -> f64 {
-        self.e_kin + self.e_pair + self.e_three + self.e_wall + self.e_spring
+        self.e_kin + self.e_pair + self.e_three + self.e_four + self.e_wall + self.e_spring
     }
 
     /// The conserved quantity. `E - W_ext` is constant for an exact integrator, with or
@@ -814,6 +1164,32 @@ impl Sim {
         self.drift_peak <= self.drift_bound()
     }
 
+    /// THE ATTRIBUTION GATE (WB-4.3): the receipt columns sum to the total.
+    ///
+    /// One gate per conserved quantity is the discipline, and this is the second half of
+    /// the energy one. `energy_gate` says the ledger CLOSED; this says the ledger's
+    /// account of WHO MOVED IT is complete. They fail independently: a column that stops
+    /// being posted leaves `w_ext` right and the attribution wrong, and no drift appears,
+    /// because the total was never the thing that broke.
+    ///
+    /// The tolerance is roundoff on the sum — both sides accumulate the same increments,
+    /// so they differ only in the order they were added, which is a few ulp of the largest
+    /// column times the number of postings. A discrepancy above that is a missing column,
+    /// not arithmetic.
+    pub fn work_columns_ok(&self) -> bool {
+        let residual = (self.w_ext - self.work.total()).abs();
+        residual <= self.work_columns_bound()
+    }
+
+    /// The roundoff bound [`Sim::work_columns_ok`] compares against.
+    pub fn work_columns_bound(&self) -> f64 {
+        let scale = self.work.scale().max(self.w_ext.abs());
+        // Each posting commits one addition to each side; `steps` bounds how many there
+        // can have been, and 8 ulp per posting is the same worst-case accounting
+        // `momentum_bound` uses.
+        (8.0 * (self.steps.max(1) as f64) * f64::EPSILON * scale).max(f64::MIN_POSITIVE)
+    }
+
     /// Momentum residual: `|P(t) - P(0) - J_ext(t)|`.
     ///
     /// Pairwise forces are applied as equal and opposite to the two partners, so they
@@ -859,6 +1235,43 @@ impl Sim {
         (px, py, pz)
     }
 
+    /// The box volume, bohr³.
+    #[inline]
+    pub fn volume(&self) -> f64 {
+        self.width * self.height * self.depth
+    }
+
+    /// THE INSTANTANEOUS PRESSURE by the virial theorem, hartree per bohr³.
+    ///
+    /// ```text
+    /// P = (2K − Σ r·dU/dr) / (3V)
+    /// ```
+    ///
+    /// The kinetic half is the ideal-gas term and the virial half is the interactions'.
+    /// A repulsive contact has `dU/dr < 0`, so it ADDS to the pressure; an attractive tail
+    /// has `dU/dr > 0` and subtracts. That sign is the one thing worth checking by hand
+    /// before believing any barostat, and `tests/t3_barostat.rs` checks it on an ideal gas
+    /// (where the virial is exactly zero and `P V = N k T` must come out) before it checks
+    /// anything else.
+    ///
+    /// MEANINGFUL ONLY IN A PERIODIC BOX. With walls, the container carries part of the
+    /// momentum flux and the virial above is missing it, so the number would be a pressure
+    /// with a term left out. `Sim::pressure_defined` says so rather than leaving the caller
+    /// to find out.
+    pub fn pressure(&self) -> f64 {
+        let v = self.volume();
+        if !(v > 0.0) {
+            return 0.0;
+        }
+        (2.0 * self.e_kin - self.w_virial) / (3.0 * v)
+    }
+
+    /// Whether [`Sim::pressure`] is a pressure. False under walls, where the container
+    /// carries flux the internal virial does not see.
+    pub fn pressure_defined(&self) -> bool {
+        !self.boundary.has_walls()
+    }
+
     /// Kinetic temperature by equipartition: `E_kin = (dof/2) N k_B T`.
     ///
     /// DIMENSION-DEPENDENT, and one of only two places in this file that is. The
@@ -874,10 +1287,426 @@ impl Sim {
         self.e_kin / (0.5 * self.dims.dof() * self.n as f64 * K_B)
     }
 
+    /// Size every per-atom buffer to `n` atoms, preserving the atoms that survive.
+    ///
+    /// The one place `n` is written. Growing appends default (hydrogen, at the origin,
+    /// at rest) atoms, which `reset` then places; shrinking truncates. Every buffer is
+    /// resized here so that `atoms.len() == a_pair.len() == ... == n` is an invariant
+    /// with ONE maintainer instead of five, and [`Sim::storage_ok`] states it as a fact
+    /// a gate can check.
+    ///
+    /// M-CHEAPER-THAN-ITS-PRICE: `Vec::resize` reuses the allocation when the capacity is
+    /// already there, so a scene that is reset repeatedly at one size allocates once.
+    pub fn resize_storage(&mut self, n: usize) {
+        self.n = n;
+        self.atoms.resize(n, Atom::default());
+        self.a_pair.resize(n, (0.0, 0.0, 0.0));
+        self.a_ext.resize(n, (0.0, 0.0, 0.0));
+        self.de4_last_pos.resize(n, [0.0; 3]);
+        self.de4_cached_forces.resize(n, (0.0, 0.0, 0.0));
+        self.de4_cached_valid = false;
+        self.slots.resize(n, 0);
+        // The pair sector is cutoff-local and is rebuilt from the cell list; it carries no
+        // per-atom entry to preserve, so it is cleared rather than resized.
+        self.pairs.clear();
+        self.pair_count = 0;
+    }
+
+    /// The storage invariant, as a checkable fact rather than a comment.
+    ///
+    /// Every per-atom buffer holds exactly `n` entries. A gate calls this because the
+    /// failure mode of heap-backed state is a buffer that was grown in one place and not
+    /// another, and that reads as a wrong force rather than as an error.
+    pub fn storage_ok(&self) -> bool {
+        self.atoms.len() == self.n
+            && self.a_pair.len() == self.n
+            && self.a_ext.len() == self.n
+            && self.de4_last_pos.len() == self.n
+            && self.de4_cached_forces.len() == self.n
+            && self.slots.len() == self.n
+    }
+
+    // ------------------------------------------------------- the box, and what wraps
+
+    /// The box as the separation arithmetic sees it. ONE constructor, so no loop can
+    /// disagree with another about whether the world wraps.
+    #[inline]
+    pub fn geom(&self) -> crate::cells::BoxGeom {
+        crate::cells::BoxGeom::new(self.width, self.height, self.depth, self.boundary.wraps())
+    }
+
+    /// Whether the periodic box can honour every cutoff the scene needs.
+    ///
+    /// The minimum-image convention is only the minimum image while the largest cutoff is
+    /// at most HALF the shortest box edge. Past that an atom is inside the cutoff of two
+    /// images of the same partner, the reduction picks one, and the missing one is a force
+    /// that silently is not there. Stated as a gate rather than as a comment, because the
+    /// symptom is a wrong number and not an error.
+    ///
+    /// Vacuously true when the boundary does not wrap: there are no images to confuse.
+    pub fn pbc_ok(&self) -> bool {
+        if !self.boundary.wraps() {
+            return true;
+        }
+        let cut = self.list_cutoff();
+        cut.is_finite() && cut <= 0.5 * self.geom().min_edge()
+    }
+
+    /// The half-edge the cutoffs must fit inside, and the cutoff that is actually asked
+    /// for — the two numbers behind [`Sim::pbc_ok`], so a refusal can say by how much.
+    pub fn pbc_margin(&self) -> (f64, f64) {
+        (self.list_cutoff(), 0.5 * self.geom().min_edge())
+    }
+
+    // ------------------------------------------------------------------- the cutoffs
+
+    /// The three-body sector's radius: the largest side length any LOADED surface's domain
+    /// admits.
+    ///
+    /// Not a tuning parameter and not a truncation — every one of these surfaces returns
+    /// an EXACT zero outside its domain, so a triple with no vertex holding two sides
+    /// inside this radius contributes exactly nothing. The enumeration skipping it
+    /// computes the same number for less.
+    ///
+    /// The domains gate on the two sides meeting at ONE vertex (water on the two O-H,
+    /// (O,O,H) on the two H-O, the homonuclear surfaces on the two shortest, which share a
+    /// vertex because any two sides of a triangle do). That common shape is what makes a
+    /// single hub-centred radius correct for all of them.
+    pub fn three_body_cutoff(&self) -> f64 {
+        let mut c = 0.0f64;
+        if self.trimer.loaded || !self.trimers.is_empty() {
+            c = c.max(holon_chem::trimer::R_HI);
+        }
+        if self.water.loaded {
+            c = c.max(holon_chem::water::R_HI);
+        }
+        if self.ooh.loaded {
+            c = c.max(holon_chem::ooh::R_HI);
+        }
+        if self.ozone.loaded {
+            c = c.max(holon_chem::ozone::R_HI);
+        }
+        c
+    }
+
+    /// The four-body sector's radius: the (O,H,H,H) switch's own `R_CUT`, or zero when the
+    /// sector is off. Also exact — the switch is identically zero past it.
+    pub fn four_body_cutoff(&self) -> f64 {
+        if self.de4_enabled {
+            DE4_R_CUT
+        } else {
+            0.0
+        }
+    }
+
+    /// The radius the cell list is built at: the largest any sector needs.
+    ///
+    /// One decomposition serves every loop. Building one list per sector would be three
+    /// passes over the scene to answer one question about it.
+    pub fn list_cutoff(&self) -> f64 {
+        let many = self.three_body_cutoff().max(self.four_body_cutoff());
+        match self.pair_switch {
+            Some((_, r_cut)) => many.max(r_cut),
+            None => many,
+        }
+    }
+
+    /// The per-pair energy the declared truncation drops, hartree. Zero when the pair sum
+    /// is complete.
+    pub fn truncation_floor(&self) -> f64 {
+        self.pair_floor
+    }
+
+    /// The declared truncation window, `(r_in, r_cut)`.
+    pub fn pair_switch(&self) -> Option<(f64, f64)> {
+        self.pair_switch
+    }
+
+    /// DERIVE a pair cutoff from the curves themselves at a declared energy budget.
+    ///
+    /// `floor` is the largest energy any single truncated pair may lose, hartree. The
+    /// window's inner edge is the radius at which every active curve is already under it,
+    /// found by bisection on the curve's own tail; the outer edge is one switch width
+    /// further out. So the number is READ OFF the potential rather than chosen: change the
+    /// budget and the radius moves, change the curve and the radius moves.
+    ///
+    /// `None` when no curve is loaded, or when even the last knot is above the budget (a
+    /// budget that no truncation can meet is refused rather than rounded up to one).
+    pub fn derive_pair_cutoff(&self, floor: f64) -> Option<(f64, f64)> {
+        if !(floor > 0.0) {
+            return None;
+        }
+        let (slots, ns) = self.active_slots();
+        let mut r_in = 0.0f64;
+        let mut any = false;
+        for &s in slots[..ns].iter() {
+            let t = self.bank.table_slot(s);
+            if !t.is_loaded() {
+                continue;
+            }
+            any = true;
+            let base = t.r_max();
+            if t.u(base).abs() <= floor {
+                // Already under budget at the last knot: the tail is all that is left.
+                r_in = r_in.max(base);
+                continue;
+            }
+            // The tail is a decaying exponential past the last knot, so `|u|` is monotone
+            // there and bisection is exact to the bracket. Walk out in doublings until the
+            // budget is met, then halve in.
+            let mut hi = base + 1.0;
+            let mut guard = 0;
+            while t.u(hi).abs() > floor && guard < 64 {
+                hi = base + (hi - base) * 2.0;
+                guard += 1;
+            }
+            if t.u(hi).abs() > floor {
+                return None;
+            }
+            let mut lo = base;
+            for _ in 0..80 {
+                let mid = 0.5 * (lo + hi);
+                if t.u(mid).abs() > floor {
+                    lo = mid;
+                } else {
+                    hi = mid;
+                }
+            }
+            r_in = r_in.max(hi);
+        }
+        if !any {
+            return None;
+        }
+        Some((r_in, r_in + PAIR_SWITCH_WIDTH))
+    }
+
+    /// Declare a pair truncation at `floor` hartree per pair. `false` if none can be
+    /// derived, or if the periodic box is too small to honour the resulting cutoff.
+    ///
+    /// The refusal is the point: a periodic box narrower than twice the cutoff cannot
+    /// carry the minimum image, and quietly shrinking the cutoff to fit would replace a
+    /// declared truncation budget with an undeclared one.
+    pub fn set_pair_cutoff(&mut self, floor: f64) -> bool {
+        let Some((r_in, r_cut)) = self.derive_pair_cutoff(floor) else {
+            return false;
+        };
+        let before = self.pair_switch;
+        let before_floor = self.pair_floor;
+        self.pair_switch = Some((r_in, r_cut));
+        self.pair_floor = floor;
+        if !self.pbc_ok() {
+            self.pair_switch = before;
+            self.pair_floor = before_floor;
+            return false;
+        }
+        self.compute_forces();
+        self.accumulate_energy();
+        true
+    }
+
+    /// Return to the complete pair sum. The scene stops being `O(N)` in the pair sector
+    /// and stops truncating; both halves of that trade are the caller's to make.
+    pub fn clear_pair_cutoff(&mut self) {
+        self.pair_switch = None;
+        self.pair_floor = 0.0;
+        self.compute_forces();
+        self.accumulate_energy();
+    }
+
+    /// Rebuild the cell decomposition and the neighbour list for the current positions.
+    fn rebuild_neighbours(&mut self) {
+        let geom = self.geom();
+        let cut = self.list_cutoff();
+        // No sector has a finite radius (no three-body table, no four-body, no declared
+        // pair cutoff): there is nothing for a cell list to accelerate, so it is not
+        // built. `Neighbours` stays empty and the complete pair loop runs, which is
+        // exactly the pre-T3 engine.
+        if !(cut > 0.0) || !cut.is_finite() {
+            self.cells.rebuild(&[], geom, f64::INFINITY);
+            self.neighbours.pairs.clear();
+            self.neighbours.start.clear();
+            self.neighbours.start.resize(self.n + 1, 0);
+            self.neighbours.cutoff = f64::INFINITY;
+            self.neighbours.complete = false;
+            self.neighbours.route = crate::cells::Route::Complete;
+            return;
+        }
+        let mut cells = core::mem::take(&mut self.cells);
+        let mut nb = core::mem::take(&mut self.neighbours);
+        cells.rebuild(&self.atoms, geom, cut);
+        cells.build_neighbours(&self.atoms, &mut nb);
+        self.cells = cells;
+        self.neighbours = nb;
+    }
+
+    /// Which enumeration the last force evaluation ran. Reported so a caller can see
+    /// whether the decomposition actually engaged rather than assuming it did.
+    pub fn route(&self) -> crate::cells::Route {
+        self.cells.route()
+    }
+
+    /// Demand the COMPLETE enumeration whatever the geometry admits — the reference route
+    /// the local one is audited against. See [`crate::cells::RoutePolicy`].
+    pub fn force_complete_route(&mut self) {
+        self.cells.set_policy(crate::cells::RoutePolicy::Complete);
+        self.recompute();
+    }
+
+    /// Let the geometry choose again.
+    pub fn auto_route(&mut self) {
+        self.cells.set_policy(crate::cells::RoutePolicy::Auto);
+        self.recompute();
+    }
+
+    /// Install a truncation window WITHOUT re-deriving it — the restore path, where the
+    /// window is being read back rather than computed.
+    ///
+    /// Separate from [`Sim::set_pair_cutoff`] on purpose: that one DERIVES the window from
+    /// the curves and refuses one the box cannot hold, which is exactly right when a caller
+    /// declares a budget and exactly wrong when a checkpoint is restoring a window that was
+    /// already derived and already accepted. A restore that silently re-derived would put
+    /// the scene on a different truncation than the one the run used.
+    pub(crate) fn set_pair_switch_raw(&mut self, switch: Option<(f64, f64)>, floor: f64) {
+        self.pair_switch = switch;
+        self.pair_floor = floor;
+    }
+
+    /// The envelope state the drift bound is built from, as raw words for the checkpoint.
+    ///
+    /// These are HISTORY, not configuration: `k_pair_max` and `k_three_max` are the
+    /// stiffest curvatures the trajectory has actually met, and the two `engaged` flags say
+    /// whether the wall and the spring have ever acted. A restore that dropped them would
+    /// hand the continuation a NARROWER bound than the run had earned, and the energy gate
+    /// would start reporting a breach that the original run had already accounted for.
+    pub(crate) fn envelope_state(&self) -> [f64; crate::checkpoint::ENVELOPE_WORDS] {
+        [
+            self.k_pair_max,
+            self.k_three_max,
+            if self.wall_engaged { 1.0 } else { 0.0 },
+            if self.spring_engaged { 1.0 } else { 0.0 },
+        ]
+    }
+
+    pub(crate) fn set_envelope_state(&mut self, w: [f64; crate::checkpoint::ENVELOPE_WORDS]) {
+        self.k_pair_max = w[0];
+        self.k_three_max = w[1];
+        self.wall_engaged = w[2] != 0.0;
+        self.spring_engaged = w[3] != 0.0;
+    }
+
+    /// The clock's state as raw words. `dt` is in here rather than re-derived because a
+    /// re-derivation reads the envelope, and the envelope is history — see above.
+    pub(crate) fn clock_state(&self) -> [f64; crate::checkpoint::CLOCK_WORDS] {
+        let t = &self.timescale;
+        [
+            t.mu,
+            t.mu_min,
+            t.omega_e,
+            t.period,
+            t.dt_reference,
+            t.dt,
+            t.k_env,
+            t.omega_env,
+            t.r_inner,
+            t.e_rel_max,
+            t.sim_speed_fs_per_wallsec,
+            t.accumulator(),
+            t.substeps_per_second,
+            t.dilation,
+        ]
+    }
+
+    pub(crate) fn set_clock_state(&mut self, w: [f64; crate::checkpoint::CLOCK_WORDS]) {
+        let t = &mut self.timescale;
+        t.mu = w[0];
+        t.mu_min = w[1];
+        t.omega_e = w[2];
+        t.period = w[3];
+        t.dt_reference = w[4];
+        t.dt = w[5];
+        t.k_env = w[6];
+        t.omega_env = w[7];
+        t.r_inner = w[8];
+        t.e_rel_max = w[9];
+        t.sim_speed_fs_per_wallsec = w[10];
+        t.set_accumulator(w[11]);
+        t.substeps_per_second = w[12];
+        t.dilation = w[13];
+    }
+
+    /// Recompute the forces and the energy from the current state, leaving the ledger's
+    /// origin alone.
+    ///
+    /// `rebase` does this and also re-zeroes the ledger, which is the wrong thing after a
+    /// change that is not meant to be a new initial condition.
+    pub fn recompute(&mut self) {
+        self.compute_forces();
+        self.accumulate_energy();
+    }
+
+    /// The neighbour pairs of the last force evaluation.
+    pub fn neighbours(&self) -> &crate::cells::Neighbours {
+        &self.neighbours
+    }
+
+    /// PLANT P-2 — THE PERIODIC TRANSLATION GATE.
+    ///
+    /// Translate every atom by one box vector, recompute the energy, and report how far it
+    /// moved. Under a correct minimum-image convention the answer is EXACTLY zero: the
+    /// periodic box has no origin, so where the scene sits inside it is not a physical
+    /// fact and cannot reach a number. Under walls or an open box it is large, because
+    /// those boundaries DO have an origin — which is what makes this a gate rather than a
+    /// tautology (M-VACUOUS-SUCCESS: a check that passes in every configuration has
+    /// checked nothing).
+    ///
+    /// # The float precondition, checked rather than assumed
+    ///
+    /// "Bit-identical" is a claim about arithmetic, and translating by `L` is only exact
+    /// when `x + L` is representable — otherwise the atom is not one box away, it is one
+    /// box away plus a rounding error, and the energies differ by what that error is
+    /// worth. So the shift is verified (`(x + L) - L == x`) on every atom before the
+    /// energies are compared, and the residual is `f64::NAN` when it fails. A gate that
+    /// silently accepted an inexact shift would be reporting the rounding of its own
+    /// harness as a property of the engine.
+    ///
+    /// The scene is restored exactly: positions are written back from the saved copy, not
+    /// un-translated.
+    pub fn pbc_translation_residual(&mut self) -> f64 {
+        if self.n == 0 {
+            return 0.0;
+        }
+        self.compute_forces();
+        self.accumulate_energy();
+        let before = self.energy();
+        let saved: Vec<Atom> = self.atoms.clone();
+        let (lx, ly, lz) = (self.width, self.height, self.depth);
+        let mut exact = true;
+        for i in 0..self.n {
+            let (x, y, z) = (self.atoms[i].x, self.atoms[i].y, self.atoms[i].z);
+            let (sx, sy, sz) = (x + lx, y + ly, z + lz);
+            if (sx - lx) != x || (sy - ly) != y || (sz - lz) != z {
+                exact = false;
+            }
+            self.atoms[i].x = sx;
+            self.atoms[i].y = sy;
+            self.atoms[i].z = sz;
+        }
+        self.compute_forces();
+        self.accumulate_energy();
+        let after = self.energy();
+        self.atoms.copy_from_slice(&saved);
+        self.compute_forces();
+        self.accumulate_energy();
+        if !exact {
+            return f64::NAN;
+        }
+        (after - before).abs()
+    }
+
     /// Place `n` atoms and zero the ledger. Deterministic: no RNG, so a reported run can
     /// be re-run byte-for-byte.
     pub fn reset(&mut self, n: usize) {
-        self.n = n.clamp(0, MAX_ATOMS);
+        self.resize_storage(n);
         // Register whatever species the scene is carrying before anything asks the bank
         // for a slot. An unregistered species resolves to slot 0, which is some OTHER
         // pair's curve, so this has to happen first rather than at the first lookup.
@@ -999,6 +1828,7 @@ impl Sim {
 
     fn zero_ledger(&mut self) {
         self.w_ext = 0.0;
+        self.work = ExternalWork::zero();
         self.j_ext = (0.0, 0.0, 0.0);
         self.time = 0.0;
         self.steps = 0;
@@ -1204,7 +2034,9 @@ impl Sim {
     /// wall energy is therefore the same float it was before the box grew a lid — and
     /// the box needs no mode flag to know which world it is in.
     fn wall_energy_force(&self, x: f64, y: f64, z: f64) -> (f64, f64, f64, f64, bool) {
-        if self.boundary == Boundary::Open {
+        // A box with no walls has no wall term. See `Boundary::has_walls` for what PLANT
+        // P-2 found when this was two separate equality tests instead of one predicate.
+        if !self.boundary.has_walls() {
             return (0.0, 0.0, 0.0, 0.0, false);
         }
         let lo = self.wall_inset;
@@ -1255,56 +2087,243 @@ impl Sim {
     /// Recompute `a_pair` and `a_ext` from the current positions, and refresh the
     /// potential terms of the ledger. Split so the momentum ledger can tell the
     /// internal forces (which cancel) from the external ones (which do not).
-    fn compute_forces(&mut self) {
+    /// THE PAIR CURVE, evaluated — value, slope and curvature — with the declared
+    /// truncation applied if there is one.
+    ///
+    /// Pure and `&self`, which is what lets it be called from a worker thread. It is the
+    /// ONLY place the switch is applied to a pair, so the complete route and the
+    /// neighbour-list route cannot disagree about what a truncated pair is worth.
+    #[inline]
+    fn pair_eval(&self, i: usize, j: usize, r: f64) -> (f64, f64, f64) {
+        // THE BANK DISPATCH. One lookup per pair, by species slot.
+        let (mut value, mut slope, mut curv) =
+            self.bank.table_at(self.slots[i], self.slots[j]).eval(r);
+        // THE DECLARED TRUNCATION, when there is one. `S(r)·U(r)` is a genuine potential,
+        // so the force below is still minus a gradient and the energy ledger still closes
+        // exactly — a hard cutoff would leave a step in the energy at the crossing and
+        // turn the drift gate into a detector of its own truncation.
+        if let Some((r_in, r_cut)) = self.pair_switch {
+            if r > r_in {
+                let (sw, ds, dds) = crate::cells::switch_c2(r, r_in, r_cut);
+                let (u, du, ddu) = (value, slope, curv);
+                value = sw * u;
+                slope = sw * du + ds * u;
+                curv = sw * ddu + 2.0 * ds * du + dds * u;
+            }
+        }
+        (value, slope, curv)
+    }
+
+    /// ONE PAIR's evaluated term. Pure; see [`PairTerm`].
+    #[inline]
+    pub fn pair_term(&self, p: &crate::cells::NeighbourPair) -> PairTerm {
+        let (value, slope, curv) = self.pair_eval(p.i as usize, p.j as usize, p.r);
+        // F = -dE/dR along the separation; positive slope pulls the pair together.
+        let f_over_r = slope / p.r;
+        PairTerm {
+            fx: f_over_r * p.dx,
+            fy: f_over_r * p.dy,
+            fz: f_over_r * p.dz,
+            value,
+            curv,
+            virial: p.r * slope,
+        }
+    }
+
+    /// Evaluate the pair terms `base .. base + out.len()`. The unit of work a
+    /// [`ForceExecutor`] hands to a worker.
+    pub fn eval_pair_chunk(&self, base: usize, out: &mut [PairTerm]) {
+        let pairs = &self.neighbours.pairs;
+        for (k, slot) in out.iter_mut().enumerate() {
+            *slot = self.pair_term(&pairs[base + k]);
+        }
+    }
+
+    /// The triples the current configuration admits, as built by the last force
+    /// evaluation. Entry `k` is what `eval_triple_chunk` evaluates into term `k`.
+    pub fn triples(&self) -> &[[usize; 3]] {
+        &self.triple_scratch
+    }
+
+    /// Evaluate the triple terms `base .. base + out.len()`.
+    pub fn eval_triple_chunk(&self, base: usize, out: &mut [TripleTerm]) {
+        for (k, slot) in out.iter_mut().enumerate() {
+            *slot = self.triple_term(self.triple_scratch[base + k]);
+        }
+    }
+
+    /// Install an executor for the force evaluation. `None` restores [`SerialExecutor`].
+    ///
+    /// Changing this must not change a number. That is not a hope: `tests/t3_parallel.rs`
+    /// runs one configuration under one worker and under many and compares the bits.
+    pub fn set_executor(&mut self, exec: Option<Box<dyn ForceExecutor + Send + Sync>>) {
+        self.executor = exec;
+    }
+
+    /// How many workers the installed executor reports.
+    pub fn workers(&self) -> usize {
+        self.executor.as_ref().map(|e| e.workers()).unwrap_or(1)
+    }
+
+    /// Evaluate `terms` through the installed executor, or serially when there is none.
+    ///
+    /// The executor is moved out for the call because it needs `&Sim` while `&mut Sim` is
+    /// held — and taking it out is honest about that rather than reaching for a cell. It
+    /// is put back before the function returns on every path.
+    fn dispatch_pairs(&mut self, mut terms: Vec<PairTerm>) -> Vec<PairTerm> {
+        match self.executor.take() {
+            None => SerialExecutor.eval_pairs(self, &mut terms, FORCE_CHUNK),
+            Some(e) => {
+                e.eval_pairs(self, &mut terms, FORCE_CHUNK);
+                self.executor = Some(e);
+            }
+        }
+        terms
+    }
+
+    fn dispatch_triples(&mut self, mut terms: Vec<TripleTerm>) -> Vec<TripleTerm> {
+        match self.executor.take() {
+            None => SerialExecutor.eval_triples(self, &mut terms, FORCE_CHUNK),
+            Some(e) => {
+                e.eval_triples(self, &mut terms, FORCE_CHUNK);
+                self.executor = Some(e);
+            }
+        }
+        terms
+    }
+
+    /// ONE PAIR, evaluated and accumulated in one statement — the COMPLETE route, where
+    /// there is no term list to shard because there is no cutoff to bound it.
+    ///
+    /// Shares [`Sim::pair_eval`] with the sharded route, so the two cannot drift apart in
+    /// what a pair is worth; what differs is only whether the sum is walked immediately or
+    /// after a wide evaluation pass.
+    #[inline]
+    #[allow(clippy::too_many_arguments)]
+    fn accumulate_pair(
+        &mut self,
+        i: usize,
+        j: usize,
+        dx: f64,
+        dy: f64,
+        dz: f64,
+        r: f64,
+        e_pair: &mut f64,
+        k_pair_max: &mut f64,
+        virial: &mut f64,
+    ) {
+        let (value, slope, curv) = self.pair_eval(i, j, r);
+        *e_pair += value;
+        *virial += r * slope;
+        let f_over_r = slope / r;
+        let fx = f_over_r * dx;
+        let fy = f_over_r * dy;
+        let fz = f_over_r * dz;
+        // Newton's third law, applied as one computed value with opposite signs: this is
+        // what makes the pair contribution cancel from the momentum sum.
+        self.a_pair[i].0 += fx;
+        self.a_pair[i].1 += fy;
+        self.a_pair[i].2 += fz;
+        self.a_pair[j].0 -= fx;
+        self.a_pair[j].1 -= fy;
+        self.a_pair[j].2 -= fz;
+        let ac = curv.abs();
+        if ac > *k_pair_max {
+            *k_pair_max = ac;
+        }
+    }
+
+    pub(crate) fn compute_forces(&mut self) {
         for i in 0..self.n {
             self.a_pair[i] = (0.0, 0.0, 0.0);
             self.a_ext[i] = (0.0, 0.0, 0.0);
         }
+        // Each atom's species slot, resolved ONCE. See `Sim::species_slots`.
+        self.refresh_slots();
+        // THE CELL LIST, rebuilt for this configuration. Sized to the largest cutoff any
+        // sector needs, so one decomposition serves the pair, triple and quadruple loops
+        // rather than three.
+        self.rebuild_neighbours();
+
         let mut e_pair = 0.0;
         let mut k_pair_max = self.k_pair_max;
-        // Each atom's species slot, resolved ONCE. See `Sim::species_slots`.
-        let species = self.species_slots();
+        let mut virial = 0.0f64;
+        let geom = self.geom();
+        let switch = self.pair_switch;
 
-        for i in 0..self.n {
-            for j in (i + 1)..self.n {
-                let dx = self.atoms[j].x - self.atoms[i].x;
-                let dy = self.atoms[j].y - self.atoms[i].y;
-                let dz = self.atoms[j].z - self.atoms[i].z;
-                // `(xx + yy) + zz`, in that order: on the mid-plane `zz` is an exact
-                // zero and adding it changes no bit of the 2D result.
-                let r2 = dx * dx + dy * dy + dz * dz;
-                // Two atoms at exactly the same point have no defined direction; the
-                // repulsive wall makes this unreachable dynamically, and the guard keeps
-                // it from being a NaN source if a caller places them there.
-                let r = r2.sqrt().max(1e-9);
-                // THE BANK DISPATCH. One lookup, the same `eval`, the same Hermite
-                // coefficients, the same arithmetic in the same order — which is what
-                // makes an all-hydrogen scene bit-for-bit what it was (gate B1).
-                let (value, slope, curv) = self.bank.table_at(species[i], species[j]).eval(r);
-                e_pair += value;
-                // F = -dE/dR along the separation; positive slope pulls the pair together.
-                let f_over_r = slope / r;
-                let fx = f_over_r * dx;
-                let fy = f_over_r * dy;
-                let fz = f_over_r * dz;
-                // Newton's third law, applied as one computed value with opposite signs:
-                // this is what makes the pair contribution cancel from the momentum sum.
-                self.a_pair[i].0 += fx;
-                self.a_pair[i].1 += fy;
-                self.a_pair[i].2 += fz;
-                self.a_pair[j].0 -= fx;
-                self.a_pair[j].1 -= fy;
-                self.a_pair[j].2 -= fz;
-                let ac = curv.abs();
+        // The pair sector takes one of two routes, and which one is a DECLARED property
+        // of the scene rather than a size heuristic:
+        //
+        //   * no pair cutoff declared -> the complete `N²/2` sum, exactly the loop this
+        //     engine has always run, with the same arithmetic in the same order. The pair
+        //     curve has no radius past which it is zero, so a complete sum is the only
+        //     one that is not an approximation, and a scene that has not declared a
+        //     truncation budget does not get truncated behind its back;
+        //   * a pair cutoff declared -> the neighbour list, which is O(N) with density.
+        //     The truncation is switched (C², so the result is still a potential and the
+        //     energy gate stays exact) and its size is reported by `truncation_floor`.
+        if switch.is_none() {
+            for i in 0..self.n {
+                let a = (self.atoms[i].x, self.atoms[i].y, self.atoms[i].z);
+                for j in (i + 1)..self.n {
+                    let b = (self.atoms[j].x, self.atoms[j].y, self.atoms[j].z);
+                    // ONE minimum-image implementation, called here. In an open or walled
+                    // box this is `b - a` and nothing else, so the float is unchanged.
+                    let (dx, dy, dz) = geom.delta(a, b);
+                    // `(xx + yy) + zz`, in that order: on the mid-plane `zz` is an exact
+                    // zero and adding it changes no bit of the 2D result.
+                    let r2 = dx * dx + dy * dy + dz * dz;
+                    // Two atoms at exactly the same point have no defined direction; the
+                    // repulsive wall makes this unreachable dynamically, and the guard
+                    // keeps it from being a NaN source if a caller places them there.
+                    let r = r2.sqrt().max(1e-9);
+                    self.accumulate_pair(
+                        i,
+                        j,
+                        dx,
+                        dy,
+                        dz,
+                        r,
+                        &mut e_pair,
+                        &mut k_pair_max,
+                        &mut virial,
+                    );
+                }
+            }
+        } else {
+            // EVALUATE WIDE, ACCUMULATE NARROW. The evaluation is where the cost is and it
+            // is pure, so it goes through the executor; the accumulation walks the terms in
+            // index order, which is the canonical order the complete loop produced, so the
+            // sum is the same float however many workers there were.
+            let mut terms = core::mem::take(&mut self.pair_terms);
+            terms.clear();
+            terms.resize(self.neighbours.pairs.len(), PairTerm::default());
+            terms = self.dispatch_pairs(terms);
+            let nb = core::mem::take(&mut self.neighbours);
+            for (t, p) in terms.iter().zip(nb.pairs.iter()) {
+                let (i, j) = (p.i as usize, p.j as usize);
+                e_pair += t.value;
+                virial += t.virial;
+                self.a_pair[i].0 += t.fx;
+                self.a_pair[i].1 += t.fy;
+                self.a_pair[i].2 += t.fz;
+                self.a_pair[j].0 -= t.fx;
+                self.a_pair[j].1 -= t.fy;
+                self.a_pair[j].2 -= t.fz;
+                let ac = t.curv.abs();
                 if ac > k_pair_max {
                     k_pair_max = ac;
                 }
             }
+            self.neighbours = nb;
+            self.pair_terms = terms;
         }
         self.k_pair_max = k_pair_max;
         self.e_pair = e_pair;
+        self.w_virial = virial;
 
         self.accumulate_three_body();
+        self.accumulate_four_body();
 
         let mut e_wall = 0.0;
         for i in 0..self.n {
@@ -1355,139 +2374,556 @@ impl Sim {
     /// keeps the N^3 loop from being the whole budget when there is nothing to compute.
     fn accumulate_three_body(&mut self) {
         self.e_three = 0.0;
-        self.fence_untabulated = 0;
+        self.fence_untabulated = self.fenced_triples();
         if (!self.trimer.loaded && !self.water.loaded && self.trimers.is_empty()) || self.n < 3 {
             return;
         }
-        // One distance matrix, read three times per triple instead of nine square roots.
-        // Indexed rather than iterated: each separation is written to BOTH `d[i][j]` and
-        // `d[j][i]`, which an iterator over one row cannot express.
-        let mut d = [[0.0f64; MAX_ATOMS]; MAX_ATOMS];
-        #[allow(clippy::needless_range_loop)]
-        for i in 0..self.n {
-            for j in (i + 1)..self.n {
-                let dx = self.atoms[j].x - self.atoms[i].x;
-                let dy = self.atoms[j].y - self.atoms[i].y;
-                let dz = self.atoms[j].z - self.atoms[i].z;
-                let r = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
-                d[i][j] = r;
-                d[j][i] = r;
-            }
+        let cut3 = self.three_body_cutoff();
+        if !(cut3 > 0.0) {
+            return;
         }
-        let mut e_three = 0.0;
-        // Per-atom stiffness totals: curvatures ADD over the triples an atom is in.
-        let mut k_atom = [0.0f64; MAX_ATOMS];
-        for i in 0..self.n {
-            for j in (i + 1)..self.n {
-                for k in (j + 1)..self.n {
-                    // THE COMPOSITION DISPATCH.
-                    // 1. Shipped / generic trimer bank first (keyed by composition).
-                    // 2. Primary / in-memory generated tables (H3 and H2O).
-                    // 3. Otherwise FENCED and counted.
-                    let (za, zb, zc) = (
-                        self.atoms[i].species.z as u8,
-                        self.atoms[j].species.z as u8,
-                        self.atoms[k].species.z as u8,
-                    );
-                    let (a, b, c, v, g, env_abs, env_per_grad) = if let Some(surf) = self.trimers.find([za, zb, zc]) {
-                        // Align the 3 atom slots to the surface's declared species order
-                        let perm = match_triple_slots(i, za, j, zb, k, zc, surf.prov.z)
-                            .unwrap_or((i, j, k));
-                        let (sa, sb, sc) = perm;
-                        let (rab, rac, rbc) = (d[sa][sb], d[sa][sc], d[sb][sc]);
-                        let (val, grad) = surf.table.eval([rab, rac, rbc]);
-                        (
-                            sa, sb, sc,
-                            val, grad,
-                            surf.table.curvature_envelope,
-                            surf.table.curvature_per_gradient,
-                        )
-                    } else {
-                        let n_o = (za == 8) as u32 + (zb == 8) as u32 + (zc == 8) as u32;
-                        let n_h = (za == 1) as u32 + (zb == 1) as u32 + (zc == 1) as u32;
-                        if n_h == 3 && self.trimer.loaded {
-                            let (rab, rac, rbc) = (d[i][j], d[i][k], d[j][k]);
-                            let (val, grad) = self.trimer.eval([rab, rac, rbc]);
-                            (
-                                i, j, k,
-                                val, grad,
-                                self.trimer.curvature_envelope,
-                                self.trimer.curvature_per_gradient,
-                            )
-                        } else if n_o == 1 && n_h == 2 && self.water.loaded {
-                            let (sa, sb, sc) = if za == 8 {
-                                (i, j, k)
-                            } else if zb == 8 {
-                                (j, i, k)
-                            } else {
-                                (k, i, j)
-                            };
-                            let (rab, rac, rbc) = (d[sa][sb], d[sa][sc], d[sb][sc]);
-                            let (val, grad) = self.water.eval(rab, rac, rbc);
-                            (
-                                sa, sb, sc,
-                                val, grad,
-                                self.water.curvature_envelope,
-                                self.water.curvature_per_gradient,
-                            )
-                        } else if n_o == 2 && n_h == 1 && self.ooh.loaded {
-                            let (sa, sb, sc) = if za == 1 {
-                                (i, j, k)
-                            } else if zb == 1 {
-                                (j, i, k)
-                            } else {
-                                (k, i, j)
-                            };
-                            let (rab, rac, rbc) = (d[sa][sb], d[sa][sc], d[sb][sc]);
-                            let (val, grad) = self.ooh.eval(rab, rac, rbc);
-                            (
-                                sa, sb, sc,
-                                val, grad,
-                                self.ooh.curvature_envelope,
-                                self.ooh.curvature_per_gradient,
-                            )
-                        } else if n_o == 3 && self.ozone.loaded {
-                            let (rab, rac, rbc) = (d[i][j], d[i][k], d[j][k]);
-                            let (val, grad) = self.ozone.eval(rab, rac, rbc);
-                            (
-                                i, j, k,
-                                val, grad,
-                                self.ozone.curvature_envelope,
-                                self.ozone.curvature_per_gradient,
-                            )
-                        } else {
-                            self.fence_untabulated += 1;
-                            continue;
-                        }
-                    };
 
-                    if v == 0.0 && g[0] == 0.0 && g[1] == 0.0 && g[2] == 0.0 {
+        // THE TRIPLE ENUMERATION, cutoff-local and canonical.
+        //
+        // Every one of these surfaces is an exact zero unless TWO SIDES MEETING AT ONE
+        // VERTEX are both inside its domain (see `Sim::three_body_cutoff`). So the triples
+        // that can contribute are exactly the ones some vertex sees both partners of, and
+        // the neighbour list already holds, per atom, the partners it sees.
+        //
+        // A triple can have more than one such vertex, so it would be enumerated more than
+        // once. The canonical rule: emit at hub `h` when the opposite side `|jk|` is
+        // longer than the cutoff (then `h` is the ONLY qualifying vertex), and otherwise
+        // only when `h` is the smallest of the three indices. Every triple is emitted
+        // exactly once, and which vertex emitted it is a function of the configuration
+        // rather than of the traversal.
+        //
+        // The list is then SORTED into ascending `(a, b, c)` before evaluation. That is
+        // not tidiness: `e_three` and the force accumulations are floating-point sums, so
+        // the order is part of the answer, and the sorted order is the one the complete
+        // `i < j < k` loop produced. A cutoff-local run therefore agrees with a complete
+        // run bit-for-bit on the terms they share.
+        let nb = core::mem::take(&mut self.neighbours);
+        let mut triples = core::mem::take(&mut self.triple_scratch);
+        triples.clear();
+        for h in 0..self.n {
+            let (mine, radii) = nb.adj_of(h);
+            for a in 0..mine.len() {
+                if radii[a] > cut3 {
+                    continue;
+                }
+                for b in (a + 1)..mine.len() {
+                    if radii[b] > cut3 {
                         continue;
                     }
-                    let (rab, rac, rbc) = (d[a][b], d[a][c], d[b][c]);
-                    e_three += v;
-                    self.push_side(a, b, g[0], rab);
-                    self.push_side(a, c, g[1], rac);
-                    self.push_side(b, c, g[2], rbc);
-                    // The per-triple stiffness the drift bound is built from; the
-                    // derivation is in `Sim::k_three`.
-                    let gmax = g[0].abs().max(g[1].abs()).max(g[2].abs());
-                    let g2 = env_abs.min(env_per_grad * gmax);
-                    let kt = 4.0 * g2
-                        + 2.0 * (g[0].abs() / rab + g[1].abs() / rac + g[2].abs() / rbc);
-                    k_atom[a] += kt;
-                    k_atom[b] += kt;
-                    k_atom[c] += kt;
+                    let (j, k) = (mine[a] as usize, mine[b] as usize);
+                    // Does a lower-indexed vertex also qualify as a hub? It does exactly
+                    // when the opposite side is itself inside the cutoff — then all three
+                    // vertices see both their partners and the triple would be emitted
+                    // three times.
+                    let opposite_local = nb.separation(j, k).map(|r| r <= cut3).unwrap_or(false);
+                    if opposite_local && !(h < j && h < k) {
+                        continue;
+                    }
+                    let mut t = [h, j, k];
+                    t.sort_unstable();
+                    triples.push(t);
                 }
             }
         }
+        triples.sort_unstable();
+        self.neighbours = nb;
+
+        self.triple_scratch = triples;
+
+        // EVALUATE WIDE, ACCUMULATE NARROW — the same split the pair sector uses, and for
+        // the same reason: the interpolant evaluations are the cost and are pure, the sums
+        // are the answer and are ordered.
+        let mut terms = core::mem::take(&mut self.triple_terms);
+        terms.clear();
+        terms.resize(self.triple_scratch.len(), TripleTerm::default());
+        terms = self.dispatch_triples(terms);
+
+        let mut e_three = 0.0;
+        // Per-atom stiffness totals: curvatures ADD over the triples an atom is in.
+        let mut k_atom = core::mem::take(&mut self.k_atom_scratch);
+        k_atom.clear();
+        k_atom.resize(self.n, 0.0);
+        for t in terms.iter() {
+            if !t.live {
+                continue;
+            }
+            let (a, b, c) = (t.a as usize, t.b as usize, t.c as usize);
+            e_three += t.v;
+            // The three-body virial, by the same `Σ s · dE/ds` the pair sector uses: each
+            // side push IS a pair force with `g` in the slope's role, so the side sum is
+            // the triple's contribution and nothing new has to be derived.
+            self.w_virial += t.g[0] * t.r[0] + t.g[1] * t.r[1] + t.g[2] * t.r[2];
+            self.push_side(a, b, t.g[0], t.r[0]);
+            self.push_side(a, c, t.g[1], t.r[1]);
+            self.push_side(b, c, t.g[2], t.r[2]);
+            k_atom[a] += t.kt;
+            k_atom[b] += t.kt;
+            k_atom[c] += t.kt;
+        }
         self.e_three = e_three;
-        for k in k_atom[..self.n].iter() {
+        for k in k_atom.iter() {
             if *k > self.k_three_max {
                 self.k_three_max = *k;
             }
         }
+        self.k_atom_scratch = k_atom;
+        self.triple_terms = terms;
     }
+
+    /// ONE TRIPLE, evaluated. Pure and `&self`; see [`TripleTerm`].
+    ///
+    /// THE COMPOSITION DISPATCH lives here, and `Sim::served` states the same dispatch for
+    /// the fence count, so the two cannot disagree about what is served. The hardcoded
+    /// composition branches are DRY-residual R-4 — see
+    /// `conformance/water_observatory/DRY_RESIDUALS.md`, which also names what would
+    /// discharge them (emitting the four in-memory surfaces through the provenanced bank
+    /// door the shipped ones already use).
+    pub fn triple_term(&self, t: [usize; 3]) -> TripleTerm {
+        let [i, j, k] = t;
+        // Sides, minimum-imaged, in the same `sqrt().max(1e-9)` form every other loop uses.
+        // Computed here rather than read from the neighbour list because the side opposite
+        // the hub may be longer than the list's cutoff.
+        let geom = self.geom();
+        let pi = (self.atoms[i].x, self.atoms[i].y, self.atoms[i].z);
+        let pj = (self.atoms[j].x, self.atoms[j].y, self.atoms[j].z);
+        let pk = (self.atoms[k].x, self.atoms[k].y, self.atoms[k].z);
+        let sep = |a: (f64, f64, f64), b: (f64, f64, f64)| -> f64 {
+            let (dx, dy, dz) = geom.delta(a, b);
+            (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9)
+        };
+        let d_ij = sep(pi, pj);
+        let d_ik = sep(pi, pk);
+        let d_jk = sep(pj, pk);
+        let d = |a: usize, b: usize| -> f64 {
+            if (a == i && b == j) || (a == j && b == i) {
+                d_ij
+            } else if (a == i && b == k) || (a == k && b == i) {
+                d_ik
+            } else {
+                d_jk
+            }
+        };
+
+        let (za, zb, zc) = (
+            self.atoms[i].species.z as u8,
+            self.atoms[j].species.z as u8,
+            self.atoms[k].species.z as u8,
+        );
+        let (a, b, c, v, g, env_abs, env_per_grad) = if let Some(surf) =
+            self.trimers.find([za, zb, zc])
+        {
+            // Align the 3 atom slots to the surface's declared species order
+            let perm = match_triple_slots(i, za, j, zb, k, zc, surf.prov.z).unwrap_or((i, j, k));
+            let (sa, sb, sc) = perm;
+            let (rab, rac, rbc) = (d(sa, sb), d(sa, sc), d(sb, sc));
+            let (val, grad) = surf.table.eval([rab, rac, rbc]);
+            (
+                sa,
+                sb,
+                sc,
+                val,
+                grad,
+                surf.table.curvature_envelope,
+                surf.table.curvature_per_gradient,
+            )
+        } else {
+            let n_o = (za == 8) as u32 + (zb == 8) as u32 + (zc == 8) as u32;
+            let n_h = (za == 1) as u32 + (zb == 1) as u32 + (zc == 1) as u32;
+            if n_h == 3 && self.trimer.loaded {
+                let (rab, rac, rbc) = (d_ij, d_ik, d_jk);
+                let (val, grad) = self.trimer.eval([rab, rac, rbc]);
+                (
+                    i,
+                    j,
+                    k,
+                    val,
+                    grad,
+                    self.trimer.curvature_envelope,
+                    self.trimer.curvature_per_gradient,
+                )
+            } else if n_o == 1 && n_h == 2 && self.water.loaded {
+                let (sa, sb, sc) = if za == 8 {
+                    (i, j, k)
+                } else if zb == 8 {
+                    (j, i, k)
+                } else {
+                    (k, i, j)
+                };
+                let (rab, rac, rbc) = (d(sa, sb), d(sa, sc), d(sb, sc));
+                let (val, grad) = self.water.eval(rab, rac, rbc);
+                (
+                    sa,
+                    sb,
+                    sc,
+                    val,
+                    grad,
+                    self.water.curvature_envelope,
+                    self.water.curvature_per_gradient,
+                )
+            } else if n_o == 2 && n_h == 1 && self.ooh.loaded {
+                let (sa, sb, sc) = if za == 1 {
+                    (i, j, k)
+                } else if zb == 1 {
+                    (j, i, k)
+                } else {
+                    (k, i, j)
+                };
+                let (rab, rac, rbc) = (d(sa, sb), d(sa, sc), d(sb, sc));
+                let (val, grad) = self.ooh.eval(rab, rac, rbc);
+                (
+                    sa,
+                    sb,
+                    sc,
+                    val,
+                    grad,
+                    self.ooh.curvature_envelope,
+                    self.ooh.curvature_per_gradient,
+                )
+            } else if n_o == 3 && self.ozone.loaded {
+                let (rab, rac, rbc) = (d_ij, d_ik, d_jk);
+                let (val, grad) = self.ozone.eval(rab, rac, rbc);
+                (
+                    i,
+                    j,
+                    k,
+                    val,
+                    grad,
+                    self.ozone.curvature_envelope,
+                    self.ozone.curvature_per_gradient,
+                )
+            } else {
+                return TripleTerm::default();
+            }
+        };
+
+        if v == 0.0 && g[0] == 0.0 && g[1] == 0.0 && g[2] == 0.0 {
+            return TripleTerm::default();
+        }
+        let (rab, rac, rbc) = (d(a, b), d(a, c), d(b, c));
+        // The per-triple stiffness the drift bound is built from; the derivation is in
+        // `Sim::k_three`.
+        let gmax = g[0].abs().max(g[1].abs()).max(g[2].abs());
+        let g2 = env_abs.min(env_per_grad * gmax);
+        let kt = 4.0 * g2 + 2.0 * (g[0].abs() / rab + g[1].abs() / rac + g[2].abs() / rbc);
+        TripleTerm {
+            a: a as u32,
+            b: b as u32,
+            c: c as u32,
+            v,
+            g,
+            r: [rab, rac, rbc],
+            kt,
+            live: true,
+        }
+    }
+
+    /// THE FENCE, counted combinatorially instead of by enumeration.
+    ///
+    /// A triple is fenced when its COMPOSITION has no server — the shipped bank does not
+    /// carry it, and it is not one of the four in-memory surfaces, or the surface it would
+    /// need is not loaded. That is a fact about which nuclei are in the scene and which
+    /// tables are open, and it does not depend on where the atoms are: the old enumeration
+    /// counted a triple whether its atoms were 2 bohr or 200 apart.
+    ///
+    /// So it is computed from the SPECIES CENSUS, in `O(species³)` rather than `O(N³)`,
+    /// and it yields the identical number the complete triple loop yielded. That identity
+    /// is what let the enumeration become cutoff-local without moving the fence incidence
+    /// the prereg pins ("the four OOO triples stay HONESTLY FENCED at exactly 4/seed").
+    ///
+    /// M-VACUOUS-SUCCESS: `tests/pbc.rs::the_fence_count_survives_going_local` holds the
+    /// two counts against each other on a scene that has both fenced and served triples.
+    pub fn fenced_triples(&self) -> u64 {
+        if self.n < 3 {
+            return 0;
+        }
+        if !self.trimer.loaded && !self.water.loaded && self.trimers.is_empty() {
+            // The pre-T3 loop returned before counting anything in this case, and the
+            // fence is a reading of that loop. Preserved deliberately: a scene carrying
+            // only an (O,O,H) or ozone surface reports no fence today, and changing that
+            // here would move a campaign number for a reason that has nothing to do with
+            // T3. Entered in the DRY-residual register as R-3.
+            return 0;
+        }
+        // The census: how many atoms of each nuclear charge.
+        let mut zs: Vec<(u8, u64)> = Vec::new();
+        for i in 0..self.n {
+            let z = self.atoms[i].species.z as u8;
+            match zs.iter_mut().find(|(k, _)| *k == z) {
+                Some(e) => e.1 += 1,
+                None => zs.push((z, 1)),
+            }
+        }
+        zs.sort_unstable();
+        let mut fenced = 0u64;
+        for (ia, &(za, na)) in zs.iter().enumerate() {
+            for (ib, &(zb, nb)) in zs.iter().enumerate().skip(ia) {
+                for &(zc, nc) in zs.iter().skip(ib) {
+                    if self.served([za, zb, zc]) {
+                        continue;
+                    }
+                    // Unordered multiset count: the number of ways to pick this
+                    // composition out of the census.
+                    let count = if za == zb && zb == zc {
+                        na * na.saturating_sub(1) * na.saturating_sub(2) / 6
+                    } else if za == zb {
+                        na * na.saturating_sub(1) / 2 * nc
+                    } else if zb == zc {
+                        na * (nb * nb.saturating_sub(1) / 2)
+                    } else {
+                        na * nb * nc
+                    };
+                    fenced += count;
+                }
+            }
+        }
+        fenced
+    }
+
+    /// Whether a composition has a three-body surface to be evaluated on. The dispatch of
+    /// `accumulate_three_body`, stated once so the fence count and the force loop cannot
+    /// disagree about what is served.
+    fn served(&self, z: [u8; 3]) -> bool {
+        if self.trimers.find(z).is_some() {
+            return true;
+        }
+        let n_o = z.iter().filter(|&&v| v == 8).count();
+        let n_h = z.iter().filter(|&&v| v == 1).count();
+        (n_h == 3 && self.trimer.loaded)
+            || (n_o == 1 && n_h == 2 && self.water.loaded)
+            || (n_o == 2 && n_h == 1 && self.ooh.loaded)
+            || (n_o == 3 && self.ozone.loaded)
+    }
+
+    /// THE 4-BODY VALENCE SECTOR: Exact ab-initio (O,H,H,H) dE4 evaluation for compact quadruples.
+    ///
+    /// Cutoff-gated: Quadruples with any O-H distance >= R_CUT (6.0 bohr) evaluate to zero
+    /// without invoking the electronic structure solver.
+    /// When compact (all 3 O-H distances < 6.0 bohr), the C^2 switching function smoothly blends
+    /// from 1.0 (at <= 5.0 bohr) to 0.0 (at 6.0 bohr), and forces are computed via central
+    /// finite difference (h = 1e-4 bohr) on the quadruple's Cartesian coordinates.
+    fn accumulate_four_body(&mut self) {
+        self.e_four = 0.0;
+        if !self.de4_enabled || self.n < 4 || !self.water.loaded || !self.trimer.loaded {
+            return;
+        }
+
+        // Fast displacement-based reuse across micro-substeps:
+        if self.de4_cached_valid {
+            let mut max_disp_sq = 0.0f64;
+            for i in 0..self.n {
+                let dx = self.atoms[i].x - self.de4_last_pos[i][0];
+                let dy = self.atoms[i].y - self.de4_last_pos[i][1];
+                let dz = self.atoms[i].z - self.de4_last_pos[i][2];
+                let d2 = dx * dx + dy * dy + dz * dz;
+                if d2 > max_disp_sq {
+                    max_disp_sq = d2;
+                }
+            }
+            // If all atoms moved < 0.08 bohr (6.4e-3 bohr^2), reuse cached forces and energy:
+            if max_disp_sq < 0.0064 {
+                self.e_four = self.de4_cached_energy;
+                self.w_virial += self.de4_cached_virial;
+                for i in 0..self.n {
+                    self.a_pair[i].0 += self.de4_cached_forces[i].0;
+                    self.a_pair[i].1 += self.de4_cached_forces[i].1;
+                    self.a_pair[i].2 += self.de4_cached_forces[i].2;
+                }
+                return;
+            }
+        }
+
+        const R_CUT: f64 = DE4_R_CUT;
+        const R_IN: f64 = DE4_R_IN;
+        const H_FD: f64 = 1e-4;
+
+        let mut e_four = 0.0;
+        let mut quad_virial = 0.0f64;
+        let mut total_forces = core::mem::take(&mut self.quad_force_scratch);
+        total_forces.clear();
+        total_forces.resize(self.n, (0.0f64, 0.0f64, 0.0f64));
+
+        // THE QUADRUPLE ENUMERATION, cutoff-local.
+        //
+        // The sector is (O,H,H,H) with the switch on the three O-H distances, so a
+        // quadruple contributes only when all three hydrogens are inside `R_CUT` of the
+        // SAME oxygen. That oxygen is the hub, every quadruple has exactly one of them,
+        // and the neighbour list already holds each atom's partners inside the cutoff — so
+        // the enumeration is over each oxygen's own hydrogens rather than over `N⁴/24`
+        // quadruples of which all but a handful are empty.
+        //
+        // The complete loop this replaces ran `h1` over the whole scene and `h2`, `h3`
+        // above it, so its order was ascending `(o, h1, h2, h3)`. The hub's adjacency is
+        // ascending too, so the triples of hydrogens come out in that same order and the
+        // floating-point sum is unchanged.
+        let geom = self.geom();
+        let nb = core::mem::take(&mut self.neighbours);
+        let mut hs: Vec<usize> = Vec::new();
+        for o in 0..self.n {
+            if self.atoms[o].species.z != 8 {
+                continue;
+            }
+            let po = [self.atoms[o].x, self.atoms[o].y, self.atoms[o].z];
+            hs.clear();
+            let (mine, radii) = nb.adj_of(o);
+            for k in 0..mine.len() {
+                let h = mine[k] as usize;
+                if self.atoms[h].species.z == 1 && radii[k] < R_CUT {
+                    hs.push(h);
+                }
+            }
+            if hs.len() < 3 {
+                continue;
+            }
+
+            for a in 0..hs.len() {
+                let h1 = hs[a];
+                // Positions are taken as the MINIMUM IMAGE about the oxygen, so a
+                // quadruple that straddles a periodic face is still a compact quadruple
+                // and not four atoms strung across the box. Under walls or an open box
+                // `delta` is the raw difference and these are the atoms' own coordinates.
+                let p1 = image_about(geom, po, self.atoms[h1]);
+                let r1 = dist(po, p1);
+                if r1 >= R_CUT {
+                    continue;
+                }
+                for b in (a + 1)..hs.len() {
+                    let h2 = hs[b];
+                    let p2 = image_about(geom, po, self.atoms[h2]);
+                    let r2 = dist(po, p2);
+                    if r2 >= R_CUT {
+                        continue;
+                    }
+                    for c in (b + 1)..hs.len() {
+                        let h3 = hs[c];
+                        let p3 = image_about(geom, po, self.atoms[h3]);
+                        let r3 = dist(po, p3);
+                        if r3 >= R_CUT {
+                            continue;
+                        }
+
+                        // Compact encounter under R_CUT = 6.0 bohr!
+                        let r_max = r1.max(r2).max(r3);
+                        let (s, _, _) = crate::cells::switch_c2(r_max, R_IN, R_CUT);
+                        if s <= 0.0 {
+                            continue;
+                        }
+
+                        self.de4_eval_count += 1;
+                        let de4_base = holon_chem::quaternary::de4_ohhh_fci(
+                            &[po, p1, p2, p3],
+                            &self.water,
+                            &self.trimer,
+                        );
+                        let u_four = s * de4_base;
+                        e_four += u_four;
+
+                        // Radial finite difference forces:
+                        let h_indices = [h1, h2, h3];
+                        let radii_fd = [r1, r2, r3];
+                        let mut mut_centers = [po, p1, p2, p3];
+                        let mut f_o = [0.0f64; 3];
+
+                        for hid in 0..3 {
+                            let local_idx = hid + 1;
+                            let r_val = radii_fd[hid].max(1e-12);
+                            let u_vec = [
+                                (mut_centers[local_idx][0] - po[0]) / r_val,
+                                (mut_centers[local_idx][1] - po[1]) / r_val,
+                                (mut_centers[local_idx][2] - po[2]) / r_val,
+                            ];
+
+                            // Perturb radial coordinate:
+                            mut_centers[local_idx][0] += H_FD * u_vec[0];
+                            mut_centers[local_idx][1] += H_FD * u_vec[1];
+                            mut_centers[local_idx][2] += H_FD * u_vec[2];
+
+                            let r1_p = dist(mut_centers[0], mut_centers[1]);
+                            let r2_p = dist(mut_centers[0], mut_centers[2]);
+                            let r3_p = dist(mut_centers[0], mut_centers[3]);
+                            let rmax_p = r1_p.max(r2_p).max(r3_p);
+                            let (s_p, _, _) = crate::cells::switch_c2(rmax_p, R_IN, R_CUT);
+                            let ep = if s_p > 0.0 {
+                                s_p * holon_chem::quaternary::de4_ohhh_fci(
+                                    &mut_centers,
+                                    &self.water,
+                                    &self.trimer,
+                                )
+                            } else {
+                                0.0
+                            };
+
+                            // restore
+                            mut_centers[local_idx][0] -= H_FD * u_vec[0];
+                            mut_centers[local_idx][1] -= H_FD * u_vec[1];
+                            mut_centers[local_idx][2] -= H_FD * u_vec[2];
+
+                            let f_mag = -(ep - u_four) / H_FD;
+                            // The four-body virial, `r · dE/dr`, with `f_mag = −dE/dr`.
+                            // The coordinate is radial in the O-H distance, so this is the
+                            // same `Σ s · dE/ds` the other two sectors use — the sector
+                            // differs, the formula does not.
+                            quad_virial += -radii_fd[hid] * f_mag;
+                            let f_h = [f_mag * u_vec[0], f_mag * u_vec[1], f_mag * u_vec[2]];
+                            f_o[0] -= f_h[0];
+                            f_o[1] -= f_h[1];
+                            f_o[2] -= f_h[2];
+
+                            let h_idx = h_indices[hid];
+                            let m_h = self.atoms[h_idx].mass();
+                            total_forces[h_idx].0 += f_h[0] / m_h;
+                            total_forces[h_idx].1 += f_h[1] / m_h;
+                            total_forces[h_idx].2 += f_h[2] / m_h;
+                        }
+
+                        let m_o = self.atoms[o].mass();
+                        total_forces[o].0 += f_o[0] / m_o;
+                        total_forces[o].1 += f_o[1] / m_o;
+                        total_forces[o].2 += f_o[2] / m_o;
+                    }
+                }
+            }
+        }
+        self.neighbours = nb;
+
+        // Apply forces to a_pair and update cache:
+        for i in 0..self.n {
+            self.a_pair[i].0 += total_forces[i].0;
+            self.a_pair[i].1 += total_forces[i].1;
+            self.a_pair[i].2 += total_forces[i].2;
+            self.de4_last_pos[i] = [self.atoms[i].x, self.atoms[i].y, self.atoms[i].z];
+        }
+        self.de4_cached_forces.clear();
+        self.de4_cached_forces.extend_from_slice(&total_forces);
+        self.quad_force_scratch = total_forces;
+        self.de4_cached_energy = e_four;
+        self.de4_cached_virial = quad_virial;
+        self.de4_cached_valid = true;
+        self.e_four = e_four;
+        self.w_virial += quad_virial;
+    }
+}
+
+/// An atom's position as the MINIMUM IMAGE of `about` — the coordinates the many-body
+/// solvers must be handed under periodic boundaries.
+///
+/// A quadruple that straddles a box face has atoms whose stored coordinates are a box
+/// apart; handing those to an electronic-structure solver would ask it about a molecule
+/// stretched across the universe. The image is taken about the hub so the cluster is
+/// compact and its internal geometry is the one the cutoff admitted.
+#[inline]
+fn image_about(geom: crate::cells::BoxGeom, about: [f64; 3], a: Atom) -> [f64; 3] {
+    let (dx, dy, dz) = geom.delta((about[0], about[1], about[2]), (a.x, a.y, a.z));
+    [about[0] + dx, about[1] + dy, about[2] + dz]
+}
+
+#[inline]
+fn dist(a: [f64; 3], b: [f64; 3]) -> f64 {
+    ((a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2)).sqrt()
 }
 
 #[inline]
@@ -1531,7 +2967,7 @@ impl Sim {
         self.a_pair[b].2 -= fz;
     }
 
-    fn accumulate_energy(&mut self) {
+    pub(crate) fn accumulate_energy(&mut self) {
         let mut e_kin = 0.0;
         for i in 0..self.n {
             let a = &self.atoms[i];
@@ -1549,6 +2985,18 @@ impl Sim {
     /// the impulse — it is the impulse.
     pub fn step(&mut self) {
         if self.n == 0 || !self.pairs_ready() {
+            return;
+        }
+        // TWO INTEGRATORS, and this is the only place that chooses between them.
+        //
+        // They are not one integrator with a flag: NVE/NVT is velocity Verlet on the
+        // physical Hamiltonian, NPT is the MTK Trotter factorization on an extended one
+        // whose box is a degree of freedom. Writing the second as a special case of the
+        // first is how a barostat becomes a rescale hack. `tests/t3_barostat.rs` gates the
+        // relation that DOES hold between them: at infinite barostat mass with the chains
+        // idle, NPT reproduces NVE.
+        if self.barostat_on() {
+            self.step_npt();
             return;
         }
         let dt = self.dt();
@@ -1572,6 +3020,26 @@ impl Sim {
             self.atoms[i].x += dt * self.atoms[i].vx;
             self.atoms[i].y += dt * self.atoms[i].vy;
             self.atoms[i].z += dt * self.atoms[i].vz;
+        }
+        // THE WRAP. An atom that left one face re-enters through the opposite one. It is
+        // done here, on the drift, and nowhere else — a coordinate is either canonical or
+        // it is not, and two places that fold it is two places that can disagree about
+        // whether it has been folded.
+        //
+        // It does NO work and delivers NO impulse: the wrap changes a coordinate by
+        // exactly one box vector, and under the minimum-image convention every separation
+        // in the scene is unchanged by that (`pbc_translation_residual` is the gate that
+        // says so). Velocities are untouched. So neither ledger has anything to post,
+        // which is why there is no `w_ext` line here and why its absence is a statement
+        // rather than an omission.
+        if self.boundary.wraps() {
+            let geom = self.geom();
+            for i in 0..self.n {
+                let (x, y, z) = geom.wrap((self.atoms[i].x, self.atoms[i].y, self.atoms[i].z));
+                self.atoms[i].x = x;
+                self.atoms[i].y = y;
+                self.atoms[i].z = z;
+            }
         }
 
         self.compute_forces();
@@ -1654,6 +3122,7 @@ impl Sim {
         }
         self.accumulate_energy();
         self.w_ext += self.e_kin - before;
+        self.work.thermostat += self.e_kin - before;
         let (pax, pay, paz) = self.momentum();
         self.j_ext.0 += pax - pbx;
         self.j_ext.1 += pay - pby;
@@ -1700,6 +3169,10 @@ impl Sim {
         let dz = self.atoms[g].z - z;
         let after = 0.5 * K_SPRING * (dx * dx + dy * dy + dz * dz);
         self.w_ext += after - before;
+        // WB-4.3: the same increment, into the hand's own receipt column. Posted from the
+        // one computed value rather than recomputed, so the column cannot drift from the
+        // total it is part of.
+        self.work.hand += after - before;
         self.compute_forces();
     }
 
@@ -1711,6 +3184,7 @@ impl Sim {
             return;
         }
         self.w_ext -= self.e_spring;
+        self.work.hand -= self.e_spring;
         self.grabbed = None;
         self.compute_forces();
     }
@@ -1749,14 +3223,42 @@ impl Sim {
         // X-X criteria differ must show them differing, and it does because `u` and
         // `outer_turning_point` are asked of the table this pair is served by.
         let species = self.species_slots();
-        for i in 0..self.n {
-            for j in (i + 1)..self.n {
-                if k >= MAX_PAIRS {
-                    break;
+        let geom = self.geom();
+        // WHICH PAIRS ARE READ. With no declared truncation, every pair — the complete
+        // reading this has always been. With one, the neighbour pairs only, and the pairs
+        // that are dropped provably cannot be bonded: past the switch's outer edge `u` is
+        // exactly zero, so `e_rel` is the relative kinetic energy, which is never
+        // negative, and the criterion is `e_rel < 0`. The bond reading therefore does not
+        // change; the count of PAIRS EXAMINED does, and `pair_count` says so.
+        let listed: Option<Vec<(u32, u32)>> = if self.pair_switch.is_some() {
+            Some(self.neighbours.pairs.iter().map(|p| (p.i, p.j)).collect())
+        } else {
+            None
+        };
+        let total = match &listed {
+            Some(v) => v.len(),
+            None => complete_pairs(self.n),
+        };
+        self.pairs.clear();
+        self.pairs.reserve(total);
+        let iter: Vec<(usize, usize)> = match &listed {
+            Some(v) => v.iter().map(|&(a, b)| (a as usize, b as usize)).collect(),
+            None => {
+                let mut out = Vec::with_capacity(total);
+                for i in 0..self.n {
+                    for j in (i + 1)..self.n {
+                        out.push((i, j));
+                    }
                 }
-                let dx = self.atoms[j].x - self.atoms[i].x;
-                let dy = self.atoms[j].y - self.atoms[i].y;
-                let dz = self.atoms[j].z - self.atoms[i].z;
+                out
+            }
+        };
+        {
+            for (i, j) in iter {
+                let (dx, dy, dz) = geom.delta(
+                    (self.atoms[i].x, self.atoms[i].y, self.atoms[i].z),
+                    (self.atoms[j].x, self.atoms[j].y, self.atoms[j].z),
+                );
                 let r = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
                 let vx = self.atoms[j].vx - self.atoms[i].vx;
                 let vy = self.atoms[j].vy - self.atoms[i].vy;
@@ -1779,14 +3281,14 @@ impl Sim {
                 let lz = mu * (dx * vy - dy * vx);
                 let l_sq = lx * lx + ly * ly + lz * lz;
                 let r_outer = table.outer_turning_point(e_rel, l_sq, mu, r, TURNING_POINT_CAP);
-                self.pairs[k] = PairReading {
+                self.pairs.push(PairReading {
                     i,
                     j,
                     r,
                     e_rel,
                     r_outer,
                     bonded: e_rel < 0.0 && r < r_outer,
-                };
+                });
                 k += 1;
             }
         }
@@ -1825,8 +3327,8 @@ impl Sim {
     /// closure fence made visible.
     pub fn cluster_count(&self) -> (usize, usize) {
         let size = self.cluster_sizes();
-        let clusters = size[..self.n].iter().filter(|&&s| s >= 2).count();
-        let atoms = size[..self.n].iter().filter(|&&s| s >= 2).sum();
+        let clusters = size.iter().filter(|&&s| s >= 2).count();
+        let atoms = size.iter().filter(|&&s| s >= 2).sum();
         (clusters, atoms)
     }
 
@@ -1838,9 +3340,9 @@ impl Sim {
     /// Split out rather than duplicated so the quench's histogram and the headline count
     /// read ONE union-find over ONE edge set. Two implementations of a cluster reading is
     /// how the two of them come to disagree.
-    pub fn cluster_sizes(&self) -> [usize; MAX_ATOMS] {
+    pub fn cluster_sizes(&self) -> Vec<usize> {
         let roots = self.cluster_roots();
-        let mut size = [0usize; MAX_ATOMS];
+        let mut size = vec![0usize; self.n];
         for i in 0..self.n {
             size[roots[i]] += 1;
         }
@@ -1853,12 +3355,9 @@ impl Sim {
     /// [`Sim::cluster_species_counts`] are two READINGS of this one partition, not two
     /// partitions — which is what stops a size histogram and a composition histogram from
     /// disagreeing about how many molecules there are.
-    fn cluster_roots(&self) -> [usize; MAX_ATOMS] {
-        let mut parent: [usize; MAX_ATOMS] = [0; MAX_ATOMS];
-        for (i, p) in parent.iter_mut().enumerate() {
-            *p = i;
-        }
-        fn find(parent: &mut [usize; MAX_ATOMS], mut i: usize) -> usize {
+    fn cluster_roots(&self) -> Vec<usize> {
+        let mut parent: Vec<usize> = (0..self.n).collect();
+        fn find(parent: &mut [usize], mut i: usize) -> usize {
             while parent[i] != i {
                 parent[i] = parent[parent[i]]; // path halving
                 i = parent[i];
@@ -1871,8 +3370,8 @@ impl Sim {
                 parent[a] = b;
             }
         }
-        let mut roots = [0usize; MAX_ATOMS];
-        for (i, r) in roots.iter_mut().enumerate().take(self.n) {
+        let mut roots = vec![0usize; self.n];
+        for (i, r) in roots.iter_mut().enumerate() {
             *r = find(&mut parent, i);
         }
         roots
@@ -1891,9 +3390,9 @@ impl Sim {
     /// Keyed by nuclear charge rather than by the bank's species index deliberately: the
     /// species index is an artefact of registration order and would make a run's output
     /// depend on which atom happened to be placed first.
-    pub fn cluster_species_counts(&self) -> [[(u32, usize); MAX_SPECIES]; MAX_ATOMS] {
+    pub fn cluster_species_counts(&self) -> Vec<[(u32, usize); MAX_SPECIES]> {
         let roots = self.cluster_roots();
-        let mut out = [[(0u32, 0usize); MAX_SPECIES]; MAX_ATOMS];
+        let mut out = vec![[(0u32, 0usize); MAX_SPECIES]; self.n];
         for i in 0..self.n {
             let z = self.atoms[i].species.z;
             let row = &mut out[roots[i]];

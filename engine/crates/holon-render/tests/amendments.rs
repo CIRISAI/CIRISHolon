@@ -347,7 +347,7 @@ fn perf_substeps_per_second_native() {
     use std::time::Instant;
     let mut s = loaded_sim();
     s.boundary = Boundary::Open;
-    s.reset(holon_render::sim::MAX_ATOMS);
+    s.reset(holon_render::sim::DEFAULT_SCENE_ATOMS);
     let pairs = (s.n * (s.n - 1) / 2) as f64;
 
     for _ in 0..2_000 {
@@ -427,7 +427,7 @@ fn the_census_layer_cost_is_measured_not_asserted() {
     let sample = |enabled: bool, scene_hot: bool| -> f64 {
         let mut s = loaded_sim();
         s.boundary = Boundary::Open;
-        s.reset(holon_render::sim::MAX_ATOMS);
+        s.reset(holon_render::sim::DEFAULT_SCENE_ATOMS);
         if scene_hot {
             // A realistic scene: most pairs unbound, so the layer has little to resolve.
             for i in 0..s.n {
@@ -852,7 +852,7 @@ fn dwell_hysteresis_is_deterministic_and_the_census_matches_ground_truth() {
     //  - the census count equals the live row count;
     //  - no atom belongs to two composites;
     //  - every live row's members are a pair the predicate currently calls bonded.
-    let mut seen = [false; holon_render::sim::MAX_ATOMS];
+    let mut seen = vec![false; s.n];
     let mut counted = 0;
     for (_, row) in s.holons.live_rows() {
         counted += 1;
@@ -889,7 +889,7 @@ fn dwell_hysteresis_is_deterministic_and_the_census_matches_ground_truth() {
     );
     assert_eq!(
         &row.members[..2],
-        &[0u8, 1u8],
+        &[0u32, 1u32],
         "the most-bound pair did not win"
     );
     assert_eq!(counted, 1, "an atom was claimed twice");

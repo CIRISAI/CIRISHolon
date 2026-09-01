@@ -45,7 +45,7 @@ use holon_render::bank::{
     D1Admission, Host, Refusal, Route, Source, TableProvenance, D1_RECORD, MAX_SPECIES,
     MAX_TABLES, RESOLVABLE_UNCERTAINTY,
 };
-use holon_render::sim::{Boundary, Dims, Sim, MAX_ATOMS};
+use holon_render::sim::{Boundary, Dims, Sim, DEFAULT_SCENE_ATOMS};
 use holon_render::{load_pair_table, TABLE_OK};
 use std::sync::OnceLock;
 
@@ -1296,7 +1296,7 @@ fn interp_u(pt: &PairTable, r: f64) -> f64 {
 /// Guard on the atom cap the fixtures assume.
 #[test]
 fn the_fixtures_fit_the_scene() {
-    assert!(MAX_ATOMS >= 4, "the B1 fixture places four atoms");
+    assert!(DEFAULT_SCENE_ATOMS >= 4, "the B1 fixture places four atoms");
     assert!(
         MAX_SPECIES >= 2,
         "a mixture needs at least two species; the cap is {MAX_SPECIES}"

@@ -36,12 +36,17 @@
 //! at substeps. `census_enabled` exists so the claim "being a holon is cheap" can be
 //! MEASURED (frame cost with the layer on against off) rather than asserted.
 
-use crate::sim::{PairReading, MAX_PAIRS};
+use crate::sim::PairReading;
 
-pub const MAX_HOLONS: usize = MAX_PAIRS;
 /// Room for composites larger than a pair, which is what SELECTOR-1's subsystem rows
 /// will need. The molecule kind uses two.
 pub const MAX_MEMBERS: usize = 8;
+
+/// How many rows the layer starts with. NOT a cap: `free_row` grows the vector when every
+/// row is live. It used to be `MAX_PAIRS` — a hard `C(16,2) = 120` — which was a cap on
+/// how many molecules a scene could hold, derived from a cap on how many atoms it could
+/// hold, and both are gone (T3).
+const INITIAL_ROWS: usize = 64;
 
 /// Grain boundaries a pair must satisfy the predicate before a row is created, and fail
 /// it before a row is destroyed.
@@ -81,12 +86,21 @@ pub enum HolonKind {
 #[derive(Clone, Copy)]
 pub struct HolonRow {
     pub kind: HolonKind,
-    pub members: [u8; MAX_MEMBERS],
+    /// Atom indices. `u32`, not `u8`: the scene is no longer capped at sixteen atoms, and
+    /// a member index that silently wrapped at 256 would name the wrong atom rather than
+    /// fail.
+    pub members: [u32; MAX_MEMBERS],
     pub member_count: u8,
     pub formed_at_frame: u64,
     pub formed_at_time: f64,
-    /// The pair this row was built from, so the row can be refreshed without a search.
-    pub pair: u16,
+    /// The pair this row was built from, BY ATOM INDEX rather than by position in the pair
+    /// list.
+    ///
+    /// The list used to be every pair in `(i, j)` order, so a pair's position in it was a
+    /// stable name for the pair. With a cutoff-local list the position moves as neighbours
+    /// come and go, and a row holding a position would silently start describing a
+    /// different pair. The atoms are the identity; the index never was.
+    pub pair: (u32, u32),
 
     // ---- the ledger row ----
     /// Bond-sector energy: pair potential plus pair-frame kinetic. A VIEW of energy the
@@ -109,7 +123,7 @@ impl HolonRow {
             member_count: 0,
             formed_at_frame: 0,
             formed_at_time: 0.0,
-            pair: 0,
+            pair: (0, 0),
             e_bond: 0.0,
             e_bond_at_formation: 0.0,
             closure_defect_at_formation: 0.0,
@@ -121,8 +135,17 @@ impl HolonRow {
 }
 
 /// Per-pair state the row layer needs between grain boundaries.
+///
+/// Carries its OWN identity. Dwell counters and the previous boundary's bond energy are
+/// state that has to follow a pair across frames, and the pair's position in the reading
+/// list is no longer a name that survives a frame (see [`HolonRow::pair`]). So the
+/// candidate list is kept sorted by `(i, j)` and merged against the new reading list at
+/// every boundary — a pair present in both keeps its history, a pair that has left loses
+/// it, and neither depends on how the list happened to be ordered.
 #[derive(Clone, Copy)]
 pub struct Candidate {
+    pub i: u32,
+    pub j: u32,
     pub dwell_bonded: u8,
     pub dwell_unbound: u8,
     /// Bond-sector energy at the previous grain boundary, for the closure defect.
@@ -130,12 +153,14 @@ pub struct Candidate {
     pub has_prev: bool,
     pub closure_defect: f64,
     /// Row index when this pair carries a live molecule.
-    pub row: i16,
+    pub row: i32,
 }
 
 impl Candidate {
     pub const fn empty() -> Self {
         Self {
+            i: 0,
+            j: 0,
             dwell_bonded: 0,
             dwell_unbound: 0,
             e_bond_prev: 0.0,
@@ -143,6 +168,11 @@ impl Candidate {
             closure_defect: f64::INFINITY,
             row: -1,
         }
+    }
+
+    #[inline]
+    fn key(&self) -> (u32, u32) {
+        (self.i, self.j)
     }
 }
 
@@ -165,15 +195,21 @@ pub struct Census {
 }
 
 pub struct HolonLayer {
-    pub rows: [HolonRow; MAX_HOLONS],
-    pub candidates: [Candidate; MAX_PAIRS],
+    pub rows: Vec<HolonRow>,
+    /// One entry per pair of the CURRENT reading list, in the same order, kept aligned by
+    /// the merge in [`HolonLayer::step_boundary`].
+    pub candidates: Vec<Candidate>,
     pub census: Census,
     /// Live row count, maintained incrementally so the census does not re-count 120 rows
     /// at every boundary just to report a number it already knows.
     live: usize,
     /// Scratch: eligible pair indices for this boundary. A field rather than a local so
-    /// the layer stays allocation-free.
-    eligible: [u16; MAX_PAIRS],
+    /// the layer stays allocation-free once a scene has settled at a size.
+    eligible: Vec<u32>,
+    /// Scratch: which atoms already belong to a live row this boundary.
+    taken: Vec<bool>,
+    /// Scratch: the merged candidate list under construction.
+    merged: Vec<Candidate>,
     /// Off measures the frame cost of everything except this layer, which is how the
     /// "holons are cheap" claim gets a number instead of a adjective.
     pub enabled: bool,
@@ -191,8 +227,8 @@ pub struct HolonLayer {
 impl HolonLayer {
     pub const fn empty() -> Self {
         Self {
-            rows: [HolonRow::empty(); MAX_HOLONS],
-            candidates: [Candidate::empty(); MAX_PAIRS],
+            rows: Vec::new(),
+            candidates: Vec::new(),
             census: Census {
                 atoms: 0,
                 molecules: 0,
@@ -203,7 +239,9 @@ impl HolonLayer {
                 closure_rejections: 0,
             },
             live: 0,
-            eligible: [0; MAX_PAIRS],
+            eligible: Vec::new(),
+            taken: Vec::new(),
+            merged: Vec::new(),
             enabled: true,
             dissolutions_without_defect_rise: 0,
             last_dissolution_defect: 0.0,
@@ -212,8 +250,9 @@ impl HolonLayer {
     }
 
     pub fn reset(&mut self) {
-        self.rows = [HolonRow::empty(); MAX_HOLONS];
-        self.candidates = [Candidate::empty(); MAX_PAIRS];
+        self.rows.clear();
+        self.rows.resize(INITIAL_ROWS, HolonRow::empty());
+        self.candidates.clear();
         self.census = Census {
             atoms: 0,
             molecules: 0,
@@ -245,8 +284,19 @@ impl HolonLayer {
         self.rows.iter().filter(|r| r.alive).map(|r| r.e_bond).sum()
     }
 
-    fn free_row(&self) -> Option<usize> {
-        self.rows.iter().position(|r| !r.alive)
+    /// A free row, GROWING the table when every row is live.
+    ///
+    /// `None` was the old answer at 120 rows and it meant a formation was silently
+    /// dropped: the molecule count would stop rising and nothing would say why. A row is
+    /// 96 bytes, so the table doubling is cheaper than the misreading.
+    fn free_row(&mut self) -> usize {
+        if let Some(k) = self.rows.iter().position(|r| !r.alive) {
+            return k;
+        }
+        let k = self.rows.len();
+        self.rows
+            .resize((self.rows.len() * 2).max(INITIAL_ROWS), HolonRow::empty());
+        k
     }
 
     /// ONE grain boundary of the composite layer.
@@ -274,6 +324,65 @@ impl HolonLayer {
             1.0
         };
         let mut rejections: u64 = 0;
+
+        // --- 0. carry the candidate state onto THIS boundary's reading list ---
+        //
+        // Both lists are sorted by `(i, j)` — the reading list by construction, the
+        // candidate list because the previous merge left it that way — so this is a linear
+        // merge with no search and no allocation past the first boundary.
+        //
+        // A pair that has LEFT the list has left it for one of two reasons: it moved past
+        // the neighbour cutoff, or the scene was resized. Either way it is not a bonded
+        // pair any more, so a row it was carrying is dissolved here rather than left alive
+        // with nothing refreshing it. That dissolution is counted like any other; what it
+        // is NOT is a defect-rise event, because there was no boundary at which to measure
+        // the rise — so it does not touch `dissolutions_without_defect_rise`, which would
+        // otherwise report a departure as a physics anomaly.
+        let mut merged = core::mem::take(&mut self.merged);
+        merged.clear();
+        merged.reserve(pairs.len());
+        {
+            let old = &self.candidates;
+            let mut a = 0usize;
+            for p in pairs.iter() {
+                let key = (p.i as u32, p.j as u32);
+                while a < old.len() && old[a].key() < key {
+                    // Departed. Release its row.
+                    if old[a].row >= 0 {
+                        let r = old[a].row as usize;
+                        if self.rows[r].alive {
+                            self.rows[r].alive = false;
+                            self.live -= 1;
+                            self.census.dissolutions += 1;
+                        }
+                    }
+                    a += 1;
+                }
+                if a < old.len() && old[a].key() == key {
+                    merged.push(old[a]);
+                    a += 1;
+                } else {
+                    merged.push(Candidate {
+                        i: key.0,
+                        j: key.1,
+                        ..Candidate::empty()
+                    });
+                }
+            }
+            while a < old.len() {
+                if old[a].row >= 0 {
+                    let r = old[a].row as usize;
+                    if self.rows[r].alive {
+                        self.rows[r].alive = false;
+                        self.live -= 1;
+                        self.census.dissolutions += 1;
+                    }
+                }
+                a += 1;
+            }
+        }
+        self.merged = core::mem::take(&mut self.candidates);
+        self.candidates = merged;
 
         // --- 1. score every candidate's closure defect and advance its dwell ---
         for (k, p) in pairs.iter().enumerate() {
@@ -358,14 +467,16 @@ impl HolonLayer {
         // MEASURED 9.7% of a frame on the 16-atom worst case (every pair mutually bound,
         // so eligibility churns every boundary) — which is not the "cheap" the census is
         // supposed to demonstrate. Sorting a list that is at most `pairs` long, once, is.
-        let mut taken = [false; crate::sim::MAX_ATOMS];
+        let mut taken = core::mem::take(&mut self.taken);
+        taken.clear();
+        taken.resize(n_atoms, false);
         for (k, p) in pairs.iter().enumerate() {
             if self.candidates[k].row >= 0 {
                 taken[p.i] = true;
                 taken[p.j] = true;
             }
         }
-        let mut eligible = 0usize;
+        self.eligible.clear();
         for (k, p) in pairs.iter().enumerate() {
             if self.candidates[k].row >= 0 || !p.bonded || taken[p.i] || taken[p.j] {
                 continue;
@@ -377,9 +488,9 @@ impl HolonLayer {
             if !(defect.is_finite() && defect <= CLOSURE_DEFECT_MAX) {
                 continue;
             }
-            self.eligible[eligible] = k as u16;
-            eligible += 1;
+            self.eligible.push(k as u32);
         }
+        let eligible = self.eligible.len();
         // Selection sort by (e_rel, index). The eligible set is small in every scene that
         // is not the pathological all-bound one, and the sort is stable in the index by
         // construction: a strict `<` on the energy leaves equal energies in scan order.
@@ -399,17 +510,17 @@ impl HolonLayer {
             if taken[p.i] || taken[p.j] {
                 continue;
             }
-            let Some(slot) = self.free_row() else { break };
-            let mut members = [0u8; MAX_MEMBERS];
-            members[0] = p.i as u8;
-            members[1] = p.j as u8;
+            let slot = self.free_row();
+            let mut members = [0u32; MAX_MEMBERS];
+            members[0] = p.i as u32;
+            members[1] = p.j as u32;
             self.rows[slot] = HolonRow {
                 kind: HolonKind::Molecule,
                 members,
                 member_count: 2,
                 formed_at_frame: frame,
                 formed_at_time: time,
-                pair: k as u16,
+                pair: (p.i as u32, p.j as u32),
                 e_bond: p.e_bond(),
                 e_bond_at_formation: p.e_bond(),
                 closure_defect_at_formation: self.candidates[k].closure_defect,
@@ -417,12 +528,13 @@ impl HolonLayer {
                 closure_defect_peak: self.candidates[k].closure_defect,
                 alive: true,
             };
-            self.candidates[k].row = slot as i16;
+            self.candidates[k].row = slot as i32;
             taken[p.i] = true;
             taken[p.j] = true;
             self.live += 1;
             self.census.formations += 1;
         }
+        self.taken = taken;
 
         self.census.molecules = self.live;
     }

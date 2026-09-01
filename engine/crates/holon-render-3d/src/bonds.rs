@@ -7,13 +7,13 @@
 //! exactly when the physics says a molecule exists, and the census counts the same
 //! events the picture shows.
 //!
-//! One entity per POSSIBLE pair, hidden unless that pair is bonded. `MAX_PAIRS` is 120,
+//! One entity per POSSIBLE pair, hidden unless that pair is bonded. `complete_pairs(DEFAULT_SCENE_ATOMS)` is 120,
 //! which is cheap to keep resident and much cheaper than spawning and despawning
 //! entities as bonds form and break — a bond can flicker at the dwell boundary, and
 //! entity churn at frame rate is exactly what the persistent table avoids.
 
 use bevy::prelude::*;
-use holon_render::sim::MAX_PAIRS;
+use holon_render::sim::{complete_pairs, DEFAULT_SCENE_ATOMS};
 
 use crate::scene::{bond_radius, rod_between, to_world, SceneAssets};
 use crate::world::AtomWorld;
@@ -23,8 +23,13 @@ use crate::world::AtomWorld;
 pub struct BondEntities(pub Vec<Entity>);
 
 pub fn setup_bonds(commands: &mut Commands, assets: &SceneAssets) {
-    let mut bonds = Vec::with_capacity(MAX_PAIRS);
-    for _ in 0..MAX_PAIRS {
+    // T3: the engine's scene is no longer capped, so this is the VIEW's own budget — how
+    // many bond cylinders the shell pre-creates for the opening scene — and not a statement
+    // about how many bonds can exist. The view reads the pair list and never writes it, so
+    // a larger scene draws the bonds it has entities for and the physics is unaffected.
+    let budget = complete_pairs(DEFAULT_SCENE_ATOMS);
+    let mut bonds = Vec::with_capacity(budget);
+    for _ in 0..budget {
         bonds.push(
             commands
                 .spawn((

@@ -36,6 +36,9 @@
 // The JSON reader is NATIVE ONLY. The browser has a JSON parser already and pushes
 // knots through the ABI below; shipping a second one inside the wasm would be pure
 // weight. This cfg is what makes the module header's claim true rather than aspirational.
+pub mod barostat;
+pub mod cells;
+pub mod checkpoint;
 pub mod bank;
 pub mod clock;
 pub mod holon;
@@ -759,13 +762,13 @@ pub extern "C" fn holon_calibration_burst(substeps: u32) -> u32 {
     let restore_n = s.n;
     let restore_boundary = s.boundary;
     s.boundary = sim::Boundary::Open;
-    s.reset(sim::MAX_ATOMS);
+    s.reset(sim::DEFAULT_SCENE_ATOMS);
     for _ in 0..substeps {
         s.step();
     }
     s.boundary = restore_boundary;
     s.reset(restore_n);
-    sim::MAX_ATOMS as u32
+    sim::DEFAULT_SCENE_ATOMS as u32
 }
 
 /// Record the measured throughput. `substeps_per_second` is what the host observed
@@ -782,7 +785,7 @@ pub extern "C" fn holon_set_calibration(substeps_per_second: f64) {
 
 #[no_mangle]
 pub extern "C" fn holon_calibration_atoms() -> u32 {
-    sim::MAX_ATOMS as u32
+    sim::DEFAULT_SCENE_ATOMS as u32
 }
 
 #[no_mangle]
@@ -800,7 +803,7 @@ pub extern "C" fn holon_substeps_per_second() -> f64 {
 #[no_mangle]
 pub extern "C" fn holon_pairs_per_second() -> f64 {
     let s = sim();
-    let pairs = (sim::MAX_ATOMS * (sim::MAX_ATOMS - 1) / 2) as f64;
+    let pairs = sim::complete_pairs(sim::DEFAULT_SCENE_ATOMS) as f64;
     s.timescale.substeps_per_second * pairs
 }
 
@@ -814,9 +817,9 @@ pub extern "C" fn holon_required_substeps_per_second() -> f64 {
 pub extern "C" fn holon_n_max() -> f64 {
     let s = sim();
     if !s.timescale.calibrated {
-        return sim::MAX_ATOMS as f64;
+        return sim::DEFAULT_SCENE_ATOMS as f64;
     }
-    let pairs = (sim::MAX_ATOMS * (sim::MAX_ATOMS - 1) / 2) as f64;
+    let pairs = sim::complete_pairs(sim::DEFAULT_SCENE_ATOMS) as f64;
     clock::n_max(
         s.timescale.substeps_per_second * pairs,
         s.timescale.required_substeps_per_second(),

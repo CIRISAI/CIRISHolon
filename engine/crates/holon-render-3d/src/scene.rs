@@ -12,7 +12,7 @@
 //! that, and everything else stays in one frame or the other.
 
 use bevy::prelude::*;
-use holon_render::sim::MAX_ATOMS;
+use holon_render::sim::DEFAULT_SCENE_ATOMS;
 
 use crate::world::{AtomWorld, ATOM_RADIUS, BOX_SIDE};
 
@@ -130,8 +130,8 @@ pub fn setup_scene(
     };
 
     // One persistent entity per atom SLOT, not per live atom.
-    let mut atoms = Vec::with_capacity(MAX_ATOMS);
-    for _ in 0..MAX_ATOMS {
+    let mut atoms = Vec::with_capacity(DEFAULT_SCENE_ATOMS);
+    for _ in 0..DEFAULT_SCENE_ATOMS {
         atoms.push(
             commands
                 .spawn((
@@ -169,7 +169,7 @@ pub fn setup_scene(
 
     commands.insert_resource(AtomEntities {
         atoms,
-        look: vec![(1, AtomLook::Free); MAX_ATOMS],
+        look: vec![(1, AtomLook::Free); DEFAULT_SCENE_ATOMS],
         spring,
         anchor,
     });
@@ -229,7 +229,7 @@ pub fn sync_atoms(
     let s = &world.sim;
     // An atom is drawn as bonded when it is a member of ANY bonded pair. That is the
     // pair predicate's own reading, not a distance test of this module's invention.
-    let mut bonded = [false; MAX_ATOMS];
+    let mut bonded = vec![false; DEFAULT_SCENE_ATOMS];
     for p in &s.pairs[..s.pair_count] {
         if p.bonded {
             bonded[p.i] = true;
@@ -237,7 +237,7 @@ pub fn sync_atoms(
         }
     }
 
-    for i in 0..MAX_ATOMS {
+    for i in 0..DEFAULT_SCENE_ATOMS {
         let e = table.atoms[i];
         let live = i < s.n;
         if let Ok(mut vis) = visibility.get_mut(e) {

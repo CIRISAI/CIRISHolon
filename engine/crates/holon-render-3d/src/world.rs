@@ -16,7 +16,7 @@ use holon_chem::elements::{
     Species, CARBON, CHLORINE, FLUORINE, HELIUM, HYDROGEN, LITHIUM, NEON, NITROGEN, OXYGEN,
 };
 use holon_render::clock::{Rung, AU_TO_FS};
-use holon_render::sim::{Boundary, Dims, Sim, MAX_ATOMS};
+use holon_render::sim::{Boundary, Dims, Sim, DEFAULT_SCENE_ATOMS};
 
 /// Scene preset selector for the 3D atom world.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -262,99 +262,54 @@ impl AtomWorld {
                 if s == holon_render::TABLE_OK {
                     holon_render::generate_trimer_table(&mut self.sim);
                 }
-                self.sim.reset(MAX_ATOMS);
+                self.sim.reset(DEFAULT_SCENE_ATOMS);
                 for i in 0..self.sim.n {
                     self.sim.atoms[i].species = HYDROGEN;
                 }
                 s
             }
             Preset::LiH => {
-                let s = holon_render::generate_pair_table(
-                    &mut self.sim,
-                    LITHIUM,
-                    HYDROGEN,
-                    64,
-                );
+                let s = holon_render::generate_pair_table(&mut self.sim, LITHIUM, HYDROGEN, 64);
                 self.setup_dimer(LITHIUM, HYDROGEN);
                 s
             }
             Preset::HF => {
-                let s = holon_render::generate_pair_table(
-                    &mut self.sim,
-                    HYDROGEN,
-                    FLUORINE,
-                    64,
-                );
+                let s = holon_render::generate_pair_table(&mut self.sim, HYDROGEN, FLUORINE, 64);
                 self.setup_dimer(HYDROGEN, FLUORINE);
                 s
             }
             Preset::Li2 => {
-                let s = holon_render::generate_pair_table(
-                    &mut self.sim,
-                    LITHIUM,
-                    LITHIUM,
-                    64,
-                );
+                let s = holon_render::generate_pair_table(&mut self.sim, LITHIUM, LITHIUM, 64);
                 self.setup_dimer(LITHIUM, LITHIUM);
                 s
             }
             Preset::N2 => {
-                let s = holon_render::generate_pair_table(
-                    &mut self.sim,
-                    NITROGEN,
-                    NITROGEN,
-                    64,
-                );
+                let s = holon_render::generate_pair_table(&mut self.sim, NITROGEN, NITROGEN, 64);
                 self.setup_dimer(NITROGEN, NITROGEN);
                 s
             }
             Preset::F2 => {
-                let s = holon_render::generate_pair_table(
-                    &mut self.sim,
-                    FLUORINE,
-                    FLUORINE,
-                    64,
-                );
+                let s = holon_render::generate_pair_table(&mut self.sim, FLUORINE, FLUORINE, 64);
                 self.setup_dimer(FLUORINE, FLUORINE);
                 s
             }
             Preset::CO => {
-                let s = holon_render::generate_pair_table(
-                    &mut self.sim,
-                    CARBON,
-                    OXYGEN,
-                    64,
-                );
+                let s = holon_render::generate_pair_table(&mut self.sim, CARBON, OXYGEN, 64);
                 self.setup_dimer(CARBON, OXYGEN);
                 s
             }
             Preset::He2 => {
-                let s = holon_render::generate_pair_table(
-                    &mut self.sim,
-                    HELIUM,
-                    HELIUM,
-                    64,
-                );
+                let s = holon_render::generate_pair_table(&mut self.sim, HELIUM, HELIUM, 64);
                 self.setup_dimer(HELIUM, HELIUM);
                 s
             }
             Preset::Ne2 => {
-                let s = holon_render::generate_pair_table(
-                    &mut self.sim,
-                    NEON,
-                    NEON,
-                    64,
-                );
+                let s = holon_render::generate_pair_table(&mut self.sim, NEON, NEON, 64);
                 self.setup_dimer(NEON, NEON);
                 s
             }
             Preset::HCl => {
-                let s = holon_render::generate_pair_table(
-                    &mut self.sim,
-                    HYDROGEN,
-                    CHLORINE,
-                    64,
-                );
+                let s = holon_render::generate_pair_table(&mut self.sim, HYDROGEN, CHLORINE, 64);
                 self.setup_dimer(HYDROGEN, CHLORINE);
                 s
             }
@@ -381,14 +336,17 @@ impl AtomWorld {
                 status = s;
             }
         }
-        self.sim.reset(MAX_ATOMS);
+        self.sim.reset(DEFAULT_SCENE_ATOMS);
         for i in 0..self.sim.n {
             let sp = if i % 2 == 0 { HYDROGEN } else { HELIUM };
-            assert!(self.sim.set_species(i, sp), "the bank refused the mixed scene");
+            assert!(
+                self.sim.set_species(i, sp),
+                "the bank refused the mixed scene"
+            );
         }
         // The opener's escape-speed derivation reads each pair's OWN curve, so it has to
         // run after the species are assigned, not before.
-        self.sim.reset(MAX_ATOMS);
+        self.sim.reset(DEFAULT_SCENE_ATOMS);
         self.sim.adopt_table_timescale();
         self.sim.rebase();
         status
@@ -456,7 +414,7 @@ impl AtomWorld {
         self.last_frame_seconds = wall_dt;
     }
 
-    /// Run `substeps` of PURE PHYSICS at the calibration scene (N = MAX_ATOMS, walls
+    /// Run `substeps` of PURE PHYSICS at the calibration scene (N = DEFAULT_SCENE_ATOMS, walls
     /// off, no grain closure), then restore the caller's scene. Mirrors
     /// `holon_calibration_burst`; the caller times it and calls
     /// [`AtomWorld::record_calibration`].
@@ -464,7 +422,7 @@ impl AtomWorld {
         let restore_n = self.sim.n;
         let restore_boundary = self.sim.boundary;
         self.sim.boundary = Boundary::Open;
-        self.sim.reset(MAX_ATOMS);
+        self.sim.reset(DEFAULT_SCENE_ATOMS);
         for _ in 0..substeps {
             self.sim.step();
         }
@@ -485,14 +443,22 @@ impl AtomWorld {
     /// Pair evaluations per second on this device: the calibration rate times the pair
     /// count of the calibration scene. This is what the O(N^2) force loop spends.
     pub fn pairs_per_second(&self) -> f64 {
-        let pairs = (MAX_ATOMS * (MAX_ATOMS - 1) / 2) as f64;
+        let pairs = holon_render::sim::complete_pairs(DEFAULT_SCENE_ATOMS) as f64;
         self.sim.timescale.substeps_per_second * pairs
     }
 
     /// Largest atom count this device sustains at the current sim-speed and accuracy.
+    ///
+    /// T3: this is now the ONLY cap. It used to be the smaller of a measured device cap and
+    /// a fixed array bound of sixteen; the array bound is gone, so what remains is a
+    /// PERFORMANCE statement about this machine and nothing about what the engine can hold.
+    ///
+    /// Uncalibrated, the answer is the default scene size — a declared policy for "we have
+    /// not measured this device yet", not a limit. Inventing a larger number would put a
+    /// fabricated cap on the atom panel, which is the same shape as inventing a throughput.
     pub fn n_max(&self) -> f64 {
         if !self.sim.timescale.calibrated {
-            return MAX_ATOMS as f64;
+            return DEFAULT_SCENE_ATOMS as f64;
         }
         holon_render::clock::n_max(
             self.pairs_per_second(),
@@ -504,8 +470,13 @@ impl AtomWorld {
     /// count the device cannot carry would be delivered as time dilation, which is a
     /// worse answer than saying so.
     pub fn reset(&mut self, n: usize) {
+        // ONE clamp, and it is the measured one. The `.clamp(2, DEFAULT_SCENE_ATOMS)` that
+        // used to sit here was the engine's old array bound wearing a policy's clothes: it
+        // refused a seventeenth atom on a machine that could carry ten thousand. A device
+        // that has been measured gets its measurement; one that has not gets the default
+        // scene, which `n_max` says is a policy rather than a limit.
         let cap = (self.n_max() as usize).max(2);
-        self.sim.reset(n.clamp(2, MAX_ATOMS).min(cap));
+        self.sim.reset(n.max(2).min(cap));
     }
 
     /// Wall-seconds one vibration takes at the current sim-speed — the clock-3 reading a

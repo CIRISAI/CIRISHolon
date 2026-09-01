@@ -1,0 +1,35 @@
+# holon-md: the THREADED DRIVER for the molecular-dynamics core.
+#
+# It exists as a separate crate for exactly the reason `holon-tables` does, and the
+# argument is copied here because it is the argument, not a convention: `holon-render` is
+# linked into the browser artifact, and `wasm32-unknown-unknown` has no `std::thread`. The
+# engine therefore owns the WORK — `Sim::eval_pair_chunk` and `Sim::eval_triple_chunk` are
+# pure, `&self`, and ship to the viewer — and this crate owns the WORKERS, which do not.
+#
+# Dependencies are three path crates and nothing else, so this cannot perturb the core's
+# feature resolution or the isolation gates in ci-gates.sh:
+#   holon-render   the engine and the `ForceExecutor` seam
+#   holon-resource the lease discipline: probe before allocating, integer receipts
+#   holon-tables   `WorkerProbe`, the ONE worker probe in the workspace
+#
+# On that last one: `holon-resource` deliberately supplies no worker probe ("the pool owner
+# supplies one"), and `holon-tables` is where the workspace's pool owner wrote it. Writing a
+# second one here would be a second implementation of "can the OS give me a thread", which
+# is a DRY residual with no reason behind it. Depending on `holon-tables` for it adds
+# nothing to the graph -- its own only deps are holon-chem (already here through
+# holon-render) and holon-resource. Registered as a fold-pending note in
+# conformance/water_observatory/DRY_RESIDUALS.md.
+#
+# `[profile.release]` is deliberately absent -- a non-root member's own profile section is
+# silently ignored by Cargo; the workspace root carries it.
+[package]
+name = "holon-md"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+description = "Threaded molecular dynamics: leased workers, chunked evaluation, bit-identical to the serial run"
+
+[dependencies]
+holon-render = { path = "../holon-render" }
+holon-resource = { path = "../holon-resource" }
+holon-tables = { path = "../holon-tables" }

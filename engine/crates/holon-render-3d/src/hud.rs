@@ -17,7 +17,7 @@
 
 use bevy::prelude::*;
 use holon_render::clock::AU_TO_FS;
-use holon_render::sim::{Boundary, MAX_ATOMS};
+use holon_render::sim::{Boundary, DEFAULT_SCENE_ATOMS};
 
 use crate::scene::{AMBER, MUTED, PAPER, RUST};
 use crate::world::{AtomWorld, Calibration};
@@ -387,7 +387,7 @@ fn handle_actions(
                 world.reset(n);
             }
             Action::MoreAtoms => {
-                let n = (world.sim.n + 1).min(MAX_ATOMS);
+                let n = (world.sim.n + 1).min(DEFAULT_SCENE_ATOMS);
                 world.reset(n);
             }
             Action::Slower => {

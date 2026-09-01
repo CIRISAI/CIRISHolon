@@ -900,6 +900,15 @@ name = "holon-lens"
 version = "0.1.0"
 
 [[package]]
+name = "holon-md"
+version = "0.1.0"
+dependencies = [
+ "holon-render",
+ "holon-resource",
+ "holon-tables",
+]
+
+[[package]]
 name = "holon-mesh"
 version = "0.1.0"
 dependencies = [

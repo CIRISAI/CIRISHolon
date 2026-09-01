@@ -440,3 +440,21 @@ pub fn n_max(pairs_per_second: f64, required_substeps_per_second: f64) -> f64 {
     let p = pairs_per_second / required_substeps_per_second;
     (0.5 * (1.0 + (1.0 + 8.0 * p).sqrt())).floor()
 }
+
+impl Timescale {
+    /// The carried fractional remainder of simulated time owed to the user.
+    ///
+    /// Private to this module because nothing outside it may WRITE the accumulator during a
+    /// run — carrying the remainder is the whole point, and a caller that reset it would be
+    /// rounding time away silently. Exposed read/write to the checkpoint alone, which is
+    /// not "during a run": a restore whose accumulator started at zero would replay a
+    /// different frame schedule from the one that was checkpointed, and the replay gate
+    /// would fail for a reason that has nothing to do with the physics.
+    pub fn accumulator(&self) -> f64 {
+        self.accumulator
+    }
+
+    pub fn set_accumulator(&mut self, v: f64) {
+        self.accumulator = v;
+    }
+}

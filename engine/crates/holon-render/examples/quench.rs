@@ -14,7 +14,7 @@
 //!
 //! With no seeds listed it runs the eight staked ones.
 
-use holon_render::sim::{Boundary, Dims, Sim, K_B, M_H, MAX_ATOMS};
+use holon_render::sim::{Boundary, Dims, Sim, K_B, M_H, DEFAULT_SCENE_ATOMS};
 use holon_render::{generate_table, generate_trimer_table, TABLE_OK};
 use std::time::Instant;
 
@@ -99,7 +99,7 @@ fn gauss(state: &mut u64) -> f64 {
 fn place(s: &mut Sim, seed: u64) {
     let mut st = seed;
     s.reset(N_ATOMS);
-    let mut vs = [(0.0f64, 0.0f64); MAX_ATOMS];
+    let mut vs = [(0.0f64, 0.0f64); DEFAULT_SCENE_ATOMS];
     let mut px = 0.0;
     let mut py = 0.0;
     let sigma = (K_B * T_INIT / M_H).sqrt();
@@ -140,16 +140,16 @@ fn place(s: &mut Sim, seed: u64) {
 /// is a FREE ATOM, not a cluster; the modal cluster size is the mode over components of
 /// size two or more, ties broken toward the smaller size. Returned as
 /// `(largest, modal, n_clusters, n_free, histogram)`.
-fn reading(s: &Sim) -> (usize, usize, usize, usize, [usize; MAX_ATOMS + 1]) {
+fn reading(s: &Sim) -> (usize, usize, usize, usize, [usize; DEFAULT_SCENE_ATOMS + 1]) {
     let sizes = s.cluster_sizes();
-    let mut hist = [0usize; MAX_ATOMS + 1];
+    let mut hist = [0usize; DEFAULT_SCENE_ATOMS + 1];
     for &sz in sizes[..s.n].iter() {
         if sz >= 1 {
             hist[sz] += 1;
         }
     }
-    let largest = (2..=MAX_ATOMS).rev().find(|&k| hist[k] > 0).unwrap_or(0);
-    let modal = (2..=MAX_ATOMS)
+    let largest = (2..=DEFAULT_SCENE_ATOMS).rev().find(|&k| hist[k] > 0).unwrap_or(0);
+    let modal = (2..=DEFAULT_SCENE_ATOMS)
         .max_by_key(|&k| (hist[k], usize::MAX - k))
         .filter(|&k| hist[k] > 0)
         .unwrap_or(0);
@@ -165,7 +165,7 @@ struct Outcome {
     modal: usize,
     clusters: usize,
     free: usize,
-    hist: [usize; MAX_ATOMS + 1],
+    hist: [usize; DEFAULT_SCENE_ATOMS + 1],
     drift: f64,
     bound: f64,
     momentum: f64,
@@ -387,7 +387,7 @@ fn main() {
     let mut outcomes = Vec::new();
     for &seed in &seeds {
         let o = run(&arm, seed, &template);
-        let hist: Vec<String> = (2..=MAX_ATOMS)
+        let hist: Vec<String> = (2..=DEFAULT_SCENE_ATOMS)
             .filter(|&k| o.hist[k] > 0)
             .map(|k| format!("{}x{}", o.hist[k], k))
             .collect();

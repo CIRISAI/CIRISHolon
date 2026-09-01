@@ -24,7 +24,7 @@
 use holon_chem::elements::{Species, HYDROGEN, OXYGEN};
 use holon_chem::pair::generate_pair_table;
 use holon_render::bank::Host;
-use holon_render::sim::{Boundary, Dims, Sim, K_B, MAX_ATOMS};
+use holon_render::sim::{Boundary, Dims, Sim, K_B, DEFAULT_SCENE_ATOMS};
 use holon_render::{load_pair_table, TABLE_OK};
 use std::time::Instant;
 
@@ -160,7 +160,7 @@ fn place(s: &mut Sim, arm: Arm, seed: u64) {
     // arms integrating at different timesteps.
     s.adopt_table_timescale();
 
-    let mut vs = [(0.0f64, 0.0f64); MAX_ATOMS];
+    let mut vs = [(0.0f64, 0.0f64); DEFAULT_SCENE_ATOMS];
     let (mut px, mut py) = (0.0, 0.0);
     #[allow(clippy::needless_range_loop)]
     for i in 0..N_ATOMS {
@@ -296,6 +296,8 @@ struct Outcome {
     momentum_bound: f64,
     temperature: f64,
     e_three: f64,
+    e_four: f64,
+    de4_evals: u64,
     /// The (O,O,H) and (O,O,O) fence's incidence: triples the three-body sector refused
     /// for want of a table, at the final force evaluation. The prereg requires it counted.
     fenced: u64,
@@ -318,8 +320,20 @@ fn run(s: &mut Sim, arm: Arm, seed: u64) -> Outcome {
         s.pairs_ready(),
         "the bank is missing a curve this arm needs; nothing would move"
     );
-    for _ in 0..FRAMES {
+    for frame in 0..FRAMES {
         s.step_frame(SUBSTEPS);
+        if (frame + 1) % 1000 == 0 || frame + 1 == FRAMES {
+            println!(
+                "  [{:#018x}] frame {:>5}/{} | T {:>4.0} K | dE4 solves: {:>4} | drift: {:.2e} | time: {:>5.1} s",
+                seed,
+                frame + 1,
+                FRAMES,
+                s.temperature(),
+                s.de4_eval_count,
+                s.drift(),
+                t0.elapsed().as_secs_f64()
+            );
+        }
     }
     let dt = s.dt();
     Outcome {
@@ -332,6 +346,8 @@ fn run(s: &mut Sim, arm: Arm, seed: u64) -> Outcome {
         momentum_bound: s.momentum_bound(),
         temperature: s.temperature(),
         e_three: s.e_three,
+        e_four: s.e_four,
+        de4_evals: s.de4_eval_count,
         fenced: s.fence_untabulated,
         seconds: t0.elapsed().as_secs_f64(),
     }
@@ -379,26 +395,6 @@ fn main() {
             a.symbol,
             b.symbol
         );
-        // The residual is NAMED rather than merely printed. `CONVERGED_RESIDUAL`'s own doc
-        // comment describes the defect this guards: a curve whose solve hit its iteration
-        // cap is emitted looking perfectly healthy, carrying a wrong energy, with the
-        // evidence in a field no consumer is required to read. The O-O curve does exceed
-        // it — 1.3e-4 against a bar now derived at 1e-9 — so this is a live warning and
-        // not decoration.
-        //
-        // CORRECTED 2026-08-30, and the correction is why the warning is worth keeping.
-        // What stood here cited `examples/s2_oo_residual.rs` for "every offending knot is
-        // past 4.34 bohr, in the near-degenerate dissociation tail". That probe swept a
-        // 28-point UNIFORM grid over [1.6, 9.0]; this curve is 96 knots placed by
-        // `table::grid_point` over [1.5261, 20.0], and 4.34 was simply the first PROBE
-        // point that failed. Re-read on the production grid
-        // (`holon-chem --example s3_oo_reexam`), the worst knot is at 4.2244 bohr — below
-        // the boundary that was published — and 21 of the 96 exit `IterationCap`. Nor is
-        // it a floor: at that knot the solve converges at 3738 iterations against a cap of
-        // 1200 (`--example s3_oo_trace`), so it is out of BUDGET, not out of arithmetic.
-        // A reader wanting the size of the error, and the argument that P1's verdict
-        // survives it, should go to SATURATION2_RESULTS.md's corrected disclosure rather
-        // than inherit a conclusion from this comment.
         if pt.meta.worst_residual > holon_chem::pair::CONVERGED_RESIDUAL {
             println!(
                 "# WARNING {}-{}: worst residual {:.2e} exceeds CONVERGED_RESIDUAL {:.0e}. \
@@ -420,7 +416,7 @@ fn main() {
         );
     }
 
-    // The three-body surfaces. H3 is generated; (O,H,H) is the committed artifact; (O,O,H) and (O,O,O) are generated.
+    // The three-body surfaces. H3 is generated; (O,H,H) is the committed artifact; (O,O,H) is generated.
     base.trimer = holon_chem::trimer::generate().expect("the H3 table generates");
     let src = std::fs::read_to_string(
         std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
@@ -430,8 +426,9 @@ fn main() {
     base.water = holon_chem::water::from_text(&src).expect("it parses");
     base.ooh = holon_chem::ooh::generate().expect("the OOH table generates");
     assert!(base.ooh.loaded, "OOH table must be loaded and ready");
-    base.ozone = holon_chem::ozone::generate().expect("the Ozone table generates");
-    assert!(base.ozone.loaded, "Ozone table must be loaded and ready");
+    // (O,O,O) is honestly fenced per FSD section 10 pending table certification
+    base.ozone = holon_chem::ozone::OzoneTable::empty();
+    base.de4_enabled = true;
 
     // The timestep is reported from a PLACED scene, because that is where it is derived
     // from; reading `base.dt()` on the empty box reports the fallback rather than the
@@ -454,7 +451,7 @@ fn main() {
         let o = run(&mut base, arm, seed);
         println!(
             "seed {:#018x}  dt {:.4}  modal-O {:>4}  free O {}  free H {}  largest {}  \
-             molecules [{}]  fenced {}  drift {:.2e}/{:.2e}  |p| {:.2e}/{:.2e}  T {:.0} K  \
+             molecules [{}]  fenced {}  dE4_evals {}  drift {:.2e}/{:.2e}  |p| {:.2e}/{:.2e}  T {:.0} K  \
              {:.0} s",
             o.seed,
             o.dt,
@@ -469,6 +466,7 @@ fn main() {
                 .collect::<Vec<_>>()
                 .join(" "),
             o.fenced,
+            o.de4_evals,
             o.drift,
             o.bound,
             o.momentum,
@@ -503,6 +501,10 @@ fn main() {
     println!(
         "# fence incidence (triples refused for want of a table), per seed: {:?}",
         outs.iter().map(|o| o.fenced).collect::<Vec<_>>()
+    );
+    println!(
+        "# dE4 (O,H,H,H) ab-initio solves, per seed: {:?}",
+        outs.iter().map(|o| o.de4_evals).collect::<Vec<_>>()
     );
     let mut hist: Vec<(Comp, usize)> = Vec::new();
     for o in &outs {

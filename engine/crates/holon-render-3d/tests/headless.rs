@@ -20,7 +20,7 @@
 use bevy::app::{App, Update};
 use bevy::ecs::system::ResMut;
 use bevy::MinimalPlugins;
-use holon_render::sim::{Boundary, Dims, MAX_ATOMS};
+use holon_render::sim::{Boundary, Dims, DEFAULT_SCENE_ATOMS};
 use holon_render_3d::world::{AtomWorld, BOX_SIDE};
 
 /// The pinned wall interval, seconds. 60 Hz exactly — a plausible frame, held fixed.
@@ -122,7 +122,7 @@ fn the_scene_is_a_three_dimensional_box() {
     assert_eq!(w.sim.depth, BOX_SIDE);
     // The opening pair is the headline scene and lies along one axis; more atoms open on
     // a sphere, which is the claim that the scene is genuinely three-dimensional.
-    w.reset(MAX_ATOMS);
+    w.reset(DEFAULT_SCENE_ATOMS);
     let z: Vec<f64> = (0..w.sim.n).map(|i| w.sim.atoms[i].z).collect();
     let spread =
         z.iter().cloned().fold(f64::MIN, f64::max) - z.iter().cloned().fold(f64::MAX, f64::min);
@@ -405,7 +405,7 @@ fn every_drawn_bond_is_a_bonded_pair_and_every_row_is_drawn() {
     // creates a row for a pair only after the dwell and the closure gate. So every live
     // row must correspond to a pair that is currently drawn — a row over a pair with no
     // cylinder would be a molecule the picture denies.
-    let mut w = AtomWorld::new(MAX_ATOMS);
+    let mut w = AtomWorld::new(DEFAULT_SCENE_ATOMS);
     w.sim.boundary = Boundary::Open;
     w.sim.rebase();
     let mut app = app_with(w);
@@ -416,13 +416,19 @@ fn every_drawn_bond_is_a_bonded_pair_and_every_row_is_drawn() {
     let rows = s.holons.molecule_count();
     println!("drawn bonds {drawn}, live molecule rows {rows}");
     for (_, row) in s.holons.live_rows() {
-        let k = row.pair as usize;
+        // T3: a row names its pair BY ATOM, not by position in the reading list. The list
+        // is cutoff-local now, so a position is not a stable name for a pair across
+        // frames — and a row holding a stale position would quietly start describing a
+        // different pair. Looking it up by its atoms is the check that identity survived.
+        let (a, b) = row.pair;
+        let found = s.pairs[..s.pair_count]
+            .iter()
+            .find(|p| p.i as u32 == a && p.j as u32 == b);
+        let Some(p) = found else {
+            panic!("a live row names the pair ({a}, {b}), which is not in the reading list")
+        };
         assert!(
-            k < s.pair_count,
-            "a row points at a pair that does not exist"
-        );
-        assert!(
-            s.pairs[k].bonded,
+            p.bonded,
             "a live molecule row sits on a pair the picture does not draw as bonded"
         );
     }
@@ -433,7 +439,7 @@ fn every_drawn_bond_is_a_bonded_pair_and_every_row_is_drawn() {
 
 #[test]
 fn the_calibration_burst_gives_the_scene_back() {
-    // The burst runs a different scene (N = MAX_ATOMS, walls off) and must leave no
+    // The burst runs a different scene (N = DEFAULT_SCENE_ATOMS, walls off) and must leave no
     // trace of it. If it did, the first frame after load would be measuring the
     // calibration scene rather than the user's.
     let mut w = AtomWorld::new(3);
@@ -465,17 +471,23 @@ fn the_calibration_burst_gives_the_scene_back() {
 #[test]
 fn the_atom_count_is_clamped_to_what_the_device_sustains() {
     let mut w = AtomWorld::new(2);
-    // Uncalibrated, the cap is the array bound and nothing else.
-    assert_eq!(w.n_max(), MAX_ATOMS as f64);
-    w.reset(MAX_ATOMS + 10);
-    assert_eq!(w.sim.n, MAX_ATOMS, "the array bound was exceeded");
+    // Uncalibrated, the cap is the DEFAULT SCENE — a declared policy for a device nobody
+    // has measured. It used to be the engine's array bound, and the difference is the
+    // whole of T3: the number below is now a statement about this shell's opening scene
+    // and about nothing the engine can or cannot hold.
+    assert_eq!(w.n_max(), DEFAULT_SCENE_ATOMS as f64);
+    w.reset(DEFAULT_SCENE_ATOMS + 10);
+    assert_eq!(
+        w.sim.n, DEFAULT_SCENE_ATOMS,
+        "an unmeasured device was given more than the default scene"
+    );
     w.reset(0);
     assert_eq!(
         w.sim.n, 2,
         "the scene needs at least a pair to be about anything"
     );
 
-    // A device measured as very slow cannot carry MAX_ATOMS, and the clamp says so
+    // A device measured as very slow cannot carry DEFAULT_SCENE_ATOMS, and the clamp says so
     // rather than delivering the shortfall as silent time dilation. 10 substeps/second
     // is chosen far below the crossing point, not near it: `n_max` grows as the square
     // root of throughput, so a device only a little too slow is barely clamped and the
@@ -483,15 +495,35 @@ fn the_atom_count_is_clamped_to_what_the_device_sustains() {
     w.record_calibration(10.0);
     let cap = w.n_max();
     assert!(
-        cap < MAX_ATOMS as f64,
-        "a 10 substeps/sec device was not clamped below {MAX_ATOMS} (cap {cap})"
+        cap < DEFAULT_SCENE_ATOMS as f64,
+        "a 10 substeps/sec device was not clamped below {DEFAULT_SCENE_ATOMS} (cap {cap})"
     );
-    w.reset(MAX_ATOMS);
+    w.reset(DEFAULT_SCENE_ATOMS);
     assert!(
         (w.sim.n as f64) <= cap.max(2.0),
         "reset ignored the measured cap: {} atoms against a cap of {cap}",
         w.sim.n
     );
+
+    // T3, THE OTHER DIRECTION, and the assertion that could not have been written before:
+    // a FAST device is given more than sixteen atoms. The clamp is a performance statement
+    // now, so it has to be able to say "yes" as well as "no" — a cap that only ever
+    // refuses is indistinguishable from the array bound it replaced.
+    let mut fast = AtomWorld::new(2);
+    fast.record_calibration(1.0e9);
+    let big = fast.n_max();
+    assert!(
+        big > DEFAULT_SCENE_ATOMS as f64,
+        "a device measured at 1e9 substeps/sec was still capped at the default scene \
+         ({big}); the old array bound is still in force somewhere"
+    );
+    fast.reset(1000);
+    assert!(
+        fast.sim.n > DEFAULT_SCENE_ATOMS,
+        "the shell refused a 1000-atom scene on a device that can carry it: got {} atoms",
+        fast.sim.n
+    );
+    assert!(fast.sim.storage_ok(), "the per-atom buffers disagree at {} atoms", fast.sim.n);
 }
 
 #[test]
@@ -506,9 +538,8 @@ fn a_clockless_host_is_reported_rather_than_invented() {
         holon_render_3d::world::Calibration::Unavailable
     );
     assert!(!w.sim.timescale.calibrated);
-    assert_eq!(w.n_max(), MAX_ATOMS as f64);
+    assert_eq!(w.n_max(), DEFAULT_SCENE_ATOMS as f64);
 }
-
 
 /// STANDING QUESTION 1 — is the thing that passes the thing that RUNS? The MBE3
 /// tier existed, was gated, and was verified, while this shell integrated
@@ -550,9 +581,12 @@ fn species_radii_and_colours_match_palette() {
         // `homonuclear_radius` is declared for the first row only and returns None past
         // it. FIRST_ROW is exactly the declared set, so an unwrap here is a claim this
         // loop stays inside it — and the message says so rather than panicking blankly.
-        let r = sp
-            .homonuclear_radius()
-            .unwrap_or_else(|| panic!("species {} is in FIRST_ROW but has no declared radius", sp.symbol));
+        let r = sp.homonuclear_radius().unwrap_or_else(|| {
+            panic!(
+                "species {} is in FIRST_ROW but has no declared radius",
+                sp.symbol
+            )
+        });
         assert!(
             r > 0.5 && r < 4.0,
             "species {} has unphysical homonuclear radius {:.4}",

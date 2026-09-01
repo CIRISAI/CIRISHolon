@@ -7,7 +7,7 @@
 //! structure solves) and copied into each scene, so the tests measure dynamics rather than
 //! table building.
 
-use holon_render::sim::{Boundary, Dims, Sim, K_B, M_H, MAX_ATOMS};
+use holon_render::sim::{Boundary, Dims, Sim, K_B, M_H, DEFAULT_SCENE_ATOMS};
 use holon_render::{generate_table, generate_trimer_table, TABLE_OK};
 use std::sync::OnceLock;
 
@@ -369,10 +369,10 @@ fn without_a_table_the_third_body_changes_no_bit() {
 #[test]
 fn the_triple_loop_cost_is_measured() {
     let mut s = staked_trimer_thermostat();
-    s.reset(MAX_ATOMS);
+    s.reset(DEFAULT_SCENE_ATOMS);
     let (cx, cy) = (0.5 * s.width, 0.5 * s.height);
-    for i in 0..MAX_ATOMS {
-        let th = i as f64 * core::f64::consts::TAU / MAX_ATOMS as f64;
+    for i in 0..DEFAULT_SCENE_ATOMS {
+        let th = i as f64 * core::f64::consts::TAU / DEFAULT_SCENE_ATOMS as f64;
         s.set_position(i, cx + 5.0 * th.cos(), cy + 5.0 * th.sin());
     }
     s.rebase();
@@ -389,9 +389,9 @@ fn the_triple_loop_cost_is_measured() {
     run(&mut s, frames, substeps);
     let without = t1.elapsed().as_secs_f64() / (frames as f64 * substeps as f64);
     println!(
-        "N = {MAX_ATOMS}, {} triples: {:.2} us per substep with the three-body loop, \
+        "N = {DEFAULT_SCENE_ATOMS}, {} triples: {:.2} us per substep with the three-body loop, \
          {:.2} us without — {:.1}x",
-        MAX_ATOMS * (MAX_ATOMS - 1) * (MAX_ATOMS - 2) / 6,
+        DEFAULT_SCENE_ATOMS * (DEFAULT_SCENE_ATOMS - 1) * (DEFAULT_SCENE_ATOMS - 2) / 6,
         with * 1e6,
         without * 1e6,
         with / without

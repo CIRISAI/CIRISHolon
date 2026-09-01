@@ -34,7 +34,7 @@ use holon_chem::elements::{Species, HYDROGEN, OXYGEN};
 use holon_chem::pair::generate_pair_table;
 use holon_lens::traj::{pair_index, Header, TrajWriter};
 use holon_render::bank::Host;
-use holon_render::sim::{Boundary, Dims, Sim, K_B, MAX_ATOMS};
+use holon_render::sim::{Boundary, Dims, Sim, K_B, DEFAULT_SCENE_ATOMS};
 use holon_render::{load_pair_table, TABLE_OK};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -171,7 +171,7 @@ fn place(s: &mut Sim, arm: Arm, seed: u64) {
     // arms integrating at different timesteps.
     s.adopt_table_timescale();
 
-    let mut vs = [(0.0f64, 0.0f64); MAX_ATOMS];
+    let mut vs = [(0.0f64, 0.0f64); DEFAULT_SCENE_ATOMS];
     let (mut px, mut py) = (0.0, 0.0);
     #[allow(clippy::needless_range_loop)]
     for i in 0..N_ATOMS {

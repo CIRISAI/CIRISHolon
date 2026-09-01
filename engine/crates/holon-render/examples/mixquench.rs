@@ -30,7 +30,7 @@
 //! beyond-pair-complete for a triple containing chlorine. Every run prints the fence.
 
 use holon_chem::elements::{Species, CHLORINE, HYDROGEN};
-use holon_render::sim::{Boundary, Dims, Sim, K_B, MAX_ATOMS};
+use holon_render::sim::{Boundary, Dims, Sim, K_B, DEFAULT_SCENE_ATOMS};
 use holon_render::{generate_trimer_table, load_pair_table, TABLE_OK};
 use std::io::Write;
 use std::time::Instant;
@@ -202,7 +202,7 @@ fn build(arm: Arm, seed: u64, curves: &Curves) -> Box<Sim> {
     generate_trimer_table(&mut s);
 
     let mut st = seed;
-    let mut vs = [(0.0f64, 0.0f64); MAX_ATOMS];
+    let mut vs = [(0.0f64, 0.0f64); DEFAULT_SCENE_ATOMS];
     let mut px = 0.0;
     let mut py = 0.0;
     #[allow(clippy::needless_range_loop)]

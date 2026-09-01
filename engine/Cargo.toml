@@ -45,6 +45,12 @@ members = [
   # cannot perturb the core's feature resolution or the isolation gates. No other deps,
   # runtime or dev (raw extern "C" ABI; the host parses its own JSON).
   "crates/holon-render",
+  # holon-md: the THREADED driver for holon-render's force evaluation. Depends on
+  # holon-render, holon-resource and holon-tables (for the workspace's one WorkerProbe);
+  # none of the three carries an optional feature, so this cannot perturb the core's
+  # feature resolution or the isolation gates. It is a separate crate for the same reason
+  # holon-tables is: holon-render ships to the browser and wasm has no std::thread.
+  "crates/holon-md",
   # holon-lens: trajectory lenses, the closure census, and the blind phase classifier.
   # ZERO runtime dependencies (std only), the same isolation profile as q-seam, so it
   # cannot perturb the core's feature resolution or the isolation gates. It is a

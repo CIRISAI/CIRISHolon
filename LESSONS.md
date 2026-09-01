@@ -54,3 +54,20 @@ These are binding on all CIRISHolon code.*
     behaviour outside that structure — a special-cased amplitude array, a
     per-feature interpretation — is refused at review. The wall is a
     theorem; respect it in both directions.
+11. **A pathspec fences across files, never within one.** `git commit --
+    <file>` takes the whole worktree file, so on a shared tree it banks
+    whatever a sibling lane left mid-edit in it — under your name, in your
+    commit message, undescribed. Measured 2026-09-01: four within-file
+    sweeps in one day, one of them ~30 lines of another lane's API-surface
+    classifications, each a documented judgement the committer had not made
+    and could not vouch for. The tell is that nothing warns you: the commit
+    is green, the tests pass, and the record is wrong about who decided
+    what. Rule, for every shared-write file (`ci-gates.sh`, `MISFITS.md`,
+    `LESSONS.md`, `BENCHMARKS`, any register or RESULTS doc): run `git diff
+    -- <file>` immediately before committing and account for EVERY hunk as
+    yours; a foreign hunk means leave the file out and hand it to its owner.
+    Run `git diff --cached --stat` too — the index is shared and may hold a
+    sibling's staged file. If you swept someone, never amend the landed
+    commit; describe the taken hunk in the next commit message and tell the
+    owner. This tree goes foreign in minutes, so "I checked when I started"
+    is not a check.

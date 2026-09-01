@@ -14,6 +14,26 @@ object FOLDS. An entry here is not a bug report and not a TODO. It is a place th
 fold did not close, with the reason it did not, and the condition under which it
 would.
 
+## Citing a row from this register: use the `GRAV-` prefix
+
+**There are TWO tracked DRY registers in this tree and they both number from R-1.**
+This one runs R-1…R-13 and `conformance/water_observatory/DRY_RESIDUALS.md` runs
+R-1…R-15, so every bare `R-N` for N ≤ 13 names two different rows. Right now "R-9"
+is this file's four-entry periodic table AND that file's ring-polymer propagator
+fold; "R-11" is a geometric centroid where the physics wants a mass-weighted one
+AND an `unsafe impl Sync` fold.
+
+**Cite rows from this register as `GRAV-R-9`, and from the other as `WO-R-9`** — or
+give the path. A bare id is ambiguous across the tree. The duplication itself is
+registered as **WO-R-15**, in the other file, and is not re-registered here: one
+residual, one row, which is the whole point of the row.
+
+This header is the cheap half of WO-R-15's fold and it is deliberately NOT the
+discharge. Merging the two registers is, and it needs both files' owners — until
+then the SERIES readings at the foot of each file are computed over DIFFERENT
+domains and are not comparable, which is the concrete cost the prefix does not fix.
+Added by `tower-complete`, who owns R-1…R-6 here; no row in this file was touched.
+
 **How to read the count.** The falsifier is a rate, not a level, so both numbers
 have to be recorded at every reading or the rate is unrecoverable.
 

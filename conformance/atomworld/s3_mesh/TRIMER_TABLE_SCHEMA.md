@@ -236,3 +236,39 @@ and the artifact is unusable without the axis that says what the number is *of*.
 **Refusal:** an artifact with no `subtraction_basis` is refused, exactly as one with no
 seam record is. A consumer must never infer the basis from the values — the two bases
 agree to ~1e-10, which is precisely why inference would succeed until it didn't.
+
+---
+
+## `axis_rule` is SPACING ONLY, and never traversal (2026-09-01)
+
+Checked against the emitter after de4-table's warning, and recorded so it cannot drift:
+`axis_rule` carries **only** how each axis's coordinates are spaced —
+
+```json
+"axis_rule": {"x": "uniform-linear", "y": "uniform-linear", "u": "uniform-linear",
+              "note": "NOT trimer.rs's tau-stretch; the coordinates below are authoritative"}
+```
+
+**It carries no traversal semantics and must never acquire any.** How a generator *walks*
+the grid — lexicographic, sum-parity serpentine, reflected serpentine — is a property of
+the *traversal*, not of the axes, and the two must stay in separate fields. de4-table's
+`NdGrid` keeps them apart correctly: `AxisMap::{Linear, ExpStretch{a}}` on each axis, and a
+separate `Serpentine::{SumParity, Reflected}` for the walk. A single field meaning both
+would make two independent choices inseparable in the artifact's identity.
+
+**Why this is more than tidiness, with a live example.** The sum-parity serpentine's
+adjacency property is *conditional* — it holds only when every axis strictly between the
+first and the last has odd region extent — and **this campaign's production region shape
+`[2, 2, 2]` fails it**, measured: the walk breaks once per i-fold, `(0,1,0) → (1,1,1)` at
+Manhattan distance 2. `holon-tables`' own comment claimed the property unconditionally for
+weeks and is now corrected. So a rule NAME is exactly the thing that can be false about a
+layout while every number in the file is right.
+
+Which is why the schema's standing answer applies here too: **the explicit `x_nodes` /
+`y_nodes` / `u_nodes` arrays are authoritative, never the rule name.** A rule field either
+states its scope precisely or should not exist. Ours states spacing, and only spacing.
+
+**Node ORDER is deliberately not a schema field.** The artifact is a set of nodes with
+explicit coordinates; a consumer indexes by coordinate, never by position in the file. That
+is what keeps a false or changed traversal from being able to corrupt a reader — the same
+reason the digest covers node identity and energy rather than emission order.

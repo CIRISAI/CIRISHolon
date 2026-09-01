@@ -191,10 +191,24 @@ impl TableGrid {
     /// the region is wide — the worst guess in the region, handed out `region_y * region_x`
     /// times.
     ///
-    /// A serpentine (boustrophedon) walk reverses every other row, so **consecutive nodes
-    /// in the traversal are always grid-adjacent**. It is just as canonical — it is a
-    /// function of the region's coordinates and nothing else — and it is strictly the
-    /// better guess everywhere the lexicographic walk differs.
+    /// A serpentine (boustrophedon) walk reverses every other row, so consecutive nodes in
+    /// the traversal are USUALLY grid-adjacent. It is just as canonical — a function of the
+    /// region's coordinates and nothing else — and it is the better guess everywhere the
+    /// lexicographic walk differs.
+    ///
+    /// **CORRECTED 2026-09-01: this comment used to claim adjacency UNCONDITIONALLY, and
+    /// that claim is false.** This is the sum-parity rule, which is adjacent iff every axis
+    /// STRICTLY BETWEEN the first and the last has odd region extent — see
+    /// [`NdGrid::adjacency_is_guaranteed`] for the derivation. **The production region shape
+    /// `[2, 2, 2]` FAILS it**, measured: the walk breaks once per i-fold, e.g.
+    /// `(0,1,0) -> (1,1,1)` at Manhattan distance 2. Empirically 0 breaks at every odd
+    /// middle extent tested and 1–3 breaks at every even one.
+    ///
+    /// Nothing is changed here and nothing should be: these tables are gated on
+    /// bit-identity, so altering the traversal alters every recorded digest, and the
+    /// property the invariant bought (warm-start locality) is not in use — WARM IS OFF on
+    /// all four production tables. [`Serpentine::Reflected`] is adjacent for any extents and
+    /// is what new surfaces should use. What was wrong was the COMMENT, not the walk.
     pub fn region_nodes(&self, r: RegionId) -> Vec<NodeId> {
         let (_, rb, rc) = self.region_extents();
         let r = r as usize;
@@ -211,8 +225,10 @@ impl TableGrid {
 
         let mut out = Vec::with_capacity((i1 - i0) * (j1 - j0) * (k1 - k0));
         for (ii, i) in (i0..i1).enumerate() {
-            // Reverse j on every other i-plane, and k on every other (i, j) row: that is
-            // what makes every consecutive pair adjacent, including across the folds.
+            // Reverse j on every other i-plane, and k on every other (i, j) row. This makes
+            // consecutive pairs adjacent WITHIN a plane always, and across the folds only
+            // when the middle axis has odd extent — see the corrected note above. Do not
+            // "fix" it here: the digests are the artifact's identity.
             let js: Vec<usize> = if ii % 2 == 0 {
                 (j0..j1).collect()
             } else {

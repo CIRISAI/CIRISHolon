@@ -827,6 +827,18 @@ against `fci::sigma_direct`'s own output rather than against a re-derivation.
 | GPU incl. host round trip | 69.8 | — | PCIe is 0.5 ms against 15 ms of compute |
 | CPU, `sigma_direct`, 32 threads | 20.8 | ~97 | the baseline (loadavg 32) |
 | CPU, `sigma_direct`, 32 threads | 17.2 | ~80 | same, loadavg 18 — the spread is the machine |
+
+**CORE PLACEMENT, declared 2026-08-31 (M-PLACEMENT-LOTTERY, M-IDLE-CALIBRATED-TIMEOUT).**
+This host is an i9-13900HX hybrid part. The CPU arm above ran **32 unpinned threads spanning
+both P and E cores** — a specific configuration, not a neutral one, and the E/P penalty is
+measured at 1.16–1.22× and is duration-independent. So "measured on this box" is not a
+specification: a citable ratio is a function of core class, exactly as a bit-gated artifact's
+trailing bits are a function of device class.
+
+The 3.2× ratio has margin enough that a ~20% placement effect cannot flip it, so this is an
+annotation and not a retraction. Any repeat should be **pinned AND quiet, with both core types
+reported** — bigqvm's standard, which their own d=101 verdict flip (0.822 unpinned "we lead"
+to 1.201 pinned "they lead 20%") is the case for.
 | CPU, same GEMM reformulation, OpenBLAS, 1 thread | 1.40 | 6.8 | **slower than the hand-written kernel** |
 | CPU, `sigma_direct`, 1 thread | 2.20 | 10.7 | — |
 

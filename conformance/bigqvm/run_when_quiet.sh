@@ -53,13 +53,21 @@ DS=${DS:-21,45,101,141,221}
 REPS=${REPS:-5}
 # PIN BOTH ARMS. This box is an i9-13900HX: P-cores 0-15, E-cores 16-31.
 # Measured 2026-08-30, both arms on the SAME core: the d=101 verdict FLIPS
-# between placements (0.822 unpinned, 1.201 on a P-core, 0.989 on an E-core),
-# and pinning cut repetition spread from 15-29% to 1.1-1.7% while HALVING both
-# arms at d=221. A quiet window fixes contention and does nothing about
-# heterogeneity, so quiet was necessary and never sufficient. PIN_P is the
-# adversarial placement for our engine and is the one to report.
-PIN_P=${PIN_P:-0}
+# between placements (0.822 unpinned, 1.201 on a P-core, 0.989 on an E-core).
+# A quiet window fixes contention and does nothing about heterogeneity, so
+# quiet was necessary and never sufficient.
+#
+# CORRECTED 2026-09-01: the E-core run is the PRIMARY, not the P-core one, and
+# the reason is counterintuitive enough to state. A P-core's throughput depends
+# on its SMT SIBLING's load, which nobody controls: within-P spread measured
+# 1.41x against E's 1.03x, and the FASTEST P-core in one sample was the SLOWEST
+# minutes later. E-cores on this part have no sibling and repeat across cores
+# and sessions. A citable table wants REPEATABILITY more than the best clock,
+# so the reproducible condition is the slower one. Both are still run and both
+# reported as a RANGE -- which placement is "adversarial" is itself unstable,
+# so no single number is quoted as the conservative one.
 PIN_E=${PIN_E:-20}
+PIN_P=${PIN_P:-0}
 
 load1() { awk '{print $1}' /proc/loadavg; }
 
@@ -86,12 +94,12 @@ while [ "$waited" -lt "$MAX_WAIT" ]; do
         # Both core types, because the ratio is placement-dependent and
         # reporting one of them alone is how the d=101 row got banked wrong.
         nice -n 5 "$STIMPY" "$H2H" --d "$DS" --rounds 3 --reps "$REPS" \
-             --pin "$PIN_P" --tmpdir /tmp --out "$HERE/h2h_quiet_pcore.json"
-        echo "--- P-core rc=$? ---"
-        nice -n 5 "$STIMPY" "$H2H" --d "$DS" --rounds 3 --reps "$REPS" \
              --pin "$PIN_E" --tmpdir /tmp --out "$HERE/h2h_quiet_ecore.json"
-        echo "--- E-core rc=$? ---"
-        cp -f "$HERE/h2h_quiet_pcore.json" "$HERE/h2h_quiet.json"
+        echo "--- E-core (PRIMARY, reproducible: no SMT sibling) rc=$? ---"
+        nice -n 5 "$STIMPY" "$H2H" --d "$DS" --rounds 3 --reps "$REPS" \
+             --pin "$PIN_P" --tmpdir /tmp --out "$HERE/h2h_quiet_pcore.json"
+        echo "--- P-core (secondary, sibling-dependent) rc=$? ---"
+        cp -f "$HERE/h2h_quiet_ecore.json" "$HERE/h2h_quiet.json"
         echo "rc=$?"
       } >> "$HERE/quiet.log" 2>&1
 

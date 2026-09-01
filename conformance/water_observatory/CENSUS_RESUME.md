@@ -12,6 +12,8 @@ computation.*
 | the trajectory runner | `engine/crates/holon-render/examples/waterquench_traj.rs` |
 | the identity gate | `engine/crates/holon-render/tests/protocol_identity.rs` |
 | the report generator | `engine/crates/holon-lens/examples/census.rs` |
+| the measured results | `conformance/water_observatory/CENSUS_RESULTS.md` |
+| the census output they summarise | `conformance/water_observatory/census_hydrogen.log` |
 
 Build and test, from a clean checkout:
 
@@ -24,13 +26,27 @@ cargo test -p holon-render --test protocol_identity
 reverse. That is load-bearing: it was written while `holon-render` did not compile, and
 the suite ran green throughout.
 
+## What has RUN
+
+| arm | seeds | state | verdict |
+|---|---|---|---|
+| hydrogen control, `--ozone=fenced` | 8 of 8 | **COMPLETE** | banked in `CENSUS_RESULTS.md` and `census_hydrogen.log` |
+| mixed `--ozone=served` | 0 of 8 | in flight, still generating the O–O curve | — |
+| mixed `--ozone=fenced` | 0 of 8 | in flight, same | — |
+
+The two mixed arms each pay a ~320 s O–O curve before their first seed, and the box has
+been at load 65–85 on 32 cores throughout (a 27-core ozone tabulation holds the critical
+path). They were launched at `nice -n 12` deliberately and have NOT been renice'd: the
+ozone table is the campaign's critical path and this lane is not.
+
 ## The detached runs
 
-Two arms, one process each, `setsid` + done-marker, one writer per output path:
+Three arms, one process each, `setsid` + done-marker, one writer per output path:
 
 ```
-$SP/census-target/release/examples/waterquench_traj mixed --ozone=served --out=$SP/traj/served
-$SP/census-target/release/examples/waterquench_traj mixed --ozone=fenced --out=$SP/traj/fenced
+$SP/census-target/release/examples/waterquench_traj mixed    --ozone=served --out=$SP/traj/served
+$SP/census-target/release/examples/waterquench_traj mixed    --ozone=fenced --out=$SP/traj/fenced
+$SP/census-target/release/examples/waterquench_traj hydrogen --ozone=fenced --out=$SP/traj/hydrogen
 ```
 
 where `$SP` is this session's scratchpad. Logs at `$SP/traj/{served,fenced}.log`, exit
@@ -43,7 +59,7 @@ Reading them:
 cargo run --release -p holon-lens --example census -- $SP/traj/fenced
 ```
 
-**Both arms are built from commit `a3b3d4b` in an isolated worktree**, not from the shared
+**All arms are built from commit `a3b3d4b` in an isolated worktree**, not from the shared
 working tree. The shared tree did not compile when this lane started (a T3 dynamic-storage
 refactor had removed `MAX_ATOMS` from `sim.rs` while ten call sites still used it), and a
 census computed against a tree that changes under it is not reproducible.
@@ -81,3 +97,15 @@ Step 3 is a copy-paste once step 1 lands. Nothing else in this lane is waiting o
 
 Neither arm contains an OH₂. The census's headline on them is therefore about the
 INSTRUMENT and about what the engine's components actually do, not about water formation.
+
+## Two corrections this lane made to itself, both worth carrying forward
+
+1. **A window staked in TIME must be measured against timestamps, never against `dt`.** The
+   engine's timestep adapts mid-run; on hydrogen seed `0x53415421` it halves after eleven
+   frames. The first census converted the window once from the header `dt` and was
+   therefore enforcing 417 fs while claiming 834. `Header::frame_fs` and
+   `Header::frames_in` are now REMOVED, so nothing can make that mistake again.
+2. **A control floor must be a shuffle floor, not a constant.** The staked 5% pool rate
+   voids all 48 genuine H₂ molecules at exactly 0.077, because six molecules in a pool of
+   66 pairs means each sees five peers pass. The stake was not moved; the successor is
+   staked in `CENSUS_RESULTS.md` §4 for the next freeze.

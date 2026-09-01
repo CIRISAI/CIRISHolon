@@ -42,7 +42,7 @@
 //! kinetic term it competes with is drawn from that distribution.
 //!
 //! ```text
-//! cargo run --release -p holon-chem --example s3_oo_reexam -- [ref_cap]
+//! cargo run --release -p holon-chem --example s3_oo_reexam -- [ref_cap] [baseline_budget]
 //! ```
 
 use holon_chem::dual::D2;
@@ -112,7 +112,15 @@ fn main() {
         .nth(1)
         .and_then(|s| s.parse().ok())
         .unwrap_or(20_000);
-    let prod_cap = DAVIDSON_MAX_ITER.load(Ordering::Relaxed);
+    // The BASELINE budget, optional second argument. Defaulting to the process default
+    // makes this the re-examination it was written as; naming a lower one turns the same
+    // instrument into a blast-radius report for a budget change, which is what the
+    // 4000 -> 5000 ruling needs and is the same measurement either way.
+    let prod_cap: usize = std::env::args()
+        .nth(2)
+        .and_then(|s| s.parse().ok())
+        .unwrap_or_else(|| DAVIDSON_MAX_ITER.load(Ordering::Relaxed));
+    DAVIDSON_MAX_ITER.store(prod_cap, Ordering::Relaxed);
 
     let e_asym = 2.0 * atom_energy(OXYGEN);
     let (r_min, r_max) = derive_range(OXYGEN, OXYGEN, e_asym);

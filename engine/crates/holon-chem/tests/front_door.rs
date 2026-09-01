@@ -38,7 +38,12 @@ fn the_cache_refuses_a_curve_whose_solve_gave_up() {
         let mut cache = PairCache::new(8);
         cache.get(HYDROGEN, HYDROGEN);
     });
-    holon_chem::fci::DAVIDSON_MAX_ITER.store(1200, Ordering::Relaxed);
+    // Restore the DEFAULT, not a literal. This read 1200 — the default at the time — and
+    // silently became a downgrade the moment the default moved, which is the same class of
+    // bug as the constant that moved inside an unrelated commit. Restoring the named
+    // constant cannot go stale.
+    holon_chem::fci::DAVIDSON_MAX_ITER
+        .store(holon_chem::fci::DAVIDSON_DEFAULT_BUDGET, Ordering::Relaxed);
 
     assert!(
         refused.is_err(),

@@ -666,6 +666,20 @@ pub struct PairMeta {
     pub provenance: &'static str,
     /// Worst Davidson residual over the knots, and worst response-solve residual. A
     /// curve that did not converge everywhere must say so in its own metadata.
+    /// The Davidson iteration BUDGET every knot of this curve was solved under.
+    ///
+    /// Part of the artifact's IDENTITY, not a diagnostic — the same law as device class
+    /// and region shape. Two curves built under different budgets are two artifacts, and
+    /// the campaign learned that the expensive way: `451db31`, a commit whose subject is
+    /// about integrating a render surface, moved the process default from 1200 to 4000, so
+    /// artifacts either side of it were produced under different solver regimes with
+    /// nothing anywhere recording which. A manifest that cannot say what budget produced it
+    /// cannot be re-derived from.
+    ///
+    /// It is a BUDGET and not a tolerance: running out of it shows up as
+    /// [`crate::fci::SolveExit::IterationCap`] in [`PairMeta::exit`], which is the field
+    /// that says whether the budget was enough. This one says what was spent.
+    pub solver_budget: usize,
     pub worst_residual: f64,
     pub worst_cg_residual: f64,
     /// Smallest overlap eigenvalue seen, the conditioning of the orthogonalisation.
@@ -910,6 +924,7 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
             route,
             exit: worst_exit,
             provenance: provenance_for(route),
+            solver_budget: crate::fci::davidson_budget(),
             worst_residual,
             worst_cg_residual: worst_cg,
             worst_s_eigenvalue: worst_s,
@@ -1361,6 +1376,15 @@ impl PairTable {
         s.push_str(&format!(
             "  \"uncertainty_hartree\": {:?},\n",
             m.worst_residual
+        ));
+        // The SOLVER BUDGET, in the declaration block rather than the diagnostics, because
+        // it is part of what this artifact IS. See `PairMeta::solver_budget`: the campaign
+        // shipped curves either side of a silent 1200 -> 4000 change with nothing recording
+        // which, and a consumer comparing two tables has no way to know they were produced
+        // under different regimes unless the file says so.
+        s.push_str(&format!(
+            "  \"solver_budget_iterations\": {},\n",
+            m.solver_budget
         ));
         s.push_str(
             "  \"units\": \"Hartree atomic units: R in bohr, E in hartree, \

@@ -1088,8 +1088,26 @@ fn hhcl_g0_compact() -> (holon_chem::fci::FciSpace, holon_chem::fci::MoIntegrals
 /// one of sixteen found in a sixty-geometry scan (`examples/s3_wrongstate_hunt.rs`).
 /// Named separately from the compact one because the plant needs a non-empty sector and
 /// the guard's silence needs a correct solve, and those are different geometries.
+///
+/// # RE-STAKED, and the reason is the point
+///
+/// This read `(1.50, 1.90, 90.0)` and was staked under a solver budget of 4000. When the
+/// budget was raised to 5000 the plant VOIDed: at that geometry the wrong start now has
+/// enough iterations to escape the trap and it converged to within 1.023e-12 Ha of the true
+/// ground state, so there was no wrong-eigenvector failure left to catch.
+///
+/// **A wrong-eigenvector trap is BUDGET-DEPENDENT.** The sector shrinks as the budget grows,
+/// which is obvious in hindsight and was not staked for. Re-hunted at the new budget
+/// (`examples/s3_wrongstate_hunt`): 16 of 60 geometries still trap the worst-diagonal start,
+/// the guard catches all 16, and this is the nearest neighbour of the old stake that still
+/// fires — 8.0179 Ha above the ground state.
+///
+/// So the VOID branch below is not a formality and must never be softened into a skip: it
+/// is the only thing that stopped a budget change from turning this test green on nothing.
+/// If the budget moves again, expect to re-stake again, and re-hunt rather than guess.
 fn hhcl_wrong_state_prone() -> (holon_chem::fci::FciSpace, holon_chem::fci::MoIntegrals) {
-    hhcl_problem(1.50, 1.90, 90.0)
+    // Staked under DAVIDSON_DEFAULT_BUDGET = 5000; see above.
+    hhcl_problem(1.50, 1.50, 90.0)
 }
 
 #[test]

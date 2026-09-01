@@ -1,0 +1,230 @@
+# THE CLOSURE CENSUS — results
+
+*Stakes: `CENSUS_PREREG.md`, frozen and committed (`2f389e7`) before a line of the
+instrument was written. Every threshold quoted here is one of its `PREREG_*` constants.
+No stake was moved after seeing a number; where a stake turned out to be wrong that is
+written up as a finding (§4) rather than repaired in place.*
+
+---
+
+## 0. THE HEADLINE
+
+**The OH₂ question is NOT ANSWERED, and it is not answerable yet** (§5). The run that
+reported the programme's first emergent OH₂ was built from source that is in no commit,
+and the census will not answer it from a different build.
+
+**What IS measured**, on all eight regenerated trajectories of the hydrogen control arm:
+
+1. **The instrument separates a molecule from an encounter by an order of magnitude, on
+   real data.** Across 48 H₂ blocks the longest held run is **666–3367 fs** (median 1415,
+   mean 1511) against a staked window of 834. Across 32 H₃/H₄ blocks it is **23–78 fs**.
+   The shortest H₂ outlives the longest H₄ by 8.5×, with no threshold tuned between them.
+2. **NOTHING CERTIFIES — including all 48 H₂.** They are voided by my own control floor,
+   at a pool rate of exactly 0.077 on every single one, and the 0.077 is arithmetic rather
+   than physics (§4). This is the pre-committed control finding a defect in the prereg.
+3. **The membership view is NOT CLOSED, and its leak EXPANDS.** Leg B exhibits hundreds of
+   witness pairs per seed at defects of 0.157–0.247 over ~20,000 informative transitions,
+   and **OBJECT.md rule 1's non-expansion budget is BREACHED on six of eight seeds**.
+4. **A window staked in time was being measured in frames, and on real data those differ**
+   (§6). Caught before it reached a verdict, by cross-checking a printed number against
+   the artifact.
+
+---
+
+## 1. What ran
+
+`waterquench_traj`, the frozen P2 protocol with a trajectory dump at every grain boundary,
+built in an isolated worktree at a pinned commit because the shared tree did not compile
+when this lane started. Hydrogen control arm, `--ozone=fenced`, all eight staked seeds,
+20,000 frames each, 16.68 or 33.35 ps of simulated time depending on whether that seed's
+timestep halved.
+
+The instrument-identity gate (`holon-render/tests/protocol_identity.rs`) passes: the
+frozen-protocol block — the eight seeds, the box, both temperatures, the thermostat
+coupling, the frame and substep counts, the jitter, the knot count, the RNG, the placement
+and the whole measurement rule — is byte-identical between `waterquench.rs` and
+`waterquench_traj.rs`.
+
+## 2. LEG A — is it a persistent quotient?
+
+Every seed forms **exactly six H₂** by the formula reader, which is what `waterquench`
+prints and what SATURATION-1 banked.
+
+| population | n | longest held run |
+|---|---|---|
+| H₂ blocks | 48 | **666.2 – 3366.9 fs** (median 1415.0, mean 1510.7) |
+| H₃/H₄ blocks | 32 | **23.3 – 78.4 fs** |
+| staked window | | 834.0 fs |
+
+43 of the 48 H₂ clear the window on their longest STRICT run; the other five reach it only
+under the budget clause, which is the budget doing exactly the job it was written for.
+Every H₄ is an order of magnitude short — the longest, 78.4 fs, is 9% of the window.
+
+**Every carrier moves.** Internal RMS displacements run 0.121–0.847 bohr and intra-block
+separation excursions 0.079–4.047 bohr, against staked floors of 0.100 and 0.050. Not one
+H₂ is the frozen carrier G5 exists to catch, so none of these readings is the vacuous kind.
+
+**And all 48 read VOID (no separation).** See §4 — the reason is arithmetic about the
+eligible pool, not anything about the molecules.
+
+**Totals over the arm: 0 certified-strict, 0 certified-budgeted, 343 transient, 48 void.**
+
+## 3. LEG B — does the membership view carry its own dynamics?
+
+`closed_iff_fiber_invariant` makes closure the statement `∀ x y, v x = v y → v (T x) =
+v (T y)`. The instrument collects the observed fibers and exhibits the pairs that break it.
+
+| seed | witness pairs | defect | 1st half | 2nd half | non-expansion (≤1.05×) |
+|---|---|---|---|---|---|
+| `0x…5421` | 262 | 0.1566 | 0.1372 | 0.1760 | **BREACHED** (1.28×) |
+| `0x…5422` | 465 | 0.2470 | 0.2319 | 0.2621 | **BREACHED** (1.13×) |
+| `0x…5423` | 370 | 0.1956 | 0.2383 | 0.1529 | ok |
+| `0x…5424` | 303 | 0.1706 | 0.1651 | 0.1762 | **BREACHED** (1.07×) |
+| `0x…5425` | 441 | 0.2142 | 0.1841 | 0.2442 | **BREACHED** (1.33×) |
+| `0x…5426` | 313 | 0.1653 | — | — | **BREACHED** |
+| `0x…5427` | 337 | 0.1820 | — | — | ok |
+| `0x…5428` | 355 | 0.1776 | — | — | **BREACHED** |
+
+Work count: ~19,984 informative transitions per seed against a staked minimum of 200, so
+none of this is the vacuous kind either. Witness pairs are exhibited by index — e.g. on
+seed `0x…5421`, frames 7177 and 7185 read the same partition while frames 7178 and 7186 do
+not.
+
+**The reading, stated carefully.** The bonded partition is not a Closed view of the atomic
+tier: 16–25% of its informative transitions cannot be predicted from the reading alone.
+That much is expected — OBJECT.md rule 2 says the claim is never zero leak. What is a
+FINDING is the second clause: rule 1 asks for **non-expanding** leak within a budget of
+1.05×, and the leak expands on five of six seeds, by up to 1.33×. A tier built on this view
+would certify on its first half and be out of budget by its second. Six of eight seeds
+breach; the two that do not (`0x…5423`, `0x…5427`) are the ones whose defect happens to
+FALL across the run, which is not the same as a bounded leak.
+
+**And the coarser views fail too**, which is the interesting part — a coarser view is
+usually easier to close:
+
+| macro view | bins | defect across the arm | reading |
+|---|---|---|---|
+| largest domain (atoms) | 13 | 0.143 – 0.229 | NOT CLOSED |
+| bonded pair count | 67 | 0.175 – 0.274 | NOT CLOSED |
+| mean hexatic ψ6 | 10 | 0.226 – 0.403 | NOT CLOSED |
+| H-bond count | 20 | 0.000 | VACUOUS (one reading; no oxygen in this arm) |
+
+The H-bond row is labelled VACUOUS rather than closed on purpose: a constant view is closed
+by `h = id` and has said nothing (M-FIXED-POINT-TRAJECTORY).
+
+## 4. THE CONTROL FLOOR IS MIS-STAKED, and its own control found it
+
+All 48 H₂ are VOID at a control rate of exactly **0.077** — the same number on every block
+of every seed — and the arithmetic is not subtle.
+The eligible pool of (2 H) blocks in a 12-hydrogen box is C(12,2) = 66; excluding the block
+under test leaves 65; the scene contains **six** genuine H₂, so any one of them sees the
+other **five** pass. 5/65 = 0.0769 against a staked ceiling of 0.05.
+
+The floor as staked can therefore be satisfied only by a scene holding **at most four**
+molecules of the composition under test (3/65 = 0.046 passes, 4/65 = 0.062 does not). That
+is not a test of whether the criterion discriminates. It is a cap on how many molecules the
+scene may contain, which is not what it was written to be — and it is a cap that gets
+TIGHTER exactly as a scene becomes more chemically interesting.
+
+**The stake is NOT being moved.** The verdicts above stand as VOID. What is recorded beside
+them is the underlying Leg A measurement, which is clean, strong and on moving carriers.
+
+**The defect, named:** the prereg compared a pool rate against a flat constant. This
+programme's own discipline rule 5 says to control estimator bias with a **shuffle or
+permutation floor**, and that rule was not applied. Staked now for the next freeze and not
+retroactively: the pool pass rate must be compared against the pass rate among
+same-composition blocks in a surrogate whose bond graph is time-shuffled within each pair.
+A flat 5% encodes a fixed selection strength; a shuffle floor encodes the question actually
+being asked, which is whether these blocks hold more than chance blocks hold.
+
+## 5. WHY THE OH₂ QUESTION IS BLOCKED
+
+The P2 run that reported the first emergent OH₂ rides `dE4(O,H,H,H)`, and that physics is
+in **no commit**: `git show HEAD:engine/crates/holon-render/src/sim.rs | grep -c
+de4_enabled` returns 0. The working-tree `sim.rs` carrying it is being overwritten by the
+T3 dynamic-storage refactor; no stash, backup or worktree held the earlier bytes.
+
+Two things were done rather than reported:
+
+* **The bytes are preserved.** `refs/rescue/de4-2026-09-01` (`11549dd`) captures the
+  working-tree state of `holon-render`, `holon-chem` and `holon-device` — 21 files, 6,245
+  insertions, including the 1,412-line `sim.rs` delta and the 738-line untracked
+  `cells.rs`. On no branch; main untouched; no working tree modified.
+* **Recoverability was MEASURED.** That exact content, in a throwaway worktree at HEAD,
+  fails `cargo check -p holon-render` with 14 errors: `MAX_ATOMS` removed while nine sites
+  still reference it, `MAX_PAIRS` likewise, a closure indexed as a slice at `sim.rs:2044`,
+  and a non-const call in a const fn. All T3's own in-flight edits.
+
+**The dE₄ physics is preserved but not rebuildable** until T3 lands green. Committing it
+buys safety, not reproducibility. Until a green commit exists and one completed seed
+reproduces its per-seed line, the OH₂ should be carried as PROVISIONAL.
+`CENSUS_RESUME.md` holds the recipe; the census step is minutes once the commit exists.
+
+## 6. A DEFECT IN THIS INSTRUMENT, found before it reached a verdict
+
+The first version of the census converted the staked window into a frame count once, from
+the header's `dt`. **The engine's timestep adapts.** On hydrogen seed `0x53415421` the
+header records `dt = 1.0772` at placement, the timestep halves after eleven frames, and
+19,988 of the 20,000 frames run at 0.5386 — a delta histogram of 19,988 at 34.4707 a.u.
+and 11 at 68.9414. So the window was 500 frames of 1.6676 fs on paper and 500 frames of
+0.8338 fs in fact: **417 fs against a staked 834, making certification twice as easy as it
+was staked to be.**
+
+Found by cross-checking a printed number against the artifact — `waterquench` reports
+`dt 0.5386` for a seed whose dump header says `1.0772`. Every window is now measured
+against `Frame::time`. `Header::frame_fs` and `Header::frames_in` were REMOVED rather than
+documented around, because a helper that is right on synthetic data and wrong on real data
+is worse than no helper: every test passes. The diffusion lens had the same defect in its
+lag axis and now uses mean elapsed time. Reports carry the number of distinct frame
+durations a run used, so "frames" is never silently a unit again.
+
+## 7. THE LENS STACK, and its refusals
+
+On the hydrogen arm, four of six lenses refuse, each naming the gate that would lift it:
+
+| lens | reading |
+|---|---|
+| q-tetrahedral | REFUSED — `dims == 3`; a tetrahedral parameter on a plane does not contain the variable it names (M-MAINTENANCE-LENS) |
+| Steinhardt q6 | REFUSED — `dims == 3`; every neighbour sits at θ = π/2 and the sum is a hexatic in disguise |
+| hexatic ψ6 | 0.397 |
+| diffusion | REFUSED — MSD at lag 2000 is 102.5 bohr² against a wall-saturation cap of 27.0; the fit would measure the box, not the fluid |
+| H-bond census | REFUSED — 0 oxygens; a zero here would read as a measured absence |
+| largest domain (bonded-pair graph) | 2 atoms over 6 edges |
+
+Gated against exact references: simple cubic `q6 = sqrt(1/8)` analytically, FCC 0.5745,
+BCC 0.5107 at fourteen neighbours, a perfect tetrahedron 1, a planar square exactly 1/2, a
+triangular-lattice `ψ6` 1.
+
+## 8. THE BLIND CLASSIFIER
+
+`classify` takes a `&Trajectory`, and `Trajectory` has no launch label in it — blindness by
+signature, not by discipline (M-TAG-AS-PROPERTY).
+
+**On the hydrogen arm: LIQUID, 8 of 8.** Free fraction 0.000–0.065 (bonded), mobility
+2.36–4.56 against an ICE bar of 0.10 (flowing). Interior atoms 0–2, which is the honest
+reason the ICE branch has nothing to weigh on a twelve-atom scene.
+
+**P-5 fired three times during construction** and named a different defect each time,
+before any real data was read:
+
+| firing | rate | defect it named | derived repair |
+|---|---|---|---|
+| 1 | 4.0% (8/200) | no finite-N floor: `E[ψ6²] = E[q_l²] = 1/N` for random neighbours, and at N = 6 that floor is 0.408 against a 0.45 bar | report `sqrt(max(0, raw² − 1/N)) / sqrt(1 − 1/N)` |
+| 2 | 1.6% (16/1000) | six neighbours is not a first shell; a chance gas cluster passes a ratio test while being ragged | require the shell COMPLETE and TIGHT, average over interior atoms only |
+| 3 | 0.2% (4/2000) | one atom is not a bulk — every remaining firing had exactly ONE distinct interior atom, its environment counted across dozens of correlated frames | require ≥ 2 distinct interior atoms; report `interior_atoms` beside `interior_samples` |
+
+Every repair is derived from the failure it repairs and **the 0.45 stake never moved**. The
+published false-crystal rate is MEASURED — 0.2%, 4 of 2000 — not inferred from zero events,
+and it sits under the 1.5% bound the prereg staked. P-1 passes: a liquid trajectory
+launched under an `ice` label classifies LIQUID.
+
+## 9. What this census does NOT claim
+
+* It does not claim water formed, or failed to. The hydrogen arm contains no oxygen at all.
+* It does not claim the bonded partition is Closed. Leg B can only exhibit witness pairs or
+  fail to find them, and here it found 262–465 per seed.
+* It does not claim H₂ is certified. Under the staked floor H₂ is VOID; the strong Leg A
+  reading behind that VOID is reported beside it and never instead of it.
+* It does not claim these 2D twelve-atom scenes are liquid water. Four of six lenses refuse
+  them mechanically, and the classifier's LIQUID is a statement about a bonded mobile
+  twelve-atom scene, nothing more.

@@ -187,13 +187,35 @@ On the hydrogen arm, four of six lenses refuse, each naming the gate that would 
 | q-tetrahedral | REFUSED — `dims == 3`; a tetrahedral parameter on a plane does not contain the variable it names (M-MAINTENANCE-LENS) |
 | Steinhardt q6 | REFUSED — `dims == 3`; every neighbour sits at θ = π/2 and the sum is a hexatic in disguise |
 | hexatic ψ6 | 0.397 |
-| diffusion | REFUSED — MSD at lag 2000 is 102.5 bohr² against a wall-saturation cap of 27.0; the fit would measure the box, not the fluid |
+| diffusion | REFUSED at every lag — see below |
 | H-bond census | REFUSED — 0 oxygens; a zero here would read as a measured absence |
 | largest domain (bonded-pair graph) | 2 atoms over 6 edges |
 
 Gated against exact references: simple cubic `q6 = sqrt(1/8)` analytically, FCC 0.5745,
 BCC 0.5107 at fourteen neighbours, a perfect tetrahedron 1, a planar square exactly 1/2, a
 triangular-lattice `ψ6` 1.
+
+**And the diffusion lens grew a second refusal, because the first was not enough.** Its
+original gate was wall saturation alone, and under that gate it reported a diffusion
+constant at every lag from 2 to 200 — a constant that GREW MONOTONICALLY with the fit
+window, 0.000814 to 0.018238 bohr²/fs, a factor of 22. That is the signature of fitting a
+line to a curve. Measuring the exponent says so directly:
+
+| max lag | MSD exponent | verdict |
+|---|---|---|
+| 10 – 200 | 1.58, 1.68, 1.74, 1.74, 1.73 | REFUSED — no diffusive regime |
+| 500 – 2000 | 1.67, 1.64, 1.54 | REFUSED — wall-saturated as well |
+
+`MSD = 2 d D τ` is a fit to a LINE; the Einstein relation IS the statement that the
+exponent is 1. On these trajectories it is 1.54–1.74 at every window, so **the lens now
+refuses at every lag** and names which gate refused. The band `[0.85, 1.15]` is not tuned:
+it is the tolerance on a log-log slope of ten points around the exponent the relation
+asserts.
+
+That refusal is checked in both directions, so it is not a branch that only ever says no:
+a synthetic random walk in a large box reads `τ^1.00` and IS reported; synthetic ballistic
+motion reads `τ^2` and is refused. **The reading is that a twelve-atom walled box over 16.7
+ps has no diffusive regime at all** — one more measurement pointing at the T3 scale-up.
 
 ## 8. THE BLIND CLASSIFIER
 

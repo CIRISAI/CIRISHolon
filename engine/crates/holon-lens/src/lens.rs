@@ -276,14 +276,57 @@ pub fn msd(traj: &Trajectory, lag: usize) -> f64 {
     }
 }
 
-/// The Einstein diffusion constant from a straight-line fit of MSD against lag.
+/// The exponent of `MSD ∝ τ^alpha` over the fit window, by least squares in log-log.
 ///
-/// **REFUSES when the fit window is wall-dominated.** These scenes are `Boundary::Walls`,
-/// so displacement saturates at the box rather than growing linearly, and a slope fitted
-/// across the saturation is a number about the box and not about the fluid. The stated
-/// criterion: refuse when `MSD` at the largest fitted lag exceeds `(L_min / 4)²`, where
-/// `L_min` is the shortest box dimension the scene actually uses. The gate that lifts the
-/// refusal is a shorter fit window, or periodic boundaries.
+/// The Einstein relation IS the statement that this exponent is 1. Reporting a diffusion
+/// constant without checking it is reporting the slope of a line through data that is not
+/// a line.
+pub fn msd_exponent(traj: &Trajectory, max_lag: usize) -> f64 {
+    let mut pts: Vec<(f64, f64)> = Vec::new();
+    let mut lag = 2usize;
+    while lag <= max_lag {
+        let x = mean_lag_fs(traj, lag);
+        let y = msd(traj, lag);
+        if x > 0.0 && y > 0.0 {
+            pts.push((x.ln(), y.ln()));
+        }
+        lag = (lag as f64 * 1.5).ceil() as usize;
+    }
+    if pts.len() < 3 {
+        return f64::NAN;
+    }
+    let n = pts.len() as f64;
+    let mx = pts.iter().map(|p| p.0).sum::<f64>() / n;
+    let my = pts.iter().map(|p| p.1).sum::<f64>() / n;
+    let num: f64 = pts.iter().map(|p| (p.0 - mx) * (p.1 - my)).sum();
+    let den: f64 = pts.iter().map(|p| (p.0 - mx).powi(2)).sum();
+    num / den
+}
+
+/// The band the MSD exponent must lie in for an Einstein fit to mean anything.
+pub const DIFFUSION_ALPHA_LO: f64 = 0.85;
+pub const DIFFUSION_ALPHA_HI: f64 = 1.15;
+
+/// The Einstein diffusion constant from a straight-line fit of MSD against elapsed time.
+///
+/// **REFUSES on two conditions, and the second one was added after the first proved
+/// insufficient on real data.**
+///
+/// 1. *Wall domination.* These scenes are `Boundary::Walls`, so displacement saturates at
+///    the box rather than growing, and a slope fitted across the saturation is a number
+///    about the box. Refuse when `MSD` at the largest fitted lag exceeds `(L_min/4)²`.
+///
+/// 2. *No diffusive regime.* `MSD = 2 d D τ` is a fit to a LINE, and on the banked
+///    hydrogen trajectories the MSD goes as `τ^1.7` — between ballistic and diffusive —
+///    over every window the wall gate admits. The first version of this lens happily
+///    returned a "diffusion constant" that grew monotonically with the fit window, from
+///    0.0008 to 0.018 bohr²/fs across lags 2 to 200, which is the signature of fitting a
+///    line to a curve. So the exponent is measured and the lens refuses outside
+///    `[0.85, 1.15]`. That band is not tuned: the Einstein relation is the statement that
+///    the exponent is 1, and the width is the tolerance on a log-log slope from ten points.
+///
+/// The gate that lifts either refusal is a longer trajectory in a larger box — which is
+/// the T3 scale-up, and this is one more measurement saying so.
 pub fn diffusion(traj: &Trajectory, max_lag: usize) -> Reading<f64> {
     let dims = traj.header.dims as f64;
     let l_min = if traj.header.dims == 2 {
@@ -307,6 +350,28 @@ pub fn diffusion(traj: &Trajectory, max_lag: usize) -> Reading<f64> {
             format!(
                 "MSD at lag {max_lag} is {top:.3} bohr^2 against a wall-saturation cap of \
                  {cap:.3}; the fit would measure the box, not the fluid"
+            ),
+        );
+    }
+    let alpha = msd_exponent(traj, max_lag);
+    if alpha.is_nan() {
+        return refuse(
+            "diffusion",
+            "at least 3 lags below max_lag",
+            format!(
+                "max_lag {max_lag} leaves too few points to measure the MSD exponent; \
+                 without it a straight-line fit is unchecked"
+            ),
+        );
+    }
+    if !(DIFFUSION_ALPHA_LO..=DIFFUSION_ALPHA_HI).contains(&alpha) {
+        return refuse(
+            "diffusion",
+            "MSD exponent in [0.85, 1.15]",
+            format!(
+                "MSD goes as tau^{alpha:.2} over this window, not tau^1; there is no \
+                 diffusive regime here and a straight-line fit would report the slope of a \
+                 curve as a diffusion constant"
             ),
         );
     }
@@ -655,6 +720,43 @@ mod tests {
     fn a_rotated_dimer_reads_none_past_thirty_degrees() {
         assert_eq!(hbonds(&dimer(5.6, 25.0).0, &dimer(5.6, 25.0).1).unwrap().len(), 1);
         assert!(hbonds(&dimer(5.6, 35.0).0, &dimer(5.6, 35.0).1).unwrap().is_empty());
+    }
+
+    /// The exponent gate must ACCEPT a random walk and REFUSE ballistic motion, or it is
+    /// a gate that only ever says no.
+    #[test]
+    fn the_diffusion_lens_accepts_a_walk_and_refuses_a_flight() {
+        use crate::synthetic::{self, Spec};
+        // A random walk in a big box: MSD ~ tau, and the walls stay out of the window.
+        let mut sp = Spec::quench_like(4000, vec![1; 12]);
+        sp.box_w = 4000.0;
+        sp.box_h = 4000.0;
+        sp.seed = 3;
+        let walk = synthetic::liquid(sp.clone());
+        let a_walk = msd_exponent(&walk, 200);
+        assert!(
+            (a_walk - 1.0).abs() < 0.15,
+            "a random walk must read tau^1, read tau^{a_walk:.3}"
+        );
+        assert!(diffusion(&walk, 200).is_ok(), "and the lens must report on it");
+
+        // Ballistic: every atom on a straight line, MSD ~ tau^2.
+        let n = 12usize;
+        let flight = synthetic::build(sp, move |t, pos, vel| {
+            for i in 0..n {
+                let v = 0.01 * (i + 1) as f64;
+                pos[i] = [2000.0 + v * t as f64, 2000.0 - v * t as f64, 0.0];
+                vel[i] = [v, -v, 0.0];
+            }
+            0
+        });
+        let a_flight = msd_exponent(&flight, 200);
+        assert!(
+            a_flight > 1.8,
+            "ballistic motion must read near tau^2, read tau^{a_flight:.3}"
+        );
+        let e = diffusion(&flight, 200).unwrap_err();
+        assert_eq!(e.gate, "MSD exponent in [0.85, 1.15]");
     }
 
     #[test]

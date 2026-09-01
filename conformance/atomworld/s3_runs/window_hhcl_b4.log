@@ -1,0 +1,19 @@
+# DOMAIN SWEEP for the (Cl, H, H) table — apex Cl, axes Cl-H and Cl-H
+# threads = 8, nx = 13, nc = 33
+# E(atoms) = -455.475356097843 Ha
+# located R_e: apex-H 2.5369, apex-H 2.5369, opposite H-H 1.3884 bohr
+# inner ends from pair::derive_range (one hartree above asymptote):
+#   x_lo = 1.2377, y_lo = 1.2377 bohr
+
+## truncation shell: worst |dE3| anywhere with max(apex side) = b
+##   x swept 13 ways over [1.238, b], angle swept 33 ways over
+##   c = sqrt(1-cos theta) in [0.0005, 1.4142]  (theta from 0.041 deg)
+
+   b/R_e      b     worst |dE3|    at x     theta      z(opp)      s2
+     4.0  10.148   1.9386e-3    5.693     0.04      4.455   5.693
+
+# swept in 704 s
+# READ THIS AS: R_HI is the smallest b whose row is under the table's truncation
+# stake, RE-SWEPT FINELY before it is trusted — a grid maximum understates its own
+# supremum, and SATURATION-2's first sweep cleared its stake by three percent and
+# then failed the fine re-sweep.

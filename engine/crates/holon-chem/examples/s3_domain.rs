@@ -108,6 +108,17 @@ fn main() {
     let threads: usize = a.get(3).and_then(|s| s.parse().ok()).unwrap_or(8);
     let nx: usize = a.get(4).and_then(|s| s.parse().ok()).unwrap_or(13);
     let nc: usize = a.get(5).and_then(|s| s.parse().ok()).unwrap_or(17);
+    // THE ANGLE WINDOW'S CLOSED END, and it is an argument because it turned out to be
+    // load-bearing. Every row of the first (Cl,H,H) sweep put its worst |dE3| at
+    // theta = 4.05 deg, which is exactly arccos(1 - 0.05^2) — the c = 0.05 endpoint. A
+    // maximum attained ON a window edge is evidence the supremum is OUTSIDE the window, so
+    // the sweep cannot be read as bracketing anything until this is pushed down and the
+    // maximum is shown to be interior. Found by saturation3-mesh reading the column rather
+    // than the number.
+    let c_min: f64 = a.get(6).and_then(|s| s.parse().ok()).unwrap_or(0.05);
+    // Sweep ONE shell, named as a multiple of the apex R_e, when the question is about the
+    // angle axis rather than the truncation radius.
+    let only: Option<f64> = a.get(7).and_then(|s| s.parse().ok());
 
     let t0 = Instant::now();
     let e_atoms = atom_energy(apex) + atom_energy(b1) + atom_energy(b2);
@@ -136,11 +147,15 @@ fn main() {
     // Shells in units of the LARGER apex equilibrium, so the ladder means the same thing
     // for chlorine as for hydrogen instead of being a set of bohr that happens to suit one.
     let re_max = re1.max(re2);
-    let mults = [1.5f64, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0];
+    let mults: Vec<f64> = match only {
+        Some(m) => vec![m],
+        None => vec![1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0],
+    };
     let bs: Vec<f64> = mults.iter().map(|m| m * re_max).collect();
     println!("## truncation shell: worst |dE3| anywhere with max(apex side) = b");
     println!("##   x swept {nx} ways over [{x_lo:.3}, b], angle swept {nc} ways over");
-    println!("##   c = sqrt(1-cos theta) in [0.05, {SQRT2:.4}]\n");
+    println!("##   c = sqrt(1-cos theta) in [{c_min}, {SQRT2:.4}]  (theta from {:.3} deg)\n",
+        (1.0f64 - c_min * c_min).clamp(-1.0, 1.0).acos().to_degrees());
 
     let jobs: Vec<(usize, usize)> = (0..bs.len())
         .flat_map(|i| (0..nx).map(move |j| (i, j)))
@@ -159,7 +174,7 @@ fn main() {
                 let x = x_lo + (b - x_lo) * j as f64 / (nx - 1) as f64;
                 let mut local = Worst::default();
                 for k in 0..nc {
-                    let cc = 0.05 + (SQRT2 - 0.05) * k as f64 / (nc - 1) as f64;
+                    let cc = c_min + (SQRT2 - c_min) * k as f64 / (nc - 1) as f64;
                     let u: f64 = 1.0 - cc * cc;
                     let (d, z) = ctx.de3(x, b, u);
                     if d.abs() > local.d.abs() {

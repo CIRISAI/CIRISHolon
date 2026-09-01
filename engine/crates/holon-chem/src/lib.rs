@@ -52,6 +52,7 @@ pub mod sto3g;
 pub mod table;
 pub mod tier;
 pub mod trimer;
+pub mod tower;
 pub mod water;
 
 pub use h2::{asymptote, equilibrium, h2_energy, h2_point, h_atom_energy, Point};

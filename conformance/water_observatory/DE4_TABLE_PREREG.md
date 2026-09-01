@@ -339,3 +339,153 @@ any basis but STO-3G; five-body terms; that the coarse v1 grid is the right reso
 T1 and T3 are expected to be informative about that and may fire; that the borrowed corners
 have been REMOVED rather than located and paid for; and that a table whose held-out band
 fires is fit for the trajectory loop, which is why R1 keeps the referee route.
+
+---
+
+## AMENDMENT A1 — 2026-09-01, before any production table node exists
+
+Every clause below was written BEFORE the production run wrote its first node, and all of
+them are corrections of design INPUTS rather than reinterpretations of results. The
+distinction matters and is checkable: the table does not exist yet, so no outcome was
+available to select an amendment by. Where a clause fails every possible design — A1.3 and
+A1.5 do — it cannot separate a good campaign from a bad one, and re-wording it is the
+SATURATION-3 precedent (an ask unreachable by construction is a typo with force, not a
+gate), not a rescue. Where a clause is merely wrong about a number, the number is replaced
+and the gate stands.
+
+**A1.1 — the path that runs changed under the freeze (M-STALE-INSTRUMENT, same day).**
+Measurement (M1) priced "the path that runs" as one value solve plus three forward radial
+differences, four solves per quadruple. While this campaign was in flight, another lane
+replaced it (commit 21e6be3): the four-body force now comes from `ohhh_fci_grad` — NINE
+seeded dual solves, three moving atoms times three axes, with the oxygen row imposed by
+translation invariance and a CI vector warm-started per oxygen hub. That is both a
+different price and a DIFFERENT QUANTITY: the old scheme delivered only the radial
+projection of the gradient, so every tangential component, including every H-H force inside
+the correction, never reached the trajectory. M1's gradient figure is therefore stale on its
+own terms and is withdrawn as a description of the current consumer. It stands only as what
+it measured. This is M-STALE-INSTRUMENT firing on this document inside the session that
+wrote it, which is the honest place to record it.
+
+The tabulation DECISION does not turn on which of the two it was. A table read is a
+`4^6 = 4096`-node stencil contracted seven times, tens of microseconds; both the four-solve
+and the nine-solve paths are seconds. The decision is not close under either price and was
+never close.
+
+**A1.2 — the embeddable fraction on the FROZEN grid is 45.00%, not 61.69%.**
+The 61.69% (`pi^2/16`) is the continuum measure of the elliptope in the cosine cube. The
+frozen grid is not the continuum: its `u = -1` plane forces `G = -(u23 + u31)^2 <= 0`, so
+that whole plane is non-geometry except on a line. Counted exactly on the 13/11 grid, 599 of
+1331 cosine triples are embeddable — **45.00%**. Consequences, all replacing the numbers in
+"Grid, frozen": canonical representatives that are real geometries **225,368**, not
+~307,000; the full box splits 1,316,003 real / 1,608,204 continued. The representative count
+497,640 is unchanged, and it is the count that sets the COST, because a continued node is
+solved too — at its projected geometry. Found by the certification harness and reproduced
+independently.
+
+**A1.3 — G2's banked per-node price is replaced; the gate stands, re-banked.**
+The smoke run (5/5 grid, 2,925 representatives, 3 workers, loadavg 77, certificate CLEAN)
+measured **2.0044 s of core time per solved node** against the banked ~0.25 s. That is 8x,
+outside G2's 2.0x band, so **G2 as originally banked FIRES** and is reported as fired.
+
+The 0.25 s was an estimate built by scaling a contended median and assuming the pair cache
+removed most of the node cost; the cache does work (measured within 1e-6 Ha of a fresh solve,
+saving six two-centre solves a node), but the four-centre FCI it exposes is itself the cost,
+and its MEAN carries a heavy tail — 3x its median. No design could have hit 0.25 s, so under
+the ruling above the number is replaced rather than the campaign rescued. **Re-banked:
+2.0 s of core time per representative at loadavg ~77**, which on 497,640 representatives
+prices the production grid at ~276 core-hours of wall-times-workers, or ~97 core-hours of
+true CPU once the measured 2.4x oversubscription is taken out. G2's 2.0x two-sided band now
+applies to the re-banked figure, and the production run's own in-job anchor is the reading
+that scores it. The direction that fired here — DEARER, not cheaper — is the one
+M-CHEAPER-THAN-ITS-PRICE does not itself cover, which is why G2 was written two-sided.
+
+**A1.4 — S1 has RUN, and it fired branch (a): the corners are real.**
+Slices 1 and 5 re-scanned at 49 points, `h` halved against the 25-point reading:
+
+| slice | `max \|d3[dE4]\|` at h | at h/2 | ratio | reading |
+|---|---|---|---|---|
+| 1, H2 elimination | 2.186e2 | 7.159e2 | **3.27** | slope jump |
+| 5, (H,H,H) channel | 6.209e2 | 3.194e3 | **5.14** | slope jump |
+
+A slope discontinuity makes `d3` scale as `J/h^2` and predicts exactly 4x; smooth curvature
+predicts no change. Both ratios exceed the pre-committed 2.5 threshold and bracket 4, which
+is what a corner that does not sit exactly on a node gives. Branch (a) is taken. Neither
+slice found a warm start beating its cold solve (worst -9.52e-13 Ha), so the corners are the
+surface's and not the eigensolver's.
+
+The implied jumps are `J = d3 * h^2` converted into the radial coordinate: **0.138 Ha/bohr**
+on the H2-elimination channel and **0.408 Ha/bohr** on the (H,H,H) channel. With a mid-range
+cell of ~0.5 bohr on the stretched radial axis, `J * h_cell / 8` gives an accepted floor of
+**2.6e-2 Ha**, and that is what the seam record carries.
+
+**Two consequences stated before the table exists, so neither can be chosen after it.**
+(i) The floor 2.6e-2 Ha EXCEEDS T1's staked band of 2.0e-2 Ha. Where the seam is near, T1
+cannot pass at any resolution, because uniform refinement cannot beat a corner — that is
+SATURATION-3's ruling and this campaign has now measured its own instance of it. (ii) The
+seam is a codimension-1 surface, not the whole domain, and the 40 witnesses are water-plus-one-
+hydrogen geometries that mostly do not sit on the H2-elimination or H3 channels. So T1 may
+still pass on the held-out set. **Both readings are live and pre-committed: T1 passing does
+NOT retire the floor, and T1 firing does NOT by itself indict the grid.** The discriminator
+is whether the firing witnesses are the ones near a channel, and the harness names offending
+geometries for exactly that reason.
+
+**A1.5 — gate S3's wording is unachievable on the fixed-point locus; it splits in two.**
+As written S3 demands the value and gradient be bit-identical under all six relabellings.
+On a geometry whose stabiliser is non-trivial (`R1 = R2`, or the C3v points),
+`canonical_ohhh` returns ONE permutation for all presentations, so the wording additionally
+demands that six different linear functionals of one 4096-node stencil be equal in f64.
+Measured: they are 1 ULP apart — 4.743e-20 absolute, 9.809e-16 relative, on 36 gradient
+components across 3 test geometries. Values are bit-exact everywhere. No implementation of
+a floating-point contraction can meet the clause on that locus, so it fails every design and
+is re-worded rather than rescued:
+
+* **S3-orbit (GATES)**: on geometries with trivial stabiliser, value and gradient identical
+  bit for bit under all six relabellings. This is the addressing gate and it PASSES.
+* **S3-stabiliser (REPORTED, not gating)**: on the fixed-point locus, the value must still
+  be bit-exact and the gradient is reported with its worst ULP deviation.
+
+**A1.6 — S3 cannot convict a wrong orbit fill; C1 is the gate that can.**
+`eval` canonicalises before it looks anything up, so all six presentations reach the
+interpolant with identical bits and the symmetry reading is BLIND to what the table
+contains. Demonstrated with a plant: a 3.05e-5 Ha corruption in one node moved S3 by exactly
+zero and moved C1 by 4.102e-7 Ha/bohr, five orders above C1's band. The module documentation
+claimed the reverse and has been corrected. C1 is hereby the orbit fill's detector, and
+S3-orbit is a test of the ADDRESSING only. Recorded because a gate believed to cover
+something it cannot is worse than no gate.
+
+**A1.7 — C1's boundary wording is loose, and the harness is stricter than the text.**
+`u23 = u31` is a canonicalisation boundary only where `R1 = R2`: the lexicographic order
+puts the radii first, so with three distinct radii the relabelling is pinned and a
+cosine crossing tests nothing. Every C1 case is therefore built on `R1 = R2`, and the
+harness ASSERTS that the returned permutation actually differs across the straddle, VOIDing
+the case when it does not. A case that does not cross is not a passing case.
+
+**A1.8 — T1/T2/T3's effective held-out count is 30, not 40.**
+The 40 staked geometries carry only **30 distinct canonical addresses**: the mirror-image
+probe directions produce identical internals, and `dE4` is a scalar function of the
+internals. Ten of the forty are therefore duplicates carrying double weight. The banked
+sign structure (11 attractive / 29 repulsive) is a fact about the 40 as enumerated and T2 is
+unchanged, but the accuracy statistics in T1 and T3 are over 30 independent points and the
+harness discloses that before it prints them.
+
+**A1.9 — a defect in this campaign's own interpolant, found and fixed before the run.**
+`QuaternaryTable::eval` clamped the index coordinate to the box but chained the slope
+through `dtau_dr` evaluated at the UNCLAMPED radius, so outside the domain the returned
+gradient was not the derivative of the returned value: constant value, nonzero reported
+force. Below `R_LO - (R_HI - R_LO)/(exp(a) - 1) = 0.633` bohr the chain factor hits its own
+1e-300 floor and the reported force reached **+4.6e296 Ha/bohr** — one integrator step from
+destroying a trajectory. The same one-sidedness applied above the closed-angle fence, at
+`u = 0.999`, which a near-collinear H-O-H genuinely reaches. Fixed: a clamped axis now
+reports exactly zero along itself. Regression test carries its own control, so zeroing
+everything cannot pass it.
+
+**A1.10 — the DRY residual register's first entries.** WB-8.7 asks for the register's
+GROWTH RATE against domain size, so the entries are named rather than counted: (i)
+`Surface::subtract` is a value-only hook, so a record's `d1_bits`/`d2_bits` carry the
+TOTAL's derivatives, harmless while every surface builds centres from `D2::c` constants;
+(ii) the four hand-rolled tabulation paths in `holon-chem` (trimer, water, ooh, ozone) are
+NOT yet migrated onto the folded generator — the capability now exists and the migration
+does not; (iii) the artifact format carries only an aggregate continued count, not per-node
+status, so the loader recomputes it from `gram_det < 0` and cross-checks the aggregate.
+Adding the four-body composition cost ZERO new generators, which is the reading WB-8.7 asked
+for.

@@ -1,0 +1,20 @@
+# VOID — SUPERSEDED, DO NOT CITE. This run used the RADIAL-ONLY four-body gradient.
+# It was launched from e6cbb13, which fixed the mass division but kept a gradient the
+# 21e6be3 audit then showed to be HALF a gradient: radial in the three O-H distances
+# only, so no H-H force inside the four-body correction ever reached a trajectory. It
+# fails the force-is-the-gradient gate at ORDER ONE. Killed deliberately, mid-run.
+# The real run is engine/output/p2_de4_full/ (per-seed logs, binary from 21e6be3).
+# Kept rather than deleted: a voided run is a record of what was tried, and a deleted
+# one is a gap someone re-derives. Nothing below is a measurement.
+#
+# THE FIRST TRUE dE4 RUN: four-body forces at full strength, momentum-clean
+# The banked seeds ran with the sector 3-4 orders too weak (mass divided twice),
+# so they were effectively MBE3 plus a small biased perturbation. This is not a
+# reproduction of them; it is the experiment they were mistaken for.
+# fix: e6cbb13   gate: tests/de4_momentum.rs (2/2 green)
+# binary sha256: 5bf4a58b981b2f54636baba2cbd66e949cc546c81331543e092d2ede44e458c6
+# HEAD: e6cbb1373ae6b4d12d412005007be1746655c8ab
+# launched: 2026-09-01T15:58:31-05:00
+# stdout is REDIRECTED TO THIS FILE, which the banked arm was not.
+# curve H-H: 96 knots, R_e = 1.3887 bohr, D_e = 0.204142 Ha, worst residual 8.7e-11, 15.0 s
+# curve O-H: 96 knots, R_e = 1.9909 bohr, D_e = 0.122901 Ha, worst residual 9.9e-11, 14.4 s

@@ -96,3 +96,15 @@ These are binding on all CIRISHolon code.*
     one-directional check becomes a rule that misleads. Where the question is
     "did this term actually fire", use a counter the physics itself
     increments and read it from the run.
+
+14. **A done-marker records an exit code, and 128+N is a signal, not a result.**
+    Two detached arms wrote their markers and stopped; the markers said
+    `143`, which is SIGTERM — they had been killed about a minute in, having
+    generated one pair curve each. Had the check been "does the marker
+    exist", both would have been read as finished runs with empty output
+    directories, and the census would have reported on nothing. The detached
+    pattern also needs its detach VERIFIED rather than assumed: plain
+    `setsid cmd &` inside a tool call that then went on to do other work did
+    not survive, while `setsid nohup cmd & disown` in a call that exits
+    immediately did. Launch, then confirm the process is alive in its own
+    session before trusting that it will be there later.

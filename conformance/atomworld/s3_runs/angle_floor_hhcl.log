@@ -1,0 +1,9 @@
+# ANGLE FLOOR for the (Cl, H, H) table — apex Cl, non-apex pair H-H
+# x_lo = 1.2377 bohr (pair::derive_range's inner end for the apex pair)
+# walking the non-apex pair together on the diagonal x = y = x_lo
+# S_MIN_FLOOR = 1e-6 — the declared fence on min eig(S)
+
+            z          c     min eig(S)    verdict
+     2.000000   1.142573      4.0558e-2         ok
+     1.600000   0.914058      3.1718e-2         ok
+     1.280000   0.731247      3.7125e-2         ok

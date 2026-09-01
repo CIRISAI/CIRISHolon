@@ -59,6 +59,13 @@ Reading them:
 cargo run --release -p holon-lens --example census -- $SP/traj/fenced
 ```
 
+**The mixed arms census THEMSELVES.** `$SP/auto_census.sh` is detached with its own
+done-markers and waits on the two `.DONE` files, then writes
+`conformance/water_observatory/census_mixed_{served,fenced}.log`. So the reading happens
+whether or not any narration session is still alive — the discipline is that a dead session
+kills narration and never computation, and a computation whose reading depends on someone
+watching has the same exposure one level up.
+
 **All arms are built from commit `a3b3d4b` in an isolated worktree**, not from the shared
 working tree. The shared tree did not compile when this lane started (a T3 dynamic-storage
 refactor had removed `MAX_ATOMS` from `sim.rs` while ten call sites still used it), and a

@@ -185,6 +185,7 @@ commuting_budget        the bead-forgetting square's measured defect, with its m
 reduced_mass_me         reduced mass from two declared atomic masses; no reduced mass is tabulated
 homonuclear             a diatomic of one species on a given curve
 thermal_energy          the reference's own thermal energy, so the ZPE correction is computed not waved away
+zpe                     the reference's ground level above a stated potential minimum
 reset_excursions        clears the banked surface's out-of-domain counter between runs
 from_table              wraps an already-generated banked table
 from_modes              normal-mode to bead coordinates

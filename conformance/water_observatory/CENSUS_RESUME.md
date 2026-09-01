@@ -71,6 +71,45 @@ working tree. The shared tree did not compile when this lane started (a T3 dynam
 refactor had removed `MAX_ATOMS` from `sim.rs` while ten call sites still used it), and a
 census computed against a tree that changes under it is not reproducible.
 
+## THE THREE CHECKS, answered
+
+**(1) THE BUILD PIN — my build carries NO dE4 dispatch, and that is verified by symbol
+table rather than by mtime.** `nm -C` on my `waterquench_traj` finds **zero**
+`quaternary::de4_ohhh_fci` symbols; the same command on the running `waterquench` finds
+**one**. Neither binary carries any T3 marker (`DEFAULT_SCENE_ATOMS`, `complete_pairs`,
+`ExternalWork`, `Periodic` — all absent), so both predate that refactor. My worktree is
+pinned at `a3b3d4b`.
+
+The consequence is that **neither of my arms can reproduce the completed dE₄ seeds, and
+neither is trying to.** They are a different experiment, not a different build of the same
+one, so a protocol-equality gate between them would fail for a reason that has nothing to
+do with trajectories. I did not build from `rescue/de4-sim-worktree` minus the T3 hunks:
+that reconstruction is the water lane's to own and to certify, and a census standing on my
+guess at someone else's diff would be worth less than no census.
+
+**(2) THE SERVED ARM IS PREP-ONLY, and was designed that way.** `--ozone=served` loads a
+surface that is mid-generation and uncertified, and whose predecessor was convicted by
+M-CHEAPER-THAN-ITS-PRICE. That arm exists solely to test whether my runner reproduces the
+committed `p2_waterquench.log` — an INSTRUMENT gate — and nothing from it banks as physics
+under any outcome. Said in `CENSUS_RESULTS.md` §5 as well, so a reader of either document
+meets the fence.
+
+**(3) PARKED, out of the session scratchpad.** The hydrogen arm now lives at
+`/home/emoore/holon-artifacts/census-traj/` (95 MB, 8 seeds) and its sha256 manifest is
+COMMITTED at `conformance/water_observatory/census_traj_manifest.sha256`, so a regeneration
+can be verified bit-for-bit rather than merely repeated. The two mixed arms are still
+writing, so they cannot be moved from under their own file handles; `park_and_census.sh`
+is detached and does it for them — census into the repo, move to the durable path, append
+to the manifest — the moment each done-marker lands.
+
+## THE OH₂ CORRECTION
+
+The brief that started this lane said seed 2 produced the programme's first emergent OH₂.
+**It did not, and no seed did.** `OH2` occurs on exactly one line of the banked log, and
+that line is the header's surface list. See `CENSUS_RESULTS.md` §0; the gate is
+`holon_lens::quenchlog`, whose plant asserts both that a grep of the real file DOES hit
+`OH2` and that the parsed molecule count is zero.
+
 ## THE BLOCKER, and it is not mine to clear
 
 The run that reported the programme's first emergent OH₂ — `waterquench mixed` with

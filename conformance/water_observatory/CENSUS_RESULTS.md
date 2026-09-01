@@ -9,6 +9,20 @@ written up as a finding (§4) rather than repaired in place.*
 
 ## 0. THE HEADLINE
 
+> **CORRECTION — 2026-09-01, the lead; owner to fold in (owner-verification-after).**
+> **The OH₂ exists.** This section was true of the artifact it examined — the MBE3-arm
+> log, where `OH2` is indeed only a table name and no water formed — but the brief's
+> seed 2 ran in the **dE4 arm**, whose logs were captured by the sprint harness OUTSIDE
+> the repo tree and were found and banked after this document was written:
+> `conformance/atomworld/p2_de4_seeds/` (commit 1ae2c1b). Seed `0x53415422`'s census
+> line reads `molecules [H2 H2 OH2 O3H2]`, modal H₂O, 284 K, 1,118 dE4 solves — a
+> molecule line, not the header collision. The observation is UNDER GATE: all six
+> completed dE4 seeds violate the momentum bound by 4–5 orders (energy in bound), so
+> the claim cashes only when a committed, conservation-clean build reproduces it.
+> The closure-census adjudication target for road item 5 is that banked log's
+> regenerated trajectory. Everything below stands as the correct reading of the
+> MBE3 artifact; its headline sentence does not generalize beyond it.
+
 **THE OH₂ THIS LANE WAS BRIEFED TO ADJUDICATE DOES NOT EXIST.** The brief said seed 2
 produced the programme's first emergent OH₂. It did not. `OH2` occurs on exactly ONE line
 of `conformance/atomworld/p2_waterquench.log`, and that line is the header:

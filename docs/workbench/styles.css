@@ -104,10 +104,29 @@ body, html {
   flex-direction: column;
 }
 
+.hud-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .hud-title {
   font-weight: 700;
   font-size: 12px;
   letter-spacing: 0.5px;
+}
+
+.hud-mock-badge {
+  font-family: var(--font-mono);
+  font-size: 7px;
+  font-weight: 700;
+  color: var(--amber);
+  background: rgba(255, 179, 0, 0.15);
+  border: 1px solid rgba(255, 179, 0, 0.4);
+  padding: 1px 4px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
 }
 
 .hud-tier {

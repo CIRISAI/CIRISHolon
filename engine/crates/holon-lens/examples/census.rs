@@ -180,8 +180,8 @@ fn main() {
         // ---- the closure reader -----------------------------------------------------
         println!("#\n# CLOSURE READER (blocks by longest held run):");
         println!(
-            "#   {:<8} {:<6} {:>9} {:>10} {:>8} {:>8} {:>7}  {:<22} {}",
-            "formula", "block", "held run", "held (fs)", "rms", "sep var", "ctrl", "verdict", "named?"
+            "#   {:<8} {:<6} {:>9} {:>10} {:>7} {:>8} {:>8} {:>7}  {:<22} {}",
+            "formula", "block", "held run", "held (fs)", "of run", "rms", "sep var", "ctrl", "verdict", "named?"
         );
         let mut shown = 0;
         for b in &rep.blocks {
@@ -197,11 +197,15 @@ fn main() {
             }
             shown += 1;
             println!(
-                "#   {:<8} {:#06x} {:>9} {:>10.1} {:>8.3} {:>8.3} {:>7}  {:<22} {}",
+                "#   {:<8} {:#06x} {:>9} {:>10.1} {:>6.1}% {:>8.3} {:>8.3} {:>7}  {:<22} {}",
                 b.formula,
                 b.block,
                 b.longest_run,
                 b.longest_run_fs,
+                // The share of the WHOLE run the block was a block. A budgeted
+                // certification says a window existed, not that the block persisted; this
+                // is the column that keeps the two from being read as one.
+                100.0 * b.frames_present as f64 / rep.n_frames as f64,
                 b.rms_internal,
                 b.max_sep_variation,
                 b.control_rate

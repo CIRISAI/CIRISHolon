@@ -291,6 +291,34 @@ fn main() {
             .map(|(sp, sym)| format!("{{\"symbol\": \"{}\", \"Z\": {}}}", esc(sym), sp.z))
             .collect::<Vec<_>>().join(", ")).unwrap();
     writeln!(f, "  \"domain\": {{\"x_bohr\": [{x_lo}, {x_hi}], \"y_bohr\": [{y_lo}, {y_hi}], \"u\": [{u_lo}, {u_hi}]}},").unwrap();
+    // THE AXIS RULE, AND THE NODE COORDINATES THEMSELVES.
+    //
+    // Spans plus counts do NOT determine node positions -- they say nothing about interior
+    // spacing -- and a consumer handed only corners has to GUESS uniform. That guess is
+    // wrong for this build's H3 table, which places r by `trimer::r_of_tau` with
+    // STRETCH_A = 2.0 and its angle axis by `node_c`. A loader assuming uniform on a
+    // stretched grid interpolates smoothly, plausibly, and wrongly everywhere except the
+    // boundary.
+    //
+    // THIS generator is uniform-linear, which is NOT the H3 rule despite the node counts
+    // matching. So the rule is named AND the coordinates ship: 79 floats against 14,157
+    // energies costs nothing and makes the artifact self-describing, so a loader verifies
+    // instead of assuming and can refuse a rule it cannot reproduce.
+    writeln!(f, "  \"axis_rule\": {{\"x\": \"uniform-linear\", \"y\": \"uniform-linear\", \"u\": \"uniform-linear\", \"note\": \"NOT trimer.rs's tau-stretch; the coordinates below are authoritative\"}},").unwrap();
+    {
+        let axis = |lo: f64, hi: f64, n: usize| -> String {
+            (0..n)
+                .map(|i| {
+                    let v = if n == 1 { lo } else { lo + (hi - lo) * (i as f64) / ((n - 1) as f64) };
+                    format!("{v:?}")
+                })
+                .collect::<Vec<_>>()
+                .join(", ")
+        };
+        writeln!(f, "  \"x_nodes\": [{}],", axis(x_lo, x_hi, grid[0])).unwrap();
+        writeln!(f, "  \"y_nodes\": [{}],", axis(y_lo, y_hi, grid[1])).unwrap();
+        writeln!(f, "  \"u_nodes\": [{}],", axis(u_lo, u_hi, grid[2])).unwrap();
+    }
     writeln!(f, "  \"grid\": {{\"nx\": {}, \"ny\": {}, \"nu\": {}, \"region\": [{}, {}, {}], \"n_nodes\": {}}},",
         grid[0], grid[1], grid[2], region[0], region[1], region[2], tg.n_nodes()).unwrap();
     writeln!(f, "  \"warm_policy\": \"{warm:?}\",").unwrap();

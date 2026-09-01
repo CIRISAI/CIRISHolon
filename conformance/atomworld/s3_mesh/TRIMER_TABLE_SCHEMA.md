@@ -60,6 +60,21 @@ mean nothing.
   // chains and therefore the trailing bits. Two tables differing only here are different
   // artifacts and the digest says so.
   "grid": {"nx": 33, "ny": 33, "nu": 13, "region": [3, 3, 13], "n_nodes": 14157},
+
+  // THE AXIS RULE AND THE COORDINATES THEMSELVES. Spans plus counts do NOT determine node
+  // positions -- they say nothing about interior spacing -- so a consumer handed only
+  // corners must GUESS uniform. That guess is WRONG for this build's H3 table, which places
+  // r by `trimer::r_of_tau` (STRETCH_A = 2.0) and its angle axis by `node_c`; a loader
+  // assuming uniform on a stretched grid interpolates smoothly, plausibly, and wrongly
+  // everywhere except the boundary.
+  //
+  // THIS generator is uniform-linear, which is NOT the H3 rule despite node counts that can
+  // match it. So the rule is NAMED and the coordinates SHIP -- 79 floats against 14,157
+  // energies -- and the coordinates are authoritative where they disagree with the name.
+  // render-3d asked for this and was right to; it blocks interpolation without it.
+  "axis_rule": {"x": "uniform-linear", "y": "uniform-linear", "u": "uniform-linear",
+                "note": "NOT trimer.rs's tau-stretch; the coordinates below are authoritative"},
+  "x_nodes": [], "y_nodes": [], "u_nodes": [],
   "warm_policy": "canonical-chain",
 
   // THE CERTIFICATE, so a consumer verifies rather than trusts.
@@ -117,6 +132,7 @@ mean nothing.
 | `digest` absent, or not reproducing over the arrays | the certificate is the point |
 | a top-level `converged: true` | see above — this schema has no such field, and one appearing means somebody derived an outcome from a threshold |
 | `voided.count > 0` with an empty `nodes` list | a VOID that is counted but not named has been averaged away |
+| `axis_rule` or the `*_nodes` arrays absent, or an array whose length disagrees with its `grid` count | spans and counts do not determine spacing; a loader would have to guess uniform, and on a stretched grid that guess is wrong everywhere but the boundary |
 | `grid.region` absent | the table's identity is incomplete and two different artifacts could collide on one digest |
 | `seams` absent, or carrying **neither** `loci` nor `accepted_floor` | a shipped surface with a **hidden corner** is exactly what this gate exists to see. Uniform refinement cannot beat a state crossing, so a table that has not located its seams is claiming a smoothness it has not checked |
 | `seams.scanned: false` with a non-empty `loci` | the loci came from somewhere other than a scan and the source is unstated |

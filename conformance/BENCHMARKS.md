@@ -1669,6 +1669,23 @@ number, after the prototype's own re-run on 2026-09-01:
 | GPU kernel only | 65.7 sigma/s, 318.4 GFLOP/s | **68.4 sigma/s, 331.6 GFLOP/s** |
 | five repeat runs bit-identical | YES | **YES** |
 
+**CORRECTION, 2026-09-01, and it removes an improvement this table appeared to
+claim.** The kernel row is NOT a 4% gain. saturation3-mesh's arithmetic on their
+own banked figures: 65.7 sigma/s is 15.221 ms, which is *slower* than the warm
+14.60–14.76 ms both instruments now read, and the banked round-trip 69.8 is
+14.327 ms — the warm second block. **The banked 65.7 was a COLD reading and
+understates the kernel by 3.7%.** So the honest statement is not that this entry
+is faster; it is that two independent instruments, with different timing methods,
+**AGREE at ~68.2 sigma/s once both are warm** — mesh at 68.22 over 3 runs of 200
+reps, this lane at 68.253 over 12 separate invocations, **0.05% apart on the
+mean.**
+
+Agreement between two instruments is a better result than the gain the row
+implied, and it is the one that is true. The row is left standing with this
+correction beneath it rather than quietly re-typed, because the cold-versus-warm
+distinction is the whole content of the finding and a repaired table would hide
+the thing worth knowing.
+
 The 103-entry difference in the bitwise count is the two builds' integrals
 arriving by different routes (exported `f64` versus in-crate) and is reported
 rather than smoothed: it is the same measurement, not the same bytes.

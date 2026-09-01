@@ -130,6 +130,37 @@ NOTE against the sweep's own header: the reported opposite-pair `R_e` is a coars
 3-round locate and reads 1.3884 for H-H against G0's 1.3887. It is REPORTED only;
 the shell ladder uses the apex pair, which reproduces G0's 2.5369 exactly.
 
+## THREE THINGS BLOCKING EVERY DOMAIN HANDOFF (do not send one until all three close)
+
+1. **ANGLE VARIABLE.** `holon-tables`' third axis is `u = cos theta` (its
+   `realise` builds `[y*u, y*s]` with `s = sqrt(1-u^2)`); this lane's sweep works
+   in `c = sqrt(1 - cos theta)` and converts internally with `u = 1 - c^2`. Handing
+   a c-range as a u-range would build "cosines" past 1.0, where
+   `sqrt(1-u^2).max(0.0)` clamps to zero and silently emits degenerate collinear
+   geometries at the top of every table -- smooth, plausible, no throw. EVERY
+   handoff states the range as `u = cos theta` in cosine, and the conversion lives
+   here and nowhere else. The finished (Cl,H,H) sweep is u in [-1, 0.9975].
+
+2. **AXIS RULE, and it is NOT the water answer.** `dtheta/du = 1/sin theta`, so
+   uniform-in-cosine is coarsest in angle at BOTH collinear ends. Uniform-in-`c` is
+   coarse only at theta = 180 and fine at theta = 0. Water's seam was at 174.9 deg,
+   so `c` hurt there; (Cl,H,H)'s maximum is at theta -> 0, so `c` HELPS here and
+   uniform-u is the wrong spacing. Hand explicit `u_nodes` from a uniform-c grid
+   plus the `axis_rule`, never a span and a count.
+
+3. **CITED CURVES -- the derivation does not read the files it was said to cite.**
+   `pair::pair_point` calls `solve_geometry`: it SOLVES the pair at that separation
+   and reads no table. So these domains subtract EXACT per-geometry pair energies,
+   not `HCl.json`/`Cl2.json`. Under the lead's dE3 ruling the artifact serves the
+   three-body correction (~1e-3) as a difference of totals (~1e2), so its
+   uncertainty is dominated by whichever pair curves are subtracted. If the
+   generator subtracts shipped interpolated curves while the domain was derived
+   against exact solves, the two dE3 disagree by the tables' interpolation error
+   and nothing currently watches for it. ASKED the mesh lane which evaluator their
+   generator uses; derive against that one and cite it precisely, and record the
+   SOLVER BUDGET alongside -- a pair solved at 4000 inside a trimer solved at 5000
+   is two regimes in one subtraction.
+
 ## Next, per the freeze's sequence
 
 (2) generalize trimer.rs over species (symmetry axis per table; S3 only for the

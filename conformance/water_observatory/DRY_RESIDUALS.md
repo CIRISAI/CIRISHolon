@@ -40,6 +40,37 @@ update, so the ratio is a series rather than an impression.
 | **R-13** | TWO INTEGRATORS. `Sim::step` is velocity Verlet on the physical Hamiltonian; `Sim::step_npt` is the MTK Trotter factorization on an extended one whose box is a degree of freedom. One `step`, two bodies, chosen by `barostat_on()`. | `holon-render/src/sim.rs::step`, `barostat.rs::step_npt` | Writing NPT as a special case of NVE is precisely how a barostat becomes a rescale hack (WB-7.2's `P^-0.05`), so the duplication is deliberate. The relation that DOES hold is proved rather than assumed: at infinite barostat mass with the chains idle, MTK reproduces Verlet BIT FOR BIT (`tests/t3_barostat.rs::npt_reduces_to_nve_at_infinite_barostat_mass`, worst coordinate difference 0.0 over 320 steps), because every barostat factor is an exact 1.0 in that limit. | Running NVE THROUGH the MTK path with the barostat frozen. It is bit-identical, so it would be sound — and it is not free: the NVE path would then compute three exponentials and two chain updates per step in order to multiply by one, and every banked campaign run would have to be re-pinned against the new call sequence. A COST decision, not a correctness one, and it should be made when someone measures the cost. |
 | **R-14** | `holon-md` depends on `holon-tables` for ONE type, `WorkerProbe` — a table-generation crate pulled into a molecular-dynamics driver for twenty lines of thread probing. | `holon-md/Cargo.toml`, `holon-tables/src/worker.rs` | `holon-resource` deliberately supplies no worker probe ("the pool owner supplies one"), and `holon-tables` is where the workspace's first pool owner wrote it. A second implementation of "can the OS give me a thread" in `holon-md` would be a duplication with no reason behind it, so the dependency is the LESSER residual — but the probe's own refusal message still reads "the table mesh probes workers only", which is now false at one of its two call sites. | Move `WorkerProbe` into `holon-resource` behind a `std` feature, or into a small crate both depend on, and re-word its refusal. Blocked only on `holon-resource`'s zero-dependency stance, which a feature gate preserves. |
 
+
+## Row provenance — who wrote which row, and a correction to what git says
+
+**`git log -S` will tell you every row below R-7 was written by commit 4bec9e2 (T3
+engine-core). That is false, and it is an artifact worth understanding rather than a
+clerical detail.** This file was UNTRACKED while three lanes wrote into it. Git shows
+nothing for an untracked path, so the interleave was invisible to every diff, and when T3
+committed the file the whole of it — including four rows from the C1/tower lane and one
+from workbench-engine — entered the history under one authorship. The sweep ran in
+REVERSE: not a lane taking someone's hunk, but a lane's hunk being taken by whoever
+committed first.
+
+| rows | lane | what they were measuring |
+|---|---|---|
+| R-1 … R-7, R-13, R-14 | T3 engine-core | the storage/locality/PBC/threading/NPT surface |
+| R-8, and the folds R-9, R-10, R-11 | C1 / carrier tower | the ring-polymer carrier and its operators |
+| R-12 | workbench-engine | the pair-curve door, timed from the browser |
+
+This matters for the SERIES below and not only for credit. The register's falsifier is a
+GROWTH RATE against domain size, and the three lanes were moving different axes — C1
+enlarged the carrier axis, workbench measured an existing door, T3 enlarged the engine
+without touching the domain at all. A ratio computed as if one lane produced all fourteen
+rows would be comparing growth against a domain nobody's work actually doubled. Read each
+lane's rows against the axis that lane moved; the two readings at the bottom already do
+this and this table is what lets a third one.
+
+**The durable fix is upstream of this file**: a register meant to be written by many lanes
+should be committed EMPTY on the day it is opened, so that every later row arrives as its
+author's own diff. Untracked is not a neutral state — it is a state in which collaboration
+leaves no trace.
+
 ## Folded rather than registered
 
 | id | what it would have been | how it folded instead |

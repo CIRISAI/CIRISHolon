@@ -52,6 +52,12 @@ const HARTREE_TO_J = 4.3597447222071e-18;
 /// `boot()` checks the two agree by reading `holon_period_fs() / holon_period()` out of
 /// the artifact rather than trusting this constant.
 const AU_TO_FS = 0.024188843265857;
+/// Boltzmann's constant in hartree per kelvin, and hydrogen's mass in electron masses.
+/// Both are the engine's own values (`sim.rs::K_B`, `sim.rs::M_H`), repeated here only
+/// because the ABI exports no reader for either; they are used for the gravity-vs-kT
+/// exhibit and for nothing the physics depends on.
+const K_B_HA = 3.166811563e-6;
+const M_H_ME = 1837.152;
 
 // ---------------------------------------------------------------- state
 
@@ -83,6 +89,15 @@ const State = {
   thermostatOn: true,
   targetK: 293.15,
   tempUnit: "K",
+
+  /// The gravitational field, in MULTIPLES OF ONE G (WB-2.4). The engine takes atomic
+  /// units; this is the number the slider carries, and `applyControls` multiplies by the
+  /// engine's own `holon_g_earth()` rather than by a constant of this file's.
+  ///
+  /// The default is 1 G and not 0: WB-2.4 asks for 1 G downward at every scale, and a
+  /// field this small changes nothing measurable at the atomic tier — which IS the
+  /// exhibit. Measured: 4.05e-15 of kT for a hydrogen atom raised 1 nm.
+  gravityG: 1.0,
 
   /// The governor's user bias (WB-2.3). Multiplies the engine's DERIVED base sim-speed;
   /// it never touches dt, so accuracy is not on this slider.
@@ -348,6 +363,7 @@ const REQUIRED_EXPORTS = [
   "holon_momentum_residual", "holon_momentum_bound", "holon_momentum_gate",
   "holon_time", "holon_steps", "holon_temperature", "holon_frame",
   "holon_set_thermostat", "holon_thermostat_on",
+  "holon_set_gravity", "holon_gravity", "holon_e_grav", "holon_g_earth",
   "holon_advance_frame", "holon_step_frame", "holon_calibration_burst",
   "holon_set_calibration", "holon_substeps_per_second", "holon_n_max",
   "holon_sim_speed", "holon_set_sim_speed", "holon_dilation", "holon_rung",
@@ -634,6 +650,10 @@ function applyControls() {
   const w = State.w;
   if (!w) return;
   w.holon_set_thermostat(State.thermostatOn ? 1 : 0, State.targetK);
+  // Gravity (WB-2.4). The multiple is converted through the ENGINE's own constant, so
+  // there is exactly one statement of what a G is and it is not in this file. A refusal
+  // (code 80) is only reachable on a periodic box, which this shell cannot select.
+  w.holon_set_gravity(State.gravityG * w.holon_g_earth());
   // The governor moves the SIM-SPEED, never dt. `holon_set_allow_dt_growth` is left off,
   // so the engine holds exactness and delivers any shortfall as honest time dilation
   // (WB-6.2: no reduced-accuracy mode, only slower time).
@@ -923,6 +943,7 @@ function renderTelemetry() {
   put("led-three", fmtEnergy(w.holon_e_three()));
   put("led-wall", fmtEnergy(w.holon_e_wall()));
   put("led-spring", fmtEnergy(w.holon_e_spring()));
+  put("led-grav", fmtEnergy(w.holon_e_grav()));
   put("led-wext", fmtEnergy(w.holon_w_ext()));
   put("led-total", fmtEnergy(w.holon_energy()));
   put("led-invariant", fmtEnergy(w.holon_ledger() - w.holon_ledger_origin()));
@@ -1004,7 +1025,21 @@ function renderTelemetry() {
       : settling ? "settling-pill settling" : "settling-pill settled";
   }
 
+  // --- gravity (WB-2.4), the tier-separation exhibit -----------------------
+  const gAu = w.holon_gravity();
+  put("grav-field", `${State.gravityG.toFixed(2)} G  (${fmtSci(gAu, 3)} a₀/aut²)`);
+  put("grav-energy", fmtEnergy(w.holon_e_grav()));
+  // The exhibit itself, computed from the engine's own constant and its own k_B, at the
+  // scene's CURRENT box height rather than a fixed 1 nm — so the number moves when the
+  // scale does, which is the whole point of calling it a tier-separation exhibit.
+  const boxBohr = sceneFrame().height;
+  const kt = K_B_HA * Math.max(w.holon_temperature(), 1e-9);
+  const uDrop = M_H_ME * gAu * boxBohr;
+  put("grav-vs-kt", kt > 0 ? `${fmtSci(uDrop / kt, 2)} × kT over the box` : "—");
+  tag("tag-grav", "live", "holon_gravity / holon_e_grav / holon_g_earth");
+
   put("dock-temp-lbl", tempIn(State.targetK));
+  put("dock-grav-lbl", `${State.gravityG.toFixed(1)} G`);
   put("dock-gov-lbl", `${State.govBias.toFixed(2)}×`);
 }
 
@@ -1234,6 +1269,15 @@ function initHUD() {
       put("sheet-temp-val", tempIn(State.targetK));
     });
   }
+  UI["sheet-grav"]?.addEventListener("input", (e) => {
+    State.gravityG = Number(e.target.value);
+    put("sheet-grav-val", `${State.gravityG.toFixed(2)} G`);
+    applyControls();
+    // A changed potential moves the total energy, so the ledger's origin moves with it —
+    // otherwise the drift would be measured against an origin taken before this field
+    // existed and would read a JUMP no integrator produced.
+    State.w.holon_rebase();
+  });
   UI["sheet-gov"]?.addEventListener("input", (e) => {
     // Logarithmic: the useful range spans decades, and a linear slider would spend all
     // its travel at the fast end.

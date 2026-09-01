@@ -1092,6 +1092,75 @@ pub extern "C" fn holon_e_three() -> f64 {
     sim().e_three
 }
 
+// ------------------------------------------------------------------ gravity (WB-2.4)
+//
+// One field, silent at the bottom and sovereign at the top. It enters through the same
+// external-acceleration array the walls and the hand write to, so its impulse is already
+// in the momentum ledger and its energy is a potential term rather than a work receipt.
+
+/// One G in atomic units, so a host can name the field rather than carry its own
+/// conversion. `9.80665 * t_au^2 / a_0`, about 1.08e-22 bohr/au^2.
+#[no_mangle]
+pub extern "C" fn holon_g_earth() -> f64 {
+    sim::G_EARTH_AU
+}
+
+/// Set the uniform downward field, atomic units. Returns 1 on success, or
+/// `GRAVITY_REFUSED + n` naming the reason.
+///
+/// The caller passes ATOMIC UNITS, not multiples of g, because a scalar named "1.0" that
+/// means one Earth gravity in one call and one bohr/au^2 in another is the ambiguity that
+/// makes unit bugs invisible. Multiply `holon_g_earth()` by the number of G you want.
+#[no_mangle]
+pub extern "C" fn holon_set_gravity(g_au: f64) -> u32 {
+    match sim().set_gravity(g_au) {
+        Ok(()) => TABLE_OK,
+        Err(r) => gravity_refusal_code(r),
+    }
+}
+
+/// Base code for a gravity refusal, placed above the trimer door's block so a host can
+/// tell which door spoke.
+pub const GRAVITY_REFUSED: u32 = 80;
+
+/// The refusal's own code, offset above [`GRAVITY_REFUSED`].
+pub fn gravity_refusal_code(r: sim::GravityRefusal) -> u32 {
+    GRAVITY_REFUSED
+        + match r {
+            sim::GravityRefusal::PeriodicBox => 0,
+        }
+}
+
+/// The field currently set, atomic units. Zero when there is none.
+#[no_mangle]
+pub extern "C" fn holon_gravity() -> f64 {
+    sim().gravity()
+}
+
+/// The field's potential energy, hartree. A term in `holon_energy`, never in `holon_w_ext`
+/// -- a uniform field is conservative and does no external work.
+#[no_mangle]
+pub extern "C" fn holon_e_grav() -> f64 {
+    sim().e_grav
+}
+
+/// Would this scene accept a field at all? 1 yes, 0 refused (a periodic box has no bottom).
+///
+/// Lets a caller render the fence BEFORE offering the control, rather than offering it and
+/// reporting a refusal after the click.
+///
+/// REACHABILITY, stated because an instrument that cannot fire is worse than none: this
+/// returns 1 for every boundary a BROWSER can currently select. `holon_set_boundary`
+/// exposes only `Walls` (0) and `Open` (anything else) — `Boundary::Periodic` has no ABI
+/// value at all — so the zero branch is reachable today only from a native caller that
+/// sets `Sim::boundary` directly, which is what `tests/gravity.rs` does. The export is
+/// here for those callers and for the day the periodic box is exposed; a browser shell
+/// should NOT advertise this as a live fence, because from there it is a constant.
+#[no_mangle]
+pub extern "C" fn holon_gravity_available() -> u32 {
+    u32::from(!sim().boundary.wraps())
+}
+
 #[no_mangle]
 pub extern "C" fn holon_e_wall() -> f64 {
     sim().e_wall

@@ -66,6 +66,8 @@ fn fingerprint(s: &Sim) -> Vec<u64> {
         s.e_four,
         s.e_wall,
         s.e_spring,
+        s.e_grav,
+        s.g,
         s.w_ext,
         s.work.hand,
         s.work.thermostat,

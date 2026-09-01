@@ -37,7 +37,15 @@ use crate::sim::{Atom, Boundary, Dims, Sim};
 
 /// Format version. Bumped whenever the field list changes; a mismatch is a refusal, never
 /// a best-effort read of a layout that has moved.
-pub const CHECKPOINT_VERSION: u32 = 1;
+///
+/// **2 (2026-09-01):** the gravitational field `Sim::g` joined the field list, written
+/// after `thermostat_tau`. A v1 checkpoint read under the v2 layout would take the first
+/// eight bytes of `w_ext` as `g` and then read every subsequent field one slot early --
+/// a scene that restores, recomputes a self-consistent ledger, and is wrong throughout,
+/// with no gate able to see it because every invariant would close around the shifted
+/// values. That is the exact failure this constant exists to make impossible, so bumping
+/// it is not bookkeeping.
+pub const CHECKPOINT_VERSION: u32 = 2;
 
 const MAGIC: [u8; 8] = *b"HOLONCK1";
 
@@ -310,6 +318,11 @@ impl Sim {
         w.bool(self.thermostat_on);
         w.f64(self.target_temperature);
         w.f64(self.thermostat_tau);
+        // The gravitational field is a SETTING and belongs here; `e_grav` is derived and
+        // does not, for the same reason no other energy term is stored. A checkpoint that
+        // dropped `g` would restore a scene that looks identical and falls differently,
+        // and `recompute()` below would rebuild a consistent-but-wrong ledger around it.
+        w.f64(self.g);
 
         // --- the ledger, including the receipt columns ---
         w.f64(self.w_ext);
@@ -426,6 +439,7 @@ impl Sim {
         let thermostat_on = r.bool()?;
         let target_temperature = r.f64()?;
         let thermostat_tau = r.f64()?;
+        let g = r.f64()?;
 
         let w_ext = r.f64()?;
         let hand = r.f64()?;
@@ -475,6 +489,7 @@ impl Sim {
         self.thermostat_on = thermostat_on;
         self.target_temperature = target_temperature;
         self.thermostat_tau = thermostat_tau;
+        self.g = g;
         self.w_ext = w_ext;
         self.work.hand = hand;
         self.work.thermostat = thermostat;

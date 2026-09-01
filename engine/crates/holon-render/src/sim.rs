@@ -83,6 +83,54 @@ pub const K_WALL: f64 = 0.5;
 /// the honest behaviour rather than a cheat that lets the pointer overpower the curve.
 pub const K_SPRING: f64 = 0.05;
 
+/// Standard gravity, m/s^2 (CGPM 1901, exact by definition).
+pub const G_SI: f64 = 9.80665;
+/// The bohr in metres (CODATA 2018).
+pub const BOHR_M: f64 = 0.529177210903e-10;
+/// One atomic unit of time in seconds, `hbar / E_h` (CODATA 2018).
+pub const AU_TIME_S: f64 = 2.4188843265857e-17;
+
+/// ONE G, in atomic units of acceleration (bohr per atomic time unit squared).
+///
+/// `a_au = a_SI * t_au^2 / a_0` -- a unit conversion and nothing else, which is why it is
+/// a `const` expression over three named constants rather than a number typed in. It
+/// works out to about 1.08e-22, and the smallness is the POINT rather than a reason to
+/// round it away: FSD-W1 WB-2.4 puts gravity forward as the workbench's cleanest
+/// tier-separation exhibit -- one field, correctly invisible at 1 nm, sovereign over a
+/// kilometre of water. `tests/gravity.rs` MEASURES the ratio to kT rather than asserting
+/// the adjective, and the FSD's own staked figure is checked there against it.
+///
+/// NOT a fitted parameter and NOT a force field, so WB-5.1 is untouched: that clause bans
+/// an empirical potential BETWEEN PARTICLES. This is a uniform external field with one
+/// defined constant, in the same category as the box the walls make.
+pub const G_EARTH_AU: f64 = G_SI * AU_TIME_S * AU_TIME_S / BOHR_M;
+
+/// Why a scene will not take a gravitational field.
+///
+/// One variant, and it is a statement about geometry rather than about policy.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum GravityRefusal {
+    /// A PERIODIC box has no bottom. `m g y` is a linear potential and the wrap makes it
+    /// discontinuous: an atom that leaves the top face re-enters at the bottom with its
+    /// potential energy changed by `m g H` and nothing having done that work, so the
+    /// balance gate opens by exactly that jump on every crossing. The field is not
+    /// well-posed on a torus, and this refuses rather than reporting an ever-growing
+    /// "drift" that is really a coordinate artifact. Conservation is chart-relative and
+    /// this chart has no bottom to fall toward.
+    PeriodicBox,
+}
+
+impl GravityRefusal {
+    /// Why, in the words the viewer shows.
+    pub fn plain(self) -> &'static str {
+        match self {
+            GravityRefusal::PeriodicBox =>
+                "a periodic box has no bottom: m*g*y jumps by m*g*H at the wrap, so the \
+                 energy ledger cannot close over it. Use walls or an open box.",
+        }
+    }
+}
+
 /// Distance beyond which the outer-turning-point search gives up and reports infinity.
 const TURNING_POINT_CAP: f64 = 200.0;
 
@@ -553,6 +601,22 @@ pub struct Sim {
     pub de4_cached_valid: bool,
     pub e_wall: f64,
     pub e_spring: f64,
+    /// Downward acceleration of the uniform gravitational field, atomic units. Zero
+    /// unless a caller sets it, so every scene that existed before gravity did is
+    /// bit-unchanged -- which is what keeps the standing replay fingerprints valid.
+    ///
+    /// A SETTING, not a derived quantity. That is why this is the field the checkpoint
+    /// carries and `e_grav` is not: `checkpoint.rs` stores state and RECOMPUTES energies,
+    /// so storing `e_grav` would be storing the same fact twice and inviting the copies
+    /// to disagree. See [`Sim::set_gravity`] for the one boundary that refuses it.
+    pub g: f64,
+    /// The field's potential energy, `sum_i m_i g y_i`, hartree.
+    ///
+    /// The zero is the box's LOWER FACE (`y = 0`), which is the force law's own zero
+    /// rather than a convenience: a potential measured from a different origin than the
+    /// force that integrates it reads in the balance gate as an unexplained loss. Derived
+    /// from the positions by `compute_forces`, never stored.
+    pub e_grav: f64,
     /// Every joule the outside world put in: anchor motion, spring teardown on release,
     /// thermostat rescaling, and the barostat's box work. The intervention is a term in
     /// the ledger, never outside it.
@@ -662,6 +726,8 @@ impl Sim {
             de4_cached_valid: false,
             e_wall: 0.0,
             e_spring: 0.0,
+            g: 0.0,
+            e_grav: 0.0,
             w_ext: 0.0,
             work: ExternalWork::zero(),
             l0: 0.0,
@@ -968,7 +1034,50 @@ impl Sim {
     /// (one `D_e` per bonded pair) and it errs toward a wider bound, which is the safe
     /// direction for a term that multiplies a bound.
     pub fn mode_energy(&self) -> f64 {
-        self.e_kin + self.e_pair.abs() + self.e_three.abs() + self.e_four.abs() + self.e_wall + self.e_spring
+        self.e_kin
+            + self.e_pair.abs()
+            + self.e_three.abs()
+            + self.e_four.abs()
+            + self.e_wall
+            + self.e_spring
+            // `.abs()` where `e_wall` and `e_spring` are added bare, and not by oversight:
+            // those two are non-negative by construction, while `e_grav` goes negative for
+            // an atom that has fallen below y = 0 through an open boundary. This sum has
+            // to stay positive-definite -- it multiplies a bound, and a term allowed to
+            // cancel against the others would narrow the bound exactly when a scene is
+            // doing something extreme.
+            + self.e_grav.abs()
+    }
+
+    /// Set the uniform gravitational field, atomic units of acceleration, downward.
+    ///
+    /// REFUSES on a periodic box. See [`GravityRefusal::PeriodicBox`] for why that is a
+    /// fact about the chart rather than a policy: the field is not well-posed on a torus,
+    /// and serving it would open the balance gate by `m g H` on every wrap while calling
+    /// the result drift.
+    ///
+    /// Re-bases nothing. Adding a potential term moves the total energy, so a caller that
+    /// turns gravity on mid-run must `rebase()` for the same reason loading a new surface
+    /// does -- otherwise the drift is measured against an origin taken before this term
+    /// existed and reads a JUMP that no integrator produced. Left to the caller rather
+    /// than done here, because a caller setting the field BEFORE the scene opens (which is
+    /// what `reset` then does anyway) should not pay for a rebase it does not need.
+    pub fn set_gravity(&mut self, g_au: f64) -> Result<(), GravityRefusal> {
+        if g_au != 0.0 && self.boundary.wraps() {
+            return Err(GravityRefusal::PeriodicBox);
+        }
+        if !g_au.is_finite() {
+            return Ok(());
+        }
+        self.g = g_au;
+        self.compute_forces();
+        self.accumulate_energy();
+        Ok(())
+    }
+
+    /// The field currently set, atomic units.
+    pub fn gravity(&self) -> f64 {
+        self.g
     }
 
     /// The INTERNAL force on atom `i`, hartree/bohr: the pair loop's contribution plus the
@@ -1057,7 +1166,7 @@ impl Sim {
 
     /// Total energy currently held by the scene.
     pub fn energy(&self) -> f64 {
-        self.e_kin + self.e_pair + self.e_three + self.e_four + self.e_wall + self.e_spring
+        self.e_kin + self.e_pair + self.e_three + self.e_four + self.e_wall + self.e_spring + self.e_grav
     }
 
     /// The conserved quantity. `E - W_ext` is constant for an exact integrator, with or
@@ -2338,6 +2447,28 @@ impl Sim {
             }
         }
         self.e_wall = e_wall;
+
+        // THE UNIFORM FIELD (WB-2.4). Deliberately OUTSIDE the wall loop above, which
+        // returns early for both wall-less boundaries through `Boundary::has_walls()`:
+        // gravity acts in an open box and walls do not, and folding the two together is
+        // how PLANT P-2 came to hand a periodic box a set of walls.
+        //
+        // It lands in `a_ext` with the walls and the hand, so the momentum ledger already
+        // knows what to do with it -- `step` accumulates `0.5 * dt * a_ext` into `j_ext`
+        // on both half-kicks, so the impulse this field delivers is booked without a line
+        // of new accounting. It posts NOTHING to `w_ext` or to the receipt columns: a
+        // uniform field is conservative, its energy is `e_grav` below, and a `work.gravity`
+        // column would be double-counting the same joules the potential already holds.
+        self.e_grav = 0.0;
+        if self.g != 0.0 {
+            for i in 0..self.n {
+                let m = self.atoms[i].mass();
+                // Downward is -y. The potential's zero is y = 0, the box's lower face,
+                // which is this force law's own zero.
+                self.a_ext[i].1 -= m * self.g;
+                self.e_grav += m * self.g * self.atoms[i].y;
+            }
+        }
 
         self.e_spring = 0.0;
         if let Some(g) = self.grabbed {

@@ -348,6 +348,62 @@ want(/served\.stepsAllowed = w\.holon_pairs_ready/.test(appSource)
   "the readiness check has moved back above applyComposition, which is the ordering that "
   + "made a frozen scene report itself as settling");
 
+// ------------------------------------------------- 5b. gravity (WB-2.4), now served
+//
+// This block exists because its entry was DELETED from FENCE_JUSTIFYING_ABSENCES below.
+// That list failed when `holon_set_gravity` appeared, which is what it is for; the fence
+// came off the page and the obligation moved here. A capability that arrives and is not
+// gated is worse than one that was honestly fenced.
+
+const grav = await freshEngine();
+grav.holon_set_dims(1);
+grav.holon_set_boundary(0);
+grav.holon_table_generate(0.6, 12.0, 192);
+grav.holon_reset(12);
+
+// The constant is a unit conversion, checked against SI rather than trusted: one G is
+// 9.80665 m/s^2, and a_au = a_SI * t_au^2 / a_0.
+const gEarth = grav.holon_g_earth();
+const BOHR_M = 0.529177210903e-10;
+const AU_TIME_S = 2.4188843265857e-17;
+const backToSI = (gEarth * BOHR_M) / (AU_TIME_S * AU_TIME_S);
+want(Math.abs(backToSI - 9.80665) < 1e-9,
+  `one G converts back to 9.80665 m/s² (${gEarth.toExponential(4)} a₀/aut²)`,
+  `round-tripped to ${backToSI}`);
+
+// A field of zero holds no potential; a field that is set does. The page's default is
+// 1 G, which is far too small to move an f64 ledger, so the conservation arm below runs
+// at a field that does real work — a gate that passes because nothing happened is the
+// shape this file exists to refuse.
+want(grav.holon_gravity() === 0 && grav.holon_e_grav() === 0,
+  "a scene with no field holds no gravitational potential");
+
+want(grav.holon_set_gravity(1.0 * gEarth) === 1, "one G is accepted on a walled box");
+want(grav.holon_gravity() === gEarth && grav.holon_e_grav() !== 0,
+  `1 G is stored and holds real potential (${grav.holon_e_grav().toExponential(3)} Ha)`);
+
+grav.holon_set_gravity(1e18 * gEarth);
+grav.holon_rebase();
+const wExtBefore = grav.holon_w_ext();
+for (let f = 0; f < 200; f++) grav.holon_step_frame(64);
+want(grav.holon_energy_gate() === 1,
+  `the energy gate closes under a field doing real work (drift ${grav.holon_drift().toExponential(2)} vs bound ${grav.holon_drift_bound().toExponential(2)} Ha)`);
+want(grav.holon_momentum_gate() === 1, "the momentum gate closes under gravity");
+// The conservative-field obligation, and it runs the OPPOSITE way from the hand's: the
+// hand's work IS a receipt, gravity's must not be, or the same joules are counted twice.
+want(grav.holon_w_ext() === wExtBefore,
+  "gravity posts NOTHING to W_ext — it is conservative, and its energy is V_g",
+  `w_ext moved from ${wExtBefore} to ${grav.holon_w_ext()}`);
+
+// THE EXHIBIT, computed rather than quoted. FSD-W1 WB-2.4 stakes ~1e-13 of kT at 1 nm;
+// the measured figure is ~4.05e-15, about 25x smaller. The page states the measured one.
+const K_B = 3.166811563e-6;
+const M_H = 1837.152;
+const ratioNm = (M_H * gEarth * (1e-9 / BOHR_M)) / (K_B * 293.15);
+want(ratioNm > 1e-15 && ratioNm < 1e-14,
+  `1 G is ${ratioNm.toExponential(2)} of kT for a hydrogen atom raised 1 nm — correctly invisible`,
+  `ratio ${ratioNm.toExponential(3)}`);
+
 // ---------------------------------------------------------------- 6. determinism (WB-5.4)
 
 // `w` already carries the H3 surface from the pure-H section above, and
@@ -386,8 +442,6 @@ want(dA === dB, `the seeded scene replays bit-identically in this device class (
 // text on the page has become false and this gate says so. The failure message is an
 // instruction, not a complaint.
 const FENCE_JUSTIFYING_ABSENCES = {
-  holon_set_gravity: "gravity (WB-2.4) is fenced on the page because no gravitational term exists",
-  holon_gravity: "gravity (WB-2.4) is fenced on the page because no gravitational term exists",
   holon_set_pressure: "the barostat (WB-2.2) is fenced on the page because no barostat exists",
   holon_box_scale: "the barostat (WB-2.2) is fenced on the page because no barostat exists",
   holon_phase_call: "the blind classifier (WB-5.5) is fenced on the page because none exists",

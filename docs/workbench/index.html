@@ -137,6 +137,7 @@
             <div class="lrow"><span>Three-body V₃</span><span id="led-three">—</span></div>
             <div class="lrow"><span>Wall</span><span id="led-wall">—</span></div>
             <div class="lrow"><span>Hand spring</span><span id="led-spring">—</span></div>
+            <div class="lrow"><span>Gravity V_g</span><span id="led-grav">—</span></div>
             <div class="lrow accent"><span>W_ext receipt</span><span id="led-wext">—</span></div>
             <div class="lrow"><span>Total E</span><span id="led-total">—</span></div>
             <div class="lrow"><span>E − W_ext − origin</span><span id="led-invariant">—</span></div>
@@ -255,12 +256,7 @@
             <li><b>Pressure / NPT barostat (WB-2.2)</b><span>there is no barostat. The box
               is fixed. The mock scaled the box by P^−0.05, which is not an equation of
               state and is not NPT.</span></li>
-            <li><b>Gravity (WB-2.4)</b><span>there is no gravitational term in this engine
-              build. Adding one is a small, ledgered change (it enters the same external
-              acceleration the walls and the hand already use, so the momentum receipt
-              follows for free) and it is owed, not done. Until it exists the control is
-              a fence, because a 1G toggle that moves nothing is the vacuous-success
-              shape.</span></li>
+            
             <li><b>Local refinement patch (WB-1.2 / WB-4.4)</b><span>no refinement machinery
               exists. The mock showed a banner with no solve behind it.</span></li>
             <li><b>Molecular / continuum / bulk tiers (WB-1.1)</b><span>one certified chart
@@ -346,9 +342,9 @@
           <span class="tab-icon">🎚</span>
           <span class="tab-lbl">P — fenced</span>
         </button>
-        <button class="dock-tab fenced" data-tab="grav">
+        <button class="dock-tab" data-tab="grav">
           <span class="tab-icon">🌍</span>
-          <span class="tab-lbl">1G — fenced</span>
+          <span class="tab-lbl" id="dock-grav-lbl">1.0 G</span>
         </button>
       </div>
 
@@ -428,14 +424,34 @@
           </p>
         </div>
 
-        <div class="sheet-panel fenced-panel" data-panel="grav">
-          <div class="panel-row"><label>Gravity 1 G (WB-2.4)</label></div>
-          <p class="sheet-note fence">
-            FENCED. There is no gravitational force term in this engine build. It is owed:
-            the term belongs in the same external-acceleration array the walls and the hand
-            already write to, which is what would make its momentum impulse and its
-            potential land in the ledger automatically. Shipping a toggle that changes
-            nothing would be the exact shape WB-7.1 was written to forbid.
+        <div class="sheet-panel" data-panel="grav">
+          <div class="panel-row">
+            <label>Gravity (WB-2.4) — a real, ledgered field</label>
+            <span class="tag" id="tag-grav">—</span>
+          </div>
+          <div class="ledger-grid tight">
+            <div class="lrow"><span>Field</span><span id="grav-field">—</span></div>
+            <div class="lrow"><span>Potential V_g</span><span id="grav-energy">—</span></div>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sheet-grav" min="0" max="5" step="0.1" value="1">
+            <span class="sheet-val" id="sheet-grav-val">1.00 G</span>
+          </div>
+          <p class="sheet-note">
+            One G downward, at every scale. It enters the same external-acceleration array
+            the walls and the hand already write to, so its impulse is booked in the
+            momentum ledger automatically; its energy is a POTENTIAL term (V_g in the
+            ledger), never a work receipt, because a uniform field is conservative and a
+            receipt column would count the same joules twice.
+          </p>
+          <p class="sheet-note">
+            You will see nothing happen, and that is the exhibit. One G is
+            <span id="grav-vs-kt">—</span> — far below the thermal energy that is shaking
+            this box apart. The same field is the entire hydrostatic column at a kilometre.
+            What changes across the tiers is not the field's strength but whether the
+            quantity that matters is a per-particle energy or a sum over the column: a
+            hydrogen atom needs 246 km of height to gain one kT, and a kilometre of water
+            still weighs 97 atmospheres because there are 10²⁸ of them.
           </p>
         </div>
       </div>

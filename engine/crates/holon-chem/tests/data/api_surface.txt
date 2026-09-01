@@ -133,3 +133,17 @@ ohhh_mbe3_energy        evaluates E_MBE3 reference energy for (O,H,H,H) 4-atom s
 de4_ohhh_fci            exact ab-initio 4-body residual dE4 = E_FCI - E_MBE3
 sort_ohhh_internals     canonical S3-quotiented sort for 6 internal coordinates of (O,H,H,H)
 
+# --- the Carrier Tower (WB-8 sprint lane) ---
+add_contribution        adds a typed energy/Hamiltonian contribution to a TheoryNode in its own carrier fiber
+bead_spring_constant    calculates harmonic spring coupling k_P between adjacent beads in C1_RingPolymer
+c2_tdvp_capability      presents the C2 real-time TDVP electronic dynamics capability with its typed fence
+c3_qed_capability       presents the C3 relativistic/spinorial QED capability with its typed fence
+is_certified            predicate checking if a theory capability is certified vs stubbed
+make_c0_to_c1_transport constructs the certified commuting transport morphism from C0 (classical BO) to C1 (ring-polymer)
+radius_of_gyration      computes quantum spatial delocalization observable for ring polymer beads
+select_corridor         implements the Corridor selection theorem (Corridor.lean): argmin(price) subject to error budgets
+spectroscopic_symbol    returns standard spectroscopic notation character (s, p, d, f, g, etc.) for general \ell
+transport_operator      executes operator picture change under certified transport across carrier fibers
+unwrap_or_refuse        unwraps a certified capability or raises an explicit TransportRefusal fence
+
+

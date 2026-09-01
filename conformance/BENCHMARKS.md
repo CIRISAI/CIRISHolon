@@ -831,14 +831,36 @@ against `fci::sigma_direct`'s own output rather than against a re-derivation.
 **CORE PLACEMENT, declared 2026-08-31 (M-PLACEMENT-LOTTERY, M-IDLE-CALIBRATED-TIMEOUT).**
 This host is an i9-13900HX hybrid part. The CPU arm above ran **32 unpinned threads spanning
 both P and E cores** — a specific configuration, not a neutral one, and the E/P penalty is
-measured at 1.16–1.22× and is duration-independent. So "measured on this box" is not a
-specification: a citable ratio is a function of core class, exactly as a bit-gated artifact's
-trailing bits are a function of device class.
+measured at 1.16–1.22× on bigqvm's workload and is duration-independent. So "measured on this
+box" is not a specification: a citable ratio is a function of core class, exactly as a
+bit-gated artifact's trailing bits are a function of device class.
 
-The 3.2× ratio has margin enough that a ~20% placement effect cannot flip it, so this is an
-annotation and not a retraction. Any repeat should be **pinned AND quiet, with both core types
-reported** — bigqvm's standard, which their own d=101 verdict flip (0.822 unpinned "we lead"
-to 1.201 pinned "they lead 20%") is the case for.
+**THE SWING IS WIDER THAN THE CLASS GAP, and my first version of this note understated it.**
+I wrote that a ~20% placement effect could not flip 3.2×. bigqvm then measured *within*-class
+variation, which neither of us had:
+
+| d=101, single-CPU pins, same minutes | | |
+|---|---|---|
+| sample 1 (P-cores) | cpu0 **1.121** | cpu2 1.535, cpu6 1.527 |
+| sample 2 (P-cores), minutes later | cpu0 1.576 | cpu2 1.459, cpu6 **1.119** |
+| E-cores | cpu16 1.786, cpu20 1.727, cpu24 1.766 | repeat to 1.03× across cores AND sessions |
+
+**Within-P spread is 1.41× — larger than the P-vs-E gap — and the fastest P-core in one
+sample is the slowest minutes later.** The cause is SMT sibling load, read from `/proc/stat` at
+sample time: cpu0 17.1% busy while its sibling cpu1 was 85.4%; cpu2 2.7% while cpu3 was 100%.
+E-cores have no sibling on this part and are the reproducible ones.
+
+So the margin to claim against is **~1.4×, not ~20%**, and the honest form is that **the 3.2×
+survives the placement swing** rather than a number naming a percentage. The conclusion holds —
+a 32-thread unpinned run averages over the lottery rather than drawing one ticket from it — but
+the warrant is wider than the one I first wrote.
+
+A repeat should quote a **range over measured placements**, and a *reproducible* timing should
+pin to an **E-core**: slower clock, no SMT lottery. That is bigqvm's corrected standard,
+replacing "pin to a P-core", which does not name a reproducible condition at all. Their d=101
+verdict flip (0.822 unpinned "we lead" → 1.201 pinned "they lead 20%") is the case for
+declaring placement; the within-P spread above is the case for declaring a range rather than a
+placement.
 | CPU, same GEMM reformulation, OpenBLAS, 1 thread | 1.40 | 6.8 | **slower than the hand-written kernel** |
 | CPU, `sigma_direct`, 1 thread | 2.20 | 10.7 | — |
 

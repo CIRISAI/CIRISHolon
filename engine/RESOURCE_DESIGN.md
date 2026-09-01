@@ -587,6 +587,41 @@ internally coherent, externally wrong, invisible to every test in this crate. Me
 on the founding case: 68.5 kernel-only against 60.3 round-trip at loadavg 82, and the
 round-trip quantity carries a 1.97× spread the kernel quantity does not.
 
+**(iv) WHAT THE HONEST QUANTITY COSTS THE DETECTOR — measured in the field, and the price
+of (ii).** Registering the quantity the caller receives does not come free, and the cost is
+detection reach. The corrected entry is the round trip at **61.619 ± 4.927 (8.00%)** over
+twelve separate invocations at loadavg 78–110, against the kernel-only figure's **0.53%**
+over the same twelve. With `k = 3` the tolerance is **14.78**, so a mis-registration is
+convicted only at **≥ 1.24× high or ≤ 0.76× low**. A liar inside 24% survives.
+
+**That surviving lie is not a defect being tolerated — it is the honest reach of a detector
+calibrated on a quantity that genuinely moves 8%.** Registering the kernel figure instead
+would have promised a **1.6%** floor that the dispatch path cannot deliver. *The choice is
+between a 24% floor that means what it says and a 1.6% floor that does not*, and the first
+is the only one a caller can act on. Pinned from both sides by
+`the_detection_floor_is_where_the_measured_spread_puts_it` (1.2× survives, 1.3× is caught)
+rather than described, because a limit that is only described is a limit nobody has checked.
+
+Note also what was NOT done to make the number look better: the 48.227 reading — the
+descheduled-host tail — was kept in the spread rather than trimmed, because it is what a
+caller gets at loadavg 110, and a spread that excluded it would describe a machine this one
+is not. Trimming the bad runs is exactly how a spread comes back narrower than the machine.
+
+**(v) AND THE FOUNDING CASE STOPPED FIRING, which is what a fix should do to its incident.**
+Under the corrected entry the reading that started all of this — observed 58.9 — is
+**CONSISTENT**, 2.7 from the mean against a tolerance of 14.8. So the false conviction that
+motivated the re-read rung would never have happened; the registration fix alone prevents
+it, with no re-read.
+
+*The tempting conclusion is that (iii) is therefore redundant, and it is wrong.* The
+registration fix widens the band to cover the machine's ORDINARY variation. The re-read
+separates a genuine outlier BEYOND that band from a wrong entry. **Those are different
+questions, and the band cannot be widened to cover a stall without also covering a real
+lie** — which is (iv) restated: widening *is* the loss of reach. The re-read is the only
+thing that separates the two without paying that price again. The plants were re-carried
+onto outliers under the current entry, with the founding numbers kept in the prose, because
+a plant re-carried silently would hide precisely this finding.
+
 **(iii) THE RE-READ RUNG — D12b, implemented.** A conviction from a single live reading
 cannot distinguish *the registration is wrong* from *the host was descheduled*, and a check
 that cannot distinguish two causes is a detector wearing a verdict's clothes. **One re-read

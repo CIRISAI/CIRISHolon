@@ -280,9 +280,17 @@ pub struct Species {
     /// Nuclear charge. DECLARED INPUT: an integer, and the whole of what makes an
     /// element that element as far as the Hamiltonian is concerned.
     pub z: u32,
-    /// Nuclear mass of the most abundant isotope, in unified atomic mass units.
+    /// ATOMIC mass of the most abundant isotope, in unified atomic mass units — the
+    /// nucleus PLUS its electrons, which is what hydrogen's `1.00782503207 u` is.
     /// DECLARED INPUT, and a MEASURED one — it plays no part in the electronic
     /// structure (Born–Oppenheimer) and only enters the sandbox's dynamics.
+    ///
+    /// This doc said "Nuclear mass" and the field has always held the atomic one. The
+    /// VALUE is right for a Born–Oppenheimer dynamics — the electrons ride with the
+    /// nuclei, the argument `holon-render/src/sim.rs` makes at length for its `M_H` — so
+    /// nothing computed from it moves; only the sentence was wrong.
+    /// `conformance/water_observatory/DRY_RESIDUALS.md` flagged it for whichever lane
+    /// owns this crate, and `rpmd::MASS_U_DEUTERIUM` carries the same convention by name.
     pub mass_u: f64,
     /// The isotope the mass above belongs to. Recorded because "the mass of carbon" is
     /// ambiguous and the natural-abundance average is a different number.

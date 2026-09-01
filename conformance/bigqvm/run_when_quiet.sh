@@ -35,7 +35,26 @@ set -u
 HERE="$(cd "$(dirname "$0")" && pwd)"
 ROOT="$(cd "$HERE/../.." && pwd)"
 BIN="$ROOT/engine/target/release/examples/surface_flagship"
-STIMPY="/tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/stimvenv/bin/python"
+# stim lives in a venv. This was originally HARDCODED to a per-session
+# scratchpad keyed by session id — it resolved from inside the session that
+# wrote it and nowhere else, which is a reproducibility defect invisible from
+# inside (credit: saturation3-mesh, who found the same shape in their own
+# instrument citations). Now: explicit override, then discovery, then a LOUD
+# refusal with the command to build one — never a silent wrong path.
+STIMPY="${STIMPY:-}"
+if [ -z "$STIMPY" ]; then
+  for c in "$ROOT/.venv/bin/python" "$HOME/.venvs/stim/bin/python" \
+           /tmp/claude-*/*/*/scratchpad/stimvenv/bin/python; do
+    if [ -x "$c" ] && "$c" -c 'import stim' >/dev/null 2>&1; then
+      STIMPY="$c"; break
+    fi
+  done
+fi
+if [ -z "$STIMPY" ]; then
+  echo "REFUSING: no python with stim found." >&2
+  echo "  set STIMPY=/path/to/python, or: python3 -m venv .venv && .venv/bin/pip install stim" >&2
+  exit 3
+fi
 H2H="$ROOT/conformance/qasm/surface_h2h.py"
 
 # Best observed d=101 engine time on this box (min over every sweep taken).

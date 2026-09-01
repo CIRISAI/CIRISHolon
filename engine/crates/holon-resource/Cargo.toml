@@ -1,10 +1,16 @@
 # holon-resource: RESOURCE-1 — an allocation is a child holon, and its lifecycle is
 # the rent clause. Design: engine/RESOURCE_DESIGN.md (ADMITTED 2026-08-30).
 #
-# ZERO dependencies, std only. Nothing here may pull a crate: this layer sits under
-# everything else in the engine, so a dependency added here is a dependency added to
-# every workload that ever leases a byte. It cannot perturb the core's feature
-# resolution or the isolation gates in ci-gates.sh.
+# ONE dependency, and the rule that kept it at zero is what admits it: this layer sits
+# under everything else in the engine, so a dependency added here is a dependency added
+# to every workload that ever leases a byte. `holon-device` is `no_std` with zero
+# dependencies of its own and no optional features — it cannot perturb the core's
+# feature resolution or the isolation gates in ci-gates.sh, and it is here because D0's
+# device class must have exactly ONE definition. The alternative was this crate and
+# `holon-chem` each declaring their own `DeviceClass` with a hand-written conversion,
+# which is M-DEVICE-CLASS's own failure one level down (see holon-device's header).
+# Nothing else may be added: anything with a build script, a feature surface, or a
+# runtime is refused here on the original grounds.
 #
 # `[profile.release]` is deliberately absent — a non-root member's own profile section
 # is silently ignored by Cargo; the workspace root carries it.
@@ -16,3 +22,4 @@ license = "AGPL-3.0-or-later"
 description = "Resource holons: probe before allocating, integer receipts, the rent clause as lifecycle, and a reaper that stands down"
 
 [dependencies]
+holon-device = { path = "../holon-device" }

@@ -257,7 +257,44 @@ pub fn davidson_eigh_from_t<T: Scalar>(
     max_iter: usize,
     start_vector: Option<&[T]>,
 ) -> (T, Vec<T>, usize, f64, SolveExit) {
-    let nd = space.n_det;
+    // ONE driver body, in `davidson_eigh_from_op`, parameterised by the sigma OPERATOR rather
+    // than by the three arguments that used to name the host one. This is its host
+    // instantiation and it is a wrapper: the operator it builds calls the same
+    // `sigma_direct_t` this function used to call directly, in the same place, so the path is
+    // bit-identical and `sigma_op`'s own test asserts that against `sigma_direct`.
+    let mut op = crate::sigma_op::CpuSigma::new(space, k, g);
+    davidson_eigh_from_op(&mut op, diag, tol, max_iter, start_vector)
+}
+
+/// [`davidson_eigh_from_t`] over an arbitrary sigma OPERATOR — the device-class arm's entry
+/// point (RESOURCE_DESIGN D0).
+///
+/// The driver logic stays host-side and is unchanged: same start-vector policy, same
+/// symmetry-breaking perturbation, same thick restart, same two-candidate expansion, same
+/// degeneracy-safe preconditioner, same exit reasons. The ONLY thing the operator changes is
+/// where `H c` is computed — which is the whole cost, and which is also the whole artifact,
+/// because two devices that agree to 3e-15 and differ on 91% of entries bitwise send this
+/// driver down two different paths.
+///
+/// # Why the class is not an argument here
+///
+/// It is a property of the operator, and asking the caller to pass it alongside would create a
+/// second place for the same fact to live and a first place for it to disagree. A caller that
+/// wants the class asks the operator.
+pub fn davidson_eigh_from_op<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Sized>(
+    op: &mut S,
+    diag: &[T],
+    tol: f64,
+    max_iter: usize,
+    start_vector: Option<&[T]>,
+) -> (T, Vec<T>, usize, f64, SolveExit) {
+    let nd = op.n_det();
+    assert_eq!(
+        diag.len(),
+        nd,
+        "the preconditioner diagonal carries {} entries for an operator of dimension {nd};          those are two different spaces",
+        diag.len()
+    );
     if let Some(v) = start_vector {
         assert_eq!(
             v.len(),
@@ -270,7 +307,7 @@ pub fn davidson_eigh_from_t<T: Scalar>(
     }
     if nd == 1 {
         let mut s = vec![T::ZERO; 1];
-        sigma_direct_t(space, k, g, &[T::ONE], &mut s);
+        op.apply(&[T::ONE], &mut s);
         return (s[0], vec![T::ONE], 0, 0.0, SolveExit::Trivial);
     }
     let max_sub = 48.min(nd);
@@ -307,7 +344,7 @@ pub fn davidson_eigh_from_t<T: Scalar>(
     for iter in 0..max_iter {
         while hbasis.len() < basis.len() {
             let mut w = vec![T::ZERO; nd];
-            sigma_direct_t(space, k, g, &basis[hbasis.len()], &mut w);
+            op.apply(&basis[hbasis.len()], &mut w);
             hbasis.push(w);
         }
         let m = basis.len();

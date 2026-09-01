@@ -1,0 +1,34 @@
+# fci_bench — the FCI sigma, both device classes, placement declared
+# species        O,O,O
+# reps           20
+# cpus_allowed   0   (core class P, i9-13900HX: P 0-15, E 16-31)
+# loadavg        68.54   (this machine is NOT quiet; CPU-time is the gate)
+# problem        n_orb 15, 455 x 455 strings, 207025 determinants  (built in 1.0 s)
+# device         15683 MiB free of 15943; probe for 481 MiB: Pass("allocated the requested VRAM on the device and freed it")
+
+--- agreement with the CPU's own sigma ---
+max |d|                   4.547474e-13
+relative to |sigma| max   3.033e-15
+entries differing BITWISE 188466 of 207025 (91.0%)  <- this is D0's whole content
+
+--- the determinism gate, 5 runs, PER CLASS ---
+cpu  bit-identical over 5 runs: YES
+gpu  bit-identical over 5 runs: YES  (atomics-free; cuBLAS pinned to pedantic
+                                      math with a fixed 4 MiB workspace)
+
+(cold first loop 54.4 sigma/s; after 3 warm-up loops 68.4 sigma/s — 26% cold-start gap, which is why every row below is warm)
+
+--- sigma/s, every row declaring BOTH classes ---
+| arm | device class | core class | sigma/s | GFLOP/s FP64 |
+|---|---|---|---:|---:|
+| GPU, kernel only | gpu | n/a | 68.4 | 331.6 |
+| GPU, incl. host round trip | gpu | n/a | 65.7 | — |
+| CPU, sigma_direct, 1 thread PINNED (wall) | cpu | P (cpus 0) | 0.75 | 3.7 |
+| CPU, sigma_direct, 1 thread PINNED (CPU time) | cpu | P (cpus 0) | 1.11 | 5.4 |
+
+flops per sigma 4.849 GFLOP; wall/CPU-time ratio on the CPU arm 1.474 (>1 means the arm was descheduled and the wall number is the machine, not the code)
+
+--- registration (mean AND spread, per RESOURCE_DESIGN section 9 Q4) ---
+gpu sigma/s over 5 timing runs: mean 68.87, sd 0.538
+PLANT D12 FIRED: registered 688.7 sigma/s, observed 67.9, tolerance 1.615 -> the ENTRY is convicted (not the run)
+PLANT CONTROL held: the honest entry at its own rate is Consistent { observed: 67.90579255559933, mean: 68.873269626358 }

@@ -1,0 +1,95 @@
+# reap_observe — RESOURCE_DESIGN D10b, the reaper's false-positive rate on REAL work
+# started_unix    1788291032
+# pid             3117475
+# log             /home/emoore/CIRISHolon/engine/output/s2_ozone_table_progress.log
+# probe_dir       /home/emoore/CIRISHolon/engine/output
+# poll_ms         2000
+# flat_grace_s    10   (DECLARED, not derived — the shape of the constant that convicted 1115 live holders)
+# k               3   (P4's multiplier of the holder's OWN observed step)
+# debounce        3 polls
+# max_polls       18446744073709551615
+# THE REAPER IS OFF: only Reaper::judge is called; the ledger is asserted at exit
+
+=== reap_observe: 30 polls, 3 receipts (nodes solved) ===
+holder's own step   median 50.029 s, max 50.029 s over 2 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.20x)
+P4's grace          150.088 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 30 | 20 | **20** | 0 | 10 |
+| P2_cpu_tick | 30 | 0 | **0** | 0 | 30 |
+| P3_debounced | 30 | 0 | **0** | 0 | 30 |
+| P4_own_step | 30 | 0 | **0** | 0 | 30 |
+| P5_own_step_alone | 30 | 0 | **0** | 0 | 30 |
+
+=== reap_observe: 60 polls, 6 receipts (nodes solved) ===
+holder's own step   median 14.007 s, max 50.029 s over 5 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.20x)
+P4's grace          150.088 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 60 | 31 | **31** | 0 | 29 |
+| P2_cpu_tick | 60 | 0 | **0** | 0 | 60 |
+| P3_debounced | 60 | 0 | **0** | 0 | 60 |
+| P4_own_step | 60 | 0 | **0** | 0 | 60 |
+| P5_own_step_alone | 60 | 0 | **0** | 0 | 60 |
+
+=== reap_observe: 90 polls, 8 receipts (nodes solved) ===
+holder's own step   median 16.004 s, max 50.029 s over 7 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.20x)
+P4's grace          150.088 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 90 | 51 | **51** | 0 | 39 |
+| P2_cpu_tick | 90 | 0 | **0** | 0 | 90 |
+| P3_debounced | 90 | 0 | **0** | 0 | 90 |
+| P4_own_step | 90 | 0 | **0** | 0 | 90 |
+| P5_own_step_alone | 90 | 0 | **0** | 0 | 90 |
+
+=== reap_observe: 120 polls, 9 receipts (nodes solved) ===
+holder's own step   median 16.004 s, max 50.029 s over 8 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.20x)
+P4's grace          150.088 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 120 | 76 | **76** | 0 | 44 |
+| P2_cpu_tick | 120 | 0 | **0** | 0 | 120 |
+| P3_debounced | 120 | 0 | **0** | 0 | 120 |
+| P4_own_step | 120 | 0 | **0** | 0 | 120 |
+| P5_own_step_alone | 120 | 0 | **0** | 0 | 120 |
+
+=== reap_observe: 150 polls, 9 receipts (nodes solved) ===
+holder's own step   median 16.004 s, max 50.029 s over 8 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.20x)
+P4's grace          150.088 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 150 | 106 | **106** | 0 | 44 |
+| P2_cpu_tick | 150 | 0 | **0** | 0 | 150 |
+| P3_debounced | 150 | 0 | **0** | 0 | 150 |
+| P4_own_step | 150 | 0 | **0** | 0 | 150 |
+| P5_own_step_alone | 150 | 0 | **0** | 0 | 150 |
+
+=== reap_observe: 180 polls, 11 receipts (nodes solved) ===
+holder's own step   median 16.004 s, max 142.067 s over 10 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.07x)
+P4's grace          426.200 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 180 | 127 | **127** | 0 | 53 |
+| P2_cpu_tick | 180 | 0 | **0** | 0 | 180 |
+| P3_debounced | 180 | 0 | **0** | 0 | 180 |
+| P4_own_step | 180 | 0 | **0** | 0 | 180 |
+| P5_own_step_alone | 180 | 0 | **0** | 0 | 180 |

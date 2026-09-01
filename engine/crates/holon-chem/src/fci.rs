@@ -54,6 +54,7 @@
 //! a time — no Slater–Condon rule anywhere — which is feasible only for small spaces and
 //! is what validates the rules the other two use.
 
+use crate::sigma_op::{CpuProvider, DeviceClass, SigmaProvider};
 use crate::dual::D2;
 use crate::md::AoIntegrals;
 
@@ -922,6 +923,21 @@ pub struct Solution {
     /// whether it was finished, and reading the first as the second is what this field
     /// exists to prevent.
     pub exit: SolveExit,
+    /// WHICH DEVICE CLASS produced this. RESOURCE_DESIGN **D0** — the class belongs to the
+    /// artifact, not to the schedule.
+    ///
+    /// This is not provenance decoration. SATURATION-3 G2 measured the two arms on the real
+    /// `(O,O,O)` problem: they agree to 3.033e-15 relative and **91.0% of the 207,025 entries
+    /// differ BITWISE**. Both are correct answers. A Davidson driven by one takes a different
+    /// path from a Davidson driven by the other, so two `Solution`s of different classes may
+    /// never be mixed inside one bit-gated table however closely their energies agree —
+    /// and a table that mixed them would fail every bit-identity gate in the engine for a
+    /// reason that is not a defect.
+    ///
+    /// Stamped by the solve from the provider that supplied its sigma operators, and REFUSED
+    /// if any operator disagreed with the provider about what it was. It is never inferred by
+    /// a caller from a build flag: a flag says what was compiled in, not what ran.
+    pub device: DeviceClass,
 }
 
 /// Which solver produced a [`Solution`], and therefore what the number is worth.
@@ -1091,11 +1107,45 @@ pub const MPS_ROUTE_THRESHOLD: usize = 50_000;
 /// downstream sees the failure it would see in the wild. Faking the residual instead would
 /// test the plumbing while leaving the physics path unexercised.
 ///
-/// Production never touches it. `tests/front_door.rs` is its only caller, and it lives in
-/// its own test binary so the global cannot leak into a parallel test.
-#[doc(hidden)]
+/// # This is NOT test-only, and saying so cost the campaign a silent regime change
+///
+/// The line that stood here read "Production never touches it. `tests/front_door.rs` is
+/// its only caller." That was false: three production solve paths LOAD it on every solve,
+/// and because the comment said otherwise nobody was watching it. Commit `451db31` — whose
+/// subject is "integrate OOH trimer surface and dispatch into Sim dynamics" — moved it
+/// from 1200 to 4000, and every artifact generated before and after that render commit was
+/// produced under a different solver regime with nothing in either recording which. That is
+/// the whole argument for [`crate::pair::PairMeta::solver_budget`] in one commit.
+///
+/// What it actually is: the PROCESS-WIDE DEFAULT budget, overridable for a test that needs
+/// a solve to genuinely fail. Callers that care state their own budget instead — see
+/// [`solve_determinant_from_with_budget`].
 pub static DAVIDSON_MAX_ITER: std::sync::atomic::AtomicUsize =
-    std::sync::atomic::AtomicUsize::new(4000);
+    std::sync::atomic::AtomicUsize::new(DAVIDSON_DEFAULT_BUDGET);
+
+/// The default iteration BUDGET a solve is given, and it is derived rather than chosen.
+///
+/// A budget is not a tolerance and not a tier edge. `SolveExit::IterationCap` means the
+/// solve ran out of TIME on an arithmetic tier that can still deliver;
+/// `SolveExit::Stagnated` near [`DAVIDSON_EXPANSION_FLOOR`] means the tier itself is
+/// exhausted and the answer overflows to the next one. They have opposite remedies and
+/// only the exit reason tells them apart.
+///
+/// THE RECEIPT: the O-O pair curve is the hardest solve this crate ships, and at its worst
+/// knot (r = 4.2244 bohr, 2025 determinants) a ladder of budgets measured the residual
+/// falling 1.08e-4 -> 9.53e-11 with the energy settling, converging at **3738 iterations**
+/// (`examples/s3_oo_trace`). 5000 covers that with a third of it again in margin. It is not
+/// a bound on every solve — nine knots of that curve do not converge at 20000 either — and
+/// a budget that runs out is reported as `IterationCap`, never as an answer.
+///
+/// Raising this re-banks every artifact whose manifest declares a lower one. That is the
+/// point of the manifest: the change is visible instead of silent.
+pub const DAVIDSON_DEFAULT_BUDGET: usize = 5000;
+
+/// The budget this process gives a solve that does not state its own.
+pub fn davidson_budget() -> usize {
+    DAVIDSON_MAX_ITER.load(std::sync::atomic::Ordering::Relaxed)
+}
 
 /// Lowest eigenpair by Davidson iterative diagonalization, matrix-free.
 ///
@@ -1207,8 +1257,7 @@ pub fn davidson(
 /// direction where it is singular.
 #[allow(clippy::too_many_arguments)]
 fn cg_response(
-    space: &FciSpace,
-    ci: &CiInts,
+    op: &mut dyn crate::sigma_op::SigmaOp<f64>,
     diag: &[f64],
     e: f64,
     v: &[f64],
@@ -1216,7 +1265,7 @@ fn cg_response(
     tol: f64,
     max_iter: usize,
 ) -> (Vec<f64>, usize, f64) {
-    let nd = space.n_det;
+    let nd = op.n_det();
     let project = |x: &mut Vec<f64>| {
         let p = dot(v, x);
         axpy(-p, v, x);
@@ -1241,7 +1290,7 @@ fn cg_response(
     let mut rz = dot(&r, &z);
     let mut hp = vec![0.0f64; nd];
     for it in 0..max_iter {
-        space.sigma(ci, &p, &mut hp);
+        op.apply(&p, &mut hp);
         axpy(-e, &p, &mut hp);
         project(&mut hp);
         let php = dot(&p, &hp);
@@ -1360,6 +1409,11 @@ pub fn solve_mps_with(
         } else {
             SolveExit::IterationCap
         },
+        // The MPS route is host arithmetic throughout — `q8-mps` has no device arm — so this is
+        // a fact about what ran, not a default. It is written here rather than left to a
+        // `Default` impl on purpose: a default class is how an artifact acquires a stamp nobody
+        // checked, and D0's whole content is that the stamp must be a measurement of the run.
+        device: DeviceClass::Cpu,
     }
 }
 
@@ -1413,6 +1467,76 @@ pub fn solve_determinant_from(
     mo: &MoIntegrals,
     start_vector: Option<&[f64]>,
 ) -> Solution {
+    solve_determinant_from_with_budget(space, mo, start_vector, davidson_budget())
+}
+
+/// [`solve_determinant_from`], with the iteration BUDGET stated by the caller.
+///
+/// The host-provider convenience over [`solve_determinant_with_budget`], which is where the
+/// reasoning lives. A caller that states a budget here owes its artifact's manifest the
+/// same number.
+pub fn solve_determinant_from_with_budget(
+    space: &FciSpace,
+    mo: &MoIntegrals,
+    start_vector: Option<&[f64]>,
+    budget: usize,
+) -> Solution {
+    // The host provider, which is what this entry point has always used. `solve_determinant_with`
+    // is the same body with the operator source made explicit.
+    solve_determinant_with_budget(space, mo, start_vector, &CpuProvider, budget)
+        .expect("the host sigma provider cannot fail to build an operator")
+}
+
+/// [`solve_determinant_from`], with the SIGMA PROVIDER — and therefore the device class of the
+/// artifact — supplied by the caller (RESOURCE_DESIGN **D0**).
+///
+/// # Every application of the Hamiltonian comes from the ONE provider
+///
+/// A determinant solve applies `H` four times over: the Davidson eigensolve, the first
+/// derivative `H'`, the second `H''`, and the conjugate-gradient response (`H` again). Running
+/// the eigensolve on one class and the derivatives on another would return a `Solution` whose
+/// energy and whose curvature came from different arithmetic — a MIXED artifact, which is
+/// precisely what D0 forbids. So all four operators come from one provider, and the class every
+/// operator reports is CHECKED against the provider's rather than assumed: a provider that
+/// handed back an operator of another class is a bug that would otherwise mis-stamp a table.
+///
+/// # Fallible, and the failure is LOUD
+///
+/// A device provider can fail to build an operator — no device, no VRAM, a lease refused. D4
+/// says that produces a refusal or a *stated* Degrade, never a quiet run on the host: a silent
+/// fallback here would return a `Solution` stamped `Gpu` that a CPU computed, which is worse
+/// than either device. So this returns `Err` and the caller decides, in the open.
+pub fn solve_determinant_with(
+    space: &FciSpace,
+    mo: &MoIntegrals,
+    start_vector: Option<&[f64]>,
+    provider: &dyn SigmaProvider,
+) -> Result<Solution, String> {
+    solve_determinant_with_budget(space, mo, start_vector, provider, davidson_budget())
+}
+
+/// [`solve_determinant_with`], with the ITERATION BUDGET stated by the caller.
+///
+/// # Why the budget is a parameter and not a constant
+///
+/// A budget silently gating physics is the same disease as an unreachable tolerance: both
+/// decide an answer while looking like housekeeping, and both did. The tolerance became a
+/// caller-visible quantity when the ask was made reachable; this is the same move for the
+/// other axis, and it is the entry point anything that cares about its own budget should
+/// use. What a caller passes here is what its artifact's manifest must declare — see
+/// [`crate::pair::PairMeta::solver_budget`]. The budget is part of the artifact's identity,
+/// under the same law as device class and region shape: two tables built under different
+/// budgets are two artifacts, and a manifest that does not say which is a manifest that
+/// cannot be re-derived from.
+///
+/// Running out of it is reported as [`SolveExit::IterationCap`] and never as an answer.
+pub fn solve_determinant_with_budget(
+    space: &FciSpace,
+    mo: &MoIntegrals,
+    start_vector: Option<&[f64]>,
+    provider: &dyn SigmaProvider,
+    budget: usize,
+) -> Result<Solution, String> {
     // THE REFUSAL, because removing the routing threshold removed the only thing standing
     // between a caller and an astronomically large space.
     //
@@ -1441,12 +1565,39 @@ pub fn solve_determinant_from(
     let ci1 = ci_ints(mo, Order::First);
     let ci2 = ci_ints(mo, Order::Second);
     let diag = space.diagonal(&ci0);
-    let (e, v, iters, residual, exit) = davidson_eigh_from(
-        space,
-        &ci0,
+    let device = provider.device();
+
+    // D0's enforcement point. An operator whose class disagrees with the provider that built it
+    // would put one class's arithmetic under another class's stamp, and no downstream gate could
+    // tell — so it is refused here rather than discovered in a table.
+    let check = |op: &dyn crate::sigma_op::SigmaOp<f64>, which: &str| -> Result<(), String> {
+        if op.device() != device {
+            return Err(format!(
+                "the {which} operator reports device class {:?} while its provider reports \
+                 {device:?}. A solve whose stages ran on different classes is a MIXED artifact, \
+                 which D0 forbids: two devices can agree to 3e-15 and differ on 91% of entries \
+                 bitwise, so the trailing bits of this energy would depend on which stage ran \
+                 where.",
+                op.device()
+            ));
+        }
+        if op.n_det() != space.n_det {
+            return Err(format!(
+                "the {which} operator is built for {} determinants and the space has {}",
+                op.n_det(),
+                space.n_det
+            ));
+        }
+        Ok(())
+    };
+
+    let mut op0 = provider.op_for(space, &ci0)?;
+    check(op0.as_ref(), "energy")?;
+    let (e, v, iters, residual, exit) = crate::tier::davidson_eigh_from_op(
+        op0.as_mut(),
         &diag,
         DAVIDSON_REQUESTED_TOLERANCE,
-        DAVIDSON_MAX_ITER.load(std::sync::atomic::Ordering::Relaxed),
+        budget,
         start_vector,
     );
 
@@ -1454,20 +1605,30 @@ pub fn solve_determinant_from(
     // because the eigenvector's own derivative enters at second order.
     let nd = space.n_det;
     let mut h1v = vec![0.0f64; nd];
-    space.sigma(&ci1, &v, &mut h1v);
+    {
+        let mut op1 = provider.op_for(space, &ci1)?;
+        check(op1.as_ref(), "first-derivative")?;
+        op1.apply(&v, &mut h1v);
+    }
     let e1 = dot(&v, &h1v);
 
     // E'' = <v|H''|v> + 2 <v^(1)|H'|v>, with (H - E) v^(1) = -(H' - E') v.
     let mut h2v = vec![0.0f64; nd];
-    space.sigma(&ci2, &v, &mut h2v);
+    {
+        let mut op2 = provider.op_for(space, &ci2)?;
+        check(op2.as_ref(), "second-derivative")?;
+        op2.apply(&v, &mut h2v);
+    }
     let e2_direct = dot(&v, &h2v);
     let mut rhs = h1v.clone();
     axpy(-e1, &v, &mut rhs);
     for x in rhs.iter_mut() {
         *x = -*x;
     }
+    // The response solve re-uses the ENERGY operator: same Hamiltonian, same class, and on a
+    // device arm the tables it uploaded are still resident.
     let (w, cg_iters, cg_residual) =
-        cg_response(space, &ci0, &diag, e, &v, &rhs, 1e-10, 2000);
+        cg_response(op0.as_mut(), &diag, e, &v, &rhs, 1e-10, 2000);
     let e2 = e2_direct + 2.0 * dot(&w, &h1v);
 
     // The variational bound, from the diagonal the preconditioner already built. See
@@ -1475,7 +1636,7 @@ pub fn solve_determinant_from(
     // solve which converged cleanly onto the wrong eigenvector, because a residual is small
     // for any eigenvector at all.
     let min_diag = diag.iter().copied().fold(f64::INFINITY, f64::min);
-    Solution {
+    Ok(Solution {
         e: D2::new(e, e1, e2),
         vector: v,
         variational_margin: Some(min_diag - e),
@@ -1485,7 +1646,8 @@ pub fn solve_determinant_from(
         cg_residual,
         route: SolverRoute::Determinant,
         exit,
-    }
+        device,
+    })
 }
 
 

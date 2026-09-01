@@ -6,15 +6,30 @@ license = "AGPL-3.0-or-later"
 publish = false
 description = "H2/STO-3G/FCI potential computed in-engine from closed-form Gaussian integrals"
 
-# ZERO dependencies, runtime and dev alike, and that is load-bearing rather than tidy.
-# This crate is linked into `holon-render`'s browser artifact, so anything it pulls in
-# is shipped to the viewer and unified into the workspace's feature resolution — the
-# exact failure the isolation gates in `ci-gates.sh` exist to catch. Everything it needs
-# is arithmetic: `erf`, `erfc` and the Boys function are written here and unit-tested
-# against known values, `f64::exp`/`f64::sqrt` come from core, and the differentiation
-# is a 20-line dual number rather than a crate.
+# The dependency rule here is load-bearing rather than tidy, and it is a RULE about what
+# may be added rather than the count it used to state. This crate is linked into
+# `holon-render`'s browser artifact, so anything it pulls in is shipped to the viewer and
+# unified into the workspace's feature resolution — the exact failure the isolation gates
+# in `ci-gates.sh` exist to catch. The arithmetic stays in-crate for that reason: `erf`,
+# `erfc` and the Boys function are written here and unit-tested against known values,
+# `f64::exp`/`f64::sqrt` come from core, and the differentiation is a 20-line dual number
+# rather than a crate.
+#
+# What may be added: a path dependency inside this workspace with NO dependencies of its
+# own, NO optional features, NO build script and NO runtime. Both of the current two
+# qualify. Anything else — an allocator, a numerics crate, a device runtime — is refused,
+# and the device arm's inversion is the pattern to follow instead: this crate NAMES the
+# contract (`sigma_op::SigmaOp`) and stays portable, and `holon-gpu` satisfies it from
+# outside the workspace with the CUDA dependency on its own side of the line.
 [dependencies]
 q8-mps = { path = "../q8-mps" }
+# holon-device: `no_std`, zero-dep, one enum. RESOURCE_DESIGN D0 says the device class
+# belongs to the ARTIFACT, and `Solution` is an artifact this crate produces — so it has
+# to be able to name the class. Declaring a second `DeviceClass` here rather than sharing
+# the one `holon-resource` dispatches on is M-DEVICE-CLASS one level down: two enums with
+# a hand-written conversion give one artifact two answers the day a class is added to one
+# of them, and the test suite stays green throughout.
+holon-device = { path = "../holon-device" }
 
 # NOTE: no `[profile.release]` here on purpose — a workspace member's profile section is
 # silently ignored by Cargo (only the workspace root's applies). `holon-render`'s

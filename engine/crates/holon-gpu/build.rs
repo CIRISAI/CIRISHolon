@@ -1,4 +1,4 @@
-//! Compile `kernels/fold.cu` to PTX with nvcc, once, at build time.
+//! Compile every `kernels/*.cu` to PTX with nvcc, once, at build time.
 //!
 //! The PTX is CHECKED IN at `kernels/fold.ptx` so the crate builds on a machine
 //! with no CUDA toolkit (only running needs a driver). But a checked-in artifact
@@ -19,27 +19,42 @@
 use std::path::Path;
 use std::process::Command;
 
+/// Every kernel translation unit, by stem. NAMED rather than globbed: a glob would compile
+/// whatever happened to be in the directory, so a stray file becomes a build input and a
+/// deleted one stops being checked without anything saying so.
+const KERNELS: [&str; 2] = ["fold", "fci_sigma"];
+
 fn main() {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR"));
-    let cu = dir.join("kernels/fold.cu");
-    let ptx = dir.join("kernels/fold.ptx");
-    println!("cargo:rerun-if-changed={}", cu.display());
     println!("cargo:rerun-if-changed=build.rs");
 
     let nvcc = std::env::var("NVCC").unwrap_or_else(|_| "nvcc".to_string());
-    let probe = Command::new(&nvcc).arg("--version").output();
+    let have_nvcc = Command::new(&nvcc)
+        .arg("--version")
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
 
-    if probe.map(|o| o.status.success()).unwrap_or(false) {
-        let out = Command::new(&nvcc)
+    for stem in KERNELS {
+        let cu = dir.join(format!("kernels/{stem}.cu"));
+        let ptx = dir.join(format!("kernels/{stem}.ptx"));
+        println!("cargo:rerun-if-changed={}", cu.display());
+        compile_or_check(&nvcc, have_nvcc, stem, &cu, &ptx);
+    }
+}
+
+fn compile_or_check(nvcc: &str, have_nvcc: bool, stem: &str, cu: &Path, ptx: &Path) {
+    if have_nvcc {
+        let out = Command::new(nvcc)
             .args(["-ptx", "-O3", "-arch=compute_89", "-lineinfo"])
-            .arg(&cu)
+            .arg(cu)
             .arg("-o")
-            .arg(&ptx)
+            .arg(ptx)
             .output()
             .expect("nvcc reported a version and then failed to run");
         if !out.status.success() {
             panic!(
-                "nvcc failed to compile kernels/fold.cu:\n{}\n{}",
+                "nvcc failed to compile kernels/{stem}.cu:\n{}\n{}",
                 String::from_utf8_lossy(&out.stdout),
                 String::from_utf8_lossy(&out.stderr)
             );
@@ -49,20 +64,20 @@ fn main() {
 
     // No nvcc. The checked-in PTX is the only option — and it is only honest if
     // it is not older than the source it claims to be a compilation of.
-    let cu_t = std::fs::metadata(&cu).and_then(|m| m.modified());
-    let ptx_t = std::fs::metadata(&ptx).and_then(|m| m.modified());
+    let cu_t = std::fs::metadata(cu).and_then(|m| m.modified());
+    let ptx_t = std::fs::metadata(ptx).and_then(|m| m.modified());
     match (cu_t, ptx_t) {
         (Ok(a), Ok(b)) if a > b => panic!(
-            "no nvcc on PATH, and kernels/fold.cu is NEWER than the checked-in \
-             kernels/fold.ptx. The checked-in PTX is stale; install the CUDA \
+            "no nvcc on PATH, and kernels/{stem}.cu is NEWER than the checked-in \
+             kernels/{stem}.ptx. The checked-in PTX is stale; install the CUDA \
              toolkit or regenerate it on a machine that has one."
         ),
         (_, Err(e)) => panic!(
-            "no nvcc on PATH and no checked-in kernels/fold.ptx ({e}); this crate \
+            "no nvcc on PATH and no checked-in kernels/{stem}.ptx ({e}); this crate \
              cannot be built without one of the two."
         ),
         _ => {
-            println!("cargo:warning=nvcc not found; using the checked-in kernels/fold.ptx");
+            println!("cargo:warning=nvcc not found; using the checked-in kernels/{stem}.ptx");
         }
     }
 }

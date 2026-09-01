@@ -1,0 +1,13 @@
+# GPU-PRODUCTION: the (O,O,O) FCI sigma through holon-chem's solve path, both device classes
+# launched_utc     2026-09-01T19:20:29Z
+# binary           /home/emoore/CIRISHolon/engine/crates/holon-gpu/target/release/examples/fci_bench
+# binary_sha256    448981cac17f8d38d4c77ca1a5187c5257458bf6d6d7da4728544053207d90f7
+# kernel_sha256    48d04e89026cf60456e301cc583fcdea2a808001fcabc69747fd5aa88a1a25de
+# ptx_sha256       68611fd21d8cebfd651b3ed162da39019889fd362d89670072a0a04b4e0edcaf
+# repo_HEAD        a3b3d4b8406b2eb4241083f6467d62fa9fad7b88
+# tree_dirty_rows  76
+# build_exit       0   (cargo build --release --example fci_bench, holon-gpu)
+# nvcc             Cuda compilation tools, release 12.0, V12.0.140
+# driver           580.142
+# device           NVIDIA GeForce RTX 4090 Laptop GPU
+# placement        M-PLACEMENT-LOTTERY: both core types, pinned with taskset, echoed as parsed

@@ -1,0 +1,11 @@
+# D10b — the reaper's false-positive rate against the LIVE (O,O,O) ozone generation
+# launched_utc     2026-09-01T18:51:54Z
+# binary           /home/emoore/CIRISHolon/engine/target/release/examples/reap_observe
+# binary_sha256    aaafae4148010e3720779ed91e8edc4e4adf62c17b6907f496aedce34d03ac0e   (5-policy build; run 1 was 4-policy, kept as d10b_ozone.run1_4policy.*)
+# repo_HEAD        052957bed872e7a0b948084652c6013e3c718d87
+# tree_dirty_rows  28
+# build_exit       0   (cargo build --release -p holon-resource --example reap_observe)
+# observed_pid     3117475  (target/release/examples/s2_ozone_table 32, started Aug 31)
+# receipt_stream   engine/output/s2_ozone_table_progress.log (append-only, one line = one node)
+# REAPER OFF       only Reaper::judge is called; the arena ledger is asserted convicted==0 reaped==0
+# NOT TOUCHED      no signal, no kill, no write to the observed process or its output

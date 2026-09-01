@@ -20,6 +20,7 @@ have to be recorded at every reading or the rate is unrecoverable.
 | reading | date | materialized carriers | open residuals | closed since last |
 |---|---|---|---|---|
 | 1 | 2026-09-01 | 3 (C0, C1, C2) | 11 | — (first reading) |
+| 2 | 2026-09-01 | 3 + the GPU device class as a second CARRIER of the same solve | 13 | 1 (see below) |
 
 Reading 1 is the baseline: it is not evidence for or against the claim, it is the
 zero against which the next reading is a measurement. The next reading is owed at
@@ -207,7 +208,62 @@ approximation alone. Declared in the function's own doc comment as well as here.
 **Exit.** Carry mass in the header beside `Z`.
 **Owner:** the closure-census lane.
 
+### R-12 — the same-spin matrix is built twice, once streamed and once whole
+
+`holon_chem::tier::sigma_direct_t` builds the same-spin matrix `F` one ROW at a
+time inside its streaming loop, reusing a single `f` buffer and never
+materialising the matrix. `holon_gpu::fci::build_same_spin` builds the whole
+`nb × nb` and `na × na` matrices so they can be uploaded once and re-used for
+every application. Same algebra, two constructions.
+
+**Why it did not fold.** Materialising `F` inside `sigma_direct_t` would change
+its memory behaviour — that streaming is the reason the hand-written CPU kernel
+beats the same reformulation through OpenBLAS, which pays 372 MB of bandwidth per
+sigma to materialise the intermediate (SATURATION-3 G2). It could also move
+trailing bits, and every committed table is keyed on those.
+
+**Why the duplication is not silent.** It is GATED by a measurement, not by
+hope: the device sigma must reproduce `sigma_direct` to 1e−12 relative before any
+timing is reported, and it does, at **3.033e−15** on the real `(O,O,O)` problem.
+A divergence between the two constructions fails that gate.
+
+**Exit.** Expose one builder from `holon-chem` that the streaming path consumes
+row-wise and the device path consumes whole — a shape the crate already has for
+`Scalar`. Worth doing when a second device arm needs `F`, and not before: one
+consumer does not justify an abstraction, and the gate is doing the work
+meanwhile. **Owner:** the gpu-production lane.
+
+### R-13 — `SigmaOp` is generic over the scalar and `SigmaProvider` is `f64` only
+
+`holon_chem::sigma_op::SigmaOp<T: Scalar>` is generic, matching the solver's own
+`Scalar` seam. `SigmaProvider` — the thing that binds a whole solve to one device
+class — is `f64` and nothing else, so `solve_determinant_with` is `f64`-only
+while `davidson_eigh_from_op` is not.
+
+**Why it did not fold.** The device arm is `f64`: consumer Ada runs FP64 at 1/64
+of FP32 and there is no `Dd` GPU kernel. A `Scalar`-generic provider would
+advertise a device tier that does not exist, which is worse than an asymmetry —
+it is a type that lies about what can be built. The double-double rung is a CPU
+rung of D3b's ladder and reaches the solver through
+`tier::refine_determinant_dd`, not through a provider.
+
+**Exit.** A second device scalar. Registered now rather than then so the entry's
+AGE is visible if the asymmetry outlives its reason. **Owner:** unassigned, and
+that is recorded rather than hidden.
+
 ---
+
+## Closed since reading 1
+
+**C-1 — the P/E core split is no longer a hardcoded per-machine branch.**
+`fci_bench` first carried `if cpu < 16 { "P" } else { "E" }`, which is exactly
+the shape WB-8.7 clause (2) refuses. It now reads
+`/sys/devices/cpu_{core,atom}/cpus` and CROSS-CHECKS the result against
+`MISFITS.md`'s M-PLACEMENT-LOTTERY entry, refusing the run if the machine and the
+citation disagree — because on a different box that entry's labels do not apply
+and a row labelled from it would be wrong. Derived from the machine, checked
+against the citation, and refusing rather than guessing: that is the fold, and it
+cost about thirty lines.
 
 ## Unevaluated claim-surface (WB-8.7 clause 3)
 

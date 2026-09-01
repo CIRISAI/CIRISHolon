@@ -28,11 +28,13 @@ use crate::lease::{Arena, LeaseError, LeaseId};
 use crate::probe::{Probe, ProbeVerdict, ResourceKind};
 
 /// Which arithmetic the work would run on. Part of the ARTIFACT for bit-gated workloads.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum DeviceClass {
-    Cpu,
-    Gpu,
-}
+///
+/// Defined in `holon-device` and re-exported here, NOT declared here. The registry dispatches
+/// on the class and `holon-chem` stamps it on the artifact, and those two crates cannot depend
+/// on each other — so the enum lives below both. Two declarations with a conversion between
+/// them would give one artifact two answers about what produced it the first time a class was
+/// added on one side only, and every test would still pass.
+pub use holon_device::DeviceClass;
 
 /// What determinism gate a registered kernel carries. Adoption for bit-gated work requires one.
 #[derive(Clone, Copy, Debug, PartialEq)]

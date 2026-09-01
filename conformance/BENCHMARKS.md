@@ -1605,3 +1605,104 @@ over-retraction of it — and **every single one was caught by the other lane
 measuring something the first had assumed.** Neither instrument found its own
 errors; each found the other's.
 
+## 2026-09-01 — GPU PRODUCTION: the FCI sigma is IN the solve path, and the artifact declares its class
+
+*By the gpu-production lane. Engine: `holon-chem/src/sigma_op.rs` (the contract),
+`holon-gpu/src/fci.rs` + `kernels/fci_sigma.cu` (the device arm),
+`holon-gpu/src/lease.rs` (the GPU as a leasable resource).
+Benchmark: `holon-gpu/examples/fci_bench.rs`; logs and provenance header in
+`conformance/atomworld/gpu_fci/`.*
+
+G2 (2026-08-30, twenty-fourth entry above) measured a CUDA sigma against the CPU
+and **deliberately did not adopt it**, because the workload is bit-gated and
+device class is part of the artifact. The P2 fence has since fired and adoption
+was licensed. This entry is the adoption, and what it cost.
+
+### The kernel is the same measurement, re-made from in-crate data
+
+The prototype (`conformance/atomworld/s3_mesh/gpu/sigma.cu`) loaded an exported
+`.bin`. This one is built from `FciSpace` and `CiInts` directly, inside the
+crate, and reproduces G2 to the digit — a third independent reading of the same
+number, after the prototype's own re-run on 2026-09-01:
+
+| quantity | G2 (2026-08-30, prototype) | this entry (in-crate, 2026-09-01) |
+|---|---:|---:|
+| relative agreement with `sigma_direct` | 3.033e−15 | **3.033e−15** |
+| entries differing BITWISE | 188,363 / 207,025 (91.0%) | **188,466 / 207,025 (91.0%)** |
+| GPU kernel only | 65.7 sigma/s, 318.4 GFLOP/s | **68.4 sigma/s, 331.6 GFLOP/s** |
+| five repeat runs bit-identical | YES | **YES** |
+
+The 103-entry difference in the bitwise count is the two builds' integrals
+arriving by different routes (exported `f64` versus in-crate) and is reported
+rather than smoothed: it is the same measurement, not the same bytes.
+
+### Placement is declared, because the ratio is a function of it
+
+M-PLACEMENT-LOTTERY, applied: both arms pinned with `taskset`, the pin **echoed
+as the process actually has it** (the binary refuses a `--core-type` that
+disagrees with its real affinity), both core types run, and the CPU arm gated on
+CPU time as well as wall. The P/E split is read from
+`/sys/devices/cpu_{core,atom}/cpus` and cross-checked against the MISFITS entry,
+refusing if they disagree — so no row carries a hardcoded per-machine branch.
+
+| arm | device class | core class | sigma/s | GFLOP/s FP64 |
+|---|---|---|---:|---:|
+| GPU, kernel only | **gpu** | n/a | **68.4** | 331.6 |
+| GPU, incl. host round trip | gpu | n/a | 65.7 | — |
+| CPU, `sigma_direct`, 1 thread pinned, CPU-time | cpu | **P** (cpu 0) | 1.11 | 5.4 |
+| CPU, `sigma_direct`, 1 thread pinned, CPU-time | cpu | **E** (cpu 16) | 0.81 | 3.9 |
+| CPU, same, wall clock | cpu | P | 0.75 | 3.7 |
+| CPU, same, wall clock | cpu | E | 0.57 | 2.8 |
+
+Both runs at loadavg 65–68. wall/CPU-time was **1.47 (P)** and **1.74 (E)**: on
+this machine, at this load, a wall-clock CPU arm reads 32–43% slow purely from
+descheduling, which is why the CPU-time rows are the citable ones.
+
+**E/P on this kernel is 0.73**, not the 57% M-PLACEMENT-LOTTERY records for the
+tableau workload. The scaling factor is per-kernel, and treating the entry's
+number as a machine constant would be the same mistake one level down.
+
+**What is NOT re-measured here:** the 32-thread CPU aggregate. G2 banked 20.8
+sigma/s for it on a machine at loadavg 32; this machine is at 65–68 with a live
+ozone tabulation holding 27 cores, and a 32-thread arm measured against that
+would be measuring the neighbours. So **the 3.2× headline stands as G2's, not as
+this entry's**, and this entry's own CPU measurement is the pinned single thread.
+Quoting 68.4 against 1.11 would be a 61× that no scheduler would ever deliver.
+
+### The cold-start gap, which convicted an honest entry
+
+The first timed loop reads **54.4 sigma/s** and the loops after it read **68.4** —
+a 26% gap (15% on the second run) from clock and power state, nothing in the
+kernel. The first version of this benchmark registered the warm mean and
+spot-checked it against the cold reading, and D12 **convicted a correct entry**.
+That is the registry's own version of a false reap, and the fix is the rule D12
+already states: a spot-check RE-TIMES the workload rather than comparing the
+registration to whatever number is lying around. Both are now warm, the discard
+is declared, and the cold reading is printed rather than thrown away.
+
+### The gates that had to pass before any timing was reported
+
+* **agreement** — the device must reproduce `sigma_direct` to 1e−12 relative, or
+  no timing is printed at all: a fast wrong answer is not a result;
+* **determinism, per class** — five applications, BITWISE identical, on the
+  operator that will actually run. Not inferred from the kernel being
+  atomics-free (it is) or from cuBLAS being pinned to pedantic math with a fixed
+  4 MiB workspace (it is) — those are reasons to expect it, and the gate is the
+  measurement;
+* **D12's plant, against the LIVE rate** — the entry re-registered at 10× its
+  measured throughput is convicted (688.7 claimed, 67.9 observed, tolerance
+  1.615), with the honest control holding at the same moment. Carrier asserted
+  first: the two devices' rates differ by far more than the tolerance.
+
+### What adoption actually buys, stated against what it costs
+
+The whole determinant solve now runs on a declared class — the Davidson, both
+derivative sigmas and the CG response all come from one `SigmaProvider`, and a
+`Solution` whose stages disagreed about their class is REFUSED rather than
+stamped. On water (441 determinants) the two classes agree to **5.7e−14 Ha** in
+15 Davidson iterations each, and are stamped `cpu` and `gpu` respectively.
+
+They are still two artifacts. 91% of the sigma entries differ bitwise, so a
+GPU-built table and a CPU-built table may never be mixed, and adopting the GPU
+for a table idles 32 cores rather than adding to them. That trade is D0's to
+make per artifact, not dispatch's to make per call.

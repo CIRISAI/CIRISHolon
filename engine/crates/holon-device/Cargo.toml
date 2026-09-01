@@ -1,0 +1,25 @@
+# holon-device: ONE definition of the device class, so D0 has one.
+#
+# `no_std`, ZERO dependencies, and it must stay both. This crate exists to be
+# depended on by crates that cannot depend on each other:
+#
+#   * `holon-chem` produces the ARTIFACT whose class D0 says must be declared, and it
+#     ships into the browser wasm bundle — it cannot take `holon-resource`, which is
+#     std-only (`std::fs`, `std::path`) and would not build for wasm at all.
+#   * `holon-resource` sits UNDER everything and keys its dispatch registry on the
+#     class — it cannot take `holon-chem`, which is orders of magnitude heavier.
+#
+# Before this crate the two would each have declared their own `DeviceClass` and a
+# hand-written conversion between them. That is precisely the shape M-DEVICE-CLASS
+# warns about one level down: a third class added to one enum and not the other gives
+# the same artifact two different answers about what produced it, through a green test
+# suite. A gate must be isomorphism-invariant, and two enums with a manual `From` is a
+# gate that is invariant only until someone edits one of them.
+[package]
+name = "holon-device"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+description = "The device class: one definition, shared by the artifact that declares it and the layer that dispatches on it"
+
+[dependencies]

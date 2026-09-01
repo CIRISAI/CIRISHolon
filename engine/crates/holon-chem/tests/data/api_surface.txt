@@ -147,3 +147,6 @@ transport_operator      executes operator picture change under certified transpo
 unwrap_or_refuse        unwraps a certified capability or raises an explicit TransportRefusal fence
 
 
+
+# --- the device-class arm (RESOURCE_DESIGN D0); the consumer is OUTSIDE this crate ---
+bit_identity_over_runs  holon-gpu's adoption gate: five applications of a device operator, refused unless BITWISE identical. Unreferenced here on purpose -- this crate names the contract and stays portable, and the device that has to pass the gate cannot live in a crate that ships to a browser

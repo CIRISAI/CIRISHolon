@@ -887,8 +887,17 @@ dependencies = [
 name = "holon-chem"
 version = "0.1.0"
 dependencies = [
+ "holon-device",
  "q8-mps",
 ]
+
+[[package]]
+name = "holon-device"
+version = "0.1.0"
+
+[[package]]
+name = "holon-lens"
+version = "0.1.0"
 
 [[package]]
 name = "holon-mesh"
@@ -908,11 +917,15 @@ version = "0.1.0"
 dependencies = [
  "holon",
  "holon-chem",
+ "holon-lens",
 ]
 
 [[package]]
 name = "holon-resource"
 version = "0.1.0"
+dependencies = [
+ "holon-device",
+]
 
 [[package]]
 name = "holon-sandbox"

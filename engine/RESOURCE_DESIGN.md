@@ -3,11 +3,14 @@
 Status: **SHIPPED** for the table path (user directive, 2026-08-30) — `holon-tables`'
 leased generator is the production route for potential-energy tables from now on; see §11.
 The rest of the layer is ADMITTED with its first implementation landed (`holon-resource`,
-all nine §8 plants firing, seven mutation-checked). **Honesty line, kept:** the WORKER probe
-is real (it spawns, runs and joins a thread); the VRAM and disk probes in the plants are
-still injected, and **no GPU has ever been leased through this layer**. Numbers marked **HARD**
-are measured on this machine and named with their instrument; **PENDING** are owed and are used
-in no argument below.
+all nine §8 plants firing, seven mutation-checked). **Honesty line, UPDATED 2026-09-01 — the
+GPU half of it is now false and is corrected rather than quietly dropped:** the WORKER probe
+was already real (it spawns, runs and joins a thread); the VRAM probe is now real too
+(`holon-gpu/src/probe.rs` — it allocates on the device and frees it), and **a GPU has now
+been leased through this layer**, on real hardware, with the resource yanked out from under a
+live lease and the outcome CONVICTED (`holon-gpu/tests/gpu_lease.rs`). What remains injected
+is the DISK probe in the plants. Numbers marked **HARD** are measured on this machine and
+named with their instrument; **PENDING** are owed and are used in no argument below.
 Scope: in-process resource discovery, leasing and dispatch — cores, RAM, VRAM, disk, worker
 pools, table-generation shards. No transport, no cross-machine scheduling, no consent layer.
 Frame: `INTEGRATION_FRAME.md` — one holon, values only.
@@ -328,14 +331,22 @@ is traceable to the entry that caused it rather than to a mood.
 
 | kernel | registration | determinism gate | status |
 |---|---|---|---|
-| `(O,O,O)` sigma, GPU | **65.7 sigma/s**, 318 GFLOP/s FP64 (HARD, `s3gpu/sigma.cu`) | fixed reduction order, atomics-free, 5/5 runs bit-identical | measured, **adoption deferred** |
-| `(O,O,O)` sigma, CPU | **20.8 sigma/s** aggregate, 32 threads at loadavg 32 (HARD, `s3_sigma_cost.rs`) | serial per node | in use |
+| `(O,O,O)` sigma, GPU | **68.4 sigma/s**, 331.6 GFLOP/s FP64 (HARD, `holon-gpu/examples/fci_bench.rs`, 2026-09-01; prototype read 65.7 / 318.4) | fixed reduction order, atomics-free, cuBLAS pinned to pedantic math with a fixed workspace, 5/5 runs bit-identical **on the operator that runs** | **ADOPTED for work that is not bit-gated**, and available to any solve that DECLARES the `Gpu` class |
+| `(O,O,O)` sigma, CPU | **20.8 sigma/s** aggregate, 32 threads at loadavg 32 (HARD, `s3_sigma_cost.rs`); **1.11 sigma/s** single thread pinned to a P-core, CPU-time, loadavg 66 (HARD, `fci_bench.rs`) | serial per node | in use, and the declared class of every committed table |
 | table-generation shards | — | bit-identical at 1/4/8 workers (HARD, G1) | in use |
 
 The GPU entry is the pattern the lead asked for — adoption by measurement, determinism gate
-declared, refusal recorded — and it is also the first case of **D0**: it wins 3.2×, its gate
-passes, and it is *not* adopted, because the workload is bit-gated and the device class is part
-of the artifact.
+declared, refusal recorded — and it was the first case of **D0**: it wins 3.2×, its gate
+passes, and it was *not* adopted while the workload's class was undeclared.
+
+**Since 2026-09-01 the class is declarable, so the refusal has moved from the kernel to the
+artifact.** `holon_chem::sigma_op::SigmaProvider` binds a whole determinant solve to ONE class
+— Davidson, both derivative sigmas and the CG response all come from it — and
+`Solution::device` carries the answer. A solve whose stages disagreed about their class is
+REFUSED, not stamped. What has *not* changed is D0 itself: the committed tables declare `Cpu`,
+91% of the sigma entries still differ bitwise between the classes, and dispatch still may not
+move a bit-gated workload between them. Adoption made the choice EXPLICIT and per-artifact; it
+did not make it automatic.
 
 ### 6.2 The registry must not be trusted about itself
 
@@ -368,9 +379,13 @@ and VOIDs rather than passes (M-PLANT-SECTOR).
   `holon-resource` implements the set (30 tests, release and debug, CI-enforced), and seven were
   mutation-checked — the mechanism was broken on purpose and the right plant failed each time.
   The remaining two (D2's liveness foil, D4's refusal) are demonstrated by construction against
-  a deliberately-wrong probe kept in-crate. What is still a commitment rather than evidence: no
-  REAL device, pool or filesystem has been leased through this layer yet — the probes are
-  injected, which is what makes the plants possible and what keeps them short of a field test.
+  a deliberately-wrong probe kept in-crate. ~~What is still a commitment rather than evidence: no
+  REAL device, pool or filesystem has been leased through this layer yet~~ — **superseded
+  2026-09-01 for the GPU:** `holon-gpu/tests/gpu_lease.rs` leases real VRAM on the real card
+  through a probe that really allocates it, and the D9 plant YANKS the card out from under a
+  live 5,080 MiB lease (a competitor takes 13,633 MiB, bounded to leave a 2 GiB reserve because
+  the browser's GPU process is on this device) and requires the outcome to be **CONVICTED**
+  rather than refused or errored. The disk probe in the plants is still injected.
 
 ## 7b. Misfit contacts
 
@@ -428,6 +443,31 @@ Plants come BEFORE the mechanism they guard, not after it.
 | **D10** reaper stands down | a stalled machine — rung-3's input mocked to "nothing is progressing" | the reaper **STANDS DOWN and says so**, reclaiming nothing | a holder really is past its grace period and silent |
 | **D12** registry spot-check | the GPU sigma registered at **10×** its measured throughput | CONVICT the entry on observing ~65.7 against a claimed 657 | the two devices' throughputs differ by more than the spot-check factor |
 | **D3b** tier overflow | a residual demanded below `f64`'s `expansion_floor()` | lease the `Dd` tier, never loop on `f64` | the f64 solve really is at its floor (exit `Stagnated`) |
+
+### The plants that now run on REAL HARDWARE (added 2026-09-01, gpu-production lane)
+
+The set above is scripted, which is what makes it exhaustive and what keeps it short of a field
+test. These five run against the actual 4090 and the actual card's memory
+(`holon-gpu/tests/{fci_sigma,gpu_lease}.rs`), and each asserts its carrier first:
+
+| rule | the plant | must do | carrier asserted first | result |
+|---|---|---|---|---|
+| **D0** mixed class | a provider that DECLARES `Gpu` and hands back a host operator | REFUSE the solve; never stamp a `Solution` | the honest provider succeeds on the same problem | FIRES |
+| **D2** probe the resource | the VRAM probe asked for four times the card's memory, against a `ReportedFreeProbe` kept as the foil | REFUSE by having ATTEMPTED, and refuse a non-VRAM question rather than passing on it | a 64 MiB ask really is granted, and really allocates (`allocations` counter moves) | FIRES |
+| **D3b** quantitative boundary | a lease past the card's size | REFUSED, and no ledger entry opened | a lease the card can honour is granted on the same provider | FIRES |
+| **D9/D3** the yank | a 5,080 MiB lease granted by a probe that really allocated it, then a competitor takes 13,633 MiB, then the USE | **CONVICTED** — the lease ends `Convicted`, the ledger moves, the books balance | the unyanked control succeeds; the competitor really took the card; the remaining free memory really is less than the lease covers | FIRES |
+| **D12** mis-registration | the LIVE measured GPU rate re-registered at 10× | convict the ENTRY on a fresh re-timing | the two devices' rates differ by more than the tolerance; the honest entry at its own rate is `Consistent` | FIRES |
+
+Two things these bought that the scripted set could not:
+
+* **the yank is bounded, and the bound is part of the plant.** The competitor leaves a declared
+  2 GiB reserve, because the browser's GPU process is on this card and a plant that demonstrated
+  the lease layer by wedging the machine would have proved the wrong thing.
+* **D12's plant found a real defect in its own instrument.** The first benchmark registered the
+  WARM mean and spot-checked it against a COLD reading, 26% apart, and convicted a correct
+  entry — the registry's own version of a false reap. The rule D12 already states is the fix: a
+  spot-check RE-TIMES the workload. A plant whose control fires is worth more than one that
+  only passes.
 
 **D10's plant is the one that matters most and is the easiest to get wrong**, which is why rung 3
 is built as an injectable input rather than an internal call: a reaper that can only be tested on
@@ -570,6 +610,42 @@ listed individually and never averaged away.
 the first time it met real work, and it stays off until its false-positive rate is measured
 across at least one full real generation. Grace is self-calibrating now and the exercise
 reads zero, but a 72-node exercise is an exercise, not the campaign.
+
+**D10b's campaign is now RUNNING and is PARTIAL** (`conformance/atomworld/reaper_d10b/`,
+opened 2026-09-01). An observer is attached to the live `(O,O,O)` ozone tabulation — 14,025
+solves, 32 workers, running since 2026-08-31 — recording what the reaper WOULD have decided,
+poll by poll, with the reaper OFF. It calls `Reaper::judge` only, which does not take the arena
+and cannot convict, and it asserts its own ledger shows `convicted == 0` and `reaped == 0` at
+exit, so "the reaper stayed off" is a fact the books carry rather than a promise in a comment.
+
+The first reading, over 840 polls at a 2 s interval:
+
+| policy | rung 1 grace | rung 2 | FALSE reaps of a live holder |
+|---|---|---|---:|
+| P1 rung-2 absent | flat 10 s (declared) | absent | **669 of 840** |
+| P2 CPU tick | flat 10 s | advanced since last poll | 0 |
+| P3 debounced | flat 10 s | advanced over 3 polls | 0 |
+| P4 own-step | 3 × the holder's own step | advanced since last poll | 0 |
+| P5 own-step ALONE | 3 × the holder's own step | **absent** | **0** |
+
+The holder's own step measured **42 s median, 128 s max**, against a flat grace of 10 s — the
+flat constant is **0.08× the holder's own worst step**, which is M-IDLE-CALIBRATED-TIMEOUT's
+shape stated as a ratio.
+
+**P5 is the discriminator and it was added because the first four did not discriminate.** P2,
+P3 and P4 all read zero, but that is not evidence for the grace rule: at a 2 s poll against a
+CPU-saturated holder the CPU tick ALWAYS advances, so rung 2 masks rung 1 and P4's zero says
+nothing about §5's claim. P5 removes rung 2 and keeps the own-step grace, so nothing but rung
+1's rule separates it from P1 — and it reads **0 against P1's 669**. That isolates §5's finding
+on real work: **the grace being sized by the holder's own step is what fixes it**, not anything
+in rung 2.
+
+**Three things this reading does NOT license.** (1) It is one holder, not 32 — per-worker
+receipts are not separable from the shared log, and the only per-thread observable is rung 2's
+own sensor, so 32 holders would have been 32 invented instruments. (2) The false-positive rate
+is a function of the POLL INTERVAL: §5's 108 and 495 for rungs 2 and 3 were measured at a 10 ms
+sensor and do not transfer to 2 s. (3) **It is not a full generation.** At the observed rate the
+tabulation has days left to run, so D10b is NOT discharged and the reaper does NOT come on.
 
 **GPU dispatch**, for the reason in D0: the two devices agree numerically and differ on 91%
 of entries bitwise, so a bit-gated table declares `Cpu` and dispatch may not move it.

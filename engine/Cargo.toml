@@ -70,6 +70,16 @@ members = [
   # down on a stalled machine. ZERO dependencies (std only), so like holon-chem it
   # cannot perturb the core's feature resolution or the isolation gates.
   "crates/holon-resource",
+  # holon-device: ONE definition of the device class (RESOURCE_DESIGN D0). `no_std`, ZERO
+  # dependencies, ~50 lines of enum. It exists because the crate that PRODUCES the artifact
+  # whose class must be declared (`holon-chem`, which ships into the browser and so cannot
+  # take a std-only dep) and the crate that DISPATCHES on it (`holon-resource`, which sits
+  # under everything and so cannot take a heavy one) cannot depend on each other. Declaring
+  # the enum in both with a conversion between them is M-DEVICE-CLASS one level down: a class
+  # added on one side only gives one artifact two answers about what produced it, through a
+  # green suite. Being `no_std` and dependency-free it cannot perturb the core's feature
+  # resolution or the isolation gates, and it adds nothing measurable to the wasm bundle.
+  "crates/holon-device",
 ]
 
 # Deliberately OUTSIDE the workspace, each for its own reason:

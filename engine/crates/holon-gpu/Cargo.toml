@@ -28,6 +28,16 @@ description = "GPU executor for the holon branch fold: the same merge law, on CU
 
 [dependencies]
 holon = { path = "../holon" }
+# The device arm of `holon-chem`'s solve path. The dependency goes THIS way on purpose:
+# `holon-chem` ships into the browser wasm bundle and cannot take a CUDA dependency, so it
+# names the contract (`sigma_op::SigmaOp`, `SigmaProvider`) and this crate — already outside
+# the workspace, already shelling out to nvcc — satisfies it from the far side of the line.
+holon-chem = { path = "../holon-chem" }
+# The lease layer, so the GPU is a leasable resource rather than a global this crate takes.
+# `holon-resource` deliberately has no CUDA (its own header says the GPU owner supplies the
+# VRAM probe); `probe.rs` here is that owner keeping the bargain.
+holon-resource = { path = "../holon-resource" }
+holon-device = { path = "../holon-device" }
 
 # dynamic-loading: libcuda.so is dlopen'd at RUN time, so a build needs no CUDA
 # stub libraries and no toolkit — only running does. cuda-13000 matches the
@@ -36,7 +46,11 @@ holon = { path = "../holon" }
 [dependencies.cudarc]
 version = "0.19"
 default-features = false
-features = ["std", "driver", "nvrtc", "dynamic-loading", "cuda-13000"]
+# `cublas` is added for the FCI sigma's three GEMMs. FP64 GEMM at 77% of this card's
+# FMA peak is not something a hand-written kernel reaches, and the whole 3.2x is in it.
+# It is still dynamically loaded: libcublas.so is dlopen'd at RUN time like libcuda.so, so
+# a build still needs no CUDA toolkit and no stub libraries.
+features = ["std", "driver", "nvrtc", "cublas", "dynamic-loading", "cuda-13000"]
 
 [profile.release]
 debug = true

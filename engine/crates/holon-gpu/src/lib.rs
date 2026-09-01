@@ -34,12 +34,27 @@
 
 pub mod cpu;
 pub mod desc;
+/// The FCI sigma: the DEVICE-CLASS ARM of `holon-chem`'s determinant solve
+/// (RESOURCE_DESIGN D0). The dependency runs this way round because `holon-chem`
+/// ships into a browser and cannot take CUDA: it names the contract, this crate
+/// satisfies it.
+pub mod fci;
 pub mod gpu;
+/// The GPU as a LEASABLE resource: VRAM leased through `holon-resource` with its
+/// quantitative boundary declared (D3b), and a device that vanishes under a live
+/// lease CONVICTED rather than swallowed (D9).
+pub mod lease;
+/// The VRAM probe `holon-resource` deliberately does not have — D2's *attempt the
+/// thing*, in the device's own vocabulary.
+pub mod probe;
 pub mod ring;
 pub mod synth;
 
 pub use desc::{AffineDesc, DescError, DescSource};
+pub use fci::{FciGpuError, GpuFciSigma, GpuSigmaProvider};
 pub use gpu::{GpuBatch, GpuError, GpuFolder, Shape};
+pub use lease::{LeasedGpuError, LeasedGpuProvider, LeasedGpuSigma, VramCompetitor, VramLease};
+pub use probe::{ReportedFreeProbe, VramProbe};
 
 /// `/proc/loadavg`'s first field, or `f64::NAN` where it is not readable.
 ///

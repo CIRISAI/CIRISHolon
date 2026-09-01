@@ -331,13 +331,19 @@ is traceable to the entry that caused it rather than to a mood.
 
 | kernel | registration | determinism gate | status |
 |---|---|---|---|
-| `(O,O,O)` sigma, GPU | **68.4 sigma/s**, 331.6 GFLOP/s FP64 (HARD, `holon-gpu/examples/fci_bench.rs`, 2026-09-01; prototype read 65.7 / 318.4) | fixed reduction order, atomics-free, cuBLAS pinned to pedantic math with a fixed workspace, 5/5 runs bit-identical **on the operator that runs** | **ADOPTED for work that is not bit-gated**, and available to any solve that DECLARES the `Gpu` class |
+| `(O,O,O)` sigma, GPU | **REGISTERED: 61.619 ± 4.927 sigma/s** — the ROUND TRIP, n=12 separate invocations at loadavg 78–110 (HARD, `conformance/atomworld/gpu_fci/spread_both.txt`). Device-internal kernel-only over the same twelve is **67.864 ± 0.358**, 331 GFLOP/s FP64, and is **not registered** because dispatch does not deliver it | fixed reduction order, atomics-free, cuBLAS pinned to pedantic math with a fixed workspace, 5/5 runs bit-identical **on the operator that runs** | **ADOPTED for work that is not bit-gated**, and available to any solve that DECLARES the `Gpu` class |
 | `(O,O,O)` sigma, CPU | **20.8 sigma/s** aggregate, 32 threads at loadavg 32 (HARD, `s3_sigma_cost.rs`); **1.11 sigma/s** single thread pinned to a P-core, CPU-time, loadavg 66 (HARD, `fci_bench.rs`) | serial per node | in use, and the declared class of every committed table |
 | table-generation shards | — | bit-identical at 1/4/8 workers (HARD, G1) | in use |
 
 The GPU entry is the pattern the lead asked for — adoption by measurement, determinism gate
 declared, refusal recorded — and it was the first case of **D0**: it wins 3.2×, its gate
 passes, and it was *not* adopted while the workload's class was undeclared.
+
+*The registration above was CORRECTED on 2026-09-01 after this row first landed: it held the
+kernel-only figure, which no caller receives. See §12 for what the honest quantity costs the
+detector, and `d42768d` for the entry. This row is the one place the two numbers sit together,
+because a reader consulting the citizens table is exactly the reader who could otherwise cite
+the prettier one.*
 
 **What the 3.2x does NOT buy, measured 2026-09-01.** The sigma ratio is not the solve ratio.
 On `(O,O,O)` one Davidson iteration is 410 ms of which the device sigma is 14.7 ms — the

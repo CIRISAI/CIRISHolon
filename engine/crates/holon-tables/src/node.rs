@@ -31,6 +31,32 @@ pub enum VoidReason {
     AboveLowestDiagonal { energy_bits: u64, min_diagonal_bits: u64 },
     /// The solve returned a non-finite energy.
     NotFinite,
+    /// The node's COORDINATES are not a geometry, and it was filled from the nearest point
+    /// that is.
+    ///
+    /// A 3-axis trimer box was chosen so that every point of it is a realisable triangle.
+    /// Six interatomic distances have no such box: most of the 6-cube is not the distance
+    /// matrix of any four points in three dimensions. Such a node cannot be skipped — an
+    /// interpolating stencil would read a hole — and must never be scored, because it is not
+    /// the point it claims to be.
+    ///
+    /// So it is FILLED from the continued point ([`crate::surface::Realised::Continued`])
+    /// and carries this reason. **A node with this status is excluded from every accuracy
+    /// statistic by construction**: the exclusion lives in the record, not in a filter
+    /// someone downstream has to remember to write.
+    ///
+    /// It is NOT produced by [`void_reason`], which sees only a `Solution` and cannot know
+    /// what the coordinates meant. The generator sets it directly from the surface's verdict.
+    NotAGeometry,
+    /// The surface refused these coordinates outright
+    /// ([`crate::surface::Realised::Refused`]): there was no solve at all, and the record
+    /// carries no energy.
+    ///
+    /// Distinct from [`VoidReason::NotAGeometry`] on purpose. A continued node HAS a number
+    /// (from a real neighbouring geometry) that is merely not the one asked for; this one has
+    /// none. Sharing a status code between them would make "how many nodes did this grid
+    /// actually solve" unanswerable from the table.
+    Unrealisable,
 }
 
 impl VoidReason {
@@ -51,6 +77,8 @@ impl VoidReason {
             VoidReason::BudgetExhausted => "budget exhausted",
             VoidReason::AboveLowestDiagonal { .. } => "above lowest diagonal",
             VoidReason::NotFinite => "not finite",
+            VoidReason::NotAGeometry => "not a geometry (continued)",
+            VoidReason::Unrealisable => "unrealisable coordinates",
         }
     }
 }
@@ -83,6 +111,25 @@ pub struct NodeRecord {
     /// G1's locality sweep measures, and because a node's cost is not interpretable
     /// without it.
     pub warm: bool,
+    /// Whether this node was FILLED from its symmetry orbit's representative rather than
+    /// solved.
+    ///
+    /// A mirrored record is the representative's record with `node` readdressed and this
+    /// flag set — the energy, the derivatives, the iteration counts, the exit code and the
+    /// status are all the representative's, bit for bit, because they describe a solve that
+    /// happened once at the same physical point. This flag is what says the iterations were
+    /// spent elsewhere, so "how many nodes did this grid actually solve" stays answerable
+    /// from the table.
+    ///
+    /// # Why it is NOT in the digest and NOT in `table_bytes`
+    ///
+    /// For exactly the reason [`NodeRecord::warm`] is not: it describes HOW the number was
+    /// reached, not WHAT the table contains, and a certificate over "how" fires on benign
+    /// change. Concretely, putting it in [`crate::GenOutcome::table_bytes`] would add a byte
+    /// per node to the byte string every committed table's bit-identity comparison is taken
+    /// over — a silent change to the strictest comparator the campaign has, made by a field
+    /// that is `false` everywhere on those tables.
+    pub mirrored: bool,
 }
 
 impl NodeRecord {
@@ -94,6 +141,8 @@ impl NodeRecord {
             NodeStatus::Void(VoidReason::BudgetExhausted) => 1,
             NodeStatus::Void(VoidReason::AboveLowestDiagonal { .. }) => 2,
             NodeStatus::Void(VoidReason::NotFinite) => 3,
+            NodeStatus::Void(VoidReason::NotAGeometry) => 4,
+            NodeStatus::Void(VoidReason::Unrealisable) => 5,
         }
     }
 
@@ -105,6 +154,14 @@ impl NodeRecord {
         matches!(self.status, NodeStatus::Ok)
     }
 }
+
+/// The `exit_code` of a node that was never solved, because its surface refused the
+/// coordinates.
+///
+/// Deliberately far from [`exit_code`]'s range rather than reusing `SolveExit::Trivial`: a
+/// trivial solve is a solve, and a record that claimed one where there was none would put a
+/// solver's name on a node the solver never saw.
+pub const NOT_SOLVED_EXIT: u8 = 255;
 
 /// [`SolveExit`] as a stable u8. Written out rather than derived so that adding a variant
 /// upstream cannot silently renumber a committed table's digest.
@@ -191,6 +248,7 @@ mod tests {
             exit_code: 0,
             status: NodeStatus::Ok,
             warm: false,
+            mirrored: false,
         };
         let statuses = [
             NodeStatus::Ok,
@@ -200,6 +258,8 @@ mod tests {
                 min_diagonal_bits: 0.0f64.to_bits(),
             }),
             NodeStatus::Void(VoidReason::NotFinite),
+            NodeStatus::Void(VoidReason::NotAGeometry),
+            NodeStatus::Void(VoidReason::Unrealisable),
         ];
         let codes: Vec<u64> = statuses
             .iter()
@@ -222,6 +282,8 @@ mod tests {
             SolveExit::Trivial,
         ];
         let mut codes: Vec<u8> = all.iter().map(|e| exit_code(*e)).collect();
+        // The never-solved marker shares this space and must not collide with a real exit.
+        codes.push(NOT_SOLVED_EXIT);
         let n = codes.len();
         codes.sort_unstable();
         codes.dedup();

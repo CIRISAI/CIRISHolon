@@ -191,6 +191,7 @@ mod tests {
             exit_code: 0,
             status: NodeStatus::Ok,
             warm: true,
+            mirrored: false,
         }
     }
 
@@ -256,6 +257,10 @@ mod tests {
         spun.cg_iters = base.cg_iters + 43;
         spun.exit_code = base.exit_code + 2;
         spun.warm = !base.warm;
+        // `mirrored` is in the same class as `warm` and is pinned here for the same reason:
+        // it says how the number was reached, and a certificate over "how" would fire on a
+        // symmetry declaration that changed no physics.
+        spun.mirrored = !base.mirrored;
         assert_ne!(base, spun, "the two records must actually differ, or this proves nothing");
         assert_eq!(
             Digest::of_record(&base),

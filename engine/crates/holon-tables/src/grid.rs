@@ -8,6 +8,24 @@
 //! a 32-worker table.
 
 /// A node's canonical index into the whole table. Stable, worker-count-independent.
+///
+/// # Why this is still `u32` after the N-axis fold
+///
+/// Six axes can multiply past `u32` where three never could, so the question was forced by
+/// [`NdGrid`] and is answered here rather than in a commit message.
+///
+/// It stays `u32`. Widening it would change [`crate::GenOutcome::table_bytes`]'s layout —
+/// four bytes per node become eight — and that byte string is the artifact the whole
+/// campaign's bit-identity comparison is taken over, so the widening would be a silent
+/// change to every committed table's strictest comparator. (The DIGEST would survive, since
+/// `Digest::of_record` already hashes `r.node as u64`; the byte string would not.)
+///
+/// And the ceiling is not a real constraint: `u32::MAX` nodes is 4.3e9 electronic-structure
+/// solves, against a committed SATURATION-2 table of 105,105. A grid that overflowed this
+/// would need terabytes for the slot vector alone. [`NdGrid::new`] therefore asserts the
+/// node count fits, loudly and at construction, rather than wrapping into two nodes sharing
+/// a slot — which the partition's own assert would report as "solved twice" from a place
+/// that could not explain it.
 pub type NodeId = u32;
 
 /// A region's canonical index. Regions are the unit of work handed to a worker AND the
@@ -219,6 +237,374 @@ impl TableGrid {
         (0..self.n_regions() as RegionId)
             .map(|r| self.region_nodes(r))
             .collect()
+    }
+}
+
+// ===========================================================================
+// The dimension-generic grid (WB-8.7: one leased tabulation pipeline, N axes)
+// ===========================================================================
+//
+// `TableGrid` above is the 3-axis trimer grid. It is not deleted and it is not
+// re-derived: `NdGrid` is a strict generalisation of it, and
+// `NdGrid::from_table_grid` plus `tests/nd_bit_identity.rs` prove — exhaustively,
+// node by node and bit by bit — that the two agree on every one of the five
+// canonical functions (`n_nodes`, `node_id`, `coords`, `geometry`, `region_of`,
+// `region_nodes`). That proof is the whole warrant for the fold: the 3-body
+// tables are gated on bit-identity, and the generator now goes through `NdGrid`.
+
+/// How an axis's node index becomes a physical coordinate.
+///
+/// The two maps here are the only two the campaign actually uses, and both are
+/// written in the EXACT expression order of the code they replace, because the
+/// tables are gated on bit-identity and `a * b / c` is not `a * (b / c)` in `f64`:
+///
+/// * [`AxisMap::Linear`] is `TableGrid::geometry`'s interpolant, `n == 1` special
+///   case included;
+/// * [`AxisMap::ExpStretch`] is `holon_chem::{water, ooh, ozone}::r_of_tau`.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum AxisMap {
+    /// `phys = lo + (hi - lo) * i / (n - 1)`, and `lo` when `n == 1`.
+    Linear,
+    /// `phys = lo + (hi - lo) * (exp(a*t) - 1) / (exp(a) - 1)` with `t = i / (n - 1)`,
+    /// and `lo` when `n == 1`.
+    ///
+    /// The exponential stretch is what puts the nodes where the potential is: dense
+    /// at short range where the curvature is, sparse in the tail where it is not.
+    ExpStretch { a: f64 },
+}
+
+impl AxisMap {
+    /// The physical coordinate of node `i` on an axis of `n` nodes spanning `[lo, hi]`.
+    ///
+    /// **Written to be bit-identical to the code it folds.** `Linear` is character for
+    /// character `TableGrid::geometry`'s closure; changing the association here would
+    /// move the last bits of every committed 3-body table.
+    #[inline]
+    pub fn coord(self, i: usize, n: usize, lo: f64, hi: f64) -> f64 {
+        if n == 1 {
+            return lo;
+        }
+        match self {
+            AxisMap::Linear => lo + (hi - lo) * (i as f64) / ((n - 1) as f64),
+            AxisMap::ExpStretch { a } => {
+                let t = i as f64 / (n - 1) as f64;
+                lo + (hi - lo) * ((a * t).exp() - 1.0) / (a.exp() - 1.0)
+            }
+        }
+    }
+}
+
+/// One axis of an [`NdGrid`]: how many nodes, over what box, under what map, cut into
+/// regions of what edge length.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Axis {
+    pub n: usize,
+    pub lo: f64,
+    pub hi: f64,
+    pub map: AxisMap,
+    /// Region edge length along this axis. Part of the table's identity for the same
+    /// reason `TableGrid::region` is: it decides the warm-start chains.
+    pub region: usize,
+}
+
+impl Axis {
+    pub fn linear(n: usize, lo: f64, hi: f64, region: usize) -> Axis {
+        Axis { n, lo, hi, map: AxisMap::Linear, region }
+    }
+
+    pub fn stretched(n: usize, lo: f64, hi: f64, a: f64, region: usize) -> Axis {
+        Axis { n, lo, hi, map: AxisMap::ExpStretch { a }, region }
+    }
+
+    /// This axis's physical coordinate at node index `i`.
+    #[inline]
+    pub fn coord(&self, i: usize) -> f64 {
+        self.map.coord(i, self.n, self.lo, self.hi)
+    }
+}
+
+/// Which serpentine rule a grid traverses a region with.
+///
+/// # Why there are two, and why the default is the weaker one
+///
+/// [`Serpentine::SumParity`] is what `TableGrid::region_nodes` does: axis `d` is
+/// reversed iff the sum of the enumerated traversal positions of axes `0..d` is odd.
+/// It is the DEFAULT because the committed 3-body tables were built with it and they
+/// are gated on bit-identity — a better traversal is still a different table.
+///
+/// It is **not** unconditionally adjacent, which the comment it inherits claims it is.
+/// See [`NdGrid::adjacency_is_guaranteed`]: the sum rule only reproduces the true
+/// boustrophedon when every axis strictly between the first and the last has ODD
+/// region extents. The production region shape `[2, 2, 2]` does not, and its traversal
+/// takes a distance-2 step at every `i`-plane fold. That is a real (small) warm-start
+/// cost in the existing tables, and it is recorded rather than silently repaired.
+///
+/// [`Serpentine::Reflected`] is the correct rule — axis `d` is reversed iff the ORDINAL
+/// of the `d`-slab is odd, i.e. iff the mixed-radix number formed by the traversal
+/// positions of axes `0..d` is odd. It is adjacent for any extents, and it agrees with
+/// the sum rule exactly when the sum rule is adjacent. New surfaces should use it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Serpentine {
+    /// The rule `TableGrid` uses. Adjacent only under the parity condition.
+    SumParity,
+    /// The true reflected boustrophedon. Adjacent unconditionally.
+    Reflected,
+}
+
+/// A box in `d` coordinates cut into canonical regions — the dimension-generic form of
+/// [`TableGrid`].
+///
+/// Index order is axis 0 slowest, last axis fastest, matching `((i*ny + j)*nu + k)`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct NdGrid {
+    pub axes: Vec<Axis>,
+    pub serpentine: Serpentine,
+}
+
+impl NdGrid {
+    /// A grid over the given axes, traversed by the legacy [`Serpentine::SumParity`]
+    /// rule so that a 3-axis linear grid is bit-identical to the [`TableGrid`] it folds.
+    ///
+    /// # Panics
+    ///
+    /// On no axes, a zero extent, a zero region edge, a degenerate box, or a node count
+    /// that does not fit in [`NodeId`].
+    pub fn new(axes: Vec<Axis>) -> NdGrid {
+        assert!(!axes.is_empty(), "a grid with no axes has no nodes to shard");
+        for (d, a) in axes.iter().enumerate() {
+            assert!(a.n > 0, "axis {d}: a grid extent of zero has no nodes to shard");
+            assert!(
+                a.region > 0,
+                "axis {d}: a region edge of zero would put every node in its own region \
+                 and turn the whole table cold while still producing a correct-looking \
+                 result"
+            );
+            assert!(
+                a.hi > a.lo,
+                "axis {d}: the grid box must be non-degenerate in every coordinate"
+            );
+        }
+        let g = NdGrid { axes, serpentine: Serpentine::SumParity };
+        // THE OVERFLOW GUARD. `NodeId` is deliberately still `u32` (see the type's own
+        // doc), and six axes can multiply past it in a way three never could. A silent
+        // wrap here would alias two nodes onto one slot, which the partition assert would
+        // report as "solved twice" from a place that cannot explain it.
+        let mut n: usize = 1;
+        for a in &g.axes {
+            n = n
+                .checked_mul(a.n)
+                .expect("the grid's node count overflowed usize");
+        }
+        assert!(
+            n <= u32::MAX as usize,
+            "this grid has {n} nodes, which does not fit in a u32 NodeId (max {}). \
+             Widening NodeId would change `GenOutcome::table_bytes`'s layout and so the \
+             bit-identity comparison every committed table is gated on; a grid this large \
+             is {n} electronic-structure solves and is not the thing to widen it for.",
+            u32::MAX
+        );
+        g
+    }
+
+    /// The same grid, traversed by the true reflected boustrophedon.
+    pub fn with_serpentine(mut self, s: Serpentine) -> NdGrid {
+        self.serpentine = s;
+        self
+    }
+
+    /// The 3-axis linear grid a [`TableGrid`] describes.
+    ///
+    /// Bit-identical on every canonical function — asserted node by node in
+    /// `tests/nd_bit_identity.rs`, which is the acceptance argument for the fold.
+    pub fn from_table_grid(g: &TableGrid) -> NdGrid {
+        NdGrid::new(vec![
+            Axis::linear(g.nx, g.x_lo, g.x_hi, g.region[0]),
+            Axis::linear(g.ny, g.y_lo, g.y_hi, g.region[1]),
+            Axis::linear(g.nu, g.u_lo, g.u_hi, g.region[2]),
+        ])
+    }
+
+    /// How many coordinates a node has.
+    pub fn dim(&self) -> usize {
+        self.axes.len()
+    }
+
+    /// Total nodes.
+    pub fn n_nodes(&self) -> usize {
+        self.axes.iter().map(|a| a.n).product()
+    }
+
+    /// The canonical linear index of a coordinate tuple, axis 0 slowest.
+    pub fn node_id(&self, c: &[usize]) -> NodeId {
+        debug_assert_eq!(c.len(), self.axes.len());
+        let mut id = 0usize;
+        for (a, &ci) in self.axes.iter().zip(c.iter()) {
+            debug_assert!(ci < a.n);
+            id = id * a.n + ci;
+        }
+        id as NodeId
+    }
+
+    /// The coordinate tuple of a canonical index.
+    pub fn coords(&self, id: NodeId) -> Vec<usize> {
+        let mut rem = id as usize;
+        let mut out = vec![0usize; self.axes.len()];
+        for d in (0..self.axes.len()).rev() {
+            out[d] = rem % self.axes[d].n;
+            rem /= self.axes[d].n;
+        }
+        out
+    }
+
+    /// The physical coordinates of a node.
+    pub fn geometry(&self, id: NodeId) -> Vec<f64> {
+        let c = self.coords(id);
+        self.axes
+            .iter()
+            .zip(c.iter())
+            .map(|(a, &i)| a.coord(i))
+            .collect()
+    }
+
+    /// How many regions the grid divides into along each axis.
+    pub fn region_extents(&self) -> Vec<usize> {
+        self.axes.iter().map(|a| a.n.div_ceil(a.region)).collect()
+    }
+
+    /// Total regions — the number of independent work units, and NOT a function of the
+    /// worker count.
+    pub fn n_regions(&self) -> usize {
+        self.region_extents().iter().product()
+    }
+
+    /// Which region a node belongs to. A pure function of the node and the grid.
+    pub fn region_of(&self, id: NodeId) -> RegionId {
+        let c = self.coords(id);
+        let rext = self.region_extents();
+        let mut r = 0usize;
+        for d in 0..self.axes.len() {
+            r = r * rext[d] + c[d] / self.axes[d].region;
+        }
+        r as RegionId
+    }
+
+    /// The region's corner and extent along every axis.
+    fn region_box(&self, r: RegionId) -> (Vec<usize>, Vec<usize>) {
+        let rext = self.region_extents();
+        let d = self.axes.len();
+        let mut rem = r as usize;
+        let mut rc = vec![0usize; d];
+        for a in (0..d).rev() {
+            rc[a] = rem % rext[a];
+            rem /= rext[a];
+        }
+        let mut lo = vec![0usize; d];
+        let mut len = vec![0usize; d];
+        for a in 0..d {
+            lo[a] = rc[a] * self.axes[a].region;
+            len[a] = (lo[a] + self.axes[a].region).min(self.axes[a].n) - lo[a];
+        }
+        (lo, len)
+    }
+
+    /// Whether axis `axis` is walked backwards, given the traversal positions `p` of the
+    /// axes before it and the region's extents `len`.
+    ///
+    /// Axis 0 is never reversed under either rule (both reduce to an empty product).
+    #[inline]
+    fn axis_reversed(&self, axis: usize, p: &[usize], len: &[usize]) -> bool {
+        match self.serpentine {
+            // The legacy rule: the PARITY OF THE SUM of the enumerated traversal
+            // positions. In 3-D this is `ii` for axis 1 and `ii + jj` for axis 2 —
+            // `TableGrid::region_nodes`, character for character.
+            Serpentine::SumParity => p[..axis].iter().sum::<usize>() % 2 == 1,
+            // The true rule: the parity of the slab's ORDINAL, i.e. of the mixed-radix
+            // number with digits `p[0..axis]` and radices `len[0..axis]`. Reduced mod 2
+            // as it is built, so nothing can overflow.
+            Serpentine::Reflected => {
+                let mut ord = 0usize;
+                for e in 0..axis {
+                    ord = (ord * len[e] + p[e]) % 2;
+                }
+                ord == 1
+            }
+        }
+    }
+
+    /// The nodes of one region, **in canonical traversal order** — the generalised
+    /// serpentine.
+    ///
+    /// Axis `d` is traversed reversed iff [`NdGrid::axis_reversed`] says so; the odometer
+    /// runs axis 0 slowest and the last axis fastest, exactly as the index order does.
+    /// See [`Serpentine`] for what each rule guarantees.
+    pub fn region_nodes(&self, r: RegionId) -> Vec<NodeId> {
+        let d = self.axes.len();
+        let (lo, len) = self.region_box(r);
+        let total: usize = len.iter().product();
+        let mut out = Vec::with_capacity(total);
+        let mut p = vec![0usize; d];
+        let mut idx = vec![0usize; d];
+        loop {
+            for a in 0..d {
+                idx[a] = if self.axis_reversed(a, &p, &len) {
+                    lo[a] + len[a] - 1 - p[a]
+                } else {
+                    lo[a] + p[a]
+                };
+            }
+            out.push(self.node_id(&idx));
+            // Increment the odometer, last axis fastest.
+            let mut a = d;
+            loop {
+                if a == 0 {
+                    return out;
+                }
+                a -= 1;
+                p[a] += 1;
+                if p[a] < len[a] {
+                    break;
+                }
+                p[a] = 0;
+            }
+        }
+    }
+
+    /// Every region's node list, region index ascending. The whole work partition.
+    pub fn partition(&self) -> Vec<Vec<NodeId>> {
+        (0..self.n_regions() as RegionId)
+            .map(|r| self.region_nodes(r))
+            .collect()
+    }
+
+    /// Whether **every** region's traversal is guaranteed to step only between
+    /// grid-adjacent nodes.
+    ///
+    /// [`Serpentine::Reflected`] always is. [`Serpentine::SumParity`] is adjacent iff
+    /// every axis STRICTLY BETWEEN the first and the last has odd region extents —
+    /// including the short last region, when the edge does not divide the axis.
+    ///
+    /// The derivation, in one line: on a carry into axis `d`, axis `e > d` must have its
+    /// reversal flag flip to keep its index still, and under the sum rule that flag's
+    /// parity moves by `1 + sum_{d < f < e} (len[f] - 1)`, which is odd iff every
+    /// intervening `len[f]` is odd. The true rule moves it by exactly 1 always.
+    ///
+    /// This is REPORTED rather than enforced, because the 3-body tables were built under
+    /// a region shape that fails it and they are gated on bit-identity.
+    pub fn adjacency_is_guaranteed(&self) -> bool {
+        if self.serpentine == Serpentine::Reflected {
+            return true;
+        }
+        let d = self.axes.len();
+        if d < 3 {
+            return true;
+        }
+        let rext = self.region_extents();
+        (1..d - 1).all(|f| {
+            let a = &self.axes[f];
+            let full_ok = rext[f] < 2 || a.region % 2 == 1;
+            let last = a.n - (rext[f] - 1) * a.region;
+            full_ok && last % 2 == 1
+        })
     }
 }
 

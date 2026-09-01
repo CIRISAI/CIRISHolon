@@ -40,48 +40,27 @@
 
 use holon_chem::elements::{HYDROGEN, OXYGEN};
 use holon_chem::pair::{atom_energy, pair_point};
-use holon_chem::quaternary::{de4_ohhh_fci, ohhh_fci_energy, ohhh_mbe3_energy, sort_ohhh_internals};
+use holon_chem::quaternary::{de4_ohhh_fci, ohhh_fci_energy, ohhh_fci_grad, ohhh_mbe3_energy, sort_ohhh_internals};
 use holon_chem::trimer::{self, TrimerTable};
 use holon_chem::water::{self, WaterTable};
 use std::time::Instant;
 
-const R_W: f64 = 1.9435740105;
-const TH_W: f64 = 96.75788837;
+// The water monomer geometry that seeds the witnesses now lives with the witnesses,
+// in `quaternary_table::staked_witnesses`.
 const PI: f64 = std::f64::consts::PI;
 
 fn dist(a: &[f64; 3], b: &[f64; 3]) -> f64 {
     ((a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2)).sqrt()
 }
 
-/// The 40 staked witness geometries, built exactly as `tests/quaternary.rs` builds them.
+/// The 40 staked witness geometries.
+///
+/// The construction moved into the library as `quaternary_table::staked_witnesses` so that
+/// this pricing probe, `examples/de4_certify.rs`'s held-out gates and `tests/quaternary.rs`
+/// cannot drift apart: a held-out set that exists in three copies is a held-out set that
+/// can silently stop being the same one.
 fn witnesses() -> Vec<[[f64; 3]; 4]> {
-    let th = TH_W * PI / 180.0;
-    let o = [0.0f64, 0.0, 0.0];
-    let h1 = [R_W * (th / 2.0).cos(), R_W * (th / 2.0).sin(), 0.0];
-    let h2 = [R_W * (th / 2.0).cos(), -R_W * (th / 2.0).sin(), 0.0];
-    let dirs: [[f64; 3]; 8] = [
-        [-1.0, 0.0, 0.0],
-        [1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0],
-        [0.0, 1.0, 0.0],
-        [0.0, -1.0, 0.0],
-        [-0.7071, 0.0, 0.7071],
-        [-0.7071, 0.0, -0.7071],
-        [0.5774, 0.5774, 0.5774],
-    ];
-    let radii = [1.4f64, 1.8, 2.2, 2.8, 3.6];
-    let mut out = Vec::new();
-    for d in dirs.iter() {
-        let n = (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt();
-        for r in radii.iter() {
-            let p = [d[0] / n * r, d[1] / n * r, d[2] / n * r];
-            if dist(&o, &p) < 0.9 || dist(&h1, &p) < 0.9 || dist(&h2, &p) < 0.9 {
-                continue;
-            }
-            out.push([o, h1, h2, p]);
-        }
-    }
-    out
+    holon_chem::quaternary_table::staked_witnesses()
 }
 
 /// The proposed repair: the lexicographic least of the six relabelled 6-tuples.
@@ -370,6 +349,37 @@ fn main() {
             pct(&mut v_grid, 0.0), pct(&mut v_grid, 0.5), gm, pct(&mut v_grid, 1.0));
         println!("  grid-mean / witness-mean = {:.2}x", gm / mean_v);
     }
+
+    // ---------------------------------------- 1c. THE PATH THAT ACTUALLY RUNS, TODAY
+    //
+    // The trajectory loop was rewritten mid-campaign (commit 21e6be3): the four-body force
+    // is no longer one value solve plus three forward radial differences. It is now
+    // `ohhh_fci_grad`, NINE seeded dual solves -- three moving atoms times three axes --
+    // with the oxygen row imposed by translation invariance and a CI vector warm-started
+    // per oxygen hub. That is a different price and a different quantity (the full
+    // Cartesian gradient, where the old scheme delivered only the radial projection), so
+    // the earlier reading is stale on its own terms and this section replaces it.
+    println!("\n--- 1c. THE CURRENT GRADIENT PATH: ohhh_fci_grad, 9 seeded dual solves ---");
+    let mut v_grad9 = Vec::new();
+    let cpu2 = cpu_seconds();
+    let wall2 = Instant::now();
+    let mut warm: Option<Vec<f64>> = None;
+    for g in wit.iter().take(8) {
+        let a = Instant::now();
+        let r = ohhh_fci_grad(g, warm.as_deref());
+        warm = Some(r.ci);
+        v_grad9.push(a.elapsed().as_secs_f64() * 1e3);
+    }
+    let g9w = wall2.elapsed().as_secs_f64();
+    let g9c = cpu_seconds() - cpu2;
+    let g9mean: f64 = v_grad9.iter().sum::<f64>() / v_grad9.len() as f64;
+    println!("  n={}  median {:8.1} ms   MEAN {:8.1} ms", v_grad9.len(),
+        pct(&mut v_grad9, 0.5), g9mean);
+    println!("  section wall {:.2} s, process CPU {:.2} s, CPU/wall {:.3}", g9w, g9c, g9c / g9w);
+    println!("  MEAN CPU per force evaluation {:8.1} ms", g9mean * (g9c / g9w));
+    println!("  This is what a table read replaces. A 4^6 = 4096-node Catmull-Rom stencil");
+    println!("  contracted seven times is ~40k flops, tens of microseconds -- so the");
+    println!("  tabulation decision is not close, and it is not close under EITHER price.");
 
     // ---------------------------------------------- 2. the canonical-form collision
     println!("\n--- 2. IS sort_ohhh_internals A CANONICAL FORM? ---");

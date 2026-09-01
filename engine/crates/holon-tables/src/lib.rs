@@ -85,18 +85,39 @@
 //! Only the set together proves anything. Each half alone is satisfiable by a broken
 //! implementation.
 
+//! ## The fold (WB-8.7)
+//!
+//! There is exactly ONE tabulation pipeline, and it is dimension- and composition-generic.
+//! [`grid::NdGrid`] is the node set over any number of axes; [`surface::Surface`] is the one
+//! seam where a composition says what its coordinates mean; [`generate::generate_surface_leased`]
+//! is the leased generator, and every discipline in this crate's header lives in it once.
+//!
+//! The 3-axis trimer path is not a second implementation of any of that. [`generate`],
+//! [`generate::generate_with_progress`] and [`generate::generate_leased`] build a
+//! [`surface::TrimerSurface`] and an `NdGrid` and come straight back. The warrant is
+//! bit-identity, and it is a test rather than an argument: `tests/nd_bit_identity.rs`
+//! asserts, node by node and bit by bit, that `NdGrid::from_table_grid` agrees with the
+//! [`grid::TableGrid`] it folds on `n_nodes`, `node_id`, `coords`, `geometry`, `region_of`,
+//! `region_nodes` and the whole partition.
+
 pub mod digest;
 pub mod generate;
 pub mod grid;
 pub mod mesh_reaper;
 pub mod mutation;
 pub mod node;
+pub mod ohhh;
+pub mod surface;
 pub mod worker;
 
 pub use digest::Digest;
-pub use generate::{generate, GenOutcome, GenSpec, WarmPolicy};
-pub use grid::{NodeId, RegionId, TableGrid};
+pub use generate::{
+    generate, generate_surface, generate_surface_leased, generate_surface_with_progress,
+    GenOutcome, GenSpec, SurfaceSpec, WarmPolicy,
+};
+pub use grid::{Axis, AxisMap, NdGrid, NodeId, RegionId, Serpentine, TableGrid};
 pub use mutation::Mutation;
 pub use node::{NodeRecord, NodeStatus, VoidReason};
+pub use surface::{DistanceTetramer, Realised, Surface, TrimerSurface};
 pub use mesh_reaper::MeshWorld;
 pub use worker::WorkerProbe;

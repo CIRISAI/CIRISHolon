@@ -894,8 +894,8 @@ deferred until P2's fence counter rules the `(O,O,O)` table necessary; see
 measurement becomes the general rule that device class belongs to the artifact
 rather than to the schedule.
 
-**CORRECTION 2026-09-01: one row was impossible, and the instrument it cited did not
-resolve.** This entry cited its GPU instruments as `scratchpad/s3gpu/...`, which reads as
+**CORRECTION 2026-09-01: the instrument this entry cited did not resolve, and its timings
+turned out not to be stable.** This entry cited its GPU instruments as `scratchpad/s3gpu/...`, which reads as
 the repository's scratch directory and was never where they were: they lived in a
 **per-session** scratchpad keyed by session id, one cleanup away from taking the
 reproducibility of every number here with them. They are now committed at
@@ -956,7 +956,8 @@ Instruments, all now in the repository: `holon-chem/examples/s3_sigma_cost.rs` (
 `holon-chem/examples/s3_sigma_export.rs` (the real problem),
 `conformance/atomworld/s3_mesh/gpu/{probe,sigma,gemm}.cu` and `{cpu_fair,cpu_blas}.py`
 (device ceilings, GPU kernel, fair CPU arm) with that directory's README carrying the
-`ooo.bin` sha256 pin and the reproduction. The production successor of `sigma.cu` is
+`ooo.bin` sha256 pin and the reproduction, and `timing_stability_2026-09-01.log` carrying
+the six-run series above. The production successor of `sigma.cu` is
 `engine/crates/holon-gpu/kernels/fci_sigma.cu` (another lane's, uncommitted as of this
 writing); it is a different artifact from the measured one and does not replace it here.
 

@@ -824,7 +824,7 @@ against `fci::sigma_direct`'s own output rather than against a re-derivation.
 | arm | sigma/s | GFLOP/s FP64 | ratio |
 |---|---:|---:|---:|
 | **GPU, RTX 4090 Laptop (sm_89)** | **65.7** | 318.4 | **3.2× the CPU** |
-| GPU incl. host round trip | 69.8 | — | PCIe is 0.5 ms against 15 ms of compute |
+| GPU + host round trip | 66.0 | — | **re-measured 2026-09-01; see the correction below** |
 | CPU, `sigma_direct`, 32 threads | 20.8 | ~97 | the baseline (loadavg 32) |
 | CPU, `sigma_direct`, 32 threads | 17.2 | ~80 | same, loadavg 18 — the spread is the machine |
 
@@ -894,10 +894,52 @@ deferred until P2's fence counter rules the `(O,O,O)` table necessary; see
 measurement becomes the general rule that device class belongs to the artifact
 rather than to the schedule.
 
-Instruments: `holon-chem/examples/s3_sigma_cost.rs` (CPU),
+**CORRECTION 2026-09-01: one row was impossible, and the instrument it cited did not
+resolve.** This entry cited its GPU instruments as `scratchpad/s3gpu/...`, which reads as
+the repository's scratch directory and was never where they were: they lived in a
+**per-session** scratchpad keyed by session id, one cleanup away from taking the
+reproducibility of every number here with them. They are now committed at
+`conformance/atomworld/s3_mesh/gpu/`, and re-running `sigma.cu` from there reproduced the
+correctness figures **identically** — 4.547474e-13 max absolute, 3.033e-15 relative,
+188,363 of 207,025 (91.0%) differing bitwise, five repeats bit-identical. The agreement
+and divergence figures that founded M-DEVICE-CLASS are therefore re-run results, not
+citations. (M-STALE-INSTRUMENT, in a form that entry does not cover: not
+working-tree-only, but never in the working tree, cited by a path they had never been at.)
+
+The re-run also settled a defect: the old row read `incl. host round trip 69.8`, **faster
+than the 65.7 it supposedly contains**, which the instrument cannot print — it times the
+round trip over a block containing the c upload and the sigma download. The tempting
+reading is that the two labels were swapped. It is wrong, and the discriminator is that
+`sigma.cu` prints sigma/s and GFLOP/s *together* on the kernel-only line and sigma/s alone
+on the round-trip line: 65.7 sigma/s is 15.221 ms is **318.6 GFLOP/s**, which is the banked
+318.4, while 69.8 would be 338.5, banked nowhere. So the headline is the kernel-only line,
+correctly transcribed and correctly labelled, and **the single bad datum was 69.8**, whose
+provenance is not recoverable. It is replaced above by today's measured round trip rather
+than by a reconstruction. **No claim moves**: the ratio is 65.7/20.8 and the 3.2x is
+untouched.
+
+**CONTENTION IS A SIGNED BIAS HERE, AND THE SIGN IS MEASURED (M-PLACEMENT-LOTTERY, third
+rung).** That row's scope note — any lane comparing two engines by wall clock on this box
+inherits it — applies to this entry, and a margin argument does not answer it, because a
+bias is not noise. What the re-run supplies is the asymmetry, measured rather than
+assumed: the GPU arm was re-timed at **loadavg 61** against the banked run's loadavg 18–32
+and moved 65.7 → 67.5 sigma/s, **+2.7% and in the wrong direction for a contention story**.
+The 14.8 ms device / 0.32 ms host split predicts exactly that. So the GPU arm is
+essentially unexposed to host load and the CPU arm is fully exposed, which means **the
+whole of the contention bias sits in the CPU arm and its sign inflates the ratio: 3.2x is
+an UPPER bound on the quiet-box ratio.** By how much is unmeasured — the two banked CPU
+readings (20.8 at loadavg 32, 17.2 at loadavg 18) are 1.21x apart and also ordered against
+a simple load story, so they do not bound it, and the quiet-window CPU arm is owed. The
+headline already quotes the *faster* of the two CPU readings, which is the conservative
+choice for the ratio, but conservative-within-loaded is not the same as unbiased.
+
+Instruments, all now in the repository: `holon-chem/examples/s3_sigma_cost.rs` (CPU),
 `holon-chem/examples/s3_sigma_export.rs` (the real problem),
-`scratchpad/s3gpu/{probe,sigma,cpu_fair}.{cu,py}` (device ceilings, GPU kernel,
-fair CPU arm).
+`conformance/atomworld/s3_mesh/gpu/{probe,sigma,gemm}.cu` and `{cpu_fair,cpu_blas}.py`
+(device ceilings, GPU kernel, fair CPU arm) with that directory's README carrying the
+`ooo.bin` sha256 pin and the reproduction. The production successor of `sigma.cu` is
+`engine/crates/holon-gpu/kernels/fci_sigma.cu` (another lane's, uncommitted as of this
+writing); it is a different artifact from the measured one and does not replace it here.
 
 ## 2026-08-30, twenty-fifth entry: the adaptive port lands — 30× per measurement, a 65,521-qubit surface code verified, and stim still ahead on the total
 
@@ -1204,7 +1246,7 @@ lib tests, both profiles.
 *Prompted by counter-evidence from MESHER (a separate lane from saturation3-mesh;
 see the attribution correction below), verified here against this
 box's own hardware. Their datum: a 26.7 ms job of theirs reads 3.5× its record
-at loadavg 46 — SHORTER than my calibration probe and far MORE sensitive,
+at loadavg 46 [FIGURE LATER WITHDRAWN — baseline artifact; see "THE PROBE-BLINDNESS FINDING IS RETRACTED" below] — SHORTER than my calibration probe and far MORE sensitive,
 which falsifies the mechanism I had proposed ("a short job gets an idle core").*
 
 **The box is a hybrid part and I never controlled for it.** 13th Gen Intel
@@ -1253,7 +1295,7 @@ never sufficient.
 
 **My proposed mechanism is withdrawn.** I claimed a short probe cannot see
 load because it gets an idle core. Three things say otherwise: MESHER's
-26.7 ms job is shorter and 3.5× more affected; the E-core penalty on MY
+26.7 ms job is shorter and 3.5× more affected [FIGURE LATER WITHDRAWN — baseline artifact; see "THE PROBE-BLINDNESS FINDING IS RETRACTED" below]; the E-core penalty on MY
 workload is duration-INDEPENDENT (1.16× at d=45, 1.22× at d=101, 1.16× at
 d=141), so duration is not the axis it varies along; and the probe's CPU time
 tracks its wall time (user 0.07 of wall 0.07–0.11), so it was never waiting
@@ -1372,8 +1414,10 @@ verified my artifacts against the primary source, and tested the claim rather
 than ignoring it — produced ALL of the following, and none of them are
 saturation3-mesh's:
 
-* the 26.7 ms counter-datum (3.5× its record at loadavg 46) that falsified my
-  "a short job gets an idle core" mechanism;
+* the 26.7 ms counter-datum (3.5× its record at loadavg 46 [FIGURE LATER WITHDRAWN — baseline artifact; see "THE PROBE-BLINDNESS FINDING IS RETRACTED" below]) that
+  falsified my "a short job gets an idle core" mechanism — the FALSIFICATION
+  stands on their CPU-time measurement, which has no baseline in it; only the
+  ratio is withdrawn;
 * the E/P = 0.83 inversion on their workload — the E-core FASTER than the
   P-core — which is what made core class visibly not the axis either;
 * the suggestion to sample `scaling_cur_freq` beside the timings, which is what

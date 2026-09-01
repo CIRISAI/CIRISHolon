@@ -117,6 +117,38 @@ pub fn sigma_direct_t<T: Scalar>(space: &FciSpace, k: &[T], g: &[T], c: &[T], si
     }
 
     // 3. Mixed alpha-beta block
+    //
+    // ### ARITHMETIC-REGIME BOUNDARY: commit 4884704 (2026-08-31 18:02)
+    //
+    // The `kl` walk below is SPARSE and runs in FIRST-TOUCH order. It used to run over
+    // every `kl` ascending (`grow.iter().enumerate()`). `vrow[ib]` accumulates over `kl`,
+    // so this reassociates a floating-point sum: the optimisation is a real speedup and
+    // changes no physics, and it changes the last bits of almost everything this crate
+    // computes.
+    //
+    // MEASURED, on the shipped pair tables: 186 of 192 HCl energy knots moved, max
+    // 3.979e-12 hartree, with the grid 0/192 different — tens of ULPs on a total of order
+    // 455 Ha, 25x inside every declared uncertainty and inside R2's 1e-10 stake. No
+    // tolerance gate can see it. Every gate asserting IDENTITY can, and three went red on
+    // it in three different lanes, each blaming the last thing its own author had changed.
+    // Bracketed to this commit against its parent 2b0d154, source-only: no Cargo.toml,
+    // Cargo.lock or workspace change, same toolchain and profile.
+    //
+    // WHICH SYSTEMS MOVE IS NOT A SIZE RULE, and the first version of this note said it
+    // was: right mechanism, wrong axis — what governs is whether the sparsity pattern's
+    // first-touch order differs from ascending, per system. Measured on the dimer record:
+    // Cl (9 determinants) moved, Br (18) did NOT, I (27) moved — the same one-hole
+    // `C(n,n)·C(n,n-1)` shape at all three, so the effect is not monotone in determinant
+    // count and a threshold on that axis mispredicts in both directions. H2, HHe and He2 are observed not to move, which is the only reason B1's
+    // all-hydrogen bit-identity reference survived this commit; that is an observation
+    // about those three curves and not a guarantee, so anything extending this walk — or
+    // changing the order `touched_kl` is pushed in — should expect B1 and every banked
+    // bit pattern to move, and should re-bank them naming the change.
+    //
+    // The regime boundary is this commit and it is ACCEPTED, not reverted (reverting
+    // would split the running ozone tabulation's arithmetic mid-table). Artifacts banked
+    // before it are records of the previous regime; see MISFITS.md, M-STALE-INSTRUMENT's
+    // artifact-identity rung.
     let mut t = vec![T::ZERO; n2 * nb];
     let mut vrow = vec![T::ZERO; nb];
     let mut touched_kl: Vec<usize> = Vec::with_capacity(n2);

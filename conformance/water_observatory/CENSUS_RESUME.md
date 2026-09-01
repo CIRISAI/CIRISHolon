@@ -31,8 +31,19 @@ the suite ran green throughout.
 | arm | seeds | state | verdict |
 |---|---|---|---|
 | hydrogen control, `--ozone=fenced` | 8 of 8 | **COMPLETE** | banked in `CENSUS_RESULTS.md` and `census_hydrogen.log` |
-| mixed `--ozone=served` | 0 of 8 | in flight, still generating the O–O curve | — |
-| mixed `--ozone=fenced` | 0 of 8 | in flight, same | — |
+| mixed `--ozone=served` | 0 of 8 | **REFUSED** — panicked at the ozone load, exit 101 | `census_mixed_served.log`, `CENSUS_RESULTS.md` §10.4 |
+| mixed `--ozone=fenced` | in flight | ~190 s a seed | `census_mixed_fenced.log` when it lands |
+
+**The served arm refused and that is a result, not a failure.** At this pin
+`ozone::generate()` is a hard `None` — the convicted surface was WITHDRAWN, not patched —
+so the run died at the table load rather than censusing an empty surface. Its consequence
+is that `p2_waterquench.log` is not reproducible from any current commit. §10.4.
+
+**A forward prediction is staked on the fenced arm** at `0a6d363`, before seeds 2–8
+printed: ≥ 5 of 8 seeds reproducing the banked molecule multisets. Its premise was then
+found FALSE at `d2533b0`, still before the data — the O–O curve also moved (6.7e-6 → 2.7e-6,
+from a `tier.rs` sparsity optimisation), so the comparison is confounded and the stake is
+expected to fail. Both commits precede the result; git is the check.
 
 The two mixed arms each pay a ~320 s O–O curve before their first seed, and the box has
 been at load 65–85 on 32 cores throughout (a 27-core ozone tabulation holds the critical

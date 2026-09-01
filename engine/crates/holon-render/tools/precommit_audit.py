@@ -22,6 +22,18 @@ content, and it gets printed.
 
     python3 precommit_audit.py <repo> <path> [<path> ...]
 
+WHEN IT APPLIES, AND WHEN IT CANNOT. It answers "is this file's change mine alone" by
+re-applying a HELD change onto a pristine worktree and comparing. That reference only
+exists while the change is held OUT of the tree — during a landing-order hold, with the
+held files sitting beside `reapply.py`. Once the work is landed, the reference IS HEAD and
+there is nothing to re-apply: run it here and `reapply.py` correctly reports that it
+cannot find the held sources, which reads like a failure and is not one.
+
+For an incremental edit on top of a landed change, the check is the direct one instead:
+`git diff HEAD -- <path>` and read every hunk, which is what the rule asked for in the
+first place. This tool earns its place on the case a person cannot do reliably by eye — a
+multi-file change held across other lanes' landings — not on a one-file edit.
+
 Exit 0 = safe to `git commit -- <those paths>`. Exit 1 = at least one file holds content
 this lane did not put there; the paths to leave out are named.
 """

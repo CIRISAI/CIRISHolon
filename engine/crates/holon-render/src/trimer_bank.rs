@@ -77,6 +77,24 @@ pub enum AxisRule {
     /// surface is on it, and because assuming the two agreed is the mistake this whole
     /// enum exists to prevent.
     TauStretchH3,
+    // THIS ENUM NAMES SPACING, AND ONLY SPACING. Do not add a traversal variant here.
+    //
+    // `de4-table`'s grid vocabulary (54821bd) keeps the two strictly apart, and the
+    // reason is not tidiness: traversal is a property of how a REGION is walked, spacing
+    // is a property of WHERE the nodes are, and a field that means both cannot answer
+    // either question. The artifact carries its traversal separately as `warm_policy`
+    // ("CanonicalChain" on the emitted H3), and this door deliberately does not read it —
+    // an unread field being a decision here rather than an oversight, because nothing the
+    // door decides depends on the order the producer visited its nodes in.
+    //
+    // That independence is now measured rather than assumed. `de4-table` falsified the
+    // sum-parity serpentine's documented adjacency invariant for even interior axis
+    // extents, and production `[2, 2, 2]` — the region shape of the very artifact in
+    // `tests/data/` — is one of the failing cases. A consumer that had reconstructed node
+    // positions from a traversal rule would have been wrong on the first real table it
+    // met. This door reads the shipped COORDINATES instead, which is why the finding
+    // costs it nothing; that was luck as much as design when the choice was made, and it
+    // is written down here so the next change keeps it on purpose.
 }
 
 impl AxisRule {

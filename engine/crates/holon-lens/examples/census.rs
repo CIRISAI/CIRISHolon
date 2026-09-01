@@ -168,6 +168,10 @@ fn main() {
             if c.nonexpansion_ok { "ok" } else { "BREACHED" },
             if c.void {
                 "VOID (work count below the stake)".to_string()
+            } else if c.distinct_readings <= 1 {
+                "VACUOUS: one partition reading for the whole run, closed by h = id \
+                 (M-FIXED-POINT-TRAJECTORY)"
+                    .to_string()
             } else if c.witness_pair_count == 0 {
                 "no witness pair found at this resolution (NOT a proof of closure)".to_string()
             } else {
@@ -214,6 +218,100 @@ fn main() {
             lens::largest_domain(traj.header.n_atoms, &edges),
             edges.len()
         );
+
+        // ---- the closure-defect lens, applied to each MACRO VIEW --------------------
+        //
+        // Leg B above asks whether the full partition view carries its own dynamics. This
+        // asks the same question of the coarser readings a report would actually quote:
+        // is "the largest domain is 8 atoms" a quantity that predicts its own next value,
+        // or does it need the micro state it threw away? Each view is binned, and the bin
+        // count is printed with the defect because a view is only as closed as its
+        // resolution (M-FINAL-VIEW-COLLISIONS: a refined view has its OWN collisions, and
+        // they have to be counted rather than assumed away).
+        println!("#\n# CLOSURE DEFECT BY MACRO VIEW (binned; a view is only as closed as its resolution):");
+        println!(
+            "#   {:<26} {:>5} {:>8} {:>13} {:>10}  {}",
+            "view", "bins", "defect", "informative", "witnesses", "reading"
+        );
+        let n = traj.header.n_atoms;
+        let edges_of = |f: &holon_lens::traj::Frame| -> Vec<(usize, usize)> {
+            let mut v = Vec::new();
+            for i in 0..n {
+                for j in (i + 1)..n {
+                    if f.is_bonded(n, i, j) {
+                        v.push((i, j));
+                    }
+                }
+            }
+            v
+        };
+        let largest: Vec<f64> = traj
+            .frames
+            .iter()
+            .map(|f| lens::largest_domain(n, &edges_of(f)) as f64)
+            .collect();
+        let bondcount: Vec<f64> = traj
+            .frames
+            .iter()
+            .map(|f| f.bonded.count_ones() as f64)
+            .collect();
+        let hb: Vec<f64> = traj
+            .frames
+            .iter()
+            .map(|f| lens::hbonds(&f.pos, &traj.header.z).map(|v| v.len() as f64).unwrap_or(0.0))
+            .collect();
+        let stride = (traj.frames.len() / 4000).max(1);
+        let psi: Vec<f64> = traj
+            .frames
+            .iter()
+            .step_by(stride)
+            .map(|f| {
+                let mut acc = 0.0;
+                let mut c = 0usize;
+                for i in 0..n {
+                    let nb: Vec<[f64; 3]> =
+                        lens::k_nearest(&f.pos, i, 6).iter().map(|&j| f.pos[j]).collect();
+                    if let Ok(v) = lens::hexatic_psi6(traj.header.dims, f.pos[i], &nb) {
+                        acc += v;
+                        c += 1;
+                    }
+                }
+                if c == 0 { 0.0 } else { acc / c as f64 }
+            })
+            .collect();
+
+        let views: [(&str, &Vec<f64>, usize, f64, f64); 4] = [
+            ("largest domain (atoms)", &largest, n + 1, 0.0, (n + 1) as f64),
+            ("bonded pair count", &bondcount, 67, 0.0, 67.0),
+            ("H-bond count", &hb, 20, 0.0, 20.0),
+            ("mean hexatic psi6", &psi, 10, 0.0, 1.0),
+        ];
+        for (name, v, bins, lo, hi) in views {
+            if v.is_empty() {
+                println!("#   {name:<26} {:>5} {:>8} {:>13} {:>10}  no samples", bins, "-", 0, "-");
+                continue;
+            }
+            let leg = lens::binned_closure_defect(v, bins, lo, hi, &st);
+            println!(
+                "#   {name:<26} {:>5} {:>8.5} {:>13} {:>10}  {}",
+                bins,
+                leg.defect,
+                leg.informative_transitions,
+                leg.witness_pair_count,
+                if leg.void {
+                    "VOID (work count below stake)"
+                } else if leg.distinct_readings <= 1 {
+                    // A view with ONE reading is closed by h = id and has said nothing.
+                    // M-FIXED-POINT-TRAJECTORY: a closure gate on a carrier that never
+                    // moves is vacuous, and a constant macro view is exactly that.
+                    "VACUOUS (one reading; the view never moved)"
+                } else if leg.witness_pair_count == 0 {
+                    "no witness pair at this resolution"
+                } else {
+                    "NOT CLOSED"
+                }
+            );
+        }
 
         // ---- the blind classifier ---------------------------------------------------
         let cl = classifier::classify(&traj);

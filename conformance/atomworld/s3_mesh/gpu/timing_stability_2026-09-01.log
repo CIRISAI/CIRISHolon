@@ -1,0 +1,48 @@
+# G2 GPU timing stability on a LOADED box — six runs of one binary, one input
+#
+# instrument   sigma.cu (this directory), compiled nvcc -O3 -arch=sm_89
+# input        ooo.bin, sha256 9bd4d3523fc5b8a4397bcd0e93583fb8b2e1f33c7b1122058f1790650c0f1710
+# invocation   ./sigma ooo.bin 20        (20 reps per timed block)
+# host         i9-13900HX + RTX 4090 Laptop, loadavg 61-72 across the series
+# device       idle before each run (nvidia-smi 0%, 15 MiB)
+# reps         NOT pinned; no taskset. That is the point of the reading.
+#
+# WHY THIS EXISTS: the banked record carried 65.7 (kernel only) and 69.8 (with host
+# round trip) -- the round trip reported FASTER than the kernel it contains. Two
+# diagnoses were tried and both were wrong (swapped labels; 69.8 unsourceable). This
+# series is what settled it.
+
+run   kernel_only_ms   sigma/s     round_trip_ms   sigma/s
+  1        14.820        67.5          15.142       66.0
+  2        18.168        55.0          89.822       11.1
+  3        17.419        57.4          14.903       67.1
+  4        17.686        56.5          80.959       12.4
+  5        17.007        58.8          81.067       12.3
+  6        14.867        67.3          14.904       67.1
+
+kernel only    14.820 - 18.168 ms   = 1.23x spread
+round trip     BIMODAL: 3 runs ~14.9 ms, 3 runs 81-90 ms = 6.03x spread
+slow-mode excess over fast mode   66.1 ms
+measured PCIe round trip (probe.cu, 1.58 MiB CI vector)   0.50 ms
+                                  ratio   132x
+
+READ THIS AS: no device-side mechanism moves 1.58 MiB 132x slower than its measured
+PCIe cost. The slow mode is the HOST THREAD DESCHEDULED at loadavg 72. The same cause
+inflates the kernel-only block, because cudaEventElapsedTime over 20 back-to-back reps
+charges host gaps to the device clock whenever the host cannot keep the launch queue fed.
+
+CONSEQUENCE: a single GPU timing on this box is a DRAW, not a measurement, and the
+ordering between two independently contaminated blocks carries no information. The banked
+65.7 and 69.8 are two such draws. Every timing row in the G2 record should have carried a
+spread beside it -- RESOURCE_DESIGN section 9 Q4 requires exactly that of a REGISTRY entry,
+and the benchmark record did not hold itself to its own crate's rule.
+
+CORROBORATION, same day, independent instrument: gpu-production's fci_bench (holon-gpu
+production path, taskset-pinned, own launch header) reported kernel only 58.9 / with round
+trip 65.2 -- the same impossible ordering -- while measuring the GPU rate over five timing
+runs at 69.40 +/- 1.01, and its registry spot-check convicted its own 58.9 against that
+mean. See conformance/atomworld/gpu_fci/.
+
+STILL OWED: the quiet-window measurement, on BOTH arms. The GPU arm's exposure is not
+smaller than the CPU arm's, so the direction of the contention bias in the 3.2x ratio is
+not established. M-PLACEMENT-LOTTERY third rung.

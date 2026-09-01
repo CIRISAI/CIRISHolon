@@ -450,7 +450,7 @@ fixed range in a fixed order. **Five repeat runs bit-identical.**
 | arm | sigma/s | GFLOP/s FP64 | note |
 |---|---|---|---|
 | **GPU, whole kernel** | **65.7** | 318.4 | 15.2 ms/sigma |
-| GPU + host round trip | 66.0 | — | re-measured 2026-09-01; the old row was impossible |
+| GPU + host round trip | 14.9–89.8 ms | — | bimodal on a loaded box; see below |
 | CPU, `sigma_direct`, 32 threads | 17.2 – 20.8 | ~97 | two runs, loadavg 18 and 32 |
 | CPU, same GEMM reformulation, OpenBLAS 1 thread | 1.40 | 6.8 | **slower than the hand-written kernel** |
 
@@ -464,22 +464,29 @@ they lived in a per-session scratchpad rather than the repository's. They are no
 4.547474e-13 absolute, 3.033e-15 relative, 188,363 of 207,025 bitwise, five repeats
 bit-identical. The 91.0% divergence that founded M-DEVICE-CLASS is a re-run result now.
 
-The re-run also convicted one datum. `69.8` was reported as the WITH-round-trip figure
-while being faster than the 65.7 it contains, which `sigma.cu` cannot print. The labels
-were **not** swapped, tempting as that reading is: the instrument prints sigma/s and
-GFLOP/s together only on the kernel-only line, and 65.7 ↔ 15.221 ms ↔ 318.6 GFLOP/s is
-the banked 318.4, whereas 69.8 would be 338.5 and appears nowhere. The headline is sound;
-the single bad datum was 69.8 and its provenance is unrecoverable. Nothing else moves.
+The re-run also exposed a defect, which I diagnosed wrongly twice. `69.8` was reported as
+the WITH-round-trip figure while being faster than the 65.7 it contains. Swapped labels:
+rejected, since `sigma.cu` prints sigma/s and GFLOP/s together only on the kernel-only line
+and 65.7 ↔ 15.221 ms ↔ 318.6 GFLOP/s is the banked 318.4. "69.8 is unsourceable": also
+wrong. **The truth is that on a loaded box neither timing is stable.** Six runs at loadavg
+61–72 gave kernel-only 14.820–18.168 ms (1.23x) and a bimodal round trip — three at ~14.9
+ms, three at 81–90 ms (6.0x), the slow mode's 66.1 ms excess being 132x the measured 0.50
+ms PCIe round trip, i.e. host descheduling rather than any device mechanism. The two banked
+numbers are two draws from that distribution. gpu-production's independent `fci_bench`
+showed the same ordering the same day (58.9 kernel / 65.2 round trip) while measuring
+69.40 ± 1.01 over five timing runs, and its spot-check convicted its own 58.9.
 
-**The ratio's exposure to contention is now measured, not argued** (M-PLACEMENT-LOTTERY,
-third rung: contention is a bias with a sign, because two arms lose different amounts to
-it). Re-timed at loadavg 61 against the banked loadavg 18–32, the GPU arm moved 65.7 →
-67.5 sigma/s — **+2.7%, in the wrong direction for a contention story**, as the 14.8 ms
-device / 0.32 ms host split predicts. The GPU arm is therefore essentially unexposed and
-the CPU arm fully exposed, so the whole bias sits in the CPU arm and inflates the ratio:
-**3.2× is an upper bound on the quiet-box ratio**, and a quiet-window CPU arm is owed.
-This does not touch the G2 verdict, which was adoption-condition-MET / adoption-DEFERRED
-on the device-class grounds, not on the size of the win.
+**RETRACTED, one hour after I posted it:** that the GPU arm's contention exposure had been
+measured and was negligible (65.7 → 67.5, "+2.7% in the wrong direction"), and that 3.2×
+was therefore an upper bound on the quiet-box ratio. That rested on a single draw; five
+more read 55.0–58.8, below the banked 65.7. The device compute is unexposed, but measured
+GPU throughput is host-exposed through launch scheduling and pageable copies — relatively
+more so than the CPU arm (6.0× vs 1.21×). **M-PLACEMENT-LOTTERY's third rung applies and
+the direction of the bias is NOT established: both arms need the quiet window.** The 3.2×
+is a loaded-box figure with unmeasured spread on both arms. It does not touch the G2
+verdict, which was adoption-condition-MET / adoption-DEFERRED on device-class grounds
+rather than on the size of the win, and it does not touch the correctness figures, which
+are bit comparisons rather than timings.
 
 ### A property banked rather than assumed: the table is profile-independent
 

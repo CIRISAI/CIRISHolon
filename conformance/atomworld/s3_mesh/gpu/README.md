@@ -76,50 +76,87 @@ the record, though **not the one the arithmetic first suggested.**
 | kernel only | 15.22 ms (65.7 sigma/s, 318.4 GFLOP/s) | 14.820 ms (67.5 sigma/s, 327.2 GFLOP/s) |
 | with host round trip | *not recoverable* — see below | 15.142 ms (66.0 sigma/s) |
 
-### The defect: a with-round-trip figure faster than the kernel it contains
+### The defect, diagnosed twice — the second time correctly
 
 The record carried two GPU rows, `whole kernel 65.7` and `incl. host round trip 69.8`.
 **69.8 sigma/s is 14.33 ms and 65.7 is 15.22 ms, so the row that includes the round trip
-was reported as the faster one.** The instrument times the round trip over a block
-containing the c upload and the sigma download (the second `cudaEventRecord` pair in
-`sigma.cu`), so it cannot produce that ordering. One of the two rows was wrong.
+was reported as the faster one**, which one run of the instrument cannot produce: it times
+the round trip over a block containing the c upload and the sigma download.
 
-The obvious reading is that the labels were swapped. **That reading is wrong**, and the
-thing that discriminates is which numbers came off one printed line. `sigma.cu` prints
-sigma/s *and* GFLOP/s together on the kernel-only line, and prints sigma/s alone on the
-round-trip line. The banked pair ties:
+**FIRST DIAGNOSIS (wrong): the labels were swapped.** Rejected, correctly, because
+`sigma.cu` prints sigma/s *and* GFLOP/s together on the kernel-only line and sigma/s alone
+on the round-trip line, and the banked pair ties — 65.7 sigma/s is 15.221 ms is 318.6
+GFLOP/s, which is the banked 318.4, while 69.8 would be 338.5 and is banked nowhere. So
+65.7 and 318.4 did come off the kernel-only line.
 
-    65.7 sigma/s  ->  15.221 ms  ->  318.6 GFLOP/s      banked GFLOP/s: 318.4
-    69.8 sigma/s  ->  14.327 ms  ->  338.5 GFLOP/s      not banked anywhere
+**SECOND DIAGNOSIS (also wrong): 69.8 was an unsourceable datum.** That is what the
+GFLOP/s tie appears to imply, and it is what this file said for about an hour. It is
+wrong, and what refuted it was a neighbour's independent instrument plus five repeats.
 
-and today the same line prints the same three-way tie (67.5 / 14.820 / 327.2). So the
-headline row is the kernel-only line, transcribed correctly and labelled correctly, and
-**the single defective datum is 69.8** — a number the instrument could not have printed
-next to 65.7, and whose provenance is not recoverable. Aug 30's true round trip would
-have been near 15.5 ms (about 64.4 sigma/s), by today's measured 0.32 ms delta.
+**WHAT IS ACTUALLY TRUE: on a loaded box neither timing is stable, and the ordering
+between them carries no information.** Six runs of the same binary against the same
+`ooo.bin`, minutes apart, at loadavg 61–72:
 
-Both readings explain the impossible ordering; only one explains the GFLOP/s. Taking the
-first would have moved a correct headline and left the real defect standing. **A check
-that cannot separate two causes says look, not conclude** — the impossible ordering was a
-detector, and the GFLOP/s tie was the discriminator.
+| run | kernel only | with host round trip |
+|---|---|---|
+| 1 | 14.820 ms (67.5) | 15.142 ms (66.0) |
+| 2 | 18.168 ms (55.0) | **89.822 ms (11.1)** |
+| 3 | 17.419 ms (57.4) | 14.903 ms (67.1) |
+| 4 | 17.686 ms (56.5) | **80.959 ms (12.4)** |
+| 5 | 17.007 ms (58.8) | **81.067 ms (12.3)** |
+| 6 | 14.867 ms (67.3) | 14.904 ms (67.1) |
 
-**No claim moves.** The headline and its GFLOP/s are sound, the ratio is 65.7/20.8, and
-the 3.2x is untouched. The 69.8 row is replaced by today's measured round trip with its
-date, rather than by a reconstruction of a number nobody can source.
+Kernel-only spans **1.23x** (14.820–18.168 ms). The round trip is **bimodal**: three runs
+at ~14.9 ms and three at 81–90 ms, a **6.0x** spread. The slow mode's excess over the fast
+mode is **66.1 ms against a measured PCIe round trip of 0.50 ms — 132x.** No device-side
+mechanism moves 1.58 MiB that slowly. That is the host thread being descheduled at loadavg
+72, and the same cause inflates kernel-only timings whenever the host cannot keep the
+launch queue fed, because `cudaEventElapsedTime` across 20 back-to-back reps charges host
+gaps to the device clock.
 
-### What this says about contention, which was an open question
+So 65.7 and 69.8 are **two draws from a contaminated distribution**, not one good number
+and one corrupt one, and an impossible-looking ordering between two independently
+contaminated blocks is expected rather than diagnostic.
 
-The GPU arm was re-measured at **loadavg 61**; the banked run was taken at loadavg 18–32.
-The kernel-only figure moved 65.7 → 67.5, i.e. **+2.7%, and in the wrong direction for a
-contention story** — the busier box read faster. The GPU arm is essentially not exposed to
-host contention, which is what the 14.8 ms device / 0.32 ms host split predicts.
+Independent corroboration, same day, different instrument: gpu-production's `fci_bench`
+(the holon-gpu production path, pinned with `taskset`, its own launch header) reported
+`kernel only 58.9` / `incl. host round trip 65.2` — **the same impossible ordering** — and
+in the same run measured the GPU rate over five timing runs at **69.40 ± 1.01**. Its
+registry spot-check then convicted its own 58.9 reading as outside tolerance of that mean.
+Two instruments, one pattern.
 
-That matters because it converts a borrowed argument into a measured one. bigqvm-demo's
-third M-PLACEMENT-LOTTERY rung is that contention is **a bias with a sign, not noise**,
-because two arms lose different amounts to it. For this comparison the asymmetry is now
-measured rather than assumed: the GPU arm loses ~nothing to host load, the CPU arm is
-fully exposed to it, so **the whole of any contention bias sits in the CPU arm and its
-sign inflates the ratio.** 3.2x is therefore an upper bound on the quiet-box ratio. How
-much of an upper bound is unmeasured and needs a quiet window; the CPU arm's own two
-banked readings (20.8 at loadavg 32, 17.2 at loadavg 18) are 1.21x apart and also ordered
-against a simple load story, so they do not bound it either.
+### What this does to the contention argument, which was the question that started it
+
+bigqvm-demo's third M-PLACEMENT-LOTTERY rung says contention is a **bias with a sign**, not
+noise, because two arms lose different amounts to it, and that a margin argument cannot
+answer a bias. This file briefly claimed the asymmetry had been measured in the GPU arm's
+favour — one re-run at loadavg 61 read 67.5 against the banked 65.7, "+2.7% and in the
+wrong direction for a contention story", concluding the GPU arm was essentially unexposed
+to host load and therefore that 3.2x was an upper bound on the quiet-box ratio.
+
+**That claim was built on a single draw from the distribution above and does not survive
+five more.** Runs 2–5 read 55.0–58.8 sigma/s kernel-only, below the banked 65.7, and the
+round trip loses 66 ms outright in half the runs. The correct statement is the opposite in
+spirit:
+
+* The **device compute** is unexposed to host load — 4.849 GFLOP at a device-set rate.
+* The **measured GPU throughput** is host-exposed twice over, through launch scheduling and
+  through pageable-memory copies, and on this box that exposure is larger in relative terms
+  than anything measured on the CPU arm (6.0x vs the CPU arm's 1.21x between its two
+  banked readings).
+
+So the direction of the bias between the two arms is **not established**, and the honest
+position is that **both arms need the quiet window**, not just the CPU one. bigqvm's
+warning applies more sharply than when they gave it, not less. What survives untouched is
+that the ratio was quoted against the *faster* of the two CPU readings, and that the G2
+verdict (adoption-condition MET, adoption DEFERRED) rests on device-class grounds rather
+than on the size of the win.
+
+**The correctness figures are unaffected by any of this** — they are bit comparisons, not
+timings, and they reproduced identically. M-DEVICE-CLASS's founding measurement stands.
+
+**The lesson, which is the transferable part:** a timing taken once on a loaded box is a
+draw, not a measurement, and two such draws will sometimes order impossibly. The tell was
+available before any of this — the record carried a *single* number per row with no spread
+beside it. RESOURCE_DESIGN section 9 Q4 already requires mean AND spread for a registry
+entry; the benchmark record did not hold itself to its own crate's rule.

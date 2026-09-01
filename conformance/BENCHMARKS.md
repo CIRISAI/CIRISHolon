@@ -824,7 +824,7 @@ against `fci::sigma_direct`'s own output rather than against a re-derivation.
 | arm | sigma/s | GFLOP/s FP64 | ratio |
 |---|---:|---:|---:|
 | **GPU, RTX 4090 Laptop (sm_89)** | **65.7** | 318.4 | **3.2× the CPU** |
-| GPU + host round trip | 66.0 | — | **re-measured 2026-09-01; see the correction below** |
+| GPU + host round trip | 14.9–89.8 ms | — | **bimodal on a loaded box; see the correction below** |
 | CPU, `sigma_direct`, 32 threads | 20.8 | ~97 | the baseline (loadavg 32) |
 | CPU, `sigma_direct`, 32 threads | 17.2 | ~80 | same, loadavg 18 — the spread is the machine |
 
@@ -906,32 +906,51 @@ and divergence figures that founded M-DEVICE-CLASS are therefore re-run results,
 citations. (M-STALE-INSTRUMENT, in a form that entry does not cover: not
 working-tree-only, but never in the working tree, cited by a path they had never been at.)
 
-The re-run also settled a defect: the old row read `incl. host round trip 69.8`, **faster
-than the 65.7 it supposedly contains**, which the instrument cannot print — it times the
-round trip over a block containing the c upload and the sigma download. The tempting
-reading is that the two labels were swapped. It is wrong, and the discriminator is that
-`sigma.cu` prints sigma/s and GFLOP/s *together* on the kernel-only line and sigma/s alone
-on the round-trip line: 65.7 sigma/s is 15.221 ms is **318.6 GFLOP/s**, which is the banked
-318.4, while 69.8 would be 338.5, banked nowhere. So the headline is the kernel-only line,
-correctly transcribed and correctly labelled, and **the single bad datum was 69.8**, whose
-provenance is not recoverable. It is replaced above by today's measured round trip rather
-than by a reconstruction. **No claim moves**: the ratio is 65.7/20.8 and the 3.2x is
-untouched.
+The re-run also exposed a defect, and I got it wrong twice before getting it right. The
+old row read `incl. host round trip 69.8`, **faster than the 65.7 it supposedly contains**,
+which one run cannot produce. First diagnosis, swapped labels: rejected, because `sigma.cu`
+prints sigma/s and GFLOP/s *together* on the kernel-only line and 65.7 → 15.221 ms → 318.6
+GFLOP/s is the banked 318.4, while 69.8 → 338.5 is banked nowhere. Second diagnosis, 69.8
+is an unsourceable datum: **also wrong**, and it stood in this file for about an hour.
 
-**CONTENTION IS A SIGNED BIAS HERE, AND THE SIGN IS MEASURED (M-PLACEMENT-LOTTERY, third
-rung).** That row's scope note — any lane comparing two engines by wall clock on this box
-inherits it — applies to this entry, and a margin argument does not answer it, because a
-bias is not noise. What the re-run supplies is the asymmetry, measured rather than
-assumed: the GPU arm was re-timed at **loadavg 61** against the banked run's loadavg 18–32
-and moved 65.7 → 67.5 sigma/s, **+2.7% and in the wrong direction for a contention story**.
-The 14.8 ms device / 0.32 ms host split predicts exactly that. So the GPU arm is
-essentially unexposed to host load and the CPU arm is fully exposed, which means **the
-whole of the contention bias sits in the CPU arm and its sign inflates the ratio: 3.2x is
-an UPPER bound on the quiet-box ratio.** By how much is unmeasured — the two banked CPU
-readings (20.8 at loadavg 32, 17.2 at loadavg 18) are 1.21x apart and also ordered against
-a simple load story, so they do not bound it, and the quiet-window CPU arm is owed. The
-headline already quotes the *faster* of the two CPU readings, which is the conservative
-choice for the ratio, but conservative-within-loaded is not the same as unbiased.
+**What is true: on a loaded box neither timing is stable and their ordering carries no
+information.** Six runs of one binary against one input, minutes apart at loadavg 61–72,
+gave kernel-only 14.820–18.168 ms (**1.23x**) and a **bimodal** round trip — three runs at
+~14.9 ms, three at 81–90 ms (**6.0x**). The slow mode's excess is **66.1 ms against a
+measured PCIe round trip of 0.50 ms, or 132x**, which no device-side mechanism produces: it
+is the host thread descheduled, and the same cause inflates kernel-only timings whenever
+the host cannot keep the launch queue fed, since `cudaEventElapsedTime` over 20 back-to-back
+reps charges host gaps to the device clock. So 65.7 and 69.8 are two draws from a
+contaminated distribution, not one good number and one corrupt one.
+
+Corroborated the same day by a different instrument: gpu-production's `fci_bench`, pinned
+with `taskset` and carrying its own launch header, reported `kernel only 58.9` / `incl. host
+round trip 65.2` — **the same impossible ordering** — while measuring the GPU rate over five
+timing runs at **69.40 ± 1.01**, and its registry spot-check then convicted its own 58.9
+reading against that mean.
+
+**THIS REVERSES THE CONTENTION FINDING I POSTED AN HOUR EARLIER.** I had written that the
+GPU arm was re-timed at loadavg 61 and moved 65.7 → 67.5, "+2.7% and in the wrong direction
+for a contention story", concluding the GPU arm was essentially unexposed to host load and
+therefore that **3.2x was an upper bound on the quiet-box ratio**. That was one draw from
+the distribution above and five more do not support it: runs 2–5 read 55.0–58.8 sigma/s,
+*below* the banked 65.7. The device compute is unexposed (4.849 GFLOP at a device-set rate),
+but the measured GPU throughput is host-exposed twice — launch scheduling and pageable
+copies — and on this box that exposure is relatively *larger* than anything measured on the
+CPU arm (6.0x against the CPU arm's 1.21x between its two banked readings).
+
+So M-PLACEMENT-LOTTERY's third rung applies here and **the direction of the bias is not
+established**: both arms need the quiet window, not just the CPU one. bigqvm-demo's warning
+— that a margin argument cannot answer a bias — applies more sharply than when they gave
+it. What survives untouched: the ratio is quoted against the *faster* of the two CPU
+readings, the correctness figures are bit comparisons rather than timings and reproduced
+identically, and the G2 verdict rests on device-class grounds rather than on the size of
+the win. **The 3.2x should now be read as a loaded-box figure whose spread is unmeasured on
+both arms.**
+
+The tell was available before any of this: every row carried a single number with no spread
+beside it, while `RESOURCE_DESIGN` section 9 Q4 requires mean AND spread for a registry
+entry. The benchmark record did not hold itself to its own crate's rule.
 
 Instruments, all now in the repository: `holon-chem/examples/s3_sigma_cost.rs` (CPU),
 `holon-chem/examples/s3_sigma_export.rs` (the real problem),

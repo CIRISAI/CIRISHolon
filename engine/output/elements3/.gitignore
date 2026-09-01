@@ -4,3 +4,10 @@
 # mid-flight. The logs beside them are the record. (Swept in by an unrelated lane's bare
 # commit at 5c7ad74; untracked here.)
 *.DONE
+
+# The ladder-witness snapshots: insurance taken out after a peer's log was truncated
+# mid-campaign and erased rows this lane had cited. It never paid out -- the rerun was
+# committed intact (5ebaf16) and every witnessed row is present there, verified by
+# comparison, so tracking these would put a duplicate of a committed artifact into the
+# record. Kept on disk, out of the record, same rule as the done-markers above.
+witness/

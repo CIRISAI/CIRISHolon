@@ -1,0 +1,8 @@
+# docs/atoms/tables/Cl2.json: ClCl over 192 knots
+# bar CONVERGED_RESIDUAL = 1.000e-9
+
+WORST DAVIDSON RESIDUAL: 9.992044e-11 at knot 44 (R = 3.709790 bohr) — 10.0% of the bar
+  declared in the file: 1.000525e-10  — DOES NOT REPRODUCE
+
+EXITS: 192/192 converged or trivial, 0 did not
+  no knot gave up: every residual in this file is a solve that finished.

@@ -1046,5 +1046,79 @@ next person inherits a measurement rather than a surprise.
 
 ---
 
+## The shipped tables, read at the density they ship at
+
+Routed from the water lane through the lead: `worst_residual` is a MAXIMUM over knots,
+so a coarser grid is optimistic and a denser one can only find worse. On O-O the two
+readings differ by 8x. The nine-curve table that fed the bar's re-derivation was taken
+at 24 knots, so: were the shipped tables ever read at 192?
+
+**They always were, and it is now measured as well as read off the code.**
+`emit_pair_tables` calls `generate_pair_table(a, b, 192)`, and `worst_residual`
+accumulates at exactly one place — `pair.rs:864`, inside the knot loop — so there is no
+coarser reading anywhere in their history. Walking both shipped grids knot by knot
+(`examples/shipped_knot_audit`):
+
+| table | worst Davidson residual | at | % of bar | exits |
+|---|---|---|---|---|
+| `HCl.json` | 9.973546e−11 | knot 54, R = 2.112 bohr | 10.0% | **192/192 Converged or Trivial** |
+| `Cl2.json` | 9.992044e−11 | knot 44, R = 3.710 bohr | 10.0% | **192/192 Converged or Trivial** |
+
+**Zero capped knots in either file.** So the water lane's hazard — a knot that exits
+`IterationCap` reports a residual that is not a bound in either direction, and whose
+value oscillates with the budget — does not reach the shipped tables. Every residual in
+both files belongs to a solve that finished.
+
+## An optimisation moved every heavy curve's last bits
+
+Both audits reported the declared uncertainty as not reproducing (HCl 9.979013e−11
+declared against 9.973546e−11 measured). That is a real movement and it has been
+attributed to one commit.
+
+**`4884704`** (08-31 18:02, titled for an ozone seam scan) carries an unmentioned
+optimisation to `sigma_direct_t`, the FCI sigma kernel: the inner accumulation used to
+walk every `kl` in ascending index order and now walks the sparse `touched_kl` set in
+first-touch order. `vrow[ib]` is a floating-point accumulation over `kl`, so reordering
+the addends changes the rounding. Bracketed by probe against its immediate parent
+`2b0d154`, with no `Cargo.toml`, `Cargo.lock` or workspace change in the commit, same
+rustc and profile throughout — source only, one variable.
+
+Scale: 186/192 HCl energy knots moved, max 3.979e−12 Ha, **grid 0/192 different**. That
+is 25x inside R2's 1e−10 pointwise stake and 25x inside the curve's own declared
+uncertainty, so no tolerance gate fires. What it breaks is anything asserting IDENTITY:
+pinned bit-digests, and any artifact expected to reproduce from its emitter.
+
+### Which curves moved, and why B1 survived
+
+| unmoved | moved |
+|---|---|
+| H2 (4 determinants), HHe, He2 (1 determinant) | HLi, Li2, HCl, ClF |
+
+The three smallest are exactly the ones the mechanism cannot reach: with a determinant
+space that small the touched set is not a differently-ordered proper subset, so there is
+no reassociation available.
+
+**B1 passes, and I had predicted it would fail.** Its reference was committed at
+`a0a665b` on 08-30 — a day and a half before the culprit — and still reproduces
+bit-for-bit through `include_str!`. The prediction was wrong because I generalised "the
+solver moved bits" to a curve whose size makes it immune. The gate is not lucky, it is
+out of the blast radius; extend the optimisation to small spaces and it fires.
+
+### The attribution I got wrong first
+
+I named the wrong commit — a lane's then-uncommitted solver rewrite — because my
+comparison ran the shipped file (08-30) against the live tree (09-01), an interval
+containing both their work and a day of other commits. **A control that predates two
+variables attributes to neither**, and a pre-announced suspect is not a discriminator.
+The one-variable test that settles it is parent-versus-commit: their landing produces
+bit-identical output to its own parent, and `4884704` does not.
+
+Neither table is regenerated: under the evidence-preservation ruling the warrant for any
+fix lives in the artifact that would be overwritten, and a second movement is already
+queued (the water lane's `solver_budget_iterations` manifest field), so one regeneration
+after both settle costs one artifact movement instead of two.
+
+---
+
 *Sections are added as each measurement lands. Nothing above was written before
 its numbers existed.*

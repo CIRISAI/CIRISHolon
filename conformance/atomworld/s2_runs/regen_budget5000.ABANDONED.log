@@ -1,0 +1,51 @@
+# ABANDONED at row 32 of 65, deliberately. DO NOT resume or cite.
+# Two reasons, and the second is my own argument returned to me by mixtures-engine:
+#  1. The red this was meant to clear is NOT the budget change. It is 4884704, which
+#     reassociated the inner accumulation in sigma_direct_t -- a change to what the
+#     solver RETURNS, not how long it runs. Three lanes are red on that one cause
+#     (this table, elements3's banked species, mixtures' shipped uncertainties) and
+#     the lead's evidence-preservation ruling wants ONE ruling and ONE re-banking.
+#  2. Regenerating now banks an intermediate artifact under a regime nothing records,
+#     which is exactly the invisible drift solver_budget exists to end. One
+#     regeneration after both settle costs one artifact movement instead of two.
+# The stale caches are preserved beside this: .stale_ask_1e-11 and .stale_budget_4000.
+# regeneration under DAVIDSON_DEFAULT_BUDGET = 5000 (the cap ruling)
+# supersedes the ask-change regeneration of 2026-08-30, which ran at budget 4000
+# binary sha256: 99c20fe2e1080ea090c7b266e28bbab5eb9a444dad1d8233a3e993c44c42e527
+# HEAD: 01cee81ac8884597772d76581304dd09fa2ea503
+# launched: 2026-09-01T15:22:41-05:00
+# fine 65 x 65 x 49, stretch a = 3
+# box x, y in [0.7, 15], c in [0.05, 1.414214]
+# E(O) = -73.80415024579725980  E(H) = -0.46658184955727550  threads = 8
+  row   6 done (1/65, 1509 s)
+  row   1 done (2/65, 1675 s)
+  row   7 done (3/65, 1732 s)
+  row   2 done (4/65, 1737 s)
+  row   5 done (5/65, 1748 s)
+  row   4 done (6/65, 1793 s)
+  row   0 done (7/65, 1882 s)
+  row   3 done (8/65, 1887 s)
+  row   8 done (9/65, 2934 s)
+  row   9 done (10/65, 3110 s)
+  row  12 done (11/65, 3242 s)
+  row  14 done (12/65, 3358 s)
+  row  10 done (13/65, 3397 s)
+  row  15 done (14/65, 3426 s)
+  row  13 done (15/65, 3468 s)
+  row  11 done (16/65, 3571 s)
+  row  16 done (17/65, 4789 s)
+  row  20 done (18/65, 5088 s)
+  row  18 done (19/65, 5182 s)
+  row  17 done (20/65, 5290 s)
+  row  21 done (21/65, 5381 s)
+  row  22 done (22/65, 5550 s)
+  row  19 done (23/65, 5582 s)
+  row  23 done (24/65, 5638 s)
+  row  24 done (25/65, 6630 s)
+  row  25 done (26/65, 6740 s)
+  row  27 done (27/65, 7160 s)
+  row  26 done (28/65, 7176 s)
+  row  28 done (29/65, 7179 s)
+  row  31 done (30/65, 7480 s)
+  row  30 done (31/65, 7601 s)
+  row  29 done (32/65, 7771 s)

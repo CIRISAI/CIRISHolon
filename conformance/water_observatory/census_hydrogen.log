@@ -1,0 +1,432 @@
+# THE CLOSURE CENSUS
+# stakes (CENSUS_PREREG.md, frozen before this instrument existed):
+#   window        W = 834 fs
+#   budget        beta = 0.02, breach run <= 8.4 fs
+#   moving carrier rms >= 0.1 bohr, separation excursion >= 0.05 bohr
+#   Leg B work count >= 200 informative transitions
+#   control floor  <= 0.05 of the same-composition pool
+
+==============================================================================
+# /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415421.traj
+# seed 0x0000000053415421  12 atoms  20000 frames  16.684 ps simulated  complete: true
+# window = 834.0 fs, flicker cap = 8.4 fs; median frame 0.8338 fs (about 1000 frames a window)
+#   NOTE: the timestep ADAPTED during this run -- 2 distinct frame durations, 0.8338 to 1.6676 fs. Frame columns below are not a uniform unit; read the fs columns.
+#
+# FORMULA READER (what waterquench prints, final frame): H2 H2 H2 H2 H2 H2
+#
+# CLOSURE READER (blocks by longest held run):
+#   formula  block   held run  held (fs)      rms  sep var    ctrl  verdict                named?
+#   H2       0x0300      3951     3293.5    0.472    3.181   0.077  VOID(no separation)    YES
+#   H2       0x0c00      2298     1915.3    0.669    3.393   0.077  VOID(no separation)    YES
+#   H2       0x0044      2235     1862.7    0.640    0.249   0.077  VOID(no separation)    YES
+#   H2       0x0088      2235     1862.7    0.413    0.236   0.077  VOID(no separation)    YES
+#   H2       0x0011      1912     1593.4    0.716    2.979   0.077  VOID(no separation)    YES
+#   H2       0x0022      1827     1522.5    0.178    1.508   0.077  VOID(no separation)    YES
+#   H4       0x0f00        51       41.7    0.107    0.791       -  TRANSIENT              
+#   H4       0x0033        42       34.2    0.109    0.722       -  TRANSIENT              
+#   H4       0x0322        42       34.2    0.114    0.788       -  TRANSIENT              
+#   H4       0x0066        40       32.5    0.168    0.863       -  TRANSIENT              
+#   (33 blocks in all; rows above are the certified, the named, and the ten longest)
+#
+# LEG B, the fiber-invariance test on the full partition view:
+#   distinct partition readings   : 70
+#   transitions                   : 19999 total, 19984 INFORMATIVE (work count; staked >= 200)
+#   witness pairs                 : 262
+#   defect                        : 0.156625   (first half 0.137237, second half 0.176006)
+#   non-expansion (<= 1.05x)       : BREACHED
+#   VERDICT                       : NOT CLOSED: 262 witness pairs exhibited
+#     witness pair: frames 7838 and 7840 read the same partition, frames 7839 and 7841 do not
+#     witness pair: frames 13295 and 13297 read the same partition, frames 13296 and 13298 do not
+#     witness pair: frames 13062 and 13085 read the same partition, frames 13063 and 13086 do not
+#     witness pair: frames 12164 and 12166 read the same partition, frames 12165 and 12167 do not
+#     witness pair: frames 16572 and 16576 read the same partition, frames 16573 and 16577 do not
+#
+# LENS STACK on the final frame (refusals are readings too):
+#   q-tetrahedral                    : REFUSED [dims == 3] the scene is 2-dimensional; a tetrahedral order parameter on a plane does not contain the variable it names (M-MAINTENANCE-LENS)
+#   steinhardt q6                    : REFUSED [dims == 3] the scene is 2-dimensional; every neighbour sits at theta = pi/2 and the spherical-harmonic sum is a hexatic in disguise. Use hexatic_psi6.
+#   hexatic psi6                     : 0.3968
+#   diffusion                        : REFUSED [MSD(max_lag) <= (L_min/4)^2] MSD at lag 2000 is 102.527 bohr^2 against a wall-saturation cap of 27.040; the fit would measure the box, not the fluid
+#   H-bond census (Luzar-Chandler)   : REFUSED [the scene holds at least one O and one H] 0 oxygens and 12 hydrogens; there is no hydrogen bond to count, and a zero here would read as a measured absence
+#   largest domain (bonded-pair graph): 2 atoms over 6 edges
+#
+# CLOSURE DEFECT BY MACRO VIEW (binned; a view is only as closed as its resolution):
+#   view                        bins   defect   informative  witnesses  reading
+#   largest domain (atoms)        13  0.14321         19999         10  NOT CLOSED
+#   bonded pair count             67  0.17482         19998         38  NOT CLOSED
+#   H-bond count                  20  0.00000         19999          0  VACUOUS (one reading; the view never moved)
+#   mean hexatic psi6             10  0.23581          3999         11  NOT CLOSED
+#
+# BLIND CLASSIFIER: Liquid
+#   free fraction 0.002  order 0.000  mobility 2.3683  interior atoms 0 (0 samples)
+
+==============================================================================
+# /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415422.traj
+# seed 0x0000000053415422  12 atoms  20000 frames  33.351 ps simulated  complete: true
+# window = 834.0 fs, flicker cap = 8.4 fs; median frame 1.6676 fs (about 500 frames a window)
+#
+# FORMULA READER (what waterquench prints, final frame): H2 H2 H2 H2 H2 H2
+#
+# CLOSURE READER (blocks by longest held run):
+#   formula  block   held run  held (fs)      rms  sep var    ctrl  verdict                named?
+#   H2       0x0300      2020     3366.9    0.290    1.581   0.077  VOID(no separation)    YES
+#   H2       0x0c00      1197     1994.5    0.701    0.277   0.077  VOID(no separation)    YES
+#   H2       0x000c      1157     1927.8    0.696    0.283   0.077  VOID(no separation)    YES
+#   H2       0x0042       966     1609.2    0.738    2.864   0.077  VOID(no separation)    YES
+#   H2       0x0081       791     1317.4    0.630    0.086   0.077  VOID(no separation)    YES
+#   H2       0x0030       708     1179.0    0.620    0.248   0.077  VOID(no separation)    YES
+#   H3       0x008c        25       40.0    0.220    0.433       -  TRANSIENT              
+#   H3       0x00b0        25       40.0    0.138    0.479       -  TRANSIENT              
+#   H4       0x0c30        25       40.0    0.127    0.821       -  TRANSIENT              
+#   H4       0x0c42        25       40.0    0.201    1.405       -  TRANSIENT              
+#   (55 blocks in all; rows above are the certified, the named, and the ten longest)
+#
+# LEG B, the fiber-invariance test on the full partition view:
+#   distinct partition readings   : 107
+#   transitions                   : 19999 total, 19985 INFORMATIVE (work count; staked >= 200)
+#   witness pairs                 : 465
+#   defect                        : 0.246985   (first half 0.231755, second half 0.262205)
+#   non-expansion (<= 1.05x)       : BREACHED
+#   VERDICT                       : NOT CLOSED: 465 witness pairs exhibited
+#     witness pair: frames 30 and 31 read the same partition, frames 31 and 32 do not
+#     witness pair: frames 5878 and 14736 read the same partition, frames 5879 and 14737 do not
+#     witness pair: frames 89 and 101 read the same partition, frames 90 and 102 do not
+#     witness pair: frames 4861 and 4865 read the same partition, frames 4862 and 4866 do not
+#     witness pair: frames 3236 and 3238 read the same partition, frames 3237 and 3239 do not
+#
+# LENS STACK on the final frame (refusals are readings too):
+#   q-tetrahedral                    : REFUSED [dims == 3] the scene is 2-dimensional; a tetrahedral order parameter on a plane does not contain the variable it names (M-MAINTENANCE-LENS)
+#   steinhardt q6                    : REFUSED [dims == 3] the scene is 2-dimensional; every neighbour sits at theta = pi/2 and the spherical-harmonic sum is a hexatic in disguise. Use hexatic_psi6.
+#   hexatic psi6                     : 0.4536
+#   diffusion                        : REFUSED [MSD(max_lag) <= (L_min/4)^2] MSD at lag 2000 is 201.646 bohr^2 against a wall-saturation cap of 27.040; the fit would measure the box, not the fluid
+#   H-bond census (Luzar-Chandler)   : REFUSED [the scene holds at least one O and one H] 0 oxygens and 12 hydrogens; there is no hydrogen bond to count, and a zero here would read as a measured absence
+#   largest domain (bonded-pair graph): 2 atoms over 6 edges
+#
+# CLOSURE DEFECT BY MACRO VIEW (binned; a view is only as closed as its resolution):
+#   view                        bins   defect   informative  witnesses  reading
+#   largest domain (atoms)        13  0.22946         19999         18  NOT CLOSED
+#   bonded pair count             67  0.27383         19998         42  NOT CLOSED
+#   H-bond count                  20  0.00000         19999          0  VACUOUS (one reading; the view never moved)
+#   mean hexatic psi6             10  0.39220          3998         18  NOT CLOSED
+#
+# BLIND CLASSIFIER: Liquid
+#   free fraction 0.025  order 0.121  mobility 4.5555  interior atoms 1 (2 samples)
+
+==============================================================================
+# /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415423.traj
+# seed 0x0000000053415423  12 atoms  20000 frames  16.696 ps simulated  complete: true
+# window = 834.0 fs, flicker cap = 8.4 fs; median frame 0.8338 fs (about 1000 frames a window)
+#   NOTE: the timestep ADAPTED during this run -- 2 distinct frame durations, 0.8338 to 1.6676 fs. Frame columns below are not a uniform unit; read the fs columns.
+#
+# FORMULA READER (what waterquench prints, final frame): H2 H2 H2 H2 H2 H2
+#
+# CLOSURE READER (blocks by longest held run):
+#   formula  block   held run  held (fs)      rms  sep var    ctrl  verdict                named?
+#   H2       0x0600      1698     1415.0    0.214    0.494   0.077  VOID(no separation)    YES
+#   H2       0x0810      1515     1262.4    0.708    0.425   0.077  VOID(no separation)    YES
+#   H2       0x0009      1251     1042.3    0.693    0.116   0.077  VOID(no separation)    YES
+#   H2       0x0140      1083      902.2    0.693    0.192   0.077  VOID(no separation)    YES
+#   H2       0x0084       955      795.5    0.691    0.185   0.077  VOID(no separation)    YES
+#   H2       0x0022       854      711.2    0.586    0.140   0.077  VOID(no separation)    YES
+#   H3       0x0141        95       78.4    0.372    0.911       -  TRANSIENT              
+#   H3       0x0023        83       68.4    0.267    0.613       -  TRANSIENT              
+#   H3       0x002a        62       50.9    0.213    1.283       -  TRANSIENT              
+#   H4       0x0832        44       35.9    0.186    1.061       -  TRANSIENT              
+#   (58 blocks in all; rows above are the certified, the named, and the ten longest)
+#
+# LEG B, the fiber-invariance test on the full partition view:
+#   distinct partition readings   : 128
+#   transitions                   : 19999 total, 19964 INFORMATIVE (work count; staked >= 200)
+#   witness pairs                 : 370
+#   defect                        : 0.195552   (first half 0.238296, second half 0.152868)
+#   non-expansion (<= 1.05x)       : ok
+#   VERDICT                       : NOT CLOSED: 370 witness pairs exhibited
+#     witness pair: frames 1955 and 1961 read the same partition, frames 1956 and 1962 do not
+#     witness pair: frames 3764 and 3809 read the same partition, frames 3765 and 3810 do not
+#     witness pair: frames 8326 and 8327 read the same partition, frames 8327 and 8328 do not
+#     witness pair: frames 55 and 57 read the same partition, frames 56 and 58 do not
+#     witness pair: frames 2031 and 2047 read the same partition, frames 2032 and 2048 do not
+#
+# LENS STACK on the final frame (refusals are readings too):
+#   q-tetrahedral                    : REFUSED [dims == 3] the scene is 2-dimensional; a tetrahedral order parameter on a plane does not contain the variable it names (M-MAINTENANCE-LENS)
+#   steinhardt q6                    : REFUSED [dims == 3] the scene is 2-dimensional; every neighbour sits at theta = pi/2 and the spherical-harmonic sum is a hexatic in disguise. Use hexatic_psi6.
+#   hexatic psi6                     : 0.3015
+#   diffusion                        : REFUSED [MSD(max_lag) <= (L_min/4)^2] MSD at lag 2000 is 132.466 bohr^2 against a wall-saturation cap of 27.040; the fit would measure the box, not the fluid
+#   H-bond census (Luzar-Chandler)   : REFUSED [the scene holds at least one O and one H] 0 oxygens and 12 hydrogens; there is no hydrogen bond to count, and a zero here would read as a measured absence
+#   largest domain (bonded-pair graph): 2 atoms over 6 edges
+#
+# CLOSURE DEFECT BY MACRO VIEW (binned; a view is only as closed as its resolution):
+#   view                        bins   defect   informative  witnesses  reading
+#   largest domain (atoms)        13  0.20163         19997         22  NOT CLOSED
+#   bonded pair count             67  0.23961         19999         33  NOT CLOSED
+#   H-bond count                  20  0.00000         19999          0  VACUOUS (one reading; the view never moved)
+#   mean hexatic psi6             10  0.24406          3999         11  NOT CLOSED
+#
+# BLIND CLASSIFIER: Liquid
+#   free fraction 0.065  order 0.119  mobility 2.8671  interior atoms 1 (7 samples)
+
+==============================================================================
+# /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415424.traj
+# seed 0x0000000053415424  12 atoms  20000 frames  16.694 ps simulated  complete: true
+# window = 834.0 fs, flicker cap = 8.4 fs; median frame 0.8338 fs (about 1000 frames a window)
+#   NOTE: the timestep ADAPTED during this run -- 2 distinct frame durations, 0.8338 to 1.6676 fs. Frame columns below are not a uniform unit; read the fs columns.
+#
+# FORMULA READER (what waterquench prints, final frame): H2 H2 H2 H2 H2 H2
+#
+# CLOSURE READER (blocks by longest held run):
+#   formula  block   held run  held (fs)      rms  sep var    ctrl  verdict                named?
+#   H2       0x0840      2094     1745.2    0.672    0.338   0.077  VOID(no separation)    YES
+#   H2       0x0408      1761     1467.5    0.144    0.269   0.077  VOID(no separation)    YES
+#   H2       0x0110      1469     1224.0    0.696    0.184   0.077  VOID(no separation)    YES
+#   H2       0x0003      1349     1124.0    0.689    0.311   0.077  VOID(no separation)    YES
+#   H2       0x0084      1346     1121.5    0.698    0.317   0.077  VOID(no separation)    YES
+#   H2       0x0220      1129      940.5    0.699    0.306   0.077  VOID(no separation)    YES
+#   H3       0x0094        92       75.9    0.261    1.035       -  TRANSIENT              
+#   H3       0x0184        92       75.9    0.204    0.498       -  TRANSIENT              
+#   H4       0x0113        43       35.0    0.284    1.400       -  TRANSIENT              
+#   H4       0x0087        36       29.2    0.275    1.888       -  TRANSIENT              
+#   (55 blocks in all; rows above are the certified, the named, and the ten longest)
+#
+# LEG B, the fiber-invariance test on the full partition view:
+#   distinct partition readings   : 93
+#   transitions                   : 19999 total, 19986 INFORMATIVE (work count; staked >= 200)
+#   witness pairs                 : 303
+#   defect                        : 0.170619   (first half 0.165065, second half 0.176170)
+#   non-expansion (<= 1.05x)       : BREACHED
+#   VERDICT                       : NOT CLOSED: 303 witness pairs exhibited
+#     witness pair: frames 7056 and 7060 read the same partition, frames 7057 and 7061 do not
+#     witness pair: frames 791 and 867 read the same partition, frames 792 and 868 do not
+#     witness pair: frames 106 and 122 read the same partition, frames 107 and 123 do not
+#     witness pair: frames 0 and 9 read the same partition, frames 1 and 10 do not
+#     witness pair: frames 5951 and 9775 read the same partition, frames 5952 and 9776 do not
+#
+# LENS STACK on the final frame (refusals are readings too):
+#   q-tetrahedral                    : REFUSED [dims == 3] the scene is 2-dimensional; a tetrahedral order parameter on a plane does not contain the variable it names (M-MAINTENANCE-LENS)
+#   steinhardt q6                    : REFUSED [dims == 3] the scene is 2-dimensional; every neighbour sits at theta = pi/2 and the spherical-harmonic sum is a hexatic in disguise. Use hexatic_psi6.
+#   hexatic psi6                     : 0.5634
+#   diffusion                        : REFUSED [MSD(max_lag) <= (L_min/4)^2] MSD at lag 2000 is 120.700 bohr^2 against a wall-saturation cap of 27.040; the fit would measure the box, not the fluid
+#   H-bond census (Luzar-Chandler)   : REFUSED [the scene holds at least one O and one H] 0 oxygens and 12 hydrogens; there is no hydrogen bond to count, and a zero here would read as a measured absence
+#   largest domain (bonded-pair graph): 2 atoms over 6 edges
+#
+# CLOSURE DEFECT BY MACRO VIEW (binned; a view is only as closed as its resolution):
+#   view                        bins   defect   informative  witnesses  reading
+#   largest domain (atoms)        13  0.16666         19999         18  NOT CLOSED
+#   bonded pair count             67  0.20087         19998         37  NOT CLOSED
+#   H-bond count                  20  0.00000         19999          0  VACUOUS (one reading; the view never moved)
+#   mean hexatic psi6             10  0.22642          3997         12  NOT CLOSED
+#
+# BLIND CLASSIFIER: Liquid
+#   free fraction 0.036  order 0.491  mobility 2.3646  interior atoms 2 (7 samples)
+
+==============================================================================
+# /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415425.traj
+# seed 0x0000000053415425  12 atoms  20000 frames  33.351 ps simulated  complete: true
+# window = 834.0 fs, flicker cap = 8.4 fs; median frame 1.6676 fs (about 500 frames a window)
+#
+# FORMULA READER (what waterquench prints, final frame): H2 H2 H2 H2 H2 H2
+#
+# CLOSURE READER (blocks by longest held run):
+#   formula  block   held run  held (fs)      rms  sep var    ctrl  verdict                named?
+#   H2       0x0440      1994     3323.6    0.597    0.768   0.077  VOID(no separation)    YES
+#   H2       0x0021      1591     2651.5    0.731    3.660   0.077  VOID(no separation)    YES
+#   H2       0x0110      1405     2341.3    0.121    0.301   0.077  VOID(no separation)    YES
+#   H2       0x0808      1369     2281.3    0.808    2.797   0.077  VOID(no separation)    YES
+#   H2       0x0006      1219     2031.2    0.700    0.251   0.077  VOID(no separation)    YES
+#   H2       0x0280       765     1274.1    0.847    4.047   0.077  VOID(no separation)    YES
+#   H4       0x0390        25       40.0    0.298    1.893       -  TRANSIENT              
+#   H4       0x0829        25       40.0    0.184    1.034       -  TRANSIENT              
+#   H4       0x0131        24       38.4    0.226    1.150       -  TRANSIENT              
+#   H4       0x080e        20       31.7    0.070    0.462       -  TRANSIENT              
+#   (49 blocks in all; rows above are the certified, the named, and the ten longest)
+#
+# LEG B, the fiber-invariance test on the full partition view:
+#   distinct partition readings   : 96
+#   transitions                   : 19999 total, 19985 INFORMATIVE (work count; staked >= 200)
+#   witness pairs                 : 441
+#   defect                        : 0.214161   (first half 0.183992, second half 0.244344)
+#   non-expansion (<= 1.05x)       : BREACHED
+#   VERDICT                       : NOT CLOSED: 441 witness pairs exhibited
+#     witness pair: frames 10434 and 10436 read the same partition, frames 10435 and 10437 do not
+#     witness pair: frames 7804 and 11645 read the same partition, frames 7805 and 11646 do not
+#     witness pair: frames 388 and 3280 read the same partition, frames 389 and 3281 do not
+#     witness pair: frames 11746 and 11750 read the same partition, frames 11747 and 11751 do not
+#     witness pair: frames 19379 and 19383 read the same partition, frames 19380 and 19384 do not
+#
+# LENS STACK on the final frame (refusals are readings too):
+#   q-tetrahedral                    : REFUSED [dims == 3] the scene is 2-dimensional; a tetrahedral order parameter on a plane does not contain the variable it names (M-MAINTENANCE-LENS)
+#   steinhardt q6                    : REFUSED [dims == 3] the scene is 2-dimensional; every neighbour sits at theta = pi/2 and the spherical-harmonic sum is a hexatic in disguise. Use hexatic_psi6.
+#   hexatic psi6                     : 0.7313
+#   diffusion                        : REFUSED [MSD(max_lag) <= (L_min/4)^2] MSD at lag 2000 is 194.152 bohr^2 against a wall-saturation cap of 27.040; the fit would measure the box, not the fluid
+#   H-bond census (Luzar-Chandler)   : REFUSED [the scene holds at least one O and one H] 0 oxygens and 12 hydrogens; there is no hydrogen bond to count, and a zero here would read as a measured absence
+#   largest domain (bonded-pair graph): 2 atoms over 6 edges
+#
+# CLOSURE DEFECT BY MACRO VIEW (binned; a view is only as closed as its resolution):
+#   view                        bins   defect   informative  witnesses  reading
+#   largest domain (atoms)        13  0.19186         19999         13  NOT CLOSED
+#   bonded pair count             67  0.22457         19998         39  NOT CLOSED
+#   H-bond count                  20  0.00000         19999          0  VACUOUS (one reading; the view never moved)
+#   mean hexatic psi6             10  0.40270          3998         16  NOT CLOSED
+#
+# BLIND CLASSIFIER: Liquid
+#   free fraction 0.006  order 0.000  mobility 4.0372  interior atoms 0 (0 samples)
+
+==============================================================================
+# /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415426.traj
+# seed 0x0000000053415426  12 atoms  20000 frames  16.697 ps simulated  complete: true
+# window = 834.0 fs, flicker cap = 8.4 fs; median frame 0.8338 fs (about 1000 frames a window)
+#   NOTE: the timestep ADAPTED during this run -- 2 distinct frame durations, 0.8338 to 1.6676 fs. Frame columns below are not a uniform unit; read the fs columns.
+#
+# FORMULA READER (what waterquench prints, final frame): H2 H2 H2 H2 H2 H2
+#
+# CLOSURE READER (blocks by longest held run):
+#   formula  block   held run  held (fs)      rms  sep var    ctrl  verdict                named?
+#   H2       0x0110      2055     1712.6    0.176    2.294   0.077  VOID(no separation)    YES
+#   H2       0x0480      1920     1600.1    0.584    0.280   0.077  VOID(no separation)    YES
+#   H2       0x0003      1839     1532.5    0.616    0.856   0.077  VOID(no separation)    YES
+#   H2       0x0a00      1717     1430.8    0.683    0.103   0.077  VOID(no separation)    YES
+#   H2       0x0024      1276     1063.1    0.708    0.507   0.077  VOID(no separation)    YES
+#   H2       0x0048      1117      930.5    0.699    0.207   0.077  VOID(no separation)    YES
+#   H3       0x0848        75       61.7    0.201    0.448       -  TRANSIENT              
+#   H4       0x004b        42       34.2    0.075    0.563       -  TRANSIENT              
+#   H4       0x006c        36       29.2    0.255    1.755       -  TRANSIENT              
+#   H4       0x0027        29       23.3    0.067    0.439       -  TRANSIENT              
+#   (46 blocks in all; rows above are the certified, the named, and the ten longest)
+#
+# LEG B, the fiber-invariance test on the full partition view:
+#   distinct partition readings   : 86
+#   transitions                   : 19999 total, 19986 INFORMATIVE (work count; staked >= 200)
+#   witness pairs                 : 291
+#   defect                        : 0.165316   (first half 0.146461, second half 0.184155)
+#   non-expansion (<= 1.05x)       : BREACHED
+#   VERDICT                       : NOT CLOSED: 291 witness pairs exhibited
+#     witness pair: frames 13288 and 13334 read the same partition, frames 13289 and 13335 do not
+#     witness pair: frames 15205 and 15257 read the same partition, frames 15206 and 15258 do not
+#     witness pair: frames 4694 and 4697 read the same partition, frames 4695 and 4698 do not
+#     witness pair: frames 25 and 27 read the same partition, frames 26 and 28 do not
+#     witness pair: frames 3029 and 5519 read the same partition, frames 3030 and 5520 do not
+#
+# LENS STACK on the final frame (refusals are readings too):
+#   q-tetrahedral                    : REFUSED [dims == 3] the scene is 2-dimensional; a tetrahedral order parameter on a plane does not contain the variable it names (M-MAINTENANCE-LENS)
+#   steinhardt q6                    : REFUSED [dims == 3] the scene is 2-dimensional; every neighbour sits at theta = pi/2 and the spherical-harmonic sum is a hexatic in disguise. Use hexatic_psi6.
+#   hexatic psi6                     : 0.5954
+#   diffusion                        : REFUSED [MSD(max_lag) <= (L_min/4)^2] MSD at lag 2000 is 134.980 bohr^2 against a wall-saturation cap of 27.040; the fit would measure the box, not the fluid
+#   H-bond census (Luzar-Chandler)   : REFUSED [the scene holds at least one O and one H] 0 oxygens and 12 hydrogens; there is no hydrogen bond to count, and a zero here would read as a measured absence
+#   largest domain (bonded-pair graph): 2 atoms over 6 edges
+#
+# CLOSURE DEFECT BY MACRO VIEW (binned; a view is only as closed as its resolution):
+#   view                        bins   defect   informative  witnesses  reading
+#   largest domain (atoms)        13  0.15696         19999         17  NOT CLOSED
+#   bonded pair count             67  0.18988         19997         36  NOT CLOSED
+#   H-bond count                  20  0.00000         19999          0  VACUOUS (one reading; the view never moved)
+#   mean hexatic psi6             10  0.23087          3998         11  NOT CLOSED
+#
+# BLIND CLASSIFIER: Liquid
+#   free fraction 0.024  order 0.000  mobility 2.9176  interior atoms 0 (0 samples)
+
+==============================================================================
+# /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415427.traj
+# seed 0x0000000053415427  12 atoms  20000 frames  16.701 ps simulated  complete: true
+# window = 834.0 fs, flicker cap = 8.4 fs; median frame 0.8338 fs (about 1000 frames a window)
+#   NOTE: the timestep ADAPTED during this run -- 2 distinct frame durations, 0.8338 to 1.6676 fs. Frame columns below are not a uniform unit; read the fs columns.
+#
+# FORMULA READER (what waterquench prints, final frame): H2 H2 H2 H2 H2 H2
+#
+# CLOSURE READER (blocks by longest held run):
+#   formula  block   held run  held (fs)      rms  sep var    ctrl  verdict                named?
+#   H2       0x0011      2370     1975.3    0.700    0.239   0.077  VOID(no separation)    YES
+#   H2       0x000c      1589     1324.1    0.763    1.838   0.077  VOID(no separation)    YES
+#   H2       0x00c0      1433     1194.0    0.656    0.079   0.077  VOID(no separation)    YES
+#   H2       0x0022      1413     1177.3    0.625    0.267   0.077  VOID(no separation)    YES
+#   H2       0x0900      1165      970.6    0.698    0.188   0.077  VOID(no separation)    YES
+#   H2       0x0600      1012      843.0    0.343    0.355   0.077  VOID(no separation)    YES
+#   H3       0x0111        83       68.4    0.103    0.667       -  TRANSIENT              
+#   H3       0x0122        75       61.7    0.096    0.307       -  TRANSIENT              
+#   H3       0x0e00        67       55.0    0.154    0.536       -  TRANSIENT              
+#   H3       0x08c0        57       46.7    0.180    0.942       -  TRANSIENT              
+#   (52 blocks in all; rows above are the certified, the named, and the ten longest)
+#
+# LEG B, the fiber-invariance test on the full partition view:
+#   distinct partition readings   : 105
+#   transitions                   : 19999 total, 19990 INFORMATIVE (work count; staked >= 200)
+#   witness pairs                 : 347
+#   defect                        : 0.182041   (first half 0.206024, second half 0.158063)
+#   non-expansion (<= 1.05x)       : ok
+#   VERDICT                       : NOT CLOSED: 347 witness pairs exhibited
+#     witness pair: frames 6690 and 6722 read the same partition, frames 6691 and 6723 do not
+#     witness pair: frames 7959 and 8897 read the same partition, frames 7960 and 8898 do not
+#     witness pair: frames 28 and 29 read the same partition, frames 29 and 30 do not
+#     witness pair: frames 3547 and 3658 read the same partition, frames 3548 and 3659 do not
+#     witness pair: frames 6557 and 6559 read the same partition, frames 6558 and 6560 do not
+#
+# LENS STACK on the final frame (refusals are readings too):
+#   q-tetrahedral                    : REFUSED [dims == 3] the scene is 2-dimensional; a tetrahedral order parameter on a plane does not contain the variable it names (M-MAINTENANCE-LENS)
+#   steinhardt q6                    : REFUSED [dims == 3] the scene is 2-dimensional; every neighbour sits at theta = pi/2 and the spherical-harmonic sum is a hexatic in disguise. Use hexatic_psi6.
+#   hexatic psi6                     : 0.4383
+#   diffusion                        : REFUSED [MSD(max_lag) <= (L_min/4)^2] MSD at lag 2000 is 126.543 bohr^2 against a wall-saturation cap of 27.040; the fit would measure the box, not the fluid
+#   H-bond census (Luzar-Chandler)   : REFUSED [the scene holds at least one O and one H] 0 oxygens and 12 hydrogens; there is no hydrogen bond to count, and a zero here would read as a measured absence
+#   largest domain (bonded-pair graph): 2 atoms over 6 edges
+#
+# CLOSURE DEFECT BY MACRO VIEW (binned; a view is only as closed as its resolution):
+#   view                        bins   defect   informative  witnesses  reading
+#   largest domain (atoms)        13  0.19631         19999         22  NOT CLOSED
+#   bonded pair count             67  0.23466         19999         39  NOT CLOSED
+#   H-bond count                  20  0.00000         19999          0  VACUOUS (one reading; the view never moved)
+#   mean hexatic psi6             10  0.20930          3999         10  NOT CLOSED
+#
+# BLIND CLASSIFIER: Liquid
+#   free fraction 0.066  order 0.500  mobility 2.7668  interior atoms 1 (2 samples)
+
+==============================================================================
+# /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415428.traj
+# seed 0x0000000053415428  12 atoms  20000 frames  16.698 ps simulated  complete: true
+# window = 834.0 fs, flicker cap = 8.4 fs; median frame 0.8338 fs (about 1000 frames a window)
+#   NOTE: the timestep ADAPTED during this run -- 2 distinct frame durations, 0.8338 to 1.6676 fs. Frame columns below are not a uniform unit; read the fs columns.
+#
+# FORMULA READER (what waterquench prints, final frame): H2 H2 H2 H2 H2 H2
+#
+# CLOSURE READER (blocks by longest held run):
+#   formula  block   held run  held (fs)      rms  sep var    ctrl  verdict                named?
+#   H2       0x0101      1740     1450.0    0.439    0.126   0.077  VOID(no separation)    YES
+#   H2       0x0208      1289     1073.9    0.704    0.317   0.077  VOID(no separation)    YES
+#   H2       0x0044      1209     1007.2    0.413    0.273   0.077  VOID(no separation)    YES
+#   H2       0x0012       895      745.4    0.687    0.212   0.077  VOID(no separation)    YES
+#   H2       0x0420       864      719.6    0.684    1.158   0.077  VOID(no separation)    YES
+#   H2       0x0880       800      666.2    0.716    1.114   0.077  VOID(no separation)    YES
+#   H4       0x0628        40       32.5    0.082    0.239       -  TRANSIENT              
+#   H4       0x0113        38       30.9    0.105    0.746       -  TRANSIENT              
+#   H4       0x024c        36       29.2    0.072    0.417       -  TRANSIENT              
+#   H4       0x0892        36       29.2    0.259    1.662       -  TRANSIENT              
+#   (43 blocks in all; rows above are the certified, the named, and the ten longest)
+#
+# LEG B, the fiber-invariance test on the full partition view:
+#   distinct partition readings   : 84
+#   transitions                   : 19999 total, 19985 INFORMATIVE (work count; staked >= 200)
+#   witness pairs                 : 328
+#   defect                        : 0.177583   (first half 0.154123, second half 0.201041)
+#   non-expansion (<= 1.05x)       : BREACHED
+#   VERDICT                       : NOT CLOSED: 328 witness pairs exhibited
+#     witness pair: frames 404 and 8231 read the same partition, frames 405 and 8232 do not
+#     witness pair: frames 6817 and 10547 read the same partition, frames 6818 and 10548 do not
+#     witness pair: frames 9570 and 10609 read the same partition, frames 9571 and 10610 do not
+#     witness pair: frames 5936 and 5955 read the same partition, frames 5937 and 5956 do not
+#     witness pair: frames 4171 and 4172 read the same partition, frames 4172 and 4173 do not
+#
+# LENS STACK on the final frame (refusals are readings too):
+#   q-tetrahedral                    : REFUSED [dims == 3] the scene is 2-dimensional; a tetrahedral order parameter on a plane does not contain the variable it names (M-MAINTENANCE-LENS)
+#   steinhardt q6                    : REFUSED [dims == 3] the scene is 2-dimensional; every neighbour sits at theta = pi/2 and the spherical-harmonic sum is a hexatic in disguise. Use hexatic_psi6.
+#   hexatic psi6                     : 0.1213
+#   diffusion                        : REFUSED [MSD(max_lag) <= (L_min/4)^2] MSD at lag 2000 is 118.396 bohr^2 against a wall-saturation cap of 27.040; the fit would measure the box, not the fluid
+#   H-bond census (Luzar-Chandler)   : REFUSED [the scene holds at least one O and one H] 0 oxygens and 12 hydrogens; there is no hydrogen bond to count, and a zero here would read as a measured absence
+#   largest domain (bonded-pair graph): 2 atoms over 6 edges
+#
+# CLOSURE DEFECT BY MACRO VIEW (binned; a view is only as closed as its resolution):
+#   view                        bins   defect   informative  witnesses  reading
+#   largest domain (atoms)        13  0.16192         19998         14  NOT CLOSED
+#   bonded pair count             67  0.20866         19999         35  NOT CLOSED
+#   H-bond count                  20  0.00000         19999          0  VACUOUS (one reading; the view never moved)
+#   mean hexatic psi6             10  0.25688          3998         11  NOT CLOSED
+#
+# BLIND CLASSIFIER: Liquid
+#   free fraction 0.004  order 0.000  mobility 2.6375  interior atoms 0 (0 samples)
+
+==============================================================================
+# TOTALS over 8 trajectories: 0 certified-strict, 0 certified-budgeted, 343 transient, 48 void

@@ -577,3 +577,90 @@ where the only difference IS the fence; it is specified in §10.5 and was not ru
 What 2 of 8 DOES support is §10.2's finding, now on a second arm: a final-frame molecule
 census is not stable across builds whose curves move at 1e-6, while the aggregate — no
 water on the MBE3 banked log, water on one fenced seed, H₂ everywhere — is what survives.
+
+---
+
+## 12. THE dE₄ ADJUDICATION — design staked before the data
+
+*Written while both arms were still generating their pair curves; neither had printed a
+seed line. Git is the check.*
+
+### 12.1 What is being compared, and why it is not the obvious comparison
+
+The lead asked for the full-strength OH₂ to be judged "against your fenced-arm baseline as
+the one-variable comparison". **It would not have been one.** The fenced arm of §11 is
+pinned at `a3b3d4b`; the full-strength dE₄ run is at `21e6be3`; between them sit the whole
+T3 refactor and the `tier.rs` solver change that already moved the O–O curve from 6.7e-6 to
+2.7e-6. That is the confound that killed §10.3's prediction, named in §10.5, and repeating
+it here would be repeating it knowingly.
+
+So the control is generated fresh **at the same commit**:
+
+| arm | commit | seed | ozone | dE₄ |
+|---|---|---|---|---|
+| A | `21e6be3` | `0x53415422` | fenced | **on** |
+| B | `21e6be3` | `0x53415422` | fenced | **off** |
+
+Everything else identical, including the binary. One variable.
+
+This is possible only because `--de4=on\|off` became a required argument today — see §12.4,
+which is the near miss that forced it.
+
+### 12.2 Admissibility gates, checked before any verdict is read
+
+- **G-dE4-1 — the term must have fired.** Arm A must report `dE4_evals > 0` and arm B must
+  report exactly `0`. The count comes from `Sim::de4_eval_count`, incremented by the
+  physics itself. If either fails, the arms are not what they claim and the comparison is
+  **VOID** — no verdict either way. *(A symbol-table check cannot stand in for this; §12.4.)*
+- **G-dE4-2 — arm A must reproduce the banked run.** Its final-frame molecule multiset must
+  equal `engine/output/p2_de4_full/seed_0x53415422.log`'s `[H2 H2 OH2 O3H2]`. If it does
+  not, my regeneration is not their run and the census speaks only about mine.
+- **G-dE4-3 — conservation.** Both arms must hold \\|p\\|/bound below 1, as every
+  conservation-clean arm in this document has. A breach voids that arm exactly as it voided
+  the broken-dE₄ logs.
+
+### 12.3 THE BRANCHES, with what each would mean
+
+Let **W** = the staked 834 fs window, and the verdict be the census's on the (1 O, 2 H)
+block of each arm.
+
+* **(a) A certifies, B does not.** The four-body term is what makes water *on this seed*,
+  and the product is a persistent quotient rather than a final-frame formula. The strongest
+  available result, and the one the three-arm story predicts.
+* **(b) BOTH certify.** The four-body term is NOT what makes water here. This would not be
+  surprising: §0 already reports a certified-strict OH₂ from MBE3 physics on seed
+  `0x53415425`, so water forming without dE₄ is established — this would establish it on
+  *this* seed too, and would mean the dE₄ arm's OH₂ is over-attributed.
+* **(c) NEITHER certifies.** The full-strength OH₂ is a final-frame formula that does not
+  hold a window. Road item 5's dE₄ leg is not cashed, and §0's MBE3 certification stands
+  alone as the water result.
+* **(d) B certifies, A does not.** Adding an exact four-body term destroys a quotient that
+  MBE3 sustains. Reported as-is and investigated, not explained away.
+
+**What NO branch licenses:** a formation rate, or "dE₄ makes water" as a general claim.
+This is ONE seed. §11 already measured 1 strict OH₂ in 8 MBE3 seeds; a single dE₄ seed
+cannot be compared against that without the other seven, which are not run here.
+
+### 12.4 The near miss that forced §12.1's design
+
+`waterquench.rs` sets `de4_enabled = true` in its own `main`, BELOW the frozen-protocol
+block that `tests/protocol_identity.rs` byte-compares. When the four-body work landed, the
+block was updated in both runners (a `MAX_ATOMS` → `DEFAULT_SCENE_ATOMS` rename), **the gate
+passed**, and `waterquench_traj` silently kept `Sim::empty()`'s `de4_enabled: false`.
+
+Regenerating "the dE₄ seed" with it would have run the four-body term **switched off**,
+written a trajectory of different physics under the right filename, and let this census
+report a confident failure to certify. Every number would have looked reasonable. It was
+caught by reading the runner one command before launching it.
+
+Two repairs, both committed before the arms launched: `--de4=on|off` is required with no
+default, and the gate now inventories every `base.<field>` assignment in both runners and
+requires the stand-in to name every knob its reference names — verified to FIRE against the
+runner at `21e6be3` (`missing = [de4_enabled]`) and to pass against the fixed one.
+
+**And the method correction.** Declaring a build by symbol table is sound on PRESENCE and
+worthless on ABSENCE: `nm -C` finds zero `quaternary::de4_ohhh_fci` symbols in a build that
+calls it, because the call is inlined. This document's earlier pinning conclusions stand —
+they rested on presence in one binary against a source that could not call it at all — but
+the method needed the caveat before someone read an absence as a verdict. Hence G-dE4-1
+being a counter and not a symbol.

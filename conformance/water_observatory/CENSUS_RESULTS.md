@@ -77,13 +77,13 @@ v (T y)`. The instrument collects the observed fibers and exhibits the pairs tha
 | seed | witness pairs | defect | 1st half | 2nd half | non-expansion (≤1.05×) |
 |---|---|---|---|---|---|
 | `0x…5421` | 262 | 0.1566 | 0.1372 | 0.1760 | **BREACHED** (1.28×) |
-| `0x…5422` | 465 | 0.2470 | 0.2319 | 0.2621 | **BREACHED** (1.13×) |
-| `0x…5423` | 370 | 0.1956 | 0.2383 | 0.1529 | ok |
+| `0x…5422` | 465 | 0.2470 | 0.2318 | 0.2622 | **BREACHED** (1.13×) |
+| `0x…5423` | 370 | 0.1956 | 0.2383 | 0.1529 | ok (0.64×) |
 | `0x…5424` | 303 | 0.1706 | 0.1651 | 0.1762 | **BREACHED** (1.07×) |
-| `0x…5425` | 441 | 0.2142 | 0.1841 | 0.2442 | **BREACHED** (1.33×) |
-| `0x…5426` | 313 | 0.1653 | — | — | **BREACHED** |
-| `0x…5427` | 337 | 0.1820 | — | — | ok |
-| `0x…5428` | 355 | 0.1776 | — | — | **BREACHED** |
+| `0x…5425` | 441 | 0.2142 | 0.1840 | 0.2443 | **BREACHED** (1.33×) |
+| `0x…5426` | 291 | 0.1653 | 0.1465 | 0.1842 | **BREACHED** (1.26×) |
+| `0x…5427` | 347 | 0.1820 | 0.2060 | 0.1581 | ok (0.77×) |
+| `0x…5428` | 328 | 0.1776 | 0.1541 | 0.2010 | **BREACHED** (1.30×) |
 
 Work count: ~19,984 informative transitions per seed against a staked minimum of 200, so
 none of this is the vacuous kind either. Witness pairs are exhibited by index — e.g. on
@@ -94,10 +94,10 @@ not.
 tier: 16–25% of its informative transitions cannot be predicted from the reading alone.
 That much is expected — OBJECT.md rule 2 says the claim is never zero leak. What is a
 FINDING is the second clause: rule 1 asks for **non-expanding** leak within a budget of
-1.05×, and the leak expands on five of six seeds, by up to 1.33×. A tier built on this view
-would certify on its first half and be out of budget by its second. Six of eight seeds
-breach; the two that do not (`0x…5423`, `0x…5427`) are the ones whose defect happens to
-FALL across the run, which is not the same as a bounded leak.
+1.05×, and the leak EXPANDS on six of the eight seeds, by 1.07× to 1.33×. A tier built on
+this view would certify on its first half and be out of budget by its second. The two seeds
+that pass (`0x…5423`, `0x…5427`) pass because their defect happens to FALL across the run,
+which is a different thing from a bounded leak and is reported as such.
 
 **And the coarser views fail too**, which is the interesting part — a coarser view is
 usually easier to close:

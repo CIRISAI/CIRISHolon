@@ -374,6 +374,13 @@ struct Outcome {
     momentum_bound: f64,
     temperature: f64,
     fenced: u64,
+    /// Compact (O,H,H,H) quadruples the four-body solver actually evaluated.
+    ///
+    /// THE FUNCTIONAL PROOF that `--de4=on` did something. A symbol-table check cannot
+    /// settle it: `quaternary::de4_ohhh_fci` is absent from `nm` output in a build that
+    /// calls it, because it gets inlined. A counter that moved is evidence; an absent
+    /// symbol is not.
+    de4_evals: u64,
     dt: f64,
     seconds: f64,
     frames_written: u64,
@@ -425,11 +432,12 @@ fn run(s: &mut Sim, arm: Arm, seed: u64, out_dir: &Path) -> Outcome {
         .expect("the frame writes");
         if (frame + 1) % 2000 == 0 || frame + 1 == FRAMES {
             println!(
-                "  [{:#018x}] frame {:>5}/{} | T {:>4.0} K | drift {:.2e} | {:>5.1} s",
+                "  [{:#018x}] frame {:>5}/{} | T {:>4.0} K | dE4 solves: {:>4} | drift {:.2e} | {:>5.1} s",
                 seed,
                 frame + 1,
                 FRAMES,
                 s.temperature(),
+                s.de4_eval_count,
                 s.drift(),
                 t0.elapsed().as_secs_f64()
             );
@@ -446,6 +454,7 @@ fn run(s: &mut Sim, arm: Arm, seed: u64, out_dir: &Path) -> Outcome {
         momentum_bound: s.momentum_bound(),
         temperature: s.temperature(),
         fenced: s.fence_untabulated,
+        de4_evals: s.de4_eval_count,
         seconds: t0.elapsed().as_secs_f64(),
         frames_written,
         path,
@@ -581,7 +590,7 @@ fn main() {
         // rather than a judgement call about whether two runs "agree".
         println!(
             "seed {:#018x}  dt {:.4}  modal-O {:>4}  free O {}  free H {}  largest {}  \
-             molecules [{}]  fenced {}  drift {:.2e}/{:.2e}  |p| {:.2e}/{:.2e}  T {:.0} K  \
+             molecules [{}]  fenced {}  dE4_evals {}  drift {:.2e}/{:.2e}  |p| {:.2e}/{:.2e}  T {:.0} K  \
              {:.0} s",
             o.seed,
             o.dt,
@@ -596,6 +605,7 @@ fn main() {
                 .collect::<Vec<_>>()
                 .join(" "),
             o.fenced,
+            o.de4_evals,
             o.drift,
             o.bound,
             o.momentum,

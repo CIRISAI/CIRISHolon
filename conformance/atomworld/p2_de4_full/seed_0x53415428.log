@@ -1,0 +1,44 @@
+# P2 dE4 arm, FULL STRENGTH: exact-gradient four-body, first run at design strength
+# launch 2026-09-01T16:12:06-05:00  HEAD=21e6be3  binary=/home/emoore/holon-artifacts/bin/waterquench_21e6be3
+# binary_sha256=7790cf3d27899527792f335ada0f4aef7361a2f5b9ed1cf5c6a87506d6cd7697  build_exit=0 (clean worktree, private target)
+# gates at this commit: de4_momentum 4/4 (momentum exact, control zero, torque, force-is-gradient)
+# loadavg_start: 78.22 76.09 73.89 138/3514 4043638  clock_start_MHz: 2733
+# curve H-H: 96 knots, R_e = 1.3887 bohr, D_e = 0.204142 Ha, worst residual 8.7e-11, 2.2 s
+# curve O-H: 96 knots, R_e = 1.9909 bohr, D_e = 0.122901 Ha, worst residual 9.9e-11, 18.0 s
+# WARNING O-O: worst residual 4.81e-6 exceeds CONVERGED_RESIDUAL 1e-9. Locate it before trusting anything this arm reports; see examples/s2_oo_residual.rs
+# curve O-O: 96 knots, R_e = 2.4421 bohr, D_e = 0.147621 Ha, worst residual 4.8e-6, 1256.8 s
+# arm = mixed (8 H + 4 O)   seeds = 1   12 atoms in 34.6 x 20.8 bohr
+# 20000 boundaries x 64 substeps, dt = 1.0772 a.u. -> 33.35 ps
+# T_init 3000 K, T_target 300 K, tau 2000
+# setup 1280.0 s
+  [0x0000000053415428] frame  1000/20000 | T  403 K | dE4 solves:    1 | drift: 6.54e-6 | time:   4.3 s
+  [0x0000000053415428] frame  2000/20000 | T  176 K | dE4 solves:    1 | drift: 8.93e-6 | time:   5.5 s
+  [0x0000000053415428] frame  3000/20000 | T  240 K | dE4 solves:    1 | drift: 8.64e-6 | time:   7.4 s
+  [0x0000000053415428] frame  4000/20000 | T  528 K | dE4 solves:    1 | drift: 3.42e-5 | time:   9.4 s
+  [0x0000000053415428] frame  5000/20000 | T  223 K | dE4 solves:    1 | drift: 1.57e-4 | time:  11.8 s
+  [0x0000000053415428] frame  6000/20000 | T  333 K | dE4 solves:    1 | drift: 1.33e-4 | time:  13.9 s
+  [0x0000000053415428] frame  7000/20000 | T  342 K | dE4 solves:    1 | drift: 1.35e-4 | time:  18.7 s
+  [0x0000000053415428] frame  8000/20000 | T  670 K | dE4 solves:  117 | drift: 1.80e-4 | time: 705.6 s
+  [0x0000000053415428] frame  9000/20000 | T  230 K | dE4 solves:  117 | drift: 1.76e-4 | time: 712.8 s
+  [0x0000000053415428] frame 10000/20000 | T  477 K | dE4 solves:  117 | drift: 1.77e-4 | time: 716.0 s
+  [0x0000000053415428] frame 11000/20000 | T  315 K | dE4 solves:  117 | drift: 1.80e-4 | time: 718.6 s
+  [0x0000000053415428] frame 12000/20000 | T  318 K | dE4 solves:  117 | drift: 1.84e-4 | time: 720.0 s
+  [0x0000000053415428] frame 13000/20000 | T  273 K | dE4 solves:  117 | drift: 1.79e-4 | time: 725.6 s
+  [0x0000000053415428] frame 14000/20000 | T  334 K | dE4 solves:  117 | drift: 1.84e-4 | time: 727.9 s
+  [0x0000000053415428] frame 15000/20000 | T  327 K | dE4 solves:  117 | drift: 1.81e-4 | time: 729.3 s
+  [0x0000000053415428] frame 16000/20000 | T  278 K | dE4 solves:  117 | drift: 1.85e-4 | time: 732.1 s
+  [0x0000000053415428] frame 17000/20000 | T  317 K | dE4 solves:  117 | drift: 1.81e-4 | time: 736.1 s
+  [0x0000000053415428] frame 18000/20000 | T  662 K | dE4 solves:  117 | drift: 1.77e-4 | time: 749.2 s
+  [0x0000000053415428] frame 19000/20000 | T  291 K | dE4 solves:  117 | drift: 1.75e-4 | time: 762.8 s
+  [0x0000000053415428] frame 20000/20000 | T  219 K | dE4 solves:  117 | drift: 1.80e-4 | time: 765.7 s
+seed 0x0000000053415428  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 4  dE4_evals 117  drift 2.10e-4/1.40e1  |p| 4.69e-12/9.05e-8  T 219 K  766 s
+
+# ---- mixed (8 H + 4 O) ----
+# seeds with the modal O-containing molecule = H2O : 0 / 1
+# seeds with ZERO free oxygen                      : 1 / 1
+# seeds with any molecule at all                   : 1 / 1
+# worst drift / bound = 1.495e-5, worst |p| / bound = 5.180e-5
+# fence incidence (triples refused for want of a table), per seed: [4]
+# dE4 (O,H,H,H) ab-initio solves, per seed: [117]
+# molecule census over all seeds: 3xH2  1xO4H2
+# exit=0  end=2026-09-01T16:46:12-05:00  loadavg_end: 75.90 75.81 77.86 72/3259 4106388  clock_end_MHz: 2400

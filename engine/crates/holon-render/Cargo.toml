@@ -38,3 +38,12 @@ holon-chem = { path = "../holon-chem" }
 # look like it worked and would not. `build-web.sh` sets the size profile through
 # `CARGO_PROFILE_RELEASE_*` environment variables instead, where it takes effect, and
 # the byte count in the report comes from that path.
+
+# DEV-ONLY, and the direction matters. `holon-lens` carries the trajectory format the
+# `waterquench_traj` example writes and the closure census reads. It is zero-dep and
+# std-only, so it cannot perturb this crate's feature resolution or the isolation gates,
+# and it is a dev-dependency so the browser artifact never sees it. The dependency points
+# THIS way and never back: the lens layer has to stay testable while this crate is
+# mid-refactor, and it was written during exactly such a window.
+[dev-dependencies]
+holon-lens = { path = "../holon-lens" }

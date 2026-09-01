@@ -9,9 +9,35 @@ written up as a finding (§4) rather than repaired in place.*
 
 ## 0. THE HEADLINE
 
-**The OH₂ question is NOT ANSWERED, and it is not answerable yet** (§5). The run that
-reported the programme's first emergent OH₂ was built from source that is in no commit,
-and the census will not answer it from a different build.
+**THE OH₂ THIS LANE WAS BRIEFED TO ADJUDICATE DOES NOT EXIST.** The brief said seed 2
+produced the programme's first emergent OH₂. It did not. `OH2` occurs on exactly ONE line
+of `conformance/atomworld/p2_waterquench.log`, and that line is the header:
+
+```
+# Physics Path: Pairs (H-H, O-H, O-O) + Complete MBE3 Triples (H3, OH2, O2H, O3)
+```
+
+`OH2` there is the NAME OF A TABLE — the (O,H,H) three-body surface, listed beside H3, O2H
+and O3. Every molecule line in that file reads `H2`, `OH`, `O2H`, `O3H3`, `O4H2` or `O4H4`;
+the run's own census is `19xH2 1xOH 4xO2H 1xO3H3 1xO4H2 4xO4H4`; and its own headline is
+**0 of 8 seeds with H₂O as the modal O-containing molecule**, with all four surfaces served
+and the fence at zero. Seed `0x…5422` — "seed 2" — produced **OH**, not OH₂.
+
+The correction came from the saturation2-water lane and is verified here against the
+primary artifact rather than taken on trust. It is now a gate:
+`holon_lens::quenchlog` parses header surfaces apart from census molecules, and its plant
+asserts BOTH halves — that a grep of the real file DOES hit `OH2`, and that the parsed
+molecule count for `OH2` is zero. A gate that passed because the string was absent would
+be no gate at all; the string is present, and the parser is what separates them.
+
+**So there was never a water molecule for the closure census to promote or reject on the
+banked artifact.** That is the result, not a failure of the instrument. The census keyed on
+a (1 O, 2 H) block correctly finds none, because none formed.
+
+**The still-running dE₄ arm is a DIFFERENT experiment and is still unverified** (§5). Its
+binary carries `quaternary::de4_ohhh_fci`; mine does not. Whatever it prints will be
+four-body physics, not another sample of the banked run, and its sim.rs dispatch is in no
+commit.
 
 **What IS measured**, on all eight regenerated trajectories of the hydrogen control arm:
 
@@ -137,28 +163,46 @@ same-composition blocks in a surrogate whose bond graph is time-shuffled within 
 A flat 5% encodes a fixed selection strength; a shuffle floor encodes the question actually
 being asked, which is whether these blocks hold more than chance blocks hold.
 
-## 5. WHY THE OH₂ QUESTION IS BLOCKED
+## 5. THE TWO ARMS ARE TWO EXPERIMENTS, AND ONLY ONE IS BANKABLE
 
-The P2 run that reported the first emergent OH₂ rides `dE4(O,H,H,H)`, and that physics is
-in **no commit**: `git show HEAD:engine/crates/holon-render/src/sim.rs | grep -c
-de4_enabled` returns 0. The working-tree `sim.rs` carrying it is being overwritten by the
-T3 dynamic-storage refactor; no stash, backup or worktree held the earlier bytes.
+| | Arm A — banked | Arm B — the running processes |
+|---|---|---|
+| physics | MBE3, all four surfaces served, fence 0 | MBE3 + `dE4(O,H,H,H)`, fence 4 |
+| source | committed, `45a513a` | sim.rs dispatch **in no commit** |
+| evidence | `p2_waterquench.log`, 8 seeds, 0/8 water | not yet printed |
+| my build | same class: **0** `quaternary::de4_ohhh_fci` symbols | **1** in theirs |
 
-Two things were done rather than reported:
+**My build's provenance, verified by symbol table rather than by mtime**, which is the
+method the water lane established today: `nm -C` on my `waterquench_traj` finds zero
+`quaternary::de4_ohhh_fci` symbols; on the running `waterquench` it finds one. Neither
+binary carries any T3 marker (`DEFAULT_SCENE_ATOMS`, `complete_pairs`, `ExternalWork`,
+`Periodic` all absent), so both predate that refactor. My worktree is pinned at `a3b3d4b`.
 
-* **The bytes are preserved.** `refs/rescue/de4-2026-09-01` (`11549dd`) captures the
-  working-tree state of `holon-render`, `holon-chem` and `holon-device` — 21 files, 6,245
-  insertions, including the 1,412-line `sim.rs` delta and the 738-line untracked
-  `cells.rs`. On no branch; main untouched; no working tree modified.
-* **Recoverability was MEASURED.** That exact content, in a throwaway worktree at HEAD,
-  fails `cargo check -p holon-render` with 14 errors: `MAX_ATOMS` removed while nine sites
-  still reference it, `MAX_PAIRS` likewise, a closure indexed as a slice at `sim.rs:2044`,
-  and a non-const call in a const fn. All T3's own in-flight edits.
+The consequence is clean rather than awkward: **my arms cannot reproduce Arm B, and a
+protocol-equality gate between them would fail for a reason that has nothing to do with
+trajectories.** They are not two builds of one experiment. `quaternary.rs` itself IS
+committed and IS gated (`forty_witnesses_ab_initio_sign_structure_and_bounds`, all 40
+staked witnesses with exactly 11 attractive); it is only the sim.rs DISPATCH of it that is
+working-tree-only.
 
-**The dE₄ physics is preserved but not rebuildable** until T3 lands green. Committing it
-buys safety, not reproducibility. Until a green commit exists and one completed seed
-reproduces its per-seed line, the OH₂ should be carried as PROVISIONAL.
-`CENSUS_RESUME.md` holds the recipe; the census step is minutes once the commit exists.
+Two things were done about that rather than only reported:
+
+* **The bytes are preserved, twice.** The water lane's `rescue/de4-sim-worktree`
+  (`7480437`, a `git stash create` that touched neither working tree nor index) and this
+  lane's `refs/rescue/de4-2026-09-01` (`11549dd`, 21 files, 6,245 insertions including the
+  untracked 738-line `cells.rs`). The reconstruction target is that tree MINUS the T3
+  hunks — a live, owned diff, not archaeology.
+* **Recoverability was MEASURED.** That content in a throwaway worktree at HEAD fails
+  `cargo check -p holon-render` with 14 errors, all T3's own in-flight edits.
+
+Arm B is therefore reported as **provenance partially reconstructed**, and nothing from it
+banks until its dispatch is committed and one completed seed reproduces its per-seed line.
+`CENSUS_RESUME.md` holds the recipe.
+
+**And the served arm is prep-only.** `--ozone=served` loads a surface that is mid-generation
+and uncertified, and whose predecessor was convicted by M-CHEAPER-THAN-ITS-PRICE. That arm
+exists to test whether my runner reproduces the committed log — an INSTRUMENT gate — and
+nothing from it banks as physics under any outcome.
 
 ## 6. A DEFECT IN THIS INSTRUMENT, found before it reached a verdict
 
@@ -242,7 +286,10 @@ launched under an `ice` label classifies LIQUID.
 
 ## 9. What this census does NOT claim
 
-* It does not claim water formed, or failed to. The hydrogen arm contains no oxygen at all.
+* It does not claim water formed. On the banked artifact it did not: 0 of 8, verified here
+  against the file. The hydrogen arm contains no oxygen at all.
+* It does not claim anything about the running dE₄ arm, which had printed no seed line when
+  this was written.
 * It does not claim the bonded partition is Closed. Leg B can only exhibit witness pairs or
   fail to find them, and here it found 262–465 per seed.
 * It does not claim H₂ is certified. Under the staked floor H₂ is VOID; the strong Leg A

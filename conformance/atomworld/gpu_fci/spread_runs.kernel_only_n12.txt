@@ -1,0 +1,31 @@
+# between-invocation spread of the (O,O,O) GPU sigma, kernel-only, warm
+# started_utc   2026-09-01T19:56:36Z
+# binary_sha256 add70f26be9f56e86a9d32aed5efc4cc3df5de4dcbfbafd5a6a8a915d9b5545c
+# repo_HEAD     c3794bd11d20da59c0b49fed75399062191f1669
+# invocations   12, each a separate process on cpu 0
+# loadavg_start 86.63
+68.303681 86.59
+68.592713 77.31
+69.181410 72.57
+68.284848 72.84
+68.020069 68.35
+68.070251 68.28
+68.492304 68.75
+68.039099 68.27
+67.899068 69.49
+68.044795 70.19
+67.889610 67.54
+68.218299 67.58
+#
+# BETWEEN-INVOCATION, n 12, failed 0   (computed after the run, NOT by the script -- see below)
+#   kernel-only  mean 68.253  sd 0.366 (0.54%)  min 67.890  max 69.181  spread 1.0190x
+#   loadavg during the series: 67.54 to 86.59
+#
+# THE SCRIPT'S OWN SUMMARY DID NOT RUN, and the reason is a mistake worth recording: the
+# script was EDITED WHILE BASH WAS EXECUTING IT (to add the round-trip rate for series 2).
+# Bash reads a script incrementally by byte offset, so editing a running one moves the
+# ground under its read position -- here the trailing awk block never executed. The twelve
+# data lines are intact and verified (12 of 12 well-formed, old two-field format, exactly
+# N), so the READINGS are sound and only the summary was lost; it is recomputed above from
+# the same lines. The lesson is the same shape as the M-STALE-INSTRUMENT family: never edit
+# an instrument that is currently running -- copy it, edit the copy, and run that.

@@ -233,3 +233,1375 @@ rung-3 probe fails  0
 | P3_debounced | 480 | 0 | **0** | 0 | 480 |
 | P4_own_step | 480 | 0 | **0** | 0 | 480 |
 | P5_own_step_alone | 480 | 0 | **0** | 0 | 480 |
+
+=== reap_observe: 510 polls, 23 receipts (nodes solved) ===
+holder's own step   median 16.004 s, max 196.089 s over 20 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.05x)
+P4's grace          588.268 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 510 | 417 | **417** | 0 | 93 |
+| P2_cpu_tick | 510 | 0 | **0** | 0 | 510 |
+| P3_debounced | 510 | 0 | **0** | 0 | 510 |
+| P4_own_step | 510 | 0 | **0** | 0 | 510 |
+| P5_own_step_alone | 510 | 0 | **0** | 0 | 510 |
+
+=== reap_observe: 540 polls, 23 receipts (nodes solved) ===
+holder's own step   median 16.004 s, max 196.089 s over 20 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.05x)
+P4's grace          588.268 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 540 | 447 | **447** | 0 | 93 |
+| P2_cpu_tick | 540 | 0 | **0** | 0 | 540 |
+| P3_debounced | 540 | 0 | **0** | 0 | 540 |
+| P4_own_step | 540 | 0 | **0** | 0 | 540 |
+| P5_own_step_alone | 540 | 0 | **0** | 0 | 540 |
+
+=== reap_observe: 570 polls, 23 receipts (nodes solved) ===
+holder's own step   median 16.004 s, max 196.089 s over 20 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.05x)
+P4's grace          588.268 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 570 | 477 | **477** | 0 | 93 |
+| P2_cpu_tick | 570 | 0 | **0** | 0 | 570 |
+| P3_debounced | 570 | 0 | **0** | 0 | 570 |
+| P4_own_step | 570 | 0 | **0** | 0 | 570 |
+| P5_own_step_alone | 570 | 0 | **0** | 0 | 570 |
+
+=== reap_observe: 600 polls, 25 receipts (nodes solved) ===
+holder's own step   median 16.004 s, max 364.191 s over 22 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 600 | 504 | **504** | 0 | 96 |
+| P2_cpu_tick | 600 | 0 | **0** | 0 | 600 |
+| P3_debounced | 600 | 0 | **0** | 0 | 600 |
+| P4_own_step | 600 | 0 | **0** | 0 | 600 |
+| P5_own_step_alone | 600 | 0 | **0** | 0 | 600 |
+
+=== reap_observe: 630 polls, 26 receipts (nodes solved) ===
+holder's own step   median 16.004 s, max 364.191 s over 23 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 630 | 528 | **528** | 0 | 102 |
+| P2_cpu_tick | 630 | 0 | **0** | 0 | 630 |
+| P3_debounced | 630 | 0 | **0** | 0 | 630 |
+| P4_own_step | 630 | 0 | **0** | 0 | 630 |
+| P5_own_step_alone | 630 | 0 | **0** | 0 | 630 |
+
+=== reap_observe: 660 polls, 26 receipts (nodes solved) ===
+holder's own step   median 16.004 s, max 364.191 s over 23 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 660 | 556 | **556** | 0 | 104 |
+| P2_cpu_tick | 660 | 0 | **0** | 0 | 660 |
+| P3_debounced | 660 | 0 | **0** | 0 | 660 |
+| P4_own_step | 660 | 0 | **0** | 0 | 660 |
+| P5_own_step_alone | 660 | 0 | **0** | 0 | 660 |
+
+=== reap_observe: 690 polls, 27 receipts (nodes solved) ===
+holder's own step   median 28.011 s, max 364.191 s over 24 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 690 | 581 | **581** | 0 | 109 |
+| P2_cpu_tick | 690 | 0 | **0** | 0 | 690 |
+| P3_debounced | 690 | 0 | **0** | 0 | 690 |
+| P4_own_step | 690 | 0 | **0** | 0 | 690 |
+| P5_own_step_alone | 690 | 0 | **0** | 0 | 690 |
+
+=== reap_observe: 720 polls, 29 receipts (nodes solved) ===
+holder's own step   median 28.011 s, max 364.191 s over 26 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 720 | 602 | **602** | 0 | 118 |
+| P2_cpu_tick | 720 | 0 | **0** | 0 | 720 |
+| P3_debounced | 720 | 0 | **0** | 0 | 720 |
+| P4_own_step | 720 | 0 | **0** | 0 | 720 |
+| P5_own_step_alone | 720 | 0 | **0** | 0 | 720 |
+
+=== reap_observe: 750 polls, 31 receipts (nodes solved) ===
+holder's own step   median 32.025 s, max 364.191 s over 28 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 750 | 624 | **624** | 0 | 126 |
+| P2_cpu_tick | 750 | 0 | **0** | 0 | 750 |
+| P3_debounced | 750 | 0 | **0** | 0 | 750 |
+| P4_own_step | 750 | 0 | **0** | 0 | 750 |
+| P5_own_step_alone | 750 | 0 | **0** | 0 | 750 |
+
+=== reap_observe: 780 polls, 31 receipts (nodes solved) ===
+holder's own step   median 32.025 s, max 364.191 s over 28 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 780 | 652 | **652** | 0 | 128 |
+| P2_cpu_tick | 780 | 0 | **0** | 0 | 780 |
+| P3_debounced | 780 | 0 | **0** | 0 | 780 |
+| P4_own_step | 780 | 0 | **0** | 0 | 780 |
+| P5_own_step_alone | 780 | 0 | **0** | 0 | 780 |
+
+=== reap_observe: 810 polls, 31 receipts (nodes solved) ===
+holder's own step   median 32.025 s, max 364.191 s over 28 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 810 | 682 | **682** | 0 | 128 |
+| P2_cpu_tick | 810 | 0 | **0** | 0 | 810 |
+| P3_debounced | 810 | 0 | **0** | 0 | 810 |
+| P4_own_step | 810 | 0 | **0** | 0 | 810 |
+| P5_own_step_alone | 810 | 0 | **0** | 0 | 810 |
+
+=== reap_observe: 840 polls, 33 receipts (nodes solved) ===
+holder's own step   median 32.025 s, max 364.191 s over 30 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 840 | 705 | **705** | 0 | 135 |
+| P2_cpu_tick | 840 | 0 | **0** | 0 | 840 |
+| P3_debounced | 840 | 0 | **0** | 0 | 840 |
+| P4_own_step | 840 | 0 | **0** | 0 | 840 |
+| P5_own_step_alone | 840 | 0 | **0** | 0 | 840 |
+
+=== reap_observe: 870 polls, 34 receipts (nodes solved) ===
+holder's own step   median 28.014 s, max 364.191 s over 31 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 870 | 730 | **730** | 0 | 140 |
+| P2_cpu_tick | 870 | 0 | **0** | 0 | 870 |
+| P3_debounced | 870 | 0 | **0** | 0 | 870 |
+| P4_own_step | 870 | 0 | **0** | 0 | 870 |
+| P5_own_step_alone | 870 | 0 | **0** | 0 | 870 |
+
+=== reap_observe: 900 polls, 35 receipts (nodes solved) ===
+holder's own step   median 32.025 s, max 364.191 s over 32 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 900 | 755 | **755** | 0 | 145 |
+| P2_cpu_tick | 900 | 0 | **0** | 0 | 900 |
+| P3_debounced | 900 | 0 | **0** | 0 | 900 |
+| P4_own_step | 900 | 0 | **0** | 0 | 900 |
+| P5_own_step_alone | 900 | 0 | **0** | 0 | 900 |
+
+=== reap_observe: 930 polls, 36 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 33 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 930 | 780 | **780** | 0 | 150 |
+| P2_cpu_tick | 930 | 0 | **0** | 0 | 930 |
+| P3_debounced | 930 | 0 | **0** | 0 | 930 |
+| P4_own_step | 930 | 0 | **0** | 0 | 930 |
+| P5_own_step_alone | 930 | 0 | **0** | 0 | 930 |
+
+=== reap_observe: 960 polls, 38 receipts (nodes solved) ===
+holder's own step   median 30.010 s, max 364.191 s over 35 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 960 | 800 | **800** | 0 | 160 |
+| P2_cpu_tick | 960 | 0 | **0** | 0 | 960 |
+| P3_debounced | 960 | 0 | **0** | 0 | 960 |
+| P4_own_step | 960 | 0 | **0** | 0 | 960 |
+| P5_own_step_alone | 960 | 0 | **0** | 0 | 960 |
+
+=== reap_observe: 990 polls, 40 receipts (nodes solved) ===
+holder's own step   median 30.010 s, max 364.191 s over 37 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 990 | 821 | **821** | 0 | 169 |
+| P2_cpu_tick | 990 | 0 | **0** | 0 | 990 |
+| P3_debounced | 990 | 0 | **0** | 0 | 990 |
+| P4_own_step | 990 | 0 | **0** | 0 | 990 |
+| P5_own_step_alone | 990 | 0 | **0** | 0 | 990 |
+
+=== reap_observe: 1020 polls, 40 receipts (nodes solved) ===
+holder's own step   median 30.010 s, max 364.191 s over 37 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1020 | 850 | **850** | 0 | 170 |
+| P2_cpu_tick | 1020 | 0 | **0** | 0 | 1020 |
+| P3_debounced | 1020 | 0 | **0** | 0 | 1020 |
+| P4_own_step | 1020 | 0 | **0** | 0 | 1020 |
+| P5_own_step_alone | 1020 | 0 | **0** | 0 | 1020 |
+
+=== reap_observe: 1050 polls, 43 receipts (nodes solved) ===
+holder's own step   median 32.025 s, max 364.191 s over 40 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1050 | 869 | **869** | 0 | 181 |
+| P2_cpu_tick | 1050 | 0 | **0** | 0 | 1050 |
+| P3_debounced | 1050 | 0 | **0** | 0 | 1050 |
+| P4_own_step | 1050 | 0 | **0** | 0 | 1050 |
+| P5_own_step_alone | 1050 | 0 | **0** | 0 | 1050 |
+
+=== reap_observe: 1080 polls, 45 receipts (nodes solved) ===
+holder's own step   median 32.025 s, max 364.191 s over 42 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1080 | 889 | **889** | 0 | 191 |
+| P2_cpu_tick | 1080 | 0 | **0** | 0 | 1080 |
+| P3_debounced | 1080 | 0 | **0** | 0 | 1080 |
+| P4_own_step | 1080 | 0 | **0** | 0 | 1080 |
+| P5_own_step_alone | 1080 | 0 | **0** | 0 | 1080 |
+
+=== reap_observe: 1110 polls, 47 receipts (nodes solved) ===
+holder's own step   median 32.025 s, max 364.191 s over 44 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1110 | 907 | **907** | 0 | 203 |
+| P2_cpu_tick | 1110 | 0 | **0** | 0 | 1110 |
+| P3_debounced | 1110 | 0 | **0** | 0 | 1110 |
+| P4_own_step | 1110 | 0 | **0** | 0 | 1110 |
+| P5_own_step_alone | 1110 | 0 | **0** | 0 | 1110 |
+
+=== reap_observe: 1140 polls, 47 receipts (nodes solved) ===
+holder's own step   median 32.025 s, max 364.191 s over 44 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1140 | 935 | **935** | 0 | 205 |
+| P2_cpu_tick | 1140 | 0 | **0** | 0 | 1140 |
+| P3_debounced | 1140 | 0 | **0** | 0 | 1140 |
+| P4_own_step | 1140 | 0 | **0** | 0 | 1140 |
+| P5_own_step_alone | 1140 | 0 | **0** | 0 | 1140 |
+
+=== reap_observe: 1170 polls, 51 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 48 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1170 | 949 | **949** | 0 | 221 |
+| P2_cpu_tick | 1170 | 0 | **0** | 0 | 1170 |
+| P3_debounced | 1170 | 0 | **0** | 0 | 1170 |
+| P4_own_step | 1170 | 0 | **0** | 0 | 1170 |
+| P5_own_step_alone | 1170 | 0 | **0** | 0 | 1170 |
+
+=== reap_observe: 1200 polls, 54 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 51 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1200 | 966 | **966** | 0 | 234 |
+| P2_cpu_tick | 1200 | 0 | **0** | 0 | 1200 |
+| P3_debounced | 1200 | 0 | **0** | 0 | 1200 |
+| P4_own_step | 1200 | 0 | **0** | 0 | 1200 |
+| P5_own_step_alone | 1200 | 0 | **0** | 0 | 1200 |
+
+=== reap_observe: 1230 polls, 54 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 51 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1230 | 996 | **996** | 0 | 234 |
+| P2_cpu_tick | 1230 | 0 | **0** | 0 | 1230 |
+| P3_debounced | 1230 | 0 | **0** | 0 | 1230 |
+| P4_own_step | 1230 | 0 | **0** | 0 | 1230 |
+| P5_own_step_alone | 1230 | 0 | **0** | 0 | 1230 |
+
+=== reap_observe: 1260 polls, 54 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 51 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1260 | 1026 | **1026** | 0 | 234 |
+| P2_cpu_tick | 1260 | 0 | **0** | 0 | 1260 |
+| P3_debounced | 1260 | 0 | **0** | 0 | 1260 |
+| P4_own_step | 1260 | 0 | **0** | 0 | 1260 |
+| P5_own_step_alone | 1260 | 0 | **0** | 0 | 1260 |
+
+=== reap_observe: 1290 polls, 56 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 53 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1290 | 1046 | **1046** | 0 | 244 |
+| P2_cpu_tick | 1290 | 0 | **0** | 0 | 1290 |
+| P3_debounced | 1290 | 0 | **0** | 0 | 1290 |
+| P4_own_step | 1290 | 0 | **0** | 0 | 1290 |
+| P5_own_step_alone | 1290 | 0 | **0** | 0 | 1290 |
+
+=== reap_observe: 1320 polls, 56 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 53 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1320 | 1076 | **1076** | 0 | 244 |
+| P2_cpu_tick | 1320 | 0 | **0** | 0 | 1320 |
+| P3_debounced | 1320 | 0 | **0** | 0 | 1320 |
+| P4_own_step | 1320 | 0 | **0** | 0 | 1320 |
+| P5_own_step_alone | 1320 | 0 | **0** | 0 | 1320 |
+
+=== reap_observe: 1350 polls, 58 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 55 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1350 | 1100 | **1100** | 0 | 250 |
+| P2_cpu_tick | 1350 | 0 | **0** | 0 | 1350 |
+| P3_debounced | 1350 | 0 | **0** | 0 | 1350 |
+| P4_own_step | 1350 | 0 | **0** | 0 | 1350 |
+| P5_own_step_alone | 1350 | 0 | **0** | 0 | 1350 |
+
+=== reap_observe: 1380 polls, 58 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 55 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1380 | 1130 | **1130** | 0 | 250 |
+| P2_cpu_tick | 1380 | 0 | **0** | 0 | 1380 |
+| P3_debounced | 1380 | 0 | **0** | 0 | 1380 |
+| P4_own_step | 1380 | 0 | **0** | 0 | 1380 |
+| P5_own_step_alone | 1380 | 0 | **0** | 0 | 1380 |
+
+=== reap_observe: 1410 polls, 59 receipts (nodes solved) ===
+holder's own step   median 30.010 s, max 364.191 s over 56 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1410 | 1157 | **1157** | 0 | 253 |
+| P2_cpu_tick | 1410 | 0 | **0** | 0 | 1410 |
+| P3_debounced | 1410 | 0 | **0** | 0 | 1410 |
+| P4_own_step | 1410 | 0 | **0** | 0 | 1410 |
+| P5_own_step_alone | 1410 | 0 | **0** | 0 | 1410 |
+
+=== reap_observe: 1440 polls, 59 receipts (nodes solved) ===
+holder's own step   median 30.010 s, max 364.191 s over 56 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1440 | 1185 | **1185** | 0 | 255 |
+| P2_cpu_tick | 1440 | 0 | **0** | 0 | 1440 |
+| P3_debounced | 1440 | 0 | **0** | 0 | 1440 |
+| P4_own_step | 1440 | 0 | **0** | 0 | 1440 |
+| P5_own_step_alone | 1440 | 0 | **0** | 0 | 1440 |
+
+=== reap_observe: 1470 polls, 63 receipts (nodes solved) ===
+holder's own step   median 30.010 s, max 364.191 s over 60 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1470 | 1202 | **1202** | 0 | 268 |
+| P2_cpu_tick | 1470 | 0 | **0** | 0 | 1470 |
+| P3_debounced | 1470 | 0 | **0** | 0 | 1470 |
+| P4_own_step | 1470 | 0 | **0** | 0 | 1470 |
+| P5_own_step_alone | 1470 | 0 | **0** | 0 | 1470 |
+
+=== reap_observe: 1500 polls, 63 receipts (nodes solved) ===
+holder's own step   median 30.010 s, max 364.191 s over 60 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1500 | 1232 | **1232** | 0 | 268 |
+| P2_cpu_tick | 1500 | 0 | **0** | 0 | 1500 |
+| P3_debounced | 1500 | 0 | **0** | 0 | 1500 |
+| P4_own_step | 1500 | 0 | **0** | 0 | 1500 |
+| P5_own_step_alone | 1500 | 0 | **0** | 0 | 1500 |
+
+=== reap_observe: 1530 polls, 66 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 63 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1530 | 1247 | **1247** | 0 | 283 |
+| P2_cpu_tick | 1530 | 0 | **0** | 0 | 1530 |
+| P3_debounced | 1530 | 0 | **0** | 0 | 1530 |
+| P4_own_step | 1530 | 0 | **0** | 0 | 1530 |
+| P5_own_step_alone | 1530 | 0 | **0** | 0 | 1530 |
+
+=== reap_observe: 1560 polls, 69 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 66 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1560 | 1262 | **1262** | 0 | 298 |
+| P2_cpu_tick | 1560 | 0 | **0** | 0 | 1560 |
+| P3_debounced | 1560 | 0 | **0** | 0 | 1560 |
+| P4_own_step | 1560 | 0 | **0** | 0 | 1560 |
+| P5_own_step_alone | 1560 | 0 | **0** | 0 | 1560 |
+
+=== reap_observe: 1590 polls, 70 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 67 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1590 | 1287 | **1287** | 0 | 303 |
+| P2_cpu_tick | 1590 | 0 | **0** | 0 | 1590 |
+| P3_debounced | 1590 | 0 | **0** | 0 | 1590 |
+| P4_own_step | 1590 | 0 | **0** | 0 | 1590 |
+| P5_own_step_alone | 1590 | 0 | **0** | 0 | 1590 |
+
+=== reap_observe: 1620 polls, 73 receipts (nodes solved) ===
+holder's own step   median 28.014 s, max 364.191 s over 70 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1620 | 1304 | **1304** | 0 | 316 |
+| P2_cpu_tick | 1620 | 0 | **0** | 0 | 1620 |
+| P3_debounced | 1620 | 0 | **0** | 0 | 1620 |
+| P4_own_step | 1620 | 0 | **0** | 0 | 1620 |
+| P5_own_step_alone | 1620 | 0 | **0** | 0 | 1620 |
+
+=== reap_observe: 1650 polls, 74 receipts (nodes solved) ===
+holder's own step   median 28.011 s, max 364.191 s over 71 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1650 | 1327 | **1327** | 0 | 323 |
+| P2_cpu_tick | 1650 | 0 | **0** | 0 | 1650 |
+| P3_debounced | 1650 | 0 | **0** | 0 | 1650 |
+| P4_own_step | 1650 | 0 | **0** | 0 | 1650 |
+| P5_own_step_alone | 1650 | 0 | **0** | 0 | 1650 |
+
+=== reap_observe: 1680 polls, 77 receipts (nodes solved) ===
+holder's own step   median 28.011 s, max 364.191 s over 74 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1680 | 1346 | **1346** | 0 | 334 |
+| P2_cpu_tick | 1680 | 0 | **0** | 0 | 1680 |
+| P3_debounced | 1680 | 0 | **0** | 0 | 1680 |
+| P4_own_step | 1680 | 0 | **0** | 0 | 1680 |
+| P5_own_step_alone | 1680 | 0 | **0** | 0 | 1680 |
+
+=== reap_observe: 1710 polls, 77 receipts (nodes solved) ===
+holder's own step   median 28.011 s, max 364.191 s over 74 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1710 | 1376 | **1376** | 0 | 334 |
+| P2_cpu_tick | 1710 | 0 | **0** | 0 | 1710 |
+| P3_debounced | 1710 | 0 | **0** | 0 | 1710 |
+| P4_own_step | 1710 | 0 | **0** | 0 | 1710 |
+| P5_own_step_alone | 1710 | 0 | **0** | 0 | 1710 |
+
+=== reap_observe: 1740 polls, 78 receipts (nodes solved) ===
+holder's own step   median 28.011 s, max 364.191 s over 75 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1740 | 1404 | **1404** | 0 | 336 |
+| P2_cpu_tick | 1740 | 0 | **0** | 0 | 1740 |
+| P3_debounced | 1740 | 0 | **0** | 0 | 1740 |
+| P4_own_step | 1740 | 0 | **0** | 0 | 1740 |
+| P5_own_step_alone | 1740 | 0 | **0** | 0 | 1740 |
+
+=== reap_observe: 1770 polls, 79 receipts (nodes solved) ===
+holder's own step   median 28.014 s, max 364.191 s over 76 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1770 | 1426 | **1426** | 0 | 344 |
+| P2_cpu_tick | 1770 | 0 | **0** | 0 | 1770 |
+| P3_debounced | 1770 | 0 | **0** | 0 | 1770 |
+| P4_own_step | 1770 | 0 | **0** | 0 | 1770 |
+| P5_own_step_alone | 1770 | 0 | **0** | 0 | 1770 |
+
+=== reap_observe: 1800 polls, 80 receipts (nodes solved) ===
+holder's own step   median 28.014 s, max 364.191 s over 77 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1800 | 1451 | **1451** | 0 | 349 |
+| P2_cpu_tick | 1800 | 0 | **0** | 0 | 1800 |
+| P3_debounced | 1800 | 0 | **0** | 0 | 1800 |
+| P4_own_step | 1800 | 0 | **0** | 0 | 1800 |
+| P5_own_step_alone | 1800 | 0 | **0** | 0 | 1800 |
+
+=== reap_observe: 1830 polls, 80 receipts (nodes solved) ===
+holder's own step   median 28.014 s, max 364.191 s over 77 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1830 | 1481 | **1481** | 0 | 349 |
+| P2_cpu_tick | 1830 | 0 | **0** | 0 | 1830 |
+| P3_debounced | 1830 | 0 | **0** | 0 | 1830 |
+| P4_own_step | 1830 | 0 | **0** | 0 | 1830 |
+| P5_own_step_alone | 1830 | 0 | **0** | 0 | 1830 |
+
+=== reap_observe: 1860 polls, 81 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 78 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1860 | 1506 | **1506** | 0 | 354 |
+| P2_cpu_tick | 1860 | 0 | **0** | 0 | 1860 |
+| P3_debounced | 1860 | 0 | **0** | 0 | 1860 |
+| P4_own_step | 1860 | 0 | **0** | 0 | 1860 |
+| P5_own_step_alone | 1860 | 0 | **0** | 0 | 1860 |
+
+=== reap_observe: 1890 polls, 82 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 79 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1890 | 1531 | **1531** | 0 | 359 |
+| P2_cpu_tick | 1890 | 0 | **0** | 0 | 1890 |
+| P3_debounced | 1890 | 0 | **0** | 0 | 1890 |
+| P4_own_step | 1890 | 0 | **0** | 0 | 1890 |
+| P5_own_step_alone | 1890 | 0 | **0** | 0 | 1890 |
+
+=== reap_observe: 1920 polls, 85 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 82 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1920 | 1546 | **1546** | 0 | 374 |
+| P2_cpu_tick | 1920 | 0 | **0** | 0 | 1920 |
+| P3_debounced | 1920 | 0 | **0** | 0 | 1920 |
+| P4_own_step | 1920 | 0 | **0** | 0 | 1920 |
+| P5_own_step_alone | 1920 | 0 | **0** | 0 | 1920 |
+
+=== reap_observe: 1950 polls, 85 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 82 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1950 | 1576 | **1576** | 0 | 374 |
+| P2_cpu_tick | 1950 | 0 | **0** | 0 | 1950 |
+| P3_debounced | 1950 | 0 | **0** | 0 | 1950 |
+| P4_own_step | 1950 | 0 | **0** | 0 | 1950 |
+| P5_own_step_alone | 1950 | 0 | **0** | 0 | 1950 |
+
+=== reap_observe: 1980 polls, 86 receipts (nodes solved) ===
+holder's own step   median 28.015 s, max 364.191 s over 83 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 1980 | 1601 | **1601** | 0 | 379 |
+| P2_cpu_tick | 1980 | 0 | **0** | 0 | 1980 |
+| P3_debounced | 1980 | 0 | **0** | 0 | 1980 |
+| P4_own_step | 1980 | 0 | **0** | 0 | 1980 |
+| P5_own_step_alone | 1980 | 0 | **0** | 0 | 1980 |
+
+=== reap_observe: 2010 polls, 87 receipts (nodes solved) ===
+holder's own step   median 30.010 s, max 364.191 s over 84 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2010 | 1626 | **1626** | 0 | 384 |
+| P2_cpu_tick | 2010 | 0 | **0** | 0 | 2010 |
+| P3_debounced | 2010 | 0 | **0** | 0 | 2010 |
+| P4_own_step | 2010 | 0 | **0** | 0 | 2010 |
+| P5_own_step_alone | 2010 | 0 | **0** | 0 | 2010 |
+
+=== reap_observe: 2040 polls, 88 receipts (nodes solved) ===
+holder's own step   median 30.010 s, max 364.191 s over 85 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2040 | 1655 | **1655** | 0 | 385 |
+| P2_cpu_tick | 2040 | 0 | **0** | 0 | 2040 |
+| P3_debounced | 2040 | 0 | **0** | 0 | 2040 |
+| P4_own_step | 2040 | 0 | **0** | 0 | 2040 |
+| P5_own_step_alone | 2040 | 0 | **0** | 0 | 2040 |
+
+=== reap_observe: 2070 polls, 88 receipts (nodes solved) ===
+holder's own step   median 30.010 s, max 364.191 s over 85 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2070 | 1681 | **1681** | 0 | 389 |
+| P2_cpu_tick | 2070 | 0 | **0** | 0 | 2070 |
+| P3_debounced | 2070 | 0 | **0** | 0 | 2070 |
+| P4_own_step | 2070 | 0 | **0** | 0 | 2070 |
+| P5_own_step_alone | 2070 | 0 | **0** | 0 | 2070 |
+
+=== reap_observe: 2100 polls, 89 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 86 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2100 | 1706 | **1706** | 0 | 394 |
+| P2_cpu_tick | 2100 | 0 | **0** | 0 | 2100 |
+| P3_debounced | 2100 | 0 | **0** | 0 | 2100 |
+| P4_own_step | 2100 | 0 | **0** | 0 | 2100 |
+| P5_own_step_alone | 2100 | 0 | **0** | 0 | 2100 |
+
+=== reap_observe: 2130 polls, 89 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 86 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2130 | 1736 | **1736** | 0 | 394 |
+| P2_cpu_tick | 2130 | 0 | **0** | 0 | 2130 |
+| P3_debounced | 2130 | 0 | **0** | 0 | 2130 |
+| P4_own_step | 2130 | 0 | **0** | 0 | 2130 |
+| P5_own_step_alone | 2130 | 0 | **0** | 0 | 2130 |
+
+=== reap_observe: 2160 polls, 90 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 87 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2160 | 1761 | **1761** | 0 | 399 |
+| P2_cpu_tick | 2160 | 0 | **0** | 0 | 2160 |
+| P3_debounced | 2160 | 0 | **0** | 0 | 2160 |
+| P4_own_step | 2160 | 0 | **0** | 0 | 2160 |
+| P5_own_step_alone | 2160 | 0 | **0** | 0 | 2160 |
+
+=== reap_observe: 2190 polls, 92 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 89 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2190 | 1783 | **1783** | 0 | 407 |
+| P2_cpu_tick | 2190 | 0 | **0** | 0 | 2190 |
+| P3_debounced | 2190 | 0 | **0** | 0 | 2190 |
+| P4_own_step | 2190 | 0 | **0** | 0 | 2190 |
+| P5_own_step_alone | 2190 | 0 | **0** | 0 | 2190 |
+
+=== reap_observe: 2220 polls, 93 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 90 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2220 | 1806 | **1806** | 0 | 414 |
+| P2_cpu_tick | 2220 | 0 | **0** | 0 | 2220 |
+| P3_debounced | 2220 | 0 | **0** | 0 | 2220 |
+| P4_own_step | 2220 | 0 | **0** | 0 | 2220 |
+| P5_own_step_alone | 2220 | 0 | **0** | 0 | 2220 |
+
+=== reap_observe: 2250 polls, 94 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 91 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2250 | 1831 | **1831** | 0 | 419 |
+| P2_cpu_tick | 2250 | 0 | **0** | 0 | 2250 |
+| P3_debounced | 2250 | 0 | **0** | 0 | 2250 |
+| P4_own_step | 2250 | 0 | **0** | 0 | 2250 |
+| P5_own_step_alone | 2250 | 0 | **0** | 0 | 2250 |
+
+=== reap_observe: 2280 polls, 96 receipts (nodes solved) ===
+holder's own step   median 30.014 s, max 364.191 s over 93 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2280 | 1851 | **1851** | 0 | 429 |
+| P2_cpu_tick | 2280 | 0 | **0** | 0 | 2280 |
+| P3_debounced | 2280 | 0 | **0** | 0 | 2280 |
+| P4_own_step | 2280 | 0 | **0** | 0 | 2280 |
+| P5_own_step_alone | 2280 | 0 | **0** | 0 | 2280 |
+
+=== reap_observe: 2310 polls, 96 receipts (nodes solved) ===
+holder's own step   median 30.014 s, max 364.191 s over 93 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2310 | 1881 | **1881** | 0 | 429 |
+| P2_cpu_tick | 2310 | 0 | **0** | 0 | 2310 |
+| P3_debounced | 2310 | 0 | **0** | 0 | 2310 |
+| P4_own_step | 2310 | 0 | **0** | 0 | 2310 |
+| P5_own_step_alone | 2310 | 0 | **0** | 0 | 2310 |
+
+=== reap_observe: 2340 polls, 97 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 94 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2340 | 1906 | **1906** | 0 | 434 |
+| P2_cpu_tick | 2340 | 0 | **0** | 0 | 2340 |
+| P3_debounced | 2340 | 0 | **0** | 0 | 2340 |
+| P4_own_step | 2340 | 0 | **0** | 0 | 2340 |
+| P5_own_step_alone | 2340 | 0 | **0** | 0 | 2340 |
+
+=== reap_observe: 2370 polls, 100 receipts (nodes solved) ===
+holder's own step   median 30.014 s, max 364.191 s over 97 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2370 | 1924 | **1924** | 0 | 446 |
+| P2_cpu_tick | 2370 | 0 | **0** | 0 | 2370 |
+| P3_debounced | 2370 | 0 | **0** | 0 | 2370 |
+| P4_own_step | 2370 | 0 | **0** | 0 | 2370 |
+| P5_own_step_alone | 2370 | 0 | **0** | 0 | 2370 |
+
+=== reap_observe: 2400 polls, 100 receipts (nodes solved) ===
+holder's own step   median 30.014 s, max 364.191 s over 97 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2400 | 1954 | **1954** | 0 | 446 |
+| P2_cpu_tick | 2400 | 0 | **0** | 0 | 2400 |
+| P3_debounced | 2400 | 0 | **0** | 0 | 2400 |
+| P4_own_step | 2400 | 0 | **0** | 0 | 2400 |
+| P5_own_step_alone | 2400 | 0 | **0** | 0 | 2400 |
+
+=== reap_observe: 2430 polls, 101 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 98 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2430 | 1979 | **1979** | 0 | 451 |
+| P2_cpu_tick | 2430 | 0 | **0** | 0 | 2430 |
+| P3_debounced | 2430 | 0 | **0** | 0 | 2430 |
+| P4_own_step | 2430 | 0 | **0** | 0 | 2430 |
+| P5_own_step_alone | 2430 | 0 | **0** | 0 | 2430 |
+
+=== reap_observe: 2460 polls, 101 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 98 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2460 | 2009 | **2009** | 0 | 451 |
+| P2_cpu_tick | 2460 | 0 | **0** | 0 | 2460 |
+| P3_debounced | 2460 | 0 | **0** | 0 | 2460 |
+| P4_own_step | 2460 | 0 | **0** | 0 | 2460 |
+| P5_own_step_alone | 2460 | 0 | **0** | 0 | 2460 |
+
+=== reap_observe: 2490 polls, 101 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 98 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2490 | 2039 | **2039** | 0 | 451 |
+| P2_cpu_tick | 2490 | 0 | **0** | 0 | 2490 |
+| P3_debounced | 2490 | 0 | **0** | 0 | 2490 |
+| P4_own_step | 2490 | 0 | **0** | 0 | 2490 |
+| P5_own_step_alone | 2490 | 0 | **0** | 0 | 2490 |
+
+=== reap_observe: 2520 polls, 102 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 99 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2520 | 2064 | **2064** | 0 | 456 |
+| P2_cpu_tick | 2520 | 0 | **0** | 0 | 2520 |
+| P3_debounced | 2520 | 0 | **0** | 0 | 2520 |
+| P4_own_step | 2520 | 0 | **0** | 0 | 2520 |
+| P5_own_step_alone | 2520 | 0 | **0** | 0 | 2520 |
+
+=== reap_observe: 2550 polls, 103 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 100 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2550 | 2089 | **2089** | 0 | 461 |
+| P2_cpu_tick | 2550 | 0 | **0** | 0 | 2550 |
+| P3_debounced | 2550 | 0 | **0** | 0 | 2550 |
+| P4_own_step | 2550 | 0 | **0** | 0 | 2550 |
+| P5_own_step_alone | 2550 | 0 | **0** | 0 | 2550 |
+
+=== reap_observe: 2580 polls, 103 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 100 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2580 | 2119 | **2119** | 0 | 461 |
+| P2_cpu_tick | 2580 | 0 | **0** | 0 | 2580 |
+| P3_debounced | 2580 | 0 | **0** | 0 | 2580 |
+| P4_own_step | 2580 | 0 | **0** | 0 | 2580 |
+| P5_own_step_alone | 2580 | 0 | **0** | 0 | 2580 |
+
+=== reap_observe: 2610 polls, 104 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 101 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2610 | 2144 | **2144** | 0 | 466 |
+| P2_cpu_tick | 2610 | 0 | **0** | 0 | 2610 |
+| P3_debounced | 2610 | 0 | **0** | 0 | 2610 |
+| P4_own_step | 2610 | 0 | **0** | 0 | 2610 |
+| P5_own_step_alone | 2610 | 0 | **0** | 0 | 2610 |
+
+=== reap_observe: 2640 polls, 104 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 101 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2640 | 2174 | **2174** | 0 | 466 |
+| P2_cpu_tick | 2640 | 0 | **0** | 0 | 2640 |
+| P3_debounced | 2640 | 0 | **0** | 0 | 2640 |
+| P4_own_step | 2640 | 0 | **0** | 0 | 2640 |
+| P5_own_step_alone | 2640 | 0 | **0** | 0 | 2640 |
+
+=== reap_observe: 2670 polls, 104 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 101 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2670 | 2204 | **2204** | 0 | 466 |
+| P2_cpu_tick | 2670 | 0 | **0** | 0 | 2670 |
+| P3_debounced | 2670 | 0 | **0** | 0 | 2670 |
+| P4_own_step | 2670 | 0 | **0** | 0 | 2670 |
+| P5_own_step_alone | 2670 | 0 | **0** | 0 | 2670 |
+
+=== reap_observe: 2700 polls, 106 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 103 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2700 | 2224 | **2224** | 0 | 476 |
+| P2_cpu_tick | 2700 | 0 | **0** | 0 | 2700 |
+| P3_debounced | 2700 | 0 | **0** | 0 | 2700 |
+| P4_own_step | 2700 | 0 | **0** | 0 | 2700 |
+| P5_own_step_alone | 2700 | 0 | **0** | 0 | 2700 |
+
+=== reap_observe: 2730 polls, 110 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 105 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2730 | 2244 | **2244** | 0 | 486 |
+| P2_cpu_tick | 2730 | 0 | **0** | 0 | 2730 |
+| P3_debounced | 2730 | 0 | **0** | 0 | 2730 |
+| P4_own_step | 2730 | 0 | **0** | 0 | 2730 |
+| P5_own_step_alone | 2730 | 0 | **0** | 0 | 2730 |
+
+=== reap_observe: 2760 polls, 110 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 105 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2760 | 2274 | **2274** | 0 | 486 |
+| P2_cpu_tick | 2760 | 0 | **0** | 0 | 2760 |
+| P3_debounced | 2760 | 0 | **0** | 0 | 2760 |
+| P4_own_step | 2760 | 0 | **0** | 0 | 2760 |
+| P5_own_step_alone | 2760 | 0 | **0** | 0 | 2760 |
+
+=== reap_observe: 2790 polls, 112 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 107 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2790 | 2294 | **2294** | 0 | 496 |
+| P2_cpu_tick | 2790 | 0 | **0** | 0 | 2790 |
+| P3_debounced | 2790 | 0 | **0** | 0 | 2790 |
+| P4_own_step | 2790 | 0 | **0** | 0 | 2790 |
+| P5_own_step_alone | 2790 | 0 | **0** | 0 | 2790 |
+
+=== reap_observe: 2820 polls, 112 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 107 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2820 | 2324 | **2324** | 0 | 496 |
+| P2_cpu_tick | 2820 | 0 | **0** | 0 | 2820 |
+| P3_debounced | 2820 | 0 | **0** | 0 | 2820 |
+| P4_own_step | 2820 | 0 | **0** | 0 | 2820 |
+| P5_own_step_alone | 2820 | 0 | **0** | 0 | 2820 |
+
+=== reap_observe: 2850 polls, 112 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 107 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2850 | 2354 | **2354** | 0 | 496 |
+| P2_cpu_tick | 2850 | 0 | **0** | 0 | 2850 |
+| P3_debounced | 2850 | 0 | **0** | 0 | 2850 |
+| P4_own_step | 2850 | 0 | **0** | 0 | 2850 |
+| P5_own_step_alone | 2850 | 0 | **0** | 0 | 2850 |
+
+=== reap_observe: 2880 polls, 115 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 110 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2880 | 2371 | **2371** | 0 | 509 |
+| P2_cpu_tick | 2880 | 0 | **0** | 0 | 2880 |
+| P3_debounced | 2880 | 0 | **0** | 0 | 2880 |
+| P4_own_step | 2880 | 0 | **0** | 0 | 2880 |
+| P5_own_step_alone | 2880 | 0 | **0** | 0 | 2880 |
+
+=== reap_observe: 2910 polls, 116 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 111 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2910 | 2396 | **2396** | 0 | 514 |
+| P2_cpu_tick | 2910 | 0 | **0** | 0 | 2910 |
+| P3_debounced | 2910 | 0 | **0** | 0 | 2910 |
+| P4_own_step | 2910 | 0 | **0** | 0 | 2910 |
+| P5_own_step_alone | 2910 | 0 | **0** | 0 | 2910 |
+
+=== reap_observe: 2940 polls, 116 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 111 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2940 | 2426 | **2426** | 0 | 514 |
+| P2_cpu_tick | 2940 | 0 | **0** | 0 | 2940 |
+| P3_debounced | 2940 | 0 | **0** | 0 | 2940 |
+| P4_own_step | 2940 | 0 | **0** | 0 | 2940 |
+| P5_own_step_alone | 2940 | 0 | **0** | 0 | 2940 |
+
+=== reap_observe: 2970 polls, 116 receipts (nodes solved) ===
+holder's own step   median 32.012 s, max 364.191 s over 111 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 2970 | 2456 | **2456** | 0 | 514 |
+| P2_cpu_tick | 2970 | 0 | **0** | 0 | 2970 |
+| P3_debounced | 2970 | 0 | **0** | 0 | 2970 |
+| P4_own_step | 2970 | 0 | **0** | 0 | 2970 |
+| P5_own_step_alone | 2970 | 0 | **0** | 0 | 2970 |
+
+=== reap_observe: 3000 polls, 117 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 112 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3000 | 2481 | **2481** | 0 | 519 |
+| P2_cpu_tick | 3000 | 0 | **0** | 0 | 3000 |
+| P3_debounced | 3000 | 0 | **0** | 0 | 3000 |
+| P4_own_step | 3000 | 0 | **0** | 0 | 3000 |
+| P5_own_step_alone | 3000 | 0 | **0** | 0 | 3000 |
+
+=== reap_observe: 3030 polls, 118 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 113 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3030 | 2506 | **2506** | 0 | 524 |
+| P2_cpu_tick | 3030 | 0 | **0** | 0 | 3030 |
+| P3_debounced | 3030 | 0 | **0** | 0 | 3030 |
+| P4_own_step | 3030 | 0 | **0** | 0 | 3030 |
+| P5_own_step_alone | 3030 | 0 | **0** | 0 | 3030 |
+
+=== reap_observe: 3060 polls, 120 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 115 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3060 | 2526 | **2526** | 0 | 534 |
+| P2_cpu_tick | 3060 | 0 | **0** | 0 | 3060 |
+| P3_debounced | 3060 | 0 | **0** | 0 | 3060 |
+| P4_own_step | 3060 | 0 | **0** | 0 | 3060 |
+| P5_own_step_alone | 3060 | 0 | **0** | 0 | 3060 |
+
+=== reap_observe: 3090 polls, 122 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 117 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3090 | 2546 | **2546** | 0 | 544 |
+| P2_cpu_tick | 3090 | 0 | **0** | 0 | 3090 |
+| P3_debounced | 3090 | 0 | **0** | 0 | 3090 |
+| P4_own_step | 3090 | 0 | **0** | 0 | 3090 |
+| P5_own_step_alone | 3090 | 0 | **0** | 0 | 3090 |
+
+=== reap_observe: 3120 polls, 122 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 117 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3120 | 2576 | **2576** | 0 | 544 |
+| P2_cpu_tick | 3120 | 0 | **0** | 0 | 3120 |
+| P3_debounced | 3120 | 0 | **0** | 0 | 3120 |
+| P4_own_step | 3120 | 0 | **0** | 0 | 3120 |
+| P5_own_step_alone | 3120 | 0 | **0** | 0 | 3120 |
+
+=== reap_observe: 3150 polls, 123 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 118 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3150 | 2601 | **2601** | 0 | 549 |
+| P2_cpu_tick | 3150 | 0 | **0** | 0 | 3150 |
+| P3_debounced | 3150 | 0 | **0** | 0 | 3150 |
+| P4_own_step | 3150 | 0 | **0** | 0 | 3150 |
+| P5_own_step_alone | 3150 | 0 | **0** | 0 | 3150 |
+
+=== reap_observe: 3180 polls, 123 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 118 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3180 | 2631 | **2631** | 0 | 549 |
+| P2_cpu_tick | 3180 | 0 | **0** | 0 | 3180 |
+| P3_debounced | 3180 | 0 | **0** | 0 | 3180 |
+| P4_own_step | 3180 | 0 | **0** | 0 | 3180 |
+| P5_own_step_alone | 3180 | 0 | **0** | 0 | 3180 |
+
+=== reap_observe: 3210 polls, 123 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 118 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3210 | 2661 | **2661** | 0 | 549 |
+| P2_cpu_tick | 3210 | 0 | **0** | 0 | 3210 |
+| P3_debounced | 3210 | 0 | **0** | 0 | 3210 |
+| P4_own_step | 3210 | 0 | **0** | 0 | 3210 |
+| P5_own_step_alone | 3210 | 0 | **0** | 0 | 3210 |
+
+=== reap_observe: 3240 polls, 124 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 119 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3240 | 2689 | **2689** | 0 | 551 |
+| P2_cpu_tick | 3240 | 0 | **0** | 0 | 3240 |
+| P3_debounced | 3240 | 0 | **0** | 0 | 3240 |
+| P4_own_step | 3240 | 0 | **0** | 0 | 3240 |
+| P5_own_step_alone | 3240 | 0 | **0** | 0 | 3240 |
+
+=== reap_observe: 3270 polls, 125 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 120 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3270 | 2711 | **2711** | 0 | 559 |
+| P2_cpu_tick | 3270 | 0 | **0** | 0 | 3270 |
+| P3_debounced | 3270 | 0 | **0** | 0 | 3270 |
+| P4_own_step | 3270 | 0 | **0** | 0 | 3270 |
+| P5_own_step_alone | 3270 | 0 | **0** | 0 | 3270 |
+
+=== reap_observe: 3300 polls, 126 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 121 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3300 | 2738 | **2738** | 0 | 562 |
+| P2_cpu_tick | 3300 | 0 | **0** | 0 | 3300 |
+| P3_debounced | 3300 | 0 | **0** | 0 | 3300 |
+| P4_own_step | 3300 | 0 | **0** | 0 | 3300 |
+| P5_own_step_alone | 3300 | 0 | **0** | 0 | 3300 |
+
+=== reap_observe: 3330 polls, 127 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 122 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3330 | 2761 | **2761** | 0 | 569 |
+| P2_cpu_tick | 3330 | 0 | **0** | 0 | 3330 |
+| P3_debounced | 3330 | 0 | **0** | 0 | 3330 |
+| P4_own_step | 3330 | 0 | **0** | 0 | 3330 |
+| P5_own_step_alone | 3330 | 0 | **0** | 0 | 3330 |
+
+=== reap_observe: 3360 polls, 128 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 123 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3360 | 2787 | **2787** | 0 | 573 |
+| P2_cpu_tick | 3360 | 0 | **0** | 0 | 3360 |
+| P3_debounced | 3360 | 0 | **0** | 0 | 3360 |
+| P4_own_step | 3360 | 0 | **0** | 0 | 3360 |
+| P5_own_step_alone | 3360 | 0 | **0** | 0 | 3360 |
+
+=== reap_observe: 3390 polls, 130 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 125 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3390 | 2809 | **2809** | 0 | 581 |
+| P2_cpu_tick | 3390 | 0 | **0** | 0 | 3390 |
+| P3_debounced | 3390 | 0 | **0** | 0 | 3390 |
+| P4_own_step | 3390 | 0 | **0** | 0 | 3390 |
+| P5_own_step_alone | 3390 | 0 | **0** | 0 | 3390 |
+
+=== reap_observe: 3420 polls, 132 receipts (nodes solved) ===
+holder's own step   median 32.020 s, max 364.191 s over 127 intervals
+flat grace          10.000 s   (ratio to the holder's own max step: 0.03x)
+P4's grace          1092.573 s   (3 x the holder's own max step)
+rung-3 probe fails  0
+
+| policy | polls | would-reap | FALSE reaps | stood down | kept |
+|---|---:|---:|---:|---:|---:|
+| P1_rung2_absent | 3420 | 2827 | **2827** | 0 | 593 |
+| P2_cpu_tick | 3420 | 0 | **0** | 0 | 3420 |
+| P3_debounced | 3420 | 0 | **0** | 0 | 3420 |
+| P4_own_step | 3420 | 0 | **0** | 0 | 3420 |
+| P5_own_step_alone | 3420 | 0 | **0** | 0 | 3420 |

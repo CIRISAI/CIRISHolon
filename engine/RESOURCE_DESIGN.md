@@ -629,19 +629,23 @@ poll by poll, with the reaper OFF. It calls `Reaper::judge` only, which does not
 and cannot convict, and it asserts its own ledger shows `convicted == 0` and `reaped == 0` at
 exit, so "the reaper stayed off" is a fact the books carry rather than a promise in a comment.
 
-The first reading, over 840 polls at a 2 s interval:
+The reading at 3,390 polls (2 s interval, 130 nodes solved, run still going):
 
 | policy | rung 1 grace | rung 2 | FALSE reaps of a live holder |
 |---|---|---|---:|
-| P1 rung-2 absent | flat 10 s (declared) | absent | **669 of 840** |
+| P1 rung-2 absent | flat 10 s (declared) | absent | **2,809 of 3,390 (82.9%)** |
 | P2 CPU tick | flat 10 s | advanced since last poll | 0 |
 | P3 debounced | flat 10 s | advanced over 3 polls | 0 |
 | P4 own-step | 3 × the holder's own step | advanced since last poll | 0 |
 | P5 own-step ALONE | 3 × the holder's own step | **absent** | **0** |
 
-The holder's own step measured **42 s median, 128 s max**, against a flat grace of 10 s — the
-flat constant is **0.08× the holder's own worst step**, which is M-IDLE-CALIBRATED-TIMEOUT's
-shape stated as a ratio.
+The holder's own step measured **32 s median, 364 s max** over 125 intervals, against a flat
+grace of 10 s — the flat constant is **0.03× the holder's own worst step**, which is
+M-IDLE-CALIBRATED-TIMEOUT's shape stated as a ratio. The ratio got WORSE as the run went on,
+not better: the max step grew from 128 s to 364 s as the generation reached slower nodes, so a
+constant that looked merely wrong at the start is three times more wrong by now. That is the
+argument against a flat grace in one line — the quantity it is supposed to bound is not
+stationary, so no constant chosen from any window survives the next one.
 
 **P5 is the discriminator and it was added because the first four did not discriminate.** P2,
 P3 and P4 all read zero, but that is not evidence for the grace rule: at a 2 s poll against a

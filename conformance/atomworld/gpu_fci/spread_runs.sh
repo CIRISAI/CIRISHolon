@@ -16,12 +16,20 @@
 # scheduling state the machine happens to be in. That is the regime the spot-check runs in,
 # so that is the regime the spread has to come from.
 #
-# Usage: spread_runs.sh [N] [core]
+# BOTH RATES, because the registry holds the wrong quantity if it holds only the kernel one.
+# Every application in the production Davidson is `SigmaOp::apply` -> htod + sigma + dtoh +
+# synchronize, so what a CALLER experiences is the round trip. The kernel figure is
+# device-internal and overstates it. They are recorded together because the contrast is the
+# finding: on this instrument the kernel block is stable across invocations and the round-trip
+# block is not.
+#
+# Usage: spread_runs.sh [N] [core] [label]
 set -u
 N=${1:-12}
 CORE=${2:-0}
+LABEL=${3:-spread_runs}
 BIN=/home/emoore/CIRISHolon/engine/crates/holon-gpu/target/release/examples/fci_bench
-OUT=/home/emoore/CIRISHolon/conformance/atomworld/gpu_fci/spread_runs.txt
+OUT=/home/emoore/CIRISHolon/conformance/atomworld/gpu_fci/${LABEL}.txt
 
 {
   echo "# between-invocation spread of the (O,O,O) GPU sigma, kernel-only, warm"
@@ -33,26 +41,35 @@ OUT=/home/emoore/CIRISHolon/conformance/atomworld/gpu_fci/spread_runs.txt
 } > "$OUT"
 
 for i in $(seq 1 "$N"); do
-  r=$(taskset -c "$CORE" "$BIN" --species O,O,O --core-type P --rate-only 2>/dev/null \
-      | grep '^RATE ' | awk '{print $2}')
+  line=$(taskset -c "$CORE" "$BIN" --species O,O,O --core-type P --rate-only 2>/dev/null \
+         | grep '^RATE ')
+  k=$(echo "$line" | awk '{print $3}')
+  rt=$(echo "$line" | awk '{print $5}')
   la=$(cut -d' ' -f1 /proc/loadavg)
   # A failed invocation is recorded as a failure, never skipped: dropping the runs that went
   # wrong is how a spread comes back narrower than the machine.
-  echo "${r:-FAILED} $la" >> "$OUT"
+  echo "${k:-FAILED} ${rt:-FAILED} $la" >> "$OUT"
 done
 
 awk '
-  !/^#/ && $1 != "FAILED" { n++; x[n]=$1; s+=$1 }
+  !/^#/ && $1 != "FAILED" { n++; k[n]=$1; r[n]=$2; sk+=$1; sr+=$2 }
   $1 == "FAILED" { f++ }
   END {
     if (n < 2) { print "# too few successful invocations to state a spread"; exit }
-    m = s/n
-    for (i=1;i<=n;i++) { d=x[i]-m; v+=d*d }
-    sd = sqrt(v/(n-1))
-    lo=x[1]; hi=x[1]
-    for (i=1;i<=n;i++) { if (x[i]<lo) lo=x[i]; if (x[i]>hi) hi=x[i] }
-    printf "#\n# BETWEEN-INVOCATION: n %d, failed %d, mean %.3f, sd %.3f (%.2f%%), min %.3f, max %.3f, spread %.3fx\n",
-           n, f+0, m, sd, 100*sd/m, lo, hi, hi/lo
+    mk = sk/n; mr = sr/n
+    for (i=1;i<=n;i++) { dk=k[i]-mk; vk+=dk*dk; dr=r[i]-mr; vr+=dr*dr }
+    sdk = sqrt(vk/(n-1)); sdr = sqrt(vr/(n-1))
+    lok=k[1]; hik=k[1]; lor=r[1]; hir=r[1]
+    for (i=1;i<=n;i++) {
+      if (k[i]<lok) lok=k[i]; if (k[i]>hik) hik=k[i]
+      if (r[i]<lor) lor=r[i]; if (r[i]>hir) hir=r[i]
+    }
+    printf "#\n# BETWEEN-INVOCATION, n %d, failed %d\n", n, f+0
+    printf "#   kernel-only  mean %.3f  sd %.3f (%.2f%%)  min %.3f  max %.3f  spread %.3fx\n",
+           mk, sdk, 100*sdk/mk, lok, hik, hik/lok
+    printf "#   ROUND TRIP   mean %.3f  sd %.3f (%.2f%%)  min %.3f  max %.3f  spread %.3fx\n",
+           mr, sdr, 100*sdr/mr, lor, hir, hir/lor
+    printf "#   the ROUND TRIP is the caller-relevant quantity and is what the registry holds\n"
   }' "$OUT" >> "$OUT"
 
-tail -3 "$OUT"
+tail -6 "$OUT"

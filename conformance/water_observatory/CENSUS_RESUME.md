@@ -32,7 +32,7 @@ the suite ran green throughout.
 |---|---|---|---|
 | hydrogen control, `--ozone=fenced` | 8 of 8 | **COMPLETE** | banked in `CENSUS_RESULTS.md` and `census_hydrogen.log` |
 | mixed `--ozone=served` | 0 of 8 | **REFUSED** — panicked at the ozone load, exit 101 | `census_mixed_served.log`, `CENSUS_RESULTS.md` §10.4 |
-| mixed `--ozone=fenced` | in flight | ~190 s a seed | `census_mixed_fenced.log` when it lands |
+| mixed `--ozone=fenced` | **8 of 8, COMPLETE** | rc 0 | `census_mixed_fenced.log`; 15 certified-strict incl. the OH₂, 14 budgeted, 262 transient, 15 void |
 
 **The served arm refused and that is a result, not a failure.** At this pin
 `ozone::generate()` is a hard `None` — the convicted surface was WITHDRAWN, not patched —
@@ -113,15 +113,29 @@ writing, so they cannot be moved from under their own file handles; `park_and_ce
 is detached and does it for them — census into the repo, move to the durable path, append
 to the manifest — the moment each done-marker lands.
 
-## THE OH₂ CORRECTION
+## ROAD ITEM 5 IS MET — and the OH₂ framing here was corrected twice
 
-The brief that started this lane said seed 2 produced the programme's first emergent OH₂.
-**It did not, and no seed did.** `OH2` occurs on exactly one line of the banked log, and
-that line is the header's surface list. See `CENSUS_RESULTS.md` §0; the gate is
-`holon_lens::quenchlog`, whose plant asserts both that a grep of the real file DOES hit
-`OH2` and that the parsed molecule count is zero.
+**A certified-strict OH₂ quotient exists, on conservation-clean physics:** seed
+`0x53415425`, fenced arm, block `0x0a08`, atoms [3, 9, 11]. 893.8 fs strict against an 834
+fs window, a block for 72.3% of a 17.5 ps run, control rate 0.000, momentum 5.70e-5 of
+bound. `CENSUS_RESULTS.md` §0 and §11.
 
-## THE BLOCKER, and it is not mine to clear
+The framing in this file went through two corrections and both are worth carrying:
+
+1. The brief said seed 2 produced the first emergent OH₂. On the **MBE3 banked log** that
+   was a header grep — `OH2` there names the (O,H,H) surface — and the parser gate
+   (`holon_lens::quenchlog`) exists because of it.
+2. Then the **dE₄ arm's** logs were found outside the repo tree and banked
+   (`p2_de4_seeds/`, `1ae2c1b`): seed `0x53415422` really does carry an OH₂ molecule line.
+   So "the OH₂ does not exist" was true of one artifact and false as a general claim.
+
+**But the dE₄ observation is UNDER A FIRED GATE** — all six banked dE₄ seeds breach the
+momentum bound by 4–5 orders with energy in bound. The conservation-clean OH₂ is the one
+measured above, from MBE3 with the OOO triples fenced, at 4.7e-5–7.9e-5 of bound. **So the
+water adjudication did not have to wait on the dE₄ repair.** What still waits on it is a
+different question: whether the four-body term changes the answer.
+
+## THE BLOCKER, and it is not mine to clear## THE BLOCKER, and it is not mine to clear
 
 The run that reported the programme's first emergent OH₂ — `waterquench mixed` with
 `dE4(O,H,H,H)` riding — **was built from source that is in no commit**:

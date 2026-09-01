@@ -1,0 +1,44 @@
+# between-invocation spread of the (O,O,O) GPU sigma, kernel-only, warm
+# started_utc   2026-09-01T21:20:22Z
+# binary_sha256 1087b0dbdc8350930db26c467fb15903756cefebf7fb7d4f4d68c24fde011401
+# repo_HEAD     d76bd1d074b5f129009e62dac1ded2a39d021212
+# invocations   12, each a separate process on cpu 0
+# loadavg_start 90.23
+68.495558 60.304595 82.07
+67.744025 62.203393 81.70
+68.041743 62.122951 97.65
+67.817074 59.587089 110.44
+68.165207 65.403338 92.10
+67.698070 61.391381 83.48
+67.893962 66.320911 79.19
+67.114149 62.321597 78.02
+68.264988 59.425060 82.01
+67.581089 66.109826 81.44
+67.901150 66.015191 81.55
+67.656882 48.227375 82.16
+#
+# BETWEEN-INVOCATION, n 12, failed 0
+#   kernel-only  mean 67.864  sd 0.358 (0.53%)  min 67.114  max 68.496  spread 1.021x
+#   ROUND TRIP   mean 61.619  sd 4.927 (8.00%)  min 48.227  max 66.321  spread 1.375x
+#   the ROUND TRIP is the caller-relevant quantity and is what the registry holds
+#
+# WHAT THIS COSTS THE DETECTOR, which is the point of measuring it here rather than in a
+# quiet moment. With k = 3 the registered tolerance is 3 x 4.927 = 14.781 sigma/s, so a
+# mis-registration is convicted only if it is >= 1.24x high or <= 0.76x low. That is the
+# HONEST detection floor for the quantity a caller actually receives.
+#
+# Registering the KERNEL figure instead would have set the tolerance at 3 x 0.358 = 1.074
+# and promised a 1.6% floor -- a precision the dispatch path cannot deliver, because the
+# thing being promised about is not the thing the caller gets. A detector calibrated on a
+# quantity nobody receives does not become more sensitive; it becomes wrong more often.
+#
+# The 10x plant is unaffected (|61.6 - 616.2| = 554.6 against a tolerance of 14.8) and so is
+# any mis-registration worth the name. What the wide tolerance genuinely gives up is the
+# small-lie band between 1.0 and 1.24x, and that band was never really covered -- the kernel
+# entry only appeared to cover it.
+#
+# The 48.227 reading is the bimodal tail saturation3-mesh characterised from the other side:
+# a descheduled host thread, not a device effect. It is KEPT in the statistics rather than
+# trimmed. It is what a caller gets when the box is at loadavg 110, and a spread that
+# excluded it would be describing a machine this one is not.
+

@@ -29,18 +29,27 @@ fn gpu_entry() -> Entry {
             size: SIZE,
             device: DeviceClass::Gpu,
         },
-        // 68.4-69.1 sigma/s WARM over three runs, sd 0.51-0.91 within a run. The spread here
-        // is the BETWEEN-run figure, which is the wider and therefore the honest one: a
-        // spot-check taken in a different process must not convict an entry for the gap
-        // between two of its own runs.
+        // THE ROUND TRIP, not the kernel — the quantity the CALLER receives.
         //
-        // COLD is a different number entirely — 54.4 sigma/s, 26% low — and that gap once
-        // convicted a correct entry when the benchmark registered warm and spot-checked cold.
-        // Registration and spot-check are both warm now, and this comment is why.
-        mean: 68.8,
-        spread: 1.0,
+        // Every application in the production Davidson is `SigmaOp::apply` -> htod + sigma +
+        // dtoh + synchronize; `time_kernel_only` is called from the benchmark and nowhere else.
+        // An entry holding the device-internal rate makes the entry and its spot-check agree
+        // with each other while both overstate what dispatch delivers: internally coherent,
+        // externally wrong, and invisible to every plant in this file. That is why this is the
+        // round-trip figure even though the kernel figure is prettier.
+        //
+        // MEASURED IN THE REGIME THE SPOT-CHECK RUNS IN: twelve SEPARATE invocations, separate
+        // processes and CUDA contexts, loadavg 78-110
+        // (`conformance/atomworld/gpu_fci/spread_both.txt`). Both laws at once — the right
+        // quantity, and its spread taken where it will be checked.
+        //
+        // The kernel-only figure over the same twelve is 67.864 +/- 0.358 (0.53%) and is kept
+        // in BENCHMARKS.md as a device-internal number for device-class comparisons. It is not
+        // registered, because dispatch does not deliver it.
+        mean: 61.619,
+        spread: 4.927,
         k: 3.0,
-        instrument: "holon-gpu/examples/fci_bench.rs, (O,O,O), warm, 2026-09-01",
+        instrument: "holon-gpu spread_both.txt, (O,O,O) ROUND TRIP, n=12 invocations, loadavg 78-110, 2026-09-01",
         // Atomics-free by construction, cuBLAS pinned to pedantic math with a fixed workspace,
         // five repeat applications bit-identical ON THE OPERATOR THAT RUNS.
         determinism: Determinism::FixedOrder { runs_checked: 5 },
@@ -93,38 +102,90 @@ fn plant_d12_a_mis_registered_entry_is_convicted() {
     );
 
     // THE CONTROL: an honest entry, observed at its measured rate, is NOT convicted — including
-    // at a legitimate 2x-throttle-sized deviation inside tolerance.
+    // at the low tail this workload really produces. 48.227 is a MEASURED reading from the
+    // twelve-invocation series (a descheduled host at loadavg 110), and an entry whose
+    // tolerance could not survive its own observed tail would convict the machine on the
+    // machine's ordinary behaviour.
     let r = registry();
     let key = gpu.key;
     assert!(matches!(
-        r.spot_check(&key, 68.8),
+        r.spot_check(&key, 61.619),
         Some(SpotCheck::Consistent { .. })
     ));
     assert!(
-        matches!(r.spot_check(&key, 66.5), Some(SpotCheck::Consistent { .. })),
-        "a deviation inside k*spread was convicted; the tolerance is too tight to survive a \
-         thermal throttle"
+        matches!(r.spot_check(&key, 48.227), Some(SpotCheck::Consistent { .. })),
+        "the measured low tail of this workload was convicted; the tolerance does not cover \
+         the spread its own registration was built from"
     );
 
     // THE PLANT: register the GPU at 10x its measured throughput, then observe the real rate.
     let mut lying = Registry::new();
     let mut liar = gpu_entry();
-    liar.mean = 688.0;
+    liar.mean = 616.19;
     lying.register(liar);
-    match lying.spot_check(&key, 68.8) {
+    match lying.spot_check(&key, 61.619) {
         Some(SpotCheck::Convicted {
             observed,
             mean,
             tolerance,
         }) => {
-            assert_eq!((observed, mean), (68.8, 688.0));
-            assert!(tolerance < 619.2);
+            assert_eq!((observed, mean), (61.619, 616.19));
+            assert!(tolerance < 554.5);
         }
         other => panic!(
             "a 10x mis-registration survived the spot-check: {other:?}. The registry is trusted \
              about itself, which is the thing D12 exists to prevent."
         ),
     }
+}
+
+/// **THE DETECTION FLOOR, demonstrated rather than asserted.**
+///
+/// Registering the quantity the caller actually receives cost this entry its precision, and a
+/// cost that is only described is a cost nobody has checked. The round-trip spread is 8.00%
+/// over twelve invocations, so with `k = 3` the tolerance is 14.78 sigma/s and a
+/// mis-registration is convicted only if it is **>= 1.24x high or <= 0.76x low**.
+///
+/// This test pins both sides of that boundary: a 1.2x lie SURVIVES and a 1.3x lie is CAUGHT.
+/// The surviving lie is not a defect being tolerated — it is the honest reach of a detector
+/// calibrated on a quantity that genuinely varies by 8% in the regime it is checked in.
+///
+/// **Why this is better than the tighter alternative.** The kernel-only figure over the same
+/// twelve invocations is 67.864 +/- 0.358, which with the same `k` would have promised a
+/// **1.6%** floor. That precision is not real: it is a promise about a device-internal rate no
+/// caller receives, made by a detector that re-times the same unreceived rate. The choice here
+/// is between a 24% floor that means what it says and a 1.6% floor that does not.
+#[test]
+fn the_detection_floor_is_where_the_measured_spread_puts_it() {
+    let r = registry();
+    let key = gpu_entry().key;
+    let mean = gpu_entry().mean;
+    let tolerance = gpu_entry().k * gpu_entry().spread;
+
+    // THE CARRIER: the tolerance is the one the registration was built from, not a number
+    // chosen to make this test come out.
+    assert!((tolerance - 14.781).abs() < 0.01, "tolerance {tolerance} is not 3 x the registered spread");
+
+    // A 1.2x mis-registration SURVIVES. Stated as a fact about reach, not hidden as a gap.
+    let mut small = Registry::new();
+    let mut e = gpu_entry();
+    e.mean = mean * 1.2;
+    small.register(e);
+    assert!(
+        matches!(small.spot_check(&key, mean), Some(SpotCheck::Consistent { .. })),
+        "a 1.2x mis-registration was convicted; then the floor is tighter than the measured \
+         spread allows, which means the spread is not the one being applied"
+    );
+
+    // A 1.3x mis-registration is CAUGHT. Without this half, "it never convicts" would pass.
+    let mut big = Registry::new();
+    let mut e = gpu_entry();
+    e.mean = mean * 1.3;
+    big.register(e);
+    assert!(
+        big.spot_check(&key, mean).unwrap().convicted(),
+        "a 1.3x mis-registration survived; the entry is past the floor its own spread implies"
+    );
 }
 
 /// **PLANT D5 — half-visible hardware REFUSES and does not fall back.**
@@ -399,6 +460,31 @@ fn every_step_of_the_dispatch_can_refuse_and_says_which() {
 // reproduce, a bad registration does.
 // ---------------------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------------------
+// RE-CARRIED 2026-09-01 by the gpu-production lane, and the reason is a RESULT rather than a
+// maintenance edit.
+//
+// These plants were staked on the founding case: observed 58.9 against a registered
+// 69.4 +/- 3.0, a conviction of an honest entry. That entry has since been corrected on BOTH
+// registration-side laws — it now holds the ROUND-TRIP rate (the quantity a caller actually
+// receives) with the spread measured across twelve separate invocations at loadavg 78-110:
+// 61.619 +/- 4.927, tolerance 14.78.
+//
+// Under the corrected entry, 58.9 IS CONSISTENT. It is 2.7 sigma/s from the mean against a
+// tolerance of 14.8, so the founding false conviction would never have happened — the
+// registration fix alone prevents it, with no re-read needed.
+//
+// THAT DOES NOT MAKE THE RUNG REDUNDANT and the distinction matters. The registration fix
+// widens the band to cover the machine's ORDINARY variation; the re-read rung is what
+// separates a genuine outlier BEYOND that band from a wrong entry. The two answer different
+// questions and the second is still unanswerable from a single reading. So the plants keep
+// their semantics and get carriers that are outliers under the CURRENT entry — 40.0 is
+// outside the corrected tolerance the way 58.9 was outside the old one.
+//
+// The founding numbers are kept in the prose above rather than deleted: a plant re-carried
+// without saying what stopped firing hides the finding that made the re-carry necessary.
+// ---------------------------------------------------------------------------------------
+
 /// A descheduled outlier is NOT a conviction: the re-read does not reproduce it.
 #[test]
 fn d12b_live_does_not_convict_an_outlier_that_does_not_reproduce() {
@@ -406,18 +492,26 @@ fn d12b_live_does_not_convict_an_outlier_that_does_not_reproduce() {
     reg.register(gpu_entry());
     let key = gpu_entry().key;
 
+    // THE CARRIER: 40.0 must actually be outside the corrected tolerance, or this plant is
+    // scoring a reading that was never going to convict.
+    let e = gpu_entry();
+    assert!(
+        (40.0f64 - e.mean).abs() > e.k * e.spread,
+        "40.0 is inside the corrected tolerance; this plant has no outlier to decline"
+    );
+
     let mut calls = 0;
-    // 58.9 is the real convicted reading; 68.25 is the real twelve-invocation mean.
+    // 40.0 is an outlier under the corrected entry; 61.6 is its twelve-invocation mean.
     let v = reg
-        .spot_check_mode(&key, 58.9, CheckMode::Live, &mut || {
+        .spot_check_mode(&key, 40.0, CheckMode::Live, &mut || {
             calls += 1;
-            68.25
+            61.6
         })
         .expect("registered");
 
     assert!(!v.convicted(), "a non-reproducing outlier must not convict: {v:?}");
     assert!(
-        matches!(v, SpotCheck::Unreproduced { first, .. } if first == 58.9),
+        matches!(v, SpotCheck::Unreproduced { first, .. } if first == 40.0),
         "the verdict must name the outlier it declined to convict on: {v:?}"
     );
     assert_eq!(calls, 1, "exactly one re-read, never more");
@@ -451,9 +545,9 @@ fn d12b_gauging_is_blunt_and_never_retimes() {
 
     let mut calls = 0;
     let v = reg
-        .spot_check_mode(&key, 58.9, CheckMode::Gauging, &mut || {
+        .spot_check_mode(&key, 40.0, CheckMode::Gauging, &mut || {
             calls += 1;
-            68.25
+            61.6
         })
         .expect("registered");
 

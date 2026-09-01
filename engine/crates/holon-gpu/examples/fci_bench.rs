@@ -30,7 +30,9 @@ use holon_chem::pair::geometry_problem;
 use holon_chem::sigma_op::{bit_identity_over_runs, CpuProvider, DeviceClass, SigmaOp, SigmaProvider};
 use holon_gpu::{GpuSigmaProvider, VramProbe};
 use holon_resource::probe::{Probe, ResourceKind};
-use holon_resource::registry::{Determinism, Entry, Registry, SpotCheck, WorkloadKey};
+use holon_resource::registry::{
+    CheckMode, Determinism, Entry, Registry, SpotCheck, WorkloadKey,
+};
 
 /// Which class a CPU belongs to on a hybrid part, **derived from the machine and CHECKED
 /// against the citation**.
@@ -308,7 +310,23 @@ fn main() {
     let gpu_roundtrip = w0.elapsed().as_secs_f64() / reps as f64;
 
     if rate_only {
-        println!("RATE {:.6}", 1.0 / gpu_kernel);
+        // BOTH rates, because the registry holds the wrong one if it holds only the first.
+        //
+        // Every application in the production Davidson goes through `SigmaOp::apply` ->
+        // `try_apply`, which is htod + sigma + dtoh + synchronize. So what a CALLER
+        // experiences is the round trip, and `kernel` is a device-internal figure that
+        // overstates it. A dispatch registry consulted to place work must hold the quantity
+        // the work will actually get.
+        //
+        // They are emitted together rather than the round trip alone because the CONTRAST is
+        // the finding: the kernel block is stable across invocations and the round-trip block
+        // is not, and the difference between them is per-rep host synchronisation.
+        let w0 = Instant::now();
+        for _ in 0..reps {
+            op.apply(&c, &mut gpu_sigma);
+        }
+        let rt = w0.elapsed().as_secs_f64() / reps as f64;
+        println!("RATE kernel {:.6} roundtrip {:.6}", 1.0 / gpu_kernel, 1.0 / rt);
         return;
     }
 
@@ -357,11 +375,29 @@ fn main() {
     // trusted about itself. Both are exercised here against the rate MEASURED IN THIS PROCESS,
     // not a number carried forward from a previous session — a registration is a memory of a
     // measurement, and calibrations are rented.
-    let gpu_rate = 1.0 / gpu_kernel;
+    // THE REGISTERED QUANTITY IS THE ROUND TRIP, not the kernel.
+    //
+    // Every application in the production Davidson is `SigmaOp::apply` -> `try_apply` ->
+    // htod + sigma + dtoh + synchronize. `time_kernel_only` is called from this benchmark and
+    // NOWHERE ELSE -- grepped, not assumed. So a registry holding the kernel figure holds a
+    // device-internal rate no caller ever receives, and dispatch consulting it to PLACE work
+    // is being told about a quantity the work will not get.
+    //
+    // The subtle part, and the reason this survived a passing D12 plant: the spot-check was
+    // re-timing the same benchmark-only figure, so entry and check agreed with each other
+    // while both overstated the caller's rate. A registry can be internally consistent, fire
+    // every plant correctly, and still be wrong about the only thing it exists to inform.
+    let gpu_rate = 1.0 / gpu_roundtrip;
     let cpu_rate = 1.0 / cpu_cpu;
     let mut spread_runs = Vec::new();
     for _ in 0..5 {
-        spread_runs.push(1.0 / op.time_kernel_only(reps.max(5)).expect("spread timing"));
+        // The ROUND TRIP, matching what is registered. Timing one quantity and registering
+        // another is how the entry came to describe something no caller receives.
+        let w = Instant::now();
+        for _ in 0..reps.max(5) {
+            op.apply(&c, &mut gpu_sigma);
+        }
+        spread_runs.push(reps.max(5) as f64 / w.elapsed().as_secs_f64());
     }
     let mean = spread_runs.iter().sum::<f64>() / spread_runs.len() as f64;
     let spread = (spread_runs.iter().map(|x| (x - mean).powi(2)).sum::<f64>()
@@ -369,7 +405,7 @@ fn main() {
         .sqrt();
     println!(
         "\n--- registration (mean AND spread, per RESOURCE_DESIGN section 9 Q4) ---\n\
-         gpu sigma/s over {} back-to-back timing runs IN THIS PROCESS: mean {mean:.2}, sd \
+         gpu ROUND-TRIP sigma/s over {} back-to-back runs IN THIS PROCESS: mean {mean:.2}, sd \
          {spread:.3}\n\
          WITHIN-PROCESS ONLY. This is NOT the spread a registration may be built from: a \
          spot-check runs whenever dispatch asks, on whatever the machine is doing then, and \
@@ -391,7 +427,7 @@ fn main() {
         mean,
         spread: spread.max(1e-9),
         k: 3.0,
-        instrument: "holon-gpu/examples/fci_bench.rs, measured in-process",
+        instrument: "holon-gpu/examples/fci_bench.rs, ROUND TRIP, in-process (illustrative)",
         determinism: Determinism::FixedOrder { runs_checked: 5 },
     };
     let mut registry = Registry::new();
@@ -419,20 +455,45 @@ fn main() {
          other, so the 10x plant would prove nothing"
     );
 
-    // THE CONTROL: the honest entry, RE-TIMED, is not convicted.
+    // THE CONTROL: the honest entry, RE-TIMED, through D12b's LIVE mode.
     //
-    // D12 says the spot-check RE-TIMES the workload — it does not compare the registration to
-    // some earlier number that happens to be lying around. Using a stale reading here is what
-    // convicted an honest entry on the first run of this benchmark, and the difference between
-    // the two is the whole point: a registration is a memory, and a spot-check is a fresh
-    // measurement to check the memory against.
-    let observed = 1.0 / op.time_kernel_only(reps).expect("spot-check timing");
-    let honest = registry.spot_check(&key, observed).expect("no entry");
+    // D12 says the spot-check RE-TIMES the workload rather than comparing the registration to
+    // some earlier number lying around — using a stale reading is what convicted an honest
+    // entry on this benchmark's first run. D12b adds the rung that case actually needed: on a
+    // shared box a single conviction cannot separate "the registration is wrong" from "the
+    // host was descheduled", and one re-read is the discriminator.
+    //
+    // `Live` because this is a live reading on a machine at loadavg 78-110. The closure
+    // re-times the ROUND TRIP, not the kernel — re-timing the easier number would reproduce
+    // the exact defect this entry was corrected for, with entry and check agreeing again about
+    // a quantity no caller receives. It is called at most once, and only on the path that
+    // would convict.
+    let mut roundtrip_rate = || -> f64 {
+        let w = Instant::now();
+        for _ in 0..reps {
+            op.apply(&c, &mut gpu_sigma);
+        }
+        reps as f64 / w.elapsed().as_secs_f64()
+    };
+    let observed = roundtrip_rate();
+    let mut retimes = 0usize;
+    let honest = registry
+        .spot_check_mode(&key, observed, CheckMode::Live, &mut || {
+            retimes += 1;
+            roundtrip_rate()
+        })
+        .expect("no entry");
+    // Consistent OR Unreproduced are both passes for an honest entry: the first means the
+    // reading landed inside the band, the second means it did not and the re-read said the
+    // machine was at fault rather than the registration. A CONVICTION here is the failure.
     assert!(
-        matches!(honest, SpotCheck::Consistent { .. }),
-        "the honestly-registered GPU entry was convicted by a fresh re-timing: {honest:?}. \
-         Either the kernel's spread is wider than the registration measured, or something \
-         between registration and spot-check changed the machine."
+        !honest.convicted(),
+        "the honestly-registered GPU entry was CONVICTED by a live re-timing: {honest:?}. \
+         Either its spread is narrower than the machine really is, or the registered quantity \
+         is not the one being re-timed."
+    );
+    println!(
+        "D12b LIVE control: {honest:?}  (re-times used: {retimes}; zero on the consistent path)"
     );
 
     // THE PLANT: register the LIVE measured rate at 10x and re-time. The registry must convict
@@ -441,6 +502,9 @@ fn main() {
     let mut liar = entry;
     liar.mean = mean * 10.0;
     lying.register(liar);
+    // GAUGING, deliberately: this is a planted probe, and a plant that needs a second opinion
+    // is not firing. The blunt single-reading call is right here and the Live rung is wrong —
+    // which is the whole content of the mode distinction.
     let verdict = lying.spot_check(&key, observed).expect("no entry");
     match verdict {
         SpotCheck::Convicted { observed, mean: m, tolerance } => println!(

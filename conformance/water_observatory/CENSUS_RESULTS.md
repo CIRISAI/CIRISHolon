@@ -369,3 +369,43 @@ fenced rather than served, on an otherwise same-class potential.
 
 Seed `0x…5421` had printed when this was staked and it MATCHES (`[H2 H2 O4H4]` both, fence
 4 against fence 0). Seeds 2–8 had not printed. The remaining seven are the test.
+
+### 10.4 THE SERVED ARM REFUSED TO RUN, and that settles §10.3 more strongly than predicted
+
+Minutes after §10.3 was committed, the served arm finished its O–O curve and **panicked**:
+
+```
+thread 'main' panicked at waterquench_traj.rs:514:56: the Ozone table generates
+```
+
+At `a3b3d4b`, `holon_chem::ozone::generate()` is a hard stub — `pub fn generate() ->
+Option<OzoneTable> { None }`. The convicted surface was not patched, it was WITHDRAWN, and
+that is the whole of the 19+/53− diff §10.3 cited. So `--ozone=served` cannot run at this
+pin at all.
+
+Two things this validates, and one it costs:
+
+* **The runner refused rather than invented.** `--ozone` is a required argument with no
+  default and the table load is an `expect`, so the arm died loudly at the moment the
+  surface was not there instead of quietly running with an empty one and reporting a
+  molecule census. A silent empty-table fallback would have produced numbers indexed to a
+  configuration nobody chose.
+* **§10.3's reasoning was right and understated it.** The served arm is not merely "not a
+  clean G2"; it is impossible at this pin.
+* **And the cost, stated plainly: `p2_waterquench.log` is NOT REPRODUCIBLE from any current
+  commit.** The surface it ran on exists in no tree that still generates it. Combined with
+  §10.2's H–H curve change, neither the P1 nor the P2 banked logs can be re-run today. They
+  remain valid RECORDS; they are no longer reproducible EXPERIMENTS, and anything that
+  needs to stand on them needs to say which of those two it is relying on.
+
+**Not taken, with the reason:** the water lane has a verified worktree at `45a513a`
+(`/home/emoore/holon-wt/p2pin`) where the surface still generates, and re-running the
+served arm there would give a bit-level G2 against the banked log. I did not spend it. That
+run would validate the instrument against CONVICTED physics on a box already at load 66–85
+with the ozone tabulation on the critical path, and the instrument already has a G2 reading
+from the hydrogen arm (§10.2) whose one discrepancy is fully explained. The option is
+recorded rather than quietly dropped; if anyone wants the bit-level check, that is where it
+is and it costs about an hour of contended machine.
+
+**The fenced arm is unaffected and still running.** It is the arm the §10.3 prediction is
+staked on.

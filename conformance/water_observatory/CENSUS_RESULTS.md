@@ -791,3 +791,93 @@ Raised by `workbench-engine`, who stopped before captioning a page with it and a
 provenance gap they found in the same read — the control's log recording no commit, no
 binary hash and no gate state, when "same commit" is the entire content of that control — is
 answered in `PROVENANCE_de4_arms.md`.
+
+---
+
+## 14. THE RULING — branch (b), and the causal claim is refuted by the CONTROL
+
+Both arms have landed. `census_de4_on.log`, `census_de4_off.log`, provenance in
+`PROVENANCE_de4_arms.md`.
+
+### 14.1 Admissibility, all three gates
+
+| gate | arm A (`--de4=on`) | arm B (`--de4=off`) |
+|---|---|---|
+| **G-dE4-1** the term fired | `dE4_evals` **891** | `dE4_evals` **0** |
+| **G-dE4-2** reproduces the banked run | **1 of 1**, `[H2 H2 O3H2 OH2]` | n/a (no reference) |
+| **G-dE4-3** conservation | \|p\|/bound **4.68e-5** | **3.84e-5** |
+
+Arm A reproduces `p2_de4_full/seed_0x53415422.log` in **every reported physics quantity** —
+`modal-O OH2`, the molecule multiset, `fenced 4`, `dE4_evals 891`, `drift 4.24e-4/1.56e1`,
+`|p| 4.87e-12/1.04e-7`, `T 307 K`. Only wall clock differs (24,023 s against 5,101 s).
+
+### 14.2 THE RESULT: both arms certify THE SAME ATOMS
+
+| | arm A (`--de4=on`) | arm B (`--de4=off`) |
+|---|---|---|
+| block | **`0x0062`** | **`0x0062`** — the same three atoms |
+| longest strict run | 3119 frames / **2599.8 fs** | 1109 frames / **923.9 fs** |
+| share of run | 91.4% | 85.8% |
+| internal rms / sep excursion | 0.920 / 0.280 | 1.103 / 0.257 |
+| control | **0.000/111** | **0.000/111** |
+| verdict | **CERTIFIED-STRICT** | **CERTIFIED-STRICT** |
+
+**This is §12.3's branch (b): both certify.**
+
+### 14.3 What is ruled, and what the ruling rests on
+
+> **The claim that MBE3 alone stops at hydroxyl and the exact four-body correction carries
+> the system to water is FALSE on this seed.**
+
+And the load-bearing point about *how* that is established: **it rests on the CONTROL alone,
+not on the comparison.** Arm B has `dE4_evals 0`, conserves momentum at 3.84e-5 of bound,
+never leaves its declared plane (§14.4), and certifies a water quotient strict at 923.9 fs
+against an 834 fs window with a control rate of 0.000 over 111 candidates. A clean,
+single-arm, conservation-clean measurement that water forms without the four-body term.
+Nothing in that sentence needs arm A.
+
+**What is NOT ruled.** Arm A's OH₂ held longer — 2599.8 fs against 923.9 fs, 91.4% against
+85.8%. **That difference may not be attributed to the four-body term**, for the reason in
+§14.4. Whether dE₄ strengthens, weakens or does nothing to a water quotient is OPEN, and
+these two arms cannot close it.
+
+### 14.4 WHY THE COMPARISON IS COMPROMISED, though the control is not
+
+Measured by the rung-1 lane and **independently confirmed here** across all eighteen parked
+trajectories:
+
+| trajectory | declared `dims` | max \|z − z₀\| | first departure |
+|---|---|---|---|
+| 8 × `hydrogen` | 2 | **0.0000** | never |
+| 8 × `fenced` | 2 | **0.0000** | never |
+| `de4_off` | 2 | **0.0000** | never |
+| **`de4_on`** | 2 | **11.4899 bohr** | **frame 4230** |
+
+Seventeen trajectories hold `z` at placement BIT-EXACTLY for 20,000 frames. `de4_on` alone
+departs, reaching 11.49 bohr against a box half-depth of 12.0 — it fills the box — and it
+starts at frame 4230, immediately after dE₄ first fires (59 solves by frame 5000).
+
+A planar configuration under in-plane forces stays planar by symmetry, and the exact
+gradient of a z-reflection-invariant energy is z-free at a symmetric point. Seventeen
+trajectories demonstrate the rest of the force stack doing exactly that, bit-exactly. So the
+escape is uniquely associated with the treatment.
+
+**The consequence for attribution.** Arm A did not merely have a four-body term; it explored
+a configuration space arm B could not reach. Its OH₂ formed in a scene with a third
+dimension available, and a bent triatomic has more room there. So the two arms differ in the
+treatment AND in the configuration space the treatment opened, and **no reading of the
+difference between them isolates the four-body term.** The one-variable design was defeated,
+not by a second variable I failed to control, but by the treatment producing one.
+
+**And it reaches the banked result.** Arm A reproduces `p2_de4_full`'s seed exactly, so the
+banked full-strength dE₄ run has this escape too. Any claim resting on that log inherits it.
+
+### 14.5 The honest summary
+
+* A certified-strict water quotient forms **without** the four-body term, on a trajectory
+  that never leaves its declared configuration space. Twice now — this seed and §0's.
+* The four-body arm certifies the **same three atoms**, so the term does not create the
+  molecule on this seed.
+* What the term *does* to it is unmeasured and unmeasurable from this pair, because the arm
+  carrying it left the plane its header declares.
+* The escape is a defect in the dE₄ path, not in the census, and it is rung 1's finding.

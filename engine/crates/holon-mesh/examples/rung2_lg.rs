@@ -16,7 +16,7 @@
 
 use ciris_sim_core::regplus;
 use holon_lens::field::{
-    self, grade, leg_a, leg_b, prereg, refines, Grid, Kind, FROZEN_GRIDS,
+    self, grade, leg_a, leg_b, prereg, refines, Kind, FROZEN_GRIDS,
 };
 use holon_lens::field_lg::*;
 use holon_lens::traj::Trajectory;

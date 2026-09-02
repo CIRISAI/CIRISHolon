@@ -425,9 +425,39 @@ mass and the two momenta. A solver that can find HPP's can find FHP's.
 So on this configuration there is no staggered linear invariant to find, and §4's statement
 stands: the only exactly-closed chart in the family is the global one, and it is vacuous.
 
-### 8.3 What this does NOT say
+### 8.3 The space that was searched — because "zero spurious" depends on it
 
-**It does not contradict Zanetti, and it must not be read as doing so.** This session's
+"We looked and they are absent" and "we looked where they could not be" are different
+sentences, and only the ansatz decides which one this is.
+
+**The search is over the full site-dependent space**: one free weight `w[c][d]` per cell and
+direction, all `6L²` of them, nothing assumed translation-invariant. The collapse to one
+weight per (direction, line) is derived, not imposed — a single particle at cell `c₀` in
+direction `d₀` forces `w[c₀+DIR[d₀]][d₀] = w[c₀][d₀]` on its own.
+
+A staggered momentum is exactly a position-dependent weight, and it survives that collapse
+whenever its sign pattern is constant along each direction's own lines — which is how HPP's
+per-line momenta appear. `ref_ansatz_scope.py` measures the genuinely position-dependent part
+of each invariant space **basis-independently**, by re-solving with the weights forced flat
+(counting position-dependent-looking basis vectors would not do: the SVD returns an arbitrary
+orthonormal basis and can report zero flat vectors for a space that plainly contains mass):
+
+| system | `dim` | `dim_TI` | **position-dependent** |
+|---|---:|---:|---:|
+| identity collision (streaming), `L` = 4, 6, 8 | 24, 36, 48 | 6 | **18, 30, 42** |
+| HPP-4, `L` = 4, 6, 8, 12 | 9, 13, 17, 25 | 3 | **6, 10, 14, 22** |
+| **FHP-I**, `L` = 4, 6, 8, 10, 12, 16 | 3 | 3 | **0** |
+
+The solver finds position-dependent invariants in quantity where they exist — `2L−2` on
+HPP-4, which is the staggered shape and the historical reason FHP exists. For FHP-I that
+sector is **empty**. So §8.2 is *looked and absent*, over the space where staggered invariants
+live.
+
+### 8.4 What this does NOT say
+
+**It does not contradict Zanetti, and it must not be read as doing so.** §8.3 fixes what a
+literature check would adjudicate — no longer whether the measurement was aimed at the right
+space, but whether his scope differs from this configuration's. This session's
 web-search budget was exhausted before the citation could be read, and the one page reachable
 by direct fetch does not discuss spurious invariants at all. So this node has **not read**
 Zanetti's exact statement, its model variant, or its scope — FHP-I here is one specific

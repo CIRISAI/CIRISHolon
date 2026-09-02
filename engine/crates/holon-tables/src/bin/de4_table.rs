@@ -26,10 +26,16 @@ use holon_chem::quaternary_table as qt;
 use holon_chem::{trimer, water};
 use holon_resource::Arena;
 use holon_chem::sigma_op::DeviceClass;
+use holon_tables::checkpoint::Checkpoint;
 use holon_tables::generate::{generate_surface_leased, SurfaceSpec, WarmPolicy};
 use holon_tables::Surface;
 use holon_tables::grid::{Axis, NdGrid, Serpentine};
 use holon_tables::ohhh::OhhhSurface;
+
+/// The Davidson iteration cap this binary runs under, named once. It is the second of the
+/// regime's three axes, and a silent 1200 -> 4000 default change is exactly how artifacts
+/// end up either side of a solver regime with nothing recording which.
+const DAVIDSON_BUDGET: usize = 1200;
 use holon_tables::worker::WorkerProbe;
 use std::io::Write;
 use std::time::Instant;
@@ -103,6 +109,12 @@ fn main() {
     };
     let workers: usize = arg(&args, "--workers").parse().unwrap_or_else(|_| fail("--workers"));
     let out = arg(&args, "--out");
+    // The checkpoint is REQUIRED, not optional. A run of this size with no resume is what
+    // the first attempt was, and it was killed at 0.96% of its priced budget for exactly
+    // that reason: a single call whose death is a total loss violates the detached-compute
+    // rule, and pid-existence as the only health signal is the blindness
+    // M-PROBE-THE-RESOURCE names. Making it a flag would make it forgettable.
+    let ckpt = arg(&args, "--checkpoint");
     // The seam record. EXACTLY ONE of these, per the trimer-table schema: a shipped
     // surface with a hidden corner is exactly what that gate exists to see.
     let seam_floor = args.iter().position(|a| a == "--seam-accepted-floor")
@@ -187,6 +199,52 @@ fn main() {
         std::process::exit(2);
     }
 
+    // OPENED BEFORE THE SURFACE IS BUILT, deliberately.
+    //
+    // The surface build samples two 1024-knot pair curves -- 2048 two-centre solves, ~370 s
+    // on a quiet machine and far longer on a loaded one -- and it used to run BEFORE this.
+    // A process that died in that window left no checkpoint file at all: no regime line, no
+    // record that the run had ever started, nothing to diagnose from. The cheapest fix is
+    // the ordering, so the log exists and declares its regime from the first second.
+    //
+    // It also fails FAST on the case that matters most: a regime mismatch is caught before
+    // 370 s of setup is spent, rather than after.
+    //
+    // THE REGIME, three axes, exactly the identity gpu-prod's node F names: the device
+    // class, the solver budget, and the subtraction basis. The binary's own sha256 is NOT
+    // in it -- that would refuse a resume after any unrelated recompile, which would make
+    // the checkpoint useless for the thing it exists for -- but every axis that can move a
+    // NUMBER is.
+    // Every axis is READ, not asserted. The literal `device=cpu` that stood here until the
+    // merge was the regime line's own defect in miniature: a GPU run would have stamped
+    // `cpu` into its log and the refusal would never have fired, which is precisely the
+    // mixing this string exists to prevent.
+    let regime = format!(
+        "device={:?} budget={} basis={} grid={} region={:?} warm={:?}",
+        device,
+        DAVIDSON_BUDGET,
+        OhhhSurface::BASIS,
+        qt::grid_line(),
+        region,
+        warm
+    );
+    println!("  regime          {regime}");
+    let checkpoint = match Checkpoint::open(std::path::Path::new(&ckpt), &regime) {
+        Ok(c) => c,
+        Err(e) => fail(&format!("cannot open checkpoint {ckpt}: {e}")),
+    };
+    println!("  checkpoint      {ckpt}");
+    println!("    replaying     {} region(s), {} node(s) from an earlier run",
+        checkpoint.replayed_regions(), checkpoint.replayed_nodes());
+    if checkpoint.torn_regions() > 0 {
+        println!("    TORN          {} region(s) in the log were incomplete or failed their own",
+            checkpoint.torn_regions());
+        println!("                  digest and WILL BE RE-SOLVED. That is the expected shape after");
+        println!("                  a kill: a region is committed by its END line, and a half-region");
+        println!("                  silently accepted would be worse than the crash.");
+    }
+
+
     println!("\n--- building the surface (samples both pair curves once) ---");
     let t0 = Instant::now();
     let src = std::fs::read_to_string(concat!(
@@ -200,9 +258,44 @@ fn main() {
     println!("  surface ready in {:.1} s", t0.elapsed().as_secs_f64());
 
     println!("\n--- generating ---");
+    // THE LIVE READOUT. `generate_surface_leased` returns only after the join, so its own
+    // progress counters are unreadable while it runs -- which is how the first attempt came
+    // to have pid-existence as its only health signal. The checkpoint log doubles as the
+    // readout: every committed region appends one END line, so counting them is a progress
+    // measure that survives this process too.
+    let done = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let watch = {
+        let done = done.clone();
+        let ckpt = ckpt.clone();
+        let n_reg = grid.n_regions();
+        let t0 = Instant::now();
+        std::thread::spawn(move || {
+            while !done.load(std::sync::atomic::Ordering::Relaxed) {
+                std::thread::sleep(std::time::Duration::from_secs(60));
+                if done.load(std::sync::atomic::Ordering::Relaxed) {
+                    break;
+                }
+                let n = std::fs::read_to_string(&ckpt)
+                    .map(|t| t.lines().filter(|l| l.starts_with("END ")).count())
+                    .unwrap_or(0);
+                let el = t0.elapsed().as_secs_f64();
+                let load = std::fs::read_to_string("/proc/loadavg").unwrap_or_default();
+                println!(
+                    "  [progress] {n}/{n_reg} regions committed, {:.1}%, elapsed {:.0} s, loadavg {}",
+                    100.0 * n as f64 / n_reg as f64,
+                    el,
+                    load.split_whitespace().next().unwrap_or("?")
+                );
+                use std::io::Write as _;
+                let _ = std::io::stdout().flush();
+            }
+        })
+    };
+
     let spec = SurfaceSpec::new(&surface, grid.clone())
         .with_warm(warm)
-        .with_device(device);
+        .with_device(device)
+        .with_checkpoint(Some(&checkpoint));
     let mut arena = Arena::new();
     let mut probe = WorkerProbe::new();
     let t1 = Instant::now();
@@ -213,6 +306,8 @@ fn main() {
             std::process::exit(3);
         }
     };
+    done.store(true, std::sync::atomic::Ordering::Relaxed);
+    let _ = watch.join();
     let wall = t1.elapsed().as_secs_f64();
     let o = &run.outcome;
 
@@ -222,6 +317,7 @@ fn main() {
     println!("  mirrored        {}   ({:.4}x fewer solves)", o.mirrored,
         o.records.len() as f64 / (o.records.len() - o.mirrored).max(1) as f64);
     println!("  cold / warm     {} / {}", o.cold_solves, o.warm_solves);
+    println!("  replayed        {}   (taken from the checkpoint, not solved in this process)", o.replayed);
     println!("  voided          {}", o.voided);
     println!("  davidson iters  {}", o.total_davidson_iters);
     println!("  digest          {}", o.digest().hex());
@@ -236,7 +332,10 @@ fn main() {
     // a cost re-measured here rather than against the prereg's number. Reported both ways
     // and refused in both directions -- too cheap means work not done, too dear means the
     // successor's budget is fiction.
-    let solved = (o.records.len() - o.mirrored) as f64;
+    // The price is charged against what THIS process solved. Counting replayed nodes as
+    // work done here would make a resumed run look cheaper than it was -- the
+    // M-CHEAPER-THAN-ITS-PRICE shape, manufactured by the resume machinery itself.
+    let solved = (o.records.len() - o.mirrored - o.replayed) as f64;
     let cpu_per_node = wall * workers as f64 / solved.max(1.0);
     println!("\n--- G2, the price model, closed in-job ---");
     println!("  solved nodes    {solved}");
@@ -266,7 +365,7 @@ fn main() {
     let _ = writeln!(f, "  \"digest\": \"{}\",", o.digest().hex());
     let _ = writeln!(f, "  \"digest_covers\": [\"node\",\"energy\",\"d1\",\"d2\",\"status\"],");
     let _ = writeln!(f, "  \"solved\": {}, \"mirrored\": {}, \"voided\": {},", o.records.len() - o.mirrored, o.mirrored, o.voided);
-    let _ = writeln!(f, "  \"generation\": {{\"workers\": {workers}, \"wall_s\": {wall:.1}, \"cold_solves\": {}, \"warm_solves\": {}, \"davidson_iters\": {}, \"core_s_per_solved_node\": {cpu_per_node:.4}}},", o.cold_solves, o.warm_solves, o.total_davidson_iters);
+    let _ = writeln!(f, "  \"generation\": {{\"workers\": {workers}, \"wall_s\": {wall:.1}, \"cold_solves\": {}, \"warm_solves\": {}, \"davidson_iters\": {}, \"core_s_per_solved_node\": {cpu_per_node:.4}, \"replayed_nodes\": {}, \"resume_free\": {}}},", o.cold_solves, o.warm_solves, o.total_davidson_iters, o.replayed, o.replayed == 0);
     match (&seam_floor, &seam_loci) {
         (Some(s), _) => {
             let (ha, why) = s.split_once(':').unwrap_or((s.as_str(), "unstated"));

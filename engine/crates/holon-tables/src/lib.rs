@@ -100,6 +100,7 @@
 //! [`grid::TableGrid`] it folds on `n_nodes`, `node_id`, `coords`, `geometry`, `region_of`,
 //! `region_nodes` and the whole partition.
 
+pub mod checkpoint;
 pub mod digest;
 pub mod generate;
 pub mod grid;

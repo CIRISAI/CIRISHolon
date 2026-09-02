@@ -105,6 +105,20 @@ pub struct OhhhSurface {
 }
 
 impl OhhhSurface {
+    /// The subtraction basis, as a const so the REGIME line can name it WITHOUT building a
+    /// surface.
+    ///
+    /// That matters because the checkpoint is opened before the surface is built — a death
+    /// during the ~370 s pair-curve sampling has to leave a diagnosable log — and the basis
+    /// is one of the three axes the regime refuses to mix across. Without this the binary
+    /// would have to hardcode the string, which is the same defect one level down: a GPU run
+    /// stamping `cpu` into its own regime line and never firing the refusal.
+    ///
+    /// [`Surface::basis`] returns this, so there is still exactly one source of truth.
+    pub const BASIS: &'static str =
+        "E_total - E_MBE3 (the four-body residual; MBE3 evaluated at the node's REALISED \
+         coordinates)";
+
     /// Build the surface, sampling both pair curves once.
     ///
     /// `r_hi` should be the grid's own `R_HI`; the H-H curve is sampled to `2 * r_hi`
@@ -215,7 +229,7 @@ impl Surface for OhhhSurface {
         // This one DOES subtract, and it is the case the required method exists for: a
         // consumer handed these numbers without knowing the basis would read a 4-body
         // residual as a total energy and be wrong by the whole of MBE3.
-        "E_total - E_MBE3 (the four-body residual; MBE3 evaluated at the node's REALISED          coordinates)"
+        Self::BASIS
     }
 
     /// The relabelling orbit's representative, **delegated whole** to

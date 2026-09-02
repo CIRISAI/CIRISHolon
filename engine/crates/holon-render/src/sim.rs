@@ -788,6 +788,9 @@ impl Sim {
                 crossings: 0,
                 residual_bound: 0.0,
                 plant_carrier: 0.0,
+                box_illegal: false,
+                shells_unresolved: false,
+                shells: 0,
             },
             l0_ang: (0.0, 0.0, 0.0),
             angular_residual_peak: 0.0,
@@ -1823,6 +1826,18 @@ impl Sim {
         self.neighbours = nb;
     }
 
+    /// Whether the last force pass's far sector actually summed, or refused.
+    ///
+    /// It can refuse for a reason that arose AFTER the sector was admitted: `Sim::scale_box`
+    /// shrinks the box affinely and nothing re-checks any legality condition afterwards —
+    /// not the far sector's `min_edge >= 2 R_s`, and not [`Sim::pbc_ok`] either, which is
+    /// consulted only by [`Sim::set_pair_cutoff`]. So this is asked per pass rather than
+    /// once at admission.
+    pub fn far_ok(&self) -> bool {
+        self.far.is_none()
+            || (!self.far_reading.box_illegal && !self.far_reading.shells_unresolved)
+    }
+
     /// Which enumeration the last force evaluation ran. Reported so a caller can see
     /// whether the decomposition actually engaged rather than assuming it did.
     pub fn route(&self) -> crate::cells::Route {
@@ -2728,6 +2743,10 @@ impl Sim {
         let mut forces = core::mem::take(&mut self.a_pair);
         let reading = far.accumulate(&pos, &self.slots[..self.n], geom, &mut forces, &r_max_by_slot);
         self.a_pair = forces;
+        // A far sector that refused this pass contributes NOTHING, and the reading says so
+        // rather than the energy quietly reading zero. `Sim::far_ok` is the door a caller
+        // must go through before believing `e_far`; a gate that reads the energy without
+        // asking has been handed a refusal wearing a number's clothes.
         self.e_far = reading.energy;
         self.w_virial += reading.virial;
         self.far_reading = reading;

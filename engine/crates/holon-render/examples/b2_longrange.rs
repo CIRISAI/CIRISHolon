@@ -77,6 +77,11 @@ const G7_STEPS: [f64; 3] = [1.0e-3, 1.0e-4, 1.0e-5];
 const G12_MIN_STEPS: u64 = 20_000;
 const G12_MIN_FRAMES: usize = 50;
 
+/// G9's shrink factor. The periodic arm's box is sized so that scaling by this stays above
+/// the far sector's `2 R_s` legality floor — the gate is about a STALE CACHE, and a box that
+/// goes illegal under the move tests the refusal instead.
+const G9_SHRINK: f64 = 0.90;
+
 /// G13's sizes and repetitions.
 const G13_SIZES: [usize; 5] = [12, 24, 48, 96, 192];
 const G13_REPS: usize = 3;
@@ -1003,6 +1008,9 @@ fn gate_g8(
     let mut worst_abs_any = 0.0f64;
     let mut done = 0usize;
     let mut probed = 0usize;
+    let mut unresolvable = 0usize;
+    let mut worst_resolvable = 0.0f64;
+    let mut e_scale = 0.0f64;
     let mut st = 0xB2_0000_0008u64;
     // DISTINCT CONFIGURATIONS, which is what the freeze stakes. Probing one configuration a
     // hundred times gives at most `2n` distinct checks and then repeats them; the far
@@ -1021,6 +1029,7 @@ fn gate_g8(
             .collect();
         let mut fx = vec![(0.0, 0.0, 0.0); sim.n];
         let read = far.accumulate(&cfgpos, &slots, geom, &mut fx, &r_max);
+        e_scale = e_scale.max(read.energy.abs());
         done += 1;
         if read.contributions == 0 {
             // No far pair in this geometry: there is no gradient of nothing to check, and
@@ -1054,6 +1063,25 @@ fn gate_g8(
                 worst_force = worst_force.max(analytic.abs());
                 worst_abs_any = worst_abs_any.max((analytic - numeric).abs());
                 probed += 1;
+                // THE REFERENCE'S OWN RESOLVABILITY. The numeric force is
+                // `−(E(+h) − E(−h)) / 2h`, and that difference is formed inside a sum of
+                // magnitude `|E_far|`, so it carries no information at all once
+                // `|F|·2h` falls under `eps·|E_far|`: the subtraction cancels to EXACTLY
+                // zero and the relative error pins at 1.0 whatever the analytic force is.
+                // Components below that floor are counted and reported separately, because
+                // a max taken over them measures the reference and not the gradient.
+                // The floor applies to the DISAGREEMENT, not to the force. A difference
+                // at the reference's own noise level is not a difference: the numeric force
+                // is `−(E(+h) − E(−h)) / 2h` formed inside a sum of magnitude `|E_far|`, so
+                // its noise is `eps·|E_far| / 2h` regardless of how large the force is. The
+                // factor of 4 is slack on a worst-case roundoff estimate and is stated here
+                // rather than tuned; both counts are printed so nothing is hidden by it.
+                let floor = 4.0 * f64::EPSILON * e_scale / (2.0 * h);
+                if (analytic - numeric).abs() <= floor {
+                    unresolvable += 1;
+                } else if rel > worst_resolvable {
+                    worst_resolvable = rel;
+                }
             }
         }
     }
@@ -1078,6 +1106,15 @@ fn gate_g8(
          {worst_abs:.3e} Ha/bohr, and the largest absolute disagreement anywhere was \
          {worst_abs_any:.3e}. Relative to the LARGEST far force that is {:.3e}.",
         worst_abs_any / worst_force.max(1.0e-300)
+    );
+    println!(
+        "# G8 diagnostic, reference resolvability: {unresolvable} of {probed} components \
+         disagree by less than the finite difference's own noise \
+         ({:.3e} Ha/bohr = 4*eps*|E_far| / 2h, |E_far| <= {e_scale:.3e}); over the {} \
+         components whose disagreement the reference CAN resolve, the worst relative error \
+         is {worst_resolvable:.4e}. The staked verdict above is unchanged and stands.",
+        4.0 * f64::EPSILON * e_scale / (2.0 * h),
+        probed - unresolvable
     );
     worst
 }
@@ -1513,7 +1550,12 @@ fn periodic_arm(
     // The box must clear `2 R_s` — below that an image sits inside the curve's support with
     // neither sector summing it, and the far sector refuses — and it must sit inside `R_f`,
     // or no image is in range and every gate here scores a zero against a zero.
-    let edge = 2.05 * r_s;
+    // SIZED SO IT SURVIVES THE SHRINK. G9 scales by 0.90, and 2.05 R_s scaled by 0.90 is
+    // 1.845 R_s — under the 2 R_s floor, so the shrunk box is ILLEGAL and the fresh sector
+    // correctly refuses. The first run of this arm did exactly that and then scored the
+    // refusal as a number, because the instrument swallowed the error with `let _ =`.
+    // 2.05 / 0.90 leaves the box legal on both sides of the move.
+    let edge = 2.05 * r_s / G9_SHRINK;
     if edge >= r_f {
         println!(
             "# periodic arm VOID (V2): the smallest legal wrapping box is 2 R_s = {:.4} bohr \
@@ -1599,10 +1641,13 @@ fn periodic_arm(
 
     // G9 — nothing box-derived goes stale. A rescaled sim against one built fresh at the
     // scaled box, compared BITWISE within one device class.
-    for f in [0.90f64, 1.10f64] {
+    for f in [G9_SHRINK, 1.10f64] {
         let mut scaled = build_scene(&cfg, curves);
         let mut fs = FarSector::build(tails, r_s, budget, Dims::Two).expect("builds");
-        let _ = fs.resolve_shells(&pos, &slots, geom);
+        if let Err(e) = fs.resolve_shells(&pos, &slots, geom) {
+            println!("# GATE G9 f={f:.2}: VOID — the scaled arm's sector refused: {e}");
+            continue;
+        }
         scaled.far = Some(Box::new(fs));
         scaled.rebase();
         scaled.scale_box(f).expect("the box scales");
@@ -1614,7 +1659,14 @@ fn periodic_arm(
             .map(|i| (fresh.atoms[i].x, fresh.atoms[i].y, fresh.atoms[i].z))
             .collect();
         let mut ffs = FarSector::build(tails, r_s, budget, Dims::Two).expect("builds");
-        let _ = ffs.resolve_shells(&fpos, &slots, fgeom);
+        // NOT `let _ =`. A refused sector scored as if it had resolved is a comparison
+        // against a zero, and that is exactly what the first run of this arm did: the
+        // shrunk box fell below 2 R_s, the fresh sector refused, and the gate reported the
+        // refusal's empty energy as a disagreement with the scaled one.
+        if let Err(e) = ffs.resolve_shells(&fpos, &slots, fgeom) {
+            println!("# GATE G9 f={f:.2}: VOID — the fresh arm's sector refused: {e}");
+            continue;
+        }
         fresh.far = Some(Box::new(ffs));
         fresh.rebase();
 
@@ -1657,25 +1709,31 @@ fn periodic_arm(
     // and it is nonzero in the image sector because scaling moves every image offset.
     let mut stale = build_scene(&cfg, curves);
     let mut sfar = FarSector::build(tails, r_s, budget, Dims::Two).expect("builds");
-    let _ = sfar.resolve_shells(&pos, &slots, geom);
+    if let Err(e) = sfar.resolve_shells(&pos, &slots, geom) {
+        println!("# P1: NOT RUN — the sector refused before the plant could act: {e}");
+        return;
+    }
     sfar.plant = Some(FarPlant::StaleLattice);
     stale.far = Some(Box::new(sfar));
     stale.rebase();
-    stale.scale_box(0.90).expect("scales");
+    stale.scale_box(G9_SHRINK).expect("scales");
 
-    let fresh_cfg = SceneCfg { prescale: 0.90, ..cfg_clone(&cfg) };
+    let fresh_cfg = SceneCfg { prescale: G9_SHRINK, ..cfg_clone(&cfg) };
     let mut fresh = build_scene(&fresh_cfg, curves);
     let fgeom = BoxGeom::new(fresh.width, fresh.height, fresh.depth, true);
     let fpos: Vec<(f64, f64, f64)> = (0..fresh.n)
         .map(|i| (fresh.atoms[i].x, fresh.atoms[i].y, fresh.atoms[i].z))
         .collect();
     let mut ffs = FarSector::build(tails, r_s, budget, Dims::Two).expect("builds");
-    let _ = ffs.resolve_shells(&fpos, &slots, fgeom);
+    if let Err(e) = ffs.resolve_shells(&fpos, &slots, fgeom) {
+        println!("# P1: NOT RUN — the fresh reference refused: {e}");
+        return;
+    }
     fresh.far = Some(Box::new(ffs));
     fresh.rebase();
     let carrier = (stale.e_far - fresh.e_far).abs();
     println!(
-        "P1 stale image lattice (f = 0.90, {shells} shells) | carrier |E_far(stale) − \
+        "P1 stale image lattice (f = {G9_SHRINK:.2}, {shells} shells) | carrier |E_far(stale) − \
          E_far(fresh)| = {carrier:.6e} Ha (sector: the periodic image sector) | verdict {}",
         if carrier == 0.0 {
             "REFUSED — carrier reads 0.0; this box has no images for the plant to act in"

@@ -348,6 +348,20 @@ pub struct FarReading {
     /// Whichever plant was installed for this pass moved by this much in its own sector.
     /// The instrument REFUSES to score a plant whose carrier reads 0.0.
     pub plant_carrier: f64,
+    /// THE BOX WENT ILLEGAL UNDER THE CALLER'S FEET. `Sim::scale_box` shrinks the box
+    /// affinely and nothing re-checks any legality condition afterwards — not this sector's
+    /// `min_edge ≥ 2 R_s`, and not `Sim::pbc_ok` either, which is consulted only by
+    /// `set_pair_cutoff`. So a scene can start legal, be scaled, and carry on summing in a
+    /// box where the division of labour between the near and far sectors is no longer true.
+    ///
+    /// Phrased as ILLEGAL rather than legal so the `Default` is the harmless one: a reading
+    /// that was never filled in reports no complaint rather than a false all-clear.
+    pub box_illegal: bool,
+    /// The image shells did not meet the declared budget inside the cap at the box this
+    /// pass ran in. R2's condition, re-evaluated after a box change.
+    pub shells_unresolved: bool,
+    /// Shells actually used this pass.
+    pub shells: usize,
 }
 
 /// THE LONG-RANGE PAIR SECTOR.
@@ -714,15 +728,33 @@ impl FarSector {
         forces: &mut [(f64, f64, f64)],
         r_max_by_slot: &[f64],
     ) -> FarReading {
+        let n = atoms.len();
+        let mut out = FarReading::default();
         let key = BoxKey::of(geom, self.dims, self.shells);
         // M-CACHE-KIND: the key carries the KIND of box, and a mismatch recomputes. P1 is
         // exactly the branch that does not.
         if self.plant != Some(FarPlant::StaleLattice) && self.key != Some(key) {
-            self.rebuild_offsets(key);
+            // LEGALITY FIRST, because a box that has been scaled below `2 R_s` is not a box
+            // this sector can divide with the near one at all — every image separation is no
+            // longer past `R_s`, so images inside the curve's support would go unsummed by
+            // both. Refusing here is what makes `scale_box` unable to walk a scene quietly
+            // out of the configuration it was admitted in.
+            if geom.periodic && geom.min_edge() < 2.0 * self.r_s {
+                out.box_illegal = true;
+                out.shells = self.shells;
+                self.key = Some(key);
+                return out;
+            }
+            // RE-RESOLVE THE SHELL COUNT, not merely rebuild the offsets at the old one.
+            // A shrunk box needs MORE shells to reach `R_f`, and rebuilding the lattice at
+            // the stale count reaches only `f` times as far as it did — which reads as a
+            // silently truncated far sum rather than as an error.
+            if self.resolve_shells(atoms, slots, geom).is_err() {
+                out.shells_unresolved = true;
+            }
         }
+        out.shells = self.shells;
         let r_f = self.effective_r_f();
-        let n = atoms.len();
-        let mut out = FarReading::default();
         let pairs = n * (n + 1) / 2;
         if self.prev_beyond.len() != pairs {
             self.prev_beyond = vec![false; pairs];

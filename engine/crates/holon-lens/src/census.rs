@@ -149,6 +149,10 @@ pub struct BlockReport {
     /// reaches the window. The base rate M-BASE-RATE-OMITTED demands, computed exactly.
     pub control_rate: Option<f64>,
     pub control_pool: usize,
+    /// The pool was SAMPLED rather than enumerated (see [`CONTROL_POOL_EXACT_MAX`]), so
+    /// `control_rate` is an estimate whose standard error is at most
+    /// `0.5 / sqrt(control_pool)`.
+    pub control_pool_sampled: bool,
     /// True when `B` is a component of the FINAL frame — i.e. when connected-component
     /// naming would have printed it as a molecule.
     pub named_at_final_frame: bool,
@@ -285,22 +289,28 @@ pub fn run(traj: &Trajectory, st: &Stakes) -> Census {
     }
 
     // ---- the membership view, frame by frame -------------------------------------
-    let labels: Vec<Vec<u8>> = traj
+    let labels: Vec<partition::Labels> = traj
         .frames
         .iter()
-        .map(|f| partition::labels_from_bonds(n, f.bonded))
+        .map(|f| partition::labels_from_bonds(n, &f.bonds))
         .collect();
     let blocks_at: Vec<Vec<Mask>> = labels.iter().map(partition::blocks).collect();
-    let keys: Vec<u64> = labels.iter().map(partition::key).collect();
+    // Readings keyed by an injective interner (G-N0), not by packing labels into a word:
+    // the packing was the sixteen-atom cap in another costume.
+    let mut keyer = crate::network::Keyer::default();
+    let keys: Vec<u64> = labels
+        .iter()
+        .map(|l| keyer.key(partition::label_bytes(l)))
+        .collect();
 
     // Every block of two or more atoms that is EVER exactly a component. A block present
     // in fewer frames than the window cannot reach it, so the count is an exact
     // pre-filter and not a heuristic shortcut.
     let mut present: HashMap<Mask, usize> = HashMap::new();
     for bs in &blocks_at {
-        for &m in bs {
-            if partition::popcount(m) >= 2 {
-                *present.entry(m).or_insert(0) += 1;
+        for m in bs {
+            if m.popcount() >= 2 {
+                *present.entry(m.clone()).or_insert(0) += 1;
             }
         }
     }
@@ -308,12 +318,11 @@ pub fn run(traj: &Trajectory, st: &Stakes) -> Census {
     let final_blocks = blocks_at.last().cloned().unwrap_or_default();
     let final_frame_molecules: Vec<(Mask, String)> = final_blocks
         .iter()
-        .copied()
-        .filter(|&m| partition::popcount(m) >= 2)
-        .map(|m| (m, partition::formula(m, &traj.header.z)))
+        .filter(|m| m.popcount() >= 2)
+        .map(|m| (m.clone(), partition::formula(m, &traj.header.z)))
         .collect();
 
-    let mut candidates: Vec<Mask> = present.keys().copied().collect();
+    let mut candidates: Vec<Mask> = present.keys().cloned().collect();
     candidates.sort_unstable();
 
     let mut reports = Vec::new();
@@ -324,7 +333,7 @@ pub fn run(traj: &Trajectory, st: &Stakes) -> Census {
 
     for m in candidates {
         let frames_present = present[&m];
-        let series = series_for(&blocks_at, m);
+        let series = series_for(&blocks_at, &m);
         let longest_run = longest_true_run(&series);
         let (longest_fs, longest_at) = longest_true_run_fs(&series, &times);
         // Cheap exact pre-filter, and the bar is the BUDGETED one: the budgeted reading
@@ -353,14 +362,14 @@ pub fn run(traj: &Trajectory, st: &Stakes) -> Census {
                 // Report the motion over the longest run anyway, so a TRANSIENT row is not
                 // silently also a frozen one.
                 let (rms, sv) = if longest_run >= 2 {
-                    carrier_motion(traj, m, longest_at, longest_at + longest_run)
+                    carrier_motion(traj, &m, longest_at, longest_at + longest_run)
                 } else {
                     (0.0, 0.0)
                 };
                 (BlockVerdict::Transient { longest_run }, rms, sv, None)
             }
             Some((a, b, breach, worst, strict)) => {
-                let (rms, sv) = carrier_motion(traj, m, a, b);
+                let (rms, sv) = carrier_motion(traj, &m, a, b);
                 if rms < st.min_rms_bohr || sv < st.min_sep_var_bohr {
                     (
                         BlockVerdict::VoidFrozenCarrier { rms, sep_var: sv },
@@ -369,7 +378,8 @@ pub fn run(traj: &Trajectory, st: &Stakes) -> Census {
                         None,
                     )
                 } else {
-                    let (rate, pool) = control_rate(traj, &blocks_at, &times, m, st);
+                    let (rate, pool, sampled) = control_rate(traj, &blocks_at, &times, &m, st);
+                    let pool = (pool, sampled);
                     if rate > st.control_max_rate {
                         (
                             BlockVerdict::VoidNoSeparation { control_rate: rate },
@@ -401,8 +411,9 @@ pub fn run(traj: &Trajectory, st: &Stakes) -> Census {
         };
 
         reports.push(BlockReport {
+            formula: partition::formula(&m, &traj.header.z),
+            named_at_final_frame: final_blocks.contains(&m),
             block: m,
-            formula: partition::formula(m, &traj.header.z),
             frames_present,
             longest_run,
             longest_run_fs: longest_fs,
@@ -410,8 +421,8 @@ pub fn run(traj: &Trajectory, st: &Stakes) -> Census {
             rms_internal: rms,
             max_sep_variation: sep_var,
             control_rate: control.map(|(r, _)| r),
-            control_pool: control.map(|(_, p)| p).unwrap_or(0),
-            named_at_final_frame: final_blocks.contains(&m),
+            control_pool: control.map(|(_, (p, _))| p).unwrap_or(0),
+            control_pool_sampled: control.map(|(_, (_, s))| s).unwrap_or(false),
         });
     }
 
@@ -444,8 +455,8 @@ pub fn run(traj: &Trajectory, st: &Stakes) -> Census {
 
 // ============================================================ Leg A internals
 
-fn series_for(blocks_at: &[Vec<Mask>], m: Mask) -> Vec<bool> {
-    blocks_at.iter().map(|bs| bs.contains(&m)).collect()
+fn series_for(blocks_at: &[Vec<Mask>], m: &Mask) -> Vec<bool> {
+    blocks_at.iter().map(|bs| bs.contains(m)).collect()
 }
 
 pub fn longest_true_run(s: &[bool]) -> usize {
@@ -637,8 +648,8 @@ impl SparseMaxF {
 /// booked as translation rather than internal, and it is stated rather than hidden; the
 /// second quantity, the separation excursion, is centroid-free and is the one that
 /// settles a frozen carrier on its own.
-pub fn carrier_motion(traj: &Trajectory, m: Mask, a: usize, b: usize) -> (f64, f64) {
-    let idx: Vec<usize> = (0..traj.header.n_atoms).filter(|i| m >> i & 1 == 1).collect();
+pub fn carrier_motion(traj: &Trajectory, m: &Mask, a: usize, b: usize) -> (f64, f64) {
+    let idx: Vec<usize> = m.iter().filter(|&i| i < traj.header.n_atoms).collect();
     let w = b - a;
     if idx.is_empty() || w < 2 {
         return (0.0, 0.0);
@@ -713,26 +724,29 @@ fn control_rate(
     traj: &Trajectory,
     blocks_at: &[Vec<Mask>],
     times: &[f64],
-    m: Mask,
+    m: &Mask,
     st: &Stakes,
-) -> (f64, usize) {
-    let n = traj.header.n_atoms;
-    let target = partition::composition(m, &traj.header.z);
-    let mut pool: Vec<Mask> = Vec::new();
-    for cand in 1u32..(1u32 << n) {
-        let cm = cand as Mask;
-        if cm == m || partition::popcount(cm) != partition::popcount(m) {
-            continue;
-        }
-        if partition::composition(cm, &traj.header.z) == target {
-            pool.push(cm);
-        }
-    }
+) -> (f64, usize, bool) {
+    let z = &traj.header.z;
+    let target = partition::composition(m, z);
+    // The pool is COUNTED before it is built (a product of binomials), enumerated exactly
+    // while that count is affordable, and sampled uniformly past it with the sampling
+    // reported. At twelve atoms every pool this census has met is exact.
+    let size = partition::pool_size(z, &target);
+    let (pool, sampled): (Vec<Mask>, bool) = if size <= CONTROL_POOL_EXACT_MAX as u64 {
+        (partition::pool_exact(z, &target), false)
+    } else {
+        (
+            partition::pool_sample(z, &target, CONTROL_POOL_SAMPLE, traj.header.seed ^ 0x51_4E_53_55_53),
+            true,
+        )
+    };
+    let pool: Vec<&Mask> = pool.iter().filter(|cm| *cm != m).collect();
     if pool.is_empty() {
-        return (0.0, 0);
+        return (0.0, 0, sampled);
     }
     let mut pass = 0usize;
-    for &cm in &pool {
+    for cm in &pool {
         let s = series_for(blocks_at, cm);
         let hit = strict_window(&s, times, st.window_fs).is_some()
             || budgeted_window(&s, times, st.window_fs, st.beta, st.flicker_fs).is_some();
@@ -740,8 +754,16 @@ fn control_rate(
             pass += 1;
         }
     }
-    (pass as f64 / pool.len() as f64, pool.len())
+    (pass as f64 / pool.len() as f64, pool.len(), sampled)
 }
+
+/// The largest composition pool the control rate enumerates EXACTLY. Past it the pool is
+/// sampled ([`CONTROL_POOL_SAMPLE`] draws) and the report says so. Not a cap on what the
+/// census reads — a precision resource: an exact rate over 2e5 candidates costs the same
+/// window scans as the sample does over 2e4, and the sample's standard error, at most
+/// 0.5/sqrt(2e4) = 0.35%, is a decade under the coarsest control bar the census stakes.
+pub const CONTROL_POOL_EXACT_MAX: usize = 200_000;
+pub const CONTROL_POOL_SAMPLE: usize = 20_000;
 
 // ============================================================ Leg B
 
@@ -853,7 +875,7 @@ mod tests {
         let n = 12usize;
 
         // Planar: z never moves. This is what seventeen of eighteen banked trajectories do.
-        let flat = synthetic::vibrating_block(Spec::quench_like(1200, z.clone()), 0b0011_0001, 0.4, |_| true);
+        let flat = synthetic::vibrating_block(Spec::quench_like(1200, z.clone()), Mask::from_bits(0b0011_0001), 0.4, |_| true);
         let r = match run(&flat, &Stakes::default()) {
             Census::Report(r) => r,
             _ => panic!("refused"),
@@ -870,7 +892,7 @@ mod tests {
                 pos[i] = [3.0 + (i as f64), 3.0, if i == 5 { t as f64 * 0.001 } else { 0.0 }];
                 vel[i] = [0.0; 3];
             }
-            synthetic::bonds_from_blocks(n, &[0b0011_0001])
+            synthetic::bonds_from_blocks(n, &[Mask::from_bits(0b0011_0001)])
         });
         let r2 = match run(&escaped, &Stakes::default()) {
             Census::Report(r) => r,

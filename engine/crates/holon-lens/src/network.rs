@@ -46,7 +46,7 @@
 use crate::census::{self, Stakes};
 use crate::lens;
 use crate::partition::{self, Mask};
-use crate::traj::{pair_index, Trajectory, AU_TIME_FS};
+use crate::traj::{BondSet, pair_index, Trajectory, AU_TIME_FS};
 use std::collections::HashMap;
 
 // ======================================================= THE STAKES, from RUNG1_PREREG
@@ -153,29 +153,35 @@ pub fn reading(
     // removing it would make that a signature change rather than a body change.
     _pos: &[[f64; 3]],
     z: &[u32],
-    bonded: u128,
+    bonded: &BondSet,
     hb: &[lens::HBond],
 ) -> Vec<u8> {
+    // Arena indices are written as u32 little-endian: a byte per index was the reader's
+    // 255-atom ceiling in another costume.
+    let idx = |i: usize| (i as u32).to_le_bytes();
     match chart {
         Chart::HbFull => {
-            let mut v: Vec<(u8, u8, u8)> = hb
+            let mut v: Vec<(usize, usize, usize)> = hb
                 .iter()
-                .map(|b| (b.donor_o as u8, b.hydrogen as u8, b.acceptor_o as u8))
+                .map(|b| (b.donor_o, b.hydrogen, b.acceptor_o))
                 .collect();
             v.sort_unstable();
             v.dedup();
-            v.into_iter().flat_map(|(a, b, c)| [a, b, c]).collect()
+            v.into_iter()
+                .flat_map(|(a, b, c)| [idx(a), idx(b), idx(c)])
+                .flatten()
+                .collect()
         }
         Chart::HbAdj => {
-            let mut v: Vec<(u8, u8)> = hb
+            let mut v: Vec<(usize, usize)> = hb
                 .iter()
-                .map(|b| (b.donor_o as u8, b.acceptor_o as u8))
+                .map(|b| (b.donor_o, b.acceptor_o))
                 .collect();
             v.sort_unstable();
             v.dedup();
-            v.into_iter().flat_map(|(a, b)| [a, b]).collect()
+            v.into_iter().flat_map(|(a, b)| [idx(a), idx(b)]).flatten().collect()
         }
-        Chart::HbPart => hb_oxygen_labels(z, hb),
+        Chart::HbPart => partition::label_bytes(&hb_oxygen_labels(z, hb)),
         Chart::HbCount => {
             let mut v: Vec<(u8, u8, u8)> = hb
                 .iter()
@@ -189,12 +195,12 @@ pub fn reading(
             let labels = partition::labels_from_bonds(n, bonded);
             let mut out: Vec<u8> = Vec::new();
             for m in partition::blocks(&labels) {
-                out.extend_from_slice(&m.to_le_bytes());
+                out.extend_from_slice(&m.to_bytes());
             }
             out.push(0xFF);
             for (a, b) in inter_block_pairs(&labels, hb) {
-                out.push(a as u8);
-                out.push(b as u8);
+                out.extend_from_slice(&idx(a));
+                out.extend_from_slice(&idx(b));
             }
             out
         }
@@ -202,14 +208,14 @@ pub fn reading(
             let labels = partition::labels_from_bonds(n, bonded);
             let mut forms: Vec<String> = partition::blocks(&labels)
                 .into_iter()
-                .map(|m| partition::formula(m, z))
+                .map(|m| partition::formula(&m, z))
                 .collect();
             forms.sort();
             let mut pairs: Vec<(String, String)> = inter_block_pairs(&labels, hb)
                 .into_iter()
                 .map(|(a, b)| {
-                    let fa = partition::formula(block_of(&labels, a), z);
-                    let fb = partition::formula(block_of(&labels, b), z);
+                    let fa = partition::formula(&block_of(&labels, a), z);
+                    let fb = partition::formula(&block_of(&labels, b), z);
                     if fa <= fb {
                         (fa, fb)
                     } else {
@@ -229,9 +235,7 @@ pub fn reading(
             );
             s.into_bytes()
         }
-        Chart::MolPart => partition::key(&partition::labels_from_bonds(n, bonded))
-            .to_le_bytes()
-            .to_vec(),
+        Chart::MolPart => partition::label_bytes(&partition::labels_from_bonds(n, bonded)),
     }
 }
 
@@ -246,10 +250,10 @@ pub fn oxygens(z: &[u32]) -> Vec<usize> {
 
 /// The undirected H-bond graph over the oxygen sub-index space, as pair bits in the
 /// engine's own `pair_index` enumeration.
-pub fn hb_oxygen_bits(z: &[u32], hb: &[lens::HBond]) -> (Vec<usize>, u128) {
+pub fn hb_oxygen_bits(z: &[u32], hb: &[lens::HBond]) -> (Vec<usize>, BondSet) {
     let ox = oxygens(z);
     let m = ox.len();
-    let mut bits = 0u128;
+    let mut bits = BondSet::empty();
     for b in hb {
         let (Some(p), Some(q)) = (
             ox.iter().position(|&i| i == b.donor_o),
@@ -261,64 +265,55 @@ pub fn hb_oxygen_bits(z: &[u32], hb: &[lens::HBond]) -> (Vec<usize>, u128) {
             continue;
         }
         let (lo, hi) = if p < q { (p, q) } else { (q, p) };
-        bits |= 1u128 << pair_index(m, lo, hi);
+        bits.insert(pair_index(m, lo, hi) as u32);
     }
     (ox, bits)
 }
 
-fn hb_oxygen_labels(z: &[u32], hb: &[lens::HBond]) -> Vec<u8> {
+fn hb_oxygen_labels(z: &[u32], hb: &[lens::HBond]) -> partition::Labels {
     let (ox, bits) = hb_oxygen_bits(z, hb);
-    partition::labels_from_bonds(ox.len(), bits)
+    partition::labels_from_bonds(ox.len(), &bits)
 }
 
 /// The components of the undirected H-bond graph, as masks over ARENA indices. Only
 /// structures of two or more oxygens: a lone oxygen is not a network.
 pub fn hb_components(z: &[u32], hb: &[lens::HBond]) -> Vec<Mask> {
     let (ox, bits) = hb_oxygen_bits(z, hb);
-    let labels = partition::labels_from_bonds(ox.len(), bits);
+    let labels = partition::labels_from_bonds(ox.len(), &bits);
     partition::blocks(&labels)
         .into_iter()
-        .filter(|m| partition::popcount(*m) >= 2)
-        .map(|m| {
-            let mut arena: Mask = 0;
-            for (p, &i) in ox.iter().enumerate() {
-                if m >> p & 1 == 1 {
-                    arena |= 1 << i;
-                }
-            }
-            arena
-        })
+        .filter(|m| m.popcount() >= 2)
+        .map(|m| Mask::from_members(m.iter().map(|p| ox[p])))
         .collect()
 }
 
 /// An ARENA mask over oxygens, re-expressed in the oxygen POSITION index space the floor
 /// and the surrogate work in. Arena indices stay the identity (Object rule 6); positions
 /// are only the compact coordinates the pool enumeration runs over.
-pub fn ox_positions_of(ox: &[usize], arena: Mask) -> u16 {
-    let mut m = 0u16;
-    for (p, &i) in ox.iter().enumerate() {
-        if arena >> i & 1 == 1 {
-            m |= 1 << p;
-        }
-    }
-    m
+pub fn ox_positions_of(ox: &[usize], arena: &Mask) -> Mask {
+    Mask::from_members(
+        ox.iter()
+            .enumerate()
+            .filter(|(_, &i)| arena.contains(i))
+            .map(|(p, _)| p),
+    )
 }
 
-fn block_of(labels: &[u8], i: usize) -> Mask {
+fn block_of(labels: &[u32], i: usize) -> Mask {
     let lead = labels[i];
-    let mut m: Mask = 0;
-    for (k, &l) in labels.iter().enumerate() {
-        if l == lead {
-            m |= 1 << k;
-        }
-    }
-    m
+    Mask::from_members(
+        labels
+            .iter()
+            .enumerate()
+            .filter(|(_, &l)| l == lead)
+            .map(|(k, _)| k),
+    )
 }
 
 /// Unordered oxygen pairs that are H-bonded AND lie in different blocks of the molecular
 /// partition — the INTER-MOLECULAR edges, which are the only edges a network of molecules
 /// has. An H-bond between two atoms of the same molecule is not an edge of that network.
-fn inter_block_pairs(labels: &[u8], hb: &[lens::HBond]) -> Vec<(usize, usize)> {
+fn inter_block_pairs(labels: &[u32], hb: &[lens::HBond]) -> Vec<(usize, usize)> {
     let mut v: Vec<(usize, usize)> = hb
         .iter()
         .filter(|b| labels[b.donor_o] != labels[b.acceptor_o])
@@ -452,31 +447,38 @@ pub fn directed_edge_series(traj: &Trajectory, hbs: &[Vec<lens::HBond>]) -> (Vec
 }
 
 /// Components of size `k` from a shuffled directed-edge state, as position masks.
-fn components_from_edges(m: usize, present: &[bool]) -> Vec<u16> {
-    let mut bits = 0u128;
+fn components_from_edges(m: usize, present: &[bool]) -> Vec<Mask> {
+    let mut bits = BondSet::empty();
     for p in 0..m {
         for q in 0..m {
             if p != q && present[p * m + q] {
                 let (lo, hi) = if p < q { (p, q) } else { (q, p) };
-                bits |= 1u128 << pair_index(m, lo, hi);
+                bits.insert(pair_index(m, lo, hi) as u32);
             }
         }
     }
-    let labels = partition::labels_from_bonds(m, bits);
+    let labels = partition::labels_from_bonds(m, &bits);
     partition::blocks(&labels)
         .into_iter()
-        .filter(|x| partition::popcount(*x) >= 2)
+        .filter(|x| x.popcount() >= 2)
         .collect()
 }
 
 /// The eligible pool for a structure of `size` oxygens: EVERY `size`-subset of the oxygen
-/// position set. An exact enumeration, not a sample — at four oxygens the pool is 6, 4 and
-/// 1 for sizes 2, 3 and 4.
-pub fn pool_subsets(m: usize, size: usize) -> Vec<u16> {
-    (1u32..(1u32 << m))
-        .map(|c| c as u16)
-        .filter(|c| partition::popcount(*c) == size)
-        .collect()
+/// position set — at four oxygens 6, 4 and 1 for sizes 2, 3 and 4 — enumerated by
+/// combination (`C(m, size)` of them) and never by walking `2^m`. Past
+/// [`crate::census::CONTROL_POOL_EXACT_MAX`] the pool is SAMPLED and the floor says so.
+pub fn pool_subsets(m: usize, size: usize, seed: u64) -> (Vec<Mask>, bool) {
+    let z: Vec<u32> = vec![8; m];
+    let target = [(8u32, size)];
+    if partition::pool_size(&z, &target) <= crate::census::CONTROL_POOL_EXACT_MAX as u64 {
+        (partition::pool_exact(&z, &target), false)
+    } else {
+        (
+            partition::pool_sample(&z, &target, crate::census::CONTROL_POOL_SAMPLE, seed),
+            true,
+        )
+    }
 }
 
 /// What the control floor measured, with every term kept so a reader can see WHICH
@@ -503,6 +505,9 @@ pub struct Floor {
     /// the null loses its degrees of freedom and stops being able to reject anything.
     pub max_edge_occupancy: f64,
     pub pool: usize,
+    /// The pool was sampled rather than enumerated; `p_data` and the surrogate rates are
+    /// estimates with standard error at most `0.5 / sqrt(pool)`.
+    pub pool_sampled: bool,
 }
 
 /// **The control floor** — `CENSUS_RESULTS.md` §4's staked repair, built here.
@@ -529,22 +534,34 @@ pub fn control_floor(
     traj: &Trajectory,
     hbs: &[Vec<lens::HBond>],
     times: &[f64],
-    target: u16,
+    target: &Mask,
     st: &Stakes,
     surrogates: usize,
 ) -> Floor {
     let (ox, series) = directed_edge_series(traj, hbs);
     let m = ox.len();
     let nf = times.len();
-    let size = partition::popcount(target);
-    let subsets = pool_subsets(m, size);
-    let ti = subsets.iter().position(|&s| s == target);
+    let size = target.popcount();
+    let (mut subsets, pool_sampled) = pool_subsets(m, size, traj.header.seed ^ RUNG1_RNG_SALT);
+    // The target is always a member of its own pool — one of the C(m, size) when the pool
+    // is enumerated, added if a sampled draw missed it — so `ti` is never None and the
+    // own-pass correction below always applies.
+    if !subsets.contains(target) {
+        subsets.push(target.clone());
+    }
+    let index: HashMap<Mask, usize> = subsets
+        .iter()
+        .cloned()
+        .enumerate()
+        .map(|(i, s)| (s, i))
+        .collect();
+    let ti = index.get(target).copied();
 
     // ---- the target's own edge occupancy, the null's power diagnostic ----------------
     let mut max_occ = 0.0f64;
     for p in 0..m {
         for q in 0..m {
-            if p == q || target >> p & 1 == 0 || target >> q & 1 == 0 {
+            if p == q || !target.contains(p) || !target.contains(q) {
                 continue;
             }
             let s = &series[p * m + q];
@@ -556,20 +573,20 @@ pub fn control_floor(
     }
 
     // ---- the pool rate in the DATA ---------------------------------------------------
-    let comps: Vec<Vec<u16>> = hbs
+    let comps: Vec<Vec<Mask>> = hbs
         .iter()
         .map(|hb| {
             let (_, bits) = hb_oxygen_bits(&traj.header.z, hb);
-            partition::blocks(&partition::labels_from_bonds(m, bits))
+            partition::blocks(&partition::labels_from_bonds(m, &bits))
                 .into_iter()
-                .filter(|c| partition::popcount(*c) >= 2)
+                .filter(|c| c.popcount() >= 2)
                 .collect()
         })
         .collect();
     let data_pass: Vec<bool> = subsets
         .iter()
-        .map(|&c| {
-            let s: Vec<bool> = comps.iter().map(|cs| cs.contains(&c)).collect();
+        .map(|c| {
+            let s: Vec<bool> = comps.iter().map(|cs| cs.contains(c)).collect();
             reaches_window(&s, times, st)
         })
         .collect();
@@ -591,6 +608,7 @@ pub fn control_floor(
             q_any: 0.0,
             max_edge_occupancy: max_occ,
             pool,
+            pool_sampled,
         };
     }
 
@@ -609,7 +627,7 @@ pub fn control_floor(
                 present[e] = series[e][(t + shifts[e]) % nf];
             }
             for c in components_from_edges(m, &present) {
-                if let Some(i) = subsets.iter().position(|&s| s == c) {
+                if let Some(&i) = index.get(&c) {
                     occ[i][t] = true;
                 }
             }
@@ -634,6 +652,7 @@ pub fn control_floor(
         q_any: any_hits as f64 / surrogates as f64,
         max_edge_occupancy: max_occ,
         pool,
+        pool_sampled,
     }
 }
 
@@ -865,7 +884,7 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
         }
         f_oo += oo as usize;
         f_oh += oh as usize;
-        let labels = partition::labels_from_bonds(n, f.bonded);
+        let labels = partition::labels_from_bonds(n, &f.bonds);
         let mut seen: Vec<(usize, usize, usize)> = hb
             .iter()
             .map(|b| (b.donor_o, b.hydrogen, b.acceptor_o))
@@ -883,7 +902,7 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
         }
         let k = partition::blocks(&labels)
             .into_iter()
-            .filter(|&b| ox.iter().any(|&i| b >> i & 1 == 1))
+            .filter(|b| ox.iter().any(|&i| b.contains(i)))
             .count();
         ox_blocks_hist[k] += 1;
         if traj.header.dims == 2 {
@@ -950,7 +969,7 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
         let keys: Vec<u64> = (0..nf)
             .map(|t| {
                 let f = &traj.frames[t];
-                keyer.key(reading(chart, n, &f.pos, z, f.bonded, &hbs[t]))
+                keyer.key(reading(chart, n, &f.pos, z, &f.bonds, &hbs[t]))
             })
             .collect();
         keyed.insert(chart.tag(), (keys, keyer.distinct()));
@@ -1000,11 +1019,11 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
     let comps_at: Vec<Vec<Mask>> = hbs.iter().map(|hb| hb_components(z, hb)).collect();
     let mut present: HashMap<Mask, usize> = HashMap::new();
     for cs in &comps_at {
-        for &m in cs {
-            *present.entry(m).or_insert(0) += 1;
+        for m in cs {
+            *present.entry(m.clone()).or_insert(0) += 1;
         }
     }
-    let mut cands: Vec<Mask> = present.keys().copied().collect();
+    let mut cands: Vec<Mask> = present.keys().cloned().collect();
     cands.sort_unstable();
 
     let dur: Vec<f64> = (0..nf)
@@ -1013,14 +1032,14 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
 
     // The floor is cached per TARGET, because the census's pool rate excludes the target
     // from its own base rate and therefore differs between two structures of one size.
-    let mut floor_cache: HashMap<u16, Floor> = HashMap::new();
+    let mut floor_cache: HashMap<Mask, Floor> = HashMap::new();
 
     let mut structures = Vec::new();
     for m in cands {
         let series: Vec<bool> = comps_at.iter().map(|cs| cs.contains(&m)).collect();
         let longest_run = census::longest_true_run(&series);
         let (longest_fs, longest_at) = census::longest_true_run_fs(&series, &times);
-        let size = partition::popcount(m);
+        let size = m.popcount();
         let held_fs: f64 = series
             .iter()
             .enumerate()
@@ -1041,21 +1060,21 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
         let (verdict, rms, sv, floor) = match hit {
             None => {
                 let (rms, sv) = if longest_run >= 2 {
-                    census::carrier_motion(traj, m, longest_at, longest_at + longest_run)
+                    census::carrier_motion(traj, &m, longest_at, longest_at + longest_run)
                 } else {
                     (0.0, 0.0)
                 };
                 (StructVerdict::Transient { longest_run }, rms, sv, None)
             }
             Some((a, b, breach, worst, strict)) => {
-                let (rms, sv) = census::carrier_motion(traj, m, a, b);
+                let (rms, sv) = census::carrier_motion(traj, &m, a, b);
                 if rms < st.min_rms_bohr || sv < st.min_sep_var_bohr {
                     (StructVerdict::VoidFrozenCarrier { rms, sep_var: sv }, rms, sv, None)
                 } else {
-                    let pm = ox_positions_of(&ox, m);
+                    let pm = ox_positions_of(&ox, &m);
                     let fl = *floor_cache
-                        .entry(pm)
-                        .or_insert_with(|| control_floor(traj, &hbs, &times, pm, st, surrogates));
+                        .entry(pm.clone())
+                        .or_insert_with(|| control_floor(traj, &hbs, &times, &pm, st, surrogates));
                     if fl.p_data > fl.bar {
                         (
                             StructVerdict::VoidNoSeparation { p_data: fl.p_data, bar: fl.bar },
@@ -1082,9 +1101,9 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
         };
 
         structures.push(StructReport {
-            structure: m,
             size,
             frames_present: present[&m],
+            structure: m,
             longest_run,
             longest_run_fs: longest_fs,
             verdict,
@@ -1143,7 +1162,7 @@ mod tests {
         let z = mixed_z();
         // 0—1 bonded, 2 and 3 isolated.
         let c = hb_components(&z, &[hb(0, 4, 1)]);
-        assert_eq!(c, vec![0b0011]);
+        assert_eq!(c, vec![Mask::from_bits(0b0011)]);
     }
 
     #[test]
@@ -1167,16 +1186,16 @@ mod tests {
         let x = vec![hb(0, 4, 1)];
         let y = vec![hb(0, 5, 1)];
         assert_ne!(
-            reading(Chart::HbFull, n, &p, &z, 0, &x),
-            reading(Chart::HbFull, n, &p, &z, 0, &y)
+            reading(Chart::HbFull, n, &p, &z, &BondSet::empty(), &x),
+            reading(Chart::HbFull, n, &p, &z, &BondSet::empty(), &y)
         );
         assert_eq!(
-            reading(Chart::HbAdj, n, &p, &z, 0, &x),
-            reading(Chart::HbAdj, n, &p, &z, 0, &y)
+            reading(Chart::HbAdj, n, &p, &z, &BondSet::empty(), &x),
+            reading(Chart::HbAdj, n, &p, &z, &BondSet::empty(), &y)
         );
         assert_eq!(
-            reading(Chart::HbPart, n, &p, &z, 0, &x),
-            reading(Chart::HbPart, n, &p, &z, 0, &y)
+            reading(Chart::HbPart, n, &p, &z, &BondSet::empty(), &x),
+            reading(Chart::HbPart, n, &p, &z, &BondSet::empty(), &y)
         );
     }
 
@@ -1188,14 +1207,14 @@ mod tests {
         let z = mixed_z();
         let n = 12;
         let p = vec![[0.0f64; 3]; n];
-        let bonds = crate::synthetic::bonds_from_blocks(n, &[0b0011]); // atoms 0,1 one block
+        let bonds = crate::synthetic::bonds_from_blocks(n, &[Mask::from_bits(0b0011)]); // atoms 0,1 one block
         let x = vec![hb(0, 4, 1)];
-        let with = reading(Chart::MolNetId, n, &p, &z, bonds, &x);
-        let without = reading(Chart::MolNetId, n, &p, &z, bonds, &[]);
+        let with = reading(Chart::MolNetId, n, &p, &z, &bonds, &x);
+        let without = reading(Chart::MolNetId, n, &p, &z, &bonds, &[]);
         assert_eq!(with, without, "an intra-block H-bond must not appear as a network edge");
         // The same H-bond across a partition boundary IS an edge.
-        let split = reading(Chart::MolNetId, n, &p, &z, 0, &x);
-        assert_ne!(split, reading(Chart::MolNetId, n, &p, &z, 0, &[]));
+        let split = reading(Chart::MolNetId, n, &p, &z, &BondSet::empty(), &x);
+        assert_ne!(split, reading(Chart::MolNetId, n, &p, &z, &BondSet::empty(), &[]));
     }
 
     /// A chart factors through itself, exactly. The instrument's own zero.
@@ -1245,7 +1264,7 @@ mod tests {
     #[test]
     fn a_scene_without_two_oxygens_is_refused() {
         let spec = crate::synthetic::Spec::quench_like(1400, vec![1u32; 12]);
-        let t = crate::synthetic::build(spec, |_, _, _| 0);
+        let t = crate::synthetic::build(spec, |_, _, _| BondSet::empty());
         match run(&t, &Stakes::default(), 4) {
             Rung1::Refused { gate, .. } => assert!(gate.contains("G-N12")),
             Rung1::Report(_) => panic!("a 12-hydrogen scene must be refused, not reported"),

@@ -22,7 +22,7 @@
 use holon_chem::elements::{Species, HYDROGEN, OXYGEN};
 use holon_chem::pair::generate_pair_table;
 use holon_lens::classifier::{self, Phase, Verdict};
-use holon_lens::traj::{pair_index, Frame, Header, Trajectory};
+use holon_lens::traj::{pair_index, BondSet, Frame, Header, Trajectory};
 use holon_render::bank::Host;
 use holon_render::sim::{Boundary, Dims, Sim, DEFAULT_SCENE_ATOMS, K_B};
 use holon_render::{load_pair_table, TABLE_OK};
@@ -142,12 +142,12 @@ fn place(s: &mut Sim, arm: Arm, seed: u64, t_target: f64) {
     s.thermostat_tau = TAU;
 }
 
-fn bond_bits(s: &Sim) -> u128 {
+fn bond_bits(s: &Sim) -> BondSet {
     let n = s.n;
-    let mut bits = 0u128;
+    let mut bits = BondSet::empty();
     for p in s.pairs[..s.pair_count].iter().filter(|p| p.bonded) {
         let (a, b) = if p.i < p.j { (p.i, p.j) } else { (p.j, p.i) };
-        bits |= 1u128 << pair_index(n, a, b);
+        bits.insert(pair_index(n, a, b) as u32);
     }
     bits
 }
@@ -207,7 +207,7 @@ fn run(s: &mut Sim, arm: Arm, seed: u64, t_target: f64) -> Rung {
                 index: frame as u64,
                 time: s.time,
                 temperature: s.temperature(),
-                bonded: bond_bits(s),
+                bonds: bond_bits(s),
                 pos: (0..s.n).map(|i| [s.atoms[i].x, s.atoms[i].y, s.atoms[i].z]).collect(),
                 vel: (0..s.n).map(|i| [s.atoms[i].vx, s.atoms[i].vy, s.atoms[i].vz]).collect(),
             });

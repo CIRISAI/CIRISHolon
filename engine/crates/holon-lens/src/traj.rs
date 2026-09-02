@@ -71,6 +71,105 @@ pub const fn pair_index(n: usize, i: usize, j: usize) -> usize {
     i * n - i * (i + 1) / 2 + (j - i - 1)
 }
 
+/// The inverse of [`pair_index`]: the pair `(i, j)`, `i < j`, at index `k` of an
+/// `n`-atom scene. Binary search on the row offsets, so a sparse bond list decodes in
+/// `O(log n)` per bond rather than by walking every pair.
+pub fn pair_from_index(n: usize, k: usize) -> (usize, usize) {
+    debug_assert!(n >= 2 && k < n * (n - 1) / 2, "pair index {k} is not in an {n}-atom scene");
+    let offset = |i: usize| i * n - i * (i + 1) / 2;
+    let (mut lo, mut hi) = (0usize, n - 1); // row i is in [lo, hi)
+    while hi - lo > 1 {
+        let mid = (lo + hi) / 2;
+        if offset(mid) <= k {
+            lo = mid;
+        } else {
+            hi = mid;
+        }
+    }
+    (lo, k - offset(lo) + lo + 1)
+}
+
+/// The bonded pairs of one frame: the engine's pair indices, ascending, any scene size.
+///
+/// This is the v2 carrier's own representation (a sparse ascending list), carried in
+/// memory for every frame whatever file it came from; a v1 file's 128-bit word is decoded
+/// into one at read time and re-encoded at write time, where the format's cap is refused
+/// by name.
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Default)]
+pub struct BondSet {
+    pairs: Vec<u32>,
+}
+
+impl BondSet {
+    pub fn empty() -> Self {
+        Self::default()
+    }
+
+    /// From an ascending, duplicate-free list of pair indices — the v2 frame's list.
+    pub fn from_sorted(pairs: Vec<u32>) -> Self {
+        debug_assert!(pairs.windows(2).all(|w| w[0] < w[1]), "bond list must be ascending");
+        Self { pairs }
+    }
+
+    /// From a v1 bit word: bit `k` set iff pair `k` is bonded.
+    pub fn from_bits(bits: u128) -> Self {
+        let mut rest = bits;
+        let mut pairs = Vec::with_capacity(rest.count_ones() as usize);
+        while rest != 0 {
+            let k = rest.trailing_zeros();
+            pairs.push(k);
+            rest &= rest - 1;
+        }
+        Self { pairs }
+    }
+
+    /// The v1 bit word, or `None` if any pair index is past what 128 bits hold — which
+    /// is exactly a scene past the v1 format's sixteen atoms.
+    pub fn to_bits(&self) -> Option<u128> {
+        let mut bits = 0u128;
+        for &k in &self.pairs {
+            if k >= 128 {
+                return None;
+            }
+            bits |= 1u128 << k;
+        }
+        Some(bits)
+    }
+
+    pub fn insert(&mut self, k: u32) {
+        if let Err(at) = self.pairs.binary_search(&k) {
+            self.pairs.insert(at, k);
+        }
+    }
+
+    #[inline]
+    pub fn contains(&self, k: u32) -> bool {
+        self.pairs.binary_search(&k).is_ok()
+    }
+
+    #[inline]
+    pub fn is_bonded(&self, n: usize, i: usize, j: usize) -> bool {
+        let (a, b) = if i < j { (i, j) } else { (j, i) };
+        self.contains(pair_index(n, a, b) as u32)
+    }
+
+    pub fn len(&self) -> usize {
+        self.pairs.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.pairs.is_empty()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = u32> + '_ {
+        self.pairs.iter().copied()
+    }
+
+    pub fn pairs(&self) -> &[u32] {
+        &self.pairs
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Header {
     pub seed: u64,
@@ -118,8 +217,8 @@ pub struct Frame {
     /// rather than on the header's `dt`, because the engine's timestep adapts mid-run.
     pub time: f64,
     pub temperature: f64,
-    /// Bit `k` set iff pair `k` read BONDED in the engine at this grain boundary.
-    pub bonded: u128,
+    /// The pairs that read BONDED in the engine at this grain boundary.
+    pub bonds: BondSet,
     pub pos: Vec<[f64; 3]>,
     pub vel: Vec<[f64; 3]>,
 }
@@ -127,8 +226,7 @@ pub struct Frame {
 impl Frame {
     #[inline]
     pub fn is_bonded(&self, n: usize, i: usize, j: usize) -> bool {
-        let (a, b) = if i < j { (i, j) } else { (j, i) };
-        self.bonded >> pair_index(n, a, b) & 1 == 1
+        self.bonds.is_bonded(n, i, j)
     }
 }
 
@@ -190,7 +288,7 @@ impl TrajWriter {
         index: u64,
         time: f64,
         temperature: f64,
-        bonded: u128,
+        bonds: &BondSet,
         pos: &[[f64; 3]],
         vel: &[[f64; 3]],
     ) -> std::io::Result<()> {
@@ -199,6 +297,9 @@ impl TrajWriter {
         self.out.write_all(&index.to_le_bytes())?;
         self.out.write_all(&time.to_le_bytes())?;
         self.out.write_all(&temperature.to_le_bytes())?;
+        let bonded = bonds
+            .to_bits()
+            .expect("v1 holds C(16,2) pair bits and `create` refused any wider scene");
         self.out.write_all(&bonded.to_le_bytes())?;
         for k in 0..self.n_atoms {
             for c in 0..3 {
@@ -297,7 +398,7 @@ impl Trajectory {
             };
             let time = f64r(&mut r)?;
             let temperature = f64r(&mut r)?;
-            let bonded = u128r(&mut r)?;
+            let bonds = BondSet::from_bits(u128r(&mut r)?);
             let mut pos = Vec::with_capacity(n_atoms);
             let mut vel = Vec::with_capacity(n_atoms);
             for _ in 0..n_atoms {
@@ -310,7 +411,7 @@ impl Trajectory {
                 index,
                 time,
                 temperature,
-                bonded,
+                bonds,
                 pos,
                 vel,
             });
@@ -381,16 +482,16 @@ mod tests {
         let mut w = TrajWriter::create(&path, &h).unwrap();
         let pos = vec![[0.0, 0.0, 0.0], [1.8, 0.0, 0.0], [-0.5, 1.7, 0.0]];
         let vel = vec![[0.1, 0.0, 0.0], [0.0, 0.2, 0.0], [0.0, 0.0, 0.3]];
-        w.push(0, 0.0, 300.0, 0b011, &pos, &vel).unwrap();
-        w.push(1, 34.5, 299.0, 0b111, &pos, &vel).unwrap();
+        w.push(0, 0.0, 300.0, &BondSet::from_bits(0b011), &pos, &vel).unwrap();
+        w.push(1, 34.5, 299.0, &BondSet::from_bits(0b111), &pos, &vel).unwrap();
         assert_eq!(w.finish().unwrap(), 2);
 
         let t = Trajectory::read(&path).unwrap();
         assert_eq!(t.header, h);
         assert_eq!(t.frames.len(), 2);
         assert!(t.is_complete());
-        assert_eq!(t.frames[0].bonded, 0b011);
-        assert_eq!(t.frames[1].bonded, 0b111);
+        assert_eq!(t.frames[0].bonds, BondSet::from_bits(0b011));
+        assert_eq!(t.frames[1].bonds, BondSet::from_bits(0b111));
         // Bit 0 is (0,1), bit 1 is (0,2), bit 2 is (1,2).
         assert!(t.frames[0].is_bonded(3, 0, 1));
         assert!(t.frames[0].is_bonded(3, 1, 0), "the accessor is symmetric");
@@ -422,7 +523,7 @@ mod tests {
         let mut w = TrajWriter::create(&path, &h).unwrap();
         let p = vec![[0.0; 3], [1.4; 3]];
         for f in 0..7 {
-            w.push(f, f as f64, 300.0, 1, &p, &p).unwrap();
+            w.push(f, f as f64, 300.0, &BondSet::from_bits(1), &p, &p).unwrap();
         }
         w.finish().unwrap();
         let t = Trajectory::read(&path).unwrap();
@@ -460,7 +561,7 @@ mod tests {
         // What the run ACTUALLY did: two coarse steps, then three at half the size.
         let mut t = 0.0f64;
         for (i, step) in [68.9414, 68.9414, 34.4707, 34.4707, 34.4707].iter().enumerate() {
-            w.push(i as u64, t, 300.0, 1, &p, &p).unwrap();
+            w.push(i as u64, t, 300.0, &BondSet::from_bits(1), &p, &p).unwrap();
             t += step;
         }
         w.finish().unwrap();

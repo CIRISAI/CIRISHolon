@@ -723,7 +723,7 @@ mod tests {
             index: i,
             time: i as f64,
             temperature: 300.0,
-            bonded: 0,
+            bonds: crate::traj::BondSet::empty(),
             pos,
             vel,
         }

@@ -214,6 +214,18 @@ sector already is. Forced by the first scene above sixteen atoms, and it should
 be folded BEFORE then rather than by the failure.
 **Owner:** the closure-census lane.
 
+**FOLDED 2026-09-02, in two halves.** The carrier half landed with the v2 trajectory
+format (a sparse ascending pair list, `traj2::MAX_ATOMS = 92,682`, the `u32` pair-index
+bound and named as such). The READER half — the part this residual was really about —
+landed with the lens widening: `partition::Mask` is a word vector over arena indices of
+any size, `Labels` is `Vec<u32>`, every in-memory frame carries a `BondSet` (the v2
+representation) whatever file it came from, readings are keyed through the injective
+interner rather than by packing labels into a `u64`, and both control pools (the census's
+composition pool and the network's oxygen-position pool) are enumerated by combination
+and SAMPLED past `CONTROL_POOL_EXACT_MAX` with the sampling reported, never by walking
+`2^n`. What remains sixteen is the v1 FILE LAYOUT's `u128` word, which is a property of a
+format and is refused by name at the writer and at `write_as_v1`.
+
 ### R-11 — a geometric centroid where the physics wants a mass-weighted one
 
 `census::carrier_motion` takes an unweighted centroid because the trajectory

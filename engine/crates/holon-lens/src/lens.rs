@@ -748,7 +748,7 @@ mod tests {
                 pos[i] = [2000.0 + v * t as f64, 2000.0 - v * t as f64, 0.0];
                 vel[i] = [v, -v, 0.0];
             }
-            0
+            crate::traj::BondSet::empty()
         });
         let a_flight = msd_exponent(&flight, 200);
         assert!(

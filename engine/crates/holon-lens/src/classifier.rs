@@ -202,9 +202,9 @@ pub fn classify(traj: &Trajectory) -> Report {
     // --- free fraction: atoms in singleton components, averaged over frames -----------
     let mut free = 0usize;
     for f in &traj.frames {
-        let labels = partition::labels_from_bonds(n, f.bonded);
+        let labels = partition::labels_from_bonds(n, &f.bonds);
         for b in partition::blocks(&labels) {
-            if partition::popcount(b) == 1 {
+            if b.popcount() == 1 {
                 free += 1;
             }
         }
@@ -365,13 +365,13 @@ mod tests {
         let mut sp = Spec::quench_like(400, vec![8; 12]);
         sp.seed = 7;
         let n = 12usize;
-        let all = ((1u32 << n) - 1) as crate::partition::Mask;
+        let all = crate::partition::Mask::all(n);
         let t = synthetic::build(sp, move |_t, pos, vel| {
             for i in 0..n {
                 pos[i] = [2.0 + 2.6 * i as f64, 5.0, 0.0];
                 vel[i] = [0.0; 3];
             }
-            synthetic::bonds_from_blocks(n, &[all])
+            synthetic::bonds_from_blocks(n, std::slice::from_ref(&all))
         });
         let r = classify(&t);
         assert_eq!(r.interior_samples, 0, "a chain closes no shell");

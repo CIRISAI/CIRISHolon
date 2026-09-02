@@ -63,7 +63,7 @@
 //! forces or it did not; a per-frame flag would let one file mean two things halfway
 //! through, which is the silent reinterpretation the version tag exists to prevent.
 
-use crate::traj::{self, pair_index, Header, Trajectory, TrajWriter};
+use crate::traj::{BondSet, self, pair_index, Header, Trajectory, TrajWriter};
 use std::fs::File;
 use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::Path;
@@ -807,9 +807,7 @@ impl Trajectory2 {
             // `n_pairs >= 128` means every bit of the word is a legal pair index and the
             // shift below would be undefined; a v1 file can DECLARE such a scene even
             // though v1's writer refuses to produce one, so the guard is a real branch.
-            let stray = if n_pairs >= 128 { 0 } else { f.bonded >> n_pairs };
-            if stray != 0 {
-                let bit = n_pairs + stray.trailing_zeros() as usize;
+            if let Some(bit) = f.bonds.iter().find(|&k| k as usize >= n_pairs) {
                 return Err(TrajError::Malformed(format!(
                     "frame {} has bond bit {bit} set and a {n}-atom scene has only \
                      {n_pairs} pairs; refusing rather than dropping it",
@@ -820,9 +818,7 @@ impl Trajectory2 {
                 index: f.index,
                 time: f.time,
                 temperature: f.temperature,
-                bonds: (0..n_pairs as u32)
-                    .filter(|k| f.bonded >> k & 1 == 1)
-                    .collect(),
+                bonds: f.bonds.pairs().to_vec(),
                 pos: f.pos.clone(),
                 vel: f.vel.clone(),
                 forces: None,
@@ -873,8 +869,10 @@ impl Trajectory2 {
         };
         let mut w = TrajWriter::create(path, &h)?;
         for f in &self.frames {
+            // Refused by name past v1's cap, before the writer's own `to_bits` could.
             let bits = f.bonded_u128(self.header.n_atoms)?;
-            w.push(f.index, f.time, f.temperature, bits, &f.pos, &f.vel)?;
+            let bonds = BondSet::from_bits(bits);
+            w.push(f.index, f.time, f.temperature, &bonds, &f.pos, &f.vel)?;
         }
         Ok(w.finish()?)
     }
@@ -933,9 +931,9 @@ impl Trajectory2 {
             cmpf!("time", f2.time, f1.time);
             cmpf!("temperature", f2.temperature, f1.temperature);
             match f2.bonded_u128(n) {
-                Ok(bits) if bits != f1.bonded => out.push(format!(
+                Ok(bits) if BondSet::from_bits(bits) != f1.bonds => out.push(format!(
                     "frame {at} bond set: v2 reads {bits:#x}, v1 reads {:#x}",
-                    f1.bonded
+                    f1.bonds.to_bits().unwrap_or(u128::MAX)
                 )),
                 Err(e) => out.push(format!("frame {at} bond set: {e}")),
                 _ => {}
@@ -1221,7 +1219,7 @@ mod tests {
                 .map(|i| [0.001 * i as f64, -0.002, 0.0])
                 .collect();
             let bits = (1u128 << (f % 7)) | 0b1011;
-            w.push(f as u64, f as f64 * 34.4, 300.0 - f as f64, bits, &pos, &vel)
+            w.push(f as u64, f as f64 * 34.4, 300.0 - f as f64, &BondSet::from_bits(bits), &pos, &vel)
                 .unwrap();
         }
         w.finish().unwrap();
@@ -1276,8 +1274,8 @@ mod tests {
         let p = vec![[0.0; 3]; 12];
         // 12 atoms have C(12,2) = 66 pairs, so 65 is the last legal index.
         assert_eq!(pair_index(12, 10, 11), 65);
-        w.push(0, 0.0, 300.0, 1u128 << 65, &p, &p).unwrap();
-        w.push(1, 1.0, 300.0, 1u128 << 119, &p, &p).unwrap();
+        w.push(0, 0.0, 300.0, &BondSet::from_bits(1u128 << 65), &p, &p).unwrap();
+        w.push(1, 1.0, 300.0, &BondSet::from_bits(1u128 << 119), &p, &p).unwrap();
         w.finish().unwrap();
         let e = match Trajectory2::read(&path) {
             Ok(_) => panic!("a bit 62 places past the last pair was accepted"),
@@ -1290,7 +1288,7 @@ mod tests {
         // And the legal top bit on its own is fine.
         let ok = d.join("ok.traj");
         let mut w = TrajWriter::create(&ok, &h).unwrap();
-        w.push(0, 0.0, 300.0, 1u128 << 65, &p, &p).unwrap();
+        w.push(0, 0.0, 300.0, &BondSet::from_bits(1u128 << 65), &p, &p).unwrap();
         w.finish().unwrap();
         let t = Trajectory2::read(&ok).unwrap();
         assert_eq!(t.frames[0].bonds, vec![65]);
@@ -1322,7 +1320,7 @@ mod tests {
             assert_eq!(f2.index, f1.index);
             assert_eq!(f2.time.to_bits(), f1.time.to_bits());
             assert_eq!(f2.temperature.to_bits(), f1.temperature.to_bits());
-            assert_eq!(f2.bonded_u128(12).unwrap(), f1.bonded);
+            assert_eq!(BondSet::from_bits(f2.bonded_u128(12).unwrap()), f1.bonds);
             for i in 0..12 {
                 for c in 0..3 {
                     assert_eq!(f2.pos[i][c].to_bits(), f1.pos[i][c].to_bits());
@@ -1692,7 +1690,7 @@ mod tests {
         };
         let mut wv = TrajWriter::create(&v1, &hv1).unwrap();
         let pp = vec![[0.0; 3], [1.4; 3]];
-        wv.push(0, 0.0, 300.0, 0, &pp, &pp).unwrap();
+        wv.push(0, 0.0, 300.0, &BondSet::empty(), &pp, &pp).unwrap();
         wv.finish().unwrap();
         assert!(
             Trajectory2::read(&v1).unwrap().momentum_residual(0, mass_of).is_none(),

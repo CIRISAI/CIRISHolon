@@ -11,7 +11,7 @@
 //! water; they are used as evidence about the instrument.
 
 use crate::partition::Mask;
-use crate::traj::{pair_index, Frame, Header, Trajectory};
+use crate::traj::{pair_index, BondSet, Frame, Header, Trajectory};
 
 #[derive(Clone, Debug)]
 pub struct Spec {
@@ -67,28 +67,24 @@ impl Lcg {
 /// Every intra-block pair bonded, and nothing else. This is how a PARTITION is planted:
 /// the census reads components, so a fixture states the components it wants and this
 /// turns them into the edge bits the format carries.
-pub fn bonds_from_blocks(n: usize, blocks: &[Mask]) -> u128 {
-    let mut bits = 0u128;
-    for &b in blocks {
-        for i in 0..n {
-            if b >> i & 1 == 0 {
-                continue;
-            }
-            for j in (i + 1)..n {
-                if b >> j & 1 == 1 {
-                    bits |= 1u128 << pair_index(n, i, j);
-                }
+pub fn bonds_from_blocks(n: usize, blocks: &[Mask]) -> BondSet {
+    let mut bonds = BondSet::empty();
+    for b in blocks {
+        let members: Vec<usize> = b.iter().filter(|&i| i < n).collect();
+        for (x, &i) in members.iter().enumerate() {
+            for &j in &members[x + 1..] {
+                bonds.insert(pair_index(n, i, j) as u32);
             }
         }
     }
-    bits
+    bonds
 }
 
 /// Build a trajectory frame by frame. The closure fills positions and velocities and
 /// returns the frame's bond bits.
 pub fn build<F>(spec: Spec, mut f: F) -> Trajectory
 where
-    F: FnMut(usize, &mut [[f64; 3]], &mut [[f64; 3]]) -> u128,
+    F: FnMut(usize, &mut [[f64; 3]], &mut [[f64; 3]]) -> BondSet,
 {
     let header = Header {
         seed: spec.seed,
@@ -111,12 +107,12 @@ where
     let mut pos = vec![[0.0f64; 3]; spec.n_atoms];
     let mut vel = vec![[0.0f64; 3]; spec.n_atoms];
     for t in 0..spec.n_frames {
-        let bonded = f(t, &mut pos, &mut vel);
+        let bonds = f(t, &mut pos, &mut vel);
         frames.push(Frame {
             index: t as u64,
             time: t as f64 * frame_au,
             temperature: 300.0,
-            bonded,
+            bonds,
             pos: pos.clone(),
             vel: vel.clone(),
         });
@@ -134,7 +130,7 @@ where
     H: FnMut(usize) -> bool,
 {
     let n = spec.n_atoms;
-    let members: Vec<usize> = (0..n).filter(|i| block >> i & 1 == 1).collect();
+    let members: Vec<usize> = (0..n).filter(|&i| block.contains(i)).collect();
     let mut rng = Lcg(spec.seed ^ 0x9E37_79B9_7F4A_7C15);
     // A fixed reference geometry: members on a small ring, everyone else spread out.
     let base: Vec<[f64; 3]> = (0..n)
@@ -157,9 +153,9 @@ where
             vel[i] = [amp * w * 0.05 * s.cos(), 0.0, 0.0];
         }
         if held(t) {
-            bonds_from_blocks(n, &[block])
+            bonds_from_blocks(n, std::slice::from_ref(&block))
         } else {
-            0
+            BondSet::empty()
         }
     })
 }
@@ -168,7 +164,7 @@ where
 /// vacuity G5 exists to catch.
 pub fn frozen_block(spec: Spec, block: Mask) -> Trajectory {
     let n = spec.n_atoms;
-    let members: Vec<usize> = (0..n).filter(|i| block >> i & 1 == 1).collect();
+    let members: Vec<usize> = (0..n).filter(|&i| block.contains(i)).collect();
     let base: Vec<[f64; 3]> = (0..n)
         .map(|i| match members.iter().position(|&m| m == i) {
             Some(k) => {
@@ -183,7 +179,7 @@ pub fn frozen_block(spec: Spec, block: Mask) -> Trajectory {
         for v in vel.iter_mut() {
             *v = [0.0; 3];
         }
-        bonds_from_blocks(n, &[block])
+        bonds_from_blocks(n, std::slice::from_ref(&block))
     })
 }
 
@@ -210,7 +206,7 @@ pub fn vapor(spec: Spec) -> Trajectory {
             pos[i] = [x, y, 0.0];
             vel[i] = vv[i];
         }
-        0
+        BondSet::empty()
     })
 }
 
@@ -242,14 +238,14 @@ pub fn crystal(spec: Spec, amp: f64) -> Trajectory {
         .collect();
     let mut rng = Lcg(spec.seed ^ 0x2545_F491_4F6C_DD1D);
     let phase: Vec<f64> = (0..n).map(|_| rng.next() * std::f64::consts::TAU).collect();
-    let all: Mask = if n >= 16 { Mask::MAX } else { ((1u32 << n) - 1) as Mask };
+    let all = Mask::all(n);
     build(spec, move |t, pos, vel| {
         for i in 0..n {
             let s = (0.9 * t as f64 * 0.05 + phase[i]).sin();
             pos[i] = [base[i][0] + amp * s, base[i][1] - amp * s, 0.0];
             vel[i] = [amp * 0.045 * s.cos(), 0.0, 0.0];
         }
-        bonds_from_blocks(n, &[all])
+        bonds_from_blocks(n, std::slice::from_ref(&all))
     })
 }
 
@@ -262,7 +258,7 @@ pub fn liquid(spec: Spec) -> Trajectory {
     let mut cur: Vec<[f64; 3]> = (0..n)
         .map(|_| [6.0 + rng.next() * 8.0, 6.0 + rng.next() * 6.0, 0.0])
         .collect();
-    let all: Mask = if n >= 16 { Mask::MAX } else { ((1u32 << n) - 1) as Mask };
+    let all = Mask::all(n);
     build(spec, move |_t, pos, vel| {
         for i in 0..n {
             let dx = rng.jitter(0.12);
@@ -272,6 +268,6 @@ pub fn liquid(spec: Spec) -> Trajectory {
             pos[i] = cur[i];
             vel[i] = [dx, dy, 0.0];
         }
-        bonds_from_blocks(n, &[all])
+        bonds_from_blocks(n, std::slice::from_ref(&all))
     })
 }

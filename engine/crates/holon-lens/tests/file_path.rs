@@ -15,7 +15,9 @@ use holon_lens::synthetic::{self, Spec};
 use holon_lens::traj::{Trajectory, TrajWriter};
 use std::path::PathBuf;
 
-const OH2: Mask = 0b0000_0011_0001;
+fn oh2() -> Mask {
+    Mask::from_bits(0b0000_0011_0001)
+}
 
 fn tmpdir(tag: &str) -> PathBuf {
     let d = std::env::temp_dir().join(format!("hlens-fp-{tag}-{}", std::process::id()));
@@ -28,7 +30,7 @@ fn write_and_read(t: &Trajectory, tag: &str) -> Trajectory {
     let path = dir.join("t.traj");
     let mut w = TrajWriter::create(&path, &t.header).unwrap();
     for f in &t.frames {
-        w.push(f.index, f.time, f.temperature, f.bonded, &f.pos, &f.vel)
+        w.push(f.index, f.time, f.temperature, &f.bonds, &f.pos, &f.vel)
             .unwrap();
     }
     assert_eq!(w.finish().unwrap() as usize, t.frames.len());
@@ -58,7 +60,7 @@ fn the_file_round_trip_preserves_every_frame_exactly() {
             s.seed = 0x5341_5499;
             s
         },
-        OH2,
+        oh2(),
         0.4,
         |f| f % 97 != 0,
     );
@@ -67,7 +69,7 @@ fn the_file_round_trip_preserves_every_frame_exactly() {
     assert_eq!(disk.frames.len(), mem.frames.len());
     for (a, b) in mem.frames.iter().zip(disk.frames.iter()) {
         assert_eq!(a.index, b.index);
-        assert_eq!(a.bonded, b.bonded, "bond bits at frame {}", a.index);
+        assert_eq!(a.bonds, b.bonds, "bond bits at frame {}", a.index);
         assert_eq!(a.time.to_bits(), b.time.to_bits(), "time is bit-exact");
         assert_eq!(a.temperature.to_bits(), b.temperature.to_bits());
         for i in 0..mem.header.n_atoms {
@@ -89,11 +91,11 @@ fn the_census_verdict_is_the_same_on_disk_as_in_memory() {
     for (tag, held) in cases {
         let mut s = Spec::quench_like(1200, vec![8, 8, 8, 8, 1, 1, 1, 1, 1, 1, 1, 1]);
         s.seed = 0x5341_5500;
-        let mem = synthetic::vibrating_block(s, OH2, 0.4, held);
+        let mem = synthetic::vibrating_block(s, oh2(), 0.4, held);
         let disk = write_and_read(&mem, tag);
         assert_eq!(
-            verdict_of(&mem, OH2),
-            verdict_of(&disk, OH2),
+            verdict_of(&mem, oh2()),
+            verdict_of(&disk, oh2()),
             "{tag}: the file layer changed the verdict"
         );
     }
@@ -117,16 +119,16 @@ fn the_bond_graph_survives_the_trip_as_a_graph() {
             pos[i] = [i as f64 * 1.7, (t % 3) as f64, 0.0];
             vel[i] = [0.0; 3];
         }
-        synthetic::bonds_from_blocks(n, &[0b0000_0011_0001, 0b0001_1100_0010])
+        synthetic::bonds_from_blocks(n, &[Mask::from_bits(0b0000_0011_0001), Mask::from_bits(0b0001_1100_0010)])
     });
     let disk = write_and_read(&mem, "graph");
     for (a, b) in mem.frames.iter().zip(disk.frames.iter()) {
-        let la = holon_lens::partition::labels_from_bonds(n, a.bonded);
-        let lb = holon_lens::partition::labels_from_bonds(n, b.bonded);
+        let la = holon_lens::partition::labels_from_bonds(n, &a.bonds);
+        let lb = holon_lens::partition::labels_from_bonds(n, &b.bonds);
         assert_eq!(la, lb);
         assert_eq!(
             holon_lens::partition::blocks(&la),
-            vec![0b0000_0011_0001, 0b0001_1100_0010, 4, 8, 512, 1024, 2048]
+            [0b0000_0011_0001u128, 0b0001_1100_0010, 4, 8, 512, 1024, 2048].map(Mask::from_bits).to_vec()
         );
     }
 }

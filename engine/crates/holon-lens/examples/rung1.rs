@@ -322,8 +322,8 @@ fn main() {
                     for s in &r.structures {
                         let f = s.floor;
                         println!(
-                            "  0x{:04x} {:>4} {:>8} {:>10.1} {:>6.1}% {:>8.3} {:>8.3} {:>8} {:>8} {:>8} {:>5}  {}",
-                            s.structure,
+                            "  {:>8} {:>4} {:>8} {:>10.1} {:>6.1}% {:>8.3} {:>8.3} {:>8} {:>8} {:>8} {:>5}  {}",
+                            mask_hex(&s.structure),
                             s.size,
                             s.frames_present,
                             s.longest_run_fs,
@@ -431,4 +431,17 @@ fn main() {
     if refusals > 0 {
         println!("\n## G-N12 — {refusals} trajectory(ies) REFUSED for want of the variable");
     }
+}
+
+/// A structure's oxygen-position mask as the hex the record has always printed, or its
+/// member count where it is wider than a 128-bit word (a scene the record never had).
+fn mask_hex(m: &holon_lens::partition::Mask) -> String {
+    let mut v: u128 = 0;
+    for i in m.iter() {
+        if i >= 128 {
+            return format!("{{{} ox}}", m.popcount());
+        }
+        v |= 1u128 << i;
+    }
+    format!("0x{v:04x}")
 }

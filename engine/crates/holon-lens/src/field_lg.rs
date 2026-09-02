@@ -316,7 +316,7 @@ mod tests {
         }
     }
     fn frame(i: u64, pos: Vec<[f64; 3]>, vel: Vec<[f64; 3]>) -> Frame {
-        Frame { index: i, time: i as f64, temperature: 300.0, bonded: 0, pos, vel }
+        Frame { index: i, time: i as f64, temperature: 300.0, bonds: crate::traj::BondSet::empty(), pos, vel }
     }
     /// A labeller for the PLUMBING tests only. It is the same arithmetic `regplus::sector`
     /// performs, and the cross-check that the two agree is an integration test in

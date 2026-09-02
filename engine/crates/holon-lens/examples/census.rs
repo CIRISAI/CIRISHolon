@@ -211,9 +211,9 @@ fn main() {
             }
             shown += 1;
             println!(
-                "#   {:<8} {:#06x} {:>9} {:>10.1} {:>6.1}% {:>8.3} {:>8.3} {:>11}  {:<22} {}",
+                "#   {:<8} {:>6} {:>9} {:>10.1} {:>6.1}% {:>8.3} {:>8.3} {:>11}  {:<22} {}",
                 b.formula,
-                b.block,
+                mask_hex(&b.block),
                 b.longest_run,
                 b.longest_run_fs,
                 // The share of the WHOLE run the block was a block. A budgeted
@@ -343,7 +343,7 @@ fn main() {
         let bondcount: Vec<f64> = traj
             .frames
             .iter()
-            .map(|f| f.bonded.count_ones() as f64)
+            .map(|f| f.bonds.len() as f64)
             .collect();
         let hb: Vec<f64> = traj
             .frames
@@ -444,4 +444,17 @@ fn report_lens(name: &str, r: lens::Reading<f64>) {
         Ok(v) => println!("#   {name:<33}: {v:.4}"),
         Err(e) => println!("#   {name:<33}: REFUSED [{}] {}", e.gate, e.reason),
     }
+}
+
+/// A block's arena mask as the hex the record has always printed, or its member count
+/// where it is wider than a 128-bit word.
+fn mask_hex(m: &holon_lens::partition::Mask) -> String {
+    let mut v: u128 = 0;
+    for i in m.iter() {
+        if i >= 128 {
+            return format!("{{{} atoms}}", m.popcount());
+        }
+        v |= 1u128 << i;
+    }
+    format!("{v:#06x}")
 }

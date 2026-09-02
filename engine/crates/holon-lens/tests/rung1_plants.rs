@@ -24,7 +24,8 @@ use holon_lens::census::{self, Stakes};
 use holon_lens::lens;
 use holon_lens::network::{self, Chart, Rung1};
 use holon_lens::synthetic::{self, Spec};
-use holon_lens::traj::Trajectory;
+use holon_lens::partition::Mask;
+use holon_lens::traj::{BondSet, Trajectory};
 
 const SIDE: f64 = 5.5;
 const OH: f64 = 1.8;
@@ -80,8 +81,8 @@ fn place_square(cfg: u8, pos: &mut [[f64; 3]]) {
 /// Each oxygen with its own two hydrogens is one block, and no O–O pair is bonded — so
 /// every H-bond edge crosses a molecular boundary and the contamination sector is ZERO
 /// by construction on every square fixture.
-fn square_bonds() -> u128 {
-    synthetic::bonds_from_blocks(12, &[0b000_000_000_111, 0b000_000_111_000, 0b000_111_000_000, 0b111_000_000_000])
+fn square_bonds() -> BondSet {
+    synthetic::bonds_from_blocks(12, &[Mask::from_bits(0b000_000_000_111), Mask::from_bits(0b000_000_111_000), Mask::from_bits(0b000_111_000_000), Mask::from_bits(0b111_000_000_000)])
 }
 
 fn square_traj(configs: &[u8], n_frames: usize) -> Trajectory {
@@ -142,7 +143,7 @@ fn p0_the_fixture_produces_the_edges_it_claims() {
         place_square(c, &mut pos);
         let hb = lens::hbonds(&pos, &z).unwrap();
         assert!(
-            seen.insert(network::reading(Chart::HbAdj, 12, &pos, &z, 0, &hb)),
+            seen.insert(network::reading(Chart::HbAdj, 12, &pos, &z, &BondSet::empty(), &hb)),
             "config {c:04b} repeats an earlier C1 reading"
         );
     }
@@ -280,7 +281,7 @@ fn p5_a_covalent_oxygen_skeleton_reads_fully_contaminated() {
             *v = [0.0; 3];
         }
         // ONE block: every oxygen covalently bonded to every other.
-        synthetic::bonds_from_blocks(12, &[0b111_111_111_111])
+        synthetic::bonds_from_blocks(12, &[Mask::from_bits(0b111_111_111_111)])
     });
     let r = report(&t, 0);
     assert!(r.hb_records > 0, "the plant must produce edges to contaminate");
@@ -305,7 +306,7 @@ fn p5_a_covalent_oxygen_skeleton_reads_fully_contaminated() {
 #[test]
 fn p6_a_scene_with_no_oxygen_is_refused_by_name() {
     let spec = Spec::quench_like(1400, vec![1u32; 12]);
-    let t = synthetic::build(spec, |_, _, _| 0);
+    let t = synthetic::build(spec, |_, _, _| BondSet::empty());
     match network::run(&t, &Stakes::default(), 0) {
         Rung1::Refused { gate, reason } => {
             assert!(gate.contains("G-N12"), "the gate is named: {gate}");
@@ -362,7 +363,7 @@ fn p7_a_permanently_held_hbond_pair_certifies_strict() {
     let s = r
         .structures
         .iter()
-        .find(|s| s.structure == 0b0000_0000_1001)
+        .find(|s| s.structure == Mask::from_bits(0b0000_0000_1001))
         .expect("the {O0, O1} structure must be a candidate");
     assert_eq!(s.size, 2);
     assert!(
@@ -388,7 +389,7 @@ fn p8_one_over_long_breach_fails_despite_passing_the_two_percent() {
     let s = r
         .structures
         .iter()
-        .find(|s| s.structure == 0b0000_0000_1001)
+        .find(|s| s.structure == Mask::from_bits(0b0000_0000_1001))
         .expect("the structure is still a candidate, it just does not certify");
     assert!(
         matches!(s.verdict, network::StructVerdict::Transient { .. }),
@@ -429,9 +430,9 @@ fn the_control_floor_reproduces_and_reports_its_own_power() {
         .collect();
     let st = Stakes::default();
     let ox = network::oxygens(&t.header.z);
-    let target = network::ox_positions_of(&ox, 0b0000_0000_1001);
-    let a = network::control_floor(&t, &hbs, &times, target, &st, 16);
-    let b = network::control_floor(&t, &hbs, &times, target, &st, 16);
+    let target = network::ox_positions_of(&ox, &Mask::from_bits(0b0000_0000_1001));
+    let a = network::control_floor(&t, &hbs, &times, &target, &st, 16);
+    let b = network::control_floor(&t, &hbs, &times, &target, &st, 16);
     assert_eq!(a.p_data, b.p_data, "the same seed must give the same pool rate");
     assert_eq!(a.p_null_p95, b.p_null_p95, "and the same surrogate percentile");
     assert_eq!(

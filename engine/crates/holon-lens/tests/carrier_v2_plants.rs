@@ -12,7 +12,7 @@
 //!
 //! P-4 through P-9 live in `src/traj2.rs`'s unit tests, beside the code they exercise.
 
-use holon_lens::traj::{Header, TrajWriter, Trajectory};
+use holon_lens::traj::{BondSet, Header, TrajWriter, Trajectory};
 use holon_lens::traj2::Trajectory2;
 use std::path::{Path, PathBuf};
 
@@ -62,7 +62,7 @@ fn banked_shape(path: &Path, n_frames: usize) -> Header {
         // `from_v1` now refuses. The first draft of this fixture set bit 119 and that is
         // how the refusal came to exist.
         let bits: u128 = 0b1011 | (1u128 << (f % 40)) | (1u128 << 65);
-        w.push(f as u64, t, 3000.0 - 2.0 * f as f64, bits, &pos, &vel)
+        w.push(f as u64, t, 3000.0 - 2.0 * f as f64, &BondSet::from_bits(bits), &pos, &vel)
             .unwrap();
         t += if f < n_frames / 2 { 68.9414 } else { 34.4707 };
     }

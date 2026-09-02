@@ -32,7 +32,7 @@
 
 use holon_chem::elements::{Species, HYDROGEN, OXYGEN};
 use holon_chem::pair::generate_pair_table;
-use holon_lens::traj::{pair_index, Header, TrajWriter};
+use holon_lens::traj::{pair_index, BondSet, Header, TrajWriter};
 use holon_render::bank::Host;
 use holon_render::sim::{Boundary, Dims, Sim, K_B, DEFAULT_SCENE_ATOMS};
 use holon_render::{load_pair_table, TABLE_OK};
@@ -355,12 +355,12 @@ impl De4 {
 /// criterion: `sim.rs` records what two implementations of a cluster reading do to each
 /// other, and the census inherits the engine's answer precisely so that a census row and
 /// a quench row cannot disagree about what is bonded.
-fn bond_bits(s: &Sim) -> u128 {
+fn bond_bits(s: &Sim) -> BondSet {
     let n = s.n;
-    let mut bits = 0u128;
+    let mut bits = BondSet::empty();
     for p in s.pairs[..s.pair_count].iter().filter(|p| p.bonded) {
         let (a, b) = if p.i < p.j { (p.i, p.j) } else { (p.j, p.i) };
-        bits |= 1u128 << pair_index(n, a, b);
+        bits.insert(pair_index(n, a, b) as u32);
     }
     bits
 }
@@ -425,7 +425,7 @@ fn run(s: &mut Sim, arm: Arm, seed: u64, out_dir: &Path) -> Outcome {
             frame as u64,
             s.time,
             s.temperature(),
-            bond_bits(s),
+            &bond_bits(s),
             &pos,
             &vel,
         )

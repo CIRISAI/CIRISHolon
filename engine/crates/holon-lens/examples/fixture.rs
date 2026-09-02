@@ -15,7 +15,9 @@ use holon_lens::synthetic::{self, Spec};
 use holon_lens::traj::TrajWriter;
 use std::path::PathBuf;
 
-const OH2: Mask = 0b0000_0011_0001;
+fn oh2() -> Mask {
+    Mask::from_bits(0b0000_0011_0001)
+}
 
 fn main() {
     let mut args = std::env::args().skip(1);
@@ -30,9 +32,9 @@ fn main() {
     let n = spec.n_atoms;
 
     let traj = match kind.as_str() {
-        "held" => synthetic::vibrating_block(spec, OH2, 0.4, |_| true),
-        "breaks" => synthetic::vibrating_block(spec, OH2, 0.4, |f| f < 600),
-        "frozen" => synthetic::frozen_block(spec, OH2),
+        "held" => synthetic::vibrating_block(spec, oh2(), 0.4, |_| true),
+        "breaks" => synthetic::vibrating_block(spec, oh2(), 0.4, |f| f < 600),
+        "frozen" => synthetic::frozen_block(spec, oh2()),
         "shuffle" => synthetic::build(spec, move |f, pos, vel| {
             let k = (f / 3) % 7;
             for i in 0..n {
@@ -40,7 +42,7 @@ fn main() {
                 pos[i] = [3.0 + 2.0 * (i as f64).cos() + a, 3.0 + 2.0 * (i as f64).sin(), 0.0];
                 vel[i] = [a, 0.0, 0.0];
             }
-            let b: Mask = (1 << 0) | (1 << (4 + k)) | (1 << (5 + k));
+            let b = Mask::from_members([0, 4 + k, 5 + k]);
             synthetic::bonds_from_blocks(n, &[b])
         }),
         other => panic!("unknown fixture {other}"),
@@ -49,7 +51,7 @@ fn main() {
     let path = dir.join(format!("fixture_{kind}_{frames}.traj"));
     let mut w = TrajWriter::create(&path, &traj.header).expect("open");
     for f in &traj.frames {
-        w.push(f.index, f.time, f.temperature, f.bonded, &f.pos, &f.vel)
+        w.push(f.index, f.time, f.temperature, &f.bonds, &f.pos, &f.vel)
             .expect("write");
     }
     let n_written = w.finish().expect("close");

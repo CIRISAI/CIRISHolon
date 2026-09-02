@@ -9,22 +9,24 @@ use holon_lens::traj::Trajectory;
 fn main() {
     let mut a = std::env::args().skip(1);
     let path = a.next().expect("trajectory");
-    let block = u16::from_str_radix(a.next().expect("block hex").trim_start_matches("0x"), 16)
-        .expect("hex block");
+    let hex = a.next().expect("block hex");
+    let block = partition::Mask::from_bits(
+        u128::from_str_radix(hex.trim_start_matches("0x"), 16).expect("hex block"),
+    );
     let t = Trajectory::read(std::path::Path::new(&path)).expect("readable");
     let n = t.header.n_atoms;
     let times: Vec<f64> = t.frames.iter().map(|f| f.time * holon_lens::traj::AU_TIME_FS).collect();
     let series: Vec<bool> = t
         .frames
         .iter()
-        .map(|f| partition::blocks(&partition::labels_from_bonds(n, f.bonded)).contains(&block))
+        .map(|f| partition::blocks(&partition::labels_from_bonds(n, &f.bonds)).contains(&block))
         .collect();
 
-    let members: Vec<usize> = (0..n).filter(|i| block >> i & 1 == 1).collect();
+    let members: Vec<usize> = block.iter().filter(|&i| i < n).collect();
     println!(
-        "# block {:#06x} = {} ; atoms {:?} ; Z {:?}",
-        block,
-        partition::formula(block, &t.header.z),
+        "# block {} = {} ; atoms {:?} ; Z {:?}",
+        hex,
+        partition::formula(&block, &t.header.z),
         members,
         members.iter().map(|&i| t.header.z[i]).collect::<Vec<_>>()
     );

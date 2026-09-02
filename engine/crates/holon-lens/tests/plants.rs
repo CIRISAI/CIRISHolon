@@ -24,8 +24,10 @@ fn spec(seed: u64, n_frames: usize) -> Spec {
     s
 }
 
-/// Arena indices 0 (an O), 4 and 5 (two H): the OH2 the census is being built to judge.
-const OH2: Mask = 0b0000_0011_0001;
+/// Arena indices 0 (an O), 4 and 5 (two H): the oh2() the census is being built to judge.
+fn oh2() -> Mask {
+    Mask::from_bits(0b0000_0011_0001)
+}
 
 fn report(t: &holon_lens::traj::Trajectory) -> census::CensusReport {
     match census::run(t, &Stakes::default()) {
@@ -34,11 +36,11 @@ fn report(t: &holon_lens::traj::Trajectory) -> census::CensusReport {
     }
 }
 
-fn row<'a>(r: &'a census::CensusReport, m: Mask) -> &'a census::BlockReport {
+fn row<'a>(r: &'a census::CensusReport, m: &Mask) -> &'a census::BlockReport {
     r.blocks
         .iter()
-        .find(|b| b.block == m)
-        .unwrap_or_else(|| panic!("block {m:#014b} never appeared"))
+        .find(|b| b.block == *m)
+        .unwrap_or_else(|| panic!("block {m:?} never appeared"))
 }
 
 // ============================================================ C-1  must CERTIFY
@@ -48,7 +50,7 @@ fn row<'a>(r: &'a census::CensusReport, m: Mask) -> &'a census::BlockReport {
 /// block-view series `v_B`, which reads 1 in every frame.
 #[test]
 fn c1_a_permanently_held_moving_block_is_certified_strict() {
-    let t = synthetic::vibrating_block(spec(11, 1200), OH2, 0.4, |_| true);
+    let t = synthetic::vibrating_block(spec(11, 1200), oh2(), 0.4, |_| true);
     let r = report(&t);
     assert!(
         (r.median_frame_fs - 0.8338).abs() < 1e-3,
@@ -57,7 +59,7 @@ fn c1_a_permanently_held_moving_block_is_certified_strict() {
     );
     assert_eq!(r.distinct_frame_durations, 1, "a synthetic clock is uniform");
     assert_eq!(r.window_fs, 834.0, "the staked window, in the unit that is enforced");
-    let b = row(&r, OH2);
+    let b = row(&r, &oh2());
     assert_eq!(b.formula, "OH2");
     assert!(
         matches!(b.verdict, BlockVerdict::CertifiedStrict { .. }),
@@ -76,9 +78,9 @@ fn c1_a_permanently_held_moving_block_is_certified_strict() {
 /// Sector: MEMBERSHIP — `v_B` transitions 1 to 0 and never returns.
 #[test]
 fn c2_a_dissociating_block_is_transient() {
-    let t = synthetic::vibrating_block(spec(12, 1200), OH2, 0.4, |f| f < 600);
+    let t = synthetic::vibrating_block(spec(12, 1200), oh2(), 0.4, |f| f < 600);
     let r = report(&t);
-    let b = row(&r, OH2);
+    let b = row(&r, &oh2());
     assert!(
         matches!(b.verdict, BlockVerdict::Transient { .. }),
         "{:?}",
@@ -99,12 +101,12 @@ fn c2_a_dissociating_block_is_transient() {
 fn c3_a_breach_run_past_the_cap_is_refused_though_the_fraction_passes() {
     // 8.4 fs of flicker cap is ten frames at this clock; eleven is past it.
     let breach = 11usize;
-    let t = synthetic::vibrating_block(spec(13, 1200), OH2, 0.4, move |f| {
+    let t = synthetic::vibrating_block(spec(13, 1200), oh2(), 0.4, move |f| {
         !(500..500 + breach).contains(&f)
     });
     let r = report(&t);
     assert_eq!(r.flicker_fs, 8.4);
-    let b = row(&r, OH2);
+    let b = row(&r, &oh2());
     let window_frames = (r.window_fs / r.median_frame_fs).round();
     assert!(
         (breach as f64) / window_frames < census::PREREG_BETA,
@@ -123,7 +125,7 @@ fn c3_a_breach_run_past_the_cap_is_refused_though_the_fraction_passes() {
     };
     match census::run(&t, &loose) {
         Census::Report(rr) => {
-            let bb = row(&rr, OH2);
+            let bb = row(&rr, &oh2());
             assert!(
                 matches!(bb.verdict, BlockVerdict::CertifiedBudgeted { .. }),
                 "{:?}",
@@ -138,10 +140,10 @@ fn c3_a_breach_run_past_the_cap_is_refused_though_the_fraction_passes() {
 
 /// THE NAMING ARTIFACT ITSELF. Carrier: a trajectory whose FINAL frame holds a
 /// (1 O, 2 H) component while the membership of that component is reshuffled every three
-/// frames. Sector: MEMBERSHIP — the COMPOSITION series is constant at OH2 throughout
+/// frames. Sector: MEMBERSHIP — the COMPOSITION series is constant at oh2() throughout
 /// while the BLOCK series flickers, so the plant acts on membership and not on formula.
 ///
-/// The formula reader must say OH2 and the census must say TRANSIENT. This is the defect
+/// The formula reader must say oh2() and the census must say TRANSIENT. This is the defect
 /// the whole census exists to catch, and if it does not fire here nothing else in this
 /// file matters.
 #[test]
@@ -157,7 +159,7 @@ fn c4_a_reshuffling_oh2_is_named_by_formula_and_refused_by_closure() {
             pos[i] = [3.0 + 2.0 * (i as f64).cos() + a, 3.0 + 2.0 * (i as f64).sin(), 0.0];
             vel[i] = [a, 0.0, 0.0];
         }
-        let block: Mask = (1 << 0) | (1 << h1) | (1 << h2);
+        let block = Mask::from_members([0, h1, h2]);
         synthetic::bonds_from_blocks(n, &[block])
     });
     let r = report(&t);
@@ -169,13 +171,13 @@ fn c4_a_reshuffling_oh2_is_named_by_formula_and_refused_by_closure() {
         r.final_frame_molecules
     );
 
-    // The census sees nothing that holds. Every OH2-shaped block is transient.
+    // The census sees nothing that holds. Every oh2()-shaped block is transient.
     let oh2_rows: Vec<_> = r.blocks.iter().filter(|b| b.formula == "OH2").collect();
     assert!(!oh2_rows.is_empty());
     for b in &oh2_rows {
         assert!(
             matches!(b.verdict, BlockVerdict::Transient { .. }),
-            "block {:#014b} certified when its membership turns over every 3 frames: {:?}",
+            "block {:?} certified when its membership turns over every 3 frames: {:?}",
             b.block,
             b.verdict
         );
@@ -190,7 +192,7 @@ fn c4_a_reshuffling_oh2_is_named_by_formula_and_refused_by_closure() {
 /// (Object rule 9), not a pass and not a fail.
 #[test]
 fn c5_a_trajectory_shorter_than_the_window_is_refused() {
-    let t = synthetic::vibrating_block(spec(15, 100), OH2, 0.4, |_| true);
+    let t = synthetic::vibrating_block(spec(15, 100), oh2(), 0.4, |_| true);
     match census::run(&t, &Stakes::default()) {
         Census::Refused { gate, reason } => {
             assert_eq!(gate, "G3/G4 window length");
@@ -210,9 +212,9 @@ fn c5_a_trajectory_shorter_than_the_window_is_refused() {
 /// MOTION — which is the vacuity G5 exists to catch (M-FIXED-POINT-TRAJECTORY).
 #[test]
 fn c6_a_frozen_carrier_voids_rather_than_certifies() {
-    let t = synthetic::frozen_block(spec(16, 1200), OH2);
+    let t = synthetic::frozen_block(spec(16, 1200), oh2());
     let r = report(&t);
-    let b = row(&r, OH2);
+    let b = row(&r, &oh2());
     assert!(
         matches!(b.verdict, BlockVerdict::VoidFrozenCarrier { .. }),
         "held forever on a carrier that never moves is VOID, not CERTIFIED: {:?}",
@@ -222,9 +224,9 @@ fn c6_a_frozen_carrier_voids_rather_than_certifies() {
 
     // FIRES: the same membership series on a MOVING carrier certifies, so the void is
     // about the motion sector and not about the fixture.
-    let moving = synthetic::vibrating_block(spec(16, 1200), OH2, 0.4, |_| true);
+    let moving = synthetic::vibrating_block(spec(16, 1200), oh2(), 0.4, |_| true);
     let rm = report(&moving);
-    assert!(row(&rm, OH2).verdict.is_certified());
+    assert!(row(&rm, &oh2()).verdict.is_certified());
 }
 
 // ============================================================ Leg B on a real fixture
@@ -242,7 +244,7 @@ fn c6_a_frozen_carrier_voids_rather_than_certifies() {
 /// the instrument exhibits the frames where it fails to.
 #[test]
 fn leg_b_exhibits_the_witness_pair_a_dissociation_creates() {
-    let held = synthetic::vibrating_block(spec(17, 1200), OH2, 0.4, |_| true);
+    let held = synthetic::vibrating_block(spec(17, 1200), oh2(), 0.4, |_| true);
     let r = report(&held);
     // One partition for the whole run: every transition informative, no witness pair, and
     // the honest reading is "none found at this resolution", never "Closed".
@@ -252,7 +254,7 @@ fn leg_b_exhibits_the_witness_pair_a_dissociation_creates() {
     assert_eq!(r.closure.defect, 0.0);
     assert!(!r.closure.void, "1199 transitions is well above the staked 200");
 
-    let once = synthetic::vibrating_block(spec(18, 1200), OH2, 0.4, |f| f < 600);
+    let once = synthetic::vibrating_block(spec(18, 1200), oh2(), 0.4, |f| f < 600);
     let r2 = report(&once);
     assert_eq!(r2.closure.distinct_readings, 2);
     assert!(!r2.closure.void);
@@ -263,9 +265,9 @@ fn leg_b_exhibits_the_witness_pair_a_dissociation_creates() {
     assert!(r2.closure.defect > 0.0);
     let (a, b) = r2.closure.witness_pairs[0];
     let key_of = |f: usize| {
-        holon_lens::partition::key(&holon_lens::partition::labels_from_bonds(
+        holon_lens::partition::label_bytes(&holon_lens::partition::labels_from_bonds(
             12,
-            once.frames[f].bonded,
+            &once.frames[f].bonds,
         ))
     };
     assert_eq!(key_of(a), key_of(b), "a witness pair agrees on the reading");

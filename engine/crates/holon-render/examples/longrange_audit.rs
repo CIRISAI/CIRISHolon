@@ -105,10 +105,64 @@ const G2_DR_E: f64 = 1.0e-4;
 const G2_DD_E: f64 = 1.0e-6;
 const G2_RESIDUAL_FACTOR: f64 = 2.0;
 
-/// The freeze's price refusal for the mixed class: the O–O curve was measured at 2596.2 s
-/// in the committed arm log, and a setup that finishes under half of the priced total is
-/// refused as not having generated that curve.
+/// B1's price refusal for the mixed class: the O–O curve was measured at 2596.2 s in the
+/// committed arm log, and a setup that finishes under half of the priced total is refused
+/// as not having generated that curve.
+///
+/// THIS GATE FIRED AND WAS WRONG TO. It is denominated in wall clock seconds, which cannot
+/// separate "did less work" from "did the same work quicker" — see LONGRANGE_RESULTS.md
+/// §7.4. It is kept, unchanged and still enforced under `--freeze=b1`, because B1's verdict
+/// is a fact about B1 and deleting the gate that produced it would erase the record.
+/// `--freeze=b1b` replaces it with W1 + W2 below.
 const MIXED_PRICE_FLOOR_S: f64 = 1200.0;
+
+// ---------------------------------------------------------------- B1b's staked constants
+//
+// From B1B_PREREG.md, committed at `1569288` BEFORE this block existed.
+
+/// B1b's work-unit price: the expensive curve's cost in units of the cheap curve solved by
+/// the same kernel, in the same process. A kernel speedup scales both, contention scales
+/// both, core placement scales both — so the ratio is work-proportional and survives all
+/// three, which is exactly what B1's wall-clock floor did not.
+///
+/// The floor sits 5.5× below the lowest ratio measured on three prior runs (555.2, 741.8,
+/// 944.1 — spread 1.70× against the absolute second-count's 2.74×), so it catches an
+/// artifact with no solve behind it (ratio ≈ 1) and not a legitimate kernel improvement.
+const B1B_COST_RATIO_FLOOR: f64 = 100.0;
+
+/// B1b's second denominator: the drift the run actually INCURRED, not the bound it was
+/// entitled to. Gated at the same 0.10 fraction, inherited unchanged from B1.
+const B1B_UNINFORMATIVE_RATIO: f64 = 1.0e3;
+
+/// B1b's plant tolerance. Looser than B1's 1e-12 because `E_switch` sums a switch function
+/// over a band rather than a step over a tail, so its floating-point path is longer.
+/// Declared in the freeze rather than discovered afterwards.
+const B1B_PLANT_TOL: f64 = 1.0e-9;
+
+/// Which freeze's gates this run is under.
+#[derive(Clone, Copy, PartialEq)]
+enum Freeze {
+    /// LONGRANGE_PREREG.md: `E_hard` gated against `0.10·B_s`, price in wall clock seconds.
+    B1,
+    /// B1B_PREREG.md: `E_switch` gated against `0.10·B_s` AND `0.10·D_s`, price in work units.
+    B1b,
+}
+
+impl Freeze {
+    fn parse(s: &str) -> Option<Freeze> {
+        match s {
+            "b1" => Some(Freeze::B1),
+            "b1b" => Some(Freeze::B1b),
+            _ => None,
+        }
+    }
+    fn label(self) -> &'static str {
+        match self {
+            Freeze::B1 => "B1 (LONGRANGE_PREREG.md)",
+            Freeze::B1b => "B1b (B1B_PREREG.md)",
+        }
+    }
+}
 
 /// Staked curve targets, quoted from LONGRANGE_PREREG.md §5, themselves quoted from the
 /// committed arm logs. `(symbol pair, R_e, D_e, worst residual)`.
@@ -498,8 +552,15 @@ fn main() {
         .and_then(|s| s.parse().ok())
         .unwrap_or(400);
     let want_plant = args.iter().any(|a| a == "--plant");
+    let freeze = arg(&args, "--freeze=")
+        .and_then(Freeze::parse)
+        .expect(
+            "--freeze=b1|b1b is REQUIRED and has no default: the two freezes gate different \
+             estimators against different denominators under different prices, and a runner \
+             that picked one silently would make its own output unattributable",
+        );
 
-    println!("# longrange_audit — GANTT B1, freeze conformance/water_observatory/LONGRANGE_PREREG.md");
+    println!("# longrange_audit — GANTT B1, freeze {}", freeze.label());
     println!("# class = {}   arm dir = {}", class.label(), class.dir());
     println!("# traj root = {}", root.display());
     println!("# manifest  = {}", manifest_path.display());
@@ -554,6 +615,10 @@ fn main() {
     sim.height = BOX_H;
     let mut setup_s = 0.0f64;
     let mut g2_fail = 0usize;
+    // W1/W2 state (B1b). `curve_secs` keys the in-run cost ratio; `w1_fail` counts curves
+    // that could not show a solver certificate.
+    let mut w1_fail = 0usize;
+    let mut curve_secs: BTreeMap<String, f64> = BTreeMap::new();
     for (a, b) in class.curves() {
         let t = Instant::now();
         let pt = generate_pair_table(a, b, CURVE_KNOTS);
@@ -567,6 +632,30 @@ fn main() {
             b.symbol
         );
         let name = format!("{}-{}", a.symbol, b.symbol);
+        curve_secs.insert(name.clone(), secs);
+        // W1 — THE SOLVER CERTIFICATE (B1b). An analytic stub has no determinant space, no
+        // route, no exit and no residual; a real curve carries all four on its own meta.
+        // The three counts are PRINTED AND NOT GATED ON A VALUE: no prior record carries
+        // them for these curves, and a freeze cannot gate a value it would have to invent.
+        // Recording them here is what lets a successor gate them.
+        println!(
+            "# W1 {name}: route {:?}  exit {:?}  n_det {}  n_basis {}  solver_budget {}  \
+             worst_residual {:.3e}",
+            pt.meta.route,
+            pt.meta.exit,
+            pt.meta.n_det,
+            pt.meta.n_basis,
+            pt.meta.solver_budget,
+            pt.meta.worst_residual
+        );
+        let w1_ok = pt.meta.route == holon_chem::fci::SolverRoute::Determinant
+            && pt.meta.n_det >= 2
+            && pt.meta.n_basis >= 2
+            && pt.meta.solver_budget >= 1;
+        if freeze == Freeze::B1b && !w1_ok {
+            println!("# GATE W1 {name}: FAIL — no solver certificate (route/space/budget)");
+            w1_fail += 1;
+        }
         let (r_e, d_e) = match pt.meta.well {
             Some(w) => (w.r_e, w.d_e),
             None => (0.0, 0.0),
@@ -599,15 +688,56 @@ fn main() {
             g2_fail += 1;
         }
     }
-    // The price refusal (M-CHEAPER-THAN-ITS-PRICE): a result that arrives cheaper than its
-    // own banked cost model is not that result.
-    let price_ok = setup_s >= class.price_floor();
-    println!(
-        "# GATE PRICE {}: setup {setup_s:.1} s against floor {:.0} s — {}",
-        class.label(),
-        class.price_floor(),
-        if price_ok { "PASS" } else { "REFUSED (the curve was not generated)" }
-    );
+    // THE PRICE (M-CHEAPER-THAN-ITS-PRICE), which is the whole difference between the two
+    // freezes. B1 asks wall clock seconds; B1b asks work units.
+    let price_ok = match freeze {
+        Freeze::B1 => {
+            let ok = setup_s >= class.price_floor();
+            println!(
+                "# GATE PRICE {}: setup {setup_s:.1} s against floor {:.0} s — {}",
+                class.label(),
+                class.price_floor(),
+                if ok { "PASS" } else { "REFUSED (the curve was not generated)" }
+            );
+            ok
+        }
+        Freeze::B1b => {
+            // W2 — the expensive curve in units of the cheap one, both solved by the same
+            // kernel in the same process. Kernel speed, contention and placement all cancel.
+            let hh = curve_secs.get("H-H").copied().unwrap_or(0.0);
+            let oo = curve_secs.get("O-O").copied();
+            let w2_ok = match (oo, hh > 0.0) {
+                (Some(oo), true) => {
+                    let ratio = oo / hh;
+                    let ok = ratio >= B1B_COST_RATIO_FLOOR;
+                    println!(
+                        "# GATE W2 {}: t(O-O)/t(H-H) = {oo:.1}/{hh:.1} = {ratio:.1} against \
+                         floor {B1B_COST_RATIO_FLOOR:.0} — {}",
+                        class.label(),
+                        if ok { "PASS" } else { "REFUSED (no solve behind the curve)" }
+                    );
+                    ok
+                }
+                _ => {
+                    // A single-curve class has no ratio to take. The freeze says so rather
+                    // than manufacturing a floor that cannot discriminate.
+                    println!(
+                        "# GATE W2 {}: NOT APPLICABLE — one curve, and a ratio needs two; \
+                         W1 is this class's price evidence",
+                        class.label()
+                    );
+                    true
+                }
+            };
+            let ok = w2_ok && w1_fail == 0;
+            println!(
+                "# GATE W1 {}: {} ({w1_fail} curves without a solver certificate)",
+                class.label(),
+                if w1_fail == 0 { "PASS" } else { "FAIL" }
+            );
+            ok
+        }
+    };
     // NOT an abort. The freeze says the reading is "void with it", and VOID in this
     // campaign means NOT SCORED — it does not mean NOT COMPUTED. Aborting here would throw
     // away the VOID structure that M-BUDGET-LAUNDER exists to make visible, and would leave
@@ -702,7 +832,7 @@ fn main() {
 
     // --- plants (M-PLANT-OBS: re-derived here and pre-checked to fire).
     if want_plant {
-        run_plant(&head, &cur, &sim.bank);
+        run_plant(&head, &cur, &sim.bank, freeze);
     }
 
     // --- the sweep.
@@ -737,6 +867,11 @@ fn main() {
     let mut switch_arg = (0u64, 0u64);
     let mut seed_rows: Vec<String> = Vec::new();
     let mut g1_fail = 0usize;
+    // Split apart so branch (c) can be told from branch (b): a class that passes on the
+    // entitled bound and fails on the incurred drift is a different finding from one that
+    // fails both, and the freeze stakes them as different branches.
+    let mut g1a_fail = 0usize;
+    let mut g1b_fail = 0usize;
     let mut uninformative = 0usize;
     let mut worst_overall = (0.0f64, 0u64, 0u64); // (|E_hard(c*)|, seed, frame)
 
@@ -759,6 +894,9 @@ fn main() {
         let mut smax = 0.0f64;
         let mut sarg = 0u64;
         let mut sframes = 0usize;
+        // B1b's primary: the per-seed max of the estimator the engine would ACTUALLY apply.
+        let mut swmax = 0.0f64;
+        let mut swarg = 0u64;
         // Per-seed ladder maxima, so the radius at which THIS seed would cross its own
         // 0.10·B_s can be named. The freeze pre-commits this as branch (b)'s follow-up; it
         // is printed whatever the branch, labelled as beyond the staked verdict when the
@@ -807,6 +945,11 @@ fn main() {
                 smax = e;
                 sarg = f.index;
             }
+            let sw = row.switched[C_STAR].abs();
+            if sw > swmax {
+                swmax = sw;
+                swarg = f.index;
+            }
             if f.index as usize % stride == 0 {
                 println!(
                     "FRAME {} {seed:#018x} {} {:.6e} {:.6e} {:.6e} {:.6e} {:.6e} {:.6e}",
@@ -822,9 +965,33 @@ fn main() {
             }
         }
         let allow = NEGLIGIBLE_FRACTION * sb.bound;
-        let pass = smax < allow;
+        // B1: E_hard against 0.10·B_s. B1b: E_switch against 0.10·B_s AND 0.10·D_s, both
+        // required. The 0.10 fraction is the same number in both freezes, deliberately.
+        let allow_drift = NEGLIGIBLE_FRACTION * sb.peak;
+        let (g1a, g1b) = match freeze {
+            Freeze::B1 => (smax < allow, true),
+            Freeze::B1b => (swmax < allow, swmax < allow_drift),
+        };
+        let pass = g1a && g1b;
         if !pass {
             g1_fail += 1;
+        }
+        if !g1a {
+            g1a_fail += 1;
+        }
+        if !g1b {
+            g1b_fail += 1;
+        }
+        if freeze == Freeze::B1b {
+            println!(
+                "SEEDB1B {} {seed:#018x} {sframes} maxEswitch {swmax:.6e} at {swarg} \
+                 | G1a {swmax:.6e} vs {allow:.6e} {} | G1b {swmax:.6e} vs {allow_drift:.6e} {} \
+                 | {}",
+                class.label(),
+                if g1a { "PASS" } else { "FAIL" },
+                if g1b { "PASS" } else { "FAIL" },
+                if pass { "PASS" } else { "FAIL" }
+            );
         }
         let bd = sb.bound / sb.peak;
         if bd > UNINFORMATIVE_RATIO {
@@ -911,25 +1078,62 @@ fn main() {
         if price_void { "VOID" } else { "PASS" },
         class.price_floor()
     );
+    if freeze == Freeze::B1b {
+        println!(
+            "GATE G1a {} {} (seeds failing the ENTITLED BOUND 0.10*B_s: {g1a_fail})",
+            class.label(),
+            if g1a_fail == 0 { "PASS" } else { "FAIL" }
+        );
+        println!(
+            "GATE G1b {} {} (seeds failing the INCURRED DRIFT 0.10*D_s: {g1b_fail})",
+            class.label(),
+            if g1b_fail == 0 { "PASS" } else { "FAIL" }
+        );
+    }
     let verdict = if price_void {
-        "VOID — the freeze's price refusal fired: the curve setup finished under the floor"
+        match freeze {
+            Freeze::B1 => {
+                "VOID — the freeze's price refusal fired: the curve setup finished under the floor"
+            }
+            Freeze::B1b => "VOID — the work-unit price refused (W1 or W2)",
+        }
     } else if !(g2 && g4 && g5 && g6 && g7) {
         "VOID"
+    } else if freeze == Freeze::B1b && g1a_fail == 0 && g1b_fail > 0 {
+        // BRANCH (c) — the split. Small against what the integrator was ENTITLED to lose,
+        // not against what it ACTUALLY lost. Staked as NON-NEGLIGIBLE because the
+        // conjunction is what was staked, and never rounded to either side.
+        "NON-NEGLIGIBLE — branch (c) SPLIT: passes the entitled bound 0.10*B_s, FAILS the \
+         incurred drift 0.10*D_s. The discard is small against what the integrator was \
+         entitled to lose and NOT against what it actually lost. The B2 Ewald requirement \
+         FIRES for this class"
+    } else if freeze == Freeze::B1b && g1b_fail == 0 && g1a_fail > 0 {
+        "NON-NEGLIGIBLE — branch (c) SPLIT: passes the incurred drift 0.10*D_s, FAILS the \
+         entitled bound 0.10*B_s. The B2 Ewald requirement FIRES for this class"
     } else if !g1 {
-        "NON-NEGLIGIBLE — branch (b): the B2 Ewald requirement FIRES for this class"
+        "NON-NEGLIGIBLE — branch (b): FAILS BOTH denominators. The B2 Ewald requirement \
+         FIRES for this class"
     } else if uninformative > 0 {
-        "NEGLIGIBLE (uninformative bound) — branch (e)"
+        "NEGLIGIBLE (G1a uninformative) — branch (e): passes both, but B_s/D_s > 1e3 so the \
+         bound gate carried no information and the verdict rests on the incurred-drift gate"
     } else {
         "NEGLIGIBLE — branch (a)"
     };
     println!(
-        "VERDICT {} {verdict} | worst frame: seed {:#018x} frame {} at |E_hard(c*)| = {:.6e} Ha \
-         | LOWER BOUND: past the table's last knot the curve is an exponential while the true \
-         tail is a power law, so the discard is at least this and never at most this.",
+        "VERDICT {} {verdict} | worst frame: {} | LOWER BOUND: past the table's last knot the \
+         curve is an exponential while the true tail is a power law, so the discard is at \
+         least this and never at most this.",
         class.label(),
-        worst_overall.1,
-        worst_overall.2,
-        worst_overall.0
+        match freeze {
+            Freeze::B1 => format!(
+                "seed {:#018x} frame {} at |E_hard(c*)| = {:.6e} Ha",
+                worst_overall.1, worst_overall.2, worst_overall.0
+            ),
+            Freeze::B1b => format!(
+                "seed {:#018x} frame {} at |E_switch(c*)| = {switch_max:.6e} Ha",
+                switch_arg.0, switch_arg.1
+            ),
+        }
     );
 }
 
@@ -943,15 +1147,38 @@ fn main() {
 /// Both components are computed by a direct per-pair path and compared against the full
 /// estimator run twice — which is what makes this a check of the estimator's inclusion
 /// bookkeeping rather than an identity.
-fn run_plant(traj: &Trajectory, cur: &Curves, bank: &holon_render::bank::PairBank) {
+fn run_plant(
+    traj: &Trajectory,
+    cur: &Curves,
+    bank: &holon_render::bank::PairBank,
+    freeze: Freeze,
+) {
     let f = &traj.frames[0];
     let n = traj.header.n_atoms;
     let zidx: Vec<usize> = traj.header.z.iter().map(|z| cur.idx(*z)).collect();
     let boxwhd = [traj.header.box_w, traj.header.box_h, traj.header.box_d];
 
     let (a, b) = (zidx[0], zidx[1]);
-    let carrier = bank.table_slot(cur.slot[a][b]).u(PLANT_R);
-    println!("# PLANT P2 carrier: u_ab({PLANT_R}) = {carrier:.6e} Ha");
+    // The carrier is the estimator's OWN term at the plant separation, so it moves with the
+    // estimator: B1's is the bare table value, B1b's is what the switch actually removes
+    // there. A plant re-derived for the instrument is the whole of M-PLANT-OBS.
+    let u_plant = bank.table_slot(cur.slot[a][b]).u(PLANT_R);
+    let carrier = match freeze {
+        Freeze::B1 => u_plant,
+        Freeze::B1b => {
+            let r_in = LADDER[C_STAR] - PAIR_SWITCH_WIDTH;
+            let (sw, _, _) = switch_c2(PLANT_R, r_in, LADDER[C_STAR]);
+            (1.0 - sw) * u_plant
+        }
+    };
+    println!(
+        "# PLANT P2 carrier ({}): {} at {PLANT_R} bohr = {carrier:.6e} Ha",
+        freeze.label(),
+        match freeze {
+            Freeze::B1 => "u_ab",
+            Freeze::B1b => "(1-S2)*u_ab",
+        }
+    );
     assert!(
         carrier != 0.0,
         "the plant's carrier is zero in the sector the plant acts on (the beyond-cutoff \
@@ -973,16 +1200,34 @@ fn run_plant(traj: &Trajectory, cur: &Curves, bank: &holon_render::bank::PairBan
     }
 
     let planted = score_frame(&pos, &zidx, cur, bank, false, boxwhd);
-    let measured = planted.hard[C_STAR] - base.hard[C_STAR];
+    let measured = match freeze {
+        Freeze::B1 => planted.hard[C_STAR] - base.hard[C_STAR],
+        Freeze::B1b => planted.switched[C_STAR] - base.switched[C_STAR],
+    };
 
-    // The independent prediction: every pair the displaced atom is in, evaluated directly.
+    // The independent prediction: every pair the displaced atom is in, evaluated directly,
+    // through the SAME inclusion rule the gated estimator uses.
     let contrib = |p: &[[f64; 3]], i: usize, j: usize| -> f64 {
         let dd = [p[j][0] - p[i][0], p[j][1] - p[i][1], p[j][2] - p[i][2]];
         let r = (dd[0] * dd[0] + dd[1] * dd[1] + dd[2] * dd[2]).sqrt();
-        if r > LADDER[C_STAR] {
-            bank.table_slot(cur.slot[zidx[i]][zidx[j]]).u(r)
-        } else {
-            0.0
+        let t = bank.table_slot(cur.slot[zidx[i]][zidx[j]]);
+        match freeze {
+            Freeze::B1 => {
+                if r > LADDER[C_STAR] {
+                    t.u(r)
+                } else {
+                    0.0
+                }
+            }
+            Freeze::B1b => {
+                let r_in = LADDER[C_STAR] - PAIR_SWITCH_WIDTH;
+                if r > r_in {
+                    let (sw, _, _) = switch_c2(r, r_in, LADDER[C_STAR]);
+                    (1.0 - sw) * t.u(r)
+                } else {
+                    0.0
+                }
+            }
         }
     };
     let mut d_target = 0.0f64;
@@ -1010,8 +1255,16 @@ fn run_plant(traj: &Trajectory, cur: &Curves, bank: &holon_render::bank::PairBan
          | other pairs of the displaced atom {d_others:.9e} | predicted {predicted:.9e} \
          | measured {measured:.9e} | relative {rel:.3e}"
     );
+    let tol = match freeze {
+        Freeze::B1 => 1e-12,
+        Freeze::B1b => B1B_PLANT_TOL,
+    };
     println!(
-        "GATE G8 PLANT-P2 {} (relative {rel:.3e} against 1e-12)",
-        if rel <= 1e-12 { "PASS — the plant fired and the estimator's bookkeeping matches" } else { "FAIL" }
+        "GATE G8 PLANT-P2 {} (relative {rel:.3e} against {tol:.0e})",
+        if rel <= tol {
+            "PASS — the plant fired and the estimator's bookkeeping matches"
+        } else {
+            "FAIL"
+        }
     );
 }

@@ -1172,3 +1172,9 @@ body, html {
   line-height: 1.5;
 }
 .fence-meta b { color: var(--text-muted); font-weight: 600; }
+
+/* A fenced band's POSITIVE finding. Green, deliberately: a refusal is not the whole
+   result, and rung 2 measured hydrodynamics' premise real on the way to failing to
+   certify it. Showing only the fence would report half of what the lane found. */
+.lad-positive { color: var(--green); margin-top: 3px; }
+.lad-positive b { color: var(--green); }

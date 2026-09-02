@@ -493,13 +493,41 @@ const LADDER = [
     band: "fluid element",
     scale: "~µm+",
     lengthM: 1.0e-6,
-    runs: "no certified continuum chart exists",
+    runs: "the carrier is inadmissible BY MEASUREMENT, not by absence",
     state: "fenced",
-    owner: "GANTT node G, rung 2",
-    exit: "T5 phase certification, then T6 continuum charts. The grain law this would run "
-      + "on is already banked (Grain.lean + grain.rs): a coarse refresh is exactly free on "
-      + "closure boundaries, with a stated bound between them.",
+    owner: "GANTT node G, rung 2 — banked NOT CERTIFIED, branch (d) of its own freeze",
+    // A MEASURED FENCE, which is a better fence than the one it replaces: "no certified
+    // chart exists" is a state, and a quantified boundary is a fact. Rung 2 spent the
+    // compute and came back with numbers rather than a shrug.
+    //
+    // The scissor: coarse cells hold atoms but nothing crosses their faces, and the only
+    // grid that transports averages 0.5 atoms per cell. A 1 µm patch at the certified
+    // density is 5.95e6 atoms against a 12-atom certified scene — 4.96e5× — and a
+    // 16-atom trajectory-format cap besides.
+    //
+    // THE EXIT IS UNDETERMINED, AND THAT IS THE PRE-COMMITTED ANSWER. Two occupancy points
+    // with overlapping ranges, five orders from the band; the freeze's own rule forbids
+    // extrapolating from them and pre-committed that UNDETERMINED beats a fitted trend.
+    // Naming it as undetermined is what keeps this a fence rather than architecture: the
+    // successor ROUTES are named even though the distance is not.
+    exit: "UNDETERMINED by measurement, and pre-committed to be reported that way — two "
+      + "occupancy points with overlapping ranges five orders from the band, which the "
+      + "freeze forbids extrapolating. Named successor routes: a ≥400-atom carrier behind "
+      + "a trajectory-format v2 (33× this scene, past the 16-atom cap), or node LG's "
+      + "lattice tier standalone — never composed, since a tier certified on its own "
+      + "dynamics is not the certified coarse truth of this water.",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:378",
+    // The measurement that says the fence is real rather than a gap in the schedule.
+    measuredBy: "conformance/water_observatory/RUNG2_RESULTS.md:214",
+    // AND THE POSITIVE HALF, because a fence is not the whole finding. Hydrodynamics'
+    // premise — that momentum is spatially coherent over a cell — was MEASURED REAL at the
+    // 5.8 bohr scale (+0.598 median, 7/7 clearing the bar). What is out of reach is the
+    // certificate, not the physics. A page that showed only the refusal would be reporting
+    // half of what the lane found.
+    positive: "the momentum field IS spatially coherent at 5.8 bohr — +0.598 over the "
+      + "scrambled control, 7/7 seeds. Hydrodynamics' premise measures real here; it is "
+      + "the CERTIFICATE that is out of reach, not the phenomenon.",
+    positiveCite: "conformance/water_observatory/RUNG2_RESULTS.md:47",
   },
   {
     band: "the cube",
@@ -1449,13 +1477,18 @@ function renderStatics() {
           + `<span class="lad-detail"><b>certificate</b> ${b.certifiedBy}</span>`
           + `<span class="lad-detail">${st.text}</span>`
         : `<span class="lad-fenced">FENCED</span>`
-          + `<span class="lad-detail"><b>owner</b> ${b.owner} · <b>exit</b> ${b.exit}</span>`;
+          + `<span class="lad-detail"><b>owner</b> ${b.owner} · <b>exit</b> ${b.exit}</span>`
+          + (b.positive
+            ? `<span class="lad-detail lad-positive"><b>measured anyway</b> ${b.positive}</span>`
+            : "");
       return `<div class="lad ${b.state}"><div class="lad-head">`
         + `<b>${b.band}</b><span>${b.scale}</span></div>`
         + `<div class="lad-runs">${b.runs}</div>`
         + `<div class="lad-status">${status}</div>`
         + `<div class="lad-status"><span class="lad-acuity" id="lad-acuity-${i}">—</span></div>`
-        + `<code>${b.cite}${b.certificate ? " · " + b.certificate : ""}</code></div>`;
+        + `<code>${b.cite}${b.certificate ? " · " + b.certificate : ""}`
+        + `${b.measuredBy ? " · " + b.measuredBy : ""}`
+        + `${b.positiveCite ? " · " + b.positiveCite : ""}</code></div>`;
     }).join("");
     // The slots were just created, so re-bind before anything writes to them.
     bindUI();

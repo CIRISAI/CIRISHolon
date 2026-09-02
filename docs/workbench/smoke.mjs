@@ -698,6 +698,8 @@ if (ladderBlock) {
     state: field(block, "state"),
     cite: field(block, "cite"),
     certificate: field(block, "certificate"),
+    measuredBy: field(block, "measuredBy"),
+    positiveCite: field(block, "positiveCite"),
   }));
   want(bands.length === 4, `the ladder carries four bands (found ${bands.length})`,
     `parsed: ${bands.map((b) => b.band).join(", ")}`);
@@ -788,6 +790,60 @@ if (ladderBlock) {
         `FENCED band "${band}" does not already hold a resolving certificate`,
         "this band's certificate RESOLVES while it is still fenced — the rung has landed "
         + "and the flip is owed: set state to \"live\" and un-fence the panel");
+    }
+  }
+
+  // ---- A MEASURED FENCE MUST BE CHECKABLE ------------------------------------
+  //
+  // Rung 2 came back NOT CERTIFIED with numbers rather than a shrug, and the fluid band's
+  // fence now carries them. Numbers on a page are a liability unless they resolve: these
+  // are cited to RUNG2_RESULTS.md and read out of it here, exactly like the RECORD block.
+  // A fence that quotes a measurement nobody checks is a longer sentence, not a better one.
+  for (const { band, measuredBy, positiveCite } of bands) {
+    for (const [label, cite] of [["measured exit", measuredBy], ["positive finding", positiveCite]]) {
+      if (!cite) continue;
+      const [relPath, lineNo] = cite.split(":");
+      try {
+        const text = readFileSync(join(repoRoot, relPath), "utf8");
+        const line = text.split("\n")[Number(lineNo) - 1] ?? "";
+        want(line.trim().length > 0,
+          `band "${band}" ${label} cites a real line at ${cite}`,
+          `line ${lineNo} of ${relPath} is empty`);
+      } catch {
+        no(`band "${band}" ${label} cites ${relPath}, which does not exist`);
+      }
+    }
+  }
+
+  // The two figures the fluid band's fence rests on, pinned against their artifact. If
+  // rung 2 re-runs and these move, the page must move with them rather than keep quoting
+  // a superseded measurement — which is the failure the RECORD gate exists to prevent,
+  // arriving in a fence instead of a figure.
+  const r2 = (() => {
+    try { return readFileSync(join(repoRoot, "conformance/water_observatory/RUNG2_RESULTS.md"), "utf8"); }
+    catch { return null; }
+  })();
+  want(r2 !== null, "RUNG2_RESULTS.md is in the tree");
+  if (r2) {
+    // REQUIRED, not conditional — and the first version of this was conditional, which
+    // made it evadable by the exact edit it exists to catch. It read "IF the page quotes
+    // 5.95e6 THEN the artifact must have it", so changing the page's figure to 9.99e9
+    // simply made the check not apply, and the plant sailed through. Both sides are
+    // demanded now: the page MUST carry the figure and the artifact MUST still contain it,
+    // so the check fails whichever of the two moves without the other.
+    const fluid = bands.find((b) => b.band === "fluid element");
+    want(!!fluid, "the fluid-element band is present to check");
+    for (const fig of ["5.95e6", "+0.598"]) {
+      const onPage = !!fluid && fluid.block.includes(fig);
+      const inArtifact = r2.includes(fig.replace("+", ""));
+      want(onPage && inArtifact,
+        `the fluid band quotes ${fig} and RUNG2_RESULTS.md still carries it`,
+        onPage
+          ? `the page quotes ${fig} but the artifact no longer contains it — rung 2 has `
+            + "re-run and the fence is quoting a superseded measurement"
+          : `the page no longer quotes ${fig}. If rung 2 re-measured, move the figure here `
+            + "too; if it was simply edited away, the fence has lost the number that made "
+            + "it a measured fence rather than a state");
     }
   }
 

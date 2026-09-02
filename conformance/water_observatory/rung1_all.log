@@ -1,0 +1,366 @@
+# RUNG 1 — THE H-BOND NETWORK TIER
+# stakes (RUNG1_PREREG.md, frozen before this instrument existed):
+#   window          W = 834 fs, beta = 0.02, breach run <= 8.4 fs   [INHERITED from the census]
+#   moving carrier  rms >= 0.1 bohr, separation excursion >= 0.05 bohr   [INHERITED]
+#   work count      >= 200 informative transitions   [INHERITED]
+#   dynamism        >= 200 changes, >= 4 distinct readings   [RUNG-1]
+#   closure budget  delta* = 0.01   [RUNG-1, a declared judgment from holon.rs CLOSURE_DEFECT_MAX]
+#   non-expansion   D(2nd half) <= 1.05 x D(1st half)   [INHERITED, OBJECT.md rule 1]
+#   contamination   <= 0.2   [RUNG-1]
+#   control floor   p_data <= max(p_null_p95, 0.05), 200 surrogates   [AMENDMENT-1]
+# the scale fence: these scenes are 34.6 x 20.8 bohr = 1.83 x 1.10 nm in TWO
+# dimensions with four oxygens. The band is nominally ~10 nm. No verdict below
+# licenses a claim at that scale (RUNG1_PREREG.md §7.2).
+
+## fenced/seed_0x0000000053415421.traj
+seed 0x0000000053415421  12 atoms (4 O)  20000 frames  16689.5 fs  complete=true
+G-N3 contamination 0.9652 = 638/661 H-bond records on a covalently bonded O-O pair  [VOID(chart does not contain its variable)]
+     frames carrying >= 1 INTER-molecular H-bond: 0 of 20000 (0.0000)
+     criterion decomposed: O-O within 6.614 bohr in 19938 frames -> plus O-H within 4.6298 bohr in 19795 -> plus angle < 30° in the 661 records above
+     oxygen-bearing molecules per frame: 0:0  1:1878  2:14530  3:3446  4:146  (90.61% of frames hold >= 2)
+     DISCRIMINATOR (diagnostic, not a gate): under a RELAXED donor rule (any O within 2.5 bohr of the H, not only the nearest) the same three clauses fire 2017 times against 661
+     planarity: dims=2 and z holds its placement value EXACTLY in all 20000 frames
+
+  chart                distinct  changes informat.   defect  1st/2nd  nonexp         F    F-wit  verdict
+  C1H/HB-FULL                 3      210     19999   0.0105 0.000/0.021  BREACH    0.0331        2  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 210 (>= 200), distinct 3 (>= 4)
+        Leg F witnesses (frames): [(1474, 18895)]
+  C1/HB-ADJ                   3      210     19999   0.0105 0.000/0.021  BREACH    0.0331        2  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 210 (>= 200), distinct 3 (>= 4)
+        Leg F witnesses (frames): [(1474, 18895)]
+  C2/HB-PART                  2      183     19999   0.0092 0.000/0.018  BREACH    0.0331        1  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 183 (>= 200), distinct 2 (>= 4)
+        Leg F witnesses (frames): [(1474, 18895)]
+  C3/HB-COUNT                 2      183     19999   0.0092 0.000/0.018  BREACH    0.0331        1  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 183 (>= 200), distinct 2 (>= 4)
+        Leg F witnesses (frames): [(1474, 18895)]
+  C4/MOL-NET-ID              31     2465     19997   0.1128 0.140/0.086      ok    0.0000        0  NOT CLOSED (G-N4: 0.1128 > 0.01)
+  C5/MOL-NET-FORMULA         26     2454     19998   0.1165 0.141/0.092      ok    0.0000        0  NOT CLOSED (G-N4: 0.1165 > 0.01)
+  C6/MOL-PART                31     2465     19997   0.1128 0.140/0.086      ok    0.0000        0  NOT CLOSED (G-N4: 0.1128 > 0.01)
+
+  struct   size  present longest fs  of run      rms  sep var   p_data   p_null      bar maxocc  verdict
+  0x0005    2      661       35.9    3.3%    0.051    0.123        -        -        -     -  TRANSIENT
+
+## fenced/seed_0x0000000053415422.traj
+seed 0x0000000053415422  12 atoms (4 O)  20000 frames  16702.8 fs  complete=true
+G-N3 contamination 0.0000 = 0/0 H-bond records on a covalently bonded O-O pair  [VOID(empty chart)]
+     frames carrying >= 1 INTER-molecular H-bond: 0 of 20000 (0.0000)
+     criterion decomposed: O-O within 6.614 bohr in 19990 frames -> plus O-H within 4.6298 bohr in 19815 -> plus angle < 30° in the 0 records above
+     oxygen-bearing molecules per frame: 0:0  1:979  2:13128  3:5786  4:107  (95.11% of frames hold >= 2)
+     DISCRIMINATOR (diagnostic, not a gate): under a RELAXED donor rule (any O within 2.5 bohr of the H, not only the nearest) the same three clauses fire 0 times against 0
+     planarity: dims=2 and z holds its placement value EXACTLY in all 20000 frames
+
+  chart                distinct  changes informat.   defect  1st/2nd  nonexp         F    F-wit  verdict
+  C1H/HB-FULL                 1        0     19999   0.0000 0.000/0.000      ok    0.0000        0  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 0 (>= 200), distinct 1 (>= 4)
+  C1/HB-ADJ                   1        0     19999   0.0000 0.000/0.000      ok    0.0000        0  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 0 (>= 200), distinct 1 (>= 4)
+  C2/HB-PART                  1        0     19999   0.0000 0.000/0.000      ok    0.0000        0  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 0 (>= 200), distinct 1 (>= 4)
+  C3/HB-COUNT                 1        0     19999   0.0000 0.000/0.000      ok    0.0000        0  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 0 (>= 200), distinct 1 (>= 4)
+  C4/MOL-NET-ID              44     3013     19994   0.1328 0.155/0.111      ok    0.0000        0  NOT CLOSED (G-N4: 0.1328 > 0.01)
+  C5/MOL-NET-FORMULA         39     3013     19994   0.1344 0.156/0.113      ok    0.0000        0  NOT CLOSED (G-N4: 0.1344 > 0.01)
+  C6/MOL-PART                44     3013     19994   0.1328 0.155/0.111      ok    0.0000        0  NOT CLOSED (G-N4: 0.1328 > 0.01)
+
+  Leg A-N: no H-bond component of two or more oxygens EVER forms.
+
+## fenced/seed_0x0000000053415423.traj
+seed 0x0000000053415423  12 atoms (4 O)  20000 frames  16691.1 fs  complete=true
+G-N3 contamination 0.2143 = 3/14 H-bond records on a covalently bonded O-O pair  [VOID(chart does not contain its variable)]
+     frames carrying >= 1 INTER-molecular H-bond: 0 of 20000 (0.0000)
+     criterion decomposed: O-O within 6.614 bohr in 19864 frames -> plus O-H within 4.6298 bohr in 19183 -> plus angle < 30° in the 14 records above
+     oxygen-bearing molecules per frame: 0:0  1:47  2:17253  3:2455  4:245  (99.77% of frames hold >= 2)
+     DISCRIMINATOR (diagnostic, not a gate): under a RELAXED donor rule (any O within 2.5 bohr of the H, not only the nearest) the same three clauses fire 43 times against 14
+     planarity: dims=2 and z holds its placement value EXACTLY in all 20000 frames
+
+  chart                distinct  changes informat.   defect  1st/2nd  nonexp         F    F-wit  verdict
+  C1H/HB-FULL                 3        5     19999   0.0003 0.001/0.000      ok    0.0007        5  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 5 (>= 200), distinct 3 (>= 4)
+        Leg F witnesses (frames): [(2246, 3265), (3039, 3264), (3269, 3293)]
+  C1/HB-ADJ                   3        5     19999   0.0003 0.001/0.000      ok    0.0007        5  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 5 (>= 200), distinct 3 (>= 4)
+        Leg F witnesses (frames): [(2246, 3265), (3269, 3293), (3039, 3264)]
+  C2/HB-PART                  2        2     19999   0.0001 0.000/0.000      ok    0.0007        3  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 2 (>= 200), distinct 2 (>= 4)
+        Leg F witnesses (frames): [(3039, 3264), (2246, 3265), (3269, 3293)]
+  C3/HB-COUNT                 2        2     19999   0.0001 0.000/0.000      ok    0.0007        3  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 2 (>= 200), distinct 2 (>= 4)
+        Leg F witnesses (frames): [(2246, 3265), (3269, 3293), (3039, 3264)]
+  C4/MOL-NET-ID              77     2764     19993   0.1339 0.173/0.095      ok    0.0000        0  NOT CLOSED (G-N4: 0.1339 > 0.01)
+  C5/MOL-NET-FORMULA         54     2761     19995   0.1351 0.175/0.095      ok    0.0000        0  NOT CLOSED (G-N4: 0.1351 > 0.01)
+  C6/MOL-PART                77     2764     19993   0.1339 0.173/0.095      ok    0.0000        0  NOT CLOSED (G-N4: 0.1339 > 0.01)
+
+  struct   size  present longest fs  of run      rms  sep var   p_data   p_null      bar maxocc  verdict
+  0x000c    2       14       10.8    0.1%    0.178    1.086        -        -        -     -  TRANSIENT
+
+## fenced/seed_0x0000000053415424.traj
+seed 0x0000000053415424  12 atoms (4 O)  20000 frames  16721.2 fs  complete=true
+G-N3 contamination 0.2102 = 37/176 H-bond records on a covalently bonded O-O pair  [VOID(chart does not contain its variable)]
+     frames carrying >= 1 INTER-molecular H-bond: 13 of 20000 (0.0006)
+     criterion decomposed: O-O within 6.614 bohr in 19956 frames -> plus O-H within 4.6298 bohr in 19852 -> plus angle < 30° in the 176 records above
+     oxygen-bearing molecules per frame: 0:0  1:41  2:16953  3:2881  4:125  (99.80% of frames hold >= 2)
+     DISCRIMINATOR (diagnostic, not a gate): under a RELAXED donor rule (any O within 2.5 bohr of the H, not only the nearest) the same three clauses fire 254 times against 176
+     planarity: dims=2 and z holds its placement value EXACTLY in all 20000 frames
+
+  chart                distinct  changes informat.   defect  1st/2nd  nonexp         F    F-wit  verdict
+  C1H/HB-FULL                 5       25     19999   0.0013 0.003/0.000      ok    0.0085        7  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 25 (>= 200), distinct 5 (>= 4)
+        Leg F witnesses (frames): [(149, 158), (234, 3898), (66, 166), (405, 3890)]
+  C1/HB-ADJ                   5       25     19999   0.0013 0.003/0.000      ok    0.0085        7  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 25 (>= 200), distinct 5 (>= 4)
+        Leg F witnesses (frames): [(405, 3890), (66, 166), (149, 158), (234, 3898)]
+  C2/HB-PART                  3        8     19999   0.0004 0.001/0.000      ok    0.0082        4  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 8 (>= 200), distinct 3 (>= 4)
+        Leg F witnesses (frames): [(405, 3890), (149, 158), (66, 166), (234, 3898)]
+  C3/HB-COUNT                 2        8     19999   0.0004 0.001/0.000      ok    0.0082        4  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 8 (>= 200), distinct 2 (>= 4)
+        Leg F witnesses (frames): [(149, 158), (405, 3890), (234, 3898), (66, 166)]
+  C4/MOL-NET-ID              59     3050     19985   0.1453 0.177/0.113      ok    0.0004        1  NOT CLOSED (G-N4: 0.1453 > 0.01)
+        Leg F witnesses (frames): [(234, 3898)]
+  C5/MOL-NET-FORMULA         35     3032     19992   0.1449 0.177/0.113      ok    0.0004        1  NOT CLOSED (G-N4: 0.1449 > 0.01)
+        Leg F witnesses (frames): [(234, 3898)]
+  C6/MOL-PART                58     3050     19985   0.1453 0.177/0.113      ok    0.0000        0  NOT CLOSED (G-N4: 0.1453 > 0.01)
+
+  struct   size  present longest fs  of run      rms  sep var   p_data   p_null      bar maxocc  verdict
+  0x000c    2      140       48.4    0.7%    0.236    1.366        -        -        -     -  TRANSIENT
+  0x0003    2       36       29.2    0.2%    0.401    2.346        -        -        -     -  TRANSIENT
+
+## fenced/seed_0x0000000053415425.traj
+seed 0x0000000053415425  12 atoms (4 O)  20000 frames  17516.6 fs  complete=true
+G-N3 contamination 0.0980 = 10/102 H-bond records on a covalently bonded O-O pair  [ok]
+     frames carrying >= 1 INTER-molecular H-bond: 0 of 20000 (0.0000)
+     criterion decomposed: O-O within 6.614 bohr in 19923 frames -> plus O-H within 4.6298 bohr in 18949 -> plus angle < 30° in the 102 records above
+     oxygen-bearing molecules per frame: 0:0  1:1823  2:14566  3:3515  4:96  (90.89% of frames hold >= 2)
+     DISCRIMINATOR (diagnostic, not a gate): under a RELAXED donor rule (any O within 2.5 bohr of the H, not only the nearest) the same three clauses fire 134 times against 102
+     planarity: dims=2 and z holds its placement value EXACTLY in all 20000 frames
+
+  chart                distinct  changes informat.   defect  1st/2nd  nonexp         F    F-wit  verdict
+  C1H/HB-FULL                 5       10     19999   0.0004 0.001/0.000      ok    0.0045        5  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 10 (>= 200), distinct 5 (>= 4)
+        Leg F witnesses (frames): [(3050, 4078), (3335, 4120)]
+  C1/HB-ADJ                   5       10     19999   0.0004 0.001/0.000      ok    0.0045        5  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 10 (>= 200), distinct 5 (>= 4)
+        Leg F witnesses (frames): [(3335, 4120), (3050, 4078)]
+  C2/HB-PART                  4        8     19999   0.0004 0.001/0.000      ok    0.0045        4  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 8 (>= 200), distinct 4 (>= 4)
+        Leg F witnesses (frames): [(3335, 4120), (3050, 4078)]
+  C3/HB-COUNT                 3        8     19999   0.0004 0.001/0.000      ok    0.0045        3  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 8 (>= 200), distinct 3 (>= 4)
+        Leg F witnesses (frames): [(3335, 4120), (3050, 4078)]
+  C4/MOL-NET-ID              65     3215     19985   0.1410 0.156/0.126      ok    0.0000        0  NOT CLOSED (G-N4: 0.1410 > 0.01)
+  C5/MOL-NET-FORMULA         52     3212     19991   0.1423 0.157/0.127      ok    0.0000        0  NOT CLOSED (G-N4: 0.1423 > 0.01)
+  C6/MOL-PART                65     3215     19985   0.1410 0.156/0.126      ok    0.0000        0  NOT CLOSED (G-N4: 0.1410 > 0.01)
+
+  struct   size  present longest fs  of run      rms  sep var   p_data   p_null      bar maxocc  verdict
+  0x0005    2       72       57.5    0.4%    0.327    2.287        -        -        -     -  TRANSIENT
+  0x0007    3       13       10.0    0.1%    0.117    0.830        -        -        -     -  TRANSIENT
+  0x0003    2        4        0.8    0.0%    0.012    0.023        -        -        -     -  TRANSIENT
+
+## fenced/seed_0x0000000053415426.traj
+seed 0x0000000053415426  12 atoms (4 O)  20000 frames  16695.3 fs  complete=true
+G-N3 contamination 0.3983 = 47/118 H-bond records on a covalently bonded O-O pair  [VOID(chart does not contain its variable)]
+     frames carrying >= 1 INTER-molecular H-bond: 18 of 20000 (0.0009)
+     criterion decomposed: O-O within 6.614 bohr in 19917 frames -> plus O-H within 4.6298 bohr in 19863 -> plus angle < 30° in the 118 records above
+     oxygen-bearing molecules per frame: 0:0  1:15213  2:4430  3:310  4:47  (23.93% of frames hold >= 2)
+     DISCRIMINATOR (diagnostic, not a gate): under a RELAXED donor rule (any O within 2.5 bohr of the H, not only the nearest) the same three clauses fire 204 times against 118
+     planarity: dims=2 and z holds its placement value EXACTLY in all 20000 frames
+
+  chart                distinct  changes informat.   defect  1st/2nd  nonexp         F    F-wit  verdict
+  C1H/HB-FULL                 6       43     19999   0.0022 0.004/0.000      ok    0.0047       15  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 43 (>= 200), distinct 6 (>= 4)
+        Leg F witnesses (frames): [(80, 83), (139, 140), (498, 5100), (126, 131)]
+  C1/HB-ADJ                   6       43     19999   0.0022 0.004/0.000      ok    0.0047       15  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 43 (>= 200), distinct 6 (>= 4)
+        Leg F witnesses (frames): [(80, 83), (74, 94), (47, 100), (138, 158)]
+  C2/HB-PART                  4       30     19999   0.0015 0.003/0.000      ok    0.0045       10  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 30 (>= 200), distinct 4 (>= 4)
+        Leg F witnesses (frames): [(138, 158), (80, 83), (111, 125), (498, 5100)]
+  C3/HB-COUNT                 3       30     19999   0.0015 0.003/0.000      ok    0.0045        9  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 30 (>= 200), distinct 3 (>= 4)
+        Leg F witnesses (frames): [(111, 125), (126, 131), (498, 5100), (74, 94)]
+  C4/MOL-NET-ID              42     1795     19996   0.0817 0.101/0.062      ok    0.0005        2  NOT CLOSED (G-N4: 0.0817 > 0.01)
+        Leg F witnesses (frames): [(80, 83), (47, 100)]
+  C5/MOL-NET-FORMULA         29     1781     19996   0.0812 0.101/0.061      ok    0.0005        2  NOT CLOSED (G-N4: 0.0812 > 0.01)
+        Leg F witnesses (frames): [(47, 100), (80, 83)]
+  C6/MOL-PART                40     1792     19996   0.0815 0.101/0.062      ok    0.0000        0  NOT CLOSED (G-N4: 0.0815 > 0.01)
+
+  struct   size  present longest fs  of run      rms  sep var   p_data   p_null      bar maxocc  verdict
+  0x000c    2       52       29.2    0.3%    0.257    1.764        -        -        -     -  TRANSIENT
+  0x0009    2       60       15.8    0.3%    0.071    0.157        -        -        -     -  TRANSIENT
+  0x000d    3        3        1.7    0.0%    0.030    0.171        -        -        -     -  TRANSIENT
+
+## fenced/seed_0x0000000053415427.traj
+seed 0x0000000053415427  12 atoms (4 O)  20000 frames  16710.3 fs  complete=true
+G-N3 contamination 0.0882 = 6/68 H-bond records on a covalently bonded O-O pair  [ok]
+     frames carrying >= 1 INTER-molecular H-bond: 6 of 20000 (0.0003)
+     criterion decomposed: O-O within 6.614 bohr in 18722 frames -> plus O-H within 4.6298 bohr in 18722 -> plus angle < 30° in the 68 records above
+     oxygen-bearing molecules per frame: 0:0  1:13258  2:5804  3:516  4:422  (33.71% of frames hold >= 2)
+     DISCRIMINATOR (diagnostic, not a gate): under a RELAXED donor rule (any O within 2.5 bohr of the H, not only the nearest) the same three clauses fire 91 times against 68
+     planarity: dims=2 and z holds its placement value EXACTLY in all 20000 frames
+
+  chart                distinct  changes informat.   defect  1st/2nd  nonexp         F    F-wit  verdict
+  C1H/HB-FULL                 3       10     19999   0.0005 0.001/0.000      ok    0.0034        7  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 10 (>= 200), distinct 3 (>= 4)
+        Leg F witnesses (frames): [(1295, 1348), (101, 1278), (127, 1279), (1324, 2016)]
+  C1/HB-ADJ                   3       10     19999   0.0005 0.001/0.000      ok    0.0034        7  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 10 (>= 200), distinct 3 (>= 4)
+        Leg F witnesses (frames): [(101, 1278), (1324, 2016), (127, 1279), (1295, 1348)]
+  C2/HB-PART                  2        4     19999   0.0002 0.000/0.000      ok    0.0034        5  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 4 (>= 200), distinct 2 (>= 4)
+        Leg F witnesses (frames): [(1295, 1348), (1324, 2016), (101, 1278), (286, 1280)]
+  C3/HB-COUNT                 2        4     19999   0.0002 0.000/0.000      ok    0.0034        5  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 4 (>= 200), distinct 2 (>= 4)
+        Leg F witnesses (frames): [(286, 1280), (1324, 2016), (1295, 1348), (101, 1278)]
+  C4/MOL-NET-ID              70     3010     19985   0.1460 0.225/0.067      ok    0.0003        1  NOT CLOSED (G-N4: 0.1460 > 0.01)
+        Leg F witnesses (frames): [(101, 1278)]
+  C5/MOL-NET-FORMULA         49     2971     19987   0.1444 0.222/0.067      ok    0.0003        1  NOT CLOSED (G-N4: 0.1444 > 0.01)
+        Leg F witnesses (frames): [(101, 1278)]
+  C6/MOL-PART                69     3009     19985   0.1460 0.225/0.067      ok    0.0000        0  NOT CLOSED (G-N4: 0.1460 > 0.01)
+
+  struct   size  present longest fs  of run      rms  sep var   p_data   p_null      bar maxocc  verdict
+  0x000c    2       68       53.4    0.3%    0.513    3.481        -        -        -     -  TRANSIENT
+
+## fenced/seed_0x0000000053415428.traj
+seed 0x0000000053415428  12 atoms (4 O)  20000 frames  16697.0 fs  complete=true
+G-N3 contamination 0.8843 = 2376/2687 H-bond records on a covalently bonded O-O pair  [VOID(chart does not contain its variable)]
+     frames carrying >= 1 INTER-molecular H-bond: 7 of 20000 (0.0003)
+     criterion decomposed: O-O within 6.614 bohr in 19896 frames -> plus O-H within 4.6298 bohr in 19531 -> plus angle < 30° in the 2687 records above
+     oxygen-bearing molecules per frame: 0:0  1:3147  2:14624  3:2063  4:166  (84.27% of frames hold >= 2)
+     DISCRIMINATOR (diagnostic, not a gate): under a RELAXED donor rule (any O within 2.5 bohr of the H, not only the nearest) the same three clauses fire 5377 times against 2687
+     planarity: dims=2 and z holds its placement value EXACTLY in all 20000 frames
+
+  chart                distinct  changes informat.   defect  1st/2nd  nonexp         F    F-wit  verdict
+  C1H/HB-FULL                10      532     19998   0.0266 0.005/0.048  BREACH    0.0852       20  NOT CLOSED (G-N4: 0.0266 > 0.01)
+        Leg F witnesses (frames): [(5097, 11918), (11754, 11920), (17602, 17610), (199, 3039)]
+  C1/HB-ADJ                  10      532     19998   0.0266 0.005/0.048  BREACH    0.0852       20  NOT CLOSED (G-N4: 0.0266 > 0.01)
+        Leg F witnesses (frames): [(4995, 10049), (17602, 17610), (17935, 18846), (352, 3025)]
+  C2/HB-PART                  6      125     19999   0.0063 0.005/0.008  BREACH    0.0448       12  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 125 (>= 200), distinct 6 (>= 4)
+        Leg F witnesses (frames): [(5097, 11918), (352, 3025), (4995, 10049), (11754, 11920)]
+  C3/HB-COUNT                 3      120     19999   0.0059 0.004/0.008  BREACH    0.0345        7  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 120 (>= 200), distinct 3 (>= 4)
+        Leg F witnesses (frames): [(352, 3025), (4995, 10049), (199, 3039), (11754, 11920)]
+  C4/MOL-NET-ID              77     2711     19984   0.1287 0.140/0.118      ok    0.0004        3  NOT CLOSED (G-N4: 0.1287 > 0.01)
+        Leg F witnesses (frames): [(5097, 11918), (199, 3039)]
+  C5/MOL-NET-FORMULA         58     2699     19987   0.1297 0.140/0.119      ok    0.0004        2  NOT CLOSED (G-N4: 0.1297 > 0.01)
+        Leg F witnesses (frames): [(5097, 11918), (199, 3039)]
+  C6/MOL-PART                74     2711     19985   0.1287 0.140/0.118      ok    0.0000        0  NOT CLOSED (G-N4: 0.1287 > 0.01)
+
+  struct   size  present longest fs  of run      rms  sep var   p_data   p_null      bar maxocc  verdict
+  0x0006    2     2399      371.0   12.0%    0.069    0.468        -        -        -     -  VOID(frozen carrier)
+        cause: G-N10 moving carrier, rms 0.0691 (>= 0.1), sep var 0.4681 (>= 0.05)
+  0x0009    2      210      126.7    1.1%    0.142    0.198        -        -        -     -  TRANSIENT
+  0x0005    2       37       10.8    0.2%    0.113    0.635        -        -        -     -  TRANSIENT
+  0x0003    2       23        4.2    0.1%    0.038    0.222        -        -        -     -  TRANSIENT
+  0x0007    3        9        1.7    0.0%    0.037    0.211        -        -        -     -  TRANSIENT
+
+## de4_off/seed_0x0000000053415422.traj
+seed 0x0000000053415422  12 atoms (4 O)  20000 frames  16702.8 fs  complete=true
+G-N3 contamination 0.1562 = 25/160 H-bond records on a covalently bonded O-O pair  [ok]
+     frames carrying >= 1 INTER-molecular H-bond: 1 of 20000 (0.0001)
+     criterion decomposed: O-O within 6.614 bohr in 19990 frames -> plus O-H within 4.6298 bohr in 19815 -> plus angle < 30° in the 160 records above
+     oxygen-bearing molecules per frame: 0:0  1:780  2:9512  3:9601  4:107  (96.10% of frames hold >= 2)
+     DISCRIMINATOR (diagnostic, not a gate): under a RELAXED donor rule (any O within 2.5 bohr of the H, not only the nearest) the same three clauses fire 187 times against 160
+     planarity: dims=2 and z holds its placement value EXACTLY in all 20000 frames
+
+  chart                distinct  changes informat.   defect  1st/2nd  nonexp         F    F-wit  verdict
+  C1H/HB-FULL                 5       17     19999   0.0009 0.000/0.002  BREACH    0.0075        7  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 17 (>= 200), distinct 5 (>= 4)
+        Leg F witnesses (frames): [(3605, 11482), (4006, 11478), (11454, 11484), (3426, 11477)]
+  C1/HB-ADJ                   5       17     19999   0.0009 0.000/0.002  BREACH    0.0075        7  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 17 (>= 200), distinct 5 (>= 4)
+        Leg F witnesses (frames): [(3426, 11477), (11454, 11484), (3605, 11482), (4006, 11478)]
+  C2/HB-PART                  4       16     19999   0.0008 0.000/0.002  BREACH    0.0075        6  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 16 (>= 200), distinct 4 (>= 4)
+        Leg F witnesses (frames): [(11454, 11484), (4006, 11478), (3605, 11482), (3426, 11477)]
+  C3/HB-COUNT                 3       16     19999   0.0008 0.000/0.002  BREACH    0.0075        5  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 16 (>= 200), distinct 3 (>= 4)
+        Leg F witnesses (frames): [(3426, 11477), (3605, 11482), (4006, 11478), (11454, 11484)]
+  C4/MOL-NET-ID              44     3119     19997   0.1365 0.186/0.087      ok    0.0001        1  NOT CLOSED (G-N4: 0.1365 > 0.01)
+        Leg F witnesses (frames): [(3426, 11477)]
+  C5/MOL-NET-FORMULA         38     3119     19997   0.1387 0.186/0.092      ok    0.0001        1  NOT CLOSED (G-N4: 0.1387 > 0.01)
+        Leg F witnesses (frames): [(3426, 11477)]
+  C6/MOL-PART                43     3118     19998   0.1365 0.186/0.087      ok    0.0000        0  NOT CLOSED (G-N4: 0.1365 > 0.01)
+
+  struct   size  present longest fs  of run      rms  sep var   p_data   p_null      bar maxocc  verdict
+  0x0005    2       86       67.5    0.4%    0.328    2.409        -        -        -     -  TRANSIENT
+  0x000a    2       54       13.3    0.3%    0.021    0.103        -        -        -     -  TRANSIENT
+  0x000d    3       10        3.3    0.1%    0.050    0.319        -        -        -     -  TRANSIENT
+
+## de4_on/seed_0x0000000053415422.traj
+seed 0x0000000053415422  12 atoms (4 O)  20000 frames  16702.8 fs  complete=true
+G-N3 contamination 0.0000 = 0/0 H-bond records on a covalently bonded O-O pair  [VOID(empty chart)]
+     frames carrying >= 1 INTER-molecular H-bond: 0 of 20000 (0.0000)
+     criterion decomposed: O-O within 6.614 bohr in 19990 frames -> plus O-H within 4.6298 bohr in 19815 -> plus angle < 30° in the 0 records above
+     oxygen-bearing molecules per frame: 0:0  1:73  2:10274  3:9546  4:107  (99.64% of frames hold >= 2)
+     DISCRIMINATOR (diagnostic, not a gate): under a RELAXED donor rule (any O within 2.5 bohr of the H, not only the nearest) the same three clauses fire 0 times against 0
+     planarity: *** dims=2 but the scene LEAVES THE PLANE at frame 4230, reaching |z-z0| = 11.490 bohr against a box half-depth of 12.0. This trajectory is not the scene it declares; see RUNG1_RESULTS.md.
+
+  chart                distinct  changes informat.   defect  1st/2nd  nonexp         F    F-wit  verdict
+  C1H/HB-FULL                 1        0     19999   0.0000 0.000/0.000      ok    0.0000        0  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 0 (>= 200), distinct 1 (>= 4)
+  C1/HB-ADJ                   1        0     19999   0.0000 0.000/0.000      ok    0.0000        0  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 0 (>= 200), distinct 1 (>= 4)
+  C2/HB-PART                  1        0     19999   0.0000 0.000/0.000      ok    0.0000        0  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 0 (>= 200), distinct 1 (>= 4)
+  C3/HB-COUNT                 1        0     19999   0.0000 0.000/0.000      ok    0.0000        0  VOID(G-N7 anti-vacuity)
+        cause: G-N7 anti-vacuity: informative 19999 (>= 200), changes 0 (>= 200), distinct 1 (>= 4)
+  C4/MOL-NET-ID              48     2115     19996   0.0935 0.168/0.019      ok    0.0000        0  NOT CLOSED (G-N4: 0.0935 > 0.01)
+  C5/MOL-NET-FORMULA         41     2112     19996   0.0938 0.168/0.019      ok    0.0000        0  NOT CLOSED (G-N4: 0.0938 > 0.01)
+  C6/MOL-PART                48     2115     19996   0.0935 0.168/0.019      ok    0.0000        0  NOT CLOSED (G-N4: 0.0935 > 0.01)
+
+  Leg A-N: no H-bond component of two or more oxygens EVER forms.
+
+## hydrogen/seed_0x0000000053415421.traj
+REFUSED at [G-N12 scene carries the network variable]
+  0 oxygens; a hydrogen-bond NETWORK needs at least two, and a zero here would read as a measured absence rather than an inapplicable lens. The gate whose passing would lift this refusal is a scene with 2+ oxygens.
+
+## hydrogen/seed_0x0000000053415422.traj
+REFUSED at [G-N12 scene carries the network variable]
+  0 oxygens; a hydrogen-bond NETWORK needs at least two, and a zero here would read as a measured absence rather than an inapplicable lens. The gate whose passing would lift this refusal is a scene with 2+ oxygens.
+
+## hydrogen/seed_0x0000000053415423.traj
+REFUSED at [G-N12 scene carries the network variable]
+  0 oxygens; a hydrogen-bond NETWORK needs at least two, and a zero here would read as a measured absence rather than an inapplicable lens. The gate whose passing would lift this refusal is a scene with 2+ oxygens.
+
+## hydrogen/seed_0x0000000053415424.traj
+REFUSED at [G-N12 scene carries the network variable]
+  0 oxygens; a hydrogen-bond NETWORK needs at least two, and a zero here would read as a measured absence rather than an inapplicable lens. The gate whose passing would lift this refusal is a scene with 2+ oxygens.
+
+## hydrogen/seed_0x0000000053415425.traj
+REFUSED at [G-N12 scene carries the network variable]
+  0 oxygens; a hydrogen-bond NETWORK needs at least two, and a zero here would read as a measured absence rather than an inapplicable lens. The gate whose passing would lift this refusal is a scene with 2+ oxygens.
+
+## hydrogen/seed_0x0000000053415426.traj
+REFUSED at [G-N12 scene carries the network variable]
+  0 oxygens; a hydrogen-bond NETWORK needs at least two, and a zero here would read as a measured absence rather than an inapplicable lens. The gate whose passing would lift this refusal is a scene with 2+ oxygens.
+
+## hydrogen/seed_0x0000000053415427.traj
+REFUSED at [G-N12 scene carries the network variable]
+  0 oxygens; a hydrogen-bond NETWORK needs at least two, and a zero here would read as a measured absence rather than an inapplicable lens. The gate whose passing would lift this refusal is a scene with 2+ oxygens.
+
+## hydrogen/seed_0x0000000053415428.traj
+REFUSED at [G-N12 scene carries the network variable]
+  0 oxygens; a hydrogen-bond NETWORK needs at least two, and a zero here would read as a measured absence rather than an inapplicable lens. The gate whose passing would lift this refusal is a scene with 2+ oxygens.
+
+
+# =============================== GATE SUMMARY
+
+## G-ID — does chart C6 reproduce the census's banked readings, EXACT to 4 dp?
+  fenced   0x0000000053415421  defect 0.1128 (banked 0.1128)  MATCH
+  fenced   0x0000000053415422  defect 0.1328 (banked 0.1328)  MATCH
+  fenced   0x0000000053415423  defect 0.1339 (banked 0.1339)  MATCH
+  fenced   0x0000000053415424  defect 0.1453 (banked 0.1453)  MATCH
+  fenced   0x0000000053415425  defect 0.1410 (banked 0.1410)  MATCH
+  fenced   0x0000000053415426  defect 0.0815 (banked 0.0815)  MATCH
+  fenced   0x0000000053415427  defect 0.1460 (banked 0.1460)  MATCH
+  fenced   0x0000000053415428  defect 0.1287 (banked 0.1287)  MATCH
+  de4_off  0x0000000053415422  defect 0.1365 (banked 0.1365)  distinct 43 (banked 43)  witness pairs 124 (banked 124)  MATCH
+  de4_on   0x0000000053415422  defect 0.0935  distinct 48  witness pairs 138  — NOT BANKED (the census has no row for this arm; nothing to check against)
+  G-ID: PASS over 9 checkable seeds
+
+## G-N2 — refinement_removes_collisions: the nested ladders are monotone
+  PASS — no violation on any trajectory (EXACT, no tolerance)
+
+## G-N12 — 8 trajectory(ies) REFUSED for want of the variable

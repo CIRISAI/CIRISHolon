@@ -604,7 +604,7 @@ impl SparseMaxF {
 /// booked as translation rather than internal, and it is stated rather than hidden; the
 /// second quantity, the separation excursion, is centroid-free and is the one that
 /// settles a frozen carrier on its own.
-fn carrier_motion(traj: &Trajectory, m: Mask, a: usize, b: usize) -> (f64, f64) {
+pub fn carrier_motion(traj: &Trajectory, m: Mask, a: usize, b: usize) -> (f64, f64) {
     let idx: Vec<usize> = (0..traj.header.n_atoms).filter(|i| m >> i & 1 == 1).collect();
     let w = b - a;
     if idx.is_empty() || w < 2 {

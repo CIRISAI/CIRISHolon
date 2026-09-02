@@ -133,6 +133,8 @@ ohhh_mbe3_energy        evaluates E_MBE3 reference energy for (O,H,H,H) 4-atom s
 de4_ohhh_fci            exact ab-initio 4-body residual dE4 = E_FCI - E_MBE3
 sort_ohhh_internals     canonical S3-quotiented sort for 6 internal coordinates of (O,H,H,H)
 ohhh_fci_grad           E_FCI(OH3) with its exact Cartesian gradient (9 seeded dual solves, warm-startable); consumer: holon-render sim.rs accumulate_four_body
+atom_energy_o           the isolated-oxygen energy of this level of theory, memoised. It BECAME library-unreferenced when quaternary.rs turned into an instantiation of cluster.rs: the generic assembly subtracts reference atoms through `cluster::atom_energy_cached`, keyed by Z, so nothing inside the library reaches for oxygen by name any more. The consumer is holon-render sim.rs accumulate_four_body, which assembles its own MBE3 half from the bank's Hermite curves and needs the same two constants the ab-initio half subtracts
+atom_energy_h           the same, for hydrogen; same consumer, same reason. Both are now thin wrappers over the Z-keyed memo and are kept as NAMES rather than as arithmetic -- deleting them would move a cross-crate caller for no gain, and reimplementing them there would give the two halves of one ledger two sources for one number
 
 # --- the DE4-TABLE four-body surface: coordinates, canonical form, interpolant ---
 # (campaign: conformance/water_observatory/DE4_TABLE_PREREG.md. These are consumed ACROSS

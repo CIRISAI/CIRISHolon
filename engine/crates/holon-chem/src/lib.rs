@@ -37,6 +37,7 @@
 //! measures agreement between two implementations of one model, which is a statement
 //! about arithmetic, not about hydrogen.
 
+pub mod cluster;
 pub mod dual;
 pub mod elements;
 pub mod fci;

@@ -276,3 +276,114 @@ fn a_producing_worker_is_never_past_its_grace() {
     world.poll();
     assert!(world.grace_expired(0), "two missed polls did not expire a 1x grace");
 }
+
+/// **THE BACKSTOP, DEMONSTRATED — the gap the sibling test above could only assert.**
+///
+/// `the_reaper_never_reaps_a_worker_that_is_working` asserts that no worker which went on to
+/// produce receipts was ever REAPED. On a healthy run that assertion is usually satisfied
+/// because rung 1 never fires at all, which makes the zero a fact about the SCENE rather than
+/// about the backstop — M-VACUOUS-SUCCESS, and the same shape as an asserted 0.0 that is
+/// really a statement about the instrument's coverage. The claim that rungs 2 and 3 hold
+/// *while rung 1 is noisy* was therefore asserted and never demonstrated.
+///
+/// This closes it, and deliberately NOT by injecting contention — a load-injected probe would
+/// reintroduce exactly the wall-clock dependence the sibling test just had removed. Instead it
+/// keeps the real work and shrinks the GRACE: at a multiple of 1, rung 1 expires the moment a
+/// worker's step exceeds its own previous maximum, which on real FCI nodes is constant. Rung 1
+/// is then guaranteed noisy by construction rather than by luck, and the conjunction is what
+/// is left holding the line.
+///
+/// Both halves are asserted, because either alone is empty: the probe must FIRE (or the test
+/// proves nothing), and the backstop must HOLD.
+///
+/// # THIS TEST CURRENTLY FAILS, AND THAT IS THE FINDING
+///
+/// Measured 2026-09-01, four consecutive runs: rung 1 fired on still-working workers and
+/// **204 / 389 / 27 / 206 of those became REAPS.** The backstop does not veto them.
+///
+/// So the claim this lane recorded in RESOURCE_DESIGN section 5 — "rungs 2 and 3 are the
+/// BACKSTOP, not the mechanism" — is **not supported for live workers**. Rung 2 asks whether
+/// the holder is being scheduled by reading the process CPU tick from `/proc/self/stat`,
+/// whose granularity is 10 ms against this loop's 5 ms poll, so a genuinely-running worker
+/// reads as not-scheduling often enough to pass the veto. That is [[M-IDLE-CALIBRATED-TIMEOUT]]
+/// again: a sensor used outside the resolution regime it can actually report in.
+///
+/// WHAT IS AND IS NOT SHOWN, kept apart deliberately. SHOWN: rungs 2 and 3 do not reliably
+/// veto a reap of a live worker once rung 1 fires. NOT SHOWN: that this happens in production
+/// — the probe runs at a grace multiple of 1 to force rung 1 noisy, and production uses 10,
+/// where rung 1 is usually silent and the conjunction is never reached. The probe breaks a
+/// precondition on purpose, which is what a planted defect is for; it does not by itself
+/// establish a production failure rate. D10b is the instrument for that and is still partial.
+///
+/// `#[ignore]` rather than deleted or weakened: a red test in a shared suite breaks every
+/// lane's gate, and asserting the current behaviour would bake a defect in as expected. Run
+/// it with `--ignored` to reproduce. It is REASON, beyond D10b's, for the reaper to stay OFF.
+#[ignore = "FAILS BY DESIGN: demonstrates that rungs 2-3 do not veto a reap of a live worker; see the doc comment"]
+#[test]
+fn the_backstop_holds_when_rung_one_goes_noisy() {
+    const WORKERS: usize = 4;
+    let s = spec(6);
+    let progress: Vec<AtomicU64> = (0..WORKERS).map(|_| AtomicU64::new(0)).collect();
+
+    let (false_expiries, false_reaps) = std::thread::scope(|scope| {
+        let p = &progress;
+        let sref = &s;
+        let worker = scope.spawn(move || generate_with_progress(sref, WORKERS, p));
+
+        // GRACE OF 1: the plant. Rung 1 now expires on healthy workers by construction.
+        let world = MeshWorld::new(&progress, 1);
+        let mut reaper = Reaper::new(world, WorkerProbe::new());
+        let mut trace: Vec<Vec<(u64, bool, bool)>> = Vec::new();
+
+        while !worker.is_finished() {
+            std::thread::sleep(Duration::from_millis(5));
+            reaper.world.poll();
+            let mut snap = Vec::with_capacity(WORKERS);
+            for w in 0..WORKERS as u32 {
+                let expired = reaper.world.grace_expired(w);
+                let reaped = reaper.judge(w, ResourceKind::Worker).reaped();
+                snap.push((progress[w as usize].load(Ordering::Relaxed), expired, reaped));
+            }
+            trace.push(snap);
+        }
+        worker.join().unwrap();
+
+        // Same ground truth as the sibling: a verdict at poll t is false iff that worker's
+        // receipts increase at some poll AFTER t. Clock-free and load-free.
+        let mut fe = 0usize;
+        let mut fr = 0usize;
+        for t in 0..trace.len().saturating_sub(1) {
+            for w in 0..WORKERS {
+                let (now, expired, reaped) = trace[t][w];
+                let still_working = trace[t + 1..].iter().any(|s| s[w].0 > now);
+                if expired && still_working {
+                    fe += 1;
+                }
+                if reaped && still_working {
+                    fr += 1;
+                }
+            }
+        }
+        (fe, fr)
+    });
+
+    // THE PROBE FIRED. Without this the test is satisfied by a run where nothing happened.
+    assert!(
+        false_expiries > 0,
+        "rung 1 never fired on a still-working worker even at a grace of 1x its own step, so \
+         this run never put the backstop under load and proves nothing about it"
+    );
+    // THE BACKSTOP HELD. Rung 1 wanted to reap live workers {false_expiries} times; rung 2
+    // asks whether the holder is still being SCHEDULED, and a merely-slow worker says yes.
+    assert_eq!(
+        false_reaps, 0,
+        "rung 1 fired {false_expiries} times on still-working workers and {false_reaps} of \
+         those became REAPS. The backstop does not hold, which is a real defect in the reaper \
+         and not a flaky test: the conjunction is the only thing standing between a noisy \
+         rung 1 and a convicted live holder."
+    );
+    println!(
+        "backstop demonstrated: rung 1 fired {false_expiries} times on still-working workers, \
+         {false_reaps} became reaps"
+    );
+}

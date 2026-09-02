@@ -301,9 +301,30 @@ Run against a REAL 72-node generation with the reaper polling in flight (not scr
 | rung 2 debounced over its 10 ms sensor | 495 |
 | **grace sized by the holder's OWN observed step** | **0** |
 
-**Rungs 2 and 3 are the BACKSTOP, not the mechanism — asserted, not hoped.** With grace sized by
+**Rungs 2 and 3 are the BACKSTOP, not the mechanism.** With grace sized by
 the design's own rule, rung 1 does not fire on healthy work at all and the later rungs are never
-consulted. Every attempt to fix this in rung 2 made it worse or barely better; the defect was that
+consulted.
+
+> **CORRECTION 2026-09-01 — this paragraph used to end "asserted, not hoped", and the word
+> ASSERTED was wrong.** What was asserted is that rung 1 stays silent; that rungs 2 and 3 would
+> HOLD if it did not was never tested, because a test demanding rung 1 stay silent leaves the
+> later rungs unconsulted. That is the vacuity the live-reaper gate was carrying.
+>
+> **It has now been tested, by planting the condition, and the backstop DOES NOT HOLD.**
+> `live_reaper::the_backstop_holds_when_rung_one_goes_noisy` runs the real generation at a
+> grace multiple of 1 so rung 1 is noisy by construction. Four consecutive runs: rung 1 fired
+> on still-working workers and **204 / 389 / 27 / 206 of those became REAPS.** Rung 2 reads the
+> process CPU tick from `/proc/self/stat`, whose 10 ms granularity against a 5 ms poll lets a
+> genuinely-running worker read as not-scheduling often enough to pass the veto — the same
+> M-IDLE-CALIBRATED-TIMEOUT shape, a sensor used outside the regime it can resolve.
+>
+> SHOWN: rungs 2 and 3 do not reliably veto the reap of a live worker once rung 1 fires.
+> NOT SHOWN: a production failure rate — the probe deliberately breaks a precondition
+> (production runs a multiple of 10, where rung 1 is usually silent), so it establishes the
+> backstop's weakness, not its frequency. The test is `#[ignore]`d because a red test in a
+> shared suite breaks every lane's gate, and asserting the observed behaviour would bake a
+> defect in as expected. **This is a second, independent reason the reaper stays OFF, beyond
+> D10b's:** the safety argument for switching it on rested on a conjunction that does not hold. Every attempt to fix this in rung 2 made it worse or barely better; the defect was that
 rung 1's grace was a flat constant when this document's own text says it must be a multiple of the
 holder's own step. See **M-IDLE-CALIBRATED-TIMEOUT**: the holders' real step was ~400× the
 idle-machine figure, so no fixed grace derived from idle timings could have survived.

@@ -23,10 +23,10 @@ C  Charged fragments core ───┬─▶ C2 ion pair/triple tables (needs A'
     H3O+/OH- certified)
 D  Periodic-table availability ─▶ heavy-element scenes · mixtures demos
    (probe every species: FCI/MPS/REFUSED-with-name; relativistic fence STATED)
-H  dE5 truncation audit ─────▶ the ladder's termination CERTIFICATE, or the
-   (measure, never build)       DMRG-cluster seam requirement (below)
+H  dE5 truncation audit ─────▶ MEASURED: the ladder does NOT terminate at four
+   (measure, never build)       on compact planar O2H3 → the seam requirement FIRED
 MPS cluster seam (DMRG for compact cores, MBE far-field, seam defect-audited)
-   ◀── gated on: H's verdict + bulk-MPS tier formalization (canonical brick, tower-owed)
+   ◀── gated on: H's verdict (DISCHARGED) + bulk-MPS tier formalization (canonical brick, tower-owed)
 G  Upward tier closures (H-bond network ⊂ molecules ⊂ quantum; census as referee)
    ◀── gated on: OOO cert + dE4 table + B1 verdict  (the ontology's own ladder)
 ```
@@ -41,9 +41,9 @@ G  Upward tier closures (H-bond network ⊂ molecules ⊂ quantum; census as ref
 | B2 | Ewald-class long-range subsystem | B1 verdict; mandatory if C ships ionic scenes | GATED | per-law gates incl. planted violations; energy ledger closed under the new term |
 | C | Charged-fragments core: charge at the solver seam (electron-count assignment, spin-sector rule stated), H3O+/OH- certified single-points, census-charge staking doc | none for the core; A for generic ion TABLES | LAUNCHED · ion-core | ion energies with variational sanity vs fragments; refusals for unstated charge; the staking doc for what remains |
 | D | Periodic-table availability: probe EVERY registered species — FCI-reachable (measured det count) / MPS-route / REFUSED with the reason (relativistic fence stated past staked Z; missing basis named) | none | LAUNCHED · bank-fences | a GENERATED availability table (probed, not asserted) + refusal tests firing per class |
-| H | dE5 truncation audit: sample compact 5-clusters from real trajectories; E_FCI(5) − MBE4(5) distribution vs declared uncertainty | live dE4 path (done) | LAUNCHED · de5-audit | prereg ADMITTED; measured distribution over ≥20 sampled configs; verdict: ladder terminates / seam required |
+| H | dE5 truncation audit: sample compact 5-clusters from real trajectories; E_FCI(5) − MBE4(5) distribution vs declared uncertainty | live dE4 path (done) | **DONE** · de5-audit | receipt: `conformance/water_observatory/DE5_RESULTS.md`. Prereg ADMITTED and committed alone before the instrument; 24 live configs (bar was 20), 0 VOID; **BRANCH (b) — DOES NOT TERMINATE**, worst \|dE5\| 7.86e-2 Ha = 1,572x the 5e-5 declared uncertainty, 24/24 over bound. Scope: planar, STO-3G, `O2H3` only. Strict reading of the audit's own frozen G2 is (d) VOID and is published beside it |
 | E | NQE in dynamics: ring-polymer propagation coupled into Sim, not merely the C1 carrier | C1 (done); sim.rs landing-wave quiet; A's carrier plumbing | GATED | per-law gates under RPMD; P=1 bit-identical to classical Sim (the C1 pattern, in-engine) |
-| MPS | DMRG cluster seam: exact-cluster solves for compact cores over MBE far-field | H verdict; bulk-tier canonical brick (tower-complete, owed) | GATED | seam defect budget staked and measured; crystal-tier referee inheritance stated |
+| MPS | DMRG cluster seam: exact-cluster solves for compact cores over MBE far-field | ~~H verdict~~ **DISCHARGED — H fired the seam requirement**; bulk-tier canonical brick (tower-complete, owed) — STILL GATED ON THIS ONE | GATED (one dep left) | seam defect budget staked and measured; crystal-tier referee inheritance stated. H supplies the measured size of what four-body truncation discards on compact `O2H3`: up to 7.86e-2 Ha, 2.83x the whole dE4 rung |
 | G | Upward closures: network and fluid tiers certified as Closed views, census as referee at each rung | OOO cert; dE4 table; B1 | GATED | each rung's closure certificate in the census's two-leg form, with controls |
 
 ## In-flight prerequisites feeding this graph (owned elsewhere)

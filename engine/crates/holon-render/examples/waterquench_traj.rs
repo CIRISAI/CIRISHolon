@@ -529,16 +529,28 @@ fn main() {
         );
         if pt.meta.worst_residual > holon_chem::pair::CONVERGED_RESIDUAL {
             println!(
-                "# WARNING {}-{}: worst residual {:.2e} exceeds CONVERGED_RESIDUAL {:.0e}.",
-                a.symbol, b.symbol, pt.meta.worst_residual, holon_chem::pair::CONVERGED_RESIDUAL
+                "# WARNING {}-{}: worst residual {:.2e} exceeds CONVERGED_RESIDUAL {:.0e}, \
+                 exit {:?}.",
+                a.symbol,
+                b.symbol,
+                pt.meta.worst_residual,
+                holon_chem::pair::CONVERGED_RESIDUAL,
+                pt.meta.exit
             );
         }
+        // THE RESIDUAL WITH ITS EXIT. A residual alone cannot say whether the solve
+        // FINISHED: `IterationCap` means it ran out of budget, `Stagnated` means more
+        // budget buys nothing, and those are different facts about the same number. Under
+        // thick restart a capped residual is a SAMPLE of a non-monotone sequence and is
+        // not a bound in either direction, so a consumer that sees only the number cannot
+        // tell whether it is an error bar or a snapshot.
         println!(
-            "# curve {}-{}: {CURVE_KNOTS} knots, {}, worst residual {:.1e}, {:.1} s",
+            "# curve {}-{}: {CURVE_KNOTS} knots, {}, worst residual {:.1e} (exit {:?}), {:.1} s",
             a.symbol,
             b.symbol,
             well,
             pt.meta.worst_residual,
+            pt.meta.exit,
             t.elapsed().as_secs_f64()
         );
     }

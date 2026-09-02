@@ -302,6 +302,37 @@
           </div>
         </div>
 
+        <!-- ------------------------------------------------- the two boxes -->
+        <div class="drawer-card">
+          <div class="card-head">
+            <h4>THE TWO BOXES (FSD-W2)</h4>
+            <span class="tag" id="tag-boxes">—</span>
+          </div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>Zoom ratio</span><span id="scene-zoom">—</span></div>
+            <div class="lrow"><span>WORLD box — the physics</span><span id="world-extent">—</span></div>
+            <div class="lrow"><span>SCENE box — the view</span><span id="scene-extent">—</span></div>
+            <div class="lrow accent"><span>Drawing</span><span id="scene-drawn">—</span></div>
+            <div class="lrow"><span>Outside</span><span id="scene-outside">—</span></div>
+            <div class="lrow"><span>Recent crossings</span><span id="scene-events">—</span></div>
+          </div>
+          <p class="card-note">
+            Four world boxes carry the physics; one scene box carries the view, and they are
+            never the same knob. The HAND acts on the world box — that is the pressure
+            control. The ZOOM is a ratio: the scene box is the world box divided by it, so
+            3× zoom on a large world and 3× on a small one are different scene-box sizes.
+            Zoom never touches the physics.
+          </p>
+          <p class="card-note">
+            <b>Nothing is destroyed by a crossing.</b> A holon leaving the scene box leaves
+            the VIEW; the world box keeps simulating it, which is exactly what makes the
+            pressure and temperature below whole-only and zoom-invariant. Zoom back out and
+            the same holons return at their current evolved state — the water kept moving
+            while you were not watching it. A cache that froze them would return you to a
+            world that stopped when you looked away.
+          </p>
+        </div>
+
         <!-- ------------------------------------------------ the scale ladder -->
         <div class="drawer-card">
           <div class="card-head">
@@ -560,6 +591,16 @@
             <input type="range" id="sheet-grav" min="0" max="5" step="0.1" value="1">
             <span class="sheet-val" id="sheet-grav-val">1.00 G</span>
           </div>
+          <div class="slider-row">
+            <input type="range" id="sheet-zoom" min="0" max="1.6" step="0.02" value="0">
+            <span class="sheet-val" id="sheet-zoom-val">1.00×</span>
+          </div>
+          <p class="sheet-note">
+            ZOOM shrinks the SCENE box around the view centre. Holons crossing a face leave
+            the picture and stay in the physics — watch "drawing N of M" and the whole-only
+            numbers, which do not move. This is not the hand: the hand is on the pressure
+            panel and it changes the world box.
+          </p>
           <div class="slider-row">
             <input type="range" id="sheet-tilt" min="-60" max="60" step="1" value="0">
             <span class="sheet-val" id="sheet-tilt-val">0°</span>

@@ -920,6 +920,81 @@ for (const claim of PROSE_CLAIMS) {
     `${claim.export} resolves, but the shipped text still matches ${claim.deny} — ${claim.say}`);
 }
 
+// ------------------------------- 6e. THE TWO-BOX LAW, made falsifiable on the page
+//
+// The law's whole content is that two knobs are never the same knob, and the way that goes
+// wrong is measurable rather than aesthetic. An earlier draft of the spec said "the
+// box-scale door IS the zoom"; implementing that literally makes zooming COMPRESS the
+// water. So both directions are pinned here, with the wrong door planted as the mutation.
+
+const zb = await freshEngine();
+zb.holon_set_dims(1);
+zb.holon_set_boundary(0);
+zb.holon_table_generate(0.6, 12.0, 192);
+zb.holon_set_calibration(2.0e6);
+zb.holon_reset(24);
+zb.holon_rebase();
+
+const worldVolume = () => zb.holon_width() * zb.holon_height() * zb.holon_depth();
+const worldDensity = () => zb.holon_atom_count() / worldVolume();
+
+// (i) THE ZOOM IS A PAGE-SIDE RATIO AND CALLS NOTHING. Read out of the shipped source
+// rather than asserted: the zoom handler must contain no engine call at all. A zoom that
+// reached for `holon_box_scale` would be the wrong door, and it would look right on screen
+// for exactly as long as nobody read the pressure.
+const zoomHandler = appSource.match(/UI\["sheet-zoom"\]\?\.addEventListener\("input",([\s\S]*?)\n  \}\);/);
+want(zoomHandler !== null, "the page has a zoom handler");
+if (zoomHandler) {
+  const calls = [...zoomHandler[1].matchAll(/\bw\.(holon_[a-z0-9_]+)|State\.w\.(holon_[a-z0-9_]+)/g)]
+    .map((m) => m[1] || m[2]);
+  want(calls.length === 0,
+    "the zoom touches NO engine call — it changes a ratio and nothing else",
+    `the zoom handler calls ${calls.join(", ")}; the zoom must not reach into the Sim, and `
+    + "reaching for holon_box_scale is the wrong door the two-box law exists to separate");
+}
+
+// (ii) THE WRONG DOOR'S SIGNATURE, MEASURED, so the gate knows what it is refusing.
+// Affine scale multiplies density by 1/f³. This is not a hypothetical: it is what the
+// superseded spec sentence would have produced, and the number is the reason it was
+// superseded.
+const d0 = worldDensity();
+for (let k = 0; k < 3; k++) zb.holon_box_scale(0.5);
+const densityRatio = worldDensity() / d0;
+want(Math.abs(densityRatio - 512) < 1,
+  `the HAND's door is affine and compresses: 3 halvings multiply world density by ${densityRatio.toFixed(1)}× (1/f³ = 512)`,
+  `measured ${densityRatio}; if this is no longer 512 the box-scale door has changed meaning and `
+  + "the two-box separation needs re-deriving");
+want(zb.holon_atom_count() === 24,
+  "and it removes nothing — every holon scales with the container",
+  "box_scale dropped atoms, which would make it a zoom after all");
+
+// (iii) THE SCENE BOX IS A QUOTIENT, and the page computes it that way. The law's own
+// example: the same zoom on two different worlds must give different scene boxes.
+const sceneBoxSrc = appSource.match(/function sceneBox\(w\) \{\n([\s\S]*?)\n\}/);
+want(sceneBoxSrc !== null && /holon_width\(\) \/ \(2 \* z\)/.test(sceneBoxSrc[1]),
+  "the scene box is world ÷ zoom, so the same zoom on two worlds gives two scene boxes",
+  "sceneBox does not divide the world extent by the zoom — a scene box that is a fixed "
+  + "LENGTH would decouple the view from the hand, which the law forbids in the other direction");
+
+// (iv) WHOLE-ONLY OBSERVABLES COME FROM THE WHOLE BOX. The hazard the cut creates: a view
+// filter that computed "the atoms I am drawing" and reported THEIR temperature would look
+// plausible at every zoom and be wrong at all but one. The page must read the engine's
+// whole-box readouts, never the drawn subset.
+const WHOLE_ONLY = ["holon_temperature", "holon_pressure", "holon_census_molecules"];
+for (const sym of WHOLE_ONLY) {
+  const used = new RegExp(`w\\.${sym}\\(\\)`).test(appSource);
+  want(used, `the page reads ${sym} from the engine (whole box), not from the drawn subset`,
+    "a whole-only observable computed over scene members is the two-box law violated in "
+    + "the direction no screenshot would reveal");
+}
+// And the membership predicate must not be reachable from those readouts: the scene cut
+// lives in the renderer, and `sceneMembers` is called from exactly one place.
+const memberCalls = (appSource.match(/sceneMembers\(/g) || []).length;
+want(memberCalls === 2,
+  `the scene-membership cut has exactly one call site plus its definition (found ${memberCalls})`,
+  "more call sites means membership is leaking out of the renderer, which is how a "
+  + "whole-only number starts being computed over a fraction");
+
 // ---------------------------------------------------------------- 7. the inverted check
 
 // --------------------------------------------- 5c. the hand on the box (WB-2.2), now served

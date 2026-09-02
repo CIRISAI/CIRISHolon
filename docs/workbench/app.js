@@ -146,6 +146,23 @@ const State = {
 
   camera: { yaw: 0.35, pitch: 0.25, distance: 2.8, fov: 45.0 },
 
+  /// THE ZOOM, and it is a RATIO rather than a length (FSD-W2, the two-box law). The
+  /// scene box is the WORLD box divided by this number, so 3× zoom on a 1 km world and
+  /// 3× zoom on a 0.5 km world are different scene-box sizes — the view is coupled to
+  /// the world through the ratio and only through the ratio. The hand stretches the
+  /// world and the scene box follows; the zoom changes the quotient and the physics does
+  /// not notice.
+  zoom: 1.0,
+
+  /// The scene-event log (append-only). Every holon crossing a scene-box face is recorded
+  /// here as it happens. Nothing is destroyed by a crossing — the WORLD box keeps
+  /// simulating every holon it has, which is exactly what makes its pressure whole-only
+  /// and zoom-invariant — so this is a record of what the VIEW is showing, not of what
+  /// the physics is doing. A scene that quietly drew a fraction would be a picture that
+  /// misrepresents its own physics.
+  sceneLog: [],
+  sceneMembership: null,
+
   /// The hand (WB-4). `grabbed` is the engine's own index, so the receipt below and the
   /// atom on screen cannot disagree about who is being pulled.
   hand: { grabbed: -1, screenX: 0, screenY: 0, radiusBohr: 0 },
@@ -520,10 +537,18 @@ function acuityPopulation(viewSpanM, lengthM) {
 /// in camera units, and one camera unit is one box span by construction (`sceneFrame`
 /// normalises by `1/span`).
 function viewSpanMetres(w) {
-  const boxBohr = sceneFrame().span;
-  const halfWidth = State.camera.distance * Math.tan((State.camera.fov * Math.PI) / 360);
-  return 2 * halfWidth * boxBohr * BOHR_TO_M;
+  // THE SCENE BOX'S OWN EXTENT, not a camera-derived quantity. This computed
+  // `2·d·tan(fov/2)·boxSpan` from the camera distance until the two-box law landed — the
+  // window-into-a-larger-scene model the operator explicitly rejected. Under the law the
+  // scene box IS the view, so the span is world/zoom and nothing else, which also makes
+  // the acuity law and the zoom the same number instead of two that could disagree.
+  //
+  // Disclosure: acuity figures shown before this change were computed the camera way and
+  // do not compare with the ones shown now.
+  const b = sceneBox(w);
+  return 2 * Math.max(b.hx, b.hy, b.hz) * BOHR_TO_M;
 }
+
 
 /// The molecular band's live status: the de-allocation criterion, READ OUT.
 ///
@@ -1045,6 +1070,78 @@ function measureRate(now) {
   }
 }
 
+// ---------------------------------------------------------------- the scene box
+//
+// THE TWO-BOX LAW (FSD-W2). Four WORLD boxes carry the physics, one SCENE box carries the
+// view, and they are never the same knob:
+//
+//   * the WORLD box is the engine's own box. The hand acts on it through `holon_box_scale`
+//     — that is the pressure control — and every whole-only observable (the virial
+//     pressure, the temperature, the census's phase fractions) is computed over ALL of it.
+//   * the SCENE box is world / zoom. Holons outside it are removed FROM THE VIEW across
+//     all six faces. Nothing leaves the simulation.
+//
+// WHY NOTHING LEAVES, stated because the alternative was measured and is wrong: zooming by
+// scaling the world box is AFFINE, and affine scale multiplies density by 1/f³. Three
+// halvings measured a density ratio of 512.0 — a "zoom" that compressed the water
+// 512-fold every three steps would be showing a different substance at every scale, which
+// is the opposite of a scale ladder. So the zoom touches the quotient and never the Sim,
+// and `zoom_leaves_world_density_invariant` in the gate plants the wrong door to prove it.
+//
+// AND THE WORLD BOX IS THE RESERVOIR. Zoom-out does not thaw a frozen cache and does not
+// synthesise new matter: the same holons come back at their CURRENT evolved state, because
+// the world kept simulating them while they were unwatched. A frozen reservoir would
+// return you to a world that stopped when you looked away, which is its own fake.
+
+/// The scene box's half-extents in bohr: the world box divided by the zoom ratio.
+function sceneBox(w) {
+  const z = Math.max(1, State.zoom);
+  return {
+    hx: w.holon_width() / (2 * z),
+    hy: w.holon_height() / (2 * z),
+    hz: w.holon_depth() / (2 * z),
+    cx: 0.5 * w.holon_width(),
+    cy: 0.5 * w.holon_height(),
+    cz: 0.5 * w.holon_depth(),
+  };
+}
+
+/// Which holons the scene box contains, and what crossed a face since the last frame.
+///
+/// Membership is DATA — a predicate on position — which is why the scene-box cut needs no
+/// engine door at all: the producer of the draw list simply does not emit what is outside,
+/// and nothing in the Sim moves. The diff against the previous frame is what feeds the
+/// scene-event log, so a crossing is recorded rather than silent.
+function sceneMembers(w) {
+  const b = sceneBox(w);
+  const n = w.holon_atom_count();
+  const inside = new Uint8Array(n);
+  let count = 0;
+  for (let i = 0; i < n; i++) {
+    const ok = Math.abs(w.holon_atom_x(i) - b.cx) <= b.hx
+      && Math.abs(w.holon_atom_y(i) - b.cy) <= b.hy
+      && Math.abs(w.holon_atom_z(i) - b.cz) <= b.hz;
+    inside[i] = ok ? 1 : 0;
+    if (ok) count += 1;
+  }
+  const prev = State.sceneMembership;
+  if (prev && prev.length === n) {
+    for (let i = 0; i < n; i++) {
+      if (prev[i] !== inside[i]) {
+        State.sceneLog.push({
+          frame: w.holon_frame(),
+          atom: i,
+          event: inside[i] ? "admitted" : "released",
+        });
+      }
+    }
+    // Bounded: the log is a live readout, not an audit trail that must survive the page.
+    if (State.sceneLog.length > 400) State.sceneLog.splice(0, State.sceneLog.length - 400);
+  }
+  State.sceneMembership = inside;
+  return { inside, count, total: n, box: b };
+}
+
 // ---------------------------------------------------------------- rendering
 //
 // The camera, orbit, dock and drawer are the mock's vocabulary and are kept deliberately:
@@ -1119,7 +1216,14 @@ function render3D() {
   const f = sceneFrame();
   const cx = 0.5 * f.width, cy = 0.5 * f.height, cz = 0.5 * f.depth;
 
+  // THE SCENE-BOX CUT. Membership is computed once per frame and the draw list is the
+  // subset — the world box keeps every holon and keeps simulating it, so this removes
+  // nothing from the physics and everything it removes is recorded in the scene log.
+  const mem = sceneMembers(w);
+  State.sceneCount = mem.count;
+
   drawBox(f, cx, cy, cz, vw, vh);
+  drawSceneBox(mem.box, f, cx, cy, cz, vw, vh);
 
   // Bonds first, from the engine's own pair readings. The BOND CRITERION is the engine's
   // (`E_rel < 0` and inside the outer turning point); this file draws the verdict and
@@ -1128,6 +1232,10 @@ function render3D() {
   for (let k = 0; k < np; k++) {
     if (w.holon_pair_bonded(k) !== 1) continue;
     const i = w.holon_pair_i(k), j = w.holon_pair_j(k);
+    // A bond is drawn only when BOTH ends are in the scene. Drawing a bond to an atom
+    // that is not on screen would draw a line to nowhere and imply a partner the view
+    // does not contain.
+    if (!mem.inside[i] || !mem.inside[j]) continue;
     const a = project((w.holon_atom_x(i) - cx) * f.k, (w.holon_atom_y(i) - cy) * f.k, (w.holon_atom_z(i) - cz) * f.k, vw, vh);
     const b = project((w.holon_atom_x(j) - cx) * f.k, (w.holon_atom_y(j) - cy) * f.k, (w.holon_atom_z(j) - cz) * f.k, vw, vh);
     if (!a || !b) continue;
@@ -1143,6 +1251,7 @@ function render3D() {
   const n = w.holon_atom_count();
   const drawn = [];
   for (let i = 0; i < n; i++) {
+    if (!mem.inside[i]) continue;
     const p = project((w.holon_atom_x(i) - cx) * f.k, (w.holon_atom_y(i) - cy) * f.k, (w.holon_atom_z(i) - cz) * f.k, vw, vh);
     if (!p) continue;
     drawn.push({ i, p, z: w.holon_atom_species_z(i) });
@@ -1208,6 +1317,30 @@ function drawTemperatureGlow(vw, vh) {
   grad.addColorStop(1, "rgba(0, 0, 0, 0)");
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, vw, vh);
+}
+
+/// The SCENE box, drawn as its own frame so the cut is visible. A viewer who sees fewer
+/// atoms than the panels report should be able to see WHY, and where the boundary is.
+/// Omitted at zoom 1, where the scene box IS the world box and a second identical frame
+/// would just be a heavier line.
+function drawSceneBox(b, f, cx, cy, cz, vw, vh) {
+  if (State.zoom <= 1.0001) return;
+  const corners = [];
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) {
+    corners.push(project(sx * b.hx * f.k, sy * b.hy * f.k, sz * b.hz * f.k, vw, vh));
+  }
+  const edges = [[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
+  ctx.strokeStyle = "rgba(179, 136, 255, 0.55)";
+  ctx.setLineDash([3, 3]);
+  ctx.lineWidth = 1;
+  for (const [a, bb] of edges) {
+    if (!corners[a] || !corners[bb]) continue;
+    ctx.beginPath();
+    ctx.moveTo(corners[a].sx, corners[a].sy);
+    ctx.lineTo(corners[bb].sx, corners[bb].sy);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
 }
 
 function drawBox(f, cx, cy, cz, vw, vh) {
@@ -1504,6 +1637,34 @@ function renderTelemetry() {
              : "holon_pressure_defined reports the virial is not a pressure under these walls");
   if (State.lastScaleRefusal) put("press-refusal", State.lastScaleRefusal);
 
+  // --- the two boxes, stated separately because they are never the same knob ----
+  const sb = sceneBox(w);
+  put("scene-zoom", `${State.zoom.toFixed(2)}×`);
+  put("world-extent", `${w.holon_width().toFixed(1)} × ${w.holon_height().toFixed(1)} × ${w.holon_depth().toFixed(1)} a₀`);
+  put("scene-extent", `${(2 * sb.hx).toFixed(1)} × ${(2 * sb.hy).toFixed(1)} × ${(2 * sb.hz).toFixed(1)} a₀ (world ÷ zoom)`);
+  const drawn = State.sceneCount ?? w.holon_atom_count();
+  const total = w.holon_atom_count();
+  put("scene-drawn", `${drawn} of ${total}`);
+  // AN EMPTY SCENE BOX MUST EXPLAIN ITSELF. Zooming into a sparse world finds vacuum, and
+  // that is a true fact about the world rather than a broken view — but a blank screen
+  // that says nothing is indistinguishable from a bug, and WB-7 does not stop applying
+  // because the failure is aesthetic. Measured here: this opener places holons on a
+  // 6-bohr shell, so the box CENTRE is empty by construction and a scene box smaller than
+  // the shell contains nothing at all.
+  const meanSep = total > 1 ? Math.cbrt((w.holon_width() * w.holon_height() * w.holon_depth()) / total) : 0;
+  put("scene-outside", drawn === total
+    ? "nothing is outside the scene box"
+    : drawn === 0
+      ? `ALL ${total} are outside — the scene box is ${(2 * sb.hx).toFixed(1)} a₀ across and this `
+        + `world averages one holon per ${meanSep.toFixed(1)} a₀, so at this zoom you are `
+        + `looking at vacuum. The physics is unchanged; zoom out or move the view centre.`
+      : `${total - drawn} outside the scene box — still simulated, still in every whole-only number below`);
+  // The last few crossings, so a removal is a recorded event rather than a vanishing.
+  const recent = State.sceneLog.slice(-4).reverse()
+    .map((e) => `frame ${e.frame}: atom ${e.atom} ${e.event}`).join(" · ");
+  put("scene-events", recent || "no crossing yet");
+  tag("tag-boxes", "live", "holon_width / holon_atom_x / the scene-box membership diff");
+
   // --- the scale ladder's live half (§9c's acuity law) ----------------------
   const viewM = viewSpanMetres(w);
   put("ladder-view", `view span ${fmtMetres(viewM)} · acuity is the allocator`);
@@ -1769,6 +1930,13 @@ function initHUD() {
     // otherwise the drift would be measured against an origin taken before this field
     // existed and would read a JUMP no integrator produced.
     State.w.holon_rebase();
+  });
+  UI["sheet-zoom"]?.addEventListener("input", (e) => {
+    // ZOOM IS A RATIO. It changes the quotient and touches nothing in the engine — no
+    // Sim call here at all, which is the two-box law's whole point and is what the
+    // density-invariance gate checks.
+    State.zoom = Math.pow(10, Number(e.target.value));
+    put("sheet-zoom-val", `${State.zoom.toFixed(2)}×`);
   });
   UI["sheet-tilt"]?.addEventListener("input", (e) => {
     State.tiltDeg = Number(e.target.value);

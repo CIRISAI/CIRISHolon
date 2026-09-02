@@ -338,6 +338,12 @@ pub struct FarSector {
     /// Previous pass's `r > R_s` flags, so `crossings` counts transitions rather than
     /// occupancy. Keyed by packed pair index.
     prev_beyond: Vec<bool>,
+    /// Whether `prev_beyond` has ever been filled. Without it the FIRST pass reads every
+    /// far pair as a fresh crossing, because the flags start `false` — which turns a
+    /// transition count into an occupancy count exactly once, on the pass a gate is most
+    /// likely to read. P4's vacuity check floors on this number, so the artifact would
+    /// have been sitting under a floor.
+    seeded: bool,
 }
 
 impl FarSector {
@@ -425,6 +431,7 @@ impl FarSector {
             plant: None,
             plant_step: PLANT_STEP_HARTREE,
             prev_beyond: Vec::new(),
+            seeded: false,
         })
     }
 
@@ -585,7 +592,10 @@ impl FarSector {
         let pairs = n * (n + 1) / 2;
         if self.prev_beyond.len() != pairs {
             self.prev_beyond = vec![false; pairs];
+            self.seeded = false;
         }
+        let seeded = self.seeded;
+        self.seeded = true;
         let (sin_t, cos_t) = if self.plant == Some(FarPlant::NonCentralForce) {
             (PLANT_ROTATION_RAD.sin(), PLANT_ROTATION_RAD.cos())
         } else {
@@ -611,7 +621,7 @@ impl FarSector {
                 let r0 = (dx * dx + dy * dy + dz * dz).sqrt();
                 let idx = i * n + j - i * (i + 1) / 2;
                 let beyond = r0 > self.r_s;
-                if beyond != self.prev_beyond[idx] {
+                if seeded && beyond != self.prev_beyond[idx] {
                     out.crossings += 1;
                 }
                 self.prev_beyond[idx] = beyond;

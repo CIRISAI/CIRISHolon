@@ -200,6 +200,14 @@ struct SceneCfg {
     /// Positions and box multiplied by this before anything else. G9's "fresh at the scaled
     /// box" arm is this at `f != 1`; every other caller leaves it at 1.
     prescale: f64,
+    /// Spread the atoms through the box's depth instead of pinning them to the mid-plane.
+    ///
+    /// Only G2 needs this, and it needs it for a reason worth stating: in an open or walled
+    /// box `CellList::rebuild` takes its extent from the ATOMS' bounding box, not from the
+    /// nominal box. A `Dims::Two` scene sits on one plane, so its z extent is zero, so
+    /// `nc[2]` is 1, so the route is COMPLETE however many atoms the scene holds. G2
+    /// compares two enumerations and cannot do that on a scene that has only one.
+    three_d: bool,
 }
 
 /// A 64-bit LCG, written out rather than pulled in: the constants are Knuth's MMIX and the
@@ -213,7 +221,7 @@ fn lcg(state: &mut u64) -> f64 {
 
 fn build_scene(cfg: &SceneCfg, curves: &[(Species, Species)]) -> Box<Sim> {
     let mut sim = Box::new(Sim::empty());
-    sim.dims = Dims::Two;
+    sim.dims = if cfg.three_d { Dims::Three } else { Dims::Two };
     sim.boundary = cfg.boundary;
     sim.width = cfg.w * cfg.prescale;
     sim.height = cfg.h * cfg.prescale;
@@ -226,17 +234,34 @@ fn build_scene(cfg: &SceneCfg, curves: &[(Species, Species)]) -> Box<Sim> {
     // A jittered grid rather than uniform placement: two atoms landing on top of each other
     // is a force spike that would make every conservation reading about the collision
     // instead of about the far sector.
-    let cols = (cfg.n as f64).sqrt().ceil() as usize;
-    let rows = cfg.n.div_ceil(cols);
+    // A 3D scene gets a CUBIC lattice, not the planar grid with the atoms striped through
+    // z: striping puts consecutive atoms tens of bohr apart in z while the grid moves them
+    // a few bohr in x, so the nearest actual 3D neighbour is far out in the tail and a gate
+    // reading that scene is reading almost nothing.
+    let side = if cfg.three_d {
+        (cfg.n as f64).cbrt().ceil() as usize
+    } else {
+        (cfg.n as f64).sqrt().ceil() as usize
+    };
+    let cols = side;
+    let rows = if cfg.three_d { side } else { cfg.n.div_ceil(cols) };
     let mut st = 0x5341_5424u64;
     for i in 0..cfg.n {
-        let (cx, cy) = (i % cols, i / cols);
+        let (cx, cy) = if cfg.three_d {
+            (i % side, (i / side) % side)
+        } else {
+            (i % cols, i / cols)
+        };
         let x = (cx as f64 + 0.5) / cols as f64 * cfg.w + (lcg(&mut st) - 0.5) * 0.6;
         let y = (cy as f64 + 0.5) / rows as f64 * cfg.h + (lcg(&mut st) - 0.5) * 0.6;
         let a = &mut sim.atoms[i];
         a.x = x * cfg.prescale;
         a.y = y * cfg.prescale;
-        a.z = 0.5 * cfg.h * cfg.prescale;
+        a.z = if cfg.three_d {
+            ((i / (side * side)) as f64 + 0.5) / side as f64 * cfg.h * cfg.prescale
+        } else {
+            0.5 * cfg.h * cfg.prescale
+        };
         // Velocities in the plane only, and small: the gates read conservation, not
         // thermodynamics, and a hot scene spends its time in the repulsive wall.
         a.vx = (lcg(&mut st) - 0.5) * 2.0e-4;
@@ -322,6 +347,7 @@ fn arm_engine(curves: &[(Species, Species)], steps: u64, budget: f64) {
         w: BOX_W,
         h: BOX_H,
         prescale: 1.0,
+        three_d: false,
     };
 
     // --- the curves, with their solver certificates. W1's fields are B2's R5 inputs.
@@ -562,23 +588,84 @@ fn isolated_pair_third_law(tails: &[Option<CurveTail>], r_s: f64, budget: f64) -
 /// The EXACT half of G2 — zero pairs in `(c*, r_max]` outside the list — is counted on the
 /// real frames in the `frames` arm, where `c*` and the trajectories both live.
 fn gate_g2(
-    cfg: &SceneCfg,
+    _cfg: &SceneCfg,
     curves: &[(Species, Species)],
     tails: &[Option<CurveTail>],
     r_s: f64,
     budget: f64,
 ) {
-    let mut local = build_scene(cfg, curves);
-    attach_far(&mut local, tails, r_s, budget, None);
-    // A declared truncation is what makes the engine take the neighbour route at all; with
-    // none declared it runs the complete sum whatever the cell list says, and the two
-    // routes would be the same arithmetic rather than two enumerations.
-    if !local.set_pair_cutoff(1.0e-12) {
-        println!("# GATE G2 (energy half): NOT RUN — no pair cutoff could be derived at 1e-12 Ha");
+    // ITS OWN SCENE, and it needs one. `CellList::rebuild` takes the cell route only at 64
+    // atoms or more AND at least 3 cells per axis, so the 12-atom conservation scene runs
+    // the COMPLETE sum on both sides and this gate compares a route against itself. That is
+    // a vacuous success wearing a green gate; the first run of this instrument printed
+    // "route Complete vs Complete  relative 0.000e0" and it meant nothing at all.
+    // The box is GROWN until the decomposition engages, and the scale that worked is
+    // printed. A fixed multiple was tried first and did not work: the extent is the ATOMS'
+    // bounding box and the placement grid insets them, so a box at three cutoffs per axis
+    // yields two cells. Searching for the precondition beats guessing a constant that the
+    // next change to the switch width would silently invalidate.
+    let mut cells_cfg = SceneCfg {
+        n: 512,
+        oxygen_every: _cfg.oxygen_every,
+        boundary: Boundary::Open,
+        w: 0.0,
+        h: 0.0,
+        prescale: 1.0,
+        three_d: true,
+    };
+    let mut local = Box::new(Sim::empty());
+    let mut found = 0.0f64;
+    for scale in [5.0f64, 7.0, 9.0, 12.0, 16.0, 22.0, 30.0] {
+        cells_cfg.w = scale * r_s.max(1.0);
+        cells_cfg.h = scale * r_s.max(1.0);
+        let mut s = build_scene(&cells_cfg, curves);
+        attach_far(&mut s, tails, r_s, budget, None);
+        // A declared truncation is what makes the engine take the neighbour route at all;
+        // with none declared it runs the complete sum whatever the cell list says, and the
+        // two routes would be the same arithmetic rather than two enumerations.
+        if !s.set_pair_cutoff(1.0e-12) {
+            println!(
+                "# GATE G2 (energy half): NOT RUN — no pair cutoff could be derived at 1e-12 Ha"
+            );
+            return;
+        }
+        if s.route() == holon_render::cells::Route::Cells {
+            local = s;
+            found = scale;
+            break;
+        }
+    }
+    if found == 0.0 {
+        println!(
+            "# GATE G2 (energy half): VOID (V2) — the cell decomposition would not engage at \
+             any box size tried, so there is one enumeration and nothing to compare it with. \
+             `CellList::rebuild` needs 64+ atoms AND 3 cells per axis of the ATOMS' bounding \
+             box, which a planar (Dims::Two) open or walled scene can never supply on z."
+        );
         return;
     }
+    let cfg = &cells_cfg;
+    // THE POPULATION THE GATE IS DRAWN FROM, counted independently of the engine. Two
+    // enumerations that both find nothing agree perfectly and say nothing, so the count is
+    // printed and floored rather than inferred from a nonzero energy.
+    let (_, r_cut) = local.pair_switch().unwrap_or((0.0, 0.0));
+    let mut in_range = 0usize;
+    for i in 0..local.n {
+        for j in (i + 1)..local.n {
+            let (a, b) = (&local.atoms[i], &local.atoms[j]);
+            let (dx, dy, dz) = (b.x - a.x, b.y - a.y, b.z - a.z);
+            if (dx * dx + dy * dy + dz * dz).sqrt() <= r_cut {
+                in_range += 1;
+            }
+        }
+    }
+    println!(
+        "# G2 scene: {} atoms, 3D cubic lattice, box {:.1} bohr ({found}x R_s), \
+         {in_range} pairs within r_cut = {r_cut:.4} bohr",
+        cfg.n, cfg.w
+    );
     let cut = local.pair_switch();
-    let route_local = format!("{:?}", local.route());
+    let route_local = local.route();
     let e_local = local.e_pair;
 
     let mut complete = build_scene(cfg, curves);
@@ -588,11 +675,24 @@ fn gate_g2(
     let e_complete = complete.e_pair;
 
     let rel = (e_local - e_complete).abs() / e_complete.abs().max(1.0e-30);
+    // THE PRECONDITION, asserted rather than hoped for. `Sim::route` exists so a caller can
+    // see whether the decomposition engaged instead of assuming it did, and a comparison of
+    // the complete route against itself is not a comparison.
+    let engaged = route_local == holon_render::cells::Route::Cells;
     println!(
-        "# GATE G2 (energy half): {}  route {route_local} vs {:?}  pair switch {:?}  \
-         list_cutoff {:.4} bohr (>= R_s {r_s:.4})  e_pair {e_local:.12e} vs \
-         {e_complete:.12e}  relative {rel:.3e} (<= {G2_TOL:.0e})",
-        pf(rel <= G2_TOL),
+        "# GATE G2 (energy half): {}  n {}  box {:.1} bohr  route {route_local:?} vs {:?} \
+         (decomposition engaged: {engaged})  pair switch {:?}  list_cutoff {:.4} bohr \
+         (>= R_s {r_s:.4})  e_pair {e_local:.12e} vs {e_complete:.12e}  \
+         relative {rel:.3e} (<= {G2_TOL:.0e})",
+        if !engaged {
+            "VOID (V2: the routes were the same route)"
+        } else if in_range == 0 {
+            "VOID (V2: no pair within the cutoff, so both routes agreed about nothing)"
+        } else {
+            pf(rel <= G2_TOL)
+        },
+        cfg.n,
+        cfg.w,
         complete.route(),
         cut,
         local.list_cutoff()
@@ -1045,6 +1145,7 @@ fn periodic_arm(
         w: edge,
         h: edge,
         prescale: 1.0,
+        three_d: false,
     };
     println!("# periodic arm: box {edge:.4} x {edge:.4} bohr, sized at 0.75 R_f so the image sector is nonempty");
     let sim = build_scene(&cfg, curves);
@@ -1179,6 +1280,7 @@ fn cfg_clone(c: &SceneCfg) -> SceneCfg {
         w: c.w,
         h: c.h,
         prescale: c.prescale,
+        three_d: c.three_d,
     }
 }
 
@@ -1216,6 +1318,7 @@ fn gate_g13(curves: &[(Species, Species)], tails: &[Option<CurveTail>], r_s: f64
             w,
             h,
             prescale: 1.0,
+            three_d: false,
         };
         let sim = build_scene(&cfg, curves);
         let mut far = FarSector::build(tails, r_s, budget, Dims::Two).expect("builds");
@@ -1425,6 +1528,14 @@ struct Split {
     sub_support_pairs: usize,
     /// Pairs in `(c*, r_max]` that a list built at `R_s` would MISS. EXACT 0 required (G2).
     missed_pairs: usize,
+    /// WHAT THE NEW SUBSYSTEM ACTUALLY DISCARDS on this frame: the table's own value summed
+    /// over pairs past `R_f`, where neither the near sector nor the far sum reaches.
+    beyond_rf: f64,
+    /// Where the tail model DISAGREES with the extrapolation it replaces, summed over
+    /// `(R_s, R_f]`. Not a discard — the far sector carries these pairs — but it is the
+    /// model's own uncertainty on them, and G14 adds it because a model that carries a pair
+    /// wrongly has not paid for it either.
+    model_gap: f64,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -1435,6 +1546,7 @@ fn split_frame(
     rmax: &[Vec<f64>],
     bank: &holon_render::bank::PairBank,
     r_s: f64,
+    far: &FarSector,
 ) -> Split {
     let n = pos.len();
     let mut out = Split::default();
@@ -1464,6 +1576,17 @@ fn split_frame(
                     out.s += removed;
                 } else {
                     out.t += removed;
+                }
+            }
+            // WHAT B2 LEAVES BEHIND, per frame. Accumulated here rather than differenced
+            // from three maxima afterwards: those maxima fall on different frames, and a
+            // max of a part is not a part of a max — the freeze says so about B1b's own
+            // numbers and it would be a poor thing to then do it here.
+            if r > far.r_f() {
+                out.beyond_rf += t.u(r);
+            } else if r > r_s {
+                if let Some(m) = far.model(slot[a][b]) {
+                    out.model_gap += m.eval(r).0 - t.u(r);
                 }
             }
         }
@@ -1508,9 +1631,30 @@ fn arm_frames(root: &Path, manifest_path: &Path, stride: usize) {
     );
 
     let tails = curve_tails(&sim, &meta);
-    report_g3(&tails);
+    let (_adopting, fenced) = report_g3(&tails);
     let r_s = tails.iter().flatten().map(|c| c.r_max()).fold(0.0f64, f64::max);
-    println!("# R_s = {r_s:.4} bohr; c* = {C_STAR} bohr");
+    let far = match FarSector::build(&tails, r_s, DEFAULT_BUDGET, Dims::Two) {
+        Ok(f) => f,
+        Err(e) => {
+            println!("VOID frames arm — the far sector refused to build: {e}");
+            return;
+        }
+    };
+    println!(
+        "# R_s = {r_s:.4} bohr; c* = {C_STAR} bohr; R_f = {:.4} bohr; budget \
+         {DEFAULT_BUDGET:.3e} Ha; fenced = {fenced} curve(s)",
+        far.r_f()
+    );
+    for s in 0..holon_render::bank::MAX_TABLES {
+        if let Some(m) = far.model(s) {
+            // R5's fields travel with the parameter, every time it is quoted.
+            println!(
+                "# tail slot {s}: p {:.4}  C_p {:.6e}  solver_exit {}  \
+                 solver_budget_iterations {}  uncertainty_hartree {:.3e}",
+                m.p, m.c_p, m.solver_exit, m.solver_budget_iterations, m.uncertainty_hartree
+            );
+        }
+    }
 
     // The manifest refusal, reused verbatim from B1b: the digests are the same file's.
     let Ok(manifest_text) = std::fs::read_to_string(manifest_path) else {
@@ -1541,7 +1685,8 @@ fn arm_frames(root: &Path, manifest_path: &Path, stride: usize) {
     let mut zs: Vec<u32> = vec![];
     let mut slot: Vec<Vec<usize>> = vec![];
     let mut rmax: Vec<Vec<f64>> = vec![];
-    let mut per_seed: Vec<(u64, f64, f64, f64, usize, usize, usize)> = Vec::new();
+    let mut per_seed: Vec<(u64, f64, f64, f64, usize, usize, usize, f64, u64, f64, f64)> =
+        Vec::new();
     let mut frames_scored = 0usize;
     let mut worst = (0.0f64, 0u64, 0u64, Split::default());
     let mut worst_s = (0.0f64, 0u64);
@@ -1590,8 +1735,11 @@ fn arm_frames(root: &Path, manifest_path: &Path, stride: usize) {
         let seed = traj.header.seed;
         let (mut mx, mut ms, mut mt, mut mframe) = (0.0f64, 0.0f64, 0.0f64, 0u64);
         let (mut sub, mut miss, mut cnt) = (0usize, 0usize, 0usize);
+        // The residual is a max over frames of a PER-FRAME quantity, and every frame is in
+        // the max whatever else it did (M-MAX-OVER-SUCCESSES).
+        let (mut mres, mut mres_frame, mut mbeyond, mut mgap) = (0.0f64, 0u64, 0.0f64, 0.0f64);
         for f in traj.frames.iter().step_by(stride.max(1)) {
-            let sp = split_frame(&f.pos, &zidx, &slot, &rmax, &sim.bank, r_s);
+            let sp = split_frame(&f.pos, &zidx, &slot, &rmax, &sim.bank, r_s, &far);
             cnt += 1;
             sub += sp.sub_support_pairs;
             miss += sp.missed_pairs;
@@ -1614,10 +1762,17 @@ fn arm_frames(root: &Path, manifest_path: &Path, stride: usize) {
                     worst_t = (mt, seed);
                 }
             }
+            let res = sp.beyond_rf.abs() + sp.model_gap.abs();
+            if res > mres {
+                mres = res;
+                mres_frame = f.index;
+                mbeyond = sp.beyond_rf;
+                mgap = sp.model_gap;
+            }
         }
         frames_scored += cnt;
         missed_total += miss;
-        per_seed.push((seed, mx, ms, mt, cnt, sub, miss));
+        per_seed.push((seed, mx, ms, mt, cnt, sub, miss, mres, mres_frame, mbeyond, mgap));
         println!(
             "SEED {seed:#018x} max|E_switch(c*)| {mx:.6e} at frame {mframe}  \
              max|S| {ms:.6e}  max|T| {mt:.6e}  frames {cnt}  sub-support pairs {sub}  \
@@ -1661,27 +1816,30 @@ fn arm_frames(root: &Path, manifest_path: &Path, stride: usize) {
     );
 
     // ---- G14
-    println!("COLUMNS G14 seed max_switch 0.10Bs 0.10Ds b1b_ratio residual_after b2_ratio paid");
+    println!(
+        "COLUMNS G14 seed max_switch 0.10Bs 0.10Ds b1b_ratio residual_after at_frame \
+         beyond_Rf model_gap b2_ratio paid"
+    );
     let mut unpaid = 0usize;
-    for (seed, mx, ms, mt, _, _, _) in &per_seed {
+    for (seed, mx, _ms, _mt, _, _, _, mres, mres_frame, mbeyond, mgap) in &per_seed {
         let Some(&(_, b10, d10, b1b)) = B1B_MIXED.iter().find(|r| r.0 == *seed) else {
             println!("G14 {seed:#018x} NO STAKED B1b ROW — refusing to grade an unstaked seed");
             unpaid += 1;
             continue;
         };
-        // What the new subsystem leaves behind: channel S is recovered EXACTLY by the near
-        // sector (G2), and channel T is carried by the tail model, so the residual discard
-        // is what neither covers. With R_s at the curve's support and R_f past the box
-        // diagonal, that is the far sum's own truncation residual.
-        let residual = (mx - ms - mt).abs();
-        let ratio = residual / d10;
+        // WHAT THE SUBSYSTEM LEAVES BEHIND, and it is a per-frame quantity maximised over
+        // frames rather than a difference of three maxima that fall on different frames.
+        // Two parts, both counted: pairs past `R_f`, which nothing reaches, and the tail
+        // model's disagreement with the extrapolation it replaces on the pairs it does
+        // carry — a pair carried wrongly has not been paid for either.
+        let ratio = mres / d10;
         let paid = ratio < 1.0;
         if !paid {
             unpaid += 1;
         }
         println!(
-            "G14 {seed:#018x} {mx:.6e} {b10:.3e} {d10:.3e} {b1b:.3} {residual:.6e} \
-             {ratio:.4} {paid}"
+            "G14 {seed:#018x} {mx:.6e} {b10:.3e} {d10:.3e} {b1b:.3} {mres:.6e} \
+             {mres_frame} {mbeyond:.6e} {mgap:.6e} {ratio:.4} {paid}"
         );
     }
     println!(
@@ -1695,8 +1853,9 @@ fn arm_frames(root: &Path, manifest_path: &Path, stride: usize) {
     // ---- G12
     println!(
         "# GATE G12 work count: frames scored {frames_scored} (floor {G12_MIN_FRAMES})  \
-         refusals {refusals}  seeds {}",
-        per_seed.len()
+         refusals {refusals}  seeds {}  sub-support pairs {}",
+        per_seed.len(),
+        per_seed.iter().map(|r| r.5).sum::<usize>()
     );
     println!("# GATE G12: {}", pf(frames_scored >= G12_MIN_FRAMES));
     println!(

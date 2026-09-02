@@ -14,6 +14,7 @@
 
 pub mod census;
 pub mod field;
+pub mod field_lg;
 pub mod classifier;
 pub mod lens;
 pub mod partition;

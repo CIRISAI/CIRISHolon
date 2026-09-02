@@ -397,9 +397,18 @@ fn handle_actions(
                 world.sim.timescale.sim_speed_fs_per_wallsec *= SPEED_STEP;
             }
             Action::ToggleWalls => {
+                // THREE boundaries since the barostat landed, so this cycles rather
+                // than flips: Walls -> Open -> Periodic -> Walls, the same order the ABI
+                // numbers them (`holon_set_boundary` 0/1/2). Exhaustive on purpose and
+                // with no `_` arm — a wildcard here is what would let the NEXT boundary
+                // land silently, and the compile error this replaces is the mechanism
+                // that made a fourth one impossible to miss. It was also, for two days,
+                // the mechanism nobody saw: this crate has not compiled since `Periodic`
+                // was added, and `pages.yml` builds it under `continue-on-error`.
                 world.sim.boundary = match world.sim.boundary {
                     Boundary::Walls => Boundary::Open,
-                    Boundary::Open => Boundary::Walls,
+                    Boundary::Open => Boundary::Periodic,
+                    Boundary::Periodic => Boundary::Walls,
                 };
                 // The ledger's origin is a property of the scene, and turning a wall off
                 // changes the scene. Re-basing here is what keeps the drift reading a
@@ -677,6 +686,11 @@ fn update_hud(world: Res<AtomWorld>, mut texts: Query<(&Slot, &mut Text, &mut Te
                 text.0 = match s.boundary {
                     Boundary::Walls => "walls ON".to_string(),
                     Boundary::Open => "walls OFF".to_string(),
+                    // Named for what it IS rather than as a third state of "walls",
+                    // because a periodic box is not a box with its walls switched off:
+                    // it wraps, every separation is a minimum image, and it is the only
+                    // boundary on which the virial is a pressure.
+                    Boundary::Periodic => "periodic (wrapping)".to_string(),
                 }
             }
             Slot::LabelThermostat => {

@@ -657,6 +657,39 @@ cargo test -q --release -p q8-mps --test c2_tdvp_gates 2>/dev/null >/dev/null \
   && ok "q8-mps C2 TDVP gates pass (exactness, order, 4 planted defects fire)" \
   || no "q8-mps C2 TDVP gates pass (exactness, order, 4 planted defects fire)"
 
+# 15b. THE 3D SHELL IN THE CONFIGURATION THE DEPLOY ACTUALLY SHIPS.
+#
+#     Gate 15 above runs holon-render-3d `--no-default-features --features headless`,
+#     which is right for what it tests and is why it could not see this: `hud.rs`,
+#     `pick.rs` and `render.rs` are all `#[cfg(feature = "render")]`, so the headless
+#     build never compiles them. The wasm the site serves is built WITH render.
+#
+#     MEASURED CONSEQUENCE, and it is why this gate exists rather than being a tidy-up.
+#     `Boundary::Periodic` landed at 4bec9e2 and two `match` expressions in hud.rs were
+#     never extended. From that commit until this one, holon-render-3d DID NOT COMPILE for
+#     wasm32 -- and both of the mechanisms that should have said so were green:
+#
+#       * gate 15 passed, because the feature it selects excludes the broken modules;
+#       * pages.yml built the artifact under `continue-on-error: true`, so the deploy
+#         proceeded and the failure was swallowed.
+#
+#     The artifacts are never committed (they are ~40 MB each), so every deploy in that
+#     window shipped docs/atoms3d with no wasm at all. The page fences itself honestly
+#     when neither backend loads, which is the one thing that went right; nobody was told
+#     the shell had stopped building.
+#
+#     `cargo check`, not `build`: this catches the type errors that actually broke it
+#     without paying for codegen and wasm-bindgen on every gate run. The full artifact
+#     build stays in pages.yml where it belongs.
+if cargo check -q --manifest-path crates/holon-render-3d/Cargo.toml \
+     --target wasm32-unknown-unknown --features render 2>/dev/null; then
+  ok "holon-render-3d compiles for wasm WITH render (the configuration the site ships)"
+else
+  echo "    the headless gate above cannot see this: hud/pick/render are cfg(feature = \"render\")"
+  echo "    reproduce: cargo check --manifest-path crates/holon-render-3d/Cargo.toml --target wasm32-unknown-unknown --features render"
+  no "holon-render-3d compiles for wasm WITH render (the configuration the site ships)"
+fi
+
 # 17. THE BROWSER ARTIFACT, RUN RATHER THAN BUILT.
 #
 #     Gate 1 compiles for wasm. Nothing until now RAN a wasm artifact, and that gap has

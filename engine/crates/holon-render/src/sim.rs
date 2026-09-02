@@ -3599,9 +3599,24 @@ impl Sim {
         }
         let dt = self.dt();
 
-        let mut jx = 0.0;
-        let mut jy = 0.0;
-        let mut jz = 0.0;
+        let mut j = (0.0, 0.0, 0.0);
+        self.half_kick(dt, &mut j);
+        self.drift_step(dt);
+        self.wrap_atoms();
+        self.compute_forces();
+        self.half_kick(dt, &mut j);
+        self.close_step(dt, j);
+    }
+
+    /// THE HALF KICK. Velocities advance half a step under the CACHED accelerations, and
+    /// the external half of what they advanced by is accumulated into `j` as the impulse
+    /// it delivered — the same term, not an independent estimate of it.
+    ///
+    /// `j` is threaded through rather than returned because the two half kicks of one step
+    /// accumulate into ONE running sum, and `(sum_a) + (sum_b)` is not `sum_a` continued
+    /// into `sum_b` in `f64`. A refactor that split them would move the momentum ledger's
+    /// last bits while looking like a tidy-up.
+    pub(crate) fn half_kick(&mut self, dt: f64, j: &mut (f64, f64, f64)) {
         for i in 0..self.n {
             let (px, py, pz) = self.a_pair[i];
             let (ex, ey, ez) = self.a_ext[i];
@@ -3609,27 +3624,33 @@ impl Sim {
             self.atoms[i].vx += half * (px + ex);
             self.atoms[i].vy += half * (py + ey);
             self.atoms[i].vz += half * (pz + ez);
-            jx += 0.5 * dt * ex;
-            jy += 0.5 * dt * ey;
-            jz += 0.5 * dt * ez;
+            j.0 += 0.5 * dt * ex;
+            j.1 += 0.5 * dt * ey;
+            j.2 += 0.5 * dt * ez;
         }
+    }
 
+    /// THE DRIFT. Positions advance a whole step at the half-kicked velocity.
+    pub(crate) fn drift_step(&mut self, dt: f64) {
         for i in 0..self.n {
             self.atoms[i].x += dt * self.atoms[i].vx;
             self.atoms[i].y += dt * self.atoms[i].vy;
             self.atoms[i].z += dt * self.atoms[i].vz;
         }
-        // THE WRAP. An atom that left one face re-enters through the opposite one. It is
-        // done here, on the drift, and nowhere else — a coordinate is either canonical or
-        // it is not, and two places that fold it is two places that can disagree about
-        // whether it has been folded.
-        //
-        // It does NO work and delivers NO impulse: the wrap changes a coordinate by
-        // exactly one box vector, and under the minimum-image convention every separation
-        // in the scene is unchanged by that (`pbc_translation_residual` is the gate that
-        // says so). Velocities are untouched. So neither ledger has anything to post,
-        // which is why there is no `w_ext` line here and why its absence is a statement
-        // rather than an omission.
+    }
+
+    /// THE WRAP. An atom that left one face re-enters through the opposite one. It is
+    /// done here, on the drift, and nowhere else — a coordinate is either canonical or
+    /// it is not, and two places that fold it is two places that can disagree about
+    /// whether it has been folded.
+    ///
+    /// It does NO work and delivers NO impulse: the wrap changes a coordinate by
+    /// exactly one box vector, and under the minimum-image convention every separation
+    /// in the scene is unchanged by that (`pbc_translation_residual` is the gate that
+    /// says so). Velocities are untouched. So neither ledger has anything to post,
+    /// which is why there is no `w_ext` line here and why its absence is a statement
+    /// rather than an omission.
+    pub(crate) fn wrap_atoms(&mut self) {
         if self.boundary.wraps() {
             let geom = self.geom();
             for i in 0..self.n {
@@ -3639,23 +3660,15 @@ impl Sim {
                 self.atoms[i].z = z;
             }
         }
+    }
 
-        self.compute_forces();
-
-        for i in 0..self.n {
-            let (px, py, pz) = self.a_pair[i];
-            let (ex, ey, ez) = self.a_ext[i];
-            let half = 0.5 * dt / self.atoms[i].mass();
-            self.atoms[i].vx += half * (px + ex);
-            self.atoms[i].vy += half * (py + ey);
-            self.atoms[i].vz += half * (pz + ez);
-            jx += 0.5 * dt * ex;
-            jy += 0.5 * dt * ey;
-            jz += 0.5 * dt * ez;
-        }
-        self.j_ext.0 += jx;
-        self.j_ext.1 += jy;
-        self.j_ext.2 += jz;
+    /// CLOSING THE STEP: post the impulse, recompute the energy columns, run the
+    /// thermostat if one is engaged, advance the clock, and track the two per-substep
+    /// extrema the gates read.
+    pub(crate) fn close_step(&mut self, dt: f64, j: (f64, f64, f64)) {
+        self.j_ext.0 += j.0;
+        self.j_ext.1 += j.1;
+        self.j_ext.2 += j.2;
 
         self.accumulate_energy();
 

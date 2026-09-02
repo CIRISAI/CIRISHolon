@@ -144,15 +144,41 @@ impl BoxGeom {
     /// case rather than the normal one.
     #[inline]
     pub fn wrap1(x: f64, l: f64) -> f64 {
+        Self::wrap1_mirror(x, l, &mut [])
+    }
+
+    /// [`BoxGeom::wrap1`]'s subtraction, applied to `x` and MIRRORED onto `followers` —
+    /// the same `-= l` or `+= l`, the same number of times, in the same order.
+    ///
+    /// This exists because a ring polymer must translate as ONE OBJECT: folding its beads
+    /// independently puts two of them a box length apart across a face, and the spring
+    /// term then reads that separation as real. Driving the fold from the ring's centroid
+    /// and mirroring it onto every bead keeps the ring intact, and — because it is
+    /// literally this function's own arithmetic reaching this function's own answer — a
+    /// one-bead ring folds bit-for-bit the way a classical atom folds. `wrap1` above is
+    /// the empty-follower case rather than a second copy: two statements of a subtraction
+    /// are two places for it to drift.
+    ///
+    /// A follower can end outside `[0, l)`; that is the point. Under the minimum-image
+    /// convention no separation in the scene changes when a whole ring translates by a box
+    /// vector, so the beads are still interacted correctly.
+    #[inline]
+    pub fn wrap1_mirror(x: f64, l: f64, followers: &mut [f64]) -> f64 {
         if !(l > 0.0) || !x.is_finite() {
             return x;
         }
         let mut x = x;
         while x >= l {
             x -= l;
+            for f in followers.iter_mut() {
+                *f -= l;
+            }
         }
         while x < 0.0 {
             x += l;
+            for f in followers.iter_mut() {
+                *f += l;
+            }
         }
         x
     }

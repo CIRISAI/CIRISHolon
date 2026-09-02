@@ -70,10 +70,26 @@ GPU-class table generation will not be a drop-in speedup, and the two reasons ar
 already measured:
 
 * **the sigma is 4% of a Davidson iteration** — 14.7 ms against 410 ms at the
-  `(O,O,O)` scale; the host driver is the other 96%;
-* **worker count is bounded by VRAM, not cores** — each worker needs its own
-  device operator holding ~500 MB of c-independent tables, so roughly 2–3 workers
-  on this card against 32 CPU workers.
+  `(O,O,O)` scale; the host driver is the other 96%. So Amdahl caps a whole-table
+  speedup near **3%** even with the device free, and 30 workers sharing one device
+  serialise that 4% among themselves, which can make it negative.
 
-So the device arm helps a SINGLE large solve and does not currently help a table.
-Saying that here, before F.2 is built, is cheaper than discovering it after.
+**CORRECTION, and it removes the second reason entirely.** This section first
+said worker count was bounded by VRAM at "roughly 2–3 workers on this card
+against 32 CPU workers". **That was arithmetic run backwards** — 16 GB over
+0.5 GB is 32, not 2 — and it was repeated into two lanes' inboxes and this
+document before anything measured it. The measurement:
+
+    (O,O,O)-shaped, 207,025 det:  480.5 MiB per worker
+    card:                          15,683 MiB free
+    with a 1 GiB reserve:          30 workers fit
+
+**VRAM is not what stops GPU-class table generation.** The conclusion survives —
+the device arm helps a SINGLE large solve and does not help a table — but on ONE
+leg instead of two, and the leg that failed is the one I had stated most
+confidently. It is now pinned by
+`gpu_lease.rs::the_gpu_worker_bound_is_derived_from_vram_and_bounds_in_both_directions`,
+which derives the bound from the live card rather than from a sentence.
+
+Saying this here, before F.2 is built, is still cheaper than discovering it
+after — and the correction is the better argument for saying it early.

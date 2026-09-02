@@ -247,3 +247,83 @@ fn plant_d9_a_yanked_gpu_convicts_the_lease_rather_than_erroring() {
         ),
     }
 }
+
+/// **The GPU-class worker bound is DERIVED from VRAM, and it really is small.**
+///
+/// F.2's shape depends on this number, so it is measured on the real card rather than
+/// asserted from the design doc. Each GPU worker needs its own device operator — `GpuFciSigma`
+/// owns device buffers a second thread cannot share — so the bound is VRAM per operator, not
+/// cores.
+///
+/// Both directions are pinned, because a bound that only ever says "lots" or only ever says
+/// "none" is not a bound:
+///
+/// * a SMALL space fits many workers (the reserve, not the footprint, is what limits it);
+/// * a space whose single operator exceeds the card returns **0**, which a caller must read as
+///   a refusal of GPU-class generation rather than a licence to fall back to the host.
+#[test]
+fn the_gpu_worker_bound_is_derived_from_vram_and_bounds_in_both_directions() {
+    let gp = holon_gpu::GpuSigmaProvider::new(0).expect("no CUDA device");
+
+    // A small space: many workers fit, and the answer must be positive or the bound is
+    // refusing work the card can obviously do.
+    let (small, _ci) = {
+        let o = holon_chem::elements::by_symbol("O").unwrap();
+        let h = holon_chem::elements::by_symbol("H").unwrap();
+        let (space, mo, _) = holon_chem::pair::geometry_problem(
+            &[o, h, h],
+            vec![at(0.0, 0.0, 0.0), at(1.81, 0.0, 0.0), at(-0.46, 1.75, 0.0)],
+        );
+        let ci = holon_chem::fci::ci_ints(&mo, holon_chem::fci::Order::Value);
+        (space, ci)
+    };
+    let many = gp.max_workers_for(&small, 1024).expect("could not derive the bound");
+    println!("water ({} det): {many} GPU workers fit with a 1 GiB reserve", small.n_det);
+    assert!(
+        many > 1,
+        "a 441-determinant space fits {many} workers on a 16 GB card; the bound is refusing \
+         work the card can plainly do"
+    );
+
+    // THE (O,O,O) CASE, pinned, because a number quoted into two lanes' inboxes was wrong by
+    // an order of magnitude before this line existed. 15 orbitals, 12 electrons per spin is
+    // C(15,12) = 455 strings per spin — the production table's exact shape.
+    let ooo = holon_chem::fci::FciSpace::new(15, 12, 12);
+    let per_mib = holon_gpu::fci::vram_bytes_for(&ooo).unwrap() as f64 / (1u64 << 20) as f64;
+    let ooo_workers = gp.max_workers_for(&ooo, 1024).expect("could not derive the bound");
+    println!("(O,O,O) ({} det, {per_mib:.1} MiB/worker): {ooo_workers} GPU workers fit", ooo.n_det);
+    assert_eq!(ooo.n_det, 207_025, "this is not the production table's shape");
+    assert!(
+        ooo_workers >= 20,
+        "the (O,O,O) footprint admits only {ooo_workers} workers, against {per_mib:.1} MiB \
+         each on a card with over 15 GB free. If this is genuinely low the footprint grew; if \
+         it is not, the bound is wrong. Either way the claim that VRAM is what stops GPU-class \
+         table generation needs re-deriving — it was ALREADY wrong once, by an order of \
+         magnitude, in the direction that made the recommendation sound better supported."
+    );
+
+    // A space no single operator fits: the answer is 0, and 0 means REFUSE.
+    let huge = holon_chem::fci::FciSpace::new(14, 7, 7);
+    let none = gp.max_workers_for(&huge, 1024).expect("could not derive the bound");
+    println!(
+        "14-orbital 7/7 ({} det, {:.1} GB/worker): {none} GPU workers fit",
+        huge.n_det,
+        holon_gpu::fci::vram_bytes_for(&huge).unwrap() as f64 / 1e9
+    );
+    assert_eq!(
+        none, 0,
+        "a space needing more VRAM than the card has reported {none} workers; a bound that \
+         cannot say `none` cannot refuse, and D4 forbids the fallback that would follow"
+    );
+
+    // The reserve is real: asking to hold back more than the card has leaves nothing.
+    let (_free, total) = gp.mem_info().expect("device memory unreadable");
+    let starved = gp
+        .max_workers_for(&small, (total as u64 / (1 << 20)) * 2)
+        .expect("could not derive the bound");
+    assert_eq!(
+        starved, 0,
+        "a reserve larger than the card still admitted {starved} workers, so the reserve is \
+         not being held back"
+    );
+}

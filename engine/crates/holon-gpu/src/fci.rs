@@ -187,6 +187,59 @@ impl GpuSigmaProvider {
         Ok(cudarc::driver::result::mem_get_info()?)
     }
 
+    /// **How many GPU-class workers this card can actually hold for a given space.**
+    ///
+    /// F.2 needs this and it is a REFUSAL, not a tuning knob. A GPU-class table generator
+    /// cannot be handed a worker count the way the CPU one can: each worker needs its OWN
+    /// device operator, holding its own copy of the c-independent tables, because
+    /// `GpuFciSigma` owns device buffers a second thread cannot share. So the bound is VRAM
+    /// per operator, not cores.
+    ///
+    /// **MEASURED, correcting a claim this comment first carried.** At the `(O,O,O)` scale the
+    /// footprint is **480.5 MiB per worker** against **15,683 MiB free**, so with a 1 GiB
+    /// reserve **30 workers fit** — not the 2–3 first written here. That figure was arithmetic
+    /// run backwards (16 GB over 0.5 GB is 32, not 2), and it was repeated into two lanes'
+    /// inboxes and a results document before this function measured it.
+    ///
+    /// **VRAM is therefore NOT the reason GPU-class generation does not help a table.** The
+    /// reason is the one that was measured: the sigma is 4% of a Davidson iteration, so
+    /// Amdahl caps a whole-table speedup near 3% even with the device free — and 30 workers
+    /// sharing one device serialise that 4% among themselves, which can make it negative. The
+    /// conclusion survives on one leg instead of two, and the leg that failed is the one that
+    /// had been stated most confidently.
+    ///
+    /// # Why this is derived and not declared
+    ///
+    /// A constant would be wrong on the next card and wrong again on the next space. The
+    /// footprint is already computed exactly by [`vram_bytes_for`] — the same arithmetic the
+    /// operator's own pre-allocation check uses — and free VRAM is a live reading. Deriving
+    /// the answer from both is the only version that stays true when either moves.
+    ///
+    /// # The reserve, and why it is not zero
+    ///
+    /// `reserve_mib` is held back rather than filled. This card runs the browser's GPU
+    /// process too, and a generator that consumed every free byte would be correct about its
+    /// own arithmetic and hostile to everything else on the machine. The caller states it;
+    /// there is no default, because the right reserve depends on what else is running and a
+    /// default would be a guess wearing a policy's clothes.
+    ///
+    /// Returns 0 when not even one worker fits — which a caller must treat as a REFUSAL of
+    /// GPU-class generation for that space, not as a reason to fall back to the host (D4: no
+    /// silent fallback across classes).
+    pub fn max_workers_for(
+        &self,
+        space: &FciSpace,
+        reserve_mib: u64,
+    ) -> Result<usize, FciGpuError> {
+        let per_worker = vram_bytes_for(space)?;
+        if per_worker == 0 {
+            return Ok(0);
+        }
+        let (free, _total) = self.mem_info()?;
+        let usable = (free as u64).saturating_sub(reserve_mib.saturating_mul(1 << 20));
+        Ok((usable / per_worker) as usize)
+    }
+
     /// Build the device operator for one integral set, checking VRAM FIRST.
     pub fn build(
         &self,

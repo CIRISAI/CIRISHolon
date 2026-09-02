@@ -95,6 +95,26 @@ so every plant above was checked to move its carrier before its gate's verdict w
   the ionic `r^-1` tail**, which is GANTT node B2's, and this table neither serves it nor
   claims it.
 
+## What G5 can and cannot catch, stated before someone else states it
+
+The channel enumeration is CALLER-SUPPLIED, so the obvious attack is: omit the true lowest
+channel and the gate cannot know what it was never told. It mostly cannot succeed, and the
+reason is worth writing down because it is the reason the two gates are not redundant.
+
+A curve whose declared asymptote is too HIGH approaches the true one from below, so
+`E(q_max) − E_asym` goes large and negative and **G5 fires** — that is exactly what plant
+P3 measures, at 160× the bound. The escape is a domain too short for the curve to have
+reached any asymptote, where the residual could be small for the wrong reason; that is
+what **G7's decay leg** is for, since a curve still moving at `q_max` does not show a tail
+falling by a factor of four over the last half of its domain.
+
+What survives both: a missing channel that lies ABOVE the declared one. Nothing here
+detects that, and nothing needs to — the declared asymptote is still the minimum over the
+channels that exist, and an omitted higher channel changes no published number. And a
+missing channel below the declared one on a curve whose domain is BOTH too short and
+coincidentally flat would pass both. No such case is exhibited; it is recorded as the hole
+rather than argued away.
+
 ## What this does NOT discharge
 
 * **The ionic three-body surfaces** (I-2's remaining half). They need a rule assigning

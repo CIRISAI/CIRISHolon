@@ -385,6 +385,31 @@ by rung IS the site's story. WB-7 (no synthetic telemetry) applies at every
 altitude; the gravity-tier exhibit (per-particle vs column-sum) already shows
 how a scale-dependent truth is displayed without faking dynamics.
 
+**THE ZOOM IS A LEASE LEDGER (operator's design, same order).** The visible
+frustum at the current zoom decides WHICH holons are alive at WHICH tier:
+zoom in far enough and most of the scene is invisible — those holons RELEASE
+their leases (RESOURCE-1's law: an allocation is a child holon, receipts are
+the rent) and the freed budget re-allocates to the visible region at full
+fidelity. The invisible bulk is never paused-fake: it is HANDED UP to its
+coarser certified view, which serves as the visible region's bath boundary —
+a closure SEAM whose defect is measured and displayed (Budget.lean's ledger),
+fenced where the coarse tier is uncertified. Zooming back in RESAMPLES the
+fine state from the coarse state's fiber — legitimate exactly where closure
+is certified, because a certified tier's macro-future is fiber-independent;
+where it is not certified, the seam wears its fence. Trajectory identity is
+never promised across a zoom (chaos already forbids it and the record says
+so); DISTRIBUTION-level closure is the contract, which is the same contract
+the certified census already runs on.
+
+**THE HERO'S FIRST INTERACTION: stretch the cube.** The box-scale door at
+hero scale — drag the cube larger, watch density fall, pressure fall (the
+virial readout), and the census's phase fractions move as water leaves the
+liquid for vapor, LIVE, with every number a measured readout and none of it
+a staked claim (the phase-DIAGRAM claims belong to TRIPLE_POINT_PREREG's
+campaign; the page shows the census's live reading and cites the campaign
+for the map). The demo axis and the campaign's f-axis are the same door,
+which is the point.
+
 Deployment: pages.yml serves the workbench at root; the committed cdylib stays
 the gated artifact; the Bevy build stays CI-built with its sha in the page
 manifest (item-1 ruling unchanged).

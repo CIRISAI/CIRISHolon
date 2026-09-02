@@ -356,6 +356,39 @@ against what §1–7 asked for, and stakes the page update.*
    reading provisional pending the same-commit control, and the page says
    so exactly as the README does).
 
+### 9c. THE SITE — operator's order, 2026-09-01
+
+**The workbench REPLACES the current .io UI entirely.** Not a page beside the
+site; the site. The old UI retires when the 3D workbench is green under its
+full gate battery — no gap where neither serves, same law as the 2D canvas
+retirement.
+
+**THE HERO DEMO: the 1 km × 1 km water cube — the scale ladder made visible.**
+A kilometre of water is ~3e31 molecules; nobody simulates that atomistically
+and the page never pretends to. The hero is the ZOOM AXIS itself (WB-1's law):
+at the bottom, the atomistic cube LIVE — the engine's own certified molecules,
+the tier that passed the closure test; each step outward hands off to the next
+COARSER CLOSED VIEW, and the handoff is the exhibit — the commuting square on
+screen. The honest ladder at launch:
+
+| zoom band | what runs | status shown on screen |
+|---|---|---|
+| molecular (~nm) | the live engine, full physics ladder | CERTIFIED (the census's own verdict, cited) |
+| H-bond network (~10 nm) | GATED — GANTT node G, rung 1 | its fence, with owner and exit, per the fence law |
+| fluid element (~µm+) | GATED — node G, rung 2; the grain law banked | fence, owner, exit |
+| the cube (1 km) | the continuum face of the ladder | "this face becomes live as each rung beneath it certifies" |
+
+**The one law that makes this hero possible now:** no tier ever fakes. A zoom
+band either runs its certified physics or wears its fence — a fence with an
+owner and an exit is HONEST CONTENT on this site, and the ladder climbing rung
+by rung IS the site's story. WB-7 (no synthetic telemetry) applies at every
+altitude; the gravity-tier exhibit (per-particle vs column-sum) already shows
+how a scale-dependent truth is displayed without faking dynamics.
+
+Deployment: pages.yml serves the workbench at root; the committed cdylib stays
+the gated artifact; the Bevy build stays CI-built with its sha in the page
+manifest (item-1 ruling unchanged).
+
 ### The dE4-in-browser chain, staked with owners (NOT this pass)
 
 evaluator for pushed (x,y,u) surfaces (mesh, next increment) → the (O,H,H)

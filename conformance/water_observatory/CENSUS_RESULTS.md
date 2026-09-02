@@ -728,6 +728,20 @@ wall time also jumps from 19 s to 309 s. That gives a check worth recording:
 controlled comparison looks like from the inside, and evidence that my build reproduces the
 banked run before G-dE4-2 is formally scored.
 
+**And it continues to match PAST the point where the term engages.** At frame 6000, after
+dE₄ has started firing:
+
+| | temperature | dE₄ solves | drift |
+|---|---|---|---|
+| banked reference | 248 K | **139** | 9.35e-5 |
+| arm A (`--de4=on`) | 248 K | **139** | 9.35e-5 |
+| arm B (`--de4=off`) | — | **0** | — |
+
+Identical in all three printed quantities; only the wall clock differs (733 s against
+2061 s), which is machine contention and not physics. **G-dE4-1 is satisfied in both
+directions**: arm A's four-body solver has fired 139 times and arm B's has fired zero, both
+read from the counter the physics itself increments. The arms are what they claim to be.
+
 ### 13.4 The caveat that applies to every certification in this document
 
 Both arms report the O–O pair curve at **worst residual 4.81e-6 against the code's own

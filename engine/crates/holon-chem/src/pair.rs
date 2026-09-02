@@ -697,6 +697,37 @@ pub struct PairMeta {
     pub worst_cg_residual: f64,
     /// Smallest overlap eigenvalue seen, the conditioning of the orthogonalisation.
     pub worst_s_eigenvalue: f64,
+    /// Did the orbital rotation converge at every knot?
+    ///
+    /// # DO NOT GATE ON THIS, and the reason is a theorem rather than a tolerance
+    ///
+    /// It is NOT a quality flag and it is deliberately absent from `to_json`'s declaration
+    /// block, where `solver_exit` and `uncertainty_hartree` live. Those two change what the
+    /// number beside them MEANS. This one cannot, because **full CI in a given one-particle
+    /// space is invariant under any unitary rotation within that space** — see the `C = X U`
+    /// comment in `solve_basis`, which is why `U` is declared to carry zero derivative. A
+    /// non-converged SCF hands the solver a different orbital BASIS, not a different answer.
+    ///
+    /// Measured, 2026-09-02 (the dE5 audit): against the independently-built committed
+    /// (O,H,H) table, worst |live − served| is 5.4e-4 where this reads true and 6.7e-4 where
+    /// it reads false. The flag does not predict disagreement, which is what the invariance
+    /// says it cannot do. Anyone finding "70 SCF non-convergences" alarming should read this
+    /// before re-deriving the alarm.
+    ///
+    /// # Two things that would make it load-bearing, neither true today
+    ///
+    /// The invariance is conditional on the CI being FULL. A frozen core, an active-space
+    /// truncation or any CASCI-shaped variant makes the rotation a real choice rather than a
+    /// gauge, and then this flag starts predicting error and belongs in the manifest after
+    /// all. If that lands, this comment is the thing to revisit.
+    ///
+    /// Separately: those 5.4e-4 and 6.7e-4 readings sit on top of the committed table's own
+    /// held-out maximum of 7.680e-4 at 65x49 (`examples/s2_build`'s tableau). The likeliest
+    /// account of that audit is that it measured the TABLE'S INTERPOLATION ERROR against live
+    /// solves — a property of the grid, unrelated to SCF — which would explain the
+    /// non-predictiveness with nothing subtle involved. Binning those disagreements by
+    /// distance from a grid node rather than by this flag is the check that separates them,
+    /// and it has not been run.
     pub scf_converged_everywhere: bool,
     /// Wall time the curve cost to generate, milliseconds. ZERO means NOT MEASURED —
     /// the browser has no clock behind `std::time::Instant`, so the host times the call

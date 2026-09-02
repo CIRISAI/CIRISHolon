@@ -235,6 +235,10 @@ pub fn reading(
     }
 }
 
+fn dist(a: [f64; 3], b: [f64; 3]) -> f64 {
+    ((a[0] - b[0]).powi(2) + (a[1] - b[1]).powi(2) + (a[2] - b[2]).powi(2)).sqrt()
+}
+
 /// The oxygen arena indices, ascending. The chart's index space.
 pub fn oxygens(z: &[u32]) -> Vec<usize> {
     (0..z.len()).filter(|&i| z[i] == 8).collect()
@@ -731,6 +735,33 @@ pub struct Rung1Report {
     pub hb_contaminated: usize,
     /// Frames carrying at least one INTER-MOLECULAR H-bond — branch (E)'s own quantity.
     pub frames_with_intermolecular: usize,
+    /// WHICH CLAUSE OF THE CRITERION IS BINDING, decomposed rather than left to be
+    /// inferred from a low count (M-EXIT-DISCRIMINATOR). Frames in which some ordered
+    /// (donor, acceptor) oxygen pair passes the O···O distance clause; then those that
+    /// also pass the O···H clause; then those that also pass the 30° angle — the last is
+    /// the H-bond itself. A big drop between two columns names the clause doing the work.
+    pub frames_oo_in_range: usize,
+    pub frames_oh_in_range: usize,
+    /// **How many separate OXYGEN-BEARING molecules the scene holds, frame by frame.**
+    /// Index `k` counts frames in which the bonded partition has exactly `k` blocks
+    /// containing at least one oxygen. This is the scope number for a NETWORK claim: a
+    /// network of molecules needs at least two molecules, and a scene sitting at 1 has
+    /// nothing to network no matter what the H-bond criterion says.
+    pub oxygen_blocks_hist: Vec<usize>,
+    /// **THE DISCRIMINATOR, added post-freeze and labelled as a diagnostic, never a gate.**
+    ///
+    /// `lens::hbonds` assigns each hydrogen to its NEAREST oxygen as donor and only then
+    /// tests the angle. In a dense scene a hydrogen sitting between two oxygens can be
+    /// assigned to one while being aligned with the other, and the edge would be
+    /// suppressed by the LENS's donor rule rather than by the geometry. That is a
+    /// different fact from "the scene has no aligned O–H···O", and a low record count
+    /// alone cannot tell them apart.
+    ///
+    /// This counts records under a RELAXED donor rule: the donor may be ANY oxygen within
+    /// 2.5 bohr of the hydrogen — a covalent O–H, the O–H curve's `R_e` being 1.9909 —
+    /// with all three Luzar–Chandler clauses otherwise unchanged. If this is also near
+    /// zero, the nearest-oxygen rule is not what is suppressing the network.
+    pub records_any_donor: usize,
     pub charts: Vec<ChartReport>,
     pub structures: Vec<StructReport>,
 }
@@ -784,8 +815,47 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
     // ---- contamination: does the criterion contain its own variable? ---------------
     let (mut records, mut contaminated) = (0usize, 0usize);
     let mut frames_with_inter = 0usize;
+    let (mut f_oo, mut f_oh) = (0usize, 0usize);
+    let mut ox_blocks_hist = vec![0usize; ox.len() + 1];
+    let mut any_donor = 0usize;
     for (t, hb) in hbs.iter().enumerate() {
         let f = &traj.frames[t];
+        // The criterion, decomposed. `hbonds` assigns each hydrogen to its NEAREST oxygen
+        // as donor and then applies three clauses in order; this walks the same two
+        // distance clauses so a reader can see which one the scene fails.
+        let (mut oo, mut oh) = (false, false);
+        for &a in &ox {
+            for &b in &ox {
+                if a == b {
+                    continue;
+                }
+                let d = dist(f.pos[a], f.pos[b]);
+                if d >= lens::HB_R_OO_BOHR {
+                    continue;
+                }
+                oo = true;
+                for h in 0..n {
+                    if z[h] != 1 {
+                        continue;
+                    }
+                    // The hydrogen must be donated by `a`: its nearest oxygen is `a`.
+                    let mine = ox
+                        .iter()
+                        .copied()
+                        .min_by(|&p, &q| {
+                            dist(f.pos[p], f.pos[h])
+                                .partial_cmp(&dist(f.pos[q], f.pos[h]))
+                                .unwrap_or(std::cmp::Ordering::Equal)
+                        })
+                        .unwrap();
+                    if mine == a && dist(f.pos[b], f.pos[h]) < lens::HB_R_OH_BOHR {
+                        oh = true;
+                    }
+                }
+            }
+        }
+        f_oo += oo as usize;
+        f_oh += oh as usize;
         let labels = partition::labels_from_bonds(n, f.bonded);
         let mut seen: Vec<(usize, usize, usize)> = hb
             .iter()
@@ -801,6 +871,50 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
         }
         if !inter_block_pairs(&labels, hb).is_empty() {
             frames_with_inter += 1;
+        }
+        let k = partition::blocks(&labels)
+            .into_iter()
+            .filter(|&b| ox.iter().any(|&i| b >> i & 1 == 1))
+            .count();
+        ox_blocks_hist[k] += 1;
+
+        // The discriminator: same three clauses, donor free among covalently close
+        // oxygens instead of pinned to the nearest one.
+        for h in 0..n {
+            if z[h] != 1 {
+                continue;
+            }
+            for &d in &ox {
+                if dist(f.pos[d], f.pos[h]) >= 2.5 {
+                    continue;
+                }
+                for &a in &ox {
+                    if a == d {
+                        continue;
+                    }
+                    if dist(f.pos[d], f.pos[a]) >= lens::HB_R_OO_BOHR
+                        || dist(f.pos[a], f.pos[h]) >= lens::HB_R_OH_BOHR
+                    {
+                        continue;
+                    }
+                    let u = [
+                        f.pos[h][0] - f.pos[d][0],
+                        f.pos[h][1] - f.pos[d][1],
+                        f.pos[h][2] - f.pos[d][2],
+                    ];
+                    let v = [
+                        f.pos[a][0] - f.pos[d][0],
+                        f.pos[a][1] - f.pos[d][1],
+                        f.pos[a][2] - f.pos[d][2],
+                    ];
+                    let nu = (u[0] * u[0] + u[1] * u[1] + u[2] * u[2]).sqrt();
+                    let nv = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt();
+                    let c = (u[0] * v[0] + u[1] * v[1] + u[2] * v[2]) / (nu.max(1e-300) * nv.max(1e-300));
+                    if c > (lens::HB_ANGLE_DEG * std::f64::consts::PI / 180.0).cos() {
+                        any_donor += 1;
+                    }
+                }
+            }
         }
     }
     let contamination = if records == 0 {
@@ -977,6 +1091,10 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
         hb_records: records,
         hb_contaminated: contaminated,
         frames_with_intermolecular: frames_with_inter,
+        frames_oo_in_range: f_oo,
+        frames_oh_in_range: f_oh,
+        oxygen_blocks_hist: ox_blocks_hist,
+        records_any_donor: any_donor,
         charts,
         structures,
     }))

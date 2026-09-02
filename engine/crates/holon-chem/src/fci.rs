@@ -944,7 +944,7 @@ pub struct Solution {
 ///
 /// # Why this is on the solution and not in a comment
 ///
-/// [`solve`] routes any space past [`MPS_ROUTE_THRESHOLD`] determinants to DMRG. That is a
+/// [`solve`] takes the MPS route as the leased overflow when the door refuses the determinant working set — to DMRG. That is a
 /// defensible engineering choice and it was, until this type existed, INVISIBLE: the curve
 /// came back through the same struct, into a `PairTable` stamped with a provenance string
 /// reading "engine-computed STO-3G FCI (determinant, Knowles-Handy)", and nothing anywhere
@@ -1076,20 +1076,11 @@ pub const DAVIDSON_EXPANSION_FLOOR: f64 = crate::scalar::F64_EXPANSION_FLOOR;
 
 pub const DAVIDSON_REQUESTED_TOLERANCE: f64 = DAVIDSON_EXPANSION_FLOOR;
 
-/// Determinant count past which [`solve_determinant`] REFUSES outright.
-///
-/// Distinct from [`MPS_ROUTE_THRESHOLD`], which is a routing preference: this one is a
-/// statement that no caller should be waiting on a space this large without having said so
-/// deliberately. Set an order above SiO's 132,496 — the largest space MIXTURES-1 drives on
-/// purpose — so the campaign's own work fits and a careless caller does not.
-pub const HARD_DETERMINANT_CAP: usize = 2_000_000;
-
-/// Determinant count past which [`solve`] switches to the MPS/DMRG route.
-///
-/// Named rather than inlined because two things now read it: the switch itself, and the
-/// tests that check a species lands on the route its size implies. A literal in the
-/// `if` and a literal in the test is how the two come to disagree.
-pub const MPS_ROUTE_THRESHOLD: usize = 50_000;
+// The hard determinant cap (2,000,000) and the MPS routing threshold (50,000) used to
+// live here. Both were prices measured in one regime and consumed as physics; both are
+// gone. A space is admitted by its PRICE at the door — `budget::price_determinant` against
+// the resource layer's real reservation — and routed to the MPS tier only as the
+// overflow of a determinant refusal (RESOURCE_DESIGN D3b). See `budget.rs`.
 
 /// Iteration cap for [`davidson`], as a settable global.
 ///
@@ -1420,7 +1411,7 @@ pub fn solve_mps_with(
 /// Solve for the ground state and both derivatives of its energy, choosing the route by
 /// the size of the determinant space.
 ///
-/// Spaces past [`MPS_ROUTE_THRESHOLD`] go to the MPS/DMRG solver. The returned
+/// Spaces whose determinant working set the door refuses go to the MPS/DMRG solver. The returned
 /// [`Solution::route`] says which one ran, and every consumer that presents the number to
 /// anybody is required to read it — see [`SolverRoute`] for what went wrong while nothing
 /// did.
@@ -1429,10 +1420,27 @@ pub fn solve_mps_with(
 /// comparison is exactly that caller — must use [`solve_determinant`] instead, which has no
 /// threshold and no fallback.
 pub fn solve(space: &FciSpace, mo: &MoIntegrals) -> Solution {
-    if space.n_det > MPS_ROUTE_THRESHOLD {
-        return solve_mps(space, mo, 64);
+    match try_solve(space, mo) {
+        Ok(s) => s,
+        Err(r) => panic!("{r}"),
     }
-    solve_determinant(space, mo)
+}
+
+/// [`solve`] with the admission door's refusal returned rather than raised: the
+/// determinant route if its working set is admitted; else the MPS route as the leased
+/// overflow, if ITS price is admitted; else the refusal naming both prices.
+pub fn try_solve(space: &FciSpace, mo: &MoIntegrals) -> Result<Solution, crate::budget::Refused> {
+    let det = crate::budget::price_determinant(space.n_det);
+    match crate::budget::admit(&det) {
+        Ok(_) => Ok(solve_determinant(space, mo)),
+        Err(det_refusal) => {
+            let mpo = crate::budget::price_mpo(space.n_orb);
+            match crate::budget::admit(&mpo) {
+                Ok(_) => Ok(solve_mps(space, mo, 64)),
+                Err(_) => Err(det_refusal),
+            }
+        }
+    }
 }
 
 /// The determinant route, unconditionally: Davidson over the whole space, whatever its
@@ -1537,30 +1545,14 @@ pub fn solve_determinant_with_budget(
     provider: &dyn SigmaProvider,
     budget: usize,
 ) -> Result<Solution, String> {
-    // THE REFUSAL, because removing the routing threshold removed the only thing standing
-    // between a caller and an astronomically large space.
-    //
-    // `solve` protects itself with `MPS_ROUTE_THRESHOLD`; this entry point deliberately has
-    // no threshold, which is right for its purpose — gate D1 and gate R2 both need the
-    // exact-in-model answer on spaces `solve` would have routed away — and wrong as a
-    // silent licence. A caller reaching for it on a mid-row species would otherwise get an
-    // attempt rather than an answer, and the attempt does not end.
-    //
-    // The cap is on the DETERMINANT COUNT and not on the orbital count, because the
-    // Davidson vectors are what the space costs: `n_det` doubles of working set per vector,
-    // several vectors, re-walked every iteration. `HARD_DETERMINANT_CAP` is set where the
-    // largest space this campaign deliberately drives — SiO at 132,496 — fits with room,
-    // and anything an order beyond it is a caller that has not priced what it is asking
-    // for. Raise it deliberately, with a measurement, the way `MPS_MAX_ORBITALS` was.
-    assert!(
-        space.n_det <= HARD_DETERMINANT_CAP,
-        "solve_determinant: {} determinants is past this crate's hard cap of {}. That is \
-         not a solve that finishes; it is a process that stops responding. If the space is \
-         genuinely wanted, raise HARD_DETERMINANT_CAP with a measurement attached rather \
-         than calling this and waiting.",
-        space.n_det,
-        HARD_DETERMINANT_CAP
-    );
+    // THE ADMISSION, not a cap. The Davidson vectors are what the space costs — `n_det`
+    // doubles per vector, up to 48 basis and 48 sigma vectors — so the working set is
+    // priced from those allocations and the resource layer's probe RESERVES it before a
+    // single sigma is built. A machine that admits the reservation runs the space; one that
+    // does not gets a refusal naming the bytes. No number here says what "too big" is.
+    if let Err(r) = crate::budget::admit(&crate::budget::price_determinant(space.n_det)) {
+        panic!("solve_determinant: {r}");
+    }
     let ci0 = ci_ints(mo, Order::Value);
     let ci1 = ci_ints(mo, Order::First);
     let ci2 = ci_ints(mo, Order::Second);
@@ -1661,16 +1653,8 @@ fn axpy(a: f64, x: &[f64], y: &mut [f64]) {
     crate::tier::axpy_t::<f64>(a, x, y)
 }
 
-fn scale(a: f64, x: &mut [f64]) {
-    crate::tier::scale_t::<f64>(a, x)
-}
-
 fn norm(a: &[f64]) -> f64 {
     crate::tier::norm_t::<f64>(a)
-}
-
-fn normalised(a: &[f64]) -> Vec<f64> {
-    crate::tier::normalised_t::<f64>(a)
 }
 
 // ------------------------------------------------------------------ the spin sector

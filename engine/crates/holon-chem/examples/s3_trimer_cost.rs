@@ -6,7 +6,7 @@
 // SAME `solve_geometry` call, with the same CPU-time and iteration-count instrumentation,
 // so the two halves are commensurable and a ratio finally means something.
 //
-// (O,O,O) is deliberately ABSENT: at 207,025 determinants it crosses MPS_ROUTE_THRESHOLD,
+// (O,O,O) is deliberately ABSENT: at 207,025 determinants it would once have crossed the (now-deleted) routing threshold,
 // which routes into an MPO builder that HANGS rather than erroring. It is also the table
 // where the subtraction is ~1% by any accounting, so it is not the case the ratio is for.
 use holon_chem::dual::D2;

@@ -298,8 +298,9 @@ want(served.oh === 1, "the O-H curve is served in the browser",
 // the page's fence would go on explaining the wrong one and nothing else would notice.
 want(served.oo === 21,
   `the O-O curve is REFUSED by the engine's in-browser split (code ${served.oo}, `
-  + `${served.e.holon_bank_pair_n_det(8, 8).toExponential(2)} determinants past a limit of `
-  + `${served.e.holon_bank_in_browser_det_limit()})`,
+  + `${served.e.holon_bank_pair_n_det(8, 8).toExponential(2)} determinants, predicted `
+  + `${served.e.holon_bank_pair_predicted_seconds(8, 8).toFixed(1)} s against a `
+  + `${served.e.holon_bank_browser_budget_seconds().toFixed(0)} s load budget)`,
   `expected 21 (PROVENANCE_REFUSED + SplitViolated), got ${served.oo}`);
 want(served.oxygen > 0, `the O:2H scene really carries oxygen (${served.oxygen} of ${served.e.holon_atom_count()} atoms)`,
   "every atom reads Z=1, so the composition never reached the engine");
@@ -1185,9 +1186,24 @@ for (let f = 0; f < 50; f++) press.holon_step_frame(64);
 want(press.holon_energy_gate() === 1,
   `the energy gate closes across a mid-run compression (drift ${press.holon_drift().toExponential(2)} vs bound ${press.holon_drift_bound().toExponential(2)} Ha) — an unledgered scale opens it by the move's cost`);
 
-press.holon_set_boundary(2);
-want(press.holon_pressure_defined() === 1,
-  "on a periodic box the readout IS a pressure, and boundary mode 2 now reaches it");
+// The boundary door is browser-reachable and refuses BY NAME: the compressed box's half
+// edge is now under the force law's reach, so wrapping it would break the minimum image.
+// 101 == BOUNDARY_REFUSED (100) + BreaksPeriodicImages (1); the page names this code.
+const wrapRefused = press.holon_set_boundary(2);
+want(wrapRefused === 101 && press.holon_pressure_defined() === 0,
+  `wrapping the compressed box is refused by the boundary door (code ${wrapRefused}) and the readout stays undefined`,
+  `expected 101 (BOUNDARY_REFUSED + BreaksPeriodicImages), got ${wrapRefused}; pressure_defined ${press.holon_pressure_defined()}`);
+// Widen it past the reach and the same door admits the wrap. The widening is COMPUTED from
+// the door's own two numbers rather than guessed: the door requires reach <= half the
+// shortest edge, and it is right to be strict, so the smoke asks it what it needs.
+const reach = press.holon_legality_radius();
+const halfEdge = press.holon_half_min_edge();
+want(reach > halfEdge, `the refusal's numbers agree with it (reach ${reach.toFixed(3)} > half edge ${halfEdge.toFixed(3)} bohr)`,
+  `the door refused but its own inequality does not hold: reach ${reach}, half edge ${halfEdge}`);
+const widen = 1.01 * reach / halfEdge;
+want(press.holon_box_scale(widen) === 1, `the box is widened by ${widen.toFixed(3)} so its half edge clears the reach`);
+want(press.holon_set_boundary(2) === 0 && press.holon_pressure_defined() === 1,
+  `on a legal periodic box (half edge ${press.holon_half_min_edge().toFixed(3)} >= reach ${press.holon_legality_radius().toFixed(3)} bohr) the readout IS a pressure, and boundary mode 2 reaches it`);
 want(Number.isFinite(press.holon_pressure()), "and it reads");
 
 // Exports whose ABSENCE is the stated reason a panel is fenced. If one appears, the fence
@@ -1225,6 +1241,37 @@ if (/sin\(\s*performance\.now/.test(js)) offenders.push("sin(performance.now()) 
 want(offenders.length === 0,
   "no SYNTHETIC tag and no synthesized telemetry survive in the shipped page",
   offenders.join("; "));
+
+// ------------------------------------------- N. the entry-point contract, both directions
+//
+// This section is about the OTHER page, and it belongs here because this lane owns both
+// sides of the contract and this is the tree's only JS gate.
+//
+// Route B made `main` empty on wasm. That is what lets ONE artifact carry two apps —
+// atoms3d's, which owns its world, and the workbench's, which owns no `Sim` at all and is
+// fed across the bridge — because an app started from inside `init()` is an app no page
+// can choose. The cost is that starting is now the page's job, and a page that forgets is
+// a page that loads a 40 MB module, shows a canvas, and draws nothing on it forever.
+//
+// TWO DIRECTIONS, and neither alone is worth much:
+//   * here: the page CALLS the entry point by name.
+//   * `build-web.sh`: the finished artifact EXPORTS it, checked with
+//     `WebAssembly.Module.exports` after wasm-opt, on the bytes the browser receives.
+// A page calling a name nothing exports and an artifact exporting a name nobody calls are
+// the same silence, and each check sees only one of them.
+const atoms3dPage = readFileSync(join(repoRoot, "docs", "atoms3d", "index.html"), "utf8")
+  .replace(/<!--[\s\S]*?-->/g, "");
+want(/wasm\.holon3d_run_owned\s*\(/.test(atoms3dPage),
+  "atoms3d names the app it wants — `main` no longer starts one",
+  "the page must call wasm.holon3d_run_owned() after init(); without it the canvas stays black");
+want(/typeof\s+wasm\.holon3d_run_owned\s*!==\s*["']function["']/.test(atoms3dPage),
+  "and it checks the export is there before calling it, so a stale artifact fails loudly",
+  "a page newer than its artifact would otherwise hang on a canvas nothing draws to");
+const buildScript = readFileSync(
+  join(repoRoot, "engine", "crates", "holon-render-3d", "build-web.sh"), "utf8");
+want(/check-exports\.js/.test(buildScript),
+  "and the build checks the artifact exports it, so the other direction is covered too",
+  "build-web.sh must run check-exports.js on the finished wasm");
 
 // HOW MANY CHECKS RAN, not just how many failed.
 //

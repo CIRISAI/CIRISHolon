@@ -784,8 +784,9 @@ const REQUIRED_EXPORTS = [
   "holon_trimer_nodes", "holon_trimer_peak",
   "holon_bank_clear", "holon_bank_register", "holon_bank_generate_pair", "holon_bank_pair_route",
   "holon_bank_pair_n_det", "holon_bank_pair_is_heavy", "holon_bank_slot",
-  "holon_bank_filled_count", "holon_bank_in_browser_det_limit",
-  "holon_bank_in_browser_basis_limit", "holon_bank_species_count",
+  "holon_bank_filled_count", "holon_bank_browser_budget_seconds",
+  "holon_bank_set_browser_budget_seconds",
+  "holon_bank_pair_predicted_seconds", "holon_bank_species_count",
   "holon_table_knots", "holon_table_r_e", "holon_table_d_e",
   "holon_chem_referee_residual", "holon_chem_referee_points",
   "holon_reset", "holon_rebase", "holon_atom_count", "holon_atom_x", "holon_atom_y",
@@ -882,6 +883,10 @@ async function loadPreset(key, { pay = null } = {}) {
 
   // A fresh bank. Switching composition must not leave the previous preset's curves in
   // the slots, where they would silently serve the wrong pair.
+  // The load budget is THIS PAGE's patience, declared here so the engine's split is
+  // enforced against a number the page owns: five seconds of main thread per curve at
+  // load. Anything dearer is refused before it is computed and must be shipped instead.
+  w.holon_bank_set_browser_budget_seconds(5);
   w.holon_bank_clear();
 
   const served = {
@@ -936,8 +941,9 @@ async function loadPreset(key, { pay = null } = {}) {
       served.fences.push({
         ...FENCE_REGISTER.unpaidCurve,
         what: `${sym(za)}–${sym(zb)} pair curve — UNPAID`,
-        why: `the engine permits this solve (${nDet.toExponential(2)} determinants, inside `
-          + `the in-browser limit of ${w.holon_bank_in_browser_det_limit()}) but it is not `
+        why: `the engine permits this solve (${nDet.toExponential(2)} determinants, predicted `
+          + `${w.holon_bank_pair_predicted_seconds(za, zb).toFixed(1)} s against the page's `
+          + `${w.holon_bank_browser_budget_seconds().toFixed(0)} s load budget) but it is not `
           + "free: on the development machine it took about fifteen seconds of the main "
           + "thread. It is offered rather than spent, and the price you pay is measured "
           + "and reported. Press SOLVE in the mixture panel to buy it.",
@@ -1080,9 +1086,10 @@ const sym = (z) => SYMBOLS[z] || `Z=${z}`;
 function refusalText(code, nDet) {
   if (code === 21) {
     return "REFUSED by the engine's in-browser split (Refusal::SplitViolated): this "
-      + `curve is ${nDet.toExponential(3)} determinants, past the in-browser limit of `
-      + `${State.w.holon_bank_in_browser_det_limit()}. It is a mesh job, not a page-load `
-      + "job, and the engine declines BEFORE spending the time rather than after.";
+      + `curve is ${nDet.toExponential(3)} determinants and its predicted load cost exceeds `
+      + `the page's ${State.w.holon_bank_browser_budget_seconds().toFixed(0)} s budget `
+      + "(a declared horizon the host can raise, not a cap). It is a mesh job, not a "
+      + "page-load job, and the engine declines BEFORE spending the time rather than after.";
   }
   if (code === 6) return "REFUSED: the grid request was not a grid (GENERATOR_REFUSED).";
   if (code >= 16 && code <= 24) return `REFUSED at the provenance door, reason ${code - 16}.`;

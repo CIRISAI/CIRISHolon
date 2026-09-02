@@ -889,6 +889,7 @@ version = "0.1.0"
 dependencies = [
  "holon-device",
  "holon-lens",
+ "holon-resource",
  "q8-mps",
 ]
 

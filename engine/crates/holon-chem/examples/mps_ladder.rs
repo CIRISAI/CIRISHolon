@@ -1,4 +1,6 @@
-//! Re-derive `pair::MPS_MAX_ORBITALS` as a MEASUREMENT, on an orbital-count ladder.
+//! Re-derive the MPS route's orbital reach as a MEASUREMENT, on an orbital-count ladder.
+//! (The constant this once fed, `MPS_MAX_ORBITALS`, is gone — routing is admission by
+//! price since 2026-09-02; the reach survives as `budget::MPS_REACH_RECORD` provenance.)
 //!
 //! ```text
 //! cargo run --release -p holon-chem --example mps_ladder -- [PAIR ...]
@@ -6,7 +8,7 @@
 //!
 //! # Why the constant needs re-deriving rather than raising
 //!
-//! `MPS_MAX_ORBITALS = 6` was measured against the OLD MPO construction — a raw list of
+//! The earlier reach of six orbitals was measured against the OLD MPO construction — a raw list of
 //! `O(n_orb^4)` operator strings compressed by one SVD per site — which cost 528 s at six
 //! orbitals and did not finish at ten. The external team's channel-based rebuild
 //! (`bb1a07a`) removed that: SiO's build went from over twelve hours to 0.07 s on real
@@ -115,7 +117,7 @@ fn main() {
         LADDER.to_vec()
     };
 
-    say!("# MPS_MAX_ORBITALS, re-derived as a measurement");
+    say!("# the MPS route's orbital reach, re-derived as a measurement (provenance only; no constant gates on it)");
     say!("#   stake        |E_dmrg - E_fci| <= {D1_STAKE:.0e} Ha");
     say!("#   budget       {CELL_BUDGET_S:.0} s of wall clock per (pair, chi) cell");
     say!("#   chi ladder   {CHI_LADDER:?}, smallest first, stopping at the first rung that reaches the stake");
@@ -250,7 +252,7 @@ fn main() {
     }
     // THE DOOR TAKES THE WALL, NOT THE REACH.
     //
-    // `MPS_MAX_ORBITALS` is spent as a `<=` admission door, so it must BOUND the admitted
+    // The reach used to be spent as a `<=` admission door, so it had to BOUND the admitted
     // set. This line used to nominate `best_reached` -- the largest count that reached --
     // which is wrong whenever a failure sits below it, and one does: NaH fails at 10 while
     // HCl reaches at 10. A maximum over a set containing a failure is not a bound on that

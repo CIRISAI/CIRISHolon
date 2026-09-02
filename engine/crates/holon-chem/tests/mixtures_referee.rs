@@ -127,10 +127,10 @@ fn fnv1a32(bytes: &[u8]) -> u32 {
 /// The exact-in-model total energy at one separation, ON THE DETERMINANT ROUTE.
 ///
 /// `pair::pair_point` would be the obvious call and it is the wrong one: it goes through
-/// `fci::solve`, which routes any space past `MPS_ROUTE_THRESHOLD` to DMRG. SiO is 132,496
-/// determinants, so grading it through `pair_point` would compare the referee against the
-/// DMRG bridge while calling the result exact — and, on this engine's MPO builder at
-/// fourteen orbitals, would not return at all.
+/// `fci::solve`, which takes the MPS route as the leased overflow whenever the resource
+/// door refuses the determinant working set. Grading through it would then compare the
+/// referee against the DMRG bridge while calling the result exact. The determinant route
+/// is called directly so the reference is what it says it is.
 fn exact_total(
     a: holon_chem::elements::Species,
     b: holon_chem::elements::Species,
@@ -192,32 +192,26 @@ fn r2_the_staked_set_is_the_freeze_s() {
 
 /// THE ENGINE HALF OF R2's FEASIBILITY READING, and it is a finding rather than a gate.
 ///
-/// ONE of the seven staked EXACT pairs is past this engine's AUTOMATIC route: `fci::solve`
-/// switches to DMRG above `MPS_ROUTE_THRESHOLD` determinants, and SiO is 132,496. So an
-/// exact curve for SiO cannot be produced by the ordinary entry point — `solve_determinant`
-/// has to be called directly, which is what gate D1's harness does and what the R2
-/// comparison below does.
-///
-/// Printed rather than asserted: which pairs cross the threshold is a property of the
-/// model and the basis, and pinning it would be pinning a consequence.
+/// Which staked EXACT pairs this MACHINE admits on the determinant route is a fact about
+/// the machine's headroom at the moment of asking (the door reserves the working set), so
+/// it is printed, never pinned. A pair the door refuses still has an exact answer —
+/// `solve_determinant` on a machine that admits it — which is what gate D1's harness and
+/// the R2 comparison below do by calling the route directly.
 #[test]
 fn r2_which_staked_pairs_leave_the_determinant_route() {
-    let mut crossing = Vec::new();
+    let mut refused = Vec::new();
     for name in MIXTURES1_STAKED_PAIRS {
         let (a, b) = split_pair(name);
         let f = automatic_route(a, b);
-        if f.n_det() > holon_chem::fci::MPS_ROUTE_THRESHOLD {
-            crossing.push((name, f.n_det(), f.n_orb()));
+        if !matches!(f, holon_chem::pair::AutomaticRoute::Determinant { .. }) {
+            refused.push((name, f.n_det(), f.n_orb()));
         }
     }
+    println!("staked pairs this machine's door does not admit on the determinant route: {refused:?}");
     println!(
-        "staked pairs past fci::MPS_ROUTE_THRESHOLD ({}): {crossing:?}",
-        holon_chem::fci::MPS_ROUTE_THRESHOLD
-    );
-    println!(
-        "  For these, `fci::solve` routes to DMRG. An R2 comparison must call \
-         `fci::solve_determinant` directly, or it would grade the DMRG bridge against the \
-         referee while calling the result exact."
+        "  For these, `fci::solve` takes the leased overflow (MPS) or refuses by price. An R2 \
+         comparison calls `fci::solve_determinant` directly on a machine that admits it, or it \
+         would grade the DMRG bridge against the referee while calling the result exact."
     );
 }
 

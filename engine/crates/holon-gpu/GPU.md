@@ -345,8 +345,11 @@ against 15.32 GiB free:
 
 The verified column is a quarter of the prediction, which is what a caller should
 actually target: the host-side transpose buffers cost the same again in system
-RAM, and the driver needs headroom. **At the hard caps (n=64, k=63) roughly 3.7M
-branches upload comfortably and ~14.8M is the arithmetic ceiling.** Nothing here
+RAM, and the driver needs headroom. **At the representation's bounds (n=64 orbitals
+is one `u64` occupation string, k=63 the widest half-filling it admits) roughly 3.7M
+branches upload comfortably and ~14.8M is the arithmetic ceiling.** Those two are
+representation choices, not budgets: a wider string type moves them, and nothing else
+here refuses on them. Nothing here
 was pushed to an out-of-memory failure; the ceiling column is arithmetic, and it
 is labelled as such.
 

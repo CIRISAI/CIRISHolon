@@ -69,22 +69,39 @@ pub const MAX_SPECIES: usize = 3;
 /// Unordered pairs over [`MAX_SPECIES`], including the homonuclear diagonal.
 pub const MAX_TABLES: usize = MAX_SPECIES * (MAX_SPECIES + 1) / 2;
 
-/// Determinant count at or above which a pair must arrive as a shipped, referee-pinned
-/// table rather than being solved in the browser at load.
+/// THE PAGE'S LOAD BUDGET, in seconds — a declared horizon, never a capability cap.
 ///
-/// This is the criterion the freeze names, and it is necessary but NOT sufficient — see
-/// [`IN_BROWSER_BASIS_LIMIT`], which was added after the cost was measured and the
-/// determinant count turned out not to be the driver.
-pub const IN_BROWSER_DET_LIMIT: u64 = 1024;
+/// Until 2026-09-02 the browser split was two constants (a determinant count of 1024 and
+/// a basis count of 6) that a pair had to sit under to be solved at page load. Both were
+/// prices measured on one machine (the table below) wearing constant costume. What a page
+/// actually has is a BUDGET: how long it is willing to wait at load. This is that budget's
+/// default — between the 3.19 s the measured table says a page absorbs once and the
+/// 9.97 s it says a page does not — and the host overrides it through the ABI. Heaviness
+/// is then `predicted_load_seconds(...) > budget`, with the prediction's provenance
+/// attached: a machine faster than the campaign machine simply admits more.
+pub const BROWSER_LOAD_BUDGET_S: f64 = 5.0;
 
-/// Basis-function count above which a pair must arrive as a shipped table, whatever its
-/// determinant count.
-///
-/// # The freeze's criterion, and what measuring it showed
-///
-/// MIXTURES-1 says "light pairs (declared determinant count below a stated threshold) are
-/// solved in-browser". Measured on the campaign machine, 24 knots, release, the cost is
-/// not a function of the determinant count:
+/// The budget in force: the host's declaration if it made one, else the default above.
+/// A budget is the HOST's patience, not the engine's — the page declares it at boot
+/// (`holon_bank_set_browser_budget_seconds`) so the split it enforces is the page's own.
+pub fn browser_budget_seconds() -> f64 {
+    let bits = BROWSER_BUDGET_BITS.load(std::sync::atomic::Ordering::Relaxed);
+    if bits == 0 {
+        BROWSER_LOAD_BUDGET_S
+    } else {
+        f64::from_bits(bits)
+    }
+}
+
+/// Declare the load budget for this host; `None` restores the default.
+pub fn set_browser_budget_seconds(s: Option<f64>) {
+    BROWSER_BUDGET_BITS.store(s.map_or(0, f64::to_bits), std::sync::atomic::Ordering::Relaxed);
+}
+
+static BROWSER_BUDGET_BITS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// The measured cost of solving a pair curve at load (MIXTURES-1 campaign machine,
+/// 24 knots, release build), the PROVENANCE of [`predicted_load_seconds`]:
 ///
 /// | pair | `n_basis` | `n_det` | curve |
 /// |---|---|---|---|
@@ -96,16 +113,19 @@ pub const IN_BROWSER_DET_LIMIT: u64 = 1024;
 /// | Li-Li | 10 | 14,400 | 40.73 s |
 /// | Cl-Cl | 18 | 324    | 95.95 s |
 ///
-/// Cl-Cl has 324 determinants — fewer than lithium hydride's neighbours and forty times
-/// fewer than Li2 — and costs the most of any of them, because the integral transform is
-/// a high power of the BASIS SIZE and runs before any determinant is enumerated. A split
-/// on `n_det` alone would have sent Cl2 to the browser and hung the page for a minute and
-/// a half.
-///
-/// So both are declared and BOTH must pass. Six admits H2, He2, H-He and every
-/// first-row-with-hydrogen pair at a few seconds; ten and up is shipped. The threshold is
-/// where it is because 3.19 s is a load a page can absorb once and 9.97 s is not.
-pub const IN_BROWSER_BASIS_LIMIT: u64 = 6;
+/// The determinant count is NOT the driver: Cl-Cl has 324 determinants and costs the most,
+/// because the integral transform is a high power of the BASIS size and runs before any
+/// determinant is enumerated. The model below carries both axes.
+pub const BROWSER_COST_PROVENANCE: &str = "MIXTURES-1 campaign machine, 24 knots, release: 7 measured pairs (H-H 0.22 s ... Cl-Cl 95.95 s)";
+
+/// Predicted seconds to solve a pair curve at page load: a basis-transform term fitted
+/// to the measured table (`3.1e-3 * n_basis^3.5`, within ~40% of every measured pair), a
+/// per-determinant term (`2.1e-3 s`, from Li2 against H-Cl at equal basis), and the
+/// measured startup floor. A MODEL, labelled by [`BROWSER_COST_PROVENANCE`]; the page
+/// compares it against its budget rather than against a species.
+pub fn predicted_load_seconds(n_basis: u64, n_det: u64) -> f64 {
+    0.1 + 3.1e-3 * (n_basis as f64).powf(3.5) + 2.1e-3 * n_det as f64
+}
 
 /// The largest energy uncertainty a curve may declare and still be loaded, hartree.
 ///
@@ -320,8 +340,9 @@ pub struct TableProvenance {
     pub source: Source,
     /// Determinant count the solver faced.
     pub n_det: u64,
-    /// Contracted basis functions the solve carried. With `n_det`, decides the browser
-    /// split — see [`IN_BROWSER_BASIS_LIMIT`] for why one of them is not enough.
+    /// Contracted basis functions the solve carried. With `n_det`, prices the load through
+    /// [`predicted_load_seconds`] — see [`BROWSER_COST_PROVENANCE`] for why the
+    /// determinant count alone is not the driver.
     pub n_basis: u64,
     /// Declared absolute uncertainty on the energy column, hartree. Zero means NOT
     /// DECLARED and is refused for anything but a solved determinant curve, whose
@@ -367,11 +388,16 @@ impl TableProvenance {
         }
     }
 
-    /// Whether this curve is too expensive to solve at page load.
-    ///
-    /// EITHER threshold is enough to make it heavy. See [`IN_BROWSER_BASIS_LIMIT`].
+    /// Whether solving this pair at page load would exceed the page's declared budget.
+    /// A prediction against a horizon, not a count against a cap; the browser host sets
+    /// the horizon it can afford.
     pub fn is_heavy(&self) -> bool {
-        self.n_det >= IN_BROWSER_DET_LIMIT || self.n_basis > IN_BROWSER_BASIS_LIMIT
+        self.is_heavy_under(browser_budget_seconds())
+    }
+
+    /// [`is_heavy`](Self::is_heavy) under an explicit budget.
+    pub fn is_heavy_under(&self, budget_s: f64) -> bool {
+        predicted_load_seconds(self.n_basis, self.n_det) > budget_s
     }
 
     /// THE PROVENANCE GATE. `Ok(())` admits the curve; `Err` says which rule it broke.

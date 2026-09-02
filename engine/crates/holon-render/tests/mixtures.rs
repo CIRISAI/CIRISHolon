@@ -639,7 +639,7 @@ fn plant_iii_a_dmrg_curve_presented_as_exact_is_refused() {
 ///
 /// No pair on this engine can produce a genuinely DMRG-routed table: `solve` switches
 /// route above 50,000 determinants, and every pair with a determinant count that large has
-/// an orbital count the MPO builder cannot be driven at (see `MPS_MAX_ORBITALS` — 528 s at
+/// an orbital count the MPO builder cannot be driven at (see `budget::MPS_REACH_RECORD` — formerly `MPS_MAX_ORBITALS` — 528 s at
 /// six orbitals, and it does not finish at ten). So the honest way to exercise the path is
 /// to take a real curve off the real generator and change the one field the gate reads —
 /// which is a plant in the strict sense: the defect is introduced, and the question is
@@ -843,15 +843,18 @@ fn every_provenance_refusal_has_a_demonstrated_failing_case() {
         Err(Refusal::SplitViolated)
     );
 
-    // THE MEASURED HALF OF THE SPLIT. Cl2 has 324 determinants -- comfortably under
-    // IN_BROWSER_DET_LIMIT -- and 18 basis functions, and costs 96 s to solve. A split on
-    // the determinant count alone, which is the criterion the freeze names, would have
-    // sent it to the browser and hung the page for a minute and a half.
+    // THE MEASURED HALF OF THE SPLIT. Cl2 has 324 determinants — a count no page would
+    // blink at — and 18 basis functions, and costs 96 s to solve. A split on the
+    // determinant count alone, which is the criterion the freeze names, would have sent it
+    // to the browser and hung the page. The cost MODEL carries the basis axis, so the
+    // prediction exceeds the budget on the basis term with the determinant term negligible.
     let cl2_solved = TableProvenance::solved_exact(324, 18, 1e-11);
+    let basis_only = holon_render::bank::predicted_load_seconds(18, 0);
     assert!(
-        cl2_solved.n_det < holon_render::bank::IN_BROWSER_DET_LIMIT,
-        "the Cl2 case no longer exercises the basis half of the split: its determinant \
-         count now trips the determinant half on its own"
+        basis_only > holon_render::bank::BROWSER_LOAD_BUDGET_S,
+        "the Cl2 case no longer exercises the basis axis: {basis_only} s from basis alone \
+         sits under the {} s budget",
+        holon_render::bank::BROWSER_LOAD_BUDGET_S
     );
     assert_eq!(
         cl2_solved.admit(&d1_none, Host::Browser),

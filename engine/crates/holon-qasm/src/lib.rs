@@ -26,15 +26,126 @@ pub mod qasm;
 
 pub use qasm::{are_tableaux_equivalent, canonicalize_circuit, parse_qasm};
 
-pub const N_MAX_STATEVECTOR: usize = 24;
+// `N_MAX_STATEVECTOR = 24` and `T_MAX_MAGIC = 24` used to live here. Both were
+// prices measured on one machine wearing constant costume. They are gone:
+// the 2^n carriers are priced in BYTES and put to a headroom probe
+// (`check_n_budget`), and the 2^t magic tier is priced in SECONDS against a
+// declared horizon (`check_t_budget`). Their provenance survives in the
+// budget functions' own text.
 
-/// The magic tier's branch budget. Clifford+T with t T-gates is a sum of 2^t
-/// phase-tracked stabilizer branches, so t IS the price. 2^24 = 16,777,216.
-pub const T_MAX_MAGIC: usize = 24;
+/// Bytes per amplitude in the statevector carrier (a complex f64 pair).
+pub const CARRIER_BYTES_PER_AMPLITUDE: u64 = 16;
+/// Bytes per exact `Cyc` amplitude in the magic tier's distribution path.
+pub const MAGIC_DISTRIBUTION_BYTES_PER_AMPLITUDE: u64 = 80;
+
+/// Seconds per gate-qubit per phase-tracked stabilizer branch, PROVISIONAL.
+/// One tableau update is O(n) per gate, so a branch costs `gates × n × this`.
+/// 3.2e-8 s is the battlerig's hidden-shift lane on the campaign machine
+/// (t = 14: 170 gates at n = 20 in 2.02 s, 323 at n = 40 in 6.00 s, 470 at
+/// n = 60 in 14.9 s — `conformance/qasm/upstream/BATTLERIG.md`), which this
+/// model reproduces within 13% at all three points. ONE machine's constant,
+/// measured under that machine's load: every refusal that cites it says so,
+/// and a host with a measured constant of its own declares it with
+/// [`set_branch_seconds_per_gate_qubit`].
+pub fn branch_seconds_per_gate_qubit() -> f64 {
+    let bits = BRANCH_SECONDS_BITS.load(std::sync::atomic::Ordering::Relaxed);
+    if bits == 0 {
+        3.2e-8
+    } else {
+        f64::from_bits(bits)
+    }
+}
+
+/// Declare a measured seconds-per-gate-qubit for this machine. `None`
+/// restores the provisional fit.
+pub fn set_branch_seconds_per_gate_qubit(c: Option<f64>) {
+    BRANCH_SECONDS_BITS.store(c.map_or(0, f64::to_bits), std::sync::atomic::Ordering::Relaxed);
+}
+
+/// Seconds for ONE phase-tracked branch of `c`: its gate count times its
+/// width times [`branch_seconds_per_gate_qubit`].
+pub fn seconds_per_branch(c: &Circuit) -> f64 {
+    c.gates.len() as f64 * c.n_qubits as f64 * branch_seconds_per_gate_qubit()
+}
+
+/// The time horizon the magic tier is allowed to spend, seconds. Default
+/// 120 s — the battlerig's per-point cap, the one number in the published
+/// record that was actually a budget. Raise it and the refusal moves with
+/// it; nothing else does.
+pub fn magic_horizon_seconds() -> f64 {
+    let bits = MAGIC_HORIZON_BITS.load(std::sync::atomic::Ordering::Relaxed);
+    if bits == 0 {
+        120.0
+    } else {
+        f64::from_bits(bits)
+    }
+}
+
+/// Declare the horizon for this process. `None` restores the default.
+pub fn set_magic_horizon_seconds(s: Option<f64>) {
+    MAGIC_HORIZON_BITS.store(s.map_or(0, f64::to_bits), std::sync::atomic::Ordering::Relaxed);
+}
+
+static MAGIC_HORIZON_BITS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+static BRANCH_SECONDS_BITS: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
+/// Predicted seconds for the magic tier on `c`: `2^t` branches at
+/// [`seconds_per_branch`] each.
+pub fn predicted_magic_seconds(c: &Circuit) -> f64 {
+    let t = t_count(c);
+    if t >= 1024 {
+        return f64::INFINITY;
+    }
+    (2.0f64).powi(t as i32) * seconds_per_branch(c)
+}
+
+/// The largest T-count the current horizon admits for a circuit of `c`'s
+/// size (its gate count and width held fixed) — DERIVED from the price and
+/// the horizon, never declared.
+pub fn t_budget_for(c: &Circuit) -> usize {
+    let per = seconds_per_branch(c);
+    (0..1024)
+        .take_while(|&t| (2.0f64).powi(t as i32) * per <= magic_horizon_seconds())
+        .last()
+        .unwrap_or(0)
+}
+
+/// Whether this machine admits `bytes` of RAM: the kernel's available-memory
+/// reading, then an address-space reservation with a bounded touch. This
+/// crate is dependency free by design (it ships alone), so this is a
+/// deliberate copy of the resource layer's `AttemptProbe::Ram` arm — the ONE
+/// duplicated probe in the engine, kept in step by hand and named here so it
+/// can be audited. It never commits the pages it prices.
+pub fn ram_admits(bytes: u64) -> Result<(), &'static str> {
+    if let Ok(text) = std::fs::read_to_string("/proc/meminfo") {
+        for line in text.lines() {
+            if let Some(rest) = line.strip_prefix("MemAvailable:") {
+                if let Ok(kb) = rest.trim().trim_end_matches("kB").trim().parse::<u64>() {
+                    if bytes > kb * 1024 {
+                        return Err("the ask exceeds the kernel's available RAM");
+                    }
+                }
+            }
+        }
+    }
+    let n = usize::try_from(bytes).map_err(|_| "the amount does not fit a usize")?;
+    let mut v: Vec<u8> = Vec::new();
+    if v.try_reserve_exact(n).is_err() {
+        return Err("the allocator refused the requested reservation");
+    }
+    let sample = n.min(1 << 20);
+    v.resize(sample, 0);
+    let mut i = 0usize;
+    while i < sample {
+        v[i] = 1;
+        i += 4096;
+    }
+    Ok(())
+}
 
 /// The T-count at or below which `route` PREFERS magic to the carrier. A
-/// preference, not a wall: `T_MAX_MAGIC` is the wall, and `--tier magic`
-/// reaches up to it.
+/// preference between two open tiers, not a wall: the walls are the priced
+/// budgets above, and `--tier magic` reaches up to whatever the horizon buys.
 pub const T_ROUTE_MAGIC: usize = 12;
 
 pub fn t_count(c: &Circuit) -> usize {
@@ -54,19 +165,27 @@ fn pow2(k: usize) -> String {
 /// anywhere — so the T-count alone prices this path.
 pub fn check_t_budget(c: &Circuit) -> Result<(), String> {
     let t = t_count(c);
-    if t <= T_MAX_MAGIC {
+    let n = c.n_qubits;
+    let secs = predicted_magic_seconds(c);
+    let horizon = magic_horizon_seconds();
+    if secs <= horizon {
         return Ok(());
     }
     Err(format!(
-        "REFUSED by the magic wall: T-count {t} > {T_MAX_MAGIC}, the magic \
-         tier's branch budget. The tableau view is not Closed under \
-         non-Clifford motions (lean/CIRISHolon/Stabilizer.lean: \
-         tableau_not_closed_under_rotation), so Clifford+T is priced as a sum \
-         of 2^t phase-tracked stabilizer branches: this call would have \
-         enumerated {} of them at n = {}. Raising the budget is a flag away — \
-         pretending the cost is not there never is.",
+        "REFUSED by the magic wall: T-count {t} at n = {n} is priced at {secs:.3e} s \
+         against a horizon of {horizon:.3e} s (the horizon admits T-count {} for a \
+         circuit this size). The tableau view is not Closed under non-Clifford motions \
+         (lean/CIRISHolon/Stabilizer.lean: tableau_not_closed_under_rotation), so \
+         Clifford+T is priced as a sum of 2^t phase-tracked stabilizer branches: this \
+         call would have enumerated {} of them at {:.3e} s each — {} gates × {n} qubits × \
+         {:.2e} s per gate-qubit, a PROVISIONAL fit to the battlerig; declare the \
+         constant for your machine. Raising the horizon is a call away — pretending the \
+         cost is not there never is.",
+        t_budget_for(c),
         pow2(t),
-        c.n_qubits
+        seconds_per_branch(c),
+        c.gates.len(),
+        branch_seconds_per_gate_qubit()
     ))
 }
 
@@ -77,18 +196,24 @@ pub fn check_t_budget(c: &Circuit) -> Result<(), String> {
 /// which array is being priced, so the refusal says whose budget blew.
 pub fn check_n_budget(c: &Circuit, carrier: &str) -> Result<(), String> {
     let n = c.n_qubits;
-    if n <= N_MAX_STATEVECTOR {
-        return Ok(());
+    let per = if carrier.contains("magic") {
+        MAGIC_DISTRIBUTION_BYTES_PER_AMPLITUDE
+    } else {
+        CARRIER_BYTES_PER_AMPLITUDE
+    };
+    let bytes = if n < 64 { (1u64 << n).saturating_mul(per) } else { u64::MAX };
+    match ram_admits(bytes) {
+        Ok(()) => Ok(()),
+        Err(why) => Err(format!(
+            "REFUSED by the carrier wall: n = {n} qubits, and {carrier}, which is {} \
+             entries at {per} bytes each — {bytes} bytes, and this machine's probe \
+             said \"{why}\". Not a cap: a machine that admits the reservation runs it. \
+             The AMPLITUDE path (`amp`) is priced at 2^t · poly(n) with no 2^n anywhere \
+             and is open here at T-count {}.",
+            pow2(n),
+            t_count(c)
+        )),
     }
-    Err(format!(
-        "REFUSED by the carrier wall: n = {n} > {N_MAX_STATEVECTOR} qubits, \
-         and {carrier}, which is {} entries. The AMPLITUDE path (`amp`) is \
-         priced at 2^t · poly(n) with no 2^n anywhere and is open here at \
-         T-count {}. Raising the budget is a flag away — pretending the cost \
-         is not there never is.",
-        pow2(n),
-        t_count(c)
-    ))
 }
 
 /// The DISTRIBUTION wall: the magic tier's branch sum pays BOTH budgets, 2^t
@@ -180,26 +305,31 @@ pub fn route(c: &Circuit) -> Result<Tier, String> {
     // 2^n array on the magic tier as much as on the carrier. Sending a wide
     // circuit to magic on its T-count alone walks past the n wall the carrier
     // arm below enforces.
+    let carrier_open = check_n_budget(c, "the statevector carrier stores 2^n amplitudes").is_ok();
     if t <= T_ROUTE_MAGIC
         && !c.gates.iter().any(|g| matches!(g, Gate::Ccx(..)))
-        && c.n_qubits <= N_MAX_STATEVECTOR
+        && carrier_open
     {
         return Ok(Tier::Magic);
     }
-    if c.n_qubits <= N_MAX_STATEVECTOR {
+    if carrier_open {
         return Ok(Tier::Statevector);
     }
     Err(format!(
-        "REFUSED by the wall: non-Clifford circuit (T-count {}) at n = {} > {} \
-         qubits. The tableau view is not Closed under non-Clifford motions \
-         (lean/CIRISHolon/Stabilizer.lean: tableau_not_closed_under_rotation), \
-         so no poly tier is open; the statevector carrier costs 2^n, and the \
-         magic tier's DISTRIBUTION path costs 2^t branches into a 2^n \
-         accumulator, so neither fits at this n. The AMPLITUDE path (`amp`) is \
-         priced at 2^t · poly(n) with no 2^n and is open here while the T-count \
-         stays within {}. Raising a budget is a flag away — pretending the cost \
-         is not there never is.",
-        t, c.n_qubits, N_MAX_STATEVECTOR, T_MAX_MAGIC
+        "REFUSED by the wall: non-Clifford circuit (T-count {}) at n = {} qubits, and \
+         this machine's probe refused the 2^n carrier ({} amplitudes). The tableau view \
+         is not Closed under non-Clifford motions \
+         (lean/CIRISHolon/Stabilizer.lean: tableau_not_closed_under_rotation), so no \
+         poly tier is open; the statevector carrier costs 2^n bytes of RAM and the magic \
+         tier's DISTRIBUTION path costs 2^t branches into a 2^n accumulator, so neither \
+         fits on this machine at this n. The AMPLITUDE path (`amp`) is priced at \
+         2^t · poly(n) with no 2^n and is open here while the T-count stays within the \
+         horizon's {} for a circuit this size. Raising a budget is a call away — \
+         pretending the cost is not there never is.",
+        t,
+        c.n_qubits,
+        pow2(c.n_qubits),
+        t_budget_for(c)
     ))
 }
 

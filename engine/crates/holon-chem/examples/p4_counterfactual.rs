@@ -27,7 +27,7 @@
 //! every state of every multiplicity while a sector one unit higher holds only
 //! `S >= S_z + 1`, so equal energies mean the ground state carries the higher spin. The
 //! reading is correct. It cannot be taken through `solve_basis`, because `solve_basis`
-//! calls `solve`, which routes anything past `MPS_ROUTE_THRESHOLD` to the MPS/DMRG path --
+//! calls `solve`, which routes a space the resource door refuses to the MPS/DMRG path --
 //! and that path is measured to reach six orbitals. Gallium's minimal sector is 124,848
 //! determinants and its raised sector 55,080, both past the threshold, so both hang in the
 //! MPO builder rather than returning anything. `solve_determinant` is the entry point with

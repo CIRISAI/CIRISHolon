@@ -67,8 +67,7 @@ use crate::elements::{by_symbol, Species};
 use crate::fci::{SolveExit, SolverRoute};
 use crate::ions::{solve_geometry_charged, spin_partition, ChargeRefusal};
 use crate::pair::{
-    build_basis, choose, provenance_for, solve_basis, PointSolution, Well, MPS_MAX_DETERMINANTS,
-    MPS_MAX_ORBITALS, WELL_MIN_DEPTH,
+    build_basis, choose, provenance_for, solve_basis, PointSolution, Well, WELL_MIN_DEPTH,
 };
 use crate::sigma_op::DeviceClass;
 
@@ -385,13 +384,16 @@ pub enum TableRefusal {
     /// The arithmetic refusals of the charged seam, passed through unchanged rather than
     /// re-worded — one rule, one place, one set of names.
     Charge(ChargeRefusal),
-    /// Priced before it was attempted, and past the automatic router's reach. NOT
-    /// "impossible": the determinant route can enumerate it, by hand and with a budget.
+    /// Priced before it was attempted, and REFUSED BY THIS MACHINE'S RESOURCE DOOR — both
+    /// the determinant working set and the MPS route's MPO. Not a property of the space:
+    /// the refusal carries the bytes so the reader knows which machine admits it.
     PastAutomaticRoute {
         n_det: usize,
         n_orb: usize,
-        det_threshold: usize,
-        orb_max: usize,
+        /// The determinant working set this machine's resource door refused, bytes.
+        det_price_bytes: u64,
+        /// The MPS route's (provisional) dense-MPO price, also refused, bytes.
+        mpo_price_bytes: u64,
     },
     ChannelSlotsNotAPartition {
         channel: &'static str,
@@ -572,8 +574,7 @@ pub fn charged_route<const N: usize>(species: &[Species; N], key: &IonKey<N>) ->
     let n_orb: usize = species.iter().map(|s| s.n_basis()).sum();
     let (na, nb) = key.partition();
     let n_det = choose(n_orb, na).saturating_mul(choose(n_orb, nb));
-    let exists = n_det <= crate::fci::MPS_ROUTE_THRESHOLD
-        || (n_det <= MPS_MAX_DETERMINANTS && n_orb <= MPS_MAX_ORBITALS);
+    let exists = crate::pair::route_for(n_det, n_orb).exists();
     (n_det, n_orb, exists)
 }
 
@@ -643,8 +644,8 @@ pub fn generate_ion_table_planted<const N: usize>(
         return Err(TableRefusal::PastAutomaticRoute {
             n_det: n_det_priced,
             n_orb: n_orb_priced,
-            det_threshold: crate::fci::MPS_ROUTE_THRESHOLD,
-            orb_max: MPS_MAX_ORBITALS,
+            det_price_bytes: crate::budget::price_determinant(n_det_priced).bytes,
+            mpo_price_bytes: crate::budget::price_mpo(n_orb_priced).bytes,
         });
     }
 

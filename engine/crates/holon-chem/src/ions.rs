@@ -162,7 +162,7 @@ pub fn spin_partition(n_electrons: usize) -> (usize, usize) {
 ///
 /// The returned energy is exact-in-model only if `PointSolution::route` says
 /// [`crate::fci::SolverRoute::Determinant`]; past
-/// [`crate::fci::MPS_ROUTE_THRESHOLD`] determinants [`crate::pair::solve_basis`] routes to
+/// the resource door's admission, [`crate::pair::solve_basis`] routes to
 /// DMRG and the number is a variational upper bound inside a bond-dimension budget. Charge
 /// makes this MORE likely, not less: adding a proton adds a basis function without removing
 /// an electron. Callers comparing two charge states must read the route on both.

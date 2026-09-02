@@ -131,16 +131,40 @@ impl Probe for AttemptProbe {
                 }
             }
             ResourceKind::Ram => {
-                let n = amount.min(1 << 20) as usize;
-                let mut v: Vec<u8> = Vec::new();
-                if v.try_reserve(n).is_err() {
-                    return ProbeVerdict::Fail("the allocator refused a headroom reservation");
+                // MEASURE THE HEADROOM, THEN ATTEMPT THE ADDRESS SPACE — and never commit
+                // the pages. The first version of this arm reserved and page-touched the
+                // FULL amount, which is not a probe but the allocation itself: on a shared
+                // box it committed real memory and the OOM killer answered (2026-09-02,
+                // periodic_availability, exit 137). D2 allows either attempting the thing
+                // or measuring the headroom for it; for RAM the honest probe is both halves
+                // without the third: read what the kernel says is available, refuse if the
+                // ask exceeds it, then reserve the address space and touch a bounded sample
+                // so an allocator that lies about reservations is still caught.
+                if let Some(avail) = available_ram_bytes() {
+                    if amount > avail {
+                        return ProbeVerdict::Fail("the ask exceeds the kernel's available RAM");
+                    }
                 }
-                v.resize(n, 1);
-                if v.len() == n {
-                    ProbeVerdict::Pass("allocated and touched a headroom sample")
+                // `as usize` would silently truncate on a 32-bit host — wasm32 — and admit
+                // an 8 GB ask as a small one; the browser found that one (2026-09-02).
+                let Ok(n) = usize::try_from(amount) else {
+                    return ProbeVerdict::Fail("the ask exceeds this host's address space");
+                };
+                let mut v: Vec<u8> = Vec::new();
+                if v.try_reserve_exact(n).is_err() {
+                    return ProbeVerdict::Fail("the allocator refused the requested reservation");
+                }
+                let sample = n.min(1 << 20);
+                v.resize(sample, 0);
+                let mut i = 0usize;
+                while i < sample {
+                    v[i] = 1;
+                    i += 4096;
+                }
+                if v.capacity() >= n {
+                    ProbeVerdict::Pass("headroom measured and the address space reserved")
                 } else {
-                    ProbeVerdict::Fail("the headroom sample did not materialise")
+                    ProbeVerdict::Fail("the reservation did not materialise")
                 }
             }
             // Vram, Worker and Arithmetic have no in-crate attempt: this layer has no CUDA and
@@ -154,6 +178,21 @@ impl Probe for AttemptProbe {
             }),
         }
     }
+}
+
+/// The kernel's own reading of available RAM (`MemAvailable` in `/proc/meminfo`), or
+/// `None` where there is no such file — wasm, or a platform without procfs — in which
+/// case the address-space attempt below is the whole probe and says so by passing on
+/// less evidence.
+pub fn available_ram_bytes() -> Option<u64> {
+    let text = std::fs::read_to_string("/proc/meminfo").ok()?;
+    for line in text.lines() {
+        if let Some(rest) = line.strip_prefix("MemAvailable:") {
+            let kb: u64 = rest.trim().trim_end_matches("kB").trim().parse().ok()?;
+            return Some(kb * 1024);
+        }
+    }
+    None
 }
 
 /// **THE WRONG PROBE, kept on purpose.** Asks whether the HOLDER is alive rather than whether

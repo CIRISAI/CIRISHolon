@@ -150,14 +150,15 @@ fn refusal_row(species: &str, why: &TableRefusal) -> String {
             "AnionFenced",
             format!("\"fence\": \"{fence}\", \"charge\": {charge}, \"cause\": \"{cause}\""),
         ),
-        TableRefusal::PastAutomaticRoute { n_det, n_orb, det_threshold, orb_max } => (
+        TableRefusal::PastAutomaticRoute { n_det, n_orb, det_price_bytes, mpo_price_bytes } => (
             "PastAutomaticRoute",
             format!(
                 "\"n_determinants\": {n_det}, \"n_orbitals\": {n_orb}, \
-                 \"determinant_threshold\": {det_threshold}, \"mps_orbital_reach\": {orb_max}, \
-                 \"note\": \"NOT impossible: the determinant route can enumerate this space \
-                 by hand and with a budget. Exit: GANTT node F (GPU solve) or the DMRG \
-                 cluster seam.\""
+                 \"determinant_working_set_bytes\": {det_price_bytes}, \
+                 \"mpo_price_bytes_provisional\": {mpo_price_bytes}, \
+                 \"note\": \"Refused by THIS machine's resource door at these prices, not \
+                 by any cap: a machine that admits the reservation runs it. Exit: more RAM, \
+                 GANTT node F (GPU solve), or the DMRG cluster seam.\""
             ),
         ),
         other => ("Other", format!("\"debug\": \"{other:?}\"")),

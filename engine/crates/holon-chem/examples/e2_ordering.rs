@@ -19,7 +19,7 @@
 //!
 //! # The two the ordinary route cannot reach
 //!
-//! SiO is 132,496 determinants, past `fci::MPS_ROUTE_THRESHOLD`, so `generate_pair_table`
+//! SiO is 132,496 determinants — a working set some machines' doors refuse — so `generate_pair_table`
 //! refuses it rather than routing it to a DMRG builder that would not return. S2 is 23,409
 //! determinants and inside the threshold but expensive. Both are reported as OWED rather
 //! than guessed at, and the ordering is scored on its broad strokes over what is measured.

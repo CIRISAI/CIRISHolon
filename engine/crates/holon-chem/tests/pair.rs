@@ -963,96 +963,71 @@ fn max_determinants(n_orb: usize) -> u128 {
         .unwrap_or(0)
 }
 
-/// `AutomaticRoute::Mps` is UNREACHABLE at the current constants, and this says so out loud
-/// so that raising either constant makes the arm's revival visible here rather than
-/// downstream.
-///
-/// # The fact
-///
-/// A space reaches the MPS arm only if it is BOTH past
-/// `fci::MPS_ROUTE_THRESHOLD` determinants AND inside `pair::MPS_MAX_ORBITALS` orbitals.
-/// Nine orbitals hold at most `C(9,4)*C(9,5)` = 15,876 determinants over every filling,
-/// against a threshold of 50,000 — so the two conditions cannot both hold, and for every
-/// reachable input `AutomaticRoute::exists()` is exactly `n_det <= MPS_ROUTE_THRESHOLD`.
-///
-/// # Why that is worth a gate rather than a comment
-///
-/// The ELEMENTS-3 lane published a route table believing its refusals rested on
-/// `MPS_MAX_ORBITALS`. They rest on the determinant threshold alone; the orbital constant
-/// enters no verdict any record contains. That was invisible until somebody multiplied two
-/// binomials. Raising the constant to 10 makes the arm live — the window being `n_det` in
-/// 50,001..=63,504, which is near half filling and is NaH's neighbourhood, the one measured
-/// failure at that orbital count. This test names that window in its own failure message.
+
+/// THE ROUTING LAW IS ADMISSION, NOT A CONSTANT (2026-09-02). The four capability caps
+/// this file used to pin — a hard determinant count, a routing threshold, an MPS orbital
+/// wall and an MPS determinant reach — were prices measured in one regime and consumed
+/// everywhere as physics. They are gone. A pair routes to the determinant route when its
+/// working set is ADMITTED by the resource door, to the MPS route as the leased overflow
+/// when its (provisional) MPO price is admitted, and nowhere otherwise — with both prices
+/// named. This test pins the LAW, both directions, with the resource layer's own plants.
 #[test]
-fn the_mps_arm_is_unreachable_at_the_current_constants() {
-    let cap = max_determinants(holon_chem::pair::MPS_MAX_ORBITALS);
-    let threshold = holon_chem::fci::MPS_ROUTE_THRESHOLD as u128;
-    println!(
-        "MPS_MAX_ORBITALS = {} holds at most {cap} determinants over every filling; \
-         MPS_ROUTE_THRESHOLD = {threshold}",
-        holon_chem::pair::MPS_MAX_ORBITALS
-    );
-
-    // The first orbital count at which the arm WOULD go live, reported either way so the
-    // distance to it is visible rather than only its absence.
-    let first_live = (1..=64).find(|&n| max_determinants(n) > threshold);
-    match first_live {
-        Some(n) => println!(
-            "  the arm first becomes reachable at {n} orbitals (max {} determinants); \
-             the window there is n_det in {}..={}",
-            max_determinants(n),
-            threshold + 1,
-            max_determinants(n)
-        ),
-        None => println!("  no orbital count up to 64 can reach the arm"),
-    }
-
-    assert!(
-        cap <= threshold,
-        "THE MPS ARM HAS GONE LIVE. MPS_MAX_ORBITALS = {} now admits spaces of up to {cap} \
-         determinants, past MPS_ROUTE_THRESHOLD = {threshold}, so AutomaticRoute::Mps is \
-         selectable for n_det in {}..={cap}. That is a real routing change and not a \
-         constant bump: it sends those spaces to DMRG automatically. The ladder's one \
-         measured failure at ten orbitals (NaH, 44,100 determinants, 4.9e-3 Ha short of the \
-         1e-8 stake after 364 s) sits in that neighbourhood. If this is intended, delete \
-         this test deliberately and say why; do not raise the constant past it by accident.",
-        holon_chem::pair::MPS_MAX_ORBITALS,
-        threshold + 1
-    );
-}
-
-/// The route verdicts this crate publishes are functions of the DETERMINANT threshold, and
-/// invariant to `MPS_MAX_ORBITALS` at its present value.
-///
-/// The companion to the test above: that one says the arm is unreachable, this one says
-/// what follows for every caller — `exists()` is exactly `n_det <= MPS_ROUTE_THRESHOLD`.
-/// The ELEMENTS-3 lane's published table rests on this fact, so it is pinned here rather
-/// than left as a consequence somebody has to re-derive.
-#[test]
-fn route_verdicts_are_the_determinant_threshold_alone() {
+fn routing_is_admission_and_both_directions_are_planted() {
+    use holon_chem::budget::{admit, price_determinant, price_mpo, set_admission};
     use holon_chem::elements::ALL_ELEMENTS;
-    let mut checked = 0usize;
+    use holon_chem::pair::{automatic_route, AutomaticRoute};
+    use holon_resource::probe::ScriptedProbe;
+
+    // (a) An admitting door routes EVERY registered pair to the determinant route: no
+    //     constant remains that could say otherwise.
+    set_admission(Some(Box::new(ScriptedProbe::always_pass())));
+    let mut pairs = 0usize;
     for a in ALL_ELEMENTS.iter().copied() {
         for b in ALL_ELEMENTS.iter().copied() {
             if b.z < a.z {
                 continue;
             }
-            let route = holon_chem::pair::automatic_route(a, b);
-            let by_threshold = route.n_det() <= holon_chem::fci::MPS_ROUTE_THRESHOLD;
-            assert_eq!(
-                route.exists(),
-                by_threshold,
-                "{}{}: exists() = {} but n_det <= MPS_ROUTE_THRESHOLD = {}. The two have \
-                 come apart, which means the MPS arm is live and every published route \
-                 table that assumed otherwise needs re-reading.",
+            let r = automatic_route(a, b);
+            assert!(
+                matches!(r, AutomaticRoute::Determinant { .. }),
+                "{}{}: with an admitting door every pair is determinant-routed, got {r:?}",
                 a.symbol,
-                b.symbol,
-                route.exists(),
-                by_threshold
+                b.symbol
             );
-            checked += 1;
+            pairs += 1;
         }
     }
-    println!("{checked} unordered pairs: exists() is the determinant threshold, exactly");
-    assert!(checked > 100, "the registry shrank; this gate is covering less than it was");
+    assert!(pairs > 1000, "the sweep covered the registry ({pairs} pairs)");
+
+    // (b) A refusing door routes every pair NOWHERE — and says so as a machine fact, never
+    //     as a property of the space.
+    set_admission(Some(Box::new(ScriptedProbe::always_fail("planted refusal"))));
+    for a in ALL_ELEMENTS.iter().copied().take(12) {
+        let r = automatic_route(a, a);
+        assert!(!r.exists(), "{}{}: a refusing door admits nothing, got {r:?}", a.symbol, a.symbol);
+    }
+
+    // (c) THE REAL DOOR, on this machine, is exactly the disjunction of the two prices.
+    //     Sampled rather than swept: the probe RESERVES the working set it is asked for.
+    set_admission(None);
+    let sample: Vec<_> = ALL_ELEMENTS.iter().copied().filter(|s| s.z <= 10 || s.z == 17).collect();
+    for a in sample.iter().copied() {
+        for b in sample.iter().copied() {
+            if b.z < a.z {
+                continue;
+            }
+            let r = automatic_route(a, b);
+            let det_ok = admit(&price_determinant(r.n_det())).is_ok();
+            let mpo_ok = admit(&price_mpo(r.n_orb())).is_ok();
+            assert_eq!(
+                r.exists(),
+                det_ok || mpo_ok,
+                "{}{}: route {r:?} disagrees with the door (det {det_ok}, mpo {mpo_ok})",
+                a.symbol,
+                b.symbol
+            );
+        }
+    }
+    let biggest = max_determinants(9);
+    println!("route law: admission by price; nine orbitals hold at most {biggest} determinants");
 }

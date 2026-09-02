@@ -262,12 +262,12 @@ pub fn load_pair_table(s: &mut Sim, pt: &holon_chem::pair::PairTable, host: bank
 /// reason [`PROVENANCE_REFUSED`] is: a full bank and a bad curve are different problems.
 pub const BANK_FULL: u32 = 15;
 
-/// This engine has no AUTOMATIC route to this pair's curve.
+/// THIS MACHINE's resource door admitted neither price for this pair's curve — not the
+/// determinant working set, not the MPS overflow's MPO.
 ///
-/// NOT "impossible": the determinant route can still enumerate the space if it is driven
-/// directly, at a cost nothing here bounds. See [`holon_chem::pair::AutomaticRoute::NoneAvailable`]
-/// for what the distinction costs — SiO lands here and is nonetheless one of gate D1's
-/// staked EXACT species.
+/// NOT "impossible" and not a property of the pair: another machine with the headroom
+/// gets the curve, and the refusal carries both prices in bytes. See
+/// [`holon_chem::pair::AutomaticRoute::NoneAvailable`] and `holon_chem::budget`.
 ///
 /// Distinct from `GENERATOR_REFUSED` (the grid request was malformed) and from `BANK_FULL`:
 /// this one is a fact about the engine's automatic routing, not about the caller's
@@ -851,6 +851,20 @@ pub extern "C" fn holon_set_boundary(mode: u32) -> u32 {
         Ok(()) => 0,
         Err(r) => boundary_refusal_code(r),
     }
+}
+
+/// How far the force law reaches on the current scene, bohr — the radius the boundary door
+/// compares against half the shortest edge before it admits a wrap. Exposed so a host can
+/// show a refusal's own two numbers and compute the widening that would lift it.
+#[no_mangle]
+pub extern "C" fn holon_legality_radius() -> f64 {
+    sim().legality_radius()
+}
+
+/// Half the box's shortest edge, bohr: the other side of the boundary door's inequality.
+#[no_mangle]
+pub extern "C" fn holon_half_min_edge() -> f64 {
+    0.5 * sim().geom().min_edge()
 }
 
 /// Base code for a boundary-switch refusal, placed above the scale door's block so a host
@@ -1620,18 +1634,32 @@ pub extern "C" fn holon_bank_slot_count() -> u32 {
     bank::MAX_TABLES as u32
 }
 
-/// Determinant count at or above which a pair must arrive as a shipped table rather than
-/// being solved at page load. Returned as `f64` because the count can exceed `u32`.
+/// The page's declared load budget, seconds. A horizon the host can raise, never a cap.
 #[no_mangle]
-pub extern "C" fn holon_bank_in_browser_det_limit() -> f64 {
-    bank::IN_BROWSER_DET_LIMIT as f64
+pub extern "C" fn holon_bank_browser_budget_seconds() -> f64 {
+    bank::browser_budget_seconds()
 }
 
-/// Basis-function count above which a pair must be shipped rather than solved at load.
-/// The measured half of the split; see `bank::IN_BROWSER_BASIS_LIMIT`.
+/// Declare the page's load budget, seconds of main thread a curve may cost at load.
+/// The split (`holon_bank_pair_is_heavy`) is enforced against THIS number, so it is the
+/// host's declaration and not a constant the engine keeps; `s <= 0` restores the default.
 #[no_mangle]
-pub extern "C" fn holon_bank_in_browser_basis_limit() -> u32 {
-    bank::IN_BROWSER_BASIS_LIMIT as u32
+pub extern "C" fn holon_bank_set_browser_budget_seconds(s: f64) {
+    bank::set_browser_budget_seconds(if s > 0.0 { Some(s) } else { None })
+}
+
+/// Predicted seconds to solve a pair's curve at load, from the measured cost model
+/// (`bank::BROWSER_COST_PROVENANCE`). The page compares this against its budget.
+#[no_mangle]
+pub extern "C" fn holon_bank_pair_predicted_seconds(za: u32, zb: u32) -> f64 {
+    let (Some(a), Some(b)) = (
+        holon_chem::elements::by_z(za),
+        holon_chem::elements::by_z(zb),
+    ) else {
+        return f64::NAN;
+    };
+    let f = holon_chem::pair::automatic_route(a, b);
+    bank::predicted_load_seconds(f.n_orb() as u64, f.n_det() as u64)
 }
 
 /// The basis-function count a pair's solve would carry.
@@ -1646,8 +1674,7 @@ pub extern "C" fn holon_bank_pair_n_basis(za: u32, zb: u32) -> u32 {
     (a.n_basis() + b.n_basis()) as u32
 }
 
-/// Whether a pair is too heavy to solve at page load, by either declared threshold.
-/// `1` = must be shipped.
+/// Whether a pair's predicted load cost exceeds the page's budget. `1` = must be shipped.
 #[no_mangle]
 pub extern "C" fn holon_bank_pair_is_heavy(za: u32, zb: u32) -> u32 {
     let (Some(a), Some(b)) = (
@@ -1725,8 +1752,10 @@ pub extern "C" fn holon_pairs_ready() -> u32 {
 
 /// Solve a pair's curve IN THE BROWSER and bank it.
 ///
-/// Refuses a pair past `holon_bank_in_browser_det_limit` — that is the split, and it is
-/// enforced here rather than left to the host to remember. Returns `LoadStatus` (1 = Ok),
+/// Refuses a pair whose predicted load cost exceeds the page's declared budget
+/// (`holon_bank_pair_is_heavy`) — that is the split, and it is enforced here rather than
+/// left to the host to remember; a heavy curve's route is to be SHIPPED with provenance
+/// through `holon_table_begin/knot/finish`, never solved on a main thread at load. Returns `LoadStatus` (1 = Ok),
 /// `BANK_FULL`, `GENERATOR_REFUSED`, or a `PROVENANCE_REFUSED` code.
 #[no_mangle]
 pub extern "C" fn holon_bank_generate_pair(za: u32, zb: u32, knots: u32) -> u32 {

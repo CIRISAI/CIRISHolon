@@ -73,8 +73,8 @@ MUTATIONS = [
         "M1",
         "the T budget predicate always passes (both amp doors at once)",
         LIB,
-        "    let t = t_count(c);\n    if t <= T_MAX_MAGIC {\n        return Ok(());\n    }",
-        "    let t = t_count(c);\n    if true {\n        return Ok(());\n    }",
+        "    let horizon = magic_horizon_seconds();\n    if secs <= horizon {\n        return Ok(());\n    }",
+        "    let horizon = magic_horizon_seconds();\n    if true {\n        return Ok(());\n    }",
         ["amp_path_refuses_past_the_t_cap", "amp_library_call_refuses_past_the_t_cap"],
     ),
     (
@@ -95,10 +95,10 @@ MUTATIONS = [
     ),
     (
         "M4",
-        "the 2^n budget predicate always passes",
+        "the 2^n budget prices one byte whatever n is (the probe always admits)",
         LIB,
-        "    let n = c.n_qubits;\n    if n <= N_MAX_STATEVECTOR {\n        return Ok(());\n    }",
-        "    let n = c.n_qubits;\n    if true {\n        return Ok(());\n    }",
+        "    match ram_admits(bytes) {\n        Ok(()) => Ok(()),",
+        "    match ram_admits(bytes.min(1)) {\n        Ok(()) => Ok(()),",
         [
             "distribution_path_refuses_past_the_n_wall",
             "distribution_library_call_refuses_past_the_n_wall",
@@ -110,7 +110,7 @@ MUTATIONS = [
         "M5",
         "the router routes to magic on T-count alone (the sibling defect)",
         LIB,
-        "    if t <= T_ROUTE_MAGIC\n        && !c.gates.iter().any(|g| matches!(g, Gate::Ccx(..)))\n        && c.n_qubits <= N_MAX_STATEVECTOR\n    {",
+        "    if t <= T_ROUTE_MAGIC\n        && !c.gates.iter().any(|g| matches!(g, Gate::Ccx(..)))\n        && carrier_open\n    {",
         "    if t <= T_ROUTE_MAGIC\n        && !c.gates.iter().any(|g| matches!(g, Gate::Ccx(..)))\n    {",
         ["router_does_not_send_a_wide_circuit_to_magic"],
     ),
@@ -124,18 +124,26 @@ MUTATIONS = [
     ),
     (
         "M7",
-        "the cap is tightened by one (the wall must sit AT the cap)",
+        "the default horizon is halved (the wall must sit AT the derived budget)",
         LIB,
-        "pub const T_MAX_MAGIC: usize = 24;",
-        "pub const T_MAX_MAGIC: usize = 23;",
+        "    if bits == 0 {\n        120.0\n",
+        "    if bits == 0 {\n        60.0\n",
         ["amp_path_is_open_at_the_cap"],
+    ),
+    (
+        "M9",
+        "the RAM probe's headroom half is deleted (the reservation half must still refuse a petabyte)",
+        LIB,
+        "                    if bytes > kb * 1024 {\n                        return Err(\"the ask exceeds the kernel's available RAM\");\n                    }",
+        "                    if false {\n                        return Err(\"the ask exceeds the kernel's available RAM\");\n                    }",
+        ["the_ram_probe_measures_headroom_and_never_commits_the_pages"],
     ),
     (
         "M8",
         "the refusal drops the numbers it is supposed to name",
         LIB,
-        "        \"REFUSED by the magic wall: T-count {t} > {T_MAX_MAGIC}, the magic \\\n         tier's branch budget.",
-        "        \"REFUSED by the magic wall: this circuit is too expensive. \\\n         Ignore the following:",
+        "        \"REFUSED by the magic wall: T-count {t} at n = {n} is priced at {secs:.3e} s \\\n",
+        "        \"REFUSED by the magic wall: too expensive (n = {n}, {secs:.3e} s); ignore \\\n",
         ["amp_path_refuses_past_the_t_cap"],
     ),
 ]
@@ -192,6 +200,9 @@ def build_tests():
     return p.returncode == 0, p.stderr[-3000:]
 
 
+TEST_BINARY = {"the_ram_probe_measures_headroom_and_never_commits_the_pages": "budget"}
+
+
 def run_one(name):
     """Run ONE named test in its own process and say whether it stayed green.
 
@@ -206,8 +217,8 @@ def run_one(name):
     """
     try:
         p = cargo(
-            ["test", "--release", "-p", "holon-qasm", "--test", "refusal",
-             "--", "--exact", name],
+            ["test", "--release", "-p", "holon-qasm", "--test",
+             TEST_BINARY.get(name, "refusal"), "--", "--exact", name],
             cap_mem=True,
             timeout=TEST_TIMEOUT,
         )
@@ -226,10 +237,15 @@ def run_one(name):
 
 
 def run_all():
-    """Baseline only: every test in the file, batched."""
-    p = cargo(["test", "--release", "-p", "holon-qasm", "--test", "refusal"],
-              cap_mem=True)
-    log = p.stdout + p.stderr
+    """Baseline only: every test in both door files, batched."""
+    log = ""
+    rc = 0
+    for binary in ("refusal", "budget"):
+        p = cargo(["test", "--release", "-p", "holon-qasm", "--test", binary],
+                  cap_mem=True)
+        log += p.stdout + p.stderr
+        rc |= p.returncode
+    p = type("P", (), {"returncode": rc})
     names = re.findall(r"^test (\S+) .*\.\.\. (ok|FAILED)$", log, re.M)
     return p.returncode == 0, dict(names), log
 

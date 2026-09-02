@@ -38,7 +38,7 @@
 //!
 //! # Why every solve goes through `solve_determinant`
 //!
-//! `fci::solve` routes past `MPS_ROUTE_THRESHOLD = 50,000` determinants into DMRG, whose
+//! `fci::solve` takes the MPS route as the leased overflow when the door refuses, whose
 //! energy is a variational upper bound and not exact in model. The `O2H3` pentamer is
 //! 204,490 determinants and the `O2H2` quadruple is 48,400 — a 3.2% margin, far too
 //! close to assume — so this file reads `Solution::route` on EVERY solve and refuses a
@@ -58,7 +58,7 @@
 
 use holon_chem::dual::D2;
 use holon_chem::elements::{Species, HYDROGEN, OXYGEN};
-use holon_chem::fci::{self, SolveExit, SolverRoute, MPS_ROUTE_THRESHOLD};
+use holon_chem::fci::{self, SolveExit, SolverRoute};
 use holon_chem::pair::{
     geometry_problem, pair_point, solve_geometry, CONVERGED_RESIDUAL,
 };
@@ -281,7 +281,7 @@ fn centres(pos: &[[f64; 3]]) -> Vec<[D2; 3]> {
 ///
 /// Two entry points, one route, and the choice is forced rather than stylistic:
 ///
-/// * at or below `MPS_ROUTE_THRESHOLD`, `solve_geometry` IS the determinant route (its
+/// * when the resource door admits the working set, `solve_geometry` IS the determinant route (its
 ///   `solve` call cannot branch there) and it additionally reports `scf_converged`, so it
 ///   is used and the route is CHECKED from `Solution::route` rather than inferred;
 /// * above it, `solve_geometry` would silently become DMRG, so the only lawful path is
@@ -293,7 +293,9 @@ fn solve_sub(species: &[Species], pos: &[[f64; 3]]) -> Result<Sub, String> {
     if n_det > FCI_DET_MAX {
         return Err(format!("{n_det} determinants exceeds FCI_DET_MAX {FCI_DET_MAX}"));
     }
-    if n_det <= MPS_ROUTE_THRESHOLD {
+    // The campaign ran under the pre-2026-09-02 routing constant (50,000); the instrument
+    // now follows the admission law so it stays runnable. The banked verdict is unchanged.
+    if holon_chem::budget::admit(&holon_chem::budget::price_determinant(n_det)).is_ok() {
         let sol = solve_geometry(species, centres(pos));
         return Ok(Sub {
             e: sol.e.v,
@@ -1155,7 +1157,7 @@ fn pair_rung_identity_check() {
         );
         let de2 = via_pair_point - atom_e(a) - atom_e(b);
         println!(
-            "  Z{}-Z{} at r={r}: E {:.12}  dE2 {:.12}  n_det {} (<= {MPS_ROUTE_THRESHOLD}, so \
+            "  Z{}-Z{} at r={r}: E {:.12}  dE2 {:.12}  n_det {} (admitted by the door, so \
              solve IS solve_determinant)  route {}  exit {}",
             a.z,
             b.z,
@@ -1165,7 +1167,7 @@ fn pair_rung_identity_check() {
             sol.route.label(),
             sol.exit.label()
         );
-        assert!(sol.n_det <= MPS_ROUTE_THRESHOLD);
+        assert!(holon_chem::budget::admit(&holon_chem::budget::price_determinant(sol.n_det)).is_ok());
         assert_eq!(sol.route, SolverRoute::Determinant);
     }
 }

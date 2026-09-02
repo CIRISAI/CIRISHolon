@@ -710,7 +710,7 @@ pub struct PairMeta {
     /// way of saying "repulsive only", which is the in-model truth for He2 and Ne2.
     pub well: Option<Well>,
     /// WHICH SOLVER produced this curve. See [`SolverRoute`]: `solve` switches to DMRG
-    /// past [`crate::fci::MPS_ROUTE_THRESHOLD`] determinants, and before this field
+    /// past what this machine's resource door admits, and before this field
     /// existed the switch was invisible downstream — a DMRG curve arrived in the sandbox
     /// wearing a provenance string that said "determinant".
     pub route: SolverRoute,
@@ -798,7 +798,7 @@ pub const PAIR_PROVENANCE: &str = "engine-computed STO-3G FCI (determinant, Know
 /// The label a DMRG-route pair curve carries.
 ///
 /// It says DMRG in the first field, because that is the fact a reader most needs and the
-/// one that was missing: past [`crate::fci::MPS_ROUTE_THRESHOLD`] determinants the solver
+/// one that was missing: past what the resource door admits the solver
 /// switches, and every such curve used to be stamped [`PAIR_PROVENANCE`] regardless. It
 /// also says what the number IS — a variational upper bound inside a bond-dimension
 /// budget — because "DMRG" alone still lets a reader assume exactness.
@@ -914,25 +914,25 @@ pub fn derive_range(a: Species, b: Species, e_asymptote: f64) -> (f64, f64) {
 /// derivation).
 pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable {
     // THE FEASIBILITY REFUSAL, before anything is spent. Without it, asking for a curve
-    // whose determinant space is past `fci::MPS_ROUTE_THRESHOLD` and whose orbital count
-    // is past `MPS_MAX_ORBITALS` does not fail — it runs the MPO builder, which at ten
+    // whose determinant working set this machine's door refuses and whose orbital count
+    // is past the MPO builder's measured reach does not fail — it runs the MPO builder, which at ten
     // orbitals did not finish in an hour on the campaign machine. A caller is entitled to
     // be told no; it is not entitled to be told nothing.
     let f = automatic_route(a, b);
     assert!(
         f.exists(),
-        "{}{}: this engine has no AUTOMATIC route to this curve. {} determinants is past \
-         fci::MPS_ROUTE_THRESHOLD ({}), so `fci::solve` would route it to DMRG, and {} \
-         orbitals is past the MPS route's measured reach of {} (see pair::MPS_MAX_ORBITALS \
-         for the timings) — so that route would not return. The determinant route CAN \
-         enumerate this space; call `fci::solve_determinant` directly and budget for it. \
-         Refusing here rather than starting a solve that does not return.",
+        "{}{}: this machine's resource door admitted neither route for this curve: the \
+         determinant working set ({} determinants -> {} bytes) and the MPS route's dense \
+         MPO ({} orbitals -> ~{} bytes, provisional) were both refused. That is a fact about \
+         THIS machine's headroom at the moment of asking, not about the space: on a box that \
+         admits the reservation the same call runs. Refusing here rather than starting a solve \
+         the machine cannot hold.",
         a.symbol,
         b.symbol,
         f.n_det(),
-        crate::fci::MPS_ROUTE_THRESHOLD,
+        crate::budget::price_determinant(f.n_det()).bytes,
         f.n_orb(),
-        MPS_MAX_ORBITALS,
+        crate::budget::price_mpo(f.n_orb()).bytes,
     );
     let t0 = Stopwatch::start();
     let e_asymptote = atom_energy(a) + atom_energy(b);
@@ -1048,99 +1048,13 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
     }
 }
 
-/// Orbital-count admission bound for the MPS route. RE-DERIVED, and it is a WALL, not a
-/// reach.
-///
-/// # The measurement
-///
-/// The old 6 was measured against the pre-rebuild MPO construction, which cost 528 s to
-/// BUILD at six orbitals and did not finish at ten. The channel-based rebuild removed that
-/// — SiO's build is now 0.31 s — so it was re-measured on an orbital ladder over real
-/// STO-3G integrals, each pair at its own equilibrium, chi = 32, a declared 300 s per-cell
-/// budget, and the D1 stake of 1e-8 Ha against exact FCI (`examples/mps_ladder.rs`,
-/// `engine/output/mixtures1/mps_ladder.log`):
-///
-/// | `n_det` | pair | `n_orb` | delta / Ha | verdict | exact FCI |
-/// |---|---|---|---|---|---|
-/// | 4 | H2 | 2 | 1.8e-15 | REACHED | 0.0 s |
-/// | 100 | HCl | 10 | 6.1e-11 | REACHED | 0.0 s |
-/// | 196 | ClF | 14 | 5.5e-12 | REACHED | 0.0 s |
-/// | 225 | LiH | 6 | 3.9e-14 | REACHED | 0.0 s |
-/// | 23,409 | S2 | 18 | 3.5e-3 | BUDGET | 2.7 s |
-/// | 44,100 | NaH | 10 | 4.9e-3 | BUDGET | 1.3 s |
-/// | 132,496 | SiO | 14 | 1.1e-2 | BUDGET | 18.5 s |
-///
-/// # Why NINE and not fourteen
-///
-/// This constant is spent as a `<=` ADMISSION DOOR in [`automatic_route`], so it must
-/// BOUND the admitted set. The largest orbital count that *reached* is 14 — but there are
-/// measured FAILURES at 10 (NaH) and 14 (SiO), which sit inside the door a 14 would open.
-/// **A maximum over a set containing a failure is not a bound on that set.** The honest
-/// value is the smallest failing count minus one: the largest count at which every tested
-/// rung reached. That is 9.
-///
-/// The ladder prints both numbers and its closing line used to nominate the wrong one.
-/// elements3-heavy caught it and the lead ruled it; the harness now names the wall.
-///
-/// # And a 9 leaves the MPS arm DEAD, which is the honest state
-///
-/// A space is only routed to MPS if it is ALSO past
-/// [`crate::fci::MPS_ROUTE_THRESHOLD`] = 50,000 determinants. The largest space nine
-/// orbitals can hold, over every filling, is `C(9,4)*C(9,5)` = 15,876 — comfortably inside
-/// that threshold. So no input can select [`AutomaticRoute::Mps`], and this constant is
-/// currently INERT: for every reachable input, `exists()` is exactly
-/// `n_det <= MPS_ROUTE_THRESHOLD`.
-///
-/// The arm first becomes reachable at TEN orbitals (max 63,504 > 50,000), and the window
-/// it would open there is `n_det` in 50,000..63,504 — near half filling, which is NaH's
-/// exact neighbourhood, the one measured failure at that orbital count. Raising this to 10
-/// would hand the automatic router the neighbourhood of the rung that failed.
-///
-/// `the_mps_arm_is_unreachable_at_the_current_constants` in `tests/pair.rs` asserts this
-/// and names the window if it ever opens, so nobody raises the constant and discovers the
-/// arm went live downstream.
-///
-/// # What would move it
-///
-/// Not this constant. The two 10-orbital rungs disagree (HCl reached, NaH did not, 441x
-/// apart in determinants at equal orbital count), so orbital count is the right axis for
-/// MPO BUILD cost and the wrong axis for whether a sweep will reach a stake. A door that
-/// survives NaH is a TWO-PART door — orbitals for the build, a filling-aware second axis
-/// for the reach — which is a designed change with its own measurement, not a bigger
-/// number here.
-pub const MPS_MAX_ORBITALS: usize = 9;
-
-/// CI-space size past which the MPS route does not reach the D1 stake, MEASURED.
-///
-/// The operative bound, because the orbital count is not (see [`MPS_MAX_ORBITALS`]). The
-/// boundary sits between LiH's 225 determinants, which reaches 1e-8 in 3 sweeps, and S2's
-/// 23,409, which is still 3.5e-3 away when the budget runs out. 1,024 is placed inside that
-/// gap and is deliberately the same round number as the browser split's determinant limit;
-/// nothing distinguishes 500 from 5,000 on this evidence, and pretending otherwise would be
-/// precision the ladder does not have.
-///
-/// # The finding this bound encodes, which is larger than the bound
-///
-/// **Every pair the MPS route REACHES is a pair whose exact FCI is already free** — 0.0 s
-/// for all four. **Every pair where exact FCI costs anything** — NaH 1.3 s, S2 2.7 s,
-/// SiO 18.5 s — **is a pair the MPS route does not reach.** So on this engine today the
-/// route extends nothing: it is slower and less accurate wherever the determinant route is
-/// affordable, and it fails wherever the determinant route is expensive.
-///
-/// Combined with [`crate::fci::MPS_ROUTE_THRESHOLD`] = 50,000, that makes
-/// [`AutomaticRoute::Mps`] UNREACHABLE — a space large enough to be routed to MPS is
-/// necessarily larger than this bound. That is not a bug in the routing; it is the
-/// measurement, encoded. The arm is kept so that the day the sweep implementation improves,
-/// the fix is one constant and not a re-argued design.
-///
-/// # What this bound is NOT
-///
-/// It is scoped to chi = 32 and a 300 s per-cell budget. The ladder stops climbing chi
-/// after a BUDGET verdict, deliberately — a larger chi is strictly slower per sweep, so it
-/// cannot do better in the same wall clock — which means a much larger budget at a larger
-/// chi was never tested and could move this. The bound says what the route reaches under a
-/// stated budget, not what DMRG can do in principle.
-pub const MPS_MAX_DETERMINANTS: usize = 1024;
+// `MPS_MAX_ORBITALS` (9) and `MPS_MAX_DETERMINANTS` (1,024) used to live here: the
+// measured reach of the MPS route under a 300 s wall-clock budget on a loaded box. They
+// were true in that regime and were consumed as physics everywhere else. Their record is
+// kept as provenance — `crate::budget::MPS_REACH_RECORD` — and the route is now chosen by
+// ADMISSION: the determinant route if its working set is admitted at the door, the MPS
+// route as the leased overflow if its (provisional) MPO price is admitted, and the named
+// refusal otherwise. The seam node re-measures the reach in work units.
 
 /// Which route [`crate::fci::solve`] WOULD TAKE for a pair.
 ///
@@ -1160,29 +1074,13 @@ pub const MPS_MAX_DETERMINANTS: usize = 1024;
 pub enum AutomaticRoute {
     /// Inside the determinant route's budget: exact in model.
     Determinant { n_det: usize, n_orb: usize },
-    /// Past the determinant threshold but inside the MPS route's measured reach. Costly
-    /// (see [`MPS_MAX_ORBITALS`]) and NOT exact in model.
+    /// The determinant working set was REFUSED by this machine's resource door and the
+    /// MPS route's (provisional) MPO price was admitted: the leased overflow. NOT exact in
+    /// model; its reach is a measurement (`crate::budget::MPS_REACH_RECORD`).
     Mps { n_det: usize, n_orb: usize },
-    /// Past both. THE ROUTER HAS NOWHERE TO SEND THIS — which is not the same as the
-    /// space being unsolvable.
-    ///
-    /// # What this does and does not say
-    ///
-    /// It says: [`crate::fci::solve`] would route this space to DMRG, and the MPO builder
-    /// cannot be driven at this orbital count, so [`generate_pair_table`] would not
-    /// return. That is a fact about the automatic route.
-    ///
-    /// It does NOT say the space is unsolvable. The determinant route has no cap of its
-    /// own beyond time and memory, and [`crate::fci::solve_determinant`] will enumerate
-    /// it. SiO is the case that matters: 132,496 determinants is past
-    /// [`crate::fci::MPS_ROUTE_THRESHOLD`] and fourteen orbitals is past
-    /// [`MPS_MAX_ORBITALS`], so it lands here — and it is nonetheless the pair gate D1
-    /// stakes as an EXACT overlap species, reached by calling the determinant route by
-    /// hand. The referee lane measured the cost of that route at 196,889,056 nonzero
-    /// Hamiltonian elements; this map does not bound it.
-    ///
-    /// So a caller that sees this must not report "impossible". It means "not
-    /// automatically, and not cheaply".
+    /// Both prices refused BY THIS MACHINE, at the moment of asking. Not a property of the
+    /// space: the same call on a machine with the RAM admits it, and the refusal names the
+    /// bytes so the reader knows what machine that is. Nothing here says "impossible".
     NoneAvailable { n_det: usize, n_orb: usize },
 }
 
@@ -1195,14 +1093,14 @@ impl AutomaticRoute {
         !matches!(self, AutomaticRoute::NoneAvailable { .. })
     }
 
-    /// The route's name, for a report. `Infeasible` prints as what it is: the determinant
-    /// route, reachable only by calling it directly.
+    /// The route's name, for a report. `NoneAvailable` prints as what it is: a verdict of
+    /// THIS machine's door on both prices, not a property of the pair.
     pub fn route_name(self) -> &'static str {
         match self {
-            AutomaticRoute::Determinant { .. } => "determinant (automatic)",
-            AutomaticRoute::Mps { .. } => "MPS/DMRG (automatic)",
+            AutomaticRoute::Determinant { .. } => "determinant (admitted)",
+            AutomaticRoute::Mps { .. } => "MPS/DMRG (admitted as the leased overflow)",
             AutomaticRoute::NoneAvailable { .. } => {
-                "determinant, BY HAND ONLY (solve_determinant)"
+                "NO ROUTE ADMITTED ON THIS MACHINE (both prices refused by the door)"
             }
         }
     }
@@ -1234,13 +1132,18 @@ pub fn automatic_route(a: Species, b: Species) -> AutomaticRoute {
     let (n, n_alpha, n_beta) = electron_counts(&[a, b]);
     let _ = n;
     let n_det = choose(n_orb, n_alpha).saturating_mul(choose(n_orb, n_beta));
-    if n_det <= crate::fci::MPS_ROUTE_THRESHOLD {
+    route_for(n_det, n_orb)
+}
+
+/// THE ONE ROUTING RULE, shared by the pair door and the charged-cluster door so the two
+/// cannot price the same space differently: the determinant route if its working set is
+/// ADMITTED at the resource door (`crate::budget::price_determinant`, a real reservation);
+/// the MPS route as the leased overflow if ITS price is admitted; otherwise nowhere — with
+/// both prices in hand for the refusal. No constant enters.
+pub fn route_for(n_det: usize, n_orb: usize) -> AutomaticRoute {
+    if crate::budget::admit(&crate::budget::price_determinant(n_det)).is_ok() {
         AutomaticRoute::Determinant { n_det, n_orb }
-    } else if n_det <= MPS_MAX_DETERMINANTS && n_orb <= MPS_MAX_ORBITALS {
-        // Currently unreachable, and measured to be so rather than assumed: see
-        // `MPS_MAX_DETERMINANTS`. A space past MPS_ROUTE_THRESHOLD is necessarily past
-        // that bound too. The arm stays because the day the sweeps improve, this is one
-        // constant to move and not a design to re-argue.
+    } else if crate::budget::admit(&crate::budget::price_mpo(n_orb)).is_ok() {
         AutomaticRoute::Mps { n_det, n_orb }
     } else {
         AutomaticRoute::NoneAvailable { n_det, n_orb }
@@ -1716,18 +1619,20 @@ pub enum RadiusRule {
     /// DERIVED from the ATOM, not from a pair: the root-mean-square radius of the
     /// outermost occupied orbital. See [`atomic_valence_rms_radius`].
     ///
-    /// A different rule, not a fallback value. It exists because most mid-row homonuclear
-    /// dimers have NO AUTOMATIC ROUTE -- `automatic_route` refuses them and
-    /// `generate_pair_table` will not produce them -- and because a curve costs about a
-    /// hundred geometries even where `solve_determinant` could reach one. Selenium's dimer
-    /// is 396,900 determinants.
+    /// A different rule, not a fallback value. It exists because a mid-row homonuclear
+    /// dimer's curve is a hundred geometries of a large determinant space — selenium's
+    /// dimer is 396,900 determinants — and the palette needs a radius for a species
+    /// before anyone has paid for its curve. Whether a given machine's door admits that
+    /// curve is the door's verdict (`route_for`), not this rule's business.
     ///
-    /// "No automatic route" is NOT "unreachable", and the distinction is one this lane got
-    /// wrong: AMENDMENT A1.2 said the latter and A3.1 corrected it, after the MIXTURES-1
-    /// lane measured SiO's 132,496 determinants at 34 seconds through `solve_determinant`.
-    /// What justifies a second rule here is cost and the absence of a production path, not
-    /// impossibility. The alternative was a remembered constant, which is what this crate
-    /// has no table of.
+    /// The distinction this lane once got wrong, kept so it is not got wrong again:
+    /// AMENDMENT A1.2 called such dimers "unreachable" and A3.1 corrected it after the
+    /// MIXTURES-1 lane measured SiO's 132,496 determinants at 34 seconds. Routing was a
+    /// cap then (`MPS_ROUTE_THRESHOLD`, retired 2026-09-02); it is admission by price now,
+    /// so the only thing that keeps a curve from being produced is a machine that cannot
+    /// pay for it, and the refusal names the price. What justifies a second rule here is
+    /// COST — a curve is not free — never impossibility. The alternative was a remembered
+    /// constant, which is what this crate has no table of.
     ///
     /// It is NOT comparable to the other two on the same axis: those measure where two
     /// atoms sit relative to each other and this measures how far one atom's valence
@@ -1756,7 +1661,7 @@ impl RadiusRule {
             }
             RadiusRule::ValenceDensity => {
                 "derived from the ATOM: RMS radius of the outermost occupied orbital \
-                 (the homonuclear pair is not computable)"
+                 (this machine's door admitted no route for the homonuclear pair)"
             }
         }
     }
@@ -1787,9 +1692,9 @@ pub struct SpeciesSize {
 pub fn homonuclear_size(sp: Species) -> SpeciesSize {
     let t0 = Stopwatch::start();
     // The pair route is asked for FIRST and refused at the door, rather than attempted and
-    // abandoned: `automatic_route` reads counts off the registry and computes nothing, so
-    // a species whose homonuclear dimer the router cannot place costs nothing to find out
-    // about.
+    // abandoned: `automatic_route` prices the space off the registry and asks the door,
+    // which computes nothing, so a species whose homonuclear dimer this machine cannot pay
+    // for costs nothing to find out about.
     if !automatic_route(sp, sp).exists() {
         let r = atomic_valence_rms_radius(sp);
         return SpeciesSize {

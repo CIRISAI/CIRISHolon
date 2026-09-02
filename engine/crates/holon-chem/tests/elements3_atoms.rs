@@ -390,146 +390,45 @@ fn the_two_closed_shell_nobles_match_the_fifty_digit_referee() {
     );
 }
 
-/// `C(n, k)`, saturating. Local and deliberately not `pair::choose`: this gate is an
-/// argument about arithmetic, and it should not be able to pass because the thing it is
-/// arguing about supplied its own counter.
-fn binom(n: usize, k: usize) -> usize {
-    if k > n {
-        return 0;
-    }
-    let k = k.min(n - k);
-    let mut acc: usize = 1;
-    for i in 0..k {
-        acc = match acc.checked_mul(n - i) {
-            Some(v) => v / (i + 1),
-            None => return usize::MAX,
-        };
-    }
-    acc
-}
-
-/// The largest determinant count any space of `n_orb` orbitals can have, over every filling.
-/// `C(n, n/2)^2` — half filling, where the binomial peaks.
-fn max_n_det_at(n_orb: usize) -> usize {
-    binom(n_orb, n_orb / 2).saturating_mul(binom(n_orb, n_orb / 2))
-}
-
-/// Is `AutomaticRoute::Mps` selectable at all, at a given set of constants?
-///
-/// The router asks in order: `n_det <= threshold` sends a space to the determinant route;
-/// otherwise `n_det <= max_det && n_orb <= max_orb` sends it to MPS. The middle arm
-/// therefore needs a space that is PAST the routing threshold and INSIDE the determinant
-/// bound at once — and if `max_det <= threshold` those two are contradictory and no space
-/// of any shape can satisfy them. That contradiction is the whole answer, and it does not
-/// depend on the orbital bound at all, which is the point.
-fn mps_arm_is_selectable(max_orb: usize, max_det: usize, threshold: usize) -> bool {
-    if max_det <= threshold {
-        return false;
-    }
-    // The determinant window is open; something within the orbital reach must be able to
-    // land in it.
-    (0..=max_orb).any(|m| max_n_det_at(m) > threshold)
-}
-
-/// THE MPS ARM IS UNREACHABLE, SO THIS RECORD'S ROUTE VERDICTS ARE THE DETERMINANT
-/// THRESHOLD'S ALONE.
-///
-/// # Why this gate exists
-///
-/// ELEMENTS3_RESULTS.md said, for one day, that this record's sixteen route-less species
-/// "rest on a superseded measurement", meaning the MPS reach constant. They do not, and the
-/// gate is here because that was a claim about a cause which was not carrying the effect.
-///
-/// # What it caught, which is why it is worth keeping
-///
-/// It was written when the reach was an ORBITAL count of 6, where six orbitals admit at most
-/// `C(6,3)^2 = 400` determinants against a 50,000 threshold. mixtures-engine then re-derived
-/// the constant as a measurement and found there is no orbital threshold at all: ten orbitals
-/// both reaches (HCl, 100 determinants) and fails (NaH, 44,100), fourteen both reaches (ClF,
-/// 196) and fails (SiO, 132,496). The operative bound is on DETERMINANTS —
-/// `MPS_MAX_DETERMINANTS = 1024` — and the orbital constant moved to 14 as a secondary.
-///
-/// This test FAILED on that change, which is what it is for. Its arithmetic modelled the old
-/// one-bound router, so it read the arm as newly live and said so loudly. The arm is in fact
-/// still empty, for a better reason than before: `MPS_MAX_DETERMINANTS` (1024) is BELOW
-/// `MPS_ROUTE_THRESHOLD` (50,000), so a space big enough to be routed away from the
-/// determinant route is necessarily past the bound that would let MPS take it. The two
-/// conditions are contradictory and no orbital count enters the argument.
-///
-/// # Why it remains a tripwire
-///
-/// The emptiness is now a measured fact about DMRG's sweeps rather than an accident of a
-/// stale constant: every pair the route reaches has an exact FCI that is already free, and
-/// every pair whose exact FCI costs anything is one the route does not reach. If the sweeps
-/// improve, `MPS_MAX_DETERMINANTS` rises past 50,000 and this test fails again — correctly,
-/// because at that moment the route table and its sixteen refusals genuinely do have to be
-/// re-read.
+/// THE MPS ARM IS THE LEASED OVERFLOW (2026-09-02), and the plant proves the arm is
+/// selectable: a door that refuses the determinant working set but admits the MPO price
+/// routes to MPS. On this machine the real door reports per species which route the
+/// price buys — printed, not pinned, because it is a fact about the machine.
 #[test]
-fn the_mps_arm_is_unreachable_so_the_orbital_constant_decides_nothing() {
-    let threshold = holon_chem::fci::MPS_ROUTE_THRESHOLD;
-    let max_orb = holon_chem::pair::MPS_MAX_ORBITALS;
-    let max_det = holon_chem::pair::MPS_MAX_DETERMINANTS;
+fn the_mps_arm_is_the_leased_overflow_and_the_plant_selects_it() {
+    use holon_chem::budget::{price_determinant, price_mpo, set_admission};
+    use holon_chem::pair::{automatic_route, AutomaticRoute};
+    use holon_resource::probe::{Probe, ProbeVerdict, ResourceKind};
 
-    // (a) The contradiction, stated as the argument rather than as a spot check.
-    assert!(
-        !mps_arm_is_selectable(max_orb, max_det, threshold),
-        "MPS_MAX_DETERMINANTS = {max_det} is now ABOVE MPS_ROUTE_THRESHOLD = {threshold}, so \
-         the MPS arm is SELECTABLE and spaces will begin routing automatically to DMRG. That \
-         is the moment this record's route table, its sixteen route-less species, and the \
-         claim that its verdicts belong to the determinant threshold alone all have to be \
-         re-read — before this test is updated, not after."
-    );
-
-    // (b) The same fact against the real registry rather than against arithmetic alone: no
-    //     pair of registered elements takes the arm. Both directions of the argument, since
-    //     an arithmetic proof and a concrete sweep fail in different ways.
-    for a in holon_chem::elements::ALL_ELEMENTS {
-        for b in holon_chem::elements::ALL_ELEMENTS {
-            let r = holon_chem::pair::automatic_route(a, b);
-            assert!(
-                !matches!(r, holon_chem::pair::AutomaticRoute::Mps { .. }),
-                "{}{} took the MPS arm ({r:?}) — the arm this gate proves is empty",
-                a.symbol,
-                b.symbol
-            );
+    /// A door with a byte ceiling: passes at or under it, refuses above. A test fixture,
+    /// not a second probe implementation — production uses the resource layer's.
+    struct Ceiling(u64);
+    impl Probe for Ceiling {
+        fn probe(&mut self, _k: ResourceKind, amount: u64) -> ProbeVerdict {
+            if amount <= self.0 {
+                ProbeVerdict::Pass("under the planted ceiling")
+            } else {
+                ProbeVerdict::Fail("over the planted ceiling")
+            }
         }
     }
 
-    // (c) THE PLANT. A check that can only ever pass is decoration, so the discriminator is
-    //     exercised at constants where the arm IS live: lift the determinant bound above the
-    //     routing threshold and the window opens.
-    //     The plant must mutate BOTH bounds, because the arm requires both conditions and
-    //     the orbital one can be the binding half. Written originally as
-    //     `mps_arm_is_selectable(max_orb, 100_000, threshold)` -- taking the ORBITAL bound
-    //     from the live constant -- which was a live-arm scenario while that constant was
-    //     14 and stopped being one when mixtures-engine re-derived it to 9: nine orbitals
-    //     hold at most 15,876 determinants, so no window past a 50,000 threshold is
-    //     reachable there however high the determinant bound is lifted. The plant then
-    //     failed for the right reason and the wrong cause.
-    //
-    //     The orbital bound is DERIVED rather than hardcoded so this cannot go stale again
-    //     the next time either constant moves.
-    let orb_that_can_hold = (0..=64)
-        .find(|&m| max_n_det_at(m) > threshold)
-        .expect("no orbital count up to 64 can hold a space past the routing threshold");
+    // A species whose determinant price exceeds its MPO price: the ceiling sits between.
+    let sp = holon_chem::elements::by_symbol("Si").expect("silicon is registered");
+    let r0 = automatic_route(sp, sp);
+    let (det, mpo) = (price_determinant(r0.n_det()).bytes, price_mpo(r0.n_orb()).bytes);
+    assert!(det > mpo, "the plant needs det ({det}) > mpo ({mpo}) for Si2; pick another species");
+    set_admission(Some(Box::new(Ceiling((det + mpo) / 2))));
+    let r = automatic_route(sp, sp);
     assert!(
-        mps_arm_is_selectable(orb_that_can_hold, 100_000, threshold),
-        "the emptiness check cannot detect a live arm: with a determinant bound of 100,000 \
-         against a {threshold} threshold, the window ({threshold}, 100,000] is open and IS \
-         reachable at {orb_that_can_hold} orbitals (which hold up to {} determinants), so \
-         this must read as selectable",
-        max_n_det_at(orb_that_can_hold)
+        matches!(r, AutomaticRoute::Mps { .. }),
+        "with the determinant refused and the MPO admitted the arm must be selected, got {r:?}"
     );
-    assert!(
-        !mps_arm_is_selectable(max_orb, threshold, threshold),
-        "a bound exactly AT the threshold leaves no space satisfying both conditions, so the \
-         arm must read as empty there — the check is reading something other than the window \
-         it claims to"
-    );
-
-    println!(
-        "route scope: MPS arm empty because MPS_MAX_DETERMINANTS ({max_det}) <= \
-         MPS_ROUTE_THRESHOLD ({threshold}); orbital bound {max_orb} does not enter; \
-         plant confirms the check discriminates"
-    );
+    set_admission(Some(Box::new(Ceiling(mpo / 2))));
+    assert!(!automatic_route(sp, sp).exists(), "under both prices, nowhere");
+    set_admission(None);
+    for z in [1u32, 8, 14, 17] {
+        let s = holon_chem::elements::by_z(z).unwrap();
+        println!("  route on this machine: {}{} -> {:?}", s.symbol, s.symbol, automatic_route(s, s));
+    }
 }

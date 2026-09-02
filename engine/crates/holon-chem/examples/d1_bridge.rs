@@ -23,7 +23,7 @@
 //! # Why the exact side calls `solve_determinant` and never `solve`
 //!
 //! [`holon_chem::fci::solve`] switches to DMRG past
-//! [`holon_chem::fci::MPS_ROUTE_THRESHOLD`] determinants. SiO is 132,496 determinants —
+//! what the resource door admits. SiO is 132,496 determinants —
 //! past it. A validation whose REFERENCE is silently the thing under test measures the
 //! solver against itself and passes at 0.0 no matter how wrong both are. That is not a
 //! hypothetical: it is what this harness would have done had it used the ordinary entry

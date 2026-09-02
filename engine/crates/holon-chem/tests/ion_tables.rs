@@ -328,6 +328,17 @@ fn g10_g11_the_door_refuses_before_it_spends() {
     // (H3O+ · H2O): I-2's headline ionic pair. Two oxygens and five hydrogens, +1.
     let species = [OXYGEN, OXYGEN, HYDROGEN, HYDROGEN, HYDROGEN, HYDROGEN, HYDROGEN];
     let key: IonKey<7> = IonKey::state(&species, 1).expect("O2H5+ is a stateable charge");
+    // Routing is admission by price (2026-09-02): whether THIS machine admits the pair's
+    // 9M-determinant working set is a machine fact, printed below. The gate's claim — the
+    // door refuses WITH NUMBERS before anything is spent — is exercised under a PLANTED
+    // refusing door, which is the only way to make it fire on every machine.
+    {
+        let (d, o, real) = charged_route(&species, &key);
+        println!("      this machine's door: n_det {d}, n_orb {o}, automatic route exists = {real}");
+    }
+    holon_chem::budget::set_admission(Some(Box::new(
+        holon_resource::probe::ScriptedProbe::always_fail("planted: the door refuses"),
+    )));
     let (n_det, n_orb, exists) = charged_route(&species, &key);
     println!(
         "  G10: (H3O+ . H2O) priced: {n_orb} orbitals, {n_det} determinants, \
@@ -338,11 +349,8 @@ fn g10_g11_the_door_refuses_before_it_spends() {
     );
     assert_eq!(key.n_electrons(), 20);
     assert!(n_orb >= 15, "seven first-row atoms carry at least 15 STO-3G orbitals");
-    assert!(
-        n_det > holon_chem::fci::MPS_ROUTE_THRESHOLD,
-        "this species is priced out only if its determinant count says so: {n_det}"
-    );
-    assert!(!exists, "the automatic router must have no route for {n_det} determinants");
+    assert!(n_det > 1_000_000, "the pair is a multi-million-determinant space: {n_det}");
+    assert!(!exists, "under a refusing door the automatic router has no route for {n_det} determinants");
 
     let singular = StretchCut::new(
         species,
@@ -365,16 +373,17 @@ fn g10_g11_the_door_refuses_before_it_spends() {
         &[Channel { label: "H3O+ + H2O", fragments: &frags }],
     );
     match refusal {
-        Err(TableRefusal::PastAutomaticRoute { n_det: d, n_orb: o, det_threshold, orb_max }) => {
+        Err(TableRefusal::PastAutomaticRoute { n_det: d, n_orb: o, det_price_bytes, mpo_price_bytes }) => {
             println!(
-                "      REFUSED with numbers: n_det {d} (threshold {det_threshold}), n_orb {o} \
-                 (MPS reach {orb_max})"
+                "      REFUSED with numbers: n_det {d} (working set {det_price_bytes} bytes), n_orb {o} \
+                 (MPO ~{mpo_price_bytes} bytes)"
             );
             assert_eq!((d, o), (n_det, n_orb), "the refusal must carry the price it computed");
         }
         other => panic!("the priced-out species was not refused with its numbers: {other:?}"),
     }
 
+    holon_chem::budget::set_admission(None);
     // --- G11, on an affordable species so the refusal cannot be the price in disguise.
     let cut = h3o_cut();
     let bad = [

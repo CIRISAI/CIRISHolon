@@ -226,3 +226,6 @@ parse_spec              the spec door; its whole job is the UnstatedCharge refus
 generate_ion_table      the production entry point: generate_ion_table_planted at Plant::None. Consumed by examples/emit_ion_tables.rs and every gate in tests/ion_tables.rs
 interpolant_error       the GRID's uncertainty, over a STAKED held-out sample the caller supplies; deliberately not called by the generator, which must not choose the sample it is measured on
 with_interpolant_uncertainty  records that measurement onto the table; to_json REFUSES without it
+
+# --- the admission door (2026-09-02: caps became leases) ---
+set_admission           installs the process-wide admission probe; consumed by tests (planted probes) and by hosts that own their own probes — the table generator lease layer and the browser host

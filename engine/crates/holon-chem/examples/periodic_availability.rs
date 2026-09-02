@@ -20,14 +20,14 @@
 //! `pair::CONVERGED_RESIDUAL` — in a row otherwise indistinguishable from a measurement.
 //! Certification is per-species campaign work and this table is not it.
 //!
-//! # Why the MPS band is reported with a caveat rather than as a route
+//! # Why the route column is a machine fact, not a species fact
 //!
-//! `pair::MPS_MAX_DETERMINANTS` (the MEASURED reach of the DMRG sweeps) is smaller than
-//! `fci::MPS_ROUTE_THRESHOLD` (the size at which `fci::solve` hands work to them). A space
-//! big enough to be routed to MPS is therefore necessarily bigger than the reach, so
-//! `AutomaticRoute::Mps` is unreachable at the current constants. This example does not
-//! take that on faith: it compares the two constants at run time and prints the conclusion
-//! that follows, so the day one of them moves the sentence moves with it.
+//! Since 2026-09-02 no constant decides a route. A species is FCI-DIRECT when THIS
+//! machine's resource door admits its determinant working set (a real reservation, priced
+//! from the Davidson's own allocations), MPS-ROUTE when that is refused and the MPS route's
+//! provisional MPO price is admitted, and REFUSED-BY-DOOR when neither is — with the bytes
+//! printed so a reader on a bigger machine knows what it would take. The table therefore
+//! describes the machine it ran on, and says so in its banner.
 //!
 //! # The relativistic fence
 //!
@@ -46,8 +46,9 @@
 //! `conformance/atomworld/PERIODIC_AVAILABILITY.md`.
 
 use holon_chem::elements::{Species, ALL_ELEMENTS, MAX_Z};
-use holon_chem::fci::{HARD_DETERMINANT_CAP, MAX_ORB, MPS_ROUTE_THRESHOLD};
-use holon_chem::pair::{electron_counts, MPS_MAX_DETERMINANTS, MPS_MAX_ORBITALS};
+use holon_chem::budget::{admit, price_determinant, price_mpo};
+use holon_chem::fci::MAX_ORB;
+use holon_chem::pair::electron_counts;
 
 /// Nuclear charge past which every row carries the non-relativistic model fence.
 ///
@@ -58,10 +59,14 @@ const RELATIVISTIC_FENCE_Z: u32 = 36;
 /// What the engine has, or has not, by way of a route to a species' ground state.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Availability {
-    /// `n_det <= fci::MPS_ROUTE_THRESHOLD`: `fci::solve` takes the determinant route.
+    /// This machine's resource door ADMITS the determinant working set: `fci::solve` takes
+    /// the determinant route.
     FciDirect,
-    /// `n_det > fci::MPS_ROUTE_THRESHOLD`: `fci::solve` hands this to the MPS/DMRG arm.
+    /// The determinant working set was refused and the (provisional) MPO price admitted:
+    /// `fci::solve` takes the MPS/DMRG route as the leased overflow.
     MpsRoute,
+    /// Both prices refused BY THIS MACHINE. A fact about the machine, carried with the bytes.
+    RefusedByDoor,
     /// The registry does not carry what a solve would need. The variant names the gap.
     Unavailable(&'static str),
 }
@@ -71,6 +76,7 @@ impl Availability {
         match self {
             Availability::FciDirect => "FCI-DIRECT",
             Availability::MpsRoute => "MPS-ROUTE",
+            Availability::RefusedByDoor => "REFUSED-BY-DOOR",
             Availability::Unavailable(_) => "UNAVAILABLE",
         }
     }
@@ -135,9 +141,9 @@ struct Row {
     /// `None` when the count overflowed `u128`, which is a fact worth printing as one.
     n_det: Option<u128>,
     avail: Availability,
-    /// Whether `n_det` is past `fci::HARD_DETERMINANT_CAP`, where `solve_determinant` — the
-    /// by-hand route the MPS band actually falls back to — refuses outright.
-    past_hard_cap: bool,
+    /// The determinant working set's price on the door, bytes (saturating for spaces past
+    /// `u128`), so the reader sees what the machine was asked for.
+    det_price_bytes: u64,
     fenced_relativistic: bool,
     /// Whether the registry carries a measured homonuclear radius for this species. A
     /// SECOND availability axis: an electronic route without one cannot be placed in a scene.
@@ -161,11 +167,13 @@ fn probe(sp: Species) -> Row {
         // element is missing basis data, not a small space.
         Availability::Unavailable("basis too small for Z electrons")
     } else {
-        match n_det {
-            Some(d) if d <= MPS_ROUTE_THRESHOLD as u128 => Availability::FciDirect,
-            // Overflow lands here honestly: a count too large for u128 is certainly past
-            // the routing threshold.
-            _ => Availability::MpsRoute,
+        let d = n_det.map_or(usize::MAX, |d| usize::try_from(d).unwrap_or(usize::MAX));
+        if admit(&price_determinant(d)).is_ok() {
+            Availability::FciDirect
+        } else if admit(&price_mpo(n_basis)).is_ok() {
+            Availability::MpsRoute
+        } else {
+            Availability::RefusedByDoor
         }
     };
 
@@ -178,47 +186,28 @@ fn probe(sp: Species) -> Row {
         n_beta,
         n_det,
         avail,
-        past_hard_cap: n_det.map_or(true, |d| d > HARD_DETERMINANT_CAP as u128),
+        det_price_bytes: price_determinant(
+            n_det.map_or(usize::MAX, |d| usize::try_from(d).unwrap_or(usize::MAX)),
+        )
+        .bytes,
         fenced_relativistic: sp.z > RELATIVISTIC_FENCE_Z,
         has_radius: sp.homonuclear_radius().is_some(),
     }
 }
 
-const HEAD: &str = "  Z  sym   nbas   n_elec    na    nb                  n_det  route        hard-cap  relativity                     scene r";
+const HEAD: &str = "  Z  sym   nbas   n_elec    na    nb                  n_det  route        det price relativity                     scene r";
 
 fn main() {
     println!("# PERIODIC-TABLE AVAILABILITY — probed from holon_chem::elements::ALL_ELEMENTS");
     println!("#");
-    println!("# Constants READ LIVE from the crate, printed so the comparison can be checked:");
-    println!("#   fci::MPS_ROUTE_THRESHOLD  = {MPS_ROUTE_THRESHOLD}   (n_det above this: fci::solve routes to MPS/DMRG)");
-    println!("#   fci::HARD_DETERMINANT_CAP = {HARD_DETERMINANT_CAP}   (solve_determinant refuses outright above this)");
+    println!("# The route column is decided by THIS MACHINE's resource door, not by a constant:");
+    println!("#   FCI-DIRECT       the determinant working set (n_det x 104 vectors x 8 bytes) was ADMITTED");
+    println!("#   MPS-ROUTE        the determinant set was refused and the MPS route's PROVISIONAL MPO price admitted");
+    println!("#   REFUSED-BY-DOOR  both refused here; the 'det price' column says what was asked for");
     println!("#   fci::MAX_ORB              = {MAX_ORB}        (the string machinery's orbital ceiling)");
-    println!("#   pair::MPS_MAX_DETERMINANTS= {MPS_MAX_DETERMINANTS}      (MEASURED reach of the DMRG sweeps)");
-    println!("#   pair::MPS_MAX_ORBITALS    = {MPS_MAX_ORBITALS}        (MEASURED orbital wall of the MPO build)");
     println!("#   elements::MAX_Z           = {MAX_Z}       (heaviest registered nuclear charge)");
     println!("#   RELATIVISTIC_FENCE_Z      = {RELATIVISTIC_FENCE_Z}       (STAKED here; rows past it carry the model fence)");
-    println!("#");
-    // The MPS band's real status, DERIVED at run time rather than asserted, so the sentence
-    // tracks the constants instead of going stale beside them.
-    if MPS_MAX_DETERMINANTS <= MPS_ROUTE_THRESHOLD {
-        println!(
-            "# MPS-ROUTE IS A BAND, NOT AN AVAILABLE ROUTE: pair::MPS_MAX_DETERMINANTS ({MPS_MAX_DETERMINANTS}) <= \
-             fci::MPS_ROUTE_THRESHOLD"
-        );
-        println!(
-            "# ({MPS_ROUTE_THRESHOLD}), so a space large enough to be routed to MPS is necessarily larger than the \
-             sweeps' measured"
-        );
-        println!("# reach. `AutomaticRoute::Mps` is unreachable at these constants. An MPS-ROUTE row's real production");
-        println!("# status is 'determinant, BY HAND ONLY (solve_determinant)' — and the hard-cap column reads REFUSED");
-        println!("# on the rows where even that by-hand route refuses.");
-    } else {
-        println!(
-            "# MPS-ROUTE IS REACHABLE: pair::MPS_MAX_DETERMINANTS ({MPS_MAX_DETERMINANTS}) > \
-             fci::MPS_ROUTE_THRESHOLD ({MPS_ROUTE_THRESHOLD})."
-        );
-        println!("# The window is n_det in {MPS_ROUTE_THRESHOLD}..={MPS_MAX_DETERMINANTS} at n_orb <= {MPS_MAX_ORBITALS}.");
-    }
+    println!("#   MPS reach provenance: {}", holon_chem::budget::MPS_REACH_RECORD);
     println!("#");
     println!("# ROUTE CLASSIFICATION IS ARITHMETIC, NOT A CERTIFICATION. FCI-DIRECT says a space is small");
     println!("# enough for the determinant route; it says nothing about whether that solve converges, agrees");
@@ -236,11 +225,10 @@ fn main() {
             Some(d) => format!("{d}"),
             None => "> u128".to_string(),
         };
-        // The hard cap gets its own column rather than a suffix: it is a DIFFERENT fence
-        // from the routing threshold — `solve_determinant`, the by-hand fallback an
-        // MPS-ROUTE row actually falls to, refuses outright above it — and two fences
-        // sharing one cell is how one of them stops being read.
-        let cap = if r.past_hard_cap { "REFUSED" } else { "-" };
+        // The determinant working set's price, so a refusal reads as a number a bigger
+        // machine can compare itself against rather than a verdict about the species.
+        let cap = format!("{:.2e}B", r.det_price_bytes as f64);
+        let cap = cap.as_str();
         let rel = if r.fenced_relativistic {
             "NON-RELATIVISTIC-MODEL-FENCE"
         } else {
@@ -274,7 +262,7 @@ fn main() {
         .filter(|r| matches!(r.avail, Availability::Unavailable(_)))
         .count();
     let fenced = rows.iter().filter(|r| r.fenced_relativistic).count();
-    let hard = rows.iter().filter(|r| r.past_hard_cap).count();
+    let refused = rows.iter().filter(|r| matches!(r.avail, Availability::RefusedByDoor)).count();
     let no_radius = rows.iter().filter(|r| !r.has_radius).count();
 
     println!();
@@ -283,7 +271,7 @@ fn main() {
     println!("#   MPS-ROUTE                     {mps}");
     println!("#   UNAVAILABLE                   {unavail}");
     println!("#   ---");
-    println!("#   past fci::HARD_DETERMINANT_CAP {hard}");
+    println!("#   REFUSED-BY-DOOR (this machine) {refused}");
     println!("#   NON-RELATIVISTIC-MODEL-FENCE  {fenced}   (Z > {RELATIVISTIC_FENCE_Z})");
     println!("#   no measured homonuclear radius {no_radius}");
     println!("# rows {}", rows.len());

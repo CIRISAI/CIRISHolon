@@ -2,16 +2,25 @@
 //!
 //! # Why a third rule at all
 //!
-//! P1 derives each element's drawn radius from its own homonuclear curve, and most mid-row
-//! homonuclear dimers have no AUTOMATIC route: `automatic_route` refuses them and
-//! `generate_pair_table` will not produce them. So the choice was a third DERIVED rule or a
-//! remembered constant, and this crate has no table of remembered constants.
+//! P1 derives each element's drawn radius from its own homonuclear curve, and a mid-row
+//! homonuclear dimer's curve is a PRICE — selenium's dimer is 396,900 determinants and a
+//! curve is about a hundred geometries — that a given machine's resource door may refuse
+//! (`pair::route_for`, admission by price since 2026-09-02; before that a cap). So the
+//! choice was a third DERIVED rule for a refused door or a remembered constant, and this
+//! crate has no table of remembered constants.
 //!
-//! "No automatic route" is not "unreachable". AMENDMENT A1.2 said the latter and A3.1
-//! corrected it, after the MIXTURES-1 lane measured SiO's 132,496 determinants at 34
-//! seconds through `solve_determinant`. What justifies the second rule is cost and the
-//! absence of a production path: selenium's dimer is 396,900 determinants and a curve is
-//! about a hundred geometries.
+//! "Refused here" is not "unreachable". AMENDMENT A1.2 said the latter and A3.1 corrected
+//! it, after the MIXTURES-1 lane measured SiO's 132,496 determinants at 34 seconds through
+//! `solve_determinant`. What justifies the second rule is cost, never impossibility.
+//!
+//! # The door is SCRIPTED in the tests that exercise the density arm
+//!
+//! Which arm `homonuclear_size` takes is the door's verdict, and the door reads THIS
+//! machine's headroom: on an 18 GiB box selenium's 330 MB working set is admitted and the
+//! dimer arm would run a fifteen-point Se2 scan — minutes of solves that test the price
+//! rule, not the label rule. So the tests below that need the density arm plant a refusing
+//! door for it, and every test in this file holds one lock, because the door is
+//! process-wide.
 //!
 //! # The rule that was specified, and why it is not the rule that shipped
 //!
@@ -27,10 +36,25 @@
 //! is what sets an atom's chemical size. It reproduces the periodic trend without being
 //! told it: sizes fall across a period and jump at the start of the next one.
 
+use holon_chem::budget::set_admission;
 use holon_chem::elements::{by_symbol, by_z, ALL_ELEMENTS};
 use holon_chem::pair::{
     atomic_rms_radius, atomic_valence_rms_radius, automatic_route, homonuclear_size, RadiusRule,
 };
+use holon_resource::probe::ScriptedProbe;
+
+/// The admission door is process-wide; every test here holds this while it runs.
+static DOOR: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+/// Run `f` behind a door that refuses every price, then restore the real door.
+fn with_refusing_door<T>(f: impl FnOnce() -> T) -> T {
+    set_admission(Some(Box::new(ScriptedProbe::always_fail(
+        "scripted: a machine whose door admits no route for this dimer",
+    ))));
+    let out = f();
+    set_admission(None);
+    out
+}
 
 /// The valence radius reproduces the periodic table's size trend, with nothing told to it.
 ///
@@ -40,6 +64,7 @@ use holon_chem::pair::{
 /// and the basis.
 #[test]
 fn the_valence_radius_reproduces_the_periodic_size_trend() {
+    let _door = DOOR.lock().unwrap_or_else(|e| e.into_inner());
     // Falls across a period.
     for row in [["Na", "Al", "Cl", "Ar"], ["K", "Se", "Br", "Kr"]] {
         let mut last = f64::INFINITY;
@@ -81,6 +106,7 @@ fn the_valence_radius_reproduces_the_periodic_size_trend() {
 /// meanings.
 #[test]
 fn the_whole_density_radius_is_core_dominated_and_says_so() {
+    let _door = DOOR.lock().unwrap_or_else(|e| e.into_inner());
     let h = atomic_rms_radius(by_symbol("H").unwrap());
     let xe = atomic_rms_radius(by_symbol("Xe").unwrap());
     assert!(
@@ -101,23 +127,29 @@ fn the_whole_density_radius_is_core_dominated_and_says_so() {
 /// Every element's radius carries the rule that produced it, and the rule is the true one.
 #[test]
 fn every_radius_is_labelled_with_the_rule_that_produced_it() {
+    let _door = DOOR.lock().unwrap_or_else(|e| e.into_inner());
     // Chosen by COST, not by outcome: each of these homonuclear pairs is one or a few
-    // dozen determinants, so the whole check is seconds. Si2 is 9.4 million and would
-    // route to DMRG, which is a different question from whether a label is right.
+    // dozen determinants, so the whole check is seconds under the real door. Selenium is
+    // the density arm's carrier and runs behind a REFUSING door: under the real door on a
+    // large machine its 396,900-determinant dimer is admitted and the check would spend
+    // minutes on the price rule instead of the label rule.
     let cheap = ["H", "He", "Ne", "Ar", "Se"];
     let mut dimer = 0usize;
     let mut density = 0usize;
     for sym in cheap {
         let sp = by_symbol(sym).unwrap();
-        let sz = homonuclear_size(sp);
-        let infeasible = !automatic_route(sp, sp).exists();
+        let (sz, infeasible) = if sym == "Se" {
+            with_refusing_door(|| (homonuclear_size(sp), !automatic_route(sp, sp).exists()))
+        } else {
+            (homonuclear_size(sp), !automatic_route(sp, sp).exists())
+        };
         assert_eq!(
             sz.rule.is_dimer_derived(),
             !infeasible,
             "{}: the radius is labelled {:?} but its homonuclear pair {}",
             sp.symbol,
             sz.rule,
-            if infeasible { "has no automatic route" } else { "has one" }
+            if infeasible { "was refused by the door" } else { "was admitted" }
         );
         let _ = ALL_ELEMENTS.len();
         if sz.rule.is_dimer_derived() {
@@ -158,19 +190,21 @@ fn every_radius_is_labelled_with_the_rule_that_produced_it() {
 /// owes a finite separation, and a density-derived one has none.
 #[test]
 fn plant_a_density_radius_presented_as_dimer_derived_is_refused() {
-    // Carrier: the sector must be non-empty.
-    // Selenium: its dimer is 36 orbitals and 396,900 determinants, so it has no automatic
-    // route, while its ATOM is 324 determinants and costs nothing. Named
-    // rather than searched, so the plant runs on the same species every time and a change
-    // in the registry shows up as this assertion rather than as a slower test.
+    let _door = DOOR.lock().unwrap_or_else(|e| e.into_inner());
+    // Carrier: the sector must be non-empty — a species whose dimer the door refuses.
+    // Selenium behind a scripted refusing door: its dimer is 36 orbitals and 396,900
+    // determinants (a real machine may admit that; this one is told not to), while its
+    // ATOM is 324 determinants and costs nothing. Named rather than searched, so the plant
+    // runs on the same species every time.
     let victim = by_symbol("Se").unwrap();
+    let (has_route, honest) =
+        with_refusing_door(|| (automatic_route(victim, victim).exists(), homonuclear_size(victim)));
     assert!(
-        !automatic_route(victim, victim).exists(),
-        "carrier: {}'s homonuclear pair HAS an automatic route, so the density rule would \
+        !has_route,
+        "carrier: the scripted door admitted {}'s homonuclear pair, so the density rule would \
          not be used for it and the plant would be scored on a case that cannot arise",
         victim.symbol
     );
-    let honest = homonuclear_size(victim);
     assert_eq!(
         honest.rule,
         RadiusRule::ValenceDensity,
@@ -207,6 +241,7 @@ fn plant_a_density_radius_presented_as_dimer_derived_is_refused() {
 /// The rule's own words are single-sourced, so two surfaces cannot describe it differently.
 #[test]
 fn the_three_rules_describe_themselves_distinctly() {
+    let _door = DOOR.lock().unwrap_or_else(|e| e.into_inner());
     let d = [
         RadiusRule::HalfEquilibrium.describe(),
         RadiusRule::HalfContact.describe(),

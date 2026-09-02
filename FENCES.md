@@ -107,14 +107,14 @@ F alone is not sufficient the second requirement is named.*
 
 | # | WHERE (file:symbol) | WHAT it refuses | OWNER | EXIT | GANTT |
 |---|---|---|---|---|---|
-| C1 | `holon-render/src/bank.rs:78` `IN_BROWSER_DET_LIMIT = 1024` | solving a pair at or above 1024 determinants in the browser at load | workbench-engine / c1-browser | F, or a shipped referee-pinned table | F |
-| C2 | `bank.rs:108` `IN_BROWSER_BASIS_LIMIT = 6` | solving a pair above six basis functions — MEASURED, and the driver: Cl–Cl is only 324 determinants but 18 basis functions and costs 95.95 s, because the integral transform is a high power of the BASIS and runs before any determinant is enumerated | workbench-engine / c1-browser | F | F |
-| C3 | `bank.rs:180` `Refusal::SplitViolated` | a curve arriving on the wrong side of that split (browser host only) | workbench-engine | F lifts C1/C2 and this with them | F |
+| C1 | `holon-render/src/bank.rs` `BROWSER_LOAD_BUDGET_S = 5.0` (was `IN_BROWSER_DET_LIMIT = 1024`) | **RETIRED AS A CAP 2026-09-02.** The page now declares a load BUDGET in seconds (default 5 s, set through the ABI) and a pair is heavy iff `predicted_load_seconds(n_basis, n_det)` exceeds it — a model fitted to the seven measured pairs (`BROWSER_COST_PROVENANCE`). A budget is a horizon, not a fence: nothing here refuses a species, only a cost | workbench-engine | n/a — the constant is gone; the model's provenance is the debt (re-fit on a second machine) | — |
+| C2 | `bank.rs` `predicted_load_seconds` basis term (was `IN_BROWSER_BASIS_LIMIT = 6`) | **RETIRED AS A CAP 2026-09-02.** The measured driver — the integral transform is a high power of the BASIS size (Cl–Cl: 324 determinants, 18 basis functions, 95.95 s) — is now the `3.1e-3 · n_basis^3.5` term of the cost model rather than a wall at six | workbench-engine | n/a — model, not cap | — |
+| C3 | `bank.rs` `Refusal::SplitViolated` | a curve arriving on the wrong side of the BUDGET split (browser host only): a solved curve whose predicted cost exceeds the page's budget, or a shipped one under it. Names the prediction and the budget | workbench-engine | a page that raises its budget, or node F making the prediction smaller | F |
 | C4 | `holon-render/src/lib.rs:1700` `holon_bank_generate_pair` | spending on a pair past the det limit — checked BEFORE the solve, not after | workbench-engine | F | F |
-| C5 | `holon-chem/src/fci.rs:1085` `HARD_DETERMINANT_CAP = 2_000_000` | `solve_determinant` outright above it. **21 of the 54 registered atoms sit past this** (see `conformance/atomworld/PERIODIC_AVAILABILITY.md`) | holon-chem | F, then raise deliberately — the constant's doc is explicit that it exists so a careless caller does not wait on such a space unknowingly | F, D |
-| C6 | `fci.rs:1092` `MPS_ROUTE_THRESHOLD = 50_000` | the determinant route above it; hands the space to MPS/DMRG. **27 of 54 atoms land past this** | holon-chem | F | F, D |
-| C7 | `pair.rs:997` `MPS_MAX_ORBITALS = 9` | the automatic MPS arm above nine orbitals. MEASURED: LiH at six took 528 s to build its MPO, HCl at ten never finished | mps / tower lane | F is necessary and **not sufficient**: the const's own header rules that the fix is a TWO-PART door (orbitals for the build, a filling-aware axis for the reach), "a designed change with its own measurement, not a bigger number here" | F, MPS |
-| C8 | `pair.rs:1029` `MPS_MAX_DETERMINANTS = 1024` | the MPS arm above 1024 determinants. MEASURED at χ=32 under a 300 s per-cell budget | mps / tower lane | F, plus a larger χ under a larger budget — explicitly untested, and the doc says so | F, MPS |
+| C5 | `holon-chem/src/budget.rs` `price_determinant` + `admit` (was `HARD_DETERMINANT_CAP = 2_000_000`) | **RETIRED AS A CAP 2026-09-02.** `solve_determinant` prices its Davidson working set (`n_det × 104 vectors × 8 bytes`, read off `tier.rs`) and puts it to the resource layer's REAL reservation (page-touched). Refusal names the bytes; a machine that admits the reservation runs the space. The 21 species the old cap refused are now a per-machine fact printed by `periodic_availability` | holon-chem | n/a — the constant is gone; the exit for a refused space is more RAM, node F, or the DMRG seam | F, MPS |
+| C6 | `budget.rs` / `fci::try_solve` (was `MPS_ROUTE_THRESHOLD = 50_000`) | **RETIRED AS A CAP 2026-09-02.** Routing is admission: determinant if its working set is admitted, MPS as the LEASED OVERFLOW if its (provisional) MPO price is admitted, named refusal otherwise (RESOURCE_DESIGN D3b) | holon-chem | n/a | — |
+| C7 | `budget::MPS_REACH_RECORD` (was `MPS_MAX_ORBITALS = 9`) | **RETIRED AS A CAP 2026-09-02.** The nine-orbital MPO wall was budgeted in 300 s of WALL CLOCK on a 2× oversubscribed box — a measurement of the queue, not the method (`regime-inherited-constant`). It survives as provenance text only; the MPS seam node re-measures the reach in work units | mps-seam | Q-B of the seam node | MPS |
+| C8 | `budget::price_mpo` (was `MPS_MAX_DETERMINANTS = 1024`) | **RETIRED AS A CAP 2026-09-02.** The MPS route's admission is now its dense-MPO price against a real reservation — PROVISIONAL (bond dimension fitted to one measurement, 1.9 GB at 21 orbitals) until the MPO builder exposes its plan. The χ=32 / 300 s reach record survives as `MPS_REACH_RECORD` | mps-seam | the builder's plan replacing the fit (Q-B) | MPS |
 | C9 | `q8-mps/src/dmrg.rs:70` `REFUSAL_THRESHOLD = 1e-4` via `RefusalPolicy::Typed` | a sweep whose worst bond discards more Schmidt weight than the ledger allows. Self-typed FLOOR: "a larger `chi_max` serves this request" | q8-mps | F, then a larger χ_max | F |
 | C10 | `holon-chem/src/rpmd.rs:697` `RefereeRefusal::Unconverged` | a level whose Lanczos Ritz residual exceeded tolerance | c1-rpmd | F, then more iterations | F |
 | C11 | `rpmd.rs:699` `RefereeRefusal::GridNotConverged` | a level that moved more than tolerance when the grid was halved | c1-rpmd | F, then a finer grid | F |
@@ -127,7 +127,7 @@ F alone is not sufficient the second requirement is named.*
 | C18 | `engine/ci-gates.sh:574` `CRATE_ALLOW["holon-gpu"]` | running holon-gpu's 12 determinism tests in CI — GitHub runners have no NVIDIA GPU (tested green on the 4090 dev box) | gpu-mesh lane / team-lead | a CI runner with a GPU, "at which point this entry converts to a real invocation" | F |
 | C19 | `ci-gates.sh:575` `CRATE_ALLOW["q8-mps"]` | the rest of q8-mps beyond gate 16b's `c2_tdvp_gates` — a live full-grid run is hours deep and a gate must never run `--ignored` full-grid tests | the C2 / tower lane | the grid completes; "this entry converts to a plain `-p q8-mps`" | F |
 | C20 | `q8-mps/tests/full_grid_gates.rs:30` `#[ignore]` | the full-grid validation on a default `cargo test` — minutes per configuration | q8-mps | F shortens it; today, run explicitly with `-- --ignored` | F |
-| C21 | `holon-chem/src/ion_table.rs` feasibility door (G10) | tabulating (H3O+ . H2O) — I-2's headline ionic pair — MEASURED at 9,018,009 determinants over 15 orbitals, past `MPS_ROUTE_THRESHOLD` (50,000) and past the MPS route's 9-orbital reach; the refusal carries both numbers | ion-tables / node F | F, or the DMRG cluster seam (MPS) — exit is the measured determinant count coming under a served route's reach | F, MPS |
+| C21 | `holon-chem/src/ion_table.rs` feasibility door (G10) | tabulating (H3O+ . H2O) — I-2's headline ionic pair — 9,018,009 determinants over 15 orbitals. **RE-PRICED 2026-09-02:** the door no longer consults a cap; it asks this machine's resource door for a 7.5 GB working set (`price_determinant`). A machine that admits the reservation tabulates it; the refusal, where it happens, names the bytes | ion-tables / node F | n/a as a fence — a machine with the RAM, or node F, or the DMRG seam | F, MPS |
 
 ## MODEL-FENCE — 11
 
@@ -229,19 +229,16 @@ visible in `GANTT.md`'s fence-triage note rather than absent.
 finding cannot be audited against the state it was written from — and it would be
 committing F-10, one finding down this page.*
 
-**F-5 — the MPS route is a named band with no reachable member.**
-`pair::MPS_MAX_DETERMINANTS` (1024) is smaller than `fci::MPS_ROUTE_THRESHOLD` (50,000),
-so a space big enough to be ROUTED to MPS is necessarily bigger than the sweeps' measured
-REACH, and `AutomaticRoute::Mps` cannot be selected by any input. This is deliberate,
-documented at `pair.rs:1016-1020`, and asserted by
-`the_mps_arm_is_unreachable_at_the_current_constants` in `tests/pair.rs` — the arm is kept
-so the day the sweeps improve the fix is one constant. Recorded here because the
-consequence is not local: **27 of the 54 registered atoms classify as MPS-ROUTE and none
-of them has an automatic route at all**, and 21 of those are also past
-`HARD_DETERMINANT_CAP`, so the by-hand fallback refuses too. Any reader of an availability
-table who takes "MPS-ROUTE" for a route will be wrong 27 times. The generated table states
-this in its own header, derived at run time from the two constants rather than asserted, so
-the sentence moves when they do.
+**F-5 — the MPS route is a named band with no reachable member.** *(RESOLVED 2026-09-02 by
+removing the constants that created the band.)* The finding was true of the constants:
+`pair::MPS_MAX_DETERMINANTS` (1024) sat below `fci::MPS_ROUTE_THRESHOLD` (50,000), so no
+input could select `AutomaticRoute::Mps`, and 27 of 54 registered atoms classified as a
+route that did not exist, 21 of them also past `HARD_DETERMINANT_CAP`. All four constants
+are gone: routing is admission by PRICE at the resource door (`budget.rs`), the MPS route
+is the leased overflow of a refused determinant working set, and a species' route is a
+fact about the machine that asked — printed with its bytes by `periodic_availability`, never
+asserted. What survives of the finding is its provenance (`budget::MPS_REACH_RECORD`) and
+the MPS seam node's Q-B re-measurement in work units. Kept and marked, per F-10.
 
 **ROUTED at `1839eb7`**, onto `GANTT.md`'s MPS node where the seam work will meet it: "the
 seam work must move the cap or the routing, not just add the seam." The finding stands —
@@ -398,7 +395,7 @@ git grep -n -A2 '#\[ignore'                                               8 hits
 git grep -n -E "unimplemented!|todo!\(" -- '*.rs'                         0 hits
 git grep -n -i -E "\bfence[sd]?\b" -- '*.rs' '*.mjs' '*.js' '*.sh' '*.py'  348 hits
 git grep -n -i "fence" -- '*FSD*'                                        17 hits
-git grep -rn "MPS_ROUTE_THRESHOLD"                                       55 hits
+git grep -rn "MPS_ROUTE_THRESHOLD"                                       0 hits in code (2026-09-02: the constant is gone; record mentions only)
 ```
 
 The 348-hit fence-word sweep is the backstop: it is deliberately loose, and every hit was

@@ -40,6 +40,7 @@
 pub mod cluster;
 pub mod dual;
 pub mod elements;
+pub mod budget;
 pub mod fci;
 pub mod h2;
 pub mod ion_table;

@@ -30,6 +30,11 @@ q8-mps = { path = "../q8-mps" }
 # a hand-written conversion give one artifact two answers the day a class is added to one
 # of them, and the test suite stays green throughout.
 holon-device = { path = "../holon-device" }
+# holon-resource: the ONE admission door. Every priced computation in this crate — a
+# determinant solve's working set, an MPO's dense tensors — asks the resource layer's
+# probe for its price at the moment of use (RESOURCE_DESIGN D1/D2/D3b) instead of
+# consulting a constant measured on one box on one afternoon. `budget.rs` is the seam.
+holon-resource = { path = "../holon-resource" }
 
 # NOTE: no `[profile.release]` here on purpose — a workspace member's profile section is
 # silently ignored by Cargo (only the workspace root's applies). `holon-render`'s

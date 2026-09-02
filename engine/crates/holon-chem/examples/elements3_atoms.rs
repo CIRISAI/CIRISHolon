@@ -29,13 +29,16 @@ const DEFAULT_MAX_N_DET: usize = 1_200_000;
 
 /// Where the PRODUCTION path gives out, as opposed to this record's budget.
 ///
-/// `fci::solve` sends anything past `MPS_ROUTE_THRESHOLD` determinants to the MPS/DMRG
-/// route, and that route is measured to reach six orbitals (`pair::MPS_MAX_ORBITALS`: LiH
+/// `fci::solve` takes the MPS/DMRG route only as the leased overflow of a refused
+/// determinant working set (admission by price since 2026-09-02); that route's reach was measured at six orbitals (LiH
 /// at six took 528 s to build its MPO and HCl at ten never finished). Every atom here is
 /// well past six orbitals, so for anything over the threshold the production entry point
 /// has NO route, and this record reaches it only through `solve_determinant`, which has no
 /// threshold. That deserves a column rather than a footnote.
-const PRODUCTION_LIMIT: usize = holon_chem::fci::MPS_ROUTE_THRESHOLD;
+/// Whether this machine's door admits the determinant working set for `n_det`.
+fn admitted(n_det: usize) -> bool {
+    holon_chem::budget::admit(&holon_chem::budget::price_determinant(n_det)).is_ok()
+}
 
 /// Determinant count past which the `O(N^2)` reference route is not affordable. DECLARED.
 const DEFAULT_MAX_DUAL_N_DET: usize = 30_000;
@@ -48,7 +51,7 @@ fn main() {
         .and_then(|s| s.parse().ok())
         .unwrap_or(DEFAULT_MAX_DUAL_N_DET);
     println!("# max_n_det = {max_n_det} (budget), max_dual_n_det = {max_dual}");
-    println!("# route 'det (forced)': the space is past fci::MPS_ROUTE_THRESHOLD ({PRODUCTION_LIMIT}),");
+    println!("# route 'det (forced)': this machine's door refused the determinant working set,");
     println!("# so the PRODUCTION entry point fci::solve would have sent it to DMRG -- which is");
     println!("# measured to reach six orbitals and cannot do any atom here. Reached instead via");
     println!("# solve_determinant, which has no threshold. 'OVER BUDGET' is this record's");
@@ -152,7 +155,7 @@ fn main() {
             sol.residual,
             mult,
             dual,
-            if space.n_det > PRODUCTION_LIMIT {
+            if !admitted(space.n_det) {
                 "det (forced)"
             } else {
                 sol.route.label().split(',').next().unwrap()

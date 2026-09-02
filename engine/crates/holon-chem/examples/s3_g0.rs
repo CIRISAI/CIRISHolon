@@ -19,7 +19,7 @@
 //!
 //! # THE TRAP THIS GATE HAD TO ROUTE AROUND
 //!
-//! `fci::solve` sends any space past `MPS_ROUTE_THRESHOLD` (50,000 determinants) to the
+//! `fci::solve` sends a space its resource door refuses to the
 //! MPS/DMRG route, whose MPO builder reaches six orbitals and then HANGS rather than
 //! erroring. (O,O,O) is 207,025 determinants over fifteen orbitals — it is the one staked
 //! combo that crosses that threshold, and calling `solve_geometry` on it would not return.
@@ -75,7 +75,7 @@
 
 use holon_chem::dual::D2;
 use holon_chem::elements::{Species, CHLORINE, HYDROGEN, OXYGEN};
-use holon_chem::fci::{solve_determinant, MPS_ROUTE_THRESHOLD};
+use holon_chem::fci::solve_determinant;
 use holon_chem::pair::{geometry_problem, pair_point, CONVERGED_RESIDUAL};
 use std::time::Instant;
 
@@ -161,7 +161,7 @@ fn main() {
          # cost classes: {CLASS_CHEAP_S} s/point, except (O,O,O) at {CLASS_OOO_S} s/point\n\
          # kill: {KILL_MULTIPLE}x its class re-scopes the campaign before tables start\n\
          # every solve goes through solve_determinant EXPLICITLY: fci::solve routes past\n\
-         #   MPS_ROUTE_THRESHOLD = {MPS_ROUTE_THRESHOLD} into an MPO builder that hangs,\n\
+         #   the door's refusal into an MPO builder that hangs,\n\
          #   and (O,O,O) at 207,025 is the one staked combo that crosses it.\n"
     );
 

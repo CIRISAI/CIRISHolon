@@ -1072,11 +1072,25 @@ fn main() {
     println!("GATE G6 {} {} (max |E_hard(41.0)| = {zero_control_max:.3e}, EXACT 0.0 required)", class.label(), if g6 { "PASS" } else { "VOID" });
     println!("GATE G7 {} {} (frames with a nonempty beyond-c* population: {populated_frames}/{total_frames} = {:.4})", class.label(), if g7 { "PASS" } else { "VOID" }, pop_frac);
 
+    // NAME THE PRICE THAT WAS ACTUALLY APPLIED. Printing B1's wall-clock floor beside a
+    // B1b verdict produced a line reading "PASS (setup 973.3 s, floor 1200 s)" — false on
+    // its face, since 973.3 is under 1200. The GATING was correct (B1b prices with W1+W2,
+    // whose own lines are right); the RECEIPT was not, and a receipt that misstates its own
+    // gate is worse than no receipt.
     println!(
-        "GATE PRICE {} {} (setup {setup_s:.1} s, floor {:.0} s)",
+        "GATE PRICE {} {} ({})",
         class.label(),
         if price_void { "VOID" } else { "PASS" },
-        class.price_floor()
+        match freeze {
+            Freeze::B1 => format!(
+                "wall-clock: setup {setup_s:.1} s against floor {:.0} s",
+                class.price_floor()
+            ),
+            Freeze::B1b => format!(
+                "work units: W1 solver certificate + W2 in-run cost ratio; setup \
+                 {setup_s:.1} s is REPORTED, not gated"
+            ),
+        }
     );
     if freeze == Freeze::B1b {
         println!(

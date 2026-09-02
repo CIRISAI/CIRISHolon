@@ -443,11 +443,16 @@ shrinks the scene box around the view center, and holons falling outside it
 are REMOVED from the scene across all six faces — released at the boundary,
 their allocation freed for the finer population the acuity law admits —
 while the world box keeps the physics whole. Drawing is the scaled fraction
-inside the scene box. Zoom never touches the physics; the hand never
-touches the view. When the scene box shrinks to where the next tier
-matters, the next band's world box seeds at the view center (one holon, per
-the acuity law above), and zoom-out is the same event in reverse. Every
-removal and re-admission is a ledgered scene event, never a silent edit.
+inside the scene box. ZOOM IS A RATIO, NOT A LENGTH: the scene box is the
+world box divided by the zoom factor, so 3x zoom on a 1 km world and 3x
+zoom on a 0.5 km world are DIFFERENT scene-box sizes. Zoom never touches
+the physics; the hand touches BOTH — stretching the world box at fixed zoom
+stretches the scene box with it, because the view is coupled to the world
+through the ratio and only through the ratio. When the scene box shrinks to
+where the next tier matters, the next band's world box seeds at the view
+center (one holon, per the acuity law above), and zoom-out is the same
+event in reverse. Every removal and re-admission is a ledgered scene event,
+never a silent edit.
 
 **THE BAND-FLIP LAW, restated because it was briefly blurred:** a band goes
 live ONLY on a node-G closure certificate — a coarse view of the dynamics

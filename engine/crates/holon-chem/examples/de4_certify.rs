@@ -126,6 +126,102 @@ fn addr(r: [f64; 3], u: [f64; 3]) -> [f64; 6] {
 /// The grid-line refusal, measured on the REAL artifact rather than on a stub: one field is
 /// mutated in the file's own bytes and the loader must refuse it, while the unmutated bytes
 /// load. Both halves are needed — a loader that refuses everything would pass the first.
+/// Minimal field readers for the artifact manifest. Local to this example rather than
+/// borrowed from the library, because the library's are private and widening a module's
+/// surface to satisfy a caller is how an API grows for reasons that are not about the API.
+fn json_str<'a>(src: &'a str, key: &str) -> Option<&'a str> {
+    let pat = format!("\"{key}\":");
+    let i = src.find(&pat)? + pat.len();
+    let rest = src[i..].trim_start();
+    let rest = rest.strip_prefix('"')?;
+    let end = rest.find('"')?;
+    Some(&rest[..end])
+}
+
+fn json_usize(src: &str, key: &str) -> Option<usize> {
+    let pat = format!("\"{key}\":");
+    let i = src.find(&pat)? + pat.len();
+    let rest = src[i..].trim_start();
+    let end = rest.find(|c: char| !c.is_ascii_digit()).unwrap_or(rest.len());
+    rest[..end].parse().ok()
+}
+
+/// L1 — THE REGIME THIS ARTIFACT WAS PRODUCED UNDER, declared at certification time.
+///
+/// The law (mixtures-engine's interval-close, now in the checklist): an artifact that will
+/// be compared for identity records the regime that produced it AT THE MOMENT it is
+/// produced. A bisect later cannot recover it, and every axis below was learned the same
+/// way — a number moved and nothing recorded which regime made it.
+///
+/// Three axes, and they are one identity rather than three diagnostics:
+///
+/// * **device class** — SATURATION-3 G2 measured the two classes agreeing to `3.033e-15`
+///   with **91.0% of 207,025 entries differing BITWISE**. Both correct; not one artifact.
+/// * **solver budget** — a silent `1200 -> 4000` default change put artifacts either side
+///   of it under different solver regimes with nothing recording which.
+/// * **subtraction basis** — a four-body RESIDUAL read as a TOTAL energy is wrong by the
+///   whole of `E_MBE3`, which on this surface is tens of hartree.
+///
+/// Plus the arithmetic interval: everything this campaign produced is **post-4884704**.
+///
+/// This gate REPORTS rather than refusing. An artifact generated before the three-axis
+/// manifest landed is not defective — it predates the law — and saying "this one does not
+/// declare its regime" is the useful thing to record. Refusing would only make the
+/// certification of the older artifacts impossible, which serves nobody.
+fn gate_l1(log: &mut Log, src: &str) {
+    let device = json_str(src, "device_class");
+    let budget = json_usize(src, "solver_budget_iterations");
+    let basis = json_str(src, "subtraction_basis");
+    let missing: Vec<&str> = [
+        ("device_class", device.is_none()),
+        ("solver_budget_iterations", budget.is_none()),
+        ("subtraction_basis", basis.is_none()),
+    ]
+    .iter()
+    .filter(|(_, m)| *m)
+    .map(|(k, _)| *k)
+    .collect();
+
+    log.say(
+        "L1",
+        V::Info,
+        format!(
+            "ARITHMETIC INTERVAL: this artifact is entirely POST-4884704. Every number in \
+             this campaign — the price model, the seam scan, the held-out bands — was \
+             measured after that commit, so a comparison against a pre-4884704 artifact is \
+             across an arithmetic boundary and is not an identity comparison."
+        ),
+    );
+
+    if missing.is_empty() {
+        log.say(
+            "L1",
+            V::Pass,
+            format!(
+                "regime declared, all three axes: device_class={}, \
+                 solver_budget_iterations={}, subtraction_basis={}",
+                device.unwrap_or("?"),
+                budget.map(|b| b.to_string()).unwrap_or_else(|| "?".into()),
+                basis.unwrap_or("?")
+            ),
+        );
+    } else {
+        log.say(
+            "L1",
+            V::Info,
+            format!(
+                "regime PARTIALLY declared — missing {missing:?}. The artifact predates the \
+                 three-axis manifest rather than being defective, so this reports and does \
+                 not refuse. What IS known from this build: subtraction basis is \
+                 E_total - E_MBE3 (the four-body residual, MBE3 at the node's REALISED \
+                 coordinates), and the interpolant's compiled grid is {}. Anything not in \
+                 the file cannot be recovered by a bisect and is owed by the producer.",
+                qt::grid_line()
+            ),
+        );
+    }
+}
+
 fn gate_l0(log: &mut Log, src: &str) -> Option<qt::QuaternaryTable> {
     let gl = qt::grid_line();
     let quoted = format!("\"{gl}\"");
@@ -1351,6 +1447,7 @@ fn main() {
     let mut log = Log::new();
 
     println!("\n--- L0: the loader's grid-line refusal (contract, EXACT) ---");
+    gate_l1(&mut log, &src);
     let t = match gate_l0(&mut log, &src) {
         Some(t) => t,
         None => {

@@ -62,16 +62,28 @@ arithmetic without being told to.
 route.** The reasoning, in one sentence: this engine's Hamiltonian is the non-relativistic
 electronic one — `md.rs` and `fci.rs` build kinetic, nuclear-attraction and two-electron
 Coulomb integrals over real contracted Gaussians and contain no mass–velocity, Darwin or
-spin–orbit term anywhere — and the scalar-relativistic correction to valence orbital
-energies grows roughly as (Zα)², which crosses the percent level through the 4th row, so
-krypton is the last place a non-relativistic answer can be offered without the error
-term outgrowing the chemistry it is meant to describe.
+spin–orbit term anywhere — while the leading correction scales as (Zα)², which is already
+about 7% at krypton and grows through the 5th and 6th rows into the regime where
+relativity stops being a correction to the chemistry and becomes a determinant of it.
 
-Where the line falls is a STAKE, not a measurement: it is placed at a row boundary the
-registry already has, before any heavy-element campaign runs, so that a later result
-cannot move it. What would move it is a measurement — the same species solved both ways —
-and the honest statement today is that this engine cannot perform the second half of that
-comparison.
+Where the line falls is a STAKE, and a deliberately CONSERVATIVE one rather than a
+measurement. Two things about it should be said plainly, because the first invites an
+obvious objection and the second is what the fence actually claims:
+
+**Z = 36 is not where the error becomes non-negligible — it is later than that.** On the
+bare (Zα)² scaling the correction is already ~2% at argon, in the 3rd row, so a stricter
+line could defensibly sit lower. The stake is placed at 36 because it is a row boundary
+the registry already has, it sits below the 5th row where relativistic effects are
+uncontroversially decisive, and it was written down before any heavy-element campaign ran
+so that a later result cannot move it.
+
+**So the fence does NOT say that answers below it are relativistically converged.** It
+says this model declines to offer answers above it. A Z = 20 row reading FCI-DIRECT
+carries the same missing Hamiltonian terms as a Z = 50 row; what differs is only that
+their size is small enough to be somebody's stated error budget rather than the answer.
+Nothing here measures that budget, and quantifying it is exactly the measurement this
+engine cannot currently perform — it would need the same species solved both ways, and it
+has only the one way.
 
 **This is a MODEL fence and its exit is named: the relativistic solver rung** (a
 scalar-relativistic one-electron correction first — ZORA or Douglas–Kroll–Hess — which

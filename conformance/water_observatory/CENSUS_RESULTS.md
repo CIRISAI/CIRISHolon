@@ -669,3 +669,75 @@ calls it, because the call is inlined. This document's earlier pinning conclusio
 they rested on presence in one binary against a source that could not call it at all — but
 the method needed the caveat before someone read an absence as a verdict. Hence G-dE4-1
 being a counter and not a symbol.
+
+---
+
+## 13. THE dE₄ ADJUDICATION — PARTIAL: arm B has landed, arm A has not
+
+*Written with the control complete and the matched arm still running. The verdict of §12.3
+is NOT made here. This section records what arm B measured, because a result held only in a
+session's memory is a result one interruption from being lost.*
+
+### 13.1 Arm B (`--de4=off`) — MBE3 by measurement, and it makes water
+
+```
+seed 0x0000000053415422  dt 0.5386  modal-O OH2  molecules [H2 H2 OH2 O3H2]
+                         fenced 4  dE4_evals 0  |p| 3.99e-12/1.04e-7  T 290 K
+```
+
+**`dE4_evals 0`** is the functional proof G-dE4-1 asks for: the counter is incremented by
+the physics, so the four-body term is absent by measurement rather than by flag.
+\|p\|/bound = 3.84e-5 — conservation-clean, G-dE4-3 met.
+
+Census:
+
+| formula | block | held run | held | of run | rms | sep var | ctrl | verdict |
+|---|---|---|---|---|---|---|---|---|
+| H₂ | `0x0300` | 5366 | 4473.4 fs | 97.7% | 0.299 | 0.270 | 0.037 | CERTIFIED-STRICT |
+| H₂ | `0x0c00` | 3066 | 2558.1 fs | 95.4% | 0.655 | 2.588 | 0.037 | CERTIFIED-STRICT |
+| O₃H₂ | `0x009d` | 1974 | 1645.1 fs | 38.4% | 0.220 | 0.394 | 0.000 | CERTIFIED-STRICT |
+| **OH₂** | **`0x0062`** | **1109** | **923.9 fs** | **85.8%** | **1.103** | **0.257** | **0.000** | **CERTIFIED-STRICT** |
+| OH | `0x0011` | 929 | 773.8 fs | 38.5% | 1.000 | 0.209 | 0.000 | CERTIFIED-BUDGETED |
+
+Leg B: 43 distinct partition readings, 124 witness pairs, defect 0.1365, non-expansion ok,
+**NOT CLOSED**.
+
+**So a certified-strict water quotient forms with the four-body term measurably switched
+off.** That is a second one, independent of §0's seed `0x…5425`, and this one has its
+control's provenance recorded (`PROVENANCE_de4_arms.md`).
+
+### 13.2 What is NOT concluded here
+
+Arm A is still running, and until it lands **no causal sentence is available in either
+direction**. §12.3's branches stand as staked. The pairing matters: it is arm A that tests
+whether the four-body term CHANGES anything, and a control without its treatment is half an
+experiment.
+
+### 13.3 A cross-check that the arms are what they claim
+
+`dE4` is cutoff-gated — it solves only for compact quadruples — and in the banked reference
+it reports zero solves through frame 4000, first firing at frame 5000 (59 solves), where its
+wall time also jumps from 19 s to 309 s. That gives a check worth recording:
+
+| frame | banked reference | arm A (`--de4=on`) | arm B (`--de4=off`) |
+|---|---|---|---|
+| 2000 | 287 K, drift 1.14e-5 | 287 K, drift 1.14e-5 | 287 K, drift 1.14e-5 |
+| 4000 | 325 K, drift 1.73e-5 | 325 K, drift 1.73e-5 | 325 K, drift 1.73e-5 |
+
+**All three are the same trajectory until the one variable engages** — which is what a
+controlled comparison looks like from the inside, and evidence that my build reproduces the
+banked run before G-dE4-2 is formally scored.
+
+### 13.4 The caveat that applies to every certification in this document
+
+Both arms report the O–O pair curve at **worst residual 4.81e-6 against the code's own
+`CONVERGED_RESIDUAL` of 1e-9** — 3.7 orders past its threshold, on the curve governing the
+oxygen aggregation these scenes are made of. It is IDENTICAL in the two arms, so it does not
+differentiate them and the relative comparison is unaffected; what it qualifies is the
+ABSOLUTE claim. A certified water molecule here is certified under an unconverged O–O curve,
+and that belongs beside the certification rather than only in the run log.
+
+Raised by `workbench-engine`, who stopped before captioning a page with it and asked. The
+provenance gap they found in the same read — the control's log recording no commit, no
+binary hash and no gate state, when "same commit" is the entire content of that control — is
+answered in `PROVENANCE_de4_arms.md`.

@@ -51,28 +51,29 @@ cargo build --release -p holon-render --example b2_longrange
 Pinned to E-cores (24 and 26) because M-PLACEMENT-LOTTERY's remedy is quiet-and-pinned and
 this box sat at loadavg 65–80 throughout. Timings are CPU seconds, not wall.
 
-## Banked
+## Banked — see `B2_RESULTS.md` for the full record
 
-**G11 — refusals: PASS, 8 of 8 fire** (R1 exponent in 2D and 3D, R1 charge, R2 image budget,
-R3 sub-support, R4 fenced bracket, R5 disclosure ×2).
+**The frames arm is complete and reproduces B1b bit for bit.** All eight
+`max|E_switch(c*)|` values and their frame indices match `B1B_RESULTS.md` §2 exactly,
+including the worst: seed `0x0000000053415424`, frame 10144, **1.150526e-5** Ha. 160,000
+frames scored, 8 of 8 admitted by digest, 0 refusals.
 
-**G3 — the tail exponent, measured** (from the frames arm, full curve set):
+* **G1 — S-DOMINANT at S/T = 9.9e8.** B1b's headline discard is a RADIUS-BOOKKEEPING defect:
+  channel S (real tabulated interaction in `(15, 20]` bohr, lost because the list radius came
+  from a THREE-BODY table) is nine orders larger than channel T at the deciding frame.
+* **G14 — PASS, 0 of 8 seeds over.** The three seeds B1b failed (1.898, 1.574, 2.496) come in
+  at 0.0274, 0.0178, 0.0290. `beyond R_f` is exactly 0 on every seed because `R_f = 73.27`
+  exceeds the box diagonal, so the residual is a bracket with ends 0 and `|model gap|`.
+* **G2 — exact half PASS**, 0 missed pairs over 108,599.
+* **G3 — O–O ADOPTING at `p_fit = 5.0049`**; H–H and O–H FENCED and nothing rests on them.
+* **G11 — 10 of 10 refusals fire**, including the negative control.
+* **Suite — 21 binaries, exit 0**, `t3_replay` included.
 
-| slot | curve | `r_max` | `p_fit` | fit residual | `exp_index` | band |
-|---|---|---|---|---|---|---|
-| 0 | H–H | 10.24 | 20.6703 | 3.31e-1 | 31.1423 | **FENCED** |
-| 1 | O–H | 10.24 | 30.6918 | 2.85e-1 | 42.5440 | **FENCED** |
-| 3 | **O–O** | **20.00** | **5.0049** | **3.72e-5** | **5.0038** | **ADOPTING** |
+## Still open when this was written
 
-The curve that matters is the one that reaches past `c*`, and it is the one that adopts: the
-O–O tail is a power law at index 5.00, and the exponential extrapolation's own local index
-agrees with the fit to four digits. The two short-range curves are fenced and their supports
-end inside the cutoff, so nothing rests on them. R4 is live on the fenced pair.
-
-**H–H engine arm** (`--curves=hh`, pinned, loadavg ~67): G2 PASS (512 atoms, 3D lattice,
-Cells vs Complete, bit-identical, 3714 pairs in range); G5 PASS; G6 PASS; G10/G9/P1 VOID by
-construction on this curve — see below; G12 PASS; G13 exponent 1.865, monotone; G4 PASS but
-VOID under V2; G7 and G8 FIRED. Plants P1, P2, P3, P5, P6, P7 fire; P4 does not.
+The engine-full arm is re-running after the three fixes at `4d25135`. Its previous run's
+readings are in `B2_RESULTS.md` §6–7; what the re-run changes is G8's diagnostic and the
+G9 `f = 0.90` arm.
 
 ## The fired gates, kept fired
 

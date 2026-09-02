@@ -69,11 +69,18 @@ frames scored, 8 of 8 admitted by digest, 0 refusals.
 * **G11 — 10 of 10 refusals fire**, including the negative control.
 * **Suite — 21 binaries, exit 0**, `t3_replay` included.
 
-## Still open when this was written
+## The engine arm, after the fixes at `4d25135`
 
-The engine-full arm is re-running after the three fixes at `4d25135`. Its previous run's
-readings are in `B2_RESULTS.md` §6–7; what the re-run changes is G8's diagnostic and the
-G9 `f = 0.90` arm.
+* **G9 stale-cache: PASS bit-identical in BOTH directions**, with **P1 still firing**
+  (carrier 7.332040e-7 Ha) — the gate kept its power through the fix.
+* **G8: still FIRED.** 1.0000e0 unfiltered (saturated by a numeric reference that underflows
+  to exactly zero); **1.1870e-7 over the 187 components whose disagreement the reference can
+  resolve, which is still 1.19× the staked 1e-7.** The saturation is an artifact; the 19%
+  overshoot is not.
+* **G7: still FIRED** on its coarsest staked step (3.8381e-5) with the finest at 3.8386e-9.
+* **G13: exponent 2.123**, monotone. **G10: PASS** at 3 shells. **G4/G5/G6: PASS** complete
+  and truncated. **G4's arm VOID under V2.**
+* **Suite: 21 binaries, exit 0** against the final tree.
 
 ## The fired gates, kept fired
 

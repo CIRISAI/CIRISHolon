@@ -1,0 +1,406 @@
+warning: function `scale` is never used
+    --> crates/holon-chem/src/fci.rs:1664:4
+     |
+1664 | fn scale(a: f64, x: &mut [f64]) {
+     |    ^^^^^
+     |
+     = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: function `normalised` is never used
+    --> crates/holon-chem/src/fci.rs:1672:4
+     |
+1672 | fn normalised(a: &[f64]) -> Vec<f64> {
+     |    ^^^^^^^^^^
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:357:5
+    |
+355 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+356 | pub struct ClassicalPotentialOp {
+357 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+    = note: `#[warn(unpredictable_function_pointer_comparisons)]` on by default
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:480:5
+    |
+478 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+479 | pub struct RingPolymerOp {
+480 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+
+warning: `holon-chem` (lib) generated 4 warnings
+warning: unused variable: `d`
+   --> crates/holon/src/cyclo.rs:180:13
+    |
+180 |         let d = self.c.len();
+    |             ^ help: if this is intentional, prefix it with an underscore: `_d`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `holon` (lib) generated 1 warning (run `cargo fix --lib -p holon` to apply 1 suggestion)
+   Compiling holon-render v0.1.0 (/tmp/claude-1000/b2-ewald-wt/engine/crates/holon-render)
+warning: constant `B1B_UNINFORMATIVE_RATIO` is never used
+   --> crates/holon-render/examples/longrange_audit.rs:135:7
+    |
+135 | const B1B_UNINFORMATIVE_RATIO: f64 = 1.0e3;
+    |       ^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `holon-render` (example "longrange_audit") generated 1 warning
+warning: fields `e_three` and `e_four` are never read
+   --> crates/holon-render/examples/waterquench.rs:298:5
+    |
+290 | struct Outcome {
+    |        ------- fields in this struct
+...
+298 |     e_three: f64,
+    |     ^^^^^^^
+299 |     e_four: f64,
+    |     ^^^^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `holon-render` (example "waterquench") generated 1 warning
+    Finished `release` profile [optimized + debuginfo] target(s) in 29.66s
+     Running unittests src/lib.rs (target/release/deps/holon_render-f7fb43a4b5c2c976)
+
+running 4 tests
+test cells::tests::the_minimum_image_takes_the_short_way ... ok
+test cells::tests::the_switch_derivative_is_the_derivative ... ok
+test cells::tests::the_switch_is_flat_at_both_ends ... ok
+test cells::tests::the_wrap_is_exact_for_an_exact_shift ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/amendments.rs (target/release/deps/amendments-f23c35c94856b2db)
+
+running 20 tests
+test a_collapsed_droplet_is_one_cluster_with_120_bonded_pairs ... ok
+test a_hot_dilute_gas_has_no_clusters ... ok
+test a_pair_held_by_the_spring_is_bound_but_not_closed ... ok
+test a_stalled_frame_reports_its_lost_time_as_dilation ... ok
+test accuracy_cannot_be_degraded_under_an_exactness_hold ... ok
+test default_sim_speed_makes_one_vibration_watchable ... ok
+test dwell_hysteresis_is_deterministic_and_the_census_matches_ground_truth ... ok
+test dt_is_derived_from_the_curve_not_chosen ... ok
+test formation_is_accounting_only_and_the_global_ledger_is_untouched ... ok
+test n_max_solves_the_pair_budget_exactly ... ok
+test shortfall_dilates_time_and_leaves_dt_alone ... ok
+test the_accumulator_carries_its_remainder_and_never_stretches_dt ... ok
+test dissociation_returns_every_joule_and_the_defect_rises ... ok
+test the_bound_is_never_stale_when_dt_moves ... ok
+test two_departing_diatomics_are_two_clusters_of_two ... ok
+test the_opener_hands_out_no_bonds ... ok
+test the_bound_uses_the_curvature_envelope_not_the_equilibrium_curvature ... ok
+test capture_plant_an_isolated_pair_never_forms_a_molecule ... ok
+test perf_substeps_per_second_native ... ok
+test the_census_layer_cost_is_measured_not_asserted ... ok
+
+test result: ok. 20 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 6.52s
+
+     Running tests/b2_longrange.rs (target/release/deps/b2_longrange-a0a0e5137581352f)
+
+running 21 tests
+test list_cutoff_reaches_the_near_radius_when_a_far_sector_is_declared ... ok
+test r1_refuses_a_kernel_its_image_lattice_cannot_sum ... ok
+test a_periodic_box_narrower_than_two_near_radii_is_refused ... ok
+test a_scene_with_no_far_sector_carries_an_exact_zero ... ok
+test angular_momentum_is_gated_only_where_the_box_conserves_it ... ok
+test r1_refuses_a_charged_scene_because_this_force_law_has_no_charge ... ok
+test the_exponent_is_measured_from_the_knots_and_not_assumed ... ok
+test the_far_force_is_central_which_is_what_conserves_angular_momentum ... ok
+test r2_refuses_when_the_image_shells_cannot_meet_the_declared_budget ... ok
+test r3_refuses_a_near_radius_inside_a_curve_s_support ... ok
+test r4_hands_out_a_bracket_and_never_a_scalar_on_a_fenced_tail ... ok
+test r5_refuses_a_tail_parameter_without_its_solve_s_exit_and_budget ... ok
+test the_far_force_is_equal_and_opposite_to_the_bit ... ok
+test the_far_force_is_minus_the_gradient_of_the_far_energy ... ok
+test the_non_central_plant_leaves_linear_momentum_exactly_alone ... ok
+test the_residual_bound_assumes_nothing_about_how_the_atoms_are_arranged ... ok
+test the_far_sector_substitutes_for_the_near_one_and_never_adds_to_it ... ok
+test the_image_lattice_is_a_pure_function_of_the_box_key ... ok
+test the_physics_digest_is_untouched_without_a_far_sector_and_moves_with_one ... ok
+test the_plants_are_visible_to_the_invariants_above ... ok
+test the_tail_matches_the_table_exactly_at_the_seam ... ok
+
+test result: ok. 21 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/de4_momentum.rs (target/release/deps/de4_momentum-75ff0b8cda567ce2)
+
+running 4 tests
+test the_control_sums_to_exactly_zero_without_the_four_body_sector ... ok
+test the_four_body_torque_sums_to_zero ... ok
+test the_four_body_forces_sum_to_zero_over_the_quartet ... ok
+test the_four_body_force_is_the_gradient_of_the_four_body_energy ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 26.97s
+
+     Running tests/engine_curve.rs (target/release/deps/engine_curve-56a227879d705269)
+
+running 7 tests
+test a_bad_grid_is_refused_rather_than_defaulted ... ok
+test the_generated_table_carries_its_curvature_column ... ok
+test the_generated_table_certifies_its_own_sign_convention ... ok
+test the_abi_generate_call_fills_the_shared_table ... ok
+test energy_is_conserved_on_the_curve_the_viewer_actually_uses ... ok
+test the_generated_and_file_routes_are_the_same_table ... ok
+test the_interpolant_reproduces_the_model_it_was_built_from ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.87s
+
+     Running tests/gravity.rs (target/release/deps/gravity-fe8a39319aa97941)
+
+running 11 tests
+test a_periodic_box_refuses_the_field ... ok
+test a_checkpoint_carries_the_field ... ok
+test a_checkpoint_carries_the_field_direction ... ok
+test gravity_is_invisible_at_the_atomic_scale ... ok
+test a_field_of_zero_changes_no_bit ... ok
+test compressing_the_box_under_gravity_keeps_the_ledger_closed ... ok
+test a_wrapping_box_refuses_the_field_in_every_direction ... ok
+test a_tilted_field_conserves_and_actually_tilts ... ok
+test gravity_posts_nothing_to_the_work_columns ... ok
+test energy_gate_closes_under_a_field_that_does_real_work ... ok
+test the_scalar_door_and_the_vector_door_are_bit_identical ... ok
+
+test result: ok. 11 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.53s
+
+     Running tests/ice_seeds.rs (target/release/deps/ice_seeds-17018609ae5f4363)
+
+running 9 tests
+test g1_stoichiometry_is_water ... ok
+test g2_scale_is_a_uniform_dilation ... ok
+test g3_the_orderings_are_the_ones_claimed ... ok
+test g6_the_plant_fires_g3_when_it_leaves_the_covalent_shell ... ok
+test g6_the_plant_fires_g2 ... ok
+test g3_bernal_fowler_receipt ... ok
+test g4_nothing_opens_inside_the_repulsive_core ... ok
+test g2_geometry_matches_the_declared_lattice ... ok
+test g5_the_scene_loads_into_a_periodic_sim ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.74s
+
+     Running tests/ledger.rs (target/release/deps/ledger-b479aea1f5a09efe)
+
+running 12 tests
+test force_is_exactly_minus_the_gradient_of_the_summed_energy ... ok
+test hermite_reproduces_its_knots_and_is_c1_across_them ... ok
+test placeholder_reproduces_its_own_constants ... ok
+test spring_stiffness_is_the_declared_stage_value ... ok
+test table_load_and_sign_convention ... ok
+test nve_momentum_gate ... ok
+test nve_energy_gate ... ok
+test drift_obeys_the_harmonic_law_it_was_derived_from ... ok
+test dragging_the_anchor_keeps_the_ledger_closed ... ok
+test two_atoms_alone_can_never_bond ... ok
+test the_thermostat_is_on_the_ledger_too ... ok
+test scripted_push_forms_a_bond_and_the_ledger_stays_closed ... ok
+
+test result: ok. 12 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.11s
+
+     Running tests/longrun.rs (target/release/deps/longrun-e5090be0058a8779)
+
+running 5 tests
+test the_amplitude_factor_survives_kinetic_potential_cancellation ... ok
+test bonds_form_in_the_long_run_so_the_repro_exercises_the_failing_condition ... ok
+test a_planted_energy_leak_still_trips_the_energy_gate ... ok
+test drift_does_not_grow_secularly ... ok
+test long_run_many_body_nve_holds_its_bound ... ok
+
+test result: ok. 5 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.64s
+
+     Running tests/mixtures.rs (target/release/deps/mixtures-ce82401b5dd12a8c)
+
+running 22 tests
+test b1_each_pair_reads_its_own_curve ... ok
+test b1_all_hydrogen_is_bit_identical_to_the_single_table ... ok
+test every_provenance_refusal_has_a_demonstrated_failing_case ... ok
+test plant_i_the_swapped_table_invents_a_bond ... ok
+test plant_i_the_swapped_table_is_caught ... ok
+test plant_ii_the_wrong_mass_moves_the_clock ... ok
+test plant_iii_a_dmrg_curve_presented_as_exact_is_refused ... ok
+test plant_iii_a_dmrg_labelled_curve_is_refused_by_the_production_loader ... ok
+test b1_the_bank_holds_one_curve_per_pair_type ... ok
+test plant_iv_an_unresolvable_uncertainty_is_refused ... ok
+test plant_iv_the_production_loader_refuses_a_curve_swallowed_by_its_own_error_bar ... ok
+test a_refused_curve_does_not_stay_in_the_bank ... ok
+test provenance_strings_carry_no_accidental_whitespace ... ok
+test the_bank_refuses_a_species_past_its_cap ... ok
+test the_clock_is_the_fastest_mode_not_the_stiffest_curve ... ok
+test the_committed_d1_record_says_what_it_measured ... ok
+test the_slot_packing_is_a_bijection ... ok
+test the_fixtures_fit_the_scene ... ok
+test the_envelope_covers_every_active_table ... ok
+test a_scene_missing_a_curve_refuses_to_step ... ok
+test c1_momentum_gate_in_a_mixed_box ... ok
+test c1_energy_gate_in_a_mixed_box ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.27s
+
+     Running tests/protocol_identity.rs (target/release/deps/protocol_identity-14c1aa61a951d1a5)
+
+running 2 tests
+test the_frozen_protocol_block_is_byte_identical_in_both_runners ... ok
+test the_trajectory_runner_names_every_physics_knob_its_reference_sets ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/saturation.rs (target/release/deps/saturation-143c7ef214cf1d21)
+
+running 10 tests
+test c1_energy_gate_three_body_nve ... ok
+test c1_momentum_gate_three_body_nve ... ok
+test the_three_body_table_reports_its_own_scale ... ok
+test plant_iii_the_force_loop_reads_the_zeroed_region ... ok
+test plant_iii_a_driven_entry_diverges ... ok
+test the_triple_force_is_minus_the_gradient_of_the_triple_energy ... ok
+test the_triple_loop_cost_is_measured ... ok
+test c1_momentum_gate_three_body_thermostatted ... ok
+test without_a_table_the_third_body_changes_no_bit ... ok
+test c1_energy_gate_three_body_thermostatted ... ok
+
+test result: ok. 10 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 4.06s
+
+     Running tests/saturation2.rs (target/release/deps/saturation2-b9fb3d8304c7cf74)
+
+running 8 tests
+test the_dispatch_serves_each_composition_its_own_surface ... ok
+test the_triple_force_is_minus_the_gradient_of_the_triple_energy ... ok
+test the_water_table_reports_its_own_scale ... ok
+test c1_momentum_gate_heteronuclear_nve ... ok
+test c1_energy_gate_heteronuclear_nve ... ok
+test the_dispatch_changes_no_bit_of_a_pure_hydrogen_scene ... ok
+test c1_momentum_gate_mixed_thermostatted ... ok
+test c1_energy_gate_mixed_thermostatted ... ok
+
+test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 11.45s
+
+     Running tests/scale_box.rs (target/release/deps/scale_box-8c1f273185b479d9)
+
+running 4 tests
+test the_energy_gate_survives_a_scale_mid_run ... ok
+test the_scale_is_applied_and_paid_for ... ok
+test the_refusals_fire_by_name ... ok
+test pressure_reads_and_declares_its_domain ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.01s
+
+     Running tests/t3_barostat.rs (target/release/deps/t3_barostat-60c603a9e5ad6bbb)
+
+running 7 tests
+test a_barostat_refuses_what_it_cannot_control ... ok
+test the_pressure_unit_is_what_it_says ... ok
+test the_pressure_is_the_ideal_gas_law_when_there_is_nothing_else ... ok
+test npt_reduces_to_nve_at_infinite_barostat_mass ... ok
+test the_barostat_is_on_the_ledger ... ok
+test the_extended_hamiltonian_is_conserved ... ok
+test the_box_follows_the_pressure_and_in_the_right_direction ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.52s
+
+     Running tests/t3_replay.rs (target/release/deps/t3_replay-eb9e81e4e67219f8)
+
+running 7 tests
+test a_checkpoint_from_another_version_is_refused ... ok
+test p_r3_a_dropped_state_field_is_visible_to_the_replay_gate ... ok
+test p_r1_a_corrupted_checkpoint_is_refused ... ok
+test p_r2_a_checkpoint_from_different_physics_is_refused ... ok
+test a_checkpoint_round_trips_exactly ... ok
+test a_restored_run_replays_bit_for_bit ... ok
+test the_same_scene_twice_is_the_same_trajectory ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 1.16s
+
+     Running tests/t3_scale.rs (target/release/deps/t3_scale-32a09df5a948edc7)
+
+running 15 tests
+test p2b_the_minimum_image_is_doing_the_work ... ok
+test p2_a_periodic_scene_does_not_know_where_it_is ... ok
+test the_fence_count_survives_going_local ... ok
+test a_box_too_small_for_its_cutoff_is_refused ... ok
+test p_t3_b_a_column_that_stops_being_posted_is_caught ... ok
+test the_pair_truncation_is_opt_in_and_reports_what_it_drops ... ok
+test the_hand_gets_its_own_receipt_column ... ok
+test the_truncated_pair_force_is_minus_the_gradient_of_the_truncated_energy ... ok
+test the_scene_is_no_longer_capped_at_sixteen ... ok
+test the_two_routes_agree_bit_for_bit ... ok
+test crossing_a_face_is_not_an_event ... ok
+test a_truncated_run_still_closes_its_ledger ... ok
+test the_hub_rule_enumerates_every_triple_exactly_once ... ok
+test the_two_routes_agree_on_the_triple_sector_too ... ok
+test a_scene_past_the_old_cap_still_holds_its_gates has been running for over 60 seconds
+test a_scene_past_the_old_cap_still_holds_its_gates ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 97.63s
+
+     Running tests/three_dimensions.rs (target/release/deps/three_dimensions-75581f0b39c412f4)
+
+running 7 tests
+test temperature_counts_the_scene_degrees_of_freedom ... ok
+test nve_energy_gate_in_three_dimensions ... ok
+test nve_momentum_gate_in_three_dimensions ... ok
+test the_lift_is_rotationally_covariant ... ok
+test the_midplane_is_exactly_invariant ... ok
+test the_box_has_a_lid ... ok
+test capture_plant_in_three_dimensions ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.13s
+
+     Running tests/trimer_door.rs (target/release/deps/trimer_door-8e75ca4fe726b198)
+
+running 27 tests
+test a_finish_with_no_begin_is_refused ... ok
+test a_refused_artifact_leaves_the_fence_up ... ok
+test plant_coordinate_count_mismatch ... ok
+test plant_coordinates_missing ... ok
+test plant_coordinates_not_monotone ... ok
+test plant_digest_missing ... ok
+test plant_domain_uncited ... ok
+test plant_energy_count_mismatch ... ok
+test plant_grid_rule_unsupported ... ok
+test plant_region_shape_missing ... ok
+test plant_resolution_pinning ... ok
+test every_refusal_says_something_specific ... ok
+test plant_angle_cosine_out_of_range ... ok
+test plant_seam_record_missing ... ok
+test plant_axis_rule_contradicts_coordinates ... ok
+test plant_side_length_not_positive ... ok
+test plant_voids_counted_not_named ... ok
+test the_control_artifact_is_admitted ... ok
+test the_fence_lifts_only_for_a_heteronuclear_surface ... ok
+test the_real_artifact_is_refused_for_want_of_an_uncertainty ... ok
+test the_real_artifact_ships_the_grid_this_door_needs ... ok
+test plant_uncertainty_exceeds_resolution ... ok
+test plant_converged_field_present ... ok
+test the_third_side_is_derived_and_the_convention_closes ... ok
+test plant_uncertainty_exceeds_feature ... ok
+test plant_uncertainty_missing ... ok
+test plant_route_undeclared ... ok
+
+test result: ok. 27 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/zoom.rs (target/release/deps/zoom-85acc7130b58bec3)
+
+running 1 test
+test refining_the_observer_never_merges_what_it_could_already_split ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests holon_render
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

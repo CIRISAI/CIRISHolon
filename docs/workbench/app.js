@@ -260,6 +260,47 @@ function tag(id, kind, trace) {
   el.title = kind === "live" ? `traces to ${trace}` : trace;
 }
 
+// ---------------------------------------------------------------- the record (WB-9.6)
+//
+// A THIRD TAG, and it earns its place rather than diluting the discipline. LIVE means the
+// digits came out of the engine this frame; FENCED means the engine cannot serve them.
+// These numbers are neither: they were measured by an instrument that is not this page,
+// on runs that are not this scene, and they are CITED. Calling them LIVE would be a lie
+// about where they came from; fencing them would hide a result that exists. So RECORD, and
+// every RECORD figure carries the artifact and line it came from — which `smoke.mjs`
+// then VERIFIES by reading that file, so a citation cannot outlive the number it cites.
+//
+// Only COMMITTED artifacts may be cited. The `--de4=off` control has run and its census
+// is banked but not yet in the repository, so its figure is deliberately absent below: a
+// published page must not assert a number that a clean checkout cannot check. When it
+// lands the row appears and the gate starts checking it.
+
+const RECORD = {
+  window: {
+    value: "834 fs",
+    what: "the pre-staked holding window",
+    cite: "conformance/water_observatory/census_mixed_fenced.log:3",
+    note: "frozen in CENSUS_PREREG.md before the instrument that measures it existed.",
+  },
+  water: {
+    value: "893.8 fs",
+    what: "OH₂ held, CERTIFIED-STRICT",
+    cite: "conformance/water_observatory/census_mixed_fenced.log:250",
+    note: "seed 0x…25, block 0x0a08, 1073 frames — 72.3% of the run, rms 0.779 bohr, "
+      + "separation variance 0.199, control 0.000, and NAMED. It clears the 834 fs window "
+      + "by 7%.",
+  },
+  legB: {
+    value: "NOT CLOSED",
+    what: "Leg B, the fiber-invariance test",
+    cite: "conformance/water_observatory/census_mixed_fenced.log:266",
+    note: "158 witness pairs, defect 0.141. The molecule is certified as a held THING; the "
+      + "full partition view it sits in is not a closed one. Both readings are the "
+      + "instrument's and the page reports them together, because quoting only the first "
+      + "would be quoting half a verdict.",
+  },
+};
+
 // ---------------------------------------------------------------- formatting
 
 function fmtEnergy(ha) {
@@ -990,6 +1031,14 @@ function renderStatics() {
   }
 
   // --- device class & artifact (WB-5.4, M-DEVICE-CLASS)
+  // The water story (WB-9.6), rendered from RECORD above so the citation and the digits
+  // cannot drift apart in the markup.
+  if (UI["record-rows"]) {
+    UI["record-rows"].innerHTML = Object.values(RECORD).map((r) =>
+      `<div class="rec"><div class="rec-head"><b>${r.value}</b><span>${r.what}</span></div>`
+      + `<p>${r.note}</p><code>${r.cite}</code></div>`).join("");
+  }
+
   put("manifest-device-class", State.deviceClass);
   put("manifest-sha", State.artifact.sha256);
   put("manifest-bytes", `${State.artifact.bytes.toLocaleString()} bytes`);

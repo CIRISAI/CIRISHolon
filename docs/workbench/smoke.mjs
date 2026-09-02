@@ -58,6 +58,7 @@
 // Exit 0 on success, 1 with a named failure otherwise. Node only; no dependencies.
 
 import { readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -525,6 +526,100 @@ const dA = digest();
 const dB = digest();
 want(dA === dB, `the seeded scene replays bit-identically in this device class (${dA})`,
   `run A ${dA}, run B ${dB}`);
+
+// ------------------------------------------- 6b. every RECORD citation still resolves
+//
+// The water-story panel is the one place this page shows numbers it did not compute. Each
+// carries `artifact:line`, and this reads that file and requires the number to BE there.
+//
+// It is the check my own house rules have been asking for and I had not written: three
+// claims in one day once rested on documents nobody had written, and a citation is exactly
+// the shape that rots silently — the page keeps displaying 893.8 fs long after the census
+// is re-run and prints something else. Two prongs, because a citation can fail two ways:
+// the artifact can vanish, and the number can move inside it.
+
+const recordBlock = appSource.match(/const RECORD = \{([\s\S]*?)\n\};/);
+want(recordBlock !== null, "the page's RECORD block is where the gate expects it");
+if (recordBlock) {
+  const entries = [...recordBlock[1].matchAll(
+    /value:\s*"([^"]+)",[\s\S]*?cite:\s*"([^"]+)"/g)];
+  want(entries.length > 0, "the RECORD block carries at least one cited figure");
+  // The repository root, FOUND rather than assumed. `join(here, "..", "..")` is right only
+  // while this file sits exactly two levels down, and it silently resolves to the wrong
+  // directory the moment the gate is run from a copy — which made every mutation test of
+  // this block fail with "artifact does not exist" instead of the defect it was probing.
+  // A check whose failures all look the same cannot tell you which one fired.
+  let repoRoot = here;
+  for (let up = 0; up < 6; up++) {
+    try { readFileSync(join(repoRoot, ".git", "HEAD")); break; } catch { /* keep climbing */ }
+    try { readFileSync(join(repoRoot, ".git")); break; } catch { /* worktrees: .git is a file */ }
+    repoRoot = join(repoRoot, "..");
+  }
+  for (const [, value, cite] of entries) {
+    const [relPath, lineNo] = cite.split(":");
+    const abs = join(repoRoot, relPath);
+    let text = null;
+    try { text = readFileSync(abs, "utf8"); } catch { /* reported below */ }
+    if (text === null) {
+      no(`RECORD cites ${relPath}, which does not exist`,
+        "a published page must not cite an artifact a clean checkout does not have; if the "
+        + "run is banked but uncommitted, the figure does not go on the page yet");
+      continue;
+    }
+    const lines = text.split("\n");
+    const line = lines[Number(lineNo) - 1] ?? "";
+    // What to look for in the artifact. For a numeric figure it is the bare number without
+    // its unit, because the artifact writes "893.8" in a fixed-width column and the page
+    // writes "893.8 fs". For a NON-numeric figure ("NOT CLOSED") the stripped form is the
+    // EMPTY STRING, and `line.includes("")` is true of every line — so the first version of
+    // this check passed that citation vacuously, which is the defect it exists to catch,
+    // committed by the checker itself. Fall back to the literal value.
+    const stripped = value.replace(/[^0-9.]/g, "");
+    const bare = stripped.length > 0 ? stripped : value;
+    if (line.includes(bare)) {
+      ok(`RECORD "${value}" is on ${cite}`);
+    } else if (text.includes(bare)) {
+      no(`RECORD "${value}" is in ${relPath} but NOT on line ${lineNo}`,
+        `line ${lineNo} reads: ${line.trim().slice(0, 90)}`);
+    } else {
+      no(`RECORD "${value}" is not in ${relPath} at all`,
+        "the artifact has been re-run or replaced and the page is quoting a number that is "
+        + "no longer in the record");
+    }
+  }
+}
+
+// And the control's figure must NOT be on the page while its artifact is uncommitted.
+// This is the inverted twin of the check above: there, a citation must resolve; here, an
+// UNCITED number must be absent. Without it the honest omission decays into an oversight
+// the moment someone pastes the figure in.
+const html6b = readFileSync(join(here, "index.html"), "utf8");
+
+// TRACKED, not merely PRESENT — and the difference is the whole check. An untracked file
+// exists on the author's disk and does not exist in CI's clean checkout, so testing
+// `readFileSync` succeeds locally and passes vacuously exactly where the defect lives.
+// That was this check's first version, and its plant sailed through.
+//
+// `git ls-files --error-unmatch` FAILS rather than skips when git is absent: a gate that
+// quietly passes when it cannot check is the shape this file exists to refuse.
+const de4OffTracked = (() => {
+  try {
+    execFileSync("git", ["ls-files", "--error-unmatch",
+      "conformance/water_observatory/census_de4_off.log"],
+      { cwd: here, stdio: "pipe" });
+    return true;
+  } catch (e) {
+    if (e && e.code === "ENOENT") {
+      no("the RECORD tracking check needs git, which is not on PATH (NOT skipped)");
+      return true; // already reported; do not double-fail below
+    }
+    return false;
+  }
+})();
+want(de4OffTracked || !/923\.9/.test(html6b + appSource),
+  "the control's figure stays off the page until its artifact is COMMITTED",
+  "923.9 fs appears on the page while census_de4_off.log is untracked — it exists on this "
+  + "disk and not in a clean checkout, so no reader could verify it");
 
 // ---------------------------------------------------------------- 7. the inverted check
 

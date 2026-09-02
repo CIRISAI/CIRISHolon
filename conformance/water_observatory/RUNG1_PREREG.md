@@ -305,6 +305,68 @@ inherited broken** (M-BASE-RATE-OMITTED, and discipline rule 5's permutation flo
 The census's flat pool rate is computed and printed BESIDE `q` for comparability with the
 banked molecular-tier numbers, and is labelled **SUPERSEDED** wherever it appears.
 
+### 3.6a AMENDMENT-1 — before any real reading, because the instrument's own positive control fired
+
+*Written 2026-09-02 with the plants built and run and with NO trajectory read. Git is the
+check on the order. The stake is not moved; an internal inconsistency in §3.6 is repaired,
+and the repair is toward the census's own words rather than away from them.*
+
+**What fired.** P-7 — the "must certify" control, a two-oxygen H-bond cluster present in
+every one of 1400 frames — came back **VOID (no separation)**. The cause is arithmetic, not
+physics: the fixture's single edge has occupancy **1.0000**, and a circular shift of an
+all-true series is that series. The surrogate IS the data, so the null has zero degrees of
+freedom. **A null that conditions on the statistic under test cannot reject, and it cannot
+accept either.**
+
+**The inconsistency it exposed, in this document.** §3.6 quotes `CENSUS_RESULTS.md` §4's
+staked repair —
+
+> *"the pool pass rate must be compared against the pass rate among same-composition blocks
+> in a surrogate whose bond graph is time-shuffled within each pair"*
+
+— and then defines `q` as something the quotation does not say: *the fraction of surrogates
+in which ANY structure of the same size reaches the window*. The census's construction is a
+**surrogate-referenced POOL RATE**; the paraphrase was an any-structure rate. They are
+different statistics and only the first survives an occupancy of 1.
+
+**The repair, which is a return to the quotation and not a new stake.**
+
+> `p_data` = the fraction of the eligible pool — every same-size subset of the oxygen set
+> other than the target, exactly enumerated — that reaches the window in the DATA. This is
+> the census's own statistic, the one that read 0.000 of 111 on the molecular certificate.
+>
+> `p_null_p95` = the 95th percentile, over the `S = 200` circular-shift surrogates, of that
+> same pool rate recomputed on the shifted edges.
+>
+> **The bar is `max(p_null_p95, 0.05)`, and the verdict is VOID (no separation) iff
+> `p_data > bar`.**
+
+**The staked 0.05 does not move. Its ROLE changes, and that change is the census's own
+diagnosis applied.** §4 convicted the flat 5% for being a CEILING — "a cap on how many
+molecules the scene may contain ... that gets TIGHTER exactly as a scene becomes more
+chemically interesting". Here it is a FLOOR on the bar: the surrogate can raise the bar when
+the scene's own edge marginals would make peers pass by chance, and can never lower it below
+what the census demanded. On the census's own worked example this is exactly right — six H₂
+in twelve hydrogens gave `p_data = 5/65 = 0.077` against a flat 0.05 and were VOIDed, while a
+marginal-preserving surrogate produces peer passes at about the same rate and lifts the bar
+to meet it.
+
+**Both diagnostics are kept and printed on every row, binding nothing:**
+
+* `max_edge_occupancy` — the largest per-edge occupancy among the target's edges. **This is
+  the field that says whether the surrogate had any power.** As it approaches 1 the shift
+  stops moving anything; a reader must never take a surrogate-referenced verdict at high
+  occupancy as a statement about the structure.
+* `q_any` — the any-structure rate §3.6 originally named, reported so the superseded
+  statistic is visible beside the one that replaced it rather than quietly dropped.
+
+**What this costs, stated plainly.** The surrogate leg is powerless against a permanently
+occupied edge, and no amendment can give it power there — every marginal-preserving null is
+degenerate at occupancy 1. So at high occupancy the discriminating work is done entirely by
+the POOL rate, which is a comparison against peers rather than against chance. That is a
+real weakening of the control relative to what §3.6 promised, it is named here rather than
+discovered later, and every certified row must be read with `max_edge_occupancy` beside it.
+
 ### 3.7 Moving carrier
 
 Inherited unchanged from census `G5`: internal RMS displacement ≥ **0.1 bohr** in the

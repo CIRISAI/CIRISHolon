@@ -15,6 +15,7 @@
 pub mod census;
 pub mod classifier;
 pub mod lens;
+pub mod network;
 pub mod partition;
 pub mod quenchlog;
 pub mod synthetic;

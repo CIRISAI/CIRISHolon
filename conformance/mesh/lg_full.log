@@ -1,0 +1,84 @@
+instrument commit: c61ddbd928de0d89f6558d5fe6a1822696b49483
+instrument tree state: 0 uncommitted paths under holon-lattice
+rustc: rustc 1.95.0 (59807616e 2026-04-14)
+started: 2026-09-02T12:41:39Z
+
+=========================================================================
+NODE LG — the lattice-gas tier, certified on its own dynamics
+prereg: conformance/mesh/LG_PREREG.md   instrument: holon-lattice
+mode:   FULL
+=========================================================================
+
+--- 6.3 INSTRUMENT CONTROL (run FIRST: these gate everything below) ---
+  G5   PASS  [294912 checks]  all 4608 enumerated laws are distinct conserving bijections on 64 states
+  G11  PASS  [64 checks]  FHP-6 census 53 sectors, histogram [(1, 44), (2, 7), (3, 2)] (Lean: 53, 44/7/2); FCHC-24 leg is holon-mesh::fchc, reproduced in tests/fchc_control.rs
+  G12  PASS  [4 checks]  FHP-6 residual 4.441e-16 (T4_xxxx 2.2500, T4_xxyy 0.7500); HPP-4 residual 0.6667 (T4_xxyy 0.0000); 2 re-presentations bit-identical
+       NOT a claim of the Navier-Stokes limit: necessary condition only.
+       Exit (LG_PREREG 3): viscosity, semi-detailed balance, the g(rho) defect.
+
+--- 6.1 DYNAMICS AND CONSERVATION (one gate per law) ---
+  G1   PASS  [20000 checks]  mass EXACT at every step (total 137820)
+  G2   PASS  [20000 checks]  momentum-x EXACT at every step (total -203)
+  G3   PASS  [20000 checks]  momentum-y EXACT at every step (total -203)
+  G13  PASS  [3 checks]  carrier moved: occupancy distance AT STEP 100 = 178938 (> 19661 = 0.30*L^2, the staked instant), 179164 at end of run; collisions fired 116887360 total, min 5551/step; min per-step churn 177846 (> 6554 = 0.10*L^2)
+  G4   PASS  [6000 checks]  with a 32-cell wall (declared 32): mass EXACT, momentum = P(0) + impulse EXACT, cumulative impulse [84, -20] (nonzero, so the gate did work)
+
+--- 6.2 CLOSURE, LEG A (HELD) ---
+  G6   PASS  [2100 checks]  HPP-4 holds its per-line momentum chart EXACTLY over 2000 steps (128 lines, a chart 64x finer than global); FHP-6 breaks the same chart at step Some(0)
+       v_L is HELD by G1-G3 and is LABELLED VACUOUS-BY-CONSERVATION, not counted.
+
+--- 6.2 CLOSURE, LEG B (CLOSED) — probed by construction ---
+          b         measured     derived W(b)     probes as-configured
+          1     1.0000000000     1.0000000000      81920     1.000000
+          2     1.0000000000     1.0000000000      81920     1.000000
+          4     0.7500000000     0.7500000000      81920     0.744301
+          8     0.4375000000     0.4375000000      81920     0.444995
+         16     0.2343750000     0.2343750000      81920     0.243806
+         32     0.1210937500     0.1210937500      81920     0.126858
+         64     0.0000000000     0.0000000000      81920     0.000000   <- VACUOUS BY CONSERVATION
+  G7   PASS  [573440 checks]  the measured k=1 defect IS 1 - max(0,b-2)^2/b^2 at all 7 charts, exactly
+  G9   PASS  [7 checks]  each b probed independently with its own fiber moves; no b's verdict inferred from another's
+  G8   PASS  [6 checks]  6 of 6 non-vacuous charts exhibit a witness pair
+       EXHIBIT at b=4: cell 0 state 9 -> 18 (both label (2, 0, 0)); the agreeing view has 256 blocks and the stepped views differ in 3 of them
+  G10  PASS  [163840 checks]  negative control (y = x) rate 0.0; positive control (cross-fiber) rate 1.000
+       light cone at b=16: k=[1, 2, 4, 8, 16] -> rate [0.2438, 0.4014, 0.666, 0.9861, 1.0]
+
+--- 6.4 THE INHOMOGENEITY DISCHARGE (M-HOMOG) ---
+       b=2   wall-free rate 1.0000000000 vs derived 1.0000000000  [80640 probes; 64 cells in wall-touching blocks reported, NOT averaged in]
+       b=4   wall-free rate 0.7500000000 vs derived 0.7500000000  [79360 probes; 128 cells in wall-touching blocks reported, NOT averaged in]
+       b=8   wall-free rate 0.4375000000 vs derived 0.4375000000  [76800 probes; 256 cells in wall-touching blocks reported, NOT averaged in]
+       b=16  wall-free rate 0.2343750000 vs derived 0.2343750000  [71680 probes; 512 cells in wall-touching blocks reported, NOT averaged in]
+       b=32  wall-free rate 0.1210937500 vs derived 0.1210937500  [40960 probes; 2048 cells in wall-touching blocks reported, NOT averaged in]
+  G14  PASS  [349440 checks]  the defect law survives a structurally inhomogeneous graph on wall-free blocks
+
+--- 6.5 THE COLLISION-LAW SWEEP (M-ONE-MODEL-DELTA) ---
+  G15  PASS  [4608 checks]  all 4608 sector-preserving collision laws give 1 distinct k=1 defect rate(s) at b=4, L=8: [0.75] (derived 0.75) — the defect is the LATTICE's, and the identity collision is in the sweep
+
+--- 7 PLANTS (each must FIRE; every carrier nonzero in its own sector) ---
+       carrier state 9 population: 98 cells, nonzero in the (N=2,P=0) sector the plants act on
+       P1 mass          9 -> 0   fires [true, false, false], expected [true, false, false]  FIRED, ISOLATED
+       P2 momentum-x    9 -> 34  fires [false, true, false], expected [false, true, false]  FIRED, ISOLATED
+       P3 momentum-y    9 -> 5   fires [false, false, true], expected [false, false, true]  FIRED, ISOLATED
+       P4 bijectivity   18 -> 9   bijectivity FAILS while conservation HOLDS: true
+       P5 census        one direction perturbed: census reads 55 (not 53): true
+       P6 isotropy      the tensor path prints a FAILING row on HPP-4: true
+       P7 wall ledger   dropping the impulse from the ledger breaks the identity: true
+       P8 probe         a no-op fiber move reads 0.0 over 81920 probes and so cannot reproduce W(4) = 0.75: true
+       P9 fixed point   the empty state is a fixed point and G13's counter refuses it: true
+  P1-P9 PASS  [9 checks]  every plant fired its own gate and no other
+
+=========================================================================
+TERMINATION: STEPS_COMPLETED  (checks performed: 1454433)
+VERDICT: every gate PASSED.
+
+  The tier runs on its OWN dynamics with exact integer conservation, a
+  bijective motion, and a census that CLASSIFIES its collision law.
+  Its coarse charts are NOT closed views: the k=1 defect is exactly the
+  block's boundary fraction, at every scale, for every one of the 4608 REG+
+  collision laws. The only exactly-closed chart is the global one, and it
+  closes BY CONSERVATION ALONE — the vacuous end of the axis, not a result.
+
+  NOT claimed: the Navier-Stokes limit (necessary condition measured only).
+  NOT claimed: the molecular-to-lattice seam. It takes no status from here.
+=========================================================================
+exit=0 finished: 2026-09-02T13:13:25Z

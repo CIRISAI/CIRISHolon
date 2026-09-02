@@ -1,0 +1,65 @@
+   Compiling holon-lattice v0.1.0 (/tmp/claude-1000/lg-wt/engine/crates/holon-lattice)
+    Finished `release` profile [optimized + debuginfo] target(s) in 4.30s
+     Running unittests src/lib.rs (target/release/deps/holon_lattice-7a3a3386b10da65c)
+
+running 28 tests
+test chart::tests::a_chart_whose_block_does_not_divide_the_lattice_is_refused ... ok
+test isotropy::tests::the_axial_embedding_is_the_hexagon ... ok
+test lattice::tests::the_motion_is_a_bijection_on_the_whole_micro_state ... ok
+test state::tests::fhp_label_agrees_with_the_pinned_runtime_object ... ok
+test chart::tests::the_chart_family_has_both_degenerate_ends_inside_it ... ok
+test state::tests::the_census_reproduces_the_lean_theorem ... ok
+test state::tests::the_bijectivity_check_fires_on_a_planted_collision ... ok
+test state::tests::the_fiber_move_preserves_the_label_and_the_control_move_does_not ... ok
+test state::tests::fhp_i_and_hpp_are_conserving_bijections_and_hpp_is_not_fhp ... ok
+test state::tests::opposites_are_opposite ... ok
+test chart::tests::the_predicted_curve_matches_the_frozen_reference ... ok
+test isotropy::tests::fhp_is_isotropic_to_fourth_order_and_hpp_is_not ... ok
+test isotropy::tests::the_verdict_is_invariant_under_re_presentation ... ok
+test state::tests::the_census_classifies_the_collision_laws ... ok
+test lattice::tests::each_conservation_plant_fires_its_own_gate_and_no_other ... ok
+test state::tests::every_enumerated_law_is_a_conserving_bijection ... ok
+test chart::tests::coarser_charts_sum_the_finer_ones ... ok
+test lattice::tests::the_carrier_provably_moves ... ok
+test lattice::tests::hpp_holds_its_spurious_line_chart_exactly_and_fhp_does_not ... ok
+test lattice::tests::the_wall_impulse_closes_the_momentum_ledger_exactly ... ok
+test lattice::tests::mass_and_each_momentum_component_are_exactly_invariant ... ok
+test probe::tests::the_as_configured_reading_agrees_within_its_own_band ... ok
+test probe::tests::a_witness_pair_is_exhibited_not_asserted ... ok
+test probe::tests::the_probe_is_gauged_in_both_directions ... ok
+test probe::tests::the_defect_grows_as_the_light_cone_crosses_the_block ... ok
+test probe::tests::the_one_step_defect_is_the_blocks_boundary_fraction ... ok
+test probe::tests::the_global_chart_closes_and_is_labelled_vacuous ... ok
+test probe::tests::the_defect_never_exceeds_its_geometric_bound ... ok
+
+test result: ok. 28 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 2.33s
+
+     Running unittests src/bin/lg_run.rs (target/release/deps/lg_run-5e2f35ead4b4fd2c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/defect_law_divisors.rs (target/release/deps/defect_law_divisors-b4968fd1e5261573)
+
+running 2 tests
+test the_odd_and_non_power_of_two_blocks_carry_their_stated_values ... ok
+test the_defect_law_holds_at_every_divisor_of_several_lattice_sizes ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 52.59s
+
+     Running tests/fchc_control.rs (target/release/deps/fchc_control-0dbe114a73358e87)
+
+running 2 tests
+test the_fchc_enumerator_moves_when_its_mode_set_does ... ok
+test the_two_crates_agree_about_fhp_and_holon_mesh_supplies_the_fchc_leg ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.28s
+
+   Doc-tests holon_lattice
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+exit=0

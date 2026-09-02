@@ -1,7 +1,9 @@
 //! The fourth-rank momentum-flux tensor of a direction set — the NECESSARY lattice
 //! condition, measured, with the sufficient ones fenced.
 //!
-//! `MESH_DESIGN.md` §2.1 carries the warrant in prose: no 3D Bravais lattice with a single
+//! `engine/MESH_DESIGN.md` §2.1 carries the warrant in prose (the LOCAL copy: the file
+//! exists in the sibling CIRISOntology tree too, and a citation into that tree is not a
+//! tracked file here): no 3D Bravais lattice with a single
 //! speed has an isotropic fourth-rank tensor, which is why FCHC-24 was chosen, and the
 //! hexagonal lattice's fourth-order isotropy is the whole reason the founding 64-state
 //! object means anything. This module puts that warrant on the tier's own instrument.

@@ -114,7 +114,12 @@ fn main() {
     let (mut fired_total, mut fired_min) = (0u64, u64::MAX);
     let mut sector_churn_min = u64::MAX;
     let mut prev_labels: Vec<u8> = g.cells.clone();
-    for _ in 0..run_steps {
+    // LG_PREREG 6.3 G13 stakes the carrier-motion distance AT STEP 100, which is the
+    // instant a closure reading taken early in the run would rely on. Reading it only at
+    // the end would be a different, later instant on a quantity that saturates, and a
+    // freeze's chosen instant is part of the freeze.
+    let mut dist_at_100 = 0u64;
+    for step in 0..run_steps {
         g.step();
         let l = g.ledger();
         ok_m &= l.mass == l0.mass;
@@ -125,29 +130,37 @@ fn main() {
         let churn = Lattice::occupancy_distance(&prev_labels, &g.cells);
         sector_churn_min = sector_churn_min.min(churn);
         prev_labels.copy_from_slice(&g.cells);
+        if step + 1 == 100 {
+            dist_at_100 = Lattice::occupancy_distance(&start, &g.cells);
+        }
     }
     let cells = (run_l * run_l) as u64;
     r.gate("G1", ok_m, run_steps as u64, format!("mass EXACT at every step (total {})", l0.mass));
     r.gate("G2", ok_x, run_steps as u64, format!("momentum-x EXACT at every step (total {})", l0.momentum[0]));
     r.gate("G3", ok_y, run_steps as u64, format!("momentum-y EXACT at every step (total {})", l0.momentum[1]));
 
-    let dist = Lattice::occupancy_distance(&start, &g.cells);
+    let dist_end = Lattice::occupancy_distance(&start, &g.cells);
     r.gate(
         "G13",
-        dist as f64 > 0.30 * cells as f64 && fired_min >= 1 && sector_churn_min as f64 >= 0.10 * cells as f64,
+        dist_at_100 as f64 > 0.30 * cells as f64
+            && fired_min >= 1
+            && sector_churn_min as f64 >= 0.10 * cells as f64,
         3,
         format!(
-            "carrier moved: occupancy distance {dist} (> {:.0} = 0.30*L^2); collisions fired \
-             {fired_total} total, min {fired_min}/step; min per-step churn {sector_churn_min} \
-             (> {:.0} = 0.10*L^2)",
+            "carrier moved: occupancy distance AT STEP 100 = {dist_at_100} (> {:.0} = \
+             0.30*L^2, the staked instant), {dist_end} at end of run; collisions fired \
+             {fired_total} total, min {fired_min}/step; min per-step churn \
+             {sector_churn_min} (> {:.0} = 0.10*L^2)",
             0.30 * cells as f64,
             0.10 * cells as f64
         ),
     );
 
     // ---------------------------------------------------------------- G4 the wall ledger
+    // 32 cells: LG_PREREG 6.4's wall, which G4's row defers to by naming that section.
+    const WALL: usize = 32;
     let mut w = fhp_lattice(128, 0x7A11);
-    w.add_wall(24, 64, 48);
+    w.add_wall(24, 64, WALL);
     let w0 = w.ledger();
     let mut wall_ok = true;
     let mut mass_ok = true;
@@ -159,12 +172,19 @@ fn main() {
             && l.momentum[1] == w0.momentum[1] + l.wall_impulse[1];
     }
     let wl = w.ledger();
+    // The label is COUNTED from the scene, never retyped. This line existed as the literal
+    // "48-cell" while add_wall was building 32, so the banked log would have misstated its
+    // own configuration -- the measurement was right and the diagnostic lied about the
+    // parameter it ran at. A diagnostic must echo its parameters from the object.
+    let solid = w.solid.iter().filter(|&&s| s).count();
+    assert_eq!(solid, WALL, "the wall the scene carries is not the wall that was declared");
     r.gate(
         "G4",
         wall_ok && mass_ok && wl.wall_impulse != [0, 0],
         2_000 * 3,
         format!(
-            "with a 48-cell wall: mass EXACT, momentum = P(0) + impulse EXACT, \
+            "with a {solid}-cell wall (declared {WALL}): mass EXACT, momentum = P(0) + \
+             impulse EXACT, \
              cumulative impulse {:?} (nonzero, so the gate did work)",
             wl.wall_impulse
         ),
@@ -277,7 +297,7 @@ fn main() {
     // ---------------------------------------------------------------- G14 inhomogeneity
     println!("\n--- 6.4 THE INHOMOGENEITY DISCHARGE (M-HOMOG) ---");
     let mut wl2 = fhp_lattice(probe_l, 0xF1BE);
-    wl2.add_wall(probe_l / 4, probe_l / 2, probe_l / 4);
+    wl2.add_wall(probe_l / 4, probe_l / 2, WALL.min(probe_l));
     let mut g14_ok = true;
     let mut g14_work = 0u64;
     for &b in bs.iter().filter(|&&b| b > 1 && b < probe_l) {

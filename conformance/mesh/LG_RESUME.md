@@ -3,52 +3,47 @@
 **Owner:** lattice-tier lane. **Worktree:** `/tmp/claude-1000/lg-wt`, branch `lattice-tier`.
 **Never push.** Pathspec commits only; cirisontology-b4 integrates.
 
-## State
+## State: BANKED
 
 | | |
 |---|---|
-| prereg | `conformance/mesh/LG_PREREG.md`, **ADMITTED**, frozen and committed at `ce392f3` |
-| instrument | `engine/crates/holon-lattice/` — built, 28 lib tests + 2 FCHC integration tests green |
-| campaign | detached via `conformance/mesh/lg_detached.sh`; markers `lg_full.DONE`, `lg_tests.DONE` |
-| results | `LG_RESULTS.md` — written from `lg_full.log` once `lg_full.DONE` exists |
+| prereg | `conformance/mesh/LG_PREREG.md`, **ADMITTED**, frozen `ce392f3`, post-freeze annexe appended |
+| instrument | `engine/crates/holon-lattice/`, `c61ddbd`; 32 tests green; CI gate in `engine/ci-gates.sh` |
+| results | `conformance/mesh/LG_RESULTS.md`, banked `048a5c2` |
+| logs | `lg_full.log` (sha256 `7180b50a…`), `lg_tests.log` (sha256 `9dccd645…`) |
+| verdict | every gate PASSED, 1,454,433 checks, `STEPS_COMPLETED`, no kill fired |
 
-## If the session died
+Nothing is owed to workbench-engine — the door spec and the landed artifacts are both sent.
 
-```
-ls /tmp/claude-1000/lg-wt/conformance/mesh/*.DONE     # both present => the run finished
-tail -80 /tmp/claude-1000/lg-wt/conformance/mesh/lg_full.log
-```
+## The one loose end, named rather than dropped
 
-Re-launch is idempotent — the script clears its own markers first:
+**The Zanetti literature check is OWED.** `ref_invariants.py` measures that FHP-I on this
+lattice has exactly three linear invariants (gauged: identity → `6L`, HPP-4 → its textbook
+`2L+1`), so no staggered linear invariant exists *on this configuration*. But this session's
+web-search budget was exhausted before the citation could be read, so nobody in this lane has
+seen Zanetti's statement, its model variant, or its scope. **No document here may say the
+result contradicts him.** Prereg annexe A4 and `LG_RESULTS.md` §8.3 both carry the boundary.
 
-```
-setsid nohup /tmp/claude-1000/lg-wt/conformance/mesh/lg_detached.sh >/dev/null 2>&1 </dev/null &
-```
+## Unfinished, post-freeze, gates nothing
+
+`ref_invariants_sweep.py` — the 4608-law version of the invariant measurement, launched via
+`sweep.sh`, marker `invariant_sweep.DONE`, output `invariant_sweep.log`. It is an extension,
+not a gate; if it never finishes, nothing in the bank changes.
 
 ## What must not drift
 
-1. **The first law.** This tier is NOT a view of the molecular dynamics and is never
-   composed through `closed_comp`. The molecular-to-lattice seam takes no status from
-   this node, in any branch. `LG_PREREG.md` §0 is binding on every document written here.
-2. **The Navier–Stokes limit is NOT claimed.** Only the necessary lattice condition
-   (fourth-rank isotropy) is measured. The exit is named in §3 and stays named.
-3. **The `b = L` point is the VACUOUS end of the curve**, never the curve's success. If
-   the workbench band ever reads "certified closed", that is the failure this node exists
-   to prevent.
-4. **The door is DEFECT-AGAINST-VIEW**, named in §12 before the page existed. No aggregate.
+1. **The first law.** Not a view of the molecular dynamics; never composed through
+   `closed_comp`. The seam takes no status from this node, in any branch.
+2. **No Navier–Stokes limit.** Only the necessary lattice condition is measured. The exit is
+   viscosity, semi-detailed balance, and the `g(ρ) ≠ 1` defect, and it stays named.
+3. **`b = L` is the VACUOUS end of the curve**, never its success.
+4. **No band state.** This certificate confers none (FSD `b374773`); §12 binds research
+   content only.
+5. **`field_lg` and this tier are not one object.** Theirs is a chart on the molecular tier.
 
-## Findings the instrument made about its own design, to be banked
+## If a number is ever quoted from here
 
-* The prereg's G7 did not name the probe's POPULATION. It is pinned by the second clause
-  ("agrees with the frozen Python reference"), whose population is every
-  `(position, movable state)` pair — but the ambiguity was real and is reported.
-* Two sampler defects, both found by the derived law refusing to be reproduced:
-  a forward-scan for the next movable cell biased the POSITION within the block
-  (read 0.7025 against 0.75, and exceeded the bound at another size); and 20,000 draws
-  with replacement from ~300 distinct cells were given a binomial band on 20,000, turning
-  a 0.65σ agreement into a 5σ disagreement.
-* `line_momenta` was first written summing each momentum component along its OWN axis,
-  which is a quantity nothing conserves — the Leg-A gauge then had no sides at all.
-  The line a component is summed along is the one that component's movers do not leave.
-* HPP-4's census was guessed at 12 in a test; it is 15, with exactly ONE fiber of
-  dimension above 1. So HPP admits a collision group of order 2 where FHP admits 4608.
+Read it out of `lg_full.log`, not out of prose. Two defects in this node were exactly this
+failure: a diagnostic that printed a wall length it was not running at, and a results row
+drafted beside a live run that carried a *killed* run's figures. Every figure in
+`LG_RESULTS.md` §2 was cross-checked against the banked log before it was committed.

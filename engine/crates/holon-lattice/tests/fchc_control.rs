@@ -2,7 +2,7 @@
 //!
 //! `holon-lattice`'s own [`Model`] is 2D — its directions are `[i64; 2]` — so it cannot
 //! enumerate a 4D mode set, and pretending otherwise would put a third implementation of the
-//! census in the tree. `holon-mesh::fchc` is the enumerator `MESH_DESIGN.md` §2.1's numbers
+//! census in the tree. `holon-mesh::fchc` is the enumerator `engine/MESH_DESIGN.md` §2.1's numbers
 //! were checked with, and it runs the SAME routine over FHP-6 as its own control. This test
 //! runs it here so the campaign's G11 has both legs under one invocation, and so the two
 //! crates' FHP-6 answers are compared against each other rather than each against itself.
@@ -30,9 +30,9 @@ fn the_two_crates_agree_about_fhp_and_holon_mesh_supplies_the_fchc_leg() {
     // --- the FCHC-24 leg, unchanged, from the crate that owns it.
     let fchc = holon_mesh::fchc::enumerate(&holon_mesh::fchc::fchc_directions())
         .expect("FCHC-24 is within the enumerator's momentum range");
-    assert_eq!(fchc.local_states, 16_777_216, "MESH_DESIGN 2.1's local-state count moved");
-    assert_eq!(fchc.sectors, 72_047, "MESH_DESIGN 2.1's sector count moved");
-    assert_eq!(fchc.largest_sector, 11_740, "MESH_DESIGN 2.1's largest sector moved");
+    assert_eq!(fchc.local_states, 16_777_216, "engine/MESH_DESIGN.md 2.1's local-state count moved");
+    assert_eq!(fchc.sectors, 72_047, "engine/MESH_DESIGN.md 2.1's sector count moved");
+    assert_eq!(fchc.largest_sector, 11_740, "engine/MESH_DESIGN.md 2.1's largest sector moved");
 }
 
 /// P5 for the FCHC leg: perturbing the mode set must move the numbers. An enumerator that

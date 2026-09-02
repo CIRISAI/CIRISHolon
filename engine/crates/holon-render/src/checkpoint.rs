@@ -278,6 +278,45 @@ pub fn physics_digest(s: &Sim) -> u64 {
             w.f64(x);
         }
     }
+    // THE LONG-RANGE SECTOR (node B2), and it belongs in the DIGEST rather than in the
+    // file for the reason the module header gives about the tables: a far sector is
+    // physics the run was performed against, and a checkpoint restored without it is a
+    // different experiment wearing the same file name. The digest already refuses that
+    // for a changed curve; this makes it refuse it for a changed far sector too.
+    //
+    // NOTHING is written when there is none, so every checkpoint that existed before B2
+    // hashes exactly the bytes it hashed before and every banked replay fingerprint in the
+    // tree stays valid. That is why the `if let` guards the whole block rather than
+    // writing a `false` flag.
+    //
+    // What this does NOT do, stated so it is a fence and not an omission: it does not
+    // SERIALIZE the far sector, so restoring a far-sector checkpoint still requires the
+    // caller to declare the same one before restoring. The exit is a checkpoint format
+    // version that carries `R_s`, the budget and the shell count; that is a format change
+    // touching every lane's banked files, so it is named here rather than taken.
+    if let Some(f) = &s.far {
+        w.f64(f.r_s());
+        w.f64(f.r_f());
+        w.f64(f.budget());
+        w.u32(f.shells() as u32);
+        w.bool(f.is_fenced());
+        // The tail models themselves, probed the way the tables are: what they COMPUTE,
+        // not how they are stored.
+        for slot in 0..crate::bank::MAX_TABLES {
+            match f.model(slot) {
+                Some(m) => {
+                    w.bool(true);
+                    for k in 0..8 {
+                        let r = f.r_s() + 0.25 * (k + 1) as f64;
+                        let (v, d) = m.eval(r);
+                        w.f64(v);
+                        w.f64(d);
+                    }
+                }
+                None => w.bool(false),
+            }
+        }
+    }
     fnv(&w.out)
 }
 

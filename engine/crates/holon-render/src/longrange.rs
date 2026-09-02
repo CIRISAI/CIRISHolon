@@ -665,7 +665,12 @@ impl FarSector {
             }
             if !self.offsets.is_empty() {
                 if let Some(m) = self.model_for(slots, i, i).cloned() {
-                    for o in self.offsets.clone().iter() {
+                    // `take` and put back rather than `self.offsets.clone()`: the clone was
+                    // one heap allocation PER ATOM PER FORCE PASS, which is a cost that
+                    // grows with N and would have shown up in G13's curve as the far sum's
+                    // scaling when it is the allocator's.
+                    let offs = core::mem::take(&mut self.offsets);
+                    for o in offs.iter() {
                         let r = (o.0 * o.0 + o.1 * o.1 + o.2 * o.2).sqrt();
                         if !(r > self.r_s) || r > r_f {
                             continue;
@@ -682,6 +687,7 @@ impl FarSector {
                         // opposite lattice offsets and cancel identically. Stated rather
                         // than silently omitted.
                     }
+                    self.offsets = offs;
                 }
             }
         }

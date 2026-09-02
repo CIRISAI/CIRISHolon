@@ -168,20 +168,31 @@ fn main() {
         std::process::exit(2);
     }
 
-    println!("\n--- building the surface (samples both pair curves once) ---");
-    let t0 = Instant::now();
-    let src = std::fs::read_to_string(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../holon-chem/tests/data/s2/s2_water_table.txt"
-    ))
-    .unwrap_or_else(|e| fail(&format!("the committed (O,H,H) table: {e}")));
-    let w = water::from_text(&src).unwrap_or_else(|| fail("the (O,H,H) table did not parse"));
-    let tri = trimer::generate().unwrap_or_else(|| fail("the (H,H,H) table did not build"));
-    let surface = OhhhSurface::new(w, tri, r_lo, r_hi);
-    println!("  surface ready in {:.1} s", t0.elapsed().as_secs_f64());
-
-    println!("\n--- generating ---");
-    let checkpoint = match Checkpoint::open(std::path::Path::new(&ckpt)) {
+    // OPENED BEFORE THE SURFACE IS BUILT, deliberately.
+    //
+    // The surface build samples two 1024-knot pair curves -- 2048 two-centre solves, ~370 s
+    // on a quiet machine and far longer on a loaded one -- and it used to run BEFORE this.
+    // A process that died in that window left no checkpoint file at all: no regime line, no
+    // record that the run had ever started, nothing to diagnose from. The cheapest fix is
+    // the ordering, so the log exists and declares its regime from the first second.
+    //
+    // It also fails FAST on the case that matters most: a regime mismatch is caught before
+    // 370 s of setup is spent, rather than after.
+    //
+    // THE REGIME, three axes, exactly the identity gpu-prod's node F names: the device
+    // class, the solver budget, and the subtraction basis. The binary's own sha256 is NOT
+    // in it -- that would refuse a resume after any unrelated recompile, which would make
+    // the checkpoint useless for the thing it exists for -- but every axis that can move a
+    // NUMBER is.
+    let regime = format!(
+        "device=cpu budget={} basis=E_total-E_MBE3 grid={} region={:?} warm={:?}",
+        1200,
+        qt::grid_line(),
+        region,
+        warm
+    );
+    println!("  regime          {regime}");
+    let checkpoint = match Checkpoint::open(std::path::Path::new(&ckpt), &regime) {
         Ok(c) => c,
         Err(e) => fail(&format!("cannot open checkpoint {ckpt}: {e}")),
     };
@@ -196,6 +207,20 @@ fn main() {
         println!("                  silently accepted would be worse than the crash.");
     }
 
+
+    println!("\n--- building the surface (samples both pair curves once) ---");
+    let t0 = Instant::now();
+    let src = std::fs::read_to_string(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../holon-chem/tests/data/s2/s2_water_table.txt"
+    ))
+    .unwrap_or_else(|e| fail(&format!("the committed (O,H,H) table: {e}")));
+    let w = water::from_text(&src).unwrap_or_else(|| fail("the (O,H,H) table did not parse"));
+    let tri = trimer::generate().unwrap_or_else(|| fail("the (H,H,H) table did not build"));
+    let surface = OhhhSurface::new(w, tri, r_lo, r_hi);
+    println!("  surface ready in {:.1} s", t0.elapsed().as_secs_f64());
+
+    println!("\n--- generating ---");
     // THE LIVE READOUT. `generate_surface_leased` returns only after the join, so its own
     // progress counters are unreadable while it runs -- which is how the first attempt came
     // to have pid-existence as its only health signal. The checkpoint log doubles as the

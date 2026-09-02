@@ -182,6 +182,25 @@ else
   ok "no session-keyed scratch paths in committed instruments"
 fi
 
+# 10a3b. The rule's second half, as a RATCHET. gpu-prod passed the claude-1000 grep
+#      while hardcoding the repo root three times — "grep claude-1000 is necessary and
+#      not sufficient". A machine-keyed absolute path is the same failure one
+#      substitution over: the instrument runs only on one box. The debt is endemic
+#      (43 files when this gate landed), so the gate pins the count and fails on
+#      INCREASE: new instruments resolve from their own location with env overrides
+#      (off-repo data defaults live behind a variable, identified by their sha256 pins,
+#      never by the path). Lanes cleaning their instruments LOWER the pin in the same
+#      commit. Deleting the pin without the sweep is the suppression this comment
+#      exists to name.
+MACHINE_KEYED_PIN=43
+mk_count=$(grep -rlE "/home/[a-z]" ../conformance --include="*.py" --include="*.sh" --include="*.rs" 2>/dev/null | wc -l)
+if [ "$mk_count" -gt "$MACHINE_KEYED_PIN" ]; then
+  grep -rlE "/home/[a-z]" ../conformance --include="*.py" --include="*.sh" --include="*.rs" 2>/dev/null | sed 's/^/  machine-keyed path in: /'
+  no "machine-keyed instrument paths do not increase (ratchet: $mk_count > pin $MACHINE_KEYED_PIN)"
+else
+  ok "machine-keyed instrument paths do not increase ($mk_count against pin $MACHINE_KEYED_PIN)"
+fi
+
 # 10a2. CONFORMANCE REPRODUCIBILITY (added after an external re-review found
 #      three banked verdicts whose instruments were working-tree-only, one
 #      of them never committed at all -- M-STALE-INSTRUMENT). Every gravity

@@ -28,6 +28,76 @@ pub use qasm::{are_tableaux_equivalent, canonicalize_circuit, parse_qasm};
 
 pub const N_MAX_STATEVECTOR: usize = 24;
 
+/// The magic tier's branch budget. Clifford+T with t T-gates is a sum of 2^t
+/// phase-tracked stabilizer branches, so t IS the price. 2^24 = 16,777,216.
+pub const T_MAX_MAGIC: usize = 24;
+
+/// The T-count at or below which `route` PREFERS magic to the carrier. A
+/// preference, not a wall: `T_MAX_MAGIC` is the wall, and `--tier magic`
+/// reaches up to it.
+pub const T_ROUTE_MAGIC: usize = 12;
+
+pub fn t_count(c: &Circuit) -> usize {
+    c.gates.iter().filter(|g| matches!(g, Gate::T(_) | Gate::Tdg(_))).count()
+}
+
+/// `2^k`, and its decimal value while one fits.
+fn pow2(k: usize) -> String {
+    if k < 64 {
+        format!("2^{k} = {}", 1u64 << k)
+    } else {
+        format!("2^{k}")
+    }
+}
+
+/// The AMPLITUDE wall: 2^t stabilizer branches, poly(n) work each, no 2^n
+/// anywhere — so the T-count alone prices this path.
+pub fn check_t_budget(c: &Circuit) -> Result<(), String> {
+    let t = t_count(c);
+    if t <= T_MAX_MAGIC {
+        return Ok(());
+    }
+    Err(format!(
+        "REFUSED by the magic wall: T-count {t} > {T_MAX_MAGIC}, the magic \
+         tier's branch budget. The tableau view is not Closed under \
+         non-Clifford motions (lean/CIRISHolon/Stabilizer.lean: \
+         tableau_not_closed_under_rotation), so Clifford+T is priced as a sum \
+         of 2^t phase-tracked stabilizer branches: this call would have \
+         enumerated {} of them at n = {}. Raising the budget is a flag away — \
+         pretending the cost is not there never is.",
+        pow2(t),
+        c.n_qubits
+    ))
+}
+
+/// The 2^n wall. Shared by the carrier and by the magic tier's DISTRIBUTION
+/// path, which accumulates into a 2^n array of exact `Cyc` amplitudes — 80
+/// bytes each against the carrier's 16, so letting it share the carrier's n
+/// is the generous reading of that budget, not a loose one. `carrier` names
+/// which array is being priced, so the refusal says whose budget blew.
+pub fn check_n_budget(c: &Circuit, carrier: &str) -> Result<(), String> {
+    let n = c.n_qubits;
+    if n <= N_MAX_STATEVECTOR {
+        return Ok(());
+    }
+    Err(format!(
+        "REFUSED by the carrier wall: n = {n} > {N_MAX_STATEVECTOR} qubits, \
+         and {carrier}, which is {} entries. The AMPLITUDE path (`amp`) is \
+         priced at 2^t · poly(n) with no 2^n anywhere and is open here at \
+         T-count {}. Raising the budget is a flag away — pretending the cost \
+         is not there never is.",
+        pow2(n),
+        t_count(c)
+    ))
+}
+
+/// The DISTRIBUTION wall: the magic tier's branch sum pays BOTH budgets, 2^t
+/// branches accumulated into 2^n exact amplitudes.
+pub fn check_magic_distribution_budget(c: &Circuit) -> Result<(), String> {
+    check_t_budget(c)?;
+    check_n_budget(c, "the magic tier's distribution path accumulates 2^n exact amplitudes")
+}
+
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub enum Gate {
     X(usize),
@@ -105,25 +175,31 @@ pub fn route(c: &Circuit) -> Result<Tier, String> {
     if clifford_only {
         return Ok(Tier::Tableau);
     }
-    let t_count = c
-        .gates
-        .iter()
-        .filter(|g| matches!(g, Gate::T(_) | Gate::Tdg(_)))
-        .count();
-    if t_count <= 12 && !c.gates.iter().any(|g| matches!(g, Gate::Ccx(..))) {
+    let t = t_count(c);
+    // `route` picks a tier for the DISTRIBUTION path, which accumulates into a
+    // 2^n array on the magic tier as much as on the carrier. Sending a wide
+    // circuit to magic on its T-count alone walks past the n wall the carrier
+    // arm below enforces.
+    if t <= T_ROUTE_MAGIC
+        && !c.gates.iter().any(|g| matches!(g, Gate::Ccx(..)))
+        && c.n_qubits <= N_MAX_STATEVECTOR
+    {
         return Ok(Tier::Magic);
     }
     if c.n_qubits <= N_MAX_STATEVECTOR {
         return Ok(Tier::Statevector);
     }
     Err(format!(
-        "REFUSED by the wall: non-Clifford circuit with T-count {} > 12 at \
-         n = {} > {} qubits. The tableau view is not Closed under non-Clifford \
-         motions (lean/CIRISHolon/Stabilizer.lean: tableau_not_closed_under_rotation); \
-         the magic tier prices such circuits at 2^t branches and this t exceeds \
-         its budget; the statevector carrier costs 2^n. Raising the budget is a \
-         flag away — pretending the cost is not there never is.",
-        t_count, c.n_qubits, N_MAX_STATEVECTOR
+        "REFUSED by the wall: non-Clifford circuit (T-count {}) at n = {} > {} \
+         qubits. The tableau view is not Closed under non-Clifford motions \
+         (lean/CIRISHolon/Stabilizer.lean: tableau_not_closed_under_rotation), \
+         so no poly tier is open; the statevector carrier costs 2^n, and the \
+         magic tier's DISTRIBUTION path costs 2^t branches into a 2^n \
+         accumulator, so neither fits at this n. The AMPLITUDE path (`amp`) is \
+         priced at 2^t · poly(n) with no 2^n and is open here while the T-count \
+         stays within {}. Raising a budget is a flag away — pretending the cost \
+         is not there never is.",
+        t, c.n_qubits, N_MAX_STATEVECTOR, T_MAX_MAGIC
     ))
 }
 
@@ -356,7 +432,13 @@ pub fn run_tableau(c: &Circuit, m: Mutation) -> BTreeMap<String, f64> {
 
 pub fn run_statevector(c: &Circuit) -> BTreeMap<String, f64> {
     let n = c.n_qubits;
-    assert!(n <= N_MAX_STATEVECTOR, "router guarantees the cap");
+    // `--tier statevector` and every library caller reach here without the
+    // router, so the wall is enforced here and not merely upstream of here.
+    if let Err(reason) =
+        check_n_budget(c, "the statevector carrier stores 2^n amplitudes")
+    {
+        panic!("{reason}");
+    }
     let dim = 1usize << n;
     let mut re = vec![0.0f64; dim];
     let mut im = vec![0.0f64; dim];
@@ -477,6 +559,25 @@ pub fn run_tableau_sample(c: &Circuit, m: Mutation) -> String {
         }
     }
     (0..c.n_clbits).rev().map(|i| if bits[i] { '1' } else { '0' }).collect()
+}
+
+/// `run`, with the tier's budget checked FIRST so a caller that named its own
+/// tier gets the router's named refusal instead of the router's silence. The
+/// CLI's `--tier` override goes through here; the panics inside `run` are the
+/// backstop for library callers that do not.
+pub fn try_run(
+    c: &Circuit,
+    tier: Tier,
+    m: Mutation,
+) -> Result<BTreeMap<String, f64>, String> {
+    match tier {
+        Tier::Magic => check_magic_distribution_budget(c)?,
+        Tier::Statevector => {
+            check_n_budget(c, "the statevector carrier stores 2^n amplitudes")?
+        }
+        Tier::Classical | Tier::Tableau => {}
+    }
+    Ok(run(c, tier, m))
 }
 
 pub fn run(c: &Circuit, tier: Tier, m: Mutation) -> BTreeMap<String, f64> {

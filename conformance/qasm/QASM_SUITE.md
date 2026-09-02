@@ -17,11 +17,21 @@ all CONFIDENCE:
   polynomially — measured on both axes.
 - **Exactness**: unitarity defect exactly 0.0 (Z[ω] arithmetic; a tolerance
   nowhere, an invariant everywhere).
-- **Refusal honesty**: past every tier's budget the router refuses naming
-  `tableau_not_closed_under_rotation` and the T-price.
+- **Refusal honesty**: past every tier's budget the engine refuses naming
+  `tableau_not_closed_under_rotation` and the price it declined to pay. This
+  claim said *the router* until 2026-09-02, and the router was the only place
+  it was true: the battlerig ran into an `amp` path with no T-cap guard at all
+  (caveat 1 below), and enumerating the other doors found the same shape twice
+  more — the router itself sent any wide low-T circuit to the magic tier's
+  DISTRIBUTION path, whose 2^n accumulator asked for 88 TB and dumped core, and
+  `--tier statevector` walked past that same wall. The wall now lives at every
+  entry point rather than upstream of one, `holon-qasm`'s `tests/refusal.rs`
+  holds one test per door, and `mutate_tcap.py` plants the removal of each
+  guard and requires the test that names it to fire.
 
 In-crate CI: `cargo test -p holon-qasm` runs the three-way tier-vs-carrier
-conformance plus planted-mutation detection with no external deps. The
+conformance, the per-door refusal gate, and planted-mutation detection, with no
+external deps. The
 python harness here is the external referee (needs qiskit); its gauge lessons
 are recorded in the upstream preregs: echoes cannot gauge Clifford mutants,
 phase mutants need pinned witnesses, and the distribution mode must never be

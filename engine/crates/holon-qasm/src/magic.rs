@@ -549,17 +549,26 @@ impl Affine {
 
 // ---------------------------------------------------------------- branch sum
 
+/// `run_magic`, refusing by name instead of panicking. The distribution path
+/// pays BOTH budgets — 2^t branches into a 2^n accumulator — so both are named.
+pub fn try_run_magic(
+    c: &Circuit,
+    drop_s_cross: bool,
+    wrong_gauss: bool,
+) -> Result<BTreeMap<String, f64>, String> {
+    crate::check_magic_distribution_budget(c)?;
+    Ok(run_magic(c, drop_s_cross, wrong_gauss))
+}
+
 pub fn run_magic(
     c: &Circuit,
     drop_s_cross: bool,
     wrong_gauss: bool,
 ) -> BTreeMap<String, f64> {
-    let t_count = c
-        .gates
-        .iter()
-        .filter(|g| matches!(g, Gate::T(_) | Gate::Tdg(_)))
-        .count();
-    assert!(t_count <= 24, "magic tier caps T-count");
+    if let Err(reason) = crate::check_magic_distribution_budget(c) {
+        panic!("{reason}");
+    }
+    let t_count = crate::t_count(c);
     let n_branches = 1usize << t_count;
     // Amplitude accumulators per basis state (exact).
     let dim = 1usize << c.n_qubits;
@@ -624,6 +633,18 @@ pub fn run_magic(
     out
 }
 
+/// `magic_amplitude`, refusing by name instead of panicking. This path has no
+/// 2^n, so the T-count is the whole of its price and the whole of its wall.
+pub fn try_magic_amplitude(
+    c: &Circuit,
+    y: &[bool],
+    drop_s_cross: bool,
+    wrong_gauss: bool,
+) -> Result<(f64, f64), String> {
+    crate::check_t_budget(c)?;
+    Ok(magic_amplitude(c, y, drop_s_cross, wrong_gauss))
+}
+
 /// Exact amplitude of one basis state via the branch sum: 2^t · poly(n) work,
 /// no 2^n anywhere — the object the T-count prices.
 pub fn magic_amplitude(
@@ -632,11 +653,10 @@ pub fn magic_amplitude(
     drop_s_cross: bool,
     wrong_gauss: bool,
 ) -> (f64, f64) {
-    let t_count = c
-        .gates
-        .iter()
-        .filter(|g| matches!(g, Gate::T(_) | Gate::Tdg(_)))
-        .count();
+    if let Err(reason) = crate::check_t_budget(c) {
+        panic!("{reason}");
+    }
+    let t_count = crate::t_count(c);
     let mut acc = Cyc::ZERO;
     for branch in 0..(1usize << t_count) {
         let mut st = Affine::with_mutation(c.n_qubits, drop_s_cross, wrong_gauss);

@@ -37,10 +37,46 @@ import sys
 import tempfile
 import time
 
-BIN = "/home/emoore/CIRISHolon/engine/target/release/holon-qasm"
-PY = "/home/emoore/CIRISOntology/scratchpad/temporal-share/qenv/bin/python"
 SELF = os.path.abspath(__file__)
-OWNED = "/home/emoore/CIRISOntology/scratchpad/qasm"
+HERE = os.path.dirname(SELF)
+# M-STALE-INSTRUMENT, second pass: BIN/PY/OWNED were absolute paths keyed to
+# one machine's home directory, so the rig ran nowhere else and said nothing
+# about why. Each now resolves from this script's location, each takes an env
+# override, and a missing one refuses by name rather than failing as a
+# FileNotFoundError three call frames down.
+ROOT = os.environ.get("HOLON_ROOT", os.path.abspath(os.path.join(HERE, "..", "..")))
+BIN = os.environ.get(
+    "HOLON_QASM_BIN",
+    os.path.join(ROOT, "engine", "target", "release", "holon-qasm"),
+)
+# The referee interpreter: needs qiskit, stim and qiskit-aer. `sys.executable`
+# is the right default only if THIS interpreter has them, which is why the
+# env override exists and why `preflight` says which one it used.
+PY = os.environ.get("BATTLERIG_PY", sys.executable)
+# Durable artifacts (the adjudication records). Read-only to this script.
+OWNED = os.environ.get("BATTLERIG_OWNED", os.path.join(HERE, "upstream"))
+
+
+def preflight():
+    """Discriminated refusals: each says which input is missing and how to
+    supply it, rather than letting the first use fail as a stack trace."""
+    if not os.path.exists(BIN):
+        sys.exit(
+            f"REFUSED: no holon-qasm binary at {BIN}.\n"
+            f"  Build it (`cargo build --release -p holon-qasm` in {ROOT}/engine)\n"
+            f"  or set HOLON_QASM_BIN to an existing one."
+        )
+    missing = [m for m in ("qiskit", "stim", "qiskit_aer")
+               if subprocess.run([PY, "-c", f"import {m}"],
+                                 capture_output=True).returncode != 0]
+    if missing:
+        sys.exit(
+            f"REFUSED: the external referees are not importable by {PY}: "
+            f"{', '.join(missing)}.\n"
+            f"  Set BATTLERIG_PY to an interpreter that has them. This rig's "
+            f"whole point is the comparison, so running without them would "
+            f"produce a table of our own numbers and nothing to check them against."
+        )
 # M-STALE-INSTRUMENT: was a hardcoded per-session scratchpad path that dies
 # with its session (durable artifacts live in OWNED; TMP holds regenerable
 # scratch circuits only).
@@ -206,6 +242,16 @@ def w_holon(spec):
     t0 = time.perf_counter()
     p = subprocess.run(cmd, capture_output=True, text=True, timeout=TIMEOUT)
     wall = time.perf_counter() - t0
+    if p.returncode == 3:
+        # The engine refused by name and priced the refusal. That is the
+        # stated discipline being HELD, not a run that failed, and rendering
+        # it as ERROR would report a pass as a fault. (Before the walls were
+        # closed, over-cap `amp` points reached here as TIMEOUT instead.)
+        try:
+            reason = json.loads(p.stdout).get("reason", p.stdout.strip())
+        except json.JSONDecodeError:
+            reason = (p.stderr or p.stdout).strip().splitlines()[-1][:300]
+        return {"refused": reason, "wall_s": wall}
     if p.returncode != 0:
         raise RuntimeError((p.stderr or p.stdout).strip().splitlines()[-1][:160])
     out = json.loads(p.stdout)
@@ -390,6 +436,11 @@ def run_point(contender, spec, reps=REPS):
             tail = msg.splitlines()[-1][:200] if msg else "no output"
             return {"status": "ERROR", "detail": tail}
         last = json.loads(p.stdout.strip().splitlines()[-1])
+        if "refused" in last:
+            # Deterministic: a budget does not vary between reps, so one is
+            # the whole measurement.
+            return {"status": "REFUSED", "reason": last["refused"],
+                    "completed_reps": rep}
         sims.append(last["sim_s"])
         walls.append(last.get("wall_s", wall))
     rec = {"status": "ok", "reps": reps,
@@ -642,7 +693,7 @@ def versions():
                             f"import {mod};print({mod}.__version__)"],
                            capture_output=True, text=True)
         v[mod] = p.stdout.strip() if p.returncode == 0 else "NOT INSTALLED"
-    p = subprocess.run(["git", "-C", "/home/emoore/CIRISHolon", "rev-parse", "--short", "HEAD"],
+    p = subprocess.run(["git", "-C", ROOT, "rev-parse", "--short", "HEAD"],
                        capture_output=True, text=True)
     v["holon_qasm_commit"] = p.stdout.strip() if p.returncode == 0 else "unknown"
     v["holon_qasm_mtime"] = time.strftime("%Y-%m-%dT%H:%M:%S",
@@ -663,8 +714,11 @@ def cell(rec):
     if rec is None:
         return "n/a"
     if rec.get("status") != "ok":
-        return (f"TIMEOUT >{rec['cap_s']:.0f}s" if rec["status"] == "TIMEOUT"
-                else "ERROR")
+        if rec["status"] == "TIMEOUT":
+            return f"TIMEOUT >{rec['cap_s']:.0f}s"
+        if rec["status"] == "REFUSED":
+            return "REFUSED by name"
+        return "ERROR"
     return f"{rec['sim_s']:.4f}"
 
 
@@ -864,16 +918,37 @@ def report(res):
           "row carry that -- so this lane is timing only, and is labelled as such.", "",
           "---", "", "## Caveats, and what the rig turned up about our own engine", ""]
 
-    # The T-count cap: enforced on the distribution path, absent on `amp`.
+    # The T-count cap. This caveat is rendered from the MEASURED status of the
+    # over-cap points, not from a belief about the current source: the defect
+    # was found here, and whether it is still present is a thing this rig
+    # observes rather than a thing it asserts.
     over = [r for r in res["lane_magic_hidden_shift"] if r["t_gates"] > 24]
     if over:
         st = {r["holon_amp"]["status"] for r in over}
-        L += [f"1. **The T-count cap is not enforced on the `amp` path.** "
-              f"`run_magic` asserts `t_count <= 24`, but `magic_amplitude` has no such "
-              f"guard, so the t=28 hidden-shift points ({len(over)} of them) did not "
-              f"refuse by name -- they began enumerating 2^28 branches and hit the cap "
-              f"as {'/'.join(sorted(st))}. Refusing by name is this engine's stated "
-              f"discipline, so this is a defect worth fixing, not a benchmark result.", ""]
+        if st == {"REFUSED"}:
+            why = sorted({r["holon_amp"].get("reason", "") for r in over})
+            L += [f"1. **The T-count cap, found missing on the `amp` path and now "
+                  f"closed.** This rig's first run recorded the defect: `run_magic` "
+                  f"asserted `t_count <= 24` while `magic_amplitude` had no guard at "
+                  f"all, so the t=28 hidden-shift points began enumerating 2^28 "
+                  f"branches and died as TIMEOUT where a named refusal belonged. All "
+                  f"{len(over)} of them now REFUSE, priced: "
+                  f"*{why[0][:220]}*  \nThe walls are held per door and gated by "
+                  f"`holon-qasm`'s `tests/refusal.rs`, with each guard's removal "
+                  f"planted and required to fire by `mutate_tcap.py`. Two siblings "
+                  f"turned up in the same enumeration and are closed with it: the "
+                  f"router sent any wide low-T circuit to the magic tier's "
+                  f"DISTRIBUTION path, whose 2^n accumulator then asked for 88 TB and "
+                  f"dumped core, and `--tier statevector` walked past the same n wall.",
+                  ""]
+        else:
+            L += [f"1. **The T-count cap is not enforced on the `amp` path.** "
+                  f"`run_magic` asserts `t_count <= 24`, but `magic_amplitude` has no "
+                  f"such guard, so the t=28 hidden-shift points ({len(over)} of them) "
+                  f"did not refuse by name -- they began enumerating 2^28 branches and "
+                  f"hit the cap as {'/'.join(sorted(st))}. Refusing by name is this "
+                  f"engine's stated discipline, so this is a defect worth fixing, not "
+                  f"a benchmark result.", ""]
 
     # Aer's run-to-run spread, measured.
     spreads = [(r["n"], r["t_gates"], r["aer_extended_stabilizer"]["spread"])
@@ -940,6 +1015,11 @@ def main():
         spec = json.load(open(sys.argv[2]))
         print(json.dumps(WORKERS[spec["contender"]](spec["spec"])))
         return
+    # Every other mode measures something against an external referee, so the
+    # inputs are checked once, up front, and named when missing. `report`
+    # renders an existing JSON and needs no binary, so it is exempt.
+    if not (len(sys.argv) > 1 and sys.argv[1] == "report"):
+        preflight()
     if len(sys.argv) > 1 and sys.argv[1] == "conf":
         # Re-run ONLY the conformance block and patch it into existing results.
         with open(RESULTS) as fh:

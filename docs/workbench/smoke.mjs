@@ -761,14 +761,25 @@ if (ladderBlock) {
         // A certificate is a VERDICT, so the cited line must actually carry one. "CERTIFIED"
         // is the census's own word; a citation to a line that merely mentions the band would
         // pass a weaker check while establishing nothing.
-        certResolves = /CERTIFIED/.test(line) && certNode === "G";
-        if (/CERTIFIED/.test(line) && certNode !== "G") {
+        const positive = carriesPositiveVerdict(line);
+        const negated = /\bCERTIFIED\b/i.test(line) && !positive;
+        certResolves = positive && certNode === "G";
+        if (negated) {
+          // A NEGATED verdict cited as a certificate is a wiring mistake worth naming —
+          // and naming it must NOT be done by demanding a flip. Rung 2 banking branch (d)
+          // is a legitimate state; the page's own fluid band cites that document through
+          // `measuredBy`, which is the right field for it.
+          no(`band "${band}" cites a NOT-CERTIFIED verdict as a certificate (${certificate})`,
+            `line ${lineNo} negates its own verdict: ${line.trim().slice(0, 70)} — cite a `
+            + "banked verdict through `measuredBy`, never as the certificate that flips a band");
+        }
+        if (positive && certNode !== "G") {
           // Not a failure: a real certificate from a node that does not confer a band
           // state. Reported so the distinction is visible rather than silent.
           ok(`band "${band}" cites a node-${certNode ?? "?"} certificate, which is not a band state`);
         }
         if (!certResolves) {
-          if (!/CERTIFIED/.test(line)) no(`band "${band}" cites a certificate at ${certificate} that carries no verdict`,
+          if (!/\bCERTIFIED\b/i.test(line)) no(`band "${band}" cites a certificate at ${certificate} that carries no verdict`,
             `line ${lineNo} reads: ${line.trim().slice(0, 90)}`);
         }
       } catch {
@@ -908,6 +919,29 @@ if (acuitySrc) {
 // (a fence with no exit is architecture, which the law forbids), and a REGISTER ROW that
 // EXISTS in FENCES.md. Cited by row ID, not by line: an id survives the register being
 // reordered and a line number does not.
+/// Does this line carry a POSITIVE certification verdict?
+///
+/// NEGATION-AWARE, and it was not. The matcher was `/CERTIFIED/.test(line)`, and
+/// RUNG2_RESULTS.md line 14 reads "THE FLUID-ELEMENT TIER IS NOT CERTIFIED" — on which
+/// that test returns TRUE. Rung 2 is node G, so a band wired to cite its results doc
+/// would have satisfied both halves of the flip test and the gate would have demanded,
+/// in the voice of a rule, exactly the flip §9c forbids. A substring match cannot tell a
+/// verdict from its negation, and the negation is the common case for a lane that banked
+/// branch (d).
+///
+/// So: find each CERTIFIED token and look at the words immediately before it. A token
+/// with a negator in front of it is not a verdict; a line counts only if some occurrence
+/// is un-negated.
+function carriesPositiveVerdict(line) {
+  const re = /\bCERTIFIED(?:-[A-Z]+)?\b/gi;
+  let m;
+  while ((m = re.exec(line)) !== null) {
+    const before = line.slice(Math.max(0, m.index - 24), m.index);
+    if (!/\b(not|never|non|un|no)\b[\s\-]*$/i.test(before)) return true;
+  }
+  return false;
+}
+
 const fenceRegisterSrc = appSource.match(/const FENCE_REGISTER = \{([\s\S]*?)\n\};/);
 const notServedSrc = appSource.match(/const NOT_SERVED = \[([\s\S]*?)\n\];/);
 want(fenceRegisterSrc !== null && notServedSrc !== null,

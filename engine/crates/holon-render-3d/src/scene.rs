@@ -14,7 +14,7 @@
 use bevy::prelude::*;
 use holon_render::sim::DEFAULT_SCENE_ATOMS;
 
-use crate::world::{AtomWorld, ATOM_RADIUS, BOX_SIDE};
+use crate::world::{ATOM_RADIUS, BOX_SIDE};
 
 // ── palette (docs/atoms/styles.css, so the two shells are one identity) ──────────
 /// `--ink`. The background of a volume rather than a page: the 2D shell is dark type on

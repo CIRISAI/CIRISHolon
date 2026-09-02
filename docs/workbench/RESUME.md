@@ -7,14 +7,16 @@ below is verifiable from the tree; nothing here is the only copy of anything.*
 ## Verdict
 
 The workbench is a REAL ENGINE PAGE, gated, at `docs/workbench/`. It is NOT yet the site.
-Route B (the 3D renderer split) is **not started**; its two feasibility unknowns are
-closed. Both CI gates this lane owns are green on main.
+Route B (the 3D renderer split) is **two increments in**: the renderer's two waists exist
+and are gated — it consumes a `FrameBuffer` and produces a `HandIntent`, and the drawing
+and interaction layers name no `Sim` at all. What remains is the workbench-side producer
+and sink (JS), `hud.rs` retiring, and R7. Both CI gates this lane owns are green on main.
 
 ## What is landed
 
 | what | where | state |
 |---|---|---|
-| real engine page (replaced the WB-7.1 mock) | `docs/workbench/{index,app,styles,smoke}` + committed `holon_render.wasm` | live, 87 checks |
+| real engine page (replaced the WB-7.1 mock) | `docs/workbench/{index,app,styles,smoke}` + committed `holon_render.wasm` | live, 149 checks |
 | gravity, WB-2.4 + WB-2.4c world VECTOR | `holon-render/src/sim.rs` `set_gravity_vec`, `tests/gravity.rs` 11/11 | live |
 | WB-2.2 pressure panel on the box-scale door | page + `holon_box_scale`/`holon_pressure` | live |
 | scale ladder + §9c acuity law | `LADDER` / `acuityPopulation` in `app.js` | live |
@@ -31,33 +33,55 @@ WB-2.4c, the water story, the ladder).
   Exists because gate 15 runs `--features headless`, which is structurally blind to
   `hud.rs`/`pick.rs`/`render.rs`, and `pages.yml` swallows build failures. Those two greens
   hid a two-day compile break.
-* **17b** — `node docs/workbench/smoke.mjs`, 87 checks, ~30 s. Runs the SHIPPED artifact.
+* **17b** — `node docs/workbench/smoke.mjs`, 149 checks, ~30 s. Runs the SHIPPED artifact.
 
-Both verified green on main at 508ea0b.
+Both verified green at 23fe9e6 plus this increment: 15b clean, 17b 149/149, and gate 15 headless now 27 tests (15 + 5 frame buffer + 7 hand intent).
 
-## Next: Route B (ruled, not started)
+## Route B (ruled; increments 1 and 2 landed)
 
 Ruling: cdylib stays the single authoritative Sim; Bevy becomes a pure renderer fed a
 per-frame buffer. **One Sim** is the hard requirement — "one drawn, one instrumented" is
-disqualifying.
+disqualifying. The shape is ONE CONSUMER, TWO PRODUCERS: each page owns one Sim and the
+renderer owns neither.
 
-* `world.rs` — stop owning `Box<Sim>`, receive a frame buffer. 54 Sim sites.
-* `pick.rs` — delegate the hand to `holon_grab`/`holon_move_anchor_3d`/`holon_release`. 5 sites.
-* `hud.rs` — retires from this page; the JS overlay IS the HUD. 18 sites.
-* `scene.rs`/`bonds.rs`/`render.rs`/`lighting.rs` — **zero** Sim sites; the drawing layer
-  already consumes buffers. This is why route B is the tractable one.
+Two waists, at the two ends of the frame:
+
+| waist | direction | type | producer / sink today | workbench's |
+|---|---|---|---|---|
+| `src/frame.rs` | engine → drawing | `FrameBuffer` | `AtomWorld::fill_frame` | JS, from the cdylib |
+| `src/hand.rs` | interaction → engine | `HandIntent` | `HandIntent::apply_to` | JS, onto the three doors |
+
+System order is now `calibrate → drag_atom → apply_hand_intent → advance_world →
+fill_frame_from_world → sync_atoms → sync_bonds`. The workbench replaces exactly two of
+those systems — the sink and the fill — and changes nothing else.
+
+* **increment 1 (44c5673)** — `frame.rs`, `AtomWorld::fill_frame`, `scene.rs`/`bonds.rs`
+  converted, 5 headless contract tests.
+* **increment 2 (this)** — `hand.rs`, `pick.rs` converted, the sink system, 7 headless
+  contract tests. The picker resolves against the buffer that was last DRAWN, which is
+  what the user aimed at.
+* `hud.rs` — **still holds the Sim**, 18 sites. Retires from the workbench page (the JS
+  overlay IS that page's HUD); it stays on atoms3d. Named as an exclusion inside
+  `tests/hand_intent.rs` so the debt sits in the file that would otherwise hide it.
+* `world.rs` — keeps its `Box<Sim>` and SHOULD: it is atoms3d's producer. The workbench
+  never constructs one.
+* R7 (one Sim on the workbench page) — page-scoped, in the page's own gate, and now
+  statable: "the drawn scene is fed only by the cdylib's buffer" is a property about one
+  producer rather than a claim about ownership.
 
 Feasibility CLOSED before starting: the crate compiles and its artifact builds end to end
 (webgpu 40,655,672 B / webgl2 41,687,973 B, 9.9 MB gz, unoptimised — no wasm-opt on this
 box); buffer extraction costs 0.2–0.6 ms at 64–98 atoms, ~1–3.5% of a 60 fps budget.
 
-Verification will be BUILD-PLUS-BROWSER, not native-test: `cargo test` for that crate
-cannot run here (default features need wayland-sys; no Wayland headers). Gate 15 covers
-headless in CI.
+Verification is NATIVE-TEST plus build, corrected from an earlier note here that said it
+could not be: `cargo test --no-default-features --features headless` runs this crate's
+suite on this box in ~100 s (27 tests). It is only the DEFAULT features that need
+wayland-sys, and the headless feature set is exactly what gate 15 runs — so Route B's
+contract is checked by the gate that was blind to the render-only modules.
 
 ## Blocking the site-root promotion (§9c)
 
-1. Route B split — not started (above).
+1. Route B split — two increments in, workbench-side producer/sink still owed (above).
 2. `pages.yml` serving the workbench at root — not done.
 3. The 1 km cube hero itself — the ladder and acuity law are live, the CUBE is not; the
    scene is a molecular box.

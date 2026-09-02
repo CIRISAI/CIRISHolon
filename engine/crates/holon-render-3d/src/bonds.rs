@@ -16,7 +16,6 @@ use bevy::prelude::*;
 use holon_render::sim::{complete_pairs, DEFAULT_SCENE_ATOMS};
 
 use crate::scene::{bond_radius, rod_between, to_world, SceneAssets};
-use crate::world::AtomWorld;
 
 /// One entity per possible pair, indexed by the pair index the simulation uses.
 #[derive(Resource)]

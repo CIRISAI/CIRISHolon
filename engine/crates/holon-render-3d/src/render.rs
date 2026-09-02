@@ -6,8 +6,16 @@
 //! must see a state nothing above it has modified:
 //!
 //! ```text
-//! calibrate → advance_world → sync_atoms → sync_bonds → update_hud
+//! calibrate → drag_atom → apply_hand_intent → advance_world
+//!           → fill_frame_from_world → sync_atoms → sync_bonds → update_hud
 //! ```
+//!
+//! The two Route B waists sit at the two ends of that line. `drag_atom` READS the buffer
+//! filled at the end of the previous frame and WRITES the hand's intent; the sink applies
+//! that intent to this page's `Sim` before the step, so a gesture and the step that
+//! carries it out land in one frame. Everything between the sink and the fill is physics
+//! and everything after it is drawing, which is what lets the workbench replace exactly
+//! two systems — the sink and the fill — and change nothing else.
 //!
 //! `advance_world` is the ONLY system that steps the physics, and it steps it exactly
 //! once per rendered frame with the interval the frame actually took. Nothing here
@@ -54,6 +62,10 @@ pub fn run_app() {
         Update,
         (
             calibrate,
+            // The finger, then what the finger asked for. Both ahead of the step, so a
+            // grab takes hold of the atom in the frame the user pressed on it.
+            pick::drag_atom,
+            apply_hand_intent,
             advance_world,
             // PRODUCE, then draw. The buffer is filled from this page's own Sim between
             // stepping and drawing, so the renderer never sees a Sim and the ordering
@@ -170,6 +182,17 @@ fn calibrate(mut world: ResMut<AtomWorld>) {
 /// different source — which is the whole of Route B's "one consumer, two producers".
 fn fill_frame_from_world(world: Res<AtomWorld>, mut frame: ResMut<crate::frame::FrameBuffer>) {
     world.fill_frame(&mut frame);
+}
+
+/// atoms3d's sink: apply the hand's intent to the `Sim` this page owns.
+///
+/// The mirror of `fill_frame_from_world`, and the other system the workbench replaces —
+/// there the same queue is drained by JS onto the cdylib's `holon_grab` /
+/// `holon_move_anchor_3d` / `holon_release`. One line here for the same reason: the
+/// mapping from op to door lives in `HandIntent::apply_to`, stated once, so the two pages
+/// cannot disagree about what a drag does to the ledger.
+fn apply_hand_intent(mut hand: ResMut<crate::hand::HandIntent>, mut world: ResMut<AtomWorld>) {
+    hand.apply_to(&mut world.sim);
 }
 
 fn advance_world(time: Res<Time>, mut world: ResMut<AtomWorld>) {

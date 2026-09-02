@@ -42,6 +42,10 @@ pub use holon_render;
 /// `render`, because the WORKBENCH producer fills it without any of the render machinery
 /// and a headless consumer should be able to name the type.
 pub mod frame;
+/// The hand intent: the one thing the interaction layer produces (Route B). Not behind
+/// `render` for the same reason as `frame` — the WORKBENCH's sink is JS, and a type the
+/// headless gate cannot name is a type the headless gate cannot check.
+pub mod hand;
 pub mod world;
 
 #[cfg(feature = "render")]

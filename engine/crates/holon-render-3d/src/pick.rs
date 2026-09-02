@@ -8,7 +8,17 @@
 //! scene, by which a bond can form at all.
 //!
 //! Nothing in this module computes work, energy or force. It computes a point in space
-//! and hands it to `Sim::move_anchor_3d`.
+//! and RECORDS it, in `HandIntent`, for whatever sink this page has — `Sim` on atoms3d,
+//! the cdylib's three doors on the workbench. Route B: the interaction layer no longer
+//! holds a `Sim`, so the workbench cannot end up dragging a second copy of the scene.
+//!
+//! # What the pick resolves against
+//!
+//! The FRAME BUFFER, filled at the end of the previous frame — which is to say, against
+//! the scene that was last DRAWN. That is a frame behind the physics and it is the right
+//! frame: the user aimed at what was on the screen, not at a state the integrator has
+//! since moved past. It also means a grab on the very first frame, before any buffer has
+//! been filled, finds nothing. It finds nothing rather than guessing.
 //!
 //! # Three dimensions, one screen
 //!
@@ -36,9 +46,10 @@ use bevy::prelude::*;
 use bevy::window::PrimaryWindow;
 use bevy_panorbit_camera::PanOrbitCamera;
 
+use crate::frame::FrameBuffer;
+use crate::hand::HandIntent;
 use crate::render::MainCam;
 use crate::scene::{to_sim, to_world};
-use crate::world::{AtomWorld, ATOM_RADIUS};
 
 /// Angular slop on the pick, radians. The perpendicular-distance threshold grows with
 /// range as `t * PICK_SLOP`, so the pick is a fixed angle on screen rather than a fixed
@@ -57,22 +68,26 @@ pub struct DragState {
     plane_normal: Vec3,
 }
 
+/// Resources only. `drag_atom` is chained explicitly in `render.rs`, ahead of the sink
+/// that applies what it records, so a gesture and its effect land in the same frame
+/// rather than in whichever order the scheduler picked.
 pub fn plugin(app: &mut App) {
     app.init_resource::<DragState>()
-        .add_systems(Update, drag_atom);
+        .init_resource::<HandIntent>();
 }
 
 /// One frame of the drag: resolve the pointer, pick on press, follow on move, let go on
 /// release.
 #[allow(clippy::too_many_arguments)]
-fn drag_atom(
+pub(crate) fn drag_atom(
     windows: Query<&Window, With<PrimaryWindow>>,
     cameras: Query<(&Camera, &GlobalTransform), With<MainCam>>,
     buttons: Res<ButtonInput<MouseButton>>,
     touches: Res<Touches>,
     ui_buttons: Query<&Interaction, With<Button>>,
     mut drag: ResMut<DragState>,
-    mut world: ResMut<AtomWorld>,
+    frame: Res<FrameBuffer>,
+    mut hand: ResMut<HandIntent>,
     mut orbit: Query<&mut PanOrbitCamera, With<MainCam>>,
 ) {
     // A press that lands on a HUD button belongs to the HUD.
@@ -112,8 +127,8 @@ fn drag_atom(
         if drag.active {
             // Release subtracts the energy still stored in the spring, because it leaves
             // the scene with the hand. `Sim::release` does that; this module only says
-            // when.
-            world.sim.release();
+            // when, and now only says it into the queue.
+            hand.release();
         }
         drag.active = false;
         drag.touch = None;
@@ -137,8 +152,7 @@ fn drag_atom(
     // ── the grab ───────────────────────────────────────────────────────────
     if began && !drag.active && !over_ui {
         let mut best: Option<(f32, usize, Vec3)> = None;
-        for i in 0..world.sim.n {
-            let a = &world.sim.atoms[i];
+        for (i, a) in frame.atoms.iter().enumerate() {
             let centre = to_world(a.x, a.y, a.z);
             let t = (centre - ray.origin).dot(dir);
             if t <= 0.0 {
@@ -147,15 +161,16 @@ fn drag_atom(
             let perp = (ray.origin + dir * t).distance(centre);
             // Angular tolerance, floored at the drawn radius so a very near atom is
             // still pickable at its own size across all species.
-            let tolerance = (t * PICK_SLOP).max(a.radius() as f32 * 1.2);
+            let tolerance = (t * PICK_SLOP).max(a.radius as f32 * 1.2);
             if perp < tolerance && best.is_none_or(|(bt, _, _)| t < bt) {
                 best = Some((t, i, centre));
             }
         }
         if let Some((_, i, centre)) = best {
             // The grab itself injects nothing: `Sim::grab` puts the anchor ON the atom,
-            // so the spring enters the ledger at zero extension.
-            world.sim.grab(i);
+            // so the spring enters the ledger at zero extension. Recorded, not called —
+            // the index is the frame buffer's, and the sink owns the bound.
+            hand.grab(i);
             drag.active = true;
             drag.plane_point = centre;
             // Frozen at the grab — see the module header on why this is not re-derived.
@@ -184,5 +199,5 @@ fn drag_atom(
     }
     let hit = ray.origin + dir * t;
     let (x, y, z) = to_sim(hit);
-    world.sim.move_anchor_3d(x, y, z);
+    hand.move_anchor(x, y, z);
 }

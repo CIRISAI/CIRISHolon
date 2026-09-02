@@ -51,10 +51,18 @@ count meaningless.
 
 Plus **10 findings**: one fence with **no exit** (F-3 — and the code says so itself, which
 is the model working); three fences whose stated reason is false or stale at HEAD (F-1,
-F-2, F-10); **four** places carrying a break with **no owner**, which by this file's own
+F-2, F-10); four places that carried a break with **no owner**, which by this file's own
 law is suppression (F-4's two `CRATE_ALLOW` entries, plus M2 and M10's exit); one fence
 whose named class has no reachable member (F-5); one silent zero where a named refusal
 belongs (F-6); and one gate that is one-directional (F-9).
+
+**Status of the findings, updated `234aa0e`.** F-4 is **DISCHARGED** (`1839eb7`): both
+allow-list entries now carry owner and exit and cite this ledger. F-5 is **ROUTED** onto
+GANTT's MPS node. F-8's two unowned model fences (M2, M10) are now a **named triage item**
+in GANTT's fence-triage note — still unowned, but with the clock visible, which is the
+condition the law actually demands. F-1, F-2, F-3, F-6, F-7, F-9 and F-10 stand as
+written. Discharged findings are kept and marked, never deleted: a ledger that drops them
+cannot be audited against the state it was written from.
 
 ---
 
@@ -76,10 +84,10 @@ belongs (F-6); and one gate that is one-directional (F-9).
 | P10 | `bridge.rs:175` `WeakFieldRefusal::UnsupportedPotentialFamily` | scenes needing a potential outside the v1 family (e.g. a flat rotation-curve disk) | same | the v2 logarithmic-potential family; unlock text at `:201` | G |
 | P11 | `holon-chem/src/tower.rs:649` `C2_MpsTdvp` fence (i) | C2 as a **climb** — `c1_to_c2_transport_capability` is not built, so C2 is reachable as a NODE only | C2 / tower lane | build the C1→C2 picture change (ring-polymer nuclei → real-time electronic carrier) | E, MPS |
 | P12 | `holon-chem/src/tower.rs:649` `C2_MpsTdvp` fence (ii) | growing a bond dimension — single-site TDVP cannot, so a start must already carry its rank | C2 / tower lane | two-site TDVP, named in the doc as the discharge route | MPS |
-| P13 | `docs/workbench/smoke.mjs:664` `holon_phase_call` | the blind phase-classifier panel (WB-5.5) — "fenced on the page because none exists" | workbench-engine | write the classifier, wire the panel, delete the entry | G |
-| P14 | `smoke.mjs:665` `holon_q_tet` | the order-parameter panel (WB-5.5) — "because none are computed" | workbench-engine | compute them, delete the entry | G |
-| P15 | `smoke.mjs:666` `holon_water_table_begin` | the (O,H,H) surface panel — "for want of an ABI door" | workbench-engine | ship the ABI door; the surface itself is not the blocker | D → G |
-| P16 | `smoke.mjs:667` `holon_refinement_active` | the local-refinement panel (WB-1.2) — "because none exists" | mesher | build refinement, delete the entry | G |
+| P13 | `docs/workbench/smoke.mjs:684` `holon_phase_call` | the blind phase-classifier panel (WB-5.5) — "fenced on the page because none exists" | workbench-engine | write the classifier, wire the panel, delete the entry | G |
+| P14 | `smoke.mjs:685` `holon_q_tet` | the order-parameter panel (WB-5.5) — "because none are computed" | workbench-engine | compute them, delete the entry | G |
+| P15 | `smoke.mjs:686` `holon_water_table_begin` | the (O,H,H) surface panel — "for want of an ABI door" | workbench-engine | ship the ABI door; the surface itself is not the blocker | D → G |
+| P16 | `smoke.mjs:687` `holon_refinement_active` | the local-refinement panel (WB-1.2) — "because none exists" | mesher | build refinement, delete the entry | G |
 | P17 | `WORKBENCH_FSD.md:277` C3+ spinorial/QED nodes | materialized spinorial and QED carriers — they exist as "visible STUBS with fences — reachable, not materialized" | tower lane | WB-8.4's discharge law: pay the price, transport to the adequate carrier | MPS, G |
 | P18 | `holon/src/zx.rs:43` | handing a shorter circuit back to the runner — "there is NO extraction back to a circuit" | zx-native | build the circuit extractor (the T-count oracle and scalar are certified already) | off-graph |
 | P19 | `holon-chem/tests/mixtures_referee.rs:293` `#[ignore]` | grading the staked pairs against the 50-digit referee | mixtures-referee | commit the drop to `tests/data/mixtures1/`, delete the `#[ignore]`, re-pin `MIXTURES1_REFEREE_DIGEST` — and do both, per the test's own header | D |
@@ -131,7 +139,7 @@ does not appear in this table.*
 | M6 | `holon-sandbox/src/scene.rs:306` `LawRefusal::UnderResolved` | a cohesive law where cell spacing ≥ 2·l_ch — no positive softening branch exists for the homogenized bilinear law at that grain | mesher | a finer mesh; the refusal is a statement about the grain, not about the material | G |
 | M7 | `holon-chem/tests/mixtures_referee.rs:82` `ScopeRefusal::OutOfScope` | grading any species with Z past `MIXTURES1_REFEREE_Z_MAX` (18, argon). A limit of the REFEREE's model, not the engine's — and refused BY NAME rather than silently skipped, so the pass is not vacuous | mixtures-referee | extend the referee past argon | D |
 | M8 | `WORKBENCH_FSD.md:333` | a 2D fallback renderer — the Bevy/WebGPU shell is "the only rendering. No 2D fallback — a fence with the reason, not a degraded mode" | workbench-engine | the viewer's own device. Deliberate: the alternative is a silently degraded chart, which WB-5.2 forbids | none |
-| M9 | `docs/workbench/smoke.mjs:663` `holon_set_pressure` | a pressure SETPOINT door — "WB-2.2's control IS the box (`holon_box_scale`); pressure is the readout, not a target" | workbench-engine | a design change, not work owed. **But the prose fence beside it is false: see finding F-2** | none |
+| M9 | `docs/workbench/smoke.mjs:683` `holon_set_pressure` | a pressure SETPOINT door — "WB-2.2's control IS the box (`holon_box_scale`); pressure is the readout, not a target" | workbench-engine | a design change, not work owed. **But the prose fence beside it is false: see finding F-2** | none |
 | M10 | `holon-chem/tests/ion_core.rs:288` `the_electron_affinity_gate_fired_oh_minus_sits_above_neutral_oh` — the fence is carried in the gate's own NAME; staked as row **I-5** of `conformance/water_observatory/ION_STAKING.md` | **anions are unbound in STO-3G.** OH⁻ sits **+0.3055 Ha above** neutral OH (`E(OH) − E(OH⁻) = −0.305545907904 Ha`), so this model's anion energies may not be used as affinities. Fences all anion-mediated chemistry — hydroxide chains, autoionization's OH⁻ half. **Grotthuss via H₃O⁺ is NOT fenced**: the proton affinity passes on the identical seam at `+0.379432332077 Ha`. Discriminated to the BASIS, not the charged seam: H⁻/H shows the same sign with a one-determinant CI space where no sector rule can be wrong, and cations pass the same path | recorded by ion-core in `ION_STAKING.md` I-5; **the exit itself is UNOWNED** — I-5's owner column reads "not this node; a basis lane… nothing technical — it is unowned, not blocked" | **the diffuse-basis rung (I-5)**: a named model upgrade. Discharge is the SAME two gates in `ion_core.rs`, un-retuned, re-run against a basis carrying diffuse functions, with the STO-3G readings kept beside the new ones. `holon-chem` declares exactly one basis (`sto3g.rs`) and adding a second is a crate-shaped decision, not a test fix | C → A (I-2's charged tables inherit the constraint) |
 
 ---
@@ -166,7 +174,7 @@ claims, correctly. **The two claims are different, and only the narrow one is ch
 `smoke.mjs`'s gate watches for `holon_set_pressure` appearing; it cannot watch prose in a
 neighbouring file that asserts something broader. This is the failure mode the gate was
 built to prevent, arriving one file over. Owner: workbench-engine. Fix: make `app.js:24`
-say what `smoke.mjs:663` says.
+say what `smoke.mjs:683` says.
 
 **F-3 — exactly one fence in this tree has no exit, and the code says so itself.**
 `ciris-sim-core/src/bridge.rs:180` `WeakFieldRefusal::RequiresSpacelikeSignal` refuses a
@@ -178,20 +186,30 @@ finding rather than a table row precisely because it is the one place where the 
 order — every fence is a bug with a fix path — does not apply, and the tree already knew
 that and typed it. **This is the model working.** No owner needed.
 
-**F-4 — two entries inside the very allow-list that supplies this ledger's law are, by
-that law, suppression.**
-`ci-gates.sh:576-577`:
+**F-4 — DISCHARGED at `1839eb7`. Two entries inside the very allow-list that supplies this
+ledger's law were, by that law, suppression.**
+As found, `ci-gates.sh:576-577` read:
 
     ["q-seam"]="uncovered, ownership untriaged (chief-of-staff-2, 2026-08-24)"
     ["sphere-demo"]="uncovered, ownership untriaged (chief-of-staff-2, 2026-08-24)"
 
-Neither names an owner; neither names an exit. Against `ci-gates.sh:566-568`'s own ruling —
+Neither named an owner; neither named an exit. Against `ci-gates.sh:566-568`'s own ruling —
 "AN ALLOWLIST ENTRY IS LEGITIMATE ONLY WHEN THE BREAK HAS AN OWNER AND AN EXIT; WITHOUT
-BOTH IT IS SUPPRESSION" — these two are suppression by the file's own definition. They are
-not in the COMPUTE-PRICED table above because they are not compute-priced: nobody has
-established that they are anything. The other five entries in the block each name a reason,
-and the two that are deferrals rather than exclusions (C18, C19) each name an owner and an
-exit. Owner: chief-of-staff / team-lead, to triage. The exit is one line each.
+BOTH IT IS SUPPRESSION" — these two were suppression by the file's own definition. They
+were not in the COMPUTE-PRICED table above because they are not compute-priced: nobody had
+established that they were anything. The other five entries in the block each named a
+reason, and the two that are deferrals rather than exclusions (C18, C19) each named an
+owner and an exit.
+
+**Both now carry Owner: team-lead and Exit: "real invocation or crate retirement, decided
+at the fence-ledger triage", citing this finding by name.** The break itself is unchanged —
+both crates are still uncovered by CI — and that is the point of the discharge: the ruling
+is about whether a break is ACCOUNTED FOR, not about whether it is fixed. The clock is now
+visible in `GANTT.md`'s fence-triage note rather than absent.
+
+*Kept in the record and marked, not deleted. A ledger that quietly drops a discharged
+finding cannot be audited against the state it was written from — and it would be
+committing F-10, one finding down this page.*
 
 **F-5 — the MPS route is a named band with no reachable member.**
 `pair::MPS_MAX_DETERMINANTS` (1024) is smaller than `fci::MPS_ROUTE_THRESHOLD` (50,000),
@@ -206,6 +224,11 @@ of them has an automatic route at all**, and 21 of those are also past
 table who takes "MPS-ROUTE" for a route will be wrong 27 times. The generated table states
 this in its own header, derived at run time from the two constants rather than asserted, so
 the sentence moves when they do.
+
+**ROUTED at `1839eb7`**, onto `GANTT.md`'s MPS node where the seam work will meet it: "the
+seam work must move the cap or the routing, not just add the seam." The finding stands —
+nothing about the constants has changed — but it is now a constraint the receiving node
+carries rather than a fact filed only here.
 
 **F-6 — one silent zero where a named refusal belongs.**
 `holon-chem/src/ozone.rs:217` `OzoneTable::eval` returns `(0.0, [0.0; 3])` in three places:
@@ -246,8 +269,13 @@ saying — **a fence does not become owned by being described well.** The exits 
 than limitations. What they lack is somebody whose job it is. Owner: to be assigned, and
 the assignment is one decision covering both.
 
+**Now a named triage item** (`1839eb7`, GANTT.md's closing fence-triage note), listed
+beside F-4's two crates and awaiting the lead's decision. That does not discharge it —
+neither fence has an owner yet — but it moves them from *unrecorded* to *recorded and
+pending*, which is the difference between suppression and a queue.
+
 **F-9 — the fence-justifying-absence gate is one-directional.**
-`smoke.mjs:662-675` checks that every entry in `FENCE_JUSTIFYING_ABSENCES` is still
+`smoke.mjs:682-695` checks that every entry in `FENCE_JUSTIFYING_ABSENCES` is still
 absent — if an export appears, the fence text has become false and the gate says so, with
 an instruction rather than a complaint. It is a good gate and it caught two fences into
 service already (`holon_set_gravity` at `:354`, `holon_box_scale` at `:628`). What it

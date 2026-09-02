@@ -40,10 +40,10 @@ G  Upward tier closures (H-bond network ⊂ molecules ⊂ quantum; census as ref
 | B1 | Long-range residual audit: measure what cutoff-locality discards, per scene class, against a pre-staked negligibility criterion | parked trajectories (exist) | LAUNCHED · longrange-audit | prereg ADMITTED by gate 9c's auditor; measured residual table; verdict per scene class, VOID-not-KILL on budget |
 | B2 | Ewald-class long-range subsystem | B1 verdict; mandatory if C ships ionic scenes | GATED | per-law gates incl. planted violations; energy ledger closed under the new term |
 | C | Charged-fragments core: charge at the solver seam (electron-count assignment, spin-sector rule stated), H3O+/OH- certified single-points, census-charge staking doc | none for the core; A for generic ion TABLES | LAUNCHED · ion-core | ion energies with variational sanity vs fragments; refusals for unstated charge; the staking doc for what remains |
-| D | Periodic-table availability: probe EVERY registered species — FCI-reachable (measured det count) / MPS-route / REFUSED with the reason (relativistic fence stated past staked Z; missing basis named) | none | LAUNCHED · bank-fences | a GENERATED availability table (probed, not asserted) + refusal tests firing per class |
+| D | Periodic-table availability + the fence ledger | none | **DONE — receipts: FENCES.md (49 fences: 19 physics-honesty / 20 compute-priced / 10 model-fence, owner+exit per row) and conformance/atomworld/PERIODIC_AVAILABILITY.md (54 species probed: 27 FCI-direct, 27 MPS-route, 0 unavailable; 18 relativity-fenced; generator gate green, mutation-tested)** | landed |
 | H | dE5 truncation audit: sample compact 5-clusters from real trajectories; E_FCI(5) − MBE4(5) distribution vs declared uncertainty | live dE4 path (done) | LAUNCHED · de5-audit | prereg ADMITTED; measured distribution over ≥20 sampled configs; verdict: ladder terminates / seam required |
 | E | NQE in dynamics: ring-polymer propagation coupled into Sim, not merely the C1 carrier | C1 (done); sim.rs landing-wave quiet; A's carrier plumbing | GATED | per-law gates under RPMD; P=1 bit-identical to classical Sim (the C1 pattern, in-engine) |
-| MPS | DMRG cluster seam: exact-cluster solves for compact cores over MBE far-field | H verdict; bulk-tier canonical brick (tower-complete, owed) | GATED | seam defect budget staked and measured; crystal-tier referee inheritance stated |
+| MPS | DMRG cluster seam: exact-cluster solves for compact cores over MBE far-field. FINDING F-5 (FENCES.md): the MPS-ROUTE band currently has NO reachable member — every species past the FCI threshold is also past the hard cap, so 27 of 54 atoms have no automatic route; the seam work must move the cap or the routing, not just add the seam | H verdict; bulk-tier canonical brick (tower-complete, owed) | GATED | seam defect budget staked and measured; crystal-tier referee inheritance stated |
 | G | Upward closures: network and fluid tiers certified as Closed views, census as referee at each rung | OOO cert; dE4 table; B1 | GATED | each rung's closure certificate in the census's two-leg form, with controls |
 
 ## In-flight prerequisites feeding this graph (owned elsewhere)
@@ -71,3 +71,8 @@ size is compute × scope, and the graph's only ordering is dependency and
 downstream value. When a node lands, its row gains the receipt's location;
 when a gated node's deps clear, its status flips here in the same commit
 that clears them.
+
+**Fence triage (from FENCES.md F-4/F-8):** two CRATE_ALLOW entries (q-seam,
+sphere-demo) and two unowned model fences (the diffuse-basis exit I-5, and
+FENCES.md's M2) await an ownership decision at the lead's next triage — named
+here so the suppression clock is visible.

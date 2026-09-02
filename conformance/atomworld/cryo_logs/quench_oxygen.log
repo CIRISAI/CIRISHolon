@@ -1,0 +1,70 @@
+# CRYO-H-O — the quench ladder: ARM 2 — oxygen (12 O)
+# prereg conformance/atomworld/CRYO_HO_PREREG.md, frozen fc7b6a0
+# STANDING FENCES: 2D scene | classical nuclei (no NQE) | STO-3G minimal basis
+# protocol COPIED from waterquench.rs: 12 atoms, 34.6 x 20.8 bohr, 20000 x 64, T_init 3000 K, tau 2000, jitter 0.8, 96 knots
+# THE ONE CHANGE: T_target ladder [300.0, 100.0, 30.0, 10.0, 3.0] K, seeds [
+    0x0000000053415421,
+    0x0000000053415422,
+    0x0000000053415423,
+]
+# classifier window: grain boundaries 15000..20000 stride 25 -> 200 frames
+# table set (copied from waterquench.rs): H3 generated, (O,H,H) committed artifact, (O,O,H) generated, (O,O,O) FENCED empty, de4_enabled = true
+# V1 curve identity: O-O 96 knots, R_e = 2.4421 bohr, D_e = 0.147621 Ha, exit iteration cap, budget 5000, worst_residual 4.809e-6, n_det 2025, n_basis 10, device Cpu  [841.5 s]
+# V1 BANKED for comparison: H-H R_e 1.3887 D_e 0.204142 | O-O R_e 2.4421 D_e 0.147621
+#
+  T   300 K  seed 0x0000000053415421  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 1.96e-2  |p|/b 3.32e-5  T_end  289 K  | order 0.9924  mob 6.5212  freefrac 0.000  iceFired false  LIQUID  [50 s]
+  T   300 K  seed 0x0000000053415422  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 2.03e-2  |p|/b 3.58e-5  T_end  274 K  | order 0.9983  mob 13.5883  freefrac 0.000  iceFired false  LIQUID  [59 s]
+  T   300 K  seed 0x0000000053415423  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 1.84e-2  |p|/b 3.86e-5  T_end  310 K  | order 0.9986  mob 35.4724  freefrac 0.000  iceFired false  LIQUID  [62 s]
+#
+  T   100 K  seed 0x0000000053415421  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 2.06e-2  |p|/b 4.54e-5  T_end  107 K  | order 0.9619  mob 4.0249  freefrac 0.000  iceFired false  LIQUID  [66 s]
+  T   100 K  seed 0x0000000053415422  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 1.98e-2  |p|/b 4.05e-5  T_end  108 K  | order 0.9984  mob 3.6104  freefrac 0.000  iceFired false  LIQUID  [123 s]
+  T   100 K  seed 0x0000000053415423  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 1.82e-2  |p|/b 4.48e-5  T_end   93 K  | order 0.9979  mob 1.7926  freefrac 0.000  iceFired false  LIQUID  [48 s]
+#
+  T    30 K  seed 0x0000000053415421  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 1.87e-2  |p|/b 7.32e-5  T_end   27 K  | order 0.9993  mob 0.0006  freefrac 0.000  iceFired false  REFUSED[at least two atoms with a complete first neighbour shell: 12 atoms, of which 1 ever closed a first shell of 6 neighbours (needed: 2). Below that the order parameter is one atom's environment counted across correlated frames, not a statement about the scene, and it cannot separate ICE from LIQUID here. The gate that lifts this is a scene with a bulk.]  [116 s]
+  T    30 K  seed 0x0000000053415422  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 1.87e-2  |p|/b 4.79e-5  T_end   28 K  | order 0.9992  mob 0.0375  freefrac 0.000  iceFired false  REFUSED[at least two atoms with a complete first neighbour shell: 12 atoms, of which 1 ever closed a first shell of 6 neighbours (needed: 2). Below that the order parameter is one atom's environment counted across correlated frames, not a statement about the scene, and it cannot separate ICE from LIQUID here. The gate that lifts this is a scene with a bulk.]  [69 s]
+  T    30 K  seed 0x0000000053415423  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 1.81e-2  |p|/b 6.94e-5  T_end   32 K  | order 0.0000  mob 0.0041  freefrac 0.000  iceFired false  REFUSED[at least two atoms with a complete first neighbour shell: 12 atoms, of which 0 ever closed a first shell of 6 neighbours (needed: 2). Below that the order parameter is one atom's environment counted across correlated frames, not a statement about the scene, and it cannot separate ICE from LIQUID here. The gate that lifts this is a scene with a bulk.]  [48 s]
+#
+  T    10 K  seed 0x0000000053415421  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 1.66e-2  |p|/b 9.31e-5  T_end   12 K  | order 0.9994  mob 0.0000  freefrac 0.000  iceFired false  REFUSED[at least two atoms with a complete first neighbour shell: 12 atoms, of which 1 ever closed a first shell of 6 neighbours (needed: 2). Below that the order parameter is one atom's environment counted across correlated frames, not a statement about the scene, and it cannot separate ICE from LIQUID here. The gate that lifts this is a scene with a bulk.]  [43 s]
+  T    10 K  seed 0x0000000053415422  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 2.06e-2  |p|/b 4.06e-5  T_end   10 K  | order 0.0000  mob 0.0000  freefrac 0.000  iceFired false  REFUSED[at least two atoms with a complete first neighbour shell: 12 atoms, of which 0 ever closed a first shell of 6 neighbours (needed: 2). Below that the order parameter is one atom's environment counted across correlated frames, not a statement about the scene, and it cannot separate ICE from LIQUID here. The gate that lifts this is a scene with a bulk.]  [53 s]
+  T    10 K  seed 0x0000000053415423  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 1.76e-2  |p|/b 4.93e-5  T_end   10 K  | order 0.0000  mob 0.0000  freefrac 0.000  iceFired false  REFUSED[at least two atoms with a complete first neighbour shell: 12 atoms, of which 0 ever closed a first shell of 6 neighbours (needed: 2). Below that the order parameter is one atom's environment counted across correlated frames, not a statement about the scene, and it cannot separate ICE from LIQUID here. The gate that lifts this is a scene with a bulk.]  [41 s]
+#
+  T     3 K  seed 0x0000000053415421  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 1.88e-2  |p|/b 1.47e-4  T_end    4 K  | order 0.9997  mob 0.0000  freefrac 0.000  iceFired true  ICE  [44 s]
+  T     3 K  seed 0x0000000053415422  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 1.85e-2  |p|/b 1.22e-4  T_end    3 K  | order 0.9997  mob 0.0000  freefrac 0.000  iceFired true  ICE  [45 s]
+  T     3 K  seed 0x0000000053415423  dt 3.3821  sizes [12]  largest 12  agg 1.000  free 0  fence 220  drift/b 1.97e-2  |p|/b 1.09e-4  T_end    3 K  | order 0.9997  mob 0.0000  freefrac 0.000  iceFired true  ICE  [41 s]
+
+# ================================ V1 leg 2 — protocol identity at the 300 K rung
+# banked at 300 K: hydrogen -> largest <= 4, zero free H | oxygen -> O12, zero free O, fence 220
+# measured at 300 K: largest [12, 12, 12], free [0, 0, 0], fence [220, 220, 220]
+# V1 leg 2: PASS — this IS the banked protocol; the ladder is the only variable
+
+# ================================ V2 / V3 — void conditions
+# V2 ledger: 0 of 15 rung-seeds VOID (worst drift/bound 2.064e-2, worst |p|/bound 1.472e-4)
+# V3 classifier refusals: 6 of 15
+
+# ================================ G7 — one aggregate at every rung?
+# staked: largest >= 10 in >= 2 of 3 seeds at every rung; fence exactly 220; zero free O
+#   T   300 K: largest [12, 12, 12]  (3/3 at or above 10), fence [220, 220, 220], free O [0, 0, 0]
+#   T   100 K: largest [12, 12, 12]  (3/3 at or above 10), fence [220, 220, 220], free O [0, 0, 0]
+#   T    30 K: largest [12, 12, 12]  (3/3 at or above 10), fence [220, 220, 220], free O [0, 0, 0]
+#   T    10 K: largest [12, 12, 12]  (3/3 at or above 10), fence [220, 220, 220], free O [0, 0, 0]
+#   T     3 K: largest [12, 12, 12]  (3/3 at or above 10), fence [220, 220, 220], free O [0, 0, 0]
+# G7: HOLDS — one aggregate, MBE2-only, at every rung
+
+# ================================ G8 — is `order` monotone as T falls?
+# staked: order non-decreasing as T_target falls, tolerance 0.05 per step
+#   T   300 K: order 0.9964 (seeds ["0.9924", "0.9983", "0.9986"])  mobility 18.5273  verdicts ["LIQUID", "LIQUID", "LIQUID"]
+#   T   100 K: order 0.9861 (seeds ["0.9619", "0.9984", "0.9979"])  mobility 3.1426  verdicts ["LIQUID", "LIQUID", "LIQUID"]
+#   T    30 K: no scorable seed
+#   T    10 K: no scorable seed
+#   T     3 K: order 0.9997 (seeds ["0.9997", "0.9997", "0.9997"])  mobility 0.0000  verdicts ["ICE", "ICE", "ICE"]
+# G8: HOLDS — order does not fall as the scene is cooled
+
+# ================================ P4 — the scrambled-scene plant (carrier: order channel)
+# carrier NONZERO IN the order channel: unscrambled order 0.9997 at T 3 K, seed 0x0000000053415423 (bar 0.10)
+# work count: 200 frames permuted, 2226 atom positions moved
+# planted: order 0.9997 (bar 0.45), verdict Phase(Liquid), iceFired false
+# P4: DID NOT FIRE — the order gate it guards is VOID
+# P4b [POST-DATA; does NOT cure P4's void]: geometry jitter, mean amplitude 1.207 bohr, 2400 atom positions displaced
+# P4b planted: order 0.0598 (bar 0.45), verdict Phase(Liquid), iceFired false  ->  the order channel IS movable; the instrument is alive
+
+# WORK: 15 quench runs of 20000 x 64 steps, plus one 96-knot curve. Wall clock is NOT the cost on this box (load average 60 on 32 cores).

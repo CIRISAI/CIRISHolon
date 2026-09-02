@@ -1,0 +1,23 @@
+# CRYO-H-O — POST-DATA order-channel diagnostic. Cures no void, changes no stake.
+# one rung: T_target 3 K, seed 0x0000000053415422 — the rung P4/P4b ran on
+#
+# THE CLASSIFIER'S INTERNALS ON THE UNPERTURBED SCENE
+#   verdict Phase(Liquid)   order 0.8477   mobility 0.4172   free_fraction 0.0950   iceFired false
+#   frames_read 200   interior_atoms 1   interior_samples 20   (STAKE_MIN_INTERIOR_ATOMS = 2)
+#   mean nearest-neighbour distance over the window: 2.5187 bohr
+#
+# THE JITTER SWEEP. P4b used frac = 0.50.
+#   frac    amplitude(bohr)   order    mobility   interior_atoms  verdict
+    0.05         0.1259    0.8562     0.4113              1    Phase(Liquid)
+    0.10         0.2519    0.7860     0.4106              1    Phase(Liquid)
+    0.25         0.6297    0.7943     0.4381              1    Phase(Liquid)
+    0.50         1.2593    0.5956     0.5641              1    Phase(Liquid)
+    1.00         2.5187    0.2427     0.7503              1    Phase(Liquid)
+    2.00         5.0374    0.1394     1.0036              1    Phase(Liquid)
+    5.00        12.5934    0.1013     4.2071              5    Phase(Liquid)
+#
+# READ: if `order` stays above 0.45 at frac = 5 — a displacement of several
+#       nearest-neighbour distances — then amplitude was never the issue and the
+#       order statistic is DEGENERATE on this scene, which is what the freeze's
+#       pre-staked instrument fence says: a twelve-atom molecular gas has no bulk
+#       for a bond-orientational order parameter to be about.

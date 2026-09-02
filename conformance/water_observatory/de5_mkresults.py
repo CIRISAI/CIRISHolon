@@ -6,7 +6,13 @@ de5_audit.csv or de5_score.log, so the document cannot drift from the run.
 """
 import csv, pathlib, re, sys
 
-WT = pathlib.Path("/tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/de5-wt")
+# WT defaults to this repo's own root (the original session worktree was a copy
+# of this tree, and a session-keyed path dies with the session -- gate 10a3).
+# Override with DE5_WT for a re-run elsewhere.
+import os, subprocess
+WT = pathlib.Path(os.environ.get("DE5_WT") or subprocess.run(
+    ["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True, check=True
+).stdout.strip())
 OBS = WT / "conformance/water_observatory"
 BOUND = 5.0e-5
 

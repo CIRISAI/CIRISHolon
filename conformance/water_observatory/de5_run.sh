@@ -10,7 +10,10 @@
 # Every stage names its own log and marker; nothing is overwritten silently.
 set -u
 
-WT=/tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/de5-wt
+# WT defaults to this repo's own root: the campaign originally ran in a session
+# worktree (a copy of this tree), and a session-keyed path dies with the session
+# (gate 10a3). Override with DE5_WT for a re-run in a different checkout.
+WT=${DE5_WT:-$(git rev-parse --show-toplevel)}
 BIN="$WT/.target-de5/release/examples/de5_audit"
 TRAJ=/home/emoore/holon-artifacts/census-traj
 MAN="$WT/conformance/water_observatory/census_traj_manifest.sha256"

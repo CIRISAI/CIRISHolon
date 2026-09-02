@@ -3,7 +3,9 @@
 # Pinned to an E-core: M-PLACEMENT-LOTTERY's remedy is quiet-and-pinned, and an E-core has
 # no SMT sibling whose load nobody controls.
 set -u
-WT=/tmp/claude-1000/b2-ewald-wt
+# WT defaults to this repo's own root; the lane's worktree was a copy of this
+# tree and its path dies with the session (gate 10a3). Override with B2_WT.
+WT=${B2_WT:-$(git rev-parse --show-toplevel)}
 OUT=$WT/conformance/water_observatory
 BIN=$WT/engine/target/release/examples/b2_longrange
 CORE=${CORE:-24}

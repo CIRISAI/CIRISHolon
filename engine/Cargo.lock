@@ -897,6 +897,14 @@ name = "holon-device"
 version = "0.1.0"
 
 [[package]]
+name = "holon-lattice"
+version = "0.1.0"
+dependencies = [
+ "ciris-sim-core",
+ "holon-mesh",
+]
+
+[[package]]
 name = "holon-lens"
 version = "0.1.0"
 

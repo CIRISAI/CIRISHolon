@@ -1,0 +1,102 @@
+# curve H-H: 96 knots, R_e = 1.3887 bohr, D_e = 0.204142 Ha, worst residual 8.7e-11, 3.5 s
+# arm = hydrogen control (12 H)   ozone = fenced   seeds = 8   12 atoms in 34.6 x 20.8 bohr
+# 20000 boundaries x 64 substeps, dt = 1.0772 a.u. -> 33.35 ps
+# T_init 3000 K, T_target 300 K, tau 2000
+# trajectory dump: every grain boundary, to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen
+# setup 11.5 s
+  [0x0000000053415421] frame  2000/20000 | T  287 K | drift 7.41e-5 |   7.5 s
+  [0x0000000053415421] frame  4000/20000 | T  222 K | drift 7.06e-5 |  10.0 s
+  [0x0000000053415421] frame  6000/20000 | T  328 K | drift 7.24e-5 |  12.5 s
+  [0x0000000053415421] frame  8000/20000 | T  255 K | drift 7.22e-5 |  15.0 s
+  [0x0000000053415421] frame 10000/20000 | T  271 K | drift 7.20e-5 |  23.3 s
+  [0x0000000053415421] frame 12000/20000 | T  329 K | drift 7.29e-5 |  25.9 s
+  [0x0000000053415421] frame 14000/20000 | T  326 K | drift 7.20e-5 |  29.0 s
+  [0x0000000053415421] frame 16000/20000 | T  264 K | drift 7.84e-5 |  34.4 s
+  [0x0000000053415421] frame 18000/20000 | T  301 K | drift 7.19e-5 |  36.9 s
+  [0x0000000053415421] frame 20000/20000 | T  296 K | drift 8.03e-5 |  40.1 s
+seed 0x0000000053415421  dt 0.5386  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 8.08e-5/6.81e-3  |p| 2.09e-12/4.71e-8  T 296 K  40 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415421.traj (12.3 MB)
+  [0x0000000053415422] frame  2000/20000 | T  329 K | drift 8.43e-5 |  10.2 s
+  [0x0000000053415422] frame  4000/20000 | T  278 K | drift 9.07e-5 |  29.3 s
+  [0x0000000053415422] frame  6000/20000 | T  325 K | drift 9.66e-5 |  34.0 s
+  [0x0000000053415422] frame  8000/20000 | T  336 K | drift 9.69e-5 |  37.8 s
+  [0x0000000053415422] frame 10000/20000 | T  328 K | drift 9.60e-5 |  53.8 s
+  [0x0000000053415422] frame 12000/20000 | T  267 K | drift 9.07e-5 |  63.7 s
+  [0x0000000053415422] frame 14000/20000 | T  280 K | drift 9.20e-5 |  65.9 s
+  [0x0000000053415422] frame 16000/20000 | T  266 K | drift 8.97e-5 |  68.6 s
+  [0x0000000053415422] frame 18000/20000 | T  287 K | drift 9.64e-5 |  84.9 s
+  [0x0000000053415422] frame 20000/20000 | T  291 K | drift 9.51e-5 |  87.7 s
+seed 0x0000000053415422  dt 1.0772  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 1.26e-4/2.36e-2  |p| 1.49e-12/4.43e-8  T 291 K  88 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415422.traj (12.3 MB)
+  [0x0000000053415423] frame  2000/20000 | T 1537 K | drift 3.48e-5 |   2.4 s
+  [0x0000000053415423] frame  4000/20000 | T  292 K | drift 4.06e-5 |   5.7 s
+  [0x0000000053415423] frame  6000/20000 | T  309 K | drift 4.45e-5 |  13.9 s
+  [0x0000000053415423] frame  8000/20000 | T  382 K | drift 4.25e-5 |  25.3 s
+  [0x0000000053415423] frame 10000/20000 | T  318 K | drift 4.93e-5 |  29.0 s
+  [0x0000000053415423] frame 12000/20000 | T  285 K | drift 4.64e-5 |  42.2 s
+  [0x0000000053415423] frame 14000/20000 | T  305 K | drift 4.38e-5 |  62.4 s
+  [0x0000000053415423] frame 16000/20000 | T  296 K | drift 4.81e-5 |  65.8 s
+  [0x0000000053415423] frame 18000/20000 | T  278 K | drift 4.70e-5 |  68.3 s
+  [0x0000000053415423] frame 20000/20000 | T  352 K | drift 4.67e-5 |  70.7 s
+seed 0x0000000053415423  dt 0.5386  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 5.23e-5/8.03e-3  |p| 2.77e-12/4.78e-8  T 352 K  71 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415423.traj (12.3 MB)
+  [0x0000000053415424] frame  2000/20000 | T  353 K | drift 2.51e-5 |   2.2 s
+  [0x0000000053415424] frame  4000/20000 | T  322 K | drift 2.42e-5 |  12.9 s
+  [0x0000000053415424] frame  6000/20000 | T  338 K | drift 3.06e-5 |  28.6 s
+  [0x0000000053415424] frame  8000/20000 | T  327 K | drift 2.79e-5 |  55.8 s
+  [0x0000000053415424] frame 10000/20000 | T  307 K | drift 2.87e-5 |  88.0 s
+  [0x0000000053415424] frame 12000/20000 | T  277 K | drift 2.83e-5 | 101.3 s
+  [0x0000000053415424] frame 14000/20000 | T  275 K | drift 2.92e-5 | 109.8 s
+  [0x0000000053415424] frame 16000/20000 | T  281 K | drift 1.95e-5 | 122.3 s
+  [0x0000000053415424] frame 18000/20000 | T  294 K | drift 2.37e-5 | 135.8 s
+  [0x0000000053415424] frame 20000/20000 | T  309 K | drift 2.74e-5 | 142.6 s
+seed 0x0000000053415424  dt 0.5386  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 4.45e-5/1.12e-2  |p| 1.49e-12/4.62e-8  T 309 K  143 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415424.traj (12.3 MB)
+  [0x0000000053415425] frame  2000/20000 | T  219 K | drift 9.70e-5 |   7.9 s
+  [0x0000000053415425] frame  4000/20000 | T  296 K | drift 9.46e-5 |  28.2 s
+  [0x0000000053415425] frame  6000/20000 | T  280 K | drift 8.92e-5 |  37.1 s
+  [0x0000000053415425] frame  8000/20000 | T  269 K | drift 9.30e-5 |  51.2 s
+  [0x0000000053415425] frame 10000/20000 | T  297 K | drift 9.66e-5 |  69.1 s
+  [0x0000000053415425] frame 12000/20000 | T  305 K | drift 9.41e-5 |  85.6 s
+  [0x0000000053415425] frame 14000/20000 | T  292 K | drift 9.53e-5 |  88.2 s
+  [0x0000000053415425] frame 16000/20000 | T  288 K | drift 9.40e-5 | 107.5 s
+  [0x0000000053415425] frame 18000/20000 | T  293 K | drift 9.55e-5 | 131.3 s
+  [0x0000000053415425] frame 20000/20000 | T  308 K | drift 9.62e-5 | 137.8 s
+seed 0x0000000053415425  dt 1.0772  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 1.23e-4/4.76e-2  |p| 1.76e-12/5.03e-8  T 308 K  138 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415425.traj (12.3 MB)
+  [0x0000000053415426] frame  2000/20000 | T  280 K | drift 4.28e-5 |   9.5 s
+  [0x0000000053415426] frame  4000/20000 | T  290 K | drift 4.81e-5 |  13.1 s
+  [0x0000000053415426] frame  6000/20000 | T  324 K | drift 4.77e-5 |  15.2 s
+  [0x0000000053415426] frame  8000/20000 | T  315 K | drift 4.52e-5 |  27.5 s
+  [0x0000000053415426] frame 10000/20000 | T  288 K | drift 4.60e-5 |  29.8 s
+  [0x0000000053415426] frame 12000/20000 | T  290 K | drift 4.28e-5 |  35.2 s
+  [0x0000000053415426] frame 14000/20000 | T  339 K | drift 4.21e-5 |  53.6 s
+  [0x0000000053415426] frame 16000/20000 | T  345 K | drift 4.25e-5 |  58.7 s
+  [0x0000000053415426] frame 18000/20000 | T  291 K | drift 4.46e-5 |  69.9 s
+  [0x0000000053415426] frame 20000/20000 | T  291 K | drift 4.90e-5 |  71.7 s
+seed 0x0000000053415426  dt 0.5386  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 7.72e-5/1.18e-2  |p| 1.85e-12/4.31e-8  T 291 K  72 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415426.traj (12.3 MB)
+  [0x0000000053415427] frame  2000/20000 | T  263 K | drift 5.18e-5 |   5.1 s
+  [0x0000000053415427] frame  4000/20000 | T  248 K | drift 5.76e-5 |  18.9 s
+  [0x0000000053415427] frame  6000/20000 | T  351 K | drift 5.45e-5 |  20.8 s
+  [0x0000000053415427] frame  8000/20000 | T  293 K | drift 6.21e-5 |  23.9 s
+  [0x0000000053415427] frame 10000/20000 | T  310 K | drift 5.39e-5 |  28.7 s
+  [0x0000000053415427] frame 12000/20000 | T  321 K | drift 5.28e-5 |  34.8 s
+  [0x0000000053415427] frame 14000/20000 | T  299 K | drift 5.74e-5 |  49.3 s
+  [0x0000000053415427] frame 16000/20000 | T  290 K | drift 5.61e-5 |  74.0 s
+  [0x0000000053415427] frame 18000/20000 | T  253 K | drift 5.06e-5 |  84.8 s
+  [0x0000000053415427] frame 20000/20000 | T  268 K | drift 5.66e-5 |  90.3 s
+seed 0x0000000053415427  dt 0.5386  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 6.45e-5/9.79e-3  |p| 1.62e-12/4.36e-8  T 268 K  90 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415427.traj (12.3 MB)
+  [0x0000000053415428] frame  2000/20000 | T  310 K | drift 5.41e-5 |   9.4 s
+  [0x0000000053415428] frame  4000/20000 | T  341 K | drift 5.37e-5 |  11.5 s
+  [0x0000000053415428] frame  6000/20000 | T  296 K | drift 5.41e-5 |  13.7 s
+  [0x0000000053415428] frame  8000/20000 | T  305 K | drift 5.10e-5 |  16.5 s
+  [0x0000000053415428] frame 10000/20000 | T  330 K | drift 5.58e-5 |  32.4 s
+  [0x0000000053415428] frame 12000/20000 | T  238 K | drift 5.00e-5 |  38.6 s
+  [0x0000000053415428] frame 14000/20000 | T  324 K | drift 5.33e-5 |  40.8 s
+  [0x0000000053415428] frame 16000/20000 | T  306 K | drift 5.69e-5 |  58.8 s
+  [0x0000000053415428] frame 18000/20000 | T  303 K | drift 5.38e-5 |  81.4 s
+  [0x0000000053415428] frame 20000/20000 | T  320 K | drift 5.02e-5 |  84.0 s
+seed 0x0000000053415428  dt 0.5386  modal-O    -  free O 0  free H 0  largest 2  molecules [H2 H2 H2 H2 H2 H2]  fenced 0  drift 6.80e-5/1.36e-2  |p| 1.29e-12/4.94e-8  T 320 K  84 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/hydrogen/seed_0x0000000053415428.traj (12.3 MB)

@@ -726,6 +726,15 @@ fn main() {
     let mut fence_tail_max = 0.0f64;
     let mut fence_pow6_max = 0.0f64;
     let mut fence_pow3_max = 0.0f64;
+    // THE FREEZE GOT THIS BACKWARDS AND THE DATA SAID SO. §3 asserts "where they disagree,
+    // `E_hard` is the larger and is the one gated, which is the conservative direction".
+    // It is not: the C² switch starts removing energy at `c − W`, INSIDE the cutoff, so
+    // `|E_switch(c)| ≥ |E_hard(c)|` and gating `E_hard` is the LESS conservative choice.
+    // The gate stays on `E_hard` because that is what was staked; this tracks `E_switch`
+    // so the results document can report the size of the freeze's error rather than
+    // inherit its claim.
+    let mut switch_max = 0.0f64;
+    let mut switch_arg = (0u64, 0u64);
     let mut seed_rows: Vec<String> = Vec::new();
     let mut g1_fail = 0usize;
     let mut uninformative = 0usize;
@@ -789,6 +798,10 @@ fn main() {
             fence_tail_max = fence_tail_max.max(row.tail[C_STAR].abs());
             fence_pow6_max = fence_pow6_max.max(row.tail_pow6.abs());
             fence_pow3_max = fence_pow3_max.max(row.tail_pow3.abs());
+            if row.switched[C_STAR].abs() > switch_max {
+                switch_max = row.switched[C_STAR].abs();
+                switch_arg = (seed, f.index);
+            }
             let e = row.hard[C_STAR].abs();
             if e > smax {
                 smax = e;
@@ -868,6 +881,14 @@ fn main() {
         fence_pow3_max
     );
     println!("# max pair separation seen: {r_max_seen_all:.4} bohr (zero control sits at {:.1})", LADDER[C_ZERO]);
+    println!(
+        "SWITCHMAX {} max|E_switch(c*)| {switch_max:.6e} at seed {:#018x} frame {} \
+         (ratio to max|E_hard(c*)| = {:.2})",
+        class.label(),
+        switch_arg.0,
+        switch_arg.1,
+        if worst_overall.0 > 0.0 { switch_max / worst_overall.0 } else { 0.0 }
+    );
 
     let g4 = total_frames >= MIN_FRAMES;
     let g5 = monotone_violations == 0;

@@ -1,0 +1,105 @@
+# curve H-H: 96 knots, R_e = 1.3887 bohr, D_e = 0.204142 Ha, worst residual 8.7e-11, 7.0 s
+# curve O-H: 96 knots, R_e = 1.9909 bohr, D_e = 0.122901 Ha, worst residual 9.9e-11, 19.8 s
+# WARNING O-O: worst residual 2.68e-6 exceeds CONVERGED_RESIDUAL 1e-9.
+# curve O-O: 96 knots, R_e = 2.4421 bohr, D_e = 0.147621 Ha, worst residual 2.7e-6, 2596.2 s
+# arm = mixed (8 H + 4 O)   ozone = fenced   seeds = 8   12 atoms in 34.6 x 20.8 bohr
+# 20000 boundaries x 64 substeps, dt = 1.0772 a.u. -> 33.35 ps
+# T_init 3000 K, T_target 300 K, tau 2000
+# trajectory dump: every grain boundary, to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/fenced
+# setup 2635.9 s
+  [0x0000000053415421] frame  2000/20000 | T  326 K | drift 2.80e-5 |  12.8 s
+  [0x0000000053415421] frame  4000/20000 | T  279 K | drift 2.91e-5 |  24.1 s
+  [0x0000000053415421] frame  6000/20000 | T  363 K | drift 4.59e-5 |  31.8 s
+  [0x0000000053415421] frame  8000/20000 | T  407 K | drift 4.41e-5 |  63.9 s
+  [0x0000000053415421] frame 10000/20000 | T  284 K | drift 6.60e-5 |  73.4 s
+  [0x0000000053415421] frame 12000/20000 | T  320 K | drift 5.87e-5 |  82.4 s
+  [0x0000000053415421] frame 14000/20000 | T  312 K | drift 6.23e-5 |  87.5 s
+  [0x0000000053415421] frame 16000/20000 | T  346 K | drift 6.56e-5 |  95.2 s
+  [0x0000000053415421] frame 18000/20000 | T  285 K | drift 6.71e-5 | 126.1 s
+  [0x0000000053415421] frame 20000/20000 | T  251 K | drift 1.37e-4 | 173.2 s
+seed 0x0000000053415421  dt 0.5386  modal-O O4H4  free O 0  free H 0  largest 8  molecules [H2 H2 O4H4]  fenced 4  drift 1.50e-4/2.04e1  |p| 3.76e-12/7.60e-8  T 251 K  173 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/fenced/seed_0x0000000053415421.traj (12.3 MB)
+  [0x0000000053415422] frame  2000/20000 | T  273 K | drift 1.26e-5 |  11.0 s
+  [0x0000000053415422] frame  4000/20000 | T  266 K | drift 1.47e-5 |  50.7 s
+  [0x0000000053415422] frame  6000/20000 | T  265 K | drift 1.45e-5 |  64.1 s
+  [0x0000000053415422] frame  8000/20000 | T  128 K | drift 1.07e-5 |  68.5 s
+  [0x0000000053415422] frame 10000/20000 | T  258 K | drift 7.33e-6 |  72.1 s
+  [0x0000000053415422] frame 12000/20000 | T  238 K | drift 1.31e-5 | 124.8 s
+  [0x0000000053415422] frame 14000/20000 | T  339 K | drift 6.18e-6 | 133.8 s
+  [0x0000000053415422] frame 16000/20000 | T  359 K | drift 1.03e-5 | 145.7 s
+  [0x0000000053415422] frame 18000/20000 | T  244 K | drift 8.09e-6 | 178.0 s
+  [0x0000000053415422] frame 20000/20000 | T  237 K | drift 1.50e-5 | 190.3 s
+seed 0x0000000053415422  dt 0.5386  modal-O  O2H  free O 0  free H 0  largest 5  molecules [H2 H2 O2H O2H3]  fenced 4  drift 4.80e-5/8.85e0  |p| 3.90e-12/8.34e-8  T 237 K  190 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/fenced/seed_0x0000000053415422.traj (12.3 MB)
+  [0x0000000053415423] frame  2000/20000 | T  393 K | drift 5.07e-5 |  16.3 s
+  [0x0000000053415423] frame  4000/20000 | T  270 K | drift 4.86e-5 |  41.2 s
+  [0x0000000053415423] frame  6000/20000 | T  288 K | drift 4.16e-5 |  58.5 s
+  [0x0000000053415423] frame  8000/20000 | T  303 K | drift 4.35e-5 |  96.6 s
+  [0x0000000053415423] frame 10000/20000 | T  334 K | drift 4.24e-5 | 100.3 s
+  [0x0000000053415423] frame 12000/20000 | T  318 K | drift 4.88e-5 | 127.0 s
+  [0x0000000053415423] frame 14000/20000 | T  308 K | drift 4.53e-5 | 131.2 s
+  [0x0000000053415423] frame 16000/20000 | T  323 K | drift 4.91e-5 | 153.6 s
+  [0x0000000053415423] frame 18000/20000 | T  255 K | drift 4.17e-5 | 181.9 s
+  [0x0000000053415423] frame 20000/20000 | T  302 K | drift 4.82e-5 | 185.6 s
+seed 0x0000000053415423  dt 0.5386  modal-O   OH  free O 0  free H 0  largest 4  molecules [H2 H2 H2 OH O3H]  fenced 4  drift 5.62e-5/1.58e0  |p| 5.32e-12/1.04e-7  T 302 K  186 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/fenced/seed_0x0000000053415423.traj (12.3 MB)
+  [0x0000000053415424] frame  2000/20000 | T  240 K | drift 3.33e-5 |   3.4 s
+  [0x0000000053415424] frame  4000/20000 | T 4166 K | drift 2.88e-5 |   6.8 s
+  [0x0000000053415424] frame  6000/20000 | T  357 K | drift 2.91e-5 |  14.0 s
+  [0x0000000053415424] frame  8000/20000 | T  316 K | drift 2.82e-5 |  16.5 s
+  [0x0000000053415424] frame 10000/20000 | T  293 K | drift 2.63e-5 |  20.5 s
+  [0x0000000053415424] frame 12000/20000 | T  321 K | drift 3.60e-5 |  31.6 s
+  [0x0000000053415424] frame 14000/20000 | T  320 K | drift 3.25e-5 |  51.3 s
+  [0x0000000053415424] frame 16000/20000 | T  341 K | drift 3.33e-5 |  64.1 s
+  [0x0000000053415424] frame 18000/20000 | T  325 K | drift 2.37e-5 |  78.3 s
+  [0x0000000053415424] frame 20000/20000 | T  312 K | drift 2.49e-5 |  99.5 s
+seed 0x0000000053415424  dt 0.5386  modal-O  O2H  free O 0  free H 0  largest 3  molecules [H2 H2 H2 O2H O2H]  fenced 4  drift 4.61e-5/2.05e0  |p| 5.95e-12/1.09e-7  T 312 K  100 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/fenced/seed_0x0000000053415424.traj (12.3 MB)
+  [0x0000000053415425] frame  2000/20000 | T  389 K | drift 2.92e-5 |   7.7 s
+  [0x0000000053415425] frame  4000/20000 | T  380 K | drift 3.26e-5 |  23.0 s
+  [0x0000000053415425] frame  6000/20000 | T  361 K | drift 7.72e-5 |  45.5 s
+  [0x0000000053415425] frame  8000/20000 | T  370 K | drift 2.29e-4 |  93.3 s
+  [0x0000000053415425] frame 10000/20000 | T  336 K | drift 2.25e-4 | 135.5 s
+  [0x0000000053415425] frame 12000/20000 | T  339 K | drift 2.29e-4 | 222.4 s
+  [0x0000000053415425] frame 14000/20000 | T  271 K | drift 2.34e-4 | 233.1 s
+  [0x0000000053415425] frame 16000/20000 | T  303 K | drift 2.28e-4 | 238.6 s
+  [0x0000000053415425] frame 18000/20000 | T  314 K | drift 2.37e-4 | 244.5 s
+  [0x0000000053415425] frame 20000/20000 | T  297 K | drift 2.37e-4 | 276.1 s
+seed 0x0000000053415425  dt 0.5386  modal-O  OH2  free O 0  free H 0  largest 5  molecules [H2 H2 OH2 O3H2]  fenced 4  drift 2.45e-4/1.33e1  |p| 5.60e-12/9.82e-8  T 297 K  276 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/fenced/seed_0x0000000053415425.traj (12.3 MB)
+  [0x0000000053415426] frame  2000/20000 | T  389 K | drift 7.41e-5 |  21.4 s
+  [0x0000000053415426] frame  4000/20000 | T  260 K | drift 7.45e-5 |  43.3 s
+  [0x0000000053415426] frame  6000/20000 | T  321 K | drift 5.38e-5 |  64.1 s
+  [0x0000000053415426] frame  8000/20000 | T  242 K | drift 2.66e-5 | 100.8 s
+  [0x0000000053415426] frame 10000/20000 | T  316 K | drift 1.44e-5 | 138.0 s
+  [0x0000000053415426] frame 12000/20000 | T  306 K | drift 2.86e-5 | 167.2 s
+  [0x0000000053415426] frame 14000/20000 | T  322 K | drift 6.62e-5 | 179.9 s
+  [0x0000000053415426] frame 16000/20000 | T  302 K | drift 7.87e-5 | 198.7 s
+  [0x0000000053415426] frame 18000/20000 | T  320 K | drift 1.08e-4 | 206.1 s
+  [0x0000000053415426] frame 20000/20000 | T  259 K | drift 8.43e-5 | 240.9 s
+seed 0x0000000053415426  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 4  drift 1.13e-4/1.22e1  |p| 3.91e-12/5.67e-8  T 259 K  241 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/fenced/seed_0x0000000053415426.traj (12.3 MB)
+  [0x0000000053415427] frame  2000/20000 | T  306 K | drift 4.12e-5 |  27.4 s
+  [0x0000000053415427] frame  4000/20000 | T  244 K | drift 6.43e-6 | 108.6 s
+  [0x0000000053415427] frame  6000/20000 | T  298 K | drift 9.97e-6 | 131.6 s
+  [0x0000000053415427] frame  8000/20000 | T  262 K | drift 2.57e-5 | 192.6 s
+  [0x0000000053415427] frame 10000/20000 | T  355 K | drift 5.81e-5 | 203.5 s
+  [0x0000000053415427] frame 12000/20000 | T  260 K | drift 1.61e-4 | 206.5 s
+  [0x0000000053415427] frame 14000/20000 | T  275 K | drift 2.06e-4 | 224.2 s
+  [0x0000000053415427] frame 16000/20000 | T  338 K | drift 1.49e-4 | 229.7 s
+  [0x0000000053415427] frame 18000/20000 | T  300 K | drift 1.48e-4 | 274.9 s
+  [0x0000000053415427] frame 20000/20000 | T  327 K | drift 1.47e-4 | 317.5 s
+seed 0x0000000053415427  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 4  drift 2.26e-4/8.22e0  |p| 8.02e-12/1.02e-7  T 327 K  317 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/fenced/seed_0x0000000053415427.traj (12.3 MB)
+  [0x0000000053415428] frame  2000/20000 | T  169 K | drift 7.66e-6 |   2.2 s
+  [0x0000000053415428] frame  4000/20000 | T  155 K | drift 2.73e-6 |   6.0 s
+  [0x0000000053415428] frame  6000/20000 | T  233 K | drift 7.31e-5 |  11.0 s
+  [0x0000000053415428] frame  8000/20000 | T  372 K | drift 7.48e-5 |  17.1 s
+  [0x0000000053415428] frame 10000/20000 | T  288 K | drift 7.29e-5 |  52.4 s
+  [0x0000000053415428] frame 12000/20000 | T  338 K | drift 7.19e-5 | 105.0 s
+  [0x0000000053415428] frame 14000/20000 | T  307 K | drift 7.18e-5 | 154.7 s
+  [0x0000000053415428] frame 16000/20000 | T  287 K | drift 6.87e-5 | 209.3 s
+  [0x0000000053415428] frame 18000/20000 | T  454 K | drift 5.12e-5 | 235.1 s
+  [0x0000000053415428] frame 20000/20000 | T  249 K | drift 5.52e-5 | 277.5 s
+seed 0x0000000053415428  dt 0.5386  modal-O O4H2  free O 0  free H 0  largest 6  molecules [H2 H2 H2 O4H2]  fenced 4  drift 1.28e-4/1.36e1  |p| 4.97e-12/1.02e-7  T 249 K  277 s
+# dumped 20000 frames to /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/traj/fenced/seed_0x0000000053415428.traj (12.3 MB)

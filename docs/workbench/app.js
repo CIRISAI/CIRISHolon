@@ -358,6 +358,31 @@ const RECORD = {
       + "exists because the run log carried no provenance line, and 'same commit' is the "
       + "entire content of a one-variable control.",
   },
+  ruling: {
+    value: "FALSE on this seed",
+    what: "the causal claim, RULED — and by the control alone",
+    cite: "conformance/water_observatory/CENSUS_RESULTS.md:830",
+    note: "§12.3's branch (b), staked before the data existed: BOTH arms certify block "
+      + "0x0062 — the same three atoms — CERTIFIED-STRICT, control 0.000/111 in each. The "
+      + "ruling rests on the CONTROL and needs nothing from the treatment arm: arm B has "
+      + "dE₄ evaluations 0, conserves momentum at 3.84e-5 of bound, and certifies water "
+      + "strict at 923.9 fs.",
+  },
+  notRuled: {
+    value: "2599.8 fs vs 923.9 fs",
+    what: "what the four-body term DOES — explicitly NOT ruled",
+    cite: "conformance/water_observatory/CENSUS_RESULTS.md:819",
+    // The DISPLAY value pairs both numbers because the comparison is the point; the
+    // artifact's row carries them in its own columns, so the checkable token is the one
+    // that is distinctive to that line.
+    match: "2599.8",
+    note: "the treated arm's molecule held longer, and that difference may NOT be "
+      + "attributed to the term: the treated run ALONE leaves its declared 2D plane, "
+      + "reaching 11.49 bohr against a 12.0 half-depth from frame 4230 — just after the "
+      + "term first fires — while seventeen other trajectories hold z bit-exactly for "
+      + "20,000 frames. The one-variable design was defeated by the treatment producing a "
+      + "second variable, so a bent triatomic had room the control could not reach.",
+  },
   legB: {
     value: "NOT CLOSED",
     what: "Leg B, the fiber-invariance test — on BOTH arms",

@@ -1,11 +1,14 @@
 # SCHWINGER-3 — adjudicated: S1 BRANCH (a), the crystal referee HOLDS
 
 *2026-08-31. Prereg frozen in this directory (`SCHWINGER3_PREREG.md`);
-instrument at CIRISOntology `scratchpad/crystal/dmrg_schwinger.py`, whose
+instrument MIRRORED IN-REPO at `instrument/dmrg_schwinger.py` (with the run
+log and sha256 provenance beside it, added 2026-09-01 so this bank is
+checkable from a clean clone; original at CIRISOntology
+`scratchpad/crystal/dmrg_schwinger.py`), whose
 running bytes were banked mid-flight at ac072ce (amendment A1's warm-start
 χ-ladder and adaptive tolerance, plus the eigsh rung repair, all pre-data
 or instrument-schedule-only per the amendment text). Run log:
-`scratchpad/crystal/schwinger3_run.log`. Zero VOIDs.*
+`instrument/schwinger3_run.log` (mirrored; original at CIRISOntology). Zero VOIDs.*
 
 ## The verdict
 

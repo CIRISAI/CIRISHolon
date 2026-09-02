@@ -1,0 +1,16 @@
+# Provenance: evidence mirrored from the sibling repository
+
+Copied byte-identical 2026-09-01 from CIRISAI/CIRISOntology so this
+repository's banked claims are checkable from a clean clone of THIS repo.
+Sources: scratchpad/crystal/ (instrument banked mid-run at Ontology
+ac072ce) and scratchpad/qasm/ (adjudication records, tracked there).
+The Ontology copies remain the originals; these are mirrors, and a
+divergence between them is a defect in whichever moved.
+
+10fffbbcba14c485c3f5bae32f3387d0b0d90e9ffe73f956b0b2d4236747cdd4  conformance/crystal/instrument/dmrg_schwinger.py
+9048d2f025242543b0030a8d47bccdb751c4ccbacc4eafa279e02b407d641818  conformance/crystal/instrument/schwinger3_run.log
+6f81d6f7c3165dc89bfbfe7c87985b3a031eaa24d17976abed95d13d1070dfd4  conformance/qasm/upstream/BATTLERIG.md
+f228b784fb43864b9defddf9975c05da3844901ca71f802b5e9593dee9ab5bed  conformance/qasm/upstream/QASM1_PREREG.md
+074a5b282e4e4befd5cef85f2d81fee2d606dc40f958d415477dbce6a80da13c  conformance/qasm/upstream/QASM1_RESULTS.md
+27ecfd1685c053f6f353b9ce6cc7b127e39cddef5381da7420938ea6232f0ecc  conformance/qasm/upstream/QASM2_PREREG.md
+45f0ea551933339ce85d1f914f47d5b0a77dc80d0245e0324843ee2ba34a20ba  conformance/qasm/upstream/QASM2_RESULTS.md

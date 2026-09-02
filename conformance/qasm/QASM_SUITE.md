@@ -1,8 +1,10 @@
 # The QASM conformance suite
 
 The stratified simulator's standing acceptance record and harness. Twelve
-pre-registered arms, adjudicated upstream (CIRISOntology `scratchpad/qasm/`:
-QASM-1 seven of seven, QASM-2 five of five), all CONFIDENCE:
+pre-registered arms, adjudicated upstream (QASM-1 seven of seven, QASM-2
+five of five; the adjudication records are MIRRORED IN-REPO at `upstream/`
+with sha256 provenance — originals at CIRISOntology `scratchpad/qasm/`),
+all CONFIDENCE:
 
 - **Conformance**: max probability error 0.0 vs qiskit exact statevector over
   650 fresh seeded circuits across all four tiers (classical, tableau, magic,

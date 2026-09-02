@@ -25,7 +25,7 @@ this exact pinned setup, against measured values. No engine claims, no descripto
 | Cell | 9-atom trigonal cell, P3₁21 (ITA setting; Wyckoff Si 3a (u,0,⅓), O 6c), ibrav=4 |
 | Starting geometry | Levien–Prewitt–Weidner (1980): a=4.9134 Å, c=5.4052 Å, u_Si=0.4697, O=(0.4133, 0.2672, 0.2145) — O_z is 1/3−z_LPW, the origin mapping into the ITA P3₁21 setting, verified by the bond network (Si–O 1.6052/1.6134 Å, Si–O–Si 143.60°, O–Si–O 108.8–110.6°) |
 | Machine | 24-core i9-13900HX, 31 GB RAM; `mpirun -np 8` (+`-nk 4` pools for strained cells) |
-| Working dir | `/tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/dft_quartz/` (inputs, outputs, pseudos, fit scripts) |
+| Working dir | DEAD — was a per-session scratchpad (`.../scratchpad/dft_quartz/`), since cleaned; the inputs, outputs, pseudos and fit scripts are LOST and this document's tables are the surviving transcription (M-STALE-INSTRUMENT, the widened variant). A re-derivation must regenerate from the recipe in this file; the QE setup route is banked in the house memory. |
 
 ## Convergence evidence (not asserted — measured)
 

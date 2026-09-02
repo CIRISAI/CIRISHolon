@@ -1,0 +1,72 @@
+x=  4.0 N= 40 chi= 40  M/g=0.689405  [checkpoint]
+x=  4.0 N= 40 chi= 64  M/g=0.689405  [checkpoint]
+x=  4.0 N= 56 chi= 40  M/g=0.681667
+x=  4.0 N= 56 chi= 64  M/g=0.681667
+x=  4.0 N= 72 chi= 40  M/g=0.678386
+x=  4.0 N= 72 chi= 64  M/g=0.678386
+x=  9.0 N= 60 chi= 40  M/g=0.655253
+x=  9.0 N= 60 chi= 64  M/g=0.655253
+x=  9.0 N= 84 chi= 40  M/g=0.646645
+x=  9.0 N= 84 chi= 64  M/g=0.646645
+x=  9.0 N=108 chi= 40  M/g=0.643018
+x=  9.0 N=108 chi= 64  M/g=0.643017
+x= 16.0 N= 80 chi= 40  M/g=0.638045
+x= 16.0 N= 80 chi= 64  M/g=0.638043
+x= 16.0 N=112 chi= 40  M/g=0.628999
+x= 16.0 N=112 chi= 64  M/g=0.628995
+Traceback (most recent call last):
+  File "/home/emoore/CIRISOntology/scratchpad/crystal/dmrg_schwinger.py", line 271, in <module>
+    m, e0, e1, st = gap(n_sites, x, chi, states=st,
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/emoore/CIRISOntology/scratchpad/crystal/dmrg_schwinger.py", line 224, in gap
+    e1, es = dmrg(n, x, chi, penalty=gs, w_pen=20.0 * scale, mutate=mutate, seed=11,
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/emoore/CIRISOntology/scratchpad/crystal/dmrg_schwinger.py", line 191, in dmrg
+    val, vec = eigsh(op, k=1, which="SA", v0=v0, maxiter=300, tol=tol)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/emoore/.local/lib/python3.12/site-packages/scipy/sparse/linalg/_eigen/arpack/arpack.py", line 1704, in eigsh
+    params.iterate()
+  File "/home/emoore/.local/lib/python3.12/site-packages/scipy/sparse/linalg/_eigen/arpack/arpack.py", line 579, in iterate
+    self._raise_no_convergence()
+  File "/home/emoore/.local/lib/python3.12/site-packages/scipy/sparse/linalg/_eigen/arpack/arpack.py", line 386, in _raise_no_convergence
+    raise ArpackNoConvergence(msg % (num_iter, k_ok, self.k), ev, vec)
+scipy.sparse.linalg._eigen.arpack.arpack.ArpackNoConvergence: ARPACK error -1: No convergence (301 iterations, 0/1 eigenvectors converged)
+x=  4.0 N= 40 chi= 40  M/g=0.689405  [checkpoint]
+x=  4.0 N= 40 chi= 64  M/g=0.689405  [checkpoint]
+x=  4.0 N= 56 chi= 40  M/g=0.681667  [checkpoint]
+x=  4.0 N= 56 chi= 64  M/g=0.681667  [checkpoint]
+x=  4.0 N= 72 chi= 40  M/g=0.678386  [checkpoint]
+x=  4.0 N= 72 chi= 64  M/g=0.678386  [checkpoint]
+x=  9.0 N= 60 chi= 40  M/g=0.655253  [checkpoint]
+x=  9.0 N= 60 chi= 64  M/g=0.655253  [checkpoint]
+x=  9.0 N= 84 chi= 40  M/g=0.646645  [checkpoint]
+x=  9.0 N= 84 chi= 64  M/g=0.646645  [checkpoint]
+x=  9.0 N=108 chi= 40  M/g=0.643018  [checkpoint]
+x=  9.0 N=108 chi= 64  M/g=0.643017  [checkpoint]
+x= 16.0 N= 80 chi= 40  M/g=0.638045  [checkpoint]
+x= 16.0 N= 80 chi= 64  M/g=0.638043  [checkpoint]
+x= 16.0 N=112 chi= 40  M/g=0.628999  [checkpoint]
+x= 16.0 N=112 chi= 64  M/g=0.628995  [checkpoint]
+x= 16.0 N=144 chi= 40  M/g=0.625199
+x= 16.0 N=144 chi= 64  M/g=0.625193
+{
+ "points": [
+  {
+   "x": 4.0,
+   "M_inf": 0.6641867882689296,
+   "delta": 0.0032818200883433235
+  },
+  {
+   "x": 9.0,
+   "M_inf": 0.6272403638781507,
+   "delta": 0.0036280901232146334
+  },
+  {
+   "x": 16.0,
+   "M_inf": 0.608619613259747,
+   "delta": 0.0038023669318647535
+  }
+ ],
+ "voids": [],
+ "verdict": "S1 BRANCH(a): M_V/g = 0.553116 (target 0.564190 +- 0.05)"
+}

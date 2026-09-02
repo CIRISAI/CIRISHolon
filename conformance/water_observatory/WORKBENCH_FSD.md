@@ -379,9 +379,12 @@ screen. The honest ladder at launch:
 | the cube (1 km) | the continuum face of the ladder | "this face becomes live as each rung beneath it certifies" |
 
 **The one law that makes this hero possible now:** no tier ever fakes. A zoom
-band either runs its certified physics or wears its fence — a fence with an
-owner and an exit is HONEST CONTENT on this site, and the ladder climbing rung
-by rung IS the site's story. WB-7 (no synthetic telemetry) applies at every
+band either runs its certified physics or wears its fence — and a fence is a
+BUG UNDER REPAIR, never content (operator's law, 2026-09-02: any "content"
+saying "we refuse, and the honesty is the point" is not content, it is a
+bug). A displayed fence states its debt, its owner, and the build paying it —
+present tense — and the site's story is the ladder CLIMBING: bands going
+live, fences being deleted. WB-7 (no synthetic telemetry) applies at every
 altitude; the gravity-tier exhibit (per-particle vs column-sum) already shows
 how a scale-dependent truth is displayed without faking dynamics.
 

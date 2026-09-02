@@ -617,6 +617,29 @@ pub fn pair_point(a: Species, b: Species, r: f64) -> PairPoint {
 /// (indium at 3.98e-1, O-O at 1.6e-5 are what this bar exists to refuse). A residual
 /// that must go DEEPER than the floor is not this tier's job: it overflows to the
 /// high-precision referee tier by lease, never by moving this constant.
+///
+/// # O-O IS NOT AN OVERFLOW CASE, AND NOT SIMPLY A BUDGET ONE EITHER
+///
+/// The curve this bar refuses has TWO kinds of failing knot, and the distinction decides
+/// what would fix them. Measured 2026-09-01/02:
+///
+/// * The FIRST failure (knot 59 of 96, r = 6.1651 bohr) is `Limit::Budget`: a ladder shows
+///   the residual falling 3.07e-5 to 9.28e-11 with the energy settling, converging at 6633
+///   iterations. More iterations fix it, and both 4000 and 5000 are below what it needs —
+///   which is why raising the default from 4000 to 5000 had a blast radius of exactly zero.
+/// * The DEEP dissociation knots — nine of them, still capped at a budget of 20000 — are
+///   structurally unconvergible. The cryo-HO arm located them: the O-O curve is a triplet
+///   at its well (`<S^2>` = 2.000000000) and crosses spin three times along its length, and
+///   the last crossing is where these caps live. At dissociation the multiplet is
+///   degenerate, there is no gap, and NO BUDGET BUYS CONVERGENCE.
+///
+/// So the disclosure is "capped BECAUSE degenerate", not "capped, try harder". And the
+/// consequence for this constant's own doctrine is the opposite of what it looks like:
+/// degeneracy is not a precision problem, so a high-precision tier does not create a gap
+/// where the multiplet has none. Those knots are no more convergible in double-double than
+/// in f64. What they would need is a different METHOD — spin-sector targeting, or state
+/// averaging — and pricing a DD lease for them would buy nothing. Credit: the cryo-HO
+/// spin-sector scan (`conformance/atomworld/CRYO_HO_RESULTS.md`, arm 2).
 pub const CONVERGED_RESIDUAL: f64 = 10.0 * crate::fci::DAVIDSON_EXPANSION_FLOOR;
 
 /// The declared threshold below which a dip in the curve is not called a well.

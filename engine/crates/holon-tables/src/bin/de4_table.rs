@@ -200,8 +200,9 @@ fn main() {
     println!("  surface ready in {:.1} s", t0.elapsed().as_secs_f64());
 
     println!("\n--- generating ---");
-    let mut spec = SurfaceSpec::new(&surface, grid.clone()).with_warm(warm);
-    spec.device = device;
+    let spec = SurfaceSpec::new(&surface, grid.clone())
+        .with_warm(warm)
+        .with_device(device);
     let mut arena = Arena::new();
     let mut probe = WorkerProbe::new();
     let t1 = Instant::now();

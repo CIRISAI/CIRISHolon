@@ -326,6 +326,14 @@ impl<'s, S: Surface + ?Sized> SurfaceSpec<'s, S> {
         self
     }
 
+    /// Declare the device class (D0). A builder rather than a field poke so the whole spec
+    /// reads as one chain — and so a caller merging this alongside another lane's builder
+    /// call resolves it as one line instead of a statement wedged between two.
+    pub fn with_device(mut self, device: DeviceClass) -> Self {
+        self.device = device;
+        self
+    }
+
     pub fn with_mutation(mut self, m: Option<Mutation>) -> Self {
         self.mutation = m;
         self

@@ -38,6 +38,10 @@
 // core through it rather than through a copy of it.
 pub use holon_render;
 
+/// The frame buffer: the one thing the drawing layer consumes (Route B). Not behind
+/// `render`, because the WORKBENCH producer fills it without any of the render machinery
+/// and a headless consumer should be able to name the type.
+pub mod frame;
 pub mod world;
 
 #[cfg(feature = "render")]

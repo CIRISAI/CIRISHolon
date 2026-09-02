@@ -219,27 +219,29 @@ fn spawn_box_edges(commands: &mut Commands, assets: &SceneAssets) {
 /// Move every atom entity to where the simulation says its atom is, show the live ones,
 /// hide the rest, and repaint only the ones whose state changed.
 pub fn sync_atoms(
-    world: Res<AtomWorld>,
+    frame: Res<crate::frame::FrameBuffer>,
     assets: Res<SceneAssets>,
     mut table: ResMut<AtomEntities>,
     mut commands: Commands,
     mut transforms: Query<&mut Transform>,
     mut visibility: Query<&mut Visibility>,
 ) {
-    let s = &world.sim;
-    // An atom is drawn as bonded when it is a member of ANY bonded pair. That is the
-    // pair predicate's own reading, not a distance test of this module's invention.
+    // READS THE FRAME BUFFER (Route B). An atom is drawn as bonded when it is a member of
+    // ANY bonded pair — the pair predicate's own reading, applied by the producer, never a
+    // distance test of this module's invention.
     let mut bonded = vec![false; DEFAULT_SCENE_ATOMS];
-    for p in &s.pairs[..s.pair_count] {
-        if p.bonded {
-            bonded[p.i] = true;
-            bonded[p.j] = true;
+    for b in &frame.bonds {
+        if b.i < bonded.len() {
+            bonded[b.i] = true;
+        }
+        if b.j < bonded.len() {
+            bonded[b.j] = true;
         }
     }
 
     for i in 0..DEFAULT_SCENE_ATOMS {
         let e = table.atoms[i];
-        let live = i < s.n;
+        let live = i < frame.atoms.len();
         if let Ok(mut vis) = visibility.get_mut(e) {
             *vis = if live {
                 Visibility::Visible
@@ -250,14 +252,14 @@ pub fn sync_atoms(
         if !live {
             continue;
         }
-        let a = &s.atoms[i];
-        let radius = a.radius() as f32;
+        let a = &frame.atoms[i];
+        let radius = a.radius as f32;
         if let Ok(mut tf) = transforms.get_mut(e) {
             tf.translation = to_world(a.x, a.y, a.z);
             tf.scale = Vec3::splat(radius);
         }
-        let z = a.species.z;
-        let look = if s.grabbed == Some(i) {
+        let z = a.z_species;
+        let look = if frame.grabbed == Some(i) {
             AtomLook::Held
         } else if bonded[i] {
             AtomLook::Bonded
@@ -279,7 +281,9 @@ pub fn sync_atoms(
     // The hand: a thin rod from the held atom to the anchor, and a marker on the anchor.
     // Drawn because the spring is a term in the ledger — if the user can see W_ext move,
     // they should be able to see what moved it.
-    let held = s.grabbed.filter(|&i| i < s.n);
+    // The producer already bounds-checks the held index against its own live count, so
+    // this is the buffer's answer rather than a second guard that could disagree with it.
+    let held = frame.grabbed;
     let show = held.is_some();
     for e in [table.spring, table.anchor] {
         if let Ok(mut vis) = visibility.get_mut(e) {
@@ -291,9 +295,9 @@ pub fn sync_atoms(
         }
     }
     if let Some(i) = held {
-        let a = &s.atoms[i];
+        let Some(a) = frame.atoms.get(i) else { return };
         let from = to_world(a.x, a.y, a.z);
-        let to = to_world(s.anchor.0, s.anchor.1, s.anchor.2);
+        let to = to_world(frame.anchor.0, frame.anchor.1, frame.anchor.2);
         if let Ok(mut tf) = transforms.get_mut(table.spring) {
             *tf = rod_between(from, to, SPRING_RADIUS);
         }

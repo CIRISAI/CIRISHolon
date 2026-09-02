@@ -189,6 +189,42 @@ pub struct AtomWorld {
 }
 
 impl AtomWorld {
+    /// PRODUCE the frame buffer from this world's own Sim.
+    ///
+    /// The atoms3d producer. The workbench has a different one — JS reading the committed
+    /// cdylib — and they fill the same type, which is what makes "one consumer, two
+    /// producers" true rather than aspirational. Nothing here decides anything the
+    /// renderer could not: the bond criterion is the engine's, the radius is the atom's
+    /// own, and the held index is the Sim's.
+    pub fn fill_frame(&self, out: &mut crate::frame::FrameBuffer) {
+        let s = &self.sim;
+        out.atoms.clear();
+        out.bonds.clear();
+        for i in 0..s.n {
+            let a = &s.atoms[i];
+            out.atoms.push(crate::frame::FrameAtom {
+                x: a.x,
+                y: a.y,
+                z: a.z,
+                radius: a.radius(),
+                z_species: a.species.z,
+            });
+        }
+        let d_e = s.table().d_e.max(1e-12);
+        for p in &s.pairs[..s.pair_count] {
+            if p.bonded {
+                out.bonds.push(crate::frame::FrameBond {
+                    i: p.i,
+                    j: p.j,
+                    depth: (-p.e_bond() / d_e).clamp(0.0, 1.0) as f32,
+                });
+            }
+        }
+        out.grabbed = s.grabbed.filter(|&i| i < s.n);
+        out.anchor = s.anchor;
+        out.frame = s.frame;
+    }
+
     /// Build the scene: generate the exact curve, adopt the clocks it implies, put the
     /// atoms in a cube.
     ///

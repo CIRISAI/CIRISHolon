@@ -48,12 +48,19 @@ pub fn run_app() {
     .add_plugins(hud::plugin)
     .insert_resource(ClearColor(INK))
     .insert_resource(AtomWorld::new(OPENING_ATOMS))
+    .init_resource::<crate::frame::FrameBuffer>()
     .add_systems(Startup, setup)
     .add_systems(
         Update,
         (
             calibrate,
             advance_world,
+            // PRODUCE, then draw. The buffer is filled from this page's own Sim between
+            // stepping and drawing, so the renderer never sees a Sim and the ordering
+            // makes "the drawn scene is the stepped scene" a schedule property rather
+            // than a hope. The workbench's producer sits in this slot instead, filling
+            // the same type from the committed cdylib.
+            fill_frame_from_world,
             scene::sync_atoms,
             bonds::sync_bonds,
         )
@@ -156,6 +163,15 @@ fn calibrate(mut world: ResMut<AtomWorld>) {
 }
 
 /// Advance one frame of MEASURED wall time.
+/// atoms3d's producer: fill the frame buffer from the `AtomWorld` this page owns.
+///
+/// One line, because `AtomWorld::fill_frame` owns the mapping and this only says WHEN.
+/// The workbench replaces this system and nothing else — same buffer, same consumers, a
+/// different source — which is the whole of Route B's "one consumer, two producers".
+fn fill_frame_from_world(world: Res<AtomWorld>, mut frame: ResMut<crate::frame::FrameBuffer>) {
+    world.fill_frame(&mut frame);
+}
+
 fn advance_world(time: Res<Time>, mut world: ResMut<AtomWorld>) {
     // The calibration frame is not a physics frame: its interval is dominated by the
     // burst, and spending it as sim-time would produce a visible jump on the first

@@ -57,31 +57,34 @@ Both arms report:
 That is **3.7 orders past the threshold the code sets for itself**, on the curve governing
 the oxygen aggregation that dominates these scenes.
 
-**And the EXIT, which the warning does not state and which changes what the number means.**
-Routed from B1b's banked W1 run: the O–O solve exits on **`IterationCap` at 5000** — it is
-BUDGET-LIMITED, not stagnated. Those are different facts and the discriminator law exists
-because they are: stagnation would mean more budget buys nothing and the curve is as good as
-this method gets, whereas a cap means the residual is a spending decision and a deeper budget
-would move it. So the caveat on every certification in this campaign is "computed under a
-curve that ran out of iterations", not "computed under a curve that cannot converge".
+**And the EXIT, which the warning did not state and which changes what the number means.**
+The O–H and H–H curves exit `Converged`. The O–O curve exits **`IterationCap`** — and at
+every reachable budget: 12 of its 96 knots cap at 4000 and the same 12 at 5000, with nine
+still capping at 20000 (measured by the `saturation2-water` lane).
 
-**My runner cannot print this today, and that is a plumbing gap rather than an oversight.**
-`holon_chem::pair::PairMeta` — everything `generate_pair_table` hands back — carries
-`worst_residual` and no exit field at all. The `davidson_iters` that would say so lives in a
-different struct and never reaches the caller. So "print the exit beside the residual" needs
-`PairMeta` to carry it first; that is a `holon-chem` change and is owed there, not here.
-Recorded rather than silently left undone.
+Three consequences, and the third is the one that touches this census:
 
-**It is IDENTICAL in both arms** — 4.81e-6 in each — so it cannot differentiate them, and
-the RELATIVE comparison between A and B is unaffected. What it qualifies is any ABSOLUTE
-claim about water: a certified molecule from these runs is certified under an O–O curve
-that has not met its own convergence bar, and that belongs in the verdict rather than only
-in the run log.
+1. **Budget-limited, not stagnated.** `Stagnated` would mean more iterations buy nothing and
+   the caveat is structural; a cap means the residual is a spending decision. So the caveat
+   is "ran out of iterations", which is weaker and fixable.
+2. **The residual is NOT A BOUND.** Under thick restart a capped residual is a SAMPLE of a
+   non-monotone sequence — not an upper bound on the error in either direction. So 4.81e-6
+   may not be quoted as an error bar; it is a snapshot of where the solve stopped.
+3. **The unconverged region is exactly the region this census's bond criterion reads.** The
+   well and everything inside `R_e` converge at 1e-10; the caps are in the DISSOCIATION TAIL
+   past about 6 bohr, at a magnitude of 4.3e-6 Ha. And `Sim::refresh_pairs` decides `bonded`
+   from `e_rel < 0` and `r < r_outer` — the outer classical turning point, which lives in
+   that tail. **So this does touch the certifications rather than sitting harmlessly beside
+   them**, and the honest statement is that the membership view's edge criterion is
+   evaluated on the part of the O–O curve that did not converge.
 
-*(For the record, `workbench-engine` reported the two arms at 2.68e-6 and 4.81e-6. The
-2.68e-6 is the earlier `fenced` arm at `a3b3d4b`, a different commit; both of the
-one-variable arms are 4.81e-6. The distinction matters because a differing residual would
-have been a second variable and there is not one.)*
+*(A correction I owe here: I previously reported that `PairMeta` carries no exit field and
+that printing the exit needed a chem change. That was false — `pub exit: SolveExit` has been
+at `pair.rs:660` since `75cd8ff`. My grep read the first 22 lines of a 64-line struct and I
+reported the absence as established. What was actually missing was narrower — the exit was
+not written into the shipped JSON — and `saturation2-water` had already fixed that at
+`e3d7eb6`. The runner now prints `worst residual X (exit Y)` from the field that was always
+there.)*
 
 ## What this file does not establish
 

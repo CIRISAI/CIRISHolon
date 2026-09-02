@@ -750,13 +750,21 @@ oxygen aggregation these scenes are made of. It is IDENTICAL in the two arms, so
 differentiate them and the relative comparison is unaffected; what it qualifies is the
 ABSOLUTE claim.
 
-The warning does not say WHICH EXIT produced it, and the exit changes the meaning. Routed
-from B1b's banked W1 run: the O–O solve exits on **`IterationCap` at 5000** — budget-limited,
-not stagnated. Stagnation would mean the curve is as good as this method gets; a cap means
-the residual is a spending decision. So every certification here is qualified by "computed
-under a curve that ran out of iterations", which is a weaker and more fixable caveat than
-"under a curve that cannot converge". `PairMeta` carries no exit field, so the runner cannot
-echo it without a `holon-chem` change; that is owed there. A certified water molecule here is certified under an unconverged O–O curve,
+The warning does not say WHICH EXIT produced it, and the exit changes the meaning. The O–O
+curve exits **`IterationCap`** at every reachable budget — 12 of 96 knots cap at 4000 and at
+5000, nine still at 20000. That is budget-limited rather than stagnated, so the caveat is
+"ran out of iterations", weaker and fixable.
+
+**But it is not harmless here, and the reason is specific to this instrument.** A capped
+residual under thick restart is a SAMPLE of a non-monotone sequence, not an upper bound, so
+4.81e-6 may not be quoted as an error bar. And the caps sit in the DISSOCIATION TAIL past
+about 6 bohr (the well and everything inside `R_e` converge at 1e-10), at 4.3e-6 Ha — while
+`Sim::refresh_pairs` decides `bonded` from `e_rel < 0` and `r < r_outer`, the outer turning
+point, which lives in that tail. **The membership view's edge criterion is therefore
+evaluated on the part of the O–O curve that did not converge**, and every certification in
+this document inherits that. Established by the `saturation2-water` lane; see
+`PROVENANCE_de4_arms.md`, which also carries my retraction of a false claim that `PairMeta`
+had no exit field. A certified water molecule here is certified under an unconverged O–O curve,
 and that belongs beside the certification rather than only in the run log.
 
 Raised by `workbench-engine`, who stopped before captioning a page with it and asked. The

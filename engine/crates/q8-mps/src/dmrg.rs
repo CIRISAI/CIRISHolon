@@ -308,6 +308,8 @@ pub struct DmrgResult {
     pub bond_dims: Vec<usize>,
     /// Worst Lanczos residual across all two-site solves.
     pub worst_lanczos_residual: f64,
+    /// Lanczos iterations summed over every two-site solve: the sweep's true price.
+    pub lanczos_iterations_total: usize,
 }
 
 /// Compute right environments for an arbitrary MPO.
@@ -341,7 +343,7 @@ fn two_site_update_mpo(
     absorb_s_left: bool,
     left_env: &Env,
     right_env: &Env,
-) -> (f64, f64, f64, f64) {
+) -> (f64, f64, f64, f64, usize) {
     let chi_l = tensors[j].chi_l;
     let chi_r = tensors[j + 1].chi_r;
     let mid = tensors[j].chi_r;
@@ -378,7 +380,7 @@ fn two_site_update_mpo(
     tensors[j] = a_left;
     tensors[j + 1] = a_right;
 
-    (gs.energy, discarded, gs.residual, spectrum_floor)
+    (gs.energy, discarded, gs.residual, spectrum_floor, gs.iterations)
 }
 
 /// Run two-site DMRG optimization sweeps for an arbitrary Matrix Product Operator (MPO).
@@ -398,6 +400,7 @@ pub fn dmrg_sweep(
     let mut spectrum_floor = vec![0.0; l.saturating_sub(1)];
     let mut energy_history = Vec::with_capacity(config.max_sweeps);
     let mut worst_lanczos_residual = 0.0f64;
+    let mut lanczos_iterations_total = 0usize;
 
     for sweep in 0..config.max_sweeps {
         sweeps_used = sweep + 1;
@@ -406,7 +409,7 @@ pub fn dmrg_sweep(
         let right_envs = all_right_envs_mpo(&tensors, mpo);
         let mut left_env = mps::trivial_left_env_mpo(mpo.sites[0].d_l);
         for j in 0..(l - 1) {
-            let (e, dw, resid, sf) = two_site_update_mpo(
+            let (e, dw, resid, sf, iters) = two_site_update_mpo(
                 &mut tensors,
                 &mpo.sites[j],
                 &mpo.sites[j + 1],
@@ -420,6 +423,7 @@ pub fn dmrg_sweep(
             discarded[j] = dw;
             spectrum_floor[j] = sf;
             worst_lanczos_residual = worst_lanczos_residual.max(resid);
+            lanczos_iterations_total += iters;
             if config.policy == RefusalPolicy::Typed && dw > REFUSAL_THRESHOLD {
                 return Err(Refusal { bond: j, weight: dw });
             }
@@ -430,7 +434,7 @@ pub fn dmrg_sweep(
         let left_envs = all_left_envs_mpo(&tensors, mpo);
         let mut right_env = mps::trivial_right_env_mpo(mpo.sites[l - 1].d_r);
         for j in (0..(l - 1)).rev() {
-            let (e, dw, resid, sf) = two_site_update_mpo(
+            let (e, dw, resid, sf, iters) = two_site_update_mpo(
                 &mut tensors,
                 &mpo.sites[j],
                 &mpo.sites[j + 1],
@@ -444,6 +448,7 @@ pub fn dmrg_sweep(
             discarded[j] = dw;
             spectrum_floor[j] = sf;
             worst_lanczos_residual = worst_lanczos_residual.max(resid);
+            lanczos_iterations_total += iters;
             if config.policy == RefusalPolicy::Typed && dw > REFUSAL_THRESHOLD {
                 return Err(Refusal { bond: j, weight: dw });
             }
@@ -475,6 +480,7 @@ pub fn dmrg_sweep(
         spin_orbital_occupations: spin_occ,
         bond_dims,
         worst_lanczos_residual,
+        lanczos_iterations_total,
     })
 }
 

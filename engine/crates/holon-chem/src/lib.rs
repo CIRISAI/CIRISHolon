@@ -45,6 +45,7 @@ pub mod fci;
 pub mod h2;
 pub mod ion_table;
 pub mod ions;
+pub mod lanes;
 pub mod md;
 pub mod ooh;
 pub mod ozone;

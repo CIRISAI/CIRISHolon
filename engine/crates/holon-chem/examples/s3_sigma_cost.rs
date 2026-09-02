@@ -68,8 +68,8 @@ fn main() {
     let n_det = space.n_det;
     println!("species        {}", symbols.join(","));
     println!("n_orb          {n_orb}");
-    println!("n_alpha_str    {}", space.alpha.len());
-    println!("n_beta_str     {}", space.beta.len());
+    println!("n_alpha_str    {}", space.alpha().len());
+    println!("n_beta_str     {}", space.beta().len());
     println!("n_det          {n_det}");
     println!("assembly       {:.3} s", assembly.as_secs_f64());
     println!(

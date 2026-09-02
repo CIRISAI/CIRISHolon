@@ -33,7 +33,6 @@
 
 use crate::fci::{CiInts, FciSpace};
 use crate::scalar::Scalar;
-use crate::tier::sigma_direct_t;
 
 pub use holon_device::DeviceClass;
 
@@ -59,27 +58,32 @@ pub trait SigmaOp<T: Scalar> {
 /// This is a wrapper and nothing more — it must stay one. The whole value of the refactor is
 /// that the CPU path through the new driver is bit-identical to the old one, and any
 /// "improvement" made here while passing through would destroy that property silently.
-pub struct CpuSigma<'a, T: Scalar> {
-    pub space: &'a FciSpace,
-    pub k: &'a [T],
-    pub g: &'a [T],
+/// The host operator: the lane tables of `(space, k, g)`, built once, applied by the sharded
+/// lane kernel. Generic over the scalar tier, so the double-double refinement runs the same
+/// loops on the same tables.
+pub struct CpuSigma<T: Scalar> {
+    inner: crate::lanes::LaneSigma<T>,
 }
 
-impl<'a, T: Scalar> CpuSigma<'a, T> {
-    pub fn new(space: &'a FciSpace, k: &'a [T], g: &'a [T]) -> Self {
-        CpuSigma { space, k, g }
+impl<T: Scalar> CpuSigma<T> {
+    pub fn new(space: &FciSpace, k: &[T], g: &[T]) -> Self {
+        CpuSigma { inner: crate::lanes::LaneSigma::for_ci_parts(space, k, g) }
+    }
+
+    pub fn tables(&self) -> &crate::lanes::LaneTables<T> {
+        &self.inner.tables
     }
 }
 
-impl<T: Scalar> SigmaOp<T> for CpuSigma<'_, T> {
+impl<T: Scalar> SigmaOp<T> for CpuSigma<T> {
     fn n_det(&self) -> usize {
-        self.space.n_det
+        self.inner.tables.n_det
     }
     fn device(&self) -> DeviceClass {
         DeviceClass::Cpu
     }
     fn apply(&mut self, c: &[T], sigma: &mut [T]) {
-        sigma_direct_t(self.space, self.k, self.g, c, sigma);
+        self.inner.apply(c, sigma);
     }
 }
 
@@ -244,11 +248,11 @@ mod tests {
     /// bit-identity is the property a bit-gated table needs.
     #[test]
     fn the_bit_identity_gate_refuses_a_one_ulp_wobble() {
-        struct Wobbly<'a> {
-            inner: CpuSigma<'a, f64>,
+        struct Wobbly {
+            inner: CpuSigma<f64>,
             calls: usize,
         }
-        impl SigmaOp<f64> for Wobbly<'_> {
+        impl SigmaOp<f64> for Wobbly {
             fn n_det(&self) -> usize {
                 self.inner.n_det()
             }

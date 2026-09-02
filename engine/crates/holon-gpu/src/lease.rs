@@ -4,7 +4,7 @@
 //!
 //! # Why the lease comes before the operator and not after
 //!
-//! `GpuFciSigma::new` computes its own footprint and refuses if the card cannot hold it. That is
+//! `GpuLaneSigma::new` computes its own footprint and refuses if the card cannot hold it. That is
 //! necessary and it is not a lease: it records nothing, it is invisible to the audit, and two
 //! operators built in the same process would each pass their own check and then contend. A lease
 //! is an ENTRY IN THE PARENT'S BOOKS — probed at birth, ledgered while it lives, released when
@@ -38,7 +38,10 @@ use holon_chem::sigma_op::{DeviceClass, SigmaOp, SigmaProvider};
 use holon_resource::probe::ResourceKind;
 use holon_resource::{Arena, LeaseError, LeaseId};
 
-use crate::fci::{vram_bytes_for, FciGpuError, GpuFciSigma};
+use holon_chem::lanes::LaneTables;
+
+use crate::fci::FciGpuError;
+use crate::lanes::GpuLaneSigma;
 use crate::probe::VramProbe;
 
 /// One mebibyte, the unit the VRAM lease is denominated in.
@@ -66,7 +69,7 @@ pub struct VramLease {
 /// are one event and cannot get out of step.
 pub struct LeasedGpuSigma {
     lease: LeaseId,
-    op: GpuFciSigma,
+    op: GpuLaneSigma,
     /// The declared quantitative boundary — D3b. What this lease covers and nothing beyond.
     pub mib: u64,
 }
@@ -75,7 +78,7 @@ impl LeasedGpuSigma {
     pub fn lease_id(&self) -> LeaseId {
         self.lease
     }
-    pub fn op(&mut self) -> &mut GpuFciSigma {
+    pub fn op(&mut self) -> &mut GpuLaneSigma {
         &mut self.op
     }
 }
@@ -152,8 +155,14 @@ impl<'a> LeasedGpuProvider<'a> {
 
     /// The declared boundary for a space, in MiB, rounded UP. Public because a caller may want
     /// to know what it is about to ask for before asking.
-    pub fn mib_for(space: &FciSpace) -> u64 {
-        vram_bytes_for(space).map(|b| b.div_ceil(MIB)).unwrap_or(u64::MAX)
+    pub fn mib_for(tables: &LaneTables<f64>) -> u64 {
+        GpuLaneSigma::bytes_for(tables).div_ceil(MIB)
+    }
+
+    /// The tables of a chemistry space on one integral set — what a lease is taken for and
+    /// what the operator uploads; built once by the caller and handed to both steps.
+    pub fn tables_for(space: &FciSpace, ci: &CiInts) -> LaneTables<f64> {
+        LaneTables::for_ci(space, ci)
     }
 
     /// **Step one: probe and lease.** No device operator yet.
@@ -166,8 +175,8 @@ impl<'a> LeasedGpuProvider<'a> {
     ///
     /// The order inside is D1's: the probe is the authority and runs before anything is
     /// recorded, so a refusal costs nothing and leaves no ledger entry.
-    pub fn take_lease(&self, space: &FciSpace) -> Result<VramLease, LeaseError> {
-        let mib = Self::mib_for(space);
+    pub fn take_lease(&self, tables: &LaneTables<f64>) -> Result<VramLease, LeaseError> {
+        let mib = Self::mib_for(tables);
         let mut arena = self.arena.borrow_mut();
         let mut probe = self.probe.borrow_mut();
         let id = arena.lease(&mut *probe, self.parent, ResourceKind::Vram, mib)?;
@@ -182,15 +191,15 @@ impl<'a> LeasedGpuProvider<'a> {
     pub fn build_on(
         &self,
         lease: VramLease,
-        space: &FciSpace,
-        ci: &CiInts,
+        tables: &LaneTables<f64>,
     ) -> Result<LeasedGpuSigma, LeasedGpuError> {
         let mut arena = self.arena.borrow_mut();
-        match GpuFciSigma::new(&self.ctx, space, ci) {
+        // the lease IS the reservation, so the operator's own VRAM check runs with no reserve
+        match GpuLaneSigma::new(&self.ctx, tables, 0) {
             Ok(op) => {
                 // The receipt is the rent (§9 Q1): a receipt of REAL WORK, and the work this
                 // lease exists for is the determinants it can now apply the Hamiltonian to.
-                let _ = arena.pay_rent(lease.id, holon_resource::Receipt(space.n_det as u64));
+                let _ = arena.pay_rent(lease.id, holon_resource::Receipt(tables.n_det as u64));
                 Ok(LeasedGpuSigma {
                     lease: lease.id,
                     op,
@@ -216,8 +225,9 @@ impl<'a> LeasedGpuProvider<'a> {
         space: &FciSpace,
         ci: &CiInts,
     ) -> Result<LeasedGpuSigma, LeasedGpuError> {
-        let lease = self.take_lease(space).map_err(LeasedGpuError::Lease)?;
-        self.build_on(lease, space, ci)
+        let tables = Self::tables_for(space, ci);
+        let lease = self.take_lease(&tables).map_err(LeasedGpuError::Lease)?;
+        self.build_on(lease, &tables)
     }
 
     /// Release a lease and its operator together, leaf-to-root (D9).
@@ -282,7 +292,7 @@ impl SigmaProvider for LeasedGpuProvider<'_> {
                     "REFUSED the GPU sigma for a {}-determinant space needing {} MiB: {e}. \
                      No fallback: a bit-gated artifact's class is not a runtime choice.",
                     space.n_det,
-                    Self::mib_for(space)
+                    Self::mib_for(&Self::tables_for(space, ci))
                 )
             })
     }

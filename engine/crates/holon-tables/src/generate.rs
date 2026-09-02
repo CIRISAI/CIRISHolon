@@ -471,8 +471,8 @@ fn solve_surface_node<S: Surface + ?Sized>(
     assert_eq!(
         sol.device, spec.device,
         "node {node}: the solve returned a {} solution under a table declaring {}. A table \
-         whose nodes came from different device classes is a MIXED artifact: the two agree to \
-         3e-15 and differ on 91% of entries bitwise, so its bit-identity digest would be a \
+         whose nodes came from different device classes is a MIXED artifact: the class is part of \
+         the arithmetic regime the manifest declares, so its bit-identity digest would be a \
          digest of a mixture.",
         sol.device, spec.device
     );

@@ -162,7 +162,7 @@ fn main() {
         for &chi in CHI_LADDER.iter() {
             let t0 = Instant::now();
             let mut tensors =
-                q8_mps::mps::initial_state_hf(mo.n, space.alpha.n_elec, space.beta.n_elec);
+                q8_mps::mps::initial_state_hf(mo.n, space.alpha().n_elec, space.beta().n_elec);
             let mut sweeps = 0usize;
             let mut delta = f64::INFINITY;
             let mut max_bond = 0usize;

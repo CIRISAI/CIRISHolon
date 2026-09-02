@@ -324,7 +324,13 @@ curvature ≡ paid-up rent on the transport map (`curvature_iff_held`); back-rea
 (`Stabilizer.lean`); the grain ≡ the Clifford angle of a Floquet gauge step
 (`Grain.lean`); the string tension ≡ rent per link (`electricSq`, Fold I); the mass
 gap ≡ the far field's closure (Fold II); the hadron ≡ the closed string (Fold I);
-the observer's frame ≡ allocation, not thinghood (ACUITY-B). Every entry is one
+the observer's frame ≡ allocation, not thinghood (ACUITY-B); **a conserved integer
+lane ≡ a shard** (the swarm's arena law at the hadron tier: a many-fermion sector with
+`k` commuting counts is a product of `k` occupation strings, every Hamiltonian term
+moves within a lane or couples two by one single each, so the solver shards on a lane
+with no halo — chemistry's alpha/beta is `k = 2`, SU(3)'s Cartan-neutral colour
+block is `k = 3`, and the ENTIRE determinant engine now runs on that one kernel, host
+and device bit-identical; `holon-chem/src/lanes.rs`, 2026-09-02). Every entry is one
 square wearing different clothes; a candidate fold that is not on this register and
 cannot be written as one of its entries composed is the signal to look harder, not
 to add a primitive.

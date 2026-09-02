@@ -472,9 +472,9 @@ pub fn grow_left_mpo(l_env: &Env, site: &crate::mpo::MpoSite, a: &TensorSite) ->
     let (d_l, d_r) = (site.d_l, site.d_r);
     let (chi_l, chi_r) = (a.chi_l, a.chi_r);
 
-    // Stage A: tmp_a[c1][s][r][lp] = sum_l A[s][l][r] * L[c1][l][lp]
+    // Stage A: tmp_a[c1][s][r][lp] = sum_l A[s][l][r] * L[c1][l][lp], live channels only
     let mut tmp_a = vec![0.0; d_l * 2 * chi_r * chi_l];
-    for c1 in 0..d_l {
+    for c1 in live_channels(l_env) {
         let lmat = &l_env[c1];
         for s in 0..2 {
             for l in 0..chi_l {
@@ -541,9 +541,9 @@ pub fn grow_right_mpo(r_env: &Env, site: &crate::mpo::MpoSite, a: &TensorSite) -
     let (d_l, d_r) = (site.d_l, site.d_r);
     let (chi_l, chi_r) = (a.chi_l, a.chi_r);
 
-    // Stage A: tmp_a[c2][s][l][rp] = sum_r A[s][l][r] * R[c2][r][rp]
+    // Stage A: tmp_a[c2][s][l][rp] = sum_r A[s][l][r] * R[c2][r][rp], live channels only
     let mut tmp_a = vec![0.0; d_r * 2 * chi_l * chi_r];
-    for c2 in 0..d_r {
+    for c2 in live_channels(r_env) {
         let rmat = &r_env[c2];
         for s in 0..2 {
             for l in 0..chi_l {
@@ -606,6 +606,28 @@ pub fn grow_right_mpo(r_env: &Env, site: &crate::mpo::MpoSite, a: &TensorSite) -
 }
 
 /// Apply effective 2-site Hamiltonian using `MpoSite` tensors.
+/// Worker threads for the two heavy contraction steps of [`apply_effective_h_mpo`], from
+/// `Q8_THREADS` (default 1). The split is over DISJOINT output regions with the reduction
+/// order inside each unchanged, so the result is bit-identical at every thread count —
+/// the thread count is not part of the arithmetic regime (M-DEVICE-CLASS).
+pub fn threads() -> usize {
+    static T: std::sync::OnceLock<usize> = std::sync::OnceLock::new();
+    *T.get_or_init(|| {
+        std::env::var("Q8_THREADS").ok().and_then(|v| v.parse().ok()).filter(|&n| n >= 1).unwrap_or(1)
+    })
+}
+
+/// Which channels of an environment carry anything at all. Most channels of a
+/// many-channel MPO (the QCD₂ accumulator MPO has 42) are structurally zero at a given
+/// bond; scanning them costs the same as the live ones, so they are skipped by name.
+pub fn live_channels(env: &Env) -> Vec<usize> {
+    env.iter()
+        .enumerate()
+        .filter(|(_, m)| m.iter().any(|&v| v != 0.0))
+        .map(|(c, _)| c)
+        .collect()
+}
+
 pub fn apply_effective_h_mpo(
     left: &Env,
     w1: &crate::mpo::MpoSite,
@@ -617,29 +639,56 @@ pub fn apply_effective_h_mpo(
 ) -> Vec<f64> {
     let (d_l, d_mid, d_r) = (w1.d_l, w1.d_r, w2.d_r);
     debug_assert_eq!(d_mid, w2.d_l);
-
+    let live_r = live_channels(right);
+    let live_l = live_channels(left);
+    let nthreads = threads();
     // Step 1: t1[c2][l_in][a][b][r_out] = sum_{r_in} R[c2][r_out,r_in] * psi[l_in,a,b,r_in]
+    // over the LIVE right channels only, threaded over disjoint channel blocks.
     let mut t1 = vec![0.0; d_r * chi_l * 2 * 2 * chi_r];
-    for c2 in 0..d_r {
-        let rmat = &right[c2];
-        for l_in in 0..chi_l {
-            for a in 0..2 {
-                for b in 0..2 {
-                    let psi_base = ((l_in * 2 + a) * 2 + b) * chi_r;
-                    let out_base = (((c2 * chi_l + l_in) * 2 + a) * 2 + b) * chi_r;
-                    for r_out in 0..chi_r {
-                        let rrow = r_out * chi_r;
-                        let mut acc = 0.0;
-                        for r_in in 0..chi_r {
-                            acc += rmat[rrow + r_in] * psi[psi_base + r_in];
+    {
+        let block = chi_l * 2 * 2 * chi_r;
+        let step1 = |c2: usize, t1c: &mut [f64]| {
+            let rmat = &right[c2];
+            for l_in in 0..chi_l {
+                for a in 0..2 {
+                    for b in 0..2 {
+                        let psi_base = ((l_in * 2 + a) * 2 + b) * chi_r;
+                        let out_base = ((l_in * 2 + a) * 2 + b) * chi_r;
+                        for r_out in 0..chi_r {
+                            let rrow = r_out * chi_r;
+                            let mut acc = 0.0;
+                            for r_in in 0..chi_r {
+                                acc += rmat[rrow + r_in] * psi[psi_base + r_in];
+                            }
+                            t1c[out_base + r_out] = acc;
                         }
-                        t1[out_base + r_out] = acc;
                     }
                 }
             }
+        };
+        let mut blocks: Vec<(usize, &mut [f64])> = t1
+            .chunks_mut(block)
+            .enumerate()
+            .filter(|(c2, _)| live_r.contains(c2))
+            .collect();
+        if nthreads <= 1 || blocks.len() < 2 {
+            for (c2, t1c) in blocks.iter_mut() {
+                step1(*c2, t1c);
+            }
+        } else {
+            let per = blocks.len().div_ceil(nthreads).max(1);
+            std::thread::scope(|sc| {
+                for chunk in blocks.chunks_mut(per) {
+                    let step1 = &step1;
+                    sc.spawn(move || {
+                        for (c2, t1c) in chunk.iter_mut() {
+                            step1(*c2, t1c);
+                        }
+                    });
+                }
+            });
         }
     }
-
     // Step 2: t2[c1'][l_in][a][t][r_out] = sum_{b,c2} t1[c2][l_in][a][b][r_out] * W2[c1',c2,t,b]
     let mut t2 = vec![0.0; d_mid * chi_l * 2 * 2 * chi_r];
     for c1p in 0..d_mid {
@@ -689,25 +738,45 @@ pub fn apply_effective_h_mpo(
     }
 
     // Step 4: out[l_out][s][t][r_out] = sum_{c1,l_in} L[c1][l_out,l_in] * t3[c1][l_in][s][t][r_out]
+    // over the LIVE left channels, threaded over DISJOINT l_out rows; the c1 and l_in sums
+    // keep their serial order inside a row, so every thread count gives the same bits.
     let mut out = vec![0.0; chi_l * 2 * 2 * chi_r];
-    for c1 in 0..d_l {
-        let lmat = &left[c1];
-        for l_out in 0..chi_l {
+    let row = 2 * 2 * chi_r;
+    let step4 = |l_out: usize, outrow: &mut [f64]| {
+        for &c1 in &live_l {
+            let lmat = &left[c1];
             let lrow = l_out * chi_l;
             for s in 0..2 {
                 for t in 0..2 {
-                    let out_base = ((l_out * 2 + s) * 2 + t) * chi_r;
+                    let out_base = (s * 2 + t) * chi_r;
                     for r_out in 0..chi_r {
                         let mut acc = 0.0;
                         for l_in in 0..chi_l {
                             let src = (((c1 * chi_l + l_in) * 2 + s) * 2 + t) * chi_r;
                             acc += lmat[lrow + l_in] * t3[src + r_out];
                         }
-                        out[out_base + r_out] += acc;
+                        outrow[out_base + r_out] += acc;
                     }
                 }
             }
         }
+    };
+    if nthreads <= 1 || chi_l < 2 {
+        for (l_out, outrow) in out.chunks_mut(row).enumerate() {
+            step4(l_out, outrow);
+        }
+    } else {
+        let per = chi_l.div_ceil(nthreads).max(1);
+        std::thread::scope(|sc| {
+            for (ci, chunk) in out.chunks_mut(per * row).enumerate() {
+                let step4 = &step4;
+                sc.spawn(move || {
+                    for (i, outrow) in chunk.chunks_mut(row).enumerate() {
+                        step4(ci * per + i, outrow);
+                    }
+                });
+            }
+        });
     }
     out
 }

@@ -1,5 +1,7 @@
 # GPU PRODUCTION — the FCI sigma is in holon-chem's solve path, and the artifact declares its class
 
+*RETIRED 2026-09-02: the GEMM device arm this record measures (`holon-gpu/src/fci.rs` + `kernels/fci_sigma.cu`, cuBLAS) was replaced by the lane kernel (`holon-gpu/src/lanes.rs`, `kernels/lanes_sigma.cu`), which is bit-identical to the host. The numbers below stand as the record of that arm and its regime; nothing in the tree reproduces them now.*
+
 *gpu-production lane, 2026-09-01. Provenance (binary/kernel/PTX sha256, repo HEAD,
 build exit status, driver, device) in `LAUNCH_HEADER.txt`. Logs: `ooo_pcore.log`,
 `ooo_ecore.log`.*

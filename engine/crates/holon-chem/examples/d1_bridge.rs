@@ -236,7 +236,7 @@ fn cost(a: Species, b: Species, name: &str) {
         bd.iter().sum::<usize>() as f64 / bd.len().max(1) as f64
     );
     for &chi in chi_ladder().iter() {
-        let init = q8_mps::mps::initial_state_hf(mo.n, space.alpha.n_elec, space.beta.n_elec);
+        let init = q8_mps::mps::initial_state_hf(mo.n, space.alpha().n_elec, space.beta().n_elec);
         let cfg = q8_mps::dmrg::DmrgConfig {
             chi_max: chi,
             max_sweeps: 1,
@@ -263,7 +263,7 @@ fn probe(a: Species, b: Species, name: &str) {
     say!("  assembly {:.2} s", t_asm.elapsed().as_secs_f64());
     say!(
         "{name}  n_basis {}  n_det {}  n_alpha {}  n_beta {}",
-        mo.n, space.n_det, space.alpha.n_elec, space.beta.n_elec
+        mo.n, space.n_det, space.alpha().n_elec, space.beta().n_elec
     );
 
     let t0 = Instant::now();
@@ -352,7 +352,7 @@ fn overlap(a: Species, b: Species, name: &str, n_points: usize) {
 
         let t0 = Instant::now();
         let mut tensors =
-            q8_mps::mps::initial_state_hf(mo.n, space.alpha.n_elec, space.beta.n_elec);
+            q8_mps::mps::initial_state_hf(mo.n, space.alpha().n_elec, space.beta().n_elec);
         let mut sweeps = 0usize;
         let mut e_dmrg = f64::NAN;
         let mut delta = f64::INFINITY;

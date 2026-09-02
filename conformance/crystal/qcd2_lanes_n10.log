@@ -1,0 +1,16 @@
+# GF2a exact referee on colour lanes (Cartan-neutral block); W-units; M_B/g = (E1-E0)/(2 sqrt x); host shards = 32; subspace bound = 12
+N=10 x= 4.0 B=0 n_q=15 n_det= 16003008 price=4.10e9B gpu E0=-65.6470061717  iters=171 resid=1.5e-10 margin=+6.565e1 exit=Stagnated  396.0s
+N=10 x= 4.0 B=0 gpu resident sigma 0.1596 s (6.3 sigma/s)
+N=10 x= 4.0 B=1 n_q=18 n_det=  9261000 price=2.37e9B gpu E0=-62.4301784810  iters=171 resid=1.0e-10 margin=+6.243e1 exit=Stagnated  243.1s
+N=10 x= 4.0 B=1 gpu resident sigma 0.1011 s (9.9 sigma/s)
+N=10 x= 4.0 B=2 n_q=21 n_det=  1728000 price=4.42e8B gpu E0=-52.9591823523  iters=164 resid=8.2e-11 margin=+5.296e1 exit=Converged  37.1s
+N=10 x= 4.0 B=2 gpu resident sigma 0.0230 s (43.4 sigma/s)
+N=10 x= 4.0 gpu  M_B/g=0.804207  U_BB=+6.254168e0  (E1-E0=+3.216828, E2-E1=+9.470996)
+N=10 x= 9.0 B=0 n_q=15 n_det= 16003008 price=4.10e9B gpu E0=-155.6819170181  iters=161 resid=1.2e-10 margin=+1.557e2 exit=Stagnated  421.2s
+N=10 x= 9.0 B=0 gpu resident sigma 0.1613 s (6.2 sigma/s)
+N=10 x= 9.0 B=1 n_q=18 n_det=  9261000 price=2.37e9B gpu E0=-148.1813486614  iters=151 resid=1.3e-10 margin=+1.482e2 exit=Stagnated  155.2s
+N=10 x= 9.0 B=1 gpu resident sigma 0.1010 s (9.9 sigma/s)
+N=10 x= 9.0 B=2 n_q=21 n_det=  1728000 price=4.42e8B gpu E0=-126.2212755359  iters=146 resid=9.1e-11 margin=+1.262e2 exit=Converged  20.6s
+N=10 x= 9.0 B=2 gpu resident sigma 0.0230 s (43.4 sigma/s)
+N=10 x= 9.0 gpu  M_B/g=1.250095  U_BB=+1.445950e1  (E1-E0=+7.500568, E2-E1=+21.960073)
+EXIT=0

@@ -1,18 +1,13 @@
-//! The solver, written once: sigma, Jacobi and Davidson generic over [`Scalar`].
-//!
-//! These bodies are VERBATIM transcriptions of the concrete f64 functions that used to
-//! live in `fci.rs` — same loop order, same operation shape — and the f64 functions now
-//! delegate here. That is the bit-identity contract: monomorphised at `T = f64` this IS
-//! the old code (IEEE operations in the same order), and the pinned-digest gates
-//! (holon-tables G1, the atoms records) are the proof that holds it. The `Dd`
-//! instantiation is the overflow tier for solves that stagnate at the f64 expansion
-//! floor: the f64 solve does the heavy lifting cold, [`refine_determinant_dd`] pays
+//! The solver's algebra, written once: Jacobi and Davidson generic over [`Scalar`]. The sigma
+//! lives in `lanes.rs`, generic the same way, and the f64 entry points in `fci.rs` delegate
+//! to both. The `Dd` instantiation is the overflow tier for solves that stagnate at the f64
+//! expansion floor: the f64 solve does the heavy lifting cold, [`refine_determinant_dd`] pays
 //! double-double cost only for the last mile from that warm start.
 //!
 //! What is NOT here, on purpose: `sigma_reference` (the connected-determinant checker)
-//! stays concrete in `fci.rs` — it exists to share no structure with this factorisation,
-//! and genericising it against the same trait would be the first step toward the drift
-//! this crate's two-route discipline exists to prevent.
+//! stays concrete in `fci.rs` — it exists to share no structure with the lane kernel, and
+//! genericising it against the same trait would be the first step toward the drift this
+//! crate's two-route discipline exists to prevent.
 
 use crate::fci::{CiInts, FciSpace, SolveExit};
 use crate::scalar::{Dd, Scalar};
@@ -50,163 +45,6 @@ pub fn normalised_t<T: Scalar>(a: &[T]) -> Vec<T> {
         scale_t(T::ONE / n, &mut v);
     }
     v
-}
-
-// ------------------------------------------------------------------ sigma, one body
-
-/// `sigma = H c` by the Knowles–Handy string factorisation, generic over the scalar.
-/// The integrals arrive as slices in `T` (the caller promotes once per solve, not per
-/// sigma); the excitation lists and their signs stay in their exact integer/f64 form.
-pub fn sigma_direct_t<T: Scalar>(space: &FciSpace, k: &[T], g: &[T], c: &[T], sigma: &mut [T]) {
-    let n = space.n_orb;
-    let n2 = n * n;
-    let na = space.alpha.len();
-    let nb = space.beta.len();
-    assert_eq!(c.len(), space.n_det);
-    assert_eq!(sigma.len(), space.n_det);
-
-    for x in sigma.iter_mut() {
-        *x = T::ZERO;
-    }
-
-    let mut f = vec![T::ZERO; na.max(nb)];
-
-    // 1. Beta same-spin block
-    for jb in 0..nb {
-        for x in f[..nb].iter_mut() {
-            *x = T::ZERO;
-        }
-        for &(kl, s1, kb) in space.beta.singles[jb].iter() {
-            f[kb as usize] = f[kb as usize] + k[kl as usize].scale(s1);
-            for &(ij, s2, ib) in space.beta.singles[kb as usize].iter() {
-                f[ib as usize] =
-                    f[ib as usize] + g[ij as usize * n2 + kl as usize].scale(0.5 * s1 * s2);
-            }
-        }
-        for (ib, &fv) in f[..nb].iter().enumerate() {
-            if fv.is_zero() {
-                continue;
-            }
-            for ia in 0..na {
-                sigma[ia * nb + ib] = sigma[ia * nb + ib] + fv * c[ia * nb + jb];
-            }
-        }
-    }
-
-    // 2. Alpha same-spin block
-    for ja in 0..na {
-        for x in f[..na].iter_mut() {
-            *x = T::ZERO;
-        }
-        for &(kl, s1, ka) in space.alpha.singles[ja].iter() {
-            f[ka as usize] = f[ka as usize] + k[kl as usize].scale(s1);
-            for &(ij, s2, ia) in space.alpha.singles[ka as usize].iter() {
-                f[ia as usize] =
-                    f[ia as usize] + g[ij as usize * n2 + kl as usize].scale(0.5 * s1 * s2);
-            }
-        }
-        for (ia, &fv) in f[..na].iter().enumerate() {
-            if fv.is_zero() {
-                continue;
-            }
-            let (src, dst) = (ja * nb, ia * nb);
-            for ib in 0..nb {
-                sigma[dst + ib] = sigma[dst + ib] + fv * c[src + ib];
-            }
-        }
-    }
-
-    // 3. Mixed alpha-beta block
-    //
-    // ### ARITHMETIC-REGIME BOUNDARY: commit 4884704 (2026-08-31 18:02)
-    //
-    // The `kl` walk below is SPARSE and runs in FIRST-TOUCH order. It used to run over
-    // every `kl` ascending (`grow.iter().enumerate()`). `vrow[ib]` accumulates over `kl`,
-    // so this reassociates a floating-point sum: the optimisation is a real speedup and
-    // changes no physics, and it changes the last bits of almost everything this crate
-    // computes.
-    //
-    // MEASURED, on the shipped pair tables: 186 of 192 HCl energy knots moved, max
-    // 3.979e-12 hartree, with the grid 0/192 different — tens of ULPs on a total of order
-    // 455 Ha, 25x inside every declared uncertainty and inside R2's 1e-10 stake. No
-    // tolerance gate can see it. Every gate asserting IDENTITY can, and three went red on
-    // it in three different lanes, each blaming the last thing its own author had changed.
-    // Bracketed to this commit against its parent 2b0d154, source-only: no Cargo.toml,
-    // Cargo.lock or workspace change, same toolchain and profile.
-    //
-    // WHICH SYSTEMS MOVE IS NOT A SIZE RULE, and the first version of this note said it
-    // was: right mechanism, wrong axis — what governs is whether the sparsity pattern's
-    // first-touch order differs from ascending, per system. Measured on the dimer record:
-    // Cl (9 determinants) moved, Br (18) did NOT, I (27) moved — the same one-hole
-    // `C(n,n)·C(n,n-1)` shape at all three, so the effect is not monotone in determinant
-    // count and a threshold on that axis mispredicts in both directions. H2, HHe and He2 are observed not to move, which is the only reason B1's
-    // all-hydrogen bit-identity reference survived this commit; that is an observation
-    // about those three curves and not a guarantee, so anything extending this walk — or
-    // changing the order `touched_kl` is pushed in — should expect B1 and every banked
-    // bit pattern to move, and should re-bank them naming the change.
-    //
-    // The regime boundary is this commit and it is ACCEPTED, not reverted (reverting
-    // would split the running ozone tabulation's arithmetic mid-table). Artifacts banked
-    // before it are records of the previous regime; see MISFITS.md, M-STALE-INSTRUMENT's
-    // artifact-identity rung.
-    let mut t = vec![T::ZERO; n2 * nb];
-    let mut vrow = vec![T::ZERO; nb];
-    let mut touched_kl: Vec<usize> = Vec::with_capacity(n2);
-    let mut is_touched = vec![false; n2];
-
-    for ja in 0..na {
-        let crow = &c[ja * nb..(ja + 1) * nb];
-        touched_kl.clear();
-
-        #[allow(clippy::needless_range_loop)]
-        for jb in 0..nb {
-            let cv = crow[jb];
-            if cv.is_zero() {
-                continue;
-            }
-            for &(kl, s, ib) in space.beta.singles[jb].iter() {
-                let kl_u = kl as usize;
-                if !is_touched[kl_u] {
-                    is_touched[kl_u] = true;
-                    touched_kl.push(kl_u);
-                }
-                t[kl_u * nb + ib as usize] = t[kl_u * nb + ib as usize] + cv.scale(s);
-            }
-        }
-
-        if touched_kl.is_empty() {
-            continue;
-        }
-
-        for &(ij, sa, ia) in space.alpha.singles[ja].iter() {
-            for x in vrow.iter_mut() {
-                *x = T::ZERO;
-            }
-            let grow = &g[ij as usize * n2..(ij as usize + 1) * n2];
-            for &kl in &touched_kl {
-                let gv = grow[kl];
-                if gv.is_zero() {
-                    continue;
-                }
-                let trow = &t[kl * nb..(kl + 1) * nb];
-                for ib in 0..nb {
-                    vrow[ib] = vrow[ib] + gv * trow[ib];
-                }
-            }
-            let dst = ia as usize * nb;
-            for ib in 0..nb {
-                sigma[dst + ib] = sigma[dst + ib] + vrow[ib].scale(sa);
-            }
-        }
-
-        // Clean up only touched slices of t
-        for &kl in &touched_kl {
-            is_touched[kl] = false;
-            for x in t[kl * nb..(kl + 1) * nb].iter_mut() {
-                *x = T::ZERO;
-            }
-        }
-    }
 }
 
 // ------------------------------------------------------------------ jacobi, one body
@@ -290,10 +128,8 @@ pub fn davidson_eigh_from_t<T: Scalar>(
     start_vector: Option<&[T]>,
 ) -> (T, Vec<T>, usize, f64, SolveExit) {
     // ONE driver body, in `davidson_eigh_from_op`, parameterised by the sigma OPERATOR rather
-    // than by the three arguments that used to name the host one. This is its host
-    // instantiation and it is a wrapper: the operator it builds calls the same
-    // `sigma_direct_t` this function used to call directly, in the same place, so the path is
-    // bit-identical and `sigma_op`'s own test asserts that against `sigma_direct`.
+    // than by the three arguments that name the host one. This is its host instantiation: the
+    // operator it builds is the lane kernel on the tables of `(space, k, g)`.
     let mut op = crate::sigma_op::CpuSigma::new(space, k, g);
     davidson_eigh_from_op(&mut op, diag, tol, max_iter, start_vector)
 }
@@ -304,9 +140,8 @@ pub fn davidson_eigh_from_t<T: Scalar>(
 /// The driver logic stays host-side and is unchanged: same start-vector policy, same
 /// symmetry-breaking perturbation, same thick restart, same two-candidate expansion, same
 /// degeneracy-safe preconditioner, same exit reasons. The ONLY thing the operator changes is
-/// where `H c` is computed — which is the whole cost, and which is also the whole artifact,
-/// because two devices that agree to 3e-15 and differ on 91% of entries bitwise send this
-/// driver down two different paths.
+/// where `H c` is computed — which is the whole cost, and which is also the whole artifact:
+/// the device class travels on the solution because it is the operator's regime.
 ///
 /// # Why the class is not an argument here
 ///
@@ -319,6 +154,26 @@ pub fn davidson_eigh_from_op<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Sized>
     tol: f64,
     max_iter: usize,
     start_vector: Option<&[T]>,
+) -> (T, Vec<T>, usize, f64, SolveExit) {
+    davidson_eigh_from_op_sub(op, diag, tol, max_iter, start_vector, crate::budget::DAVIDSON_SUBSPACE_MAX)
+}
+
+/// [`davidson_eigh_from_op`] with the SUBSPACE BOUND stated by the caller.
+///
+/// The bound is the working set: `2·max_sub` vectors of `n_det` entries, and it is what the
+/// admission door prices (`budget::price_determinant_with`). A space the door refuses at 48
+/// is admitted at 12 with the same driver, the same policies and the same code — more
+/// iterations, each cheaper, and the Ritz values it converges to are the same eigenvalues.
+/// Two solves under different bounds are two artifacts (the bound travels on the manifest
+/// beside device class and iteration budget), which is why the default is a named constant
+/// and not a literal here.
+pub fn davidson_eigh_from_op_sub<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Sized>(
+    op: &mut S,
+    diag: &[T],
+    tol: f64,
+    max_iter: usize,
+    start_vector: Option<&[T]>,
+    max_sub: usize,
 ) -> (T, Vec<T>, usize, f64, SolveExit) {
     let nd = op.n_det();
     assert_eq!(
@@ -342,9 +197,14 @@ pub fn davidson_eigh_from_op<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Sized>
         op.apply(&[T::ONE], &mut s);
         return (s[0], vec![T::ONE], 0, 0.0, SolveExit::Trivial);
     }
-    let max_sub = 48.min(nd);
+    let max_sub = max_sub.max(2).min(nd);
     let mut basis: Vec<Vec<T>> = Vec::new();
     let mut hbasis: Vec<Vec<T>> = Vec::new();
+    // The Gram matrix `<b_i|H|b_j>` is CACHED: a basis vector never changes once pushed, so
+    // its row and column are computed once and reused until a restart clears the basis.
+    // Same dots, same bits — the per-iteration cost drops from m²·n_det to m·n_det.
+    let mut gram: Vec<T> = vec![T::ZERO; max_sub * max_sub];
+    let mut gram_m = 0usize;
 
     let start = diag
         .iter()
@@ -380,10 +240,21 @@ pub fn davidson_eigh_from_op<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Sized>
             hbasis.push(w);
         }
         let m = basis.len();
+        for i in gram_m..m {
+            for j in 0..m {
+                gram[i * max_sub + j] = dot_t(&basis[i], &hbasis[j]);
+            }
+        }
+        for i in 0..gram_m {
+            for j in gram_m..m {
+                gram[i * max_sub + j] = dot_t(&basis[i], &hbasis[j]);
+            }
+        }
+        gram_m = m;
         let mut sub = vec![T::ZERO; m * m];
         for i in 0..m {
             for j in 0..m {
-                sub[i * m + j] = dot_t(&basis[i], &hbasis[j]);
+                sub[i * m + j] = gram[i * max_sub + j];
             }
         }
         for i in 0..m {
@@ -425,6 +296,7 @@ pub fn davidson_eigh_from_op<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Sized>
             let nd_ = norm_t(&d).to_f64();
             basis.clear();
             hbasis.clear();
+            gram_m = 0;
             basis.push(normalised_t(&x));
             if nd_ > T::expansion_floor() {
                 scale_t(T::from_f64(1.0 / nd_), &mut d);

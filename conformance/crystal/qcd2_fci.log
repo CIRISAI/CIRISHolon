@@ -1,0 +1,18 @@
+# GF2a FCI: massless QCD2, axial gauge; sectors B=0,1,2; W-units; M_B/g = (E1-E0)/(2 sqrt x)
+N= 4 x= 4.0 B=0 n_q= 6 n_det=      924 price=7.69e5B  E0=-24.5391166860  iters=35 resid=5.4e-11  0.1s
+N= 4 x= 4.0 B=1 n_q= 9 n_det=      220 price=1.83e5B  E0=-17.5847761876  iters=29 resid=3.3e-11  0.0s
+N= 4 x= 4.0 B=2 n_q=12 n_det=        1 price=8.00e1B  E0=+0.0000000000  iters=0 resid=0.0e0  0.0s
+N= 4 x= 4.0  M_B/g=1.738585  U_BB=+1.063044e1  (E1-E0=+6.954340, E2-E1=+17.584776)
+N= 4 x= 9.0 B=0 n_q= 6 n_det=      924 price=7.69e5B  E0=-58.0230018617  iters=36 resid=3.7e-11  0.1s
+N= 4 x= 9.0 B=1 n_q= 9 n_det=      220 price=1.83e5B  E0=-41.7896555157  iters=30 resid=3.3e-11  0.0s
+N= 4 x= 9.0 B=2 n_q=12 n_det=        1 price=8.00e1B  E0=+0.0000000000  iters=0 resid=0.0e0  0.0s
+N= 4 x= 9.0  M_B/g=2.705558  U_BB=+2.555631e1  (E1-E0=+16.233346, E2-E1=+41.789656)
+N= 6 x= 4.0 B=0 n_q= 9 n_det=    48620 price=4.05e7B  E0=-38.2128396646  iters=55 resid=6.3e-11  242.7s
+N= 6 x= 4.0 B=1 n_q=12 n_det=    18564 price=1.54e7B  E0=-33.1848596866  iters=51 resid=9.5e-11  36.7s
+N= 6 x= 4.0 B=2 n_q=15 n_det=      816 price=6.79e5B  E0=-19.1570928549  iters=40 resid=8.3e-11  0.2s
+N= 6 x= 4.0  M_B/g=1.256995  U_BB=+8.999787e0  (E1-E0=+5.027980, E2-E1=+14.027767)
+N= 6 x= 9.0 B=0 n_q= 9 n_det=    48620 price=4.05e7B  E0=-90.4871056656  iters=57 resid=9.5e-11  254.6s
+N= 6 x= 9.0 B=1 n_q=12 n_det=    18564 price=1.54e7B  E0=-78.7699472604  iters=56 resid=6.4e-11  53.0s
+N= 6 x= 9.0 B=2 n_q=15 n_det=      816 price=6.79e5B  E0=-46.0059828234  iters=43 resid=8.2e-11  0.5s
+N= 6 x= 9.0  M_B/g=1.952860  U_BB=+2.104681e1  (E1-E0=+11.717158, E2-E1=+32.763964)
+# EXIT=137: SIGKILL under memory pressure (20 GB resident) during the N=8 x=4.0 B=0 sector after ~2h on one thread, 2026-09-02; superseded by the colour-lane referee (qcd2_lanes.log), gated against this route at N=4,6 (lanes_gauge.rs) and reproducing every N=4,6 number above to the printed digit

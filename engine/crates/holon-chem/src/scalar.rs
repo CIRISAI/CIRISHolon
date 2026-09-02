@@ -54,6 +54,8 @@ pub trait Scalar:
     Copy
     + PartialOrd
     + core::fmt::Debug
+    + Send
+    + Sync
     + Add<Output = Self>
     + Sub<Output = Self>
     + Mul<Output = Self>

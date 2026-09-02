@@ -40,11 +40,17 @@ pub struct Price {
 /// sigma subspaces of up to [`DAVIDSON_SUBSPACE_MAX`] vectors each, plus the fixed extras,
 /// eight bytes per entry. MEASURED in the sense that matters: read off the driver.
 pub fn price_determinant(n_det: usize) -> Price {
-    let vectors = 2 * DAVIDSON_SUBSPACE_MAX.min(n_det.max(1)) + DAVIDSON_EXTRA_VECTORS;
+    price_determinant_with(n_det, DAVIDSON_SUBSPACE_MAX)
+}
+
+/// [`price_determinant`] under a caller-stated subspace bound (`tier::davidson_eigh_from_op_sub`):
+/// the same allocations, read off the same driver, at the bound the solve will actually run.
+pub fn price_determinant_with(n_det: usize, max_sub: usize) -> Price {
+    let vectors = 2 * max_sub.max(2).min(n_det.max(1)) + DAVIDSON_EXTRA_VECTORS;
     Price {
-        what: format!("determinant route, {n_det} determinants x {vectors} vectors"),
+        what: format!("determinant route, {n_det} determinants x {vectors} vectors (subspace bound {max_sub})"),
         bytes: (n_det as u64).saturating_mul(vectors as u64).saturating_mul(8),
-        provenance: "computed from tier.rs's Davidson allocations (max_sub = 48)",
+        provenance: "computed from tier.rs's Davidson allocations (2·max_sub + 8 vectors)",
     }
 }
 

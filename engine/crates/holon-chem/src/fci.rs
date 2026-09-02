@@ -54,7 +54,8 @@
 //! a time — no Slater–Condon rule anywhere — which is feasible only for small spaces and
 //! is what validates the rules the other two use.
 
-use crate::sigma_op::{CpuProvider, DeviceClass, SigmaProvider};
+use crate::lanes::{LaneSigma, LaneSpace};
+use crate::sigma_op::{CpuProvider, DeviceClass, SigmaOp, SigmaProvider};
 use crate::dual::D2;
 use crate::md::AoIntegrals;
 
@@ -511,100 +512,27 @@ impl Strings {
 
 /// The determinant space of one species at one `S_z`, and the machinery that applies the
 /// Hamiltonian to a vector in it.
-pub struct FciSpace {
-    pub n_orb: usize,
-    pub alpha: Strings,
-    pub beta: Strings,
-    pub n_det: usize,
-}
+/// The CI space of chemistry: alpha and beta strings over one orbital set — the two-lane
+/// instance of [`LaneSpace`], which is what every solver here runs on. `FciSpace::new(n, na, nb)`
+/// is [`LaneSpace::new`]; the strings are [`LaneSpace::alpha`] and [`LaneSpace::beta`].
+pub type FciSpace = LaneSpace;
 
-impl FciSpace {
-    pub fn new(n_orb: usize, n_alpha: usize, n_beta: usize) -> FciSpace {
-        FciSpace::with_mask_width(n_orb, n_alpha, n_beta, MAX_ORB)
-    }
-
-    /// The determinant space a string mask of `mask_width` bits can address. See
-    /// [`Strings::with_mask_width`]: `new` passes [`MAX_ORB`] and this exists for the W1
-    /// plant, which needs to build the space a 32-bit mask would have built.
-    pub fn with_mask_width(
-        n_orb: usize,
-        n_alpha: usize,
-        n_beta: usize,
-        mask_width: usize,
-    ) -> FciSpace {
-        let alpha = Strings::with_mask_width(n_orb, n_alpha, mask_width);
-        let beta = Strings::with_mask_width(n_orb, n_beta, mask_width);
-        let n_det = alpha.len() * beta.len();
-        FciSpace {
-            n_orb,
-            alpha,
-            beta,
-            n_det,
-        }
-    }
-
-    /// Diagonal of the Hamiltonian, for the Davidson preconditioner and its start vector.
-    ///
-    /// ```text
-    /// <D|H|D> = sum_{p in occ} h_pp + 1/2 sum_{p,q in occ} [ (pp|qq) - delta_spin (pq|qp) ]
-    /// ```
-    ///
-    /// written over SPATIAL orbitals, where the spin delta becomes: the exchange term
-    /// survives within the alpha set and within the beta set and not between them.
+impl LaneSpace {
+    /// `<k|H|k>` for every determinant, from the operator's own walk (`lanes::sigma_det` with
+    /// its `DIAG` switch), so the preconditioner cannot disagree with the sigma about what the
+    /// operator is.
     pub fn diagonal(&self, ci: &CiInts) -> Vec<f64> {
-        let n = self.n_orb;
-        let n2 = n * n;
-        let nb = self.beta.len();
-        let mut d = vec![0.0f64; self.n_det];
-        let g = |p: usize, q: usize, r: usize, s: usize| ci.g[(p * n + q) * n2 + (r * n + s)];
-        // The physical one-electron integral: `k` carries the exchange fold that turns
-        // the two-electron operator into a plain product, and the diagonal is stated in
-        // terms of the unfolded `h`.
-        let hph = |p: usize, q: usize| -> f64 {
-            let mut x = ci.k[p * n + q];
-            for r in 0..n {
-                x += 0.5 * g(p, r, r, q);
-            }
-            x
-        };
-        let occ = |m: Mask| -> Vec<usize> { (0..n).filter(|&p| (m >> p) & 1 == 1).collect() };
-        for (ia, &ma) in self.alpha.masks.iter().enumerate() {
-            let oa = occ(ma);
-            for (ib, &mb) in self.beta.masks.iter().enumerate() {
-                let ob = occ(mb);
-                let mut e = 0.0f64;
-                for &p in oa.iter().chain(ob.iter()) {
-                    e += hph(p, p);
-                }
-                for set in [&oa, &ob] {
-                    for &p in set.iter() {
-                        for &q in set.iter() {
-                            e += 0.5 * (g(p, p, q, q) - g(p, q, q, p));
-                        }
-                    }
-                }
-                for &p in oa.iter() {
-                    for &q in ob.iter() {
-                        e += g(p, p, q, q);
-                    }
-                }
-                d[ia * nb + ib] = e;
-            }
-        }
-        d
+        LaneSigma::for_ci(self, ci).diagonal()
     }
 
-    /// `sigma = H c`, by the Knowles-Handy string factorisation direct-CI method.
+    /// `sigma = H c` on the lane kernel (host shards). Builds the tables per call; a Davidson
+    /// solve goes through [`crate::sigma_op::CpuSigma`], which builds them once.
     #[inline]
     pub fn sigma_direct(&self, ci: &CiInts, c: &[f64], out: &mut [f64]) {
         sigma_direct(self, ci, c, out);
     }
 
-    /// `sigma = H c`, by the string factorisation.
-    ///
-    /// Three blocks, because the Hamiltonian splits into terms that move only beta
-    /// electrons, only alpha electrons, and one of each — and each block is a different
-    /// contraction over the same single-excitation lists.
+    /// `sigma = H c`, the production route: [`Self::sigma_direct`].
     #[inline]
     pub fn sigma(&self, ci: &CiInts, c: &[f64], out: &mut [f64]) {
         sigma_direct(self, ci, c, out);
@@ -613,19 +541,18 @@ impl FciSpace {
     /// `sigma = H c` by an INDEPENDENT route: enumerate the determinants connected to
     /// each determinant and apply the Slater–Condon rules pair by pair.
     ///
-    /// Shares no loop structure, no intermediate and no factorisation with [`Self::sigma`]
-    /// — only the integrals and the rules. It is `O(N_det * N_connected)` rather than the
-    /// string method's factorised cost, which is why it is a checker and not the
-    /// production path.
+    /// Shares no loop structure, no table and no factorisation with [`Self::sigma`] — only the
+    /// integrals and the rules. It is `O(N_det * N_connected)` rather than the lane kernel's
+    /// factorised cost, which is why it is the referee and not the production path.
     pub fn sigma_reference(&self, ci: &CiInts, c: &[f64], out: &mut [f64]) {
         let n = self.n_orb;
-        let nb = self.beta.len();
+        let nb = self.beta().len();
         for x in out.iter_mut() {
             *x = 0.0;
         }
         let combine = |ma: Mask, mb: Mask| -> Det { (ma as Det) | ((mb as Det) << n) };
         let dets: Vec<Det> = (0..self.n_det)
-            .map(|d| combine(self.alpha.masks[d / nb], self.beta.masks[d % nb]))
+            .map(|d| combine(self.alpha().masks[d / nb], self.beta().masks[d % nb]))
             .collect();
 
         for i in 0..self.n_det {
@@ -644,16 +571,10 @@ impl FciSpace {
     }
 }
 
-/// `sigma = H c`, evaluated directly via the Knowles-Handy string factorisation
-/// without allocating the full CI Hamiltonian matrix.
-///
-/// The Hamiltonian splits into three blocks: beta-only excitations, alpha-only excitations,
-/// and mixed alpha-beta excitations. Each block is contracted directly using single-excitation
-/// lists over alpha and beta occupation strings.
+/// `sigma = H c` on the lane kernel — `LaneSigma::for_ci(space, ci).apply(c, sigma)`, tables
+/// built per call.
 pub fn sigma_direct(space: &FciSpace, ci: &CiInts, c: &[f64], sigma: &mut [f64]) {
-    // ONE body, in `tier::sigma_direct_t`, generic over the scalar; this is its f64
-    // instantiation and monomorphises to the pre-generic code (same loops, same ops).
-    crate::tier::sigma_direct_t::<f64>(space, &ci.k, &ci.g, c, sigma);
+    LaneSigma::for_ci(space, ci).apply(c, sigma);
 }
 
 /// `<D_i| H |D_j>` for two determinants given as interleaved spin-orbital masks, by the
@@ -779,7 +700,7 @@ pub fn slater_condon(di: Det, dj: Det, ci: &CiInts, n: usize) -> f64 {
 /// can see it.
 pub fn dense_hamiltonian_ladder(space: &FciSpace, ci: &CiInts, n: usize) -> Vec<f64> {
     let nd = space.n_det;
-    let nb = space.beta.len();
+    let nb = space.beta().len();
     let n2 = n * n;
     let hph = |p: usize, q: usize| -> f64 {
         let mut x = ci.k[p * n + q];
@@ -791,7 +712,7 @@ pub fn dense_hamiltonian_ladder(space: &FciSpace, ci: &CiInts, n: usize) -> Vec<
 
     let combine = |ma: Mask, mb: Mask| -> Det { (ma as Det) | ((mb as Det) << n) };
     let dets: Vec<Det> = (0..nd)
-        .map(|d| combine(space.alpha.masks[d / nb], space.beta.masks[d % nb]))
+        .map(|d| combine(space.alpha().masks[d / nb], space.beta().masks[d % nb]))
         .collect();
     let mut index = std::collections::HashMap::new();
     for (i, &d) in dets.iter().enumerate() {
@@ -1337,8 +1258,8 @@ pub fn solve_mps_with(
     tol: f64,
 ) -> Solution {
     let n_orb = mo.n;
-    let n_alpha = space.alpha.n_elec;
-    let n_beta = space.beta.n_elec;
+    let n_alpha = space.alpha().n_elec;
+    let n_beta = space.beta().n_elec;
 
     let h0: Vec<f64> = mo.h.iter().map(|d| d.v).collect();
     let g0: Vec<f64> = mo.g.iter().map(|d| d.v).collect();
@@ -1694,7 +1615,7 @@ fn norm(a: &[f64]) -> f64 {
 /// dropped: the result is a NORM, and a global sign cannot survive squaring.
 pub fn s_squared(space: &FciSpace, c: &[f64]) -> f64 {
     let n = space.n_orb;
-    let (na, nb) = (space.alpha.n_elec, space.beta.n_elec);
+    let (na, nb) = (space.alpha().n_elec, space.beta().n_elec);
     let sz = 0.5 * (na as f64 - nb as f64);
     let floor = sz * (sz + 1.0);
     // `S_+` annihilates the state when there is no beta electron to raise, or no alpha
@@ -1706,10 +1627,10 @@ pub fn s_squared(space: &FciSpace, c: &[f64]) -> f64 {
 
     let target = FciSpace::new(n, na + 1, nb - 1);
     let mut raised = vec![0.0f64; target.n_det];
-    let nb_src = space.beta.len();
-    let nb_dst = target.beta.len();
-    for (ia, &ma) in space.alpha.masks.iter().enumerate() {
-        for (ib, &mb) in space.beta.masks.iter().enumerate() {
+    let nb_src = space.beta().len();
+    let nb_dst = target.beta().len();
+    for (ia, &ma) in space.alpha().masks.iter().enumerate() {
+        for (ib, &mb) in space.beta().masks.iter().enumerate() {
             let amp = c[ia * nb_src + ib];
             if amp == 0.0 {
                 continue;
@@ -1730,8 +1651,8 @@ pub fn s_squared(space: &FciSpace, c: &[f64]) -> f64 {
                     1.0
                 };
                 let (Some(ja), Some(jb)) = (
-                    target.alpha.index_of(ma | (1 << p)),
-                    target.beta.index_of(mb ^ (1 << p)),
+                    target.alpha().index_of(ma | (1 << p)),
+                    target.beta().index_of(mb ^ (1 << p)),
                 ) else {
                     continue;
                 };

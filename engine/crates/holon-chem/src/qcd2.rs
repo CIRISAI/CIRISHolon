@@ -25,9 +25,39 @@
 //! Credits: Banks–Kogut–Susskind, Hamer et al. (staggered form); Atas et al. 2023 and
 //! Farrell et al. 2023 (the axial-gauge 1+1D QCD Hamiltonian for quantum simulation);
 //! 't Hooft 1974 (context only).
+//!
+//! # The colour lanes — the same operator, one string per colour
+//!
+//! Every colour number `n_c = Σ_k n_{k,c}` commutes with `W` (the Cartan generators of SU(3)
+//! commute with every `Σ_a q^a q^a`), so the sector splits into colour-count blocks, and the
+//! block with equal counts holds a state of EVERY multiplet whose quark number is a multiple
+//! of three (each triality-zero irrep has a zero weight). Restricting to it is therefore exact
+//! for the ground energy of every sector this instrument runs, and it assumes nothing about the
+//! singlet — octets sit in the same block. With one occupation string per colour the space is
+//! `C(N, n_q/3)³` instead of `C(3N, n_q)`: 343,000 against 2,704,156 at `N = 8`, and `N = 10`,
+//! which the freeze assigned to DMRG alone, is 16 million determinants on the same solver.
+//!
+//! The operator in lane form follows from two identities (fermion algebra only). Writing
+//! `E^c_{kk'} = ψ†_{k,c} ψ_{k',c}` and `n_k = Σ_c n_{k,c}`:
+//!
+//! ```text
+//! Σ_a q^a_k q^a_{k'} = ½ Σ_{c,d} ψ†_{kc} ψ_{kd} ψ†_{k'd} ψ_{k'c} − ⅙ n_k n_{k'}          (Fierz)
+//! ψ†_{kc} ψ_{kd} ψ†_{k'd} ψ_{k'c} = δ_{kk'} n_{kc} − E^c_{kk'} E^d_{k'k}        (c ≠ d)
+//! ```
+//!
+//! so, summed with `w_{kk'} = N−1−max(k,k')` over all `k, k'`, in `lanes.rs`'s convention
+//! (`Σ_{c<d} g^{cd} E^c E^d + ½ Σ_c g^{cc} E^c E^c`):
+//!
+//! * `h^c_{k,k+1} = h^c_{k+1,k} = x`, `h^c_{kk} = w_{kk}` (the `δ_{kk'}` remainder, two partners);
+//! * `g^{cd}_{(kk'),(k'k)} = −w_{kk'}` for `c < d` (the exchange, both orders folded in);
+//! * `g^{cd}_{(kk),(k'k')} = −⅓ w_{kk'}` for `c < d` and `g^{cc}_{(kk),(k'k')} = ⅔ w_{kk'}`
+//!   (the trace `−⅙ n n` and the same-colour `½ n n`, as operator products).
+//!
+//! Plant (ii) — `−⅙ → 0` — is the same mutation here: the `−⅓` and the `⅔ → 1`.
 
 use crate::dual::D2;
 use crate::fci::{solve_determinant, FciSpace, MoIntegrals, Solution};
+use crate::lanes::{solve_lanes, LaneHamiltonian, LaneSolution, LaneSpace};
 
 /// Planted defects for the freeze's plants, never a physics option.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -96,8 +126,8 @@ impl Qcd2 {
                     h[q * m + p] += self.x;
                 }
                 // the one-body Casimir per link the quark sits to the left of
-                if k + 2 <= n {
-                    let w = (n - 1 - k) as f64;
+                let w = self.coulomb_weight(k, k);
+                if w > 0.0 {
                     let self_term: f64 = (0..COLOURS).map(|cp| fierz(c, cp, cp, c, self.mutation)).sum();
                     h[p * m + p] += w * self_term;
                 }
@@ -105,7 +135,7 @@ impl Qcd2 {
         }
         for k in 0..n {
             for kp in 0..n {
-                let w = (n - 1 - k.max(kp)) as f64;
+                let w = self.coulomb_weight(k, kp);
                 if w == 0.0 {
                     continue;
                 }
@@ -152,5 +182,59 @@ impl Qcd2 {
     /// The baryon mass in units of `g`, the Schwinger normalisation: `(E₀(1) − E₀(0)) / (2√x)`.
     pub fn baryon_mass(e0: f64, e1: f64, x: f64) -> f64 {
         (e1 - e0) / (2.0 * x.sqrt())
+    }
+
+    /// `w_{kk'} = N − 1 − max(k, k')`: the number of links to the right of both sites, zero at
+    /// the last site.
+    pub fn coulomb_weight(&self, k: usize, kp: usize) -> f64 {
+        (self.n - 1 - k.max(kp)) as f64
+    }
+
+    /// The colour-lane space of sector `b`: one string per colour over the `N` sites, equal
+    /// counts (the Cartan-neutral block; see the header for why that is exact).
+    pub fn lane_space(&self, b: i32) -> LaneSpace {
+        let n_q = self.quarks(b);
+        assert!(n_q % COLOURS == 0, "a sector with {n_q} quarks has no Cartan-neutral block");
+        LaneSpace::uniform(self.n, &[n_q / COLOURS; COLOURS])
+    }
+
+    /// The same operator as [`Self::integrals`], in lane form (header).
+    pub fn lane_hamiltonian(&self) -> LaneHamiltonian<f64> {
+        let n = self.n;
+        let trace = match self.mutation {
+            Mutation::None => 1.0 / 6.0,
+            Mutation::FierzTraceOff => 0.0,
+        };
+        let mut ham = LaneHamiltonian::<f64>::new(&[n; COLOURS]);
+        for c in 0..COLOURS {
+            for k in 0..n {
+                if k + 1 < n {
+                    ham.one_body(c, k, k + 1, self.x);
+                    ham.one_body(c, k + 1, k, self.x);
+                }
+                ham.one_body(c, k, k, self.coulomb_weight(k, k));
+            }
+        }
+        for k in 0..n {
+            for kp in 0..n {
+                let w = self.coulomb_weight(k, kp);
+                if w == 0.0 {
+                    continue;
+                }
+                for c in 0..COLOURS {
+                    ham.two_body(c, k, k, c, kp, kp, (1.0 - 2.0 * trace) * w);
+                    for d in c + 1..COLOURS {
+                        ham.two_body(c, k, kp, d, kp, k, -w);
+                        ham.two_body(c, k, k, d, kp, kp, -2.0 * trace * w);
+                    }
+                }
+            }
+        }
+        ham
+    }
+
+    /// The exact ground state of sector `b` on the colour-lane route, `threads` host shards.
+    pub fn ground_lanes(&self, b: i32, threads: usize) -> LaneSolution {
+        solve_lanes(&self.lane_space(b), &self.lane_hamiltonian(), threads)
     }
 }

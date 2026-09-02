@@ -54,21 +54,21 @@ fn main() {
     let (space, mo, _nuc) = geometry_problem(&species, centers);
     let n = space.n_orb;
     let n2 = n * n;
-    let na = space.alpha.len();
-    let nb = space.beta.len();
+    let na = space.alpha().len();
+    let nb = space.beta().len();
 
     // The excitation lists are UNIFORM in length: a string with `e` of `n` orbitals
     // occupied has exactly `e * (n - e) + e` single excitations, every string alike. The
     // GPU layout is a flat array that depends on that, so it is asserted rather than
     // assumed — a ragged list would silently corrupt every stride.
-    let ns_a = space.alpha.singles[0].len();
-    let ns_b = space.beta.singles[0].len();
+    let ns_a = space.alpha().singles[0].len();
+    let ns_b = space.beta().singles[0].len();
     assert!(
-        space.alpha.singles.iter().all(|s| s.len() == ns_a),
+        space.alpha().singles.iter().all(|s| s.len() == ns_a),
         "alpha excitation lists are ragged; the flat GPU layout assumes they are not"
     );
     assert!(
-        space.beta.singles.iter().all(|s| s.len() == ns_b),
+        space.beta().singles.iter().all(|s| s.len() == ns_b),
         "beta excitation lists are ragged; the flat GPU layout assumes they are not"
     );
 
@@ -103,7 +103,7 @@ fn main() {
     for v in ci0.k.iter().chain(ci0.g.iter()) {
         w.write_all(&v.to_le_bytes()).unwrap();
     }
-    for strings in [&space.alpha, &space.beta] {
+    for strings in [space.alpha(), space.beta()] {
         for row in strings.singles.iter() {
             for &(pq, sign, dst) in row.iter() {
                 w.write_all(&(pq as u32).to_le_bytes()).unwrap();

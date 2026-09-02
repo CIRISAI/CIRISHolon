@@ -1,0 +1,86 @@
+# GF2a exact referee on colour lanes (Cartan-neutral block); W-units; M_B/g = (E1-E0)/(2 sqrt x); host shards = 8; subspace bound = 48
+N= 4 x= 4.0 B=0 n_q= 6 n_det=      216 price=1.80e5B cpu E0=-24.5391166860  iters=33 resid=4.9e-11 margin=+2.454e1 exit=Converged  0.0s
+N= 4 x= 4.0 B=0 n_q= 6 n_det=      216 price=1.80e5B gpu E0=-24.5391166860  iters=33 resid=4.9e-11 margin=+2.454e1 exit=Converged  0.1s
+N= 4 x= 4.0 B=0 gpu resident sigma 0.0001 s (12989.6 sigma/s)
+N= 4 x= 4.0 B=0 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 4 x= 4.0 B=1 n_q= 9 n_det=       64 price=5.32e4B cpu E0=-17.5847761876  iters=26 resid=7.4e-11 margin=+1.758e1 exit=Converged  0.0s
+N= 4 x= 4.0 B=1 n_q= 9 n_det=       64 price=5.32e4B gpu E0=-17.5847761876  iters=26 resid=7.4e-11 margin=+1.758e1 exit=Converged  0.0s
+N= 4 x= 4.0 B=1 gpu resident sigma 0.0000 s (21959.1 sigma/s)
+N= 4 x= 4.0 B=1 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 4 x= 4.0 B=2 n_q=12 n_det=        1 price=8.00e1B cpu E0=-0.0000000000  iters=0 resid=0.0e0 margin=+0.000e0 exit=Trivial  0.0s
+N= 4 x= 4.0 B=2 n_q=12 n_det=        1 price=8.00e1B gpu E0=-0.0000000000  iters=0 resid=0.0e0 margin=+0.000e0 exit=Trivial  0.0s
+N= 4 x= 4.0 B=2 gpu resident sigma 0.0000 s (26816.0 sigma/s)
+N= 4 x= 4.0 B=2 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 4 x= 4.0 cpu  M_B/g=1.738585  U_BB=+1.063044e1  (E1-E0=+6.954340, E2-E1=+17.584776)
+N= 4 x= 4.0 gpu  M_B/g=1.738585  U_BB=+1.063044e1  (E1-E0=+6.954340, E2-E1=+17.584776)
+N= 4 x= 9.0 B=0 n_q= 6 n_det=      216 price=1.80e5B cpu E0=-58.0230018617  iters=33 resid=6.6e-11 margin=+5.802e1 exit=Converged  0.1s
+N= 4 x= 9.0 B=0 n_q= 6 n_det=      216 price=1.80e5B gpu E0=-58.0230018617  iters=33 resid=6.6e-11 margin=+5.802e1 exit=Converged  0.0s
+N= 4 x= 9.0 B=0 gpu resident sigma 0.0000 s (22295.5 sigma/s)
+N= 4 x= 9.0 B=0 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 4 x= 9.0 B=1 n_q= 9 n_det=       64 price=5.32e4B cpu E0=-41.7896555157  iters=26 resid=8.4e-11 margin=+4.179e1 exit=Converged  0.0s
+N= 4 x= 9.0 B=1 n_q= 9 n_det=       64 price=5.32e4B gpu E0=-41.7896555157  iters=26 resid=8.4e-11 margin=+4.179e1 exit=Converged  0.0s
+N= 4 x= 9.0 B=1 gpu resident sigma 0.0000 s (22135.3 sigma/s)
+N= 4 x= 9.0 B=1 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 4 x= 9.0 B=2 n_q=12 n_det=        1 price=8.00e1B cpu E0=-0.0000000000  iters=0 resid=0.0e0 margin=+0.000e0 exit=Trivial  0.0s
+N= 4 x= 9.0 B=2 n_q=12 n_det=        1 price=8.00e1B gpu E0=-0.0000000000  iters=0 resid=0.0e0 margin=+0.000e0 exit=Trivial  0.0s
+N= 4 x= 9.0 B=2 gpu resident sigma 0.0000 s (26970.0 sigma/s)
+N= 4 x= 9.0 B=2 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 4 x= 9.0 cpu  M_B/g=2.705558  U_BB=+2.555631e1  (E1-E0=+16.233346, E2-E1=+41.789656)
+N= 4 x= 9.0 gpu  M_B/g=2.705558  U_BB=+2.555631e1  (E1-E0=+16.233346, E2-E1=+41.789656)
+N= 6 x= 4.0 B=0 n_q= 9 n_det=     8000 price=6.66e6B cpu E0=-38.2128396646  iters=59 resid=7.4e-11 margin=+3.821e1 exit=Converged  0.9s
+N= 6 x= 4.0 B=0 n_q= 9 n_det=     8000 price=6.66e6B gpu E0=-38.2128396646  iters=59 resid=7.4e-11 margin=+3.821e1 exit=Converged  0.1s
+N= 6 x= 4.0 B=0 gpu resident sigma 0.0001 s (15015.6 sigma/s)
+N= 6 x= 4.0 B=0 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 6 x= 4.0 B=1 n_q=12 n_det=     3375 price=2.81e6B cpu E0=-33.1848596866  iters=54 resid=8.3e-11 margin=+3.318e1 exit=Converged  0.4s
+N= 6 x= 4.0 B=1 n_q=12 n_det=     3375 price=2.81e6B gpu E0=-33.1848596866  iters=54 resid=8.3e-11 margin=+3.318e1 exit=Converged  0.2s
+N= 6 x= 4.0 B=1 gpu resident sigma 0.0001 s (9767.3 sigma/s)
+N= 6 x= 4.0 B=1 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 6 x= 4.0 B=2 n_q=15 n_det=      216 price=1.80e5B cpu E0=-19.1570928549  iters=38 resid=6.3e-11 margin=+1.916e1 exit=Converged  0.0s
+N= 6 x= 4.0 B=2 n_q=15 n_det=      216 price=1.80e5B gpu E0=-19.1570928549  iters=38 resid=6.3e-11 margin=+1.916e1 exit=Converged  0.0s
+N= 6 x= 4.0 B=2 gpu resident sigma 0.0001 s (10312.9 sigma/s)
+N= 6 x= 4.0 B=2 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 6 x= 4.0 cpu  M_B/g=1.256995  U_BB=+8.999787e0  (E1-E0=+5.027980, E2-E1=+14.027767)
+N= 6 x= 4.0 gpu  M_B/g=1.256995  U_BB=+8.999787e0  (E1-E0=+5.027980, E2-E1=+14.027767)
+N= 6 x= 9.0 B=0 n_q= 9 n_det=     8000 price=6.66e6B cpu E0=-90.4871056656  iters=60 resid=5.8e-11 margin=+9.049e1 exit=Converged  0.5s
+N= 6 x= 9.0 B=0 n_q= 9 n_det=     8000 price=6.66e6B gpu E0=-90.4871056656  iters=60 resid=5.8e-11 margin=+9.049e1 exit=Converged  0.2s
+N= 6 x= 9.0 B=0 gpu resident sigma 0.0001 s (15126.7 sigma/s)
+N= 6 x= 9.0 B=0 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 6 x= 9.0 B=1 n_q=12 n_det=     3375 price=2.81e6B cpu E0=-78.7699472604  iters=56 resid=6.1e-11 margin=+7.877e1 exit=Converged  0.2s
+N= 6 x= 9.0 B=1 n_q=12 n_det=     3375 price=2.81e6B gpu E0=-78.7699472604  iters=56 resid=6.1e-11 margin=+7.877e1 exit=Converged  0.1s
+N= 6 x= 9.0 B=1 gpu resident sigma 0.0001 s (12650.6 sigma/s)
+N= 6 x= 9.0 B=1 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 6 x= 9.0 B=2 n_q=15 n_det=      216 price=1.80e5B cpu E0=-46.0059828234  iters=41 resid=3.1e-11 margin=+4.601e1 exit=Converged  0.0s
+N= 6 x= 9.0 B=2 n_q=15 n_det=      216 price=1.80e5B gpu E0=-46.0059828234  iters=41 resid=3.1e-11 margin=+4.601e1 exit=Converged  0.0s
+N= 6 x= 9.0 B=2 gpu resident sigma 0.0005 s (1936.4 sigma/s)
+N= 6 x= 9.0 B=2 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 6 x= 9.0 cpu  M_B/g=1.952860  U_BB=+2.104681e1  (E1-E0=+11.717158, E2-E1=+32.763964)
+N= 6 x= 9.0 gpu  M_B/g=1.952860  U_BB=+2.104681e1  (E1-E0=+11.717158, E2-E1=+32.763964)
+N= 8 x= 4.0 B=0 n_q=12 n_det=   343000 price=2.85e8B cpu E0=-51.9229999638  iters=86 resid=7.0e-11 margin=+5.192e1 exit=Converged  21.1s
+N= 8 x= 4.0 B=0 n_q=12 n_det=   343000 price=2.85e8B gpu E0=-51.9229999638  iters=86 resid=7.0e-11 margin=+5.192e1 exit=Converged  6.7s
+N= 8 x= 4.0 B=0 gpu resident sigma 0.0024 s (409.6 sigma/s)
+N= 8 x= 4.0 B=0 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 8 x= 4.0 B=1 n_q=15 n_det=   175616 price=1.46e8B cpu E0=-47.9964825669  iters=81 resid=9.4e-11 margin=+4.800e1 exit=Converged  10.1s
+N= 8 x= 4.0 B=1 n_q=15 n_det=   175616 price=1.46e8B gpu E0=-47.9964825669  iters=81 resid=9.4e-11 margin=+4.800e1 exit=Converged  3.8s
+N= 8 x= 4.0 B=1 gpu resident sigma 0.0016 s (631.3 sigma/s)
+N= 8 x= 4.0 B=1 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 8 x= 4.0 B=2 n_q=18 n_det=    21952 price=1.83e7B cpu E0=-36.6401053164  iters=83 resid=9.1e-11 margin=+3.664e1 exit=Converged  1.4s
+N= 8 x= 4.0 B=2 n_q=18 n_det=    21952 price=1.83e7B gpu E0=-36.6401053164  iters=83 resid=9.1e-11 margin=+3.664e1 exit=Converged  0.5s
+N= 8 x= 4.0 B=2 gpu resident sigma 0.0004 s (2458.7 sigma/s)
+N= 8 x= 4.0 B=2 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 8 x= 4.0 cpu  M_B/g=0.981629  U_BB=+7.429860e0  (E1-E0=+3.926517, E2-E1=+11.356377)
+N= 8 x= 4.0 gpu  M_B/g=0.981629  U_BB=+7.429860e0  (E1-E0=+3.926517, E2-E1=+11.356377)
+N= 8 x= 9.0 B=0 n_q=12 n_det=   343000 price=2.85e8B cpu E0=-123.0642401146  iters=85 resid=6.5e-11 margin=+1.231e2 exit=Converged  20.0s
+N= 8 x= 9.0 B=0 n_q=12 n_det=   343000 price=2.85e8B gpu E0=-123.0642401146  iters=85 resid=6.5e-11 margin=+1.231e2 exit=Converged  9.5s
+N= 8 x= 9.0 B=0 gpu resident sigma 0.0024 s (411.5 sigma/s)
+N= 8 x= 9.0 B=0 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 8 x= 9.0 B=1 n_q=15 n_det=   175616 price=1.46e8B cpu E0=-113.9136751337  iters=79 resid=8.4e-11 margin=+1.139e2 exit=Converged  12.9s
+N= 8 x= 9.0 B=1 n_q=15 n_det=   175616 price=1.46e8B gpu E0=-113.9136751337  iters=79 resid=8.4e-11 margin=+1.139e2 exit=Converged  3.8s
+N= 8 x= 9.0 B=1 gpu resident sigma 0.0016 s (632.7 sigma/s)
+N= 8 x= 9.0 B=1 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 8 x= 9.0 B=2 n_q=18 n_det=    21952 price=1.83e7B cpu E0=-87.5269948585  iters=80 resid=7.6e-11 margin=+8.753e1 exit=Converged  1.9s
+N= 8 x= 9.0 B=2 n_q=18 n_det=    21952 price=1.83e7B gpu E0=-87.5269948585  iters=80 resid=7.6e-11 margin=+8.753e1 exit=Converged  0.5s
+N= 8 x= 9.0 B=2 gpu resident sigma 0.0004 s (2469.3 sigma/s)
+N= 8 x= 9.0 B=2 cpu-vs-gpu |dE|=0.000e0 same_bits=true
+N= 8 x= 9.0 cpu  M_B/g=1.525094  U_BB=+1.723612e1  (E1-E0=+9.150565, E2-E1=+26.386680)
+N= 8 x= 9.0 gpu  M_B/g=1.525094  U_BB=+1.723612e1  (E1-E0=+9.150565, E2-E1=+26.386680)
+EXIT=0

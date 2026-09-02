@@ -22,7 +22,16 @@ use std::process::Command;
 /// Every kernel translation unit, by stem. NAMED rather than globbed: a glob would compile
 /// whatever happened to be in the directory, so a stray file becomes a build input and a
 /// deleted one stops being checked without anything saying so.
-const KERNELS: [&str; 2] = ["fold", "fci_sigma"];
+const KERNELS: [&str; 2] = ["fold", "lanes_sigma"];
+
+/// Per-kernel flags. `lanes_sigma` is the transliteration of a host body and is gated
+/// bit-identical to it, so fused multiply-add — which the host never performs — is off.
+fn extra_flags(stem: &str) -> &'static [&'static str] {
+    match stem {
+        "lanes_sigma" => &["-fmad=false"],
+        _ => &[],
+    }
+}
 
 fn main() {
     let dir = Path::new(env!("CARGO_MANIFEST_DIR"));
@@ -47,6 +56,7 @@ fn compile_or_check(nvcc: &str, have_nvcc: bool, stem: &str, cu: &Path, ptx: &Pa
     if have_nvcc {
         let out = Command::new(nvcc)
             .args(["-ptx", "-O3", "-arch=compute_89", "-lineinfo"])
+            .args(extra_flags(stem))
             .arg(cu)
             .arg("-o")
             .arg(ptx)

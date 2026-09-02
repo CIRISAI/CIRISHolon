@@ -200,8 +200,8 @@ fn main() {
     println!(
         "# problem        n_orb {}, {} x {} strings, {} determinants  (built in {:.1} s)",
         space.n_orb,
-        space.alpha.len(),
-        space.beta.len(),
+        space.alpha().len(),
+        space.beta().len(),
         space.n_det,
         t_setup.elapsed().as_secs_f64()
     );
@@ -231,7 +231,8 @@ fn main() {
         p.mem_info_mib().expect("device memory unreadable")
     };
     // D2: the probe ATTEMPTS the thing before the benchmark claims the device.
-    let need_mib = holon_gpu::lease::LeasedGpuProvider::mib_for(&space);
+    let tables = holon_gpu::lease::LeasedGpuProvider::tables_for(&space, &ci);
+    let need_mib = holon_gpu::lease::LeasedGpuProvider::mib_for(&tables);
     let mut probe = VramProbe::on(provider.context().clone());
     let verdict = probe.probe(ResourceKind::Vram, need_mib);
     println!(
@@ -275,8 +276,7 @@ fn main() {
     }
     println!("\n--- the determinism gate, 5 runs, PER CLASS ---");
     println!("cpu  bit-identical over 5 runs: YES");
-    println!("gpu  bit-identical over 5 runs: YES  (atomics-free; cuBLAS pinned to pedantic");
-    println!("                                      math with a fixed 4 MiB workspace)");
+    println!("gpu  bit-identical over 5 runs: YES  (a gather: no atomic, no library reduction)");
 
     // ---- timing.
     //
@@ -289,13 +289,13 @@ fn main() {
     // So every reported number below is warm, the discard is declared, and the cold reading is
     // printed rather than thrown away — a registration is a memory of a measurement, and this is
     // what that memory has to be a memory OF.
-    op.preload(&c).expect("preload");
+    op.try_apply(&c, &mut gpu_sigma).expect("preload");
     const WARMUP_LOOPS: usize = 3;
-    let gpu_cold = op.time_kernel_only(reps).expect("cold timing");
+    let gpu_cold = op.seconds_per_sigma_resident(reps).expect("cold timing");
     for _ in 0..WARMUP_LOOPS {
-        op.time_kernel_only(reps).expect("warmup");
+        op.seconds_per_sigma_resident(reps).expect("warmup");
     }
-    let gpu_kernel = op.time_kernel_only(reps).expect("kernel timing");
+    let gpu_kernel = op.seconds_per_sigma_resident(reps).expect("kernel timing");
     println!(
         "\n(cold first loop {:.1} sigma/s; after {WARMUP_LOOPS} warm-up loops {:.1} sigma/s \
          — {:.0}% cold-start gap, which is why every row below is warm)",
@@ -330,15 +330,31 @@ fn main() {
         return;
     }
 
-    let n = space.n_orb;
-    let n2 = (n * n) as f64;
-    let na = space.alpha.len() as f64;
-    let nb = space.beta.len() as f64;
-    let ns_a = space.alpha.singles[0].len() as f64;
-    let gflop = 2.0 * ns_a * n2 * nb * na / 1e9 + 2.0 * na * nb * nb / 1e9 + 2.0 * na * na * nb / 1e9;
+    // The kernel's work is counted from its own tables: one term per (output determinant,
+    // lane, single) for the one-body part plus one per pair entry on that single's row —
+    // exactly what the walk visits (the `jm < 0` skips are not subtracted).
+    let terms: f64 = (0..tables.n_lanes)
+        .map(|l| {
+            let size = tables.lane_size[l] as usize;
+            let ns = tables.lane_ns[l] as usize;
+            let s_off = tables.lane_off_singles[l] as usize;
+            let mut per_lane = 0f64;
+            for e in s_off..s_off + size * ns {
+                let tp = tables.singles_tp[e] as usize;
+                let mut rows = 1usize;
+                for p in tables.lane_pair_ptr[l]..tables.lane_pair_ptr[l + 1] {
+                    let row = tables.pair_row_off[p as usize] as usize + tp;
+                    rows += (tables.row_ptr[row + 1] - tables.row_ptr[row]) as usize;
+                }
+                per_lane += rows as f64;
+            }
+            per_lane * (space.n_det / size) as f64
+        })
+        .sum();
+    let gflop = terms / 1e9;
 
     println!("\n--- sigma/s, every row declaring BOTH classes ---");
-    println!("| arm | device class | core class | sigma/s | GFLOP/s FP64 |");
+    println!("| arm | device class | core class | sigma/s | Gterm/s |");
     println!("|---|---|---|---:|---:|");
     println!(
         "| GPU, kernel only | {} | n/a | {:.1} | {:.1} |",
@@ -364,7 +380,7 @@ fn main() {
         gflop / cpu_cpu
     );
     println!(
-        "\nflops per sigma {gflop:.3} GFLOP; wall/CPU-time ratio on the CPU arm {:.3} \
+        "\nterms per sigma {gflop:.3} G; wall/CPU-time ratio on the CPU arm {:.3} \
          (>1 means the arm was descheduled and the wall number is the machine, not the code)",
         cpu_wall / cpu_cpu
     );
@@ -418,7 +434,7 @@ fn main() {
     );
 
     let key = WorkloadKey {
-        workload: "fci_sigma",
+        workload: "lane_sigma",
         size: space.n_det as u64,
         device: DeviceClass::Gpu,
     };
@@ -434,7 +450,7 @@ fn main() {
     registry.register(entry);
     registry.register(Entry {
         key: WorkloadKey {
-            workload: "fci_sigma",
+            workload: "lane_sigma",
             size: space.n_det as u64,
             device: DeviceClass::Cpu,
         },

@@ -46,11 +46,10 @@ holon-device = { path = "../holon-device" }
 [dependencies.cudarc]
 version = "0.19"
 default-features = false
-# `cublas` is added for the FCI sigma's three GEMMs. FP64 GEMM at 77% of this card's
-# FMA peak is not something a hand-written kernel reaches, and the whole 3.2x is in it.
-# It is still dynamically loaded: libcublas.so is dlopen'd at RUN time like libcuda.so, so
-# a build still needs no CUDA toolkit and no stub libraries.
-features = ["std", "driver", "nvrtc", "cublas", "dynamic-loading", "cuda-13000"]
+# Dynamically loaded: libcuda.so is dlopen'd at RUN time, so a build needs no CUDA
+# toolkit and no stub libraries. No cuBLAS: the lane kernel is a gather with no library
+# reduction in it, which is what makes it bit-identical to the host.
+features = ["std", "driver", "nvrtc", "dynamic-loading", "cuda-13000"]
 
 [profile.release]
 debug = true

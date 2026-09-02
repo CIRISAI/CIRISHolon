@@ -468,14 +468,14 @@ fn the_spin_check_rejects_a_state_that_is_not_an_eigenstate() {
     let n = basis.n;
     let (n_elec, na, nb) = electron_counts(&[CARBON]);
     let space = FciSpace::new(n, na, nb);
-    assert_eq!(space.alpha.n_elec, space.beta.n_elec, "S_z must be 0 for this probe");
-    let nb_len = space.beta.len();
+    assert_eq!(space.alpha().n_elec, space.beta().n_elec, "S_z must be 0 for this probe");
+    let nb_len = space.beta().len();
 
     // Find an OPEN-SHELL determinant: alpha and beta occupations that differ. Searched
     // rather than indexed, so the test cannot be silently testing the wrong object.
     let mut probes = Vec::new();
-    for (ia, &ma) in space.alpha.masks.iter().enumerate() {
-        for (ib, &mb) in space.beta.masks.iter().enumerate() {
+    for (ia, &ma) in space.alpha().masks.iter().enumerate() {
+        for (ib, &mb) in space.beta().masks.iter().enumerate() {
             let beta_only = (mb & !ma).count_ones();
             if beta_only > 0 {
                 probes.push((ia * nb_len + ib, beta_only));
@@ -1162,44 +1162,63 @@ fn the_variational_guard_fires_on_a_solve_that_converged_to_the_wrong_state() {
     // far from the ground state as a single determinant gets, and it needs no seed. If
     // Davidson converges anywhere near it, the energy is above `min_i H_ii` by
     // construction and the guard must fire.
+    // RE-STAKED A SECOND TIME, under the lane kernel (2026-09-02). The highest-diagonal start
+    // converged to the TRUE ground state to 3e-12 Ha on this geometry once the sigma's
+    // reduction order changed: the accident that carrier depended on was a property of one
+    // kernel's rounding, and it moved with the kernel. A plant whose carrier is an arithmetic
+    // accident is a plant that voids on every regime change, so the carrier is now EXACT: the
+    // ground state is deflated out of the operator (`H + μ |g><g|`, a `SigmaOp` wrapping the
+    // host operator, μ above the whole spectrum's width), so the solve converges cleanly onto
+    // the first excited eigenvector BY CONSTRUCTION — small residual, `Converged` — and the
+    // guard is scored on that solution against the ORIGINAL diagonal. The geometry hunt
+    // (`examples/s3_wrongstate_hunt.rs`) remains the instrument for how often the driver
+    // itself lands wrong; this test is about whether the guard sees it when it does.
+    use holon_chem::fci::CiInts;
+    use holon_chem::sigma_op::{CpuProvider, DeviceClass, SigmaOp, SigmaProvider};
+    struct Deflated<'a> {
+        inner: Box<dyn SigmaOp<f64> + 'a>,
+        g: Vec<f64>,
+        mu: f64,
+    }
+    impl SigmaOp<f64> for Deflated<'_> {
+        fn n_det(&self) -> usize {
+            self.inner.n_det()
+        }
+        fn device(&self) -> DeviceClass {
+            self.inner.device()
+        }
+        fn apply(&mut self, c: &[f64], sigma: &mut [f64]) {
+            self.inner.apply(c, sigma);
+            let p: f64 = self.g.iter().zip(c).map(|(a, b)| a * b).sum();
+            for (s, gi) in sigma.iter_mut().zip(&self.g) {
+                *s += self.mu * p * gi;
+            }
+        }
+    }
+    struct DeflatingProvider {
+        g: Vec<f64>,
+        mu: f64,
+    }
+    impl SigmaProvider for DeflatingProvider {
+        fn device(&self) -> DeviceClass {
+            DeviceClass::Cpu
+        }
+        fn op_for<'a>(&self, space: &'a FciSpace, ci: &'a CiInts) -> Result<Box<dyn SigmaOp<f64> + 'a>, String> {
+            Ok(Box::new(Deflated { inner: CpuProvider.op_for(space, ci)?, g: self.g.clone(), mu: self.mu }))
+        }
+    }
+
     let ci = holon_chem::fci::ci_ints(&mo, holon_chem::fci::Order::Value);
     let diag = space.diagonal(&ci);
-    let (hi_i, hi_v) = diag
-        .iter()
-        .enumerate()
-        .fold((0usize, f64::NEG_INFINITY), |acc, (i, &v)| {
-            if v > acc.1 {
-                (i, v)
-            } else {
-                acc
-            }
-        });
     let lo_v = diag.iter().copied().fold(f64::INFINITY, f64::min);
-    let mut wrong = vec![0.0f64; space.n_det];
-    wrong[hi_i] = 1.0;
-
-    // M-PLANT-OBS: the carrier is asserted before the plant is scored. A start whose own
-    // expectation value already sits below `min_i H_ii` could not produce an above-bound
-    // answer and would prove nothing.
-    assert!(
-        hi_v > lo_v + 1.0,
-        "the plant's carrier is empty: the highest diagonal ({hi_v:.4}) is only \
-         {:.3e} above the lowest ({lo_v:.4}), so no start can put the solve meaningfully \
-         above the bound",
-        hi_v - lo_v
-    );
-    let overlap = good.vector[hi_i].abs();
-    assert!(
-        overlap < 0.2,
-        "the plant's carrier is empty: the planted determinant carries {overlap:.3} of the \
-         true ground state, which is a warm start rather than a wrong one"
-    );
-
-    let planted = holon_chem::fci::solve_determinant_from(&space, &mo, Some(&wrong));
+    let hi_v = diag.iter().copied().fold(f64::NEG_INFINITY, f64::max);
+    let mu = 4.0 * (hi_v - lo_v) + 10.0;
+    let provider = DeflatingProvider { g: good.vector.clone(), mu };
+    let planted = holon_chem::fci::solve_determinant_with(&space, &mo, None, &provider).expect("deflated solve");
     let margin = planted.variational_margin.expect("determinant route");
     println!(
         "plant: E = {:.6} against a true {:.6} ({:.3} Ha above); residual {:.3e} against \
-         {:.3e}; exit {} against {}; margin {:.4}",
+         {:.3e}; exit {} against {}; margin {:.4}; lowest diagonal {:.6}",
         planted.e.v,
         good.e.v,
         planted.e.v - good.e.v,
@@ -1207,7 +1226,27 @@ fn the_variational_guard_fires_on_a_solve_that_converged_to_the_wrong_state() {
         good.residual,
         planted.exit.label(),
         good.exit.label(),
-        margin
+        margin,
+        lo_v
+    );
+
+    // M-PLANT-OBS: the carrier, asserted before the plant is scored. The deflated solve must
+    // have landed on a DIFFERENT eigenvector (above the ground state), and that eigenvector
+    // must sit above the lowest diagonal element — otherwise no above-bound answer exists for
+    // the guard to catch and the plant is VOID, not passed.
+    assert!(
+        planted.e.v > good.e.v + 1e-3,
+        "PLANT VOID (empty sector): the deflated solve landed within {:.3e} Ha of the ground \
+         state; deflation did not remove it",
+        (planted.e.v - good.e.v).abs()
+    );
+    assert!(
+        planted.e.v > lo_v + 1e-3,
+        "PLANT VOID (empty sector): the first excited state ({:.6}) lies below the lowest \
+         diagonal element ({lo_v:.6}) on this geometry, so a solve that lands on it is not an \
+         above-bound answer and the guard has nothing to catch here. Re-stake on a geometry \
+         whose first excitation clears the lowest determinant.",
+        planted.e.v
     );
 
     // The two claims that make this the RIGHT guard, in order.
@@ -1215,30 +1254,18 @@ fn the_variational_guard_fires_on_a_solve_that_converged_to_the_wrong_state() {
     // First: the existing discriminators are blind. If the plant were catchable by residual
     // or exit reason there would be no case for a new field, and this assertion is what
     // stops the guard being justified by a defect that something else already caught.
-    if planted.e.v > good.e.v + 1e-3 {
-        assert!(
-            planted.residual < 1e-8 && planted.exit == good.exit,
-            "the plant was caught by the EXISTING record (residual {:.3e}, exit {}), so the \
-             variational margin is not what is needed here",
-            planted.residual,
-            planted.exit.label()
-        );
-        // Second: the guard sees it.
-        assert!(
-            margin < 0.0,
-            "plant MISSED: the solve landed {:.3} Ha above the ground state and the \
-             variational margin is still {margin:.4}, so the guard does not catch the one \
-             failure it exists for",
-            planted.e.v - good.e.v
-        );
-    } else {
-        // The plant did not fire. That is a VOID, not a pass: it means this start was not
-        // wrong enough on this system, and the guard is untested rather than validated.
-        panic!(
-            "PLANT VOID (empty sector): the wrong start converged to within {:.3e} Ha of the \
-             true ground state, so there is no wrong-eigenvector failure here to catch and \
-             this test validates nothing. Re-stake the plant.",
-            (planted.e.v - good.e.v).abs()
-        );
-    }
+    assert!(
+        planted.residual < 1e-8 && planted.exit == good.exit,
+        "the plant was caught by the EXISTING record (residual {:.3e}, exit {}), so the \
+         variational margin is not what is needed here",
+        planted.residual,
+        planted.exit.label()
+    );
+    // Second: the guard sees it.
+    assert!(
+        margin < 0.0,
+        "plant MISSED: the solve landed {:.3} Ha above the ground state and the variational \
+         margin is still {margin:.4}, so the guard does not catch the one failure it exists for",
+        planted.e.v - good.e.v
+    );
 }

@@ -14,7 +14,7 @@ Results:  conformance/atomworld/CRYO_HO_RESULTS.md
 | compress.DONE | compress.log | ARM 3 G9/G10, plant P2, V4/V5, unit fence | COMPLETE |
 | quench_hydrogen.DONE | quench_hydrogen.log | ARM 1 G4 + classifier, plants P4/P4b, V1 leg 2 | COMPLETE |
 | order_probe.DONE | order_probe.log | POST-DATA order-channel diagnostic (jitter sweep, interior_atoms) | COMPLETE |
-| quench_oxygen.DONE | quench_oxygen.log | ARM 2 G7/G8 + classifier, V1 leg 2 | LONG — the 96-knot O-O curve is 2025 determinants a knot |
+| quench_oxygen.DONE | quench_oxygen.log | ARM 2 G7/G8 + classifier, V1 leg 2 | COMPLETE (curve 841.5 s, 15 runs) |
 
 ## Dead, kept and marked
 quench_hydrogen.NO_H3_TABLE.log — the first hydrogen run, before the H3 three-body surface

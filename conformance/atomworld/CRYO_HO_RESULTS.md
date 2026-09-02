@@ -12,8 +12,8 @@ CONTEXT and nothing is scored against them.*
 
 | arm | verdict |
 |---|---|
-| **ARM 1 — liquid H₂** | **MEASURED NO WELL, with the number and the mechanism.** The model's exact H₂–H₂ interaction has no well deeper than the staked 1.0e-5 Ha anywhere at R ≥ 3 bohr. Its deepest attraction is **−5.592e-6 Ha = −1.77 K**, T-shaped, at R = 8.00 bohr — and it is **not dispersion**: the tail is `R^-5.00` with the classical quadrupole–quadrupole angular pattern, measured out to 100 bohr against a floor control. This model has no liquid hydrogen. |
-| **ARM 2 — liquid O₂** | **The banked O–O curve IS a triplet curve at its well** (`⟨S²⟩ = 2.000000000`, multiplicity 3), so no paramagnetic fence is owed there — but the curve **changes spin state along its own length**, becoming S = 0 between 2.8 and 3.5 bohr, which no field in the banked artifact records. The model cannot represent a molecular O₂ liquid at all: the `(O,O,O)` surface does not exist and the exact O₂–O₂ reference is priced out at 23,474,025 determinants. |
+| **ARM 1 — liquid H₂** | **MEASURED NO WELL, with the number and the mechanism.** The model's exact H₂–H₂ interaction has no well deeper than the staked 1.0e-5 Ha anywhere at R ≥ 3 bohr. Its deepest attraction is **−5.592e-6 Ha = −1.77 K**, T-shaped, at R = 8.00 bohr — and it is **not dispersion**: the tail is `R^-5.00` with the classical quadrupole–quadrupole angular pattern, measured out to 100 bohr against a floor control. This model has no liquid hydrogen — and the quench ladder agrees: six H₂ molecules at every rung from 300 K down to 3 K, largest component ≤ 4 in 15 of 15 runs, nothing growing. |
+| **ARM 2 — liquid O₂** | **One O12 aggregate at every rung from 300 K to 3 K**, fence exactly 220 every step, freezing (mobility 18.5 → 0.0) but never molecular — and it is NOT liquid oxygen: with no `(O,O,O)` surface the pair curve has no valence saturation. **The banked O–O curve IS a triplet curve at its well** (`⟨S²⟩ = 2.000000000`, multiplicity 3), so no paramagnetic fence is owed there — but the curve **changes spin state along its own length**, becoming S = 0 between 2.8 and 3.5 bohr, which no field in the banked artifact records. The model cannot represent a molecular O₂ liquid at all: the `(O,O,O)` surface does not exist and the exact O₂–O₂ reference is priced out at 23,474,025 determinants. |
 | **ARM 3 — the metallic-hydrogen fence** | **The fragment-local expansion never converges on this scene, at any density tested.** `|ΔMBE4| < |ΔMBE3| < |ΔMBE2|` fails at every rung including the loosest, because the three- and four-body terms have opposite signs and comparable size. The 1 mHa/atom crossing sits at **a = 5.50 bohr, n = 0.0661 atoms/bohr², P₂D = +1.254e-4 Ha/bohr²** — reported as a measurement, because its gate is VOID (below). |
 
 **Two of the four pre-registered plants did not fire, and both voids stand.** That is the
@@ -23,6 +23,30 @@ that wrote those plants is where the defect was.
 
 **One instrument defect was caught by this campaign's own tie-to-banked rung and fixed
 before any ARM 1 / ARM 2 quench verdict was read.** See § 0.
+
+## SCORECARD
+
+| gate | verdict | the number that decides it |
+|---|---|---|
+| **G1** — the model has no H₂–H₂ well | **HOLDS** | deepest `E_int = −5.592e-6 Ha` (−1.77 K) at R = 8.00 bohr, T; bar −1.0e-5 |
+| **G2** — the pair level invents binding | **HOLDS** | MBE2 over-binds by −3.956e-1 Ha at R = 3.00, L; bar −1.0e-4 |
+| **G3** — the three-body term corrects it | **VOID** (P2 did not fire) | criterion met at 1.2×, plant bar 10× |
+| **G4** — no rung condenses | **KILLED**, on a clause this campaign mis-set | 5 of 15 breach an unsatisfiable `agg ≤ 1/6`; the `largest ≤ 4` clause held 15/15 |
+| **G5** — which spin sector | **HOLDS** | `⟨S²⟩ = 2.000000000`, multiplicity 3 |
+| **G6** — the sector plumbing, two-sided | **HOLDS** | quintet gap +4.332e-1 Ha; `M_s` degeneracy 3.13e-13 Ha |
+| **G7** — one aggregate at every rung | **HOLDS** | O12 in 15 of 15; fence exactly 220 every step; zero free O |
+| **G8** — `order` monotone as T falls | **VOID** (P4 did not fire) | criterion met; `order` starts at 0.996 and cannot rise |
+| **G9** — the fence has a location | **VOID** (P2 did not fire) | all three clauses met; crossing at a = 5.50 bohr |
+| **G10** — the ladder's convergence | **the expansion never converges** | `\|ΔMBE3\| > \|ΔMBE2\|` at 10 of 10 rungs |
+
+| plant | | | void condition | |
+|---|---|---|---|---|
+| **P1** sign | **FIRES** | | **V1** instrument identity | **PASS**, both legs, both arms |
+| **P2** three-body deletion | **DID NOT FIRE** | | **V2** ledger | 0 of 30 rung-seeds void |
+| **P3** spin sector | **FIRES** | | **V3** classifier refusals | 5 of 15 (H), 6 of 15 (O) |
+| **P4** label permutation | **DID NOT FIRE** | | **V4** solver exits | 0 of 10 exact solves void; 164 SCF-only sub-clusters, 0 IterationCap, 0 Stagnated |
+| | | | **V5** basis dependence | never fired; the ladder ran to its end |
+| | | | **V6** plant voids | **fired twice — G3, G8, G9** |
 
 ---
 
@@ -109,6 +133,14 @@ does not.
 more decades. The T slope is `−5.00` to four digits at every step, and the signs are the
 classical quadrupole–quadrupole angular pattern exactly: **T attractive, side-by-side (H)
 repulsive, collinear (L) repulsive.**
+
+**One thing is measured and not explained, and is written down as such.** Only the T
+channel's slope has converged: H and L climb monotonically from −4.17 and −2.56 toward −5
+without reaching it by 40 bohr, and extrapolating each channel's own `R^-5` from 40 bohr
+to 100 bohr reproduces T exactly (−2.458e-11 predicted, −2.458e-11 read) while missing H by
+8% and L by 14%. So H and L carry a sub-leading component this campaign has not
+characterised. It does not touch G1: the verdict rests on the T channel, which is both the
+only attractive one and the cleanly converged one.
 
 So the model's only H₂–H₂ attraction is **electrostatic** — H₂ has a permanent quadrupole
 and a minimal basis carries one — and **not dispersion**, which a basis with no p function
@@ -306,7 +338,76 @@ force evaluation. The model has no valence-saturation term for oxygen at all. Wh
 condenses is a pair-only aggregate, and calling it "liquid oxygen" would be a category
 error the engine itself refuses to make.
 
-### G7, G8 — the quench ladder · see § 2.1
+### G7 — one aggregate at every rung? · **HOLDS, 15 of 15**
+
+*Instrument `holon-render/examples/cryo_quench.rs`; log `engine/output/cryo/quench_oxygen.log`.*
+
+**V1 leg 1 PASS**, and it reproduces the banked disclosure exactly, not approximately:
+
+    O-O 96 knots, R_e = 2.4421 bohr, D_e = 0.147621 Ha,
+    exit IterationCap, budget 5000, worst_residual 4.809e-6, n_det 2025, n_basis 10,
+    device Cpu                                                        [841.5 s]
+
+**V1 leg 2 PASS**: at 300 K the scene reads `largest 12, free O 0, fence 220` in 3 of 3
+seeds — SATURATION-2's banked oxygen control reproduced.
+
+| T_target | largest, per seed | fence | free O | classifier |
+|---|---|---|---|---|
+| 300 K | 12, 12, 12 | 220, 220, 220 | 0, 0, 0 | LIQUID ×3 |
+| 100 K | 12, 12, 12 | 220, 220, 220 | 0, 0, 0 | LIQUID ×3 |
+| 30 K | 12, 12, 12 | 220, 220, 220 | 0, 0, 0 | REFUSED ×3 |
+| 10 K | 12, 12, 12 | 220, 220, 220 | 0, 0, 0 | REFUSED ×3 |
+| 3 K | 12, 12, 12 | 220, 220, 220 | 0, 0, 0 | ICE ×3 |
+
+Ledger: 0 of 15 rung-seeds VOID; worst drift/bound 2.064e-2, worst |p|/bound 1.472e-4.
+The fence is **exactly `C(12,3) = 220` at every force evaluation of every run**: every
+triple in the box refused for want of an `(O,O,O)` surface. This arm is MBE2 throughout
+and the count says so mechanically.
+
+**One aggregate, at every temperature, including 300 K.** *[LABELLED CONTEXT, never scored
+against: oxygen boils at 90.2 K. The model's oxygen is already condensed 210 K above
+that, and the ladder was chosen before the number was looked up.]* The reason is named in
+the freeze and is not a temperature effect at all: with no three-body term the pair curve
+has no valence saturation, so twelve oxygens over-coordinate into one droplet the way
+SATURATION-1's pair-only hydrogens did. **This is not liquid oxygen and the campaign does
+not call it that.** Liquid O₂ is a molecular liquid of O₂ units held by weak forces; the
+model has no mechanism to stop an oxygen collecting neighbours, and the reference that
+could settle whether the model has a molecular O₂ liquid is priced out at 23,474,025
+determinants.
+
+**G7 carries no plant.** The freeze assigned P1→G1, P2→G3/G9, P3→G5/G6 and P4→G4/G8, and
+left G7 unguarded. What stands behind it instead is mechanical and stated so the reader can
+weigh it: V1 leg 2's reproduction of the banked control, and the fence count landing on
+`C(12,3)` exactly rather than near it.
+
+### G8 — is `order` monotone as the scene is cooled? · **VOID (its plant did not fire)**
+
+    T   300 K : order 0.9964   mobility 18.53   LIQUID x3
+    T   100 K : order 0.9861   mobility  3.14   LIQUID x3
+    T    30 K : REFUSED x3 — no scorable seed
+    T    10 K : REFUSED x3 — no scorable seed
+    T     3 K : order 0.9997   mobility  0.00   ICE x3
+
+The staked criterion is met (no fall exceeds the 0.05 tolerance). **The gate is VOID**
+because P4 did not fire (§ 4). And the criterion was close to uninformative in any case:
+`order` starts at 0.996 and has nowhere to rise to, which is **M-UNTESTED-GAP** in a form
+the freeze did not anticipate — a monotonicity stake on a quantity already at its ceiling.
+
+What the numbers do show, as a measurement without a verdict, is a **droplet that freezes**:
+mobility falls by four orders across the ladder, 18.5 → 3.1 → ~0.0, and by 3 K it is
+exactly zero with the classifier reading ICE in 3 of 3 seeds. The two middle rungs are
+**REFUSED** by the classifier's own bulk gate — 0 or 1 atoms ever closed a complete
+six-neighbour shell, against its declared minimum of 2 — and it names the gate that would
+lift the refusal: a scene with a bulk. **A twelve-atom droplet in 2D is almost all
+surface.** That the same classifier reaches ICE at 3 K and refuses at 10 K and 30 K is the
+droplet settling into a structure that finally has an interior, not a phase transition,
+and this record does not present it as one.
+
+**P4b fired here.** On the oxygen droplet the same geometry jitter that left the hydrogen
+scene at 0.5956 drove `order` from 0.9997 to **0.0598**. The contrast is the point: a dense
+12-atom droplet has real bond-orientational structure to destroy, and a 12-atom molecular
+gas does not.
+
 
 ---
 
@@ -465,7 +566,7 @@ sampling. A different solver class, out of scope for this campaign and for this 
 | **P1** — negate `E_int` (ARM 1 G1) | the intermolecular channel; **nonzero in** it at 21 of 21 points in `R ∈ [3,6]` with `\|E_int\| > 1.0e-4 Ha` | **FIRES.** Planted deepest reading −9.144e-2 Ha against a −1.0e-4 bar; G1's no-well verdict inverts. 36 points negated. |
 | **P2** — delete every three-body term (ARM 1 G3, ARM 3 G9) | the three-body channel; **nonzero in** it — `Σ dE3 = +7.344e-1 Ha` at ARM 1's point, `+3.803e-4 Ha` at ARM 3's loosest rung | **DID NOT FIRE.** ARM 1: 1.2× against a 10× bar. ARM 3: **0.82×** — deleting the term makes the residual *smaller*. **G3 and G9 are VOID.** |
 | **P3** — force the solve into `S_z = 2` (ARM 2 G5/G6) | the quintet block, 210 determinants, containing no `M_s = 0` component at all, so disjoint from the honest solve's space by construction | **FIRES.** +4.332e-1 Ha against a 1.0e-4 bar. |
-| **P4** — permute positions across atoms (ARM 1 G4, ARM 2 G8) | the bond-orientational order channel | **DID NOT FIRE**, and it could never have. |
+| **P4** — permute positions across atoms (ARM 1 G4, ARM 2 G8) | the bond-orientational order channel; **nonzero in** it — unscrambled 0.8477 (H arm), 0.9997 (O arm) | **DID NOT FIRE** on either arm (order unchanged to four decimals), and it could never have. **G8 is VOID.** It also never guarded G4 at all — see below. |
 
 ### Why P2's failure is a result and not an accident
 
@@ -475,8 +576,8 @@ alternates, deleting the three-body term moves the reported residual *toward* th
 answer, not away. A plant whose premise is "removing this term makes things much worse"
 cannot fire on a series where that term overshoots.
 
-Something else does establish that ARM 3 measures the expansion — the residuals span five
-orders of magnitude across the ladder, from 2.6e-5 to 1.5 Ha/atom, which no constant
+Something else does establish that ARM 3 measures the expansion — the residuals span nearly
+five orders of magnitude across the ladder, from 2.6e-5 to 1.5 Ha/atom, which no constant
 offset does. **That reasoning is post-hoc and does not discharge the gate.** V6 says a
 plant that does not fire voids the gate it guards, and G3 and G9 stay void.
 
@@ -488,8 +589,17 @@ touch. **P4's carrier lies exactly in the null space of the statistic it was mea
 move** — it could not have fired on any scene whatever, and the vacuity was written into
 the freeze's own wording ("leaving the per-frame position multiset untouched"). That is
 **M-PLANT-OBS** in its pure form: the plant was not re-derived for this instrument. Its
-work count is honest and useless: 200 frames permuted, 2,226 atom positions moved,
-`order` unchanged at 0.9672.
+work count is honest and useless: 200 frames permuted, 2,226 atom positions moved, `order`
+unchanged at 0.8477 to four decimals.
+
+**And it was assigned to a gate it does not touch.** The freeze put P4 on ARM 1's G4 as
+well as ARM 2's G8. G4's criterion is component composition, read from the engine's bonded
+bitset — which P4 *explicitly preserves*. So P4 could not have guarded G4 either, on a
+different mechanism from the one that made it vacuous for G8. **G4's real guard turned out
+to be V1 leg 2**, the mechanical comparison against SATURATION-2's banked 300 K reading,
+which passed — and which is also what caught § 0.1. The lesson is not that the plant was
+weak; it is that a plant assigned to a gate must be checked against *that gate's own
+statistic*, and neither of P4's two assignments was.
 
 **P4b** (POST-DATA, and it does not cure the void) displaces every atom by an independent
 uniform vector of up to half the frame's own mean nearest-neighbour distance, which is
@@ -508,9 +618,12 @@ under-powered amplitude, or a degenerate statistic.
 | 2.00 | 5.037 | 0.1394 | 1 | LIQUID |
 | 5.00 | 12.593 | 0.1013 | 5 | LIQUID |
 
-**The order channel IS movable — P4b was simply under-powered.** It crosses the 0.45 bar
-between one half and one full nearest-neighbour distance, and P4b sat just under the
-crossing. That is the benign answer to the question the probe asked.
+**The order channel IS movable — P4b was simply under-powered on the hydrogen scene.** It
+crosses the 0.45 bar between one half and one full nearest-neighbour distance, and P4b sat
+just under the crossing. On the OXYGEN droplet the same P4b, at the same fraction, drove
+`order` from 0.9997 to 0.0598 and fired comfortably — a dense droplet has structure to
+destroy where a molecular gas has none. That is the benign answer to the question the probe
+asked, and it is arm-dependent.
 
 The unbenign answer is in the last column but one: **`interior_atoms = 1` at every
 amplitude below a five-fold displacement.** The order number, moved or unmoved, is one

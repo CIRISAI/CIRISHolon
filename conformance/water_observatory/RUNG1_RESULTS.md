@@ -99,6 +99,22 @@ All 23 entries of `census_traj_manifest.sha256` verified `OK` against
 | `de4_on` | 1 | same | its matched arm, `dE4_evals 891` — **excluded, see §4** |
 | `hydrogen` | 8 | 12 H, 0 O | P-6, the refusal control |
 
+**To re-run this, from the repo root** (Gate 10a3's shape: no path is baked into the
+instrument, and the artifact location is an override rather than a constant, so a future
+reader on another box changes one variable and nothing else):
+
+```sh
+TRAJ=${HOLON_CENSUS_TRAJ:-/home/emoore/holon-artifacts/census-traj}
+cd engine && cargo run --release -p holon-lens --example rung1 -- \
+  "$TRAJ/fenced" "$TRAJ/de4_off" "$TRAJ/de4_on" "$TRAJ/hydrogen" --surrogates=200
+```
+
+`rung1` hardcodes no path: it takes its trajectories as arguments and exits with a usage
+line when given none, so nothing in it dies with the session that ran it. The trajectories
+themselves are addressed by the committed `census_traj_manifest.sha256`, which is the
+portable identity; the box path above is provenance for where THIS run happened, which is
+what a results document is for. `rung1_all.log` carries no session-keyed path.
+
 **Work-unit pricing, and no cost claim is made.** 1.08e7 H-bond donor–acceptor tests, 2.38e6
 chart evaluations, and the surrogate leg — which the freeze priced at 4.8e8 edge rotations
 and which cost essentially nothing here, because the control floor is computed only for a

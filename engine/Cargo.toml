@@ -40,6 +40,13 @@ members = [
   # `[profile.*]` section is silently ignored by Cargo once it joins a workspace.
   "crates/holon-swarm",
   "crates/holon-mesh",
+  # holon-lattice: node LG's fluid tier. Same isolation profile as holon-mesh — its ONLY
+  # runtime dep is ciris-sim-core with `alloc`, which carries no optional features beyond
+  # alloc/std, so it cannot perturb the core's feature resolution or ci-gates.sh's isolation
+  # gates. It depends on that crate to REUSE regplus::DIRECTIONS and regplus::sector rather
+  # than retyping them; a second declaration of the direction set is how the two come to
+  # disagree, and regplus's is the table Core/Lattice.lean pins.
+  "crates/holon-lattice",
   # holon-render: the interactive atom renderer. Depends ONLY on `holon`, and only for
   # its tuner/grain TYPES; `holon` has no runtime deps and no optional features, so this
   # cannot perturb the core's feature resolution or the isolation gates. No other deps,

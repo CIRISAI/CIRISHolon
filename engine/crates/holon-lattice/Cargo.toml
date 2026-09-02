@@ -1,0 +1,26 @@
+# holon-lattice: the continuum-native fluid tier, on its OWN dynamics.
+#
+# Dependency profile matches `holon-mesh`'s and is deliberate: the ONLY runtime dep is
+# `ciris-sim-core` with `alloc`, which carries no optional features of its own beyond
+# alloc/std, so this crate cannot perturb the core's feature resolution or `ci-gates.sh`'s
+# isolation gates. It depends on that crate specifically to reuse `regplus::DIRECTIONS`
+# and `regplus::sector` rather than re-declaring them — a second declaration of the
+# direction set is how the two come to disagree, and `regplus`'s is the one
+# `CIRISOntology/Core/Lattice.lean` pins.
+
+[package]
+name = "holon-lattice"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+description = "FHP-6 / HPP-4 lattice gas as its own closed-tier candidate: exact conservation, the collision classification, and the closure defect law"
+
+[dependencies]
+ciris-sim-core = { path = "../ciris-sim-core", features = ["alloc"] }
+
+# DEV-only: tests/fchc_control.rs runs holon-mesh's FCHC-24 enumerator so G11's second leg
+# is discharged under this campaign's own invocation rather than cited from another crate's
+# suite. A dev-dependency leaves the library's runtime profile at one crate, so the isolation
+# argument above is untouched.
+[dev-dependencies]
+holon-mesh = { path = "../holon-mesh" }

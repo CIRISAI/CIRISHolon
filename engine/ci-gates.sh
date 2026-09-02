@@ -269,6 +269,27 @@ cargo test -q -p holon-mesh 2>/dev/null >/dev/null \
 cargo build -q -p holon-mesh --release 2>/dev/null \
   && ok "holon-mesh mesh_bench builds" || no "holon-mesh mesh_bench builds"
 
+# holon-lattice: node LG's fluid tier -- FHP-6 / HPP-4 running on their own dynamics.
+#
+# Two things are asserted that a plain `cargo test` would not distinguish. First the test
+# COUNT, gate 9's disease: a crate that resolves to nothing passes silently. Second the
+# CAMPAIGN DRIVER, because this crate's claim lives in a binary and not only in its unit
+# tests -- `lg_run --quick` runs every gate of conformance/mesh/LG_PREREG.md on a small
+# lattice and EXITS NONZERO if any of them fails, so a regression in the defect law or in
+# any conservation gate fails CI rather than waiting for someone to read a log. The quick
+# arm is used deliberately: it exercises the same gates on the same code paths in seconds,
+# and its output is labelled QUICK so it can never be mistaken for a banked reading.
+n_lat=$(cargo test -q -p holon-lattice -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_lat:-0}" -gt 0 ] \
+  && ok "holon-lattice reaches $n_lat tests" \
+  || no "holon-lattice reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q -p holon-lattice --release 2>/dev/null >/dev/null \
+  && ok "holon-lattice conservation/closure/plant tests" \
+  || no "holon-lattice conservation/closure/plant tests"
+cargo run -q --release -p holon-lattice --bin lg_run -- --quick >/dev/null 2>&1 \
+  && ok "holon-lattice LG campaign gates (quick arm) all pass" \
+  || no "holon-lattice LG campaign gates (quick arm) FAILED -- see lg_run --quick"
+
 # holon-tables: SATURATION-3's G1 tier — table generation sharded across workers,
 # bit-identical across shard counts, corruption convicted by an exact digest.
 #

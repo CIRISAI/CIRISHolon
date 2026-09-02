@@ -32,9 +32,26 @@ The log's last line is `# exit code ...` only when the run really ended.
 ## To resume
 
 ```
-cd <worktree>
 ./conformance/water_observatory/de5_run.sh score      # relaunch (idempotent; rewrites the log)
 ```
+
+Run it from anywhere: the script resolves the repo root from ITS OWN LOCATION, so no
+`cd` is needed and it works from outside a checkout entirely. Overrides, all optional:
+`DE5_WT` (a different checkout), `DE5_BIN` (a binary by name), `DE5_TRAJ` (the parked
+trajectories, which live outside the repo — the sha256 pin in `DE5_PREREG.md` §2.5 is
+what identifies them, the path only says where to look).
+
+**Check the resolver without launching anything:**
+
+```
+DE5_DRY=1 ./conformance/water_observatory/de5_run.sh score
+```
+
+prints every resolved path and exits 0, touching no marker, no log and no process — so
+it is safe to run against a tree that has live compute in it. Testing a launcher by
+launching it is not a test (b2-ewald's finding). Two refusals, with distinct exit codes
+so the fault is never guessed: **exit 4** = WT is not a checkout, **exit 3** = no
+`de5_audit` binary, each naming what it looked for and how to fix it.
 
 Nothing in the sampling depends on run order or on wall clock: the draw is a deterministic
 function of the pinned trajectories, so a relaunch reproduces the same 24 configs.

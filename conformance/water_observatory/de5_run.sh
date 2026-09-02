@@ -10,10 +10,38 @@
 # Every stage names its own log and marker; nothing is overwritten silently.
 set -u
 
-# WT defaults to this repo's own root: the campaign originally ran in a session
-# worktree (a copy of this tree), and a session-keyed path dies with the session
-# (gate 10a3). Override with DE5_WT for a re-run in a different checkout.
-WT=${DE5_WT:-$(git rev-parse --show-toplevel)}
+# WT RESOLUTION. The campaign originally ran in a session worktree (a copy of this
+# tree), and a session-keyed path dies with the session -- gate 10a3. The default is
+# therefore this repo's own root, resolved from THIS SCRIPT'S OWN LOCATION: the file
+# lives in conformance/water_observatory/, so the root is two directories up. That
+# is the only resolver that works from any cwd AND from outside a checkout.
+#
+# It used to be `git rev-parse --show-toplevel`. b2-ewald found the hole and it is
+# worth naming rather than just patching: from outside any checkout rev-parse prints
+# NOTHING and exits nonzero, so `WT=$(...)` assigns the EMPTY STRING -- which `set -u`
+# accepts, because the variable IS set. Measured here from /tmp before changing
+# anything: this script refused with exit 3 and wrote zero files, so the BIN hardening
+# already stopped it dying invisibly. But it refused for the WRONG REASON, naming
+# `/engine/target/...` and telling the reader to `cd /engine`. A refusal that
+# misidentifies the fault sends someone hunting a missing binary when the real fault
+# is that the script does not know where the repo is. So the root is now resolved from
+# a fact that cannot go empty, and VALIDATED where it is resolved.
+self=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+WT=${DE5_WT:-$(cd -- "$self/../.." && pwd -P)}
+
+# Validate the root POSITIVELY, here, so a wrong or empty WT fails saying so rather
+# than downstream wearing another error's clothes. Distinct exit code from the BIN
+# refusal, because they are different faults with different remedies.
+if [ -z "$WT" ] || [ ! -d "$WT/conformance/water_observatory" ] || [ ! -d "$WT/engine" ]; then
+  {
+    echo "de5_run.sh REFUSES: WT does not look like a CIRISHolon checkout."
+    echo "  WT resolved to:   [${WT:-<empty>}]"
+    echo "  script location:  $self"
+    echo "  expected under WT: conformance/water_observatory/ and engine/"
+    echo "Name it explicitly:  DE5_WT=/path/to/CIRISHolon $0 <stage>"
+  } >&2
+  exit 4
+fi
 # THE PARKED TRAJECTORIES live OUTSIDE the repo -- the closure census banked them
 # there and DE5_PREREG.md section 2.5 pins their sha256, which is what actually
 # identifies them. Not session-keyed, but machine-keyed, so it takes an override
@@ -72,6 +100,25 @@ esac
 
 log="$OUT/de5_$stage.log"
 done="$OUT/de5_$stage.DONE"
+
+# DRY MODE. b2-ewald's point, and it is right: testing a launcher by launching it is
+# not a test. Everything above is resolution; this prints what was resolved and exits
+# without touching a marker, a log, or a process, so the resolver can be exercised on
+# a tree that has running compute in it.
+if [ -n "${DE5_DRY:-}" ]; then
+  echo "DE5_DRY: resolution only. Nothing launched, nothing written."
+  echo "  self      $self"
+  echo "  WT        $WT"
+  echo "  BIN       $BIN"
+  echo "  TRAJ      $TRAJ"
+  echo "  MAN       $MAN"
+  echo "  stage     $stage"
+  echo "  args      ${args[*]}"
+  echo "  log       $log"
+  echo "  marker    $done"
+  exit 0
+fi
+
 rm -f "$done"
 
 {

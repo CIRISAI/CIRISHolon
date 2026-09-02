@@ -7,16 +7,34 @@ is proved, what is owed.*
 ## What is RUNNING right now
 
 ```
-pid file    engine/output/de4/de4_v2.PID
-log         engine/output/de4/de4_v2.log
-checkpoint  engine/output/de4/de4_v2.ckpt      <- the resume AND the live progress readout
-artifact    engine/output/de4/de4_v2.json      (written only on success)
+pid file    engine/output/de4/de4_v4.PID
+log         engine/output/de4/de4_v4.log
+checkpoint  engine/output/de4/de4_v4.ckpt      <- the resume AND the live progress readout
+artifact    engine/output/de4/de4_v4.json      (written only on success)
 command     de4_table --nr 13 --nu 11 --r 0.9:6.0 --stretch 3.0 --u -1.0:0.9975 \
-                      --region 7x7x7x6x6x6 --warm chain --workers 6 --checkpoint <ckpt>
+                      --region 5x5x5x4x4x4 --warm chain --workers 6 --device cpu \
+                      --checkpoint <ckpt>
+nice        5     <- NOT 19; see "why v4" below
 ```
 
 **Size: 497,640 representatives of a 2,924,207-node box.** Re-banked price (prereg A1.3)
 ~2.0 s of core time per representative at loadavg ~77.
+
+### Why there are four versions, one line each
+
+Three kills, each for a different defect, and none of them a false start — the run is the
+instrument that found them:
+
+| | killed because | cost |
+|---|---|---|
+| **v1** | no resume, no live progress: a 78-hour run whose only health signal was that the pid existed | 0.96% of budget |
+| **v2** | the sink was correct, its GRANULARITY was not — 64 regions put the first commit ~21 h out, and v2 then died at 52 min with **zero** regions committed, demonstrating it | nothing replayable |
+| **v3** | nice 19 against a nice-0 machine: 0.43 effective cores, a 9.4-day run. `renice` downward is refused to an unprivileged process, so the only fix was a relaunch | nothing replayable |
+| **v4** | — running — nice 5, 729 regions, first region committed at 15 min | — |
+
+v4 also carries what v3 could not: the checkpoint opens BEFORE the ~370 s surface build (so
+a death in setup leaves a diagnosable log), every regime axis is READ rather than asserted,
+and it is main's merged bytes rather than a branch's.
 
 ### v1 was KILLED, and that is a recorded decision
 
@@ -54,7 +72,8 @@ many regions replayed and how many were torn.
 One `END` line per committed region, so:
 
 ```
-grep -c '^END ' engine/output/de4/de4_v2.ckpt      # regions done, out of 64
+grep -c '^END ' engine/output/de4/de4_v4.ckpt      # regions done, out of 729
+./target/release/ckpt_verify engine/output/de4/de4_v4.ckpt   # and: is it replayable?
 ```
 
 The binary also prints a progress line every 60 s carrying regions-committed, percent,

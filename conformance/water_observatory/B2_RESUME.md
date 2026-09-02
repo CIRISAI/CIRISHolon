@@ -4,73 +4,128 @@
 `setsid` with a done-marker; if this lane's session is gone, read the markers and the logs
 and continue from them.*
 
-## Where things stand
+## The commits, in order — the ordering proof is `git log --oneline` on `b2-ewald`
 
-* **Freeze:** `conformance/water_observatory/B2_PREREG.md`, ADMITTED by
-  `Audit/prereg_audit.py`, committed at `f2539f1` on branch `b2-ewald` — one commit BEFORE
-  `longrange.rs` existed. `git log --oneline` is the ordering proof.
-* **Subsystem:** `engine/crates/holon-render/src/longrange.rs`, wired into `Sim`
-  (`e_far` row, forces into `a_pair`, virial into `w_virial`, `list_cutoff` respecting
-  `R_s`) plus a new angular-momentum ledger (`Sim::angular_momentum`,
-  `angular_conserved`, `angular_residual`, `angular_bound`, `angular_gate`).
-* **Instrument:** `engine/crates/holon-render/examples/b2_longrange.rs`, three arms.
+```
+7c8866b The far sector was ADDING to the near one, and a gradient gate found it
+b8a73a1 Three of my own gates were passing on nothing, and one of them found an engine fact
+4ce3a9a A checkpoint would have dropped the far sector silently, and the suite says what it costs
+07c1c4f B2's subsystem: a split kernel, an angular ledger, and the plants that refused
+f2539f1 B2's freeze: the measurement fired a long-range method, and it is not Ewald
+55c61b9 (branch point)
+```
+
+**The freeze landed before the subsystem existed.** `Audit/prereg_audit.py` returns
+`ADMITTED B2_PREREG.md`.
+
+## What exists
+
+* **Freeze:** `conformance/water_observatory/B2_PREREG.md` — 14 gates, 5 refusals, 7 plants,
+  6 VOID conditions, and the method argument (§2: this force law has no `r⁻¹` term, so
+  Ewald's defining difficulty is absent and B2 does not build it).
+* **Subsystem:** `engine/crates/holon-render/src/longrange.rs`. Wired into `Sim` as `e_far`
+  with forces into `a_pair` and virial into `w_virial`; `list_cutoff` reaches `R_s`; the far
+  sector's declaration is in `physics_digest` so a checkpoint cannot drop it silently.
+* **Angular-momentum ledger, new to this engine:** `Sim::angular_momentum`,
+  `angular_conserved`, `angular_residual`, `angular_bound`, `angular_gate` (returns
+  `Option`, so "not applicable" cannot be read as a pass).
+* **Instrument:** `engine/crates/holon-render/examples/b2_longrange.rs` — arms `engine`,
+  `frames`, `refusals`.
+* **Suite tests:** `engine/crates/holon-render/tests/b2_longrange.rs`, 21 tests, including a
+  mutation check that every invariant is re-run under the plant that should break it.
 
 ## The runs
-
-Worktree: `/tmp/claude-1000/b2-ewald-wt`. Build first:
 
 ```
 cd /tmp/claude-1000/b2-ewald-wt/engine
 cargo build --release -p holon-render --example b2_longrange
 ```
 
-| marker | log | command |
-|---|---|---|
-| `b2_engine_full.DONE` | `b2_engine_full.log` | `--arm=engine --curves=full --steps=20000` |
-| `b2_frames.DONE` | `b2_frames.log` | `--arm=frames --stride=400` |
-| `b2_tests.DONE` | `b2_tests.log` | `cargo test -p holon-render --release` |
+| marker | log | command | cost |
+|---|---|---|---|
+| `b2_engine_full.DONE` | `b2_engine_full.log` | `--arm=engine --curves=full --steps=20000` | one O–O solve (~680 s CPU) |
+| `b2_frames.DONE` | `b2_frames.log` | `--arm=frames --stride=400` | one O–O solve |
+| `b2_tests.DONE` | `b2_tests.log` | `cargo test --release -p holon-render` | ~15 min |
+| — | — | `--arm=refusals` | seconds |
 
-All three are launched by `conformance/water_observatory/b2_detached.sh`, which writes the
-markers into `conformance/water_observatory/`. Markers and logs are RUN STATE and stay
-untracked.
+Pinned to E-cores (24 and 26) because M-PLACEMENT-LOTTERY's remedy is quiet-and-pinned and
+this box sat at loadavg 65–80 throughout. Timings are CPU seconds, not wall.
 
-**Cost:** the `full` and `frames` arms each regenerate the O–O curve, which B1b measured at
-961 s of CPU. Everything else in those arms is seconds. Both are pinned to an E-core
-(`taskset -c 24`) because M-PLACEMENT-LOTTERY's remedy is quiet-and-pinned and this box was
-at loadavg ~67 while they ran.
+## Banked
 
-## Already banked (H–H arm, `--curves=hh`, pinned, loadavg ~67)
+**G11 — refusals: PASS, 8 of 8 fire** (R1 exponent in 2D and 3D, R1 charge, R2 image budget,
+R3 sub-support, R4 fenced bracket, R5 disclosure ×2).
 
-| gate | reading |
-|---|---|
-| G2 energy half | PASS, relative 0.000e0 |
-| G3 | **1 curve FENCED**: H–H `p_fit = 20.6703`, `exp_index = 31.1423`, fit residual 3.3e-1 |
-| G5 momentum | PASS, 2.518402e-13 vs bound 2.443462e-9; isolated pair `F_i + F_j` EXACT 0 |
-| G6 angular | PASS, 9.982663e-12 vs bound 7.331421e-8 |
-| G7 virial | **FIRED** on the `h = 1e-3` prong (1.350e-4); `h = 1e-4` 3.746e-7 PASS, `h = 1e-5` 3.747e-9 PASS |
-| G8 gradient | PASS, worst relative 2.1105e-10 over 100 configurations |
-| G9 stale cache | PASS, bit-identical at `f = 0.90` and `f = 1.10` |
-| G10 image convergence | PASS at 2 shells |
-| G11 refusals | PASS, 8 of 8 fired |
-| G12 work count | PASS |
-| G13 N-scaling | exponent 1.865, monotone, spreads 1.00–1.09 |
-| G4 energy | PASS as run, but **VOID under V2**: the staked plant does not fire. Power certificate: G4 resolves a 1.0e-3 Ha step and not the staked 1.0e-6, a factor of 1000 |
-| plants | P1, P2, P3, P5, P6, P7 all FIRED. **P3 fired G6 while G5 stayed green** — the staked independence demonstration. P4 did not fire (see G4) |
+**G3 — the tail exponent, measured** (from the frames arm, full curve set):
 
-## What the full arm adds
+| slot | curve | `r_max` | `p_fit` | fit residual | `exp_index` | band |
+|---|---|---|---|---|---|---|
+| 0 | H–H | 10.24 | 20.6703 | 3.31e-1 | 31.1423 | **FENCED** |
+| 1 | O–H | 10.24 | 30.6918 | 2.85e-1 | 42.5440 | **FENCED** |
+| 3 | **O–O** | **20.00** | **5.0049** | **3.72e-5** | **5.0038** | **ADOPTING** |
 
-The O–O curve is the one that matters: its `r_max = 20.0` bohr against `c* = 15.0` is the
-mechanism B1b named, and G3's band on it decides whether the tail model may be adopted at
-all. The H–H reading above is FENCED, so on present evidence the sector emits a bracket.
+The curve that matters is the one that reaches past `c*`, and it is the one that adopts: the
+O–O tail is a power law at index 5.00, and the exponential extrapolation's own local index
+agrees with the fit to four digits. The two short-range curves are fenced and their supports
+end inside the cutoff, so nothing rests on them. R4 is live on the fenced pair.
 
-## Standing cautions for whoever picks this up
+**H–H engine arm** (`--curves=hh`, pinned, loadavg ~67): G2 PASS (512 atoms, 3D lattice,
+Cells vs Complete, bit-identical, 3714 pairs in range); G5 PASS; G6 PASS; G10/G9/P1 VOID by
+construction on this curve — see below; G12 PASS; G13 exponent 1.865, monotone; G4 PASS but
+VOID under V2; G7 and G8 FIRED. Plants P1, P2, P3, P5, P6, P7 fire; P4 does not.
 
-* **Do not retune a fired gate.** G7's `h = 1e-3` prong and G4's V2 are readings. The G4
-  power certificate is a measurement OF the gate; the plant's verdict stays at the staked
-  1.0e-6 Ha whatever the sweep says.
-* **`Sim::close_grain` is where the momentum and angular peaks are sampled**, and only
-  `step_frame` calls it. A loop over `step` leaves both at exactly 0.0. This instrument's
-  first run did that and the plants REFUSED on 0.0 carriers rather than being scored.
-* **The periodic arm's box is sized from `R_f`**, not from the census box. At `p ≈ 21` the
-  far window is under a bohr wide and the census box's nearest image is far outside it, so
-  every gate in that arm would score a zero against a zero.
+## The fired gates, kept fired
+
+* **G7 (virial)** fires on its `h = 1e-3` prong, 1.01e-4 against 1e-6. The other two staked
+  steps pass (3.75e-7 and 3.75e-9) and the Richardson extrapolation equals the virial to ten
+  digits. The fired prong is the coarsest step's own `O(h²)` truncation error. **Not
+  retuned.**
+* **G8 (gradient)** fires at 4.3e-6 against 1e-7. The far term is now a DIFFERENCE of two
+  nearly equal functions, so a per-component relative error is dominated by components
+  carrying no force: the worst relative component holds `|F| = 8.2e-15` Ha/bohr against a
+  largest far force of `8.1e-9`, and the largest absolute disagreement anywhere is 4.7e-10 of
+  that largest force. **Not retuned.**
+* **G4 (energy) is VOID under V2**: the staked 1.0e-6 Ha plant does not fire it. Power
+  certificate: G4 resolves a zero-point step at 1.0e-2 Ha on this scene, a factor of 10⁴
+  above the staked plant. The sweep is a measurement OF the gate and never a new criterion.
+* **The periodic arm is VOID on H–H by construction**: at `p_fit = 20.67` the far sum reaches
+  `R_f = 11.19` bohr while the smallest legal wrapping box is `2 R_s = 20.48`, so no legal
+  periodic box can put an image in range. A tail that steep has no long-range content for an
+  image sum to carry. It should score on the full curve set, where `R_f = 73.27` against
+  `2 R_s = 40`.
+
+## Corrections this lane made to its own instrument, all found by its own gates
+
+1. **The far sector was ADDING to the near one** (fixed at `7c8866b`) — every pair past `R_s`
+   counted twice, plus a step of `u(R_s)` at the handover. Found by widening G8 from one
+   configuration probed 100 times to 100 distinct configurations, which is what the freeze
+   stakes.
+2. **P2 and P3 REFUSED on 0.0 carriers.** `Sim::close_grain` samples the momentum and angular
+   peaks and only `step_frame` calls it; a loop over `step` leaves both at exactly 0.0.
+3. **G2 compared the complete route against itself.** `CellList::rebuild` needs 64+ atoms AND
+   3 cells per axis.
+4. **The periodic arm scored 0.0 against 0.0** because the census box's nearest image sits
+   outside `R_f`.
+5. **G13 read three zeros** against a 10 ms clock tick; V6 correctly convicted it.
+6. **The crossing counter** read every far pair as a fresh crossing on the first pass.
+7. **The manifest key carried an extra path segment** (`census-traj/fenced/…` where the
+   manifest says `fenced/…`), refusing all eight trajectories; and the digest was not being
+   computed at all, only path presence. Both fixed; the sha256 is lifted verbatim from
+   `longrange_audit.rs` with its standard-vector self-test.
+8. **`build_scene` regenerated every pair table per call**, re-solving the 681-second O–O
+   determinant space once per scene.
+
+## An engine fact found on the way, outside B2's gates
+
+**In an open or walled box the cell decomposition's extent is the ATOMS' bounding box, not
+the nominal box** (`cells.rs:448`). A `Dims::Two` scene sits on one plane, so its z extent is
+zero, `nc[2]` is 1, and `CellList::rebuild` falls to the COMPLETE route however many atoms
+the scene holds. Every census scene is `Dims::Two` with walls. **The O(N) route B1b's
+counterfactual is about does not engage on them at all.** Worth a look from whoever owns the
+T3 cost story; it is not a B2 verdict and nothing here rests on it.
+
+## Standing cautions
+
+* **Do not retune a fired gate.** G7's coarse prong, G8, and G4's V2 are readings.
+* Run-state markers (`.log`, `.DONE`) stay untracked.
+* NEVER push. `cirisontology-b4` integrates.

@@ -51,12 +51,15 @@ use std::time::Instant;
 
 // ================================================================= THE FROZEN PROTOCOL
 
-/// Liquid water's number density, atoms per cubic bohr.
+/// ARM A's density, atoms per cubic bohr — `CARRIER_V2_PREREG.md` §4.2's stake, WHICH
+/// FIRED.
 ///
-/// 0.0334 molecules/A^3 x 3 atoms/molecule, converted at 1 A = 1.8897261 bohr. Written as
-/// the atom density rather than the molecular one because every scaling law below is in
-/// atoms and converting twice is how the two of them come to disagree.
-const RHO_ATOMS: f64 = 0.014_860;
+/// Liquid water's atom number density: 0.0334 molecules/A^3 x 3 atoms/molecule at
+/// 1 A = 1.8897261 bohr. It is kept, marked, and still reachable through `--rho=`, because
+/// `CARRIER_V2_AMENDMENT_1.md`'s A1 needs the placement that failed as its must-fire
+/// control. It is NOT the default and must never become one again: see [`LATTICE_SPACING`]
+/// for what it did and why.
+const RHO_ATOMS_ARM_A_FIRED: f64 = 0.014_860;
 
 /// The ladder's rungs, in ATOMS, each an exact 2:1 stoichiometry.
 ///
@@ -108,9 +111,46 @@ fn gauss(state: &mut u64) -> f64 {
     (-2.0 * u1.ln()).sqrt() * (core::f64::consts::TAU * u2).cos()
 }
 
-/// The cube edge that holds `n` atoms at [`RHO_ATOMS`], bohr.
-fn box_edge(n: usize) -> f64 {
-    (n as f64 / RHO_ATOMS).cbrt()
+/// THE CENSUS PROTOCOL'S OWN NEAREST-NEIGHBOUR SPACING, bohr.
+///
+/// Written as the quotient rather than as 6.9333 so its provenance is visible: the census
+/// places 12 atoms on a 4x3 lattice in a 34.6 x 20.8 bohr box, and 20.8/3 is the smaller of
+/// its two spacings — the one that decides whether a pair opens inside a well.
+///
+/// `CARRIER_V2_AMENDMENT_1.md` is why this constant exists at all. The freeze fixed the
+/// DENSITY, and the certified protocol's controlled quantity is the SPACING. The two
+/// coincide in a fixed dimension and part company across a 2D-to-3D change: at N = 402 the
+/// frozen density gave 3.75 bohr between neighbours against the census's 6.93, every atom
+/// opened inside its neighbours' wells, and the scene reached 241,001 K by frame 500
+/// against a 300 K target. A uniform ATOM lattice at liquid ATOM density is a
+/// supersaturated covalent solid, not a liquid.
+const LATTICE_SPACING: f64 = 20.8 / 3.0;
+
+/// The cubic lattice side that holds `n` atoms — sites past `n` stay empty.
+fn lattice_side(n: usize) -> usize {
+    (n as f64).cbrt().ceil() as usize
+}
+
+/// The cube edge for `n` atoms.
+///
+/// `Some(rho)` reproduces ARM A, the fired stake, kept runnable because
+/// `CARRIER_V2_AMENDMENT_1.md`'s A1 needs it as a must-fire control: a 5000 K bar that has
+/// never been seen to fail is a fence, and the placement that failed it is the only
+/// carrier that can show it discriminates.
+///
+/// `None` is ARM B: the edge is `side x LATTICE_SPACING`, and the density is whatever that
+/// implies and is REPORTED rather than declared.
+fn box_edge(n: usize, rho: Option<f64>) -> f64 {
+    match rho {
+        Some(r) => (n as f64 / r).cbrt(),
+        None => lattice_side(n) as f64 * LATTICE_SPACING,
+    }
+}
+
+/// The number density a scene actually has, atoms per bohr^3 — reported, never declared.
+fn density_of(n: usize, rho: Option<f64>) -> f64 {
+    let e = box_edge(n, rho);
+    n as f64 / (e * e * e)
 }
 
 /// Oxygens FIRST, then hydrogens — the census protocol's convention, so the lattice site a
@@ -135,7 +175,7 @@ fn species_at(i: usize, n: usize) -> Species {
 /// gradient of a z-reflection-invariant energy is z-free at a symmetric point. The
 /// symmetry has to be broken at placement or it is never broken at all, and no flag
 /// anywhere in the engine does that.
-fn place3d(s: &mut Sim, n: usize, seed: u64) {
+fn place3d(s: &mut Sim, n: usize, seed: u64, rho: Option<f64>) {
     let mut st = seed;
     s.reset(n);
     for i in 0..n {
@@ -149,10 +189,11 @@ fn place3d(s: &mut Sim, n: usize, seed: u64) {
     // its loop body never runs, and it falls through to a hydrogen default.
     s.adopt_table_timescale();
 
-    let edge = box_edge(n);
-    // The smallest cubic lattice that holds them. Sites beyond `n` stay empty, which keeps
-    // the density at the declared value rather than at whatever a perfect cube would force.
-    let side = (n as f64).cbrt().ceil() as usize;
+    let edge = box_edge(n, rho);
+    // Sites beyond `n` stay empty. In arm B the edge is DERIVED from this side and the
+    // census's spacing, so the placed nearest-neighbour distance is that spacing exactly
+    // (A2's one-variable claim) and the density is a consequence.
+    let side = lattice_side(n);
     let mut vel = vec![(0.0f64, 0.0, 0.0); n];
     let (mut px, mut py, mut pz) = (0.0, 0.0, 0.0);
     for i in 0..n {
@@ -338,8 +379,13 @@ struct Rung {
 /// division is auditable.
 const LADDER_FRAMES: usize = 4;
 
-fn run_rung(n: usize, workers: usize, tables: &[holon_chem::pair::PairTable]) -> Result<Rung, String> {
-    let edge = box_edge(n);
+fn run_rung(
+    n: usize,
+    workers: usize,
+    tables: &[holon_chem::pair::PairTable],
+    rho: Option<f64>,
+) -> Result<Rung, String> {
+    let edge = box_edge(n, rho);
     let mut s = Box::new(Sim::empty());
     s.boundary = Boundary::Walls;
     s.dims = Dims::Three;
@@ -347,7 +393,7 @@ fn run_rung(n: usize, workers: usize, tables: &[holon_chem::pair::PairTable]) ->
     s.height = edge;
     s.depth = edge;
     load_tables(&mut s, tables);
-    place3d(&mut s, n, SEEDS[0]);
+    place3d(&mut s, n, SEEDS[0], rho);
     if !s.set_pair_cutoff(PAIR_FLOOR) {
         return Err(format!(
             "no pair cutoff could be derived at floor {PAIR_FLOOR:e} for N = {n}"
@@ -410,6 +456,39 @@ fn run_rung(n: usize, workers: usize, tables: &[holon_chem::pair::PairTable]) ->
 
 /// The log-log slope of `y` against `x` by least squares. Reported with the points it was
 /// fitted to, never alone.
+/// A1's PAIRED TEMPERATURE PROBE — `CARRIER_V2_AMENDMENT_1.md` §A1.2.2.
+///
+/// Runs the SAME instrument on the SAME N and seed, differing in one argument: `rho`. Arm A
+/// (the fired placement) must EXCEED the bar and arm B must fall below it. Both numbers are
+/// printed whatever they say, because a 5000 K bar that has never been seen to fail is a
+/// fence, and if both land on the same side the amendment's own rule is that A1 is VOID
+/// rather than passed.
+fn a1_probe(
+    n: usize,
+    frames: usize,
+    tables: &[holon_chem::pair::PairTable],
+    rho: Option<f64>,
+) -> Result<(f64, f64, usize), String> {
+    let edge = box_edge(n, rho);
+    let mut s = Box::new(Sim::empty());
+    s.boundary = Boundary::Walls;
+    s.dims = Dims::Three;
+    s.width = edge;
+    s.height = edge;
+    s.depth = edge;
+    load_tables(&mut s, tables);
+    place3d(&mut s, n, SEEDS[0], rho);
+    if !s.set_pair_cutoff(PAIR_FLOOR) {
+        return Err(format!("no pair cutoff at floor {PAIR_FLOOR:e} for N = {n}"));
+    }
+    let t_open = s.temperature();
+    for _ in 0..frames {
+        s.step_frame(SUBSTEPS);
+    }
+    let bonds = s.pairs[..s.pair_count].iter().filter(|p| p.bonded).count();
+    Ok((t_open, s.temperature(), bonds))
+}
+
 fn loglog_slope(pts: &[(f64, f64)]) -> f64 {
     let n = pts.len() as f64;
     let (mut sx, mut sy, mut sxx, mut sxy) = (0.0, 0.0, 0.0, 0.0);
@@ -423,11 +502,17 @@ fn loglog_slope(pts: &[(f64, f64)]) -> f64 {
     (n * sxy - sx * sy) / (n * sxx - sx * sx)
 }
 
-fn ladder(workers: usize, rungs: &[usize], knots: usize) -> i32 {
+fn ladder(workers: usize, rungs: &[usize], knots: usize, rho: Option<f64>) -> i32 {
     println!("THE N-LADDER — CARRIER_V2_PREREG.md §4");
     println!(
-        "density {RHO_ATOMS} atoms/bohr^3, pair floor {PAIR_FLOOR:e} Ha, dE4 ON, \
-         {LADDER_FRAMES} frames x {SUBSTEPS} substeps per rung"
+        "{}, pair floor {PAIR_FLOOR:e} Ha, dE4 ON, {LADDER_FRAMES} frames x {SUBSTEPS} \
+substeps per rung",
+        match rho {
+            Some(r) => format!("ARM A (FIRED, kept as A1's control): density {r} atoms/bohr^3 declared"),
+            None => format!(
+                "ARM B: lattice spacing {LATTICE_SPACING:.4} bohr (= 20.8/3, the census's own)"
+            ),
+        }
     );
     println!(
         "\n{:>5} {:>8} {:>9} {:>9} {:>8} {:>14} {:>12} {:>8} {:>7} {:>6} {:>9}",
@@ -438,7 +523,7 @@ fn ladder(workers: usize, rungs: &[usize], knots: usize) -> i32 {
     let tables = make_tables(knots);
     let mut rows = Vec::new();
     for &n in rungs {
-        match run_rung(n, workers, &tables) {
+        match run_rung(n, workers, &tables, rho) {
             Ok(r) => {
                 println!(
                     "{:>5} {:>8.2} {:>9} {:>3}x{}x{} {:>8.3} {:>14.1} {:>12.1} {:>8} {:>7} {:>6} {:>9.1}",
@@ -546,14 +631,30 @@ fn produce(
     seeds: &[u64],
     workers: usize,
     knots: usize,
+    rho: Option<f64>,
 ) -> i32 {
     println!("generating the three pair curves once:");
     let tables = make_tables(knots);
+    produce_with(out, n, frames, seeds, workers, knots, rho, &tables)
+}
+
+/// The production loop with the curves already in hand, so `--mode=both` pays for them once.
+#[allow(clippy::too_many_arguments)]
+fn produce_with(
+    out: &PathBuf,
+    n: usize,
+    frames: usize,
+    seeds: &[u64],
+    workers: usize,
+    knots: usize,
+    rho: Option<f64>,
+    tables: &[holon_chem::pair::PairTable],
+) -> i32 {
     if let Err(e) = std::fs::create_dir_all(out) {
         eprintln!("REFUSED  output directory {}: {e}", out.display());
         return 3;
     }
-    let edge = box_edge(n);
+    let edge = box_edge(n, rho);
     for &seed in seeds {
         let mut s = Box::new(Sim::empty());
         s.boundary = Boundary::Walls;
@@ -562,7 +663,7 @@ fn produce(
         s.height = edge;
         s.depth = edge;
         load_tables(&mut s, &tables);
-        place3d(&mut s, n, seed);
+        place3d(&mut s, n, seed, rho);
         if !s.set_pair_cutoff(PAIR_FLOOR) {
             eprintln!("REFUSED  no pair cutoff at floor {PAIR_FLOOR:e} for N = {n}");
             return 4;
@@ -579,11 +680,17 @@ fn produce(
         // one `mv` away from being banked as one. The knot count is part of the curve's
         // identity exactly as the solver budget is, so it goes in the NAME when it is not
         // the protocol's.
-        let path = if knots == CURVE_KNOTS {
-            out.join(format!("n{n}_seed_{seed:#018x}.traj"))
-        } else {
-            out.join(format!("SMOKE-{knots}knots_n{n}_seed_{seed:#018x}.traj"))
-        };
+        let mut stem = format!("n{n}_seed_{seed:#018x}");
+        if knots != CURVE_KNOTS {
+            stem = format!("SMOKE-{knots}knots_{stem}");
+        }
+        if rho.is_some() {
+            // ARM A IS A FIRED STAKE. Its trajectories are controls, not carriers, and a
+            // control that shares a carrier's filename is one `mv` from being banked as
+            // one.
+            stem = format!("ARMA-FIRED_{stem}");
+        }
+        let path = out.join(format!("{stem}.traj"));
         let header = Header2 {
             seed,
             n_atoms: n,
@@ -743,6 +850,19 @@ fn main() {
         },
         None => CURVE_KNOTS,
     };
+    // ARM SELECTION, and it has no silent default. `--rho=` reproduces arm A, the FIRED
+    // stake, kept runnable because A1's bar needs it as a must-fire control. Absent, the
+    // scene is arm B and its density is a reported consequence of the census's spacing.
+    let rho: Option<f64> = match arg("--rho=") {
+        Some(v) => match v.parse::<f64>() {
+            Ok(r) if r > 0.0 && r.is_finite() => Some(r),
+            _ => {
+                eprintln!("REFUSED  --rho={v} is not a positive finite density");
+                std::process::exit(2);
+            }
+        },
+        None => None,
+    };
     let workers: usize = match arg("--workers=") {
         Some(v) => match v.parse() {
             Ok(v) => v,
@@ -755,21 +875,12 @@ fn main() {
     };
 
     if mode == "ladder" {
-        if dry {
-            println!("DRY RUN — nothing was computed and nothing was written.");
-            println!("would run {} rungs, {LADDER_FRAMES} frames x {SUBSTEPS} substeps each:", LADDER.len());
-            for n in LADDER {
-                println!(
-                    "  N = {n:>4}  ({:>3} waters)  cube edge {:>6.2} bohr  \
-                     3 cells/axis needs r_cut <= {:.3}",
-                    n / 3,
-                    box_edge(n),
-                    box_edge(n) / 3.0
-                );
-            }
-            println!("workers requested: {workers} (the LEASED count is what gets reported)");
-            std::process::exit(0);
-        }
+        // THE RUNG LIST IS PARSED BEFORE THE DRY-RUN BRANCH, NOT AFTER IT.
+        //
+        // It was after, so `--dry-run --rungs=402,804` printed the DEFAULT ladder and
+        // exited 0 — a dry run that describes a different job from the one the same
+        // arguments would launch, which is worse than no dry run at all because it is
+        // believed. A diagnostic must echo the parameters it was given.
         let rungs: Vec<usize> = match arg("--rungs=") {
             Some(list) => list.split(',').filter_map(|v| v.trim().parse().ok()).collect(),
             None => LADDER.to_vec(),
@@ -778,7 +889,141 @@ fn main() {
             eprintln!("REFUSED  --rungs= parsed to nothing");
             std::process::exit(2);
         }
-        std::process::exit(ladder(workers, &rungs, knots));
+        if dry {
+            println!("DRY RUN — nothing was computed and nothing was written.");
+            println!(
+                "would run {} rungs, {LADDER_FRAMES} frames x {SUBSTEPS} substeps each:",
+                rungs.len()
+            );
+            for &n in &rungs {
+                println!(
+                    "  N = {n:>4}  ({:>3} waters)  side {:>2}  edge {:>6.2} bohr  \
+spacing {:>5.3}  rho {:.5}  3 cells/axis needs r_cut <= {:.3}",
+                    n / 3,
+                    lattice_side(n),
+                    box_edge(n, rho),
+                    box_edge(n, rho) / lattice_side(n) as f64,
+                    density_of(n, rho),
+                    box_edge(n, rho) / 3.0
+                );
+            }
+            println!("workers requested: {workers} (the LEASED count is what gets reported)");
+            std::process::exit(0);
+        }
+        std::process::exit(ladder(workers, &rungs, knots, rho));
+    }
+
+    if mode == "both" || mode == "probe" {
+        // ONE PROCESS, ONE SET OF CURVES. The O-O curve costs ~1000 s and A1's whole design
+        // is that its two arms differ in ONE argument on ONE instrument; paying the curve
+        // twice would also mean two sets of curves, which is a second difference.
+        let rungs: Vec<usize> = match arg("--rungs=") {
+            Some(list) => list.split(',').filter_map(|v| v.trim().parse().ok()).collect(),
+            None => LADDER.to_vec(),
+        };
+        let probe_n: usize = arg("--probe-n=").and_then(|v| v.parse().ok()).unwrap_or(804);
+        let probe_frames: usize =
+            arg("--probe-frames=").and_then(|v| v.parse().ok()).unwrap_or(500);
+        if dry {
+            println!("DRY RUN — nothing was computed and nothing was written.");
+            println!("would price rungs {rungs:?} on arm B, then run A1's PAIR at N = {probe_n}");
+            println!("  arm B  spacing {:.4} bohr, edge {:.2}", LATTICE_SPACING, box_edge(probe_n, None));
+            println!(
+                "  arm A  rho {RHO_ATOMS_ARM_A_FIRED}, edge {:.2}, spacing {:.4} (THE FIRED STAKE)",
+                box_edge(probe_n, Some(RHO_ATOMS_ARM_A_FIRED)),
+                box_edge(probe_n, Some(RHO_ATOMS_ARM_A_FIRED)) / lattice_side(probe_n) as f64
+            );
+            println!("  {probe_frames} frames x {SUBSTEPS} substeps each, bar 5000 K");
+            if mode == "both" {
+                let out = arg("--out=").unwrap_or("(REQUIRED)");
+                let frames: usize = arg("--frames=").and_then(|v| v.parse().ok()).unwrap_or(20000);
+                let nn: usize = arg("--n=").and_then(|v| v.parse().ok()).unwrap_or(804);
+                println!("then produce N = {nn}, {frames} frames, into {out}");
+            }
+            std::process::exit(0);
+        }
+        println!("generating the three pair curves once:");
+        let tables = make_tables(knots);
+
+        if !rungs.is_empty() {
+            println!("\n--- ARM B LADDER ---");
+            for &n in &rungs {
+                match run_rung(n, workers, &tables, None) {
+                    Ok(r) => println!(
+                        "N {:>5}  edge {:>7.2}  {:>8} {}x{}x{}  r_cut {:>7.3}  \
+W_pair/step {:>12.1}  W_dE4 {:>6}  3D@0 {}  lease {}",
+                        r.n, r.edge, r.route, r.cells[0], r.cells[1], r.cells[2], r.r_cut,
+                        r.w_pair as f64 / r.steps as f64, r.w_de4,
+                        if r.dims_at_zero { "yes" } else { "NO" }, r.workers
+                    ),
+                    Err(e) => eprintln!("N {n:>5}  REFUSED  {e}"),
+                }
+            }
+        }
+
+        println!("\n--- A1: THE PAIRED TEMPERATURE PROBE, bar 5000 K ---");
+        println!("both numbers are printed whatever they say; if both land on the SAME side");
+        println!("of the bar, A1 is VOID rather than passed (AMENDMENT_1 §A1.2.2)");
+        let mut verdicts = Vec::new();
+        for (label, r) in [
+            ("P-A arm A (FIRED placement, must EXCEED)", Some(RHO_ATOMS_ARM_A_FIRED)),
+            ("P-B arm B (census spacing, must fall BELOW)", None),
+        ] {
+            match a1_probe(probe_n, probe_frames, &tables, r) {
+                Ok((t0, t1, bonds)) => {
+                    println!(
+                        "  {label:<44} N={probe_n} spacing {:>6.4}  T(0) {:>9.0} K  \
+T({probe_frames}) {:>10.0} K  bonds {bonds}",
+                        box_edge(probe_n, r) / lattice_side(probe_n) as f64,
+                        t0,
+                        t1
+                    );
+                    verdicts.push((label, t1));
+                }
+                Err(e) => eprintln!("  {label}: REFUSED {e}"),
+            }
+        }
+        if verdicts.len() == 2 {
+            let (a, b) = (verdicts[0].1, verdicts[1].1);
+            let fired = a > 5000.0;
+            let quenching = b < 5000.0;
+            println!(
+                "\n  A1: {}",
+                if fired && quenching {
+                    "PASS — the control fired and the measurement did not"
+                } else if !fired {
+                    "VOID — the control did NOT fire, so the bar does not discriminate \
+and the A1.1 diagnosis is not supported"
+                } else {
+                    "FAIL — arm B is also above the bar; the spacing was not the cause"
+                }
+            );
+            println!("  arm A {a:.0} K, arm B {b:.0} K, ratio {:.1}x", a / b.max(1e-9));
+        }
+
+        if mode == "probe" {
+            std::process::exit(0);
+        }
+        let Some(out) = arg("--out=") else {
+            eprintln!("REFUSED  --out=DIR is required for --mode=both");
+            std::process::exit(2);
+        };
+        let out = PathBuf::from(out);
+        let nn: usize = arg("--n=").and_then(|v| v.parse().ok()).unwrap_or(804);
+        let frames: usize = arg("--frames=").and_then(|v| v.parse().ok()).unwrap_or(20000);
+        let seeds: Vec<u64> = match arg("--seeds=") {
+            Some(list) => list
+                .split(',')
+                .filter_map(|v| u64::from_str_radix(v.trim().trim_start_matches("0x"), 16).ok())
+                .collect(),
+            None => SEEDS[..1].to_vec(),
+        };
+        if nn % 3 != 0 {
+            eprintln!("REFUSED  N = {nn} is not 3 x whole waters");
+            std::process::exit(2);
+        }
+        println!("\n--- PRODUCTION (arm B) ---");
+        std::process::exit(produce_with(&out, nn, frames, &seeds, workers, knots, rho, &tables));
     }
 
     if mode == "produce" {
@@ -803,7 +1048,13 @@ fn main() {
         if dry {
             println!("DRY RUN — nothing was computed and nothing was written.");
             println!("out    {}", out.display());
-            println!("N      {n} ({} waters), cube edge {:.2} bohr", n / 3, box_edge(n));
+            println!(
+                "N      {n} ({} waters), edge {:.2} bohr, spacing {:.4}, rho {:.5}",
+                n / 3,
+                box_edge(n, rho),
+                box_edge(n, rho) / lattice_side(n) as f64,
+                density_of(n, rho)
+            );
             println!("frames {frames} x {SUBSTEPS} substeps, dE4 ON, content = forces|ledger");
             println!("seeds  {}", seeds.iter().map(|s| format!("{s:#018x}")).collect::<Vec<_>>().join(" "));
             let bytes = frames as u64
@@ -811,9 +1062,9 @@ fn main() {
             println!("size   ~{:.1} MB per trajectory (bonds estimated at 2N)", bytes as f64 / 1e6);
             std::process::exit(0);
         }
-        std::process::exit(produce(&out, n, frames, &seeds, workers, knots));
+        std::process::exit(produce(&out, n, frames, &seeds, workers, knots, rho));
     }
 
-    eprintln!("REFUSED  unknown --mode={mode}; expected ladder or produce");
+    eprintln!("REFUSED  unknown --mode={mode}; expected ladder, produce, probe or both");
     std::process::exit(2);
 }

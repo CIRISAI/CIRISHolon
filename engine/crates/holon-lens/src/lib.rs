@@ -13,6 +13,7 @@
 //! lenses refuse on them by construction; that is the honest reading and not a gap.
 
 pub mod census;
+pub mod field;
 pub mod classifier;
 pub mod lens;
 pub mod partition;

@@ -684,6 +684,35 @@ if (ladderBlock) {
     + "not have, which is the tier-faking the ladder exists to forbid");
 }
 
+// ------------------------------------------- 6d. the PROSE cannot outlive the engine
+//
+// FENCES.md F-2 caught this page telling viewers "there is no barostat in this engine"
+// months after the barostat landed. The absence LIST was already gated — that is what made
+// me un-fence the gravity panel the day `holon_set_gravity` appeared — but the page's
+// PROSE was not, so half the claim was mechanised and half was a sentence nobody re-read.
+// The same header also still listed gravity among the absent, and gravity is mine.
+//
+// So: for each capability, the export that proves it exists and the phrase that would deny
+// it. If the export resolves and the phrase is in the shipped text, this fails. It is the
+// inverted check aimed at prose instead of at panels, and it closes the half of F-2 that
+// the absence list never covered.
+const PROSE_CLAIMS = [
+  { export: "holon_box_scale", deny: /there is no barostat/i,
+    say: "the barostat landed (holon_box_scale); only the SETPOINT door is fenced, by design" },
+  { export: "holon_set_gravity", deny: /no gravitational (force )?term exists/i,
+    say: "gravity landed (holon_set_gravity / holon_set_gravity_vec) and the panel is live" },
+  { export: "holon_pressure", deny: /no pressure readout/i,
+    say: "holon_pressure is the readout, with holon_pressure_defined honoured" },
+];
+const shippedText = readFileSync(join(here, "index.html"), "utf8") + appSource;
+for (const claim of PROSE_CLAIMS) {
+  const exists = typeof w[claim.export] === "function";
+  const denied = claim.deny.test(shippedText);
+  want(!(exists && denied),
+    `the page does not deny a capability the engine has (${claim.export})`,
+    `${claim.export} resolves, but the shipped text still matches ${claim.deny} — ${claim.say}`);
+}
+
 // ---------------------------------------------------------------- 7. the inverted check
 
 // --------------------------------------------- 5c. the hand on the box (WB-2.2), now served

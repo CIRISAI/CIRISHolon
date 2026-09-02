@@ -21,7 +21,21 @@
 //                                           bond criterion reports and defines no geometry.
 //   `sin(performance.now())` as dE       -> `holon_drift()` against `holon_drift_bound()`,
 //                                           with `holon_energy_gate()` as the verdict.
-//   P^-0.05 box scaling as NPT           -> a FENCE. There is no barostat in this engine.
+//   P^-0.05 box scaling as NPT           -> `holon_box_scale`, an affine rescale of
+//                                           container AND contents whose cost is posted to
+//                                           both ledger columns, with pressure as the
+//                                           virial READOUT and its defined-flag honoured.
+//                                           (This line denied the barostat's existence
+//                                           until FENCES.md F-2 caught it: the barostat
+//                                           landed and the sentence did not move. What is
+//                                           fenced is only the SETPOINT door, and by
+//                                           design — the control is the box. The denial is
+//                                           paraphrased rather than quoted here because the
+//                                           gate below matches the phrase itself, and for
+//                                           the same reason the water panel does not quote
+//                                           the causal claim it declines to make: restating
+//                                           a false sentence to disown it still puts the
+//                                           sentence on the page.)
 //   "refinement patch" banner            -> a FENCE. There is no refinement patch either.
 //   manifest claiming T6 certification   -> the manifest reports the SHA-256 of the wasm
 //                                           bytes this page actually instantiated.

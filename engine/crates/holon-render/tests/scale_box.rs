@@ -88,3 +88,95 @@ fn pressure_reads_and_declares_its_domain() {
     assert!(s.pressure_defined(), "periodic: it is");
     let _p = s.pressure();
 }
+
+/// A periodic 3D lattice with species synced, so a pair cutoff is derivable — the same
+/// shape `t3_scale.rs` proves out (`scene()`'s `reset(8)` leaves no active slot, and a
+/// zero cutoff can never break image legality, which is why these gates need their own
+/// builder).
+fn periodic_lattice() -> Box<Sim> {
+    use holon_render::sim::Dims;
+    let mut s = scene();
+    s.dims = Dims::Three;
+    s.boundary = Boundary::Periodic;
+    let (n_side, spacing) = (4usize, 10.0);
+    s.width = n_side as f64 * spacing;
+    s.height = n_side as f64 * spacing;
+    s.depth = n_side as f64 * spacing;
+    let n = n_side * n_side * n_side;
+    s.resize_storage(n);
+    for i in 0..n {
+        let ix = i % n_side;
+        let iy = (i / n_side) % n_side;
+        let iz = i / (n_side * n_side);
+        s.atoms[i].x = (ix as f64 + 0.5) * spacing;
+        s.atoms[i].y = (iy as f64 + 0.5) * spacing;
+        s.atoms[i].z = (iz as f64 + 0.5) * spacing;
+        s.atoms[i].vx = 0.0;
+        s.atoms[i].vy = 0.0;
+        s.atoms[i].vz = 0.0;
+    }
+    s.sync_species();
+    s.rebase();
+    s
+}
+
+#[test]
+fn a_shrink_that_breaks_periodic_images_is_refused_and_the_state_is_untouched() {
+    // B2's G9 found the hole: scale_box could walk a periodic scene past pbc_ok with no
+    // complaint anywhere, and the symptom is a silently missing image force, not an
+    // error. The door now opens only onto legal states.
+    let mut s = periodic_lattice();
+    assert!(
+        s.set_pair_cutoff(1e-6),
+        "precondition: the 40-bohr box holds the 1e-6 Ha cutoff (t3_scale.rs proves it)"
+    );
+    let (cut, half) = s.pbc_margin();
+    assert!(
+        cut.is_finite() && 0.0 < cut && cut <= half,
+        "precondition: admitted legal with a REAL cutoff (cut {cut}, half-edge {half})"
+    );
+
+    // Derive the first illegal factor from the door's own numbers rather than guessing:
+    // post-scale legality is cut <= half * f, so any f below cut/half must refuse.
+    let f_bad = (cut / half) * 0.999;
+    let (w0, h0) = (s.width, s.height);
+    let x0: Vec<f64> = s.atoms.iter().map(|a| a.x).collect();
+    let e0 = s.energy();
+
+    let r = s.scale_box(f_bad);
+    assert_eq!(
+        r,
+        Err(ScaleRefusal::BreaksPeriodicImages),
+        "a shrink past the image-legality line refuses by name (f = {f_bad})"
+    );
+    assert_eq!(s.width, w0, "a refused move leaves the width untouched");
+    assert_eq!(s.height, h0, "a refused move leaves the height untouched");
+    for (a, x) in s.atoms.iter().zip(&x0) {
+        assert_eq!(a.x, *x, "a refused move leaves every position untouched");
+    }
+    assert_eq!(s.energy().to_bits(), e0.to_bits(), "a refused move costs nothing");
+
+    // And the same scene still accepts a legal shrink: the door refuses the move, not
+    // the periodic boundary.
+    let f_ok = (cut / half) * 1.001;
+    assert!(f_ok < 1.0, "the probe factors are shrinks (cut/half = {})", cut / half);
+    s.scale_box(f_ok)
+        .expect("a shrink that keeps cut <= half*f is accepted");
+    assert!(s.pbc_ok(), "and the accepted move lands on a legal state");
+}
+
+#[test]
+fn the_open_boundary_is_exempt_from_the_image_check() {
+    // pbc_ok is vacuously true without wrapping: there are no images to confuse, so the
+    // same factor that refuses under Periodic is accepted under walls.
+    let mut s = periodic_lattice();
+    assert!(s.set_pair_cutoff(1e-6), "precondition shared with the gate above");
+    let (cut, half) = s.pbc_margin();
+    let f_bad = (cut / half) * 0.999;
+    s.boundary = Boundary::Open;
+    let floor = 2.0 * s.wall_inset;
+    if s.width * f_bad > floor && s.height * f_bad > floor && s.depth * f_bad > floor {
+        s.scale_box(f_bad)
+            .expect("without a wrapping boundary the image condition does not apply");
+    }
+}

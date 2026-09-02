@@ -1828,11 +1828,11 @@ impl Sim {
 
     /// Whether the last force pass's far sector actually summed, or refused.
     ///
-    /// It can refuse for a reason that arose AFTER the sector was admitted: `Sim::scale_box`
-    /// shrinks the box affinely and nothing re-checks any legality condition afterwards —
-    /// not the far sector's `min_edge >= 2 R_s`, and not [`Sim::pbc_ok`] either, which is
-    /// consulted only by [`Sim::set_pair_cutoff`]. So this is asked per pass rather than
-    /// once at admission.
+    /// It can refuse for a reason that arose AFTER the sector was admitted. The pair
+    /// sector's [`Sim::pbc_ok`] condition is now guarded at the door — `Sim::scale_box`
+    /// refuses a move that would break it (`ScaleRefusal::BreaksPeriodicImages`) — but the
+    /// far sector's own `min_edge >= 2 R_s` is not the door's condition, so this is still
+    /// asked per pass rather than once at admission.
     pub fn far_ok(&self) -> bool {
         self.far.is_none()
             || (!self.far_reading.box_illegal && !self.far_reading.shells_unresolved)

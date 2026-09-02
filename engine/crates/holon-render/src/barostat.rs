@@ -209,6 +209,14 @@ pub enum ScaleRefusal {
     BadFactor,
     /// The scaled box would collapse below twice the wall inset on some axis.
     CollapsesBox,
+    /// The scaled box would put the pair list's cutoff past half the shortest edge of a
+    /// wrapping boundary — the [`crate::sim::Sim::pbc_ok`] condition — so an atom would
+    /// sit inside the cutoff of two images of the same partner and the reduction would
+    /// silently drop one force. Found by B2's G9: `scale_box` could walk a scene out of
+    /// the configuration it was admitted in, with no complaint anywhere. The door now
+    /// opens only onto legal states; the numbers behind the refusal are
+    /// [`crate::sim::Sim::pbc_margin`].
+    BreaksPeriodicImages,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -542,6 +550,12 @@ impl crate::sim::Sim {
             || (self.dims == crate::sim::Dims::Three && self.depth * factor <= floor)
         {
             return Err(ScaleRefusal::CollapsesBox);
+        }
+        if self.boundary.wraps() {
+            let (cut, half_edge) = self.pbc_margin();
+            if !(cut.is_finite() && cut <= half_edge * factor) {
+                return Err(ScaleRefusal::BreaksPeriodicImages);
+            }
         }
         let before = self.energy();
         self.width *= factor;

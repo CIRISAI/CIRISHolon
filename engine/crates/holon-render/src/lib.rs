@@ -1200,6 +1200,7 @@ pub fn scale_refusal_code(r: crate::barostat::ScaleRefusal) -> u32 {
         + match r {
             R::BadFactor => 1,
             R::CollapsesBox => 2,
+            R::BreaksPeriodicImages => 3,
         }
 }
 

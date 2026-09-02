@@ -743,6 +743,13 @@ if (ladderBlock) {
   // that are not.
   for (const { block, band, state, certificate } of bands) {
     const isLive = state === "live";
+    // WHICH NODE certified it. Only node G's certificates are band states: a node-G
+    // certificate is a certified coarse view of the dynamics beneath the band. Node LG's
+    // lattice-gas tier is certified on its OWN dynamics — supporting machinery and
+    // research content — so an LG bank must NOT fire the flip-owed direction. Without
+    // this the gate would read any line containing "CERTIFIED" as a band's warrant and
+    // demand a flip that §9c forbids.
+    const certNode = (block.match(/certNode: "([^"]+)"/) || [, null])[1];
     let certResolves = false;
     if (certificate) {
       const [relPath, lineNo] = certificate.split(":");
@@ -752,9 +759,14 @@ if (ladderBlock) {
         // A certificate is a VERDICT, so the cited line must actually carry one. "CERTIFIED"
         // is the census's own word; a citation to a line that merely mentions the band would
         // pass a weaker check while establishing nothing.
-        certResolves = /CERTIFIED/.test(line);
+        certResolves = /CERTIFIED/.test(line) && certNode === "G";
+        if (/CERTIFIED/.test(line) && certNode !== "G") {
+          // Not a failure: a real certificate from a node that does not confer a band
+          // state. Reported so the distinction is visible rather than silent.
+          ok(`band "${band}" cites a node-${certNode ?? "?"} certificate, which is not a band state`);
+        }
         if (!certResolves) {
-          no(`band "${band}" cites a certificate at ${certificate} that carries no verdict`,
+          if (!/CERTIFIED/.test(line)) no(`band "${band}" cites a certificate at ${certificate} that carries no verdict`,
             `line ${lineNo} reads: ${line.trim().slice(0, 90)}`);
         }
       } catch {

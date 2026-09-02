@@ -450,6 +450,14 @@ const LADDER = [
     // to let a band be live without it, which is what makes "fenced -> live" a flip that
     // cannot be performed by editing one word.
     certificate: "conformance/water_observatory/census_mixed_fenced.log:233",
+    // WHICH NODE'S CERTIFICATE, and it is load-bearing rather than provenance decoration.
+    // A band goes live ONLY on a node-G closure certificate — a coarse view of the
+    // dynamics BENEATH it, certified by the census. Node LG's lattice-gas tier is
+    // certified on its OWN dynamics: real, banked, and NOT a band state, because running
+    // physics that is not the certified coarse truth of THIS water is the fake §9c bans.
+    // Without this field an LG bank would read as "the rung has landed and the flip is
+    // owed" and the gate would demand a flip nobody is entitled to.
+    certNode: "G",
     certifiedBy: "the closure census — OH₂ held 893.8 fs, CERTIFIED-STRICT, past the "
       + "pre-staked 834 fs window",
   },

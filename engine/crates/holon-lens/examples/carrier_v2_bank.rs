@@ -303,10 +303,17 @@ fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let dry = args.iter().any(|a| a == "--dry-run");
     let bank_arg = args.iter().find_map(|a| a.strip_prefix("--bank="));
+    let manifest_arg = args.iter().find_map(|a| a.strip_prefix("--manifest="));
     for a in &args {
-        if a.starts_with("--") && a != "--dry-run" && !a.starts_with("--bank=") {
+        if a.starts_with("--")
+            && a != "--dry-run"
+            && !a.starts_with("--bank=")
+            && !a.starts_with("--manifest=")
+        {
             eprintln!("REFUSED  unknown argument {a}");
-            eprintln!("         usage: carrier_v2_bank [--dry-run] [--bank=DIR]");
+            eprintln!(
+                "         usage: carrier_v2_bank [--dry-run] [--bank=DIR] [--manifest=DIR]"
+            );
             std::process::exit(2);
         }
     }
@@ -316,6 +323,72 @@ fn main() {
         std::process::exit(5);
     }
     println!("sha256 self-check: PASS (3 published vectors)");
+
+    // ------------------------------------------------------------------ G10, the manifest
+    //
+    // The same gauged digest, used to BANK a new carrier rather than to check an old one.
+    // One implementation: a manifest emitter with its own sha256 would be a second
+    // instrument, and the day the two disagreed the pin would be the thing in doubt.
+    if let Some(dir) = manifest_arg {
+        let dir = PathBuf::from(dir);
+        let mut files: Vec<PathBuf> = match std::fs::read_dir(&dir) {
+            Ok(rd) => rd
+                .filter_map(|e| e.ok().map(|e| e.path()))
+                .filter(|p| p.extension().map(|x| x == "traj").unwrap_or(false))
+                .collect(),
+            Err(e) => {
+                eprintln!("REFUSED  {}: {e}", dir.display());
+                std::process::exit(3);
+            }
+        };
+        if files.is_empty() {
+            eprintln!("REFUSED  no .traj files in {}", dir.display());
+            std::process::exit(3);
+        }
+        // Sorted, so the manifest is a function of the directory's CONTENT and not of the
+        // order the filesystem happened to hand them back.
+        files.sort();
+        println!("# carrier-v2 manifest for {}", dir.display());
+        println!("# digest  file                                   N  frames  dims(meas)  span_z  flatness  content");
+        for f in &files {
+            let bytes = match std::fs::read(f) {
+                Ok(b) => b,
+                Err(e) => {
+                    eprintln!("REFUSED  {}: {e}", f.display());
+                    std::process::exit(3);
+                }
+            };
+            let t = match Trajectory2::read(f) {
+                Ok(t) => t,
+                Err(e) => {
+                    eprintln!("REFUSED  {}: {e}", f.display());
+                    std::process::exit(e.exit_code());
+                }
+            };
+            let m = t.measure();
+            let name = f.file_name().unwrap().to_string_lossy();
+            // The MEASURED dimensionality goes in the manifest beside the digest, because
+            // this campaign's whole finding is that a declared one is not a fact. A
+            // manifest that pinned the bytes and left the reading to a later reader's
+            // trust would be pinning the wrong thing.
+            println!(
+                "{}  {name}  N={} frames={} dims={} span_z={:.4} flat={:.3e} content={:#x}{}",
+                sha256_hex(&bytes),
+                t.header.n_atoms,
+                t.frames.len(),
+                m.dims,
+                m.span[2],
+                m.flatness,
+                t.header.content,
+                if t.header.dims_declared == m.dims {
+                    ""
+                } else {
+                    "  DECLARED-DIMS-DISAGREE"
+                }
+            );
+        }
+        std::process::exit(0);
+    }
 
     let mut tried = Vec::new();
     let Some(repo) = find_repo(&mut tried) else {
@@ -356,7 +429,14 @@ fn main() {
     println!("manifest {} ({} pins)", manifest_path.display(), pins.len());
 
     if dry {
-        println!("\nDRY RUN — nothing was read and nothing was written.");
+        // PRECISELY WHAT IT DID AND DID NOT DO. The manifest WAS read -- the listing
+        // below is its contents -- and each path WAS stat-ed. Writing "nothing was read"
+        // would be an unconditional claim that the code contradicts three lines later,
+        // and a dry run whose own description is wrong is not a dry run anybody can trust.
+        println!(
+            "\nDRY RUN — the manifest was read and each path stat-ed. NOTHING was \
+digested, opened as a trajectory, or written."
+        );
         let n_traj = pins.iter().filter(|(_, r)| r.ends_with(".traj")).count();
         println!(
             "would digest {} pinned files and read {} of them as trajectories:",

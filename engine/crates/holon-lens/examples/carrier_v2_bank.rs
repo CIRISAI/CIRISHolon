@@ -429,7 +429,14 @@ fn main() {
     println!("manifest {} ({} pins)", manifest_path.display(), pins.len());
 
     if dry {
-        println!("\nDRY RUN — nothing was read and nothing was written.");
+        // PRECISELY WHAT IT DID AND DID NOT DO. The manifest WAS read -- the listing
+        // below is its contents -- and each path WAS stat-ed. Writing "nothing was read"
+        // would be an unconditional claim that the code contradicts three lines later,
+        // and a dry run whose own description is wrong is not a dry run anybody can trust.
+        println!(
+            "\nDRY RUN — the manifest was read and each path stat-ed. NOTHING was \
+digested, opened as a trajectory, or written."
+        );
         let n_traj = pins.iter().filter(|(_, r)| r.ends_with(".traj")).count();
         println!(
             "would digest {} pinned files and read {} of them as trajectories:",

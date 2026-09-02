@@ -86,26 +86,68 @@ first thing this freeze measures.
 ## 1. THE ARTIFACT
 
 The near table is a **NEW artifact with its own identity**, never an edit of the banked
-96-knot O–O curve, whose record — including its `IterationCap` exit at 5000 iterations and
-worst residual 4.809e-6 — stays exactly as it is. Its form is being settled with
-`saturation2-water`, who owns the curve; **this freeze stakes the gates, and the two admissible
-forms are gated differently:**
+96-knot O–O curve.
 
-* **PREFIX form** — same generator, same grid, truncated at 10.2400, so every retained knot is
-  bit-identical to one in the banked curve. Then G-EXACT below is a **bit-comparison**.
-* **RESAMPLED form** — same generator, 96 knots redistributed over the shorter range. Then
-  G-EXACT is a **budgeted** comparison against the banked curve's interpolant, and the freeze
-  says so rather than quietly weakening a bit-gate into a tolerance.
+## 1bis. AMENDMENT, 2026-09-02 — three of §1's options and one of §0's numbers were wrong
 
-Whichever lands, the near table declares which form it is, and the instrument REFUSES to
-score G-EXACT under the bit-comparison unless the artifact declares itself a prefix.
+*Landed before any G-SPLIT result was read. Every change below NARROWS the design or
+CORRECTS a fact about the setup; none moves a threshold, and none makes anything easier to
+pass. The cause is `saturation2-water`'s measurements on the curve they own, which is exactly
+the review this freeze asked for.*
+
+**(1) The RESAMPLED form is measured and REJECTED, not offered.** `table::grid_point` places
+knots at `u = r_min^(−1/4) + (r_max^(−1/4) − r_min^(−1/4))·i/(n−1)`, `r = u^(−4)` — so
+**`r_max` appears in every interior knot's position**. Regenerating at a shorter `r_max`
+moves all of them: between the 20.0 grid and a 10.24 grid at the same `n` the number of
+shared interior knots is **ZERO** (knot 10 sits at 1.873169 on one and 1.795747 on the other).
+There is no bit-referee down that road, so the resampled form is struck. **The near table is a
+TRUNCATION of the banked grid**, generated on the banked rule (`r_min = 1.5261`,
+`r_max = 20.0`, `n = 96`) and cut after the last knot at or below the target.
+
+**Its consequence, stated here rather than left to be tripped over:** the near table's grid
+rule cites `r_max = 20.0` while its support ends near 10.30. That is odd-looking and it is
+the price of the bit-referee; the artifact must say so on its face, because a grid rule
+referencing a radius the table does not reach reads as a bug two months later.
+
+**(2) The cut radius is 10.2972, not 10.2400.** 76 of the 96 knots lie at or below 10.24 and
+the nearest knot is `i = 76` at **r = 10.2972**. The freeze's §0.1 target was `r_max ≤ 10.59`,
+which 10.2972 clears, so the design is unchanged — but the derived threshold moves from 736
+to `0.40122 × 12.2972³ = 746`. The instrument's ladder keeps 10.24 as a probe point; the
+ARTIFACT is cut at the knot, because a table cannot end between its own knots.
+
+**(3) The disclosure is "IterationCap because DEGENERATE", not merely IterationCap.** All
+twelve iteration-capped knots span **6.1651 to 8.5269 bohr and ZERO lie above 10.24**, and
+nine of them are capped because the O–O multiplet has no gap at dissociation — the curve is a
+triplet at its well and crosses spin three times (cryo-HO's scan). **No budget and no
+precision tier converges them**; the fix would be spin-sector targeting or state averaging,
+a different method. So G-SOLVE's rows carry the reason and not just the exit, which stops a
+reader wondering whether budget 10000 would help.
+
+**Two consequences run opposite ways and both are recorded.** The band this design hands to
+the far sector, 10.24 → 20.0, is **entirely converged**, so G-SPLIT is a fair test of the
+tail model rather than a test of the curve. And **the unconvergible region stays entirely in
+the near table** — cutting at 10.2972 removes none of it, and all twelve capped knots are
+inherited by the artifact this campaign banks.
+
+**(4) The near table is ADDITIONAL and the default does NOT move.** Six files build the O–O
+curve, and the two that matter are the quench arms (`waterquench.rs`,
+`waterquench_traj.rs`), whose bond criterion reads `outer_turning_point` — which searches the
+tail. **Banked results depend on the default being the full-length curve.** So this campaign
+adds an artifact and changes no default; the quench arms moving to a short table would be a
+separate decision with its own re-bank, never a side effect of this split. `b2_longrange.rs`
+is on that list too and keeps the full-length curve, which is correct: B2's own measurements
+are against the long curve by construction.
+
+**What the amendment does NOT change:** G-SPLIT's budget of 1.0e-7 Ha, its candidate ladder,
+the `r_max ≤ 10.59` target, and every branch in §4. The one number that moves is a derived
+expectation (736 → 746), and G-ROUTE measures it either way.
 
 ---
 
 ## 2. THE GATES
 
 - **G-SPLIT — THE ADMISSIBLE HANDOVER RADIUS, and the gate that can refute this design.** For candidate `R_s` on the staked ladder `[10.24, 11.0, 12.0, 13.0, 14.0, 15.0, 16.0, 18.0, 20.0]` bohr, the tail model is rebuilt at that `R_s` and `max |u_far(r) − u_table(r)|` is measured over `(R_s, 20.0]` at 200 sampled radii. A radius is ADMISSIBLE when that worst gap is below `1.0e-7` Ha — one tenth of carrier-v2's own `PAIR_FLOOR`, so a pair the far sector carries wrongly is worth less than a tenth of the error the near sector is already allowed to drop. The gap is printed for EVERY candidate, admissible or not. witness: `DependsWithinUpTo`
-- **G-EXACT — THE ZERO-DISCARD REFEREE.** On B1b's own admitted frames, under its own manifest refusal, the re-split configuration's total pair interaction is compared against the FULL-TABLE complete sum, per frame. Three regions, gated separately because they fail differently: pairs at `r <= R_s` must agree EXACTLY (bit-identical under the prefix form, else within 1.0e-12 relative); pairs in `(R_s, R_f]` within the G-SPLIT budget of 1.0e-7 Ha per pair; pairs past `R_f` counted and reported as the residual discard, gated at `0.10·D_s` exactly as B1b gated its own. witness: `DependsWithinUpTo`
+- **G-EXACT — THE ZERO-DISCARD REFEREE.** On B1b's own admitted frames, under its own manifest refusal, the re-split configuration's total pair interaction is compared against the FULL-TABLE complete sum, per frame. Three regions, gated separately because they fail differently: pairs at `r <= R_s` must agree EXACTLY — bit-identical, since §1bis struck the resampled form and the near table is a truncation of the banked grid whose every retained knot is the banked curve's own; pairs in `(R_s, R_f]` within the G-SPLIT budget of 1.0e-7 Ha per pair; pairs past `R_f` counted and reported as the residual discard, gated at `0.10·D_s` exactly as B1b gated its own. witness: `DependsWithinUpTo`
 - **G-ROUTE — THE DELIVERABLE.** The smallest N at which `Sim::route()` reports `Cells`, MEASURED by bisection on a 3D liquid-density scene at the banked radius and at the re-split radius, with the cell arithmetic (`cells_per_axis`, extent, cutoff) printed at every probe. A ROUTE reading and not a timing, so placement cannot move it. Both numbers are reported beside their derived expectations of 4272 and 736; a measured value differing from its derivation by more than 20% is REPORTED as a finding about the derivation, not silently accepted. witness: `none (a measured property of the engine's own decomposition; M-VOLUME-SCALE is its warrant)`
 - **G-LAWS — THE THREE LAWS IN BOTH CONFIGURATIONS.** Energy, momentum and angular momentum, each staked on the quantity its own law constrains, run at the banked radius and at the re-split radius over at least 20000 steps. A re-split that buys the route by breaking a conservation law has bought nothing. witness: `none (conservation gates on this engine's own ledgers; M-NULL-MISSTAKE is its warrant)`
 - **G-LEGAL — THE REFUSALS STILL FIRE.** The re-split lowers `legality_radius`, so boxes that were illegal become legal. Every refusal is re-exercised at the new radius: sub-support (R3), the periodic floor, `scale_box`'s door. A refusal that stops firing because the radius moved is a refusal that was measuring the radius. witness: `none (a refusal-observability gate; the cryo finding is its warrant)`

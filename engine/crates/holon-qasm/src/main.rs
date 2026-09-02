@@ -2,7 +2,7 @@ use holon_qasm::*;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let usage = "usage: holon-qasm run <file.qasm> [--tier classical|tableau|statevector] [--mutate s-phase|cx-phase|cx-swap] | route <file.qasm>";
+    let usage = "usage: holon-qasm run <file.qasm> [--tier classical|tableau|magic|statevector] [--mutate s-phase|cx-phase|cx-swap|magic-s-cross|magic-gauss] | route <file.qasm> | amp <file.qasm> | test-magic <file.qasm>";
     if args.len() < 3 {
         eprintln!("{usage}");
         std::process::exit(2);
@@ -24,7 +24,16 @@ fn main() {
             // amplitude of |0...0> via the magic tier: 2^t · poly(n), no 2^n
             let y = vec![false; c.n_qubits];
             let t0 = std::time::Instant::now();
-            let (re, im) = holon_qasm::magic::magic_amplitude(&c, &y, false, false);
+            let (re, im) = match holon_qasm::magic::try_magic_amplitude(
+                &c, &y, false, false,
+            ) {
+                Ok(v) => v,
+                Err(msg) => {
+                    println!("{{\"amp\": \"REFUSED\", \"reason\": {:?}}}", msg);
+                    eprintln!("{msg}");
+                    std::process::exit(3);
+                }
+            };
             let dt = t0.elapsed().as_secs_f64();
             println!(
                 "{{\"seconds\": {dt:.6}, \"re\": {re:.12}, \"im\": {im:.12}, \"p\": {:.12}}}",
@@ -33,7 +42,14 @@ fn main() {
         }
         "test-magic" => {
             // dev loop: magic tier vs in-crate statevector on THIS circuit
-            let d1 = holon_qasm::magic::run_magic(&c, false, false);
+            let d1 = match holon_qasm::magic::try_run_magic(&c, false, false) {
+                Ok(v) => v,
+                Err(msg) => {
+                    println!("{{\"test_magic\": \"REFUSED\", \"reason\": {:?}}}", msg);
+                    eprintln!("{msg}");
+                    std::process::exit(3);
+                }
+            };
             let d2 = run_statevector(&c);
             let keys: std::collections::BTreeSet<_> =
                 d1.keys().chain(d2.keys()).collect();
@@ -98,7 +114,16 @@ fn main() {
                 },
             };
             let t0 = std::time::Instant::now();
-            let dist = run(&c, tier, m);
+            // `--tier` names a tier without consulting the router, so the
+            // budget for the tier the caller named is checked HERE.
+            let dist = match try_run(&c, tier, m) {
+                Ok(d) => d,
+                Err(msg) => {
+                    println!("{{\"tier\": \"REFUSED\", \"reason\": {:?}}}", msg);
+                    eprintln!("{msg}");
+                    std::process::exit(3);
+                }
+            };
             let dt = t0.elapsed().as_secs_f64();
             let entries: Vec<String> = dist
                 .iter()

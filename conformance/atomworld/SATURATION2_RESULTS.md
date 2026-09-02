@@ -250,6 +250,50 @@ NOT explained; `examples/s2_third.rs` measures a third candidate coordinate (the
 bend angle) beating both `u` and `c` on the worst slice by 2.2×, and that is the
 named successor.
 
+### WHERE THE ERROR LIVES — a localization clause, labelled POST-DATA
+
+*Added 2026-09-02 from evidence the published bound did not have. **The bound does
+not move.** 7.68e−4 came from a pre-registered 384-point draw, every disagreement
+measured since is inside it, and a published number is not revised on post-data
+evidence. What follows says where inside it the error sits.*
+
+**The error is not uniform over the grid. It concentrates in the near-collinear
+band, and real scenes visit that band constantly.**
+
+The de5 audit, on its own sample and its own instrument, binned 144 compact
+(O, H, H) triples against the served table. The near-collinear band `θ ≥ 150°` is
+**13 of 144 triples — 9.0% — and holds 9 of 9 disagreements ≥ 1e−4 Ha**, with a
+median separation of 130× across the cut. All nine sit within 1.6 grid cells of
+SATURATION-3's **Seam 1**, the electronic state crossing at `c ≈ 1.4128`,
+`θ ≈ 174.9°`. The largest is 6.678e−4, inside the 7.68e−4 declared here.
+
+Two instruments, two samples, one corner. This lane found the seam by walking a
+slice's second and third differences and showed that no smooth interpolant
+converges on a corner; the audit found that 9% of the triples a trajectory
+actually visits land on it — without looking for it, and neither reading contains
+the other.
+
+**Why this clause exists rather than a different number.** A flat bar over a
+domain containing a non-smooth feature is a summary that hides its own structure.
+It is never a false bound, and it is uninformative in both directions: a consumer
+averaging over many triples is told they carry 7.68e−4 when they carry far less,
+and a consumer whose quantity lives near collinear is told a number that is true
+and given no reason to look harder. Naming where the error lives costs a sentence
+and turns the bar back into information. This is the same clause, for the same
+reason, as the O-O disclosure's "the caps are in the dissociation tail past ~6
+bohr" — which is the sentence the census lane reported as the most useful thing it
+received, because it let them decide whether it touched them.
+
+**What it does NOT license.** No refinement of the served table. Uniform
+refinement cannot beat a corner — that is what the 5×-per-doubling reading was,
+and gauging the interpolator at 9.3–10.9× on planted smooth data is what proved
+the shortfall belongs to the surface rather than the scheme. For any FUTURE
+(O, H, H)-class grid the options remain: put a grid line ON the seam, splitting
+the domain into two smooth patches that each recover the gauged rate, or accept
+the floor deliberately. The audit's 9% is a traffic estimate this lane did not
+have, and it moves the lean toward the first. It changes nothing about the served
+table, which stands as published on its published bound.
+
 ---
 
 ## R1 — the 50-digit (O, H, H) referee · **HOLDS**

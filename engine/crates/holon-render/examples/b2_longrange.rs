@@ -1477,6 +1477,23 @@ fn periodic_arm(
             scaled.e_far,
             fresh.e_far
         );
+        // THE LEDGER CLOSES ACROSS THE BOX MOVE, with the far term in it. `scale_box`
+        // measures `energy()` on both sides and posts the difference to `w_ext` AND to
+        // `work.hand`; `energy()` now carries `e_far`, so the far sector's own change under
+        // an affine scaling is booked rather than appearing as an unexplained loss. Checked
+        // rather than inferred from that reasoning, because the reasoning is exactly the
+        // kind that is right about the code that existed when it was written.
+        let closed = scaled.drift() <= scaled.drift_bound();
+        println!(
+            "# GATE G9 ledger across the box move, f={f:.2}: {}  |ledger − l0| {:.6e} vs \
+             bound {:.6e}  w_ext {:.6e}  work.hand {:.6e}  columns_ok {}",
+            pf(closed && scaled.work_columns_ok()),
+            scaled.drift(),
+            scaled.drift_bound(),
+            scaled.w_ext,
+            scaled.work.hand,
+            scaled.work_columns_ok()
+        );
     }
 
     // P1 — the stale lattice. The carrier is the difference a skipped recomputation makes,
@@ -1736,17 +1753,52 @@ fn arm_refusals() {
 
     // R2 — the image-budget refusal, on a box whose shells cannot reach an impossible
     // budget inside the cap.
+    //
+    // The box must clear `2 R_s` or the SIZE refusal fires first and this row would be
+    // scoring a different refusal than the one it names. That happened: the census box
+    // (34.6 x 20.8) took this probe to `PeriodicTooSmall` and G11 read 7 of 8.
     total += 1;
     let c = vec![Some(power(3.0, 20.0))];
     let mut f = FarSector::build(&c, 20.0, 1.0e-30, Dims::Two).expect("builds");
     let pos = [(0.0, 0.0, 0.0), (5.0, 0.0, 0.0)];
-    let geom = BoxGeom::new(BOX_W, BOX_H, BOX_H, true);
-    match f.resolve_shells(&pos, &[0, 0], geom) {
+    let wide = BoxGeom::new(90.0, 90.0, 90.0, true);
+    match f.resolve_shells(&pos, &[0, 0], wide) {
         Err(e @ FarRefusal::ImageBudget { .. }) => {
             fired += 1;
             println!("R2 FIRED: {e}");
         }
         other => println!("R2 DID NOT FIRE: {other:?}"),
+    }
+
+    // The periodic SIZE refusal, which is R1's locality argument one level up: the near
+    // sector sums minimum images only, so the far sector owns every image — true only while
+    // every image separation is past `R_s`, which needs `min_edge >= 2 R_s`.
+    total += 1;
+    let mut f2 = FarSector::build(&c, 20.0, 1.0e-9, Dims::Two).expect("builds");
+    let tight = BoxGeom::new(BOX_W, BOX_H, BOX_H, true);
+    match f2.resolve_shells(&pos, &[0, 0], tight) {
+        Err(e @ FarRefusal::PeriodicTooSmall { .. }) => {
+            fired += 1;
+            println!("R-SIZE FIRED: {e}");
+        }
+        other => println!("R-SIZE DID NOT FIRE: {other:?}"),
+    }
+    // And it must NOT fire on a box that clears the floor, or it is a refusal rather than a
+    // criterion. On a curve and budget whose shells actually converge, so the silence being
+    // checked is the SIZE gate's and not an accident of some other refusal firing first —
+    // the first version of this row used a `p = 3` tail that R2 caught before the size gate
+    // could stay quiet, which is the same confusion one row up.
+    total += 1;
+    let converging = vec![Some(power(6.0, 20.0))];
+    let mut f3 = FarSector::build(&converging, 20.0, 1.0e-12, Dims::Two).expect("builds");
+    match f3.resolve_shells(&pos, &[0, 0], wide) {
+        Ok((m, diff)) => {
+            fired += 1;
+            println!(
+                "R-SIZE correctly SILENT on a box clearing 2 R_s = 40.0000 bohr                  (converged at {m} shells, difference {diff:.3e} Ha)"
+            );
+        }
+        Err(e) => println!("R-SIZE fired where it should not have: {e}"),
     }
 
     println!("# GATE G11: {fired} of {total} refusals fired. {}", pf(fired == total));

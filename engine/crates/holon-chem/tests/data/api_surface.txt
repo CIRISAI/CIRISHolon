@@ -220,3 +220,9 @@ to_modes                bead to normal-mode coordinates
 # `ChargeRefusal` needs no line either — the scan reads `pub fn`/`pub const`/`pub static`
 # and never sees a `pub enum`, which is a separate blind spot and not this lane's to fix.
 solve_geometry_charged  the ion seam's entry point; charge is stated by a CALLER, so nothing in the library calls it — tests/ion_core.rs certifies H3O+/OH- and plants all three refusals
+
+# --- the charged-table door (ION-TABLES lane; node C's table half) ---
+parse_spec              the spec door; its whole job is the UnstatedCharge refusal, and the emitter and tests/ion_tables.rs are its consumers
+generate_ion_table      the production entry point: generate_ion_table_planted at Plant::None. Consumed by examples/emit_ion_tables.rs and every gate in tests/ion_tables.rs
+interpolant_error       the GRID's uncertainty, over a STAKED held-out sample the caller supplies; deliberately not called by the generator, which must not choose the sample it is measured on
+with_interpolant_uncertainty  records that measurement onto the table; to_json REFUSES without it

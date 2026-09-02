@@ -203,6 +203,37 @@ Reported as plainly as the passes, and kept.
 
 3. **The freeze's G1 was two gates written as one.** §2.1.
 
+4. **A file too short to carry a version exited 3, "a path did not resolve", instead of 4,
+   "a format refusal".** `peek_version`'s `?` mapped `UnexpectedEof` onto `TrajError::Io`,
+   so a caller handed a truncated or foreign file would be told to check its paths. That is
+   the exact failure `M-EXIT-DISCRIMINATOR` names, sitting in the function whose job is to
+   discriminate. Found by inspection, not by a gate — the freeze's G3 asked about v1-vs-v2
+   and never about a stub. Fixed and tested on both sides: a six-byte file is exit 4 naming
+   its size, an absent file is still exit 3.
+
+5. **The occupancy grid and `cells.rs` disagreed about who owns the box's upper face.**
+   `mean_cell_occupancy` used a half-open `[0, 1)` test, so an atom exactly on the upper
+   face read as an escapee; `cells.rs` deliberately adds "a hair of margin so an atom
+   exactly on the upper face lands in the last cell rather than one past it". Two
+   conventions for which cell owns a face is how the fluid chart and the neighbour list
+   come to disagree about where an atom is, with only one of them reported. Now matched to
+   the engine, with a test placing atoms exactly on both faces and just past one.
+
+6. **The ladder collected the LEASED worker count and never printed it.** §4.1 of the freeze
+   requires reporting "the worker count the pool actually LEASED (not the count requested —
+   `M-PROBE-THE-RESOURCE`)". `run_rung` obtains it and the printed row has no column for
+   it. The omission changes no number: the ladder's counter wraps the SERIAL executor, and
+   term counts are worker-count invariant by `holon-md/tests/bit_identity.rs` — that is the
+   crate's whole guarantee. But a required disclosure field was collected and dropped, and
+   the run of record does not carry it. Recorded rather than back-filled, because
+   re-running the ladder to add a column would cost the O–O curve again and would produce a
+   second run of record for one field.
+
+   The same function also **leases workers and drops the pool without releasing the
+   leases**. Nothing observes the imbalance — the arena is owned by the pool and dies with
+   it — but the lease discipline says leases are paid, and `WorkerPool::retire` is the call
+   that was not made.
+
 ---
 
 ## 5. THE PLANTS

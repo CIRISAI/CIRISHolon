@@ -373,7 +373,14 @@ fn run_rung(n: usize, workers: usize, tables: &[holon_chem::pair::PairTable]) ->
     // pricing WORK, and the work is the same term count under any worker count — that is
     // `tests/bit_identity.rs`'s whole guarantee. The pool's own scaling is `examples/
     // scaling.rs`'s question and is not re-answered here under a different name.
-    drop(pool);
+    //
+    // The pool is RETIRED rather than dropped. Nothing observes the difference — the arena
+    // is owned by the pool and dies with it — but the lease discipline is that leases are
+    // released, and a lane that drops them because nobody is looking is a lane that has
+    // stopped obeying the rule rather than one the rule does not apply to.
+    if let Some(p) = pool {
+        let _ = p.retire();
+    }
     s.set_executor(Some(Box::new(handle)));
     let t0 = Instant::now();
     for _ in 0..LADDER_FRAMES {
@@ -423,8 +430,9 @@ fn ladder(workers: usize, rungs: &[usize], knots: usize) -> i32 {
          {LADDER_FRAMES} frames x {SUBSTEPS} substeps per rung"
     );
     println!(
-        "\n{:>5} {:>8} {:>9} {:>9} {:>8} {:>14} {:>12} {:>8} {:>7} {:>9}",
-        "N", "edge", "route", "cells", "r_cut", "W_pair/step", "W_trip/step", "W_dE4", "3D@0", "s (cont.)"
+        "\n{:>5} {:>8} {:>9} {:>9} {:>8} {:>14} {:>12} {:>8} {:>7} {:>6} {:>9}",
+        "N", "edge", "route", "cells", "r_cut", "W_pair/step", "W_trip/step", "W_dE4", "3D@0",
+        "lease", "s (cont.)"
     );
     println!("\ngenerating the three pair curves once:");
     let tables = make_tables(knots);
@@ -433,7 +441,7 @@ fn ladder(workers: usize, rungs: &[usize], knots: usize) -> i32 {
         match run_rung(n, workers, &tables) {
             Ok(r) => {
                 println!(
-                    "{:>5} {:>8.2} {:>9} {:>3}x{}x{} {:>8.3} {:>14.1} {:>12.1} {:>8} {:>7} {:>9.1}",
+                    "{:>5} {:>8.2} {:>9} {:>3}x{}x{} {:>8.3} {:>14.1} {:>12.1} {:>8} {:>7} {:>6} {:>9.1}",
                     r.n,
                     r.edge,
                     r.route,
@@ -445,6 +453,11 @@ fn ladder(workers: usize, rungs: &[usize], knots: usize) -> i32 {
                     r.w_triple as f64 / r.steps as f64,
                     r.w_de4,
                     if r.dims_at_zero { "yes" } else { "NO" },
+                    // THE LEASED count, never the requested one (M-PROBE-THE-RESOURCE).
+                    // It enters no number here -- the counter wraps the serial executor and
+                    // term counts are worker-invariant -- but the freeze requires it
+                    // reported, and the first ladder run collected it and printed nothing.
+                    r.workers,
                     r.seconds,
                 );
                 rows.push(r);

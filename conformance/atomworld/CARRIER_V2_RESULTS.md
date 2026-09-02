@@ -348,7 +348,7 @@ reached.
 And that last clause is the finding worth carrying forward. The cell route engages at
 N ≈ 4,273 (§6.1), and the scissor's own 4×4×4 bar is **N = 6400, which is above that
 threshold**. So the successor's target size is on the far side of the route change: at
-N = 6400 the box is 75.7 bohr, `75.7 / 22.0 = 3.44`, and the `O(N)` route is live. The
+N = 6400 the box is 75.52 bohr, `75.52 / 22.0 = 3.43`, and the `O(N)` route is live. The
 123.5× figure is therefore an over-estimate by an amount this ladder cannot measure, because
 this ladder never reached the regime.
 
@@ -358,6 +358,28 @@ table — `r_cut` is `r_max + 2.0` and `r_max` is a property of the tabulated cu
 curve tabulated to 10 bohr instead of 20 would move the route threshold down by a factor of
 ~8 in N. That is a change to the physics artifact, not to the ladder, and it is named here
 rather than made.
+
+### 6.5 THE PRODUCTION N DOES NOT MEET THE SCISSOR BAR, AND IS NOT PRETENDED TO
+
+Stated here rather than buried beside the trajectories, because it is the first thing the
+successor needs to know.
+
+`RUNG2_RESULTS.md`'s bar is **≥ 100 atoms per cell WITH inter-cell transport**. On the
+smallest grid that has faces to transport across, 2×2×2, that is `N ≥ 800`. **The production
+N is 402, which gives 50.25 atoms per cell on that grid — half the bar.**
+
+It is 402 and not 804 because the freeze says so. §5 of `CARRIER_V2_PREREG.md` permits
+production "only at an N the ladder priced", the ladder's rungs stop at 402, and 804 is an
+extrapolation rather than a measurement. Producing at an unpriced N because the bar would
+look better is exactly the move the freeze exists to prevent, and the cost of obeying it is
+this paragraph rather than a quiet substitution.
+
+What the ladder DOES say about the gap: N = 800 is **3.3×** the N = 402 rung in `W_pair`
+(§6.4), still on the `Complete` route, and therefore affordable on this host — roughly two
+hours per 20,000-frame seed rather than forty minutes, at ~1.3 GB per trajectory. **The next
+ladder should include a rung at 804** (268 waters, exact 2:1 stoichiometry) so that the
+scissor-meeting size is a priced rung rather than an extrapolated one, and the production
+that follows it can be run under the same rule this one obeyed.
 
 ---
 

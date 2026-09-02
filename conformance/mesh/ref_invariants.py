@@ -43,9 +43,17 @@ def line_labels(L, dirs):
     return out
 
 
+_LABEL_CACHE = {}
+
+
 def invariant_space(L, C, dirs=DIR, tol=1e-9, return_basis=False):
     n = len(dirs)
-    labs = line_labels(L, dirs)
+    # The line labels depend only on (L, dirs), never on the collision. Recomputing them
+    # per law made the 4608-law sweep spend all of its time on the same answer.
+    key = (L, tuple(map(tuple, dirs)))
+    if key not in _LABEL_CACHE:
+        _LABEL_CACHE[key] = line_labels(L, dirs)
+    labs = _LABEL_CACHE[key]
     offset, total = [], 0
     for _, k in labs:
         offset.append(total)

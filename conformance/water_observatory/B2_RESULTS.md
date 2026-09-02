@@ -8,7 +8,8 @@ commit BEFORE `longrange.rs` existed. Same ordering discipline as B1 and B1b, sa
 **Instrument:** `engine/crates/holon-render/examples/b2_longrange.rs`
 **Raw output, committed beside this document:** `b2_frames.log` (every frame),
 `b2_frames_stride400.log`, `b2_engine_full.log`, `b2_engine_hh.log`, `b2_refusals.log`,
-`b2_tests.log`.
+`b2_tests.log`, and **`b2_engine_full_G9RED.log`** — the run in which G9's `f = 0.90` arm
+fired, kept because a fired gate stays in the record with what fired it.
 
 ---
 
@@ -21,7 +22,7 @@ commit BEFORE `longrange.rs` existed. Same ordering discipline as B1 and B1b, sa
 | Is B1b's bill paid? | **G14: PASS, 0 of 8 seeds over the criterion**, residual 3.1e-8 – 1.3e-7 Ha against criteria of 4.6e-6 – 2.5e-5 |
 | Does the tail model apply? | **G3: the one curve that matters ADOPTS**, `p_fit = 5.0049`; the other two are FENCED and nothing rests on them |
 | Do the three conservation laws hold? | **G4, G5, G6 PASS**, complete and truncated — but **G4's arm is VOID under V2** because its staked plant cannot fire it |
-| Fired gates | **G7** (coarsest staked step only) and **G8** (its statistic measures the reference's noise). Both kept fired, neither retuned |
+| Fired gates | **G7** (coarsest staked step only) and **G8** (saturated by an unresolvable reference; filtered it still reads 1.19× the bar). Both kept fired, neither retuned |
 
 **B1b's fired G1b stays fired**: 3 of 8 seeds, worst 2.496×. Nothing here erases it.
 
@@ -185,7 +186,9 @@ floor of `|u(r_max)|`, which puts its inner edge exactly on the curve's support 
 than chosen. All three laws hold there too.
 
 **G10 image convergence: PASS** at 3 shells with the difference emitted as
-`uncertainty_hartree`. **G13 N-scaling: exponent 2.122**, monotone in N over 12–192 at fixed
+`uncertainty_hartree`. **G9 stale-cache: PASS bit-identical in BOTH directions** (`f = 0.90`
+and `f = 1.10`), with **P1 still firing** at a carrier of 7.332040e-7 Ha, so the gate keeps
+its power. **G13 N-scaling: exponent 2.123**, monotone in N over 12–192 at fixed
 number density, 3 repetitions, CPU time, pinned to an E-core. That is `O(N²)`, which is what a
 complete far sum is; **the far sector as built does not buy an `O(N)` far route, and nothing
 here claims it does.** **G11: 10 of 10 refusals fire**, including the negative control — the
@@ -197,7 +200,7 @@ box moves with `w_ext` matching `work.hand`.
 
 | plant | carrier | sector | verdict |
 |---|---|---|---|
-| **P1** stale image lattice | `\|E_far(stale) − E_far(fresh)\|` = 1.335285e-6 Ha | periodic image sector | **FIRED** |
+| **P1** stale image lattice | `\|E_far(stale) − E_far(fresh)\|` = 7.332040e-7 Ha | periodic image sector | **FIRED** |
 | **P2** one-sided far force | `\|P − P₀ − J\|` = 1.150051e-5 | far pair force | **FIRED** (G5 FAIL) |
 | **P3** non-central far force | `\|L − L₀\|` = 4.704846e-7 | angular | **FIRED, and G5 STAYED GREEN** |
 | P4 zero-point step at `R_s` | 1.0e-6 Ha per crossing, 23 crossings | energy ledger | **did NOT fire** — §7 |
@@ -241,14 +244,23 @@ beside it identifies the cause without moving the verdict:
   against 4.2616e-6 clean);
 * **the far force is not missing.** The largest absolute disagreement anywhere is 1.087e-17
   Ha/bohr against a largest far force of 1.148e-8 — **9.470e-10 of the force scale**;
-* over the components whose disagreement the reference can actually resolve (a disagreement
-  above `4·eps·|E_far| / 2h`, its own noise), the worst relative error on the H–H arm is
-  **3.0392e-8 — inside the staked 1e-7**, against the 4.2616e-6 the unfiltered maximum
-  reports.
+* filtering to the components whose disagreement the reference can actually resolve (a
+  disagreement above `4·eps·|E_far| / 2h`, its own noise) removes **1909 of 2096** components
+  on the full arm. **Over the 187 that remain, the worst relative error is 1.1870e-7 —
+  still OVER the staked 1e-7, by 19%.** On the H–H arm the same filter gives 3.0392e-8, which
+  is inside.
 
-**The gate is fired on its staked criterion.** The successor's fix is a resolvability
-condition on the reference, staked in advance; the diagnostic is reported here so that fix can
-be argued from a measurement rather than from a preference.
+**So the filtered statistic does not rescue this gate, and it is not offered as if it did.**
+The saturation at 1.0 is an artifact of the reference; the residual 1.19× overshoot on the
+full curve set is not, and it is a real reading against a criterion the freeze staked. What
+the diagnostic buys is that the two are now separable, and that the far force is bounded from
+the other side: the largest absolute disagreement anywhere is 9.470e-10 of the largest far
+force.
+
+**The gate is fired on its staked criterion.** The successor's fix is a criterion that is
+well-posed for a quantity formed as a difference of two nearly equal functions — the far term
+is exactly that by construction — staked in advance with its resolvability condition. Nothing
+here proposes moving the number.
 
 ### G4 — PASSES, and its arm is VOID under V2
 
@@ -266,10 +278,12 @@ box is `2 R_s = 20.48`, so no legal periodic box can place an image in range. **
 the tail, not of the instrument**: a kernel that steep has no long-range content for an image
 sum to carry. On the full curve set `R_f = 73.27` against `2 R_s = 40.00` and the arm scores.
 
-### G9 — one direction, and a defect it exposed in `Sim::scale_box`
+### G9 — now PASSES both directions, after two stacked defects it exposed
 
-`f = 1.10` passes bit-identical. `f = 0.90` FAILED on the first full run, and the cause was
-two defects stacked:
+`f = 0.90` and `f = 1.10` both pass bit-identical (`-1.565574861693e-6` and
+`-6.147355490814e-7`, scaled against fresh), and P1 still fires at 7.332040e-7 Ha, so the gate
+kept its power through the fix. `f = 0.90` FAILED on the first full run, and the cause was two
+defects stacked:
 
 1. **The instrument swallowed a refusal.** `0.90 × 41.0 = 36.9` bohr is below the far sector's
    `2 R_s = 40` legality floor, so the fresh sector correctly REFUSED — and the gate scored
@@ -279,10 +293,11 @@ two defects stacked:
    shells to reach `R_f`; rebuilding the offsets at the old count reaches only `f` times as
    far, which reads as a silently truncated far sum rather than as an error.
 
-Both are fixed: `accumulate` now re-resolves the shell count when the box key changes and
-refuses when a scaled box falls below the legality floor, surfaced through `Sim::far_ok`; the
-instrument no longer swallows the error, and the periodic arm's box is sized at `2.05 R_s /
-0.90` so it stays legal on both sides of the move.
+Both are fixed at `4d25135`: `accumulate` re-resolves the shell count when the box key
+changes and refuses when a scaled box falls below the legality floor, surfaced through
+`Sim::far_ok`; the instrument no longer swallows the error at any of its four call sites; and
+the periodic arm's box is sized at `2.05 R_s / 0.90` = 45.5556 bohr so it stays legal on both
+sides of the move.
 
 **The engine-level finding underneath it is worth more than the gate.** `Sim::scale_box`
 shrinks the box affinely and **nothing re-checks any legality condition afterwards** — not
@@ -325,7 +340,7 @@ plant that should break it, and the plant must move the quantity the invariant r
    configuration, with plants demonstrating that each gate can fail without the others.
 5. **The engine now has an angular-momentum ledger** it did not have, and it returns `None`
    rather than `true` where the box does not conserve `L`.
-6. **The far sector costs `O(N²)`** at the sizes measured — exponent 2.122.
+6. **The far sector costs `O(N²)`** at the sizes measured — exponent 2.123.
 
 **Not banked:**
 

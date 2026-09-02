@@ -1,0 +1,16 @@
+# B2 LONG-RANGE GATE BATTERY — freeze conformance/water_observatory/B2_PREREG.md
+# instrument = engine/crates/holon-render/examples/b2_longrange.rs
+# arm = refusals  curves = hh  steps = 20000  budget = 1.000e-9 Ha
+# launch: loadavg 64.35  cpu 30  core class E (no SMT sibling)  clock fraction 0.615
+R3 FIRED: REFUSED (R3, sub-support): slot 0 has r_max = 20 bohr but the near radius is R_s = 15 bohr — 5.0000 bohr of tabulated interaction would be handed to a tail model. Raise R_s to at least r_max.
+R1a(d=2) FIRED: REFUSED (R1, exponent): measured tail exponent p = 1.0000 against scene dimension d = 2; the image lattice converges absolutely only for p > d. EXIT: Ewald or PME, on a force law carrying charge (GANTT node C)
+R1a(d=3) FIRED: REFUSED (R1, exponent): measured tail exponent p = 1.0000 against scene dimension d = 3; the image lattice converges absolutely only for p > d. EXIT: Ewald or PME, on a force law carrying charge (GANTT node C)
+R1b FIRED: REFUSED (R1, charge): scene declares a point charge of 1, and this engine's force law carries no electrostatic term. EXIT: Ewald or PME, on a force law carrying charge (GANTT node C)
+R5 (no exit) FIRED: REFUSED (R5, disclosure): slot 0's tail parameter carries no solver_exit. A capped residual is not monotone in effort.
+R5 (no budget) FIRED: REFUSED (R5, disclosure): slot 0's tail parameter carries no solver_budget_iterations. A capped residual is not monotone in effort.
+R4 FIRED: REFUSED (R4, fenced tail): the far energy is a BRACKET [-1.000000e-6, -1.000000e-9] Ha spanning a factor of 1.000e-3; no scalar is available. EXIT: a curve carrying further support, or a basis with diffuse functions (ION_STAKING.md I-5, unowned).
+R2 FIRED: REFUSED (R2, image budget): shell-to-shell difference 2.422663e-7 Ha still above the declared budget 1.000000e-30 Ha at the staked cap of 8 shells.
+R-SIZE FIRED: REFUSED (periodic box too small): the shortest edge is 20.8000 bohr against 2 R_s = 40.0000. Below that an image sits inside the curve's support with neither sector summing it. Widen the box or lower R_s.
+R-SIZE correctly SILENT on a box clearing 2 R_s = 40.0000 bohr                  (converged at 2 shells, difference 0.000e0 Ha)
+# GATE G11: 10 of 10 refusals fired. PASS
+# done: wall 0.0 s  cpu 0.0 s  loadavg at exit 64.35  clock fraction at exit 0.615

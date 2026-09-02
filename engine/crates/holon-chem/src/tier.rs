@@ -14,12 +14,10 @@ use crate::scalar::{Dd, Scalar};
 
 // ------------------------------------------------------------------ generic helpers
 
+/// `a · b` under the reduction law (`vecspace::blocked_dot`): the same bits as every host
+/// thread count and as the device.
 pub fn dot_t<T: Scalar>(a: &[T], b: &[T]) -> T {
-    let mut acc = T::ZERO;
-    for (x, y) in a.iter().zip(b.iter()) {
-        acc = acc + *x * *y;
-    }
-    acc
+    crate::vecspace::blocked_dot(a, b)
 }
 
 pub fn axpy_t<T: Scalar>(a: T, x: &[T], y: &mut [T]) {
@@ -28,24 +26,11 @@ pub fn axpy_t<T: Scalar>(a: T, x: &[T], y: &mut [T]) {
     }
 }
 
-pub fn scale_t<T: Scalar>(a: T, x: &mut [T]) {
-    for xi in x.iter_mut() {
-        *xi = *xi * a;
-    }
-}
 
 pub fn norm_t<T: Scalar>(a: &[T]) -> T {
     dot_t(a, a).sqrt()
 }
 
-pub fn normalised_t<T: Scalar>(a: &[T]) -> Vec<T> {
-    let mut v = a.to_vec();
-    let n = norm_t(&v);
-    if n.to_f64() > 0.0 {
-        scale_t(T::ONE / n, &mut v);
-    }
-    v
-}
 
 // ------------------------------------------------------------------ jacobi, one body
 
@@ -167,6 +152,9 @@ pub fn davidson_eigh_from_op<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Sized>
 /// Two solves under different bounds are two artifacts (the bound travels on the manifest
 /// beside device class and iteration budget), which is why the default is a named constant
 /// and not a literal here.
+///
+/// This is the HOST instantiation of [`davidson_in`]: the vectors live in host memory and
+/// the operator is any [`SigmaOp`](crate::sigma_op::SigmaOp).
 pub fn davidson_eigh_from_op_sub<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Sized>(
     op: &mut S,
     diag: &[T],
@@ -175,13 +163,34 @@ pub fn davidson_eigh_from_op_sub<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Si
     start_vector: Option<&[T]>,
     max_sub: usize,
 ) -> (T, Vec<T>, usize, f64, SolveExit) {
-    let nd = op.n_det();
-    assert_eq!(
-        diag.len(),
-        nd,
-        "the preconditioner diagonal carries {} entries for an operator of dimension {nd};          those are two different spaces",
-        diag.len()
-    );
+    let sp = crate::vecspace::HostSpace::new();
+    let mut apply = |v: &Vec<T>, w: &mut Vec<T>| op.apply(v, w);
+    davidson_in(&sp, &mut apply, diag, tol, max_iter, start_vector, max_sub)
+}
+
+/// THE Davidson driver, written once against a [`VectorSpace`](crate::vecspace::VectorSpace):
+/// the vectors live wherever the space keeps them (host memory, or the device), `apply` is
+/// `w = H v` on the space's vectors, and every reduction follows the space's law.
+///
+/// Read sideways, one iteration is four row programs and the operator (see `vecspace.rs`):
+/// the Gram row of the newest image, the Ritz transform (x, r, corr and their reductions in
+/// one pass), and two deflation passes that orthogonalise the candidate against the basis
+/// (classical Gram–Schmidt, re-orthogonalised). The policies are the driver's own — the
+/// symmetry-breaking perturbation of the start, the lowest-diagonal start, the thick restart
+/// carrying the Ritz vector and its projected residual, the two-candidate expansion, the
+/// degeneracy-safe preconditioner, the three exit reasons — and they exist here and nowhere
+/// else. The residual is returned in f64: it is an absolute norm, representable at any tier.
+#[allow(clippy::type_complexity)]
+pub fn davidson_in<T: Scalar, S: crate::vecspace::VectorSpace<T>>(
+    sp: &S,
+    apply: &mut dyn FnMut(&S::V, &mut S::V),
+    diag_host: &[T],
+    tol: f64,
+    max_iter: usize,
+    start_vector: Option<&[T]>,
+    max_sub: usize,
+) -> (T, Vec<T>, usize, f64, SolveExit) {
+    let nd = diag_host.len();
     if let Some(v) = start_vector {
         assert_eq!(
             v.len(),
@@ -193,20 +202,21 @@ pub fn davidson_eigh_from_op_sub<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Si
         );
     }
     if nd == 1 {
-        let mut s = vec![T::ZERO; 1];
-        op.apply(&[T::ONE], &mut s);
-        return (s[0], vec![T::ONE], 0, 0.0, SolveExit::Trivial);
+        let one = sp.upload(&[T::ONE]);
+        let mut s = sp.zeros(1);
+        apply(&one, &mut s);
+        return (sp.download(&s)[0], vec![T::ONE], 0, 0.0, SolveExit::Trivial);
     }
     let max_sub = max_sub.max(2).min(nd);
-    let mut basis: Vec<Vec<T>> = Vec::new();
-    let mut hbasis: Vec<Vec<T>> = Vec::new();
+    let diag = sp.upload(diag_host);
+    let mut basis: Vec<S::V> = Vec::new();
+    let mut hbasis: Vec<S::V> = Vec::new();
     // The Gram matrix `<b_i|H|b_j>` is CACHED: a basis vector never changes once pushed, so
     // its row and column are computed once and reused until a restart clears the basis.
-    // Same dots, same bits — the per-iteration cost drops from m²·n_det to m·n_det.
     let mut gram: Vec<T> = vec![T::ZERO; max_sub * max_sub];
     let mut gram_m = 0usize;
 
-    let start = diag
+    let start = diag_host
         .iter()
         .enumerate()
         .min_by(|a, b| a.1.partial_cmp(b.1).unwrap())
@@ -227,27 +237,40 @@ pub fn davidson_eigh_from_op_sub<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Si
     if start_vector.is_none() {
         v0[start] = v0[start] + T::ONE;
     }
-    basis.push(normalised_t(&v0));
+    let normalised = |v: &mut S::V| {
+        let n = sp.norm(v);
+        if n.to_f64() > 0.0 {
+            sp.scale(T::ONE / n, v);
+        }
+    };
+    let mut b0 = sp.upload(&v0);
+    normalised(&mut b0);
+    basis.push(b0);
 
-    let mut theta = diag[start];
-    let mut x = basis[0].clone();
+    let mut theta = diag_host[start];
+    let mut x = sp.copy(&basis[0]);
+    let mut r = sp.zeros(nd);
+    let mut corr = sp.zeros(nd);
     let mut resid = f64::INFINITY;
 
     for iter in 0..max_iter {
         while hbasis.len() < basis.len() {
-            let mut w = vec![T::ZERO; nd];
-            op.apply(&basis[hbasis.len()], &mut w);
+            let mut w = sp.zeros(nd);
+            apply(&basis[hbasis.len()], &mut w);
             hbasis.push(w);
         }
         let m = basis.len();
+        // new rows: <b_i | hb_j> for every j; new columns: <b_i | hb_j> for the old i
         for i in gram_m..m {
-            for j in 0..m {
-                gram[i * max_sub + j] = dot_t(&basis[i], &hbasis[j]);
-            }
+            let row = sp.gram_row(&hbasis[..m], &basis[i]);
+            gram[i * max_sub..i * max_sub + m].copy_from_slice(&row);
         }
-        for i in 0..gram_m {
+        if gram_m > 0 {
             for j in gram_m..m {
-                gram[i * max_sub + j] = dot_t(&basis[i], &hbasis[j]);
+                let col = sp.gram_row(&basis[..gram_m], &hbasis[j]);
+                for (i, v) in col.into_iter().enumerate() {
+                    gram[i * max_sub + j] = v;
+                }
             }
         }
         gram_m = m;
@@ -266,70 +289,51 @@ pub fn davidson_eigh_from_op_sub<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Si
         }
         let (evals, evecs) = jacobi_eigh_t(&sub, m);
         theta = evals[0];
-        x = vec![T::ZERO; nd];
-        for i in 0..m {
-            let ci_ = evecs[i * m];
-            if !ci_.is_zero() {
-                axpy_t(ci_, &basis[i], &mut x);
-            }
-        }
-        let mut hx = vec![T::ZERO; nd];
-        for i in 0..m {
-            let ci_ = evecs[i * m];
-            if !ci_.is_zero() {
-                axpy_t(ci_, &hbasis[i], &mut hx);
-            }
-        }
-        let mut r = hx;
-        axpy_t(-theta, &x, &mut r);
-        resid = norm_t(&r).to_f64();
+        let y: Vec<T> = (0..m).map(|i| evecs[i * m]).collect();
+        let (rr, bt_corr) = sp.ritz(&basis, &hbasis, &y, theta, &diag, &mut x, &mut r, &mut corr);
+        resid = rr.sqrt().to_f64();
         if resid < tol {
-            return (theta, x, iter + 1, resid, SolveExit::Converged);
+            return (theta, sp.download(&x), iter + 1, resid, SolveExit::Converged);
         }
         if iter + 1 == max_iter {
-            return (theta, x, iter + 1, resid, SolveExit::IterationCap);
+            return (theta, sp.download(&x), iter + 1, resid, SolveExit::IterationCap);
         }
         if basis.len() >= max_sub {
-            let mut d = r.clone();
-            let p = dot_t(&x, &d);
-            axpy_t(-p, &x, &mut d);
-            let nd_ = norm_t(&d).to_f64();
+            let mut d = sp.copy(&r);
+            let p = sp.dot(&x, &d);
+            sp.axpy(-p, &x, &mut d);
+            let nd_ = sp.norm(&d).to_f64();
             basis.clear();
             hbasis.clear();
             gram_m = 0;
-            basis.push(normalised_t(&x));
+            let mut bx = sp.copy(&x);
+            normalised(&mut bx);
+            basis.push(bx);
             if nd_ > T::expansion_floor() {
-                scale_t(T::from_f64(1.0 / nd_), &mut d);
+                sp.scale(T::from_f64(1.0 / nd_), &mut d);
                 basis.push(d);
             }
             continue;
         }
 
-        let mut corr = r.clone();
-        for i in 0..nd {
-            let d = theta - diag[i];
-            if d.abs().to_f64() > 1e-8 {
-                corr[i] = r[i] / d;
-            }
-        }
         // The corrector first; the raw residual is the second candidate and is built ONLY if
-        // the first fails to expand the basis — same two candidates in the same order, one
-        // n_det-sized copy per iteration fewer.
+        // the first fails to expand the basis. Each candidate is deflated against the basis
+        // twice (classical Gram–Schmidt, re-orthogonalised), every pass reading the basis once.
         let mut added = false;
         let mut first = true;
         loop {
-            let mut w = if first { std::mem::take(&mut corr) } else { r.clone() };
-            for b in basis.iter() {
-                let p = dot_t(b, &w);
-                axpy_t(-p, b, &mut w);
-            }
-            for b in basis.iter() {
-                let p = dot_t(b, &w);
-                axpy_t(-p, b, &mut w);
-            }
-            let nw = norm_t(&w).to_f64();
+            let (mut w, p1) = if first {
+                (sp.copy(&corr), bt_corr.clone())
+            } else {
+                let w = sp.copy(&r);
+                let p = sp.gram_row(&basis, &w);
+                (w, p)
+            };
+            let p2 = sp.deflate(&basis, &p1, &mut w);
+            let nn = sp.deflate_norm(&basis, &p2, &mut w);
+            let nw = nn.sqrt().to_f64();
             if nw > T::expansion_floor() {
-                scale_t(T::from_f64(1.0 / nw), &mut w);
+                sp.scale(T::from_f64(1.0 / nw), &mut w);
                 basis.push(w);
                 added = true;
                 break;
@@ -340,10 +344,10 @@ pub fn davidson_eigh_from_op_sub<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Si
             first = false;
         }
         if !added {
-            return (theta, x, iter + 1, resid, SolveExit::Stagnated);
+            return (theta, sp.download(&x), iter + 1, resid, SolveExit::Stagnated);
         }
     }
-    (theta, x, max_iter, resid, SolveExit::IterationCap)
+    (theta, sp.download(&x), max_iter, resid, SolveExit::IterationCap)
 }
 
 // ------------------------------------------------------------------ the overflow tier

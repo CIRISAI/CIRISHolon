@@ -416,8 +416,18 @@ pub fn sigma_det<T: Scalar, const DIAG: bool>(t: &LaneTables<T>, c: &[T], k: usi
     acc
 }
 
-/// The thread count the host kernels use: `LANE_THREADS`, else the machine's parallelism; 1 on
-/// wasm, where there are no threads to have.
+static LANE_THREADS_OVERRIDE: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+
+/// Set the process's host thread policy for every operator and space built afterwards — the
+/// call an orchestrator that already runs `w` workers makes, with `cores / w`, so nested
+/// parallelism does not oversubscribe the machine. Scheduling only: no thread count can reach
+/// a bit. `0` restores the default (`LANE_THREADS`, else the machine's parallelism).
+pub fn set_lane_threads(threads: usize) {
+    LANE_THREADS_OVERRIDE.store(threads, std::sync::atomic::Ordering::Relaxed);
+}
+
+/// The thread count the host kernels use: the process override, else `LANE_THREADS`, else the
+/// machine's parallelism; 1 on wasm, where there are no threads to have.
 pub fn lane_threads() -> usize {
     #[cfg(target_arch = "wasm32")]
     {
@@ -425,6 +435,10 @@ pub fn lane_threads() -> usize {
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
+        let o = LANE_THREADS_OVERRIDE.load(std::sync::atomic::Ordering::Relaxed);
+        if o > 0 {
+            return o;
+        }
         std::env::var("LANE_THREADS")
             .ok()
             .and_then(|v| v.parse::<usize>().ok())
@@ -446,29 +460,35 @@ pub fn sigma_rows<T: Scalar, const DIAG: bool>(t: &LaneTables<T>, c: &[T], out: 
     if !DIAG {
         assert_eq!(c.len(), t.n_det);
     }
-    let shards = threads.max(1).min(t.n_det.div_ceil(MIN_ROWS_PER_SHARD).max(1));
     #[cfg(target_arch = "wasm32")]
-    let run_parallel = false;
-    #[cfg(not(target_arch = "wasm32"))]
-    let run_parallel = shards > 1;
-    if !run_parallel {
+    {
+        // no threads to have: one shard, the same rows in the same order
+        let _ = threads;
         for (k, o) in out.iter_mut().enumerate() {
             *o = sigma_det::<T, DIAG>(t, c, k);
         }
-        return;
     }
     #[cfg(not(target_arch = "wasm32"))]
-    std::thread::scope(|sc| {
-        let chunk = t.n_det.div_ceil(shards).max(1);
-        for (ci, slice) in out.chunks_mut(chunk).enumerate() {
-            let k0 = ci * chunk;
-            sc.spawn(move || {
-                for (i, o) in slice.iter_mut().enumerate() {
-                    *o = sigma_det::<T, DIAG>(t, c, k0 + i);
-                }
-            });
+    {
+        let shards = threads.max(1).min(t.n_det.div_ceil(MIN_ROWS_PER_SHARD).max(1));
+        if shards <= 1 {
+            for (k, o) in out.iter_mut().enumerate() {
+                *o = sigma_det::<T, DIAG>(t, c, k);
+            }
+            return;
         }
-    });
+        std::thread::scope(|sc| {
+            let chunk = t.n_det.div_ceil(shards).max(1);
+            for (ci, slice) in out.chunks_mut(chunk).enumerate() {
+                let k0 = ci * chunk;
+                sc.spawn(move || {
+                    for (i, o) in slice.iter_mut().enumerate() {
+                        *o = sigma_det::<T, DIAG>(t, c, k0 + i);
+                    }
+                });
+            }
+        });
+    }
 }
 
 /// The host operator: the tables plus a thread count. Owns its tables so a solve can be handed
@@ -534,9 +554,9 @@ pub struct LaneSolution {
     pub variational_margin: f64,
 }
 
-/// The ground state through ANY sigma operator on these tables (host shards or a device), so
-/// the device arm is the same solve with one argument swapped. The admission of the working set
-/// is the determinant door's, priced at the subspace bound the solve runs under.
+/// The ground state through ANY sigma operator on these tables, the vectors on the HOST. The
+/// device-resident solve is [`solve_lanes_in`] with a device space; this is the same call with
+/// the host space and the operator's `apply`.
 pub fn solve_lanes_with(
     op: &mut dyn SigmaOp<f64>,
     diag: &[f64],
@@ -548,14 +568,29 @@ pub fn solve_lanes_with(
         panic!("solve_lanes: {r}");
     }
     let device = op.device();
-    let (e, v, iters, residual, exit) = crate::tier::davidson_eigh_from_op_sub(
-        op,
-        diag,
-        DAVIDSON_REQUESTED_TOLERANCE,
-        budget,
-        start,
-        max_sub,
-    );
+    let sp = crate::vecspace::HostSpace::new();
+    let mut apply = |c: &Vec<f64>, s: &mut Vec<f64>| op.apply(c, s);
+    solve_lanes_in(&sp, &mut apply, diag, start, budget, max_sub, device)
+}
+
+/// The ground state on ANY space — host vectors or device-resident ones — through `apply`
+/// (`sigma = H c` on that space's vectors). The Davidson body is `tier::davidson_in`, once.
+/// The ADMISSION is the caller's: the working set lives in the space's memory (host RAM for
+/// [`solve_lanes_with`], VRAM for the device arm), and only the arm knows which door to ask.
+/// `device` is the class of the arithmetic that `apply` and the space perform, stamped on the
+/// solution because it is the regime the numbers were produced under.
+#[allow(clippy::too_many_arguments)]
+pub fn solve_lanes_in<S: crate::vecspace::VectorSpace<f64>>(
+    sp: &S,
+    apply: &mut dyn FnMut(&S::V, &mut S::V),
+    diag: &[f64],
+    start: Option<&[f64]>,
+    budget: usize,
+    max_sub: usize,
+    device: DeviceClass,
+) -> LaneSolution {
+    let (e, v, iters, residual, exit) =
+        crate::tier::davidson_in(sp, apply, diag, DAVIDSON_REQUESTED_TOLERANCE, budget, start, max_sub);
     let min_diag = diag.iter().copied().fold(f64::INFINITY, f64::min);
     LaneSolution { energy: e, vector: v, iters, residual, exit, device, variational_margin: min_diag - e }
 }

@@ -1,0 +1,10 @@
+# GF2a exact referee on colour lanes (Cartan-neutral block); W-units; M_B/g = (E1-E0)/(2 sqrt x); host shards = 32; subspace bound = 48
+N=10 x= 4.0 B=0 n_q=15 n_det= 16003008 price=1.33e10B gpu E0=-65.6470061717  iters=118 resid=7.5e-11 margin=+6.565e1 exit=Converged  78.9s
+N=10 x= 4.0 B=1 n_q=18 n_det=  9261000 price=7.71e9B gpu E0=-62.4301784810  iters=111 resid=9.6e-11 margin=+6.243e1 exit=Converged  47.2s
+N=10 x= 4.0 B=2 n_q=21 n_det=  1728000 price=1.44e9B gpu E0=-52.9591823523  iters=113 resid=8.9e-11 margin=+5.296e1 exit=Converged  6.2s
+N=10 x= 4.0 gpu  M_B/g=0.804207  U_BB=+6.254168e0  (E1-E0=+3.216828, E2-E1=+9.470996)
+N=10 x= 9.0 B=0 n_q=15 n_det= 16003008 price=1.33e10B gpu E0=-155.6819170182  iters=108 resid=7.3e-11 margin=+1.557e2 exit=Converged  76.8s
+N=10 x= 9.0 B=1 n_q=18 n_det=  9261000 price=7.71e9B gpu E0=-148.1813486615  iters=116 resid=8.6e-11 margin=+1.482e2 exit=Converged  45.9s
+N=10 x= 9.0 B=2 n_q=21 n_det=  1728000 price=1.44e9B gpu E0=-126.2212755359  iters=106 resid=7.6e-11 margin=+1.262e2 exit=Converged  5.7s
+N=10 x= 9.0 gpu  M_B/g=1.250095  U_BB=+1.445950e1  (E1-E0=+7.500568, E2-E1=+21.960073)
+# (the trailing EXIT=1 is the launcher script's grep for REFUSED finding none, not the run's exit)

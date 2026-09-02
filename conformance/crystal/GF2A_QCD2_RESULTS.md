@@ -3,7 +3,8 @@
 *2026-09-02. Prereg `GF2A_QCD2_PREREG.md` (frozen alone). Instruments: `holon-chem::qcd2`
 (two-string integrals AND colour lanes), `holon-gpu` `examples/qcd2_lanes` (the exact arm,
 host and device), `q8-mps` `examples/qcd2_dmrg` (the MPS arm). Every number below is in the
-committed logs `qcd2_lanes.log`, `qcd2_lanes_n10.log`, `qcd2_fci.log`, `qcd2_dmrg/*.json`.*
+committed logs `qcd2_lanes.log`, `qcd2_lanes_n10.log`, `qcd2_lanes_n10_resident.log`,
+`qcd2_fci.log`, `qcd2_dmrg/*.json`.*
 
 ```
 G0 (two solvers, one tensor, |E_FCI − E_DMRG(χ=64)| ≤ 1e-6 at N=8):  FIRED on the MPS arm
@@ -33,14 +34,16 @@ plants (i)(ii)(iii): PASS on both routes (holon-chem tests qcd2_gauge, lanes_gau
 | 9.0 | 4 | −58.0230018617 | −41.7896555157 | 0 (one det) | 2.705558 | +25.55631 |
 | 9.0 | 6 | −90.4871056656 | −78.7699472604 | −46.0059828234 | 1.952860 | +21.04681 |
 | 9.0 | 8 | −123.0642401146 | −113.9136751337 | −87.5269948585 | 1.525094 | +17.23612 |
-| 9.0 | 10 | −155.6819170181 | −148.1813486614 | −126.2212755359 | 1.250095 | +14.45950 |
+| 9.0 | 10 | −155.6819170182 | −148.1813486615 | −126.2212755359 | 1.250095 | +14.45950 |
 
-Spaces: `C(N, n_q/3)³` — 216 / 8,000 / 343,000 / 16,003,008 at B=0. N=10 ran at Davidson
-subspace bound 12 (priced and admitted; bound 48 was refused at the door, 13.3 GB against
-11 GB free with the ladder running). The N=10 B=0 and B=1 solves exit `Stagnated` at
-residual 1.2–1.5e-10 against a requested 1e-10: the Krylov space stopped growing one step
-short of the label; the energies are converged to the residual's square. Reported as
-labelled, not relabelled.
+Spaces: `C(N, n_q/3)³` — 216 / 8,000 / 343,000 / 16,003,008 at B=0. First run (host-driven
+device sigma, subspace bound 12 because bound 48 was refused at the host door with the
+ladder holding 20 GB): N=10 B=0 and B=1 exited `Stagnated` at residual 1.2–1.5e-10 in
+396 s and 243 s. Re-run the same day on the DEVICE-RESIDENT solve (GANTT E13: the
+Davidson's vectors on the card, the host holding the m×m eigenproblem, bound 48 priced
+against VRAM): every N=10 sector `Converged` at residual ≤ 9.6e-11 in 79 / 47 / 6 s
+(x=4) and 77 / 46 / 6 s (x=9), the same energies to the printed digit
+(`qcd2_lanes_n10_resident.log`). The table above carries the resident run's values.
 
 What the exact arm says on its own, unread as a gate: `M_B` falls with `N` at every
 volume in both columns, and `U_BB` is positive and falls with `N` (ratios 0.85, 0.83,

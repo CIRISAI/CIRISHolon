@@ -43,6 +43,9 @@ pub mod gpu;
 /// The lane sigma on the device: `holon_chem::lanes::sigma_det` transliterated, bit-identical
 /// to the host shards by construction and by gate.
 pub mod lanes;
+/// The vector space on the device: the Davidson's row programs as kernels, under the host's
+/// reduction law, so a solve runs resident on the card and lands on the host's bits.
+pub mod vecspace;
 /// The GPU as a LEASABLE resource: VRAM leased through `holon-resource` with its
 /// quantitative boundary declared (D3b), and a device that vanishes under a live
 /// lease CONVICTED rather than swallowed (D9).
@@ -56,7 +59,8 @@ pub mod synth;
 pub use desc::{AffineDesc, DescError, DescSource};
 pub use fci::{FciGpuError, GpuSigmaProvider};
 pub use gpu::{GpuBatch, GpuError, GpuFolder, Shape};
-pub use lanes::GpuLaneSigma;
+pub use lanes::{resident_solve_bytes, solve_lanes_on_device, GpuLaneSigma};
+pub use vecspace::DeviceSpace;
 pub use lease::{LeasedGpuError, LeasedGpuProvider, LeasedGpuSigma, VramCompetitor, VramLease};
 pub use probe::{ReportedFreeProbe, VramProbe};
 

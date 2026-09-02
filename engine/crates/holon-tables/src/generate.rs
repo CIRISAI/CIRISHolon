@@ -624,6 +624,12 @@ pub fn generate_surface_with_progress<S: Surface + ?Sized>(
     workers: usize,
     progress: &[AtomicU64],
 ) -> GenOutcome {
+    // Nested parallelism policy: every worker's solve shards its rows and its vector algebra
+    // across threads by default; `workers` of them would oversubscribe the machine. Scheduling
+    // only — no thread count can reach a bit.
+    holon_chem::lanes::set_lane_threads(
+        (std::thread::available_parallelism().map_or(1, |n| n.get()) / workers.max(1)).max(1),
+    );
     assert!(workers >= 1, "a run needs at least one worker");
     assert_eq!(
         progress.len(),

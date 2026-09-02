@@ -905,7 +905,10 @@ fn test_sigma_direct_germanium_ground_state() {
     // Verify matrix-vector multiplication with sigma_direct
     let mut sig = vec![0.0f64; space.n_det];
     sigma_direct(&space, &ci0, &vec, &mut sig);
-    let rayleigh: f64 = vec.iter().zip(sig.iter()).map(|(a, b)| a * b).sum();
+    // the quotient under the engine's reduction law (`vecspace::blocked_dot`), the order every
+    // energy in the engine is summed in; a serial sum here would measure the order, not the
+    // eigenpair
+    let rayleigh: f64 = holon_chem::tier::dot_t(&vec, &sig);
     let rayleigh_diff = (rayleigh - e).abs();
 
     let s2 = s_squared(&space, &vec);

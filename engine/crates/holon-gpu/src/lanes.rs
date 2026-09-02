@@ -12,10 +12,12 @@ use std::sync::Arc;
 
 use cudarc::driver::{CudaContext, CudaFunction, CudaSlice, CudaStream, PushKernelArg};
 use cudarc::nvrtc::Ptx;
-use holon_chem::lanes::LaneTables;
+use holon_chem::budget::DAVIDSON_SUBSPACE_MAX;
+use holon_chem::lanes::{solve_lanes_in, LaneSolution, LaneTables};
 use holon_chem::sigma_op::{DeviceClass, SigmaOp};
 
 use crate::fci::{grid_for, FciGpuError};
+use crate::vecspace::DeviceSpace;
 
 /// PTX for `kernels/lanes_sigma.cu`, produced by `build.rs` with `-fmad=false`.
 const PTX: &str = include_str!("../kernels/lanes_sigma.ptx");
@@ -35,8 +37,10 @@ pub struct GpuLaneSigma {
     func: CudaFunction,
     n_det: usize,
     n_lanes: i32,
-    d_c: CudaSlice<f64>,
-    d_sigma: CudaSlice<f64>,
+    /// The operator's own vectors for the host-driven path; `None` only while a launch borrows
+    /// them. The device-resident path applies to external vectors and never touches these.
+    d_c: Option<CudaSlice<f64>>,
+    d_sigma: Option<CudaSlice<f64>>,
     lane_n: CudaSlice<i32>,
     lane_ns: CudaSlice<i32>,
     lane_stride: CudaSlice<i64>,
@@ -99,8 +103,8 @@ impl GpuLaneSigma {
         let op = GpuLaneSigma {
             n_det: t.n_det,
             n_lanes: t.n_lanes as i32,
-            d_c: unsafe { stream.alloc::<f64>(t.n_det)? },
-            d_sigma: unsafe { stream.alloc::<f64>(t.n_det)? },
+            d_c: Some(unsafe { stream.alloc::<f64>(t.n_det)? }),
+            d_sigma: Some(unsafe { stream.alloc::<f64>(t.n_det)? }),
             lane_n: upload(&stream, &t.lane_n)?,
             lane_ns: upload(&stream, &t.lane_ns)?,
             lane_stride: upload(&stream, &t.lane_stride)?,
@@ -128,13 +132,27 @@ impl GpuLaneSigma {
         Ok(op)
     }
 
+    /// The kernel on the operator's own vectors.
     fn launch(&mut self, diag: i32) -> Result<(), FciGpuError> {
+        let c = self.d_c.take().expect("operator vectors present");
+        let mut s = self.d_sigma.take().expect("operator vectors present");
+        let r = self.launch_on(diag, &c, &mut s);
+        self.d_c = Some(c);
+        self.d_sigma = Some(s);
+        r
+    }
+
+    /// The kernel on ANY resident vectors: `sigma = H c` (`diag = 0`) or the diagonal into
+    /// `sigma` (`diag = 1`, `c` unread). No copy, no synchronisation: stream order carries it.
+    fn launch_on(&mut self, diag: i32, c: &CudaSlice<f64>, sigma: &mut CudaSlice<f64>) -> Result<(), FciGpuError> {
+        assert_eq!(c.len(), self.n_det, "input vector is not this operator's dimension");
+        assert_eq!(sigma.len(), self.n_det, "output vector is not this operator's dimension");
         let n_det = self.n_det as i64;
         let n_lanes = self.n_lanes;
         let cfg = grid_for(n_det);
         let mut b = self.stream.launch_builder(&self.func);
-        b.arg(&mut self.d_sigma)
-            .arg(&self.d_c)
+        b.arg(sigma)
+            .arg(c)
             .arg(&n_det)
             .arg(&n_lanes)
             .arg(&diag)
@@ -162,13 +180,34 @@ impl GpuLaneSigma {
         Ok(())
     }
 
+    /// `sigma = H c` between resident vectors — the device-resident solve's operator. The
+    /// vectors stay on the card; the stream orders the launch after whatever produced `c`.
+    pub fn apply_on(&mut self, c: &CudaSlice<f64>, sigma: &mut CudaSlice<f64>) -> Result<(), FciGpuError> {
+        self.launch_on(0, c, sigma)
+    }
+
+    /// `<k|H|k>` into a resident vector.
+    pub fn diagonal_on(&mut self, out: &mut CudaSlice<f64>) -> Result<(), FciGpuError> {
+        let c = self.d_c.take().expect("operator vectors present");
+        let r = self.launch_on(1, &c, out);
+        self.d_c = Some(c);
+        r
+    }
+
+    /// The stream the operator launches on; a resident solve builds its space on the same one.
+    pub fn stream(&self) -> &Arc<CudaStream> {
+        &self.stream
+    }
+
     /// `sigma = H c`, reporting the driver's errors rather than panicking through them.
     pub fn try_apply(&mut self, c: &[f64], sigma: &mut [f64]) -> Result<(), FciGpuError> {
         assert_eq!(c.len(), self.n_det, "input vector is not this operator's dimension");
         assert_eq!(sigma.len(), self.n_det, "output vector is not this operator's dimension");
-        self.stream.memcpy_htod(c, &mut self.d_c)?;
+        let mut dc = self.d_c.take().expect("operator vectors present");
+        self.stream.memcpy_htod(c, &mut dc)?;
+        self.d_c = Some(dc);
         self.launch(0)?;
-        self.stream.memcpy_dtoh(&self.d_sigma, sigma)?;
+        self.stream.memcpy_dtoh(self.d_sigma.as_ref().expect("operator vectors present"), sigma)?;
         self.stream.synchronize()?;
         Ok(())
     }
@@ -177,7 +216,7 @@ impl GpuLaneSigma {
     pub fn diagonal(&mut self) -> Result<Vec<f64>, FciGpuError> {
         self.launch(1)?;
         let mut d = vec![0.0f64; self.n_det];
-        self.stream.memcpy_dtoh(&self.d_sigma, &mut d)?;
+        self.stream.memcpy_dtoh(self.d_sigma.as_ref().expect("operator vectors present"), &mut d)?;
         self.stream.synchronize()?;
         Ok(d)
     }
@@ -207,4 +246,42 @@ impl SigmaOp<f64> for GpuLaneSigma {
         // A device that vanished under a live solve is a conviction, not a number to carry on with.
         self.try_apply(c, sigma).expect("device sigma failed mid-solve");
     }
+}
+
+/// Bytes a device-resident Davidson holds beyond the operator: `2·max_sub + 8` vectors, the
+/// same count the host door prices, plus the partials scratch.
+pub fn resident_solve_bytes(n_det: usize, max_sub: usize) -> u64 {
+    let vectors = 2 * max_sub.max(2) + 8;
+    (n_det as u64) * (vectors as u64) * 8 + (n_det.div_ceil(holon_chem::vecspace::DOT_BLOCK) as u64) * ((DAVIDSON_SUBSPACE_MAX + 1) as u64) * 8
+}
+
+/// THE DEVICE-RESIDENT SOLVE: tables uploaded once, the Davidson's vectors on the card, the
+/// physics kernel applied between them, the host holding only the `m×m` eigenproblem. The
+/// same body as the host solve (`holon_chem::tier::davidson_in`) on `DeviceSpace`, so the
+/// answer is the host's answer to the bit (`tests/vecspace.rs`).
+///
+/// The admission is VRAM's: the operator's footprint plus the solve's vectors against the
+/// card's free memory less `reserve_mib`, refused loudly (D4) rather than attempted.
+pub fn solve_lanes_on_device(
+    ctx: &Arc<CudaContext>,
+    tables: &LaneTables<f64>,
+    reserve_mib: u64,
+    start: Option<&[f64]>,
+    budget: usize,
+    max_sub: usize,
+) -> Result<LaneSolution, FciGpuError> {
+    ctx.bind_to_thread()?;
+    let (free, _total) = cudarc::driver::result::mem_get_info()?;
+    let need = GpuLaneSigma::bytes_for(tables) + resident_solve_bytes(tables.n_det, max_sub);
+    if need.saturating_add(reserve_mib << 20) > free as u64 {
+        return Err(FciGpuError::NotEnoughVram { need_bytes: need, free_bytes: free as u64 });
+    }
+    let mut op = GpuLaneSigma::new(ctx, tables, 0)?;
+    let sp = DeviceSpace::new(ctx)?;
+    let diag_host = op.diagonal()?;
+    let mut apply = |c: &CudaSlice<f64>, s: &mut CudaSlice<f64>| {
+        // A device that vanished under a live solve is a conviction, not a number to carry on with.
+        op.apply_on(c, s).expect("device sigma failed mid-solve");
+    };
+    Ok(solve_lanes_in(&sp, &mut apply, &diag_host, start, budget, max_sub, DeviceClass::Gpu))
 }

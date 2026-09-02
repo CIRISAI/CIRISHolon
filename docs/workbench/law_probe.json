@@ -1,0 +1,6 @@
+{
+  "probe": "the oxygen atom's STO-3G FCI energy on the lane engine (holon_law_probe)",
+  "energy_bits_hex": "c05273773297b13f",
+  "energy": -7.38041502457972314e1,
+  "pinned_by": "engine/crates/holon-render/tests/wasm_law.rs (native, HostSpace under the reduction law)"
+}

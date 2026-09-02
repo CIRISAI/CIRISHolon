@@ -2649,3 +2649,39 @@ pub fn by_symbol(sym: &str) -> Option<Species> {
 pub fn sz2_sector(n_electrons: u32) -> u32 {
     n_electrons % 2
 }
+
+// ------------------------------------------------------------ the nucleus, DECLARED
+
+/// The nucleus of an element's most abundant isotope as a DECLARED object: the two
+/// numbers the Hamiltonian never computes and the workbench's nucleus rung shows with
+/// the tag DECLARED beside them (FSD-W3 WB-1.7). Sources, so the tag names its origin:
+/// nuclear spins from the IAEA/NNDC nuclear data sheets; root-mean-square charge radii
+/// from Angeli & Marinova, At. Data Nucl. Data Tables 99 (2013) 69, except the proton's,
+/// which is CODATA 2018's 0.8414 fm. Nothing here enters any solve.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Nuclear {
+    pub z: u32,
+    /// Must equal the `Species` isotope label for the same `Z`; `tests` pin the two tables.
+    pub isotope: &'static str,
+    /// Twice the nuclear spin `I`, so half-integers are exact.
+    pub spin_2: u8,
+    pub charge_radius_fm: f64,
+}
+
+pub const NUCLEI: [Nuclear; 10] = [
+    Nuclear { z: 1, isotope: "1H", spin_2: 1, charge_radius_fm: 0.8414 },
+    Nuclear { z: 2, isotope: "4He", spin_2: 0, charge_radius_fm: 1.6755 },
+    Nuclear { z: 3, isotope: "7Li", spin_2: 3, charge_radius_fm: 2.4440 },
+    Nuclear { z: 4, isotope: "9Be", spin_2: 3, charge_radius_fm: 2.5190 },
+    Nuclear { z: 5, isotope: "11B", spin_2: 3, charge_radius_fm: 2.4060 },
+    Nuclear { z: 6, isotope: "12C", spin_2: 0, charge_radius_fm: 2.4702 },
+    Nuclear { z: 7, isotope: "14N", spin_2: 2, charge_radius_fm: 2.5582 },
+    Nuclear { z: 8, isotope: "16O", spin_2: 0, charge_radius_fm: 2.6991 },
+    Nuclear { z: 9, isotope: "19F", spin_2: 1, charge_radius_fm: 2.8976 },
+    Nuclear { z: 10, isotope: "20Ne", spin_2: 0, charge_radius_fm: 3.0055 },
+];
+
+/// The declared nucleus of element `z`, `None` where none is declared (the page fences).
+pub fn nuclear(z: u32) -> Option<&'static Nuclear> {
+    NUCLEI.iter().find(|n| n.z == z)
+}

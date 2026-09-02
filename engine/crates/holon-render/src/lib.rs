@@ -47,6 +47,7 @@ pub mod holon;
 pub mod json;
 pub mod lattice;
 pub mod longrange;
+pub mod nucleus;
 pub mod sim;
 pub mod table;
 pub mod trimer_bank;
@@ -57,7 +58,7 @@ use std::sync::{Mutex, MutexGuard};
 
 static SIM: std::sync::OnceLock<Mutex<Box<Sim>>> = std::sync::OnceLock::new();
 
-fn sim() -> MutexGuard<'static, Box<Sim>> {
+pub(crate) fn sim() -> MutexGuard<'static, Box<Sim>> {
     SIM.get_or_init(|| Mutex::new(Box::new(Sim::empty())))
         .lock()
         .unwrap_or_else(|poisoned| poisoned.into_inner())

@@ -369,6 +369,7 @@ const LADDER = [
   {
     band: "molecular",
     scale: "~nm",
+    lengthM: 3.0e-10,
     runs: "the live engine, full physics ladder",
     state: "live",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:376",
@@ -376,6 +377,7 @@ const LADDER = [
   {
     band: "H-bond network",
     scale: "~10 nm",
+    lengthM: 1.0e-8,
     runs: "no certified coarse chart exists",
     state: "fenced",
     owner: "GANTT node G, rung 1",
@@ -386,6 +388,7 @@ const LADDER = [
   {
     band: "fluid element",
     scale: "~µm+",
+    lengthM: 1.0e-6,
     runs: "no certified continuum chart exists",
     state: "fenced",
     owner: "GANTT node G, rung 2",
@@ -397,6 +400,7 @@ const LADDER = [
   {
     band: "the cube",
     scale: "1 km",
+    lengthM: 1.0e3,
     runs: "the continuum face of the ladder",
     state: "fenced",
     owner: "GANTT node G",
@@ -405,6 +409,34 @@ const LADDER = [
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:379",
   },
 ];
+
+/// THE ACUITY LAW (§9c): the observer's resolution bounds the allocation, and the seed is
+/// ONE. A band's population is what the current view can actually distinguish — zero while
+/// the view is far wider than the band's own scale, one when the view has zoomed to that
+/// scale, and cubic growth after. Acuity is the allocator: that is why a 1 km cube of
+/// ~3×10³¹ molecules is cheap, and why the page never needs a representative slab.
+///
+/// WHICH READING THIS COMPUTES, because the FSD admits two and they differ by nine orders.
+/// The paragraph's parenthetical says the seed is where "a molecule at a pixel" first
+/// resolves; at 1440 px that view is 432 nm across and holds 3.0e9 molecules, not one. The
+/// reading that gives ONE is the view having zoomed to the BAND'S OWN SCALE — span ≈ ℓ —
+/// and that reading also reproduces the paragraph's other number, "thousands at full
+/// molecular zoom" (span = 10ℓ gives 1000). Both of the law's stated figures fall out of
+/// it, so it is the one implemented here, and the parenthetical is the loose part.
+function acuityPopulation(viewSpanM, lengthM) {
+  if (!(viewSpanM > 0) || !(lengthM > 0) || viewSpanM < lengthM) return 0;
+  return Math.floor(Math.pow(viewSpanM / lengthM, 3));
+}
+
+/// The view's span in metres, from the projection rather than from a guess: at camera
+/// distance `d` the visible half-width on the plane through the origin is `d·tan(fov/2)`
+/// in camera units, and one camera unit is one box span by construction (`sceneFrame`
+/// normalises by `1/span`).
+function viewSpanMetres(w) {
+  const boxBohr = sceneFrame().span;
+  const halfWidth = State.camera.distance * Math.tan((State.camera.fov * Math.PI) / 360);
+  return 2 * halfWidth * boxBohr * BOHR_TO_M;
+}
 
 /// The molecular band's live status: the de-allocation criterion, READ OUT.
 ///
@@ -453,6 +485,19 @@ function fmtRate(fsPerSec) {
   if (fsPerSec >= 1e6) return `${(fsPerSec / 1e6).toFixed(2)} ns/s`;
   if (fsPerSec >= 1e3) return `${(fsPerSec / 1e3).toFixed(2)} ps/s`;
   return `${fsPerSec.toFixed(2)} fs/s`;
+}
+
+/// Metres, in whatever unit keeps the number readable. Separate from `fmtLength` because
+/// that one takes bohr and this takes metres, and one function silently accepting both
+/// is how a factor of 1.9e10 gets into a label.
+function fmtMetres(m) {
+  if (!Number.isFinite(m) || m <= 0) return "—";
+  if (m < 1e-9) return `${(m * 1e12).toFixed(1)} pm`;
+  if (m < 1e-6) return `${(m * 1e9).toFixed(2)} nm`;
+  if (m < 1e-3) return `${(m * 1e6).toFixed(2)} µm`;
+  if (m < 1) return `${(m * 1e3).toFixed(2)} mm`;
+  if (m < 1e3) return `${m.toFixed(2)} m`;
+  return `${(m / 1e3).toFixed(2)} km`;
 }
 
 function fmtLength(bohr) {
@@ -1161,10 +1206,15 @@ function renderStatics() {
   }
 
   // --- device class & artifact (WB-5.4, M-DEVICE-CLASS)
-  // The scale ladder (§9c), rendered from LADDER above.
+  // The scale ladder (§9c). STRUCTURE only — the band names, what runs, the fences and
+  // their citations do not change while a scene is loaded. The acuity figure DOES change,
+  // with every camera move, so it is written per frame by `renderTelemetry` into the slot
+  // left here. It lived in this function once and read the same 4,383 at every zoom, which
+  // is not an acuity readout at all: a number that cannot respond to its own input is a
+  // caption. Caught by varying the camera in the browser rather than by reading the code.
   if (UI["ladder-rows"]) {
     const st = ladderStatus(w);
-    UI["ladder-rows"].innerHTML = LADDER.map((b) => {
+    UI["ladder-rows"].innerHTML = LADDER.map((b, i) => {
       const status = b.state === "live"
         ? `<span class="lad-live">CERTIFIED · LIVE</span><span class="lad-detail">${st.text}</span>`
         : `<span class="lad-fenced">FENCED</span>`
@@ -1173,8 +1223,11 @@ function renderStatics() {
         + `<b>${b.band}</b><span>${b.scale}</span></div>`
         + `<div class="lad-runs">${b.runs}</div>`
         + `<div class="lad-status">${status}</div>`
+        + `<div class="lad-status"><span class="lad-acuity" id="lad-acuity-${i}">—</span></div>`
         + `<code>${b.cite}</code></div>`;
     }).join("");
+    // The slots were just created, so re-bind before anything writes to them.
+    bindUI();
   }
 
   // The water story (WB-9.6), rendered from RECORD above so the citation and the digits
@@ -1344,6 +1397,32 @@ function renderTelemetry() {
     pDefined ? "holon_pressure / holon_width / holon_w_ext"
              : "holon_pressure_defined reports the virial is not a pressure under these walls");
   if (State.lastScaleRefusal) put("press-refusal", State.lastScaleRefusal);
+
+  // --- the scale ladder's live half (§9c's acuity law) ----------------------
+  const viewM = viewSpanMetres(w);
+  put("ladder-view", `view span ${fmtMetres(viewM)} · acuity is the allocator`);
+  LADDER.forEach((b, i) => {
+    const pop = acuityPopulation(viewM, b.lengthM);
+    const el = UI[`lad-acuity-${i}`];
+    if (!el) return;
+    el.className = pop === 0 ? "lad-acuity zero" : "lad-acuity";
+    if (pop === 0) {
+      el.textContent = "below this band's scale — nothing to allocate";
+      return;
+    }
+    let line = `acuity admits ${pop.toLocaleString()}${pop === 1 ? " — the pinned seed" : ""}`;
+    // On the LIVE band, say what the engine is actually carrying beside what acuity
+    // admits. Without it the row reads "acuity admits 2.6e20" next to "CERTIFIED · LIVE"
+    // and invites exactly the reading the whole design refuses — that the page is
+    // allocating them. The GAP between the two numbers is the de-allocation law's job,
+    // so it belongs on screen rather than in the paragraph underneath.
+    if (b.state === "live") {
+      const carried = w.holon_atom_count();
+      line += ` · engine carries ${carried.toLocaleString()}`;
+      if (pop > carried) line += " — the rest is out of view and stays coarse";
+    }
+    el.textContent = line;
+  });
 
   put("dock-temp-lbl", tempIn(State.targetK));
   put("dock-grav-lbl", `${State.gravityG.toFixed(1)} G`);

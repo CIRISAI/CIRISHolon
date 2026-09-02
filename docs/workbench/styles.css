@@ -1148,3 +1148,14 @@ body, html {
 .lad-detail { display: block; color: var(--text-muted); }
 .lad-detail b { color: var(--text-dim); font-weight: 600; }
 .lad code { display: block; font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); margin-top: 3px; }
+
+/* --- acuity: what this view can actually distinguish, per band. */
+.lad-viewline {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 0.04em;
+  margin-top: 8px;
+}
+.lad-acuity { display: block; font-size: 10px; color: var(--purple); font-family: var(--font-mono); }
+.lad-acuity.zero { color: var(--text-dim); }

@@ -66,7 +66,31 @@ const here = dirname(fileURLToPath(import.meta.url));
 const AU_TO_FS = 0.024188843265857;
 
 let failures = 0;
-function ok(what) { console.log(`  ok   ${what}`); }
+let passes = 0;
+
+/// HOW MANY CHECKS RAN, reported on EVERY exit path.
+///
+/// This file threw once while being written — a botched `new Function` in the acuity
+/// block — and node printed a stack trace and exited. The exit code was non-zero so CI
+/// would have caught SOMETHING, but every check after the throw silently did not run and
+/// the output named no failing property at all. A gate that can die halfway and report a
+/// stack trace is a gate whose coverage is unknown exactly when you most need it.
+///
+/// A floor checked at the end of the script does not fix that: a throw never reaches the
+/// end. An `exit` hook does, because it fires on the throw path too — so a crash now says
+/// how far it got, right under the stack trace, instead of leaving that to be inferred.
+///
+/// The floor is deliberately well below the current total. Its job is to catch a run that
+/// STOPPED EARLY, not to make adding a check a two-file edit; the number moves DOWN only
+/// when checks are deliberately removed.
+const MIN_CHECKS = 70;
+let reachedEnd = false;
+process.on("exit", () => {
+  if (reachedEnd) return;
+  console.log(`\n  FAIL the gate did not reach its end — only ${passes + failures} checks ran`);
+  console.log("       coverage is UNKNOWN for everything after that point; fix the throw above");
+});
+function ok(what) { passes += 1; console.log(`  ok   ${what}`); }
 function no(what, detail) {
   failures += 1;
   console.log(`  FAIL ${what}`);
@@ -684,6 +708,48 @@ if (ladderBlock) {
     + "not have, which is the tier-faking the ladder exists to forbid");
 }
 
+// ------------------------------------------- 6c2. the acuity law seeds at ONE
+//
+// §9c's acuity law is what makes a 1 km cube of ~3e31 molecules cheap: a band's population
+// is what the view can distinguish, seeded at one. Both of the law's stated figures are
+// checked here against the page's own implementation, because the FSD admits two readings
+// that differ by nine orders and the page had to choose one.
+//
+//   - span = the band's own scale  -> exactly 1 (the pinned seed)
+//   - span = 10x that scale        -> 1000 ("thousands at full molecular zoom")
+//   - span below the band's scale  -> 0 (nothing to allocate)
+//
+// The rejected reading — the paragraph's "(a molecule at a pixel)" parenthetical — puts
+// 3.0e9 molecules in view at the seed, which contradicts the same paragraph's "ONE". The
+// arithmetic is pinned here so the page cannot drift onto it silently.
+// The page's OWN function is executed, not a copy of it — a second implementation in the
+// checker would drift from the one that ships and would be testing itself. The body is
+// captured between the brace that opens it and the one that closes it at column zero.
+const acuitySrc = appSource.match(
+  /function acuityPopulation\(viewSpanM, lengthM\) \{\n([\s\S]*?)\n\}/);
+want(acuitySrc !== null, "the page implements acuityPopulation");
+if (acuitySrc) {
+  let acuity;
+  try {
+    acuity = new Function("viewSpanM", "lengthM", acuitySrc[1]);
+  } catch (e) {
+    no("acuityPopulation's body could not be reconstructed for testing", String(e));
+  }
+  if (acuity) {
+  const L = 3.0e-10;
+  want(acuity(L, L) === 1, "at the band's own scale the population is the ONE pinned seed",
+    `got ${acuity(L, L)}`);
+  want(acuity(10 * L, L) === 1000, "ten times that scale admits a thousand — the law's own 'thousands'",
+    `got ${acuity(10 * L, L)}`);
+  want(acuity(L / 2, L) === 0, "below the band's scale there is nothing to allocate",
+    `got ${acuity(L / 2, L)}`);
+  // And the number the law exists to avoid: a kilometre of water, never enumerated.
+  want(acuity(1e3, L) > 1e30,
+    "the law does not pretend a 1 km view is cheap — it reports the 1e31 it refuses to allocate",
+    `got ${acuity(1e3, L).toExponential(2)}`);
+  }
+}
+
 // ------------------------------------------- 6d. the PROSE cannot outlive the engine
 //
 // FENCES.md F-2 caught this page telling viewers "there is no barostat in this engine"
@@ -784,7 +850,27 @@ want(offenders.length === 0,
   "no SYNTHETIC tag and no synthesized telemetry survive in the shipped page",
   offenders.join("; "));
 
+// HOW MANY CHECKS RAN, not just how many failed.
+//
+// This file threw once while being written — a botched `new Function` in the acuity block
+// — and node printed a stack trace and exited. The exit code was non-zero, so CI would
+// have caught SOMETHING, but every check after the throw silently did not run and the
+// output named no failing property at all. A gate that can die halfway and report a stack
+// trace is a gate whose coverage is unknown exactly when you most need it.
+//
+// So the count is asserted. The floor is deliberately well below the current total: its
+// job is to catch a gate that stopped early, not to make adding a check a two-file edit.
+// If it ever fires, the message says what to do — the number moves DOWN only when checks
+// are deliberately removed.
+const ran = passes + failures;
+if (ran < MIN_CHECKS) {
+  failures += 1;
+  console.log(`  FAIL only ${ran} checks ran, expected at least ${MIN_CHECKS}`);
+  console.log("       the run stopped early — look for a throw above, not a failing property");
+}
+
+reachedEnd = true;
 console.log(failures === 0
-  ? "\nworkbench artifact: all checks passed"
-  : `\nworkbench artifact: ${failures} check(s) failed`);
+  ? `\nworkbench artifact: all ${ran} checks passed`
+  : `\nworkbench artifact: ${failures} of ${ran} check(s) failed`);
 process.exit(failures === 0 ? 0 : 1);

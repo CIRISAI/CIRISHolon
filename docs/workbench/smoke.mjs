@@ -1085,6 +1085,38 @@ want(memberCalls === 2,
   "more call sites means membership is leaking out of the renderer, which is how a "
   + "whole-only number starts being computed over a fraction");
 
+// ------------------------------- 6f. the view centre is the observer's, and it clamps
+//
+// The lead's ruling, derived from the FSD: the centre is AIM and aim belongs to the
+// observer, so the camera target owns it. Two properties, and the second is what keeps a
+// zoomed view from showing a region that is not in the domain at all.
+const sceneBoxFn = appSource.match(/function sceneBox\(w\) \{\n([\s\S]*?)\n\}/);
+want(sceneBoxFn !== null, "sceneBox is where the gate expects it");
+if (sceneBoxFn) {
+  const body = sceneBoxFn[1];
+  want(/State\.camera\.target/.test(body),
+    "the scene box is centred on the CAMERA TARGET, not hard-pinned to the world centre",
+    "the centre is aim, and aim is the observer's axis — pinning it to the world centre "
+    + "makes deep zoom on a shell-opener scene able to look only at vacuum");
+  want(/clamp/.test(body),
+    "the scene box is CLAMPED inside the world box — near a wall it slides, never protrudes",
+    "an unclamped scene box aimed near a face shows a region outside the domain, which is "
+    + "not vacuum but nothing at all");
+  // AIM MUST NOT TOUCH THE PHYSICS. The whole point of separating the axes is that the
+  // observer's knob reaches no engine call — the same property the zoom handler is gated
+  // on, checked at the other end of the same law.
+  const aim = appSource.match(/canvas\.addEventListener\("dblclick",([\s\S]*?)\n  \}\);/);
+  want(aim !== null, "the page has an aim control");
+  if (aim) {
+    const calls = [...aim[1].matchAll(/\bw\.(holon_[a-z0-9_]+)|State\.w\.(holon_[a-z0-9_]+)/g)]
+      .map((m) => m[1] || m[2]);
+    want(calls.length === 0,
+      "aiming touches NO engine call — the observer's axis, never the hand's",
+      `the aim handler calls ${calls.join(", ")}; aiming has no physical meaning and must `
+      + "not reach the Sim, or the two axes the two-box law separates are coupled again");
+  }
+}
+
 // ---------------------------------------------------------------- 7. the inverted check
 
 // --------------------------------------------- 5c. the hand on the box (WB-2.2), now served

@@ -144,7 +144,14 @@ const State = {
   rate: { fsPerSec: 0, pctRealtime: 0, fps: 0 },
   clockWindow: { t0: null, simFs0: 0, frames: 0 },
 
-  camera: { yaw: 0.35, pitch: 0.25, distance: 2.8, fov: 45.0 },
+  /// The camera, and its TARGET owns the view centre (lead's ruling, derived from the
+  /// FSD rather than chosen). The centre is AIM, and aim belongs to the observer: the
+  /// acuity law is written from the observer's side, and the seeding rule pins one holon
+  /// "near the center" — near where you are LOOKING. The hand is physics and aiming has
+  /// no physical meaning, so letting the hand place the centre would couple the two axes
+  /// the two-box law separates. The ratio correction coupled SIZE through the quotient,
+  /// deliberately and only that.
+  camera: { yaw: 0.35, pitch: 0.25, distance: 2.8, fov: 45.0, target: null },
 
   /// THE ZOOM, and it is a RATIO rather than a length (FSD-W2, the two-box law). The
   /// scene box is the WORLD box divided by this number, so 3× zoom on a 1 km world and
@@ -1124,15 +1131,25 @@ function measureRate(now) {
 /// The scene box's half-extents in bohr: the world box divided by the zoom ratio.
 function sceneBox(w) {
   const z = Math.max(1, State.zoom);
+  const hx = w.holon_width() / (2 * z);
+  const hy = w.holon_height() / (2 * z);
+  const hz = w.holon_depth() / (2 * z);
+  // The centre is the CAMERA TARGET, defaulting to the world-box centre until aimed.
+  const t = State.camera.target
+    ?? { x: 0.5 * w.holon_width(), y: 0.5 * w.holon_height(), z: 0.5 * w.holon_depth() };
+  // CLAMPED to stay wholly inside the world box: near a wall the scene box SLIDES rather
+  // than protrudes. The quotient sets its size and the clamp sets its position, so a view
+  // aimed at a corner still shows a full box of water rather than a box half full of
+  // nothing that is not even vacuum — it would be outside the domain entirely.
+  const clamp = (v, h, extent) => Math.min(Math.max(v, h), extent - h);
   return {
-    hx: w.holon_width() / (2 * z),
-    hy: w.holon_height() / (2 * z),
-    hz: w.holon_depth() / (2 * z),
-    cx: 0.5 * w.holon_width(),
-    cy: 0.5 * w.holon_height(),
-    cz: 0.5 * w.holon_depth(),
+    hx, hy, hz,
+    cx: clamp(t.x, hx, w.holon_width()),
+    cy: clamp(t.y, hy, w.holon_height()),
+    cz: clamp(t.z, hz, w.holon_depth()),
   };
 }
+
 
 /// Which holons the scene box contains, and what crossed a face since the last frame.
 ///
@@ -1673,6 +1690,9 @@ function renderTelemetry() {
   // --- the two boxes, stated separately because they are never the same knob ----
   const sb = sceneBox(w);
   put("scene-zoom", `${State.zoom.toFixed(2)}×`);
+  put("scene-centre", State.camera.target
+    ? `${sb.cx.toFixed(1)}, ${sb.cy.toFixed(1)}, ${sb.cz.toFixed(1)} a₀ — aimed (double-click to move)`
+    : `${sb.cx.toFixed(1)}, ${sb.cy.toFixed(1)}, ${sb.cz.toFixed(1)} a₀ — world centre (double-click to aim)`);
   put("world-extent", `${w.holon_width().toFixed(1)} × ${w.holon_height().toFixed(1)} × ${w.holon_depth().toFixed(1)} a₀`);
   put("scene-extent", `${(2 * sb.hx).toFixed(1)} × ${(2 * sb.hy).toFixed(1)} × ${(2 * sb.hz).toFixed(1)} a₀ (world ÷ zoom)`);
   const drawn = State.sceneCount ?? w.holon_atom_count();
@@ -1878,6 +1898,12 @@ function initInput() {
   window.addEventListener("mouseup", () => {
     releaseHand();
     orbiting = false;
+  });
+  // AIM. Double-click puts the view centre on whatever you clicked — the observer's axis,
+  // never the hand's: this calls nothing on the engine and moves no atom.
+  canvas.addEventListener("dblclick", (e) => {
+    const p = pointerToWorld(e.clientX, e.clientY);
+    State.camera.target = { x: p.x, y: p.y, z: p.z };
   });
   canvas.addEventListener("contextmenu", (e) => e.preventDefault());
   canvas.addEventListener("wheel", (e) => {

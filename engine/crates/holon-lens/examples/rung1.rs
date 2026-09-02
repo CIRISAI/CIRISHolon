@@ -222,6 +222,22 @@ fn main() {
                      clauses fire {} times against {}",
                     r.records_any_donor, r.hb_records
                 );
+                // IS THE SCENE THE SCENE IT DECLARES? Measured and printed, never a gate:
+                // found after the freeze, and gating on it afterwards would move a stake.
+                match r.first_out_of_plane {
+                    None => println!(
+                        "     planarity: dims=2 and z holds its placement value EXACTLY in \
+                         all {} frames",
+                        r.n_frames
+                    ),
+                    Some(f) => println!(
+                        "     planarity: *** dims=2 but the scene LEAVES THE PLANE at frame \
+                         {f}, reaching |z-z0| = {:.3} bohr against a box half-depth of {:.1}. \
+                         This trajectory is not the scene it declares; see RUNG1_RESULTS.md.",
+                        r.worst_out_of_plane,
+                        traj.header.box_d / 2.0
+                    ),
+                }
 
                 // ---- Leg B-N and Leg F, per chart ------------------------------------
                 println!(

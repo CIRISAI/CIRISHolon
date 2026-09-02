@@ -762,6 +762,13 @@ pub struct Rung1Report {
     /// with all three Luzar–Chandler clauses otherwise unchanged. If this is also near
     /// zero, the nearest-oxygen rule is not what is suppressing the network.
     pub records_any_donor: usize,
+    /// **Is the scene the scene it declares?** For a `dims == 2` trajectory every force
+    /// is in-plane by symmetry, so `z` should hold its placement value to the bit. This
+    /// is the largest departure from it, and the first frame at which any departure
+    /// appears. MEASURED AND PRINTED, never a gate: it was found after the freeze and
+    /// adding a gate on it afterwards would be moving a stake.
+    pub worst_out_of_plane: f64,
+    pub first_out_of_plane: Option<usize>,
     pub charts: Vec<ChartReport>,
     pub structures: Vec<StructReport>,
 }
@@ -818,6 +825,8 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
     let (mut f_oo, mut f_oh) = (0usize, 0usize);
     let mut ox_blocks_hist = vec![0usize; ox.len() + 1];
     let mut any_donor = 0usize;
+    let z_plane = traj.header.box_d / 2.0;
+    let (mut worst_oop, mut first_oop) = (0.0f64, None::<usize>);
     for (t, hb) in hbs.iter().enumerate() {
         let f = &traj.frames[t];
         // The criterion, decomposed. `hbonds` assigns each hydrogen to its NEAREST oxygen
@@ -877,6 +886,17 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
             .filter(|&b| ox.iter().any(|&i| b >> i & 1 == 1))
             .count();
         ox_blocks_hist[k] += 1;
+        if traj.header.dims == 2 {
+            for q in &f.pos {
+                let d = (q[2] - z_plane).abs();
+                if d > worst_oop {
+                    worst_oop = d;
+                }
+                if d > 0.0 && first_oop.is_none() {
+                    first_oop = Some(t);
+                }
+            }
+        }
 
         // The discriminator: same three clauses, donor free among covalently close
         // oxygens instead of pinned to the nearest one.
@@ -1095,6 +1115,8 @@ pub fn run(traj: &Trajectory, st: &Stakes, surrogates: usize) -> Rung1 {
         frames_oh_in_range: f_oh,
         oxygen_blocks_hist: ox_blocks_hist,
         records_any_donor: any_donor,
+        worst_out_of_plane: worst_oop,
+        first_out_of_plane: first_oop,
         charts,
         structures,
     }))

@@ -96,8 +96,22 @@ table error wearing five-body clothes.
 `conformance/atomworld/s3_runs/RESUME.md` records what that costs a careless caller:
 "an MPO builder that reaches six orbitals and HANGS rather than erroring... Call
 `solve_determinant` explicitly anywhere the space size is not statically obvious."
-Two of this audit's subsystem classes are over that line (`O2H3` at 204,490 determinants;
-`OHHH` at 52,920 in the four-hydrogen case), so:
+
+**CORRECTION C-1, landed pre-data, before the instrument existed and before any five-body
+number was read.** This paragraph first said "Two of this audit's subsystem classes are
+over that line (`O2H3` at 204,490 determinants; `OHHH` at 52,920 in the four-hydrogen
+case)". The second number was arithmetic error: `OHHH` is 8 orbitals and 11 electrons,
+`C(8,6)*C(8,5) = 1,568` — the count `quaternary.rs`'s own header states, which is the
+check that should have caught it. Recomputed over every composition this audit can meet:
+
+> **Exactly ONE subsystem class is over the 50,000 line: the `O2H3` pentamer, at
+> 204,490 determinants. The next largest subsystem in scope is the `O2H2` quadruple at
+> 48,400 — only 3.2% under the threshold**, which is far too close to assume, so the
+> instrument reads `Solution::route` on EVERY solve and refuses a `Dmrg` route rather
+> than inferring the route from a size it believes it knows.
+
+The stake is unchanged and is if anything tightened: routing was already asserted per
+solve, and the corrected number says the assertion is not decoration. So:
 
 > **Every solve in the estimator uses `fci::solve_determinant`. A mixed-exactness
 > telescope — some rungs exact, some DMRG-64 — would put an approximation error of
@@ -358,8 +372,23 @@ and the same quantities split by composition.
   permitted. witness: `exact_never_degraded`
 - **G2 — convergence of every rung.** Every one of the 26 solves must exit
   `SolveExit::Converged` or `SolveExit::Trivial`, AND carry `residual <= 1.0e-9`
-  (`pair::CONVERGED_RESIDUAL = 10 * DAVIDSON_EXPANSION_FLOOR`), AND report
-  `scf_converged = true`. Any failure VOIDs the config; see section 6.
+  (`pair::CONVERGED_RESIDUAL = 10 * DAVIDSON_EXPANSION_FLOOR`). Any failure VOIDs the
+  config; see section 6.
+  **CORRECTION C-2, landed pre-data**: this row first also required `scf_converged = true`
+  on all 26. It cannot be delivered on all 26, so the stake is amended here rather than
+  quietly under-delivered. `pair::geometry_problem` — the only public entry point that
+  hands back the `(space, mo, nuc)` triple `solve_determinant` needs, and therefore the
+  only route to G1's exactness — DISCARDS the SCF convergence flag (`let (u, _, _) =
+  orbital_rotation(...)`). `solve_geometry` reports the flag but chooses its own route,
+  which G1 forbids. So the flag is required, and CHECKED, on every solve that goes through
+  `solve_geometry` — every subsystem at or below `MPS_ROUTE_THRESHOLD`: 26 of 26 for `H5`
+  and `OH4`, 25 of 26 for `O2H3` — and is recorded as UNOBSERVABLE, by name, on the one
+  solve that cannot supply it. That solve is not left unguarded: the FCI energy is
+  invariant under the orbital rotation for every geometry (`pair.rs`: "the FCI energy is
+  invariant under U for every R"), so SCF convergence there changes Davidson's conditioning
+  and not the answer, and the answer's own guard is the residual bound in this same row.
+  The dropped flag is itself a finding — a diagnostic one entry point carries and its
+  sibling does not — and it is reported to the crate rather than absorbed.
   witness: `none (a solver-convergence gate has no theorem here; SolveExit is the recorded fact and M-EXIT-DISCRIMINATOR is its warrant)`
 - **G3 — the size fence.** No subsystem exceeds `FCI_DET_MAX = 250,000` determinants;
   a candidate whose pentamer exceeds it is never sampled, and the exclusion is counted by
@@ -392,8 +421,9 @@ and the same quantities split by composition.
 ## 6. VOID — what it is, how it is counted, and why it is never scored
 
 > **A config VOIDs if any of its 26 solves exits `SolveExit::IterationCap`; or exits
-> `SolveExit::Stagnated` with `residual > 1.0e-9`; or reports `scf_converged = false`;
-> or exceeds G10's budget.**
+> `SolveExit::Stagnated` with `residual > 1.0e-9`; or reports `scf_converged = false` on
+> any solve that reports the flag at all (G2, as corrected by C-2); or exceeds G10's
+> budget.**
 
 A VOID config is counted, its reason named, and it is **never scored** — not as a pass,
 not as a fail. Budget exhaustion is a structural property of the subject and can

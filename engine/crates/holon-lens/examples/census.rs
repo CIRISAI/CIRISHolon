@@ -181,7 +181,7 @@ fn main() {
         println!("#\n# CLOSURE READER (blocks by longest held run):");
         println!(
             "#   {:<8} {:<6} {:>9} {:>10} {:>7} {:>8} {:>8} {:>7}  {:<22} {}",
-            "formula", "block", "held run", "held (fs)", "of run", "rms", "sep var", "ctrl", "verdict", "named?"
+            "formula", "block", "held run", "held (fs)", "of run", "rms", "sep var", "ctrl/pool", "verdict", "named?"
         );
         let mut shown = 0;
         for b in &rep.blocks {
@@ -197,7 +197,7 @@ fn main() {
             }
             shown += 1;
             println!(
-                "#   {:<8} {:#06x} {:>9} {:>10.1} {:>6.1}% {:>8.3} {:>8.3} {:>7}  {:<22} {}",
+                "#   {:<8} {:#06x} {:>9} {:>10.1} {:>6.1}% {:>8.3} {:>8.3} {:>11}  {:<22} {}",
                 b.formula,
                 b.block,
                 b.longest_run,
@@ -208,8 +208,13 @@ fn main() {
                 100.0 * b.frames_present as f64 / rep.n_frames as f64,
                 b.rms_internal,
                 b.max_sep_variation,
+                // THE RATE WITH ITS DENOMINATOR. A control rate printed alone reads like
+                // a default zero; it is the pool size that makes 0.000 mean "none of the
+                // N same-composition candidates passed" rather than "nothing was checked".
+                // The pool was always computed and never emitted, which is the same
+                // computed-but-unprintable gap that makes any number uncheckable.
                 b.control_rate
-                    .map(|r| format!("{:.3}", r))
+                    .map(|r| format!("{:.3}/{}", r, b.control_pool))
                     .unwrap_or_else(|| "-".into()),
                 b.verdict.tag(),
                 if b.named_at_final_frame { "YES" } else { "" }

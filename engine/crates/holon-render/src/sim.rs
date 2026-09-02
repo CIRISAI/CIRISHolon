@@ -575,6 +575,27 @@ pub struct Sim {
     pub e_three: f64,
     /// The four-body sector: exact ab-initio (O,H,H,H) valence term.
     pub e_four: f64,
+    /// THE LONG-RANGE SECTOR (GANTT node B2): the pair tail past `R_s`, summed to a
+    /// declared budget and, in a wrapping box, over image shells.
+    ///
+    /// Its OWN ledger row, following the four-body sector's pattern for the reason that
+    /// sector gives: one reader per term, because a combined number cannot say which
+    /// sector moved. Exactly 0.0 when no far sector is declared, so every scene that
+    /// existed before B2 is bit-unchanged — an exact zero added to a finite float changes
+    /// no bit, and the replay fingerprints stay valid.
+    pub e_far: f64,
+    /// The far sector itself, absent until one is declared. Boxed because it carries a
+    /// tail model per bank slot and an image lattice, and a `Sim` that never uses one
+    /// should not grow by them.
+    pub far: Option<Box<crate::longrange::FarSector>>,
+    /// What the last force pass's far sector computed — channels, counts, virial and the
+    /// residual bound. Read by B2's gates; carries no state the physics depends on.
+    pub far_reading: crate::longrange::FarReading,
+    /// Total angular momentum at reset, and the peak residual since. `L` is conserved only
+    /// where the box permits it (see [`Sim::angular_gate`]), which is why this is tracked
+    /// beside the momentum ledger rather than folded into it.
+    pub l0_ang: (f64, f64, f64),
+    pub angular_residual_peak: f64,
     /// THE INTERNAL VIRIAL, `Σ r · dU/dr` over every interacting pair, triple side and
     /// four-body radial coordinate.
     ///
@@ -755,6 +776,24 @@ impl Sim {
             momentum_residual_peak: 0.0,
             pairs: Vec::new(),
             pair_count: 0,
+            e_far: 0.0,
+            far: None,
+            far_reading: crate::longrange::FarReading {
+                energy: 0.0,
+                virial: 0.0,
+                contributions: 0,
+                image_contributions: 0,
+                channel_s: 0.0,
+                channel_t: 0.0,
+                crossings: 0,
+                residual_bound: 0.0,
+                plant_carrier: 0.0,
+                box_illegal: false,
+                shells_unresolved: false,
+                shells: 0,
+            },
+            l0_ang: (0.0, 0.0, 0.0),
+            angular_residual_peak: 0.0,
             barostat: None,
             timescale: Timescale::empty(),
             holons: HolonLayer::empty(),
@@ -1049,6 +1088,7 @@ impl Sim {
             + self.e_pair.abs()
             + self.e_three.abs()
             + self.e_four.abs()
+            + self.e_far.abs()
             + self.e_wall
             + self.e_spring
             // `.abs()` where `e_wall` and `e_spring` are added bare, and not by oversight:
@@ -1205,7 +1245,7 @@ impl Sim {
 
     /// Total energy currently held by the scene.
     pub fn energy(&self) -> f64 {
-        self.e_kin + self.e_pair + self.e_three + self.e_four + self.e_wall + self.e_spring + self.e_grav
+        self.e_kin + self.e_pair + self.e_three + self.e_four + self.e_far + self.e_wall + self.e_spring + self.e_grav
     }
 
     /// The conserved quantity. `E - W_ext` is constant for an exact integrator, with or
@@ -1383,6 +1423,96 @@ impl Sim {
         (px, py, pz)
     }
 
+    /// TOTAL ANGULAR MOMENTUM about the box origin, `Σ m_i r_i × v_i`.
+    ///
+    /// About the ORIGIN and not the centre of mass, deliberately: the origin is the force
+    /// law's own reference — it is where `e_grav`'s potential is measured from and what
+    /// `scale_box` scales toward — and a moment taken about a different point than the
+    /// forces that change it reads as an unexplained torque.
+    pub fn angular_momentum(&self) -> (f64, f64, f64) {
+        let mut lx = 0.0;
+        let mut ly = 0.0;
+        let mut lz = 0.0;
+        for i in 0..self.n {
+            let a = &self.atoms[i];
+            let m = a.mass();
+            lx += m * (a.y * a.vz - a.z * a.vy);
+            ly += m * (a.z * a.vx - a.x * a.vz);
+            lz += m * (a.x * a.vy - a.y * a.vx);
+        }
+        (lx, ly, lz)
+    }
+
+    /// Whether this box conserves angular momentum at all.
+    ///
+    /// Four things break rotational symmetry and each breaks it for its own reason: soft
+    /// walls torque whatever touches them, a uniform field picks out a direction, the
+    /// user's spring is an external anchor, and the controllers move energy on a schedule
+    /// the symmetry knows nothing about. A PERIODIC box is excluded too, and that one is
+    /// the easy one to get wrong: it does no work and delivers no impulse, so it looks
+    /// exactly like the open box to the energy and momentum ledgers — but its image
+    /// lattice is not isotropic, and a rotated configuration is a different scene.
+    /// `Boundary::Open` is the only boundary here that is rotationally symmetric.
+    ///
+    /// Stated as a precondition rather than assumed, because a gate that reads a conserved
+    /// quantity where it is not conserved is measuring the boundary and calling it the
+    /// engine.
+    pub fn angular_conserved(&self) -> bool {
+        matches!(self.boundary, Boundary::Open)
+            && self.g_vec == (0.0, 0.0, 0.0)
+            && self.grabbed.is_none()
+            && !self.thermostat_on
+            && !self.barostat_on()
+    }
+
+    /// `|L(t) − L(0)|`. Meaningful only where [`Sim::angular_conserved`] holds.
+    pub fn angular_residual(&self) -> f64 {
+        let (lx, ly, lz) = self.angular_momentum();
+        let dx = lx - self.l0_ang.0;
+        let dy = ly - self.l0_ang.1;
+        let dz = lz - self.l0_ang.2;
+        (dx * dx + dy * dy + dz * dz).sqrt()
+    }
+
+    /// Roundoff bound for the angular ledger, built the way `momentum_bound` is: each step
+    /// commits O(N) additions into the sum, each worth at most one unit in the last place
+    /// of the running magnitude, accumulated worst-case rather than as the random walk it
+    /// actually is.
+    ///
+    /// The scale carries a LEVER ARM as well as a momentum, because `L` is a moment: the
+    /// same velocity error at twice the radius is twice the angular error, and a bound
+    /// built from `p_scale` alone would tighten as the scene expands, which is backwards.
+    pub fn angular_bound(&self) -> f64 {
+        let mut l_scale: f64 = 0.0;
+        for i in 0..self.n {
+            let a = &self.atoms[i];
+            let r = (a.x * a.x + a.y * a.y + a.z * a.z).sqrt();
+            let v = (a.vx * a.vx + a.vy * a.vy + a.vz * a.vz).sqrt();
+            l_scale += a.mass() * r * v;
+        }
+        let l_scale = l_scale.max(1e-12);
+        8.0 * (self.steps.max(1) as f64) * f64::EPSILON * l_scale
+    }
+
+    /// THE ANGULAR-MOMENTUM GATE (node B2, G6), independent of the energy and momentum ones
+    /// by construction.
+    ///
+    /// The independence is the whole reason it exists. A pairwise force that is equal and
+    /// opposite but NOT central conserves linear momentum exactly and destroys angular
+    /// momentum: `momentum_gate` cannot see that, and a green `momentum_gate` read as
+    /// covering it is one gate vouching for a conserved quantity it never constrained.
+    /// Plant P3 is the demonstration — it fires this gate while the momentum gate stays
+    /// green.
+    ///
+    /// Returns `None` where the box does not conserve `L`, so a caller has to handle
+    /// "not applicable" rather than receiving a `true` it can mistake for a pass.
+    pub fn angular_gate(&self) -> Option<bool> {
+        if !self.angular_conserved() {
+            return None;
+        }
+        Some(self.angular_residual_peak <= self.angular_bound())
+    }
+
     /// The box volume, bohr³.
     #[inline]
     pub fn volume(&self) -> f64 {
@@ -1554,6 +1684,14 @@ impl Sim {
     /// passes over the scene to answer one question about it.
     pub fn list_cutoff(&self) -> f64 {
         let many = self.three_body_cutoff().max(self.four_body_cutoff());
+        // THE B2 SEAM. A declared far sector hands the near sector everything up to `R_s`,
+        // so the decomposition must reach that far or the split has a hole in it — which is
+        // exactly the defect B1b measured, where the list radius was set by a THREE-BODY
+        // table while the pair curve reached 5 bohr further.
+        let many = match &self.far {
+            Some(f) => many.max(f.r_s()),
+            None => many,
+        };
         match self.pair_switch {
             Some((_, r_cut)) => many.max(r_cut),
             None => many,
@@ -1686,6 +1824,18 @@ impl Sim {
         cells.build_neighbours(&self.atoms, &mut nb);
         self.cells = cells;
         self.neighbours = nb;
+    }
+
+    /// Whether the last force pass's far sector actually summed, or refused.
+    ///
+    /// It can refuse for a reason that arose AFTER the sector was admitted: `Sim::scale_box`
+    /// shrinks the box affinely and nothing re-checks any legality condition afterwards —
+    /// not the far sector's `min_edge >= 2 R_s`, and not [`Sim::pbc_ok`] either, which is
+    /// consulted only by [`Sim::set_pair_cutoff`]. So this is asked per pass rather than
+    /// once at admission.
+    pub fn far_ok(&self) -> bool {
+        self.far.is_none()
+            || (!self.far_reading.box_illegal && !self.far_reading.shells_unresolved)
     }
 
     /// Which enumeration the last force evaluation ran. Reported so a caller can see
@@ -1989,11 +2139,13 @@ impl Sim {
         self.e_ref = 0.0;
         self.drift_peak = 0.0;
         self.momentum_residual_peak = 0.0;
+        self.angular_residual_peak = 0.0;
         self.holons.reset();
         self.compute_forces();
         self.accumulate_energy();
         self.l0 = self.ledger();
         self.p0 = self.momentum();
+        self.l0_ang = self.angular_momentum();
         self.e_ref = self.mode_energy().max(self.active_d_e());
         self.refresh_pairs();
         // Seed the curvature envelope from the pair energies this scene actually starts
@@ -2111,6 +2263,16 @@ impl Sim {
         let m = self.momentum_residual();
         if m > self.momentum_residual_peak {
             self.momentum_residual_peak = m;
+        }
+        // The angular residual is sampled here for the same reason and at the same price.
+        // It is tracked in EVERY box, not only the ones that conserve it: the peak is a
+        // reading, and `angular_gate` is what decides whether the reading means anything.
+        // Deciding at the accumulation site would leave a stale peak behind whenever a
+        // scene changed boundary, which is a number that is right for a box that no longer
+        // exists.
+        let l = self.angular_residual();
+        if l > self.angular_residual_peak {
+            self.angular_residual_peak = l;
         }
 
         // The composite layer sees a state nothing above it has modified.
@@ -2476,6 +2638,7 @@ impl Sim {
 
         self.accumulate_three_body();
         self.accumulate_four_body();
+        self.accumulate_far();
 
         let mut e_wall = 0.0;
         for i in 0..self.n {
@@ -2534,6 +2697,60 @@ impl Sim {
                 self.spring_engaged = true;
             }
         }
+    }
+
+    /// THE LONG-RANGE SECTOR (node B2): the pair tail past `R_s`.
+    ///
+    /// Follows the four-body sector's pattern exactly — its own energy row, its virial
+    /// accumulated where the slopes already are, forces into `a_pair` because the term is a
+    /// conservative pairwise interaction and cancels from the momentum sum, and NOTHING
+    /// posted to `w_ext`: a conservative term's energy is held by its potential, and a
+    /// receipt column for it would book the same hartrees twice.
+    ///
+    /// Exactly nothing happens when no far sector is declared, and `e_far` stays an exact
+    /// 0.0 — which is what keeps every pre-B2 replay fingerprint valid.
+    fn accumulate_far(&mut self) {
+        self.e_far = 0.0;
+        let Some(mut far) = self.far.take() else {
+            return;
+        };
+        if self.n == 0 {
+            self.far = Some(far);
+            return;
+        }
+        let geom = self.geom();
+        let pos: Vec<(f64, f64, f64)> = self.atoms[..self.n]
+            .iter()
+            .map(|a| (a.x, a.y, a.z))
+            .collect();
+        // The support each TABLE actually carries, read from the bank rather than
+        // remembered, so G1's channel split is drawn at the radius the committed table has.
+        let r_max_by_slot: Vec<f64> = (0..crate::bank::MAX_TABLES)
+            .map(|s| {
+                let tbl = self.bank.table_slot(s);
+                if tbl.is_loaded() {
+                    tbl.r_max()
+                } else {
+                    0.0
+                }
+            })
+            .collect();
+        // THE NEAR SECTOR'S DECLARED TRUNCATION, handed over on every pass rather than
+        // captured once. The far sector supplies what the near one did NOT, so it has to
+        // know which of the pair sector's two routes ran — and a scene may declare or clear
+        // a truncation between passes.
+        far.set_switch(self.pair_switch);
+        let mut forces = core::mem::take(&mut self.a_pair);
+        let reading = far.accumulate(&pos, &self.slots[..self.n], geom, &mut forces, &r_max_by_slot);
+        self.a_pair = forces;
+        // A far sector that refused this pass contributes NOTHING, and the reading says so
+        // rather than the energy quietly reading zero. `Sim::far_ok` is the door a caller
+        // must go through before believing `e_far`; a gate that reads the energy without
+        // asking has been handed a refusal wearing a number's clothes.
+        self.e_far = reading.energy;
+        self.w_virial += reading.virial;
+        self.far_reading = reading;
+        self.far = Some(far);
     }
 
     /// THE MANY-BODY SECTOR: the tabulated three-body term over every triple, and the

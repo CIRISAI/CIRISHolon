@@ -1,0 +1,57 @@
+# B2 LONG-RANGE GATE BATTERY — freeze conformance/water_observatory/B2_PREREG.md
+# instrument = engine/crates/holon-render/examples/b2_longrange.rs
+# arm = engine  curves = hh  steps = 20000  budget = 1.000e-9 Ha
+# launch: loadavg 65.28  cpu 30  core class E (no SMT sibling)  clock fraction 0.615
+# W1 H-H: slot 0 route Determinant exit Converged n_det 4 n_basis 2 solver_budget 5000 worst_residual 8.719e-11
+# curve setup CPU: 1.1 s (generated ONCE, reloaded per scene)
+COLUMNS G3 slot r_max u_at_max p_fit fit_residual exp_index knots band
+G3 0 10.2400 6.272736e-9 20.6703 3.3123e-1 31.1423 10 Fenced
+# GATE G3: 0 curve(s) ADOPTING, 1 FENCED. Band [5, 7] on p_fit, exp_index <= 3x p_fit.
+# R_s = 10.2400 bohr (the largest loaded curve's support); budget = 1.000e-9 Ha
+# far sector: R_s = 10.2400  R_f = 11.1913 bohr  fenced = true
+# R4 (live, on the fenced sector): REFUSED (R4, fenced tail): the far energy is a BRACKET [-1.000000e-6, -1.000000e-9] Ha spanning a factor of 1.000e-3; no scalar is available. EXIT: a curve carrying further support, or a basis with diffuse functions (ION_STAKING.md I-5, unowned).
+# G2 scene: 512 atoms, 3D cubic lattice, box 71.7 bohr (7x R_s), 3714 pairs within r_cut = 15.1151 bohr
+# GATE G2 (energy half): PASS  n 512  box 71.7 bohr  route Cells vs Complete (decomposition engaged: true)  pair switch Some((13.115129305895728, 15.115129305895728))  list_cutoff 15.1151 bohr (>= R_s 10.2400)  e_pair -3.566042959956e-4 vs -3.566042959956e-4  relative 0.000e0 (<= 1e-12)
+# GATE G8 gradient: FAIL  worst relative 4.2616e-6 (<= 1e-7)  configurations 100 (floor 100)  nonzero components probed 1214
+# G8 diagnostic: the worst relative component had |F| = 8.163e-15 Ha/bohr against a largest far force of 8.096e-9; its absolute disagreement was 3.479e-20 Ha/bohr, and the largest absolute disagreement anywhere was 3.804e-18. Relative to the LARGEST far force that is 4.698e-10.
+G7 h 1.0e-3  dE/dlambda 5.056078315e-3  virial 5.055565654e-3  rel 1.014e-4  FAIL
+G7 h 1.0e-4  dE/dlambda 5.055567547e-3  virial 5.055565654e-3  rel 3.745e-7  PASS  richardson 5.055562388e-3
+G7 h 1.0e-5  dE/dlambda 5.055565673e-3  virial 5.055565654e-3  rel 3.747e-9  PASS  richardson 5.055565654e-3
+# GATE G7 virial (LEDGER COMPLETENESS, not a conservation law): FAIL  worst over the three staked steps 1.0141e-4, finest step 3.7466e-9 (<= 1e-6 required at every step)
+# GATE G-LEDGER box move f=0.90: PASS  e_far -6.481754e-9 -> -5.904851e-10  |ledger - l0| 5.421011e-20 vs bound 1.067287e-3  w_ext -1.123308e-3  work.hand -1.123308e-3  columns_ok true  (l0 -2.482597789e-4)
+# GATE G-LEDGER box move f=1.10: PASS  e_far -6.481754e-9 -> 0.000000e0  |ledger - l0| 0.000000e0 vs bound 1.067287e-3  w_ext 2.645831e-4  work.hand 2.645831e-4  columns_ok true  (l0 -2.482597789e-4)
+# GATE G4 energy: PASS  drift_peak 8.649726e-5  bound 8.561813e-3  ratio 0.0101  work_columns_ok true
+# GATE G5 momentum: PASS  residual_peak 5.027345e-13  bound 3.874723e-9  isolated-pair |F_i + F_j| = 0.0e0 (EXACT 0 required)
+# GATE G6 angular: PASS  residual_peak 6.539026e-12  bound 1.133612e-7
+# GATE G12 work count: steps 20000 (floor 20000)  far contributions 84154  image contributions 0  R_s crossings 97 (floor 1)
+# TRUNCATED ARM (the O(N) near route): pair_floor 6.2790e-9 Ha gives the window (10.2400, 12.2400) bohr against R_s = 10.2400
+# GATE G4 energy (truncated): PASS  drift_peak 8.652107e-5  bound 9.608388e-3  ratio 0.0090
+# GATE G5 momentum (truncated): PASS  residual_peak 5.076832e-13  bound 4.395441e-9
+# GATE G6 angular (truncated): PASS  residual_peak 3.812687e-11  bound 1.103699e-7
+# G12 (truncated): steps 20000  far contributions 82758  R_s crossings 94
+# GATE G12: PASS
+# --- PLANTS (M-PLANT-OBS: each pre-checked to fire; a 0.0 carrier REFUSES) ---
+P2 one-sided far force | carrier |P − P0 − J| = 6.144409e-6 (sector: the far pair force) | G5 FAIL | verdict FIRED
+P3 non-central far force | carrier |L − L0| = 1.049179e-7 (sector: angular) | G6 FAIL | G5 PASS | verdict FIRED, and G5 STAYED GREEN — the two gates are independent
+P4 zero-point STEP at R_s | carrier = the 1.0e-6 Ha jump per crossing (sector: the energy ledger) | crossings 97 | drift_peak 9.049726e-5 vs bound 8.561827e-3 | G4 PASS | verdict DID NOT FIRE — G4's derived bound is larger than the planted defect
+# G4 POWER CERTIFICATE (the staked plant did not fire; this is what the gate CAN see, not a new criterion):
+P4-power step 1.0e-5 Ha  drift_peak 1.286736e-4  bound 8.561948e-3  G4 PASS
+P4-power step 1.0e-4 Ha  drift_peak 8.004881e-4  bound 8.563166e-3  G4 PASS
+P4-power step 1.0e-3 Ha  drift_peak 8.000488e-3  bound 8.575347e-3  G4 PASS
+P4-power step 1.0e-2 Ha  drift_peak 8.000049e-2  bound 8.697151e-3  G4 FAIL
+P4-power step 1.0e-1 Ha  drift_peak 8.000005e-1  bound 9.915193e-3  G4 FAIL
+P4-power step 1.0e0 Ha  drift_peak 8.000000e0  bound 4.062357e-2  G4 FAIL
+# G4 resolves a zero-point step at 1.0e-2 Ha and not at the staked 1.0e-6 Ha — a factor of 10000. V2 applies at the staked plant: G4's arm is VOID until a successor stakes a plant this gate can see.
+P5 gradient mismatch (force x1.001) | carrier = relative gradient error 9.9900e-4 (sector: the far force) | clean run was 4.2616e-6 | G8 FAIL | verdict FIRED
+P6 truncated far sum (R_s + 0.1 bohr) | carrier = the omitted band's energy 6.481754e-9 Ha (sector: the far pair sector) | E_far clean -6.481754e-9 vs truncated 0.000000e0 | verdict FIRED
+P7 omitted virial | carrier = the far sector's Sum r du/dr, 5.973972e-8 Ha (sector: the virial) | G7 relative 1.1817e-5 vs clean 3.7466e-9 | G7 FAIL | G4 PASS | G5 PASS | verdict FIRED, and G4/G5 STAYED GREEN — a conservative channel missing from the pressure
+# periodic arm VOID (V2): the smallest legal wrapping box is 2 R_s = 20.4800 bohr and the far sum reaches only R_f = 11.1913 bohr, so NO legal periodic box can put an image in range. That is a property of this tail, not of the instrument: at p_fit = 20.67 the kernel has no long-range content for an image sum to carry. G9, G10 and P1 are NOT scored.
+# G13 conditions: cpu 30  core class E (no SMT sibling)  clock fraction 0.615  loadavg 65.26
+COLUMNS G13 n cpu_seconds_mean cpu_seconds_min cpu_seconds_max spread_factor
+G13 12 2.543132e-6 2.441406e-6 2.746582e-6 1.125
+G13 24 7.731120e-6 7.324219e-6 7.934570e-6 1.083
+G13 48 3.092448e-5 2.929688e-5 3.173828e-5 1.083
+G13 96 1.171875e-4 1.074219e-4 1.367187e-4 1.273
+G13 192 4.687500e-4 4.296875e-4 5.078125e-4 1.182
+# GATE G13: exponent 1.897 over N = [12, 24, 48, 96, 192], 3 repetitions each. PRINTED, NOT GATED ON A VALUE. Ordering monotone in N: true — the measurement stands
+# done: wall 9.6 s  cpu 5.4 s  loadavg at exit 65.32  clock fraction at exit 0.615

@@ -1,0 +1,52 @@
+# B2 LONG-RANGE GATE BATTERY — freeze conformance/water_observatory/B2_PREREG.md
+# instrument = engine/crates/holon-render/examples/b2_longrange.rs
+# arm = frames  curves = hh  steps = 20000  budget = 1.000e-9 Ha
+# launch: loadavg 71.68  cpu 26  core class E (no SMT sibling)  clock fraction 0.615
+# W1 H-H: slot 0 route Determinant exit Converged n_det 4 n_basis 2 solver_budget 5000 worst_residual 8.719e-11
+# W1 O-H: slot 1 route Determinant exit Converged n_det 90 n_basis 6 solver_budget 5000 worst_residual 9.945e-11
+# W1 O-O: slot 3 route Determinant exit IterationCap n_det 2025 n_basis 10 solver_budget 5000 worst_residual 4.809e-6
+# W2 (inherited from B1b): t(O-O)/t(H-H) = 689.4/0.9 = 741.3 against floor 100
+COLUMNS G3 slot r_max u_at_max p_fit fit_residual exp_index knots band
+G3 0 10.2400 6.272736e-9 20.6703 3.3123e-1 31.1423 10 Fenced
+G3 1 10.2400 1.645191e-10 30.6918 2.8526e-1 42.5440 10 Fenced
+G3 3 20.0000 6.641237e-7 5.0049 3.7181e-5 5.0038 10 Adopting
+# GATE G3: 1 curve(s) ADOPTING, 2 FENCED. Band [5, 7] on p_fit, exp_index <= 3x p_fit.
+# R_s = 20.0000 bohr; c* = 15 bohr; R_f = 73.2697 bohr; budget 1.000e-9 Ha; fenced = 2 curve(s)
+# tail slot 0: p 20.6703  C_p 6.298306e5  solver_exit Converged  solver_budget_iterations 5000  uncertainty_hartree 8.719e-11
+# tail slot 1: p 30.6918  C_p 3.440691e12  solver_exit Converged  solver_budget_iterations 5000  uncertainty_hartree 9.945e-11
+# tail slot 3: p 5.0049  C_p 2.156767e0  solver_exit IterationCap  solver_budget_iterations 5000  uncertainty_hartree 4.809e-6
+# manifest = conformance/water_observatory/census_traj_manifest.sha256 (21 entries)
+# parked .traj in /home/emoore/holon-artifacts/census-traj/fenced: 8
+# ADMITTED fenced/seed_0x0000000053415421.traj  sha256 0441aeef8797d37e22e842ec577194d0649a2dbfbd08bafa064a902e79e6cb02
+SEED 0x0000000053415421 max|E_switch(c*)| 5.682088e-6 at frame 4800  max|S| 5.682088e-6  max|T| 1.007418e-6  frames 50  sub-support pairs 31  missed-by-R_s 0
+# ADMITTED fenced/seed_0x0000000053415422.traj  sha256 020c342784f6720d80e374d247b90412914052f79d385056062a683031759351
+SEED 0x0000000053415422 max|E_switch(c*)| 7.832231e-6 at frame 12400  max|S| 7.832231e-6  max|T| 1.464806e-6  frames 50  sub-support pairs 39  missed-by-R_s 0
+# ADMITTED fenced/seed_0x0000000053415423.traj  sha256 035e1950cb7b222dbe8b3f471bf1fbb68218f906a2bc16aef0dad1f7370a01fe
+SEED 0x0000000053415423 max|E_switch(c*)| 7.270347e-6 at frame 2000  max|S| 7.203159e-6  max|T| 1.622439e-6  frames 50  sub-support pairs 29  missed-by-R_s 0
+# ADMITTED fenced/seed_0x0000000053415424.traj  sha256 d22bde01fb3df238f0079f14548c4dc9d52dedf70119c73ee553bd264e3eaf65
+SEED 0x0000000053415424 max|E_switch(c*)| 9.056803e-6 at frame 10000  max|S| 9.056803e-6  max|T| 1.929008e-6  frames 50  sub-support pairs 51  missed-by-R_s 0
+# ADMITTED fenced/seed_0x0000000053415425.traj  sha256 0a576fe10e589469a26ce61206bd813bb211861612768227cb307ce8c357a619
+SEED 0x0000000053415425 max|E_switch(c*)| 7.221650e-6 at frame 14000  max|S| 7.221650e-6  max|T| 6.440473e-7  frames 50  sub-support pairs 35  missed-by-R_s 0
+# ADMITTED fenced/seed_0x0000000053415426.traj  sha256 5cc80583f760118933b2cb999cc0c9ede04cc7e2af2045fa78e3621d01568fab
+SEED 0x0000000053415426 max|E_switch(c*)| 9.530799e-6 at frame 2400  max|S| 9.530799e-6  max|T| 6.256398e-7  frames 50  sub-support pairs 29  missed-by-R_s 0
+# ADMITTED fenced/seed_0x0000000053415427.traj  sha256 b4cb069b0be1986f219e12aaae25e54b40f23d72733005cd8bfac955acb77518
+SEED 0x0000000053415427 max|E_switch(c*)| 7.872839e-6 at frame 5600  max|S| 7.872839e-6  max|T| 1.572519e-6  frames 50  sub-support pairs 24  missed-by-R_s 0
+# ADMITTED fenced/seed_0x0000000053415428.traj  sha256 e62c326283d4fc82da00c473d2bf26ddd5d318f0bb9e09b64968d7d347e0bdee
+SEED 0x0000000053415428 max|E_switch(c*)| 5.466800e-6 at frame 11200  max|S| 5.466800e-6  max|T| 1.617546e-6  frames 50  sub-support pairs 38  missed-by-R_s 0
+# GATE G1 channel split at the worst frame (seed 0x0000000053415426, frame 2400): E_switch -9.530799e-6  S -9.530799e-6  T -8.039842e-14  signed sum -9.530799e-6  S/T 118544602.1605 (dominance 10) — S-DOMINANT (branch a): a RADIUS-BOOKKEEPING defect
+# G1 also, per M-LOOP-BLIND: max|S| over ALL frames 9.530799e-6 (seed 0x0000000053415426); max|T| 1.929008e-6 (seed 0x0000000053415424). The two channels are reported separately because a marginal over separation can hide two contributions of opposite sign.
+# GATE G2 near-sector coverage: PASS  pairs in (c*, r_max] missed by a list at R_s = 20.0000: 0 (EXACT 0 required)
+COLUMNS G14 seed max_switch 0.10Bs 0.10Ds b1b_ratio residual_after at_frame beyond_Rf model_gap b2_ratio paid
+G14 0x0000000053415421 5.682088e-6 2.040e0 1.500e-5 0.454 9.672708e-8 13600 0.000000e0 -9.672708e-8 0.0064 true
+G14 0x0000000053415422 7.832231e-6 8.850e-1 4.800e-6 1.898 1.314508e-7 10000 0.000000e0 -1.314508e-7 0.0274 true
+G14 0x0000000053415423 7.270347e-6 1.580e-1 5.620e-6 1.574 9.860161e-8 9200 0.000000e0 -9.860161e-8 0.0175 true
+G14 0x0000000053415424 9.056803e-6 2.050e-1 4.610e-6 2.496 1.337343e-7 7600 0.000000e0 -1.337343e-7 0.0290 true
+G14 0x0000000053415425 7.221650e-6 1.330e0 2.450e-5 0.312 3.363739e-8 800 0.000000e0 -3.363739e-8 0.0014 true
+G14 0x0000000053415426 9.530799e-6 1.220e0 1.130e-5 0.982 3.051820e-8 0 0.000000e0 -3.051820e-8 0.0027 true
+G14 0x0000000053415427 7.872839e-6 8.220e-1 2.260e-5 0.443 5.515854e-8 2000 0.000000e0 -5.515854e-8 0.0024 true
+G14 0x0000000053415428 5.466800e-6 1.360e0 1.280e-5 0.595 5.202077e-8 2400 0.000000e0 -5.202077e-8 0.0041 true
+# GATE G14: PASS  0 of 8 seeds still over the criterion. B1b's fired G1b stays fired: 3 of 8 seeds, worst 2.496x.
+# GATE G12 work count: frames scored 400 (floor 50)  refusals 0  seeds 8  sub-support pairs 276
+# GATE G12: PASS
+# NEGLIGIBLE_FRACTION inherited unchanged from B1: 0.1. Not re-chosen, not widened, not narrowed.
+# done: wall 1111.2 s  cpu 700.8 s  loadavg at exit 65.76  clock fraction at exit 0.641

@@ -286,7 +286,9 @@ document.
 
 ## 3.1 The instrument
 
-`engine/crates/holon-chem/examples/cryo_h_compress.rs`. Eight hydrogens as **four H₂
+`engine/crates/holon-render/examples/cryo_h_compress.rs` *[POINTER corrected
+2026-09-02, see AMENDMENT A1.1 — the crate named at freeze time was `holon-chem` and the
+instrument needs `Sim`; no stake, bar, kill or VOID condition moves]*. Eight hydrogens as **four H₂
 molecules on a 2 × 2 planar lattice**, every bond frozen at the referee's `r_e`, molecular
 axes all along x, nearest-neighbour centre separation `a` stepped DOWN:
 
@@ -447,3 +449,61 @@ An error reported only as a total is not reported.
 The result is banked in `conformance/atomworld/CRYO_HO_RESULTS.md`, verdict first, with
 the instrument commit named beside every number (**M-STALE-INSTRUMENT**) and with no
 inference attached to that pin beyond what it measures (**M-PROVENANCE-OVERREACH**).
+
+---
+
+# AMENDMENT A1 — 2026-09-02, after the freeze, appended not edited
+
+*The freeze above is unedited. Every stake, bar, kill and VOID condition in it is as it
+was at `fc7b6a0`. This amendment records two things that happened afterwards: one path in
+the freeze that turned out to be wrong, and a standing rule that reached this lane late.*
+
+## A1.1 — one instrument landed in a different crate than the freeze named
+
+§ 3.1 named ARM 3's instrument in the **`holon-chem`** crate. It landed in
+`engine/crates/holon-render/examples/cryo_h_compress.rs`, and the reason is physics rather
+than filing: the freeze also requires that arm to read the engine's own virial pressure
+(§ 3.1, the unit fence), which needs `holon_render::sim::Sim`, and `holon-chem` does not
+depend on `holon-render`. The freeze predicted a crate before the instrument existed and
+predicted it wrong.
+
+**The pointer is corrected in place and marked; nothing else is touched.** A prereg is
+frozen history and its STAKES cannot be edited to comply with anything — but a pointer to
+a file that does not exist is not a stake, it is a broken cross-reference in a
+load-bearing index, and this tree's own cross-reference gate rules that "a cross-reference
+is a warrant only if its target EXISTS". Leaving it dangling would preserve the letter of
+the freeze at the cost of the thing the freeze is for. So the crate segment is corrected,
+the correction carries its date and a pointer to this amendment inline, and **the scene,
+the ladder, the four expansion levels, the 1.0e-3 Ha/atom bar and the three staked clauses
+of G9 are all exactly as frozen** — `CRYO_HO_RESULTS.md` § 3 reports against them
+unchanged. A reader diffing this file against `fc7b6a0` sees one crate name and one
+bracketed marker, and nothing else.
+
+## A1.2 — the local-citation and instrument-portability rules, received after the freeze
+
+Two standing rules reached this lane after `fc7b6a0` was committed. Both are folded in
+here so this freeze is read under them, and both were complied with in the record:
+
+1. **Tree-local witnesses.** Every file citation in a committed document must resolve in
+   this repository's tracked tree. This campaign's `witness:` lines are all
+   `none (<reason>)` — it is a measurement campaign and claims no machine-checked
+   theorem — so no Lean witness needed relocating. Its log citations originally named
+   `engine/output/cryo/*.log`, which is untracked run state by design; they now name the
+   committed copies in `conformance/atomworld/cryo_logs/`, which is the resolving witness.
+2. **Gate 10a3 — no session-keyed or lane-keyed paths in committed instruments.** All
+   seven runners resolve their inputs from `env!("CARGO_MANIFEST_DIR")` and carry no
+   scratch path, no worktree path and no lane-assigned target directory; verified by grep
+   over the committed set. Run-location provenance lives in
+   `conformance/atomworld/cryo_logs/RESUME.md` and in this record, never in a runner.
+
+**A scope finding about both gates, reported rather than relied upon.** Neither gate
+would have caught this campaign if it had failed. `ci-gates.sh`'s cross-reference check
+globs `*.md` from `engine/`, so it never reaches `conformance/*/*.md`; and gate 10a3 greps
+`../conformance` for `*.py`, `*.sh` and `*.rs`, so it reaches neither this campaign's
+runners (which live under `engine/crates/`) nor a `.md` under `conformance/` carrying a
+scratch path — which is exactly what this campaign's `RESUME.md` did carry until it was
+scrubbed by hand. Both are one-directional in the sense
+`conformance/gravity/MISFITS.md` records: the question *"what would this command NOT
+catch?"* answers itself. Owner: the ci-gates lane. Exit: widen the cross-reference glob to
+`conformance/*/*.md` and widen 10a3's path and extension sets. This lane complied on the
+merits, not because a gate demanded it.

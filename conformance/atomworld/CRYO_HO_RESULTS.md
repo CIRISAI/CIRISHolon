@@ -73,7 +73,7 @@ two-directional question, reported as both.
 
 The fix is the table set, copied verbatim. The gate is **V1 leg 2**, added after the fact
 and stated as such: the 300 K rung is compared to the banked reading *mechanically*, not
-by eye. The first-run log is kept at `engine/output/cryo/quench_hydrogen.NO_H3_TABLE.log`,
+by eye. The first-run log is kept at `conformance/atomworld/cryo_logs/quench_hydrogen.NO_H3_TABLE.log`,
 marked dead, because a record that deletes what it got wrong cannot be audited.
 
 ### 0.2 The unit-fence section reported a pass for a scene with no interactions in it
@@ -87,7 +87,7 @@ reading**, which turned the defect into a finding about the engine's own guard (
 
 ## 1. ARM 1 — LIQUID HYDROGEN
 
-*Instrument `holon-chem/examples/cryo_h2_dimer.rs`; log `engine/output/cryo/arm1_dimer.log`.
+*Instrument `holon-chem/examples/cryo_h2_dimer.rs`; log `conformance/atomworld/cryo_logs/arm1_dimer.log`.
 431 FCI solves, largest 36 determinants. Every sub-cluster energy is a fresh exact solve,
 so ARM 1 carries no interpolation error and a residual it reports is the expansion's.*
 
@@ -191,7 +191,7 @@ cannot see.
 
 ### G4 — does any rung condense? · **KILLED as staked, on a clause this campaign mis-set**
 
-*Instrument `holon-render/examples/cryo_quench.rs`; log `engine/output/cryo/quench_hydrogen.log`.
+*Instrument `holon-render/examples/cryo_quench.rs`; log `conformance/atomworld/cryo_logs/quench_hydrogen.log`.
 15 runs of 20,000 × 64 steps. **V1 leg 2 PASS**: the 300 K rung reads largest 2, zero free
 H, in 3 of 3 seeds — SATURATION-2's banked hydrogen control reproduced, so this is the
 banked protocol and the ladder is the only variable.*
@@ -272,7 +272,7 @@ all sub-cluster solves exited converged.
 
 ## 2. ARM 2 — LIQUID OXYGEN
 
-*Instrument `holon-chem/examples/cryo_o2_spin.rs`; log `engine/output/cryo/o2_spin.log`.*
+*Instrument `holon-chem/examples/cryo_o2_spin.rs`; log `conformance/atomworld/cryo_logs/o2_spin.log`.*
 
 **Inherited disclosure, carried on every number in this arm:** the banked O–O curve exits
 `IterationCap` at `solver_budget_iterations = 5000` with `worst_residual = 4.809e-6 Ha`,
@@ -360,7 +360,7 @@ error the engine itself refuses to make.
 
 ### G7 — one aggregate at every rung? · **HOLDS, 15 of 15**
 
-*Instrument `holon-render/examples/cryo_quench.rs`; log `engine/output/cryo/quench_oxygen.log`.*
+*Instrument `holon-render/examples/cryo_quench.rs`; log `conformance/atomworld/cryo_logs/quench_oxygen.log`.*
 
 **V1 leg 1 PASS**, and it reproduces the banked disclosure exactly, not approximately:
 
@@ -433,7 +433,7 @@ gas does not.
 
 ## 3. ARM 3 — THE METALLIC-HYDROGEN FENCE
 
-*Instrument `holon-render/examples/cryo_h_compress.rs`; log `engine/output/cryo/compress.log`.
+*Instrument `holon-render/examples/cryo_h_compress.rs`; log `conformance/atomworld/cryo_logs/compress.log`.
 1,570 FCI solves, largest 4,900 determinants. Four H₂ molecules on a 2 × 2 planar lattice,
 bond frozen at the referee's `R_e`, nearest-neighbour centre separation `a` stepped down.*
 

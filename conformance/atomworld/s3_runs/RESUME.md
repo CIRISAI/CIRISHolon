@@ -161,6 +161,26 @@ the shell ladder uses the apex pair, which reproduces G0's 2.5369 exactly.
    SOLVER BUDGET alongside -- a pair solved at 4000 inside a trimer solved at 5000
    is two regimes in one subtraction.
 
+## THE RESIDUAL IS NOT MONOTONE IN THE BUDGET — reconciled, 2026-09-01
+
+Two lanes quoted two worst residuals for the O-O curve and they were treated as a
+discrepancy needing reconciliation. They are the SAME curve, the same 96 knots and
+the same build, at two budgets, and both columns are in
+`oo_budget_4000_to_5000.log`:
+
+    budget 4000  ->  worst 2.683e-6
+    budget 5000  ->  worst 4.810e-6
+
+The LARGER budget gives the LARGER worst residual, by a factor of 1.8 the wrong
+way. So a capped curve's uncertainty is not merely un-tight: it is not monotone in
+the effort spent, and the intuition "more iterations, tighter bound" is false. Two
+honest readings of one curve will never converge, and a consumer asked to
+reconcile them will pick the wrong one.
+
+Consequence for every citation: name the BUDGET beside the residual, or cite
+`solver_budget_iterations` from the manifest, which is what that field is for.
+This is the first case where it does work prose could not.
+
 ## Next, per the freeze's sequence
 
 (2) generalize trimer.rs over species (symmetry axis per table; S3 only for the

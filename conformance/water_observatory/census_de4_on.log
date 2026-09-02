@@ -11,6 +11,9 @@
 # /home/emoore/holon-artifacts/census-traj/de4_on/seed_0x0000000053415422.traj
 # seed 0x0000000053415422  12 atoms  20000 frames  16.703 ps simulated  complete: true
 # window = 834.0 fs, flicker cap = 8.4 fs; median frame 0.8338 fs (about 1000 frames a window)
+#
+# !! DIMS DECLARATION VIOLATED: the header says dims = 2 and an atom departs its placement z by 11.4899 bohr.
+#    A planar scene under in-plane forces stays planar by symmetry, so this trajectory did not stay in the configuration space it declares. Every dimension-keyed lens refusal below is taken on a false premise, and any comparison against a trajectory that DID stay planar differs in more than its stated variable.
 #   NOTE: the timestep ADAPTED during this run -- 2 distinct frame durations, 0.8338 to 1.6676 fs. Frame columns below are not a uniform unit; read the fs columns.
 #
 # FORMULA READER (what waterquench prints, final frame): O3H2 OH2 H2 H2
@@ -38,11 +41,11 @@
 #   defect                        : 0.093469   (first half 0.167850, second half 0.019102)
 #   non-expansion (<= 1.05x)       : ok
 #   VERDICT                       : NOT CLOSED: 138 witness pairs exhibited
-#     witness pair: frames 34 and 38 read the same partition, frames 35 and 39 do not
-#     witness pair: frames 107 and 117 read the same partition, frames 108 and 118 do not
-#     witness pair: frames 98 and 106 read the same partition, frames 99 and 107 do not
-#     witness pair: frames 167 and 175 read the same partition, frames 168 and 176 do not
 #     witness pair: frames 7187 and 7190 read the same partition, frames 7188 and 7191 do not
+#     witness pair: frames 3605 and 3613 read the same partition, frames 3606 and 3614 do not
+#     witness pair: frames 2199 and 2312 read the same partition, frames 2200 and 2313 do not
+#     witness pair: frames 2505 and 2546 read the same partition, frames 2506 and 2547 do not
+#     witness pair: frames 7931 and 7964 read the same partition, frames 7932 and 7965 do not
 #
 # LENS STACK on the final frame (refusals are readings too):
 #   q-tetrahedral                    : REFUSED [dims == 3] the scene is 2-dimensional; a tetrahedral order parameter on a plane does not contain the variable it names (M-MAINTENANCE-LENS)

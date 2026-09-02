@@ -199,6 +199,21 @@ pub struct CensusReport {
     pub distinct_frame_durations: usize,
     pub min_frame_fs: f64,
     pub max_frame_fs: f64,
+    /// The dimensionality the trajectory DECLARED. Recorded rather than inferred: a
+    /// declaration and the measurement of whether it held are two different facts, and an
+    /// accessor that derives one from the other collapses them.
+    pub dims_declared: u32,
+    /// Largest departure of any atom from its own placement `z`, in bohr.
+    ///
+    /// A scene declaring `dims = 2` must hold this at EXACTLY zero: a planar configuration
+    /// under in-plane forces stays planar by symmetry, and seventeen of eighteen banked
+    /// trajectories hold it bit-exactly across 20,000 frames. The eighteenth reached 11.49
+    /// bohr against a 12.0 box half-depth while still declaring `dims = 2`, which made
+    /// every dimension-keyed lens refusal in this crate a decision taken on a false
+    /// premise. The declaration is now CHECKED rather than trusted.
+    pub max_z_excursion: f64,
+    /// True when the scene's motion contradicts its declared dimensionality.
+    pub dims_declaration_violated: bool,
     pub blocks: Vec<BlockReport>,
     pub closure: ClosureLeg,
     /// What connected-component naming reports: the final frame's components of size ≥ 2.
@@ -241,6 +256,21 @@ pub fn run(traj: &Trajectory, st: &Stakes) -> Census {
         d.dedup_by(|a, b| (*a - *b).abs() < 1e-9);
         d.len()
     };
+    // The declared dimensionality, MEASURED. Every lens refusal keyed on `dims` is only as
+    // good as this, and a header is a claim rather than an observation.
+    let mut max_z_excursion = 0.0f64;
+    if let Some(f0) = traj.frames.first() {
+        for f in &traj.frames {
+            for i in 0..n {
+                let d = (f.pos[i][2] - f0.pos[i][2]).abs();
+                if d > max_z_excursion {
+                    max_z_excursion = d;
+                }
+            }
+        }
+    }
+    let dims_declaration_violated = traj.header.dims == 2 && max_z_excursion > 0.0;
+
     let span_fs = times[nf - 1] - times[0];
     if span_fs < st.window_fs {
         return Census::Refused {
@@ -403,6 +433,9 @@ pub fn run(traj: &Trajectory, st: &Stakes) -> Census {
         distinct_frame_durations: distinct,
         min_frame_fs,
         max_frame_fs,
+        dims_declared: traj.header.dims,
+        max_z_excursion,
+        dims_declaration_violated,
         blocks: reports,
         closure: closure_leg(&keys, st),
         final_frame_molecules,
@@ -809,6 +842,47 @@ pub fn closure_leg(keys: &[u64], st: &Stakes) -> ClosureLeg {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// THE PLANARITY GATE, both directions. A declared-2D scene that stays planar must not
+    /// trip it, and one that leaves the plane must -- with the excursion reported, since
+    /// "violated" without a magnitude is as unusable as a control rate without its pool.
+    #[test]
+    fn a_declared_planar_scene_that_leaves_the_plane_is_flagged() {
+        use crate::synthetic::{self, Spec};
+        let z = vec![8, 8, 8, 8, 1, 1, 1, 1, 1, 1, 1, 1];
+        let n = 12usize;
+
+        // Planar: z never moves. This is what seventeen of eighteen banked trajectories do.
+        let flat = synthetic::vibrating_block(Spec::quench_like(1200, z.clone()), 0b0011_0001, 0.4, |_| true);
+        let r = match run(&flat, &Stakes::default()) {
+            Census::Report(r) => r,
+            _ => panic!("refused"),
+        };
+        assert_eq!(r.dims_declared, 2);
+        assert_eq!(r.max_z_excursion, 0.0);
+        assert!(!r.dims_declaration_violated);
+
+        // The same scene with one atom drifting out of plane, declaring dims = 2 anyway.
+        let mut sp = Spec::quench_like(1200, z);
+        sp.seed = 99;
+        let escaped = synthetic::build(sp, move |t, pos, vel| {
+            for i in 0..n {
+                pos[i] = [3.0 + (i as f64), 3.0, if i == 5 { t as f64 * 0.001 } else { 0.0 }];
+                vel[i] = [0.0; 3];
+            }
+            synthetic::bonds_from_blocks(n, &[0b0011_0001])
+        });
+        let r2 = match run(&escaped, &Stakes::default()) {
+            Census::Report(r) => r,
+            _ => panic!("refused"),
+        };
+        assert_eq!(r2.dims_declared, 2, "it still CLAIMS to be planar");
+        assert!(r2.max_z_excursion > 1.0, "excursion {}", r2.max_z_excursion);
+        assert!(
+            r2.dims_declaration_violated,
+            "a scene that leaves its declared plane must be flagged"
+        );
+    }
 
     #[test]
     fn longest_run_counts_consecutive_only() {

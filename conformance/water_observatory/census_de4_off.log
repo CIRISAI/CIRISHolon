@@ -35,11 +35,11 @@
 #   defect                        : 0.136514   (first half 0.185600, second half 0.087417)
 #   non-expansion (<= 1.05x)       : ok
 #   VERDICT                       : NOT CLOSED: 124 witness pairs exhibited
-#     witness pair: frames 10112 and 10143 read the same partition, frames 10113 and 10144 do not
-#     witness pair: frames 167 and 175 read the same partition, frames 168 and 176 do not
-#     witness pair: frames 22 and 24 read the same partition, frames 23 and 25 do not
-#     witness pair: frames 3434 and 3465 read the same partition, frames 3435 and 3466 do not
-#     witness pair: frames 3455 and 3498 read the same partition, frames 3456 and 3499 do not
+#     witness pair: frames 3426 and 3433 read the same partition, frames 3427 and 3434 do not
+#     witness pair: frames 19 and 21 read the same partition, frames 20 and 22 do not
+#     witness pair: frames 39 and 47 read the same partition, frames 40 and 48 do not
+#     witness pair: frames 14783 and 15123 read the same partition, frames 14784 and 15124 do not
+#     witness pair: frames 15188 and 15190 read the same partition, frames 15189 and 15191 do not
 #
 # LENS STACK on the final frame (refusals are readings too):
 #   q-tetrahedral                    : REFUSED [dims == 3] the scene is 2-dimensional; a tetrahedral order parameter on a plane does not contain the variable it names (M-MAINTENANCE-LENS)

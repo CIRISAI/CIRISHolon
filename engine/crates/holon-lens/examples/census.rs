@@ -120,6 +120,20 @@ fn main() {
             rep.median_frame_fs,
             rep.window_fs / rep.median_frame_fs
         );
+        if rep.dims_declaration_violated {
+            // Loud, and above everything else, because a false dimensionality declaration
+            // silently invalidates every dimension-keyed lens refusal below it.
+            println!(
+                "#\n# !! DIMS DECLARATION VIOLATED: the header says dims = 2 and an atom \
+                 departs its placement z by {:.4} bohr.\n\
+                 #    A planar scene under in-plane forces stays planar by symmetry, so this \
+                 trajectory did not stay in the configuration space it declares. Every \
+                 dimension-keyed lens refusal below is taken on a false premise, and any \
+                 comparison against a trajectory that DID stay planar differs in more than \
+                 its stated variable.",
+                rep.max_z_excursion
+            );
+        }
         if rep.distinct_frame_durations > 1 {
             // The engine's timestep adapts. Saying so is not decoration: a window
             // converted once from the header `dt` would be the wrong duration for most of

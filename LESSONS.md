@@ -137,3 +137,16 @@ These are binding on all CIRISHolon code.*
     triage that follows from it: an untested negative that stays inside your
     lane wastes your afternoon, while one that leaves it spends attention its
     spender cannot audit — so the second is the more urgent class to fix.
+
+17. **A header is a claim; check it against the trajectory it describes.** Every
+    dimension-keyed refusal in the lens stack — the tetrahedral and `q6` lenses
+    declining 2D scenes, the hexatic declining 3D ones — was keyed on
+    `header.dims`, which the census TRUSTED. One trajectory declared `dims = 2`
+    and reached 11.49 bohr out of plane against a 12.0 box half-depth, which
+    made every one of those refusals a decision taken on a false premise, and
+    made a comparison against a genuinely planar arm differ in more than its
+    stated variable. Seventeen sibling trajectories held `z` bit-exactly for
+    20,000 frames, so the check costs one pass and had a clean expected value.
+    The census now MEASURES the excursion, reports it beside the declaration,
+    and shouts above every other reading when the two disagree. Declared
+    metadata is an input to be verified, not a fact to be consumed.

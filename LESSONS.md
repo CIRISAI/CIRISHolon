@@ -122,3 +122,18 @@ These are binding on all CIRISHolon code.*
     `conformance/water_observatory/detached_run.sh` is the pattern, with its
     three plants (killed, succeeded, empty-success) checked in all three
     directions.
+
+16. **An untested negative that leaves your lane must carry the check that
+    would falsify it.** Reporting "X does not exist" costs other people's
+    attention in a way reporting "X is broken" does not: the receiver acts on
+    it and cannot see the error from where they stand. A false absence was
+    routed to a lead and on to a second lane before the field it denied — one
+    that had existed for days, in the file being read — was found by someone
+    who happened to have just edited that struct. The cheap fix is to state
+    the check alongside the claim: *"`grep 'pub struct PairMeta' -A 22` shows
+    no exit field"* invites the reader to notice the struct is 64 lines long,
+    where *"PairMeta has no exit field"* does not. This is the
+    one-directional-check lesson with the blast radius attached, and the
+    triage that follows from it: an untested negative that stays inside your
+    lane wastes your afternoon, while one that leaves it spends attention its
+    spender cannot audit — so the second is the more urgent class to fix.

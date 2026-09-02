@@ -345,6 +345,76 @@ const RECORD = {
 };
 
 
+// ---------------------------------------------------------------- the fence register
+//
+// R6 of the retirement battery, at the lead's ruling: FENCES.md is the SINGLE register,
+// every fence the page DISPLAYS gets a row there, and the page carries owner + exit and
+// CITES the row. The citation is by ROW ID rather than by line, because an id survives the
+// register being reordered and a line number does not — the same reason the misfit gate
+// greps for `M-` ids instead of offsets.
+//
+// Most of these were already registered by the bank-fences lane before I came to cite
+// them, which is the register working: P13 the classifier, P14 the order parameters, P16
+// the refinement patch, C3 the in-browser split, P2 the untabulated-triple counter. Where
+// a page-local decision has no row, it says so and names what would earn one — an
+// UNREGISTERED marker that the gate treats as a failure once the row exists is the same
+// two-directional shape as the band certificates.
+const FENCE_REGISTER = {
+  splitViolated: {
+    owner: "holon-chem / atomworld",
+    exit: "the mesh solve — this is a page-load budget, not a capability limit",
+    register: "C3",
+  },
+  unpaidCurve: {
+    owner: "workbench-engine",
+    exit: "press SOLVE, or ship the curve as a committed artifact through the pair door",
+    register: "C3",
+  },
+  untabulatedTriples: {
+    owner: "ozone / atomworld lane",
+    exit: "the (O,O,O) tabulation lands and its certification upgrades the fence to served",
+    register: "P2",
+  },
+  trimerRefused: {
+    owner: "workbench-engine",
+    exit: "the H₃ generator declining its own grid is an error path, not a limit; if it "
+      + "fires the grid request is wrong",
+    register: "P2",
+  },
+  cannotStep: {
+    owner: "workbench-engine",
+    exit: "serve every pair the scene's atoms can meet — this fence is DERIVED from the "
+      + "pair fences above it and lifts when they do",
+    register: "C3",
+  },
+};
+
+/// The panels this engine cannot serve at all. Data rather than markup since R3 went full:
+/// the gate reads this list and requires the same owner/exit/register of every entry that
+/// the runtime fences carry. As prose in the HTML it was uncheckable, and "a citation pass
+/// over every fence the page displays" cannot mean "over the ones that were convenient".
+const NOT_SERVED = [
+  {
+    what: "Blind phase classifier (WB-5.5)",
+    why: "no classifier exists in this engine, so there is no phase call to display beside "
+      + "the preset. The mock printed \"LIQUID WATER · 99.8%\"; that number had no source.",
+    owner: "workbench-engine", register: "P13",
+    exit: "a classifier that reads the scene rather than the preset that launched it",
+  },
+  {
+    what: "Order parameters q_tet, Q₆, ⟨H-bonds⟩, MSD",
+    why: "not computed anywhere in this build.",
+    owner: "workbench-engine", register: "P14",
+    exit: "the lens stack the census already runs natively, exposed through the ABI",
+  },
+  {
+    what: "Local refinement patch (WB-1.2 / WB-4.4)",
+    why: "no refinement machinery exists. The mock showed a banner with no solve behind it.",
+    owner: "mesher", register: "P16",
+    exit: "a refinement patch that opens on a measured closure-budget breach",
+  },
+];
+
 // ---------------------------------------------- the scale ladder (FSD-W2 §9c)
 //
 // The site's hero is the zoom axis itself. A band either runs its certified physics or
@@ -729,7 +799,8 @@ async function loadPreset(key, { pay = null } = {}) {
     if (heavy) {
       const code = w.holon_bank_generate_pair(za, zb, 160);
       served.pairs.push({ za, zb, route, nDet, heavy, code, ok: false, door: "refused" });
-      served.fences.push({ what: `${sym(za)}–${sym(zb)} pair curve`, why: refusalText(code, nDet) });
+      served.fences.push({ what: `${sym(za)}–${sym(zb)} pair curve`, why: refusalText(code, nDet),
+        ...FENCE_REGISTER.splitViolated });
       continue;
     }
 
@@ -743,6 +814,7 @@ async function loadPreset(key, { pay = null } = {}) {
       served.priced.push({ za, zb, nDet, key: priceKey(za, zb) });
       served.pairs.push({ za, zb, route, nDet, heavy, code: 0, ok: false, door: "priced" });
       served.fences.push({
+        ...FENCE_REGISTER.unpaidCurve,
         what: `${sym(za)}–${sym(zb)} pair curve — UNPAID`,
         why: `the engine permits this solve (${nDet.toExponential(2)} determinants, inside `
           + `the in-browser limit of ${w.holon_bank_in_browser_det_limit()}) but it is not `
@@ -760,7 +832,8 @@ async function loadPreset(key, { pay = null } = {}) {
     if (code === 1) PAID_PRICES.set(priceKey(za, zb), ms);
     served.pairs.push({ za, zb, route, nDet, heavy, code, ok: code === 1, ms, door: "generate_pair" });
     if (code !== 1) {
-      served.fences.push({ what: `${sym(za)}–${sym(zb)} pair curve`, why: refusalText(code, nDet) });
+      served.fences.push({ what: `${sym(za)}–${sym(zb)} pair curve`, why: refusalText(code, nDet),
+        ...FENCE_REGISTER.splitViolated });
     }
   }
 
@@ -772,7 +845,8 @@ async function loadPreset(key, { pay = null } = {}) {
   const loaded = t === 1 && w.holon_trimer_loaded() === 1;
   if (!loaded) {
     served.trimer = { state: "refused", detail: "the H₃ generator declined this grid." };
-    served.fences.push({ what: "H₃ three-body surface", why: served.trimer.detail });
+    served.fences.push({ what: "H₃ three-body surface", why: served.trimer.detail,
+      ...FENCE_REGISTER.trimerRefused });
   } else if (preset.fencedTriples) {
     served.trimer = {
       state: "partly served",
@@ -785,6 +859,7 @@ async function loadPreset(key, { pay = null } = {}) {
         + "below rather than interpolated across or zeroed.",
     };
     served.fences.push({
+      ...FENCE_REGISTER.untabulatedTriples,
       what: `${preset.fencedTriples} three-body surfaces`,
       why: "shipped artifacts with no ABI door in this engine build; the encounters are "
         + "refused and counted, and the count is a live readout.",
@@ -827,6 +902,7 @@ async function loadPreset(key, { pay = null } = {}) {
   served.stepsAllowed = w.holon_pairs_ready() === 1;
   if (!served.stepsAllowed) {
     served.fences.push({
+      ...FENCE_REGISTER.cannotStep,
       what: "dynamics — this scene cannot step",
       why: "a curve this scene's atoms can meet each other on is missing, so the engine "
         + "refuses to integrate. Nothing is drawn moving because nothing is moving, and "
@@ -1210,7 +1286,10 @@ function renderStatics() {
   // --- the fence register (WB-5.2)
   if (UI["fence-list"]) {
     UI["fence-list"].innerHTML = s.fences.length
-      ? s.fences.map((f) => `<li><b>${f.what}</b><span>${f.why}</span></li>`).join("")
+      ? s.fences.map((f) => `<li><b>${f.what}</b><span>${f.why}</span>`
+          + `<span class="fence-meta"><b>owner</b> ${f.owner || "UNREGISTERED"}`
+          + ` · <b>exit</b> ${f.exit || "none stated"}`
+          + ` · <b>register</b> ${f.register || "UNREGISTERED"}</span></li>`).join("")
       : `<li class="none"><b>none</b><span>every interaction this scene can produce is served by a certified chart.</span></li>`;
   }
 
@@ -1247,6 +1326,14 @@ function renderStatics() {
     UI["record-rows"].innerHTML = Object.values(RECORD).map((r) =>
       `<div class="rec"><div class="rec-head"><b>${r.value}</b><span>${r.what}</span></div>`
       + `<p>${r.note}</p><code>${r.cite}</code></div>`).join("");
+  }
+
+  // The not-served list, from data so the gate can read it (R3 full).
+  if (UI["not-served-rows"]) {
+    UI["not-served-rows"].innerHTML = NOT_SERVED.map((f) =>
+      `<li><b>${f.what}</b><span>${f.why}</span>`
+      + `<span class="fence-meta"><b>owner</b> ${f.owner} · <b>exit</b> ${f.exit}`
+      + ` · <b>register</b> ${f.register}</span></li>`).join("");
   }
 
   put("manifest-device-class", State.deviceClass);

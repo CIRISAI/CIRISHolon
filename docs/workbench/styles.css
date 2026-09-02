@@ -1159,3 +1159,16 @@ body, html {
 }
 .lad-acuity { display: block; font-size: 10px; color: var(--purple); font-family: var(--font-mono); }
 .lad-acuity.zero { color: var(--text-dim); }
+
+/* --- a fence's provenance: who owns it, what lifts it, and which register row it is.
+   Rendered on every fence the page displays, because a fence without an owner and an
+   exit is a shrug, and one outside the register is invisible to the register's law. */
+.fence-meta {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.fence-meta b { color: var(--text-muted); font-weight: 600; }

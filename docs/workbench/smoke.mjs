@@ -828,6 +828,57 @@ if (acuitySrc) {
   }
 }
 
+// --------------------------------- 6c3. EVERY fence the page displays is registered
+//
+// R3 of the retirement battery, taken to FULL at the lead's ruling: partial was not it.
+// The RECORD figures and the band cites were gated; the page's runtime fences and its
+// not-served list were prose, and prose is where a fence goes to rot — the F-2 incident
+// was exactly that, one file over.
+//
+// Three properties per fence, and the third is the one the fence law actually demands:
+// an OWNER (a fence nobody owns is suppression, by that ledger's own words), an EXIT
+// (a fence with no exit is architecture, which the law forbids), and a REGISTER ROW that
+// EXISTS in FENCES.md. Cited by row ID, not by line: an id survives the register being
+// reordered and a line number does not.
+const fenceRegisterSrc = appSource.match(/const FENCE_REGISTER = \{([\s\S]*?)\n\};/);
+const notServedSrc = appSource.match(/const NOT_SERVED = \[([\s\S]*?)\n\];/);
+want(fenceRegisterSrc !== null && notServedSrc !== null,
+  "the page's fence register and not-served list are where the gate expects them");
+
+if (fenceRegisterSrc && notServedSrc) {
+  const ledger = readFileSync(join(repoRoot, "FENCES.md"), "utf8");
+  // A row id counts as existing only where the ledger uses it AS A ROW — leading pipe,
+  // the id, a pipe. "P13" appearing in a sentence is a mention, not a registration, and a
+  // check that accepted a mention would pass on a fence nobody had actually filed.
+  const rowExists = (id) =>
+    new RegExp(`^\\|\\s*\\*{0,2}${id}\\*{0,2}\\s*\\|`, "m").test(ledger);
+
+  want(rowExists("P13") && !rowExists("P999"),
+    "the row-existence test distinguishes a filed row from an absent one",
+    "the test cannot tell a real row id from an invented one, so every check below is void");
+
+  const entries = [
+    ...[...fenceRegisterSrc[1].matchAll(/(\w+): \{([\s\S]*?)\n  \},/g)]
+      .map((m) => ({ name: m[1], body: m[2], kind: "runtime fence" })),
+    ...notServedSrc[1].split(/\n  \{/).filter((b) => /what:/.test(b))
+      .map((b) => ({ name: (b.match(/what: "([^"]+)"/) || [, "?"])[1], body: b, kind: "not-served panel" })),
+  ];
+  want(entries.length >= 8, `every displayed fence is enumerable (${entries.length} found)`);
+
+  for (const { name, body, kind } of entries) {
+    const owner = /owner: "([^"]+)"/.exec(body);
+    const exit = /exit: "((?:[^"\\]|\\.)*)"/.exec(body);
+    const reg = /register: "([^"]+)"/.exec(body);
+    want(!!owner, `${kind} "${name}" names an OWNER`,
+      "a fence nobody owns is suppression, by the ledger's own law");
+    want(!!exit && exit[1].length > 25, `${kind} "${name}" names a substantive EXIT`,
+      "a fence with no exit is architecture, and the ledger forbids that word");
+    want(!!reg && rowExists(reg[1]),
+      `${kind} "${name}" cites a FENCES.md row that exists (${reg ? reg[1] : "none"})`,
+      reg ? `row ${reg[1]} is not a row in FENCES.md` : "no register id — the page displays a fence the register has never seen");
+  }
+}
+
 // ------------------------------------------- 6d. the PROSE cannot outlive the engine
 //
 // FENCES.md F-2 caught this page telling viewers "there is no barostat in this engine"

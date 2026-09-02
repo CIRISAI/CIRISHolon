@@ -1,0 +1,1325 @@
+# RUNG 2 / A2 — the lattice-gas (N,P) chart
+# stakes: RUNG2_PREREG_A2.md @ e5bd812
+# chart: FHP-6 (dims=2 carrier); engine/MESH_DESIGN.md §2.1's 3D FCHC-24 not exercised
+# labeller: ciris_sim_core::regplus::sector (53 sectors, 44/7/2, in-tree test)
+# bars: A1 distinct words >= 8; transport >= 0.05; informative >= 200; beta = 0.02; separation >= 0.05
+
+===== ARM fenced (8 trajectories) =====
+
+-- seed 0x0000000053415421  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5492 zero_vel=0 words=38 | A1 ok
+      Spatial W1 coll=85148508 fire=42604384 D_A=0.500354 info=19998 distinct=5 | D_B=0.412400 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=57033530 fire=30549751 D_A=0.535645 info=19996 distinct=30 | D_B=0.508656 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=0) D_A=0.494981 info=2494 | grain boundary found: NO
+      Spatial W3 coll=56868376 fire=30415457 D_A=0.534840 info=19993 distinct=38 | D_B=0.508918 cov=0.998 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5492 zero_vel=0 words=38 | A1 ok
+      BlindLabel W1 coll=85148508 fire=42604384 D_A=0.500354 info=19998 distinct=5 | D_B=0.412400 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=57033530 fire=30549751 D_A=0.535645 info=19996 distinct=30 | D_B=0.508656 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=56868376 fire=30415457 D_A=0.534840 info=19993 distinct=38 | D_B=0.508918 cov=0.998 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5492 zero_vel=0 words=38 | A1 ok
+      GlobalRelabel W1 coll=85148508 fire=42604384 D_A=0.500354 info=19998 distinct=5 | D_B=0.412400 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=57033530 fire=30549751 D_A=0.535645 info=19996 distinct=30 | D_B=0.508656 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=56868376 fire=30415457 D_A=0.534840 info=19993 distinct=38 | D_B=0.508918 cov=0.998 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.388 transport=0.0044  G2 admissible: NO
+      Spatial MAP saturation=0.8385 lost_atoms=0.3541 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=16817186 fire=13233275 D_A=0.786890 info=19998 distinct=32 | D_B=0.639305 cov=0.881 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=774200 fire=695703 D_A=0.898609 info=19807 distinct=1252 | D_B=0.872788 cov=0.542 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=7) D_A=0.884179 info=2202 | grain boundary found: NO
+      Spatial W3 coll=406183 fire=364562 D_A=0.897531 info=19645 distinct=1793 | D_B=0.944800 cov=0.484 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.9160 lost_atoms=0.3377 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=22863853 fire=18762906 D_A=0.820636 info=19999 distinct=28 | D_B=0.679175 cov=0.999 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=399456 fire=386609 D_A=0.967839 info=19792 distinct=1404 | D_B=0.945344 cov=0.853 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=210366 fire=203261 D_A=0.966226 info=19631 distinct=2050 | D_B=0.955367 cov=0.802 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.8385 lost_atoms=0.3541 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=16817186 fire=13233275 D_A=0.786890 info=19998 distinct=32 | D_B=0.639305 cov=0.881 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=774200 fire=695703 D_A=0.898609 info=19807 distinct=1252 | D_B=0.872788 cov=0.542 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=406183 fire=364562 D_A=0.897531 info=19645 distinct=1793 | D_B=0.944800 cov=0.484 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.757 transport=0.0077  G2 admissible: NO
+      Spatial MAP saturation=0.4888 lost_atoms=0.2410 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=4476229 fire=3397228 D_A=0.758949 info=19963 distinct=301 | D_B=0.653919 cov=0.531 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=115102 fire=108756 D_A=0.944866 info=13937 distinct=9036 | D_B=0.944123 cov=0.052 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=4) D_A=0.934277 info=947 | grain boundary found: NO
+      Spatial W3 coll=46010 fire=43168 D_A=0.938231 info=11888 distinct=11306 | D_B=0.957447 cov=0.014 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.5578 lost_atoms=0.2259 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=4766703 fire=4148976 D_A=0.870408 info=19974 distinct=226 | D_B=0.788082 cov=0.492 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=8994 fire=8784 D_A=0.976651 info=8185 distinct=14939 | D_B=0.994550 cov=0.073 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=4831 fire=4666 D_A=0.965846 info=6060 distinct=16519 | D_B=0.991071 cov=0.034 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4888 lost_atoms=0.2410 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=4476229 fire=3397228 D_A=0.758949 info=19963 distinct=301 | D_B=0.653919 cov=0.531 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=115102 fire=108756 D_A=0.944866 info=13937 distinct=9036 | D_B=0.944123 cov=0.052 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=46010 fire=43168 D_A=0.938231 info=11888 distinct=11306 | D_B=0.957447 cov=0.014 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=1.122 transport=0.0132  G2 admissible: NO
+      Spatial MAP saturation=0.2383 lost_atoms=0.1407 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=2668156 fire=1643742 D_A=0.616059 info=19727 distinct=1039 | D_B=0.524194 cov=0.037 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=50262 fire=47327 D_A=0.941606 info=9378 distinct=13187 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=4) D_A=0.909964 info=502 | grain boundary found: NO
+      Spatial W3 coll=25160 fire=23513 D_A=0.934539 info=6668 distinct=15506 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.1725 lost_atoms=0.1018 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=1709799 fire=1131456 D_A=0.661748 info=19841 distinct=962 | D_B=0.653191 cov=0.094 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=1030 fire=973 D_A=0.944660 info=1759 distinct=19079 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=964 fire=907 D_A=0.940871 info=1658 distinct=19134 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.2383 lost_atoms=0.1407 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=2668156 fire=1643742 D_A=0.616059 info=19727 distinct=1039 | D_B=0.505376 cov=0.037 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=50262 fire=47327 D_A=0.941606 info=9378 distinct=13187 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=25160 fire=23513 D_A=0.934539 info=6668 distinct=15506 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.782 transport=0.0452  G2 admissible: NO
+      Spatial MAP saturation=0.1043 lost_atoms=0.0674 zero_vel=0 words=63 | A1 ok
+      Spatial W1 coll=1383407 fire=511514 D_A=0.369749 info=19447 distinct=2014 | D_B=0.571429 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=2144 fire=2043 D_A=0.952892 info=2862 distinct=18403 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=3, r=2) D_A=0.933333 info=223 | grain boundary found: NO
+      Spatial W3 coll=1371 fire=1297 D_A=0.946025 info=2179 distinct=18833 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0478 lost_atoms=0.0374 zero_vel=0 words=57 | A1 ok
+      BlindLabel W1 coll=1294777 fire=535539 D_A=0.413615 info=19741 distinct=1425 | D_B=0.285714 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=792 fire=756 D_A=0.954545 info=1405 distinct=19272 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=739 fire=704 D_A=0.952639 info=1322 distinct=19317 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1043 lost_atoms=0.0674 zero_vel=0 words=63 | A1 ok
+      GlobalRelabel W1 coll=1383407 fire=511514 D_A=0.369749 info=19447 distinct=2014 | D_B=0.571429 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=2144 fire=2043 D_A=0.952892 info=2862 distinct=18403 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=1371 fire=1297 D_A=0.946025 info=2179 distinct=18833 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415422  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5460 zero_vel=0 words=36 | A1 ok
+      Spatial W1 coll=88282771 fire=43370283 D_A=0.491266 info=19999 distinct=4 | D_B=0.382900 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=60784043 fire=32307038 D_A=0.531505 info=19999 distinct=28 | D_B=0.530518 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=6, r=0) D_A=0.500105 info=3332 | grain boundary found: NO
+      Spatial W3 coll=60703833 fire=32244452 D_A=0.531177 info=19992 distinct=36 | D_B=0.530784 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5460 zero_vel=0 words=36 | A1 ok
+      BlindLabel W1 coll=88282771 fire=43370283 D_A=0.491266 info=19999 distinct=4 | D_B=0.382900 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=60784043 fire=32307038 D_A=0.531505 info=19999 distinct=28 | D_B=0.530518 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=60703833 fire=32244452 D_A=0.531177 info=19992 distinct=36 | D_B=0.530784 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5460 zero_vel=0 words=36 | A1 ok
+      GlobalRelabel W1 coll=88282771 fire=43370283 D_A=0.491266 info=19999 distinct=4 | D_B=0.382900 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=60784043 fire=32307038 D_A=0.531505 info=19999 distinct=28 | D_B=0.530518 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=60703833 fire=32244452 D_A=0.531177 info=19992 distinct=36 | D_B=0.530784 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.384 transport=0.0057  G2 admissible: NO
+      Spatial MAP saturation=0.8233 lost_atoms=0.3523 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=20322914 fire=16270156 D_A=0.800582 info=19999 distinct=30 | D_B=0.674654 cov=0.989 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=621995 fire=585365 D_A=0.941109 info=19814 distinct=1268 | D_B=0.916722 cov=0.754 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=5) D_A=0.925298 info=2201 | grain boundary found: NO
+      Spatial W3 coll=362816 fire=337162 D_A=0.929292 info=19647 distinct=1801 | D_B=0.925957 cov=0.710 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.9187 lost_atoms=0.3321 zero_vel=0 words=62 | A1 ok
+      BlindLabel W1 coll=20447485 fire=16895950 D_A=0.826309 info=19998 distinct=29 | D_B=0.733761 cov=0.998 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=329839 fire=319590 D_A=0.968927 info=19796 distinct=1460 | D_B=0.955260 cov=0.834 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=192822 fire=185872 D_A=0.963956 info=19614 distinct=2110 | D_B=0.968109 cov=0.790 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.8233 lost_atoms=0.3523 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=20322914 fire=16270156 D_A=0.800582 info=19999 distinct=30 | D_B=0.674654 cov=0.989 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=621995 fire=585365 D_A=0.941109 info=19814 distinct=1268 | D_B=0.916722 cov=0.754 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=362816 fire=337162 D_A=0.929292 info=19647 distinct=1801 | D_B=0.925957 cov=0.710 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.622 transport=0.0117  G2 admissible: NO
+      Spatial MAP saturation=0.4595 lost_atoms=0.1940 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=3356707 fire=2734407 D_A=0.814610 info=19950 distinct=403 | D_B=0.911039 cov=0.401 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=31433 fire=30213 D_A=0.961187 info=11569 distinct=11766 | D_B=0.996377 cov=0.028 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=1) D_A=0.951477 info=561 | grain boundary found: NO
+      Spatial W3 coll=10110 fire=9296 D_A=0.919486 info=8204 distinct=14858 | D_B=1.000000 cov=0.006 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4227 lost_atoms=0.2024 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=3612596 fire=2974361 D_A=0.823331 info=19962 distinct=283 | D_B=0.851987 cov=0.274 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=4876 fire=4519 D_A=0.926784 info=5256 distinct=16914 | D_B=1.000000 cov=0.006 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=4156 fire=3812 D_A=0.917228 info=4540 distinct=17345 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4595 lost_atoms=0.1940 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=3356707 fire=2734407 D_A=0.814610 info=19950 distinct=403 | D_B=0.911787 cov=0.401 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=31433 fire=30213 D_A=0.961187 info=11569 distinct=11766 | D_B=1.000000 cov=0.028 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=10110 fire=9296 D_A=0.919486 info=8204 distinct=14858 | D_B=1.000000 cov=0.006 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=0.936 transport=0.0295  G2 admissible: NO
+      Spatial MAP saturation=0.2102 lost_atoms=0.1083 zero_vel=0 words=63 | A1 ok
+      Spatial W1 coll=2088009 fire=1161145 D_A=0.556102 info=19553 distinct=1671 | D_B=0.744318 cov=0.035 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=10113 fire=9735 D_A=0.962622 info=5767 distinct=16385 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=1, r=0) D_A=0.962622 info=5767 | grain boundary found: NO
+      Spatial W3 coll=2273 fire=2091 D_A=0.919930 info=3279 distinct=18203 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.1774 lost_atoms=0.1052 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=1264934 fire=907157 D_A=0.717158 info=19756 distinct=1334 | D_B=0.731760 cov=0.047 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=1124 fire=1003 D_A=0.892349 info=1844 distinct=19028 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=1082 fire=962 D_A=0.889094 info=1780 distinct=19063 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.2102 lost_atoms=0.1083 zero_vel=0 words=63 | A1 ok
+      GlobalRelabel W1 coll=2088009 fire=1161145 D_A=0.556102 info=19553 distinct=1671 | D_B=0.744318 cov=0.035 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=10113 fire=9735 D_A=0.962622 info=5767 distinct=16385 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=2273 fire=2091 D_A=0.919930 info=3279 distinct=18203 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.770 transport=0.0657  G2 admissible: NO
+      Spatial MAP saturation=0.1052 lost_atoms=0.0639 zero_vel=0 words=57 | A1 ok
+      Spatial W1 coll=919084 fire=473771 D_A=0.515482 info=19225 distinct=2522 | D_B=0.742424 cov=0.007 | refines=true | NotClosed
+      Spatial W2 coll=5748 fire=5491 D_A=0.955289 info=3817 distinct=17595 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=4, r=2) D_A=0.954861 info=310 | grain boundary found: NO
+      Spatial W3 coll=1717 fire=1568 D_A=0.913221 info=2406 distinct=18671 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0330 lost_atoms=0.0286 zero_vel=0 words=57 | A1 ok
+      BlindLabel W1 coll=1379238 fire=421047 D_A=0.305275 info=19776 distinct=1296 | D_B=0.186441 cov=0.006 | refines=true | NotClosed
+      BlindLabel W2 coll=846 fire=729 D_A=0.861702 info=1400 distinct=19272 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=809 fire=692 D_A=0.855377 info=1326 distinct=19309 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1052 lost_atoms=0.0639 zero_vel=0 words=57 | A1 ok
+      GlobalRelabel W1 coll=919084 fire=473771 D_A=0.515482 info=19225 distinct=2522 | D_B=0.742424 cov=0.007 | refines=true | NotClosed
+      GlobalRelabel W2 coll=5748 fire=5491 D_A=0.955289 info=3817 distinct=17595 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=1717 fire=1568 D_A=0.913221 info=2406 distinct=18671 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415423  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5615 zero_vel=0 words=34 | A1 ok
+      Spatial W1 coll=82059855 fire=41224456 D_A=0.502371 info=19999 distinct=4 | D_B=0.403800 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=39413067 fire=23267292 D_A=0.590345 info=19998 distinct=29 | D_B=0.470423 cov=0.996 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=4) D_A=0.569120 info=2498 | grain boundary found: NO
+      Spatial W3 coll=39374907 fire=23236378 D_A=0.590132 info=19997 distinct=34 | D_B=0.470163 cov=0.995 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5615 zero_vel=0 words=34 | A1 ok
+      BlindLabel W1 coll=82059855 fire=41224456 D_A=0.502371 info=19999 distinct=4 | D_B=0.403800 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=39413067 fire=23267292 D_A=0.590345 info=19998 distinct=29 | D_B=0.470423 cov=0.996 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=39374907 fire=23236378 D_A=0.590132 info=19997 distinct=34 | D_B=0.470163 cov=0.995 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5615 zero_vel=0 words=34 | A1 ok
+      GlobalRelabel W1 coll=82059855 fire=41224456 D_A=0.502371 info=19999 distinct=4 | D_B=0.403800 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=39413067 fire=23267292 D_A=0.590345 info=19998 distinct=29 | D_B=0.470423 cov=0.996 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=39374907 fire=23236378 D_A=0.590132 info=19997 distinct=34 | D_B=0.470163 cov=0.995 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.260 transport=0.0044  G2 admissible: NO
+      Spatial MAP saturation=0.9045 lost_atoms=0.3609 zero_vel=0 words=61 | A1 ok
+      Spatial W1 coll=19229016 fire=15002736 D_A=0.780213 info=19997 distinct=32 | D_B=0.648243 cov=0.993 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=367615 fire=327239 D_A=0.890168 info=19825 distinct=1482 | D_B=0.924777 cov=0.706 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=6) D_A=0.822915 info=2140 | grain boundary found: NO
+      Spatial W3 coll=279517 fire=246858 D_A=0.883159 info=19670 distinct=2047 | D_B=0.936882 cov=0.627 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.8626 lost_atoms=0.3602 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=24095345 fire=18613588 D_A=0.772497 info=19998 distinct=28 | D_B=0.621400 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=438458 fire=406345 D_A=0.926759 info=19805 distinct=1309 | D_B=0.875678 cov=0.867 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=297745 fire=273765 D_A=0.919461 info=19655 distinct=1808 | D_B=0.888411 cov=0.814 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.9045 lost_atoms=0.3609 zero_vel=0 words=61 | A1 ok
+      GlobalRelabel W1 coll=19229016 fire=15002736 D_A=0.780213 info=19997 distinct=32 | D_B=0.648243 cov=0.993 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=367615 fire=327239 D_A=0.890168 info=19825 distinct=1482 | D_B=0.924777 cov=0.706 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=279517 fire=246858 D_A=0.883159 info=19670 distinct=2047 | D_B=0.936882 cov=0.627 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.555 transport=0.0106  G2 admissible: NO
+      Spatial MAP saturation=0.4892 lost_atoms=0.2422 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=2150323 fire=1706816 D_A=0.793749 info=19944 distinct=383 | D_B=0.762065 cov=0.833 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=28433 fire=25604 D_A=0.900503 info=11669 distinct=11835 | D_B=0.976190 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=0) D_A=0.814224 info=661 | grain boundary found: NO
+      Spatial W3 coll=21510 fire=19457 D_A=0.904556 info=10725 distinct=12679 | D_B=1.000000 cov=0.003 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4691 lost_atoms=0.2167 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=1691838 fire=1402560 D_A=0.829016 info=19959 distinct=411 | D_B=0.763069 cov=0.589 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=9614 fire=8659 D_A=0.900666 info=8315 distinct=14856 | D_B=1.000000 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=8776 fire=7854 D_A=0.894941 info=7730 distinct=15243 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4892 lost_atoms=0.2422 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=2150323 fire=1706816 D_A=0.793749 info=19944 distinct=383 | D_B=0.762785 cov=0.833 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=28433 fire=25604 D_A=0.900503 info=11669 distinct=11835 | D_B=0.976190 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=21510 fire=19457 D_A=0.904556 info=10725 distinct=12679 | D_B=1.000000 cov=0.003 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=0.865 transport=0.0195  G2 admissible: NO
+      Spatial MAP saturation=0.2754 lost_atoms=0.1561 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=534385 fire=330661 D_A=0.618769 info=19525 distinct=1975 | D_B=0.717890 cov=0.087 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=15494 fire=12988 D_A=0.838260 info=7483 distinct=15223 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=6, r=4) D_A=0.767908 info=399 | grain boundary found: NO
+      Spatial W3 coll=8419 fire=7592 D_A=0.901770 info=6593 distinct=15946 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.2081 lost_atoms=0.1250 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=484797 fire=339280 D_A=0.699839 info=19687 distinct=1592 | D_B=0.707018 cov=0.057 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=3423 fire=3132 D_A=0.914987 info=4551 distinct=17439 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=3205 fire=2919 D_A=0.910764 info=4309 distinct=17587 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.2754 lost_atoms=0.1561 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=534385 fire=330661 D_A=0.618769 info=19525 distinct=1975 | D_B=0.719037 cov=0.087 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=15494 fire=12988 D_A=0.838260 info=7483 distinct=15223 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=8419 fire=7592 D_A=0.901770 info=6593 distinct=15946 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.683 transport=0.0506  G2 admissible: NO
+      Spatial MAP saturation=0.1409 lost_atoms=0.0960 zero_vel=0 words=57 | A1 ok
+      Spatial W1 coll=299530 fire=123703 D_A=0.412990 info=19082 distinct=3116 | D_B=0.750000 cov=0.001 | refines=true | NotClosed
+      Spatial W2 coll=4690 fire=4082 D_A=0.870362 info=4434 distinct=17426 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=4, r=2) D_A=0.786561 info=361 | grain boundary found: NO
+      Spatial W3 coll=3097 fire=2810 D_A=0.907330 info=3849 distinct=17831 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0487 lost_atoms=0.0392 zero_vel=0 words=57 | A1 ok
+      BlindLabel W1 coll=400345 fire=132485 D_A=0.330927 info=19627 distinct=1861 | D_B=0.200000 cov=0.001 | refines=true | NotClosed
+      BlindLabel W2 coll=1679 fire=1545 D_A=0.920191 info=2730 distinct=18545 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=1648 fire=1515 D_A=0.919296 info=2673 distinct=18574 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1409 lost_atoms=0.0960 zero_vel=0 words=57 | A1 ok
+      GlobalRelabel W1 coll=299530 fire=123703 D_A=0.412990 info=19082 distinct=3116 | D_B=0.750000 cov=0.001 | refines=true | NotClosed
+      GlobalRelabel W2 coll=4690 fire=4082 D_A=0.870362 info=4434 distinct=17426 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=3097 fire=2810 D_A=0.907330 info=3849 distinct=17831 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415424  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5500 zero_vel=0 words=38 | A1 ok
+      Spatial W1 coll=85837385 fire=43574021 D_A=0.507635 info=19999 distinct=4 | D_B=0.390300 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=53590131 fire=30167864 D_A=0.562937 info=19999 distinct=29 | D_B=0.496949 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=5) D_A=0.525424 info=2498 | grain boundary found: NO
+      Spatial W3 coll=53508161 fire=30102888 D_A=0.562585 info=19997 distinct=38 | D_B=0.496444 cov=0.998 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5500 zero_vel=0 words=38 | A1 ok
+      BlindLabel W1 coll=85837385 fire=43574021 D_A=0.507635 info=19999 distinct=4 | D_B=0.390300 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=53590131 fire=30167864 D_A=0.562937 info=19999 distinct=29 | D_B=0.496949 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=53508161 fire=30102888 D_A=0.562585 info=19997 distinct=38 | D_B=0.496444 cov=0.998 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5500 zero_vel=0 words=38 | A1 ok
+      GlobalRelabel W1 coll=85837385 fire=43574021 D_A=0.507635 info=19999 distinct=4 | D_B=0.390300 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=53590131 fire=30167864 D_A=0.562937 info=19999 distinct=29 | D_B=0.496949 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=53508161 fire=30102888 D_A=0.562585 info=19997 distinct=38 | D_B=0.496444 cov=0.998 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.201 transport=0.0044  G2 admissible: NO
+      Spatial MAP saturation=0.9348 lost_atoms=0.3360 zero_vel=0 words=60 | A1 ok
+      Spatial W1 coll=18885231 fire=15620504 D_A=0.827128 info=19996 distinct=32 | D_B=0.675825 cov=0.997 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=347368 fire=334871 D_A=0.964024 info=19851 distinct=1429 | D_B=0.947836 cov=0.822 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=2) D_A=0.955782 info=2169 | grain boundary found: NO
+      Spatial W3 coll=177500 fire=170239 D_A=0.959093 info=19681 distinct=2104 | D_B=0.963094 cov=0.764 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.9550 lost_atoms=0.3380 zero_vel=0 words=62 | A1 ok
+      BlindLabel W1 coll=25259675 fire=20687408 D_A=0.818989 info=19995 distinct=30 | D_B=0.682300 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=332162 fire=322057 D_A=0.969578 info=19816 distinct=1430 | D_B=0.930669 cov=0.943 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=198109 fire=191389 D_A=0.966079 info=19643 distinct=2097 | D_B=0.946241 cov=0.906 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.9348 lost_atoms=0.3360 zero_vel=0 words=60 | A1 ok
+      GlobalRelabel W1 coll=18885231 fire=15620504 D_A=0.827128 info=19996 distinct=32 | D_B=0.675825 cov=0.997 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=347368 fire=334871 D_A=0.964024 info=19851 distinct=1429 | D_B=0.947836 cov=0.822 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=177500 fire=170239 D_A=0.959093 info=19681 distinct=2104 | D_B=0.963094 cov=0.764 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.459 transport=0.0131  G2 admissible: NO
+      Spatial MAP saturation=0.4607 lost_atoms=0.1870 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=2431350 fire=2039690 D_A=0.838913 info=19954 distinct=408 | D_B=0.808533 cov=0.654 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=13338 fire=12729 D_A=0.954341 info=7836 distinct=14965 | D_B=0.984127 cov=0.006 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=7) D_A=0.886957 info=350 | grain boundary found: NO
+      Spatial W3 coll=5535 fire=5233 D_A=0.945438 info=5826 distinct=16532 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4240 lost_atoms=0.1923 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=2154991 fire=1807398 D_A=0.838703 info=19960 distinct=352 | D_B=0.833199 cov=0.622 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=4310 fire=4127 D_A=0.957541 info=5088 distinct=17064 | D_B=0.959184 cov=0.005 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=3298 fire=3127 D_A=0.948150 info=4381 distinct=17528 | D_B=0.969697 cov=0.003 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4607 lost_atoms=0.1870 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=2431350 fire=2039690 D_A=0.838913 info=19954 distinct=408 | D_B=0.804404 cov=0.654 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=13338 fire=12729 D_A=0.954341 info=7836 distinct=14965 | D_B=0.984127 cov=0.006 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=5535 fire=5233 D_A=0.945438 info=5826 distinct=16532 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=0.782 transport=0.0247  G2 admissible: NO
+      Spatial MAP saturation=0.2165 lost_atoms=0.1062 zero_vel=0 words=63 | A1 ok
+      Spatial W1 coll=634601 fire=350855 D_A=0.552875 info=19523 distinct=1972 | D_B=0.851064 cov=0.047 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=9185 fire=8722 D_A=0.949592 info=4248 distinct=17397 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=4, r=3) D_A=0.919626 info=408 | grain boundary found: NO
+      Spatial W3 coll=2216 fire=2100 D_A=0.947653 info=3030 distinct=18315 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.1766 lost_atoms=0.1022 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=432561 fire=315623 D_A=0.729661 info=19677 distinct=1733 | D_B=0.725000 cov=0.020 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=1095 fire=1036 D_A=0.946119 info=1924 distinct=18997 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=1043 fire=985 D_A=0.944391 info=1832 distinct=19045 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.2165 lost_atoms=0.1062 zero_vel=0 words=63 | A1 ok
+      GlobalRelabel W1 coll=634601 fire=350855 D_A=0.552875 info=19523 distinct=1972 | D_B=0.851064 cov=0.047 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=9185 fire=8722 D_A=0.949592 info=4248 distinct=17397 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=2216 fire=2100 D_A=0.947653 info=3030 distinct=18315 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.661 transport=0.0521  G2 admissible: NO
+      Spatial MAP saturation=0.1069 lost_atoms=0.0683 zero_vel=0 words=42 | A1 ok
+      Spatial W1 coll=356713 fire=130093 D_A=0.364699 info=19149 distinct=3015 | D_B=0.416667 cov=0.001 | refines=true | NotClosed
+      Spatial W2 coll=2643 fire=2487 D_A=0.940976 info=2722 distinct=18430 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=3, r=0) D_A=0.923077 info=223 | grain boundary found: NO
+      Spatial W3 coll=1254 fire=1187 D_A=0.946571 info=2085 distinct=18893 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0419 lost_atoms=0.0354 zero_vel=0 words=48 | A1 ok
+      BlindLabel W1 coll=372995 fire=120187 D_A=0.322221 info=19594 distinct=1979 | D_B=0.214286 cov=0.001 | refines=true | NotClosed
+      BlindLabel W2 coll=829 fire=786 D_A=0.948130 info=1501 distinct=19224 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=812 fire=771 D_A=0.949507 info=1473 distinct=19239 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1069 lost_atoms=0.0683 zero_vel=0 words=42 | A1 ok
+      GlobalRelabel W1 coll=356713 fire=130093 D_A=0.364699 info=19149 distinct=3015 | D_B=0.416667 cov=0.001 | refines=true | NotClosed
+      GlobalRelabel W2 coll=2643 fire=2487 D_A=0.940976 info=2722 distinct=18430 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=1254 fire=1187 D_A=0.946571 info=2085 distinct=18893 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415425  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5613 zero_vel=0 words=41 | A1 ok
+      Spatial W1 coll=78524371 fire=43043575 D_A=0.548156 info=19998 distinct=5 | D_B=0.430500 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=40402630 fire=25621293 D_A=0.634149 info=19997 distinct=32 | D_B=0.570785 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=2) D_A=0.614458 info=2498 | grain boundary found: NO
+      Spatial W3 coll=40301467 fire=25537510 D_A=0.633662 info=19996 distinct=41 | D_B=0.570356 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5613 zero_vel=0 words=41 | A1 ok
+      BlindLabel W1 coll=78524371 fire=43043575 D_A=0.548156 info=19998 distinct=5 | D_B=0.430500 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=40402630 fire=25621293 D_A=0.634149 info=19997 distinct=32 | D_B=0.570785 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=40301467 fire=25537510 D_A=0.633662 info=19996 distinct=41 | D_B=0.570356 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5613 zero_vel=0 words=41 | A1 ok
+      GlobalRelabel W1 coll=78524371 fire=43043575 D_A=0.548156 info=19998 distinct=5 | D_B=0.430500 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=40402630 fire=25621293 D_A=0.634149 info=19997 distinct=32 | D_B=0.570785 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=40301467 fire=25537510 D_A=0.633662 info=19996 distinct=41 | D_B=0.570356 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.344 transport=0.0079  G2 admissible: NO
+      Spatial MAP saturation=0.8499 lost_atoms=0.3633 zero_vel=0 words=63 | A1 ok
+      Spatial W1 coll=14987177 fire=12382975 D_A=0.826238 info=19999 distinct=32 | D_B=0.735303 cov=0.995 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=316726 fire=301988 D_A=0.953468 info=19771 distinct=1707 | D_B=0.961033 cov=0.677 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=4) D_A=0.941941 info=2046 | grain boundary found: NO
+      Spatial W3 coll=177802 fire=167240 D_A=0.940597 info=19600 distinct=2386 | D_B=0.969221 cov=0.637 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.9464 lost_atoms=0.3478 zero_vel=0 words=62 | A1 ok
+      BlindLabel W1 coll=22780939 fire=18870856 D_A=0.828362 info=19998 distinct=30 | D_B=0.705241 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=264442 fire=257633 D_A=0.974251 info=19797 distinct=1566 | D_B=0.962748 cov=0.894 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=165192 fire=160403 D_A=0.971009 info=19608 distinct=2294 | D_B=0.969562 cov=0.854 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.8499 lost_atoms=0.3633 zero_vel=0 words=63 | A1 ok
+      GlobalRelabel W1 coll=14987177 fire=12382975 D_A=0.826238 info=19999 distinct=32 | D_B=0.735303 cov=0.995 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=316726 fire=301988 D_A=0.953468 info=19771 distinct=1707 | D_B=0.961033 cov=0.677 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=177802 fire=167240 D_A=0.940597 info=19600 distinct=2386 | D_B=0.969221 cov=0.637 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.650 transport=0.0153  G2 admissible: NO
+      Spatial MAP saturation=0.4732 lost_atoms=0.2311 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=2420229 fire=1882396 D_A=0.777776 info=19933 distinct=542 | D_B=0.767652 cov=0.521 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=19741 fire=18865 D_A=0.955625 info=9687 distinct=13538 | D_B=1.000000 cov=0.009 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=4) D_A=0.914634 info=401 | grain boundary found: NO
+      Spatial W3 coll=8907 fire=8372 D_A=0.939935 info=7182 distinct=15499 | D_B=1.000000 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4581 lost_atoms=0.1941 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=2734317 fire=2376747 D_A=0.869229 info=19954 distinct=358 | D_B=0.757818 cov=0.812 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=4574 fire=4257 D_A=0.930695 info=4534 distinct=17367 | D_B=1.000000 cov=0.012 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=3706 fire=3419 D_A=0.922558 info=3649 distinct=17880 | D_B=1.000000 cov=0.003 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4732 lost_atoms=0.2311 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=2420229 fire=1882396 D_A=0.777776 info=19933 distinct=542 | D_B=0.770146 cov=0.521 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=19741 fire=18865 D_A=0.955625 info=9687 distinct=13538 | D_B=1.000000 cov=0.009 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=8907 fire=8372 D_A=0.939935 info=7182 distinct=15499 | D_B=1.000000 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=1.017 transport=0.0284  G2 admissible: NO
+      Spatial MAP saturation=0.2870 lost_atoms=0.1576 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=959829 fire=546982 D_A=0.569874 info=19496 distinct=1977 | D_B=0.845316 cov=0.046 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=6736 fire=6312 D_A=0.937055 info=5057 distinct=16914 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=4, r=1) D_A=0.906178 info=471 | grain boundary found: NO
+      Spatial W3 coll=2954 fire=2812 D_A=0.951930 info=3485 distinct=18006 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.1788 lost_atoms=0.1123 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=712065 fire=490343 D_A=0.688621 info=19680 distinct=1521 | D_B=0.706234 cov=0.117 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=1425 fire=1363 D_A=0.956491 info=2095 distinct=18862 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=1314 fire=1257 D_A=0.956621 info=1956 distinct=18942 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.2870 lost_atoms=0.1576 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=959829 fire=546982 D_A=0.569874 info=19496 distinct=1977 | D_B=0.908497 cov=0.046 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=6736 fire=6312 D_A=0.937055 info=5057 distinct=16914 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=2954 fire=2812 D_A=0.951930 info=3485 distinct=18006 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.850 transport=0.0508  G2 admissible: NO
+      Spatial MAP saturation=0.1494 lost_atoms=0.0950 zero_vel=0 words=63 | A1 ok
+      Spatial W1 coll=339279 fire=155671 D_A=0.458829 info=18906 distinct=3374 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      Spatial W2 coll=3876 fire=3696 D_A=0.953560 info=3125 distinct=18109 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=4, r=2) D_A=0.914729 info=276 | grain boundary found: NO
+      Spatial W3 coll=1720 fire=1655 D_A=0.962209 info=2214 distinct=18760 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0485 lost_atoms=0.0395 zero_vel=0 words=57 | A1 ok
+      BlindLabel W1 coll=413080 fire=148469 D_A=0.359419 info=19586 distinct=1925 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      BlindLabel W2 coll=959 fire=925 D_A=0.964546 info=1472 distinct=19216 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=943 fire=909 D_A=0.963945 info=1443 distinct=19231 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1494 lost_atoms=0.0950 zero_vel=0 words=63 | A1 ok
+      GlobalRelabel W1 coll=339279 fire=155671 D_A=0.458829 info=18906 distinct=3374 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W2 coll=3876 fire=3696 D_A=0.953560 info=3125 distinct=18109 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=1720 fire=1655 D_A=0.962209 info=2214 distinct=18760 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415426  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5500 zero_vel=0 words=36 | A1 ok
+      Spatial W1 coll=85225537 fire=42796787 D_A=0.502159 info=19999 distinct=4 | D_B=0.375400 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=54392391 fire=29792828 D_A=0.547739 info=19999 distinct=28 | D_B=0.533607 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=1) D_A=0.503778 info=2498 | grain boundary found: NO
+      Spatial W3 coll=54322599 fire=29734953 D_A=0.547377 info=19996 distinct=36 | D_B=0.533093 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5500 zero_vel=0 words=36 | A1 ok
+      BlindLabel W1 coll=85225537 fire=42796787 D_A=0.502159 info=19999 distinct=4 | D_B=0.375400 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=54392391 fire=29792828 D_A=0.547739 info=19999 distinct=28 | D_B=0.533607 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=54322599 fire=29734953 D_A=0.547377 info=19996 distinct=36 | D_B=0.533093 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5500 zero_vel=0 words=36 | A1 ok
+      GlobalRelabel W1 coll=85225537 fire=42796787 D_A=0.502159 info=19999 distinct=4 | D_B=0.375400 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=54392391 fire=29792828 D_A=0.547739 info=19999 distinct=28 | D_B=0.533607 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=54322599 fire=29734953 D_A=0.547377 info=19996 distinct=36 | D_B=0.533093 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.508 transport=0.0035  G2 admissible: NO
+      Spatial MAP saturation=0.7813 lost_atoms=0.3800 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=11688511 fire=8790232 D_A=0.752040 info=19998 distinct=36 | D_B=0.825638 cov=0.764 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=700974 fire=570947 D_A=0.814505 info=19768 distinct=1502 | D_B=0.955644 cov=0.426 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=4) D_A=0.767600 info=2132 | grain boundary found: NO
+      Spatial W3 coll=566390 fire=446055 D_A=0.787540 info=19593 distinct=2066 | D_B=0.968787 cov=0.340 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.8435 lost_atoms=0.3558 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=20183733 fire=15625284 D_A=0.774152 info=19998 distinct=28 | D_B=0.691542 cov=0.994 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=441870 fire=410074 D_A=0.928042 info=19790 distinct=1405 | D_B=0.877853 cov=0.837 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=279253 fire=256664 D_A=0.919109 info=19611 distinct=1981 | D_B=0.888960 cov=0.785 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.7813 lost_atoms=0.3800 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=11688511 fire=8790232 D_A=0.752040 info=19998 distinct=36 | D_B=0.825638 cov=0.764 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=700974 fire=570947 D_A=0.814505 info=19768 distinct=1502 | D_B=0.955644 cov=0.426 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=566390 fire=446055 D_A=0.787540 info=19593 distinct=2066 | D_B=0.968787 cov=0.340 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.727 transport=0.0098  G2 admissible: NO
+      Spatial MAP saturation=0.4729 lost_atoms=0.2389 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=3160540 fire=2174740 D_A=0.688091 info=19949 distinct=464 | D_B=0.926242 cov=0.199 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=68692 fire=64722 D_A=0.942206 info=12400 distinct=10900 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=2) D_A=0.844093 info=690 | grain boundary found: NO
+      Spatial W3 coll=41502 fire=38824 D_A=0.935473 info=10939 distinct=12260 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4954 lost_atoms=0.2212 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=2250764 fire=1827628 D_A=0.812003 info=19957 distinct=473 | D_B=0.771316 cov=0.561 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=45228 fire=41009 D_A=0.906717 info=6813 distinct=15361 | D_B=0.977778 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=34223 fire=30803 D_A=0.900067 info=6192 distinct=15774 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4729 lost_atoms=0.2389 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=3160540 fire=2174740 D_A=0.688091 info=19949 distinct=464 | D_B=0.925238 cov=0.199 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=68692 fire=64722 D_A=0.942206 info=12400 distinct=10900 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=41502 fire=38824 D_A=0.935473 info=10939 distinct=12260 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=1.029 transport=0.0175  G2 admissible: NO
+      Spatial MAP saturation=0.2679 lost_atoms=0.1433 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=2512229 fire=1547362 D_A=0.615932 info=19697 distinct=1422 | D_B=0.900000 cov=0.017 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=17911 fire=16952 D_A=0.946457 info=7722 distinct=14881 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=7) D_A=0.876636 info=415 | grain boundary found: NO
+      Spatial W3 coll=9071 fire=8504 D_A=0.937493 info=6358 distinct=16023 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.1759 lost_atoms=0.1071 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=1558146 fire=1132739 D_A=0.726979 info=19728 distinct=1414 | D_B=0.749240 cov=0.066 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=2065 fire=1903 D_A=0.921550 info=3148 distinct=18295 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=1998 fire=1841 D_A=0.921421 info=3050 distinct=18350 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.2679 lost_atoms=0.1433 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=2512229 fire=1547362 D_A=0.615932 info=19697 distinct=1422 | D_B=0.917647 cov=0.017 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=17911 fire=16952 D_A=0.946457 info=7722 distinct=14881 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=9071 fire=8504 D_A=0.937493 info=6358 distinct=16023 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.881 transport=0.0518  G2 admissible: NO
+      Spatial MAP saturation=0.1419 lost_atoms=0.0892 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=816921 fire=326625 D_A=0.399824 info=19262 distinct=2636 | D_B=0.857143 cov=0.001 | refines=true | NotClosed
+      Spatial W2 coll=3574 fire=3410 D_A=0.954113 info=3853 distinct=17784 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=4, r=3) D_A=0.940945 info=283 | grain boundary found: NO
+      Spatial W3 coll=2760 fire=2626 D_A=0.951449 info=3308 distinct=18134 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0472 lost_atoms=0.0380 zero_vel=0 words=55 | A1 ok
+      BlindLabel W1 coll=904123 fire=328101 D_A=0.362894 info=19645 distinct=1717 | D_B=0.333333 cov=0.003 | refines=true | NotClosed
+      BlindLabel W2 coll=1382 fire=1292 D_A=0.934877 info=2352 distinct=18760 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=1358 fire=1269 D_A=0.934462 info=2320 distinct=18778 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1419 lost_atoms=0.0892 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=816921 fire=326625 D_A=0.399824 info=19262 distinct=2636 | D_B=0.857143 cov=0.001 | refines=true | NotClosed
+      GlobalRelabel W2 coll=3574 fire=3410 D_A=0.954113 info=3853 distinct=17784 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=2760 fire=2626 D_A=0.951449 info=3308 distinct=18134 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415427  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5571 zero_vel=0 words=38 | A1 ok
+      Spatial W1 coll=80371298 fire=42263698 D_A=0.525856 info=19999 distinct=4 | D_B=0.402100 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=45392134 fire=26570280 D_A=0.585350 info=19996 distinct=31 | D_B=0.498894 cov=0.994 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=3) D_A=0.557865 info=2498 | grain boundary found: NO
+      Spatial W3 coll=45275989 fire=26474470 D_A=0.584735 info=19994 distinct=38 | D_B=0.498894 cov=0.994 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5571 zero_vel=0 words=38 | A1 ok
+      BlindLabel W1 coll=80371298 fire=42263698 D_A=0.525856 info=19999 distinct=4 | D_B=0.402100 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=45392134 fire=26570280 D_A=0.585350 info=19996 distinct=31 | D_B=0.498894 cov=0.994 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=45275989 fire=26474470 D_A=0.584735 info=19994 distinct=38 | D_B=0.498894 cov=0.994 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5571 zero_vel=0 words=38 | A1 ok
+      GlobalRelabel W1 coll=80371298 fire=42263698 D_A=0.525856 info=19999 distinct=4 | D_B=0.402100 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=45392134 fire=26570280 D_A=0.585350 info=19996 distinct=31 | D_B=0.498894 cov=0.994 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=45275989 fire=26474470 D_A=0.584735 info=19994 distinct=38 | D_B=0.498894 cov=0.994 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.338 transport=0.0028  G2 admissible: NO
+      Spatial MAP saturation=0.8368 lost_atoms=0.3564 zero_vel=0 words=60 | A1 ok
+      Spatial W1 coll=18242312 fire=14432480 D_A=0.791154 info=19998 distinct=29 | D_B=0.636099 cov=0.996 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=480572 fire=439409 D_A=0.914346 info=19788 distinct=1389 | D_B=0.946285 cov=0.758 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=4) D_A=0.870744 info=2173 | grain boundary found: NO
+      Spatial W3 coll=285639 fire=259034 D_A=0.906858 info=19633 distinct=2058 | D_B=0.953454 cov=0.675 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.9718 lost_atoms=0.3408 zero_vel=0 words=60 | A1 ok
+      BlindLabel W1 coll=23477812 fire=19302734 D_A=0.822169 info=19997 distinct=30 | D_B=0.703904 cov=0.999 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=277733 fire=267871 D_A=0.964491 info=19792 distinct=1523 | D_B=0.944014 cov=0.916 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=174400 fire=167123 D_A=0.958274 info=19640 distinct=2186 | D_B=0.956847 cov=0.869 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.8368 lost_atoms=0.3564 zero_vel=0 words=60 | A1 ok
+      GlobalRelabel W1 coll=18242312 fire=14432480 D_A=0.791154 info=19998 distinct=29 | D_B=0.636099 cov=0.996 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=480572 fire=439409 D_A=0.914346 info=19788 distinct=1389 | D_B=0.946285 cov=0.758 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=285639 fire=259034 D_A=0.906858 info=19633 distinct=2058 | D_B=0.953454 cov=0.675 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.641 transport=0.0161  G2 admissible: NO
+      Spatial MAP saturation=0.4692 lost_atoms=0.2261 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=2326730 fire=1781134 D_A=0.765510 info=19961 distinct=401 | D_B=0.755246 cov=0.481 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=36600 fire=33182 D_A=0.906612 info=11473 distinct=11964 | D_B=0.969231 cov=0.006 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=4) D_A=0.801782 info=666 | grain boundary found: NO
+      Spatial W3 coll=20465 fire=18385 D_A=0.898363 info=9061 distinct=13943 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4995 lost_atoms=0.1975 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=2165427 fire=1894155 D_A=0.874726 info=19957 distinct=382 | D_B=0.771598 cov=0.656 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=4770 fire=4431 D_A=0.928931 info=5247 distinct=16962 | D_B=1.000000 cov=0.005 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=3836 fire=3509 D_A=0.914755 info=4292 distinct=17542 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4692 lost_atoms=0.2261 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=2326730 fire=1781134 D_A=0.765510 info=19961 distinct=401 | D_B=0.757739 cov=0.481 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=36600 fire=33182 D_A=0.906612 info=11473 distinct=11964 | D_B=0.969231 cov=0.006 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=20465 fire=18385 D_A=0.898363 info=9061 distinct=13943 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=1.043 transport=0.0223  G2 admissible: NO
+      Spatial MAP saturation=0.2920 lost_atoms=0.1576 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=859105 fire=526558 D_A=0.612915 info=19705 distinct=1405 | D_B=0.720721 cov=0.022 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=16587 fire=14971 D_A=0.902574 info=7149 distinct=15387 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=6) D_A=0.869159 info=332 | grain boundary found: NO
+      Spatial W3 coll=10063 fire=9049 D_A=0.899235 info=5401 distinct=16601 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.1854 lost_atoms=0.1144 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=626753 fire=454411 D_A=0.725024 info=19758 distinct=1341 | D_B=0.764513 cov=0.091 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=2205 fire=2005 D_A=0.909297 info=2851 distinct=18418 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=2083 fire=1887 D_A=0.905905 info=2669 distinct=18518 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.2920 lost_atoms=0.1576 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=859105 fire=526558 D_A=0.612915 info=19705 distinct=1405 | D_B=0.720721 cov=0.022 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=16587 fire=14971 D_A=0.902574 info=7149 distinct=15387 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=10063 fire=9049 D_A=0.899235 info=5401 distinct=16601 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.835 transport=0.0494  G2 admissible: NO
+      Spatial MAP saturation=0.1495 lost_atoms=0.0951 zero_vel=0 words=63 | A1 ok
+      Spatial W1 coll=344003 fire=158191 D_A=0.459854 info=19270 distinct=2644 | D_B=0.390244 cov=0.008 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=5752 fire=5131 D_A=0.892038 info=3497 distinct=17902 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=4, r=3) D_A=0.841424 info=296 | grain boundary found: NO
+      Spatial W3 coll=3873 fire=3469 D_A=0.895688 info=2923 distinct=18287 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0311 lost_atoms=0.0275 zero_vel=0 words=58 | A1 ok
+      BlindLabel W1 coll=574033 fire=136997 D_A=0.238657 info=19797 distinct=1333 | D_B=0.416667 cov=0.008 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=1256 fire=1155 D_A=0.919586 info=1916 distinct=18971 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=1241 fire=1141 D_A=0.919420 info=1897 distinct=18982 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1495 lost_atoms=0.0951 zero_vel=0 words=63 | A1 ok
+      GlobalRelabel W1 coll=344003 fire=158191 D_A=0.459854 info=19270 distinct=2644 | D_B=0.402439 cov=0.008 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=5752 fire=5131 D_A=0.892038 info=3497 distinct=17902 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=3873 fire=3469 D_A=0.895688 info=2923 distinct=18287 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415428  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5535 zero_vel=0 words=39 | A1 ok
+      Spatial W1 coll=82348092 fire=42008277 D_A=0.510131 info=19998 distinct=5 | D_B=0.393500 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=50187851 fire=27973167 D_A=0.557369 info=19996 distinct=32 | D_B=0.452045 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=4) D_A=0.534000 info=2495 | grain boundary found: NO
+      Spatial W3 coll=50079398 fire=27883594 D_A=0.556788 info=19994 distinct=39 | D_B=0.451306 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5535 zero_vel=0 words=39 | A1 ok
+      BlindLabel W1 coll=82348092 fire=42008277 D_A=0.510131 info=19998 distinct=5 | D_B=0.393500 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=50187851 fire=27973167 D_A=0.557369 info=19996 distinct=32 | D_B=0.452045 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=50079398 fire=27883594 D_A=0.556788 info=19994 distinct=39 | D_B=0.451306 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5535 zero_vel=0 words=39 | A1 ok
+      GlobalRelabel W1 coll=82348092 fire=42008277 D_A=0.510131 info=19998 distinct=5 | D_B=0.393500 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=50187851 fire=27973167 D_A=0.557369 info=19996 distinct=32 | D_B=0.452045 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=50079398 fire=27883594 D_A=0.556788 info=19994 distinct=39 | D_B=0.451306 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.284 transport=0.0061  G2 admissible: NO
+      Spatial MAP saturation=0.9024 lost_atoms=0.3484 zero_vel=0 words=60 | A1 ok
+      Spatial W1 coll=20266933 fire=16364901 D_A=0.807468 info=19997 distinct=30 | D_B=0.666533 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=448568 fire=413566 D_A=0.921969 info=19816 distinct=1349 | D_B=0.927771 cov=0.795 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=6) D_A=0.884573 info=2191 | grain boundary found: NO
+      Spatial W3 coll=272052 fire=244806 D_A=0.899850 info=19649 distinct=1951 | D_B=0.954805 cov=0.699 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.9547 lost_atoms=0.3384 zero_vel=0 words=59 | A1 ok
+      BlindLabel W1 coll=23003905 fire=18851163 D_A=0.819477 info=19997 distinct=27 | D_B=0.697097 cov=0.999 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=296127 fire=285856 D_A=0.965316 info=19783 distinct=1500 | D_B=0.934082 cov=0.934 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=182131 fire=174760 D_A=0.959529 info=19621 distinct=2196 | D_B=0.946707 cov=0.867 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.9024 lost_atoms=0.3484 zero_vel=0 words=60 | A1 ok
+      GlobalRelabel W1 coll=20266933 fire=16364901 D_A=0.807468 info=19997 distinct=30 | D_B=0.666533 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=448568 fire=413566 D_A=0.921969 info=19816 distinct=1349 | D_B=0.927771 cov=0.795 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=272052 fire=244806 D_A=0.899850 info=19649 distinct=1951 | D_B=0.954805 cov=0.699 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.636 transport=0.0153  G2 admissible: NO
+      Spatial MAP saturation=0.4559 lost_atoms=0.2156 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=2007260 fire=1574359 D_A=0.784332 info=19958 distinct=398 | D_B=0.691758 cov=0.658 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=25468 fire=23073 D_A=0.905960 info=11333 distinct=12032 | D_B=1.000000 cov=0.012 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=5) D_A=0.794501 info=671 | grain boundary found: NO
+      Spatial W3 coll=18606 fire=16831 D_A=0.904601 info=9902 distinct=13259 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4235 lost_atoms=0.2142 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=2094474 fire=1719269 D_A=0.820860 info=19960 distinct=353 | D_B=0.718108 cov=0.628 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=6148 fire=5613 D_A=0.912980 info=6423 distinct=16199 | D_B=1.000000 cov=0.005 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=5395 fire=4896 D_A=0.907507 info=5790 distinct=16603 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4559 lost_atoms=0.2156 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=2007260 fire=1574359 D_A=0.784332 info=19958 distinct=398 | D_B=0.691454 cov=0.658 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=25468 fire=23073 D_A=0.905960 info=11333 distinct=12032 | D_B=0.975610 cov=0.012 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=18606 fire=16831 D_A=0.904601 info=9902 distinct=13259 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=0.891 transport=0.0280  G2 admissible: NO
+      Spatial MAP saturation=0.2155 lost_atoms=0.1219 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=1090025 fire=649591 D_A=0.595941 info=19715 distinct=1428 | D_B=0.786822 cov=0.052 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=8186 fire=7523 D_A=0.919008 info=6231 distinct=16104 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=5) D_A=0.827273 info=295 | grain boundary found: NO
+      Spatial W3 coll=4867 fire=4504 D_A=0.925416 info=5047 distinct=17004 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.1920 lost_atoms=0.1214 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=802034 fire=549237 D_A=0.684805 info=19721 distinct=1416 | D_B=0.772810 cov=0.110 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=2725 fire=2475 D_A=0.908257 info=3425 distinct=18061 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=2577 fire=2337 D_A=0.906868 info=3314 distinct=18135 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.2155 lost_atoms=0.1219 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=1090025 fire=649591 D_A=0.595941 info=19715 distinct=1428 | D_B=0.784884 cov=0.052 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=8186 fire=7523 D_A=0.919008 info=6231 distinct=16104 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=4867 fire=4504 D_A=0.925416 info=5047 distinct=17004 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.760 transport=0.0511  G2 admissible: NO
+      Spatial MAP saturation=0.1161 lost_atoms=0.0742 zero_vel=0 words=63 | A1 ok
+      Spatial W1 coll=419054 fire=201697 D_A=0.481315 info=19310 distinct=2531 | D_B=0.500000 cov=0.002 | refines=true | NotClosed
+      Spatial W2 coll=3377 fire=3118 D_A=0.923305 info=3971 distinct=17714 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=4, r=0) D_A=0.857143 info=371 | grain boundary found: NO
+      Spatial W3 coll=2422 fire=2239 D_A=0.924443 info=3194 distinct=18210 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0348 lost_atoms=0.0297 zero_vel=0 words=56 | A1 ok
+      BlindLabel W1 coll=681105 fire=143877 D_A=0.211241 info=19738 distinct=1503 | D_B=0.363636 cov=0.002 | refines=true | NotClosed
+      BlindLabel W2 coll=1307 fire=1201 D_A=0.918898 info=2104 distinct=18880 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=1286 fire=1184 D_A=0.920684 info=2082 distinct=18894 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1161 lost_atoms=0.0742 zero_vel=0 words=63 | A1 ok
+      GlobalRelabel W1 coll=419054 fire=201697 D_A=0.481315 info=19310 distinct=2531 | D_B=0.500000 cov=0.002 | refines=true | NotClosed
+      GlobalRelabel W2 coll=3377 fire=3118 D_A=0.923305 info=3971 distinct=17714 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=2422 fire=2239 D_A=0.924443 info=3194 distinct=18210 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+===== ARM hydrogen (8 trajectories) =====
+
+-- seed 0x0000000053415421  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5556 zero_vel=0 words=39 | A1 ok
+      Spatial W1 coll=79805244 fire=42640964 D_A=0.534313 info=19999 distinct=5 | D_B=0.422500 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=49024783 fire=28880652 D_A=0.589103 info=19998 distinct=31 | D_B=0.561071 cov=0.997 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=2) D_A=0.560133 info=2496 | grain boundary found: NO
+      Spatial W3 coll=48689236 fire=28643642 D_A=0.588295 info=19995 distinct=39 | D_B=0.562280 cov=0.996 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5556 zero_vel=0 words=39 | A1 ok
+      BlindLabel W1 coll=79805244 fire=42640964 D_A=0.534313 info=19999 distinct=5 | D_B=0.422500 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=49024783 fire=28880652 D_A=0.589103 info=19998 distinct=31 | D_B=0.561071 cov=0.997 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=48689236 fire=28643642 D_A=0.588295 info=19995 distinct=39 | D_B=0.562280 cov=0.996 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5556 zero_vel=0 words=39 | A1 ok
+      GlobalRelabel W1 coll=79805244 fire=42640964 D_A=0.534313 info=19999 distinct=5 | D_B=0.422500 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=49024783 fire=28880652 D_A=0.589103 info=19998 distinct=31 | D_B=0.561071 cov=0.997 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=48689236 fire=28643642 D_A=0.588295 info=19995 distinct=39 | D_B=0.562280 cov=0.996 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.157 transport=0.0075  G2 admissible: NO
+      Spatial MAP saturation=0.9418 lost_atoms=0.3330 zero_vel=0 words=58 | A1 ok
+      Spatial W1 coll=22429083 fire=18135186 D_A=0.808557 info=19999 distinct=27 | D_B=0.728400 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=1061611 fire=863994 D_A=0.813852 info=19852 distinct=1374 | D_B=0.975435 cov=0.822 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=3) D_A=0.742331 info=2233 | grain boundary found: NO
+      Spatial W3 coll=331175 fire=273862 D_A=0.826940 info=19703 distinct=2009 | D_B=0.975883 cov=0.759 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.9360 lost_atoms=0.3450 zero_vel=0 words=61 | A1 ok
+      BlindLabel W1 coll=19406284 fire=16191453 D_A=0.834341 info=19997 distinct=32 | D_B=0.753511 cov=0.997 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=354746 fire=336908 D_A=0.949716 info=19817 distinct=1496 | D_B=0.971462 cov=0.771 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=190695 fire=177063 D_A=0.928514 info=19689 distinct=2144 | D_B=0.982655 cov=0.698 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.9418 lost_atoms=0.3330 zero_vel=0 words=58 | A1 ok
+      GlobalRelabel W1 coll=22429083 fire=18135186 D_A=0.808557 info=19999 distinct=27 | D_B=0.728400 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=1061611 fire=863994 D_A=0.813852 info=19852 distinct=1374 | D_B=0.975435 cov=0.822 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=331175 fire=273862 D_A=0.826940 info=19703 distinct=2009 | D_B=0.975883 cov=0.759 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.415 transport=0.0229  G2 admissible: NO
+      Spatial MAP saturation=0.4259 lost_atoms=0.1757 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=3044071 fire=2488961 D_A=0.817642 info=19952 distinct=399 | D_B=0.774965 cov=0.794 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=102171 fire=82176 D_A=0.804299 info=11682 distinct=11838 | D_B=1.000000 cov=0.005 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=0) D_A=0.637982 info=1066 | grain boundary found: NO
+      Spatial W3 coll=32301 fire=25622 D_A=0.793226 info=10277 distinct=13221 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4289 lost_atoms=0.2057 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=2492017 fire=2082337 D_A=0.835603 info=19961 distinct=347 | D_B=0.782996 cov=0.875 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=20838 fire=16243 D_A=0.779489 info=10451 distinct=13233 | D_B=0.983871 cov=0.006 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=19766 fire=15249 D_A=0.771476 info=9887 distinct=13640 | D_B=0.960000 cov=0.003 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4259 lost_atoms=0.1757 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=3044071 fire=2488961 D_A=0.817642 info=19952 distinct=399 | D_B=0.774588 cov=0.794 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=102171 fire=82176 D_A=0.804299 info=11682 distinct=11838 | D_B=1.000000 cov=0.005 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=32301 fire=25622 D_A=0.793226 info=10277 distinct=13221 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=0.718 transport=0.0359  G2 admissible: NO
+      Spatial MAP saturation=0.1785 lost_atoms=0.0938 zero_vel=0 words=58 | A1 ok
+      Spatial W1 coll=2573234 fire=483931 D_A=0.188063 info=19554 distinct=1890 | D_B=0.897590 cov=0.116 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=167056 fire=130565 D_A=0.781564 info=9664 distinct=13338 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=5) D_A=0.565106 info=960 | grain boundary found: NO
+      Spatial W3 coll=25842 fire=20126 D_A=0.778810 info=8166 distinct=14773 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.1770 lost_atoms=0.1100 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=664905 fire=484342 D_A=0.728438 info=19621 distinct=1925 | D_B=0.772727 cov=0.110 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=13542 fire=10341 D_A=0.763624 info=8157 distinct=14930 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=13209 fire=10095 D_A=0.764252 info=7970 distinct=15059 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1785 lost_atoms=0.0938 zero_vel=0 words=58 | A1 ok
+      GlobalRelabel W1 coll=2573234 fire=483931 D_A=0.188063 info=19554 distinct=1890 | D_B=0.898451 cov=0.116 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=167056 fire=130565 D_A=0.781564 info=9664 distinct=13338 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=25842 fire=20126 D_A=0.778810 info=8166 distinct=14773 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.599 transport=0.0640  G2 admissible: NO
+      Spatial MAP saturation=0.0906 lost_atoms=0.0554 zero_vel=0 words=31 | A1 ok
+      Spatial W1 coll=790774 fire=105188 D_A=0.133019 info=19184 distinct=2900 | D_B=0.666667 cov=0.000 | refines=true | NotClosed
+      Spatial W2 coll=120819 fire=85514 D_A=0.707786 info=7825 distinct=14748 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=8, r=5) D_A=0.466118 info=789 | grain boundary found: NO
+      Spatial W3 coll=25787 fire=20056 D_A=0.777756 info=6724 distinct=15734 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0472 lost_atoms=0.0387 zero_vel=0 words=57 | A1 ok
+      BlindLabel W1 coll=547101 fire=197738 D_A=0.361429 info=19499 distinct=2346 | D_B=0.368421 cov=0.002 | refines=true | NotClosed
+      BlindLabel W2 coll=11684 fire=8983 D_A=0.768829 info=6547 distinct=15986 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=11624 fire=8931 D_A=0.768324 info=6487 distinct=16024 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.0906 lost_atoms=0.0554 zero_vel=0 words=31 | A1 ok
+      GlobalRelabel W1 coll=790774 fire=105188 D_A=0.133019 info=19184 distinct=2900 | D_B=0.666667 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W2 coll=120819 fire=85514 D_A=0.707786 info=7825 distinct=14748 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=25787 fire=20056 D_A=0.777756 info=6724 distinct=15734 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415422  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5595 zero_vel=0 words=38 | A1 ok
+      Spatial W1 coll=79266706 fire=46018029 D_A=0.580547 info=19999 distinct=4 | D_B=0.494300 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=42464747 fire=30037442 D_A=0.707350 info=19997 distinct=31 | D_B=0.615546 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=5) D_A=0.684046 info=2497 | grain boundary found: NO
+      Spatial W3 coll=42348291 fire=29957474 D_A=0.707407 info=19995 distinct=38 | D_B=0.617247 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5595 zero_vel=0 words=38 | A1 ok
+      BlindLabel W1 coll=79266706 fire=46018029 D_A=0.580547 info=19999 distinct=4 | D_B=0.494300 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=42464747 fire=30037442 D_A=0.707350 info=19997 distinct=31 | D_B=0.615546 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=42348291 fire=29957474 D_A=0.707407 info=19995 distinct=38 | D_B=0.617247 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5595 zero_vel=0 words=38 | A1 ok
+      GlobalRelabel W1 coll=79266706 fire=46018029 D_A=0.580547 info=19999 distinct=4 | D_B=0.494300 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=42464747 fire=30037442 D_A=0.707350 info=19997 distinct=31 | D_B=0.615546 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=42348291 fire=29957474 D_A=0.707407 info=19995 distinct=38 | D_B=0.617247 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.275 transport=0.0160  G2 admissible: NO
+      Spatial MAP saturation=0.9094 lost_atoms=0.3603 zero_vel=0 words=62 | A1 ok
+      Spatial W1 coll=15700534 fire=13580299 D_A=0.864958 info=19998 distinct=33 | D_B=0.760900 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=275050 fire=263710 D_A=0.958771 info=19831 distinct=1617 | D_B=0.986450 cov=0.878 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=4, r=0) D_A=0.917664 info=4690 | grain boundary found: NO
+      Spatial W3 coll=150753 fire=142443 D_A=0.944877 info=19661 distinct=2339 | D_B=0.991529 cov=0.815 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.9206 lost_atoms=0.3531 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=18869928 fire=16549331 D_A=0.877021 info=19996 distinct=33 | D_B=0.793338 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=233586 fire=228138 D_A=0.976677 info=19810 distinct=1649 | D_B=0.996443 cov=0.900 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=146499 fire=141483 D_A=0.965761 info=19645 distinct=2353 | D_B=0.996192 cov=0.840 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.9094 lost_atoms=0.3603 zero_vel=0 words=62 | A1 ok
+      GlobalRelabel W1 coll=15700534 fire=13580299 D_A=0.864958 info=19998 distinct=33 | D_B=0.760900 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=275050 fire=263710 D_A=0.958771 info=19831 distinct=1617 | D_B=0.986450 cov=0.878 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=150753 fire=142443 D_A=0.944877 info=19661 distinct=2339 | D_B=0.991529 cov=0.815 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.464 transport=0.0436  G2 admissible: NO
+      Spatial MAP saturation=0.4793 lost_atoms=0.2007 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=1715154 fire=1525751 D_A=0.889571 info=19930 distinct=521 | D_B=0.856296 cov=0.945 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=18850 fire=14836 D_A=0.787056 info=10104 distinct=13455 | D_B=1.000000 cov=0.007 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=4, r=3) D_A=0.708786 info=2146 | grain boundary found: NO
+      Spatial W3 coll=11398 fire=8798 D_A=0.771890 info=8869 distinct=14497 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4525 lost_atoms=0.1968 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=1906156 fire=1776336 D_A=0.931894 info=19948 distinct=443 | D_B=0.893654 cov=0.914 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=8481 fire=6193 D_A=0.730220 info=8419 distinct=14921 | D_B=1.000000 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=8150 fire=5878 D_A=0.721227 info=8163 distinct=15094 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4793 lost_atoms=0.2007 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=1715154 fire=1525751 D_A=0.889571 info=19930 distinct=521 | D_B=0.856720 cov=0.945 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=18850 fire=14836 D_A=0.787056 info=10104 distinct=13455 | D_B=1.000000 cov=0.007 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=11398 fire=8798 D_A=0.771890 info=8869 distinct=14497 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=0.755 transport=0.0774  G2 admissible: NO
+      Spatial MAP saturation=0.2172 lost_atoms=0.1146 zero_vel=0 words=63 | A1 ok
+      Spatial W1 coll=258787 fire=155208 D_A=0.599752 info=18992 distinct=3383 | D_B=0.866076 cov=0.214 | refines=true | NotClosed
+      Spatial W2 coll=10526 fire=8279 D_A=0.786529 info=7882 distinct=15148 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=4, r=3) D_A=0.697270 info=1745 | grain boundary found: NO
+      Spatial W3 coll=6486 fire=4965 D_A=0.765495 info=6741 distinct=16026 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.1655 lost_atoms=0.1021 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=169578 fire=123939 D_A=0.730867 info=19102 distinct=3378 | D_B=0.902256 cov=0.173 | refines=true | NotClosed
+      BlindLabel W2 coll=5408 fire=3879 D_A=0.717271 info=6555 distinct=16227 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=5271 fire=3770 D_A=0.715234 info=6381 distinct=16329 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.2172 lost_atoms=0.1146 zero_vel=0 words=63 | A1 ok
+      GlobalRelabel W1 coll=258787 fire=155208 D_A=0.599752 info=18992 distinct=3383 | D_B=0.868875 cov=0.214 | refines=true | NotClosed
+      GlobalRelabel W2 coll=10526 fire=8279 D_A=0.786529 info=7882 distinct=15148 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=6486 fire=4965 D_A=0.765495 info=6741 distinct=16026 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.575 transport=0.1282  G2 admissible: NO
+      Spatial MAP saturation=0.1035 lost_atoms=0.0653 zero_vel=0 words=33 | A1 ok
+      Spatial W1 coll=166065 fire=41093 D_A=0.247451 info=18352 distinct=4755 | D_B=1.000000 cov=0.001 | refines=true | NotClosed
+      Spatial W2 coll=11145 fire=8126 D_A=0.729116 info=6129 distinct=16282 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=4, r=0) D_A=0.679372 info=1435 | grain boundary found: NO
+      Spatial W3 coll=5185 fire=3735 D_A=0.720347 info=5163 distinct=17007 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0449 lost_atoms=0.0370 zero_vel=0 words=54 | A1 ok
+      BlindLabel W1 coll=138630 fire=49452 D_A=0.356719 info=18760 distinct=4100 | D_B=0.500000 cov=0.001 | refines=true | NotClosed
+      BlindLabel W2 coll=3958 fire=2839 D_A=0.717281 info=4983 distinct=17178 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=3926 fire=2814 D_A=0.716760 info=4953 distinct=17196 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1035 lost_atoms=0.0653 zero_vel=0 words=33 | A1 ok
+      GlobalRelabel W1 coll=166065 fire=41093 D_A=0.247451 info=18352 distinct=4755 | D_B=1.000000 cov=0.001 | refines=true | NotClosed
+      GlobalRelabel W2 coll=11145 fire=8126 D_A=0.729116 info=6129 distinct=16282 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=5185 fire=3735 D_A=0.720347 info=5163 distinct=17007 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415423  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5543 zero_vel=0 words=36 | A1 ok
+      Spatial W1 coll=82874793 fire=43377999 D_A=0.523416 info=19999 distinct=4 | D_B=0.404300 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=48089943 fire=28545063 D_A=0.593577 info=19999 distinct=30 | D_B=0.550662 cov=0.997 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=6) D_A=0.563333 info=2498 | grain boundary found: NO
+      Spatial W3 coll=48020402 fire=28488747 D_A=0.593263 info=19998 distinct=36 | D_B=0.549388 cov=0.996 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5543 zero_vel=0 words=36 | A1 ok
+      BlindLabel W1 coll=82874793 fire=43377999 D_A=0.523416 info=19999 distinct=4 | D_B=0.404300 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=48089943 fire=28545063 D_A=0.593577 info=19999 distinct=30 | D_B=0.550662 cov=0.997 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=48020402 fire=28488747 D_A=0.593263 info=19998 distinct=36 | D_B=0.549388 cov=0.996 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5543 zero_vel=0 words=36 | A1 ok
+      GlobalRelabel W1 coll=82874793 fire=43377999 D_A=0.523416 info=19999 distinct=4 | D_B=0.404300 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=48089943 fire=28545063 D_A=0.593577 info=19999 distinct=30 | D_B=0.550662 cov=0.997 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=48020402 fire=28488747 D_A=0.593263 info=19998 distinct=36 | D_B=0.549388 cov=0.996 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.273 transport=0.0066  G2 admissible: NO
+      Spatial MAP saturation=0.9100 lost_atoms=0.3488 zero_vel=0 words=62 | A1 ok
+      Spatial W1 coll=16996276 fire=13985288 D_A=0.822844 info=19998 distinct=29 | D_B=0.709985 cov=0.997 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=317670 fire=292995 D_A=0.922325 info=19841 distinct=1471 | D_B=0.969718 cov=0.733 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=0) D_A=0.831805 info=2213 | grain boundary found: NO
+      Spatial W3 coll=208705 fire=187799 D_A=0.899830 info=19684 distinct=2105 | D_B=0.974932 cov=0.666 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.8761 lost_atoms=0.3506 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=15760294 fire=12997427 D_A=0.824694 info=19997 distinct=32 | D_B=0.767088 cov=0.980 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=309856 fire=288414 D_A=0.930800 info=19808 distinct=1545 | D_B=0.968437 cov=0.710 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=182424 fire=165549 D_A=0.907496 info=19668 distinct=2159 | D_B=0.980006 cov=0.635 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.9100 lost_atoms=0.3488 zero_vel=0 words=62 | A1 ok
+      GlobalRelabel W1 coll=16996276 fire=13985288 D_A=0.822844 info=19998 distinct=29 | D_B=0.709985 cov=0.997 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=317670 fire=292995 D_A=0.922325 info=19841 distinct=1471 | D_B=0.969718 cov=0.733 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=208705 fire=187799 D_A=0.899830 info=19684 distinct=2105 | D_B=0.974932 cov=0.666 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.475 transport=0.0197  G2 admissible: NO
+      Spatial MAP saturation=0.4468 lost_atoms=0.1920 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=2107394 fire=1734497 D_A=0.823053 info=19959 distinct=447 | D_B=0.720639 cov=0.720 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=22332 fire=18972 D_A=0.849543 info=11950 distinct=11970 | D_B=1.000000 cov=0.005 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=5) D_A=0.656920 info=1043 | grain boundary found: NO
+      Spatial W3 coll=16476 fire=13540 D_A=0.821801 info=10550 distinct=13211 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4685 lost_atoms=0.1915 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=1870508 fire=1651716 D_A=0.883031 info=19960 distinct=421 | D_B=0.839410 cov=0.793 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=12098 fire=9538 D_A=0.788395 info=9738 distinct=13996 | D_B=1.000000 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=11625 fire=9078 D_A=0.780903 info=9411 distinct=14215 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4468 lost_atoms=0.1920 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=2107394 fire=1734497 D_A=0.823053 info=19959 distinct=447 | D_B=0.720083 cov=0.720 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=22332 fire=18972 D_A=0.849543 info=11950 distinct=11970 | D_B=1.000000 cov=0.005 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=16476 fire=13540 D_A=0.821801 info=10550 distinct=13211 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=0.718 transport=0.0339  G2 admissible: NO
+      Spatial MAP saturation=0.1749 lost_atoms=0.0940 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=512703 fire=268627 D_A=0.523943 info=19535 distinct=1969 | D_B=0.770471 cov=0.081 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=14388 fire=11826 D_A=0.821935 info=9296 distinct=14104 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=4) D_A=0.677616 info=871 | grain boundary found: NO
+      Spatial W3 coll=9942 fire=7941 D_A=0.798733 info=7949 distinct=15172 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.1731 lost_atoms=0.1020 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=335323 fire=204826 D_A=0.610832 info=19554 distinct=2176 | D_B=0.893258 cov=0.071 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=8445 fire=6538 D_A=0.774186 info=7670 distinct=15446 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=8187 fire=6307 D_A=0.770368 info=7425 distinct=15595 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1749 lost_atoms=0.0940 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=512703 fire=268627 D_A=0.523943 info=19535 distinct=1969 | D_B=0.769231 cov=0.081 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=14388 fire=11826 D_A=0.821935 info=9296 distinct=14104 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=9942 fire=7941 D_A=0.798733 info=7949 distinct=15172 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.553 transport=0.0699  G2 admissible: NO
+      Spatial MAP saturation=0.0697 lost_atoms=0.0452 zero_vel=0 words=37 | A1 ok
+      Spatial W1 coll=373108 fire=95081 D_A=0.254835 info=19261 distinct=2737 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      Spatial W2 coll=10719 fire=8674 D_A=0.809217 info=7518 distinct=15352 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=8, r=0) D_A=0.657191 info=666 | grain boundary found: NO
+      Spatial W3 coll=7136 fire=5630 D_A=0.788957 info=6319 distinct=16266 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0486 lost_atoms=0.0390 zero_vel=0 words=51 | A1 ok
+      BlindLabel W1 coll=269710 fire=105873 D_A=0.392544 info=19521 distinct=2355 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      BlindLabel W2 coll=6121 fire=4729 D_A=0.772586 info=6001 distinct=16507 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=6072 fire=4686 D_A=0.771739 info=5932 distinct=16545 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.0697 lost_atoms=0.0452 zero_vel=0 words=37 | A1 ok
+      GlobalRelabel W1 coll=373108 fire=95081 D_A=0.254835 info=19261 distinct=2737 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W2 coll=10719 fire=8674 D_A=0.809217 info=7518 distinct=15352 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=7136 fire=5630 D_A=0.788957 info=6319 distinct=16266 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415424  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5564 zero_vel=0 words=36 | A1 ok
+      Spatial W1 coll=81538774 fire=44726889 D_A=0.548535 info=19999 distinct=4 | D_B=0.431600 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=45401421 fire=28915014 D_A=0.636875 info=19998 distinct=28 | D_B=0.630963 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=4) D_A=0.584187 info=2498 | grain boundary found: NO
+      Spatial W3 coll=45290749 fire=28831703 D_A=0.636591 info=19998 distinct=36 | D_B=0.629841 cov=0.997 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5564 zero_vel=0 words=36 | A1 ok
+      BlindLabel W1 coll=81538774 fire=44726889 D_A=0.548535 info=19999 distinct=4 | D_B=0.431600 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=45401421 fire=28915014 D_A=0.636875 info=19998 distinct=28 | D_B=0.630963 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=45290749 fire=28831703 D_A=0.636591 info=19998 distinct=36 | D_B=0.629841 cov=0.997 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5564 zero_vel=0 words=36 | A1 ok
+      GlobalRelabel W1 coll=81538774 fire=44726889 D_A=0.548535 info=19999 distinct=4 | D_B=0.431600 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=45401421 fire=28915014 D_A=0.636875 info=19998 distinct=28 | D_B=0.630963 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=45290749 fire=28831703 D_A=0.636591 info=19998 distinct=36 | D_B=0.629841 cov=0.997 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.242 transport=0.0052  G2 admissible: NO
+      Spatial MAP saturation=0.9133 lost_atoms=0.3417 zero_vel=0 words=60 | A1 ok
+      Spatial W1 coll=18157142 fire=15158888 D_A=0.834872 info=19999 distinct=32 | D_B=0.733138 cov=0.987 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=368615 fire=351652 D_A=0.953982 info=19843 distinct=1397 | D_B=0.979017 cov=0.710 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=6) D_A=0.872940 info=2265 | grain boundary found: NO
+      Spatial W3 coll=195440 fire=182966 D_A=0.936175 info=19699 distinct=2029 | D_B=0.982210 cov=0.641 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.8814 lost_atoms=0.3581 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=23131571 fire=19267833 D_A=0.832967 info=19999 distinct=28 | D_B=0.736778 cov=0.987 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=357160 fire=344819 D_A=0.965447 info=19808 distinct=1471 | D_B=0.975156 cov=0.785 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=220862 fire=210776 D_A=0.954333 info=19647 distinct=2067 | D_B=0.977538 cov=0.712 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.9133 lost_atoms=0.3417 zero_vel=0 words=60 | A1 ok
+      GlobalRelabel W1 coll=18157142 fire=15158888 D_A=0.834872 info=19999 distinct=32 | D_B=0.733138 cov=0.987 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=368615 fire=351652 D_A=0.953982 info=19843 distinct=1397 | D_B=0.979017 cov=0.710 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=195440 fire=182966 D_A=0.936175 info=19699 distinct=2029 | D_B=0.982210 cov=0.641 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.440 transport=0.0151  G2 admissible: NO
+      Spatial MAP saturation=0.4224 lost_atoms=0.1778 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=2182715 fire=1853366 D_A=0.849110 info=19951 distinct=426 | D_B=0.768396 cov=0.746 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=21672 fire=18349 D_A=0.846669 info=12066 distinct=11850 | D_B=1.000000 cov=0.005 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=3) D_A=0.642512 info=1140 | grain boundary found: NO
+      Spatial W3 coll=13785 fire=10934 D_A=0.793181 info=10692 distinct=13156 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4755 lost_atoms=0.2071 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=2133475 fire=1875455 D_A=0.879061 info=19965 distinct=381 | D_B=0.804854 cov=0.795 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=13838 fire=10831 D_A=0.782700 info=11356 distinct=12777 | D_B=0.986207 cov=0.015 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=11528 fire=8713 D_A=0.755812 info=10628 distinct=13395 | D_B=1.000000 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4224 lost_atoms=0.1778 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=2182715 fire=1853366 D_A=0.849110 info=19951 distinct=426 | D_B=0.767591 cov=0.746 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=21672 fire=18349 D_A=0.846669 info=12066 distinct=11850 | D_B=1.000000 cov=0.005 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=13785 fire=10934 D_A=0.793181 info=10692 distinct=13156 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=0.706 transport=0.0309  G2 admissible: NO
+      Spatial MAP saturation=0.1443 lost_atoms=0.0780 zero_vel=0 words=63 | A1 ok
+      Spatial W1 coll=1206071 fire=402770 D_A=0.333952 info=19625 distinct=1609 | D_B=0.870107 cov=0.056 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=21160 fire=18102 D_A=0.855482 info=10055 distinct=13425 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=1) D_A=0.662910 info=1033 | grain boundary found: NO
+      Spatial W3 coll=8993 fire=6923 D_A=0.769821 info=8452 distinct=14855 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.2050 lost_atoms=0.1150 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=371149 fire=280434 D_A=0.755583 info=19589 distinct=2063 | D_B=0.928155 cov=0.051 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=7586 fire=5459 D_A=0.719615 info=8271 distinct=15084 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=7403 fire=5302 D_A=0.716196 info=8150 distinct=15167 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1443 lost_atoms=0.0780 zero_vel=0 words=63 | A1 ok
+      GlobalRelabel W1 coll=1206071 fire=402770 D_A=0.333952 info=19625 distinct=1609 | D_B=0.870107 cov=0.056 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=21160 fire=18102 D_A=0.855482 info=10055 distinct=13425 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=8993 fire=6923 D_A=0.769821 info=8452 distinct=14855 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.571 transport=0.0648  G2 admissible: NO
+      Spatial MAP saturation=0.0714 lost_atoms=0.0452 zero_vel=0 words=27 | A1 ok
+      Spatial W1 coll=317728 fire=96801 D_A=0.304666 info=19320 distinct=2603 | D_B=0.222222 cov=0.001 | refines=true | NotClosed
+      Spatial W2 coll=9226 fire=7276 D_A=0.788641 info=7850 distinct=15201 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=8, r=1) D_A=0.608558 info=839 | grain boundary found: NO
+      Spatial W3 coll=6073 fire=4504 D_A=0.741643 info=6797 distinct=16013 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0434 lost_atoms=0.0362 zero_vel=0 words=57 | A1 ok
+      BlindLabel W1 coll=269045 fire=93096 D_A=0.346024 info=19604 distinct=2207 | D_B=0.111111 cov=0.001 | refines=true | NotClosed
+      BlindLabel W2 coll=5290 fire=3735 D_A=0.706049 info=6553 distinct=16235 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=5233 fire=3688 D_A=0.704758 info=6490 distinct=16273 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.0714 lost_atoms=0.0452 zero_vel=0 words=27 | A1 ok
+      GlobalRelabel W1 coll=317728 fire=96801 D_A=0.304666 info=19320 distinct=2603 | D_B=0.222222 cov=0.001 | refines=true | NotClosed
+      GlobalRelabel W2 coll=9226 fire=7276 D_A=0.788641 info=7850 distinct=15201 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=6073 fire=4504 D_A=0.741643 info=6797 distinct=16013 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415425  n=12 frames=20000
+   grid 1x1: REFUSED — AtomOutsideBox { frame: 32, atom: 10, x: 25.333480344786565, y: 20.841803104270674 }
+   grid 2x1: REFUSED — AtomOutsideBox { frame: 32, atom: 10, x: 25.333480344786565, y: 20.841803104270674 }
+   grid 2x2: REFUSED — AtomOutsideBox { frame: 32, atom: 10, x: 25.333480344786565, y: 20.841803104270674 }
+   grid 4x2: REFUSED — AtomOutsideBox { frame: 32, atom: 10, x: 25.333480344786565, y: 20.841803104270674 }
+   grid 6x4: REFUSED — AtomOutsideBox { frame: 32, atom: 10, x: 25.333480344786565, y: 20.841803104270674 }
+
+-- seed 0x0000000053415426  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5509 zero_vel=0 words=35 | A1 ok
+      Spatial W1 coll=84137997 fire=44757628 D_A=0.531955 info=19999 distinct=4 | D_B=0.415300 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=53491871 fire=31745343 D_A=0.593461 info=19998 distinct=28 | D_B=0.545255 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=5) D_A=0.570884 info=2497 | grain boundary found: NO
+      Spatial W3 coll=53363454 fire=31649354 D_A=0.593090 info=19998 distinct=35 | D_B=0.545255 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5509 zero_vel=0 words=35 | A1 ok
+      BlindLabel W1 coll=84137997 fire=44757628 D_A=0.531955 info=19999 distinct=4 | D_B=0.415300 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=53491871 fire=31745343 D_A=0.593461 info=19998 distinct=28 | D_B=0.545255 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=53363454 fire=31649354 D_A=0.593090 info=19998 distinct=35 | D_B=0.545255 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5509 zero_vel=0 words=35 | A1 ok
+      GlobalRelabel W1 coll=84137997 fire=44757628 D_A=0.531955 info=19999 distinct=4 | D_B=0.415300 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=53491871 fire=31745343 D_A=0.593461 info=19998 distinct=28 | D_B=0.545255 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=53363454 fire=31649354 D_A=0.593090 info=19998 distinct=35 | D_B=0.545255 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.241 transport=0.0067  G2 admissible: NO
+      Spatial MAP saturation=0.9246 lost_atoms=0.3420 zero_vel=0 words=60 | A1 ok
+      Spatial W1 coll=16901573 fire=14288362 D_A=0.845387 info=19999 distinct=29 | D_B=0.722384 cov=0.997 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=347219 fire=331281 D_A=0.954098 info=19859 distinct=1391 | D_B=0.971550 cov=0.872 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=3) D_A=0.885070 info=2225 | grain boundary found: NO
+      Spatial W3 coll=189179 fire=178181 D_A=0.941865 info=19721 distinct=2044 | D_B=0.979286 cov=0.801 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.8866 lost_atoms=0.3496 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=18027764 fire=15065221 D_A=0.835668 info=19998 distinct=29 | D_B=0.713900 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=303723 fire=291958 D_A=0.961264 info=19835 distinct=1483 | D_B=0.968820 cov=0.895 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=174496 fire=165579 D_A=0.948899 info=19692 distinct=2116 | D_B=0.975391 cov=0.837 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.9246 lost_atoms=0.3420 zero_vel=0 words=60 | A1 ok
+      GlobalRelabel W1 coll=16901573 fire=14288362 D_A=0.845387 info=19999 distinct=29 | D_B=0.722384 cov=0.997 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=347219 fire=331281 D_A=0.954098 info=19859 distinct=1391 | D_B=0.971550 cov=0.872 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=189179 fire=178181 D_A=0.941865 info=19721 distinct=2044 | D_B=0.979286 cov=0.801 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.462 transport=0.0181  G2 admissible: NO
+      Spatial MAP saturation=0.4526 lost_atoms=0.1846 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=2131470 fire=1825176 D_A=0.856299 info=19959 distinct=428 | D_B=0.792448 cov=0.863 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=20663 fire=17858 D_A=0.864250 info=11395 distinct=12450 | D_B=1.000000 cov=0.013 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=5) D_A=0.678794 info=1093 | grain boundary found: NO
+      Spatial W3 coll=11338 fire=9237 D_A=0.814694 info=9768 distinct=13879 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4594 lost_atoms=0.2016 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=1908934 fire=1683223 D_A=0.881761 info=19960 distinct=389 | D_B=0.812221 cov=0.830 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=10831 fire=8626 D_A=0.796418 info=10072 distinct=13800 | D_B=1.000000 cov=0.009 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=9562 fire=7445 D_A=0.778603 info=9453 distinct=14260 | D_B=1.000000 cov=0.003 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4526 lost_atoms=0.1846 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=2131470 fire=1825176 D_A=0.856299 info=19959 distinct=428 | D_B=0.791869 cov=0.863 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=20663 fire=17858 D_A=0.864250 info=11395 distinct=12450 | D_B=1.000000 cov=0.013 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=11338 fire=9237 D_A=0.814694 info=9768 distinct=13879 | D_B=1.000000 cov=0.002 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=0.733 transport=0.0335  G2 admissible: NO
+      Spatial MAP saturation=0.1764 lost_atoms=0.0922 zero_vel=0 words=63 | A1 ok
+      Spatial W1 coll=1104259 fire=529526 D_A=0.479531 info=19562 distinct=1855 | D_B=0.786087 cov=0.172 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=19051 fire=16372 D_A=0.859377 info=9088 distinct=14169 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=4) D_A=0.675399 info=873 | grain boundary found: NO
+      Spatial W3 coll=7037 fire=5641 D_A=0.801620 info=7381 distinct=15630 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.2025 lost_atoms=0.1163 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=385467 fire=291968 D_A=0.757440 info=19588 distinct=2094 | D_B=0.848044 cov=0.110 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=6199 fire=4785 D_A=0.771899 info=7255 distinct=15779 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=6008 fire=4615 D_A=0.768142 info=7158 distinct=15849 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1764 lost_atoms=0.0922 zero_vel=0 words=63 | A1 ok
+      GlobalRelabel W1 coll=1104259 fire=529526 D_A=0.479531 info=19562 distinct=1855 | D_B=0.793623 cov=0.172 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=19051 fire=16372 D_A=0.859377 info=9088 distinct=14169 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=7037 fire=5641 D_A=0.801620 info=7381 distinct=15630 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.578 transport=0.0721  G2 admissible: NO
+      Spatial MAP saturation=0.0836 lost_atoms=0.0525 zero_vel=0 words=32 | A1 ok
+      Spatial W1 coll=304691 fire=87785 D_A=0.288112 info=19137 distinct=2961 | D_B=0.566667 cov=0.003 | refines=true | NotClosed
+      Spatial W2 coll=8984 fire=7445 D_A=0.828695 info=6771 distinct=15927 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=8, r=3) D_A=0.668085 info=673 | grain boundary found: NO
+      Spatial W3 coll=4690 fire=3697 D_A=0.788273 info=5760 distinct=16711 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0451 lost_atoms=0.0366 zero_vel=0 words=56 | A1 ok
+      BlindLabel W1 coll=260408 fire=89641 D_A=0.344233 info=19497 distinct=2367 | D_B=0.222222 cov=0.004 | refines=true | NotClosed
+      BlindLabel W2 coll=4051 fire=3081 D_A=0.760553 info=5561 distinct=16894 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=4004 fire=3038 D_A=0.758741 info=5515 distinct=16924 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.0836 lost_atoms=0.0525 zero_vel=0 words=32 | A1 ok
+      GlobalRelabel W1 coll=304691 fire=87785 D_A=0.288112 info=19137 distinct=2961 | D_B=0.566667 cov=0.003 | refines=true | NotClosed
+      GlobalRelabel W2 coll=8984 fire=7445 D_A=0.828695 info=6771 distinct=15927 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=4690 fire=3697 D_A=0.788273 info=5760 distinct=16711 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415427  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5479 zero_vel=0 words=34 | A1 ok
+      Spatial W1 coll=86713355 fire=44007956 D_A=0.507511 info=19999 distinct=4 | D_B=0.407600 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=57464029 fire=32000967 D_A=0.556887 info=19998 distinct=30 | D_B=0.518177 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=7) D_A=0.537132 info=2495 | grain boundary found: NO
+      Spatial W3 coll=57401688 fire=31956333 D_A=0.556714 info=19998 distinct=34 | D_B=0.517977 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5479 zero_vel=0 words=34 | A1 ok
+      BlindLabel W1 coll=86713355 fire=44007956 D_A=0.507511 info=19999 distinct=4 | D_B=0.407600 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=57464029 fire=32000967 D_A=0.556887 info=19998 distinct=30 | D_B=0.518177 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=57401688 fire=31956333 D_A=0.556714 info=19998 distinct=34 | D_B=0.517977 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5479 zero_vel=0 words=34 | A1 ok
+      GlobalRelabel W1 coll=86713355 fire=44007956 D_A=0.507511 info=19999 distinct=4 | D_B=0.407600 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=57464029 fire=32000967 D_A=0.556887 info=19998 distinct=30 | D_B=0.518177 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=57401688 fire=31956333 D_A=0.556714 info=19998 distinct=34 | D_B=0.517977 cov=0.999 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.212 transport=0.0081  G2 admissible: NO
+      Spatial MAP saturation=0.9259 lost_atoms=0.3301 zero_vel=0 words=59 | A1 ok
+      Spatial W1 coll=21050453 fire=17279623 D_A=0.820867 info=19997 distinct=30 | D_B=0.692508 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=519661 fire=474422 D_A=0.912945 info=19853 distinct=1303 | D_B=0.963367 cov=0.789 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=7) D_A=0.843377 info=2299 | grain boundary found: NO
+      Spatial W3 coll=268269 fire=241242 D_A=0.899254 info=19727 distinct=1873 | D_B=0.970772 cov=0.719 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.9233 lost_atoms=0.3330 zero_vel=0 words=62 | A1 ok
+      BlindLabel W1 coll=19688827 fire=16408380 D_A=0.833385 info=19998 distinct=33 | D_B=0.714257 cov=0.998 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=380247 fire=353148 D_A=0.928733 info=19845 distinct=1391 | D_B=0.975466 cov=0.799 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=217554 fire=196776 D_A=0.904493 info=19693 distinct=2014 | D_B=0.979785 cov=0.727 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.9259 lost_atoms=0.3301 zero_vel=0 words=59 | A1 ok
+      GlobalRelabel W1 coll=21050453 fire=17279623 D_A=0.820867 info=19997 distinct=30 | D_B=0.692508 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=519661 fire=474422 D_A=0.912945 info=19853 distinct=1303 | D_B=0.963367 cov=0.789 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=268269 fire=241242 D_A=0.899254 info=19727 distinct=1873 | D_B=0.970772 cov=0.719 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.425 transport=0.0219  G2 admissible: NO
+      Spatial MAP saturation=0.3958 lost_atoms=0.1657 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=3106768 fire=2552974 D_A=0.821746 info=19946 distinct=376 | D_B=0.823338 cov=0.924 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=66156 fire=52699 D_A=0.796587 info=12445 distinct=11166 | D_B=1.000000 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=5) D_A=0.654505 info=1207 | grain boundary found: NO
+      Spatial W3 coll=31134 fire=25069 D_A=0.805197 info=11372 distinct=12225 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4626 lost_atoms=0.2029 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=1909807 fire=1645525 D_A=0.861618 info=19967 distinct=414 | D_B=0.870968 cov=0.493 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=16505 fire=12426 D_A=0.752863 info=11216 distinct=12727 | D_B=1.000000 cov=0.005 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=16050 fire=11995 D_A=0.747352 info=10971 distinct=12914 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.3958 lost_atoms=0.1657 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=3106768 fire=2552974 D_A=0.821746 info=19946 distinct=376 | D_B=0.824637 cov=0.924 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=66156 fire=52699 D_A=0.796587 info=12445 distinct=11166 | D_B=1.000000 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=31134 fire=25069 D_A=0.805197 info=11372 distinct=12225 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=0.691 transport=0.0337  G2 admissible: NO
+      Spatial MAP saturation=0.1436 lost_atoms=0.0779 zero_vel=0 words=57 | A1 ok
+      Spatial W1 coll=1318592 fire=439970 D_A=0.333667 info=19648 distinct=1613 | D_B=0.829016 cov=0.097 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=114016 fire=75269 D_A=0.660162 info=10699 distinct=12552 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=6, r=0) D_A=0.549168 info=647 | grain boundary found: NO
+      Spatial W3 coll=22208 fire=17490 D_A=0.787554 info=9483 distinct=13788 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.1757 lost_atoms=0.1037 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=694781 fire=422940 D_A=0.608739 info=19654 distinct=1839 | D_B=0.687560 cov=0.104 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=11279 fire=8448 D_A=0.749003 info=9033 distinct=14390 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=11159 fire=8339 D_A=0.747289 info=8924 distinct=14460 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1436 lost_atoms=0.0779 zero_vel=0 words=57 | A1 ok
+      GlobalRelabel W1 coll=1318592 fire=439970 D_A=0.333667 info=19648 distinct=1613 | D_B=0.817617 cov=0.097 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=114016 fire=75269 D_A=0.660162 info=10699 distinct=12552 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=22208 fire=17490 D_A=0.787554 info=9483 distinct=13788 | D_B=n/a cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.553 transport=0.0668  G2 admissible: NO
+      Spatial MAP saturation=0.0657 lost_atoms=0.0426 zero_vel=0 words=36 | A1 ok
+      Spatial W1 coll=528718 fire=105164 D_A=0.198904 info=19372 distinct=2442 | D_B=0.400000 cov=0.001 | refines=true | NotClosed
+      Spatial W2 coll=38833 fire=26808 D_A=0.690341 info=8851 distinct=14087 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=8, r=4) D_A=0.611061 info=923 | grain boundary found: NO
+      Spatial W3 coll=15051 fire=11829 D_A=0.785928 info=7875 distinct=15001 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0493 lost_atoms=0.0397 zero_vel=0 words=57 | A1 ok
+      BlindLabel W1 coll=346437 fire=134144 D_A=0.387210 info=19482 distinct=2259 | D_B=0.076923 cov=0.001 | refines=true | NotClosed
+      BlindLabel W2 coll=8663 fire=6504 D_A=0.750779 info=7472 distinct=15471 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=8625 fire=6470 D_A=0.750145 info=7436 distinct=15494 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.0657 lost_atoms=0.0426 zero_vel=0 words=36 | A1 ok
+      GlobalRelabel W1 coll=528718 fire=105164 D_A=0.198904 info=19372 distinct=2442 | D_B=0.400000 cov=0.001 | refines=true | NotClosed
+      GlobalRelabel W2 coll=38833 fire=26808 D_A=0.690341 info=8851 distinct=14087 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=15051 fire=11829 D_A=0.785928 info=7875 distinct=15001 | D_B=n/a cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x0000000053415428  n=12 frames=20000
+   grid 1x1 cells=1 atoms/cell=12.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial MAP saturation=1.0000 lost_atoms=0.5606 zero_vel=0 words=40 | A1 ok
+      Spatial W1 coll=79169248 fire=43212311 D_A=0.545822 info=19999 distinct=4 | D_B=0.435100 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial W2 coll=40796043 fire=26056413 D_A=0.638700 info=19998 distinct=32 | D_B=0.538856 cov=0.995 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      A3 phase sweep: best (p=8, r=7) D_A=0.616671 info=2497 | grain boundary found: NO
+      Spatial W3 coll=40718347 fire=25995244 D_A=0.638416 info=19998 distinct=40 | D_B=0.538663 cov=0.995 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=1.0000 lost_atoms=0.5606 zero_vel=0 words=40 | A1 ok
+      BlindLabel W1 coll=79169248 fire=43212311 D_A=0.545822 info=19999 distinct=4 | D_B=0.435100 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W2 coll=40796043 fire=26056413 D_A=0.638700 info=19998 distinct=32 | D_B=0.538856 cov=0.995 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel W3 coll=40718347 fire=25995244 D_A=0.638416 info=19998 distinct=40 | D_B=0.538663 cov=0.995 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=1.0000 lost_atoms=0.5606 zero_vel=0 words=40 | A1 ok
+      GlobalRelabel W1 coll=79169248 fire=43212311 D_A=0.545822 info=19999 distinct=4 | D_B=0.435100 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W2 coll=40796043 fire=26056413 D_A=0.638700 info=19998 distinct=32 | D_B=0.538856 cov=0.995 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel W3 coll=40718347 fire=25995244 D_A=0.638416 info=19998 distinct=40 | D_B=0.538663 cov=0.995 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 atoms/cell=6.000 fluct=0.203 transport=0.0091  G2 admissible: NO
+      Spatial MAP saturation=0.9369 lost_atoms=0.3496 zero_vel=0 words=59 | A1 ok
+      Spatial W1 coll=19018159 fire=15816944 D_A=0.831676 info=19999 distinct=29 | D_B=0.710900 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=308256 fire=291798 D_A=0.946609 info=19830 distinct=1494 | D_B=0.967017 cov=0.828 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=3) D_A=0.863501 info=2184 | grain boundary found: NO
+      Spatial W3 coll=176658 fire=163740 D_A=0.926876 info=19670 distinct=2152 | D_B=0.968613 cov=0.777 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.9163 lost_atoms=0.3534 zero_vel=0 words=61 | A1 ok
+      BlindLabel W1 coll=22232115 fire=18336891 D_A=0.824793 info=19996 distinct=31 | D_B=0.709397 cov=0.999 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=289752 fire=276240 D_A=0.953367 info=19847 distinct=1441 | D_B=0.957459 cov=0.900 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=181542 fire=170155 D_A=0.937276 info=19690 distinct=2094 | D_B=0.964834 cov=0.847 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.9369 lost_atoms=0.3496 zero_vel=0 words=59 | A1 ok
+      GlobalRelabel W1 coll=19018159 fire=15816944 D_A=0.831676 info=19999 distinct=29 | D_B=0.710900 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=308256 fire=291798 D_A=0.946609 info=19830 distinct=1494 | D_B=0.967017 cov=0.828 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=176658 fire=163740 D_A=0.926876 info=19670 distinct=2152 | D_B=0.968613 cov=0.777 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 atoms/cell=3.000 fluct=0.444 transport=0.0258  G2 admissible: NO
+      Spatial MAP saturation=0.4674 lost_atoms=0.1911 zero_vel=0 words=64 | A1 ok
+      Spatial W1 coll=1857615 fire=1601486 D_A=0.862119 info=19951 distinct=465 | D_B=0.798817 cov=0.828 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=16747 fire=14019 D_A=0.837105 info=10601 distinct=13067 | D_B=1.000000 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=2) D_A=0.648787 info=932 | grain boundary found: NO
+      Spatial W3 coll=12627 fire=10160 D_A=0.804625 info=9483 distinct=13993 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.4502 lost_atoms=0.2212 zero_vel=0 words=64 | A1 ok
+      BlindLabel W1 coll=1811571 fire=1536519 D_A=0.848169 info=19945 distinct=447 | D_B=0.760334 cov=0.849 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=12365 fire=9989 D_A=0.807845 info=9912 distinct=13786 | D_B=0.986667 cov=0.007 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=11601 fire=9273 D_A=0.799328 info=9582 distinct=14040 | D_B=0.978261 cov=0.005 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.4674 lost_atoms=0.1911 zero_vel=0 words=64 | A1 ok
+      GlobalRelabel W1 coll=1857615 fire=1601486 D_A=0.862119 info=19951 distinct=465 | D_B=0.798817 cov=0.828 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=16747 fire=14019 D_A=0.837105 info=10601 distinct=13067 | D_B=1.000000 cov=0.004 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=12627 fire=10160 D_A=0.804625 info=9483 distinct=13993 | D_B=1.000000 cov=0.001 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 atoms/cell=1.500 fluct=0.753 transport=0.0463  G2 admissible: NO
+      Spatial MAP saturation=0.2118 lost_atoms=0.1098 zero_vel=0 words=57 | A1 ok
+      Spatial W1 coll=324354 fire=197615 D_A=0.609257 info=19460 distinct=2351 | D_B=0.823297 cov=0.101 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial W2 coll=9633 fire=7851 D_A=0.815011 info=8287 distinct=14908 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      A3 phase sweep: best (p=8, r=3) D_A=0.641577 info=741 | grain boundary found: NO
+      Spatial W3 coll=7587 fire=6048 D_A=0.797153 info=7324 distinct=15626 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.1869 lost_atoms=0.1116 zero_vel=0 words=63 | A1 ok
+      BlindLabel W1 coll=278611 fire=191855 D_A=0.688612 info=19477 distinct=2371 | D_B=0.874585 cov=0.120 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W2 coll=6644 fire=5168 D_A=0.777845 info=7278 distinct=15718 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel W3 coll=6441 fire=4982 D_A=0.773482 info=7115 distinct=15824 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.2118 lost_atoms=0.1098 zero_vel=0 words=57 | A1 ok
+      GlobalRelabel W1 coll=324354 fire=197615 D_A=0.609257 info=19460 distinct=2351 | D_B=0.822310 cov=0.101 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W2 coll=9633 fire=7851 D_A=0.815011 info=8287 distinct=14908 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel W3 coll=7587 fire=6048 D_A=0.797153 info=7324 distinct=15626 | D_B=1.000000 cov=0.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 atoms/cell=0.500 fluct=1.577 transport=0.0714  G2 admissible: NO
+      Spatial MAP saturation=0.1003 lost_atoms=0.0631 zero_vel=0 words=34 | A1 ok
+      Spatial W1 coll=242299 fire=96003 D_A=0.396217 info=19052 distinct=3284 | D_B=0.041667 cov=0.002 | refines=true | NotClosed
+      Spatial W2 coll=6643 fire=5488 D_A=0.826133 info=6345 distinct=16251 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      A3 phase sweep: best (p=8, r=3) D_A=0.652913 info=566 | grain boundary found: NO
+      Spatial W3 coll=4918 fire=3937 D_A=0.800529 info=5651 distinct=16753 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      Spatial G8 weak (monotone counts): true
+      BlindLabel MAP saturation=0.0512 lost_atoms=0.0415 zero_vel=0 words=57 | A1 ok
+      BlindLabel W1 coll=243977 fire=82042 D_A=0.336269 info=19398 distinct=2770 | D_B=0.416667 cov=0.002 | refines=true | NotClosed
+      BlindLabel W2 coll=4470 fire=3522 D_A=0.787919 info=5614 distinct=16813 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      BlindLabel W3 coll=4417 fire=3473 D_A=0.786280 info=5549 distinct=16850 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      BlindLabel G8 weak (monotone counts): true
+      GlobalRelabel MAP saturation=0.1003 lost_atoms=0.0631 zero_vel=0 words=34 | A1 ok
+      GlobalRelabel W1 coll=242299 fire=96003 D_A=0.396217 info=19052 distinct=3284 | D_B=0.041667 cov=0.002 | refines=true | NotClosed
+      GlobalRelabel W2 coll=6643 fire=5488 D_A=0.826133 info=6345 distinct=16251 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel W3 coll=4918 fire=3937 D_A=0.800529 info=5651 distinct=16753 | D_B=1.000000 cov=0.000 | refines=true | NotClosed
+      GlobalRelabel G8 weak (monotone counts): true
+
+===== COST (A2 §7, work units, never wall clock) =====
+frames read:       320000
+chart evaluations: 13500000

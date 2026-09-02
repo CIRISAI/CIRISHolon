@@ -21,3 +21,12 @@ g5 = []
 [dependencies]
 ciris-sim-core = { path = "../ciris-sim-core", features = ["alloc"] }
 holon-swarm = { path = "../holon-swarm" }
+
+# DEV-ONLY, for `examples/rung2_lg.rs` (rung 2 amendment A2). The direction matters and is
+# the same one `holon-render` documents: `holon-lens` carries the trajectory format and the
+# closure instrument, and this crate carries `ciris-sim-core::regplus::sector` — the ONE
+# implementation of the (N, P) label. A2's chart needs both, and this is the only crate that
+# can see both. A dev-dependency, so `holon-mesh`'s own dependency graph is unchanged and
+# nothing here can reach the isolation-gated core's normal edges.
+[dev-dependencies]
+holon-lens = { path = "../holon-lens" }

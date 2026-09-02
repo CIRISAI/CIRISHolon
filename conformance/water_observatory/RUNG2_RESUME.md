@@ -1,11 +1,14 @@
 # Rung-2 (fluid-element tier) lane — RESUME
 
-**State: COMPLETE. Verdict banked. No computation is running and none is pending.**
+**State: COMPLETE, including amendment A2. Verdict banked. No computation is running and
+none is pending.**
 
 ## Verdict in one line
 
 The fluid-element tier is NOT certified; `RUNG2_PREREG.md` branch **(d) — inadmissible
-carrier** — and the 1 km face does not flip. `RUNG2_RESULTS.md` is the reading.
+carrier** — and the 1 km face does not flip. **The flip is NOT owed.** `RUNG2_RESULTS.md` is
+the reading; `RUNG2_RESULTS_A2.md` re-runs it on the lattice-gas chart and the verdict is
+unchanged on both charts.
 
 ## What is banked (committed, green)
 
@@ -17,6 +20,9 @@ carrier** — and the 1 km face does not flip. `RUNG2_RESULTS.md` is the reading
 | the measured results | `RUNG2_RESULTS.md` |
 | the log they summarise | `rung2_chart.log` (2,129 lines) |
 | G1's digest check | `rung2_g1_digests.log` (23 files OK, exit 0) |
+| A2's stakes, frozen before its instrument | `RUNG2_PREREG_A2.md` (`e5bd812`, ADMITTED) |
+| A2's instrument | `holon-lens/src/field_lg.rs` (8 map plants) + `holon-mesh/examples/rung2_lg.rs` + `holon-mesh/tests/rung2_lg_pin.rs` |
+| A2's results | `RUNG2_RESULTS_A2.md`, log `rung2_lg.log` |
 
 Reproduce, from a clean checkout:
 
@@ -25,6 +31,9 @@ cargo test -p holon-lens                      # instrument + plants, no holon-re
 cd /home/emoore/holon-artifacts/census-traj && \
   sha256sum -c <repo>/conformance/water_observatory/census_traj_manifest.sha256
 cargo run --release -p holon-lens --example rung2 -- \
+  /home/emoore/holon-artifacts/census-traj fenced hydrogen
+cargo test -p holon-mesh --test rung2_lg_pin      # A2's direction/label pin
+cargo run --release -p holon-mesh --example rung2_lg -- \
   /home/emoore/holon-artifacts/census-traj fenced hydrogen
 ```
 
@@ -46,6 +55,17 @@ All in `RUNG2_RESULTS.md` §5, none repaired in place:
    ledger in the dump. Marked UNDISCHARGED, not failed.
 4. **The freeze's own blind control is degenerate** (`BlindIndex`: constant membership, zero
    transport). `BlindLabel` is the control every G7 number uses.
+
+## A2, in four lines
+
+The operator's rule is that a deviation from the FHP/FCHC machinery must be argued against
+it BY MEASUREMENT. It was: the banked cell-field chart reads **3.4–9.2× better** than the
+lattice-gas `(N,P)` chart at comparable arity, the verdict census is **bit-identical**
+(183 VOID / 42 NotClosed) so the scissor is chart-independent, and the cause is a **second
+scissor** — FHP-6's Boolean word caps at 6 atoms per cell, losing 55% at 12 atoms/cell and
+~94% at the admissibility bar. `Core/ModeChart.lean`'s own CAP fence predicts that and names
+the repair (the fractional / lattice-Boltzmann chart), which belongs to the LG node.
+Door (c) came back a **measured null**: 0 of 75 phase sweeps found a grain boundary.
 
 ## What is owed, and by whom
 

@@ -1,0 +1,32 @@
+# ACUITY-B readings, 2026-09-02T15:53:09Z, instrument commit: pending (this commit); binary: engine/target/release/examples/acuity_b
+# freeze: ACUITY_B_PREREG.md B.5 scene = 10 bohr; 6 and 3 bohr are density readings, not the staked scene
+
+## spacing 10.0 bohr
+# ACUITY-B reading: N = 64, box 40.0 bohr periodic, frame half 10.0 bohr at centre
+# observed at start: 8 atoms; well depth 1.744900e-1 Ha; 64 substeps x 32 frames
+G1 momentum: residual 2.242e-13 vs bound 9.432e-10 -> PASS
+G2 ledger:   drift 1.792e-4 vs bound 2.882e-3 -> PASS; work.acuity +8.048375e-3 Ha; columns_ok true
+G3 observed: rms deviation 0.0176 bohr (budget 0.5); row defect peak full 4.3431e-2 framed 3.6198e-2 -> |diff|/D_e 0.0414 (budget 0.1)
+G4 work:     pairs fine 974848 skipped 3153920 examined 4128768 -> saving 76.4%; triples skipped 0 quads skipped 0; transitions 56
+whole-only:  T full 6086.16 K framed 1415.01 K; P full 7.1222e-6 framed 3.6680e-6 (defined true)
+BRANCH (a) inside budget with saving > 0: B's missing piece is the ALLOCATION law
+
+## spacing 6.0 bohr
+# ACUITY-B reading: N = 64, box 24.0 bohr periodic, frame half 6.0 bohr at centre
+# observed at start: 8 atoms; well depth 1.744900e-1 Ha; 64 substeps x 32 frames
+G1 momentum: residual 5.026e-13 vs bound 2.888e-9 -> PASS
+G2 ledger:   drift 1.063e-2 vs bound 4.847e-2 -> PASS; work.acuity +2.153640e-1 Ha; columns_ok true
+G3 observed: rms deviation 4.0122 bohr (budget 0.5); row defect peak full 2.0382e-1 framed 2.7029e-1 -> |diff|/D_e 0.3809 (budget 0.1)
+G4 work:     pairs fine 1481810 skipped 2646958 examined 4128768 -> saving 64.1%; triples skipped 0 quads skipped 0; transitions 89
+whole-only:  T full 35670.54 K framed 19025.45 K; P full -3.8983e-6 framed 3.3184e-5 (defined true)
+BRANCH (b) over budget: the unobserved region is LOAD-BEARING for the observed thing
+
+## spacing 3.0 bohr
+# ACUITY-B reading: N = 64, box 12.0 bohr periodic, frame half 3.0 bohr at centre
+# observed at start: 8 atoms; well depth 1.744900e-1 Ha; 64 substeps x 32 frames
+G1 momentum: residual 2.639e-12 vs bound 1.279e-8 -> PASS
+G2 ledger:   drift 4.960e-1 vs bound 1.159e0 -> PASS; work.acuity +3.407774e0 Ha; columns_ok true
+G3 observed: rms deviation 5.3845 bohr (budget 0.5); row defect peak full 0.0000e0 framed 1.3449e0 -> |diff|/D_e 7.7076 (budget 0.1)
+G4 work:     pairs fine 3434955 skipped 693813 examined 4128768 -> saving 16.8%; triples skipped 0 quads skipped 0; transitions 172
+whole-only:  T full 280834.56 K framed 212968.04 K; P full 2.3296e-3 framed 4.2956e-3 (defined true)
+BRANCH (b) over budget: the unobserved region is LOAD-BEARING for the observed thing

@@ -219,7 +219,7 @@ PRICE measured in a regime, and four were caught this season being inherited acr
 regimes; the arithmetic-regime law (device class, solver budget, subtraction basis,
 and now bead count and bond dimension) is what keeps a price from becoming a wall.
 
-### Where the weight sits — the lead's calibrated read, dated 2026-09-02
+### Where the weight sits — the lead's calibrated read, dated 2026-09-02, MOVED the same day by ACUITY-B
 
 Not a measurement; a judgement over MUTUALLY EXCLUSIVE readings of what a holon most
 likely IS, given everything above. Probabilities sum to one and each names the
@@ -227,14 +227,15 @@ evidence that moves it.
 
 | reading | p | what moves it |
 |---|---|---|
-| **A.** The full thesis: closure + paid rent IS thinghood, at every tier, and the books are physical (Move 5 true) | 0.20 | Moves 1–4 all stand; but Move 5's two dead legs and the fact that the only EXACT closures measured are conservation fibers cap it here |
-| **B.** Closure + rent is the right account of objects, but a FRAME-SELECTION principle is missing: `exists_closed_view` makes closure cheap (every step closes some view — itself), so what picks the frame in which water is a thing and a fluid cell is not remains unaccounted; the observer's acuity is doing unacknowledged work | 0.40 | The upward campaign's vacuity trap; the acuity law's own arithmetic; `frames_are_not_gauge` cuts AGAINST full relativism (frames are an order), which is why this is B and not D |
-| **C.** Thinghood is primarily CONSERVATION — closed views are fibers of conserved labels and everything else is budgeted approximation to that; rent is thermodynamics repackaged | 0.20 | LG: the global chart closes by conservation alone and nothing else closes exactly; rung 1's conserved-label lesson; `conserved_descends` reads as the primitive, not a corollary |
-| **D.** Closure is real but observer-indexed with no observer-free fact of thinghood | 0.12 | The acuity law's spirit; against it, `FrameOrder.lean` (frames are an ORDER, gauge is only presentation) and the certified molecule's controls (0/111) |
+| **A.** The full thesis: closure + paid rent IS thinghood, at every tier, and the books are physical (Move 5 true) | 0.35 | Moves 1–4 all stand; but Move 5's two dead legs and the fact that the only EXACT closures measured are conservation fibers cap it here |
+| **B.** Closure + rent is the right account of objects, but a FRAME-SELECTION principle is missing: `exists_closed_view` makes closure cheap (every step closes some view — itself), so what picks the frame in which water is a thing and a fluid cell is not remains unaccounted; the observer's acuity is doing unacknowledged work — **TESTED (ACUITY-B, `conformance/water_observatory/ACUITY_B_RESULTS.md`): the frame selects ALLOCATION, not thinghood; carried-coarse cost the observed thing 0.018 bohr and 4% of a well at 76% of pair work saved, with a measured density crossover where the unobserved region becomes load-bearing** | 0.27 | The upward campaign's vacuity trap; the acuity law's own arithmetic; `frames_are_not_gauge` cuts AGAINST full relativism (frames are an order), which is why this is B and not D |
+| **C.** Thinghood is primarily CONSERVATION — closed views are fibers of conserved labels and everything else is budgeted approximation to that; rent is thermodynamics repackaged | 0.22 | LG: the global chart closes by conservation alone and nothing else closes exactly; rung 1's conserved-label lesson; `conserved_descends` reads as the primitive, not a corollary |
+| **D.** Closure is real but observer-indexed with no observer-free fact of thinghood | 0.08 | The acuity law's spirit; against it, `FrameOrder.lean` (frames are an ORDER, gauge is only presentation) and the certified molecule's controls (0/111) |
 | **E.** The frame is wrong in a way the record already shows: the world-level "rent" is metaphor, and the dead cosmology legs are the tell | 0.08 | The Landauer and flow legs fired; against it, the rent clause's rate surviving on hardware and the design-knowing repair result |
 
 The steelman's own verdict on itself: Moves 1–4 are load-bearing and would survive
-E; Move 5 is the bet. The programme's next measurements that would MOVE this table
+E; Move 5 is the bet. The first lever was pulled the day this was written: ACUITY-B
+measured the allocation half of B and moved 0.13 of its weight into A. The programme's next measurements that would MOVE this table
 are named, not implied — the genuine-3D carrier re-running rungs 1 and 2 (B and C
 separate on whether a dynamic in-budget chart appears at scale), node E's quantum
 nuclei on the H₂ arm (A and C separate on whether persistence needs more than

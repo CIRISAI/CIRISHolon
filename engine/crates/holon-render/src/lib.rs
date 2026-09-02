@@ -36,6 +36,7 @@
 // The JSON reader is NATIVE ONLY. The browser has a JSON parser already and pushes
 // knots through the ABI below; shipping a second one inside the wasm would be pure
 // weight. This cfg is what makes the module header's claim true rather than aspirational.
+pub mod acuity;
 pub mod barostat;
 pub mod cells;
 pub mod checkpoint;

@@ -50,7 +50,8 @@ use crate::sim::{Atom, Boundary, Dims, Sim};
 /// what a version check buys that a length check would not: v2 and v3 differ by sixteen
 /// bytes, so a truncated-or-padded v2 could pass a size test and still restore a scene
 /// whose field points somewhere nobody chose.
-pub const CHECKPOINT_VERSION: u32 = 3;
+/// v4 (2026-09-02): the `acuity` receipt column joins the ledger block after `barostat`.
+pub const CHECKPOINT_VERSION: u32 = 4;
 
 const MAGIC: [u8; 8] = *b"HOLONCK1";
 
@@ -375,6 +376,7 @@ impl Sim {
         w.f64(self.work.hand);
         w.f64(self.work.thermostat);
         w.f64(self.work.barostat);
+        w.f64(self.work.acuity);
         w.f64(self.l0);
         w.f64(self.p0.0);
         w.f64(self.p0.1);
@@ -491,6 +493,7 @@ impl Sim {
         let hand = r.f64()?;
         let thermostat = r.f64()?;
         let barostat = r.f64()?;
+        let acuity = r.f64()?;
         let l0 = r.f64()?;
         let p0 = (r.f64()?, r.f64()?, r.f64()?);
         let j_ext = (r.f64()?, r.f64()?, r.f64()?);
@@ -540,6 +543,7 @@ impl Sim {
         self.work.hand = hand;
         self.work.thermostat = thermostat;
         self.work.barostat = barostat;
+        self.work.acuity = acuity;
         self.l0 = l0;
         self.p0 = p0;
         self.j_ext = j_ext;

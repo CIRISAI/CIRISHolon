@@ -354,6 +354,9 @@ pub struct PairTerm {
     /// the sign to be wrong. The pressure is `(2K − Σ virial) / 3V`, so a sign error here is
     /// a barostat that expands under compression.
     pub virial: f64,
+    /// Acuity treatment: 0 live, 1 skipped, 2 transition-out, 3 transition-in. Zero
+    /// whenever no frame is set, so the default term is a live term.
+    pub acuity: u8,
 }
 
 /// ONE TRIPLE's evaluated contribution. Same split, same reason.
@@ -455,13 +458,16 @@ pub struct ExternalWork {
     /// The barostat's box work: the potential energy change produced by moving the box
     /// walls at fixed scaled coordinates, plus the kinetic change from rescaling.
     pub barostat: f64,
+    /// The observer's frame: energy moved by fine/coarse membership transitions under an
+    /// [`crate::acuity::AcuityFrame`]. Zero whenever no frame is set.
+    pub acuity: f64,
 }
 
 impl ExternalWork {
     /// The columns' sum, in a FIXED order so the total is reproducible.
     #[inline]
     pub fn total(&self) -> f64 {
-        (self.hand + self.thermostat) + self.barostat
+        ((self.hand + self.thermostat) + self.barostat) + self.acuity
     }
 
     #[inline]
@@ -470,6 +476,7 @@ impl ExternalWork {
             hand: 0.0,
             thermostat: 0.0,
             barostat: 0.0,
+            acuity: 0.0,
         }
     }
 
@@ -481,6 +488,7 @@ impl ExternalWork {
             .abs()
             .max(self.thermostat.abs())
             .max(self.barostat.abs())
+            .max(self.acuity.abs())
     }
 }
 
@@ -737,6 +745,20 @@ pub struct Sim {
     /// Largest pair relative energy seen since reset — what the curvature envelope, and
     /// therefore the drift bound, is derived from.
     pub e_rel_max: f64,
+
+    // --- the observer's frame (ACUITY-B) ---
+    /// The scene box. `None` means every atom is fine and none of the acuity code runs.
+    pub acuity: Option<crate::acuity::AcuityFrame>,
+    /// Per-atom membership this step (true = coarse). Sized lazily to `n`.
+    pub coarse: Vec<bool>,
+    /// Membership at the previous force pass, for transition accounting.
+    coarse_prev: Vec<bool>,
+    /// Banked relative velocity of a coarse atom (its motion inside its composite).
+    coarse_rel_v: Vec<(f64, f64, f64)>,
+    /// Composite group per atom: the live row index, or `u32::MAX` for a lone atom.
+    coarse_group: Vec<u32>,
+    pub acuity_work: crate::acuity::AcuityWork,
+    pub acuity_plant: crate::acuity::AcuityPlant,
 }
 
 impl Sim {
@@ -833,6 +855,13 @@ impl Sim {
             holons: HolonLayer::empty(),
             frame: 0,
             e_rel_max: f64::NEG_INFINITY,
+            acuity: None,
+            coarse: Vec::new(),
+            coarse_prev: Vec::new(),
+            coarse_rel_v: Vec::new(),
+            coarse_group: Vec::new(),
+            acuity_work: crate::acuity::AcuityWork::zero(),
+            acuity_plant: crate::acuity::AcuityPlant::None,
         }
     }
 
@@ -2596,6 +2625,7 @@ impl Sim {
             value,
             curv,
             virial: p.r * slope,
+            acuity: 0,
         }
     }
 
@@ -2603,8 +2633,30 @@ impl Sim {
     /// [`ForceExecutor`] hands to a worker.
     pub fn eval_pair_chunk(&self, base: usize, out: &mut [PairTerm]) {
         let pairs = &self.neighbours.pairs;
+        if self.acuity.is_none() {
+            for (k, slot) in out.iter_mut().enumerate() {
+                *slot = self.pair_term(&pairs[base + k]);
+            }
+            return;
+        }
+        use crate::acuity::PairKind;
         for (k, slot) in out.iter_mut().enumerate() {
-            *slot = self.pair_term(&pairs[base + k]);
+            let p = &pairs[base + k];
+            match self.acuity_kind(p.i as usize, p.j as usize) {
+                PairKind::Live => *slot = self.pair_term(p),
+                PairKind::Skip => {
+                    *slot = PairTerm::default();
+                    slot.acuity = 1;
+                }
+                PairKind::TransitionOut => {
+                    *slot = self.pair_term(p);
+                    slot.acuity = 2;
+                }
+                PairKind::TransitionIn => {
+                    *slot = self.pair_term(p);
+                    slot.acuity = 3;
+                }
+            }
         }
     }
 
@@ -2680,7 +2732,7 @@ impl Sim {
         e_pair: &mut f64,
         k_pair_max: &mut f64,
         virial: &mut f64,
-    ) {
+    ) -> f64 {
         let (value, slope, curv) = self.pair_eval(i, j, r);
         *e_pair += value;
         *virial += r * slope;
@@ -2693,13 +2745,21 @@ impl Sim {
         self.a_pair[i].0 += fx;
         self.a_pair[i].1 += fy;
         self.a_pair[i].2 += fz;
-        self.a_pair[j].0 -= fx;
-        self.a_pair[j].1 -= fy;
-        self.a_pair[j].2 -= fz;
+        // P-2 (sector: momentum): the plant drops the reaction on the coarse side.
+        let drop_j = self.acuity.is_some()
+            && self.acuity_plant == crate::acuity::AcuityPlant::DropReaction
+            && self.coarse.get(j).copied().unwrap_or(false)
+            && !self.coarse.get(i).copied().unwrap_or(false);
+        if !drop_j {
+            self.a_pair[j].0 -= fx;
+            self.a_pair[j].1 -= fy;
+            self.a_pair[j].2 -= fz;
+        }
         let ac = curv.abs();
         if ac > *k_pair_max {
             *k_pair_max = ac;
         }
+        value
     }
 
     /// Recompute the whole force ledger at the CURRENT positions, without stepping.
@@ -2722,6 +2782,10 @@ impl Sim {
         let mut virial = 0.0f64;
         let geom = self.geom();
         let switch = self.pair_switch;
+        // ACUITY-B: the pair sector's transition ledger and work partition for this pass.
+        let framed = self.acuity.is_some();
+        let (mut pe_out, mut pe_in) = (0.0f64, 0.0f64);
+        let (mut n_fine, mut n_skip) = (0u64, 0u64);
 
         // The pair sector takes one of two routes, and which one is a DECLARED property
         // of the scene rather than a size heuristic:
@@ -2749,6 +2813,32 @@ impl Sim {
                     // repulsive wall makes this unreachable dynamically, and the guard
                     // keeps it from being a NaN source if a caller places them there.
                     let r = r2.sqrt().max(1e-9);
+                    if framed {
+                        use crate::acuity::PairKind;
+                        match self.acuity_kind(i, j) {
+                            PairKind::Skip => {
+                                n_skip += 1;
+                                continue;
+                            }
+                            PairKind::TransitionOut => {
+                                let (value, _, _) = self.pair_eval(i, j, r);
+                                pe_out += value;
+                                n_skip += 1;
+                                continue;
+                            }
+                            PairKind::TransitionIn => {
+                                let value = self.accumulate_pair(
+                                    i, j, dx, dy, dz, r, &mut e_pair, &mut k_pair_max, &mut virial,
+                                );
+                                pe_in += value;
+                                n_fine += 1;
+                                continue;
+                            }
+                            PairKind::Live => {
+                                n_fine += 1;
+                            }
+                        }
+                    }
                     self.accumulate_pair(
                         i,
                         j,
@@ -2774,14 +2864,41 @@ impl Sim {
             let nb = core::mem::take(&mut self.neighbours);
             for (t, p) in terms.iter().zip(nb.pairs.iter()) {
                 let (i, j) = (p.i as usize, p.j as usize);
+                if framed {
+                    match t.acuity {
+                        1 => {
+                            n_skip += 1;
+                            continue;
+                        }
+                        2 => {
+                            pe_out += t.value;
+                            n_skip += 1;
+                            continue;
+                        }
+                        3 => {
+                            pe_in += t.value;
+                            n_fine += 1;
+                        }
+                        _ => {
+                            n_fine += 1;
+                        }
+                    }
+                }
                 e_pair += t.value;
                 virial += t.virial;
                 self.a_pair[i].0 += t.fx;
                 self.a_pair[i].1 += t.fy;
                 self.a_pair[i].2 += t.fz;
-                self.a_pair[j].0 -= t.fx;
-                self.a_pair[j].1 -= t.fy;
-                self.a_pair[j].2 -= t.fz;
+                // P-2 (sector: momentum): the plant drops the reaction on the coarse side.
+                let drop_j = framed
+                    && self.acuity_plant == crate::acuity::AcuityPlant::DropReaction
+                    && self.coarse[j]
+                    && !self.coarse[i];
+                if !drop_j {
+                    self.a_pair[j].0 -= t.fx;
+                    self.a_pair[j].1 -= t.fy;
+                    self.a_pair[j].2 -= t.fz;
+                }
                 let ac = t.curv.abs();
                 if ac > k_pair_max {
                     k_pair_max = ac;
@@ -2793,6 +2910,9 @@ impl Sim {
         self.k_pair_max = k_pair_max;
         self.e_pair = e_pair;
         self.w_virial = virial;
+        if framed {
+            self.acuity_post_pairs(pe_out, pe_in, n_fine, n_skip);
+        }
 
         self.accumulate_three_body();
         self.accumulate_four_body();
@@ -2979,6 +3099,10 @@ impl Sim {
                     // three times.
                     let opposite_local = nb.separation(j, k).map(|r| r <= cut3).unwrap_or(false);
                     if opposite_local && !(h < j && h < k) {
+                        continue;
+                    }
+                    if self.acuity.is_some() && self.coarse[h] && self.coarse[j] && self.coarse[k] {
+                        self.acuity_work.triples_skipped += 1;
                         continue;
                     }
                     let mut t = [h, j, k];
@@ -3355,6 +3479,10 @@ impl Sim {
             if hs.len() < 3 {
                 continue;
             }
+            if self.acuity.is_some() && self.coarse[o] && hs.iter().all(|&h| self.coarse[h]) {
+                self.acuity_work.quads_skipped += 1;
+                continue;
+            }
 
             for a in 0..hs.len() {
                 let h1 = hs[a];
@@ -3660,6 +3788,9 @@ impl Sim {
         }
         let dt = self.dt();
 
+        if self.acuity.is_some() {
+            self.refresh_acuity();
+        }
         let mut j = (0.0, 0.0, 0.0);
         self.half_kick(dt, &mut j);
         self.drift_step(dt);
@@ -3678,6 +3809,10 @@ impl Sim {
     /// into `sum_b` in `f64`. A refactor that split them would move the momentum ledger's
     /// last bits while looking like a tidy-up.
     pub(crate) fn half_kick(&mut self, dt: f64, j: &mut (f64, f64, f64)) {
+        if self.acuity.is_some() {
+            self.half_kick_acuity(dt, j);
+            return;
+        }
         for i in 0..self.n {
             let (px, py, pz) = self.a_pair[i];
             let (ex, ey, ez) = self.a_ext[i];
@@ -3767,6 +3902,244 @@ impl Sim {
             self.e_ref = m;
         }
     }
+
+    // ---------------------------------------------------------------- ACUITY-B
+
+    /// Install (or clear) the observer's frame. Membership is refreshed on the next step.
+    /// Clearing restores every banked relative velocity as a ledgered re-admission.
+    pub fn set_acuity(&mut self, frame: Option<crate::acuity::AcuityFrame>) {
+        self.acuity = frame;
+        if frame.is_none() {
+            let n = self.n;
+            self.size_acuity(n);
+            let before = self.energy();
+            for i in 0..n {
+                if self.coarse[i] {
+                    let (rx, ry, rz) = self.coarse_rel_v[i];
+                    self.atoms[i].vx += rx;
+                    self.atoms[i].vy += ry;
+                    self.atoms[i].vz += rz;
+                    self.coarse_rel_v[i] = (0.0, 0.0, 0.0);
+                    self.coarse[i] = false;
+                }
+            }
+            self.accumulate_energy();
+            let de = self.energy() - before;
+            self.w_ext += de;
+            self.work.acuity += de;
+            for i in 0..n {
+                self.coarse_prev[i] = false;
+            }
+        }
+    }
+
+    fn size_acuity(&mut self, n: usize) {
+        if self.coarse.len() != n {
+            self.coarse.resize(n, false);
+        }
+        if self.coarse_prev.len() != n {
+            self.coarse_prev.resize(n, false);
+        }
+        if self.coarse_rel_v.len() != n {
+            self.coarse_rel_v.resize(n, (0.0, 0.0, 0.0));
+        }
+        if self.coarse_group.len() != n {
+            self.coarse_group.resize(n, u32::MAX);
+        }
+    }
+
+    /// How the pair `(i, j)` is treated this pass, from the current and previous
+    /// membership.
+    pub(crate) fn acuity_kind(&self, i: usize, j: usize) -> crate::acuity::PairKind {
+        use crate::acuity::PairKind;
+        let now = self.coarse[i] && self.coarse[j];
+        let before = self.coarse_prev[i] && self.coarse_prev[j];
+        match (now, before) {
+            (true, true) => PairKind::Skip,
+            (true, false) => PairKind::TransitionOut,
+            (false, true) => PairKind::TransitionIn,
+            (false, false) => PairKind::Live,
+        }
+    }
+
+    /// Post the pair sector's transition energy to the observer's column and bank the
+    /// work partition; then the previous membership becomes this one.
+    fn acuity_post_pairs(&mut self, pe_out: f64, pe_in: f64, n_fine: u64, n_skip: u64) {
+        use crate::acuity::AcuityPlant;
+        // P-3 (sector: the ledger): the plant applies transitions without posting them.
+        if self.acuity_plant != AcuityPlant::SkipLedger {
+            let de = pe_in - pe_out;
+            self.w_ext += de;
+            self.work.acuity += de;
+        }
+        // P-4 (sector: the work counter): the plant loses the skipped count, so the
+        // partition `fine + skipped == examined` no longer holds.
+        if self.acuity_plant == AcuityPlant::Miscount {
+            self.acuity_work.pairs_fine += n_fine;
+        } else {
+            self.acuity_work.pairs_fine += n_fine;
+            self.acuity_work.pairs_skipped += n_skip;
+        }
+        let n = self.n;
+        self.coarse_prev[..n].copy_from_slice(&self.coarse[..n]);
+    }
+
+    /// Membership for this step, and the transitions it implies — the banking and
+    /// restoring of internal motion, posted to the ledger as the observer's column.
+    pub(crate) fn refresh_acuity(&mut self) {
+        let Some(frame) = self.acuity else { return };
+        let n = self.n;
+        self.size_acuity(n);
+        // 1. inside the scene box, by position.
+        let mut fine: Vec<bool> = (0..n)
+            .map(|i| frame.contains([self.atoms[i].x, self.atoms[i].y, self.atoms[i].z]))
+            .collect();
+        // 2. a composite is fine if ANY member is inside: no molecule is torn.
+        for g in self.coarse_group.iter_mut() {
+            *g = u32::MAX;
+        }
+        let mut groups: Vec<(u32, Vec<usize>)> = Vec::new();
+        for (ri, row) in self.holons.live_rows() {
+            let members: Vec<usize> = row.members[..row.member_count as usize]
+                .iter()
+                .map(|&m| m as usize)
+                .collect();
+            groups.push((ri as u32, members));
+        }
+        for (ri, members) in &groups {
+            let any_in = members.iter().any(|&m| fine[m]);
+            for &m in members {
+                self.coarse_group[m] = *ri;
+                if any_in {
+                    fine[m] = true;
+                }
+            }
+        }
+        // 3. transitions, per composite, as ONE ledgered event.
+        let before = self.energy();
+        let mut transitions = 0u64;
+        let mut done: Vec<bool> = vec![false; n];
+        for i in 0..n {
+            if done[i] {
+                continue;
+            }
+            let going_coarse = !fine[i] && !self.coarse[i];
+            let going_fine = fine[i] && self.coarse[i];
+            if !(going_coarse || going_fine) {
+                done[i] = true;
+                continue;
+            }
+            let group = self.coarse_group[i];
+            let members: Vec<usize> = if group == u32::MAX {
+                vec![i]
+            } else {
+                groups
+                    .iter()
+                    .find(|(g, _)| *g == group)
+                    .map(|(_, m)| m.clone())
+                    .unwrap_or_else(|| vec![i])
+            };
+            if going_coarse {
+                let (mut px, mut py, mut pz, mut mt) = (0.0, 0.0, 0.0, 0.0);
+                for &m in &members {
+                    let a = &self.atoms[m];
+                    let mm = a.mass();
+                    px += mm * a.vx;
+                    py += mm * a.vy;
+                    pz += mm * a.vz;
+                    mt += mm;
+                }
+                let vc = (px / mt, py / mt, pz / mt);
+                for &m in &members {
+                    let a = &mut self.atoms[m];
+                    self.coarse_rel_v[m] = (a.vx - vc.0, a.vy - vc.1, a.vz - vc.2);
+                    a.vx = vc.0;
+                    a.vy = vc.1;
+                    a.vz = vc.2;
+                    self.coarse[m] = true;
+                    done[m] = true;
+                    transitions += 1;
+                }
+            } else {
+                for &m in &members {
+                    let (rx, ry, rz) = self.coarse_rel_v[m];
+                    let a = &mut self.atoms[m];
+                    a.vx += rx;
+                    a.vy += ry;
+                    a.vz += rz;
+                    self.coarse_rel_v[m] = (0.0, 0.0, 0.0);
+                    self.coarse[m] = false;
+                    done[m] = true;
+                    transitions += 1;
+                }
+            }
+        }
+        if transitions > 0 {
+            self.accumulate_energy();
+            let de = self.energy() - before;
+            if self.acuity_plant != crate::acuity::AcuityPlant::SkipLedger {
+                self.w_ext += de;
+                self.work.acuity += de;
+            }
+            self.acuity_work.transitions += transitions;
+        }
+    }
+
+    /// The half kick under a frame: fine atoms take exactly the classical kick; a coarse
+    /// composite's members all take the composite's centre-of-mass acceleration, so it
+    /// translates as one object and momentum is exact.
+    fn half_kick_acuity(&mut self, dt: f64, j: &mut (f64, f64, f64)) {
+        let n = self.n;
+        for i in 0..n {
+            if self.coarse[i] {
+                continue;
+            }
+            let (px, py, pz) = self.a_pair[i];
+            let (ex, ey, ez) = self.a_ext[i];
+            let half = 0.5 * dt / self.atoms[i].mass();
+            self.atoms[i].vx += half * (px + ex);
+            self.atoms[i].vy += half * (py + ey);
+            self.atoms[i].vz += half * (pz + ez);
+            j.0 += 0.5 * dt * ex;
+            j.1 += 0.5 * dt * ey;
+            j.2 += 0.5 * dt * ez;
+        }
+        let mut done: Vec<bool> = vec![false; n];
+        for i in 0..n {
+            if !self.coarse[i] || done[i] {
+                continue;
+            }
+            let group = self.coarse_group[i];
+            let members: Vec<usize> = if group == u32::MAX {
+                vec![i]
+            } else {
+                (0..n)
+                    .filter(|&m| self.coarse_group[m] == group && self.coarse[m])
+                    .collect()
+            };
+            let (mut fx, mut fy, mut fz, mut mt) = (0.0, 0.0, 0.0, 0.0);
+            for &m in &members {
+                let (px, py, pz) = self.a_pair[m];
+                let (ex, ey, ez) = self.a_ext[m];
+                fx += px + ex;
+                fy += py + ey;
+                fz += pz + ez;
+                mt += self.atoms[m].mass();
+                j.0 += 0.5 * dt * ex;
+                j.1 += 0.5 * dt * ey;
+                j.2 += 0.5 * dt * ez;
+            }
+            let half = 0.5 * dt / mt;
+            let (ax, ay, az) = (half * fx, half * fy, half * fz);
+            for &m in &members {
+                self.atoms[m].vx += ax;
+                self.atoms[m].vy += ay;
+                self.atoms[m].vz += az;
+                done[m] = true;
+            }
+        }
+    }
+
 
     /// Berendsen velocity rescaling. Whatever kinetic energy it adds or removes is
     /// posted to `w_ext` in the same breath, so a thermostatted run is still a closed

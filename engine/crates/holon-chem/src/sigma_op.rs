@@ -53,7 +53,7 @@ pub trait SigmaOp<T: Scalar> {
     fn apply(&mut self, c: &[T], sigma: &mut [T]);
 }
 
-/// The host arm: `sigma_direct_t`, the Knowles–Handy string factorisation, exactly as it was.
+/// The host arm: the lane kernel (`lanes::LaneSigma`) on the tables of one integral set.
 ///
 /// This is a wrapper and nothing more — it must stay one. The whole value of the refactor is
 /// that the CPU path through the new driver is bit-identical to the old one, and any

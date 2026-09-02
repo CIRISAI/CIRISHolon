@@ -120,16 +120,44 @@ fn shards_are_bit_identical_to_one_shard() {
     let ham = q.lane_hamiltonian();
     let c = random_vector(space.n_det, 7);
     let mut one = vec![0.0; space.n_det];
-    LaneSigma::new(&space, &ham, 1).apply(&c, &mut one);
+    // one operator, its shard count varied: the tables do not depend on it
+    let mut op = LaneSigma::new(&space, &ham, 1);
+    op.apply(&c, &mut one);
     for threads in [2usize, 4, 7, 32] {
+        op.threads = threads;
         let mut many = vec![0.0; space.n_det];
-        LaneSigma::new(&space, &ham, threads).apply(&c, &mut many);
+        op.apply(&c, &mut many);
         let mismatched = one.iter().zip(&many).filter(|(a, b)| a.to_bits() != b.to_bits()).count();
         assert_eq!(mismatched, 0, "{threads} shards differ from one shard on {mismatched} entries");
     }
     let e1 = q.ground_lanes(0, 1).energy;
     let e4 = q.ground_lanes(0, 4).energy;
     assert_eq!(e1.to_bits(), e4.to_bits(), "Davidson on 1 vs 4 shards: {e1:.15} vs {e4:.15}");
+}
+
+#[test]
+fn four_lanes_with_two_empty_are_two_lanes_to_the_bit() {
+    // The k ≥ 4 decode path, exercised on both the sigma and the diagonal with an exact
+    // referee: an empty lane has one string and no singles, so a four-lane space whose lanes
+    // 2 and 3 are empty is the two-lane space with the same index order, term for term.
+    let (n, na, nb) = (6usize, 3usize, 2usize);
+    let mo = random_integrals(n, 21);
+    let ci = ci_ints(&mo, Order::Value);
+    let two = LaneSpace::uniform(n, &[na, nb]);
+    let four = LaneSpace::uniform(n, &[na, nb, 0, 0]);
+    assert_eq!(four.n_det, two.n_det);
+    assert_eq!(four.n_lanes(), 4);
+    let c = random_vector(two.n_det, 22);
+    let (mut s2, mut s4) = (vec![0.0; two.n_det], vec![0.0; two.n_det]);
+    let mut op2 = LaneSigma::new(&two, &LaneHamiltonian::from_ci_ints(&ci, 2), 3);
+    let mut op4 = LaneSigma::new(&four, &LaneHamiltonian::from_ci_ints(&ci, 4), 3);
+    op2.apply(&c, &mut s2);
+    op4.apply(&c, &mut s4);
+    let mism = s2.iter().zip(&s4).filter(|(a, b)| a.to_bits() != b.to_bits()).count();
+    assert_eq!(mism, 0, "four lanes (two empty) differ from two lanes on {mism} entries");
+    let (d2, d4) = (op2.diagonal(), op4.diagonal());
+    let mism = d2.iter().zip(&d4).filter(|(a, b)| a.to_bits() != b.to_bits()).count();
+    assert_eq!(mism, 0, "diagonals differ on {mism} entries");
 }
 
 #[test]

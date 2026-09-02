@@ -637,10 +637,25 @@ pub fn apply_effective_h_mpo(
     chi_l: usize,
     chi_r: usize,
 ) -> Vec<f64> {
+    apply_effective_h_mpo_live(left, w1, w2, right, psi, chi_l, chi_r, &live_channels(left), &live_channels(right))
+}
+
+/// [`apply_effective_h_mpo`] with the live-channel lists supplied: the environments are fixed
+/// for a whole local eigensolve, so the Lanczos loop computes them once and passes them in.
+#[allow(clippy::too_many_arguments)]
+pub fn apply_effective_h_mpo_live(
+    left: &Env,
+    w1: &crate::mpo::MpoSite,
+    w2: &crate::mpo::MpoSite,
+    right: &Env,
+    psi: &[f64],
+    chi_l: usize,
+    chi_r: usize,
+    live_l: &[usize],
+    live_r: &[usize],
+) -> Vec<f64> {
     let (d_l, d_mid, d_r) = (w1.d_l, w1.d_r, w2.d_r);
     debug_assert_eq!(d_mid, w2.d_l);
-    let live_r = live_channels(right);
-    let live_l = live_channels(left);
     let nthreads = threads();
     // Step 1: t1[c2][l_in][a][b][r_out] = sum_{r_in} R[c2][r_out,r_in] * psi[l_in,a,b,r_in]
     // over the LIVE right channels only, threaded over disjoint channel blocks.
@@ -743,7 +758,7 @@ pub fn apply_effective_h_mpo(
     let mut out = vec![0.0; chi_l * 2 * 2 * chi_r];
     let row = 2 * 2 * chi_r;
     let step4 = |l_out: usize, outrow: &mut [f64]| {
-        for &c1 in &live_l {
+        for &c1 in live_l {
             let lmat = &left[c1];
             let lrow = l_out * chi_l;
             for s in 0..2 {

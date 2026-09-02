@@ -312,9 +312,13 @@ pub fn davidson_eigh_from_op_sub<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Si
                 corr[i] = r[i] / d;
             }
         }
+        // The corrector first; the raw residual is the second candidate and is built ONLY if
+        // the first fails to expand the basis — same two candidates in the same order, one
+        // n_det-sized copy per iteration fewer.
         let mut added = false;
-        for cand in [corr, r.clone()] {
-            let mut w = cand;
+        let mut first = true;
+        loop {
+            let mut w = if first { std::mem::take(&mut corr) } else { r.clone() };
             for b in basis.iter() {
                 let p = dot_t(b, &w);
                 axpy_t(-p, b, &mut w);
@@ -330,6 +334,10 @@ pub fn davidson_eigh_from_op_sub<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Si
                 added = true;
                 break;
             }
+            if !first {
+                break;
+            }
+            first = false;
         }
         if !added {
             return (theta, x, iter + 1, resid, SolveExit::Stagnated);

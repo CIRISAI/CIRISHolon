@@ -19,6 +19,16 @@ use crate::fci::{grid_for, FciGpuError};
 
 /// PTX for `kernels/lanes_sigma.cu`, produced by `build.rs` with `-fmad=false`.
 const PTX: &str = include_str!("../kernels/lanes_sigma.ptx");
+/// The kernel's source, read for ONE number: its `HOLON_MAX_LANES` must equal the host's
+/// `MAX_LANES`, and a mismatch is refused at operator build rather than found in a launch.
+const CU: &str = include_str!("../kernels/lanes_sigma.cu");
+
+fn kernel_max_lanes() -> usize {
+    CU.lines()
+        .find_map(|l| l.strip_prefix("#define HOLON_MAX_LANES "))
+        .and_then(|v| v.trim().parse().ok())
+        .expect("lanes_sigma.cu declares HOLON_MAX_LANES")
+}
 
 pub struct GpuLaneSigma {
     stream: Arc<CudaStream>,
@@ -71,6 +81,12 @@ impl GpuLaneSigma {
     /// Build and upload, checking VRAM FIRST against `reserve_mib` held back for whatever else
     /// runs on the card.
     pub fn new(ctx: &Arc<CudaContext>, t: &LaneTables<f64>, reserve_mib: u64) -> Result<GpuLaneSigma, FciGpuError> {
+        assert_eq!(
+            kernel_max_lanes(),
+            holon_chem::lanes::MAX_LANES,
+            "lanes_sigma.cu's HOLON_MAX_LANES and holon_chem::lanes::MAX_LANES have drifted apart"
+        );
+        assert!(t.n_lanes <= holon_chem::lanes::MAX_LANES, "{} lanes exceed the kernel's register array", t.n_lanes);
         ctx.bind_to_thread()?;
         let (free, _total) = cudarc::driver::result::mem_get_info()?;
         let need = Self::bytes_for(t);

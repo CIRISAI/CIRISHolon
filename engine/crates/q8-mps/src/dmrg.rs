@@ -323,16 +323,6 @@ fn all_right_envs_mpo(tensors: &[TensorSite], mpo: &crate::mpo::Mpo) -> Vec<Env>
     envs
 }
 
-/// Compute left environments for an arbitrary MPO.
-fn all_left_envs_mpo(tensors: &[TensorSite], mpo: &crate::mpo::Mpo) -> Vec<Env> {
-    let l = tensors.len();
-    let d_first = if l > 0 { mpo.sites[0].d_l } else { 1 };
-    let mut envs: Vec<Env> = vec![mps::trivial_left_env_mpo(d_first); l + 1];
-    for k in 0..l {
-        envs[k + 1] = mps::grow_left_mpo(&envs[k], &mpo.sites[k], &tensors[k]);
-    }
-    envs
-}
 
 fn two_site_update_mpo(
     tensors: &mut [TensorSite],
@@ -368,8 +358,10 @@ fn two_site_update_mpo(
     }
 
     let dim = chi_l * 2 * 2 * chi_r;
+    // the environments are fixed for the whole local solve: their live channels once
+    let (live_l, live_r) = (mps::live_channels(left_env), mps::live_channels(right_env));
     let gs = lanczos::ground_state(
-        |psi| mps::apply_effective_h_mpo(left_env, w1, w2, right_env, psi, chi_l, chi_r),
+        |psi| mps::apply_effective_h_mpo_live(left_env, w1, w2, right_env, psi, chi_l, chi_r, &live_l, &live_r),
         &seed,
         dim,
     )
@@ -402,12 +394,20 @@ pub fn dmrg_sweep(
     let mut worst_lanczos_residual = 0.0f64;
     let mut lanczos_iterations_total = 0usize;
 
+    // The right environments are built once, before the first sweep; every later sweep's are
+    // the ones its own right-to-left pass grew, and the left environments a right-to-left
+    // pass needs are the ones the left-to-right pass grew. Both hold exactly: `tensors[j]` is
+    // final once step `j` of a pass has run, so the environment grown from it then is the
+    // environment a rebuild from the finished pass would compute — same function, same
+    // inputs, same bits. The rebuilds that used to run at each pass boundary were `l − 1`
+    // redundant `grow` calls per pass.
+    let mut right_envs = all_right_envs_mpo(&tensors, mpo);
     for sweep in 0..config.max_sweeps {
         sweeps_used = sweep + 1;
 
         // Left-to-right pass
-        let right_envs = all_right_envs_mpo(&tensors, mpo);
-        let mut left_env = mps::trivial_left_env_mpo(mpo.sites[0].d_l);
+        let mut left_envs: Vec<Env> = Vec::with_capacity(l);
+        left_envs.push(mps::trivial_left_env_mpo(mpo.sites[0].d_l));
         for j in 0..(l - 1) {
             let (e, dw, resid, sf, iters) = two_site_update_mpo(
                 &mut tensors,
@@ -416,7 +416,7 @@ pub fn dmrg_sweep(
                 j,
                 config.chi_max,
                 false,
-                &left_env,
+                &left_envs[j],
                 &right_envs[j + 2],
             );
             last_energy = e;
@@ -427,12 +427,11 @@ pub fn dmrg_sweep(
             if config.policy == RefusalPolicy::Typed && dw > REFUSAL_THRESHOLD {
                 return Err(Refusal { bond: j, weight: dw });
             }
-            left_env = mps::grow_left_mpo(&left_env, &mpo.sites[j], &tensors[j]);
+            let grown = mps::grow_left_mpo(&left_envs[j], &mpo.sites[j], &tensors[j]);
+            left_envs.push(grown);
         }
 
         // Right-to-left pass
-        let left_envs = all_left_envs_mpo(&tensors, mpo);
-        let mut right_env = mps::trivial_right_env_mpo(mpo.sites[l - 1].d_r);
         for j in (0..(l - 1)).rev() {
             let (e, dw, resid, sf, iters) = two_site_update_mpo(
                 &mut tensors,
@@ -442,7 +441,7 @@ pub fn dmrg_sweep(
                 config.chi_max,
                 true,
                 &left_envs[j],
-                &right_env,
+                &right_envs[j + 2],
             );
             last_energy = e;
             discarded[j] = dw;
@@ -452,7 +451,7 @@ pub fn dmrg_sweep(
             if config.policy == RefusalPolicy::Typed && dw > REFUSAL_THRESHOLD {
                 return Err(Refusal { bond: j, weight: dw });
             }
-            right_env = mps::grow_right_mpo(&right_env, &mpo.sites[j + 1], &tensors[j + 1]);
+            right_envs[j + 1] = mps::grow_right_mpo(&right_envs[j + 2], &mpo.sites[j + 1], &tensors[j + 1]);
         }
 
         energy_history.push(last_energy);

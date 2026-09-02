@@ -215,11 +215,15 @@ fn main() {
 
     // ---------------- the CPU arm, PINNED, gated on CPU time ----------------
     let mut cpu_sigma = vec![0.0f64; space.n_det];
-    sigma_direct(&space, &ci, &c, &mut cpu_sigma); // warm the caches; not timed
+    // The host operator is built ONCE, like the device one below: `sigma_direct` builds the
+    // lane tables per call, and timing it would charge the CPU arm a table build the device
+    // arm does not pay. One shard, to match the pinned single-core rows.
+    let mut host_op = holon_chem::lanes::LaneSigma { tables: holon_chem::lanes::LaneTables::for_ci(&space, &ci), threads: 1 };
+    host_op.apply(&c, &mut cpu_sigma); // warm the caches; not timed
     let w0 = Instant::now();
     let p0 = cpu_seconds();
     for _ in 0..reps {
-        sigma_direct(&space, &ci, &c, &mut cpu_sigma);
+        host_op.apply(&c, &mut cpu_sigma);
     }
     let cpu_wall = w0.elapsed().as_secs_f64() / reps as f64;
     let cpu_cpu = (cpu_seconds() - p0) / reps as f64;

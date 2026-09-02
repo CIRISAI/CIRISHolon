@@ -51,9 +51,10 @@ use crate::fci::{davidson_budget, CiInts, SolveExit, Strings, DAVIDSON_REQUESTED
 use crate::scalar::Scalar;
 use crate::sigma_op::{DeviceClass, SigmaOp};
 
-/// The most lanes a determinant index is decoded into on the device — a fixed register array
-/// there, so the bound is shared here rather than discovered by a launch failure. Nothing else
-/// in this module depends on it.
+/// The most lanes a determinant index is decoded into — a fixed register array in both
+/// kernels (`idx[MAX_LANES]` here, `HOLON_MAX_LANES` in `lanes_sigma.cu`, which must match; the
+/// device wrapper checks the two at build time), so the bound is refused at construction
+/// rather than discovered by a stack overflow in a launch.
 pub const MAX_LANES: usize = 8;
 
 // ------------------------------------------------------------------ the space
@@ -120,18 +121,6 @@ impl LaneSpace {
         &self.lanes[1]
     }
 
-    /// The lane string indices of determinant `k`.
-    pub fn decode(&self, k: usize) -> Vec<usize> {
-        let mut rem = k;
-        self.strides
-            .iter()
-            .map(|&s| {
-                let i = rem / s;
-                rem -= i * s;
-                i
-            })
-            .collect()
-    }
 }
 
 // ------------------------------------------------------------------ the Hamiltonian
@@ -375,6 +364,21 @@ pub fn sigma_det<T: Scalar, const DIAG: bool>(t: &LaneTables<T>, c: &[T], k: usi
         let s_off = t.lane_off_singles[l] + idx[l] * ns;
         let h_off = t.lane_off_h[l] as i64;
         let stride_l = t.lane_stride[l];
+        // The pair metadata of lane `l` is invariant over its singles: read once, per lane.
+        let (p0, p1) = (t.lane_pair_ptr[l] as usize, t.lane_pair_ptr[l + 1] as usize);
+        let mut pm = [(0usize, T::ZERO, 0i64, 0i64, 0i64, 0i64, 0i64); MAX_LANES];
+        for (q, p) in (p0..p1).enumerate() {
+            let m = t.pair_m[p] as usize;
+            pm[q] = (
+                m,
+                t.pair_half[p],
+                (t.lane_n[m] as i64) * (t.lane_n[m] as i64),
+                t.lane_off_at[m],
+                t.lane_stride[m],
+                t.pair_row_off[p] as i64,
+                t.pair_ent_off[p] as i64,
+            );
+        }
         for e in s_off..s_off + ns {
             let tp = t.singles_tp[e as usize] as i64;
             let s = t.singles_sign[e as usize];
@@ -384,16 +388,15 @@ pub fn sigma_det<T: Scalar, const DIAG: bool>(t: &LaneTables<T>, c: &[T], k: usi
                 let cv = if DIAG { T::ONE } else { c[kj as usize] };
                 acc = acc + t.h[(h_off + tp) as usize] * s * cv;
             }
-            for p in t.lane_pair_ptr[l]..t.lane_pair_ptr[l + 1] {
-                let p = p as usize;
-                let m = t.pair_m[p] as usize;
-                let half = t.pair_half[p];
-                let nm2 = (t.lane_n[m] as i64) * (t.lane_n[m] as i64);
+            for &(m, half, nm2, at_off_m, stride_m, row_off, ent) in pm.iter().take(p1 - p0) {
+                // On the diagonal a cross-lane term needs BOTH lanes at rest; with lane `l`
+                // moved the whole row is provably zero, so it is not walked.
+                if DIAG && m != l && kj != kk {
+                    continue;
+                }
                 let (str_m, base, refidx) = if m == l { (j, kk, idx[l]) } else { (idx[m], kj, idx[m]) };
-                let at_off = t.lane_off_at[m] + str_m * nm2;
-                let stride_m = t.lane_stride[m];
-                let row = (t.pair_row_off[p] as i64 + tp) as usize;
-                let ent = t.pair_ent_off[p] as i64;
+                let at_off = at_off_m + str_m * nm2;
+                let row = (row_off + tp) as usize;
                 for e2 in t.row_ptr[row]..t.row_ptr[row + 1] {
                     let a = (at_off + t.ent_sr[(ent + e2 as i64) as usize] as i64) as usize;
                     let jm = t.at_j[a] as i64;
@@ -444,7 +447,6 @@ pub fn sigma_rows<T: Scalar, const DIAG: bool>(t: &LaneTables<T>, c: &[T], out: 
         assert_eq!(c.len(), t.n_det);
     }
     let shards = threads.max(1).min(t.n_det.div_ceil(MIN_ROWS_PER_SHARD).max(1));
-    let chunk = t.n_det.div_ceil(shards).max(1);
     #[cfg(target_arch = "wasm32")]
     let run_parallel = false;
     #[cfg(not(target_arch = "wasm32"))]
@@ -457,6 +459,7 @@ pub fn sigma_rows<T: Scalar, const DIAG: bool>(t: &LaneTables<T>, c: &[T], out: 
     }
     #[cfg(not(target_arch = "wasm32"))]
     std::thread::scope(|sc| {
+        let chunk = t.n_det.div_ceil(shards).max(1);
         for (ci, slice) in out.chunks_mut(chunk).enumerate() {
             let k0 = ci * chunk;
             sc.spawn(move || {

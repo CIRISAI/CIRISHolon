@@ -26,6 +26,7 @@
 use holon_chem::dual::D2;
 use holon_chem::elements::by_symbol;
 use holon_chem::fci::{ci_ints, sigma_direct, Order};
+use holon_chem::sigma_op::SigmaOp;
 use holon_chem::pair::geometry_problem;
 use std::time::Instant;
 
@@ -104,9 +105,11 @@ fn main() {
         .and_then(|v| v.parse().ok())
         .unwrap_or(3);
     let mut out = vec![0.0f64; n_det];
-    // One untimed call first: the timed reps should measure the kernel, not the first
-    // touch of `out` and the excitation lists.
-    sigma_direct(&space, &ci0, &c, &mut out);
+    // The operator is built ONCE, outside the timing: `sigma_direct` builds the lane tables
+    // per call, and a loop over it would time the table build. One untimed call first, so the
+    // timed reps measure the kernel and not the first touch of `out`.
+    let mut op = holon_chem::lanes::LaneSigma::for_ci(&space, &ci0);
+    op.apply(&c, &mut out);
     let warm_checksum = out.iter().fold(0.0f64, |a, b| a + b);
     assert!(
         warm_checksum.is_finite() && warm_checksum != 0.0,
@@ -115,10 +118,10 @@ fn main() {
 
     let t0 = Instant::now();
     for _ in 0..reps {
-        sigma_direct(&space, &ci0, &c, &mut out);
+        op.apply(&c, &mut out);
     }
     let per_call = t0.elapsed().as_secs_f64() / reps as f64;
-    println!("sigma_direct   {per_call:.4} s per call  (mean of {reps})");
+    println!("lane sigma     {per_call:.4} s per call  (mean of {reps}; tables built once, {} host shards)", op.threads);
     println!("loadavg        {:.2}", loadavg());
 
     // ---- the PARALLEL CPU arm, which is the one G2 has to be compared against.

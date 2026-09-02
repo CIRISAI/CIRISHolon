@@ -53,6 +53,42 @@ fn the_device_sigma_is_bit_identical_to_the_host_shards() {
 }
 
 #[test]
+fn four_lanes_with_two_empty_run_the_device_decode_path_to_the_bit() {
+    // The k ≥ 4 register-array path on the device, against the host on the same tables and
+    // against the two-lane operator on the same index order (an empty lane has one string
+    // and no singles, so the two spaces are the same operator term for term).
+    let provider = GpuSigmaProvider::new(0).expect("no CUDA device");
+    let q = Qcd2::new(4, 4.0);
+    let two = q.lane_space(0);
+    let ham2 = q.lane_hamiltonian();
+    let four = holon_chem::lanes::LaneSpace::uniform(4, &[2, 2, 2, 0]);
+    let mut ham4 = holon_chem::lanes::LaneHamiltonian::<f64>::new(&[4; 4]);
+    for l in 0..3 {
+        ham4.h[l].copy_from_slice(&ham2.h[l]);
+        for m in l..3 {
+            let (src, dst) = (ham2.pair(l, m), ham4.pair(l, m));
+            ham4.g[dst].copy_from_slice(&ham2.g[src]);
+        }
+    }
+    assert_eq!(four.n_det, two.n_det);
+    let c = lcg_vector(two.n_det, 44);
+    let mut ref2 = vec![0.0; two.n_det];
+    LaneSigma::new(&two, &ham2, 4).apply(&c, &mut ref2);
+    let t4 = LaneTables::build(&four, &ham4);
+    let mut host4 = vec![0.0; four.n_det];
+    LaneSigma { tables: LaneTables::build(&four, &ham4), threads: 4 }.apply(&c, &mut host4);
+    let mut op = GpuLaneSigma::new(provider.context(), &t4, 512).expect("device operator");
+    let mut dev4 = vec![0.0; four.n_det];
+    op.apply(&c, &mut dev4);
+    let (m1, _) = bit_mismatches(&ref2, &host4);
+    let (m2, d) = bit_mismatches(&host4, &dev4);
+    assert_eq!(m1, 0, "four host lanes differ from two on {m1} entries");
+    assert_eq!(m2, 0, "device four-lane sigma differs from host on {m2} entries, max |Δ| {d:e}");
+    let (m3, _) = bit_mismatches(&LaneSigma { tables: LaneTables::build(&four, &ham4), threads: 1 }.diagonal(), &op.diagonal().expect("diag"));
+    assert_eq!(m3, 0, "four-lane diagonal differs on {m3} entries");
+}
+
+#[test]
 fn the_davidson_through_the_device_lands_on_the_referees() {
     let provider = GpuSigmaProvider::new(0).expect("no CUDA device");
     let q = Qcd2::new(4, 4.0);

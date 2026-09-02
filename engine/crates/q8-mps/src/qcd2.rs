@@ -17,7 +17,7 @@
 //! accumulator — each bilinear needs ONE accumulator channel: nine `A_{cc'}` for the
 //! bilinears, one for `n`, plus the within-group open/close states of the two-site
 //! bilinears, the three-sites-apart hopping strings, and the diagonal Casimir pair channel.
-//! Forty-one channels, independent of `N`; a generic integral builder would need `O(N)`.
+//! Forty-two channels (`channels()`), independent of `N`; a generic integral builder would need `O(N)`.
 //!
 //! Jordan–Wigner over the `3N` colour modes in orbital order. For `i < j`:
 //! `c†_i c_j = σ⁺_i Z_{i+1} … Z_{j−1} σ⁻_j` and `c†_j c_i = σ⁻_i Z_{i+1} … Z_{j−1} σ⁺_j`
@@ -246,7 +246,9 @@ impl Qcd2 {
     pub fn mpo(&self, n_q: usize) -> Mpo {
         let chs = channels();
         let d = chs.len();
-        let idx = |ch: Ch| chs.iter().position(|&c| c == ch).expect("channel");
+        // one lookup, built once, instead of a linear scan per transition per site
+        let lookup: std::collections::HashMap<Ch, usize> = chs.iter().enumerate().map(|(i, &c)| (c, i)).collect();
+        let idx = |ch: Ch| *lookup.get(&ch).expect("channel");
         let l = self.sites();
         let mut sites = Vec::with_capacity(l);
         for j in 0..l {

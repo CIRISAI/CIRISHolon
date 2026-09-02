@@ -572,7 +572,9 @@ impl LaneSpace {
 }
 
 /// `sigma = H c` on the lane kernel — `LaneSigma::for_ci(space, ci).apply(c, sigma)`, tables
-/// built per call.
+/// built PER CALL. A convenience for one application; anything that applies the operator
+/// repeatedly (a solve, a timing loop) builds a [`LaneSigma`] once and calls `apply`, or the
+/// table build is inside what it measures.
 pub fn sigma_direct(space: &FciSpace, ci: &CiInts, c: &[f64], sigma: &mut [f64]) {
     LaneSigma::for_ci(space, ci).apply(c, sigma);
 }

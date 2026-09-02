@@ -232,7 +232,6 @@ declare_reach           consumed by holon-render Sim::surface_registry — where
 
 # --- the lane solver and the GF2a instrument (2026-09-02) ---
 baryon_mass     Qcd2's derived observable (E1-E0)/(2 sqrt x); consumed by the referee runners (examples/qcd2, holon-gpu examples/qcd2_lanes) and the GF2a record
-decode          LaneSpace's index -> lane-string map, the inverse of the layout; consumed by anything reading a converged vector determinant by determinant (gates, runners)
 from_ci_ints    LaneHamiltonian's entry from a CiInts; the chemistry lanes in the gates (lanes_gauge) and external crates; the library itself goes through from_ci_parts
 ground_lanes    Qcd2's exact solve on the colour lanes; consumed by the runners and the gates (lanes_gauge, qcd2_gauge)
 with_mutation   Qcd2's plant entry (plant ii, the Fierz trace mutation); consumed by the gates only, which is what a plant entry is for

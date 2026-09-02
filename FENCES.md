@@ -47,11 +47,15 @@ count meaningless.
 
 ## Verdict
 
-**49 fences.** PHYSICS-HONESTY 19 · COMPUTE-PRICED 20 · MODEL-FENCE 10.
+**50 fences.** PHYSICS-HONESTY 19 · COMPUTE-PRICED 20 · MODEL-FENCE 11.
+*(M11 added 2026-09-01 by workbench-engine, at the lead's ruling on the swallowed
+3D-build failure — the counts above move with it, because a register whose total
+disagrees with its own rows is worse than one that is merely out of date.)*
 
 Plus **10 findings**: one fence with **no exit** (F-3 — and the code says so itself, which
 is the model working); three fences whose stated reason is false or stale at HEAD (F-1,
-F-2, F-10); four places that carried a break with **no owner**, which by this file's own
+F-10, and F-2 — **F-2 DISCHARGED 2026-09-01 at 8554c14**, class mechanised, see its
+entry; the other two stand); four places that carried a break with **no owner**, which by this file's own
 law is suppression (F-4's two `CRATE_ALLOW` entries, plus M2 and M10's exit); one fence
 whose named class has no reachable member (F-5); one silent zero where a named refusal
 belongs (F-6); and one gate that is one-directional (F-9).
@@ -124,7 +128,7 @@ F alone is not sufficient the second requirement is named.*
 | C19 | `ci-gates.sh:575` `CRATE_ALLOW["q8-mps"]` | the rest of q8-mps beyond gate 16b's `c2_tdvp_gates` — a live full-grid run is hours deep and a gate must never run `--ignored` full-grid tests | the C2 / tower lane | the grid completes; "this entry converts to a plain `-p q8-mps`" | F |
 | C20 | `q8-mps/tests/full_grid_gates.rs:30` `#[ignore]` | the full-grid validation on a default `cargo test` — minutes per configuration | q8-mps | F shortens it; today, run explicitly with `-- --ignored` | F |
 
-## MODEL-FENCE — 10
+## MODEL-FENCE — 11
 
 *A stated limit of the model. The exit is named in every row, however far. "Permanent"
 does not appear in this table.*
@@ -141,6 +145,7 @@ does not appear in this table.*
 | M8 | `WORKBENCH_FSD.md:333` | a 2D fallback renderer — the Bevy/WebGPU shell is "the only rendering. No 2D fallback — a fence with the reason, not a degraded mode" | workbench-engine | the viewer's own device. Deliberate: the alternative is a silently degraded chart, which WB-5.2 forbids | none |
 | M9 | `docs/workbench/smoke.mjs:683` `holon_set_pressure` | a pressure SETPOINT door — "WB-2.2's control IS the box (`holon_box_scale`); pressure is the readout, not a target" | workbench-engine | a design change, not work owed. **But the prose fence beside it is false: see finding F-2** | none |
 | M10 | `holon-chem/tests/ion_core.rs:288` `the_electron_affinity_gate_fired_oh_minus_sits_above_neutral_oh` — the fence is carried in the gate's own NAME; staked as row **I-5** of `conformance/water_observatory/ION_STAKING.md` | **anions are unbound in STO-3G.** OH⁻ sits **+0.3055 Ha above** neutral OH (`E(OH) − E(OH⁻) = −0.305545907904 Ha`), so this model's anion energies may not be used as affinities. Fences all anion-mediated chemistry — hydroxide chains, autoionization's OH⁻ half. **Grotthuss via H₃O⁺ is NOT fenced**: the proton affinity passes on the identical seam at `+0.379432332077 Ha`. Discriminated to the BASIS, not the charged seam: H⁻/H shows the same sign with a one-determinant CI space where no sector rule can be wrong, and cations pass the same path | recorded by ion-core in `ION_STAKING.md` I-5; **the exit itself is UNOWNED** — I-5's owner column reads "not this node; a basis lane… nothing technical — it is unowned, not blocked" | **the diffuse-basis rung (I-5)**: a named model upgrade. Discharge is the SAME two gates in `ion_core.rs`, un-retuned, re-run against a basis carrying diffuse functions, with the STO-3G readings kept beside the new ones. `holon-chem` declares exactly one basis (`sto3g.rs`) and adding a second is a crate-shaped decision, not a test fix | C → A (I-2's charged tables inherit the constraint) |
+| M11 | `docs/atoms3d/index.html` `upgradeFenceFromBuildStatus()`, stamped by `.github/workflows/pages.yml` | showing a viewer a GENERIC "neither backend would load" when the real cause is that CI never built the artifact. The two want opposite responses — one is the viewer's hardware, the other is ours — and the page could not tell them apart | workbench-engine | none owed; this IS the exit. `pages.yml` keeps `continue-on-error` on the 3D build (a broken bundle must not take the site down) and now STAMPS the outcome, commit and run number into `docs/build-status.json`; the page reads it on the failure path only and upgrades its own fence to name the cause. Measured need: holon-render-3d did not compile for two days (fixed 245f601) with the headless gate structurally blind, this step swallowing the failure, and the page fencing gracefully — three correct greens adding up to nobody being told | none |
 
 ---
 
@@ -175,6 +180,18 @@ claims, correctly. **The two claims are different, and only the narrow one is ch
 neighbouring file that asserts something broader. This is the failure mode the gate was
 built to prevent, arriving one file over. Owner: workbench-engine. Fix: make `app.js:24`
 say what `smoke.mjs:683` says.
+
+> **DISCHARGED 2026-09-01 at 8554c14** by workbench-engine, and the finding was worth more
+> than the sentence it corrected. TWO claims were false, not one: the page's header also
+> listed GRAVITY among the absent, months after that lane landed it. Rather than edit two
+> sentences, the CLASS is now mechanised — `smoke.mjs` carries a table of (export that
+> proves a capability exists, phrase that would deny it), and the build fails with the
+> correction to make if the export resolves while the phrase is in the shipped text,
+> comments included, since `app.js:24` is where this finding lived. The gate then caught
+> its own author: the first correction kept the false sentence as a QUOTATION inside a
+> historical note and failed the page for containing the phrase. Restating a claim to
+> disown it puts the claim back — the second instance of that shape on this page — so both
+> are paraphrased now. M9's narrow claim was correct throughout and is unchanged.
 
 **F-3 — exactly one fence in this tree has no exit, and the code says so itself.**
 `ciris-sim-core/src/bridge.rs:180` `WeakFieldRefusal::RequiresSpacelikeSignal` refuses a

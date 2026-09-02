@@ -77,8 +77,47 @@ jobs:
       # landing page rather than failing the whole site. The 3D page then reports that
       # neither backend would load, which is the truth rather than a blank screen.
       - name: Build both browser artifacts
+        id: build3d
         continue-on-error: true
         run: ./engine/crates/holon-render-3d/build-web.sh
+
+      # THE SWALLOWED FAILURE HAS TO GO OFF SOMEWHERE A READER MEETS IT.
+      #
+      # `continue-on-error` above is deliberate and stays: a broken 3D bundle should not
+      # take the whole site down, and the page fences itself gracefully when no backend
+      # loads. The cost of that grace was measured -- holon-render-3d did not compile for
+      # two days (fixed at 245f601) and every mechanism reported success: the headless CI
+      # gate is structurally blind to the render-only modules, this step swallowed the
+      # build failure, and the page's own fence said only "neither backend would load",
+      # which is true of a missing artifact and of a machine with no GPU alike. Three
+      # correct greens adding up to nobody being told.
+      #
+      # ci-gates.sh 15b now catches the COMPILE class. It cannot catch the rest: a link
+      # error, a codegen OOM, wasm-bindgen drifting from the lockfile. So the outcome is
+      # STAMPED here, and the page reads it to upgrade its own fence from a generic
+      # "no backend loaded" to the specific reason with the commit and the run that
+      # produced it. `if: always()` because the interesting case is exactly the one where
+      # the step before it failed.
+      - name: Stamp the 3D build's outcome where the page can read it
+        if: always()
+        run: |
+          outcome='${{ steps.build3d.outcome }}'
+          if [ "$outcome" = "success" ]; then ok=true; else ok=false; fi
+          cat > docs/build-status.json <<JSON
+          {
+            "bevy": {
+              "ok": $ok,
+              "outcome": "$outcome",
+              "sha": "$GITHUB_SHA",
+              "run": "$GITHUB_RUN_NUMBER",
+              "at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            }
+          }
+          JSON
+          echo "--- docs/build-status.json ---"
+          cat docs/build-status.json
+          # NOT a failure of this step. The stamp's whole job is to let the deploy proceed
+          # while the page tells the truth about what it is serving.
 
       # The workbench's engine, REBUILT FROM THE COMMIT BEING DEPLOYED.
       #

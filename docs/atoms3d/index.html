@@ -176,6 +176,37 @@
         note.className = "error";
         note.textContent = message;
         detail.textContent = hint || "";
+        upgradeFenceFromBuildStatus();
+      }
+
+      // THE FENCE UPGRADES ITSELF WHEN THE BUILD IS THE REASON.
+      //
+      // "Neither backend would load" is true of a machine with no GPU AND of an artifact
+      // that was never built, and those want opposite responses from a reader: one is
+      // their hardware, the other is our CI. The page could not tell them apart, and for
+      // two days it served the second while sounding like the first -- holon-render-3d
+      // failed to compile, `pages.yml` built it under `continue-on-error`, and this
+      // overlay said the same sentence it says to somebody on an old laptop.
+      //
+      // `docs/build-status.json` is stamped by the deploy with the outcome, the commit and
+      // the run number. Read only on the failure path, so a healthy load costs nothing;
+      // and absent-or-unparseable leaves the generic message standing rather than
+      // inventing a cause, because a missing status file is not evidence of anything.
+      async function upgradeFenceFromBuildStatus() {
+        try {
+          const r = await fetch("../build-status.json", { cache: "no-store" });
+          if (!r.ok) return;
+          const st = (await r.json()).bevy;
+          if (!st || st.ok !== false) return;
+          note.textContent = "the 3D bundle FAILED TO BUILD — this is our CI, not your machine";
+          detail.textContent =
+            `commit ${String(st.sha || "?").slice(0, 12)}, CI run ${st.run || "?"}`
+            + `, stamped ${st.at || "?"} (build step outcome: ${st.outcome || "?"}).`
+            + " The deploy continued on purpose so the rest of the site stays up; this"
+            + " page is telling you what it is missing rather than blaming your hardware.";
+        } catch {
+          // Leave the generic fence. Guessing a cause would be worse than a vague truth.
+        }
       }
 
       // A LATE failure -- one that happens after the module has been handed the canvas --

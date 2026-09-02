@@ -241,3 +241,94 @@ fn scale_box_refuses_a_shrink_that_breaks_the_pair_tables_reach() {
     );
     assert_eq!((s.width, s.height), before, "a refused move mutated the box");
 }
+
+// ------------------------------------------------------------------- the boundary door
+
+/// The switch door: every route INTO a wrapping box now refuses an illegal one.
+///
+/// `scale_box` guards the box changing under a wrapping scene and `set_pair_cutoff` guards a
+/// truncation declared on one, but neither covers the scene that simply *becomes* periodic —
+/// and that is the route the ABI's mode 2 takes. A door on each is what makes the illegal
+/// state unreachable except by writing the public field, which tests do and which `pbc_ok`
+/// covers by telling the truth per pass.
+#[test]
+fn the_boundary_door_refuses_a_switch_into_an_illegal_periodic_state() {
+    use holon_render::sim::BoundaryRefusal;
+    let pt = generate_pair_table(HYDROGEN, HYDROGEN, 96);
+    let reach = {
+        let mut s = periodic_scene(100.0);
+        assert_eq!(load_pair_table(&mut s, &pt, Host::Native), TABLE_OK);
+        s.reset(4);
+        s.legality_radius()
+    };
+    assert!(reach > 1.0, "the probe has no reach to speak of");
+
+    // A box that cannot honour the reach: WALLS is fine, and the switch to periodic is not.
+    let mut tight = periodic_scene(2.0 * reach * UNDER);
+    tight.boundary = Boundary::Walls;
+    assert_eq!(load_pair_table(&mut tight, &pt, Host::Native), TABLE_OK);
+    tight.reset(4);
+    assert!(tight.pbc_ok(), "a walled box is vacuously legal");
+    match tight.set_boundary(Boundary::Periodic) {
+        Err(BoundaryRefusal::BreaksPeriodicImages { reach: r, half_edge }) => {
+            assert!((r - reach).abs() < 1.0e-12, "the refusal quoted the wrong reach");
+            assert!(r > half_edge, "the refusal fired with the reach INSIDE the half-edge");
+        }
+        Ok(()) => panic!("the door admitted a switch into an illegal periodic state"),
+    }
+    // AND IT LEFT THE SCENE ALONE. A door that refuses but mutates has not refused.
+    assert_eq!(tight.boundary, Boundary::Walls);
+
+    // A box that can honour it is admitted, so the door is a criterion and not a wall.
+    let mut wide = periodic_scene(2.0 * reach * OVER);
+    wide.boundary = Boundary::Walls;
+    assert_eq!(load_pair_table(&mut wide, &pt, Host::Native), TABLE_OK);
+    wide.reset(4);
+    assert!(wide.set_boundary(Boundary::Periodic).is_ok());
+    assert_eq!(wide.boundary, Boundary::Periodic);
+    assert!(wide.pbc_ok(), "the door admitted a state its own guard calls illegal");
+
+    // Leaving a wrapping boundary is ALWAYS admitted: a door that refused the exit would
+    // trap a scene in the state it was complaining about.
+    let mut trapped = periodic_scene(2.0 * reach * UNDER);
+    assert_eq!(load_pair_table(&mut trapped, &pt, Host::Native), TABLE_OK);
+    trapped.reset(4);
+    assert!(!trapped.pbc_ok(), "the field poke should have produced an illegal scene");
+    assert!(trapped.set_boundary(Boundary::Walls).is_ok());
+    assert!(trapped.set_boundary(Boundary::Open).is_ok());
+}
+
+#[test]
+fn the_abi_mode_two_route_goes_through_the_door() {
+    // The ABI is the route a host actually takes, and it assigned unconditionally before
+    // this. Checked through the exported symbol rather than through `Sim`, because a door
+    // the library honours and the ABI walks around is not a door.
+    use holon_render::{
+        holon_box_scale, holon_reset, holon_set_boundary, holon_table_generate,
+        BOUNDARY_REFUSED, TABLE_OK,
+    };
+    holon_reset(4);
+    holon_set_boundary(0);
+    // A CURVE FIRST. The ABI's scene starts with the species registered and no table loaded
+    // — `PairBank::hydrogen_seeded` seeds `z[0] = 1` and nothing else — so its reach is a
+    // legitimate ZERO and mode 2 is legal at any box size. The first version of this test
+    // asserted a refusal on that scene and was wrong to: a scene with no interactions in it
+    // has nothing the minimum image can get wrong.
+    assert_eq!(holon_table_generate(1.0, 10.0, 32), TABLE_OK, "the ABI's curve door works");
+    // Shrunk through the ABI's own box door, so the sequence is one a host could perform:
+    // the scale door guards only WRAPPING boundaries, so shrinking a walled box is admitted
+    // and the illegal state is then one mode-2 call away. That call has to refuse.
+    for _ in 0..3 {
+        holon_box_scale(0.5);
+    }
+    let refused = holon_set_boundary(2);
+    let ok_open = holon_set_boundary(1);
+    let ok_walls = holon_set_boundary(0);
+    assert_eq!(ok_open, 0, "leaving a wrapping boundary must always be admitted");
+    assert_eq!(ok_walls, 0, "switching to walls must always be admitted");
+    assert!(
+        refused >= BOUNDARY_REFUSED,
+        "ABI mode 2 admitted a box shrunk to 1/8 its default against a 10-bohr curve; \
+         it returned {refused}"
+    );
+}

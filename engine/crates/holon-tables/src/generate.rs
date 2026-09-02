@@ -11,6 +11,7 @@ use holon_chem::elements::Species;
 use holon_chem::fci::solve_determinant_from;
 use holon_chem::pair::geometry_problem;
 
+use crate::checkpoint::Checkpoint;
 use crate::digest::{Certificate, Digest};
 use crate::grid::{NdGrid, NodeId, RegionId, TableGrid};
 use crate::mutation::Mutation;
@@ -89,6 +90,10 @@ pub struct GenOutcome {
     /// and denominator.
     pub cold_solves: usize,
     pub warm_solves: usize,
+    /// Node records taken from a checkpoint rather than solved in THIS process. Zero on an
+    /// uninterrupted run. Non-zero means the artifact is the product of more than one
+    /// process, which a certificate has to be able to say.
+    pub replayed: usize,
     /// How many nodes were FILLED from their symmetry orbit's representative rather than
     /// solved. Zero unless the surface declares a [`Surface::canonical`] other than the
     /// identity.
@@ -185,6 +190,10 @@ pub fn generate_with_progress(
 /// old `triangle()` arithmetic character for character, so the numbers cannot move.
 fn trimer_spec<'a>(spec: &GenSpec, surface: &'a TrimerSurface) -> SurfaceSpec<'a, TrimerSurface> {
     SurfaceSpec {
+        // The legacy three-axis entry points do not checkpoint. They are the path the
+        // committed three-body tables were built on, and adding a sink to it would be a
+        // change to that path for no caller that asked for one.
+        checkpoint: None,
         surface,
         grid: NdGrid::from_table_grid(&spec.grid),
         warm: spec.warm,
@@ -254,6 +263,9 @@ impl LeasedRun {
 /// carries a generator of its own: [`generate_with_progress`] builds a [`TrimerSurface`]
 /// and an [`NdGrid`] and comes straight back here. There is exactly one solve loop.
 pub struct SurfaceSpec<'s, S: Surface + ?Sized> {
+    /// Where completed regions are committed, and where an earlier run's are replayed from.
+    /// `None` is the old behaviour exactly: nothing is written and nothing is replayed.
+    pub checkpoint: Option<&'s Checkpoint>,
     pub surface: &'s S,
     pub grid: NdGrid,
     pub warm: WarmPolicy,
@@ -274,6 +286,7 @@ impl<'s, S: Surface + ?Sized> SurfaceSpec<'s, S> {
             grid.axes.len()
         );
         SurfaceSpec {
+            checkpoint: None,
             surface,
             grid,
             warm: WarmPolicy::CanonicalChain,
@@ -284,6 +297,18 @@ impl<'s, S: Surface + ?Sized> SurfaceSpec<'s, S> {
 
     pub fn with_warm(mut self, warm: WarmPolicy) -> Self {
         self.warm = warm;
+        self
+    }
+
+    /// Attach a checkpoint. A region already committed to it is REPLAYED rather than
+    /// re-solved; every region this run completes is committed to it.
+    ///
+    /// The unit is the region and not the node, and that is load-bearing rather than
+    /// convenient — see `crate::checkpoint`. Replaying individual nodes would break the
+    /// warm chain their successors start from and the table would come out with different
+    /// last bits: correct physics, different artifact.
+    pub fn with_checkpoint(mut self, c: Option<&'s Checkpoint>) -> Self {
+        self.checkpoint = c;
         self
     }
 
@@ -551,7 +576,7 @@ pub fn generate_surface_with_progress<S: Surface + ?Sized>(
     // assembly; the solves happen outside it.
     let slots: Mutex<Vec<Option<NodeRecord>>> = Mutex::new(vec![None; n_nodes]);
     let worker_digests: Mutex<Vec<Digest>> = Mutex::new(vec![Digest::ZERO; workers]);
-    let counters = Mutex::new((0usize, 0usize, 0u64)); // cold, warm, iters
+    let counters = Mutex::new((0usize, 0usize, 0u64, 0usize)); // cold, warm, iters, replayed
 
     std::thread::scope(|scope| {
         for w in 0..workers {
@@ -564,6 +589,7 @@ pub fn generate_surface_with_progress<S: Surface + ?Sized>(
             scope.spawn(move || {
                 let mut mine = Digest::ZERO;
                 let (mut cold, mut warm, mut iters) = (0usize, 0usize, 0u64);
+                let mut replayed = 0usize;
                 // The WorkerLocalWarmStart mutation's state: the last vector THIS worker
                 // produced, regardless of which region it came from. That is the defect.
                 let mut worker_last: Option<Vec<f64>> = None;
@@ -582,6 +608,33 @@ pub fn generate_surface_with_progress<S: Surface + ?Sized>(
                         "region {region} is empty; the partition is malformed"
                     );
 
+                    // REPLAY. A region committed by an earlier run is taken whole, or not at
+                    // all. Its records go into the slots and its digest into this worker's
+                    // lane exactly as if it had been solved here — which is the point: the
+                    // assembled digest of a resumed run has to equal the uninterrupted one,
+                    // and it does because these are the same bits, not a recomputation.
+                    if let Some(saved) = spec.checkpoint.and_then(|c| c.region(region)) {
+                        let mut s = slots.lock().unwrap();
+                        for r in saved.iter() {
+                            assert!(
+                                s[r.node as usize].is_none(),
+                                "node {} was replayed onto a slot that was already filled",
+                                r.node
+                            );
+                            s[r.node as usize] = Some(*r);
+                        }
+                        drop(s);
+                        for r in saved.iter() {
+                            mine = mine.merge(Digest::of_record(r));
+                            iters += r.davidson_iters as u64;
+                            if r.warm { warm += 1 } else { cold += 1 }
+                            progress[w].fetch_add(1, Ordering::Relaxed);
+                        }
+                        replayed += saved.len();
+                        continue;
+                    }
+
+                    let mut region_records: Vec<NodeRecord> = Vec::new();
                     let mut chain: Option<Vec<f64>> = None;
                     for &node in nodes.iter() {
                         // PASS 1 SOLVES REPRESENTATIVES ONLY. A node that is not its own
@@ -637,9 +690,16 @@ pub fn generate_surface_with_progress<S: Surface + ?Sized>(
                         );
                         s[node as usize] = Some(record);
                         drop(s);
+                        region_records.push(record);
                         // Rent, paid as the work lands rather than at the end: a shard that
                         // reported nothing for hours would look IDLE to the reaper.
                         progress[w].fetch_add(1, Ordering::Relaxed);
+                    }
+                    // COMMIT, after the region's last node and never before: the END line is
+                    // what makes a region replayable, so writing it early is exactly how a
+                    // half-region would come back as a whole one.
+                    if let Some(c) = spec.checkpoint {
+                        c.commit(region, &region_records);
                     }
                 }
                 worker_digests.lock().unwrap()[w] = mine;
@@ -647,6 +707,7 @@ pub fn generate_surface_with_progress<S: Surface + ?Sized>(
                 c.0 += cold;
                 c.1 += warm;
                 c.2 += iters;
+                c.3 += replayed;
             });
         }
     });
@@ -721,7 +782,8 @@ pub fn generate_surface_with_progress<S: Surface + ?Sized>(
     if mirrored > 0 {
         shard_digests.push(mirror_digest);
     }
-    let (cold_solves, warm_solves, total_davidson_iters) = counters.into_inner().unwrap();
+    let (cold_solves, warm_solves, total_davidson_iters, replayed) =
+        counters.into_inner().unwrap();
     // M-VACUOUS-SUCCESS: every node is accounted for as a solve or as a fill, or the
     // reduction has quietly dropped work while producing a full-looking table.
     assert_eq!(
@@ -760,6 +822,7 @@ pub fn generate_surface_with_progress<S: Surface + ?Sized>(
         workers,
         cold_solves,
         warm_solves,
+        replayed,
         mirrored,
         total_davidson_iters,
         voided,

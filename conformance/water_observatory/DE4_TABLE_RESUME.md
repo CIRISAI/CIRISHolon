@@ -7,40 +7,58 @@ is proved, what is owed.*
 ## What is RUNNING right now
 
 ```
-pid file    engine/output/de4/de4_v1.PID
-log         engine/output/de4/de4_v1.log
-artifact    engine/output/de4/de4_v1.json      (written only on success)
+pid file    engine/output/de4/de4_v2.PID
+log         engine/output/de4/de4_v2.log
+checkpoint  engine/output/de4/de4_v2.ckpt      <- the resume AND the live progress readout
+artifact    engine/output/de4/de4_v2.json      (written only on success)
 command     de4_table --nr 13 --nu 11 --r 0.9:6.0 --stretch 3.0 --u -1.0:0.9975 \
-                      --region 7x7x7x6x6x6 --warm chain --workers 6
+                      --region 7x7x7x6x6x6 --warm chain --workers 6 --checkpoint <ckpt>
 ```
 
-Launched 2026-09-01T17:59:05-05:00, binary sha256 `a2875c4f…65681`, build exit status 0,
-repo HEAD `115f3c9a…` with a dirty tree (so the binary is the WORKING TREE's, and HEAD is
-context, not a claim about those bytes).
+**Size: 497,640 representatives of a 2,924,207-node box.** Re-banked price (prereg A1.3)
+~2.0 s of core time per representative at loadavg ~77.
 
-**Size: 497,640 representatives of a 2,924,207-node box.** At the re-banked price (A1.3)
-of ~2.0 s of core time per representative at loadavg ~77, that is ~276 core-hours of
-wall-times-workers, or ~97 core-hours of true CPU once the measured 2.4x oversubscription
-is taken out. It is nice'd to 19 and shares a machine that already carries `s2_ozone_table`
-(~27 cores) and two `waterquench` runs.
+### v1 was KILLED, and that is a recorded decision
 
-### THE ONE THING TO KNOW: there is no resume
+The first attempt (pid 4186424) ran 2698 s, consumed 3357 s of CPU at **1.24 effective
+cores** against six workers requested, and was killed at **0.96% of its priced budget** on
+the lead's ruling. It projected to 348,000 / 1.24 = **77.9 hours** with no resume and no
+live progress — `LeasedRun::progress()` is readable only after the join, so pid-existence
+was its only health signal. Both violate the detached-compute rule; M-PROBE-THE-RESOURCE
+names the blindness half. The full arithmetic is in `engine/output/de4/de4_v1.log` and is
+repeated in v2's launch header, so the kill is a decision in the record rather than a gap.
 
-`generate_surface_leased` runs the whole grid in a single call. If this process dies, the
-work is lost and the run restarts from zero. This is a known gap, deliberately not papered
-over, and it is the top of the "what is owed" list below. Note that the existing
-`s2_ozone_table` generator's resume is not a model to copy: it round-trips values through
-`{:.16e}` DECIMAL, so a resumed table is not bit-identical to an uninterrupted one — the
-fix is to checkpoint the whole `NodeRecord` in hex, which is what the artifact format
-already does.
+### Resume: how it works, and the trap it avoids
 
-**Check on it with:**
+The checkpoint is **region-granular**, and that is load-bearing rather than convenient.
+Under `CanonicalChain` a region's first solved node is cold and every later one warm-starts
+from its canonical predecessor in that same region — so replaying INDIVIDUAL NODES would
+hand the next node a different starting vector, and the table would come back with
+different last bits: correct physics, different artifact. A region is therefore replayed
+**whole or re-solved from cold**, never partially. A crash loses at most one in-flight
+region per worker.
+
+`tests/checkpoint.rs` proves rather than asserts it: a resumed run's `table_bytes` and
+digest equal an uninterrupted run's exactly, at 1, 4 and 8 workers; a fully committed log
+solves ZERO nodes; a region whose `END` line never landed is reported torn and re-solved;
+and a region whose bytes were corrupted fails its own digest. The control is there too — 
+merely attaching a checkpoint must not move the table, or the equality would be comparing
+two altered runs.
+
+**To resume after a death: relaunch the identical command.** The checkpoint path is the
+same; it replays what committed and re-solves the rest. The binary prints, at startup, how
+many regions replayed and how many were torn.
+
+### Live progress
+
+One `END` line per committed region, so:
+
 ```
-ps -o pid=,etimes=,%cpu= -p $(cat engine/output/de4/de4_v1.PID)
-tail -30 engine/output/de4/de4_v1.log
+grep -c '^END ' engine/output/de4/de4_v2.ckpt      # regions done, out of 64
 ```
-It prints nothing between the parameter echo and completion. Silence is expected; only
-`ps` distinguishes working from dead.
+
+The binary also prints a progress line every 60 s carrying regions-committed, percent,
+elapsed and loadavg.
 
 **When it lands**, the gates are one command:
 ```
@@ -60,10 +78,17 @@ cargo run --release -p holon-chem --example de4_certify -- engine/output/de4/de4
 
 ## What is OWED, in priority order
 
-1. **Resume for the leased generator.** Checkpoint the full `NodeRecord` in hex as each
-   node lands, and replay it on restart. Without this every long run is one `kill` from
-   zero. The shape to copy is the artifact's own hex-bits format, NOT `s2_ozone_table`'s
-   decimal log.
+1. ~~Resume for the leased generator.~~ **DONE** — `holon-tables/src/checkpoint.rs`, region
+   granular, bit-identity proven at 1/4/8 workers. Note the correction: I first justified the
+   hex format by claiming `s2_ozone_table`'s `{:.16e}` decimal log loses bits. **That is
+   false** — measured over 2,999,033 values, `{:.16e}` round-trips f64 exactly, because
+   seventeen significant digits is the round-trip width. The real defect in that generator is
+   worse and is the one to carry: its warm-start carrier is updated only inside the branch
+   that solves, so a knot replayed from the log leaves the carrier stale and the next knot on
+   that ray starts from the wrong vector. A resumed ozone table is not bit-identical to an
+   uninterrupted one, and the cause is the warm chain, not the number format. Measured on the
+   live job: 4,627 KNOT lines, **zero duplicate `idx`**, so it has never resumed and its
+   bit-identity is currently intact — the obligation is contingent, not owed.
 2. **Wire the table into the trajectory loop.** NOT DONE, and deliberately not started:
    `holon-render/src/sim.rs`'s four-body block was rewritten by another lane mid-session
    (commit 21e6be3, `ohhh_fci_grad`, nine seeded dual solves), a `waterquench` process is

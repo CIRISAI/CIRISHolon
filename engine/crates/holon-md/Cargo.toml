@@ -33,3 +33,13 @@ description = "Threaded molecular dynamics: leased workers, chunked evaluation, 
 holon-render = { path = "../holon-render" }
 holon-resource = { path = "../holon-resource" }
 holon-tables = { path = "../holon-tables" }
+
+# The v2 trajectory format, for `examples/carrier3d.rs` only. `holon-lens` has ZERO
+# dependencies of its own, so this adds nothing to the graph and cannot perturb the core's
+# feature resolution or the isolation gates in ci-gates.sh. A dev-dependency rather than a
+# dependency because the library does not use it: the generator does.
+[dev-dependencies]
+holon-lens = { path = "../holon-lens" }
+# Already in the graph through holon-render; named here so the example can call
+# `generate_pair_table` directly rather than through a re-export that does not exist.
+holon-chem = { path = "../holon-chem" }

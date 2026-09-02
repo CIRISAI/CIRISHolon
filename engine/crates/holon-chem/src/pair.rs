@@ -1185,7 +1185,12 @@ pub fn automatic_route(a: Species, b: Species) -> AutomaticRoute {
 /// Latent rather than live today: the understating form only bites at `n >= 64` with `k`
 /// near `n/2`, and the registry's largest pair is Xe2 at 54 orbitals, where `C(54,27)`
 /// computes exactly. It becomes reachable the day a species hits `fci::MAX_ORB`.
-fn choose(n: usize, k: usize) -> usize {
+///
+/// PUBLIC so `ion_table::charged_route` prices an N-atom charged cluster with the SAME
+/// count this door prices a pair with. A second copy of a function whose obvious
+/// simplification is silently wrong in the cheap direction is exactly the copy that
+/// eventually gets simplified.
+pub fn choose(n: usize, k: usize) -> usize {
     if k > n {
         return 0;
     }

@@ -42,6 +42,7 @@ pub mod dual;
 pub mod elements;
 pub mod fci;
 pub mod h2;
+pub mod ion_table;
 pub mod ions;
 pub mod md;
 pub mod ooh;

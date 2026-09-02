@@ -26,6 +26,94 @@ state; the appendices remain as the record of how each line was earned.)*
 | physics / graphics | **THE WORKBENCH IS REAL**: the mock retired; the deployed page runs the actual engine wasm, with honest fences for what is not yet served (pressure, the water-table door) that FIRE on the export appearing — the gravity fence already fired once, correctly | workbench gate battery (38 checks) + smoke.mjs | un-fencing follows the engine, never precedes it |
 | dynamics infrastructure (T3) | **LANDED**: the sixteen-atom cap is gone and every loop is cutoff-local; PBC with the wrap doing no work by theorem; checkpoint/replay bit-exact with refusal plants; MTK NPT with H′ conserved; leased-worker threading bit-identical across 1/2/3/5/8 workers | per-law gates; clean-checkout 145 tests | a citable speedup number awaits a quiet box (staked, not banked — the contended measurement was visibly corrupt and refused) |
 
+## The ladder's assumptions (imported from GANTT.md) — and the top rung
+
+*Added 2026-09-01 at the operator's order. The build graph (GANTT.md) rests
+on assumptions the tier ladder should own explicitly; and a ladder that
+claims to accommodate ALL of reality's physics must say where the
+cosmological sector lives, at what status, and what measures it.*
+
+### The graph's assumptions, stated as the ladder's
+
+1. **The many-body ladder terminates or the seam covers it.** Chemistry's
+   rung assumes MBE-to-4 plus (if the dE5 audit says so) exact DMRG
+   cluster solves over an MBE far field suffice — measured, never assumed
+   (node H decides; the crystal tier's referee licenses the cluster
+   machinery).
+2. **Long-range is Coulomb and dispersion, nothing else, and it is
+   currently DISCARDED.** Cutoff-locality is an approximation with an
+   unmeasured tail until node B1 reads; B2 (Ewald-class) builds only on
+   its verdict. No fifth force enters the chemistry rung.
+3. **Charge sectors are electron-count assignments** at the solver seam
+   (node C); the spin-sector rule is a declared model choice with a
+   variational sweep as its promote path.
+4. **The relativity fence.** Non-relativistic STO-3G is qualitatively
+   wrong past ~Kr; every heavy row wears that fence with a named exit
+   (a relativistic solver rung), never silently.
+5. **Nuclear quantum effects enter as ring-polymer carriers** (C1 banked;
+   node E couples them into dynamics). Photons do not exist in this
+   engine: no radiation, no photochemistry — Born–Oppenheimer FCI only.
+   That is a NAMED ABSENT RUNG of the ladder, not an oversight.
+6. **Arithmetic regime is artifact identity** (device class, solver
+   budget, subtraction basis — one law, three axes), and a fence is a debt
+   with an owner and an exit, never architecture.
+7. **Everything above chemistry is a CLOSED VIEW or it is not a tier.**
+   The upward rungs (H-bond network, fluid, and beyond) certify through
+   the census's two-leg closure instrument or wear fences (node G). This
+   is the ontology's own load-bearing assumption: emergence = lossy
+   quotient + dynamical autonomy, machine-checked in the sibling seed
+   (CIRISOntology `Core/Closure.lean`).
+8. **Gravity enters the demo tiers as an external ledgered field** —
+   measured at 4.05e-15 of kT at 1 nm, sovereignty collective not
+   per-particle. SELF-gravity between atoms is absent and irrelevant at
+   these scales by that same measurement.
+
+### The top rung: the cosmological sector, at wager strength
+
+The staked claims live in the sibling seed's stance (CIRISAI/CIRISOntology
+`Stance.lean`, keys `precedent-is-bits`, `dark-balance-intensive`,
+`dark-balance-extensive`, `dark-matter-first`, `dark-medium`,
+`gravity-audit`, `the-ledgers-third-name`), and the ladder imports them AT
+THEIR STATED STRENGTH — wagers with named kills, some legs already dead
+and kept dead (the Landauer-normalisation leg fired at 3–5 dex; the
+flow/maintenance rescue fired harder; neither is restated here in any
+form):
+
+* **The composed wager:** dark matter is the CAPACITY, luminous matter the
+  WRITER, dark energy the RECORD — the universe's ledger read as physics,
+  with DESI as the standing kill.
+* **The engine's relation to it, stated exactly:** this programme is
+  BUILDING THE SAME THREE-PART STRUCTURE in miniature, on purpose. The
+  banked tables, warm-start carriers, and composite rows are PRECEDENT
+  CARRIED AS CLASSICAL BITS — habit's substrate requirement, the
+  machine-checked one — which is the wager's dark-matter ROLE (capacity
+  holding the pattern). The receipts — w_ext, the append-only ledgers,
+  the records that survive every event bit-identically — are the RECORD:
+  the wager's dark-energy role. The atoms are the writer. This is a
+  STRUCTURAL instantiation, a shape carried not a guarantee inherited
+  (the same fence every instantiation in this programme keeps): building
+  it demonstrates the architecture is REALIZABLE and lets its laws be
+  measured in a system we fully control. It is not evidence about the sky.
+* **What "measured by gravity" means at each altitude.** In the cosmos:
+  the wager's whole point is that both dark sectors are SEEN ONLY
+  gravitationally — gravity weighs everything and reads nothing
+  (`gravity-audit`), so a ledger and its capacity would gravitate while
+  being invisible to every meaning-reading probe; DESI's expansion history
+  is the measurement and carries the kill. In the engine: the model is
+  non-relativistic, so ENERGY does not gravitate here — mass does — and
+  the honest measurable is the AUDIT property itself, buildable now as a
+  gate: **two scenes with identical mass configurations but different
+  record/organization content (bonds formed vs not, rows written vs not,
+  tables banked vs not) must produce BIT-IDENTICAL gravitational
+  dynamics.** Gravity reads the mass column and none of the meaning — the
+  stance's claim as an engine theorem with a plant (a gravity coupling
+  that peeked at any record field would fire it). That gate is cheap,
+  currently unowned, and is this rung's first receipt.
+* **The kill discipline travels with the import:** if DESI DR3 (or the
+  lepton-phase and companion kills on adjacent claims) fires, the top
+  rung's wager rows die IN THE STANCE and this section inherits the
+  death; nothing here outlives its source claims.
+
 **Gravity/Ω conformance riding the ladder**: rungs 1–5½ closed; rung 6
 passed on quantum computation AND field theory (SCHWINGER-3); rung 7 owns
 the stasis theorem, SELECTOR-3, and the SELECTOR-4/5/6 record with its

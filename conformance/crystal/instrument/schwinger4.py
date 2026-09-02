@@ -439,7 +439,7 @@ def mode_staked(x):
                 seen.add(lab)
                 jobs64.append((lab, f"x{x}_N{n}_chi64_{lab}", n, x, 64, pair(p, s), None))
         jobs64.append((f"E2_d{d}", f"x{x}_N{n}_chi64_E2_d{d}", n, x, 64, pair(q1, s) + pair(q2, s), None))
-    out = run_points(jobs + [(f"chi64:{l}",) + j[1:] for (l, *j) in [(j[0], *j[1:]) for j in jobs64]])
+    out = run_points(jobs + [("chi64:" + j[0],) + tuple(j[1:]) for j in jobs64])
     out40 = {k: v for k, v in out.items() if not k.startswith("chi64:") and k != "E1_s3"}
     out64 = {k[len("chi64:"):]: v for k, v in out.items() if k.startswith("chi64:")}
     json.dump({"x": x, "chi40": out40, "chi64": out64, "E1_s3": out["E1_s3"], **driver_provenance()},
@@ -544,5 +544,12 @@ if __name__ == "__main__":
         mode_analyze()
     elif mode == "crosscheck":
         mode_crosscheck(float(sys.argv[2]))
+    elif mode == "point":
+        # one staked configuration by label, on the chosen driver (the amendment's
+        # cross-check points, run as their own processes): point X LABEL [py|rs]
+        x, label = float(sys.argv[2]), sys.argv[3]
+        jobs = [j for j in column_jobs(x, chi=CHI) if j[0] == label]
+        assert jobs, f"no staked configuration labelled {label} on the x={x} column"
+        run_points(jobs)
     else:
         raise SystemExit(__doc__)

@@ -285,7 +285,9 @@ measured by its own kill.
   charge pairs in QED₂ must decay exponentially at the banked vector-meson mass —
   a defect DERIVED like `W(b)`. Slower kills Fold II in one dimension before any
   three-dimensional cycle is spent; faster kills only the identification of the
-  exchanged state and is reported.
+  exchanged state and is reported. **Read 2026-09-02 on the engine arm: branch (a)
+  on both columns, the rate at the gap to 0.6 % (`SCHWINGER4_RESULTS.md`); the
+  Python cross-check per amendment A1 is the one open condition.**
 - **GF1 — the magic price of gauge vacua.** The stabilizer extent (and its
   measurable proxies) of Z₂ and Z₃ lattice-gauge ground states across the coupling,
   on the exact tiers, in boxes growing toward a hadron's grain. If the price escapes

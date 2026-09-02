@@ -1,0 +1,31 @@
+rs_x4.0_N56_chi40-coulomb-off_E0 E=-141.1676740326  [checkpoint]
+rs_x4.0_N56_chi40-coulomb-off_E1_p25 E=-142.6513214081  [checkpoint]
+rs_x4.0_N56_chi40-coulomb-off_E1_p29 E=-142.6294360192  [checkpoint]
+rs_x4.0_N56_chi40-coulomb-off_E1_p24 E=-142.6294360215      92.4s  sweeps   7 conv True resid 1.0e-11 loadavg 26.6
+rs_x4.0_N56_chi40-coulomb-off_E1_p30 E=-142.5960466785     126.4s  sweeps   8 conv True resid 1.0e-11 loadavg 27.6
+rs_x4.0_N56_chi40-coulomb-off_E2_d4 E=-151.6333579404     153.6s  sweeps  10 conv True resid 1.0e-11 loadavg 25.6
+rs_x4.0_N56_chi40-coulomb-off_E1_p23 E=-142.5960466784     122.9s  sweeps   8 conv True resid 1.0e-11 loadavg 25.3
+rs_x4.0_N56_chi40-coulomb-off_E1_p31 E=-142.5520063916      76.4s  sweeps   8 conv True resid 1.0e-11 loadavg 23.9
+rs_x4.0_N56_chi40-coulomb-off_E1_p22 E=-142.5520063870  [checkpoint]
+rs_x4.0_N56_chi40-coulomb-off_E2_d3 E=-151.9710234710     352.6s  sweeps  10 conv True resid 8.7e-08 loadavg 23.0
+rs_x4.0_N56_chi40-coulomb-off_E2_d2 E=-152.2831551041     362.7s  sweeps  10 conv True resid 1.1e-07 loadavg 21.9
+rs_x4.0_N56_chi40-coulomb-off_E1_p32 E=-142.4967568360      62.3s  sweeps   8 conv True resid 1.0e-11 loadavg 20.7
+rs_x4.0_N56_chi40-coulomb-off_E2_d8 E=-150.3315741911      82.8s  sweeps  10 conv True resid 1.0e-11 loadavg 19.1
+rs_x4.0_N56_chi40-coulomb-off_E1_p21 E=-142.4967568439      72.8s  sweeps   9 conv True resid 1.0e-11 loadavg 19.1
+rs_x4.0_N56_chi40-coulomb-off_E1_p33 E=-142.4299769320      51.3s  sweeps   7 conv True resid 1.0e-11 loadavg 19.1
+rs_x4.0_N56_chi40-coulomb-off_E2_d6 E=-150.9817383238     256.0s  sweeps   8 conv True resid 1.7e-03 loadavg 20.0
+rs_x4.0_N56_chi40-coulomb-off_E2_d10 E=-149.6816749689      82.2s  sweeps   9 conv True resid 1.0e-11 loadavg 19.3
+rs_x4.0_N56_chi40-coulomb-off_E1_p34 E=-142.3534960581      93.1s  sweeps   9 conv True resid 1.0e-11 loadavg 18.7
+rs_x4.0_N56_chi40-coulomb-off_E1_p20 E=-142.4299769322      99.7s  sweeps   8 conv True resid 1.0e-11 loadavg 18.4
+rs_x4.0_N56_chi40-coulomb-off_E1_p19 E=-142.3534960544      51.8s  sweeps   7 conv True resid 1.0e-11 loadavg 18.0
+rs_x4.0_N56_chi40-coulomb-off_E1_p35 E=-142.2631548813      70.6s  sweeps   8 conv True resid 1.0e-11 loadavg 18.7
+rs_x4.0_N56_chi40-coulomb-off_E1_p18 E=-142.2631548800      85.4s  sweeps   9 conv True resid 1.0e-11 loadavg 17.7
+rs_x4.0_N56_chi40-coulomb-off_E2_d14 E=-148.3787929744     120.4s  sweeps   9 conv True resid 1.0e-11 loadavg 17.7
+rs_x4.0_N56_chi40-coulomb-off_E1_p36 E=-142.1660742810      58.6s  sweeps   8 conv True resid 1.0e-11 loadavg 17.6
+rs_x4.0_N56_chi40-coulomb-off_E2_d16 E=-147.7295927027      65.1s  sweeps   9 conv True resid 1.0e-11 loadavg 16.5
+rs_x4.0_N56_chi40-coulomb-off_E2_d12 E=-149.0289566757     227.0s  sweeps   9 conv True resid 5.8e-08 loadavg 15.5
+plant (ii) coulomb-off x=4.0: V(2)=-8.1701e+00 (carrier nonzero); kappa_fit=0.04589442476551786 R2=0.9992600507204896 n=5 -> G1 reads b: FIRES
+ conv True resid 5.8e-08 loadavg 15.4
+plant (ii) coulomb-off x=4.0: V(2)=-8.1701e+00 (carrier nonzero); kappa_fit=0.04589442476551786 R2=0.9992600507204896 n=5 -> G1 reads b: FIRES
+EXIT=0
+EXIT=0

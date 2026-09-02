@@ -161,6 +161,7 @@ fn main() {
         .flat_map(|i| (0..nx).map(move |j| (i, j)))
         .collect();
     let next = AtomicUsize::new(0);
+    let progress = AtomicUsize::new(0);
     let acc: Vec<Mutex<Worst>> = bs.iter().map(|_| Mutex::new(Worst::default())).collect();
     std::thread::scope(|sc| {
         for _ in 0..threads {
@@ -193,6 +194,19 @@ fn main() {
                 if local.d.abs() > slot.d.abs() {
                     *slot = local;
                 }
+                drop(slot);
+                // PROGRESS, PER JOB. Without it this sweep is untriageable: it prints its
+                // table only at the end, so a run that is 1/3 done and one that is wedged
+                // look identical from outside, and the only way to tell them apart is
+                // /proc accounting. That cost a real decision -- an (H,O,O) sweep ran 18.8
+                // hours at 79% CPU efficiency before anyone could say whether it was
+                // progressing. s2_build prints per row for exactly this reason.
+                let done = progress.fetch_add(1, Ordering::SeqCst) + 1;
+                println!(
+                    "#   job {done}/{} done ({:.0} s)",
+                    jobs.len(),
+                    t0.elapsed().as_secs_f64()
+                );
             });
         }
     });

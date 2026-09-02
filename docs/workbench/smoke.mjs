@@ -676,11 +676,33 @@ want(de4OffTracked || !/923\.9/.test(html6b + appSource),
 const ladderBlock = appSource.match(/const LADDER = \[([\s\S]*?)\n\];/);
 want(ladderBlock !== null, "the page's LADDER block is where the gate expects it");
 if (ladderBlock) {
-  const bands = [...ladderBlock[1].matchAll(
-    /\{\s*\n\s*band: "([^"]+)"[\s\S]*?state: "([^"]+)"[\s\S]*?cite: "([^"]+)",\s*\n\s*\}/g)];
-  want(bands.length === 4, `the ladder carries four bands (found ${bands.length})`);
+  // ONE parse, by splitting on entry boundaries rather than by a field-order regex.
+  //
+  // The previous version matched `band ... state ... cite` and required `cite` to be the
+  // LAST field before the closing brace. Adding a `certificate` field after it silently
+  // broke the match, the non-greedy span ran on into the NEXT entry, and the gate reported
+  // three bands and paired the molecular band's name with its neighbour's citation. A
+  // checker that assumes field order is a checker that breaks when the thing it checks
+  // grows — which is exactly when you need it.
+  const bandBlocks = ladderBlock[1]
+    .split(/\n  \{/)
+    .map((b) => b.trim())
+    .filter((b) => /^\s*band: "/.test(b) || /\bband: "/.test(b));
+  const field = (block, name) => {
+    const m = block.match(new RegExp(`${name}: "((?:[^"\\\\]|\\\\.)*)"`));
+    return m ? m[1] : null;
+  };
+  const bands = bandBlocks.map((block) => ({
+    block,
+    band: field(block, "band"),
+    state: field(block, "state"),
+    cite: field(block, "cite"),
+    certificate: field(block, "certificate"),
+  }));
+  want(bands.length === 4, `the ladder carries four bands (found ${bands.length})`,
+    `parsed: ${bands.map((b) => b.band).join(", ")}`);
 
-  for (const [whole, band, state, cite] of bands) {
+  for (const { block: whole, band, state, cite } of bands) {
     const [relPath, lineNo] = cite.split(":");
     let text = null;
     try { text = readFileSync(join(repoRoot, relPath), "utf8"); } catch { /* below */ }
@@ -701,7 +723,63 @@ if (ladderBlock) {
         + "— the fence law requires both, and an exit too short to say anything is not one");
     }
   }
-  const live = bands.filter(([, , st]) => st === "live").length;
+  // ---- THE FLIP IS MECHANICAL, IN BOTH DIRECTIONS -----------------------------
+  //
+  // §9c's ladder unlocks band by band as node G's rungs certify. The staking is that a
+  // band flips fenced -> live ONLY on a banked certificate whose citation RESOLVES, and
+  // this is that rule as code rather than as a habit. Two directions, because one alone
+  // is a door with a hinge and no latch:
+  //
+  //   live  => a certificate is named AND resolves. Without this, flipping a band is
+  //            editing one word, and the word would be believed.
+  //   resolves => live. Without this, a rung could land, its certificate could be wired
+  //            in, and the band could sit fenced indefinitely with nobody told — the
+  //            same absence-shaped rot the gravity fence had, pointed the other way.
+  //
+  // `cite` is deliberately NOT sufficient for either: it points at the FSD line that says
+  // a band should be live, which is a PLAN. The certificate is a VERDICT. The molecular
+  // band was live on the plan alone until this check was written, which is why the rule
+  // had to bind the band that was already flipped before it could be trusted on the ones
+  // that are not.
+  for (const { block, band, state, certificate } of bands) {
+    const isLive = state === "live";
+    let certResolves = false;
+    if (certificate) {
+      const [relPath, lineNo] = certificate.split(":");
+      try {
+        const text = readFileSync(join(repoRoot, relPath), "utf8");
+        const line = text.split("\n")[Number(lineNo) - 1] ?? "";
+        // A certificate is a VERDICT, so the cited line must actually carry one. "CERTIFIED"
+        // is the census's own word; a citation to a line that merely mentions the band would
+        // pass a weaker check while establishing nothing.
+        certResolves = /CERTIFIED/.test(line);
+        if (!certResolves) {
+          no(`band "${band}" cites a certificate at ${certificate} that carries no verdict`,
+            `line ${lineNo} reads: ${line.trim().slice(0, 90)}`);
+        }
+      } catch {
+        no(`band "${band}" cites a certificate in ${relPath}, which does not exist`);
+      }
+    }
+    // Only the direction that BITES for this band is emitted. Reporting "FENCED band X does
+    // not hold a certificate" about a live band is a check that passes by not applying, and
+    // a log full of those is how a reader stops reading the log.
+    if (isLive) {
+      want(certResolves,
+        `LIVE band "${band}" is backed by a resolving certificate`,
+        certificate
+          ? "the certificate does not resolve to a line carrying a verdict"
+          : "no `certificate` field — a band may not be live on the SPEC line alone; the FSD "
+            + "saying a band should be live is a plan, and the flip needs a banked verdict");
+    } else {
+      want(!certResolves,
+        `FENCED band "${band}" does not already hold a resolving certificate`,
+        "this band's certificate RESOLVES while it is still fenced — the rung has landed "
+        + "and the flip is owed: set state to \"live\" and un-fence the panel");
+    }
+  }
+
+  const live = bands.filter((b) => b.state === "live").length;
   want(live === 1,
     `exactly one band is LIVE (${live}) — the others must fence rather than degrade`,
     "more than one live band means a coarse chart is being served that this engine does "

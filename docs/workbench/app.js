@@ -373,6 +373,15 @@ const LADDER = [
     runs: "the live engine, full physics ladder",
     state: "live",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:376",
+    // THE CERTIFICATE, not the specification. `cite` above points at the FSD line that
+    // says this band SHOULD be live; that is a plan, and a plan is not a verdict. This
+    // points at the census's own CERTIFIED-STRICT row — the molecular tier's closure test,
+    // passed, on a banked trajectory. The gate requires it of every live band and refuses
+    // to let a band be live without it, which is what makes "fenced -> live" a flip that
+    // cannot be performed by editing one word.
+    certificate: "conformance/water_observatory/census_mixed_fenced.log:233",
+    certifiedBy: "the closure census — OH₂ held 893.8 fs, CERTIFIED-STRICT, past the "
+      + "pre-staked 834 fs window",
   },
   {
     band: "H-bond network",
@@ -1216,7 +1225,9 @@ function renderStatics() {
     const st = ladderStatus(w);
     UI["ladder-rows"].innerHTML = LADDER.map((b, i) => {
       const status = b.state === "live"
-        ? `<span class="lad-live">CERTIFIED · LIVE</span><span class="lad-detail">${st.text}</span>`
+        ? `<span class="lad-live">CERTIFIED · LIVE</span>`
+          + `<span class="lad-detail"><b>certificate</b> ${b.certifiedBy}</span>`
+          + `<span class="lad-detail">${st.text}</span>`
         : `<span class="lad-fenced">FENCED</span>`
           + `<span class="lad-detail"><b>owner</b> ${b.owner} · <b>exit</b> ${b.exit}</span>`;
       return `<div class="lad ${b.state}"><div class="lad-head">`
@@ -1224,7 +1235,7 @@ function renderStatics() {
         + `<div class="lad-runs">${b.runs}</div>`
         + `<div class="lad-status">${status}</div>`
         + `<div class="lad-status"><span class="lad-acuity" id="lad-acuity-${i}">—</span></div>`
-        + `<code>${b.cite}</code></div>`;
+        + `<code>${b.cite}${b.certificate ? " · " + b.certificate : ""}</code></div>`;
     }).join("");
     // The slots were just created, so re-bind before anything writes to them.
     bindUI();

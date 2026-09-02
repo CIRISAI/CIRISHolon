@@ -235,11 +235,29 @@ is rebuilt O(N²) every substep. A scale-up is a campaign with its own freeze, i
 conservation gates and a format v2, and it would still be nanometres.
 
 **And the honest alternative, recorded so the results cannot invent it later.** A
-continuum-native tier certified on its OWN dynamics — the FHP/REG+ chart in `holon-mesh`,
-already mechanized in `CIRISOntology/Core/ModeChart.lean` — is a real object and a
-reasonable node. **It is not a Closed view of the molecular dynamics and must never be
-composed as though it were** (`M-FOREIGN-DOMAIN-CORROBORATION` at tier scale). Nothing in
-this document discharges rung 2 through it.
+continuum-native tier certified on its OWN dynamics — the FHP/REG+ chart, whose 3D mode set
+is chosen and warranted in `engine/MESH_DESIGN.md` §2.1 (FCHC-24, on the isotropy argument)
+and whose runtime object is `ciris-sim-core::regplus` — is a real object and a reasonable
+node. **It is not a Closed view of the molecular dynamics and must never be composed as
+though it were** (`M-FOREIGN-DOMAIN-CORROBORATION` at tier scale). Nothing in this document
+discharges rung 2 through it.
+
+> **Two notes added 2026-09-02, after this document was banked; neither changes a verdict.**
+>
+> 1. *Citation, at the lead's correction.* This paragraph originally cited
+>    `CIRISOntology/Core/ModeChart.lean` for the mechanization. The local citation is
+>    `engine/MESH_DESIGN.md` §2.1, which is what resolves in this tree's gate;
+>    `Core/ModeChart.lean` and `Core/Lattice.lean` have no copy here and are upstream prior
+>    art, while the in-tree witness for the same object is
+>    `regplus.rs::runtime_sector_table_matches_the_lean_theorem` (53 sectors, 44/7/2).
+> 2. *The alternative was subsequently MEASURED, not left as a note.* On the operator's
+>    instruction, amendment `RUNG2_PREREG_A2.md` built the lattice-gas `(N, P)` chart and ran
+>    it on these same trajectories. `RUNG2_RESULTS_A2.md` is the reading: the verdict census
+>    is bit-identical to this document's (183 VOID / 42 NotClosed), the lattice-gas chart's
+>    defect is 3.4–9.2× worse at comparable arity, and the cause is a second scissor —
+>    FHP-6's Boolean word holds at most six atoms per cell. **A2 tested a MAP into that
+>    object; it did not test the object as a view of the molecular dynamics, and the
+>    prohibition in the paragraph above is unchanged.**
 
 ---
 

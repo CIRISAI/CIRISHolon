@@ -1,0 +1,74 @@
+# de5_audit stage=plants
+# host      lapbuntu2
+# commit    665440518157a2915eecf3a20eca47663f294e18
+# binary    /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/de5-wt/.target-de5/release/examples/de5_audit
+# binary sha256  470d983c0f4251c948dd29d0301dc7c3ff5c85c8ed7040309a18821f101c5ae6
+# nice      10
+# loadavg at launch  57.90 56.66 55.26
+# started   2026-09-01T20:35:10-05:00
+# pid 207299
+# finished  2026-09-01T20:35:10-05:00
+=== dE5 TRUNCATION AUDIT — GANTT node H ===
+freeze     conformance/water_observatory/DE5_PREREG.md (committed ahead of this file)
+device_class      cpu
+solver_budget     5000
+subtraction_basis fci_live
+staked     R_COMPACT 6 bohr  STRIDE 250  DEDUPE_BLOCK 2000 QUOTA 8  N_TARGET 24
+staked     FCI_DET_MAX 250000  BOUND 5.0e-5 Ha  LIVE_BAR 5.0e-5 Ha  WALL_BUDGET 3600 s
+args       traj-dir "/home/emoore/holon-artifacts/census-traj"  manifest "/tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/de5-wt/conformance/water_observatory/census_traj_manifest.sha256"  out "de5_audit.csv"  plants true  audit false  crosscheck false  limit None
+sha256     self-test PASS (NIST vectors for "" and "abc")
+pair rung  two entry points, one number (bit equality), and the route CHECKED:
+# loadavg at exit  57.90 56.66 55.26
+# exit code 127
+  Z8-Z1 at r=1.9909: E -74.393633167035  dE2 -0.122901071681  n_det 90 (<= 50000, so solve IS solve_determinant)  route determinant, Knowles-Handy  exit converged
+  Z1-Z1 at r=1.3887: E -1.137306051214  dE2 -0.204142352099  n_det 4 (<= 50000, so solve IS solve_determinant)  route determinant, Knowles-Handy  exit converged
+  Z8-Z8 at r=2.4421: E -147.755921627328  dE2 -0.147621135734  n_det 2025 (<= 50000, so solve IS solve_determinant)  route determinant, Knowles-Handy  exit converged
+pin OK     fenced/seed_0x0000000053415421.traj  sha256 0441aeef8797d37e  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415422.traj  sha256 020c342784f6720d  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415423.traj  sha256 035e1950cb7b222d  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415424.traj  sha256 d22bde01fb3df238  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415425.traj  sha256 0a576fe10e589469  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415426.traj  sha256 5cc80583f7601189  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415427.traj  sha256 b4cb069b0be1986f  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415428.traj  sha256 e62c326283d4fc82  n_atoms 12  dims 2  frames 20000
+
+=== THE LANDSCAPE (freeze 3.6: every compact candidate, in scope or not) ===
+  comp     candidates     determinants   in scope
+  O2H3             31           204490        yes
+  O3H2            110          5664400         NO
+  O4H1             36        121788765         NO
+  TOTAL           177
+
+=== THE DRAW (freeze 3.4; the cap is declared and the excess counted) ===
+  comp     enumerated    drawn     excess
+  H5                0        0          0
+  O1H4              0        0          0
+  O2H3             31       24          7
+  drawn total 24 (N_TARGET 24)
+
+=== PLANTS (freeze section 8) ===
+  carrier: O2H3 seed 0x53415421 frame 4500 idx [2, 3, 5, 6, 7]   quadruple #2 (drops atom 5)
+
+  P-1  the dropped quadruple — must shift EXACTLY
+    sector the plant acts on: the FOUR-BODY sector; carrier dE4(Q*) = +6.652414206064e-2 Ha
+    (nonzero in that sector: |dE4(Q*)| = 6.652e-2 >= PLANT_MIN 1.0e-6)
+    dE5 unplanted  +7.507207076645e-2
+    dE5 planted    +1.415962128271e-1
+    shift          +6.652414206064e-2
+    expected       +6.652414206064e-2   (= +dE4(Q*))
+    |shift - dE4(Q*)| = 2.109e-15   tolerance 1.0e-12
+    P-1 FIRES — the instrument sees what it measures
+
+  P-2  the separated atom — must read ZERO
+    sector the plant acts on: the GEOMETRY sector, nonzero there by 40 bohr,
+    while the FIVE-BODY sector must read exactly zero (the MBE is size-consistent,
+    so a four-cluster plus a distant atom has an identically vanishing dE5).
+    dE5 = +9.350742e-12 Ha   tolerance 1.0e-8   P-2 FIRES
+
+  P-3  the exhausted budget — must VOID
+    sector the plant acts on: the SOLVER-EXIT sector, where it must be nonzero
+    (IterationCap where the unplanted run reports Converged).
+    VOID as staked: atom Z8 (n_det 25): exit iteration cap
+    P-3 FIRES — the exhausted case is refused, not scored
+
+  budget restored to 5000

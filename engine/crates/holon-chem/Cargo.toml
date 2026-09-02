@@ -35,3 +35,14 @@ holon-device = { path = "../holon-device" }
 # silently ignored by Cargo (only the workspace root's applies). `holon-render`'s
 # `build-web.sh` sets the size profile through `CARGO_PROFILE_RELEASE_*` environment
 # variables, and that is the path this crate's wasm bytes are measured on.
+
+# DEV-ONLY, and the direction matters. `holon-lens` carries the HLNTRAJ1 trajectory format
+# the closure census banked, and `examples/de5_audit.rs` reads those parked trajectories as
+# a GEOMETRY SAMPLER. It is zero-dep and std-only, so it cannot perturb this crate's feature
+# resolution or the isolation gates, and it is a dev-dependency so the browser artifact
+# never sees it. Same shape, and for the same reason, as `holon-render`'s own dev-dependency
+# on it. The alternative was a second reader of the format inside this example, and the
+# format's own module header says why that is refused: two implementations of one reading is
+# how the two of them come to disagree.
+[dev-dependencies]
+holon-lens = { path = "../holon-lens" }

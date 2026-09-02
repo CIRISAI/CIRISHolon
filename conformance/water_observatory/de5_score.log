@@ -1,0 +1,150 @@
+# de5_audit stage=score
+# host      lapbuntu2
+# commit    665440518157a2915eecf3a20eca47663f294e18
+# binary    /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/de5-wt/.target-de5/release/examples/de5_audit
+# binary sha256  470d983c0f4251c948dd29d0301dc7c3ff5c85c8ed7040309a18821f101c5ae6
+# nice      10
+# loadavg at launch  55.10 56.09 55.14
+# started   2026-09-01T20:35:57-05:00
+# pid 207880
+=== dE5 TRUNCATION AUDIT — GANTT node H ===
+freeze     conformance/water_observatory/DE5_PREREG.md (committed ahead of this file)
+device_class      cpu
+solver_budget     5000
+subtraction_basis fci_live
+staked     R_COMPACT 6 bohr  STRIDE 250  DEDUPE_BLOCK 2000 QUOTA 8  N_TARGET 24
+staked     FCI_DET_MAX 250000  BOUND 5.0e-5 Ha  LIVE_BAR 5.0e-5 Ha  WALL_BUDGET 3600 s
+args       traj-dir "/home/emoore/holon-artifacts/census-traj"  manifest "/tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/de5-wt/conformance/water_observatory/census_traj_manifest.sha256"  out "/tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/de5-wt/conformance/water_observatory/de5_audit.csv"  plants false  audit false  crosscheck true  limit None
+sha256     self-test PASS (NIST vectors for "" and "abc")
+pair rung  two entry points, one number (bit equality), and the route CHECKED:
+  Z8-Z1 at r=1.9909: E -74.393633167035  dE2 -0.122901071681  n_det 90 (<= 50000, so solve IS solve_determinant)  route determinant, Knowles-Handy  exit converged
+  Z1-Z1 at r=1.3887: E -1.137306051214  dE2 -0.204142352099  n_det 4 (<= 50000, so solve IS solve_determinant)  route determinant, Knowles-Handy  exit converged
+  Z8-Z8 at r=2.4421: E -147.755921627328  dE2 -0.147621135734  n_det 2025 (<= 50000, so solve IS solve_determinant)  route determinant, Knowles-Handy  exit converged
+pin OK     fenced/seed_0x0000000053415421.traj  sha256 0441aeef8797d37e  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415422.traj  sha256 020c342784f6720d  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415423.traj  sha256 035e1950cb7b222d  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415424.traj  sha256 d22bde01fb3df238  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415425.traj  sha256 0a576fe10e589469  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415426.traj  sha256 5cc80583f7601189  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415427.traj  sha256 b4cb069b0be1986f  n_atoms 12  dims 2  frames 20000
+pin OK     fenced/seed_0x0000000053415428.traj  sha256 e62c326283d4fc82  n_atoms 12  dims 2  frames 20000
+
+=== THE LANDSCAPE (freeze 3.6: every compact candidate, in scope or not) ===
+  comp     candidates     determinants   in scope
+  O2H3             31           204490        yes
+  O3H2            110          5664400         NO
+  O4H1             36        121788765         NO
+  TOTAL           177
+
+=== THE DRAW (freeze 3.4; the cap is declared and the excess counted) ===
+  comp     enumerated    drawn     excess
+  H5                0        0          0
+  O1H4              0        0          0
+  O2H3             31       24          7
+  drawn total 24 (N_TARGET 24)
+G9: (O,H,H) table loaded; building the (H,H,H) table...
+G9: both served surfaces ready
+
+=== SCORING 24 configs ===
+  LIVE    O2H3 seed 0x53415421 frame   4500  diam 5.727  dE5 +7.507207e-2  max|dE4| 6.652414e-2  ratio 1.1285  OVER BOUND  [31 solves, 799.0 s]
+    G9 OHHH(drop 0): live +4.957483e-3  served +4.957905e-3  diff -4.215991e-7 
+    G9 OHHH(drop 1): live -2.332925e-3  served -2.327251e-3  diff -5.673442e-6 
+  LIVE    O2H3 seed 0x53415421 frame   5000  diam 5.557  dE5 -1.788368e-3  max|dE4| 2.278351e-2  ratio 0.0785  OVER BOUND  [31 solves, 853.5 s]
+    G9 OHHH(drop 0): live -1.147994e-2  served -1.161811e-2  diff +1.381749e-4 
+    G9 OHHH(drop 1): live -6.483314e-3  served -6.485262e-3  diff +1.948970e-6 
+  LIVE    O2H3 seed 0x53415421 frame   5000  diam 5.557  dE5 +1.605783e-2  max|dE4| 4.716181e-2  ratio 0.3405  OVER BOUND  [31 solves, 798.7 s]
+    G9 OHHH(drop 0): live +6.212830e-3  served +6.211003e-3  diff +1.826851e-6 
+    G9 OHHH(drop 1): live -6.483314e-3  served -6.485262e-3  diff +1.948970e-6 
+  LIVE    O2H3 seed 0x53415421 frame   6000  diam 5.772  dE5 -3.436216e-3  max|dE4| 2.057155e-2  ratio 0.1670  OVER BOUND  [31 solves, 1054.0 s]
+    G9 OHHH(drop 0): live -5.943677e-3  served -5.942290e-3  diff -1.387594e-6 
+    G9 OHHH(drop 1): live -6.800433e-3  served -6.896701e-3  diff +9.626824e-5 
+  LIVE    O2H3 seed 0x53415421 frame   6000  diam 5.772  dE5 +1.767187e-2  max|dE4| 3.619196e-2  ratio 0.4883  OVER BOUND  [31 solves, 617.5 s]
+    G9 OHHH(drop 0): live +3.366614e-3  served +3.366117e-3  diff +4.968154e-7 
+    G9 OHHH(drop 1): live -5.943677e-3  served -5.942290e-3  diff -1.387594e-6 
+  LIVE    O2H3 seed 0x53415421 frame   8000  diam 5.787  dE5 -3.049465e-3  max|dE4| 2.500692e-2  ratio 0.1219  OVER BOUND  [31 solves, 1134.8 s]
+    G9 OHHH(drop 0): live -8.778457e-3  served -8.889887e-3  diff +1.114304e-4 
+    G9 OHHH(drop 1): live -5.964669e-3  served -5.966971e-3  diff +2.302010e-6 
+  LIVE    O2H3 seed 0x53415421 frame   8000  diam 5.787  dE5 +2.748646e-2  max|dE4| 3.370110e-2  ratio 0.8156  OVER BOUND  [31 solves, 1313.3 s]
+    G9 OHHH(drop 0): live +1.229947e-3  served +1.235974e-3  diff -6.026792e-6 
+    G9 OHHH(drop 1): live -5.964669e-3  served -5.966971e-3  diff +2.302010e-6 
+  LIVE    O2H3 seed 0x53415421 frame  10000  diam 5.631  dE5 -3.553050e-3  max|dE4| 2.558619e-2  ratio 0.1389  OVER BOUND  [31 solves, 1208.9 s]
+    G9 OHHH(drop 0): live -7.818212e-3  served -7.823352e-3  diff +5.140026e-6 
+    G9 OHHH(drop 1): live -9.216854e-3  served -9.372604e-3  diff +1.557506e-4 
+  LIVE    O2H3 seed 0x53415421 frame  10000  diam 5.631  dE5 +4.825916e-2  max|dE4| 4.509803e-2  ratio 1.0701  OVER BOUND  [31 solves, 976.8 s]
+    G9 OHHH(drop 0): live +3.556613e-3  served +3.560704e-3  diff -4.091176e-6 
+    G9 OHHH(drop 1): live -9.216854e-3  served -9.372604e-3  diff +1.557506e-4 
+  LIVE    O2H3 seed 0x53415421 frame  10000  diam 5.631  dE5 +3.728186e-2  max|dE4| 4.082356e-2  ratio 0.9132  OVER BOUND  [31 solves, 748.3 s]
+    G9 OHHH(drop 0): live +3.556613e-3  served +3.560704e-3  diff -4.091176e-6 
+    G9 OHHH(drop 1): live -7.818212e-3  served -7.823352e-3  diff +5.140026e-6 
+  LIVE    O2H3 seed 0x53415421 frame  12000  diam 5.723  dE5 -3.739379e-3  max|dE4| 2.430884e-2  ratio 0.1538  OVER BOUND  [31 solves, 1461.2 s]
+    G9 OHHH(drop 0): live -1.019078e-2  served -1.022857e-2  diff +3.779032e-5 
+    G9 OHHH(drop 1): live -5.945740e-3  served -5.952018e-3  diff +6.278076e-6 
+  LIVE    O2H3 seed 0x53415421 frame  12000  diam 5.723  dE5 +2.478885e-2  max|dE4| 4.231026e-2  ratio 0.5859  OVER BOUND  [31 solves, 1216.4 s]
+    G9 OHHH(drop 0): live +3.078697e-3  served +3.070780e-3  diff +7.917317e-6 
+    G9 OHHH(drop 1): live -1.019078e-2  served -1.022857e-2  diff +3.779032e-5 
+  LIVE    O2H3 seed 0x53415421 frame  14000  diam 5.626  dE5 -3.849224e-3  max|dE4| 2.493368e-2  ratio 0.1544  OVER BOUND  [31 solves, 1751.2 s]
+    G9 OHHH(drop 0): live -6.603054e-3  served -6.611715e-3  diff +8.661440e-6 
+    G9 OHHH(drop 1): live -9.206795e-3  served -9.263082e-3  diff +5.628637e-5 
+  LIVE    O2H3 seed 0x53415421 frame  14000  diam 5.626  dE5 +3.074337e-2  max|dE4| 4.027690e-2  ratio 0.7633  OVER BOUND  [31 solves, 1321.1 s]
+    G9 OHHH(drop 0): live +2.974191e-3  served +2.971766e-3  diff +2.424809e-6 
+    G9 OHHH(drop 1): live -9.206795e-3  served -9.263082e-3  diff +5.628637e-5 
+  LIVE    O2H3 seed 0x53415421 frame  16000  diam 5.669  dE5 -4.407974e-3  max|dE4| 2.361599e-2  ratio 0.1867  OVER BOUND  [31 solves, 1712.6 s]
+    G9 OHHH(drop 0): live -8.054615e-3  served -8.063655e-3  diff +9.039992e-6 
+    G9 OHHH(drop 1): live -7.677851e-3  served -7.735730e-3  diff +5.787927e-5 
+  LIVE    O2H3 seed 0x53415421 frame  16000  diam 5.669  dE5 +3.579893e-2  max|dE4| 4.551247e-2  ratio 0.7866  OVER BOUND  [31 solves, 1492.3 s]
+    G9 OHHH(drop 0): live +3.740628e-3  served +3.736286e-3  diff +4.342502e-6 
+    G9 OHHH(drop 1): live -7.677851e-3  served -7.735730e-3  diff +5.787927e-5 
+  LIVE    O2H3 seed 0x53415421 frame  16000  diam 5.669  dE5 +2.077987e-2  max|dE4| 4.015449e-2  ratio 0.5175  OVER BOUND  [31 solves, 1648.1 s]
+    G9 OHHH(drop 0): live +3.740628e-3  served +3.736286e-3  diff +4.342502e-6 
+    G9 OHHH(drop 1): live -8.054615e-3  served -8.063655e-3  diff +9.039992e-6 
+  LIVE    O2H3 seed 0x53415421 frame  18000  diam 5.616  dE5 -3.738177e-3  max|dE4| 2.636019e-2  ratio 0.1418  OVER BOUND  [31 solves, 1764.9 s]
+    G9 OHHH(drop 0): live -8.934156e-3  served -8.957944e-3  diff +2.378744e-5 
+    G9 OHHH(drop 1): live -8.843227e-3  served -8.932150e-3  diff +8.892304e-5 
+  LIVE    O2H3 seed 0x53415421 frame  18000  diam 5.616  dE5 +3.408666e-2  max|dE4| 4.105756e-2  ratio 0.8302  OVER BOUND  [31 solves, 1423.7 s]
+    G9 OHHH(drop 0): live +3.739004e-3  served +3.732441e-3  diff +6.563345e-6 
+    G9 OHHH(drop 1): live -8.934156e-3  served -8.957944e-3  diff +2.378744e-5 
+  LIVE    O2H3 seed 0x53415422 frame   7500  diam 5.886  dE5 +1.565850e-2  max|dE4| 5.294692e-2  ratio 0.2957  OVER BOUND  [31 solves, 1463.4 s]
+    G9 OHHH(drop 0): live +2.536829e-3  served +2.724486e-3  diff -1.876572e-4 
+    G9 OHHH(drop 1): live -6.188056e-3  served -5.752248e-3  diff -4.358080e-4 
+  LIVE    O2H3 seed 0x53415422 frame   9750  diam 5.969  dE5 +4.034204e-2  max|dE4| 7.226264e-2  ratio 0.5583  OVER BOUND  [31 solves, 1566.3 s]
+    G9 OHHH(drop 0): live +3.075648e-3  served +3.081959e-3  diff -6.311041e-6 
+    G9 OHHH(drop 1): live -8.668028e-4  served -9.072341e-4  diff +4.043135e-5 
+  LIVE    O2H3 seed 0x53415422 frame  13000  diam 5.653  dE5 +7.859411e-2  max|dE4| 7.458010e-2  ratio 1.0538  OVER BOUND  [31 solves, 1343.7 s]
+    G9 OHHH(drop 0): live +3.479677e-3  served +4.024041e-3  diff -5.443639e-4 
+    G9 OHHH(drop 1): live -4.534421e-4  served -4.430961e-4  diff -1.034599e-5 
+  LIVE    O2H3 seed 0x53415422 frame  14500  diam 5.872  dE5 +5.718526e-2  max|dE4| 7.179395e-2  ratio 0.7965  OVER BOUND  [31 solves, 1075.4 s]
+    G9 OHHH(drop 0): live +2.202444e-3  served +2.568228e-3  diff -3.657836e-4 
+    G9 OHHH(drop 1): live +1.258597e-3  served +1.264508e-3  diff -5.910628e-6 
+  LIVE    O2H3 seed 0x53415422 frame  16250  diam 5.767  dE5 +6.584658e-2  max|dE4| 7.465923e-2  ratio 0.8820  OVER BOUND  [31 solves, 1334.6 s]
+    G9 OHHH(drop 0): live +2.926157e-3  served +3.603816e-3  diff -6.776587e-4 
+    G9 OHHH(drop 1): live +3.462210e-4  served +3.560370e-4  diff -9.816028e-6 
+
+=== VOID STRUCTURE (freeze section 6) ===
+  none
+
+=== THE STRICT READING (G2 exactly as frozen, before amendment A-1) ===
+  configs VOIDed by the scf_converged clause alone: 24 of 24
+  solves reporting scf_converged = false: 70
+  STRICT VERDICT: BRANCH (d) VOID — no verdict about the ladder
+  (published beside the amended reading every time — freeze section 5b)
+
+=== THE READING (amended, A-1) ===
+  scored 24   LIVE 24   VACUOUS 0   VOID 0
+  (the maximum below is a bound on the SCORED set only — M-MAX-OVER-SUCCESSES)
+  worst LIVE |dE5| = 7.859411e-2 Ha   bound 5.0e-5   OVER
+  worst config: O2H3 seed 0x53415422 frame 13000 idx [0, 1, 4, 5, 6] diameter 5.652645 bohr
+    atom 0 Z=8 at [4.230387029735, 9.546631275821, 12.000000000000]
+    atom 1 Z=8 at [2.731176115476, 7.602983350484, 12.000000000000]
+    atom 4 Z=1 at [3.291512546341, 11.351373899681, 12.000000000000]
+    atom 5 Z=1 at [3.063362921829, 5.703335262854, 12.000000000000]
+    atom 6 Z=1 at [0.680444960503, 7.490735480802, 12.000000000000]
+    dE4 terms: [0.003479677056907271, -0.00045344211718550964, 0.07458010415015937, -0.01960675054300315, -0.030231297871973817]
+    rung sums:  dE2 -5.947892691e-1 (max |1.476e-1|)   dE3 +3.299263201e-1 (max |1.036e-1|)   dE4 +2.776829067e-2 (max |7.458e-2|)
+    E_FCI -149.166546592311   E_MBE4 -149.245140698642   dE5 +7.859410633e-2
+
+  VERDICT: BRANCH (b) DOES NOT TERMINATE — the DMRG-cluster seam requirement fires (GANTT MPS node)
+
+  csv written to "/tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/de5-wt/conformance/water_observatory/de5_audit.csv"
+# finished  2026-09-02T05:01:40-05:00
+# loadavg at exit  59.90 59.85 59.43
+# exit code (poll-observed completion; see the run's own last line) 0

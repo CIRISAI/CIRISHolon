@@ -360,6 +360,48 @@ pub fn solve_basis(basis: &Basis, n_alpha: usize, n_beta: usize) -> PointSolutio
 /// [`solve_geometry_detailed`] used to carry — the copy was correct, and a correct copy
 /// is still a thing that can stop being one.
 pub fn geometry_problem(species: &[Species], centers: Vec<[D2; 3]>) -> (FciSpace, MoIntegrals, D2) {
+    let gp = geometry_problem_reported(species, centers);
+    (gp.space, gp.mo, gp.e_nuc)
+}
+
+/// One geometry's assembled problem WITH its assembly observability: what
+/// [`geometry_problem`] returns, plus the SCF record and the orbital coefficients that
+/// used to live in a thread-local slot.
+///
+/// # Why this exists (dE5 audit finding, 2026-09-02)
+///
+/// `geometry_problem` was the only entry point that could give an exact-in-model solve
+/// and the only one that could NOT report SCF convergence — it computed the flag and
+/// discarded it. Today that asymmetry is harmless: full CI in a given one-particle space
+/// is invariant to the unitary the SCF supplies (see the module header), so a
+/// non-converged SCF changes the orbital BASIS, not the answer. But that invariance is
+/// conditional on FULL CI — a frozen core, an active-space truncation or any CASCI-shaped
+/// variant makes the rotation load-bearing, and the commit that introduces one will not
+/// think to add the observability. It is bought here, first.
+///
+/// `scf_converged` is NOT a quality gate on the energy (the dE5 audit convicted it as a
+/// non-discriminator for exactly the invariance reason above); it is an assembly fact,
+/// reported so a future non-invariant solver can gate on it.
+pub struct GeometryProblem {
+    pub space: FciSpace,
+    pub mo: MoIntegrals,
+    /// The nuclear repulsion, with derivatives.
+    pub e_nuc: D2,
+    /// SCF iterations spent by [`orbital_rotation`].
+    pub scf_iters: usize,
+    /// Whether the SCF met its own convergence criterion. See the struct header for what
+    /// this does and does not mean under full CI.
+    pub scf_converged: bool,
+    /// The orbital coefficients `C = X U`, values only — what the deleted `ORBITALS`
+    /// thread-local used to carry for [`atomic_rms_radius`].
+    pub orbitals: Vec<f64>,
+}
+
+/// [`geometry_problem`] with nothing discarded. The tuple form above is a thin delegate
+/// kept for its ~40 call sites across four crates; new callers who need any of the extra
+/// fields take this one, and the migration can happen per-caller with no second design
+/// change.
+pub fn geometry_problem_reported(species: &[Species], centers: Vec<[D2; 3]>) -> GeometryProblem {
     let basis = build_basis(species, centers);
     let n = basis.n;
     let ao = ao_integrals(&basis);
@@ -367,7 +409,7 @@ pub fn geometry_problem(species: &[Species], centers: Vec<[D2; 3]>) -> (FciSpace
     let (_, n_alpha, n_beta) = electron_counts(species);
     let xv: Vec<f64> = x.iter().map(|d| d.v).collect();
     let (hx, gx) = transform_values(&ao, &xv, n);
-    let (u, _, _) = orbital_rotation(&hx, &gx, n, n_alpha, n_beta);
+    let (u, scf_iters, scf_converged) = orbital_rotation(&hx, &gx, n, n_alpha, n_beta);
     let mut c = vec![D2::c(0.0); n * n];
     for i in 0..n {
         for p in 0..n {
@@ -380,23 +422,14 @@ pub fn geometry_problem(species: &[Species], centers: Vec<[D2; 3]>) -> (FciSpace
     }
     let mo = transform(&ao, &c, n);
     let space = FciSpace::new(n, n_alpha, n_beta);
-    ORBITALS.with(|slot| *slot.borrow_mut() = Some(c.iter().map(|d| d.v).collect()));
-    (space, mo, basis.nuclear_repulsion())
-}
-
-thread_local! {
-    /// The orbital coefficients of the last [`geometry_problem`] call, values only.
-    ///
-    /// # Why a slot rather than a return value
-    ///
-    /// `geometry_problem` is public and has callers in three test files, two examples and
-    /// another lane's bridge. Widening its tuple to carry `C` would edit all of them for
-    /// one consumer, and a second entry point duplicating its preamble is the copy the
-    /// module header already complains about having removed once.
-    ///
-    /// Only [`atomic_rms_radius`] reads this, immediately after the call that fills it, on
-    /// the same thread. It is not a cache and nothing may treat it as one.
-    static ORBITALS: std::cell::RefCell<Option<Vec<f64>>> = const { std::cell::RefCell::new(None) };
+    GeometryProblem {
+        space,
+        mo,
+        e_nuc: basis.nuclear_repulsion(),
+        scf_iters,
+        scf_converged,
+        orbitals: c.iter().map(|d| d.v).collect(),
+    }
 }
 
 /// The root-mean-square distance of an electron from the nucleus, in bohr.
@@ -422,10 +455,8 @@ thread_local! {
 pub fn atomic_rms_radius(sp: Species) -> f64 {
     let centre = || vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]];
     let basis = build_basis(&[sp], centre());
-    let (space, mo, _nuc) = geometry_problem(&[sp], centre());
-    let c = ORBITALS
-        .with(|slot| slot.borrow_mut().take())
-        .expect("geometry_problem fills the orbital slot");
+    let gp = geometry_problem_reported(&[sp], centre());
+    let (space, mo, c) = (gp.space, gp.mo, gp.orbitals);
     let sol = crate::fci::solve_determinant(&space, &mo);
 
     let n = basis.n;
@@ -488,10 +519,7 @@ pub fn atomic_rms_radius(sp: Species) -> f64 {
 pub fn atomic_valence_rms_radius(sp: Species) -> f64 {
     let centre = || vec![[D2::c(0.0), D2::c(0.0), D2::c(0.0)]];
     let basis = build_basis(&[sp], centre());
-    let (_space, _mo, _nuc) = geometry_problem(&[sp], centre());
-    let c = ORBITALS
-        .with(|slot| slot.borrow_mut().take())
-        .expect("geometry_problem fills the orbital slot");
+    let c = geometry_problem_reported(&[sp], centre()).orbitals;
     let n = basis.n;
     let r2_ao = crate::md::atomic_r2(&basis);
     let (_, n_alpha, _) = electron_counts(&[sp]);

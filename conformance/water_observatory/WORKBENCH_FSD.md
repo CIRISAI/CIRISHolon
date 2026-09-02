@@ -553,3 +553,74 @@ the instrument be complete enough for its reading to mean something. The
 dE₄ incident is the founding case: the unfolded path concealed an 80×
 price surprise precisely because nothing had forced its shape into the
 open.
+
+## 11. FSD-W3 — 2026-09-02: the ladder runs from 1 km × 1 km to the NUCLEUS, and the stale assumptions are retired by name
+
+*Operator's order, 2026-09-02: "get the waterbench up with all the levels from 1 km × 1 km
+to the nucleus of an H or an O, either in a molecule or not", and "old assumptions are
+stale as hell". This section is the spec of record for the ladder; where it contradicts an
+earlier section, this section wins and the earlier one is marked below. The laws of §9c
+(no tier fakes; a fence is a bug under repair with owner and exit; the band-flip law; the
+acuity law; the two-box law; de-allocation, not transition machinery) are unchanged and
+are the reason this ladder can exist.*
+
+### 11.1 The engine the page now runs on (what changed under it today)
+
+| fact, 2026-09-02 | consequence for the page |
+|---|---|
+| ONE determinant kernel for every space: `holon-chem/src/lanes.rs` (one occupation string per conserved integer lane; chemistry is two lanes) — host shards and the 4090 bit-identical | the page's electronic solves and the native referee are the same arithmetic; a solve in the shipped wasm can be gated EQUAL TO THE BIT against native, not merely close |
+| the Davidson is four row programs on a vector space under one reduction law (`vecspace.rs`, block 256); resident on the card (`solve_lanes_on_device`) | the law is device-independent, so wasm (single thread) and native (32 threads, or the card) agree bitwise; the fold cuts the vector traffic ~6m → 4 passes, which a single-threaded wasm build receives in full |
+| the exact QCD₂ referee reaches N = 10 on the card in minutes; the MPS arm is convicted at χ = 64 (E7 building) | the gauge vacuum is a real band candidate (W2), sequenced AFTER this ladder by the operator |
+| every determinant-route energy moved in its trailing bits twice today (regime changes: the lane kernel, then the reduction law); banked tables re-derived | any pinned wasm value in this page's gates is re-pinned from the current native engine, never carried from before today |
+
+### 11.2 The scale axis, restated (WB-1.5 supersedes WB-1.1's table and §9c's launch ladder)
+
+Zoom is a TIER SELECTOR from 1 km × 1 km to the nucleus. Every band is PRESENT on the
+page, and each is one of exactly two things: LIVE on its certified chart, or FENCED with
+its debt, owner and exit in the present tense. Nothing in between.
+
+| band | scale | what runs | state at this spec | owner / exit if fenced |
+|---|---|---|---|---|
+| the cube | 1 km | continuum face; hydrostatics of the column as a READOUT (ρ g h, the gravity exhibit WB-2.4a) | FENCED as dynamics; the hydrostatic readout LIVE (it is arithmetic on measured constants, labelled as such) | node G; exit: the rungs beneath certify |
+| fluid element | ~µm – m | continuum fields (T6) | FENCED | node G rung 2 (branch (d) of its own freeze); exit: the promoted-molecule chart |
+| H-bond network | ~10 nm | the promoted molecular chart | FENCED | node G rung 1 (measured, NOT certified: the alignment finding); exit: the physics ladder + T3 |
+| molecular | ~nm | the live engine, full physics ladder | LIVE (census CERTIFIED-STRICT, cited) | — |
+| **atom** (NEW) | ~Å | ONE atom pinned by the acuity law — H or O, in a molecule or free (the census says which) — its electronic structure solved by the lane engine IN THE PAGE (STO-3G FCI, the same arithmetic as native) | LIVE: energy, electron count, the solve's residual and exit, and BIT-IDENTITY with the native referee as a displayed gate | — |
+| **nucleus** (NEW, the maximum zoom) | ~fm | the nucleus of that atom as the deepest OBJECT: Z, isotope, mass (u), nuclear spin, charge radius — DECLARED, MEASURED INPUTS, labelled so on the page — and the nucleus's thermal de Broglie wavelength at the scene's measured temperature (COMPUTED, closed form, from `holon_temperature`); the ring-polymer spread joins when node E's carrier reaches the ABI (owed, named) | LIVE for the numbers above (every one traces to an export or wears DECLARED); the interior FENCED | interior: the fold below the atom — owner GF2, exit E10 (E7 → E8 → E10) |
+| below the nucleus | — | the gauge vacuum (W2): QED₂ meson and a QCD₂ sector at exact sizes on the wasm lane engine | NOT ON THIS PAGE YET — sequenced after W by the operator | W2 |
+
+**WB-1.6 — in a molecule or not.** The atom and nucleus bands are reached through a
+PICKED atom of the scene (the hand's pick). The page states whether that atom is a member
+of a census molecule row (bonded, with the row's closure defect) or free, from the census
+export — never from a distance heuristic in JavaScript.
+
+**WB-1.7 — declared inputs are allowed and labelled.** Nuclear spin and charge radius,
+like the atomic mass already in `Species`, are measured inputs the Hamiltonian never
+computes. They carry their source in the species table's own doc and the tag DECLARED on
+the page. A declared number presented as computed is the WB-7 lie in a new costume.
+
+### 11.3 Stale assumptions retired, by ID
+
+| where | it said | it is now |
+|---|---|---|
+| WB-1.3, WB-6.1 | "staked rates on the 4090 at 30 fps"; "Target: 30 fps on the RTX 4090, device class declared" | the page's device class is `wasm32-unknown-unknown/f64` (single thread); the 4090 is the NATIVE referee's class, where the lane engine runs resident. The page's rates are MEASURED in the running environment by the governor (WB-2.3, M-IDLE-CALIBRATED-TIMEOUT) and never staked from a card the page does not use |
+| WB-1.1 | "the vacuum to 1 km" with the vacuum as a word | the bottom is the NUCLEUS band (this spec); the gauge vacuum is W2, after W |
+| §9b item 1 | "3D ONLY; the 2D canvas retires" | the 2D page IS the real engine page today (RESUME.md, 149 smoke checks); Route B's renderer consumes a `FrameBuffer` and is two increments in. The ladder lands on the page that exists; the 3D shell inherits it through the same frame buffer when Route B closes. No gap where neither serves |
+| §10 "OWED" | "the real wasm engine replacing the WB-7.1 mock" | DONE (the mock replacement is landed and gated) |
+| WB-8.0 | "PREREQUISITE" | C1's gate DELIVERED; node E LAUNCHED; the nucleus band's ring-polymer spread is the named ABI door still owed |
+| GANTT node F's caveat (copied here because the page cites it) | "sigma is 4% of a Davidson iteration; table generation Amdahl-capped ~3%" | after the fold the vector algebra is a few percent and the physics kernel is the cost; the device-resident solve is the path for table generation, priced against VRAM |
+| §7 build chain | "promoted-molecule charts + derived V(H₂O–H₂O)" as a straight line | node G rung 1 found the boundary is ALIGNMENT, not aggregation, and the MPS cluster seam FIRED twice; the promoted chart's shape is a finding to build to, not a line item |
+
+### 11.4 The build (WB-10), with owners
+
+| # | task | owner | gate |
+|---|---|---|---|
+| WB-10.1 | `Species` gains `nuclear_spin_2` and `charge_radius_fm` (declared, sourced); the palette emitter ships them; `holon_nucleus_*` exports (Z, mass_u, isotope, spin, radius, thermal wavelength at the scene temperature) and `holon_atom_in_molecule(i)` from the census | lead (engine) | `tests/nucleus.rs`: every export traces; the wavelength reproduces the closed form on the engine's own temperature readout; declared values match the table |
+| WB-10.2 | the atom band's solve in the page: the picked atom's (or its molecule's) STO-3G FCI on the lane engine in wasm; `holon_atom_band_*` exports (energy, n_electrons, residual, exit) | lead (engine) | `tests/wasm_law.rs` natively computes the same solves and pins the digest the smoke gate reads: wasm == native TO THE BIT |
+| WB-10.3 | the page: the ladder from 1 km to fm with every band present as LIVE or FENCED per this table; the pick → atom → nucleus descent; the nucleus panel; the hydrostatic readout at the cube; the "in a molecule / free" statement from the census | page lane | `smoke.mjs`: every band present with its state, certificate or owner+exit from the RECORD; every nucleus number traced to an export or tagged DECLARED; the atom band's digest equals the pinned native digest |
+| WB-10.4 | the record table on the page (`RECORD` in app.js) cites the certificates and fences by file:line, gate-verified as today | page lane | the existing citation gate, extended to the new bands |
+| WB-10.5 | the 3D shell inherits the ladder through the frame buffer when Route B closes | workbench-engine | gate 15b as today |
+
+**WB-10.6 — what this build does NOT do.** It does not flip the three fenced bands; that
+is node G's certification and no page work can substitute for it. It does not draw the
+interior of a nucleus. It does not put the gauge vacuum on the page (W2, after W).

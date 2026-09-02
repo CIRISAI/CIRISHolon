@@ -19,10 +19,10 @@
 //! ## The second gate, and the near miss that bought it
 //!
 //! Byte-comparing the block is NOT enough, because the physics is not all inside it.
-//! `waterquench.rs` sets `de4_enabled = true` in its own `main`, well below the block's
+//! `waterquench.rs` sets `many_body_order = 4` in its own `main`, well below the block's
 //! closing banner. When the exact four-body work landed, the block was updated in both
 //! files (a `MAX_ATOMS` to `DEFAULT_SCENE_ATOMS` rename) and the gate passed — while
-//! `waterquench_traj` silently kept `Sim::empty()`'s `de4_enabled: false`.
+//! `waterquench_traj` silently kept `Sim::empty()`'s `many_body_order: 0` (then `de4_enabled: false`).
 //!
 //! Regenerating "the dE4 seed" with that runner would have run the four-body term SWITCHED
 //! OFF, produced a trajectory of different physics under the right filename, and let a
@@ -147,7 +147,7 @@ fn the_trajectory_runner_names_every_physics_knob_its_reference_sets() {
         "waterquench_traj.rs does not set {missing:?}, which waterquench.rs does. \
          Whatever it does not set it inherits from Sim::empty(), so a run of it is a run of \
          DIFFERENT PHYSICS under the same protocol banner. This gate exists because \
-         `de4_enabled` went missing exactly this way and would have regenerated the dE4 \
+         the four-body flag went missing exactly this way and would have regenerated the dE4 \
          seed with the four-body term switched off.\n  reference sets: {reference:?}\n  \
          traj sets     : {traj:?}"
     );

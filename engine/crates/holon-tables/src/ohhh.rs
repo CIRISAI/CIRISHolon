@@ -143,7 +143,7 @@ impl OhhhSurface {
 
     /// `E_MBE3` at these coordinates: six pairs, three (O,H,H) triples, one (H,H,H) triple,
     /// and the isolated atoms. The same decomposition as
-    /// `holon_chem::quaternary::ohhh_mbe3_energy`, reading cached pair curves instead of
+    /// `holon_chem::cluster::mbe_energy`, reading cached pair curves instead of
     /// re-solving each pair.
     pub fn mbe3(&self, coords: &[f64]) -> f64 {
         let (r1, r2, r3) = (coords[0], coords[1], coords[2]);

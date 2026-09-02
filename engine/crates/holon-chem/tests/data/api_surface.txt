@@ -127,14 +127,8 @@ from_text               parses (O,O,O) table from committed text artifact
 generate                generates calibrated (O,O,O) Ozone three-body table
 
 # --- the quaternary MBE4-1 (O,H,H,H) ab-initio evaluation module (T2 critical path) ---
-R_CUT                   cutoff radius for 4-body asymptotic decoupling (6.0 bohr)
-ohhh_fci_energy         evaluates E_FCI for (O,H,H,H) from ab-initio Hamiltonian (1,568 determinants)
-ohhh_mbe3_energy        evaluates E_MBE3 reference energy for (O,H,H,H) 4-atom system
 de4_ohhh_fci            exact ab-initio 4-body residual dE4 = E_FCI - E_MBE3
 sort_ohhh_internals     canonical S3-quotiented sort for 6 internal coordinates of (O,H,H,H)
-ohhh_fci_grad           E_FCI(OH3) with its exact Cartesian gradient (9 seeded dual solves, warm-startable); consumer: holon-render sim.rs accumulate_four_body
-atom_energy_o           the isolated-oxygen energy of this level of theory, memoised. It BECAME library-unreferenced when quaternary.rs turned into an instantiation of cluster.rs: the generic assembly subtracts reference atoms through `cluster::atom_energy_cached`, keyed by Z, so nothing inside the library reaches for oxygen by name any more. The consumer is holon-render sim.rs accumulate_four_body, which assembles its own MBE3 half from the bank's Hermite curves and needs the same two constants the ab-initio half subtracts
-atom_energy_h           the same, for hydrogen; same consumer, same reason. Both are now thin wrappers over the Z-keyed memo and are kept as NAMES rather than as arithmetic -- deleting them would move a cross-crate caller for no gain, and reimplementing them there would give the two halves of one ledger two sources for one number
 
 # --- the DE4-TABLE four-body surface: coordinates, canonical form, interpolant ---
 # (campaign: conformance/water_observatory/DE4_TABLE_PREREG.md. These are consumed ACROSS
@@ -229,3 +223,9 @@ with_interpolant_uncertainty  records that measurement onto the table; to_json R
 
 # --- the admission door (2026-09-02: caps became leases) ---
 set_admission           installs the process-wide admission probe; consumed by tests (planted probes) and by hosts that own their own probes — the table generator lease layer and the browser host
+
+# --- the many-body registry (2026-09-02: the engine sector is any-order) ---
+family_covers           consumed by holon-render Sim::surface_registry — a measured reach is only declared where every triple class of the cluster is served
+max_reach_at            consumed by holon-render Sim::many_body_cutoff and accumulate_many_body — the enumeration radius derived from the measured reaches at the declared order
+measured_body_reaches   consumed by holon-render Sim::surface_registry — the crate-wide list of measured body reaches with their records
+declare_reach           consumed by holon-render Sim::surface_registry — where a measured body reach is declared per class after its triple families are checked

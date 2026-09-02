@@ -1,4 +1,4 @@
-use holon_chem::quaternary::{de4_ohhh_fci, sort_ohhh_internals};
+use holon_chem::quaternary_table::{de4_ohhh_fci, sort_ohhh_internals};
 use holon_chem::trimer;
 use holon_chem::water;
 

@@ -64,7 +64,8 @@
 
 use holon_chem::cluster::{ClusterClass, SurfaceFamily};
 use holon_chem::ooh::{OohMeta, OohTable};
-use holon_chem::quaternary;
+use holon_chem::cluster::{self, AbInitioPairs, SurfaceRegistry};
+use holon_chem::quaternary_table::{de4_ohhh_fci, OHHH};
 use holon_chem::trimer::{self, TrimerTable};
 use holon_chem::water::{self, WaterTable};
 use std::sync::OnceLock;
@@ -305,10 +306,11 @@ fn identical_through(label: &str, g: &[[f64; 3]; 4]) {
     let (w, t) = tables();
 
     // 1. E_FCI, value only.
+    let registry = || SurfaceRegistry::new().with(w).with(t);
     same_bits(
         &format!("{label} / E_FCI"),
         frozen::ohhh_fci_energy(g),
-        quaternary::ohhh_fci_energy(g),
+        cluster::cluster_fci_energy(&OHHH, g),
     );
 
     // 2. E_MBE3: six pair excesses in hub-and-cycle order, four triples through the
@@ -316,30 +318,38 @@ fn identical_through(label: &str, g: &[[f64; 3]; 4]) {
     same_bits(
         &format!("{label} / E_MBE3"),
         frozen::ohhh_mbe3_energy(g, w, t),
-        quaternary::ohhh_mbe3_energy(g, w, t),
+        cluster::mbe_energy(3, &OHHH, g, &AbInitioPairs, &registry()).expect("both triple classes registered"),
     );
 
     // 3. dE4, the difference the certified tables are built from.
     same_bits(
         &format!("{label} / dE4"),
         frozen::de4_ohhh_fci(g, w, t),
-        quaternary::de4_ohhh_fci(g, w, t),
+        de4_ohhh_fci(g, w, t),
+    );
+    // 3b. The order-generic assembly at the cluster's own order: E_MBE3 again, through
+    //     the any-order path with the four-body subclusters EXCLUDED by the clamp — so an
+    //     `order = 4` request on a four-cluster reads identically to `order = 3`.
+    same_bits(
+        &format!("{label} / E_MBE3 via order 4 (clamped)"),
+        frozen::ohhh_mbe3_energy(g, w, t),
+        cluster::mbe_energy(4, &OHHH, g, &AbInitioPairs, &registry()).expect("both triple classes registered"),
     );
 
     // 4. The gradient object, cold.
     let old = frozen::ohhh_fci_grad(g, None);
-    let new = quaternary::ohhh_fci_grad(g, None);
+    let new = cluster::cluster_fci_grad(&OHHH, g, None);
     compare_grad(&format!("{label} / grad cold"), &old, &new);
 
     // 5. The gradient object, warm-started from each path's OWN cold CI vector — which,
     //    step 4 having passed, is the same vector. This is the shape `sim.rs` runs.
     let old_w = frozen::ohhh_fci_grad(g, Some(&old.ci));
-    let new_w = quaternary::ohhh_fci_grad(g, Some(&new.ci));
+    let new_w = cluster::cluster_fci_grad(&OHHH, g, Some(&new.ci));
     compare_grad(&format!("{label} / grad warm"), &old_w, &new_w);
 }
 
 #[track_caller]
-fn compare_grad(label: &str, old: &frozen::OhhhFciGrad, new: &quaternary::OhhhFciGrad) {
+fn compare_grad(label: &str, old: &frozen::OhhhFciGrad, new: &cluster::ClusterFciGrad) {
     same_bits(&format!("{label} / e"), old.e, new.e);
     for atom in 0..4 {
         for axis in 0..3 {
@@ -438,9 +448,9 @@ fn surface_families_key_on_the_sorted_z_triple() {
     let w = WaterTable::default();
     let t = TrimerTable::empty();
     let o = OohTable::empty();
-    assert_eq!(SurfaceFamily::class(&w), ClusterClass::from_z([1, 1, 8]));
-    assert_eq!(SurfaceFamily::class(&t), ClusterClass::from_z([1, 1, 1]));
-    assert_eq!(SurfaceFamily::class(&o), ClusterClass::from_z([1, 8, 8]));
+    assert_eq!(SurfaceFamily::class(&w), ClusterClass::from_z(&[1, 1, 8]));
+    assert_eq!(SurfaceFamily::class(&t), ClusterClass::from_z(&[1, 1, 1]));
+    assert_eq!(SurfaceFamily::class(&o), ClusterClass::from_z(&[1, 8, 8]));
     // The canonical ORDER is the family's own, and is not the sorted key: water's first
     // two arguments are the O-H sides, so oxygen sits at canonical position 0.
     assert_eq!(SurfaceFamily::canonical_z(&w), [8, 1, 1]);

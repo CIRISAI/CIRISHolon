@@ -27,76 +27,11 @@
 //! OFF must sum to exactly zero, or the test is measuring the pair and triple sectors and
 //! would fire whatever the four-body code did.
 
-use holon_chem::elements::{HYDROGEN, OXYGEN};
-use holon_chem::pair::{generate_pair_table, PairTable};
-use holon_render::bank::Host;
 use holon_render::sim::Sim;
-use holon_render::{load_pair_table, TABLE_OK};
-use std::sync::OnceLock;
 
-const FIXTURE_KNOTS: usize = 48;
-
-struct Bank {
-    hh: PairTable,
-    oh: PairTable,
-    trimer: Box<holon_chem::trimer::TrimerTable>,
-    water: Box<holon_chem::water::WaterTable>,
-}
-
-fn banked() -> &'static Bank {
-    static B: OnceLock<Bank> = OnceLock::new();
-    B.get_or_init(|| Bank {
-        hh: generate_pair_table(HYDROGEN, HYDROGEN, FIXTURE_KNOTS),
-        oh: generate_pair_table(OXYGEN, HYDROGEN, FIXTURE_KNOTS),
-        trimer: Box::new(holon_chem::trimer::generate().expect("the H3 table generates")),
-        water: Box::new(
-            holon_chem::water::from_text(&water_table_text())
-                .expect("the committed (O,H,H) table parses under this build's grid rule"),
-        ),
-    })
-}
-
-fn water_table_text() -> String {
-    std::fs::read_to_string(concat!(
-        env!("CARGO_MANIFEST_DIR"),
-        "/../holon-chem/tests/data/s2/s2_water_table.txt"
-    ))
-    .expect("the committed water table is readable")
-}
-
-/// One oxygen with three hydrogens well inside `R_CUT`, so the four-body switch is fully on
-/// and the sector is genuinely evaluated rather than skipped at the cutoff.
-fn quartet(de4: bool) -> Box<Sim> {
-    let b = banked();
-    let mut s = Box::new(Sim::empty());
-    assert_eq!(load_pair_table(&mut s, &b.hh, Host::Native), TABLE_OK);
-    assert_eq!(load_pair_table(&mut s, &b.oh, Host::Native), TABLE_OK);
-    s.trimer = (*b.trimer).clone();
-    s.water = (*b.water).clone();
-    s.reset(4);
-    assert!(s.set_species(0, OXYGEN));
-    for i in 1..4 {
-        assert!(s.set_species(i, HYDROGEN));
-    }
-    // A compact, deliberately ASYMMETRIC quartet: a symmetric one can cancel a broken force
-    // by its own geometry and pass a gate it should fail.
-    let p = [
-        [0.0, 0.0, 0.0],
-        [1.83, 0.0, 0.0],
-        [-0.61, 1.94, 0.0],
-        [-0.55, -0.72, 1.71],
-    ];
-    for (i, c) in p.iter().enumerate() {
-        s.atoms[i].x = c[0];
-        s.atoms[i].y = c[1];
-        s.atoms[i].z = c[2];
-        s.atoms[i].vx = 0.0;
-        s.atoms[i].vy = 0.0;
-        s.atoms[i].vz = 0.0;
-    }
-    s.de4_enabled = de4;
-    s
-}
+#[path = "common/quartet.rs"]
+mod quartet;
+use quartet::quartet;
 
 /// The summed internal force, and the scale to judge it against.
 fn net_internal_force(s: &Sim) -> ((f64, f64, f64), f64) {
@@ -204,7 +139,7 @@ fn the_four_body_force_is_the_gradient_of_the_four_body_energy() {
             s.atoms[i].z += sign * delta * d[i][2];
         }
         s.compute_forces();
-        s.e_four
+        s.e_many
     };
     let du_dl = (e_at(1.0) - e_at(-1.0)) / (2.0 * delta);
 

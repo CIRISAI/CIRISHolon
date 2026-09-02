@@ -63,7 +63,7 @@ fn fingerprint(s: &Sim) -> Vec<u64> {
         s.e_kin,
         s.e_pair,
         s.e_three,
-        s.e_four,
+        s.e_many,
         s.e_wall,
         s.e_spring,
         s.e_grav,

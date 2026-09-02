@@ -51,7 +51,10 @@ use crate::sim::{Atom, Boundary, Dims, Sim};
 /// bytes, so a truncated-or-padded v2 could pass a size test and still restore a scene
 /// whose field points somewhere nobody chose.
 /// v4 (2026-09-02): the `acuity` receipt column joins the ledger block after `barostat`.
-pub const CHECKPOINT_VERSION: u32 = 4;
+/// v5 (2026-09-02): the four-body pair `(de4_eval_count: u64, de4_enabled: bool)` becomes
+/// the many-body triple `(many_body_evals: u64, many_body_order: u64, many_body_unserved:
+/// u64)` — the sector is any-order now and its declared order is state a restore must carry.
+pub const CHECKPOINT_VERSION: u32 = 5;
 
 const MAGIC: [u8; 8] = *b"HOLONCK1";
 
@@ -391,8 +394,9 @@ impl Sim {
         w.f64(self.drift_peak);
         w.f64(self.momentum_residual_peak);
         w.f64(self.e_rel_max);
-        w.u64(self.de4_eval_count);
-        w.bool(self.de4_enabled);
+        w.u64(self.many_body_evals);
+        w.u64(self.many_body_order as u64);
+        w.u64(self.many_body_unserved);
 
         // --- the envelope state the drift bound is built from ---
         for v in self.envelope_state() {
@@ -504,8 +508,9 @@ impl Sim {
         let drift_peak = r.f64()?;
         let momentum_residual_peak = r.f64()?;
         let e_rel_max = r.f64()?;
-        let de4_eval_count = r.u64()?;
-        let de4_enabled = r.bool()?;
+        let many_body_evals = r.u64()?;
+        let many_body_order = r.u64()? as usize;
+        let many_body_unserved = r.u64()?;
 
         let mut envelope = [0.0f64; ENVELOPE_WORDS];
         for v in envelope.iter_mut() {
@@ -554,8 +559,9 @@ impl Sim {
         self.drift_peak = drift_peak;
         self.momentum_residual_peak = momentum_residual_peak;
         self.e_rel_max = e_rel_max;
-        self.de4_eval_count = de4_eval_count;
-        self.de4_enabled = de4_enabled;
+        self.many_body_evals = many_body_evals;
+        self.many_body_order = many_body_order;
+        self.many_body_unserved = many_body_unserved;
         self.set_envelope_state(envelope);
         self.set_clock_state(clock);
         self.timescale.calibrated = calibrated;

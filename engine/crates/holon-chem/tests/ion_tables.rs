@@ -29,6 +29,12 @@ use holon_chem::ion_table::{
 use holon_chem::ions::{solve_geometry_charged, ChargeRefusal};
 use holon_chem::pair::{generate_pair_table, solve_geometry};
 
+/// The admission door is process-wide. The test that SCRIPTS it holds this exclusively;
+/// every other test in this binary holds it shared, so they still run in parallel with
+/// each other and never see a planted verdict (the G1 flake of 2026-09-02: a 512-byte
+/// working set "refused" because a sibling's planted door was in force).
+static DOOR: std::sync::RwLock<()> = std::sync::RwLock::new(());
+
 // ---------------------------------------------------------------- the staked geometry
 //
 // Bohr and degrees, TAKEN UNCHANGED from `tests/ion_core.rs`'s staked pyramid so the cut
@@ -158,6 +164,7 @@ const DIATOMIC_ATOMS: [Fragment; 2] = [
 /// and then diverged the first time either side changed.
 #[test]
 fn g1_the_neutral_path_does_not_move_by_one_bit() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     let n = 24usize;
     let mut compared = 0usize;
     for (label, a, b) in [("H2", HYDROGEN, HYDROGEN), ("OH", OXYGEN, HYDROGEN)] {
@@ -230,6 +237,7 @@ fn g1_the_neutral_path_does_not_move_by_one_bit() {
 /// proves nothing, so each refusing input is paired with a served one.
 #[test]
 fn g3_g4_the_two_refusal_doors() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     // --- G3, at the spec door. P4 is the refused form.
     assert_eq!(
         parse_spec("O H H H").unwrap_err(),
@@ -325,6 +333,7 @@ fn g3_g4_the_two_refusal_doors() {
 /// that came back before the solve.
 #[test]
 fn g10_g11_the_door_refuses_before_it_spends() {
+    let _door = DOOR.write().unwrap_or_else(|e| e.into_inner());
     // (H3O+ · H2O): I-2's headline ionic pair. Two oxygens and five hydrogens, +1.
     let species = [OXYGEN, OXYGEN, HYDROGEN, HYDROGEN, HYDROGEN, HYDROGEN, HYDROGEN];
     let key: IonKey<7> = IonKey::state(&species, 1).expect("O2H5+ is a stateable charge");
@@ -440,6 +449,7 @@ fn g10_g11_the_door_refuses_before_it_spends() {
 /// different order — `q * (sin t cos φ)` here against `(R sin t) * cos φ` there.
 #[test]
 fn g9_the_certified_core_point_is_on_the_cut() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     let cut = h3o_cut();
     let e_h3o = solve_geometry_charged(&cut.species(), cut.centers(D2::var(R_OH_H3O)), 1)
         .expect("H3O+ solves on the cut")
@@ -496,6 +506,7 @@ fn g9_the_certified_core_point_is_on_the_cut() {
 /// bisection plus the channels plus 24 held-out solves.
 #[test]
 fn g2_g5_g6_g7_g8_the_h3o_plus_table() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     let cut = h3o_cut();
     let channels = h3o_channels();
     let t0 = std::time::Instant::now();
@@ -704,6 +715,7 @@ fn report_well(t: &IonTable<4>) {
 /// verdict read off the reduced grid.
 #[test]
 fn p3_dropping_the_lowest_channel_fires_g5() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     let cut = h3o_cut();
     let channels = h3o_channels();
     let n = 12usize;
@@ -781,6 +793,7 @@ fn p3_dropping_the_lowest_channel_fires_g5() {
 /// a silent pass — which is the whole failure this file exists to refuse.
 #[test]
 fn the_emitted_bank_was_produced_under_the_staked_inputs() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     let root = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("../../../docs/atoms/tables/ions");
     let manifest = std::fs::read_to_string(root.join("manifest.json")).unwrap_or_else(|e| {

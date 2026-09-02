@@ -296,7 +296,7 @@ struct Outcome {
     momentum_bound: f64,
     temperature: f64,
     e_three: f64,
-    e_four: f64,
+    e_many: f64,
     de4_evals: u64,
     /// The (O,O,H) and (O,O,O) fence's incidence: triples the three-body sector refused
     /// for want of a table, at the final force evaluation. The prereg requires it counted.
@@ -329,7 +329,7 @@ fn run(s: &mut Sim, arm: Arm, seed: u64) -> Outcome {
                 frame + 1,
                 FRAMES,
                 s.temperature(),
-                s.de4_eval_count,
+                s.many_body_evals,
                 s.drift(),
                 t0.elapsed().as_secs_f64()
             );
@@ -346,8 +346,8 @@ fn run(s: &mut Sim, arm: Arm, seed: u64) -> Outcome {
         momentum_bound: s.momentum_bound(),
         temperature: s.temperature(),
         e_three: s.e_three,
-        e_four: s.e_four,
-        de4_evals: s.de4_eval_count,
+        e_many: s.e_many,
+        de4_evals: s.many_body_evals,
         fenced: s.fence_untabulated,
         seconds: t0.elapsed().as_secs_f64(),
     }
@@ -428,7 +428,7 @@ fn main() {
     assert!(base.ooh.loaded, "OOH table must be loaded and ready");
     // (O,O,O) is honestly fenced per FSD section 10 pending table certification
     base.ozone = holon_chem::ozone::OzoneTable::empty();
-    base.de4_enabled = true;
+    base.many_body_order = 4;
 
     // The timestep is reported from a PLACED scene, because that is where it is derived
     // from; reading `base.dt()` on the empty box reports the fallback rather than the

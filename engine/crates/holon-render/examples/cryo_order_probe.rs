@@ -125,7 +125,7 @@ fn main() {
     s.water = holon_chem::water::from_text(&src).expect("it parses");
     s.ooh = holon_chem::ooh::generate().expect("the OOH table generates");
     s.ozone = holon_chem::ozone::OzoneTable::empty();
-    s.de4_enabled = true;
+    s.many_body_order = 4;
 
     // The frozen placement, identical to `cryo_quench::place`.
     let mut st = PROBE_SEED;

@@ -40,6 +40,12 @@ use holon_chem::elements::by_z;
 use holon_chem::fci::{ci_ints, s_squared, solve_determinant, Order};
 use holon_chem::pair::{electron_counts, geometry_problem, CONVERGED_RESIDUAL};
 
+/// The admission door is process-wide. The test that SCRIPTS it holds this exclusively;
+/// every other test in this binary holds it shared, so they still run in parallel with
+/// each other and never see a planted verdict (the G1 flake of 2026-09-02: a 512-byte
+/// working set "refused" because a sibling's planted door was in force).
+static DOOR: std::sync::RwLock<()> = std::sync::RwLock::new(());
+
 /// `(Z, 2S+1)` for the heavy atoms cheap enough to solve in a test.
 ///
 /// The multiplicities are the periodic table's, not this crate's: LABELLED CONTEXT, and the
@@ -135,6 +141,7 @@ const MISSES_CONVERGENCE_BAR: [(u32, f64); 0] = [];
 /// Both rows' p-blocks reproduce Hund's rules, with nothing about spin supplied.
 #[test]
 fn the_heavy_ground_multiplicities_come_out_rather_than_in() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     for (z, _) in EXPECTED_MULTIPLICITY {
         assert!(
             !KNOWN_DISAGREEMENTS.contains(&z),
@@ -237,6 +244,7 @@ fn the_heavy_ground_multiplicities_come_out_rather_than_in() {
 /// conjugated by a diagonal matrix of signs -- identical spectrum, different matrix.
 #[test]
 fn the_heavy_atoms_agree_between_two_independent_sigma_routes() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     /// Determinant count past which the reference route is not bought here.
     ///
     /// `sigma_reference` is `O(N_det^2)` in Slater-Condon evaluations, so germanium's
@@ -336,6 +344,7 @@ fn probe(n: usize, seed: u64) -> Vec<f64> {
 /// normalisation, the 5x6 projection and the heavy basis table at once.
 #[test]
 fn the_two_closed_shell_nobles_match_the_fifty_digit_referee() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
         .join("tests/data/elements3_referee_nobles.txt");
     let text = std::fs::read_to_string(&path)
@@ -396,6 +405,7 @@ fn the_two_closed_shell_nobles_match_the_fifty_digit_referee() {
 /// price buys — printed, not pinned, because it is a fact about the machine.
 #[test]
 fn the_mps_arm_is_the_leased_overflow_and_the_plant_selects_it() {
+    let _door = DOOR.write().unwrap_or_else(|e| e.into_inner());
     use holon_chem::budget::{price_determinant, price_mpo, set_admission};
     use holon_chem::pair::{automatic_route, AutomaticRoute};
     use holon_resource::probe::{Probe, ProbeVerdict, ResourceKind};

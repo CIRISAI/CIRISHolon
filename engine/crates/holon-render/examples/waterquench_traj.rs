@@ -437,7 +437,7 @@ fn run(s: &mut Sim, arm: Arm, seed: u64, out_dir: &Path) -> Outcome {
                 frame + 1,
                 FRAMES,
                 s.temperature(),
-                s.de4_eval_count,
+                s.many_body_evals,
                 s.drift(),
                 t0.elapsed().as_secs_f64()
             );
@@ -454,7 +454,7 @@ fn run(s: &mut Sim, arm: Arm, seed: u64, out_dir: &Path) -> Outcome {
         momentum_bound: s.momentum_bound(),
         temperature: s.temperature(),
         fenced: s.fence_untabulated,
-        de4_evals: s.de4_eval_count,
+        de4_evals: s.many_body_evals,
         seconds: t0.elapsed().as_secs_f64(),
         frames_written,
         path,
@@ -576,7 +576,7 @@ fn main() {
 
     // The four-body term. `Sim::empty()` leaves this FALSE, so omitting this line is how a
     // runner silently drops the physics it was pointed at.
-    base.de4_enabled = de4.enabled();
+    base.many_body_order = if de4.enabled() { 4 } else { 0 };
 
     place(&mut base, arm, seeds[0]);
     println!(

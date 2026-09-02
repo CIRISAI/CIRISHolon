@@ -392,10 +392,10 @@ fn main() {
     base.ooh = holon_chem::ooh::generate().expect("the OOH table generates");
     assert!(base.ooh.loaded, "OOH table must be loaded and ready");
     base.ozone = holon_chem::ozone::OzoneTable::empty();
-    base.de4_enabled = true;
+    base.many_body_order = 4;
     println!(
         "# table set (copied from waterquench.rs): H3 generated, (O,H,H) committed artifact, \
-         (O,O,H) generated, (O,O,O) FENCED empty, de4_enabled = true"
+         (O,O,H) generated, (O,O,O) FENCED empty, many_body_order = 4"
     );
     println!(
         "# V1 curve identity: {}-{} {CURVE_KNOTS} knots, {}, exit {}, budget {}, worst_residual {:.3e}, \

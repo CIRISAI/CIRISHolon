@@ -61,7 +61,7 @@ use std::time::Instant;
 // Every one of these is quoted from LONGRANGE_PREREG.md, which is committed. A value that
 // disagrees with the freeze is a defect in this file, not a new decision.
 
-/// The staked cutoff ladder, bohr. Provenance, in order: `sim::DE4_R_CUT`,
+/// The staked cutoff ladder, bohr. Provenance, in order: `quaternary_table::R_HI` (the four-body reach the engine derives its cutoff from),
 /// `trimer::R_HI`, half the short box edge (the largest cutoff `pbc_ok` would admit on a
 /// periodic box this size), `ooh::R_HI` = `ozone::R_HI`, `water::R_HI`, and one radius
 /// above the box diagonal as the zero control.

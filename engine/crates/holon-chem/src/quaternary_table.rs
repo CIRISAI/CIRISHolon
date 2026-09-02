@@ -29,7 +29,7 @@
 //!
 //! Relabelling the three hydrogens is a group of order six acting on a labelled geometry:
 //! `sigma` sends `R_a -> R_{sigma(a)}` AND `u_ab -> u_{sigma(a)sigma(b)}`, simultaneously.
-//! The predecessor [`crate::quaternary::sort_ohhh_internals`] sorts the three O-H distances
+//! The predecessor [`sort_ohhh_internals`] sorts the three O-H distances
 //! and the three H-H distances INDEPENDENTLY, which is invariance under `S3 x S3`, order
 //! 36. Thirty-six over six is six, so it generically hands SIX distinct geometries one
 //! address — measured, two geometries at one address whose `dE4` differ by `6.355e-3` Ha.
@@ -69,6 +69,11 @@
 //! output and seven outputs (value plus six partials), so a few tens of microseconds —
 //! against a measured MEAN of 9.84 SECONDS for the four-solve path it replaces.
 
+use crate::cluster::{body_term, AbInitioPairs, SurfaceRegistry};
+use crate::elements::{Species, HYDROGEN, OXYGEN};
+use crate::trimer::TrimerTable;
+use crate::water::WaterTable;
+
 use crate::trimer::cr_weights;
 
 // ================================================================= the frozen grid
@@ -79,7 +84,7 @@ use crate::trimer::cr_weights;
 
 /// Shortest O-H distance on the grid.
 pub const R_LO: f64 = 0.9;
-/// Longest O-H distance: `quaternary::R_CUT`, the MEASURED far-field cutoff (`|dE4|` is
+/// Longest O-H distance, and the four-body term's REACH: the MEASURED far-field cutoff (`|dE4|` is
 /// 4.9e-5 Ha at 6.1 bohr, 1.7e-6 Ha by 9). The three-body table's 15.0 does not transfer.
 pub const R_HI: f64 = 6.0;
 /// Exponential stretch on the radial axes, matching the three-body tables' `a = 3`.
@@ -1155,4 +1160,42 @@ mod tests {
             }
         }
     }
+}
+
+// ------------------------------------------------------------------ the instance
+
+/// THE INSTANCE. The four-body machinery is `crate::cluster`'s and is written for any
+/// arity; this is the one Z-tuple it has a certified table for. A second four-cluster
+/// is a second constant and a second table, and nothing else.
+pub const OHHH: [Species; 4] = [OXYGEN, HYDROGEN, HYDROGEN, HYDROGEN];
+
+/// Where [`R_HI`] was measured — the record a many-body sector cites when it derives its
+/// cutoff from this table's reach rather than from a constant of its own.
+pub const OHHH_REACH_PROVENANCE: &str =
+    "DE4_TABLE_PREREG.md / DE4_PRICE: |dE4| = 4.9e-5 Ha at 6.1 bohr and 1.7e-6 Ha by 9 bohr, \
+     the (O,H,H,H) four-body term's measured far field";
+
+/// The ab-initio four-body term this table is certified against:
+/// `eps_4 = E_FCI(OHHH) - E_MBE3(OHHH)` through the generic cluster machinery, with
+/// ab-initio pairs and the two three-body tables an OHHH cluster's triples need.
+pub fn de4_ohhh_fci(centers: &[[f64; 3]; 4], water: &WaterTable, trimer: &TrimerTable) -> f64 {
+    let surfaces = SurfaceRegistry::new().with(water).with(trimer);
+    body_term(&OHHH, centers, &AbInitioPairs, &surfaces)
+        .expect("(O,H,H) and (H,H,H) cover every triple of an OHHH cluster")
+}
+
+/// The PREDECESSOR canonical form, kept for the record that measured why it is not one
+/// (see the module header: it is `S3 x S3`-invariant and merges six geometries at one
+/// address). [`canonical_ohhh`] replaced it; `examples/de4_price.rs` and
+/// `tests/quaternary.rs` still exercise it as the measurement's witness.
+/// Six-coordinate S3 permutation sort for internal coordinate evaluation.
+pub fn sort_ohhh_internals(
+    r1: f64, r2: f64, r3: f64,
+    r12: f64, r23: f64, r31: f64,
+) -> ([f64; 3], [f64; 3]) {
+    let mut roh = [r1, r2, r3];
+    roh.sort_by(|a, b| a.partial_cmp(b).unwrap_or(core::cmp::Ordering::Equal));
+    let mut rhh = [r12, r23, r31];
+    rhh.sort_by(|a, b| a.partial_cmp(b).unwrap_or(core::cmp::Ordering::Equal));
+    (roh, rhh)
 }

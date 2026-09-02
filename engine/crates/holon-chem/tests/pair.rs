@@ -17,6 +17,12 @@ use holon_chem::elements::{FLUORINE, HELIUM, HYDROGEN, LITHIUM, NEON};
 use holon_chem::dual::D2;
 use holon_chem::fnv1a32;
 use holon_chem::fci::{multiplicity, s_squared};
+
+/// The admission door is process-wide. The test that SCRIPTS it holds this exclusively;
+/// every other test in this binary holds it shared, so they still run in parallel with
+/// each other and never see a planted verdict (the G1 flake of 2026-09-02: a 512-byte
+/// working set "refused" because a sibling's planted door was in force).
+static DOOR: std::sync::RwLock<()> = std::sync::RwLock::new(());
 use holon_chem::pair::{
     atom_energy, declared_colour, generate_pair_table, pair_point, solve_geometry_detailed,
     PairCache, WELL_MIN_DEPTH,
@@ -35,6 +41,7 @@ use holon_chem::pair::{
 /// six declared decimals of the hydrogen contraction and nothing else.
 #[test]
 fn the_general_path_reproduces_the_banked_h2_curve() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     let src = common::referee_text();
     let rs: Vec<f64> = string_array(&src, "R_grid_bohr")
         .iter()
@@ -98,6 +105,7 @@ fn the_general_path_reproduces_the_banked_h2_curve() {
 /// construction, and this test asserts what the model says rather than what is true.
 #[test]
 fn e1_the_closed_shells_refuse_to_bind() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     for (label, a, b) in [("He2", HELIUM, HELIUM), ("Ne2", NEON, NEON)] {
         let table = generate_pair_table(a, b, 40);
         let deepest = table.e.iter().cloned().fold(f64::INFINITY, f64::min);
@@ -143,6 +151,7 @@ fn e1_the_closed_shells_refuse_to_bind() {
 /// must bind, and it must.
 #[test]
 fn the_well_finder_is_not_simply_silent() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     let table = generate_pair_table(HYDROGEN, FLUORINE, 32);
     let well = table
         .meta
@@ -168,6 +177,7 @@ fn the_well_finder_is_not_simply_silent() {
 /// bound or not, and the unbound ones say so in the schema.
 #[test]
 fn e3_every_pair_emits_the_renderer_contract() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     for (label, a, b, expect_bound) in [
         ("H2", HYDROGEN, HYDROGEN, true),
         ("LiH", LITHIUM, HYDROGEN, true),
@@ -258,6 +268,7 @@ fn e3_every_pair_emits_the_renderer_contract() {
 /// The lazy cache computes once and then does not.
 #[test]
 fn the_pair_cache_is_lazy_and_unordered() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     let mut cache = PairCache::new(16);
     let first_ms = {
         let t = cache.get(HYDROGEN, HELIUM);
@@ -286,6 +297,7 @@ fn the_pair_cache_is_lazy_and_unordered() {
 /// separation is asserted on the whole colour rather than on warmth alone.
 #[test]
 fn the_colour_rule_is_declared_monotone_and_distinguishable() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     let rgb = |z: u32| -> (i32, i32, i32) {
         let c = declared_colour(z);
         assert_eq!(c.len(), 7, "colour must be #rrggbb, got {c}");
@@ -454,6 +466,7 @@ fn f64_scalar(src: &str, key: &str) -> f64 {
 
 #[test]
 fn r2_the_first_row_matches_the_fifty_digit_referee() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     let dir = referee_dir();
     let is_committed = std::env::var("ELEMENTS1_REFEREE_DIR").is_err();
 
@@ -872,6 +885,7 @@ fn split_pair(name: &str) -> (String, String) {
 
 #[test]
 fn pair_file_names_parse_to_their_elements() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     for (name, a, b) in [
         ("H2", "H", "H"), ("He2", "He", "He"), ("Ne2", "Ne", "Ne"), ("Li2", "Li", "Li"),
         ("N2", "N", "N"), ("F2", "F", "F"), ("LiH", "Li", "H"), ("HF", "H", "F"),
@@ -902,6 +916,7 @@ fn pair_file_names_parse_to_their_elements() {
 /// declared contact energy.
 #[test]
 fn the_palette_size_rule_runs_both_of_its_branches() {
+    let _door = DOOR.read().unwrap_or_else(|e| e.into_inner());
     use holon_chem::pair::{homonuclear_size, RadiusRule, CONTACT_ENERGY};
 
     // H2 binds; He2 does not. One of each, so neither branch can be silently dead.
@@ -973,6 +988,7 @@ fn max_determinants(n_orb: usize) -> u128 {
 /// named. This test pins the LAW, both directions, with the resource layer's own plants.
 #[test]
 fn routing_is_admission_and_both_directions_are_planted() {
+    let _door = DOOR.write().unwrap_or_else(|e| e.into_inner());
     use holon_chem::budget::{admit, price_determinant, price_mpo, set_admission};
     use holon_chem::elements::ALL_ELEMENTS;
     use holon_chem::pair::{automatic_route, AutomaticRoute};

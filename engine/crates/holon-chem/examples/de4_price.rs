@@ -18,7 +18,7 @@
 //!    FCI) and `ohhh_mbe3_energy` (six `pair_point` two-centre solves plus four table
 //!    lookups) are timed apart.
 //!
-//! 2. **The canonical form.** `quaternary::sort_ohhh_internals` sorts the three O-H
+//! 2. **The canonical form.** `quaternary_table::sort_ohhh_internals` sorts the three O-H
 //!    distances and the three H-H distances INDEPENDENTLY. Independent sorting is
 //!    invariant under S3 x S3 (order 36), not under the S3 (order 6) that actually acts
 //!    on a geometry — the hydrogen relabelling that moves R2 also moves which pair R23
@@ -40,7 +40,8 @@
 
 use holon_chem::elements::{HYDROGEN, OXYGEN};
 use holon_chem::pair::{atom_energy, pair_point};
-use holon_chem::quaternary::{de4_ohhh_fci, ohhh_fci_energy, ohhh_fci_grad, ohhh_mbe3_energy, sort_ohhh_internals};
+use holon_chem::cluster::{cluster_fci_energy, cluster_fci_grad, mbe_energy, AbInitioPairs, SurfaceRegistry};
+use holon_chem::quaternary_table::{de4_ohhh_fci, sort_ohhh_internals, OHHH};
 use holon_chem::trimer::{self, TrimerTable};
 use holon_chem::water::{self, WaterTable};
 use std::time::Instant;
@@ -276,7 +277,7 @@ fn main() {
         let _ = de4_ohhh_fci(g, &w, &t);
         v_value.push(a.elapsed().as_secs_f64() * 1e3);
         let a = Instant::now();
-        let _ = ohhh_fci_energy(g);
+        let _ = cluster_fci_energy(&OHHH, g);
         v_fci.push(a.elapsed().as_secs_f64() * 1e3);
         iters_seen.push(0.0);
     }
@@ -366,7 +367,7 @@ fn main() {
     let mut warm: Option<Vec<f64>> = None;
     for g in wit.iter().take(8) {
         let a = Instant::now();
-        let r = ohhh_fci_grad(g, warm.as_deref());
+        let r = cluster_fci_grad(&OHHH, g, warm.as_deref());
         warm = Some(r.ci);
         v_grad9.push(a.elapsed().as_secs_f64() * 1e3);
     }

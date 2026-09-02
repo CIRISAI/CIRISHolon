@@ -34,7 +34,7 @@
 //! * **SKIP** — deliberately not run, with the reason printed.
 //! * **INFO** — measured and reported, gating nothing.
 
-use holon_chem::quaternary::de4_ohhh_fci;
+use holon_chem::quaternary_table::de4_ohhh_fci;
 use holon_chem::quaternary_table as qt;
 use holon_chem::trimer::{self, TrimerTable};
 use holon_chem::water::{self, WaterTable};

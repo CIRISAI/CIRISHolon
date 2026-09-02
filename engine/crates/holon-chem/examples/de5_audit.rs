@@ -25,7 +25,7 @@
 //! with each rung defined as the previous ladder's closing residual. `subtraction_basis`
 //! is **`fci_live`**: every rung at every arity from the determinant route, exact in
 //! model, with no served surface anywhere in the assembly. At the PAIR rung this is
-//! `pair_point_exact`, which is `quaternary::ohhh_mbe3_energy`'s own convention, matched
+//! `pair_point_exact`, which is `cluster::mbe_energy`'s own convention, matched
 //! by calling the same three functions (`pair_point`, `atom_energy_o`, `atom_energy_h`)
 //! and checked for bit equality at startup rather than assumed.
 //!
@@ -62,7 +62,8 @@ use holon_chem::fci::{self, SolveExit, SolverRoute};
 use holon_chem::pair::{
     geometry_problem, pair_point, solve_geometry, CONVERGED_RESIDUAL,
 };
-use holon_chem::quaternary::{atom_energy_h, atom_energy_o, de4_ohhh_fci, R_CUT};
+use holon_chem::cluster::atom_energy_cached;
+use holon_chem::quaternary_table::{de4_ohhh_fci, R_HI as R_CUT};
 use holon_chem::trimer::{self, TrimerTable};
 use holon_chem::water::{self, WaterTable};
 use holon_lens::traj::Trajectory;
@@ -76,7 +77,7 @@ use std::time::Instant;
 // Every one of these is quoted from DE5_PREREG.md by section number. They are `const`
 // rather than CLI knobs so that changing one is a source edit visible in a diff.
 
-/// Freeze section 3.1. The cluster DIAMETER fence, in bohr, equal to `quaternary::R_CUT`
+/// Freeze section 3.1. The cluster DIAMETER fence, in bohr, equal to `quaternary_table::R_HI`
 /// — the measured radius past which dE4 itself falls below the tolerance this audit uses
 /// as its bound. Sampling inside it means every scored cluster is one where the previous
 /// rung is still live.
@@ -323,9 +324,9 @@ fn solve_sub(species: &[Species], pos: &[[f64; 3]]) -> Result<Sub, String> {
 /// numbers `ohhh_mbe3_energy` subtracts.
 fn atom_e(sp: Species) -> f64 {
     if sp.z == OXYGEN.z {
-        atom_energy_o()
+        atom_energy_cached(OXYGEN)
     } else {
-        atom_energy_h()
+        atom_energy_cached(HYDROGEN)
     }
 }
 
@@ -1118,7 +1119,7 @@ fn main() {
 ///
 /// The claim has two halves and each needs a check that could fail:
 ///
-/// 1. the VALUE this audit's pair rung uses is the one `quaternary::ohhh_mbe3_energy`
+/// 1. the VALUE this audit's pair rung uses is the one `cluster::mbe_energy`
 ///    uses — established by calling the same `pair_point` and the same cached atom
 ///    energies, so there is one expression and not two;
 /// 2. the DIAGNOSTICS this audit reads (`route`, `exit`, `n_det`) belong to that same

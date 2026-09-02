@@ -52,7 +52,7 @@ use holon_chem::fci::{
     ci_ints, davidson_eigh_from, Order, DAVIDSON_MAX_ITER, DAVIDSON_REQUESTED_TOLERANCE,
 };
 use holon_chem::pair::geometry_problem;
-use holon_chem::quaternary::de4_ohhh_fci;
+use holon_chem::quaternary_table::de4_ohhh_fci;
 use holon_chem::trimer::{self, TrimerTable};
 use holon_chem::water::{self, WaterTable};
 use std::io::Write;

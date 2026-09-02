@@ -168,11 +168,11 @@ impl GravityRefusal {
 /// Distance beyond which the outer-turning-point search gives up and reports infinity.
 const TURNING_POINT_CAP: f64 = 200.0;
 
-/// The (O,H,H,H) four-body sector's outer radius, bohr: past this every O-H distance puts
-/// the quadruple outside the switch and the term is an exact zero without a solve.
-pub const DE4_R_CUT: f64 = 6.0;
-/// The four-body switch's inner edge, bohr: inside this the term is at full weight.
-pub const DE4_R_IN: f64 = 5.0;
+/// Width of the many-body switch window, bohr: the term is at full weight inside
+/// `reach - width` and an exact zero at `reach`, where `reach` is the class's MEASURED far
+/// field from the registry (`quaternary_table::R_HI` for OHHH). The width is the one
+/// declared number in the sector, as it is in the pair truncation.
+pub const MANY_BODY_SWITCH_WIDTH: f64 = 1.0;
 
 /// Width of the pair truncation's switch window, bohr.
 ///
@@ -615,8 +615,8 @@ pub struct Sim {
     /// inside the table's domain. Its OWN ledger row, never folded into `e_pair` — one
     /// reader per term, because a combined number cannot say which sector moved.
     pub e_three: f64,
-    /// The four-body sector: exact ab-initio (O,H,H,H) valence term.
-    pub e_four: f64,
+    /// The many-body sector: every compact cluster's own exact connected term at the declared order.
+    pub e_many: f64,
     /// THE LONG-RANGE SECTOR (GANTT node B2): the pair tail past `R_s`, summed to a
     /// declared budget and, in a wrapping box, over image shells.
     ///
@@ -650,22 +650,29 @@ pub struct Sim {
     /// the substance, and a virial that included them would report the box pushing on
     /// itself as pressure.
     pub w_virial: f64,
-    /// Whether the ab-initio 4-body (O,H,H,H) valence term is active.
-    pub de4_enabled: bool,
-    /// Counter of compact (O,H,H,H) encounters actually evaluated by the ab-initio solver.
-    pub de4_eval_count: u64,
-    pub de4_last_pos: Vec<[f64; 3]>,
-    pub de4_cached_forces: Vec<(f64, f64, f64)>,
-    pub de4_cached_energy: f64,
-    /// The four-body sector's virial, cached alongside its energy and forces. Cached for
+    /// The order of the live many-body sector: `0` (or anything below 4) is off, `4` is
+    /// every compact four-cluster's own connected term — the `(O,H,H,H)` `dE4` — and `k`
+    /// is every compact `k`-cluster's, with the lower orders' terms subtracted through the
+    /// same machinery. A declaration, not a cap: the price is `3(k-1)` seeded solves per
+    /// cluster and it is paid where the registry carries a measured reach for the class.
+    pub many_body_order: usize,
+    /// Compact clusters actually evaluated by the ab-initio solver.
+    pub many_body_evals: u64,
+    /// Compact clusters REFUSED by name: their class has no measured reach at this order
+    /// or a triple of theirs has no registered surface. Never silently zero.
+    pub many_body_unserved: u64,
+    pub many_body_last_pos: Vec<[f64; 3]>,
+    pub many_body_cached_forces: Vec<(f64, f64, f64)>,
+    pub many_body_cached_energy: f64,
+    /// The many-body sector's virial, cached alongside its energy and forces. Cached for
     /// the same reason and reused on the same condition — a cache that carried the energy
     /// and recomputed the virial would be two answers about one configuration.
-    pub de4_cached_virial: f64,
-    pub de4_cached_valid: bool,
-    /// Per-hub warm start: the converged CI vector of each oxygen's last four-body
-    /// solve. Consecutive recomputes of a barely-moved quadruple start Davidson from
+    pub many_body_cached_virial: f64,
+    pub many_body_cached_valid: bool,
+    /// Per-(hub, class) warm start: the converged CI vector of that hub's last solve of
+    /// that class. Consecutive recomputes of a barely-moved cluster start Davidson from
     /// the answer instead of from cold.
-    pub de4_ci: Vec<(usize, Vec<f64>)>,
+    pub many_body_ci: Vec<((usize, holon_chem::cluster::ClusterClass), Vec<f64>)>,
     pub e_wall: f64,
     pub e_spring: f64,
     /// The uniform gravitational field as an ACCELERATION VECTOR, atomic units. Zero
@@ -802,16 +809,17 @@ impl Sim {
             e_kin: 0.0,
             e_pair: 0.0,
             e_three: 0.0,
-            e_four: 0.0,
+            e_many: 0.0,
             w_virial: 0.0,
-            de4_enabled: false,
-            de4_eval_count: 0,
-            de4_last_pos: Vec::new(),
-            de4_cached_forces: Vec::new(),
-            de4_cached_energy: 0.0,
-            de4_cached_virial: 0.0,
-            de4_cached_valid: false,
-            de4_ci: Vec::new(),
+            many_body_order: 0,
+            many_body_evals: 0,
+            many_body_unserved: 0,
+            many_body_last_pos: Vec::new(),
+            many_body_cached_forces: Vec::new(),
+            many_body_cached_energy: 0.0,
+            many_body_cached_virial: 0.0,
+            many_body_cached_valid: false,
+            many_body_ci: Vec::new(),
             e_wall: 0.0,
             e_spring: 0.0,
             g_vec: (0.0, 0.0, 0.0),
@@ -1150,7 +1158,7 @@ impl Sim {
         self.e_kin
             + self.e_pair.abs()
             + self.e_three.abs()
-            + self.e_four.abs()
+            + self.e_many.abs()
             + self.e_far.abs()
             + self.e_wall
             + self.e_spring
@@ -1323,7 +1331,7 @@ impl Sim {
 
     /// Total energy currently held by the scene.
     pub fn energy(&self) -> f64 {
-        self.e_kin + self.e_pair + self.e_three + self.e_four + self.e_far + self.e_wall + self.e_spring + self.e_grav
+        self.e_kin + self.e_pair + self.e_three + self.e_many + self.e_far + self.e_wall + self.e_spring + self.e_grav
     }
 
     /// The conserved quantity. `E - W_ext` is constant for an exact integrator, with or
@@ -1658,10 +1666,10 @@ impl Sim {
         self.atoms.resize(n, Atom::default());
         self.a_pair.resize(n, (0.0, 0.0, 0.0));
         self.a_ext.resize(n, (0.0, 0.0, 0.0));
-        self.de4_last_pos.resize(n, [0.0; 3]);
-        self.de4_cached_forces.resize(n, (0.0, 0.0, 0.0));
-        self.de4_cached_valid = false;
-        self.de4_ci.clear();
+        self.many_body_last_pos.resize(n, [0.0; 3]);
+        self.many_body_cached_forces.resize(n, (0.0, 0.0, 0.0));
+        self.many_body_cached_valid = false;
+        self.many_body_ci.clear();
         self.slots.resize(n, 0);
         // The pair sector is cutoff-local and is rebuilt from the cell list; it carries no
         // per-atom entry to preserve, so it is cleared rather than resized.
@@ -1678,8 +1686,8 @@ impl Sim {
         self.atoms.len() == self.n
             && self.a_pair.len() == self.n
             && self.a_ext.len() == self.n
-            && self.de4_last_pos.len() == self.n
-            && self.de4_cached_forces.len() == self.n
+            && self.many_body_last_pos.len() == self.n
+            && self.many_body_cached_forces.len() == self.n
             && self.slots.len() == self.n
     }
 
@@ -1758,7 +1766,7 @@ impl Sim {
     /// returned any one channel's number would admit a box another channel cannot honour:
     ///
     /// * the pair sector, at [`Sim::pair_reach`];
-    /// * the three- and four-body sectors, which are EXACT zeros past their radii;
+    /// * the three- and many-body sectors, which are EXACT zeros past their radii;
     /// * a declared far sector's `R_s`, which is the near sector's share of the split and
     ///   reduces to the minimum image like any other near term. The far sector's OWN
     ///   `min_edge >= 2 R_s` condition is deliberately not folded in here and stays a
@@ -1771,7 +1779,7 @@ impl Sim {
     /// explicitly, so it is the one channel that does not depend on the minimum image being
     /// unique, and folding `R_f` in here would refuse exactly the boxes it exists to serve.
     pub fn legality_radius(&self) -> f64 {
-        let mut r = self.three_body_cutoff().max(self.four_body_cutoff());
+        let mut r = self.three_body_cutoff().max(self.many_body_cutoff());
         r = r.max(self.pair_reach());
         if let Some(f) = &self.far {
             r = r.max(f.r_s());
@@ -1843,11 +1851,12 @@ impl Sim {
         c
     }
 
-    /// The four-body sector's radius: the (O,H,H,H) switch's own `R_CUT`, or zero when the
-    /// sector is off. Also exact — the switch is identically zero past it.
-    pub fn four_body_cutoff(&self) -> f64 {
-        if self.de4_enabled {
-            DE4_R_CUT
+    /// The many-body sector's radius: the largest measured reach any class declares at
+    /// the sector's order, or zero when the sector is off or no class has one. Exact — the
+    /// switch is identically zero past it.
+    pub fn many_body_cutoff(&self) -> f64 {
+        if self.many_body_order >= 4 {
+            self.surface_registry().max_reach_at(self.many_body_order).unwrap_or(0.0)
         } else {
             0.0
         }
@@ -1858,7 +1867,7 @@ impl Sim {
     /// One decomposition serves every loop. Building one list per sector would be three
     /// passes over the scene to answer one question about it.
     pub fn list_cutoff(&self) -> f64 {
-        let many = self.three_body_cutoff().max(self.four_body_cutoff());
+        let many = self.three_body_cutoff().max(self.many_body_cutoff());
         // THE B2 SEAM. A declared far sector hands the near sector everything up to `R_s`,
         // so the decomposition must reach that far or the split has a hole in it — which is
         // exactly the defect B1b measured, where the list radius was set by a THREE-BODY
@@ -2915,7 +2924,7 @@ impl Sim {
         }
 
         self.accumulate_three_body();
-        self.accumulate_four_body();
+        self.accumulate_many_body();
         self.accumulate_far();
 
         let mut e_wall = 0.0;
@@ -3399,26 +3408,45 @@ impl Sim {
             || (n_o == 3 && self.ozone.loaded)
     }
 
-    /// THE 4-BODY VALENCE SECTOR: Exact ab-initio (O,H,H,H) dE4 evaluation for compact quadruples.
+    /// THE MANY-BODY SECTOR: every compact `k`-cluster's own connected term, live and
+    /// exact, for the declared order `k = many_body_order`.
     ///
-    /// Cutoff-gated: Quadruples with any O-H distance >= R_CUT (6.0 bohr) evaluate to zero
-    /// without invoking the electronic structure solver.
-    /// When compact (all 3 O-H distances < 6.0 bohr), the C^2 switching function smoothly blends
-    /// from 1.0 (at <= 5.0 bohr) to 0.0 (at 6.0 bohr), and forces are computed via central
-    /// finite difference (h = 1e-4 bohr) on the quadruple's Cartesian coordinates.
-    fn accumulate_four_body(&mut self) {
-        self.e_four = 0.0;
-        if !self.de4_enabled || self.n < 4 || !self.water.loaded || !self.trimer.loaded {
+    /// A cluster is enumerated ONCE, from its HUB — the member of greatest nuclear charge,
+    /// lowest index among equals — as that hub plus any `k - 1` of its neighbours that sort
+    /// below it and lie inside the class's declared reach. For `(O, H, H, H)` the hub is
+    /// the oxygen and the members its hydrogens inside 6.0 bohr, which is the enumeration
+    /// the four-body sector always ran; the rule is stated so a second class enumerates the
+    /// same way without a second loop.
+    ///
+    /// The reach is DERIVED, never declared here: `SurfaceRegistry::reach_of` carries the
+    /// measured far field of each class that has one (`quaternary_table::R_HI` for OHHH,
+    /// with its record), and a class with no measured reach at this order is REFUSED by
+    /// name — counted in `many_body_unserved` — rather than given a radius. The switch
+    /// window's width is the one declared number, as the pair truncation's is.
+    ///
+    /// The term is `eps_k = E_FCI(cluster) - E_MBE_{k-1}(cluster)`: the exact gradient
+    /// from `3(k-1)` seeded dual solves (the hub's row imposed by translation invariance,
+    /// so the cluster's force sum is zero to the last bit), the lower-order expansion
+    /// assembled from THE SAME curves the pair and triple sectors apply (`BankPairs`, and
+    /// the loaded three-body tables through the registry) so it subtracts exactly what the
+    /// rest of the ledger adds, and for `k >= 5` the sub-clusters' own connected terms
+    /// through the same machinery recursively. Folded in the sector's banked order — one
+    /// running sum, atoms, pairs, triples — and pinned bit for bit against the four-body
+    /// sector it replaced by `tests/many_body_identity.rs`.
+    fn accumulate_many_body(&mut self) {
+        self.e_many = 0.0;
+        let order = self.many_body_order;
+        if order < 4 || self.n < order {
             return;
         }
 
         // Fast displacement-based reuse across micro-substeps:
-        if self.de4_cached_valid {
+        if self.many_body_cached_valid {
             let mut max_disp_sq = 0.0f64;
             for i in 0..self.n {
-                let dx = self.atoms[i].x - self.de4_last_pos[i][0];
-                let dy = self.atoms[i].y - self.de4_last_pos[i][1];
-                let dz = self.atoms[i].z - self.de4_last_pos[i][2];
+                let dx = self.atoms[i].x - self.many_body_last_pos[i][0];
+                let dy = self.atoms[i].y - self.many_body_last_pos[i][1];
+                let dz = self.atoms[i].z - self.many_body_last_pos[i][2];
                 let d2 = dx * dx + dy * dy + dz * dz;
                 if d2 > max_disp_sq {
                     max_disp_sq = d2;
@@ -3426,253 +3454,264 @@ impl Sim {
             }
             // If all atoms moved < 0.08 bohr (6.4e-3 bohr^2), reuse cached forces and energy:
             if max_disp_sq < 0.0064 {
-                self.e_four = self.de4_cached_energy;
-                self.w_virial += self.de4_cached_virial;
+                self.e_many = self.many_body_cached_energy;
+                self.w_virial += self.many_body_cached_virial;
                 for i in 0..self.n {
-                    self.a_pair[i].0 += self.de4_cached_forces[i].0;
-                    self.a_pair[i].1 += self.de4_cached_forces[i].1;
-                    self.a_pair[i].2 += self.de4_cached_forces[i].2;
+                    self.a_pair[i].0 += self.many_body_cached_forces[i].0;
+                    self.a_pair[i].1 += self.many_body_cached_forces[i].1;
+                    self.a_pair[i].2 += self.many_body_cached_forces[i].2;
                 }
                 return;
             }
         }
-
-        const R_CUT: f64 = DE4_R_CUT;
-        const R_IN: f64 = DE4_R_IN;
-
-        let mut e_four = 0.0;
-        let mut quad_virial = 0.0f64;
+        let mut e_many = 0.0;
+        let mut virial = 0.0f64;
         let mut total_forces = core::mem::take(&mut self.quad_force_scratch);
         total_forces.clear();
         total_forces.resize(self.n, (0.0f64, 0.0f64, 0.0f64));
-
-        // THE QUADRUPLE ENUMERATION, cutoff-local.
-        //
-        // The sector is (O,H,H,H) with the switch on the three O-H distances, so a
-        // quadruple contributes only when all three hydrogens are inside `R_CUT` of the
-        // SAME oxygen. That oxygen is the hub, every quadruple has exactly one of them,
-        // and the neighbour list already holds each atom's partners inside the cutoff — so
-        // the enumeration is over each oxygen's own hydrogens rather than over `N⁴/24`
-        // quadruples of which all but a handful are empty.
-        //
-        // The complete loop this replaces ran `h1` over the whole scene and `h2`, `h3`
-        // above it, so its order was ascending `(o, h1, h2, h3)`. The hub's adjacency is
-        // ascending too, so the triples of hydrogens come out in that same order and the
-        // floating-point sum is unchanged.
         let geom = self.geom();
-        let species = self.species_slots();
         let nb = core::mem::take(&mut self.neighbours);
-        let mut hs: Vec<usize> = Vec::new();
-        for o in 0..self.n {
-            if self.atoms[o].species.z != 8 {
-                continue;
-            }
-            let po = [self.atoms[o].x, self.atoms[o].y, self.atoms[o].z];
-            hs.clear();
-            let (mine, radii) = nb.adj_of(o);
-            for k in 0..mine.len() {
-                let h = mine[k] as usize;
-                if self.atoms[h].species.z == 1 && radii[k] < R_CUT {
-                    hs.push(h);
+        let mut ci_cache = core::mem::take(&mut self.many_body_ci);
+        let (mut evals, mut skipped, mut unserved) = (0u64, 0u64, 0u64);
+        {
+            let registry = self.surface_registry();
+            let enumerate_to = match registry.max_reach_at(order) {
+                Some(r) => r,
+                None => 0.0,
+            };
+            let pairs = BankPairs { bank: &self.bank };
+            let mut members: Vec<usize> = Vec::new();
+            let mut idx: Vec<usize> = Vec::new();
+            let mut species: Vec<holon_chem::elements::Species> = Vec::new();
+            let mut centers: Vec<[f64; 3]> = Vec::new();
+            let mut hub_r: Vec<f64> = Vec::new();
+            for hub in 0..self.n {
+                if enumerate_to <= 0.0 {
+                    break;
                 }
-            }
-            if hs.len() < 3 {
-                continue;
-            }
-            if self.acuity.is_some() && self.coarse[o] && hs.iter().all(|&h| self.coarse[h]) {
-                self.acuity_work.quads_skipped += 1;
-                continue;
-            }
-
-            for a in 0..hs.len() {
-                let h1 = hs[a];
-                // Positions are taken as the MINIMUM IMAGE about the oxygen, so a
-                // quadruple that straddles a periodic face is still a compact quadruple
-                // and not four atoms strung across the box. Under walls or an open box
-                // `delta` is the raw difference and these are the atoms' own coordinates.
-                let p1 = image_about(geom, po, self.atoms[h1]);
-                let r1 = dist(po, p1);
-                if r1 >= R_CUT {
+                let zh = self.atoms[hub].species.z;
+                let ph = [self.atoms[hub].x, self.atoms[hub].y, self.atoms[hub].z];
+                members.clear();
+                let (mine, radii) = nb.adj_of(hub);
+                for k in 0..mine.len() {
+                    let p = mine[k] as usize;
+                    let zp = self.atoms[p].species.z;
+                    let below = zp < zh || (zp == zh && p > hub);
+                    if below && radii[k] < enumerate_to {
+                        members.push(p);
+                    }
+                }
+                if members.len() + 1 < order {
                     continue;
                 }
-                for b in (a + 1)..hs.len() {
-                    let h2 = hs[b];
-                    let p2 = image_about(geom, po, self.atoms[h2]);
-                    let r2 = dist(po, p2);
-                    if r2 >= R_CUT {
-                        continue;
+                // Every (order - 1)-subset of the hub's eligible neighbours, lexicographic in
+                // adjacency order (ascending index) — the order the four-body loop ran.
+                let m = order - 1;
+                idx.clear();
+                idx.extend(0..m);
+                loop {
+                    species.clear();
+                    centers.clear();
+                    hub_r.clear();
+                    species.push(self.atoms[hub].species);
+                    centers.push(ph);
+                    let mut r_max = 0.0f64;
+                    let mut inside = true;
+                    for &k in idx.iter() {
+                        let a = members[k];
+                        let pa = image_about(geom, ph, self.atoms[a]);
+                        let r = dist(ph, pa);
+                        if r >= enumerate_to {
+                            inside = false;
+                            break;
+                        }
+                        species.push(self.atoms[a].species);
+                        centers.push(pa);
+                        hub_r.push(r);
+                        r_max = r_max.max(r);
                     }
-                    for c in (b + 1)..hs.len() {
-                        let h3 = hs[c];
-                        let p3 = image_about(geom, po, self.atoms[h3]);
-                        let r3 = dist(po, p3);
-                        if r3 >= R_CUT {
-                            continue;
-                        }
-
-                        // Compact encounter under R_CUT = 6.0 bohr!
-                        let r_max = r1.max(r2).max(r3);
-                        let (sw, dsw, _) = crate::cells::switch_c2(r_max, R_IN, R_CUT);
-                        if sw <= 0.0 {
-                            continue;
-                        }
-
-                        self.de4_eval_count += 1;
-
-                        // EXACT four-body force. Nine seeded dual solves give the exact
-                        // Cartesian gradient of E_FCI(OH3) — `ohhh_fci_grad` imposes the
-                        // oxygen row by translation invariance, so the FCI force sum is
-                        // zero to the last bit — and the MBE3 half is assembled from THE
-                        // SAME curves the pair and triple sectors apply, so the four-body
-                        // term subtracts exactly what the rest of the ledger adds and its
-                        // gradient is pairwise by construction. This replaced a scheme
-                        // that took 36 value-only solves per recompute (4 of them
-                        // physics: the others re-solved two isolated atoms and six pair
-                        // diatomics that are constants and loaded tables) for HALF a
-                        // gradient — the radial projection — with O(h) forward-difference
-                        // error: every tangential component, including every H-H force
-                        // inside the correction, never reached the trajectory. No
-                        // finite-difference step remains, and no mass appears anywhere:
-                        // `total_forces` holds FORCE, and the integrator divides once.
-                        let centers4 = [po, p1, p2, p3];
-                        let warm = self
-                            .de4_ci
-                            .iter()
-                            .find(|(hub, _)| *hub == o)
-                            .map(|(_, v)| v.clone());
-                        let fci =
-                            holon_chem::quaternary::ohhh_fci_grad(&centers4, warm.as_deref());
-                        match self.de4_ci.iter_mut().find(|(hub, _)| *hub == o) {
-                            Some(slot) => slot.1 = fci.ci,
-                            None => self.de4_ci.push((o, fci.ci)),
-                        }
-
-                        // MBE3 value and gradient from the loaded curves, all pairwise.
-                        let e_o = holon_chem::quaternary::atom_energy_o();
-                        let e_h = holon_chem::quaternary::atom_energy_h();
-                        let r12 = dist(p1, p2);
-                        let r23 = dist(p2, p3);
-                        let r31 = dist(p3, p1);
-                        let mut e_mbe3 = e_o + 3.0 * e_h;
-                        let mut gm = [[0.0f64; 3]; 4]; // grad E_MBE3, local slots [O,H1,H2,H3]
-
-                        // The six pair terms, from the bank's own Hermite curves
-                        // (value, slope) — the render table's zero IS the dissociated
-                        // asymptote, which is exactly the `pair - atoms` quantity the
-                        // MBE3 definition subtracts.
-                        {
-                            let pl = [po, p1, p2, p3];
-                            let pair_list: [(usize, usize, f64); 6] = [
-                                (0, 1, r1),
-                                (0, 2, r2),
-                                (0, 3, r3),
-                                (1, 2, r12),
-                                (2, 3, r23),
-                                (3, 1, r31),
-                            ];
-                            let gidx = [o, h1, h2, h3];
-                            for &(a, b, r) in &pair_list {
-                                let t =
-                                    self.bank.table_at(species[gidx[a]], species[gidx[b]]);
-                                let (v, dv, _) = t.eval(r.max(1e-12));
-                                e_mbe3 += v;
-                                add_pair_grad(&mut gm, &pl, a, b, r, dv);
+                    if inside {
+                        let class = holon_chem::cluster::ClusterClass::of(&species);
+                        match registry.reach_of(&class) {
+                            None => unserved += 1,
+                            Some((reach, _)) if r_max >= reach => {}
+                            Some((reach, _)) => {
+                                let (sw, dsw, _) = crate::cells::switch_c2(
+                                    r_max,
+                                    reach - MANY_BODY_SWITCH_WIDTH,
+                                    reach,
+                                );
+                                if sw > 0.0 {
+                                    let all_coarse = self.acuity.is_some()
+                                        && self.coarse[hub]
+                                        && idx.iter().all(|&k| self.coarse[members[k]]);
+                                    if all_coarse {
+                                        skipped += 1;
+                                    } else if let Some(terms) = holon_chem::cluster::mbe_terms(
+                                        order - 1,
+                                        &species,
+                                        &centers,
+                                        &pairs,
+                                        &registry,
+                                        true,
+                                    ) {
+                                        evals += 1;
+                                        let warm = ci_cache
+                                            .iter()
+                                            .find(|((h, c), _)| *h == hub && *c == class)
+                                            .map(|(_, v)| v.clone());
+                                        let fci = holon_chem::cluster::cluster_fci_grad(
+                                            &species,
+                                            &centers,
+                                            warm.as_deref(),
+                                        );
+                                        match ci_cache.iter_mut().find(|((h, c), _)| *h == hub && *c == class) {
+                                            Some(slot) => slot.1 = fci.ci,
+                                            None => ci_cache.push(((hub, class.clone()), fci.ci)),
+                                        }
+                                        // The lower-order expansion in the sector's banked
+                                        // fold: one running sum in term order.
+                                        let mut e_mbe = terms.atoms;
+                                        for t in &terms.pairs {
+                                            e_mbe += t.v;
+                                        }
+                                        for t in &terms.triples {
+                                            e_mbe += t.v;
+                                        }
+                                        for t in &terms.higher {
+                                            e_mbe += t.v;
+                                        }
+                                        let mut gm = vec![[0.0f64; 3]; order];
+                                        terms.add_gradient(&centers, &mut gm);
+                                        let de = fci.e - e_mbe;
+                                        e_many += sw * de;
+                                        // F = -grad(sw * de) = -sw*(grad E_FCI - grad E_MBE)
+                                        //     - de * dsw * grad r_max, the last pairwise on
+                                        // the hub's longest bond.
+                                        let mut fl = vec![[0.0f64; 3]; order];
+                                        for a in 0..order {
+                                            for x in 0..3 {
+                                                fl[a][x] = -sw * (fci.grad[a][x] - gm[a][x]);
+                                            }
+                                        }
+                                        {
+                                            let mut amax = 1usize;
+                                            for a in 2..order {
+                                                if hub_r[a - 1] > hub_r[amax - 1] {
+                                                    amax = a;
+                                                }
+                                            }
+                                            let c = de * dsw;
+                                            let rr = hub_r[amax - 1].max(1e-12);
+                                            for x in 0..3 {
+                                                let u = (centers[amax][x] - ph[x]) / rr;
+                                                fl[amax][x] -= c * u;
+                                                fl[0][x] += c * u;
+                                            }
+                                        }
+                                        // The sector's virial: -sum p . F over the cluster's
+                                        // IMAGED positions. The force sum is exactly zero, so
+                                        // the origin drops out.
+                                        for a in 0..order {
+                                            virial -= centers[a][0] * fl[a][0]
+                                                + centers[a][1] * fl[a][1]
+                                                + centers[a][2] * fl[a][2];
+                                        }
+                                        total_forces[hub].0 += fl[0][0];
+                                        total_forces[hub].1 += fl[0][1];
+                                        total_forces[hub].2 += fl[0][2];
+                                        for (a, &k) in idx.iter().enumerate() {
+                                            let g = members[k];
+                                            total_forces[g].0 += fl[a + 1][0];
+                                            total_forces[g].1 += fl[a + 1][1];
+                                            total_forces[g].2 += fl[a + 1][2];
+                                        }
+                                    } else {
+                                        unserved += 1;
+                                    }
+                                }
                             }
                         }
-
-                        // The four triple terms, from the same tables the triple sector
-                        // serves, each with its analytic gradient in its three distances.
-                        {
-                            let pl = [po, p1, p2, p3];
-                            let (v, g) = self.water.eval(r1, r2, r12);
-                            e_mbe3 += v;
-                            add_pair_grad(&mut gm, &pl, 0, 1, r1, g[0]);
-                            add_pair_grad(&mut gm, &pl, 0, 2, r2, g[1]);
-                            add_pair_grad(&mut gm, &pl, 1, 2, r12, g[2]);
-                            let (v, g) = self.water.eval(r2, r3, r23);
-                            e_mbe3 += v;
-                            add_pair_grad(&mut gm, &pl, 0, 2, r2, g[0]);
-                            add_pair_grad(&mut gm, &pl, 0, 3, r3, g[1]);
-                            add_pair_grad(&mut gm, &pl, 2, 3, r23, g[2]);
-                            let (v, g) = self.water.eval(r3, r1, r31);
-                            e_mbe3 += v;
-                            add_pair_grad(&mut gm, &pl, 0, 3, r3, g[0]);
-                            add_pair_grad(&mut gm, &pl, 0, 1, r1, g[1]);
-                            add_pair_grad(&mut gm, &pl, 3, 1, r31, g[2]);
-                            let (v, g) = self.trimer.eval([r12, r23, r31]);
-                            e_mbe3 += v;
-                            add_pair_grad(&mut gm, &pl, 1, 2, r12, g[0]);
-                            add_pair_grad(&mut gm, &pl, 2, 3, r23, g[1]);
-                            add_pair_grad(&mut gm, &pl, 3, 1, r31, g[2]);
-                        }
-
-                        let de4 = fci.e - e_mbe3;
-                        let u_four = sw * de4;
-                        e_four += u_four;
-
-                        // F = -grad(sw * de4) = -sw*(grad E_FCI - grad E_MBE3)
-                        //     - de4 * dsw * grad r_max, the last pairwise on the
-                        // argmax O-H bond.
-                        let mut fl = [[0.0f64; 3]; 4];
-                        for a in 0..4 {
-                            for x in 0..3 {
-                                fl[a][x] = -sw * (fci.grad[a][x] - gm[a][x]);
+                    }
+                    // next subset
+                    let mut i = m;
+                    let mut done = true;
+                    while i > 0 {
+                        i -= 1;
+                        if idx[i] < members.len() - (m - i) {
+                            idx[i] += 1;
+                            for j in (i + 1)..m {
+                                idx[j] = idx[j - 1] + 1;
                             }
+                            done = false;
+                            break;
                         }
-                        {
-                            let (amax, ra, pa) = if r1 >= r2 && r1 >= r3 {
-                                (1usize, r1, p1)
-                            } else if r2 >= r3 {
-                                (2usize, r2, p2)
-                            } else {
-                                (3usize, r3, p3)
-                            };
-                            let c = de4 * dsw;
-                            let rr = ra.max(1e-12);
-                            for x in 0..3 {
-                                let u = (pa[x] - po[x]) / rr;
-                                fl[amax][x] -= c * u;
-                                fl[0][x] += c * u;
-                            }
-                        }
-
-                        // The four-body virial: -sum p . F over the quadruple's IMAGED
-                        // positions. The force sum is exactly zero, so the origin drops
-                        // out, and for the pairwise decomposition this is the same
-                        // sum r . dU/dr the other sectors accumulate.
-                        let pl = [po, p1, p2, p3];
-                        for a in 0..4 {
-                            quad_virial -=
-                                pl[a][0] * fl[a][0] + pl[a][1] * fl[a][1] + pl[a][2] * fl[a][2];
-                        }
-
-                        let gidx = [o, h1, h2, h3];
-                        for a in 0..4 {
-                            total_forces[gidx[a]].0 += fl[a][0];
-                            total_forces[gidx[a]].1 += fl[a][1];
-                            total_forces[gidx[a]].2 += fl[a][2];
-                        }
+                    }
+                    if done {
+                        break;
                     }
                 }
             }
         }
         self.neighbours = nb;
-
+        self.many_body_ci = ci_cache;
+        self.many_body_evals += evals;
+        self.many_body_unserved += unserved;
+        self.acuity_work.quads_skipped += skipped;
         // Apply forces to a_pair and update cache:
         for i in 0..self.n {
             self.a_pair[i].0 += total_forces[i].0;
             self.a_pair[i].1 += total_forces[i].1;
             self.a_pair[i].2 += total_forces[i].2;
-            self.de4_last_pos[i] = [self.atoms[i].x, self.atoms[i].y, self.atoms[i].z];
+            self.many_body_last_pos[i] = [self.atoms[i].x, self.atoms[i].y, self.atoms[i].z];
         }
-        self.de4_cached_forces.clear();
-        self.de4_cached_forces.extend_from_slice(&total_forces);
+        self.many_body_cached_forces.clear();
+        self.many_body_cached_forces.extend_from_slice(&total_forces);
         self.quad_force_scratch = total_forces;
-        self.de4_cached_energy = e_four;
-        self.de4_cached_virial = quad_virial;
-        self.de4_cached_valid = true;
-        self.e_four = e_four;
-        self.w_virial += quad_virial;
+        self.many_body_cached_energy = e_many;
+        self.many_body_cached_virial = virial;
+        self.many_body_cached_valid = true;
+        self.e_many = e_many;
+        self.w_virial += virial;
+    }
+
+    /// The three-body families this scene has loaded, with every measured body reach the
+    /// chemistry crate carries — the registry the many-body sector evaluates through.
+    pub fn surface_registry(&self) -> holon_chem::cluster::SurfaceRegistry<'_> {
+        let mut r = holon_chem::cluster::SurfaceRegistry::new();
+        if self.water.loaded {
+            r.insert(&self.water);
+        }
+        if self.trimer.loaded {
+            r.insert(&self.trimer);
+        }
+        if self.ooh.loaded {
+            r.insert(&self.ooh);
+        }
+        for (class, reach, prov) in holon_chem::cluster::measured_body_reaches() {
+            // A reach is only usable where every triple of the class can be served.
+            if r.family_covers(&class) {
+                r.declare_reach(class, reach, prov);
+            }
+        }
+        r
+    }
+}
+
+/// The engine's pair source for the many-body sector: the bank's Hermite curves, whose
+/// zero IS the dissociated asymptote, so `eval` is the pair excess and its slope directly.
+struct BankPairs<'a> {
+    bank: &'a crate::bank::PairBank,
+}
+
+impl holon_chem::cluster::PairSource for BankPairs<'_> {
+    fn excess(&self, a: holon_chem::elements::Species, b: holon_chem::elements::Species, r: f64) -> f64 {
+        let (sa, sb) = (self.bank.index_of(a.z).unwrap_or(0), self.bank.index_of(b.z).unwrap_or(0));
+        self.bank.table_at(sa, sb).eval(r.max(1e-12)).0
+    }
+    fn excess_slope(&self, a: holon_chem::elements::Species, b: holon_chem::elements::Species, r: f64) -> f64 {
+        let (sa, sb) = (self.bank.index_of(a.z).unwrap_or(0), self.bank.index_of(b.z).unwrap_or(0));
+        self.bank.table_at(sa, sb).eval(r.max(1e-12)).1
     }
 }
 
@@ -3687,19 +3726,6 @@ impl Sim {
 fn image_about(geom: crate::cells::BoxGeom, about: [f64; 3], a: Atom) -> [f64; 3] {
     let (dx, dy, dz) = geom.delta((about[0], about[1], about[2]), (a.x, a.y, a.z));
     [about[0] + dx, about[1] + dy, about[2] + dz]
-}
-
-/// One pairwise share of a scalar potential's gradient: `dv` is dV/dr for the pair
-/// (a, b) at separation `r`; the contribution is `dv` along the unit vector from a to b,
-/// equal and opposite — the same convention `push_side` carries, on imaged coordinates.
-#[inline]
-fn add_pair_grad(g: &mut [[f64; 3]; 4], p: &[[f64; 3]; 4], a: usize, b: usize, r: f64, dv: f64) {
-    let rr = r.max(1e-12);
-    for x in 0..3 {
-        let u = (p[b][x] - p[a][x]) / rr;
-        g[b][x] += dv * u;
-        g[a][x] -= dv * u;
-    }
 }
 
 #[inline]

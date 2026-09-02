@@ -109,9 +109,9 @@ pub const WELL_BISECTION_STEPS: usize = 24;
 /// `sum(Z) - charge`, arithmetic with nothing to choose, and the partition is
 /// [`spin_partition`]'s parity rule, a stated MODEL CHOICE. Deriving them is what makes the
 /// key's sector and the solve's sector the same fact rather than two fields free to drift.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct IonKey<const N: usize> {
-    class: ClusterClass<N>,
+    class: ClusterClass,
     charge: i32,
     n_electrons: usize,
     sz2: u32,
@@ -152,8 +152,8 @@ impl<const N: usize> IonKey<N> {
     /// The sorted Z-multiset — node A's cluster class, unchanged and reused rather than
     /// re-invented, so a charged table and a neutral one are addressed by the same
     /// composition key.
-    pub fn class(&self) -> ClusterClass<N> {
-        self.class
+    pub fn class(&self) -> ClusterClass {
+        self.class.clone()
     }
 
     /// The TOTAL charge in units of the elementary charge.
@@ -865,7 +865,7 @@ pub fn interpolant_error<const N: usize>(
     intervals: &[usize],
     positions: &[f64],
 ) -> (f64, f64, usize) {
-    let key = table.meta.key;
+    let key = table.meta.key.clone();
     let (mut worst_e, mut worst_f) = (0.0f64, 0.0f64);
     let mut points = 0usize;
     for &i in intervals {

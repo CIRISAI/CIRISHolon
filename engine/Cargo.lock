@@ -914,6 +914,7 @@ name = "holon-mesh"
 version = "0.1.0"
 dependencies = [
  "ciris-sim-core",
+ "holon-lens",
  "holon-swarm",
 ]
 

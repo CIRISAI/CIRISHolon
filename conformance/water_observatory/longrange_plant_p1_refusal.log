@@ -1,0 +1,47 @@
+# longrange_audit — GANTT B1, freeze conformance/water_observatory/LONGRANGE_PREREG.md
+# class = CLASS-H   arm dir = hydrogen
+# traj root = /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/plantroot
+# manifest  = conformance/water_observatory/census_traj_manifest.sha256
+# manifest sha256 = 61aca9458a2909661363ef4bbbbdc175816671d221bd59eed84d38516af5a382
+# ADMITTED hydrogen.log  sha256 f5f1896ddc2e2ac160bc09e7e8629d495a341f74fb35e12c877c1c28ce4fa7a2
+# curve H-H: 96 knots, R_e = 1.3887 bohr, D_e = 0.204142 Ha, worst residual 8.7e-11, r_max = 10.2400 bohr, 1.0 s
+# GATE G2 H-H: PASS  dR_e 6.0e-6 (<= 1e-4)  dD_e 3.5e-7 (<= 1e-6)  residual x1.00 (within 2x)
+# GATE PRICE CLASS-H: setup 1.0 s against floor 0 s — PASS
+# parked .traj files in /tmp/claude-1000/-home-emoore-CIRISOntology/4cf4fa5c-aaa3-4173-83b9-978cb75c887f/scratchpad/plantroot/hydrogen: 3
+# ADMITTED hydrogen/seed_0x0000000053415421.traj  sha256 77d512886e52b3424bec9a750c1cfc8922920dbd776d711e80cf060a5b941b88
+# REFUSED  hydrogen/seed_0x0000000053415422.traj: sha256 9e4e221c2ba3cc122558c02bd9d3e65dd5d0b93fff9b1a58a205ea3beba0b748 != manifest 93fbac502f3a7c6fb90549facb2d3c5667ce92de114a86f6b2f3724807dd386a
+# REFUSED  hydrogen/seed_0x00000000deadbeef.traj: sha256 77d512886e52b3424bec9a750c1cfc8922920dbd776d711e80cf060a5b941b88 but the manifest does not list this path
+# admitted 1 of 3 parked files; refusals 2
+# REFUSAL-REASON hydrogen/seed_0x0000000053415422.traj: sha256 9e4e221c2ba3cc122558c02bd9d3e65dd5d0b93fff9b1a58a205ea3beba0b748 != manifest 93fbac502f3a7c6fb90549facb2d3c5667ce92de114a86f6b2f3724807dd386a
+# REFUSAL-REASON hydrogen/seed_0x00000000deadbeef.traj: not listed in manifest
+# curve slot z1-z1 = 0, r_max = 10.2400 bohr, u(r_max) = -6.272736e-9 Ha
+# ladder (bohr): [6.0, 9.0, 10.4, 14.0, 15.0, 41.0]   c* = 15 bohr   stride = 20000
+COLUMNS FRAME class seed frame E_band E_tail E_hard E_switch bound ratio_to_bound
+FRAME CLASS-H 0x0000000053415421 0 0.000000e0 -1.785825e-15 -1.785825e-15 -6.385217e-14 6.810000e-3 2.622357e-13
+SEED CLASS-H 0x0000000053415421 20000 1.771078e-14 18902 6.810000e-3 6.810000e-4 2.600702e-11 8.080000e-5 84.2822 PASS
+SEEDLADDER CLASS-H 0x0000000053415421 6.0 1.030759e-3 6.810000e-4 OVER
+SEEDLADDER CLASS-H 0x0000000053415421 9.0 1.128814e-6 6.810000e-4 under
+SEEDLADDER CLASS-H 0x0000000053415421 10.4 2.320046e-8 6.810000e-4 under
+SEEDLADDER CLASS-H 0x0000000053415421 14.0 3.594489e-13 6.810000e-4 under
+SEEDLADDER CLASS-H 0x0000000053415421 15.0 1.771078e-14 6.810000e-4 under
+SEEDLADDER CLASS-H 0x0000000053415421 41.0 0.000000e0 6.810000e-4 under
+# ---- GATES, CLASS-H ----
+LADDER CLASS-H 6.0 1.483467e-4 1.030759e-3
+LADDER CLASS-H 9.0 2.882586e-7 1.128814e-6
+LADDER CLASS-H 10.4 4.641093e-9 2.320046e-8
+LADDER CLASS-H 14.0 6.661369e-14 3.594489e-13
+LADDER CLASS-H 15.0 3.441678e-15 1.771078e-14
+LADDER CLASS-H 41.0 0.000000e0 0.000000e0
+FENCE CLASS-H E_tail_mean -3.441678e-15 E_tail_pow6_mean -5.041978e-9 E_tail_pow3_mean -2.738537e-8
+FENCEMAX CLASS-H E_tail_max 1.771078e-14 E_tail_pow6_max 9.991912e-9 E_tail_pow3_max 4.643727e-8
+# max pair separation seen: 37.8711 bohr (zero control sits at 41.0)
+SWITCHMAX CLASS-H max|E_switch(c*)| 4.971991e-13 at seed 0x0000000053415421 frame 11289 (ratio to max|E_hard(c*)| = 28.07)
+GATE G1 CLASS-H PASS (seeds failing: 0)
+GATE G2 CLASS-H PASS (curves failing: 0)
+GATE G3 CLASS-H refusals 2 of 4 files hashed
+GATE G4 CLASS-H PASS (frames scored: 20000, floor 50)
+GATE G5 CLASS-H PASS (monotonicity violations: 0)
+GATE G6 CLASS-H PASS (max |E_hard(41.0)| = 0.000e0, EXACT 0.0 required)
+GATE G7 CLASS-H PASS (frames with a nonempty beyond-c* population: 20000/20000 = 1.0000)
+GATE PRICE CLASS-H PASS (setup 1.0 s, floor 0 s)
+VERDICT CLASS-H NEGLIGIBLE — branch (a) | worst frame: seed 0x0000000053415421 frame 18902 at |E_hard(c*)| = 1.771078e-14 Ha | LOWER BOUND: past the table's last knot the curve is an exponential while the true tail is a power law, so the discard is at least this and never at most this.

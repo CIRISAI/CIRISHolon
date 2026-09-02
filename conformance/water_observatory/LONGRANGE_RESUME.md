@@ -26,6 +26,27 @@ committed arm log prices O–O at 2596.2 s.
 Each log's last line begins `VERDICT`. A log without one is an unfinished run, not a
 verdict: re-launch rather than reading a partial sweep.
 
+## State — CLOSED
+
+Both scorable classes have run to a `VERDICT` on the instrument at `42cab33`, and the
+results are in `LONGRANGE_RESULTS.md` with their raw output committed beside it
+(`longrange_hydrogen.log`, `longrange_fenced.log`, `longrange_plant_p1_refusal.log`).
+Nothing is in flight. What follows is the history of how it ran.
+
+## History
+
+`CLASS-H` is COMPLETE and final, on the instrument at `42cab33`; its numbers are written
+up in `LONGRANGE_RESULTS.md`.
+
+`CLASS-MIX-FENCED` is COMPLETE, and its verdict is **VOID**: the freeze's own price
+refusal fired at 1021.5 s against a 1200 s floor. A first attempt was launched on the
+instrument one commit earlier (`48dc51f`, which lacks only the `SWITCHMAX` line) and was
+TERMINATED
+mid-curve rather than allowed to finish: every number in a results document must come from
+one instrument commit, and letting it finish would have cost a whole second O–O
+generation on top of it. It produced no `VERDICT`, so nothing was lost but the partial
+curve. Recorded because killing one's own running compute is worth saying out loud.
+
 ## Resume
 
 Both runs are pure functions of committed inputs — the parked artifacts, their manifest,

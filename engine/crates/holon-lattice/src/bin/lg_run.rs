@@ -172,12 +172,19 @@ fn main() {
             && l.momentum[1] == w0.momentum[1] + l.wall_impulse[1];
     }
     let wl = w.ledger();
+    // The label is COUNTED from the scene, never retyped. This line existed as the literal
+    // "48-cell" while add_wall was building 32, so the banked log would have misstated its
+    // own configuration -- the measurement was right and the diagnostic lied about the
+    // parameter it ran at. A diagnostic must echo its parameters from the object.
+    let solid = w.solid.iter().filter(|&&s| s).count();
+    assert_eq!(solid, WALL, "the wall the scene carries is not the wall that was declared");
     r.gate(
         "G4",
         wall_ok && mass_ok && wl.wall_impulse != [0, 0],
         2_000 * 3,
         format!(
-            "with a 48-cell wall: mass EXACT, momentum = P(0) + impulse EXACT, \
+            "with a {solid}-cell wall (declared {WALL}): mass EXACT, momentum = P(0) + \
+             impulse EXACT, \
              cumulative impulse {:?} (nonzero, so the gate did work)",
             wl.wall_impulse
         ),

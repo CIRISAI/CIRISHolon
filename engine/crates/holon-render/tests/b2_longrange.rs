@@ -163,11 +163,86 @@ fn r4_hands_out_a_bracket_and_never_a_scalar_on_a_fenced_tail() {
 fn r2_refuses_when_the_image_shells_cannot_meet_the_declared_budget() {
     let mut f = FarSector::build(&[Some(power(3.0, 20.0))], 20.0, 1.0e-30, Dims::Two)
         .expect("builds");
-    let geom = BoxGeom::new(34.6, 20.8, 20.8, true);
+    // The box must clear 2 R_s or the SIZE refusal fires first and this test would be
+    // scoring a different refusal than the one it names.
+    let geom = BoxGeom::new(90.0, 90.0, 90.0, true);
     match f.resolve_shells(&[(0.0, 0.0, 0.0), (5.0, 0.0, 0.0)], &[0, 0], geom) {
         Err(FarRefusal::ImageBudget { cap, .. }) => assert_eq!(cap, SHELL_CAP),
         other => panic!("R2 did not fire: {other:?}"),
     }
+}
+
+#[test]
+fn a_periodic_box_narrower_than_two_near_radii_is_refused() {
+    // The near sector sums MINIMUM IMAGES only, so every image contribution belongs to the
+    // far sector — true only while every image separation is past `R_s`. Below `2 R_s` an
+    // image sits inside the curve's support with neither sector summing it, which is a
+    // missing force and not an error, so it is refused rather than approximated.
+    let mut f =
+        FarSector::build(&[Some(power(6.0, 20.0))], 20.0, 1.0e-9, Dims::Two).expect("builds");
+    let tight = BoxGeom::new(34.6, 20.8, 20.8, true);
+    match f.resolve_shells(&[(0.0, 0.0, 0.0), (5.0, 0.0, 0.0)], &[0, 0], tight) {
+        Err(FarRefusal::PeriodicTooSmall { min_edge, r_s }) => {
+            assert_eq!(min_edge, 20.8);
+            assert_eq!(r_s, 20.0);
+        }
+        other => panic!("the size refusal did not fire: {other:?}"),
+    }
+    // A wide enough box is admitted, and a NON-wrapping box is vacuously fine because it
+    // has no images to divide.
+    assert!(f
+        .resolve_shells(&[(0.0, 0.0, 0.0), (5.0, 0.0, 0.0)], &[0, 0], BoxGeom::new(90.0, 90.0, 90.0, true))
+        .is_ok());
+    assert!(f
+        .resolve_shells(&[(0.0, 0.0, 0.0), (5.0, 0.0, 0.0)], &[0, 0], open_geom())
+        .is_ok());
+}
+
+#[test]
+fn the_far_sector_substitutes_for_the_near_one_and_never_adds_to_it() {
+    // THE DEFECT THIS TEST EXISTS FOR: the first wiring added `u_far` on top of the engine's
+    // complete pair sum, so every pair past `R_s` was counted twice and the far term carried
+    // a step of `u(R_s)` at the handover. The far sector supplies the DIFFERENCE between
+    // what the total should be and what the near sector already gave.
+    let mut far =
+        FarSector::build(&[Some(power(6.0, 20.0))], 20.0, 1.0e-9, Dims::Two).expect("builds");
+    let slots = [0usize, 0];
+    let geom = open_geom();
+
+    // With no truncation declared, the near sector ran the complete sum, so the far term is
+    // exactly zero AT the handover — not small, zero — and the total is continuous there.
+    far.set_switch(None);
+    let at_seam = [(0.0, 0.0, 0.0), (20.0, 0.0, 0.0)];
+    let mut f = [(0.0, 0.0, 0.0); 2];
+    let r = far.accumulate(&at_seam, &slots, geom, &mut f, &[20.0]);
+    assert_eq!(r.energy, 0.0, "the substitution is nonzero at R_s, so there is a step there");
+
+    // Just past it the far term is the model minus the extrapolation it replaces, which is
+    // strictly smaller than the model itself. An ADDING implementation would report the
+    // model's own value here.
+    let past = [(0.0, 0.0, 0.0), (26.0, 0.0, 0.0)];
+    let mut f2 = [(0.0, 0.0, 0.0); 2];
+    let r2 = far.accumulate(&past, &slots, geom, &mut f2, &[20.0]);
+    let m = far.model(0).expect("a model");
+    let (model_only, _) = m.eval(26.0);
+    let (table_only, _) = m.table_exp(26.0);
+    assert!(
+        (r2.energy - (model_only - table_only)).abs() < 1.0e-24,
+        "expected the substitution {:e}, got {:e}",
+        model_only - table_only,
+        r2.energy
+    );
+    assert!(
+        r2.energy.abs() < model_only.abs(),
+        "the far term is as large as the model itself, which is what adding looks like"
+    );
+
+    // With a truncation declared the near sector gave nothing past `r_cut`, so the far term
+    // IS the model there — the same code path, a different declared scene.
+    far.set_switch(Some((20.0, 22.0)));
+    let mut f3 = [(0.0, 0.0, 0.0); 2];
+    let r3 = far.accumulate(&past, &slots, geom, &mut f3, &[20.0]);
+    assert!((r3.energy - model_only).abs() < 1.0e-24);
 }
 
 // ------------------------------------------------- what the conservation gates rest on

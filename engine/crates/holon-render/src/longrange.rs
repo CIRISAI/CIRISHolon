@@ -113,6 +113,13 @@ pub struct TailModel {
     /// `−u(R_s) · R_s^p`, so `u_far(R_s) == u(R_s)` exactly by construction.
     pub c_p: f64,
     pub r_s: f64,
+    /// The table's last knot, and the two numbers its exponential extrapolation is built
+    /// from. Carried so the model can evaluate the extrapolation IT REPLACES, which is what
+    /// makes the handover a substitution rather than an addition — see
+    /// [`TailModel::table_exp`].
+    pub r_max: f64,
+    pub u_at_max: f64,
+    pub hi_b: f64,
     pub fit: TailFit,
     pub solver_exit: &'static str,
     pub solver_budget_iterations: u64,
@@ -127,6 +134,22 @@ impl TailModel {
     pub fn eval(&self, r: f64) -> (f64, f64) {
         let inv = r.powf(-self.p);
         (-self.c_p * inv, self.p * self.c_p * inv / r)
+    }
+
+    /// THE EXTRAPOLATION THIS MODEL REPLACES: the table's own exponential past its last
+    /// knot, `u(r_max)·exp(−hi_b·(r − r_max))`, and its derivative.
+    ///
+    /// Valid only for `r ≥ r_max`, which is the only place it is ever asked: `R_s ≥ r_max`
+    /// is enforced by [`FarRefusal::SubSupport`], and a declared truncation's inner edge is
+    /// at or past `r_max` by `Sim::derive_pair_cutoff`'s own construction — it bisects
+    /// OUTWARD from the last knot. So the far sector never needs the table's interpolant,
+    /// only this closed form, and there is no second copy of the knots to disagree with the
+    /// bank.
+    #[inline]
+    pub fn table_exp(&self, r: f64) -> (f64, f64) {
+        let e = (-self.hi_b * (r - self.r_max)).exp();
+        let u = self.u_at_max * e;
+        (u, -self.hi_b * u)
     }
 
     /// The radius at which one pair's far energy falls under `budget`. Solved in closed
@@ -167,6 +190,14 @@ pub enum FarRefusal {
     UndisclosedSolve { slot: usize, missing: &'static str },
     /// No curve is loaded for a slot the scene needs, so there is nothing to fit.
     NoCurve { slot: usize },
+    /// A wrapping box too small for the split to be well defined.
+    ///
+    /// `Sim::pbc_ok`'s condition, one radius further out. The near sector sums MINIMUM
+    /// IMAGES only, so every image contribution belongs to the far sector — and that is
+    /// only true while every image separation is past `R_s`, which needs `min_edge ≥ 2·R_s`.
+    /// Below that an image sits inside the table's support with nobody summing it, which is
+    /// a missing force rather than an error.
+    PeriodicTooSmall { min_edge: f64, r_s: f64 },
 }
 
 impl core::fmt::Display for FarRefusal {
@@ -211,6 +242,13 @@ impl core::fmt::Display for FarRefusal {
             FarRefusal::NoCurve { slot } => {
                 write!(f, "REFUSED: no loaded curve for slot {slot}; nothing to fit.")
             }
+            FarRefusal::PeriodicTooSmall { min_edge, r_s } => write!(
+                f,
+                "REFUSED (periodic box too small): the shortest edge is {min_edge:.4} bohr \
+                 against 2 R_s = {:.4}. Below that an image sits inside the curve's support \
+                 with neither sector summing it. Widen the box or lower R_s.",
+                2.0 * r_s
+            ),
         }
     }
 }
@@ -328,6 +366,11 @@ pub struct FarSector {
     offsets: Vec<(f64, f64, f64)>,
     key: Option<BoxKey>,
     shells: usize,
+    /// The near sector's declared truncation, mirrored here so the far sector knows what
+    /// the near one already supplied. `None` means the near sector ran the complete sum.
+    /// Set by [`FarSector::set_switch`]; `Sim::accumulate_far` keeps it in step with
+    /// `Sim::pair_switch` on every force pass, so the two cannot disagree.
+    switch: Option<(f64, f64)>,
     pub plant: Option<FarPlant>,
     /// P4's step, hartree. [`PLANT_STEP_HARTREE`] is the STAKED value and is what the
     /// plant runs at; the field exists so a POWER CERTIFICATE can sweep it — the smallest
@@ -398,6 +441,9 @@ impl FarSector {
                 p: fit.p_fit,
                 c_p: -u_s * r_s.powf(fit.p_fit),
                 r_s,
+                r_max: c.r_max(),
+                u_at_max: c.u.last().copied().unwrap_or(0.0),
+                hi_b: c.hi_b,
                 fit,
                 solver_exit: c.solver_exit,
                 solver_budget_iterations: c.solver_budget_iterations,
@@ -428,6 +474,7 @@ impl FarSector {
             offsets: Vec::new(),
             key: None,
             shells: 0,
+            switch: None,
             plant: None,
             plant_step: PLANT_STEP_HARTREE,
             prev_beyond: Vec::new(),
@@ -484,6 +531,19 @@ impl FarSector {
     /// achieved. G10 reads both; R2 refuses at [`SHELL_CAP`].
     ///
     /// Non-wrapping boxes need none, and that zero is a fact about the scene.
+    /// Tell the far sector what the near sector's declared truncation is.
+    ///
+    /// Kept in step by the caller on every force pass rather than captured once: a scene may
+    /// declare or clear a truncation at any time, and a far sector holding a stale switch
+    /// would supply a complement to a window that is no longer there.
+    pub fn set_switch(&mut self, switch: Option<(f64, f64)>) {
+        self.switch = switch;
+    }
+
+    pub fn switch(&self) -> Option<(f64, f64)> {
+        self.switch
+    }
+
     pub fn resolve_shells(
         &mut self,
         atoms: &[(f64, f64, f64)],
@@ -493,6 +553,15 @@ impl FarSector {
         if !geom.periodic {
             self.set_shells(0, geom);
             return Ok((0, 0.0));
+        }
+        // The near sector sums minimum images only, so the far sector owns every image
+        // contribution — and that is a correct division of labour only while every image
+        // separation is past `R_s`, which needs `min_edge >= 2 R_s`.
+        if geom.min_edge() < 2.0 * self.r_s {
+            return Err(FarRefusal::PeriodicTooSmall {
+                min_edge: geom.min_edge(),
+                r_s: self.r_s,
+            });
         }
         let mut prev = self.energy_at_shells(atoms, slots, geom, 0);
         for m in 1..=SHELL_CAP {
@@ -539,13 +608,14 @@ impl FarSector {
                     continue;
                 };
                 let (dx, dy, dz) = geom.delta(atoms[i], atoms[j]);
-                for (k, o) in core::iter::once(&(0.0, 0.0, 0.0)).chain(offsets.iter()).enumerate() {
+                let r0 = (dx * dx + dy * dy + dz * dz).sqrt();
+                e += self.minimum_image_term(m, r0, r_f).0;
+                for o in offsets.iter() {
                     let (sx, sy, sz) = (dx + o.0, dy + o.1, dz + o.2);
                     let r = (sx * sx + sy * sy + sz * sz).sqrt();
-                    if !(r > self.r_s) || r > r_f {
+                    if r > r_f {
                         continue;
                     }
-                    let _ = k;
                     e += m.eval(r).0;
                 }
             }
@@ -555,7 +625,7 @@ impl FarSector {
                 if let Some(m) = self.model_for(slots, i, i) {
                     for o in offsets.iter() {
                         let r = (o.0 * o.0 + o.1 * o.1 + o.2 * o.2).sqrt();
-                        if !(r > self.r_s) || r > r_f {
+                        if r > r_f {
                             continue;
                         }
                         e += 0.5 * m.eval(r).0;
@@ -564,6 +634,70 @@ impl FarSector {
             }
         }
         e
+    }
+
+    /// THE MINIMUM-IMAGE TERM, and it is where the split stops being an addition.
+    ///
+    /// The near sector has already summed this pair — either completely, or switched off at
+    /// a declared truncation. So what the far sector owes is the DIFFERENCE between what the
+    /// total should be and what the near sector gave, never `u_far` on top of it. Adding
+    /// `u_far` to a complete pair sum counts every pair past `R_s` twice, and it puts a step
+    /// of `u(R_s)` into the energy at the handover, which is what a gradient gate sees first.
+    ///
+    /// Two cases, and which one applies is a DECLARED property of the scene, exactly as the
+    /// engine's own pair sector has two routes:
+    ///
+    /// * **no truncation declared** — the near sector ran the complete `N²/2` sum, so the far
+    ///   sector supplies `u_far(r) − u_table(r)`: a substitution of the model for the
+    ///   extrapolation. It is exactly 0 at `R_s` by the seam match, so the total is
+    ///   continuous there rather than merely close.
+    /// * **a truncation declared at `(r_in, r_cut)`** — the near sector gave `S₂·u_table`
+    ///   inside the window and nothing past `r_cut`, so the far sector supplies the rest.
+    ///   This is the case that buys the `O(N)` near route, and it is the one B1b's
+    ///   counterfactual is about.
+    ///
+    /// `u_table` here is the closed-form exponential extrapolation ([`TailModel::table_exp`])
+    /// and never the interpolant, which is legitimate because every radius this function
+    /// evaluates it at is past the last knot: `R_s ≥ r_max` by R3, and a derived truncation's
+    /// `r_in` is at or past `r_max` because `Sim::derive_pair_cutoff` bisects outward from it.
+    #[inline]
+    fn minimum_image_term(&self, m: &TailModel, r: f64, r_f: f64) -> (f64, f64) {
+        let want = if r > self.r_s {
+            if r > r_f {
+                // Past the far sum's range the total reverts to whatever the near sector
+                // holds, so there is nothing to substitute.
+                return (0.0, 0.0);
+            }
+            m.eval(r)
+        } else {
+            m.table_exp(r)
+        };
+        match self.switch {
+            None => {
+                if !(r > self.r_s) {
+                    // Below the handover the near sector's complete sum is already right.
+                    return (0.0, 0.0);
+                }
+                let (ut, dut) = m.table_exp(r);
+                (want.0 - ut, want.1 - dut)
+            }
+            Some((r_in, r_cut)) => {
+                if !(r > r_in) {
+                    // Inside the switch's inner edge the near sector gave the pair in full.
+                    return (0.0, 0.0);
+                }
+                if r <= r_cut {
+                    let (sw, ds, _) = crate::cells::switch_c2(r, r_in, r_cut);
+                    let (ut, dut) = m.table_exp(r);
+                    // The near sector supplied `S₂·u`, whose derivative carries the switch's
+                    // own slope; the complement must carry it too or the force stops being
+                    // minus a gradient.
+                    (want.0 - sw * ut, want.1 - (sw * dut + ds * ut))
+                } else {
+                    want
+                }
+            }
+        }
     }
 
     /// THE FORCE PASS. Accumulates the far sector's energy, forces and virial, and every
@@ -635,10 +769,22 @@ impl FarSector {
                 {
                     let (sx, sy, sz) = (dx + o.0, dy + o.1, dz + o.2);
                     let r = (sx * sx + sy * sy + sz * sz).sqrt();
-                    if !(r > self.r_s) || r > r_f {
-                        continue;
-                    }
-                    let (u, du) = m.eval(r);
+                    // THE MINIMUM IMAGE is a SUBSTITUTION for what the near sector already
+                    // supplied; every OTHER image is the far sector's outright, because the
+                    // near sector sums minimum images only. `PeriodicTooSmall` is what keeps
+                    // that second statement true.
+                    let (u, du) = if which == 0 {
+                        let term = self.minimum_image_term(&m, r, r_f);
+                        if term.0 == 0.0 && term.1 == 0.0 {
+                            continue;
+                        }
+                        term
+                    } else {
+                        if r > r_f {
+                            continue;
+                        }
+                        m.eval(r)
+                    };
                     out.energy += u + step;
                     if self.plant != Some(FarPlant::OmittedVirial) {
                         out.virial += r * du;
@@ -682,7 +828,7 @@ impl FarSector {
                     let offs = core::mem::take(&mut self.offsets);
                     for o in offs.iter() {
                         let r = (o.0 * o.0 + o.1 * o.1 + o.2 * o.2).sqrt();
-                        if !(r > self.r_s) || r > r_f {
+                        if r > r_f {
                             continue;
                         }
                         let (u, du) = m.eval(r);

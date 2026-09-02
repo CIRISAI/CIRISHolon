@@ -108,6 +108,165 @@ const B1B_MIXED: [(u64, f64, f64, f64); 8] = [
     (0x0000000053415428, 1.360e0, 1.280e-5, 0.595),
 ];
 
+// ====================================================================== the manifest digest
+//
+// LIFTED VERBATIM from `longrange_audit.rs`, which produced B1b's refusals. A second
+// implementation of a digest is a second thing that can disagree with the first, and the
+// mitigation is the one that implementation already carries: `sha256_selftest` checks both
+// standard vectors at startup, so a copy that has drifted refuses to run rather than
+// producing refusals nobody can reproduce. The exit is a shared digest module, which is a
+// change to a committed instrument that produced banked results and therefore not this
+// node's to take.
+
+const K256: [u32; 64] = [
+    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4,
+    0xab1c5ed5, 0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe,
+    0x9bdc06a7, 0xc19bf174, 0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f,
+    0x4a7484aa, 0x5cb0a9dc, 0x76f988da, 0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7,
+    0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967, 0x27b70a85, 0x2e1b2138, 0x4d2c6dfc,
+    0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85, 0xa2bfe8a1, 0xa81a664b,
+    0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070, 0x19a4c116,
+    0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
+    0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7,
+    0xc67178f2,
+];
+
+struct Sha256 {
+    h: [u32; 8],
+    buf: [u8; 64],
+    len: usize,
+    total: u64,
+}
+
+impl Sha256 {
+    fn new() -> Self {
+        Self {
+            h: [
+                0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a, 0x510e527f, 0x9b05688c,
+                0x1f83d9ab, 0x5be0cd19,
+            ],
+            buf: [0u8; 64],
+            len: 0,
+            total: 0,
+        }
+    }
+
+    fn block(&mut self) {
+        let mut w = [0u32; 64];
+        for i in 0..16 {
+            w[i] = u32::from_be_bytes([
+                self.buf[4 * i],
+                self.buf[4 * i + 1],
+                self.buf[4 * i + 2],
+                self.buf[4 * i + 3],
+            ]);
+        }
+        for i in 16..64 {
+            let s0 = w[i - 15].rotate_right(7) ^ w[i - 15].rotate_right(18) ^ (w[i - 15] >> 3);
+            let s1 = w[i - 2].rotate_right(17) ^ w[i - 2].rotate_right(19) ^ (w[i - 2] >> 10);
+            w[i] = w[i - 16]
+                .wrapping_add(s0)
+                .wrapping_add(w[i - 7])
+                .wrapping_add(s1);
+        }
+        let (mut a, mut b, mut c, mut d, mut e, mut f, mut g, mut hh) = (
+            self.h[0], self.h[1], self.h[2], self.h[3], self.h[4], self.h[5], self.h[6],
+            self.h[7],
+        );
+        for i in 0..64 {
+            let s1 = e.rotate_right(6) ^ e.rotate_right(11) ^ e.rotate_right(25);
+            let ch = (e & f) ^ ((!e) & g);
+            let t1 = hh
+                .wrapping_add(s1)
+                .wrapping_add(ch)
+                .wrapping_add(K256[i])
+                .wrapping_add(w[i]);
+            let s0 = a.rotate_right(2) ^ a.rotate_right(13) ^ a.rotate_right(22);
+            let maj = (a & b) ^ (a & c) ^ (b & c);
+            let t2 = s0.wrapping_add(maj);
+            hh = g;
+            g = f;
+            f = e;
+            e = d.wrapping_add(t1);
+            d = c;
+            c = b;
+            b = a;
+            a = t1.wrapping_add(t2);
+        }
+        self.h[0] = self.h[0].wrapping_add(a);
+        self.h[1] = self.h[1].wrapping_add(b);
+        self.h[2] = self.h[2].wrapping_add(c);
+        self.h[3] = self.h[3].wrapping_add(d);
+        self.h[4] = self.h[4].wrapping_add(e);
+        self.h[5] = self.h[5].wrapping_add(f);
+        self.h[6] = self.h[6].wrapping_add(g);
+        self.h[7] = self.h[7].wrapping_add(hh);
+    }
+
+    fn update(&mut self, mut data: &[u8]) {
+        self.total = self.total.wrapping_add(data.len() as u64);
+        while !data.is_empty() {
+            let take = (64 - self.len).min(data.len());
+            self.buf[self.len..self.len + take].copy_from_slice(&data[..take]);
+            self.len += take;
+            data = &data[take..];
+            if self.len == 64 {
+                self.block();
+                self.len = 0;
+            }
+        }
+    }
+
+    fn hex(mut self) -> String {
+        let bits = self.total.wrapping_mul(8);
+        self.update(&[0x80]);
+        while self.len != 56 {
+            self.update(&[0x00]);
+        }
+        // `update` moved `total`; the length field is the pre-padding one captured above.
+        self.buf[56..64].copy_from_slice(&bits.to_be_bytes());
+        self.len = 64;
+        self.block();
+        self.len = 0;
+        let mut s = String::with_capacity(64);
+        for v in self.h {
+            s.push_str(&format!("{v:08x}"));
+        }
+        s
+    }
+}
+
+fn sha256_file(p: &Path) -> std::io::Result<String> {
+    use std::io::Read;
+    let mut f = std::fs::File::open(p)?;
+    let mut h = Sha256::new();
+    let mut buf = vec![0u8; 1 << 20];
+    loop {
+        let n = f.read(&mut buf)?;
+        if n == 0 {
+            break;
+        }
+        h.update(&buf[..n]);
+    }
+    Ok(h.hex())
+}
+
+fn sha256_selftest() {
+    let empty = Sha256::new().hex();
+    assert_eq!(
+        empty, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "the inlined sha256 fails the standard empty-input vector; every refusal it \
+         produced would be meaningless"
+    );
+    let mut h = Sha256::new();
+    h.update(b"abc");
+    assert_eq!(
+        h.hex(),
+        "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
+        "the inlined sha256 fails the standard \"abc\" vector"
+    );
+}
+
 // ====================================================================== the launch header
 
 /// CPU time this process has burned, seconds — utime + stime from `/proc/self/stat`.
@@ -727,34 +886,87 @@ fn gate_g8(
         .collect();
     let h = 1.0e-5;
     let mut worst = 0.0f64;
+    let mut worst_abs = 0.0f64;
+    let mut worst_val = 0.0f64;
+    let mut worst_force = 0.0f64;
+    let mut worst_abs_any = 0.0f64;
     let mut done = 0usize;
+    let mut probed = 0usize;
     let mut st = 0xB2_0000_0008u64;
+    // DISTINCT CONFIGURATIONS, which is what the freeze stakes. Probing one configuration a
+    // hundred times gives at most `2n` distinct checks and then repeats them; the far
+    // sector's population changes with the geometry, so a hundred geometries is a hundred
+    // different sets of pairs and a single geometry is one.
     while done < G8_CONFIGS {
-        let i = (lcg(&mut st) * sim.n as f64) as usize % sim.n;
-        let ax = if lcg(&mut st) < 0.5 { 0 } else { 1 };
+        let cfgpos: Vec<(f64, f64, f64)> = base
+            .iter()
+            .map(|p| {
+                (
+                    p.0 + (lcg(&mut st) - 0.5) * 4.0,
+                    p.1 + (lcg(&mut st) - 0.5) * 4.0,
+                    p.2,
+                )
+            })
+            .collect();
         let mut fx = vec![(0.0, 0.0, 0.0); sim.n];
-        far.accumulate(&base, &slots, geom, &mut fx, &r_max);
-        let analytic = if ax == 0 { fx[i].0 } else { fx[i].1 };
-        let mut plus = base.clone();
-        let mut minus = base.clone();
-        if ax == 0 {
-            plus[i].0 += h;
-            minus[i].0 -= h;
-        } else {
-            plus[i].1 += h;
-            minus[i].1 -= h;
-        }
-        let ep = far.energy_at_shells(&plus, &slots, geom, 0);
-        let em = far.energy_at_shells(&minus, &slots, geom, 0);
-        let numeric = -(ep - em) / (2.0 * h);
-        let scale = analytic.abs().max(numeric.abs()).max(1.0e-30);
-        worst = worst.max((analytic - numeric).abs() / scale);
+        let read = far.accumulate(&cfgpos, &slots, geom, &mut fx, &r_max);
         done += 1;
+        if read.contributions == 0 {
+            // No far pair in this geometry: there is no gradient of nothing to check, and
+            // counting it would be a hundred configurations of which some tested nothing.
+            continue;
+        }
+        for i in 0..sim.n {
+            for ax in 0..2 {
+                let (mut plus, mut minus) = (cfgpos.clone(), cfgpos.clone());
+                if ax == 0 {
+                    plus[i].0 += h;
+                    minus[i].0 -= h;
+                } else {
+                    plus[i].1 += h;
+                    minus[i].1 -= h;
+                }
+                let ep = far.energy_at_shells(&plus, &slots, geom, 0);
+                let em = far.energy_at_shells(&minus, &slots, geom, 0);
+                let numeric = -(ep - em) / (2.0 * h);
+                let analytic = if ax == 0 { fx[i].0 } else { fx[i].1 };
+                if analytic == 0.0 && numeric == 0.0 {
+                    continue;
+                }
+                let scale = analytic.abs().max(numeric.abs()).max(1.0e-30);
+                let rel = (analytic - numeric).abs() / scale;
+                if rel > worst {
+                    worst = rel;
+                    worst_abs = (analytic - numeric).abs();
+                    worst_val = analytic.abs();
+                }
+                worst_force = worst_force.max(analytic.abs());
+                worst_abs_any = worst_abs_any.max((analytic - numeric).abs());
+                probed += 1;
+            }
+        }
     }
     println!(
         "# GATE G8 gradient: {}  worst relative {worst:.4e} (<= {G8_TOL:.0e})  \
-         configurations {done} (floor {G8_CONFIGS})",
-        pf(worst <= G8_TOL)
+         configurations {done} (floor {G8_CONFIGS})  nonzero components probed {probed}",
+        if probed == 0 {
+            "VOID (V2: no configuration carried a far gradient to check)"
+        } else {
+            pf(worst <= G8_TOL)
+        }
+    );
+    // THE DIAGNOSTIC BESIDE THE VERDICT, and it changes nothing about the verdict. The far
+    // term is a DIFFERENCE of two nearly equal functions near `R_s` — the tail model minus
+    // the extrapolation it replaces — so a per-component RELATIVE error is dominated by the
+    // components where that difference is near zero, and says almost nothing about the ones
+    // carrying the force. Both scales are printed so a reader can see which regime the worst
+    // relative reading came from.
+    println!(
+        "# G8 diagnostic: the worst relative component had |F| = {worst_val:.3e} Ha/bohr \
+         against a largest far force of {worst_force:.3e}; its absolute disagreement was \
+         {worst_abs:.3e} Ha/bohr, and the largest absolute disagreement anywhere was \
+         {worst_abs_any:.3e}. Relative to the LARGEST far force that is {:.3e}.",
+        worst_abs_any / worst_force.max(1.0e-300)
     );
     worst
 }
@@ -1134,10 +1346,33 @@ fn periodic_arm(
     // vacuous success wearing a green gate, which is the failure M-VACUOUS-SUCCESS names,
     // and the first run of this instrument produced all three of them.
     let probe = FarSector::build(tails, r_s, budget, Dims::Two);
-    let edge = match &probe {
-        Ok(f) => 0.75 * f.r_f(),
-        Err(_) => BOX_H,
+    let r_f = match &probe {
+        Ok(f) => f.r_f(),
+        Err(e) => {
+            println!("# periodic arm VOID: {e}");
+            return;
+        }
     };
+    // The box must clear `2 R_s` — below that an image sits inside the curve's support with
+    // neither sector summing it, and the far sector refuses — and it must sit inside `R_f`,
+    // or no image is in range and every gate here scores a zero against a zero.
+    let edge = 2.05 * r_s;
+    if edge >= r_f {
+        println!(
+            "# periodic arm VOID (V2): the smallest legal wrapping box is 2 R_s = {:.4} bohr \
+             and the far sum reaches only R_f = {r_f:.4} bohr, so NO legal periodic box can \
+             put an image in range. That is a property of this tail, not of the instrument: \
+             at p_fit = {:.2} the kernel has no long-range content for an image sum to carry. \
+             G9, G10 and P1 are NOT scored.",
+            2.0 * r_s,
+            tails
+                .iter()
+                .flatten()
+                .map(|c| c.fit().p_fit)
+                .fold(0.0f64, f64::max)
+        );
+        return;
+    }
     let cfg = SceneCfg {
         n: 12,
         oxygen_every: if curves.len() > 1 { 3 } else { 0 },
@@ -1147,7 +1382,11 @@ fn periodic_arm(
         prescale: 1.0,
         three_d: false,
     };
-    println!("# periodic arm: box {edge:.4} x {edge:.4} bohr, sized at 0.75 R_f so the image sector is nonempty");
+    println!(
+        "# periodic arm: box {edge:.4} x {edge:.4} bohr — just above the 2 R_s = {:.4} floor \
+         and inside R_f = {r_f:.4}, so the image sector is both legal and nonempty",
+        2.0 * r_s
+    );
     let sim = build_scene(&cfg, curves);
     let geom = BoxGeom::new(sim.width, sim.height, sim.depth, true);
     let slots: Vec<usize> = (0..sim.n)
@@ -1695,16 +1934,35 @@ fn arm_frames(root: &Path, manifest_path: &Path, stride: usize) {
     let mut refusals = 0usize;
 
     for p in &paths {
-        let key = format!(
-            "census-traj/fenced/{}",
-            p.file_name().unwrap().to_string_lossy()
-        );
+        // The manifest's own key form, which is `<arm>/<file>` and NOT prefixed with the
+        // artifact root. The first run of this arm prefixed it and refused all eight
+        // trajectories with "the manifest does not list this path" — a refusal that fired
+        // correctly on a key the instrument had made up.
+        let key = format!("fenced/{}", p.file_name().unwrap().to_string_lossy());
         // M-PROVENANCE-OVERREACH: the refusal names the FILE it hashed and infers nothing
         // about which run produced it.
-        if !want.contains_key(&key) {
-            println!("# REFUSED {key}: the manifest does not list this path");
-            refusals += 1;
-            continue;
+        let got = match sha256_file(p) {
+            Ok(h) => h,
+            Err(e) => {
+                println!("# REFUSED {key}: {e}");
+                refusals += 1;
+                continue;
+            }
+        };
+        match want.get(&key) {
+            Some(w) if *w == got => println!("# ADMITTED {key}  sha256 {got}"),
+            Some(w) => {
+                println!("# REFUSED {key}: sha256 {got} != manifest {w}");
+                refusals += 1;
+                continue;
+            }
+            None => {
+                println!(
+                    "# REFUSED {key}: sha256 {got} but the manifest does not list this path"
+                );
+                refusals += 1;
+                continue;
+            }
         }
         let Ok(traj) = Trajectory::read(p) else {
             println!("# REFUSED {key}: unreadable");
@@ -1913,6 +2171,7 @@ fn main() {
         .and_then(|v| v.parse().ok())
         .unwrap_or(400);
 
+    sha256_selftest();
     let cpu = cpu_now();
     println!("# B2 LONG-RANGE GATE BATTERY — freeze conformance/water_observatory/B2_PREREG.md");
     println!("# instrument = engine/crates/holon-render/examples/b2_longrange.rs");

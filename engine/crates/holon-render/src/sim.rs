@@ -2720,6 +2720,11 @@ impl Sim {
                 }
             })
             .collect();
+        // THE NEAR SECTOR'S DECLARED TRUNCATION, handed over on every pass rather than
+        // captured once. The far sector supplies what the near one did NOT, so it has to
+        // know which of the pair sector's two routes ran — and a scene may declare or clear
+        // a truncation between passes.
+        far.set_switch(self.pair_switch);
         let mut forces = core::mem::take(&mut self.a_pair);
         let reading = far.accumulate(&pos, &self.slots[..self.n], geom, &mut forces, &r_max_by_slot);
         self.a_pair = forces;

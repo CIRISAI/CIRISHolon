@@ -904,6 +904,8 @@ version = "0.1.0"
 name = "holon-md"
 version = "0.1.0"
 dependencies = [
+ "holon-chem",
+ "holon-lens",
  "holon-render",
  "holon-resource",
  "holon-tables",

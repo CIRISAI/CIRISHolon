@@ -9,7 +9,10 @@ campaign are listed at the bottom; they feed this graph but predate it.*
 ## The graph
 
 ```
-F  GPU production dispatch ──────────────┐  (multiplies every compute node below)
+F  GPU production dispatch ──────────────┐  (multiplies SOLVE-BOUND work where sigma dominates;
+                                         │   MEASURED CAVEAT: table generation is Amdahl-capped ~3% —
+                                         │   sigma is 4% of a Davidson iteration at 207k dets, and the
+                                         │   earlier VRAM story was retracted by measurement: 30 workers fit)
                                          ├─▶ dE4 table regen · dE5 audit · triple-point sweep · cluster solves
 A  Species-generic MBE ──────┬─▶ C2 ion tables ─▶ Grotthuss/superionic honesty
    (Z prices, never branches)├─▶ full-table chemistry beyond water

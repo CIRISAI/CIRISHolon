@@ -417,9 +417,11 @@ grain law saying when coarse is free.
 **THE ACUITY LAW (operator's design): the observer's resolution bounds the
 allocation, and the seed is ONE pinned holon.** The arithmetic that makes
 the hero cheap: the cube is 1 km and a water molecule is ~3 Å — a linear
-ratio of ~3e12 — so at the zoom where the next tier FIRST becomes
-resolvable (a molecule at a pixel), the in-view population at that tier is
-ONE. Even at full molecular zoom, the focal view admits thousands of
+ratio of ~3e12 — so when the view has zoomed to a
+band's OWN scale, the in-view population at that tier is ONE (the earlier
+parenthetical — first resolvability at a pixel — names a moment nine orders
+wider, 3.0e9 in view; the page measured both readings and ships the one
+that reproduces this paragraph's own figures, per the ladder gate). Even at full molecular zoom, the focal view admits thousands of
 molecules, never 3e31: acuity itself is the allocator. Therefore the
 zoom-in rule is: when the next tier starts to matter, PIN ONE HOLON of
 that tier near the view center and populate only what acuity admits as the

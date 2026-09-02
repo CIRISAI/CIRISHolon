@@ -858,6 +858,18 @@ if (ladderBlock) {
     }
   }
 
+  // EVERY FENCED BAND NAMES A BUILD IN PROGRESS, not just a condition (operator's law: a
+  // fence is a bug under repair, never content). The discriminator is deliberately crude —
+  // present-tense build language — because that is what a text check can see. It was the
+  // TENSE that was wrong; the numbers were always right.
+  for (const { band, state, block: bandBlock } of bands) {
+    if (state !== "fenced") continue;
+    want(/\b(is|are) (being )?(built|in build)\b|\bin build\b|\bgoes live as\b/i.test(bandBlock),
+      `fenced band "${band}" names a build in progress, not just a condition`,
+      "the fence must say what work is paying the debt, in the present tense — a band whose "
+      + "exit names only a state is describing a refusal rather than a repair");
+  }
+
   const live = bands.filter((b) => b.state === "live").length;
   want(live === 1,
     `exactly one band is LIVE (${live}) — the others must fence rather than degrade`,
@@ -1115,6 +1127,32 @@ if (sceneBoxFn) {
       `the aim handler calls ${calls.join(", ")}; aiming has no physical meaning and must `
       + "not reach the Sim, or the two axes the two-box law separates are coupled again");
   }
+}
+
+// ------------------------- 6g. a fence is a BUG UNDER REPAIR, never content
+//
+// Operator's law (FSD, cd2160e): any "content" saying "we refuse, and the honesty is the
+// point" is not content, it is a bug. Honesty is unchanged — every citation gate stands and
+// no band flips without its certificate — but the STORY a fence tells is its DEBT, its
+// OWNER and THE BUILD PAYING IT, in the present tense.
+//
+// This gate is a wording check, which is a weaker instrument than the rest of this file,
+// and it is scoped to what a wording check can actually establish: the phrases that make
+// refusal the point. It cannot tell a well-written debt from a badly written one. Stated
+// so that "6g green" is not read as "the tense is right everywhere".
+const REFUSAL_AS_POINT = [
+  /\bthe honesty is the point\b/i,
+  /\brefusing is\b[^.]{0,40}\b(the point|honest|a feature)\b/i,
+  /\bwe refuse\b[^.]{0,30}\band that is\b/i,
+  /\bfence is honest content\b/i,
+];
+const pageText = readFileSync(join(here, "index.html"), "utf8").replace(/<!--[\s\S]*?-->/g, "")
+  + appSource.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+for (const pat of REFUSAL_AS_POINT) {
+  want(!pat.test(pageText),
+    `no refusal-as-the-point wording matching ${pat}`,
+    "a fence states its debt, its owner and the build paying it — present tense. The "
+    + "operator's law: refusal presented as the point is a bug wearing content's clothes");
 }
 
 // ---------------------------------------------------------------- 7. the inverted check

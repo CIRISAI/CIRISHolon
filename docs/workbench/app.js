@@ -445,20 +445,26 @@ const FENCE_REGISTER = {
 const NOT_SERVED = [
   {
     what: "Blind phase classifier (WB-5.5)",
-    why: "no classifier exists in this engine, so there is no phase call to display beside "
-      + "the preset. The mock printed \"LIQUID WATER · 99.8%\"; that number had no source.",
+    why: "the phase call is OWED. The census computes phase fractions natively today; what "
+      + "is missing is the ABI door that brings them to the page, which is a door and not "
+      + "a discovery. Until it lands the panel shows nothing rather than a guess — the mock "
+      + "printed \"LIQUID WATER · 99.8%\" and that number had no source.",
     owner: "workbench-engine", register: "P13",
     exit: "a classifier that reads the scene rather than the preset that launched it",
   },
   {
     what: "Order parameters q_tet, Q₆, ⟨H-bonds⟩, MSD",
-    why: "not computed anywhere in this build.",
+    why: "the lens stack that computes these runs natively in the census — q_tet, Q₆, "
+      + "H-bond counts and MSD, with their own refusals where a lens does not apply. The "
+      + "work owed is the door, not the lenses.",
     owner: "workbench-engine", register: "P14",
     exit: "the lens stack the census already runs natively, exposed through the ABI",
   },
   {
     what: "Local refinement patch (WB-1.2 / WB-4.4)",
-    why: "no refinement machinery exists. The mock showed a banner with no solve behind it.",
+    why: "refinement is owed to the mesher, and the closure-budget signal it would trigger "
+      + "on is already measured per row. The mock showed a banner with no solve behind it; "
+      + "what is missing is the solve, and it has an owner.",
     owner: "mesher", register: "P16",
     exit: "a refinement patch that opens on a measured closure-budget breach",
   },
@@ -514,18 +520,34 @@ const LADDER = [
     band: "H-bond network",
     scale: "~10 nm",
     lengthM: 1.0e-8,
-    runs: "no certified coarse chart exists",
+    runs: "the carrier that certifies this band is BEING BUILT",
     state: "fenced",
-    owner: "GANTT node G, rung 1",
-    exit: "a promoted molecular chart admitted by measured closure — the H₂O quotient and "
-      + "a derived water–water interaction, per the FSD's own build chain (§7).",
+    owner: "GANTT node G, rung 1 — banked branch (D), NOT certified",
+    // A FENCE IS A BUG UNDER REPAIR, NEVER CONTENT (operator's law). What goes on screen
+    // is the DEBT, its OWNER, and THE BUILD PAYING IT, in the present tense. The measured
+    // numbers are still here — they are the requirement the build has to beat — but they
+    // are the specification of the work, not a display of why refusing was clever.
+    exit: "the physics ladder and the T3 scale-up are the named unblockers; rung 1's "
+      + "readings are the bar that build must clear — 70 chart readings in which the two "
+      + "conditions a certified tier needs are EXACTLY DISJOINT: 36 inside the closure "
+      + "budget and all 36 VOID by anti-vacuity, 32 clearing anti-vacuity and none inside "
+      + "the budget, zero doing both.",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:377",
+    measuredBy: "conformance/water_observatory/RUNG1_RESULTS.md:19",
+    // The mechanism, which is the display-worthy part: the boundary is ALIGNMENT, not
+    // presence and not proximity. That is a result about water, not a note about us.
+    positive: "the molecules are there and the proximity is there — two or more separate "
+      + "oxygen-bearing molecules in 84–99.8% of frames on eight of ten trajectories, "
+      + "sitting within hydrogen-bonding distance for essentially the whole run. What is "
+      + "missing is ALIGNMENT: frames carrying even one inter-molecular H-bond number "
+      + "0–18 out of 20,000. The boundary is orientation, and that is a measurement.",
+    positiveCite: "conformance/water_observatory/RUNG1_RESULTS.md:51",
   },
   {
     band: "fluid element",
     scale: "~µm+",
     lengthM: 1.0e-6,
-    runs: "the carrier is inadmissible BY MEASUREMENT, not by absence",
+    runs: "the carrier that certifies this band is BEING BUILT",
     state: "fenced",
     owner: "GANTT node G, rung 2 — banked NOT CERTIFIED, branch (d) of its own freeze",
     // A MEASURED FENCE, which is a better fence than the one it replaces: "no certified
@@ -542,12 +564,15 @@ const LADDER = [
     // extrapolating from them and pre-committed that UNDETERMINED beats a fitted trend.
     // Naming it as undetermined is what keeps this a fence rather than architecture: the
     // successor ROUTES are named even though the distance is not.
-    exit: "UNDETERMINED by measurement, and pre-committed to be reported that way — two "
-      + "occupancy points with overlapping ranges five orders from the band, which the "
-      + "freeze forbids extrapolating. Named successor routes: a ≥400-atom carrier behind "
-      + "a trajectory-format v2 (33× this scene, past the 16-atom cap), or node LG's "
-      + "lattice tier standalone — never composed, since a tier certified on its own "
-      + "dynamics is not the certified coarse truth of this water.",
+    exit: "carrier-v2 is in build: trajectory format v2 past the 16-atom cap, genuine-3D "
+      + "≥400-atom scenes on the threaded MD path, dims MEASURED rather than declared. "
+      + "Rung 2's numbers are the requirement it must beat — a 1 µm patch is 5.95e6 atoms "
+      + "against a 12-atom certified scene, and the occupancy and transport conditions "
+      + "scissor: coarse cells hold atoms but nothing crosses their faces, and the only "
+      + "transporting grid averages 0.5 atoms per cell. The DISTANCE is undetermined and "
+      + "pre-committed to be reported that way — two occupancy points five orders from the "
+      + "band, which the freeze forbids extrapolating — so the build is named and the "
+      + "estimate is not.",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:378",
     // The measurement that says the fence is real rather than a gap in the schedule.
     measuredBy: "conformance/water_observatory/RUNG2_RESULTS.md:214",
@@ -568,8 +593,10 @@ const LADDER = [
     runs: "the continuum face of the ladder",
     state: "fenced",
     owner: "GANTT node G",
-    exit: "this face becomes live as each rung beneath it certifies. A kilometre of water "
-      + "is ~3×10³¹ molecules; nobody simulates that and this page never pretends to.",
+    exit: "this face goes live as the rungs beneath it certify — rung 1's carrier and "
+      + "rung 2's carrier-v2 are both in build, and this face is their composition. A "
+      + "kilometre of water is ~3×10³¹ molecules; the acuity law is why that is a scale "
+      + "to stand in front of rather than a number to simulate.",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:379",
   },
 ];

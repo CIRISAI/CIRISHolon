@@ -1,13 +1,16 @@
-# The retirement battery — DRAFT for ruling
+# The retirement battery — RULED 2026-09-02
 
 *Drafted 2026-09-02 by workbench-engine at the lead's ruling. §9c says "the old UI retires
 when the 3D workbench is green under its full gate battery — no gap where neither serves."
 That battery was a PHRASE. A phrase cannot gate a promotion: it has no owner, no command,
 and no way to be false. This enumerates it.*
 
-**Status: DRAFT. Not a gate until ruled.** Rows R1–R4 pass today; R5–R9 do not, and three
-of them are not yet built. A battery whose every row already passes would be describing
-the present rather than gating a change, so the failing rows are the useful half.
+**Status: RULED and in force.** The lead's rulings are folded in below. R3 has since gone
+FULL (1a1b302) and now passes. What remains unbuilt is R5's manual receipt, R6's
+registration sweep, R7 (a Route B deliverable and a hard blocker), and R9 (the lead's).
+
+A battery whose every row already passes would be describing the present rather than
+gating a change, so the failing rows are the useful half.
 
 ---
 
@@ -28,17 +31,30 @@ green. The one-directional column is where the next one gets caught.
 |---|---|---|---|---|---|
 | **R1** | the 3D shell compiles in the configuration the site ships | `cargo check --manifest-path crates/holon-render-3d/Cargo.toml --target wasm32-unknown-unknown --features render` (ci-gates 15b) | workbench-engine | **yes** | that it LINKS, that wasm-bindgen matches the lockfile, or that the bundle RUNS. It is a type check. It exists because gate 15's `--features headless` is structurally blind to `hud.rs`/`pick.rs`/`render.rs`, which hid a two-day compile break |
 | **R2** | the shipped workbench artifact runs, and the page's claims hold against it | `node docs/workbench/smoke.mjs` (ci-gates 17b) — 91 checks, ~30 s | workbench-engine | **yes** | anything about the BEVY artifact, which it never loads; and anything about how the page LOOKS. It drives the cdylib through the raw ABI and reads the page's source, not its pixels |
-| **R3** | every figure and fence the page displays resolves to its cited artifact | inside R2 — the `RECORD` and `LADDER` citation passes | workbench-engine | **partial** | **the fences in the page's own fence register and NOT-SERVED list carry no citations at all.** RECORD figures (6) and band cites (4+1 certificate) are gated; the runtime fence list is prose. Closing this is R6 |
+| **R3** | every figure and fence the page displays resolves to its cited artifact | inside R2 — the `RECORD`, `LADDER`, `FENCE_REGISTER` and `NOT_SERVED` passes | workbench-engine | **yes — FULL since 1a1b302** | that a cited row says what the page says ABOUT it. The gate checks a row EXISTS and that a figure is on its line; it does not read the row's prose back. A register row that is itself wrong would pass |
 | **R4** | the page cannot deny a capability the engine has | inside R2 — the `PROSE_CLAIMS` parity table | workbench-engine | **yes** | the reverse: a capability the page CLAIMS and the engine lacks. The absence list covers named exports; a page asserting a physics claim with no export behind it would pass both |
-| **R5** | the Bevy artifact BUILDS — link, bindgen match, bundle runs | `bash engine/crates/holon-render-3d/build-web.sh` in CI, outcome stamped to `docs/build-status.json` | workbench-engine | **no — not a gate yet** | the stamp records the outcome and the page fences on it, but nothing FAILS a promotion on it. Needs a promotion-time read of the stamp. Also: "builds" is not "runs correctly" — see R7 |
-| **R6** | every fence the page renders carries an owner and an exit, and is registered | not built | workbench-engine | **no** | the band fences already carry owner+exit and are gated; the runtime fence register and NOT-SERVED list are not. Registration in `FENCES.md` is the second half — M8/M9/M11 exist, the rest do not |
+| **R5a** | AUTOMATED: the Bevy artifact builds, links, and wasm-bindgen matches the lockfile | `bash engine/crates/holon-render-3d/build-web.sh` in CI; outcome stamped to `docs/build-status.json` and read at promotion time | workbench-engine | **no — stamp exists, promotion-time read does not** | that the bundle RUNS. Compiles-and-links genuinely does not say runs; that is R5b, and splitting them is the lead's ruling |
+| **R5b** | MANUAL: the bundle actually runs, with a receipt | a named command run in a real browser by a human before the promotion commit; outcome recorded IN the promotion commit message — page loaded, sim stepped, N frames, backend used | workbench-engine (runs it) / lead (accepts the receipt) | **no** | anything after the moment it was run. A receipt is a measurement at a time, not a standing property — which is why R5a exists beside it rather than instead of it. Headless-browser CI is a separate node nobody owns yet; it does not block this promotion |
+| **R6** | every fence the page renders carries an owner and an exit, and cites a FENCES.md row that exists | inside R2 since 1a1b302 | workbench-engine (page) / bank-fences (register) | **mostly** | that the register row is CORRECT, and that no fence exists which the page fails to display. Most rows were already filed by bank-fences (P2, P13, P14, P16, C3); what remains is a sweep for page-local fences that still have no row of their own |
 | **R7** | the Bevy shell renders the SAME scene the cdylib is stepping | not built — needs Route B | workbench-engine | **no** | this is the one-Sim law made checkable. Until Route B lands there is nothing to check; after it, the check is that the drawn atom count and positions match the ABI's, which is the only thing standing between "one Sim" and "two Sims that agree for now" |
 | **R8** | a seeded scene replays bit-identically on the shipped artifact | inside R2 — the FNV digest over raw f64 bits, two runs | workbench-engine | **yes, for the cdylib** | the BEVY artifact's determinism, and cross-device replay. WB-5.4 is per device class and the class is declared, not verified across machines |
-| **R9** | no gap: the old UI still serves until the moment the new one is promoted | not built | lead / whoever owns the .io deploy | **no** | this is a deploy-sequencing property, not a code property, and no command I own can check it. Naming it here so it is not discovered during the promotion |
+| **R9** | no gap: the old UI still serves until the moment the new one is promoted | **the lead's, executed and recorded by them.** RULED: the promotion is ONE revertable commit (the pages.yml root switch); the old UI is RETAINED in the tree at its current path; retiring those files is a SEPARATE later commit after the workbench root has served green; rollback is a one-command revert | lead | **owned, not yet executed** | a Pages build that fails after the switch — which the revert covers, and which is why the retirement is a separate commit rather than part of the switch |
 
 ---
 
-## What I would ask the ruling to settle
+## The rulings, as given
+
+1. **R5 splits in two.** Automated: builds + links + bindgen matches. Manual: a
+   human-run browser receipt recorded in the promotion commit message. Headless-browser
+   CI is a later node and does not block; the manual receipt does.
+2. **R6: the fence law stands** — FENCES.md is the single register, every displayed fence
+   gets a row, the page carries owner+exit and cites the row.
+3. **R7 is a HARD promotion blocker**, recommendation adopted. It is a Route B
+   deliverable, so the ordering costs nothing.
+4. **R9 is the lead's**, with its content ruled as above.
+5. **R3 goes FULL before promotion** — done at 1a1b302.
+
+## Superseded — what I had asked the ruling to settle
 
 1. **R5's threshold.** "The artifact builds" is checkable. "The bundle runs" needs a
    headless browser in CI, which this repo does not currently have. I can gate the build

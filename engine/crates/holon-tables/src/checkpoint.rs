@@ -108,10 +108,43 @@ impl Checkpoint {
     /// Open a checkpoint at `path`, replaying whatever complete regions it already holds.
     ///
     /// A missing file is not an error: it is the first run.
-    pub fn open(path: &Path) -> std::io::Result<Checkpoint> {
+    pub fn open(path: &Path, regime: &str) -> std::io::Result<Checkpoint> {
         let mut replay: HashMap<RegionId, Vec<NodeRecord>> = HashMap::new();
         let mut torn = 0usize;
+        // THE REGIME LINE, and it REFUSES rather than warns.
+        //
+        // A checkpoint is a claim that these records could have been produced by THIS run.
+        // They could not, if the binary that wrote them solved under a different regime --
+        // a different device class, a different Davidson budget, a different subtraction
+        // basis. Replaying across that boundary would assemble one artifact out of two
+        // regimes, every gate in the repository would pass it, and nothing downstream could
+        // tell. SATURATION-3 G2 is the measurement that makes this concrete: two device
+        // classes agreeing to 3.033e-15 with 91.0% of 207,025 entries differing BITWISE.
+        // Both correct; not the same artifact.
+        //
+        // So a log written under a different regime is REFUSED, not silently discarded and
+        // not silently mixed: a discard would quietly re-solve 40 hours of work while
+        // reporting success, which is its own M-VACUOUS-SUCCESS shape.
         if path.exists() {
+            if let Ok(first) = std::fs::read_to_string(path) {
+                if let Some(line) = first.lines().find(|l| l.starts_with("REGIME ")) {
+                    let found = line.trim_start_matches("REGIME ").trim();
+                    if found != regime {
+                        return Err(std::io::Error::new(
+                            std::io::ErrorKind::InvalidData,
+                            format!(
+                                "checkpoint {} was written under a DIFFERENT REGIME and is \
+                                 refused rather than mixed.\n  in the log: {found}\n  this \
+                                 run:   {regime}\nA table assembled from two regimes passes \
+                                 every bit-identity gate in this repository and is still two \
+                                 artifacts. Move the old log aside to start fresh, or run \
+                                 under the regime that wrote it.",
+                                path.display()
+                            ),
+                        ));
+                    }
+                }
+            }
             let mut pending: Option<(RegionId, Vec<NodeRecord>)> = None;
             for line in BufReader::new(File::open(path)?).lines() {
                 let line = line?;
@@ -202,7 +235,12 @@ impl Checkpoint {
                 torn += 1;
             }
         }
-        let sink = OpenOptions::new().create(true).append(true).open(path)?;
+        let fresh = !path.exists() || std::fs::metadata(path).map(|m| m.len() == 0).unwrap_or(true);
+        let mut sink = OpenOptions::new().create(true).append(true).open(path)?;
+        if fresh {
+            writeln!(sink, "REGIME {regime}")?;
+            sink.flush()?;
+        }
         Ok(Checkpoint {
             sink: Mutex::new(sink),
             replay,
@@ -296,10 +334,10 @@ mod tests {
         let _ = std::fs::remove_file(&p);
         let recs = vec![rec(1, 0x3FF0_0000_0000_0000), rec(2, 0xBFE0_0000_0000_0001)];
         {
-            let c = Checkpoint::open(&p).unwrap();
+            let c = Checkpoint::open(&p, "test").unwrap();
             c.commit(4, &recs);
         }
-        let c = Checkpoint::open(&p).unwrap();
+        let c = Checkpoint::open(&p, "test").unwrap();
         assert_eq!(c.replayed_regions(), 1);
         assert_eq!(c.torn_regions(), 0);
         // Every field, not just the energy: the record is compared for bit-identity and
@@ -315,7 +353,7 @@ mod tests {
         let p = dir.join("c.log");
         let _ = std::fs::remove_file(&p);
         {
-            let c = Checkpoint::open(&p).unwrap();
+            let c = Checkpoint::open(&p, "test").unwrap();
             c.commit(1, &[rec(1, 9)]);
         }
         // Simulate a death mid-region: a BEGIN and a NODE with no END, which is exactly
@@ -330,7 +368,7 @@ mod tests {
             )
             .unwrap();
         }
-        let c = Checkpoint::open(&p).unwrap();
+        let c = Checkpoint::open(&p, "test").unwrap();
         assert_eq!(c.replayed_regions(), 1, "only region 1 committed");
         assert!(c.region(2).is_none(), "a region with no END must not replay");
         assert_eq!(c.torn_regions(), 1, "the torn region must be REPORTED, not swallowed");
@@ -344,7 +382,7 @@ mod tests {
         let p = dir.join("c.log");
         let _ = std::fs::remove_file(&p);
         {
-            let c = Checkpoint::open(&p).unwrap();
+            let c = Checkpoint::open(&p, "test").unwrap();
             c.commit(3, &[rec(1, 0x1234), rec(2, 0x5678)]);
         }
         // Flip one hex digit in a NODE line, leaving the END digest as it was.
@@ -352,7 +390,7 @@ mod tests {
         let bad = src.replacen("0000000000001234", "0000000000001235", 1);
         assert_ne!(src, bad, "the corruption must actually change the bytes");
         std::fs::write(&p, bad).unwrap();
-        let c = Checkpoint::open(&p).unwrap();
+        let c = Checkpoint::open(&p, "test").unwrap();
         assert_eq!(c.replayed_regions(), 0, "a region that fails its digest must not replay");
         assert_eq!(c.torn_regions(), 1);
         let _ = std::fs::remove_file(&p);

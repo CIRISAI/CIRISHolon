@@ -81,7 +81,7 @@ fn a_resumed_run_is_bit_identical_to_an_uninterrupted_one() {
     let p = tmp("resume");
     let _ = std::fs::remove_file(&p);
     {
-        let c = Checkpoint::open(&p).unwrap();
+        let c = Checkpoint::open(&p, "test").unwrap();
         let _ = generate_surface(&SurfaceSpec::new(&s, grid()).with_checkpoint(Some(&c)), 3);
     }
     let full = std::fs::read_to_string(&p).unwrap();
@@ -97,7 +97,7 @@ fn a_resumed_run_is_bit_identical_to_an_uninterrupted_one() {
     std::fs::write(&p, format!("{cut}{torn_tail}\n")).unwrap();
 
     // Run B: resume from that partial log.
-    let c = Checkpoint::open(&p).unwrap();
+    let c = Checkpoint::open(&p, "test").unwrap();
     assert_eq!(c.replayed_regions(), 1, "exactly one region should replay");
     assert!(
         c.torn_regions() >= 1,
@@ -135,7 +135,7 @@ fn checkpointing_does_not_move_the_table_when_nothing_is_replayed() {
     let plain = generate_surface(&SurfaceSpec::new(&s, grid()), 3);
     let p = tmp("fresh");
     let _ = std::fs::remove_file(&p);
-    let c = Checkpoint::open(&p).unwrap();
+    let c = Checkpoint::open(&p, "test").unwrap();
     assert_eq!(c.replayed_regions(), 0);
     let written = generate_surface(&SurfaceSpec::new(&s, grid()).with_checkpoint(Some(&c)), 3);
     assert_eq!(written.replayed, 0, "a fresh run must replay nothing");
@@ -154,11 +154,11 @@ fn a_replayed_run_is_bit_identical_at_every_worker_count() {
     let p = tmp("workers");
     let _ = std::fs::remove_file(&p);
     {
-        let c = Checkpoint::open(&p).unwrap();
+        let c = Checkpoint::open(&p, "test").unwrap();
         let _ = generate_surface(&SurfaceSpec::new(&s, grid()).with_checkpoint(Some(&c)), 2);
     }
     for w in [1usize, 4, 8] {
-        let c = Checkpoint::open(&p).unwrap();
+        let c = Checkpoint::open(&p, "test").unwrap();
         assert!(c.replayed_regions() > 0);
         let r = generate_surface(&SurfaceSpec::new(&s, grid()).with_checkpoint(Some(&c)), w);
         assert_eq!(
@@ -179,15 +179,45 @@ fn the_committed_log_replays_the_whole_table_and_solves_nothing() {
     let p = tmp("complete");
     let _ = std::fs::remove_file(&p);
     {
-        let c = Checkpoint::open(&p).unwrap();
+        let c = Checkpoint::open(&p, "test").unwrap();
         let _ = generate_surface(&SurfaceSpec::new(&s, grid()).with_checkpoint(Some(&c)), 3);
     }
-    let c = Checkpoint::open(&p).unwrap();
+    let c = Checkpoint::open(&p, "test").unwrap();
     assert_eq!(c.torn_regions(), 0, "a clean run must leave no torn region");
     let r = generate_surface(&SurfaceSpec::new(&s, grid()).with_checkpoint(Some(&c)), 3);
     let solved = r.records.len() - r.mirrored - r.replayed;
     assert_eq!(solved, 0, "a fully committed log still solved {solved} node(s)");
     assert_eq!(r.table_bytes(), plain.table_bytes());
     assert_eq!(r.digest(), plain.digest());
+    let _ = std::fs::remove_file(&p);
+}
+
+#[test]
+fn a_log_from_another_regime_is_refused_not_mixed() {
+    // The regime line REFUSES rather than warning, and rather than silently discarding.
+    // A table assembled out of two regimes passes every bit-identity gate in this
+    // repository and is still two artifacts -- SATURATION-3 G2 measured two device classes
+    // agreeing to 3.033e-15 with 91.0% of 207,025 entries differing bitwise. A silent
+    // DISCARD would be almost as bad in the other direction: it would quietly re-solve the
+    // whole run while reporting success.
+    let s = Tiny { species: [HYDROGEN; 3] };
+    let p = tmp("regime");
+    let _ = std::fs::remove_file(&p);
+    {
+        let c = Checkpoint::open(&p, "device=cpu budget=1200").unwrap();
+        let _ = generate_surface(&SurfaceSpec::new(&s, grid()).with_checkpoint(Some(&c)), 2);
+    }
+    // Same path, different regime: must refuse.
+    let msg = match Checkpoint::open(&p, "device=gpu budget=1200") {
+        Ok(_) => panic!("a log from another regime must be REFUSED, and it opened"),
+        Err(e) => format!("{e}"),
+    };
+    assert!(msg.contains("DIFFERENT REGIME"), "the refusal must say why: {msg}");
+    assert!(msg.contains("device=cpu"), "the refusal must name what the log holds: {msg}");
+    assert!(msg.contains("device=gpu"), "the refusal must name what this run is: {msg}");
+    // CONTROL: the matching regime still opens and still replays, or the refusal above
+    // would be a gate that rejects everything.
+    let ok = Checkpoint::open(&p, "device=cpu budget=1200").expect("matching regime opens");
+    assert!(ok.replayed_regions() > 0, "the matching regime must still replay");
     let _ = std::fs::remove_file(&p);
 }

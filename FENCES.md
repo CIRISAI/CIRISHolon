@@ -47,7 +47,7 @@ count meaningless.
 
 ## Verdict
 
-**50 fences.** PHYSICS-HONESTY 19 · COMPUTE-PRICED 20 · MODEL-FENCE 11.
+**51 fences.** PHYSICS-HONESTY 19 · COMPUTE-PRICED 21 · MODEL-FENCE 11.
 *(M11 added 2026-09-01 by workbench-engine, at the lead's ruling on the swallowed
 3D-build failure — the counts above move with it, because a register whose total
 disagrees with its own rows is worse than one that is merely out of date.)*
@@ -100,7 +100,7 @@ cannot be audited against the state it was written from.
 verification: that fence is already discharged. Its instructions are still in the tree —
 see finding **F-10**.)*
 
-## COMPUTE-PRICED — 20
+## COMPUTE-PRICED — 21
 
 *Affordable once the GPU solve is the path. Exit is GANTT node **F** for every row; where
 F alone is not sufficient the second requirement is named.*
@@ -127,6 +127,7 @@ F alone is not sufficient the second requirement is named.*
 | C18 | `engine/ci-gates.sh:574` `CRATE_ALLOW["holon-gpu"]` | running holon-gpu's 12 determinism tests in CI — GitHub runners have no NVIDIA GPU (tested green on the 4090 dev box) | gpu-mesh lane / team-lead | a CI runner with a GPU, "at which point this entry converts to a real invocation" | F |
 | C19 | `ci-gates.sh:575` `CRATE_ALLOW["q8-mps"]` | the rest of q8-mps beyond gate 16b's `c2_tdvp_gates` — a live full-grid run is hours deep and a gate must never run `--ignored` full-grid tests | the C2 / tower lane | the grid completes; "this entry converts to a plain `-p q8-mps`" | F |
 | C20 | `q8-mps/tests/full_grid_gates.rs:30` `#[ignore]` | the full-grid validation on a default `cargo test` — minutes per configuration | q8-mps | F shortens it; today, run explicitly with `-- --ignored` | F |
+| C21 | `holon-chem/src/ion_table.rs` feasibility door (G10) | tabulating (H3O+ . H2O) — I-2's headline ionic pair — MEASURED at 9,018,009 determinants over 15 orbitals, past `MPS_ROUTE_THRESHOLD` (50,000) and past the MPS route's 9-orbital reach; the refusal carries both numbers | ion-tables / node F | F, or the DMRG cluster seam (MPS) — exit is the measured determinant count coming under a served route's reach | F, MPS |
 
 ## MODEL-FENCE — 11
 

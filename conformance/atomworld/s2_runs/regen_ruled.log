@@ -1,0 +1,105 @@
+# THE ONE AUTHORIZED REGENERATION, under the shared 4884704 cause line.
+# Supersedes: the 2026-08-30 ask-change run (budget 4000) and my own
+# regen_budget5000.ABANDONED (killed at row 32 while the ruling was pending).
+# Cause accepted and banked: 4884704 reassociated sigma_direct_t's inner
+# accumulation, changing what the solver RETURNS. Movement is ULP-scale
+# (2.558e-13 Ha on the node that failed); the 4.087e-7 relative figure is
+# cancellation amplification and is NOT a numerical problem.
+# binary sha256: 3cc2ecaafa23c2cc296f22b67915f73a77866b20ea04c83ba831f72d61feb765
+# HEAD: e3d7eb608d96446810c5ffc383eb49f7384fe1e7
+# launched: 2026-09-01T21:58:40-05:00
+# fine 65 x 65 x 49, stretch a = 3
+# box x, y in [0.7, 15], c in [0.05, 1.414214]
+# E(O) = -73.80415024579725980  E(H) = -0.46658184955727550  threads = 8
+  row   6 done (1/65, 2957 s)
+  row   7 done (2/65, 3050 s)
+  row   4 done (3/65, 3107 s)
+  row   3 done (4/65, 3556 s)
+  row   2 done (5/65, 3588 s)
+  row   0 done (6/65, 3610 s)
+  row   5 done (7/65, 3704 s)
+  row   1 done (8/65, 3717 s)
+  row  12 done (9/65, 5801 s)
+  row  10 done (10/65, 5931 s)
+  row   9 done (11/65, 5992 s)
+  row   8 done (12/65, 6002 s)
+  row  11 done (13/65, 6086 s)
+  row  15 done (14/65, 6395 s)
+  row  13 done (15/65, 6687 s)
+  row  14 done (16/65, 6801 s)
+  row  16 done (17/65, 9984 s)
+  row  19 done (18/65, 10148 s)
+  row  17 done (19/65, 10241 s)
+  row  18 done (20/65, 10542 s)
+  row  20 done (21/65, 10573 s)
+  row  21 done (22/65, 10885 s)
+  row  22 done (23/65, 10890 s)
+  row  23 done (24/65, 11558 s)
+  row  24 done (25/65, 14258 s)
+  row  25 done (26/65, 14488 s)
+  row  26 done (27/65, 15089 s)
+  row  28 done (28/65, 15296 s)
+  row  27 done (29/65, 15473 s)
+  row  29 done (30/65, 15661 s)
+  row  30 done (31/65, 16057 s)
+  row  31 done (32/65, 16539 s)
+  row  32 done (33/65, 19513 s)
+  row  33 done (34/65, 22069 s)
+  row  39 done (35/65, 24724 s)
+  row  40 done (36/65, 24839 s)
+  row  35 done (37/65, 25166 s)
+  row  36 done (38/65, 26172 s)
+  row  34 done (39/65, 26360 s)
+  row  37 done (40/65, 27225 s)
+  row  41 done (41/65, 27266 s)
+  row  38 done (42/65, 28358 s)
+  row  42 done (43/65, 28679 s)
+  row  43 done (44/65, 28780 s)
+  row  44 done (45/65, 29359 s)
+  row  46 done (46/65, 30218 s)
+  row  45 done (47/65, 30396 s)
+  row  47 done (48/65, 30957 s)
+  row  48 done (49/65, 31511 s)
+  row  50 done (50/65, 31750 s)
+  row  51 done (51/65, 31798 s)
+  row  49 done (52/65, 32366 s)
+  row  52 done (53/65, 32375 s)
+  row  53 done (54/65, 32446 s)
+  row  55 done (55/65, 32607 s)
+  row  54 done (56/65, 32775 s)
+  row  62 done (57/65, 32834 s)
+  row  58 done (58/65, 32839 s)
+  row  57 done (59/65, 32854 s)
+  row  60 done (60/65, 32933 s)
+  row  63 done (61/65, 32965 s)
+  row  61 done (62/65, 32984 s)
+  row  64 done (63/65, 32996 s)
+  row  59 done (64/65, 33039 s)
+  row  56 done (65/65, 33082 s)
+# fine node set built in 33082 s
+# peak |dE3| on a node = 7.637817e-1 Ha
+
+  nr   nu     max |dV|     rms |dV|     solves                 worst at (x, y, c)   true dE3
+  65   49     7.680e-4     6.326e-5     105105              (1.766, 2.576, 1.373)   7.111e-2
+  65   25     3.876e-3     2.710e-4      53625              (1.766, 2.576, 1.373)   7.111e-2
+  65   13     1.607e-2     1.033e-3      27885              (1.766, 2.576, 1.373)   7.111e-2
+  65    9     2.378e-2     1.685e-3      19305              (1.766, 2.576, 1.373)   7.111e-2
+  33   49     1.061e-3     9.796e-5      27489              (1.000, 1.155, 0.065)   7.420e-1
+  33   25     3.754e-3     2.731e-4      14025              (1.766, 2.576, 1.373)   7.111e-2
+  33   13     1.591e-2     1.021e-3       7293              (1.766, 2.576, 1.373)   7.111e-2
+  33    9     2.359e-2     1.679e-3       5049              (1.766, 2.576, 1.373)   7.111e-2
+  17   49     1.040e-2     6.871e-4       7497              (1.000, 1.155, 0.065)   7.420e-1
+  17   25     1.060e-2     7.229e-4       3825              (1.000, 1.155, 0.065)   7.420e-1
+  17   13     1.069e-2     9.985e-4       1989              (1.000, 1.155, 0.065)   7.420e-1
+  17    9     1.372e-2     1.467e-3       1377              (1.766, 2.576, 1.373)   7.111e-2
+   9   49     2.715e-2     2.986e-3       2205              (1.000, 1.155, 0.065)   7.420e-1
+   9   25     2.719e-2     2.969e-3       1125              (1.000, 1.155, 0.065)   7.420e-1
+   9   13     2.742e-2     2.990e-3        585              (1.000, 1.155, 0.065)   7.420e-1
+   9    9     2.783e-2     3.143e-3        405              (1.000, 1.155, 0.065)   7.420e-1
+
+# total 33166 s
+wrote /home/emoore/CIRISHolon/engine/crates/holon-chem/tests/data/s2/s2_water_table.txt (1787303 bytes)
+  peak |dE3|             = 7.637817e-1 Ha
+  curvature_envelope     = 3.969306e3 Ha/bohr^2
+  curvature_per_gradient = 1.810238e4 /bohr
+  sort_kink              = 0.000e0 Ha/bohr

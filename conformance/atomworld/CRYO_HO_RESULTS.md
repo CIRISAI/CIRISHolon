@@ -13,7 +13,7 @@ CONTEXT and nothing is scored against them.*
 | arm | verdict |
 |---|---|
 | **ARM 1 — liquid H₂** | **MEASURED NO WELL, with the number and the mechanism.** The model's exact H₂–H₂ interaction has no well deeper than the staked 1.0e-5 Ha anywhere at R ≥ 3 bohr. Its deepest attraction is **−5.592e-6 Ha = −1.77 K**, T-shaped, at R = 8.00 bohr — and it is **not dispersion**: the tail is `R^-5.00` with the classical quadrupole–quadrupole angular pattern, measured out to 100 bohr against a floor control. This model has no liquid hydrogen — and the quench ladder agrees: six H₂ molecules at every rung from 300 K down to 3 K, largest component ≤ 4 in 15 of 15 runs, nothing growing. |
-| **ARM 2 — liquid O₂** | **One O12 aggregate at every rung from 300 K to 3 K**, fence exactly 220 every step, freezing (mobility 18.5 → 0.0) but never molecular — and it is NOT liquid oxygen: with no `(O,O,O)` surface the pair curve has no valence saturation. **The banked O–O curve IS a triplet curve at its well** (`⟨S²⟩ = 2.000000000`, multiplicity 3), so no paramagnetic fence is owed there — but the curve **changes spin state along its own length**, becoming S = 0 between 2.8 and 3.5 bohr, which no field in the banked artifact records. The model cannot represent a molecular O₂ liquid at all: the `(O,O,O)` surface does not exist and the exact O₂–O₂ reference is priced out at 23,474,025 determinants. |
+| **ARM 2 — liquid O₂** | **One O12 aggregate at every rung from 300 K to 3 K**, fence exactly 220 every step, freezing (mobility 18.5 → 0.0) but never molecular — and it is NOT liquid oxygen: with no `(O,O,O)` surface the pair curve has no valence saturation. **The banked O–O curve IS a triplet curve at its well** (`⟨S²⟩ = 2.000000000`, multiplicity 3), so no paramagnetic fence is owed there — but the curve **changes spin state three times along its own length** (triplet → S = 0 → quintet → degenerate-and-UNRESOLVED), which no field in the banked artifact records — and the last of those **locates the banked curve's own `IterationCap`**: at dissociation the multiplet is degenerate, so there is no gap to converge against and more budget cannot buy one. The model cannot represent a molecular O₂ liquid at all: the `(O,O,O)` surface does not exist and the exact O₂–O₂ reference is priced out at 23,474,025 determinants. |
 | **ARM 3 — the metallic-hydrogen fence** | **The fragment-local expansion never converges on this scene, at any density tested.** `|ΔMBE4| < |ΔMBE3| < |ΔMBE2|` fails at every rung including the loosest, because the three- and four-body terms have opposite signs and comparable size. The 1 mHa/atom crossing sits at **a = 5.50 bohr, n = 0.0661 atoms/bohr², P₂D = +1.254e-4 Ha/bohr²** — reported as a measurement, because its gate is VOID (below). |
 
 **Two of the four pre-registered plants did not fire, and both voids stand.** That is the
@@ -307,22 +307,42 @@ say "triplet".
 G5 is staked at one geometry; the banked curve is 96 knots over a range, and multiplicity
 is a property of a geometry.
 
-| R (bohr) | ⟨S²⟩ | multiplicity | E(S_z=1) − E(S_z=0) |
-|---|---|---|---|
-| 1.800 | 2.000000 | 3 | +5.7e-14 |
-| 2.200 | 2.000000 | 3 | −1.4e-12 |
-| **2.442** | **2.000000** | **3** | +3.1e-13 |
-| 2.800 | 2.000000 | 3 | −4.5e-13 |
-| 3.500 | **0.000000** | **1** | +2.922e-3 |
-| 4.500 | **0.000000** | **1** | +1.682e-3 |
+| R (bohr) | ⟨S²⟩ | multiplicity | E(S_z=1) − E(S_z=0) | exit | residual |
+|---|---|---|---|---|---|
+| 1.800 | 2.000000 | 3 — triplet | +5.7e-14 | Converged | 8.2e-11 |
+| 2.200 | 2.000000 | 3 — triplet | −1.4e-12 | Converged | 8.6e-11 |
+| **2.442** | **2.000000** | **3 — triplet** | +3.1e-13 | Converged | 8.2e-11 |
+| 2.800 | 2.000000 | 3 — triplet | −4.5e-13 | Converged | 8.0e-11 |
+| 3.500 | **0.000000** | **1** | +2.922e-3 | Converged | 7.5e-11 |
+| 4.500 | **0.000000** | **1** | +1.682e-3 | Converged | 9.7e-11 |
+| 6.000 | **6.000000** | **5 — quintet** | +1.4e-13 | Converged | 8.6e-11 |
+| 8.000 | **2.743455** | **UNRESOLVED** | −1.5e-9 | **IterationCap** | **9.3e-8** |
 
-**The banked O–O curve changes spin state along its own length.** It is a triplet through
-the well and an S = 0 state from ~3.5 bohr outward, so there is a spin crossing between
-2.8 and 3.5 bohr. The minimal-|S_z| rule follows the lowest state across it, which is
-exactly what it is designed to do — and it means **the curve is not a single-multiplet
-curve, and no field in the banked artifact records that**. G5's verdict is about the well,
-where the bonding is; the crossing is scope G5 did not claim and is now measured rather
-than owed.
+**The banked O–O curve changes spin state three times along its own length**, and **all
+three of G5's pre-committed branches occur somewhere on it**: triplet through the well,
+S = 0 from about 3.5 bohr, quintet by 6 bohr, and UNRESOLVED at 8. The minimal-|S_z| rule
+follows the lowest state across every crossing, which is exactly what it is designed to do
+— and it means **the curve is not a single-multiplet curve, and no field in the banked
+artifact records that**. G5's verdict is about the well, where the bonding is; the
+crossings are scope G5 did not claim and are now measured rather than owed.
+
+The sequence is the two oxygen atoms' multiplet structure resolving as they separate: at
+8 bohr they are two dissociated ³P atoms, whose S = 0, 1 and 2 states are degenerate, so
+the eigensolver returns an arbitrary mixture of degenerate components. `⟨S²⟩ = 2.743455`
+is `S(S+1)` for no half-integer S at all, and `multiplicity` refuses it rather than
+rounding — the UNRESOLVED branch working as written. SATURATION-2's own spin audit
+described exactly this shape on the (O,H,H) surface ("56 are degenerate — 2S = 0, 1 and 2
+all occur, and none is asserted on").
+
+**And it locates the banked curve's `IterationCap`.** That row is the only one that did not
+converge: exit `IterationCap`, residual 9.3e-8 against 8e-11 everywhere else — three orders
+worse — and `E(S_z=1)` sitting 1.5e-9 Ha *below* `E(S_z=0)`, which is degeneracy, not an
+ordering. The banked O–O curve's inherited disclosure (`IterationCap`, budget 5000,
+`worst_residual 4.809e-6`) has been carried on every number in this arm as a fact without a
+cause. **The cause is the dissociation tail: where the spin multiplet is degenerate there is
+no gap for Davidson to converge against, and more budget cannot buy one.** That is a
+different fact from a budget being too small, and it is the distinction
+**M-EXIT-DISCRIMINATOR** exists to preserve.
 
 ### What ARM 2 cannot reach, priced
 

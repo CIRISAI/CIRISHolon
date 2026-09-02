@@ -23,10 +23,18 @@ scratchpad/crystal/schwinger.py, mirrored here as `ed_build` with the same stati
 Modes:
     gauge                  plants (i) and (iii): ED vs DMRG at N=12, x=4; carrier nonzero
     pilot X N CHI          time one vacuum and one two-pair ground state (sizing only)
-    staked4 X              the frozen grid for one column, checkpointed per configuration
-    plant-coulomb-off      plant (ii): the x=4 column under the mutation; G1 must refuse (a)
-    analyze                the gates, from checkpoints; prints the results-document numbers
+    staked4 X [py|rs]      the frozen grid for one column, checkpointed per configuration
+    plant-coulomb-off [py|rs]  plant (ii): the x=4 column under the mutation; G1 must refuse (a)
+    analyze [py|rs]        the gates, from checkpoints; prints the results-document numbers
+    crosscheck X           amendment A1: the engine arm against the Python arm on the staked points
+
+Drivers (amendment A1, pre-data): `py` is the banked Python driver (this file, single
+process); `rs` is the engine's own DMRG (`q8-mps`, `examples/schwinger4.rs`, the same
+six-channel tensor), one process per configuration fanned over the machine. The `rs` arm's
+checkpoints are `ckpt4_rs_*`; its column outputs `schwinger4_rs_x<x>.json`.
 """
+import subprocess
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import inspect
 import json
@@ -229,8 +237,27 @@ def energy(n, x, chi, charges, mutate=None, init=None):
 
 # ----------------------------------------------------------------- checkpoints
 
+DRIVER = "py"
+RS_BIN = os.environ.get("SCHWINGER4_BIN", os.path.join(HERE, "..", "..", "..", "engine", "target", "release", "examples", "schwinger4"))
+RS_WORKERS = int(os.environ.get("SCHWINGER4_WORKERS", "24"))
+
+
 def ckpt_path(tag):
     return os.path.join(HERE, "..", f"ckpt4_{tag}.npz")
+
+
+def rs_energy(n, x, chi, charges, mutate=None):
+    """One ground state on the engine driver: a subprocess, JSON on stdout."""
+    args = [RS_BIN, "--n", str(n), "--x", str(x), "--chi", str(chi),
+            "--charges", ",".join(f"{p}:{q}" for p, q in charges), "--sweeps", "80", "--tol", "1e-9"]
+    if mutate == "coulomb-off":
+        args.append("--coulomb-off")
+    env = dict(os.environ, OMP_NUM_THREADS="1")
+    r = subprocess.run(args, capture_output=True, text=True, env=env)
+    if r.returncode != 0:
+        raise RuntimeError(f"engine driver failed ({r.returncode}): {r.stderr[-400:]}")
+    z = json.loads(r.stdout.strip().splitlines()[-1])
+    return float(z["energy"]), z
 
 
 def loadavg():
@@ -241,38 +268,65 @@ def loadavg():
 
 
 def run_point(tag, n, x, chi, charges, mutate=None):
+    if DRIVER == "rs":
+        tag = "rs_" + tag
     ck = ckpt_path(tag)
     if os.path.exists(ck):
         z = np.load(ck, allow_pickle=True)
         e = float(z["e"])
-        print(f"{tag:28s} E={e:.10f}  [checkpoint]", flush=True)
+        print(f"{tag:31s} E={e:.10f}  [checkpoint]", flush=True)
         return e
     t0 = time.time()
+    if DRIVER == "rs":
+        e, meta = rs_energy(n, x, chi, charges, mutate)
+        np.savez(ck, e=e, charges=np.array(charges, dtype=object), n=n, x=x, chi=chi,
+                 mutate=str(mutate), seconds=time.time() - t0, sweeps=meta["sweeps"],
+                 converged=meta["converged"], worst_residual=meta["worst_residual"],
+                 max_discarded=meta["max_discarded"], driver="rs")
+        print(f"{tag:31s} E={e:.10f}  {time.time() - t0:8.1f}s  sweeps {meta['sweeps']:3d} "
+              f"conv {meta['converged']} resid {meta['worst_residual']:.1e} loadavg {loadavg():.1f}", flush=True)
+        return e
     e, _ = energy(n, x, chi, charges, mutate)
     np.savez(ck, e=e, charges=np.array(charges, dtype=object), n=n, x=x, chi=chi,
-             mutate=str(mutate), seconds=time.time() - t0)
-    print(f"{tag:28s} E={e:.10f}  {time.time() - t0:8.1f}s  loadavg {loadavg():.1f}", flush=True)
+             mutate=str(mutate), seconds=time.time() - t0, driver="py")
+    print(f"{tag:31s} E={e:.10f}  {time.time() - t0:8.1f}s  loadavg {loadavg():.1f}", flush=True)
     return e
 
 
-def column(x, mutate=None, chi=CHI, prefix=""):
-    """Every configuration of one column at one χ; returns the energies keyed by label."""
+def run_points(jobs):
+    """`jobs`: list of (label, tag, n, x, chi, charges, mutate). On the engine driver the
+    points run in a process pool; on the Python driver, sequentially. Returns {label: E}."""
+    if DRIVER == "rs":
+        with ThreadPoolExecutor(max_workers=RS_WORKERS) as ex:
+            futs = {label: ex.submit(run_point, tag, n, x, chi, ch, mut) for (label, tag, n, x, chi, ch, mut) in jobs}
+            return {label: f.result() for label, f in futs.items()}
+    return {label: run_point(tag, n, x, chi, ch, mut) for (label, tag, n, x, chi, ch, mut) in jobs}
+
+
+def column_jobs(x, mutate=None, chi=CHI, prefix=""):
+    """Every configuration of one column at one χ, as jobs (label, tag, n, x, chi, charges, mutate)."""
     g = GRID[x]
     n, s = g["N"], g["s"]
     mut = f"-{mutate}" if mutate else ""
     key = lambda name: f"{prefix}x{x}_N{n}_chi{chi}{mut}_{name}"
-    out = {}
-    out["E0"] = run_point(key("E0"), n, x, chi, [], mutate)
+    jobs = [("E0", key("E0"), n, x, chi, [], mutate)]
+    seen = {"E0"}
     for d in g["d"]:
         p1, p2 = positions(n, s, d)
         for p in (p1, p2):
             lab = f"E1_p{p}"
-            if lab not in out:
-                out[lab] = run_point(key(lab), n, x, chi, pair(p, s), mutate)
-        out[f"E2_d{d}"] = run_point(key(f"E2_d{d}"), n, x, chi, pair(p1, s) + pair(p2, s), mutate)
+            if lab not in seen:
+                seen.add(lab)
+                jobs.append((lab, key(lab), n, x, chi, pair(p, s), mutate))
+        jobs.append((f"E2_d{d}", key(f"E2_d{d}"), n, x, chi, pair(p1, s) + pair(p2, s), mutate))
         if g["flip"] and d >= FIT_DMIN and mutate is None and chi == CHI:
-            out[f"E2f_d{d}"] = run_point(key(f"E2f_d{d}"), n, x, chi, pair(p1, s) + pair(p2, s, -1), mutate)
-    return out
+            jobs.append((f"E2f_d{d}", key(f"E2f_d{d}"), n, x, chi, pair(p1, s) + pair(p2, s, -1), mutate))
+    return jobs
+
+
+def column(x, mutate=None, chi=CHI, prefix=""):
+    """Every configuration of one column at one χ; returns the energies keyed by label."""
+    return run_points(column_jobs(x, mutate, chi, prefix))
 
 
 def v_of_d(x, out, flipped=False):
@@ -354,26 +408,42 @@ def mode_pilot(x, n, chi):
               flush=True)
 
 
+def column_file(x):
+    return os.path.join(HERE, "..", f"schwinger4_{'rs_' if DRIVER == 'rs' else ''}x{x}.json")
+
+
+def driver_provenance():
+    if DRIVER == "rs":
+        return {"driver": "rs", "binary_sha256": hashlib.sha256(open(RS_BIN, "rb").read()).hexdigest(),
+                "binary": RS_BIN}
+    return {"driver": "py", "driver_sha256": DRIVER_SHA}
+
+
 def mode_staked(x):
     g = GRID[x]
-    print(f"# SCHWINGER-4 column x={x} N={g['N']} chi={CHI}; driver sha256 {DRIVER_SHA[:16]}; "
+    print(f"# SCHWINGER-4 column x={x} N={g['N']} chi={CHI}; driver {DRIVER} {driver_provenance()}; "
           f"kappa_pred {kappa_pred(x):.6f}/site", flush=True)
-    out40 = column(x, chi=CHI)
-    # the screening premise: s=3 against s=2 at the first pair's own position
     n, s = g["N"], g["s"]
     p1, _ = positions(n, s, g["d"][0])
-    e1_s3 = run_point(f"x{x}_N{n}_chi{CHI}_E1s3_p{p1}", n, x, CHI, pair(p1, 3))
+    jobs = column_jobs(x, chi=CHI)
+    # the screening premise: s=3 against s=2 at the first pair's own position
+    jobs.append(("E1_s3", f"x{x}_N{n}_chi{CHI}_E1s3_p{p1}", n, x, CHI, pair(p1, 3), None))
     # chi = 64 checks at the staked d
-    out64 = {"E0": run_point(f"x{x}_N{n}_chi64_E0", n, x, 64, [])}
+    jobs64 = [("E0", f"x{x}_N{n}_chi64_E0", n, x, 64, [], None)]
+    seen = {"E0"}
     for d in g["chi64_at"]:
         q1, q2 = positions(n, s, d)
         for p in (q1, q2):
             lab = f"E1_p{p}"
-            if lab not in out64:
-                out64[lab] = run_point(f"x{x}_N{n}_chi64_{lab}", n, x, 64, pair(p, s))
-        out64[f"E2_d{d}"] = run_point(f"x{x}_N{n}_chi64_E2_d{d}", n, x, 64, pair(q1, s) + pair(q2, s))
-    json.dump({"x": x, "chi40": out40, "chi64": out64, "E1_s3": e1_s3, "driver_sha256": DRIVER_SHA},
-              open(os.path.join(HERE, "..", f"schwinger4_x{x}.json"), "w"), indent=1)
+            if lab not in seen:
+                seen.add(lab)
+                jobs64.append((lab, f"x{x}_N{n}_chi64_{lab}", n, x, 64, pair(p, s), None))
+        jobs64.append((f"E2_d{d}", f"x{x}_N{n}_chi64_E2_d{d}", n, x, 64, pair(q1, s) + pair(q2, s), None))
+    out = run_points(jobs + [(f"chi64:{l}",) + j[1:] for (l, *j) in [(j[0], *j[1:]) for j in jobs64]])
+    out40 = {k: v for k, v in out.items() if not k.startswith("chi64:") and k != "E1_s3"}
+    out64 = {k[len("chi64:"):]: v for k, v in out.items() if k.startswith("chi64:")}
+    json.dump({"x": x, "chi40": out40, "chi64": out64, "E1_s3": out["E1_s3"], **driver_provenance()},
+              open(column_file(x), "w"), indent=1)
     print("COLUMN_DONE", flush=True)
 
 
@@ -387,14 +457,14 @@ def mode_plant_coulomb_off():
           f"(carrier {'nonzero' if abs(vs.get(2, 0.0)) > 1e-3 else 'VACUOUS'}); "
           f"kappa_fit={k} R2={r2} n={npts} -> G1 reads {verdict}: "
           f"{'FIRES' if verdict != 'a' else 'MISSED'}", flush=True)
-    json.dump({"vs": {str(d): v for d, v in vs.items()}, "kappa": k, "r2": r2, "g1": verdict},
-              open(os.path.join(HERE, "..", "schwinger4_plant_coulomb_off.json"), "w"), indent=1)
+    json.dump({"vs": {str(d): v for d, v in vs.items()}, "kappa": k, "r2": r2, "g1": verdict, **driver_provenance()},
+              open(os.path.join(HERE, "..", f"schwinger4_{'rs_' if DRIVER == 'rs' else ''}plant_coulomb_off.json"), "w"), indent=1)
 
 
 def mode_analyze():
     report = {}
     for x in GRID:
-        f = os.path.join(HERE, "..", f"schwinger4_x{x}.json")
+        f = column_file(x)
         if not os.path.exists(f):
             print(f"x={x}: no column file yet")
             continue
@@ -438,11 +508,30 @@ def mode_analyze():
                   f"{(abs(kf - k) / kappa_pred(x)) if (kf and k) else float('nan'):.4f})")
             rep["g2"] = {"all_signs_flip": bool(signs_flip), "kappa_flip": kf, "r2": r2f}
         report[str(x)] = rep
-    json.dump(report, open(os.path.join(HERE, "..", "schwinger4_analysis.json"), "w"), indent=1)
+    json.dump(report, open(os.path.join(HERE, "..", f"schwinger4_{'rs_' if DRIVER == 'rs' else ''}analysis.json"), "w"), indent=1)
+
+
+def mode_crosscheck(x):
+    """Amendment A1: the engine arm's E0 and two E2(d) against the Python arm's checkpoints,
+    within the χ-premise band on their contribution to V. Reads whatever checkpoints exist."""
+    g = GRID[x]
+    n, s = g["N"], g["s"]
+    checks = ["E0"] + [f"E2_d{d}" for d in g["chi64_at"][:2]]
+    for lab in checks:
+        tag = f"x{x}_N{n}_chi{CHI}_{lab}"
+        py, rs = ckpt_path(tag), ckpt_path("rs_" + tag)
+        if not (os.path.exists(py) and os.path.exists(rs)):
+            print(f"x={x} {lab}: waiting (py {os.path.exists(py)}, rs {os.path.exists(rs)})")
+            continue
+        e_py, e_rs = float(np.load(py, allow_pickle=True)["e"]), float(np.load(rs, allow_pickle=True)["e"])
+        print(f"x={x} {lab}: py {e_py:.10f} rs {e_rs:.10f} |diff| {abs(e_py - e_rs):.2e} "
+              f"{'ok' if abs(e_py - e_rs) <= 1e-4 else 'MISS'} (band max(1e-4, 5% of V) on V)")
 
 
 if __name__ == "__main__":
     mode = sys.argv[1] if len(sys.argv) > 1 else ""
+    if len(sys.argv) > 2 and sys.argv[-1] in ("py", "rs"):
+        DRIVER = sys.argv[-1]
     if mode == "gauge":
         mode_gauge()
     elif mode == "pilot":
@@ -453,5 +542,7 @@ if __name__ == "__main__":
         mode_plant_coulomb_off()
     elif mode == "analyze":
         mode_analyze()
+    elif mode == "crosscheck":
+        mode_crosscheck(float(sys.argv[2]))
     else:
         raise SystemExit(__doc__)

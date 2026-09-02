@@ -176,3 +176,38 @@ differ, `E2` per `d`) plus 13 at x = 4, plus 6 χ = 64 checks and the two
 screening-premise points — under 40 ground states, each cheaper than a
 SCHWINGER-3 point at the same `(x, N, χ)`. Run detached with per-point
 checkpoints and a DONE marker; the record prints loadavg beside every point.
+
+## Amendment A1 — 2026-09-02, PRE-DATA, instrument-schedule-only
+
+*Filed before any staked configuration had completed on either driver (zero
+checkpoints in `conformance/crystal/` at filing). No gate, band, grid, referee
+or meaning clause above changes. What changes is WHICH DRIVER may compute a
+staked point.*
+
+The operator's standing order is a single engine, DRY. The Python driver above is
+the banked SCHWINGER-3 referee, single-process, and its first N = 56 ground state
+had not finished after thirty minutes; the engine's own DMRG (`q8-mps`, zero
+dependencies, general-MPO two-site sweep with Lanczos residual gate 1e-10 and a
+fixed Néel start, no RNG) carries the SAME six-channel tensor (`q8-mps/src/schwinger.rs`)
+and fans one process per configuration over the machine. So:
+
+- **The engine driver is ADMITTED for staked points provided** it passes plant (i)
+  on itself — the three N = 12 referees at the 1e-6 bar (`schwinger4 --gauge`,
+  and `tests/schwinger_gauge.rs`, which also grades its MPO against an
+  independent dense Hamiltonian spectrum to spectrum) — AND three cross-check
+  points per column (`E0` and two `E2(d)` at χ = 40) agree with the Python
+  driver within the χ-premise band `max(1e-4, 0.05·|V|)` on the energies'
+  contribution to `V`. A cross-check that misses VOIDs the engine arm for that
+  column; it does not touch the Python arm.
+- **Plant (iii) for the engine arm** reads: the results document carries the
+  `schwinger4` binary's sha256, the crate commit, and the rustc version; the
+  Python arm keeps its own plant (iii) unchanged.
+- **The two arms are both reported.** Whichever arm completes a column first is the arm
+  the gates are read on, the other is the cross-check; if both complete, both
+  fits are printed and G1 is read on the engine arm with the Python arm's
+  `κ_fit` beside it. The `E1` energies are per POSITION on both arms.
+- Checkpoints of the engine arm are `ckpt4_rs_*.npz`; its column outputs
+  `schwinger4_rs_x<x>.json`; `analyze rs` reads them.
+
+Digit-bearing: 1e-6, 1e-4, 0.05, 3. witness: none (an amendment about which
+implementation of one tensor runs; the theorem content is unchanged).

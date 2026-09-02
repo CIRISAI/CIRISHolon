@@ -466,7 +466,9 @@ if [ -n "$repo_root" ]; then
       case "$r" in http://*|https://*) continue ;; esac
       [ -n "${REF_ALLOW["sim_engine/$f::$r"]:-}" ] && continue
       esc=$(printf '%s' "$r" | sed 's/[.[\*^$]/\\&/g')
-      if ! printf '%s\n' "$tracked" | grep -qE "(^|/)${esc}\$"; then
+      # herestring, not a pipe: grep -q exits at first match, and the pipe was
+      # spraying "printf: write error: Broken pipe" across every verify log.
+      if ! grep -qE "(^|/)${esc}\$" <<< "$tracked"; then
         # DECOUPLING RULE: these docs migrated from CIRISAI/CIRISOntology and
         # legitimately cite files tracked THERE (Core/*.lean, campaign
         # records). UPSTREAM_MANIFEST.txt is a committed snapshot of the

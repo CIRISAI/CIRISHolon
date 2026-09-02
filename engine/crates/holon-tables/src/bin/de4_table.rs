@@ -220,8 +220,14 @@ fn main() {
     // `cpu` into its log and the refusal would never have fired, which is precisely the
     // mixing this string exists to prevent.
     let regime = format!(
-        "device={:?} budget={} basis={} grid={} region={:?} warm={:?}",
-        device,
+        // `tag()` and not `{:?}`: the tag's own doc says it is written into artifacts and
+        // therefore never changes, while Debug's output is stable only by convention. The
+        // regime string is compared for EQUALITY across runs and across releases, so it must
+        // depend on the representation whose stability is documented rather than the one
+        // that happens to match today. gpu-prod's correction, and it is the same rule as
+        // reading the device instead of asserting it, one layer down.
+        "device={} budget={} basis={:?} grid={} region={:?} warm={:?}",
+        device.tag(),
         DAVIDSON_BUDGET,
         OhhhSurface::BASIS,
         qt::grid_line(),

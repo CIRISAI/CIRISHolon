@@ -1172,6 +1172,21 @@ impl Sim {
         }
     }
 
+    /// The EXTERNAL force on atom `i`, hartree/bohr: walls, the hand's spring, gravity and
+    /// the uniform field — the half of the force loop that does NOT cancel from the total
+    /// momentum, and whose time integral is [`Sim::j_ext`].
+    ///
+    /// The public partner of [`Sim::internal_force`], added so a trajectory writer can
+    /// record the total force an atom actually felt. Recording only the internal half
+    /// would put a wall-driven atom in the artifact with no force explaining its turn.
+    pub fn external_force(&self, i: usize) -> (f64, f64, f64) {
+        if i < self.n {
+            self.a_ext[i]
+        } else {
+            (0.0, 0.0, 0.0)
+        }
+    }
+
     /// The internal and external accelerations on atom `i`, for an integrator that lives
     /// outside this file. Split exactly as the force loop keeps them, because the momentum
     /// ledger's whole distinction is which of the two cancels.
@@ -1842,6 +1857,18 @@ impl Sim {
     /// whether the decomposition actually engaged rather than assuming it did.
     pub fn route(&self) -> crate::cells::Route {
         self.cells.route()
+    }
+
+    /// The cell decomposition's grid, as the DECOMPOSITION chose it.
+    ///
+    /// A read-only passthrough, added so a scaling report can state the engine's own
+    /// answer rather than recomputing `extent / cutoff` beside it. The recomputation
+    /// would agree until it did not — `rebuild` takes the floor, clamps at 2^20, and
+    /// falls back to `[1, 1, 1]` whenever the route is `Complete` — and a cost report
+    /// that quietly disagreed with the engine about how the work was divided would be
+    /// reporting its own arithmetic under the engine's name.
+    pub fn cells_per_axis(&self) -> [usize; 3] {
+        self.cells.cells_per_axis()
     }
 
     /// Demand the COMPLETE enumeration whatever the geometry admits — the reference route

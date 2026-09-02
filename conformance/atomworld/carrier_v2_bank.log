@@ -1,0 +1,35 @@
+sha256 self-check: PASS (3 published vectors)
+repo     /tmp/claude-1000/carrier-wt
+bank     /home/emoore/holon-artifacts/census-traj
+manifest /tmp/claude-1000/carrier-wt/conformance/water_observatory/census_traj_manifest.sha256 (23 pins)
+
+G1a — carrier identity: 23 of 23 banked files match the manifest
+         18 of them are trajectories; 5 are run logs, digested and not parsed
+
+G5 — DIMS AS MEASURED (declared is printed beside it, never instead of it)
+file                                        dec meas     span z    max|dz|    flatness  frames  whole
+hydrogen/seed_0x0000000053415421.traj         2    2     0.0000     0.0000     0.000e0   20000    yes  
+hydrogen/seed_0x0000000053415422.traj         2    2     0.0000     0.0000     0.000e0   20000    yes  
+hydrogen/seed_0x0000000053415423.traj         2    2     0.0000     0.0000     0.000e0   20000    yes  
+hydrogen/seed_0x0000000053415424.traj         2    2     0.0000     0.0000     0.000e0   20000    yes  
+hydrogen/seed_0x0000000053415425.traj         2    2     0.0000     0.0000     0.000e0   20000    yes  
+hydrogen/seed_0x0000000053415426.traj         2    2     0.0000     0.0000     0.000e0   20000    yes  
+hydrogen/seed_0x0000000053415427.traj         2    2     0.0000     0.0000     0.000e0   20000    yes  
+hydrogen/seed_0x0000000053415428.traj         2    2     0.0000     0.0000     0.000e0   20000    yes  
+fenced/seed_0x0000000053415421.traj           2    2     0.0000     0.0000     0.000e0   20000    yes  
+fenced/seed_0x0000000053415422.traj           2    2     0.0000     0.0000     0.000e0   20000    yes  
+fenced/seed_0x0000000053415423.traj           2    2     0.0000     0.0000     0.000e0   20000    yes  
+fenced/seed_0x0000000053415424.traj           2    2     0.0000     0.0000     0.000e0   20000    yes  
+fenced/seed_0x0000000053415425.traj           2    2     0.0000     0.0000     0.000e0   20000    yes  
+fenced/seed_0x0000000053415426.traj           2    2     0.0000     0.0000     0.000e0   20000    yes  
+fenced/seed_0x0000000053415427.traj           2    2     0.0000     0.0000     0.000e0   20000    yes  
+fenced/seed_0x0000000053415428.traj           2    2     0.0000     0.0000     0.000e0   20000    yes  
+de4_off/seed_0x0000000053415422.traj          2    2     0.0000     0.0000     0.000e0   20000    yes  
+de4_on/seed_0x0000000053415422.traj           2    3    22.9546    11.4899    3.560e-1   20000    yes  
+
+         cross-check against CENSUS_RESULTS.md §14.4: de4_on max|dz| = 11.4899, published 11.4899, difference 0.0000
+G1b 18 of 18 trajectories reproduce their manifest digest through the reader
+G2  18 of 18 field-identical to the v1 reader
+G5  18 of 18 match §14.4's expectation; 1 file(s) DECLARE a dimensionality the data does not carry
+
+ALL GATES PASS

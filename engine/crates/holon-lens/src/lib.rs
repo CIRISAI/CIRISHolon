@@ -22,3 +22,4 @@ pub mod partition;
 pub mod quenchlog;
 pub mod synthetic;
 pub mod traj;
+pub mod traj2;

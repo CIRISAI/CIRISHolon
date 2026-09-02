@@ -612,6 +612,50 @@ fn arm_engine(species: &[(Species, Species)], steps: u64, budget: f64) {
          image contributions {}  R_s crossings {} (floor 1)",
         run.steps, run.contributions, run.image_contributions, run.crossings
     );
+
+    // THE SAME THREE LAWS, in the configuration that truncates. A subsystem whose
+    // conservation is only measured where the near sector runs complete has not been
+    // measured where it is used.
+    let floor = tails
+        .iter()
+        .flatten()
+        .map(|c| c.u.last().copied().unwrap_or(0.0).abs())
+        .fold(0.0f64, f64::max)
+        * 1.001;
+    let (trunc, sw) = conservation_run_truncated(&base, curves, &tails, r_s, budget, steps, floor);
+    match sw {
+        Some((r_in, r_cut)) => println!(
+            "# TRUNCATED ARM (the O(N) near route): pair_floor {floor:.4e} Ha gives the \
+             window ({r_in:.4}, {r_cut:.4}) bohr against R_s = {r_s:.4}",
+        ),
+        None => println!("# TRUNCATED ARM: NOT RUN — no cutoff derives at {floor:.4e} Ha"),
+    }
+    if sw.is_some() {
+        println!(
+            "# GATE G4 energy (truncated): {}  drift_peak {:.6e}  bound {:.6e}  ratio {:.4}",
+            pf(trunc.energy_ok),
+            trunc.drift_peak,
+            trunc.drift_bound,
+            trunc.drift_peak / trunc.drift_bound
+        );
+        println!(
+            "# GATE G5 momentum (truncated): {}  residual_peak {:.6e}  bound {:.6e}",
+            pf(trunc.momentum_ok), trunc.momentum_peak, trunc.momentum_bound
+        );
+        println!(
+            "# GATE G6 angular (truncated): {}  residual_peak {:.6e}  bound {:.6e}",
+            match trunc.angular_ok {
+                Some(b) => pf(b),
+                None => "N/A",
+            },
+            trunc.angular_peak,
+            trunc.angular_bound
+        );
+        println!(
+            "# G12 (truncated): steps {}  far contributions {}  R_s crossings {}",
+            trunc.steps, trunc.contributions, trunc.crossings
+        );
+    }
     let g12 = run.steps >= G12_MIN_STEPS && run.contributions > 0 && run.crossings >= 1;
     println!("# GATE G12: {}", pf(g12));
 
@@ -685,8 +729,65 @@ fn conservation_run(
     steps: u64,
     plant: Option<FarPlant>,
 ) -> RunOut {
+    conservation_run_mode(cfg, curves, tails, r_s, budget, steps, plant, None)
+}
+
+/// The same run with the near sector's truncation declared — THE CONFIGURATION B2 EXISTS
+/// TO MAKE SAFE, and the one B1b's counterfactual is about.
+///
+/// Everything else in this battery runs the near sector as the complete `N²/2` sum, which
+/// is what the census scenes do and what keeps the comparison against B1b honest. But the
+/// whole point of a long-range sector is that the near one can then be truncated, and a
+/// subsystem whose conservation is only ever measured in the configuration that does not
+/// truncate has not been measured where it is used.
+///
+/// `pair_floor` is chosen so the derived window's inner edge lands at the largest loaded
+/// curve's support: `derive_pair_cutoff` bisects outward from `r_max` and stops at the first
+/// radius where every curve is under the floor, so a floor at `|u(r_max)|` puts `r_in` there
+/// exactly. That is the tightest legal handover, not a tuned one.
+fn conservation_run_truncated(
+    cfg: &SceneCfg,
+    curves: &[PairTable],
+    tails: &[Option<CurveTail>],
+    r_s: f64,
+    budget: f64,
+    steps: u64,
+    pair_floor: f64,
+) -> (RunOut, Option<(f64, f64)>) {
+    let mut probe = build_scene(cfg, curves);
+    attach_far(&mut probe, tails, r_s, budget, None);
+    if !probe.set_pair_cutoff(pair_floor) {
+        return (
+            conservation_run(cfg, curves, tails, r_s, budget, steps, None),
+            None,
+        );
+    }
+    let sw = probe.pair_switch();
+    (
+        conservation_run_mode(cfg, curves, tails, r_s, budget, steps, None, Some(pair_floor)),
+        sw,
+    )
+}
+
+#[allow(clippy::too_many_arguments)]
+fn conservation_run_mode(
+    cfg: &SceneCfg,
+    curves: &[PairTable],
+    tails: &[Option<CurveTail>],
+    r_s: f64,
+    budget: f64,
+    steps: u64,
+    plant: Option<FarPlant>,
+    pair_floor: Option<f64>,
+) -> RunOut {
     let mut sim = build_scene(cfg, curves);
     attach_far(&mut sim, tails, r_s, budget, plant);
+    if let Some(floor) = pair_floor {
+        assert!(sim.set_pair_cutoff(floor), "the truncation derives");
+        // `set_pair_cutoff` recomputes forces but does NOT re-zero the ledger, so the run's
+        // origin has to be taken after the scene is in the configuration it will run in.
+        sim.rebase();
+    }
     let (mut contributions, mut images, mut crossings) = (0u64, 0u64, 0u64);
     // THROUGH `step_frame`, NOT `step`. `Sim::close_grain` is where the momentum and
     // angular residuals are sampled, and only `step_frame` calls it — a loop over `step`

@@ -762,7 +762,27 @@ about 6 bohr (the well and everything inside `R_e` converge at 1e-10), at 4.3e-6
 `Sim::refresh_pairs` decides `bonded` from `e_rel < 0` and `r < r_outer`, the outer turning
 point, which lives in that tail. **The membership view's edge criterion is therefore
 evaluated on the part of the O–O curve that did not converge**, and every certification in
-this document inherits that. Established by the `saturation2-water` lane; see
+this document inherits that. **The residual must be quoted WITH ITS BUDGET, because it is not monotone in effort.**
+Reconciled with the `saturation2-water` lane, whose `oo_budget_4000_to_5000.log` carries both
+columns for this same curve at the same 96 knots: worst residual **2.683e-6 at budget 4000**
+and **4.81e-6 at budget 5000**. Mine is the budget-5000 number and theirs was the
+budget-4000 one; both are honest readings of the same curve.
+
+The larger budget produced the LARGER worst residual, by a factor of 1.8 **the wrong way**.
+So a capped curve's residual is not merely un-tight — it is not monotone in the effort spent,
+and the natural reading "more iterations, tighter bound" is false here. Any statement of the
+form "certified under a curve whose residual is X" is incomplete without the budget, since
+the same curve honestly reports a different X at a different one.
+
+**And the magnitude of what this census inherits, quantified rather than gestured at.** The
+caps affect the tail energies by 4.3e-6 Ha — **0.45% of kT at the quench's 300 K target** —
+which shifts the outer classical turning point by about **3.7e-4 bohr**. Against intra-block
+separations of order 2–6 bohr that is a relative effect near 1e-4 on the criterion that
+decides membership. It is a real inheritance and it is a small one, and both halves of that
+sentence are load-bearing: small enough that no certification in this document plausibly
+turns on it, real enough that it belongs inside the claims rather than beside them.
+
+Established by the `saturation2-water` lane; see
 `PROVENANCE_de4_arms.md`, which also carries my retraction of a false claim that `PairMeta`
 had no exit field. A certified water molecule here is certified under an unconverged O–O curve,
 and that belongs beside the certification rather than only in the run log.

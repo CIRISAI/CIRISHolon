@@ -385,21 +385,34 @@ by rung IS the site's story. WB-7 (no synthetic telemetry) applies at every
 altitude; the gravity-tier exhibit (per-particle vs column-sum) already shows
 how a scale-dependent truth is displayed without faking dynamics.
 
-**THE ZOOM IS A LEASE LEDGER (operator's design, same order).** The visible
-frustum at the current zoom decides WHICH holons are alive at WHICH tier:
-zoom in far enough and most of the scene is invisible — those holons RELEASE
-their leases (RESOURCE-1's law: an allocation is a child holon, receipts are
-the rent) and the freed budget re-allocates to the visible region at full
-fidelity. The invisible bulk is never paused-fake: it is HANDED UP to its
-coarser certified view, which serves as the visible region's bath boundary —
-a closure SEAM whose defect is measured and displayed (Budget.lean's ledger),
-fenced where the coarse tier is uncertified. Zooming back in RESAMPLES the
-fine state from the coarse state's fiber — legitimate exactly where closure
-is certified, because a certified tier's macro-future is fiber-independent;
-where it is not certified, the seam wears its fence. Trajectory identity is
-never promised across a zoom (chaos already forbids it and the record says
-so); DISTRIBUTION-level closure is the contract, which is the same contract
-the certified census already runs on.
+**THE ZOOM DE-ALLOCATES — NO TRANSITION MACHINERY. The math is already
+banked (operator's correction; prior art in this repo):**
+
+* `lean/CIRISHolon/Grain.lean` + `engine/crates/holon/src/grain.rs` — a
+  Grain is a MEASURED closure schedule: it names the steps where a coarse
+  view is EXACT (zero defect), so refreshing a coarse representation on
+  closure boundaries is FREE, with a stated bound between them. Machine-
+  checked kernel; constants pinned in CI.
+* `engine/crates/holon-render/src/holon.rs` — composites are first-class
+  rows with a MEASURED per-row closure defect at every grain boundary
+  ("the composite view asserts the members are autonomous; the defect is
+  how much that assertion missed by"). Formation/dissolution is
+  ACCOUNTING-ONLY: E_before == E_after bit-identically, the row's ledger a
+  VIEW of energy the global ledger already holds.
+* The census is the same instrument at verdict strength.
+
+So the zoom needs nothing new: **a holon that is not load-bearing for the
+scene DE-ALLOCATES** — its members' fine DOF release and the freed budget
+goes to the visible region — and "load-bearing" is not a heuristic, it is
+the MEASURED closure defect: a row whose defect reads ~0 is autonomous by
+measurement and its composite carries it exactly on grain boundaries; a
+row being buffeted, grabbed, or coupled into the visible region scores
+badly and KEEPS its fine allocation. Zoom in far enough and most of the
+scene is invisible and non-load-bearing: those rows run as their
+composites (which conserve by construction), and re-allocation on zoom-out
+is the same accounting-only event in reverse. No seam machinery, no
+handoff protocol, no resampling story: one layer, one defect number, the
+grain law saying when coarse is free.
 
 **THE HERO'S FIRST INTERACTION: stretch the cube.** The box-scale door at
 hero scale — drag the cube larger, watch density fall, pressure fall (the

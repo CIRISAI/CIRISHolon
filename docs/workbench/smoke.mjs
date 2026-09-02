@@ -641,6 +641,49 @@ want(de4OffTracked || !/923\.9/.test(html6b + appSource),
   "923.9 fs appears on the page while census_de4_off.log is untracked — it exists on this "
   + "disk and not in a clean checkout, so no reader could verify it");
 
+// ------------------------------------------- 6c. the scale ladder wears real fences
+//
+// Two properties, and the second is the fence law applied to this page rather than
+// restated on it: every band's citation must resolve to the FSD line it claims, and every
+// FENCED band must carry an OWNER and an EXIT. A fence without those is a shrug with a
+// border around it, and it is exactly what the ladder would decay into if the coarse
+// bands stayed un-owned long enough for someone to stop noticing.
+
+const ladderBlock = appSource.match(/const LADDER = \[([\s\S]*?)\n\];/);
+want(ladderBlock !== null, "the page's LADDER block is where the gate expects it");
+if (ladderBlock) {
+  const bands = [...ladderBlock[1].matchAll(
+    /\{\s*\n\s*band: "([^"]+)"[\s\S]*?state: "([^"]+)"[\s\S]*?cite: "([^"]+)",\s*\n\s*\}/g)];
+  want(bands.length === 4, `the ladder carries four bands (found ${bands.length})`);
+
+  for (const [whole, band, state, cite] of bands) {
+    const [relPath, lineNo] = cite.split(":");
+    let text = null;
+    try { text = readFileSync(join(repoRoot, relPath), "utf8"); } catch { /* below */ }
+    if (text === null) { no(`band "${band}" cites ${relPath}, which does not exist`); continue; }
+    const line = (text.split("\n")[Number(lineNo) - 1] ?? "").toLowerCase();
+    // The band name must actually appear on the line it cites — otherwise the citation is
+    // decoration, and the page could drift a whole band away from the spec unnoticed.
+    want(line.includes(band.toLowerCase()),
+      `band "${band}" is on ${cite}`,
+      `line ${lineNo} reads: ${(text.split("\n")[Number(lineNo) - 1] ?? "").trim().slice(0, 80)}`);
+
+    if (state === "fenced") {
+      const hasOwner = /owner:\s*"[^"]+"/.test(whole);
+      const hasExit = /exit:\s*"[^"]{40,}"/.test(whole);
+      want(hasOwner && hasExit,
+        `fenced band "${band}" carries an owner and an exit`,
+        `owner ${hasOwner ? "present" : "MISSING"}, substantive exit ${hasExit ? "present" : "MISSING"} `
+        + "— the fence law requires both, and an exit too short to say anything is not one");
+    }
+  }
+  const live = bands.filter(([, , st]) => st === "live").length;
+  want(live === 1,
+    `exactly one band is LIVE (${live}) — the others must fence rather than degrade`,
+    "more than one live band means a coarse chart is being served that this engine does "
+    + "not have, which is the tier-faking the ladder exists to forbid");
+}
+
 // ---------------------------------------------------------------- 7. the inverted check
 
 // --------------------------------------------- 5c. the hand on the box (WB-2.2), now served

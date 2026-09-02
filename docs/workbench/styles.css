@@ -1129,3 +1129,22 @@ body, html {
   color: var(--text-dim);
   word-break: break-all;
 }
+
+/* --- the scale ladder. A band is live or fenced; there is no third state, and the
+   fenced ones carry their owner and exit because a fence without them is a shrug. */
+.ladder-rows { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+
+.lad { border-left: 2px solid var(--border); padding-left: 10px; }
+.lad.live { border-left-color: var(--cyan); }
+.lad.fenced { border-left-color: var(--rose); }
+
+.lad-head { display: flex; align-items: baseline; gap: 8px; }
+.lad-head b { font-family: var(--font-mono); font-size: 11px; color: var(--text-main); }
+.lad-head span { font-size: 10px; color: var(--text-dim); }
+.lad-runs { font-size: 10.5px; color: var(--text-muted); margin: 2px 0; }
+.lad-status { font-size: 10.5px; line-height: 1.5; }
+.lad-live { color: var(--cyan); font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em; }
+.lad-fenced { color: var(--rose); font-family: var(--font-mono); font-size: 9.5px; letter-spacing: 0.05em; }
+.lad-detail { display: block; color: var(--text-muted); }
+.lad-detail b { color: var(--text-dim); font-weight: 600; }
+.lad code { display: block; font-family: var(--font-mono); font-size: 9px; color: var(--text-dim); margin-top: 3px; }

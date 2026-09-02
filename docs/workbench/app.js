@@ -285,16 +285,19 @@ const RECORD = {
   waterA: {
     value: "893.8 fs",
     what: "OH₂ held, CERTIFIED-STRICT — fenced arm",
-    cite: "conformance/water_observatory/census_mixed_fenced.log:250",
+    cite: "conformance/water_observatory/census_mixed_fenced.log:233",
     note: "seed 0x…25, block 0x0a08, 1073 frames — 72.3% of the run, rms 0.779 bohr, "
-      + "separation variance 0.199, control 0.000, NAMED. Clears the window by 7%.",
+      + "separation variance 0.199, NAMED. Control rate 0.000 against a pool of 111 "
+      + "same-composition candidates — the denominator matters, because a bare 0.000 "
+      + "reads like a default. Clears the window by 7%.",
   },
   waterB: {
     value: "923.9 fs",
     what: "OH₂ held, CERTIFIED-STRICT — the four-body term switched OFF",
     cite: "conformance/water_observatory/census_de4_off.log:22",
     note: "seed 0x…22, block 0x0062, 1109 frames — 85.8% of the run, rms 1.103 bohr, "
-      + "control 0.000, NAMED. Clears the window by 11%.",
+      + "NAMED, control 0.000 against the same 111-candidate pool. Clears the window "
+      + "by 11%.",
   },
   absent: {
     value: "0",
@@ -327,6 +330,92 @@ const RECORD = {
   },
 };
 
+
+// ---------------------------------------------- the scale ladder (FSD-W2 §9c)
+//
+// The site's hero is the zoom axis itself. A band either runs its certified physics or
+// WEARS ITS FENCE with an owner and an exit — a fence is honest content here, and the
+// ladder climbing rung by rung is the story. Nothing on this ladder ever fakes a tier.
+//
+// THE ZOOM IS DE-ALLOCATION, NOT A HANDOFF. There is no transition machinery and none is
+// owed: a holon that is not load-bearing for the scene releases its members' fine degrees
+// of freedom, and "load-bearing" is not a heuristic but the MEASURED per-row closure
+// defect — a row reading ~0 is autonomous BY MEASUREMENT and its composite carries it
+// exactly on grain boundaries, while a row being buffeted, grabbed or coupled into the
+// visible region scores badly and keeps its fine allocation. Re-allocation on zoom-out is
+// the same accounting-only event in reverse.
+//
+// WHAT THIS PAGE DOES AND DOES NOT DO, stated because the difference is the whole honesty
+// of the panel: it REPORTS the criterion — the live per-row defects that decide
+// allocation — and it performs no de-allocation, because none is implemented. A panel
+// that displayed a budget being reclaimed while nothing was reclaimed would be the
+// synthetic-telemetry shape at a new altitude.
+
+const LADDER = [
+  {
+    band: "molecular",
+    scale: "~nm",
+    runs: "the live engine, full physics ladder",
+    state: "live",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:376",
+  },
+  {
+    band: "H-bond network",
+    scale: "~10 nm",
+    runs: "no certified coarse chart exists",
+    state: "fenced",
+    owner: "GANTT node G, rung 1",
+    exit: "a promoted molecular chart admitted by measured closure — the H₂O quotient and "
+      + "a derived water–water interaction, per the FSD's own build chain (§7).",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:377",
+  },
+  {
+    band: "fluid element",
+    scale: "~µm+",
+    runs: "no certified continuum chart exists",
+    state: "fenced",
+    owner: "GANTT node G, rung 2",
+    exit: "T5 phase certification, then T6 continuum charts. The grain law this would run "
+      + "on is already banked (Grain.lean + grain.rs): a coarse refresh is exactly free on "
+      + "closure boundaries, with a stated bound between them.",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:378",
+  },
+  {
+    band: "the cube",
+    scale: "1 km",
+    runs: "the continuum face of the ladder",
+    state: "fenced",
+    owner: "GANTT node G",
+    exit: "this face becomes live as each rung beneath it certifies. A kilometre of water "
+      + "is ~3×10³¹ molecules; nobody simulates that and this page never pretends to.",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:379",
+  },
+];
+
+/// The molecular band's live status: the de-allocation criterion, READ OUT.
+///
+/// No threshold is invented here. "A row reading ~0 is autonomous" needs a number that
+/// separates ~0 from not-~0, and that number is the engine's to derive — from the grain
+/// law's own stated bound between closure boundaries, which is where it belongs. Until it
+/// exists this reports the DISTRIBUTION (best, worst) and the rows that are load-bearing
+/// for a reason needing no threshold at all: the hand is on them.
+function ladderStatus(w) {
+  const rows = w.holon_row_count();
+  if (rows === 0) return { rows: 0, text: "no composite in the scene yet" };
+  let worst = 0;
+  let best = Infinity;
+  for (let k = 0; k < rows; k++) {
+    const d = Math.abs(w.holon_row_closure_defect(k));
+    if (d > worst) worst = d;
+    if (d < best) best = d;
+  }
+  const held = w.holon_grabbed() >= 0 ? 1 : 0;
+  return {
+    rows,
+    text: `${rows} row${rows === 1 ? "" : "s"} · defect ${fmtSci(best, 2)} … ${fmtSci(worst, 2)} Ha`
+      + (held ? " · 1 held by the hand, load-bearing by construction" : ""),
+  };
+}
 
 // ---------------------------------------------------------------- formatting
 
@@ -1058,6 +1147,22 @@ function renderStatics() {
   }
 
   // --- device class & artifact (WB-5.4, M-DEVICE-CLASS)
+  // The scale ladder (§9c), rendered from LADDER above.
+  if (UI["ladder-rows"]) {
+    const st = ladderStatus(w);
+    UI["ladder-rows"].innerHTML = LADDER.map((b) => {
+      const status = b.state === "live"
+        ? `<span class="lad-live">CERTIFIED · LIVE</span><span class="lad-detail">${st.text}</span>`
+        : `<span class="lad-fenced">FENCED</span>`
+          + `<span class="lad-detail"><b>owner</b> ${b.owner} · <b>exit</b> ${b.exit}</span>`;
+      return `<div class="lad ${b.state}"><div class="lad-head">`
+        + `<b>${b.band}</b><span>${b.scale}</span></div>`
+        + `<div class="lad-runs">${b.runs}</div>`
+        + `<div class="lad-status">${status}</div>`
+        + `<code>${b.cite}</code></div>`;
+    }).join("");
+  }
+
   // The water story (WB-9.6), rendered from RECORD above so the citation and the digits
   // cannot drift apart in the markup.
   if (UI["record-rows"]) {

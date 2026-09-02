@@ -1642,14 +1642,84 @@ impl Sim {
         if !self.boundary.wraps() {
             return true;
         }
-        let cut = self.list_cutoff();
+        let cut = self.legality_radius();
         cut.is_finite() && cut <= 0.5 * self.geom().min_edge()
+    }
+
+    /// HOW FAR THE FORCE LAW REACHES — the radius the minimum image must be the only image
+    /// out to, and NOT the radius the cell decomposition is built at.
+    ///
+    /// This asked [`Sim::list_cutoff`] until the cryo campaign measured what that costs.
+    /// `list_cutoff` answers a different question — what the DECOMPOSITION must cover — and
+    /// when no pair truncation is declared the pair loop runs the complete `N²/2` sum and
+    /// consults no cell list at all, so `list_cutoff` correctly returns ZERO. `pbc_ok` then
+    /// compared zero to the half-edge and admitted everything: pair-only periodic boxes of
+    /// half-edge 8.000, 4.500 and 1.900 bohr all passed against a table reaching 10.240
+    /// (`conformance/atomworld/cryo_logs/compress.log`). `set_pair_cutoff`'s refusal never
+    /// bound on those scenes because none declares a cutoff, and `scale_box`'s
+    /// [`crate::barostat::ScaleRefusal::BreaksPeriodicImages`] door inherited the hole
+    /// wholesale, since a cutoff of zero is under every half-edge there is.
+    ///
+    /// `list_cutoff` is left exactly as it was. It is right for what it is for, and changing
+    /// it would move the cell radius — and with it the route, the cell count and every
+    /// timing — to fix a guard that was simply asking the wrong function.
+    ///
+    /// A MAX over every channel that reduces to the minimum image, because a radius that
+    /// returned any one channel's number would admit a box another channel cannot honour:
+    ///
+    /// * the pair sector, at [`Sim::pair_reach`];
+    /// * the three- and four-body sectors, which are EXACT zeros past their radii;
+    /// * a declared far sector's `R_s`, which is the near sector's share of the split and
+    ///   reduces to the minimum image like any other near term. The far sector's OWN
+    ///   `min_edge >= 2 R_s` condition is deliberately not folded in here and stays a
+    ///   per-pass check: this one guards the door, that one guards a call that never went
+    ///   through the door. They agree by construction — half-edge `>= R_s` is the same
+    ///   inequality — which is the point, since two conditions that must agree should not be
+    ///   free to disagree.
+    ///
+    /// The far sector's own IMAGE sum is excluded on purpose. It enumerates images
+    /// explicitly, so it is the one channel that does not depend on the minimum image being
+    /// unique, and folding `R_f` in here would refuse exactly the boxes it exists to serve.
+    pub fn legality_radius(&self) -> f64 {
+        let mut r = self.three_body_cutoff().max(self.four_body_cutoff());
+        r = r.max(self.pair_reach());
+        if let Some(f) = &self.far {
+            r = r.max(f.r_s());
+        }
+        r
+    }
+
+    /// How far the PAIR sector reaches, hartree-blind and in bohr.
+    ///
+    /// With a truncation declared this is `r_cut`: the C² switch is identically zero past it,
+    /// so nothing beyond it is ever evaluated. With none declared the loop evaluates the
+    /// table at every minimum-image separation, so the reach is the largest support among the
+    /// curves THIS SCENE actually uses — `active_slots`, not every loaded slot, because a
+    /// curve no pair in the scene resolves to cannot constrain the box.
+    ///
+    /// The table's tail is an exponential and never an exact zero, so `r_max` is where the
+    /// table's KNOWLEDGE ends rather than where its value does. That is the same radius R3
+    /// uses for the far sector's support condition, and using anything larger would mean
+    /// refusing boxes over an extrapolation.
+    pub fn pair_reach(&self) -> f64 {
+        if let Some((_, r_cut)) = self.pair_switch {
+            return r_cut;
+        }
+        let (slots, ns) = self.active_slots();
+        let mut r = 0.0f64;
+        for &s in slots[..ns].iter() {
+            let t = self.bank.table_slot(s);
+            if t.is_loaded() {
+                r = r.max(t.r_max());
+            }
+        }
+        r
     }
 
     /// The half-edge the cutoffs must fit inside, and the cutoff that is actually asked
     /// for — the two numbers behind [`Sim::pbc_ok`], so a refusal can say by how much.
     pub fn pbc_margin(&self) -> (f64, f64) {
-        (self.list_cutoff(), 0.5 * self.geom().min_edge())
+        (self.legality_radius(), 0.5 * self.geom().min_edge())
     }
 
     // ------------------------------------------------------------------- the cutoffs

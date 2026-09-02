@@ -26,7 +26,7 @@
 //! which band the tail landed in.
 
 use holon_chem::elements::{Species, HYDROGEN, OXYGEN};
-use holon_chem::pair::generate_pair_table;
+use holon_chem::pair::{generate_pair_table, PairTable};
 use holon_lens::traj::Trajectory;
 use holon_render::bank::Host;
 use holon_render::cells::{switch_c2, BoxGeom};
@@ -378,16 +378,22 @@ fn lcg(state: &mut u64) -> f64 {
     ((*state >> 11) as f64) / ((1u64 << 53) as f64)
 }
 
-fn build_scene(cfg: &SceneCfg, curves: &[(Species, Species)]) -> Box<Sim> {
+/// Build a scene from ALREADY-GENERATED curves.
+///
+/// Curves are generated ONCE per run and reloaded, never regenerated per scene. The first
+/// version took species pairs and called `generate_pair_table` on every call — and this arm
+/// calls it twenty-two times across its gates and plants, so with the full curve set it
+/// re-solved the O–O determinant space, at 681 s of CPU, once per scene. Loading a table
+/// that already exists is knot copying and costs nothing.
+fn build_scene(cfg: &SceneCfg, curves: &[PairTable]) -> Box<Sim> {
     let mut sim = Box::new(Sim::empty());
     sim.dims = if cfg.three_d { Dims::Three } else { Dims::Two };
     sim.boundary = cfg.boundary;
     sim.width = cfg.w * cfg.prescale;
     sim.height = cfg.h * cfg.prescale;
     sim.depth = cfg.h * cfg.prescale;
-    for (a, b) in curves {
-        let pt = generate_pair_table(*a, *b, CURVE_KNOTS);
-        assert_eq!(load_pair_table(&mut sim, &pt, Host::Native), TABLE_OK);
+    for pt in curves {
+        assert_eq!(load_pair_table(&mut sim, pt, Host::Native), TABLE_OK);
     }
     sim.reset(cfg.n);
     // A jittered grid rather than uniform placement: two atoms landing on top of each other
@@ -497,8 +503,8 @@ fn report_g3(tails: &[Option<CurveTail>]) -> (usize, usize) {
 // ====================================================================== the engine arm
 
 #[allow(clippy::too_many_lines)]
-fn arm_engine(curves: &[(Species, Species)], steps: u64, budget: f64) {
-    let ox = if curves.len() > 1 { 3 } else { 0 };
+fn arm_engine(species: &[(Species, Species)], steps: u64, budget: f64) {
+    let ox = if species.len() > 1 { 3 } else { 0 };
     let base = SceneCfg {
         n: 12,
         oxygen_every: ox,
@@ -516,7 +522,8 @@ fn arm_engine(curves: &[(Species, Species)], steps: u64, budget: f64) {
     probe.height = BOX_H;
     let mut meta: BTreeMap<usize, (&'static str, u64, f64)> = BTreeMap::new();
     let mut setup_cpu = 0.0;
-    for (a, b) in curves {
+    let mut tabs: Vec<PairTable> = Vec::new();
+    for (a, b) in species {
         let t0 = cpu_seconds();
         let pt = generate_pair_table(*a, *b, CURVE_KNOTS);
         setup_cpu += cpu_seconds() - t0;
@@ -537,8 +544,10 @@ fn arm_engine(curves: &[(Species, Species)], steps: u64, budget: f64) {
             a.symbol, b.symbol, pt.meta.route, pt.meta.n_det, pt.meta.n_basis,
             pt.meta.solver_budget, pt.meta.worst_residual
         );
+        tabs.push(pt);
     }
-    println!("# curve setup CPU: {setup_cpu:.1} s");
+    println!("# curve setup CPU: {setup_cpu:.1} s (generated ONCE, reloaded per scene)");
+    let curves: &[PairTable] = &tabs;
     let tails = curve_tails(&probe, &meta);
     let (_adopting, fenced) = report_g3(&tails);
 
@@ -576,6 +585,7 @@ fn arm_engine(curves: &[(Species, Species)], steps: u64, budget: f64) {
     // ---------------------------------------------------------------- G8, then G7
     let g8 = gate_g8(&base, curves, &tails, r_s, budget);
     let g7 = gate_g7(&base, curves, &tails, r_s, budget);
+    gate_ledger_across_box_move(&base, curves, &tails, r_s, budget);
 
     // ---------------------------------------------------------------- G4, G5, G6, G12
     let run = conservation_run(&base, curves, &tails, r_s, budget, steps, None);
@@ -668,7 +678,7 @@ fn attach_far(
 
 fn conservation_run(
     cfg: &SceneCfg,
-    curves: &[(Species, Species)],
+    curves: &[PairTable],
     tails: &[Option<CurveTail>],
     r_s: f64,
     budget: f64,
@@ -748,7 +758,7 @@ fn isolated_pair_third_law(tails: &[Option<CurveTail>], r_s: f64, budget: f64) -
 /// real frames in the `frames` arm, where `c*` and the trajectories both live.
 fn gate_g2(
     _cfg: &SceneCfg,
-    curves: &[(Species, Species)],
+    curves: &[PairTable],
     tails: &[Option<CurveTail>],
     r_s: f64,
     budget: f64,
@@ -866,7 +876,7 @@ fn gate_g2(
 /// term rather than the sum of every term the engine holds.
 fn gate_g8(
     cfg: &SceneCfg,
-    curves: &[(Species, Species)],
+    curves: &[PairTable],
     tails: &[Option<CurveTail>],
     r_s: f64,
     budget: f64,
@@ -985,7 +995,7 @@ fn gate_g8(
 /// would otherwise be an unexplained difference rather than a defect.
 fn gate_g7(
     cfg: &SceneCfg,
-    curves: &[(Species, Species)],
+    curves: &[PairTable],
     tails: &[Option<CurveTail>],
     r_s: f64,
     budget: f64,
@@ -1036,11 +1046,57 @@ fn gate_g7(
     finest
 }
 
+// ------------------------------------------- the barostat seam's energy ledger
+
+/// THE LEDGER CLOSES ACROSS A BOX MOVE, with the far term in it.
+///
+/// `Sim::scale_box` measures `energy()` on both sides of the move and posts the difference
+/// to `w_ext` AND to `work.hand`. `energy()` now carries `e_far`, so the far sector's own
+/// change under an affine scaling is booked rather than reading as an unexplained loss —
+/// which is the shape a channel present in the force law but absent from the ledger takes.
+///
+/// CHECKED rather than inferred from that reasoning. The reasoning is exactly the kind that
+/// is correct about the code that existed when it was written and silently stops being
+/// correct afterwards, and the whole point of `w_ext` carrying receipt columns is that the
+/// total closing is not evidence the attribution is right.
+///
+/// In the OPEN box and not the periodic one, so it runs whatever the tail's steepness does
+/// to the image sector: a curve steep enough to leave the periodic arm VOID would otherwise
+/// take this check down with it, and this check has nothing to do with images.
+fn gate_ledger_across_box_move(
+    cfg: &SceneCfg,
+    curves: &[PairTable],
+    tails: &[Option<CurveTail>],
+    r_s: f64,
+    budget: f64,
+) {
+    for f in [0.90f64, 1.10] {
+        let mut sim = build_scene(cfg, curves);
+        attach_far(&mut sim, tails, r_s, budget, None);
+        let e_far_before = sim.e_far;
+        let l0 = sim.ledger();
+        sim.scale_box(f).expect("the box scales");
+        let closed = sim.drift() <= sim.drift_bound();
+        println!(
+            "# GATE G-LEDGER box move f={f:.2}: {}  e_far {e_far_before:.6e} -> {:.6e}  \
+             |ledger - l0| {:.6e} vs bound {:.6e}  w_ext {:.6e}  work.hand {:.6e}  \
+             columns_ok {}  (l0 {l0:.9e})",
+            pf(closed && sim.work_columns_ok()),
+            sim.e_far,
+            sim.drift(),
+            sim.drift_bound(),
+            sim.w_ext,
+            sim.work.hand,
+            sim.work_columns_ok()
+        );
+    }
+}
+
 // ---------------------------------------------------------------- the plants
 
 fn plant_p2(
     cfg: &SceneCfg,
-    curves: &[(Species, Species)],
+    curves: &[PairTable],
     tails: &[Option<CurveTail>],
     r_s: f64,
     budget: f64,
@@ -1065,7 +1121,7 @@ fn plant_p2(
 
 fn plant_p3(
     cfg: &SceneCfg,
-    curves: &[(Species, Species)],
+    curves: &[PairTable],
     tails: &[Option<CurveTail>],
     r_s: f64,
     budget: f64,
@@ -1108,7 +1164,7 @@ fn plant_p3(
 
 fn plant_p4(
     cfg: &SceneCfg,
-    curves: &[(Species, Species)],
+    curves: &[PairTable],
     tails: &[Option<CurveTail>],
     r_s: f64,
     budget: f64,
@@ -1188,7 +1244,7 @@ fn plant_p4(
 
 fn plant_p5(
     cfg: &SceneCfg,
-    curves: &[(Species, Species)],
+    curves: &[PairTable],
     tails: &[Option<CurveTail>],
     r_s: f64,
     budget: f64,
@@ -1240,7 +1296,7 @@ fn plant_p5(
 
 fn plant_p6(
     cfg: &SceneCfg,
-    curves: &[(Species, Species)],
+    curves: &[PairTable],
     tails: &[Option<CurveTail>],
     r_s: f64,
     budget: f64,
@@ -1267,7 +1323,7 @@ fn plant_p6(
 
 fn plant_p7(
     cfg: &SceneCfg,
-    curves: &[(Species, Species)],
+    curves: &[PairTable],
     tails: &[Option<CurveTail>],
     r_s: f64,
     budget: f64,
@@ -1333,7 +1389,7 @@ fn plant_p7(
 /// the plant would be scored on a scene it cannot act in. That is M-PLANT-SECTOR, and it is
 /// why this arm exists separately from the open-box one.
 fn periodic_arm(
-    curves: &[(Species, Species)],
+    curves: &[PairTable],
     tails: &[Option<CurveTail>],
     r_s: f64,
     budget: f64,
@@ -1549,7 +1605,7 @@ fn cfg_clone(c: &SceneCfg) -> SceneCfg {
 /// ordering: a cost that comes back non-monotone in N convicts the measurement outright,
 /// with no baseline and no second run needed — which is M-PLACEMENT-LOTTERY's fourth
 /// instance turned into a check.
-fn gate_g13(curves: &[(Species, Species)], tails: &[Option<CurveTail>], r_s: f64, budget: f64) {
+fn gate_g13(curves: &[PairTable], tails: &[Option<CurveTail>], r_s: f64, budget: f64) {
     let cpu = cpu_now();
     println!(
         "# G13 conditions: cpu {cpu}  core class {}  clock fraction {:.3}  loadavg {:.2}",

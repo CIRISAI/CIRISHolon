@@ -828,15 +828,40 @@ pub extern "C" fn holon_n_max() -> f64 {
     )
 }
 
-/// 0 = soft walls, 1 = open (no walls; exact translation invariance).
+/// 0 = soft walls, 1 = open (no walls; exact translation invariance), 2 = periodic.
+///
+/// Returns 0 on success and [`boundary_refusal_code`] on a REFUSED switch. It used to
+/// return nothing and assign unconditionally, which let mode 2 walk a scene into a box whose
+/// minimum image is not the only image — the state the cryo campaign found admitted at
+/// half-edges of 8.000, 4.500 and 1.900 bohr against a table reaching 10.240.
+///
+/// The signature widened from `()` to `u32`. A caller that ignores the result is unaffected
+/// in both C and wasm, so the two in-tree viewers keep working unchanged — but a caller that
+/// WANTS to know now can, which is the point of a door that speaks.
 #[no_mangle]
-pub extern "C" fn holon_set_boundary(mode: u32) {
+pub extern "C" fn holon_set_boundary(mode: u32) -> u32 {
     let mut s = sim();
-    s.boundary = match mode {
+    let b = match mode {
         0 => Boundary::Walls,
         2 => Boundary::Periodic,
         _ => Boundary::Open,
     };
+    match s.set_boundary(b) {
+        Ok(()) => 0,
+        Err(r) => boundary_refusal_code(r),
+    }
+}
+
+/// Base code for a boundary-switch refusal, placed above the scale door's block so a host
+/// can tell which door spoke.
+pub const BOUNDARY_REFUSED: u32 = 100;
+
+/// The refusal's own code, offset above [`BOUNDARY_REFUSED`].
+pub fn boundary_refusal_code(r: sim::BoundaryRefusal) -> u32 {
+    BOUNDARY_REFUSED
+        + match r {
+            sim::BoundaryRefusal::BreaksPeriodicImages { .. } => 1,
+        }
 }
 
 #[no_mangle]

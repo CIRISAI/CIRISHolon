@@ -105,6 +105,40 @@ pub const AU_TIME_S: f64 = 2.4188843265857e-17;
 /// defined constant, in the same category as the box the walls make.
 pub const G_EARTH_AU: f64 = G_SI * AU_TIME_S * AU_TIME_S / BOHR_M;
 
+/// Why a boundary switch was refused.
+///
+/// One variant, and it is here because a scene can be perfectly legal as walls and illegal
+/// the instant it wraps: nothing about the box or the force law changes, only whether
+/// separations are reduced to the minimum image. Past half the shortest edge an atom sits
+/// inside the reach of two images of the same partner, the reduction picks one, and the
+/// missing one is a force that silently is not there.
+///
+/// The cryo campaign found the guard that should have said so reading zero
+/// (`conformance/atomworld/CRYO_HO_RESULTS.md` § 3.4). With `Sim::legality_radius` telling
+/// the truth, this is the door that says it at the moment the state would be ENTERED,
+/// rather than a flag a caller has to remember to read afterwards.
+#[derive(Clone, Copy, PartialEq, Debug)]
+pub enum BoundaryRefusal {
+    /// Wrapping this box would put the force law's reach past half its shortest edge.
+    /// Both numbers travel with the refusal so it can say by how much.
+    BreaksPeriodicImages { reach: f64, half_edge: f64 },
+}
+
+impl core::fmt::Display for BoundaryRefusal {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            BoundaryRefusal::BreaksPeriodicImages { reach, half_edge } => write!(
+                f,
+                "REFUSED: wrapping this box needs the force law's reach ({reach:.4} bohr) at \
+                 or under half its shortest edge ({half_edge:.4} bohr); it is over by \
+                 {:.4} bohr. Widen the box, shorten the reach, or stay unwrapped.",
+                reach - half_edge
+            ),
+        }
+    }
+}
+
+
 /// Why a scene will not take a gravitational field.
 ///
 /// One variant, and it is a statement about geometry rather than about policy.
@@ -1644,6 +1678,33 @@ impl Sim {
         }
         let cut = self.legality_radius();
         cut.is_finite() && cut <= 0.5 * self.geom().min_edge()
+    }
+
+    /// THE BOUNDARY DOOR: switch the boundary, refusing a switch into an illegal state.
+    ///
+    /// Every route INTO a wrapping box goes through a refusing door now — this one at switch
+    /// time, [`Sim::set_pair_cutoff`] when a truncation is declared, and
+    /// [`crate::barostat::ScaleRefusal::BreaksPeriodicImages`] when the box is scaled. What
+    /// is deliberately NOT guarded is a direct write to the public `boundary` field, which
+    /// tests need and which [`Sim::pbc_ok`] covers by telling the truth per pass.
+    ///
+    /// And there is deliberately no stop inside the force pass. A scene that turns illegal
+    /// mid-flight keeps producing numbers with the flag saying so; killing a run from inside
+    /// `compute_forces` would convert an honest reading into a crash, and with the doors shut
+    /// that state is unreachable except by deliberate construction.
+    ///
+    /// Switching AWAY from a wrapping boundary is always admitted: leaving an illegal state
+    /// is how a caller fixes one, and a door that refused the exit would trap the scene.
+    pub fn set_boundary(&mut self, b: Boundary) -> Result<(), BoundaryRefusal> {
+        if b.wraps() {
+            let half_edge = 0.5 * self.geom().min_edge();
+            let reach = self.legality_radius();
+            if !(reach.is_finite() && reach <= half_edge) {
+                return Err(BoundaryRefusal::BreaksPeriodicImages { reach, half_edge });
+            }
+        }
+        self.boundary = b;
+        Ok(())
     }
 
     /// HOW FAR THE FORCE LAW REACHES — the radius the minimum image must be the only image

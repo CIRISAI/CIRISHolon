@@ -234,10 +234,99 @@ raw `ΔP` at the planted magnitude (`M-VACUOUS-SUCCESS`).
 
 ---
 
-## 6. THE N-LADDER
+## 6. THE N-LADDER — F2 FAILED, AND THE REASON IS EXACT
 
-*Pending — the run is detached and its result is appended here when it lands. The
-`RESUME.md` carries the launch line and the done-marker.*
+`carrier3d_ladder.log`. Density 0.01486 atoms/bohr³, pair floor 1e-6 Ha, dE₄ ON, four
+frames × 64 substeps per rung, all five rungs completing.
+
+```
+    N     edge     route     cells    r_cut    W_pair/step  W_trip/step   W_dE4   3D@0
+   24    11.73  Complete   1x1x1   22.000          276.0          0.0        0     yes
+   48    14.78  Complete   1x1x1   22.000         1128.0          0.0        0     yes
+   96    18.62  Complete   1x1x1   22.000         4547.6          0.0        0     yes
+  201    23.83  Complete   1x1x1   22.000        17571.0          0.0        0     yes
+  402    30.02  Complete   1x1x1   22.000        54899.4          0.0        0     yes
+```
+
+| stake | reading | verdict |
+|---|---|---|
+| **F1** `d ln W_pair / d ln N` over N ∈ {96, 201, 402} | **1.7403** (1.8856 over all five) | **NEITHER** — between the staked 1.35 and 1.80, reported as such |
+| **F2** `Route::Cells` at N = 402 with ≥ 3 cells/axis | `Complete`, 1×1×1 | **FAIL** |
+| **G9** genuine 3D placement at frame 0 | yes on all five rungs | **PASS** |
+
+### 6.1 Why F2 failed, mechanically, and why no ladder of this shape could have passed it
+
+**`r_cut = 22.000 bohr at every rung, independent of N.** That is the tell, and tracing it
+gives the whole result:
+
+* `Sim::list_cutoff` takes the maximum of the three-body radius, the four-body radius and
+  the declared pair switch. dE₄'s radius is `DE4_R_CUT = 6.0`, so it is not the binder.
+* The pair switch comes from `derive_pair_cutoff(1e-6)`, which **starts at the table's own
+  `r_max` and only walks outward**: `if t.u(base).abs() <= floor { r_in = r_in.max(base) }`.
+  The curve is already under the 1e-6 budget at its last knot, so `r_in` is the table's
+  `r_max` — 20.0 bohr — and `r_cut = r_in + PAIR_SWITCH_WIDTH = 22.0`.
+
+So **the neighbour radius is set by the TABLE, not by the truncation budget I declared.**
+Tightening the floor cannot shrink it; the derivation floors at `r_max` by construction.
+`cells.rs` needs three cells per axis, i.e. `edge ≥ 3 × 22.0 = 66.0 bohr`, and at this
+density that is
+
+> **N ≥ 0.01486 × 66³ ≈ 4,273 atoms** before the `O(N)` route can engage at all.
+
+The ladder's top rung is 402. **No rung of this ladder could have passed F2**, and that is a
+fact about the engine's cutoff arithmetic rather than about the ladder's ambition. The
+freeze reasoned "in three dimensions it can" engage and did not check the arithmetic against
+`r_max`; the check would have taken one line and is written here so the next freeze makes
+it.
+
+### 6.2 F1's 1.74 is fully explained, and is not a partial success
+
+The slope is between the staked bands, which the freeze pre-committed to reporting as
+NEITHER rather than as a near-pass. Its value is explained exactly:
+
+* at N = 24, `W_pair = 276.0 = C(24,2)` **exactly** — every pair is inside 22 bohr, so the
+  cost is the complete sum;
+* at N = 402, `W_pair = 54,899` against `C(402,2) = 80,601` — 68% of pairs, because a
+  30.02 bohr box has finally grown comparable to the 22 bohr radius.
+
+So the bend from 2.0 to 1.74 is the CUTOFF beginning to bite inside a `Complete` route, not
+the cell route engaging. Reading 1.74 as partial evidence for the cell route would have been
+exactly wrong, and F2 is the conjunct that says so — which is why the freeze staked the
+mechanism separately from the slope (`M-CONJUNCTION-MONOTONE`).
+
+### 6.3 dE₄ fired ZERO times at every rung
+
+`W_dE4 = 0` at N = 24 through 402, over 256 steps each, with the term ON. The four-body
+sector costs nothing on these configurations because its 6.0 bohr triple-hydrogen gate never
+closes on a freshly placed lattice. This is reported because a cost model that priced dE₄
+from the census's 891 evaluations would be pricing a regime this ladder never entered.
+
+### 6.4 G8 — the scissor's price, and the one piece of good news
+
+Extrapolating at the measured top-rung slope 1.7403 from the N = 402 rung:
+
+| target | grid at 100 atoms/cell | W_pair/step | relative to N = 402 |
+|---|---|---|---|
+| N = 800 | 2×2×2 | ~181,838 | 3.3× |
+| N = 6400 | 4×4×4 | ~6,781,801 | 123.5× |
+
+**These are UPPER BOUNDS, not forecasts**, and the instrument prints them as such: the
+slope used is the `Complete`-route slope, and the route changes before either target is
+reached.
+
+And that last clause is the finding worth carrying forward. The cell route engages at
+N ≈ 4,273 (§6.1), and the scissor's own 4×4×4 bar is **N = 6400, which is above that
+threshold**. So the successor's target size is on the far side of the route change: at
+N = 6400 the box is 75.7 bohr, `75.7 / 22.0 = 3.44`, and the `O(N)` route is live. The
+123.5× figure is therefore an over-estimate by an amount this ladder cannot measure, because
+this ladder never reached the regime.
+
+**What the successor is owed, plainly:** a second ladder starting at N ≈ 4,000, which is
+where the interesting question begins and where this one stops. Alternatively a shorter pair
+table — `r_cut` is `r_max + 2.0` and `r_max` is a property of the tabulated curve, so a
+curve tabulated to 10 bohr instead of 20 would move the route threshold down by a factor of
+~8 in N. That is a change to the physics artifact, not to the ladder, and it is named here
+rather than made.
 
 ---
 

@@ -57,9 +57,21 @@ finished both stop writing to the log, and only the status tells them apart.
 
 | step | cost |
 |---|---|
-| pair curve Z1–Z1, 96 knots | ~1.1 s |
-| pair curve Z8–Z1, 96 knots | ~10 s |
-| pair curve Z8–Z8, 96 knots | minutes — 2025 determinants per point; this dominates startup |
+| pair curve H–H, 96 knots | 1.3 s |
+| pair curve O–H, 96 knots | 13.8 s |
+| pair curve O–O, 96 knots | ~2600 s CPU (the census's own log: 2596.2 s). THIS DOMINATES STARTUP. |
+| pair curve O–H, **12** knots | 10.0 s — only 1.4x cheaper than 96 |
+
+**`--knots` does NOT buy a cheap curve, and that is a measurement, not an expectation.**
+O–H at 12 knots costs 10.0 s against 13.8 s at 96 — a factor of 1.4 for an eightfold cut in
+knots. The per-knot solves are not where the money goes; the asymptote and the well
+refinement do their own solves whatever the knot count. So `--knots` is useful for making a
+smoke artifact *distinguishable* (it stamps `SMOKE-<k>knots` into the filename) and is NOT
+a way to get a fast startup. Budget the O–O curve in full for every process.
+
+The corollary for scheduling: **one process, many rungs.** The three curves are generated
+once per process and reused, so a ladder pays the O–O cost once and a run that regenerated
+per rung would put the whole ladder's cost in the tables and price nothing.
 
 The three curves are generated ONCE per process and reused across every ladder rung, so a
 ladder pays the curve cost once. A run that regenerated them per rung would put the whole

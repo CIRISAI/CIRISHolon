@@ -263,12 +263,12 @@ impl ForceExecutor for CountHandle {
 /// Every knot is a full CI solve and O2 is 2025 determinants a point, so regenerating them
 /// per rung would put the ladder's whole cost in the tables and price nothing. Generated in
 /// `main`, loaded into each rung's fresh `Sim`.
-fn make_tables() -> Vec<holon_chem::pair::PairTable> {
+fn make_tables(knots: usize) -> Vec<holon_chem::pair::PairTable> {
     [(HYDROGEN, HYDROGEN), (OXYGEN, HYDROGEN), (OXYGEN, OXYGEN)]
         .into_iter()
         .map(|(a, b)| {
             let t0 = Instant::now();
-            let pt = generate_pair_table(a, b, CURVE_KNOTS);
+            let pt = generate_pair_table(a, b, knots);
             // THE DISCLOSURE FIELDS on a solver-derived number, printed whether or not
             // they are comfortable. The census's own log carries
             // "WARNING O-O: worst residual 2.68e-6 exceeds CONVERGED_RESIDUAL 1e-9" and
@@ -279,7 +279,7 @@ fn make_tables() -> Vec<holon_chem::pair::PairTable> {
             // diagnostics -- two curves under different budgets are two artifacts.
             let m = &pt.meta;
             println!(
-                "  curve {}-{}: {CURVE_KNOTS} knots, {}, worst residual {:.2e}, route {:?}, \
+                "  curve {}-{}: {knots} knots, {}, worst residual {:.2e}, route {:?}, \
 budget {}, exit {:?}, {}{:.1} s (contended)",
                 m.symbol_a,
                 m.symbol_b,
@@ -416,7 +416,7 @@ fn loglog_slope(pts: &[(f64, f64)]) -> f64 {
     (n * sxy - sx * sy) / (n * sxx - sx * sx)
 }
 
-fn ladder(workers: usize, rungs: &[usize]) -> i32 {
+fn ladder(workers: usize, rungs: &[usize], knots: usize) -> i32 {
     println!("THE N-LADDER — CARRIER_V2_PREREG.md §4");
     println!(
         "density {RHO_ATOMS} atoms/bohr^3, pair floor {PAIR_FLOOR:e} Ha, dE4 ON, \
@@ -427,7 +427,7 @@ fn ladder(workers: usize, rungs: &[usize]) -> i32 {
         "N", "edge", "route", "cells", "r_cut", "W_pair/step", "W_trip/step", "W_dE4", "3D@0", "s (cont.)"
     );
     println!("\ngenerating the three pair curves once:");
-    let tables = make_tables();
+    let tables = make_tables(knots);
     let mut rows = Vec::new();
     for &n in rungs {
         match run_rung(n, workers, &tables) {
@@ -526,9 +526,16 @@ fn ladder(workers: usize, rungs: &[usize]) -> i32 {
 
 // ======================================================================== the production
 
-fn produce(out: &PathBuf, n: usize, frames: usize, seeds: &[u64], workers: usize) -> i32 {
+fn produce(
+    out: &PathBuf,
+    n: usize,
+    frames: usize,
+    seeds: &[u64],
+    workers: usize,
+    knots: usize,
+) -> i32 {
     println!("generating the three pair curves once:");
-    let tables = make_tables();
+    let tables = make_tables(knots);
     if let Err(e) = std::fs::create_dir_all(out) {
         eprintln!("REFUSED  output directory {}: {e}", out.display());
         return 3;
@@ -552,7 +559,18 @@ fn produce(out: &PathBuf, n: usize, frames: usize, seeds: &[u64], workers: usize
             eprintln!("REFUSED  G9: the scene opens PLANAR and would stay planar by symmetry");
             return 4;
         }
-        let path = out.join(format!("n{n}_seed_{seed:#018x}.traj"));
+        // A NON-PROTOCOL CURVE CANNOT PRODUCE A FILE THAT LOOKS LIKE A PRODUCTION ONE.
+        //
+        // `--knots` exists so the write path can be exercised without paying the O-O
+        // curve, and a smoke artifact that shared a production artifact's name would be
+        // one `mv` away from being banked as one. The knot count is part of the curve's
+        // identity exactly as the solver budget is, so it goes in the NAME when it is not
+        // the protocol's.
+        let path = if knots == CURVE_KNOTS {
+            out.join(format!("n{n}_seed_{seed:#018x}.traj"))
+        } else {
+            out.join(format!("SMOKE-{knots}knots_n{n}_seed_{seed:#018x}.traj"))
+        };
         let header = Header2 {
             seed,
             n_atoms: n,
@@ -699,6 +717,19 @@ fn main() {
             std::process::exit(2);
         }
     };
+    let knots: usize = match arg("--knots=") {
+        Some(v) => match v.parse::<usize>() {
+            // A curve needs enough knots to have a shape; below this the interpolant is
+            // not a potential, and a smoke test on one would exercise a write path under
+            // physics nobody would recognise.
+            Ok(k) if k >= 8 => k,
+            _ => {
+                eprintln!("REFUSED  --knots={v} is not an integer >= 8");
+                std::process::exit(2);
+            }
+        },
+        None => CURVE_KNOTS,
+    };
     let workers: usize = match arg("--workers=") {
         Some(v) => match v.parse() {
             Ok(v) => v,
@@ -734,7 +765,7 @@ fn main() {
             eprintln!("REFUSED  --rungs= parsed to nothing");
             std::process::exit(2);
         }
-        std::process::exit(ladder(workers, &rungs));
+        std::process::exit(ladder(workers, &rungs, knots));
     }
 
     if mode == "produce" {
@@ -767,7 +798,7 @@ fn main() {
             println!("size   ~{:.1} MB per trajectory (bonds estimated at 2N)", bytes as f64 / 1e6);
             std::process::exit(0);
         }
-        std::process::exit(produce(&out, n, frames, &seeds, workers));
+        std::process::exit(produce(&out, n, frames, &seeds, workers, knots));
     }
 
     eprintln!("REFUSED  unknown --mode={mode}; expected ladder or produce");

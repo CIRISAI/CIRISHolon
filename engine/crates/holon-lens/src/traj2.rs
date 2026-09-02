@@ -549,8 +549,25 @@ fn f64r(r: &mut impl Read) -> std::io::Result<f64> {
 /// status from "this is not a trajectory at all".
 pub fn peek_version(path: &Path) -> Result<u32> {
     let mut r = BufReader::new(File::open(path)?);
-    let magic: [u8; 8] = rd::<8>(&mut r)?;
-    let version = u32r(&mut r)?;
+    // A FILE TOO SHORT TO HAVE A VERSION IS A FORMAT REFUSAL, NOT A PATH FAILURE.
+    //
+    // The raw `?` here mapped `UnexpectedEof` onto `TrajError::Io` and therefore onto exit
+    // code 3, which the freeze defines as "a path did not resolve" — so a caller handed a
+    // truncated or foreign file would be told to check its paths. That is the exact
+    // failure `M-EXIT-DISCRIMINATOR` names, in the code whose job is to discriminate.
+    let head = |e: std::io::Error| -> TrajError {
+        if e.kind() == std::io::ErrorKind::UnexpectedEof {
+            let size = std::fs::metadata(path).map(|m| m.len()).unwrap_or(0);
+            TrajError::Malformed(format!(
+                "{size} bytes is too short to be a trajectory: the magic and version alone \
+                 need 12"
+            ))
+        } else {
+            TrajError::Io(e)
+        }
+    };
+    let magic: [u8; 8] = rd::<8>(&mut r).map_err(head)?;
+    let version = u32r(&mut r).map_err(head)?;
     if magic == traj::MAGIC {
         if version != traj::VERSION {
             return Err(TrajError::BadVersion {
@@ -1089,7 +1106,12 @@ impl Trajectory2 {
                 let mut out = false;
                 for k in 0..3 {
                     let t = p[k] / extent[k];
-                    if !(0.0..1.0).contains(&t) {
+                    // The upper face is INSIDE, matching `cells.rs`, which adds "a hair of
+                    // margin so an atom exactly on the upper face lands in the last cell
+                    // rather than one past it". Two conventions for which cell owns a face
+                    // is how the fluid chart and the neighbour list come to disagree about
+                    // where an atom is, and only one of them would be reported.
+                    if !(0.0..=1.0).contains(&t) {
                         out = true;
                         break;
                     }
@@ -1735,6 +1757,59 @@ mod tests {
             n * 4
         );
         assert!(t.mean_cell_occupancy([0, 1, 1]).is_none(), "a zero axis refuses");
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    /// The box's faces belong to the cells `cells.rs` puts them in, and a file too short to
+    /// have a version says so as a FORMAT refusal rather than as a path failure.
+    #[test]
+    fn the_upper_face_is_inside_and_a_stub_file_is_a_format_refusal() {
+        let d = tmp("edges");
+        let path = d.join("f.traj");
+        let h = Header2 {
+            seed: 4,
+            n_atoms: 4,
+            dims_declared: 3,
+            substeps: 1,
+            n_frames: 1,
+            dt: 1.0,
+            box_w: 10.0,
+            box_h: 10.0,
+            box_d: 10.0,
+            z: vec![1; 4],
+            content: 0,
+        };
+        let mut w = TrajWriter2::create(&path, &h).unwrap();
+        // Exactly on the lower face, exactly on the upper face, just inside, just outside.
+        let pos = vec![
+            [0.0, 5.0, 5.0],
+            [10.0, 5.0, 5.0],
+            [9.999, 5.0, 5.0],
+            [10.001, 5.0, 5.0],
+        ];
+        w.push(0, 0.0, 300.0, &[], &pos, &pos, None, None).unwrap();
+        w.finish().unwrap();
+        let t = Trajectory2::read_strict(&path).unwrap();
+        let (occ, outside) = t.mean_cell_occupancy([2, 1, 1]).unwrap();
+        assert_eq!(outside, 1, "only the atom PAST the face is outside");
+        assert_eq!(occ[0], 1.0, "the lower face belongs to the first cell");
+        assert_eq!(occ[1], 2.0, "the upper face belongs to the LAST cell");
+
+        // A stub too short to carry a version: exit 4 (format), never exit 3 (path).
+        let stub = d.join("stub.traj");
+        std::fs::write(&stub, b"HLNTRA").unwrap();
+        let e = match Trajectory2::read(&stub) {
+            Ok(_) => panic!("a six-byte file was accepted as a trajectory"),
+            Err(e) => e,
+        };
+        assert_eq!(e.exit_code(), 4, "{e}");
+        assert!(e.to_string().contains("6 bytes"), "{e}");
+        // An absent file IS a path failure, and must stay one.
+        let e = match Trajectory2::read(&d.join("nothing-here.traj")) {
+            Ok(_) => panic!("a missing file was read"),
+            Err(e) => e,
+        };
+        assert_eq!(e.exit_code(), 3, "{e}");
         let _ = std::fs::remove_dir_all(&d);
     }
 

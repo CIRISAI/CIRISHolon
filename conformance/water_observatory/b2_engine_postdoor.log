@@ -1,0 +1,69 @@
+# B2 LONG-RANGE GATE BATTERY — freeze conformance/water_observatory/B2_PREREG.md
+# instrument = engine/crates/holon-render/examples/b2_longrange.rs
+# arm = engine  curves = full  steps = 20000  budget = 1.000e-9 Ha
+# launch: loadavg 59.24  cpu 7  core class P (SMT sibling present)  clock fraction 0.558
+# W1 H-H: slot 0 route Determinant exit Converged n_det 4 n_basis 2 solver_budget 5000 worst_residual 8.719e-11
+# W1 O-H: slot 1 route Determinant exit Converged n_det 90 n_basis 6 solver_budget 5000 worst_residual 9.945e-11
+# W1 O-O: slot 3 route Determinant exit IterationCap n_det 2025 n_basis 10 solver_budget 5000 worst_residual 4.809e-6
+# curve setup CPU: 648.9 s (generated ONCE, reloaded per scene)
+COLUMNS G3 slot r_max u_at_max p_fit fit_residual exp_index knots band
+G3 0 10.2400 6.272736e-9 20.6703 3.3123e-1 31.1423 10 Fenced
+G3 1 10.2400 1.645191e-10 30.6918 2.8526e-1 42.5440 10 Fenced
+G3 3 20.0000 6.641237e-7 5.0049 3.7181e-5 5.0038 10 Adopting
+# GATE G3: 1 curve(s) ADOPTING, 2 FENCED. Band [5, 7] on p_fit, exp_index <= 3x p_fit.
+# R_s = 20.0000 bohr (the largest loaded curve's support); budget = 1.000e-9 Ha
+# far sector: R_s = 20.0000  R_f = 73.2697 bohr  fenced = true
+# R4 (live, on the fenced sector): REFUSED (R4, fenced tail): the far energy is a BRACKET [-1.000000e-6, -1.000000e-9] Ha spanning a factor of 1.000e-3; no scalar is available. EXIT: a curve carrying further support, or a basis with diffuse functions (ION_STAKING.md I-5, unowned).
+# G2 scene: 512 atoms, 3D cubic lattice, box 320.0 bohr (16x R_s), 5068 pairs within r_cut = 75.5841 bohr
+# GATE G2 (energy half): PASS  n 512  box 320.0 bohr  route Cells vs Complete (decomposition engaged: true)  pair switch Some((73.58407728167015, 75.58407728167015))  list_cutoff 75.5841 bohr (>= R_s 20.0000)  e_pair -2.809154453097e-8 vs -2.809154453097e-8  relative 0.000e0 (<= 1e-12)
+# GATE G8 gradient: FAIL  worst relative 1.0000e0 (<= 1e-7)  configurations 100 (floor 100)  nonzero components probed 2096
+# G8 diagnostic: the worst relative component had |F| = 2.442e-23 Ha/bohr against a largest far force of 1.148e-8; its absolute disagreement was 2.442e-23 Ha/bohr, and the largest absolute disagreement anywhere was 1.087e-17. Relative to the LARGEST far force that is 9.470e-10.
+# G8 diagnostic, reference resolvability: 1909 of 2096 components disagree by less than the finite difference's own noise (3.154e-18 Ha/bohr = 4*eps*|E_far| / 2h, |E_far| <= 7.103e-8); over the 187 components whose disagreement the reference CAN resolve, the worst relative error is 1.1870e-7. The staked verdict above is unchanged and stands.
+G7 h 1.0e-3  dE/dlambda 3.578983955e-3  virial 3.578846594e-3  rel 3.838e-5  FAIL
+G7 h 1.0e-4  dE/dlambda 3.578847968e-3  virial 3.578846594e-3  rel 3.838e-7  PASS  richardson 3.578846594e-3
+G7 h 1.0e-5  dE/dlambda 3.578846608e-3  virial 3.578846594e-3  rel 3.839e-9  PASS  richardson 3.578846594e-3
+# GATE G7 virial (LEDGER COMPLETENESS, not a conservation law): FAIL  worst over the three staked steps 3.8381e-5, finest step 3.8386e-9 (<= 1e-6 required at every step)
+# GATE G-LEDGER box move f=0.90: PASS  e_far -4.074994e-8 -> -1.994615e-8  |ledger - l0| 0.000000e0 vs bound 1.067809e-3  w_ext -7.991546e-4  work.hand -7.991546e-4  columns_ok true  (l0 3.124108716e-4)
+# GATE G-LEDGER box move f=1.10: PASS  e_far -4.074994e-8 -> -5.969809e-8  |ledger - l0| 0.000000e0 vs bound 1.067809e-3  w_ext 1.881787e-4  work.hand 1.881787e-4  columns_ok true  (l0 3.124108716e-4)
+# GATE G4 energy: PASS  drift_peak 5.587362e-5  bound 6.242874e-3  ratio 0.0089  work_columns_ok true
+# GATE G5 momentum: PASS  residual_peak 1.387608e-13  bound 8.118668e-10  isolated-pair |F_i + F_j| = 0.0e0 (EXACT 0 required)
+# GATE G6 angular: PASS  residual_peak 3.166929e-12  bound 2.123218e-8
+# GATE G12 work count: steps 20000 (floor 20000)  far contributions 267581  image contributions 0  R_s crossings 23 (floor 1)
+# TRUNCATED ARM (the O(N) near route): pair_floor 6.6479e-7 Ha gives the window (20.0000, 22.0000) bohr against R_s = 20.0000
+# GATE G4 energy (truncated): PASS  drift_peak 5.587362e-5  bound 5.131967e-3  ratio 0.0109
+# GATE G5 momentum (truncated): PASS  residual_peak 1.310899e-13  bound 8.118668e-10
+# GATE G6 angular (truncated): PASS  residual_peak 2.779653e-12  bound 2.123218e-8
+# G12 (truncated): steps 20000  far contributions 267581  R_s crossings 23
+# GATE G12: PASS
+# --- PLANTS (M-PLANT-OBS: each pre-checked to fire; a 0.0 carrier REFUSES) ---
+P2 one-sided far force | carrier |P − P0 − J| = 1.150051e-5 (sector: the far pair force) | G5 FAIL | verdict FIRED
+P3 non-central far force | carrier |L − L0| = 4.704846e-7 (sector: angular) | G6 FAIL | G5 PASS | verdict FIRED, and G5 STAYED GREEN — the two gates are independent
+P4 zero-point STEP at R_s | carrier = the 1.0e-6 Ha jump per crossing (sector: the energy ledger) | crossings 23 | drift_peak 5.560550e-5 vs bound 6.243016e-3 | G4 PASS | verdict DID NOT FIRE — G4's derived bound is larger than the planted defect
+# G4 POWER CERTIFICATE (the staked plant did not fire; this is what the gate CAN see, not a new criterion):
+P4-power step 1.0e-5 Ha  drift_peak 8.260550e-5  bound 6.244300e-3  G4 PASS
+P4-power step 1.0e-4 Ha  drift_peak 3.946651e-4  bound 6.257136e-3  G4 PASS
+P4-power step 1.0e-3 Ha  drift_peak 3.994665e-3  bound 6.385498e-3  G4 PASS
+P4-power step 1.0e-2 Ha  drift_peak 3.999467e-2  bound 7.669115e-3  G4 FAIL
+P4-power step 1.0e-1 Ha  drift_peak 3.999947e-1  bound 2.050529e-2  G4 FAIL
+P4-power step 1.0e0 Ha  drift_peak 3.999995e0  bound 1.641372e-1  G4 FAIL
+# G4 resolves a zero-point step at 1.0e-2 Ha and not at the staked 1.0e-6 Ha — a factor of 10000. V2 applies at the staked plant: G4's arm is VOID until a successor stakes a plant this gate can see.
+P5 gradient mismatch (force x1.001) | carrier = relative gradient error 1.0000e0 (sector: the far force) | clean run was 1.0000e0 | G8 FAIL | verdict FIRED
+P6 truncated far sum (R_s + 0.1 bohr) | carrier = the omitted band's energy 4.074994e-8 Ha (sector: the far pair sector) | E_far clean -4.074994e-8 vs truncated 0.000000e0 | verdict FIRED
+P7 omitted virial | carrier = the far sector's Sum r du/dr, 2.171990e-7 Ha (sector: the virial) | G7 relative 6.0686e-5 vs clean 3.8386e-9 | G7 FAIL | G4 PASS | G5 PASS | verdict FIRED, and G4/G5 STAYED GREEN — a conservative channel missing from the pressure
+# periodic arm: box 45.5556 x 45.5556 bohr — just above the 2 R_s = 40.0000 floor and inside R_f = 73.2697, so the image sector is both legal and nonempty
+# GATE G10 image convergence: PASS  shells 3 (cap 8)  |E(m+1) − E(m)| = 0.000000e0 Ha  budget 1.000e-9 Ha  uncertainty_hartree 0.000000e0
+# periodic arm image sector: 558 of 576 far contributions come from a nonzero image offset; E_far = -9.490398e-7 Ha
+# GATE G9 stale-cache f=0.90: PASS  e_far bit-identical true  virial true  every force true  (scaled -1.565574861693e-6 vs fresh -1.565574861693e-6)
+# GATE G9 ledger across the box move, f=0.90: PASS  |ledger − l0| 0.000000e0 vs bound 1.067754e-3  w_ext -1.121887e-5  work.hand -1.121887e-5  columns_ok true
+# GATE G9 stale-cache f=1.10: PASS  e_far bit-identical true  virial true  every force true  (scaled -6.147355490814e-7 vs fresh -6.147355490814e-7)
+# GATE G9 ledger across the box move, f=1.10: PASS  |ledger − l0| 0.000000e0 vs bound 1.067754e-3  w_ext 6.093374e-6  work.hand 6.093374e-6  columns_ok true
+P1 stale image lattice (f = 0.90, 3 shells) | carrier |E_far(stale) − E_far(fresh)| = 7.332040e-7 Ha (sector: the periodic image sector) | verdict FIRED — G9 sees it
+# G13 conditions: cpu 26  core class E (no SMT sibling)  clock fraction 0.589  loadavg 60.43
+COLUMNS G13 n cpu_seconds_mean cpu_seconds_min cpu_seconds_max spread_factor
+G13 12 3.356934e-6 3.204346e-6 3.662109e-6 1.143
+G13 24 1.790365e-5 1.770020e-5 1.831055e-5 1.034
+G13 48 8.870443e-5 8.300781e-5 9.765625e-5 1.176
+G13 96 3.450521e-4 3.417969e-4 3.515625e-4 1.029
+G13 192 1.210937e-3 1.210937e-3 1.210938e-3 1.000
+# GATE G13: exponent 2.126 over N = [12, 24, 48, 96, 192], 3 repetitions each. PRINTED, NOT GATED ON A VALUE. Ordering monotone in N: true — the measurement stands
+# done: wall 786.5 s  cpu 656.9 s  loadavg at exit 61.52  clock fraction at exit 0.615

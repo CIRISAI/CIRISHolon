@@ -8,8 +8,9 @@ commit BEFORE `longrange.rs` existed. Same ordering discipline as B1 and B1b, sa
 **Instrument:** `engine/crates/holon-render/examples/b2_longrange.rs`
 **Raw output, committed beside this document:** `b2_frames.log` (every frame),
 `b2_frames_stride400.log`, `b2_engine_full.log`, `b2_engine_hh.log`, `b2_refusals.log`,
-`b2_tests.log`, and **`b2_engine_full_G9RED.log`** — the run in which G9's `f = 0.90` arm
-fired, kept because a fired gate stays in the record with what fired it.
+`b2_tests.log`, **`b2_engine_full_G9RED.log`** — the run in which G9's `f = 0.90` arm fired,
+kept because a fired gate stays in the record with what fired it — and
+**`b2_engine_postdoor.log`**, the same arm re-run against `scale_box`'s new door.
 
 ---
 
@@ -299,13 +300,33 @@ changes and refuses when a scaled box falls below the legality floor, surfaced t
 the periodic arm's box is sized at `2.05 R_s / 0.90` = 45.5556 bohr so it stays legal on both
 sides of the move.
 
-**The engine-level finding underneath it is worth more than the gate.** `Sim::scale_box`
-shrinks the box affinely and **nothing re-checks any legality condition afterwards** — not
-this sector's floor, and **not `Sim::pbc_ok` either, which is consulted only by
-`Sim::set_pair_cutoff`** (`sim.rs:1781`). So a barostat move can carry a periodic scene from
-`pbc_ok` true to `pbc_ok` false with no complaint anywhere, which would break the
-minimum-image convention silently. B2 refuses for its own condition; **the `pbc_ok` half is
-not B2's to fix and is reported here for whoever owns the barostat.**
+**The engine-level finding underneath it was worth more than the gate, and it is now
+closed.** `Sim::scale_box` shrank the box affinely and **re-checked no legality condition
+afterwards** — not this sector's floor, and **not `Sim::pbc_ok` either, which was consulted
+only by `Sim::set_pair_cutoff`** (`sim.rs:1781`). A barostat move could therefore carry a
+periodic scene from `pbc_ok` true to false with no complaint anywhere, breaking the
+minimum-image convention silently: the pair reduction would drop an image force, a wrong
+number rather than an error.
+
+**The door was built at `44ac404`** by the integrating lane, after B2 routed the finding to
+it: `scale_box` now refuses any factor that would put the list cutoff past half the shortest
+scaled edge on a wrapping boundary (`ScaleRefusal::BreaksPeriodicImages`), mutation-tested,
+with the numbers behind the refusal readable at `Sim::pbc_margin`. **The two halves live in
+two places on purpose** — the pair sector's `pbc_ok` condition is the door's, and the far
+sector's own `min_edge ≥ 2 R_s` is not, so it stays a per-pass check exactly as designed.
+
+Three of this instrument's probes walk through that door — G9 scales by 0.90 and 1.10, P1 by
+0.90 — and each call was an `.expect(...)`, so a refusal would have surfaced as a PANIC
+rather than a reading. They now print the refusal and mark the arm VOID, **and they print the
+margin**: this arm's box clears the door by 2.5% (`list_cutoff` 20.0 against a scaled
+half-edge of 20.5). **DEMONSTRATED, not predicted** — `b2_engine_postdoor.log` re-runs the
+whole arm against the live door and no probe hits it: G9 passes bit-identically in both
+directions at the same values as the pre-door run (−1.565574861693e-6 and
+−6.147355490814e-7), P1 still fires at 7.332040e-7, G10 still converges at 3 shells. The 2.5%
+is additionally pinned by a test with a negative control — a box just under the floor IS
+refused — so the margin fails loudly if either constant moves. The two floors coincide here ONLY because no pair truncation is declared,
+so `list_cutoff == R_s`; a scene that declared one would push `list_cutoff` past `R_s` and
+`pbc_ok` would bind first. A margin nobody prints is a margin nobody notices moving.
 
 ---
 

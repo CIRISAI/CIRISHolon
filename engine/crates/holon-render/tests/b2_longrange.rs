@@ -585,3 +585,79 @@ fn the_plants_are_visible_to_the_invariants_above() {
         assert_eq!(plant_f[i].1.to_bits(), clean_f[i].1.to_bits());
     }
 }
+
+#[test]
+fn the_periodic_probe_box_clears_the_scale_box_door_under_the_shrink() {
+    // `44ac404` gave `Sim::scale_box` a door: on a wrapping boundary it refuses any factor
+    // that would put `list_cutoff` past half the shortest SCALED edge, which is `pbc_ok`
+    // evaluated after the move. Three of B2's probes walk through it — G9 scales by 0.90 and
+    // 1.10, P1 by 0.90 — and the instrument's periodic box is sized at `2.05 R_s / 0.90` for
+    // a DIFFERENT floor, the far sector's own `min_edge >= 2 R_s`.
+    //
+    // That the second sizing also clears the first is not a coincidence to be trusted: it
+    // holds only because no pair truncation is declared here, so `list_cutoff == R_s`. This
+    // pins the margin at test cost instead of at a twelve-minute solve, and it fails if
+    // either constant moves.
+    const SHRINK: f64 = 0.90;
+    let r_s = 20.0f64;
+    let edge = 2.05 * r_s / SHRINK;
+
+    let mut sim = Box::new(Sim::empty());
+    sim.dims = Dims::Two;
+    sim.boundary = Boundary::Periodic;
+    sim.width = edge;
+    sim.height = edge;
+    sim.depth = edge;
+    sim.reset(4);
+    let far = FarSector::build(&[Some(power(6.0, r_s))], r_s, 1.0e-9, Dims::Two).expect("builds");
+    sim.far = Some(Box::new(far));
+    sim.recompute();
+
+    // The far sector forces the list radius out to `R_s`, so the door's quantity IS `R_s`
+    // here — which is the whole reason the two floors coincide.
+    let (cut, half_edge) = sim.pbc_margin();
+    assert!((cut - r_s).abs() < 1.0e-12, "list_cutoff {cut} is not R_s");
+    assert!(
+        cut <= half_edge * SHRINK,
+        "the probe box does not clear the door: cutoff {cut} against a scaled half-edge of {}",
+        half_edge * SHRINK
+    );
+    // 2.05/2.00 = 1.025, so the margin is 2.5% and no more. Asserted as a BAND rather than a
+    // floor: a successor that widens the box past this has stopped testing the tight case,
+    // and one that narrows it walks into the door.
+    let margin = half_edge * SHRINK / cut;
+    assert!(
+        (1.02..=1.03).contains(&margin),
+        "the door margin is {margin}, outside the 2-3% band this arm is sized for"
+    );
+
+    // And the move the probes actually make is admitted, in both directions.
+    let mut shrunk = Box::new(Sim::empty());
+    shrunk.dims = Dims::Two;
+    shrunk.boundary = Boundary::Periodic;
+    shrunk.width = edge;
+    shrunk.height = edge;
+    shrunk.depth = edge;
+    shrunk.reset(4);
+    let far2 = FarSector::build(&[Some(power(6.0, r_s))], r_s, 1.0e-9, Dims::Two).expect("builds");
+    shrunk.far = Some(Box::new(far2));
+    shrunk.recompute();
+    assert!(shrunk.scale_box(SHRINK).is_ok(), "G9's shrink hits the door");
+
+    // The negative control: a box only just under the floor is REFUSED, so the assertion
+    // above is about this box clearing a live door rather than about a door that never fires.
+    let mut tight = Box::new(Sim::empty());
+    tight.dims = Dims::Two;
+    tight.boundary = Boundary::Periodic;
+    tight.width = 1.95 * r_s / SHRINK;
+    tight.height = tight.width;
+    tight.depth = tight.width;
+    tight.reset(4);
+    let far3 = FarSector::build(&[Some(power(6.0, r_s))], r_s, 1.0e-9, Dims::Two).expect("builds");
+    tight.far = Some(Box::new(far3));
+    tight.recompute();
+    assert!(
+        tight.scale_box(SHRINK).is_err(),
+        "a box under the floor was admitted; the door is not live"
+    );
+}

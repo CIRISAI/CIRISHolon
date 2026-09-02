@@ -228,3 +228,49 @@ fn a_log_from_another_regime_is_refused_not_mixed() {
     assert!(ok.replayed_regions() > 0, "the matching regime must still replay");
     let _ = std::fs::remove_file(&p);
 }
+
+/// THE TAG BYTES ARE PINNED, because this crate's checkpoints are stored artifacts that
+/// contain them.
+///
+/// `holon-device` already tests that every class round-trips through its tag. That check
+/// cannot catch what this one is for: `from_tag(tag())` compares the function against
+/// itself, so renaming `"cpu"` to `"CPU"` round-trips perfectly, passes both of that
+/// crate's tests, and silently invalidates every checkpoint ever written — the regime line
+/// stops matching, and a run that should resume re-solves from zero while reporting
+/// success. Two routes through one changed expression agree with each other and disagree
+/// with the past.
+///
+/// gpu-prod named the constraint when they recommended `tag()` over `Debug`: the guarantee
+/// is load-bearing precisely because artifacts store it, and if a third class is ever added
+/// the existing two must keep their bytes. A constraint held in two lanes' memory is one
+/// tidy-up away from being gone, so it is written down here as an assertion instead.
+///
+/// It lives in THIS crate rather than in `holon-device` because this is where the
+/// dependency is. The tags are not wrong if they change; they are wrong if they change
+/// *while these checkpoints exist*, and only this side knows that.
+#[test]
+fn the_device_tags_this_crate_stores_are_pinned_to_their_bytes() {
+    use holon_chem::sigma_op::DeviceClass;
+    assert_eq!(
+        DeviceClass::Cpu.tag(),
+        "cpu",
+        "the CPU tag changed. Every REGIME line already written contains the old bytes, so \
+         every existing checkpoint will now be REFUSED as a foreign regime and re-solved \
+         from zero. If this is intentional, the stored logs have to be migrated or \
+         discarded deliberately — not silently."
+    );
+    assert_eq!(
+        DeviceClass::Gpu.tag(),
+        "gpu",
+        "the GPU tag changed; see the CPU case above for what that costs."
+    );
+    // And the count, so a third class arriving is a decision someone makes here rather than
+    // a surprise the checkpoints discover.
+    assert_eq!(
+        DeviceClass::ALL.len(),
+        2,
+        "a device class was added. That is fine for the checkpoint IF the existing two kept \
+         their bytes (asserted above) — this line exists so the addition is noticed by the \
+         lane whose artifacts depend on it, not only by the lane that made it."
+    );
+}

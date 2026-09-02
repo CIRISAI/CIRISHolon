@@ -1,0 +1,6 @@
+generating the three pair curves once:
+  curve H-H: 96 knots, R_e 1.3887 bohr D_e 0.204142 Ha, worst residual 8.72e-11, route Determinant, budget 5000, exit Converged, 1.1 s (contended)
+  curve O-H: 96 knots, R_e 1.9909 bohr D_e 0.122901 Ha, worst residual 9.95e-11, route Determinant, budget 5000, exit Converged, 10.5 s (contended)
+  curve O-O: 96 knots, R_e 2.4421 bohr D_e 0.147621 Ha, worst residual 4.81e-6, route Determinant, budget 5000, exit IterationCap, NOT CONVERGED (worst residual above CONVERGED_RESIDUAL), 969.5 s (contended)
+[0x0000000053415421] N=402 edge=30.02 bohr workers=8 -> /tmp/claude-1000/carrier-wt/prod/n402_seed_0x0000000053415421.traj
+  frame    500/20000 | T 241001 K | bonds   365 | drift 2.47e-3/5.17e0 | |p| 1.70e-10/1.78e-6 | dE4      0 |   534.2 s (cont.)

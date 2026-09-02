@@ -85,11 +85,53 @@ contract is checked by the gate that was blind to the render-only modules.
 2. `pages.yml` serving the workbench at root — not done.
 3. The 1 km cube hero itself — the ladder and acuity law are live, the CUBE is not; the
    scene is a molecular box.
-4. The retirement battery — "the old UI retires when the workbench is green under its full
-   gate battery" needs that battery enumerated. Not yet defined.
+4. The retirement battery — enumerated and ruled in `RETIREMENT_BATTERY.md` (R1–R9, R5
+   split into an automated stamp read and a manual receipt). R3 runs in full before
+   promotion; R7 is a hard blocker; R9 is the lead's. Rows still unbuilt: R5a, R5b, and
+   R6's residual sweep for page-local fences with no register row.
 
-Not blockers, by design: the three coarse bands are FENCED with owner and exit; that is
-the ladder's story, not a gap.
+The three coarse bands are FENCED, and a fence is a bug under repair, never content
+(operator's law). Each names its debt, its owner and the build paying it in present tense,
+and the band flips on that build landing a node-G closure certificate — not on the fence
+being well worded. They are not blockers on the site promotion; they ARE the work queue.
+
+## Door queue (bands flip only on node-G closure certificates)
+
+Standing law: a band goes live ONLY on a node-G closure certificate whose citation the
+gate resolves in both directions. Door (a), the aggregate-defect route, is REFUSED for
+every band. LG certificates confer no band state at all.
+
+* **C6 / MOL-PART, door (b) pair** — first in the queue, for the molecular band.
+* **rung 2's (N,P) defect door** — pending their A2.
+* **LG's defect-against-view curve** — pending `LG_RESULTS.md` / `lg_full.log`, which are
+  not banked (third launch, past b=8; two earlier runs killed by their own lane, one for
+  reading a gate at the wrong instant against the wrong wall length, one for a log that
+  misdescribed its own scene). The citation gate refuses uncommitted artifacts, so this
+  panel cannot be drawn before they land.
+
+  **L = 64** is the closure probe's L, confirmed by lattice-tier: the staked points, the
+  banked run and the 0.061523 vacuity gap are all at it. Two other L values are in their
+  bank and are NOT the curve's — the conservation run (G1–G4, G13) is L = 256, and the
+  post-freeze divisor extension is L = 12, 18, 24, 30. Any panel showing one of those says
+  which.
+
+  **The caption is a constraint, not a preference.** W(b) = 1 − max(0, b−2)²/b² counts a
+  block's boundary layer and is DERIVED assuming the block has neighbours outside it. At
+  b = L on a torus there are no inter-block edges, so the layer is empty and the count is
+  0 rather than 4b−4. The dashed continuation past b = 32 must therefore be captioned as
+  the same algebra applied where its premise no longer holds — NOT as "the curve". Caption
+  it as the curve and the page asserts a disagreement between model and measurement, and
+  there is none: the discontinuity is the domain boundary. The gap is 1 − (L−2)²/L² —
+  0.0615 at L = 64, 0.0311 at 128, 0.0156 at 256 — so a smaller L draws it larger
+  honestly; do not draw it at an L the bank does not report.
+
+  Two constraints that travel with any LG wording: the page may not present `field_lg`'s
+  chart and the LG tier as one object, and no wording may claim a Navier–Stokes limit for
+  the LG tier. One result the page MAY carry: FHP-I has exactly three linear invariants —
+  mass and the two momentum components — at every L from 4 to 16, zero spurious, gauged in
+  both directions (identity collision returns 6L, HPP-4 returns its textbook 2L+1 per
+  line). It is a fact about that configuration only; lattice-tier has NOT read Zanetti's
+  statement or its scope, so no sentence may say it contradicts him.
 
 ## Standing hazards this lane has hit
 

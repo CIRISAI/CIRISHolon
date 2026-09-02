@@ -1022,6 +1022,90 @@ impl Trajectory2 {
         }
     }
 
+    /// G9b's QUANTITY, computed from the artifact alone: `|P(t) - P(0) - J_ext(t)|`.
+    ///
+    /// `RUNG2_RESULTS.md` §5.3 marked this UNDISCHARGED — "not computable from this
+    /// artifact" — because v1 carried no intervention ledger. It is computable now, and
+    /// this function is deliberately the whole of what that took: the velocities were
+    /// always there, `j_ext` is the new part, and `P(0)` is this trajectory's own first
+    /// frame.
+    ///
+    /// **The caller supplies the mass law.** `holon-lens` has no element table and will
+    /// not grow one: a second statement of "what does nucleus Z weigh" is how the two of
+    /// them come to disagree, and the engine's is in `holon-chem`. Pass
+    /// `|z| sim_species_mass(z)` from a crate that has it. This is `OBJECT.md`'s generator
+    /// discipline one tier down — the caller supplies the physics and the layer refuses to
+    /// invent it.
+    ///
+    /// `None` when the file carries no ledger, which is the honest answer for every v1
+    /// file and is not the same answer as zero.
+    pub fn momentum_residual(&self, frame: usize, mass_of: impl Fn(u32) -> f64) -> Option<f64> {
+        let f = self.frames.get(frame)?;
+        let l = f.ledger?;
+        let first = self.frames.first()?;
+        let mut d = [0.0f64; 3];
+        for k in 0..3 {
+            let mut p = 0.0;
+            let mut p0 = 0.0;
+            for (i, z) in self.header.z.iter().enumerate() {
+                let m = mass_of(*z);
+                p += m * f.vel[i][k];
+                p0 += m * first.vel[i][k];
+            }
+            d[k] = p - p0 - l.j_ext[k];
+        }
+        Some((d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt())
+    }
+
+    /// PER-CELL FRACTIONAL MEAN OCCUPANCY over a grid the CALLER declares.
+    ///
+    /// `RUNG2_PREREG_A2`'s fluid-element representation, derived rather than stored, and
+    /// the choice is deliberate. Occupancy is a function of the positions and A GRID, and
+    /// a grid is a reading, not a fact about the run. Storing it in the artifact would
+    /// (i) bake one grid into a file every later campaign has to live with — the same
+    /// trusted-declaration failure `dims_declared` exists to close — and (ii) create a
+    /// second implementation of a reading that already has one. So the format carries the
+    /// positions and this is the only implementation.
+    ///
+    /// Returns the grid in `x + nx*(y + ny*z)` order, and — separately, never folded in —
+    /// how many (frame, atom) samples fell OUTSIDE the declared box. The walls in this
+    /// engine are soft, so atoms genuinely leave; clamping them into the edge cells would
+    /// manufacture density exactly where a fluid-element reading is most fragile, and
+    /// dropping them silently would make the grid's total disagree with `N`.
+    pub fn mean_cell_occupancy(&self, n: [usize; 3]) -> Option<(Vec<f64>, usize)> {
+        if n.iter().any(|c| *c == 0) || self.frames.is_empty() {
+            return None;
+        }
+        let extent = [self.header.box_w, self.header.box_h, self.header.box_d];
+        if extent.iter().any(|e| !(*e > 0.0) || !e.is_finite()) {
+            return None;
+        }
+        let cells = n[0] * n[1] * n[2];
+        let mut count = vec![0u64; cells];
+        let mut outside = 0usize;
+        for f in &self.frames {
+            for p in &f.pos {
+                let mut idx = [0usize; 3];
+                let mut out = false;
+                for k in 0..3 {
+                    let t = p[k] / extent[k];
+                    if !(0.0..1.0).contains(&t) {
+                        out = true;
+                        break;
+                    }
+                    idx[k] = ((t * n[k] as f64) as usize).min(n[k] - 1);
+                }
+                if out {
+                    outside += 1;
+                    continue;
+                }
+                count[idx[0] + n[0] * (idx[1] + n[1] * idx[2])] += 1;
+            }
+        }
+        let frames = self.frames.len() as f64;
+        Some((count.iter().map(|c| *c as f64 / frames).collect(), outside))
+    }
+
     /// Whether the header's claim and the data's answer agree. Reported by every reader;
     /// NEVER repaired in place, because correcting the header would put the lie one layer
     /// down where the next campaign would inherit it.
@@ -1496,6 +1580,161 @@ mod tests {
         let f0 = &t.frames[0];
         assert_eq!(f0.vel.len(), n);
         assert_eq!(t.header.z, vec![8, 1, 1]);
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    /// G9b, the gate `RUNG2_RESULTS.md` §5.3 could not compute, computed from the file.
+    ///
+    /// Planted rather than merely exercised: the impulse is a KNOWN 0.5 in x, the
+    /// velocities move by exactly that impulse over the oxygen's mass, and the residual
+    /// must come back at zero. A ledger that closed because nothing moved would pass a
+    /// bare `residual < eps` and fail the second assertion.
+    #[test]
+    fn the_momentum_ledger_closes_from_the_artifact_and_the_impulse_is_real() {
+        let d = tmp("mom");
+        let path = d.join("m.traj");
+        // A mass law the CALLER supplies, as the API demands. These are the engine's
+        // electron-mass values for H and O to four figures; the test needs a law, not the
+        // element table, and inventing one here is exactly what the signature prevents
+        // from happening inside the crate.
+        let mass_of = |z: u32| match z {
+            1 => 1837.15,
+            8 => 29165.1,
+            _ => panic!("the fixture has no nucleus {z}"),
+        };
+        let h = Header2 {
+            seed: 11,
+            n_atoms: 3,
+            dims_declared: 3,
+            substeps: 1,
+            n_frames: 3,
+            dt: 1.0,
+            box_w: 12.0,
+            box_h: 12.0,
+            box_d: 12.0,
+            z: vec![8, 1, 1],
+            content: CONTENT_LEDGER,
+        };
+        let mut w = TrajWriter2::create(&path, &h).unwrap();
+        let pos = vec![[1.0, 2.0, 3.0], [2.5, 2.0, 3.0], [1.0, 3.5, 3.0]];
+        let impulse = 0.5f64;
+        for f in 0..3u64 {
+            // The whole impulse lands on the oxygen, which is what a wall on one face
+            // would do. dv = J / m.
+            let dv = impulse * f as f64 / mass_of(8);
+            let vel = vec![[0.01 + dv, 0.0, 0.0], [-0.02, 0.03, 0.0], [0.0, -0.03, 0.04]];
+            let led = Ledger {
+                j_ext: [impulse * f as f64, 0.0, 0.0],
+                ..Ledger::default()
+            };
+            w.push(f, f as f64, 300.0, &[], &pos, &vel, None, Some(&led))
+                .unwrap();
+        }
+        w.finish().unwrap();
+
+        let t = Trajectory2::read_strict(&path).unwrap();
+        for f in 0..3 {
+            let r = t.momentum_residual(f, mass_of).expect("the ledger is present");
+            assert!(r < 1e-9, "frame {f} residual {r}");
+        }
+        // AND THE CONTROL: the momentum genuinely moved, so the closure above is a
+        // measurement and not a description of a scene where nothing happened.
+        let p = |f: usize| -> f64 {
+            t.header
+                .z
+                .iter()
+                .enumerate()
+                .map(|(i, z)| mass_of(*z) * t.frames[f].vel[i][0])
+                .sum()
+        };
+        assert!(
+            (p(2) - p(0) - 2.0 * impulse).abs() < 1e-9,
+            "the planted impulse must be visible in the raw momentum: {} vs {}",
+            p(2) - p(0),
+            2.0 * impulse
+        );
+        assert!((p(2) - p(0)).abs() > 0.9, "and it must be large: {}", p(2) - p(0));
+        // A v1 file has no ledger, and that is NOT the same answer as a residual of zero.
+        let v1 = d.join("v1.traj");
+        let hv1 = Header {
+            seed: 1,
+            n_atoms: 2,
+            dims: 2,
+            substeps: 1,
+            n_frames: 1,
+            dt: 1.0,
+            box_w: 5.0,
+            box_h: 5.0,
+            box_d: 5.0,
+            z: vec![1, 1],
+        };
+        let mut wv = TrajWriter::create(&v1, &hv1).unwrap();
+        let pp = vec![[0.0; 3], [1.4; 3]];
+        wv.push(0, 0.0, 300.0, 0, &pp, &pp).unwrap();
+        wv.finish().unwrap();
+        assert!(
+            Trajectory2::read(&v1).unwrap().momentum_residual(0, mass_of).is_none(),
+            "a file with no ledger must answer None, never 0.0"
+        );
+        let _ = std::fs::remove_dir_all(&d);
+    }
+
+    /// The fluid-element reading is DERIVED, and it counts every atom or says where they
+    /// went.
+    #[test]
+    fn cell_occupancy_is_fractional_and_escapees_are_reported_not_clamped() {
+        let d = tmp("occ");
+        let path = d.join("o.traj");
+        let n = 8usize;
+        let h = Header2 {
+            seed: 2,
+            n_atoms: n,
+            dims_declared: 3,
+            substeps: 1,
+            n_frames: 4,
+            dt: 1.0,
+            box_w: 10.0,
+            box_h: 10.0,
+            box_d: 10.0,
+            z: vec![1; n],
+            content: 0,
+        };
+        let mut w = TrajWriter2::create(&path, &h).unwrap();
+        for f in 0..4usize {
+            // Every atom in the low-x half; on the last frame ONE of them leaves the box
+            // entirely, which soft walls permit and a fluid reading must not hide.
+            let pos: Vec<[f64; 3]> = (0..n)
+                .map(|i| {
+                    if f == 3 && i == 0 {
+                        [-1.0, 5.0, 5.0]
+                    } else {
+                        [2.0, 5.0, 5.0]
+                    }
+                })
+                .collect();
+            w.push(f as u64, f as f64, 300.0, &[], &pos, &pos, None, None)
+                .unwrap();
+        }
+        w.finish().unwrap();
+        let t = Trajectory2::read_strict(&path).unwrap();
+        let (occ, outside) = t.mean_cell_occupancy([2, 1, 1]).unwrap();
+        assert_eq!(outside, 1, "the escapee is counted, once");
+        // 8 atoms x 3 frames + 7 atoms x 1 frame = 31 samples, all in the low-x cell,
+        // over 4 frames.
+        assert_eq!(occ.len(), 2);
+        assert!((occ[0] - 31.0 / 4.0).abs() < 1e-12, "{occ:?}");
+        assert_eq!(occ[1], 0.0);
+        // FRACTIONAL, which is the whole point: 7.75 atoms per cell is not an atom count.
+        assert!(occ[0].fract() > 0.0);
+        // The grid total plus the escapees accounts for every sample; nothing is clamped
+        // into an edge cell and nothing vanishes.
+        let total: f64 = occ.iter().sum();
+        assert!(
+            (total * 4.0 + outside as f64 - (n * 4) as f64).abs() < 1e-9,
+            "the books do not balance: {total} x 4 + {outside} != {}",
+            n * 4
+        );
+        assert!(t.mean_cell_occupancy([0, 1, 1]).is_none(), "a zero axis refuses");
         let _ = std::fs::remove_dir_all(&d);
     }
 

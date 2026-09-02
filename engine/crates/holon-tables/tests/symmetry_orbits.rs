@@ -106,6 +106,13 @@ impl Surface for CheapOhhh {
         e_total
     }
 
+    fn basis(&self) -> &'static str {
+        // A test fixture, and it says so rather than borrowing a production basis string —
+        // a manifest line copied from a stand-in is how a fixture's identity leaks into a
+        // real artifact's.
+        "test fixture: stores whatever the cheap surrogate returned"
+    }
+
     fn canonical(&self, idx: &[usize]) -> Vec<usize> {
         if !self.symmetric {
             return idx.to_vec();

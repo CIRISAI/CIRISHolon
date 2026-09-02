@@ -103,6 +103,15 @@ pub trait Surface: Sync {
     /// would need this widened rather than worked around.
     fn subtract(&self, coords: &[f64], e_total: f64) -> f64;
 
+    /// **What the stored number is a residual OF** — the subtraction basis, one of the three
+    /// axes of a table's identity beside the device class and the solver budget.
+    ///
+    /// REQUIRED rather than defaulted, and that is the point: a default of "total" would let a
+    /// surface that DOES subtract inherit a manifest line saying it does not, which is the
+    /// silent-difference failure `subtract`'s own comment is written against. A new surface
+    /// must say what its numbers mean before it can produce any.
+    fn basis(&self) -> &'static str;
+
     /// The canonical representative of this node's symmetry orbit, as grid indices.
     /// Default: every node is its own representative (no symmetry declared).
     ///
@@ -178,6 +187,11 @@ impl Surface for TrimerSurface {
         // the evaluator, not in the table. Stated as the identity rather than left implicit,
         // so that a surface which DOES subtract is a visible difference and not a silent one.
         e_total
+    }
+
+    fn basis(&self) -> &'static str {
+        "none: stores E_total (electronic + nuclear); the many-body subtraction is the \
+         evaluator's, not the table's"
     }
 }
 
@@ -308,6 +322,10 @@ impl Surface for DistanceTetramer {
 
     fn subtract(&self, _coords: &[f64], e_total: f64) -> f64 {
         e_total
+    }
+
+    fn basis(&self) -> &'static str {
+        "none: stores E_total. This surface is the GRID, not the subtraction — a caller          wanting a four-body residual uses `OhhhSurface`, whose basis says so."
     }
 }
 

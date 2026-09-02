@@ -20,7 +20,7 @@
 //! s3_tables --species H,H,Cl \
 //!           --x 2.0:6.0 --y 2.2:6.4 --u -1.0:0.6 \
 //!           --grid 33x33x13 --region 3x3x13 \
-//!           --warm cold|chain --workers 32 \
+//!           --warm cold|chain --workers 32 [--device cpu] \
 //!           --out engine/output/saturation3/hhcl.tbl
 //! ```
 
@@ -28,6 +28,8 @@ use std::io::Write;
 use std::time::Instant;
 
 use holon_chem::elements::{by_symbol, Species};
+use holon_chem::sigma_op::DeviceClass;
+use holon_tables::Surface;
 use holon_resource::{Arena, ResourceKind};
 use holon_tables::generate::generate_leased;
 use holon_tables::{GenSpec, TableGrid, WarmPolicy, WorkerProbe};
@@ -170,7 +172,42 @@ fn main() {
         (y_lo, y_hi),
         (u_lo, u_hi),
     );
-    let spec = GenSpec::new([species[0], species[1], species[2]], tg).with_warm(warm);
+    // **--device: THE THIRD IDENTITY AXIS ON THE COMMAND LINE** (RESOURCE_DESIGN D0).
+    //
+    // Beside the solver budget and the subtraction basis, and for the same reason both of
+    // those are named rather than defaulted: it is a property of the artifact, and an
+    // artifact whose regime is unrecorded cannot be re-derived from. Defaults to `cpu`,
+    // which is what every committed table declares.
+    //
+    // `gpu` is REFUSED HERE, by name, with its exit — not silently downgraded. This binary
+    // links `holon-tables`, which does not link CUDA (deliberately: it sits inside the
+    // workspace whose isolation gates keep CUDA out). A GPU-class table is generated through
+    // `holon-gpu`'s device-class launcher, which can supply the provider. D4: a failed path
+    // produces a loud refusal naming what was asked, what was found, and what to do instead —
+    // never a quiet run on the other class.
+    let device_s = args
+        .iter()
+        .position(|a| a == "--device")
+        .and_then(|i| args.get(i + 1).cloned())
+        .unwrap_or_else(|| "cpu".to_string());
+    let device = match DeviceClass::from_tag(&device_s) {
+        Some(DeviceClass::Cpu) => DeviceClass::Cpu,
+        Some(DeviceClass::Gpu) => fail(
+            "--device gpu: this binary cannot generate a GPU-class table. It links \
+             holon-tables, which does not link CUDA by design. Use holon-gpu's device-class \
+             launcher, which supplies the GPU provider. REFUSED rather than run on the CPU: a \
+             table stamped `gpu` that a CPU produced would pass every gate and be wrong.",
+        ),
+        None => fail(&format!(
+            "--device {device_s}: unknown device class. Known: cpu, gpu. An unrecognised class \
+             is refused rather than defaulted — defaulting would stamp this build's class onto \
+             an artifact the caller meant for another one."
+        )),
+    };
+
+    let spec = GenSpec::new([species[0], species[1], species[2]], tg)
+        .with_warm(warm)
+        .with_device(device);
 
     // ---- THE ECHO. Every parameter, as the binary actually parsed it — not as the launcher
     // believes it passed them. This is the half of the provenance discipline that closed
@@ -190,7 +227,11 @@ fn main() {
     println!("warm          {warm:?}");
     println!("workers       {workers}");
     println!("out           {out}");
-    println!("device class  Cpu (DECLARED — this table is bit-gated, so D0 pins it here)");
+    // ECHOED AS PARSED, not as a constant. This line used to read a hardcoded "Cpu" — correct
+    // while the class was not selectable and a lie the moment `--device` existed, which is the
+    // trap "a diagnostic must echo its parameters" names: the string was right for a year and
+    // wrong the instant the thing it described became a variable.
+    println!("device class  {device} (DECLARED — this table is bit-gated, so D0 pins it)");
     match (&seam_loci, &seam_floor) {
         (Some(l), _) => println!("seams         LOCATED: {l}  (instrument {})",
                                  seam_instrument.as_deref().unwrap_or("?")),
@@ -284,6 +325,16 @@ fn main() {
     writeln!(f, "  \"schema\": \"SATURATION3/trimer-table/v1\",").unwrap();
     writeln!(f, "  \"provenance\": \"engine-computed STO-3G FCI (determinant, Knowles-Handy), f64, generated through holon-tables' leased mesh\",").unwrap();
     writeln!(f, "  \"solver_route\": \"determinant\",").unwrap();
+    // THE THREE-AXIS IDENTITY, together, because they are one identity rather than three
+    // diagnostics: the DEVICE CLASS (which arithmetic produced the bits), the SOLVER BUDGET
+    // (which regime the solves ran under) and the SUBTRACTION BASIS (what the stored number
+    // is a residual of). Each was learned the same way — a number moved and nothing recorded
+    // which regime made it. A consumer comparing two tables cannot know they are comparable
+    // unless the file says so on all three.
+    writeln!(f, "  \"device_class\": \"{}\",", spec.device).unwrap();
+    writeln!(f, "  \"solver_budget_iterations\": {},", spec.max_iter).unwrap();
+    writeln!(f, "  \"subtraction_basis\": \"{}\",",
+        esc(holon_tables::TrimerSurface::new(spec.species).basis())).unwrap();
     writeln!(f, "  \"exact_in_model\": true,").unwrap();
     writeln!(f, "  \"model\": \"({})/STO-3G/FCI\",", esc(&species_s)).unwrap();
     writeln!(f, "  \"species\": [{}],",

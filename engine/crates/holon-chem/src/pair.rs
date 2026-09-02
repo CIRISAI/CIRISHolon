@@ -284,6 +284,11 @@ pub struct PointSolution {
     pub route: SolverRoute,
     /// WHY the solve stopped. See [`crate::fci::SolveExit`].
     pub exit: crate::fci::SolveExit,
+    /// WHICH DEVICE CLASS produced this point (RESOURCE_DESIGN D0).
+    ///
+    /// Carried for the same reason `route` is: a caller that re-derived it from a build flag
+    /// would be reading what was COMPILED IN rather than what RAN. Taken from the solve.
+    pub device: crate::sigma_op::DeviceClass,
 }
 
 /// Solve one geometry: assemble, orthonormalise, rotate, transform, diagonalise.
@@ -341,6 +346,7 @@ pub fn solve_basis(basis: &Basis, n_alpha: usize, n_beta: usize) -> PointSolutio
         s_min_eigenvalue: s_eigs[0],
         route: sol.route,
         exit: sol.exit,
+        device: sol.device,
     }
 }
 
@@ -680,6 +686,13 @@ pub struct PairMeta {
     /// [`crate::fci::SolveExit::IterationCap`] in [`PairMeta::exit`], which is the field
     /// that says whether the budget was enough. This one says what was spent.
     pub solver_budget: usize,
+    /// The DEVICE CLASS every knot of this curve was solved in (D0) — the third axis of the
+    /// artifact's identity, beside the solver budget above and the model it declares.
+    ///
+    /// Tracked across knots exactly as `route` is, and REFUSED if they disagree: a curve whose
+    /// knots came from different classes is a mixture, and the two classes agree to 3e-15
+    /// while differing on 91% of entries bitwise, so nothing downstream could tell.
+    pub device: crate::sigma_op::DeviceClass,
     pub worst_residual: f64,
     pub worst_cg_residual: f64,
     /// Smallest overlap eigenvalue seen, the conditioning of the orthogonalisation.
@@ -857,6 +870,9 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
     // single label cannot describe it. Downgrading on any DMRG knot is the safe
     // direction: it can only understate the curve's exactness, never overstate it.
     let mut route = SolverRoute::Determinant;
+    // The class every knot came back in. Seeded from the first knot rather than assumed, and
+    // checked against every later one — see the refusal in the loop.
+    let mut device: Option<crate::sigma_op::DeviceClass> = None;
     // The WORST exit over the curve's knots, in the same downgrading spirit as `route`: one
     // knot that gave up makes the curve one that gave up, because the curve is only as good
     // as its worst point and a single label cannot describe a mixture.
@@ -879,6 +895,19 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
         worst_cg = worst_cg.max(sol.cg_residual);
         worst_s = worst_s.min(sol.s_min_eigenvalue);
         scf_ok &= sol.scf_converged;
+        // **D0's mixed-class refusal, on the pair curve.** Same shape as the table
+        // generator's: the class is checked on what came BACK, so a curve cannot be
+        // assembled from two classes and stamped with one.
+        match device {
+            None => device = Some(sol.device),
+            Some(d) => assert_eq!(
+                d, sol.device,
+                "this pair curve has knots from device class {} and {}. A curve assembled from \
+                 two classes is a MIXED artifact: they agree to 3e-15 and differ on 91% of \
+                 entries bitwise, so its manifest would name one class for numbers from two.",
+                d, sol.device
+            ),
+        }
         if sol.route == SolverRoute::Dmrg {
             route = SolverRoute::Dmrg;
         }
@@ -925,6 +954,9 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
             exit: worst_exit,
             provenance: provenance_for(route),
             solver_budget: crate::fci::davidson_budget(),
+            // Unwrapped rather than defaulted: a curve with no knots has no class, and a
+            // default would invent one for an artifact nothing computed.
+            device: device.expect("a pair curve with no solved knot has no device class"),
             worst_residual,
             worst_cg_residual: worst_cg,
             worst_s_eigenvalue: worst_s,
@@ -1386,6 +1418,8 @@ impl PairTable {
             "  \"solver_budget_iterations\": {},\n",
             m.solver_budget
         ));
+        // The third axis. See `PairMeta::device`: it is what RAN, not what was compiled in.
+        s.push_str(&format!("  \"device_class\": \"{}\",\n", m.device));
         s.push_str(
             "  \"units\": \"Hartree atomic units: R in bohr, E in hartree, \
              F in hartree/bohr, masses in electron masses. F is the FORCE, so dE/dR = -F.\",\n",

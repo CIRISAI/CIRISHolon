@@ -8,7 +8,8 @@ use holon_resource::{Arena, LeaseError, LeaseId, Probe, Receipt, ResourceKind};
 
 use holon_chem::dual::D2;
 use holon_chem::elements::Species;
-use holon_chem::fci::solve_determinant_from;
+use holon_chem::fci::solve_determinant_with;
+use holon_chem::sigma_op::{CpuProvider, DeviceClass};
 use holon_chem::pair::geometry_problem;
 
 use crate::digest::{Certificate, Digest};
@@ -40,6 +41,18 @@ pub struct GenSpec {
     /// Davidson iteration cap for every node. Exceeding it VOIDs the node loudly
     /// (M-BUDGET-LAUNDER) rather than publishing wherever the solve had reached.
     pub max_iter: usize,
+    /// **The device class this table is generated in** — RESOURCE_DESIGN D0.
+    ///
+    /// The THIRD axis of a table's identity, beside the solver budget (`max_iter`) and the
+    /// subtraction basis (the `Surface`). All three are properties of what the artifact IS,
+    /// not of the run that made it, and each was learned the same way: a number moved and
+    /// nothing recorded which regime produced it.
+    ///
+    /// For this axis the measurement is SATURATION-3 G2 — the two classes agree to 3.033e-15
+    /// and **91.0% of 207,025 entries differ BITWISE**. Both correct, not the same artifact.
+    /// A table that mixed them would fail every bit-identity gate in the engine for a reason
+    /// that is not a defect, so the generator refuses to mix rather than detecting it after.
+    pub device: DeviceClass,
     pub mutation: Option<Mutation>,
 }
 
@@ -50,8 +63,17 @@ impl GenSpec {
             grid,
             warm: WarmPolicy::CanonicalChain,
             max_iter: 1200,
+            // CPU is the default because every committed table declares it, not because it is
+            // a fallback: there is no silent fallback across classes (D4).
+            device: DeviceClass::Cpu,
             mutation: None,
         }
+    }
+
+    /// Declare the device class. Part of the table's identity, so it is set deliberately.
+    pub fn with_device(mut self, device: DeviceClass) -> Self {
+        self.device = device;
+        self
     }
 
     pub fn with_warm(mut self, warm: WarmPolicy) -> Self {
@@ -177,6 +199,19 @@ pub fn generate_with_progress(
     generate_surface_with_progress(&trimer_spec(spec, &surface), workers, progress)
 }
 
+/// Whether THIS BUILD can construct a provider for a class.
+///
+/// A fact about what is linked in, not a policy: `holon-tables` has `holon-chem` and no CUDA,
+/// so it can build the host provider and nothing else. Named rather than inlined because the
+/// answer changes if the crate ever gains a device dependency, and a reader asking "why is gpu
+/// refused here" should find the reason rather than a match arm.
+fn provider_available(device: DeviceClass) -> bool {
+    match device {
+        DeviceClass::Cpu => true,
+        DeviceClass::Gpu => false,
+    }
+}
+
 /// The 3-axis trimer run, said in the folded generator's own terms.
 ///
 /// This is the whole of what used to be a second generator. `NdGrid::from_table_grid` is
@@ -189,6 +224,7 @@ fn trimer_spec<'a>(spec: &GenSpec, surface: &'a TrimerSurface) -> SurfaceSpec<'a
         grid: NdGrid::from_table_grid(&spec.grid),
         warm: spec.warm,
         max_iter: spec.max_iter,
+        device: spec.device,
         mutation: spec.mutation,
     }
 }
@@ -260,6 +296,8 @@ pub struct SurfaceSpec<'s, S: Surface + ?Sized> {
     /// Davidson iteration cap for every node. Exceeding it VOIDs the node loudly
     /// (M-BUDGET-LAUNDER) rather than publishing wherever the solve had reached.
     pub max_iter: usize,
+    /// The declared device class (D0). See [`GenSpec::device`].
+    pub device: DeviceClass,
     pub mutation: Option<Mutation>,
 }
 
@@ -278,6 +316,7 @@ impl<'s, S: Surface + ?Sized> SurfaceSpec<'s, S> {
             grid,
             warm: WarmPolicy::CanonicalChain,
             max_iter: 1200,
+            device: DeviceClass::Cpu,
             mutation: None,
         }
     }
@@ -358,7 +397,48 @@ fn solve_surface_node<S: Surface + ?Sized>(
             Some(&planted)
         }
     };
-    let sol = solve_determinant_from(&space, &mo, start_slice);
+    // **D0 AT THE SOLVE SITE.** The declared class selects the provider, and a class this
+    // build cannot construct is a LOUD refusal rather than a quiet CPU run (D4): a table
+    // stamped `gpu` that a CPU produced would be worse than either class, and nothing
+    // downstream could tell.
+    //
+    // `holon-tables` cannot construct a GPU provider — it would have to link CUDA, and this
+    // crate sits in the workspace whose isolation gates exist to keep CUDA out of it. The
+    // device-class launcher lives in `holon-gpu`, which is outside the workspace and already
+    // shells out to nvcc. That inversion is the same one `holon-chem` uses: the crate that
+    // needs to stay portable names the contract, and the device crate satisfies it.
+    let sol = match spec.device {
+        // Through the PROVIDER, not through `solve_determinant_from`'s convenience wrapper.
+        // The two are bit-identical (the wrapper delegates here with the same provider), and
+        // going the long way means the class on the returned `Solution` is a fact produced by
+        // the thing that computed it rather than a label this function attached.
+        DeviceClass::Cpu => solve_determinant_with(&space, &mo, start_slice, &CpuProvider)
+            .expect("the host provider cannot fail to build an operator"),
+        // Unreachable: `generate_surface_with_progress` refuses an unconstructable class
+        // before any worker exists. Kept as a panic rather than removed, because "the entry
+        // point checked it" is exactly the kind of guarantee that survives until someone adds
+        // a second entry point — and then this is the thing that fires instead of a CPU solve
+        // being stamped `gpu`.
+        DeviceClass::Gpu => panic!(
+            "node {node}: reached the solve site under device class {} with no provider for \
+             it. The entry-point refusal was bypassed — a caller has reached this generator \
+             by a path that does not check the class.",
+            spec.device
+        ),
+    };
+
+    // **THE MIXED-CLASS REFUSAL, node by node.** The class is checked on what came back, not
+    // assumed from what was asked for. A generator that trusted its own request would stamp a
+    // manifest from the spec while the numbers came from somewhere else, which is precisely
+    // the artifact D0 forbids — and the check costs one comparison per node.
+    assert_eq!(
+        sol.device, spec.device,
+        "node {node}: the solve returned a {} solution under a table declaring {}. A table \
+         whose nodes came from different device classes is a MIXED artifact: the two agree to \
+         3e-15 and differ on 91% of entries bitwise, so its bit-identity digest would be a \
+         digest of a mixture.",
+        sol.device, spec.device
+    );
 
     // The variational guard lives on the Solution (`variational_margin`), computed by the
     // solver from the diagonal it already holds. M-VACUOUS-SUCCESS again: if it is absent
@@ -512,6 +592,25 @@ pub fn generate_surface_with_progress<S: Surface + ?Sized>(
         progress.len(),
         workers,
         "one progress counter per worker, or a worker's work is invisible to the reaper"
+    );
+    // **D0/D4, REFUSED HERE — before a single worker is spawned.**
+    //
+    // This check used to live at the solve site, and it fired correctly and uselessly: N
+    // workers each raised the right message inside a scoped thread, and what reached the
+    // caller was "a scoped thread panicked". A loud refusal that names what was asked, what
+    // was found and the exit is worth nothing if the naming is swallowed by the thread that
+    // did it. A class this build cannot construct is knowable before any work starts, so it
+    // is refused where the caller can hear it.
+    assert!(
+        provider_available(spec.device),
+        "this generator declares device class {} and cannot construct a provider for it — \
+         `holon-tables` does not link CUDA, deliberately: it sits inside the workspace whose \
+         isolation gates exist to keep CUDA out. Generate a GPU-class table through \
+         `holon-gpu`'s device-class launcher, which supplies the provider. REFUSED rather \
+         than run on the CPU: a table stamped `{}` that a CPU produced would fail no gate in \
+         this repository and be wrong.",
+        spec.device,
+        spec.device
     );
     assert_eq!(
         spec.surface.dim(),

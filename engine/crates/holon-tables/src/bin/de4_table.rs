@@ -18,14 +18,16 @@
 //! Run:
 //! ```text
 //! de4_table --nr 13 --nu 11 --r 0.9:6.0 --stretch 3.0 --u -1.0:0.9975 \
-//!           --region 7x7x7x6x6x6 --warm chain --workers 4 --out <path> \
+//!           --region 7x7x7x6x6x6 --warm chain --workers 4 [--device cpu] --out <path> \
 //!           --seam-accepted-floor '<Ha>:<why>'
 //! ```
 
 use holon_chem::quaternary_table as qt;
 use holon_chem::{trimer, water};
 use holon_resource::Arena;
+use holon_chem::sigma_op::DeviceClass;
 use holon_tables::generate::{generate_surface_leased, SurfaceSpec, WarmPolicy};
+use holon_tables::Surface;
 use holon_tables::grid::{Axis, NdGrid, Serpentine};
 use holon_tables::ohhh::OhhhSurface;
 use holon_tables::worker::WorkerProbe;
@@ -71,6 +73,29 @@ fn main() {
     if region.len() != 6 {
         fail("--region needs six edges, one per axis");
     }
+    // **--device: the third identity axis** (RESOURCE_DESIGN D0), beside the solver budget and
+    // the subtraction basis. `gpu` is REFUSED by name with its exit rather than downgraded —
+    // this binary links `holon-tables`, which does not link CUDA by design, and a table stamped
+    // `gpu` that a CPU produced would pass every gate and be wrong (D4: loud refusal, never a
+    // silent fallback across classes).
+    let device_s = args
+        .iter()
+        .position(|a| a == "--device")
+        .and_then(|i| args.get(i + 1).cloned())
+        .unwrap_or_else(|| "cpu".to_string());
+    let device = match DeviceClass::from_tag(&device_s) {
+        Some(DeviceClass::Cpu) => DeviceClass::Cpu,
+        Some(DeviceClass::Gpu) => fail(
+            "--device gpu: this binary cannot generate a GPU-class table. Use holon-gpu's \
+             device-class launcher, which supplies the GPU provider. REFUSED rather than run \
+             on the CPU under a `gpu` stamp.",
+        ),
+        None => fail(&format!(
+            "--device {device_s}: unknown device class. Known: cpu, gpu. Refused rather than \
+             defaulted."
+        )),
+    };
+
     let warm = match arg(&args, "--warm").as_str() {
         "chain" => WarmPolicy::CanonicalChain,
         "cold" => WarmPolicy::AllCold,
@@ -116,6 +141,7 @@ fn main() {
     println!("  region          {region:?}");
     println!("  serpentine      Reflected (the sum-parity rule is not adjacent at even interior extents)");
     println!("  warm            {warm:?}");
+    println!("  device class    {device} (DECLARED; D0 — part of the artifact, echoed as parsed)");
     println!("  workers         {workers}");
     println!("  out             {out}");
     println!("  seam            {}",
@@ -174,7 +200,8 @@ fn main() {
     println!("  surface ready in {:.1} s", t0.elapsed().as_secs_f64());
 
     println!("\n--- generating ---");
-    let spec = SurfaceSpec::new(&surface, grid.clone()).with_warm(warm);
+    let mut spec = SurfaceSpec::new(&surface, grid.clone()).with_warm(warm);
+    spec.device = device;
     let mut arena = Arena::new();
     let mut probe = WorkerProbe::new();
     let t1 = Instant::now();
@@ -222,6 +249,12 @@ fn main() {
     let _ = writeln!(f, "  \"schema\": \"DE4TABLE/quaternary-table/v1\",");
     let _ = writeln!(f, "  \"provenance\": \"{}\",", qt::QUATERNARY_PROVENANCE);
     let _ = writeln!(f, "  \"solver_route\": \"determinant\",");
+    // THE THREE-AXIS IDENTITY, together. `stored` below already names this table's
+    // subtraction basis in prose; `subtraction_basis` is the SURFACE's own machine-readable
+    // answer, so a consumer does not have to parse an English sentence to know what it holds.
+    let _ = writeln!(f, "  \"device_class\": \"{}\",", spec.device);
+    let _ = writeln!(f, "  \"solver_budget_iterations\": {},", spec.max_iter);
+    let _ = writeln!(f, "  \"subtraction_basis\": \"{}\",", surface.basis().replace('"', "'"));
     let _ = writeln!(f, "  \"exact_in_model\": true,");
     let _ = writeln!(f, "  \"model\": \"(O,H,H,H)/STO-3G/FCI four-body term\",");
     let _ = writeln!(f, "  \"stored\": \"dE4 = E_FCI(OH3) - E_MBE3(OH3), hartree\",");

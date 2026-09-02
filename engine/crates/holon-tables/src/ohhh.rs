@@ -152,6 +152,17 @@ impl OhhhSurface {
     }
 }
 
+/// What an `(O,H,H,H)` node stores, as a citable constant.
+///
+/// A constant rather than an inline string because `OhhhSurface::new` samples two pair curves
+/// — a gate that had to build the whole surface just to read its own manifest line would be a
+/// gate nobody runs. This one DOES subtract, and it is the case the required `basis` method
+/// exists for: a consumer handed these numbers without knowing the basis would read a
+/// four-body residual as a total energy and be wrong by the whole of MBE3.
+pub const OHHH_BASIS: &str =
+    "E_total - E_MBE3 (the four-body residual; MBE3 evaluated at the node's REALISED \
+     coordinates)";
+
 impl Surface for OhhhSurface {
     fn species(&self) -> &[Species] {
         &self.species
@@ -198,6 +209,13 @@ impl Surface for OhhhSurface {
 
     fn subtract(&self, coords: &[f64], e_total: f64) -> f64 {
         e_total - self.mbe3(coords)
+    }
+
+    fn basis(&self) -> &'static str {
+        // This one DOES subtract, and it is the case the required method exists for: a
+        // consumer handed these numbers without knowing the basis would read a 4-body
+        // residual as a total energy and be wrong by the whole of MBE3.
+        "E_total - E_MBE3 (the four-body residual; MBE3 evaluated at the node's REALISED          coordinates)"
     }
 
     /// The relabelling orbit's representative, **delegated whole** to

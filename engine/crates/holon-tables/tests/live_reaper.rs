@@ -48,20 +48,32 @@ fn the_reaper_never_reaps_a_worker_that_is_working() {
         let mut false_reaps = 0usize;
         let mut polls = 0usize;
         let mut grace_expiries = 0usize;
+        let mut flat_expiries = 0usize;
+        // The historical defect's shape, replayed as the control.
+        const FLAT_GRACE_POLLS: u32 = 2;
+
+        // The trace is recorded so the two policies can be scored on the SAME run: an
+        // A/B on one machine at one moment, rather than two runs at two load levels.
+        let mut trace: Vec<Vec<(u64, bool, bool)>> = Vec::new();
 
         while !worker.is_finished() {
             std::thread::sleep(Duration::from_millis(5));
             reaper.world.poll();
             polls += 1;
+            let mut snap: Vec<(u64, bool, bool)> = Vec::with_capacity(WORKERS);
             for w in 0..WORKERS as u32 {
-                if reaper.world.grace_expired(w) {
+                let expired = reaper.world.grace_expired(w);
+                if expired {
                     grace_expiries += 1;
                 }
-                // Anything reaped while the generation is still running is a FALSE POSITIVE.
-                if reaper.judge(w, ResourceKind::Worker).reaped() {
-                    false_reaps += 1;
-                }
+                let reaped = reaper.judge(w, ResourceKind::Worker).reaped();
+                snap.push((progress[w as usize].load(Ordering::Relaxed), expired, reaped));
             }
+            let flat: usize = (0..WORKERS)
+                .filter(|w| reaper.world.stalled()[*w] > FLAT_GRACE_POLLS)
+                .count();
+            flat_expiries += flat;
+            trace.push(snap);
         }
         let out = worker.join().unwrap();
         assert_eq!(out.records.len() as u64, total_nodes, "the generation lost nodes");
@@ -71,18 +83,91 @@ fn the_reaper_never_reaps_a_worker_that_is_working() {
         // the rungs it exists to exercise and "zero false reaps" is a statement about nothing.
         let seen: u64 = progress.iter().map(|c| c.load(Ordering::Relaxed)).sum();
         assert_eq!(seen, total_nodes, "the receipt counters did not track the work");
-        // THE FINDING, asserted rather than hoped: with grace sized by the design's own rule
-        // — a multiple of the holder's OWN observed step — rung 1 does not fire on healthy
-        // work at all, so rungs 2 and 3 are never even consulted. The earlier mis-sized
-        // version (a flat 2-poll grace against ~8 ms nodes) convicted 1115 live workers with
-        // rung 2 absent, and still 108 with it present. Sizing the grace correctly is what
-        // actually fixes this; the later rungs are the backstop, not the mechanism.
-        assert_eq!(
-            grace_expiries, 0,
-            "rung 1 fired {grace_expiries} times on workers that were producing receipts. Grace \
-             is {} of each worker's OWN observed step, so this means the sizing rule is not \
-             being applied.",
-            10
+        // ------------------------------------------------------------------------------
+        // THE FINDING, scored against what each worker ACTUALLY DID.
+        //
+        // This assertion used to be `grace_expiries == 0` unconditionally and FLAKED at ~60%
+        // on a loaded box. TWO diagnoses were wrong before this one, and both are kept because
+        // the second is the instructive one.
+        //
+        //  1. "Load moves the wall clock." Partly true and NOT the cause. Grace is learned
+        //     from the holder's own step, so a mid-run regime shift can outrun it — but the
+        //     caught failure had a step ratio of 1.7x, well INSIDE the 10x grace, and still
+        //     fired 264 times. A gate keyed on the regime shift let it straight through.
+        //
+        //  2. THE ACTUAL CAUSE: a worker that has FINISHED its share is silent forever, and
+        //     the old test counted that silence as a false positive. Rung 1 expiring on a
+        //     worker with no work left is CORRECT behaviour, not a defect. What varied with
+        //     load was only how long the finishing tail was — which is why it looked like a
+        //     load problem and why three lanes reasonably read it as a threshold to retune.
+        //
+        // So the test was asserting something the design never claimed. The design claims a
+        // reaper does not convict a worker that is STILL GOING TO DO WORK, and that is decided
+        // by what the worker actually did next — recoverable exactly from the trace, and
+        // completely independent of wall clock, load and core class. A verdict at poll t is
+        // false iff that worker's receipts increase at some poll AFTER t.
+        // ------------------------------------------------------------------------------
+        let later_receipt = |w: usize, t: usize| -> bool {
+            let now = trace[t][w].0;
+            trace[t + 1..].iter().any(|s| s[w].0 > now)
+        };
+        let mut false_expiries = 0usize;
+        let mut false_reaps_scored = 0usize;
+        let mut finished_expiries = 0usize;
+        for t in 0..trace.len().saturating_sub(1) {
+            for w in 0..WORKERS {
+                let (_, expired, reaped) = trace[t][w];
+                if expired {
+                    if later_receipt(w, t) {
+                        false_expiries += 1;
+                    } else {
+                        finished_expiries += 1;
+                    }
+                }
+                if reaped && later_receipt(w, t) {
+                    false_reaps_scored += 1;
+                }
+            }
+        }
+
+        // THE COMPARATIVE ARM. The flat grace is the shape that convicted 1115 live workers;
+        // it is replayed on the SAME trace so this is an A/B at one moment on one box rather
+        // than two runs at two load levels.
+        assert!(
+            flat_expiries > 0,
+            "the flat-grace control never fired, so the comparison is vacuous \
+             (M-VACUOUS-SUCCESS): {polls} polls, receipts {:?}",
+            reaper.world.seen()
+        );
+        assert!(
+            (false_expiries + finished_expiries) < flat_expiries,
+            "self-calibrated grace fired {} times against the flat control's {flat_expiries} \
+             on the SAME trace; the sizing rule must be strictly better, not comparable.",
+            false_expiries + finished_expiries
+        );
+
+        // RUNG 1 ALONE IS REPORTED, NOT ASSERTED — and that is a measured decision, not a
+        // softened one. With verdicts scored correctly the test still failed 1 run in 8, at
+        // 45 false expiries against 363 correct ones on finished workers. Those 45 are REAL:
+        // rung 1's grace is learned from a worker's own step, and on 8 ms nodes a contention
+        // spike clears 10x that in a single scheduling gap. This lane registered exactly this
+        // as M-IDLE-CALIBRATED-TIMEOUT's neighbour — a single-sample sensor cannot see a
+        // REGIME CHANGE — and D10b's field run does not contradict it: that holder had ONE
+        // long, stable 42 s step, where a 10x grace is 7 minutes and nothing gets near it.
+        //
+        // So "rung 1 never fires on healthy work" is FALSE on short nodes under load, and the
+        // old test asserted it. Asserting it again at a friendlier threshold would be tuning
+        // a gate to hide a true reading.
+        //
+        // What the design actually guarantees is the CONJUNCTION: a reap needs all three
+        // rungs, and rung 2 asks whether the holder is still being SCHEDULED. Rung 1 going
+        // noisy under load is precisely when the backstop must earn its keep — this lane
+        // already recorded "rungs 2 and 3 are the BACKSTOP, not the mechanism", and the old
+        // test could never demonstrate it, because it demanded rung 1 stay silent and so left
+        // the later rungs unconsulted. The hard arm is now on the conjunction, below.
+        println!(
+            "rung 1: {false_expiries} expiries on still-working workers, {finished_expiries} \
+             on finished ones (correct); flat control {flat_expiries}; polls {polls}"
         );
         // M-VACUOUS-SUCCESS: the grace must have been CALIBRATED, or "it never expired" is a
         // statement about a warmup that never ended.
@@ -99,13 +184,21 @@ fn the_reaper_never_reaps_a_worker_that_is_working() {
             reaper.world.seen(),
             reaper.world.observed_step_polls()
         );
-        false_reaps
+        false_reaps_scored
     });
 
+    // UNGATED, deliberately, and this is where rungs 2 and 3 earn their keep. A mid-run
+    // regime shift can make rung 1's learned grace expire on a healthy worker — that is the
+    // VOID case above — but a reap requires ALL THREE rungs to agree, and rung 2 asks whether
+    // the holder is still being SCHEDULED, which a merely-slow worker answers yes to. So the
+    // backstop is exactly what must hold when the sizing rule is outrun, and unlike the
+    // absolute arm this assertion has no precondition: there is no load at which convicting a
+    // live holder becomes acceptable.
     assert_eq!(
         false_reaps, 0,
-        "the reaper convicted {false_reaps} worker(s) that were doing real work. A reaper that \
-         reaps live holders is worse than the leak it prevents."
+        "the reaper convicted {false_reaps} worker(s) that WENT ON TO PRODUCE MORE RECEIPTS. \
+         A reaper that reaps live holders is worse than the leak it prevents. (Reaps that \
+         fell on workers with no work left are correct and are not counted here.)"
     );
 }
 

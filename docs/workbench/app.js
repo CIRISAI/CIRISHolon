@@ -282,24 +282,51 @@ const RECORD = {
     cite: "conformance/water_observatory/census_mixed_fenced.log:3",
     note: "frozen in CENSUS_PREREG.md before the instrument that measures it existed.",
   },
-  water: {
+  waterA: {
     value: "893.8 fs",
-    what: "OH₂ held, CERTIFIED-STRICT",
+    what: "OH₂ held, CERTIFIED-STRICT — fenced arm",
     cite: "conformance/water_observatory/census_mixed_fenced.log:250",
     note: "seed 0x…25, block 0x0a08, 1073 frames — 72.3% of the run, rms 0.779 bohr, "
-      + "separation variance 0.199, control 0.000, and NAMED. It clears the 834 fs window "
-      + "by 7%.",
+      + "separation variance 0.199, control 0.000, NAMED. Clears the window by 7%.",
+  },
+  waterB: {
+    value: "923.9 fs",
+    what: "OH₂ held, CERTIFIED-STRICT — the four-body term switched OFF",
+    cite: "conformance/water_observatory/census_de4_off.log:22",
+    note: "seed 0x…22, block 0x0062, 1109 frames — 85.8% of the run, rms 1.103 bohr, "
+      + "control 0.000, NAMED. Clears the window by 11%.",
+  },
+  absent: {
+    value: "0",
+    what: "dE₄ evaluations in that run — the term is measured absent, not just unflagged",
+    cite: "conformance/water_observatory/PROVENANCE_de4_arms.md:43",
+    // A DISPLAY value of "0" is honest and almost worthless to a checker: "0" occurs on
+    // most lines of most files, so citing it would pass without establishing anything.
+    // `match` is what the gate looks for instead — the arm row's own momentum figure,
+    // which is distinctive to exactly this line.
+    match: "3.84e-5",
+    note: "`Sim::de4_eval_count` is incremented by the physics itself, so a reading of "
+      + "exactly zero is functional proof the four-body term never fired. A symbol-table "
+      + "check could not establish that, because the symbol is inlined away.",
+  },
+  sameCommit: {
+    value: "21e6be3",
+    what: "the control's commit, with its binary hash",
+    cite: "conformance/water_observatory/PROVENANCE_de4_arms.md:13",
+    note: "binary sha256 462045fe…, own target directory, detached worktree. This sidecar "
+      + "exists because the run log carried no provenance line, and 'same commit' is the "
+      + "entire content of a one-variable control.",
   },
   legB: {
     value: "NOT CLOSED",
-    what: "Leg B, the fiber-invariance test",
-    cite: "conformance/water_observatory/census_mixed_fenced.log:266",
-    note: "158 witness pairs, defect 0.141. The molecule is certified as a held THING; the "
-      + "full partition view it sits in is not a closed one. Both readings are the "
-      + "instrument's and the page reports them together, because quoting only the first "
-      + "would be quoting half a verdict.",
+    what: "Leg B, the fiber-invariance test — on BOTH arms",
+    cite: "conformance/water_observatory/census_de4_off.log:37",
+    note: "124 witness pairs here, 158 on the fenced arm. Each molecule is certified as a "
+      + "held THING; the full partition view it sits in is not a closed one. Quoting only "
+      + "the first would be quoting half a verdict.",
   },
 };
+
 
 // ---------------------------------------------------------------- formatting
 

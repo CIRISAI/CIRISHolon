@@ -538,24 +538,37 @@ want(dA === dB, `the seeded scene replays bit-identically in this device class (
 // is re-run and prints something else. Two prongs, because a citation can fail two ways:
 // the artifact can vanish, and the number can move inside it.
 
+// The repository root, FOUND rather than assumed. `join(here, "..", "..")` is right only
+// while this file sits exactly two levels down, and it silently resolves to the wrong
+// directory the moment the gate runs from a copy — which made every mutation test of this
+// block fail with "artifact does not exist" instead of the defect it was probing. A check
+// whose failures all look the same cannot tell you which one fired.
+let repoRoot = here;
+for (let up = 0; up < 6; up++) {
+  try { readFileSync(join(repoRoot, ".git", "HEAD")); break; } catch { /* keep climbing */ }
+  try { readFileSync(join(repoRoot, ".git")); break; } catch { /* worktrees: .git is a file */ }
+  repoRoot = join(repoRoot, "..");
+}
+
 const recordBlock = appSource.match(/const RECORD = \{([\s\S]*?)\n\};/);
 want(recordBlock !== null, "the page's RECORD block is where the gate expects it");
 if (recordBlock) {
+  // `match` is optional and overrides `value` for the lookup. It exists because a DISPLAY
+  // figure and a CHECKABLE one are not always the same string: "0" is the honest thing to
+  // show for a solver counter and is useless to look for, since it occurs on nearly every
+  // line of nearly every file. A citation that passes without establishing anything is the
+  // failure this whole block exists to prevent, so the block must not commit it.
   const entries = [...recordBlock[1].matchAll(
-    /value:\s*"([^"]+)",[\s\S]*?cite:\s*"([^"]+)"/g)];
+    /value:\s*"([^"]+)",[\s\S]*?cite:\s*"([^"]+)"(?:,\s*(?:\/\/[^\n]*\n\s*)*match:\s*"([^"]+)")?/g)];
   want(entries.length > 0, "the RECORD block carries at least one cited figure");
   // The repository root, FOUND rather than assumed. `join(here, "..", "..")` is right only
   // while this file sits exactly two levels down, and it silently resolves to the wrong
   // directory the moment the gate is run from a copy — which made every mutation test of
   // this block fail with "artifact does not exist" instead of the defect it was probing.
   // A check whose failures all look the same cannot tell you which one fired.
-  let repoRoot = here;
-  for (let up = 0; up < 6; up++) {
-    try { readFileSync(join(repoRoot, ".git", "HEAD")); break; } catch { /* keep climbing */ }
-    try { readFileSync(join(repoRoot, ".git")); break; } catch { /* worktrees: .git is a file */ }
-    repoRoot = join(repoRoot, "..");
-  }
-  for (const [, value, cite] of entries) {
+  // (repoRoot is computed once, above.)
+  for (const [, value, cite, override] of entries) {
+    const needle = override ?? value;
     const [relPath, lineNo] = cite.split(":");
     const abs = join(repoRoot, relPath);
     let text = null;
@@ -568,14 +581,21 @@ if (recordBlock) {
     }
     const lines = text.split("\n");
     const line = lines[Number(lineNo) - 1] ?? "";
-    // What to look for in the artifact. For a numeric figure it is the bare number without
-    // its unit, because the artifact writes "893.8" in a fixed-width column and the page
-    // writes "893.8 fs". For a NON-numeric figure ("NOT CLOSED") the stripped form is the
-    // EMPTY STRING, and `line.includes("")` is true of every line — so the first version of
-    // this check passed that citation vacuously, which is the defect it exists to catch,
-    // committed by the checker itself. Fall back to the literal value.
-    const stripped = value.replace(/[^0-9.]/g, "");
-    const bare = stripped.length > 0 ? stripped : value;
+    // WHAT TO LOOK FOR, and this rule has been wrong twice.
+    //
+    // Try the LITERAL value first, then the digit-stripped form. Stripping alone was wrong
+    // for a non-numeric value ("NOT CLOSED" strips to the empty string, and
+    // `line.includes("")` is true of every line — a vacuous pass on the very citation it
+    // was checking). Stripping-with-a-fallback was still wrong for a hex commit hash
+    // ("21e6be3" strips to "2163", which is length > 0 and is not in the file, so a
+    // perfectly good citation failed). Literal-then-stripped handles all three: the hash
+    // and "NOT CLOSED" match literally, and "893.8 fs" matches after its unit comes off,
+    // because the artifact writes it in a fixed-width column with no unit.
+    const stripped = needle.replace(/[^0-9.]/g, "");
+    const candidates = [needle, stripped].filter((c) => c.length > 0);
+    const bare = candidates.find((c) => line.includes(c))
+      ?? candidates.find((c) => text.includes(c))
+      ?? needle;
     if (line.includes(bare)) {
       ok(`RECORD "${value}" is on ${cite}`);
     } else if (text.includes(bare)) {
@@ -606,7 +626,7 @@ const de4OffTracked = (() => {
   try {
     execFileSync("git", ["ls-files", "--error-unmatch",
       "conformance/water_observatory/census_de4_off.log"],
-      { cwd: here, stdio: "pipe" });
+      { cwd: repoRoot, stdio: "pipe" });
     return true;
   } catch (e) {
     if (e && e.code === "ENOENT") {

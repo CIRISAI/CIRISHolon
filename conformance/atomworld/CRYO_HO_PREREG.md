@@ -454,9 +454,11 @@ inference attached to that pin beyond what it measures (**M-PROVENANCE-OVERREACH
 
 # AMENDMENT A1 — 2026-09-02, after the freeze, appended not edited
 
-*The freeze above is unedited. Every stake, bar, kill and VOID condition in it is as it
-was at `fc7b6a0`. This amendment records two things that happened afterwards: one path in
-the freeze that turned out to be wrong, and a standing rule that reached this lane late.*
+*Every stake, bar, kill and VOID condition above is exactly as it was at `fc7b6a0`.
+**One thing above IS edited** — a single file pointer in § 3.1, corrected in place and
+marked inline with its date and a pointer here; A1.1 gives the reason and the diff is one
+crate name and one bracketed marker. This amendment records that, and a standing rule that
+reached this lane after the freeze.*
 
 ## A1.1 — one instrument landed in a different crate than the freeze named
 

@@ -35,18 +35,34 @@ cosmological sector lives, at what status, and what measures it.*
 
 ### The graph's assumptions, stated as the ladder's
 
-1. **The many-body ladder terminates or the seam covers it.** Chemistry's
-   rung assumes MBE-to-4 plus (if the dE5 audit says so) exact DMRG
-   cluster solves over an MBE far field suffice — measured, never assumed
-   (node H decides; the crystal tier's referee licenses the cluster
-   machinery).
-2. **Long-range is Coulomb and dispersion, nothing else, and it is
-   currently DISCARDED.** Cutoff-locality is an approximation with an
-   unmeasured tail until node B1 reads; B2 (Ewald-class) builds only on
-   its verdict. No fifth force enters the chemistry rung.
+1. **The many-body ladder terminates or the seam covers it — and node H
+   DECIDED (2026-09-02): it does not terminate.** The dE5 audit read 24 of
+   24 sampled compact 5-clusters over the declared per-term bound, worst
+   1,572×, the five-body residue up to 2.83× the entire four-body rung it
+   corrects. The DMRG cluster seam is FIRED BY MEASUREMENT, not by taste
+   (receipt: `conformance/water_observatory/DE5_RESULTS.md`). Separately
+   ruled on the census's control arm: the four-body term is NOT what
+   carries hydroxyl to water — MBE3 alone certifies water strict on the
+   control (`CENSUS_RESULTS.md` §14); what dE4 adds to a water quotient
+   remains open, its A/B comparison defeated by the treatment itself
+   opening the z axis.
+2. **Long-range: MEASURED AND PAID (2026-09-02). The discard was a
+   RADIUS, not a tail.** B1b split the discard per frame: S/T = 9.9e8 —
+   essentially all of it was tabulated interaction inside a cell-list
+   radius inherited from a three-body table, nine orders above the true
+   far tail. And this force law carries no r⁻¹ term, so Ewald's defining
+   difficulty is absent and was never built; the landed subsystem is a
+   split kernel with an angular-momentum ledger, three laws gated in both
+   the complete and truncated configurations, far sector measured O(N²)
+   (`B2_RESULTS.md`; G14 0/8 where B1b failed 3/8). No fifth force enters
+   the chemistry rung.
 3. **Charge sectors are electron-count assignments** at the solver seam
-   (node C); the spin-sector rule is a declared model choice with a
-   variational sweep as its promote path.
+   (node C — CASHED: core and generic ion tables landed, charge and spin
+   sector in the key so an unlabelled row cannot be constructed). The
+   variational gate has FIRED once and stays fired: OH⁻ is unbound in
+   STO-3G (no diffuse functions, fence I-5), and the headline ionic pair
+   (H₃O⁺·H₂O) is compute-priced at 9,018,009 determinants (fence C21,
+   exits: node F or the DMRG seam).
 4. **The relativity fence.** Non-relativistic STO-3G is qualitatively
    wrong past ~Kr; every heavy row wears that fence with a named exit
    (a relativistic solver rung), never silently.
@@ -57,12 +73,25 @@ cosmological sector lives, at what status, and what measures it.*
 6. **Arithmetic regime is artifact identity** (device class, solver
    budget, subtraction basis — one law, three axes), and a fence is a debt
    with an owner and an exit, never architecture.
-7. **Everything above chemistry is a CLOSED VIEW or it is not a tier.**
-   The upward rungs (H-bond network, fluid, and beyond) certify through
-   the census's two-leg closure instrument or wear fences (node G). This
-   is the ontology's own load-bearing assumption: emergence = lossy
-   quotient + dynamical autonomy, machine-checked in the sibling seed
-   (CIRISOntology `Core/Closure.lean`).
+7. **Everything above chemistry is a CLOSED VIEW or it is not a tier —
+   and the first upward campaign (2026-09-02) measured what that costs.**
+   Both rungs ran and neither certified, for a reason that is now a
+   measurement rather than a scope note: on the 12-atom certified carrier
+   NO coarse chart is both dynamic and inside its closure budget — the
+   conditions came apart everywhere (rung 1: 70 readings, 36 in-budget
+   all vacuous, 32 dynamic none in-budget; rung 2: the occupancy/transport
+   scissor, CHART-INDEPENDENT under A2). The physics inside the negative:
+   momentum is spatially coherent at 5.8 bohr (+0.598 over the scrambled
+   control) and the H-bond boundary is ALIGNMENT, not proximity. On the
+   founding lattice tier the closure defect has a DERIVED form — the
+   block's boundary fraction, saturated, identical across all 4,608 lawful
+   collision laws — and a Boolean FHP word cannot carry a fluid element
+   (~94% of atoms discarded at fluid density): the bridge chart is the
+   FRACTIONAL mean-occupancy one `Core/ModeChart.lean` already fences.
+   The limit was the CARRIER (16-atom format cap, declared-2D scenes) —
+   stale engineering the engine has outgrown, being nuked by carrier-v2
+   (genuine 3D, ≥400 atoms, dims measured never declared). The assumption
+   stands; its price is now known.
 8. **Gravity enters the demo tiers as an external ledgered field** —
    measured at 4.05e-15 of kT at 1 nm, sovereignty collective not
    per-particle. SELF-gravity between atoms is absent and irrelevant at

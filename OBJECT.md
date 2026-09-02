@@ -150,10 +150,40 @@ One certified-strict molecule in eight seeds; no formation-rate claim;
 closure is statistical over the staked window with a declared defect
 budget, never trajectory-exact, which chaos forbids.
 
-**Open and staked, not assumed:** whether the exact four-body term changes
-the answer. The pair-plus-three-body physics produced the certification;
-the four-body arm is a pre-declared one-variable comparison against that
-baseline. Either outcome is a result.
+**The four-body comparison, RULED (2026-09-02) — and half-defeated, which
+is itself the result** (`CENSUS_RESULTS.md` §14). Both arms certify the
+same three atoms strict. The control arm alone — dE4 provably absent,
+momentum clean, plane held bit-exactly — refutes the causal claim: MBE3
+does not stop at hydroxyl; water forms without the four-body term. What
+dE4 ADDS remains open, because the comparison's other half was defeated by
+the treatment producing its own variable: the dE4 arm alone leaves the
+declared 2D plane (frame 4230, |z−z₀| → 11.49 bohr) and so explored space
+the control could not reach. The one-variable design failed in a mode no
+same-commit discipline prevents — the treatment opened a dimension — and
+the clean successor needs genuinely-3D arms on both sides (carrier-v2).
+Separately, node H measured the ladder itself: dE5 exceeds its declared
+per-term bound on 24 of 24 sampled clusters (worst 1,572×), so the
+truncation does not terminate at four and the cluster seam is fired.
+
+**The first upward campaign (2026-09-02): closure above the certified
+tier is not free, and the cost is now measured.** No coarse chart on the
+certified carrier is both dynamic and inside its budget — rung 1's 70
+readings split 36 vacuous-in-budget / 32 dynamic-out / 0 both, and rung
+2's occupancy/transport scissor is chart-independent (A2: the verdict
+census is bit-identical across a cell-field and a lattice-gas chart). Two
+riders join design rule 2 from this campaign: BUDGET-COMPLIANCE WITHOUT
+DYNAMICS IS VACUOUS — the battery must pair the defect with
+reading-changes and distinct-readings, because on real carriers the two
+conditions came apart everywhere (a band-aggregate defect is refused as a
+readout for exactly this reason); and a chart meant to compose into a
+conserved-label census must be BUILT from conserved labels — geometric
+predicates measured as factoring through nothing. On the founding lattice
+tier the closure defect is DERIVED, not fitted: the block's boundary
+fraction, saturated, identical across all 4,608 lawful collision laws —
+the defect belongs to the lattice, not the law — and a Boolean FHP word
+discards ~94% of a fluid element's atoms, naming the fractional
+mean-occupancy chart (`Core/ModeChart.lean`'s cap fence) as the only
+bridge that can carry the band.
 
 **The join, wagered:** an object is a shared pattern whose closure pays its
 own rent — existence from the square, persistence from the paid step, the

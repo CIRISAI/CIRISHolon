@@ -305,15 +305,149 @@ evidence and its cost:
 **Two findings handed on rather than absorbed:**
 
 1. **For the crate.** 28% of `(O,H,H)` solves at trajectory geometries fail
-   `pair::orbital_rotation`'s 1e-10-in-200-damped-iterations test. The served water table
-   was built through those same solves. This is a fact about the convenience SCF, not
-   about this audit, and it is reported, not fixed here.
+   `pair::orbital_rotation`'s 1e-10-in-200-damped-iterations test. This is a fact about
+   the convenience SCF, not about this audit, and it is reported, not fixed here.
+   **This finding first said "the served water table was built through those same solves",
+   which implied a taint on the table. That implication is RETRACTED — see §7b, which
+   measured it and found no water-table implication at all.**
 2. **For `pair::geometry_problem`.** It is the only public entry point that returns the
    `(space, mo, nuc)` triple `solve_determinant` needs — and it DISCARDS `scf_converged`
    (`let (u, _, _) = orbital_rotation(...)`). So the only route to an exact-in-model solve
    is also the only route that cannot report SCF convergence. That is M-EXIT-DISCRIMINATOR
    one level up from where the misfit was registered: a diagnostic one entry point carries
    and its sibling does not.
+
+---
+
+
+## 7b. POST-DATA ANALYSIS B-1 — what the G2 disagreements actually sort by
+
+**Post-data, labelled as such, and it corrects two things this document said before it.**
+Prompted by the water lane, which supplied both the mechanism and the check.
+
+### The mechanism the check was built on
+
+`pair.rs` states it and the check assumes it: **full CI in a given one-particle space is
+invariant under unitary rotation of the orbitals.** A non-converged SCF therefore hands
+the solver a DIFFERENT BASIS, not a different answer. So §7's comparison — worst
+`|live - served|` of 5.386e-4 with the flag true against 6.678e-4 with it false — was
+never measuring a weak dependence of the energy on SCF convergence. It was measuring a
+NON-dependence, and reporting it as though the near-equality were the finding rather than
+the prediction.
+
+The conviction of G2 stands. Its stated reason was too weak.
+
+### The check, and the prediction it was given
+
+Water's prediction: the disagreements are the served table's **interpolation error**, so
+they should sort by **distance from the nearest grid node** and the flag should stay flat.
+Instrument: `de5_gridcheck.py`, reading `de5_probe.log` (144 `(O,H,H)` triples), with the
+grid mapping copied from `water.rs`'s own `eval_grid` rather than re-derived.
+
+*(The probe was re-run for this. The log banked in commit `2c8243d`,
+`de5_scf_probe.log`, was TRUNCATED — written through a `tail -60`, so it carries 50 of the
+144 rows under a summary counting all 144. `de5_probe.log` is the untruncated receipt and
+the numbers below are from it. Both are kept.)*
+
+### Result 1 — the flag is flat, exactly as predicted, and then some
+
+| stratum | flag | n | median \|diff\| | max \|diff\| |
+|---|---|---:|---:|---:|
+| `theta >= 150` | converged | 6 | 1.393e-4 | 5.386e-4 |
+| `theta >= 150` | NOT conv. | 7 | 1.822e-4 | 6.678e-4 |
+| `theta < 150` | converged | 70 | 1.746e-6 | 5.161e-5 |
+| `theta < 150` | NOT conv. | 61 | 7.811e-7 | 1.391e-5 |
+
+Flat inside every geometry stratum. Its marginal rank correlation is
+`rho = -0.3383` — **negative**, i.e. the non-converged solves agree with the table
+slightly BETTER. That is a confound with geometry, not a cause, and it points the opposite
+way from the story that would have justified the gate. **The conviction of G2 is stronger
+than §7 claimed, not weaker.**
+
+### Result 2 — but water's predicted sorter is FALSIFIED
+
+Binned by `D`, the distance to the nearest grid node in fractional cell units, maximised
+over the three axes (0 = on a node, 0.5 = cell centre, where a tensor-product interpolant's
+error peaks):
+
+| `D` bin | n | median \|diff\| | max \|diff\| |
+|---|---:|---:|---:|
+| [0.1, 0.2) | 12 | 1.534e-6 | 3.406e-5 |
+| [0.2, 0.3) | 27 | 1.433e-6 | 1.822e-4 |
+| [0.3, 0.4) | 48 | 1.374e-6 | 5.386e-4 |
+| [0.4, 0.5) | 57 | 1.174e-6 | 6.678e-4 |
+
+`rho(|diff|, D) = +0.0321`. The medians are flat to within a factor of 1.3 and if anything
+run the wrong way. **Generic distance from a grid node does not sort these disagreements.**
+
+### Result 3 — what does sort them, base rate included
+
+The near-collinear H–O–H geometry does, and the separation is not subtle:
+
+| band | n | share of sample | holds \|diff\| >= 1e-4 | median \|diff\| | max \|diff\| |
+|---|---:|---:|---:|---:|---:|
+| `theta >= 160` | 4 | 2.8% | 4 of 9 | 4.836e-4 | 6.678e-4 |
+| **`theta >= 150`** | **13** | **9.0%** | **9 of 9** | **1.546e-4** | **6.678e-4** |
+| `theta < 150` | 131 | 91.0% | 0 of 9 | 1.194e-6 | 5.161e-5 |
+
+> **9% of the sample holds 100% of the disagreements at or above 1e-4 Ha, and the median
+> separation across that cut is 130x.**
+
+The denominator is stated because a region that holds all the big numbers proves nothing
+until its own share of the sample is (M-BASE-RATE-OMITTED).
+
+### Result 4 — and this is SATURATION-3's Seam 1, met again by a different instrument
+
+The obvious attribution for a boundary effect is the one-sided node slope at `c = C_HI`,
+which `water.rs` documents. **It is wrong, and this campaign did not have to find that out
+the hard way**: `SATURATION3_RESULTS.md` already tested it and refuted it on planted data —
+*"the 'all points' and 'no end interval' columns are identical to every digit on every row.
+The one-sided slope costs nothing on smooth data. It is not the mechanism."*
+
+What that campaign found instead is a **near-collinear electronic state crossing**, its
+Seam 1: a corner in `dE3` at `c ~= 1.4128`, `theta ~= 174.9 deg`, where the bending slope
+turns by about 400x across roughly `1e-4` of the `c` axis against a grid spacing of
+`0.0284`, sitting inside the last cell with the Catmull-Rom stencil reaching across it.
+
+This audit's nine largest disagreements:
+
+| \|diff\| | c | theta | c - c_seam |
+|---:|---:|---:|---:|
+| 6.678e-4 | 1.4008 | 164.2 deg | -0.0120 |
+| 5.386e-4 | 1.3960 | 161.6 deg | -0.0168 |
+| 4.285e-4 | 1.4043 | 166.4 deg | -0.0085 |
+| 3.588e-4 | 1.4039 | 166.1 deg | -0.0089 |
+| 1.822e-4 | 1.3918 | 159.6 deg | -0.0210 |
+| 1.546e-4 | 1.3739 | 152.6 deg | -0.0389 |
+| 1.240e-4 | 1.3682 | 150.7 deg | -0.0446 |
+
+Every one sits within 1.6 grid cells below that corner, on stencils that reach the final
+`c` node and therefore span it. **This is an independent reproduction of Seam 1 — different
+instrument, different sample, different campaign, and arrived at without looking for it.**
+Corroboration, and the free learning is that the seam is not a curiosity of the sizing
+sweep's 384-point draw: geometries a real trajectory visits land in it routinely, at 9% of
+compact `(O,H,H)` triples.
+
+### Result 5 — and therefore NO water-table implication
+
+The largest disagreement measured here is **6.678e-4 Ha**. The shipped table's own declared
+held-out maximum at 65 x 49 is **7.68e-4 Ha** (`SATURATION2_RESULTS.md`: *"No subgrid met
+it — the best available, 65 x 49, reads 7.68e-4"*).
+
+> **Every disagreement this audit measured is INSIDE the served table's own published error
+> bar. The table is behaving exactly as documented, and nothing here impugns it.**
+
+So §7's first finding is corrected: the 28% SCF failure rate at arity 3 is a fact about
+`pair::orbital_rotation` **alone**, with no consequence for the water table, whose node
+values are rotation-invariant by the mechanism at the top of this section.
+
+### What B-1 does NOT change
+
+The verdict. `dE5` is computed from live FCI at every rung; the served table enters this
+audit only through G9's cross-check (which agrees to 1e-7–1e-5 Ha) and through this probe.
+If anything B-1 sharpens the freeze's argument for the `fci_live` basis: the served
+surface's error is not spread thinly across the grid but concentrated at a geometry class
+water scenes visit constantly, where it reaches 13x the 5.0e-5 Ha bound.
 
 ---
 

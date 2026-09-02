@@ -204,3 +204,17 @@ reset_excursions        clears the banked surface's out-of-domain counter betwee
 from_table              wraps an already-generated banked table
 from_modes              normal-mode to bead coordinates
 to_modes                bead to normal-mode coordinates
+
+# --- the charged-fragment seam (GANTT node C; ions.rs) ---
+#
+# DISCLOSURE, because the audit's own header is about laundering: `solve_geometry_charged`
+# is NOT currently in the unreferenced bucket, and the only thing keeping it out is that
+# `ChargeRefusal`'s doc comment names it in a rustdoc link. `word_count` scans the source
+# text, so a `[`name`]` in a sibling's doc reads as a reference exactly like a call does.
+# It is classified anyway rather than left to that accident: the audit's question is
+# "does anything in the library CALL this", and the honest answer here is no.
+#
+# `spin_partition` is deliberately NOT listed: `solve_geometry_charged` really does call it.
+# `ChargeRefusal` needs no line either — the scan reads `pub fn`/`pub const`/`pub static`
+# and never sees a `pub enum`, which is a separate blind spot and not this lane's to fix.
+solve_geometry_charged  the ion seam's entry point; charge is stated by a CALLER, so nothing in the library calls it — tests/ion_core.rs certifies H3O+/OH- and plants all three refusals

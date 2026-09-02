@@ -461,9 +461,23 @@ fn main() {
     // THE TABLE MUST BE LOADED FIRST. Read on an empty `Sim` this section returns
     // `list_cutoff = 0.000` and `pbc_ok = true` at every density — a pass reported for a
     // scene with no interactions in it, which is M-VACUOUS-SUCCESS exactly. The first run
-    // of this file did that. The cutoff being asked about is the PAIR TABLE's reach, so
-    // the table has to be in the box before the question means anything.
+    // of this file did that.
+    //
+    // Loading it did NOT change the reading, and that is the finding rather than the fix.
+    // `Sim::list_cutoff` is `max(three_body_cutoff, four_body_cutoff, far.r_s,
+    // pair_switch.r_cut)` — the PAIR TABLE's own support is not among them, because an
+    // undeclared pair sector is a COMPLETE sum with no cutoff to report. So on a scene
+    // with no three-body surface, no far sector and no declared truncation window,
+    // `list_cutoff()` is exactly zero and `Sim::pbc_ok` — which is
+    // `list_cutoff() <= half the shortest edge` — is true for EVERY box size, including
+    // boxes far smaller than the pair curve's support. The row below prints the pair
+    // table's `r_max` beside the half-edge so the comparison the guard does not make is
+    // visible.
     let pt = generate_pair_table(HYDROGEN, HYDROGEN, 96);
+    println!(
+        "#   the H-H pair table's own support: r_min {:.3} to r_max {:.3} bohr",
+        pt.meta.r_min, pt.meta.r_max
+    );
     for &a in [LADDER[0], 4.5, LADDER[LADDER.len() - 1]].iter() {
         let mut s = Box::new(Sim::empty());
         s.dims = Dims::Two;
@@ -492,11 +506,17 @@ fn main() {
              half-edge {:.3} -> pbc_ok = {}{}",
             a, s.width, s.height, s.depth, walls_defined, p_walls, cut, half_edge, ok,
             if ok {
-                format!("  -> P = {:+.4e} Ha/bohr^3 = {:+.4e} Pa", s.pressure(),
-                        s.pressure() * holon_render::barostat::AU_PRESSURE_PA)
+                format!(
+                    "  -> P = {:+.4e} Ha/bohr^3 = {:+.4e} Pa   [table r_max {:.2} vs half-edge \
+                     {:.2}: the guard does {} the comparison that matters]",
+                    s.pressure(),
+                    s.pressure() * holon_render::barostat::AU_PRESSURE_PA,
+                    pt.meta.r_max,
+                    half_edge,
+                    if pt.meta.r_max <= half_edge { "pass" } else { "NOT make" }
+                )
             } else {
-                "  -> REFUSED: the pair table's reach exceeds half the box edge, so an atom \
-                 would sit inside the cutoff of two images of one partner".to_string()
+                "  -> REFUSED".to_string()
             }
         );
     }

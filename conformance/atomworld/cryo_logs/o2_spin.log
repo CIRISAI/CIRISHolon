@@ -1,0 +1,49 @@
+# CRYO-H-O ARM 2 — the spin-sector disclosure gate
+# prereg conformance/atomworld/CRYO_HO_PREREG.md, frozen fc7b6a0
+# STANDING FENCES: 2D scene | classical nuclei (no NQE) | STO-3G minimal basis
+# INHERITED DISCLOSURE: the banked O-O curve exits IterationCap at budget 5000,
+#   worst_residual 4.809e-6 Ha, n_det 2025, n_basis 10 (B1B_RESULTS.md W1).
+# The engine's rule under test: sz2_sector(n) = n % 2, elements.rs:2649.
+
+# ---- O2 at the banked R_e = 2.4421 bohr, three S_z sectors ----
+  S_z = 0  (the engine's)    n_a  8 n_b  8  S_z +0.0  E -147.755921627 Ha  <S^2> 2.000000  mult S=1.0 2S+1=3  exit Converged   resid 8.24e-11  iters   36  n_det   2025  var_margin +1.700e-1  device Cpu
+  S_z = 1                    n_a  9 n_b  7  S_z +1.0  E -147.755921627 Ha  <S^2> 2.000000  mult S=1.0 2S+1=3  exit Converged   resid 5.08e-11  iters   25  n_det   1200  var_margin +1.434e-1  device Cpu
+  S_z = 2  (P3's plant)      n_a 10 n_b  6  S_z +2.0  E -147.322758977 Ha  <S^2> 6.000000  mult S=2.0 2S+1=5  exit Converged   resid 8.37e-11  iters   18  n_det    210  var_margin +4.208e-2  device Cpu
+
+# ================================ G5 — which sector did the banked curve return?
+# staked: <S^2> = 2.000 +/- 0.01, multiplicity 3 (a triplet)
+# KILL:   <S^2> = 0 (multiplicity 1) -> a named MODEL FENCE on every ARM 2 number
+# third pre-committed branch: neither, reported UNRESOLVED with the value printed
+# measured <S^2> = 2.000000000, multiplicity Some((1.0, 3))
+# G5: HOLDS — the banked O-O curve IS a triplet curve; no paramagnetic fence is owed
+
+# ================================ G6 — is the sector plumbing two-sided?
+# staked (a): E(S_z=2) - E(S_z=0) > 1.0e-4 Ha    measured +4.331627e-1
+# staked (b), IF G5 returns a triplet: |E(S_z=1) - E(S_z=0)| < 1.0e-6 Ha    measured 3.126388e-13  [in force]
+# G6: HOLDS — the sector machinery does what the code says
+
+# ================================ P3 — the spin-sector plant (carrier: S_z = 2 block)
+# carrier NONZERO IN the S_z = 2 sector: 210 determinants, and it holds no M_s = 0 component at all, so the plant's space is disjoint from the honest solve's by construction
+# planted E(S_z=2) sits +4.331627e-1 Ha above the honest E(S_z=0) (bar 1.0e-4)
+# P3: FIRES
+
+# ---- CONTROL: H2 at R_e, a case whose answer is known independently ----
+# The same instrument on a molecule that must read S = 0. A gate that only ever
+# returns 'triplet' would pass G5 on an O2 that was not one.
+  H2  S_z = 0                n_a  1 n_b  1  S_z +0.0  E -1.137306051 Ha  <S^2> 0.000000  mult S=0.0 2S+1=1  exit Converged   resid 9.66e-17  iters    4  n_det      4  var_margin +2.030e-2  device Cpu
+  H2  S_z = 1                n_a  2 n_b  0  S_z +1.0  E -0.524448131 Ha  <S^2> 2.000000  mult S=1.0 2S+1=3  exit Trivial     resid 0.00e0  iters    0  n_det      1  var_margin +0.000e0  device Cpu
+# control: H2 reads <S^2> = 0.000000 (multiplicity Some((0.0, 1))); the instrument distinguishes the two molecules
+
+# ---- POST-DATA: <S^2> along the curve, the scope G5's single point does not cover ----
+#     R      E(S_z=0)        <S^2>     mult        E(S_z=1)-E(S_z=0)   exit         resid
+   1.800  -147.390819687  2.000000  S=1.0 2S+1=3 +5.684342e-14       Converged    8.2e-11
+   2.200  -147.725932939  2.000000  S=1.0 2S+1=3 -1.449507e-12       Converged    8.6e-11
+   2.442  -147.755921627  2.000000  S=1.0 2S+1=3 +3.126388e-13       Converged    8.2e-11
+   2.800  -147.722835631  2.000000  S=1.0 2S+1=3 -4.547474e-13       Converged    8.0e-11
+   3.500  -147.633035513  0.000000  S=0.0 2S+1=1 +2.921893e-3       Converged    7.5e-11
+   4.500  -147.611087085  0.000000  S=0.0 2S+1=1 +1.681560e-3       Converged    9.7e-11
+   6.000  -147.608582783  6.000000  S=2.0 2S+1=5 +1.421085e-13       Converged    8.6e-11
+   8.000  -147.608365905  2.743455  UNRESOLVED  -1.496801e-9       IterationCap  9.3e-8
+# READ: G5's verdict is about R_e = 2.4421 bohr, which is where the banked curve's well is. Any row above whose multiplicity differs is a place the curve is a different spin state, and is scope G5 did not claim.
+
+# WORK: 5 determinant solves, largest 2025 determinants.

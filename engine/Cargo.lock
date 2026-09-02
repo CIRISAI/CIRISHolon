@@ -888,6 +888,7 @@ name = "holon-chem"
 version = "0.1.0"
 dependencies = [
  "holon-device",
+ "holon-lens",
  "q8-mps",
 ]
 

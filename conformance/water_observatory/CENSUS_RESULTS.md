@@ -748,7 +748,15 @@ Both arms report the O–O pair curve at **worst residual 4.81e-6 against the co
 `CONVERGED_RESIDUAL` of 1e-9** — 3.7 orders past its threshold, on the curve governing the
 oxygen aggregation these scenes are made of. It is IDENTICAL in the two arms, so it does not
 differentiate them and the relative comparison is unaffected; what it qualifies is the
-ABSOLUTE claim. A certified water molecule here is certified under an unconverged O–O curve,
+ABSOLUTE claim.
+
+The warning does not say WHICH EXIT produced it, and the exit changes the meaning. Routed
+from B1b's banked W1 run: the O–O solve exits on **`IterationCap` at 5000** — budget-limited,
+not stagnated. Stagnation would mean the curve is as good as this method gets; a cap means
+the residual is a spending decision. So every certification here is qualified by "computed
+under a curve that ran out of iterations", which is a weaker and more fixable caveat than
+"under a curve that cannot converge". `PairMeta` carries no exit field, so the runner cannot
+echo it without a `holon-chem` change; that is owed there. A certified water molecule here is certified under an unconverged O–O curve,
 and that belongs beside the certification rather than only in the run log.
 
 Raised by `workbench-engine`, who stopped before captioning a page with it and asked. The

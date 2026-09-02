@@ -57,6 +57,21 @@ Both arms report:
 That is **3.7 orders past the threshold the code sets for itself**, on the curve governing
 the oxygen aggregation that dominates these scenes.
 
+**And the EXIT, which the warning does not state and which changes what the number means.**
+Routed from B1b's banked W1 run: the O–O solve exits on **`IterationCap` at 5000** — it is
+BUDGET-LIMITED, not stagnated. Those are different facts and the discriminator law exists
+because they are: stagnation would mean more budget buys nothing and the curve is as good as
+this method gets, whereas a cap means the residual is a spending decision and a deeper budget
+would move it. So the caveat on every certification in this campaign is "computed under a
+curve that ran out of iterations", not "computed under a curve that cannot converge".
+
+**My runner cannot print this today, and that is a plumbing gap rather than an oversight.**
+`holon_chem::pair::PairMeta` — everything `generate_pair_table` hands back — carries
+`worst_residual` and no exit field at all. The `davidson_iters` that would say so lives in a
+different struct and never reaches the caller. So "print the exit beside the residual" needs
+`PairMeta` to carry it first; that is a `holon-chem` change and is owed there, not here.
+Recorded rather than silently left undone.
+
 **It is IDENTICAL in both arms** — 4.81e-6 in each — so it cannot differentiate them, and
 the RELATIVE comparison between A and B is unaffected. What it qualifies is any ABSOLUTE
 claim about water: a certified molecule from these runs is certified under an O–O curve

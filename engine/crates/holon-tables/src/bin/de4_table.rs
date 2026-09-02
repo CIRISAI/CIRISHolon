@@ -92,9 +92,14 @@ fn main() {
     let device = match DeviceClass::from_tag(&device_s) {
         Some(DeviceClass::Cpu) => DeviceClass::Cpu,
         Some(DeviceClass::Gpu) => fail(
-            "--device gpu: this binary cannot generate a GPU-class table. Use holon-gpu's \
-             device-class launcher, which supplies the GPU provider. REFUSED rather than run \
-             on the CPU under a `gpu` stamp.",
+            "--device gpu: GPU-class table generation is MEASURED NOT TO PAY, and this is a \
+             closed route rather than a missing feature. The sigma is 4% of a Davidson \
+             iteration (14.7 ms against 410 ms at the (O,O,O) scale), so Amdahl caps a \
+             whole-table speedup near 3% even with the device free, and the 30 operators \
+             that fit in VRAM would serialise that 4% among themselves. Receipt: \
+             conformance/atomworld/gpu_fci/NODE_F.md and RESULTS.md. The device arm is \
+             adopted where it pays — SOLVE-bound work, where sigma dominates — and reached \
+             through holon-gpu, not through this binary.",
         ),
         None => fail(&format!(
             "--device {device_s}: unknown device class. Known: cpu, gpu. Refused rather than \

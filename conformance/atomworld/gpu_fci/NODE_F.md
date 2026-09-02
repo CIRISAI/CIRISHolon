@@ -64,6 +64,38 @@ hand is no longer the output of the code that claims to produce it, which is wha
 Closing it means a deliberate regeneration, which is its own act with its own
 review — the same way the budget axis was closed.
 
+## F.2 SPLIT BY RULING, 2026-09-02
+
+**F.2-for-TABLES is CLOSED BY MEASUREMENT.** The lead's ruling: the Amdahl
+reading below is a completed negative result, not an unrepaired fence. The
+`--device gpu` refusal in the table generators now CITES that finding rather than
+promising an exit — a closed route, which the law permits, with the debt
+discharged by the measurement that closed it.
+
+**F.2-for-SOLVES is OPEN and is the real node F deliverable**, because it gained
+a consumer: mps-seam is re-measuring the determinant ceiling on a Davidson ladder
+at 0.25M / 1M / 4M / 9M determinants. A big-determinant sigma build is
+sigma-DOMINATED — exactly the regime where the 4% table share inverts.
+
+### The first thing that lane needs is not a rate: it is whether the device holds the problem
+
+Measured through `vram_bytes_for` — the same function the operator's own
+pre-allocation check uses, not a re-derivation — and pinned in
+`gpu_lease.rs`:
+
+| rung | nearest space | determinants | per operator | on a 15.7 GiB card |
+|---|---|---:|---:|---|
+| 0.25M | 12 orb / 4e | 245,025 | 0.36 GiB | **fits** |
+| 1M | 14 orb / 4e | 1,002,001 | 1.89 GiB | **fits** |
+| 4M | 14 orb / 5e | 4,008,004 | 7.62 GiB | **fits** |
+| 9M | 14 orb / 6e | 9,018,009 | **17.32 GiB** | **DOES NOT FIT** |
+
+**Three of their four rungs are reachable and the top one is not**, on this card,
+with a single operator and no room for a second. The assertion is two-sided: if
+the 9M rung ever starts fitting, the footprint shrank and the rung comes back; if
+a fitting rung stops, the ladder's top moved down and that lane must be told
+before it stakes a comparison on it.
+
 ## What F.2 has to face, measured rather than assumed
 
 GPU-class table generation will not be a drop-in speedup, and the two reasons are

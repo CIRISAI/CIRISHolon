@@ -302,6 +302,43 @@ fn the_gpu_worker_bound_is_derived_from_vram_and_bounds_in_both_directions() {
          magnitude, in the direction that made the recommendation sound better supported."
     );
 
+    // **MPS-SEAM'S DETERMINANT LADDER, measured against the production footprint function.**
+    //
+    // They are re-measuring the determinant ceiling at 0.25M / 1M / 4M / 9M determinants
+    // (operator's order — the caps are suspect), and a big-determinant sigma build is
+    // sigma-DOMINATED, which is exactly the regime where the 4% share that killed GPU table
+    // generation inverts. So the first thing they need from this lane is not a rate: it is
+    // whether the device can hold the problem at all.
+    //
+    // The shapes are the nearest reachable FCI spaces to each rung. Asserted through
+    // `vram_bytes_for` — the SAME function the operator's own pre-allocation check uses —
+    // rather than through a re-derivation, because a mirrored formula agreeing with itself
+    // is not a check.
+    let (free, _tot) = gp.mem_info().expect("device memory unreadable");
+    for (label, n_orb, n_elec, expect_fits) in [
+        ("0.25M", 12usize, 4usize, true),
+        ("1M", 14, 4, true),
+        ("4M", 14, 5, true),
+        ("9M", 14, 6, false),
+    ] {
+        let sp = holon_chem::fci::FciSpace::new(n_orb, n_elec, n_elec);
+        let b = holon_gpu::fci::vram_bytes_for(&sp).unwrap();
+        let fits = b <= free as u64;
+        println!(
+            "  ladder {label:>5}: {n_orb}orb/{n_elec}e  {:>10} det  {:>6.2} GiB/op  {}",
+            sp.n_det,
+            b as f64 / (1u64 << 30) as f64,
+            if fits { "FITS" } else { "DOES NOT FIT" }
+        );
+        assert_eq!(
+            fits, expect_fits,
+            "the {label} rung's footprint crossed the card's capacity in the direction nobody \
+             expected. If it now FITS where it did not, the footprint shrank and mps-seam can \
+             have a rung back; if it stopped fitting, the top of their ladder just moved down \
+             and they must be told before they stake a comparison on it."
+        );
+    }
+
     // A space no single operator fits: the answer is 0, and 0 means REFUSE.
     let huge = holon_chem::fci::FciSpace::new(14, 7, 7);
     let none = gp.max_workers_for(&huge, 1024).expect("could not derive the bound");

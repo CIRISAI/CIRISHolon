@@ -640,12 +640,14 @@ pub fn generate_surface_with_progress<S: Surface + ?Sized>(
     // is refused where the caller can hear it.
     assert!(
         provider_available(spec.device),
-        "this generator declares device class {} and cannot construct a provider for it — \
-         `holon-tables` does not link CUDA, deliberately: it sits inside the workspace whose \
-         isolation gates exist to keep CUDA out. Generate a GPU-class table through \
-         `holon-gpu`'s device-class launcher, which supplies the provider. REFUSED rather \
-         than run on the CPU: a table stamped `{}` that a CPU produced would fail no gate in \
-         this repository and be wrong.",
+        "this generator declares device class {} and does not construct a provider for it. \
+         For `Gpu` that is a CLOSED ROUTE rather than a missing one: GPU-class table \
+         generation is measured not to pay — the sigma is 4% of a Davidson iteration, so \
+         Amdahl caps a whole-table gain near 3% and the operators that fit in VRAM serialise \
+         even that (conformance/atomworld/gpu_fci/NODE_F.md). The device arm is adopted for \
+         SOLVE-bound work, where sigma dominates, and is reached through `holon-gpu`. \
+         REFUSED rather than run on the CPU: a table stamped `{}` that a CPU produced would \
+         fail no gate in this repository and be wrong.",
         spec.device,
         spec.device
     );

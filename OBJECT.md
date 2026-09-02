@@ -206,6 +206,127 @@ fired at 3–5 dex, and the flow/maintenance rescue fired harder (`flow/stock = 
 the failure conserved). What survives is the SHAPE (DESI DR2: Δχ² = −2.13 against
 ΛCDM with no ΛCDM limit), with DESI DR3 as the standing kill.
 
+### The fold below the atom — LOCKED 2026-09-02
+
+*The steelman's five moves say nothing about what lies under the atom. This
+section says how the SAME square reaches it, and it is written as a fold of the
+existing machinery, never as a new primitive. Status: WAGER, with three separable
+kills, each buildable on instruments this repository already holds. The lead's
+read that forced it: every rung actually built since the fluid tier found the
+holon factoring away the hardest part of the problem and leaving the rest
+tractable, and this is where the pattern says the next fold is.*
+
+**The fold, in one line: GAUSS'S LAW IS THE SEAM.** Below the atom the closure of
+the tier above is not a budgeted approximation, as it was for the molecule; it is
+an exact conservation fiber — the one kind of closure this record has ever
+measured exact (Move 3). Three moves, each standing on something already in the
+lake or the record:
+
+**Fold I — colour is the seam, and it closes exactly.** A gauge constraint is a
+Held, lossy view (`gauss_held`, `gauss_is_lossy` in the sibling seed's
+`Core/MatterCoupling.lean`; `Vacuum.lean`'s `vacuum_gauss_zero` here); fiber-internal
+dynamics is gauge by the identity commitment (`Identity.lean`: holon identity is
+the Moore quotient, exactly as gauge theory treats orbit-internal data); and a
+charged pair is a state only when DRESSED by a Wilson line (`BareCharge.lean`).
+Composed: the physical state space of a gauge theory is a holon quotient whose
+readings are flux strings and their junctions, the electric term (`electricSq`) is
+rent per unit of string, and a hadron is a closed string configuration — a colour
+singlet. Confinement is the statement that the singlet view is Closed under the
+dynamics below the string-breaking threshold, by Gauss's law exactly; so the hadron
+tier is a Closed view of the quark–gluon tier in the strong sense the molecule tier
+never reached, and its law is FORCED (`closure_determines_dynamics`): the
+nucleon–nucleon table should fall out of a two-hadron exact solve the way the H–H
+curve fell out of FCI, with no fitted constants. Measured banks are referees only.
+
+**Fold II — the mass gap makes the far field free.** `Core/Locality.lean` and
+`Core/Aggregation.lean` (transplanted here as `Budget.lean`) are the warrant: a
+locally generated dynamics has a horizon and the state in a region factors through
+its neighbourhood, with the quantitative bound the mesh already runs on. Chemistry
+carries a 1/r tail, needed the B2 far sector, and still closed. Between colour
+singlets the interaction decays like a Yukawa in the pion mass, so the many-body
+expansion over hadrons converges exponentially and the closure defect of a hadron
+chart is DERIVABLE from the gap — the shape `W(b)` took on the lattice tier, never a
+fit. The consumer is the order-generic many-body machinery landed 2026-09-02
+(`holon-chem/src/cluster.rs`: any arity, any order, a `PairSource`, a
+`SurfaceFamily`, the census as referee), unchanged: species proton and neutron,
+tables from hadron solves, the cluster solver in an oscillator basis.
+
+**Fold III — the only priced object is one hadron in its own grain.** Water never
+diagonalised the ocean; it diagonalised OHHH clusters and let tables carry the
+rest. The hadron version is a box of a few fermi, and `Boundaries.lean`'s
+`generic_state_table_absolute` says why that is affordable: the tier ladder exists
+because physical states are not generic. The confined phase's two fixed points —
+the strong-coupling vacuum (`vacuumConfig`) and the toric-code vacuum — are both
+stabilizer states, so the interacting vacuum in a hadron-sized box is a low-magic,
+area-law state, and this engine owns all three strata that PRICE it exactly: the
+stabilizer tier, the magic tier's exact `Z[ω]` branch sums (the contextual fraction
+is the price, measured), and DMRG with defect-priced bond dimension (two orders of
+margin on SCHWINGER-3). The arithmetic is this repository's own: the gravity
+sequence already runs exact integer gauge theory on finite groups with Gauss as a
+quotient (`AdmDescent.lean`, the deficit ladder, the perfect group). Finite
+subgroups of SU(3) as link groups are established prior art, credited: Petcher &
+Weingarten 1980; Bhanot & Rebbi 1981 (the 1080-element group reproduces SU(3) into
+the scaling region); Alexandru et al. 2019 for quantum simulation. Moving those
+instruments from a torus to a three-dimensional box is a change of lattice, not of
+method. `Grain.lean` supplies the time side: Floquet gauge steps at the grain are
+Clifford, so coarse refreshes there carry zero defect, and the C2 real-time carrier
+has landed. Staggered quarks suffice: the Nielsen–Ninomiya wall is chiral-only, and
+it stays named in `LEPTON_LADDER.md` for the electroweak sector, untouched here.
+
+**What the fold does NOT claim.** No hadron has been computed. The three moves are
+a wager about a NEW tier; they move none of the weights in the table below. The
+lepton is an input to QED, not an emergent object, and no move above says otherwise.
+"Exact-first" is a statement about arithmetic and Hamiltonian formulation (no sign
+problem is posable here at all), never about affordability: Fold III's price is
+measured by its own kill.
+
+*Kills, separable, each buildable now (GANTT nodes GF0–GF2):*
+- **GF0 — SCHWINGER-4.** The residual interaction between two screened static
+  charge pairs in QED₂ must decay exponentially at the banked vector-meson mass —
+  a defect DERIVED like `W(b)`. Slower kills Fold II in one dimension before any
+  three-dimensional cycle is spent; faster kills only the identification of the
+  exchanged state and is reported.
+- **GF1 — the magic price of gauge vacua.** The stabilizer extent (and its
+  measurable proxies) of Z₂ and Z₃ lattice-gauge ground states across the coupling,
+  on the exact tiers, in boxes growing toward a hadron's grain. If the price escapes
+  with volume, Fold III dies.
+- **GF2 — the finite-subgroup hadron box.** Σ(1080)-valued links with staggered
+  quarks in a small three-dimensional box on the finite-group instruments, against
+  the proton, neutron and pion masses and the deuteron. If the DERIVED hadron pair
+  table misses its referees at the staked band, Fold I's "forced, not fitted" dies
+  for this carrier.
+
+### The lock — how this steelman may be extended, and how it may not
+
+The steelman is LOCKED as of this section. It changes in exactly two ways:
+
+1. **A move's own kill fires.** The move is marked dead and kept, its weight moves,
+   nothing is rewritten around it (rule 7 of the seed's discipline).
+2. **A FOLD is added.** A fold is the same square applied to a carrier or tier it has
+   not yet been applied to. To be admitted it must name, in this document, all four
+   of: the EXACT fiber it closes on (or the budget it closes within), the DERIVED
+   form of its defect (never a fit), the one object whose solve is PRICED and the
+   stratum that prices it, and a separable kill buildable on instruments this
+   repository holds. A fold that needs a primitive not derivable from the existing
+   signature is a format replacement under W3's frozen extension grammar
+   (`STANCE.md`) and is refused as a fold — it may be proposed only as a new move,
+   at wager strength, with its kill.
+
+**The DRY register — where the object has already folded into itself.** Kept so the
+next fold is found by looking here first, not by re-deriving: closure ≡ never-split
+(`viewClosed_iff_never_splits`); conservation ≡ the only exact closure (Move 3);
+curvature ≡ paid-up rent on the transport map (`curvature_iff_held`); back-reaction
+≡ mutual non-closure (`MatterCoupling`); gauge ≡ the Moore quotient's fiber
+(`Identity.lean`); the classical tier ≡ the diagonal retract of the quantum carrier
+(`DiagonalLift`); magic ≡ the sixth wall, non-closure of the tableau view
+(`Stabilizer.lean`); the grain ≡ the Clifford angle of a Floquet gauge step
+(`Grain.lean`); the string tension ≡ rent per link (`electricSq`, Fold I); the mass
+gap ≡ the far field's closure (Fold II); the hadron ≡ the closed string (Fold I);
+the observer's frame ≡ allocation, not thinghood (ACUITY-B). Every entry is one
+square wearing different clothes; a candidate fold that is not on this register and
+cannot be written as one of its entries composed is the signal to look harder, not
+to add a primitive.
+
 ### What the record does NOT license, stated so the steelman cannot be read past it
 
 No formation-rate claim. A model system: minimal basis, classical nuclei (the

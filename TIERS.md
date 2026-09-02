@@ -18,6 +18,7 @@ state; the appendices remain as the record of how each line was earned.)*
 | 2 — magic (Clifford+T + rings) | **CAPABILITY-COMPLETE** | ring tower; symbolic angles; native ZX evaluation and certified extraction | reduction-depth parity only — a performance delta with a named location |
 | mesh / GPU | **BUILT, and the arithmetic is a declared regime** | shard-invariant, bit-identical, merge law machine-checked; GPU sigma agrees to 3e-15 relative and differs bitwise on 91% of entries — so DEVICE CLASS is part of the artifact (M-DEVICE-CLASS), dispatch chooses only within a class, and a summation-order change is an arithmetic-regime boundary its commit must declare | done — carries all tiers; regime declared per table |
 | **crystal — gauge-coupled matter** | **BANKED 2026-08-31, S1(a)** | M_V/g = 0.553116 vs continuum 1/√π ± 0.05 (2.0%), 18/18, zero VOIDs (`conformance/crystal/SCHWINGER3_RESULTS.md`) | done; fence: QED₂ licenses the machinery, not 3+1D |
+| **hadron — colour-singlet closure (the fold below the atom)** | **NAMED AND LOCKED 2026-09-02 as a FOLD, wager strength, three separable kills** (`OBJECT.md` "The fold below the atom"): Gauss's law is the seam — the hadron tier closes on an EXACT conservation fiber (colour), the far field is free by the mass gap, and the one priced object is a hadron in its own grain, priced by the strata this engine owns | GF0 SCHWINGER-4 (residual interaction between screened static pairs decays at the banked M_V; prereg frozen alone 2026-09-02), GF1 the magic price of Z₂/Z₃ gauge vacua on the exact tiers, GF2 the Σ(1080) hadron box against p/n/π and the deuteron | first rung running: GF0
 | bulk — MPS | **INHABITED, and now MOVING**: the C2 real-time carrier landed — single-site TDVP with the gate battery that split EXACTNESS AT THE CAP (projector-splitting reproduces the exact trajectory, 3.1e-13 flat) from ORDER BELOW IT (measured 2.006), after the first stake was wrong in the instructive direction | q8-mps TDVP gates; the C2 results record | canonical-form Lean brick; staked bulk targets |
 | **chemical — emergent matter** | **THE LADDER CLIMBED THREE RUNGS.** ELEMENTS-1 (first row from Z + masses + basis) and SATURATION-1 (MBE3; the gas becomes H₂) stand. Since: the three-body tables (H₃, OH₂-surface, OOH) banked through the leased generator, bit-identical, seam-scanned before freezing; the MBE3-complete quench arms ran with fence 0; and the four-body machinery is EXACT — nine seeded dual solves per recompute give the full Cartesian gradient (no finite difference, momentum zero to the last bit by construction), gated two-directionally on momentum, torque, and force-is-the-gradient | per-encounter exact FCI; `conformance/atomworld/` | the OOO table completing its tabulation lifts the last fence; the four-body arm is RUNNING |
 | **molecular matter — the first CERTIFIED tier** | **BANKED 2026-09-01: a water molecule passed the closure test.** The tier ladder's premise — a tier is a Closed view of the tier below — stopped being a definition and became a measurement: on the conservation-audited MBE3 arm, an H₂O held CERTIFIED-STRICT for 893.8 fs against the 834 fs window staked before the instrument existed, 72.3% of the run, 0/111 controls, momentum at 6e-5 of bound. The referee is the closure census (`holon-lens`): leg A holds-over-window, leg B is the empirical `closed_iff_fiber_invariant` with witness pairs by frame index — and it says NO most of the time (transients refused, coarser views failed), which is what makes the yes evidence | `CENSUS_PREREG.md` (frozen pre-instrument), `CENSUS_RESULTS.md`, `census_mixed_fenced.log`, hashed trajectory | whether the exact four-body term CHANGES the answer — the staked one-variable comparison, running now; then the tier above: the hydrogen-bond network as a closed view of molecules |
@@ -96,6 +97,25 @@ cosmological sector lives, at what status, and what measures it.*
    measured at 4.05e-15 of kT at 1 nm, sovereignty collective not
    per-particle. SELF-gravity between atoms is absent and irrelevant at
    these scales by that same measurement.
+9. **Below the atom the seam is Gauss's law, and the ladder is a FOLD, not a
+   new engine (LOCKED 2026-09-02, `OBJECT.md`).** Three moves: colour is the
+   seam and closes on an exact conservation fiber (the hadron is a closed
+   string configuration; its law is forced by `closure_determines_dynamics`,
+   so hadron tables are DERIVED from two-hadron solves and measured banks are
+   referees only); the mass gap makes the far field free (`Locality`,
+   `Budget`), so the many-body expansion over hadrons converges exponentially
+   and its defect is derivable like `W(b)`; and the only priced object is one
+   hadron in its own grain, priced by the stabilizer, magic and DMRG strata
+   (both confined-phase fixed points are stabilizer states). Finite subgroups
+   of SU(3) on the gravity sequence's exact finite-group instruments are the
+   3D carrier (Petcher–Weingarten 1980, Bhanot–Rebbi 1981, credited). What
+   this assumption does NOT say: no hadron has been computed; the lepton is an
+   input to QED, not emergent; "exact-first" never means "affordable" — the
+   price is measured by GF1's own kill. Kills: GF0 (Fold II dies in 1+1D if
+   the residual interaction decays slower than the banked meson mass), GF1
+   (Fold III dies if the magic price escapes with volume), GF2 (Fold I's
+   "forced, not fitted" dies if the derived hadron pair table misses its
+   referees).
 
 ### The top rung: the cosmological sector, at wager strength
 

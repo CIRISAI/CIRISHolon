@@ -431,16 +431,23 @@ outside the view stays coarse under the de-allocation law above. No
 representative slabs, no bulk fine-simulation: one seed, acuity-bounded
 growth, measured closure defects deciding what stays fine.
 
-**THE ZOOM MECHANIC (operator's design, 2026-09-02): the box IS the view.**
-Zooming in SHRINKS the box around the view center, and holons that fall
-outside the shrinking domain are REMOVED from the scene across all six
-faces — released at the boundary, their allocation freed for the finer
-population the acuity law admits. No window-into-a-larger-scene, no
-off-screen fine simulation, no pinning machinery beyond the one-seed rule
-above, no transition hacks: the box-scale door is the zoom, the six faces
-are the exits, and zoom-out is the same event in reverse — the box grows
-and the coarser population is re-admitted per acuity. Every removal and
-re-admission is a ledgered scene event, never a silent edit.
+**THE TWO-BOX LAW (operator's design, 2026-09-02): four WORLD boxes, one
+SCENE box, and they are never the same knob.** Each ladder band has its own
+WORLD box — the physics domain. Pressure (the virial), temperature, and the
+census's phase fractions are WHOLE-ONLY observables and are computed on the
+world box, never on a fraction of it; the HAND acts on the world box, which
+is the pressure control ("we change the size of the box to change
+pressure"). The SCENE box is the single view volume, always the same size
+as the active world box or smaller, and it scales with the ZOOM: zooming in
+shrinks the scene box around the view center, and holons falling outside it
+are REMOVED from the scene across all six faces — released at the boundary,
+their allocation freed for the finer population the acuity law admits —
+while the world box keeps the physics whole. Drawing is the scaled fraction
+inside the scene box. Zoom never touches the physics; the hand never
+touches the view. When the scene box shrinks to where the next tier
+matters, the next band's world box seeds at the view center (one holon, per
+the acuity law above), and zoom-out is the same event in reverse. Every
+removal and re-admission is a ledgered scene event, never a silent edit.
 
 **THE BAND-FLIP LAW, restated because it was briefly blurred:** a band goes
 live ONLY on a node-G closure certificate — a coarse view of the dynamics

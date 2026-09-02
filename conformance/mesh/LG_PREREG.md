@@ -66,7 +66,7 @@ FHP sector label versus continuum `f64 P^mu`, "until that decision is made
 deliberately". **This node makes it, on the integer side, and does not touch the
 SR ledger.**
 
-Prior art, reused verbatim from `sim_engine/MESH_DESIGN.md` §2.1 and
+Prior art, reused verbatim from `engine/MESH_DESIGN.md` §2.1 and
 `fchc.rs`'s header, credited generously per house pattern:
 
 * Frisch, Hasslacher & Pomeau, *Lattice-gas automata for the Navier–Stokes
@@ -491,7 +491,7 @@ VOID is not KILL. A VOID says the instrument did not measure what it claimed.
   interesting possible failure.
 - **K5 — the isotropy warrant.** *Claim:* FHP-6's fourth-rank tensor is
   isotropic and HPP-4's is not. *Kill:* either row failing. Takes down
-  MESH_DESIGN §2.1's warrant as measured here; takes down nothing else, because
+  `engine/MESH_DESIGN.md` §2.1's warrant as measured here; takes down nothing else, because
   no claim in this node depends on the Navier–Stokes limit.
 - **K6 — the Leg-A gauge.** *Claim:* HPP-4 carries an exactly-held non-global
   chart that FHP-6 does not. *Kill:* HPP-4's per-line momentum drifting, or
@@ -565,3 +565,75 @@ only what was measured and nothing inferred beside it (M-PROVENANCE-OVERREACH);
 every gate's verdict WITH its work count; every plant's firing; every VOID; and
 the fired kills as plainly as the survivals. Run-state markers stay untracked;
 cited logs are committed. Nothing is pushed from this node.
+
+---
+
+## APPENDIX — POST-FREEZE ANNOTATIONS
+
+**Nothing in this appendix moves a gate, a stake, a criterion, a VOID condition or a kill.**
+It corrects two pointers, records one scope correction from the operator, and records one
+addition the lead asked for. Each is dated. An annotation must never weaken a gate, and none
+of these touches one; the frozen body above is unchanged except where noted in A1, which
+changes only file paths.
+
+### A1 — path correction, 2026-09-02
+
+`MESH_DESIGN.md` exists in **both** trees. Every citation in this document and in the
+instrument now names the LOCAL copy, `engine/MESH_DESIGN.md` (§2.1; FHP prior art at ~line
+101, FCHC-24 at ~line 105). The previous text cited
+`/home/emoore/CIRISOntology/sim_engine/MESH_DESIGN.md`, which is the sibling repository's
+twin — identical content, but not a tracked file here, so it fails this tree's citation gate.
+**Content identical, path only.** Caught by `workbench-engine`'s citation gate.
+
+### A2 — corroboration for the chart choice, 2026-09-02
+
+`RUNG1_RESULTS.md` (merged) measured that their **geometric-predicate** charts — H-bond
+networks built from distance and angle criteria — factored through **nothing**, their Leg F.
+This node's chart's fibers are conserved-label classes, closed by construction for
+sector-preserving collisions. Their stated lesson, written to this node by name: a chart
+meant to compose into a conserved-label fiber census should be **built from conserved labels,
+not from geometry.**
+
+Recorded here so the `(N,P)` chart choice does not read as taste. **It is corroboration, not
+a stake**: it was measured by an independent instrument that tried the other kind of chart and
+watched it fail, and it arrived after this freeze. Nothing in §6 depends on it, and §11's
+meanings are unchanged. Rung 1 also confirms that nothing composes upward into this node —
+they certified nothing — so §0.2's standalone framing is untouched.
+
+### A3 — scope correction from the operator, 2026-09-02
+
+**This node's certificate confers NO workbench band state.** The band-flip law is restated in
+the FSD (`b374773`): a band goes live only on a **node-G closure certificate**, a certified
+coarse view of the dynamics beneath it. This tier is certified on **its own** dynamics, which
+is a different thing, and running it under a band would be running physics that is not the
+certified coarse truth of that scene — the fake the FSD bans, and what §0's first law already
+forbade from the other direction.
+
+§12's door requirements stand exactly as written, now as requirements on **research content
+the page may cite**, never on a band state. The earlier framing that upper bands could go live
+running this tier's physics is retracted, by the lead, before it reached any artifact.
+
+### A4 — the invariant question, raised by the lead, answered by measurement, 2026-09-02
+
+The lead suggested staking, in advance, that the **staggered (Zanetti) momentum invariants**
+would appear as extra closed views at a staggered chart — rule-6 material if confirmed — and
+said to verify the literature before staking it.
+
+**Neither staked nor dismissed: solved.** Staking a half-remembered formula would have made
+the answer depend on the recall. Instead `ref_invariants.py` solves for the **complete space
+of linear invariants** of `T = S ∘ C`, so that any spurious invariant of any form must appear
+in the dimension count. The derivation and the two gauges are in that file's header; the
+reading is in `LG_RESULTS.md` §8.
+
+This is **post-freeze and gates nothing.** It bears on the results document's wording — a
+spurious invariant would be an extra exactly-closed view, and §11's outcome 1 says "the only
+exactly-closed chart is the global one" — so it is reported as a measurement in its own right
+with its own gauges, and the wording in the results follows what it measured.
+
+**The literature check the lead asked for could not be completed**: this session's web-search
+budget was exhausted before the Zanetti citation could be read, and the one page reachable by
+direct fetch does not discuss spurious invariants. The measurement below is therefore stated
+as a fact about **this configuration**, gauged on two systems whose invariant spaces are known
+independently, and it is NOT stated as agreeing or disagreeing with Zanetti, whose exact
+statement and scope this node has not read. That check is **owed**, and named here as owed
+rather than quietly dropped.

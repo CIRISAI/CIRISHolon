@@ -1418,6 +1418,24 @@ impl PairTable {
             "  \"solver_budget_iterations\": {},\n",
             m.solver_budget
         ));
+        // THE EXIT, beside the uncertainty and not below it, because the uncertainty means
+        // something different depending on this field and a consumer cannot know which
+        // without it.
+        //
+        // A curve that exits `converged` reached the asked tolerance and its
+        // `uncertainty_hartree` is a bound. A curve that exits `iteration cap` ran out of
+        // BUDGET, and under thick restart its residual is a SAMPLE of a non-monotone
+        // sequence — not a bound in either direction. The O-O curve is the live case: it
+        // exits `iteration cap`, 12 of its 96 knots are capped at budget 4000 and the same
+        // 12 at 5000, and the campaign's long-range results were resting on it while the
+        // logs that cited it warned the residual and never stated the exit. That is
+        // silent inheritance, and this field is what ends it: a consumer gating on the
+        // number alone now has the fact that makes the number conditional, in the same
+        // block, without having to know to ask.
+        //
+        // It does NOT say which knots. `worst_residual` is a maximum and this is the worst
+        // exit; a consumer needing the distribution regenerates with the per-knot record.
+        s.push_str(&format!("  \"solver_exit\": \"{}\",\n", m.exit.label()));
         // The third axis. See `PairMeta::device`: it is what RAN, not what was compiled in.
         s.push_str(&format!("  \"device_class\": \"{}\",\n", m.device));
         s.push_str(

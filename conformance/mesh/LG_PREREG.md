@@ -637,3 +637,39 @@ as a fact about **this configuration**, gauged on two systems whose invariant sp
 independently, and it is NOT stated as agreeing or disagreeing with Zanetti, whose exact
 statement and scope this node has not read. That check is **owed**, and named here as owed
 rather than quietly dropped.
+
+### A5 — the ansatz scope of A4's solve, 2026-09-02
+
+The lead asked, correctly, which space `ref_invariants.py` searched — because "zero spurious"
+means different things over a site-dependent space and over a translation-invariant one, and
+the difference is *we looked and they are absent* versus *we looked where they could not be.*
+
+**The search is over the FULL site-dependent space: one free weight `w[c][d]` per cell and
+direction, all `6L²` of them, with nothing assumed translation-invariant.** The collapse to
+one weight per (direction, line) is a **derived consequence of the dynamics, not a restriction
+on the search**: put a single particle at cell `c₀` in direction `d₀` and conservation reads
+`w[c₀+DIR[d₀]][d₀] = w[c₀][d₀]` immediately, because single-particle states are alone in their
+`(N,P)` fiber and every sector-preserving collision fixes them.
+
+A staggered momentum is exactly a **position-dependent** weight, and it survives that collapse
+whenever its sign pattern is constant along each direction's own lines — which is how HPP's
+per-line momenta appear. So such functionals are **inside** the searched space, and
+`ref_ansatz_scope.py` measures how much of each system's invariant space is genuinely
+position-dependent, basis-independently, by re-solving with the weights forced flat:
+
+| system | `dim` | `dim_TI` | **position-dependent** |
+|---|---:|---:|---:|
+| identity collision (streaming), `L` = 4, 6, 8 | 24, 36, 48 | 6 | **18, 30, 42** |
+| HPP-4, `L` = 4, 6, 8, 12 | 9, 13, 17, 25 | 3 | **6, 10, 14, 22** |
+| **FHP-I**, `L` = 4, 6, 8, 10, 12, 16 | 3 | 3 | **0** |
+
+So the solver finds position-dependent invariants in quantity when they exist — `2L−2` of them
+on HPP-4, which is the staggered shape and the historical reason FHP exists — and for FHP-I
+that sector is **empty**. `A4`'s reading is therefore *looked and absent*, over the space where
+staggered invariants live.
+
+**This does not discharge the literature check**, which stays owed at A4 and is now owed
+session-wide (the web-search budget is a shared pool and was exhausted). What it does is fix
+what the check will adjudicate: no longer whether the measurement was aimed at the right
+space, but whether Zanetti's scope — rest particles, boundary conditions, `L` parity, model
+variant — differs from this configuration's.

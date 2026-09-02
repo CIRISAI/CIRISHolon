@@ -15,14 +15,25 @@
 
 Nothing is owed to workbench-engine — the door spec and the landed artifacts are both sent.
 
-## The one loose end, named rather than dropped
+## The one loose end, named rather than dropped — and its scope now fixed
 
 **The Zanetti literature check is OWED.** `ref_invariants.py` measures that FHP-I on this
 lattice has exactly three linear invariants (gauged: identity → `6L`, HPP-4 → its textbook
 `2L+1`), so no staggered linear invariant exists *on this configuration*. But this session's
 web-search budget was exhausted before the citation could be read, so nobody in this lane has
 seen Zanetti's statement, its model variant, or its scope. **No document here may say the
-result contradicts him.** Prereg annexe A4 and `LG_RESULTS.md` §8.3 both carry the boundary.
+result contradicts him.** Prereg annexe A4 and `LG_RESULTS.md` §8.4 both carry the boundary.
+The budget is a session-wide pool and the lead's attempt exhausted it too, so no lane could
+complete the read this session; the operator can raise it.
+
+**What the check will adjudicate is now fixed, and it is not the measurement.** Annexe A5 and
+`LG_RESULTS.md` §8.3 establish that the solve ran over the FULL site-dependent space — one
+weight per cell and direction, `6L²` of them — with the reduction to one weight per
+(direction, line) a derived consequence of the dynamics rather than a restriction. Staggered
+momenta are position-dependent weights and live inside that space; the solver returns `2L−2`
+of them on HPP-4 and 18–42 on the identity collision, and **zero** on FHP-I. So the reading is
+*looked and absent*, and the open question is only whether Zanetti's scope (rest particles,
+boundary conditions, `L` parity, model variant) differs from this configuration's.
 
 ## Unfinished, post-freeze, gates nothing
 

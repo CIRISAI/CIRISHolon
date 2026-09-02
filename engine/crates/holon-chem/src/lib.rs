@@ -49,6 +49,7 @@ pub mod md;
 pub mod ooh;
 pub mod ozone;
 pub mod pair;
+pub mod qcd2;
 pub mod quaternary_table;
 pub mod rpmd;
 pub mod scalar;

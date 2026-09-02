@@ -1555,6 +1555,13 @@ fn periodic_arm(
     // correctly refuses. The first run of this arm did exactly that and then scored the
     // refusal as a number, because the instrument swallowed the error with `let _ =`.
     // 2.05 / 0.90 leaves the box legal on both sides of the move.
+    // TWO FLOORS, and they coincide here only by accident. This sector's own condition is
+    // `min_edge >= 2 R_s`; the PAIR sector's is `Sim::pbc_ok`, `list_cutoff <= half the
+    // shortest edge`, and since 44ac404 `Sim::scale_box` refuses a move that would break it.
+    // With no pair truncation declared `list_cutoff == R_s` and the two are the same number
+    // — but a scene that declared one would push `list_cutoff` past `R_s` and pbc_ok would
+    // bind first. So the edge is DERIVED from whichever binds, read off the engine rather
+    // than assumed, and the margin is printed.
     let edge = 2.05 * r_s / G9_SHRINK;
     if edge >= r_f {
         println!(
@@ -1650,7 +1657,22 @@ fn periodic_arm(
         }
         scaled.far = Some(Box::new(fs));
         scaled.rebase();
-        scaled.scale_box(f).expect("the box scales");
+        // REPORTED, not `expect`. Since 44ac404 the door can refuse this move — a wrapping
+        // box whose scaled half-edge falls under `list_cutoff` breaks `Sim::pbc_ok` — and a
+        // gate that PANICS where it should read VOID tells the next person nothing about
+        // which condition it hit. The margin is printed either way, because this arm's box
+        // clears the door by only a few percent and a margin nobody prints is a margin
+        // nobody notices moving.
+        let (cut, half_edge) = scaled.pbc_margin();
+        println!(
+            "# G9 door margin f={f:.2}: list_cutoff {cut:.4} vs scaled half-edge {:.4} \
+             (ScaleRefusal::BreaksPeriodicImages fires below)",
+            half_edge * f
+        );
+        if let Err(e) = scaled.scale_box(f) {
+            println!("# GATE G9 f={f:.2}: VOID — scale_box refused the move: {e:?}");
+            continue;
+        }
 
         let fresh_cfg = SceneCfg { prescale: f, ..cfg_clone(&cfg) };
         let mut fresh = build_scene(&fresh_cfg, curves);
@@ -1716,7 +1738,10 @@ fn periodic_arm(
     sfar.plant = Some(FarPlant::StaleLattice);
     stale.far = Some(Box::new(sfar));
     stale.rebase();
-    stale.scale_box(G9_SHRINK).expect("scales");
+    if let Err(e) = stale.scale_box(G9_SHRINK) {
+        println!("# P1: NOT RUN — scale_box refused the move the plant needs: {e:?}");
+        return;
+    }
 
     let fresh_cfg = SceneCfg { prescale: G9_SHRINK, ..cfg_clone(&cfg) };
     let mut fresh = build_scene(&fresh_cfg, curves);

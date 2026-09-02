@@ -414,6 +414,21 @@ is the same accounting-only event in reverse. No seam machinery, no
 handoff protocol, no resampling story: one layer, one defect number, the
 grain law saying when coarse is free.
 
+**THE ACUITY LAW (operator's design): the observer's resolution bounds the
+allocation, and the seed is ONE pinned holon.** The arithmetic that makes
+the hero cheap: the cube is 1 km and a water molecule is ~3 Å — a linear
+ratio of ~3e12 — so at the zoom where the next tier FIRST becomes
+resolvable (a molecule at a pixel), the in-view population at that tier is
+ONE. Even at full molecular zoom, the focal view admits thousands of
+molecules, never 3e31: acuity itself is the allocator. Therefore the
+zoom-in rule is: when the next tier starts to matter, PIN ONE HOLON of
+that tier near the view center and populate only what acuity admits as the
+zoom deepens — by the time finer structure is visible at all, the number
+of other holons at that scale in view is negligible, and everything
+outside the view stays coarse under the de-allocation law above. No
+representative slabs, no bulk fine-simulation: one seed, acuity-bounded
+growth, measured closure defects deciding what stays fine.
+
 **THE HERO'S FIRST INTERACTION: stretch the cube.** The box-scale door at
 hero scale — drag the cube larger, watch density fall, pressure fall (the
 virial readout), and the census's phase fractions move as water leaves the

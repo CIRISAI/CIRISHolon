@@ -409,6 +409,18 @@ parent commit, no `smoke.mjs` block was added, and `docs/workbench/holon_render.
 never rebuilt or touched. The wasm artifacts of §1 were built to a scratch path and are
 not in the tree.
 
+**Nothing on the page becomes a lie because of this refusal.** `smoke.mjs`'s
+`FENCE_JUSTIFYING_ABSENCES` — the inverted check that fails when a fenced capability
+arrives — carries five entries (`holon_set_pressure`, `holon_phase_call`, `holon_q_tet`,
+`holon_water_table_begin`, `holon_refinement_active`) and **none of them is C1**. The
+workbench does not currently fence quantum nuclei; it simply does not mention them, so no
+displayed claim depended on this door either way. The full gate was run against the tree
+this lane leaves behind and passes 43/43.
+
+A successor that DOES land the door inherits an obligation from that same block: a
+capability that arrives and is not gated is worse than one that was honestly fenced, so
+the door ships with its smoke block or it does not ship.
+
 What remains is this document. The probe body is reproduced below so a successor can
 recreate the measurement exactly rather than re-deriving which entry points it wired.
 

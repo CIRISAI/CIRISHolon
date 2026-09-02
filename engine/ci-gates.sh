@@ -329,6 +329,29 @@ cargo test -q -p holon-resource 2>/dev/null >/dev/null \
   && ok "holon-resource: all nine RESOURCE_DESIGN plants (D2,D4,D5,D7,D8,D9,D10,D12,D3b)" \
   || no "holon-resource: all nine RESOURCE_DESIGN plants (D2,D4,D5,D7,D8,D9,D10,D12,D3b)"
 
+# holon-lens: trajectory lenses, the closure census, and the blind phase classifier --
+# census-lens's instrument crate. Pure arithmetic over recorded trajectories (no
+# chemistry, no I/O beyond fixtures), so the whole suite runs in seconds and is fully
+# enforced here, plants included (tests/plants.rs -- gates that have fired).
+n_lens=$(cargo test -q -p holon-lens -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_lens:-0}" -gt 0 ] \
+  && ok "holon-lens reaches $n_lens tests" \
+  || no "holon-lens reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q --release -p holon-lens 2>/dev/null >/dev/null \
+  && ok "holon-lens census/classifier gates pass (plants included)" \
+  || no "holon-lens census/classifier gates pass (plants included)"
+
+# holon-md: threaded molecular dynamics -- leased workers, chunked evaluation, and the
+# claim that matters is BIT-IDENTITY to the serial run (tests/bit_identity.rs). Release
+# because the identity test propagates real dynamics; still tens of seconds, not hours.
+n_md=$(cargo test -q -p holon-md -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_md:-0}" -gt 0 ] \
+  && ok "holon-md reaches $n_md tests" \
+  || no "holon-md reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q --release -p holon-md 2>/dev/null >/dev/null \
+  && ok "holon-md threaded/serial bit-identity gates pass" \
+  || no "holon-md threaded/serial bit-identity gates pass"
+
 # holon-device: ONE definition of RESOURCE_DESIGN D0's device class, `no_std` and
 # dependency-free, sitting under both `holon-chem` (which ships into the browser and
 # cannot take a std-only dep) and `holon-resource` (which sits under everything and

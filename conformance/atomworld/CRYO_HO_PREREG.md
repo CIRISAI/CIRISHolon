@@ -498,14 +498,22 @@ here so this freeze is read under them, and both were complied with in the recor
    over the committed set. Run-location provenance lives in
    `conformance/atomworld/cryo_logs/RESUME.md` and in this record, never in a runner.
 
-**A scope finding about both gates, reported rather than relied upon.** Neither gate
-would have caught this campaign if it had failed. `ci-gates.sh`'s cross-reference check
-globs `*.md` from `engine/`, so it never reaches `conformance/*/*.md`; and gate 10a3 greps
-`../conformance` for `*.py`, `*.sh` and `*.rs`, so it reaches neither this campaign's
-runners (which live under `engine/crates/`) nor a `.md` under `conformance/` carrying a
-scratch path — which is exactly what this campaign's `RESUME.md` did carry until it was
-scrubbed by hand. Both are one-directional in the sense
-`conformance/gravity/MISFITS.md` records: the question *"what would this command NOT
-catch?"* answers itself. Owner: the ci-gates lane. Exit: widen the cross-reference glob to
-`conformance/*/*.md` and widen 10a3's path and extension sets. This lane complied on the
-merits, not because a gate demanded it.
+**A scope finding, narrower than this lane first wrote it.** Neither gate would have
+caught this campaign if it had failed, but only one of the two has a gap.
+
+* **The cross-reference gate has one.** It globs `*.md` from `engine/`, so it never
+  reaches `conformance/*/*.md` — including every prereg and results document in the tree,
+  which is where this campaign's six dangling log citations lived. Owner: the ci-gates
+  lane. Exit: widen the glob to `conformance/*/*.md`.
+* **Gate 10a3's `.md` exclusion is NOT a gap and this lane initially miscalled it.** The
+  gate's own comment rules "Executable files only; prose records may cite such paths as
+  history" — a deliberate, documented scope decision, and `RESUME.md` is a prose record.
+  What it does miss is a PATH scope: it greps `../conformance` only, so a runner under
+  `engine/crates/` is outside it. That half stands; the extension half does not, and
+  reporting a documented scope decision as a defect would have sent someone to fix
+  something that is working. Owner: the ci-gates lane. Exit: widen 10a3's path set.
+
+This lane complied on both counts on the merits rather than because a gate demanded it:
+the citations because a pointer with no target is not a warrant, and `RESUME.md`'s recipe
+because a re-run recipe that only works in the checkout that wrote it is not a recipe. Its
+run location is still recorded there, once, as the history the gate expressly allows.

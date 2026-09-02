@@ -431,6 +431,24 @@ outside the view stays coarse under the de-allocation law above. No
 representative slabs, no bulk fine-simulation: one seed, acuity-bounded
 growth, measured closure defects deciding what stays fine.
 
+**THE ZOOM MECHANIC (operator's design, 2026-09-02): the box IS the view.**
+Zooming in SHRINKS the box around the view center, and holons that fall
+outside the shrinking domain are REMOVED from the scene across all six
+faces — released at the boundary, their allocation freed for the finer
+population the acuity law admits. No window-into-a-larger-scene, no
+off-screen fine simulation, no pinning machinery beyond the one-seed rule
+above, no transition hacks: the box-scale door is the zoom, the six faces
+are the exits, and zoom-out is the same event in reverse — the box grows
+and the coarser population is re-admitted per acuity. Every removal and
+re-admission is a ledgered scene event, never a silent edit.
+
+**THE BAND-FLIP LAW, restated because it was briefly blurred:** a band goes
+live ONLY on a node-G closure certificate — a coarse view of the dynamics
+beneath it, certified by the census. A tier certified on its OWN dynamics
+(node LG's lattice gas) is supporting machinery and research content; its
+certificate does NOT flip a band, because running physics that is not the
+certified coarse truth of THIS water would be exactly the fake §9c bans.
+
 **THE HERO'S FIRST INTERACTION: stretch the cube.** The box-scale door at
 hero scale — drag the cube larger, watch density fall, pressure fall (the
 virial readout), and the census's phase fractions move as water leaves the

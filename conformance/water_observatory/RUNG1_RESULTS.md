@@ -331,9 +331,54 @@ Reported as plainly as the survivals, and kept.
 4. **Two over-broad keywords in `Audit/prereg_audit.py`'s CONTACT table falsely refused this
    freeze**: `charged` matches `discharged`, and `inside T` matches `inside the`. Reworded
    rather than cited, because citing a misfit one does not contact is the dishonest repair.
-   Flagged for whoever owns the audit — it is the failure mode its own comments warn about
-   ("an over-broad contact refuses honest freezes, and an audit people switch off gates
+   `inside T` then fired a THIRD time on `ADDENDUM-1`'s new prose, which is the point: a
+   keyword that refuses ordinary English refuses it every time anyone writes. Flagged for
+   whoever owns the audit — it is the failure mode its own comments warn about ("an
+   over-broad contact refuses honest freezes, and an audit people switch off gates
    nothing").
+
+## 9. THE LIVE READOUT, AND THE TWO RUNG-2 SEAMS — `ADDENDUM-1`
+
+Two requirements reached this lane **after** the instrument ran and after §0–§8 were banked
+at `a32202c`. Both are answered in `RUNG1_PREREG.md`'s `ADDENDUM-1`, which is dated and
+labelled post-data in its first line rather than folded into the frozen text.
+
+**The live-readout requirement carried the condition "before your instrument runs", and that
+condition can no longer be met.** Backdating it into the freeze would be the stake-move this
+programme's discipline exists to prevent. The answer is given anyway, because it is useful
+and because it names a PAGE READOUT rather than a gate — it enters no verdict and moves no
+threshold, which is the specific reason it is safe to add after data. **For the guarantee the
+requirement exists to provide, the door must be named in the NEXT freeze, before that
+instrument exists.**
+
+The answer, in one line each:
+
+* **Door (a), an aggregate defect over the band's rows: do not build it.** This campaign is
+  the evidence — 36 of 70 readings sit within the closure budget *because they barely move*,
+  so an aggregate would display "essentially closed" while measuring nothing. That is WB-7.1's
+  own forbidden shape rendered as a live number.
+* **Door (b), a defect against a named coarse view: build it, as a PAIR** — defect together
+  with reading-changes and distinct-readings, never the defect alone, because on real data
+  those two conditions are exactly disjoint. Serve **C6/MOL-PART** first: it is the only chart
+  with an externally cross-validated defect (G-ID, nine banked readings), and it belongs to
+  the band that is already live. **No network-tier door is owed; this rung banked no
+  certificate.**
+* **Door (c), a grain schedule: not named.** `grain.rs` requires a period a caller MEASURED,
+  and this campaign measured no cadence at which any network view is exact.
+
+**Seam (1), composing upward into rung 2's lattice-gas chart, is satisfied vacuously** — this
+rung certified nothing, so it composes upward into nothing. Said plainly rather than claimed
+as a design virtue. What the campaign *does* contribute is a measured constraint: the
+lattice-gas chart's fibers are **conserved-label** classes, closed by construction for
+sector-preserving collisions, while this rung's charts are a **geometric predicate** that
+Leg F measured to factor through nothing. A chart meant to compose into a conserved-label
+fiber census should be built from conserved labels, not from geometry.
+
+**Seam (2), reusing the sector-census instrument, required no change.** This instrument's
+equivalence classes are connected components (via `partition::labels_from_bonds` — the
+census's own union-find, reused verbatim) and `k`-subsets of the four oxygens for a base
+rate. Neither is a conserved-label fiber census over a fixed local state space, so there was
+no site where `regplus.rs::sector` was the right instrument and a new one got written.
 
 ## 7. WHAT THIS DOES NOT CLAIM
 

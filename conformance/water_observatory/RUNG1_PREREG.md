@@ -660,3 +660,98 @@ chart-loop or holonomy claim is made (M-LOOP-BLIND); the re-root loop is not exe
 `partition::formula`, `lens::hbonds` — rather than reimplementing them. `carrier_motion` is
 made `pub` with no change to its body; that visibility change is the entire diff to the
 census crate's logic, and `G-ID` is the check that nothing else moved.
+
+---
+
+## ADDENDUM-1 — the live readout this certificate implies
+
+### THIS ADDENDUM IS POST-DATA AND SAYS SO IN ITS FIRST LINE
+
+*Written 2026-09-02, **after** the instrument ran and after `RUNG1_RESULTS.md` was banked
+(`a32202c`). The requirement it answers reached this lane after the run, with the stated
+condition that it be named "before your instrument runs". **That condition cannot now be
+met, and backdating it into the frozen text above would be the exact stake-move this
+document's whole discipline forbids** — git would show it, and correctly. So it is written
+here, dated, labelled, and separated from everything frozen at `683a339`.*
+
+**What this costs, stated rather than glossed.** The requirement's purpose is that "the page
+must not shape the claim": name the quantity first, then let the door serve exactly that. An
+answer written after the data cannot carry that guarantee, and this one does not claim it.
+**For the guarantee to be real it must be named in the NEXT freeze, before that instrument
+exists** — rung 1's next attempt, or rung 2's.
+
+**Why it is nonetheless safe to add here, and the reason is specific:** this names a PAGE
+READOUT, not a gate. It enters no verdict, moves no threshold, and cannot change a single
+reading in `RUNG1_RESULTS.md`. Had it named a gate, the honest move would have been to
+refuse to add it at all.
+
+### The answer: door (b), and it is NOT a scalar
+
+Of the three door shapes offered, this campaign's measurements name **(b), a defect against a
+specific coarse VIEW** — with a second field that is mandatory rather than decorative.
+
+**(a) — an AGGREGATE closure defect over the band's rows — SHOULD NOT BE BUILT, and this
+campaign is the evidence.** Of 70 chart readings, **36 sit within the closure budget
+(`D ≤ 0.01`, some as low as 0.0004) precisely because they barely move** — 0–43 reading
+changes across 20,000 frames, 1–6 distinct readings. An aggregate defect over this band would
+have displayed "essentially closed" as a live number while measuring nothing whatever. That
+is the vacuous-success shape rendered on a page, which is what `WORKBENCH_FSD.md` WB-7.1
+exists to forbid. The recommendation against (a) is the single most useful thing this rung
+can hand workbench-engine, and it is an argument from measurement rather than from taste.
+
+**(b) — a defect against a named coarse view — BUILD THIS, as a PAIR.** A closure defect
+alone is half a readout. On real data the two halves are **exactly disjoint**: every one of
+the 36 readings within the budget failed anti-vacuity, and every one of the 32 readings that
+cleared anti-vacuity sat outside the budget; **zero readings were both**. A door serving the
+defect without the dynamism beside it can therefore only ever show the misleading half. The
+readout is:
+
+> **`(closure defect D, reading changes over the window, distinct readings over the window)`**
+> for one NAMED view — three numbers, displayed together, never the first alone.
+
+**The view to serve first is the MOLECULAR chart (C6/MOL-PART), not a network chart.** It is
+the only chart in the frozen set with a banked, externally cross-validated defect: G-ID
+reproduces nine census readings exact to four decimals, including `de4_off` on all three
+quantities `CENSUS_RESULTS.md` §13.1 records. **The band that should get a live door is the
+one that is already LIVE.** No network-tier door is owed, because this rung banked no
+certificate and the band stays fenced.
+
+**(c) — a grain-schedule readout — NOT NAMED, and the reason is a fence, not a preference.**
+`grain.rs` states it in its own words: "a `Grain` must be constructed from a period that a
+caller measured or derived", and `Grain::from_bridge_family()` is the one named constant,
+carrying its provenance. **This campaign measured no cadence at which any network view is
+exact**, so naming (c) would be asking workbench-engine to build a door for a schedule
+nobody has measured. That is available later if a rung measures one; it is not available now.
+
+### The seam to rung 2, recorded here because it is a design constraint and not a result
+
+Rung 2's composition target is the lattice-gas chart (`Core/Lattice.lean`'s 53 `(N, P)`
+sectors, `sector_count`/`sector_dims`; engine side `ciris-sim-core/src/regplus.rs::sector`,
+pinned to the Lean theorem by its own test). That chart's fibers are **conserved-label**
+classes, and it is closed BY CONSTRUCTION for sector-preserving collisions
+(`SectorPreserving.n_eq`/`.p_eq`, with `conserved_descends` carrying a conserved coarse
+reading down).
+
+This rung's chart family is defined by a **geometric predicate** — Luzar–Chandler distance
+and angle — which is not a conserved label and carries no such guarantee. **Leg F measured
+the consequence: it factors through nothing**, with witnesses on 32 of 40 readings against
+the molecular chart. So the constraint for whoever takes rung 1 next, stated as evidence
+rather than as advice:
+
+> **A network-tier chart intended to compose upward into a conserved-label fiber census
+> should itself be built from conserved or near-conserved labels, not from a geometric
+> predicate.** This campaign is a measured instance of the failure mode.
+
+**Seam (1) — "avoid design choices needing a bespoke continuum view above you" — is satisfied
+VACUOUSLY here, and that is said plainly rather than claimed as a virtue.** This rung
+certified nothing, so it composes upward into nothing; there is no bespoke view to avoid
+because there is no view.
+
+**Seam (2) — reuse the sector-census instrument — required no change, and the reason is
+structural.** This instrument's equivalence classes are of two kinds, neither of which is a
+conserved-label fiber census over a fixed local state space: (i) connected components of a
+graph, computed by `partition::labels_from_bonds` — **the census's own union-find, reused
+verbatim, with no second implementation written anywhere in this campaign**; and (ii)
+`k`-subsets of the four-element oxygen set, directly enumerated for the control floor's base
+rate. There was no site at which `sector()` was the right instrument and a new one was
+written instead.

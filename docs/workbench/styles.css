@@ -1178,3 +1178,79 @@ body, html {
    certify it. Showing only the fence would report half of what the lane found. */
 .lad-positive { color: var(--green); margin-top: 3px; }
 .lad-positive b { color: var(--green); }
+
+/* --- an EXPORT-GATED band. Not a third state on the ladder: it is FENCED until the
+   exports that serve it are in the artifact, and LIVE the moment they are. The border
+   is the fenced rose because that is what it is today; app.js repaints the state word
+   from the artifact every frame, so nothing here has to be edited when it flips. */
+.lad.export-gated { border-left-color: var(--rose); }
+
+/* The one readout a fenced band is granted (the cube's hydrostatic column, FSD-W3
+   §11.2). Amber rather than cyan: it is arithmetic on measured constants, which is
+   neither the band's certified dynamics nor a refusal. */
+.lad-readout { color: var(--amber); margin-top: 3px; }
+.lad-readout b { color: var(--amber); }
+
+/* ==========================================================================
+   THE LADDER'S READOUTS (FSD-W3 §11.2)
+   ==========================================================================
+
+   Four kinds of number in one card, so the tag goes BESIDE each number rather than
+   once over the lot: a single panel tag would have to be the weakest of them, and a
+   reader would have no way to tell which digit was which. The tag word is drawn from
+   `data-tag` in CSS so no markup carries it and no row can be given digits without one.
+   A PENDING row is never passed digits at all — its text is the export it waits for. */
+
+.desc-sec {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.dval::after {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  margin-left: 6px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.dval[data-tag="live"] { color: var(--cyan); }
+.dval[data-tag="live"]::after {
+  content: "LIVE";
+  background: rgba(0, 229, 255, 0.14);
+  color: var(--cyan);
+}
+
+.dval[data-tag="declared"] { color: var(--purple); }
+.dval[data-tag="declared"]::after {
+  content: "DECLARED";
+  background: rgba(179, 136, 255, 0.14);
+  color: var(--purple);
+}
+
+.dval[data-tag="computed"] { color: var(--amber); }
+.dval[data-tag="computed"]::after {
+  content: "COMPUTED";
+  background: rgba(255, 214, 0, 0.14);
+  color: var(--amber);
+}
+
+.dval[data-tag="pending"] { color: var(--rose); }
+.dval[data-tag="pending"]::after {
+  content: "FENCED — PENDING";
+  background: rgba(255, 42, 85, 0.12);
+  color: var(--rose);
+}
+
+/* The bit-identity verdict keeps its own colour when it has one: EQUAL TO THE BIT is
+   green and a mismatch is red, and neither is a tag state. */
+.dval.green, .dval.green[data-tag="computed"] { color: var(--green); }
+.dval.red, .dval.red[data-tag="computed"] { color: var(--rose); }

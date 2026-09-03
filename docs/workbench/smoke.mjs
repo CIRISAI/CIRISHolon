@@ -65,6 +65,18 @@ import { dirname, join } from "node:path";
 const here = dirname(fileURLToPath(import.meta.url));
 const AU_TO_FS = 0.024188843265857;
 
+// The repository root, FOUND rather than assumed. `join(here, "..", "..")` is right only
+// while this file sits exactly two levels down, and it silently resolves to the wrong
+// directory the moment the gate runs from a copy — which made every mutation test of the
+// citation block fail with "artifact does not exist" instead of the defect it was probing.
+// A check whose failures all look the same cannot tell you which one fired.
+let repoRoot = here;
+for (let up = 0; up < 6; up++) {
+  try { readFileSync(join(repoRoot, ".git", "HEAD")); break; } catch { /* keep climbing */ }
+  try { readFileSync(join(repoRoot, ".git")); break; } catch { /* worktrees: .git is a file */ }
+  repoRoot = join(repoRoot, "..");
+}
+
 let failures = 0;
 let passes = 0;
 
@@ -108,12 +120,42 @@ if (!listMatch) {
 }
 const required = [...listMatch[1].matchAll(/"([a-z0-9_]+)"/g)].map((m) => m[1]);
 
-// Every `holon_*` the page actually CALLS, discovered from the source. The declared list
-// above is a promise; this is the check that the promise covers the calls. `?.(` forms are
+// THE SECOND LIST, and the reason it is a second list rather than more of the first.
+//
+// `REQUIRED_EXPORTS` is a boot-time refusal: a wasm missing one of those is not this engine
+// and the page says so with the name. `PENDING_EXPORTS` is the other kind of absence — the
+// exports WB-10.1 and WB-10.2 are building right now, which the page must handle by FENCING
+// the rows they serve, not by refusing to start. Putting them in the required list would
+// take the whole page down for want of a nucleus readout, which is the opposite of a fence.
+const pendingMatch = appSource.match(/const PENDING_EXPORTS = \[([\s\S]*?)\n\];/);
+want(pendingMatch !== null, "the page's PENDING_EXPORTS list is where the gate expects it");
+const pending = pendingMatch
+  ? [...pendingMatch[1].matchAll(/name: "([a-z0-9_]+)"/g)].map((m) => m[1]) : [];
+const declared = new Set([...required, ...pending]);
+
+// The two lists must be DISJOINT. A name on both would be required at boot and fenced at
+// render, and whichever ran first would decide what the page did — which is the shape of a
+// guard that names a different function from the one it guards.
+const onBoth = pending.filter((n) => required.includes(n));
+want(onBoth.length === 0,
+  `the required and pending export lists are disjoint (${required.length} + ${pending.length})`,
+  onBoth.length ? `on both lists: ${onBoth.join(", ")} — a required export cannot also be `
+    + "the reason a band fences, because the boot would already have refused" : undefined);
+
+// Every `holon_*` the page actually CALLS, discovered from the source. The declared lists
+// above are a promise; this is the check that the promise covers the calls. `?.(` forms are
 // deliberately included: an optional call on an export that does not exist is the false
 // guard the atom viewer shipped for months.
-const called = new Set([...appSource.matchAll(/\bw\.(holon_[a-z0-9_]+)/g)].map((m) => m[1]));
-const undeclared = [...called].filter((n) => !required.includes(n)).sort();
+//
+// STRING LITERALS COUNT AS CALLS, and that is not pedantry: the descent panel dispatches
+// through `w[name](i)` over a table of names, so a typo'd export there would be invisible
+// to a `w.holon_*` scan and would fence a row forever with nobody told. Any `"holon_*"` in
+// the source is therefore required to be on one of the two lists.
+const called = new Set([
+  ...[...appSource.matchAll(/\bw\.(holon_[a-z0-9_]+)/g)].map((m) => m[1]),
+  ...[...appSource.matchAll(/"(holon_[a-z0-9_]+)"/g)].map((m) => m[1]),
+]);
+const undeclared = [...called].filter((n) => !declared.has(n)).sort();
 
 // The other half of the same contract: every element id the page WRITES to must exist in
 // the markup. `put()` and `tag()` are deliberately tolerant of a missing element so that a
@@ -124,6 +166,7 @@ const domIds = new Set([...htmlSource.matchAll(/\bid="([A-Za-z0-9_-]+)"/g)].map(
 const written = new Set([
   ...appSource.matchAll(/\bput\("([A-Za-z0-9_-]+)"/g),
   ...appSource.matchAll(/\btag\("([A-Za-z0-9_-]+)"/g),
+  ...appSource.matchAll(/\bdescField\("([A-Za-z0-9_-]+)"/g),
   ...appSource.matchAll(/\bUI\["([A-Za-z0-9_-]+)"\]/g),
 ].map((m) => m[1]));
 const orphaned = [...written].filter((id) => !domIds.has(id)).sort();
@@ -140,6 +183,56 @@ want(missing.length === 0, `every export app.js declares resolves (${required.le
   missing.length ? `missing: ${missing.join(", ")}` : undefined);
 want(undeclared.length === 0, "every holon_* call in app.js is on the declared list",
   undeclared.length ? `called but undeclared: ${undeclared.join(", ")}` : undefined);
+
+// THE PENDING LIST IS A COMMISSION, NOT A WISH. Every name on it must belong to a family
+// FSD-W3 §11.4 actually commissions, so a typo or an invented export cannot sit there
+// fencing a band indefinitely while looking like scheduled work. `holon_law_probe` is the
+// one exception and it is declared as one IN THE PAGE: §11.4 commissions the PROPERTY
+// (wasm == native to the bit, pinned by tests/wasm_law.rs) and names no export for it, so
+// the page records the name's provenance as WB-10.3's brief rather than citing a line that
+// does not carry it.
+const fsdText = readFileSync(
+  join(repoRoot, "conformance/water_observatory/WORKBENCH_FSD.md"), "utf8");
+const COMMISSIONED = [
+  [/^holon_nucleus_/, "holon_nucleus_*"],
+  [/^holon_atom_band_/, "holon_atom_band_*"],
+  [/^holon_atom_in_molecule$/, "holon_atom_in_molecule"],
+];
+for (const name of pending) {
+  const fam = COMMISSIONED.find(([re]) => re.test(name));
+  if (!fam) {
+    // Not commissioned by §11.4: the page must say so itself, in the entry's own `spec`.
+    const entry = pendingMatch[1].split(/\n  \{/).find((b) => b.includes(`"${name}"`)) || "";
+    want(/spec: "[^"]*not named in §11\.4[^"]*"/.test(entry),
+      `pending export ${name} is declared as NOT commissioned by §11.4`,
+      "an export the FSD does not commission must say so in its own `spec` field; citing a "
+      + "line that does not carry the claim is the failure this gate battery is about");
+    continue;
+  }
+  want(fsdText.includes(fam[1]),
+    `pending export ${name} belongs to a family §11.4 commissions (${fam[1]})`,
+    `the FSD does not mention ${fam[1]}, so this name is not scheduled work — a band fenced `
+    + "on an export nobody is building is a fence with no exit");
+}
+// AND THEY ALL RESOLVE TODAY, so that is what is demanded rather than reported.
+//
+// This started as an informational line while WB-10.1 and WB-10.2 were in build. They
+// landed, the fine bands flipped live with no edit to the page — which is the property the
+// export-gating was built for — and an informational line would now be the wrong instrument:
+// a rebuild that dropped one of these would silently re-fence a live band and nothing would
+// say so. The absence path is still covered, in the two places it belongs: `bandLiveness`
+// and `exportRow` are lifted out and run against a stub artifact with the exports missing.
+const pendingLive = pending.filter((n) => typeof w[n] === "function");
+const pendingGone = pending.filter((n) => typeof w[n] !== "function");
+want(pendingGone.length === 0,
+  `every export the fine bands wait on resolves in the committed artifact (${pending.length})`,
+  pendingGone.length
+    ? `absent: ${pendingGone.join(", ")} — the atom and nucleus bands re-fence on this `
+      + "artifact. If that is deliberate, say so here; if it is a rebuild that dropped a "
+      + "symbol, the band went dark and only this line would have told you"
+    : undefined);
+ok(`${pendingLive.length} pending-list exports are live in this artifact, so the fine bands `
+  + "flip without an edit to the page");
 
 // ---------------------------------------------------------------- 2. the pure-H boot
 
@@ -563,17 +656,10 @@ want(dA === dB, `the seeded scene replays bit-identically in this device class (
 // is re-run and prints something else. Two prongs, because a citation can fail two ways:
 // the artifact can vanish, and the number can move inside it.
 
-// The repository root, FOUND rather than assumed. `join(here, "..", "..")` is right only
-// while this file sits exactly two levels down, and it silently resolves to the wrong
-// directory the moment the gate runs from a copy — which made every mutation test of this
-// block fail with "artifact does not exist" instead of the defect it was probing. A check
-// whose failures all look the same cannot tell you which one fired.
-let repoRoot = here;
-for (let up = 0; up < 6; up++) {
-  try { readFileSync(join(repoRoot, ".git", "HEAD")); break; } catch { /* keep climbing */ }
-  try { readFileSync(join(repoRoot, ".git")); break; } catch { /* worktrees: .git is a file */ }
-  repoRoot = join(repoRoot, "..");
-}
+// `repoRoot` is resolved at the top of this file. It used to be resolved here, and moved
+// when the export-contract section started citing the FSD: a `let` read before its
+// initialiser runs is a TDZ throw, which this gate would have reported as "coverage
+// unknown" rather than as the ordering mistake it is.
 
 const recordBlock = appSource.match(/const RECORD = \{([\s\S]*?)\n\};/);
 want(recordBlock !== null, "the page's RECORD block is where the gate expects it");
@@ -701,9 +787,89 @@ if (ladderBlock) {
     certificate: field(block, "certificate"),
     measuredBy: field(block, "measuredBy"),
     positiveCite: field(block, "positiveCite"),
+    readoutCite: field(block, "readoutCite"),
+    declaredCite: field(block, "declaredCite"),
+    buildCite: field(block, "buildCite"),
+    ganttCite: field(block, "ganttCite"),
+    lengthM: Number((block.match(/lengthM: ([0-9.e+-]+)/) || [, NaN])[1]),
+    liveWhen: [...(block.match(/liveWhen: \[([\s\S]*?)\],/) || [, ""])[1]
+      .matchAll(/"([a-z0-9_]+)"/g)].map((m) => m[1]),
   }));
-  want(bands.length === 4, `the ladder carries four bands (found ${bands.length})`,
-    `parsed: ${bands.map((b) => b.band).join(", ")}`);
+
+  // ---- EVERY BAND IN §11.2's TABLE IS ON THE PAGE ----------------------------
+  //
+  // FSD-W3 §11.2 is the spec of record and its content is that the ladder runs from 1 km to
+  // the nucleus with NOTHING MISSING: every band present, each one live or fenced. A count
+  // alone would pass on seven bands with the wrong names, so the names are pinned — and the
+  // one row §11.2 carries that must NOT be here is pinned too, in the other direction.
+  //
+  // "below the nucleus" is the gauge vacuum (W2), which §11.2 marks NOT ON THIS PAGE YET and
+  // the operator sequenced after this build. A band drawn for unscheduled work is a promise
+  // wearing a fence's clothes, so its ABSENCE is the checked property.
+  const LADDER_BANDS = [
+    "the cube", "fluid element", "H-bond network", "molecular",
+    "atom", "nucleus", "the fold below the atom",
+  ];
+  const names = bands.map((b) => b.band);
+  want(bands.length === LADDER_BANDS.length,
+    `the ladder carries all ${LADDER_BANDS.length} bands of FSD-W3 §11.2 (found ${bands.length})`,
+    `parsed: ${names.join(", ")}`);
+  for (const wanted of LADDER_BANDS) {
+    want(names.includes(wanted), `§11.2's "${wanted}" band is present on the page`,
+      "every band in the table is on the page, live or fenced — nothing in between and "
+      + "nothing missing");
+  }
+  want(!names.some((n) => /below the nucleus/i.test(n) && n !== "the fold below the atom"),
+    "the gauge-vacuum row §11.2 marks NOT ON THIS PAGE YET is not drawn as a band",
+    "W2 is sequenced after this build; a band on the page for unscheduled work is a promise "
+    + "wearing a fence's clothes");
+
+  // ---- THE LADDER IS ORDERED, CUBE DOWN TO NUCLEUS ---------------------------
+  //
+  // The operator's order is a zoom axis, and an axis whose rungs are out of order is not
+  // one. Strict monotonicity is the checkable form: each band's own scale is smaller than
+  // the one above it, so the page cannot silently grow a rung in the middle of the ladder.
+  const lengths = bands.map((b) => b.lengthM);
+  want(lengths.every((v) => Number.isFinite(v) && v > 0),
+    "every band declares a positive scale length",
+    `lengthM values: ${lengths.join(", ")}`);
+  const descendingOrder = lengths.every((v, k) => k === 0 || v < lengths[k - 1]);
+  want(descendingOrder,
+    "the ladder runs from the cube DOWN to the nucleus (scale strictly decreasing)",
+    `order as declared: ${names.map((n, k) => `${n} ${lengths[k]}`).join(" · ")}`);
+  want(names[0] === "the cube" && names[names.length - 1] === "the fold below the atom",
+    "the ladder's ends are the 1 km cube and the fold below the atom",
+    `first "${names[0]}", last "${names[names.length - 1]}"`);
+
+  // ---- EACH BAND'S STATE IS THE ONE §11.2 GIVES IT ---------------------------
+  //
+  // The count and the names would both pass on a ladder with every band fenced, which is
+  // the ladder §11.2 does not describe. So the state is pinned per band, and the two fine
+  // ones are pinned TWICE: their source state is `export-gated` (the flip is the artifact's,
+  // not a word's) AND §11.2 says they are LIVE, so the artifact must actually serve them.
+  // Failing that second half is what "the page shows a fence where the spec shows a band"
+  // looks like from the outside, and nothing else here would say it.
+  const SPEC_STATE = {
+    "the cube": "fenced", "fluid element": "fenced", "H-bond network": "fenced",
+    "molecular": "live", "atom": "export-gated", "nucleus": "export-gated",
+    "the fold below the atom": "fenced",
+  };
+  for (const b of bands) {
+    const expect = SPEC_STATE[b.band];
+    if (!expect) continue;
+    want(b.state === expect, `band "${b.band}" is ${expect}, as §11.2 has it`,
+      `the page says "${b.state}". §11.2 is the spec of record for this ladder; a band that `
+      + "disagrees with it is either the spec moving or the page drifting, and one of the "
+      + "two has to be edited");
+    if (expect === "export-gated") {
+      const unserved = b.liveWhen.filter((n) => typeof w[n] !== "function");
+      want(unserved.length === 0,
+        `band "${b.band}" is LIVE on this artifact, as §11.2 says it is`,
+        `this artifact does not serve ${unserved.join(", ")}, so the band renders FENCED — `
+        + "PENDING while §11.2 says LIVE. Either the wasm is behind the spec or a name is "
+        + "wrong; the page is doing the right thing with the artifact it has");
+    }
+  }
 
   for (const { block: whole, band, state, cite } of bands) {
     const [relPath, lineNo] = cite.split(":");
@@ -717,14 +883,54 @@ if (ladderBlock) {
       `band "${band}" is on ${cite}`,
       `line ${lineNo} reads: ${(text.split("\n")[Number(lineNo) - 1] ?? "").trim().slice(0, 80)}`);
 
-    if (state === "fenced") {
+    // A band that is not LIVE is fenced, whatever its warrant would be: the coarse bands
+    // wait on a closure certificate and the fine ones wait on their exports, and BOTH owe
+    // the reader an owner and an exit. Scoping this to `state === "fenced"` would have let
+    // the two new bands carry a pending state with nobody named, which is the shrug the
+    // fence law exists to forbid.
+    if (state === "fenced" || state === "export-gated") {
       const hasOwner = /owner:\s*"[^"]+"/.test(whole);
       const hasExit = /exit:\s*"[^"]{40,}"/.test(whole);
       want(hasOwner && hasExit,
-        `fenced band "${band}" carries an owner and an exit`,
+        `${state} band "${band}" carries an owner and an exit`,
         `owner ${hasOwner ? "present" : "MISSING"}, substantive exit ${hasExit ? "present" : "MISSING"} `
         + "— the fence law requires both, and an exit too short to say anything is not one");
     }
+  }
+
+  // ---- THE FINE BANDS FLIP ON EXPORTS, AND NAME EVERY ONE --------------------
+  //
+  // The coarse bands' warrant is a node-G closure certificate, gated below. The fine bands
+  // hold none and are not entitled to one — a closure certificate certifies a COARSE view
+  // of the dynamics beneath a band and there is no coarse view at an atom. Their warrant is
+  // the artifact: `liveWhen` names the exports that must resolve, and until they do the band
+  // draws no digits.
+  //
+  // The failure this catches is a band fenced on an export nobody named — indistinguishable
+  // on screen from a band waiting for work in progress, and permanent.
+  for (const { band, state, liveWhen } of bands) {
+    if (state !== "export-gated") continue;
+    want(liveWhen.length > 0,
+      `export-gated band "${band}" names the exports it is waiting for`,
+      "a band gated on nothing can never flip, and its fence has no exit a reader can check");
+    const strays = liveWhen.filter((n) => !pending.includes(n));
+    want(strays.length === 0,
+      `every export "${band}" waits on is on PENDING_EXPORTS (${liveWhen.length})`,
+      strays.length ? `not on the pending list: ${strays.join(", ")} — a name that is on `
+        + "neither list is a name nothing is building" : undefined);
+  }
+  // AND THE OTHER DIRECTION: every pending export is claimed by some band or by the
+  // readouts card. An export on the list that nothing waits for is a fence with no panel
+  // behind it, and it would keep looking like scheduled work forever.
+  const claimed = new Set(bands.flatMap((b) => b.liveWhen));
+  for (const name of pending) {
+    const inLadder = claimed.has(name);
+    const inCard = new RegExp(`"${name}"`).test(appSource.slice(appSource.indexOf("DESCENT_FIELDS")))
+      || new RegExp(`hasExport\\("${name}"\\)`).test(appSource);
+    want(inLadder || inCard,
+      `pending export ${name} is claimed by a band or by a readout row`,
+      "nothing on the page waits for this export, so its absence fences nothing and its "
+      + "arrival would change nothing");
   }
   // ---- THE FLIP IS MECHANICAL, IN BOTH DIRECTIONS -----------------------------
   //
@@ -811,8 +1017,12 @@ if (ladderBlock) {
   // fence now carries them. Numbers on a page are a liability unless they resolve: these
   // are cited to RUNG2_RESULTS.md and read out of it here, exactly like the RECORD block.
   // A fence that quotes a measurement nobody checks is a longer sentence, not a better one.
-  for (const { band, measuredBy, positiveCite } of bands) {
-    for (const [label, cite] of [["measured exit", measuredBy], ["positive finding", positiveCite]]) {
+  for (const { band, measuredBy, positiveCite, readoutCite, declaredCite, buildCite, ganttCite } of bands) {
+    for (const [label, cite] of [
+      ["measured exit", measuredBy], ["positive finding", positiveCite],
+      ["readout grant", readoutCite], ["declared-input rule", declaredCite],
+      ["build row", buildCite], ["GANTT row", ganttCite],
+    ]) {
       if (!cite) continue;
       const [relPath, lineNo] = cite.split(":");
       try {
@@ -859,23 +1069,127 @@ if (ladderBlock) {
     }
   }
 
+  // THE FOLD'S QUOTED FIGURE, pinned to the register row it cites — same rule as the fluid
+  // band's, and for the same reason: a fence that quotes a measurement nobody checks is a
+  // longer sentence, not a better one. If GF2's first rung re-reads, the page must move with
+  // it rather than keep quoting a superseded number.
+  const fold = bands.find((b) => b.band === "the fold below the atom");
+  want(!!fold, "the fold band is present to check");
+  if (fold) {
+    const tiers = (() => {
+      try { return readFileSync(join(repoRoot, "TIERS.md"), "utf8"); } catch { return null; }
+    })();
+    want(tiers !== null, "TIERS.md is in the tree");
+    if (tiers) {
+      const onPage = fold.block.includes("0.6%");
+      const line = tiers.split("\n")[Number(fold.positiveCite.split(":")[1]) - 1] ?? "";
+      want(onPage && line.includes("0.6%"),
+        "the fold band quotes 0.6% and TIERS.md's hadron row still carries it",
+        onPage
+          ? "the page quotes 0.6% and the cited row no longer does — GF2's first rung has "
+            + "re-read and the fence is quoting a superseded measurement"
+          : "the page no longer quotes the figure that made this a measured fence rather "
+            + "than a state");
+    }
+  }
+
   // EVERY FENCED BAND NAMES A BUILD IN PROGRESS, not just a condition (operator's law: a
   // fence is a bug under repair, never content). The discriminator is deliberately crude —
   // present-tense build language — because that is what a text check can see. It was the
   // TENSE that was wrong; the numbers were always right.
-  for (const { band, state, block: bandBlock } of bands) {
-    if (state !== "fenced") continue;
-    want(/\b(is|are) (being )?(built|in build)\b|\bin build\b|\bgoes live as\b/i.test(bandBlock),
-      `fenced band "${band}" names a build in progress, not just a condition`,
+  //
+  // SCOPED TO BANDS THAT ARE ACTUALLY FENCED, and that scoping is a correction rather than
+  // a loophole. An export-gated band whose exports have landed is LIVE and owes no debt;
+  // demanding it name a build in progress forces a sentence that was true this morning and
+  // is false now. That is exactly what happened — the atom band's exit said its exports
+  // "are in build in holon-render now" for as long as it took them to land — so the rule is
+  // stated in BOTH directions here, and the stale half is the one nothing was checking.
+  const servedNow = (b) => b.state === "live"
+    || (b.state === "export-gated" && b.liveWhen.length > 0
+      && b.liveWhen.every((n) => typeof w[n] === "function"));
+  const BUILD_TENSE = /\b(is|are) (being )?(built|in build)\b|\bin build\b|\bgoes live as\b/i;
+  for (const b of bands) {
+    if (b.state !== "fenced" && b.state !== "export-gated") continue;
+    if (servedNow(b)) {
+      want(!BUILD_TENSE.test(b.block),
+        `live band "${b.band}" no longer describes its exports as work in progress`,
+        "this band's exports resolve in the committed artifact, so it renders LIVE — and its "
+        + "exit still promises a build. A fence that outlives its debt is the F-2 shape: the "
+        + "page telling viewers about an absence that ended");
+      continue;
+    }
+    want(BUILD_TENSE.test(b.block),
+      `${b.state} band "${b.band}" names a build in progress, not just a condition`,
       "the fence must say what work is paying the debt, in the present tense — a band whose "
       + "exit names only a state is describing a refusal rather than a repair");
   }
 
+  // EXACTLY ONE BAND IS DECLARED LIVE IN THE SOURCE, and the claim is narrower than it was
+  // — deliberately, because the ladder grew two bands whose state is not in the source at
+  // all. What this still forbids is the thing it was written to forbid: a COARSE chart
+  // declared live that this engine does not have, flipped by editing one word.
+  //
+  // The fine bands cannot be flipped that way. Their state is computed from the artifact
+  // every frame by `bandLiveness`, which is exercised in both directions below, so there is
+  // no word here to edit — which is why they are excluded from this count rather than
+  // counted and forgiven.
   const live = bands.filter((b) => b.state === "live").length;
+  const gated = bands.filter((b) => b.state === "export-gated").length;
   want(live === 1,
-    `exactly one band is LIVE (${live}) — the others must fence rather than degrade`,
+    `exactly one band is declared LIVE in the source (${live}); ${gated} flip from the artifact`,
     "more than one live band means a coarse chart is being served that this engine does "
     + "not have, which is the tier-faking the ladder exists to forbid");
+  const known = bands.filter((b) => ["live", "fenced", "export-gated"].includes(b.state)).length;
+  want(known === bands.length,
+    "every band's state is one of live, fenced or export-gated",
+    `states: ${bands.map((b) => `${b.band}=${b.state}`).join(", ")} — a state the renderer `
+    + "does not know renders as a fenced band with no fence, which is a blank row");
+}
+
+// ------------------------------- 6c1. the fine bands' flip is the ARTIFACT's, not a word's
+//
+// `bandLiveness` is the whole rule for the atom and nucleus bands: live when every export
+// they name resolves, FENCED — PENDING naming the missing ones otherwise. It is lifted out
+// of the page and run here rather than re-implemented, for the same reason `acuityPopulation`
+// is — a second implementation in the checker would drift from the one that ships and would
+// be testing itself.
+//
+// BOTH DIRECTIONS, because one alone is a door with a hinge and no latch. Forward: a missing
+// export must fence the band and NAME what is missing, so the page cannot draw a digit it
+// does not have. Reverse: with every export present the band must go live with no edit to
+// app.js, so a rung cannot land and leave the band fenced with nobody told — the
+// absence-shaped rot the gravity fence had, pointed the other way.
+const livenessSrc = appSource.match(/function bandLiveness\(liveWhen, has\) \{\n([\s\S]*?)\n\}/);
+want(livenessSrc !== null, "the page implements bandLiveness");
+if (livenessSrc) {
+  let liveness;
+  try {
+    liveness = new Function("liveWhen", "has", livenessSrc[1]);
+  } catch (e) {
+    no("bandLiveness's body could not be reconstructed for testing", String(e));
+  }
+  if (liveness) {
+    const three = ["holon_atom_band_energy", "holon_atom_band_exit", "holon_law_probe"];
+    const all = liveness(three, () => true);
+    want(all.live === true && all.missing.length === 0,
+      "with every export present the band flips LIVE with no edit to the page",
+      `got live=${all.live}, missing=${JSON.stringify(all.missing)}`);
+    const one = liveness(three, (n) => n !== "holon_atom_band_exit");
+    want(one.live === false && one.missing.length === 1 && one.missing[0] === "holon_atom_band_exit",
+      "one missing export fences the band and NAMES the export",
+      `got live=${one.live}, missing=${JSON.stringify(one.missing)} — a fence that cannot `
+      + "say what it is waiting for has no exit a reader can check");
+    const none = liveness(three, () => false);
+    want(none.live === false && none.missing.length === 3,
+      "with none present all three are named, not just the first");
+    // AND THE DEGENERATE CASE, which is the one that would pass by not applying: a band
+    // that names no export must NOT read live. Without this, deleting a `liveWhen` list
+    // would flip its band live and every other check here would still be green.
+    const empty = liveness([], () => true);
+    want(empty.live === false,
+      "a band naming NO exports does not read live — an empty gate is not a passed gate",
+      "vacuous truth over an empty list would flip a band on the deletion of its own warrant");
+  }
 }
 
 // ------------------------------------------- 6c2. the acuity law seeds at ONE
@@ -917,6 +1231,399 @@ if (acuitySrc) {
   want(acuity(1e3, L) > 1e30,
     "the law does not pretend a 1 km view is cheap — it reports the 1e31 it refuses to allocate",
     `got ${acuity(1e3, L).toExponential(2)}`);
+  }
+}
+
+// ------------------------- 6c4. the ladder's readouts: every digit names its source
+//
+// WB-7 at the bottom of the ladder. The nucleus band is the hardest place on this page to
+// obey it — three of its numbers are MEASURED INPUTS the Hamiltonian never computes
+// (WB-1.7), three are waiting on exports WB-10.1 is building, and two of the cube band's
+// are page arithmetic — so "a number either traces or it is fenced" needs a third and
+// fourth word, and each of them needs a checker or it is a promise.
+//
+// `DESCENT_FIELDS` is that contract as data: one entry per row, each naming its source in
+// one of exactly four forms. Everything below resolves those names against the artifact,
+// the committed tables and the markup, in both directions.
+const descBlock = appSource.match(/const DESCENT_FIELDS = \[([\s\S]*?)\n\];/);
+want(descBlock !== null, "the page's DESCENT_FIELDS table is where the gate expects it");
+if (descBlock) {
+  const fields = descBlock[1].split(/\n  \{/).filter((b) => /id: "/.test(b)).map((b) => ({
+    block: b,
+    id: (b.match(/id: "([^"]+)"/) || [, null])[1],
+    // Sources are written across continuation lines, so the concatenated literal is
+    // reassembled before it is parsed. A regex that read only the first fragment would
+    // silently accept a source whose second half named nothing.
+    source: [...b.matchAll(/source: "((?:[^"\\]|\\.)*)"|\+ "((?:[^"\\]|\\.)*)"/g)]
+      .map((m) => m[1] ?? m[2]).join(""),
+  }));
+  want(fields.length >= 15, `the readouts card enumerates its rows (${fields.length} found)`);
+
+  // ---- THE MARKUP CONTRACT, BOTH DIRECTIONS --------------------------------
+  //
+  // A row in the table with no element renders nowhere; an element with no table row shows
+  // a dash forever and nothing says which. `put()` is deliberately tolerant of a missing
+  // element so a removed panel cannot take the frame loop down, and this is what keeps that
+  // tolerance from letting a whole card go dark in silence.
+  const htmlDescIds = [...htmlSource.matchAll(/id="(desc-[A-Za-z0-9_-]+)"/g)].map((m) => m[1]);
+  for (const f of fields) {
+    want(htmlDescIds.includes(f.id), `readout row "${f.id}" has an element in index.html`,
+      "a row the table declares and the markup does not carry renders nowhere at all");
+  }
+  for (const id of htmlDescIds) {
+    want(fields.some((f) => f.id === id),
+      `element "${id}" in the markup is declared in DESCENT_FIELDS`,
+      "a row with no declared source is a digit with no provenance, which is the whole "
+      + "thing WB-7 forbids");
+  }
+
+  // ---- EVERY SOURCE IS ONE OF THE FOUR FORMS, AND EVERY FORM RESOLVES ------
+  const renderSrc = appSource.slice(appSource.indexOf("function renderDescent"));
+  // COMMENTS STRIPPED for every check below that is about CODE. Two of these checks were
+  // written against the raw text and one of them passed on a tooltip: "read back from
+  // holon_atom_band_solve" satisfied a test meant to establish that the door is CALLED.
+  // A checker that cannot tell a call from a sentence about a call is a checker that goes
+  // green on the defect it names.
+  const renderCode = renderSrc.replace(/^\s*\/\/.*$/gm, "");
+  const solveFn = appSource.match(/function maybeSolveAtomBand\(w, atom\) \{\n([\s\S]*?)\n\}/);
+  const palette = JSON.parse(readFileSync(join(here, "species_palette.json"), "utf8"));
+  const paletteHas = (f) => palette.species.some((s) => s[f] !== undefined);
+
+  for (const f of fields) {
+    const [kind, rest] = [f.source.slice(0, f.source.indexOf(":")), f.source.slice(f.source.indexOf(":") + 1)];
+    if (!["live", "export", "declared", "computed"].includes(kind)) {
+      no(`readout row "${f.id}" declares an unknown source kind`,
+        `source reads "${f.source}" — the four forms are live:, export:, declared: and `
+        + "computed:, and a fifth would be a digit whose provenance nothing checks");
+      continue;
+    }
+    if (kind === "live") {
+      const names = rest.split(",").map((s) => s.trim()).filter(Boolean);
+      const stray = names.filter((n) => !required.includes(n));
+      want(names.length > 0 && stray.length === 0,
+        `readout row "${f.id}" traces to REQUIRED_EXPORTS (${names.length})`,
+        stray.length ? `not required: ${stray.join(", ")} — a live row must trace to an `
+          + "export the boot refuses to run without" : "no export named");
+    } else if (kind === "export") {
+      const name = rest.trim();
+      want(pending.includes(name),
+        `readout row "${f.id}" waits on a PENDING_EXPORTS name (${name})`,
+        "a row fenced on an export that is on neither list is fenced on nothing");
+      // AND IT IS WIRED TO THAT NAME. The failure this catches is real and silent: pairing
+      // the spin row with the charge-radius export renders a length where a spin belongs,
+      // and every other check on this page would stay green.
+      const at = renderCode.indexOf(`"${f.id}"`);
+      const near = at >= 0 ? renderCode.slice(at, at + 420) : "";
+      // STRUCTURALLY, not by mention. The export's name must sit in `exportRow`'s first
+      // argument beside this row, or be paired with the id in the table the loop walks —
+      // a name that merely appears in the row's tooltip proves nothing about what the row
+      // reads, and that is exactly how the solve check above went green on nothing.
+      want(near.includes(`exportRow("${name}"`) || near.includes(`"${f.id}", "${name}"`),
+        `readout row "${f.id}" is wired to ${name} in renderDescent`,
+        at < 0 ? "the row is never rendered at all"
+          : `the render near "${f.id}" does not pass ${name} to exportRow; a row wired to a `
+            + "different export shows the wrong quantity under the right label");
+    } else if (kind === "declared") {
+      const [file, fld] = rest.split("#");
+      want(!!file && !!fld, `readout row "${f.id}" names a file and a field`, f.source);
+      if (file === "species_palette.json") {
+        want(paletteHas(fld),
+          `readout row "${f.id}" cites a field the committed species table carries (${fld})`,
+          `species_palette.json has no "${fld}" on any species — a DECLARED number must come `
+          + "from a table that exists, or it is not declared, it is invented");
+      } else {
+        // A declared source whose file is not in the tree yet is legitimate — that is what
+        // pending means — but the page must then FENCE the row rather than render it. The
+        // guard is checked in the source, because the file's absence is the state today.
+        let present = true;
+        try { readFileSync(join(here, file)); } catch { present = false; }
+        if (present) ok(`readout row "${f.id}" cites ${file}, which is in the tree`);
+        else want(/State\.lawProbe/.test(renderSrc),
+          `readout row "${f.id}" fences while ${file} is absent`,
+          "the file the row declares is not in the tree and the render does not guard on "
+          + "its absence — the row would draw whatever `undefined` formats to");
+      }
+    } else {
+      const inputs = rest.split(",").map((s) => s.trim()).filter(Boolean);
+      want(inputs.length >= 2, `computed row "${f.id}" names its inputs (${inputs.length})`,
+        "arithmetic with one named input has an unnamed one, and an unnamed input is how a "
+        + "constant walks into a readout");
+      for (const inp of inputs) {
+        const holon = inp.match(/holon_[a-z0-9_]+/);
+        if (holon) {
+          want(declared.has(holon[0]), `computed row "${f.id}" input ${holon[0]} is declared`);
+          continue;
+        }
+        const other = inp.match(/^desc-[A-Za-z0-9_-]+$/);
+        if (other) {
+          want(fields.some((g) => g.id === other[0]),
+            `computed row "${f.id}" input ${other[0]} is another declared row`);
+        }
+        const filefield = inp.match(/^([A-Za-z0-9_.-]+\.json)#([A-Za-z0-9_]+)$/);
+        if (filefield) {
+          want(filefield[1] !== "species_palette.json" || paletteHas(filefield[2]),
+            `computed row "${f.id}" input ${inp} resolves in the committed table`);
+        }
+      }
+    }
+  }
+
+  // ---- THE DECLARED DOORS' SENTINELS -------------------------------------
+  //
+  // A door that cannot serve a DECLARED value returns a sentinel rather than a plausible
+  // number (`u32::MAX`, `0.0` — nucleus.rs's own header). Two ways to get this wrong, and
+  // both put a false measurement on screen, so both are planted here against the page's own
+  // readers rather than against a copy of them.
+  //
+  //   * `u32::MAX` crosses the i32 ABI as **-1**. A guard spelled `=== 4294967295` is false
+  //     for exactly the value it exists to catch, and the row renders "I = -1/2".
+  //   * ZERO IS A REAL SPIN. ¹⁶O and ¹²C both have spin 0, so the falsiness guard this would
+  //     ordinarily be written as fences the true value for two of the ten elements the page
+  //     can draw.
+  const u32Src = appSource.match(/function declaredU32\(v\) \{\n([\s\S]*?)\n\}/);
+  const posSrc = appSource.match(/function declaredPositive\(v\) \{\n([\s\S]*?)\n\}/);
+  want(u32Src !== null && posSrc !== null, "the page implements both sentinel readers");
+  if (u32Src && posSrc) {
+    const dU32 = new Function("v", u32Src[1]);
+    const dPos = new Function("v", posSrc[1]);
+    want(dU32(-1) === null, "the u32 sentinel is caught as it actually arrives (-1)",
+      `got ${dU32(-1)} — a wasm u32 reaches JavaScript through the i32 ABI, so u32::MAX is `
+      + "-1 here and a guard written against 4294967295 alone never fires");
+    want(dU32(4294967295) === null, "and as its unsigned spelling too");
+    want(dU32(0) === 0, "spin 0 is a VALUE, not an absence",
+      "¹⁶O has spin 0; a falsy test would fence the true value for two of the ten elements "
+      + "this page can draw");
+    want(dU32(1) === 1 && dU32(3) === 3, "ordinary spins pass through");
+    want(dPos(0) === null && dPos(0.0) === null,
+      "the real-valued sentinel 0.0 is fenced — a zero charge radius is a point nucleus");
+    want(dPos(-1) === null && dPos(NaN) === null,
+      "a negative or non-finite reading is fenced rather than rendered",
+      "a door that returned one would be broken, and drawing it puts the breakage on screen "
+      + "as a measurement");
+    want(dPos(0.8414) === 0.8414, "a real charge radius passes through");
+
+    // AND AGAINST THE SHIPPED ARTIFACT, so the readers are tested on the doors' real output
+    // rather than on what this file believes the doors return.
+    if (typeof w.holon_nucleus_spin2 === "function") {
+      want(dU32(w.holon_nucleus_spin2(11)) === null
+        && dPos(w.holon_nucleus_charge_radius_fm(11)) === null,
+        "an element with no declared nucleus fences on the page's own readers (Z = 11)",
+        `the doors returned spin2 ${w.holon_nucleus_spin2(11)} and radius `
+        + `${w.holon_nucleus_charge_radius_fm(11)}, which the page did not fence`);
+      want(dU32(w.holon_nucleus_spin2(8)) === 0 && dPos(w.holon_nucleus_charge_radius_fm(8)) > 0,
+        "and ¹⁶O's declared spin of 0 survives the same readers",
+        "the sentinel test must not swallow a real zero");
+      // THE THREE DECLARED ROWS ARE INDEPENDENT, measured rather than assumed: the mass
+      // table covers more elements than the nucleus table, so a single "is it declared"
+      // flag would fence a mass the engine serves or show a spin it does not.
+      want(dPos(w.holon_nucleus_mass_u(11)) > 0,
+        "mass is declared where spin and charge radius are not (Z = 11), so the rows fence "
+        + "independently",
+        "if this ever changes the page may share one flag across the three rows; today it "
+        + "must not");
+    }
+    // Each row must go through the reader rather than formatting the raw return.
+    // The window looks BOTH WAYS. One of these three computes its value before it paints,
+    // and a forward-only window reported it as unguarded when it was guarded — a false
+    // failure is a check people learn to route around, which is worse than none.
+    for (const [id, reader] of [["desc-nuc-spin", "declaredU32"],
+      ["desc-nuc-radius", "declaredPositive"], ["desc-nuc-mass", "declaredPositive"]]) {
+      const at = renderCode.indexOf(`"${id}"`);
+      const near = at >= 0
+        ? renderCode.slice(Math.max(0, at - 420), at + 420) : "";
+      want(near.includes(`${reader}(`),
+        `readout row "${id}" passes its door through ${reader}`,
+        at < 0 ? "the row is never rendered at all"
+          : "formatting the raw return renders the sentinel as a measurement — -1 for a "
+            + "spin, or a zero charge radius as a point nucleus");
+    }
+  }
+
+  // ---- AND WHETHER THAT FENCE CAN FIRE AT ALL (WB-2.4b's rule) ------------
+  //
+  // "An instrument that cannot fire is worse than none" — the FSD says it of the periodic
+  // box's gravity refusal, and it applies here: this page draws from a ten-element palette,
+  // and if every one of those has a declared nucleus then the sentinel fence is CORRECT and
+  // UNREACHABLE from the page's own species set. That is worth saying on the page rather
+  // than letting the row look like a live guard, and it is worth checking in both
+  // directions — if the palette grows past the nucleus table, the sentence must change.
+  if (typeof w.holon_nucleus_spin2 === "function") {
+    const paletteZ = palette.species.map((s) => s.Z);
+    const undeclared = paletteZ.filter((z) => (w.holon_nucleus_spin2(z) >>> 0) === 0xFFFFFFFF
+      || !(w.holon_nucleus_charge_radius_fm(z) > 0));
+    const htmlFlat = htmlSource.replace(/<!--[\s\S]*?-->/g, "").replace(/\s+/g, " ");
+    const saysUnreachable = /not reachable from this page's own species set/i.test(htmlFlat);
+    want(undeclared.length === 0 ? saysUnreachable : !saysUnreachable,
+      undeclared.length === 0
+        ? `the page states that the sentinel fence is unreachable from its ${paletteZ.length}-element palette`
+        : `the page does not claim an unreachable fence — Z ${undeclared.join(", ")} have no declared nucleus`,
+      undeclared.length === 0
+        ? "every species this page can draw has a declared nucleus, so the fence cannot fire "
+          + "here. WB-2.4b's rule: a shell must not advertise an unfireable refusal as a live "
+          + "fence, so the page has to say which it is"
+        : `Z ${undeclared.join(", ")} now fence, so the page's 'unreachable' sentence is `
+          + "false and must be removed");
+  }
+
+  // ---- WB-5.2: THE ATOM BAND IS NEVER SILENTLY ZEROED ----------------------
+  //
+  // `holon_atom_band_energy` returns exactly 0.0 for an atom whose solve was never kept, and
+  // its companion `holon_atom_band_exit` returns 4 — "not computed". Zero hartree is a
+  // number a reader takes for an energy, so the page must consult the exit before painting
+  // the value. This is the artifact's own refusal being displayed as a refusal, which is
+  // exactly what WB-5.2 asks: never faked, never interpolated across, never silently zeroed.
+  //
+  // The engine's contract is the reason this is checkable at all: the getters are read-backs
+  // of the LAST solve, so a page that never calls the door reads four zeros that look fine.
+  want(/\bmaybeSolveAtomBand\(w,/.test(renderCode)
+    && solveFn !== null && /w\.holon_atom_band_solve\(/.test(solveFn[1]),
+    "the page RUNS the atom band's solve rather than only reading its getters",
+    "the four getters return the last kept solve — zeros and exit 4 if there is none — so a "
+    + "page that never opens holon_atom_band_solve displays a solve that never happened. "
+    + "The call is what is checked, not a mention of it: this test passed for an hour on a "
+    + "tooltip that said 'read back from holon_atom_band_solve'");
+  want(/w\.holon_atom_band_exit\(/.test(renderCode) && /!\s*solved\b/.test(renderCode),
+    "the atom band's value rows are guarded by the engine's own exit code",
+    "WB-5.2: the energy row must consult holon_atom_band_exit before printing, or an "
+    + "unsolved atom reads +0.000000 Ha and nothing on the page says it was never computed");
+  // AND THE SOLVE IS NOT RUN PER FRAME. The engine's own door says a molecule's FCI is
+  // milliseconds; a per-frame solve would spend the scene's budget on a readout and WB-6.2
+  // would pay for it in dilated time. A throttle is the property, so a throttle is checked.
+  want(solveFn !== null && /BAND_SOLVE_INTERVAL_MS|atMs/.test(solveFn[1]),
+    "the atom band's solve is throttled, not run every frame",
+    "renderDescent runs on every frame; an unthrottled millisecond solve inside it is a "
+    + "readout charging the scene its whole time budget");
+
+  // ---- WB-1.6: MEMBERSHIP COMES FROM THE CENSUS, NEVER FROM A DISTANCE -----
+  //
+  // §11.2 forbids this by name — "never from a distance heuristic in JavaScript" — and the
+  // page has every coordinate it would need to break the rule, which is exactly why the
+  // ban is worth mechanising. The pair doors are the ones a heuristic would reach for.
+  const FORBIDDEN_IN_DESCENT = ["holon_pair_bonded", "holon_pair_r", "holon_pair_i", "holon_pair_j"];
+  const reached = FORBIDDEN_IN_DESCENT.filter((n) => renderCode.includes(n));
+  want(reached.length === 0,
+    "the descent reads membership from the census export, not from a separation",
+    reached.length ? `renderDescent reaches for ${reached.join(", ")} — WB-1.6 requires the `
+      + "census's own verdict, and a distance in this file is not the census's bond criterion"
+      : undefined);
+}
+
+// ------------------- 6c5. a PENDING row cannot evaluate, let alone display, a digit
+//
+// `exportRow` is the whole of WB-7 for the readouts card: every export-served row goes
+// through it, and it takes its value as a THUNK so an absent export cannot produce a
+// number. That is a property, so it is planted rather than asserted — the thunk THROWS,
+// and if the guard is ever inverted this gate reports the throw instead of a wrong string.
+const rowSrc = appSource.match(
+  /function exportRow\(name, has, kind, value, traceLive, tracePending\) \{\n([\s\S]*?)\n\}/);
+want(rowSrc !== null, "the page implements exportRow");
+if (rowSrc) {
+  let row;
+  try {
+    row = new Function("name", "has", "kind", "value", "traceLive", "tracePending", rowSrc[1]);
+  } catch (e) { no("exportRow's body could not be reconstructed for testing", String(e)); }
+  if (row) {
+    const boom = () => { throw new Error("a pending row evaluated its value"); };
+    let absent = null, threw = null;
+    try {
+      absent = row("holon_nucleus_spin2", () => false, "declared", boom, "t", "p");
+    } catch (e) { threw = String(e.message); }
+    want(threw === null,
+      "an absent export does not even EVALUATE the row's value",
+      `the value thunk ran: ${threw} — a guard that computes first and decides after is one `
+      + "refactor away from displaying what it computed");
+    want(absent && absent.kind === "pending" && absent.text.includes("holon_nucleus_spin2"),
+      "an absent export renders PENDING and names the export",
+      `got ${JSON.stringify(absent)}`);
+    const shown = row("holon_nucleus_spin2", () => true, "declared", () => "I = 5/2", "t", "p");
+    want(shown.kind === "declared" && shown.text === "I = 5/2" && shown.trace === "t",
+      "a present export renders its value under the tag the row declares",
+      `got ${JSON.stringify(shown)}`);
+    // THE TAG IS THE ROW'S, NOT THE MECHANISM'S. A measured input read back through an
+    // export is still DECLARED (WB-1.7); if exportRow ever hard-coded "live" the nucleus
+    // rows would start claiming the engine computes a charge radius.
+    want(shown.kind !== "live",
+      "an export-served DECLARED row is not relabelled LIVE by having been served",
+      "WB-1.7: a function returning a measured input does not make the input computed");
+    // A PRESENT DOOR SERVING ITS SENTINEL IS STILL A FENCE, and it must carry the fence's
+    // TAG and not just its wording. This row read "DECLARED · FENCED — no charge radius is
+    // declared" until the sentinel path was walked end to end against a sodium atom: the
+    // text was right and the tag contradicted it, and the tag is what the eye sorts by.
+    const sentinel = row("holon_nucleus_spin2", () => true, "declared", () => null, "t", "p");
+    want(sentinel.kind === "pending",
+      "a door that serves its sentinel fences with the FENCE's tag, not the row's",
+      `got kind "${sentinel.kind}" — a row tagged DECLARED whose text reads FENCED is a `
+      + "panel contradicting itself, and the tag is the half a reader sorts by");
+    want(!/\d/.test(sentinel.text.replace(/holon_[a-z0-9_]+/g, "")),
+      "and it draws no digits of its own",
+      `text was "${sentinel.text}"`);
+  }
+}
+
+// ------------------------------- 6c6. the bit-identity gate is bits, not a tolerance
+//
+// §11.1: one determinant kernel runs every space, so wasm and native agree BITWISE rather
+// than closely — which is the whole reason this row can be a gate. A tolerance here would
+// pass on two numbers that differ and would throw away the property the lane kernel exists
+// to make checkable.
+const verdictSrc = appSource.match(
+  /function lawProbeVerdict\(wasmBits, nativeBits\) \{\n([\s\S]*?)\n\}/);
+want(verdictSrc !== null, "the page implements lawProbeVerdict");
+if (verdictSrc) {
+  const body = verdictSrc[1];
+  want(!/Math\.abs|<\s*1e-|epsilon|tolerance/i.test(body),
+    "the bit-identity comparison carries no tolerance",
+    "a near-equality in this row would report EQUAL TO THE BIT for two different numbers");
+  let verdict;
+  try { verdict = new Function("wasmBits", "nativeBits", body); }
+  catch (e) { no("lawProbeVerdict could not be reconstructed for testing", String(e)); }
+  if (verdict) {
+    want(verdict("3ff0000000000000", "3FF0000000000000") === true,
+      "identical patterns compare EQUAL regardless of hex case");
+    want(verdict("3ff0000000000000", "3ff0000000000001") === false,
+      "a one-ulp difference is a MISMATCH, not a pass",
+      "the last hex digit is one unit in the last place — the smallest disagreement two "
+      + "doubles can have, and the one a tolerance would hide");
+    want(verdict(null, "3ff0000000000000") === null && verdict("3ff0000000000000", null) === null,
+      "a missing half is PENDING, never a pass",
+      "a comparison with nothing that reported agreement would be the vacuous-success shape "
+      + "with a checkmark on it");
+  }
+}
+
+// The pinned native value itself, when the engine lane has written it. Absent today, and
+// the check is written so that its arrival starts checking rather than needing an edit.
+let lawProbe = null;
+try { lawProbe = JSON.parse(readFileSync(join(here, "law_probe.json"), "utf8")); } catch { /* below */ }
+if (lawProbe === null) {
+  ok("law_probe.json is not in the tree yet — the bit-identity row PENDS, and this gate "
+    + "starts comparing the moment the engine lane writes it");
+} else {
+  want(typeof lawProbe.probe === "string" && typeof lawProbe.pinned_by === "string"
+    && typeof lawProbe.energy === "number"
+    && /^[0-9a-fA-F]{16}$/.test(lawProbe.energy_bits_hex || ""),
+    "law_probe.json carries a probe, its bits, its value and the test that pins it",
+    `got ${JSON.stringify(lawProbe)}`);
+  // The file's own two halves must agree before it is used to judge anything else.
+  const dv = new DataView(new ArrayBuffer(8));
+  dv.setFloat64(0, lawProbe.energy, false);
+  const fileBits = [...new Uint8Array(dv.buffer)]
+    .map((b) => b.toString(16).padStart(2, "0")).join("");
+  want(fileBits === String(lawProbe.energy_bits_hex).toLowerCase(),
+    "law_probe.json's hex bits are the bits of its own energy value",
+    `energy ${lawProbe.energy} has bits ${fileBits}, file says ${lawProbe.energy_bits_hex}`);
+  if (typeof w.holon_law_probe === "function") {
+    dv.setFloat64(0, w.holon_law_probe(), false);
+    const wasmBits = [...new Uint8Array(dv.buffer)]
+      .map((b) => b.toString(16).padStart(2, "0")).join("");
+    want(wasmBits === String(lawProbe.energy_bits_hex).toLowerCase(),
+      "the shipped wasm's law probe equals the pinned native value TO THE BIT",
+      `wasm ${wasmBits} vs native ${lawProbe.energy_bits_hex} — §11.1's claim is that one `
+      + "determinant kernel runs every space, so these are the same arithmetic or the claim "
+      + "is wrong");
+  } else {
+    ok("law_probe.json is pinned but this artifact has no holon_law_probe — the row PENDS "
+      + "on the wasm rather than on the referee");
   }
 }
 
@@ -1147,8 +1854,16 @@ const REFUSAL_AS_POINT = [
   /\bwe refuse\b[^.]{0,30}\band that is\b/i,
   /\bfence is honest content\b/i,
 ];
-const pageText = readFileSync(join(here, "index.html"), "utf8").replace(/<!--[\s\S]*?-->/g, "")
-  + appSource.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, "");
+// WHITESPACE IS NORMALISED FIRST, and that is not tidiness — it is the difference between
+// this check working and this check having been decorative. index.html carried the sentence
+// "a fence is honest content on it" for as long as the check existed, and the check passed:
+// the phrase was broken across a wrapped line, so `\bfence is honest content\b` never
+// matched the newline and the indentation between "honest" and "content". A text gate that
+// only sees phrases the author happened not to wrap is a gate whose coverage depends on the
+// width of the editor.
+const pageText = (readFileSync(join(here, "index.html"), "utf8").replace(/<!--[\s\S]*?-->/g, "")
+  + appSource.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^\s*\/\/.*$/gm, ""))
+  .replace(/\s+/g, " ");
 for (const pat of REFUSAL_AS_POINT) {
   want(!pat.test(pageText),
     `no refusal-as-the-point wording matching ${pat}`,

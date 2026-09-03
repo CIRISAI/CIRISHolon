@@ -177,6 +177,17 @@ const State = {
   /// The determinism exhibit (WB-5.4). Two runs of the same seeded scene under the same
   /// device class must produce the same digest.
   replay: { last: null, prev: null, matched: null },
+
+  /// The native referee's pinned reference solve (WB-10.2), read from `law_probe.json`
+  /// beside this page. Null until it loads and null forever if the engine lane has not
+  /// written it yet — in which case the bit-identity row PENDS rather than passing.
+  lawProbe: null,
+  lawProbeWhy: null,
+
+  /// The last atom-band solve and WHEN it was taken. The engine keeps one result at a time
+  /// and the page runs it on a throttle, so the readouts card shows the frame it belongs to
+  /// rather than letting a solve from 400 frames ago read as the current one.
+  atomBand: { atom: -1, atMs: -Infinity, atFrame: 0, atTimeFs: 0, exit: 4 },
 };
 
 // ---------------------------------------------------------------- scene presets (WB-3.1)
@@ -296,6 +307,28 @@ function tag(id, kind, trace) {
   el.dataset.tag = kind;
   el.textContent = kind === "live" ? "LIVE" : "FENCED";
   el.title = kind === "live" ? `traces to ${trace}` : trace;
+}
+
+/// One row of the ladder's readouts card, with its OWN tag beside its own digits.
+///
+/// The panel-level `tag()` above is not enough here and the reason is the point of the
+/// card: three rows of the nucleus band are declared measured inputs, three are waiting on
+/// an export that is still being built, and two are page arithmetic. One tag over the lot
+/// would have to be the weakest of them, and a reader would have no way to tell which digit
+/// was which. So the tag is per row, it is rendered next to the number rather than hidden in
+/// a tooltip (`styles.css` draws it from `data-tag`), and a PENDING row is passed no digits
+/// at all — `text` is the name of the export it is waiting for.
+///
+///   live      read out of the engine this frame
+///   declared  a measured input, from the committed artifact named in `trace` (WB-1.7)
+///   computed  page arithmetic over inputs that are themselves live or declared
+///   pending   the export that serves this row is not in the artifact yet; no digits
+function descField(id, kind, text, trace) {
+  const el = UI[id];
+  if (!el) return;
+  el.dataset.tag = kind;
+  el.textContent = text;
+  el.title = trace || "";
 }
 
 // ---------------------------------------------------------------- the record (WB-9.6)
@@ -470,11 +503,34 @@ const NOT_SERVED = [
   },
 ];
 
-// ---------------------------------------------- the scale ladder (FSD-W2 §9c)
+// ------------------------------------- the scale ladder (FSD-W3 §11.2, superseding §9c)
 //
-// The site's hero is the zoom axis itself. A band either runs its certified physics or
-// WEARS ITS FENCE with an owner and an exit — a fence is honest content here, and the
-// ladder climbing rung by rung is the story. Nothing on this ladder ever fakes a tier.
+// The site's hero is the zoom axis itself, and FSD-W3 §11.2 sets its ends: 1 km × 1 km at
+// the top, the NUCLEUS at the bottom. Every band is PRESENT and is exactly one of two
+// things — LIVE on its certified chart, or FENCED with its debt, its owner and its exit in
+// the present tense. Nothing in between, and no band ever fakes a tier.
+//
+// A FENCE IS A BUG UNDER REPAIR (operator's law). The rungs on this ladder are a work
+// queue, not a display of scruple: each fenced band names the build that is paying it off,
+// and the band flips when that build lands its warrant — never when the sentence improves.
+//
+// THREE KINDS OF WARRANT, and they are not interchangeable:
+//
+//   the coarse bands (cube, fluid element, H-bond network) flip on a NODE-G CLOSURE
+//   CERTIFICATE — a coarse view of the dynamics beneath them, certified by the census.
+//   That is §9c's band-flip law and it is gated in both directions.
+//
+//   the fine bands (atom, nucleus) are not coarse views of anything, so no closure
+//   certificate applies to them. They flip on their EXPORTS: the quantities they display
+//   are served by the engine or they are not, and `liveWhen` names exactly which. Until
+//   the rebuilt wasm carries them the band renders FENCED — PENDING with the export named,
+//   and shows no digits. `bandLiveness` below is that rule, and it is what the page runs.
+//
+//   the fold below the atom is fenced on physics nobody has yet: node GF2's hadron box.
+//
+// §11.2's bottom row — the gauge vacuum below the nucleus (W2) — is deliberately NOT on
+// this ladder. The operator sequenced it after W, and a band on the page for work that has
+// not been scheduled is a promise wearing a fence's clothes.
 //
 // THE ZOOM IS DE-ALLOCATION, NOT A HANDOFF. There is no transition machinery and none is
 // owed: a holon that is not load-bearing for the scene releases its members' fine degrees
@@ -492,56 +548,29 @@ const NOT_SERVED = [
 
 const LADDER = [
   {
-    band: "molecular",
-    scale: "~nm",
-    lengthM: 3.0e-10,
-    runs: "the live engine, full physics ladder",
-    state: "live",
-    cite: "conformance/water_observatory/WORKBENCH_FSD.md:376",
-    // THE CERTIFICATE, not the specification. `cite` above points at the FSD line that
-    // says this band SHOULD be live; that is a plan, and a plan is not a verdict. This
-    // points at the census's own CERTIFIED-STRICT row — the molecular tier's closure test,
-    // passed, on a banked trajectory. The gate requires it of every live band and refuses
-    // to let a band be live without it, which is what makes "fenced -> live" a flip that
-    // cannot be performed by editing one word.
-    certificate: "conformance/water_observatory/census_mixed_fenced.log:233",
-    // WHICH NODE'S CERTIFICATE, and it is load-bearing rather than provenance decoration.
-    // A band goes live ONLY on a node-G closure certificate — a coarse view of the
-    // dynamics BENEATH it, certified by the census. Node LG's lattice-gas tier is
-    // certified on its OWN dynamics: real, banked, and NOT a band state, because running
-    // physics that is not the certified coarse truth of THIS water is the fake §9c bans.
-    // Without this field an LG bank would read as "the rung has landed and the flip is
-    // owed" and the gate would demand a flip nobody is entitled to.
-    certNode: "G",
-    certifiedBy: "the closure census — OH₂ held 893.8 fs, CERTIFIED-STRICT, past the "
-      + "pre-staked 834 fs window",
-  },
-  {
-    band: "H-bond network",
-    scale: "~10 nm",
-    lengthM: 1.0e-8,
-    runs: "the carrier that certifies this band is BEING BUILT",
+    band: "the cube",
+    scale: "1 km",
+    lengthM: 1.0e3,
+    runs: "the continuum face of the ladder — its DYNAMICS fenced, its hydrostatic column "
+      + "a live readout",
     state: "fenced",
-    owner: "GANTT node G, rung 1 — banked branch (D), NOT certified",
-    // A FENCE IS A BUG UNDER REPAIR, NEVER CONTENT (operator's law). What goes on screen
-    // is the DEBT, its OWNER, and THE BUILD PAYING IT, in the present tense. The measured
-    // numbers are still here — they are the requirement the build has to beat — but they
-    // are the specification of the work, not a display of why refusing was clever.
-    exit: "the physics ladder and the T3 scale-up are the named unblockers; rung 1's "
-      + "readings are the bar that build must clear — 70 chart readings in which the two "
-      + "conditions a certified tier needs are EXACTLY DISJOINT: 36 inside the closure "
-      + "budget and all 36 VOID by anti-vacuity, 32 clearing anti-vacuity and none inside "
-      + "the budget, zero doing both.",
-    cite: "conformance/water_observatory/WORKBENCH_FSD.md:377",
-    measuredBy: "conformance/water_observatory/RUNG1_RESULTS.md:19",
-    // The mechanism, which is the display-worthy part: the boundary is ALIGNMENT, not
-    // presence and not proximity. That is a result about water, not a note about us.
-    positive: "the molecules are there and the proximity is there — two or more separate "
-      + "oxygen-bearing molecules in 84–99.8% of frames on eight of ten trajectories, "
-      + "sitting within hydrogen-bonding distance for essentially the whole run. What is "
-      + "missing is ALIGNMENT: frames carrying even one inter-molecular H-bond number "
-      + "0–18 out of 20,000. The boundary is orientation, and that is a measurement.",
-    positiveCite: "conformance/water_observatory/RUNG1_RESULTS.md:51",
+    owner: "GANTT node G",
+    exit: "this face goes live as the rungs beneath it certify — rung 1's carrier and "
+      + "rung 2's carrier-v2 are both in build, and this face is their composition. A "
+      + "kilometre of water is ~3×10³¹ molecules; the acuity law is why that is a scale "
+      + "to stand in front of rather than a number to simulate.",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:379",
+    // ONE THING THIS BAND SERVES WHILE ITS DYNAMICS ARE FENCED, and §11.2 grants it by
+    // name: the hydrostatic column, ρ g h. It is not a dynamics readout and is never
+    // offered as one — it is arithmetic on constants this page has already measured (the
+    // scene's own density, the engine's own g), which is exactly the gravity exhibit
+    // WB-2.4a makes: what changes across the tiers is not the field but whether the
+    // quantity that matters is a per-particle energy or a sum over the column. The digits
+    // live in one place — the readouts card below — so this row points at them rather
+    // than restating them, and the band stays FENCED.
+    readout: "ρ g h, the hydrostatic column, in the ladder readouts card below — "
+      + "arithmetic on measured constants, never a dynamics readout",
+    readoutCite: "conformance/water_observatory/WORKBENCH_FSD.md:584",
   },
   {
     band: "fluid element",
@@ -587,17 +616,140 @@ const LADDER = [
     positiveCite: "conformance/water_observatory/RUNG2_RESULTS.md:47",
   },
   {
-    band: "the cube",
-    scale: "1 km",
-    lengthM: 1.0e3,
-    runs: "the continuum face of the ladder",
+    band: "H-bond network",
+    scale: "~10 nm",
+    lengthM: 1.0e-8,
+    runs: "the carrier that certifies this band is BEING BUILT",
     state: "fenced",
-    owner: "GANTT node G",
-    exit: "this face goes live as the rungs beneath it certify — rung 1's carrier and "
-      + "rung 2's carrier-v2 are both in build, and this face is their composition. A "
-      + "kilometre of water is ~3×10³¹ molecules; the acuity law is why that is a scale "
-      + "to stand in front of rather than a number to simulate.",
-    cite: "conformance/water_observatory/WORKBENCH_FSD.md:379",
+    owner: "GANTT node G, rung 1 — banked branch (D), NOT certified",
+    // A FENCE IS A BUG UNDER REPAIR, NEVER CONTENT (operator's law). What goes on screen
+    // is the DEBT, its OWNER, and THE BUILD PAYING IT, in the present tense. The measured
+    // numbers are still here — they are the requirement the build has to beat — but they
+    // are the specification of the work, not a display of why refusing was clever.
+    exit: "the physics ladder and the T3 scale-up are the named unblockers; rung 1's "
+      + "readings are the bar that build must clear — 70 chart readings in which the two "
+      + "conditions a certified tier needs are EXACTLY DISJOINT: 36 inside the closure "
+      + "budget and all 36 VOID by anti-vacuity, 32 clearing anti-vacuity and none inside "
+      + "the budget, zero doing both.",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:377",
+    measuredBy: "conformance/water_observatory/RUNG1_RESULTS.md:19",
+    // The mechanism, which is the display-worthy part: the boundary is ALIGNMENT, not
+    // presence and not proximity. That is a result about water, not a note about us.
+    positive: "the molecules are there and the proximity is there — two or more separate "
+      + "oxygen-bearing molecules in 84–99.8% of frames on eight of ten trajectories, "
+      + "sitting within hydrogen-bonding distance for essentially the whole run. What is "
+      + "missing is ALIGNMENT: frames carrying even one inter-molecular H-bond number "
+      + "0–18 out of 20,000. The boundary is orientation, and that is a measurement.",
+    positiveCite: "conformance/water_observatory/RUNG1_RESULTS.md:51",
+  },
+  {
+    band: "molecular",
+    scale: "~nm",
+    lengthM: 3.0e-10,
+    runs: "the live engine, full physics ladder",
+    state: "live",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:376",
+    // THE CERTIFICATE, not the specification. `cite` above points at the FSD line that
+    // says this band SHOULD be live; that is a plan, and a plan is not a verdict. This
+    // points at the census's own CERTIFIED-STRICT row — the molecular tier's closure test,
+    // passed, on a banked trajectory. The gate requires it of every live band and refuses
+    // to let a band be live without it, which is what makes "fenced -> live" a flip that
+    // cannot be performed by editing one word.
+    certificate: "conformance/water_observatory/census_mixed_fenced.log:233",
+    // WHICH NODE'S CERTIFICATE, and it is load-bearing rather than provenance decoration.
+    // A band goes live ONLY on a node-G closure certificate — a coarse view of the
+    // dynamics BENEATH it, certified by the census. Node LG's lattice-gas tier is
+    // certified on its OWN dynamics: real, banked, and NOT a band state, because running
+    // physics that is not the certified coarse truth of THIS water is the fake §9c bans.
+    // Without this field an LG bank would read as "the rung has landed and the flip is
+    // owed" and the gate would demand a flip nobody is entitled to.
+    certNode: "G",
+    certifiedBy: "the closure census — OH₂ held 893.8 fs, CERTIFIED-STRICT, past the "
+      + "pre-staked 834 fs window",
+  },
+  {
+    // --- THE FINE BANDS. Everything below the molecular band is reached through a PICKED
+    // atom (WB-1.6) and pinned ONE at a time by the acuity law. These bands hold no
+    // closure certificate and are not entitled to one: a closure certificate certifies a
+    // COARSE view of the dynamics beneath a band, and there is no coarse view here — the
+    // atom band is the dynamics, solved. What it needs instead is the engine's own
+    // arithmetic, through the exports `liveWhen` names.
+    band: "atom",
+    scale: "~Å",
+    lengthM: 5.3e-11,
+    runs: "ONE atom pinned by the acuity law — H or O, in a molecule or free — its "
+      + "electronic structure solved by the lane engine IN THE PAGE (STO-3G FCI, the same "
+      + "arithmetic as native, gated bit-identical against the native referee)",
+    state: "export-gated",
+    pinned: true,
+    liveWhen: [
+      "holon_atom_in_molecule", "holon_atom_band_solve", "holon_atom_band_energy",
+      "holon_atom_band_n_electrons", "holon_atom_band_residual", "holon_atom_band_exit",
+    ],
+    owner: "lead (engine) — WB-10.1 / WB-10.2",
+    // STATED AS A CONDITION, not as a build in progress — and it said the latter until the
+    // doors landed, which made it stale within the hour. A fence names the build paying it
+    // off; a band that is LIVE owes nothing and must not describe work as pending. The
+    // gate now checks both directions of that, because only one of them was checked and
+    // the wrong sentence was the one it let through.
+    exit: "the atom band is live exactly when the shipped wasm carries `holon_atom_band_*` "
+      + "and `holon_atom_in_molecule`, and fences by name — no digits — on any artifact "
+      + "that does not. Its bit-identity row is green only while `law_probe.json` sits "
+      + "beside this page with the digest `tests/wasm_law.rs` pinned natively.",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:588",
+    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:619",
+    ganttCite: "GANTT.md:108",
+  },
+  {
+    band: "nucleus",
+    scale: "~fm",
+    lengthM: 2.7e-15,
+    runs: "the nucleus of that atom as the deepest OBJECT this page carries: Z, isotope, "
+      + "mass, nuclear spin and charge radius — DECLARED, MEASURED INPUTS the "
+      + "Hamiltonian never computes (WB-1.7) — and its thermal de Broglie wavelength "
+      + "at the scene's own measured temperature, COMPUTED in closed form by the engine",
+    state: "export-gated",
+    pinned: true,
+    liveWhen: [
+      "holon_nucleus_mass_u", "holon_nucleus_spin2", "holon_nucleus_charge_radius_fm",
+      "holon_nucleus_thermal_wavelength_bohr",
+    ],
+    owner: "lead (engine) — WB-10.1",
+    exit: "the nucleus is a DECLARED table, `holon_chem::elements::NUCLEI` (spin and "
+      + "charge radius with their sources), served by the `holon_nucleus_*` doors under "
+      + "`tests/nucleus.rs`; this band is live exactly when the shipped wasm carries those "
+      + "doors, and fences by name — no digits — on any artifact that does not. Z and the "
+      + "isotope name come from the committed species table and wear DECLARED, which is "
+      + "what WB-1.7 asks of a measured input.",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:589",
+    declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:597",
+    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:618",
+    ganttCite: "GANTT.md:108",
+  },
+  {
+    // THE FLOOR, and it is a fence rather than a band that draws. This page does not draw
+    // the interior of a nucleus (WB-10.6) and will not until node GF2 has one to draw.
+    band: "the fold below the atom",
+    scale: "< 1 fm",
+    lengthM: 8.4e-16,
+    noAllocation: true,
+    runs: "the hadron tier — colour-singlet closure, with Gauss's law as the seam. "
+      + "Nothing on this page draws here, and the ladder's floor is the nucleus above.",
+    state: "fenced",
+    owner: "GANTT node GF2 — the Σ(1080) hadron box",
+    exit: "E7 (U(1)³ MPS blocks) is in build now, then E8, then E10 — the 3D "
+      + "finite-group box with Σ(1080)-valued links and staggered quarks. This band "
+      + "goes live as GF2's hadron spectrum lands inside its staked band and the derived "
+      + "nucleon–nucleon table reproduces the deuteron binding.",
+    cite: "GANTT.md:103",
+    // The tier's own register row: NAMED AND LOCKED as a fold at wager strength with three
+    // separable kills, and its first rung MEASURED on the engine arm. A fence over real
+    // work in progress, which is what the fence law asks a fence to be.
+    measuredBy: "TIERS.md:21",
+    positive: "the first rung is MEASURED: SCHWINGER-4's residual interaction between two "
+      + "screened static pairs decays at the banked meson mass to 0.6% — Fold II's "
+      + "first measurement below the atom, 1+1D only.",
+    positiveCite: "TIERS.md:21",
   },
 ];
 
@@ -662,6 +814,127 @@ function ladderStatus(w) {
   };
 }
 
+// ------------------------------------------- the ladder's readouts (FSD-W3 §11.2)
+//
+// The ladder rows above carry each band's STATE — live or fenced, with its owner, its exit
+// and its citations. This table carries the NUMBERS those bands serve, and it exists as
+// data for the same reason `NOT_SERVED` does: as markup it would be prose, and prose is
+// where a provenance claim goes to rot.
+//
+// EVERY FIELD NAMES WHERE ITS DIGITS COME FROM, in one of exactly four forms, and `smoke.mjs`
+// checks each of them against the artifact rather than taking the word for it:
+//
+//   live:<exports>          the digits are read this frame out of exports on
+//                           REQUIRED_EXPORTS, which the boot refuses to run without.
+//   export:<one export>     the digits are served by an export that is NOT YET IN THE
+//                           ARTIFACT (WB-10.1 / WB-10.2 in build). Until it resolves the
+//                           row renders FENCED — PENDING, names the export, and shows no
+//                           digits. This is the whole of WB-7 applied to work in progress:
+//                           the third option, a plausible number, does not exist.
+//   declared:<file>#<field> a MEASURED INPUT the Hamiltonian never computes, read from a
+//                           committed artifact and tagged DECLARED on the page (WB-1.7). A
+//                           declared number presented as computed is the WB-7 lie in a new
+//                           costume, so the tag is rendered beside the digits, not in a
+//                           tooltip. If the file is not in the tree yet, the row pends.
+//   computed:<inputs>       page arithmetic over inputs that are themselves live or
+//                           declared, labelled as arithmetic. §11.2 grants exactly one of
+//                           these to a fenced band — the cube's hydrostatic column — and
+//                           the label says so on screen. Every input is named so the gate
+//                           can resolve it; an unnamed input is how a constant walks in.
+//
+// The ids are the contract with the markup: `smoke.mjs` requires every id here to exist in
+// index.html AND every `desc-` id in index.html to be here, so a row cannot be added to one
+// without the other. A panel that silently stopped rendering would otherwise look exactly
+// like a panel with nothing to say.
+const DESCENT_FIELDS = [
+  // --- the pick (WB-1.6)
+  { id: "desc-pinned", label: "Pinned atom",
+    source: "live:holon_grabbed, holon_atom_count, holon_atom_x, holon_atom_y, "
+      + "holon_atom_z, holon_atom_species_z" },
+  { id: "desc-membership", label: "In a molecule, or free",
+    source: "export:holon_atom_in_molecule" },
+  // --- the atom band (WB-10.2)
+  { id: "desc-band-energy", label: "Electronic energy", source: "export:holon_atom_band_energy" },
+  { id: "desc-band-electrons", label: "Electrons in the solve",
+    source: "export:holon_atom_band_n_electrons" },
+  { id: "desc-band-residual", label: "Solve residual", source: "export:holon_atom_band_residual" },
+  { id: "desc-band-exit", label: "Solve exit", source: "export:holon_atom_band_exit" },
+  // --- the nucleus band (WB-10.1 / WB-1.7)
+  { id: "desc-nuc-z", label: "Z", source: "live:holon_atom_species_z" },
+  { id: "desc-nuc-isotope", label: "Isotope",
+    source: "declared:species_palette.json#isotope" },
+  { id: "desc-nuc-mass", label: "Mass",
+    // BOTH doors, and the tag does not change between them. The species table already
+    // carries this measured input and is committed, so the row has honest digits today;
+    // when `holon_nucleus_mass_u` lands the page reads the engine's copy instead. Either
+    // way it is DECLARED — a measured input read back through an export is still a
+    // measured input, and calling it LIVE because a function returned it would be the
+    // costume WB-1.7 names.
+    source: "declared:species_palette.json#mass_u",
+    preferExport: "holon_nucleus_mass_u" },
+  { id: "desc-nuc-spin", label: "Nuclear spin", source: "export:holon_nucleus_spin2" },
+  { id: "desc-nuc-radius", label: "Charge radius",
+    source: "export:holon_nucleus_charge_radius_fm" },
+  { id: "desc-nuc-lambda", label: "Thermal de Broglie wavelength",
+    // NOT computed here, deliberately. The page has the mass, the temperature and k_B and
+    // could evaluate the closed form — and then there would be two implementations of one
+    // number, which is how they start disagreeing. §11.4 gives it to the engine and gates
+    // it there (`tests/nucleus.rs`: the wavelength reproduces the closed form on the
+    // engine's own temperature readout), so the page waits for that door.
+    source: "export:holon_nucleus_thermal_wavelength_bohr" },
+  // --- the bit-identity gate (WB-10.2)
+  { id: "desc-probe-wasm", label: "holon_law_probe() in this wasm",
+    source: "export:holon_law_probe" },
+  { id: "desc-probe-native", label: "the pinned native value",
+    source: "declared:law_probe.json#energy_bits_hex" },
+  { id: "desc-probe-verdict", label: "Bit identity",
+    source: "computed:desc-probe-wasm, desc-probe-native" },
+  // --- the cube band's hydrostatic column (§11.2, WB-2.4a)
+  { id: "desc-density", label: "Scene mass density",
+    source: "computed:holon_atom_count, holon_atom_species_z, holon_width, holon_height, "
+      + "holon_depth, species_palette.json#mass_me" },
+  { id: "desc-hydro-view", label: "ρ g h at the view's own depth",
+    source: "computed:desc-density, holon_g_earth, holon_gravity_available, the scene "
+      + "box's own vertical extent" },
+  { id: "desc-hydro-km", label: "ρ g h at the cube band's 1 km",
+    source: "computed:desc-density, holon_g_earth, holon_gravity_available, the cube "
+      + "band's declared 1 km" },
+];
+
+/// SI, from the engine's box and the species table's declared masses. Both inputs are
+/// measured — the box is the engine's own and the masses are the palette's — so this is
+/// arithmetic, not a model, and the panel says so beside the digits.
+///
+/// It returns null rather than a number when the palette did not load: a density computed
+/// with a missing mass would be a smaller number that looks like a measurement.
+const ELECTRON_MASS_KG = 9.1093837015e-31;
+
+function sceneDensitySI(w) {
+  const n = w.holon_atom_count();
+  if (n === 0 || PALETTE.size === 0) return null;
+  let massMe = 0;
+  for (let i = 0; i < n; i++) {
+    const s = PALETTE.get(w.holon_atom_species_z(i));
+    if (!s || !(s.mass_me > 0)) return null;
+    massMe += s.mass_me;
+  }
+  const volumeM3 = w.holon_width() * w.holon_height() * w.holon_depth() * Math.pow(BOHR_TO_M, 3);
+  if (!(volumeM3 > 0)) return null;
+  return (massMe * ELECTRON_MASS_KG) / volumeM3;
+}
+
+/// g in SI, from the ENGINE's own constant rather than from a number in this file — the
+/// same rule `applyControls` follows, so there is exactly one statement of what a G is.
+/// Null where the field is refused: on a wrapping box there is no bottom to fall toward
+/// (WB-2.4b), and a column that has no down has no ρ g h either.
+function gravitySI(w) {
+  if (w.holon_gravity_available() !== 1) return null;
+  const gAu = Math.abs(w.holon_gravity());
+  // a₀/aut² → m/s². One atomic unit of time is AU_TO_FS femtoseconds.
+  const autS = AU_TO_FS * 1e-15;
+  return (gAu * BOHR_TO_M) / (autS * autS);
+}
+
 // ---------------------------------------------------------------- formatting
 
 function fmtEnergy(ha) {
@@ -697,6 +970,20 @@ function fmtMetres(m) {
   if (m < 1) return `${(m * 1e3).toFixed(2)} mm`;
   if (m < 1e3) return `${m.toFixed(2)} m`;
   return `${(m / 1e3).toFixed(2)} km`;
+}
+
+/// Pascals, in whatever unit keeps the number readable, with the atmosphere beside it
+/// because WB-2.4a's own statement of the exhibit is in atmospheres ("~9.8 MPa at 1 km,
+/// about 97 atmospheres") and a reader should not have to convert to check the page against
+/// the spec it cites.
+function fmtPressure(pa) {
+  if (!Number.isFinite(pa)) return "—";
+  const atm = pa / 101325;
+  const mag = Math.abs(pa) >= 1e6 ? `${(pa / 1e6).toFixed(3)} MPa`
+    : Math.abs(pa) >= 1e3 ? `${(pa / 1e3).toFixed(3)} kPa`
+      : Math.abs(pa) >= 1 ? `${pa.toFixed(3)} Pa`
+        : `${pa.toExponential(3)} Pa`;
+  return `${mag} (${Math.abs(atm) >= 0.01 ? atm.toFixed(2) : atm.toExponential(2)} atm)`;
 }
 
 function fmtLength(bohr) {
@@ -745,6 +1032,7 @@ async function boot() {
   }
 
   await loadPalette();
+  await loadLawProbe();
 
   // Three dimensions. The workbench is a 3D instrument; the 2D mid-plane is the atom
   // viewer's scene, not this one.
@@ -818,6 +1106,213 @@ const REQUIRED_EXPORTS = [
   "holon_pairs_ready", "holon_bank_provenance_ok",
 ];
 
+/// THE EXPORTS THE FINE BANDS ARE WAITING FOR — declared here and NOT in the list above,
+/// which is a deliberate separation rather than an oversight.
+///
+/// `REQUIRED_EXPORTS` is a boot-time refusal: a wasm missing one of those names is not this
+/// engine, and the page says so with the name instead of failing later inside the frame
+/// loop. Putting a not-yet-built export in that list would take the whole page down for the
+/// absence of a nucleus readout, which is the opposite of a fence.
+///
+/// These are the other kind of absence: WB-10.1 and WB-10.2 are in build in holon-render
+/// right now, and until the rebuilt wasm ships them the atom and nucleus bands render
+/// FENCED — PENDING with the missing export NAMED, and draw no digits at all. When a name
+/// here starts resolving, `bandLiveness` flips its band with no edit to this file: the flip
+/// is a property of the artifact, not of a word somebody changed.
+///
+/// `serves` and `what` are not decoration — `smoke.mjs` reads them, requires every name to
+/// belong to a family FSD-W3 §11.4 actually commissions, and requires every band's
+/// `liveWhen` to name only exports on this list.
+const PENDING_EXPORTS = [
+  { name: "holon_nucleus_spin2", serves: "nucleus", spec: "WB-10.1",
+    what: "twice the nuclear spin of the most abundant isotope (DECLARED input)" },
+  { name: "holon_nucleus_charge_radius_fm", serves: "nucleus", spec: "WB-10.1",
+    what: "the nuclear charge radius in femtometres (DECLARED input)" },
+  { name: "holon_nucleus_mass_u", serves: "nucleus", spec: "WB-10.1",
+    what: "the isotope mass in unified atomic mass units (DECLARED input)" },
+  { name: "holon_nucleus_thermal_wavelength_bohr", serves: "nucleus", spec: "WB-10.1",
+    what: "the nucleus's thermal de Broglie wavelength at the scene's measured temperature "
+      + "— COMPUTED in closed form by the engine, 0 where the temperature is undefined" },
+  { name: "holon_atom_in_molecule", serves: "atom", spec: "WB-10.1",
+    what: "0 if the atom is free, else 1 + the census row index it belongs to (WB-1.6)" },
+  // THE DOOR, not a getter. The four rows below are READ-BACKS of the last solve; this is
+  // what runs one. It is called on a pick change and on a throttle, never per frame — the
+  // engine's own header says a molecule's FCI is milliseconds and its value changes with
+  // every position, and a page that ran one every frame would be spending the scene's whole
+  // budget on a readout.
+  { name: "holon_atom_band_solve", serves: "atom", spec: "WB-10.2",
+    what: "solve the picked atom, or the census molecule it belongs to, and keep the result "
+      + "for the four getters; returns the exit code" },
+  { name: "holon_atom_band_energy", serves: "atom", spec: "WB-10.2",
+    what: "the picked atom's STO-3G FCI energy, solved on the lane engine in this page" },
+  { name: "holon_atom_band_n_electrons", serves: "atom", spec: "WB-10.2",
+    what: "how many electrons that solve carried" },
+  { name: "holon_atom_band_residual", serves: "atom", spec: "WB-10.2",
+    what: "the solve's residual" },
+  { name: "holon_atom_band_exit", serves: "atom", spec: "WB-10.2",
+    what: "how the solve ended: 0 converged, 1 iteration cap, 2 stagnated, 3 trivial, "
+      + "4 not computed" },
+  // THE BIT-IDENTITY PROBE, and its provenance is worth stating exactly: §11.4's WB-10.2
+  // commissions the PROPERTY (wasm == native to the bit, pinned by `tests/wasm_law.rs`)
+  // and names no export for it. The export name is WB-10.3's brief, agreed with the engine
+  // lane. Recorded here rather than attributed to the FSD, because a citation to a line
+  // that does not carry the claim is the failure this page's whole gate battery is about.
+  { name: "holon_law_probe", serves: "atom", spec: "WB-10.3 brief (not named in §11.4)",
+    what: "a fixed reference solve whose bits are pinned natively, so the page can display "
+      + "EQUAL TO THE BIT rather than a tolerance" },
+];
+
+/// Is this export in the artifact this page instantiated? One place to ask, so a guard can
+/// never name a function other than the one it guards — the atom viewer shipped for months
+/// guarding on `holon_set_atom_z`, a name the engine has never exported.
+function hasExport(name) {
+  return !!State.w && typeof State.w[name] === "function";
+}
+
+/// THE FINE BANDS' FLIP RULE, as a pure function of the artifact.
+///
+/// A band whose quantities are served is LIVE; a band missing even one is FENCED — PENDING
+/// and names what is missing. Both directions matter and only one of them is obvious: the
+/// forward one stops the page drawing digits it does not have, and the reverse one stops
+/// the band sitting fenced after the exports land, which is the absence-shaped rot the
+/// gravity fence had before it was gated. Neither direction involves editing this file.
+///
+/// Pure, and deliberately so: `smoke.mjs` lifts this body out and runs it against a stub
+/// artifact with and without the exports, which is a check that a second implementation in
+/// the gate could not be.
+function bandLiveness(liveWhen, has) {
+  const names = liveWhen || [];
+  const missing = names.filter((n) => !has(n));
+  return { live: names.length > 0 && missing.length === 0, missing };
+}
+
+// ---------------------------------------------- the declared doors' sentinels (WB-10.1)
+//
+// A door that cannot serve a DECLARED value returns a sentinel rather than a plausible
+// number — `u32::MAX` for the integer doors, `0.0` for the real ones (nucleus.rs's own
+// header). The page fences on the sentinel, and these two readers are where that decision
+// is made so it cannot be made differently in three places.
+//
+// THE ABI DETAIL THAT BITES. A wasm `u32` crosses into JavaScript through the i32 ABI, so
+// `u32::MAX` arrives as **-1**, not as 4294967295. A guard written as `v === 4294967295`
+// is false for the exact value it was written to catch, and the page would render "I = -1/2"
+// for an element with no declared nucleus. `>>> 0` reinterprets the bits, which is the one
+// operation that makes both spellings the same number.
+//
+// AND ZERO IS A REAL SPIN. ¹⁶O has spin 0 and ¹²C has spin 0, so `if (!spin2)` — the guard
+// this would ordinarily be written as — fences the true value for two of the ten elements
+// this page can draw. The test is the exact sentinel and nothing looser.
+function declaredU32(v) {
+  return (v >>> 0) === 0xFFFFFFFF ? null : (v >>> 0);
+}
+
+/// The real-valued doors' sentinel is `0.0`, and here zero is not a value any of them can
+/// legitimately take: a charge radius of zero is a point nucleus and a mass of zero is not
+/// an isotope. Negative and non-finite are refused for the same reason — a door that
+/// returned one would be broken, and rendering it would put the breakage on screen as a
+/// measurement.
+function declaredPositive(v) {
+  return Number.isFinite(v) && v > 0 ? v : null;
+}
+
+/// ONE READOUT ROW SERVED BY AN EXPORT, and the reason every such row goes through here
+/// rather than writing its own guard.
+///
+/// Each of these rows had its own `hasExport(...) ? digits : fence` when this card was
+/// first written, which is nine chances to get the guard right and one file in which a
+/// missing `!` renders a number nobody computed. Routing them through one function makes
+/// the discipline structural: `value` is a THUNK and it is not called at all when the
+/// export is absent, so a pending row cannot evaluate — let alone display — a digit.
+///
+/// Pure, and `smoke.mjs` lifts it out and plants a throwing thunk against it: if the guard
+/// is ever inverted the gate does not report a wrong string, it reports the throw.
+/// TWO WAYS A ROW CAN HAVE NOTHING TO SHOW, and they are different facts about the world:
+/// the DOOR is not in this artifact (the build has not landed), or the door is here and
+/// SERVED ITS SENTINEL (nothing is declared for this element). The value thunk signals the
+/// second by returning `null`, and both render as a fence with no digits — because a row
+/// tagged DECLARED whose text reads FENCED is a panel contradicting itself, which is how
+/// this was found.
+function exportRow(name, has, kind, value, traceLive, tracePending) {
+  if (!has(name)) {
+    return { kind: "pending", text: `FENCED — PENDING ${name}`, trace: tracePending };
+  }
+  const v = value();
+  if (v === null) {
+    return {
+      kind: "pending",
+      text: `FENCED — ${name} serves its sentinel: nothing is declared for this element`,
+      trace: traceLive,
+    };
+  }
+  return { kind, text: v, trace: traceLive };
+}
+
+/// THE PICK (WB-1.6): which ONE atom the fine bands are about.
+///
+/// The hand's pick wins — an atom you are holding is the atom you are asking about. With no
+/// hand on the scene the acuity law's seeding rule applies instead: pin ONE holon near the
+/// view centre. "Near" is measured against the engine's own coordinates, which is reading
+/// the scene rather than guessing at it; what may NOT be inferred from those coordinates is
+/// whether the atom is in a molecule, and it is not — that comes from the census export and
+/// from nothing else (WB-1.6 names the JavaScript distance heuristic as the thing forbidden).
+function pinnedAtomIndex(w) {
+  const grabbed = w.holon_grabbed();
+  if (grabbed >= 0) return { index: grabbed, how: "the hand's pick" };
+  const n = w.holon_atom_count();
+  if (n === 0) return { index: -1, how: "no atom in the scene" };
+  const b = sceneBox(w);
+  let best = -1;
+  let bestD = Infinity;
+  for (let i = 0; i < n; i++) {
+    const dx = w.holon_atom_x(i) - b.cx;
+    const dy = w.holon_atom_y(i) - b.cy;
+    const dz = w.holon_atom_z(i) - b.cz;
+    const d = dx * dx + dy * dy + dz * dz;
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return { index: best, how: "the acuity law's seed — nearest the view centre" };
+}
+
+/// Is the observer AT the fine bands — has the descent been entered?
+///
+/// TWO DOORS, because §11.2 opens two and they are not the same. WB-1.6 says the fine bands
+/// are reached through a PICKED atom, so a hand on an atom is a descent at any zoom: you are
+/// asking about that atom and the page should answer. With no hand, the acuity law's own
+/// rule applies — the molecular band's population falls to zero exactly when the view span
+/// drops below that band's scale, which is the moment §9c calls "the next tier starts to
+/// matter". No third threshold is invented here; a third could disagree with these two.
+///
+/// This governs the LABEL, never whether the numbers are real. The pinned atom exists at
+/// every zoom and every readout about it traces the same way; what the descent changes is
+/// whether the observer has arrived, and the page says which rather than hiding the rows.
+function descentActive(w) {
+  if (w.holon_grabbed() >= 0) return true;
+  const molecular = LADDER.find((b) => b.band === "molecular");
+  return acuityPopulation(viewSpanMetres(w), molecular.lengthM) === 0;
+}
+
+/// THE ATOM BAND'S SOLVE, run on a pick change and on a throttle — never per frame.
+///
+/// The engine's own door says why: a molecule's FCI is milliseconds and its value changes
+/// with every position, so a per-frame solve would spend the scene's whole budget on a
+/// readout and WB-6.2 would be paying for it in dilated time. What the page owes instead is
+/// HONESTY ABOUT STALENESS, which is why the solve's frame is recorded and displayed: a
+/// number that was true 400 frames ago is not wrong, but a page that does not say when it
+/// was taken is inviting it to be read as now.
+const BAND_SOLVE_INTERVAL_MS = 500;
+
+function maybeSolveAtomBand(w, atom) {
+  if (atom < 0 || !hasExport("holon_atom_band_solve")) return;
+  const now = performance.now();
+  const s = State.atomBand;
+  if (s.atom === atom && now - s.atMs < BAND_SOLVE_INTERVAL_MS) return;
+  s.exit = w.holon_atom_band_solve(atom);
+  s.atom = atom;
+  s.atMs = now;
+  s.atFrame = w.holon_frame();
+  s.atTimeFs = w.holon_time() * AU_TO_FS;
+}
+
 async function loadPalette() {
   try {
     const r = await fetch("species_palette.json");
@@ -828,6 +1323,50 @@ async function loadPalette() {
     // not correctness, so the page continues and says so in the manifest.
     PALETTE = new Map();
   }
+}
+
+/// THE NATIVE REFEREE'S PINNED VALUE (WB-10.2), fetched rather than embedded.
+///
+/// `law_probe.json` is written by the engine lane out of `tests/wasm_law.rs`, which
+/// computes the reference solve natively and pins its bits. The page displays the wasm's
+/// own `holon_law_probe()` beside it and says EQUAL TO THE BIT or shows the mismatch — the
+/// claim §11.1 makes possible, that a solve in the shipped wasm is the same arithmetic as
+/// the native referee rather than merely close to it.
+///
+/// ABSENT IS NOT ZERO AND NOT GREEN. The file is not in the tree yet; a missing referee
+/// means the row PENDS. A bit-identity row that went green because there was nothing to
+/// disagree with would be the vacuous-success shape with a checkmark on it.
+async function loadLawProbe() {
+  try {
+    const r = await fetch("law_probe.json");
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    const d = await r.json();
+    if (typeof d.energy_bits_hex !== "string" || !/^[0-9a-fA-F]{16}$/.test(d.energy_bits_hex)) {
+      throw new Error("energy_bits_hex is not 16 hex characters");
+    }
+    State.lawProbe = d;
+  } catch (e) {
+    State.lawProbe = null;
+    State.lawProbeWhy = String(e && e.message ? e.message : e);
+  }
+}
+
+/// The raw f64 bits of a double, as the 16 lowercase hex characters `law_probe.json` pins.
+/// Big-endian, because that is the order the digits are written in and a comparison of two
+/// strings written in opposite orders is a comparison that always fails.
+function f64Bits(x) {
+  const buf = new ArrayBuffer(8);
+  new DataView(buf).setFloat64(0, x, false);
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+/// EQUAL TO THE BIT, and the comparison is on the bits — there is no tolerance anywhere in
+/// this function and there must not be. A near-equality here would pass on two numbers that
+/// differ, which is the exact property §11.1 says the lane kernel now makes checkable and
+/// the exact property a tolerance would throw away.
+function lawProbeVerdict(wasmBits, nativeBits) {
+  if (!wasmBits || !nativeBits) return null;
+  return wasmBits.toLowerCase() === nativeBits.toLowerCase();
 }
 
 /// Measure THIS device rather than assuming it (M-IDLE-CALIBRATED-TIMEOUT / WB-2.3).
@@ -1539,12 +2078,18 @@ function renderStatics() {
   }
 
   // --- device class & artifact (WB-5.4, M-DEVICE-CLASS)
-  // The scale ladder (§9c). STRUCTURE only — the band names, what runs, the fences and
-  // their citations do not change while a scene is loaded. The acuity figure DOES change,
-  // with every camera move, so it is written per frame by `renderTelemetry` into the slot
-  // left here. It lived in this function once and read the same 4,383 at every zoom, which
-  // is not an acuity readout at all: a number that cannot respond to its own input is a
-  // caption. Caught by varying the camera in the browser rather than by reading the code.
+  // The scale ladder (FSD-W3 §11.2). STRUCTURE only — the band names, what runs, the
+  // fences and their citations do not change while a scene is loaded. The acuity figure
+  // DOES change, with every camera move, so it is written per frame by `renderTelemetry`
+  // into the slot left here. It lived in this function once and read the same 4,383 at
+  // every zoom, which is not an acuity readout at all: a number that cannot respond to its
+  // own input is a caption. Caught by varying the camera in the browser, not by reading.
+  //
+  // The FINE bands' state is not structure and is not written here either: it is a property
+  // of the artifact (`bandLiveness`), so it is written per frame beside the acuity figure.
+  // Writing it here would freeze it at the moment a preset loaded, and a band that went
+  // live on the next reload rather than on the export landing is a band whose state is
+  // about this page's history instead of about the engine.
   if (UI["ladder-rows"]) {
     const st = ladderStatus(w);
     UI["ladder-rows"].innerHTML = LADDER.map((b, i) => {
@@ -1552,19 +2097,35 @@ function renderStatics() {
         ? `<span class="lad-live">CERTIFIED · LIVE</span>`
           + `<span class="lad-detail"><b>certificate</b> ${b.certifiedBy}</span>`
           + `<span class="lad-detail">${st.text}</span>`
-        : `<span class="lad-fenced">FENCED</span>`
-          + `<span class="lad-detail"><b>owner</b> ${b.owner} · <b>exit</b> ${b.exit}</span>`
-          + (b.positive
-            ? `<span class="lad-detail lad-positive"><b>measured anyway</b> ${b.positive}</span>`
-            : "");
-      return `<div class="lad ${b.state}"><div class="lad-head">`
+        : b.state === "export-gated"
+          // The state word itself is written per frame into `lad-state-${i}` below, because
+          // it depends on the artifact. What is structural is the owner and the exit, and
+          // they are shown whichever way the flip falls: a band that has just gone live
+          // still owes the reader the debt it was carrying an hour ago.
+          ? `<span class="lad-fenced" id="lad-state-${i}">FENCED — PENDING</span>`
+            + `<span class="lad-detail"><b>owner</b> ${b.owner} · <b>exit</b> ${b.exit}</span>`
+            + `<span class="lad-detail" id="lad-liveWhen-${i}">—</span>`
+          : `<span class="lad-fenced">FENCED</span>`
+            + `<span class="lad-detail"><b>owner</b> ${b.owner} · <b>exit</b> ${b.exit}</span>`
+            + (b.positive
+              ? `<span class="lad-detail lad-positive"><b>measured anyway</b> ${b.positive}</span>`
+              : "");
+      return `<div class="lad ${b.state}" id="lad-row-${i}"><div class="lad-head">`
         + `<b>${b.band}</b><span>${b.scale}</span></div>`
         + `<div class="lad-runs">${b.runs}</div>`
         + `<div class="lad-status">${status}</div>`
+        + (b.readout
+          ? `<div class="lad-status"><span class="lad-detail lad-readout">`
+            + `<b>readout</b> ${b.readout}</span></div>`
+          : "")
         + `<div class="lad-status"><span class="lad-acuity" id="lad-acuity-${i}">—</span></div>`
         + `<code>${b.cite}${b.certificate ? " · " + b.certificate : ""}`
         + `${b.measuredBy ? " · " + b.measuredBy : ""}`
-        + `${b.positiveCite ? " · " + b.positiveCite : ""}</code></div>`;
+        + `${b.positiveCite ? " · " + b.positiveCite : ""}`
+        + `${b.readoutCite ? " · " + b.readoutCite : ""}`
+        + `${b.declaredCite ? " · " + b.declaredCite : ""}`
+        + `${b.buildCite ? " · " + b.buildCite : ""}`
+        + `${b.ganttCite ? " · " + b.ganttCite : ""}</code></div>`;
     }).join("");
     // The slots were just created, so re-bind before anything writes to them.
     bindUI();
@@ -1779,11 +2340,73 @@ function renderTelemetry() {
 
   // --- the scale ladder's live half (§9c's acuity law) ----------------------
   const viewM = viewSpanMetres(w);
-  put("ladder-view", `view span ${fmtMetres(viewM)} · acuity is the allocator`);
+  const descending = descentActive(w);
+  const pick = pinnedAtomIndex(w);
+  put("ladder-view", `view span ${fmtMetres(viewM)} · acuity is the allocator`
+    + (descending ? " · past the molecular band — one atom pinned" : ""));
+  // THE LADDER'S OWN TAG, and it is the weakest band's. This element existed and was never
+  // written, so it read "—" at every zoom — a panel-level honesty tag that says nothing is
+  // the shape WB-7.1 is about, one altitude up from the digits.
+  const liveBands = LADDER.filter((b) => b.state === "live"
+    || (b.state === "export-gated" && bandLiveness(b.liveWhen, hasExport).live)).length;
+  tag("tag-ladder", liveBands === LADDER.length ? "live" : "fenced",
+    liveBands === LADDER.length
+      ? "every band on the ladder runs its certified chart"
+      : `${liveBands} of ${LADDER.length} bands run; the rest carry their debt, owner and `
+        + "exit, and each names the build paying it");
   LADDER.forEach((b, i) => {
+    // THE FINE BANDS' STATE, written from the artifact every frame rather than from the
+    // source. `bandLiveness` is the whole rule and it runs here: name every export the band
+    // is missing, or say it is live because none are.
+    if (b.state === "export-gated") {
+      const lv = bandLiveness(b.liveWhen, hasExport);
+      const stateEl = UI[`lad-state-${i}`];
+      if (stateEl) {
+        stateEl.textContent = lv.live ? "LIVE — every export it needs resolves" : "FENCED — PENDING";
+        stateEl.className = lv.live ? "lad-live" : "lad-fenced";
+      }
+      const whenEl = UI[`lad-liveWhen-${i}`];
+      if (whenEl) {
+        whenEl.innerHTML = lv.live
+          ? `<b>serves</b> ${b.liveWhen.join(", ")} — all present in this artifact`
+          : `<b>debt</b> ${lv.missing.length} of ${b.liveWhen.length} exports are not in `
+            + `this artifact yet: ${lv.missing.join(", ")}. No digit for them is drawn.`;
+      }
+      // The row's own colour follows the flip too. A band reading LIVE inside a rose fence
+      // is a panel disagreeing with itself, and the eye sorts a drawer by colour before it
+      // reads a word.
+      const rowEl = UI[`lad-row-${i}`];
+      if (rowEl) rowEl.className = `lad ${lv.live ? "live" : "export-gated"}`;
+    }
     const pop = acuityPopulation(viewM, b.lengthM);
     const el = UI[`lad-acuity-${i}`];
     if (!el) return;
+    // A PINNED BAND REPORTS THE PIN, NOT THE COUNT. Acuity's cubic figure is the number of
+    // holons this view could distinguish at that scale; on the fine bands that figure runs
+    // to 10¹² and reporting it beside a band the page seeds with exactly ONE would invite
+    // the reading the acuity law exists to refuse. The law's own rule for these bands is
+    // the seed: pin one holon of that tier near the view centre.
+    if (b.pinned) {
+      el.className = pick.index >= 0 ? "lad-acuity" : "lad-acuity zero";
+      el.textContent = pick.index < 0
+        ? "no atom in the scene to pin"
+        : `ONE pinned — atom ${pick.index} (${sym(w.holon_atom_species_z(pick.index))}), `
+          + `${pick.how}; acuity would admit ${pop.toLocaleString()} at this view and the `
+          + "page allocates one"
+          + (descending ? " · the view is past the molecular band"
+            : " · the view has not yet zoomed past the molecular band, and a hand on an "
+              + "atom would arrive here too");
+      return;
+    }
+    // THE FLOOR ALLOCATES NOTHING, and reporting an acuity figure for it would say the
+    // opposite. Below the nucleus this page has no tier to populate — that is the fence,
+    // and a number beside it would read as a population being carried.
+    if (b.noAllocation) {
+      el.className = "lad-acuity zero";
+      el.textContent = "below the nucleus — this page allocates nothing here, and the "
+        + "fence above says who is building what would go here";
+      return;
+    }
     el.className = pop === 0 ? "lad-acuity zero" : "lad-acuity";
     if (pop === 0) {
       el.textContent = "below this band's scale — nothing to allocate";
@@ -1803,9 +2426,253 @@ function renderTelemetry() {
     el.textContent = line;
   });
 
+  renderDescent(w, descending, pick);
+
   put("dock-temp-lbl", tempIn(State.targetK));
   put("dock-grav-lbl", `${State.gravityG.toFixed(1)} G`);
   put("dock-gov-lbl", `${State.govBias.toFixed(2)}×`);
+}
+
+// ------------------------------------- the ladder's readouts (FSD-W3 §11.2, WB-10.3)
+//
+// The bottom of the ladder, and the one page-side arithmetic §11.2 grants at the top of it.
+// Every row here is one entry of `DESCENT_FIELDS`, and every row's digits — or its refusal
+// to draw digits — follow that entry's declared source. Three rules are absolute:
+//
+//   * a row whose export is not in this artifact shows NO NUMBER. It shows the export's
+//     name. That is the whole of WB-7 at this altitude: there is no third option between a
+//     traced number and a fence, and a placeholder is not a fence.
+//   * a DECLARED input is labelled DECLARED beside its digits, never LIVE — including when
+//     it arrives through an export. `holon_nucleus_mass_u` returning a measured mass does
+//     not make the mass computed (WB-1.7).
+//   * "in a molecule or free" comes from the census export and from nowhere else. The
+//     page has every atom's coordinates and could measure a separation; §11.2's WB-1.6
+//     forbids exactly that, because a distance in JavaScript is not the census's bond
+//     criterion and a page that guessed would be asserting the engine's own verdict.
+function renderDescent(w, descending, pick) {
+  const i = pick.index;
+  const z = i >= 0 ? w.holon_atom_species_z(i) : 0;
+  const species = PALETTE.get(z);
+
+  // THE CARD'S OWN TAG is the WEAKEST row's, not the best — a card that said LIVE while
+  // six of its rows were waiting on an export would be advertising the half that works.
+  const pending = PENDING_EXPORTS.filter((e) => !hasExport(e.name));
+  tag("tag-descent", pending.length === 0 && State.lawProbe ? "live" : "fenced",
+    pending.length === 0 && State.lawProbe
+      ? "every export these rows need resolves in this artifact"
+      : `${pending.length} export(s) WB-10.1/WB-10.2 is building are not in this artifact `
+        + `yet (${pending.map((e) => e.name).join(", ") || "none"})`
+        + (State.lawProbe ? "" : ", and law_probe.json is not in the tree")
+        + ". Those rows name what they wait for and draw no digits; the rest are live or "
+        + "declared and say which.");
+
+  // --- the pick (WB-1.6) ---------------------------------------------------
+  descField("desc-pinned",
+    i < 0 ? "pending" : "live",
+    i < 0
+      ? "no atom in the scene to pin"
+      : `atom ${i} — ${sym(z)} · ${pick.how}`
+        + (descending ? " · the view is at the fine bands"
+          : " · the view has not yet zoomed past the molecular band"),
+    "holon_grabbed / holon_atom_x,y,z / holon_atom_species_z");
+
+  // ONE HELPER, and every export-served row below goes through it. `paint` writes what
+  // `exportRow` decided; nothing here decides for itself whether it has an export, because
+  // nine hand-written guards is nine chances for a missing `!` to draw a number the engine
+  // never returned.
+  const paint = (id, row) => descField(id, row.kind, row.text, row.trace);
+  const owed = (spec, why) =>
+    `${spec} is in build (lead, engine). ${why} Until the rebuilt wasm carries it this row `
+    + "shows the export's name and no digits.";
+
+  paint("desc-membership", exportRow("holon_atom_in_molecule", hasExport, "live",
+    () => {
+      if (i < 0) return "—";
+      const r = w.holon_atom_in_molecule(i);
+      return r === 0 ? "FREE — in no census molecule row" : `IN A MOLECULE — census row ${r - 1}`;
+    },
+    "holon_atom_in_molecule — the census's own membership, never a distance in this file",
+    owed("WB-10.1", "WB-1.6 asks for the census's verdict; a separation measured in "
+      + "JavaScript is not the census's bond criterion and the page will not substitute one.")));
+
+  // --- the atom band (WB-10.2) ---------------------------------------------
+  //
+  // THE SOLVE IS RUN, then read back. The four getters below return the LAST solve for that
+  // atom and return zeros with exit 4 for an atom that has not been solved — so the page
+  // runs the solve first (throttled, never per frame) and then honours the exit code.
+  maybeSolveAtomBand(w, i);
+  const EXITS = ["converged", "iteration cap", "stagnated", "trivial", "not computed"];
+  const bandExit = hasExport("holon_atom_band_exit") && i >= 0 ? w.holon_atom_band_exit(i) : 4;
+  // WB-5.2: NEVER SILENTLY ZEROED. `holon_atom_band_energy` returns exactly 0.0 for an atom
+  // whose solve was never kept, and 0.0 hartree is a number a reader would take for an
+  // energy. When the engine's own exit says "not computed" the three value rows say so
+  // instead of printing its zeros — the refusal is the engine's and the page displays it.
+  const solved = bandExit !== 4;
+  const bandRows = [
+    ["desc-band-energy", "holon_atom_band_energy", (v) => fmtEnergy(v)],
+    ["desc-band-electrons", "holon_atom_band_n_electrons",
+      (v) => `${v} electron${v === 1 ? "" : "s"}`],
+    ["desc-band-residual", "holon_atom_band_residual", (v) => `${fmtSci(v, 3)} Ha`],
+  ];
+  for (const [id, name, fmt] of bandRows) {
+    paint(id, exportRow(name, hasExport, "live",
+      () => (i < 0 ? "—"
+        : !solved ? "NOT COMPUTED for this atom — the engine's own exit code 4, not a zero"
+          : `${fmt(w[name](i))}  · at frame ${State.atomBand.atFrame.toLocaleString()}`
+            + ` (${State.atomBand.atTimeFs.toFixed(3)} fs)`),
+      `${name} — read back from holon_atom_band_solve, on the lane engine in this page`,
+      owed("WB-10.2", "the picked atom's STO-3G FCI on the lane engine in wasm, gated "
+        + "bit-identical against the native referee by `tests/wasm_law.rs`.")));
+  }
+  paint("desc-band-exit", exportRow("holon_atom_band_exit", hasExport, "live",
+    () => (i < 0 ? "—" : `${EXITS[bandExit] || `code ${bandExit}`} (${bandExit})`),
+    "holon_atom_band_exit — how the last solve for this atom ended",
+    owed("WB-10.2", "the solve's own exit code; without it the page cannot tell a converged "
+      + "energy from a slot that was never filled.")));
+
+  // --- the nucleus band (WB-10.1, WB-1.7) ----------------------------------
+  //
+  // DECLARED, all of it except the wavelength. These are measured inputs the Hamiltonian
+  // never computes, so the tag says DECLARED whether the digits come from the committed
+  // species table or from the engine reading its own copy of that table back to us.
+  descField("desc-nuc-z", i < 0 ? "pending" : "live",
+    i < 0 ? "—" : `Z = ${z}`, "holon_atom_species_z");
+
+  // THE TWO ABSENCES ARE DIFFERENT FACTS and the row says which. "The table did not load"
+  // is this page's own failure; "no isotope is declared for this element" is a true
+  // statement about the element. One message for both told the reader the wrong thing in
+  // whichever case it was not written for.
+  descField("desc-nuc-isotope",
+    species && species.isotope ? "declared" : "pending",
+    species && species.isotope ? species.isotope
+      : PALETTE.size === 0
+        ? "FENCED — species_palette.json did not load, so this page has no isotope table"
+        : `FENCED — no isotope is declared for Z = ${z} in the committed species table`,
+    "species_palette.json#isotope — a measured input, not a computed one (WB-1.7)");
+
+  // MASS: two doors to one measured input, and the TAG DOES NOT MOVE between them. The
+  // committed species table carries it and so does the engine; either way it is DECLARED —
+  // a function returning a measured mass does not make the mass computed, and calling it
+  // LIVE because an export served it is exactly the costume WB-1.7 names.
+  //
+  // THE THREE DECLARED ROWS FENCE INDEPENDENTLY, because the engine's two tables do not
+  // cover the same elements. Measured against the shipped artifact: at Z = 11 the mass door
+  // serves 22.989769282 u while the spin and charge-radius doors both return their
+  // sentinels. A single "the nucleus is declared" flag would have fenced a mass the engine
+  // was serving, or shown a spin it was not.
+  const massU = hasExport("holon_nucleus_mass_u") && i >= 0
+    ? declaredPositive(w.holon_nucleus_mass_u(z))
+    : species && species.mass_u > 0 ? species.mass_u : null;
+  descField("desc-nuc-mass", massU === null ? "pending" : "declared",
+    massU === null
+      ? "FENCED — no mass is declared for this element (the door returned its sentinel)"
+      : `${massU.toFixed(9)} u`,
+    hasExport("holon_nucleus_mass_u")
+      ? "holon_nucleus_mass_u — a DECLARED measured input read back through the engine"
+      : "species_palette.json#mass_u — a DECLARED measured input (WB-1.7)");
+
+  paint("desc-nuc-spin", exportRow("holon_nucleus_spin2", hasExport, "declared",
+    () => {
+      if (i < 0) return "—";
+      const s2 = declaredU32(w.holon_nucleus_spin2(z));
+      if (s2 === null) return null;
+      return s2 % 2 === 0 ? `I = ${s2 / 2}` : `I = ${s2}/2`;
+    },
+    "holon_nucleus_spin2 — twice the spin, a DECLARED measured input (WB-1.7)",
+    owed("WB-10.1", "`holon_chem::elements::NUCLEI` declares the spin with its source and the door "
+      + "ships it.")));
+
+  paint("desc-nuc-radius", exportRow("holon_nucleus_charge_radius_fm", hasExport, "declared",
+    () => {
+      if (i < 0) return "—";
+      const fm = declaredPositive(w.holon_nucleus_charge_radius_fm(z));
+      return fm === null ? null : `${fm.toFixed(4)} fm`;
+    },
+    "holon_nucleus_charge_radius_fm — a DECLARED measured input (WB-1.7)",
+    owed("WB-10.1", "`holon_chem::elements::NUCLEI` declares the charge radius with its source. A charge radius this "
+      + "page invented would be the WB-7 lie in a new costume.")));
+
+  paint("desc-nuc-lambda", exportRow("holon_nucleus_thermal_wavelength_bohr", hasExport, "live",
+    () => {
+      if (i < 0) return "—";
+      const lam = w.holon_nucleus_thermal_wavelength_bohr(i);
+      // The engine returns 0 where the scene's temperature is undefined, and zero is a
+      // LENGTH here — printing it would assert a point-like nucleus. The undefined case
+      // says so instead.
+      return lam > 0
+        ? `${fmtLength(lam)}  (${lam.toFixed(6)} a₀, at ${tempIn(w.holon_temperature())})`
+        : "UNDEFINED — the scene has no temperature to evaluate it at";
+    },
+    "holon_nucleus_thermal_wavelength_bohr — COMPUTED by the engine in closed form at "
+      + "the scene's own holon_temperature",
+    owed("WB-10.1", "gated by `tests/nucleus.rs`. The page holds the mass, k_B and the "
+      + "temperature and does NOT evaluate the closed form itself: two implementations of "
+      + "one number are how they start disagreeing.")));
+
+  // --- the bit-identity gate (WB-10.2) -------------------------------------
+  const wasmBits = hasExport("holon_law_probe") ? f64Bits(w.holon_law_probe()) : null;
+  paint("desc-probe-wasm", exportRow("holon_law_probe", hasExport, "live",
+    () => `0x${wasmBits}  (${w.holon_law_probe().toPrecision(17)})`,
+    "holon_law_probe — the reference solve, run in this artifact",
+    owed("WB-10.2", "a fixed reference solve whose bits are pinned natively. Without it "
+      + "the page has nothing to compare, and a comparison with nothing is not a gate.")));
+
+  const native = State.lawProbe;
+  descField("desc-probe-native", native ? "declared" : "pending",
+    native ? `0x${native.energy_bits_hex.toLowerCase()}  (pinned by ${native.pinned_by})`
+      : "FENCED — PENDING law_probe.json",
+    native ? `law_probe.json#energy_bits_hex — ${native.probe}`
+      : "the engine lane writes `law_probe.json` beside this page out of `tests/wasm_law.rs`. "
+        + `It is not in the tree yet (${State.lawProbeWhy || "absent"}), so this row pends.`);
+
+  const verdict = lawProbeVerdict(wasmBits, native && native.energy_bits_hex);
+  descField("desc-probe-verdict",
+    verdict === null ? "pending" : verdict ? "computed" : "computed",
+    verdict === null
+      ? "FENCED — PENDING both halves of the comparison"
+      : verdict ? "EQUAL TO THE BIT" : "MISMATCH — the wasm and the native referee disagree",
+    "a string comparison of two 64-bit patterns; there is no tolerance in this row");
+  if (UI["desc-probe-verdict"]) {
+    UI["desc-probe-verdict"].classList.toggle("red", verdict === false);
+    UI["desc-probe-verdict"].classList.toggle("green", verdict === true);
+  }
+
+  // --- the cube band's hydrostatic column (§11.2, WB-2.4a) -----------------
+  //
+  // ARITHMETIC ON MEASURED CONSTANTS, and the label says so on screen. It is not a claim
+  // about water: this scene's density is this scene's, and it is nothing like a kilometre
+  // of liquid water. WB-2.4a's own figure for that — ~9.8 MPa at 1 km, about 97 atmospheres
+  // — is the exhibit's point and is a MEASURED figure from `tests/gravity.rs`, not from
+  // here. The two are shown as what they are: the same arithmetic on two different
+  // substances, which is exactly the tier-separation exhibit.
+  const rho = sceneDensitySI(w);
+  const gSI = gravitySI(w);
+  descField("desc-density", rho === null ? "pending" : "computed",
+    rho === null
+      ? "FENCED — the species table did not load, so there are no masses to sum"
+      : `${rho.toFixed(1)} kg/m³ — ${w.holon_atom_count()} atoms in the world box`,
+    "Σ mᵢ from species_palette.json#mass_me over holon_width × holon_height × holon_depth");
+
+  const hViewM = 2 * sceneBox(w).hy * BOHR_TO_M;
+  const hydro = (h) => (rho === null || gSI === null) ? null : rho * gSI * h;
+  descField("desc-hydro-view",
+    hydro(hViewM) === null ? "pending" : "computed",
+    hydro(hViewM) === null
+      ? (gSI === null
+        ? "FENCED — the field is refused on a wrapping box, and a column with no down has no ρ g h"
+        : "FENCED — no density to multiply")
+      : `${fmtPressure(hydro(hViewM))}  over ${fmtMetres(hViewM)} of this scene`,
+    "ρ (above) × g (holon_g_earth × the slider) × the scene box's own vertical extent");
+
+  descField("desc-hydro-km",
+    hydro(1.0e3) === null ? "pending" : "computed",
+    hydro(1.0e3) === null
+      ? (gSI === null
+        ? "FENCED — the field is refused on a wrapping box"
+        : "FENCED — no density to multiply")
+      : `${fmtPressure(hydro(1.0e3))}  over the cube band's 1 km, at THIS scene's density`,
+    "the same arithmetic at the cube band's own declared depth. Liquid water gives ~9.8 MPa "
+    + "there (WB-2.4a, measured in tests/gravity.rs); this scene is not liquid water.");
 }
 
 // ---------------------------------------------------------------- the hand (WB-4)

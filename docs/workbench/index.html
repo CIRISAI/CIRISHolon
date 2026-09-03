@@ -337,15 +337,25 @@
         <!-- ------------------------------------------------ the scale ladder -->
         <div class="drawer-card">
           <div class="card-head">
-            <h4>THE SCALE LADDER (FSD-W2 §9c)</h4>
+            <h4>THE SCALE LADDER (FSD-W3 §11.2) — 1 km TO THE NUCLEUS</h4>
             <span class="tag" id="tag-ladder">—</span>
           </div>
           <p class="card-note">
             A kilometre of water is about 3×10³¹ molecules. Nobody simulates that and this
-            page does not pretend to. What the zoom axis shows instead is the ladder itself:
-            each band either runs its certified physics or wears its fence with an owner and
-            an exit. The rungs certifying one by one IS the story, and a fence is honest
-            content on it.
+            page does not pretend to. What the zoom axis shows instead is the ladder itself,
+            from the 1 km cube down to the nucleus of a single picked atom: every band is
+            here, and each one either runs its certified physics or carries a DEBT with the
+            build that is paying it off. The fences are this page's work queue and the
+            rungs going live one by one is what the queue emptying looks like.
+          </p>
+          <p class="card-note">
+            <b>Three kinds of warrant, and they do not substitute for each other.</b> The
+            three coarse bands flip on a node-G closure certificate — a coarse view of the
+            dynamics beneath them, certified by the census. The two fine bands hold no
+            certificate and are not entitled to one: there is no coarse view at an atom,
+            there is the solve, so they flip on their EXPORTS being in this artifact, named
+            one by one in each band's debt line. The floor below the nucleus is fenced on
+            physics nobody has yet.
           </p>
           <div class="lad-viewline" id="ladder-view">—</div>
           <div id="ladder-rows" class="ladder-rows"></div>
@@ -370,14 +380,126 @@
             bit.
           </p>
           <p class="card-note fence">
-            <b>Two debts this panel owes, shown rather than hidden.</b> First: no threshold
+            <b>Three debts this panel owes, shown rather than hidden.</b> First: no threshold
             separates "~0" from "not ~0" yet, so the panel reports the defect DISTRIBUTION
             and not a verdict on which rows would release. That number belongs to the grain
             law's own stated bound and is the engine's to derive, not this page's to guess.
             Second: this page performs NO de-allocation — none is implemented — so what you
-            see is the criterion being read, never a budget being reclaimed. And the three
-            fences above are not yet rows in <code>FENCES.md</code>, which the fence law
-            requires; they carry their owner and exit here, and their registration is owed.
+            see is the criterion being read, never a budget being reclaimed. Third: the
+            fenced bands above are not yet rows in <code>FENCES.md</code>, which the fence
+            law requires; they carry their owner and exit here, and their registration is
+            owed.
+          </p>
+          <p class="card-note fence">
+            <b>What this build does not do (WB-10.6).</b> It does not flip the three coarse
+            bands — that is node G's certification and no page work substitutes for it. It
+            does not draw the interior of a nucleus. And the gauge vacuum below the nucleus
+            is not on this ladder at all: the operator sequenced it after this build, and a
+            band on the page for work nobody has scheduled is a promise wearing a fence's
+            clothes.
+          </p>
+        </div>
+
+        <!-- ------------------------------- the ladder's readouts (FSD-W3 §11.2) -->
+        <!--
+          The numbers the ladder's ends serve. Structure here, digits from app.js — and
+          every row's tag is rendered beside its own digits, because this card mixes three
+          kinds of number and one tag over the lot would have to be the weakest of them.
+
+          The row ids are a contract: smoke.mjs requires every DESCENT_FIELDS id to exist
+          here and every desc- id here to be in DESCENT_FIELDS, so a row cannot be added to
+          one without the other. A panel that quietly stopped rendering would otherwise look
+          exactly like a panel with nothing to say.
+        -->
+        <div class="drawer-card">
+          <div class="card-head">
+            <h4>THE LADDER'S READOUTS (FSD-W3 §11.2)</h4>
+            <span class="tag" id="tag-descent">—</span>
+          </div>
+          <p class="card-note">
+            The ladder above carries each band's state, owner, exit and citations. This card
+            carries the numbers those bands serve. <b>LIVE</b> means the digits came out of
+            this artifact this frame. <b>DECLARED</b> means a measured input the Hamiltonian
+            never computes, read from a committed table and labelled as such (WB-1.7) —
+            including when it arrives through an export, because a function returning a
+            measured mass does not make the mass computed. <b>COMPUTED</b> means arithmetic
+            on this page over inputs that are themselves live or declared.
+            <b>FENCED — PENDING</b> means the export that serves the row is not in this
+            artifact yet; the row names it and shows no digits.
+          </p>
+
+          <div class="desc-sec">THE PICK — WB-1.6</div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>Pinned atom</span><span class="dval" id="desc-pinned">—</span></div>
+            <div class="lrow"><span>In a molecule, or free</span><span class="dval" id="desc-membership">—</span></div>
+          </div>
+
+          <div class="desc-sec">THE ATOM BAND — electronic structure, WB-10.2</div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>Electronic energy</span><span class="dval" id="desc-band-energy">—</span></div>
+            <div class="lrow"><span>Electrons in the solve</span><span class="dval" id="desc-band-electrons">—</span></div>
+            <div class="lrow"><span>Solve residual</span><span class="dval" id="desc-band-residual">—</span></div>
+            <div class="lrow"><span>Solve exit</span><span class="dval" id="desc-band-exit">—</span></div>
+          </div>
+
+          <div class="desc-sec">THE NUCLEUS BAND — WB-10.1, declared inputs per WB-1.7</div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>Z</span><span class="dval" id="desc-nuc-z">—</span></div>
+            <div class="lrow"><span>Isotope</span><span class="dval" id="desc-nuc-isotope">—</span></div>
+            <div class="lrow"><span>Mass</span><span class="dval" id="desc-nuc-mass">—</span></div>
+            <div class="lrow"><span>Nuclear spin</span><span class="dval" id="desc-nuc-spin">—</span></div>
+            <div class="lrow"><span>Charge radius</span><span class="dval" id="desc-nuc-radius">—</span></div>
+            <div class="lrow"><span>Thermal de Broglie wavelength</span><span class="dval" id="desc-nuc-lambda">—</span></div>
+          </div>
+
+          <p class="card-note">
+            <b>A declared door that has nothing to declare returns a sentinel</b>, and these
+            rows fence on it rather than drawing it: the integer doors return
+            <code>u32::MAX</code>, which reaches this page as −1, and the real-valued doors
+            return zero. Two of the ten elements here have a nuclear spin of exactly zero,
+            so the test is the sentinel itself and never falsiness. The three rows fence
+            independently, because the engine's mass table covers more elements than its
+            nucleus table — at Z = 11 the mass is served while the spin and charge radius
+            are not. That fence is <b>not reachable from this page's own species set</b>:
+            every element in the shipped palette has a declared nucleus, so the guard is
+            correct and cannot fire here, and this page's gate re-measures that on every run.
+          </p>
+
+          <div class="desc-sec">THE BIT-IDENTITY GATE — WB-10.2</div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>holon_law_probe() in this wasm</span><span class="dval" id="desc-probe-wasm">—</span></div>
+            <div class="lrow"><span>the pinned native value</span><span class="dval" id="desc-probe-native">—</span></div>
+            <div class="lrow verdict"><span>Bit identity</span><span class="dval val" id="desc-probe-verdict">—</span></div>
+          </div>
+          <p class="card-note">
+            One determinant kernel runs every space (§11.1), so the page's solve and the
+            native referee's are the same arithmetic — which makes EQUAL TO THE BIT a thing
+            that can be displayed rather than a thing that has to be trusted. The comparison
+            is on the 64-bit patterns and carries no tolerance: a near-equality here would
+            pass on two numbers that differ, which is the property the lane kernel exists to
+            make checkable.
+          </p>
+
+          <div class="desc-sec">THE CUBE BAND'S COLUMN — ρ g h, §11.2</div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>Scene mass density</span><span class="dval" id="desc-density">—</span></div>
+            <div class="lrow"><span>ρ g h at the view's own depth</span><span class="dval" id="desc-hydro-view">—</span></div>
+            <div class="lrow accent"><span>ρ g h at the cube band's 1 km</span><span class="dval" id="desc-hydro-km">—</span></div>
+          </div>
+          <p class="card-note">
+            <b>Arithmetic on measured constants, and nothing more.</b> §11.2 grants the cube
+            band this one readout while its DYNAMICS stay fenced: the density is summed from
+            the engine's own box and the species table's declared masses, and g comes from
+            the engine's own constant. It is the gravity exhibit (WB-2.4a) at the top of the
+            ladder — what changes across the tiers is not the field's strength but whether
+            the quantity that matters is a per-particle energy or a sum over the column.
+          </p>
+          <p class="card-note">
+            <b>It is not a claim about water.</b> This scene is a handful of atoms in a box a
+            few nanometres across, and its density is its own. A kilometre of liquid water
+            gives about 9.8 MPa, or 97 atmospheres — that figure is measured in
+            <code>tests/gravity.rs</code> and belongs to WB-2.4a, not to this readout. The
+            same arithmetic on two different substances is the whole of the exhibit.
           </p>
         </div>
 

@@ -446,7 +446,10 @@ fn run_rung(
         r_cut: s.list_cutoff(),
         w_pair: counter.pair_terms.load(Ordering::Relaxed),
         w_triple: counter.triple_terms.load(Ordering::Relaxed),
-        w_de4: s.de4_eval_count,
+        // `de4_eval_count` became `many_body_evals` at 02bc47f, when the sector went
+        // any-order: the counter is the same column, counting every many-body term
+        // rather than four-body ones alone.
+        w_de4: s.many_body_evals,
         steps: LADDER_FRAMES as u64 * SUBSTEPS as u64,
         workers: leased,
         seconds,
@@ -787,7 +790,7 @@ fn produce_with(
                     s.drift_bound(),
                     s.momentum_residual(),
                     s.momentum_bound(),
-                    s.de4_eval_count,
+                    s.many_body_evals,
                     t0.elapsed().as_secs_f64()
                 );
             }

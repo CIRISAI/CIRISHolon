@@ -89,6 +89,14 @@ build_one() {
       --strip-debug --strip-producers \
       -o "$dest/atoms3d_bg.wasm" "$dest/atoms3d_bg.wasm"
   fi
+  # THE PAGE CALLS THE ENTRY POINTS BY NAME, so they are data the page depends on rather
+  # than something the linker guarantees. `main` is empty on wasm — that is what lets one
+  # artifact carry two apps, atoms3d's and the workbench's — so a rename, a `cfg` that
+  # stopped matching, or `forbid(unsafe_code)` moving into `main.rs` would all produce a
+  # module that loads cleanly and never draws anything. Checked on the FINISHED artifact,
+  # after wasm-opt, because the question is what the browser will receive.
+  node "$here/check-exports.js" "$dest/atoms3d_bg.wasm"
+
   bytes=$(wc -c < "$dest/atoms3d_bg.wasm")
   # Report the COMPRESSED size next to the raw one. A browser downloads the compressed
   # bytes, so the raw figure alone overstates what a phone on a slow link actually waits

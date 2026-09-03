@@ -82,6 +82,60 @@ pub fn run_app() {
     app.run();
 }
 
+/// The WORKBENCH's app: the same renderer, fed from the wasm boundary.
+///
+/// The difference from [`run_app`] is entirely in what is NOT here, and each absence is
+/// the point rather than an economy:
+///
+///   * no `AtomWorld`, so this app cannot construct a `Sim`. That is R7's property held
+///     by the wiring instead of by discipline — there is no second engine to drift from
+///     the cdylib's because there is no second engine.
+///   * no `calibrate` and no `advance_world`. The cdylib steps the physics and owns the
+///     device measurement; a second stepper would be a second clock.
+///   * no `hud::plugin`. The workbench page's own overlay IS its HUD, with the citation
+///     gate behind every figure on it. Two overlays would be two claims.
+///
+/// What remains is a camera, some spheres, some cylinders and a finger — which is what
+/// this crate's own header says it is.
+pub fn run_hosted() {
+    let mut app = App::new();
+    app.add_plugins(DefaultPlugins.set(WindowPlugin {
+        primary_window: Some(Window {
+            title: "CIRISHolon · workbench".into(),
+            // A DIFFERENT canvas id from atoms3d's, so a page that loads the wrong
+            // artifact fails to find its canvas rather than quietly drawing the other
+            // page's scene.
+            canvas: Some("#workbench3d".into()),
+            fit_canvas_to_parent: true,
+            prevent_default_event_handling: true,
+            ..default()
+        }),
+        ..default()
+    }))
+    .add_plugins(PanOrbitCameraPlugin)
+    .add_plugins(pick::plugin)
+    .insert_resource(ClearColor(INK))
+    .init_resource::<crate::frame::FrameBuffer>()
+    .add_systems(Startup, setup)
+    .add_systems(
+        Update,
+        (
+            // Pull what JS committed, aim at it, push back what the finger asked for,
+            // then draw. The picker sees the frame it was given THIS frame rather than
+            // the previous one, because here the producer runs before the drawing rather
+            // than between the step and the drawing.
+            crate::bridge::pull_frame,
+            pick::drag_atom,
+            crate::bridge::push_hand,
+            scene::sync_atoms,
+            bonds::sync_bonds,
+        )
+            .chain(),
+    );
+
+    app.run();
+}
+
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,

@@ -270,7 +270,22 @@
         note.textContent = `loading the ${chosen} build\u2026`;
         try {
           const module = await import(`./${chosen}/atoms3d.js`);
-          await module.default();
+          const wasm = await module.default();
+          // THE PAGE NAMES THE APP IT WANTS. `main` is empty on wasm, deliberately: one
+          // artifact carries two apps -- this one, which owns its world, and the
+          // workbench's, which owns no `Sim` at all and is fed across the bridge. An app
+          // started from inside `init()` would be an app no page could choose, because
+          // wasm-bindgen runs `main` before any page code gets to express a preference.
+          //
+          // Checked rather than called blind: a page newer than its artifact would
+          // otherwise hang on a canvas nothing ever draws to, which is the failure this
+          // overlay exists to make loud.
+          if (typeof wasm.holon3d_run_owned !== "function") {
+            throw new Error(
+              "this build exports no holon3d_run_owned -- the artifact is older than the page"
+            );
+          }
+          wasm.holon3d_run_owned();
         } catch (error) {
           console.error(`${chosen} failed to load`, error);
           fail(

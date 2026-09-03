@@ -2604,8 +2604,14 @@ version = "0.1.0"
 name = "holon-chem"
 version = "0.1.0"
 dependencies = [
+ "holon-device",
+ "holon-resource",
  "q8-mps",
 ]
+
+[[package]]
+name = "holon-device"
+version = "0.1.0"
 
 [[package]]
 name = "holon-render"
@@ -2623,6 +2629,13 @@ dependencies = [
  "bevy_panorbit_camera",
  "holon-chem",
  "holon-render",
+]
+
+[[package]]
+name = "holon-resource"
+version = "0.1.0"
+dependencies = [
+ "holon-device",
 ]
 
 [[package]]

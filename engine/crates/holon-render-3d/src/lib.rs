@@ -41,6 +41,10 @@ pub use holon_render;
 /// The frame buffer: the one thing the drawing layer consumes (Route B). Not behind
 /// `render`, because the WORKBENCH producer fills it without any of the render machinery
 /// and a headless consumer should be able to name the type.
+/// The workbench's producer and sink on this side of the wasm boundary (Route B). Not
+/// behind `render`: the staging area is plain data and refusal logic, and it is checked by
+/// the headless gate.
+pub mod bridge;
 pub mod frame;
 /// The hand intent: the one thing the interaction layer produces (Route B). Not behind
 /// `render` for the same reason as `frame` — the WORKBENCH's sink is JS, and a type the
@@ -73,6 +77,17 @@ pub const OPENING_ATOMS: usize = 2;
 #[cfg(feature = "render")]
 pub fn run() {
     render::run_app();
+}
+
+/// Build and run the WORKBENCH's application: the same renderer with no `Sim` of its
+/// own, fed across the wasm boundary through [`bridge`].
+///
+/// Separate entry point rather than a flag on [`run`], because the difference is which
+/// resources exist and that is decided when the app is built. A page picks one of these
+/// two and gets exactly the systems that go with it.
+#[cfg(feature = "render")]
+pub fn run_hosted() {
+    render::run_hosted();
 }
 
 /// Headless entry point: `MinimalPlugins`, the world, no rendering.

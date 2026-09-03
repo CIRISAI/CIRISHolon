@@ -368,3 +368,50 @@ at volume no rung is exact and the perturbation is what keeps a truncated sweep 
 own basins. The ceiling per sector from the cut's rank, the variance as the error bar, the
 device as the executor. What is NOT done and is not claimed: the volume ladder itself, the
 non-abelian (SU(3)) block structure, and any statement about N = 16 and beyond.
+
+---
+
+## A2's exam at N = 8 (2026-09-03): G0″ FIRES on three sectors at the ceiling A2 staked; V1 and two plants PASS; plant (vii) pending
+
+*Read from `qcd2_a2/rows/*.json` by `qcd2_a2/score.py`, every run on the device, every rung
+checkpointed per sweep. Thirteen of fourteen rows in; the mutant (plant vii) is running on
+the host's dense path and is appended when it lands.*
+
+| x | B | mixed χ=256 miss | cold χ=256 miss | \|cold − mixed\| | variance at 64 / 128 / 256 | G0″ |
+|---|---|---|---|---|---|---|
+| 4 | 2 | −1.6e-11 | −1.6e-11 | 0 | 7.1e-1 / 1.9e-7 / −7e-13 | PASS |
+| 4 | 1 | +4.27e-7 | +4.27e-7 | 7e-10 | 6.2e-2 / 2.4e-3 / 1.8e-5 | PASS |
+| 4 | 0 | **+2.88e-6** | +2.97e-6 | 9e-8 | 1.2e-1 / 7.0e-3 / 1.2e-4 | **FIRE** |
+| 9 | 2 | +4.1e-11 | +4.1e-11 | 0 | 1.1e-2 / 2.4e-7 / −3e-12 | PASS |
+| 9 | 1 | **+3.88e-6** | +3.82e-6 | 6e-8 | 5.2e-1 / 3.4e-2 / 3.1e-4 | **FIRE** |
+| 9 | 0 | **+2.89e-5** | +2.73e-5 | 1.6e-6 | 2.4 / 1.1e-1 / 2.3e-3 | **FIRE** |
+
+**G0″ fires on x=4 B=0, x=9 B=1 and x=9 B=0, and on every one of them the cold start lands
+within 1e-6 of the mixed ladder** (within 1.6e-6 on x=9 B=0 — that leg fires too, by 0.6e-6).
+Two routes reaching the same number is the signature of a FLOOR, not of a basin: the arm is
+at the limit of χ = 256 on those sectors, and A2.3 staked 1e-6 at a flat χ = 256 for all six
+— against its own A2.6, which derives χ from the cut's rank and says χ = 256 is 6.2× under
+the rank at B = 1 and 16× under it at B = 0. The digit was staked where the instrument's own
+counting predicted it could not be met; that is M-UNTESTED-GAP in a freeze that cited it,
+and it is recorded as such. The B = 2 sectors, whose rank 366 is within 1.4× of χ, pass to
+1e-11.
+
+**V1 PASSES on all six sectors, and the variance is what A2.4 predicted it would be.** It is
+strictly decreasing in χ everywhere, and across sectors it is ordered exactly with the miss:
+1e-12 where the miss is 1e-11, 1.8e-5 where it is 4e-7, 1.2e-4 where it is 3e-6, 2.3e-3 where
+it is 3e-5. On the sector that fired G0′, the unmixed χ = 256 state's variance exceeds the
+mixed state's by **108×** (1.93e-3 against 1.78e-5) while their Lanczos residuals agree to 2 %
+(9.99e-12 vs 9.75e-12) — plant (viii) fires as staked, and the discriminator the old fields
+could not provide is measured.
+
+**Plant (vi) fires as staked:** the unmixed ladder reads +6.634e-5 (the recorded number, to
+the digit) and the mixed ladder +4.273e-7 on the same start.
+
+**Plant (vii) is pending:** the labels-ignored mutant at χ = 256 runs on the host's dense
+operator (it has no labels to plan by), which at χ = 256 is the 447 ms matvec — it is
+checkpointed per sweep and its row is appended when it lands.
+
+What this licenses: the exam is restaked, ALONE, with the χ per sector A2.6 already derives
+for the ladder — `GF2A_AMENDMENT_3.md` — and the three firing sectors are re-run at their
+ceilings. Nothing in this section is re-read by that; G0″ fired at χ = 256 and stays fired
+there.

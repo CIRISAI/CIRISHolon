@@ -325,3 +325,46 @@ neighbours have lost). The warm ladder is retired as a design, not merely as a r
 diagnostic on the largest sector — x = 4, B = 0, two states per label, warm miss 5.9e-3 — is
 running now and decides whether a cold ladder is sufficient by itself or whether B = 0 also
 needs a ceiling above 256.
+
+---
+
+## E14 — the MPS-side base, built and gated (2026-09-03): the warm ladder that fired G0′ now meets its stake
+
+*Not a re-reading of G0′. The gate was staked on the instrument as frozen and it fired on
+that instrument; the record above stands. This section is the base that the successor
+amendment will stake on, each piece with its own gate, and the one measurement that bears
+directly on the fired gate: the SAME warm ladder, on the same sector, with the mechanism
+the amendment lacked.*
+
+### The five items, and what each measured
+
+| item | what | gate | measured |
+|---|---|---|---|
+| 1 block-sparse contraction | the two-site operator on live label blocks only (`blocks.rs`); channel shifts read off the environments and verified on every nonzero entry | BIT-IDENTICAL to the dense operator on all 120 bonds of every N=6 and N=8 sector; the banked B=2 and B=1 warm ladders and the cold diagnostic reproduced FIELD FOR FIELD | one matvec at N=8 B=2 χ=256: **447 ms → 3.98 ms (112×) at 4 threads**, 222× single-threaded; ladders 2434 → 83 s (29×), 20851 → 305 s (68×), cold 2420 → 40 s (61×) |
+| 2 change instrumentation | per-bond local energy and delta, per-site tensor motion, per-bond kept block mass in `DmrgResult`; `skip_unmoved` | kept mass + discarded = 1 on every bond; skipping gated as a bounded measurement | skipping saves 5 % of Lanczos iterations at a 3.7e-6 excursion (three-sweep period, the truncation fixed point perturbed) — ships OFF with that number |
+| 3 subspace expansion | label re-seeding (`reseed_labels`) AND White's density-matrix perturbation (`SymConfig::mixing`, scheduled off as the sweep settles, convergence only unmixed) | re-seeding: A1.8's recorded starved failure reproduced (−23.4816, miss 1.06) and cured (46 labels, 3.8e-11); mixing: the N=4 referees and exact N=6 to 1e-8, α = 0 bit-identical | **the x=4 B=1 warm ladder 64→128→256 with α = 1e-4: +4.273e-7 at χ=256 — MEETS the 1e-6 stake**, against +6.634e-5 as frozen; re-seeding alone reached +2.65e-5 |
+| 4 the variance | `⟨H²⟩ − ⟨H⟩²` exact through the squared MPO (`variance.rs`), priced by bytes, refused by name above the lease | equals the dense value to 1e-9 on a random labelled state (87.08); −1.1e-13 on the converged N=4 eigenstate | the arm's own error bar, for every rung the exam uses |
+| 5 the device | compact slot layout (`CompactPlan`, host reference) and four CUDA stage kernels (`holon-gpu/kernels/mps_blocks.cu`, `-fmad=false`); `SymConfig::backend` | device = host reference = dense on all 120 bonds; whole sweeps on the device backend identical to the host sweep TO THE BIT (energy and Lanczos count), zero refusals | χ=256: host 2.81 ms → device 0.589 ms (4.8×), tables 5.9 MB once per bond; at N=8 the launches and the two 1 MB copies are most of it |
+
+### What the mixed ladder says about G0′
+
+| x = 4, B = 1 | χ = 64 | χ = 128 | χ = 256 |
+|---|---|---|---|
+| frozen warm ladder (fired) | +2.271e-3 | +1.302e-4 | +6.634e-5 |
+| + label re-seeding | +2.271e-3 | +1.043e-4 | +2.652e-5 |
+| cold at χ = 256 (diagnostic) | — | — | +4.266e-7 |
+| **+ White's mixing, α = 1e-4** | +2.228e-3 | +7.141e-5 | **+4.273e-7** |
+
+The mixed warm ladder lands where the cold start landed, to three digits of the miss —
+the warm ladder's inherited basin is fully escaped, and the remaining 4.3e-7 is the
+truncation floor of χ = 256 against the cut's rank of 1,582 (the counting section above).
+So the mechanism is named and cured: the amendment's instrument lacked a way to open a
+block the state had no weight in, and the perturbation Q10 §4 asked for is that way.
+
+### Where the successor amendment starts
+
+Cold or mixed — both meet the stake at N = 8; the mixed warm ladder is what scales, since
+at volume no rung is exact and the perturbation is what keeps a truncated sweep out of its
+own basins. The ceiling per sector from the cut's rank, the variance as the error bar, the
+device as the executor. What is NOT done and is not claimed: the volume ladder itself, the
+non-abelian (SU(3)) block structure, and any statement about N = 16 and beyond.

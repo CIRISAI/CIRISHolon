@@ -1,0 +1,1 @@
+{"n":8,"x":4,"b":1,"n_q":15,"arm":"symmetric","threads":4,"rungs":[{"chi":256,"energy":-47.996482140293,"sweeps":4,"lanczos_iterations":2754,"converged":true,"worst_residual":9.774e-12,"max_discarded":3.703e-9,"max_bond":264,"seconds":39.5}],"seconds":39.5}

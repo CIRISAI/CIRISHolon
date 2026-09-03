@@ -16,7 +16,7 @@ and sink (JS), `hud.rs` retiring, and R7. Both CI gates this lane owns are green
 
 | what | where | state |
 |---|---|---|
-| real engine page (replaced the WB-7.1 mock) | `docs/workbench/{index,app,styles,smoke}` + committed `holon_render.wasm` | live, 149 checks |
+| real engine page (replaced the WB-7.1 mock) | `docs/workbench/{index,app,styles,smoke}` + committed `holon_render.wasm` | live, 350 checks (FSD-W3: the ladder from the 1 km cube to the nucleus, 2026-09-03) |
 | gravity, WB-2.4 + WB-2.4c world VECTOR | `holon-render/src/sim.rs` `set_gravity_vec`, `tests/gravity.rs` 11/11 | live |
 | WB-2.2 pressure panel on the box-scale door | page + `holon_box_scale`/`holon_pressure` | live |
 | scale ladder + §9c acuity law | `LADDER` / `acuityPopulation` in `app.js` | live |
@@ -33,9 +33,9 @@ WB-2.4c, the water story, the ladder).
   Exists because gate 15 runs `--features headless`, which is structurally blind to
   `hud.rs`/`pick.rs`/`render.rs`, and `pages.yml` swallows build failures. Those two greens
   hid a two-day compile break.
-* **17b** — `node docs/workbench/smoke.mjs`, 149 checks, ~30 s. Runs the SHIPPED artifact.
+* **17b** — `node docs/workbench/smoke.mjs`, 350 checks (149 before FSD-W3), ~40 s. Runs the SHIPPED artifact.
 
-Both verified green at 23fe9e6 plus this increment: 15b clean, 17b 149/149, and gate 15 headless now 27 tests (15 + 5 frame buffer + 7 hand intent).
+Both verified green at 23fe9e6 plus this increment: 15b clean, 17b 149/149, and gate 15 headless now 27 tests (15 + 5 frame buffer + 7 hand intent). FSD-W3 (1c4ac35, 95378dd): 17b is 350/350; the ladder runs cube → nucleus with the atom and nucleus bands export-gated and live from the shipped doors.
 
 ## Route B (ruled; increments 1 and 2 landed)
 

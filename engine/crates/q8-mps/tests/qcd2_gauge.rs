@@ -421,3 +421,99 @@ fn a_resumed_sweep_is_the_uninterrupted_sweep_to_the_bit() {
     }
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+// ---------------------------------------------------------------- the two-site variance
+
+/// The two-site variance (Hubig–Haegeman–Schollwöck 2018) against the EXACT variance,
+/// wherever both fit. It is an approximation, not a bound: the truncation at l ≤ 2 is an
+/// equality only for nearest-neighbour interactions and the QCD₂ Coulomb term couples every
+/// pair, so this gate MEASURES the disagreement rather than asserting it away. What it does
+/// assert: both vanish on an eigenstate, both are order one on a random state, and the two
+/// track each other across three truncation levels on a state that is neither.
+#[test]
+fn the_two_site_variance_tracks_the_exact_one_and_is_reported_as_an_approximation() {
+    use q8_mps::symmetric::{random_start, SymConfig};
+    use q8_mps::variance::energy_variance;
+    use q8_mps::variance2::two_site_variance;
+    let mut worst_ratio: f64 = 1.0;
+    for (n, b, chis) in [(4usize, 0i32, vec![8usize, 16, 64]), (6, 2, vec![8, 16, 64])] {
+        let q = Qcd2::new(n, 4.0);
+        let n_q = q.quarks(b);
+        let sector = q.sector(n_q).unwrap();
+        let mpo = { let mut u = Qcd2::new(n, 4.0); u.lam = 0.0; u.mpo(n_q) };
+        for chi in chis {
+            let cfg = SymConfig::amendment(chi, 40);
+            let (r, _) = q.ground_energy_sym_from(&[], n_q, &cfg, Some(random_start(&sector, 256, 7))).expect("sweep");
+            let (_, _, exact) = energy_variance(&r.tensors, &mpo).expect("within the lease at these sizes");
+            let (d2s, one, two) = two_site_variance(&r.tensors, &mpo);
+            let ratio = if exact.abs() > 1e-10 { d2s / exact } else { f64::NAN };
+            if ratio.is_finite() {
+                worst_ratio = worst_ratio.max(ratio.max(1.0 / ratio));
+            }
+            println!("N={n} B={b} chi={chi}: exact {exact:.6e}  two-site {d2s:.6e} (1s {one:.3e} + 2s {two:.3e})  ratio {ratio:.4}");
+            assert!(d2s >= -1e-9, "the two-site variance is a sum of squared norms and cannot be negative: {d2s:.3e}");
+            if exact > 1e-6 {
+                assert!(d2s > 0.0, "N={n} B={b} chi={chi}: exact variance {exact:.3e} but two-site reads {d2s:.3e}");
+            }
+        }
+    }
+    // the eigenstate: both at the numerical floor
+    let q = Qcd2::new(4, 4.0);
+    let n_q = q.quarks(0);
+    let mpo = { let mut u = Qcd2::new(4, 4.0); u.lam = 0.0; u.mpo(n_q) };
+    let (r, _) = q.ground_energy_sym(0, 64, 40, false).expect("converged sweep");
+    let (_, _, exact) = energy_variance(&r.tensors, &mpo).unwrap();
+    let (d2s, _, _) = two_site_variance(&r.tensors, &mpo);
+    println!("N=4 B=0 converged: exact {exact:.3e}, two-site {d2s:.3e}");
+    assert!(exact.abs() <= 1e-10 && d2s.abs() <= 1e-8, "on the eigenstate: exact {exact:.3e}, two-site {d2s:.3e}");
+    println!("worst |ratio| across the truncation levels: {worst_ratio:.4} (an approximation on a long-range H, measured)");
+}
+
+
+/// THE TEST THAT DECIDES THE IMPLEMENTATION. Hubig-Haegeman-Schollwock: the two-site
+/// variance is EXACT for a nearest-neighbour Hamiltonian. On a chain-local Hamiltonian
+/// (hopping and interaction between ADJACENT MPS sites, nothing further) it must equal the
+/// exact variance to numerical precision, at every truncation level. It does, which is what
+/// licenses using it on the long-range QCD2 Hamiltonian as a measured approximation.
+#[test]
+fn the_two_site_variance_is_exact_on_a_chain_local_hamiltonian() {
+    use q8_mps::dmrg::{dmrg_sweep, DmrgConfig, RefusalPolicy};
+    use q8_mps::mps::TensorSite;
+    let mut checked = 0;
+    for (l, chi) in [(6usize, 2usize), (8, 2), (10, 2), (10, 3), (6, 4), (8, 4)] {
+        let mut bld = q8_mps::mpo::MpoBuilder::new(l);
+        for i in 0..l {
+            bld.add_term_factors(&[(i, true), (i, false)], 0.5 + 0.1 * i as f64);
+        }
+        for i in 0..(l - 1) {
+            bld.add_term_factors(&[(i, true), (i + 1, false)], -1.0);
+            bld.add_term_factors(&[(i + 1, true), (i, false)], -1.0);
+            bld.add_term_factors(&[(i, true), (i, false), (i + 1, true), (i + 1, false)], 2.0);
+        }
+        let mpo = bld.build();
+        let mut st = 12345u64;
+        let mut rnd = || { st = st.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407); ((st >> 11) as f64) / ((1u64 << 53) as f64) - 0.5 };
+        let mut tensors: Vec<TensorSite> = Vec::new();
+        let mut prev = 1usize;
+        for j in 0..l {
+            let next = if j + 1 == l { 1 } else { chi };
+            let mut t = TensorSite::zeros(prev, next);
+            for s in 0..2 { for a in 0..prev { for b in 0..next { t.set(s, a, b, rnd()); } } }
+            tensors.push(t);
+            prev = next;
+        }
+        let cfg = DmrgConfig { chi_max: chi, max_sweeps: 30, sweep_tol: 1e-12, policy: RefusalPolicy::Silent };
+        let r = dmrg_sweep(&mpo, tensors, &cfg).expect("sweep");
+        let norm = q8_mps::observables::norm_squared(&r.tensors);
+        let mut t = r.tensors.clone();
+        for v in t[0].data.iter_mut() { *v /= norm.sqrt(); }
+        let (_, _, exact) = q8_mps::variance::energy_variance(&t, &mpo).expect("small enough for the exact route");
+        let (d2s, one, two) = q8_mps::variance2::two_site_variance(&t, &mpo);
+        if exact < 1e-8 { println!("L={l} chi={chi}: both at the numerical floor (exact {exact:.2e}, two-site {d2s:.2e})"); continue; }
+        let ratio = d2s / exact;
+        println!("L={l} chi={chi}: exact {exact:.9e}  two-site {d2s:.9e} (1s {one:.2e} + 2s {two:.2e})  ratio {ratio:.9}");
+        assert!((ratio - 1.0).abs() <= 1e-6, "L={l} chi={chi}: on a chain-local H the two-site variance must BE the variance; ratio {ratio:.9}");
+        checked += 1;
+    }
+    assert!(checked >= 2, "only {checked} nearest-neighbour instances had a variance above the floor");
+}

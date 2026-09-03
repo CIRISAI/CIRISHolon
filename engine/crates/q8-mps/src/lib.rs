@@ -17,4 +17,5 @@ pub mod svd;
 pub mod symmetric;
 pub mod blocks;
 pub mod variance;
+pub mod variance2;
 pub mod tdvp;

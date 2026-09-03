@@ -362,3 +362,62 @@ fn mixing_keeps_the_exact_referees_and_injects_nothing() {
         println!("N={n} B={b} chi={chi} mixing 1e-4: E {:.10} (exact {e_ref:.10}), {} sweeps, {} Lanczos its", r.energy, r.sweeps_used, r.lanczos_iterations_total);
     }
 }
+
+// ---------------------------------------------------------------- A2.5 R1: resumability
+
+/// A run interrupted after a complete sweep and resumed from its checkpoint reproduces the
+/// uninterrupted run TO THE BIT — energy, Lanczos count, every bond's discarded weight and
+/// the whole energy history — on the exact N = 6 sector and on one truncating N = 8 rung.
+/// The checkpoint round-trips its bytes exactly, and a kill mid-write leaves the previous
+/// file intact because the write is atomic (temp + rename).
+#[test]
+fn a_resumed_sweep_is_the_uninterrupted_sweep_to_the_bit() {
+    use q8_mps::symmetric::{dmrg_sweep_sym, dmrg_sweep_sym_resume, random_start, SweepCheckpoint, SymConfig};
+    let dir = std::env::temp_dir().join(format!("q8_r1_{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    for (n, b, chi, sweeps, cut_after) in [(6usize, 2i32, 64usize, 40usize, 2usize), (8, 2, 64, 6, 3)] {
+        let q = Qcd2::new(n, 4.0);
+        let n_q = q.quarks(b);
+        let sector = q.sector(n_q).unwrap();
+        let mpo = { let mut u = Qcd2::new(n, 4.0); u.lam = 0.0; u.mpo(n_q) };
+        // uninterrupted
+        let full_cfg = SymConfig::amendment(chi, sweeps);
+        let (t0, l0) = random_start(&sector, 256, 7);
+        let (rf, lf) = dmrg_sweep_sym(&mpo, t0, l0, &sector, &full_cfg).unwrap();
+        // interrupted: run `cut_after` sweeps with a checkpoint, then resume from the file
+        let path = dir.join(format!("n{n}_b{b}_chi{chi}.state"));
+        let mut cut_cfg = full_cfg.clone();
+        cut_cfg.max_sweeps = cut_after;
+        cut_cfg.checkpoint = Some(path.clone());
+        let (t0, l0) = random_start(&sector, 256, 7);
+        let (rc, _) = dmrg_sweep_sym(&mpo, t0, l0, &sector, &cut_cfg).unwrap();
+        assert_eq!(rc.sweeps_used, cut_after, "the cut run stopped at the sweep cap");
+        let ck = SweepCheckpoint::load(&path).expect("the checkpoint is readable");
+        assert_eq!(ck.sweeps_done, cut_after);
+        // the round trip is checked on the BYTES: the state carries NaNs (a site that changed
+        // shape has no motion), and NaN != NaN under any value comparison
+        let bytes = ck.to_bytes();
+        let again = SweepCheckpoint::from_bytes(&bytes).expect("the checkpoint parses its own bytes");
+        assert_eq!(again.to_bytes(), bytes, "the checkpoint does not round-trip its own bytes");
+        let mut res_cfg = full_cfg.clone();
+        res_cfg.checkpoint = Some(path.clone());
+        let (rr, lr) = dmrg_sweep_sym_resume(&mpo, Vec::new(), Vec::new(), &sector, &res_cfg, Some(ck)).unwrap();
+        assert_eq!(rf.energy.to_bits(), rr.energy.to_bits(), "N={n} B={b}: resumed {:.15} vs uninterrupted {:.15}", rr.energy, rf.energy);
+        assert_eq!(rf.sweeps_used, rr.sweeps_used, "N={n} B={b}: sweep counts differ");
+        assert_eq!(rf.lanczos_iterations_total, rr.lanczos_iterations_total, "N={n} B={b}: Lanczos counts differ");
+        assert_eq!(rf.converged, rr.converged);
+        for (j, (a, c)) in rf.discarded_weight.iter().zip(&rr.discarded_weight).enumerate() {
+            assert_eq!(a.to_bits(), c.to_bits(), "N={n} B={b} bond {j}: discarded weight differs");
+        }
+        assert_eq!(rf.energy_history.len(), rr.energy_history.len());
+        for (s, (a, c)) in rf.energy_history.iter().zip(&rr.energy_history).enumerate() {
+            assert_eq!(a.to_bits(), c.to_bits(), "N={n} B={b} sweep {}: energy history differs", s + 1);
+        }
+        assert_eq!(lf, lr, "N={n} B={b}: the labels differ");
+        for (j, (a, c)) in rf.tensors.iter().zip(&rr.tensors).enumerate() {
+            assert_eq!(a, c, "N={n} B={b} site {j}: the tensors differ");
+        }
+        println!("N={n} B={b} chi={chi}: cut after {cut_after} of {} sweeps and resumed — energy {:.12}, {} Lanczos its, identical to the bit", rf.sweeps_used, rr.energy, rr.lanczos_iterations_total);
+    }
+    let _ = std::fs::remove_dir_all(&dir);
+}

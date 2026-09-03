@@ -6,7 +6,7 @@
 use crate::mpo;
 
 /// One MPS site tensor, physical dimension 2 (occupied/empty), flat `[s][l][r]` layout.
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct TensorSite {
     pub chi_l: usize,
     pub chi_r: usize,

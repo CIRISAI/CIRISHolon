@@ -132,6 +132,10 @@ pub struct SymConfig {
     /// local eigensolve for a matvec closure over the plan, so its uploads happen once per
     /// bond and the hundreds of Lanczos matvecs move only ψ.
     pub backend: Option<std::sync::Arc<dyn crate::blocks::TwoSiteBackend>>,
+    /// A2.5 (R1): write the sweep's FULL state to this path after every completed sweep, so
+    /// an interrupted run resumes from its last sweep and reproduces the uninterrupted run
+    /// to the bit. `None` writes nothing.
+    pub checkpoint: Option<std::path::PathBuf>,
 }
 
 impl std::fmt::Debug for SymConfig {
@@ -146,6 +150,7 @@ impl std::fmt::Debug for SymConfig {
             .field("skip_unmoved", &self.skip_unmoved)
             .field("mixing", &self.mixing)
             .field("backend", &self.backend.as_ref().map(|_| "device"))
+            .field("checkpoint", &self.checkpoint)
             .finish()
     }
 }
@@ -153,7 +158,7 @@ impl std::fmt::Debug for SymConfig {
 impl SymConfig {
     /// The amendment's stated convergence test at bond dimension `chi_max`.
     pub fn amendment(chi_max: usize, max_sweeps: usize) -> SymConfig {
-        SymConfig { chi_max, max_sweeps, rtol: 1e-10, max_discarded: 1e-8, min_sweeps: 4, ignore_labels: false, skip_unmoved: false, mixing: 0.0, backend: None }
+        SymConfig { chi_max, max_sweeps, rtol: 1e-10, max_discarded: 1e-8, min_sweeps: 4, ignore_labels: false, skip_unmoved: false, mixing: 0.0, backend: None, checkpoint: None }
     }
 }
 
@@ -949,6 +954,141 @@ fn all_right_envs(tensors: &[TensorSite], mpo: &Mpo) -> Vec<Env> {
     envs
 }
 
+/// THE SWEEP'S FULL STATE between two sweeps — every variable the next sweep reads — so a
+/// run resumed from it is the uninterrupted run, bit for bit (A2.5, R1; gated in
+/// `tests/qcd2_gauge.rs`). Written after each completed sweep when `SymConfig::checkpoint`
+/// is set; a zero-dependency binary file (magic, little-endian, every f64 by its bits).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SweepCheckpoint {
+    pub tensors: Vec<TensorSite>,
+    pub labels: Labels,
+    pub sweeps_done: usize,
+    pub prev_energy: f64,
+    pub last_energy: f64,
+    pub energy_history: Vec<f64>,
+    pub discarded: Vec<f64>,
+    pub spectrum_floor: Vec<f64>,
+    pub bond_energy: Vec<f64>,
+    pub bond_energy_prev: Vec<f64>,
+    pub bond_energy_delta: Vec<f64>,
+    pub site_delta: Vec<f64>,
+    pub block_mass: Vec<Vec<(Charge, f64)>>,
+    pub worst_resid: f64,
+    pub iters_total: usize,
+    pub bonds_skipped: usize,
+    pub converged: bool,
+}
+
+const CKPT_MAGIC: &[u8; 8] = b"Q8SYMCK1";
+
+fn put_u64(v: &mut Vec<u8>, x: u64) { v.extend_from_slice(&x.to_le_bytes()); }
+fn put_f64(v: &mut Vec<u8>, x: f64) { v.extend_from_slice(&x.to_bits().to_le_bytes()); }
+fn put_f64s(v: &mut Vec<u8>, xs: &[f64]) { put_u64(v, xs.len() as u64); for &x in xs { put_f64(v, x); } }
+fn put_charge(v: &mut Vec<u8>, c: &Charge) { for &x in c.iter() { v.extend_from_slice(&x.to_le_bytes()); } }
+
+struct Reader<'a> { b: &'a [u8], at: usize }
+impl<'a> Reader<'a> {
+    fn u64(&mut self) -> Option<u64> { let s = self.b.get(self.at..self.at + 8)?; self.at += 8; Some(u64::from_le_bytes(s.try_into().ok()?)) }
+    fn usize(&mut self) -> Option<usize> { self.u64().map(|v| v as usize) }
+    fn f64(&mut self) -> Option<f64> { self.u64().map(f64::from_bits) }
+    fn f64s(&mut self) -> Option<Vec<f64>> { let n = self.usize()?; (0..n).map(|_| self.f64()).collect() }
+    fn i32(&mut self) -> Option<i32> { let s = self.b.get(self.at..self.at + 4)?; self.at += 4; Some(i32::from_le_bytes(s.try_into().ok()?)) }
+    fn charge(&mut self) -> Option<Charge> { let mut c = ZERO_CHARGE; for x in c.iter_mut() { *x = self.i32()?; } Some(c) }
+}
+
+impl SweepCheckpoint {
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let mut v = Vec::new();
+        v.extend_from_slice(CKPT_MAGIC);
+        put_u64(&mut v, self.tensors.len() as u64);
+        for t in &self.tensors {
+            put_u64(&mut v, t.chi_l as u64);
+            put_u64(&mut v, t.chi_r as u64);
+            put_f64s(&mut v, &t.data);
+        }
+        put_u64(&mut v, self.labels.len() as u64);
+        for bond in &self.labels {
+            put_u64(&mut v, bond.len() as u64);
+            for c in bond { put_charge(&mut v, c); }
+        }
+        put_u64(&mut v, self.sweeps_done as u64);
+        put_f64(&mut v, self.prev_energy);
+        put_f64(&mut v, self.last_energy);
+        put_f64s(&mut v, &self.energy_history);
+        put_f64s(&mut v, &self.discarded);
+        put_f64s(&mut v, &self.spectrum_floor);
+        put_f64s(&mut v, &self.bond_energy);
+        put_f64s(&mut v, &self.bond_energy_prev);
+        put_f64s(&mut v, &self.bond_energy_delta);
+        put_f64s(&mut v, &self.site_delta);
+        put_u64(&mut v, self.block_mass.len() as u64);
+        for bond in &self.block_mass {
+            put_u64(&mut v, bond.len() as u64);
+            for (c, m) in bond { put_charge(&mut v, c); put_f64(&mut v, *m); }
+        }
+        put_f64(&mut v, self.worst_resid);
+        put_u64(&mut v, self.iters_total as u64);
+        put_u64(&mut v, self.bonds_skipped as u64);
+        put_u64(&mut v, u64::from(self.converged));
+        v
+    }
+
+    pub fn from_bytes(b: &[u8]) -> Option<SweepCheckpoint> {
+        if b.get(..8)? != CKPT_MAGIC { return None; }
+        let mut r = Reader { b, at: 8 };
+        let nt = r.usize()?;
+        let mut tensors = Vec::with_capacity(nt);
+        for _ in 0..nt {
+            let (chi_l, chi_r) = (r.usize()?, r.usize()?);
+            let data = r.f64s()?;
+            if data.len() != 2 * chi_l * chi_r { return None; }
+            tensors.push(TensorSite { chi_l, chi_r, data });
+        }
+        let nl = r.usize()?;
+        let mut labels = Vec::with_capacity(nl);
+        for _ in 0..nl {
+            let n = r.usize()?;
+            labels.push((0..n).map(|_| r.charge()).collect::<Option<Vec<_>>>()?);
+        }
+        let sweeps_done = r.usize()?;
+        let prev_energy = r.f64()?;
+        let last_energy = r.f64()?;
+        let energy_history = r.f64s()?;
+        let discarded = r.f64s()?;
+        let spectrum_floor = r.f64s()?;
+        let bond_energy = r.f64s()?;
+        let bond_energy_prev = r.f64s()?;
+        let bond_energy_delta = r.f64s()?;
+        let site_delta = r.f64s()?;
+        let nb = r.usize()?;
+        let mut block_mass = Vec::with_capacity(nb);
+        for _ in 0..nb {
+            let n = r.usize()?;
+            let mut bond = Vec::with_capacity(n);
+            for _ in 0..n { let c = r.charge()?; let m = r.f64()?; bond.push((c, m)); }
+            block_mass.push(bond);
+        }
+        let worst_resid = r.f64()?;
+        let iters_total = r.usize()?;
+        let bonds_skipped = r.usize()?;
+        let converged = r.u64()? != 0;
+        Some(SweepCheckpoint { tensors, labels, sweeps_done, prev_energy, last_energy, energy_history, discarded, spectrum_floor, bond_energy, bond_energy_prev, bond_energy_delta, site_delta, block_mass, worst_resid, iters_total, bonds_skipped, converged })
+    }
+
+    /// Write atomically: to `path.tmp`, then renamed, so a kill mid-write leaves the previous
+    /// checkpoint intact.
+    pub fn save(&self, path: &std::path::Path) -> std::io::Result<()> {
+        let tmp = path.with_extension("tmp");
+        std::fs::write(&tmp, self.to_bytes())?;
+        std::fs::rename(&tmp, path)
+    }
+
+    pub fn load(path: &std::path::Path) -> std::io::Result<SweepCheckpoint> {
+        let b = std::fs::read(path)?;
+        SweepCheckpoint::from_bytes(&b).ok_or_else(|| std::io::Error::new(std::io::ErrorKind::InvalidData, "not a Q8SYMCK1 checkpoint"))
+    }
+}
+
 /// The symmetric sweep. Returns the result and the final labels, so a χ-ladder continues
 /// from them: raising `chi_max` on the returned state needs no padding — the two-site
 /// update grows the bond itself.
@@ -959,6 +1099,24 @@ pub fn dmrg_sweep_sym(
     sector: &Sector,
     cfg: &SymConfig,
 ) -> Result<(DmrgResult, Labels), SymRefusal> {
+    dmrg_sweep_sym_resume(mpo, initial, labels, sector, cfg, None)
+}
+
+/// [`dmrg_sweep_sym`] resumed from a checkpoint: every loop variable is restored from it
+/// and the sweep count continues where it stopped, so the arithmetic that follows is the
+/// uninterrupted run's (A2.5, R1). `initial`/`labels` are ignored when `resume` is given.
+pub fn dmrg_sweep_sym_resume(
+    mpo: &Mpo,
+    initial: Vec<TensorSite>,
+    labels: Labels,
+    sector: &Sector,
+    cfg: &SymConfig,
+    resume: Option<SweepCheckpoint>,
+) -> Result<(DmrgResult, Labels), SymRefusal> {
+    let (initial, labels) = match &resume {
+        Some(c) => (c.tensors.clone(), c.labels.clone()),
+        None => (initial, labels),
+    };
     let l = mpo.sites.len();
     assert_eq!(initial.len(), l, "tensors length must match MPO length");
     assert_eq!(labels.len(), l + 1, "one label vector per bond, boundaries included");
@@ -990,6 +1148,25 @@ pub fn dmrg_sweep_sym(
     let mut site_delta = vec![f64::NAN; l];
     let mut block_mass: Vec<Vec<(Charge, f64)>> = vec![Vec::new(); l.saturating_sub(1)];
     let mut bonds_skipped = 0usize;
+    let mut first_sweep = 0usize;
+    if let Some(c) = resume {
+        prev_energy = c.prev_energy;
+        last_energy = c.last_energy;
+        converged = c.converged;
+        sweeps_used = c.sweeps_done;
+        discarded = c.discarded;
+        spectrum_floor = c.spectrum_floor;
+        energy_history = c.energy_history;
+        worst_resid = c.worst_resid;
+        iters_total = c.iters_total;
+        bond_energy = c.bond_energy;
+        bond_energy_prev = c.bond_energy_prev;
+        bond_energy_delta = c.bond_energy_delta;
+        site_delta = c.site_delta;
+        block_mass = c.block_mass;
+        bonds_skipped = c.bonds_skipped;
+        first_sweep = c.sweeps_done;
+    }
     let mut right_envs = all_right_envs(&tensors, mpo);
     // THE MIXING SCHEDULE. White's perturbation chooses the kept basis while the state is
     // still moving and must be OFF at the end, or the basis it leaves behind is a perturbed
@@ -999,7 +1176,11 @@ pub fn dmrg_sweep_sym(
     // UNMIXED sweep. `cfg.mixing` is the ceiling; `sweep_cfg` is what this sweep runs with.
     let mut sweep_cfg = cfg.clone();
     let mut mixed_last;
-    for sweep in 0..cfg.max_sweeps {
+    if converged {
+        // a checkpoint written after the converging sweep: nothing to run
+        first_sweep = cfg.max_sweeps;
+    }
+    for sweep in first_sweep..cfg.max_sweeps {
         sweeps_used = sweep + 1;
         let still_moving = prev_energy.is_infinite() || (last_energy - prev_energy).abs() > 100.0 * cfg.rtol * last_energy.abs().max(1.0);
         sweep_cfg.mixing = if cfg.mixing > 0.0 && still_moving { cfg.mixing } else { 0.0 };
@@ -1102,9 +1283,37 @@ pub fn dmrg_sweep_sym(
         let de = (last_energy - prev_energy).abs();
         if !mixed_last && sweeps_used >= cfg.min_sweeps && de <= cfg.rtol * last_energy.abs().max(1.0) && max_dw <= cfg.max_discarded {
             converged = true;
+        }
+        if !converged {
+            prev_energy = last_energy;
+        }
+        if let Some(path) = &cfg.checkpoint {
+            let c = SweepCheckpoint {
+                tensors: tensors.clone(),
+                labels: labels.clone(),
+                sweeps_done: sweeps_used,
+                prev_energy,
+                last_energy,
+                energy_history: energy_history.clone(),
+                discarded: discarded.clone(),
+                spectrum_floor: spectrum_floor.clone(),
+                bond_energy: bond_energy.clone(),
+                bond_energy_prev: bond_energy_prev.clone(),
+                bond_energy_delta: bond_energy_delta.clone(),
+                site_delta: site_delta.clone(),
+                block_mass: block_mass.clone(),
+                worst_resid,
+                iters_total,
+                bonds_skipped,
+                converged,
+            };
+            if let Err(e) = c.save(path) {
+                eprintln!("checkpoint {} not written: {e}", path.display());
+            }
+        }
+        if converged {
             break;
         }
-        prev_energy = last_energy;
     }
     let occ = crate::observables::occupation_profile(&tensors, l / 2);
     let spin_occ = crate::observables::spin_orbital_occupations(&tensors);

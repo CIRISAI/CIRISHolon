@@ -382,3 +382,136 @@ impl Qcd2 {
         Ok(r)
     }
 }
+
+
+// ------------------------------------------------------------------ the χ-ladder as a library (A2)
+
+/// One sector's χ-ladder, checkpointed and resumable: what the host driver
+/// (`examples/qcd2_dmrg.rs`) and the device driver (`holon-gpu/examples/qcd2_sym_device.rs`)
+/// both run, so there is one ladder and two executors.
+#[derive(Clone, Debug)]
+pub struct LadderOpts {
+    pub n: usize,
+    pub x: f64,
+    pub b: i32,
+    pub chis: Vec<usize>,
+    pub sweeps: usize,
+    pub mixing: f64,
+    pub reseed: bool,
+    pub mutant: bool,
+    /// Compute the exact variance of every rung's final state (priced; a refusal is printed).
+    pub variance: bool,
+    /// Where the rung rows, the per-sweep state and each rung's final state live. With it a
+    /// killed run resumes from its last completed sweep; without it nothing is written.
+    pub ckpt_dir: Option<std::path::PathBuf>,
+    pub seed: u64,
+    pub label_cap: usize,
+}
+
+impl LadderOpts {
+    pub fn tag(&self) -> String {
+        format!("x{}_N{}_B{}{}", self.x, self.n, self.b, if self.mutant { "_mutant" } else { "" })
+    }
+}
+
+/// Run the ladder; returns the JSON document for the sector (every rung, completed earlier
+/// or now). `backend` is the device, or `None` for the host loops.
+pub fn run_sym_ladder(o: &LadderOpts, backend: Option<std::sync::Arc<dyn crate::blocks::TwoSiteBackend>>) -> String {
+    use crate::symmetric::{random_start, reseed_labels, SweepCheckpoint, SymConfig};
+    use std::time::Instant;
+    let t0 = Instant::now();
+    let q = Qcd2::new(o.n, o.x);
+    let n_q = q.quarks(o.b);
+    let sector = q.sector(n_q).expect("a Cartan-neutral sector");
+    let unpen = Qcd2 { n: o.n, x: o.x, lam: 0.0 };
+    let mpo = unpen.mpo(n_q);
+    let tag = o.tag();
+    let class = if backend.is_some() { "device" } else { "host" };
+    // rows already completed, from the checkpoint directory
+    let rows_path = o.ckpt_dir.as_ref().map(|d| d.join(format!("{tag}.rungs.jsonl")));
+    let mut rows: Vec<String> = rows_path
+        .as_ref()
+        .and_then(|p| std::fs::read_to_string(p).ok())
+        .map(|t| t.lines().filter(|l| !l.trim().is_empty()).map(String::from).collect())
+        .unwrap_or_default();
+    let done_chi = |rows: &[String]| -> Vec<usize> {
+        rows.iter()
+            .filter_map(|r| r.split("\"chi\":").nth(1).and_then(|s| s.split(',').next()).and_then(|s| s.trim().parse().ok()))
+            .collect()
+    };
+    let completed = done_chi(&rows);
+    let mut state: Option<(Vec<crate::mps::TensorSite>, crate::symmetric::Labels)> = None;
+    let mut prev_chi: Option<usize> = None;
+    for &chi in &o.chis {
+        if completed.contains(&chi) {
+            prev_chi = Some(chi);
+            continue;
+        }
+        let t1 = Instant::now();
+        let mut cfg = SymConfig::amendment(chi, o.sweeps);
+        cfg.ignore_labels = o.mutant;
+        cfg.mixing = o.mixing;
+        cfg.backend = backend.clone();
+        let state_path = o.ckpt_dir.as_ref().map(|d| d.join(format!("{tag}_chi{chi}.state")));
+        cfg.checkpoint = state_path.clone();
+        // the start of this rung: a checkpoint of THIS rung, else the previous rung's final
+        // state (re-seeded if asked), else the seeded random labelled start
+        let resume = state_path.as_ref().filter(|p| p.exists()).and_then(|p| SweepCheckpoint::load(p).ok());
+        let resumed_from = resume.as_ref().map_or(0, |c| c.sweeps_done);
+        let (start_t, start_l, restored) = if let Some(c) = &resume {
+            (c.tensors.clone(), c.labels.clone(), 0usize)
+        } else if let Some((t, l)) = state.take() {
+            let (mut t, mut l) = (t, l);
+            let restored = if o.reseed { reseed_labels(&mut t, &mut l, &sector, o.label_cap, 1e-3, o.seed + prev_chi.unwrap_or(0) as u64) } else { 0 };
+            (t, l, restored)
+        } else if let Some(pc) = prev_chi {
+            // resuming after the previous rung completed in an earlier invocation
+            let done = o.ckpt_dir.as_ref().unwrap().join(format!("{tag}_chi{pc}.done.state"));
+            let c = SweepCheckpoint::load(&done).unwrap_or_else(|e| panic!("rung chi {pc} is recorded complete but its final state {} is unreadable: {e}", done.display()));
+            let (mut t, mut l) = (c.tensors, c.labels);
+            let restored = if o.reseed { reseed_labels(&mut t, &mut l, &sector, o.label_cap, 1e-3, o.seed + pc as u64) } else { 0 };
+            (t, l, restored)
+        } else {
+            let (t, l) = random_start(&sector, o.label_cap, o.seed);
+            (t, l, 0)
+        };
+        match crate::symmetric::dmrg_sweep_sym_resume(&mpo, start_t, start_l, &sector, &cfg, resume) {
+            Ok((r, labels)) => {
+                let max_dw = r.discarded_weight.iter().cloned().fold(0.0f64, f64::max);
+                let var = if o.variance {
+                    match crate::variance::energy_variance(&r.tensors, &mpo) {
+                        Ok((_, _, v)) => format!(",\"variance\":{v:.6e}"),
+                        Err(e) => format!(",\"variance_refused\":\"{e}\""),
+                    }
+                } else {
+                    String::new()
+                };
+                let row = format!(
+                    "{{\"chi\":{chi},\"energy\":{:.12},\"sweeps\":{},\"lanczos_iterations\":{},\"converged\":{},\"exit\":\"{}\",\"worst_residual\":{:.3e},\"max_discarded\":{:.3e},\"max_bond\":{},\"seconds\":{:.1},\"class\":\"{class}\",\"mixing\":{:.1e},\"reseeded\":{restored},\"resumed_from_sweep\":{resumed_from}{var}}}",
+                    r.energy, r.sweeps_used, r.lanczos_iterations_total, r.converged,
+                    if r.converged { "converged" } else { "sweep_cap" },
+                    r.worst_lanczos_residual, max_dw, r.bond_dims.iter().cloned().max().unwrap_or(0), t1.elapsed().as_secs_f64(), o.mixing
+                );
+                if let Some(d) = &o.ckpt_dir {
+                    let done = SweepCheckpoint { tensors: r.tensors.clone(), labels: labels.clone(), sweeps_done: r.sweeps_used, prev_energy: f64::INFINITY, last_energy: r.energy, energy_history: r.energy_history.clone(), discarded: r.discarded_weight.clone(), spectrum_floor: r.spectrum_floor.clone(), bond_energy: r.bond_energy.clone(), bond_energy_prev: Vec::new(), bond_energy_delta: r.bond_energy_delta.clone(), site_delta: r.site_delta.clone(), block_mass: r.block_mass.clone(), worst_resid: r.worst_lanczos_residual, iters_total: r.lanczos_iterations_total, bonds_skipped: r.bonds_skipped, converged: r.converged };
+                    done.save(&d.join(format!("{tag}_chi{chi}.done.state"))).expect("the rung's final state is written");
+                    let mut f = std::fs::OpenOptions::new().create(true).append(true).open(rows_path.as_ref().unwrap()).expect("the rung rows file");
+                    use std::io::Write;
+                    writeln!(f, "{row}").expect("a rung row is appended");
+                    let _ = std::fs::remove_file(d.join(format!("{tag}_chi{chi}.state")));
+                }
+                rows.push(row);
+                state = Some((r.tensors, labels));
+                prev_chi = Some(chi);
+            }
+            Err(e) => {
+                rows.push(format!("{{\"chi\":{chi},\"refused\":\"{e}\"}}"));
+                break;
+            }
+        }
+    }
+    format!(
+        "{{\"n\":{},\"x\":{},\"b\":{},\"n_q\":{n_q},\"arm\":\"{}\",\"class\":\"{class}\",\"threads\":{},\"rungs\":[{}],\"seconds\":{:.1}}}",
+        o.n, o.x, o.b, if o.mutant { "mutant-labels-ignored" } else { "symmetric-a2" }, crate::mps::threads(), rows.join(","), t0.elapsed().as_secs_f64()
+    )
+}

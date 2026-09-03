@@ -4,6 +4,7 @@
 //!   qcd2_dmrg --n 24 --x 9 --b 1 --chi 40,64 [--sweeps 120] [--rtol 1e-9]
 //!   qcd2_dmrg --n 8 --x 4 --b 0 --chi 32,64,128,256 --sym        (E7, amendment A1)
 //!   qcd2_dmrg --n 8 --x 4 --b 0 --chi 64 --mutant                (plant iv: labels ignored)
+//!   qcd2_dmrg ... --sym --mix 1e-4 --variance --ckpt DIR         (A2: mixed, variance per rung, resumable)
 //!
 //! The sweep tolerance is RELATIVE: two sweeps run at tolerance zero to learn the energy
 //! scale, then the run continues from those tensors with `rtol · max(1, |E|)`. An absolute
@@ -31,46 +32,17 @@ fn main() {
     let q = Qcd2::new(n, x);
     let n_q = q.quarks(b);
     if sym || mutant {
-        // E7 (amendment A1): the symmetric sweep on the unpenalised Hamiltonian, the χ-ladder
-        // continuing from the previous rung's tensors and labels (no padding: the two-site
-        // update grows the bond itself); `--mutant` is plant (iv), labels ignored.
-        let t0 = Instant::now();
-        let sector = q.sector(n_q).expect("a Cartan-neutral sector");
-        let mut state: Option<(Vec<q8_mps::mps::TensorSite>, q8_mps::symmetric::Labels)> = Some(q8_mps::symmetric::random_start(&sector, 256, 7));
-        let occ: Vec<bool> = Vec::new();
-        let mut rungs = Vec::new();
-        for &chi in &chis {
-            let t1 = Instant::now();
-            let mut cfg = q8_mps::symmetric::SymConfig::amendment(chi, sweeps);
-            cfg.ignore_labels = mutant;
-            cfg.mixing = mix;
-            match q.ground_energy_sym_from(&occ, n_q, &cfg, state.take()) {
-                Ok((r, labels)) => {
-                    let max_dw = r.discarded_weight.iter().cloned().fold(0.0f64, f64::max);
-                    rungs.push(format!(
-                        "{{\"chi\":{chi},\"energy\":{:.12},\"sweeps\":{},\"lanczos_iterations\":{},\"converged\":{},\"worst_residual\":{:.3e},\"max_discarded\":{:.3e},\"max_bond\":{},\"seconds\":{:.1}}}",
-                        r.energy, r.sweeps_used, r.lanczos_iterations_total, r.converged, r.worst_lanczos_residual, max_dw,
-                        r.bond_dims.iter().cloned().max().unwrap_or(0), t1.elapsed().as_secs_f64()
-                    ));
-                    let (mut tensors, mut labels) = (r.tensors, labels);
-                    // E14 item 3: restore every reachable label the rung truncated away
-                    // before the next rung inherits the gap (`--reseed`)
-                    if reseed {
-                        let n = q8_mps::symmetric::reseed_labels(&mut tensors, &mut labels, &sector, 256, 1e-3, 7 + chi as u64);
-                        eprintln!("reseed after chi {chi}: {n} labels restored");
-                    }
-                    state = Some((tensors, labels));
-                }
-                Err(e) => {
-                    rungs.push(format!("{{\"chi\":{chi},\"refused\":\"{e}\"}}"));
-                    break;
-                }
-            }
-        }
-        println!(
-            "{{\"n\":{n},\"x\":{x},\"b\":{b},\"n_q\":{n_q},\"arm\":\"{}\",\"threads\":{},\"rungs\":[{}],\"seconds\":{:.1}}}",
-            if mutant { "mutant-labels-ignored" } else { "symmetric" }, q8_mps::mps::threads(), rungs.join(","), t0.elapsed().as_secs_f64()
-        );
+        // A2: the checkpointed, resumable ladder in the library (`qcd2::run_sym_ladder`),
+        // shared with the device driver in holon-gpu
+        let opts = q8_mps::qcd2::LadderOpts {
+            n, x, b, chis: chis.clone(), sweeps, mixing: mix, reseed, mutant,
+            variance: a.iter().any(|s| s == "--variance"),
+            ckpt_dir: get("--ckpt").map(std::path::PathBuf::from),
+            seed: 7,
+            label_cap: 256,
+        };
+        if let Some(d) = &opts.ckpt_dir { std::fs::create_dir_all(d).expect("checkpoint dir"); }
+        println!("{}", q8_mps::qcd2::run_sym_ladder(&opts, None));
         return;
     }
     let mpo = q.mpo(n_q);

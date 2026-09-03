@@ -3076,15 +3076,28 @@ function renderTierRail(w, viewM) {
     });
     State.tierStopsBuilt = true;
   }
-  let active = -1;
-  let best = Infinity;
+  // THE ACTIVE BAND IS THE COARSEST ONE THE VIEW CAN RESOLVE: the first band (LADDER runs
+  // coarse to fine) whose scale fits inside the view span. This is §9c's acuity rule, the
+  // same one `descentActive` applies at the molecular band — not "nearest in log
+  // distance", which read a 2 nm view of twelve atoms as the H-bond network band, a
+  // fenced band, while the scene was running the molecular band's live chart.
+  let active = LADDER.length - 1;
+  for (let i = 0; i < LADDER.length; i++) {
+    if (LADDER[i].lengthM <= viewM) { active = i; break; }
+  }
+  // stops sit at their own zoom; two within a label's height of each other (the nucleus
+  // and the fold below it are half a decade apart on a nineteen-decade axis) are pushed
+  // apart top-down so both stay legible — the slider's thumb, not the label, is the truth
+  const railPx = UI["tier-stops"] ? UI["tier-stops"].clientHeight : 0;
+  const minGapPct = railPx > 0 ? (100 * 30) / railPx : 0;
+  let lastPct = -Infinity;
   LADDER.forEach((b, i) => {
     const v = Math.log10(spanM / b.lengthM);
-    const pct = 100 * (v - min) / (max - min);
+    let pct = Math.min(99, Math.max(1, 100 * (v - min) / (max - min)));
+    if (pct < lastPct + minGapPct) pct = lastPct + minGapPct;
+    lastPct = pct;
     const el = UI[`tier-stop-${i}`];
-    if (el) el.style.top = `${Math.min(99, Math.max(1, pct)).toFixed(1)}%`;
-    const d = Math.abs(Math.log10(viewM / b.lengthM));
-    if (d < best) { best = d; active = i; }
+    if (el) el.style.top = `${Math.min(99, pct).toFixed(1)}%`;
   });
   const hasExport = (name) => typeof w[name] === "function";
   LADDER.forEach((b, i) => {
@@ -3145,16 +3158,23 @@ function renderSizeAxis() {
       const v = vNow + Math.log10(m.gcc / gcc) / 3;
       if (v >= min && v <= max) {
         const pct = 100 * (v - min) / (max - min);
-        on.push(`<span class="dmark" style="left:${pct.toFixed(1)}%" title="${m.name}: ${m.gcc} g/cm³">${m.name}</span>`);
+        // alternate rows so neighbours (liquid water and ice VII are a fifth of a decade
+        // apart) do not print on top of each other
+        on.push(`<span class="dmark" style="left:${pct.toFixed(1)}%;top:${(on.length % 2) * 9}px" `
+          + `title="${m.name}: ${m.gcc} g/cm³">${m.name}</span>`);
       } else if (v > max) {
-        off.push(`<span class="dmark off" title="${m.name}: ${m.gcc} g/cm³ — ${(3 * (v - max)).toFixed(0)} decades of density past the slider's floor, and past this chart's electrons">${m.name} ⟶</span>`);
+        off.push(`${m.name} +${(3 * (v - max)).toFixed(0)}`);
       }
     }
-    el.innerHTML = on.join("") + off.join("");
+    el.innerHTML = on.join("")
+      + (off.length
+        ? `<span class="dmark off" title="decades of density past the slider's floor — and past `
+          + `this chart's electrons; a limit on the box size, not a stop">beyond the floor: ${off.join(", ")} decades</span>`
+        : "");
   }
   put("size-fence", State.lastScaleRefusal
     ? State.lastScaleRefusal
-    : "floor: the chart's electrons (STO-3G), no degeneracy pressure here");
+    : "floor: STO-3G electrons, no degeneracy pressure");
 }
 
 function scaleRefusalText(code) {

@@ -1280,11 +1280,22 @@ body, html {
 }
 .density-axis {
   position: relative;
-  height: 16px;
+  height: 30px;
   font-family: var(--font-mono);
   font-size: 7px;
   color: var(--text-dim);
   overflow: visible;
+}
+.density-axis .dmark.off {
+  position: absolute;
+  left: 0;
+  top: 20px;
+  transform: none;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .dmark {
   position: absolute;

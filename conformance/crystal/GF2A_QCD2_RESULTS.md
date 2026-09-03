@@ -75,3 +75,65 @@ bit-identical: every sigma entry, the diagonal, the Davidson energies). Binaries
 - `qcd2_dmrg` sha256 a0bcdef8a395cc0dc757f82c4b36497d01455b81e785b847a3a9a042e1dc55cc
 - `qcd2` sha256 c4c5b9a4741a39669304575a8d7d9437e915e6476ff495d678165c23fbf330e2
 - rustc rustc 1.95.0 (59807616e 2026-04-14), nvcc cuda_12.0.r12.0/compiler.32267302_0
+
+---
+
+## E7 — G0′ on the symmetric arm: **FIRED** at x = 4, B = 1 (2026-09-03, appended as the rungs land)
+
+*Read against `GF2A_AMENDMENT_1.md` §A1.3, which stakes: at N = 8, both x, all three
+sectors, `|E₀(exact) − E₀(MPS-sym, χ)| ≤ 1e-6` at some χ on the warm ladder 64 → 128 → 256,
+and "a sector that meets none of the ladder's χ fires G0′ for the arm". The exact arm's
+column above is the referee; the symmetric arm's own convergence test (energy change
+≤ 1e-10·max(1,|E|), discarded weight ≤ 1e-8, at least four sweeps) is printed per rung.*
+
+| x | B | n_q | states | χ | E₀(MPS-sym) | miss vs exact | ≤ 1e-6 | arm's own verdict | discarded | sweeps |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 4 | 2 | 18 | 21,952 | 64 | −36.639986332414 | +1.190e-4 | no | not converged | 7.23e-7 | 60 |
+| 4 | 2 | 18 | 21,952 | 128 | −36.640105311856 | +4.544e-9 | **MEETS** | converged | 3.33e-11 | 4 |
+| 4 | 2 | 18 | 21,952 | 256 | −36.640105316416 | −1.599e-11 | **MEETS** | converged | 1.96e-18 | 4 |
+| 9 | 2 | 18 | 21,952 | 64 | −87.526797317669 | +1.975e-4 | no | not converged | 5.19e-7 | 60 |
+| 9 | 2 | 18 | 21,952 | 128 | −87.526994855406 | +3.094e-9 | **MEETS** | converged | 1.01e-11 | 4 |
+| 9 | 2 | 18 | 21,952 | 256 | −87.526994858459 | +4.100e-11 | **MEETS** | converged | 1.48e-19 | 4 |
+| **4** | **1** | **15** | **175,616** | **64** | −47.994211358802 | **+2.271e-3** | **no** | not converged | 7.52e-6 | 60 |
+| **4** | **1** | **15** | **175,616** | **128** | −47.996352367153 | **+1.302e-4** | **no** | not converged | 1.89e-7 | 60 |
+| **4** | **1** | **15** | **175,616** | **256** | −47.996416223802 | **+6.634e-5** | **no** | **converged** | 2.98e-9 | **4** |
+
+**G0′ FIRES.** `x = 4, B = 1` meets none of the ladder's χ — its best rung is 66× outside
+the stake — and by §A1.3's own words that fires the gate for the arm. The ladder is not
+extended past 256 without a further amendment, and by §A1.6 **nothing downstream is read:
+G1′, G2 and G3 stay unread on the symmetric arm.** `x = 4, B = 0` and both `x = 9`
+non-trivial sectors are still running and are appended when they land; they cannot un-fire
+this.
+
+**The discarded weight cannot buy the error, which is the same conviction that retired the
+penalised arm (§A1.1).** On the sector that passes, the two quantities track: at `x = 4,
+B = 2, χ = 128` a discarded weight of 3.3e-11 comes with a 4.5e-9 miss, a ratio of ~140. On
+the sector that fires, `χ = 256` reports a discarded weight of 3.0e-9 with a 6.6e-5 miss —
+a ratio of ~22,000, two orders worse. A truncation that small cannot be responsible for an
+error that large, so the state is not truncated; it is **converged inside the wrong
+variational manifold**.
+
+**Two measured facts point at the ladder itself, and neither is a mechanism yet.**
+
+1. **The lower rungs never converged.** χ = 64 and χ = 128 both ran the full 60 sweeps with
+   `converged = false`, so the warm ladder carried a state that had not converged at
+   χ = 128 into χ = 256.
+2. **The top rung then converged in the MINIMUM four sweeps.** That is the fixed-point
+   symptom this instrument has already been caught by once (§A1.8.1): once χ is large
+   enough that truncation stops moving the state, the sweep-to-sweep energy change falls
+   under the test's leg (a) whether or not the state is right. The passing sector shows the
+   same four-sweep signature at 1e-11, so the signature alone does not discriminate — the
+   miss does.
+
+**The named suspect, stated as the next test rather than as a finding.** §A1.8.2 established
+on this instrument that a charge sector absent from both neighbouring bonds can never
+reappear, which is why the ladder starts at 64 and rescues blocks in the split. The
+hypothesis is that at N = 8, B = 1 — eight times the states of the sector that passes — the
+χ = 64 rung's block content is already deficient and every warmer rung refines inside that
+deficiency. **It is untested here.** The test that would separate it from ordinary
+metastability is a COLD χ = 256 run of that sector from a fresh seeded labelled start: if a
+cold 256 reaches the referee, the ladder's inheritance is the mechanism and the gate's
+warm-ladder design is what fired; if a cold 256 lands in the same place, the arm's ansatz or
+its label set is short at this sector size and that is a deeper finding. Either way it needs
+an amendment, because the frozen ladder is 64 → 128 → 256 warm and this document does not
+get to change it after reading it.

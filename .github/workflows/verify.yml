@@ -31,7 +31,20 @@ jobs:
   engine:
     name: Engine gates (Rust)
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    # RAISED 40 -> 75 on 2026-09-03, from the clock rather than from a feeling, and it
+    # hides no failure. The last four runs were CANCELLED at exactly 40:00 with no gate
+    # having failed: run 33722596717 passed every gate through "holon-chem
+    # referee/FCI/pair/E1" at 06:55:20 and was killed at 06:58 with five gates left (the
+    # holon-render suites, q8-mps C2, the two wasm artifacts) — all five green in a full
+    # local run of the same script the same night (57 PASS). The last SUCCESS was
+    # 09-02T16:05, at 33 minutes; the suite has grown since (the water door, the shipped
+    # (O,O) curve, a stepping water scene in the smoke gate) and now needs ~50.
+    #
+    # OWNER: ci-manager. EXIT: this is a budget, not a fix — the job wants splitting (the
+    # per-crate gates and the two artifact gates are independent) or the long poles want
+    # profiling. A timeout that cancels a green run teaches everyone to ignore the
+    # workflow, which is the state this raise is undoing.
+    timeout-minutes: 75
     defaults:
       run:
         working-directory: engine

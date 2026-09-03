@@ -415,3 +415,34 @@ What this licenses: the exam is restaked, ALONE, with the χ per sector A2.6 alr
 for the ladder — `GF2A_AMENDMENT_3.md` — and the three firing sectors are re-run at their
 ceilings. Nothing in this section is re-read by that; G0″ fired at χ = 256 and stays fired
 there.
+
+---
+
+## A3's exam (2026-09-03): G0‴ PASSES on every sector at the ceiling its rank demands
+
+*`qcd2_a2/rows/a3*.json`, scored by `qcd2_a2/score3.py`; the B = 2 sectors passed at χ = 256
+in A2's exam (rank 366, within 1.4× of χ) and were not re-run. Every run on the device,
+checkpointed per sweep — and resumed once, from exactly those checkpoints, after the session
+running them died mid-rung (R1 in the field).*
+
+| x | B | ceiling | rank of the cut | mixed miss at the ceiling | cold miss at the ceiling | \|cold − mixed\| | top rung |
+|---|---|---|---|---|---|---|---|
+| 4 | 1 | 512 | 1,582 | **+1.45e-10** | +1.45e-10 | **0** (identical bits) | converged, 4 sw, 100 s |
+| 9 | 1 | 512 | 1,582 | **+6.15e-10** | +6.16e-10 | 1.0e-12 | converged, 4 sw, 82 s |
+| 4 | 0 | 1024 | 4,096 | **+1.86e-10** | +5.5e-11 | 1.3e-10 | converged, 4 sw, 567 s |
+| 9 | 0 | 1024 | 4,096 | **+1.58e-9** | +4.1e-10 | 1.2e-9 | converged, 4 sw, 577 s |
+
+**The arm passes its exam by three to four orders on every sector**, at ceilings that are
+still 3–4× under the exact rank. The ladder's rungs show the floor moving with χ exactly as
+the counting said it would — at x = 9, B = 0: 4.8e-2 → 1.8e-3 → 2.9e-5 → 1.0e-7 → 1.6e-9 for
+χ = 64 → 1024 — and the cold start lands on the mixed ladder's number every time, which is
+the floor's signature again, now below the stake instead of above it. On x = 4, B = 1 the two
+routes agree to the bit.
+
+**V1 passes on every sector** over the rungs whose exact variance is within its lease
+(64 / 128 / 256). At χ = 512 the exact variance prices itself at 18.5 GB and at χ = 1024 at
+74 GB against an 8.6 GB lease, and REFUSES BY NAME — the refusal it was built to make, and
+the first thing the volume ladder needs cured: the two-site variance
+(Hubig–Haegeman–Schollwöck 2018), cited in `variance.rs` as the exit, is now owed.
+
+What this licenses (A3.3): with plant (vii) — running — the ladder of A2.6.

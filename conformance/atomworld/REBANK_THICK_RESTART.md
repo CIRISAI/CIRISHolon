@@ -57,7 +57,7 @@ page's own gate. **Measured per artifact, never inferred from a rule.**
 |---|---|---|---|---|
 | `holon-chem/tests/data/s2/s2_water_table.txt` | current-engine-output | **YES** | 26,386 of 105,105 nodes; median 3.98e-13, p99 7.22e-12, max 1.73e-7 Ha — 4,400× inside the campaign's declared 7.68e-4 | re-banked; superseded bytes kept as `s2_water_table.stale_pre17bc115.txt`; the record and the new ~1e-7 long-range floor are in `SATURATION2_RESULTS.md` |
 | `docs/workbench/tables/s2_water_table.txt` | served copy of the above | **YES** | byte-identical to the re-banked table (the smoke gate requires it) | re-copied; the page's SHA-256 pin updated |
-| `holon-render/tests/data/many_body_identity.receipt` | current-engine-output | **YES** | 6 of 40 pinned entries, all forces, on one atom of each scene; ≤1.07e-7 Ha/bohr against a receipt whose scale is 0.788 | re-banked via `HOLON_MANY_BODY_RECEIPT=write` |
+| `holon-render/tests/data/many_body_identity.receipt` | current-engine-output | **YES, twice** | against the solver alone: 6 of 40 pinned entries, all forces, on one atom of each scene, ≤1.07e-7 Ha/bohr on a receipt whose scale is 0.788. Against the re-banked table beneath it: trailing-bit moves (~1e-11) across most force entries | re-banked via `HOLON_MANY_BODY_RECEIPT=write` AFTER the table (see below); verified self-reproducing |
 | `docs/workbench/tables/HO.json` | current-engine-output | **NO** (numerically) | 0 of 192 energy knots differ; every scalar bit-identical; only `generation_ms` changed | re-emitted anyway (the field is part of the file); pin updated |
 | `docs/workbench/tables/O2.json` | current-engine-output | n/a — first emission | 2,025 determinants, 192 knots, 1,785 s, exit `converged`, uncertainty 9.99e-11 | emitted UNDER the new regime; it is the curve the old restart could not emit without capping a knot |
 | `docs/workbench/law_probe.json` | current-engine-output | **NO** | the wasm/native bit-identity probe re-ran clean against the rebuilt artifact | untouched |
@@ -83,7 +83,7 @@ The same ordering governs the page: the served copy of the table, then the SHA-2
 | suite | result |
 |---|---|
 | `cargo test --release -p holon-chem` | **252 tests, 0 failures** — including the identity gate `water.rs::the_committed_table_is_this_build_s_own_output` on the re-banked table, the 50-digit external referee `water_referee.rs` (R1), and every pair/element/dimer/ion bank |
-| `cargo test --release -p holon-render` | green after the receipt was re-banked in dependency order (`many_body_identity` 3/3); the full `--no-fail-fast` run is the record |
+| `cargo test --release -p holon-render --no-fail-fast` | **228 tests, 0 failures** — the run after the receipt was re-banked in dependency order (`many_body_identity` 3/3) |
 | `docs/workbench/smoke.mjs` | **376 checks, 0 failures**, including the new arms: the shipped (H,O) and (O,O) curves ADMITTED by the bank's provenance gate, the water door's bit-exact push, the fence count dropping by exactly the (O,H,H) family, and a STEPPING O:2H scene with its census |
 
 **No external referee moved.** `water_referee.json` and `referee_h2_sto3g_fci.json` are

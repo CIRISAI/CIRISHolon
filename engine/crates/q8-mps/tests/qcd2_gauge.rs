@@ -335,3 +335,25 @@ fn the_energy_variance_is_the_dense_one_and_vanishes_on_the_eigenstate() {
         Ok(_) => panic!("a price above the lease was not refused"),
     }
 }
+
+
+// ---------------------------------------------------------------- E14 item 3b: White's mixing
+
+/// With the density-matrix perturbation on, the sweep still lands on the exact referees
+/// where the sector is exactly representable (the perturbation chooses the basis and
+/// injects nothing), and the α = 0 path is untouched (every gate above ran on it).
+#[test]
+fn mixing_keeps_the_exact_referees_and_injects_nothing() {
+    use q8_mps::symmetric::{random_start, SymConfig};
+    for (n, x, b, chi, e_ref) in [(4usize, 4.0f64, 0i32, 64usize, REFEREE[0].2), (4, 4.0, 1, 64, REFEREE[1].2), (6, 4.0, 2, 64, -19.1570928549)] {
+        let q = Qcd2::new(n, x);
+        let n_q = q.quarks(b);
+        let sector = q.sector(n_q).unwrap();
+        let mut cfg = SymConfig::amendment(chi, 40);
+        cfg.mixing = 1e-4;
+        let (r, _) = q.ground_energy_sym_from(&[], n_q, &cfg, Some(random_start(&sector, 256, 7))).expect("mixed sweep");
+        assert!((r.energy - e_ref).abs() <= 1e-8, "N={n} B={b} with mixing 1e-4: {:.10} vs exact {e_ref:.10}", r.energy);
+        assert!(r.converged, "N={n} B={b} with mixing: not converged after {} sweeps", r.sweeps_used);
+        println!("N={n} B={b} chi={chi} mixing 1e-4: E {:.10} (exact {e_ref:.10}), {} sweeps, {} Lanczos its", r.energy, r.sweeps_used, r.lanczos_iterations_total);
+    }
+}

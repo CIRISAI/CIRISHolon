@@ -25,6 +25,7 @@ fn main() {
     let rtol: f64 = get("--rtol").map_or(1e-9, |v| v.parse().unwrap());
     let sym = a.iter().any(|s| s == "--sym");
     let reseed = a.iter().any(|s| s == "--reseed");
+    let mix: f64 = get("--mix").map_or(0.0, |v| v.parse().unwrap());
 
     let mutant = a.iter().any(|s| s == "--mutant");
     let q = Qcd2::new(n, x);
@@ -42,6 +43,7 @@ fn main() {
             let t1 = Instant::now();
             let mut cfg = q8_mps::symmetric::SymConfig::amendment(chi, sweeps);
             cfg.ignore_labels = mutant;
+            cfg.mixing = mix;
             match q.ground_energy_sym_from(&occ, n_q, &cfg, state.take()) {
                 Ok((r, labels)) => {
                     let max_dw = r.discarded_weight.iter().cloned().fold(0.0f64, f64::max);

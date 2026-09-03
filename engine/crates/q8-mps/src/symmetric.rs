@@ -117,12 +117,22 @@ pub struct SymConfig {
     /// (second order in the motion: skipped bonds that were still turning), tensor motion
     /// (this one — first order, and still perturbs the fixed point).
     pub skip_unmoved: bool,
+    /// E14 item 3, the SUBSPACE EXPANSION Q10_PREREG.md §4 names (White 2005's density-matrix
+    /// perturbation, in the labelled two-site update): the reduced density matrix whose
+    /// eigenvectors become the new bond basis is `ρ + α·P`, where `P` is the unit-trace sum of
+    /// the environment-and-MPO images of the two-site state, blockwise by charge. The state
+    /// kept is still the PROJECTION of ψ — the perturbation chooses the basis, it injects
+    /// nothing — so a block that ψ has no weight in can be opened by the Hamiltonian's own
+    /// direction into it, which is exactly what a warm ladder inheriting a truncated label
+    /// set cannot do by itself (label re-seeding alone left x = 4, B = 1 at 2.65e-5, 60× the
+    /// cold start's 4.3e-7). `0.0` is the plain blockwise SVD path, bit for bit.
+    pub mixing: f64,
 }
 
 impl SymConfig {
     /// The amendment's stated convergence test at bond dimension `chi_max`.
     pub fn amendment(chi_max: usize, max_sweeps: usize) -> SymConfig {
-        SymConfig { chi_max, max_sweeps, rtol: 1e-10, max_discarded: 1e-8, min_sweeps: 4, ignore_labels: false, skip_unmoved: false }
+        SymConfig { chi_max, max_sweeps, rtol: 1e-10, max_discarded: 1e-8, min_sweeps: 4, ignore_labels: false, skip_unmoved: false, mixing: 0.0 }
     }
 }
 
@@ -461,6 +471,304 @@ pub fn split_two_site_sym(
     Some((a_left, a_right, discarded, floor, new_q, mass))
 }
 
+/// The environment-and-MPO images of the two-site state on the LEFT (rows `(l', s)`, one
+/// image per mid channel `c2`): `Φ_{c2}[(l',s),(b,r)] = Σ_{c1,l,a} L[c1][l',l]·W1[c1,c2,s,a]·Ψ[(l,a),(b,r)]`.
+fn left_images(psi: &[f64], chi_l: usize, chi_r: usize, left: &Env, w1: &crate::mpo::MpoSite, live_l: &[usize]) -> Vec<Vec<f64>> {
+    let (m, n) = (2 * chi_l, 2 * chi_r);
+    let mut phis: Vec<Vec<f64>> = vec![Vec::new(); w1.d_r];
+    for &c1 in live_l {
+        // t[(l',a),(b,r)] = Σ_l L[c1][l',l] Ψ[(l,a),(b,r)]
+        let lmat = &left[c1];
+        let mut t = vec![0.0; m * n];
+        for lp in 0..chi_l {
+            for l in 0..chi_l {
+                let lv = lmat[lp * chi_l + l];
+                if lv == 0.0 {
+                    continue;
+                }
+                for a in 0..2 {
+                    let src = (l * 2 + a) * n;
+                    let dst = (lp * 2 + a) * n;
+                    for k in 0..n {
+                        t[dst + k] += lv * psi[src + k];
+                    }
+                }
+            }
+        }
+        for c2 in 0..w1.d_r {
+            for sb in 0..2 {
+                for a in 0..2 {
+                    let wv = w1.get(c1, c2, sb, a);
+                    if wv == 0.0 {
+                        continue;
+                    }
+                    if phis[c2].is_empty() {
+                        phis[c2] = vec![0.0; m * n];
+                    }
+                    let phi = &mut phis[c2];
+                    for lp in 0..chi_l {
+                        let src = (lp * 2 + a) * n;
+                        let dst = (lp * 2 + sb) * n;
+                        for k in 0..n {
+                            phi[dst + k] += wv * t[src + k];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    phis.into_iter().filter(|p| !p.is_empty()).collect()
+}
+
+/// The mirror on the RIGHT, returned TRANSPOSED so the column space reads as rows `(t, r')`:
+/// `Φ'_{c1'}[(t,r'),(l,a)] = Σ_{c2,b,r} R[c2][r',r]·W2[c1',c2,t,b]·Ψ[(l,a),(b,r)]`.
+fn right_images_t(psi: &[f64], chi_l: usize, chi_r: usize, right: &Env, w2: &crate::mpo::MpoSite, live_r: &[usize]) -> Vec<Vec<f64>> {
+    let (m, n) = (2 * chi_l, 2 * chi_r);
+    let mut phis: Vec<Vec<f64>> = vec![Vec::new(); w2.d_l];
+    for &c2 in live_r {
+        // t[(b,r'),(l,a)] = Σ_r R[c2][r',r] Ψ[(l,a),(b,r)]  (stored transposed: n x m)
+        let rmat = &right[c2];
+        let mut t = vec![0.0; n * m];
+        for rp in 0..chi_r {
+            for r in 0..chi_r {
+                let rv = rmat[rp * chi_r + r];
+                if rv == 0.0 {
+                    continue;
+                }
+                for b in 0..2 {
+                    for row in 0..m {
+                        t[(b * chi_r + rp) * m + row] += rv * psi[row * n + b * chi_r + r];
+                    }
+                }
+            }
+        }
+        for c1p in 0..w2.d_l {
+            for tb in 0..2 {
+                for b in 0..2 {
+                    let wv = w2.get(c1p, c2, tb, b);
+                    if wv == 0.0 {
+                        continue;
+                    }
+                    if phis[c1p].is_empty() {
+                        phis[c1p] = vec![0.0; n * m];
+                    }
+                    let phi = &mut phis[c1p];
+                    for rp in 0..chi_r {
+                        let src = (b * chi_r + rp) * m;
+                        let dst = (tb * chi_r + rp) * m;
+                        for k in 0..m {
+                            phi[dst + k] += wv * t[src + k];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    phis.into_iter().filter(|p| !p.is_empty()).collect()
+}
+
+/// The perturbed blockwise split. `psi_rows` is `m x n` row-major with rows in the space that
+/// receives the new basis (the left `(l,a)` space moving right, the right `(b,r)` space —
+/// transposed — moving left); `row_charge[i]` labels row `i`; `images` are the perturbation's
+/// images in the same layout. Returns, in kept order: `(charge, eigenvector over rows, the
+/// projected other-side row = uᵀΨ)`, the discarded weight of `psi` outside the kept space,
+/// the kept-spectrum floor, and the per-block kept mass of `psi`.
+#[allow(clippy::type_complexity)]
+fn mixed_row_split(
+    psi_rows: &[f64],
+    m: usize,
+    n: usize,
+    row_charge: &[Charge],
+    images: &[Vec<f64>],
+    alpha: f64,
+    chi_max: usize,
+) -> Option<(Vec<(Charge, Vec<f64>, Vec<f64>)>, f64, f64, Vec<(Charge, f64)>)> {
+    // the perturbation's total trace, so `alpha` is a FRACTION of the state's own weight
+    let mut ptrace = 0.0;
+    for im in images {
+        ptrace += im.iter().map(|v| v * v).sum::<f64>();
+    }
+    let pscale = if ptrace > 0.0 { alpha / ptrace } else { 0.0 };
+    let mut charges: Vec<Charge> = row_charge.to_vec();
+    charges.sort();
+    charges.dedup();
+    // (eigenvalue, charge, eigenvector over ALL rows)
+    let mut triples: Vec<(f64, Charge, Vec<f64>)> = Vec::new();
+    for &c in &charges {
+        if c == NO_CHARGE {
+            continue;
+        }
+        let rows: Vec<usize> = (0..m).filter(|&i| row_charge[i] == c).collect();
+        let k = rows.len();
+        // rho'_R = Psi_R Psi_R^T + pscale * sum_im Im_R Im_R^T
+        let mut rho = vec![0.0; k * k];
+        for (i, &ri) in rows.iter().enumerate() {
+            for (j, &rj) in rows.iter().enumerate().take(i + 1) {
+                let mut acc = 0.0;
+                let (a, b) = (&psi_rows[ri * n..ri * n + n], &psi_rows[rj * n..rj * n + n]);
+                for x in 0..n {
+                    acc += a[x] * b[x];
+                }
+                let mut pert = 0.0;
+                for im in images {
+                    let (a, b) = (&im[ri * n..ri * n + n], &im[rj * n..rj * n + n]);
+                    for x in 0..n {
+                        pert += a[x] * b[x];
+                    }
+                }
+                let v = acc + pscale * pert;
+                rho[i * k + j] = v;
+                rho[j * k + i] = v;
+            }
+        }
+        if rho.iter().all(|v| *v == 0.0) {
+            continue;
+        }
+        // symmetric PSD: its SVD is its eigendecomposition
+        let svd = crate::svd::jacobi_svd(&rho, k, k);
+        if !svd.converged {
+            return None;
+        }
+        for (e, &lam) in svd.s.iter().enumerate() {
+            if lam <= 0.0 {
+                continue;
+            }
+            let mut u_full = vec![0.0; m];
+            for (i, &ri) in rows.iter().enumerate() {
+                u_full[ri] = svd.u[e][i];
+            }
+            triples.push((lam, c, u_full));
+        }
+    }
+    if triples.is_empty() {
+        return None;
+    }
+    triples.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
+    const BLOCK_FLOOR: f64 = 1e-12;
+    let mut keep = vec![false; triples.len()];
+    for kf in keep.iter_mut().take(chi_max.min(triples.len())) {
+        *kf = true;
+    }
+    let top = triples[0].0;
+    let mut have: Vec<Charge> = triples.iter().zip(&keep).filter(|(_, k)| **k).map(|(t, _)| t.1).collect();
+    for (i, t) in triples.iter().enumerate() {
+        if !keep[i] && t.0 >= BLOCK_FLOOR * top && !have.contains(&t.1) {
+            keep[i] = true;
+            have.push(t.1);
+        }
+    }
+    let mut kept: Vec<(Charge, Vec<f64>, Vec<f64>)> = Vec::new();
+    let mut kept_weight = 0.0;
+    let mut mass: Vec<(Charge, f64)> = Vec::new();
+    let (mut lmax, mut lmin) = (0.0f64, f64::INFINITY);
+    for (t, &k) in triples.iter().zip(&keep) {
+        if !k {
+            continue;
+        }
+        let (lam, c, u) = t;
+        lmax = lmax.max(*lam);
+        lmin = lmin.min(*lam);
+        // the projected other side: row_i = u^T Psi
+        let mut proj = vec![0.0; n];
+        for (ri, &uv) in u.iter().enumerate() {
+            if uv == 0.0 {
+                continue;
+            }
+            let row = &psi_rows[ri * n..ri * n + n];
+            for x in 0..n {
+                proj[x] += uv * row[x];
+            }
+        }
+        let w: f64 = proj.iter().map(|v| v * v).sum();
+        kept_weight += w;
+        match mass.iter_mut().find(|q| q.0 == *c) {
+            Some(q) => q.1 += w,
+            None => mass.push((*c, w)),
+        }
+        kept.push((*c, u.clone(), proj));
+    }
+    let total: f64 = psi_rows.iter().map(|v| v * v).sum();
+    let discarded = (total - kept_weight).max(0.0);
+    let floor = if lmax > 0.0 { lmin / lmax } else { 0.0 };
+    Some((kept, discarded, floor, mass))
+}
+
+/// The blockwise split WITH White's perturbation (`SymConfig::mixing > 0`): the same
+/// return as [`split_two_site_sym`], the new basis chosen from `ρ + α·P`.
+#[allow(clippy::too_many_arguments)]
+pub fn split_two_site_sym_mixed(
+    psi: &[f64],
+    q_l: &[Charge],
+    q_r: &[Charge],
+    e1: Charge,
+    e2: Charge,
+    chi_max: usize,
+    absorb_s_left: bool,
+    alpha: f64,
+    left: &Env,
+    right: &Env,
+    w1: &crate::mpo::MpoSite,
+    w2: &crate::mpo::MpoSite,
+    live_l: &[usize],
+    live_r: &[usize],
+) -> Option<(TensorSite, TensorSite, f64, f64, Vec<Charge>, Vec<(Charge, f64)>)> {
+    let (chi_l, chi_r) = (q_l.len(), q_r.len());
+    let (m, n) = (2 * chi_l, 2 * chi_r);
+    if !absorb_s_left {
+        // moving RIGHT: the left (l,a) space receives the new basis
+        let row_charge: Vec<Charge> = (0..m).map(|i| if i % 2 == 1 { charge_add(q_l[i / 2], e1) } else { q_l[i / 2] }).collect();
+        let images = left_images(psi, chi_l, chi_r, left, w1, live_l);
+        let (kept, dw, floor, mass) = mixed_row_split(psi, m, n, &row_charge, &images, alpha, chi_max)?;
+        let chi_new = kept.len();
+        let mut a_left = TensorSite::zeros(chi_l, chi_new);
+        let mut a_right = TensorSite::zeros(chi_new, chi_r);
+        let mut new_q = Vec::with_capacity(chi_new);
+        for (i, (c, u, proj)) in kept.iter().enumerate() {
+            for l in 0..chi_l {
+                for a in 0..2 {
+                    a_left.set(a, l, i, u[l * 2 + a]);
+                }
+            }
+            for b in 0..2 {
+                for r in 0..chi_r {
+                    a_right.set(b, i, r, proj[b * chi_r + r]);
+                }
+            }
+            new_q.push(*c);
+        }
+        Some((a_left, a_right, dw, floor, new_q, mass))
+    } else {
+        // moving LEFT: the right (b,r) space receives the new basis; work on Ψ transposed
+        let mut psi_t = vec![0.0; n * m];
+        for row in 0..m {
+            for col in 0..n {
+                psi_t[col * m + row] = psi[row * n + col];
+            }
+        }
+        let col_charge: Vec<Charge> = (0..n).map(|j| { let (b, r) = (j / chi_r, j % chi_r); if b == 1 { charge_sub(q_r[r], e2) } else { q_r[r] } }).collect();
+        let images = right_images_t(psi, chi_l, chi_r, right, w2, live_r);
+        let (kept, dw, floor, mass) = mixed_row_split(&psi_t, n, m, &col_charge, &images, alpha, chi_max)?;
+        let chi_new = kept.len();
+        let mut a_left = TensorSite::zeros(chi_l, chi_new);
+        let mut a_right = TensorSite::zeros(chi_new, chi_r);
+        let mut new_q = Vec::with_capacity(chi_new);
+        for (i, (c, v, proj)) in kept.iter().enumerate() {
+            for b in 0..2 {
+                for r in 0..chi_r {
+                    a_right.set(b, i, r, v[b * chi_r + r]);
+                }
+            }
+            for l in 0..chi_l {
+                for a in 0..2 {
+                    a_left.set(a, l, i, proj[l * 2 + a]);
+                }
+            }
+            new_q.push(*c);
+        }
+        Some((a_left, a_right, dw, floor, new_q, mass))
+    }
+}
+
 /// One two-site update at bond `j`: `(energy, discarded, residual, floor, iterations, new labels)`.
 #[allow(clippy::too_many_arguments)]
 fn update(
@@ -570,8 +878,12 @@ fn update(
     // oscillated by 3.7e-6 with a three-sweep period on N = 6, B = 0 at χ = 64. Splitting at
     // `max(chi_max, mid)` keeps the whole rank and the re-canonicalisation is exact.
     let chi_split = if skip { cfg.chi_max.max(mid) } else { cfg.chi_max };
-    let (a_left, a_right, dw, floor, new_q, mass) =
-        split_two_site_sym(&gs.vector, q_l, q_r, e1, e2, chi_split, absorb_s_left).ok_or(SymRefusal::EmptyCut { bond: j })?;
+    let (a_left, a_right, dw, floor, new_q, mass) = if cfg.mixing > 0.0 && !skip {
+        split_two_site_sym_mixed(&gs.vector, q_l, q_r, e1, e2, chi_split, absorb_s_left, cfg.mixing, left_env, right_env, w1, w2, &live_l, &live_r)
+            .ok_or(SymRefusal::EmptyCut { bond: j })?
+    } else {
+        split_two_site_sym(&gs.vector, q_l, q_r, e1, e2, chi_split, absorb_s_left).ok_or(SymRefusal::EmptyCut { bond: j })?
+    };
     tensors[j] = a_left;
     tensors[j + 1] = a_right;
     TIMING.with(|t| t.borrow_mut().split += t_split.elapsed().as_secs_f64());
@@ -653,8 +965,19 @@ pub fn dmrg_sweep_sym(
     let mut block_mass: Vec<Vec<(Charge, f64)>> = vec![Vec::new(); l.saturating_sub(1)];
     let mut bonds_skipped = 0usize;
     let mut right_envs = all_right_envs(&tensors, mpo);
+    // THE MIXING SCHEDULE. White's perturbation chooses the kept basis while the state is
+    // still moving and must be OFF at the end, or the basis it leaves behind is a perturbed
+    // one — measured: constant α = 1e-4 left N = 6, B = 2 at χ = 64 1.7e-8 above a referee
+    // the plain split reaches to 1e-11. The rule: mix while the last sweep's energy change
+    // was above 100·rtol·|E|, run unmixed once it is not, and declare convergence only on an
+    // UNMIXED sweep. `cfg.mixing` is the ceiling; `sweep_cfg` is what this sweep runs with.
+    let mut sweep_cfg = cfg.clone();
+    let mut mixed_last;
     for sweep in 0..cfg.max_sweeps {
         sweeps_used = sweep + 1;
+        let still_moving = prev_energy.is_infinite() || (last_energy - prev_energy).abs() > 100.0 * cfg.rtol * last_energy.abs().max(1.0);
+        sweep_cfg.mixing = if cfg.mixing > 0.0 && still_moving { cfg.mixing } else { 0.0 };
+        mixed_last = sweep_cfg.mixing > 0.0;
         let snapshot: Vec<TensorSite> = tensors.clone();
         // A bond is skippable when its two TENSORS did not move in the previous sweep — the
         // relative Frobenius change of both sites inside `sqrt(rtol)`. Two earlier criteria
@@ -680,7 +1003,7 @@ pub fn dmrg_sweep_sym(
         for j in 0..(l - 1) {
             let (q_l, q_r) = (labels[j].clone(), labels[j + 2].clone());
             let skip = skippable[j];
-            let (e, dw, resid, sf, it, new_q, mass) = update(&mut tensors, &q_l, &q_r, sector, mpo, j, cfg, false, &left_envs[j], &right_envs[j + 2], skip)?;
+            let (e, dw, resid, sf, it, new_q, mass) = update(&mut tensors, &q_l, &q_r, sector, mpo, j, &sweep_cfg, false, &left_envs[j], &right_envs[j + 2], skip)?;
             labels[j + 1] = new_q;
             last_energy = e;
             bond_energy[j] = e;
@@ -706,7 +1029,7 @@ pub fn dmrg_sweep_sym(
         for j in (0..(l - 1)).rev() {
             let (q_l, q_r) = (labels[j].clone(), labels[j + 2].clone());
             let skip = skippable[j];
-            let (e, dw, resid, sf, it, new_q, mass) = update(&mut tensors, &q_l, &q_r, sector, mpo, j, cfg, true, &left_envs[j], &right_envs[j + 2], skip)?;
+            let (e, dw, resid, sf, it, new_q, mass) = update(&mut tensors, &q_l, &q_r, sector, mpo, j, &sweep_cfg, true, &left_envs[j], &right_envs[j + 2], skip)?;
             labels[j + 1] = new_q;
             last_energy = e;
             bond_energy[j] = e;
@@ -731,8 +1054,8 @@ pub fn dmrg_sweep_sym(
         if std::env::var_os("Q8_TIMING").is_some() {
             let st = take_stage_seconds();
             eprintln!(
-                "q8 sweep {} chi_max {}: seed {:.2}s plan {:.2}s lanczos {:.2}s split {:.2}s envs {:.2}s | E {:.10} skipped {}",
-                sweeps_used, cfg.chi_max, st.seed, st.plan, st.lanczos, st.split, st.envs, last_energy, bonds_skipped
+                "q8 sweep {} chi_max {} mix {:.0e}: seed {:.2}s plan {:.2}s lanczos {:.2}s split {:.2}s envs {:.2}s | E {:.10} skipped {}",
+                sweeps_used, cfg.chi_max, sweep_cfg.mixing, st.seed, st.plan, st.lanczos, st.split, st.envs, last_energy, bonds_skipped
             );
         }
         for j in 0..l.saturating_sub(1) {
@@ -751,7 +1074,7 @@ pub fn dmrg_sweep_sym(
         energy_history.push(last_energy);
         let max_dw = discarded.iter().cloned().fold(0.0f64, f64::max);
         let de = (last_energy - prev_energy).abs();
-        if sweeps_used >= cfg.min_sweeps && de <= cfg.rtol * last_energy.abs().max(1.0) && max_dw <= cfg.max_discarded {
+        if !mixed_last && sweeps_used >= cfg.min_sweeps && de <= cfg.rtol * last_energy.abs().max(1.0) && max_dw <= cfg.max_discarded {
             converged = true;
             break;
         }

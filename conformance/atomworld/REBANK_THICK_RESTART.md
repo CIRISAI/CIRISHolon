@@ -1,7 +1,7 @@
 # Re-banking checklist — the thick-restart arithmetic-regime boundary
 
-**Owner:** lead (solver lane). **Boundary:** the commit carrying `tier.rs`'s thick restart,
-2026-09-02. **Cause line, carried verbatim by every re-banking commit under this boundary:**
+**Owner:** lead (solver lane). **Boundary:** commit `2bfb9ba`, 2026-09-02 (the commit carrying
+`tier.rs`'s thick restart and every artifact re-banked with it). **Cause line, carried verbatim by every re-banking commit under this boundary:**
 *re-banked under the thick-restart regime*.
 
 This file is the successor of `REBANK_4884704.md` and follows its ruling exactly: the regime

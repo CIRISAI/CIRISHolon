@@ -233,3 +233,48 @@ reasons given there. The misfit reading does not rescue the arm — it explains 
 own record said everything was fine while it was wrong by 5.9e-3, and it says the successor
 amendment must stake a criterion that an independent referee can fail, not one the solver
 can satisfy by stopping.
+
+---
+
+## The ladder was scaled to the LABEL COUNT, not to the RANK (2026-09-03, combinatorics, no run)
+
+*Pure counting on the sector structure — permanent, cheap, and available before any of the
+compute above was spent. The chain is 8 spatial sites x 3 colours = 24 JW modes, site-major
+(colour = j mod 3, §A1.2), so the middle cut leaves 4 modes of each colour on each side.*
+
+| B | n_q | per colour | states in sector | **labels** at mid-bond | largest single block | **exact Schmidt rank** | χ = 256 is | measured miss |
+|---|---|---|---|---|---|---|---|---|
+| 2 | 18 | 6 | 21,952 | **27** | 216 | **366** | 1.4× short | **1.6e-11** |
+| 1 | 15 | 5 | 175,616 | **64** | 216 | **1,582** | 6.2× short | 6.6e-5 |
+| 0 | 12 | 4 | 343,000 | **125** | 216 | **4,096** | 16× short | 5.9e-3 |
+
+**§A1.8.2 chose the ladder's floor because "64 is the middle bond's label count", and 64 is
+exactly the label count of the sector that fired.** The label count is the number of charge
+BLOCKS on that bond; the rank is the number of STATES, and the largest single block on it
+holds 216 of them. So the ladder's three rungs give **1, 2 and 4 states per label** at
+B = 1 — and at B = 0, whose 125 labels the ladder never re-scaled for, χ = 256 is two states
+per label against blocks of 216.
+
+**That is the whole ordering of the results, and it was computable in advance.** States per
+label at the top rung: 9.5 (B=2, passes at 1e-11), 4.0 (B=1, misses by 6.6e-5), 2.0 (B=0,
+misses by 5.9e-3). The gate's ceiling was set by counting the wrong thing — an enumerated
+count read as an effective one — and no sector's ceiling was ever checked against the rank
+its own cut requires. **χ ≤ 256 could not have been exact in ANY of the three**, including
+the one that passed; B = 2 passes because its singular values decay fast enough, which is a
+fact about the state and not about the budget.
+
+**What it does and does not license.** It does NOT un-fire G0′: the arm still missed, and a
+gate is read on what happened. It does say the miss is an ANSATZ-REACH statement with a
+number attached, not a mystery, and it makes the successor's ladder derivable rather than
+chosen: **scale χ by the rank of the cut, not by the count of its labels**, and state states
+per label as the quantity the ladder walks. It also sharpens the cold-vs-warm diagnostic
+already running: at 4 states per label a cold start cannot buy resolution that is not there,
+so if cold ≈ warm the limit is truncation, and only if cold ≫ warm is the inheritance the
+mechanism.
+
+**And it prices the volume honestly.** At N = 40, the ladder's own target, the middle cut has
+20 modes of each colour and the exact rank is astronomically beyond any χ — as it is for
+every DMRG worth running. Exactness is not the goal there and never was; the decay rate is.
+Which is exactly why the N = 8 exam is worth passing: it is the one place where the rank is
+close enough to touch, so it is the only place the arm's decay can be measured against an
+exact answer rather than asserted.

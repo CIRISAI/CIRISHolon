@@ -654,8 +654,14 @@ pub fn apply_effective_h_mpo_live(
     live_l: &[usize],
     live_r: &[usize],
 ) -> Vec<f64> {
-    let (d_l, d_mid, d_r) = (w1.d_l, w1.d_r, w2.d_r);
-    debug_assert_eq!(d_mid, w2.d_l);
+    let t1 = step1_right(right, psi, chi_l, chi_r, w2.d_r, live_r);
+    let t3 = apply_mpo_pair(w1, w2, &t1, chi_l, chi_r);
+    step4_left(left, &t3, chi_l, chi_r, live_l)
+}
+
+/// Step 1 of the two-site operator, DENSE: `t1[c2][l,a,b][r_out] = Σ_{r_in} R[c2][r_out,r_in]·ψ[l,a,b,r_in]`
+/// over the live right channels, threaded over disjoint channel blocks.
+pub(crate) fn step1_right(right: &Env, psi: &[f64], chi_l: usize, chi_r: usize, d_r: usize, live_r: &[usize]) -> Vec<f64> {
     let nthreads = threads();
     // Step 1: t1[c2][l_in][a][b][r_out] = sum_{r_in} R[c2][r_out,r_in] * psi[l_in,a,b,r_in]
     // over the LIVE right channels only, threaded over disjoint channel blocks.
@@ -704,6 +710,15 @@ pub fn apply_effective_h_mpo_live(
             });
         }
     }
+    t1
+}
+
+/// Steps 2 and 3: the two MPO sites applied to `t1`, giving `t3[c1][l_in,s,t,r_out]`. Cheap
+/// beside steps 1 and 4 (the MPO is sparse and the sums run over channels, not bonds), so it
+/// is shared by the dense and the block-sparse operator unchanged.
+pub(crate) fn apply_mpo_pair(w1: &crate::mpo::MpoSite, w2: &crate::mpo::MpoSite, t1: &[f64], chi_l: usize, chi_r: usize) -> Vec<f64> {
+    let (d_l, d_mid, d_r) = (w1.d_l, w1.d_r, w2.d_r);
+    debug_assert_eq!(d_mid, w2.d_l);
     // Step 2: t2[c1'][l_in][a][t][r_out] = sum_{b,c2} t1[c2][l_in][a][b][r_out] * W2[c1',c2,t,b]
     let mut t2 = vec![0.0; d_mid * chi_l * 2 * 2 * chi_r];
     for c1p in 0..d_mid {
@@ -751,10 +766,13 @@ pub fn apply_effective_h_mpo_live(
             }
         }
     }
+    t3
+}
 
-    // Step 4: out[l_out][s][t][r_out] = sum_{c1,l_in} L[c1][l_out,l_in] * t3[c1][l_in][s][t][r_out]
-    // over the LIVE left channels, threaded over DISJOINT l_out rows; the c1 and l_in sums
-    // keep their serial order inside a row, so every thread count gives the same bits.
+/// Step 4, DENSE: `out[l_out,s,t,r_out] = Σ_{c1,l_in} L[c1][l_out,l_in]·t3[c1][l_in,s,t,r_out]` over the
+/// live left channels, threaded over DISJOINT `l_out` rows with the serial order inside a row kept.
+pub(crate) fn step4_left(left: &Env, t3: &[f64], chi_l: usize, chi_r: usize, live_l: &[usize]) -> Vec<f64> {
+    let nthreads = threads();
     let mut out = vec![0.0; chi_l * 2 * 2 * chi_r];
     let row = 2 * 2 * chi_r;
     let step4 = |l_out: usize, outrow: &mut [f64]| {

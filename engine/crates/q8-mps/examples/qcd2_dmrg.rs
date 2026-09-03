@@ -24,6 +24,8 @@ fn main() {
     let sweeps: usize = get("--sweeps").map_or(120, |v| v.parse().unwrap());
     let rtol: f64 = get("--rtol").map_or(1e-9, |v| v.parse().unwrap());
     let sym = a.iter().any(|s| s == "--sym");
+    let reseed = a.iter().any(|s| s == "--reseed");
+
     let mutant = a.iter().any(|s| s == "--mutant");
     let q = Qcd2::new(n, x);
     let n_q = q.quarks(b);
@@ -48,7 +50,14 @@ fn main() {
                         r.energy, r.sweeps_used, r.lanczos_iterations_total, r.converged, r.worst_lanczos_residual, max_dw,
                         r.bond_dims.iter().cloned().max().unwrap_or(0), t1.elapsed().as_secs_f64()
                     ));
-                    state = Some((r.tensors, labels));
+                    let (mut tensors, mut labels) = (r.tensors, labels);
+                    // E14 item 3: restore every reachable label the rung truncated away
+                    // before the next rung inherits the gap (`--reseed`)
+                    if reseed {
+                        let n = q8_mps::symmetric::reseed_labels(&mut tensors, &mut labels, &sector, 256, 1e-3, 7 + chi as u64);
+                        eprintln!("reseed after chi {chi}: {n} labels restored");
+                    }
+                    state = Some((tensors, labels));
                 }
                 Err(e) => {
                     rungs.push(format!("{{\"chi\":{chi},\"refused\":\"{e}\"}}"));

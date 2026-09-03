@@ -15,4 +15,6 @@ pub mod qcd2;
 pub mod schwinger;
 pub mod svd;
 pub mod symmetric;
+pub mod blocks;
+pub mod variance;
 pub mod tdvp;

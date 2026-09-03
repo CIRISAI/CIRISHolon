@@ -310,6 +310,24 @@ pub struct DmrgResult {
     pub worst_lanczos_residual: f64,
     /// Lanczos iterations summed over every two-site solve: the sweep's true price.
     pub lanczos_iterations_total: usize,
+    // ---- E14 item 2: HOW MUCH THE STATE MOVED, per bond and per site, in the last sweep.
+    // A sweep that records only its discarded weight cannot say which bonds still move,
+    // and E7 measured that the discarded weight is not an error bar; these are the
+    // quantities that separate a converging bond from a stuck one. Empty on the retired
+    // dense sweep, which does not carry labels.
+    /// The local two-site energy at each bond in the last half-sweep.
+    pub bond_energy: Vec<f64>,
+    /// `|e_j(this sweep) − e_j(previous sweep)|` per bond; `INFINITY` on the first sweep.
+    pub bond_energy_delta: Vec<f64>,
+    /// Relative Frobenius change of each site tensor across the last sweep, `NAN` where the
+    /// tensor changed SHAPE (a grown bond is a moved bond by definition).
+    pub site_delta: Vec<f64>,
+    /// Per bond, the kept singular mass `Σσ²` of each charge block in the last split: the
+    /// label-weight measurement — which of a bond's labels carry the state at all.
+    pub block_mass: Vec<Vec<([i32; 4], f64)>>,
+    /// Bond visits whose local solve was SKIPPED under `skip_unmoved` (re-canonicalised
+    /// without a Lanczos), summed over the whole run.
+    pub bonds_skipped: usize,
 }
 
 /// Compute right environments for an arbitrary MPO.
@@ -480,6 +498,11 @@ pub fn dmrg_sweep(
         bond_dims,
         worst_lanczos_residual,
         lanczos_iterations_total,
+        bond_energy: Vec::new(),
+        bond_energy_delta: Vec::new(),
+        site_delta: Vec::new(),
+        block_mass: Vec::new(),
+        bonds_skipped: 0,
     })
 }
 

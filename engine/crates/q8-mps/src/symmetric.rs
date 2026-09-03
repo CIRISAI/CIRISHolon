@@ -70,6 +70,9 @@ pub enum SymRefusal {
     EmptyCut { bond: usize },
     /// The local Lanczos did not converge.
     LanczosFailed { bond: usize },
+    /// An environment was not block-diagonal in the bond's labels: the operator does not
+    /// conserve them (`blocks::NotBlockDiagonal`).
+    NotBlockDiagonal { bond: usize, why: String },
 }
 
 impl std::fmt::Display for SymRefusal {
@@ -82,6 +85,7 @@ impl std::fmt::Display for SymRefusal {
             ),
             SymRefusal::EmptyCut { bond } => write!(f, "bond {bond}: no label-consistent block at the cut"),
             SymRefusal::LanczosFailed { bond } => write!(f, "bond {bond}: the local Lanczos did not converge"),
+            SymRefusal::NotBlockDiagonal { bond, why } => write!(f, "bond {bond}: {why}"),
         }
     }
 }
@@ -98,12 +102,27 @@ pub struct SymConfig {
     pub min_sweeps: usize,
     /// Plant (iv): labels ignored in the mask and the SVD — the retired arm without its penalty.
     pub ignore_labels: bool,
+    /// E14 item 2: skip the local eigensolve on a bond whose two tensors did not move in the
+    /// previous sweep (relative change within `sqrt(rtol)`), and only re-canonicalise it.
+    ///
+    /// OFF, AND MEASURED TO STAY OFF WHERE TRUNCATION IS REAL. On N = 6, B = 0 at χ = 64 the
+    /// skipping arm's energy oscillates 3.7e-6 above the full arm's with a three-sweep period
+    /// (`tests/qcd2_gauge.rs`): a frozen middle bond drifts out of the truncation fixed point
+    /// its neighbours keep moving under, and when its motion finally re-solves it, the split
+    /// truncates it afresh and the state pays that cost again. On a sector the ladder solves
+    /// exactly the option never fires, because the amendment's test converges in the minimum
+    /// sweeps. So under this convergence test skipping buys nothing safe, and it is kept as
+    /// the instrument that measured that, not as a speed-up. Three criteria were tried and
+    /// are recorded at the site: discarded weight (never fires on truncation), local energy
+    /// (second order in the motion: skipped bonds that were still turning), tensor motion
+    /// (this one — first order, and still perturbs the fixed point).
+    pub skip_unmoved: bool,
 }
 
 impl SymConfig {
     /// The amendment's stated convergence test at bond dimension `chi_max`.
     pub fn amendment(chi_max: usize, max_sweeps: usize) -> SymConfig {
-        SymConfig { chi_max, max_sweeps, rtol: 1e-10, max_discarded: 1e-8, min_sweeps: 4, ignore_labels: false }
+        SymConfig { chi_max, max_sweeps, rtol: 1e-10, max_discarded: 1e-8, min_sweeps: 4, ignore_labels: false, skip_unmoved: false }
     }
 }
 
@@ -137,6 +156,37 @@ pub fn labels_of_product(occ: &[bool], sector: &Sector) -> Labels {
 /// start). The retired arm only moved by changing local quark number — the leak its penalty
 /// fought. A superposed environment carries the hopping channels, and the sweep proceeds.
 pub fn random_start(sector: &Sector, chi0: usize, seed: u64) -> (Vec<TensorSite>, Labels) {
+    let l = sector.site_charge.len();
+    let labels = reachable_labels(sector, chi0);
+    let mut st = seed;
+    let mut rnd = || {
+        st = st.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+        ((st >> 11) as f64) / ((1u64 << 53) as f64) - 0.5
+    };
+    let mut tensors = Vec::with_capacity(l);
+    for j in 0..l {
+        let (ql, qr) = (&labels[j], &labels[j + 1]);
+        let mut t = TensorSite::zeros(ql.len(), qr.len());
+        for (li, &a_q) in ql.iter().enumerate() {
+            for a in 0..2 {
+                let q_after = if a == 1 { charge_add(a_q, sector.site_charge[j]) } else { a_q };
+                for (ri, &b_q) in qr.iter().enumerate() {
+                    if b_q == q_after {
+                        t.set(a, li, ri, rnd());
+                    }
+                }
+            }
+        }
+        tensors.push(t);
+    }
+    (tensors, labels)
+}
+
+/// Every charge label a bond can carry in this sector — the counts a left part can hold,
+/// intersected with what the right part must still supply — up to `chi0` of them per bond,
+/// closest to the proportional fill first. The label set `random_start` seeds and the set
+/// `reseed_labels` restores.
+pub fn reachable_labels(sector: &Sector, chi0: usize) -> Labels {
     let l = sector.site_charge.len();
     let k = MAX_CHARGES;
     // capacity of each charge component to the left of bond j and to its right
@@ -177,28 +227,87 @@ pub fn random_start(sector: &Sector, chi0: usize, seed: u64) -> (Vec<TensorSite>
         set.truncate(chi0.max(1));
         labels.push(set);
     }
+    labels
+}
+
+/// LABEL RE-SEEDING — E14 item 3, the cure for the mechanism E7 measured.
+///
+/// A labelled two-site update can only produce labels that combine its two neighbouring
+/// bonds' existing ones, so a charge block truncated away at a low rung of a χ-ladder can
+/// never return once both its neighbours lack the labels that would rebuild it (§A1.8.2).
+/// The warm ladder 64 → 128 → 256 inherited exactly that: at x = 4, B = 1 it read 6.6e-5
+/// above the exact referee where a COLD start at the same χ = 256 read 4.3e-7 — 156× — and
+/// was cheaper (`GF2A_QCD2_RESULTS.md`, the cold diagnostic). Growth by zero-padding is what
+/// `Q10_PREREG.md` §4 bans; this is the labelled form of the growth rule it names instead:
+/// new bond directions that are non-null and physically reachable.
+///
+/// Every reachable label absent from a bond is restored as ONE new bond state, carrying
+/// label-consistent entries of size `eps` relative to the adjacent tensor's largest entry
+/// (deterministic pseudo-random from `seed`), on both tensors the bond joins. The sweep
+/// then decides what the block is worth; it can only do so if the block exists. Returns
+/// how many labels were restored. `chi0` bounds the reachable set as in `random_start`.
+pub fn reseed_labels(tensors: &mut [TensorSite], labels: &mut Labels, sector: &Sector, chi0: usize, eps: f64, seed: u64) -> usize {
+    let l = sector.site_charge.len();
+    assert_eq!(tensors.len(), l);
+    assert_eq!(labels.len(), l + 1);
+    let reach = reachable_labels(sector, chi0);
     let mut st = seed;
     let mut rnd = || {
         st = st.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
         ((st >> 11) as f64) / ((1u64 << 53) as f64) - 0.5
     };
-    let mut tensors = Vec::with_capacity(l);
-    for j in 0..l {
-        let (ql, qr) = (&labels[j], &labels[j + 1]);
-        let mut t = TensorSite::zeros(ql.len(), qr.len());
-        for (li, &a_q) in ql.iter().enumerate() {
-            for a in 0..2 {
-                let q_after = if a == 1 { charge_add(a_q, sector.site_charge[j]) } else { a_q };
-                for (ri, &b_q) in qr.iter().enumerate() {
-                    if b_q == q_after {
-                        t.set(a, li, ri, rnd());
+    let mut restored = 0usize;
+    for j in 1..l {
+        let missing: Vec<Charge> = reach[j].iter().copied().filter(|q| !labels[j].contains(q)).collect();
+        if missing.is_empty() {
+            continue;
+        }
+        let k = missing.len();
+        // the tensor left of bond j grows its right index; the tensor right of it, its left
+        let (lt, rt) = (&tensors[j - 1], &tensors[j]);
+        let scale_l = lt.data.iter().fold(0.0f64, |m, v| m.max(v.abs())).max(f64::MIN_POSITIVE);
+        let scale_r = rt.data.iter().fold(0.0f64, |m, v| m.max(v.abs())).max(f64::MIN_POSITIVE);
+        let mut new_l = TensorSite::zeros(lt.chi_l, lt.chi_r + k);
+        for s in 0..2 {
+            for a in 0..lt.chi_l {
+                for b in 0..lt.chi_r {
+                    new_l.set(s, a, b, lt.get(s, a, b));
+                }
+            }
+        }
+        let mut new_r = TensorSite::zeros(rt.chi_l + k, rt.chi_r);
+        for s in 0..2 {
+            for a in 0..rt.chi_l {
+                for b in 0..rt.chi_r {
+                    new_r.set(s, a, b, rt.get(s, a, b));
+                }
+            }
+        }
+        for (m, &q) in missing.iter().enumerate() {
+            let idx = lt.chi_r + m;
+            for (li, &ql) in labels[j - 1].iter().enumerate() {
+                for a in 0..2 {
+                    let after = if a == 1 { charge_add(ql, sector.site_charge[j - 1]) } else { ql };
+                    if after == q {
+                        new_l.set(a, li, idx, eps * scale_l * rnd());
+                    }
+                }
+            }
+            for (ri, &qr) in labels[j + 1].iter().enumerate() {
+                for b in 0..2 {
+                    let after = if b == 1 { charge_add(q, sector.site_charge[j]) } else { q };
+                    if after == qr {
+                        new_r.set(b, idx, ri, eps * scale_r * rnd());
                     }
                 }
             }
         }
-        tensors.push(t);
+        tensors[j - 1] = new_l;
+        tensors[j] = new_r;
+        labels[j].extend(missing);
+        restored += k;
     }
-    (tensors, labels)
+    restored
 }
 
 /// The occupations of a `χ = 1` product state.
@@ -235,7 +344,7 @@ pub fn split_two_site_sym(
     e2: Charge,
     chi_max: usize,
     absorb_s_left: bool,
-) -> Option<(TensorSite, TensorSite, f64, f64, Vec<Charge>)> {
+) -> Option<(TensorSite, TensorSite, f64, f64, Vec<Charge>, Vec<(Charge, f64)>)> {
     let (chi_l, chi_r) = (q_l.len(), q_r.len());
     let mut row_charge: Vec<(Charge, usize)> = Vec::with_capacity(chi_l * 2);
     for (l, &ql) in q_l.iter().enumerate() {
@@ -341,7 +450,15 @@ pub fn split_two_site_sym(
         }
         new_q.push(*c);
     }
-    Some((a_left, a_right, discarded, floor, new_q))
+    // the kept singular mass per charge block: which labels carry the state
+    let mut mass: Vec<(Charge, f64)> = Vec::new();
+    for (s, c, _, _) in kept.iter() {
+        match mass.iter_mut().find(|m| m.0 == *c) {
+            Some(m) => m.1 += s * s,
+            None => mass.push((*c, s * s)),
+        }
+    }
+    Some((a_left, a_right, discarded, floor, new_q, mass))
 }
 
 /// One two-site update at bond `j`: `(energy, discarded, residual, floor, iterations, new labels)`.
@@ -357,7 +474,8 @@ fn update(
     absorb_s_left: bool,
     left_env: &Env,
     right_env: &Env,
-) -> Result<(f64, f64, f64, f64, usize, Vec<Charge>), SymRefusal> {
+    skip: bool,
+) -> Result<(f64, f64, f64, f64, usize, Vec<Charge>, Vec<(Charge, f64)>), SymRefusal> {
     let (w1, w2) = (&mpo.sites[j], &mpo.sites[j + 1]);
     let chi_l = tensors[j].chi_l;
     let chi_r = tensors[j + 1].chi_r;
@@ -365,6 +483,7 @@ fn update(
     debug_assert_eq!(q_r.len(), chi_r);
     let mid = tensors[j].chi_r;
     let dim = chi_l * 2 * 2 * chi_r;
+    let t_seed = std::time::Instant::now();
     let mut seed = vec![0.0; dim];
     for lft in 0..chi_l {
         for a in 0..2 {
@@ -394,10 +513,23 @@ fn update(
             return Err(SymRefusal::EmptyCut { bond: j });
         }
     }
+    TIMING.with(|t| t.borrow_mut().seed += t_seed.elapsed().as_secs_f64());
+    let t_plan = std::time::Instant::now();
     let (live_l, live_r) = (mps::live_channels(left_env), mps::live_channels(right_env));
-    let gs = lanczos::ground_state(
-        |psi| {
-            let mut h = mps::apply_effective_h_mpo_live(left_env, w1, w2, right_env, psi, chi_l, chi_r, &live_l, &live_r);
+    // THE BLOCK-SPARSE OPERATOR (E14 item 1, `blocks.rs`): the labels say which entries of
+    // the two-site tensor can be nonzero, and the environments are block-diagonal in them,
+    // so the eigensolve contracts the live blocks only — bit-identical to the dense operator,
+    // gated in `tests/qcd2_gauge.rs`. The mutant keeps the dense path: it has no labels to plan by.
+    let plan = if cfg.ignore_labels {
+        None
+    } else {
+        Some(crate::blocks::BlockPlan::build(q_l, q_r, e1, e2, left_env, right_env).map_err(|e| SymRefusal::NotBlockDiagonal { bond: j, why: e.to_string() })?)
+    };
+    let apply = |psi: &[f64]| {
+            let mut h = match &plan {
+                Some(p) => p.apply(left_env, w1, w2, right_env, psi),
+                None => mps::apply_effective_h_mpo_live(left_env, w1, w2, right_env, psi, chi_l, chi_r, &live_l, &live_r),
+            };
             if !cfg.ignore_labels {
                 for (v, &ok) in h.iter_mut().zip(&msk) {
                     if !ok {
@@ -406,23 +538,67 @@ fn update(
                 }
             }
             h
-        },
-        &seed,
-        dim,
-    )
-    .ok_or(SymRefusal::LanczosFailed { bond: j })?;
+        };
+    // A SKIPPED bond keeps its state and is only re-canonicalised: the two-site tensor is the
+    // seed normalised, its energy one matvec, no Lanczos. The residual reported is the
+    // seed's own, so a skipped bond that was NOT converged shows up as such.
+    TIMING.with(|t| t.borrow_mut().plan += t_plan.elapsed().as_secs_f64());
+    let t_lan = std::time::Instant::now();
+    let gs = if skip {
+        let nrm = seed.iter().map(|v| v * v).sum::<f64>().sqrt();
+        let v: Vec<f64> = seed.iter().map(|x| x / nrm).collect();
+        let hv = apply(&v);
+        let e: f64 = v.iter().zip(&hv).map(|(a, b)| a * b).sum();
+        let resid = hv.iter().zip(&v).map(|(h, x)| (h - e * x) * (h - e * x)).sum::<f64>().sqrt();
+        lanczos::TwoSiteGroundState { energy: e, vector: v, residual: resid, iterations: 0 }
+    } else {
+        lanczos::ground_state(apply, &seed, dim).ok_or(SymRefusal::LanczosFailed { bond: j })?
+    };
+    TIMING.with(|t| t.borrow_mut().lanczos += t_lan.elapsed().as_secs_f64());
+    let t_split = std::time::Instant::now();
     if cfg.ignore_labels {
         let (a_left, a_right, dw, floor) = mps::split_two_site(&gs.vector, chi_l, chi_r, cfg.chi_max, absorb_s_left);
         let chi_new = a_left.chi_r;
         tensors[j] = a_left;
         tensors[j + 1] = a_right;
-        return Ok((gs.energy, dw, gs.residual, floor, gs.iterations, vec![NO_CHARGE; chi_new]));
+        return Ok((gs.energy, dw, gs.residual, floor, gs.iterations, vec![NO_CHARGE; chi_new], Vec::new()));
     }
-    let (a_left, a_right, dw, floor, new_q) =
-        split_two_site_sym(&gs.vector, q_l, q_r, e1, e2, cfg.chi_max, absorb_s_left).ok_or(SymRefusal::EmptyCut { bond: j })?;
+    // A SKIPPED bond is re-canonicalised, never re-truncated: block rescue lets a bond exceed
+    // `chi_max`, so a two-site tensor built from two such sites has rank up to `mid` and a
+    // split at `chi_max` would cut it — silently, since the skipped bond keeps its previous
+    // truncation record. Measured before this line existed: the skipping arm's energy
+    // oscillated by 3.7e-6 with a three-sweep period on N = 6, B = 0 at χ = 64. Splitting at
+    // `max(chi_max, mid)` keeps the whole rank and the re-canonicalisation is exact.
+    let chi_split = if skip { cfg.chi_max.max(mid) } else { cfg.chi_max };
+    let (a_left, a_right, dw, floor, new_q, mass) =
+        split_two_site_sym(&gs.vector, q_l, q_r, e1, e2, chi_split, absorb_s_left).ok_or(SymRefusal::EmptyCut { bond: j })?;
     tensors[j] = a_left;
     tensors[j + 1] = a_right;
-    Ok((gs.energy, dw, gs.residual, floor, gs.iterations, new_q))
+    TIMING.with(|t| t.borrow_mut().split += t_split.elapsed().as_secs_f64());
+    Ok((gs.energy, dw, gs.residual, floor, gs.iterations, new_q, mass))
+}
+
+/// Stage timing of the labelled sweep, thread-local, printed per sweep when `Q8_TIMING` is
+/// set: where a sweep's seconds go (the seed, the block plan, the eigensolve, the split, the
+/// environment growth), so a speedup is attributed to the stage it belongs to and a stage
+/// that quietly dominates is named. The instrument that found the χ = 64 rung's time was
+/// NOT in the eigensolve after the block-sparse operator landed.
+#[derive(Default, Clone, Copy)]
+pub struct StageSeconds {
+    pub seed: f64,
+    pub plan: f64,
+    pub lanczos: f64,
+    pub split: f64,
+    pub envs: f64,
+}
+
+thread_local! {
+    static TIMING: std::cell::RefCell<StageSeconds> = const { std::cell::RefCell::new(StageSeconds { seed: 0.0, plan: 0.0, lanczos: 0.0, split: 0.0, envs: 0.0 }) };
+}
+
+/// Take and reset the accumulated stage seconds of this thread.
+pub fn take_stage_seconds() -> StageSeconds {
+    TIMING.with(|t| std::mem::take(&mut *t.borrow_mut()))
 }
 
 fn all_right_envs(tensors: &[TensorSite], mpo: &Mpo) -> Vec<Env> {
@@ -468,33 +644,109 @@ pub fn dmrg_sweep_sym(
     let mut energy_history = Vec::with_capacity(cfg.max_sweeps);
     let mut worst_resid = 0.0f64;
     let mut iters_total = 0usize;
+    // E14 item 2: what moved. Per bond the local energy of this sweep and the last, per site
+    // the tensor at the start of the sweep, per bond the kept block masses of the last split.
+    let mut bond_energy = vec![f64::NAN; l.saturating_sub(1)];
+    let mut bond_energy_prev = vec![f64::NAN; l.saturating_sub(1)];
+    let mut bond_energy_delta = vec![f64::INFINITY; l.saturating_sub(1)];
+    let mut site_delta = vec![f64::NAN; l];
+    let mut block_mass: Vec<Vec<(Charge, f64)>> = vec![Vec::new(); l.saturating_sub(1)];
+    let mut bonds_skipped = 0usize;
     let mut right_envs = all_right_envs(&tensors, mpo);
     for sweep in 0..cfg.max_sweeps {
         sweeps_used = sweep + 1;
+        let snapshot: Vec<TensorSite> = tensors.clone();
+        // A bond is skippable when its two TENSORS did not move in the previous sweep — the
+        // relative Frobenius change of both sites inside `sqrt(rtol)`. Two earlier criteria
+        // were measured wrong on N = 6, B = 0 at χ = 64: requiring the discarded weight under
+        // `max_discarded` never fires on a truncated sector (the weight is truncation, not
+        // motion), and requiring the LOCAL ENERGY change inside `rtol` skipped the five middle
+        // bonds from sweep three on while the state kept rotating under them — the energy is
+        // stationary to second order in a state change, so it reads "stopped" on a bond that
+        // is still turning, and the skipping arm parked 2e-6 above the full arm. The tensors'
+        // own motion is first order and is what `site_delta` records. A tensor that changed
+        // SHAPE reads `NAN` and is never skippable; the first sweep skips nothing.
+        // The two END bonds are never skipped: the sweep's energy is reported from the last
+        // bond visited, and a reported energy must be a MINIMISED one, or the history mixes
+        // the state's energy before and after its last optimisation (measured as a clean
+        // 3.7e-6 oscillation with a three-sweep period when bond 0 was skippable).
+        let thr = cfg.rtol.sqrt();
+        let nb = l.saturating_sub(1);
+        let skippable: Vec<bool> = (0..nb)
+            .map(|j| cfg.skip_unmoved && j != 0 && j + 1 != nb && site_delta[j] <= thr && site_delta[j + 1] <= thr)
+            .collect();
         let mut left_envs: Vec<Env> = Vec::with_capacity(l);
         left_envs.push(mps::trivial_left_env_mpo(mpo.sites[0].d_l));
         for j in 0..(l - 1) {
             let (q_l, q_r) = (labels[j].clone(), labels[j + 2].clone());
-            let (e, dw, resid, sf, it, new_q) = update(&mut tensors, &q_l, &q_r, sector, mpo, j, cfg, false, &left_envs[j], &right_envs[j + 2])?;
+            let skip = skippable[j];
+            let (e, dw, resid, sf, it, new_q, mass) = update(&mut tensors, &q_l, &q_r, sector, mpo, j, cfg, false, &left_envs[j], &right_envs[j + 2], skip)?;
             labels[j + 1] = new_q;
             last_energy = e;
-            discarded[j] = dw;
-            spectrum_floor[j] = sf;
+            bond_energy[j] = e;
+            // a SKIPPED bond keeps its last real truncation record: re-splitting a two-site
+            // tensor of rank ≤ χ discards nothing, and a zero written here would let the
+            // convergence test's discarded-weight leg pass on a bond that was never re-solved
+            // (measured: the first skipping run "converged" in 6 sweeps on a sector whose
+            // middle bonds truncate at 1e-6)
+            if skip {
+                bonds_skipped += 1;
+            } else {
+                discarded[j] = dw;
+                spectrum_floor[j] = sf;
+                block_mass[j] = mass;
+            }
             worst_resid = worst_resid.max(resid);
             iters_total += it;
+            let t_env = std::time::Instant::now();
             let grown = mps::grow_left_mpo(&left_envs[j], &mpo.sites[j], &tensors[j]);
             left_envs.push(grown);
+            TIMING.with(|t| t.borrow_mut().envs += t_env.elapsed().as_secs_f64());
         }
         for j in (0..(l - 1)).rev() {
             let (q_l, q_r) = (labels[j].clone(), labels[j + 2].clone());
-            let (e, dw, resid, sf, it, new_q) = update(&mut tensors, &q_l, &q_r, sector, mpo, j, cfg, true, &left_envs[j], &right_envs[j + 2])?;
+            let skip = skippable[j];
+            let (e, dw, resid, sf, it, new_q, mass) = update(&mut tensors, &q_l, &q_r, sector, mpo, j, cfg, true, &left_envs[j], &right_envs[j + 2], skip)?;
             labels[j + 1] = new_q;
             last_energy = e;
-            discarded[j] = dw;
-            spectrum_floor[j] = sf;
+            bond_energy[j] = e;
+            // a SKIPPED bond keeps its last real truncation record: re-splitting a two-site
+            // tensor of rank ≤ χ discards nothing, and a zero written here would let the
+            // convergence test's discarded-weight leg pass on a bond that was never re-solved
+            // (measured: the first skipping run "converged" in 6 sweeps on a sector whose
+            // middle bonds truncate at 1e-6)
+            if skip {
+                bonds_skipped += 1;
+            } else {
+                discarded[j] = dw;
+                spectrum_floor[j] = sf;
+                block_mass[j] = mass;
+            }
             worst_resid = worst_resid.max(resid);
             iters_total += it;
+            let t_env = std::time::Instant::now();
             right_envs[j + 1] = mps::grow_right_mpo(&right_envs[j + 2], &mpo.sites[j + 1], &tensors[j + 1]);
+            TIMING.with(|t| t.borrow_mut().envs += t_env.elapsed().as_secs_f64());
+        }
+        if std::env::var_os("Q8_TIMING").is_some() {
+            let st = take_stage_seconds();
+            eprintln!(
+                "q8 sweep {} chi_max {}: seed {:.2}s plan {:.2}s lanczos {:.2}s split {:.2}s envs {:.2}s | E {:.10} skipped {}",
+                sweeps_used, cfg.chi_max, st.seed, st.plan, st.lanczos, st.split, st.envs, last_energy, bonds_skipped
+            );
+        }
+        for j in 0..l.saturating_sub(1) {
+            bond_energy_delta[j] = if bond_energy_prev[j].is_nan() { f64::INFINITY } else { (bond_energy[j] - bond_energy_prev[j]).abs() };
+            bond_energy_prev[j] = bond_energy[j];
+        }
+        for (j, (old, new)) in snapshot.iter().zip(&tensors).enumerate() {
+            site_delta[j] = if old.chi_l == new.chi_l && old.chi_r == new.chi_r {
+                let num: f64 = old.data.iter().zip(&new.data).map(|(a, b)| (a - b) * (a - b)).sum::<f64>().sqrt();
+                let den: f64 = old.data.iter().map(|a| a * a).sum::<f64>().sqrt();
+                if den > 0.0 { num / den } else { f64::NAN }
+            } else {
+                f64::NAN
+            };
         }
         energy_history.push(last_energy);
         let max_dw = discarded.iter().cloned().fold(0.0f64, f64::max);
@@ -522,6 +774,11 @@ pub fn dmrg_sweep_sym(
             bond_dims,
             worst_lanczos_residual: worst_resid,
             lanczos_iterations_total: iters_total,
+            bond_energy,
+            bond_energy_delta,
+            site_delta,
+            block_mass,
+            bonds_skipped,
         },
         labels,
     ))

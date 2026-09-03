@@ -278,3 +278,50 @@ every DMRG worth running. Exactness is not the goal there and never was; the dec
 Which is exactly why the N = 8 exam is worth passing: it is the one place where the rank is
 close enough to touch, so it is the only place the arm's decay can be measured against an
 exact answer rather than asserted.
+
+---
+
+## The cold diagnostic: the ladder's INHERITANCE is the mechanism, and it refutes the lean I put on the rank count (2026-09-03)
+
+*Diagnostic, not a gate reading. G0′ was staked on the ladder as frozen — warm, 64 → 128 →
+256 — and that ladder missed; a different start is a different instrument and cannot un-fire
+it. What this buys is the mechanism, and it changes the successor's design completely.*
+
+**One run, same sector, same χ, same convergence test, only the start changed.**
+
+| x = 4, B = 1, χ = 256 | E₀ | miss vs exact | ≤ 1e-6 | sweeps | discarded | seconds |
+|---|---|---|---|---|---|---|
+| warm (the frozen ladder, arriving from χ = 128) | −47.996416223802 | +6.634e-5 | no | 4 | 2.98e-9 | 3196 |
+| **cold (a fresh seeded labelled start at 256)** | **−47.996482140293** | **+4.266e-7** | **MEETS** | 4 | 3.70e-9 | 2420 |
+
+**The warm run sat 156× above what the same bond dimension can reach**, and it was CHEAPER
+to start cold than to arrive warm (2420 s against 3196 s, ignoring the 17,655 s the two
+lower rungs spent getting there). The arm can pass G0′ on this sector. The ladder is what
+failed it.
+
+**A prediction of mine, refuted, in the same breath.** Two sections up I wrote that at four
+states per label *"a cold start cannot buy resolution that is not there, so if cold ≈ warm
+the limit is truncation"* — and leaned that way. Cold beat warm by 156×. The rank counting
+stands and is still the right frame; the lean I put on it was wrong, and the measurement is
+what settled it. What the two together now give is a DECOMPOSITION nobody had:
+
+* **the truncation floor** at χ = 256 for this sector is **4.3e-7** — measured, not
+  estimated, and consistent with χ being 6.2× below the cut's exact rank of 1,582;
+* **the ladder's excess above its own floor** was **6.6e-5**, 156× the floor, and that part
+  is pure inherited block content: §A1.8.2's *"a dropped sector never returns"*, now measured
+  at the TOP of the ladder instead of at the χ = 32 rung where it was first caught.
+
+**And the four-sweep signature was not the tell.** The cold run also converged in the minimum
+four sweeps, with a discarded weight (3.70e-9) slightly LARGER than the warm run's (2.98e-9)
+while being 156× more accurate. Every self-reported field was as good or better on the wrong
+answer. Only the referee separated them — which is M-EXIT-DISCRIMINATOR and
+M-TRUNCATION-AS-ERRORBAR stated in one line of data.
+
+**What the successor amendment must therefore stake.** A COLD ladder: every χ from a fresh
+seeded labelled start, or a start that can re-open blocks (subspace expansion — the standard
+remedy for exactly this, since a two-site update cannot reintroduce a block both its
+neighbours have lost). The warm ladder is retired as a design, not merely as a run, and the
+χ ceiling is derived from the cut's rank per sector rather than from its label count. The
+diagnostic on the largest sector — x = 4, B = 0, two states per label, warm miss 5.9e-3 — is
+running now and decides whether a cold ladder is sufficient by itself or whether B = 0 also
+needs a ceiling above 256.

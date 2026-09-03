@@ -16,6 +16,10 @@ and sink (JS), `hud.rs` retiring, and R7. Both CI gates this lane owns are green
 
 | what | where | state |
 |---|---|---|
+| **the surface** (FSD §11.5, 2026-09-02 evening): cube + four selectors + tier rail as the zoom + ☰ | `index.html` (header/tier-rail/control-rail/MORE CONTROLS card), `styles.css` (dock + four-tier pill deleted), `app.js` (`renderTierRail`, `renderSizeAxis`, `renderMixChips`) | live, 367 checks |
+| **shipped artifacts through the doors**: `tables/HO.json` via `holon_bank_table_*`, `tables/s2_water_table.txt` via the water door; SHA-256 pins in `SHIPPED`, checked by smoke against the tree | `app.js` `SHIPPED`/`fetchPinned`/`pushShippedPair`/`pushWater`; engine `holon_water_table_alloc/load`, `holon_water_node`, `tests/water_door.rs` | live; O:2H waits on `tables/O2.json` (emitter running: 21 s/knot × 192) |
+| **the split re-pinned** on the shipped engine (fixed + per-knot, 5 pairs, `examples/pair_price.rs`), `holon_bank_browser_knots` | `holon-render/src/bank.rs` `predicted_load_seconds_at`, `BROWSER_COST_PROVENANCE` | live — H-H in-browser, H-O/O-O ship |
+| wasm at opt-level 3 (2.15× on the H-O setup; law probe bit-equal) | `build-web.sh` | live |
 | real engine page (replaced the WB-7.1 mock) | `docs/workbench/{index,app,styles,smoke}` + committed `holon_render.wasm` | live, 350 checks (FSD-W3: the ladder from the 1 km cube to the nucleus, 2026-09-03) |
 | gravity, WB-2.4 + WB-2.4c world VECTOR | `holon-render/src/sim.rs` `set_gravity_vec`, `tests/gravity.rs` 11/11 | live |
 | WB-2.2 pressure panel on the box-scale door | page + `holon_box_scale`/`holon_pressure` | live |

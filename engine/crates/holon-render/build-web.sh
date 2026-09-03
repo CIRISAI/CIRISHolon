@@ -22,7 +22,7 @@ out="${HOLON_RENDER_WASM_OUT:-$here/viewer/holon_render.wasm}"
 # `-C debuginfo=2` changes codegen decisions that survive stripping (stripping happens
 # after codegen, not before) — which cost holon-sandbox its reproducibility once already.
 CARGO_TARGET_DIR="$workspace/target/web-dist" \
-CARGO_PROFILE_RELEASE_OPT_LEVEL=z \
+CARGO_PROFILE_RELEASE_OPT_LEVEL=3 \
 CARGO_PROFILE_RELEASE_LTO=true \
 CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1 \
 CARGO_PROFILE_RELEASE_PANIC=abort \

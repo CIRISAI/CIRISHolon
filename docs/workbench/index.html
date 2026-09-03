@@ -89,29 +89,34 @@
       </div>
 
       <div class="hud-actions">
-        <button id="btn-toggle-telemetry" class="icon-btn" title="Telemetry lens">📊</button>
-        <button id="btn-toggle-manifest" class="icon-btn" title="Provenance manifest">📋</button>
         <button id="btn-play-pause" class="icon-btn highlight" title="Play / pause">⏸</button>
+        <button id="btn-menu" class="icon-btn" title="Everything else: telemetry, ledgers, the fence register, boundary, gravity, the hand, the manifest">☰</button>
       </div>
     </header>
 
-    <!-- --------------------------------------------------- the scale axis (WB-1) -->
+    <!-- ------------------------------------------ the tier rail: ZOOM IS THE TIER -->
     <!--
-      WB-1.1 asks for four bands. This engine carries ONE certified chart: the atomistic
-      one. The other three bands are not dimmed decorations of a working control — they are
-      fences, and pressing them says so. The mock let the user slide into a continuum tier
-      that did not exist.
+      FSD-W3 §11.2 / WB-1.5: one vertical axis from the cube (1 km) to the fold below the
+      atom. The bands are STOPS on it, the slider is continuous, and the band nearest the
+      view span is the active tier. Every word the rail shows is derived from LADDER in
+      app.js each frame, so a band cannot read LIVE here and FENCED in the drawer. The zoom
+      changes a ratio and calls nothing in the engine — the two-box law — which is why the
+      cube band draws this scene as the speck it is at a kilometre rather than pretending
+      the kilometre is in the box.
     -->
-    <div id="floating-tier-selector">
-      <div class="tier-pill-labels">
-        <span class="t-tag active" data-tier="0" title="Atomistic quantum-emergent chart: tables plus on-demand solves. This is the served band.">Atomistic</span>
-        <span class="t-tag fenced" data-tier="1" title="FENCED: no promoted molecular chart exists in this engine. The H2O quotient and the derived V(H2O-H2O) are owed by T5/T6, per FSD §7.">Molecular</span>
-        <span class="t-tag fenced" data-tier="2" title="FENCED: no T6 continuum charts exist in this engine.">Continuum</span>
-        <span class="t-tag fenced" data-tier="3" title="FENCED: no bulk/hydrostatic chart exists in this engine.">Bulk 1 km</span>
+    <nav id="tier-rail" aria-label="scale — zoom is the tier selector">
+      <div id="tier-stops" class="tier-stops"></div>
+      <input type="range" id="sheet-zoom" min="-12.5" max="6.5" step="0.02" value="0" aria-label="zoom">
+    </nav>
+    <div id="band-card" class="band-card">
+      <div class="band-head">
+        <span class="band-name" id="band-name">—</span>
+        <span class="tag" id="tag-band">—</span>
       </div>
-      <span class="tier-note">one certified chart · three fences (WB-1.1)</span>
+      <div class="band-scale" id="band-scale">—</div>
+      <div class="band-scale" id="sheet-zoom-val">1.00×</div>
+      <p class="band-text" id="band-text">—</p>
     </div>
-
     <div id="reticle-hud" class="hidden">
       <div class="reticle-ring"></div>
       <span class="reticle-label" id="reticle-text">—</span>
@@ -129,6 +134,108 @@
         <button class="drawer-close" id="close-telemetry">×</button>
       </div>
       <div class="drawer-content">
+
+        <!-- ------------------------------------------ everything else the rail is not -->
+        <!--
+          The surface is a cube and four selectors (temperature, box size, timescale,
+          mixture) with the tier as the zoom. These are the controls that are real but not
+          daily: each keeps the door, the ledger row and the refusal text it always had.
+        -->
+        <div class="drawer-card">
+          <div class="card-head">
+            <h4>MORE CONTROLS</h4>
+            <button id="btn-toggle-manifest" class="btn-micro" title="Provenance manifest (WB-3.4)">📋 manifest</button>
+          </div>
+          <label class="check-row">
+            <input type="checkbox" id="sheet-thermostat" checked>
+            <span>thermostat engaged — heat removed or added is posted to W_ext, so the
+              energy gate still closes (WB-2.1)</span>
+          </label>
+          <div class="panel-row">
+            <label>Atoms — a scene RESET, never a live mutation (WB-3.1)</label>
+            <button id="btn-quick-reset" class="btn-micro">↺ re-warm</button>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sheet-atoms" min="2" max="16" step="1" value="12">
+            <span class="sheet-val" id="sheet-atoms-val">12</span>
+          </div>
+          <p class="sheet-note">
+            Composition is identity, so changing it resets the scene rather than mutating
+            it. The atom slider tops out at this engine's own capacity; a count past it
+            would be delivered as time dilation, which is a worse answer than saying so.
+          </p>
+          <div class="panel-row">
+            <label>Pressure — the control IS the box (WB-2.2)</label>
+            <span class="tag" id="tag-press">—</span>
+          </div>
+          <div class="ledger-grid tight">
+            <div class="lrow"><span>Virial pressure</span><span id="press-value">—</span></div>
+            <div class="lrow"><span>Box</span><span id="press-box">—</span></div>
+            <div class="lrow accent"><span>Hand column W_ext</span><span id="press-hand">—</span></div>
+          </div>
+          <div class="panel-row">
+            <button class="btn-micro" id="btn-compress">− compress 2%</button>
+            <button class="btn-micro" id="btn-expand">+ expand 2%</button>
+          </div>
+          <div class="panel-row">
+            <label>Boundary</label>
+            <div class="unit-pills">
+              <button class="u-pill active" data-boundary="0">walls</button>
+              <button class="u-pill" data-boundary="1">open</button>
+              <button class="u-pill" data-boundary="2">periodic</button>
+            </div>
+          </div>
+          <p class="sheet-note">
+            The boundary is here because it is what makes two fences live rather than
+            theoretical. The virial is only a PRESSURE on a wrapping box, so under walls
+            the readout above refuses to call itself one. And a wrapping box has no bottom,
+            so it REFUSES gravity — switch to periodic with the field on and watch the
+            gravity panel fence itself for a reason you can check.
+          </p>
+          <p class="sheet-note" id="press-note">—</p>
+          <p class="sheet-note fence" id="press-refusal"></p>
+          <div class="panel-row">
+            <label>Gravity (WB-2.4) — a real, ledgered field</label>
+            <span class="tag" id="tag-grav">—</span>
+          </div>
+          <div class="ledger-grid tight">
+            <div class="lrow"><span>Field</span><span id="grav-field">—</span></div>
+            <div class="lrow"><span>Vector (box frame)</span><span id="grav-vector">—</span></div>
+            <div class="lrow"><span>Box tilt</span><span id="grav-tilt">—</span></div>
+            <div class="lrow"><span>Potential V_g</span><span id="grav-energy">—</span></div>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sheet-grav" min="0" max="5" step="0.1" value="1">
+            <span class="sheet-val" id="sheet-grav-val">1.00 G</span>
+          </div>
+          <div class="slider-row">
+            <input type="range" id="sheet-tilt" min="-60" max="60" step="1" value="0">
+            <span class="sheet-val" id="sheet-tilt-val">0°</span>
+          </div>
+          <p class="sheet-note">
+            The second slider TILTS THE BOX (WB-2.4c). The field stays pointing world-down;
+            what changes is its direction in the box's own coordinates, which is the entire
+            content of tilting a bucket. At 1 G nothing visible happens — the field is
+            15 orders below the thermal motion — so turn the strength up to see the water
+            actually run downhill.
+          </p>
+          <p class="sheet-note">
+            One G downward, at every scale. It enters the same external-acceleration array
+            the walls and the hand already write to, so its impulse is booked in the
+            momentum ledger automatically; its energy is a POTENTIAL term (V_g in the
+            ledger), never a work receipt, because a uniform field is conservative and a
+            receipt column would count the same joules twice.
+          </p>
+          <p class="sheet-note">
+            You will see nothing happen, and that is the exhibit. One G is
+            <span id="grav-vs-kt">—</span> — far below the thermal energy that is shaking
+            this box apart. The same field is the entire hydrostatic column at a kilometre.
+            What changes across the tiers is not the field's strength but whether the
+            quantity that matters is a per-particle energy or a sum over the column: a
+            hydrogen atom needs 246 km of height to gain one kT, and a kilometre of water
+            still weighs 97 atmospheres because there are 10²⁸ of them.
+          </p>
+        </div>
 
         <!-- ------------------------------------------------ the energy ledger -->
         <div class="drawer-card">
@@ -587,184 +694,52 @@
       </div>
     </aside>
 
-    <!-- ------------------------------------------------------------------ dock -->
-    <footer id="hud-bottom-dock">
-      <div class="dock-buttons">
-        <button class="dock-tab active" data-tab="temp">
-          <span class="tab-icon">🌡</span>
-          <span class="tab-lbl" id="dock-temp-lbl">—</span>
-        </button>
-        <button class="dock-tab" data-tab="mix">
-          <span class="tab-icon">🧪</span>
-          <span class="tab-lbl" id="dock-mix-lbl">—</span>
-        </button>
-        <button class="dock-tab" data-tab="gov">
-          <span class="tab-icon">⏱</span>
-          <span class="tab-lbl" id="dock-gov-lbl">—</span>
-        </button>
-        <button class="dock-tab" data-tab="press">
-          <span class="tab-icon">🎚</span>
-          <span class="tab-lbl">pressure</span>
-        </button>
-        <button class="dock-tab" data-tab="grav">
-          <span class="tab-icon">🌍</span>
-          <span class="tab-lbl" id="dock-grav-lbl">1.0 G</span>
-        </button>
+    <!-- ------------------------------------------------------- the control rail -->
+    <!--
+      A cube and a few linear selectors. Temperature is the Berendsen thermostat's setpoint
+      (WB-2.1); box size is the hand on the world box (WB-2.2 — the control IS the box, and
+      the axis under it is DENSITY, so the slider's floor is where this chart's electrons
+      stop and neutronium is a mark fourteen decades past it, not a stop); timescale is the
+      governor (WB-2.3 — it moves the requested rate, never dt, and the clocks report the
+      dilation honestly); mixture is a scene reset (WB-3.1). Everything else is under ☰.
+    -->
+    <footer id="control-rail">
+      <div class="rail-item">
+        <div class="rail-head">
+          <label for="sheet-temp">temperature</label>
+          <div class="unit-pills">
+            <button class="u-pill active" data-unit="K">K</button>
+            <button class="u-pill" data-unit="C">°C</button>
+            <button class="u-pill" data-unit="F">°F</button>
+          </div>
+        </div>
+        <input type="range" id="sheet-temp" min="1" max="3000" step="1" value="293">
+        <span class="sheet-val" id="sheet-temp-val">293.2 K</span>
       </div>
-
-      <div id="control-sheet" class="control-sheet">
-        <div class="sheet-panel active" data-panel="temp">
-          <div class="panel-row">
-            <label>Temperature — Berendsen thermostat (WB-2.1)</label>
-            <div class="unit-pills">
-              <button class="u-pill active" data-unit="K">K</button>
-              <button class="u-pill" data-unit="C">°C</button>
-              <button class="u-pill" data-unit="F">°F</button>
-            </div>
-          </div>
-          <div class="slider-row">
-            <input type="range" id="sheet-temp" min="1" max="3000" step="1" value="293">
-            <span class="sheet-val" id="sheet-temp-val">293.2 K</span>
-          </div>
-          <label class="check-row">
-            <input type="checkbox" id="sheet-thermostat" checked>
-            <span>thermostat engaged — heat removed or added is posted to W_ext, so the
-              energy gate still closes</span>
-          </label>
+      <div class="rail-item">
+        <div class="rail-head">
+          <label for="sheet-size">pressure · box size</label>
+          <span class="sub-lbl" id="size-fence">—</span>
         </div>
-
-        <div class="sheet-panel" data-panel="mix">
-          <div class="panel-row">
-            <label>Mixture — a scene RESET, never a live mutation (WB-3.1)</label>
-            <button id="btn-quick-reset" class="btn-micro">↺ re-warm</button>
-          </div>
-          <div class="mix-grid">
-            <button class="mix-chip active" data-mix="pure-h">Pure H · served</button>
-            <button class="mix-chip" data-mix="one-o">1 O + H · runs, triples fenced</button>
-            <button class="mix-chip" data-mix="o-2h">O : 2H · cannot step</button>
-            <button class="mix-chip" data-mix="pure-o">Pure O · cannot step</button>
-          </div>
-          <p class="sheet-note">
-            The true O:2H stoichiometry cannot take a step in this build, and the page says
-            so rather than pretending: any two oxygens need the (O,O) curve, which the
-            engine refuses in a browser at 2,025 determinants. A box with exactly one
-            oxygen never forms that pair, so it runs — real O–H chemistry with the
-            O-bearing three-body fences firing on every force pass. It is not offered as a
-            substitute for water; it is offered as the O-bearing scene this engine can
-            honestly serve.
-          </p>
-          <div class="slider-row">
-            <input type="range" id="sheet-atoms" min="2" max="16" step="1" value="12">
-            <span class="sheet-val" id="sheet-atoms-val">12</span>
-          </div>
-          <p class="sheet-note">
-            Composition is identity, so changing it resets the scene rather than mutating
-            it. The atom slider tops out at this engine's own capacity; a count past it
-            would be delivered as time dilation, which is a worse answer than saying so.
-          </p>
+        <input type="range" id="sheet-size" min="-1.2" max="1.5" step="0.01" value="0">
+        <span class="sheet-val" id="sheet-size-val">—</span>
+        <div class="density-axis" id="density-axis"></div>
+      </div>
+      <div class="rail-item">
+        <div class="rail-head">
+          <label for="sheet-gov">timescale</label>
+          <span class="sub-lbl" id="gov-delivered">—</span>
         </div>
-
-        <div class="sheet-panel" data-panel="gov">
-          <div class="panel-row">
-            <label>Timescale governor (WB-2.3)</label>
-            <span class="sub-lbl">holds framerate by substeps per frame</span>
-          </div>
-          <div class="slider-row">
-            <input type="range" id="sheet-gov" min="-1" max="3" step="0.05" value="0">
-            <span class="sheet-val" id="sheet-gov-val">1.00×</span>
-          </div>
-          <p class="sheet-note">
-            The bias moves the REQUESTED simulated-time rate. It never touches dt: accuracy
-            is not on this slider, and a request the device cannot meet comes back as
-            honest dilation on the clocks panel.
-          </p>
-        </div>
-
-        <div class="sheet-panel" data-panel="press">
-          <div class="panel-row">
-            <label>Pressure — the control IS the box (WB-2.2)</label>
-            <span class="tag" id="tag-press">—</span>
-          </div>
-          <div class="ledger-grid tight">
-            <div class="lrow"><span>Virial pressure</span><span id="press-value">—</span></div>
-            <div class="lrow"><span>Box</span><span id="press-box">—</span></div>
-            <div class="lrow accent"><span>Hand column W_ext</span><span id="press-hand">—</span></div>
-          </div>
-          <div class="panel-row">
-            <button class="btn-micro" id="btn-compress">− compress 2%</button>
-            <button class="btn-micro" id="btn-expand">+ expand 2%</button>
-          </div>
-          <div class="panel-row">
-            <label>Boundary</label>
-            <div class="unit-pills">
-              <button class="u-pill active" data-boundary="0">walls</button>
-              <button class="u-pill" data-boundary="1">open</button>
-              <button class="u-pill" data-boundary="2">periodic</button>
-            </div>
-          </div>
-          <p class="sheet-note">
-            The boundary is here because it is what makes two fences live rather than
-            theoretical. The virial is only a PRESSURE on a wrapping box, so under walls
-            the readout above refuses to call itself one. And a wrapping box has no bottom,
-            so it REFUSES gravity — switch to periodic with the field on and watch the
-            gravity panel fence itself for a reason you can check.
-          </p>
-          <p class="sheet-note" id="press-note">—</p>
-          <p class="sheet-note fence" id="press-refusal"></p>
-        </div>
-
-        <div class="sheet-panel" data-panel="grav">
-          <div class="panel-row">
-            <label>Gravity (WB-2.4) — a real, ledgered field</label>
-            <span class="tag" id="tag-grav">—</span>
-          </div>
-          <div class="ledger-grid tight">
-            <div class="lrow"><span>Field</span><span id="grav-field">—</span></div>
-            <div class="lrow"><span>Vector (box frame)</span><span id="grav-vector">—</span></div>
-            <div class="lrow"><span>Box tilt</span><span id="grav-tilt">—</span></div>
-            <div class="lrow"><span>Potential V_g</span><span id="grav-energy">—</span></div>
-          </div>
-          <div class="slider-row">
-            <input type="range" id="sheet-grav" min="0" max="5" step="0.1" value="1">
-            <span class="sheet-val" id="sheet-grav-val">1.00 G</span>
-          </div>
-          <div class="slider-row">
-            <input type="range" id="sheet-zoom" min="0" max="1.6" step="0.02" value="0">
-            <span class="sheet-val" id="sheet-zoom-val">1.00×</span>
-          </div>
-          <p class="sheet-note">
-            ZOOM shrinks the SCENE box around the view centre. Holons crossing a face leave
-            the picture and stay in the physics — watch "drawing N of M" and the whole-only
-            numbers, which do not move. This is not the hand: the hand is on the pressure
-            panel and it changes the world box.
-          </p>
-          <div class="slider-row">
-            <input type="range" id="sheet-tilt" min="-60" max="60" step="1" value="0">
-            <span class="sheet-val" id="sheet-tilt-val">0°</span>
-          </div>
-          <p class="sheet-note">
-            The second slider TILTS THE BOX (WB-2.4c). The field stays pointing world-down;
-            what changes is its direction in the box's own coordinates, which is the entire
-            content of tilting a bucket. At 1 G nothing visible happens — the field is
-            15 orders below the thermal motion — so turn the strength up to see the water
-            actually run downhill.
-          </p>
-          <p class="sheet-note">
-            One G downward, at every scale. It enters the same external-acceleration array
-            the walls and the hand already write to, so its impulse is booked in the
-            momentum ledger automatically; its energy is a POTENTIAL term (V_g in the
-            ledger), never a work receipt, because a uniform field is conservative and a
-            receipt column would count the same joules twice.
-          </p>
-          <p class="sheet-note">
-            You will see nothing happen, and that is the exhibit. One G is
-            <span id="grav-vs-kt">—</span> — far below the thermal energy that is shaking
-            this box apart. The same field is the entire hydrostatic column at a kilometre.
-            What changes across the tiers is not the field's strength but whether the
-            quantity that matters is a per-particle energy or a sum over the column: a
-            hydrogen atom needs 246 km of height to gain one kT, and a kilometre of water
-            still weighs 97 atmospheres because there are 10²⁸ of them.
-          </p>
+        <input type="range" id="sheet-gov" min="-1" max="3" step="0.05" value="0">
+        <span class="sheet-val" id="sheet-gov-val">1.00×</span>
+      </div>
+      <div class="rail-item mix">
+        <div class="rail-head"><label>mixture</label><span class="sub-lbl" id="mix-state">—</span></div>
+        <div class="mix-grid">
+          <button class="mix-chip active" data-mix="pure-h"><b>Pure H</b><span id="mix-lbl-pure-h">—</span></button>
+          <button class="mix-chip" data-mix="one-o"><b>1 O + H</b><span id="mix-lbl-one-o">—</span></button>
+          <button class="mix-chip" data-mix="o-2h"><b>O : 2H</b><span id="mix-lbl-o-2h">—</span></button>
+          <button class="mix-chip" data-mix="pure-o"><b>Pure O</b><span id="mix-lbl-pure-o">—</span></button>
         </div>
       </div>
     </footer>

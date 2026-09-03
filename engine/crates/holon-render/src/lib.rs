@@ -413,6 +413,64 @@ pub extern "C" fn holon_water_r_max() -> f64 {
     holon_chem::water::R_HI
 }
 
+/// One node of the loaded (O, H, H) table, `dE3` in hartree at grid indices `(i, j, k)`
+/// (the two O-H sides in either order, the angle index). Zero when nothing is loaded or
+/// the indices are off the grid — a readout for pinning the door against the native
+/// parser bit for bit, not a force path.
+#[no_mangle]
+pub extern "C" fn holon_water_node(i: u32, j: u32, k: u32) -> f64 {
+    let s = sim();
+    if !s.water.loaded
+        || (i as usize) >= holon_chem::water::NR
+        || (j as usize) >= holon_chem::water::NR
+        || (k as usize) >= holon_chem::water::NU
+    {
+        return 0.0;
+    }
+    s.water.node(i as usize, j as usize, k as usize)
+}
+
+// ----------------------------------------------------- the water-table door (FSD-W3 WB-10.7)
+//
+// The (O, H, H) surface is 441 determinants a node over 105,105 nodes: computed on the
+// mesh, SHIPPED as a text artifact, and until this door existed the page could only say
+// so. The door is a byte buffer and one call: the host reserves `len` bytes, writes the
+// artifact's UTF-8 into them, and asks the engine to READ them. Reading is
+// `water::from_text` — the parser the native tests pin the committed table against — so a
+// table pushed through this door is the native table to the bit, and a grid rule that is
+// not this build's is refused rather than interpolated on the wrong axes.
+//
+// One buffer rather than a node-wise push: the water table's parser owns its symmetric
+// fill and its metadata (the atom references, the peak, the solve count), and a node-wise
+// door would restate that contract in JavaScript, which is where a provenance claim goes
+// to rot. The buffer is released on every load, success or refusal — a 1.8 MB text has no
+// business staying resident beside the table it produced.
+
+static ARTIFACT_TEXT: std::sync::Mutex<Vec<u8>> = std::sync::Mutex::new(Vec::new());
+
+/// Reserve `len` bytes for a shipped text artifact and return their address in linear
+/// memory. The host writes the artifact's bytes there, then calls the loader that reads
+/// them. A second call replaces the reservation.
+#[no_mangle]
+pub extern "C" fn holon_water_table_alloc(len: u32) -> *mut u8 {
+    let mut buf = ARTIFACT_TEXT.lock().unwrap_or_else(|p| p.into_inner());
+    *buf = vec![0u8; len as usize];
+    buf.as_mut_ptr()
+}
+
+/// Read the reserved bytes as the (O, H, H) three-body table. 1 when it loaded; 0 when the
+/// bytes are not this build's table (a foreign grid line, a short or long node count, a
+/// byte that is not UTF-8, or nothing reserved) — and a refusal leaves whatever was loaded
+/// before untouched.
+#[no_mangle]
+pub extern "C" fn holon_water_table_load() -> u32 {
+    let bytes = std::mem::take(&mut *ARTIFACT_TEXT.lock().unwrap_or_else(|p| p.into_inner()));
+    let Ok(text) = std::str::from_utf8(&bytes) else {
+        return 0;
+    };
+    load_water_table(&mut sim(), text)
+}
+
 /// Triples the three-body sector refused for want of a table in the last force pass —
 /// (O, O, H) and (O, O, O), which SATURATION-2 does not tabulate.
 ///
@@ -1639,6 +1697,12 @@ pub extern "C" fn holon_bank_slot_count() -> u32 {
 #[no_mangle]
 pub extern "C" fn holon_bank_browser_budget_seconds() -> f64 {
     bank::browser_budget_seconds()
+}
+
+/// The knot count the split is priced at and the page solves at (`bank::BROWSER_KNOTS`).
+#[no_mangle]
+pub extern "C" fn holon_bank_browser_knots() -> u32 {
+    bank::BROWSER_KNOTS as u32
 }
 
 /// Declare the page's load budget, seconds of main thread a curve may cost at load.

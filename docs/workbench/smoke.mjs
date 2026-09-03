@@ -58,6 +58,7 @@
 // Exit 0 on success, 1 with a named failure otherwise. Node only; no dependencies.
 
 import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -350,16 +351,75 @@ async function freshEngine() {
   return (await WebAssembly.instantiate(bytes, {})).instance.exports;
 }
 
+// THE SHIPPED ARTIFACTS, read out of the page's own `SHIPPED` table so this gate pins what
+// the page serves rather than a parallel list. Every pin is checked against the bytes in
+// the tree (a re-emitted artifact under a stale pin is a fence on the page, and this is
+// where it is caught first), and the water table in the served tree must be the committed
+// one from holon-chem's test data byte for byte — a copy is not a second source.
+const shippedMatch = appSource.match(/const SHIPPED = \{([\s\S]*?)\n\};/);
+want(shippedMatch !== null, "the page's SHIPPED table is where the gate expects it");
+const shippedEntries = shippedMatch
+  ? [...shippedMatch[1].matchAll(/file: "([^"]+)",[\s\S]*?sha256: "([0-9a-f]{64})"/g)]
+    .map((m) => ({ file: m[1], sha256: m[2] }))
+  : [];
+want(shippedEntries.length >= 2,
+  `SHIPPED names at least the (H,O) curve and the (O,H,H) table (${shippedEntries.length} entries)`);
+const sha256Of = (buf) => createHash("sha256").update(buf).digest("hex");
+for (const s of shippedEntries) {
+  let buf = null;
+  try { buf = readFileSync(join(here, s.file)); } catch { /* below */ }
+  want(buf !== null, `shipped artifact ${s.file} is in the served tree`);
+  if (buf) {
+    const got = sha256Of(buf);
+    want(got === s.sha256, `${s.file} digests to its pin (${s.sha256.slice(0, 12)}…)`,
+      `the tree has ${got.slice(0, 12)}…; the page would fence this artifact rather than serve it`);
+  }
+}
+const waterCanonical = readFileSync(join(repoRoot, "engine/crates/holon-chem/tests/data/s2/s2_water_table.txt"));
+want(sha256Of(waterCanonical) === sha256Of(readFileSync(join(here, "tables/s2_water_table.txt"))),
+  "the served (O,H,H) table is the committed one byte for byte");
+// the emitter's file names: "HO" for a heteronuclear pair in Z order, "O2" for a homonuclear one
+const shippedPairJson = (za, zb) => {
+  const [lo, hi] = za <= zb ? [za, zb] : [zb, za];
+  const name = lo === hi ? `${sym2(lo)}2` : `${sym2(lo)}${sym2(hi)}`;
+  const entry = shippedEntries.find((s) => s.file.endsWith(`/${name}.json`));
+  return entry ? JSON.parse(readFileSync(join(here, entry.file), "utf8")) : null;
+};
+function sym2(z) { return z === 1 ? "H" : z === 8 ? "O" : `Z${z}`; }
+
+/// The page's push, mirrored: the bank's node-wise door, finish code returned.
+function pushShippedPair(e, za, zb, j) {
+  const slot = e.holon_bank_slot(za, zb);
+  if (slot < 0) return -1;
+  const n = j.R_grid_bohr.length;
+  if (e.holon_bank_table_begin(slot, n) !== 1) return -2;
+  for (let i = 0; i < n; i++) {
+    if (e.holon_bank_table_knot(slot, i, j.R_grid_bohr[i], j.E_hartree[i], j.F_hartree_per_bohr[i]) !== 1) return -3;
+    if (e.holon_bank_table_knot_curvature(slot, i, j.E2_hartree_per_bohr2[i]) !== 1) return -4;
+  }
+  return e.holon_bank_table_finish(slot, j.R_e, j.D_e, j.E_asymptote,
+    j.solver_route === "determinant" ? 1 : 2, j.species.n_determinants, j.species.n_basis,
+    j.uncertainty_hartree, j.exact_in_model ? 1 : 0);
+}
+
+/// The page's water push, mirrored: bytes into the reservation, then the loader.
+function pushWater(e, buf) {
+  const ptr = e.holon_water_table_alloc(buf.length);
+  new Uint8Array(e.memory.buffer, ptr, buf.length).set(buf);
+  return e.holon_water_table_load();
+}
+
 /// Build the O:2H scene exactly as `loadPreset` builds it, optionally WITHOUT the H3
 /// surface, and report what the engine did.
 ///
-/// `ohKnots` is a BUDGET, not a shortcut. The O-H solve is dominated by a fixed setup cost
-/// — measured at 17.0 s for 4 knots against 14.7 s for 16 — so the knot count buys almost
-/// nothing here and costs a minute of CI at the 160 the page uses. What this gate is
-/// asserting about that curve is that the engine SERVES it in a browser host, and eight
-/// knots establish that as well as a hundred and sixty do. The blind arm skips the solve
-/// entirely because its subject is the fence counter, which does not depend on it.
-async function o2hScene({ withTrimer, ohKnots = 8, solveOH = true }) {
+/// The O-H curve arrives the way the page gets it: the shipped `tables/HO.json` pushed
+/// through the bank's door. It is on the heavy side of the split since the split was
+/// re-measured on this engine (the solve is a fixed ~5 s of setup before any knot, over
+/// the page's 5 s budget), and the split refuses a shipped file for a pair it expects the
+/// browser to solve — so "served" here means the bank's provenance gate ADMITTED the file,
+/// which is a verdict of the engine's, not of this script. The blind arm skips the push
+/// because its subject is the fence counter, which does not depend on it.
+async function o2hScene({ withTrimer, solveOH = true }) {
   const e = await freshEngine();
   e.holon_set_dims(1);
   e.holon_set_boundary(0);
@@ -368,7 +428,8 @@ async function o2hScene({ withTrimer, ohKnots = 8, solveOH = true }) {
   e.holon_bank_register(1);
   e.holon_bank_register(8);
   e.holon_table_generate(0.6, 12.0, 192);
-  const oh = solveOH ? e.holon_bank_generate_pair(8, 1, ohKnots) : null;
+  const hoJson = shippedPairJson(8, 1);
+  const oh = solveOH && hoJson ? pushShippedPair(e, 8, 1, hoJson) : null;
   const oo = e.holon_bank_generate_pair(8, 8, 160);
   if (withTrimer) e.holon_trimer_generate();
   e.holon_reset(12);
@@ -383,8 +444,21 @@ async function o2hScene({ withTrimer, ohKnots = 8, solveOH = true }) {
 }
 
 const served = await o2hScene({ withTrimer: true });
-want(served.oh === 1, "the O-H curve is served in the browser",
-  `holon_bank_generate_pair(8,1) -> ${served.oh}`);
+want(served.oh === 1, "the shipped O-H curve is ADMITTED by the bank's provenance gate (finish code 1)",
+  `holon_bank_table_finish for (8,1) -> ${served.oh}; -1..-4 are this script's own push refusals, `
+  + "21 is the split refusing a shipped file for a pair it expects the browser to solve");
+// The other side of the same split, on the same engine: the in-browser solve of that pair
+// is refused BEFORE it runs. The slot is already filled by the shipped file above and the
+// refusal must not touch it.
+const ohInBrowser = served.e.holon_bank_generate_pair(8, 1, served.e.holon_bank_browser_knots());
+want(ohInBrowser === 21,
+  `the in-browser O-H solve is refused by the re-measured split (code 21, predicted `
+  + `${served.e.holon_bank_pair_predicted_seconds(8, 1).toFixed(0)} s against `
+  + `${served.e.holon_bank_browser_budget_seconds().toFixed(0)} s): it is a shipped curve now`,
+  `expected 21, got ${ohInBrowser}`);
+want(served.e.holon_bank_filled_count() === 2,
+  "both curves the O:2H scene can serve are in the bank (H-H solved here, H-O shipped)",
+  `filled ${served.e.holon_bank_filled_count()}`);
 
 // 21 == PROVENANCE_REFUSED (16) + Refusal::SplitViolated (5). The page names this code in
 // the text it shows the user, so the gate pins it: if the engine renumbers its refusals,
@@ -432,8 +506,42 @@ want(blind.fenced === 0,
   `expected the never-looked zero, got ${blind.fenced}; the discrimination this check `
   + "rests on no longer holds and the fence count may be uninformative");
 
+// THE WATER DOOR (FSD-W3 WB-10.7). Before the push the surface is absent — the counter
+// above was a measurement of that absence, not a choice — and after it the same scene's
+// counter drops by exactly the (O,H,H) family: 4·C(8,2) = 112 triples served, the
+// (O,O,H) and (O,O,O) families still fenced. The identity is what makes "served" a fact
+// about the force pass rather than a flag on a table.
 want(served.e.holon_water_loaded() === 0 && served.e.holon_trimer_surfaces() === 0,
-  "the (O,H,H) surface is genuinely absent — the page's fence is a fact, not a choice");
+  "before the push the (O,H,H) surface is absent, so the fence above measured an absence");
+const waterPush = pushWater(served.e, waterCanonical);
+want(waterPush === 1 && served.e.holon_water_loaded() === 1,
+  "the committed (O,H,H) table is read through the water door (holon_water_table_load -> 1)",
+  `load -> ${waterPush}, loaded -> ${served.e.holon_water_loaded()}`);
+// 105,105 SOLVED nodes (the i <= j half of the two O-H sides, times 49 angles) fill a
+// 207,025-node symmetric grid (65 x 65 x 49); the export counts the grid the force pass
+// reads, the artifact carries the half that was solved
+want(served.e.holon_water_nodes() === 207025,
+  `the loaded table fills the 207,025-node symmetric grid from its 105,105 solved nodes (${served.e.holon_water_nodes()})`);
+// the first value line of the artifact, read here as the parser reads it, is the node the
+// door serves at (0,0,0): the bytes went through, not a cached table
+const firstHex = waterCanonical.toString("utf8").split("\n").find((l) => l && !l.startsWith("#"));
+const firstValue = new DataView(new BigUint64Array([BigInt(`0x${firstHex}`)]).buffer).getFloat64(0, true);
+want(served.e.holon_water_node(0, 0, 0) === firstValue,
+  `the door serves the artifact's own bytes (node (0,0,0) = ${firstValue.toPrecision(6)} Ha)`,
+  `door ${served.e.holon_water_node(0, 0, 0)} vs artifact ${firstValue}`);
+served.e.holon_rebase();
+for (let f = 0; f < 10; f++) served.e.holon_step_frame(64);
+const fencedWithWater = served.e.holon_fence_untabulated();
+const expectedWithWater = c2(nO) * nH + c3(nO);
+want(fencedWithWater === expectedWithWater,
+  `with the water table served the fence count drops to exactly the (O,O,H)+(O,O,O) families `
+  + `(${fencedWithWater} = C(${nO},2)*${nH} + C(${nO},3))`,
+  `counted ${fencedWithWater}, expected ${expectedWithWater}: (O,H,H) is not being served from the `
+  + "pushed table, or another family moved with it");
+// a foreign grid line is refused by name and leaves the loaded table untouched
+const foreign = Buffer.from(waterCanonical.toString("utf8").replace("NR=65", "NR=165"));
+want(pushWater(served.e, foreign) === 0 && served.e.holon_water_loaded() === 1,
+  "a table with a foreign grid rule is refused through the door and the loaded one stays");
 
 // WHEN THE ANSWER DEPENDS ON THE ORDER OF THE QUESTION.
 //
@@ -1928,7 +2036,6 @@ const FENCE_JUSTIFYING_ABSENCES = {
   holon_set_pressure: "no setpoint door ships: WB-2.2's control IS the box (holon_box_scale); pressure is the readout, not a target",
   holon_phase_call: "the blind classifier (WB-5.5) is fenced on the page because none exists",
   holon_q_tet: "the order parameters (WB-5.5) are fenced on the page because none are computed",
-  holon_water_table_begin: "the (O,H,H) surface is fenced on the page for want of an ABI door",
   holon_refinement_active: "local refinement (WB-1.2) is fenced on the page because none exists",
 };
 const appeared = Object.keys(FENCE_JUSTIFYING_ABSENCES).filter((n) => typeof w[n] === "function");

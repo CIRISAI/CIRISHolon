@@ -624,3 +624,48 @@ the page. A declared number presented as computed is the WB-7 lie in a new costu
 **WB-10.6 — what this build does NOT do.** It does not flip the three fenced bands; that
 is node G's certification and no page work can substitute for it. It does not draw the
 interior of a nucleus. It does not put the gauge vacuum on the page (W2, after W).
+
+### 11.5 The surface (2026-09-02): a cube, four selectors, the tier as the zoom, everything else under ☰
+
+The operator's specification of the page, verbatim in intent: *the workbench is a cube and
+a few linear selectors — temperature, pressure (box size), timescale scaled to performance
+— the tier selection is just the zoom, and everything else is under a hamburger.* This
+section is that specification and it retires the dock, its five tabs and the four-tier
+pill of WB-1.1 (already retired as a spec by §11.3; now retired as markup).
+
+| control | what it is | door | fence it can show |
+|---|---|---|---|
+| the cube | the scene box, drawn; zooming out past 1× shrinks the world box on screen by the same ratio, so the 1 km band shows this scene as the speck it is at a kilometre | none — a ratio | — |
+| **temperature** | the Berendsen setpoint, K/°C/°F | `holon_set_thermostat` | — |
+| **pressure · box size** | the hand on the world box, an absolute position on a log axis of compression applied as the factor from the box the engine has now; a refusal snaps the slider to the real box and names the reason. The axis under it is DENSITY: liquid water, ice VII, white dwarf and neutronium are placed where THIS scene's mass would reach them, and a mark past the slider's floor is listed off-axis with the decades it is past. Neutronium is therefore a limit on the box size, fourteen decades below where this chart's electrons stop, never a stop | `holon_box_scale` | `CollapsesBox`, `BreaksPeriodicImages`, by name |
+| **timescale** | the governor's requested rate, with the DELIVERED rate and the realtime fraction beside it — scaled to performance means the shortfall is shown as dilation, never as reduced accuracy | `holon_set_sim_speed` | — |
+| **mixture** | four presets, each chip carrying its live second line: the active one *running · N atoms* or *cannot step*, the others *ready* or *needs X–Y shipped* — derived from `SHIPPED` and the split, never typed | reset | the preset's own fences |
+| **the tier rail** | ZOOM IS THE TIER SELECTOR. One vertical slider from the cube (1 km) to the fold below the atom; the seven bands of §11.2 are stops placed each frame at the zoom that puts the view span at their scale (the box moves under the hand, so the stops move); the active band is the nearest in log distance; its card carries the band's state from the same rule the drawer's ladder uses (`bandLiveness`), so rail and drawer cannot disagree | none — a ratio; the smoke gate reads the handler and refuses any engine call in it | LIVE / FENCED — PENDING (missing exports named) / FENCED (owner named) |
+| **☰** | everything else: the telemetry cards (ledger, closure lens, chart, three-body sector, fence register, not-served, clocks, scene, two boxes, the ladder and its readouts, the water story, determinism) and a MORE CONTROLS card holding the thermostat switch, the atom count, the boundary, the hand's buttons and pressure ledger, gravity and tilt, and the manifest — every id and door as before | as before | as before |
+
+**WB-11.5a — shipped artifacts through the doors.** Curves and surfaces past the browser's
+split arrive as committed text artifacts in `docs/workbench/tables/` and are pushed through
+the engine's own doors at load: pair curves through the bank's node-wise door
+(`holon_bank_table_begin/knot/knot_curvature/finish`, whose provenance gate weighs the
+declared uncertainty and refuses a file on the wrong side of the split), the (O,H,H)
+surface through the water door (`holon_water_table_alloc` + `holon_water_table_load`, whose
+reader is the native parser to the bit: `tests/water_door.rs`, WB-10.7). Each artifact is
+pinned by the SHA-256 of its bytes in the page's `SHIPPED` table; the page computes the
+digest over what it fetched and fences a mismatch; the smoke gate checks every pin against
+the tree and the served water table against holon-chem's committed one byte for byte.
+
+**WB-11.5b — the split, re-measured.** The in-browser cost model was the retired solver's
+and had drifted by two orders on the pairs this page serves (it welcomed a shipped (H,O)
+file as "light" and then refused it as a split violation). It is re-pinned on the engine
+that ships — fixed setup plus per-knot, five pairs measured, provenance in
+`bank::BROWSER_COST_PROVENANCE`, a classifier within 3× rather than a stopwatch — and the
+knot count the page solves at is the engine's one statement (`holon_bank_browser_knots`).
+Under it H–H is the only in-browser solve; H–O and O–O ship.
+
+**WB-11.5c — what is live.** Pure H: served, steps. 1 O + H: steps, with (O,H,H) served
+from the shipped table; every triple it can form is on a certified surface. O : 2H steps
+exactly when `tables/O2.json` is in the tree and admitted; until then the chip says
+*needs O–O shipped* and the scene is a fence, never a frozen box reported as settling.
+Pure O waits on the same file and on (O,O,O), which is tabulated nowhere yet. The wasm
+ships at opt-level 3 (2.15× on the H–O setup against opt-level z, measured; bit-identity
+with the native solve re-pinned by `law_probe.json` at every smoke run).

@@ -242,31 +242,32 @@ const PRESETS = {
     /// without H3 the O-bearing triples would be skipped silently and
     /// `holon_fence_untabulated` would read a zero that meant "never looked".
     trimer: "generate",
-    /// Triples the engine will meet and refuse. The (O,H,H) surface is 441 determinants a
-    /// node — about a thousand times an H3 node — so it is computed on the mesh and
-    /// SHIPPED as a text artifact; this wasm exposes no door to push it through (there is
-    /// no `holon_water_table_*` export), and (O,O,H) and (O,O,O) are not tabulated here at
-    /// all. Each encounter is refused and COUNTED.
-    fencedTriples: "(O,H,H), (O,O,H), (O,O,O)",
+    /// Triples the engine will meet and refuse are DERIVED at load (`untabulatedTriples`):
+    /// the (O,H,H) surface is 441 determinants a node — about a thousand times an H3 node
+    /// — so it is computed on the mesh, SHIPPED as a text artifact and pushed through the
+    /// water door (`holon_water_table_alloc` / `holon_water_table_load`); (O,O,H) and
+    /// (O,O,O) are not tabulated anywhere yet. Each encounter is refused and COUNTED.
   },
   // ONE OXYGEN, AND THE REASON IT EXISTS.
   //
-  // The O:2H preset above cannot take a single step in this build, and that is not a bug
-  // in the page: any two oxygens in a box need the (O,O) curve, which the engine refuses
-  // in a browser at 2,025 determinants. So the true stoichiometry is a static fence.
+  // The O:2H preset above steps exactly when both of its O-bearing curves are in the bank:
+  // (O,H) and (O,O) are past the browser's split (the engine's own cost model, re-measured
+  // on the shipped wasm: the (O,O) curve is minutes, not a page load), so both arrive as
+  // committed artifacts through the pair door, digest-pinned in `SHIPPED`. Until an
+  // artifact is in the tree the preset is a fence that names it, never a frozen box
+  // reported as settling.
   //
-  // A box with EXACTLY ONE oxygen never forms an (O,O) pair, so every curve it needs is
-  // served and it runs — real O-H chemistry, with the O-bearing three-body fences firing
-  // on every force pass rather than only at the rebase. It is labelled for what it is: not
-  // the water stoichiometry, and it is not offered as a substitute for it.
+  // A box with EXACTLY ONE oxygen never forms an (O,O) pair, so it needs only (O,H) and
+  // runs — real O-H chemistry, with (O,H,H) served from the shipped table and the O-bearing
+  // fences it cannot form never firing. It is labelled for what it is: not the water
+  // stoichiometry, and not offered as a substitute for it.
   "one-o": {
     label: "1 O + H",
-    sub: "one oxygen — the O-bearing scene that actually runs",
+    sub: "one oxygen — the O-bearing scene with every triple it can form tabulated",
     species: [8, 1],
     composition: "single-o",
     pairs: [[8, 1]],
     trimer: "generate",
-    fencedTriples: "(O,H,H), (O,O,H), (O,O,O)",
   },
   "pure-o": {
     label: "Pure O",
@@ -274,9 +275,25 @@ const PRESETS = {
     species: [8],
     pairs: [[8, 8]],
     trimer: "generate",
-    fencedTriples: "(O,O,O)",
   },
 };
+
+/// The O-bearing triples a preset's scene can form that this build has no surface for.
+///
+/// DERIVED from the composition and from what the water door actually read, never
+/// declared per preset: a declared fence list is how (O,H,H) stayed "fenced" on the page
+/// for a build whose parser could have read the table. (O,O,H) and (O,O,O) are not
+/// tabulated anywhere yet, so they are fenced wherever two oxygens can meet.
+function untabulatedTriples(preset, waterServed) {
+  const hasO = preset.species.includes(8);
+  const hasH = preset.species.includes(1);
+  const manyO = hasO && preset.composition !== "single-o";
+  const out = [];
+  if (hasO && hasH && !waterServed) out.push("(O,H,H)");
+  if (manyO && hasH) out.push("(O,O,H)");
+  if (manyO) out.push("(O,O,O)");
+  return out;
+}
 
 /// Species drawing data, loaded from `species_palette.json`. `radius_bohr` there is
 /// DERIVED by the engine (half the element's own computed homonuclear separation), so the
@@ -450,6 +467,13 @@ const FENCE_REGISTER = {
   unpaidCurve: {
     owner: "workbench-engine",
     exit: "press SOLVE, or ship the curve as a committed artifact through the pair door",
+    register: "C3",
+  },
+  artifactRefused: {
+    owner: "workbench-engine",
+    exit: "re-emit the artifact with the engine that ships (emit_pair_tables / s2_table), "
+      + "or re-pin SHIPPED to the committed bytes; a digest that does not match is never "
+      + "served",
     register: "C3",
   },
   untabulatedTriples: {
@@ -1072,7 +1096,7 @@ const REQUIRED_EXPORTS = [
   "holon_trimer_nodes", "holon_trimer_peak",
   "holon_bank_clear", "holon_bank_register", "holon_bank_generate_pair", "holon_bank_pair_route",
   "holon_bank_pair_n_det", "holon_bank_pair_is_heavy", "holon_bank_slot",
-  "holon_bank_filled_count", "holon_bank_browser_budget_seconds",
+  "holon_bank_filled_count", "holon_bank_browser_budget_seconds", "holon_bank_browser_knots",
   "holon_bank_set_browser_budget_seconds",
   "holon_bank_pair_predicted_seconds", "holon_bank_species_count",
   "holon_table_knots", "holon_table_r_e", "holon_table_d_e",
@@ -1104,6 +1128,11 @@ const REQUIRED_EXPORTS = [
   "holon_census_closure_rejections",
   "holon_fence_untabulated", "holon_water_loaded", "holon_trimer_surfaces",
   "holon_pairs_ready", "holon_bank_provenance_ok",
+  // the doors shipped artifacts are pushed through (FSD-W3 §11.5): the pair bank's
+  // node-wise door and the water door
+  "holon_bank_table_begin", "holon_bank_table_knot", "holon_bank_table_knot_curvature",
+  "holon_bank_table_finish", "holon_water_table_alloc", "holon_water_table_load",
+  "holon_water_nodes", "holon_water_peak",
 ];
 
 /// THE EXPORTS THE FINE BANDS ARE WAITING FOR — declared here and NOT in the list above,
@@ -1414,6 +1443,84 @@ function paint(message) {
 const PAID_PRICES = new Map();
 const priceKey = (za, zb) => `${Math.min(za, zb)}-${Math.max(za, zb)}`;
 
+// ---------------------------------------------------------------- shipped artifacts
+//
+// Curves and surfaces the browser cannot afford to solve at load arrive as committed text
+// artifacts and are PUSHED through the engine's own doors: the pair bank's node-wise door
+// (`holon_bank_table_*`, whose provenance gate weighs the declared uncertainty and refuses
+// a file on the wrong side of the split) and the water door (`holon_water_table_alloc` /
+// `holon_water_table_load`, whose reader is the native parser to the bit —
+// tests/water_door.rs). Each artifact is pinned by the SHA-256 of its bytes, computed here
+// over what was fetched; a mismatch is a fence, not a warning, because a table that is not
+// the one the tests certified is not a table this page may serve. `smoke.mjs` checks every
+// pin against the file in the tree, so a re-emitted artifact cannot ship under a stale pin.
+const SHIPPED = {
+  pairs: {
+    "8,1": { file: "tables/HO.json",
+      sha256: "05485483a3b90f249fedef47b8a30d14d639b2f943f35030ccdc0d0fb4811735" },
+  },
+  water: { file: "tables/s2_water_table.txt", nodes: 105105,
+    sha256: "3599348c40a9f4c0eff3225ca255b3cac7e3cf440053088025f12feb29741f72" },
+};
+
+/// Fetch a pinned artifact and refuse it unless its bytes digest to the pin.
+async function fetchPinned(entry) {
+  let res;
+  try { res = await fetch(entry.file); } catch (e) { return { ok: false, why: `${entry.file}: ${e.message}` }; }
+  if (!res.ok) return { ok: false, why: `${entry.file}: HTTP ${res.status}` };
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  let sha;
+  try {
+    sha = [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))]
+      .map((b) => b.toString(16).padStart(2, "0")).join("");
+  } catch {
+    return { ok: false, why: `${entry.file}: crypto.subtle is unavailable on this origin, so `
+      + "the artifact cannot be pinned and is not served" };
+  }
+  if (sha !== entry.sha256) {
+    return { ok: false, why: `${entry.file}: SHA-256 ${sha.slice(0, 12)}… is not the pinned `
+      + `${entry.sha256.slice(0, 12)}… — the file in the tree is not the one this page certifies` };
+  }
+  return { ok: true, bytes, sha };
+}
+
+/// Push a shipped pair curve (the `emit_pair_tables` JSON) through the bank's node-wise
+/// door. The return is the engine's: 1 when the bank committed the slot, else its refusal
+/// code with the reason spelled out.
+function pushShippedPair(w, za, zb, j) {
+  const slot = w.holon_bank_slot(za, zb);
+  if (slot < 0) return { code: 0, why: `${sym(za)}–${sym(zb)} is not a registered pair in the bank` };
+  const n = j.R_grid_bohr.length;
+  if (w.holon_bank_table_begin(slot, n) !== 1) return { code: 0, why: `the bank refused a ${n}-knot grid` };
+  for (let i = 0; i < n; i++) {
+    if (w.holon_bank_table_knot(slot, i, j.R_grid_bohr[i], j.E_hartree[i], j.F_hartree_per_bohr[i]) !== 1
+      || w.holon_bank_table_knot_curvature(slot, i, j.E2_hartree_per_bohr2[i]) !== 1) {
+      return { code: 0, why: `knot ${i} of ${n} was refused by the bank` };
+    }
+  }
+  const route = j.solver_route === "determinant" ? 1 : j.solver_route === "DMRG" ? 2 : 0;
+  const code = w.holon_bank_table_finish(slot, j.R_e, j.D_e, j.E_asymptote, route,
+    j.species.n_determinants, j.species.n_basis, j.uncertainty_hartree, j.exact_in_model ? 1 : 0);
+  if (code === 1) return { code, knots: n };
+  const why = code === 21
+    ? "REFUSED by the bank's split (Refusal::SplitViolated): the engine's cost model puts "
+      + "this pair on the SOLVE-HERE side, and a shipped file for a pair the browser is "
+      + "expected to solve itself is refused, not welcomed. The model and the file "
+      + "disagree; the model is the engine's, and this page reports it."
+    : refusalText(code, j.species.n_determinants);
+  return { code, why, knots: n };
+}
+
+/// Push the (O,H,H) table's bytes through the water door. 1 when the engine's parser read
+/// them as this build's table.
+function pushWater(w, bytes) {
+  const ptr = w.holon_water_table_alloc(bytes.length);
+  // the buffer is read AFTER the reservation: a reservation can grow linear memory, and a
+  // view taken before it would be detached
+  new Uint8Array(w.memory.buffer, ptr, bytes.length).set(bytes);
+  return w.holon_water_table_load();
+}
+
 async function loadPreset(key, { pay = null } = {}) {
   const w = State.w;
   const preset = PRESETS[key];
@@ -1456,12 +1563,36 @@ async function loadPreset(key, { pay = null } = {}) {
     const route = w.holon_bank_pair_route(za, zb);
     const nDet = w.holon_bank_pair_n_det(za, zb);
     const heavy = w.holon_bank_pair_is_heavy(za, zb) === 1;
+    const shipped = SHIPPED.pairs[`${za},${zb}`];
+
+    // A SHIPPED curve comes first, whatever the split says about solving it here: the
+    // bank's own provenance gate decides whether the file is admitted (it weighs the
+    // declared uncertainty, and it refuses a file for a pair the browser is expected to
+    // solve itself), and its verdict is the engine's. The bytes are pinned before a knot
+    // is pushed.
+    if (shipped) {
+      await paint(`loading the shipped ${sym(za)}–${sym(zb)} curve (${shipped.file})…`);
+      const got = await fetchPinned(shipped);
+      let r = { code: 0, why: got.why };
+      if (got.ok) {
+        let table = null;
+        try { table = JSON.parse(new TextDecoder().decode(got.bytes)); } catch { table = null; }
+        r = table ? pushShippedPair(w, za, zb, table) : { code: 0, why: `${shipped.file} is not JSON` };
+      }
+      served.pairs.push({ za, zb, route, nDet, heavy, code: r.code, ok: r.code === 1,
+        door: "shipped", knots: r.knots, sha: got.sha });
+      if (r.code !== 1) {
+        served.fences.push({ ...FENCE_REGISTER.artifactRefused,
+          what: `${sym(za)}–${sym(zb)} pair curve — shipped artifact`, why: r.why });
+      }
+      continue;
+    }
 
     // A pair past the engine's own in-browser split is refused BEFORE it is computed, and
     // the refusal is instant — so it costs nothing to ask and the answer is the engine's,
     // not a rule this file keeps.
     if (heavy) {
-      const code = w.holon_bank_generate_pair(za, zb, 160);
+      const code = w.holon_bank_generate_pair(za, zb, w.holon_bank_browser_knots());
       served.pairs.push({ za, zb, route, nDet, heavy, code, ok: false, door: "refused" });
       served.fences.push({ what: `${sym(za)}–${sym(zb)} pair curve`, why: refusalText(code, nDet),
         ...FENCE_REGISTER.splitViolated });
@@ -1492,7 +1623,7 @@ async function loadPreset(key, { pay = null } = {}) {
 
     await paint(`solving the ${sym(za)}–${sym(zb)} curve — ${nDet.toExponential(2)} determinants, this will block…`);
     const a = performance.now();
-    const code = w.holon_bank_generate_pair(za, zb, 160);
+    const code = w.holon_bank_generate_pair(za, zb, w.holon_bank_browser_knots());
     const ms = performance.now() - a;
     if (code === 1) PAID_PRICES.set(priceKey(za, zb), ms);
     served.pairs.push({ za, zb, route, nDet, heavy, code, ok: code === 1, ms, door: "generate_pair" });
@@ -1502,39 +1633,73 @@ async function loadPreset(key, { pay = null } = {}) {
     }
   }
 
+  // The (O,H,H) surface, SHIPPED and pushed through the water door for every preset whose
+  // scene can form the triple. The door's reader is the native parser to the bit
+  // (tests/water_door.rs), so what the page serves here is the table the S2 campaign
+  // certified — or nothing, with the reason named.
+  served.water = { state: "not needed", detail: "no (O,H,H) triple can form in this scene" };
+  if (preset.species.includes(8) && preset.species.includes(1)) {
+    await paint(`loading the shipped (O,H,H) three-body table (${SHIPPED.water.nodes.toLocaleString()} nodes)…`);
+    const got = await fetchPinned(SHIPPED.water);
+    if (!got.ok) {
+      served.water = { state: "refused", detail: got.why };
+    } else {
+      const code = pushWater(w, got.bytes);
+      served.water = code === 1 && w.holon_water_loaded() === 1
+        ? { state: "served",
+          detail: `${SHIPPED.water.nodes.toLocaleString()} solved nodes filling a `
+            + `${w.holon_water_nodes().toLocaleString()}-node symmetric grid, peak |dE₃| `
+            + `${fmtSci(w.holon_water_peak())} Ha, pushed through holon_water_table_load and `
+            + `read by the engine's own parser (SHA-256 ${got.sha.slice(0, 12)}…)` }
+        : { state: "refused",
+          detail: "the engine's parser refused the artifact: not this build's grid rule" };
+    }
+    if (served.water.state !== "served") {
+      served.fences.push({ ...FENCE_REGISTER.artifactRefused,
+        what: "(O,H,H) three-body surface — shipped artifact", why: served.water.detail });
+    }
+  }
+
   // The three-body sector. The homonuclear H3 surface generates in the browser — nine
   // determinants a node over 14,157 nodes — so it is loaded for every preset that can
   // meet an H-H-H triple, and its presence is also what keeps the fence counter honest.
   await paint(`generating the H₃ three-body surface (14,157 nodes)…`);
   const t = w.holon_trimer_generate();
   const loaded = t === 1 && w.holon_trimer_loaded() === 1;
+  const fencedTriples = untabulatedTriples(preset, served.water.state === "served");
+  served.fencedTriples = fencedTriples.join(", ");
+  const waterLine = served.water.state === "served"
+    ? `(O,H,H) is SERVED from the shipped table (${SHIPPED.water.nodes.toLocaleString()} solved `
+      + "nodes) pushed through the water door. "
+    : "";
   if (!loaded) {
     served.trimer = { state: "refused", detail: "the H₃ generator declined this grid." };
     served.fences.push({ what: "H₃ three-body surface", why: served.trimer.detail,
       ...FENCE_REGISTER.trimerRefused });
-  } else if (preset.fencedTriples) {
+  } else if (fencedTriples.length) {
     served.trimer = {
       state: "partly served",
       detail:
         `(H,H,H) is SERVED from the engine's own ${w.holon_trimer_nodes()}-node surface, `
         + `generated in the browser at load, peak |dE₃| ${fmtSci(w.holon_trimer_peak())} Ha. `
-        + `${preset.fencedTriples} are FENCED: those surfaces are shipped text artifacts `
-        + "computed on the mesh, and this wasm exposes no door to push them through — no "
-        + "`holon_water_table_*` export exists. Every such encounter is refused and counted "
-        + "below rather than interpolated across or zeroed.",
+        + waterLine
+        + `${served.fencedTriples} ${fencedTriples.length === 1 ? "is" : "are"} FENCED: no `
+        + "surface for them is tabulated in this build — (O,O,H) and (O,O,O) are not computed "
+        + "anywhere yet. Every such encounter is refused and counted below rather than "
+        + "interpolated across or zeroed.",
     };
     served.fences.push({
       ...FENCE_REGISTER.untabulatedTriples,
-      what: `${preset.fencedTriples} three-body surfaces`,
-      why: "shipped artifacts with no ABI door in this engine build; the encounters are "
-        + "refused and counted, and the count is a live readout.",
+      what: `${served.fencedTriples} three-body surface${fencedTriples.length === 1 ? "" : "s"}`,
+      why: "not tabulated in this build; the encounters are refused and counted, and the "
+        + "count is a live readout.",
     });
   } else {
     served.trimer = {
       state: "served",
       detail: `${w.holon_trimer_nodes()} nodes, generated in the browser at load, `
-        + `peak |dE₃| ${fmtSci(w.holon_trimer_peak())} Ha. Every triple this scene can `
-        + "form is on a certified surface.",
+        + `peak |dE₃| ${fmtSci(w.holon_trimer_peak())} Ha. ${waterLine}Every triple this `
+        + "scene can form is on a certified surface.",
     };
   }
 
@@ -1580,7 +1745,12 @@ async function loadPreset(key, { pay = null } = {}) {
   applyControls();
   State.clockWindow = { t0: null, simFs0: 0, frames: 0 };
   State.replay = { last: null, prev: null, matched: null };
+  // the reset re-derived the box, so the hand's scale starts over with it
+  State.boxScale = 1.0;
+  State.lastScaleRefusal = null;
+  syncSizeSlider();
   renderStatics();
+  renderSizeAxis();
   UI["boot-overlay"]?.classList.add("hidden");
 }
 
@@ -1857,6 +2027,11 @@ function render3D() {
   if (!State.booted) return;
   drawTemperatureGlow(vw, vh);
   const f = sceneFrame();
+  // ZOOMING OUT past 1× shrinks the world box on screen by the same ratio, so the cube
+  // band draws this scene as what it is at a kilometre — a speck — rather than filling the
+  // viewport with twelve atoms wearing a kilometre's label. The scene box (the quotient)
+  // never grows past the world box; only the drawing scale falls.
+  f.k *= Math.min(1, State.zoom);
   const cx = 0.5 * f.width, cy = 0.5 * f.height, cz = 0.5 * f.depth;
 
   // THE SCENE-BOX CUT. Membership is computed once per frame and the draw list is the
@@ -2016,7 +2191,7 @@ function renderStatics() {
   const s = State.served;
 
   put("hud-mix-name", s.label);
-  put("dock-mix-lbl", s.label);
+  renderMixChips(s);
 
   // --- the chart in the viewport (WB-5.1)
   put("chart-pair-knots", String(w.holon_table_knots()));
@@ -2427,10 +2602,9 @@ function renderTelemetry() {
   });
 
   renderDescent(w, descending, pick);
-
-  put("dock-temp-lbl", tempIn(State.targetK));
-  put("dock-grav-lbl", `${State.gravityG.toFixed(1)} G`);
-  put("dock-gov-lbl", `${State.govBias.toFixed(2)}×`);
+  renderTierRail(w, viewM);
+  put("gov-delivered",
+    `delivered ${fmtRate(State.rate.fsPerSec)} · ${fmtSci(State.rate.pctRealtime, 2)} % realtime`);
 }
 
 // ------------------------------------- the ladder's readouts (FSD-W3 §11.2, WB-10.3)
@@ -2869,8 +3043,159 @@ function initInput() {
   resize();
 }
 
+// ------------------------------------------------ the surface (FSD-W3 §11.5)
+//
+// A cube, four selectors, the tier as the zoom, everything else under ☰. What follows is
+// the rail's rendering; the controls' DOORS are unchanged and live in `initHUD` below.
+
+/// THE TIER RAIL: zoom is the tier selector. Each band on LADDER is a stop, placed each
+/// frame at the zoom that puts the view span at the band's scale (the world box moves
+/// under the hand, so the stops move with it); the active tier is the band nearest the
+/// view span in log distance; the card carries the band's state from the same rule the
+/// drawer's ladder uses (`bandLiveness`), so the two can never disagree.
+function renderTierRail(w, viewM) {
+  const zoomEl = UI["sheet-zoom"];
+  if (!zoomEl) return;
+  const min = Number(zoomEl.min);
+  const max = Number(zoomEl.max);
+  const spanM = Math.max(w.holon_width(), w.holon_height(), w.holon_depth()) * BOHR_TO_M;
+  if (!State.tierStopsBuilt && UI["tier-stops"]) {
+    UI["tier-stops"].innerHTML = LADDER.map((b, i) =>
+      `<button class="tier-stop" id="tier-stop-${i}" title="${b.band} · ${b.scale}">`
+      + `<b>${b.scale}</b><span>${b.band}</span></button>`).join("");
+    LADDER.forEach((b, i) => {
+      const el = document.getElementById(`tier-stop-${i}`);
+      UI[`tier-stop-${i}`] = el;
+      el.addEventListener("click", () => {
+        // the stop sets the same ratio the slider sets, and nothing else
+        const v = Math.min(max, Math.max(min, Math.log10(spanM / b.lengthM)));
+        zoomEl.value = v.toFixed(2);
+        State.zoom = Math.pow(10, v);
+        put("sheet-zoom-val", `${State.zoom.toFixed(2)}×`);
+      });
+    });
+    State.tierStopsBuilt = true;
+  }
+  let active = -1;
+  let best = Infinity;
+  LADDER.forEach((b, i) => {
+    const v = Math.log10(spanM / b.lengthM);
+    const pct = 100 * (v - min) / (max - min);
+    const el = UI[`tier-stop-${i}`];
+    if (el) el.style.top = `${Math.min(99, Math.max(1, pct)).toFixed(1)}%`;
+    const d = Math.abs(Math.log10(viewM / b.lengthM));
+    if (d < best) { best = d; active = i; }
+  });
+  const hasExport = (name) => typeof w[name] === "function";
+  LADDER.forEach((b, i) => {
+    const el = UI[`tier-stop-${i}`];
+    if (!el) return;
+    const live = b.state === "live"
+      || (b.state === "export-gated" && bandLiveness(b.liveWhen, hasExport).live);
+    el.className = `tier-stop${live ? "" : " fenced"}${i === active ? " active" : ""}`;
+  });
+  if (active < 0) return;
+  const b = LADDER[active];
+  const lv = b.state === "export-gated" ? bandLiveness(b.liveWhen, hasExport) : null;
+  const live = b.state === "live" || (lv && lv.live);
+  put("band-name", b.band.toUpperCase());
+  put("band-scale", `${b.scale} · view span ${fmtMetres(viewM)}`);
+  tag("tag-band", live ? "live" : "fenced",
+    live ? `this band runs its certified chart — ${b.runs}`
+      : lv ? `FENCED — PENDING: ${lv.missing.join(", ")} not in this artifact`
+        : `FENCED — owner ${b.owner}`);
+  put("band-text", live
+    ? b.runs
+    : `${b.runs}. FENCED — ${b.owner}. ${b.readout ? `Served meanwhile: ${b.readout}.` : ""}`);
+}
+
+const DENSITY_MARKS = [
+  { name: "air", gcc: 1.2e-3 },
+  { name: "liquid water", gcc: 1.0 },
+  { name: "ice VII", gcc: 1.65 },
+  { name: "white dwarf", gcc: 1.0e6 },
+  { name: "neutronium", gcc: 4.0e14 },
+];
+
+/// The size slider's readout and the density axis under it. The marks are placed on the
+/// slider's own axis (density goes as the inverse cube of the edge), so "liquid water" is
+/// wherever THIS scene's mass in THIS box would reach 1 g/cm³ — a computed position, not
+/// a label at a fixed pixel. Marks past the slider's floor are listed off-axis with the
+/// decades they are past it, which is how neutronium appears: a limit on the box size,
+/// fourteen decades below the chart's electrons.
+function renderSizeAxis() {
+  const w = State.w;
+  const rho = w ? sceneDensitySI(w) : null;
+  if (rho == null) {
+    put("sheet-size-val", "—");
+    return;
+  }
+  const gcc = rho / 1000;
+  put("sheet-size-val",
+    `${fmtSci(gcc, 2)} g/cm³ · box ×${(1 / State.boxScale).toFixed(2)} · ${w.holon_width().toFixed(1)} a₀`);
+  const el = UI["density-axis"];
+  const slider = UI["sheet-size"];
+  if (el && slider) {
+    const min = Number(slider.min);
+    const max = Number(slider.max);
+    const vNow = -Math.log10(State.boxScale);
+    const on = [];
+    const off = [];
+    for (const m of DENSITY_MARKS) {
+      const v = vNow + Math.log10(m.gcc / gcc) / 3;
+      if (v >= min && v <= max) {
+        const pct = 100 * (v - min) / (max - min);
+        on.push(`<span class="dmark" style="left:${pct.toFixed(1)}%" title="${m.name}: ${m.gcc} g/cm³">${m.name}</span>`);
+      } else if (v > max) {
+        off.push(`<span class="dmark off" title="${m.name}: ${m.gcc} g/cm³ — ${(3 * (v - max)).toFixed(0)} decades of density past the slider's floor, and past this chart's electrons">${m.name} ⟶</span>`);
+      }
+    }
+    el.innerHTML = on.join("") + off.join("");
+  }
+  put("size-fence", State.lastScaleRefusal
+    ? State.lastScaleRefusal
+    : "floor: the chart's electrons (STO-3G), no degeneracy pressure here");
+}
+
+function scaleRefusalText(code) {
+  return code === 91
+    ? "REFUSED: that factor is not a positive finite number."
+    : code === 92
+      ? "REFUSED: that scale would collapse the box onto its own walls."
+      : code === 93
+        ? "REFUSED: that box could not hold its own periodic images."
+        : `REFUSED by the engine, code ${code}.`;
+}
+
+/// Put the size slider where the box actually is.
+function syncSizeSlider() {
+  if (UI["sheet-size"]) UI["sheet-size"].value = (-Math.log10(State.boxScale)).toFixed(2);
+}
+
+/// The mixture chips' second lines: the active preset's served state, and for the others
+/// whether their curves are in the tree — SHIPPED, in-browser, or absent by name.
+function renderMixChips(s) {
+  const w = State.w;
+  for (const key of Object.keys(PRESETS)) {
+    const p = PRESETS[key];
+    let line;
+    if (key === State.mixture) {
+      line = s.stepsAllowed ? `running · ${State.atomsActual} atoms` : "cannot step";
+    } else {
+      const missing = p.pairs.filter(([za, zb]) =>
+        !SHIPPED.pairs[`${za},${zb}`] && w && w.holon_bank_pair_is_heavy(za, zb) === 1);
+      line = missing.length
+        ? `needs ${missing.map(([za, zb]) => `${sym(za)}–${sym(zb)}`).join(", ")} shipped`
+        : "ready";
+    }
+    put(`mix-lbl-${key}`, line);
+  }
+  put("mix-state", s.stepsAllowed ? `${s.label} · stepping` : `${s.label} · fenced`);
+}
+
 function initHUD() {
-  UI["btn-toggle-telemetry"]?.addEventListener("click", () => UI["telemetry-drawer"].classList.toggle("open"));
+  // ☰ is everything that is not the cube, the four selectors or the tier rail.
+  UI["btn-menu"]?.addEventListener("click", () => UI["telemetry-drawer"].classList.toggle("open"));
   UI["close-telemetry"]?.addEventListener("click", () => UI["telemetry-drawer"].classList.remove("open"));
   UI["btn-toggle-manifest"]?.addEventListener("click", () => UI["manifest-modal"].classList.toggle("hidden"));
   UI["btn-close-manifest"]?.addEventListener("click", () => UI["manifest-modal"].classList.add("hidden"));
@@ -2881,15 +3206,6 @@ function initHUD() {
     // into the delivered figure and report a slowdown that is not the engine's.
     State.clockWindow = { t0: null, simFs0: 0, frames: 0 };
   });
-
-  for (const tabBtn of document.querySelectorAll(".dock-tab")) {
-    tabBtn.addEventListener("click", () => {
-      const panel = tabBtn.dataset.tab;
-      for (const b of document.querySelectorAll(".dock-tab")) b.classList.toggle("active", b === tabBtn);
-      for (const p of document.querySelectorAll(".sheet-panel")) p.classList.toggle("active", p.dataset.panel === panel);
-      UI["control-sheet"].classList.add("open");
-    });
-  }
 
   UI["sheet-temp"]?.addEventListener("input", (e) => {
     State.targetK = Number(e.target.value);
@@ -2954,14 +3270,33 @@ function initHUD() {
         State.boxScale *= factor;
         State.lastScaleRefusal = null;
       } else {
-        State.lastScaleRefusal = code === 91
-          ? "REFUSED: that factor is not a positive finite number."
-          : code === 92
-            ? "REFUSED: that scale would collapse the box onto its own walls."
-            : `REFUSED by the engine, code ${code}.`;
+        State.lastScaleRefusal = scaleRefusalText(code);
       }
+      syncSizeSlider();
+      renderSizeAxis();
     });
   }
+  // THE SIZE SLIDER IS THE HAND ON THE WORLD BOX (WB-2.2), through the same door as the
+  // buttons above: an absolute position on a log axis of compression, applied as the
+  // multiplicative factor from where the box is now. A refusal snaps the slider back to
+  // the box the engine actually has and says why — the slider never shows a size the
+  // world does not have. The axis under it is DENSITY: the floor is where this chart's
+  // electrons stop, and neutronium is a mark fourteen decades past it, not a stop.
+  UI["sheet-size"]?.addEventListener("input", (e) => {
+    const w = State.w;
+    if (!w) return;
+    const target = Math.pow(10, -Number(e.target.value));
+    const factor = target / State.boxScale;
+    const code = w.holon_box_scale(factor);
+    if (code === 1) {
+      State.boxScale = target;
+      State.lastScaleRefusal = null;
+    } else {
+      State.lastScaleRefusal = scaleRefusalText(code);
+      syncSizeSlider();
+    }
+    renderSizeAxis();
+  });
   UI["sheet-gov"]?.addEventListener("input", (e) => {
     // Logarithmic: the useful range spans decades, and a linear slider would spend all
     // its travel at the fast end.

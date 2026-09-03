@@ -116,15 +116,60 @@ static BROWSER_BUDGET_BITS: std::sync::atomic::AtomicU64 = std::sync::atomic::At
 /// The determinant count is NOT the driver: Cl-Cl has 324 determinants and costs the most,
 /// because the integral transform is a high power of the BASIS size and runs before any
 /// determinant is enumerated. The model below carries both axes.
-pub const BROWSER_COST_PROVENANCE: &str = "MIXTURES-1 campaign machine, 24 knots, release: 7 measured pairs (H-H 0.22 s ... Cl-Cl 95.95 s)";
+pub const BROWSER_COST_PROVENANCE_MIXTURES1: &str = "MIXTURES-1 campaign machine, 24 knots, release: 7 measured pairs (H-H 0.22 s ... Cl-Cl 95.95 s) — the RETIRED solver's model, kept as the record of what the split was fitted on before 2026-09-02";
 
-/// Predicted seconds to solve a pair curve at page load: a basis-transform term fitted
-/// to the measured table (`3.1e-3 * n_basis^3.5`, within ~40% of every measured pair), a
-/// per-determinant term (`2.1e-3 s`, from Li2 against H-Cl at equal basis), and the
-/// measured startup floor. A MODEL, labelled by [`BROWSER_COST_PROVENANCE`]; the page
-/// compares it against its budget rather than against a species.
+/// RE-MEASURED 2026-09-02 on the engine that ships — the lane solver behind the vector
+/// fold (`holon-chem/src/lanes.rs`, `vecspace.rs`) — because the model above was the OLD
+/// solver's and had drifted by two orders on the pairs the workbench actually serves: it
+/// predicted 1.9 s for the (H,O) curve that measured 5.4 s at 40 knots in the shipped
+/// wasm, and it put (O,O) at 4.4 s where one KNOT is 21 s. A split enforced against a stale
+/// model refuses the wrong files: it welcomed a shipped (H,O) table as "light" and refused
+/// it as a split violation, which is how the water preset stayed unable to step.
+///
+/// The measurement (this machine, 32 cores, under concurrent load ≈ 20; native release,
+/// and the opt-level-3 wasm under node for the two light pairs; `examples/pair_price.rs`
+/// is the instrument). A curve's cost is a FIXED part — the range derivation and the two
+/// atom references, solved before any knot — plus a per-knot part:
+///
+/// | pair  | `n_basis` | `n_det` | fixed (s) | per knot (s) | where |
+/// |---|---|---|---|---|---|
+/// | H-H   | 2  | 4     | 0.30 | 0.007 | wasm |
+/// | H-O   | 6  | 90    | 5.1  | 0.006 – 0.056 | wasm / native |
+/// | H-Cl  | 10 | 100   | ~3   | ~3    | native |
+/// | O-O   | 10 | 2,025 | 20   | 21    | native |
+/// | Cl-Cl | 18 | 324   | 27   | 4.7   | native |
+///
+/// The per-knot cost is the dual-number solve — energy, its first and second derivative
+/// through the response equation — and rises with BOTH axes; the fixed cost rises with
+/// the determinant count. Neither axis alone classifies the table above: Cl-Cl is heavy
+/// on the basis, O-O on the determinants.
+pub const BROWSER_COST_PROVENANCE: &str = "this machine, 2026-09-02, engine as shipped (lane solver, vector fold): 5 pairs measured at 1-40 knots, fixed + per-knot; the model is within 3x of every measured pair and is a CLASSIFIER, not a stopwatch";
+
+/// The knot count the page asks for at load (`holon_bank_generate_pair`), and the one the
+/// split is priced at. Exposed to the page (`holon_bank_browser_knots`) so there is one
+/// statement of it.
+pub const BROWSER_KNOTS: u64 = 160;
+
+/// Predicted seconds to solve a pair curve at page load, at [`BROWSER_KNOTS`]:
+/// `predicted_load_seconds_at(n_basis, n_det, BROWSER_KNOTS)`. A MODEL, labelled by
+/// [`BROWSER_COST_PROVENANCE`]; the page compares it against its budget rather than
+/// against a species.
 pub fn predicted_load_seconds(n_basis: u64, n_det: u64) -> f64 {
-    0.1 + 3.1e-3 * (n_basis as f64).powf(3.5) + 2.1e-3 * n_det as f64
+    predicted_load_seconds_at(n_basis, n_det, BROWSER_KNOTS)
+}
+
+/// The cost model at an arbitrary knot count: a fixed part `0.3 + 0.5·√n_det` and a
+/// per-knot part `7e-3·(n_basis/2)^2.5 + 5e-6·n_det²`, fitted to the table above. Within
+/// 3× of every measured pair; on the pairs the workbench ships it says H-H 2.4 s (light),
+/// H-O 29 s, H-Cl 75 s, Cl-Cl 360 s, O-O 3,400 s (all heavy), which is the classification
+/// the measurements give at any budget between 3 s and 20 s. Beyond `n_basis = 18` or
+/// `n_det = 2,025` it is an extrapolation and should be read as one.
+pub fn predicted_load_seconds_at(n_basis: u64, n_det: u64, knots: u64) -> f64 {
+    let nd = n_det as f64;
+    let nb = n_basis as f64;
+    let fixed = 0.3 + 0.5 * nd.sqrt();
+    let per_knot = 7e-3 * (nb / 2.0).powf(2.5) + 5e-6 * nd * nd;
+    fixed + knots as f64 * per_knot
 }
 
 /// The largest energy uncertainty a curve may declare and still be loaded, hartree.

@@ -147,9 +147,35 @@ vector meson the lightest exchange; static (infinitely heavy) sources; open chai
 the columns' own finite-N masses as referee (the continuum limit is SCHWINGER-3's,
 not re-taken here).
 
-## 8. The Python arm's cross-check (amendment A1) — PENDING
+## 8. The Python arm's cross-check (amendment A1) — CONFIRMED on both columns
 
-To be appended when the Python driver's `E0` and two `E2(d)` per column complete
-(`schwinger4.py crosscheck 4.0` / `9.0`): agreement within the χ-premise band on the
-energies' contribution to `V` confirms the engine arm's admission for that column;
-a miss VOIDs the engine arm for that column and the Python arm's own fit is read.
+*Appended 2026-09-02 (evening) when the Python driver's staked points completed;
+`schwinger4.py crosscheck 4.0` / `9.0` read against the checkpoints, verbatim.*
+
+| x | point | Python (`dmrg_schwinger.py`, χ = 40) | engine arm (`schwinger4`, χ = 40) | \|diff\| | band | |
+|---|---|---|---|---|---|---|
+| 4 | E0 | −127.2036725856 | −127.2036725856 | 1.54e-11 | ≥ 1e-4 | ok |
+| 4 | E2(d = 6) | −124.1180890897 | −124.1180890897 | 1.44e-11 | ≥ 1e-4 | ok |
+| 4 | E2(d = 10) | −124.0641389572 | −124.0641389572 | 1.47e-11 | ≥ 1e-4 | ok |
+| 9 | E0 | −454.7034805665 | −454.7034805667 | 1.06e-10 | ≥ 1e-4 | ok |
+| 9 | E2(d = 8) | −451.4016421246 | −451.4016421247 | 1.14e-10 | ≥ 1e-4 | ok |
+| 9 | E2(d = 12) | −451.3536347296 | −451.3536347297 | 1.13e-10 | ≥ 1e-4 | ok |
+
+Three of three staked points per column agree six to seven orders inside the χ-premise
+band `max(1e-4, 0.05·|V|)`. **The engine arm's admission (A1) stands for both columns,
+and the verdict of §0 — G1 branch (a) on both columns — is no longer formally pending:
+it is the campaign's staked verdict.** Nothing in §1–§7 changed.
+
+Beyond the three staked points, the Python arm's other completed configurations
+(x = 4: E2 at d = 2, 3, 4, 8; x = 9: E2 at d = 2, 3, 4, 6) agree with the engine arm's
+to ≤ 1.6e-10 on every one (column logs `schwinger4_x4.0.log`, `schwinger4_x9.0.log`
+against `schwinger4_rs_x{4.0,9.0}.json`); they are recorded, not gated. The two drivers
+are independent codes on one Hamiltonian — the Python driver banked for SCHWINGER-3
+(its provenance in `instrument/PROVENANCE.sha256`) and the engine's `q8-mps` behind the
+`schwinger4` example (binary SHA-256 in `schwinger4_rs_x*.log`) — and their agreement at
+1e-10 is a cross-solver identity on the energies, not a statement about the fit.
+
+Cost, recorded (M-CHEAPER-THAN-ITS-PRICE): the Python points ran 1,000–3,600 s each
+under machine loads of 6–35; the engine arm's matching points ran 8–25 s. The ratio is
+the reason A1 admitted the engine arm and the reason this section is the last one the
+Python driver is asked to write for this campaign.

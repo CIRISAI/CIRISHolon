@@ -769,11 +769,11 @@ const LADDER = [
     // The tier's own register row: NAMED AND LOCKED as a fold at wager strength with three
     // separable kills, and its first rung MEASURED on the engine arm. A fence over real
     // work in progress, which is what the fence law asks a fence to be.
-    measuredBy: "TIERS.md:21",
+    measuredBy: "TIERS.md:59",
     positive: "the first rung is MEASURED: SCHWINGER-4's residual interaction between two "
       + "screened static pairs decays at the banked meson mass to 0.6% — Fold II's "
       + "first measurement below the atom, 1+1D only.",
-    positiveCite: "TIERS.md:21",
+    positiveCite: "TIERS.md:59",
   },
 ];
 

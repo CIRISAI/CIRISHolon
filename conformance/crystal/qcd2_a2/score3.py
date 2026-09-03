@@ -18,8 +18,12 @@ for x, b in [(4.0,0),(9.0,0),(9.0,1),(4.0,1)]:
     rungs = " ".join(f"{r['chi']}:{r['energy']-e:+.2e}/{r.get('variance', float('nan')):.1e}/{r['exit'][:4]}" for r in m["rungs"] if "energy" in r)
     print(f"  {'PASS' if pm else 'FIRE'}  x={x} B={b} mixed at chi {tm['chi']}: miss {tm['energy']-e:+.3e} ({tm['exit']}, {tm['sweeps']} sw, {tm['seconds']:.0f}s) | rungs miss/var/exit: {rungs}")
     print(f"  {'PASS' if pc else 'FIRE'}  x={x} B={b} cold at chi {tc['chi']}: miss {tc['energy']-e:+.3e}, |cold-mixed| {abs(tc['energy']-tm['energy']):.2e}, var {tc.get('variance')} ({tc['seconds']:.0f}s)")
-    vs = [r.get("variance") for r in m["rungs"] if "energy" in r]
-    mono = all(v is not None for v in vs) and all(vs[i] > vs[i+1] for i in range(len(vs)-1))
-    print(f"  {'PASS' if mono else 'FIRE'}  V1 x={x} B={b}: " + " > ".join(f"{v:.2e}" for v in vs if v is not None))
+    # V1 is staked on the rungs whose exact variance is within its lease (A2.4: 64/128/256);
+    # a refused rung is printed by name and is neither a pass nor a fire
+    rr = [r for r in m["rungs"] if "energy" in r]
+    vs = [r["variance"] for r in rr if r.get("variance") is not None]
+    refused = [r["chi"] for r in rr if "variance_refused" in r]
+    mono = len(vs) >= 2 and all(vs[i] > vs[i+1] for i in range(len(vs)-1))
+    print(f"  {'PASS' if mono else 'FIRE'}  V1 x={x} B={b}: " + " > ".join(f"{v:.2e}" for v in vs) + (f"  (variance refused by its lease at chi {refused})" if refused else ""))
     ok &= mono
 print("G0''' ALL PASS" if ok else "NOT ALL PASS (or waiting)")

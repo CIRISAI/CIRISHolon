@@ -6,6 +6,44 @@ a target is not scaffolded — it's a wish. Statuses are honest: ASSUMED means
 
 ---
 
+## FOUR PHYSICS, ONE OBJECT TEST — consolidated status, 2026-09-03
+
+*The ladder's premise was that one contract — an OBJECT is a lossy summary the dynamics
+never splits (`Core/Closure.lean`: `ViewClosed`, `viewClosed_iff_never_splits`,
+`macro_law_forced`) — could be put to physics that share nothing but this engine. Four now
+have been. The result worth reporting is NOT that they all passed: it is that the same test,
+unchanged, returned a different verdict on each, and each verdict came with its own number.*
+
+| physics | the carrier | what the object test returned | the number that says it |
+|---|---|---|---|
+| **molecular matter** | 12-atom water scene, MBE3 physics, 2D | **CERTIFIED-STRICT** — the molecule is a closed view | 893.8 fs of survival against a pre-staked 834 fs window, 72.3 % of the run, **0 of 111 controls** passing |
+| **fluid dynamics** | FHP-6 / FCHC-24 lattice gas, integer-exact | **THE TIER CERTIFIES, ITS COARSE CHARTS DO NOT** | the closure defect of a block chart is EXACTLY its boundary fraction, `W(b) = 1 − max(0, b−2)²/b²`, at every chart and for **every one of the 4,608 REG+ collision laws** the census admits |
+| **quantum dynamics** | single-site TDVP, complex, real time | **THE CARRIER IS MATERIALIZED AND GATED**, with one prong of its own stake falsified and kept | exact at the natural bond cap (the manifold IS the Hilbert space there); below the cap the integrator's convergence order is the measured quantity |
+| **atomic matter** | the chemical tier, elements from `Z` | **THE LADDER CLIMBED**, and node H DECIDED against it: the many-body expansion does **not** terminate at four | dE5: 24 of 24 over bound, worst 1,572× |
+| **hadronic matter** (the fold below the atom) | labelled MPS on QCD₂, colour as block labels | **INSTRUMENT VALIDATED, PHYSICS UNREAD** | the arm reproduces the exact colour-lane referee to **1e-10** on every sector at rank-derived ceilings; no mass, interaction or continuum shape has been read on it |
+
+**What is genuinely new in this line, and what is not.** New: one object contract, stated
+once and machine-checked, has now been applied across four physics on one engine, and it
+DISCRIMINATES — it certifies water, refuses the fluid tier's coarse charts with an exact
+formula for how badly, and its answer on each is a number rather than a verdict word. Not
+new, and not claimed: none of this is a result about nature. Every carrier is small (twelve
+atoms, a lattice gas, eight lattice sites), every tier's negative is about ITS carrier, and
+the fluid tier explicitly does **not** claim a Navier–Stokes limit — only the necessary
+lattice condition is measured, and the exit for the rest is named and unmoved.
+
+**The honest tension inside the four.** The fluid tier appears twice in this record with
+different answers, and both stand: as its OWN tier (node LG) the lattice gas certifies, while
+as a COARSE-GRAINING of the water scene (RUNG2) no fluid summary closes at twelve atoms.
+Those are different objects, not a contradiction, and the second one's cause is measured —
+the only grid with real exchange averaged half an atom per cell.
+
+**What each tier owes next.** Molecular: the exact four-body rung, a staked open comparison.
+Fluid: the measured kinematic viscosity, semi-detailed balance, and the Galilean defect.
+Quantum dynamics: a campaign to spend it on (`DIMER_PREREG.md`). Atomic: the DMRG cluster
+seam, fired by measurement twice. Hadronic: the volume ladder, then the first physics read.
+
+---
+
 ## WHERE WE ARE — consolidated status, 2026-09-01
 
 *(This section supersedes the running appendices below for at-a-glance

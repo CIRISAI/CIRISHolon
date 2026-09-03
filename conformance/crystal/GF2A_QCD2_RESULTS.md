@@ -98,12 +98,43 @@ column above is the referee; the symmetric arm's own convergence test (energy ch
 | **4** | **1** | **15** | **175,616** | **128** | −47.996352367153 | **+1.302e-4** | **no** | not converged | 1.89e-7 | 60 |
 | **4** | **1** | **15** | **175,616** | **256** | −47.996416223802 | **+6.634e-5** | **no** | **converged** | 2.98e-9 | **4** |
 
+### x = 4, B = 0 landed next, and it takes plant (iv) down with it
+
+| x | B | n_q | states | χ | E₀(MPS-sym) | miss vs exact | ≤ 1e-6 | arm's own verdict | discarded | sweeps |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **4** | **0** | **12** | **343,000** | **64** | −51.913392934209 | **+9.607e-3** | **no** | not converged | 1.01e-5 | 60 |
+| **4** | **0** | **12** | **343,000** | **128** | −51.916887808623 | **+6.112e-3** | **no** | not converged | 3.82e-7 | 60 |
+| **4** | **0** | **12** | **343,000** | **256** | −51.917057523964 | **+5.942e-3** | **no** | **converged** | 6.92e-9 | **4** |
+
+**The miss is monotone in the size of the sector, and only the smallest one is solved.**
+At x = 4: 21,952 states → 1.6e-11 (exact to the referee's own digits); 175,616 → 6.6e-5;
+343,000 → 5.9e-3. Two orders of sector size cost eight orders of accuracy at the same χ.
+
+**PLANT (iv) IS VOID ON THIS SECTOR — it no longer discriminates, and it fails on the side
+that matters.** §A1.5 stakes it as a two-sided test at N = 8, x = 4, B = 0, χ = 64: *the
+mutant must land more than 1e-3 from the exact arm's energy, and the successor must not.*
+Measured, both halves now in hand:
+
+| arm | χ = 64 | miss vs exact −51.9229999638 |
+|---|---|---|
+| mutant (labels ignored, `mutant_x4.0_N8_B0.json`) | −51.917869990835 | +5.13e-3 |
+| **successor (the shipped symmetric arm)** | −51.913392934209 | **+9.61e-3** |
+| successor at its BEST rung (χ = 256) | −51.917057523964 | **+5.94e-3** |
+
+The mutant's half passes; **the successor's half fails**, at χ = 64 as staked and at every
+richer rung besides. At its best the correct arm is FURTHER from the exact answer than the
+deliberately broken one. When the earlier record said plant (iv) "fires as designed" only
+the mutant had been run; with both halves measured the plant is a detector that cannot tell
+its two causes apart on this sector, so it says LOOK and it does not say the labels are
+load-bearing. What the passing B = 2 sectors do still say is narrower and worth keeping: at
+21,952 states the labelled machinery reproduces the referee to 1e-11, so the label
+bookkeeping is not broken — it is out of reach at eight and sixteen times that size.
+
 **G0′ FIRES.** `x = 4, B = 1` meets none of the ladder's χ — its best rung is 66× outside
 the stake — and by §A1.3's own words that fires the gate for the arm. The ladder is not
 extended past 256 without a further amendment, and by §A1.6 **nothing downstream is read:
-G1′, G2 and G3 stay unread on the symmetric arm.** `x = 4, B = 0` and both `x = 9`
-non-trivial sectors are still running and are appended when they land; they cannot un-fire
-this.
+G1′, G2 and G3 stay unread on the symmetric arm.** Both `x = 9` non-trivial sectors are still running and are appended when they land; they
+cannot un-fire this, and `x = 4, B = 0` above has already made it worse.
 
 **The discarded weight cannot buy the error, which is the same conviction that retired the
 penalised arm (§A1.1).** On the sector that passes, the two quantities track: at `x = 4,

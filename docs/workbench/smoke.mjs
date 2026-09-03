@@ -543,6 +543,32 @@ const foreign = Buffer.from(waterCanonical.toString("utf8").replace("NR=65", "NR
 want(pushWater(served.e, foreign) === 0 && served.e.holon_water_loaded() === 1,
   "a table with a foreign grid rule is refused through the door and the loaded one stays");
 
+// ACTUAL WATER. The last curve the O:2H scene needs is (O,O) — 2,025 determinants,
+// 21 s a knot natively, minutes in any browser — and it arrives as `tables/O2.json`
+// through the same bank door. With it admitted the scene that could not take a step
+// steps: `holon_pairs_ready` flips to 1 on the O:2H composition, the integrator runs,
+// the temperature is a number, and the census counts. The fence identity from above
+// still holds with (O,O) served, because (O,O,H) and (O,O,O) are surfaces, not curves.
+const o2Json = shippedPairJson(8, 8);
+want(o2Json !== null, "the shipped (O,O) curve is in SHIPPED and in the tree (tables/O2.json)");
+if (o2Json) {
+  const o2 = pushShippedPair(served.e, 8, 8, o2Json);
+  want(o2 === 1, "the shipped O-O curve is ADMITTED by the bank's provenance gate (finish code 1)",
+    `holon_bank_table_finish for (8,8) -> ${o2}`);
+  want(served.e.holon_bank_filled_count() === 3, "all three curves of the O:2H scene are in the bank",
+    `filled ${served.e.holon_bank_filled_count()}`);
+  served.e.holon_rebase();
+  want(served.e.holon_pairs_ready() === 1,
+    "with (O,O) served the O:2H scene MAY STEP — holon_pairs_ready reads 1 on the water composition");
+  for (let f = 0; f < 20; f++) served.e.holon_step_frame(64);
+  const t = served.e.holon_temperature();
+  want(Number.isFinite(t) && t > 0, `and it does: after 20 frames the temperature reads ${t.toFixed(1)} K`);
+  want(served.e.holon_fence_untabulated() === expectedWithWater,
+    `the fence count with every curve served is still the (O,O,H)+(O,O,O) families (${served.e.holon_fence_untabulated()})`);
+  want(Number.isInteger(served.e.holon_census_molecules()),
+    `the census counts molecules on a stepping water scene (${served.e.holon_census_molecules()} rows)`);
+}
+
 // WHEN THE ANSWER DEPENDS ON THE ORDER OF THE QUESTION.
 //
 // `holon_pairs_ready` asks about the pairs THIS SCENE'S ATOMS can meet, so on a box that

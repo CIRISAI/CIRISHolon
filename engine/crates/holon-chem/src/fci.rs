@@ -1353,9 +1353,34 @@ pub fn solve(space: &FciSpace, mo: &MoIntegrals) -> Solution {
 /// determinant route if its working set is admitted; else the MPS route as the leased
 /// overflow, if ITS price is admitted; else the refusal naming both prices.
 pub fn try_solve(space: &FciSpace, mo: &MoIntegrals) -> Result<Solution, crate::budget::Refused> {
+    try_solve_from(space, mo, None)
+}
+
+/// [`solve`] from a START VECTOR — the previous knot's eigenvector on a curve, the
+/// previous bracket's on a bisection. The eigenvector of a smoothly varying Hamiltonian
+/// varies smoothly, so a warm Davidson converges in a handful of iterations where a cold
+/// one on a (near-)degenerate ground state — two open-shell atoms at large separation,
+/// whose lowest manifold is 81-fold degenerate in the Sz = 0 space — took 945 (measured on
+/// the (O,O) curve, 16.9 s of a 37 s single-knot run). The converged energy is the same
+/// eigenvalue to the residual tolerance; its trailing bits depend on the path, which is
+/// why the single-point [`solve`] keeps its cold start and every pinned reference solve
+/// goes through it.
+pub fn solve_from(space: &FciSpace, mo: &MoIntegrals, start: Option<&[f64]>) -> Solution {
+    match try_solve_from(space, mo, start) {
+        Ok(s) => s,
+        Err(r) => panic!("{r}"),
+    }
+}
+
+/// [`try_solve`] with a start vector; the MPS route has no use for one and ignores it.
+pub fn try_solve_from(
+    space: &FciSpace,
+    mo: &MoIntegrals,
+    start: Option<&[f64]>,
+) -> Result<Solution, crate::budget::Refused> {
     let det = crate::budget::price_determinant(space.n_det);
     match crate::budget::admit(&det) {
-        Ok(_) => Ok(solve_determinant(space, mo)),
+        Ok(_) => Ok(solve_determinant_from(space, mo, start)),
         Err(det_refusal) => {
             let mpo = crate::budget::price_mpo(space.n_orb);
             match crate::budget::admit(&mpo) {
@@ -1506,6 +1531,12 @@ pub fn solve_determinant_with_budget(
         Ok(())
     };
 
+    // STAGE TIMING, on request (`HOLON_SOLVE_TIMING=1`): one line per solve on stderr with
+    // the eigensolve, the derivative operators and the response solve priced separately —
+    // the instrument that placed the (O,O) curve's per-knot cost. A cost that is not split
+    // by stage gets attributed to the wrong one.
+    let timing = crate::pair::stage_timing_on();
+    let t_dav = crate::pair::Stopwatch::start();
     let mut op0 = provider.op_for(space, &ci0)?;
     check(op0.as_ref(), "energy")?;
     let (e, v, iters, residual, exit) = crate::tier::davidson_eigh_from_op(
@@ -1515,6 +1546,8 @@ pub fn solve_determinant_with_budget(
         budget,
         start_vector,
     );
+    let dav_s = t_dav.secs();
+    let t_ops = crate::pair::Stopwatch::start();
 
     // E' = <v|H'|v>: exact for a variational eigenvector, with no response needed,
     // because the eigenvector's own derivative enters at second order.
@@ -1535,6 +1568,7 @@ pub fn solve_determinant_with_budget(
         op2.apply(&v, &mut h2v);
     }
     let e2_direct = dot(&v, &h2v);
+    let ops_s = t_ops.secs();
     let mut rhs = h1v.clone();
     axpy(-e1, &v, &mut rhs);
     for x in rhs.iter_mut() {
@@ -1542,8 +1576,18 @@ pub fn solve_determinant_with_budget(
     }
     // The response solve re-uses the ENERGY operator: same Hamiltonian, same class, and on a
     // device arm the tables it uploaded are still resident.
+    let t_cg = crate::pair::Stopwatch::start();
     let (w, cg_iters, cg_residual) =
         cg_response(op0.as_mut(), &diag, e, &v, &rhs, 1e-10, 2000);
+    if timing {
+        eprintln!(
+            "solve_timing n_det={} davidson {dav_s:.3}s ({iters} it, resid {residual:.1e}, \
+             {exit:?}) derivative-ops {ops_s:.3}s response-cg {:.3}s ({cg_iters} it, \
+             resid {cg_residual:.1e})",
+            space.n_det,
+            t_cg.secs()
+        );
+    }
     let e2 = e2_direct + 2.0 * dot(&w, &h1v);
 
     // The variational bound, from the diagonal the preconditioner already built. See

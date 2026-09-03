@@ -84,6 +84,9 @@ fn main() {
         .nth(1)
         .and_then(|s| s.parse().ok())
         .unwrap_or(6);
+    // this producer owns the machine and runs its own pool: split the cores between
+    // the pool and the lane kernel beneath it, or the two multiply (scheduling only)
+    holon_chem::lanes::set_lane_threads_for_pool(threads);
     let t0 = Instant::now();
     let e_o = atom_energy(OXYGEN);
     let e_h = atom_energy(HYDROGEN);

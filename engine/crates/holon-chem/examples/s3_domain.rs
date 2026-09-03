@@ -106,6 +106,9 @@ fn main() {
     };
     let (apex, b1, b2) = (name(0), name(1), name(2));
     let threads: usize = a.get(3).and_then(|s| s.parse().ok()).unwrap_or(8);
+    // this producer owns the machine and runs its own pool: split the cores between
+    // the pool and the lane kernel beneath it, or the two multiply (scheduling only)
+    holon_chem::lanes::set_lane_threads_for_pool(threads);
     let nx: usize = a.get(4).and_then(|s| s.parse().ok()).unwrap_or(13);
     let nc: usize = a.get(5).and_then(|s| s.parse().ok()).unwrap_or(17);
     // THE ANGLE WINDOW'S CLOSED END, and it is an argument because it turned out to be
@@ -124,14 +127,29 @@ fn main() {
     let e_atoms = atom_energy(apex) + atom_energy(b1) + atom_energy(b2);
     let ctx = Ctx { apex, b1, b2, e_atoms };
 
-    // The inner end, from the crate's own pair rule rather than a new one.
+    // IDENTIFY BEFORE COMPUTING. Everything below this point does electronic-structure
+    // work -- two `derive_range` calls and three `locate_r_e` scans, each of which is 123
+    // pair solves -- and for the oxygen tables those include O-O at radii near the spin
+    // degeneracy, where a solve costs orders more than the compact one G0 timed. Printing
+    // the header AFTER them left the job silent through a startup that is itself minutes
+    // long, so a reader could not tell a live run from a wedged one. Adding progress to
+    // the sweep loop alone did not fix that: the sweep had not started yet. A job has to be
+    // legible from its FIRST second, not from its first result.
+    println!("# DOMAIN SWEEP starting: ({}, {}, {}), apex {}, threads = {threads}",
+        apex.symbol, b1.symbol, b2.symbol, apex.symbol);
+    println!("#   deriving inner ends and equilibria (5 scans, each real solves)...");
     let asym1 = atom_energy(apex) + atom_energy(b1);
     let asym2 = atom_energy(apex) + atom_energy(b2);
     let (x_lo, _) = derive_range(apex, b1, asym1);
+    println!("#   x_lo = {x_lo:.4} ({:.0} s)", t0.elapsed().as_secs_f64());
     let (y_lo, _) = derive_range(apex, b2, asym2);
+    println!("#   y_lo = {y_lo:.4} ({:.0} s)", t0.elapsed().as_secs_f64());
     let re1 = locate_r_e(apex, b1);
+    println!("#   R_e(apex-{}) = {re1:.4} ({:.0} s)", b1.symbol, t0.elapsed().as_secs_f64());
     let re2 = locate_r_e(apex, b2);
+    println!("#   R_e(apex-{}) = {re2:.4} ({:.0} s)", b2.symbol, t0.elapsed().as_secs_f64());
     let re_opp = locate_r_e(b1, b2);
+    println!("#   R_e({}-{}) = {re_opp:.4} ({:.0} s)", b1.symbol, b2.symbol, t0.elapsed().as_secs_f64());
 
     println!(
         "# DOMAIN SWEEP for the ({}, {}, {}) table — apex {}, axes {}-{} and {}-{}",
@@ -149,7 +167,14 @@ fn main() {
     let re_max = re1.max(re2);
     let mults: Vec<f64> = match only {
         Some(m) => vec![m],
-        None => vec![1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 5.0, 6.0, 7.0, 8.0],
+        // RE-SIZED. The ladder stopped at 8x R_e and the last two rungs were the most
+        // expensive by far -- cost grows with b because a larger shell is a more
+        // DISSOCIATED geometry, and dissociated oxygen solves sit near the spin degeneracy
+        // where Davidson grinds. They were also pure confirmation: (Cl,H,H) crossed the
+        // 1e-5 truncation stake between 5.0 and 6.0, and 7.0/8.0 only restated a decay
+        // already established. Dropping them and spending the saving on half-steps where
+        // the crossing actually lives is strictly more information for strictly less time.
+        None => vec![1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5],
     };
     let bs: Vec<f64> = mults.iter().map(|m| m * re_max).collect();
     println!("## truncation shell: worst |dE3| anywhere with max(apex side) = b");

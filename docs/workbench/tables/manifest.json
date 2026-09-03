@@ -3,6 +3,6 @@
   "note": "Shipped pair curves for the pairs the browser cannot afford to solve at load. Each file declares its producer, its solver route, its grid rule and one uncertainty; the engine's provenance gate refuses a table that does not. The uncertainty is also WEIGHED, not merely required to exist: a file is refused if it declares an error bar at or above the depth below which this schema will not call a dip a well (1e-4 hartree), or at or above the well the file itself declares. That uncertainty describes the ENERGY column; the curvature column carries its own residual in the convergence block and is consumed as a cross-check rather than as a source. Light pairs are absent on purpose: the sandbox solves those itself.",
   "knots": 192,
   "pairs": [
-    {"pair": "HO", "file": "HO.json", "Z": [1, 8], "n_basis": 6, "n_determinants": 90, "solver_route": "determinant", "exact_in_model": true, "uncertainty_hartree": 9.933221397630114e-11, "n_grid": 192}
+    {"pair": "O2", "file": "O2.json", "Z": [8, 8], "n_basis": 10, "n_determinants": 2025, "solver_route": "determinant", "exact_in_model": true, "uncertainty_hartree": 9.987675711502677e-11, "n_grid": 192}
   ]
 }

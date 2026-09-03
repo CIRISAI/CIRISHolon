@@ -33,6 +33,9 @@ fn main() {
         .next()
         .and_then(|s| s.parse().ok())
         .unwrap_or(8);
+    // this producer owns the machine and runs its own pool: split the cores between
+    // the pool and the lane kernel beneath it, or the two multiply (scheduling only)
+    holon_chem::lanes::set_lane_threads_for_pool(threads);
     let out = args.next().unwrap_or_else(|| {
         format!(
             "{}/tests/data/s2_water_table.txt",

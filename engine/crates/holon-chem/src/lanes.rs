@@ -422,6 +422,22 @@ static LANE_THREADS_OVERRIDE: std::sync::atomic::AtomicUsize = std::sync::atomic
 /// call an orchestrator that already runs `w` workers makes, with `cores / w`, so nested
 /// parallelism does not oversubscribe the machine. Scheduling only: no thread count can reach
 /// a bit. `0` restores the default (`LANE_THREADS`, else the machine's parallelism).
+/// Split this machine between a producer's OWN worker pool and the lane kernel beneath it.
+///
+/// The nested-parallelism policy, stated once. Every solve shards its rows and its vector
+/// algebra across `lane_threads()` threads by default; a producer that runs `workers` solves
+/// at a time would multiply the two and oversubscribe the machine. Scheduling only — no
+/// thread count can reach a bit (`lanes_gauge.rs` pins one shard against many).
+///
+/// The precedent is `holon-tables`' surface generator, which has carried this line since the
+/// lane kernel landed; it became load-bearing for every producer on 2026-09-02, when
+/// [`MIN_ROWS_PER_SHARD`] fell to 128 and pair-sized spaces started sharding at all.
+pub fn set_lane_threads_for_pool(workers: usize) {
+    set_lane_threads(
+        (std::thread::available_parallelism().map_or(1, |n| n.get()) / workers.max(1)).max(1),
+    );
+}
+
 pub fn set_lane_threads(threads: usize) {
     LANE_THREADS_OVERRIDE.store(threads, std::sync::atomic::Ordering::Relaxed);
 }
@@ -448,9 +464,16 @@ pub fn lane_threads() -> usize {
 }
 
 /// Rows a shard is worth spawning a thread for. A SCHEDULING choice: the shard count cannot
-/// reach the answer (rows are disjoint and each row's order is fixed), so this only decides
-/// when the spawn costs more than the rows it would take.
-const MIN_ROWS_PER_SHARD: usize = 2048;
+/// reach the answer (rows are disjoint and each row's order is fixed — `lanes_gauge.rs`
+/// pins one shard against many to the bit), so this only decides when the spawn costs more
+/// than the rows it would take.
+///
+/// MEASURED 2026-09-02 (`examples/sigma_price.rs`): at 2,025 determinants, ten orbitals,
+/// one apply is 16–19 ms on one thread — a row is ~9 µs of scattered gathers, so 128 rows
+/// are a millisecond of work against a ~30 µs spawn, and the (O,O) curve's Davidson, which
+/// was paying that apply 462 times a knot, runs on every core the policy allows. The old
+/// bound of 2,048 left every pair curve in the workbench's range single-threaded.
+const MIN_ROWS_PER_SHARD: usize = 128;
 
 /// `sigma = H c` (or the diagonal, with `DIAG`), sharded on contiguous output rows across up to
 /// `threads` scoped threads. Each shard writes only its rows; the per-row order is

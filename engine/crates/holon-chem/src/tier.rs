@@ -140,7 +140,14 @@ pub fn davidson_eigh_from_op<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Sized>
     max_iter: usize,
     start_vector: Option<&[T]>,
 ) -> (T, Vec<T>, usize, f64, SolveExit) {
-    davidson_eigh_from_op_sub(op, diag, tol, max_iter, start_vector, crate::budget::DAVIDSON_SUBSPACE_MAX)
+    // `HOLON_DAVIDSON_SUB` is a tuning door for measuring the default; a value above the
+    // priced bound is an experiment the budget has not admitted, so it is for measurement
+    // runs only and never for a table that ships
+    let max_sub = std::env::var("HOLON_DAVIDSON_SUB")
+        .ok()
+        .and_then(|s| s.parse::<usize>().ok())
+        .unwrap_or(crate::budget::DAVIDSON_SUBSPACE_MAX);
+    davidson_eigh_from_op_sub(op, diag, tol, max_iter, start_vector, max_sub)
 }
 
 /// [`davidson_eigh_from_op`] with the SUBSPACE BOUND stated by the caller.
@@ -180,6 +187,29 @@ pub fn davidson_eigh_from_op_sub<T: Scalar, S: crate::sigma_op::SigmaOp<T> + ?Si
 /// carrying the Ritz vector and its projected residual, the two-candidate expansion, the
 /// degeneracy-safe preconditioner, the three exit reasons — and they exist here and nowhere
 /// else. The residual is returned in f64: it is an absolute norm, representable at any tier.
+/// Ritz vectors kept across a Davidson restart (thick restart), inside the 48-vector
+/// subspace the budget prices, so no price changes.
+///
+/// MEASURED on the (O,O) curve's eight knots, 2,025 determinants, this machine,
+/// 2026-09-02 (`HOLON_DAVIDSON_KEEP` / `HOLON_DAVIDSON_SUB` are the doors; iterations per
+/// knot inward to outward, then the curve's total):
+///
+/// | keep | subspace | knot iterations | total |
+/// |---|---|---|---|
+/// | 1 (+r, the old restart) | 48 | 264 18 29 50 398 922 5000 672 945 (one at the cap) | 307 s |
+/// | 8  | 48  | 18 29 50 165 574 937 238 264 | 164 s |
+/// | 16 | 48  | 18 29 53 163 406 469 241 247 | 143 s |
+/// | 8  | 96  | 18 29 51 149 428 586 233 231 | 188 s |
+/// | 16 | 96  | 18 29 51 149 330 424 214 219 | 159 s |
+/// | 24 | 128 | 18 29 51 140 309 396 215 220 | 195 s |
+///
+/// More kept vectors keep cutting iterations at the four outer knots (the ³P+³P manifold)
+/// but a wider subspace costs more per iteration than it saves, so 16 at the priced 48 is
+/// the setting. What remains at those knots is the residual criterion resolving an
+/// eigenvector INSIDE a near-degenerate manifold, which the energy does not need — a
+/// criterion question for a prereg, not a knob.
+pub const DAVIDSON_RESTART_KEEP: usize = 16;
+
 #[allow(clippy::type_complexity)]
 pub fn davidson_in<T: Scalar, S: crate::vecspace::VectorSpace<T>>(
     sp: &S,
@@ -299,16 +329,69 @@ pub fn davidson_in<T: Scalar, S: crate::vecspace::VectorSpace<T>>(
             return (theta, sp.download(&x), iter + 1, resid, SolveExit::IterationCap);
         }
         if basis.len() >= max_sub {
-            let mut d = sp.copy(&r);
-            let p = sp.dot(&x, &d);
-            sp.axpy(-p, &x, &mut d);
-            let nd_ = sp.norm(&d).to_f64();
+            // THICK RESTART. The subspace is collapsed onto the lowest `keep` Ritz vectors —
+            // not onto the single current one. Until 2026-09-02 the restart kept {x, r⊥}
+            // alone, and on a near-degenerate ground manifold (two open-shell atoms at
+            // large separation: the (O,O) curve) every restart threw the manifold's
+            // partner states away and the diagonal preconditioner had to rebuild them from
+            // the residual: knots took 400 to 5,000 iterations, one to the cap with the
+            // residual stalled at 1e-6, where the same knots converge in tens once the
+            // partners survive the restart. The kept vectors' images are the same linear
+            // combinations of the sigma vectors already in hand, so a restart costs no
+            // sigma application; the Gram block is rebuilt from them on the next pass.
+            //
+            // A solve that never restarts (fewer than `max_sub` iterations) is untouched
+            // to the bit, which is every reference solve the record pins.
+            // `HOLON_DAVIDSON_KEEP` is a tuning door for measuring the default, echoed by the
+            // solve's timing line so a measurement always names the setting it ran under
+            let keep_cfg = std::env::var("HOLON_DAVIDSON_KEEP")
+                .ok()
+                .and_then(|s| s.parse::<usize>().ok())
+                .unwrap_or(DAVIDSON_RESTART_KEEP);
+            let keep = keep_cfg.min(m).min(max_sub.saturating_sub(1)).max(1);
+            let mut kept: Vec<S::V> = Vec::with_capacity(keep);
+            let mut kept_h: Vec<S::V> = Vec::with_capacity(keep);
+            for j in 0..keep {
+                let mut xj = sp.zeros(nd);
+                let mut hxj = sp.zeros(nd);
+                for i in 0..m {
+                    let c = evecs[i * m + j];
+                    sp.axpy(c, &basis[i], &mut xj);
+                    sp.axpy(c, &hbasis[i], &mut hxj);
+                }
+                kept.push(xj);
+                kept_h.push(hxj);
+            }
             basis.clear();
             hbasis.clear();
             gram_m = 0;
-            let mut bx = sp.copy(&x);
-            normalised(&mut bx);
-            basis.push(bx);
+            // the Ritz vectors are orthonormal to roundoff (eigenvectors of a symmetric
+            // matrix over an orthonormal basis); re-orthogonalised here so roundoff never
+            // accumulates across restarts, the images following the same combination
+            for (j, (mut xj, mut hxj)) in kept.into_iter().zip(kept_h).enumerate() {
+                if j > 0 {
+                    let p = sp.gram_row(&basis, &xj);
+                    for (i, pi) in p.iter().enumerate() {
+                        sp.axpy(-*pi, &basis[i], &mut xj);
+                        sp.axpy(-*pi, &hbasis[i], &mut hxj);
+                    }
+                }
+                let n = sp.norm(&xj).to_f64();
+                if n <= T::expansion_floor() {
+                    continue;
+                }
+                sp.scale(T::from_f64(1.0 / n), &mut xj);
+                sp.scale(T::from_f64(1.0 / n), &mut hxj);
+                basis.push(xj);
+                hbasis.push(hxj);
+            }
+            // and the residual, deflated against what was kept, as the first new direction
+            let mut d = sp.copy(&r);
+            let p = sp.gram_row(&basis, &d);
+            for (i, pi) in p.iter().enumerate() {
+                sp.axpy(-*pi, &basis[i], &mut d);
+            }
+            let nd_ = sp.norm(&d).to_f64();
             if nd_ > T::expansion_floor() {
                 sp.scale(T::from_f64(1.0 / nd_), &mut d);
                 basis.push(d);

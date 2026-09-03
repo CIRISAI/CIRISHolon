@@ -1457,10 +1457,14 @@ const priceKey = (za, zb) => `${Math.min(za, zb)}-${Math.max(za, zb)}`;
 const SHIPPED = {
   pairs: {
     "8,1": { file: "tables/HO.json",
-      sha256: "05485483a3b90f249fedef47b8a30d14d639b2f943f35030ccdc0d0fb4811735" },
+      sha256: "0dc5dd77a0cfc58891993601d9c429aefb66fbed6b14cec77ef79891049905df" },
+    // THE CURVE THE WATER SCENE COULD NOT STEP WITHOUT. 2,025 determinants over 192 knots,
+    // 1,785 s on the mesh — minutes, not a page load, in any browser — so it ships.
+    "8,8": { file: "tables/O2.json",
+      sha256: "b5c4802cd4968e76e3f6aac077e724734bb670e25468ab6400093828e4a80121" },
   },
   water: { file: "tables/s2_water_table.txt", nodes: 105105,
-    sha256: "3599348c40a9f4c0eff3225ca255b3cac7e3cf440053088025f12feb29741f72" },
+    sha256: "9cb10675aaafe3d0a98486befb506165193a07a7f9a85ade87d75dbd1804a681" },
 };
 
 /// Fetch a pinned artifact and refuse it unless its bytes digest to the pin.

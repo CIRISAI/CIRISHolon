@@ -235,6 +235,7 @@ baryon_mass     Qcd2's derived observable (E1-E0)/(2 sqrt x); consumed by the re
 from_ci_ints    LaneHamiltonian's entry from a CiInts; the chemistry lanes in the gates (lanes_gauge) and external crates; the library itself goes through from_ci_parts
 ground_lanes    Qcd2's exact solve on the colour lanes; consumed by the runners and the gates (lanes_gauge, qcd2_gauge)
 with_mutation   Qcd2's plant entry (plant ii, the Fierz trace mutation); consumed by the gates only, which is what a plant entry is for
+set_lane_threads_for_pool  the same policy stated as a split: cores / workers, for a producer that runs its own pool; consumed by the s2/s3 table producers in examples/, never by the library's own paths
 set_lane_threads  the process thread policy for nested parallelism; consumed by orchestrators that already run workers (holon-tables generate.rs), never by the library's own paths
 with_threads      HostSpace's explicit thread count; consumed by the law gates (vecspace_law.rs, holon-gpu vecspace.rs) and any caller pinning a shard count for a measurement
 nuclear         the declared nucleus by Z (spin, charge radius, sourced); consumed by holon-render's nucleus doors (the workbench's nucleus rung), never by a solve

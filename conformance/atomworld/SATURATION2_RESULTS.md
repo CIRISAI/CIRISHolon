@@ -1071,3 +1071,52 @@ quadrupolar.
    and `c` on the worst slice by 2.2×; the shipped table's angle axis converges at
    5× per doubling where a C1 cubic should give 16×, and this campaign has not
    explained that.
+
+---
+
+## RE-BANKED under the thick-restart regime (2026-09-02, post-data, the bound does not move)
+
+*The served `(O,H,H)` table was regenerated because the solver beneath it changed:
+`tier.rs`'s Davidson now restarts THICK, keeping the lowest 16 Ritz vectors and reusing
+their images, where it used to keep the current Ritz vector and the deflated residual and
+recompute the image. The cause and the enumeration are `REBANK_THICK_RESTART.md`; this
+section is what it did to THIS table.*
+
+**Why the solver changed at all.** The old restart threw away a near-degenerate manifold's
+partner states at every restart, so the diagonal preconditioner had to rebuild them from
+the residual. Measured on the (O,O) curve, which this campaign's successors need: knots at
+large separation took 400 to 5,000 Davidson iterations and **one hit the 5,000-iteration
+cap with its residual stalled at 2.6e-6** — an unconverged knot that any table containing
+that geometry would have carried, labelled `IterationCap` and nothing else. Under the thick
+restart the same knots converge in tens to hundreds and no knot caps.
+
+**What moved here.** 26,386 of 105,105 solved nodes — 25.1% — with median move
+**3.98e-13 Ha**, 99th percentile **7.22e-12 Ha**, maximum **1.73e-7 Ha**. The grid, the
+headers and both atom references are unchanged; the round-trip and exchange-symmetry gates
+pass on the new bytes exactly as on the old.
+
+**The bound does not move, and nothing here revises a published number.** The maximum move
+is 4,400× inside this campaign's declared `7.68e-4` and three orders inside the
+localization clause's near-collinear concentration. No tolerance gate in the tree can see
+it; the identity gate `the_committed_table_is_this_build_s_own_output` sees it exactly, and
+that is the gate's job.
+
+**Where the largest move sits, refereed.** The 1.73e-7 move is at node (i 37, j 51, k 45) —
+O–H sides 4.196 and 8.133 bohr, an essentially separated H at long range. Refereed against
+the double-double tier (`examples/water_node_referee.rs`, `tier::refine_determinant_dd`):
+the trimer's f64 energy at that geometry is **1.734e-7 Ha above the DD answer**, under the
+new restart and the old one alike, and the two f64 arms agree with each other to 1.2e-12.
+So both the old table's `+7.86e-9` and the new table's `+1.81e-7` sit **inside the f64
+tier's own resolution at that geometry**: at long range `dE3` is a difference of ~1e2 Ha
+solves and its f64 noise floor is ~1e-7 Ha, which is larger than the quantity itself there.
+
+**What that licenses, and what it does not.** It licenses the re-bank: neither value is
+resolvable, so the artifact should simply be this build's own output, which is what the
+identity gate demands. It does NOT license reading any long-range `dE3` node at more than
+~1e-7 Ha, and this lane had not stated that floor before. It is stated now, POST-DATA and
+labelled: **the published `7.68e-4` interpolation bound stands unchanged; the new sentence
+is that the underlying f64 nodes carry ~1e-7 Ha of their own at long range, which is inside
+that bound and was never separately claimed.** A campaign wanting long-range `dE3` at better
+than 1e-7 needs the DD tier at the nodes, not a finer grid.
+
+**The superseded bytes are kept, marked:** `tests/data/s2/s2_water_table.stale_pre17bc115.txt`.

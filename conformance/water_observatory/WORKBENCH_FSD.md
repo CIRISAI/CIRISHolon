@@ -663,9 +663,23 @@ knot count the page solves at is the engine's one statement (`holon_bank_browser
 Under it H–H is the only in-browser solve; H–O and O–O ship.
 
 **WB-11.5c — what is live.** Pure H: served, steps. 1 O + H: steps, with (O,H,H) served
-from the shipped table; every triple it can form is on a certified surface. O : 2H steps
-exactly when `tables/O2.json` is in the tree and admitted; until then the chip says
-*needs O–O shipped* and the scene is a fence, never a frozen box reported as settling.
-Pure O waits on the same file and on (O,O,O), which is tabulated nowhere yet. The wasm
-ships at opt-level 3 (2.15× on the H–O setup against opt-level z, measured; bit-identity
-with the native solve re-pinned by `law_probe.json` at every smoke run).
+from the shipped table; every triple it can form is on a certified surface. **O : 2H STEPS**
+— `tables/O2.json` landed 2026-09-02 (2,025 determinants, 192 knots, 1,785 s on the mesh,
+exit `converged`, uncertainty 9.99e-11 Ha) and the bank admits it, so the water
+stoichiometry runs its own dynamics with (O,H,H) served and only (O,O,H) and (O,O,O)
+fenced; the smoke gate reads `holon_pairs_ready` = 1, steps the scene and requires a
+temperature and a census on it. Pure O runs on the same curve with (O,O,O) fenced, which
+is tabulated nowhere yet. The wasm ships at opt-level 3 (2.15× on the H–O setup against
+opt-level z, measured; bit-identity with the native solve re-pinned by `law_probe.json` at
+every smoke run).
+
+**WB-11.5d — the solver underneath, and why the shipped tables moved.** The O–O curve is
+what forced the eigensolver open: stage timing (`HOLON_SOLVE_TIMING=1`) put its per-knot
+cost in the Davidson on the near-degenerate ³P+³P manifold, not in the response solve, and
+the old restart hit the 5,000-iteration cap on one knot with its residual stalled at 2.6e-6.
+`tier.rs` now restarts THICK (16 Ritz vectors, images carried) and `lanes.rs` shards
+pair-sized spaces (`MIN_ROWS_PER_SHARD` 2,048 → 128): the eight-knot curve went 307 s →
+71 s and no knot caps. That is an arithmetic-regime boundary for every artifact this page
+serves; what moved, by how much, and what was re-banked is
+`conformance/atomworld/REBANK_THICK_RESTART.md`, with the (O,H,H) table's own numbers and
+its newly stated ~1e-7 Ha long-range floor in `SATURATION2_RESULTS.md`.

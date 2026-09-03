@@ -44,27 +44,67 @@ use crate::md::{ao_integrals, AoIntegrals, Basis};
 /// "not measured" rather than a guess or a crash; the host has `performance.now()` and
 /// can time the call itself.
 #[cfg(not(target_arch = "wasm32"))]
-struct Stopwatch(std::time::Instant);
+pub(crate) struct Stopwatch(std::time::Instant);
 #[cfg(not(target_arch = "wasm32"))]
 impl Stopwatch {
-    fn start() -> Self {
+    pub(crate) fn start() -> Self {
         Stopwatch(std::time::Instant::now())
     }
     fn ms(&self) -> f64 {
         self.0.elapsed().as_secs_f64() * 1e3
     }
+    pub(crate) fn secs(&self) -> f64 {
+        self.0.elapsed().as_secs_f64()
+    }
 }
 
 #[cfg(target_arch = "wasm32")]
-struct Stopwatch;
+pub(crate) struct Stopwatch;
 #[cfg(target_arch = "wasm32")]
 impl Stopwatch {
-    fn start() -> Self {
+    pub(crate) fn start() -> Self {
         Stopwatch
     }
     /// Zero, meaning NOT MEASURED.
     fn ms(&self) -> f64 {
         0.0
+    }
+    /// Zero, meaning NOT MEASURED.
+    pub(crate) fn secs(&self) -> f64 {
+        0.0
+    }
+}
+
+/// Is stage timing asked for? FALSE on wasm whatever the host says, because the stages it
+/// would time are the ones with no clock behind them — the same reason [`Stopwatch`] is
+/// cfg-split. Read once per solve rather than per stage.
+///
+/// This function is the fix for a real defect: the stage timers landed calling
+/// `Instant::now()` directly on 2026-09-02, the browser artifact panicked on its first
+/// reference solve (`RuntimeError: unreachable` out of `holon_law_probe`), and the page's
+/// own law-probe gate caught it before the artifact shipped.
+pub(crate) fn stage_timing_on() -> bool {
+    #[cfg(target_arch = "wasm32")]
+    {
+        false
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        std::env::var_os("HOLON_SOLVE_TIMING").is_some()
+    }
+}
+
+/// Is the curve's warm-start continuation asked for? Measured HARMFUL on the (O,O) curve
+/// (see [`generate_pair_table`]), so it is an experiment door, off by default and off on
+/// wasm whatever the host says.
+pub(crate) fn warm_start_on() -> bool {
+    #[cfg(target_arch = "wasm32")]
+    {
+        false
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        std::env::var_os("HOLON_WARM_START").is_some()
     }
 }
 
@@ -289,12 +329,26 @@ pub struct PointSolution {
     /// Carried for the same reason `route` is: a caller that re-derived it from a build flag
     /// would be reading what was COMPILED IN rather than what RAN. Taken from the solve.
     pub device: crate::sigma_op::DeviceClass,
+    /// The converged CI vector, so the next point on a curve can start from it
+    /// ([`solve_geometry_from`]). Empty on the MPS route.
+    pub vector: Vec<f64>,
 }
 
 /// Solve one geometry: assemble, orthonormalise, rotate, transform, diagonalise.
 pub fn solve_geometry(species: &[Species], centers: Vec<[D2; 3]>) -> PointSolution {
+    solve_geometry_from(species, centers, None)
+}
+
+/// [`solve_geometry`] warm-started from a neighbouring geometry's CI vector (the same
+/// species in the same order, so the same determinant space). See
+/// [`crate::fci::solve_from`] for what a warm start buys and what it changes.
+pub fn solve_geometry_from(
+    species: &[Species],
+    centers: Vec<[D2; 3]>,
+    start: Option<&[f64]>,
+) -> PointSolution {
     let (_, n_alpha, n_beta) = electron_counts(species);
-    solve_basis(&build_basis(species, centers), n_alpha, n_beta)
+    solve_basis_from(&build_basis(species, centers), n_alpha, n_beta, start)
 }
 
 /// The same, from an already-assembled basis and an explicit electron partition.
@@ -304,8 +358,23 @@ pub fn solve_geometry(species: &[Species], centers: Vec<[D2; 3]>) -> PointSoluti
 /// going through the species registry that would refuse to hold the mutated value. A
 /// plant that has to bypass the code it is planted in is not testing that code.
 pub fn solve_basis(basis: &Basis, n_alpha: usize, n_beta: usize) -> PointSolution {
+    solve_basis_from(basis, n_alpha, n_beta, None)
+}
+
+/// [`solve_basis`] with a start vector for the CI solve (see [`solve_geometry_from`]).
+pub fn solve_basis_from(
+    basis: &Basis,
+    n_alpha: usize,
+    n_beta: usize,
+    start: Option<&[f64]>,
+) -> PointSolution {
+    // stage timing on request (`HOLON_SOLVE_TIMING=1`), the companion of the FCI solve's
+    // own line: integrals, SCF and the four-index transform priced apart from the solve
+    let timing = stage_timing_on();
+    let t0 = Stopwatch::start();
     let n = basis.n;
     let ao = ao_integrals(basis);
+    let ints_s = t0.secs();
     let x = cholesky_orthonormaliser(&ao.s, n)
         .expect("the overlap matrix is not positive definite: the basis is linearly dependent");
 
@@ -314,7 +383,10 @@ pub fn solve_basis(basis: &Basis, n_alpha: usize, n_beta: usize) -> PointSolutio
 
     let xv: Vec<f64> = x.iter().map(|d| d.v).collect();
     let (hx, gx) = transform_values(&ao, &xv, n);
-    let (u, _scf_iters, scf_converged) = orbital_rotation(&hx, &gx, n, n_alpha, n_beta);
+    let t_scf = Stopwatch::start();
+    let (u, scf_iters, scf_converged) = orbital_rotation(&hx, &gx, n, n_alpha, n_beta);
+    let scf_s = t_scf.secs();
+    let t_tr = Stopwatch::start();
 
     // C = X U, with U carrying ZERO derivative. See the module header: the FCI energy is
     // invariant under U for every R, so its R-derivatives are too, and declaring U
@@ -331,8 +403,24 @@ pub fn solve_basis(basis: &Basis, n_alpha: usize, n_beta: usize) -> PointSolutio
     }
 
     let mo = transform(&ao, &c, n);
+    let tr_s = t_tr.secs();
     let space = FciSpace::new(n, n_alpha, n_beta);
-    let sol = solve(&space, &mo);
+    let t_solve = Stopwatch::start();
+    // a start vector from another determinant space is not a start, it is a bug; refuse it
+    // here so the mismatch is named at the caller rather than inside the eigensolver
+    let start = start.filter(|s| {
+        assert_eq!(s.len(), space.n_det, "a start vector for {} determinants was offered to a {}-determinant space", s.len(), space.n_det);
+        true
+    });
+    let sol = crate::fci::solve_from(&space, &mo, start);
+    if timing {
+        eprintln!(
+            "basis_timing n_basis={n} integrals {ints_s:.3}s scf {scf_s:.3}s ({scf_iters} it, \
+             converged {scf_converged}) transform {tr_s:.3}s fci-solve {:.3}s{}",
+            t_solve.secs(),
+            if start.is_some() { " (warm)" } else { "" }
+        );
+    }
     let e = sol.e + basis.nuclear_repulsion();
     PointSolution {
         e,
@@ -347,6 +435,7 @@ pub fn solve_basis(basis: &Basis, n_alpha: usize, n_beta: usize) -> PointSolutio
         route: sol.route,
         exit: sol.exit,
         device: sol.device,
+        vector: sol.vector,
     }
 }
 
@@ -860,16 +949,24 @@ pub fn bisect(lo: f64, hi: f64, steps: usize, f: &mut dyn FnMut(f64) -> f64) -> 
 /// asymptote) and the energy the outer end sits within ([`TAIL_TOLERANCE`] of it); the
 /// separations that realise them are computed.
 pub fn derive_range(a: Species, b: Species, e_asymptote: f64) -> (f64, f64) {
-    let u = |r: f64| solve_geometry(
-        &[a, b],
-        vec![
-            [D2::c(0.0), D2::c(0.0), D2::c(0.0)],
-            [D2::c(0.0), D2::c(0.0), D2::c(r)],
-        ],
-    )
-    .e
-    .v
-        - e_asymptote;
+    // The same experiment door as the knot loop (`HOLON_WARM_START`, see
+    // `generate_pair_table`): off, every probe is the cold single-point solve.
+    let warm_door = warm_start_on();
+    let mut warm: Option<Vec<f64>> = None;
+    let mut u = |r: f64| {
+        let sol = solve_geometry_from(
+            &[a, b],
+            vec![
+                [D2::c(0.0), D2::c(0.0), D2::c(0.0)],
+                [D2::c(0.0), D2::c(0.0), D2::c(r)],
+            ],
+            if warm_door { warm.as_deref() } else { None },
+        );
+        if warm_door && !sol.vector.is_empty() {
+            warm = Some(sol.vector);
+        }
+        sol.e.v - e_asymptote
+    };
 
     // Inner end: walk in from a separation that is certainly below the ceiling until one
     // above it is bracketed, then bisect. Walking rather than assuming, because the wall
@@ -960,15 +1057,34 @@ pub fn generate_pair_table(a: Species, b: Species, n_knots: usize) -> PairTable 
     // as its worst point and a single label cannot describe a mixture.
     let mut worst_exit = crate::fci::SolveExit::Trivial;
 
+    // A WARM START ALONG THE CURVE IS AN EXPERIMENT DOOR, OFF BY DEFAULT. Measured on the
+    // (O,O) curve (HOLON_SOLVE_TIMING, 2026-09-02): starting each knot's Davidson from its
+    // predecessor's vector took two of four knots to the 5,000-iteration cap (127 s and
+    // 108 s, residual stalled at 3e-6) and a third to 3,162 iterations, where the cold
+    // solves converge in tens. The Davidson as it stands stagnates from a start that is
+    // already close on a near-degenerate manifold — the diagonal preconditioner cannot
+    // resolve the manifold's splitting — so the continuation is kept behind
+    // `HOLON_WARM_START=1` for the solver work that would make it pay, and the shipped
+    // path is the cold one whose bytes every committed table carries.
+    let warm_door = warm_start_on();
+    let timing = stage_timing_on();
+    let mut warm: Option<Vec<f64>> = None;
     for i in 0..n_knots {
         let ri = crate::table::grid_point(r_min, r_max, n_knots, i);
-        let sol = solve_geometry(
+        if timing {
+            eprintln!("knot_timing {}{} knot {i} of {n_knots} R={ri:.6}", a.symbol, b.symbol);
+        }
+        let sol = solve_geometry_from(
             &[a, b],
             vec![
                 [D2::c(0.0), D2::c(0.0), D2::c(0.0)],
                 [D2::c(0.0), D2::c(0.0), D2::var(ri)],
             ],
+            if warm_door { warm.as_deref() } else { None },
         );
+        if warm_door && !sol.vector.is_empty() {
+            warm = Some(sol.vector.clone());
+        }
         r.push(ri);
         e.push(sol.e.v);
         f.push(-sol.e.d);

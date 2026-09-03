@@ -1,0 +1,1 @@
+{"chi":256,"energy":-123.064212838380,"sweeps":60,"lanczos_iterations":27409,"converged":false,"exit":"sweep_cap","worst_residual":9.985e-12,"max_discarded":5.503e-8,"max_bond":276,"seconds":378.5,"class":"device","mixing":0.0e0,"reseeded":0,"resumed_from_sweep":0,"variance":2.188580e-3}

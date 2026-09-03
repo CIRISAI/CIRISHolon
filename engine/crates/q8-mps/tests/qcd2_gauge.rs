@@ -68,6 +68,59 @@ fn the_accumulator_mpo_is_the_fci_tensor_at_four_sites() {
     }
 }
 
+// ---------------------------------------------------------------- E7: the symmetric arm (amendment A1)
+
+#[test]
+fn the_symmetric_sweep_reaches_the_referees_at_four_sites_with_no_penalty() {
+    // plants (i)–(iii) re-run on the successor at N = 4 (A1.5): the labelled sweep on the
+    // UNPENALISED Hamiltonian lands on the frozen referees, and its energy carries no λ n_q²
+    let q = Qcd2::new(4, 4.0);
+    for (b, _, e_ref) in REFEREE {
+        let (r, labels) = q.ground_energy_sym(b, 64, 40, false).expect("symmetric sweep");
+        assert!((r.energy - e_ref).abs() <= 1e-8, "B={b}: symmetric {:.10} vs FCI {e_ref:.10}", r.energy);
+        assert!(r.converged, "B={b}: not converged by the amendment's test after {} sweeps", r.sweeps_used);
+        // every bond state carries a definite label and the boundary carries the sector
+        let sector = q.sector(q.quarks(b)).unwrap();
+        assert_eq!(labels[labels.len() - 1], vec![sector.total]);
+        assert!(labels.iter().all(|l| l.iter().all(|c| *c != q8_mps::symmetric::NO_CHARGE)));
+    }
+}
+
+#[test]
+fn plant_v_a_start_outside_the_sector_is_refused_by_name() {
+    let q = Qcd2::new(4, 4.0);
+    let n_q = q.quarks(0);
+    // six quarks, but four red and one each green and blue: the same count, the wrong block
+    let mut occ = vec![false; q.sites()];
+    for (k, o) in occ.iter_mut().enumerate() {
+        *o = matches!(k, 0 | 3 | 6 | 9 | 1 | 2);
+    }
+    let cfg = q8_mps::symmetric::SymConfig::amendment(64, 10);
+    match q.ground_energy_sym_from(&occ, n_q, &cfg, None) {
+        Err(q8_mps::symmetric::SymRefusal::StartOutsideSector { start, total }) => {
+            assert_eq!(start[0], 4);
+            assert_eq!(total, [2, 2, 2, 0]);
+        }
+        other => panic!("a start outside the sector was not refused by name: {:?}", other.map(|r| r.0.energy)),
+    }
+}
+
+#[test]
+fn the_symmetric_sweep_at_six_sites_lands_on_the_exact_referee() {
+    // B = 2 at N = 6 is 216 determinants on the lanes (exact −19.1570928549 at x = 4); the
+    // labelled sweep at χ = 64 holds the whole sector, so it must reproduce the exact energy
+    let q = Qcd2::new(6, 4.0);
+    let (r, _) = q.ground_energy_sym(2, 64, 40, false).expect("symmetric sweep");
+    assert!((r.energy - (-19.1570928549)).abs() <= 1e-8, "N=6 B=2: symmetric {:.10} vs exact -19.1570928549", r.energy);
+    // B = 0 at N = 6 is 8,000 determinants: the χ = 64 truncation is real here, and the
+    // amendment's gate is staked at N = 8 on the ladder, not here. This prints the miss and
+    // requires only that the labelled sweep is not the retired arm's 0.62 at χ = 40.
+    let (r0, _) = q.ground_energy_sym(0, 64, 8, false).expect("symmetric sweep");
+    let miss = r0.energy - (-38.2128396646);
+    println!("N=6 B=0 x=4: symmetric chi=64 E={:.10} (exact -38.2128396646, miss {:+.3e}, converged {}, sweeps {})", r0.energy, miss, r0.converged, r0.sweeps_used);
+    assert!(miss.abs() < 1e-2, "the labelled sweep misses the exact energy by {miss:+.3e} at chi=64");
+}
+
 #[test]
 fn the_sweep_reaches_the_fci_ground_state_at_four_sites() {
     let q = Qcd2::new(4, 4.0);

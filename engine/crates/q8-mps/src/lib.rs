@@ -14,4 +14,5 @@ pub mod ops;
 pub mod qcd2;
 pub mod schwinger;
 pub mod svd;
+pub mod symmetric;
 pub mod tdvp;

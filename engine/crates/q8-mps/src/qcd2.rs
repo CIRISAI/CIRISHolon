@@ -28,6 +28,7 @@
 //! Farrell et al. 2023 (axial-gauge QCD₂ for quantum simulation); White 1992 (DMRG).
 
 use crate::dmrg::{dmrg_sweep, DmrgConfig, DmrgResult, Refusal, RefusalPolicy};
+use crate::symmetric::{dmrg_sweep_sym, labels_of_product, random_start, Labels, Sector, SymConfig, SymRefusal, ZERO_CHARGE};
 use crate::mpo::{Mpo, MpoSite};
 use crate::mps::TensorSite;
 
@@ -303,8 +304,73 @@ impl Qcd2 {
             .collect()
     }
 
-    /// Ground state of baryon-number sector `b`; the penalty's constant `λ n_q²` is added
-    /// back so `energy` is the sector's own `W`.
+    /// The colour sector of `n_q` quarks for the SYMMETRIC sweep (amendment A1): site `j` is
+    /// colour `j mod 3`, and the boundary carries equal counts — the Cartan-neutral block,
+    /// exact for every sector this instrument runs (`holon-chem::qcd2`, the same lanes).
+    pub fn sector(&self, n_q: usize) -> Result<Sector, SymRefusal> {
+        let mut total = ZERO_CHARGE;
+        if n_q % COLOURS != 0 {
+            return Err(SymRefusal::StartOutsideSector { start: [n_q as i32, 0, 0, 0], total });
+        }
+        for c in 0..COLOURS {
+            total[c] = (n_q / COLOURS) as i32;
+        }
+        let site_charge = (0..self.sites())
+            .map(|j| {
+                let mut e = ZERO_CHARGE;
+                e[j % COLOURS] = 1;
+                e
+            })
+            .collect();
+        Ok(Sector { site_charge, total })
+    }
+
+    /// The symmetric sweep (E7) from a product start with the given occupations, on the
+    /// UNPENALISED Hamiltonian (`λ = 0`), returning the result and the bond labels so a
+    /// χ-ladder continues from them. `ignore_labels` is plant (iv)'s mutant.
+    pub fn ground_energy_sym_from(
+        &self,
+        occ: &[bool],
+        n_q: usize,
+        cfg: &SymConfig,
+        from: Option<(Vec<TensorSite>, Labels)>,
+    ) -> Result<(DmrgResult, Labels), SymRefusal> {
+        let sector = self.sector(n_q)?;
+        let unpenalised = Qcd2 { n: self.n, x: self.x, lam: 0.0 };
+        let (tensors, labels) = match from {
+            Some(s) => s,
+            None => {
+                let tensors: Vec<TensorSite> = occ
+                    .iter()
+                    .map(|&o| {
+                        let mut t = TensorSite::zeros(1, 1);
+                        t.set(usize::from(o), 0, 0, 1.0);
+                        t
+                    })
+                    .collect();
+                let labels = labels_of_product(occ, &sector);
+                (tensors, labels)
+            }
+        };
+        dmrg_sweep_sym(&unpenalised.mpo(n_q), tensors, labels, &sector, cfg)
+    }
+
+    /// The symmetric sweep of baryon-number sector `b` from the seeded random labelled start
+    /// (`symmetric::random_start`, 256 labels, seed 7 — every reachable sector for N ≤ 10; the
+    /// product start is a fixed point of the labelled two-site update on this chain, see
+    /// `random_start`'s header).
+    pub fn ground_energy_sym(&self, b: i32, chi: usize, max_sweeps: usize, ignore_labels: bool) -> Result<(DmrgResult, Labels), SymRefusal> {
+        let n_q = self.quarks(b);
+        let sector = self.sector(n_q)?;
+        let start = random_start(&sector, 256, 7);
+        let mut cfg = SymConfig::amendment(chi, max_sweeps);
+        cfg.ignore_labels = ignore_labels;
+        self.ground_energy_sym_from(&[], n_q, &cfg, Some(start))
+    }
+
+    /// Ground state of baryon-number sector `b` on the RETIRED penalised arm (kept as the
+    /// amendment's evidence and for plant (iv)'s comparison); the penalty's constant `λ n_q²`
+    /// is added back so `energy` is the sector's own `W`.
     pub fn ground_energy(&self, b: i32, chi: usize, max_sweeps: usize, sweep_tol: f64) -> Result<DmrgResult, Refusal> {
         let n_q = self.quarks(b);
         let config = DmrgConfig { chi_max: chi, max_sweeps, sweep_tol, policy: RefusalPolicy::Silent };

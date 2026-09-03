@@ -364,7 +364,14 @@ evidence that moves it.
 
 The steelman's own verdict on itself: Moves 1–4 are load-bearing and would survive
 E; Move 5 is the bet. The first lever was pulled the day this was written: ACUITY-B
-measured the allocation half of B and moved 0.13 of its weight into A. The programme's next measurements that would MOVE this table
+measured the allocation half of B and moved 0.13 of its weight into A. **MOVED AGAIN
+the same day by the three folds** (the colour lanes, the port, the Davidson on a vector
+space under one reduction law): in each, the frame was selected by a conserved label
+and by nothing else, and the one BUDGETED closure run that day — the MPS arm's penalty-
+enforced sector — failed where the exact label is the fix. Read now: A 0.36, B 0.20,
+C 0.28, D 0.08, E 0.08. B keeps 0.20 on rung 1's alignment finding, a frame puzzle
+still unsolved; A still leads C on the one measured non-conservation closure that held
+with controls (the certified molecule). The programme's next measurements that would MOVE this table
 are named, not implied — the genuine-3D carrier re-running rungs 1 and 2 (B and C
 separate on whether a dynamic in-budget chart appears at scale), node E's quantum
 nuclei on the H₂ arm (A and C separate on whether persistence needs more than

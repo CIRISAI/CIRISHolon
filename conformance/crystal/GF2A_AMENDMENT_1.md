@@ -122,3 +122,21 @@ Per MPS point: 24 → 180 sites, χ ≤ 256, the two-site solve's cost `∝ χ³
 Lanczos iteration; the χ = 64 N = 8 point measured 30 min under the retired arm's
 metastability and is expected to fall with the penalty gone (a prediction, printed against
 the measurement). The exact referee: minutes per column on the device.
+
+## A1.8 Instrument corrections found on first contact, recorded before any gate is read (2026-09-03)
+
+Two properties of a labelled two-site update, both measured on this instrument and neither
+a change to any gate or digit above:
+
+1. **The product start is a fixed point.** A full colour-singlet site has zero Coulomb
+   energy and the chain's hopping spans three sites, so with a product environment no local
+   update can move (the labelled sweep returned 0.000000 at N = 4). The start is therefore a
+   SEEDED random labelled MPS carrying every reachable charge label (`random_start`, 256
+   labels, seed 7). §A1.2's sentence "the start is the product state" is superseded.
+2. **A dropped sector never returns, so truncation preserves blocks and the ladder starts at
+   the label count.** A χ = 32 rung at N = 8 truncated purely by singular value, dropped
+   charge sectors, and every higher rung then converged (discarded weight 4e-21) inside the
+   wrong label set: x = 4, B = 1 read −39.4956 against the exact −47.9965 (kept as evidence,
+   `qcd2_sym/destructive_chi32/`). The split now keeps at least one state per block that
+   carries weight, and G0′'s ladder is 64 → 128 → 256 at N = 8 (64 is the middle bond's
+   label count). G0′'s digits (1e-6, χ ≤ 256, 1e-10, 1e-8, 4 sweeps) are unchanged.

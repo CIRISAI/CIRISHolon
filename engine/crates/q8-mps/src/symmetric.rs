@@ -296,9 +296,31 @@ pub fn split_two_site_sym(
         return None;
     }
     triples.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
-    let chi_new = chi_max.min(triples.len()).max(1);
-    let discarded: f64 = triples[chi_new..].iter().map(|t| t.0 * t.0).sum();
-    let kept = &triples[..chi_new];
+    // BLOCK-RESCUING truncation. A charge block dropped from a bond can never return once both
+    // neighbours lack it (the labelled update only combines existing labels), so after the
+    // largest `chi_max` singular values are kept, any block that carries weight above
+    // BLOCK_FLOOR of the largest and has no kept state is RESCUED with its largest state, and
+    // the bond exceeds `chi_max` by the rescued count. Measured 2026-09-03, both ways: a
+    // chi=32 rung truncating purely by size dropped sectors at N=8 and every higher rung then
+    // converged (discarded 4e-21) inside the wrong label set (x=4 B=1: −39.4956 against the
+    // exact −47.9965); and reserving one state per block BEFORE the size-ordered budget spent
+    // all of chi=64 on 64 blocks and worsened N=6 B=0 from 1.2e-3 to 3.8e-2.
+    const BLOCK_FLOOR: f64 = 1e-12;
+    let mut keep = vec![false; triples.len()];
+    for k in keep.iter_mut().take(chi_max.min(triples.len())) {
+        *k = true;
+    }
+    let s_top = triples[0].0;
+    let mut have: Vec<Charge> = triples.iter().zip(&keep).filter(|(_, k)| **k).map(|(t, _)| t.1).collect();
+    for (i, t) in triples.iter().enumerate() {
+        if !keep[i] && t.0 * t.0 >= BLOCK_FLOOR * s_top * s_top && !have.contains(&t.1) {
+            keep[i] = true;
+            have.push(t.1);
+        }
+    }
+    let kept: Vec<&(f64, Charge, Vec<f64>, Vec<f64>)> = triples.iter().zip(&keep).filter(|(_, k)| **k).map(|(t, _)| t).collect();
+    let discarded: f64 = triples.iter().zip(&keep).filter(|(_, k)| !**k).map(|(t, _)| t.0 * t.0).sum();
+    let chi_new = kept.len().max(1);
     let s_max = kept.iter().map(|t| t.0).fold(0.0f64, f64::max);
     let s_min = kept.iter().map(|t| t.0).fold(f64::INFINITY, f64::min);
     let floor = if s_max > 0.0 { s_min / s_max } else { 0.0 };

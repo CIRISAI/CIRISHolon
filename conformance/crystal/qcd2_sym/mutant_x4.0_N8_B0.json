@@ -1,0 +1,1 @@
+{"n":8,"x":4,"b":0,"n_q":12,"arm":"mutant-labels-ignored","threads":4,"rungs":[{"chi":64,"energy":-51.917869990835,"sweeps":60,"lanczos_iterations":43361,"converged":false,"worst_residual":3.167e-9,"max_discarded":1.116e-5,"max_bond":64,"seconds":1391.1}],"seconds":1391.1}

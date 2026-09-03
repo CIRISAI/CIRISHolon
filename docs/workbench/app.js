@@ -3091,13 +3091,20 @@ function renderTierRail(w, viewM) {
   const railPx = UI["tier-stops"] ? UI["tier-stops"].clientHeight : 0;
   const minGapPct = railPx > 0 ? (100 * 30) / railPx : 0;
   let lastPct = -Infinity;
-  LADDER.forEach((b, i) => {
+  const pcts = LADDER.map((b) => {
     const v = Math.log10(spanM / b.lengthM);
     let pct = Math.min(99, Math.max(1, 100 * (v - min) / (max - min)));
     if (pct < lastPct + minGapPct) pct = lastPct + minGapPct;
     lastPct = pct;
+    return pct;
+  });
+  // the same gap from the bottom up, so the last stops are not folded onto the rail's end
+  for (let i = pcts.length - 1; i >= 0; i--) {
+    pcts[i] = Math.min(pcts[i], 99 - (pcts.length - 1 - i) * minGapPct);
+  }
+  pcts.forEach((pct, i) => {
     const el = UI[`tier-stop-${i}`];
-    if (el) el.style.top = `${Math.min(99, pct).toFixed(1)}%`;
+    if (el) el.style.top = `${pct.toFixed(1)}%`;
   });
   const hasExport = (name) => typeof w[name] === "function";
   LADDER.forEach((b, i) => {

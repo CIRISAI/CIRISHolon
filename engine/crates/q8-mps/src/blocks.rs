@@ -543,6 +543,13 @@ impl BlockPlan {
         self.apply_timed(left, w1, w2, right, psi).0
     }
 
+    /// [`apply`](Self::apply) without the environments: the tiles are the environments'
+    /// live parts, so nothing else is read from them. What a backend falls back to.
+    pub fn apply_host_only(&self, w1: &MpoSite, w2: &MpoSite, psi: &[f64]) -> Vec<f64> {
+        let e: Env = Vec::new();
+        self.apply_timed(&e, w1, w2, &e, psi).0
+    }
+
     /// [`apply`](Self::apply) with the three stages' seconds: `(stage 1, stages 2+3, stage 4)`.
     pub fn apply_timed(&self, left: &Env, w1: &MpoSite, w2: &MpoSite, right: &Env, psi: &[f64]) -> (Vec<f64>, [f64; 3]) {
         debug_assert_eq!(psi.len(), self.chi_l * 4 * self.chi_r);
@@ -565,4 +572,431 @@ impl BlockPlan {
         let _ = right;
         (out, [s1, s23, t.elapsed().as_secs_f64()])
     }
+}
+
+// ------------------------------------------------------------------ E14 item 5b: the device layout
+
+/// THE COMPACT LAYOUT — every table a device kernel needs, flattened, and the exact
+/// per-element loops the kernels run, in plain Rust as the reference.
+///
+/// The intermediates `t1`, `t2`, `t3` live in SLOTS: one slot per `(channel, l, physical
+/// pair)` that is structurally live, holding its `r` block contiguously, so nothing dense
+/// is ever allocated or moved across the bus — only `ψ` goes up and `Hψ` comes down. Every
+/// output element is computed by one thread from `0.0` with the dense loop order inside
+/// (channels in the dense order, the inner index ascending), so the device bits are the host
+/// bits and the host reference here is what the kernels are gated against, entry for entry.
+#[derive(Debug, Clone)]
+pub struct CompactPlan {
+    pub chi_l: usize,
+    pub chi_r: usize,
+    pub d_l: usize,
+    pub d_mid: usize,
+    pub d_r: usize,
+    /// Left indices grouped by block (ascending inside a block), and block offsets.
+    pub l_idx: Vec<i32>,
+    pub l_off: Vec<i32>,
+    /// Left index → block, and → position inside its block.
+    pub l_block_of: Vec<i32>,
+    pub l_pos_of: Vec<i32>,
+    pub r_idx: Vec<i32>,
+    pub r_off: Vec<i32>,
+    /// `cut[lb*4 + ab]`: the r block of `q_l(lb) + a·e₁ + b·e₂`, or −1.
+    pub cut: Vec<i32>,
+    /// Live right channels: ids, `map[ci*nrb + rb_in] = rb_out | −1`, tiles `(|rb_out| × |rb_in|)`.
+    pub right_chan: Vec<i32>,
+    pub right_map: Vec<i32>,
+    pub rtile: Vec<f64>,
+    pub rtile_off: Vec<i64>,
+    /// Live left channels: ids, `map[ci*nlb + lb_out] = lb_in | −1`, tiles `(|lb_out| × |lb_in|)`.
+    pub left_chan: Vec<i32>,
+    pub left_map: Vec<i32>,
+    pub ltile: Vec<f64>,
+    pub ltile_off: Vec<i64>,
+    /// `t1` slots: `off[(ci*chi_l + l)*4 + ab]` into `t1`, or −1; total length.
+    pub t1_off: Vec<i64>,
+    pub t1_len: usize,
+    /// `t2` slots by MID channel: `off[(c1p*chi_l + l)*4 + at]`, the r block `rb[(c1p*nlb + lb)*4 + at]`.
+    pub t2_off: Vec<i64>,
+    pub t2_rb: Vec<i32>,
+    pub t2_len: usize,
+    /// `t2` contributions per `(c1p, a, t)`: `(ci_right, b, w)` in the dense order.
+    pub t2_contrib_off: Vec<i32>,
+    pub t2_contrib_ci: Vec<i32>,
+    pub t2_contrib_b: Vec<i32>,
+    pub t2_contrib_w: Vec<f64>,
+    /// `t3` slots by LEFT channel id: `off[(c1*chi_l + l)*4 + st]`, block `rb[(c1*nlb + lb)*4 + st]`.
+    pub t3_off: Vec<i64>,
+    pub t3_rb: Vec<i32>,
+    pub t3_len: usize,
+    /// `t3` contributions per `(c1, s, t)`: `(c1p, a, w)` in the dense order.
+    pub t3_contrib_off: Vec<i32>,
+    pub t3_contrib_c1p: Vec<i32>,
+    pub t3_contrib_a: Vec<i32>,
+    pub t3_contrib_w: Vec<f64>,
+}
+
+impl CompactPlan {
+    /// Flatten a block plan with its two MPO sites. Refuses (returns `None`) if a slot would be
+    /// live in two r blocks, which means the MPO does not conserve the labels.
+    pub fn build(plan: &BlockPlan, w1: &MpoSite, w2: &MpoSite) -> Option<CompactPlan> {
+        let (chi_l, chi_r) = (plan.chi_l, plan.chi_r);
+        let (d_l, d_mid, d_r) = (w1.d_l, w1.d_r, w2.d_r);
+        let nlb = plan.l_blocks.len();
+        let nrb = plan.r_blocks.len();
+        let mut l_idx = Vec::new();
+        let mut l_off = vec![0i32];
+        let mut l_block_of = vec![-1i32; chi_l];
+        let mut l_pos_of = vec![-1i32; chi_l];
+        for (lb, b) in plan.l_blocks.iter().enumerate() {
+            for (pos, &i) in b.iter().enumerate() {
+                l_idx.push(i as i32);
+                l_block_of[i] = lb as i32;
+                l_pos_of[i] = pos as i32;
+            }
+            l_off.push(l_idx.len() as i32);
+        }
+        let mut r_idx = Vec::new();
+        let mut r_off = vec![0i32];
+        for b in &plan.r_blocks {
+            r_idx.extend(b.iter().map(|&i| i as i32));
+            r_off.push(r_idx.len() as i32);
+        }
+        let cut: Vec<i32> = plan.cut_r_block.iter().flat_map(|row| row.iter().map(|&v| if v == NONE { -1 } else { v as i32 })).collect();
+        let right_chan: Vec<i32> = plan.right.iter().map(|p| p.0 as i32).collect();
+        let right_map: Vec<i32> = plan.right.iter().flat_map(|p| p.1.iter().map(|&v| if v == NONE { -1 } else { v as i32 })).collect();
+        let mut rtile = Vec::new();
+        let mut rtile_off = Vec::with_capacity(plan.right.len() * nrb);
+        for tiles in &plan.right_tiles {
+            for t in tiles {
+                rtile_off.push(rtile.len() as i64);
+                rtile.extend_from_slice(t);
+            }
+        }
+        let left_chan: Vec<i32> = plan.left.iter().map(|p| p.0 as i32).collect();
+        let left_map: Vec<i32> = plan.left.iter().flat_map(|p| p.1.iter().map(|&v| if v == NONE { -1 } else { v as i32 })).collect();
+        let mut ltile = Vec::new();
+        let mut ltile_off = Vec::with_capacity(plan.left.len() * nlb);
+        for tiles in &plan.left_tiles {
+            for t in tiles {
+                ltile_off.push(ltile.len() as i64);
+                ltile.extend_from_slice(t);
+            }
+        }
+        // t1 slots
+        let nr = plan.right.len();
+        let mut t1_off = vec![-1i64; nr * chi_l * 4];
+        let mut t1_len = 0usize;
+        for ci in 0..nr {
+            for l in 0..chi_l {
+                let lb = l_block_of[l] as usize;
+                for ab in 0..4 {
+                    let rb_in = plan.cut_r_block[lb][ab];
+                    if rb_in == NONE {
+                        continue;
+                    }
+                    let rb_out = plan.right[ci].1[rb_in];
+                    if rb_out == NONE {
+                        continue;
+                    }
+                    t1_off[(ci * chi_l + l) * 4 + ab] = t1_len as i64;
+                    t1_len += plan.r_blocks[rb_out].len();
+                }
+            }
+        }
+        // t2: contributions and slots
+        let mut t2_contrib_off = vec![0i32];
+        let (mut t2_contrib_ci, mut t2_contrib_b, mut t2_contrib_w) = (Vec::new(), Vec::new(), Vec::new());
+        let mut t2_rb = vec![-1i32; d_mid * nlb * 4];
+        for c1p in 0..d_mid {
+            for a in 0..2 {
+                for t in 0..2 {
+                    for (ci, (c2, map)) in plan.right.iter().enumerate() {
+                        for b in 0..2 {
+                            let wv = w2.get(c1p, *c2, t, b);
+                            if wv == 0.0 {
+                                continue;
+                            }
+                            t2_contrib_ci.push(ci as i32);
+                            t2_contrib_b.push(b as i32);
+                            t2_contrib_w.push(wv);
+                            for lb in 0..nlb {
+                                let rb_in = plan.cut_r_block[lb][a * 2 + b];
+                                if rb_in == NONE {
+                                    continue;
+                                }
+                                let rb = map[rb_in];
+                                if rb == NONE {
+                                    continue;
+                                }
+                                let slot = &mut t2_rb[(c1p * nlb + lb) * 4 + a * 2 + t];
+                                if *slot != -1 && *slot != rb as i32 {
+                                    return None;
+                                }
+                                *slot = rb as i32;
+                            }
+                        }
+                    }
+                    t2_contrib_off.push(t2_contrib_ci.len() as i32);
+                }
+            }
+        }
+        let mut t2_off = vec![-1i64; d_mid * chi_l * 4];
+        let mut t2_len = 0usize;
+        for c1p in 0..d_mid {
+            for l in 0..chi_l {
+                let lb = l_block_of[l] as usize;
+                for at in 0..4 {
+                    let rb = t2_rb[(c1p * nlb + lb) * 4 + at];
+                    if rb < 0 {
+                        continue;
+                    }
+                    t2_off[(c1p * chi_l + l) * 4 + at] = t2_len as i64;
+                    t2_len += plan.r_blocks[rb as usize].len();
+                }
+            }
+        }
+        // t3: contributions and slots, by left channel id
+        let mut t3_contrib_off = vec![0i32];
+        let (mut t3_contrib_c1p, mut t3_contrib_a, mut t3_contrib_w) = (Vec::new(), Vec::new(), Vec::new());
+        let mut t3_rb = vec![-1i32; d_l * nlb * 4];
+        for c1 in 0..d_l {
+            for sb in 0..2 {
+                for t in 0..2 {
+                    for c1p in 0..d_mid {
+                        for a in 0..2 {
+                            let wv = w1.get(c1, c1p, sb, a);
+                            if wv == 0.0 {
+                                continue;
+                            }
+                            t3_contrib_c1p.push(c1p as i32);
+                            t3_contrib_a.push(a as i32);
+                            t3_contrib_w.push(wv);
+                            for lb in 0..nlb {
+                                let rb = t2_rb[(c1p * nlb + lb) * 4 + a * 2 + t];
+                                if rb < 0 {
+                                    continue;
+                                }
+                                let slot = &mut t3_rb[(c1 * nlb + lb) * 4 + sb * 2 + t];
+                                if *slot != -1 && *slot != rb {
+                                    return None;
+                                }
+                                *slot = rb;
+                            }
+                        }
+                    }
+                    t3_contrib_off.push(t3_contrib_c1p.len() as i32);
+                }
+            }
+        }
+        let mut t3_off = vec![-1i64; d_l * chi_l * 4];
+        let mut t3_len = 0usize;
+        for c1 in 0..d_l {
+            for l in 0..chi_l {
+                let lb = l_block_of[l] as usize;
+                for st in 0..4 {
+                    let rb = t3_rb[(c1 * nlb + lb) * 4 + st];
+                    if rb < 0 {
+                        continue;
+                    }
+                    t3_off[(c1 * chi_l + l) * 4 + st] = t3_len as i64;
+                    t3_len += plan.r_blocks[rb as usize].len();
+                }
+            }
+        }
+        // stage 4 alignment: the t3 slot a left channel reads must sit in the output's own block
+        for (ci, (c1, map)) in plan.left.iter().enumerate() {
+            let _ = ci;
+            for lb_out in 0..nlb {
+                let lb_in = map[lb_out];
+                if lb_in == NONE {
+                    continue;
+                }
+                for st in 0..4 {
+                    let rb = plan.cut_r_block[lb_out][st];
+                    if rb == NONE {
+                        continue;
+                    }
+                    let rb3 = t3_rb[(c1 * nlb + lb_in) * 4 + st];
+                    if rb3 >= 0 && rb3 as usize != rb {
+                        return None;
+                    }
+                }
+            }
+        }
+        Some(CompactPlan {
+            chi_l, chi_r, d_l, d_mid, d_r, l_idx, l_off, l_block_of, l_pos_of, r_idx, r_off, cut,
+            right_chan, right_map, rtile, rtile_off, left_chan, left_map, ltile, ltile_off,
+            t1_off, t1_len, t2_off, t2_rb, t2_len, t2_contrib_off, t2_contrib_ci, t2_contrib_b, t2_contrib_w,
+            t3_off, t3_rb, t3_len, t3_contrib_off, t3_contrib_c1p, t3_contrib_a, t3_contrib_w,
+        })
+    }
+
+    pub fn n_lblocks(&self) -> usize {
+        self.l_off.len() - 1
+    }
+    pub fn n_rblocks(&self) -> usize {
+        self.r_off.len() - 1
+    }
+    /// Bytes of every table plus the three slot arrays: what a device upload costs.
+    pub fn bytes(&self) -> u64 {
+        let i32s = self.l_idx.len() + self.l_off.len() + self.l_block_of.len() + self.l_pos_of.len() + self.r_idx.len() + self.r_off.len()
+            + self.cut.len() + self.right_chan.len() + self.right_map.len() + self.left_chan.len() + self.left_map.len() + self.t2_rb.len()
+            + self.t2_contrib_off.len() + self.t2_contrib_ci.len() + self.t2_contrib_b.len() + self.t3_rb.len() + self.t3_contrib_off.len()
+            + self.t3_contrib_c1p.len() + self.t3_contrib_a.len();
+        let i64s = self.rtile_off.len() + self.ltile_off.len() + self.t1_off.len() + self.t2_off.len() + self.t3_off.len();
+        let f64s = self.rtile.len() + self.ltile.len() + self.t2_contrib_w.len() + self.t3_contrib_w.len() + self.t1_len + self.t2_len + self.t3_len
+            + 2 * self.chi_l * 4 * self.chi_r;
+        (4 * i32s + 8 * i64s + 8 * f64s) as u64
+    }
+
+    /// Stage 1, one element: `t1[slot(ci, l, ab)][row]`.
+    #[inline]
+    fn t1_element(&self, ci: usize, l: usize, ab: usize, row: usize, psi: &[f64]) -> f64 {
+        let nrb = self.n_rblocks();
+        let lb = self.l_block_of[l] as usize;
+        let rb_in = self.cut[lb * 4 + ab] as usize;
+        let rb_out = self.right_map[ci * nrb + rb_in] as usize;
+        let n_in = (self.r_off[rb_in + 1] - self.r_off[rb_in]) as usize;
+        let tile = &self.rtile[self.rtile_off[ci * nrb + rb_in] as usize..];
+        let base = (l * 4 + ab) * self.chi_r;
+        let in0 = self.r_off[rb_in] as usize;
+        let _ = rb_out;
+        let mut acc = 0.0;
+        for k in 0..n_in {
+            acc += tile[row * n_in + k] * psi[base + self.r_idx[in0 + k] as usize];
+        }
+        acc
+    }
+
+    /// The reference implementation of the four kernels, serial, element by element.
+    pub fn apply_reference(&self, psi: &[f64]) -> Vec<f64> {
+        let (chi_l, chi_r) = (self.chi_l, self.chi_r);
+        let nlb = self.n_lblocks();
+        let nrb = self.n_rblocks();
+        let nr = self.right_chan.len();
+        // stage 1
+        let mut t1 = vec![0.0; self.t1_len];
+        for ci in 0..nr {
+            for l in 0..chi_l {
+                for ab in 0..4 {
+                    let off = self.t1_off[(ci * chi_l + l) * 4 + ab];
+                    if off < 0 {
+                        continue;
+                    }
+                    let lb = self.l_block_of[l] as usize;
+                    let rb_out = self.right_map[ci * nrb + self.cut[lb * 4 + ab] as usize] as usize;
+                    let n_out = (self.r_off[rb_out + 1] - self.r_off[rb_out]) as usize;
+                    for row in 0..n_out {
+                        t1[off as usize + row] = self.t1_element(ci, l, ab, row, psi);
+                    }
+                }
+            }
+        }
+        // stage 2
+        let mut t2 = vec![0.0; self.t2_len];
+        for c1p in 0..self.d_mid {
+            for l in 0..chi_l {
+                let lb = self.l_block_of[l] as usize;
+                for at in 0..4 {
+                    let off = self.t2_off[(c1p * chi_l + l) * 4 + at];
+                    if off < 0 {
+                        continue;
+                    }
+                    let rb = self.t2_rb[(c1p * nlb + lb) * 4 + at] as usize;
+                    let n = (self.r_off[rb + 1] - self.r_off[rb]) as usize;
+                    let (a, t) = (at / 2, at % 2);
+                    let (c0, c1) = (self.t2_contrib_off[(c1p * 2 + a) * 2 + t] as usize, self.t2_contrib_off[(c1p * 2 + a) * 2 + t + 1] as usize);
+                    for pos in 0..n {
+                        let mut acc = 0.0;
+                        for c in c0..c1 {
+                            let ci = self.t2_contrib_ci[c] as usize;
+                            let b = self.t2_contrib_b[c] as usize;
+                            let o1 = self.t1_off[(ci * chi_l + l) * 4 + a * 2 + b];
+                            if o1 < 0 {
+                                continue;
+                            }
+                            acc += self.t2_contrib_w[c] * t1[o1 as usize + pos];
+                        }
+                        t2[off as usize + pos] = acc;
+                    }
+                }
+            }
+        }
+        // stage 3
+        let mut t3 = vec![0.0; self.t3_len];
+        for c1 in 0..self.d_l {
+            for l in 0..chi_l {
+                let lb = self.l_block_of[l] as usize;
+                for st in 0..4 {
+                    let off = self.t3_off[(c1 * chi_l + l) * 4 + st];
+                    if off < 0 {
+                        continue;
+                    }
+                    let rb = self.t3_rb[(c1 * nlb + lb) * 4 + st] as usize;
+                    let n = (self.r_off[rb + 1] - self.r_off[rb]) as usize;
+                    let (sb, t) = (st / 2, st % 2);
+                    let (c0, c1c) = (self.t3_contrib_off[(c1 * 2 + sb) * 2 + t] as usize, self.t3_contrib_off[(c1 * 2 + sb) * 2 + t + 1] as usize);
+                    for pos in 0..n {
+                        let mut acc = 0.0;
+                        for c in c0..c1c {
+                            let c1p = self.t3_contrib_c1p[c] as usize;
+                            let a = self.t3_contrib_a[c] as usize;
+                            let o2 = self.t2_off[(c1p * chi_l + l) * 4 + a * 2 + t];
+                            if o2 < 0 {
+                                continue;
+                            }
+                            acc += self.t3_contrib_w[c] * t2[o2 as usize + pos];
+                        }
+                        t3[off as usize + pos] = acc;
+                    }
+                }
+            }
+        }
+        // stage 4
+        let mut out = vec![0.0; chi_l * 4 * chi_r];
+        let nl = self.left_chan.len();
+        for l_out in 0..chi_l {
+            let lb_out = self.l_block_of[l_out] as usize;
+            let row = self.l_pos_of[l_out] as usize;
+            for st in 0..4 {
+                let rb = self.cut[lb_out * 4 + st];
+                if rb < 0 {
+                    continue;
+                }
+                let rb = rb as usize;
+                let n = (self.r_off[rb + 1] - self.r_off[rb]) as usize;
+                for pos in 0..n {
+                    let r_out = self.r_idx[self.r_off[rb] as usize + pos] as usize;
+                    let mut total = 0.0;
+                    for ci in 0..nl {
+                        let lb_in = self.left_map[ci * nlb + lb_out];
+                        if lb_in < 0 {
+                            continue;
+                        }
+                        let lb_in = lb_in as usize;
+                        let c1 = self.left_chan[ci] as usize;
+                        let n_in = (self.l_off[lb_in + 1] - self.l_off[lb_in]) as usize;
+                        let tile = &self.ltile[self.ltile_off[ci * nlb + lb_out] as usize..];
+                        let in0 = self.l_off[lb_in] as usize;
+                        let mut acc = 0.0;
+                        for k in 0..n_in {
+                            let l_in = self.l_idx[in0 + k] as usize;
+                            let o3 = self.t3_off[(c1 * chi_l + l_in) * 4 + st];
+                            let v = if o3 < 0 { 0.0 } else { t3[o3 as usize + pos] };
+                            acc += tile[row * n_in + k] * v;
+                        }
+                        total += acc;
+                    }
+                    out[(l_out * 4 + st) * chi_r + r_out] = total;
+                }
+            }
+        }
+        out
+    }
+}
+
+/// A backend that runs the two-site operator somewhere other than this crate's host loops
+/// (the device, in `holon-gpu`). Built once per local eigensolve from the plan.
+pub trait TwoSiteBackend: Send + Sync {
+    fn matvec<'a>(&'a self, plan: &'a BlockPlan, w1: &'a MpoSite, w2: &'a MpoSite) -> Box<dyn Fn(&[f64]) -> Vec<f64> + 'a>;
 }

@@ -90,7 +90,7 @@ impl std::fmt::Display for SymRefusal {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct SymConfig {
     pub chi_max: usize,
     pub max_sweeps: usize,
@@ -127,12 +127,33 @@ pub struct SymConfig {
     /// set cannot do by itself (label re-seeding alone left x = 4, B = 1 at 2.65e-5, 60× the
     /// cold start's 4.3e-7). `0.0` is the plain blockwise SVD path, bit for bit.
     pub mixing: f64,
+    /// E14 item 5b: where the two-site operator runs. `None` is this crate's host loops
+    /// (`BlockPlan::apply`); `holon-gpu` supplies the device. The backend is asked once per
+    /// local eigensolve for a matvec closure over the plan, so its uploads happen once per
+    /// bond and the hundreds of Lanczos matvecs move only ψ.
+    pub backend: Option<std::sync::Arc<dyn crate::blocks::TwoSiteBackend>>,
+}
+
+impl std::fmt::Debug for SymConfig {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SymConfig")
+            .field("chi_max", &self.chi_max)
+            .field("max_sweeps", &self.max_sweeps)
+            .field("rtol", &self.rtol)
+            .field("max_discarded", &self.max_discarded)
+            .field("min_sweeps", &self.min_sweeps)
+            .field("ignore_labels", &self.ignore_labels)
+            .field("skip_unmoved", &self.skip_unmoved)
+            .field("mixing", &self.mixing)
+            .field("backend", &self.backend.as_ref().map(|_| "device"))
+            .finish()
+    }
 }
 
 impl SymConfig {
     /// The amendment's stated convergence test at bond dimension `chi_max`.
     pub fn amendment(chi_max: usize, max_sweeps: usize) -> SymConfig {
-        SymConfig { chi_max, max_sweeps, rtol: 1e-10, max_discarded: 1e-8, min_sweeps: 4, ignore_labels: false, skip_unmoved: false, mixing: 0.0 }
+        SymConfig { chi_max, max_sweeps, rtol: 1e-10, max_discarded: 1e-8, min_sweeps: 4, ignore_labels: false, skip_unmoved: false, mixing: 0.0, backend: None }
     }
 }
 
@@ -833,10 +854,15 @@ fn update(
     } else {
         Some(crate::blocks::BlockPlan::build(q_l, q_r, e1, e2, left_env, right_env).map_err(|e| SymRefusal::NotBlockDiagonal { bond: j, why: e.to_string() })?)
     };
+    let device = match (&plan, &cfg.backend) {
+        (Some(p), Some(b)) => Some(b.matvec(p, w1, w2)),
+        _ => None,
+    };
     let apply = |psi: &[f64]| {
-            let mut h = match &plan {
-                Some(p) => p.apply(left_env, w1, w2, right_env, psi),
-                None => mps::apply_effective_h_mpo_live(left_env, w1, w2, right_env, psi, chi_l, chi_r, &live_l, &live_r),
+            let mut h = match (&device, &plan) {
+                (Some(f), _) => f(psi),
+                (None, Some(p)) => p.apply(left_env, w1, w2, right_env, psi),
+                (None, None) => mps::apply_effective_h_mpo_live(left_env, w1, w2, right_env, psi, chi_l, chi_r, &live_l, &live_r),
             };
             if !cfg.ignore_labels {
                 for (v, &ok) in h.iter_mut().zip(&msk) {

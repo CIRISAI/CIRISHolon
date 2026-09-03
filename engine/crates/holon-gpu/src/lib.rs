@@ -43,6 +43,7 @@ pub mod gpu;
 /// The lane sigma on the device: `holon_chem::lanes::sigma_det` transliterated, bit-identical
 /// to the host shards by construction and by gate.
 pub mod lanes;
+pub mod mps_blocks;
 /// The vector space on the device: the Davidson's row programs as kernels, under the host's
 /// reduction law, so a solve runs resident on the card and lands on the host's bits.
 pub mod vecspace;

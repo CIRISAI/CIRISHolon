@@ -192,6 +192,11 @@ fn the_block_sparse_operator_is_the_dense_operator_to_the_bit() {
                 let sparse = plan.apply(left, &mpo.sites[j], &mpo.sites[j + 1], right, &psi);
                 let mismatched = dense.iter().zip(&sparse).filter(|(a, b)| a.to_bits() != b.to_bits()).count();
                 assert_eq!(mismatched, 0, "N={n} B={b} bond {j}: block-sparse differs from dense on {mismatched} of {} entries", dense.len());
+                // the device layout's host reference — the exact per-element loops the kernels run
+                let compact = q8_mps::blocks::CompactPlan::build(&plan, &mpo.sites[j], &mpo.sites[j + 1]).expect("the compact layout: every slot in one r block");
+                let reference = compact.apply_reference(&psi);
+                let mismatched = dense.iter().zip(&reference).filter(|(a, b)| a.to_bits() != b.to_bits()).count();
+                assert_eq!(mismatched, 0, "N={n} B={b} bond {j}: the compact reference differs from dense on {mismatched} entries");
                 assert_eq!(plan.live_left(), mps::live_channels(left), "N={n} B={b} bond {j}: live left channels");
                 assert_eq!(plan.live_right(), mps::live_channels(right), "N={n} B={b} bond {j}: live right channels");
                 let live = plan.live_entries() as f64 / psi.len() as f64;

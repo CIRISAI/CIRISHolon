@@ -38,6 +38,7 @@ holon-chem = { path = "../holon-chem" }
 # VRAM probe); `probe.rs` here is that owner keeping the bargain.
 holon-resource = { path = "../holon-resource" }
 holon-device = { path = "../holon-device" }
+q8-mps = { path = "../q8-mps" }
 
 # dynamic-loading: libcuda.so is dlopen'd at RUN time, so a build needs no CUDA
 # stub libraries and no toolkit — only running does. cuda-13000 matches the

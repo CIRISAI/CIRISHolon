@@ -168,3 +168,68 @@ warm-ladder design is what fired; if a cold 256 lands in the same place, the arm
 its label set is short at this sector size and that is a deeper finding. Either way it needs
 an amendment, because the frozen ladder is 64 → 128 → 256 warm and this document does not
 get to change it after reading it.
+
+---
+
+## E7's misfit reading, and the retro-refusal of the amendment that governs it (2026-09-03)
+
+*Run after G0′ fired, by putting the registry (`conformance/gravity/MISFITS.md`) and the
+audit (`Audit/prereg_audit.py`) against this campaign's own documents and its own JSONs.
+Three findings, in the order they hurt.*
+
+### 1. The arm's record could not tell success from stagnation — and the registry already had that name
+
+Every rung's `worst_residual`, across every sector and every χ:
+
+| sector | χ | miss vs exact | worst Lanczos residual | max discarded | `converged` |
+|---|---|---|---|---|---|
+| x=4 B=2 | 256 | **−1.6e-11** | 9.97e-12 | 1.96e-18 | true |
+| x=4 B=1 | 256 | **+6.6e-5** | 9.99e-12 | 2.98e-9 | true |
+| x=4 B=0 | 256 | **+5.9e-3** | 9.98e-12 | 6.92e-9 | true |
+
+The local residual is **pinned at its own stopping tolerance in all twelve rungs** — 9.8e-12
+to 1.0e-11 — identical where the answer is right to eleven decimals and where it is wrong by
+six milli-hartree. It is a fact about when the solver stopped, not about what it found, and
+it cannot discriminate. The discarded weight does vary, and it is no better as an error bar:
+the ratio (miss ÷ discarded) runs 1.4e2, 2.2e4, 8.6e5 across the three sectors — four orders
+of drift in the quantity leg (b) of the convergence test reads. And `converged` is `true` on
+all three, including the two that are wrong.
+
+**M-EXIT-DISCRIMINATOR was registered before this campaign was frozen** and says it in
+advance: *a solve record keeping only the residual makes iteration-cap and
+subspace-stagnation indistinguishable … the discriminator field must be READ, not merely
+carried.* `GF2A_AMENDMENT_1.md`'s `misfits:` line does not cite it. Registered today from
+the second half of the same reading: **M-TRUNCATION-AS-ERRORBAR**, that a variational
+method's own truncation measure is a self-consistency reading which degrades exactly where
+the ansatz fails.
+
+**Neither could have been caught.** Both ids were UNARMED — no contact keyword — so a freeze
+could contact their shapes freely, and 22 of the registry's 42 ids still are. Both are armed
+now (`iteration cap`, `sweep cap`, `stagnation`; `discarded weight`, `truncation error`),
+narrowly, and verified to newly refuse **zero** of the 57 freezes and amendments in the tree.
+
+### 2. The audit never looked at this document at all
+
+`ci-gates.sh` globbed `conformance/*/*_PREREG.md`. **Amendments were not in the glob**, and
+that hole was nowhere stated — unlike the `engine/*_PREREG.md` hole, which the script names
+with an owner and an exit. So the document that retired one instrument, admitted its
+successor and staked G0′, G1′ and two plants was never audited. The glob now takes
+`*AMENDMENT*.md`; the gate sees 57 documents where it saw 55.
+
+### 3. And when it is audited, it REFUSES
+
+> `REFUSED GF2A_AMENDMENT_1.md — witness does not resolve in lean/CIRISHolon: macro_law_forced`
+
+G1′ names `macro_law_forced` as its witness. That theorem is **CIRISOntology's**
+(`Core/Closure.lean`), not this repo's, and the amendment's own §A1.4 says so in words. The
+audit has no way to express a cross-repo witness, so the honest form was
+`witness: none (macro_law_forced is CIRISOntology's)`. The amendment is frozen and cannot be
+edited to comply, so the remedy is the one the seven gravity freezes took: **this paragraph
+is the retro-refusal, on the record**, and `GF2A_AMENDMENT_1.md` carries a CI exemption
+naming the crystal lane as owner and this record as its exit.
+
+**What this does NOT change.** G0′ still fired, on the numbers in §E7 above and for the
+reasons given there. The misfit reading does not rescue the arm — it explains why the arm's
+own record said everything was fine while it was wrong by 5.9e-3, and it says the successor
+amendment must stake a criterion that an independent referee can fail, not one the solver
+can satisfy by stopping.

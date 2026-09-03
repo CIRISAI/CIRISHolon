@@ -102,6 +102,14 @@ CONTACT = {
     "results document": "M-STALE-INSTRUMENT", "instrument's commit": "M-STALE-INSTRUMENT",
     "taskset": "M-PLACEMENT-LOTTERY", "core class": "M-PLACEMENT-LOTTERY",
     "wall clock": "M-PLACEMENT-LOTTERY",
+    # --- 2026-09-03: E7 fired G0' with a record whose every field said "fine". The two
+    # ids that name that shape were BOTH unarmed, so the amendment could contact them
+    # freely and did. Armed narrowly, and verified against every freeze and amendment in
+    # the tree at the time of the edit: zero newly refused.
+    "iteration cap": "M-EXIT-DISCRIMINATOR", "sweep cap": "M-EXIT-DISCRIMINATOR",
+    "stagnation": "M-EXIT-DISCRIMINATOR",
+    "discarded weight": "M-TRUNCATION-AS-ERRORBAR",
+    "truncation error": "M-TRUNCATION-AS-ERRORBAR",
 }
 
 def contact_table_is_sound():

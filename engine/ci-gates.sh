@@ -546,13 +546,30 @@ fi
 # outside it. Measured before widening: atomworld (6), selector (4) and
 # water_observatory (3) all pass unchanged; omega has two that do not, named below.
 #
+# AMENDMENTS ARE NOW IN THE GLOB (2026-09-03), and the hole they were in was not even
+# stated. An amendment is exactly as load-bearing as a freeze -- GF2A_AMENDMENT_1 retired
+# one instrument, admitted its successor and staked four gates -- and nothing audited it.
+# Found by running the audit by hand over every freeze AND amendment in the tree after E7
+# fired G0': of the two amendments, one is ADMITTED and the other refuses on a witness
+# that cannot resolve here at all.
+#
 # STILL UNCOVERED, stated rather than left silent: `engine/*_PREREG.md` (Q7, Q7B,
 # Q8_MPS, Q10, Q_SEAM). All five are frozen history from before this audit existed
 # and all five retro-refuse; covering them would mean five more exemptions and zero
 # coverage gain, which is what the file above calls suppression. Owner: the Q-series
 # lane. Exit: a results document recording the five retro-refusals, after which the
 # glob takes `../engine/*_PREREG.md` too.
-PREREG_EXEMPT="GRAVITY_BRIDGE0_PREREG.md GRAVITY_BRIDGE0_V2_PREREG.md GRAVITY_BRIDGE1_PREREG.md GRAVITY_BRIDGE2_PREREG.md GRAVITY_BRIDGE3_PREREG.md GRAVITY_BRIDGE5_PREREG.md GRAVITY_BRIDGE6_PREREG.md CROSSFACE1_PREREG.md OMEGA_CIRCUITS1_PREREG.md"
+PREREG_EXEMPT="GF2A_AMENDMENT_1.md GRAVITY_BRIDGE0_PREREG.md GRAVITY_BRIDGE0_V2_PREREG.md GRAVITY_BRIDGE1_PREREG.md GRAVITY_BRIDGE2_PREREG.md GRAVITY_BRIDGE3_PREREG.md GRAVITY_BRIDGE5_PREREG.md GRAVITY_BRIDGE6_PREREG.md CROSSFACE1_PREREG.md OMEGA_CIRCUITS1_PREREG.md"
+# GF2A_AMENDMENT_1: added with the amendment widening, NOT to hide it. It refuses on
+# `witness: macro_law_forced`, which is a CIRISOntology theorem (Core/Closure.lean) and
+# resolves in no lean/ file of THIS repo; the amendment's own text says so in words and
+# the audit has no way to express a cross-repo witness, so the honest form would have been
+# `witness: none (macro_law_forced is CIRISOntology's)`. It is frozen and cannot be edited
+# to comply. Owner: the crystal lane. Exit: the retro-refusal is recorded in
+# GF2A_QCD2_RESULTS.md (the same remedy the seven gravity names took), and this entry goes
+# when either the audit learns to resolve a named sibling repo or a successor amendment
+# states the witness honestly.
+#
 # CROSSFACE1 / OMEGA_CIRCUITS1: added with the widening, NOT to hide them. Both
 # retro-refuse on one contact each -- 'repair'/'maintenance' -> M-MAINTENANCE-LENS
 # uncited -- and both are frozen, so they cannot be edited to comply. Owner: the
@@ -562,7 +579,7 @@ PREREG_EXEMPT="GRAVITY_BRIDGE0_PREREG.md GRAVITY_BRIDGE0_V2_PREREG.md GRAVITY_BR
 # have both, and the break is one citation line, not a defect in either campaign.
 audit_fail=0
 audit_seen=0
-for pre in ../conformance/*/*_PREREG.md; do
+for pre in ../conformance/*/*_PREREG.md ../conformance/*/*AMENDMENT*.md; do
   [ -f "$pre" ] || continue
   audit_seen=$((audit_seen+1))
   base=$(basename "$pre")

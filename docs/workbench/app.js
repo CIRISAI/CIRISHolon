@@ -709,6 +709,7 @@ const LADDER = [
     liveWhen: [
       "holon_atom_in_molecule", "holon_atom_band_solve", "holon_atom_band_energy",
       "holon_atom_band_n_electrons", "holon_atom_band_residual", "holon_atom_band_exit",
+      "holon_atom_band_rms_radius_bohr",
     ],
     owner: "lead (engine) — WB-10.1 / WB-10.2",
     // STATED AS A CONDITION, not as a build in progress — and it said the latter until the
@@ -1209,6 +1210,9 @@ const PENDING_EXPORTS = [
   { name: "holon_nucleus_thermal_wavelength_bohr", serves: "nucleus", spec: "WB-10.1",
     what: "the nucleus's thermal de Broglie wavelength at the scene's measured temperature "
       + "— COMPUTED in closed form by the engine, 0 where the temperature is undefined" },
+  { name: "holon_atom_band_rms_radius_bohr", serves: "atom", spec: "WB-10.1",
+    what: "the picked atom's electronic size: the RMS electron radius of the free atom in "
+      + "bohr, from the band's own STO-3G solve — the sphere the atom band draws" },
   { name: "holon_atom_in_molecule", serves: "atom", spec: "WB-10.1",
     what: "0 if the atom is free, else 1 + the census row index it belongs to (WB-1.6)" },
   // THE SUB-ATOM BAND'S DOORS. `holon_hadron_solve` is the door — it runs an EXACT
@@ -2126,6 +2130,17 @@ function render3D() {
     renderFold(w, vw, vh);
     return;
   }
+  // THE ATOM AND THE NUCLEUS DRAW THEIR OWN PICTURES TOO. At 53 pm the scene cut holds
+  // nothing the scene renderer can draw, so the world box with a speck in it is what a
+  // viewer saw under a card that said LIVE — the fence shape the page's own law forbids.
+  if (State.activeBand === ATOM_BAND && bandLive(w, ATOM_BAND)) {
+    renderAtom(w, vw, vh);
+    return;
+  }
+  if (State.activeBand === NUCLEUS_BAND && bandLive(w, NUCLEUS_BAND)) {
+    renderNucleus(w, vw, vh);
+    return;
+  }
   drawTemperatureGlow(vw, vh);
   const f = sceneFrame();
   // ZOOMING OUT past 1× shrinks the world box on screen by the same ratio, so the cube
@@ -2224,6 +2239,169 @@ function render3D() {
 /// says something about water rather than about a designer's gradient. Outside that range
 /// it saturates, which is honest — the glow is an indicator, not a thermometer, and the
 /// scene panel carries the number.
+// ------------------------------------------------------------------ THE ATOM AND THE NUCLEUS
+
+const ATOM_BAND = LADDER.findIndex((b) => b.band === "atom");
+const NUCLEUS_BAND = LADDER.findIndex((b) => b.band === "nucleus");
+const BOHR_TO_PM = 52.917721;
+const BOHR_TO_FM = 52917.721;
+
+function bandLive(w, idx) {
+  const b = LADDER[idx];
+  if (!b) return false;
+  if (b.state === "live") return true;
+  return b.state === "export-gated" && b.liveWhen.every((n) => typeof w[n] === "function");
+}
+
+/// The atom the fine bands are about: the hand's pick, else the atom nearest the view.
+function fineBandAtom(w) {
+  const p = pinnedAtomIndex(w);
+  return p && p.index >= 0 ? p : { index: -1, how: "no atom in the scene" };
+}
+
+function speciesOf(w, i) {
+  const z = w.holon_atom_species_z(i);
+  const s = PALETTE.get(z) || {};
+  return { z, name: s.name || s.symbol || (z === 1 ? "H" : z === 8 ? "O" : `Z=${z}`), colour: s.color || s.colour || (z === 1 ? "#e2e8f0" : "#ff6b6b"), isotope: s.isotope || "—" };
+}
+
+function readoutLines(ctx2, lines, x, y, dim) {
+  ctx2.font = "13px ui-monospace, monospace";
+  ctx2.textAlign = "left";
+  lines.forEach((l, i) => {
+    ctx2.fillStyle = dim && dim.includes(i) ? "rgba(148, 163, 184, 0.6)" : "rgba(241, 245, 249, 0.9)";
+    ctx2.fillText(l, x, y + i * 18);
+  });
+}
+
+/// THE ATOM BAND'S PICTURE: the picked atom as a sphere of its MEASURED electronic size
+/// (the RMS electron radius from its own solve), at the band's scale, with the molecule
+/// it belongs to as ghosts at their true relative positions, and the solve's own
+/// readouts beneath — energy, electron count, residual, exit — read live from the doors.
+function renderAtom(w, vw, vh) {
+  const pick = fineBandAtom(w);
+  if (pick.index < 0) {
+    readoutLines(ctx, [`atom band: ${pick.how}`], 24, vh * 0.5);
+    return;
+  }
+  const i = pick.index;
+  // the solve runs at the page's cadence, not per frame; here it runs when the pick changes
+  if (State.atomBandSolved !== i) {
+    w.holon_atom_band_solve(i);
+    State.atomBandSolved = i;
+  }
+  const sp = speciesOf(w, i);
+  const rms = w.holon_atom_band_rms_radius_bohr(i);
+  // THE BAND'S OWN FRAME, not the scene's. At the stop's 53 pm a hydrogen atom is three
+  // times the view and its sphere floods the canvas — true to scale and useless as a
+  // picture. The atom is drawn at 38 % of the viewport and the scale it is drawn at is
+  // WRITTEN, which is the honest version of a picture that fits.
+  const drawR = Math.min(vw, vh) * 0.38;
+  const pxPerBohr = drawR / Math.max(rms, 1e-6);
+  const cx = vw * 0.5, cy = vh * 0.42;
+  ctx.fillStyle = "rgba(6, 10, 16, 0.92)";
+  ctx.fillRect(0, 0, vw, vh);
+  const ax = w.holon_atom_x(i), ay = w.holon_atom_y(i), az = w.holon_atom_z(i);
+  // the molecule's other members, as ghosts at their true offsets in the scene's x/y plane
+  const row = w.holon_atom_in_molecule(i);
+  const n = w.holon_atom_count();
+  if (row > 0) {
+    for (let j = 0; j < n; j++) {
+      if (j === i || w.holon_atom_in_molecule(j) !== row) continue;
+      const dx = (w.holon_atom_x(j) - ax) * pxPerBohr, dy = (w.holon_atom_y(j) - ay) * pxPerBohr;
+      const sj = speciesOf(w, j);
+      const rj = w.holon_atom_band_rms_radius_bohr(j) * pxPerBohr;
+      ctx.strokeStyle = "rgba(148, 163, 184, 0.35)";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + dx, cy - dy); ctx.stroke();
+      ctx.fillStyle = sj.colour; ctx.globalAlpha = 0.25;
+      ctx.beginPath(); ctx.arc(cx + dx, cy - dy, Math.max(4, rj), 0, 2 * Math.PI); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+  // the picked atom: its electronic size, as a soft sphere
+  const r = Math.max(6, rms * pxPerBohr);
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  g.addColorStop(0, sp.colour);
+  g.addColorStop(0.7, sp.colour);
+  g.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.fill();
+  // the nucleus, to scale, which at this zoom is a point
+  ctx.fillStyle = "rgba(255, 214, 0, 0.95)";
+  ctx.beginPath(); ctx.arc(cx, cy, 2, 0, 2 * Math.PI); ctx.fill();
+  // the RMS radius as a ring, labelled with its number
+  ctx.strokeStyle = "rgba(0, 229, 255, 0.7)"; ctx.setLineDash([4, 4]);
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(0, 229, 255, 0.9)"; ctx.font = "12px ui-monospace, monospace"; ctx.textAlign = "left";
+  ctx.fillText(`⟨r²⟩½ = ${(rms * BOHR_TO_PM).toFixed(1)} pm`, Math.min(cx + r + 8, vw - 150), cy);
+  ctx.fillStyle = "rgba(148, 163, 184, 0.7)";
+  ctx.fillText(`drawn at ${(pxPerBohr / (vw * 0.6 / (viewSpanMetres(w) / BOHR_TO_M))).toFixed(2)}× the view's scale — the view span is ${fmtMetres(viewSpanMetres(w))}, the atom is ${(2 * rms * BOHR_TO_PM).toFixed(0)} pm across`, 24, vh * 0.76 - 22);
+  const exit = w.holon_atom_band_exit(i);
+  const exitName = ["converged", "iteration cap", "stagnated", "trivial", "not computed"][exit] || "?";
+  readoutLines(ctx, [
+    `atom ${i}: ${sp.name}, Z = ${sp.z} — ${pick.how}${row > 0 ? `, member of census molecule ${row - 1}` : ", free"}`,
+    `STO-3G full CI in the page: E = ${w.holon_atom_band_energy(i).toFixed(9)} Ha over ${w.holon_atom_band_n_electrons(i)} electrons${row > 0 ? " (the whole molecule)" : ""}`,
+    `residual ${w.holon_atom_band_residual(i).toExponential(2)}  ·  exit: ${exitName}  ·  the same arithmetic as native, gated bit-identical`,
+    `the sphere is the free atom's RMS electron radius, ${(rms * BOHR_TO_PM).toFixed(1)} pm — a measured size, not an icon; the yellow point is the nucleus, to scale`,
+  ], 24, vh * 0.76, [3]);
+}
+
+/// THE NUCLEUS BAND'S PICTURE: the picked atom's nucleus as a disc of its DECLARED charge
+/// radius at the band's scale, wrapped in the halo of its thermal de Broglie wavelength at
+/// the scene's own temperature — the one quantity here the engine COMPUTES — with every
+/// declared input labelled as such, which is what WB-1.7 asks of a measured input.
+function renderNucleus(w, vw, vh) {
+  const pick = fineBandAtom(w);
+  if (pick.index < 0) {
+    readoutLines(ctx, [`nucleus band: ${pick.how}`], 24, vh * 0.5);
+    return;
+  }
+  const i = pick.index;
+  const sp = speciesOf(w, i);
+  const z = sp.z;
+  const rc = w.holon_nucleus_charge_radius_fm(z);
+  const lam = w.holon_nucleus_thermal_wavelength_bohr(i);
+  const mass = w.holon_nucleus_mass_u(z);
+  const spin2 = w.holon_nucleus_spin2(z);
+  const viewM = viewSpanMetres(w);
+  // the band's own frame: the charge radius at 12 % of the viewport, the halo to the edge
+  const pxPerFm = (Math.min(vw, vh) * 0.12) / Math.max(rc, 1e-6);
+  const cx = vw * 0.5, cy = vh * 0.42;
+  ctx.fillStyle = "rgba(6, 10, 16, 0.92)";
+  ctx.fillRect(0, 0, vw, vh);
+  // the thermal wavelength, a halo: it is far larger than the nucleus, so it is drawn to
+  // the edge of the picture and its true size is written, not implied
+  const lamFm = lam * BOHR_TO_FM;
+  const haloR = Math.min(vw * 0.45, Math.max(40, lamFm * pxPerFm));
+  const hg = ctx.createRadialGradient(cx, cy, 0, cx, cy, haloR);
+  hg.addColorStop(0, "rgba(0, 229, 255, 0.18)");
+  hg.addColorStop(1, "rgba(0, 229, 255, 0)");
+  ctx.fillStyle = hg;
+  ctx.beginPath(); ctx.arc(cx, cy, haloR, 0, 2 * Math.PI); ctx.fill();
+  // the nucleus: its charge radius, to scale
+  const r = Math.max(5, rc * pxPerFm);
+  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  g.addColorStop(0, "#ffd600");
+  g.addColorStop(0.8, "#ffab00");
+  g.addColorStop(1, "rgba(255, 171, 0, 0)");
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.fill();
+  ctx.strokeStyle = "rgba(255, 214, 0, 0.8)"; ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(255, 214, 0, 0.95)"; ctx.font = "12px ui-monospace, monospace"; ctx.textAlign = "left";
+  ctx.fillText(`r_charge = ${rc.toFixed(3)} fm  (DECLARED)`, cx + r + 8, cy);
+  ctx.fillStyle = "rgba(0, 229, 255, 0.9)";
+  ctx.fillText(`λ_thermal = ${lamFm > 1e3 ? (lamFm / 1e3).toFixed(1) + " pm" : lamFm.toFixed(1) + " fm"}  (COMPUTED, drawn to the edge — its true radius is ${(lamFm / rc).toExponential(1)}× the nucleus)`, 24, cy - haloR - 8 > 60 ? cy - haloR - 8 : 60);
+  const spinTxt = spin2 % 2 === 0 ? `${spin2 / 2}` : `${spin2}/2`;
+  readoutLines(ctx, [
+    `the nucleus of atom ${i}: ${sp.name}, Z = ${z}, isotope ${sp.isotope} — ${pick.how}`,
+    `DECLARED, measured inputs the Hamiltonian never computes (WB-1.7): mass ${mass.toFixed(6)} u  ·  spin ${spinTxt}  ·  charge radius ${rc.toFixed(3)} fm`,
+    `COMPUTED by the engine in closed form: thermal de Broglie wavelength λ = ${lam.toExponential(3)} bohr at the scene's own measured temperature`,
+    `the disc is the charge radius, drawn at ${(pxPerFm / (vw * 0.6 / (viewM * 1e15))).toFixed(0)}× the view's scale (view span ${fmtMetres(viewM)}); the halo is λ, where a proton's position stops being a point — the deepest OBJECT the page carries`,
+  ], 24, vh * 0.76, [3]);
+}
+
 // ------------------------------------------------------------------ THE FOLD BELOW THE ATOM
 
 /// The fold's own state. The exact solve is per (sites, coupling, baryon number) and is

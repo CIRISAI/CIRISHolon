@@ -165,6 +165,23 @@ pub extern "C" fn holon_atom_band_exit(i: u32) -> u32 {
     band_for(i).map_or(4, |b| b.3)
 }
 
+/// The picked atom's electronic SIZE — the root-mean-square distance of an electron from
+/// its nucleus in the free atom, in bohr, from the same STO-3G solve the band runs
+/// (`holon_chem::pair::atomic_rms_radius`). What the atom band DRAWS: a sphere of this
+/// radius at the band's own scale, so the picture is a measured size and not an icon.
+/// `0.0` for no such atom.
+#[no_mangle]
+pub extern "C" fn holon_atom_band_rms_radius_bohr(i: u32) -> f64 {
+    let sp = {
+        let s = crate::sim();
+        if (i as usize) >= s.n {
+            return 0.0;
+        }
+        s.atoms[i as usize].species
+    };
+    holon_chem::pair::atomic_rms_radius(sp)
+}
+
 // ------------------------------------------------------------------ the law probe
 
 /// A fixed reference solve — the oxygen atom's STO-3G FCI energy on the lane engine — whose

@@ -100,3 +100,46 @@ stands: build 2 helps ice and does not reach metallic hydrogen.
 
 None of the papers above reports wall-clock time or core-hours. No comparison of speed is
 made here, in either direction, and none may be made until one is measured on both sides.
+
+## 5. Prior art for EMBED-2 and EMBED-3 — the field as monomer densities, the residual as dispersion, the precision floor (searched 2026-09-04, while EMBED-3 ran)
+
+**The fragment molecular orbital method — Kitaura, Fedorov and co-workers.** FMO divides a
+system into fragments and computes each fragment and each pair INSIDE the electrostatic
+potential of all the other fragments' nuclei and electron densities, the monomer densities
+iterated to self-consistency (Kitaura et al. 1999; Fedorov and Kitaura, *J. Chem. Phys.* 120,
+6832, 2004, "The importance of three-body terms in the fragment molecular orbital method";
+Fedorov and Kitaura, *Chem. Phys. Lett.* 433, 182, 2006, the three-body FMO3 formulation;
+review Fedorov, *WIREs Comput. Mol. Sci.* 2017). **EMBED-2 is FMO2's embedding scheme in the
+EE-PA form**: the Coulomb potential of self-consistent partner densities and nuclei, no
+exchange, and the pairwise sum with the monomer field terms cancelling. FMO3 is the
+three-body correction — the seam's own shape. FMO's practice also settles a design point we
+had left open: FMO uses the ESP of the densities, not of point charges, for exactly the
+penetration reason, and reports that three-body terms matter most for water clusters and
+solvated ions, which is our carrier.
+
+**The electrostatically embedded many-body expansion — Dahlke and Truhlar.** *J. Chem. Theory
+Comput.* 3, 46 (2007); 3, 1342 (2007); 4, 1 (2008): point-charge embedding lowers EE-PA errors
+on water clusters by up to a factor of ten against the bare pairwise approximation, and the
+embedded three-body expansion reaches mean unsigned errors of 0.05 kcal/mol across nine
+levels of theory. This is the charge-field arm of EMBED-1 and SEAM-1, and its numbers are the
+water target EMBED-3's System B is priced against in our own basis.
+
+**The residual as three-body dispersion.** Otero-de-la-Roza, LeBlanc and Johnson, "What is
+'many-body' dispersion and should I worry about it?", *Phys. Chem. Chem. Phys.* 22, 8266
+(2020): the leading ATOMIC many-body dispersion term is Axilrod–Teller–Muto, `R⁻⁹` on a triple,
+distinct from the electronic many-body effects the phrase also names. EMBED-2's reading — that
+once the electrostatics is exact the far-field residual of an embedded two-body expansion is
+the ATM term — is therefore standard physics; what is ours is that it came out of exact solves
+as a harvested residual with a measured floor, as a one-constant law, beside the charge-field
+residual that partly cancels it.
+
+**Precision in the many-body expansion — Richard, Lao and Herbert.** *J. Chem. Phys.* 141,
+014108 (2014), "Understanding the many-body expansion for large systems. I. Precision
+considerations": the MBE loses precision through the factorial growth of subsystem terms as a
+function of system size and truncation order; parts II (2016) and III (2017) add accuracy,
+counterpoise and the necessity of four-body terms for (H₂O)₃₇. Our case is seven terms, not
+thousands, and the loss we found was a RECORD's printed precision, not the arithmetic's
+(M-FORMAT-FLOOR) — but the shape is theirs: a difference of large terms is only as good as
+the least precise term it is built from.
+
+**Compute time.** None of these reports a runtime comparable to ours; none is compared.

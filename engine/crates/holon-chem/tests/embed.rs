@@ -117,3 +117,29 @@ fn g4_one_fixed_point_and_plant_ii() {
         eprintln!("G4 {r_ff_a} Å: {} / {} iterations, q_a = {:?}, e_qq = {:.6e}", z.iterations, i.iterations, z.q_a, z.e_qq);
     }
 }
+
+/// The coupled size: on a free atom it IS `atomic_rms_radius`; on H₂ at its bond length
+/// the populations sum to the electron count and the partitioned size differs from the
+/// free atom's — the density responds to the bond, which is the whole point of the door.
+#[test]
+fn partitioned_sizes_are_the_record_on_an_atom_and_move_on_a_molecule() {
+    for sym in ["H", "O", "F"] {
+        let s = sp(sym);
+        let f = Fragment::new(vec![s], vec![[0.0; 3]], vec![0.0]);
+        let m = monomer(&f, &[], ChargeModel::Mulliken);
+        let sizes = partitioned_sizes(&m.p, &m.solve.basis, &f.species, &f.centers);
+        assert!((sizes[0].0 - s.n_electrons() as f64).abs() <= 1e-12, "{sym}: population");
+        let rel = ((sizes[0].1 - atomic_rms_radius(s)) / atomic_rms_radius(s)).abs();
+        assert!(rel <= 1e-10, "{sym}: partitioned size {} vs record {} (rel {rel:.2e})", sizes[0].1, atomic_rms_radius(s));
+    }
+    let h = sp("H");
+    let f = Fragment::new(vec![h, h], vec![[0.0; 3], [0.0, 0.0, 1.4]], vec![-1.0, 1.0]);
+    let m = monomer(&f, &[], ChargeModel::Mulliken);
+    let sizes = partitioned_sizes(&m.p, &m.solve.basis, &f.species, &f.centers);
+    let pop: f64 = sizes.iter().map(|x| x.0).sum();
+    assert!((pop - 2.0).abs() <= 1e-12, "H2 populations sum to {pop}");
+    assert!((sizes[0].0 - sizes[1].0).abs() <= 1e-12, "H2 is symmetric");
+    let free = atomic_rms_radius(h);
+    assert!((sizes[0].1 - free).abs() > 1e-3, "H2's partitioned size {} did not move from the free atom's {free}", sizes[0].1);
+    eprintln!("coupled size: H free {free:.6} bohr, H in H2 at 1.4 bohr {:.6} bohr (population {:.6})", sizes[0].1, sizes[0].0);
+}

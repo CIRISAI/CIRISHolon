@@ -5,7 +5,7 @@
 use holon_chem::elements::{by_z, nuclear, FIRST_ROW, OXYGEN};
 use holon_chem::pair::atom_energy;
 use holon_render::nucleus::{
-    holon_atom_band_exit, holon_law_probe, holon_nucleus_charge_radius_fm, holon_nucleus_mass_u,
+    holon_atom_band_coupled_rms_bohr, holon_atom_band_exit, holon_atom_band_population, holon_law_probe, holon_nucleus_charge_radius_fm, holon_nucleus_mass_u,
     holon_nucleus_spin2, holon_nucleus_thermal_wavelength_bohr, thermal_wavelength_bohr,
 };
 
@@ -57,6 +57,9 @@ fn the_thermal_wavelength_is_the_closed_form_and_zero_without_a_temperature() {
 fn the_atom_band_reports_not_computed_until_it_is_asked() {
     assert_eq!(holon_atom_band_exit(0), 4);
     assert_eq!(holon_atom_band_exit(7), 4);
+    // the coupled size and the population serve the sentinel, never a number, unsolved
+    assert_eq!(holon_atom_band_coupled_rms_bohr(0), 0.0);
+    assert_eq!(holon_atom_band_population(0), 0.0);
 }
 
 #[test]

@@ -326,6 +326,45 @@ pub fn potential_at(p: &[f64], species: &[Species], centers: &[[f64; 3]], r: [f6
     v - trace_product(p, &a, n)
 }
 
+// ------------------------------------------------------------------ partitioned sizes
+
+/// Each atom's Mulliken population and the RMS radius of the density partitioned to it,
+/// taken about its OWN nucleus:
+///
+/// ```text
+/// N_A     = Σ_{μ∈A} (PS)_μμ
+/// <r²>_A  = Σ_{μ∈A} Σ_ν P_μν <μ| (r − R_A)² |ν>
+/// rms_A   = sqrt(<r²>_A / N_A)
+/// ```
+///
+/// This is the COUPLED size the workbench's atom band owes (OBJECT.md "The surface,
+/// audited", step 1): the molecule's own density at the scene's geometry, partitioned to
+/// the atom, so it responds to the bond, the neighbour and the box. On a free atom it is
+/// exactly `atomic_rms_radius` by construction (one centre, the whole density). Mulliken
+/// partitioning is the declared convention and is named as such wherever it is drawn.
+pub fn partitioned_sizes(p: &[f64], b: &Basis, species: &[Species], centers: &[[f64; 3]]) -> Vec<(f64, f64)> {
+    let n = b.n;
+    let map = ao_atom_map(b);
+    let s = moments(b, [0.0; 3]).s;
+    let mut out = Vec::with_capacity(species.len());
+    for (a, c) in centers.iter().enumerate() {
+        let mom = moments(b, *c);
+        let mut pop = 0.0;
+        let mut r2 = 0.0;
+        for mu in 0..n {
+            if map[mu] != a {
+                continue;
+            }
+            for nu in 0..n {
+                pop += p[mu * n + nu] * s[nu * n + mu];
+                r2 += p[mu * n + nu] * mom.r2[nu * n + mu];
+            }
+        }
+        out.push((pop, if pop > 0.0 { (r2 / pop).sqrt() } else { 0.0 }));
+    }
+    out
+}
+
 // ------------------------------------------------------------------ charges
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

@@ -18,10 +18,10 @@
 
 use std::sync::Mutex;
 
-use holon_chem::dual::D2;
 use holon_chem::elements::{by_z, nuclear, OXYGEN};
 use holon_chem::fci::SolveExit;
-use holon_chem::pair::{atom_energy, solve_geometry};
+use holon_chem::embed::{ao_density, partitioned_sizes, rdm1, solve_embedded};
+use holon_chem::pair::atom_energy;
 
 use crate::sim::K_B;
 
@@ -95,6 +95,13 @@ struct AtomBand {
     n_electrons: u32,
     residual: f64,
     exit: u32,
+    /// Per member of the solved molecule: `(atom index, Mulliken population, coupled RMS
+    /// radius in bohr)` — the molecule's own density at the scene's geometry, partitioned
+    /// to the atom about its own nucleus (`holon_chem::embed::partitioned_sizes`). This is
+    /// the COUPLED size OBJECT.md's surface audit owed: it moves with the bond, the
+    /// neighbour and the box, where the free-atom door (`holon_atom_band_rms_radius_bohr`)
+    /// is a constant per species.
+    sizes: Vec<(u32, f64, f64)>,
 }
 
 static BAND: Mutex<Option<AtomBand>> = Mutex::new(None);
@@ -114,7 +121,7 @@ fn exit_code(e: SolveExit) -> u32 {
 /// milliseconds, and its value changes with every position.
 #[no_mangle]
 pub extern "C" fn holon_atom_band_solve(i: u32) -> u32 {
-    let (species, centres) = {
+    let (species, centres, members) = {
         let s = crate::sim();
         if (i as usize) >= s.n {
             return 4;
@@ -128,16 +135,48 @@ pub extern "C" fn holon_atom_band_solve(i: u32) -> u32 {
             .iter()
             .map(|&m| {
                 let a = &s.atoms[m as usize];
-                [D2::c(a.x), D2::c(a.y), D2::c(a.z)]
+                [a.x, a.y, a.z]
             })
             .collect::<Vec<_>>();
-        (species, centres)
+        (species, centres, members)
     };
     let n_electrons = species.iter().map(|sp| sp.z).sum();
-    let sol = solve_geometry(&species, centres);
-    let code = exit_code(sol.exit);
-    *BAND.lock().expect("atom band") = Some(AtomBand { atom: i, energy: sol.e.v, n_electrons, residual: sol.residual, exit: code });
+    // the same exact solve as before, through the door that also hands back the basis,
+    // the orbitals and the space the density needs
+    let es = solve_embedded(&species, &centres, &[]);
+    let code = exit_code(es.sol.exit);
+    let n = es.basis.n;
+    let gamma = rdm1(&es.gp.space, &es.sol.vector);
+    let pm = ao_density(&gamma, &es.gp.orbitals, n);
+    let sizes = partitioned_sizes(&pm, &es.basis, &species, &centres)
+        .into_iter()
+        .zip(members.iter())
+        .map(|((pop, rms), &m)| (m, pop, rms))
+        .collect();
+    *BAND.lock().expect("atom band") = Some(AtomBand { atom: i, energy: es.e_total, n_electrons, residual: es.sol.residual, exit: code, sizes });
     code
+}
+
+/// The COUPLED RMS radius of atom `i` in bohr — the last solved molecule's own density,
+/// Mulliken-partitioned to the atom about its nucleus — or `0.0` when the last atom-band
+/// solve did not contain `i` (the page then falls back to the free-atom door and says so).
+#[no_mangle]
+pub extern "C" fn holon_atom_band_coupled_rms_bohr(i: u32) -> f64 {
+    BAND.lock()
+        .expect("atom band")
+        .as_ref()
+        .and_then(|b| b.sizes.iter().find(|s| s.0 == i).map(|s| s.2))
+        .unwrap_or(0.0)
+}
+
+/// The Mulliken population of atom `i` in the last solved molecule, or `0.0`.
+#[no_mangle]
+pub extern "C" fn holon_atom_band_population(i: u32) -> f64 {
+    BAND.lock()
+        .expect("atom band")
+        .as_ref()
+        .and_then(|b| b.sizes.iter().find(|s| s.0 == i).map(|s| s.1))
+        .unwrap_or(0.0)
 }
 
 fn band_for(i: u32) -> Option<(f64, u32, f64, u32)> {

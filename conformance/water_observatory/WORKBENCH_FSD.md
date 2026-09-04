@@ -505,10 +505,13 @@ five hundredths of a pixel. Pinned by the `smoke.mjs` "rail:" check.
 **PROVENANCE OF THE FINE BANDS (audit 2026-09-04, the operator's question
 "how much of this is tacked on vs using the holon maximally"):** the
 molecular band is the holon. The atom band's SOLVE is the engine's own
-substrate at the scene's geometry (the census molecule, holon-coupled) but
-its drawn cloud SIZE is a free-atom constant per species (decoupled; the
-coupled size is the molecular solve's own density — next step, on the
-one-body density the embedding build needs anyway). The nucleus band is
+substrate at the scene's geometry (the census molecule, holon-coupled), and
+— step 1 of the audit, done the same day on EMBED-1's density — the pinned
+molecule's atoms are DRAWN AT THAT SOLVE'S OWN DENSITY, Mulliken-partitioned
+to each atom about its nucleus (`holon_atom_band_coupled_rms_bohr`; H in H₂
+at 1.4 bohr reads 1.506 bohr against the free atom's 1.396), while every
+other atom in the scene wears its free-atom size and the ring label says
+which. The nucleus band is
 four declared inputs and one closed-form readout on the holon's
 temperature; node E's measured spread is not wired. The fold is a model on
 its own carrier, solved on the engine's lane kernel, with no seam to the

@@ -326,7 +326,7 @@ the dynamics beneath it) is untouched, and none of the three fine bands passes i
 |---|---|---|---|
 | molecular | the certified scene: pair curves from FCI, the (O,H,H) surface, the census, the closure certificate, ACUITY-B's allocation as the cut | yes — it IS the holon | maximal |
 | atom | the SOLVE (`holon_atom_band_solve`): STO-3G FCI of the CENSUS MOLECULE at the scene's own geometry — energy, electron count, residual, exit | yes: the census picks the members, the scene supplies the geometry | the engine's bottom exposed, honestly — a substrate, not a tier |
-| atom | the drawn cloud SIZE (`holon_atom_band_rms_radius_bohr`): a FREE atom at the origin, per species, cached | **no** — it does not respond to the bond, the neighbour or the box | **tacked on**: the coupled size is the molecular solve's own one-body density, the same object the embedding build (Build 1) needs; that is the fix and it is one door |
+| atom | the drawn cloud SIZE: the pinned molecule's atoms at the molecular solve's OWN density, Mulliken-partitioned to each about its nucleus (`holon_atom_band_coupled_rms_bohr`, on EMBED-1's density, DONE 2026-09-04: H in H₂ reads 1.506 bohr against the free atom's 1.396); every other atom at its free-atom size, labelled | yes for the pinned molecule; no for the rest, and the ring says which | step 1 of the path below, closed the same day; what remains decoupled is labelled |
 | nucleus | Z, isotope, mass, spin, charge radius | no — DECLARED inputs (WB-1.7), labelled so | honest input; nothing here is a coarse view of anything |
 | nucleus | the thermal de Broglie wavelength | half: the holon's measured temperature into a closed form | a formula standing in for the MEASURED spread node E's ring polymer would give; **tacked on until node E is wired** |
 | the fold | one baryon's quark density on a 6-site 1+1D SU(3) chain, exact, with a grab that quenches and a unitary clock | the SOLVER is the holon's lane kernel (the shard law); the OBJECT has no seam to the nucleus above it and produces no table | **a model, credited as prior art on its face**; it becomes a tier only through GF2 |
@@ -337,7 +337,7 @@ substrate exposed with a decoupled picture, one is declared, one is a model. The
 surface below the molecule is therefore mostly NOT the holon yet, and the page now
 says so on each card. The maximal-use path is three named steps, none new machinery:
 (1) the atom's drawn size from the molecular solve's density (Build 1's one-body
-density, reused); (2) node E's ring-polymer spread into the nucleus band in place of
+density, reused — DONE the same day); (2) node E's ring-polymer spread into the nucleus band in place of
 the formula; (3) the fold stays a model until GF2 gives it a seam — and is labelled a
 model until then.
 

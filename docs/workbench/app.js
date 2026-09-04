@@ -598,7 +598,7 @@ const LADDER = [
     // than restating them, and the band stays FENCED.
     readout: "ρ g h, the hydrostatic column, in the ladder readouts card below — "
       + "arithmetic on measured constants, never a dynamics readout",
-    readoutCite: "conformance/water_observatory/WORKBENCH_FSD.md:643",
+    readoutCite: "conformance/water_observatory/WORKBENCH_FSD.md:646",
   },
   {
     band: "fluid element",
@@ -708,18 +708,20 @@ const LADDER = [
     runs: "ONE atom pinned by the acuity law — H or O, in a molecule or free — its "
       + "electronic structure solved by the lane engine IN THE PAGE (STO-3G FCI, the same "
       + "arithmetic as native, gated bit-identical against the native referee). "
-      + "PROVENANCE (audit 2026-09-04): the solve is the engine's own substrate at the "
-      + "scene's geometry (holon-coupled: it is the census molecule that is solved); the "
-      + "cloud's drawn SIZE is a free-atom constant per species (DECOUPLED — it does not "
-      + "respond to the bond or the box; the coupled size is the molecular solve's own "
-      + "density, named as the next step). This is the engine's bottom exposed, not a "
-      + "certified tier.",
+      + "PROVENANCE (audit 2026-09-04, step 1 done the same day): the solve is the engine's "
+      + "own substrate at the scene's geometry (holon-coupled: it is the census molecule that "
+      + "is solved), and the pinned molecule's atoms are DRAWN AT THAT SOLVE'S OWN DENSITY, "
+      + "Mulliken-partitioned to each atom (coupled: it moves with the bond, the neighbour "
+      + "and the box); every other atom in the scene wears its free-atom size, a constant "
+      + "per species, and says so. This is the engine's bottom exposed, not a certified tier.",
     state: "export-gated",
     pinned: true,
     liveWhen: [
       "holon_atom_in_molecule", "holon_atom_band_solve", "holon_atom_band_energy",
       "holon_atom_band_n_electrons", "holon_atom_band_residual", "holon_atom_band_exit",
       "holon_atom_band_rms_radius_bohr",
+      "holon_atom_band_coupled_rms_bohr",
+      "holon_atom_band_population",
     ],
     owner: "lead (engine) — WB-10.1 / WB-10.2",
     // STATED AS A CONDITION, not as a build in progress — and it said the latter until the
@@ -731,9 +733,9 @@ const LADDER = [
       + "and `holon_atom_in_molecule`, and fences by name — no digits — on any artifact "
       + "that does not. Its bit-identity row is green only while `law_probe.json` sits "
       + "beside this page with the digest `tests/wasm_law.rs` pinned natively.",
-    cite: "conformance/water_observatory/WORKBENCH_FSD.md:647",
-    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:678",
-    ganttCite: "GANTT.md:108",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:650",
+    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:681",
+    ganttCite: "GANTT.md:109",
   },
   {
     band: "nucleus",
@@ -760,10 +762,10 @@ const LADDER = [
       + "doors, and fences by name — no digits — on any artifact that does not. Z and the "
       + "isotope name come from the committed species table and wear DECLARED, which is "
       + "what WB-1.7 asks of a measured input.",
-    cite: "conformance/water_observatory/WORKBENCH_FSD.md:648",
-    declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:677",
-    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:677",
-    ganttCite: "GANTT.md:108",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:651",
+    declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:680",
+    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:680",
+    ganttCite: "GANTT.md:109",
   },
   {
     // THE FLOOR, AND IT DRAWS NOW. This was a fence whose stated exit was node GF2's
@@ -829,7 +831,7 @@ const LADDER = [
       + "every sector before solving it (`holon_hadron_dim_for`) and REFUSES above "
       + "`holon_hadron_max_det`: 3,375 determinants at N = 6 B = 1 is instant, 175,616 at "
       + "N = 8 runs, 9.3 million at N = 10 is refused with code 6.",
-    cite: "GANTT.md:103",
+    cite: "GANTT.md:104",
     measuredBy: "TIERS.md:59",
     positive: "the first rung is MEASURED: SCHWINGER-4's residual interaction between two "
       + "screened static pairs decays at the banked meson mass to 0.6% — Fold II's "
@@ -1230,6 +1232,14 @@ const PENDING_EXPORTS = [
   { name: "holon_atom_band_rms_radius_bohr", serves: "atom", spec: "WB-10.1",
     what: "the picked atom's electronic size: the RMS electron radius of the free atom in "
       + "bohr, from the band's own STO-3G solve — the sphere the atom band draws" },
+  { name: "holon_atom_band_coupled_rms_bohr", serves: "atom", spec: "WB-10.1",
+    what: "the atom's COUPLED size: the last solved molecule's own density at the scene's "
+      + "geometry, Mulliken-partitioned to the atom about its nucleus, in bohr — the sphere "
+      + "the pinned molecule's atoms are drawn at (EMBED-1's density; OBJECT.md audit step 1); "
+      + "0 when the last atom-band solve did not contain the atom" },
+  { name: "holon_atom_band_population", serves: "atom", spec: "WB-10.1",
+    what: "the atom's Mulliken population in the last solved molecule, in electrons — "
+      + "written beside the coupled size so the partition is visible; 0 when not in the solve" },
   { name: "holon_atom_in_molecule", serves: "atom", spec: "WB-10.1",
     what: "0 if the atom is free, else 1 + the census row index it belongs to (WB-1.6)" },
   // THE SUB-ATOM BAND'S DOORS. `holon_hadron_solve` is the door — it runs an EXACT
@@ -2081,12 +2091,26 @@ function setZoom(z) {
 /// so it is taken once per species and cached — never per frame.
 const RMS_RADIUS_CACHE = new Map();
 function atomRadiusBohr(w, i) {
+  return atomSize(w, i).rms;
+}
+
+/// The atom's drawn size and where it came from. COUPLED when the last atom-band solve
+/// contains this atom: the molecule's own density at the scene's geometry, Mulliken-
+/// partitioned to the atom about its nucleus — it moves with the bond, the neighbour and
+/// the box (OBJECT.md "The surface, audited", step 1). FREE otherwise: the species'
+/// free-atom RMS radius, a constant, cached once per species because its solve is a full
+/// CI. The palette radius only when neither door is in the artifact.
+function atomSize(w, i) {
+  if (typeof w.holon_atom_band_coupled_rms_bohr === "function") {
+    const r = w.holon_atom_band_coupled_rms_bohr(i);
+    if (r > 0) return { rms: r, how: "coupled", pop: w.holon_atom_band_population(i) };
+  }
   const z = w.holon_atom_species_z(i);
   if (typeof w.holon_atom_band_rms_radius_bohr === "function") {
     if (!RMS_RADIUS_CACHE.has(z)) RMS_RADIUS_CACHE.set(z, w.holon_atom_band_rms_radius_bohr(i));
-    return RMS_RADIUS_CACHE.get(z);
+    return { rms: RMS_RADIUS_CACHE.get(z), how: "free" };
   }
-  return styleFor(z).radiusBohr;
+  return { rms: styleFor(z).radiusBohr, how: "palette" };
 }
 
 function sceneBox(w) {
@@ -2357,7 +2381,8 @@ function render3D() {
       ctx.strokeStyle = "rgba(0, 229, 255, 0.7)"; ctx.setLineDash([4, 4]);
       ctx.beginPath(); ctx.arc(d.p.sx, d.p.sy, r, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
       ctx.fillStyle = "rgba(0, 229, 255, 0.9)"; ctx.font = "12px ui-monospace, monospace"; ctx.textAlign = "left";
-      ctx.fillText(`⟨r²⟩½ = ${(atomRadiusBohr(w, d.i) * BOHR_TO_PM).toFixed(1)} pm`, d.p.sx + Math.min(r, vw * 0.4) + 8, d.p.sy);
+      const sz = atomSize(w, d.i);
+      ctx.fillText(`⟨r²⟩½ = ${(sz.rms * BOHR_TO_PM).toFixed(1)} pm  (${sz.how === "coupled" ? `COUPLED: the molecular density, Mulliken-partitioned, ${sz.pop.toFixed(3)} e` : sz.how === "free" ? "FREE ATOM: a constant per species" : "palette"})`, d.p.sx + Math.min(r, vw * 0.4) + 8, d.p.sy);
     }
     if (d.i === State.hand.grabbed) {
       ctx.strokeStyle = "#ffd479";
@@ -2539,7 +2564,7 @@ function renderAtomReadout(w, vw, vh) {
     `atom ${i}: ${sp.name}, Z = ${sp.z} — ${pick.how}${row > 0 ? `, member of census molecule ${row - 1}` : ", free"}`,
     `STO-3G full CI in the page: E = ${w.holon_atom_band_energy(i).toFixed(9)} Ha over ${w.holon_atom_band_n_electrons(i)} electrons${row > 0 ? " (the whole molecule)" : ""}`,
     `residual ${w.holon_atom_band_residual(i).toExponential(2)}  ·  exit: ${exitName}  ·  the same arithmetic as native, gated bit-identical`,
-    `to scale: the sphere is the free atom's RMS electron radius, ${(rms * BOHR_TO_PM).toFixed(1)} pm, in a view ${fmtMetres(viewSpanMetres(w))} across — a measured size, not an icon`,
+    `to scale: the sphere is ${atomSize(w, i).how === "coupled" ? "this molecule's OWN density partitioned to the atom (coupled — it moves with the bond and the box)" : "the free atom's RMS electron radius (a constant per species)"}, ${(rms * BOHR_TO_PM).toFixed(1)} pm, in a view ${fmtMetres(viewSpanMetres(w))} across — a measured size, not an icon`,
   ], 24, vh * 0.76, [3]);
 }
 

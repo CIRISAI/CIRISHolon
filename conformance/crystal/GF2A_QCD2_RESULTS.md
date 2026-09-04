@@ -446,3 +446,38 @@ the first thing the volume ladder needs cured: the two-site variance
 (Hubig–Haegeman–Schollwöck 2018), cited in `variance.rs` as the exit, is now owed.
 
 What this licenses (A3.3): with plant (vii) — running — the ladder of A2.6.
+
+---
+
+## The exam is COMPLETE (2026-09-04 03:35): plant (vii) fires by LEAVING ITS SECTOR, and every live gate passes
+
+**Plant (vii), the labels-ignored mutant at x = 4, B = 1, χ = 256, ran to its 60-sweep cap in
+19,646 s on the host's dense path and fired — and the number says more than the stake asked.**
+
+| | energy | reading |
+|---|---|---|
+| mutant (B = 1, labels ignored) | **−51.922996861** | ran to the sweep cap |
+| its OWN sector's exact answer (B = 1) | −47.996482567 | miss **−3.93** — BELOW the variational bound for B = 1 |
+| the NEIGHBOURING sector's exact answer (B = 0) | −51.922999964 | agrees to **3.1e-6** |
+
+A variational method cannot go below its sector's ground state. This one did, by 3.9
+hartree, and landed on the B = 0 ground state to six digits. **The mutant did not wander
+inside its sector; it LEFT the sector and solved a different problem.** That is precisely
+what the charge labels are for, and it is a sharper demonstration than the stake required:
+A2.8's plant (vii) asked only for a miss above 1e-3.
+
+### Every gate of the successor, in one place
+
+| gate | verdict | the number |
+|---|---|---|
+| **G0‴** (A3: χ per sector from the cut's rank) | **PASS, all six sectors** | misses 1.45e-10 … 1.58e-9; cold = mixed to 1e-9, identical bits at x = 4 B = 1 |
+| G0″ (A2: a flat χ = 256 for every sector) | **FIRED on three sectors** — superseded by A3, kept | +2.9e-6, +3.9e-6, +2.9e-5; the χ was staked under the rank A2.6 itself derives |
+| **V1** (the variance is the error bar) | **PASS, all six sectors** | strictly decreasing in χ everywhere, and ordered with the miss ACROSS sectors |
+| **R1** (resumability) | **PASS**, and in the field | a resumed run reproduces the uninterrupted one to the bit; proved again when the session died mid-rung and every run resumed from its last sweep |
+| **plant (vi)** — mixing is load-bearing | **FIRES** | unmixed +6.63e-5, mixed +4.27e-7, same start |
+| **plant (vii)** — labels are load-bearing | **FIRES** | −3.93, by leaving the sector |
+| **plant (viii)** — the variance separates what the residual cannot | **FIRES** | variance ratio **108×** between two states whose Lanczos residuals agree to 2 % |
+
+**A2.9 and A3.3 are therefore satisfied**, and the volume ladder of A2.6 is licensed. What is
+NOT licensed and not claimed: any physics. G1′, G2 and G3 remain unread on this arm, which is
+the whole point of the ladder that follows.

@@ -1034,6 +1034,7 @@ function fmtRate(fsPerSec) {
 /// is how a factor of 1.9e10 gets into a label.
 function fmtMetres(m) {
   if (!Number.isFinite(m) || m <= 0) return "—";
+  if (m < 1e-12) return `${(m * 1e15).toFixed(2)} fm`;
   if (m < 1e-9) return `${(m * 1e12).toFixed(1)} pm`;
   if (m < 1e-6) return `${(m * 1e9).toFixed(2)} nm`;
   if (m < 1e-3) return `${(m * 1e6).toFixed(2)} µm`;
@@ -1936,6 +1937,7 @@ function frame(now) {
   }
 
   measureRate(now);
+  State.foldWallDt = wallDt;
   render3D();
   renderTelemetry();
   requestAnimationFrame(frame);
@@ -2117,6 +2119,13 @@ function render3D() {
   ctx.clearRect(0, 0, vw, vh);
 
   if (!State.booted) return;
+  // THE FLOOR DRAWS ITS OWN PICTURE. When the fold below the atom is the active band and
+  // its doors are in the artifact, the canvas is a baryon's quark density, not a box of
+  // water seen from a femtometre away — which would be an empty frame wearing a label.
+  if (State.activeBand === LADDER.length - 1 && foldLive(w)) {
+    renderFold(w, vw, vh);
+    return;
+  }
   drawTemperatureGlow(vw, vh);
   const f = sceneFrame();
   // ZOOMING OUT past 1× shrinks the world box on screen by the same ratio, so the cube
@@ -2215,6 +2224,157 @@ function render3D() {
 /// says something about water rather than about a designer's gradient. Outside that range
 /// it saturates, which is honest — the glow is an indicator, not a thermometer, and the
 /// scene panel carries the number.
+// ------------------------------------------------------------------ THE FOLD BELOW THE ATOM
+
+/// The fold's own state. The exact solve is per (sites, coupling, baryon number) and is
+/// cached in the engine; this is what the PAGE holds — which site is grabbed, the pull
+/// strength, and the clock.
+const Fold = {
+  n: 6,
+  x: 4.0,
+  b: 1,
+  solved: false,
+  solvedFor: "",
+  grabbedSite: -1,
+  /// depth of the pull, in the model's own energy units, set by how far the pointer drags
+  pull: 0,
+  /// model time advanced per wall second; the quench runs at this rate
+  rate: 0.6,
+  /// the last frame's drawn bars, for hit-testing a press
+  bars: [],
+};
+
+function foldLive(w) {
+  return LADDER[LADDER.length - 1].liveWhen.every((n) => typeof w[n] === "function");
+}
+
+/// Solve both sectors of the current box once, so the sea and the baryon can be compared
+/// and the mass can be read; re-solve only when the box changes.
+function foldEnsureSolved(w) {
+  const key = `${Fold.n}/${Fold.x}/${Fold.b}`;
+  if (Fold.solved && Fold.solvedFor === key) return true;
+  const dim = w.holon_hadron_dim_for(Fold.n, Fold.b);
+  if (dim < 0 || dim > w.holon_hadron_max_det()) return false;
+  const c0 = w.holon_hadron_solve(Fold.n, Fold.x, 0);
+  const c1 = w.holon_hadron_solve(Fold.n, Fold.x, Fold.b);
+  Fold.solved = (c0 === 0 || c0 === 3) && (c1 === 0 || c1 === 3);
+  Fold.solvedFor = key;
+  Fold.grabbedSite = -1;
+  Fold.pull = 0;
+  return Fold.solved;
+}
+
+function renderFold(w, vw, vh) {
+  if (!foldEnsureSolved(w)) {
+    ctx.fillStyle = "rgba(255, 214, 0, 0.9)";
+    ctx.font = "14px ui-monospace, monospace";
+    ctx.fillText(`the ${Fold.n}-site box is over the ${w.holon_hadron_max_det().toExponential(1)}-determinant cap — refused, not attempted`, 24, vh * 0.5);
+    return;
+  }
+  // THE CLOCK. Model time advances at `rate` per wall second whenever the state is not
+  // an eigenstate of its own Hamiltonian — i.e. after a grab. Before any grab, stepping
+  // would move nothing (the eigenstate control) and is skipped so the picture is still.
+  if (!State.paused && Fold.grabbedSite >= 0) {
+    const dt = Math.min(0.05, Fold.rate * (State.foldWallDt || 0));
+    if (dt > 0) w.holon_hadron_step(Fold.b, dt);
+  }
+  const n = Fold.n;
+  const occ = [], sea = [];
+  for (let k = 0; k < n; k++) {
+    occ.push(w.holon_hadron_occ(Fold.b, k));
+    sea.push(w.holon_hadron_occ(0, k));
+  }
+  // layout: one bar per site, the sea's density as a ghost behind the baryon's
+  const left = vw * 0.22, right = vw * 0.78, base = vh * 0.66, top = vh * 0.20;
+  const slot = (right - left) / n;
+  const barW = slot * 0.5;
+  const yOf = (v) => base - (v / 3) * (base - top);
+  Fold.bars = [];
+  // the chain
+  ctx.strokeStyle = "rgba(148, 163, 184, 0.35)";
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(left, base); ctx.lineTo(right, base); ctx.stroke();
+  for (let k = 0; k < n; k++) {
+    const cx = left + slot * (k + 0.5);
+    // the sea, as a ghost: what this site holds with no baryon in the box
+    ctx.fillStyle = "rgba(148, 163, 184, 0.18)";
+    ctx.fillRect(cx - barW / 2, yOf(sea[k]), barW, base - yOf(sea[k]));
+    // the baryon's density, coloured by how much of it is the extra baryon
+    const extra = Math.max(0, occ[k] - sea[k]);
+    const hue = 190 - Math.min(1, extra / 1.5) * 150;
+    ctx.fillStyle = k === Fold.grabbedSite ? "rgba(255, 214, 0, 0.9)" : `hsla(${hue}, 90%, 60%, 0.85)`;
+    ctx.fillRect(cx - barW / 2, yOf(occ[k]), barW, base - yOf(occ[k]));
+    // the grab's well, drawn as a dip below the chain
+    const pin = w.holon_hadron_pin_at(Fold.b, k);
+    if (pin < 0) {
+      ctx.fillStyle = "rgba(255, 214, 0, 0.25)";
+      ctx.fillRect(cx - barW / 2, base, barW, Math.min(vh * 0.12, -pin * 8));
+    }
+    ctx.fillStyle = "rgba(241, 245, 249, 0.85)";
+    ctx.font = "12px ui-monospace, monospace";
+    ctx.textAlign = "center";
+    ctx.fillText(occ[k].toFixed(2), cx, yOf(occ[k]) - 6);
+    ctx.fillStyle = "rgba(148, 163, 184, 0.7)";
+    ctx.fillText(`site ${k}`, cx, base + 16);
+    Fold.bars.push({ k, x0: cx - slot / 2, x1: cx + slot / 2, y0: top, y1: base + vh * 0.12 });
+  }
+  ctx.textAlign = "left";
+  // THE TWO HONESTY READOUTS, beside the picture: both must hold still while it moves.
+  const norm = w.holon_hadron_norm(Fold.b);
+  const live = w.holon_hadron_live_energy(Fold.b);
+  const e1 = w.holon_hadron_energy(Fold.b), e0 = w.holon_hadron_energy(0);
+  const mass = w.holon_hadron_baryon_mass();
+  const t = w.holon_hadron_time(Fold.b);
+  const nd = w.holon_hadron_n_det(Fold.b);
+  ctx.font = "13px ui-monospace, monospace";
+  ctx.fillStyle = "rgba(241, 245, 249, 0.9)";
+  const lines = [
+    `1+1D QCD, one flavour, ${n} sites, x = ${Fold.x} — EXACT colour-singlet solve, ${nd} determinants, no approximation`,
+    `E(sea) ${e0.toFixed(6)}   E(one baryon) ${e1.toFixed(6)}   baryon mass (E1−E0)/2√x = ${Number.isFinite(mass) ? mass.toFixed(6) : "—"}`,
+    `‖ψ‖² = ${norm.toFixed(12)}  (must stay 1: unitary)     ⟨H⟩ = ${live.toFixed(9)}  (conserved under the current H)     t = ${t.toFixed(2)}`,
+    Fold.grabbedSite >= 0
+      ? `grabbed site ${Fold.grabbedSite}, pull ${Fold.pull.toFixed(2)} — a quench: the Hamiltonian changed under the state; release to restore the ground state`
+      : `press a site and drag down to pull the quarks toward it; shift-drag to change the pull`,
+  ];
+  lines.forEach((l, i) => ctx.fillText(l, 24, vh * 0.76 + i * 18));
+  ctx.fillStyle = "rgba(148, 163, 184, 0.6)";
+  ctx.font = "11px ui-monospace, monospace";
+  ctx.fillText("ONE SPACE DIMENSION: no transverse gluons; the gauge field is eliminated by Gauss's law, the confining potential built in. A model, not the proton.", 24, vh * 0.76 + 4 * 18 + 6);
+  ctx.fillText("Prior art: Silvi, Sauer, Tschirsich, Montangero, PRD 100 074512 (2019); Hayata, Hidaka, Nishimura, arXiv:2311.11643. Neither reports runtime; no comparison is made.", 24, vh * 0.76 + 5 * 18 + 6);
+}
+
+/// A press on a site is the grab. Returns true if the press landed on the fold's chain.
+function foldTryGrab(px, py) {
+  if (!(State.activeBand === LADDER.length - 1 && foldLive(State.w))) return false;
+  const hit = Fold.bars.find((b) => px >= b.x0 && px < b.x1 && py >= b.y0 && py < b.y1);
+  if (!hit) return false;
+  if (Fold.grabbedSite >= 0) State.w.holon_hadron_release(Fold.b);
+  Fold.grabbedSite = hit.k;
+  Fold.pull = -3.0;
+  State.w.holon_hadron_grab(Fold.b, hit.k, Fold.pull);
+  Fold.grabY0 = py;
+  return true;
+}
+
+/// Dragging down deepens the well; the grab is re-applied as the difference so the pin
+/// tracks the pointer without accumulating.
+function foldDragTo(px, py) {
+  if (Fold.grabbedSite < 0) return;
+  const want = -3.0 - Math.max(0, py - (Fold.grabY0 ?? py)) * 0.03;
+  const delta = want - Fold.pull;
+  if (Math.abs(delta) > 1e-9) {
+    State.w.holon_hadron_grab(Fold.b, Fold.grabbedSite, delta);
+    Fold.pull = want;
+  }
+}
+
+function foldRelease() {
+  if (Fold.grabbedSite < 0) return;
+  State.w.holon_hadron_release(Fold.b);
+  Fold.grabbedSite = -1;
+  Fold.pull = 0;
+}
+
 function drawTemperatureGlow(vw, vh) {
   const t = State.w.holon_temperature();
   if (!Number.isFinite(t)) return;
@@ -3075,10 +3235,13 @@ function initInput() {
     lastY = e.clientY;
     // Shift (or the secondary button) orbits; a plain press reaches for an atom, and
     // falls through to orbit when it finds none.
+    if (foldTryGrab(e.clientX, e.clientY)) return;
     if (e.shiftKey || e.button === 2 || !tryGrab(e.clientX, e.clientY)) orbiting = true;
   });
   window.addEventListener("mousemove", (e) => {
-    if (State.hand.grabbed >= 0) {
+    if (Fold.grabbedSite >= 0) {
+      foldDragTo(e.clientX, e.clientY);
+    } else if (State.hand.grabbed >= 0) {
       dragTo(e.clientX, e.clientY);
     } else if (orbiting) {
       State.camera.yaw += (e.clientX - lastX) * 0.006;
@@ -3088,6 +3251,7 @@ function initInput() {
     lastY = e.clientY;
   });
   window.addEventListener("mouseup", () => {
+    foldRelease();
     releaseHand();
     orbiting = false;
   });
@@ -3207,6 +3371,7 @@ function renderTierRail(w, viewM) {
     el.className = `tier-stop${live ? "" : " fenced"}${i === active ? " active" : ""}`;
   });
   if (active < 0) return;
+  State.activeBand = active;
   const b = LADDER[active];
   const lv = b.state === "export-gated" ? bandLiveness(b.liveWhen, hasExport) : null;
   const live = b.state === "live" || (lv && lv.live);

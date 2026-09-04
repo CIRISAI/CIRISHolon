@@ -746,29 +746,64 @@ const LADDER = [
       + "isotope name come from the committed species table and wear DECLARED, which is "
       + "what WB-1.7 asks of a measured input.",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:589",
-    declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:597",
+    declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:598",
     buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:618",
     ganttCite: "GANTT.md:108",
   },
   {
-    // THE FLOOR, and it is a fence rather than a band that draws. This page does not draw
-    // the interior of a nucleus (WB-10.6) and will not until node GF2 has one to draw.
+    // THE FLOOR, AND IT DRAWS NOW. This was a fence whose stated exit was node GF2's
+    // three-dimensional hadron box. That exit CLOSED on 2026-09-04: the physics it was
+    // reaching for is prior art (see `priorArt`), so the band went live on what this engine
+    // can honestly compute instead — the EXACT colour-singlet ground state of one-flavour
+    // QCD in 1+1 dimensions, solved in the page with no approximation, and the quark
+    // density along the chain is the picture.
     band: "the fold below the atom",
     scale: "< 1 fm",
     lengthM: 8.4e-16,
-    noAllocation: true,
-    runs: "the hadron tier — colour-singlet closure, with Gauss's law as the seam. "
-      + "Nothing on this page draws here, and the ladder's floor is the nucleus above.",
-    state: "fenced",
-    owner: "GANTT node GF2 — the Σ(1080) hadron box",
-    exit: "E7 (U(1)³ MPS blocks) is in build now, then E8, then E10 — the 3D "
-      + "finite-group box with Σ(1080)-valued links and staggered quarks. This band "
-      + "goes live as GF2's hadron spectrum lands inside its staked band and the derived "
-      + "nucleon–nucleon table reproduces the deuteron binding.",
+    runs: "one baryon as a COLOUR-SINGLET bound state of three quarks, solved EXACTLY in "
+      + "the page on the colour-lane determinant engine — the same arithmetic as native, "
+      + "no approximation and no truncation. What is drawn is the quark density along the "
+      + "chain; the difference between the B = 0 sea and the B = 1 state is one baryon's "
+      + "worth of quarks, and where it sits is what this band shows. The baryon mass "
+      + "(E1 - E0) / 2*sqrt(x) is read off the two solves when both are in the same box.",
+    state: "export-gated",
+    pinned: true,
+    liveWhen: [
+      "holon_hadron_solve", "holon_hadron_energy", "holon_hadron_occ",
+      "holon_hadron_baryon_mass", "holon_hadron_n_det", "holon_hadron_exit",
+      "holon_hadron_margin", "holon_hadron_dim_for", "holon_hadron_max_det",
+    ],
+    owner: "lead (engine) — the sub-atom band",
+    // THE LIMIT, in the band and not only in the source. This is one space dimension.
+    limit: "ONE SPACE DIMENSION. There are no transverse gluons here: the gauge field is "
+      + "not dynamical, Gauss's law eliminates it, and the linear confining potential is "
+      + "built in rather than emergent. No glueballs, no asymptotic freedom in the "
+      + "four-dimensional sense. This is a MODEL that shares confinement and colour-singlet "
+      + "structure with the real thing. It is not the proton.",
+    // THE PRIOR ART, credited by name. Both did this physics before us, on cluster
+    // hardware, and NEITHER PAPER REPORTS ITS RUNTIME — so no speed comparison is made
+    // here or anywhere, in either direction.
+    priorArt: "SU(3) lattice gauge theory in 1D with gauge-invariant matrix product states: "
+      + "P. Silvi, Y. Sauer, F. Tschirsich and S. Montangero, Phys. Rev. D 100, 074512 "
+      + "(2019) — the finite-density phase diagram, all phases colourless, and multi-baryon "
+      + "bound states including the deuteron. And one-flavour SU(2) and SU(3) QCD2 with "
+      + "DMRG: T. Hayata, Y. Hidaka and K. Nishimura, arXiv:2311.11643 — equation of "
+      + "state, chiral condensate and quark distribution functions, SU(3) at 48 sites and "
+      + "bond dimension 500 on RIKEN cluster machines. What is ours here is the engine and "
+      + "the exactness in a browser, not the physics. NEITHER paper states its compute "
+      + "time, so we do not know it and claim nothing about it.",
+    // The COST, priced before it is spent: the sector is C(N, n_q/3)^3 and the door refuses
+    // above its cap by name rather than hanging the page on a zoom gesture.
+    // STATED AS A CONDITION, not as a build: the doors are in the shipped artifact, so this
+    // band renders LIVE and owes nothing. It said "is being rebuilt" until the artifact
+    // carried them, and the gate caught that within the minute — a fence that outlives its
+    // debt is the page telling viewers about an absence that ended.
+    exit: "the sub-atom band is live exactly when the shipped wasm carries `holon_hadron_*`, "
+      + "and fences by name — no digits — on any artifact that does not. The door prices "
+      + "every sector before solving it (`holon_hadron_dim_for`) and REFUSES above "
+      + "`holon_hadron_max_det`: 3,375 determinants at N = 6 B = 1 is instant, 175,616 at "
+      + "N = 8 runs, 9.3 million at N = 10 is refused with code 6.",
     cite: "GANTT.md:103",
-    // The tier's own register row: NAMED AND LOCKED as a fold at wager strength with three
-    // separable kills, and its first rung MEASURED on the engine arm. A fence over real
-    // work in progress, which is what the fence law asks a fence to be.
     measuredBy: "TIERS.md:59",
     positive: "the first rung is MEASURED: SCHWINGER-4's residual interaction between two "
       + "screened static pairs decays at the banked meson mass to 0.6% — Fold II's "
@@ -1164,6 +1199,29 @@ const PENDING_EXPORTS = [
       + "— COMPUTED in closed form by the engine, 0 where the temperature is undefined" },
   { name: "holon_atom_in_molecule", serves: "atom", spec: "WB-10.1",
     what: "0 if the atom is free, else 1 + the census row index it belongs to (WB-1.6)" },
+  // THE SUB-ATOM BAND'S DOORS. `holon_hadron_solve` is the door — it runs an EXACT
+  // colour-singlet solve and keeps it; the rest are read-backs of the stored sector, and
+  // `holon_hadron_dim_for` / `holon_hadron_max_det` are the PRICE, readable before any
+  // solve is asked for, so a zoom gesture is refused with a number instead of a hang.
+  { name: "holon_hadron_solve", serves: "the fold below the atom", spec: "WB-10.7",
+    what: "solve the exact colour-singlet sector of 1+1D QCD at (sites, coupling, baryon "
+      + "number); 0 converged, 3 trivial, 5 bad parameters, 6 over the determinant cap" },
+  { name: "holon_hadron_energy", serves: "the fold below the atom", spec: "WB-10.7",
+    what: "the stored sector's exact ground-state energy, NaN if unsolved" },
+  { name: "holon_hadron_occ", serves: "the fold below the atom", spec: "WB-10.7",
+    what: "the quark density at one site, summed over colours — what the band draws" },
+  { name: "holon_hadron_baryon_mass", serves: "the fold below the atom", spec: "WB-10.7",
+    what: "(E1 - E0) / 2*sqrt(x) from the two stored sectors, NaN unless both are the same box" },
+  { name: "holon_hadron_n_det", serves: "the fold below the atom", spec: "WB-10.7",
+    what: "the stored sector's determinant count" },
+  { name: "holon_hadron_exit", serves: "the fold below the atom", spec: "WB-10.7",
+    what: "0 converged, 1 iteration cap, 2 stagnated, 3 trivial, 4 not solved" },
+  { name: "holon_hadron_margin", serves: "the fold below the atom", spec: "WB-10.7",
+    what: "min diag - E: non-negative for a true ground state, a defect on screen otherwise" },
+  { name: "holon_hadron_dim_for", serves: "the fold below the atom", spec: "WB-10.7",
+    what: "the determinant count a sector WOULD have, without solving it — the price" },
+  { name: "holon_hadron_max_det", serves: "the fold below the atom", spec: "WB-10.7",
+    what: "the cap above which the door refuses rather than attempts" },
   // THE DOOR, not a getter. The four rows below are READ-BACKS of the last solve; this is
   // what runs one. It is called on a pick change and on a throttle, never per frame — the
   // engine's own header says a molecule's FCI is milliseconds and its value changes with

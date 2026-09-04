@@ -587,6 +587,7 @@ its debt, owner and exit in the present tense. Nothing in between.
 | molecular | ~nm | the live engine, full physics ladder | LIVE (census CERTIFIED-STRICT, cited) | — |
 | **atom** (NEW) | ~Å | ONE atom pinned by the acuity law — H or O, in a molecule or free (the census says which) — its electronic structure solved by the lane engine IN THE PAGE (STO-3G FCI, the same arithmetic as native) | LIVE: energy, electron count, the solve's residual and exit, and BIT-IDENTITY with the native referee as a displayed gate | — |
 | **nucleus** (NEW, the maximum zoom) | ~fm | the nucleus of that atom as the deepest OBJECT: Z, isotope, mass (u), nuclear spin, charge radius — DECLARED, MEASURED INPUTS, labelled so on the page — and the nucleus's thermal de Broglie wavelength at the scene's measured temperature (COMPUTED, closed form, from `holon_temperature`); the ring-polymer spread joins when node E's carrier reaches the ABI (owed, named) | LIVE for the numbers above (every one traces to an export or wears DECLARED); the interior FENCED | interior: the fold below the atom — owner GF2, exit E10 (E7 → E8 → E10) |
+| **the fold below the atom** (NEW 2026-09-04, the floor DRAWS) | < 1 fm | one baryon as a COLOUR-SINGLET bound state of three quarks: the exact ground state of one-flavour QCD in 1+1 dimensions on the wasm lane engine, no approximation and no truncation, with the quark density along the chain as the picture and the baryon mass (E1−E0)/2√x read off two solves in the same box | **EXPORT-GATED** — the band was FENCED, and its stated exit was node GF2's three-dimensional hadron box. That exit CLOSED on 2026-09-04: the physics it reached for is prior art (Silvi–Sauer–Tschirsich–Montangero, Phys. Rev. D 100, 074512 (2019), SU(3) in 1D with gauge-invariant MPS including the deuteron; Hayata–Hidaka–Nishimura, arXiv:2311.11643, SU(2) and SU(3) QCD₂ with DMRG at 48 sites and bond dimension 500). NEITHER PAPER REPORTS ITS RUNTIME, so no speed comparison is made in either direction. What is ours is the engine and the exactness in a browser, not the physics. THE LIMIT, carried in the band itself: one space dimension has no transverse gluons, the gauge field is eliminated by Gauss's law rather than dynamical, and the confining potential is built in rather than emergent — a MODEL sharing confinement and colour-singlet structure with the real thing, not the proton. The sector is C(N, n_q/3)³ and the door PRICES it before solving (`holon_hadron_dim_for`), refusing above the cap by name: 3,375 determinants at N=6 B=1 is instant, 9.3 million at N=10 is refused |
 | below the nucleus | — | the gauge vacuum (W2): QED₂ meson and a QCD₂ sector at exact sizes on the wasm lane engine | NOT ON THIS PAGE YET — sequenced after W by the operator | W2 |
 
 **WB-1.6 — in a molecule or not.** The atom and nucleus bands are reached through a
@@ -612,6 +613,17 @@ the page. A declared number presented as computed is the WB-7 lie in a new costu
 | §7 build chain | "promoted-molecule charts + derived V(H₂O–H₂O)" as a straight line | node G rung 1 found the boundary is ALIGNMENT, not aggregation, and the MPS cluster seam FIRED twice; the promoted chart's shape is a finding to build to, not a line item |
 
 ### 11.4 The build (WB-10), with owners
+
+**WB-10.7 — the sub-atom band's doors, `holon_hadron_*` (NEW 2026-09-04, owner: lead).**
+The ladder's floor stops being a fence and starts drawing. Nine doors, all served by the
+colour-lane determinant engine already in the artifact:
+`holon_hadron_solve` (the door: an EXACT colour-singlet solve at a given site count,
+coupling and baryon number), `holon_hadron_energy`, `holon_hadron_occ` (the quark density
+per site — what the band draws), `holon_hadron_baryon_mass`, `holon_hadron_n_det`,
+`holon_hadron_exit`, `holon_hadron_margin`, and the two PRICE doors `holon_hadron_dim_for`
+and `holon_hadron_max_det`, which let the page refuse a zoom with a number instead of
+hanging on one. Gated in `crates/holon-render/tests/hadron_band.rs`: the door is the exact
+arm to the bit, the drawn density conserves quark number, and every refusal fires by name.
 
 | # | task | owner | gate |
 |---|---|---|---|

@@ -198,6 +198,8 @@ const COMMISSIONED = [
   [/^holon_nucleus_/, "holon_nucleus_*"],
   [/^holon_atom_band_/, "holon_atom_band_*"],
   [/^holon_atom_in_molecule$/, "holon_atom_in_molecule"],
+  // WB-10.7, the sub-atom band: the ladder's floor draws instead of fencing.
+  [/^holon_hadron_/, "holon_hadron_*"],
 ];
 for (const name of pending) {
   const fam = COMMISSIONED.find(([re]) => re.test(name));
@@ -986,7 +988,7 @@ if (ladderBlock) {
   const SPEC_STATE = {
     "the cube": "fenced", "fluid element": "fenced", "H-bond network": "fenced",
     "molecular": "live", "atom": "export-gated", "nucleus": "export-gated",
-    "the fold below the atom": "fenced",
+    "the fold below the atom": "export-gated",
   };
   for (const b of bands) {
     const expect = SPEC_STATE[b.band];

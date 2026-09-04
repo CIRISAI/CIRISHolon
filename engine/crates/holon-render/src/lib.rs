@@ -42,6 +42,7 @@ pub mod cells;
 pub mod checkpoint;
 pub mod bank;
 pub mod clock;
+pub mod hadron;
 pub mod holon;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod json;
@@ -2369,3 +2370,17 @@ pub extern "C" fn holon_pair_slot(k: u32) -> i32 {
     let slots = s.species_slots();
     s.bank.slot(slots[p.i], slots[p.j]) as i32
 }
+
+// ------------------------------------------------------------------ the sub-atom band's clock
+//
+// `Instant::now()` traps on wasm32-unknown-unknown (it panicked once already, in the stage
+// timers), so the band's seconds are host-only and read zero in the page rather than killing
+// the module. The page shows the determinant count and the exit, which are what matter.
+#[cfg(target_arch = "wasm32")]
+pub(crate) fn hadron_clock() {}
+#[cfg(target_arch = "wasm32")]
+pub(crate) fn hadron_elapsed(_t: ()) -> f64 { 0.0 }
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) fn hadron_clock() -> std::time::Instant { std::time::Instant::now() }
+#[cfg(not(target_arch = "wasm32"))]
+pub(crate) fn hadron_elapsed(t: std::time::Instant) -> f64 { t.elapsed().as_secs_f64() }

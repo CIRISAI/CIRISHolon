@@ -14,8 +14,9 @@ A   Species-generic MBE (done) ──┬─▶ C2 ion tables (done) ─▶ Grott
                                  └─▶ E  NQE in dynamics (launched)
 B1  Long-range audit (done) ─▶ B2 split-kernel far field (landed; no charge in the force law)
 EMBED-1  the embedding field (read) ─▶ SEAM-1 exact cores inside it (read) ─▶ EMBED-2 the field
-         as densities (read; residual harvested) ─▶ EMBED-3 the harvested residual's field
-         dependence (next freeze) ─▶ the water cores inside the field ─▶ G rung 1 gets electrostatics
+         as densities (read; residual harvested) ─▶ EMBED-3 the residual's field dependence (running)
+         ─▶ THE CHANNEL LEDGER (OBJECT.md rule 10) ─▶ FIELD-1 channel 1 in the force law (building)
+         ─▶ the water cores inside the field ─▶ G rung 1 gets electrostatics
 H   dE5 audit (done: the bare ladder does not terminate) ─▶ MPS seam (re-shaped by EMBED/SEAM)
 G   Upward closures (rungs 1, 2 measured, not certified) ◀── OOO cert · dE4 table · B1 · the field
 LG  Continuum-native lattice tier (launched) — never composed through viewClosed_comp with G
@@ -34,7 +35,8 @@ W   the waterbench zoom ladder (up) ─▶ W2 gauge vacuum in the browser ─▶
 | EMBED-1 | The embedding field: external charges in the Hamiltonian, the one-body density, the potential, dipole-exact charges (Mulliken control), two fragments to a fixed point (`embed.rs`) | dE5, prior art | READ 2026-09-04: branch (a) on the HF dimer — ρ ≤ 1.5e-2 on the far sector against 0.25; water dimer refused by its own price gate (207.6 processor-min on 27 threads vs 30 staked) | EMBED_PREREG.md, EMBED_RESULTS.md |
 | SEAM-1 | Exact cores inside the field: N fragments to a fixed point, the embedded pairwise expansion vs the exact 665,856-det HF trimer (`seam.rs`) | EMBED-1 | READ 2026-09-04: the embedding carries 99.93 % of the three-body term (κ = 5.1e-4…6.8e-4); S1 branch (b) by its letter on the monotonicity clause; AMENDMENT 1 measured the floor (3–4e-12) and S1′ reads (b) on measured ground; M-FLOOR-UNSTAKED registered | SEAM_PREREG.md, SEAM_AMENDMENT_1.md, SEAM_RESULTS.md |
 | EMBED-2 | The field as the partners' DENSITIES (Coulomb-only frozen-density embedding, credited); the residual harvested | SEAM-1 | READ 2026-09-04: branch (b) by its letter (κ_ρ > κ_q) — and the residual IS the three-body dispersion: `r = −C/R⁹`, C = 8.5 Ha·bohr⁹, one constant on three nodes, floor 1e-12; the seam's far-field defect is DERIVED | EMBED2_PREREG.md, EMBED2_RESULTS.md |
-| EMBED-3 | The harvested residual's dependence on the field its core sits in; the reach of an embedded three-body table; then the water cores (dimer priced in wall time; the triple on the labelled-MPS base) | EMBED-2 | READY · next freeze | — |
+| EMBED-3 | The harvested residual's dependence on the field its core sits in (channel 4 inside channel 1 — the separability the channel ledger needs); the water dimer's far field priced in wall time | EMBED-2 | FROZEN 5276318 · RUNNING 2026-09-04: System A's price gate admitted (583 s per trimer in a field), its identity gate found EMBED-2's record-precision floor (M-FORMAT-FLOOR); nodes and the water arm in flight | EMBED3_PREREG.md, EMBED3_RESULTS.md (pending) |
+| FIELD-1 | **THE FIELD ENTERS THE FORCE LAW as channel 1 of the channel ledger** (OBJECT.md design rule 10): fixed derived charges on census water, the Coulomb term between rows with analytic forces, its energy row, its transfer column `work.field`, the wrapped box refused (Ewald the exit); S1 stakes that hydrogen bonds appear | EMBED-1, ACUITY-B's transition pattern | FROZEN 0b6cb42 · BUILDING 2026-09-04 (lead): `field.rs`, the term, the doors, checkpoint v6 compile; gates next | FIELD_PREREG.md |
 | C | Charged fragments at the solver seam; H3O⁺/OH⁻ certified; ion tables through the generic door | A | DONE (core and tables); H3O⁺·H2O priced out at 9.0M determinants (compute fence, exit F); OH⁻ tables refused under I-5 | ION_TABLES_PREREG/RESULTS, `ion_table.rs` |
 | D | Periodic-table availability and the fence ledger | — | DONE; 54 species probed (38 determinant, 16 MPS, 18 relativity-fenced); 49 fences with owner and exit | FENCES.md, PERIODIC_AVAILABILITY.md |
 | H | dE5 truncation audit: the bare ladder at order five | dE4 | DONE: does NOT terminate — 24/24 over bound, worst 1,572×; explained by EMBED/SEAM (the ladder was bare) | DE5_RESULTS.md |

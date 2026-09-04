@@ -84,6 +84,25 @@ to `2e-12`. A reading, marked as one: it adds no primitive and names no new kill
    known-exponential cost, delegation, or refusal by name.
 9. **Refusal is a feature.** A tier outside its certified scope refuses, naming the gate
    whose passing would lift the refusal.
+10. **The interaction is a LEDGER OF CHANNELS, each with a derived rate, and precision is an
+    allocator over them** (locked 2026-09-04 at the operator's order, read off EMBED-1/2/3 and
+    SEAM-1). Five channels on the record, five rates: fixed-multipole electrostatics (the
+    field, `R⁻¹`/`R⁻³`), induction (the field's fixed point, `R⁻⁴`/`R⁻⁶`), pair dispersion
+    (inside the exact pair, `R⁻⁶`), three-body dispersion (the harvested residual, `−C/R⁹`),
+    and exchange with penetration (the exact core, exponential, gone by 3 Å). COMPLETENESS is
+    the field counted once (the +1 that no fragment generates and that does not factor):
+    with it the channels sum to the exact energy, so a residual is ASSIGNED by its exponent
+    rather than hunted. SEPARABILITY is a channel's coefficient not depending on the others
+    beyond a measured coupling (EMBED-3's System A measures it for channel 4 inside channel
+    1). Under both, the dynamics is the gradient of known transfers between fragments —
+    forces from Hellmann–Feynman with no second solve — and the cost of a scenario is fixed
+    by the digits it asks for: at precision `ε` evaluate exactly the channels with
+    `C_k R^−n_k > ε`, and solve a core only inside channel 5's reach. The engine's energy
+    rows are the channels and its receipt columns are the transfers; FIELD-1 lands the
+    field as channel 1 of that ledger. *Kills:* a residual whose exponent matches no
+    channel; a channel coefficient that depends on another's field at more than one part in
+    ten where the freeze staked less; and contact, where the channels do not separate and
+    the core stays irreducible — which is a bound, not a defect.
 
 **Tables** are produced only through `holon-tables`' leased generator — probed leases,
 receipts, a merge-digest certificate, a launch header with the binary's sha256 and the
@@ -231,6 +250,7 @@ harder, not to add a primitive.*
 | the embedding field ≡ the Record | the +1 that no fragment generates and that does not factor, counted once (`EMBED_RESULTS.md` plant ii; `record_not_site_generated`, `repairable_does_not_factor`) |
 | the residual of an embedded view ≡ the value the next view carries | `EMBED2_RESULTS.md`: the two-body residual is the three-body dispersion, `−C/R⁹`; separation by decay rate is what makes a residual tabulable |
 | the self-consistent fixed point ≡ the declaration corner | `declaration_is_double`; measured start-independent to `2e-12` |
+| a residual's exponent ≡ its channel; precision ≡ an allocator over channels | design rule 10: the sum of channels is exact once the field is counted once, so a residual is assigned by its decay law (`9.34 → R⁻⁹`, EMBED-2) and a scenario evaluates only the channels above the digit it asks for |
 
 ## The surface, audited — what of the workbench is the holon (2026-09-04)
 

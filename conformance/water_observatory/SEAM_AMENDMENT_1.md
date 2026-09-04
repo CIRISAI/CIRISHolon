@@ -19,10 +19,15 @@ measured 265 wall-seconds each on the same machine; a run arriving under half th
 VOID); **M-DEVICE-CLASS** (host `f64`, `solve_determinant`, one class);
 **M-MAX-OVER-SUCCESSES** (S1′ is a for-all over posable pairs); **M-HOMOG** and
 **M-BARE-CHARGE** (the words "local" and "charge" appear; nothing homogeneous or
-gauge-charged is meant); **M-PLANT-SECTOR** (the word "sector" appears for the far
-sector; no deliberate defect is switched on in this amendment — the null is a
-calibration of the instrument, not a verdict, and a switched-on defect in a floor
-measurement would be a planted floor). Not contacted: the rest of the registry.
+gauge-charged is meant); **M-PLANT-SECTOR** and **M-PLANT-OBS** (the word "sector"
+appears for the far sector; NO deliberate defect is switched on in this amendment —
+the null is a calibration of the instrument, not a verdict, and a switched-on defect
+inside a floor measurement would fabricate the floor it measures — so the carrier
+statement those two require, a carrier asserted nonzero in the sector the defect acts
+on, has no referent here and is discharged by absence, stated); **M-COND-PROBE** (the
+phrase "inside the field" contacts its keyword; the field is the Hamiltonian's own
+external-charge term, applied before the solve, never an operator applied after a
+step). Not contacted: the rest of the registry.
 
 ## A1.0 What was read, and stays read
 

@@ -502,8 +502,22 @@ pub fn geometry_problem_reported(species: &[Species], centers: Vec<[D2; 3]>) -> 
 /// sums every centre pair; a caller with external centres subtracts their self-energy
 /// itself (`embed::solve_embedded` does, and asserts it).
 pub fn geometry_problem_from_basis(basis: &Basis, species: &[Species]) -> GeometryProblem {
+    geometry_problem_with_potential(basis, species, None)
+}
+
+/// [`geometry_problem_from_basis`] with an additive one-electron term `v_extra` (AO
+/// basis, row-major `n × n`, values only) added to the nuclear attraction BEFORE the
+/// orthonormaliser, the SCF and the transform — EMBED-2's door: the Coulomb matrix of a
+/// partner's frozen density enters the fragment's Hamiltonian here and nowhere else.
+pub fn geometry_problem_with_potential(basis: &Basis, species: &[Species], v_extra: Option<&[f64]>) -> GeometryProblem {
     let n = basis.n;
-    let ao = ao_integrals(basis);
+    let mut ao = ao_integrals(basis);
+    if let Some(v) = v_extra {
+        assert_eq!(v.len(), n * n, "v_extra must be n × n in the AO basis");
+        for (k, x) in v.iter().enumerate() {
+            ao.v[k] = ao.v[k] + D2::c(*x);
+        }
+    }
     let x = cholesky_orthonormaliser(&ao.s, n).expect("overlap not positive definite");
     let (_, n_alpha, n_beta) = electron_counts(species);
     let xv: Vec<f64> = x.iter().map(|d| d.v).collect();

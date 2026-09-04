@@ -38,6 +38,7 @@
 //! about arithmetic, not about hydrogen.
 
 pub mod cluster;
+pub mod density_embed;
 pub mod dual;
 pub mod embed;
 pub mod elements;

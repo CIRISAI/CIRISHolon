@@ -465,12 +465,36 @@ interior inside them, never the outline. Pressure draws BELOW the zoom: the
 coloured cube is the scene box (world / zoom, never larger than the world)
 at `boxScale` of the white frame — RED shrinking inward when the hand has
 compressed the world, BLUE growing outward past the white when it has
-expanded it, faint and coincident at ×1.00. Zoomed out, the coloured cube
-is the speck the kilometre band promises, inside a frame that says how
-much space it sits in. The page's first rendering had this inverted
-(world box normalised to the screen every frame, so pressure changed
-nothing visible and zoom drew as a shrinking inner box); pinned by
-`smoke.mjs` "two-box:" checks.
+expanded it, faint and coincident at ×1.00 — and it is that fraction of
+the frame at EVERY zoom, in and out, because the pressure is still being
+applied: a world compressed to 10 % is a red cube at 10 % of the frame
+whatever the view's sides mean. Zoomed out, the world's CONTENTS are the
+speck the kilometre band promises; the cube is the hand's gauge, not a
+second view. The page's first rendering had this inverted (world box
+normalised to the screen every frame, so pressure changed nothing visible
+and zoom drew as a shrinking inner box); pinned by `smoke.mjs` "two-box:"
+checks.
+
+**THE FLUID-ZOOM LAW (operator, 2026-09-04: "the zoom needs to be entirely
+fluid"):** ONE picture, ONE scale, EVERY band. Pixels per bohr is
+`zoom · boxScale / span` through a FIXED camera at every zoom — the wheel
+and the pinch are the zoom, never the camera distance — and no band may
+draw at a private pixel frame. The atom is its measured RMS electron
+radius at that scale, the nucleus its declared charge radius, the thermal
+halo its wavelength; each appears when its true size passes a pixel, which
+is when it is resolvable in the view, and each grows continuously through
+the band boundaries. The bands add their READOUTS to the picture and do
+not replace it; the fold, a lattice MODEL rather than a place, overlays
+the nucleus at the floor stop. THE DESCENT GLIDES: as the cut passes the
+mean holon spacing the view centre moves, smoothly in log zoom, from the
+camera's target onto the acuity seed (held for the whole descent), so the
+zoom never lands on vacuum by the accident of where the box centre sits
+between atoms. THE FILMSTRIP is the fluidity check: `filmstrip({ n, fromM,
+toM })` (☰ → 🎞 filmstrip, or `?filmstrip=20`) renders n zoom levels from
+the molecular stop to the floor through the page's own path into one tiled
+canvas with a save link — the frame must not move, the pressure cube must
+not move, every object must grow continuously. Pinned by `smoke.mjs`
+"fluid zoom:" and "filmstrip:" checks.
 
 **THE BAND-FLIP LAW, restated because it was briefly blurred:** a band goes
 live ONLY on a node-G closure certificate — a coarse view of the dynamics

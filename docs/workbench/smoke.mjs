@@ -204,6 +204,23 @@ const fsdText = readFileSync(
   want(!/f\.k \*= Math\.min\(1, State\.zoom\)/.test(app), "two-box: the old zoom-out shrink of the frame is gone");
   want(/factor < 0\.999 \? "rgba\(255, 80, 80/.test(app) && /factor > 1\.001 \? "rgba\(80, 140, 255/.test(app), "two-box: compressed world draws red, expanded blue");
   want(/frameSide \* BOHR_TO_M/.test(app), "two-box: the frame writes its side length L_ref/zoom");
+  want(/const hx = 0\.5 \* f\.width \/ State\.zoom \* f\.k;/.test(app),
+    "two-box: the coloured cube is boxScale of the frame at EVERY zoom (world/zoom, no zoom-out shrink)");
+  // THE FLUID-ZOOM LAW (FSD §9c, 2026-09-04): one scale for every band, the wheel is the zoom.
+  want(/setZoom\(State\.zoom \* Math\.exp\(-e\.deltaY/.test(app) && !/State\.camera\.distance = .*deltaY/.test(app),
+    "fluid zoom: the wheel drives the zoom, never the camera distance");
+  want(/setZoom\(State\.zoom \* \(d \/ pinch0\)\)/.test(app) && !/State\.camera\.distance = .*pinch0/.test(app),
+    "fluid zoom: the pinch drives the zoom, never the camera distance");
+  want(!/Math\.min\(vw, vh\) \* 0\.38/.test(app) && !/Math\.min\(vw, vh\) \* 0\.12\)/.test(app)
+    && !/function renderAtom\(/.test(app) && !/function renderNucleus\(/.test(app),
+    "fluid zoom: no band draws at a private pixel frame (the atom and nucleus pictures are gone)");
+  want(/function renderAtomReadout\(/.test(app) && /function renderNucleusReadout\(/.test(app)
+    && /holon_nucleus_charge_radius_fm\(d\.z\) \/ BOHR_TO_FM\) \* pxPerBohr/.test(app),
+    "fluid zoom: the bands add readouts and the nucleus is drawn at its charge radius through the one scale");
+  want(/function viewCentre\(/.test(app) && /function descentWeight\(/.test(app) && /const t = viewCentre\(w\);/.test(app),
+    "fluid zoom: the view centre glides onto the acuity seed and the cut uses the same centre");
+  want(/function filmstrip\(/.test(app) && /btn-filmstrip/.test(app) && /get\("filmstrip"\)/.test(app) && /window\.filmstrip = filmstrip/.test(app),
+    "filmstrip: the tool exists and is reachable from the sheet, the URL and the console");
 }
 
 const COMMISSIONED = [
@@ -1962,8 +1979,11 @@ const sceneBoxFn = appSource.match(/function sceneBox\(w\) \{\n([\s\S]*?)\n\}/);
 want(sceneBoxFn !== null, "sceneBox is where the gate expects it");
 if (sceneBoxFn) {
   const body = sceneBoxFn[1];
-  want(/State\.camera\.target/.test(body),
-    "the scene box is centred on the CAMERA TARGET, not hard-pinned to the world centre",
+  // since the fluid-zoom law the centre arrives through `viewCentre` → `baseCentre`, and it
+  // is `baseCentre` that reads the camera target; the property is the same, one hop away
+  const baseCentreFn = appSource.match(/function baseCentre\(w\) \{\n([\s\S]*?)\n\}/);
+  want(/viewCentre\(w\)/.test(body) && baseCentreFn !== null && /State\.camera\.target/.test(baseCentreFn[1]),
+    "the scene box is centred on the CAMERA TARGET (through viewCentre → baseCentre), not hard-pinned to the world centre",
     "the centre is aim, and aim is the observer's axis — pinning it to the world centre "
     + "makes deep zoom on a shell-opener scene able to look only at vacuum");
   want(/clamp/.test(body),

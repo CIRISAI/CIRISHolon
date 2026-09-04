@@ -125,6 +125,10 @@ const State = {
   /// kept only so the panel can show how far from the reference box the scene is; the
   /// engine owns the box and this never drives it.
   boxScale: 1.0,
+  /// the acuity seed held for the whole descent (see `pinnedAtomIndex`)
+  descentPin: -1,
+  /// the last filmstrip's frame records (see `filmstrip`)
+  filmstrip: null,
   lastScaleRefusal: null,
 
   /// 0 Walls · 1 Open · 2 Periodic. Exposed because it is the knob that makes two fences
@@ -594,7 +598,7 @@ const LADDER = [
     // than restating them, and the band stays FENCED.
     readout: "ρ g h, the hydrostatic column, in the ladder readouts card below — "
       + "arithmetic on measured constants, never a dynamics readout",
-    readoutCite: "conformance/water_observatory/WORKBENCH_FSD.md:599",
+    readoutCite: "conformance/water_observatory/WORKBENCH_FSD.md:623",
   },
   {
     band: "fluid element",
@@ -721,8 +725,8 @@ const LADDER = [
       + "and `holon_atom_in_molecule`, and fences by name — no digits — on any artifact "
       + "that does not. Its bit-identity row is green only while `law_probe.json` sits "
       + "beside this page with the digest `tests/wasm_law.rs` pinned natively.",
-    cite: "conformance/water_observatory/WORKBENCH_FSD.md:603",
-    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:634",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:627",
+    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:658",
     ganttCite: "GANTT.md:108",
   },
   {
@@ -746,9 +750,9 @@ const LADDER = [
       + "doors, and fences by name — no digits — on any artifact that does not. Z and the "
       + "isotope name come from the committed species table and wear DECLARED, which is "
       + "what WB-1.7 asks of a measured input.",
-    cite: "conformance/water_observatory/WORKBENCH_FSD.md:604",
-    declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:613",
-    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:633",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:628",
+    declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:637",
+    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:657",
     ganttCite: "GANTT.md:108",
   },
   {
@@ -1129,6 +1133,9 @@ async function boot() {
   }
 
   State.booted = true;
+  // `?filmstrip=20` renders the strip once the page has drawn a few frames
+  const stripParam = new URLSearchParams(location.search).get("filmstrip");
+  if (stripParam !== null) setTimeout(() => filmstrip({ n: Number(stripParam) || 20 }), 1500);
   document.body.dataset.engine = "ready";
   requestAnimationFrame(frame);
 }
@@ -1382,16 +1389,26 @@ function pinnedAtomIndex(w) {
   if (grabbed >= 0) return { index: grabbed, how: "the hand's pick" };
   const n = w.holon_atom_count();
   if (n === 0) return { index: -1, how: "no atom in the scene" };
-  const b = sceneBox(w);
+  // STICKY FOR THE DESCENT: the seed is chosen once as the view centre starts to glide
+  // onto it and held until the view is back at the molecular scale, so the picture does
+  // not hop between two atoms that are both near the centre as they move.
+  const wgt = descentWeight(w);
+  if (wgt > 0 && State.descentPin >= 0 && State.descentPin < n) {
+    return { index: State.descentPin, how: "the acuity law's seed — held for the descent" };
+  }
+  // nearest the UNBLENDED centre (the camera target or the world centre): the blended
+  // centre follows the pick, so choosing against it would be circular
+  const b = baseCentre(w);
   let best = -1;
   let bestD = Infinity;
   for (let i = 0; i < n; i++) {
-    const dx = w.holon_atom_x(i) - b.cx;
-    const dy = w.holon_atom_y(i) - b.cy;
-    const dz = w.holon_atom_z(i) - b.cz;
+    const dx = w.holon_atom_x(i) - b.x;
+    const dy = w.holon_atom_y(i) - b.y;
+    const dz = w.holon_atom_z(i) - b.z;
     const d = dx * dx + dy * dy + dz * dz;
     if (d < bestD) { bestD = d; best = i; }
   }
+  State.descentPin = wgt > 0 ? best : -1;
   return { index: best, how: "the acuity law's seed — nearest the view centre" };
 }
 
@@ -1844,6 +1861,7 @@ async function loadPreset(key, { pay = null } = {}) {
   State.replay = { last: null, prev: null, matched: null };
   // the reset re-derived the box, so the hand's scale starts over with it
   State.boxScale = 1.0;
+  State.descentPin = -1;
   State.lastScaleRefusal = null;
   syncSizeSlider();
   renderStatics();
@@ -1995,14 +2013,79 @@ function measureRate(now) {
 // return you to a world that stopped when you looked away, which is its own fake.
 
 /// The scene box's half-extents in bohr: the world box divided by the zoom ratio.
+/// The mean holon spacing in the world box, in bohr: the length at which the cut stops
+/// holding "some atoms" and starts holding "one or none".
+function meanSpacingBohr(w) {
+  const n = Math.max(1, w.holon_atom_count());
+  return Math.cbrt((w.holon_width() * w.holon_height() * w.holon_depth()) / n);
+}
+
+/// The view centre before the descent: the camera target, else the world-box centre.
+function baseCentre(w) {
+  return State.camera.target
+    ?? { x: 0.5 * w.holon_width(), y: 0.5 * w.holon_height(), z: 0.5 * w.holon_depth() };
+}
+
+/// THE DESCENT'S WEIGHT, 0 → 1, smooth in log zoom. It is 0 while the cut is 3× the mean
+/// spacing or wider (a box of water, centred where the camera aims) and 1 once the cut is
+/// 0.3× the spacing or narrower (one atom, the acuity seed, centred). Between, the view
+/// centre glides from the one to the other, so the zoom never lands on vacuum by the
+/// accident of where the box centre sits between atoms, and never jumps.
+function descentWeight(w) {
+  const cut = Math.max(w.holon_width(), w.holon_height(), w.holon_depth()) / Math.max(1, State.zoom);
+  const t = Math.log10((3 * meanSpacingBohr(w)) / cut);
+  const u = Math.min(1, Math.max(0, t));
+  return u * u * (3 - 2 * u);
+}
+
+/// The scene's centre in world coordinates: the base centre, gliding onto the pinned atom
+/// as the descent proceeds. Every draw, cut and pointer map goes through this one point.
+function viewCentre(w) {
+  const b = baseCentre(w);
+  const wgt = descentWeight(w);
+  if (wgt <= 0) return b;
+  const p = pinnedAtomIndex(w);
+  if (p.index < 0) return b;
+  return {
+    x: b.x + (w.holon_atom_x(p.index) - b.x) * wgt,
+    y: b.y + (w.holon_atom_y(p.index) - b.y) * wgt,
+    z: b.z + (w.holon_atom_z(p.index) - b.z) * wgt,
+  };
+}
+
+/// THE ONE ZOOM SETTER. Wheel, pinch, slider, tier stop and filmstrip all come through
+/// here, so the slider, its readout and the state can never disagree; the range is the
+/// slider's own.
+function setZoom(z) {
+  const el = UI["sheet-zoom"];
+  const lo = el ? Math.pow(10, Number(el.min)) : 1e-12;
+  const hi = el ? Math.pow(10, Number(el.max)) : 1e7;
+  State.zoom = Math.min(hi, Math.max(lo, z));
+  if (el) el.value = Math.log10(State.zoom).toFixed(2);
+  put("sheet-zoom-val", `${State.zoom >= 1 ? State.zoom.toFixed(2) : State.zoom.toExponential(1)}×`);
+}
+
+/// An atom's drawn radius in bohr: its MEASURED RMS electron radius from the atom band's
+/// own solve when that door is in the artifact, else the palette's. The door's value
+/// depends on the species alone (a free atom at the origin) and its solve is a full CI,
+/// so it is taken once per species and cached — never per frame.
+const RMS_RADIUS_CACHE = new Map();
+function atomRadiusBohr(w, i) {
+  const z = w.holon_atom_species_z(i);
+  if (typeof w.holon_atom_band_rms_radius_bohr === "function") {
+    if (!RMS_RADIUS_CACHE.has(z)) RMS_RADIUS_CACHE.set(z, w.holon_atom_band_rms_radius_bohr(i));
+    return RMS_RADIUS_CACHE.get(z);
+  }
+  return styleFor(z).radiusBohr;
+}
+
 function sceneBox(w) {
   const z = Math.max(1, State.zoom);
   const hx = w.holon_width() / (2 * z);
   const hy = w.holon_height() / (2 * z);
   const hz = w.holon_depth() / (2 * z);
   // The centre is the CAMERA TARGET, defaulting to the world-box centre until aimed.
-  const t = State.camera.target
-    ?? { x: 0.5 * w.holon_width(), y: 0.5 * w.holon_height(), z: 0.5 * w.holon_depth() };
+  const t = viewCentre(w);
   // CLAMPED to stay wholly inside the world box: near a wall the scene box SLIDES rather
   // than protrudes. The quotient sets its size and the clamp sets its position, so a view
   // aimed at a corner still shows a full box of water rather than a box half full of
@@ -2127,6 +2210,13 @@ function sceneFrame() {
   return { width, height, depth, span, refSpan, k, frameSide: refSpan / State.zoom };
 }
 
+/// A palette colour at a given alpha (hex in, rgba out; anything else passes through).
+function withAlpha(colour, a) {
+  const m = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(colour || "");
+  if (!m) return colour;
+  return `rgba(${parseInt(m[1], 16)}, ${parseInt(m[2], 16)}, ${parseInt(m[3], 16)}, ${a})`;
+}
+
 function styleFor(z) {
   const sp = PALETTE.get(z);
   const h = PALETTE.get(1);
@@ -2141,38 +2231,23 @@ function render3D() {
   ctx.clearRect(0, 0, vw, vh);
 
   if (!State.booted) return;
-  // THE FLOOR DRAWS ITS OWN PICTURE. When the fold below the atom is the active band and
-  // its doors are in the artifact, the canvas is a baryon's quark density, not a box of
-  // water seen from a femtometre away — which would be an empty frame wearing a label.
-  if (State.activeBand === LADDER.length - 1 && foldLive(w)) {
-    renderFold(w, vw, vh);
-    return;
-  }
-  // THE ATOM AND THE NUCLEUS DRAW THEIR OWN PICTURES TOO. At 53 pm the scene cut holds
-  // nothing the scene renderer can draw, so the world box with a speck in it is what a
-  // viewer saw under a card that said LIVE — the fence shape the page's own law forbids.
-  if (State.activeBand === ATOM_BAND && bandLive(w, ATOM_BAND)) {
-    renderAtom(w, vw, vh);
-    return;
-  }
-  if (State.activeBand === NUCLEUS_BAND && bandLive(w, NUCLEUS_BAND)) {
-    renderNucleus(w, vw, vh);
-    return;
-  }
+  // THE FLUID-ZOOM LAW: ONE PICTURE, ONE SCALE, EVERY BAND. There is no band that draws
+  // at a private pixel frame. Pixels per bohr is `zoom·boxScale/span` through the fixed
+  // camera at every zoom, so the atom is its RMS electron radius at that scale, the
+  // nucleus its declared charge radius, the thermal halo its wavelength — and each
+  // appears when its true size passes a pixel, which is when it is resolvable in this
+  // view. The bands add their READOUTS to the picture; they no longer replace it. The
+  // fold, a lattice model rather than a place, overlays the nucleus at the floor stop.
   drawTemperatureGlow(vw, vh);
   const f = sceneFrame();
-  // No zoom-out shrink here any more: the frame is pinned by construction (see
-  // `sceneFrame`), and zooming out makes the WORLD box the speck inside it.
-  const cx = 0.5 * f.width, cy = 0.5 * f.height, cz = 0.5 * f.depth;
+  const c = viewCentre(w);
+  const cx = c.x, cy = c.y, cz = c.z;
 
   // THE SCENE-BOX CUT. Membership is computed once per frame and the draw list is the
   // subset — the world box keeps every holon and keeps simulating it, so this removes
   // nothing from the physics and everything it removes is recorded in the scene log.
   const mem = sceneMembers(w);
   State.sceneCount = mem.count;
-
-  drawViewFrame(f, vw, vh);
-  drawBox(f, cx, cy, cz, vw, vh);
 
   // Bonds first, from the engine's own pair readings. The BOND CRITERION is the engine's
   // (`E_rel < 0` and inside the outer turning point); this file draws the verdict and
@@ -2196,7 +2271,7 @@ function render3D() {
     ctx.stroke();
   }
 
-  // Atoms, painter-sorted back to front.
+  // Atoms, painter-sorted back to front, each at its true size.
   const n = w.holon_atom_count();
   const drawn = [];
   for (let i = 0; i < n; i++) {
@@ -2206,23 +2281,78 @@ function render3D() {
     drawn.push({ i, p, z: w.holon_atom_species_z(i) });
   }
   drawn.sort((a, b) => b.p.zEye - a.p.zEye);
+  const pick = fineBandAtom(w);
+  const atomLive = bandLive(w, ATOM_BAND);
+  const nucleusLive = bandLive(w, NUCLEUS_BAND);
+  const huge = 4 * Math.max(vw, vh);
   for (const d of drawn) {
     const st = styleFor(d.z);
-    const r = Math.max(2, st.radiusBohr * f.k * d.p.scale);
-    const grad = ctx.createRadialGradient(
-      d.p.sx - r * 0.3, d.p.sy - r * 0.3, r * 0.1, d.p.sx, d.p.sy, r,
-    );
-    grad.addColorStop(0, "#ffffff");
-    grad.addColorStop(0.35, st.colour);
-    grad.addColorStop(1, "rgba(0,0,0,0.55)");
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.arc(d.p.sx, d.p.sy, r, 0, Math.PI * 2);
-    ctx.fill();
+    const pxPerBohr = f.k * d.p.scale;
+    // the electron cloud: the RMS radius, soft-edged; when the view is inside it, the
+    // cloud is the background and is painted flat rather than as a circle wider than
+    // the canvas is tall
+    // CONTINUITY ACROSS THE SWITCH: the gradient's centre and the flat fill are the same
+    // colour at the same alpha, so zooming through the cloud's edge into its interior
+    // changes nothing but what is resolvable
+    const r = atomRadiusBohr(w, d.i) * pxPerBohr;
+    const CLOUD_ALPHA = 0.55;
+    if (r > huge) {
+      ctx.fillStyle = withAlpha(st.colour, CLOUD_ALPHA);
+      ctx.fillRect(0, 0, vw, vh);
+    } else {
+      const rr = Math.max(1.5, r);
+      const grad = ctx.createRadialGradient(d.p.sx, d.p.sy, 0, d.p.sx, d.p.sy, rr);
+      grad.addColorStop(0, withAlpha(st.colour, CLOUD_ALPHA));
+      grad.addColorStop(0.6, withAlpha(st.colour, CLOUD_ALPHA * 0.85));
+      grad.addColorStop(1, withAlpha(st.colour, 0));
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(d.p.sx, d.p.sy, rr, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // the thermal de Broglie halo (COMPUTED by the engine), where the nucleus stops being
+    // a point; drawn once it is two pixels wide
+    if (nucleusLive) {
+      const lam = w.holon_nucleus_thermal_wavelength_bohr(d.i) * pxPerBohr;
+      if (lam > huge) {
+        ctx.fillStyle = "rgba(0, 229, 255, 0.06)";
+        ctx.fillRect(0, 0, vw, vh);
+      } else if (lam >= 2) {
+        const hg = ctx.createRadialGradient(d.p.sx, d.p.sy, 0, d.p.sx, d.p.sy, lam);
+        hg.addColorStop(0, "rgba(0, 229, 255, 0.22)");
+        hg.addColorStop(1, "rgba(0, 229, 255, 0)");
+        ctx.fillStyle = hg;
+        ctx.beginPath(); ctx.arc(d.p.sx, d.p.sy, lam, 0, 2 * Math.PI); ctx.fill();
+      }
+      // the nucleus: its DECLARED charge radius, to scale, once it is resolvable
+      const rc = (w.holon_nucleus_charge_radius_fm(d.z) / BOHR_TO_FM) * pxPerBohr;
+      if (rc >= 0.4) {
+        const rn = Math.min(rc, huge);
+        const g = ctx.createRadialGradient(d.p.sx, d.p.sy, 0, d.p.sx, d.p.sy, rn);
+        g.addColorStop(0, "#ffd600");
+        g.addColorStop(0.8, "#ffab00");
+        g.addColorStop(1, "rgba(255, 171, 0, 0)");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(d.p.sx, d.p.sy, Math.max(1, rn), 0, 2 * Math.PI); ctx.fill();
+        if (rc >= 6 && d.i === pick.index && State.activeBand === NUCLEUS_BAND) {
+          ctx.strokeStyle = "rgba(255, 214, 0, 0.8)"; ctx.setLineDash([3, 3]);
+          ctx.beginPath(); ctx.arc(d.p.sx, d.p.sy, rn, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
+          ctx.fillStyle = "rgba(255, 214, 0, 0.95)"; ctx.font = "12px ui-monospace, monospace"; ctx.textAlign = "left";
+          ctx.fillText(`r_charge = ${w.holon_nucleus_charge_radius_fm(d.z).toFixed(3)} fm  (DECLARED)`, d.p.sx + Math.min(rn, vw * 0.4) + 8, d.p.sy);
+        }
+      }
+    }
+    // the pinned atom's RMS ring and its number, once the descent has it in hand
+    if (atomLive && d.i === pick.index && State.activeBand === ATOM_BAND && r >= 6 && r <= huge) {
+      ctx.strokeStyle = "rgba(0, 229, 255, 0.7)"; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.arc(d.p.sx, d.p.sy, r, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(0, 229, 255, 0.9)"; ctx.font = "12px ui-monospace, monospace"; ctx.textAlign = "left";
+      ctx.fillText(`⟨r²⟩½ = ${(atomRadiusBohr(w, d.i) * BOHR_TO_PM).toFixed(1)} pm`, d.p.sx + Math.min(r, vw * 0.4) + 8, d.p.sy);
+    }
     if (d.i === State.hand.grabbed) {
       ctx.strokeStyle = "#ffd479";
       ctx.lineWidth = 2;
-      ctx.stroke();
+      ctx.beginPath(); ctx.arc(d.p.sx, d.p.sy, Math.min(Math.max(2, r), huge), 0, Math.PI * 2); ctx.stroke();
     }
   }
 
@@ -2242,7 +2372,92 @@ function render3D() {
       ctx.setLineDash([]);
     }
   }
+
+  // THE TWO BOXES, ON TOP: the frame is the view's boundary and the cube is the hand's
+  // gauge, and neither may be lost inside an electron cloud that fills the view.
+  drawViewFrame(f, vw, vh);
+  drawBox(f, cx, cy, cz, vw, vh);
+
+  // THE FINE BANDS' READOUTS, over the same picture.
+  if (State.activeBand === ATOM_BAND && atomLive) renderAtomReadout(w, vw, vh);
+  else if (State.activeBand === NUCLEUS_BAND && nucleusLive) renderNucleusReadout(w, vw, vh);
+  // THE FLOOR'S MODEL, over the nucleus it sits in.
+  if (State.activeBand === LADDER.length - 1 && foldLive(w)) renderFold(w, vw, vh);
 }
+
+/// THE FILMSTRIP: `n` zoom levels from one view span to another, each rendered through
+/// the page's OWN path (the band pick, then `render3D`) into one tiled canvas shown over
+/// the page, with a save link. It exists because the zoom has to be fluid and the only
+/// honest check of fluidity is looking at every step of it side by side: the frame must
+/// not move, the pressure cube must not move, and every object must grow continuously
+/// through the band boundaries. Defaults: 20 steps, from the molecular stop to the floor.
+/// Reached from ☰ → 🎞 filmstrip, from `?filmstrip=20` on the URL, and from the console
+/// as `filmstrip({ n, fromM, toM, cols })`. Returns the per-frame records.
+function filmstrip(opts = {}) {
+  const w = State.w;
+  if (!State.booted) return null;
+  const n = Math.max(2, Math.min(60, Math.floor(opts.n ?? 20)));
+  const molecular = LADDER.find((b) => b.band === "molecular");
+  const fromM = opts.fromM ?? molecular.lengthM;
+  const toM = opts.toM ?? LADDER[LADDER.length - 1].lengthM;
+  const cols = Math.max(1, Math.floor(opts.cols ?? (n <= 20 ? 5 : Math.ceil(Math.sqrt(n * 1.8)))));
+  const rows = Math.ceil(n / cols);
+  const src = ctx.canvas;
+  const vw = window.innerWidth, vh = window.innerHeight;
+  const tileW = Math.floor(vw / cols), tileH = Math.floor(vh / rows);
+  const strip = document.createElement("canvas");
+  strip.width = Math.floor(vw * dpr); strip.height = Math.floor(vh * dpr);
+  const sctx = strip.getContext("2d");
+  sctx.scale(dpr, dpr);
+  sctx.fillStyle = "#05080c"; sctx.fillRect(0, 0, vw, vh);
+  const saved = { zoom: State.zoom, pin: State.descentPin };
+  const spanM = Math.max(w.holon_width(), w.holon_height(), w.holon_depth()) * BOHR_TO_M;
+  const frames = [];
+  for (let i = 0; i < n; i++) {
+    const viewM = fromM * Math.pow(toM / fromM, i / (n - 1));
+    setZoom(spanM / viewM);
+    renderTierRail(w, viewSpanMetres(w));
+    render3D();
+    const col = i % cols, row = Math.floor(i / cols);
+    const x = col * tileW, y = row * tileH;
+    sctx.drawImage(src, 0, 0, src.width, src.height, x, y, tileW, tileH);
+    const band = LADDER[State.activeBand] ? LADDER[State.activeBand].band : "—";
+    const label = `${i + 1}/${n} · ${State.zoom.toExponential(1)}× · view ${fmtMetres(viewSpanMetres(w))} · ${band} · ${State.sceneCount} in view`;
+    sctx.fillStyle = "rgba(0, 0, 0, 0.6)"; sctx.fillRect(x, y, tileW, 16);
+    sctx.fillStyle = "#f1f5f9"; sctx.font = "11px ui-monospace, monospace"; sctx.textAlign = "left";
+    sctx.fillText(label, x + 4, y + 12);
+    sctx.strokeStyle = "rgba(148, 163, 184, 0.5)"; sctx.lineWidth = 1;
+    sctx.strokeRect(x + 0.5, y + 0.5, tileW - 1, tileH - 1);
+    frames.push({ i, zoom: State.zoom, viewM: viewSpanMetres(w), band, inView: State.sceneCount });
+  }
+  // restore the page's own state and picture
+  State.descentPin = saved.pin;
+  setZoom(saved.zoom);
+  renderTierRail(w, viewSpanMetres(w));
+  render3D();
+  // show it
+  const old = document.getElementById("filmstrip-overlay");
+  if (old) old.remove();
+  const ov = document.createElement("div");
+  ov.id = "filmstrip-overlay";
+  ov.style.cssText = "position:fixed;inset:0;z-index:9000;background:#05080c;overflow:auto";
+  strip.style.cssText = `width:${vw}px;height:${vh}px;display:block`;
+  ov.appendChild(strip);
+  const bar = document.createElement("div");
+  bar.style.cssText = "position:fixed;top:8px;right:12px;display:flex;gap:8px;z-index:9001";
+  const dl = document.createElement("a");
+  dl.textContent = "save PNG"; dl.download = "workbench_filmstrip.png"; dl.className = "btn-micro";
+  dl.href = strip.toDataURL("image/png");
+  const close = document.createElement("button");
+  close.textContent = "× close"; close.className = "btn-micro";
+  close.addEventListener("click", () => ov.remove());
+  bar.append(dl, close);
+  ov.appendChild(bar);
+  document.body.appendChild(ov);
+  State.filmstrip = frames;
+  return frames;
+}
+window.filmstrip = filmstrip;
 
 /// WB-9.3 — the temperature glow. A READOUT and never a control: it is keyed to the
 /// engine's MEASURED kinetic temperature, not to the thermostat's setpoint, so a scene
@@ -2289,11 +2504,11 @@ function readoutLines(ctx2, lines, x, y, dim) {
   });
 }
 
-/// THE ATOM BAND'S PICTURE: the picked atom as a sphere of its MEASURED electronic size
-/// (the RMS electron radius from its own solve), at the band's scale, with the molecule
-/// it belongs to as ghosts at their true relative positions, and the solve's own
-/// readouts beneath — energy, electron count, residual, exit — read live from the doors.
-function renderAtom(w, vw, vh) {
+/// THE ATOM BAND'S READOUT, over the one picture: the solve's own numbers — energy,
+/// electron count, residual, exit — read live from the doors, for the pinned atom. The
+/// atom itself is drawn by the scene at its true size (the fluid-zoom law); this band
+/// no longer draws a picture of its own.
+function renderAtomReadout(w, vw, vh) {
   const pick = fineBandAtom(w);
   if (pick.index < 0) {
     readoutLines(ctx, [`atom band: ${pick.how}`], 24, vh * 0.5);
@@ -2306,67 +2521,23 @@ function renderAtom(w, vw, vh) {
     State.atomBandSolved = i;
   }
   const sp = speciesOf(w, i);
-  const rms = w.holon_atom_band_rms_radius_bohr(i);
-  // THE BAND'S OWN FRAME, not the scene's. At the stop's 53 pm a hydrogen atom is three
-  // times the view and its sphere floods the canvas — true to scale and useless as a
-  // picture. The atom is drawn at 38 % of the viewport and the scale it is drawn at is
-  // WRITTEN, which is the honest version of a picture that fits.
-  const drawR = Math.min(vw, vh) * 0.38;
-  const pxPerBohr = drawR / Math.max(rms, 1e-6);
-  const cx = vw * 0.5, cy = vh * 0.42;
-  ctx.fillStyle = "rgba(6, 10, 16, 0.92)";
-  ctx.fillRect(0, 0, vw, vh);
-  const ax = w.holon_atom_x(i), ay = w.holon_atom_y(i), az = w.holon_atom_z(i);
-  // the molecule's other members, as ghosts at their true offsets in the scene's x/y plane
+  const rms = atomRadiusBohr(w, i);
   const row = w.holon_atom_in_molecule(i);
-  const n = w.holon_atom_count();
-  if (row > 0) {
-    for (let j = 0; j < n; j++) {
-      if (j === i || w.holon_atom_in_molecule(j) !== row) continue;
-      const dx = (w.holon_atom_x(j) - ax) * pxPerBohr, dy = (w.holon_atom_y(j) - ay) * pxPerBohr;
-      const sj = speciesOf(w, j);
-      const rj = w.holon_atom_band_rms_radius_bohr(j) * pxPerBohr;
-      ctx.strokeStyle = "rgba(148, 163, 184, 0.35)";
-      ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + dx, cy - dy); ctx.stroke();
-      ctx.fillStyle = sj.colour; ctx.globalAlpha = 0.25;
-      ctx.beginPath(); ctx.arc(cx + dx, cy - dy, Math.max(4, rj), 0, 2 * Math.PI); ctx.fill();
-      ctx.globalAlpha = 1;
-    }
-  }
-  // the picked atom: its electronic size, as a soft sphere
-  const r = Math.max(6, rms * pxPerBohr);
-  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-  g.addColorStop(0, sp.colour);
-  g.addColorStop(0.7, sp.colour);
-  g.addColorStop(1, "rgba(0,0,0,0)");
-  ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.fill();
-  // the nucleus, to scale, which at this zoom is a point
-  ctx.fillStyle = "rgba(255, 214, 0, 0.95)";
-  ctx.beginPath(); ctx.arc(cx, cy, 2, 0, 2 * Math.PI); ctx.fill();
-  // the RMS radius as a ring, labelled with its number
-  ctx.strokeStyle = "rgba(0, 229, 255, 0.7)"; ctx.setLineDash([4, 4]);
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = "rgba(0, 229, 255, 0.9)"; ctx.font = "12px ui-monospace, monospace"; ctx.textAlign = "left";
-  ctx.fillText(`⟨r²⟩½ = ${(rms * BOHR_TO_PM).toFixed(1)} pm`, Math.min(cx + r + 8, vw - 150), cy);
-  ctx.fillStyle = "rgba(148, 163, 184, 0.7)";
-  ctx.fillText(`drawn at ${(pxPerBohr / (vw * 0.6 / (viewSpanMetres(w) / BOHR_TO_M))).toFixed(2)}× the view's scale — the view span is ${fmtMetres(viewSpanMetres(w))}, the atom is ${(2 * rms * BOHR_TO_PM).toFixed(0)} pm across`, 24, vh * 0.76 - 22);
   const exit = w.holon_atom_band_exit(i);
   const exitName = ["converged", "iteration cap", "stagnated", "trivial", "not computed"][exit] || "?";
   readoutLines(ctx, [
     `atom ${i}: ${sp.name}, Z = ${sp.z} — ${pick.how}${row > 0 ? `, member of census molecule ${row - 1}` : ", free"}`,
     `STO-3G full CI in the page: E = ${w.holon_atom_band_energy(i).toFixed(9)} Ha over ${w.holon_atom_band_n_electrons(i)} electrons${row > 0 ? " (the whole molecule)" : ""}`,
     `residual ${w.holon_atom_band_residual(i).toExponential(2)}  ·  exit: ${exitName}  ·  the same arithmetic as native, gated bit-identical`,
-    `the sphere is the free atom's RMS electron radius, ${(rms * BOHR_TO_PM).toFixed(1)} pm — a measured size, not an icon; the yellow point is the nucleus, to scale`,
+    `to scale: the sphere is the free atom's RMS electron radius, ${(rms * BOHR_TO_PM).toFixed(1)} pm, in a view ${fmtMetres(viewSpanMetres(w))} across — a measured size, not an icon`,
   ], 24, vh * 0.76, [3]);
 }
 
-/// THE NUCLEUS BAND'S PICTURE: the picked atom's nucleus as a disc of its DECLARED charge
-/// radius at the band's scale, wrapped in the halo of its thermal de Broglie wavelength at
-/// the scene's own temperature — the one quantity here the engine COMPUTES — with every
-/// declared input labelled as such, which is what WB-1.7 asks of a measured input.
-function renderNucleus(w, vw, vh) {
+/// THE NUCLEUS BAND'S READOUT, over the one picture: the DECLARED inputs (mass, spin,
+/// charge radius — WB-1.7) and the one COMPUTED quantity (the thermal de Broglie
+/// wavelength at the scene's own temperature), for the pinned atom. The disc and the
+/// halo are drawn by the scene at their true sizes.
+function renderNucleusReadout(w, vw, vh) {
   const pick = fineBandAtom(w);
   if (pick.index < 0) {
     readoutLines(ctx, [`nucleus band: ${pick.how}`], 24, vh * 0.5);
@@ -2377,43 +2548,15 @@ function renderNucleus(w, vw, vh) {
   const z = sp.z;
   const rc = w.holon_nucleus_charge_radius_fm(z);
   const lam = w.holon_nucleus_thermal_wavelength_bohr(i);
+  const lamFm = lam * BOHR_TO_FM;
   const mass = w.holon_nucleus_mass_u(z);
   const spin2 = w.holon_nucleus_spin2(z);
-  const viewM = viewSpanMetres(w);
-  // the band's own frame: the charge radius at 12 % of the viewport, the halo to the edge
-  const pxPerFm = (Math.min(vw, vh) * 0.12) / Math.max(rc, 1e-6);
-  const cx = vw * 0.5, cy = vh * 0.42;
-  ctx.fillStyle = "rgba(6, 10, 16, 0.92)";
-  ctx.fillRect(0, 0, vw, vh);
-  // the thermal wavelength, a halo: it is far larger than the nucleus, so it is drawn to
-  // the edge of the picture and its true size is written, not implied
-  const lamFm = lam * BOHR_TO_FM;
-  const haloR = Math.min(vw * 0.45, Math.max(40, lamFm * pxPerFm));
-  const hg = ctx.createRadialGradient(cx, cy, 0, cx, cy, haloR);
-  hg.addColorStop(0, "rgba(0, 229, 255, 0.18)");
-  hg.addColorStop(1, "rgba(0, 229, 255, 0)");
-  ctx.fillStyle = hg;
-  ctx.beginPath(); ctx.arc(cx, cy, haloR, 0, 2 * Math.PI); ctx.fill();
-  // the nucleus: its charge radius, to scale
-  const r = Math.max(5, rc * pxPerFm);
-  const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-  g.addColorStop(0, "#ffd600");
-  g.addColorStop(0.8, "#ffab00");
-  g.addColorStop(1, "rgba(255, 171, 0, 0)");
-  ctx.fillStyle = g;
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.fill();
-  ctx.strokeStyle = "rgba(255, 214, 0, 0.8)"; ctx.setLineDash([3, 3]);
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
-  ctx.fillStyle = "rgba(255, 214, 0, 0.95)"; ctx.font = "12px ui-monospace, monospace"; ctx.textAlign = "left";
-  ctx.fillText(`r_charge = ${rc.toFixed(3)} fm  (DECLARED)`, cx + r + 8, cy);
-  ctx.fillStyle = "rgba(0, 229, 255, 0.9)";
-  ctx.fillText(`λ_thermal = ${lamFm > 1e3 ? (lamFm / 1e3).toFixed(1) + " pm" : lamFm.toFixed(1) + " fm"}  (COMPUTED, drawn to the edge — its true radius is ${(lamFm / rc).toExponential(1)}× the nucleus)`, 24, cy - haloR - 8 > 60 ? cy - haloR - 8 : 60);
   const spinTxt = spin2 % 2 === 0 ? `${spin2 / 2}` : `${spin2}/2`;
   readoutLines(ctx, [
     `the nucleus of atom ${i}: ${sp.name}, Z = ${z}, isotope ${sp.isotope} — ${pick.how}`,
     `DECLARED, measured inputs the Hamiltonian never computes (WB-1.7): mass ${mass.toFixed(6)} u  ·  spin ${spinTxt}  ·  charge radius ${rc.toFixed(3)} fm`,
-    `COMPUTED by the engine in closed form: thermal de Broglie wavelength λ = ${lam.toExponential(3)} bohr at the scene's own measured temperature`,
-    `the disc is the charge radius, drawn at ${(pxPerFm / (vw * 0.6 / (viewM * 1e15))).toFixed(0)}× the view's scale (view span ${fmtMetres(viewM)}); the halo is λ, where a proton's position stops being a point — the deepest OBJECT the page carries`,
+    `COMPUTED by the engine in closed form: thermal de Broglie wavelength λ = ${lam.toExponential(3)} bohr (${lamFm > 1e3 ? (lamFm / 1e3).toFixed(1) + " pm" : lamFm.toFixed(1) + " fm"}) at the scene's own measured temperature`,
+    `to scale in a view ${fmtMetres(viewSpanMetres(w))} across: the disc is the charge radius, the cyan halo is λ (${(lamFm / rc).toExponential(1)}× the nucleus), where a proton's position stops being a point — the deepest OBJECT the page carries`,
   ], 24, vh * 0.76, [3]);
 }
 
@@ -2464,6 +2607,9 @@ function renderFold(w, vw, vh) {
     ctx.fillText(`the ${Fold.n}-site box is over the ${w.holon_hadron_max_det().toExponential(1)}-determinant cap — refused, not attempted`, 24, vh * 0.5);
     return;
   }
+  // an overlay: the nucleus the fold sits in stays faintly visible behind the model
+  ctx.fillStyle = "rgba(6, 10, 16, 0.82)";
+  ctx.fillRect(0, 0, vw, vh);
   // THE CLOCK. Model time advances at `rate` per wall second whenever the state is not
   // an eigenstate of its own Hamiltonian — i.e. after a grab. Before any grab, stepping
   // would move nothing (the eigenstate control) and is skipped so the picture is still.
@@ -2607,16 +2753,14 @@ function drawSceneBox(b, f, cx, cy, cz, vw, vh) {
 }
 
 function drawBox(f, cx, cy, cz, vw, vh) {
-  // THE COLOURED CUBE — the SCENE box (the world box divided by the zoom, never larger
-  // than the world), which is what the hand has done to the world, drawn "below" the
-  // zoom: zoomed in it is `boxScale` of the white frame, so a compressed world reads as
-  // a RED cube inside the white and an expanded one as a BLUE cube outside it at EVERY
-  // zoom; zoomed out it is the speck the kilometre band promises. Faint when the hand
-  // has done nothing (×1.00), where it coincides with the frame at zoom 1.
-  const zc = Math.max(1, State.zoom);
-  const hx = 0.5 * f.width / zc * f.k;
-  const hy = 0.5 * f.height / zc * f.k;
-  const hz = 0.5 * f.depth / zc * f.k;
+  // THE COLOURED CUBE — the hand's gauge, drawn BELOW the zoom at every zoom, in and
+  // out: the world box divided by the zoom, which is `boxScale` of the white frame. A
+  // world compressed to 10 % is a RED cube at 10 % of the frame at every zoom, because
+  // that pressure is still being applied; expanded, a BLUE cube outside the white. It is
+  // faint when the hand has done nothing (×1.00), where it coincides with the frame.
+  const hx = 0.5 * f.width / State.zoom * f.k;
+  const hy = 0.5 * f.height / State.zoom * f.k;
+  const hz = 0.5 * f.depth / State.zoom * f.k;
   const factor = State.boxScale;
   const moved = factor < 0.999 || factor > 1.001;
   const colour = factor < 0.999 ? "rgba(255, 80, 80, 0.85)" : factor > 1.001 ? "rgba(80, 140, 255, 0.85)" : "rgba(120, 200, 190, 0.18)";
@@ -2635,9 +2779,7 @@ function drawBox(f, cx, cy, cz, vw, vh) {
     ctx.fillStyle = colour;
     ctx.font = "12px ui-monospace, monospace";
     ctx.textAlign = "left";
-    const world = `world ${fmtMetres(f.span * BOHR_TO_M)} · ×${factor.toFixed(2)} ${factor < 1 ? "compressed" : "expanded"}`;
-    const shown = State.zoom > 1.0001 ? ` · 1/${State.zoom.toFixed(2)} of it in view` : "";
-    ctx.fillText(world + shown, corners[7].sx + 8, corners[7].sy);
+    ctx.fillText(`world ${fmtMetres(f.span * BOHR_TO_M)} · ×${factor.toFixed(2)} ${factor < 1 ? "compressed" : "expanded"}`, corners[7].sx + 8, corners[7].sy);
   }
 }
 
@@ -3357,17 +3499,20 @@ function pointerToWorld(px, py) {
   const z1 = -y2 * Math.sin(pitch) + z2 * Math.cos(pitch);
   const x = x1 * Math.cos(yaw) + z1 * Math.sin(yaw);
   const z = -x1 * Math.sin(yaw) + z1 * Math.cos(yaw);
+  const c = viewCentre(w);
   return {
-    x: x / f.k + 0.5 * f.width,
-    y: y / f.k + 0.5 * f.height,
-    z: z / f.k + 0.5 * f.depth,
+    x: x / f.k + c.x,
+    y: y / f.k + c.y,
+    z: z / f.k + c.z,
   };
 }
 
 /// WB-4.1: the grab radius is a fixed fraction of the viewport edge, in physical units,
 /// and is DISPLAYED. At this tier that is a few atoms.
 function grabRadiusBohr() {
-  return 0.05 * sceneFrame().span;
+  // 5 % of the CUT, never less than an atom: at the fine bands the pinned atom is the
+  // whole view and a grab anywhere near its centre should take it
+  return Math.max(2.0, (0.05 * sceneFrame().span) / Math.max(1, State.zoom));
 }
 
 function tryGrab(px, py) {
@@ -3496,7 +3641,9 @@ function initInput() {
   canvas.addEventListener("contextmenu", (e) => e.preventDefault());
   canvas.addEventListener("wheel", (e) => {
     e.preventDefault();
-    State.camera.distance = Math.max(0.6, Math.min(12, State.camera.distance * (1 + e.deltaY * 0.001)));
+    // THE WHEEL IS THE ZOOM. The camera does not move: the frame's apparent size is
+    // constant by law, and what the wheel changes is what the frame's sides mean.
+    setZoom(State.zoom * Math.exp(-e.deltaY * 0.0015));
   }, { passive: false });
 
   // Touch: one finger orbits or grabs, two pinch the camera.
@@ -3521,7 +3668,7 @@ function initInput() {
       lastX = t.clientX; lastY = t.clientY;
     } else if (e.touches.length === 2 && pinch0 > 0) {
       const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      State.camera.distance = Math.max(0.6, Math.min(12, State.camera.distance * (pinch0 / d)));
+      setZoom(State.zoom * (d / pinch0));
       pinch0 = d;
     }
   }, { passive: true });
@@ -3752,7 +3899,7 @@ function initHUD() {
     // ZOOM IS A RATIO. It changes the quotient and touches nothing in the engine — no
     // Sim call here at all, which is the two-box law's whole point and is what the
     // density-invariance gate checks.
-    State.zoom = Math.pow(10, Number(e.target.value));
+    setZoom(Math.pow(10, Number(e.target.value)));
     put("sheet-zoom-val", `${State.zoom.toFixed(2)}×`);
   });
   UI["sheet-tilt"]?.addEventListener("input", (e) => {
@@ -3779,6 +3926,7 @@ function initHUD() {
       State.w.holon_rebase();
     });
   }
+  UI["btn-filmstrip"]?.addEventListener("click", () => filmstrip({ n: 20 }));
   for (const [id, factor] of [["btn-compress", 0.98], ["btn-expand", 1.02]]) {
     UI[id]?.addEventListener("click", () => {
       const code = State.w.holon_box_scale(factor);

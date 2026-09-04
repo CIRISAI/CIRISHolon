@@ -594,7 +594,7 @@ const LADDER = [
     // than restating them, and the band stays FENCED.
     readout: "ρ g h, the hydrostatic column, in the ladder readouts card below — "
       + "arithmetic on measured constants, never a dynamics readout",
-    readoutCite: "conformance/water_observatory/WORKBENCH_FSD.md:584",
+    readoutCite: "conformance/water_observatory/WORKBENCH_FSD.md:599",
   },
   {
     band: "fluid element",
@@ -721,8 +721,8 @@ const LADDER = [
       + "and `holon_atom_in_molecule`, and fences by name — no digits — on any artifact "
       + "that does not. Its bit-identity row is green only while `law_probe.json` sits "
       + "beside this page with the digest `tests/wasm_law.rs` pinned natively.",
-    cite: "conformance/water_observatory/WORKBENCH_FSD.md:588",
-    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:619",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:603",
+    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:634",
     ganttCite: "GANTT.md:108",
   },
   {
@@ -746,9 +746,9 @@ const LADDER = [
       + "doors, and fences by name — no digits — on any artifact that does not. Z and the "
       + "isotope name come from the committed species table and wear DECLARED, which is "
       + "what WB-1.7 asks of a measured input.",
-    cite: "conformance/water_observatory/WORKBENCH_FSD.md:589",
-    declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:598",
-    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:618",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:604",
+    declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:613",
+    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:633",
     ganttCite: "GANTT.md:108",
   },
   {
@@ -2098,15 +2098,33 @@ function project(x, y, z, vw, vh) {
 }
 
 /// The scene's own extent in bohr, and the scale factor that maps it into camera units.
+///
+/// THE TWO-BOX LAW ON SCREEN (FSD §9c, the operator's rendering of it, 2026-09-04): the
+/// VIEW is the constant frame — a white cube of fixed apparent size whose sides mean
+/// `L_ref / zoom`, where `L_ref` is the reference world box (the box at ×1.00 on the
+/// pressure axis). Zoom changes what the frame's sides MEAN and the interior rescales
+/// inside it. The WORLD box is what the hand moves: at ×1.00 and zoom 1 it coincides
+/// with the frame; compressed it is a RED cube shrinking inward from the white; expanded
+/// it is a BLUE cube growing outward past it. Zoomed in, the world box is larger than
+/// the frame and the frame shows a fraction of it; zoomed out, it is the speck the
+/// kilometre band promises, inside a frame that says how much space it sits in.
+///
+/// This REPLACES the page's first rendering, which normalised the WORLD box to the
+/// screen (`k = 1/span`): that pinned the thing the hand moves and moved the thing the
+/// law pins, so pressure changed nothing visible (the box was re-normalised to itself
+/// every frame) and zoom drew as a shrinking inner box instead of magnified contents.
 function sceneFrame() {
   const w = State.w;
   const width = w.holon_width();
   const height = w.holon_height();
   const depth = w.holon_depth();
-  // Normalise the longest box edge to one camera unit, so the camera distance means the
-  // same thing whatever box the engine is carrying.
   const span = Math.max(width, height, depth);
-  return { width, height, depth, span, k: 1 / span };
+  // the reference box: the world at ×1.00, i.e. the current box undone by the hand's
+  // cumulative factor
+  const refSpan = span / State.boxScale;
+  // one camera unit = the frame = L_ref / zoom
+  const k = State.zoom * State.boxScale / span;
+  return { width, height, depth, span, refSpan, k, frameSide: refSpan / State.zoom };
 }
 
 function styleFor(z) {
@@ -2143,11 +2161,8 @@ function render3D() {
   }
   drawTemperatureGlow(vw, vh);
   const f = sceneFrame();
-  // ZOOMING OUT past 1× shrinks the world box on screen by the same ratio, so the cube
-  // band draws this scene as what it is at a kilometre — a speck — rather than filling the
-  // viewport with twelve atoms wearing a kilometre's label. The scene box (the quotient)
-  // never grows past the world box; only the drawing scale falls.
-  f.k *= Math.min(1, State.zoom);
+  // No zoom-out shrink here any more: the frame is pinned by construction (see
+  // `sceneFrame`), and zooming out makes the WORLD box the speck inside it.
   const cx = 0.5 * f.width, cy = 0.5 * f.height, cz = 0.5 * f.depth;
 
   // THE SCENE-BOX CUT. Membership is computed once per frame and the draw list is the
@@ -2156,8 +2171,8 @@ function render3D() {
   const mem = sceneMembers(w);
   State.sceneCount = mem.count;
 
+  drawViewFrame(f, vw, vh);
   drawBox(f, cx, cy, cz, vw, vh);
-  drawSceneBox(mem.box, f, cx, cy, cz, vw, vh);
 
   // Bonds first, from the engine's own pair readings. The BOND CRITERION is the engine's
   // (`E_rel < 0` and inside the outer turning point); this file draws the verdict and
@@ -2592,24 +2607,63 @@ function drawSceneBox(b, f, cx, cy, cz, vw, vh) {
 }
 
 function drawBox(f, cx, cy, cz, vw, vh) {
-  const inset = State.w.holon_wall_inset();
-  const hx = (0.5 * f.width - inset) * f.k;
-  const hy = (0.5 * f.height - inset) * f.k;
-  const hz = (0.5 * f.depth - inset) * f.k;
+  // THE COLOURED CUBE — the SCENE box (the world box divided by the zoom, never larger
+  // than the world), which is what the hand has done to the world, drawn "below" the
+  // zoom: zoomed in it is `boxScale` of the white frame, so a compressed world reads as
+  // a RED cube inside the white and an expanded one as a BLUE cube outside it at EVERY
+  // zoom; zoomed out it is the speck the kilometre band promises. Faint when the hand
+  // has done nothing (×1.00), where it coincides with the frame at zoom 1.
+  const zc = Math.max(1, State.zoom);
+  const hx = 0.5 * f.width / zc * f.k;
+  const hy = 0.5 * f.height / zc * f.k;
+  const hz = 0.5 * f.depth / zc * f.k;
+  const factor = State.boxScale;
+  const moved = factor < 0.999 || factor > 1.001;
+  const colour = factor < 0.999 ? "rgba(255, 80, 80, 0.85)" : factor > 1.001 ? "rgba(80, 140, 255, 0.85)" : "rgba(120, 200, 190, 0.18)";
   const corners = [];
   for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) {
     corners.push(project(sx * hx, sy * hy, sz * hz, vw, vh));
   }
+  if (corners.some((c) => !c)) return;
+  ctx.strokeStyle = colour;
+  ctx.lineWidth = moved ? 1.6 : 1;
   const edges = [[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
-  ctx.strokeStyle = "rgba(120, 200, 190, 0.18)";
-  ctx.lineWidth = 1;
-  for (const [a, b] of edges) {
-    if (!corners[a] || !corners[b]) continue;
-    ctx.beginPath();
-    ctx.moveTo(corners[a].sx, corners[a].sy);
-    ctx.lineTo(corners[b].sx, corners[b].sy);
-    ctx.stroke();
+  ctx.beginPath();
+  for (const [a, b] of edges) { ctx.moveTo(corners[a].sx, corners[a].sy); ctx.lineTo(corners[b].sx, corners[b].sy); }
+  ctx.stroke();
+  if (moved) {
+    ctx.fillStyle = colour;
+    ctx.font = "12px ui-monospace, monospace";
+    ctx.textAlign = "left";
+    const world = `world ${fmtMetres(f.span * BOHR_TO_M)} · ×${factor.toFixed(2)} ${factor < 1 ? "compressed" : "expanded"}`;
+    const shown = State.zoom > 1.0001 ? ` · 1/${State.zoom.toFixed(2)} of it in view` : "";
+    ctx.fillText(world + shown, corners[7].sx + 8, corners[7].sy);
   }
+}
+
+/// THE VIEW FRAME — the white cube of constant apparent size. Its sides mean
+/// `L_ref / zoom` and that length is written on it; nothing about it moves when the hand
+/// moves the world, which is what makes the world's motion legible against it.
+function drawViewFrame(f, vw, vh) {
+  const r = f.refSpan / f.span; // the reference box in units of the current one
+  const hx = 0.5 * f.width * r / State.zoom * f.k;
+  const hy = 0.5 * f.height * r / State.zoom * f.k;
+  const hz = 0.5 * f.depth * r / State.zoom * f.k;
+  const corners = [];
+  for (const sx of [-1, 1]) for (const sy of [-1, 1]) for (const sz of [-1, 1]) {
+    corners.push(project(sx * hx, sy * hy, sz * hz, vw, vh));
+  }
+  if (corners.some((c) => !c)) return;
+  ctx.strokeStyle = "rgba(241, 245, 249, 0.75)";
+  ctx.lineWidth = 1.2;
+  const edges = [[0,1],[0,2],[0,4],[1,3],[1,5],[2,3],[2,6],[3,7],[4,5],[4,6],[5,7],[6,7]];
+  ctx.beginPath();
+  for (const [a, b] of edges) { ctx.moveTo(corners[a].sx, corners[a].sy); ctx.lineTo(corners[b].sx, corners[b].sy); }
+  ctx.stroke();
+  ctx.fillStyle = "rgba(241, 245, 249, 0.85)";
+  ctx.font = "12px ui-monospace, monospace";
+  ctx.textAlign = "left";
+  ctx.fillText(`view ${fmtMetres(f.frameSide * BOHR_TO_M)} a side · zoom ${State.zoom >= 1 ? State.zoom.toFixed(2) : State.zoom.toExponential(1)}×`, corners[6].sx + 8, corners[6].sy - 6);
 }
 
 // ---------------------------------------------------------------- telemetry

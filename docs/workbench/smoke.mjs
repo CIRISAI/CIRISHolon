@@ -194,6 +194,18 @@ want(undeclared.length === 0, "every holon_* call in app.js is on the declared l
 // does not carry it.
 const fsdText = readFileSync(
   join(repoRoot, "conformance/water_observatory/WORKBENCH_FSD.md"), "utf8");
+// THE TWO-BOX LAW ON SCREEN (FSD §9c rendering, 2026-09-04): the view frame is pinned to
+// the screen and the world moves under the hand — coloured red compressed / blue expanded.
+{
+  const app = readFileSync(new URL("./app.js", import.meta.url), "utf8");
+  want(/function drawViewFrame\(/.test(app), "two-box: a view frame of constant apparent size is drawn");
+  want(/const k = State\.zoom \* State\.boxScale \/ span;/.test(app), "two-box: camera scale is zoom·boxScale/span (frame = L_ref/zoom)");
+  want(!/k: 1 \/ span/.test(app), "two-box: the old world-normalised scale is gone");
+  want(!/f\.k \*= Math\.min\(1, State\.zoom\)/.test(app), "two-box: the old zoom-out shrink of the frame is gone");
+  want(/factor < 0\.999 \? "rgba\(255, 80, 80/.test(app) && /factor > 1\.001 \? "rgba\(80, 140, 255/.test(app), "two-box: compressed world draws red, expanded blue");
+  want(/frameSide \* BOHR_TO_M/.test(app), "two-box: the frame writes its side length L_ref/zoom");
+}
+
 const COMMISSIONED = [
   [/^holon_nucleus_/, "holon_nucleus_*"],
   [/^holon_atom_band_/, "holon_atom_band_*"],

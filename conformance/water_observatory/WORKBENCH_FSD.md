@@ -457,6 +457,21 @@ center (one holon, per the acuity law above), and zoom-out is the same
 event in reverse. Every removal and re-admission is a ledgered scene event,
 never a silent edit.
 
+**THE TWO-BOX LAW ON SCREEN (operator's rendering, 2026-09-04):** the VIEW is a
+WHITE cube of CONSTANT apparent size. Its sides mean `L_ref / zoom`, where
+`L_ref` is the reference world box (×1.00 on the pressure axis), and that
+length is written on it; zoom changes what the sides mean and rescales the
+interior inside them, never the outline. Pressure draws BELOW the zoom: the
+coloured cube is the scene box (world / zoom, never larger than the world)
+at `boxScale` of the white frame — RED shrinking inward when the hand has
+compressed the world, BLUE growing outward past the white when it has
+expanded it, faint and coincident at ×1.00. Zoomed out, the coloured cube
+is the speck the kilometre band promises, inside a frame that says how
+much space it sits in. The page's first rendering had this inverted
+(world box normalised to the screen every frame, so pressure changed
+nothing visible and zoom drew as a shrinking inner box); pinned by
+`smoke.mjs` "two-box:" checks.
+
 **THE BAND-FLIP LAW, restated because it was briefly blurred:** a band goes
 live ONLY on a node-G closure certificate — a coarse view of the dynamics
 beneath it, certified by the census. A tier certified on its OWN dynamics

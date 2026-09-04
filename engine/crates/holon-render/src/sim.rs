@@ -461,13 +461,17 @@ pub struct ExternalWork {
     /// The observer's frame: energy moved by fine/coarse membership transitions under an
     /// [`crate::acuity::AcuityFrame`]. Zero whenever no frame is set.
     pub acuity: f64,
+    /// The embedding field's charge-assignment transitions (FIELD-1): the energy jump at
+    /// fixed positions when a charged row forms or dies, or the field is switched. Zero
+    /// whenever the field is off.
+    pub field: f64,
 }
 
 impl ExternalWork {
     /// The columns' sum, in a FIXED order so the total is reproducible.
     #[inline]
     pub fn total(&self) -> f64 {
-        ((self.hand + self.thermostat) + self.barostat) + self.acuity
+        (((self.hand + self.thermostat) + self.barostat) + self.acuity) + self.field
     }
 
     #[inline]
@@ -477,6 +481,7 @@ impl ExternalWork {
             thermostat: 0.0,
             barostat: 0.0,
             acuity: 0.0,
+            field: 0.0,
         }
     }
 
@@ -489,6 +494,7 @@ impl ExternalWork {
             .max(self.thermostat.abs())
             .max(self.barostat.abs())
             .max(self.acuity.abs())
+            .max(self.field.abs())
     }
 }
 
@@ -766,6 +772,18 @@ pub struct Sim {
     coarse_group: Vec<u32>,
     pub acuity_work: crate::acuity::AcuityWork,
     pub acuity_plant: crate::acuity::AcuityPlant,
+    /// FIELD-1: the embedding field in the force law, `None` = the engine as it was.
+    pub field: Option<crate::field::FieldModel>,
+    pub field_plant: crate::field::FieldPlant,
+    pub field_work: crate::field::FieldWork,
+    /// The field's energy row (exact `0.0` whenever the field is off or nothing is charged).
+    pub e_field: f64,
+    /// Per-atom charge under the CURRENT assignment, and the assignment the last force pass
+    /// used — a difference between them is a ledgered transition.
+    pub charge: Vec<f64>,
+    pub charge_prev: Vec<f64>,
+    /// Per-atom census row (`u32::MAX` = none), so charged pairs within one row are skipped.
+    pub charge_row: Vec<u32>,
 }
 
 impl Sim {
@@ -870,6 +888,13 @@ impl Sim {
             coarse_group: Vec::new(),
             acuity_work: crate::acuity::AcuityWork::zero(),
             acuity_plant: crate::acuity::AcuityPlant::None,
+            field: None,
+            field_plant: crate::field::FieldPlant::None,
+            field_work: crate::field::FieldWork::zero(),
+            e_field: 0.0,
+            charge: Vec::new(),
+            charge_prev: Vec::new(),
+            charge_row: Vec::new(),
         }
     }
 
@@ -1331,7 +1356,7 @@ impl Sim {
 
     /// Total energy currently held by the scene.
     pub fn energy(&self) -> f64 {
-        self.e_kin + self.e_pair + self.e_three + self.e_many + self.e_far + self.e_wall + self.e_spring + self.e_grav
+        self.e_kin + self.e_pair + self.e_three + self.e_many + self.e_far + self.e_field + self.e_wall + self.e_spring + self.e_grav
     }
 
     /// The conserved quantity. `E - W_ext` is constant for an exact integrator, with or
@@ -1666,6 +1691,9 @@ impl Sim {
         self.atoms.resize(n, Atom::default());
         self.a_pair.resize(n, (0.0, 0.0, 0.0));
         self.a_ext.resize(n, (0.0, 0.0, 0.0));
+        self.charge.resize(n, 0.0);
+        self.charge_prev.resize(n, 0.0);
+        self.charge_row.resize(n, u32::MAX);
         self.many_body_last_pos.resize(n, [0.0; 3]);
         self.many_body_cached_forces.resize(n, (0.0, 0.0, 0.0));
         self.many_body_cached_valid = false;
@@ -2926,6 +2954,7 @@ impl Sim {
         self.accumulate_three_body();
         self.accumulate_many_body();
         self.accumulate_far();
+        self.accumulate_field();
 
         let mut e_wall = 0.0;
         for i in 0..self.n {
@@ -2984,6 +3013,176 @@ impl Sim {
                 self.spring_engaged = true;
             }
         }
+    }
+
+    /// THE EMBEDDING FIELD (FIELD-1): fixed derived charges on census water, the Coulomb
+    /// term between different rows. Follows the far sector's pattern — its own energy row,
+    /// the virial where the slopes are, forces into `a_pair` (internal, cancelling from the
+    /// momentum sum), nothing posted to `w_ext` for the conservative term — plus the
+    /// ACUITY-B pattern for what is NOT conservative: a change of the charge assignment at
+    /// fixed positions is an energy jump, posted to `w_ext` and `work.field` as one event.
+    ///
+    /// Exactly nothing happens when the field is `None`, and `e_field` stays an exact `0.0`.
+    fn accumulate_field(&mut self) {
+        self.e_field = 0.0;
+        let Some(model) = self.field else {
+            return;
+        };
+        let n = self.n;
+        if n == 0 {
+            return;
+        }
+        // 1. the assignment (FIELD_AMENDMENT_1): a WATER UNIT is an oxygen with exactly the
+        //    hydrogens the engine's own pair bond verdict bonds to it — the verdict the page
+        //    draws (`E_rel < 0`, inside the outer turning point), read from the pair list this
+        //    pass already produced — when that count is exactly two and neither hydrogen is
+        //    bonded to another oxygen. The census carries PAIR rows and has no molecule row.
+        for i in 0..n {
+            self.charge[i] = 0.0;
+            self.charge_row[i] = u32::MAX;
+        }
+        {
+            // per hydrogen: the oxygens it is bonded to; per oxygen: its bonded hydrogens
+            let mut h_oxygens: Vec<Vec<usize>> = vec![Vec::new(); n];
+            let mut o_hydrogens: Vec<Vec<usize>> = vec![Vec::new(); n];
+            for p in self.pairs.iter() {
+                if !p.bonded {
+                    continue;
+                }
+                let (zi, zj) = (self.atoms[p.i].species.z, self.atoms[p.j].species.z);
+                if zi == 8 && zj == 1 {
+                    o_hydrogens[p.i].push(p.j);
+                    h_oxygens[p.j].push(p.i);
+                } else if zi == 1 && zj == 8 {
+                    o_hydrogens[p.j].push(p.i);
+                    h_oxygens[p.i].push(p.j);
+                }
+            }
+            for o in 0..n {
+                if self.atoms[o].species.z != 8 || o_hydrogens[o].len() != 2 {
+                    continue;
+                }
+                if o_hydrogens[o].iter().any(|&h| h_oxygens[h].len() != 1) {
+                    continue;
+                }
+                self.charge[o] = -2.0 * model.q_h;
+                self.charge_row[o] = o as u32;
+                for &h in &o_hydrogens[o] {
+                    self.charge[h] = model.q_h;
+                    self.charge_row[h] = o as u32;
+                }
+            }
+        }
+        // 2. a transition: the energy jump at FIXED positions, old assignment to new
+        let changed = (0..n).any(|i| self.charge[i] != self.charge_prev[i]);
+        if changed {
+            let e_old = self.field_energy_of(&self.charge_prev.clone());
+            let e_new = self.field_energy_of(&self.charge.clone());
+            let de = e_new - e_old;
+            if self.field_plant != crate::field::FieldPlant::SkipLedger {
+                self.w_ext += de;
+                self.work.field += de;
+            }
+            self.field_work.transitions += 1;
+            self.charge_prev.copy_from_slice(&self.charge[..n]);
+        }
+        // 3. the term
+        let sign = if self.field_plant == crate::field::FieldPlant::FlipSign { -1.0 } else { 1.0 };
+        let mut e = 0.0f64;
+        let mut pairs = 0u64;
+        for i in 0..n {
+            let qi = self.charge[i];
+            if qi == 0.0 {
+                continue;
+            }
+            for j in (i + 1)..n {
+                let qj = self.charge[j];
+                if qj == 0.0 || self.charge_row[i] == self.charge_row[j] {
+                    continue;
+                }
+                let dx = self.atoms[i].x - self.atoms[j].x;
+                let dy = self.atoms[i].y - self.atoms[j].y;
+                let dz = self.atoms[i].z - self.atoms[j].z;
+                let r2 = dx * dx + dy * dy + dz * dz;
+                let r = r2.sqrt();
+                let qq = sign * qi * qj;
+                e += qq / r;
+                // F_i = qq r_ij / r³, F_j = −F_i
+                let f = qq / (r2 * r);
+                self.a_pair[i].0 += f * dx;
+                self.a_pair[i].1 += f * dy;
+                self.a_pair[i].2 += f * dz;
+                if self.field_plant != crate::field::FieldPlant::DropReaction {
+                    self.a_pair[j].0 -= f * dx;
+                    self.a_pair[j].1 -= f * dy;
+                    self.a_pair[j].2 -= f * dz;
+                }
+                pairs += 1;
+            }
+        }
+        self.e_field = e;
+        // the Coulomb virial: Σ r·F = Σ qq/r = E
+        self.w_virial += e;
+        self.field_work.pairs = pairs;
+    }
+
+    /// `E_field` for a given per-atom charge vector at the CURRENT positions (rows as
+    /// assigned), used for the transition posting and by the tests.
+    pub fn field_energy_of(&self, charge: &[f64]) -> f64 {
+        let n = self.n;
+        let sign = if self.field_plant == crate::field::FieldPlant::FlipSign { -1.0 } else { 1.0 };
+        let mut e = 0.0f64;
+        for i in 0..n {
+            if charge[i] == 0.0 {
+                continue;
+            }
+            for j in (i + 1)..n {
+                if charge[j] == 0.0 || self.charge_row[i] == self.charge_row[j] {
+                    continue;
+                }
+                let dx = self.atoms[i].x - self.atoms[j].x;
+                let dy = self.atoms[i].y - self.atoms[j].y;
+                let dz = self.atoms[i].z - self.atoms[j].z;
+                e += sign * charge[i] * charge[j] / (dx * dx + dy * dy + dz * dz).sqrt();
+            }
+        }
+        e
+    }
+
+    /// Enable or disable the field. Enabling under a wrapping boundary is REFUSED (Ewald is
+    /// the exit). Disabling posts the field's energy out as a transition at the next force
+    /// pass, by the same rule every assignment change obeys; the charge itself is computed
+    /// from the engine's own density (`crate::field::water_charge_at_pin`) unless one is
+    /// given (a checkpoint restore, or a test that pins it).
+    pub fn set_field(&mut self, on: bool, q_h: Option<f64>) -> Result<(), crate::field::FieldRefusal> {
+        if on {
+            if matches!(self.boundary, Boundary::Periodic) {
+                return Err(crate::field::FieldRefusal::PeriodicNeedsEwald);
+            }
+            let q = q_h.unwrap_or_else(crate::field::water_charge_at_pin);
+            self.field = Some(crate::field::FieldModel { q_h: q });
+        } else {
+            self.field = None;
+            // the assignment becomes all-zero: post the jump now, at these positions
+            let n = self.n;
+            let zero = vec![0.0; n];
+            let e_old = self.field_energy_of(&self.charge_prev.clone());
+            if e_old != 0.0 {
+                let de = 0.0 - e_old;
+                if self.field_plant != crate::field::FieldPlant::SkipLedger {
+                    self.w_ext += de;
+                    self.work.field += de;
+                }
+                self.field_work.transitions += 1;
+            }
+            self.charge_prev[..n].copy_from_slice(&zero);
+            for i in 0..n {
+                self.charge[i] = 0.0;
+                self.charge_row[i] = u32::MAX;
+            }
+            self.e_field = 0.0;
+        }
+        Ok(())
     }
 
     /// THE LONG-RANGE SECTOR (node B2): the pair tail past `R_s`.

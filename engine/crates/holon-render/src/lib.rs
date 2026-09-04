@@ -37,6 +37,7 @@
 // knots through the ABI below; shipping a second one inside the wasm would be pure
 // weight. This cfg is what makes the module header's claim true rather than aspirational.
 pub mod acuity;
+pub mod field;
 pub mod barostat;
 pub mod cells;
 pub mod checkpoint;
@@ -907,6 +908,9 @@ pub extern "C" fn holon_set_boundary(mode: u32) -> u32 {
         2 => Boundary::Periodic,
         _ => Boundary::Open,
     };
+    if matches!(b, Boundary::Periodic) && s.field.is_some() {
+        return FIELD_REFUSED + 1;
+    }
     match s.set_boundary(b) {
         Ok(()) => 0,
         Err(r) => boundary_refusal_code(r),
@@ -930,6 +934,46 @@ pub extern "C" fn holon_half_min_edge() -> f64 {
 /// Base code for a boundary-switch refusal, placed above the scale door's block so a host
 /// can tell which door spoke.
 pub const BOUNDARY_REFUSED: u32 = 100;
+
+/// FIELD-1's refusals sit above [`BOUNDARY_REFUSED`]'s block.
+pub const FIELD_REFUSED: u32 = 200;
+
+/// Enable (`on != 0`) or disable the embedding field (FIELD-1). Returns 0, or
+/// `FIELD_REFUSED + 1` when the boundary wraps (Ewald is the exit, not built).
+#[no_mangle]
+pub extern "C" fn holon_set_field(on: u32) -> u32 {
+    let mut s = sim();
+    match s.set_field(on != 0, None) {
+        Ok(()) => 0,
+        Err(field::FieldRefusal::PeriodicNeedsEwald) => FIELD_REFUSED + 1,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn holon_field_enabled() -> u32 {
+    u32::from(sim().field.is_some())
+}
+
+#[no_mangle]
+pub extern "C" fn holon_field_energy() -> f64 {
+    sim().e_field
+}
+
+#[no_mangle]
+pub extern "C" fn holon_field_charge(i: u32) -> f64 {
+    let s = sim();
+    if (i as usize) < s.n { s.charge[i as usize] } else { 0.0 }
+}
+
+#[no_mangle]
+pub extern "C" fn holon_work_field() -> f64 {
+    sim().work.field
+}
+
+#[no_mangle]
+pub extern "C" fn holon_field_transitions() -> u64 {
+    sim().field_work.transitions
+}
 
 /// The refusal's own code, offset above [`BOUNDARY_REFUSED`].
 pub fn boundary_refusal_code(r: sim::BoundaryRefusal) -> u32 {

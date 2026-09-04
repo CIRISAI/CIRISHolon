@@ -54,7 +54,10 @@ use crate::sim::{Atom, Boundary, Dims, Sim};
 /// v5 (2026-09-02): the four-body pair `(de4_eval_count: u64, de4_enabled: bool)` becomes
 /// the many-body triple `(many_body_evals: u64, many_body_order: u64, many_body_unserved:
 /// u64)` — the sector is any-order now and its declared order is state a restore must carry.
-pub const CHECKPOINT_VERSION: u32 = 5;
+/// v6 (2026-09-04, FIELD-1): the `field` receipt column joins the ledger block after `acuity`,
+/// and the field's charge `field_q` (0.0 = off) follows `frame`; a restore re-derives the
+/// per-atom assignment from the live rows.
+pub const CHECKPOINT_VERSION: u32 = 6;
 
 const MAGIC: [u8; 8] = *b"HOLONCK1";
 
@@ -380,6 +383,7 @@ impl Sim {
         w.f64(self.work.thermostat);
         w.f64(self.work.barostat);
         w.f64(self.work.acuity);
+        w.f64(self.work.field);
         w.f64(self.l0);
         w.f64(self.p0.0);
         w.f64(self.p0.1);
@@ -390,6 +394,7 @@ impl Sim {
         w.f64(self.time);
         w.u64(self.steps);
         w.u64(self.frame);
+        w.f64(self.field.map_or(0.0, |m| m.q_h));
         w.f64(self.e_ref);
         w.f64(self.drift_peak);
         w.f64(self.momentum_residual_peak);
@@ -498,12 +503,14 @@ impl Sim {
         let thermostat = r.f64()?;
         let barostat = r.f64()?;
         let acuity = r.f64()?;
+        let field_col = r.f64()?;
         let l0 = r.f64()?;
         let p0 = (r.f64()?, r.f64()?, r.f64()?);
         let j_ext = (r.f64()?, r.f64()?, r.f64()?);
         let time = r.f64()?;
         let steps = r.u64()?;
         let frame = r.u64()?;
+        let field_q = r.f64()?;
         let e_ref = r.f64()?;
         let drift_peak = r.f64()?;
         let momentum_residual_peak = r.f64()?;
@@ -549,6 +556,8 @@ impl Sim {
         self.work.thermostat = thermostat;
         self.work.barostat = barostat;
         self.work.acuity = acuity;
+        self.work.field = field_col;
+        self.field = if field_q != 0.0 { Some(crate::field::FieldModel { q_h: field_q }) } else { None };
         self.l0 = l0;
         self.p0 = p0;
         self.j_ext = j_ext;

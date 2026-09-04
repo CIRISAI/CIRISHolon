@@ -15,10 +15,10 @@ dipole-exact charges IS the far field.** On every far node the residual fraction
 below the stake by more than an order of magnitude and the absolute residual falls
 strictly with distance. Plant (ii) fires at `ρ ≈ 1` on every far node, the Mulliken
 control sits at `ρ ≈ 0.10`, and the near sector is reported and not read. **System 2
-(the water dimer) is priced and pending**: its G1 pin passed and G0's single
-1,002,001-determinant node is running as this document is first committed; its
-section is appended by the next commit with the price, the admission, and — if
-admitted — its five nodes.
+(the water dimer) is REFUSED BY G0 and not run**: its G1 pin passed, and the one
+priced node cost 207.6 processor-minutes against the 30 the freeze admits. S3 is
+therefore read on System 1 alone, as the freeze says it must be, and the claim is
+the HF dimer's.
 
 | gate | verdict | the number |
 |---|---|---|
@@ -30,7 +30,7 @@ admitted — its five nodes.
 | plant (i) — the field's sign | **FIRES** | derivative off by `2|V| = 6.06e-2`; carrier `|V| = 3.03e-2` at the nearest point, nonzero in its sector |
 | plant (ii) — the double count | **FIRES** | `ρ = 1.053, 1.040, 1.024, 1.016` on the far nodes; carrier `|e_qq| ≥ 5.0e-5` hartree at every far node |
 | plant (iii) — the fermionic phase | **FIRES at G3, silent at G2's trace, as staked** | off-diagonal carrier `4.5e-6` hartree per unit charge; the unsigned density's trace is still `10` to `1e-12` |
-| G0 — System 2's price | **running** | one `LINEAR` node at 8.0 Å, `C(14,10)² = 1,002,001` determinants |
+| G0 — System 2's price | **REFUSED**, 1 node | `LINEAR` R_OO = 8.0 Å, 1,002,001 determinants: `E = −150.0467322495` Ha, residual `8.8e-11`, 148 Davidson iterations, **12,456.5 processor-seconds (207.6 min) against the 30-minute stake**; 451.0 wall-seconds on the solver's ~27 threads |
 
 ## System 1 — every node
 
@@ -73,6 +73,22 @@ charges carry `0.279` a.u. of the donor's `0.410` a.u. dipole (`q_H = 0.148` aga
 the dipole-exact `0.218`); it is what a charge model that misses the dipole looks
 like, and it is why the primary was chosen dipole-exact. Read for nothing.
 
-## System 2 — the water dimer
+## System 2 — the water dimer: G0 refused it
 
-G1 passed (above). G0 is running; this section is completed by the next commit.
+G1 passed (above): `r = 1.9435738400` bohr, `θ = 96.7579°`, gradients `1.85e-7` and
+`1.07e-7`. G0 solved the one staked node — `LINEAR`, R_OO = 8.0 Å, 1,002,001
+determinants — to a residual of `8.8e-11` in 148 Davidson iterations, at
+**12,456.5 processor-seconds = 207.6 processor-minutes**, against the freeze's
+admission of 30. System 2 is dropped from this campaign, as the freeze says, and none
+of its five nodes was run (`embed/g0_price.json`, `embed/water.log`).
+
+**What the refusal is and is not.** The stake was written in processor time on
+purpose (M-PLACEMENT-LOTTERY: wall clock is a lottery over placement), and the
+determinant solver runs on every core it finds — 27.6 threads' worth here — so the
+node's WALL time was 451 s, seven and a half minutes. Five nodes are 17 processor-hours
+or 38 wall-minutes: affordable on this machine and not admitted under this freeze,
+which is the correct order. A successor freeze that wants the water verdict must
+stake the price it means — processor time with the thread count declared, or wall
+time pinned to a core count — and say which; it is named here as the next freeze and
+not done by amendment to this one. The HF-dimer verdict stands on its own and does
+not borrow from water.

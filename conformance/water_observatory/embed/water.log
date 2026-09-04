@@ -1,0 +1,45 @@
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:357:5
+    |
+355 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+356 | pub struct ClassicalPotentialOp {
+357 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+    = note: `#[warn(unpredictable_function_pointer_comparisons)]` on by default
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:480:5
+    |
+478 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+479 | pub struct RingPolymerOp {
+480 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+
+warning: `holon-chem` (lib) generated 2 warnings
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.02s
+     Running `target/release/examples/embed_campaign water`
+G1 HF: R = 1.8794379298 bohr, |dE/dR| = 4.95e-8
+G1 H2O: r = 1.9435738400 bohr, θ = 1.6887434037 rad (96.7579°), |dE/dr| = 1.85e-7, |dE/dθ| = 1.07e-7
+G0: 1002001 determinants, cpu 12456.5 s, wall 451.0 s → REFUSED (System 2 dropped)
+G0 refused System 2 (12457 s > 1800 s per node); said so, not run
+system  R(Å)   sector      ΔE_exact       ΔE_emb(dip)    ρ(dip)    ρ(mull)   ρ(plant ii)
+hf      10.000  far         -4.939783612201e-5  -4.936017673174e-5  7.623692e-4  9.918801e-2  1.016228e0
+hf      2.400  near        8.051790429363e-3  -3.210454659381e-3  1.398726e0  1.394802e0  2.063809e0
+hf      2.600  near        4.181382290369e-5  -2.557488050385e-3  6.216370e1  6.059401e1  1.548371e2
+hf      2.800  near        -2.078465264674e-3  -2.064293346649e-3  6.818453e-3  4.361248e-2  1.399291e0
+hf      3.000  near        -2.209621108548e-3  -1.696092987558e-3  2.324055e-1  2.684067e-1  7.963739e-1
+hf      3.500  transition  -1.307206705022e-3  -1.095589881928e-3  1.618847e-1  2.163404e-1  8.581518e-1
+hf      4.000  transition  -7.961844368367e-4  -7.459872152253e-4  6.304723e-2  1.339069e-1  1.014314e0
+hf      5.000  far         -3.942182451908e-4  -3.881136863413e-4  1.548523e-2  1.006046e-1  1.052513e0
+hf      6.000  far         -2.279580976676e-4  -2.262819706402e-4  7.352786e-3  9.833293e-2  1.039893e0
+hf      8.000  far         -9.632968348683e-5  -9.611465830517e-5  2.232180e-3  9.843367e-2  1.024266e0

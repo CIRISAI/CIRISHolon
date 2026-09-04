@@ -1,0 +1,8 @@
+{
+  "r_angstrom": 5.000, "sector": "far", "e_super_record": -2.958107477679e2, "de3_bare": -4.481382234189e-6, "kappa_q": 5.067017e-4, "g0": 3.098e-11,
+  "g2": {"converged": true, "sweeps_zero": 5, "sweeps_isolated": 4, "dp": 0.000e0, "de": 0.000e0},
+  "rho_pa": -2.958107477532e2, "e_mono": [-9.860374313789e1, -9.860408052233e1, -9.860374223490e1], "e_dimer": [[0, 1, -1.972074397360e2], [0, 2, -1.972074352537e2], [1, 2, -1.972074386587e2]],
+  "r_rho": -1.467225274610e-8, "kappa_rho": 3.274046e-3, "kappa_plant_ii": 5.404711e3,
+  "floor": {"r_rho_moved": -1.467083166062e-8, "floor": 1.421085e-12, "posable_ratio": 10324.680, "sweeps_moved": 5},
+  "wall_seconds": 65.18, "cpu_seconds": 112.50
+}

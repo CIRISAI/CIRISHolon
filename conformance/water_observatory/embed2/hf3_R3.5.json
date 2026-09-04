@@ -1,0 +1,8 @@
+{
+  "r_angstrom": 3.500, "sector": "transition", "e_super_record": -2.958127256672e2, "de3_bare": -6.213990326387e-5, "kappa_q": 1.723930e-2, "g0": 2.848e-11,
+  "g2": {"converged": true, "sweeps_zero": 6, "sweeps_isolated": 5, "dp": 0.000e0, "de": 0.000e0},
+  "rho_pa": -2.958127235426e2, "e_mono": [-9.860467532356e1, -9.860571035752e1, -9.860466058757e1], "e_dimer": [[0, 1, -1.972092979474e2], [0, 2, -1.972091854831e2], [1, 2, -1.972092863808e2]],
+  "r_rho": -2.124565810391e-6, "kappa_rho": 3.419004e-2, "kappa_plant_ii": 1.838156e3,
+  "floor": null,
+  "wall_seconds": 72.42, "cpu_seconds": 127.37
+}

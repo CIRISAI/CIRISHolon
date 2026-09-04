@@ -1,0 +1,73 @@
+warning: value assigned to `last_delta` is never read
+   --> crates/holon-chem/src/density_embed.rs:170:26
+    |
+170 |     let mut last_delta = f64::INFINITY;
+    |                          ^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: value assigned to `last_delta` is never read
+  --> crates/holon-chem/src/seam.rs:55:26
+   |
+55 |     let mut last_delta = f64::INFINITY;
+   |                          ^^^^^^^^^^^^^
+   |
+   = help: maybe it is overwritten before being read?
+
+warning: value assigned to `monomers` is never read
+  --> crates/holon-chem/src/seam.rs:56:24
+   |
+56 |     let mut monomers = Vec::new();
+   |                        ^^^^^^^^^^
+   |
+   = help: maybe it is overwritten before being read?
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:357:5
+    |
+355 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+356 | pub struct ClassicalPotentialOp {
+357 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+    = note: `#[warn(unpredictable_function_pointer_comparisons)]` on by default
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:480:5
+    |
+478 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+479 | pub struct RingPolymerOp {
+480 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+
+warning: `holon-chem` (lib) generated 5 warnings
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.03s
+     Running `target/release/examples/embed2_campaign`
+  R=2.6 Å (near): κ_q 3.585e-1  κ_ρ 4.025e-1  r_ρ -1.107e-3  plant(ii) κ 266.62  G2 Δρ 0.0e0  wall 36s
+  R=2.8 Å (near): κ_q 2.516e-1  κ_ρ 2.932e-1  r_ρ -3.049e-4  plant(ii) κ 479.15  G2 Δρ 0.0e0  wall 37s
+  R=3.0 Å (near): κ_q 1.489e-1  κ_ρ 1.844e-1  r_ρ -7.534e-5  plant(ii) κ 736.39  G2 Δρ 0.0e0  wall 38s
+  R=3.5 Å (transition): κ_q 1.724e-2  κ_ρ 3.419e-2  r_ρ -2.125e-6  plant(ii) κ 1838.16  G2 Δρ 0.0e0  wall 72s
+  R=4.0 Å (transition): κ_q 1.129e-3  κ_ρ 8.696e-3  r_ρ -1.663e-7  plant(ii) κ 3226.92  G2 Δρ 0.0e0  wall 73s
+  R=5.0 Å (far): κ_q 5.067e-4  κ_ρ 3.274e-3  r_ρ -1.467e-8  plant(ii) κ 5404.71  G2 Δρ 0.0e0  wall 65s
+  R=6.0 Å (far): κ_q 7.810e-4  κ_ρ 1.812e-3  r_ρ -2.672e-9  plant(ii) κ 7757.74  G2 Δρ 0.0e0  wall 48s
+  R=8.0 Å (far): κ_q 6.783e-4  κ_ρ 7.965e-4  r_ρ -2.057e-10  plant(ii) κ 13734.94  G2 Δρ 0.0e0  wall 46s
+R(Å)   sector      ΔE3_bare        κ_q         κ_ρ         r_ρ            floor       posable
+2.600e0  near             -2.750e-3    3.585e-1    4.025e-1       -1.107e-3           —        —
+2.800e0  near             -1.040e-3    2.516e-1    2.932e-1       -3.049e-4           —        —
+3.000e0  near             -4.086e-4    1.489e-1    1.844e-1       -7.534e-5           —        —
+3.500e0  transition       -6.214e-5    1.724e-2    3.419e-2       -2.125e-6           —        —
+4.000e0  transition       -1.913e-5    1.129e-3    8.696e-3       -1.663e-7           —        —
+5.000e0  far              -4.481e-6    5.067e-4    3.274e-3       -1.467e-8           —        —
+6.000e0  far              -1.475e-6    7.810e-4    1.812e-3       -2.672e-9           —        —
+8.000e0  far              -2.583e-7    6.783e-4    7.965e-4      -2.057e-10           —        —
+    —  ?                        —           —           —               —           —        —

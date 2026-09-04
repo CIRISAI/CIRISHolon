@@ -110,6 +110,8 @@ CONTACT = {
     "stagnation": "M-EXIT-DISCRIMINATOR",
     "discarded weight": "M-TRUNCATION-AS-ERRORBAR",
     "truncation error": "M-TRUNCATION-AS-ERRORBAR",
+    "non-increasing": "M-FLOOR-UNSTAKED", "monotonicity": "M-FLOOR-UNSTAKED",
+    "resolution floor": "M-FLOOR-UNSTAKED",
 }
 
 def contact_table_is_sound():

@@ -24,6 +24,15 @@ use crate::pair::{geometry_problem_with_potential, GeometryProblem};
 pub struct Partner<'a> {
     pub frag: &'a Fragment,
     pub p: &'a [f64],
+    /// Whether the partner's NUCLEI enter as external centres (always, except PLANT (ii) of
+    /// EMBED-3, which drops one partner's nuclei while its density stays).
+    pub nuclei: bool,
+}
+
+impl<'a> Partner<'a> {
+    pub fn new(frag: &'a Fragment, p: &'a [f64]) -> Partner<'a> {
+        Partner { frag, p, nuclei: true }
+    }
 }
 
 /// `J[P_B]` on `a`'s functions: the combined basis `A ∪ B` assembled once, its ERIs by the
@@ -91,6 +100,9 @@ pub fn solve_in_densities_with(frag: &Fragment, partners: &[Partner], plant_j_si
     let mut ext = Vec::new();
     if !plant_drop_nuclei {
         for pt in partners {
+            if !pt.nuclei {
+                continue;
+            }
             for (c, sp) in pt.frag.centers.iter().zip(pt.frag.species.iter()) {
                 ext.push(External { r: *c, q: sp.z as f64 });
             }
@@ -150,7 +162,79 @@ pub struct DensityFixedPoint {
 }
 
 fn partners_except<'a>(frags: &'a [Fragment], dens: &'a [Vec<f64>], except: &[usize]) -> Vec<Partner<'a>> {
-    frags.iter().enumerate().filter(|(j, _)| !except.contains(j)).map(|(j, f)| Partner { frag: f, p: &dens[j] }).collect()
+    partners_except_flagged(frags, dens, except, None)
+}
+
+/// As [`partners_except`], with one partner's nuclei dropped (PLANT (ii) of EMBED-3).
+pub fn partners_except_flagged<'a>(frags: &'a [Fragment], dens: &'a [Vec<f64>], except: &[usize], drop_nuclei_of: Option<usize>) -> Vec<Partner<'a>> {
+    frags
+        .iter()
+        .enumerate()
+        .filter(|(j, _)| !except.contains(j))
+        .map(|(j, f)| Partner { frag: f, p: &dens[j], nuclei: drop_nuclei_of != Some(j) })
+        .collect()
+}
+
+/// The density-embedded pairwise sum over a SUBSET of the fragments, every solve in the
+/// field of ALL the others — inside and outside the subset (EMBED-3's `ρPA_ABC[ρ_D]`).
+/// `drop_nuclei_of` is PLANT (ii). With `subset` = everything this is [`rho_pa`].
+pub fn rho_pa_subset(frags: &[Fragment], dens: &[Vec<f64>], subset: &[usize], drop_nuclei_of: Option<usize>) -> RhoPa {
+    let n = subset.len();
+    let e_mono: Vec<f64> = subset
+        .iter()
+        .map(|&i| solve_in_densities(&frags[i], &partners_except_flagged(frags, dens, &[i], drop_nuclei_of)).e_total)
+        .collect();
+    let mut e_dimer = Vec::new();
+    for a in 0..n {
+        for b in (a + 1)..n {
+            let (i, j) = (subset[a], subset[b]);
+            let (sp, ce) = crate::seam::joined(&frags[i], &frags[j]);
+            let mut w = frags[i].weights.clone();
+            w.extend_from_slice(&frags[j].weights);
+            let dimer = Fragment::new(sp, ce, w);
+            let pts = partners_except_flagged(frags, dens, &[i, j], drop_nuclei_of);
+            e_dimer.push((i, j, solve_in_densities(&dimer, &pts).e_total));
+        }
+    }
+    let total = e_dimer.iter().map(|d| d.2).sum::<f64>() - (n as f64 - 2.0) * e_mono.iter().sum::<f64>();
+    RhoPa { e_mono, e_dimer, total }
+}
+
+/// The exact supermolecule of a SUBSET of the fragments solved in the field of all the others.
+pub fn subset_in_field(frags: &[Fragment], dens: &[Vec<f64>], subset: &[usize], drop_nuclei_of: Option<usize>) -> DensitySolve {
+    let mut species = Vec::new();
+    let mut centers = Vec::new();
+    let mut weights = Vec::new();
+    for &i in subset {
+        species.extend_from_slice(&frags[i].species);
+        centers.extend_from_slice(&frags[i].centers);
+        weights.extend_from_slice(&frags[i].weights);
+    }
+    let joined = Fragment::new(species, centers, weights);
+    solve_in_densities(&joined, &partners_except_flagged(frags, dens, subset, drop_nuclei_of))
+}
+
+/// The classical electrostatic interaction of two frozen fragments (densities and nuclei):
+/// `nn(A,B) − Σ_a Z_a V_B^el(R_a) − Σ_b Z_b V_A^el(R_b) + tr(P_A J[P_B])`. Symmetric under
+/// `A ↔ B` to roundoff — a test on the ERI-block extraction (EMBED-3 G4).
+pub fn classical_interaction(a: &Fragment, p_a: &[f64], b: &Fragment, p_b: &[f64]) -> f64 {
+    let nn = nn_between(a, b);
+    let mut ne = 0.0;
+    for (c, sp) in a.centers.iter().zip(a.species.iter()) {
+        ne += sp.z as f64 * partner_potential_at(b, p_b, *c);
+    }
+    for (c, sp) in b.centers.iter().zip(b.species.iter()) {
+        ne += sp.z as f64 * partner_potential_at(a, p_a, *c);
+    }
+    let j = coulomb_from_partner(a, b, p_b);
+    let n = (p_a.len() as f64).sqrt().round() as usize;
+    let mut ee = 0.0;
+    for mu in 0..n {
+        for nu in 0..n {
+            ee += p_a[mu * n + nu] * j[nu * n + mu];
+        }
+    }
+    nn - ne + ee
 }
 
 /// The fixed point of the densities: each fragment solved in the others' current densities,

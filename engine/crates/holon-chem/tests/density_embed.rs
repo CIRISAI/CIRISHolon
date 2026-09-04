@@ -19,7 +19,7 @@ fn g1_hellmann_feynman_on_the_density_field_and_plant_i() {
         let pb = solve_in_densities(&frags[1], &[]).p;
         let at = |lam: f64, plant: bool| {
             let scaled: Vec<f64> = pb.iter().map(|x| x * lam).collect();
-            solve_in_densities_with(&frags[0], &[Partner { frag: &frags[1], p: &scaled }], plant, false)
+            solve_in_densities_with(&frags[0], &[Partner::new(&frags[1], &scaled)], plant, false)
         };
         let h = 1e-4;
         let base = at(1.0, false);
@@ -79,4 +79,19 @@ fn plant_ii_carrier_is_nonzero_in_the_sector() {
     // orders above the far sector's three-body term (4.5e-6 at 5 Å): the freeze's κ > 1
     assert!((dropped.total - honest.total).abs() >= 1e-4, "plant (ii) moved the sum by only {}", (dropped.total - honest.total).abs());
     eprintln!("plant (ii): E_nn(A,B) = {nn:.4} Ha; the sum moved by {:.4} Ha", (dropped.total - honest.total).abs());
+}
+
+/// EMBED-3 G4 and the subset identity: the classical interaction is symmetric under A ↔ B,
+/// and the subset pairwise sum over everything is the pairwise sum.
+#[test]
+fn embed3_g4_symmetry_and_subset_identity() {
+    let frags = hf_chain(sp("F"), sp("H"), R_HF, 5.0 * ANGSTROM_TO_BOHR, 3);
+    let z = embed_densities(&frags, DensityStart::Zero);
+    let ab = classical_interaction(&frags[0], &z.densities[0], &frags[1], &z.densities[1]);
+    let ba = classical_interaction(&frags[1], &z.densities[1], &frags[0], &z.densities[0]);
+    assert!((ab - ba).abs() <= 1e-12, "G4: E_es(A,B) = {ab} vs E_es(B,A) = {ba}");
+    let full = rho_pa(&frags, &z.densities);
+    let sub = rho_pa_subset(&frags, &z.densities, &[0, 1, 2], None);
+    assert!((full.total - sub.total).abs() <= 1e-12, "subset identity: {} vs {}", full.total, sub.total);
+    eprintln!("G4 |E_es(A,B) − E_es(B,A)| = {:.1e}; E_es = {ab:.6e}; subset identity {:.1e}", (ab - ba).abs(), (full.total - sub.total).abs());
 }

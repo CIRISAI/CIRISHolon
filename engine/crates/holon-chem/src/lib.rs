@@ -55,6 +55,7 @@ pub mod qcd2;
 pub mod quaternary_table;
 pub mod rpmd;
 pub mod scalar;
+pub mod seam;
 pub mod sigma_op;
 pub mod special;
 pub mod sto3g;

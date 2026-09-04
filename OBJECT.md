@@ -408,7 +408,13 @@ genuine-3D carrier is being built). Closure is statistical over a staked window
 with a declared budget, never trajectory-exact, which chaos forbids. The many-body
 ladder does not terminate at four (dE5: 24/24 over bound, worst 1,572×) — the design
 is arbitrary order with exact cluster solves, and the four-specific assembly in this
-tree is a residue being removed, not a claim. Every constant in this engine is a
+tree is a residue being removed, not a claim. **Measured 2026-09-04 (EMBED-1, SEAM-1):
+the ladder that did not terminate was BARE.** Solved inside the mutual point-charge field
+of its partners, the pairwise expansion carries 99.93 % of the three-body term on the HF
+chain's far sector against the exact trimer (S1′ branch (b) on measured ground: the part it
+misses, one in 1,300 to 2,000, decays more slowly than the term at 5–6 Å, and the next
+freeze stakes the field as the partners' densities). At the hydrogen-bond distance a third
+of the term is uncarried — non-additive exchange, which is what exact cores are for. Every constant in this engine is a
 PRICE measured in a regime, and four were caught this season being inherited across
 regimes; the arithmetic-regime law (device class, solver budget, subtraction basis,
 and now bead count and bond dimension) is what keeps a price from becoming a wall.

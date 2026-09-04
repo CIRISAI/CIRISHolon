@@ -1,0 +1,66 @@
+warning: value assigned to `last_delta` is never read
+  --> crates/holon-chem/src/seam.rs:55:26
+   |
+55 |     let mut last_delta = f64::INFINITY;
+   |                          ^^^^^^^^^^^^^
+   |
+   = help: maybe it is overwritten before being read?
+   = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: value assigned to `monomers` is never read
+  --> crates/holon-chem/src/seam.rs:56:24
+   |
+56 |     let mut monomers = Vec::new();
+   |                        ^^^^^^^^^^
+   |
+   = help: maybe it is overwritten before being read?
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:357:5
+    |
+355 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+356 | pub struct ClassicalPotentialOp {
+357 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+    = note: `#[warn(unpredictable_function_pointer_comparisons)]` on by default
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:480:5
+    |
+478 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+479 | pub struct RingPolymerOp {
+480 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+
+warning: `holon-chem` (lib) generated 4 warnings
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.02s
+     Running `target/release/examples/seam_campaign`
+G1: R_HF = 1.8794379298 bohr, |dE/dR| = 4.95e-8
+G0: 665856 determinants, wall 264.8 s, cpu 7176.8 s on 32 threads → all eight
+  R=2.6 Å (near): ΔE3_bare -2.749801e-3  G3 0.0e0  wall 252s
+  R=2.8 Å (near): ΔE3_bare -1.039825e-3  G3 0.0e0  wall 229s
+  R=3.0 Å (near): ΔE3_bare -4.085647e-4  G3 0.0e0  wall 253s
+  R=3.5 Å (transition): ΔE3_bare -6.213990e-5  G3 0.0e0  wall 246s
+  R=4.0 Å (transition): ΔE3_bare -1.912905e-5  G3 0.0e0  wall 256s
+  R=5.0 Å (far): ΔE3_bare -4.481382e-6  G3 0.0e0  wall 259s
+  R=6.0 Å (far): ΔE3_bare -1.474668e-6  G3 0.0e0  wall 245s
+  R=8.0 Å (far): ΔE3_bare -2.582758e-7  G3 0.0e0  wall 290s
+R(Å)   sector      ΔE3_bare        r_emb(dip)      κ(dip)     κ(mull)    κ(plant i)  G3
+2.600  near        -2.749801265963e-3  -9.856960981551e-4  3.584608e-1  5.410606e-1  6.324502e0  0.000e0
+2.800  near        -1.039824597513e-3  -2.616247038532e-4  2.516046e-1  4.512977e-1  1.173826e1  0.000e0
+3.000  near        -4.085646869498e-4  -6.083320329253e-5  1.488949e-1  3.545157e-1  2.250425e1  0.000e0
+3.500  transition  -6.213990326387e-5  -1.071248220796e-6  1.723930e-2  1.682382e-1  8.606010e1  0.000e0
+4.000  transition  -1.912904650681e-5  -2.159191581086e-8  1.128750e-3  9.670525e-2  1.818671e2  0.000e0
+5.000  far         -4.481382234189e-6  2.270724053233e-9  5.067017e-4  8.702920e-2  3.874714e2  0.000e0
+6.000  far         -1.474667897128e-6  1.151761352958e-9  7.810310e-4  9.165107e-2  6.737912e2  0.000e0
+8.000  far         -2.582758042990e-7  1.751914169290e-10  6.783114e-4  9.625991e-2  1.607970e3  0.000e0

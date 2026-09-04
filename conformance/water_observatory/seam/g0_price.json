@@ -1,0 +1,3 @@
+{
+  "node": "hf chain R_FF=8.0", "n_det": 665856, "e_super": -2.958101104595e2, "residual": 8.489e-11, "davidson_iters": 143, "wall_seconds": 264.775, "cpu_seconds": 7176.790, "threads_available": 32, "device_class": "host f64, solve_determinant", "admitted": "all eight"
+}

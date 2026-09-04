@@ -1,0 +1,6 @@
+{
+  "r_angstrom": 5.000, "shift_bohr": [0.37, 0.21, 0.5],
+  "base":  {"e_super": -2.958107477679e2, "ee_pa": -2.958107477701e2, "bare_pa": -2.958107432865e2, "r_emb": 2.266574483656e-9, "de3_bare": -4.481385531108e-6, "sweeps": 5, "residual": 8.939e-11},
+  "moved": {"e_super": -2.958107477679e2, "ee_pa": -2.958107477701e2, "bare_pa": -2.958107432865e2, "r_emb": 2.269587184855e-9, "de3_bare": -4.481382291033e-6, "sweeps": 5, "residual": 9.392e-11},
+  "floor_r_emb": 3.012701e-12, "floor_de3": 3.240075e-12, "floor_e_super": 3.353762e-12, "posable_ratio": 752.340, "wall_seconds": 752.2
+}

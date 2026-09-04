@@ -70,7 +70,7 @@ cannot be audited against the state it was written from.
 
 ---
 
-## PHYSICS-HONESTY — 19
+## PHYSICS-HONESTY — 20
 
 *The physics is not certified. The exit is a named node, not more hardware.*
 
@@ -95,6 +95,7 @@ cannot be audited against the state it was written from.
 | P17 | `WORKBENCH_FSD.md:277` C3+ spinorial/QED nodes | materialized spinorial and QED carriers — they exist as "visible STUBS with fences — reachable, not materialized" | tower lane | WB-8.4's discharge law: pay the price, transport to the adequate carrier | MPS, G |
 | P18 | `holon/src/zx.rs:43` | handing a shorter circuit back to the runner — "there is NO extraction back to a circuit" | zx-native | build the circuit extractor (the T-count oracle and scalar are certified already) | off-graph |
 | P19 | `holon-chem/tests/mixtures_referee.rs:293` `#[ignore]` | grading the staked pairs against the 50-digit referee | mixtures-referee | commit the drop to `tests/data/mixtures1/`, delete the `#[ignore]`, re-pin `MIXTURES1_REFEREE_DIGEST` — and do both, per the test's own header | D |
+| P20 | `holon-render/src/sim.rs` `drift_bound()` | the ENERGY LEDGER GATE's bound is the integrator's O(h²) envelope `DRIFT_SAFETY·¼·ω²dt²·e_ref`, with ω² from the stiffest reachable pair curvature and e_ref from the largest pair energy seen; on a four-water scene it reads **20 hartree** while the measured drift is 3e-6 — four orders loose, so `drift ≤ drift_bound` is TRUE and UNINFORMATIVE there and cannot fire on an unposted 8e-4 hartree transition (FIELD-1 AMENDMENT 3, 2026-09-04). Not a wrong bound: an envelope that is not a measurement | the lead (the ledger's author) | a measured-excursion bound beside the envelope (the honest run's own drift peak, as FIELD-1's plant (ii) now reads), or an envelope from the actual mode energies rather than the largest seen | FIELD-1 |
 
 *(A twentieth row was drafted here for the ELEMENTS-1 referee gate and removed on
 verification: that fence is already discharged. Its instructions are still in the tree —

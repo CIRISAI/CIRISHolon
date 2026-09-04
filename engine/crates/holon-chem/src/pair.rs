@@ -492,8 +492,18 @@ pub struct GeometryProblem {
 /// change.
 pub fn geometry_problem_reported(species: &[Species], centers: Vec<[D2; 3]>) -> GeometryProblem {
     let basis = build_basis(species, centers);
+    geometry_problem_from_basis(&basis, species)
+}
+
+/// [`geometry_problem_reported`] on a basis the caller has already assembled — the door
+/// EMBED-1 needs, because an embedded fragment's basis carries external point charges as
+/// centres with no shells (`embed::build_basis_embedded`), and the electron count still
+/// comes from the species alone. `e_nuc` is the basis's OWN `nuclear_repulsion`, which
+/// sums every centre pair; a caller with external centres subtracts their self-energy
+/// itself (`embed::solve_embedded` does, and asserts it).
+pub fn geometry_problem_from_basis(basis: &Basis, species: &[Species]) -> GeometryProblem {
     let n = basis.n;
-    let ao = ao_integrals(&basis);
+    let ao = ao_integrals(basis);
     let x = cholesky_orthonormaliser(&ao.s, n).expect("overlap not positive definite");
     let (_, n_alpha, n_beta) = electron_counts(species);
     let xv: Vec<f64> = x.iter().map(|d| d.v).collect();

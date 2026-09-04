@@ -39,6 +39,7 @@
 
 pub mod cluster;
 pub mod dual;
+pub mod embed;
 pub mod elements;
 pub mod budget;
 pub mod fci;

@@ -625,6 +625,18 @@ and `holon_hadron_max_det`, which let the page refuse a zoom with a number inste
 hanging on one. Gated in `crates/holon-render/tests/hadron_band.rs`: the door is the exact
 arm to the bit, the drawn density conserves quark number, and every refusal fires by name.
 
+**WB-10.8 — the sub-atom band MOVES, and has a handle (NEW 2026-09-04, owner: lead).**
+Seven more doors: `holon_hadron_grab` (add a one-body potential at a site — the handle),
+`holon_hadron_release`, `holon_hadron_pin_at`, `holon_hadron_step` (advance by
+`exp(-iH·dt)`, Lanczos on the real Hamiltonian), `holon_hadron_time`, and the two honesty
+readouts `holon_hadron_norm` and `holon_hadron_live_energy`. A grab does NOT re-solve: the
+Hamiltonian changes under the state, which is a quantum quench, and the quarks then flow
+toward the grabbed site. Gated: the propagator is unitary to **6.6e-14** and conserves
+energy to **6.9e-14** relative over forty steps; an eigenstate evolved under its own
+Hamiltonian does not move its density (**4.0e-12**), which is the control that says a moving
+picture is not being mistaken for physics; a grab raises the density at the grabbed site
+from 1.556 to 2.782; and release restores the ground state and the clock.
+
 | # | task | owner | gate |
 |---|---|---|---|
 | WB-10.1 | `Species` gains `nuclear_spin_2` and `charge_radius_fm` (declared, sourced); the palette emitter ships them; `holon_nucleus_*` exports (Z, mass_u, isotope, spin, radius, thermal wavelength at the scene temperature) and `holon_atom_in_molecule(i)` from the census | lead (engine) | `tests/nucleus.rs`: every export traces; the wavelength reproduces the closed form on the engine's own temperature readout; declared values match the table |

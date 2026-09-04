@@ -765,13 +765,24 @@ const LADDER = [
       + "no approximation and no truncation. What is drawn is the quark density along the "
       + "chain; the difference between the B = 0 sea and the B = 1 state is one baryon's "
       + "worth of quarks, and where it sits is what this band shows. The baryon mass "
-      + "(E1 - E0) / 2*sqrt(x) is read off the two solves when both are in the same box.",
+      + "(E1 - E0) / 2*sqrt(x) is read off the two solves when both are in the same box.\n\n"
+      + "IT MOVES, AND YOU CAN REACH IN. Grab a site and pull: a one-body potential well "
+      + "opens there, the Hamiltonian changes under the state without re-solving it — a "
+      + "quench — and stepping the clock runs exp(-iH dt) by Lanczos, unitary by "
+      + "construction. The quarks flow toward what you grabbed. Two readouts sit beside the "
+      + "picture and must NOT move while it does: the state's norm, which is one for a "
+      + "unitary propagator, and its energy, which the evolution conserves. A drift in "
+      + "either is the propagator failing, not physics happening, and the page shows both "
+      + "rather than asking to be trusted. Let go and the ground state comes back.",
     state: "export-gated",
     pinned: true,
     liveWhen: [
       "holon_hadron_solve", "holon_hadron_energy", "holon_hadron_occ",
       "holon_hadron_baryon_mass", "holon_hadron_n_det", "holon_hadron_exit",
       "holon_hadron_margin", "holon_hadron_dim_for", "holon_hadron_max_det",
+      "holon_hadron_grab", "holon_hadron_release", "holon_hadron_pin_at",
+      "holon_hadron_step", "holon_hadron_time", "holon_hadron_norm",
+      "holon_hadron_live_energy",
     ],
     owner: "lead (engine) — the sub-atom band",
     // THE LIMIT, in the band and not only in the source. This is one space dimension.
@@ -1222,6 +1233,25 @@ const PENDING_EXPORTS = [
     what: "the determinant count a sector WOULD have, without solving it — the price" },
   { name: "holon_hadron_max_det", serves: "the fold below the atom", spec: "WB-10.7",
     what: "the cap above which the door refuses rather than attempts" },
+  // THE GRAB AND THE DYNAMICS (WB-10.8). `grab` adds a one-body potential at a site and
+  // does NOT re-solve — the Hamiltonian changes under the state, which is a quench — and
+  // `step` advances it by exp(-iH dt), unitary by construction. `norm` and `live_energy`
+  // are the band's own honesty readouts: both must hold still while the density moves.
+  { name: "holon_hadron_grab", serves: "the fold below the atom", spec: "WB-10.8",
+    what: "reach in and pull one site: add a one-body potential there, every colour alike" },
+  { name: "holon_hadron_release", serves: "the fold below the atom", spec: "WB-10.8",
+    what: "let go: clear the grab and restore the unpinned ground state" },
+  { name: "holon_hadron_pin_at", serves: "the fold below the atom", spec: "WB-10.8",
+    what: "the grab's current strength at a site" },
+  { name: "holon_hadron_step", serves: "the fold below the atom", spec: "WB-10.8",
+    what: "advance the state by dt under the current Hamiltonian: exp(-iH dt) by Lanczos" },
+  { name: "holon_hadron_time", serves: "the fold below the atom", spec: "WB-10.8",
+    what: "elapsed model time since the last ground state" },
+  { name: "holon_hadron_norm", serves: "the fold below the atom", spec: "WB-10.8",
+    what: "the evolving state's norm — ONE for a unitary propagator, a defect otherwise" },
+  { name: "holon_hadron_live_energy", serves: "the fold below the atom", spec: "WB-10.8",
+    what: "the evolving state's energy under the current Hamiltonian — conserved, so a "
+      + "drift is the propagator failing rather than physics happening" },
   // THE DOOR, not a getter. The four rows below are READ-BACKS of the last solve; this is
   // what runs one. It is called on a pick change and on a throttle, never per frame — the
   // engine's own header says a molecule's FCI is milliseconds and its value changes with

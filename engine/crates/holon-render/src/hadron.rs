@@ -25,7 +25,8 @@
 
 use std::sync::Mutex;
 
-use holon_chem::lanes::{solve_lanes, LaneSolution};
+use holon_chem::lanes::{solve_lanes, LaneSigma, LaneSolution};
+use holon_chem::sigma_op::SigmaOp;
 use holon_chem::qcd2::Qcd2;
 use holon_chem::fci::SolveExit;
 
@@ -43,8 +44,19 @@ struct Band {
     exit: u32,
     margin: f64,
     seconds: f64,
-    /// `Σ_c ⟨n_{k,c}⟩`, one entry per site.
+    /// `Σ_c ⟨n_{k,c}⟩`, one entry per site — of the CURRENT state, which is the ground
+    /// state until a grab and an evolution move it.
     occ: Vec<f64>,
+    // ---- the dynamics. The state is complex; the Hamiltonian is real symmetric, so the
+    // two real parts are all that is stored and `exp(-iHt)` is built from `cos(Ht)` and
+    // `sin(Ht)` on each (see `propagate`).
+    re: Vec<f64>,
+    im: Vec<f64>,
+    /// Elapsed time since the grab, in the model's own units (ħ = 1).
+    t: f64,
+    /// The user's grab: a one-body potential per site, added to the Hamiltonian. All zero
+    /// until someone reaches in and pulls.
+    pin: Vec<f64>,
 }
 
 static BANDS: Mutex<[Option<Band>; 3]> = Mutex::new([None, None, None]);
@@ -117,6 +129,10 @@ pub extern "C" fn holon_hadron_solve(n: u32, x: f64, b: i32) -> u32 {
         margin: sol.variational_margin,
         seconds,
         occ,
+        re: sol.vector.clone(),
+        im: vec![0.0; sol.vector.len()],
+        t: 0.0,
+        pin: vec![0.0; n],
     });
     code
 }
@@ -206,4 +222,272 @@ pub extern "C" fn holon_hadron_baryon_mass() -> f64 {
         }
         _ => f64::NAN,
     }
+}
+
+
+// ------------------------------------------------------------------ the grab, and the dynamics
+
+/// The sector's Hamiltonian with the user's grab added: a one-body potential on each site,
+/// the same term for every colour, which is what a colour-blind poke IS. Zero pin gives back
+/// exactly the campaign's Hamiltonian, bit for bit.
+fn pinned_hamiltonian(q: &Qcd2, pin: &[f64]) -> holon_chem::lanes::LaneHamiltonian<f64> {
+    let mut ham = q.lane_hamiltonian();
+    for (k, &v) in pin.iter().enumerate() {
+        if v != 0.0 {
+            for c in 0..3 {
+                ham.one_body(c, k, k, v);
+            }
+        }
+    }
+    ham
+}
+
+/// Eigen-decomposition of a small symmetric matrix by cyclic Jacobi rotations. Used on the
+/// Krylov tridiagonal only, where `m ≤ KRYLOV`, so its cubic cost is nothing.
+fn jacobi_sym(a: &mut [f64], v: &mut [f64], m: usize) {
+    for i in 0..m {
+        for j in 0..m {
+            v[i * m + j] = f64::from(i == j);
+        }
+    }
+    for _ in 0..60 {
+        let off: f64 = (0..m).flat_map(|i| (i + 1..m).map(move |j| (i, j))).map(|(i, j)| a[i * m + j] * a[i * m + j]).sum();
+        if off <= 1e-30 {
+            break;
+        }
+        for p in 0..m {
+            for qq in p + 1..m {
+                let apq = a[p * m + qq];
+                if apq.abs() <= 1e-300 {
+                    continue;
+                }
+                let theta = (a[qq * m + qq] - a[p * m + p]) / (2.0 * apq);
+                let t = theta.signum() / (theta.abs() + (theta * theta + 1.0).sqrt());
+                let c = 1.0 / (t * t + 1.0).sqrt();
+                let s = t * c;
+                for k in 0..m {
+                    let (akp, akq) = (a[k * m + p], a[k * m + qq]);
+                    a[k * m + p] = c * akp - s * akq;
+                    a[k * m + qq] = s * akp + c * akq;
+                }
+                for k in 0..m {
+                    let (apk, aqk) = (a[p * m + k], a[qq * m + k]);
+                    a[p * m + k] = c * apk - s * aqk;
+                    a[qq * m + k] = s * apk + c * aqk;
+                }
+                for k in 0..m {
+                    let (vkp, vkq) = (v[k * m + p], v[k * m + qq]);
+                    v[k * m + p] = c * vkp - s * vkq;
+                    v[k * m + qq] = s * vkp + c * vkq;
+                }
+            }
+        }
+    }
+}
+
+/// Krylov dimension of one time step. Small on purpose: the step is what the page calls per
+/// frame, and accuracy comes from taking more steps, not from a deeper space.
+const KRYLOV: usize = 12;
+
+/// `cos(H·dt)·v` and `sin(H·dt)·v` for a real vector, by Lanczos: build the Krylov basis of
+/// `v` under `H`, diagonalise the tridiagonal, and apply the scalar functions to its
+/// eigenvalues. The Hamiltonian is real symmetric, which is the whole reason the complex
+/// propagator needs no complex arithmetic.
+fn cos_sin_apply(sig: &mut LaneSigma<f64>, v: &[f64], dt: f64) -> (Vec<f64>, Vec<f64>) {
+    let n = v.len();
+    let nrm = v.iter().map(|x| x * x).sum::<f64>().sqrt();
+    if nrm == 0.0 {
+        return (vec![0.0; n], vec![0.0; n]);
+    }
+    let mut basis: Vec<Vec<f64>> = vec![v.iter().map(|x| x / nrm).collect()];
+    let (mut alpha, mut beta) = (Vec::new(), Vec::new());
+    let mut w = vec![0.0; n];
+    for j in 0..KRYLOV {
+        sig.apply(&basis[j], &mut w);
+        let a = basis[j].iter().zip(&w).map(|(x, y)| x * y).sum::<f64>();
+        alpha.push(a);
+        for (k, wk) in w.iter_mut().enumerate() {
+            *wk -= a * basis[j][k];
+            if j > 0 {
+                *wk -= beta[j - 1] * basis[j - 1][k];
+            }
+        }
+        // full re-orthogonalisation: the space is tiny and a lost orthogonality here shows
+        // up as a norm drift on screen, which is the one thing this must not do
+        for b in basis.iter() {
+            let d = b.iter().zip(w.iter()).map(|(x, y)| x * y).sum::<f64>();
+            for (k, wk) in w.iter_mut().enumerate() {
+                *wk -= d * b[k];
+            }
+        }
+        let bnorm = w.iter().map(|x| x * x).sum::<f64>().sqrt();
+        if bnorm <= 1e-13 || j + 1 == KRYLOV {
+            break;
+        }
+        beta.push(bnorm);
+        basis.push(w.iter().map(|x| x / bnorm).collect());
+    }
+    let m = alpha.len();
+    let mut t = vec![0.0; m * m];
+    for i in 0..m {
+        t[i * m + i] = alpha[i];
+        if i + 1 < m {
+            t[i * m + i + 1] = beta[i];
+            t[(i + 1) * m + i] = beta[i];
+        }
+    }
+    let mut vecs = vec![0.0; m * m];
+    let mut work = t.clone();
+    jacobi_sym(&mut work, &mut vecs, m);
+    let lambda: Vec<f64> = (0..m).map(|i| work[i * m + i]).collect();
+    // e_0 in the Krylov basis, rotated, scaled by cos/sin, rotated back
+    let (mut cc, mut ss) = (vec![0.0; m], vec![0.0; m]);
+    for i in 0..m {
+        let z = vecs[i]; // vecs[0*m + i] — the first row
+        cc[i] = z * (lambda[i] * dt).cos();
+        ss[i] = z * (lambda[i] * dt).sin();
+    }
+    let (mut cy, mut sy) = (vec![0.0; m], vec![0.0; m]);
+    for i in 0..m {
+        for j in 0..m {
+            cy[i] += vecs[i * m + j] * cc[j];
+            sy[i] += vecs[i * m + j] * ss[j];
+        }
+    }
+    let (mut co, mut si) = (vec![0.0; n], vec![0.0; n]);
+    for (j, b) in basis.iter().enumerate().take(m) {
+        for k in 0..n {
+            co[k] += nrm * cy[j] * b[k];
+            si[k] += nrm * sy[j] * b[k];
+        }
+    }
+    (co, si)
+}
+
+/// GRAB a site: add `strength` to the one-body potential there, for every colour. This does
+/// NOT re-solve — the state stays where it was and the Hamiltonian changes under it, which
+/// is a quantum quench and is exactly what makes the next step interesting. `0` accepted,
+/// `4` no band solved, `5` no such site.
+#[no_mangle]
+pub extern "C" fn holon_hadron_grab(b: i32, k: u32, strength: f64) -> u32 {
+    if !(0..=2).contains(&b) {
+        return 5;
+    }
+    let mut g = BANDS.lock().expect("hadron band");
+    let Some(band) = g[b as usize].as_mut() else { return 4 };
+    let Some(slot) = band.pin.get_mut(k as usize) else { return 5 };
+    *slot += strength;
+    0
+}
+
+/// Let go: clear the grab and put the state back in the ground state of the unpinned
+/// Hamiltonian. `0` done, `4` no band solved.
+#[no_mangle]
+pub extern "C" fn holon_hadron_release(b: i32) -> u32 {
+    let (n, x) = {
+        let g = BANDS.lock().expect("hadron band");
+        match g.get(b.clamp(0, 2) as usize).and_then(|s| s.as_ref()) {
+            Some(band) if (0..=2).contains(&b) => (band.n, band.x),
+            _ => return 4,
+        }
+    };
+    holon_hadron_solve(n as u32, x, b)
+}
+
+/// The grab's current strength at a site, `NaN` off the end.
+#[no_mangle]
+pub extern "C" fn holon_hadron_pin_at(b: i32, k: u32) -> f64 {
+    band(b, |x| x.pin.get(k as usize).copied().unwrap_or(f64::NAN), f64::NAN)
+}
+
+/// Advance the state by `dt` under the CURRENT (possibly grabbed) Hamiltonian and refresh
+/// the density. `0` done, `4` no band solved, `5` bad arguments.
+///
+/// The propagator is `exp(-iH·dt)` by Lanczos on the real Hamiltonian — unitary by
+/// construction, and the page can see that for itself in `holon_hadron_norm`, which must
+/// stay at one. A drifting norm on screen is a defect, not a rounding story.
+#[no_mangle]
+pub extern "C" fn holon_hadron_step(b: i32, dt: f64) -> u32 {
+    if !(0..=2).contains(&b) || !dt.is_finite() {
+        return 5;
+    }
+    let (n, x, pin, re, im) = {
+        let g = BANDS.lock().expect("hadron band");
+        let Some(band) = g[b as usize].as_ref() else { return 4 };
+        (band.n, band.x, band.pin.clone(), band.re.clone(), band.im.clone())
+    };
+    let q = Qcd2::new(n, x);
+    let space = q.lane_space(b);
+    let mut sig = LaneSigma::new(&space, &pinned_hamiltonian(&q, &pin), 1);
+    // exp(-iH dt)(re + i·im) = [cos·re + sin·im] + i[cos·im − sin·re]
+    let (cre, sre) = cos_sin_apply(&mut sig, &re, dt);
+    let (cim, sim) = cos_sin_apply(&mut sig, &im, dt);
+    let new_re: Vec<f64> = cre.iter().zip(&sim).map(|(c, s)| c + s).collect();
+    let new_im: Vec<f64> = cim.iter().zip(&sre).map(|(c, s)| c - s).collect();
+    let occ = occupancy_complex(&space, &new_re, &new_im, n);
+    let mut g = BANDS.lock().expect("hadron band");
+    if let Some(band) = g[b as usize].as_mut() {
+        band.re = new_re;
+        band.im = new_im;
+        band.occ = occ;
+        band.t += dt;
+    }
+    0
+}
+
+/// `Σ_c ⟨n_{k,c}⟩` for a complex state.
+fn occupancy_complex(space: &holon_chem::lanes::LaneSpace, re: &[f64], im: &[f64], n_sites: usize) -> Vec<f64> {
+    let mut occ = vec![0.0; n_sites];
+    for d in 0..re.len() {
+        let w = re[d] * re[d] + im[d] * im[d];
+        if w == 0.0 {
+            continue;
+        }
+        for (l, lane) in space.lanes.iter().enumerate() {
+            let idx = (d / space.strides[l]) % lane.masks.len();
+            let mask = lane.masks[idx];
+            for (k, o) in occ.iter_mut().enumerate().take(n_sites) {
+                if mask >> k & 1 == 1 {
+                    *o += w;
+                }
+            }
+        }
+    }
+    occ
+}
+
+/// Elapsed model time since the state was last put in a ground state.
+#[no_mangle]
+pub extern "C" fn holon_hadron_time(b: i32) -> f64 {
+    band(b, |x| x.t, f64::NAN)
+}
+
+/// `⟨ψ|ψ⟩` of the evolving state — ONE for a unitary propagator, and a defect on screen
+/// otherwise. This is the band's own honesty readout.
+#[no_mangle]
+pub extern "C" fn holon_hadron_norm(b: i32) -> f64 {
+    band(b, |x| x.re.iter().map(|v| v * v).sum::<f64>() + x.im.iter().map(|v| v * v).sum::<f64>(), f64::NAN)
+}
+
+/// `⟨ψ|H|ψ⟩` under the CURRENT Hamiltonian — conserved by the evolution, so a drift here is
+/// the propagator failing rather than physics happening.
+#[no_mangle]
+pub extern "C" fn holon_hadron_live_energy(b: i32) -> f64 {
+    if !(0..=2).contains(&b) {
+        return f64::NAN;
+    }
+    let (n, x, pin, re, im) = {
+        let g = BANDS.lock().expect("hadron band");
+        let Some(band) = g[b as usize].as_ref() else { return f64::NAN };
+        (band.n, band.x, band.pin.clone(), band.re.clone(), band.im.clone())
+    };
+    let q = Qcd2::new(n, x);
+    let space = q.lane_space(b);
+    let mut sig = LaneSigma::new(&space, &pinned_hamiltonian(&q, &pin), 1);
+    let mut w = vec![0.0; re.len()];
+    sig.apply(&re, &mut w);
+    let mut e = re.iter().zip(&w).map(|(a, c)| a * c).sum::<f64>();
+    sig.apply(&im, &mut w);
+    e += im.iter().zip(&w).map(|(a, c)| a * c).sum::<f64>();
+    e
 }

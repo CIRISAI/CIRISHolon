@@ -2382,7 +2382,11 @@ function render3D() {
       ctx.beginPath(); ctx.arc(d.p.sx, d.p.sy, r, 0, 2 * Math.PI); ctx.stroke(); ctx.setLineDash([]);
       ctx.fillStyle = "rgba(0, 229, 255, 0.9)"; ctx.font = "12px ui-monospace, monospace"; ctx.textAlign = "left";
       const sz = atomSize(w, d.i);
-      ctx.fillText(`⟨r²⟩½ = ${(sz.rms * BOHR_TO_PM).toFixed(1)} pm  (${sz.how === "coupled" ? `COUPLED: the molecular density, Mulliken-partitioned, ${sz.pop.toFixed(3)} e` : sz.how === "free" ? "FREE ATOM: a constant per species" : "palette"})`, d.p.sx + Math.min(r, vw * 0.4) + 8, d.p.sy);
+      const label = `⟨r²⟩½ = ${(sz.rms * BOHR_TO_PM).toFixed(1)} pm  (${sz.how === "coupled" ? `COUPLED: the molecular density, Mulliken-partitioned, ${sz.pop.toFixed(3)} e` : sz.how === "free" ? "FREE ATOM: a constant per species" : "palette"})`;
+      // beside the ring, but never off the right edge: a ring wider than the view puts
+      // its label at the edge, clamped so the whole sentence is read
+      const lx = Math.min(d.p.sx + Math.min(r, vw * 0.4) + 8, vw - 12 - ctx.measureText(label).width);
+      ctx.fillText(label, Math.max(12, lx), d.p.sy);
     }
     if (d.i === State.hand.grabbed) {
       ctx.strokeStyle = "#ffd479";

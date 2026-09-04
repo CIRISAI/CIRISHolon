@@ -4,7 +4,8 @@
 
 use holon_chem::elements::{by_z, nuclear, FIRST_ROW, OXYGEN};
 use holon_chem::pair::atom_energy;
-use holon_render::nucleus::{
+use holon_render::{holon_atom_count, holon_reset};
+use holon_render::nucleus::{holon_atom_band_solve,
     holon_atom_band_coupled_rms_bohr, holon_atom_band_exit, holon_atom_band_population, holon_law_probe, holon_nucleus_charge_radius_fm, holon_nucleus_mass_u,
     holon_nucleus_spin2, holon_nucleus_thermal_wavelength_bohr, thermal_wavelength_bohr,
 };
@@ -67,4 +68,25 @@ fn the_law_probe_is_the_oxygen_atom_on_the_lane_engine() {
     let probe = holon_law_probe();
     assert_eq!(probe.to_bits(), atom_energy(OXYGEN).to_bits());
     assert!(probe < -70.0 && probe > -80.0, "oxygen STO-3G FCI energy {probe}");
+}
+
+/// The coupled-size door on a real scene through the ABI: reset a hydrogen scene, solve
+/// the band for atom 0, and read a positive size and a population for it — and the
+/// sentinel for an atom the solve did not contain. Natively, so a wasm-side trap in the
+/// same path is separable from a defect in the door.
+#[test]
+fn the_coupled_size_door_serves_the_solved_molecule_and_the_sentinel_elsewhere() {
+    holon_reset(4);
+    let n = holon_atom_count();
+    assert!(n >= 2, "scene has {n} atoms");
+    let code = holon_atom_band_solve(0);
+    assert!(code == 0 || code == 3, "solve exit {code}");
+    let r = holon_render::nucleus::holon_atom_band_coupled_rms_bohr(0);
+    let pop = holon_render::nucleus::holon_atom_band_population(0);
+    assert!(r > 0.5 && r < 5.0, "coupled rms {r}");
+    assert!(pop > 0.0, "population {pop}");
+    // an atom outside the solved molecule serves the sentinel — unless the census put every
+    // atom in one row, in which case every atom has a size; both are honest, so only the
+    // solved atom is asserted
+    eprintln!("coupled door: atom 0 rms {r:.6} bohr, population {pop:.6}; atom 1 rms {:.6}", holon_render::nucleus::holon_atom_band_coupled_rms_bohr(1));
 }

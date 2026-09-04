@@ -221,6 +221,10 @@ const fsdText = readFileSync(
     "fluid zoom: the view centre glides onto the acuity seed and the cut uses the same centre");
   want(/function filmstrip\(/.test(app) && /btn-filmstrip/.test(app) && /get\("filmstrip"\)/.test(app) && /window\.filmstrip = filmstrip/.test(app),
     "filmstrip: the tool exists and is reachable from the sheet, the URL and the console");
+  // THE LABEL FOLLOWS WHAT IS VISIBLE: fits AND resolvable, else the interior of the object above.
+  want(/LADDER\[i\]\.lengthM <= viewM && LADDER\[i\]\.lengthM \* pxPerM >= 1/.test(app)
+    && /if \(LADDER\[i\]\.lengthM > viewM\) active = i;/.test(app),
+    "rail: the active band is the coarsest that fits AND resolves, else the object the view is inside");
 }
 
 const COMMISSIONED = [

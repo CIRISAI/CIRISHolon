@@ -494,7 +494,27 @@ toM })` (☰ → 🎞 filmstrip, or `?filmstrip=20`) renders n zoom levels from
 the molecular stop to the floor through the page's own path into one tiled
 canvas with a save link — the frame must not move, the pressure cube must
 not move, every object must grow continuously. Pinned by `smoke.mjs`
-"fluid zoom:" and "filmstrip:" checks.
+"fluid zoom:" and "filmstrip:" checks. THE LABEL FOLLOWS WHAT IS
+VISIBLE (operator, 2026-09-04): the rail's active band is the coarsest whose
+object both FITS in the view and is RESOLVABLE in it (a pixel or more at the
+view's scale); when none does, the view is inside the finest object larger
+than it and that band is the label — 40 pm is the atom's interior, not the
+nucleus band, which the fits-only rule had read there while its object was
+five hundredths of a pixel. Pinned by the `smoke.mjs` "rail:" check.
+
+**PROVENANCE OF THE FINE BANDS (audit 2026-09-04, the operator's question
+"how much of this is tacked on vs using the holon maximally"):** the
+molecular band is the holon. The atom band's SOLVE is the engine's own
+substrate at the scene's geometry (the census molecule, holon-coupled) but
+its drawn cloud SIZE is a free-atom constant per species (decoupled; the
+coupled size is the molecular solve's own density — next step, on the
+one-body density the embedding build needs anyway). The nucleus band is
+four declared inputs and one closed-form readout on the holon's
+temperature; node E's measured spread is not wired. The fold is a model on
+its own carrier, solved on the engine's lane kernel, with no seam to the
+tier above. None of the three is a certified tier under the band-flip law;
+the page's cards say so in the band's own text. The register of record is
+`OBJECT.md` "The surface, audited".
 
 **THE BAND-FLIP LAW, restated because it was briefly blurred:** a band goes
 live ONLY on a node-G closure certificate — a coarse view of the dynamics

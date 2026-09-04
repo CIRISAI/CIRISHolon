@@ -598,7 +598,7 @@ const LADDER = [
     // than restating them, and the band stays FENCED.
     readout: "ρ g h, the hydrostatic column, in the ladder readouts card below — "
       + "arithmetic on measured constants, never a dynamics readout",
-    readoutCite: "conformance/water_observatory/WORKBENCH_FSD.md:623",
+    readoutCite: "conformance/water_observatory/WORKBENCH_FSD.md:643",
   },
   {
     band: "fluid element",
@@ -707,7 +707,13 @@ const LADDER = [
     lengthM: 5.3e-11,
     runs: "ONE atom pinned by the acuity law — H or O, in a molecule or free — its "
       + "electronic structure solved by the lane engine IN THE PAGE (STO-3G FCI, the same "
-      + "arithmetic as native, gated bit-identical against the native referee)",
+      + "arithmetic as native, gated bit-identical against the native referee). "
+      + "PROVENANCE (audit 2026-09-04): the solve is the engine's own substrate at the "
+      + "scene's geometry (holon-coupled: it is the census molecule that is solved); the "
+      + "cloud's drawn SIZE is a free-atom constant per species (DECOUPLED — it does not "
+      + "respond to the bond or the box; the coupled size is the molecular solve's own "
+      + "density, named as the next step). This is the engine's bottom exposed, not a "
+      + "certified tier.",
     state: "export-gated",
     pinned: true,
     liveWhen: [
@@ -725,8 +731,8 @@ const LADDER = [
       + "and `holon_atom_in_molecule`, and fences by name — no digits — on any artifact "
       + "that does not. Its bit-identity row is green only while `law_probe.json` sits "
       + "beside this page with the digest `tests/wasm_law.rs` pinned natively.",
-    cite: "conformance/water_observatory/WORKBENCH_FSD.md:627",
-    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:658",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:647",
+    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:678",
     ganttCite: "GANTT.md:108",
   },
   {
@@ -736,7 +742,11 @@ const LADDER = [
     runs: "the nucleus of that atom as the deepest OBJECT this page carries: Z, isotope, "
       + "mass, nuclear spin and charge radius — DECLARED, MEASURED INPUTS the "
       + "Hamiltonian never computes (WB-1.7) — and its thermal de Broglie wavelength "
-      + "at the scene's own measured temperature, COMPUTED in closed form by the engine",
+      + "at the scene's own measured temperature, COMPUTED in closed form by the engine. "
+      + "PROVENANCE (audit 2026-09-04): four DECLARED inputs and one closed-form readout "
+      + "on the holon's temperature; the nucleus's MEASURED positional spread (node E's "
+      + "ring polymer) is not wired, and the wavelength stands in for it. Not a tier: "
+      + "nothing here is a coarse view of a dynamics beneath.",
     state: "export-gated",
     pinned: true,
     liveWhen: [
@@ -750,9 +760,9 @@ const LADDER = [
       + "doors, and fences by name — no digits — on any artifact that does not. Z and the "
       + "isotope name come from the committed species table and wear DECLARED, which is "
       + "what WB-1.7 asks of a measured input.",
-    cite: "conformance/water_observatory/WORKBENCH_FSD.md:628",
-    declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:637",
-    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:657",
+    cite: "conformance/water_observatory/WORKBENCH_FSD.md:648",
+    declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:677",
+    buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:677",
     ganttCite: "GANTT.md:108",
   },
   {
@@ -3711,14 +3721,23 @@ function renderTierRail(w, viewM) {
     });
     State.tierStopsBuilt = true;
   }
-  // THE ACTIVE BAND IS THE COARSEST ONE THE VIEW CAN RESOLVE: the first band (LADDER runs
-  // coarse to fine) whose scale fits inside the view span. This is §9c's acuity rule, the
-  // same one `descentActive` applies at the molecular band — not "nearest in log
-  // distance", which read a 2 nm view of twelve atoms as the H-bond network band, a
-  // fenced band, while the scene was running the molecular band's live chart.
-  let active = LADDER.length - 1;
+  // THE LABEL FOLLOWS WHAT IS VISIBLE (operator, 2026-09-04). The active band is the
+  // coarsest one (LADDER runs coarse to fine) whose object both FITS in the view and is
+  // RESOLVABLE in it — at least a pixel across at the view's own scale. "Fits" is §9c's
+  // acuity rule, the same one `descentActive` applies at the molecular band, and it is
+  // what keeps a 2 nm view of twelve atoms from reading as the H-bond network. "Resolvable"
+  // is the new half: the old rule read a 40 pm view as the nucleus band because a 2.7 fm
+  // object FITS in 40 pm — while that object was five hundredths of a pixel, invisible.
+  // When nothing both fits and resolves, the view is INSIDE the finest object larger than
+  // it, and that object's band is the label: 40 pm is the atom's interior, not the nucleus.
+  const pxPerM = (0.6 * Math.min(window.innerWidth, window.innerHeight)) / Math.max(viewM, 1e-30);
+  let active = -1;
   for (let i = 0; i < LADDER.length; i++) {
-    if (LADDER[i].lengthM <= viewM) { active = i; break; }
+    if (LADDER[i].lengthM <= viewM && LADDER[i].lengthM * pxPerM >= 1) { active = i; break; }
+  }
+  if (active < 0) {
+    active = 0;
+    for (let i = 0; i < LADDER.length; i++) if (LADDER[i].lengthM > viewM) active = i;
   }
   // stops sit at their own zoom; two within a label's height of each other (the nucleus
   // and the fold below it are half a decade apart on a nineteen-decade axis) are pushed

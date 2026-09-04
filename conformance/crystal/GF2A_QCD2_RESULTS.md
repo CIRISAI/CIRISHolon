@@ -481,3 +481,25 @@ A2.8's plant (vii) asked only for a miss above 1e-3.
 **A2.9 and A3.3 are therefore satisfied**, and the volume ladder of A2.6 is licensed. What is
 NOT licensed and not claimed: any physics. G1′, G2 and G3 remain unread on this arm, which is
 the whole point of the ladder that follows.
+
+
+## The ladder is CLOSED AS PRIOR ART (2026-09-04, the operator's call) — not as a result
+
+The volume ladder A2.6 licensed was not run to volume. The 1+1D SU(3) lattice gauge theory
+with tensor networks at finite baryon density — the same colour-singlet sectors this arm
+was built to reach — is published: Silvi, Sauer, Tschirsich, Montangero, *Phys. Rev. D*
+**100**, 074512 (2019), and Hayata, Hidaka, Nishimura, arXiv:2311.11643 (dense QCD₂ with
+matrix product states). Neither reports runtime; no comparison is made and none is implied.
+The two x = 9 sectors that were running were killed with their checkpoints intact
+(`qcd2_a2/RESUME.md`); nothing from them is read.
+
+**What this closes and what it does not.** By A1.6, G1′, G2 and G3 stay UNREAD — they are
+withdrawn, not fired and not passed; no physics of this arm is claimed. The instrument is
+NOT withdrawn: E14's base (block-sparse contraction, change instrumentation, re-seeding and
+White's mixing, the exact and two-site variances, the device kernels) and A3's exam are
+banked as the labelled-MPS arm any 3D tensor-network node will stand on, and the one
+measurement the rehearsal made for Fold III's price stands with them: χ is the sector's
+RANK at the middle cut, the label count grows as (N/2+1)³, and so the price of a hadron
+sector is the number of labels that carry weight — a measurement, named, before any box is
+priced. The reading TIERS.md carries ("four physics, one object test, four different
+answers") is the other thing banked: the same closure test discriminates across carriers.

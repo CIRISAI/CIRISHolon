@@ -297,6 +297,49 @@ measured by its own kill.
   the proton, neutron and pion masses and the deuteron. If the DERIVED hadron pair
   table misses its referees at the staked band, Fold I's "forced, not fitted" dies
   for this carrier.
+- **GF2a — the 1+1D rehearsal of GF2's instrument (E7 → E14), READ 2026-09-04.**
+  The labelled MPS arm met the exact colour-lane referee on all six N = 8 sectors at
+  a χ set by the cut's RANK (misses ≤ 1.6e-9, cold = warm-mixed to 1e-9); the plants
+  fired as staked — the labels are load-bearing by the sharpest route, the unlabelled
+  mutant LEAVING its sector to sit 3.93 below its own variational bound on the
+  neighbouring sector's ground state to 3.1e-6 — and the two-site variance is the
+  arm's own error bar (108× between two states whose residuals agree to 2 %). The
+  volume ladder past N = 8 is **CLOSED AS PRIOR ART, not as a result** (Silvi, Sauer,
+  Tschirsich, Montangero, PRD 100 074512, 2019; Hayata, Hidaka, Nishimura,
+  arXiv:2311.11643; neither reports runtime, none is compared): G1′, G2, G3 unread by
+  A1.6 and withdrawn. What it banks for Fold III's PRICE: χ is the sector's rank at
+  the middle cut and the label count grows as (N/2+1)³, so a hadron sector's price is
+  the number of labels that CARRY WEIGHT — the measurement GF2 owes before its box is
+  priced. And the DRY register's newest entry got its first exact-vs-budgeted reading:
+  the penalty-enforced sector (a budgeted closure) failed where the exact label fixed
+  it (`conformance/crystal/GF2A_QCD2_RESULTS.md`, closing section).
+
+### The surface, audited — what of the workbench is the holon (2026-09-04)
+
+*The operator's question, asked after the zoom went fluid: "how much of this has been
+tacked on vs using the holon maximally?" Answered per band from the doors, not from
+the cards. The rule applied: a band's LIVE means its doors resolve, never a
+certificate; the band-flip law (a band is a tier only on a closure certificate against
+the dynamics beneath it) is untouched, and none of the three fine bands passes it.*
+
+| band | what is drawn or read | holon-coupled? | verdict |
+|---|---|---|---|
+| molecular | the certified scene: pair curves from FCI, the (O,H,H) surface, the census, the closure certificate, ACUITY-B's allocation as the cut | yes — it IS the holon | maximal |
+| atom | the SOLVE (`holon_atom_band_solve`): STO-3G FCI of the CENSUS MOLECULE at the scene's own geometry — energy, electron count, residual, exit | yes: the census picks the members, the scene supplies the geometry | the engine's bottom exposed, honestly — a substrate, not a tier |
+| atom | the drawn cloud SIZE (`holon_atom_band_rms_radius_bohr`): a FREE atom at the origin, per species, cached | **no** — it does not respond to the bond, the neighbour or the box | **tacked on**: the coupled size is the molecular solve's own one-body density, the same object the embedding build (Build 1) needs; that is the fix and it is one door |
+| nucleus | Z, isotope, mass, spin, charge radius | no — DECLARED inputs (WB-1.7), labelled so | honest input; nothing here is a coarse view of anything |
+| nucleus | the thermal de Broglie wavelength | half: the holon's measured temperature into a closed form | a formula standing in for the MEASURED spread node E's ring polymer would give; **tacked on until node E is wired** |
+| the fold | one baryon's quark density on a 6-site 1+1D SU(3) chain, exact, with a grab that quenches and a unitary clock | the SOLVER is the holon's lane kernel (the shard law); the OBJECT has no seam to the nucleus above it and produces no table | **a model, credited as prior art on its face**; it becomes a tier only through GF2 |
+| the view (two-box, fluid zoom, descent glide, filmstrip) | presentation of the cut ACUITY-B defined | it draws the holon's own view `v` and moves nothing in the physics | machinery, correctly placed — the one place the day's work was maximal by construction |
+
+Count: of the seven bands three are fenced on node G, one is the holon, one is the
+substrate exposed with a decoupled picture, one is declared, one is a model. The
+surface below the molecule is therefore mostly NOT the holon yet, and the page now
+says so on each card. The maximal-use path is three named steps, none new machinery:
+(1) the atom's drawn size from the molecular solve's density (Build 1's one-body
+density, reused); (2) node E's ring-polymer spread into the nucleus band in place of
+the formula; (3) the fold stays a model until GF2 gives it a seam — and is labelled a
+model until then.
 
 ### The lock — how this steelman may be extended, and how it may not
 
@@ -383,3 +426,10 @@ where the books are kept. Each half is backed at its own strength; the join is t
 bet, and its kills are separable: closure held at zero maintenance flux, or identity
 retained under design-blind repair — either fires alone, leaving both halves
 standing.
+
+**2026-09-04, the table UNCHANGED.** The season since 09-02 produced base machinery
+(E14), a rehearsal closed as prior art (GF2a), and a surface audited above — none is a
+measurement that separates the readings. The one reading added, "four physics, one
+object test, four different answers" (`TIERS.md`; the sibling's `four-from-one` claim),
+sharpens Move 1's INSTRUMENT — the same closure test discriminates across carriers —
+without moving any weight. A 0.36, B 0.20, C 0.28, D 0.08, E 0.08 stand.

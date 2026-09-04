@@ -42,8 +42,8 @@ embedded expansion terminates and the bare one (dE5) could not.
 | G1 — Hellmann–Feynman on the density field | **PASS**, 2 points | `|dE/dλ − (⟨ρ_A|J⟩ − Σ Z V)| = 3.8e-10` (5 Å), `7.6e-10` (3 Å) |
 | G2 — one fixed point of the densities | **PASS**, 8 of 8 | the two starts converge to bit-identical densities and sums (`Δρ = 0`, `ΔE = 0`) in 4–7 sweeps |
 | G3 — the reduction is exact | **PASS**, 8 of 8 | no partners anywhere: equal to the bare sum to the bit |
-| G4 — the floor of r_ρ | **PASS**, 3 of 3 | `1.4e-12, 8.5e-13, 1.1e-13` Ha; `|r_ρ|/floor = 10,325, 3,133, 1,810` — every far node posable |
-| S1 | **BRANCH (b)** | `κ_ρ > κ_q` at 5, 6 and 8 Å; `κ_ρ` non-increasing on both posable pairs; residual `∝ R^−9.3, R^−8.9`, attractive |
+| G4 — the floor of r_ρ | **CORRECTED 2026-09-04 (below)**: the translation null read `1.4e-12, 8.5e-13, 1.1e-13`, but the trimer energies entered from a record printed at 13 significant digits, whose rounding (`≤ 5e-11` Ha on a 296 Ha energy) cancelled identically between the base and moved chains — the null measured the pairwise sum's floor and was blind to the trimer's. The honest floor is the record's resolution, `5e-11`: `|r_ρ|/floor = 293, 53, 4.1` — **5 and 6 Å posable, 8 Å VOID for the monotonicity clause** |
+| S1 | **BRANCH (b)** (unchanged by the correction) | `κ_ρ > κ_q` at 5, 6 and 8 Å; `κ_ρ` non-increasing on the ONE posable pair (5 → 6 Å); residual `∝ R^−9.3` on that pair, attractive; the 8 Å point consistent with the same law within its `±5e-11` |
 | plant (i) — the Coulomb sign | **FIRES** at G1 | derivative off by `2⟨ρ_A|J⟩ = 21.3` Ha; carrier `⟨ρ_A|J⟩ = 10.6` Ha at 5 Å, nonzero in the sector |
 | plant (ii) — the partners' nuclei dropped | **FIRES** at S1, silent at G3 | `κ_ρ = 5,405, 7,758, 13,735` on the far nodes; carrier `E_nn(A, Z_b) = 10.7` Ha at 5 Å |
 
@@ -86,3 +86,34 @@ inside the field; the embedded residual tabulated for what remains; the far fiel
 **Not measured here, staked next.** The harvested residual depends on the field its core sits
 in; that dependence is what the next freeze stakes before any table is built from it. One
 carrier, one basis, no water: the water triple (21 orbitals) is the labelled-MPS base's job.
+
+## CORRECTION (2026-09-04, found by EMBED-3's G2) — the floor was blind to the record's precision
+
+EMBED-3's identity gate re-solved the 5.0 Å trimer in-process and found `r_3 = −1.462678e-8`
+against this document's `−1.467225e-8`: a difference of `4.5e-11` on a residual whose floor
+this document had put at `1.4e-12`. The cause is bookkeeping, not arithmetic: EMBED-2 never
+solved the trimer, it read `E_ABC` from SEAM-1's JSON, and that record prints energies with
+`{:.12e}` — thirteen significant digits, an absolute resolution of `1e-10` on a 296 Ha
+energy. The translation null compared two such rounded trimer energies whose true difference
+(`3e-12`, SEAM-1's own in-process floor) is far below the format's step, so both rounded to the
+same value and the trimer's contribution to the floor read exactly zero; what the null measured
+was the pairwise sum's floor alone.
+
+**What changes.** The floor of `r_ρ` in this campaign is the record's resolution, `5e-11` Ha,
+not `1e-12`. Posable ratios become `293` (5 Å), `53` (6 Å) and
+`4.1` (8 Å): the 8 Å node is VOID for the monotonicity clause. S1 stands on the
+one posable pair, 5 → 6 Å, where `κ_ρ` falls (`3.27e-3 → 1.81e-3`) and the residual's exponent
+is `9.34`; the 8 Å point (`−2.06e-10 ± 0.5e-10`) is consistent with `−C/R⁹` (`−2.1e-10`) and
+supports the law within its error bar without being read for the exponent. The one-constant fit
+therefore rests on two exact points and one bounded one; `C = 8.5 Ha·bohr⁹` is unchanged in
+value and its stated precision drops from "a few per cent" to "a few per cent on the two exact
+nodes, twenty per cent on the third". The verdict, branch (b), and every comparison to the
+charge field are unchanged (`κ_q` and `κ_ρ` differ by factors of 2–6, four orders above the
+floor).
+
+**What changes forward.** Registered as **M-FORMAT-FLOOR**: a floor measured through a
+rounded record reads the rounding's cancellation, not the arithmetic; write every energy a
+later campaign may difference at full precision (`{:.17e}`), and measure a floor in the
+process that holds the unrounded values or not at all. EMBED-3's own gates compute every
+difference in-process; its G2 stake of `1e-12` on an identity between a rounded record and an
+in-process value was the same error and reads `4.5e-11` — the record's resolution, said so.

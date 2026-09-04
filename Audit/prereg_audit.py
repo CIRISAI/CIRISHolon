@@ -112,6 +112,7 @@ CONTACT = {
     "truncation error": "M-TRUNCATION-AS-ERRORBAR",
     "non-increasing": "M-FLOOR-UNSTAKED", "monotonicity": "M-FLOOR-UNSTAKED",
     "resolution floor": "M-FLOOR-UNSTAKED",
+    "significant digits": "M-FORMAT-FLOOR", "printed precision": "M-FORMAT-FLOOR",
 }
 
 def contact_table_is_sound():

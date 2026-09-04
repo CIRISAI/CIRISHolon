@@ -478,11 +478,27 @@ pub fn run_sym_ladder(o: &LadderOpts, backend: Option<std::sync::Arc<dyn crate::
         match crate::symmetric::dmrg_sweep_sym_resume(&mpo, start_t, start_l, &sector, &cfg, resume) {
             Ok((r, labels)) => {
                 let max_dw = r.discarded_weight.iter().cloned().fold(0.0f64, f64::max);
+                // THE ERROR BAR. The exact variance is priced and refuses above its lease
+                // (18.5 GB at chi=512, 74 GB at 1024), and every rung of the volume ladder
+                // sits above that — so the two-site variance is computed on EVERY rung and
+                // the exact one beside it wherever it fits. Their ratio on the rungs where
+                // both exist is the calibration (measured 0.46-0.73 at N=8; the two-site one
+                // is an approximation on this long-range H, exact only for nearest-neighbour
+                // interactions, and is reported as `variance_2s`, never as `variance`).
                 let var = if o.variance {
-                    match crate::variance::energy_variance(&r.tensors, &mpo) {
+                    let mut t = r.tensors.clone();
+                    let n2 = crate::observables::norm_squared(&t);
+                    if n2 > 0.0 {
+                        let f = 1.0 / n2.sqrt();
+                        for v in t[0].data.iter_mut() { *v *= f; }
+                    }
+                    let exact = match crate::variance::energy_variance(&t, &mpo) {
                         Ok((_, _, v)) => format!(",\"variance\":{v:.6e}"),
                         Err(e) => format!(",\"variance_refused\":\"{e}\""),
-                    }
+                    };
+                    let t0 = std::time::Instant::now();
+                    let (d2s, one, two) = crate::variance2::two_site_variance(&t, &mpo);
+                    format!("{exact},\"variance_2s\":{d2s:.6e},\"variance_2s_1s\":{one:.3e},\"variance_2s_2s\":{two:.3e},\"variance_2s_seconds\":{:.1}", t0.elapsed().as_secs_f64())
                 } else {
                     String::new()
                 };

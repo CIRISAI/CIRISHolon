@@ -56,6 +56,7 @@ pub mod nucleus;
 pub mod sim;
 pub mod table;
 pub mod trimer_bank;
+pub mod waterbox;
 
 use sim::{Boundary, Sim};
 

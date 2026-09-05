@@ -518,6 +518,183 @@ pub fn binned_closure_defect(
     closure_leg(&keys, st)
 }
 
+
+// ------------------------------------------- 7. the periodic readouts (LIQUID-1)
+//
+// Two readings a WRAPPING box needs and the open-box lenses above cannot give it. Both
+// take the cell explicitly rather than reading it from a header: a lens that guessed the
+// periodicity would be a different instrument on the same numbers, which is the
+// M-STALE-INSTRUMENT shape. `hbonds_periodic` is `hbonds`'s criterion verbatim with every
+// difference vector reduced to the minimum image; `rdf_oo` is the oxygen-oxygen radial
+// distribution normalised to the ideal gas at the box's own density.
+
+/// `b - a` under the minimum image of an ORTHORHOMBIC cell.
+///
+/// An axis whose edge is not a finite positive length is left UNREDUCED — that is the
+/// open-axis case stated rather than assumed, and it is what makes a slab (one edge zero
+/// or infinite) a well-defined argument instead of a NaN.
+#[inline]
+fn min_image(a: [f64; 3], b: [f64; 3], cell: [f64; 3]) -> [f64; 3] {
+    let mut d = sub(b, a);
+    for k in 0..3 {
+        let l = cell[k];
+        if l.is_finite() && l > 0.0 {
+            d[k] -= l * (d[k] / l).round();
+        }
+    }
+    d
+}
+
+/// The H-bond census of [`hbonds`], under the minimum image of an orthorhombic `cell`.
+///
+/// The SAME rung-1 criterion — `r(O···O) < 6.6140`, `r(O···H) < 4.6298`, and the angle at
+/// the donor under 30° — with every difference vector, INCLUDING the one that picks each
+/// hydrogen's covalent donor, taken under the minimum image. A hydrogen bond whose partner
+/// sits across a face is a hydrogen bond; read with the open-box lens it is both invisible
+/// (the O···O separation reads a box length) and mis-assigned (the nearest oxygen by raw
+/// difference is the wrong molecule), which is LIQUID-1's plant (ii).
+///
+/// **REFUSES exactly where [`hbonds`] refuses** and nowhere else: a scene with no oxygen or
+/// no hydrogen has no hydrogen-bond variable, and a zero there would read as a measured
+/// absence.
+pub fn hbonds_periodic(pos: &[[f64; 3]], z: &[u32], cell: [f64; 3]) -> Reading<Vec<HBond>> {
+    let oxygens: Vec<usize> = (0..z.len()).filter(|&i| z[i] == 8).collect();
+    let hydrogens: Vec<usize> = (0..z.len()).filter(|&i| z[i] == 1).collect();
+    if oxygens.is_empty() || hydrogens.is_empty() {
+        return refuse(
+            "hbond-census-periodic",
+            "the scene holds at least one O and one H",
+            format!(
+                "{} oxygens and {} hydrogens; there is no hydrogen bond to count, and a \
+                 zero here would read as a measured absence",
+                oxygens.len(),
+                hydrogens.len()
+            ),
+        );
+    }
+    let cos_cut = (HB_ANGLE_DEG * std::f64::consts::PI / 180.0).cos();
+    let mut out = Vec::new();
+    for &h in &hydrogens {
+        // Covalent donor = nearest oxygen UNDER THE MINIMUM IMAGE.
+        let donor = *oxygens
+            .iter()
+            .min_by(|&&a, &&b| {
+                norm(min_image(pos[h], pos[a], cell))
+                    .partial_cmp(&norm(min_image(pos[h], pos[b], cell)))
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            })
+            .unwrap();
+        for &acc in &oxygens {
+            if acc == donor {
+                continue;
+            }
+            let b = min_image(pos[donor], pos[acc], cell);
+            let r_oo = norm(b);
+            if r_oo >= HB_R_OO_BOHR {
+                continue;
+            }
+            if norm(min_image(pos[h], pos[acc], cell)) >= HB_R_OH_BOHR {
+                continue;
+            }
+            let a = min_image(pos[donor], pos[h], cell);
+            let c = dot(a, b) / (norm(a).max(1e-300) * norm(b).max(1e-300));
+            if c > cos_cut {
+                out.push(HBond {
+                    donor_o: donor,
+                    hydrogen: h,
+                    acceptor_o: acc,
+                });
+            }
+        }
+    }
+    Ok(out)
+}
+
+/// A radial distribution function: the bin centres, the reading, and the two numbers the
+/// normalisation was taken at, so a `g` quoted without its density cannot be produced here.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Rdf {
+    /// Bin centres, bohr: bin `k` covers `[k·dr, (k+1)·dr)` and its centre is `(k+½)·dr`.
+    pub r: Vec<f64>,
+    pub g: Vec<f64>,
+    pub dr: f64,
+    /// Oxygens in the scene.
+    pub n_o: usize,
+    /// The number density the ideal-gas reference was taken at, `N_O / V`, bohr⁻³.
+    pub rho_o: f64,
+}
+
+/// The oxygen–oxygen radial distribution under the minimum image of an orthorhombic cell,
+/// normalised to the ideal gas at the BOX's density:
+///
+/// ```text
+/// g(r) = 2 · N_pairs(bin) / (N_O · rho_O · 4 pi r^2 dr),   rho_O = N_O / V,  r the bin centre
+/// ```
+///
+/// The factor of two is there because the loop counts each unordered pair once and each
+/// oxygen's shell counts it twice; with it, `sum over bins of rho_O·4 pi r^2·g(r)·dr` over a
+/// shell is the mean COORDINATION NUMBER of that shell, which is the form the gate reads.
+///
+/// **REFUSES** past half the shortest edge — beyond that the minimum image is no longer the
+/// only image and the histogram is counting one partner twice — and on a scene with fewer
+/// than two oxygens, where there is no pair to bin and an all-zero `g` would read as a
+/// measured absence.
+pub fn rdf_oo(pos: &[[f64; 3]], z: &[u32], cell: [f64; 3], dr: f64, r_max: f64) -> Reading<Rdf> {
+    let oxygens: Vec<usize> = (0..z.len()).filter(|&i| z[i] == 8).collect();
+    if oxygens.len() < 2 {
+        return refuse(
+            "rdf-oo",
+            "the scene holds at least two oxygens",
+            format!("{} oxygens; there is no O–O pair to bin", oxygens.len()),
+        );
+    }
+    let min_edge = cell[0].min(cell[1]).min(cell[2]);
+    if !(dr > 0.0) || !(r_max > dr) {
+        return refuse(
+            "rdf-oo",
+            "0 < dr < r_max",
+            format!("dr {dr} and r_max {r_max} leave no bin to fill"),
+        );
+    }
+    if !(r_max <= 0.5 * min_edge) {
+        return refuse(
+            "rdf-oo",
+            "r_max <= half the shortest cell edge",
+            format!(
+                "r_max {r_max:.4} bohr against a shortest edge of {min_edge:.4}; past half \
+                 the edge the minimum image is not the only image and the histogram counts \
+                 one partner twice"
+            ),
+        );
+    }
+    let n_bins = (r_max / dr).floor() as usize;
+    if n_bins == 0 {
+        return refuse("rdf-oo", "at least one whole bin inside r_max", format!("r_max {r_max} at dr {dr}"));
+    }
+    let n_o = oxygens.len();
+    let volume = cell[0] * cell[1] * cell[2];
+    let rho_o = n_o as f64 / volume;
+    let mut counts = vec![0.0f64; n_bins];
+    for (ii, &i) in oxygens.iter().enumerate() {
+        for &j in oxygens[ii + 1..].iter() {
+            let r = norm(min_image(pos[i], pos[j], cell));
+            let k = (r / dr).floor();
+            if k >= 0.0 && (k as usize) < n_bins {
+                counts[k as usize] += 1.0;
+            }
+        }
+    }
+    let mut rs = Vec::with_capacity(n_bins);
+    let mut g = Vec::with_capacity(n_bins);
+    for k in 0..n_bins {
+        let r = (k as f64 + 0.5) * dr;
+        let shell = 4.0 * std::f64::consts::PI * r * r * dr;
+        rs.push(r);
+        g.push(2.0 * counts[k] / (n_o as f64 * rho_o * shell));
+    }
+    Ok(Rdf { r: rs, g, dr, n_o, rho_o })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -796,5 +973,154 @@ mod tests {
         assert!(!leg.void);
         assert!(leg.defect > 0.0);
         assert!(leg.witness_pair_count >= 1);
+    }
+
+    // ---------------------------------------------------- the periodic readouts
+
+    /// EMBED-1's water pin, repeated here rather than imported: this crate has ZERO
+    /// dependencies by design and importing the constant would point the dependency the
+    /// wrong way. `holon_render::field::{WATER_PIN_R_BOHR, WATER_PIN_THETA_RAD}`.
+    const PIN_R: f64 = 1.9435738400;
+    const PIN_THETA: f64 = 1.6887434037;
+
+    /// A water with its oxygen at `o`, its first hydrogen along `+dir`, and the second at
+    /// the pin angle in the plane `dir`–`up`.
+    fn water(o: [f64; 3], dir: [f64; 3], up: [f64; 3]) -> [[f64; 3]; 3] {
+        let n = norm(dir);
+        let d = [dir[0] / n, dir[1] / n, dir[2] / n];
+        let m = norm(up);
+        let u = [up[0] / m, up[1] / m, up[2] / m];
+        let (c, s) = (PIN_THETA.cos(), PIN_THETA.sin());
+        [
+            o,
+            [o[0] + PIN_R * d[0], o[1] + PIN_R * d[1], o[2] + PIN_R * d[2]],
+            [
+                o[0] + PIN_R * (c * d[0] + s * u[0]),
+                o[1] + PIN_R * (c * d[1] + s * u[1]),
+                o[2] + PIN_R * (c * d[2] + s * u[2]),
+            ],
+        ]
+    }
+
+    /// A simple-cubic lattice of oxygens has SIX nearest neighbours, and the first peak of
+    /// `g_OO` integrates to exactly that: `sum rho·4 pi r^2 g dr` over the peak = 6, by the
+    /// normalisation's own arithmetic and independently of the bin centre. Below the
+    /// spacing the reading is an exact zero — there is no pair there to bin.
+    #[test]
+    fn rdf_of_a_simple_cubic_lattice_integrates_to_six_neighbours() {
+        let a = 1.0f64;
+        let n = 4usize;
+        let l = a * n as f64;
+        let mut pos = Vec::new();
+        let mut z = Vec::new();
+        for i in 0..n {
+            for j in 0..n {
+                for k in 0..n {
+                    pos.push([i as f64 * a, j as f64 * a, k as f64 * a]);
+                    z.push(8u32);
+                }
+            }
+        }
+        let dr = 0.1;
+        let rdf = rdf_oo(&pos, &z, [l, l, l], dr, 0.5 * l).unwrap();
+        assert_eq!(rdf.n_o, 64);
+        assert!((rdf.rho_o - 64.0 / (l * l * l)).abs() < EPS);
+        // below the spacing: exactly zero, in every bin wholly inside r < a
+        for (k, &r) in rdf.r.iter().enumerate() {
+            if r + 0.5 * dr <= a {
+                assert_eq!(rdf.g[k], 0.0, "bin at r = {r} reads {}", rdf.g[k]);
+            }
+        }
+        // the first peak, integrated: the next shell is at a·sqrt(2) = 1.414a, so a window
+        // out to 1.2a holds the first shell and nothing else
+        let mut coord = 0.0f64;
+        for (k, &r) in rdf.r.iter().enumerate() {
+            if r < 1.2 * a {
+                coord += rdf.rho_o * 4.0 * std::f64::consts::PI * r * r * rdf.g[k] * dr;
+            }
+        }
+        assert!((coord - 6.0).abs() < 1e-9, "first-shell coordination {coord}");
+        // and the refusal past half the shortest edge
+        let e = rdf_oo(&pos, &z, [l, l, l], dr, 0.5 * l + 0.001).unwrap_err();
+        assert_eq!(e.gate, "r_max <= half the shortest cell edge");
+        let e = rdf_oo(&pos[..1], &z[..1], [l, l, l], dr, 1.0).unwrap_err();
+        assert_eq!(e.gate, "the scene holds at least two oxygens");
+    }
+
+    /// A hydrogen bond ACROSS A FACE: the periodic lens finds it, the open-box lens on the
+    /// same wrapped coordinates finds nothing — it reads the O···O separation as a box
+    /// length and assigns the donor hydrogen to the wrong molecule. This is LIQUID-1's
+    /// plant (ii) as a two-molecule fixture.
+    #[test]
+    fn a_hydrogen_bond_across_a_face_is_seen_only_under_the_minimum_image() {
+        let l = 20.0f64;
+        let cell = [l, l, l];
+        // donor at x = 1.0 pointing along −x; acceptor 5.5 bohr away at x = −4.5, wrapped
+        // to 15.5 — so the bond runs through the x = 0 face
+        let donor = water([1.0, 10.0, 10.0], [-1.0, 0.0, 0.0], [0.0, 0.0, 1.0]);
+        let (ch, sh) = ((0.5 * PIN_THETA).cos(), (0.5 * PIN_THETA).sin());
+        let acc_o = [15.5, 10.0, 10.0];
+        let acceptor = [
+            acc_o,
+            [acc_o[0] + PIN_R * ch, acc_o[1], acc_o[2] + PIN_R * sh],
+            [acc_o[0] + PIN_R * ch, acc_o[1], acc_o[2] - PIN_R * sh],
+        ];
+        let mut pos: Vec<[f64; 3]> = Vec::new();
+        let mut z: Vec<u32> = Vec::new();
+        for w in [donor, acceptor] {
+            for (m, p) in w.iter().enumerate() {
+                // wrapped into [0, L), as the engine's drift step leaves them
+                pos.push([
+                    p[0] - l * (p[0] / l).floor(),
+                    p[1] - l * (p[1] / l).floor(),
+                    p[2] - l * (p[2] / l).floor(),
+                ]);
+                z.push(if m == 0 { 8 } else { 1 });
+            }
+        }
+        assert!(pos.iter().all(|p| p.iter().all(|&x| (0.0..l).contains(&x))), "every atom is inside the cell");
+        let across = hbonds_periodic(&pos, &z, cell).unwrap();
+        assert_eq!(across.len(), 1, "one bond across the face: {across:?}");
+        assert_eq!(across[0].donor_o, 0);
+        assert_eq!(across[0].hydrogen, 1);
+        assert_eq!(across[0].acceptor_o, 3);
+        let open = hbonds(&pos, &z).unwrap();
+        assert_eq!(open.len(), 0, "the open-box lens sees none of it: {open:?}");
+    }
+
+    /// Inside the cell with nothing crossing a face the two lenses are the SAME reading —
+    /// the periodic one is the open one plus a reduction that never fires.
+    #[test]
+    fn inside_the_cell_the_periodic_lens_is_the_open_lens() {
+        let l = 30.0f64;
+        let c = 15.0f64;
+        let donor = water([c, c, c], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]);
+        let (ch, sh) = ((0.5 * PIN_THETA).cos(), (0.5 * PIN_THETA).sin());
+        let acc_o = [c, c, c + 5.5];
+        let acceptor = [
+            acc_o,
+            [acc_o[0] + PIN_R * sh, acc_o[1], acc_o[2] + PIN_R * ch],
+            [acc_o[0] - PIN_R * sh, acc_o[1], acc_o[2] + PIN_R * ch],
+        ];
+        let mut pos: Vec<[f64; 3]> = Vec::new();
+        let mut z: Vec<u32> = Vec::new();
+        for w in [donor, acceptor] {
+            for (m, p) in w.iter().enumerate() {
+                pos.push(*p);
+                z.push(if m == 0 { 8 } else { 1 });
+            }
+        }
+        let a = hbonds(&pos, &z).unwrap();
+        let b = hbonds_periodic(&pos, &z, [l, l, l]).unwrap();
+        assert_eq!(a, b, "no face is crossed, so the reduction never fires");
+        assert_eq!(a.len(), 1, "and the fixture is a bonded dimer: {a:?}");
+    }
+
+    #[test]
+    fn the_periodic_hbond_lens_refuses_where_the_open_one_does() {
+        let e = hbonds_periodic(&[[0.0; 3]], &[8], [10.0; 3]).unwrap_err();
+        assert_eq!(e.gate, "the scene holds at least one O and one H");
+        let e = hbonds_periodic(&[[0.0; 3]], &[1], [10.0; 3]).unwrap_err();
+        assert_eq!(e.gate, "the scene holds at least one O and one H");
     }
 }

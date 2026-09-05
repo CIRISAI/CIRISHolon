@@ -1,0 +1,9 @@
+{
+  "law_source": "../conformance/water_observatory/field9/wall9.json", "law_refused_for_counted_arm": true, "law_refusal": "../conformance/water_observatory/field9/wall9.json: the harvested law is NOT BOUNDED below its fit range — H–O potential falls to -4.2908e-2 at r = 2.68 bohr, more than kT below its value -4.1621e-2 at its fit floor r_min = 2.781 (FIELD-9 G-B0)",
+  "dry": true,
+  "seam_terms_reach_bohr": 1.339878610e1, "seam_reach_budget_hartree": 1.000000000e-10, "intra_unit_reach_bohr": 4.000000000e0,
+  "legality_radius_bohr": 1.339878610e1, "tables_reach_bohr": 2.000000000e1, "half_edge_bohr": 1.479681565e1, "cell_edge_bohr": 2.959363131e1,
+  "units": 128, "staked_units": 128, "free_atoms": 0, "atoms": 384,
+  "admitted": true, "refusal": null,
+  "legality_is_seam_rule_to_the_bit": true
+}

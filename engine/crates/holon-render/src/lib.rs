@@ -40,6 +40,7 @@ pub mod acuity;
 pub mod field;
 pub mod barostat;
 pub mod cells;
+pub mod channel;
 pub mod checkpoint;
 pub mod bank;
 pub mod clock;

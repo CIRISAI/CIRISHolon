@@ -33,13 +33,45 @@ channel 4 to channel 1 is small where it was measured — the separability the c
 needs (OBJECT.md rule 10) is supported on the two nodes that exist and is not claimed on
 the two that do not.
 
-**Why 8 and 12 Å did not complete — an instrument fact.** The 8 Å node's first trimer solve
-ran for three hours at full CPU where the 4 and 6 Å nodes took 680 s per trimer; the run was
-killed at 18:27 with its record annotated and the node JSON unwritten. The node JSON did not
-carry the solver's exit or iteration count for the trimer-in-field solve (it carried them
-for G0 only), so the cause is not in the record; `examples/embed3_probe.rs` re-solves that
-node alone and prints its exit, iterations and residual, and its result is appended below
-when it lands. The likely shape is the Davidson running to its iteration cap on a weak,
-symmetry-breaking field (the memory of this repository: a warm start on a near-degenerate
-manifold stalls at the cap), and if so the fix is the thick restart the pair curves already
-use, not a new stake. Until the probe reads, the two far nodes are UNRUN, not VOID.
+**Why 8 and 12 Å did not complete the first time — an instrument fact, CORRECTED by the
+probe.** The 8 Å node's first trimer solve ran for three hours where the 4 and 6 Å nodes took
+680 s per trimer, and the run was killed with its record annotated "Davidson non-convergence
+suspected". `examples/embed3_probe.rs` then re-solved that node alone: **exit Converged, 133
+Davidson iterations, residual 9.7e-11, 2,531 wall-seconds** — 19 s per iteration against
+4.5 s per iteration on the uncontended nodes. The solver did not stall; it was starved. The
+lead was running FIELD-1's gate tests, an S1 arm and a compile on the same 32 cores at the
+time, and the annotation was a guess written before the measurement. The two nodes are
+UNRUN, not VOID, and were relaunched uncontended after the probe read; their rows follow.
+The node JSON now owes the solver's exit and iteration count for every trimer solve, not
+only G0's — a bookkeeping gap the probe existed to fill and the next runner closes.
+
+
+## System B — the water dimer's far field, priced in the clock it is spent in
+
+| gate | verdict | the number |
+|---|---|---|
+| G0 — the price, wall time | **PASS** | one exact dimer (`LINEAR`, 6.0 Å): 1,002,001 determinants, **574.5 wall-seconds** on 32 threads (14508 processor-seconds), under the 900 staked; the five nodes admitted. The 8.0 Å energy re-derived against EMBED-1's `g0_price.json` to `4.8e-11` Ha (stake `1e-9`) |
+| G1 — one fixed point of the two densities | **PASS**, 5 of 5 | bit-identical densities from both starts on every node |
+| G4 — `E_es` symmetric | **PASS**, 5 of 5 | `≤ 2.7e-14` |
+| S2 — water's far field | **BRANCH (a)** for the charge field, 3 of 3 far nodes | `ρ_q = 2.058e-02, 1.093e-02, 4.446e-03` at 5, 6, 8 Å (stake `≤ 0.25`); absolute residual `1.38e-05 → 4.04e-06 → 6.63e-07` Ha, strictly falling — **the charge field is water's far field, as it was HF's** |
+| S2, the density field | **BRANCH (a)** for the same clause | `ρ_ρ = 2.137e-02, 1.143e-02, 4.689e-03`; residual `1.43e-05 → 4.22e-06 → 7.00e-07` — within 5 % of the charge field at every node |
+| plant (i) — the double count on water | **FIRES** | `ρ_q = 0.98, 1.00, 1.00` on the far nodes; carrier `|e_qq|` nonzero at every node |
+
+| R_OO (Å) | sector | ΔE_exact (Ha) | ΔE_q (Ha) | ρ_q | \|residual_q\| | ρ_q plant (i) | ΔE_ρ (Ha) | ρ_ρ | G4 | q_H donor | density sweeps | dimer residual | wall s |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 4.0 | transition | -1.510625e-03 | -1.369840e-03 | 9.320e-02 | 1.41e-04 | 0.84 | -1.379706e-03 | 8.667e-02 | 0.0e+00 | +0.23402 | 5 / 4 | 1.0e-10 | 854 |
+| 4.5 | transition | -9.599758e-04 | -9.243802e-04 | 3.708e-02 | 3.56e-05 | 0.95 | -9.239073e-04 | 3.757e-02 | 1.8e-14 | +0.23316 | 5 / 4 | 6.6e-11 | 651 |
+| 5.0 | far | -6.689798e-04 | -6.552133e-04 | 2.058e-02 | 1.38e-05 | 0.98 | -6.546804e-04 | 2.137e-02 | 1.1e-14 | +0.23264 | 5 / 4 | 9.5e-11 | 829 |
+| 6.0 | far | -3.696209e-04 | -3.655800e-04 | 1.093e-02 | 4.04e-06 | 1.00 | -3.653964e-04 | 1.143e-02 | 1.1e-14 | +0.23208 | 4 / 3 | 7.8e-11 | 950 |
+| 8.0 | far | -1.491869e-04 | -1.485236e-04 | 4.446e-03 | 6.63e-07 | 1.00 | -1.484874e-04 | 4.689e-03 | 2.7e-15 | +0.23167 | 4 / 3 | 9.7e-11 | 870 |
+
+**What water says that HF did not.** On water the two fields agree to a few per cent at every
+far node and both carry 98–99.6 % of the interaction, where on the HF chain the density field
+lost to the charges by factors of 2–6. Water's two-centre dipole-exact charges sit on three
+centres (`q_O = −2q`, symmetric hydrogens), so the charge model already carries the
+molecule's quadrupole along its C₂ axis; the multipole error that dominated the HF chain's
+charge residual is smaller here, and the dispersion the density field exposes cleanly is a
+similar fraction on both. The transition nodes (4.0, 4.5 Å: `ρ_q = 0.093, 0.037`) are
+reported and not read. This closes the water question EMBED-1's G0 left open: the water
+cores go inside the charge field under the next freeze, and the price of that verdict was
+69 wall-minutes on 32 threads, said in the clock it was spent in.

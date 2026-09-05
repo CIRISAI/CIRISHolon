@@ -1,0 +1,1 @@
+{"node": "water LINEAR R_OO=6.0", "n_det": 1002001, "e_super": -1.500469526835e2, "residual": 7.800e-11, "davidson_iters": 140, "wall_seconds": 574.547, "cpu_seconds": 14508.340, "threads": 32, "admitted": true}

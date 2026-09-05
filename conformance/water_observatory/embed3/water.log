@@ -1,0 +1,62 @@
+warning: value assigned to `last_delta` is never read
+   --> crates/holon-chem/src/density_embed.rs:254:26
+    |
+254 |     let mut last_delta = f64::INFINITY;
+    |                          ^^^^^^^^^^^^^
+    |
+    = help: maybe it is overwritten before being read?
+    = note: `#[warn(unused_assignments)]` (part of `#[warn(unused)]`) on by default
+
+warning: value assigned to `last_delta` is never read
+  --> crates/holon-chem/src/seam.rs:55:26
+   |
+55 |     let mut last_delta = f64::INFINITY;
+   |                          ^^^^^^^^^^^^^
+   |
+   = help: maybe it is overwritten before being read?
+
+warning: value assigned to `monomers` is never read
+  --> crates/holon-chem/src/seam.rs:56:24
+   |
+56 |     let mut monomers = Vec::new();
+   |                        ^^^^^^^^^^
+   |
+   = help: maybe it is overwritten before being read?
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:357:5
+    |
+355 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+356 | pub struct ClassicalPotentialOp {
+357 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+    = note: `#[warn(unpredictable_function_pointer_comparisons)]` on by default
+
+warning: function pointer comparisons do not produce meaningful results since their addresses are not guaranteed to be unique
+   --> crates/holon-chem/src/tower.rs:480:5
+    |
+478 | #[derive(Clone, Debug, PartialEq)]
+    |                        --------- in this derive macro expansion
+479 | pub struct RingPolymerOp {
+480 |     pub pair_energy_fn: Option<fn(r: f64) -> f64>,
+    |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |
+    = note: the address of the same function can vary between different codegen units
+    = note: furthermore, different functions could have the same address after being merged together
+    = note: for more information visit <https://doc.rust-lang.org/nightly/core/ptr/fn.fn_addr_eq.html>
+
+warning: `holon-chem` (lib) generated 5 warnings
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.03s
+     Running `target/release/examples/embed3_campaign water`
+System B — the water dimer's far field
+G0 water: 1002001 dets, wall 574.5 s on 32 threads → admitted
+  R_OO=4.0 Å (transition): ΔE_exact -1.5106e-3  ρ_q 9.320e-2  ρ_ρ 8.667e-2  plant(i) 0.84  G4 0.0e0  wall 854s
+  R_OO=4.5 Å (transition): ΔE_exact -9.5998e-4  ρ_q 3.708e-2  ρ_ρ 3.757e-2  plant(i) 0.95  G4 1.8e-14  wall 651s
+  R_OO=5.0 Å (far): ΔE_exact -6.6898e-4  ρ_q 2.058e-2  ρ_ρ 2.137e-2  plant(i) 0.98  G4 1.1e-14  wall 829s
+  R_OO=6.0 Å (far): ΔE_exact -3.6962e-4  ρ_q 1.093e-2  ρ_ρ 1.143e-2  plant(i) 1.00  G4 1.1e-14  wall 950s
+  R_OO=8.0 Å (far): ΔE_exact -1.4919e-4  ρ_q 4.446e-3  ρ_ρ 4.689e-3  plant(i) 1.00  G4 2.7e-15  wall 870s

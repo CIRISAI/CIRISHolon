@@ -1,0 +1,6 @@
+{
+  "r_oo_angstrom": 5.000, "sector": "far", "n_det_super": 1002001, "e_super": -1.500472520424e2, "super_residual": 9.516e-11, "super_davidson_iters": 169, "record_check_8A": NaN, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "de_exact": -6.689798197215e-4,
+  "charges": {"converged": true, "iterations": 4, "q_a": [-4.652882954e-1, 2.326441477e-1, 2.326441477e-1], "e_qq": -6.696191569512e-4, "de_q": -6.552133334594e-4, "rho_q": 2.057833e-2, "rho_q_plant_i": 9.803774e-1},
+  "densities": {"converged": true, "sweeps_zero": 5, "sweeps_isolated": 4, "dp": 0.000e0, "e_a_in_b": -7.502394851154e1, "e_b_in_a": -7.502395311773e1, "e_es": -6.638863102140e-4, "g4": 1.066e-14, "de_rho": -6.546803796539e-4, "rho_rho": 2.137499e-2},
+  "wall_seconds": 828.7, "cpu_seconds": 22222.6, "threads": 32
+}

@@ -239,3 +239,22 @@ set_lane_threads_for_pool  the same policy stated as a split: cores / workers, f
 set_lane_threads  the process thread policy for nested parallelism; consumed by orchestrators that already run workers (holon-tables generate.rs), never by the library's own paths
 with_threads      HostSpace's explicit thread count; consumed by the law gates (vecspace_law.rs, holon-gpu vecspace.rs) and any caller pinning a shard count for a measurement
 nuclear         the declared nucleus by Z (spin, charge radius, sourced); consumed by holon-render's nucleus doors (the workbench's nucleus rung), never by a solve
+
+# --- the water observatory: EMBED/SEAM/FIELD/CT campaigns (classified 2026-09-05) ---
+ANGSTROM_TO_BOHR        the one Å→bohr constant; every campaign example here and every holon-render harvest (field3–9, ct1) imports it; the library itself works in bohr
+embed_densities         EMBED-2/3's density fixed point; consumed by embed2/embed3 campaign examples, channel34_sizing and holon-render field4_harvest; gated by tests/density_embed.rs
+rho_pa_subset           EMBED-3's pairwise-additive density on a fragment subset; embed3_campaign, channel34_sizing, tests/density_embed.rs
+subset_in_field         EMBED-3's subset-in-the-others'-field solve; embed3_campaign, embed3_probe, channel34_sizing (where it priced the exact water trimer at the door)
+fci_in_hl_basis         FIELD-5's gate G-H0 (the full CI in the orthogonalised monomer basis is the supermolecule); consumed by holon-render field5_harvest and the module's unit test
+fci_full_from_product   CT-1 plant (i): the same Davidson on the FULL space from the undeformed product start; consumed by holon-render ct1_harvest (plant_i_full.json)
+fci_no_charge_transfer_orthogonalised  the REFUTED instrument of CT-1 as frozen, kept with its refutation ASSERTED by its unit test (CT1_AMENDMENT_1: the orthogonalised sector is a sector of deformed monomers); reached only by that test, on purpose — it is the record of a refutation, not API
+hf_chain                the HF-chain fragment builder of the SEAM/EMBED campaigns; seam_campaign, seam_floor, embed2/3 examples, tests/seam.rs, tests/density_embed.rs
+hf_dimer                EMBED-1's HF dimer builder; embed_campaign and tests/embed.rs
+supermolecule_all       SEAM's all-fragment supermolecule; seam_floor, seam_campaign
+water_dimer_linear      the linear water dimer builder every FIELD harvest (3–9) and ct1_harvest consume
+pin_hf                  EMBED-1's HF monomer pin; seam_campaign, embed_campaign, tests/embed.rs, tests/seam.rs
+pin_water               EMBED-1's water monomer pin; embed_campaign; holon-render carries the pin's coordinates by value in its scenes (field2_scenes, waterbox)
+partitioned_sizes       consumed by holon-render src/nucleus.rs (the nucleus door) and tests/embed.rs
+potential_at            EMBED-1's electrostatic potential of a density at a point — the referee for gate G3; reached only by tests/embed.rs, kept as the gate's instrument
+r2_expectation          EMBED-1's ⟨r²⟩ of a density — the size gate's referee; reached only by tests/embed.rs, kept as the gate's instrument
+rdm1_plant_unsigned     EMBED-1's plant (the unsigned 1-RDM); reached only by tests/embed.rs, which is what a plant entry is for

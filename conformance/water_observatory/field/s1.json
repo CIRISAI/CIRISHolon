@@ -1,0 +1,6 @@
+{
+  "settle_frames": 2000, "count_frames": 20000, "frame": "one integrator step",
+  "off": {"frac_frames_with_hbond": 0.000000, "mean_hbonds_per_frame": 0.000000, "mean_temperature_k": 331.524},
+  "on":  {"frac_frames_with_hbond": 0.000000, "mean_hbonds_per_frame": 0.000000, "mean_temperature_k": 335.937, "transitions": 11, "e_field_final": 1.637837e-4, "work_field_final": 1.077446e-3},
+  "s1_branch": "b"
+}

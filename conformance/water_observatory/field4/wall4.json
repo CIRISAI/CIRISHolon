@@ -1,0 +1,20 @@
+{
+  "a": 0.000000000000e0, "b": 0.000000000000e0, "p": 9.388717917861e0, "c": 2.270000000000e0, "c6": 0.000000000000e0,
+  "r_x_angstrom": NaN, "fit_nodes": 0, "s1_branch": "c", "c6_transferred": false,
+  "positive_prefix": 3, "branch_c_reason": "the positive prefix is 3, but no set of three or more is fitted within 0.1·|ΔE_exact| — (c) by the harvest rule, NOT by the prefix count",
+  "pen_fit": {"placement": "cross-unit H–O", "nodes_used": 6, "weighted_residual": 7.973098460154e-4, "c_grid": "0.5 to 4 step 0.01 per bohr", "c_at_grid_edge": false},
+  "pen_fit_oo": {"placement": "cross-unit O–O (the named alternative)", "p": 7.770235675570e2, "c": 2.270000000000e0, "weighted_residual": 7.999796979118e-4, "c_at_grid_edge": false},
+  "c1": {"pass": true, "sign_ok": true, "monotone_ok": true, "converged_ok": true, "peak_r_angstrom": 2.5, "floor": 1e-6},
+  "e_q_convention_max_diff": 2.283747e-6,
+  "g_c1": "deferred to the engine phase", "plant_i": "deferred to the engine phase",
+  "wall_fit_attempts": [{"k": 3, "r_x_angstrom": 2.9, "a": 4.208751241336e5, "b": 3.503418063915e0, "worst_miss_over_de": 0.248848, "qualifies": false}],
+  "remainder_beyond_r_x": [],
+  "nodes": [
+    {"r_angstrom": 2.5, "r_bohr": 4.724315, "de_exact": +2.506907491579e-3, "e_q": -7.069205246387e-3, "de_rho": -2.416129490808e-2, "p": -1.709208966170e-2, "p_fit": -1.709892447354e-2, "r_rho": +2.666820239966e-2, "wall_fit": NaN, "remainder": NaN, "in_wall_fit": false, "in_pen_fit": true, "converged": true, "sweeps": 7, "e_q_difference_minus_raw": -2.283747e-6, "cross_ho_bohr": [6.188222, 6.188222, 2.780741, 5.315789]},
+    {"r_angstrom": 2.7, "r_bohr": 5.102261, "de_exact": -4.319925980980e-3, "e_q": -5.337374935830e-3, "de_rho": -1.264957507064e-2, "p": -7.312200134810e-3, "p_fit": -7.252001409284e-3, "r_rho": +8.329649089660e-3, "wall_fit": NaN, "remainder": NaN, "in_wall_fit": false, "in_pen_fit": true, "converged": true, "sweeps": 6, "e_q_difference_minus_raw": -2.139608e-6, "cross_ho_bohr": [6.556203, 6.556203, 3.158687, 5.669603]},
+    {"r_angstrom": 2.9, "r_bohr": 5.480206, "de_exact": -5.480012308439e-3, "e_q": -4.133875699869e-3, "de_rho": -7.209632768692e-3, "p": -3.075757068823e-3, "p_fit": -3.075674636374e-3, "r_rho": +1.729620460253e-3, "wall_fit": NaN, "remainder": NaN, "in_wall_fit": false, "in_pen_fit": true, "converged": true, "sweeps": 6, "e_q_difference_minus_raw": -1.994972e-6, "cross_ho_bohr": [6.925258, 6.925258, 3.536632, 6.026348]},
+    {"r_angstrom": 3.1, "r_bohr": 5.858151, "de_exact": -4.757009922656e-3, "e_q": -3.270181135363e-3, "de_rho": -4.535047810208e-3, "p": -1.264866674845e-3, "p_fit": -1.304418461243e-3, "r_rho": -2.219621124480e-4, "wall_fit": NaN, "remainder": NaN, "in_wall_fit": false, "in_pen_fit": true, "converged": true, "sweeps": 6, "e_q_difference_minus_raw": -1.850037e-6, "cross_ho_bohr": [7.295222, 7.295222, 3.914577, 6.385532]},
+    {"r_angstrom": 3.4, "r_bohr": 6.425069, "de_exact": -3.217465720653e-3, "e_q": -2.377210882419e-3, "de_rho": -2.687411584091e-3, "p": -3.102007016721e-4, "p_fit": -3.602647618481e-4, "r_rho": -5.300541365619e-4, "wall_fit": NaN, "remainder": NaN, "in_wall_fit": false, "in_pen_fit": true, "converged": true, "sweeps": 5, "e_q_difference_minus_raw": -1.632503e-6, "cross_ho_bohr": [7.851595, 7.851595, 4.481495, 6.928053]},
+    {"r_angstrom": 3.7, "r_bohr": 6.991987, "de_exact": -2.141365165613e-3, "e_q": -1.784345060868e-3, "de_rho": -1.847728440509e-3, "p": -6.338337964140e-5, "p_fit": -9.949841209304e-5, "r_rho": -2.936367251036e-4, "wall_fit": NaN, "remainder": NaN, "in_wall_fit": false, "in_pen_fit": true, "converged": true, "sweeps": 5, "e_q_difference_minus_raw": -1.415389e-6, "cross_ho_bohr": [8.409376, 8.409376, 5.048413, 7.474196]}
+  ]
+}

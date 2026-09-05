@@ -1,0 +1,34 @@
+FIELD-4 density — the frozen-density field on FIELD-3's six linear nodes, 24 threads
+  R_OO 2.5 Å: ΔE_ρ -2.416129e-2  E_q -7.069205e-3  p -1.709209e-2  r_ρ +2.666820e-2  converged true in 7 sweeps  (13 s)
+  R_OO 2.7 Å: ΔE_ρ -1.264958e-2  E_q -5.337375e-3  p -7.312200e-3  r_ρ +8.329649e-3  converged true in 6 sweeps  (11 s)
+  R_OO 2.9 Å: ΔE_ρ -7.209633e-3  E_q -4.133876e-3  p -3.075757e-3  r_ρ +1.729620e-3  converged true in 6 sweeps  (11 s)
+  R_OO 3.1 Å: ΔE_ρ -4.535048e-3  E_q -3.270181e-3  p -1.264867e-3  r_ρ -2.219621e-4  converged true in 6 sweeps  (11 s)
+  R_OO 3.4 Å: ΔE_ρ -2.687412e-3  E_q -2.377211e-3  p -3.102007e-4  r_ρ -5.300541e-4  converged true in 5 sweeps  (9 s)
+  R_OO 3.7 Å: ΔE_ρ -1.847728e-3  E_q -1.784345e-3  p -6.338338e-5  r_ρ -2.936367e-4  converged true in 5 sweeps  (9 s)
+
+| R (Å) | R_OO (bohr) | ΔE_exact (Ha) | E_q (Ha) | ΔE_ρ (Ha) | p (Ha) | r_ρ (Ha) | converged | sweeps |
+| 2.5 | 4.7243 | +2.506907e-3 | -7.069205e-3 | -2.416129e-2 | -1.709209e-2 | +2.666820e-2 | true | 7 |
+| 2.7 | 5.1023 | -4.319926e-3 | -5.337375e-3 | -1.264958e-2 | -7.312200e-3 | +8.329649e-3 | true | 6 |
+| 2.9 | 5.4802 | -5.480012e-3 | -4.133876e-3 | -7.209633e-3 | -3.075757e-3 | +1.729620e-3 | true | 6 |
+| 3.1 | 5.8582 | -4.757010e-3 | -3.270181e-3 | -4.535048e-3 | -1.264867e-3 | -2.219621e-4 | true | 6 |
+| 3.4 | 6.4251 | -3.217466e-3 | -2.377211e-3 | -2.687412e-3 | -3.102007e-4 | -5.300541e-4 | true | 5 |
+| 3.7 | 6.9920 | -2.141365e-3 | -1.784345e-3 | -1.847728e-3 | -6.338338e-5 | -2.936367e-4 | true | 5 |
+C1: p ≤ 0 at every reading (true); |p| non-increasing outward from its largest node, R = 2.5 Å (true); every fixed point converged (true) → PASS
+
+fit (a) H–O placement: P = 9.388717918e0 Ha, c = 2.27 /bohr over 6 of 6 nodes (weighted residual 7.973098e-4)
+  2.5 Å: p -1.709209e-2  fit -1.709892e-2  miss -6.834812e-6 (-0.003 of ΔE_exact)
+  2.7 Å: p -7.312200e-3  fit -7.252001e-3  miss +6.019873e-5 (+0.014 of ΔE_exact)
+  2.9 Å: p -3.075757e-3  fit -3.075675e-3  miss +8.243245e-8 (+0.000 of ΔE_exact)
+  3.1 Å: p -1.264867e-3  fit -1.304418e-3  miss -3.955179e-5 (-0.008 of ΔE_exact)
+  3.4 Å: p -3.102007e-4  fit -3.602648e-4  miss -5.006406e-5 (-0.016 of ΔE_exact)
+  3.7 Å: p -6.338338e-5  fit -9.949841e-5  miss -3.611503e-5 (-0.017 of ΔE_exact)
+fit (a′) O–O placement (the named alternative): P = 7.770235676e2 Ha, c = 2.27 /bohr (weighted residual 7.999797e-4)
+  attempt k = 3 (to 2.9 Å): A = 4.208751e5 Ha, b = 3.503418 /bohr, worst miss 0.2488 of |ΔE_exact| (tol 0.1) → does not qualify
+
+fit (b) the wall over the density field: positive prefix 3 of 6; A = 0.000000000e0 Ha, b = 0.000000 /bohr over the shortest 0 nodes (R_x = NaN Å)
+
+S1: branch (c) — VOID: no wall, the arms do not run. the positive prefix is 3, but no set of three or more is fitted within 0.1·|ΔE_exact| — (c) by the harvest rule, NOT by the prefix count
+G-C1: deferred to the engine phase
+E_q convention: worst |E(near) − E(far) − wall.json's e_field| over the six nodes = 2.284e-6 Ha (the fit reads the RAW field of record, the flipped prediction reads the DIFFERENCE)
+wall4.json written
+prediction.json filed BEFORE the flipped solve: E_pred(H–O) +2.314742e-3 Ha, E_pred(O–O) +2.417803e-3 Ha — E_q +2.777793e-3, p_HO -4.630513e-4, p_OO -3.599896e-4, wall +0.000000e0 (NOT harvested; 0.0 recorded), disp +0.000000e0

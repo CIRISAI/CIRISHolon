@@ -282,9 +282,16 @@ impl Row {
             Row::Far => &[(ChannelId::PairDispersion, Carriage::Whole)],
             // Channel 1 at molecule level, whole, counted once.
             Row::Field => &[(ChannelId::Field, Carriage::Whole)],
-            // Channel 5 between units, whole: the exponential the ledger declares, its
-            // coefficients transferred from the exact dimer's residual (FIELD-3).
-            Row::Seam => &[(ChannelId::Exchange, Carriage::Whole)],
+            // Between units (FIELD-3, FIELD-4): channel 5 whole (the exponential wall), the
+            // contact's penetration and induction folded into one exponential on the H–O
+            // pairs, and channel 3 whole (−C₆/r⁶ on the O–O pairs) — each coefficient
+            // transferred from the exact dimer's residual, none chosen.
+            Row::Seam => &[
+                (ChannelId::Exchange, Carriage::Whole),
+                (ChannelId::Field, Carriage::Folded),
+                (ChannelId::Induction, Carriage::Folded),
+                (ChannelId::PairDispersion, Carriage::Whole),
+            ],
         }
     }
 

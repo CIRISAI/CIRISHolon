@@ -1,0 +1,12 @@
+{
+  "g_c1_worst_miss": 2.284e-6, "g_c1_pass": false, "g_c1_worst_miss_reference_corrected": 5.065e-16,
+  "plant_i": {"miss_observed": 6.151349e-3, "miss_expected": 6.151349e-3, "fires": true},
+  "nodes": [
+    {"r_angstrom": 2.5, "engine_interaction": -2.417041346715e-2, "formula": -2.416812971992e-2, "miss": 2.284e-6, "e_q": -7.069205246387e-3, "pen": -1.709892447354e-2, "wall": +0.000000000000e0, "disp": +0.000000000000e0},
+    {"r_angstrom": 2.7, "engine_interaction": -1.259151595320e-2, "formula": -1.258937634511e-2, "miss": 2.140e-6, "e_q": -5.337374935830e-3, "pen": -7.252001409284e-3, "wall": +0.000000000000e0, "disp": +0.000000000000e0},
+    {"r_angstrom": 2.9, "engine_interaction": -7.211545308252e-3, "formula": -7.209550336243e-3, "miss": 1.995e-6, "e_q": -4.133875699869e-3, "pen": -3.075674636374e-3, "wall": +0.000000000000e0, "disp": +0.000000000000e0},
+    {"r_angstrom": 3.1, "engine_interaction": -4.576449633865e-3, "formula": -4.574599596606e-3, "miss": 1.850e-6, "e_q": -3.270181135363e-3, "pen": -1.304418461243e-3, "wall": +0.000000000000e0, "disp": +0.000000000000e0},
+    {"r_angstrom": 3.4, "engine_interaction": -2.739108147764e-3, "formula": -2.737475644267e-3, "miss": 1.633e-6, "e_q": -2.377210882419e-3, "pen": -3.602647618481e-4, "wall": +0.000000000000e0, "disp": +0.000000000000e0},
+    {"r_angstrom": 3.7, "engine_interaction": -1.885258861558e-3, "formula": -1.883843472961e-3, "miss": 1.415e-6, "e_q": -1.784345060868e-3, "pen": -9.949841209304e-5, "wall": +0.000000000000e0, "disp": +0.000000000000e0}
+  ]
+}

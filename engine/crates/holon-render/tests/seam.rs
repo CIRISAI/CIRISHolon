@@ -19,18 +19,25 @@ use field2_scenes::*;
 mod channel_scenes;
 
 const STEPS: usize = 2000;
+const WALL4_JSON: &str = "../../conformance/water_observatory/field4/wall4.json";
 const WALL_JSON: &str = "../../conformance/water_observatory/field3/wall.json";
 
+/// FIELD-4's harvested terms when they exist, else FIELD-3's wall, else DECLARED test
+/// coefficients — the gates below are conservation properties that hold for any values,
+/// and each run says which it used.
 fn wall() -> (SeamModel, String) {
-    if let Ok(t) = std::fs::read_to_string(WALL_JSON) {
-        let num = |k: &str| t.split(&format!("\"{k}\": ")).nth(1).and_then(|x| x.split(',').next()).and_then(|x| x.trim().parse::<f64>().ok());
-        if let (Some(a), Some(b)) = (num("a"), num("b")) {
-            if a != 0.0 {
-                return (SeamModel { a, b }, format!("the harvest's wall.json (A = {a:.6e}, b = {b:.6})"));
+    for path in [WALL4_JSON, WALL_JSON] {
+        if let Ok(t) = std::fs::read_to_string(path) {
+            let num = |k: &str| t.split(&format!("\"{k}\": ")).nth(1).and_then(|x| x.split(',').next()).and_then(|x| x.trim().parse::<f64>().ok());
+            if let (Some(a), Some(b)) = (num("a"), num("b")) {
+                if a != 0.0 {
+                    let (p, c, c6) = (num("p").unwrap_or(0.0), num("c").unwrap_or(0.0), num("c6").unwrap_or(0.0));
+                    return (SeamModel { a, b, p, c, c6 }, format!("{path} (A = {a:.6e}, b = {b:.6}, P = {p:.6e}, c = {c:.6}, C6 = {c6:.6e})"));
+                }
             }
         }
     }
-    (SeamModel { a: 0.5, b: 1.2 }, "DECLARED test coefficients (wall.json absent or empty): A = 0.5, b = 1.2".to_string())
+    (SeamModel { a: 0.5, b: 1.2, p: 0.02, c: 1.5, c6: 10.0 }, "DECLARED test coefficients (no harvest on disk): A = 0.5, b = 1.2, P = 0.02, c = 1.5, C6 = 10".to_string())
 }
 
 fn step(s: &mut Sim, n: usize) {
@@ -193,7 +200,7 @@ fn g_b1_the_books_close_with_the_seam_on() {
 fn g_b2_momentum_is_conserved_with_the_seam_on_and_plant_iii_breaks_it() {
     let (model, which) = wall();
     let (dsp, dpos) = dimer_positions();
-    for (plant, expect_fire) in [(SeamPlant::None, false), (SeamPlant::DropReaction, true)] {
+    for (plant, expect_fire) in [(SeamPlant::None, false), (SeamPlant::DropReaction, true), (SeamPlant::DropReactionNew, true)] {
         let mut s = scene(&dsp, &dpos, 30.0, 293.0);
         s.set_field(true, None).unwrap();
         s.seam_plant = plant;
@@ -202,6 +209,13 @@ fn g_b2_momentum_is_conserved_with_the_seam_on_and_plant_iii_breaks_it() {
         let r_oo = ((s.atoms[0].x - s.atoms[3].x).powi(2) + (s.atoms[0].y - s.atoms[3].y).powi(2) + (s.atoms[0].z - s.atoms[3].z).powi(2)).sqrt();
         let f_wall = model.b * model.wall(r_oo);
         assert!(f_wall >= 1e-6, "plant (iii) carrier: |F_wall| = {f_wall:.2e} at R_OO = {r_oo:.2}");
+        if plant == SeamPlant::DropReactionNew {
+            // FIELD-4 plant (ii) carrier: the new terms' force at the start (the H-bond contact
+            // O_acc···H_don is atoms 3 and 1)
+            let r_ho = ((s.atoms[3].x - s.atoms[1].x).powi(2) + (s.atoms[3].y - s.atoms[1].y).powi(2) + (s.atoms[3].z - s.atoms[1].z).powi(2)).sqrt();
+            let f_new = (model.c * model.penetration(r_ho)).abs() + (6.0 * model.c6 / r_oo.powi(7)).abs();
+            assert!(f_new >= 1e-6, "FIELD-4 plant (ii) carrier: |F_pen + F_disp| = {f_new:.2e}");
+        }
         step(&mut s, STEPS);
         let (mut fx, mut fy, mut fz, mut scale) = (0.0, 0.0, 0.0, 0.0f64);
         for i in 0..s.n {
@@ -234,10 +248,8 @@ fn g_b3_the_wall_is_the_derivative_of_its_energy() {
     let mut worst = 0.0f64;
     let mut carrier = 0.0f64;
     for i in 0..s.n {
-        if s.atoms[i].species.z != 8 {
-            continue;
-        }
-        // the wall's force alone: the internal force with the wall minus without, same drops
+        // every atom: the penetration term (FIELD-4) acts on hydrogens too
+        // the seam terms' force alone: the internal force with the terms minus without, same drops
         s.compute_forces();
         let with = s.internal_force(i);
         s.seam = Some(SeamModel::NO_WALL);
@@ -264,9 +276,9 @@ fn g_b3_the_wall_is_the_derivative_of_its_energy() {
         }
     }
     s.compute_forces();
-    assert!(carrier > 1e-10, "no wall force on any oxygen");
-    assert!(worst <= 1e-8, "G-B3: worst relative |F − (−∂E)| = {worst:.2e}");
-    eprintln!("G-B3 ({which}): worst relative {worst:.2e}; |F_wall| max {carrier:.3e}, e_seam {:+.6e}", s.e_seam);
+    assert!(carrier > 1e-10, "no seam force on any atom");
+    assert!(worst <= 1e-8, "G-B3 / G-D1: worst relative |F − (−∂E)| = {worst:.2e}");
+    eprintln!("G-B3 / G-D1 ({which}): worst relative {worst:.2e} over every atom; |F_seam| max {carrier:.3e}, e_seam {:+.6e}, O–O pairs {}, H–O pairs {}", s.e_seam, s.seam_work.oo_pairs, s.seam_work.ho_pairs);
 }
 
 #[test]

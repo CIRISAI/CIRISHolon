@@ -300,7 +300,7 @@ fn run_fit(out: &Path) {
         }
     }
     // G-C1 and plant (i): the engine's seam-law interaction at every node
-    let model = SeamModel { a, b };
+    let model = SeamModel::wall_only(a, b);
     let mut g_c1_worst = 0.0f64;
     let mut plant_i = (f64::NAN, f64::NAN, false);
     let mut c1_lines = Vec::new();

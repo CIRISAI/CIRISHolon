@@ -1,0 +1,3 @@
+FIELD-4 predict — the flipped node on 24 threads
+  flipped_R3.4: R_OO 3.4 Å, 1002001 dets, ΔE_exact +6.008833e-3 Ha, 177 iters, residual 6.5e-11, exit Converged, wall 578 s, 13176 core-s
+S2: ΔE_exact +6.008833e-3 Ha — H–O miss 3.694e-3 (61.5 %), O–O miss 3.591e-3 (59.8 %), tolerance 1.502e-3 → branch (c)

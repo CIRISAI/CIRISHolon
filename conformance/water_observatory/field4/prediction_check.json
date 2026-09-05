@@ -1,0 +1,7 @@
+{
+  "node": "flipped_R3.4", "e_pred_ho": +2.314741595604e-3, "e_pred_oo": +2.417803302326e-3, "de_exact": +6.008832814402e-3,
+  "miss_ho": 3.694091e-3, "miss_ho_fraction": 0.614777, "miss_oo": 3.591030e-3, "miss_oo_fraction": 0.597625,
+  "tolerance": 1.502208e-3, "tolerance_rule": "max(0.25·|ΔE_exact|, 5e-4)",
+  "converged": true, "exit": "Converged", "davidson_iters": 177, "residual": 6.476e-11, "cpu_seconds": 13176.0, "wall_seconds": 577.8,
+  "s2_branch": "c"
+}

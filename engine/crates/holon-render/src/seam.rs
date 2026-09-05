@@ -29,21 +29,51 @@
 /// The unit id of an atom in no unit.
 pub const FREE: u32 = u32::MAX;
 
-/// The wall's coefficients: `A·exp(−b·r)` hartree on each cross-unit oxygen–oxygen pair.
+/// The seam's cross-unit terms, each a DECLARED shape with TRANSFERRED coefficients
+/// (FIELD-3, FIELD-4): the wall `A·exp(−b·r)` on cross-unit oxygen–oxygen pairs (channel 5);
+/// the penetration-and-induction term `−P·exp(−c·r)` on cross-unit hydrogen–oxygen pairs
+/// (channels 1 and 2 at the contact, FIELD-4); dispersion `−C₆/r⁶` on cross-unit
+/// oxygen–oxygen pairs (channel 3, FIELD-4). Every coefficient at `0.0` switches its term
+/// off exactly, so FIELD-3's engine is the identity when the FIELD-4 terms are zero.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct SeamModel {
     pub a: f64,
     pub b: f64,
+    pub p: f64,
+    pub c: f64,
+    pub c6: f64,
 }
 
 impl SeamModel {
-    /// The seam rule with no wall.
-    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0 };
+    /// The seam rule with no cross-unit term at all.
+    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0 };
+
+    /// FIELD-3's wall alone.
+    pub const fn wall_only(a: f64, b: f64) -> SeamModel {
+        SeamModel { a, b, p: 0.0, c: 0.0, c6: 0.0 }
+    }
 
     /// The wall's energy at separation `r`.
     #[inline]
     pub fn wall(&self, r: f64) -> f64 {
         self.a * (-self.b * r).exp()
+    }
+
+    /// The penetration term's energy at a cross-unit H–O separation `r` (negative for `P > 0`).
+    #[inline]
+    pub fn penetration(&self, r: f64) -> f64 {
+        -self.p * (-self.c * r).exp()
+    }
+
+    /// The dispersion term's energy at a cross-unit O–O separation `r`.
+    #[inline]
+    pub fn dispersion(&self, r: f64) -> f64 {
+        if self.c6 == 0.0 {
+            0.0
+        } else {
+            let r2 = r * r;
+            -self.c6 / (r2 * r2 * r2)
+        }
     }
 }
 
@@ -82,6 +112,10 @@ pub enum SeamPlant {
     TriplesAcross,
     /// (iii) the reaction dropped on the wall.
     DropReaction,
+    /// FIELD-4 plant (ii): the reaction dropped on the penetration and dispersion terms.
+    DropReactionNew,
+    /// FIELD-4 plant (i): `P → −P`.
+    FlipPenetration,
 }
 
 /// The seam's work counters for the last force pass, and its transitions to date.
@@ -97,6 +131,8 @@ pub struct SeamWork {
     pub triples_dropped_total: u64,
     /// Cross-unit oxygen–oxygen pairs the wall served.
     pub oo_pairs: u64,
+    /// Cross-unit hydrogen–oxygen pairs the penetration term served (FIELD-4).
+    pub ho_pairs: u64,
     /// Water units in the last assignment.
     pub units: u64,
     /// Membership transitions posted (including the enabling and disabling ones).
@@ -166,9 +202,14 @@ mod tests {
 
     #[test]
     fn the_wall_is_the_declared_shape() {
-        let m = SeamModel { a: 2.0, b: 0.5 };
+        let m = SeamModel::wall_only(2.0, 0.5);
         assert_eq!(m.wall(0.0), 2.0);
         assert!((m.wall(2.0) - 2.0 * (-1.0f64).exp()).abs() < 1e-15);
         assert_eq!(SeamModel::NO_WALL.wall(3.0), 0.0);
+        assert_eq!(SeamModel::NO_WALL.penetration(3.0), 0.0);
+        assert_eq!(SeamModel::NO_WALL.dispersion(3.0), 0.0);
+        let f = SeamModel { a: 0.0, b: 0.0, p: 1.0, c: 1.0, c6: 64.0 };
+        assert!((f.penetration(1.0) + (-1.0f64).exp()).abs() < 1e-15);
+        assert_eq!(f.dispersion(2.0), -1.0);
     }
 }

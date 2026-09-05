@@ -989,10 +989,12 @@ pub extern "C" fn holon_field_transitions() -> u64 {
 /// switch is posted as a transition at the current positions.
 pub const SEAM_REFUSED: u32 = 210;
 
-/// Returns 0, or `SEAM_REFUSED + 1` when an acuity frame is installed.
+/// Enable the seam with the wall `a·exp(−b·r)`, the penetration term `−p·exp(−c·r)` and the
+/// dispersion `−c6/r⁶` (FIELD-3, FIELD-4), or disable it. Returns 0, or `SEAM_REFUSED + k`
+/// for the named refusals.
 #[no_mangle]
-pub extern "C" fn holon_set_seam(on: u32, a: f64, b: f64) -> u32 {
-    match sim().set_seam(if on != 0 { Some(seam::SeamModel { a, b }) } else { None }) {
+pub extern "C" fn holon_set_seam(on: u32, a: f64, b: f64, p: f64, c: f64, c6: f64) -> u32 {
+    match sim().set_seam(if on != 0 { Some(seam::SeamModel { a, b, p, c, c6 }) } else { None }) {
         Ok(()) => 0,
         Err(seam::SeamRefusal::AcuityFrameSet) => SEAM_REFUSED + 1,
         Err(seam::SeamRefusal::FarSectorDeclared) => SEAM_REFUSED + 2,

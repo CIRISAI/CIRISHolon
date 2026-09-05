@@ -57,10 +57,13 @@ fn field2_arms(out: &Path) -> Option<String> {
     cands.into_iter().find_map(|p| fs::read_to_string(p).ok())
 }
 
-/// The harvested wall, or the refusal. `a == 0.0` is the harvest not having landed — the
-/// seam rule with no wall is a legitimate state for gate G-B4 and is NOT these arms.
+/// The harvested terms, or the refusal. FIELD-4's `wall4.json` (wall, penetration,
+/// dispersion) is preferred when present, else FIELD-3's `wall.json` (wall only). `a == 0.0`
+/// is the harvest not having landed — the seam rule with no wall is a legitimate state for
+/// gate G-B4 and is NOT these arms.
 fn wall_from(out: &Path) -> Result<SeamModel, String> {
-    let p = out.join("wall.json");
+    let p4 = out.join("wall4.json");
+    let p = if p4.exists() { p4 } else { out.join("wall.json") };
     let t = fs::read_to_string(&p).map_err(|e| format!("{}: {e}", p.display()))?;
     let (a, b) = (json_num(&t, "a"), json_num(&t, "b"));
     if !a.is_finite() || !b.is_finite() {
@@ -69,7 +72,8 @@ fn wall_from(out: &Path) -> Result<SeamModel, String> {
     if a == 0.0 {
         return Err(format!("{}: a = 0", p.display()));
     }
-    Ok(SeamModel { a, b })
+    let opt = |k: &str| { let v = json_num(&t, k); if v.is_finite() { v } else { 0.0 } };
+    Ok(SeamModel { a, b, p: opt("p"), c: opt("c"), c6: opt("c6") })
 }
 
 struct Start {
@@ -386,7 +390,7 @@ fn main() {
             let a: f64 = args.get(3).expect("smoke needs A").parse().expect("A");
             let b: f64 = args.get(4).expect("smoke needs b").parse().expect("b");
             eprintln!("SMOKE: coefficients from the command line (a {a:.6e}, b {b:.6}), 20 settling and 50 counted frames — NOT the freeze's arms");
-            run(&out, SeamModel { a, b }, 20, 50);
+            run(&out, SeamModel::wall_only(a, b), 20, 50);
         }
         _ => {
             let out = PathBuf::from(args.get(1).cloned().unwrap_or_else(|| "../conformance/water_observatory/field3".to_string()));

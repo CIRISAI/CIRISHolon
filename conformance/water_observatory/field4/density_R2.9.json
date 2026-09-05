@@ -1,0 +1,9 @@
+{
+  "node": "density_R2.9", "r_oo_angstrom": 2.900, "r_oo_bohr": 5.480206,
+  "de_exact": -5.480012308439e-3, "e_q": -4.133875699869e-3, "de_rho": -7.209632768692e-3,
+  "p": -3.075757068823e-3, "r_rho": +1.729620460253e-3,
+  "densities": {"start": "Zero", "converged": true, "sweeps": 6, "last_delta": 1.219e-10, "e_a_in_b": -7.503061767242e1, "e_b_in_a": -7.503068494377e1, "e_es": -7.509920846989e-3},
+  "monomers": {"e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_a0_field3": -7.502329153129e1, "e_b0_field3": -7.502329153129e1, "max_monomer_delta": 1.052e-12},
+  "cross_ho_bohr": [6.925258, 6.925258, 3.536632, 6.026348],
+  "wall_seconds": 11.0, "cpu_seconds": 11.5, "threads": 24
+}

@@ -919,7 +919,7 @@ impl Sim {
             charge_row: Vec::new(),
             seam: None,
             seam_plant: crate::seam::SeamPlant::None,
-            seam_work: crate::seam::SeamWork { pairs_dropped: 0, triples_dropped: 0, pairs_dropped_total: 0, triples_dropped_total: 0, oo_pairs: 0, units: 0, transitions: 0 },
+            seam_work: crate::seam::SeamWork { pairs_dropped: 0, triples_dropped: 0, pairs_dropped_total: 0, triples_dropped_total: 0, oo_pairs: 0, ho_pairs: 0, units: 0, transitions: 0 },
             e_seam: 0.0,
             unit_of: Vec::new(),
             unit_prev: Vec::new(),
@@ -3290,23 +3290,37 @@ impl Sim {
     fn accumulate_seam(&mut self) {
         self.e_seam = 0.0;
         self.seam_work.oo_pairs = 0;
+        self.seam_work.ho_pairs = 0;
         let Some(model) = self.seam else {
             return;
         };
         let n = self.n;
-        let a = if self.seam_plant == crate::seam::SeamPlant::FlipSign { -model.a } else { model.a };
+        let plant = self.seam_plant;
+        let a = if plant == crate::seam::SeamPlant::FlipSign { -model.a } else { model.a };
         let b = model.b;
+        let p = if plant == crate::seam::SeamPlant::FlipPenetration { -model.p } else { model.p };
+        let c = model.c;
+        let c6 = model.c6;
         let geom = self.geom();
         let f = crate::seam::FREE;
         let mut e = 0.0f64;
         let mut virial = 0.0f64;
-        let mut pairs = 0u64;
+        let mut oo = 0u64;
+        let mut ho = 0u64;
         for i in 0..n {
-            if self.atoms[i].species.z != 8 || self.unit_of[i] == f {
+            let zi = self.atoms[i].species.z;
+            if self.unit_of[i] == f || (zi != 8 && zi != 1) {
                 continue;
             }
             for j in (i + 1)..n {
-                if self.atoms[j].species.z != 8 || self.unit_of[j] == f || self.unit_of[j] == self.unit_of[i] {
+                let zj = self.atoms[j].species.z;
+                if self.unit_of[j] == f || self.unit_of[j] == self.unit_of[i] {
+                    continue;
+                }
+                // the pair's class: O–O carries the wall and the dispersion, H–O the
+                // penetration term, H–H nothing
+                let (is_oo, is_ho) = (zi == 8 && zj == 8, (zi == 8 && zj == 1) || (zi == 1 && zj == 8));
+                if !is_oo && !is_ho {
                     continue;
                 }
                 let (dx, dy, dz) = geom.delta(
@@ -3315,29 +3329,50 @@ impl Sim {
                 );
                 // `delta(b, a)` is `a − b`: the vector from j to i
                 let r = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
-                let w = a * (-b * r).exp();
-                e += w;
-                // E = A e^{−b r}; F_i = −∂E/∂r_i = b·w·(r_i − r_j)/r, F_j = −F_i
-                let fm = b * w / r;
+                // U(r) and dU/dr for this pair's terms; F_i = −(dU/dr)·(r_i − r_j)/r
+                let (u, du, drop_reaction) = if is_oo {
+                    let w = a * (-b * r).exp();
+                    // wall: dU/dr = −b·w; dispersion: U = −c6/r⁶, dU/dr = 6·c6/r⁷
+                    let (ud, dud) = if c6 == 0.0 {
+                        (0.0, 0.0)
+                    } else {
+                        let r2 = r * r;
+                        let r6 = r2 * r2 * r2;
+                        (-c6 / r6, 6.0 * c6 / (r6 * r))
+                    };
+                    oo += 1;
+                    // FIELD-3's plant (iii) drops the wall's reaction; FIELD-4's plant (ii)
+                    // drops the new terms' — on an O–O pair that is the dispersion part, so
+                    // the reaction is dropped for the whole pair only when the wall is off
+                    let drop = plant == crate::seam::SeamPlant::DropReaction
+                        || (plant == crate::seam::SeamPlant::DropReactionNew && a == 0.0);
+                    (w + ud, -b * w + dud, drop)
+                } else {
+                    // penetration: U = −p·e^{−c r}, dU/dr = p·c·e^{−c r}
+                    let x = p * (-c * r).exp();
+                    ho += 1;
+                    (-x, c * x, plant == crate::seam::SeamPlant::DropReactionNew)
+                };
+                e += u;
+                let fm = -du / r;
                 self.a_pair[i].0 += fm * dx;
                 self.a_pair[i].1 += fm * dy;
                 self.a_pair[i].2 += fm * dz;
-                if self.seam_plant != crate::seam::SeamPlant::DropReaction {
+                if !drop_reaction {
                     self.a_pair[j].0 -= fm * dx;
                     self.a_pair[j].1 -= fm * dy;
                     self.a_pair[j].2 -= fm * dz;
                 }
                 // THE VIRIAL CONVENTION: `w_virial` is Σ r·dU/dr (pair `r * slope`, far
                 // `r * du`, three-body `g · r`) and `pressure()` reads `(2K − w_virial)/3V`.
-                // For the wall dU/dr = −b·w, so the term is −b·w·r: a repulsive wall raises
-                // the pressure. (FIELD-3's review caught this sector posting `+r·F`.)
-                virial -= b * w * r;
-                pairs += 1;
+                // (FIELD-3's review caught this sector posting `+r·F`.)
+                virial += r * du;
             }
         }
         self.e_seam = e;
         self.w_virial += virial;
-        self.seam_work.oo_pairs = pairs;
+        self.seam_work.oo_pairs = oo;
+        self.seam_work.ho_pairs = ho;
     }
 
     /// Enable (`Some(model)`) or disable (`None`) the seam. The switch is a transition at the

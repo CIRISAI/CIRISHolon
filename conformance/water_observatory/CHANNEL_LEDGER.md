@@ -80,6 +80,17 @@ through a file-local lock (`SERIAL`), poison-tolerant, no physics touched; 3/3 s
 after. The remaining targets are re-run with `--no-fail-fast` and their count is
 appended below by the commit that reads it.
 
+### The full suite, read
+
+`cargo test --release -p holon-render --no-fail-fast`, every target, on the refactored
+library with the hadron-band lock in place: **29 of 29 targets green, 254 tests passed,
+0 failed**, 9 min 5 s wall. Per target: unittests 9, acuity 4, amendments 20, b2_longrange
+22, channel_ledger 7, de4_momentum 4, engine_curve 7, field 7, gravity 11, hadron_band 6,
+ice_seeds 9, ledger 12, longrun 5, many_body_identity 3 (the four-body receipt, still
+bit-identical), mixtures 22, nucleus 6, pbc_legality 8, protocol_identity 2, saturation 10,
+saturation2 8, scale_box 6, t3_barostat 7, t3_replay 7 (the replay fingerprints, still
+valid), t3_scale 15, three_dimensions 7, trimer_door 27, wasm_law 1, water_door 1, zoom 1.
+
 ## What this does and does not do for the ladder
 
 It changes no number, so it certifies nothing and un-fences nothing. Rung 1 (the H-bond

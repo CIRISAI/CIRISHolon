@@ -1,0 +1,11 @@
+{
+  "node": "doublebent_R2.9", "r_oo_angstrom": 2.900, "r_oo_bohr": 5.480206, "donor_bend_degrees": 30.0, "acceptor_bend_degrees": 30.0, "bend_axis": "x, through EACH monomer's own oxygen — the donor turned 30° as FIELD-8's bent donor, the acceptor turned 30° as FIELD-5's tilt; both pivots are oxygens, so R_OO is unchanged", "held_out": true, "kind": "a DOUBLY BENT dimer — both monomers turned, a kind no fit point contains (§4, M-UNTESTED-GAP)",
+  "e_pred": -7.804236812039e-4,
+  "parts": {"e_q_difference": -1.971589038760e-3, "contact_ho": -5.163352601285e-3, "contact_hh": -0.000000000000e0, "wall_oo": 1.839819302421e-3, "wall_oh": 4.121666971364e-3, "wall_hh": 3.930316850566e-4, "wall_total": 6.354517958842e-3, "disp": 0.000000000000e0, "engine_seam": 1.191165357556e-3},
+  "coefficients": {"a": 9.480487358002e2, "b": 2.400000000000e0, "p": 1.626061533517e1, "c": 2.060000000000e0, "c6": 0.000000000000e0, "a_oh": 2.258605362549e1, "b_oh": 2.200000000000e0, "a_hh": 1.525046249564e0, "b_hh": 1.750000000000e0, "p_hh": 0.000000000000e0, "c_hh": 5.000000000000e-1},
+  "s1_branch": "b", "c1_pass": false, "c6_transferred": false, "g_b0_pass": false, "g_c1_pass": true, "delta": 0.259217873, "tolerance_fraction_of_the_wall": 0.129608936, "units": 2, "oo_pairs": 1, "ho_pairs": 4,
+  "tolerance_rule": "max(0.25·|ΔE_exact|, 5e-4)", "tolerance_frac": 0.25, "tolerance_abs": 5e-4,
+  "exact_solve_stake": {"n_det": 1002001, "cpu_seconds_lo": 1450, "cpu_seconds_hi": 57600, "residual_bar": 1e-9, "exit": "Converged"},
+  "cross_oo_bohr": [5.480206], "cross_ho_bohr": [6.787015, 6.787015, 3.919406, 5.998419], "cross_hh_bohr": [5.135626, 5.135626, 6.855212, 7.629609],
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, -0.9717869200, 1.6831843196], [1.9300704789, 0.1143538564, -0.1980666894]], "acceptor_centers": [[0.0000000000, 0.0000000000, 5.4802057614], [1.4529262884, -0.6454619415, 6.5981786385], [-1.4529262884, -0.6454619415, 6.5981786385]]
+}

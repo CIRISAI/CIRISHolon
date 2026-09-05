@@ -1,0 +1,179 @@
+FIELD-9 fit — D0 (the drift, declared first), the three-class wall on the 48 readings at R_OO ≥ 2.5 Å (S1), plant (ii), G-B0, the two-class contact term on the twelve exact geometries inside the identity (C1), dispersion, G-C1, plant (i)
+the reading set: 66 records, none measured here.
+  FIT (48, R_OO ≥ 2.5 Å): tilt 30 (2.5, 2.7, 2.9, 3.1, 3.4 Å × 6 tilts) + twist 18 (2.7, 3.0, 3.4 Å × 6)
+  BOUNDEDNESS-ONLY (18, R_OO ≤ 2.3 Å): tilt 12 (2.1, 2.3 Å × 6) + twist 6 (2.3 Å × 6) — the twist 2.3 Å row belongs to the bound set and is included in it
+the twelve exact geometries of record, each rebuilt here and matched to its record's centers:
+  linear_R2.3 (linear): R_OO 4.3464 bohr, ΔE_exact +2.331034e-2 Ha  [../conformance/water_observatory/field8/linear_R2.3.json]
+  linear_R2.5 (linear): R_OO 4.7243 bohr, ΔE_exact +2.506907e-3 Ha  [../conformance/water_observatory/field3/linear_R2.5.json]
+  linear_R2.7 (linear): R_OO 5.1023 bohr, ΔE_exact -4.319926e-3 Ha  [../conformance/water_observatory/field3/linear_R2.7.json]
+  linear_R2.9 (linear): R_OO 5.4802 bohr, ΔE_exact -5.480012e-3 Ha  [../conformance/water_observatory/field3/linear_R2.9.json]
+  linear_R3.1 (linear): R_OO 5.8582 bohr, ΔE_exact -4.757010e-3 Ha  [../conformance/water_observatory/field3/linear_R3.1.json]
+  linear_R3.4 (linear): R_OO 6.4251 bohr, ΔE_exact -3.217466e-3 Ha  [../conformance/water_observatory/field3/linear_R3.4.json]
+  linear_R3.7 (linear): R_OO 6.9920 bohr, ΔE_exact -2.141365e-3 Ha  [../conformance/water_observatory/field3/linear_R3.7.json]
+  tilted_R2.9 (bent acceptor 30°): R_OO 5.4802 bohr, ΔE_exact -6.175837e-3 Ha  [../conformance/water_observatory/field5/tilted_R2.9.json]
+  tilted45_R3.1 (bent acceptor 45°): R_OO 5.8582 bohr, ΔE_exact -5.434519e-3 Ha  [../conformance/water_observatory/field6/tilted45_R3.1.json]
+  flipped_R3.4 (flipped 180°): R_OO 6.4251 bohr, ΔE_exact +6.008833e-3 Ha  [../conformance/water_observatory/field4/flipped_R3.4.json]
+  twisted_R3.0 (twisted 90°+60°): R_OO 5.6692 bohr, ΔE_exact +5.171560e-4 Ha  [../conformance/water_observatory/field7/twisted_R3.0.json]
+  bentdonor_R2.9 (bent donor 30°): R_OO 5.4802 bohr, ΔE_exact -3.031334e-3 Ha  [../conformance/water_observatory/field8/bentdonor_R2.9.json]
+
+the readings, as records (a reading, not a gate): overlap in (0.8, 1] false (lowest 0.713389064678, highest 0.999161701468); E_exch > 1e-6 everywhere true; E_exch non-increasing in R_OO along each (family, tilt): 0 breaks
+
+D0 — the drift, measured and DECLARED before any wall is fit (§0, §2 D0).
+  (a) the SINGLE-class log-linear exponent of E_exch against R_OO, per family, per tilt — 6 × 2 = 12:
+     tilt family, tilt   0.0°: b = 2.162280 /bohr  (5 points)
+     tilt family, tilt  30.0°: b = 2.158658 /bohr  (5 points)
+     tilt family, tilt  60.0°: b = 2.152206 /bohr  (5 points)
+     tilt family, tilt  90.0°: b = 2.117097 /bohr  (5 points)
+     tilt family, tilt 120.0°: b = 1.966175 /bohr  (5 points)
+     tilt family, tilt 180.0°: b = 1.731701 /bohr  (5 points)
+    twist family, tilt   0.0°: b = 2.195980 /bohr  (3 points)
+    twist family, tilt  30.0°: b = 2.199607 /bohr  (3 points)
+    twist family, tilt  60.0°: b = 2.071891 /bohr  (3 points)
+    twist family, tilt  90.0°: b = 1.776292 /bohr  (3 points)
+    twist family, tilt 120.0°: b = 1.681799 /bohr  (3 points)
+    twist family, tilt 180.0°: b = 1.757238 /bohr  (3 points)
+    max 2.199607, min 1.681799, mean 1.997577 → relative spread δ_single = 0.259218
+  (b) the THREE-class wall fit on each family alone, and the per-class spread between them:
+     tilt family (30 readings, 0.0 s): b_OO 2.20 (A 1.751286e3, kept true), b_OH 2.10 (A 2.666727e0, kept true), b_HH 1.90 (A 2.657807e0, kept true); weighted residual 3.509417e-2
+    twist family (18 readings, 0.0 s): b_OO 2.55 (A 1.081937e3, kept true), b_OH 2.25 (A 2.761174e1, kept true), b_HH 1.70 (A 1.336286e0, kept true); weighted residual 8.525125e-2
+    class OO: b_tilt 2.20, b_twist 2.55 → relative spread 0.147368
+    class OH: b_tilt 2.10, b_twist 2.25 → relative spread 0.068966
+    class HH: b_tilt 1.90, b_twist 1.70 → relative spread 0.111111
+  δ_single = 0.259218, δ_class = 0.147368 (over the 3 classes kept in both families) → δ = 0.259218
+  D0 → the wall's tolerance rule is per reading  max(0.129609·E_exch, 1e-4)  —  δ/2 = 0.129609
+d0.json written BEFORE the wall fit
+
+the three-class wall over the 48 FIT readings — 357911 triples on 0.50..=4.00 step 0.05, weighted (1/E_exch²) least squares, amplitudes non-negative, in 0.0 s:
+  b_OO = 2.40 /bohr, A_OO = 9.480487358e2 Ha (kept: true)
+  b_OH = 2.20 /bohr, A_OH = 2.258605363e1 Ha (kept: true)
+  b_HH = 1.75 /bohr, A_HH = 1.525046250e0 Ha (kept: true)
+  weighted residual 1.911659674e-1
+
+| family | R (Å) | tilt (°) | E_exch (Ha) | model (Ha) | miss (Ha) | miss/tol | within | typed 0.05·E |
+| tilt | 2.5 | 0 | +5.833118e-2 | +6.291719e-2 | +4.586008e-3 | 0.6066 | true | false |
+| tilt | 2.5 | 30 | +6.070173e-2 | +6.328929e-2 | +2.587561e-3 | 0.3289 | true | true |
+| tilt | 2.5 | 60 | +6.517164e-2 | +6.489814e-2 | -2.735048e-4 | 0.0324 | true | true |
+| tilt | 2.5 | 90 | +6.988659e-2 | +7.011666e-2 | +2.300699e-4 | 0.0254 | true | true |
+| tilt | 2.5 | 120 | +8.581540e-2 | +8.650260e-2 | +6.872059e-4 | 0.0618 | true | true |
+| tilt | 2.5 | 180 | +1.636557e-1 | +1.561916e-1 | -7.464082e-3 | 0.3519 | true | true |
+| tilt | 2.7 | 0 | +2.688576e-2 | +2.720149e-2 | +3.157254e-4 | 0.0906 | true | true |
+| tilt | 2.7 | 30 | +2.802200e-2 | +2.740888e-2 | -6.131162e-4 | 0.1688 | true | true |
+| tilt | 2.7 | 60 | +3.016358e-2 | +2.831892e-2 | -1.844660e-3 | 0.4718 | true | false |
+| tilt | 2.7 | 90 | +3.267351e-2 | +3.133847e-2 | -1.335041e-3 | 0.3153 | true | true |
+| tilt | 2.7 | 120 | +4.204962e-2 | +4.099268e-2 | -1.056941e-3 | 0.1939 | true | true |
+| tilt | 2.7 | 180 | +8.794872e-2 | +8.193778e-2 | -6.010940e-3 | 0.5273 | true | false |
+| tilt | 2.9 | 0 | +1.209542e-2 | +1.178433e-2 | -3.110898e-4 | 0.1984 | true | true |
+| tilt | 2.9 | 30 | +1.262365e-2 | +1.189847e-2 | -7.251805e-4 | 0.4432 | true | false |
+| tilt | 2.9 | 60 | +1.362148e-2 | +1.240544e-2 | -1.216037e-3 | 0.6888 | true | false |
+| tilt | 2.9 | 90 | +1.493131e-2 | +1.411802e-2 | -8.132966e-4 | 0.4203 | true | false |
+| tilt | 2.9 | 120 | +2.026251e-2 | +1.966047e-2 | -6.020473e-4 | 0.2292 | true | true |
+| tilt | 2.9 | 180 | +4.636195e-2 | +4.294458e-2 | -3.417363e-3 | 0.5687 | true | false |
+| tilt | 3.1 | 0 | +5.307314e-3 | +5.116662e-3 | -1.906518e-4 | 0.2772 | true | true |
+| tilt | 3.1 | 30 | +5.546201e-3 | +5.178870e-3 | -3.673304e-4 | 0.5110 | true | false |
+| tilt | 3.1 | 60 | +5.998881e-3 | +5.457981e-3 | -5.409002e-4 | 0.6957 | true | false |
+| tilt | 3.1 | 90 | +6.666822e-3 | +6.414409e-3 | -2.524127e-4 | 0.2921 | true | true |
+| tilt | 3.1 | 120 | +9.595699e-3 | +9.534408e-3 | -6.129173e-5 | 0.0493 | true | true |
+| tilt | 3.1 | 180 | +2.398955e-2 | +2.247428e-2 | -1.515275e-3 | 0.4873 | true | false |
+| tilt | 3.4 | 0 | +1.477364e-3 | +1.470757e-3 | -6.607022e-6 | 0.0345 | true | true |
+| tilt | 3.4 | 30 | +1.547000e-3 | +1.495441e-3 | -5.155840e-5 | 0.2571 | true | true |
+| tilt | 3.4 | 60 | +1.679314e-3 | +1.607559e-3 | -7.175567e-5 | 0.3297 | true | true |
+| tilt | 3.4 | 90 | +1.911381e-3 | +1.998107e-3 | +8.672658e-5 | 0.3501 | true | true |
+| tilt | 3.4 | 120 | +3.032018e-3 | +3.280701e-3 | +2.486823e-4 | 0.6328 | true | false |
+| tilt | 3.4 | 180 | +8.616289e-3 | +8.487746e-3 | -1.285434e-4 | 0.1151 | true | true |
+| twist | 2.7 | 0 | +2.688331e-2 | +2.719776e-2 | +3.144504e-4 | 0.0902 | true | true |
+| twist | 2.7 | 30 | +2.595412e-2 | +2.795774e-2 | +2.003616e-3 | 0.5956 | true | false |
+| twist | 2.7 | 60 | +3.000997e-2 | +3.339193e-2 | +3.381959e-3 | 0.8695 | true | false |
+| twist | 2.7 | 90 | +7.005260e-2 | +6.785836e-2 | -2.194243e-3 | 0.2417 | true | true |
+| twist | 2.7 | 120 | +1.725695e-1 | +2.005170e-1 | +2.794740e-2 | 1.2495 | false | false |
+| twist | 2.7 | 180 | +8.752365e-2 | +8.135933e-2 | -6.164317e-3 | 0.5434 | true | false |
+| twist | 3.0 | 0 | +8.035263e-3 | +7.761568e-3 | -2.736953e-4 | 0.2628 | true | true |
+| twist | 3.0 | 30 | +7.741528e-3 | +8.081539e-3 | +3.400116e-4 | 0.3389 | true | true |
+| twist | 3.0 | 60 | +9.527603e-3 | +1.042614e-2 | +8.985332e-4 | 0.7276 | true | false |
+| twist | 3.0 | 90 | +2.630021e-2 | +2.491210e-2 | -1.388109e-3 | 0.4072 | true | false |
+| twist | 3.0 | 120 | +6.894188e-2 | +7.240525e-2 | +3.463364e-3 | 0.3876 | true | false |
+| twist | 3.0 | 180 | +3.327807e-2 | +3.088249e-2 | -2.395573e-3 | 0.5554 | true | false |
+| twist | 3.4 | 0 | +1.477030e-3 | +1.470468e-3 | -6.561966e-6 | 0.0343 | true | true |
+| twist | 3.4 | 30 | +1.419153e-3 | +1.567253e-3 | +1.481006e-4 | 0.8052 | true | false |
+| twist | 3.4 | 60 | +1.941173e-3 | +2.289331e-3 | +3.481585e-4 | 1.3838 | false | false |
+| twist | 3.4 | 90 | +6.699534e-3 | +6.563893e-3 | -1.356417e-4 | 0.1562 | true | true |
+| twist | 3.4 | 120 | +1.871577e-2 | +1.863758e-2 | -7.819588e-5 | 0.0322 | true | true |
+| twist | 3.4 | 180 | +8.585494e-3 | +8.444485e-3 | -1.410089e-4 | 0.1267 | true | true |
+S1: 46 of 48 within the DERIVED tolerance max(0.129609·E_exch, 1e-4) → branch (b) — transferred, the 2 misses reported: (twist, R = 2.7 Å, tilt = 120°), (twist, R = 3.4 Å, tilt = 60°)
+
+plant (ii) — the SAME 48-reading fit judged at FIELD-8's typed twentieth (0.05·E_exch, a pure fraction with no absolute floor): 21 outside, against 2 outside the derived rule — 19 more (needs ≥ 5); carrier δ/2 = 0.129609 ≥ 0.06: true → FIRES
+
+G-B0's r_min — the SHORTEST cross-unit distance of each class among the 48 FIT geometries (geometry alone; the walk itself runs once the contact terms and dispersion are harvested):
+  O–O 4.724315 bohr  [tilt family, R_OO 2.5 Å, tilt 0°]
+  H–O 2.780741 bohr  [tilt family, R_OO 2.5 Å, tilt 0°]
+  H–H 1.314606 bohr  [twist family, R_OO 2.7 Å, tilt 120°]
+every one of the twelve is served with TWO units by the engine (the closure identity holds at each) — the fit may use them
+
+the contact term on TWO classes with the wall HELD: remainder = ΔE_exact − [E_q(g) − E_q(40)]_engine − wall(g), on the twelve exact geometries inside the identity
+  linear_R2.3 (linear): ΔE_exact +2.331034e-2, E_q(g) − E_q(40) -9.664231e-3, wall +1.458036e-1 → remainder -1.128290e-1 Ha (-4.8403 of |ΔE_exact|)
+  linear_R2.5 (linear): ΔE_exact +2.506907e-3, E_q(g) − E_q(40) -7.071489e-3, wall +6.291719e-2 → remainder -5.333879e-2 Ha (-21.2767 of |ΔE_exact|)
+  linear_R2.7 (linear): ΔE_exact -4.319926e-3, E_q(g) − E_q(40) -5.339515e-3, wall +2.720149e-2 → remainder -2.618190e-2 Ha (-6.0607 of |ΔE_exact|)
+  linear_R2.9 (linear): ΔE_exact -5.480012e-3, E_q(g) − E_q(40) -4.135871e-3, wall +1.178433e-2 → remainder -1.312847e-2 Ha (-2.3957 of |ΔE_exact|)
+  linear_R3.1 (linear): ΔE_exact -4.757010e-3, E_q(g) − E_q(40) -3.272031e-3, wall +5.116662e-3 → remainder -6.601641e-3 Ha (-1.3878 of |ΔE_exact|)
+  linear_R3.4 (linear): ΔE_exact -3.217466e-3, E_q(g) − E_q(40) -2.378843e-3, wall +1.470757e-3 → remainder -2.309380e-3 Ha (-0.7178 of |ΔE_exact|)
+  linear_R3.7 (linear): ΔE_exact -2.141365e-3, E_q(g) − E_q(40) -1.785760e-3, wall +4.254897e-4 → remainder -7.810944e-4 Ha (-0.3648 of |ΔE_exact|)
+  tilted_R2.9 (bent acceptor 30°): ΔE_exact -6.175837e-3, E_q(g) − E_q(40) -3.962014e-3, wall +1.189847e-2 → remainder -1.411230e-2 Ha (-2.2851 of |ΔE_exact|)
+  tilted45_R3.1 (bent acceptor 45°): ΔE_exact -5.434519e-3, E_q(g) − E_q(40) -2.919047e-3, wall +5.276197e-3 → remainder -7.791669e-3 Ha (-1.4337 of |ΔE_exact|)
+  flipped_R3.4 (flipped 180°): ΔE_exact +6.008833e-3, E_q(g) − E_q(40) +2.777793e-3, wall +8.487746e-3 → remainder -5.256706e-3 Ha (-0.8748 of |ΔE_exact|)
+  twisted_R3.0 (twisted 90°+60°): ΔE_exact +5.171560e-4, E_q(g) − E_q(40) -2.255175e-3, wall +1.042614e-2 → remainder -7.653805e-3 Ha (-14.7998 of |ΔE_exact|)
+  bentdonor_R2.9 (bent donor 30°): ΔE_exact -3.031334e-3, E_q(g) − E_q(40) -2.541073e-3, wall +6.215684e-3 → remainder -6.705945e-3 Ha (-2.2122 of |ΔE_exact|)
+
+the two-class contact fit — 30976 pairs on 0.50..=4.00 step 0.02 per class, weighted (1/ΔE_exact²), non-negative by drop-and-refit, in 0.0 s:
+  P_HO = 1.626061534e1 Ha, c_HO = 2.06 /bohr (kept: true)
+  P_HH = 0.000000000e0 Ha, c_HH = 0.50 /bohr (kept: false)
+  weighted residual 1.575645375e0
+  linear_R2.3: remainder -1.128290e-1, fit -1.159967e-1, miss 3.167711e-3 (0.5436 of its tolerance 5.828e-3) → within
+  linear_R2.5: remainder -5.333879e-2, fit -5.326781e-2, miss 7.097540e-5 (0.1132 of its tolerance 6.267e-4) → within
+  linear_R2.7: remainder -2.618190e-2, fit -2.446088e-2, miss 1.721021e-3 (1.5936 of its tolerance 1.080e-3) → MISS
+  linear_R2.9: remainder -1.312847e-2, fit -1.123229e-2, miss 1.896185e-3 (1.3841 of its tolerance 1.370e-3) → MISS
+  linear_R3.1: remainder -6.601641e-3, fit -5.157683e-3, miss 1.443958e-3 (1.2142 of its tolerance 1.189e-3) → MISS
+  linear_R3.4: remainder -2.309380e-3, fit -1.604790e-3, miss 7.045900e-4 (0.8760 of its tolerance 8.044e-4) → within
+  linear_R3.7: remainder -7.810944e-4, fit -4.993036e-4, miss 2.817908e-4 (0.5264 of its tolerance 5.353e-4) → within
+  tilted_R2.9: remainder -1.411230e-2, fit -1.123912e-2, miss 2.873180e-3 (1.8609 of its tolerance 1.544e-3) → MISS
+  tilted45_R3.1: remainder -7.791669e-3, fit -5.166336e-3, miss 2.625332e-3 (1.9323 of its tolerance 1.359e-3) → MISS
+  flipped_R3.4: remainder -5.256706e-3, fit -2.149410e-3, miss 3.107296e-3 (2.0685 of its tolerance 1.502e-3) → MISS
+  twisted_R3.0: remainder -7.653805e-3, fit -7.848711e-3, miss 1.949055e-4 (0.3898 of its tolerance 5.000e-4) → within
+  bentdonor_R2.9: remainder -6.705945e-3, fit -5.156524e-3, miss 1.549421e-3 (2.0445 of its tolerance 7.578e-4) → MISS
+C1: 5 of 12 within max(0.25·|ΔE_exact|, 5e-4) (needs ≥ 10), and the line at 2.7, 2.9, 3.1 Å all within: false (0 of 3) → FAIL — the remainder's shape at the minimum is the open problem, and its size is named above; misses: linear_R2.7, linear_R2.9, linear_R3.1, tilted_R2.9, tilted45_R3.1, flipped_R3.4, bentdonor_R2.9
+  line node — linear_R2.7: miss 1.721021e-3 vs tolerance 1.079981e-3 → MISS
+  line node — linear_R2.9: miss 1.896185e-3 vs tolerance 1.370003e-3 → MISS
+  line node — linear_R3.1: miss 1.443958e-3 vs tolerance 1.189252e-3 → MISS
+
+dispersion — the remainder AFTER the two contact terms, on the 4 outer linear nodes (R_OO ≥ 2.9 Å):
+  2.9 Å: remainder after contact -1.896185e-3 Ha (-0.3460 of |ΔE_exact|)
+  3.1 Å: remainder after contact -1.443958e-3 Ha (-0.3035 of |ΔE_exact|)
+  3.4 Å: remainder after contact -7.045900e-4 Ha (-0.2190 of |ΔE_exact|)
+  3.7 Å: remainder after contact -2.817908e-4 Ha (-0.1316 of |ΔE_exact|)
+  log-log slope 2.9 → 3.1 Å: -4.085
+  log-log slope 3.1 → 3.4 Å: -7.768
+  log-log slope 3.4 → 3.7 Å: -10.838
+dispersion: C₆ = 0.000000000e0 Ha·bohr⁶; every slope in [-8, -4] → NOT transferred (C₆ = 0 recorded)
+
+G-B0 — bounded: the engine walks each cross-unit class potential of the HARVESTED law from its own r_min (O–O 4.724315, H–O 2.780741, H–H 1.314606 bohr) inward to 0.5 bohr on a 0.05 grid, kT = 9.28e-4 Ha, q_H = 2.313803721151e-1
+  bounded() named a fall, verbatim: H–O potential falls to -4.2908e-2 at r = 2.68 bohr, more than kT below its value -4.1621e-2 at its fit floor r_min = 2.781
+  → the arms are VOID before they run (§2 G-B0). The harvest is still recorded in full.
+  hole() (a READING beside the gate, not a gate) names a fall, verbatim: H–O potential falls inward at r = 2.95 bohr (-3.9317e-2 < -3.8632e-2)
+
+G-C1 — the harvest is the engine's arithmetic, ONE reference (E_q(g) − E_q(40) from the engine itself), on the twelve exact geometries
+  linear_R2.3: engine +2.014262764331e-2 vs formula +2.014262764331e-2 — miss 9.714e-17 (E_q diff -9.664231e-3, seam +2.980686e-2; pen_HO -1.159967e-1, pen_HH -0.000000e0, wall_OO +2.796274e-2, wall_OH +1.148433e-1, wall_HH +2.997548e-3, disp +0.000000e0; units 2, O–O 1, H–O 4)
+  linear_R2.5: engine +2.577882891209e-3 vs formula +2.577882891209e-3 — miss 1.128e-17 (E_q diff -7.071489e-3, seam +9.649372e-3; pen_HO -5.326781e-2, pen_HH -0.000000e0, wall_OO +1.128873e-2, wall_OH +5.001577e-2, wall_HH +1.612692e-3, disp +0.000000e0; units 2, O–O 1, H–O 4)
+  linear_R2.7: engine -2.598904704219e-3 vs formula -2.598904704219e-3 — miss 3.643e-17 (E_q diff -5.339515e-3, seam +2.740610e-3; pen_HO -2.446088e-2, pen_HH -0.000000e0, wall_OO +4.557325e-3, wall_OH +2.178210e-2, wall_HH +8.620591e-4, disp +0.000000e0; units 2, O–O 1, H–O 4)
+  linear_R2.9: engine -3.583827263346e-3 vs formula -3.583827263346e-3 — miss 2.342e-17 (E_q diff -4.135871e-3, seam +5.520434e-4; pen_HO -1.123229e-2, pen_HH -0.000000e0, wall_OO +1.839819e-3, wall_OH +9.486037e-3, wall_HH +4.584753e-4, disp +0.000000e0; units 2, O–O 1, H–O 4)
+plant (i) at the linear 2.9 Å node: miss 2.246458e-2 vs 2·|p_HO(2.9)| 2.246458e-2 (difference 1.180e-16); carrier |p_HO(2.9)| 1.123e-2 ≥ 1e-4: true → FIRES
+  linear_R3.1: engine -3.313051911218e-3 vs formula -3.313051911218e-3 — miss 5.638e-18 (E_q diff -3.272031e-3, seam -4.102074e-5; pen_HO -5.157683e-3, pen_HH -0.000000e0, wall_OO +7.427460e-4, wall_OH +4.131072e-3, wall_HH +2.428442e-4, disp +0.000000e0; units 2, O–O 1, H–O 4)
+  linear_R3.4: engine -2.512875739019e-3 vs formula -2.512875739019e-3 — miss 5.551e-17 (E_q diff -2.378843e-3, seam -1.340324e-4; pen_HO -1.604790e-3, pen_HH -0.000000e0, wall_OO +1.905189e-4, wall_OH +1.187184e-3, wall_HH +9.305441e-5, disp +0.000000e0; units 2, O–O 1, H–O 4)
+  linear_R3.7: engine -1.859574341765e-3 vs formula -1.859574341765e-3 — miss 7.828e-17 (E_q diff -1.785760e-3, seam -7.381389e-5; pen_HO -4.993036e-4, pen_HH -0.000000e0, wall_OO +4.886926e-5, wall_OH +3.411622e-4, wall_HH +3.545818e-5, disp +0.000000e0; units 2, O–O 1, H–O 4)
+  tilted_R2.9: engine -3.302657370462e-3 vs formula -3.302657370462e-3 — miss 3.600e-17 (E_q diff -3.962014e-3, seam +6.593569e-4; pen_HO -1.123912e-2, pen_HH -0.000000e0, wall_OO +1.839819e-3, wall_OH +9.489917e-3, wall_HH +5.687364e-4, disp +0.000000e0; units 2, O–O 1, H–O 4)
+  tilted45_R3.1: engine -2.809186273797e-3 vs formula -2.809186273797e-3 — miss 2.862e-17 (E_q diff -2.919047e-3, seam +1.098603e-4; pen_HO -5.166336e-3, pen_HH -0.000000e0, wall_OO +7.427460e-4, wall_OH +4.135807e-3, wall_HH +3.976434e-4, disp +0.000000e0; units 2, O–O 1, H–O 4)
+  flipped_R3.4: engine +9.116128935006e-3 vs formula +9.116128935006e-3 — miss 1.076e-16 (E_q diff +2.777793e-3, seam +6.338336e-3; pen_HO -2.149410e-3, pen_HH -0.000000e0, wall_OO +1.905189e-4, wall_OH +1.546191e-3, wall_HH +6.751036e-3, disp +0.000000e0; units 2, O–O 1, H–O 4)
+  twisted_R3.0: engine +3.222504765286e-4 vs formula +3.222504765286e-4 — miss 1.778e-17 (E_q diff -2.255175e-3, seam +2.577425e-3; pen_HO -7.848711e-3, pen_HH -0.000000e0, wall_OO +1.168982e-3, wall_OH +6.416710e-3, wall_HH +2.840445e-3, disp +0.000000e0; units 2, O–O 1, H–O 4)
+  bentdonor_R2.9: engine -1.481912759629e-3 vs formula -1.481912759629e-3 — miss 5.855e-17 (E_q diff -2.541073e-3, seam +1.059160e-3; pen_HO -5.156524e-3, pen_HH -0.000000e0, wall_OO +1.839819e-3, wall_OH +4.117786e-3, wall_HH +2.580788e-4, disp +0.000000e0; units 2, O–O 1, H–O 4)
+G-C1: worst |engine − formula| = 1.076e-16 (stake 1e-10) → PASS
+M-VACUOUS-SUCCESS: every G-C1 geometry served two units, one cross O–O pair and four cross H–O pairs: true
+
+wall9.json written
+prediction.json filed BEFORE the held-out solve: E_pred -7.804237e-4 Ha — E_q(g) − E_q(40) -1.971589e-3, contact_HO -5.163353e-3, contact_HH -0.000000e0, wall_OO +1.839819e-3, wall_OH +4.121667e-3, wall_HH +3.930317e-4, disp +0.000000e0; units 2

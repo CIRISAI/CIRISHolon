@@ -1,0 +1,3 @@
+FIELD-9 predict — the HELD-OUT DOUBLY BENT node (donor 30° and acceptor 30° about the x-axis through their OWN oxygens, R_OO 2.9 Å) on 24 threads; E_pred -7.804236812039e-4 Ha
+  doublebent_R2.9: R_OO 2.9 Å, 1002001 dets, ΔE_exact -3.143038e-3 Ha, 209 iters, residual 7.9e-11, exit Converged, wall 1403 s, 30935 core-s, admitted true (band 1450–57600)
+S2: ΔE_exact -3.143038e-3 Ha, E_pred -7.804237e-4 — miss 2.363e-3 (75.2 % of |ΔE_exact|) against 7.858e-4; E_exch(undeformed, doubly bent) +6.133803e-3 vs the three-class wall +6.354518e-3 (O–O +1.839819e-3, H–O +4.121667e-3, H–H +3.930317e-4), difference 2.207e-4 → branch (b)

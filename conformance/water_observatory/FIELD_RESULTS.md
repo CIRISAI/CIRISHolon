@@ -86,3 +86,13 @@ edited into the text above (rule 7: the record stays, marked).
    no ledger row and no receipt line reads the virial; `pressure()` with the field on was the
    only reading affected, and no campaign has read it.
 
+3. **The records were not JSON (FIELD-6 through FIELD-9, 2026-09-05).** The harvest writers
+   formatted positive numbers with a sign (`{:+.12e}`), and JSON admits no leading `+`; every
+   `wall*.json`, `prediction*.json`, exchange and orientation record under `field6/`–`field9/`
+   failed to parse (`python3 -m json.tool`). The gate loaders read those files by string
+   split and Rust's number parser, which accepts the sign, so no gate or arm read a wrong
+   value. The `+` tokens were removed from the banked files by a script (values unchanged,
+   83 banked files under `field6/`–`field8/` and the three FIELD-9 records; `git diff` is the receipt), and the writer in
+   `field9_harvest.rs` corrected; CT-1's runner validates every file it writes. Entered here
+   rather than silently: M-FORMAT-FLOOR's neighbour — a record that cannot be read by the
+   format it claims.

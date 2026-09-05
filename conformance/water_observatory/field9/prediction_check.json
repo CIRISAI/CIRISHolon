@@ -1,0 +1,9 @@
+{
+  "node": "doublebent_R2.9", "e_pred": -7.804236812039e-4, "de_exact": -3.143038450943e-3,
+  "miss": 2.362615e-3, "miss_fraction": 0.751698, "tolerance": 7.857596e-4, "tolerance_rule": "max(0.25·|ΔE_exact|, 5e-4)",
+  "s2_branch": "b", "s2_branch_meaning": "(a) the prediction lands within tolerance; (b) it misses and the wall is within that tolerance of E_exch on the same geometry; (c) both miss",
+  "exact": {"converged": true, "exit": "Converged", "davidson_iters": 209, "residual": 7.911e-11, "residual_bar": 1e-9, "n_det": 1002001, "n_det_expected": 1002001, "n_det_ok": true, "cpu_seconds": 30934.6, "cpu_seconds_lo": 1450, "cpu_seconds_hi": 57600, "price_in_band": true, "wall_seconds": 1402.8},
+  "exchange_on_the_held_out_node": {"r_oo_bohr": 5.480206, "e_exch": 6.133802754714e-3, "e_hl": -1.500439228087e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": -3.473548925339e-3, "norm": 9.966761904004550e-1, "nonzero_dets": 1002001, "n_det_a": 441, "n_det_b": 441, "product_dets": 194481, "s_cross_max": 4.422101e-2, "sigma_seconds": 7.063, "cpu_seconds": 159.890, "wall_seconds": 10.058},
+  "wall": {"a": 9.480487358002e2, "b": 2.400000000000e0, "a_oh": 2.258605362549e1, "b_oh": 2.200000000000e0, "a_hh": 1.525046249564e0, "b_hh": 1.750000000000e0, "value": 6.354517958842e-3, "oo": 1.839819302421e-3, "oh": 4.121666971365e-3, "hh": 3.930316850565e-4, "minus_e_exch": 2.207152041279e-4, "abs_difference": 2.207152e-4, "within_tolerance": true},
+  "cross_oo_bohr": [5.480206], "cross_ho_bohr": [6.787015, 6.787015, 3.919406, 5.998419], "cross_hh_bohr": [5.135626, 5.135626, 6.855212, 7.629609]
+}

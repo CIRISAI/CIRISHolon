@@ -1,7 +1,7 @@
 {
   "node": "orient_close_R2.5_t30", "family": "tilt", "r_oo_angstrom": 2.500, "r_oo_bohr": 4.724315, "tilt_degrees": 30.0, "twist_degrees": 0.0, "tilt_axis": "x, through the acceptor's own oxygen",
   "referee": "heitler_london_undeformed",
-  "e_hl": -1.500106094623e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": -2.472813101162e-2, "e_exch": +6.070173132831e-2,
+  "e_hl": -1.500106094623e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": -2.472813101162e-2, "e_exch": 6.070173132831e-2,
   "norm": 9.682774986321995e-1, "nonzero_dets": 1002001, "n_det": 1002001, "n_det_a": 441, "n_det_b": 441, "product_dets": 194481, "product_dets_staked": 194481,
   "s_cross_max": 1.319799594253e-1, "sigma_seconds": 3.773, "wall_seconds": 5.785, "cpu_seconds": 89.950, "threads": 24,
   "cross_oo_bohr": [4.724315], "cross_ho_bohr": [6.054746, 6.054746, 2.780741, 5.315789], "cross_hh_bohr": [4.210414, 4.210414, 6.123829, 6.979848],

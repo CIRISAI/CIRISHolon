@@ -1456,6 +1456,12 @@ impl Sim {
                         (None, Some((_, r_cut))) => Reach::Radius { r: r_cut, by: "pair switch (inside the exact pair curve)" },
                         (None, None) => Reach::Scene,
                     },
+                    // the sixth is a cross-unit term of the seam law (CT-1): present only
+                    // where the seam is on and the term's amplitude is not the exact zero
+                    ChannelId::ChargeTransfer => match self.seam {
+                        Some(m) if m.p_ct != 0.0 => Reach::Scene,
+                        _ => Reach::Absent,
+                    },
                 };
                 ChannelStanding { channel: c, rows, reach }
             })
@@ -3303,6 +3309,9 @@ impl Sim {
         let c6 = model.c6;
         let (a_oh, b_oh, a_hh, b_hh) = (model.a_oh, model.b_oh, model.a_hh, model.b_hh);
         let (p_hh, c_hh) = (model.p_hh, model.c_hh);
+        // CT-1: the charge-transfer term on cross-unit H–O pairs; plant (ii) flips its sign
+        let p_ct = if plant == crate::seam::SeamPlant::FlipChargeTransfer { -model.p_ct } else { model.p_ct };
+        let c_ct = model.c_ct;
         let geom = self.geom();
         let f = crate::seam::FREE;
         let mut e = 0.0f64;
@@ -3350,11 +3359,13 @@ impl Sim {
                         || (plant == crate::seam::SeamPlant::DropReactionNew && a == 0.0);
                     (w + ud, -b * w + dud, drop)
                 } else if is_ho {
-                    // penetration: U = −p·e^{−c r}, dU/dr = p·c·e^{−c r}; the H–O wall beside it
+                    // penetration: U = −p·e^{−c r}, dU/dr = p·c·e^{−c r}; the H–O wall beside
+                    // it; and the charge-transfer term −p_ct·e^{−c_ct r} (CT-1, channel 6)
                     let x = p * (-c * r).exp();
                     let w = a_oh * (-b_oh * r).exp();
+                    let t = p_ct * (-c_ct * r).exp();
                     ho += 1;
-                    (-x + w, c * x - b_oh * w, plant == crate::seam::SeamPlant::DropReactionNew)
+                    (-x + w - t, c * x - b_oh * w + c_ct * t, plant == crate::seam::SeamPlant::DropReactionNew)
                 } else {
                     // the H–H wall (FIELD-7) and the H–H contact term (FIELD-8)
                     let w = a_hh * (-b_hh * r).exp();

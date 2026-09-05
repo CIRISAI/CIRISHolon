@@ -62,7 +62,7 @@ fn field2_arms(out: &Path) -> Option<String> {
 /// is the harvest not having landed — the seam rule with no wall is a legitimate state for
 /// gate G-B4 and is NOT these arms.
 fn wall_from(out: &Path) -> Result<SeamModel, String> {
-    let p = ["wall8.json", "wall7.json", "wall6.json", "wall5.json", "wall4.json", "wall.json"].iter().map(|f| out.join(f)).find(|p| p.exists()).unwrap_or_else(|| out.join("wall.json"));
+    let p = ["wall_ct.json", "wall9.json", "wall8.json", "wall7.json", "wall6.json", "wall5.json", "wall4.json", "wall.json"].iter().map(|f| out.join(f)).find(|p| p.exists()).unwrap_or_else(|| out.join("wall.json"));
     let t = fs::read_to_string(&p).map_err(|e| format!("{}: {e}", p.display()))?;
     let (a, b) = (json_num(&t, "a"), json_num(&t, "b"));
     if !a.is_finite() || !b.is_finite() {
@@ -72,10 +72,20 @@ fn wall_from(out: &Path) -> Result<SeamModel, String> {
         return Err(format!("{}: a = 0", p.display()));
     }
     let opt = |k: &str| { let v = json_num(&t, k); if v.is_finite() { v } else { 0.0 } };
-    let m = SeamModel { a, b, p: opt("p"), c: opt("c"), c6: opt("c6"), a_oh: opt("a_oh"), b_oh: opt("b_oh"), a_hh: opt("a_hh"), b_hh: opt("b_hh"), p_hh: opt("p_hh"), c_hh: opt("c_hh") };
-    // FIELD-8 G-N0 (M-EXTRAPOLATED-HOLE): a law that falls inward to contact is not run
-    if let Some(why) = m.hole(holon_render::field::water_charge_at_pin()) {
-        return Err(format!("{}: the harvested law has a HOLE below its data — {why}; the arms are VOID before they run (FIELD-8 G-N0)", p.display()));
+    let m = SeamModel { a, b, p: opt("p"), c: opt("c"), c6: opt("c6"), a_oh: opt("a_oh"), b_oh: opt("b_oh"), a_hh: opt("a_hh"), b_hh: opt("b_hh"), p_hh: opt("p_hh"), c_hh: opt("c_hh"), p_ct: opt("p_ct"), c_ct: opt("c_ct") };
+    // FIELD-9 G-B0 (M-EXTRAPOLATED-HOLE as FIELD-8 read it): a law is run only if it is BOUNDED
+    // below its fit range — no fall deeper than kT below its value at the class's shortest fit
+    // distance, and positive at contact. The record carries its own r_min per class; a record
+    // without them (FIELD-8's and earlier) is walked from FIELD-8's shortest fit distances.
+    let q_h = holon_render::field::water_charge_at_pin();
+    let rmin = |k: &str, default: f64| { let v = json_num(&t, k); if v.is_finite() && v > 0.0 { v } else { default } };
+    let r_min = [rmin("r_min_oo", 4.724), rmin("r_min_oh", 2.78), rmin("r_min_hh", 3.5)];
+    let kt = 9.278758e-4;
+    if let Some(why) = m.bounded(q_h, r_min, kt) {
+        return Err(format!("{}: the harvested law is NOT BOUNDED below its fit range — {why}; the arms are VOID before they run (FIELD-9 G-B0)", p.display()));
+    }
+    if let Some(dip) = m.hole(q_h) {
+        eprintln!("note: the monotone walk reads a dip ({dip}); the boundedness gate admits the law (FIELD-8's finding: a bounded well is not a hole)");
     }
     Ok(m)
 }

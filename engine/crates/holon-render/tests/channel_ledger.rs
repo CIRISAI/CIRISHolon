@@ -82,14 +82,19 @@ fn energy_folded_over_the_row_table_is_the_hand_written_chain() {
 // ---------------------------------------------------------------- THE DECLARATIONS
 
 #[test]
-fn the_five_channels_wear_the_five_thing_kinds_in_rate_order() {
+fn the_five_channels_wear_the_five_thing_kinds_in_rate_order_and_the_sixth_is_appended() {
+    // the five in rate order, and CT-1's sixth APPENDED: the identity's soft edge, sharing
+    // the fifth's kind and rate, after it
     let kinds: Vec<Kind> = CHANNELS.iter().map(|c| c.kind).collect();
-    assert_eq!(kinds, [Kind::Circumstances, Kind::Structure, Kind::Process, Kind::Rules, Kind::Identity]);
+    assert_eq!(kinds, [Kind::Circumstances, Kind::Structure, Kind::Process, Kind::Rules, Kind::Identity, Kind::Identity]);
     let powers: Vec<Option<f64>> = CHANNELS.iter().map(|c| c.rate.power()).collect();
-    assert_eq!(powers, [Some(1.0), Some(4.0), Some(6.0), Some(9.0), None]);
+    assert_eq!(powers, [Some(1.0), Some(4.0), Some(6.0), Some(9.0), None, None]);
     let shapes: Vec<Shape> = CHANNELS.iter().map(|c| c.shape).collect();
-    assert_eq!(shapes, [Shape::Sum, Shape::FixedPoint, Shape::Sum, Shape::Sum, Shape::Solve]);
-    assert_eq!(CHANNELS.iter().map(|c| c.arity).collect::<Vec<_>>(), [2, 2, 2, 3, 2]);
+    assert_eq!(shapes, [Shape::Sum, Shape::FixedPoint, Shape::Sum, Shape::Sum, Shape::Solve, Shape::Solve]);
+    assert_eq!(CHANNELS.iter().map(|c| c.arity).collect::<Vec<_>>(), [2, 2, 2, 3, 2, 2]);
+    assert_eq!(ChannelId::ChargeTransfer as usize, 5, "appended, the five not renumbered");
+    assert!(ChannelId::ChargeTransfer.record().prior_art.contains("KILL"), "the sixth carries its kill in the record");
+    assert_eq!(rows_carrying(ChannelId::ChargeTransfer), vec![Row::Seam]);
     assert_eq!(ChannelId::Field.record().receipt, Some("work.field"));
     for c in CHANNELS.iter().skip(1) {
         assert_eq!(c.receipt, None, "{:?} is conservative and posts no receipt", c.id);
@@ -100,7 +105,7 @@ fn the_five_channels_wear_the_five_thing_kinds_in_rate_order() {
 fn the_standing_report_reads_the_rows_it_names_and_nothing_else() {
     let s = water();
     let standing = s.channel_standing();
-    assert_eq!(standing.len(), 5);
+    assert_eq!(standing.len(), 6);
     for st in standing.iter() {
         assert_eq!(rows_carrying(st.channel.id).len(), st.rows.len());
         for (row, carriage, v) in st.rows.iter() {

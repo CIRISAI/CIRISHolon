@@ -28,6 +28,15 @@
 //! | pair dispersion | Process | 2 | `R⁻⁶` | a sum | London 1930 |
 //! | three-body dispersion | Rules | 3 | `R⁻⁹` | a sum | Axilrod–Teller–Muto 1943 |
 //! | exchange | Identity | 2 | exponential | a solve | Pauli; the exact core |
+//! | charge transfer | Identity | 2 | exponential | a solve | Mo–Gao–Peyerimhoff 2000; Khaliullin–Bell–Head-Gordon 2007 |
+//!
+//! The sixth (CT-1, 2026-09-05) is APPENDED, the five not renumbered: it is the identity's
+//! SOFT edge — electrons crossing between two closures that both stay closed — where
+//! exchange is the hard one (which electron is which). It is measured as the energy the
+//! exact dimer has and the block-localised closed sector does not (`E_exact − E_noCT`,
+//! `holon-chem::heitler_london::fci_block_localised`). Its kill, carried in the record:
+//! a charge-transfer term harvested at one basis that vanishes at a larger one was the
+//! basis's, not the seam's (Stone and Misquitta 2009).
 //!
 //! The rates are the leading orders of standard intermolecular theory (SAPT: Jeziorski,
 //! Moszynski, Szalewicz 1994) and they are what a residual is ASSIGNED by — EMBED-2's
@@ -101,7 +110,7 @@ impl Rate {
     }
 }
 
-/// The five channels of the ledger, in rate order.
+/// The channels of the ledger, in rate order; the sixth appended (CT-1).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ChannelId {
     /// The standing multipoles of everything else, counted once (FIELD-1).
@@ -114,6 +123,9 @@ pub enum ChannelId {
     ThreeBody,
     /// Which electron is which, and the sign of saying so.
     Exchange,
+    /// Electrons crossing between two closures that both stay closed — the identity's
+    /// soft edge (CT-1).
+    ChargeTransfer,
 }
 
 /// One channel of the ledger — a record, not a computation.
@@ -134,8 +146,9 @@ pub struct Channel {
     pub prior_art: &'static str,
 }
 
-/// THE FIVE. Order is rate order, which is also the order of reach at any budget.
-pub const CHANNELS: [Channel; 5] = [
+/// THE FIVE, AND THE SIXTH APPENDED. Order is rate order, which is also the order of reach
+/// at any budget; the sixth shares the fifth's rate and sits after it.
+pub const CHANNELS: [Channel; 6] = [
     Channel {
         id: ChannelId::Field,
         kind: Kind::Circumstances,
@@ -180,6 +193,15 @@ pub const CHANNELS: [Channel; 5] = [
         shape: Shape::Solve,
         receipt: None,
         prior_art: "Pauli; the exact determinant core (holon-chem::lanes, the k = 2 case); CIRISOntology Core/ExchangeSign.lean",
+    },
+    Channel {
+        id: ChannelId::ChargeTransfer,
+        kind: Kind::Identity,
+        arity: 2,
+        rate: Rate::Exponential,
+        shape: Shape::Solve,
+        receipt: None,
+        prior_art: "block-localised wavefunctions (Mo, Gao, Peyerimhoff 2000); ALMO (Khaliullin, Bell, Head-Gordon 2007); the basis dependence (Stone, Misquitta 2009); measured here as E_exact − E_noCT on the closed sector of the monomers' own determinants (holon-chem::heitler_london::fci_block_localised, CT-1). KILL: a term that vanishes at a larger basis was the basis's",
     },
 ];
 
@@ -291,6 +313,7 @@ impl Row {
                 (ChannelId::Field, Carriage::Folded),
                 (ChannelId::Induction, Carriage::Folded),
                 (ChannelId::PairDispersion, Carriage::Whole),
+                (ChannelId::ChargeTransfer, Carriage::Whole),
             ],
         }
     }

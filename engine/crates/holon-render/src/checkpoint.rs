@@ -65,7 +65,8 @@ use crate::sim::{Atom, Boundary, Dims, Sim};
 /// v9 (2026-09-05, FIELD-7): the walls on the two further pair classes (`a_oh`, `b_oh`,
 /// `a_hh`, `b_hh`) follow `seam_c6`.
 /// v10 (2026-09-05, FIELD-8): the H–H contact term (`p_hh`, `c_hh`) follows `seam_b_hh`.
-pub const CHECKPOINT_VERSION: u32 = 10;
+/// v11 (2026-09-05, CT-1): the charge-transfer term (`p_ct`, `c_ct`) follows `seam_c_hh`.
+pub const CHECKPOINT_VERSION: u32 = 11;
 
 const MAGIC: [u8; 8] = *b"HOLONCK1";
 
@@ -416,6 +417,8 @@ impl Sim {
         w.f64(self.seam.map_or(0.0, |m| m.b_hh));
         w.f64(self.seam.map_or(0.0, |m| m.p_hh));
         w.f64(self.seam.map_or(0.0, |m| m.c_hh));
+        w.f64(self.seam.map_or(0.0, |m| m.p_ct));
+        w.f64(self.seam.map_or(0.0, |m| m.c_ct));
         w.f64(self.e_ref);
         w.f64(self.drift_peak);
         w.f64(self.momentum_residual_peak);
@@ -545,6 +548,8 @@ impl Sim {
         let seam_b_hh = r.f64()?;
         let seam_p_hh = r.f64()?;
         let seam_c_hh = r.f64()?;
+        let seam_p_ct = r.f64()?;
+        let seam_c_ct = r.f64()?;
         let e_ref = r.f64()?;
         let drift_peak = r.f64()?;
         let momentum_residual_peak = r.f64()?;
@@ -593,7 +598,7 @@ impl Sim {
         self.work.field = field_col;
         self.work.seam = seam_col;
         self.field = if field_q != 0.0 { Some(crate::field::FieldModel { q_h: field_q }) } else { None };
-        self.seam = if seam_on != 0 { Some(crate::seam::SeamModel { a: seam_a, b: seam_b, p: seam_p, c: seam_c, c6: seam_c6, a_oh: seam_a_oh, b_oh: seam_b_oh, a_hh: seam_a_hh, b_hh: seam_b_hh, p_hh: seam_p_hh, c_hh: seam_c_hh }) } else { None };
+        self.seam = if seam_on != 0 { Some(crate::seam::SeamModel { a: seam_a, b: seam_b, p: seam_p, c: seam_c, c6: seam_c6, a_oh: seam_a_oh, b_oh: seam_b_oh, a_hh: seam_a_hh, b_hh: seam_b_hh, p_hh: seam_p_hh, c_hh: seam_c_hh, p_ct: seam_p_ct, c_ct: seam_c_ct }) } else { None };
         self.seam_assigned = false;
         self.l0 = l0;
         self.p0 = p0;

@@ -51,16 +51,60 @@ pub struct SeamModel {
     /// FIELD-8: the contact term on cross-unit hydrogen–hydrogen pairs, `−p_hh·exp(−c_hh·r)`.
     pub p_hh: f64,
     pub c_hh: f64,
+    /// CT-1: the charge-transfer term on cross-unit hydrogen–oxygen pairs, `−p_ct·exp(−c_ct·r)`
+    /// (channel 6, whole) — the donor's O–H against the acceptor's lone pair is the contact.
+    pub p_ct: f64,
+    pub c_ct: f64,
 }
 
 impl SeamModel {
     /// The seam rule with no cross-unit term at all.
-    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0, a_oh: 0.0, b_oh: 0.0, a_hh: 0.0, b_hh: 0.0, p_hh: 0.0, c_hh: 0.0 };
+    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0, a_oh: 0.0, b_oh: 0.0, a_hh: 0.0, b_hh: 0.0, p_hh: 0.0, c_hh: 0.0, p_ct: 0.0, c_ct: 0.0 };
+
+    /// The charge-transfer term's energy at a cross-unit H–O separation `r` (CT-1).
+    #[inline]
+    pub fn charge_transfer(&self, r: f64) -> f64 {
+        -self.p_ct * (-self.c_ct * r).exp()
+    }
 
     /// The H–H contact term's energy at a cross-unit H–H separation `r` (FIELD-8).
     #[inline]
     pub fn contact_hh(&self, r: f64) -> f64 {
         -self.p_hh * (-self.c_hh * r).exp()
+    }
+
+    /// THE BOUNDEDNESS WALK (FIELD-9 G-B0, the discharge of M-EXTRAPOLATED-HOLE as FIELD-8 read
+    /// it): each cross-unit class potential — O–O, H–O, H–H, in that order of `r_min` — walked
+    /// from its own `r_min` (the shortest distance of that class the wall was FIT on) inward to
+    /// 0.5 bohr on a 0.05 grid. A physical contact potential may dip below its fit range (a
+    /// hydrogen bond's H···O well is real); what it may not do is fall without bound or end
+    /// attractive at contact. Refused, by name: a value along the walk lower than the value at
+    /// `r_min` by more than `kt`, or a value at 0.5 bohr that is not positive. `None` is a law
+    /// the dynamics cannot fall through.
+    pub fn bounded(&self, q_h: f64, r_min: [f64; 3], kt: f64) -> Option<String> {
+        let q_o = -2.0 * q_h;
+        let classes: [(&str, &dyn Fn(f64) -> f64); 3] = [
+            ("O–O", &|r: f64| self.wall(r) + self.dispersion(r) + q_o * q_o / r),
+            ("H–O", &|r: f64| self.penetration(r) + self.charge_transfer(r) + self.wall_oh(r) + q_h * q_o / r),
+            ("H–H", &|r: f64| self.contact_hh(r) + self.wall_hh(r) + q_h * q_h / r),
+        ];
+        for (k, (name, u)) in classes.iter().enumerate() {
+            let r0 = r_min[k];
+            let floor = u(r0) - kt;
+            let mut r = r0;
+            while r > 0.5 + 1e-12 {
+                r = (r - 0.05).max(0.5);
+                let v = u(r);
+                if v < floor {
+                    return Some(format!("{name} potential falls to {v:+.4e} at r = {r:.2} bohr, more than kT below its value {:+.4e} at its fit floor r_min = {r0:.3}", u(r0)));
+                }
+            }
+            let at_contact = u(0.5);
+            if !(at_contact > 0.0) {
+                return Some(format!("{name} potential is not positive at contact: {at_contact:+.4e} at 0.5 bohr"));
+            }
+        }
+        None
     }
 
     /// THE NO-HOLE WALK (FIELD-8 G-N0, the discharge of M-EXTRAPOLATED-HOLE): each cross-unit
@@ -71,7 +115,7 @@ impl SeamModel {
     pub fn hole(&self, q_h: f64) -> Option<String> {
         let q_o = -2.0 * q_h;
         let classes: [(&str, &dyn Fn(f64) -> f64); 3] = [
-            ("H–O", &|r: f64| self.penetration(r) + self.wall_oh(r) + q_h * q_o / r),
+            ("H–O", &|r: f64| self.penetration(r) + self.charge_transfer(r) + self.wall_oh(r) + q_h * q_o / r),
             ("O–O", &|r: f64| self.wall(r) + self.dispersion(r) + q_o * q_o / r),
             ("H–H", &|r: f64| self.contact_hh(r) + self.wall_hh(r) + q_h * q_h / r),
         ];
@@ -174,6 +218,8 @@ pub enum SeamPlant {
     DropReactionNew,
     /// FIELD-4 plant (i): `P → −P`.
     FlipPenetration,
+    /// CT-1 plant (ii): `P_CT → −P_CT`.
+    FlipChargeTransfer,
 }
 
 /// The seam's work counters for the last force pass, and its transitions to date.
@@ -270,6 +316,8 @@ mod tests {
         assert!((f.penetration(1.0) + (-1.0f64).exp()).abs() < 1e-15);
         assert_eq!(f.dispersion(2.0), -1.0);
         assert!((SeamModel { p_hh: 2.0, c_hh: 1.0, ..SeamModel::NO_WALL }.contact_hh(1.0) + 2.0 * (-1.0f64).exp()).abs() < 1e-15);
+        assert!((SeamModel { p_ct: 3.0, c_ct: 2.0, ..SeamModel::NO_WALL }.charge_transfer(0.5) + 3.0 * (-1.0f64).exp()).abs() < 1e-15);
+        assert_eq!(SeamModel::NO_WALL.charge_transfer(2.0), 0.0);
     }
 
     #[test]
@@ -284,5 +332,20 @@ mod tests {
         assert_eq!(ok.hole(q), None);
         // no seam terms at all: the charges alone attract on H–O — a hole, named
         assert!(SeamModel::NO_WALL.hole(q).is_some());
+        // FIELD-9's boundedness: FIELD-7's law falls without bound (refused); FIELD-8's law dips
+        // by a fraction of kT and rises to +1.3 Ha at contact (admitted); no terms at all ends
+        // attractive at contact (refused)
+        let kt = 9.28e-4;
+        let r_min = [4.724, 2.78, 3.5];
+        assert!(f7.bounded(q, r_min, kt).is_some());
+        // FIELD-8's law: its H–O well dips 4.5 mHa below the value at r_min = 2.78 (about 5 kT, the
+        // minimum at 2.28 bohr)
+        // and rises to +1.3 Ha at contact — refused at a kT depth, admitted at 5 mHa; the monotone
+        // walk names the dip either way. The depth is the rule; the test exercises both sides.
+        let f8 = SeamModel { a: 387.87, b: 2.20, p: 11.737, c: 1.98, a_oh: 17.302, b_oh: 2.15, a_hh: 1.309, b_hh: 1.70, p_hh: 1.16e-4, c_hh: 0.5, ..SeamModel::NO_WALL };
+        assert!(f8.bounded(q, r_min, kt).as_deref().map_or(false, |m| m.starts_with("H–O potential falls")));
+        assert_eq!(f8.bounded(q, r_min, 5.0e-3), None, "{:?}", f8.bounded(q, r_min, 5.0e-3));
+        assert!(f8.hole(q).is_some(), "the monotone walk still names FIELD-8's dip");
+        assert!(SeamModel::NO_WALL.bounded(q, r_min, kt).is_some());
     }
 }

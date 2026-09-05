@@ -1354,9 +1354,80 @@ impl Sim {
         self.k_three_max
     }
 
-    /// Total energy currently held by the scene.
+    /// One ledger row, by name (`channel::Row`). The rows are the fields below, and this
+    /// is the one place that says which field each row is.
+    pub fn row(&self, row: crate::channel::Row) -> f64 {
+        use crate::channel::Row;
+        match row {
+            Row::Kin => self.e_kin,
+            Row::Pair => self.e_pair,
+            Row::Three => self.e_three,
+            Row::Many => self.e_many,
+            Row::Far => self.e_far,
+            Row::Field => self.e_field,
+            Row::Wall => self.e_wall,
+            Row::Spring => self.e_spring,
+            Row::Grav => self.e_grav,
+        }
+    }
+
+    /// Total energy currently held by the scene: the ledger's rows summed IN THE LEDGER'S
+    /// ORDER (`channel::Row::ALL`), left to right, starting from the first row — exactly
+    /// the operations the hand-written chain `e_kin + e_pair + … + e_grav` performed, so
+    /// deriving the sum from the row table changes no bit (`tests/channel_ledger.rs`
+    /// holds the chain beside it as the receipt).
     pub fn energy(&self) -> f64 {
-        self.e_kin + self.e_pair + self.e_three + self.e_many + self.e_far + self.e_field + self.e_wall + self.e_spring + self.e_grav
+        let rows = crate::channel::Row::ALL;
+        let mut e = self.row(rows[0]);
+        for r in &rows[1..] {
+            e += self.row(*r);
+        }
+        e
+    }
+
+    /// THE CHANNEL LEDGER'S STANDING in this scene (`channel.rs`): for each of the five
+    /// channels, the rows that carry it and how, those rows' current values, and the
+    /// channel's reach as the sector that carries it set it. A report over numbers the
+    /// force law already computed; it evaluates nothing and is consulted by nothing.
+    pub fn channel_standing(&self) -> Vec<crate::channel::ChannelStanding> {
+        use crate::channel::{Carriage, ChannelId, ChannelStanding, Reach, Row, CHANNELS};
+        CHANNELS
+            .iter()
+            .map(|c| {
+                let rows: Vec<(Row, Carriage, f64)> = Row::ALL
+                    .iter()
+                    .flat_map(|r| r.carries().iter().filter(|(id, _)| *id == c.id).map(move |(_, car)| (*r, *car, self.row(*r))))
+                    .collect();
+                let reach = match c.id {
+                    ChannelId::Field => {
+                        if self.field.is_some() {
+                            Reach::Scene
+                        } else {
+                            Reach::Absent
+                        }
+                    }
+                    ChannelId::Induction => Reach::Absent,
+                    ChannelId::PairDispersion => match (&self.far, self.pair_switch) {
+                        (Some(f), _) => Reach::Radius { r: f.r_f(), by: "far sector R_f (channel::Kernel::Power)" },
+                        (None, Some((_, r_cut))) => Reach::Radius { r: r_cut, by: "pair switch (channel::Kernel::Sampled)" },
+                        (None, None) => Reach::Scene,
+                    },
+                    ChannelId::ThreeBody => {
+                        let r = self.three_body_cutoff().max(self.many_body_cutoff());
+                        if r > 0.0 {
+                            Reach::Radius { r, by: "table reach / registry body reach (channel::Kernel::Declared)" }
+                        } else {
+                            Reach::Absent
+                        }
+                    }
+                    ChannelId::Exchange => match self.pair_switch {
+                        Some((_, r_cut)) => Reach::Radius { r: r_cut, by: "pair switch (inside the exact pair curve)" },
+                        None => Reach::Scene,
+                    },
+                };
+                ChannelStanding { channel: c, rows, reach }
+            })
+            .collect()
     }
 
     /// The conserved quantity. `E - W_ext` is constant for an exact integrator, with or
@@ -1944,34 +2015,15 @@ impl Sim {
                 continue;
             }
             any = true;
+            // THE ONE ALLOCATOR (`channel::reach_for_budget`): this is its `Sampled` arm —
+            // the doubling walk and the 80-step bisection that stood here, moved verbatim,
+            // so every radius is bit-identical to the one it replaced.
             let base = t.r_max();
-            if t.u(base).abs() <= floor {
-                // Already under budget at the last knot: the tail is all that is left.
-                r_in = r_in.max(base);
-                continue;
-            }
-            // The tail is a decaying exponential past the last knot, so `|u|` is monotone
-            // there and bisection is exact to the bracket. Walk out in doublings until the
-            // budget is met, then halve in.
-            let mut hi = base + 1.0;
-            let mut guard = 0;
-            while t.u(hi).abs() > floor && guard < 64 {
-                hi = base + (hi - base) * 2.0;
-                guard += 1;
-            }
-            if t.u(hi).abs() > floor {
+            let u = |r: f64| t.u(r);
+            let Some(r) = crate::channel::reach_for_budget(crate::channel::Kernel::Sampled { u: &u, base }, floor) else {
                 return None;
-            }
-            let mut lo = base;
-            for _ in 0..80 {
-                let mid = 0.5 * (lo + hi);
-                if t.u(mid).abs() > floor {
-                    lo = mid;
-                } else {
-                    hi = mid;
-                }
-            }
-            r_in = r_in.max(hi);
+            };
+            r_in = r_in.max(r);
         }
         if !any {
             return None;

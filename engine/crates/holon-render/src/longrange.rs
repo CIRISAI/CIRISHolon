@@ -156,10 +156,14 @@ impl TailModel {
     /// form because the kernel is a pure power; `Sim::derive_pair_cutoff` bisects because
     /// its kernel is an interpolant, and the two agree in what they mean by a budget.
     pub fn radius_for_budget(&self, budget: f64) -> f64 {
-        if !(budget > 0.0) || self.c_p == 0.0 {
-            return self.r_s;
-        }
-        (self.c_p.abs() / budget).powf(1.0 / self.p).max(self.r_s)
+        // THE ONE ALLOCATOR (`channel::reach_for_budget`): this is its `Power` arm, whose
+        // arithmetic is exactly the closed form that stood here, so every radius is
+        // bit-identical to the one it replaced (`tests/channel_ledger.rs`).
+        crate::channel::reach_for_budget(
+            crate::channel::Kernel::Power { c: self.c_p, p: self.p, r_min: self.r_s },
+            budget,
+        )
+        .expect("the power arm always returns a radius")
     }
 }
 
@@ -198,6 +202,12 @@ pub enum FarRefusal {
     /// Below that an image sits inside the table's support with nobody summing it, which is
     /// a missing force rather than an error.
     PeriodicTooSmall { min_edge: f64, r_s: f64 },
+    /// THE CHANNEL LEDGER'S refusal (OBJECT.md rule 10; `channel.rs`): a curve's MEASURED
+    /// tail exponent disagrees with the DERIVED exponent of the channel its tail is booked
+    /// to, by more than `channel::EXPONENT_SLACK`. A fit is not a law; a tail that is not
+    /// the power its channel says it is refuses to hand anyone a scalar. OPT-IN via
+    /// `FarSector::require_assigned_exponent` — no banked scene consults it.
+    ExponentDisagrees { slot: usize, measured: f64, assigned: f64, deviation: f64 },
 }
 
 impl core::fmt::Display for FarRefusal {
@@ -248,6 +258,15 @@ impl core::fmt::Display for FarRefusal {
                  against 2 R_s = {:.4}. Below that an image sits inside the curve's support \
                  with neither sector summing it. Widen the box or lower R_s.",
                 2.0 * r_s
+            ),
+            FarRefusal::ExponentDisagrees { slot, measured, assigned, deviation } => write!(
+                f,
+                "REFUSED (channel ledger, exponent): slot {slot}'s measured tail exponent \
+                 p = {measured:.4} disagrees with its channel's derived power {assigned:.1} \
+                 by {:.1}% (slack {:.1}%). A fit is not a law: extend the curve or move the \
+                 tail to the channel whose rate it has.",
+                100.0 * deviation,
+                100.0 * crate::channel::EXPONENT_SLACK
             ),
         }
     }
@@ -513,6 +532,38 @@ impl FarSector {
     }
     pub fn model(&self, slot: usize) -> Option<&TailModel> {
         self.models.get(slot).and_then(|m| m.as_ref())
+    }
+
+    /// THE CHANNEL LEDGER'S READING of every loaded tail: its measured exponent against the
+    /// derived power of the channel it is booked to (pair dispersion, `R⁻⁶`, on a force law
+    /// with no charge). A reading, not a gate: nothing in the force law consults it.
+    pub fn exponent_readings(&self) -> Vec<crate::channel::ExponentReading> {
+        self.models
+            .iter()
+            .enumerate()
+            .filter_map(|(slot, m)| {
+                let m = m.as_ref()?;
+                crate::channel::ExponentReading::of(slot, crate::channel::ChannelId::PairDispersion, &m.fit)
+            })
+            .collect()
+    }
+
+    /// THE OPT-IN REFUSAL built on that reading: `Err` naming the first slot whose measured
+    /// exponent is not its channel's, within `channel::EXPONENT_SLACK`. Callers that want
+    /// the ledger's law rather than the curve's fit ask here; the sector's own build does
+    /// not, so every banked scene is bit-unchanged.
+    pub fn require_assigned_exponent(&self) -> Result<(), FarRefusal> {
+        for r in self.exponent_readings() {
+            if !r.agrees {
+                return Err(FarRefusal::ExponentDisagrees {
+                    slot: r.slot,
+                    measured: r.measured,
+                    assigned: r.assigned,
+                    deviation: r.deviation,
+                });
+            }
+        }
+        Ok(())
     }
 
     /// R4: a caller wanting one number from a fenced sector gets the bracket and a refusal.

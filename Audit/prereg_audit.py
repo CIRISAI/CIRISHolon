@@ -113,6 +113,12 @@ CONTACT = {
     "non-increasing": "M-FLOOR-UNSTAKED", "monotonicity": "M-FLOOR-UNSTAKED",
     "resolution floor": "M-FLOOR-UNSTAKED",
     "significant digits": "M-FORMAT-FLOOR", "printed precision": "M-FORMAT-FLOOR",
+    # --- 2026-09-05: FIELD-2 read its pre-arm binding as exactly zero and its expectation
+    # rule wrote "break" instead of VOID. Armed on the phrases a freeze of that shape uses.
+    # FIELD2_PREREG.md is the instance; it is dated the day of the registration and the
+    # forward-only rule below admits it by precedence (its results document carries the
+    # contact). Verified against every freeze and amendment in the tree: zero newly refused.
+    "expected to hold": "M-EMPTY-SECTOR", "binding at the start": "M-EMPTY-SECTOR",
 }
 
 def contact_table_is_sound():

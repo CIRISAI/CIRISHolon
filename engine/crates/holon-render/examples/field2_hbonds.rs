@@ -8,6 +8,10 @@
 //! M1 and M2 are written first (`expectation.json`), then the arms: dimer and cyclic
 //! tetramer, field OFF and ON, 293 K and 150 K, plus plants (i) and (ii). One frame is one
 //! integrator step. Counted by the rung-1 lens (`holon_lens::lens::hbonds`).
+//!
+//! Diagnostics (`FIELD2_RESULTS.md`): `-- probe` prints the dimer's first 400 frames with
+//! the field OFF and ON; `-- refs` prints the reference energies (monomer, dimer at 40
+//! bohr, dimer at the staked start), the charge assignment and the triple list at the start.
 use holon_chem::elements::{HYDROGEN, OXYGEN};
 use holon_chem::embed::{fragment_charges, monomer, water_centers, ChargeModel, Fragment};
 use holon_render::field::{FieldPlant, WATER_PIN_R_BOHR, WATER_PIN_THETA_RAD};
@@ -143,6 +147,14 @@ fn hbonds_now(s: &Sim) -> usize {
 fn binding_at_start(species: &[holon_chem::elements::Species], pos: &[[f64; 3]], box_edge: f64) -> (f64, f64, usize) {
     let mut s = scene(species, pos, box_edge, 293.0);
     s.set_field(true, None).unwrap();
+    // the bond verdicts the assignment reads are written by `refresh_pairs` at grain
+    // boundaries and at rebase. This call was added after the arms had run once, on the
+    // suspicion that the first expectation read the verdicts before they existed; it moved
+    // no number (`expectation.json` bit-identical). M1 is EXACTLY ZERO because the pair
+    // verdict bonds the donor hydrogen to the acceptor oxygen at 3.56 bohr and the unit
+    // assignment (FIELD_AMENDMENT_1) then finds no water unit at the bonded start — the
+    // results document reads this as M-EMPTY-SECTOR.
+    s.refresh_pairs();
     s.compute_forces();
     let charge = s.charge.clone();
     let e_start = s.field_energy_of(&charge);
@@ -209,7 +221,78 @@ fn arm_json(a: &Arm) -> String {
         a.f, a.nbar, a.t_mean, a.e_field_final, a.work_field, a.transitions, a.drift_peak, a.columns_ok, a.momentum_ok, a.hb0, a.seconds)
 }
 
+fn probe() {
+    let (sp, pos) = dimer_positions();
+    for on in [false, true] {
+        let mut s = scene(&sp, &pos, 30.0, 293.0);
+        if on { s.set_field(true, None).unwrap(); }
+        eprintln!("-- dimer field {}: dt {:.3}, n {}", if on { "ON" } else { "OFF" }, s.dt(), s.n);
+        for k in 0..=400 {
+            if k % 25 == 0 {
+                let oo = ((s.atoms[0].x - s.atoms[3].x).powi(2) + (s.atoms[0].y - s.atoms[3].y).powi(2) + (s.atoms[0].z - s.atoms[3].z).powi(2)).sqrt();
+                let oh = ((s.atoms[3].x - s.atoms[1].x).powi(2) + (s.atoms[3].y - s.atoms[1].y).powi(2) + (s.atoms[3].z - s.atoms[1].z).powi(2)).sqrt();
+                let bonded = s.pairs.iter().filter(|p| p.bonded).map(|p| format!("{}-{}", p.i, p.j)).collect::<Vec<_>>().join(",");
+                eprintln!("  frame {k:4}: O-O {oo:6.2}  Oacc···Hdon {oh:6.2}  T {:6.0} K  e_pair {:+.4}  e_three {:+.4}  e_field {:+.2e}  hb {}  bonded [{bonded}]",
+                    s.temperature(), s.e_pair, s.e_three, s.e_field, hbonds_now(&s));
+            }
+            s.step_frame(1);
+        }
+    }
+}
+
+
+/// Reference energies: the monomer at the pin, the dimer separated to 40 bohr, the dimer at
+/// its bonded start — and, at the start, the charge assignment and the cross-molecule
+/// (O,H,H) triples the water surface is asked to evaluate.
+fn refs() {
+    let (sp, pos) = dimer_positions();
+    let mono_sp: Vec<_> = sp[..3].to_vec();
+    let mono_pos: Vec<_> = pos[..3].to_vec();
+    let mut m = scene(&mono_sp, &mono_pos, 30.0, 293.0);
+    m.refresh_pairs();
+    m.compute_forces();
+    eprintln!("monomer at pin: e_pair {:+.6}  e_three {:+.6}  total {:+.6}  triples {}", m.e_pair, m.e_three, m.e_pair + m.e_three, m.triples().len());
+    let mut far = pos.clone();
+    for i in 3..6 { far[i][0] += 40.0; }
+    let mut d40 = scene(&sp, &far, 100.0, 293.0);
+    d40.refresh_pairs();
+    d40.compute_forces();
+    eprintln!("dimer at 40 bohr: e_pair {:+.6}  e_three {:+.6}  total {:+.6}  triples {}", d40.e_pair, d40.e_three, d40.e_pair + d40.e_three, d40.triples().len());
+    let mut d = scene(&sp, &pos, 30.0, 293.0);
+    d.set_field(true, None).unwrap();
+    d.refresh_pairs();
+    d.compute_forces();
+    eprintln!("dimer at start: e_pair {:+.6}  e_three {:+.6}  total {:+.6}  e_field {:+.3e}  triples {} (fenced, untabulated class: {})", d.e_pair, d.e_three, d.e_pair + d.e_three, d.e_field, d.triples().len(), d.fence_untabulated);
+    eprintln!("  interaction vs 40 bohr: pair {:+.6}  three {:+.6}  total {:+.6}", d.e_pair - d40.e_pair, d.e_three - d40.e_three, (d.e_pair + d.e_three) - (d40.e_pair + d40.e_three));
+    eprintln!("  charges: {:?}", &d.charge[..d.n]);
+    for p in d.pairs.iter() {
+        if p.bonded {
+            eprintln!("  bonded {}-{}: r {:.3}  e_rel {:+.5}  r_outer {:.2}", p.i, p.j, p.r, p.e_rel, p.r_outer);
+        }
+    }
+    for t in d.triples() {
+        let cross = (t[0] / 3 != t[1] / 3) || (t[1] / 3 != t[2] / 3);
+        let z: Vec<u32> = t.iter().map(|&i| d.atoms[i].species.z).collect();
+        let r = |a: usize, b: usize| ((d.atoms[a].x - d.atoms[b].x).powi(2) + (d.atoms[a].y - d.atoms[b].y).powi(2) + (d.atoms[a].z - d.atoms[b].z).powi(2)).sqrt();
+        eprintln!("  triple {:?} z {:?} {}: r01 {:.2} r02 {:.2} r12 {:.2}", t, z, if cross { "CROSS" } else { "intra" }, r(t[0], t[1]), r(t[0], t[2]), r(t[1], t[2]));
+    }
+    // the same three readings with the acceptor's own hydrogens dropped: a lone O at 5.5
+    let (sp3, pos3) = (sp[..4].to_vec(), pos[..4].to_vec());
+    let mut lone = scene(&sp3, &pos3, 30.0, 293.0);
+    lone.refresh_pairs();
+    lone.compute_forces();
+    eprintln!("monomer + lone O at 5.5: e_pair {:+.6}  e_three {:+.6}  (minus monomer: pair {:+.6} three {:+.6})", lone.e_pair, lone.e_three, lone.e_pair - m.e_pair, lone.e_three - m.e_three);
+}
+
 fn main() {
+    if std::env::args().nth(1).as_deref() == Some("probe") {
+        probe();
+        return;
+    }
+    if std::env::args().nth(1).as_deref() == Some("refs") {
+        refs();
+        return;
+    }
     let out = PathBuf::from(std::env::args().nth(1).unwrap_or_else(|| "../conformance/water_observatory/field2".to_string()));
     fs::create_dir_all(&out).expect("out");
     let (dsp, dpos) = dimer_positions();

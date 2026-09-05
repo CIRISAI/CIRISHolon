@@ -1,0 +1,7 @@
+{
+  "kT_293": 9.278758e-4, "kT_150": 4.750217e-4,
+  "dimer":    {"hbonds_at_start": 1, "e_field_start": 0.000000e0, "e_field_separated": 0.000000e0, "binding": 0.000000e0, "expect_293": "break", "expect_150": "break"},
+  "tetramer": {"hbonds_at_start": 4, "e_field_start": 0.000000e0, "e_field_separated": 0.000000e0, "binding": 0.000000e0, "expect_293": "break", "expect_150": "break"},
+  "square_plant_ii": {"hbonds_at_start": 0, "e_field_start": 0.000000e0, "e_field_separated": 0.000000e0, "binding": 0.000000e0, "carrier_vs_ring": 0.000000e0},
+  "m2": {"q_pin": 0.231380372, "max_rel_dev": 0.3426, "grid_r_theta_q": [[1.794, 81.8, 0.252274477], [1.794, 96.8, 0.275790460], [1.794, 111.8, 0.310657104], [1.944, 81.8, 0.210423501], [1.944, 96.8, 0.231380372], [1.944, 111.8, 0.262934657], [2.094, 81.8, 0.174690007], [2.094, 96.8, 0.192499805], [2.094, 111.8, 0.219297647]]}
+}

@@ -492,11 +492,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_five_are_in_rate_order_and_each_has_a_kind() {
+    fn the_five_are_in_rate_order_and_each_has_a_kind_and_the_sixth_is_appended() {
+        // the five in rate order; CT-1's sixth APPENDED after them, wearing the fifth's kind
+        // (Identity's soft edge) and rate
         let kinds: Vec<Kind> = CHANNELS.iter().map(|c| c.kind).collect();
         assert_eq!(
             kinds,
-            [Kind::Circumstances, Kind::Structure, Kind::Process, Kind::Rules, Kind::Identity]
+            [Kind::Circumstances, Kind::Structure, Kind::Process, Kind::Rules, Kind::Identity, Kind::Identity]
         );
         let mut last = 0.0;
         for c in CHANNELS.iter() {
@@ -506,6 +508,8 @@ mod tests {
             }
         }
         assert_eq!(CHANNELS[4].rate, Rate::Exponential);
+        assert_eq!(CHANNELS[5].rate, Rate::Exponential);
+        assert_eq!(CHANNELS[5].id, ChannelId::ChargeTransfer);
         for (i, c) in CHANNELS.iter().enumerate() {
             assert_eq!(c.id as usize, i);
             assert_eq!(c.id.record(), c);

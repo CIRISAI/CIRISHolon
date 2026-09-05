@@ -125,6 +125,8 @@ CONTACT = {
     # precedence (dated the day of the registration); its results carry the contact.
     "attractive exponential": "M-EXTRAPOLATED-HOLE", "contact term": "M-EXTRAPOLATED-HOLE",
     "remainder transferred": "M-EXTRAPOLATED-HOLE",
+    "first violation": "M-FIRST-VIOLATION-ONLY", "returns none": "M-FIRST-VIOLATION-ONLY",
+    "boundedness gate": "M-FIRST-VIOLATION-ONLY", "every class": "M-FIRST-VIOLATION-ONLY",
 }
 
 def contact_table_is_sound():

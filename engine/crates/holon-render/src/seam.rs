@@ -81,6 +81,12 @@ impl SeamModel {
     /// attractive at contact. Refused, by name: a value along the walk lower than the value at
     /// `r_min` by more than `kt`, or a value at 0.5 bohr that is not positive. `None` is a law
     /// the dynamics cannot fall through.
+    ///
+    /// EVERY violating class and BOTH legs are named, joined by `; ` (CT-1's correction): the
+    /// first-violation return this walk shipped with under FIELD-9 reported the H–O class's
+    /// one-kT dip at 2.58 bohr and said nothing of the same class ending at −0.41 hartree at
+    /// contact or of the H–H class's −20.7 hartree — a detector that stopped at the mildest
+    /// failure and hid the worst (M-FIRST-VIOLATION-ONLY).
     pub fn bounded(&self, q_h: f64, r_min: [f64; 3], kt: f64) -> Option<String> {
         let q_o = -2.0 * q_h;
         let classes: [(&str, &dyn Fn(f64) -> f64); 3] = [
@@ -88,23 +94,33 @@ impl SeamModel {
             ("H–O", &|r: f64| self.penetration(r) + self.charge_transfer(r) + self.wall_oh(r) + q_h * q_o / r),
             ("H–H", &|r: f64| self.contact_hh(r) + self.wall_hh(r) + q_h * q_h / r),
         ];
+        let mut named: Vec<String> = Vec::new();
         for (k, (name, u)) in classes.iter().enumerate() {
             let r0 = r_min[k];
             let floor = u(r0) - kt;
             let mut r = r0;
+            // the first fall below the floor, and the walk's minimum, both named
+            let (mut first_fall, mut min_v, mut min_r) = (None, u(r0), r0);
             while r > 0.5 + 1e-12 {
                 r = (r - 0.05).max(0.5);
                 let v = u(r);
-                if v < floor {
-                    return Some(format!("{name} potential falls to {v:+.4e} at r = {r:.2} bohr, more than kT below its value {:+.4e} at its fit floor r_min = {r0:.3}", u(r0)));
+                if v < min_v {
+                    min_v = v;
+                    min_r = r;
                 }
+                if v < floor && first_fall.is_none() {
+                    first_fall = Some((r, v));
+                }
+            }
+            if let Some((rf, vf)) = first_fall {
+                named.push(format!("{name} potential falls to {vf:+.4e} at r = {rf:.2} bohr, more than kT below its value {:+.4e} at its fit floor r_min = {r0:.3} (walk minimum {min_v:+.4e} at {min_r:.2} bohr, {:.1} kT below the floor)", u(r0), (u(r0) - min_v) / kt));
             }
             let at_contact = u(0.5);
             if !(at_contact > 0.0) {
-                return Some(format!("{name} potential is not positive at contact: {at_contact:+.4e} at 0.5 bohr"));
+                named.push(format!("{name} potential is not positive at contact: {at_contact:+.4e} at 0.5 bohr"));
             }
         }
-        None
+        if named.is_empty() { None } else { Some(named.join("; ")) }
     }
 
     /// THE NO-HOLE WALK (FIELD-8 G-N0, the discharge of M-EXTRAPOLATED-HOLE): each cross-unit
@@ -386,5 +402,16 @@ mod tests {
         assert_eq!(f8.bounded(q, r_min, 5.0e-3), None, "{:?}", f8.bounded(q, r_min, 5.0e-3));
         assert!(f8.hole(q).is_some(), "the monotone walk still names FIELD-8's dip");
         assert!(SeamModel::NO_WALL.bounded(q, r_min, kt).is_some());
+        // CT-1's law: the H–O class dips one kT at 2.58 bohr AND ends negative at contact, and
+        // the H–H class is an abyss — every class and both legs are named, not only the first
+        let ct1 = SeamModel { a: 948.048736, b: 2.40, p: 23.704848, c: 2.44, a_oh: 22.586054, b_oh: 2.20, a_hh: 1.525046, b_hh: 1.75, p_hh: 158.7891, c_hh: 4.00, p_ct: 1.47488, c_ct: 1.46, ..SeamModel::NO_WALL };
+        let why = ct1.bounded(q, [4.724315, 2.780741, 1.314606], kt).expect("CT-1's law is refused");
+        assert!(why.contains("H–O potential falls to"), "{why}");
+        assert!(why.contains("H–O potential is not positive at contact"), "{why}");
+        assert!(why.contains("H–H potential falls to"), "{why}");
+        assert!(why.contains("H–H potential is not positive at contact"), "{why}");
+        assert!(!why.contains("O–O potential"), "the O–O class is bounded: {why}");
+        assert_eq!(why.matches("; ").count(), 3, "four violations, three separators: {why}");
+        eprintln!("CT-1's law, every class named: {why}");
     }
 }

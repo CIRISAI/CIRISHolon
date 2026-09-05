@@ -64,6 +64,22 @@ The existing gates the refactor touches, re-run on the refactored library, dev p
 `tests/field.rs` 7/7 (FIELD-1's own gates, 1,466 s), `tests/ledger.rs` 12/12,
 `tests/b2_longrange.rs` 22/22. The crate's whole test suite in release: RUNNING at this commit (release profile, every test target of `holon-render`); its count is appended to this section by the commit that reads it, never edited into this one. The wasm target (`wasm32-unknown-unknown`) builds with the module in.
 
+### The full suite's first reading, and a defect it found that is not the ledger's
+
+The first full run (release, every `holon-render` target, fail-fast) stopped at
+`tests/hadron_band.rs::the_evolution_is_unitary_and_conserves_energy`: 9 targets green
+before it, that one 5/6. The test PASSES alone and passed 3/3 on re-run, and `hadron.rs`
+imports nothing from `sim`, `longrange` or `channel`, so the ledger cannot have moved it.
+Root cause, read from the file rather than called a flake: the sub-atom bands are ONE
+process-global object (`hadron.rs::BANDS`, three slots) and five of the file's six gates
+solve, step and grab slot 1; Rust runs a file's tests on parallel threads, so under a
+loaded box two gates stepped one band at once and the energy-drift gate read the other's
+steps as its own drift. `M-STALE-INSTRUMENT`'s third variant one level down — a shared
+object read as if it were private. Fix, test-only: the six gates take the band in turn
+through a file-local lock (`SERIAL`), poison-tolerant, no physics touched; 3/3 stable
+after. The remaining targets are re-run with `--no-fail-fast` and their count is
+appended below by the commit that reads it.
+
 ## What this does and does not do for the ladder
 
 It changes no number, so it certifies nothing and un-fences nothing. Rung 1 (the H-bond

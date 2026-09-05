@@ -2,9 +2,23 @@
 //! conserves quark number, and every refusal fires by name rather than hanging the page.
 
 use holon_render::hadron::*;
+use std::sync::Mutex;
+
+/// THE BANDS ARE ONE PROCESS-GLOBAL OBJECT (`hadron.rs::BANDS`, three slots), and five of
+/// the gates below solve, step and grab slot 1. Rust runs a file's tests on parallel
+/// threads, so without this lock two gates step one band at once and the energy-drift
+/// gate reads the other's steps as its own drift — it fired exactly that way under a
+/// loaded full-suite run (2026-09-05, `CHANNEL_LEDGER.md`) and passed alone. The gates
+/// therefore take the band in turn. A poisoned lock (a gate that panicked while holding
+/// it) is taken anyway: the next gate re-solves its own band before reading it.
+static SERIAL: Mutex<()> = Mutex::new(());
+fn serial() -> std::sync::MutexGuard<'static, ()> {
+    SERIAL.lock().unwrap_or_else(|e| e.into_inner())
+}
 
 #[test]
 fn the_band_is_the_exact_colour_lane_arm_to_the_bit() {
+    let _band = serial();
     for (n, x) in [(4usize, 4.0f64), (6, 4.0), (6, 9.0)] {
         for b in 0..=2 {
             let q = holon_chem::qcd2::Qcd2::new(n, x);
@@ -53,6 +67,7 @@ fn the_band_is_the_exact_colour_lane_arm_to_the_bit() {
 
 #[test]
 fn every_refusal_fires_by_name_and_changes_nothing() {
+    let _band = serial();
     // a good solve to have something to protect
     assert_eq!(holon_hadron_solve(4, 4.0, 1), 0);
     let good = holon_hadron_energy(1);
@@ -77,6 +92,7 @@ fn every_refusal_fires_by_name_and_changes_nothing() {
 /// real dynamics from a moving picture, and they are checked over many steps rather than one.
 #[test]
 fn the_evolution_is_unitary_and_conserves_energy() {
+    let _band = serial();
     assert!(holon_hadron_solve(6, 4.0, 1) == 0);
     let e0 = holon_hadron_live_energy(1);
     assert!((e0 - holon_hadron_energy(1)).abs() <= 1e-9, "the live energy of the ground state is its energy");
@@ -97,6 +113,7 @@ fn the_evolution_is_unitary_and_conserves_energy() {
 /// moving picture is not being mistaken for physics.
 #[test]
 fn the_ground_state_evolves_without_moving() {
+    let _band = serial();
     assert_eq!(holon_hadron_solve(6, 4.0, 1), 0);
     let before: Vec<f64> = (0..6).map(|k| holon_hadron_occ(1, k)).collect();
     for _ in 0..20 {
@@ -113,6 +130,7 @@ fn the_ground_state_evolves_without_moving() {
 /// of the pinned Hamiltonian that it is heading for. Releasing puts it back.
 #[test]
 fn grabbing_a_site_pulls_the_quarks_to_it() {
+    let _band = serial();
     assert_eq!(holon_hadron_solve(6, 4.0, 1), 0);
     let site = 1u32;
     let before = holon_hadron_occ(1, site);
@@ -140,6 +158,7 @@ fn grabbing_a_site_pulls_the_quarks_to_it() {
 /// The grab's refusals fire by name too.
 #[test]
 fn the_grab_refuses_by_name() {
+    let _band = serial();
     assert_eq!(holon_hadron_solve(4, 4.0, 1), 0);
     assert_eq!(holon_hadron_grab(1, 99, -1.0), 5, "no such site");
     assert_eq!(holon_hadron_grab(9, 0, -1.0), 5, "no such sector");

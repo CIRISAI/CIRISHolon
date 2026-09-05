@@ -1,0 +1,5 @@
+CT-1 predict — the HELD-OUT node twistbent_R3.2 (acceptor twisted 90° about the O···O axis, donor bent 20° about its own x-axis, R_OO 6.047124 bohr) on 24 threads; E_pred -3.675083228379e-3 Ha, CT term of the filed prediction -3.037245810082e-3 (rebuilt from wall_ct.json here: -3.037245810082e-3, difference 4.077e-16)
+  twistbent_R3.2: R_OO 3.2 Å, 1002001 dets, ΔE_exact -3.314265e-3 Ha, 222 iters, residual 8.3e-11, exit Converged, wall 1444 s, 30472 core-s, admitted true (band 1450–57600)
+  twistbent_R3.2: E_noCT -1.500473821621e2, E_HL(undeformed) -1.500470126451e2, gain -3.695170e-4 Ha, sector 194481 of 1002001 dets, 13 iters, residual 3.427e-9, converged true, metric min 9.930e-1, wall 98 s (84 s in sigma), 1820 core-s, price floor 72 core-s, admitted true
+S2: ΔE_exact -3.314265e-3 Ha, E_pred -3.675083e-3 — miss 3.608e-4 (10.9 % of |ΔE_exact|) against 8.286e-4; measured E_CT = E_exact − E_noCT = -2.515165e-3 against the predicted CT term -3.037246e-3 — miss 5.221e-4 against 6.288e-4; the sector's order E_exact ≤ E_noCT ≤ E_HL: true → branch (a)
+prediction_check.json and predict.done written

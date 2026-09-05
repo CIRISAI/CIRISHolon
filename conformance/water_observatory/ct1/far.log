@@ -1,0 +1,5 @@
+CT-1 far — the EXACT solve of `linear_far40` on 24 threads: the linear 2.9 Å node's acceptor translated [40.0, 0, 0] bohr — the engine's own E_q(40) geometry, O–O 40.373663 bohr (21.3648 Å), 1002001 determinants, residual bar 1e-9, price band 1450–57600 core-seconds.
+  T0's far leg reads E_exact from THIS file; E_A0 + E_B0 is not E_exact at 40 bohr (the electrostatics of the linear dimer survive there, of order 1e-5 hartree) and is only REPORTED beside the gate.
+  linear_far40: R_OO 21.4 Å, 1002001 dets, ΔE_exact 2.026405e-6 Ha, 139 iters, residual 7.4e-11, exit Converged, wall 663 s, 14533 core-s, admitted true (band 1450–57600)
+far: the exact solve converged within its bar: true
+far.done written

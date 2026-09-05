@@ -1,0 +1,139 @@
+CT-1 fit — T0 (the sector is what it says), T1 (attractive and short-ranged), T2 (the decomposition), S1 (the CT term), C1 (the contact term re-fit on what remains), dispersion, G-B0, G-C1, plants (i) and (ii)
+
+FIELD-9's wall, HELD [../conformance/water_observatory/field9/wall9.json]:
+  a = 9.480487358e2, b = 2.400000; a_oh = 2.258605363e1, b_oh = 2.200000; a_hh = 1.525046250e0, b_hh = 1.750000
+  r_min: O–O 4.724315, H–O 2.780741, H–H 1.314606 bohr; q_H of record 2.313803721151e-1
+
+T0 — the sector is what it says (CT1_AMENDMENT_1): the generalised residual ≤ 1e-8, exit Converged, the subspace dimension 194481 EXACT, E_exact ≤ E_noCT ≤ E_HL(undeformed) on TOTAL energies within 1e-10, and |E_CT| ≤ 1e-8 at 40 bohr.
+| node | E_exact | E_noCT | E_HL(undef) | E_CT | order | dim | iters | residual | converged | core-s | priced |
+| linear_R2.3 | -1.500232727238e2 | -1.499831984921e2 | -1.499702209785e2 | -4.007423e-2 | true | 194481 | 14 | 7.816e-9 | true | 1389 | true |
+| linear_R2.5 | -1.500440761551e2 | -1.500176078769e2 | -1.500118480919e2 | -2.646828e-2 | true | 194481 | 13 | 8.937e-9 | true | 1479 | true |
+| linear_R2.7 | -1.500509029886e2 | -1.500346148606e2 | -1.500319555651e2 | -1.628813e-2 | true | 194481 | 13 | 5.415e-9 | true | 1594 | true |
+| linear_R2.9 | -1.500520630749e2 | -1.500427262950e2 | -1.500414148237e2 | -9.336780e-3 | true | 194481 | 13 | 3.223e-9 | true | 1640 | true |
+| linear_R3.1 | -1.500513400725e2 | -1.500463165623e2 | -1.500456123379e2 | -5.023510e-3 | true | 194481 | 12 | 9.647e-9 | true | 1545 | true |
+| linear_R3.4 | -1.500498005283e2 | -1.500480023898e2 | -1.500476791434e2 | -1.798139e-3 | true | 194481 | 12 | 6.689e-9 | true | 1568 | true |
+| linear_R3.7 | -1.500487244277e2 | -1.500481435335e2 | -1.500479729943e2 | -5.808942e-4 | true | 194481 | 12 | 3.970e-9 | true | 1632 | true |
+| tilted_R2.9 | -1.500527588999e2 | -1.500423332766e2 | -1.500410883889e2 | -1.042562e-2 | true | 194481 | 13 | 6.988e-9 | true | 2497 | true |
+| tilted45_R3.1 | -1.500520175812e2 | -1.500458024158e2 | -1.500452133826e2 | -6.215165e-3 | true | 194481 | 13 | 5.727e-9 | true | 2515 | true |
+| flipped_R3.4 | -1.500405742298e2 | -1.500367534987e2 | -1.500363756834e2 | -3.820731e-3 | true | 194481 | 12 | 7.293e-9 | true | 1616 | true |
+| twisted_R3.0 | -1.500460659066e2 | -1.500416226672e2 | -1.500409735675e2 | -4.443239e-3 | true | 194481 | 13 | 5.337e-9 | true | 2386 | true |
+| bentdonor_R2.9 | -1.500496143964e2 | -1.500450721236e2 | -1.500445382761e2 | -4.542273e-3 | true | 194481 | 13 | 5.285e-9 | true | 2346 | true |
+  linear_far40: E_exact -1.500465810362e2 (the EXACT solve of this geometry, converged true [../conformance/water_observatory/ct1/linear_far40.json]), E_noCT -1.500465810362e2, E_HL(undeformed) -1.500465810330e2 → |E_CT| = 0.000e0 (bar 1e-8); sector dim 194481, 7 iters, residual 8.754e-9, converged true, 1033 core-s, priced true
+  reported beside the gate, NEVER as it: at 40 bohr the exact dimer keeps the linear dimer's electrostatics, E_exact − (E_A0 + E_B0) = 2.026405e-6 Ha, and the block-localised sector keeps them too, E_noCT − (E_A0 + E_B0) = 2.026380e-6 Ha; their difference IS the E_CT above, which is why the monomer limit cannot stand in for E_exact here
+T0: PASS — 12 of 12 nodes pass every leg, the 40-bohr limit holds
+M-CHEAPER-THAN-ITS-PRICE: every sector solve at or above a tenth of its own iteration count times 55 core-seconds: true
+
+T1 — charge transfer is attractive on the line at 2.3–3.4 Å (E_CT < −1e-6), non-increasing in magnitude outward along the whole line, and its log-log slope beyond 2.9 Å steeper than -6:
+  linear_R2.3: E_CT -4.007423e-2 Ha < −1e-6: true
+  linear_R2.5: E_CT -2.646828e-2 Ha < −1e-6: true
+  linear_R2.7: E_CT -1.628813e-2 Ha < −1e-6: true
+  linear_R2.9: E_CT -9.336780e-3 Ha < −1e-6: true
+  linear_R3.1: E_CT -5.023510e-3 Ha < −1e-6: true
+  linear_R3.4: E_CT -1.798139e-3 Ha < −1e-6: true
+  linear_R3.7: E_CT -5.808942e-4 Ha (outside the 2.3–3.4 Å line — the magnitude order still reads on it)
+  |E_CT| 2.3 Å 4.007423e-2 → 2.5 Å 2.646828e-2: non-increasing true
+  |E_CT| 2.5 Å 2.646828e-2 → 2.7 Å 1.628813e-2: non-increasing true
+  |E_CT| 2.7 Å 1.628813e-2 → 2.9 Å 9.336780e-3: non-increasing true
+  |E_CT| 2.9 Å 9.336780e-3 → 3.1 Å 5.023510e-3: non-increasing true
+  |E_CT| 3.1 Å 5.023510e-3 → 3.4 Å 1.798139e-3: non-increasing true
+  |E_CT| 3.4 Å 1.798139e-3 → 3.7 Å 5.808942e-4: non-increasing true
+  log-log slope 2.9 → 3.1 Å: -9.2940 (needs < -6): true
+  log-log slope 3.1 → 3.4 Å: -11.1220 (needs < -6): true
+  log-log slope 3.4 → 3.7 Å: -13.3630 (needs < -6): true
+T1: PASS — attractive on the line true, non-increasing outward true, every slope beyond 2.9 Å steeper than -6 true
+
+T2 — the decomposition at the linear 2.9 Å node, in interaction energies (hartree, and mHa beside):
+  ΔE_HL   = E_HL(undeformed) − (E_A0 + E_B0)  = 5.168238880e-3  (5.1682 mHa)   — electrostatics and exchange
+  gain    = E_noCT − E_HL(undeformed)         = -1.311471300e-3  (-1.3115 mHa)   — the closed sector's polarisation and correlation (channels 2 and 3 at this level)
+  E_CT    = E_exact − E_noCT                  = -9.336779900e-3  (-9.3368 mHa)   — charge transfer, channel 6
+  their sum minus ΔE_HL = -1.064825120e-2 (-10.6483 mHa) against E_exact − E_HL = -1.064825120e-2 (-10.6483 mHa) — identity miss 0.000e0 (bar 1e-10): true
+  beside FIELD-6's remainder at this node, -10.4000 mHa: this harvest reads -10.6483 mHa, of which 87.7 % is charge transfer
+  the monomer references agree with the exact record: E_A0 -7.502329153129e1 vs -7.502329153129e1, E_B0 -7.502329153129e1 vs -7.502329153129e1 (differences 0.000e0, 0.000e0)
+
+the CT term: CT(g) = −P_CT·Σ_{cross-unit H–O} exp(−c_CT·r) fit to E_CT on the twelve, c on 0.50..=4.00 step 0.02 (176 values), weights 1/max(|ΔE_exact|, 5e-3)² (THIS FREEZE'S CORRECTION of FIELD-7/8/9's 1/ΔE_exact², which pinned every fit at the 2.5 Å zero crossing), P_CT non-negative:
+  P_CT = 1.474879879e0 Ha (unclamped 1.474879879e0), c_CT = 1.46 /bohr, weighted residual 5.574355470e-1 (against Σw·E_CT² = 5.182258578e1), in 0.0 s → TRANSFERRED
+| node | E_CT | CT fit | miss | tolerance | within |
+| linear_R2.3 | -4.007423e-2 | -4.582728e-2 | 5.753050e-3 | 5.827585e-3 | true |
+| linear_R2.5 | -2.646828e-2 | -2.642311e-2 | 4.517031e-5 | 6.267269e-4 | true |
+| linear_R2.7 | -1.628813e-2 | -1.523333e-2 | 1.054794e-3 | 1.079981e-3 | true |
+| linear_R2.9 | -9.336780e-3 | -8.781395e-3 | 5.553849e-4 | 1.370003e-3 | true |
+| linear_R3.1 | -5.023510e-3 | -5.061683e-3 | 3.817234e-5 | 1.189252e-3 | true |
+| linear_R3.4 | -1.798139e-3 | -2.214787e-3 | 4.166490e-4 | 8.043664e-4 | true |
+| linear_R3.7 | -5.808942e-4 | -9.689656e-4 | 3.880714e-4 | 5.353413e-4 | true |
+| tilted_R2.9 | -1.042562e-2 | -8.808202e-3 | 1.617421e-3 | 1.543959e-3 | false |
+| tilted45_R3.1 | -6.215165e-3 | -5.101694e-3 | 1.113472e-3 | 1.358630e-3 | true |
+| flipped_R3.4 | -3.820731e-3 | -3.404283e-3 | 4.164478e-4 | 1.502208e-3 | true |
+| twisted_R3.0 | -4.443239e-3 | -7.168671e-3 | 2.725432e-3 | 5.000000e-4 | false |
+| bentdonor_R2.9 | -4.542273e-3 | -5.177695e-3 | 6.354224e-4 | 7.578334e-4 | true |
+S1: 10 of 12 within max(0.25·|ΔE_exact|, 5e-4) → branch (b) — transferred, the 2 misses named: tilted_R2.9, twisted_R3.0
+
+every one of the twelve is served with TWO units by the engine (the closure identity holds at each) — the contact re-fit may use them
+the contact term re-fit: remainder = ΔE_exact − [E_q(g) − E_q(40)]_engine − wall9(g) − CT(g), two classes (H–O, H–H), same grid and weights:
+  linear_R2.3 (linear): ΔE_exact 2.331034e-2, E_q(g) − E_q(40) -9.664231e-3, wall9 1.458036e-1, CT -4.582728e-2 → remainder -6.700171e-2 Ha (-2.8743 of |ΔE_exact|)
+  linear_R2.5 (linear): ΔE_exact 2.506907e-3, E_q(g) − E_q(40) -7.071489e-3, wall9 6.291719e-2, CT -2.642311e-2 → remainder -2.691568e-2 Ha (-10.7366 of |ΔE_exact|)
+  linear_R2.7 (linear): ΔE_exact -4.319926e-3, E_q(g) − E_q(40) -5.339515e-3, wall9 2.720149e-2, CT -1.523333e-2 → remainder -1.094856e-2 Ha (-2.5344 of |ΔE_exact|)
+  linear_R2.9 (linear): ΔE_exact -5.480012e-3, E_q(g) − E_q(40) -4.135871e-3, wall9 1.178433e-2, CT -8.781395e-3 → remainder -4.347078e-3 Ha (-0.7933 of |ΔE_exact|)
+  linear_R3.1 (linear): ΔE_exact -4.757010e-3, E_q(g) − E_q(40) -3.272031e-3, wall9 5.116662e-3, CT -5.061683e-3 → remainder -1.539959e-3 Ha (-0.3237 of |ΔE_exact|)
+  linear_R3.4 (linear): ΔE_exact -3.217466e-3, E_q(g) − E_q(40) -2.378843e-3, wall9 1.470757e-3, CT -2.214787e-3 → remainder -9.459207e-5 Ha (-0.0294 of |ΔE_exact|)
+  linear_R3.7 (linear): ΔE_exact -2.141365e-3, E_q(g) − E_q(40) -1.785760e-3, wall9 4.254897e-4, CT -9.689656e-4 → remainder 1.878712e-4 Ha (0.0877 of |ΔE_exact|)
+  tilted_R2.9 (bent acceptor 30°): ΔE_exact -6.175837e-3, E_q(g) − E_q(40) -3.962014e-3, wall9 1.189847e-2, CT -8.808202e-3 → remainder -5.304094e-3 Ha (-0.8588 of |ΔE_exact|)
+  tilted45_R3.1 (bent acceptor 45°): ΔE_exact -5.434519e-3, E_q(g) − E_q(40) -2.919047e-3, wall9 5.276197e-3, CT -5.101694e-3 → remainder -2.689975e-3 Ha (-0.4950 of |ΔE_exact|)
+  flipped_R3.4 (flipped 180°): ΔE_exact 6.008833e-3, E_q(g) − E_q(40) 2.777793e-3, wall9 8.487746e-3, CT -3.404283e-3 → remainder -1.852423e-3 Ha (-0.3083 of |ΔE_exact|)
+  twisted_R3.0 (twisted 90°+60°): ΔE_exact 5.171560e-4, E_q(g) − E_q(40) -2.255175e-3, wall9 1.042614e-2, CT -7.168671e-3 → remainder -4.851338e-4 Ha (-0.9381 of |ΔE_exact|)
+  bentdonor_R2.9 (bent donor 30°): ΔE_exact -3.031334e-3, E_q(g) − E_q(40) -2.541073e-3, wall9 6.215684e-3, CT -5.177695e-3 → remainder -1.528250e-3 Ha (-0.5042 of |ΔE_exact|)
+
+the two-class contact re-fit — 30976 pairs on 0.50..=4.00 step 0.02 per class, weights 1/max(|ΔE_exact|, 5e-3)², non-negative by drop-and-refit, in 0.0 s:
+  P_HO = 2.370484785e1 Ha, c_HO = 2.44 /bohr (kept: true)
+  P_HH = 1.587891000e2 Ha, c_HH = 4.00 /bohr (kept: true)
+  weighted residual 3.234375053e-1
+  linear_R2.3: remainder -6.700171e-2, fit -6.760005e-2, miss 5.983446e-4 (0.1027 of its tolerance 5.828e-3) → within
+  linear_R2.5: remainder -2.691568e-2, fit -2.687877e-2, miss 3.691272e-5 (0.0589 of its tolerance 6.267e-4) → within
+  linear_R2.7: remainder -1.094856e-2, fit -1.068821e-2, miss 2.603525e-4 (0.2411 of its tolerance 1.080e-3) → within
+  linear_R2.9: remainder -4.347078e-3, fit -4.250312e-3, miss 9.676546e-5 (0.0706 of its tolerance 1.370e-3) → within
+  linear_R3.1: remainder -1.539959e-3, fit -1.690239e-3, miss 1.502804e-4 (0.1264 of its tolerance 1.189e-3) → within
+  linear_R3.4: remainder -9.459207e-5, fit -4.238857e-4, miss 3.292936e-4 (0.4094 of its tolerance 8.044e-4) → within
+  linear_R3.7: remainder 1.878712e-4, fit -1.063047e-4, miss 2.941759e-4 (0.5495 of its tolerance 5.353e-4) → within
+  tilted_R2.9: remainder -5.304094e-3, fit -4.251536e-3, miss 1.052558e-3 (0.6817 of its tolerance 1.544e-3) → within
+  tilted45_R3.1: remainder -2.689975e-3, fit -1.691507e-3, miss 9.984686e-4 (0.7349 of its tolerance 1.359e-3) → within
+  flipped_R3.4: remainder -1.852423e-3, fit -7.868357e-4, miss 1.065587e-3 (0.7093 of its tolerance 1.502e-3) → within
+  twisted_R3.0: remainder -4.851338e-4, fit -2.808109e-3, miss 2.322975e-3 (4.6460 of its tolerance 5.000e-4) → MISS
+  bentdonor_R2.9: remainder -1.528250e-3, fit -1.678184e-3, miss 1.499338e-4 (0.1978 of its tolerance 7.578e-4) → within
+C1: 11 of 12 within max(0.25·|ΔE_exact|, 5e-4) (needs ≥ 10), and the line at 2.7, 2.9, 3.1 Å all within: true (3 of 3) → PASS; misses: twisted_R3.0
+
+dispersion — the remainder AFTER both contact terms, on the 4 outer linear nodes (R_OO ≥ 2.9 Å):
+  2.9 Å: remainder after contact -9.676546e-5 Ha (-0.0177 of |ΔE_exact|)
+  3.1 Å: remainder after contact 1.502804e-4 Ha (0.0316 of |ΔE_exact|)
+  3.4 Å: remainder after contact 3.292936e-4 Ha (0.1023 of |ΔE_exact|)
+  3.7 Å: remainder after contact 2.941759e-4 Ha (0.1374 of |ΔE_exact|)
+  log-log slope 2.9 → 3.1 Å: 6.601
+  log-log slope 3.1 → 3.4 Å: 8.492
+  log-log slope 3.4 → 3.7 Å: -1.334
+dispersion: C₆ = 0.000000000e0 Ha·bohr⁶; every slope in [-8, -4] → NOT transferred (C₆ = 0 recorded)
+
+G-B0 — bounded: the engine walks each cross-unit class potential of the FULL law (the CT term IN) from its own r_min (O–O 4.724315, H–O 2.780741, H–H 1.314606 bohr) inward to 0.5 bohr on a 0.05 grid, kT = 9.278758e-4 Ha, q_H = 2.313803721151e-1 (wall9's record 2.313803721151e-1, difference 2.776e-17)
+  bounded() named a fall, verbatim: H–O potential falls to -4.1939e-2 at r = 2.58 bohr, more than kT below its value -4.0977e-2 at its fit floor r_min = 2.781
+  → the arms are VOID before they run (§2 G-B0). The harvest is still recorded in full.
+  hole() (a READING beside the gate, not a gate) names a fall, verbatim: H–O potential falls inward at r = 2.95 bohr (-3.9604e-2 < -3.9136e-2)
+
+G-C1 — the harvest is the engine's arithmetic, ONE reference (E_q(g) − E_q(40) from the engine itself), on the twelve, with the CT term in the formula
+  linear_R2.3: engine 2.271199416757e-2 vs formula 2.271199416757e-2 — miss 1.214e-16 (E_q diff -9.664231e-3, seam 3.237622e-2; pen_HO -6.755962e-2, pen_HH -4.043390e-5, wall_OO 2.796274e-2, wall_OH 1.148433e-1, wall_HH 2.997548e-3, disp 0.000000e0, CT -4.582728e-2; units 2, O–O 1, H–O 4)
+  linear_R2.5: engine 2.543820211360e-3 vs formula 2.543820211360e-3 — miss 1.995e-17 (E_q diff -7.071489e-3, seam 9.615309e-3; pen_HO -2.686895e-2, pen_HH -9.815236e-6, wall_OO 1.128873e-2, wall_OH 5.001577e-2, wall_HH 1.612692e-3, disp 0.000000e0, CT -2.642311e-2; units 2, O–O 1, H–O 4)
+  linear_R2.7: engine -4.059573443390e-3 vs formula -4.059573443390e-3 — miss 1.301e-17 (E_q diff -5.339515e-3, seam 1.279941e-3; pen_HO -1.068586e-2, pen_HH -2.347101e-6, wall_OO 4.557325e-3, wall_OH 2.178210e-2, wall_HH 8.620591e-4, disp 0.000000e0, CT -1.523333e-2; units 2, O–O 1, H–O 4)
+  linear_R2.9: engine -5.383246850262e-3 vs formula -5.383246850262e-3 — miss 1.041e-16 (E_q diff -4.135871e-3, seam -1.247376e-3; pen_HO -4.249758e-3, pen_HH -5.546604e-7, wall_OO 1.839819e-3, wall_OH 9.486037e-3, wall_HH 4.584753e-4, disp 0.000000e0, CT -8.781395e-3; units 2, O–O 1, H–O 4)
+plant (ii) at the linear 2.9 Å node (P_CT → −P_CT): miss 1.756279e-2 vs 2·|CT(2.9)| 1.756279e-2 (difference 2.429e-17, bar 1e-10); carrier |CT(2.9)| 8.781e-3 ≥ 1e-4: true → FIRES
+  linear_R3.1: engine -4.907290328377e-3 vs formula -4.907290328377e-3 — miss 1.648e-17 (E_q diff -3.272031e-3, seam -1.635259e-3; pen_HO -1.690109e-3, pen_HH -1.298419e-7, wall_OO 7.427460e-4, wall_OH 4.131072e-3, wall_HH 2.428442e-4, disp 0.000000e0, CT -5.061683e-3; units 2, O–O 1, H–O 4)
+  linear_R3.4: engine -3.546759358978e-3 vs formula -3.546759358978e-3 — miss 1.405e-16 (E_q diff -2.378843e-3, seam -1.167916e-3; pen_HO -4.238712e-4, pen_HH -1.450238e-8, wall_OO 1.905189e-4, wall_OH 1.187184e-3, wall_HH 9.305441e-5, disp 0.000000e0, CT -2.214787e-3; units 2, O–O 1, H–O 4)
+  linear_R3.7: engine -2.435541055853e-3 vs formula -2.435541055853e-3 — miss 9.888e-17 (E_q diff -1.785760e-3, seam -6.497806e-4; pen_HO -1.063031e-4, pen_HH -1.598929e-9, wall_OO 4.886926e-5, wall_OH 3.411622e-4, wall_HH 3.545818e-5, disp 0.000000e0, CT -9.689656e-4; units 2, O–O 1, H–O 4)
+  tilted_R2.9: engine -5.123279609834e-3 vs formula -5.123279609834e-3 — miss 4.163e-17 (E_q diff -3.962014e-3, seam -1.161265e-3; pen_HO -4.250630e-3, pen_HH -9.065653e-7, wall_OO 1.839819e-3, wall_OH 9.489917e-3, wall_HH 5.687364e-4, disp 0.000000e0, CT -8.808202e-3; units 2, O–O 1, H–O 4)
+  tilted45_R3.1: engine -4.436050019585e-3 vs formula -4.436050019585e-3 — miss 2.602e-17 (E_q diff -2.919047e-3, seam -1.517003e-3; pen_HO -1.691107e-3, pen_HH -3.998456e-7, wall_OO 7.427460e-4, wall_OH 4.135807e-3, wall_HH 3.976434e-4, disp 0.000000e0, CT -5.101694e-3; units 2, O–O 1, H–O 4)
+  flipped_R3.4: engine 7.074419757024e-3 vs formula 7.074419757025e-3 — miss 1.032e-16 (E_q diff 2.777793e-3, seam 4.296627e-3; pen_HO -5.287598e-4, pen_HH -2.580759e-4, wall_OO 1.905189e-4, wall_OH 1.546191e-3, wall_HH 6.751036e-3, disp 0.000000e0, CT -3.404283e-3; units 2, O–O 1, H–O 4)
+  twisted_R3.0: engine -1.805819165491e-3 vs formula -1.805819165491e-3 — miss 2.776e-17 (E_q diff -2.255175e-3, seam 4.493557e-4; pen_HO -2.725786e-3, pen_HH -8.232324e-5, wall_OO 1.168982e-3, wall_OH 6.416710e-3, wall_HH 2.840445e-3, disp 0.000000e0, CT -7.168671e-3; units 2, O–O 1, H–O 4)
+  bentdonor_R2.9: engine -3.181267620896e-3 vs formula -3.181267620897e-3 — miss 6.852e-17 (E_q diff -2.541073e-3, seam -6.401947e-4; pen_HO -1.678040e-3, pen_HH -1.433837e-7, wall_OO 1.839819e-3, wall_OH 4.117786e-3, wall_HH 2.580788e-4, disp 0.000000e0, CT -5.177695e-3; units 2, O–O 1, H–O 4)
+G-C1: worst |engine − formula| = 1.405e-16 (stake 1e-10) → PASS
+M-VACUOUS-SUCCESS: every G-C1 geometry served two units, one cross O–O pair and four cross H–O pairs: true
+
+plant (i) — the mask dropped (from ../conformance/water_observatory/ct1/plant_i_full.json): E_full -1.500520630749e2 vs E_exact of record -1.500520630749e2 — miss 0.000e0 (bar 1e-8), converged true, 15 iterations, residual 3.256e-9; carrier |E_CT(2.9)| 9.337e-3 ≥ 1e-3: true → FIRES
+
+wall_ct.json written — arms_void true
+prediction.json filed BEFORE the held-out solve: twistbent_R3.2 at R_OO 6.047124 bohr — E_pred -3.675083e-3 Ha; E_q(g) − E_q(40) -2.429034e-3, contact_HO -7.064195e-4, contact_HH -4.256656e-8, wall_OO 4.719249e-4, wall_OH 1.883759e-3, wall_HH 1.419741e-4, disp 0.000000e0, CT -3.037246e-3; units 2, O–O 1, H–O 4
+fit.done written

@@ -1,0 +1,10 @@
+{
+  "node": "flipped_R3.4", "r_oo_angstrom": 3.400, "r_oo_bohr": 6.425069,
+  "e_noct": -1.500367534987e2, "e_hl_undeformed": -1.500363756834e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1,
+  "closed_sector_gain": -3.778152842528e-4,
+  "sector_dim": 194481, "sector_dim_staked": 194481, "n_det": 1002001, "davidson_iters": 12, "residual": 7.292899132177e-9, "converged": true,
+  "residual_bar": 1e-8, "metric_min_eigenvalue": 9.424082457090e-1,
+  "wall_seconds": 82.758463, "sigma_seconds": 68.158850, "harness_wall_seconds": 82.762046, "cpu_seconds": 1616.470000, "threads": 24,
+  "price_floor_core_seconds_per_sigma": 55, "price_rule": "cpu_seconds >= 0.1 * davidson_iters * 55 (M-CHEAPER-THAN-ITS-PRICE)", "price_expected_core_seconds": 66.000000, "price_admitted": true,
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, 0.0000000000, 1.9435738400], [1.9300704789, 0.0000000000, -0.2287077129]], "acceptor_centers": [[0.0000000000, 0.0000000000, 6.4250688237], [1.4529262884, 0.0000000000, 5.1341449407], [-1.4529262884, 0.0000000000, 5.1341449407]]
+}

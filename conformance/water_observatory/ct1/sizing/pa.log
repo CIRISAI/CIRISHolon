@@ -1,0 +1,40 @@
+threads: lane_threads() = 4
+
+================ 2. THE RING ================
+  A.O         [+3.163998, +0.000000, +0.000000] bohr
+  A.H(donor)  [+1.480814, +0.971787, +0.000000] bohr
+  A.H(free)   [+5.292135, -0.114354, +0.000000] bohr
+  B.O         [-1.581999, +2.740103, +0.000000] bohr
+  B.H(donor)  [-1.581999, +0.796529, +0.000000] bohr
+  B.H(free)   [-2.547034, +4.640301, +0.000000] bohr
+  C.O         [-1.581999, -2.740103, +0.000000] bohr
+  C.H(donor)  [+0.101185, -1.768316, +0.000000] bohr
+  C.H(free)   [-2.745101, -4.525947, +0.000000] bohr
+  O(A)-O(B) = 5.480206 bohr = 2.9000 A
+  O(A)-O(C) = 5.480206 bohr = 2.9000 A
+  O(B)-O(C) = 5.480206 bohr = 2.9000 A
+  H(A donor)...O(B) = 3.536632 bohr = 1.8715 A
+  H(A free )...O(B) = 7.443228 bohr = 3.9388 A
+  H(A donor)...O(C) = 4.812375 bohr = 2.5466 A
+  H(A free )...O(C) = 7.358552 bohr = 3.8940 A
+  H(B donor)...O(A) = 4.812375 bohr = 2.5466 A
+  H(B free )...O(A) = 7.358552 bohr = 3.8940 A
+  H(B donor)...O(C) = 3.536632 bohr = 1.8715 A
+  H(B free )...O(C) = 7.443228 bohr = 3.9388 A
+  H(C donor)...O(A) = 3.536632 bohr = 1.8715 A
+  H(C free )...O(A) = 7.443228 bohr = 3.9388 A
+  H(C donor)...O(B) = 4.812375 bohr = 2.5466 A
+  H(C free )...O(B) = 7.358552 bohr = 3.8940 A
+  SHORTEST cross-unit H...O = 3.536632 bohr = 1.8715 A
+  SHORTEST cross-unit H...H = 3.067823 bohr = 1.6234 A
+  FIELD-8's closure boundary is H...O = 1.95 bohr; this ring's shortest is 1.81x that.
+
+================ 4. rho_pa_subset's DIMER-IN-FIELD SOLVES, ONE AT A TIME ================
+  the three-fragment fixed point: 7 sweeps, converged true, (78.5 s)
+  E_0[field of the other two] = -7.492461986008e1 Ha
+  E_1[field of the other two] = -7.492461986008e1 Ha
+  E_2[field of the other two] = -7.492461986008e1 Ha
+
+  subset_in_field(frags, dens, [0,1,2]) IS the exact trimer supermolecule.
+  REFUSED at the admission door: determinant route, 2944581696 determinants x 104 vectors (subspace bound 48) would hold 2449891971072 bytes of RAM and the probe said "the ask exceeds the kernel's available RAM" (price provenance: computed from tier.rs's Davidson allocations (2·max_sub + 8 vectors)). Nothing in this crate caps the size; a machine that admits the reservation runs it. The escalation is a lease on a bigger box or the next tier, never an edit to a constant.
+

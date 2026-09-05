@@ -1,0 +1,13 @@
+{
+  "node": "twistbent_R3.2", "r_oo_angstrom": 3.200, "r_oo_bohr": 6.047124, "acceptor_twist_degrees": 90.0, "acceptor_tilt_degrees": 0.0, "donor_bend_degrees": 20.0, "geometry": "the linear dimer at 3.2 Å with the ACCEPTOR twisted 90° about the O···O axis (FIELD-7's builder, tilt 0°) and the DONOR bent 20° about the x-axis through its own oxygen; both pivots are oxygens, so R_OO is unchanged", "held_out": true, "kind": "a TWISTED-AND-BENT dimer — no fit point turns both monomers this way (§4, M-UNTESTED-GAP)",
+  "e_pred": -3.675083228379e-3,
+  "parts": {"e_q_difference": -2.429033550669e-3, "contact_ho": -7.064195432958e-4, "contact_hh": -4.256656314572e-8, "wall_oo": 4.719248849396e-4, "wall_oh": 1.883759220307e-3, "wall_hh": 1.419741369837e-4, "wall_total": 2.497658242230e-3, "disp": 0.000000000000e0, "ct_term": -3.037245810082e-3, "engine_seam": -1.246049677710e-3},
+  "coefficients": {"a": 9.480487358002e2, "b": 2.400000000000e0, "p": 2.370484785307e1, "c": 2.440000000000e0, "c6": 0.000000000000e0, "a_oh": 2.258605362549e1, "b_oh": 2.200000000000e0, "a_hh": 1.525046249564e0, "b_hh": 1.750000000000e0, "p_hh": 1.587890999584e2, "c_hh": 4.000000000000e0, "p_ct": 1.474879878961e0, "c_ct": 1.460000000000e0},
+  "s1_branch": "b", "c1_pass": true, "t0_pass": true, "t1_pass": true, "t2_pass": true, "g_b0_pass": false, "g_c1_pass": true, "ct_transferred": true, "c6_transferred": false, "arms_void": true, "units": 2, "oo_pairs": 1, "ho_pairs": 4,
+  "tolerance_rule": "max(0.25·|ΔE_exact|, 5e-4)", "tolerance_frac": 0.25, "tolerance_abs": 5e-4,
+  "ct_tolerance_rule": "branch (b): |CT_term − E_CT| ≤ max(0.25·|E_CT|, 2e-4)", "ct_tolerance_frac": 0.25, "ct_tolerance_abs": 2e-4,
+  "exact_solve_stake": {"n_det": 1002001, "cpu_seconds_lo": 1450, "cpu_seconds_hi": 57600, "residual_bar": 1e-9, "exit": "Converged"},
+  "sector_solve_stake": {"sector_dim": 194481, "residual_bar": 1e-8},
+  "cross_oo_bohr": [6.047124], "cross_ho_bohr": [7.480504, 7.480504, 4.272787, 6.553199], "cross_hh_bohr": [5.904506, 5.567756, 7.915947, 7.944610],
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, -0.6647414033, 1.8263619954], [1.9300704789, 0.0782226447, -0.2149149501]], "acceptor_centers": [[0.0000000000, 0.0000000000, 6.0471235988], [0.0000000000, 1.4529262884, 7.3380474819], [-0.0000000000, -1.4529262884, 7.3380474819]]
+}

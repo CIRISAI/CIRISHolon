@@ -12,9 +12,9 @@ thread count in every JSON.*
 |---|---|---|
 | G0 — the price, wall time | **PASS** | one trimer solved inside a fourth monomer's density: 665,856 determinants, **583.1 wall-seconds** on 32 threads (15132 processor-seconds), under the 900 staked — the grid admitted |
 | G2 — the identity with EMBED-2 | **PASS at the record's resolution, FAIL at its letter** | D removed: `r_3 = -1.462678e-08` against EMBED-2's `-1.467178e-08` — `|Δ| = 4.5e-11`, above the `1e-12` staked and exactly the printed-precision floor of the record EMBED-2 had read its trimer from (`M-FORMAT-FLOOR`, registered from this finding; `EMBED2_RESULTS.md` corrected) |
-| G1 — one fixed point of four densities | **PASS**, 2 of 2 run | both starts converge to bit-identical densities (`Δρ = 0`) in 5–7 sweeps |
-| G3 — the floor of r_3 | **PASS**, 2 of 2 run | `3.5e-12`, `1.3e-12` Ha; `|Δ|/floor = 22, 43` — both posable |
-| S1 — the table transfers | **NOT YET READ** — the 8 and 12 Å nodes did not complete (below) | on the nodes run, `|Δ|/|r_3(∞)| = 5.3e-03` (4 Å, contact, reported not read) and **`3.8e-03` at 6 Å** against the `0.10` stake — twenty-six times inside it |
+| G1 — one fixed point of four densities | **PASS**, 4 of 4 | both starts converge to bit-identical densities (`Δρ = 0`) in 5–7 sweeps |
+| G3 — the floor of r_3 | **PASS**, 4 of 4 | `3.5e-12, 1.3e-12, 4.3e-12, 3.1e-12` Ha; `|Δ|/floor = 22, 43, 11, 15` — every node posable |
+| S1 — the table transfers | **BRANCH (a)**, 3 of 3 far nodes posable | `|Δ|/|r_3(∞)| = 3.8e-03, 3.2e-03, 3.2e-03` at 6, 8, 12 Å against `0.10`, non-increasing; plant (ii) at 12 Å fires (`|Δ| = 4.4e-08`, three times the term; carrier `nn(C,D) = 4.42` Ha) |
 
 | R_CD (Å) | r_3 inside D's field (Ha) | Δ = r_3 − r_3(∞) (Ha) | \|Δ\| / \|r_3(∞)\| | floor | \|Δ\|/floor | G1 sweeps zero / isolated | G1 Δρ | wall s |
 |---|---|---|---|---|---|---|---|---|
@@ -75,3 +75,41 @@ similar fraction on both. The transition nodes (4.0, 4.5 Å: `ρ_q = 0.093, 0.03
 reported and not read. This closes the water question EMBED-1's G0 left open: the water
 cores go inside the charge field under the next freeze, and the price of that verdict was
 69 wall-minutes on 32 threads, said in the clock it was spent in.
+
+
+## System A, complete — the four nodes, and what the reference's precision does to Δ
+
+| R_CD (Å) | r_3 inside D's field (Ha) | Δ against the FROZEN r_3(∞) | \|Δ\| / \|r_3(∞)\| | Δ against the in-process r_3 (G2's) | floor | \|Δ\|/floor | G1 sweeps | wall s |
+|---|---|---|---|---|---|---|---|---|
+| 4.0 | -1.459432e-08 | +7.746e-11 | 5.28e-03 | +3.25e-11 | 3.5e-12 | 22 | 6 / 5 | 1357 |
+| 6.0 | -1.461621e-08 | +5.557e-11 | 3.79e-03 | +1.06e-11 | 1.3e-12 | 43 | 5 / 4 | 1445 |
+| 8.0 | -1.462445e-08 | +4.733e-11 | 3.23e-03 | +2.33e-12 | 4.3e-12 | 11 | 5 / 4 | 2815 |
+| 12.0 | -1.462490e-08 | +4.688e-11 | 3.20e-03 | +1.88e-12 | 3.1e-12 | 15 | 5 / 4 | 3573 |
+
+**S1 reads BRANCH (a).** Against the frozen reference (`r_3(∞) = −1.4672e-8`, EMBED-2's
+printed value) the dependence is `3.8e-3, 3.2e-3, 3.2e-3` of the term at 6, 8, 12 Å — thirty
+times inside the one-in-ten stake — and non-increasing. Plant (ii) fires: with D's nuclei
+dropped while its density stays, the trimer sits in the field of a bare `−10` electron cloud
+and its three-body residual moves by three times its own size. **The harvested three-body
+residual is a field-blind table on this carrier to three parts in a thousand, and the
+channel ledger's separability (OBJECT.md rule 10) is measured, not assumed, for channel 4
+inside channel 1.**
+
+**The plateau, and what it is.** Δ against the frozen reference flattens at `+4.7e-11` from
+8 Å on (consecutive exponents `0.56`, `0.02`) — it does not vanish with distance. That
+constant is the reference's own printed precision: the freeze typed `r_3(∞)` from EMBED-2's
+record, which carried SEAM-1's trimer at thirteen significant digits, and G2 measured the
+same `4.5e-11` between that number and the in-process re-derivation (`M-FORMAT-FLOOR`,
+registered on that finding). Read against the in-process reference — G2's own
+`r_3(no D) = -1.462678e-08`, the truer number by the correction EMBED-2 carries — the
+dependence is `+3.2e-11` at contact, `+1.1e-11` at 6 Å, and `+2.3e-12`, `+1.9e-12` at
+8 and 12 Å — the last two at or under their floors. So the coupling is smaller than the
+frozen reading says, and vanishes with distance as a coupling should; the freeze's letter is
+read with its own reference and reported as (a), and the in-process reading is beside it
+as the number a successor freeze should carry, by file and field and never by a typed
+constant.
+
+**Price.** Trimers in a field cost 583–1,800 wall-seconds each on 32 threads; the two nodes
+that were killed under contention cost 2,815 and 3,573 s uncontended for their three solves
+each, against the 900 s per solve the freeze admitted on G0's single node — the price gate
+priced one solve and each node holds two or three; a successor freeze prices the node.

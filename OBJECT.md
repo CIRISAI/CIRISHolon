@@ -93,8 +93,9 @@ to `2e-12`. A reading, marked as one: it adds no primitive and names no new kill
     the field counted once (the +1 that no fragment generates and that does not factor):
     with it the channels sum to the exact energy, so a residual is ASSIGNED by its exponent
     rather than hunted. SEPARABILITY is a channel's coefficient not depending on the others
-    beyond a measured coupling (EMBED-3's System A measures it for channel 4 inside channel
-    1). Under both, the dynamics is the gradient of known transfers between fragments —
+    beyond a measured coupling — MEASURED 2026-09-05 for channel 4 inside channel 1: three
+    parts in a thousand at 6–12 Å against the frozen reference, at the arithmetic floor
+    beyond 8 Å against the in-process one (`EMBED3_RESULTS.md`, System A, branch (a)). Under both, the dynamics is the gradient of known transfers between fragments —
     forces from Hellmann–Feynman with no second solve — and the cost of a scenario is fixed
     by the digits it asks for: at precision `ε` evaluate exactly the channels with
     `C_k R^−n_k > ε`, and solve a core only inside channel 5's reach. The engine's energy

@@ -57,13 +57,12 @@ fn field2_arms(out: &Path) -> Option<String> {
     cands.into_iter().find_map(|p| fs::read_to_string(p).ok())
 }
 
-/// The harvested terms, or the refusal. FIELD-4's `wall4.json` (wall, penetration,
-/// dispersion) is preferred when present, else FIELD-3's `wall.json` (wall only). `a == 0.0`
+/// The harvested terms, or the refusal. The newest record in OUT_DIR is preferred:
+/// FIELD-5's `wall5.json`, then FIELD-4's `wall4.json`, then FIELD-3's `wall.json`. `a == 0.0`
 /// is the harvest not having landed — the seam rule with no wall is a legitimate state for
 /// gate G-B4 and is NOT these arms.
 fn wall_from(out: &Path) -> Result<SeamModel, String> {
-    let p4 = out.join("wall4.json");
-    let p = if p4.exists() { p4 } else { out.join("wall.json") };
+    let p = ["wall7.json", "wall6.json", "wall5.json", "wall4.json", "wall.json"].iter().map(|f| out.join(f)).find(|p| p.exists()).unwrap_or_else(|| out.join("wall.json"));
     let t = fs::read_to_string(&p).map_err(|e| format!("{}: {e}", p.display()))?;
     let (a, b) = (json_num(&t, "a"), json_num(&t, "b"));
     if !a.is_finite() || !b.is_finite() {
@@ -73,7 +72,7 @@ fn wall_from(out: &Path) -> Result<SeamModel, String> {
         return Err(format!("{}: a = 0", p.display()));
     }
     let opt = |k: &str| { let v = json_num(&t, k); if v.is_finite() { v } else { 0.0 } };
-    Ok(SeamModel { a, b, p: opt("p"), c: opt("c"), c6: opt("c6") })
+    Ok(SeamModel { a, b, p: opt("p"), c: opt("c"), c6: opt("c6"), a_oh: opt("a_oh"), b_oh: opt("b_oh"), a_hh: opt("a_hh"), b_hh: opt("b_hh") })
 }
 
 struct Start {

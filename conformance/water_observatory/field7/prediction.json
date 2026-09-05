@@ -1,0 +1,11 @@
+{
+  "node": "twisted_R3.0", "r_oo_angstrom": 3.000, "r_oo_bohr": 5.669178, "twist_degrees": 90.0, "twist_axis": "z, the O···O axis, through the acceptor's own oxygen", "tilt_degrees": 60.0, "tilt_axis": "x, the acceptor's own, AFTER the twist", "held_out": true, "kind": "a TWIST — neither of the two kinds the contact term is fit on (§4, M-UNTESTED-GAP)",
+  "e_pred": -1.911582929242e-3,
+  "parts": {"e_q_difference": -2.255174906487e-3, "contact": -1.040180687747e-2, "wall_oo": +6.221496506240e-3, "wall_oh": +1.688564940882e-3, "wall_hh": +2.835337407589e-3, "wall_total": +1.074539885471e-2, "disp": +0.000000000000e0, "engine_seam": +3.435919772442e-4},
+  "coefficients": {"a": 1.623675389158e3, "b": 2.200000000000e0, "p": 8.971174442382e0, "c": 1.830000000000e0, "c6": 0.000000000000e0, "a_oh": 8.668738992009e0, "b_oh": 2.300000000000e0, "a_hh": 2.652294792702e0, "b_hh": 1.900000000000e0},
+  "s1_branch": "b", "c6_transferred": false, "units": 2, "oo_pairs": 1, "ho_pairs": 4,
+  "tolerance_rule": "max(0.25·|ΔE_exact|, 5e-4)", "tolerance_frac": 0.25, "tolerance_abs": 5e-4,
+  "exact_solve_stake": {"n_det": 1002001, "cpu_seconds_lo": 1450, "cpu_seconds_hi": 57600, "residual_bar": 1e-9, "exit": "Converged"},
+  "cross_oo_bohr": [5.669178], "cross_ho_bohr": [7.583025, 5.382268, 3.725605, 6.205661], "cross_hh_bohr": [5.642936, 3.618209, 8.046348, 5.921077],
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, 0.0000000000, 1.9435738400], [1.9300704789, 0.0000000000, -0.2287077129]], "acceptor_centers": [[0.0000000000, 0.0000000000, 5.6691783739], [0.0000000000, -0.3915097329, 7.5729113910], [-0.0000000000, -1.8444360213, 5.0563692398]]
+}

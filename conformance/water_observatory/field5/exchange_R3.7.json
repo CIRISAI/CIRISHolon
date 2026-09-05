@@ -1,0 +1,10 @@
+{
+  "node": "exchange_R3.7", "r_oo_angstrom": 3.700, "r_oo_bohr": 6.991987,
+  "e_hl": -1.500467411696e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": -1.781706648488e-3, "e_exch": +1.623599643795e-3,
+  "e_hl_minus_monomers": -1.581070046939e-4,
+  "norm": 9.999999999999957e-1, "nonzero_dets": 194481, "n_det": 1002001, "n_det_a": 441, "n_det_b": 441, "nonzero_dets_expected": 194481,
+  "s_cross_max": 1.578661297745e-2, "sigma_seconds": 2.740,
+  "de_exact": -2.141365165613e-3, "e_q_raw_field3": -1.784345060868e-3, "p_field4": -6.338337964140e-5,
+  "cross_ho_bohr": [8.409376, 8.409376, 5.048413, 7.474196],
+  "wall_seconds": 4.099, "cpu_seconds": 59.100, "price_tenth_core_seconds": 7, "price_floor_met": true, "threads": 24
+}

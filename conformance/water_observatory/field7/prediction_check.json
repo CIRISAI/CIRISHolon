@@ -1,0 +1,9 @@
+{
+  "node": "twisted_R3.0", "e_pred": -1.911582929242e-3, "de_exact": +5.171560087120e-4,
+  "miss": 2.428739e-3, "miss_fraction": 4.696337, "tolerance": 5.000000e-4, "tolerance_rule": "max(0.25·|ΔE_exact|, 5e-4)",
+  "s2_branch": "c",
+  "exact": {"converged": true, "exit": "Converged", "davidson_iters": 226, "residual": 8.203e-11, "residual_bar": 1e-9, "n_det": 1002001, "n_det_expected": 1002001, "n_det_ok": true, "cpu_seconds": 24416.6, "cpu_seconds_lo": 1450, "cpu_seconds_hi": 57600, "price_in_band": true, "wall_seconds": 1131.0},
+  "exchange_on_the_held_out_node": {"r_oo_bohr": 5.669178, "e_exch": +9.527602945127e-3, "e_hl": -1.500409735674e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": -3.918107772719e-3, "norm": 9.930336507778146e-1, "nonzero_dets": 1002001, "n_det_a": 441, "n_det_b": 441, "product_dets": 194481, "s_cross_max": 7.201642e-2, "sigma_seconds": 4.754, "cpu_seconds": 104.600, "wall_seconds": 6.720},
+  "wall": {"a": 1.623675389158e3, "b": 2.200000000000e0, "a_oh": 8.668738992009e0, "b_oh": 2.300000000000e0, "a_hh": 2.652294792702e0, "b_hh": 1.900000000000e0, "value": +1.074539885471e-2, "oo": +6.221496506239e-3, "oh": +1.688564940882e-3, "hh": +2.835337407590e-3, "minus_e_exch": +1.217795909583e-3, "abs_difference": 1.217796e-3, "within_tolerance": false},
+  "cross_oo_bohr": [5.669178], "cross_ho_bohr": [7.583025, 5.382268, 3.725605, 6.205661], "cross_hh_bohr": [5.642936, 3.618209, 8.046348, 5.921077]
+}

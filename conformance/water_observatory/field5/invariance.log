@@ -1,0 +1,5 @@
+FIELD-5 invariance — G-H0 and plant (ii) on the 2.9 Å node, 24 threads; FIELD-3's record E_super = -1.500520630749e2 Ha
+plant (ii) carrier: largest cross-fragment orbital overlap 7.849457e-2 ≥ 1e-3 → present
+G-H0: full CI over C′ = -1.500520630749e2 Ha vs the record -1.500520630749e2 — miss 1.637e-11 (tol 1e-8); 185 iters, residual 8.911e-11, exit Converged, 1002001 determinants (want 1002001); wall 962 s, 14910 core-s → PASS
+plant (ii): full CI with the block-diagonal orbitals used as if orthonormal = -1.501184930771e2 Ha — misses the record by 6.643000e-2 (≥ 1e-2 required), misses G-H0's own answer by 6.643000e-2; 172 iters, residual 8.334e-11, exit Converged, wall 796 s, 13920 core-s → FIRES
+invariance.json written

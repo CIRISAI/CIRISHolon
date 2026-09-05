@@ -1,0 +1,9 @@
+{
+  "node": "exchange_R3.1", "r_oo_angstrom": 3.100, "r_oo_bohr": 5.858151,
+  "undeformed": {"e_hl": -1.500456123378e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": -4.336589390171e-3, "e_exch": +5.307314123492e-3, "norm": 9.970113067891462e-1, "nonzero_dets": 1002001, "n_det": 1002001, "n_det_a": 441, "n_det_b": 441, "nonzero_dets_expected": 194481, "s_cross_max": 5.444159365880e-2, "sigma_seconds": 7.498, "wall_seconds": 13.330, "cpu_seconds": 89.450},
+  "orthogonalised": {"e_hl": -1.500320075211e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": -4.336589390171e-3, "e_exch": +1.891213085165e-2, "norm": 9.999999999999958e-1, "nonzero_dets": 194481, "n_det": 1002001, "s_cross_max": 5.444159365880e-2, "sigma_seconds": 9.042, "wall_seconds": 14.105, "cpu_seconds": 88.340},
+  "deformation_penalty": +1.360481672816e-2,
+  "e_super_field3": -1.500513400725e2, "de_exact": -4.757009922656e-3, "e_q_raw_field3": -3.270181135363e-3,
+  "cross_ho_bohr": [7.295222, 7.295222, 3.914577, 6.385532],
+  "price_tenth_core_seconds": 5.5, "price_floor_met": true, "threads": 24
+}

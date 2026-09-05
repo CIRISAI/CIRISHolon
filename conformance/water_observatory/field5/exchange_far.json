@@ -1,0 +1,7 @@
+{
+  "node": "exchange_far_40bohr", "base_r_oo_angstrom": 2.900, "acceptor_translated_bohr": [40.0, 0.0, 0.0], "r_oo_bohr": 40.373663,
+  "e_hl": -1.500465810330e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": +2.029597613085e-6, "e_exch": +8.423928221646e-12,
+  "limit_miss": 2.029606e-6, "limit_tolerance": 1e-8,
+  "norm": 9.999999999999956e-1, "nonzero_dets": 194481, "n_det": 1002001, "n_det_a": 441, "n_det_b": 441, "s_cross_max": 1.348968470943e-52,
+  "sigma_seconds": 2.921, "wall_seconds": 4.290, "cpu_seconds": 58.450
+}

@@ -993,8 +993,8 @@ pub const SEAM_REFUSED: u32 = 210;
 /// dispersion `−c6/r⁶` (FIELD-3, FIELD-4), or disable it. Returns 0, or `SEAM_REFUSED + k`
 /// for the named refusals.
 #[no_mangle]
-pub extern "C" fn holon_set_seam(on: u32, a: f64, b: f64, p: f64, c: f64, c6: f64) -> u32 {
-    match sim().set_seam(if on != 0 { Some(seam::SeamModel { a, b, p, c, c6 }) } else { None }) {
+pub extern "C" fn holon_set_seam(on: u32, a: f64, b: f64, p: f64, c: f64, c6: f64, a_oh: f64, b_oh: f64, a_hh: f64, b_hh: f64) -> u32 {
+    match sim().set_seam(if on != 0 { Some(seam::SeamModel { a, b, p, c, c6, a_oh, b_oh, a_hh, b_hh }) } else { None }) {
         Ok(()) => 0,
         Err(seam::SeamRefusal::AcuityFrameSet) => SEAM_REFUSED + 1,
         Err(seam::SeamRefusal::FarSectorDeclared) => SEAM_REFUSED + 2,

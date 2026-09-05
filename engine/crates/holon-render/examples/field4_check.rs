@@ -81,7 +81,7 @@ fn formula_terms(a: &Fragment, b: &Fragment, m: &SeamModel) -> (f64, f64, f64) {
 fn main() {
     let out = PathBuf::from(std::env::args().nth(1).unwrap_or_else(|| "../conformance/water_observatory/field4".to_string()));
     let t = fs::read_to_string(out.join("wall4.json")).expect("wall4.json: run field4_harvest density first");
-    let m = SeamModel { a: json_num(&t, "a"), b: json_num(&t, "b"), p: json_num(&t, "p"), c: json_num(&t, "c"), c6: json_num(&t, "c6") };
+    let m = SeamModel { a: json_num(&t, "a"), b: json_num(&t, "b"), p: json_num(&t, "p"), c: json_num(&t, "c"), c6: json_num(&t, "c6"), ..SeamModel::NO_WALL };
     eprintln!("harvest: A {:.6e} b {:.6} P {:.6e} c {:.6} C6 {:.6e}", m.a, m.b, m.p, m.c, m.c6);
     let (o, h) = (by_symbol("O").unwrap(), by_symbol("H").unwrap());
     let field3: &Path = Path::new("../conformance/water_observatory/field3");

@@ -1,0 +1,5 @@
+FIELD-6 predict — the HELD-OUT node (45° about x through the acceptor's oxygen, R_OO 3.1 Å) on 24 threads; E_pred +9.685751225311e-4 Ha
+  tilted45_R3.1: R_OO 3.1 Å, 1002001 dets, ΔE_exact -5.434519e-3 Ha, 217 iters, residual 8.8e-11, exit Converged, wall 1022 s, 23507 core-s
+S2: ΔE_exact -5.434519e-3 Ha, E_pred +9.685751e-4 — miss 6.403e-3 (117.8 % of |ΔE_exact|) against 1.359e-3; E_exch(undeformed, held-out) +5.771379e-3 (orthogonalised +2.014306e-2) vs wall(R_OO = 5.8582 bohr) +5.125331e-3, difference 6.460e-4 → branch (b)
+free reading — tilted30_R2.9 (R_OO 5.4802 bohr): E_exch(undeformed) +1.262365e-2 Ha vs wall +1.158673e-2, difference -1.036925e-3. NOT a stake.
+free reading — flipped_R3.4 (R_OO 6.4251 bohr): E_exch(undeformed) +8.616289e-3 Ha vs wall +1.507869e-3, difference -7.108421e-3. NOT a stake.

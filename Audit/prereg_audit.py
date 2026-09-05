@@ -119,6 +119,12 @@ CONTACT = {
     # forward-only rule below admits it by precedence (its results document carries the
     # contact). Verified against every freeze and amendment in the tree: zero newly refused.
     "expected to hold": "M-EMPTY-SECTOR", "binding at the start": "M-EMPTY-SECTOR",
+    # --- 2026-09-05: FIELD-7's transferred contact term had no inner wall below its data and
+    # the arms fell into the hole while the lens read f = 1. Armed on the phrases a freeze
+    # that transfers an attraction uses; FIELD7_PREREG.md is the instance, admitted by
+    # precedence (dated the day of the registration); its results carry the contact.
+    "attractive exponential": "M-EXTRAPOLATED-HOLE", "contact term": "M-EXTRAPOLATED-HOLE",
+    "remainder transferred": "M-EXTRAPOLATED-HOLE",
 }
 
 def contact_table_is_sound():

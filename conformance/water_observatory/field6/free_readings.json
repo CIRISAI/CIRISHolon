@@ -1,0 +1,7 @@
+{
+  "stake": false, "referee": "heitler_london_undeformed", "wall": {"a": 1.586445540172e3, "b": 2.158157328313e0},
+  "readings": [
+    {"node": "tilted30_R2.9", "note": "FIELD6_PREREG §4: FIELD-5's tilted node, its exact value already known — a FREE reading beside the wall's value", "stake": false, "r_oo_bohr": 5.480206, "e_hl": -1.500410883888e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": -7.128979807504e-3, "e_exch": +1.262365361384e-2, "wall_value": +1.158672837742e-2, "wall_minus_e_exch": -1.036925236426e-3, "norm": 9.930484474936594e-1, "nonzero_dets": 1002001, "n_det": 1002001, "s_cross_max": 6.865927e-2, "sigma_seconds": 3.687, "cpu_seconds": 88.200, "wall_seconds": 5.585},
+    {"node": "flipped_R3.4", "note": "FIELD6_PREREG §4: FIELD-4's flipped node, its exact value already known — a FREE reading beside the wall's value", "stake": false, "r_oo_bohr": 6.425069, "e_hl": -1.500363756833e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": +1.591089913422e-3, "e_exch": +8.616289323040e-3, "wall_value": +1.507868698065e-3, "wall_minus_e_exch": -7.108420624975e-3, "norm": 9.928087969458398e-1, "nonzero_dets": 1002001, "n_det": 1002001, "s_cross_max": 1.155860e-1, "sigma_seconds": 2.542, "cpu_seconds": 61.300, "wall_seconds": 4.385}
+  ]
+}

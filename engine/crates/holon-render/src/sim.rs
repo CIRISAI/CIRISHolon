@@ -3301,6 +3301,7 @@ impl Sim {
         let p = if plant == crate::seam::SeamPlant::FlipPenetration { -model.p } else { model.p };
         let c = model.c;
         let c6 = model.c6;
+        let (a_oh, b_oh, a_hh, b_hh) = (model.a_oh, model.b_oh, model.a_hh, model.b_hh);
         let geom = self.geom();
         let f = crate::seam::FREE;
         let mut e = 0.0f64;
@@ -3318,9 +3319,9 @@ impl Sim {
                     continue;
                 }
                 // the pair's class: O–O carries the wall and the dispersion, H–O the
-                // penetration term, H–H nothing
-                let (is_oo, is_ho) = (zi == 8 && zj == 8, (zi == 8 && zj == 1) || (zi == 1 && zj == 8));
-                if !is_oo && !is_ho {
+                // penetration term and its own wall (FIELD-7), H–H its wall (FIELD-7)
+                let (is_oo, is_ho, is_hh) = (zi == 8 && zj == 8, (zi == 8 && zj == 1) || (zi == 1 && zj == 8), zi == 1 && zj == 1);
+                if !is_oo && !is_ho && !is_hh {
                     continue;
                 }
                 let (dx, dy, dz) = geom.delta(
@@ -3347,11 +3348,16 @@ impl Sim {
                     let drop = plant == crate::seam::SeamPlant::DropReaction
                         || (plant == crate::seam::SeamPlant::DropReactionNew && a == 0.0);
                     (w + ud, -b * w + dud, drop)
-                } else {
-                    // penetration: U = −p·e^{−c r}, dU/dr = p·c·e^{−c r}
+                } else if is_ho {
+                    // penetration: U = −p·e^{−c r}, dU/dr = p·c·e^{−c r}; the H–O wall beside it
                     let x = p * (-c * r).exp();
+                    let w = a_oh * (-b_oh * r).exp();
                     ho += 1;
-                    (-x, c * x, plant == crate::seam::SeamPlant::DropReactionNew)
+                    (-x + w, c * x - b_oh * w, plant == crate::seam::SeamPlant::DropReactionNew)
+                } else {
+                    // the H–H wall (FIELD-7)
+                    let w = a_hh * (-b_hh * r).exp();
+                    (w, -b_hh * w, false)
                 };
                 e += u;
                 let fm = -du / r;

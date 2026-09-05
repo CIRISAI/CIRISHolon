@@ -1,0 +1,4 @@
+FIELD-5 predict — the TILTED node (30° about x through the acceptor's oxygen) on 24 threads; E_pred -7.049510652387e-3 Ha
+  tilted_R2.9: R_OO 2.9 Å, 1002001 dets, ΔE_exact -6.175837e-3 Ha, 165 iters, residual 7.9e-11, exit Converged, wall 784 s, 17795 core-s
+S2: ΔE_exact -6.175837e-3 Ha, E_pred -7.049511e-3 — miss 8.737e-4 (14.1 % of |ΔE_exact|) against 1.544e-3; E_exch(tilted) +4.130942e-2 vs wall(R_OO = 5.4802 bohr) +0.000000e0, difference 4.131e-2 → branch (a)
+free reading — FIELD-4's flipped node at 3.4 Å (R_OO 6.4251 bohr): E_exch +3.344248e-2 Ha vs wall +0.000000e0, difference -3.344248e-2. NOT a stake.

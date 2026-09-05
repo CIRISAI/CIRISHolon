@@ -45,6 +45,7 @@ pub mod elements;
 pub mod budget;
 pub mod fci;
 pub mod h2;
+pub mod heitler_london;
 pub mod ion_table;
 pub mod ions;
 pub mod lanes;

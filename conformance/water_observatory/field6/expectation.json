@@ -1,0 +1,7 @@
+{
+  "wall": {"a": 1.586445540e3, "b": 2.158157328},
+  "kT_293": 9.278758e-4, "kT_150": 4.750217e-4, "binding_floor": 1.0e-4,
+  "settle": 2000, "count": 20000,
+  "dimer": {"staked_units": 2, "units": 2, "hbonds_at_start": 1, "e_start": 4.078279e-3, "e_separated": 1.987387e-6, "binding": 4.076291e-3, "field_part": -4.083421e-3, "wall_part": 8.159713e-3, "void": false, "reason": "the start is not empty", "expect_293": "break", "expect_150": "break"},
+  "ring": {"staked_units": 4, "units": 4, "hbonds_at_start": 4, "e_start": 2.067666e-2, "e_separated": -8.017081e-6, "binding": 2.068467e-2, "field_part": -1.201973e-2, "wall_part": 3.270441e-2, "void": false, "reason": "the start is not empty", "expect_293": "break", "expect_150": "break"}
+}

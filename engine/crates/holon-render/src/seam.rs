@@ -42,15 +42,33 @@ pub struct SeamModel {
     pub p: f64,
     pub c: f64,
     pub c6: f64,
+    /// FIELD-7: the wall on cross-unit hydrogen–oxygen pairs, `a_oh·exp(−b_oh·r)`.
+    pub a_oh: f64,
+    pub b_oh: f64,
+    /// FIELD-7: the wall on cross-unit hydrogen–hydrogen pairs, `a_hh·exp(−b_hh·r)`.
+    pub a_hh: f64,
+    pub b_hh: f64,
 }
 
 impl SeamModel {
     /// The seam rule with no cross-unit term at all.
-    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0 };
+    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0, a_oh: 0.0, b_oh: 0.0, a_hh: 0.0, b_hh: 0.0 };
 
     /// FIELD-3's wall alone.
     pub const fn wall_only(a: f64, b: f64) -> SeamModel {
-        SeamModel { a, b, p: 0.0, c: 0.0, c6: 0.0 }
+        SeamModel { a, b, ..SeamModel::NO_WALL }
+    }
+
+    /// The H–O wall's energy at a cross-unit H–O separation `r` (FIELD-7).
+    #[inline]
+    pub fn wall_oh(&self, r: f64) -> f64 {
+        self.a_oh * (-self.b_oh * r).exp()
+    }
+
+    /// The H–H wall's energy at a cross-unit H–H separation `r` (FIELD-7).
+    #[inline]
+    pub fn wall_hh(&self, r: f64) -> f64 {
+        self.a_hh * (-self.b_hh * r).exp()
     }
 
     /// The wall's energy at separation `r`.
@@ -208,7 +226,7 @@ mod tests {
         assert_eq!(SeamModel::NO_WALL.wall(3.0), 0.0);
         assert_eq!(SeamModel::NO_WALL.penetration(3.0), 0.0);
         assert_eq!(SeamModel::NO_WALL.dispersion(3.0), 0.0);
-        let f = SeamModel { a: 0.0, b: 0.0, p: 1.0, c: 1.0, c6: 64.0 };
+        let f = SeamModel { p: 1.0, c: 1.0, c6: 64.0, ..SeamModel::NO_WALL };
         assert!((f.penetration(1.0) + (-1.0f64).exp()).abs() < 1e-15);
         assert_eq!(f.dispersion(2.0), -1.0);
     }

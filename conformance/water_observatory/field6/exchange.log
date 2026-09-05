@@ -1,0 +1,92 @@
+FIELD-6 exchange — the UNDEFORMED Heitler–London referee on FIELD-3's six linear nodes, 24 threads
+penetration: P = 1.603983127e1 Ha, c = 2.42 /bohr — FIELD-5's fit on the outer four nodes, reused as frozen
+  R_OO 2.5 Å: undeformed E_HL -1.500118481e2 E_exch +5.833118e-2 norm 0.969333653376 (90.6 core-s) | orthogonalised E_HL -1.499036990e2 E_exch +1.664803e-1 (87.7 core-s) | penalty +1.081491e-1
+  R_OO 2.7 Å: undeformed E_HL -1.500319556e2 E_exch +2.688576e-2 norm 0.985427296142 (90.6 core-s) | orthogonalised E_HL -1.499762889e2 E_exch +8.255240e-2 (88.6 core-s) | penalty +5.566664e-2
+  R_OO 2.9 Å: undeformed E_HL -1.500414148e2 E_exch +1.209542e-2 norm 0.993300428065 (87.9 core-s) | orthogonalised E_HL -1.500134393e2 E_exch +4.007096e-2 (87.9 core-s) | penalty +2.797554e-2
+  R_OO 3.1 Å: undeformed E_HL -1.500456123e2 E_exch +5.307314e-3 norm 0.997011306789 (89.4 core-s) | orthogonalised E_HL -1.500320075e2 E_exch +1.891213e-2 (88.3 core-s) | penalty +1.360482e-2
+  R_OO 3.4 Å: undeformed E_HL -1.500476791e2 E_exch +1.477364e-3 norm 0.999161473302 (91.7 core-s) | orthogonalised E_HL -1.500433850e2 E_exch +5.771548e-3 (89.0 core-s) | penalty +4.294184e-3
+  R_OO 3.7 Å: undeformed E_HL -1.500479730e2 E_exch +3.917750e-4 norm 0.999784101397 (90.2 core-s) | orthogonalised E_HL -1.500467412e2 E_exch +1.623600e-3 (87.8 core-s) | penalty +1.231825e-3
+
+G-U0 — the undeformed state is what it says:
+  norm: every undeformed ⟨v|v⟩ in (0.8, 1] — lowest 0.969333653376, highest 0.999784101397 → PASS (the far reading's norm is 0.999999999999996, -3.664e-15 from 1; the orthogonalised norm is 1 by construction, worst 4.441e-15)
+  order: E_super(FIELD-3) ≤ E_HL(undeformed) ≤ E_HL(orthogonalised) at every node (slack 1e-10) → PASS
+    2.5 Å: -1.500440761551e2 ≤ -1.500118480918e2 ≤ -1.499036990059e2  (gaps +3.222806e-2, +1.081491e-1)
+    2.7 Å: -1.500509029886e2 ≤ -1.500319555650e2 ≤ -1.499762889264e2  (gaps +1.894742e-2, +5.566664e-2)
+    2.9 Å: -1.500520630749e2 ≤ -1.500414148236e2 ≤ -1.500134392864e2  (gaps +1.064825e-2, +2.797554e-2)
+    3.1 Å: -1.500513400725e2 ≤ -1.500456123378e2 ≤ -1.500320075211e2  (gaps +5.727735e-3, +1.360482e-2)
+    3.4 Å: -1.500498005283e2 ≤ -1.500476791434e2 ≤ -1.500433849595e2  (gaps +2.121385e-3, +4.294184e-3)
+    3.7 Å: -1.500487244277e2 ≤ -1.500479729942e2 ≤ -1.500467411696e2  (gaps +7.514335e-4, +1.231825e-3)
+  limit: at 40 bohr |E_exch| = 8.367e-12 and |E_HL − E_A0 − E_B0 − E_es| = 8.367e-12 (tol 1e-8) → PASS
+G-U0 → PASS
+
+| R (Å) | R_OO (bohr) | ΔE_exact (Ha) | E_exch undeformed (Ha) | E_exch orthogonalised (Ha) | norm undeformed | σ (s) | core-s |
+| 2.5 | 4.7243 | +2.506907e-3 | +5.833118e-2 | +1.664803e-1 | 0.969333653376 | 9.1 | 90.6 |
+| 2.7 | 5.1023 | -4.319926e-3 | +2.688576e-2 | +8.255240e-2 | 0.985427296142 | 8.3 | 90.6 |
+| 2.9 | 5.4802 | -5.480012e-3 | +1.209542e-2 | +4.007096e-2 | 0.993300428065 | 8.6 | 87.9 |
+| 3.1 | 5.8582 | -4.757010e-3 | +5.307314e-3 | +1.891213e-2 | 0.997011306789 | 7.5 | 89.4 |
+| 3.4 | 6.4251 | -3.217466e-3 | +1.477364e-3 | +5.771548e-3 | 0.999161473302 | 10.1 | 91.7 |
+| 3.7 | 6.9920 | -2.141365e-3 | +3.917750e-4 | +1.623600e-3 | 0.999784101397 | 9.0 | 90.2 |
+H1: E_exch > 1e-6 at all six (true); non-increasing outward (true); E_exch(2.9 Å) = 1.209542e-2 < 0.5·E_exch^orth = 2.003548e-2 (true, ratio 0.3019) → PASS
+M-CHEAPER-THAN-ITS-PRICE (recorded): every undeformed reading at or above a tenth of its 5.5 core-second price: true (cheapest 87.9 core-s)
+
+the wall over the UNDEFORMED E_exch — FIELD-3's rule, the largest contiguous set of the SHORTEST nodes (≥ 3), within the DERIVED tolerance max(0.1·|ΔE_exact|, 0.05·E_exch) at each:
+  2.5 Å: tolerance 2.916559e-3 Ha = max(2.506907e-4, 2.916559e-3) — the E_exch arm
+  2.7 Å: tolerance 1.344288e-3 Ha = max(4.319926e-4, 1.344288e-3) — the E_exch arm
+  2.9 Å: tolerance 6.047710e-4 Ha = max(5.480012e-4, 6.047710e-4) — the E_exch arm
+  3.1 Å: tolerance 4.757010e-4 Ha = max(4.757010e-4, 2.653657e-4) — the ΔE_exact arm
+  3.4 Å: tolerance 3.217466e-4 Ha = max(3.217466e-4, 7.386821e-5) — the ΔE_exact arm
+  3.7 Å: tolerance 2.141365e-4 Ha = max(2.141365e-4, 1.958875e-5) — the ΔE_exact arm
+  [undeformed] attempt k = 6 (to 3.7 Å): A = 2.055495e3 Ha, b = 2.209037 /bohr, worst miss 1.2169 of its DERIVED tolerance → does not qualify
+  [undeformed] attempt k = 5 (to 3.4 Å): A = 1.586446e3 Ha, b = 2.158157 /bohr, worst miss 0.8411 of its DERIVED tolerance → QUALIFIES
+the wall: positive prefix 6 of 6; A = 1.586445540e3 Ha, b = 2.158157 /bohr over the shortest 5 nodes (R_x = 3.4 Å)
+  2.5 Å: E_exch +5.833118e-2  wall +5.921595e-2  miss +8.847678e-4 (0.3034 of its tolerance 2.917e-3)  [in the fit]
+  2.7 Å: E_exch +2.688576e-2  wall +2.619387e-2  miss -6.918852e-4 (0.5147 of its tolerance 1.344e-3)  [in the fit]
+  2.9 Å: E_exch +1.209542e-2  wall +1.158673e-2  miss -5.086926e-4 (0.8411 of its tolerance 6.048e-4)  [in the fit]
+  3.1 Å: E_exch +5.307314e-3  wall +5.125331e-3  miss -1.819833e-4 (0.3826 of its tolerance 4.757e-4)  [in the fit]
+  3.4 Å: E_exch +1.477364e-3  wall +1.507869e-3  miss +3.050444e-5 (0.0948 of its tolerance 3.217e-4)  [in the fit]
+  3.7 Å: E_exch +3.917750e-4  wall +4.436139e-4  miss +5.183888e-5 (0.2421 of its tolerance 2.141e-4)
+S1: branch (b) — a prefix of 5 fits (R_x = 3.4 Å); the wall from the prefix, the outer miss reported
+
+the penetration term is NOT re-fit: P = 1.603983127e1 Ha, c = 2.42 /bohr — FIELD-5's fit on the outer four nodes, reused as frozen
+  2.5 Å: p_fit -1.922330e-2 Ha (-7.6681 of ΔE_exact)
+  2.7 Å: p_fit -7.703219e-3 Ha (-1.7832 of ΔE_exact)
+  2.9 Å: p_fit -3.086825e-3 Ha (-0.5633 of ΔE_exact)
+  3.1 Å: p_fit -1.236937e-3 Ha (-0.2600 of ΔE_exact)
+  3.4 Å: p_fit -3.137574e-4 Ha (-0.0975 of ΔE_exact)
+  3.7 Å: p_fit -7.958532e-5 Ha (-0.0372 of ΔE_exact)
+
+dispersion from the remainder ΔE_exact − E_q − p_fit − E_exch(undeformed) − wall_fit, OUTER nodes only
+  2.5 Å: remainder -8.874771e-2 Ha (-35.4013 of ΔE_exact)  [inner, NOT fit]
+  2.7 Å: remainder -4.435897e-2 Ha (-10.2685 of ΔE_exact)  [inner, NOT fit]
+  2.9 Å: remainder -2.194146e-2 Ha (-4.0039 of ΔE_exact)  [in the fit]
+  3.1 Å: remainder -1.068254e-2 Ha (-2.2456 of ΔE_exact)  [in the fit]
+  3.4 Å: remainder -3.511730e-3 Ha (-1.0915 of ΔE_exact)  [in the fit]
+  3.7 Å: remainder -1.112824e-3 Ha (-0.5197 of ΔE_exact)  [in the fit]
+  log-log slope 2.9 → 3.1 Å: -10.793
+  log-log slope 3.1 → 3.4 Å: -12.044
+  log-log slope 3.4 → 3.7 Å: -13.591
+dispersion: C₆ = 0.000000000e0 Ha·bohr⁶; every slope in [-8, -4] → NOT transferred (C₆ = 0 recorded)
+
+plant (ii) — FIELD-5's orthogonalised E_exch in place of the undeformed one, the same derived tolerance rule computed from ITS values:
+  2.5 Å: E_exch^orth +1.664803e-1, tolerance 8.324013e-3
+  2.7 Å: E_exch^orth +8.255240e-2, tolerance 4.127620e-3
+  2.9 Å: E_exch^orth +4.007096e-2, tolerance 2.003548e-3
+  3.1 Å: E_exch^orth +1.891213e-2, tolerance 9.456065e-4
+  3.4 Å: E_exch^orth +5.771548e-3, tolerance 3.217466e-4
+  3.7 Å: E_exch^orth +1.623600e-3, tolerance 2.141365e-4
+  [orthogonalised] attempt k = 6 (to 3.7 Å): A = 2.713244e3 Ha, b = 2.043814 /bohr, worst miss 1.8873 of its DERIVED tolerance → does not qualify
+  [orthogonalised] attempt k = 5 (to 3.4 Å): A = 1.885566e3 Ha, b = 1.972329 /bohr, worst miss 0.9694 of its DERIVED tolerance → QUALIFIES
+plant (ii): carrier E_exch^orth(2.9) − E_exch(2.9) = 2.797554e-2 Ha ≥ 1e-3: true; every set of three or more FAILS: false (positive prefix 6) → does not fire
+
+G-C1 — the harvest is the engine's arithmetic, the SAME reference on both sides (E_q(R) − E_q(40) from the engine itself)
+  R 2.5 Å: engine +3.292115652677e-2 (field diff -7.071489e-3, seam +3.999265e-2) vs formula +3.292115652677e-2 (E_q(R) − E_q(40) -7.071489e-3 + pen -1.922330e-2 + wall +5.921595e-2 + disp +0.000000e0) — miss 1.457e-16
+  R 2.7 Å: engine +1.315114114150e-2 (field diff -5.339515e-3, seam +1.849066e-2) vs formula +1.315114114150e-2 (E_q(R) − E_q(40) -5.339515e-3 + pen -7.703219e-3 + wall +2.619387e-2 + disp +0.000000e0) — miss 2.602e-17
+  R 2.9 Å: engine +4.364032720848e-3 (field diff -4.135871e-3, seam +8.499903e-3) vs formula +4.364032720848e-3 (E_q(R) − E_q(40) -4.135871e-3 + pen -3.086825e-3 + wall +1.158673e-2 + disp +0.000000e0) — miss 2.602e-18
+plant (i) at 2.9 Å: miss 6.173650e-3 vs 2·|p_HO| 6.173650e-3 (difference 9.541e-17); carrier |p_HO| 3.087e-3 ≥ 1e-4: true → FIRES
+  R 3.1 Å: engine +6.163626196132e-4 (field diff -3.272031e-3, seam +3.888394e-3) vs formula +6.163626196132e-4 (E_q(R) − E_q(40) -3.272031e-3 + pen -1.236937e-3 + wall +5.125331e-3 + disp +0.000000e0) — miss 1.041e-17
+  R 3.4 Å: engine -1.184732098877e-3 (field diff -2.378843e-3, seam +1.194111e-3) vs formula -1.184732098877e-3 (E_q(R) − E_q(40) -2.378843e-3 + pen -3.137574e-4 + wall +1.507869e-3 + disp +0.000000e0) — miss 1.134e-16
+  R 3.7 Å: engine -1.421731868360e-3 (field diff -1.785760e-3, seam +3.640286e-4) vs formula -1.421731868360e-3 (E_q(R) − E_q(40) -1.785760e-3 + pen -7.958532e-5 + wall +4.436139e-4 + disp +0.000000e0) — miss 6.093e-17
+G-C1: worst |engine − formula| = 1.457e-16 (stake 1e-10) → PASS
+
+wall6.json written
+prediction.json filed BEFORE the held-out solve: E_pred +9.685751e-4 Ha — E_q(R) − E_q(40) -2.919047e-3, p_HO -1.237709e-3, wall +5.125331e-3, disp +0.000000e0; units 2

@@ -1,0 +1,8 @@
+{
+  "node": "tilted45_R3.1", "e_pred": +9.685751225311e-4, "de_exact": -5.434518591940e-3,
+  "miss": 6.403094e-3, "miss_fraction": 1.178226, "tolerance": 1.358630e-3, "tolerance_rule": "max(0.25·|ΔE_exact|, 5e-4)",
+  "exact": {"converged": true, "exit": "Converged", "davidson_iters": 217, "residual": 8.817e-11, "residual_bar": 1e-9, "n_det": 1002001, "n_det_expected": 1002001, "n_det_ok": true, "cpu_seconds": 23506.9, "wall_seconds": 1022.3},
+  "exchange_on_the_held_out_node": {"r_oo_bohr": 5.858151, "e_exch_undeformed": +5.771379128728e-3, "e_exch_orth": +2.014305773963e-2, "e_hl_undeformed": -1.500452133824e2, "e_hl_orth": -1.500308417038e2, "e_es": -4.401698999015e-3, "norm_undeformed": 9.967648537714439e-1, "wall_value": +5.125330859316e-3, "wall_minus_e_exch": -6.460482694120e-4, "abs_difference": 6.460483e-4, "within_tolerance": true, "nonzero_dets": 1002001, "sigma_seconds": 4.252, "cpu_seconds_undeformed": 102.250, "wall_seconds_undeformed": 6.254, "cpu_seconds_orth": 100.080, "wall_seconds_orth": 5.534},
+  "wall": {"a": 1.586445540172e3, "b": 2.158157328313e0},
+  "s2_branch": "b"
+}

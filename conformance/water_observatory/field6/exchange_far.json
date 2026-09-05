@@ -1,0 +1,6 @@
+{
+  "node": "exchange_far_40bohr", "base_r_oo_angstrom": 2.900, "acceptor_translated_bohr": [40.0, 0.0, 0.0], "r_oo_bohr": 40.373663,
+  "undeformed": {"e_hl": -1.500465810330e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": +2.029597613085e-6, "e_exch": +8.367084802785e-12, "norm": 9.999999999999963e-1, "nonzero_dets": 194481, "n_det": 1002001, "s_cross_max": 1.348968470943e-52, "sigma_seconds": 9.462, "wall_seconds": 14.836, "cpu_seconds": 89.010},
+  "orthogonalised": {"e_hl": -1.500465810330e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": +2.029597613085e-6, "e_exch": +8.423928221646e-12, "norm": 9.999999999999956e-1, "nonzero_dets": 194481, "n_det": 1002001, "sigma_seconds": 9.444, "wall_seconds": 15.189, "cpu_seconds": 86.370},
+  "limit_abs_e_exch": 8.367085e-12, "limit_abs_residual": 8.367085e-12, "limit_tolerance": 1e-8
+}

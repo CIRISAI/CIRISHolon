@@ -1,0 +1,7 @@
+{
+  "node": "flipped_R3.4", "r_oo_angstrom": 3.400, "r_oo_bohr": 6.425069,
+  "stake": false, "note": "FIELD5_PREREG §4: a FREE reading beside the wall's value; the flipped node's exact value was already known",
+  "e_hl": -1.500115494931e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": +1.591089913422e-3, "e_exch": +3.344247956826e-2,
+  "wall_value": +0.000000000000e0, "wall_minus_e_exch": -3.344247956826e-2,
+  "norm": 9.999999999999966e-1, "nonzero_dets": 194481, "n_det": 1002001, "s_cross_max": 1.155860e-1, "sigma_seconds": 2.854, "cpu_seconds": 66.600, "wall_seconds": 4.183
+}

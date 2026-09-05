@@ -1,0 +1,5 @@
+{
+  "node": "invariance_R2.9", "r_oo_angstrom": 2.900, "threads": 24,
+  "g_h0": {"pass": true, "e_fci_in_hl_basis": -1.500520630749e2, "e_super_field3": -1.500520630749e2, "miss": 1.637090e-11, "tolerance": 1e-8, "davidson_iters": 185, "residual": 8.910737e-11, "exit": "Converged", "converged": true, "residual_bar": 1e-9, "n_det": 1002001, "n_det_expected": 1002001, "n_det_ok": true, "wall_seconds": 961.6, "cpu_seconds": 14910.2},
+  "plant_ii": {"fires": true, "e_fci_skip_orthogonalisation": -1.501184930771e2, "miss_vs_record": 6.643000e-2, "miss_vs_g_h0": 6.643000e-2, "required": 1e-2, "carrier_s_cross_max": 7.849457e-2, "carrier_floor": 1e-3, "carrier_present": true, "davidson_iters": 172, "residual": 8.334280e-11, "exit": "Converged", "wall_seconds": 795.7, "cpu_seconds": 13919.6}
+}

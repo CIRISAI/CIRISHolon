@@ -1,0 +1,8 @@
+{
+  "node": "tilted_R2.9", "e_pred": -7.049510652387e-3, "de_exact": -6.175837362520e-3,
+  "miss": 8.736733e-4, "miss_fraction": 0.141466, "tolerance": 1.543959e-3, "tolerance_rule": "max(0.25·|ΔE_exact|, 5e-4)",
+  "exact": {"converged": true, "exit": "Converged", "davidson_iters": 165, "residual": 7.893e-11, "n_det": 1002001, "cpu_seconds": 17795.2, "wall_seconds": 783.9},
+  "exchange_on_the_tilted_node": {"r_oo_bohr": 5.480206, "e_exch": +4.130942237623e-2, "e_hl": -1.500124026200e2, "e_es": -7.128979807504e-3, "wall_value": +0.000000000000e0, "wall_minus_e_exch": -4.130942237623e-2, "abs_difference": 4.130942e-2, "within_tolerance": false, "norm": 9.999999999999951e-1, "nonzero_dets": 194481, "sigma_seconds": 4.271, "cpu_seconds": 99.930, "wall_seconds": 5.636},
+  "wall": {"a": 0.000000000000e0, "b": 0.000000000000e0},
+  "s2_branch": "a"
+}

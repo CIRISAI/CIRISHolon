@@ -19,6 +19,7 @@ use field2_scenes::*;
 mod channel_scenes;
 
 const STEPS: usize = 2000;
+const WALL8_JSON: &str = "../../../conformance/water_observatory/field8/wall8.json";
 const WALL7_JSON: &str = "../../../conformance/water_observatory/field7/wall7.json";
 const WALL6_JSON: &str = "../../../conformance/water_observatory/field6/wall6.json";
 const WALL5_JSON: &str = "../../../conformance/water_observatory/field5/wall5.json";
@@ -29,14 +30,15 @@ const WALL_JSON: &str = "../../../conformance/water_observatory/field3/wall.json
 /// coefficients — the gates below are conservation properties that hold for any values,
 /// and each run says which it used.
 fn wall() -> (SeamModel, String) {
-    for path in [WALL7_JSON, WALL6_JSON, WALL5_JSON, WALL4_JSON, WALL_JSON] {
+    for path in [WALL8_JSON, WALL7_JSON, WALL6_JSON, WALL5_JSON, WALL4_JSON, WALL_JSON] {
         if let Ok(t) = std::fs::read_to_string(path) {
             let num = |k: &str| t.split(&format!("\"{k}\": ")).nth(1).and_then(|x| x.split(',').next()).and_then(|x| x.trim().parse::<f64>().ok());
             if let (Some(a), Some(b)) = (num("a"), num("b")) {
                 if a != 0.0 {
                     let (p, c, c6) = (num("p").unwrap_or(0.0), num("c").unwrap_or(0.0), num("c6").unwrap_or(0.0));
                     let (a_oh, b_oh, a_hh, b_hh) = (num("a_oh").unwrap_or(0.0), num("b_oh").unwrap_or(0.0), num("a_hh").unwrap_or(0.0), num("b_hh").unwrap_or(0.0));
-                    return (SeamModel { a, b, p, c, c6, a_oh, b_oh, a_hh, b_hh }, format!("{path} (A = {a:.6e}, b = {b:.6}, P = {p:.6e}, c = {c:.6}, C6 = {c6:.6e}, A_OH = {a_oh:.6e}, b_OH = {b_oh:.6}, A_HH = {a_hh:.6e}, b_HH = {b_hh:.6})"));
+                    let (p_hh, c_hh) = (num("p_hh").unwrap_or(0.0), num("c_hh").unwrap_or(0.0));
+                    return (SeamModel { a, b, p, c, c6, a_oh, b_oh, a_hh, b_hh, p_hh, c_hh }, format!("{path} (A = {a:.6e}, b = {b:.6}, P = {p:.6e}, c = {c:.6}, C6 = {c6:.6e}, A_OH = {a_oh:.6e}, b_OH = {b_oh:.6}, A_HH = {a_hh:.6e}, b_HH = {b_hh:.6}, P_HH = {p_hh:.6e}, c_HH = {c_hh:.6})"));
                 }
             }
         }
@@ -44,32 +46,11 @@ fn wall() -> (SeamModel, String) {
     (SeamModel { a: 0.5, b: 1.2, p: 0.02, c: 1.5, c6: 10.0, ..SeamModel::NO_WALL }, "DECLARED test coefficients (no harvest on disk): A = 0.5, b = 1.2, P = 0.02, c = 1.5, C6 = 10".to_string())
 }
 
-/// M-EXTRAPOLATED-HOLE (FIELD-7): a harvested law whose cross-unit pair potential does not
-/// rise monotonically inward from 3.0 bohr to contact has a hole below its data, and the
-/// dynamics will find it. The DYNAMICS gates (books, momentum) run on such a record only
-/// through the declared coefficients, and say so; the static derivative gate runs on the
-/// record as harvested.
+/// M-EXTRAPOLATED-HOLE (FIELD-7): the DYNAMICS gates (books, momentum) run a record with a
+/// hole only through the declared coefficients, and say so; the static derivative gate runs
+/// on the record as harvested. The walk is the model's own (`SeamModel::hole`, FIELD-8 G-N0).
 fn has_hole(m: &SeamModel) -> Option<String> {
-    let q_h = holon_render::field::water_charge_at_pin();
-    let q_o = -2.0 * q_h;
-    let classes: [(&str, Box<dyn Fn(f64) -> f64>); 3] = [
-        ("H–O", Box::new(move |r: f64| m.penetration(r) + m.wall_oh(r) + q_h * q_o / r)),
-        ("O–O", Box::new(move |r: f64| m.wall(r) + m.dispersion(r) + q_o * q_o / r)),
-        ("H–H", Box::new(move |r: f64| m.wall_hh(r) + q_h * q_h / r)),
-    ];
-    for (name, u) in classes.iter() {
-        let mut r = 3.0;
-        let mut prev = u(r);
-        while r > 0.5 {
-            r -= 0.05;
-            let v = u(r);
-            if v < prev - 1e-12 {
-                return Some(format!("{name} potential falls inward at r = {r:.2} bohr ({v:+.4e} < {prev:+.4e})"));
-            }
-            prev = v;
-        }
-    }
-    None
+    m.hole(holon_render::field::water_charge_at_pin())
 }
 
 /// The record for the dynamics gates: the newest harvest if it has no hole, else the declared
@@ -79,7 +60,7 @@ fn dynamics_wall() -> (SeamModel, String) {
     match has_hole(&m) {
         None => (m, which),
         Some(why) => (
-            SeamModel { a: 0.5, b: 1.2, p: 0.02, c: 1.5, c6: 10.0, a_oh: 0.3, b_oh: 1.8, a_hh: 0.2, b_hh: 1.6 },
+            SeamModel { a: 0.5, b: 1.2, p: 0.02, c: 1.5, c6: 10.0, a_oh: 0.3, b_oh: 1.8, a_hh: 0.2, b_hh: 1.6, p_hh: 0.01, c_hh: 1.4 },
             format!("DECLARED coefficients — the newest record ({which}) has a HOLE below its data: {why} (M-EXTRAPOLATED-HOLE)"),
         ),
     }
@@ -287,8 +268,8 @@ fn g_b3_the_wall_is_the_derivative_of_its_energy() {
     let (loaded, which_loaded) = wall();
     // FIELD-7 G-E1: the two further wall classes exercised even when the harvest on disk
     // carries none — a DECLARED all-classes model beside the loaded one
-    let all_classes = SeamModel { a: 0.5, b: 1.2, p: 0.02, c: 1.5, c6: 10.0, a_oh: 0.3, b_oh: 1.8, a_hh: 0.2, b_hh: 1.6 };
-    for (model, which) in [(loaded, which_loaded), (all_classes, "DECLARED all-classes model (A_OH 0.3, b_OH 1.8, A_HH 0.2, b_HH 1.6)".to_string())] {
+    let all_classes = SeamModel { a: 0.5, b: 1.2, p: 0.02, c: 1.5, c6: 10.0, a_oh: 0.3, b_oh: 1.8, a_hh: 0.2, b_hh: 1.6, p_hh: 0.01, c_hh: 1.4 };
+    for (model, which) in [(loaded, which_loaded), (all_classes, "DECLARED all-classes model (A_OH 0.3, b_OH 1.8, A_HH 0.2, b_HH 1.6, P_HH 0.01, c_HH 1.4)".to_string())] {
         derivative_check(model, &which);
     }
 }

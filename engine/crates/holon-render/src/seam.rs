@@ -48,11 +48,51 @@ pub struct SeamModel {
     /// FIELD-7: the wall on cross-unit hydrogen–hydrogen pairs, `a_hh·exp(−b_hh·r)`.
     pub a_hh: f64,
     pub b_hh: f64,
+    /// FIELD-8: the contact term on cross-unit hydrogen–hydrogen pairs, `−p_hh·exp(−c_hh·r)`.
+    pub p_hh: f64,
+    pub c_hh: f64,
 }
 
 impl SeamModel {
     /// The seam rule with no cross-unit term at all.
-    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0, a_oh: 0.0, b_oh: 0.0, a_hh: 0.0, b_hh: 0.0 };
+    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0, a_oh: 0.0, b_oh: 0.0, a_hh: 0.0, b_hh: 0.0, p_hh: 0.0, c_hh: 0.0 };
+
+    /// The H–H contact term's energy at a cross-unit H–H separation `r` (FIELD-8).
+    #[inline]
+    pub fn contact_hh(&self, r: f64) -> f64 {
+        -self.p_hh * (-self.c_hh * r).exp()
+    }
+
+    /// THE NO-HOLE WALK (FIELD-8 G-N0, the discharge of M-EXTRAPOLATED-HOLE): each cross-unit
+    /// class potential — H–O: contact + wall + charges; O–O: wall + dispersion + charges;
+    /// H–H: contact + wall + charges, with the pin charge `q_h` on hydrogen and `−2 q_h` on
+    /// oxygen — walked from 3.0 bohr inward to 0.5 on a 0.05 grid; the first FALL inward is
+    /// named, with its class and radius. `None` is a law that rises to contact everywhere.
+    pub fn hole(&self, q_h: f64) -> Option<String> {
+        let q_o = -2.0 * q_h;
+        let classes: [(&str, &dyn Fn(f64) -> f64); 3] = [
+            ("H–O", &|r: f64| self.penetration(r) + self.wall_oh(r) + q_h * q_o / r),
+            ("O–O", &|r: f64| self.wall(r) + self.dispersion(r) + q_o * q_o / r),
+            ("H–H", &|r: f64| self.contact_hh(r) + self.wall_hh(r) + q_h * q_h / r),
+        ];
+        for (name, u) in classes.iter() {
+            let mut k = 0usize;
+            let mut prev = u(3.0);
+            loop {
+                k += 1;
+                let r = 3.0 - 0.05 * k as f64;
+                if r < 0.5 - 1e-12 {
+                    break;
+                }
+                let v = u(r);
+                if v < prev - 1e-12 {
+                    return Some(format!("{name} potential falls inward at r = {r:.2} bohr ({v:+.4e} < {prev:+.4e})"));
+                }
+                prev = v;
+            }
+        }
+        None
+    }
 
     /// FIELD-3's wall alone.
     pub const fn wall_only(a: f64, b: f64) -> SeamModel {
@@ -229,5 +269,20 @@ mod tests {
         let f = SeamModel { p: 1.0, c: 1.0, c6: 64.0, ..SeamModel::NO_WALL };
         assert!((f.penetration(1.0) + (-1.0f64).exp()).abs() < 1e-15);
         assert_eq!(f.dispersion(2.0), -1.0);
+        assert!((SeamModel { p_hh: 2.0, c_hh: 1.0, ..SeamModel::NO_WALL }.contact_hh(1.0) + 2.0 * (-1.0f64).exp()).abs() < 1e-15);
+    }
+
+    #[test]
+    fn the_no_hole_walk_names_a_fall_and_admits_a_law_that_rises() {
+        let q = 0.231380372;
+        // FIELD-7's harvest: the H–O contact decays slower than its wall — a hole
+        let f7 = SeamModel { a: 1623.675, b: 2.20, p: 8.971, c: 1.83, a_oh: 8.669, b_oh: 2.30, a_hh: 2.652, b_hh: 1.90, ..SeamModel::NO_WALL };
+        let h = f7.hole(q);
+        assert!(h.as_deref().map_or(false, |m| m.starts_with("H–O")), "{h:?}");
+        // the same law with an H–O wall that wins inward — no hole
+        let ok = SeamModel { a_oh: 40.0, b_oh: 2.30, ..f7 };
+        assert_eq!(ok.hole(q), None);
+        // no seam terms at all: the charges alone attract on H–O — a hole, named
+        assert!(SeamModel::NO_WALL.hole(q).is_some());
     }
 }

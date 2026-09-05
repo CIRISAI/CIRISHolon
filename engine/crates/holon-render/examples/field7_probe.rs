@@ -9,8 +9,10 @@ fn num(t: &str, k: &str) -> f64 {
     t.split(&format!("\"{k}\": ")).nth(1).and_then(|x| x.split(',').next()).and_then(|x| x.trim().parse().ok()).unwrap_or(0.0)
 }
 fn main() {
-    let t = std::fs::read_to_string("../conformance/water_observatory/field7/wall7.json").expect("wall7.json");
-    let m = SeamModel { a: num(&t, "a"), b: num(&t, "b"), p: num(&t, "p"), c: num(&t, "c"), c6: num(&t, "c6"), a_oh: num(&t, "a_oh"), b_oh: num(&t, "b_oh"), a_hh: num(&t, "a_hh"), b_hh: num(&t, "b_hh") };
+    let path = std::env::args().nth(1).unwrap_or_else(|| "../conformance/water_observatory/field7/wall7.json".to_string());
+    let t = std::fs::read_to_string(&path).expect("the wall record");
+    eprintln!("probe on {path}");
+    let m = SeamModel { a: num(&t, "a"), b: num(&t, "b"), p: num(&t, "p"), c: num(&t, "c"), c6: num(&t, "c6"), a_oh: num(&t, "a_oh"), b_oh: num(&t, "b_oh"), a_hh: num(&t, "a_hh"), b_hh: num(&t, "b_hh"), p_hh: num(&t, "p_hh"), c_hh: num(&t, "c_hh") };
     for temp in [293.0, 150.0] {
         let (sp, pos) = dimer_positions();
         let mut s = scene(&sp, &pos, 30.0, temp);

@@ -1,0 +1,11 @@
+{
+  "node": "bentdonor_R2.9", "r_oo_angstrom": 2.900, "r_oo_bohr": 5.480206, "bend_degrees": 30.0, "bend_axis": "x, through the DONOR's own oxygen; the acceptor untouched", "held_out": true, "kind": "a bent DONOR — a kind no fit point contains (§4, M-UNTESTED-GAP)",
+  "e_pred": -1.287203631952e-3,
+  "parts": {"e_q_difference": -2.541072876431e-3, "contact_ho": -5.110941141834e-3, "contact_hh": -2.174309136903e-5, "wall_oo": +2.252333631880e-3, "wall_oh": +3.843357531112e-3, "wall_hh": +2.908623130131e-4, "wall_total": +6.386553476005e-3, "disp": +0.000000000000e0, "engine_seam": +1.253869244478e-3},
+  "coefficients": {"a": 3.878676776926e2, "b": 2.200000000000e0, "p": 1.173732498460e1, "c": 1.980000000000e0, "c6": 0.000000000000e0, "a_oh": 1.730245452134e1, "b_oh": 2.150000000000e0, "a_hh": 1.308971393352e0, "b_hh": 1.700000000000e0, "p_hh": 1.163017788167e-4, "c_hh": 5.000000000000e-1},
+  "s1_branch": "c", "c1_pass": false, "c6_transferred": false, "g_n0_pass": false, "g_c1_pass": false, "units": 2, "oo_pairs": 1, "ho_pairs": 4,
+  "tolerance_rule": "max(0.25·|ΔE_exact|, 5e-4)", "tolerance_frac": 0.25, "tolerance_abs": 5e-4,
+  "exact_solve_stake": {"n_det": 1002001, "cpu_seconds_lo": 1450, "cpu_seconds_hi": 57600, "residual_bar": 1e-9, "exit": "Converged"},
+  "cross_oo_bohr": [5.480206], "cross_ho_bohr": [6.925258, 6.925258, 3.919406, 5.998419], "cross_hh_bohr": [5.379828, 5.379828, 6.986447, 7.747738],
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, -0.9717869200, 1.6831843196], [1.9300704789, 0.1143538564, -0.1980666894]], "acceptor_centers": [[0.0000000000, 0.0000000000, 5.4802057614], [1.4529262884, 0.0000000000, 6.7711296445], [-1.4529262884, 0.0000000000, 6.7711296445]]
+}

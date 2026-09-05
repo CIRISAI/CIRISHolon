@@ -3302,6 +3302,7 @@ impl Sim {
         let c = model.c;
         let c6 = model.c6;
         let (a_oh, b_oh, a_hh, b_hh) = (model.a_oh, model.b_oh, model.a_hh, model.b_hh);
+        let (p_hh, c_hh) = (model.p_hh, model.c_hh);
         let geom = self.geom();
         let f = crate::seam::FREE;
         let mut e = 0.0f64;
@@ -3355,9 +3356,10 @@ impl Sim {
                     ho += 1;
                     (-x + w, c * x - b_oh * w, plant == crate::seam::SeamPlant::DropReactionNew)
                 } else {
-                    // the H–H wall (FIELD-7)
+                    // the H–H wall (FIELD-7) and the H–H contact term (FIELD-8)
                     let w = a_hh * (-b_hh * r).exp();
-                    (w, -b_hh * w, false)
+                    let x = p_hh * (-c_hh * r).exp();
+                    (w - x, -b_hh * w + c_hh * x, plant == crate::seam::SeamPlant::DropReactionNew && a_hh == 0.0)
                 };
                 e += u;
                 let fm = -du / r;

@@ -1,0 +1,3 @@
+FIELD-8 predict — the HELD-OUT BENT-DONOR node (30° about the x-axis through the DONOR's own oxygen, R_OO 2.9 Å) on 24 threads; E_pred -1.287203631952e-3 Ha
+  bentdonor_R2.9: R_OO 2.9 Å, 1002001 dets, ΔE_exact -3.031334e-3 Ha, 235 iters, residual 8.6e-11, exit Converged, wall 1040 s, 23660 core-s, admitted true (band 1450–57600)
+S2: ΔE_exact -3.031334e-3 Ha, E_pred -1.287204e-3 — miss 1.744e-3 (57.5 % of |ΔE_exact|) against 7.578e-4; E_exch(undeformed, bent donor) +5.716709e-3 vs the three-class wall +6.386553e-3 (O–O +2.252334e-3, H–O +3.843358e-3, H–H +2.908623e-4), difference 6.698e-4 → branch (b)

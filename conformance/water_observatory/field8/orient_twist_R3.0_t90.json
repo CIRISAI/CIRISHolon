@@ -1,0 +1,9 @@
+{
+  "node": "orient_twist_R3.0_t90", "family": "twist", "r_oo_angstrom": 3.000, "r_oo_bohr": 5.669178, "tilt_degrees": 90.0, "twist_degrees": 90.0, "tilt_axis": "z by 90° (the O···O axis) then x, both through the acceptor's own oxygen",
+  "referee": "heitler_london_undeformed",
+  "e_hl": -1.500247558894e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "e_es": -4.473038941359e-3, "e_exch": +2.630021211663e-2,
+  "norm": 9.788864572617413e-1, "nonzero_dets": 1002001, "n_det": 1002001, "n_det_a": 441, "n_det_b": 441, "product_dets": 194481, "product_dets_staked": 194481,
+  "s_cross_max": 1.226042343350e-1, "sigma_seconds": 4.981, "wall_seconds": 6.976, "cpu_seconds": 103.470, "threads": 24,
+  "cross_oo_bohr": [5.669178], "cross_ho_bohr": [7.238153, 4.409452, 3.725605, 6.205661], "cross_hh_bohr": [5.337009, 2.613724, 7.708833, 5.014910],
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, 0.0000000000, 1.9435738400], [1.9300704789, 0.0000000000, -0.2287077129]], "acceptor_centers": [[0.0000000000, 0.0000000000, 5.6691783739], [0.0000000000, -1.2909238831, 7.1221046623], [-0.0000000000, -1.2909238831, 4.2162520854]]
+}

@@ -227,11 +227,14 @@ pub enum Row {
     Spring,
     /// The uniform gravitational field. Conservative; an acceleration, not a channel.
     Grav,
+    /// The seam's wall: channel 5 between units, whole, harvested (FIELD-3). Appended at
+    /// the end under FIELD-3's cause line; exact `0.0` whenever the seam is off.
+    Seam,
 }
 
 impl Row {
     /// THE ORDER OF `Sim::energy`. See the type's doc for why it may only grow at the end.
-    pub const ALL: [Row; 9] = [
+    pub const ALL: [Row; 10] = [
         Row::Kin,
         Row::Pair,
         Row::Three,
@@ -241,6 +244,7 @@ impl Row {
         Row::Wall,
         Row::Spring,
         Row::Grav,
+        Row::Seam,
     ];
 
     /// Which channels this row's number is made of, and how. Container rows and the
@@ -278,6 +282,9 @@ impl Row {
             Row::Far => &[(ChannelId::PairDispersion, Carriage::Whole)],
             // Channel 1 at molecule level, whole, counted once.
             Row::Field => &[(ChannelId::Field, Carriage::Whole)],
+            // Channel 5 between units, whole: the exponential the ledger declares, its
+            // coefficients transferred from the exact dimer's residual (FIELD-3).
+            Row::Seam => &[(ChannelId::Exchange, Carriage::Whole)],
         }
     }
 
@@ -297,6 +304,7 @@ impl Row {
             Row::Wall => "e_wall",
             Row::Spring => "e_spring",
             Row::Grav => "e_grav",
+            Row::Seam => "e_seam",
         }
     }
 }

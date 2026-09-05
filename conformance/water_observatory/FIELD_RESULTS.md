@@ -62,3 +62,27 @@ density, with its own energy row, its own transfer column and a refusal where th
 would need Ewald. G's hydrogen-bond network carrier can now be run WITH a field; whether
 that field, as fixed charges, is enough is answered here: it is not, and the answer is a
 measurement with a named successor rather than a guess.
+
+## CORRECTIONS (FIELD-3, 2026-09-05)
+
+Two findings of the FIELD-3 campaign land on this record and are entered here rather than
+edited into the text above (rule 7: the record stays, marked).
+
+1. **The unit rule was blind on this campaign's own scene from the first frame.** AMENDMENT 1's
+   assignment (an oxygen with exactly two pair-verdict-bonded hydrogens, none shared) read a
+   hydrogen of one water as BONDED to another water's oxygen at 5.7 bohr on the O–H curve's
+   tail (`E_rel = −1.3e-4` inside the turning point) at step 16 of the four-water walled scene,
+   so two of the four waters were uncharged there; the closure reading FIELD-3 installs (each
+   hydrogen to the oxygen it is most bound to) finds all four. The two rules agree again by
+   step 2,000, but the trajectories have diverged by then, and the channel receipt's `water4`
+   block (nine lines: `e_kin`, `e_pair`, `e_three`, `e_field`, `energy`, `ledger`, `w_ext`,
+   `work.field`, `drift`) was re-banked under FIELD-3's cause line. The S1 (b) reading above
+   ("no hydrogen bond formed") stands as measured; its interpretation ("the field is net
+   repulsive on the staked scene") was made on a scene where the assignment itself was
+   flickering, and FIELD-2 then showed the assignment, not the field, to be the null's cause.
+2. **The field's virial had the wrong sign.** `accumulate_field` posted `+E` to `w_virial`
+   ("Σ r·F = E"); the engine's convention is `Σ r·dU/dr` (`pressure()` reads `(2K − W)/3V`),
+   for which the Coulomb term is `−E`. Corrected under FIELD-3's cause line. No gate above,
+   no ledger row and no receipt line reads the virial; `pressure()` with the field on was the
+   only reading affected, and no campaign has read it.
+

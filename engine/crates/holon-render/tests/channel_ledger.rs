@@ -66,12 +66,12 @@ fn the_engine_reproduces_the_pre_ledger_receipt_bit_for_bit() {
 #[test]
 fn energy_folded_over_the_row_table_is_the_hand_written_chain() {
     let s = water();
-    let chain = s.e_kin + s.e_pair + s.e_three + s.e_many + s.e_far + s.e_field + s.e_wall + s.e_spring + s.e_grav;
+    let chain = s.e_kin + s.e_pair + s.e_three + s.e_many + s.e_far + s.e_field + s.e_wall + s.e_spring + s.e_grav + s.e_seam;
     assert_eq!(s.energy().to_bits(), chain.to_bits());
     assert_eq!(s.ledger().to_bits(), (chain - s.w_ext).to_bits());
     // every row reads its field, in the ledger's order
     let by_row: Vec<f64> = Row::ALL.iter().map(|r| s.row(*r)).collect();
-    let fields = [s.e_kin, s.e_pair, s.e_three, s.e_many, s.e_far, s.e_field, s.e_wall, s.e_spring, s.e_grav];
+    let fields = [s.e_kin, s.e_pair, s.e_three, s.e_many, s.e_far, s.e_field, s.e_wall, s.e_spring, s.e_grav, s.e_seam];
     for (a, b) in by_row.iter().zip(fields.iter()) {
         assert_eq!(a.to_bits(), b.to_bits());
     }

@@ -4,7 +4,7 @@
 
 use holon_chem::elements::{HYDROGEN, OXYGEN};
 use holon_chem::embed::{fragment_charges, monomer, water_centers, ChargeModel, Fragment};
-use holon_render::field::{water_charge_at_pin, FieldPlant, FieldRefusal, WATER_PIN_R_BOHR, WATER_PIN_THETA_RAD};
+use holon_render::field::{water_charge_at_pin, FieldPlant, WATER_PIN_R_BOHR, WATER_PIN_THETA_RAD};
 use holon_render::sim::{Boundary, Dims, Sim};
 
 #[path = "common/quartet.rs"]
@@ -256,10 +256,80 @@ fn g4_the_charge_is_the_records() {
     eprintln!("G4: q_H = {q:.9} (q_O = {:.9})", -2.0 * q);
 }
 
+/// EWALD-1 G6, superseding FIELD-1 G5 ("the wrapped box is refused by name"): the wrapped
+/// box is SERVED by the lattice sum. READ AS MEASURED (EWALD_RESULTS.md): the freeze's scene
+/// — FIELD-1's four waters in a 17 × 17 × 10 cell — is one the engine's own image rule
+/// refuses (`set_boundary(Periodic)` → `BreaksPeriodicImages { reach: 20, half_edge: 5 }`),
+/// and it drifts 1.6e-2 hartree in 2,000 steps with the FIELD OFF; the letter fails on that
+/// scene for the tables' reason. On the smallest legal cube (42 bohr ≥ 2 × the 20-bohr
+/// reach) the field's drift equals the bare law's to three digits. Both facts asserted.
+/// G7 (the open box untouched) is the channel receipt, whose field-on walled scene must
+/// reproduce line for line (`tests/channel_ledger.rs`).
 #[test]
-fn g5_the_wrapped_box_is_refused_by_name() {
-    let mut s = four_waters(Boundary::Periodic);
-    assert_eq!(s.set_field(true, Some(0.2)), Err(FieldRefusal::PeriodicNeedsEwald));
-    assert!(s.field.is_none(), "the refusal left the state unchanged");
-    assert!(FieldRefusal::PeriodicNeedsEwald.to_string().contains("Ewald"));
+fn g6_the_wrapped_box_is_served_by_the_lattice_sum() {
+    // the freeze's scene is refused by the engine's own image rule
+    let mut ill = four_waters(Boundary::Walls);
+    let refusal = ill.set_boundary(Boundary::Periodic).err();
+    assert!(matches!(refusal, Some(holon_render::sim::BoundaryRefusal::BreaksPeriodicImages { .. })), "the 17×17×10 cell is not refused: {refusal:?}");
+    // the legal cell: four waters on a 7-bohr square at the centre of a 42-bohr cube
+    let cube = |edge: f64| -> Box<Sim> {
+        let mono = water_centers(WATER_PIN_R_BOHR, WATER_PIN_THETA_RAD);
+        let c = edge / 2.0;
+        let oxygens = [[c - 3.5, c - 3.5, c], [c + 3.5, c - 3.5, c], [c - 3.5, c + 3.5, c], [c + 3.5, c + 3.5, c]];
+        let mut species = Vec::new();
+        let mut pos = Vec::new();
+        for (k, o) in oxygens.iter().enumerate() {
+            let flip = if k % 2 == 0 { 1.0 } else { -1.0 };
+            for (m, cc) in mono.iter().enumerate() {
+                species.push(if m == 0 { OXYGEN } else { HYDROGEN });
+                pos.push([o[0] + flip * cc[0], o[1] + cc[2], o[2] + cc[1]]);
+            }
+        }
+        let mut s = quartet::scene(&species, &pos, false);
+        s.dims = Dims::Three;
+        s.width = edge;
+        s.height = edge;
+        s.depth = edge;
+        s.set_boundary(Boundary::Periodic).expect("a legal periodic cell");
+        let mut st: u64 = 0x4649_454c;
+        let mut lcg = || {
+            st = st.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            ((st >> 11) as f64) / ((1u64 << 53) as f64)
+        };
+        let n = s.n;
+        let (mut px, mut py, mut pz) = (0.0, 0.0, 0.0);
+        for i in 0..n {
+            let scale = if s.atoms[i].species.z == 8 { 2.5e-4 } else { 1.0e-3 };
+            s.atoms[i].vx = scale * (2.0 * lcg() - 1.0);
+            s.atoms[i].vy = scale * (2.0 * lcg() - 1.0);
+            s.atoms[i].vz = scale * (2.0 * lcg() - 1.0);
+            let m = s.atoms[i].mass();
+            px += m * s.atoms[i].vx;
+            py += m * s.atoms[i].vy;
+            pz += m * s.atoms[i].vz;
+        }
+        let mtot: f64 = (0..n).map(|i| s.atoms[i].mass()).sum();
+        for i in 0..n {
+            s.atoms[i].vx -= px / mtot;
+            s.atoms[i].vy -= py / mtot;
+            s.atoms[i].vz -= pz / mtot;
+        }
+        s.sync_species();
+        s.adopt_table_timescale();
+        s.rebase();
+        s
+    };
+    let mut bare = cube(42.0);
+    run(&mut bare, STEPS);
+    let mut s = cube(42.0);
+    assert_eq!(s.set_field(true, None), Ok(()), "EWALD-1: the wrapped box is served");
+    run(&mut s, STEPS);
+    assert!(s.e_field != 0.0, "the field's energy is nonzero under the lattice sum");
+    assert!(s.field_work.k_vectors > 0 && s.field_work.pairs > 0, "the lattice sum did work: {} real pairs, {} wave-vectors", s.field_work.pairs, s.field_work.k_vectors);
+    let transition = s.work.field.abs();
+    assert!(transition > 0.0, "the enabling transition was posted");
+    assert!(s.work_columns_ok(), "G6: the receipt columns do not sum to w_ext");
+    assert!(s.drift_peak <= 0.1 * transition, "G6: honest drift peak {:.3e} over a tenth of the enabling transition {:.3e}", s.drift_peak, transition);
+    assert!(s.momentum_residual() <= s.momentum_bound(), "G6: momentum residual {} over bound {}", s.momentum_residual(), s.momentum_bound());
+    eprintln!("G6 (42-bohr cube): e_field {:+.6e}, transition {:+.3e}, drift peak {:.3e} against the bare law's {:.3e}, momentum residual {:.2e} / bound {:.2e}, {} real pairs, {} wave-vectors; the freeze's 17×17×10 scene refused: {refusal:?}", s.e_field, s.work.field, s.drift_peak, bare.drift_peak, s.momentum_residual(), s.momentum_bound(), s.field_work.pairs, s.field_work.k_vectors);
 }

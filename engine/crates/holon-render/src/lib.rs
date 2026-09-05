@@ -38,6 +38,8 @@
 // weight. This cfg is what makes the module header's claim true rather than aspirational.
 pub mod acuity;
 pub mod field;
+pub mod seam;
+pub mod ewald;
 pub mod barostat;
 pub mod cells;
 pub mod channel;
@@ -909,9 +911,8 @@ pub extern "C" fn holon_set_boundary(mode: u32) -> u32 {
         2 => Boundary::Periodic,
         _ => Boundary::Open,
     };
-    if matches!(b, Boundary::Periodic) && s.field.is_some() {
-        return FIELD_REFUSED + 1;
-    }
+    // EWALD-1: wrapping with the field on is served by the lattice sum; FIELD-1's refusal
+    // here is retired with `field::FieldRefusal`.
     match s.set_boundary(b) {
         Ok(()) => 0,
         Err(r) => boundary_refusal_code(r),
@@ -937,17 +938,25 @@ pub extern "C" fn holon_half_min_edge() -> f64 {
 pub const BOUNDARY_REFUSED: u32 = 100;
 
 /// FIELD-1's refusals sit above [`BOUNDARY_REFUSED`]'s block.
+/// FIELD-1's refusal code, kept for the page's switch table: since EWALD-1 the field has no
+/// refusal (`field::FieldRefusal` is uninhabited) and this door always returns 0.
 pub const FIELD_REFUSED: u32 = 200;
 
-/// Enable (`on != 0`) or disable the embedding field (FIELD-1). Returns 0, or
-/// `FIELD_REFUSED + 1` when the boundary wraps (Ewald is the exit, not built).
+/// Enable (`on != 0`) or disable the embedding field (FIELD-1; the wrapping box served by
+/// EWALD-1). Returns 0.
 #[no_mangle]
 pub extern "C" fn holon_set_field(on: u32) -> u32 {
     let mut s = sim();
     match s.set_field(on != 0, None) {
         Ok(()) => 0,
-        Err(field::FieldRefusal::PeriodicNeedsEwald) => FIELD_REFUSED + 1,
+        Err(never) => match never {},
     }
+}
+
+/// The reciprocal-space wave-vectors the last force pass summed (0 in an open box).
+#[no_mangle]
+pub extern "C" fn holon_field_k_vectors() -> u64 {
+    sim().field_work.k_vectors
 }
 
 #[no_mangle]
@@ -974,6 +983,58 @@ pub extern "C" fn holon_work_field() -> f64 {
 #[no_mangle]
 pub extern "C" fn holon_field_transitions() -> u64 {
     sim().field_work.transitions
+}
+
+/// Enable (`on != 0`, with the wall `a·exp(−b·r)`) or disable the seam (FIELD-3). The
+/// switch is posted as a transition at the current positions.
+pub const SEAM_REFUSED: u32 = 210;
+
+/// Returns 0, or `SEAM_REFUSED + 1` when an acuity frame is installed.
+#[no_mangle]
+pub extern "C" fn holon_set_seam(on: u32, a: f64, b: f64) -> u32 {
+    match sim().set_seam(if on != 0 { Some(seam::SeamModel { a, b }) } else { None }) {
+        Ok(()) => 0,
+        Err(seam::SeamRefusal::AcuityFrameSet) => SEAM_REFUSED + 1,
+        Err(seam::SeamRefusal::FarSectorDeclared) => SEAM_REFUSED + 2,
+        Err(seam::SeamRefusal::ManyBodySectorOn) => SEAM_REFUSED + 3,
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn holon_seam_enabled() -> u32 {
+    u32::from(sim().seam.is_some())
+}
+
+#[no_mangle]
+pub extern "C" fn holon_seam_energy() -> f64 {
+    sim().e_seam
+}
+
+#[no_mangle]
+pub extern "C" fn holon_work_seam() -> f64 {
+    sim().work.seam
+}
+
+#[no_mangle]
+pub extern "C" fn holon_seam_pairs_dropped() -> u64 {
+    sim().seam_work.pairs_dropped
+}
+
+#[no_mangle]
+pub extern "C" fn holon_seam_triples_dropped() -> u64 {
+    sim().seam_work.triples_dropped
+}
+
+#[no_mangle]
+pub extern "C" fn holon_seam_units() -> u64 {
+    sim().seam_work.units
+}
+
+/// The unit an atom belongs to (its oxygen's index), or `u32::MAX` for a free atom.
+#[no_mangle]
+pub extern "C" fn holon_unit_of(i: u32) -> u32 {
+    let s = sim();
+    if (i as usize) < s.n { s.unit_of[i as usize] } else { u32::MAX }
 }
 
 /// The refusal's own code, offset above [`BOUNDARY_REFUSED`].

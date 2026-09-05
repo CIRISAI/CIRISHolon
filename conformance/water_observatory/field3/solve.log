@@ -1,0 +1,11 @@
+FIELD-3 C — the six linear nodes on 24 threads
+  linear_R2.9: R_OO 2.9 Å, 1002001 dets, ΔE_exact -5.480012e-3 Ha, 193 iters, residual 9.0e-11, exit Converged, wall 2315 s (52739 core-s) — G-C0 REFUSED
+the price node was refused or did not converge; the harvest stops here
+FIELD-3 C — the six linear nodes on 24 threads
+  linear_R2.9: exists, skipped
+  linear_R2.5: R_OO 2.5 Å, 1002001 dets, ΔE_exact +2.506907e-3 Ha, 219 iters, residual 8.5e-11, exit Converged, wall 1027 s (21849 core-s)
+  linear_R2.7: R_OO 2.7 Å, 1002001 dets, ΔE_exact -4.319926e-3 Ha, 181 iters, residual 1.0e-10, exit Converged, wall 929 s (20063 core-s)
+  linear_R3.1: R_OO 3.1 Å, 1002001 dets, ΔE_exact -4.757010e-3 Ha, 208 iters, residual 9.8e-11, exit Converged, wall 1438 s (29888 core-s)
+  linear_R3.4: R_OO 3.4 Å, 1002001 dets, ΔE_exact -3.217466e-3 Ha, 223 iters, residual 9.8e-11, exit Converged, wall 1531 s (29720 core-s)
+  linear_R3.7: R_OO 3.7 Å, 1002001 dets, ΔE_exact -2.141365e-3 Ha, 205 iters, residual 9.9e-11, exit Converged, wall 826 s (16557 core-s)
+solve: done

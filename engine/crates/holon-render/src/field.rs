@@ -55,33 +55,30 @@ pub enum FieldPlant {
 pub struct FieldWork {
     /// Charge-assignment transitions posted (or, under the plant, applied unposted).
     pub transitions: u64,
-    /// Charged pairs evaluated in the last force pass.
+    /// Charged pairs evaluated in the last force pass (the real-space pairs under Ewald).
     pub pairs: u64,
+    /// Reciprocal-space wave-vectors summed in the last force pass (0 in an open box).
+    pub k_vectors: u64,
 }
 
 impl FieldWork {
     pub const fn zero() -> Self {
-        Self { transitions: 0, pairs: 0 }
+        Self { transitions: 0, pairs: 0, k_vectors: 0 }
     }
 }
 
-/// Why the field could not be enabled, or the box could not be wrapped.
+/// Why the field could not be enabled. FIELD-1 refused the wrapping box by name
+/// (`PeriodicNeedsEwald`: a bare Coulomb sum over minimum images is conditionally
+/// convergent); EWALD-1 built the exit it named (`crate::ewald`) and retired the variant, so
+/// the type is UNINHABITED — `set_field` keeps its `Result` shape and can no longer refuse.
+/// A refusal that could never fire would be decoration; an empty enum says the same thing
+/// the type system can check.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum FieldRefusal {
-    /// A bare Coulomb sum under a wrapping boundary is conditionally convergent.
-    PeriodicNeedsEwald,
-}
+pub enum FieldRefusal {}
 
 impl core::fmt::Display for FieldRefusal {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self {
-            FieldRefusal::PeriodicNeedsEwald => write!(
-                f,
-                "REFUSED: the embedding field under a wrapping boundary is a conditionally \
-                 convergent Coulomb sum; Ewald (or PME) is the exit and is not built. Use walls \
-                 or an open box, or leave the field off."
-            ),
-        }
+    fn fmt(&self, _f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match *self {}
     }
 }
 

@@ -57,7 +57,10 @@ use crate::sim::{Atom, Boundary, Dims, Sim};
 /// v6 (2026-09-04, FIELD-1): the `field` receipt column joins the ledger block after `acuity`,
 /// and the field's charge `field_q` (0.0 = off) follows `frame`; a restore re-derives the
 /// per-atom assignment from the live rows.
-pub const CHECKPOINT_VERSION: u32 = 6;
+/// v7 (2026-09-05, FIELD-3): the `seam` receipt column joins the ledger block after `field`,
+/// and the seam's state (`seam_on: u32`, `seam_a`, `seam_b`) follows `field_q`; a restore
+/// re-derives the unit assignment at its first force pass without posting a transition.
+pub const CHECKPOINT_VERSION: u32 = 7;
 
 const MAGIC: [u8; 8] = *b"HOLONCK1";
 
@@ -384,6 +387,7 @@ impl Sim {
         w.f64(self.work.barostat);
         w.f64(self.work.acuity);
         w.f64(self.work.field);
+        w.f64(self.work.seam);
         w.f64(self.l0);
         w.f64(self.p0.0);
         w.f64(self.p0.1);
@@ -395,6 +399,9 @@ impl Sim {
         w.u64(self.steps);
         w.u64(self.frame);
         w.f64(self.field.map_or(0.0, |m| m.q_h));
+        w.u32(u32::from(self.seam.is_some()));
+        w.f64(self.seam.map_or(0.0, |m| m.a));
+        w.f64(self.seam.map_or(0.0, |m| m.b));
         w.f64(self.e_ref);
         w.f64(self.drift_peak);
         w.f64(self.momentum_residual_peak);
@@ -504,6 +511,7 @@ impl Sim {
         let barostat = r.f64()?;
         let acuity = r.f64()?;
         let field_col = r.f64()?;
+        let seam_col = r.f64()?;
         let l0 = r.f64()?;
         let p0 = (r.f64()?, r.f64()?, r.f64()?);
         let j_ext = (r.f64()?, r.f64()?, r.f64()?);
@@ -511,6 +519,9 @@ impl Sim {
         let steps = r.u64()?;
         let frame = r.u64()?;
         let field_q = r.f64()?;
+        let seam_on = r.u32()?;
+        let seam_a = r.f64()?;
+        let seam_b = r.f64()?;
         let e_ref = r.f64()?;
         let drift_peak = r.f64()?;
         let momentum_residual_peak = r.f64()?;
@@ -557,7 +568,10 @@ impl Sim {
         self.work.barostat = barostat;
         self.work.acuity = acuity;
         self.work.field = field_col;
+        self.work.seam = seam_col;
         self.field = if field_q != 0.0 { Some(crate::field::FieldModel { q_h: field_q }) } else { None };
+        self.seam = if seam_on != 0 { Some(crate::seam::SeamModel { a: seam_a, b: seam_b }) } else { None };
+        self.seam_assigned = false;
         self.l0 = l0;
         self.p0 = p0;
         self.j_ext = j_ext;

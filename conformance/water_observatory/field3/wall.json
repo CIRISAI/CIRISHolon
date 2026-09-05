@@ -1,0 +1,15 @@
+{
+  "a": 0.000000000000e0, "b": 0.000000000000e0, "fit_nodes": 0, "r_x_angstrom": NaN, "s1_branch": "c",
+  "g_c0_admitted_amendment_1": true, "all_converged": true, "g_c1_worst_miss": 0.000e0, "g_c1_pass": true,
+  "plant_i": {"miss_observed": NaN, "miss_expected": NaN, "fires": false},
+  "e_pred_flipped": null,
+  "nodes": [
+    {"r_angstrom": 2.5, "r_bohr": 4.724315, "de_exact": +2.506907491579e-3, "e_field": -7.069205246387e-3, "r": +9.576112737966e-3, "fit": NaN, "miss_over_de": NaN, "in_fit": false, "davidson_iters": 219, "exit": "Converged", "residual": 8.450e-11, "cpu_seconds": 21849.3},
+    {"r_angstrom": 2.7, "r_bohr": 5.102261, "de_exact": -4.319925980980e-3, "e_field": -5.337374935830e-3, "r": +1.017448954850e-3, "fit": NaN, "miss_over_de": NaN, "in_fit": false, "davidson_iters": 181, "exit": "Converged", "residual": 9.976e-11, "cpu_seconds": 20062.5},
+    {"r_angstrom": 2.9, "r_bohr": 5.480206, "de_exact": -5.480012308439e-3, "e_field": -4.133875699869e-3, "r": -1.346136608570e-3, "fit": NaN, "miss_over_de": NaN, "in_fit": false, "davidson_iters": 193, "exit": "Converged", "residual": 8.961e-11, "cpu_seconds": 52739.1},
+    {"r_angstrom": 3.1, "r_bohr": 5.858151, "de_exact": -4.757009922656e-3, "e_field": -3.270181135363e-3, "r": -1.486828787293e-3, "fit": NaN, "miss_over_de": NaN, "in_fit": false, "davidson_iters": 208, "exit": "Converged", "residual": 9.786e-11, "cpu_seconds": 29888.0},
+    {"r_angstrom": 3.4, "r_bohr": 6.425069, "de_exact": -3.217465720653e-3, "e_field": -2.377210882419e-3, "r": -8.402548382338e-4, "fit": NaN, "miss_over_de": NaN, "in_fit": false, "davidson_iters": 223, "exit": "Converged", "residual": 9.786e-11, "cpu_seconds": 29720.2},
+    {"r_angstrom": 3.7, "r_bohr": 6.991987, "de_exact": -2.141365165613e-3, "e_field": -1.784345060868e-3, "r": -3.570201047453e-4, "fit": NaN, "miss_over_de": NaN, "in_fit": false, "davidson_iters": 205, "exit": "Converged", "residual": 9.851e-11, "cpu_seconds": 16557.2}
+  ],
+  "remainder_beyond_r_x": []
+}

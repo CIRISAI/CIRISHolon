@@ -465,13 +465,17 @@ pub struct ExternalWork {
     /// fixed positions when a charged row forms or dies, or the field is switched. Zero
     /// whenever the field is off.
     pub field: f64,
+    /// The seam's membership transitions (FIELD-3): the closure sector's energy jump at
+    /// fixed positions when a unit forms, dies or changes hands, or the seam is switched.
+    /// Zero whenever the seam is off.
+    pub seam: f64,
 }
 
 impl ExternalWork {
     /// The columns' sum, in a FIXED order so the total is reproducible.
     #[inline]
     pub fn total(&self) -> f64 {
-        (((self.hand + self.thermostat) + self.barostat) + self.acuity) + self.field
+        ((((self.hand + self.thermostat) + self.barostat) + self.acuity) + self.field) + self.seam
     }
 
     #[inline]
@@ -482,6 +486,7 @@ impl ExternalWork {
             barostat: 0.0,
             acuity: 0.0,
             field: 0.0,
+            seam: 0.0,
         }
     }
 
@@ -495,6 +500,7 @@ impl ExternalWork {
             .max(self.barostat.abs())
             .max(self.acuity.abs())
             .max(self.field.abs())
+            .max(self.seam.abs())
     }
 }
 
@@ -784,6 +790,22 @@ pub struct Sim {
     pub charge_prev: Vec<f64>,
     /// Per-atom census row (`u32::MAX` = none), so charged pairs within one row are skipped.
     pub charge_row: Vec<u32>,
+    /// FIELD-3: the seam — `None` = the engine as it was; `Some` = closure surfaces served
+    /// only within units, the wall between them (`crate::seam`).
+    pub seam: Option<crate::seam::SeamModel>,
+    pub seam_plant: crate::seam::SeamPlant,
+    pub seam_work: crate::seam::SeamWork,
+    /// The wall's energy row (exact `0.0` whenever the seam is off).
+    pub e_seam: f64,
+    /// THE UNIT ASSIGNMENT (`Sim::assign_units`): per atom, the oxygen index of its unit, or
+    /// `crate::seam::FREE`. Read by the field's charges and by the seam rule; all FREE when
+    /// neither is on.
+    pub unit_of: Vec<u32>,
+    /// The assignment the last force pass used under the seam; a difference is a transition.
+    pub(crate) unit_prev: Vec<u32>,
+    /// Whether `unit_prev` holds an assignment at all (false after a reset or a restore, so
+    /// the first assignment is not posted as a transition).
+    pub(crate) seam_assigned: bool,
 }
 
 impl Sim {
@@ -895,6 +917,13 @@ impl Sim {
             charge: Vec::new(),
             charge_prev: Vec::new(),
             charge_row: Vec::new(),
+            seam: None,
+            seam_plant: crate::seam::SeamPlant::None,
+            seam_work: crate::seam::SeamWork { pairs_dropped: 0, triples_dropped: 0, pairs_dropped_total: 0, triples_dropped_total: 0, oo_pairs: 0, units: 0, transitions: 0 },
+            e_seam: 0.0,
+            unit_of: Vec::new(),
+            unit_prev: Vec::new(),
+            seam_assigned: false,
         }
     }
 
@@ -1194,6 +1223,7 @@ impl Sim {
             // cancel against the others would narrow the bound exactly when a scene is
             // doing something extreme.
             + self.e_grav.abs()
+            + self.e_seam.abs()
     }
 
     /// Set the uniform gravitational field as a WORLD-FRAME acceleration vector, atomic
@@ -1368,6 +1398,7 @@ impl Sim {
             Row::Wall => self.e_wall,
             Row::Spring => self.e_spring,
             Row::Grav => self.e_grav,
+            Row::Seam => self.e_seam,
         }
     }
 
@@ -1420,9 +1451,10 @@ impl Sim {
                             Reach::Absent
                         }
                     }
-                    ChannelId::Exchange => match self.pair_switch {
-                        Some((_, r_cut)) => Reach::Radius { r: r_cut, by: "pair switch (inside the exact pair curve)" },
-                        None => Reach::Scene,
+                    ChannelId::Exchange => match (self.seam, self.pair_switch) {
+                        (Some(_), _) => Reach::Scene,
+                        (None, Some((_, r_cut))) => Reach::Radius { r: r_cut, by: "pair switch (inside the exact pair curve)" },
+                        (None, None) => Reach::Scene,
                     },
                 };
                 ChannelStanding { channel: c, rows, reach }
@@ -1765,6 +1797,8 @@ impl Sim {
         self.charge.resize(n, 0.0);
         self.charge_prev.resize(n, 0.0);
         self.charge_row.resize(n, u32::MAX);
+        self.unit_of.resize(n, crate::seam::FREE);
+        self.unit_prev.resize(n, crate::seam::FREE);
         self.many_body_last_pos.resize(n, [0.0; 3]);
         self.many_body_cached_forces.resize(n, (0.0, 0.0, 0.0));
         self.many_body_cached_valid = false;
@@ -2282,6 +2316,7 @@ impl Sim {
     /// be re-run byte-for-byte.
     pub fn reset(&mut self, n: usize) {
         self.resize_storage(n);
+        self.seam_assigned = false;
         // Register whatever species the scene is carrying before anything asks the bank
         // for a slot. An unregistered species resolves to slot 0, which is some OTHER
         // pair's curve, so this has to happen first rather than at the first lookup.
@@ -2865,148 +2900,20 @@ impl Sim {
         // sector needs, so one decomposition serves the pair, triple and quadruple loops
         // rather than three.
         self.rebuild_neighbours();
-
-        let mut e_pair = 0.0;
-        let mut k_pair_max = self.k_pair_max;
-        let mut virial = 0.0f64;
-        let geom = self.geom();
-        let switch = self.pair_switch;
-        // ACUITY-B: the pair sector's transition ledger and work partition for this pass.
-        let framed = self.acuity.is_some();
-        let (mut pe_out, mut pe_in) = (0.0f64, 0.0f64);
-        let (mut n_fine, mut n_skip) = (0u64, 0u64);
-
-        // The pair sector takes one of two routes, and which one is a DECLARED property
-        // of the scene rather than a size heuristic:
-        //
-        //   * no pair cutoff declared -> the complete `N²/2` sum, exactly the loop this
-        //     engine has always run, with the same arithmetic in the same order. The pair
-        //     curve has no radius past which it is zero, so a complete sum is the only
-        //     one that is not an approximation, and a scene that has not declared a
-        //     truncation budget does not get truncated behind its back;
-        //   * a pair cutoff declared -> the neighbour list, which is O(N) with density.
-        //     The truncation is switched (C², so the result is still a potential and the
-        //     energy gate stays exact) and its size is reported by `truncation_floor`.
-        if switch.is_none() {
-            for i in 0..self.n {
-                let a = (self.atoms[i].x, self.atoms[i].y, self.atoms[i].z);
-                for j in (i + 1)..self.n {
-                    let b = (self.atoms[j].x, self.atoms[j].y, self.atoms[j].z);
-                    // ONE minimum-image implementation, called here. In an open or walled
-                    // box this is `b - a` and nothing else, so the float is unchanged.
-                    let (dx, dy, dz) = geom.delta(a, b);
-                    // `(xx + yy) + zz`, in that order: on the mid-plane `zz` is an exact
-                    // zero and adding it changes no bit of the 2D result.
-                    let r2 = dx * dx + dy * dy + dz * dz;
-                    // Two atoms at exactly the same point have no defined direction; the
-                    // repulsive wall makes this unreachable dynamically, and the guard
-                    // keeps it from being a NaN source if a caller places them there.
-                    let r = r2.sqrt().max(1e-9);
-                    if framed {
-                        use crate::acuity::PairKind;
-                        match self.acuity_kind(i, j) {
-                            PairKind::Skip => {
-                                n_skip += 1;
-                                continue;
-                            }
-                            PairKind::TransitionOut => {
-                                let (value, _, _) = self.pair_eval(i, j, r);
-                                pe_out += value;
-                                n_skip += 1;
-                                continue;
-                            }
-                            PairKind::TransitionIn => {
-                                let value = self.accumulate_pair(
-                                    i, j, dx, dy, dz, r, &mut e_pair, &mut k_pair_max, &mut virial,
-                                );
-                                pe_in += value;
-                                n_fine += 1;
-                                continue;
-                            }
-                            PairKind::Live => {
-                                n_fine += 1;
-                            }
-                        }
-                    }
-                    self.accumulate_pair(
-                        i,
-                        j,
-                        dx,
-                        dy,
-                        dz,
-                        r,
-                        &mut e_pair,
-                        &mut k_pair_max,
-                        &mut virial,
-                    );
-                }
-            }
-        } else {
-            // EVALUATE WIDE, ACCUMULATE NARROW. The evaluation is where the cost is and it
-            // is pure, so it goes through the executor; the accumulation walks the terms in
-            // index order, which is the canonical order the complete loop produced, so the
-            // sum is the same float however many workers there were.
-            let mut terms = core::mem::take(&mut self.pair_terms);
-            terms.clear();
-            terms.resize(self.neighbours.pairs.len(), PairTerm::default());
-            terms = self.dispatch_pairs(terms);
-            let nb = core::mem::take(&mut self.neighbours);
-            for (t, p) in terms.iter().zip(nb.pairs.iter()) {
-                let (i, j) = (p.i as usize, p.j as usize);
-                if framed {
-                    match t.acuity {
-                        1 => {
-                            n_skip += 1;
-                            continue;
-                        }
-                        2 => {
-                            pe_out += t.value;
-                            n_skip += 1;
-                            continue;
-                        }
-                        3 => {
-                            pe_in += t.value;
-                            n_fine += 1;
-                        }
-                        _ => {
-                            n_fine += 1;
-                        }
-                    }
-                }
-                e_pair += t.value;
-                virial += t.virial;
-                self.a_pair[i].0 += t.fx;
-                self.a_pair[i].1 += t.fy;
-                self.a_pair[i].2 += t.fz;
-                // P-2 (sector: momentum): the plant drops the reaction on the coarse side.
-                let drop_j = framed
-                    && self.acuity_plant == crate::acuity::AcuityPlant::DropReaction
-                    && self.coarse[j]
-                    && !self.coarse[i];
-                if !drop_j {
-                    self.a_pair[j].0 -= t.fx;
-                    self.a_pair[j].1 -= t.fy;
-                    self.a_pair[j].2 -= t.fz;
-                }
-                let ac = t.curv.abs();
-                if ac > k_pair_max {
-                    k_pair_max = ac;
-                }
-            }
-            self.neighbours = nb;
-            self.pair_terms = terms;
-        }
-        self.k_pair_max = k_pair_max;
-        self.e_pair = e_pair;
-        self.w_virial = virial;
-        if framed {
-            self.acuity_post_pairs(pe_out, pe_in, n_fine, n_skip);
-        }
-
+        // THE SEAM (FIELD-3): the unit assignment this pass reads — the field's charges and
+        // the seam rule both read `unit_of` — and, when membership changed under the seam,
+        // the closure sector under the OLD assignment at these positions, so the jump can
+        // be posted once the new pass has its numbers.
+        let seam_transition = self.seam_assign_and_open();
+        self.accumulate_pairs();
         self.accumulate_three_body();
         self.accumulate_many_body();
         self.accumulate_far();
         self.accumulate_field();
+        self.accumulate_seam();
+        if let Some(e_old) = seam_transition {
+            self.seam_close_transition(e_old);
+        }
 
         let mut e_wall = 0.0;
         for i in 0..self.n {
@@ -3067,6 +2974,415 @@ impl Sim {
         }
     }
 
+    /// THE PAIR SECTOR — the loop `compute_forces` has always run, moved into its own
+    /// method by FIELD-3 so the seam can evaluate it under a previous assignment; the
+    /// arithmetic and its order are unchanged.
+    fn accumulate_pairs(&mut self) {
+        let mut e_pair = 0.0;
+        let mut k_pair_max = self.k_pair_max;
+        let mut dropped = 0u64;
+        let mut virial = 0.0f64;
+        let geom = self.geom();
+        let switch = self.pair_switch;
+        // ACUITY-B: the pair sector's transition ledger and work partition for this pass.
+        let framed = self.acuity.is_some();
+        let (mut pe_out, mut pe_in) = (0.0f64, 0.0f64);
+        let (mut n_fine, mut n_skip) = (0u64, 0u64);
+
+        // The pair sector takes one of two routes, and which one is a DECLARED property
+        // of the scene rather than a size heuristic:
+        //
+        //   * no pair cutoff declared -> the complete `N²/2` sum, exactly the loop this
+        //     engine has always run, with the same arithmetic in the same order. The pair
+        //     curve has no radius past which it is zero, so a complete sum is the only
+        //     one that is not an approximation, and a scene that has not declared a
+        //     truncation budget does not get truncated behind its back;
+        //   * a pair cutoff declared -> the neighbour list, which is O(N) with density.
+        //     The truncation is switched (C², so the result is still a potential and the
+        //     energy gate stays exact) and its size is reported by `truncation_floor`.
+        if switch.is_none() {
+            for i in 0..self.n {
+                let a = (self.atoms[i].x, self.atoms[i].y, self.atoms[i].z);
+                for j in (i + 1)..self.n {
+                    let b = (self.atoms[j].x, self.atoms[j].y, self.atoms[j].z);
+                    // ONE minimum-image implementation, called here. In an open or walled
+                    // box this is `b - a` and nothing else, so the float is unchanged.
+                    let (dx, dy, dz) = geom.delta(a, b);
+                    // `(xx + yy) + zz`, in that order: on the mid-plane `zz` is an exact
+                    // zero and adding it changes no bit of the 2D result.
+                    let r2 = dx * dx + dy * dy + dz * dz;
+                    // Two atoms at exactly the same point have no defined direction; the
+                    // repulsive wall makes this unreachable dynamically, and the guard
+                    // keeps it from being a NaN source if a caller places them there.
+                    let r = r2.sqrt().max(1e-9);
+                    // FIELD-3: a cross-unit pair is the seam's, not the table's
+                    if self.seam_drops_pair(i, j) {
+                        dropped += 1;
+                        continue;
+                    }
+                    if framed {
+                        use crate::acuity::PairKind;
+                        match self.acuity_kind(i, j) {
+                            PairKind::Skip => {
+                                n_skip += 1;
+                                continue;
+                            }
+                            PairKind::TransitionOut => {
+                                let (value, _, _) = self.pair_eval(i, j, r);
+                                pe_out += value;
+                                n_skip += 1;
+                                continue;
+                            }
+                            PairKind::TransitionIn => {
+                                let value = self.accumulate_pair(
+                                    i, j, dx, dy, dz, r, &mut e_pair, &mut k_pair_max, &mut virial,
+                                );
+                                pe_in += value;
+                                n_fine += 1;
+                                continue;
+                            }
+                            PairKind::Live => {
+                                n_fine += 1;
+                            }
+                        }
+                    }
+                    self.accumulate_pair(
+                        i,
+                        j,
+                        dx,
+                        dy,
+                        dz,
+                        r,
+                        &mut e_pair,
+                        &mut k_pair_max,
+                        &mut virial,
+                    );
+                }
+            }
+        } else {
+            // EVALUATE WIDE, ACCUMULATE NARROW. The evaluation is where the cost is and it
+            // is pure, so it goes through the executor; the accumulation walks the terms in
+            // index order, which is the canonical order the complete loop produced, so the
+            // sum is the same float however many workers there were.
+            let mut terms = core::mem::take(&mut self.pair_terms);
+            terms.clear();
+            terms.resize(self.neighbours.pairs.len(), PairTerm::default());
+            terms = self.dispatch_pairs(terms);
+            let nb = core::mem::take(&mut self.neighbours);
+            for (t, p) in terms.iter().zip(nb.pairs.iter()) {
+                let (i, j) = (p.i as usize, p.j as usize);
+                if self.seam_drops_pair(i, j) {
+                    dropped += 1;
+                    continue;
+                }
+                if framed {
+                    match t.acuity {
+                        1 => {
+                            n_skip += 1;
+                            continue;
+                        }
+                        2 => {
+                            pe_out += t.value;
+                            n_skip += 1;
+                            continue;
+                        }
+                        3 => {
+                            pe_in += t.value;
+                            n_fine += 1;
+                        }
+                        _ => {
+                            n_fine += 1;
+                        }
+                    }
+                }
+                e_pair += t.value;
+                virial += t.virial;
+                self.a_pair[i].0 += t.fx;
+                self.a_pair[i].1 += t.fy;
+                self.a_pair[i].2 += t.fz;
+                // P-2 (sector: momentum): the plant drops the reaction on the coarse side.
+                let drop_j = framed
+                    && self.acuity_plant == crate::acuity::AcuityPlant::DropReaction
+                    && self.coarse[j]
+                    && !self.coarse[i];
+                if !drop_j {
+                    self.a_pair[j].0 -= t.fx;
+                    self.a_pair[j].1 -= t.fy;
+                    self.a_pair[j].2 -= t.fz;
+                }
+                let ac = t.curv.abs();
+                if ac > k_pair_max {
+                    k_pair_max = ac;
+                }
+            }
+            self.neighbours = nb;
+            self.pair_terms = terms;
+        }
+        self.k_pair_max = k_pair_max;
+        self.e_pair = e_pair;
+        self.w_virial = virial;
+        if framed {
+            self.acuity_post_pairs(pe_out, pe_in, n_fine, n_skip);
+        }
+        self.seam_work.pairs_dropped = dropped;
+        self.seam_work.pairs_dropped_total += dropped;
+    }
+
+    /// FIELD-3: does the seam drop this pair from the tables (both atoms in units, and not
+    /// the same unit). False whenever the seam is off, so the loops are untouched.
+    #[inline]
+    fn seam_drops_pair(&self, i: usize, j: usize) -> bool {
+        if self.seam.is_none() {
+            return false;
+        }
+        let (a, b) = (self.unit_of[i], self.unit_of[j]);
+        a != crate::seam::FREE && b != crate::seam::FREE && a != b
+    }
+
+    /// FIELD-3: does the seam drop this triple from the surfaces (all three in units, not
+    /// all the same). Plant (ii) serves the surfaces across the seam.
+    #[inline]
+    fn seam_drops_triple(&self, a: usize, b: usize, c: usize) -> bool {
+        if self.seam.is_none() || self.seam_plant == crate::seam::SeamPlant::TriplesAcross {
+            return false;
+        }
+        let (ua, ub, uc) = (self.unit_of[a], self.unit_of[b], self.unit_of[c]);
+        let f = crate::seam::FREE;
+        ua != f && ub != f && uc != f && !(ua == ub && ub == uc)
+    }
+
+    /// THE UNIT ASSIGNMENT (FIELD-3, `crate::seam`): each hydrogen to the oxygen it is MOST
+    /// BOUND to by the engine's own O–H pair curve (`u(r)` lowest, inside the curve's reach),
+    /// a water unit an oxygen with exactly two. Computed whenever the field or the seam is
+    /// on; all FREE otherwise, so a scene with neither is untouched.
+    pub fn assign_units(&mut self) {
+        let n = self.n;
+        if self.field.is_none() && self.seam.is_none() {
+            for i in 0..n {
+                self.unit_of[i] = crate::seam::FREE;
+            }
+            self.seam_work.units = 0;
+            return;
+        }
+        let species = self.species_slots();
+        let geom = self.geom();
+        let z: Vec<u32> = (0..n).map(|i| self.atoms[i].species.z).collect();
+        let mut best = vec![crate::seam::FREE; n];
+        for h in 0..n {
+            if z[h] != 1 {
+                continue;
+            }
+            // the LOWEST `u` among oxygens inside the curve's reach (the tabulated support,
+            // `r_max`) — no sign threshold: a hydrogen on its oxygen's repulsive wall is still
+            // that oxygen's, and a hydrogen beyond every oxygen's reach is free
+            let (mut best_u, mut best_o) = (f64::INFINITY, crate::seam::FREE);
+            for o in 0..n {
+                if z[o] != 8 {
+                    continue;
+                }
+                let (dx, dy, dz) = geom.delta(
+                    (self.atoms[h].x, self.atoms[h].y, self.atoms[h].z),
+                    (self.atoms[o].x, self.atoms[o].y, self.atoms[o].z),
+                );
+                let r = (dx * dx + dy * dy + dz * dz).sqrt();
+                let table = self.bank.table_at(species[h], species[o]);
+                if r >= table.r_max() {
+                    continue;
+                }
+                let u = table.u(r);
+                if u < best_u {
+                    best_u = u;
+                    best_o = o as u32;
+                }
+            }
+            best[h] = best_o;
+        }
+        let units = crate::seam::units_from_best(&z, &best);
+        self.unit_of[..n].copy_from_slice(&units);
+        self.seam_work.units = units.iter().enumerate().filter(|(i, &u)| u == *i as u32).count() as u64;
+    }
+
+    /// FIELD-1's assignment, kept as a READING for gate G-A2 (FIELD-3): an oxygen with
+    /// exactly two pair-verdict-bonded hydrogens, neither bonded to another oxygen. Not
+    /// consulted by the physics.
+    pub fn units_by_pair_verdict(&self) -> Vec<u32> {
+        let n = self.n;
+        let mut h_oxygens: Vec<Vec<usize>> = vec![Vec::new(); n];
+        let mut o_hydrogens: Vec<Vec<usize>> = vec![Vec::new(); n];
+        for p in self.pairs[..self.pair_count].iter() {
+            if !p.bonded {
+                continue;
+            }
+            let (zi, zj) = (self.atoms[p.i].species.z, self.atoms[p.j].species.z);
+            if zi == 8 && zj == 1 {
+                o_hydrogens[p.i].push(p.j);
+                h_oxygens[p.j].push(p.i);
+            } else if zi == 1 && zj == 8 {
+                o_hydrogens[p.j].push(p.i);
+                h_oxygens[p.i].push(p.j);
+            }
+        }
+        let mut unit = vec![crate::seam::FREE; n];
+        for o in 0..n {
+            if self.atoms[o].species.z != 8 || o_hydrogens[o].len() != 2 {
+                continue;
+            }
+            if o_hydrogens[o].iter().any(|&h| h_oxygens[h].len() != 1) {
+                continue;
+            }
+            unit[o] = o as u32;
+            for &h in &o_hydrogens[o] {
+                unit[h] = o as u32;
+            }
+        }
+        unit
+    }
+
+    /// Assign the units for this pass and, under the seam, open a membership transition:
+    /// returns the closure sector's energy under the OLD assignment at these positions when
+    /// membership changed, `None` otherwise. The seam and an acuity frame are not combined.
+    fn seam_assign_and_open(&mut self) -> Option<f64> {
+        self.assign_units();
+        self.seam?;
+        let n = self.n;
+        if !self.seam_assigned {
+            self.unit_prev[..n].copy_from_slice(&self.unit_of[..n]);
+            self.seam_assigned = true;
+            return None;
+        }
+        if !(0..n).any(|i| self.unit_of[i] != self.unit_prev[i]) {
+            return None;
+        }
+        core::mem::swap(&mut self.unit_of, &mut self.unit_prev);
+        let e_old = self.closure_sector_energy();
+        core::mem::swap(&mut self.unit_of, &mut self.unit_prev);
+        self.unit_prev[..n].copy_from_slice(&self.unit_of[..n]);
+        Some(e_old)
+    }
+
+    /// `e_pair + e_three + e_seam` under the current assignment at the current positions,
+    /// leaving `a_pair` zeroed for the pass that follows.
+    fn closure_sector_energy(&mut self) -> f64 {
+        self.accumulate_pairs();
+        self.accumulate_three_body();
+        self.accumulate_seam();
+        let e = (self.e_pair + self.e_three) + self.e_seam;
+        for i in 0..self.n {
+            self.a_pair[i] = (0.0, 0.0, 0.0);
+        }
+        e
+    }
+
+    /// Post a membership transition: the closure sector under the new assignment against
+    /// `e_old`, to `w_ext` and the `seam` column, one event.
+    fn seam_close_transition(&mut self, e_old: f64) {
+        let e_new = (self.e_pair + self.e_three) + self.e_seam;
+        let de = e_new - e_old;
+        self.w_ext += de;
+        self.work.seam += de;
+        self.seam_work.transitions += 1;
+    }
+
+    /// THE WALL (FIELD-3, channel 5): `A·exp(−b·r)` on every cross-unit oxygen–oxygen pair.
+    /// The far sector's pattern — its own row, forces into `a_pair`, the virial where the
+    /// slope is, nothing posted for a conservative term. Exactly nothing when the seam is
+    /// off, and `e_seam` stays an exact `0.0`.
+    fn accumulate_seam(&mut self) {
+        self.e_seam = 0.0;
+        self.seam_work.oo_pairs = 0;
+        let Some(model) = self.seam else {
+            return;
+        };
+        let n = self.n;
+        let a = if self.seam_plant == crate::seam::SeamPlant::FlipSign { -model.a } else { model.a };
+        let b = model.b;
+        let geom = self.geom();
+        let f = crate::seam::FREE;
+        let mut e = 0.0f64;
+        let mut virial = 0.0f64;
+        let mut pairs = 0u64;
+        for i in 0..n {
+            if self.atoms[i].species.z != 8 || self.unit_of[i] == f {
+                continue;
+            }
+            for j in (i + 1)..n {
+                if self.atoms[j].species.z != 8 || self.unit_of[j] == f || self.unit_of[j] == self.unit_of[i] {
+                    continue;
+                }
+                let (dx, dy, dz) = geom.delta(
+                    (self.atoms[j].x, self.atoms[j].y, self.atoms[j].z),
+                    (self.atoms[i].x, self.atoms[i].y, self.atoms[i].z),
+                );
+                // `delta(b, a)` is `a − b`: the vector from j to i
+                let r = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+                let w = a * (-b * r).exp();
+                e += w;
+                // E = A e^{−b r}; F_i = −∂E/∂r_i = b·w·(r_i − r_j)/r, F_j = −F_i
+                let fm = b * w / r;
+                self.a_pair[i].0 += fm * dx;
+                self.a_pair[i].1 += fm * dy;
+                self.a_pair[i].2 += fm * dz;
+                if self.seam_plant != crate::seam::SeamPlant::DropReaction {
+                    self.a_pair[j].0 -= fm * dx;
+                    self.a_pair[j].1 -= fm * dy;
+                    self.a_pair[j].2 -= fm * dz;
+                }
+                // THE VIRIAL CONVENTION: `w_virial` is Σ r·dU/dr (pair `r * slope`, far
+                // `r * du`, three-body `g · r`) and `pressure()` reads `(2K − w_virial)/3V`.
+                // For the wall dU/dr = −b·w, so the term is −b·w·r: a repulsive wall raises
+                // the pressure. (FIELD-3's review caught this sector posting `+r·F`.)
+                virial -= b * w * r;
+                pairs += 1;
+            }
+        }
+        self.e_seam = e;
+        self.w_virial += virial;
+        self.seam_work.oo_pairs = pairs;
+    }
+
+    /// Enable (`Some(model)`) or disable (`None`) the seam. The switch is a transition at the
+    /// current positions — the closure sector before against after — posted to `w_ext` and
+    /// the `seam` column now, and the forces are recomputed so the next half-kick reads the
+    /// law that is on.
+    pub fn set_seam(&mut self, model: Option<crate::seam::SeamModel>) -> Result<(), crate::seam::SeamRefusal> {
+        if self.seam.is_none() && model.is_none() {
+            return Ok(());
+        }
+        if self.acuity.is_some() {
+            return Err(crate::seam::SeamRefusal::AcuityFrameSet);
+        }
+        if model.is_some() && self.far.is_some() {
+            return Err(crate::seam::SeamRefusal::FarSectorDeclared);
+        }
+        if model.is_some() && self.many_body_order >= 4 {
+            return Err(crate::seam::SeamRefusal::ManyBodySectorOn);
+        }
+        let n = self.n;
+        self.refresh_slots();
+        self.rebuild_neighbours();
+        self.assign_units();
+        let e_before = self.closure_sector_energy();
+        self.seam = model;
+        self.assign_units();
+        self.unit_prev[..n].copy_from_slice(&self.unit_of[..n]);
+        self.seam_assigned = self.seam.is_some();
+        let e_after = self.closure_sector_energy();
+        let de = e_after - e_before;
+        if de != 0.0 {
+            self.w_ext += de;
+            self.work.seam += de;
+        }
+        // the switch is a transition whether or not its energy is zero (a scene with no
+        // units posts nothing and is still switched)
+        self.seam_work.transitions += 1;
+        if model.is_none() {
+            self.seam_work.pairs_dropped_total = 0;
+            self.seam_work.triples_dropped_total = 0;
+        }
+        self.compute_forces();
+        Ok(())
+    }
+
     /// THE EMBEDDING FIELD (FIELD-1): fixed derived charges on census water, the Coulomb
     /// term between different rows. Follows the far sector's pattern — its own energy row,
     /// the virial where the slopes are, forces into `a_pair` (internal, cancelling from the
@@ -3084,45 +3400,20 @@ impl Sim {
         if n == 0 {
             return;
         }
-        // 1. the assignment (FIELD_AMENDMENT_1): a WATER UNIT is an oxygen with exactly the
-        //    hydrogens the engine's own pair bond verdict bonds to it — the verdict the page
-        //    draws (`E_rel < 0`, inside the outer turning point), read from the pair list this
-        //    pass already produced — when that count is exactly two and neither hydrogen is
-        //    bonded to another oxygen. The census carries PAIR rows and has no molecule row.
+        // 1. the assignment (FIELD-3, replacing FIELD_AMENDMENT_1's pair-verdict rule): the
+        //    WATER UNIT is the closure reading `Sim::assign_units` made at the top of this
+        //    pass — each hydrogen with the oxygen it is most bound to, a unit an oxygen with
+        //    exactly two. The pair verdict bonds across a hydrogen bond (FIELD-2) and cannot
+        //    be the identity; the closure reading can. FIELD-1's rule survives as the
+        //    reading `units_by_pair_verdict`, for gate G-A2.
         for i in 0..n {
-            self.charge[i] = 0.0;
-            self.charge_row[i] = u32::MAX;
-        }
-        {
-            // per hydrogen: the oxygens it is bonded to; per oxygen: its bonded hydrogens
-            let mut h_oxygens: Vec<Vec<usize>> = vec![Vec::new(); n];
-            let mut o_hydrogens: Vec<Vec<usize>> = vec![Vec::new(); n];
-            for p in self.pairs.iter() {
-                if !p.bonded {
-                    continue;
-                }
-                let (zi, zj) = (self.atoms[p.i].species.z, self.atoms[p.j].species.z);
-                if zi == 8 && zj == 1 {
-                    o_hydrogens[p.i].push(p.j);
-                    h_oxygens[p.j].push(p.i);
-                } else if zi == 1 && zj == 8 {
-                    o_hydrogens[p.j].push(p.i);
-                    h_oxygens[p.i].push(p.j);
-                }
-            }
-            for o in 0..n {
-                if self.atoms[o].species.z != 8 || o_hydrogens[o].len() != 2 {
-                    continue;
-                }
-                if o_hydrogens[o].iter().any(|&h| h_oxygens[h].len() != 1) {
-                    continue;
-                }
-                self.charge[o] = -2.0 * model.q_h;
-                self.charge_row[o] = o as u32;
-                for &h in &o_hydrogens[o] {
-                    self.charge[h] = model.q_h;
-                    self.charge_row[h] = o as u32;
-                }
+            let u = self.unit_of[i];
+            if u == crate::seam::FREE {
+                self.charge[i] = 0.0;
+                self.charge_row[i] = u32::MAX;
+            } else {
+                self.charge[i] = if self.atoms[i].species.z == 8 { -2.0 * model.q_h } else { model.q_h };
+                self.charge_row[i] = u;
             }
         }
         // 2. a transition: the energy jump at FIXED positions, old assignment to new
@@ -3138,7 +3429,29 @@ impl Sim {
             self.field_work.transitions += 1;
             self.charge_prev.copy_from_slice(&self.charge[..n]);
         }
-        // 3. the term
+        // 3. the term. EWALD-1: under a wrapping boundary the lattice sum (`crate::ewald`),
+        //    its forces into `a_pair` and its virial in the engine's convention (gated as
+        //    3V·dE/dV); the open box keeps the direct sum below, untouched.
+        if self.boundary.wraps() {
+            let pos: Vec<[f64; 3]> = (0..n).map(|i| [self.atoms[i].x, self.atoms[i].y, self.atoms[i].z]).collect();
+            let cell = [self.width, self.height, self.depth];
+            let p = crate::ewald::params_for(cell, crate::ewald::DEFAULT_ACCURACY);
+            let r = crate::ewald::ewald(&pos, &self.charge[..n], &self.unit_of[..n], cell, &p, crate::ewald::EwaldPlant::None);
+            // plant (iii) of FIELD-1, the sign, negates the whole term; plant (i), the
+            // reaction dropped, is a property of a pairwise sum and has no reading here
+            let sign = if self.field_plant == crate::field::FieldPlant::FlipSign { -1.0 } else { 1.0 };
+            for i in 0..n {
+                self.a_pair[i].0 += sign * r.forces[i][0];
+                self.a_pair[i].1 += sign * r.forces[i][1];
+                self.a_pair[i].2 += sign * r.forces[i][2];
+            }
+            self.e_field = sign * r.energy;
+            self.w_virial += sign * r.virial;
+            self.field_work.pairs = r.real_pairs;
+            self.field_work.k_vectors = r.k_vectors;
+            return;
+        }
+        self.field_work.k_vectors = 0;
         let sign = if self.field_plant == crate::field::FieldPlant::FlipSign { -1.0 } else { 1.0 };
         let mut e = 0.0f64;
         let mut pairs = 0u64;
@@ -3173,8 +3486,12 @@ impl Sim {
             }
         }
         self.e_field = e;
-        // the Coulomb virial: Σ r·F = Σ qq/r = E
-        self.w_virial += e;
+        // The Coulomb virial in THIS engine's convention (Σ r·dU/dr, see `pressure()`):
+        // r·d(qq/r)/dr = −qq/r, so the sector's term is −E. FIELD-1 posted +E here ("Σ r·F
+        // = E", the wrong quantity) — a sign error in the field's contribution to
+        // `pressure()` only, found by FIELD-3's review and corrected under its cause line;
+        // no gate, ledger row or receipt line reads the virial.
+        self.w_virial -= e;
         self.field_work.pairs = pairs;
     }
 
@@ -3183,6 +3500,14 @@ impl Sim {
     pub fn field_energy_of(&self, charge: &[f64]) -> f64 {
         let n = self.n;
         let sign = if self.field_plant == crate::field::FieldPlant::FlipSign { -1.0 } else { 1.0 };
+        if self.boundary.wraps() {
+            let pos: Vec<[f64; 3]> = (0..n).map(|i| [self.atoms[i].x, self.atoms[i].y, self.atoms[i].z]).collect();
+            let cell = [self.width, self.height, self.depth];
+            let p = crate::ewald::params_for(cell, crate::ewald::DEFAULT_ACCURACY);
+            // the rows of the GIVEN charge vector: an atom with a nonzero charge is in the
+            // unit `charge_row` names for it; the lattice sum excludes same-row pairs
+            return sign * crate::ewald::ewald(&pos, &charge[..n], &self.charge_row[..n], cell, &p, crate::ewald::EwaldPlant::None).energy;
+        }
         let mut e = 0.0f64;
         for i in 0..n {
             if charge[i] == 0.0 {
@@ -3208,9 +3533,8 @@ impl Sim {
     /// given (a checkpoint restore, or a test that pins it).
     pub fn set_field(&mut self, on: bool, q_h: Option<f64>) -> Result<(), crate::field::FieldRefusal> {
         if on {
-            if matches!(self.boundary, Boundary::Periodic) {
-                return Err(crate::field::FieldRefusal::PeriodicNeedsEwald);
-            }
+            // EWALD-1: the wrapping box is served by the lattice sum (`accumulate_field`
+            // dispatches on `boundary.wraps()`); FIELD-1's refusal here is retired.
             let q = q_h.unwrap_or_else(crate::field::water_charge_at_pin);
             self.field = Some(crate::field::FieldModel { q_h: q });
         } else {
@@ -3311,6 +3635,9 @@ impl Sim {
     /// keeps the N^3 loop from being the whole budget when there is nothing to compute.
     fn accumulate_three_body(&mut self) {
         self.e_three = 0.0;
+        // reset before the early returns below, so a pass that serves no surface does not
+        // carry the previous pass's count (a vacuity check reads this field)
+        self.seam_work.triples_dropped = 0;
         self.fence_untabulated = self.fenced_triples();
         if (!self.trimer.loaded && !self.water.loaded && self.trimers.is_empty()) || self.n < 3 {
             return;
@@ -3342,6 +3669,7 @@ impl Sim {
         let nb = core::mem::take(&mut self.neighbours);
         let mut triples = core::mem::take(&mut self.triple_scratch);
         triples.clear();
+        let mut triples_dropped = 0u64;
         for h in 0..self.n {
             let (mine, radii) = nb.adj_of(h);
             for a in 0..mine.len() {
@@ -3365,6 +3693,11 @@ impl Sim {
                         self.acuity_work.triples_skipped += 1;
                         continue;
                     }
+                    // FIELD-3: a cross-unit triple is the seam's, not the surface's
+                    if self.seam_drops_triple(h, j, k) {
+                        triples_dropped += 1;
+                        continue;
+                    }
                     let mut t = [h, j, k];
                     t.sort_unstable();
                     triples.push(t);
@@ -3373,6 +3706,8 @@ impl Sim {
         }
         triples.sort_unstable();
         self.neighbours = nb;
+        self.seam_work.triples_dropped = triples_dropped;
+        self.seam_work.triples_dropped_total += triples_dropped;
 
         self.triple_scratch = triples;
 
@@ -3597,6 +3932,30 @@ impl Sim {
     pub fn fenced_triples(&self) -> u64 {
         if self.n < 3 {
             return 0;
+        }
+        if !self.trimer.loaded && !self.water.loaded && self.trimers.is_empty() {
+            // R-3 (below) applies before the seam branch too: the seam changes which triples
+            // are dropped, not whether the pre-T3 loop counted anything
+            return 0;
+        }
+        if self.seam.is_some() {
+            // FIELD-3: a cross-unit triple is dropped by the seam rule, not fenced; the census
+            // formula below cannot tell them apart, so the count is enumerated (O(N³), on the
+            // seam's scenes).
+            let mut fenced = 0u64;
+            for a in 0..self.n {
+                for b in (a + 1)..self.n {
+                    for c in (b + 1)..self.n {
+                        let mut z = [self.atoms[a].species.z as u8, self.atoms[b].species.z as u8, self.atoms[c].species.z as u8];
+                        z.sort_unstable();
+                        if self.served(z) || self.seam_drops_triple(a, b, c) {
+                            continue;
+                        }
+                        fenced += 1;
+                    }
+                }
+            }
+            return fenced;
         }
         if !self.trimer.loaded && !self.water.loaded && self.trimers.is_empty() {
             // The pre-T3 loop returned before counting anything in this case, and the
@@ -4185,6 +4544,12 @@ impl Sim {
     /// Install (or clear) the observer's frame. Membership is refreshed on the next step.
     /// Clearing restores every banked relative velocity as a ledgered re-admission.
     pub fn set_acuity(&mut self, frame: Option<crate::acuity::AcuityFrame>) {
+        // FIELD-3: not combined with the seam (`seam::SeamRefusal::AcuityFrameSet` is the
+        // reverse order's refusal). Installing a frame over a live seam is refused here —
+        // the frame stays `None` — so the two ledgers never double-post.
+        if frame.is_some() && self.seam.is_some() {
+            return;
+        }
         self.acuity = frame;
         if frame.is_none() {
             let n = self.n;

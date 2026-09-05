@@ -1,0 +1,1 @@
+{"node": "hf4 R_CD=12 trimer in field", "n_det": 665856, "e": -2.958107916323e2, "residual": 6.635e-11, "wall_seconds": 583.145, "cpu_seconds": 15132.440, "threads": 32, "admitted": true}

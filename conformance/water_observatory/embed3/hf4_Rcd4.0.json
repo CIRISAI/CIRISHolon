@@ -1,0 +1,7 @@
+{
+  "r_cd_angstrom": 4.000, "r3": -1.459432041884e-8, "r3_inf": -1.467178000000e-8, "delta": 7.745958116299e-11, "delta_over_r3": 5.279494e-3, "e_abc_in_field": -2.958115982682e2, "rho_pa_abc_in_field": -2.958115982536e2,
+  "g1": {"converged": true, "sweeps_zero": 6, "sweeps_isolated": 5, "dp": 0.000e0, "dpa": 0.000e0},
+  "floor": {"r3_moved": -1.459778786739e-8, "floor": 3.467449e-12, "posable_ratio": 22.339},
+  "plant_ii": null,
+  "wall_seconds": 1357.4, "cpu_seconds": 34876.2, "threads": 32
+}

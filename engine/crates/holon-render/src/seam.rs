@@ -138,6 +138,35 @@ impl SeamModel {
         None
     }
 
+    /// HOW FAR THE SEAM LAW REACHES (LIQUID-1): the radius past which every cross-unit term
+    /// is under `budget` in magnitude, from the law's own coefficients — an exponential
+    /// `A·e^{−b r}` is under the budget past `ln(A/budget)/b`, the dispersion past
+    /// `(C₆/budget)^{1/6}`. A term at an exact `0.0` reaches nowhere. Under a wrapping
+    /// boundary this is the radius the minimum image must be unique out to for the seam's
+    /// terms, and `Sim::legality_radius` takes it in place of the tables' reach when every
+    /// atom is inside a unit.
+    pub fn reach(&self, budget: f64) -> f64 {
+        let exp_reach = |amp: f64, rate: f64| -> f64 {
+            if amp.abs() > budget && rate > 0.0 {
+                (amp.abs() / budget).ln() / rate
+            } else {
+                0.0
+            }
+        };
+        let disp = if self.c6.abs() > budget { (self.c6.abs() / budget).powf(1.0 / 6.0) } else { 0.0 };
+        [
+            exp_reach(self.a, self.b),
+            exp_reach(self.p, self.c),
+            exp_reach(self.a_oh, self.b_oh),
+            exp_reach(self.a_hh, self.b_hh),
+            exp_reach(self.p_hh, self.c_hh),
+            exp_reach(self.p_ct, self.c_ct),
+            disp,
+        ]
+        .into_iter()
+        .fold(0.0, f64::max)
+    }
+
     /// FIELD-3's wall alone.
     pub const fn wall_only(a: f64, b: f64) -> SeamModel {
         SeamModel { a, b, ..SeamModel::NO_WALL }
@@ -318,6 +347,16 @@ mod tests {
         assert!((SeamModel { p_hh: 2.0, c_hh: 1.0, ..SeamModel::NO_WALL }.contact_hh(1.0) + 2.0 * (-1.0f64).exp()).abs() < 1e-15);
         assert!((SeamModel { p_ct: 3.0, c_ct: 2.0, ..SeamModel::NO_WALL }.charge_transfer(0.5) + 3.0 * (-1.0f64).exp()).abs() < 1e-15);
         assert_eq!(SeamModel::NO_WALL.charge_transfer(2.0), 0.0);
+        // the reach: no term reaches anywhere at zero; one wall reaches ln(A/budget)/b; the
+        // dispersion's sixth root; the law's reach is the largest of its terms'
+        assert_eq!(SeamModel::NO_WALL.reach(1e-10), 0.0);
+        let w = SeamModel::wall_only(948.0, 2.4);
+        assert!((w.reach(1e-10) - (948.0f64 / 1e-10).ln() / 2.4).abs() < 1e-12);
+        assert!(w.wall(w.reach(1e-10)) <= 1e-10 * (1.0 + 1e-9));
+        let d = SeamModel { c6: 64.0, ..SeamModel::NO_WALL };
+        assert!((d.reach(1e-10) - (64.0f64 / 1e-10).powf(1.0 / 6.0)).abs() < 1e-9);
+        let both = SeamModel { c6: 64.0, ..w };
+        assert_eq!(both.reach(1e-10), w.reach(1e-10).max(d.reach(1e-10)));
     }
 
     #[test]

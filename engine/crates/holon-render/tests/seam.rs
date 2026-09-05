@@ -9,7 +9,7 @@
 //! properties that hold for any `(A, b)`, and each run says which it used.
 
 use holon_render::seam::{SeamModel, SeamPlant, FREE};
-use holon_render::sim::{Boundary, Sim};
+use holon_render::sim::{Boundary, BoundaryRefusal, Sim, INTRA_UNIT_REACH, SEAM_REACH_BUDGET};
 
 #[path = "common/field2_scenes.rs"]
 mod field2_scenes;
@@ -203,6 +203,57 @@ fn g_b0_the_seam_off_is_the_identity_in_checkpoint_bytes() {
     assert_eq!(a.checkpoint().bytes, b.checkpoint().bytes, "G-B0: enabling then disabling before the first step must be the identity");
     assert_eq!(b.e_seam, 0.0);
     assert_eq!(b.work.seam, 0.0, "the two transitions cancel exactly");
+}
+
+/// LIQUID-1 §0/§6 — THE IMAGE RULE UNDER THE SEAM: a cell the tables' reach refuses is
+/// admitted once every atom is inside a unit, because the tables then serve only within a
+/// unit and the seam terms' own reach (from the law's coefficients) is what the minimum
+/// image must honour; `legality_radius` is EXACTLY `max(INTRA_UNIT_REACH, model.reach(1e-10))`
+/// there; and one free atom restores the tables' reach and the refusal.
+#[test]
+fn l0_the_liquid_cell_is_admitted_under_the_seam_and_refused_without_it() {
+    let (model, which) = wall();
+    let (dsp, dpos) = dimer_positions();
+    let seam_reach = INTRA_UNIT_REACH.max(model.reach(SEAM_REACH_BUDGET));
+    // a cell the seam law can live in, with a bohr to spare, and no larger than 26 bohr if
+    // that suffices — so the tables' reach (20 bohr) refuses it without the seam
+    let edge = (2.0 * (seam_reach + 1.0)).max(26.0);
+    let mut s = scene(&dsp, &dpos, edge, 293.0);
+    let bare = s.legality_radius();
+    eprintln!("L0 ({which}): tables' reach {bare:.4}, seam reach {seam_reach:.4} (= max({INTRA_UNIT_REACH}, law {:.4})), half-edge {:.4}", model.reach(SEAM_REACH_BUDGET), 0.5 * edge);
+    if bare > 0.5 * edge {
+        assert!(matches!(s.set_boundary(Boundary::Periodic), Err(BoundaryRefusal::BreaksPeriodicImages { .. })), "without the seam the tables' reach must refuse this cell");
+    } else {
+        eprintln!("L0: the loaded law reaches {seam_reach:.3} bohr, past the tables' {bare:.3} — the bare refusal leg has no cell to test on and is skipped");
+    }
+    s.set_field(true, None).unwrap();
+    s.set_seam(Some(model)).unwrap();
+    let units = s.units_reading();
+    assert!(units.iter().all(|&u| u != FREE), "every atom of the dimer is inside a unit");
+    assert_eq!(units.iter().enumerate().filter(|(i, &u)| u == *i as u32).count(), 2, "two units");
+    assert_eq!(s.legality_radius().to_bits(), seam_reach.to_bits(), "under the seam the legality radius IS the seam-aware rule, to the bit");
+    s.set_boundary(Boundary::Periodic).expect("the cell is admitted under the seam");
+    assert!(s.pbc_ok(), "and stays legal per pass");
+    // one hydrogen carried beyond every oxygen's O–H reach (under walls, so no image brings
+    // it back): free, so the tables' reach returns and the wrapped box is refused again
+    s.set_boundary(Boundary::Walls).unwrap();
+    let h = (0..s.n).find(|&i| s.atoms[i].species.z == 1).unwrap();
+    let saved = (s.atoms[h].x, s.atoms[h].y, s.atoms[h].z);
+    s.atoms[h].x = saved.0 + 0.5 * edge - 0.5;
+    s.atoms[h].y = saved.1 + 0.5 * edge - 0.5;
+    s.atoms[h].z = saved.2 + 0.5 * edge - 0.5;
+    let units2 = s.units_reading();
+    if units2[h] == FREE {
+        assert_eq!(s.legality_radius().to_bits(), bare.to_bits(), "one free atom restores the tables' reach exactly");
+        if bare > 0.5 * edge {
+            assert!(s.set_boundary(Boundary::Periodic).is_err(), "and the refusal");
+        }
+    } else {
+        eprintln!("L0: the displaced hydrogen ({:.2} bohr from its start) is still inside an O–H table's reach in this cell; the free-atom leg has no scene here and is skipped", (3.0f64).sqrt() * (0.5 * edge - 0.5));
+    }
+    s.atoms[h].x = saved.0;
+    s.atoms[h].y = saved.1;
+    s.atoms[h].z = saved.2;
 }
 
 #[test]

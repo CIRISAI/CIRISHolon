@@ -808,6 +808,14 @@ pub struct Sim {
     pub(crate) seam_assigned: bool,
 }
 
+/// LIQUID-1 §0: no water unit spans more than this (bohr) — the intra-unit reach the minimum
+/// image must honour under the seam; a unit stretched past it dissolves at the closure
+/// reading and the box is judged by the full law again.
+pub const INTRA_UNIT_REACH: f64 = 4.0;
+/// LIQUID-1 §0: the budget under which a cross-unit term of the seam law is taken as absent
+/// (hartree), from which the law's reach is derived by `SeamModel::reach`.
+pub const SEAM_REACH_BUDGET: f64 = 1e-10;
+
 impl Sim {
     pub const fn empty() -> Self {
         Self {
@@ -1922,6 +1930,18 @@ impl Sim {
         r = r.max(self.pair_reach());
         if let Some(f) = &self.far {
             r = r.max(f.r_s());
+        }
+        // UNDER THE SEAM (LIQUID-1 §0): the tables and surfaces serve only within a unit or
+        // with a free atom, so when every atom is inside a unit the reach the minimum image
+        // must honour is the larger of the intra-unit span and the seam terms' own reach.
+        // One free atom anywhere restores the tables' reach — the box is then judged by the
+        // full law, which is what a dissolving unit deserves.
+        if let Some(m) = self.seam {
+            let units = self.units_reading();
+            let any_free = units[..self.n].iter().any(|&u| u == crate::seam::FREE);
+            if !any_free {
+                r = INTRA_UNIT_REACH.max(m.reach(SEAM_REACH_BUDGET));
+            }
         }
         r
     }
@@ -3170,6 +3190,17 @@ impl Sim {
             self.seam_work.units = 0;
             return;
         }
+        let units = self.units_reading();
+        self.unit_of[..n].copy_from_slice(&units);
+        self.seam_work.units = units.iter().enumerate().filter(|(i, &u)| u == *i as u32).count() as u64;
+    }
+
+    /// The closure reading of the units on the CURRENT positions, as a pure reading (no
+    /// state written, no transition posted): `assign_units` writes it; `legality_radius`
+    /// consults it under the seam so the boundary door can tell whether every atom is
+    /// inside a unit BEFORE the first force pass.
+    pub fn units_reading(&self) -> Vec<u32> {
+        let n = self.n;
         let species = self.species_slots();
         let geom = self.geom();
         let z: Vec<u32> = (0..n).map(|i| self.atoms[i].species.z).collect();
@@ -3203,9 +3234,7 @@ impl Sim {
             }
             best[h] = best_o;
         }
-        let units = crate::seam::units_from_best(&z, &best);
-        self.unit_of[..n].copy_from_slice(&units);
-        self.seam_work.units = units.iter().enumerate().filter(|(i, &u)| u == *i as u32).count() as u64;
+        crate::seam::units_from_best(&z, &best)
     }
 
     /// FIELD-1's assignment, kept as a READING for gate G-A2 (FIELD-3): an oxygen with

@@ -1,0 +1,5 @@
+CT-2 predict — the HELD-OUT node twisttiltbent_R3.1 (acceptor twisted 45° then tilted 45°, donor bent 15°, R_OO 5.858151 bohr) on 24 threads; E_pred -3.724960833874e-3 Ha, the filed transfer term -4.910173696473e-3 (rebuilt from wall_ct2.json here: -4.910173696473e-3, difference 6.765e-17)
+  the exact solve: E -1.500496136034e2, ΔE_exact -3.030541e-3 Ha, 15 iters, residual 3.378e-9, converged true, wall 65 s, 1448 core-s
+  the sector solve: E_noCT -1.500455159800e2, dim 194481, 13 iters, residual 4.711e-9, converged true, 1588 core-s
+S2: ΔE_exact -3.030541e-3 Ha, E_pred -3.724961e-3 — miss 6.944e-4 (22.9 % of |ΔE_exact|) against 7.576e-4; measured E_CT = E_exact − E_noCT = -4.097623e-3 against the predicted transfer term -4.910174e-3 — miss 8.126e-4 against 1.024e-3; the sector's order E_exact ≤ E_noCT ≤ E_HL: true → branch (a)
+prediction_check.json and predict.done written

@@ -1,0 +1,9 @@
+{
+  "node": "twisttiltbent_R3.1", "r_oo_angstrom": 3.100, "r_oo_bohr": 5.858151,
+  "e_pred": -3.724960833874e-3, "de_exact": -3.030540780202e-3, "miss": 6.944200536720e-4, "miss_fraction": 2.291406399176e-1, "tolerance": 7.576351950505e-4, "tolerance_rule": "max(0.25·|ΔE_exact|, 5e-4)",
+  "e_ct_measured": -4.097623399986e-3, "e_ct_measured_rule": "E_exact(total) − E_noCT(total), both on this geometry", "ct_term_predicted": -4.910173696473e-3, "ct_term_rebuilt_here": -4.910173696473e-3, "ct_miss": 8.125502964873e-4, "ct_tolerance": 1.024405849996e-3, "ct_tolerance_rule": "max(0.25·|E_CT|, 2e-4)",
+  "s2_branch": "a", "s2_branch_meaning": "(a) the total lands within tolerance; (b) the total misses but the transfer term is within tolerance of the measured E_CT; (c) both miss",
+  "exact": {"solver": "fci_full_from_product", "converged": true, "davidson_iters": 15, "residual": 3.378423527782e-9, "residual_bar": 1e-8, "capped": false, "n_det": 1002001, "e_super": -1.500496136034e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "cpu_seconds": 1.448270000000e3, "wall_seconds": 6.534164400000e1, "price_admitted": true, "source": "../conformance/water_observatory/ct2/twisttiltbent_R3.1.json"},
+  "sector": {"e_noct": -1.500455159800e2, "e_hl_undeformed": -1.500451332757e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "delta_e_hl": 1.449786879988e-3, "closed_sector_gain": -3.827042999944e-4, "sector_dim": 194481, "sector_dim_staked": 194481, "davidson_iters": 13, "residual": 4.711473113042e-9, "residual_bar": 1e-8, "converged": true, "order_ok": true, "metric_min_eigenvalue": 9.854698530987e-1, "cpu_seconds": 1.588000000000e3, "price_admitted": true, "source": "../conformance/water_observatory/ct2/sector_twisttiltbent_R3.1.json"},
+  "cross_oo_bohr": [5.858151], "cross_ho_bohr": [7.569793, 6.346561, 4.012460, 6.378379], "cross_hh_bohr": [5.721989, 4.439796, 7.774836, 7.133501]
+}

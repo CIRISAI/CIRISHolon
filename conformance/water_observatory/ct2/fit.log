@@ -1,0 +1,489 @@
+CT-2 fit — G-D0's verdict, T0, A1, P1, the angular family (S1), the two-class contact fit UNDER the boundedness gate (C1) with the unconstrained fit beside it, dispersion, G-B0, G-C1, plants (i) and (ii)
+
+the node set: 64 distinct geometries — 13 of record, 51 new; the freeze's §0 table stakes 64 distinct and 51 new (its family count column sums to 67 with three geometries shared with the record).
+  named OUTSIDE the closure identity (not solved, not fit): none
+  named a DUPLICATE of a node of record (not solved again, fit once under the record's name): tilt_R3.4_t180
+  branch (b) needs 52 of 64 — the freeze's literal (52 of 64, its 80 %); 80 % of the MEASURED total is 52, recorded beside it; C1 needs 52, 80 % of the measured total
+
+FIELD-9's wall, HELD [../conformance/water_observatory/field9/wall9.json]:
+  a = 9.480487358e2, b = 2.400000; a_oh = 2.258605363e1, b_oh = 2.200000; a_hh = 1.525046250e0, b_hh = 1.750000
+  r_min: O–O 4.724315, H–O 2.780741, H–H 1.314606 bohr; q_H 2.313803721151e-1 (wall9's record 2.313803721151e-1, difference 2.776e-17); kT 9.278758e-4
+CT-1's transfer term of record [../conformance/water_observatory/ct1/wall_ct.json]: P_CT = 1.474879878961e0, c_CT = 1.460000 /bohr (the freeze quotes 1.474879879, 1.46)
+
+G-D0 — `fci_full_from_product` is the stock solver's equal on the 13 exact nodes of record (bar 1e-8), its price beside the stock's:
+| node | E_full | E_record | miss | within | iters | residual | converged | core-s | stock core-s | stock iters |
+| linear_R2.3 | -1.500232727237e2 | -1.500232727238e2 | 5.303e-11 | true | 19 | 4.979e-9 | true | 1313 | 15518 | 199 |
+| linear_R2.5 | -1.500440761551e2 | -1.500440761551e2 | 3.513e-11 | true | 17 | 5.166e-9 | true | 1441 | 21849 | 219 |
+| linear_R2.7 | -1.500509029885e2 | -1.500509029886e2 | 7.077e-11 | true | 16 | 3.163e-9 | true | 1316 | 20062 | 181 |
+| linear_R2.9 | -1.500520630749e2 | -1.500520630749e2 | 3.521e-11 | true | 15 | 3.256e-9 | true | 1220 | 52739 | 193 |
+| linear_R3.1 | -1.500513400725e2 | -1.500513400725e2 | 2.672e-11 | true | 14 | 4.811e-9 | true | 1146 | 29888 | 208 |
+| linear_R3.4 | -1.500498005283e2 | -1.500498005283e2 | 1.387e-11 | true | 13 | 6.412e-9 | true | 1084 | 29720 | 223 |
+| linear_R3.7 | -1.500487244277e2 | -1.500487244277e2 | 2.578e-11 | true | 12 | 9.497e-9 | true | 1040 | 16557 | 205 |
+| tilted_R2.9 | -1.500527588999e2 | -1.500527588999e2 | 8.100e-12 | true | 16 | 3.076e-9 | true | 1966 | 17795 | 165 |
+| tilted45_R3.1 | -1.500520175811e2 | -1.500520175812e2 | 7.157e-11 | true | 15 | 4.263e-9 | true | 1781 | 23507 | 217 |
+| flipped_R3.4 | -1.500405742297e2 | -1.500405742298e2 | 6.483e-11 | true | 15 | 3.173e-9 | true | 1218 | 13176 | 177 |
+| twisted_R3.0 | -1.500460659065e2 | -1.500460659066e2 | 8.754e-11 | true | 15 | 4.942e-9 | true | 1749 | 24417 | 226 |
+| bentdonor_R2.9 | -1.500496143963e2 | -1.500496143964e2 | 8.203e-11 | true | 15 | 3.018e-9 | true | 1755 | 23660 | 235 |
+| twistbent_R3.2 | -1.500498973271e2 | -1.500498973271e2 | 3.499e-11 | true | 14 | 3.483e-9 | true | 1641 | 30472 | 222 |
+G-D0: PASS — 13 of 13 within 1e-8 with a converged exit and a residual at or under 1e-8 (13 records read)
+
+T0 — on every NEW node: residual ≤ 1e-8, exit Converged, dimension 194481 EXACT, E_exact ≤ E_noCT ≤ E_HL(undeformed) on TOTALS within 1e-10. The 13 of record are reported beside the gate (CT-1's T0 read them).
+| node | new | E_exact | E_noCT | E_HL(undef) | E_CT | order | dim | iters | residual | converged | core-s | priced |
+| linear_R2.3 | false | -1.500232727238e2 | -1.499831984921e2 | -1.499702209785e2 | -4.007423e-2 | true | 194481 | 14 | 7.816e-9 | true | 1389 | true |
+| linear_R2.5 | false | -1.500440761551e2 | -1.500176078769e2 | -1.500118480919e2 | -2.646828e-2 | true | 194481 | 13 | 8.937e-9 | true | 1479 | true |
+| linear_R2.7 | false | -1.500509029886e2 | -1.500346148606e2 | -1.500319555651e2 | -1.628813e-2 | true | 194481 | 13 | 5.415e-9 | true | 1594 | true |
+| linear_R2.9 | false | -1.500520630749e2 | -1.500427262950e2 | -1.500414148237e2 | -9.336780e-3 | true | 194481 | 13 | 3.223e-9 | true | 1640 | true |
+| linear_R3.1 | false | -1.500513400725e2 | -1.500463165623e2 | -1.500456123379e2 | -5.023510e-3 | true | 194481 | 12 | 9.647e-9 | true | 1545 | true |
+| linear_R3.4 | false | -1.500498005283e2 | -1.500480023898e2 | -1.500476791434e2 | -1.798139e-3 | true | 194481 | 12 | 6.689e-9 | true | 1568 | true |
+| linear_R3.7 | false | -1.500487244277e2 | -1.500481435335e2 | -1.500479729943e2 | -5.808942e-4 | true | 194481 | 12 | 3.970e-9 | true | 1632 | true |
+| tilted_R2.9 | false | -1.500527588999e2 | -1.500423332766e2 | -1.500410883889e2 | -1.042562e-2 | true | 194481 | 13 | 6.988e-9 | true | 2497 | true |
+| tilted45_R3.1 | false | -1.500520175812e2 | -1.500458024158e2 | -1.500452133826e2 | -6.215165e-3 | true | 194481 | 13 | 5.727e-9 | true | 2515 | true |
+| flipped_R3.4 | false | -1.500405742298e2 | -1.500367534987e2 | -1.500363756834e2 | -3.820731e-3 | true | 194481 | 12 | 7.293e-9 | true | 1616 | true |
+| twisted_R3.0 | false | -1.500460659066e2 | -1.500416226672e2 | -1.500409735675e2 | -4.443239e-3 | true | 194481 | 13 | 5.337e-9 | true | 2386 | true |
+| bentdonor_R2.9 | false | -1.500496143964e2 | -1.500450721236e2 | -1.500445382761e2 | -4.542273e-3 | true | 194481 | 13 | 5.285e-9 | true | 2346 | true |
+| twistbent_R3.2 | false | -1.500498973271e2 | -1.500473821621e2 | -1.500470126451e2 | -2.515165e-3 | true | 194481 | 13 | 3.427e-9 | true | 1820 | true |
+| tilt_R2.7_t30 | true | -1.500519985006e2 | -1.500339055526e2 | -1.500313132597e2 | -1.809295e-2 | true | 194481 | 14 | 2.902e-9 | true | 1720 | true |
+| tilt_R2.7_t60 | true | -1.500535318434e2 | -1.500319972449e2 | -1.500296851650e2 | -2.153460e-2 | true | 194481 | 14 | 2.893e-9 | true | 1719 | true |
+| tilt_R2.7_t90 | true | -1.500508593439e2 | -1.500280166401e2 | -1.500262410332e2 | -2.284270e-2 | true | 194481 | 13 | 9.820e-9 | true | 1623 | true |
+| tilt_R2.7_t120 | true | -1.500373139221e2 | -1.500165691544e2 | -1.500151140398e2 | -2.074477e-2 | true | 194481 | 14 | 2.987e-9 | true | 1719 | true |
+| tilt_R2.7_t150 | true | -1.500106770808e2 | -1.499911994579e2 | -1.499889764657e2 | -1.947762e-2 | true | 194481 | 14 | 6.917e-9 | true | 1727 | true |
+| tilt_R2.7_t180 | true | -1.499933080564e2 | -1.499727565607e2 | -1.499693789292e2 | -2.055150e-2 | true | 194481 | 14 | 4.906e-9 | true | 1732 | true |
+| tilt_R2.9_t60 | true | -1.500536663883e2 | -1.500411814526e2 | -1.500401477285e2 | -1.248494e-2 | true | 194481 | 13 | 7.256e-9 | true | 1564 | true |
+| tilt_R2.9_t90 | true | -1.500518262288e2 | -1.500386088919e2 | -1.500379069341e2 | -1.321734e-2 | true | 194481 | 13 | 6.035e-9 | true | 1596 | true |
+| tilt_R2.9_t120 | true | -1.500434963096e2 | -1.500314659017e2 | -1.500309626689e2 | -1.203041e-2 | true | 194481 | 13 | 5.492e-9 | true | 1561 | true |
+| tilt_R2.9_t150 | true | -1.500281413962e2 | -1.500162103767e2 | -1.500152840510e2 | -1.193102e-2 | true | 194481 | 14 | 3.193e-9 | true | 1757 | true |
+| tilt_R2.9_t180 | true | -1.500186121049e2 | -1.500053529735e2 | -1.500037732493e2 | -1.325913e-2 | true | 194481 | 13 | 6.275e-9 | true | 1611 | true |
+| tilt_R3.1_t30 | true | -1.500517222675e2 | -1.500460932530e2 | -1.500454410386e2 | -5.629014e-3 | true | 194481 | 13 | 5.937e-9 | true | 1613 | true |
+| tilt_R3.1_t60 | true | -1.500521254337e2 | -1.500453563751e2 | -1.500448523911e2 | -6.769059e-3 | true | 194481 | 13 | 5.286e-9 | true | 1565 | true |
+| tilt_R3.1_t90 | true | -1.500507794014e2 | -1.500436020940e2 | -1.500433040842e2 | -7.177307e-3 | true | 194481 | 13 | 3.915e-9 | true | 1566 | true |
+| tilt_R3.1_t120 | true | -1.500457137080e2 | -1.500390588954e2 | -1.500388731634e2 | -6.654813e-3 | true | 194481 | 13 | 2.856e-9 | true | 1569 | true |
+| tilt_R3.1_t150 | true | -1.500370084259e2 | -1.500299176514e2 | -1.500294750434e2 | -7.090774e-3 | true | 194481 | 13 | 5.879e-9 | true | 1538 | true |
+| tilt_R3.1_t180 | true | -1.500318205469e2 | -1.500235690595e2 | -1.500227571143e2 | -8.251487e-3 | true | 194481 | 13 | 3.852e-9 | true | 1570 | true |
+| tilt_R3.4_t30 | true | -1.500499104555e2 | -1.500478889892e2 | -1.500475976301e2 | -2.021466e-3 | true | 194481 | 13 | 3.940e-9 | true | 1530 | true |
+| tilt_R3.4_t60 | true | -1.500498878848e2 | -1.500474477758e2 | -1.500472414496e2 | -2.440109e-3 | true | 194481 | 13 | 3.357e-9 | true | 1544 | true |
+| tilt_R3.4_t90 | true | -1.500489615375e2 | -1.500463545791e2 | -1.500462533623e2 | -2.606958e-3 | true | 194481 | 12 | 7.907e-9 | true | 1431 | true |
+| tilt_R3.4_t120 | true | -1.500464618124e2 | -1.500439069659e2 | -1.500438477965e2 | -2.554847e-3 | true | 194481 | 12 | 5.158e-9 | true | 1448 | true |
+| tilt_R3.4_t150 | true | -1.500426925328e2 | -1.500395931732e2 | -1.500393882800e2 | -3.099360e-3 | true | 194481 | 13 | 2.678e-9 | true | 1567 | true |
+| twist_R2.7_t0 | true | -1.500510876835e2 | -1.500347965192e2 | -1.500321777063e2 | -1.629116e-2 | true | 194481 | 13 | 5.647e-9 | true | 1555 | true |
+| twist_R2.7_t30 | true | -1.500491702519e2 | -1.500344125839e2 | -1.500320629846e2 | -1.475767e-2 | true | 194481 | 13 | 8.899e-9 | true | 1561 | true |
+| twist_R2.7_t60 | true | -1.500396686424e2 | -1.500285970870e2 | -1.500267113895e2 | -1.107156e-2 | true | 194481 | 14 | 2.927e-9 | true | 1721 | true |
+| twist_R2.7_t90 | true | -1.500054079212e2 | -1.499933274084e2 | -1.499902785627e2 | -1.208051e-2 | true | 194481 | 15 | 3.407e-9 | true | 1828 | true |
+| twist_R2.7_t120 | true | -1.499077477605e2 | -1.498832118995e2 | -1.498683517656e2 | -2.453586e-2 | true | 194481 | 19 | 8.466e-9 | true | 2257 | true |
+| twist_R2.7_t180 | true | -1.499951141454e2 | -1.499738535855e2 | -1.499706584464e2 | -2.126056e-2 | true | 194481 | 15 | 3.422e-9 | true | 2028 | true |
+| twist_R3.0_t0 | true | -1.500519216219e2 | -1.500450215973e2 | -1.500440939678e2 | -6.900025e-3 | true | 194481 | 13 | 3.653e-9 | true | 1713 | true |
+| twist_R3.0_t30 | true | -1.500507833597e2 | -1.500446321224e2 | -1.500437996249e2 | -6.151237e-3 | true | 194481 | 13 | 5.045e-9 | true | 1674 | true |
+| twist_R3.0_t90 | true | -1.500312653007e2 | -1.500258993700e2 | -1.500247558895e2 | -5.365931e-3 | true | 194481 | 14 | 3.280e-9 | true | 1832 | true |
+| twist_R3.0_t120 | true | -1.500016138833e2 | -1.499873852201e2 | -1.499818479932e2 | -1.422866e-2 | true | 194481 | 16 | 3.840e-9 | true | 1999 | true |
+| twist_R3.0_t180 | true | -1.500269218700e2 | -1.500163072964e2 | -1.500153146127e2 | -1.061457e-2 | true | 194481 | 14 | 2.899e-9 | true | 1823 | true |
+| twist_R3.4_t0 | true | -1.500498669014e2 | -1.500480683767e2 | -1.500477569124e2 | -1.798525e-3 | true | 194481 | 12 | 8.089e-9 | true | 1607 | true |
+| twist_R3.4_t30 | true | -1.500493274505e2 | -1.500477467482e2 | -1.500474665192e2 | -1.580702e-3 | true | 194481 | 13 | 3.292e-9 | true | 1669 | true |
+| twist_R3.4_t60 | true | -1.500474755464e2 | -1.500463370089e2 | -1.500461151956e2 | -1.138537e-3 | true | 194481 | 12 | 8.672e-9 | true | 1572 | true |
+| twist_R3.4_t90 | true | -1.500427390616e2 | -1.500410103229e2 | -1.500405880743e2 | -1.728739e-3 | true | 194481 | 13 | 3.371e-9 | true | 1729 | true |
+| twist_R3.4_t120 | true | -1.500351596845e2 | -1.500296648558e2 | -1.500280527858e2 | -5.494829e-3 | true | 194481 | 13 | 9.297e-9 | true | 1740 | true |
+| twist_R3.4_t180 | true | -1.500407843702e2 | -1.500369716242e2 | -1.500366547019e2 | -3.812746e-3 | true | 194481 | 13 | 3.357e-9 | true | 1815 | true |
+| donor_R2.9_b15 | true | -1.500513162895e2 | -1.500435430273e2 | -1.500425093260e2 | -7.773262e-3 | true | 194481 | 13 | 6.156e-9 | true | 1759 | true |
+| donor_R2.9_b45 | true | -1.500479198580e2 | -1.500459561297e2 | -1.500457500487e2 | -1.963728e-3 | true | 194481 | 13 | 3.123e-9 | true | 1759 | true |
+| donor_R2.9_b60 | true | -1.500466655481e2 | -1.500459566640e2 | -1.500458812802e2 | -7.088841e-4 | true | 194481 | 12 | 5.772e-9 | true | 1596 | true |
+| donor_R2.9_b90 | true | -1.500452010237e2 | -1.500450370911e2 | -1.500449842962e2 | -1.639326e-4 | true | 194481 | 12 | 5.599e-9 | true | 1542 | true |
+| donor_R3.1_b15 | true | -1.500507280393e2 | -1.500465639963e2 | -1.500459942746e2 | -4.164043e-3 | true | 194481 | 13 | 4.906e-9 | true | 1617 | true |
+| donor_R3.1_b45 | true | -1.500479204248e2 | -1.500468859727e2 | -1.500467527051e2 | -1.034452e-3 | true | 194481 | 12 | 8.434e-9 | true | 1513 | true |
+| donor_R3.1_b60 | true | -1.500468402990e2 | -1.500464741698e2 | -1.500464217629e2 | -3.661292e-4 | true | 194481 | 12 | 4.583e-9 | true | 1523 | true |
+| donor_R3.1_b90 | true | -1.500455580893e2 | -1.500454847456e2 | -1.500454491189e2 | -7.334370e-5 | true | 194481 | 12 | 4.406e-9 | true | 1522 | true |
+| dbent_R2.9_d15_a60 | true | -1.500519262355e2 | -1.500413587274e2 | -1.500407121246e2 | -1.056751e-2 | true | 194481 | 13 | 5.991e-9 | true | 1570 | true |
+| dbent_R2.9_d45_a45 | true | -1.500473105893e2 | -1.500448208256e2 | -1.500447224625e2 | -2.489764e-3 | true | 194481 | 12 | 7.743e-9 | true | 1527 | true |
+| dbent_R2.9_d30_a90 | true | -1.500459212107e2 | -1.500400364422e2 | -1.500398954019e2 | -5.884768e-3 | true | 194481 | 13 | 2.974e-9 | true | 1607 | true |
+| twistbent_R3.0_tw90_t30_d20 | true | -1.500485342883e2 | -1.500446649141e2 | -1.500441649721e2 | -3.869374e-3 | true | 194481 | 13 | 3.909e-9 | true | 1581 | true |
+T0: PASS — 51 of 51 new nodes pass every leg
+M-CHEAPER-THAN-ITS-PRICE: every solve at or above a tenth of its own iteration count times 55 core-seconds: true
+
+A1 — the expectation of §1, written before any new solve: E_CT < −1e-6 at every node whose shortest cross-unit H···O is at or under 5 bohr; a node beyond that may read null, and reads it as a NULL, not a miss (M-NULL-MISSTAKE).
+A1: PASS — 60 of 60 nodes inside 5 bohr read attractive
+
+A1's tables — E_CT against the angle, family by family (the linear node at each separation is the tilt family's 0° row, marked of record):
+  E_CT against acceptor tilt at R_OO = 2.7 Å
+  | node | angle (deg) | R_OO (Å) | shortest H···O (bohr) | E_CT (Ha) | ΔE_exact (Ha) | of record |
+  | linear_R2.7 | 0 | 2.7 | 3.1587 | -1.628813e-2 | -4.319926e-3 | true |
+  | tilt_R2.7_t30 | 30 | 2.7 | 3.1587 | -1.809295e-2 | -5.415438e-3 | false |
+  | tilt_R2.7_t60 | 60 | 2.7 | 3.1587 | -2.153460e-2 | -6.948781e-3 | false |
+  | tilt_R2.7_t90 | 90 | 2.7 | 3.1587 | -2.284270e-2 | -4.276281e-3 | false |
+  | tilt_R2.7_t120 | 120 | 2.7 | 3.1587 | -2.074477e-2 | 9.269141e-3 | false |
+  | tilt_R2.7_t150 | 150 | 2.7 | 3.1587 | -1.947762e-2 | 3.590598e-2 | false |
+  | tilt_R2.7_t180 | 180 | 2.7 | 3.1587 | -2.055150e-2 | 5.327501e-2 | false |
+  E_CT against acceptor tilt at R_OO = 2.9 Å
+  | node | angle (deg) | R_OO (Å) | shortest H···O (bohr) | E_CT (Ha) | ΔE_exact (Ha) | of record |
+  | linear_R2.9 | 0 | 2.9 | 3.5366 | -9.336780e-3 | -5.480012e-3 | true |
+  | tilted_R2.9 | 30 | 2.9 | 3.5366 | -1.042562e-2 | -6.175837e-3 | true |
+  | tilt_R2.9_t60 | 60 | 2.9 | 3.5366 | -1.248494e-2 | -7.083326e-3 | false |
+  | tilt_R2.9_t90 | 90 | 2.9 | 3.5366 | -1.321734e-2 | -5.243166e-3 | false |
+  | tilt_R2.9_t120 | 120 | 2.9 | 3.5366 | -1.203041e-2 | 3.086753e-3 | false |
+  | tilt_R2.9_t150 | 150 | 2.9 | 3.5366 | -1.193102e-2 | 1.844167e-2 | false |
+  | tilt_R2.9_t180 | 180 | 2.9 | 3.5366 | -1.325913e-2 | 2.797096e-2 | false |
+  E_CT against acceptor tilt at R_OO = 3.1 Å
+  | node | angle (deg) | R_OO (Å) | shortest H···O (bohr) | E_CT (Ha) | ΔE_exact (Ha) | of record |
+  | linear_R3.1 | 0 | 3.1 | 3.9146 | -5.023510e-3 | -4.757010e-3 | true |
+  | tilt_R3.1_t30 | 30 | 3.1 | 3.9146 | -5.629014e-3 | -5.139205e-3 | false |
+  | tilted45_R3.1 | 45 | 3.1 | 3.9146 | -6.215165e-3 | -5.434519e-3 | true |
+  | tilt_R3.1_t60 | 60 | 3.1 | 3.9146 | -6.769059e-3 | -5.542371e-3 | false |
+  | tilt_R3.1_t90 | 90 | 3.1 | 3.9146 | -7.177307e-3 | -4.196339e-3 | false |
+  | tilt_R3.1_t120 | 120 | 3.1 | 3.9146 | -6.654813e-3 | 8.693546e-4 | false |
+  | tilt_R3.1_t150 | 150 | 3.1 | 3.9146 | -7.090774e-3 | 9.574637e-3 | false |
+  | tilt_R3.1_t180 | 180 | 3.1 | 3.9146 | -8.251487e-3 | 1.476252e-2 | false |
+  E_CT against acceptor tilt at R_OO = 3.4 Å
+  | node | angle (deg) | R_OO (Å) | shortest H···O (bohr) | E_CT (Ha) | ΔE_exact (Ha) | of record |
+  | linear_R3.4 | 0 | 3.4 | 4.4815 | -1.798139e-3 | -3.217466e-3 | true |
+  | tilt_R3.4_t30 | 30 | 3.4 | 4.4815 | -2.021466e-3 | -3.327393e-3 | false |
+  | tilt_R3.4_t60 | 60 | 3.4 | 4.4815 | -2.440109e-3 | -3.304822e-3 | false |
+  | tilt_R3.4_t90 | 90 | 3.4 | 4.4815 | -2.606958e-3 | -2.378475e-3 | false |
+  | tilt_R3.4_t120 | 120 | 3.4 | 4.4815 | -2.554847e-3 | 1.212501e-4 | false |
+  | tilt_R3.4_t150 | 150 | 3.4 | 4.4815 | -3.099360e-3 | 3.890530e-3 | false |
+  | flipped_R3.4 | 180 | 3.4 | 4.4815 | -3.820731e-3 | 6.008833e-3 | true |
+  E_CT against tilt after a 90° twist at R_OO = 2.7 Å
+  | node | angle (deg) | R_OO (Å) | shortest H···O (bohr) | E_CT (Ha) | ΔE_exact (Ha) | of record |
+  | twist_R2.7_t0 | 0 | 2.7 | 3.1587 | -1.629116e-2 | -4.504621e-3 | false |
+  | twist_R2.7_t30 | 30 | 2.7 | 3.1587 | -1.475767e-2 | -2.587189e-3 | false |
+  | twist_R2.7_t60 | 60 | 2.7 | 3.1587 | -1.107156e-2 | 6.914420e-3 | false |
+  | twist_R2.7_t90 | 90 | 2.7 | 3.1587 | -1.208051e-2 | 4.117514e-2 | false |
+  | twist_R2.7_t120 | 120 | 2.7 | 3.1587 | -2.453586e-2 | 1.388353e-1 | false |
+  | twist_R2.7_t180 | 180 | 2.7 | 3.1587 | -2.126056e-2 | 5.146892e-2 | false |
+  E_CT against tilt after a 90° twist at R_OO = 3.0 Å
+  | node | angle (deg) | R_OO (Å) | shortest H···O (bohr) | E_CT (Ha) | ΔE_exact (Ha) | of record |
+  | twist_R3.0_t0 | 0 | 3.0 | 3.7256 | -6.900025e-3 | -5.338559e-3 | false |
+  | twist_R3.0_t30 | 30 | 3.0 | 3.7256 | -6.151237e-3 | -4.200297e-3 | false |
+  | twisted_R3.0 | 60 | 3.0 | 3.7256 | -4.443239e-3 | 5.171560e-4 | true |
+  | twist_R3.0_t90 | 90 | 3.0 | 3.7256 | -5.365931e-3 | 1.531776e-2 | false |
+  | twist_R3.0_t120 | 120 | 3.0 | 3.7256 | -1.422866e-2 | 4.496918e-2 | false |
+  | twist_R3.0_t180 | 180 | 3.0 | 3.7256 | -1.061457e-2 | 1.966119e-2 | false |
+  E_CT against tilt after a 90° twist at R_OO = 3.4 Å
+  | node | angle (deg) | R_OO (Å) | shortest H···O (bohr) | E_CT (Ha) | ΔE_exact (Ha) | of record |
+  | twist_R3.4_t0 | 0 | 3.4 | 4.4815 | -1.798525e-3 | -3.283839e-3 | false |
+  | twist_R3.4_t30 | 30 | 3.4 | 4.4815 | -1.580702e-3 | -2.744388e-3 | false |
+  | twist_R3.4_t60 | 60 | 3.4 | 4.4815 | -1.138537e-3 | -8.924838e-4 | false |
+  | twist_R3.4_t90 | 90 | 3.4 | 4.4815 | -1.728739e-3 | 3.844001e-3 | false |
+  | twist_R3.4_t120 | 120 | 3.4 | 4.4815 | -5.494829e-3 | 1.142338e-2 | false |
+  | twist_R3.4_t180 | 180 | 3.4 | 4.4815 | -3.812746e-3 | 5.798692e-3 | false |
+  E_CT against donor bend at R_OO = 2.9 Å
+  | node | angle (deg) | R_OO (Å) | shortest H···O (bohr) | E_CT (Ha) | ΔE_exact (Ha) | of record |
+  | donor_R2.9_b15 | 15 | 2.9 | 3.6378 | -7.773262e-3 | -4.733227e-3 | false |
+  | bentdonor_R2.9 | 30 | 2.9 | 3.9194 | -4.542273e-3 | -3.031334e-3 | true |
+  | donor_R2.9_b45 | 45 | 2.9 | 4.3298 | -1.963728e-3 | -1.336795e-3 | false |
+  | donor_R2.9_b60 | 60 | 2.9 | 4.8124 | -7.088841e-4 | -8.248548e-5 | false |
+  | donor_R2.9_b90 | 90 | 2.9 | 5.8146 | -1.639326e-4 | 1.382039e-3 | false |
+  E_CT against donor bend at R_OO = 3.1 Å
+  | node | angle (deg) | R_OO (Å) | shortest H···O (bohr) | E_CT (Ha) | ΔE_exact (Ha) | of record |
+  | donor_R3.1_b15 | 15 | 3.1 | 4.0125 | -4.164043e-3 | -4.144977e-3 | false |
+  | donor_R3.1_b45 | 45 | 3.1 | 4.6897 | -1.034452e-3 | -1.337362e-3 | false |
+  | donor_R3.1_b60 | 60 | 3.1 | 5.1681 | -3.661292e-4 | -2.572364e-4 | false |
+  | donor_R3.1_b90 | 90 | 3.1 | 6.1721 | -7.334370e-5 | 1.024973e-3 | false |
+  E_CT on the doubly varied geometries
+  | node | angle (deg) | R_OO (Å) | shortest H···O (bohr) | E_CT (Ha) | ΔE_exact (Ha) | of record |
+  | dbent_R2.9_d15_a60 | 15 | 2.9 | 3.6378 | -1.056751e-2 | -5.343173e-3 | false |
+  | dbent_R2.9_d30_a90 | 30 | 2.9 | 3.9194 | -5.884768e-3 | 6.618519e-4 | false |
+  | dbent_R2.9_d45_a45 | 45 | 2.9 | 4.3298 | -2.489764e-3 | -7.275268e-4 | false |
+  | twistbent_R3.0_tw90_t30_d20 | 20 | 3.0 | 3.8999 | -3.869374e-3 | -1.951226e-3 | false |
+  | twistbent_R3.2 | 20 | 3.2 | 4.2728 | -2.515165e-3 | -3.314265e-3 | true |
+
+the transfer family (§0), fit on all 64 nodes: c on 0.50..=4.00 step 0.02 (176 values), m ∈ [0, 1, 2, 4], k ∈ [0, 1, 2, 4], λ ∈ [0.0, 30.0, 45.0, 55.0, 70.0]°, P by weighted least squares in closed form per grid point, weights 1/max(|ΔE_exact|, 5e-3)², P ≥ 0. 14080 grid points over 256 cross-unit H–O pairs; ties go to the first point in the order m, k, λ, c ascending.
+  P = 1.371043456e0 Ha (unclamped 1.371043456e0), c = 1.40 /bohr, m = 1, k = 0, λ = 0.0° (0.000000000 rad, IMMATERIAL at k = 0 — λ enters only through g_a), weighted residual 5.363062087e0 against Σw·E_CT² = 1.601826326e2, in 0.0 s → TRANSFERRED
+  grid edges (M-FIRST-VIOLATION-ONLY): m at its edge (4) false, k at its edge false, λ at an edge (0° or 70°) false (λ is not read: k = 0) → no parameter sits at a grid edge
+
+P1 — the family at m = k = 0 on CT-1's twelve: P = 1.474879878961e0 (CT-1's 1.474879879, difference 3.883e-11), c = 1.460000000000 (CT-1's 1.46, difference 0.000e0), bar 1e-9 → PASS; the record's own numbers are P = 1.474879878961e0, c = 1.460000 (differences 1.676e-13, 0.000e0)
+
+S1 — the angular term against the measured E_CT, tolerance max(0.25·|ΔE_exact|, 5e-4):
+| node | E_CT | CT fit | miss | tolerance | within |
+| linear_R2.3 | -4.007423e-2 | -4.783654e-2 | 7.762309e-3 | 5.827585e-3 | false |
+| linear_R2.5 | -2.646828e-2 | -2.820164e-2 | 1.733360e-3 | 6.267269e-4 | false |
+| linear_R2.7 | -1.628813e-2 | -1.662521e-2 | 3.370816e-4 | 1.079981e-3 | true |
+| linear_R2.9 | -9.336780e-3 | -9.800303e-3 | 4.635228e-4 | 1.370003e-3 | true |
+| linear_R3.1 | -5.023510e-3 | -5.776874e-3 | 7.533640e-4 | 1.189252e-3 | true |
+| linear_R3.4 | -1.798139e-3 | -2.614212e-3 | 8.160734e-4 | 8.043664e-4 | false |
+| linear_R3.7 | -5.808942e-4 | -1.182917e-3 | 6.020226e-4 | 5.353413e-4 | false |
+| tilted_R2.9 | -1.042562e-2 | -9.809473e-3 | 6.161501e-4 | 1.543959e-3 | true |
+| tilted45_R3.1 | -6.215165e-3 | -5.792260e-3 | 4.229053e-4 | 1.358630e-3 | true |
+| flipped_R3.4 | -3.820731e-3 | -3.731032e-3 | 8.969882e-5 | 1.502208e-3 | true |
+| twisted_R3.0 | -4.443239e-3 | -7.867123e-3 | 3.423884e-3 | 5.000000e-4 | false |
+| bentdonor_R2.9 | -4.542273e-3 | -4.973185e-3 | 4.309122e-4 | 7.578334e-4 | true |
+| twistbent_R3.2 | -2.515165e-3 | -3.294946e-3 | 7.797815e-4 | 8.285661e-4 | true |
+| tilt_R2.7_t30 | -1.809295e-2 | -1.663991e-2 | 1.453041e-3 | 1.353860e-3 | false |
+| tilt_R2.7_t60 | -2.153460e-2 | -1.671566e-2 | 4.818940e-3 | 1.737195e-3 | false |
+| tilt_R2.7_t90 | -2.284270e-2 | -1.702173e-2 | 5.820978e-3 | 1.069070e-3 | false |
+| tilt_R2.7_t120 | -2.074477e-2 | -1.812607e-2 | 2.618698e-3 | 2.317285e-3 | false |
+| tilt_R2.7_t150 | -1.947762e-2 | -2.075891e-2 | 1.281290e-3 | 8.976495e-3 | true |
+| tilt_R2.7_t180 | -2.055150e-2 | -2.274733e-2 | 2.195836e-3 | 1.331875e-2 | true |
+| tilt_R2.9_t60 | -1.248494e-2 | -9.856998e-3 | 2.627937e-3 | 1.770831e-3 | false |
+| tilt_R2.9_t90 | -1.321734e-2 | -1.005001e-2 | 3.167327e-3 | 1.310792e-3 | false |
+| tilt_R2.9_t120 | -1.203041e-2 | -1.074495e-2 | 1.285453e-3 | 7.716883e-4 | false |
+| tilt_R2.9_t150 | -1.193102e-2 | -1.238163e-2 | 4.506136e-4 | 4.610417e-3 | true |
+| tilt_R2.9_t180 | -1.325913e-2 | -1.360133e-2 | 3.421949e-4 | 6.992739e-3 | true |
+| tilt_R3.1_t30 | -5.629014e-3 | -5.782558e-3 | 1.535432e-4 | 1.284801e-3 | true |
+| tilt_R3.1_t60 | -6.769059e-3 | -5.812147e-3 | 9.569116e-4 | 1.385593e-3 | true |
+| tilt_R3.1_t90 | -7.177307e-3 | -5.932790e-3 | 1.244518e-3 | 1.049085e-3 | false |
+| tilt_R3.1_t120 | -6.654813e-3 | -6.365947e-3 | 2.888657e-4 | 5.000000e-4 | true |
+| tilt_R3.1_t150 | -7.090774e-3 | -7.374350e-3 | 2.835756e-4 | 2.393659e-3 | true |
+| tilt_R3.1_t180 | -8.251487e-3 | -8.116867e-3 | 1.346204e-4 | 3.690629e-3 | true |
+| tilt_R3.4_t30 | -2.021466e-3 | -2.616957e-3 | 5.954902e-4 | 8.318482e-4 | true |
+| tilt_R3.4_t60 | -2.440109e-3 | -2.631326e-3 | 1.912166e-4 | 8.262055e-4 | true |
+| tilt_R3.4_t90 | -2.606958e-3 | -2.690160e-3 | 8.320131e-5 | 5.946187e-4 | true |
+| tilt_R3.4_t120 | -2.554847e-3 | -2.900360e-3 | 3.455139e-4 | 5.000000e-4 | true |
+| tilt_R3.4_t150 | -3.099360e-3 | -3.381965e-3 | 2.826058e-4 | 9.726324e-4 | true |
+| twist_R2.7_t0 | -1.629116e-2 | -1.662521e-2 | 3.340453e-4 | 1.126155e-3 | true |
+| twist_R2.7_t30 | -1.475767e-2 | -1.669762e-2 | 1.939948e-3 | 6.467973e-4 | false |
+| twist_R2.7_t60 | -1.107156e-2 | -1.731361e-2 | 6.242053e-3 | 1.728605e-3 | false |
+| twist_R2.7_t90 | -1.208051e-2 | -2.111166e-2 | 9.031148e-3 | 1.029379e-2 | true |
+| twist_R2.7_t120 | -2.453586e-2 | -3.132692e-2 | 6.791063e-3 | 3.470883e-2 | true |
+| twist_R2.7_t180 | -2.126056e-2 | -2.274733e-2 | 1.486771e-3 | 1.286723e-2 | true |
+| twist_R3.0_t0 | -6.900025e-3 | -7.524341e-3 | 6.243165e-4 | 1.334640e-3 | true |
+| twist_R3.0_t30 | -6.151237e-3 | -7.560399e-3 | 1.409161e-3 | 1.050074e-3 | false |
+| twist_R3.0_t90 | -5.365931e-3 | -9.687992e-3 | 4.322061e-3 | 3.829440e-3 | false |
+| twist_R3.0_t120 | -1.422866e-2 | -1.422634e-2 | 2.327116e-6 | 1.124229e-2 | true |
+| twist_R3.0_t180 | -1.061457e-2 | -1.050946e-2 | 1.051140e-4 | 4.915298e-3 | true |
+| twist_R3.4_t0 | -1.798525e-3 | -2.614212e-3 | 8.156872e-4 | 8.209597e-4 | true |
+| twist_R3.4_t30 | -1.580702e-3 | -2.628083e-3 | 1.047381e-3 | 6.860970e-4 | false |
+| twist_R3.4_t60 | -1.138537e-3 | -2.745683e-3 | 1.607145e-3 | 5.000000e-4 | false |
+| twist_R3.4_t90 | -1.728739e-3 | -3.414141e-3 | 1.685402e-3 | 9.610002e-4 | false |
+| twist_R3.4_t120 | -5.494829e-3 | -4.957948e-3 | 5.368810e-4 | 2.855845e-3 | true |
+| twist_R3.4_t180 | -3.812746e-3 | -3.731032e-3 | 8.171372e-5 | 1.449673e-3 | true |
+| donor_R2.9_b15 | -7.773262e-3 | -8.187541e-3 | 4.142783e-4 | 1.183307e-3 | true |
+| donor_R2.9_b45 | -1.963728e-3 | -2.423329e-3 | 4.596004e-4 | 5.000000e-4 | true |
+| donor_R2.9_b60 | -7.088841e-4 | -1.070030e-3 | 3.611455e-4 | 5.000000e-4 | true |
+| donor_R2.9_b90 | -1.639326e-4 | -2.824158e-4 | 1.184832e-4 | 5.000000e-4 | true |
+| donor_R3.1_b15 | -4.164043e-3 | -4.861258e-3 | 6.972154e-4 | 1.036244e-3 | true |
+| donor_R3.1_b45 | -1.034452e-3 | -1.488083e-3 | 4.536314e-4 | 5.000000e-4 | true |
+| donor_R3.1_b60 | -3.661292e-4 | -6.645011e-4 | 2.983719e-4 | 5.000000e-4 | true |
+| donor_R3.1_b90 | -7.334370e-5 | -1.760531e-4 | 1.027094e-4 | 5.000000e-4 | true |
+| dbent_R2.9_d15_a60 | -1.056751e-2 | -8.244236e-3 | 2.323272e-3 | 1.335793e-3 | false |
+| dbent_R2.9_d45_a45 | -2.489764e-3 | -2.448112e-3 | 4.165213e-5 | 5.000000e-4 | true |
+| dbent_R2.9_d30_a90 | -5.884768e-3 | -5.222892e-3 | 6.618767e-4 | 5.000000e-4 | false |
+| twistbent_R3.0_tw90_t30_d20 | -3.869374e-3 | -5.564446e-3 | 1.695071e-3 | 5.000000e-4 | false |
+S1: 41 of 64 within tolerance (branch (b) needs 52) → branch (c); misses: linear_R2.3, linear_R2.5, linear_R3.4, linear_R3.7, twisted_R3.0, tilt_R2.7_t30, tilt_R2.7_t60, tilt_R2.7_t90, tilt_R2.7_t120, tilt_R2.9_t60, tilt_R2.9_t90, tilt_R2.9_t120, tilt_R3.1_t90, twist_R2.7_t30, twist_R2.7_t60, twist_R3.0_t30, twist_R3.0_t90, twist_R3.4_t30, twist_R3.4_t60, twist_R3.4_t90, dbent_R2.9_d15_a60, dbent_R2.9_d30_a90, twistbent_R3.0_tw90_t30_d20
+  the twisted dimer of record (twisted_R3.0, CT-1's 60 % miss): measured E_CT -4.443239e-3, fit miss 3.423884e-3 against 5.000000e-4 → MISS
+  the bar is the freeze's literal 52 of 64; 80 % of the measured total (52 of 64) is recorded beside it, never in place of it
+
+every one of the 64 nodes is served with TWO units by the engine — the contact fit may use them
+the remainder: ΔE_exact − [E_q(g) − E_q(40)]_engine − wall9(g) − CT(g), with the angular transfer term held:
+  linear_R2.3 (the linear dimer at 2.3 Å): ΔE_exact 2.331034e-2, E_q diff -9.664231e-3, wall9 1.458036e-1, CT -4.783654e-2 → remainder -6.499245e-2 Ha (-2.7881 of |ΔE_exact|)
+  linear_R2.5 (the linear dimer at 2.5 Å): ΔE_exact 2.506907e-3, E_q diff -7.071489e-3, wall9 6.291719e-2, CT -2.820164e-2 → remainder -2.513715e-2 Ha (-10.0272 of |ΔE_exact|)
+  linear_R2.7 (the linear dimer at 2.7 Å): ΔE_exact -4.319926e-3, E_q diff -5.339515e-3, wall9 2.720149e-2, CT -1.662521e-2 → remainder -9.556687e-3 Ha (-2.2122 of |ΔE_exact|)
+  linear_R2.9 (the linear dimer at 2.9 Å): ΔE_exact -5.480012e-3, E_q diff -4.135871e-3, wall9 1.178433e-2, CT -9.800303e-3 → remainder -3.328170e-3 Ha (-0.6073 of |ΔE_exact|)
+  linear_R3.1 (the linear dimer at 3.1 Å): ΔE_exact -4.757010e-3, E_q diff -3.272031e-3, wall9 5.116662e-3, CT -5.776874e-3 → remainder -8.247669e-4 Ha (-0.1734 of |ΔE_exact|)
+  linear_R3.4 (the linear dimer at 3.4 Å): ΔE_exact -3.217466e-3, E_q diff -2.378843e-3, wall9 1.470757e-3, CT -2.614212e-3 → remainder 3.048323e-4 Ha (0.0947 of |ΔE_exact|)
+  linear_R3.7 (the linear dimer at 3.7 Å): ΔE_exact -2.141365e-3, E_q diff -1.785760e-3, wall9 4.254897e-4, CT -1.182917e-3 → remainder 4.018225e-4 Ha (0.1876 of |ΔE_exact|)
+  tilted_R2.9 (bent acceptor 30°): ΔE_exact -6.175837e-3, E_q diff -3.962014e-3, wall9 1.189847e-2, CT -9.809473e-3 → remainder -4.302823e-3 Ha (-0.6967 of |ΔE_exact|)
+  tilted45_R3.1 (bent acceptor 45°): ΔE_exact -5.434519e-3, E_q diff -2.919047e-3, wall9 5.276197e-3, CT -5.792260e-3 → remainder -1.999409e-3 Ha (-0.3679 of |ΔE_exact|)
+  flipped_R3.4 (flipped acceptor 180°): ΔE_exact 6.008833e-3, E_q diff 2.777793e-3, wall9 8.487746e-3, CT -3.731032e-3 → remainder -1.525674e-3 Ha (-0.2539 of |ΔE_exact|)
+  twisted_R3.0 (twisted 90° + tilted 60°): ΔE_exact 5.171560e-4, E_q diff -2.255175e-3, wall9 1.042614e-2, CT -7.867123e-3 → remainder 2.133180e-4 Ha (0.4125 of |ΔE_exact|)
+  bentdonor_R2.9 (bent donor 30°): ΔE_exact -3.031334e-3, E_q diff -2.541073e-3, wall9 6.215684e-3, CT -4.973185e-3 → remainder -1.732760e-3 Ha (-0.5716 of |ΔE_exact|)
+  twistbent_R3.2 (twisted 90° + bent donor 20° (CT-1's S2 node)): ΔE_exact -3.314265e-3, E_q diff -2.429034e-3, wall9 2.497658e-3, CT -3.294946e-3 → remainder -8.794274e-5 Ha (-0.0265 of |ΔE_exact|)
+  tilt_R2.7_t30 (acceptor tilted 30° at 2.7 Å): ΔE_exact -5.415438e-3, E_q diff -5.141307e-3, wall9 2.740888e-2, CT -1.663991e-2 → remainder -1.104311e-2 Ha (-2.0392 of |ΔE_exact|)
+  tilt_R2.7_t60 (acceptor tilted 60° at 2.7 Å): ΔE_exact -6.948781e-3, E_q diff -4.481375e-3, wall9 2.831892e-2, CT -1.671566e-2 → remainder -1.407067e-2 Ha (-2.0249 of |ΔE_exact|)
+  tilt_R2.7_t90 (acceptor tilted 90° at 2.7 Å): ΔE_exact -4.276281e-3, E_q diff -3.132970e-3, wall9 3.133847e-2, CT -1.702173e-2 → remainder -1.546006e-2 Ha (-3.6153 of |ΔE_exact|)
+  tilt_R2.7_t120 (acceptor tilted 120° at 2.7 Å): ΔE_exact 9.269141e-3, E_q diff -6.742243e-4, wall9 4.099268e-2, CT -1.812607e-2 → remainder -1.292325e-2 Ha (-1.3942 of |ΔE_exact|)
+  tilt_R2.7_t150 (acceptor tilted 150° at 2.7 Å): ΔE_exact 3.590598e-2, E_q diff 2.980103e-3, wall9 6.384218e-2, CT -2.075891e-2 → remainder -1.015739e-2 Ha (-0.2829 of |ΔE_exact|)
+  tilt_R2.7_t180 (acceptor tilted 180° at 2.7 Å): ΔE_exact 5.327501e-2, E_q diff 5.256095e-3, wall9 8.193778e-2, CT -2.274733e-2 → remainder -1.117153e-2 Ha (-0.2097 of |ΔE_exact|)
+  tilt_R2.9_t60 (acceptor tilted 60° at 2.9 Å): ΔE_exact -7.083326e-3, E_q diff -3.386382e-3, wall9 1.240544e-2, CT -9.856998e-3 → remainder -6.245384e-3 Ha (-0.8817 of |ΔE_exact|)
+  tilt_R2.9_t90 (acceptor tilted 90° at 2.9 Å): ΔE_exact -5.243166e-3, E_q diff -2.227260e-3, wall9 1.411802e-2, CT -1.005001e-2 → remainder -7.083913e-3 Ha (-1.3511 of |ΔE_exact|)
+  tilt_R2.9_t120 (acceptor tilted 120° at 2.9 Å): ΔE_exact 3.086753e-3, E_q diff -1.771550e-4, wall9 1.966047e-2, CT -1.074495e-2 → remainder -5.651604e-3 Ha (-1.8309 of |ΔE_exact|)
+  tilt_R2.9_t150 (acceptor tilted 150° at 2.9 Å): ΔE_exact 1.844167e-2, E_q diff 2.719880e-3, wall9 3.272824e-2, CT -1.238163e-2 → remainder -4.624820e-3 Ha (-0.2508 of |ΔE_exact|)
+  tilt_R2.9_t180 (acceptor tilted 180° at 2.9 Å): ΔE_exact 2.797096e-2, E_q diff 4.439427e-3, wall9 4.294458e-2, CT -1.360133e-2 → remainder -5.811728e-3 Ha (-0.2078 of |ΔE_exact|)
+  tilt_R3.1_t30 (acceptor tilted 30° at 3.1 Å): ΔE_exact -5.139205e-3, E_q diff -3.119671e-3, wall9 5.178870e-3, CT -5.782558e-3 → remainder -1.415847e-3 Ha (-0.2755 of |ΔE_exact|)
+  tilt_R3.1_t60 (acceptor tilted 60° at 3.1 Å): ΔE_exact -5.542371e-3, E_q diff -2.618330e-3, wall9 5.457981e-3, CT -5.812147e-3 → remainder -2.569875e-3 Ha (-0.4637 of |ΔE_exact|)
+  tilt_R3.1_t90 (acceptor tilted 90° at 3.1 Å): ΔE_exact -4.196339e-3, E_q diff -1.624286e-3, wall9 6.414409e-3, CT -5.932790e-3 → remainder -3.053672e-3 Ha (-0.7277 of |ΔE_exact|)
+  tilt_R3.1_t120 (acceptor tilted 120° at 3.1 Å): ΔE_exact 8.693546e-4, E_q diff 8.120459e-5, wall9 9.534408e-3, CT -6.365947e-3 → remainder -2.380311e-3 Ha (-2.7380 of |ΔE_exact|)
+  tilt_R3.1_t150 (acceptor tilted 150° at 3.1 Å): ΔE_exact 9.574637e-3, E_q diff 2.379827e-3, wall9 1.684033e-2, CT -7.374350e-3 → remainder -2.271174e-3 Ha (-0.2372 of |ΔE_exact|)
+  tilt_R3.1_t180 (acceptor tilted 180° at 3.1 Å): ΔE_exact 1.476252e-2, E_q diff 3.686516e-3, wall9 2.247428e-2, CT -8.116867e-3 → remainder -3.281411e-3 Ha (-0.2223 of |ΔE_exact|)
+  tilt_R3.4_t30 (acceptor tilted 30° at 3.4 Å): ΔE_exact -3.327393e-3, E_q diff -2.253522e-3, wall9 1.495441e-3, CT -2.616957e-3 → remainder 4.764475e-5 Ha (0.0143 of |ΔE_exact|)
+  tilt_R3.4_t60 (acceptor tilted 60° at 3.4 Å): ΔE_exact -3.304822e-3, E_q diff -1.845104e-3, wall9 1.607559e-3, CT -2.631326e-3 → remainder -4.359516e-4 Ha (-0.1319 of |ΔE_exact|)
+  tilt_R3.4_t90 (acceptor tilted 90° at 3.4 Å): ΔE_exact -2.378475e-3, E_q diff -1.053763e-3, wall9 1.998107e-3, CT -2.690160e-3 → remainder -6.326595e-4 Ha (-0.2660 of |ΔE_exact|)
+  tilt_R3.4_t120 (acceptor tilted 120° at 3.4 Å): ΔE_exact 1.212501e-4, E_q diff 2.468022e-4, wall9 3.280701e-3, CT -2.900360e-3 → remainder -5.058924e-4 Ha (-4.1723 of |ΔE_exact|)
+  tilt_R3.4_t150 (acceptor tilted 150° at 3.4 Å): ΔE_exact 3.890530e-3, E_q diff 1.892413e-3, wall9 6.245954e-3, CT -3.381965e-3 → remainder -8.658723e-4 Ha (-0.2226 of |ΔE_exact|)
+  twist_R2.7_t0 (acceptor twisted 90° then tilted 0° at 2.7 Å): ΔE_exact -4.504621e-3, E_q diff -5.411884e-3, wall9 2.719776e-2, CT -1.662521e-2 → remainder -9.665285e-3 Ha (-2.1456 of |ΔE_exact|)
+  twist_R2.7_t30 (acceptor twisted 90° then tilted 30° at 2.7 Å): ΔE_exact -2.587189e-3, E_q diff -5.036761e-3, wall9 2.795774e-2, CT -1.669762e-2 → remainder -8.810552e-3 Ha (-3.4055 of |ΔE_exact|)
+  twist_R2.7_t60 (acceptor twisted 90° then tilted 60° at 2.7 Å): ΔE_exact 6.914420e-3, E_q diff -3.544080e-3, wall9 3.339193e-2, CT -1.731361e-2 → remainder -5.619817e-3 Ha (-0.8128 of |ΔE_exact|)
+  twist_R2.7_t90 (acceptor twisted 90° then tilted 90° at 2.7 Å): ΔE_exact 4.117514e-2, E_q diff 1.017505e-3, wall9 6.785836e-2, CT -2.111166e-2 → remainder -6.589063e-3 Ha (-0.1600 of |ΔE_exact|)
+  twist_R2.7_t120 (acceptor twisted 90° then tilted 120° at 2.7 Å): ΔE_exact 1.388353e-1, E_q diff 1.336818e-2, wall9 2.005170e-1, CT -3.132692e-2 → remainder -4.372290e-2 Ha (-0.3149 of |ΔE_exact|)
+  twist_R2.7_t180 (acceptor twisted 90° then tilted 180° at 2.7 Å): ΔE_exact 5.146892e-2, E_q diff 4.683542e-3, wall9 8.135933e-2, CT -2.274733e-2 → remainder -1.182662e-2 Ha (-0.2298 of |ΔE_exact|)
+  twist_R3.0_t0 (acceptor twisted 90° then tilted 0° at 3.0 Å): ΔE_exact -5.338559e-3, E_q diff -3.719605e-3, wall9 7.761568e-3, CT -7.524341e-3 → remainder -1.856181e-3 Ha (-0.3477 of |ΔE_exact|)
+  twist_R3.0_t30 (acceptor twisted 90° then tilted 30° at 3.0 Å): ΔE_exact -4.200297e-3, E_q diff -3.415937e-3, wall9 8.081539e-3, CT -7.560399e-3 → remainder -1.305501e-3 Ha (-0.3108 of |ΔE_exact|)
+  twist_R3.0_t90 (acceptor twisted 90° then tilted 90° at 3.0 Å): ΔE_exact 1.531776e-2, E_q diff 8.392704e-4, wall9 2.491210e-2, CT -9.687992e-3 → remainder -7.456204e-4 Ha (-0.0487 of |ΔE_exact|)
+  twist_R3.0_t120 (acceptor twisted 90° then tilted 120° at 3.0 Å): ΔE_exact 4.496918e-2, E_q diff 6.859811e-3, wall9 7.240525e-2, CT -1.422634e-2 → remainder -2.006954e-2 Ha (-0.4463 of |ΔE_exact|)
+  twist_R3.0_t180 (acceptor twisted 90° then tilted 180° at 3.0 Å): ΔE_exact 1.966119e-2, E_q diff 3.708211e-3, wall9 3.088249e-2, CT -1.050946e-2 → remainder -4.420054e-3 Ha (-0.2248 of |ΔE_exact|)
+  twist_R3.4_t0 (acceptor twisted 90° then tilted 0° at 3.4 Å): ΔE_exact -3.283839e-3, E_q diff -2.410102e-3, wall9 1.470468e-3, CT -2.614212e-3 → remainder 2.700075e-4 Ha (0.0822 of |ΔE_exact|)
+  twist_R3.4_t30 (acceptor twisted 90° then tilted 30° at 3.4 Å): ΔE_exact -2.744388e-3, E_q diff -2.182515e-3, wall9 1.567253e-3, CT -2.628083e-3 → remainder 4.989567e-4 Ha (0.1818 of |ΔE_exact|)
+  twist_R3.4_t60 (acceptor twisted 90° then tilted 60° at 3.4 Å): ΔE_exact -8.924838e-4, E_q diff -1.355375e-3, wall9 2.289331e-3, CT -2.745683e-3 → remainder 9.192430e-4 Ha (1.0300 of |ΔE_exact|)
+  twist_R3.4_t90 (acceptor twisted 90° then tilted 90° at 3.4 Å): ΔE_exact 3.844001e-3, E_q diff 5.519471e-4, wall9 6.563893e-3, CT -3.414141e-3 → remainder 1.423021e-4 Ha (0.0370 of |ΔE_exact|)
+  twist_R3.4_t120 (acceptor twisted 90° then tilted 120° at 3.4 Å): ΔE_exact 1.142338e-2, E_q diff 3.414884e-3, wall9 1.863758e-2, CT -4.957948e-3 → remainder -5.671135e-3 Ha (-0.4964 of |ΔE_exact|)
+  twist_R3.4_t180 (acceptor twisted 90° then tilted 180° at 3.4 Å): ΔE_exact 5.798692e-3, E_q diff 2.595769e-3, wall9 8.444485e-3, CT -3.731032e-3 → remainder -1.510530e-3 Ha (-0.2605 of |ΔE_exact|)
+  donor_R2.9_b15 (donor bent 15° at 2.9 Å): ΔE_exact -4.733227e-3, E_q diff -3.665536e-3, wall9 9.837906e-3, CT -8.187541e-3 → remainder -2.718056e-3 Ha (-0.5743 of |ΔE_exact|)
+  donor_R2.9_b45 (donor bent 45° at 2.9 Å): ΔE_exact -1.336795e-3, E_q diff -1.282364e-3, wall9 3.682727e-3, CT -2.423329e-3 → remainder -1.313831e-3 Ha (-0.9828 of |ΔE_exact|)
+  donor_R2.9_b60 (donor bent 60° at 2.9 Å): ΔE_exact -8.248548e-5, E_q diff -2.093048e-4, wall9 2.539331e-3, CT -1.070030e-3 → remainder -1.342482e-3 Ha (-16.2754 of |ΔE_exact|)
+  donor_R2.9_b90 (donor bent 90° at 2.9 Å): ΔE_exact 1.382039e-3, E_q diff 1.164942e-3, wall9 2.000020e-3, CT -2.824158e-4 → remainder -1.500508e-3 Ha (-1.0857 of |ΔE_exact|)
+  donor_R3.1_b15 (donor bent 15° at 3.1 Å): ΔE_exact -4.144977e-3, E_q diff -2.924023e-3, wall9 4.287483e-3, CT -4.861258e-3 → remainder -6.471791e-4 Ha (-0.1561 of |ΔE_exact|)
+  donor_R3.1_b45 (donor bent 45° at 3.1 Å): ΔE_exact -1.337362e-3, E_q diff -1.092345e-3, wall9 1.589009e-3, CT -1.488083e-3 → remainder -3.459424e-4 Ha (-0.2587 of |ΔE_exact|)
+  donor_R3.1_b60 (donor bent 60° at 3.1 Å): ΔE_exact -2.572364e-4, E_q diff -2.270353e-4, wall9 1.067682e-3, CT -6.645011e-4 → remainder -4.333820e-4 Ha (-1.6848 of |ΔE_exact|)
+  donor_R3.1_b90 (donor bent 90° at 3.1 Å): ΔE_exact 1.024973e-3, E_q diff 9.237532e-4, wall9 8.173130e-4, CT -1.760531e-4 → remainder -5.400398e-4 Ha (-0.5269 of |ΔE_exact|)
+  dbent_R2.9_d15_a60 (donor bent 15° and acceptor tilted 60° at 2.9 Å): ΔE_exact -5.343173e-3, E_q diff -2.394000e-3, wall9 1.058722e-2, CT -8.244236e-3 → remainder -5.292152e-3 Ha (-0.9905 of |ΔE_exact|)
+  dbent_R2.9_d45_a45 (donor bent 45° and acceptor tilted 45° at 2.9 Å): ΔE_exact -7.275268e-4, E_q diff -3.221253e-4, wall9 3.885598e-3, CT -2.448112e-3 → remainder -1.842888e-3 Ha (-2.5331 of |ΔE_exact|)
+  dbent_R2.9_d30_a90 (donor bent 30° and acceptor tilted 90° at 2.9 Å): ΔE_exact 6.618519e-4, E_q diff 3.772273e-4, wall9 8.562718e-3, CT -5.222892e-3 → remainder -3.055202e-3 Ha (-4.6161 of |ΔE_exact|)
+  twistbent_R3.0_tw90_t30_d20 (acceptor twisted 90° then tilted 30°, donor bent 20°, at 3.0 Å): ΔE_exact -1.951226e-3, E_q diff -2.199516e-3, wall9 6.203936e-3, CT -5.564446e-3 → remainder -3.912005e-4 Ha (-0.2005 of |ΔE_exact|)
+
+the two-class contact fit UNDER the gate: 30976 exponent pairs on 0.50..=4.00 step 0.02 per class, weights 1/max(|ΔE_exact|, 5e-3)², each amplitude CLAMPED at the largest value `SeamModel::bounded(q_H, r_min, kT)` admits (bisection on [0, P_ls] to 1e-6 relative, the two classes iterated to a fixed point, at most 20 rounds).
+  held inside the clamp: FIELD-9's wall; the transfer term at its LINEAR value (m = k = 0 inside `bounded`, which is what the engine's own `bounded` reads); the dispersion at an exact 0 — FIELD-6's rule fits C₆ AFTER both contacts, so it is not yet a coefficient of the law when the clamp runs, and G-B0 below is RUN on the full law with C₆ in.
+  CONSTRAINED: P_HO = 2.217404417e1 Ha, c_HO = 2.44 /bohr (clamped false); P_HH = 1.697141511e-2 Ha, c_HH = 1.02 /bohr (clamped false); 1 round(s) to the fixed point; weighted residual 3.955278368e0
+  UNCONSTRAINED (recorded beside it, NEVER the law): P_HO = 2.480943951e1, c_HO = 2.48 (kept true); P_HH = 1.506788189e-2, c_HH = 0.96 (kept true); weighted residual 3.946390253e0
+  the price of the clamp: constrained/unconstrained residual ratio 1.002252 — at or under 2: the gate costs the fit little
+  grid edges: c_HO at an edge false, c_HH at an edge false; 14958 of 30976 grid points had at least one amplitude clamped, 3004389 boundedness walks in 4.0 s
+
+C1 — the constrained contact fit against the remainder, tolerance max(0.25·|ΔE_exact|, 5e-4):
+  linear_R2.3: remainder -6.499245e-2, fit -6.384790e-2, miss 1.144550e-3 (0.1964 of its tolerance 5.828e-3) → within
+  linear_R2.5: remainder -2.513715e-2, fit -2.558726e-2, miss 4.501048e-4 (0.7182 of its tolerance 6.267e-4) → within
+  linear_R2.7: remainder -9.556687e-3, fit -1.031044e-2, miss 7.537499e-4 (0.6979 of its tolerance 1.080e-3) → within
+  linear_R2.9: remainder -3.328170e-3, fit -4.193032e-3, miss 8.648623e-4 (0.6313 of its tolerance 1.370e-3) → within
+  linear_R3.1: remainder -8.247669e-4, fit -1.731269e-3, miss 9.065023e-4 (0.7622 of its tolerance 1.189e-3) → within
+  linear_R3.4: remainder 3.048323e-4, fit -4.824250e-4, miss 7.872573e-4 (0.9787 of its tolerance 8.044e-4) → within
+  linear_R3.7: remainder 4.018225e-4, fit -1.484064e-4, miss 5.502289e-4 (1.0278 of its tolerance 5.353e-4) → MISS
+  tilted_R2.9: remainder -4.302823e-3, fit -4.223241e-3, miss 7.958150e-5 (0.0515 of its tolerance 1.544e-3) → within
+  tilted45_R3.1: remainder -1.999409e-3, fit -1.782633e-3, miss 2.167753e-4 (0.1596 of its tolerance 1.359e-3) → within
+  flipped_R3.4: remainder -1.525674e-3, fit -1.540944e-3, miss 1.527006e-5 (0.0102 of its tolerance 1.502e-3) → within
+  twisted_R3.0: remainder 2.133180e-4, fit -3.072098e-3, miss 3.285416e-3 (6.5708 of its tolerance 5.000e-4) → MISS
+  bentdonor_R2.9: remainder -1.732760e-3, fit -1.730065e-3, miss 2.695201e-6 (0.0036 of its tolerance 7.578e-4) → within
+  twistbent_R3.2: remainder -8.794274e-5, fit -7.703323e-4, miss 6.823896e-4 (0.8236 of its tolerance 8.286e-4) → within
+  tilt_R2.7_t30: remainder -1.104311e-2, fit -1.035329e-2, miss 6.898150e-4 (0.5095 of its tolerance 1.354e-3) → within
+  tilt_R2.7_t60: remainder -1.407067e-2, fit -1.051371e-2, miss 3.556952e-3 (2.0475 of its tolerance 1.737e-3) → MISS
+  tilt_R2.7_t90: remainder -1.546006e-2, fit -1.092131e-2, miss 4.538744e-3 (4.2455 of its tolerance 1.069e-3) → MISS
+  tilt_R2.7_t120: remainder -1.292325e-2, fit -1.192270e-2, miss 1.000549e-3 (0.4318 of its tolerance 2.317e-3) → within
+  tilt_R2.7_t150: remainder -1.015739e-2, fit -1.395804e-2, miss 3.800650e-3 (0.4234 of its tolerance 8.976e-3) → within
+  tilt_R2.7_t180: remainder -1.117153e-2, fit -1.548593e-2, miss 4.314399e-3 (0.3239 of its tolerance 1.332e-2) → within
+  tilt_R2.9_t60: remainder -6.245384e-3, fit -4.335982e-3, miss 1.909403e-3 (1.0783 of its tolerance 1.771e-3) → MISS
+  tilt_R2.9_t90: remainder -7.083913e-3, fit -4.617002e-3, miss 2.466911e-3 (1.8820 of its tolerance 1.311e-3) → MISS
+  tilt_R2.9_t120: remainder -5.651604e-3, fit -5.268186e-3, miss 3.834172e-4 (0.4969 of its tolerance 7.717e-4) → within
+  tilt_R2.9_t150: remainder -4.624820e-3, fit -6.473928e-3, miss 1.849108e-3 (0.4011 of its tolerance 4.610e-3) → within
+  tilt_R2.9_t180: remainder -5.811728e-3, fit -7.319125e-3, miss 1.507397e-3 (0.2156 of its tolerance 6.993e-3) → within
+  tilt_R3.1_t30: remainder -1.415847e-3, fit -1.752551e-3, miss 3.367039e-4 (0.2621 of its tolerance 1.285e-3) → within
+  tilt_R3.1_t60: remainder -2.569875e-3, fit -1.831937e-3, miss 7.379373e-4 (0.5326 of its tolerance 1.386e-3) → within
+  tilt_R3.1_t90: remainder -3.053672e-3, fit -2.027755e-3, miss 1.025918e-3 (0.9779 of its tolerance 1.049e-3) → within
+  tilt_R3.1_t120: remainder -2.380311e-3, fit -2.463890e-3, miss 8.357886e-5 (0.1672 of its tolerance 5.000e-4) → within
+  tilt_R3.1_t150: remainder -2.271174e-3, fit -3.214621e-3, miss 9.434469e-4 (0.3941 of its tolerance 2.394e-3) → within
+  tilt_R3.1_t180: remainder -3.281411e-3, fit -3.710037e-3, miss 4.286262e-4 (0.1161 of its tolerance 3.691e-3) → within
+  tilt_R3.4_t30: remainder 4.764475e-5, fit -4.949569e-4, miss 5.426016e-4 (0.6523 of its tolerance 8.318e-4) → within
+  tilt_R3.4_t60: remainder -4.359516e-4, fit -5.417799e-4, miss 1.058282e-4 (0.1281 of its tolerance 8.262e-4) → within
+  tilt_R3.4_t90: remainder -6.326595e-4, fit -6.565190e-4, miss 2.385949e-5 (0.0401 of its tolerance 5.946e-4) → within
+  tilt_R3.4_t120: remainder -5.058924e-4, fit -9.032728e-4, miss 3.973804e-4 (0.7948 of its tolerance 5.000e-4) → within
+  tilt_R3.4_t150: remainder -8.658723e-4, fit -1.297768e-3, miss 4.318960e-4 (0.4440 of its tolerance 9.726e-4) → within
+  twist_R2.7_t0: remainder -9.665285e-3, fit -1.030797e-2, miss 6.426869e-4 (0.5707 of its tolerance 1.126e-3) → within
+  twist_R2.7_t30: remainder -8.810552e-3, fit -1.042006e-2, miss 1.609510e-3 (2.4884 of its tolerance 6.468e-4) → MISS
+  twist_R2.7_t60: remainder -5.619817e-3, fit -1.100929e-2, miss 5.389470e-3 (3.1178 of its tolerance 1.729e-3) → MISS
+  twist_R2.7_t90: remainder -6.589063e-3, fit -1.396928e-2, miss 7.380215e-3 (0.7170 of its tolerance 1.029e-2) → within
+  twist_R2.7_t120: remainder -4.372290e-2, fit -2.353153e-2, miss 2.019137e-2 (0.5817 of its tolerance 3.471e-2) → within
+  twist_R2.7_t180: remainder -1.182662e-2, fit -1.541859e-2, miss 3.591971e-3 (0.2792 of its tolerance 1.287e-2) → within
+  twist_R3.0_t0: remainder -1.856181e-3, fit -2.686686e-3, miss 8.305044e-4 (0.6223 of its tolerance 1.335e-3) → within
+  twist_R3.0_t30: remainder -1.305501e-3, fit -2.752546e-3, miss 1.447045e-3 (1.3780 of its tolerance 1.050e-3) → MISS
+  twist_R3.0_t90: remainder -7.456204e-4, fit -4.339212e-3, miss 3.593592e-3 (0.9384 of its tolerance 3.829e-3) → within
+  twist_R3.0_t120: remainder -2.006954e-2, fit -7.535527e-3, miss 1.253402e-2 (1.1149 of its tolerance 1.124e-2) → MISS
+  twist_R3.0_t180: remainder -4.420054e-3, fit -5.130313e-3, miss 7.102587e-4 (0.1445 of its tolerance 4.915e-3) → within
+  twist_R3.4_t0: remainder 2.700075e-4, fit -4.819447e-4, miss 7.519522e-4 (0.9159 of its tolerance 8.210e-4) → within
+  twist_R3.4_t30: remainder 4.989567e-4, fit -5.146562e-4, miss 1.013613e-3 (1.4774 of its tolerance 6.861e-4) → MISS
+  twist_R3.4_t60: remainder 9.192430e-4, fit -6.655510e-4, miss 1.584794e-3 (3.1696 of its tolerance 5.000e-4) → MISS
+  twist_R3.4_t90: remainder 1.423021e-4, fit -1.155503e-3, miss 1.297805e-3 (1.3505 of its tolerance 9.610e-4) → MISS
+  twist_R3.4_t120: remainder -5.671135e-3, fit -2.092006e-3, miss 3.579130e-3 (1.2533 of its tolerance 2.856e-3) → MISS
+  twist_R3.4_t180: remainder -1.510530e-3, fit -1.528829e-3, miss 1.829936e-5 (0.0126 of its tolerance 1.450e-3) → within
+  donor_R2.9_b15: remainder -2.718056e-3, fit -3.309104e-3, miss 5.910477e-4 (0.4995 of its tolerance 1.183e-3) → within
+  donor_R2.9_b45: remainder -1.313831e-3, fit -7.013519e-4, miss 6.124786e-4 (1.2250 of its tolerance 5.000e-4) → MISS
+  donor_R2.9_b60: remainder -1.342482e-3, fit -2.718814e-4, miss 1.070601e-3 (2.1412 of its tolerance 5.000e-4) → MISS
+  donor_R2.9_b90: remainder -1.500508e-3, fit -7.884215e-5, miss 1.421666e-3 (2.8433 of its tolerance 5.000e-4) → MISS
+  donor_R3.1_b15: remainder -6.471791e-4, fit -1.384914e-3, miss 7.377350e-4 (0.7119 of its tolerance 1.036e-3) → within
+  donor_R3.1_b45: remainder -3.459424e-4, fit -3.238733e-4, miss 2.206905e-5 (0.0441 of its tolerance 5.000e-4) → within
+  donor_R3.1_b60: remainder -4.333820e-4, fit -1.365396e-4, miss 2.968425e-4 (0.5937 of its tolerance 5.000e-4) → within
+  donor_R3.1_b90: remainder -5.400398e-4, fit -4.559306e-5, miss 4.944468e-4 (0.9889 of its tolerance 5.000e-4) → within
+  dbent_R2.9_d15_a60: remainder -5.292152e-3, fit -3.480397e-3, miss 1.811755e-3 (1.3563 of its tolerance 1.336e-3) → MISS
+  dbent_R2.9_d45_a45: remainder -1.842888e-3, fit -7.758929e-4, miss 1.066995e-3 (2.1340 of its tolerance 5.000e-4) → MISS
+  dbent_R2.9_d30_a90: remainder -3.055202e-3, fit -2.188072e-3, miss 8.671297e-4 (1.7343 of its tolerance 5.000e-4) → MISS
+  twistbent_R3.0_tw90_t30_d20: remainder -3.912005e-4, fit -1.897698e-3, miss 1.506497e-3 (3.0130 of its tolerance 5.000e-4) → MISS
+C1: FAIL — 43 of 64 within tolerance (needs ≥ 52, 80 % of the measured total), and the line at 2.7, 2.9, 3.1 Å all within: true (3 of 3); misses: linear_R3.7, twisted_R3.0, tilt_R2.7_t60, tilt_R2.7_t90, tilt_R2.9_t60, tilt_R2.9_t90, twist_R2.7_t30, twist_R2.7_t60, twist_R3.0_t30, twist_R3.0_t120, twist_R3.4_t30, twist_R3.4_t60, twist_R3.4_t90, twist_R3.4_t120, donor_R2.9_b45, donor_R2.9_b60, donor_R2.9_b90, dbent_R2.9_d15_a60, dbent_R2.9_d45_a45, dbent_R2.9_d30_a90, twistbent_R3.0_tw90_t30_d20
+
+dispersion (FIELD-6's rule, after BOTH contacts) on the 4 outer linear nodes (R_OO ≥ 2.9 Å):
+  2.9 Å: remainder after contact 8.648623e-4 Ha (0.1578 of |ΔE_exact|)
+  3.1 Å: remainder after contact 9.065023e-4 Ha (0.1906 of |ΔE_exact|)
+  3.4 Å: remainder after contact 7.872573e-4 Ha (0.2447 of |ΔE_exact|)
+  3.7 Å: remainder after contact 5.502289e-4 Ha (0.2570 of |ΔE_exact|)
+  log-log slope 2.9 → 3.1 Å: 0.705
+  log-log slope 3.1 → 3.4 Å: -1.527
+  log-log slope 3.4 → 3.7 Å: -4.236
+dispersion: C₆ = 0.000000000e0 Ha·bohr⁶; every slope in [-8, -4] → NOT transferred (C₆ = 0 recorded)
+
+G-B0 — RUN on the constrained law even though the clamp makes it pass by construction (M-VACUOUS-SUCCESS): `bounded` walks each cross-unit class of the FULL law from its own r_min (O–O 4.724315, H–O 2.780741, H–H 1.314606 bohr) inward to 0.5 bohr on a 0.05 grid, kT = 9.278758e-4 Ha, q_H = 2.313803721151e-1
+  bounded() returned none → PASS: no class falls more than kT below its fit floor, and each is positive at contact; the arms may run
+  hole() (a READING beside the gate, not a gate) names a fall, verbatim: H–O potential falls inward at r = 2.95 bohr (-4.0636e-2 < -4.0208e-2)
+
+G-C1 — the engine's arithmetic against THIS runner's independent evaluation of §0's equations (the formula side never calls SeamModel::ct_angular), ONE reference (E_q(g) − E_q(40) from the engine itself), on every node:
+  linear_R2.3: engine 2.445488830160e-2 vs formula 2.445488830160e-2 — miss 1.284e-16 (E_q diff -9.664231e-3, seam 3.411912e-2; pen_HO -6.319677e-2, pen_HH -6.511236e-4, wall_OO 2.796274e-2, wall_OH 1.148433e-1, wall_HH 2.997548e-3, disp 0.000000e0, CT -4.783654e-2; units 2, O–O 1, H–O 4)
+  linear_R2.5: engine 2.056802650660e-3 vs formula 2.056802650660e-3 — miss 6.505e-17 (E_q diff -7.071489e-3, seam 9.128292e-3; pen_HO -2.513382e-2, pen_HH -4.534366e-4, wall_OO 1.128873e-2, wall_OH 5.001577e-2, wall_HH 1.612692e-3, disp 0.000000e0, CT -2.820164e-2; units 2, O–O 1, H–O 4)
+  linear_R2.7: engine -5.073675838693e-3 vs formula -5.073675838693e-3 — miss 1.128e-17 (E_q diff -5.339515e-3, seam 2.658387e-4; pen_HO -9.995795e-3, pen_HH -3.146417e-4, wall_OO 4.557325e-3, wall_OH 2.178210e-2, wall_HH 8.620591e-4, disp 0.000000e0, CT -1.662521e-2; units 2, O–O 1, H–O 4)
+  linear_R2.9: engine -6.344874576755e-3 vs formula -6.344874576755e-3 — miss 4.857e-17 (E_q diff -4.135871e-3, seam -2.209004e-3; pen_HO -3.975318e-3, pen_HH -2.177141e-4, wall_OO 1.839819e-3, wall_OH 9.486037e-3, wall_HH 4.584753e-4, disp 0.000000e0, CT -9.800303e-3; units 2, O–O 1, H–O 4)
+plant (ii) at the linear 2.9 Å node (P_CT → −P_CT in the engine): the G-C1 miss under the plant 1.960061e-2 vs 2·|CT(2.9)| 1.960061e-2 (difference 9.021e-17, bar 1e-10); engine-to-engine 1.960061e-2; carrier |CT| 9.800e-3 ≥ 1e-4: true → FIRES
+  linear_R3.1: engine -5.663512182444e-3 vs formula -5.663512182444e-3 — miss 3.990e-17 (E_q diff -3.272031e-3, seam -2.391481e-3; pen_HO -1.580966e-3, pen_HH -1.503033e-4, wall_OO 7.427460e-4, wall_OH 4.131072e-3, wall_HH 2.428442e-4, disp 0.000000e0, CT -5.776874e-3; units 2, O–O 1, H–O 4)
+  linear_R3.4: engine -4.004723048511e-3 vs formula -4.004723048511e-3 — miss 8.240e-17 (E_q diff -2.378843e-3, seam -1.625880e-3; pen_HO -3.964986e-4, pen_HH -8.592640e-5, wall_OO 1.905189e-4, wall_OH 1.187184e-3, wall_HH 9.305441e-5, disp 0.000000e0, CT -2.614212e-3; units 2, O–O 1, H–O 4)
+  linear_R3.7: engine -2.691594063074e-3 vs formula -2.691594063074e-3 — miss 3.556e-17 (E_q diff -1.785760e-3, seam -9.058336e-4; pen_HO -9.943831e-5, pen_HH -4.896813e-5, wall_OO 4.886926e-5, wall_OH 3.411622e-4, wall_HH 3.545818e-5, disp 0.000000e0, CT -1.182917e-3; units 2, O–O 1, H–O 4)
+  tilted_R2.9: engine -6.096255860414e-3 vs formula -6.096255860414e-3 — miss 1.561e-17 (E_q diff -3.962014e-3, seam -2.134242e-3; pen_HO -3.976134e-3, pen_HH -2.471073e-4, wall_OO 1.839819e-3, wall_OH 9.489917e-3, wall_HH 5.687364e-4, disp 0.000000e0, CT -9.809473e-3; units 2, O–O 1, H–O 4)
+  tilted45_R3.1: engine -5.217743300068e-3 vs formula -5.217743300068e-3 — miss 5.898e-17 (E_q diff -2.919047e-3, seam -2.298697e-3; pen_HO -1.581899e-3, pen_HH -2.007343e-4, wall_OO 7.427460e-4, wall_OH 4.135807e-3, wall_HH 3.976434e-4, disp 0.000000e0, CT -5.792260e-3; units 2, O–O 1, H–O 4)
+  flipped_R3.4: engine 5.993562758186e-3 vs formula 5.993562758186e-3 — miss 3.990e-17 (E_q diff 2.777793e-3, seam 3.215770e-3; pen_HO -4.946137e-4, pen_HH -1.046330e-3, wall_OO 1.905189e-4, wall_OH 1.546191e-3, wall_HH 6.751036e-3, disp 0.000000e0, CT -3.731032e-3; units 2, O–O 1, H–O 4)
+  twisted_R3.0: engine -2.768260422631e-3 vs formula -2.768260422631e-3 — miss 7.026e-17 (E_q diff -2.255175e-3, seam -5.130855e-4; pen_HO -2.549761e-3, pen_HH -5.223376e-4, wall_OO 1.168982e-3, wall_OH 6.416710e-3, wall_HH 2.840445e-3, disp 0.000000e0, CT -7.867123e-3; units 2, O–O 1, H–O 4)
+  bentdonor_R2.9: engine -3.028638580182e-3 vs formula -3.028638580182e-3 — miss 8.760e-17 (E_q diff -2.541073e-3, seam -4.875657e-4; pen_HO -1.569677e-3, pen_HH -1.603885e-4, wall_OO 1.839819e-3, wall_OH 4.117786e-3, wall_HH 2.580788e-4, disp 0.000000e0, CT -4.973185e-3; units 2, O–O 1, H–O 4)
+  twistbent_R3.2: engine -3.996654062421e-3 vs formula -3.996654062421e-3 — miss 1.310e-16 (E_q diff -2.429034e-3, seam -1.567621e-3; pen_HO -6.608006e-4, pen_HH -1.095317e-4, wall_OO 4.719249e-4, wall_OH 1.883759e-3, wall_HH 1.419741e-4, disp 0.000000e0, CT -3.294946e-3; units 2, O–O 1, H–O 4)
+  tilt_R2.7_t30: engine -4.725622980802e-3 vs formula -4.725622980802e-3 — miss 9.975e-17 (E_q diff -5.141307e-3, seam 4.156844e-4; pen_HO -9.997765e-3, pen_HH -3.555280e-4, wall_OO 4.557325e-3, wall_OH 2.179068e-2, wall_HH 1.060881e-3, disp 0.000000e0, CT -1.663991e-2; units 2, O–O 1, H–O 4)
+  tilt_R2.7_t60: engine -3.391828933557e-3 vs formula -3.391828933557e-3 — miss 9.194e-17 (E_q diff -4.481375e-3, seam 1.089546e-3; pen_HO -1.000873e-2, pen_HH -5.049845e-4, wall_OO 4.557325e-3, wall_OH 2.183525e-2, wall_HH 1.926343e-3, disp 0.000000e0, CT -1.671566e-2; units 2, O–O 1, H–O 4)
+  tilt_R2.7_t90: engine 2.624628042870e-4 vs formula 2.624628042869e-4 — miss 4.944e-17 (E_q diff -3.132970e-3, seam 3.395433e-3; pen_HO -1.006342e-2, pen_HH -8.578909e-4, wall_OO 4.557325e-3, wall_OH 2.203181e-2, wall_HH 4.749341e-3, disp 0.000000e0, CT -1.702173e-2; units 2, O–O 1, H–O 4)
+  tilt_R2.7_t120: engine 1.026968994684e-2 vs formula 1.026968994684e-2 — miss 4.857e-17 (E_q diff -6.742243e-4, seam 1.094391e-2; pen_HO -1.033765e-2, pen_HH -1.585045e-3, wall_OO 4.557325e-3, wall_OH 2.288070e-2, wall_HH 1.355466e-2, disp 0.000000e0, CT -1.812607e-2; units 2, O–O 1, H–O 4)
+  tilt_R2.7_t150: engine 3.210533220993e-2 vs formula 3.210533220993e-2 — miss 6.939e-18 (E_q diff 2.980103e-3, seam 2.912523e-2; pen_HO -1.125289e-2, pen_HH -2.705151e-3, wall_OO 4.557325e-3, wall_OH 2.535678e-2, wall_HH 3.392807e-2, disp 0.000000e0, CT -2.075891e-2; units 2, O–O 1, H–O 4)
+  tilt_R2.7_t180: engine 4.896060769638e-2 vs formula 4.896060769638e-2 — miss 4.857e-17 (E_q diff 5.256095e-3, seam 4.370451e-2; pen_HO -1.210219e-2, pen_HH -3.383740e-3, wall_OO 4.557325e-3, wall_OH 2.748166e-2, wall_HH 4.989879e-2, disp 0.000000e0, CT -2.274733e-2; units 2, O–O 1, H–O 4)
+  tilt_R2.9_t60: engine -5.173923073889e-3 vs formula -5.173923073889e-3 — miss 1.735e-18 (E_q diff -3.386382e-3, seam -1.787541e-3; pen_HO -3.980717e-3, pen_HH -3.552641e-4, wall_OO 1.839819e-3, wall_OH 9.510245e-3, wall_HH 1.055375e-3, disp 0.000000e0, CT -9.856998e-3; units 2, O–O 1, H–O 4)
+  tilt_R2.9_t90: engine -2.776255403535e-3 vs formula -2.776255403535e-3 — miss 2.862e-17 (E_q diff -2.227260e-3, seam -5.489950e-4; pen_HO -4.003849e-3, pen_HH -6.131530e-4, wall_OO 1.839819e-3, wall_OH 9.600802e-3, wall_HH 2.677395e-3, disp 0.000000e0, CT -1.005001e-2; units 2, O–O 1, H–O 4)
+  tilt_R2.9_t120: engine 3.470170221051e-3 vs formula 3.470170221051e-3 — miss 2.515e-17 (E_q diff -1.771550e-4, seam 3.647325e-3; pen_HO -4.120397e-3, pen_HH -1.147790e-3, wall_OO 1.839819e-3, wall_OH 9.993423e-3, wall_HH 7.827224e-3, disp 0.000000e0, CT -1.074495e-2; units 2, O–O 1, H–O 4)
+  tilt_R2.9_t150: engine 1.659255839899e-2 vs formula 1.659255839899e-2 — miss 7.633e-17 (E_q diff 2.719880e-3, seam 1.387268e-2; pen_HO -4.506464e-3, pen_HH -1.967464e-3, wall_OO 1.839819e-3, wall_OH 1.113014e-2, wall_HH 1.975828e-2, disp 0.000000e0, CT -1.238163e-2; units 2, O–O 1, H–O 4)
+  tilt_R2.9_t180: engine 2.646356086054e-2 vs formula 2.646356086054e-2 — miss 6.245e-17 (E_q diff 4.439427e-3, seam 2.202413e-2; pen_HO -4.860796e-3, pen_HH -2.458329e-3, wall_OO 1.839819e-3, wall_OH 1.209533e-2, wall_HH 2.900943e-2, disp 0.000000e0, CT -1.360133e-2; units 2, O–O 1, H–O 4)
+  tilt_R3.1_t30: engine -5.475908766216e-3 vs formula -5.475908766216e-3 — miss 9.541e-18 (E_q diff -3.119671e-3, seam -2.356238e-3; pen_HO -1.581302e-3, pen_HH -1.712486e-4, wall_OO 7.427460e-4, wall_OH 4.132820e-3, wall_HH 3.033038e-4, disp 0.000000e0, CT -5.782558e-3; units 2, O–O 1, H–O 4)
+  tilt_R3.1_t60: engine -4.804433800691e-3 vs formula -4.804433800691e-3 — miss 8.327e-17 (E_q diff -2.618330e-3, seam -2.186104e-3; pen_HO -1.583207e-3, pen_HH -2.487303e-4, wall_OO 7.427460e-4, wall_OH 4.142041e-3, wall_HH 5.731935e-4, disp 0.000000e0, CT -5.812147e-3; units 2, O–O 1, H–O 4)
+  tilt_R3.1_t90: engine -3.170421126670e-3 vs formula -3.170421126670e-3 — miss 9.845e-17 (E_q diff -1.624286e-3, seam -1.546135e-3; pen_HO -1.592917e-3, pen_HH -4.348378e-4, wall_OO 7.427460e-4, wall_OH 4.183475e-3, wall_HH 1.488189e-3, disp 0.000000e0, CT -5.932790e-3; units 2, O–O 1, H–O 4)
+  tilt_R3.1_t120: engine 7.857757139682e-4 vs formula 7.857757139682e-4 — miss 1.518e-17 (E_q diff 8.120459e-5, seam 7.045711e-4; pen_HO -1.642006e-3, pen_HH -8.218835e-4, wall_OO 7.427460e-4, wall_OH 4.363582e-3, wall_HH 4.428080e-3, disp 0.000000e0, CT -6.365947e-3; units 2, O–O 1, H–O 4)
+  tilt_R3.1_t150: engine 8.631189705437e-3 vs formula 8.631189705437e-3 — miss 4.337e-17 (E_q diff 2.379827e-3, seam 6.251363e-3; pen_HO -1.803401e-3, pen_HH -1.411220e-3, wall_OO 7.427460e-4, wall_OH 4.881199e-3, wall_HH 1.121639e-2, disp 0.000000e0, CT -7.374350e-3; units 2, O–O 1, H–O 4)
+  tilt_R3.1_t180: engine 1.433388946620e-2 vs formula 1.433388946620e-2 — miss 6.592e-17 (E_q diff 3.686516e-3, seam 1.064737e-2; pen_HO -1.950045e-3, pen_HH -1.759992e-3, wall_OO 7.427460e-4, wall_OH 5.316481e-3, wall_HH 1.641505e-2, disp 0.000000e0, CT -8.116867e-3; units 2, O–O 1, H–O 4)
+  tilt_R3.4_t30: engine -3.869994551685e-3 vs formula -3.869994551685e-3 — miss 6.072e-18 (E_q diff -2.253522e-3, seam -1.616472e-3; pen_HO -3.965871e-4, pen_HH -9.836982e-5, wall_OO 1.905189e-4, wall_OH 1.187709e-3, wall_HH 1.172131e-4, disp 0.000000e0, CT -2.616957e-3; units 2, O–O 1, H–O 4)
+  tilt_R3.4_t60: engine -3.410650410314e-3 vs formula -3.410650410314e-3 — miss 4.684e-17 (E_q diff -1.845104e-3, seam -1.565547e-3; pen_HO -3.970930e-4, pen_HH -1.446869e-4, wall_OO 1.905189e-4, wall_OH 1.190503e-3, wall_HH 2.265364e-4, disp 0.000000e0, CT -2.631326e-3; units 2, O–O 1, H–O 4)
+  tilt_R3.4_t90: engine -2.402334407242e-3 vs formula -2.402334407242e-3 — miss 2.689e-17 (E_q diff -1.053763e-3, seam -1.348572e-3; pen_HO -3.997037e-4, pen_HH -2.568154e-4, wall_OO 1.905189e-4, wall_OH 1.203193e-3, wall_HH 6.043956e-4, disp 0.000000e0, CT -2.690160e-3; units 2, O–O 1, H–O 4)
+  tilt_R3.4_t120: engine -2.761302660919e-4 vs formula -2.761302660919e-4 — miss 6.072e-17 (E_q diff 2.468022e-4, seam -5.229325e-4; pen_HO -4.129447e-4, pen_HH -4.903282e-4, wall_OO 1.905189e-4, wall_OH 1.258475e-3, wall_HH 1.831707e-3, disp 0.000000e0, CT -2.900360e-3; units 2, O–O 1, H–O 4)
+  tilt_R3.4_t150: engine 3.458633705248e-3 vs formula 3.458633705248e-3 — miss 5.117e-17 (E_q diff 1.892413e-3, seam 1.566220e-3; pen_HO -4.560082e-4, pen_HH -8.417601e-4, wall_OO 1.905189e-4, wall_OH 1.415682e-3, wall_HH 4.639753e-3, disp 0.000000e0, CT -3.381965e-3; units 2, O–O 1, H–O 4)
+  twist_R2.7_t0: engine -5.147307748890e-3 vs formula -5.147307748890e-3 — miss 1.023e-16 (E_q diff -5.411884e-3, seam 2.645767e-4; pen_HO -9.995795e-3, pen_HH -3.121770e-4, wall_OO 4.557325e-3, wall_OH 2.178210e-2, wall_HH 8.583324e-4, disp 0.000000e0, CT -1.662521e-2; units 2, O–O 1, H–O 4)
+  twist_R2.7_t30: engine -4.196699108086e-3 vs formula -4.196699108086e-3 — miss 6.245e-17 (E_q diff -5.036761e-3, seam 8.400623e-4; pen_HO -1.000699e-2, pen_HH -4.130710e-4, wall_OO 4.557325e-3, wall_OH 2.182531e-2, wall_HH 1.575102e-3, disp 0.000000e0, CT -1.669762e-2; units 2, O–O 1, H–O 4)
+  twist_R2.7_t60: engine 1.524950305132e-3 vs formula 1.524950305132e-3 — miss 3.773e-17 (E_q diff -3.544080e-3, seam 5.069030e-3; pen_HO -1.015105e-2, pen_HH -8.582342e-4, wall_OO 4.557325e-3, wall_OH 2.228258e-2, wall_HH 6.552021e-3, disp 0.000000e0, CT -1.731361e-2; units 2, O–O 1, H–O 4)
+  twist_R2.7_t90: engine 3.379492622126e-2 vs formula 3.379492622126e-2 — miss 1.388e-17 (E_q diff 1.017505e-3, seam 3.277742e-2; pen_HO -1.174611e-2, pen_HH -2.223167e-3, wall_OO 4.557325e-3, wall_OH 2.628921e-2, wall_HH 3.701182e-2, disp 0.000000e0, CT -2.111166e-2; units 2, O–O 1, H–O 4)
+  twist_R2.7_t120: engine 1.590266752376e-1 vs formula 1.590266752376e-1 — miss 4.718e-16 (E_q diff 1.336818e-2, seam 1.456585e-1; pen_HO -1.853409e-2, pen_HH -4.997441e-3, wall_OO 4.557325e-3, wall_OH 4.063556e-2, wall_HH 1.553241e-1, disp 0.000000e0, CT -3.132692e-2; units 2, O–O 1, H–O 4)
+  twist_R2.7_t180: engine 4.787694580729e-2 vs formula 4.787694580729e-2 — miss 1.388e-17 (E_q diff 4.683542e-3, seam 4.319340e-2; pen_HO -1.210219e-2, pen_HH -3.316402e-3, wall_OO 4.557325e-3, wall_OH 2.748166e-2, wall_HH 4.932034e-2, disp 0.000000e0, CT -2.274733e-2; units 2, O–O 1, H–O 4)
+  twist_R3.0_t0: engine -6.169063713109e-3 vs formula -6.169063713109e-3 — miss 3.903e-17 (E_q diff -3.719605e-3, seam -2.449459e-3; pen_HO -2.506961e-3, pen_HH -1.797241e-4, wall_OO 1.168982e-3, wall_OH 6.260004e-3, wall_HH 3.325822e-4, disp 0.000000e0, CT -7.524341e-3; units 2, O–O 1, H–O 4)
+  twist_R3.0_t30: engine -5.647342627512e-3 vs formula -5.647342627512e-3 — miss 8.674e-17 (E_q diff -3.415937e-3, seam -2.231406e-3; pen_HO -2.510006e-3, pen_HH -2.425403e-4, wall_OO 1.168982e-3, wall_OH 6.273391e-3, wall_HH 6.391660e-4, disp 0.000000e0, CT -7.560399e-3; units 2, O–O 1, H–O 4)
+  twist_R3.0_t90: engine 1.172417027718e-2 vs formula 1.172417027718e-2 — miss 2.949e-17 (E_q diff 8.392704e-4, seam 1.088490e-2; pen_HO -2.977381e-3, pen_HH -1.361831e-3, wall_OO 1.168982e-3, wall_OH 7.638531e-3, wall_HH 1.610459e-2, disp 0.000000e0, CT -9.687992e-3; units 2, O–O 1, H–O 4)
+  twist_R3.0_t120: engine 5.750319608177e-2 vs formula 5.750319608177e-2 — miss 4.163e-17 (E_q diff 6.859811e-3, seam 5.064338e-2; pen_HO -4.666829e-3, pen_HH -2.868698e-3, wall_OO 1.168982e-3, wall_OH 1.171983e-2, wall_HH 5.951644e-2, disp 0.000000e0, CT -1.422634e-2; units 2, O–O 1, H–O 4)
+  twist_R3.0_t180: engine 1.895093385135e-2 vs formula 1.895093385135e-2 — miss 2.776e-17 (E_q diff 3.708211e-3, seam 1.524272e-2; pen_HO -3.079173e-3, pen_HH -2.051140e-3, wall_OO 1.168982e-3, wall_OH 8.020214e-3, wall_HH 2.169330e-2, disp 0.000000e0, CT -1.050946e-2; units 2, O–O 1, H–O 4)
+  twist_R3.4_t0: engine -4.035791080346e-3 vs formula -4.035791080346e-3 — miss 5.204e-17 (E_q diff -2.410102e-3, seam -1.625689e-3; pen_HO -3.964986e-4, pen_HH -8.544614e-5, wall_OO 1.905189e-4, wall_OH 1.187184e-3, wall_HH 9.276476e-5, disp 0.000000e0, CT -2.614212e-3; units 2, O–O 1, H–O 4)
+  twist_R3.4_t30: engine -3.758000711034e-3 vs formula -3.758000711034e-3 — miss 3.426e-17 (E_q diff -2.182515e-3, seam -1.575486e-3; pen_HO -3.970242e-4, pen_HH -1.176320e-4, wall_OO 1.905189e-4, wall_OH 1.189937e-3, wall_HH 1.867973e-4, disp 0.000000e0, CT -2.628083e-3; units 2, O–O 1, H–O 4)
+  twist_R3.4_t60: engine -2.477277789750e-3 vs formula -2.477277789750e-3 — miss 1.171e-17 (E_q diff -1.355375e-3, seam -1.121903e-3; pen_HO -4.039754e-4, pen_HH -2.615756e-4, wall_OO 1.905189e-4, wall_OH 1.219705e-3, wall_HH 8.791076e-4, disp 0.000000e0, CT -2.745683e-3; units 2, O–O 1, H–O 4)
+  twist_R3.4_t90: engine 2.546195843859e-3 vs formula 2.546195843859e-3 — miss 7.806e-17 (E_q diff 5.519471e-4, seam 1.994249e-3; pen_HO -4.762152e-4, pen_HH -6.792878e-4, wall_OO 1.905189e-4, wall_OH 1.465364e-3, wall_HH 4.908010e-3, disp 0.000000e0, CT -3.414141e-3; units 2, O–O 1, H–O 4)
+  twist_R3.4_t120: engine 1.500250776687e-2 vs formula 1.500250776687e-2 — miss 5.551e-17 (E_q diff 3.414884e-3, seam 1.158762e-2; pen_HO -7.408737e-4, pen_HH -1.351132e-3, wall_OO 1.905189e-4, wall_OH 2.230064e-3, wall_HH 1.621699e-2, disp 0.000000e0, CT -4.957948e-3; units 2, O–O 1, H–O 4)
+  twist_R3.4_t180: engine 5.780393033657e-3 vs formula 5.780393033657e-3 — miss 6.072e-17 (E_q diff 2.595769e-3, seam 3.184624e-3; pen_HO -4.946137e-4, pen_HH -1.034215e-3, wall_OO 1.905189e-4, wall_OH 1.546191e-3, wall_HH 6.707775e-3, disp 0.000000e0, CT -3.731032e-3; units 2, O–O 1, H–O 4)
+  donor_R2.9_b15: engine -5.324274570200e-3 vs formula -5.324274570200e-3 — miss 1.301e-17 (E_q diff -3.665536e-3, seam -1.658738e-3; pen_HO -3.108308e-3, pen_HH -2.007958e-4, wall_OO 1.839819e-3, wall_OH 7.603769e-3, wall_HH 3.943172e-4, disp 0.000000e0, CT -8.187541e-3; units 2, O–O 1, H–O 4)
+  donor_R2.9_b45: engine -7.243167533687e-4 vs formula -7.243167533687e-4 — miss 4.836e-17 (E_q diff -1.282364e-3, seam 5.580468e-4; pen_HO -5.849664e-4, pen_HH -1.163855e-4, wall_OO 1.839819e-3, wall_OH 1.704027e-3, wall_HH 1.388805e-4, disp 0.000000e0, CT -2.423329e-3; units 2, O–O 1, H–O 4)
+  donor_R2.9_b60: engine 9.881151528996e-4 vs formula 9.881151528996e-4 — miss 1.713e-17 (E_q diff -2.093048e-4, seam 1.197420e-3; pen_HO -1.901196e-4, pen_HH -8.176181e-5, wall_OO 1.839819e-3, wall_OH 6.305913e-4, wall_HH 6.892022e-5, disp 0.000000e0, CT -1.070030e-3; units 2, O–O 1, H–O 4)
+  donor_R2.9_b90: engine 2.803704502866e-3 vs formula 2.803704502866e-3 — miss 4.727e-17 (E_q diff 1.164942e-3, seam 1.638762e-3; pen_HO -3.259837e-5, pen_HH -4.624378e-5, wall_OO 1.839819e-3, wall_OH 1.366013e-4, wall_HH 2.359969e-5, disp 0.000000e0, CT -2.824158e-4; units 2, O–O 1, H–O 4)
+  donor_R3.1_b15: engine -4.882711724600e-3 vs formula -4.882711724601e-3 — miss 8.500e-17 (E_q diff -2.924023e-3, seam -1.958689e-3; pen_HO -1.246131e-3, pen_HH -1.387829e-4, wall_OO 7.427460e-4, wall_OH 3.335430e-3, wall_HH 2.093074e-4, disp 0.000000e0, CT -4.861258e-3; units 2, O–O 1, H–O 4)
+  donor_R3.1_b45: engine -1.315293144330e-3 vs formula -1.315293144330e-3 — miss 9.302e-17 (E_q diff -1.092345e-3, seam -2.229483e-4; pen_HO -2.430540e-4, pen_HH -8.081934e-5, wall_OO 7.427460e-4, wall_OH 7.718774e-4, wall_HH 7.438508e-5, disp 0.000000e0, CT -1.488083e-3; units 2, O–O 1, H–O 4)
+  donor_R3.1_b60: engine 3.960609578424e-5 vs formula 3.960609578420e-5 — miss 3.491e-17 (E_q diff -2.270353e-4, seam 2.666414e-4; pen_HO -7.974552e-5, pen_HH -5.679405e-5, wall_OO 7.427460e-4, wall_OH 2.880126e-4, wall_HH 3.692349e-5, disp 0.000000e0, CT -6.645011e-4; units 2, O–O 1, H–O 4)
+  donor_R3.1_b90: engine 1.519420055932e-3 vs formula 1.519420055932e-3 — miss 3.686e-17 (E_q diff 9.237532e-4, seam 5.956668e-4; pen_HO -1.360030e-5, pen_HH -3.199276e-5, wall_OO 7.427460e-4, wall_OH 6.207866e-5, wall_HH 1.248834e-5, disp 0.000000e0, CT -1.760531e-4; units 2, O–O 1, H–O 4)
+  dbent_R2.9_d15_a60: engine -3.531417462397e-3 vs formula -3.531417462397e-3 — miss 3.123e-17 (E_q diff -2.394000e-3, seam -1.137417e-3; pen_HO -3.113707e-3, pen_HH -3.666894e-4, wall_OO 1.839819e-3, wall_OH 7.627977e-3, wall_HH 1.119419e-3, disp 0.000000e0, CT -8.244236e-3; units 2, O–O 1, H–O 4)
+  dbent_R2.9_d45_a45: engine 3.394679092409e-4 vs formula 3.394679092410e-4 — miss 1.041e-16 (E_q diff -3.221253e-4, seam 6.615932e-4; pen_HO -5.872234e-4, pen_HH -1.886695e-4, wall_OO 1.839819e-3, wall_OH 1.714513e-3, wall_HH 3.312657e-4, disp 0.000000e0, CT -2.448112e-3; units 2, O–O 1, H–O 4)
+  dbent_R2.9_d30_a90: engine 1.528981528887e-3 vs formula 1.528981528887e-3 — miss 5.985e-17 (E_q diff 3.772273e-4, seam 1.151754e-3; pen_HO -1.598207e-3, pen_HH -5.898654e-4, wall_OO 1.839819e-3, wall_OH 4.232551e-3, wall_HH 2.490348e-3, disp 0.000000e0, CT -5.222892e-3; units 2, O–O 1, H–O 4)
+  twistbent_R3.0_tw90_t30_d20: engine -3.457723225722e-3 vs formula -3.457723225722e-3 — miss 1.735e-17 (E_q diff -2.199516e-3, seam -1.258207e-3; pen_HO -1.644283e-3, pen_HH -2.534147e-4, wall_OO 1.168982e-3, wall_OH 4.291270e-3, wall_HH 7.436842e-4, disp 0.000000e0, CT -5.564446e-3; units 2, O–O 1, H–O 4)
+G-C1: worst |engine − formula| = 4.718e-16 (stake 1e-10) → PASS
+M-VACUOUS-SUCCESS: every G-C1 geometry served two units, one cross O–O pair and four cross H–O pairs: true
+
+plant (i) — the angle removed: CT-1's term (m = k = 0, P = 1.474879879, c = 1.46) on twisted_R3.0 reads -7.168671e-3 against the measured E_CT -4.443239e-3 — miss 2.725432e-3, which must be at least 2e-3; carrier |E_CT − CT_(0,0)| 2.725e-3 ≥ 1e-3: true; the FITTED family's miss beside it: 3.423884e-3 → FIRES
+
+wall_ct2.json written — arms_void false
+prediction.json filed BEFORE the held-out solve: twisttiltbent_R3.1 at R_OO 5.858151 bohr (shortest cross H···O 4.0125) — E_pred -3.724961e-3 Ha; E_q diff -2.128738e-3, contact_HO -1.249691e-3, contact_HH -2.506103e-4, wall_OO 7.427460e-4, wall_OH 3.351414e-3, wall_HH 7.200920e-4, disp 0.000000e0, CT -4.910174e-3; units 2, O–O 1, H–O 4
+fit.done written

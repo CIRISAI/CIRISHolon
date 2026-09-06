@@ -1,0 +1,10 @@
+{
+  "node": "linear_R2.3", "kind": "the linear dimer at 2.3 Å", "family": "linear", "r_oo_angstrom": 2.300, "r_oo_bohr": 4.346370,
+  "solver": "holon_chem::heitler_london::fci_full_from_product (the Davidson on the FULL space from the undeformed Heitler-London product)",
+  "e_full": -1.500232727237e2, "e_record": -1.500232727238e2, "miss": 5.303490979713e-11, "tolerance": 1e-8, "within": true,
+  "davidson_iters": 19, "residual": 4.978948964571e-9, "residual_bar": 1e-8, "converged": true, "capped": false,
+  "n_det": 1002001, "wall_seconds": 59.802596, "cpu_seconds": 1312.770000, "threads": 24,
+  "price_rule": "cpu_seconds >= 0.1 * davidson_iters * 55 (M-CHEAPER-THAN-ITS-PRICE)", "price_expected_core_seconds": 104.500000, "price_admitted": true,
+  "stock": {"cpu_seconds": 15518.300000, "davidson_iters": 199, "residual": 8.905000000000e-11, "exit": "Converged", "converged": true, "wall_seconds": 708.300000, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "de_exact": 2.331033879966e-2, "source": "../conformance/water_observatory/field8/linear_R2.3.json"},
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, 0.0000000000, 1.9435738400], [1.9300704789, 0.0000000000, -0.2287077129]], "acceptor_centers": [[0.0000000000, 0.0000000000, 4.3463700866], [1.4529262884, 0.0000000000, 5.6372939697], [-1.4529262884, 0.0000000000, 5.6372939697]]
+}

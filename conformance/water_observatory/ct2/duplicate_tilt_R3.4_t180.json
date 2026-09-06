@@ -1,0 +1,7 @@
+{
+  "node": "tilt_R3.4_t180", "family": "tilt", "kind": "acceptor tilted 180° at 3.4 Å",
+  "duplicates": "flipped_R3.4", "duplicate_kind": "flipped acceptor 180°", "max_center_deviation_bohr": 1.580925801347e-16, "tolerance_bohr": 1e-9,
+  "solved": false,
+  "rule": "CT2_PREREG §0: a candidate that reproduces a node of record to 1e-9 bohr is NOT solved, is written here naming the record, and is counted ONCE in every fit and gate under the record's name. The freeze's table names three such coincidences: the tilt family's 2.9 A / 30 deg, its 3.4 A / 180 deg (which IS flipped_R3.4, the acceptor turned by pi about x through its own oxygen), and the twist family's 3.0 A / 60 deg.",
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, 0.0000000000, 1.9435738400], [1.9300704789, 0.0000000000, -0.2287077129]], "acceptor_centers": [[0.0000000000, 0.0000000000, 6.4250688237], [1.4529262884, -0.0000000000, 5.1341449407], [-1.4529262884, -0.0000000000, 5.1341449407]]
+}

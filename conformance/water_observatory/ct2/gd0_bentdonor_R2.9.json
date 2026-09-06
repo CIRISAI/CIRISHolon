@@ -1,0 +1,10 @@
+{
+  "node": "bentdonor_R2.9", "kind": "bent donor 30°", "family": "donor", "r_oo_angstrom": 2.900, "r_oo_bohr": 5.480206,
+  "solver": "holon_chem::heitler_london::fci_full_from_product (the Davidson on the FULL space from the undeformed Heitler-London product)",
+  "e_full": -1.500496143963e2, "e_record": -1.500496143964e2, "miss": 8.202505341615e-11, "tolerance": 1e-8, "within": true,
+  "davidson_iters": 15, "residual": 3.017737068346e-9, "residual_bar": 1e-8, "converged": true, "capped": false,
+  "n_det": 1002001, "wall_seconds": 76.375674, "cpu_seconds": 1754.530000, "threads": 24,
+  "price_rule": "cpu_seconds >= 0.1 * davidson_iters * 55 (M-CHEAPER-THAN-ITS-PRICE)", "price_expected_core_seconds": 82.500000, "price_admitted": true,
+  "stock": {"cpu_seconds": 23659.500000, "davidson_iters": 235, "residual": 8.582000000000e-11, "exit": "Converged", "converged": true, "wall_seconds": 1039.800000, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "de_exact": -3.031333780996e-3, "source": "../conformance/water_observatory/field8/bentdonor_R2.9.json"},
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, -0.9717869200, 1.6831843196], [1.9300704789, 0.1143538564, -0.1980666894]], "acceptor_centers": [[0.0000000000, 0.0000000000, 5.4802057614], [1.4529262884, 0.0000000000, 6.7711296445], [-1.4529262884, 0.0000000000, 6.7711296445]]
+}

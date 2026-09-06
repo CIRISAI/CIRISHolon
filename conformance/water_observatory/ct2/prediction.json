@@ -1,0 +1,15 @@
+{
+  "node": "twisttiltbent_R3.1", "r_oo_angstrom": 3.100, "r_oo_bohr": 5.858151, "acceptor_twist_degrees": 45.0, "acceptor_tilt_degrees": 45.0, "donor_bend_degrees": 15.0,
+  "geometry": "twisted(3.1 Å, 45°, 45°) with the DONOR bent 15° about the x-axis through its own oxygen — a twist, a tilt and a bend at once, at a distance and angles no fit point has; every pivot is an oxygen, so R_OO is unchanged", "held_out": true,
+  "e_pred": -3.724960833874e-3,
+  "parts": {"e_q_difference": -2.128737791428e-3, "contact_ho": -1.249691305772e-3, "contact_hh": -2.506102613287e-4, "wall_oo": 7.427459790679e-4, "wall_oh": 3.351414226317e-3, "wall_hh": 7.200920157432e-4, "wall_total": 4.814252221129e-3, "disp": 0.000000000000e0, "ct_term": -4.910173696473e-3, "engine_seam": -1.596223042445e-3},
+  "ct_term_rule": "the angular family of §0 at the fitted P, c, m, k, λ, summed over this geometry's four cross-unit H–O pairs",
+  "coefficients": {"a": 9.480487358002e2, "b": 2.400000000000e0, "p": 2.217404417304e1, "c": 2.440000000000e0, "c6": 0.000000000000e0, "a_oh": 2.258605362549e1, "b_oh": 2.200000000000e0, "a_hh": 1.525046249564e0, "b_hh": 1.750000000000e0, "p_hh": 1.697141511022e-2, "c_hh": 1.020000000000e0, "p_ct": 1.371043456222e0, "c_ct": 1.400000000000e0, "m_ct": 1, "k_ct": 0, "lambda_ct": 0.000000000000e0, "lambda_ct_degrees": 0.000000000000e0},
+  "s1_branch": "c", "c1_pass": false, "g_d0_pass": true, "t0_pass": true, "a1_pass": true, "p1_pass": true, "g_b0_pass": true, "g_c1_pass": true, "ct_transferred": true, "c6_transferred": false, "arms_void": false, "units": 2, "oo_pairs": 1, "ho_pairs": 4,
+  "tolerance_rule": "max(0.25·|ΔE_exact|, 5e-4)", "tolerance_frac": 0.25, "tolerance_abs": 5e-4,
+  "ct_tolerance_rule": "branch (b): |CT_term − E_CT| ≤ max(0.25·|E_CT|, 2e-4)", "ct_tolerance_frac": 0.25, "ct_tolerance_abs": 2e-4,
+  "exact_solve_stake": {"solver": "holon_chem::heitler_london::fci_full_from_product (G-D0's solver)", "n_det": 1002001, "residual_bar": 1e-8, "exit": "Converged"},
+  "sector_solve_stake": {"sector_dim": 194481, "residual_bar": 1e-8},
+  "cross_oo_bohr": [5.858151], "cross_ho_bohr": [7.569793, 6.346561, 4.012460, 6.378379], "cross_hh_bohr": [5.721989, 4.439796, 7.774836, 7.133501], "min_cross_ho_bohr": 4.012460,
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, -0.5030339254, 1.8773481674], [1.9300704789, 0.0591939119, -0.2209146865]], "acceptor_centers": [[0.0000000000, 0.0000000000, 5.8581509863], [1.0273740311, -0.1863578875, 7.4974351623], [-1.0273740311, -1.6392841759, 6.0445088738]]
+}

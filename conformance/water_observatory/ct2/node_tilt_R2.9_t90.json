@@ -1,0 +1,14 @@
+{
+  "node": "tilt_R2.9_t90", "family": "tilt", "kind": "acceptor tilted 90° at 2.9 Å", "naming": "tilt_R<R>_t<tilt> = tilted(R, tilt); twist_R<R>_t<tilt> = twisted(R, 90, tilt); donor_R<R>_b<bend> = bent_donor(R, bend); dbent_R<R>_d<donor bend>_a<acceptor tilt> = double_bent(R, donor bend, acceptor tilt); twistbent_R<R>_tw<twist>_t<tilt>_d<donor bend> = twisted(R, twist, tilt) with the donor rot_x(donor bend). R in angstrom to one decimal, every angle in whole degrees. The thirteen of record keep the names their own records carry.",
+  "r_oo_angstrom": 2.900, "r_oo_bohr": 5.480206, "twist_degrees": 0.0, "tilt_degrees": 90.0, "donor_bend_degrees": 0.0,
+  "units": 2, "units_reading": [0, 0, 0, 3, 3, 3], "units_free_marker": 4294967295,
+  "exact": {"solver": "holon_chem::heitler_london::fci_full_from_product", "e_total": -1.500518262288e2, "davidson_iters": 16, "residual": 3.951981314158e-9, "residual_bar": 1e-8, "converged": true, "capped": false, "n_det": 1002001, "wall_seconds": 79.025313, "cpu_seconds": 1798.670000, "price_expected_core_seconds": 88.000000, "price_admitted": true},
+  "sector": {"e_noct": -1.500386088919e2, "e_hl_undeformed": -1.500379069341e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "closed_sector_gain": -7.019578254415e-4,
+  "sector_dim": 194481, "sector_dim_staked": 194481, "n_det": 1002001, "davidson_iters": 13, "residual": 6.034735764253e-9, "residual_bar": 1e-8, "converged": true, "capped": false,
+  "metric_min_eigenvalue": 9.612057369928e-1, "wall_seconds": 78.091448, "sigma_seconds": 65.157889, "harness_wall_seconds": 78.093543, "cpu_seconds": 1595.880000, "threads": 24,
+  "price_floor_core_seconds_per_sigma": 55, "price_rule": "cpu_seconds >= 0.1 * davidson_iters * 55 (M-CHEAPER-THAN-ITS-PRICE)", "price_expected_core_seconds": 71.500000, "price_admitted": true},
+  "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "de_exact": -5.243166249755e-3, "de_exact_rule": "E_exact(total) - (E_A0 + E_B0), the monomer references from the sector solve's own setup (the same solve_embedded call the records used)",
+  "e_ct": -1.321733688559e-2, "e_ct_rule": "E_exact(total) - E_noCT(total)", "order_ok": true, "order_tolerance": 1e-10,
+  "cross_oo_bohr": [5.480206], "cross_ho_bohr": [5.814648, 5.814648, 3.536632, 6.026348], "cross_hh_bohr": [4.035498, 4.035498, 5.872465, 6.760388], "min_cross_ho_bohr": 3.536632,
+  "threads": 24, "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, 0.0000000000, 1.9435738400], [1.9300704789, 0.0000000000, -0.2287077129]], "acceptor_centers": [[0.0000000000, 0.0000000000, 5.4802057614], [1.4529262884, -1.2909238831, 5.4802057614], [-1.4529262884, -1.2909238831, 5.4802057614]]
+}

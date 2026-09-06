@@ -1,0 +1,10 @@
+{
+  "node": "tilted45_R3.1", "kind": "bent acceptor 45°", "family": "tilt", "r_oo_angstrom": 3.100, "r_oo_bohr": 5.858151,
+  "solver": "holon_chem::heitler_london::fci_full_from_product (the Davidson on the FULL space from the undeformed Heitler-London product)",
+  "e_full": -1.500520175811e2, "e_record": -1.500520175812e2, "miss": 7.156586434576e-11, "tolerance": 1e-8, "within": true,
+  "davidson_iters": 15, "residual": 4.262640262102e-9, "residual_bar": 1e-8, "converged": true, "capped": false,
+  "n_det": 1002001, "wall_seconds": 77.589715, "cpu_seconds": 1780.600000, "threads": 24,
+  "price_rule": "cpu_seconds >= 0.1 * davidson_iters * 55 (M-CHEAPER-THAN-ITS-PRICE)", "price_expected_core_seconds": 82.500000, "price_admitted": true,
+  "stock": {"cpu_seconds": 23506.900000, "davidson_iters": 217, "residual": 8.817000000000e-11, "exit": "Converged", "converged": true, "wall_seconds": 1022.300000, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "de_exact": -5.434518591940e-3, "source": "../conformance/water_observatory/field6/tilted45_R3.1.json"},
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, 0.0000000000, 1.9435738400], [1.9300704789, 0.0000000000, -0.2287077129]], "acceptor_centers": [[0.0000000000, 0.0000000000, 5.8581509863], [1.4529262884, -0.9128210317, 6.7709720181], [-1.4529262884, -0.9128210317, 6.7709720181]]
+}

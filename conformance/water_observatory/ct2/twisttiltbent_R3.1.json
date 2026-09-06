@@ -1,0 +1,8 @@
+{
+  "node": "twisttiltbent_R3.1", "r_oo_angstrom": 3.100, "r_oo_bohr": 5.858151,
+  "solver": "holon_chem::heitler_london::fci_full_from_product (G-D0's solver)",
+  "n_det": 1002001, "e_super": -1.500496136034e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "de_exact": -3.030540780202e-3,
+  "davidson_iters": 15, "residual": 3.378423527782e-9, "residual_bar": 1e-8, "converged": true, "capped": false,
+  "wall_seconds": 65.341644, "cpu_seconds": 1448.270000, "threads": 24, "price_expected_core_seconds": 82.500000, "price_admitted": true,
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, -0.5030339254, 1.8773481674], [1.9300704789, 0.0591939119, -0.2209146865]], "acceptor_centers": [[0.0000000000, 0.0000000000, 5.8581509863], [1.0273740311, -0.1863578875, 7.4974351623], [-1.0273740311, -1.6392841759, 6.0445088738]]
+}

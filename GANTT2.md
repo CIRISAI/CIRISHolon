@@ -30,7 +30,42 @@ fixed point: a spanning bond graph is a liquid.
 
 ## The ladder, bottom to top
 
-### The fold below the atom (hadron) — see `GANTT.md` GF nodes and `OBJECT.md`; unchanged this season
+### Leptons — OWED (the floor under the whole ladder is an input)
+
+| question | record |
+|---|---|
+| closed | nothing: every tier above takes the electron as given. `OBJECT.md` and `TIERS.md` say it in the fold's own fence: "the lepton is an input to QED, not an emergent object" |
+| the ledger | none measured; QED's presence between leptons is the input's own physics, taken from the chemistry tier upward without a seam |
+| the production | none: no tier produces an electron, and the ladder has no rewrite that makes or unmakes one |
+| dynamics | none on the engine; the one named obstacle is the chiral wall — a lattice with chiral fermions runs into Nielsen–Ninomiya, so the route (domain-wall, overlap, or a 1+1D chiral rehearsal on the lanes) has to be PRICED before any freeze (`GANTT.md` row L6) |
+
+**Debt, stated plainly.** `GANTT.md` row L6 cites `LEPTON_LADDER.md` and no such file exists in
+the repository (a cross-reference without a target, the third this season). Two things are owed
+before a lepton row can carry anything: the file that row cites, holding the priced routes and
+their kills; and the electron's place in the closure grammar (it is a terminal today, and the
+question is whether it stays one). Nothing here is a claim; the row is complete as a fence with
+an owner to be named and an exit (the pricing) that costs no compute.
+
+### The fold below the atom (hadron; the tier below the neutron) — INSTRUMENT VALIDATED, ONE RUNG READ (`GANTT.md` GF nodes; `OBJECT.md` "The fold below the atom", LOCKED as a fold at wager strength)
+
+| question | record |
+|---|---|
+| closed | the colour-singlet closure: Gauss's law is the seam, the hadron tier closes on an exact conservation fibre (colour), the far field free by the mass gap (`OBJECT.md`); the crystal below it BANKED (SCHWINGER, S1 (a): M_V/g = 0.553 against the continuum 1/√π to 2 %) |
+| the ledger | **GF0 READ, branch (a)**: two screened pairs' residual interaction decays at the banked vector-meson mass on both columns, the rate at the gap to 0.6 % (SCHWINGER-4) — presence at this tier is a massive exchange, and it was measured on the engine's own arm |
+| the production | the hadron box: **GF2 GATED** — its 1+1D rehearsal (E7 → E14, the labelled MPS on the colour lanes) met the exact colour-lane referee on all six N = 8 sectors at rank-derived ceilings, and the volume ladder was closed as prior art (Silvi 2019; Hayata 2023); no mass, interaction or continuum shape has been read; the MPS arm was convicted at χ = 64 by G0 (penalty-sector metastability) and retired for that rung, successor E7 |
+| dynamics | the k-lane determinant solver (E11: one string per conserved integer lane, host and device bit-identical; the chemistry engine is its k = 2 case) and the labelled MPS arm (E14: block-sparse two-site contraction, the device kernel 4.8× host) — the water triple runs on the same arm |
+
+**Next, in order:** **GF1** (the magic price of gauge vacua across the coupling; the kill a
+volume law; prereg owed), then **E8 → E10** (general local dimension, the 3D finite-group
+box: GF2 proper — staggered quarks; the referees p, n, π and the deuteron are the kills). The
+tier's own fence, kept in its words: no hadron computed.
+
+### Nucleus — GATED on GF2 and the chemistry tier's machinery (`GANTT.md` NUC)
+
+| question | record |
+|---|---|
+| closed | the nucleus is the deepest OBJECT the workbench shows — mass, charge, spin, its quantum spread — carried on its conserved totals the way ACUITY-B carries a composite outside the acuity (`GANTT.md`, the zoom ladder) |
+| the ledger / the production / dynamics | none: the nuclear tier is to be built on tier A's machinery from GF2's derived tables, and GF2 has not read a hadron. FENCED by name at the nucleus rung with that owner and exit, never suppressed |
 
 ### Atom — `TIERS.md`: the ladder climbed, node H decided (the bare many-body expansion does not terminate; the seam is the answer)
 

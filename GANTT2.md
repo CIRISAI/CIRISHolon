@@ -30,22 +30,6 @@ fixed point: a spanning bond graph is a liquid.
 
 ## The ladder, bottom to top
 
-### Leptons — OWED (the floor under the whole ladder is an input)
-
-| question | record |
-|---|---|
-| closed | nothing: every tier above takes the electron as given. `OBJECT.md` and `TIERS.md` say it in the fold's own fence: "the lepton is an input to QED, not an emergent object" |
-| the ledger | none measured; QED's presence between leptons is the input's own physics, taken from the chemistry tier upward without a seam |
-| the production | none: no tier produces an electron, and the ladder has no rewrite that makes or unmakes one |
-| dynamics | none on the engine; the one named obstacle is the chiral wall — a lattice with chiral fermions runs into Nielsen–Ninomiya, so the route (domain-wall, overlap, or a 1+1D chiral rehearsal on the lanes) has to be PRICED before any freeze (`GANTT.md` row L6) |
-
-**Debt, stated plainly.** `GANTT.md` row L6 cites `LEPTON_LADDER.md` and no such file exists in
-the repository (a cross-reference without a target, the third this season). Two things are owed
-before a lepton row can carry anything: the file that row cites, holding the priced routes and
-their kills; and the electron's place in the closure grammar (it is a terminal today, and the
-question is whether it stays one). Nothing here is a claim; the row is complete as a fence with
-an owner to be named and an exit (the pricing) that costs no compute.
-
 ### The fold below the atom (hadron; the tier below the neutron) — INSTRUMENT VALIDATED, ONE RUNG READ (`GANTT.md` GF nodes; `OBJECT.md` "The fold below the atom", LOCKED as a fold at wager strength)
 
 | question | record |
@@ -59,6 +43,22 @@ an owner to be named and an exit (the pricing) that costs no compute.
 volume law; prereg owed), then **E8 → E10** (general local dimension, the 3D finite-group
 box: GF2 proper — staggered quarks; the referees p, n, π and the deuteron are the kills). The
 tier's own fence, kept in its words: no hadron computed.
+
+### Leptons — OWED; BESIDE the fold, not below it (the floor has two inputs: the quark, which the hadron rung is built to produce, and the electron, which nothing on the ladder produces)
+
+| question | record |
+|---|---|
+| closed | nothing: the electron enters at the ATOM tier as a given constituent — it is elementary the way a quark is, not a rung under the hadron — and every tier above takes it as given. `OBJECT.md` and `TIERS.md` say it in the fold's own fence: "the lepton is an input to QED, not an emergent object" |
+| the ledger | none measured; QED's presence between leptons is the input's own physics, taken from the chemistry tier upward without a seam |
+| the production | none: no tier produces an electron, and the ladder has no rewrite that makes or unmakes one |
+| dynamics | none on the engine; the one named obstacle is the chiral wall — a lattice with chiral fermions runs into Nielsen–Ninomiya, so the route (domain-wall, overlap, or a 1+1D chiral rehearsal on the lanes) has to be PRICED before any freeze (`GANTT.md` row L6) |
+
+**Debt, stated plainly.** `GANTT.md` row L6 cites `LEPTON_LADDER.md` and no such file exists in
+the repository (a cross-reference without a target, the third this season). Two things are owed
+before a lepton row can carry anything: the file that row cites, holding the priced routes and
+their kills; and the electron's place in the closure grammar (it is a terminal today, and the
+question is whether it stays one). Nothing here is a claim; the row is complete as a fence with
+an owner to be named and an exit (the pricing) that costs no compute.
 
 ### Nucleus — GATED on GF2 and the chemistry tier's machinery (`GANTT.md` NUC)
 

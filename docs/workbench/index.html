@@ -115,7 +115,8 @@
       </div>
       <div class="band-scale" id="band-scale">—</div>
       <div class="band-scale" id="sheet-zoom-val">1.00×</div>
-      <p class="band-text" id="band-text">—</p>
+      <button id="btn-band-more" class="btn-micro band-more" aria-expanded="false" title="The band's statement: what runs, or its fence with owner and exit">more info ▸</button>
+      <p class="band-text" id="band-text" hidden>—</p>
     </div>
     <div id="reticle-hud" class="hidden">
       <div class="reticle-ring"></div>
@@ -146,7 +147,7 @@
             <h4>MORE CONTROLS</h4>
             <button id="btn-toggle-manifest" class="btn-micro" title="Provenance manifest (WB-3.4)">📋 manifest</button>
             <button id="btn-filmstrip" class="btn-micro" title="Render 20 zoom levels from the molecular stop to the floor into one strip — the fluidity check">🎞 filmstrip</button>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <label class="check-row">
             <input type="checkbox" id="sheet-thermostat" checked>
             <span>thermostat engaged — heat removed or added is posted to W_ext, so the
@@ -243,7 +244,7 @@
           <div class="card-head">
             <h4>ENERGY LEDGER (WB-4.3)</h4>
             <span class="tag" id="tag-ledger">—</span>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <div class="ledger-grid">
             <div class="lrow"><span>Kinetic T</span><span id="led-kin">—</span></div>
             <div class="lrow"><span>Pair V₂</span><span id="led-pair">—</span></div>
@@ -276,7 +277,7 @@
           <div class="card-head">
             <h4>CLOSURE-DEFECT LENS (WB-5.3)</h4>
             <span class="tag" id="tag-closure">—</span>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <div class="ledger-grid">
             <div class="lrow"><span>Holon rows</span><span id="clo-rows">—</span></div>
             <div class="lrow"><span>Worst defect now</span><span id="clo-worst">—</span></div>
@@ -302,7 +303,7 @@
           <div class="card-head">
             <h4>THE CHART IN THE VIEWPORT (WB-5.1)</h4>
             <span class="tag" id="tag-chart">—</span>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <div class="ledger-grid">
             <div class="lrow"><span>Pair knots</span><span id="chart-pair-knots">—</span></div>
             <div class="lrow"><span>R_e</span><span id="chart-re">—</span></div>
@@ -337,7 +338,7 @@
           <div class="card-head">
             <h4>THREE-BODY SECTOR</h4>
             <span class="tag" id="tag-trimer">—</span>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <div class="ledger-grid">
             <div class="lrow"><span>State</span><span id="trimer-state">—</span></div>
             <div class="lrow"><span>Untabulated triples refused<br><small>per force pass</small></span><span id="fence-count">—</span></div>
@@ -350,7 +351,7 @@
           <div class="card-head">
             <h4>FENCE REGISTER (WB-5.2)</h4>
             <span class="tag" id="tag-fence">—</span>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <ul class="fence-list" id="fence-list"></ul>
         </div>
 
@@ -363,7 +364,7 @@
           <div class="card-head">
             <h4>NOT SERVED BY THIS ENGINE</h4>
             <span class="tag" data-tag="fenced">FENCED</span>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <ul class="fence-list" id="not-served-rows"></ul>
           <p class="card-note">
             The scale bands are NOT listed here. They were, and it was a second place for
@@ -377,7 +378,7 @@
           <div class="card-head">
             <h4>THE THREE CLOCKS (WB-1.4 / WB-2.3)</h4>
             <span class="tag" id="tag-clocks">—</span>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <div class="ledger-grid">
             <div class="lrow"><span>dt (derived)</span><span id="clk-dt">—</span></div>
             <div class="lrow"><span>ω·dt</span><span id="clk-omega-dt">—</span></div>
@@ -399,7 +400,7 @@
           <div class="card-head">
             <h4>SCENE</h4>
             <span class="tag" id="tag-scene">—</span>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <div class="ledger-grid">
             <div class="lrow"><span>Atoms</span><span id="scene-atoms">—</span></div>
             <div class="lrow"><span>Bonded pairs</span><span id="scene-bonds">—</span></div>
@@ -415,7 +416,7 @@
           <div class="card-head">
             <h4>THE TWO BOXES (FSD-W2)</h4>
             <span class="tag" id="tag-boxes">—</span>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <div class="ledger-grid">
             <div class="lrow"><span>Zoom ratio</span><span id="scene-zoom">—</span></div>
             <div class="lrow"><span>WORLD box — the physics</span><span id="world-extent">—</span></div>
@@ -447,7 +448,7 @@
           <div class="card-head">
             <h4>THE SCALE LADDER (FSD-W3 §11.2) — 1 km TO THE NUCLEUS</h4>
             <span class="tag" id="tag-ladder">—</span>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <p class="card-note">
             A kilometre of water is about 3×10³¹ molecules. Nobody simulates that and this
             page does not pretend to. What the zoom axis shows instead is the ladder itself,
@@ -523,7 +524,7 @@
           <div class="card-head">
             <h4>THE LADDER'S READOUTS (FSD-W3 §11.2)</h4>
             <span class="tag" id="tag-descent">—</span>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <p class="card-note">
             The ladder above carries each band's state, owner, exit and citations. This card
             carries the numbers those bands serve. <b>LIVE</b> means the digits came out of
@@ -616,7 +617,7 @@
           <div class="card-head">
             <h4>THE WATER STORY (WB-9.6)</h4>
             <span class="tag" data-tag="record">RECORD</span>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <p class="card-note">
             This is the only panel on the page whose numbers did not come out of the engine
             you are watching. They were measured by the closure census on banked
@@ -679,7 +680,7 @@
           <div class="card-head">
             <h4>DETERMINISM (WB-5.4)</h4>
             <button class="btn-micro" id="btn-replay">Run replay check</button>
-          </div>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
           <div class="ledger-grid">
             <div class="lrow"><span>Run A digest</span><span id="replay-a">—</span></div>
             <div class="lrow"><span>Run B digest</span><span id="replay-b">—</span></div>

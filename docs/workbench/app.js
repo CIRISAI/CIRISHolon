@@ -3813,6 +3813,28 @@ function renderTierRail(w, viewM) {
     : `${b.runs}. FENCED — ${b.owner}. ${b.readout ? `Served meanwhile: ${b.readout}.` : ""}`);
 }
 
+/// "more info" on the band card (2026-09-06): the band's statement is collapsed by default so
+/// the card never covers the simulation; the text is always in the DOM. The choice persists
+/// per viewer in localStorage and fails safe to collapsed.
+function installBandMore() {
+  const btn = document.getElementById("btn-band-more");
+  const txt = document.getElementById("band-text");
+  if (!btn || !txt) return;
+  let open = false;
+  try { open = localStorage.getItem("wb.band.more") === "1"; } catch (_) { open = false; }
+  const apply = () => {
+    txt.hidden = !open;
+    btn.textContent = open ? "less ▾" : "more info ▸";
+    btn.setAttribute("aria-expanded", open ? "true" : "false");
+  };
+  btn.addEventListener("click", () => {
+    open = !open;
+    try { localStorage.setItem("wb.band.more", open ? "1" : "0"); } catch (_) { /* per-viewer convenience only */ }
+    apply();
+  });
+  apply();
+}
+
 const DENSITY_MARKS = [
   { name: "air", gcc: 1.2e-3 },
   { name: "liquid water", gcc: 1.0 },
@@ -4045,3 +4067,30 @@ window.addEventListener("DOMContentLoaded", () => {
     UI["boot-failure"]?.classList.remove("hidden");
   });
 });
+
+// the band card's "more info" toggle (installed once; safe if the card is absent)
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", installBandMore);
+} else {
+  installBandMore();
+}
+
+// the drawer cards' "more info" toggles (installed once; each card's note is hidden until asked for)
+function installCardMore() {
+  document.querySelectorAll(".card-more").forEach((btn) => {
+    const card = btn.closest(".drawer-card");
+    if (!card) return;
+    const apply = () => {
+      const open = card.classList.contains("expanded");
+      btn.textContent = open ? "less ▾" : "more info ▸";
+      btn.setAttribute("aria-expanded", open ? "true" : "false");
+    };
+    btn.addEventListener("click", () => { card.classList.toggle("expanded"); apply(); });
+    apply();
+  });
+}
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", installCardMore);
+} else {
+  installCardMore();
+}

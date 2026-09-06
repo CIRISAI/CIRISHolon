@@ -1204,6 +1204,15 @@ body, html {
   color: var(--text-muted);
   margin-top: 4px;
   line-height: 1.35;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+/* The band's statement is behind "more info" by default: the card must not cover the
+   simulation. The text stays in the DOM (hidden), so nothing the page says is removed. */
+.band-more {
+  margin-top: 4px;
+  font-size: 9px;
+  opacity: 0.8;
 }
 #control-rail {
   position: absolute;
@@ -1350,3 +1359,9 @@ body, html {
   .tier-stop span { display: none; }
   .band-card { max-width: 58vw; }
 }
+
+/* The drawer's card notes are behind "more info" by default (2026-09-06): the notes stay in
+   the DOM, the card shows its head and its numbers, and the drawer stops being a wall of
+   text over the simulation. */
+.drawer-card:not(.expanded) .card-note { display: none; }
+.card-more { margin-left: auto; font-size: 9px; opacity: 0.8; }

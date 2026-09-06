@@ -90,10 +90,30 @@ widened to 45° `1.20`; everything against bonding `0.45`. Two stacks with the t
 pointed at the acceptor's plane normal (the family's own corner) and everything for bonding
 DISSOLVED a unit within 1,500–2,400 frames — a proton transfer the referee cannot hold (OH⁻
 unbound at this basis) — and the pointing-only screens at the family's amplitude heated the
-box and dissolved a unit too. Reading, for LIQUID-2's branches only: direction is the lever,
-the neighbours are already there, and the amplitude must be refit with the direction in it
-(CT-3's table term); the energy scale is not the story; the criterion is a minority of the
-deficit.
+box and dissolved a unit too. The pointing-only screen at 200 K target finished: `1.200` bonds
+per molecule (the largest single-knob move, +36 % on base) — but its box ran at 392 K under
+the thermostat and its oxygen peak collapsed to `2.57` Å at height `1.17`: the family's
+amplitude, doubled at the plane normal, pulled molecules into short, hot contacts rather
+than a network. Reading, for LIQUID-2's branches only: direction is the lever, the neighbours
+are already there, and the amplitude must be refit with the direction in it (CT-3's table
+term); the energy scale is not the story; the criterion is a minority of the deficit.
+
+| screen | T̄ K | bonds | peak Å | height | n(3.3 Å) | end |
+|---|---|---|---|---|---|---|
+| base | 336 | 0.882 | 3.10 | 2.12 | 3.59 | done |
+| T250 / T200 | 296 / 250 | 0.899 / 0.916 | 3.10 / 3.25 | 2.11 / 2.16 | 3.49 / 3.37 | done |
+| Q125 | 365 | 0.980 | 3.04 | 2.02 | 3.71 | done |
+| C6_45 | 345 | 0.920 | 2.94 | 2.01 | 3.86 | done |
+| Q125_C6 / T200_C6 | 379 / 264 | 0.999 / 0.975 | 2.99 / 2.94 | 1.99 / 1.85 | 4.01 / 3.74 | done |
+| PAIRCT | 342 | 0.858 | 2.99 | 2.17 | 3.97 | done |
+| L45 (readout only) | 336 | 1.196 | 3.10 | 2.12 | 3.59 | done |
+| MINBOND | 360 | 0.454 | 3.31 | 2.94 | 2.83 | done |
+| POINT (293 K) | 446 | 0.806 | 3.36 | 2.53 | 2.95 | VOID at 2,400 (a unit dissolved) |
+| POINT_COLD (200 K) | 392 | 1.200 | 2.57 | 1.17 | 3.21 | done |
+| MAXBOND, MAXBOND_L45 | — | — | — | — | — | VOID at 1,482 (a unit dissolved) |
+
+(Screens ran nine to a socket at 0.46 s per pass; their thermostat had not settled the
+random start's heat within 12,000 frames, so their mean temperatures sit above target.)
 
 ## 4. Corrections to the freeze's letter
 

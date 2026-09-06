@@ -11,3 +11,14 @@ L2 price: 0.694412 s per force pass at 384 atoms with the lattice sum (15624 wav
   frame    4000: T  402.5 K, units 128, H-bonds/molecule 0.956, drift 7.05e-6, 40 readouts
   frame    6000: T  412.5 K, units 128, H-bonds/molecule 1.057, drift 7.05e-6, 60 readouts
   frame    8000: T  404.6 K, units 128, H-bonds/molecule 1.136, drift 7.35e-6, 80 readouts
+  frame   10000: T  380.6 K, units 128, H-bonds/molecule 1.200, drift 1.01e-5, 100 readouts
+R1 first O–O peak: r 4.850 bohr, g 1.170 → branch (c)  [KILL: position (5.0, 5.6) bohr, height (2.0, 4.0)]
+R2 H-bonds/molecule: 1.2005 → branch (b)  [KILL: (3.0, 4.0)]
+R3 self-diffusion: VOID — diffusion refuses (gate: MSD exponent in [0.85, 1.15]): MSD goes as tau^1.87 over this window, not tau^1; there is no diffusive regime here and a straight-line fit would report the slope of a curve as a diffusion constant
+L1 books: columns true, drift peak 1.014e-5 against 1.000e-5 (false), momentum 7.78e-12 / bound 4.09e-8 (true)
+L2 price: 5236.5 s against 8332.9 s expected (true)
+carrier: 0.2334 of first-shell O–O pairs cross a face (floor 0.05) — nonzero
+plant (i) raw-difference g_OO: first peak Some((6.050000000000001, 1.0124930005241988)) vs Some((4.8500000000000005, 1.1698539710907547)), moved 0.135 (needs > 0.2)
+plant (ii) open-box H-bonds: 0.9277 against 1.2005, fell 0.227 (needs > 0.2)
+wrote arm.done
+done

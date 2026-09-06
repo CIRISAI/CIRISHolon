@@ -53,12 +53,14 @@ tier's own fence, kept in its words: no hadron computed.
 | the production | none: no tier produces an electron, and the ladder has no rewrite that makes or unmakes one |
 | dynamics | none on the engine; the one named obstacle is the chiral wall — a lattice with chiral fermions runs into Nielsen–Ninomiya, so the route (domain-wall, overlap, or a 1+1D chiral rehearsal on the lanes) has to be PRICED before any freeze (`GANTT.md` row L6) |
 
-**Debt, stated plainly.** `GANTT.md` row L6 cites `LEPTON_LADDER.md` and no such file exists in
-the repository (a cross-reference without a target, the third this season). Two things are owed
-before a lepton row can carry anything: the file that row cites, holding the priced routes and
-their kills; and the electron's place in the closure grammar (it is a terminal today, and the
-question is whether it stays one). Nothing here is a claim; the row is complete as a fence with
-an owner to be named and an exit (the pricing) that costs no compute.
+**Debt, half paid.** `GANTT.md` row L6 and `OBJECT.md` Fold III cite `LEPTON_LADDER.md`; the
+file now exists (a pricing note, no claim, no compute): two questions priced apart (the atom
+tier's electron is vector-like and needs no chiral route; the weak interaction's is chiral and
+meets the wall), six routes each with its orbitals-per-site cost on the lanes and its kill
+(Wilson, staggered, domain wall, overlap, SLAC refused by the locality budget, and the 1+1D
+chiral rehearsal on the banked Schwinger instrument), and the order sized by compute. Still
+owed: R6's prereg (the axial anomaly's coefficient on SCHWINGER-3's ladder, one observable
+added), and the electron's place in the closure grammar (a terminal today; no wager carried).
 
 ### Nucleus — GATED on GF2 and the chemistry tier's machinery (`GANTT.md` NUC)
 

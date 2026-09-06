@@ -40,6 +40,13 @@ const DENSITY_G_CM3: f64 = 0.997;
 const TEMPERATURE_K: f64 = 293.0;
 /// §0: one seed, declared (M-FIXED-POINT-TRAJECTORY).
 const SEED: u64 = 0x4c49_5155_4944;
+/// LIQUID-1 Amendment 2: the C² switch on every seam term, `r_on = r_cut − 2`; chosen from the
+/// half-edge 14.797 bohr with 0.8 bohr to spare. `0.0` would be no switch (every record before
+/// the amendment).
+const SEAM_CUTOFF_BOHR: f64 = 14.0;
+/// Amendment 2's stake on the truncation: the energy the switch removes on the start box,
+/// per water, must be under a hundredth of kT.
+const TRUNCATION_STAKE_PER_WATER: f64 = 1.0e-5;
 const N_CELLS: usize = 4;
 const N_WATERS: usize = 128;
 
@@ -159,10 +166,11 @@ fn json_num(t: &str, key: &str) -> f64 {
 fn load_law(out: &Path) -> Result<Law, String> {
     let root = out.parent().map(PathBuf::from).unwrap_or_else(|| PathBuf::from("."));
     let mut cands: Vec<PathBuf> = Vec::new();
-    for f in ["wall_ct.json", "wall9.json", "wall8.json", "wall7.json", "wall6.json", "wall5.json", "wall4.json", "wall.json"] {
+    for f in ["wall_ct2.json", "wall_ct.json", "wall9.json", "wall8.json", "wall7.json", "wall6.json", "wall5.json", "wall4.json", "wall.json"] {
         cands.push(out.join(f));
     }
     for (dir, f) in [
+        ("ct2", "wall_ct2.json"),
         ("ct1", "wall_ct.json"),
         ("field9", "wall9.json"),
         ("field8", "wall8.json"),
@@ -207,6 +215,9 @@ fn load_law(out: &Path) -> Result<Law, String> {
         c_hh: g("c_hh"),
         p_ct: g("p_ct"),
         c_ct: g("c_ct"),
+        m_ct: g("m_ct") as u8,
+        k_ct: g("k_ct") as u8,
+        lambda_ct: g("lambda_ct"),
         ..SeamModel::NO_WALL
     };
     let q_h = holon_render::field::water_charge_at_pin();
@@ -338,12 +349,55 @@ fn run(out: &Path, law: &Law, count: usize, dry: bool) {
     let mut sim: Box<Sim> = scene(&species, &pos, l, TEMPERATURE_K);
     let tables_reach = sim.legality_radius();
     sim.set_field(true, None).expect("the open box admits the field");
-    sim.set_seam(Some(law.model)).expect("no acuity frame is installed");
+    // LIQUID-1 Amendment 2: the law with the declared switch; the unswitched reach is
+    // reported beside the switched one
+    let model = SeamModel { r_cut: SEAM_CUTOFF_BOHR, ..law.model };
+    sim.set_seam(Some(model)).expect("no acuity frame is installed");
 
     // ---------------------------------------------------------------- door.json (§2 L0)
-    let seam_reach = law.model.reach(SEAM_REACH_BUDGET);
+    let seam_reach_unswitched = law.model.reach(SEAM_REACH_BUDGET);
+    let seam_reach = model.reach(SEAM_REACH_BUDGET);
     let legality = sim.legality_radius();
     let units_reading = sim.units_reading();
+    // the truncation's price (Amendment 2 §3): the energy the switch removes on the start box,
+    // summed over every cross-unit pair with r > r_on under the minimum image, by class
+    let r_on = SEAM_CUTOFF_BOHR - 2.0;
+    let z: Vec<u32> = species.iter().map(|sp| sp.z).collect();
+    let mut truncation_tail = 0.0f64;
+    let mut tail_pairs = 0usize;
+    for i in 0..pos.len() {
+        let ui = units_reading[i];
+        if ui == holon_render::seam::FREE || (z[i] != 8 && z[i] != 1) {
+            continue;
+        }
+        for j in (i + 1)..pos.len() {
+            let uj = units_reading[j];
+            if uj == holon_render::seam::FREE || uj == ui || (z[j] != 8 && z[j] != 1) {
+                continue;
+            }
+            let mut d2 = 0.0;
+            for c in 0..3 {
+                let mut d = pos[i][c] - pos[j][c];
+                d -= l * (d / l).round();
+                d2 += d * d;
+            }
+            let r = d2.sqrt();
+            if r <= r_on {
+                continue;
+            }
+            let (sw, _) = model.switch(r);
+            let u = match (z[i], z[j]) {
+                (8, 8) => law.model.wall(r) + law.model.dispersion(r),
+                (1, 1) => law.model.contact_hh(r) + law.model.wall_hh(r),
+                _ => law.model.penetration(r) + law.model.wall_oh(r) + law.model.charge_transfer(r),
+            };
+            truncation_tail += u.abs() * (1.0 - sw);
+            tail_pairs += 1;
+        }
+    }
+    let truncation_per_water = truncation_tail / N_WATERS as f64;
+    let truncation_ok = truncation_per_water <= TRUNCATION_STAKE_PER_WATER;
+    eprintln!("L0 door (Amendment 2): seam switch r_cut {SEAM_CUTOFF_BOHR:.2} bohr (r_on {r_on:.2}); unswitched reach {seam_reach_unswitched:.4}, switched reach {seam_reach:.4}; truncation tail {truncation_tail:.4e} Ha over {tail_pairs} pairs beyond r_on = {truncation_per_water:.4e} per water against the stake {TRUNCATION_STAKE_PER_WATER:e} → {}", if truncation_ok { "within" } else { "VOID" });
     let n_atoms = sim.n;
     let units_at_door = units_reading[..n_atoms].iter().enumerate().filter(|(i, &u)| u == *i as u32).count();
     let free_atoms = units_reading[..n_atoms].iter().filter(|&&u| u == holon_render::seam::FREE).count();
@@ -360,12 +414,20 @@ fn run(out: &Path, law: &Law, count: usize, dry: bool) {
         out,
         "door.json",
         format!(
-            "{{\n  \"law_source\": {}, \"law_refused_for_counted_arm\": {}, \"law_refusal\": {},\n  \"dry\": {},\n  \"seam_terms_reach_bohr\": {}, \"seam_reach_budget_hartree\": {}, \"intra_unit_reach_bohr\": {},\n  \"legality_radius_bohr\": {}, \"tables_reach_bohr\": {}, \"half_edge_bohr\": {}, \"cell_edge_bohr\": {},\n  \"units\": {}, \"staked_units\": {}, \"free_atoms\": {}, \"atoms\": {},\n  \"admitted\": {}, \"refusal\": {},\n  \"legality_is_seam_rule_to_the_bit\": {}\n}}\n",
+            "{{\n  \"law_source\": {}, \"law_refused_for_counted_arm\": {}, \"law_refusal\": {},\n  \"dry\": {},\n  \"seam_terms_reach_bohr\": {}, \"seam_terms_reach_unswitched_bohr\": {}, \"seam_switch_r_cut_bohr\": {}, \"seam_switch_r_on_bohr\": {}, \"truncation_tail_hartree\": {}, \"truncation_tail_pairs\": {}, \"truncation_tail_per_water\": {}, \"truncation_stake_per_water\": {}, \"truncation_ok\": {}, \"seam_reach_budget_hartree\": {}, \"intra_unit_reach_bohr\": {},\n  \"legality_radius_bohr\": {}, \"tables_reach_bohr\": {}, \"half_edge_bohr\": {}, \"cell_edge_bohr\": {},\n  \"units\": {}, \"staked_units\": {}, \"free_atoms\": {}, \"atoms\": {},\n  \"admitted\": {}, \"refusal\": {},\n  \"legality_is_seam_rule_to_the_bit\": {}\n}}\n",
             s(&law.source),
             law.refusal.is_some(),
             opt(&law.refusal),
             dry,
             n(seam_reach),
+            n(seam_reach_unswitched),
+            n(SEAM_CUTOFF_BOHR),
+            n(r_on),
+            n(truncation_tail),
+            tail_pairs,
+            n(truncation_per_water),
+            n(TRUNCATION_STAKE_PER_WATER),
+            truncation_ok,
             n(SEAM_REACH_BUDGET),
             n(INTRA_UNIT_REACH),
             n(legality),
@@ -385,6 +447,13 @@ fn run(out: &Path, law: &Law, count: usize, dry: bool) {
         let why = refusal_text.unwrap_or_default();
         write(out, "arm.void", format!("VOID at the door: {why}\n"));
         eprintln!("VOID at the door: {why}");
+        return;
+    }
+    // LIQUID-1 Amendment 2 §3: the truncation's price is a stake, not a note
+    if !truncation_ok {
+        let why = format!("the seam switch at r_cut {SEAM_CUTOFF_BOHR:.2} bohr removes {truncation_per_water:.4e} hartree per water on the start box, over the stake {TRUNCATION_STAKE_PER_WATER:e}");
+        eprintln!("VOID at the door: {why}");
+        write(out, "arm.void", format!("VOID at the door: {why}\n"));
         return;
     }
     // The boundary switch is the last act of the SETUP, not an intervention inside the run:

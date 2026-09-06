@@ -30,6 +30,10 @@
 //! | exchange | Identity | 2 | exponential | a solve | Pauli; the exact core |
 //! | charge transfer | Identity | 2 | exponential | a solve | Mo–Gao–Peyerimhoff 2000; Khaliullin–Bell–Head-Gordon 2007 |
 //!
+//! Each carries a PLAIN name beside the physics name (`Channel::plain`, Backpass V, 2026-09-06),
+//! saying what the channel DOES between two closed wholes: presence, accommodation, attunement,
+//! concert, refusal, sharing. The physics names stay the technical keys; no number moves.
+//!
 //! The sixth (CT-1, 2026-09-05) is APPENDED, the five not renumbered: it is the identity's
 //! SOFT edge — electrons crossing between two closures that both stay closed — where
 //! exchange is the hard one (which electron is which). It is measured as the energy the
@@ -132,6 +136,9 @@ pub enum ChannelId {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Channel {
     pub id: ChannelId,
+    /// What the channel DOES between two closed wholes, in one plain word (Backpass V): the
+    /// name a general reader is given first; the physics name stays the key.
+    pub plain: &'static str,
     pub kind: Kind,
     /// How many fragments must be present for the channel to exist.
     pub arity: u8,
@@ -151,6 +158,7 @@ pub struct Channel {
 pub const CHANNELS: [Channel; 6] = [
     Channel {
         id: ChannelId::Field,
+        plain: "presence",
         kind: Kind::Circumstances,
         arity: 2,
         rate: Rate::Power(1.0),
@@ -160,6 +168,7 @@ pub const CHANNELS: [Channel; 6] = [
     },
     Channel {
         id: ChannelId::Induction,
+        plain: "accommodation",
         kind: Kind::Structure,
         arity: 2,
         rate: Rate::Power(4.0),
@@ -169,6 +178,7 @@ pub const CHANNELS: [Channel; 6] = [
     },
     Channel {
         id: ChannelId::PairDispersion,
+        plain: "attunement",
         kind: Kind::Process,
         arity: 2,
         rate: Rate::Power(6.0),
@@ -178,6 +188,7 @@ pub const CHANNELS: [Channel; 6] = [
     },
     Channel {
         id: ChannelId::ThreeBody,
+        plain: "concert",
         kind: Kind::Rules,
         arity: 3,
         rate: Rate::Power(9.0),
@@ -187,6 +198,7 @@ pub const CHANNELS: [Channel; 6] = [
     },
     Channel {
         id: ChannelId::Exchange,
+        plain: "refusal",
         kind: Kind::Identity,
         arity: 2,
         rate: Rate::Exponential,
@@ -196,6 +208,7 @@ pub const CHANNELS: [Channel; 6] = [
     },
     Channel {
         id: ChannelId::ChargeTransfer,
+        plain: "sharing",
         kind: Kind::Identity,
         arity: 2,
         rate: Rate::Exponential,
@@ -510,6 +523,12 @@ mod tests {
         assert_eq!(CHANNELS[4].rate, Rate::Exponential);
         assert_eq!(CHANNELS[5].rate, Rate::Exponential);
         assert_eq!(CHANNELS[5].id, ChannelId::ChargeTransfer);
+        // Backpass V: one plain word per channel, all distinct, the physics name the key
+        let plain: Vec<&str> = CHANNELS.iter().map(|c| c.plain).collect();
+        assert_eq!(plain, ["presence", "accommodation", "attunement", "concert", "refusal", "sharing"]);
+        for p in plain.iter() {
+            assert!(!p.is_empty() && !p.contains(' '), "one plain word: {p:?}");
+        }
         for (i, c) in CHANNELS.iter().enumerate() {
             assert_eq!(c.id as usize, i);
             assert_eq!(c.id.record(), c);

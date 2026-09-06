@@ -1,0 +1,17 @@
+{
+  "phase": "sweep",
+  "params": {"amendment": "FLUID0_AMENDMENT_1 set A", "l": 256, "density": 2.000000000e-1, "seeds": 2, "a_shear": 1.000000000e-1, "a_shear_plant": 5.000000000e-2, "a_colour": 1.000000000e0, "k_index": [1, 2], "k1": 2.834061507e-2, "k2": 5.668123013e-2, "seed": 77293662323760, "tau_steps": 1.140000000e1, "tau_rule": "tau = 2D/v^2 with v = 1 link per step and the campaign's measured tracer D; the window opens at 4 tau", "transient_taus": 4.000000000e0, "window_start_steps": 46, "window_end_fraction": 2.000000000e-1, "noise_floor_snr": 1.200000000e1, "window_end_rule": "close at the first step under max(fraction * |M(t0)|, noise_floor_snr * sigma / sqrt(seeds))", "sigma_table": [{"l": 64, "shear": 3.399050000e1, "colour": 2.175250000e1}, {"l": 128, "shear": 7.239690000e1, "colour": 4.540900000e1}, {"l": 256, "shear": 1.144808000e2, "colour": 8.985270000e1}], "sigma_used_shear": 1.144808000e2, "sigma_used_colour": 8.985270000e1, "floor_shear": 9.714017999e2, "floor_colour": 7.624254417e2, "cap_shear": [12000, 3000], "cap_colour": [1500, 400], "min_r2": 9.900000000e-1, "min_points": 20, "monotone_tolerance_fraction": 1.000000000e-2, "k_agreement_tolerance": 1.000000000e-1},
+  "n_laws": 4608,
+  "threads": 8,
+  "written_this_run": 4608,
+  "lines_present": 4608,
+  "distinct_indices": 4608,
+  "complete": true,
+  "wall_seconds_this_run": 1.378989968e4,
+  "total_seconds": 1.102503092e5,
+  "price_seconds_per_law": 2.580076738e1,
+  "projected_total_seconds": 1.188899361e5,
+  "band_low_seconds": 1.188899361e4,
+  "band_high_seconds": 1.188899361e6,
+  "price_check_in_band": true
+}

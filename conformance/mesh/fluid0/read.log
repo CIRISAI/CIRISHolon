@@ -1,0 +1,54 @@
+=========================================================================
+FLUID-0 — the census's transport character
+freeze:  conformance/mesh/FLUID0_PREREG.md + FLUID0_AMENDMENT_1 set A
+instr:   holon-lattice::transport   phase: read   out_dir: ../conformance/mesh/fluid0
+set A:   L=256 d=0.2 seeds=2 A_shear=0.1 A_colour=1 k_index in {1,2} seed=0x464c55494430
+         k(1)=2.834061507e-2  k(2)=5.668123013e-2   tau=11.4 steps (2D/v^2, measured D)
+window:  opens at 4 tau = 46 steps; closes at the first step under max(0.2|M(t0)|, 12 sigma/sqrt(S))
+         sigma(L=256) shear 114.4808 colour 89.8527 -> floors 971.4018 / 762.4254
+caps:    shear [12000, 3000] colour [1500, 400] by k_index; R2 >= 0.99 on >= 20 points; k-agreement 0.1
+=========================================================================
+  4608 census lines in ../conformance/mesh/fluid0/census.jsonl (0 torn and dropped)
+  4608 distinct law indices
+
+  exit counts (M-BASE-RATE-OMITTED: the refusal rate beside the distribution):
+    d_k1_exit=Fitted                   4550
+    d_k1_exit=LowR2                    58
+    d_k2_exit=Fitted                   4465
+    d_k2_exit=LowR2                    61
+    d_k2_exit=NoDecay                  4
+    d_k2_exit=TooFewPoints             78
+    d_status=Fitted                    3743
+    d_status=LowR2                     111
+    d_status=PreHydrodynamic           705
+    d_status=TooFewPoints              49
+    nu_k1_exit=Fitted                  2128
+    nu_k1_exit=LowR2                   2393
+    nu_k1_exit=NoDecay                 87
+    nu_k2_exit=Fitted                  1930
+    nu_k2_exit=LowR2                   2493
+    nu_k2_exit=NoDecay                 168
+    nu_k2_exit=TooFewPoints            17
+    nu_status=Fitted                   1850
+    nu_status=LowR2                    2612
+    nu_status=NoDecay                  87
+    nu_status=PreHydrodynamic          59
+
+  distribution over the 1707 laws Fitted on BOTH readouts with k-agreement:
+    nu  min 3.312687e-1  median 4.633477e-1  max 2.811295e0   (n 1707)
+    D   min 2.037596e0  median 3.189829e0  max 7.726407e0   (n 1707)
+    Sc  min 1.068338e-1  median 1.608506e-1  max 4.485649e-1   (n 1707)
+    PreHydrodynamic laws: 752
+    refusal rate: 11604 of 18432 readings
+    laws refusing: 2901 of 4608 = 0.6296; the 48-law preview at one seed read 27 of 48 = 0.5625; ratio 1.1192, within a factor of two = true
+
+  FHP-I lines (2):
+    {"index": 2352, "digest": "c0a3bdebaac97ae5", "is_fhp_i": true, "is_identity": false, "seeds": 2, "l": 256, "nu_k1": 5.284306411e-1, "nu_k2": 5.392310123e-1, "d_k1": 4.881117700e0, "d_k2": 5.125316154e0, "nu_k1_exit": "Fitted", "nu_k2_exit": "Fitted", "d_k1_exit": "Fitted", "d_k2_exit": "Fitted", "nu_status": "Fitted", "d_status": "Fitted", "nu_k1_r2": 9.971642728e-1, "nu_k2_r2": 9.974096888e-1, "d_k1_r2": 9.999510379e-1, "d_k2_r2": 9.996368544e-1, "nu_k1_points": 3802, "nu_k2_points": 906, "d_k1_points": 409, "d_k2_points": 100, "sc": 1.082601719e-1, "collisions_fired": 39816972, "ledger_exact": true, "seconds": 1.235269661e1}
+    {"index": 3120, "digest": "6657ba0491b18add", "is_fhp_i": true, "is_identity": false, "seeds": 2, "l": 256, "nu_k1": 5.270810625e-1, "nu_k2": 5.213910679e-1, "d_k1": 4.778534219e0, "d_k2": 5.299006330e0, "nu_k1_exit": "Fitted", "nu_k2_exit": "Fitted", "d_k1_exit": "Fitted", "d_k2_exit": "Fitted", "nu_status": "Fitted", "d_status": "Fitted", "nu_k1_r2": 9.967954074e-1, "nu_k2_r2": 9.959565635e-1, "d_k1_r2": 9.999459373e-1, "d_k2_r2": 9.999249422e-1, "nu_k1_points": 3756, "nu_k2_points": 915, "d_k1_points": 421, "d_k2_points": 96, "sc": 1.103018286e-1, "collisions_fired": 39620578, "ledger_exact": true, "seconds": 1.333346842e1}
+  identity line(s) (1):
+    {"index": 0, "digest": "8368214f77995ee5", "is_fhp_i": false, "is_identity": true, "seeds": 2, "l": 256, "nu_k1": null, "nu_k2": null, "d_k1": null, "d_k2": null, "nu_k1_exit": "NoDecay", "nu_k2_exit": "NoDecay", "d_k1_exit": "LowR2", "d_k2_exit": "NoDecay", "nu_status": "NoDecay", "d_status": "LowR2", "nu_k1_r2": null, "nu_k2_r2": null, "d_k1_r2": 9.561046199e-1, "d_k2_r2": null, "nu_k1_points": 11955, "nu_k2_points": 2955, "d_k1_points": 32, "d_k2_points": 39, "sc": null, "collisions_fired": 0, "ledger_exact": true, "seconds": 3.305905479e1}
+
+  S branch (c): the largest Sc is under 10: 4.485649e-1 at index 654 digest 4b4ceae045ea57af — no single-species FHP-6 element carries water's two coefficients at once
+    water's kill band (experiment, §1): Sc_water ~= 434.8 [Kestin/Sokolov/Wakeham 1978; Krynicki/Green/Sawyer 1978; Mills 1973]
+
+  wrote ../conformance/mesh/fluid0/census_summary.json

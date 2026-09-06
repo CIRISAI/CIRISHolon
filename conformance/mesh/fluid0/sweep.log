@@ -1,0 +1,59 @@
+=========================================================================
+FLUID-0 — the census's transport character
+freeze:  conformance/mesh/FLUID0_PREREG.md + FLUID0_AMENDMENT_1 set A
+instr:   holon-lattice::transport   phase: sweep   out_dir: ../conformance/mesh/fluid0
+set A:   L=256 d=0.2 seeds=2 A_shear=0.1 A_colour=1 k_index in {1,2} seed=0x464c55494430
+         k(1)=2.834061507e-2  k(2)=5.668123013e-2   tau=11.4 steps (2D/v^2, measured D)
+window:  opens at 4 tau = 46 steps; closes at the first step under max(0.2|M(t0)|, 12 sigma/sqrt(S))
+         sigma(L=256) shear 114.4808 colour 89.8527 -> floors 971.4018 / 762.4254
+caps:    shear [12000, 3000] colour [1500, 400] by k_index; R2 >= 0.99 on >= 20 points; k-agreement 0.1
+=========================================================================
+  resuming: 0 of 4608 laws already present in ../conformance/mesh/fluid0/census.jsonl; 4608 to run on 8 workers
+  progress: 100 written (100 of 4608 present), 249.7 s wall, 2.50 s/law wall, 2.2 % done
+  progress: 200 written (200 of 4608 present), 490.6 s wall, 2.45 s/law wall, 4.3 % done
+  progress: 300 written (300 of 4608 present), 742.9 s wall, 2.48 s/law wall, 6.5 % done
+  progress: 400 written (400 of 4608 present), 990.3 s wall, 2.48 s/law wall, 8.7 % done
+  progress: 500 written (500 of 4608 present), 1242.7 s wall, 2.49 s/law wall, 10.9 % done
+  progress: 600 written (600 of 4608 present), 1490.3 s wall, 2.48 s/law wall, 13.0 % done
+  progress: 700 written (700 of 4608 present), 1758.8 s wall, 2.51 s/law wall, 15.2 % done
+  progress: 800 written (800 of 4608 present), 2024.9 s wall, 2.53 s/law wall, 17.4 % done
+  progress: 900 written (900 of 4608 present), 2361.1 s wall, 2.62 s/law wall, 19.5 % done
+  progress: 1000 written (1000 of 4608 present), 2721.3 s wall, 2.72 s/law wall, 21.7 % done
+  progress: 1100 written (1100 of 4608 present), 3099.7 s wall, 2.82 s/law wall, 23.9 % done
+  progress: 1200 written (1200 of 4608 present), 3436.0 s wall, 2.86 s/law wall, 26.0 % done
+  progress: 1300 written (1300 of 4608 present), 3753.1 s wall, 2.89 s/law wall, 28.2 % done
+  progress: 1400 written (1400 of 4608 present), 4076.4 s wall, 2.91 s/law wall, 30.4 % done
+  progress: 1500 written (1500 of 4608 present), 4405.6 s wall, 2.94 s/law wall, 32.6 % done
+  progress: 1600 written (1600 of 4608 present), 4690.8 s wall, 2.93 s/law wall, 34.7 % done
+  progress: 1700 written (1700 of 4608 present), 4931.3 s wall, 2.90 s/law wall, 36.9 % done
+  progress: 1800 written (1800 of 4608 present), 5181.7 s wall, 2.88 s/law wall, 39.1 % done
+  progress: 1900 written (1900 of 4608 present), 5440.8 s wall, 2.86 s/law wall, 41.2 % done
+  progress: 2000 written (2000 of 4608 present), 5739.6 s wall, 2.87 s/law wall, 43.4 % done
+  progress: 2100 written (2100 of 4608 present), 5997.3 s wall, 2.86 s/law wall, 45.6 % done
+  progress: 2200 written (2200 of 4608 present), 6261.5 s wall, 2.85 s/law wall, 47.7 % done
+  progress: 2300 written (2300 of 4608 present), 6532.8 s wall, 2.84 s/law wall, 49.9 % done
+  progress: 2400 written (2400 of 4608 present), 6835.5 s wall, 2.85 s/law wall, 52.1 % done
+  progress: 2500 written (2500 of 4608 present), 7175.0 s wall, 2.87 s/law wall, 54.3 % done
+  progress: 2600 written (2600 of 4608 present), 7492.8 s wall, 2.88 s/law wall, 56.4 % done
+  progress: 2700 written (2700 of 4608 present), 7835.8 s wall, 2.90 s/law wall, 58.6 % done
+  progress: 2800 written (2800 of 4608 present), 8153.2 s wall, 2.91 s/law wall, 60.8 % done
+  progress: 2900 written (2900 of 4608 present), 8500.3 s wall, 2.93 s/law wall, 62.9 % done
+  progress: 3000 written (3000 of 4608 present), 8824.0 s wall, 2.94 s/law wall, 65.1 % done
+  progress: 3100 written (3100 of 4608 present), 9181.4 s wall, 2.96 s/law wall, 67.3 % done
+  progress: 3200 written (3200 of 4608 present), 9499.8 s wall, 2.97 s/law wall, 69.4 % done
+  progress: 3300 written (3300 of 4608 present), 9863.7 s wall, 2.99 s/law wall, 71.6 % done
+  progress: 3400 written (3400 of 4608 present), 10193.8 s wall, 3.00 s/law wall, 73.8 % done
+  progress: 3500 written (3500 of 4608 present), 10550.9 s wall, 3.01 s/law wall, 76.0 % done
+  progress: 3600 written (3600 of 4608 present), 10878.4 s wall, 3.02 s/law wall, 78.1 % done
+  progress: 3700 written (3700 of 4608 present), 11202.1 s wall, 3.03 s/law wall, 80.3 % done
+  progress: 3800 written (3800 of 4608 present), 11520.8 s wall, 3.03 s/law wall, 82.5 % done
+  progress: 3900 written (3900 of 4608 present), 11813.4 s wall, 3.03 s/law wall, 84.6 % done
+  progress: 4000 written (4000 of 4608 present), 12050.6 s wall, 3.01 s/law wall, 86.8 % done
+  progress: 4100 written (4100 of 4608 present), 12296.2 s wall, 3.00 s/law wall, 89.0 % done
+  progress: 4200 written (4200 of 4608 present), 12564.5 s wall, 2.99 s/law wall, 91.1 % done
+  progress: 4300 written (4300 of 4608 present), 12849.5 s wall, 2.99 s/law wall, 93.3 % done
+  progress: 4400 written (4400 of 4608 present), 13138.9 s wall, 2.99 s/law wall, 95.5 % done
+  progress: 4500 written (4500 of 4608 present), 13441.1 s wall, 2.99 s/law wall, 97.7 % done
+  progress: 4600 written (4600 of 4608 present), 13775.2 s wall, 2.99 s/law wall, 99.8 % done
+  census complete: 4608 laws written this run on 8 workers, 4608 lines present (4608 distinct indices), 13789.9 s wall this run, 110250.3 s summed single-core over all census lines; price check projected 118889.9 s, band 11889.0..1188899.4 s, in band = true
+  wrote ../conformance/mesh/fluid0/sweep.done

@@ -64,7 +64,7 @@ tier's own fence, kept in its words: no hadron computed.
 
 | question | record |
 |---|---|
-| closed | the nucleus is the deepest OBJECT the workbench shows — mass, charge, spin, its quantum spread — carried on its conserved totals the way ACUITY-B carries a composite outside the acuity (`GANTT.md`, the zoom ladder) |
+| closed | on the page's ladder the nucleus band sits between the atom and the fold below it (both export-gated bands today; the fold is on the page, so the nucleus is NOT the deepest thing shown): the nucleus as an OBJECT — mass, charge, spin, its quantum spread — carried on its conserved totals the way ACUITY-B carries a composite outside the acuity |
 | the ledger / the production / dynamics | none: the nuclear tier is to be built on tier A's machinery from GF2's derived tables, and GF2 has not read a hadron. FENCED by name at the nucleus rung with that owner and exit, never suppressed |
 
 ### Atom — `TIERS.md`: the ladder climbed, node H decided (the bare many-body expansion does not terminate; the seam is the answer)

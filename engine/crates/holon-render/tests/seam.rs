@@ -42,7 +42,8 @@ fn wall() -> (SeamModel, String) {
                     let (p_hh, c_hh) = (num("p_hh").unwrap_or(0.0), num("c_hh").unwrap_or(0.0));
                     let (p_ct, c_ct) = (num("p_ct").unwrap_or(0.0), num("c_ct").unwrap_or(0.0));
                     let (m_ct, k_ct, lambda_ct) = (num("m_ct").unwrap_or(0.0) as u8, num("k_ct").unwrap_or(0.0) as u8, num("lambda_ct").unwrap_or(0.0));
-                    return (SeamModel { a, b, p, c, c6, a_oh, b_oh, a_hh, b_hh, p_hh, c_hh, p_ct, c_ct, m_ct, k_ct, lambda_ct }, format!("{path} (A = {a:.6e}, b = {b:.6}, P = {p:.6e}, c = {c:.6}, C6 = {c6:.6e}, A_OH = {a_oh:.6e}, b_OH = {b_oh:.6}, A_HH = {a_hh:.6e}, b_HH = {b_hh:.6}, P_HH = {p_hh:.6e}, c_HH = {c_hh:.6}, P_CT = {p_ct:.6e}, c_CT = {c_ct:.6}, m_CT = {m_ct}, k_CT = {k_ct}, λ_CT = {lambda_ct:.4})"));
+                    let r_cut = num("r_cut").unwrap_or(0.0);
+                    return (SeamModel { a, b, p, c, c6, a_oh, b_oh, a_hh, b_hh, p_hh, c_hh, p_ct, c_ct, m_ct, k_ct, lambda_ct, r_cut }, format!("{path} (A = {a:.6e}, b = {b:.6}, P = {p:.6e}, c = {c:.6}, C6 = {c6:.6e}, A_OH = {a_oh:.6e}, b_OH = {b_oh:.6}, A_HH = {a_hh:.6e}, b_HH = {b_hh:.6}, P_HH = {p_hh:.6e}, c_HH = {c_hh:.6}, P_CT = {p_ct:.6e}, c_CT = {c_ct:.6}, m_CT = {m_ct}, k_CT = {k_ct}, λ_CT = {lambda_ct:.4})"));
                 }
             }
         }
@@ -64,7 +65,7 @@ fn dynamics_wall() -> (SeamModel, String) {
     match has_hole(&m) {
         None => (m, which),
         Some(why) => (
-            SeamModel { a: 0.5, b: 1.2, p: 0.02, c: 1.5, c6: 10.0, a_oh: 0.3, b_oh: 1.8, a_hh: 0.2, b_hh: 1.6, p_hh: 0.01, c_hh: 1.4, p_ct: 0.015, c_ct: 1.9, m_ct: 2, k_ct: 2, lambda_ct: 55.0f64.to_radians() },
+            SeamModel { a: 0.5, b: 1.2, p: 0.02, c: 1.5, c6: 10.0, a_oh: 0.3, b_oh: 1.8, a_hh: 0.2, b_hh: 1.6, p_hh: 0.01, c_hh: 1.4, p_ct: 0.015, c_ct: 1.9, m_ct: 2, k_ct: 2, lambda_ct: 55.0f64.to_radians(), r_cut: 6.0 },
             format!("DECLARED coefficients — the newest record ({which}) has a HOLE below its data: {why} (M-EXTRAPOLATED-HOLE)"),
         ),
     }
@@ -233,6 +234,15 @@ fn l0_the_liquid_cell_is_admitted_under_the_seam_and_refused_without_it() {
     assert!(units.iter().all(|&u| u != FREE), "every atom of the dimer is inside a unit");
     assert_eq!(units.iter().enumerate().filter(|(i, &u)| u == *i as u32).count(), 2, "two units");
     assert_eq!(s.legality_radius().to_bits(), seam_reach.to_bits(), "under the seam the legality radius IS the seam-aware rule, to the bit");
+    // LIQUID-1 Amendment 2: under a declared switch the reach is capped at r_cut, to the bit,
+    // and the door admits a cell the unswitched law would refuse
+    let cut = SeamModel { r_cut: 0.5 * edge - 1.0, ..model };
+    s.set_seam(Some(cut)).unwrap();
+    let expect_cut = INTRA_UNIT_REACH.max(cut.reach(SEAM_REACH_BUDGET));
+    assert_eq!(cut.reach(SEAM_REACH_BUDGET), cut.r_cut.min(model.reach(SEAM_REACH_BUDGET)));
+    assert_eq!(s.legality_radius().to_bits(), expect_cut.to_bits(), "the switched rule, to the bit");
+    assert!(expect_cut <= 0.5 * edge);
+    s.set_seam(Some(model)).unwrap();
     s.set_boundary(Boundary::Periodic).expect("the cell is admitted under the seam");
     assert!(s.pbc_ok(), "and stays legal per pass");
     // one hydrogen carried beyond every oxygen's O–H reach (under walls, so no image brings
@@ -323,8 +333,8 @@ fn g_b3_the_wall_is_the_derivative_of_its_energy() {
     let (loaded, which_loaded) = wall();
     // FIELD-7 G-E1: the two further wall classes exercised even when the harvest on disk
     // carries none — a DECLARED all-classes model beside the loaded one
-    let all_classes = SeamModel { a: 0.5, b: 1.2, p: 0.02, c: 1.5, c6: 10.0, a_oh: 0.3, b_oh: 1.8, a_hh: 0.2, b_hh: 1.6, p_hh: 0.01, c_hh: 1.4, p_ct: 0.015, c_ct: 1.9, m_ct: 2, k_ct: 2, lambda_ct: 55.0f64.to_radians() };
-    for (model, which) in [(loaded, which_loaded), (all_classes, "DECLARED all-classes model (A_OH 0.3, b_OH 1.8, A_HH 0.2, b_HH 1.6, P_HH 0.01, c_HH 1.4, P_CT 0.015, c_CT 1.9, ANGULAR m 2 k 2 λ 55°)".to_string())] {
+    let all_classes = SeamModel { a: 0.5, b: 1.2, p: 0.02, c: 1.5, c6: 10.0, a_oh: 0.3, b_oh: 1.8, a_hh: 0.2, b_hh: 1.6, p_hh: 0.01, c_hh: 1.4, p_ct: 0.015, c_ct: 1.9, m_ct: 2, k_ct: 2, lambda_ct: 55.0f64.to_radians(), r_cut: 6.0 };
+    for (model, which) in [(loaded, which_loaded), (all_classes, "DECLARED all-classes model (A_OH 0.3, b_OH 1.8, A_HH 0.2, b_HH 1.6, P_HH 0.01, c_HH 1.4, P_CT 0.015, c_CT 1.9, ANGULAR m 2 k 2 λ 55°, SWITCH r_cut 6.0 so the C² step is inside the dimer's cross distances)".to_string())] {
         derivative_check(model, &which);
     }
 }

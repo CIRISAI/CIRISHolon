@@ -62,7 +62,7 @@ fn field2_arms(out: &Path) -> Option<String> {
 /// is the harvest not having landed — the seam rule with no wall is a legitimate state for
 /// gate G-B4 and is NOT these arms.
 fn wall_from(out: &Path) -> Result<SeamModel, String> {
-    let p = ["wall_ct.json", "wall9.json", "wall8.json", "wall7.json", "wall6.json", "wall5.json", "wall4.json", "wall.json"].iter().map(|f| out.join(f)).find(|p| p.exists()).unwrap_or_else(|| out.join("wall.json"));
+    let p = ["wall_ct2.json", "wall_ct.json", "wall9.json", "wall8.json", "wall7.json", "wall6.json", "wall5.json", "wall4.json", "wall.json"].iter().map(|f| out.join(f)).find(|p| p.exists()).unwrap_or_else(|| out.join("wall.json"));
     let t = fs::read_to_string(&p).map_err(|e| format!("{}: {e}", p.display()))?;
     let (a, b) = (json_num(&t, "a"), json_num(&t, "b"));
     if !a.is_finite() || !b.is_finite() {
@@ -72,7 +72,7 @@ fn wall_from(out: &Path) -> Result<SeamModel, String> {
         return Err(format!("{}: a = 0", p.display()));
     }
     let opt = |k: &str| { let v = json_num(&t, k); if v.is_finite() { v } else { 0.0 } };
-    let m = SeamModel { a, b, p: opt("p"), c: opt("c"), c6: opt("c6"), a_oh: opt("a_oh"), b_oh: opt("b_oh"), a_hh: opt("a_hh"), b_hh: opt("b_hh"), p_hh: opt("p_hh"), c_hh: opt("c_hh"), p_ct: opt("p_ct"), c_ct: opt("c_ct"), m_ct: opt("m_ct") as u8, k_ct: opt("k_ct") as u8, lambda_ct: opt("lambda_ct") };
+    let m = SeamModel { a, b, p: opt("p"), c: opt("c"), c6: opt("c6"), a_oh: opt("a_oh"), b_oh: opt("b_oh"), a_hh: opt("a_hh"), b_hh: opt("b_hh"), p_hh: opt("p_hh"), c_hh: opt("c_hh"), p_ct: opt("p_ct"), c_ct: opt("c_ct"), m_ct: opt("m_ct") as u8, k_ct: opt("k_ct") as u8, lambda_ct: opt("lambda_ct"), r_cut: opt("r_cut") };
     // FIELD-9 G-B0 (M-EXTRAPOLATED-HOLE as FIELD-8 read it): a law is run only if it is BOUNDED
     // below its fit range — no fall deeper than kT below its value at the class's shortest fit
     // distance, and positive at contact. The record carries its own r_min per class; a record

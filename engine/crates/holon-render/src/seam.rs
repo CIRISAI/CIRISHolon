@@ -63,11 +63,35 @@ pub struct SeamModel {
     pub m_ct: u8,
     pub k_ct: u8,
     pub lambda_ct: f64,
+    /// LIQUID-1 Amendment 2: the cutoff radius of the C² switch on every cross-unit term
+    /// (bohr); `0.0` means no switch — every record before the amendment is that state, bit
+    /// for bit. The switch is 1 up to `r_cut − 2`, the quintic step down to 0 at `r_cut`.
+    pub r_cut: f64,
 }
 
 impl SeamModel {
     /// The seam rule with no cross-unit term at all.
-    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0, a_oh: 0.0, b_oh: 0.0, a_hh: 0.0, b_hh: 0.0, p_hh: 0.0, c_hh: 0.0, p_ct: 0.0, c_ct: 0.0, m_ct: 0, k_ct: 0, lambda_ct: 0.0 };
+    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0, a_oh: 0.0, b_oh: 0.0, a_hh: 0.0, b_hh: 0.0, p_hh: 0.0, c_hh: 0.0, p_ct: 0.0, c_ct: 0.0, m_ct: 0, k_ct: 0, lambda_ct: 0.0, r_cut: 0.0 };
+
+    /// THE SWITCH (LIQUID-1 Amendment 2): `(S, dS/dr)` at `r` — 1 and 0 with no cutoff or
+    /// below `r_on = r_cut − 2`; the quintic C² step `1 − 10x³ + 15x⁴ − 6x⁵`, `x = (r − r_on)/2`,
+    /// between; 0 and 0 at and past `r_cut`.
+    #[inline]
+    pub fn switch(&self, r: f64) -> (f64, f64) {
+        if self.r_cut <= 0.0 {
+            return (1.0, 0.0);
+        }
+        let r_on = self.r_cut - 2.0;
+        if r <= r_on {
+            (1.0, 0.0)
+        } else if r >= self.r_cut {
+            (0.0, 0.0)
+        } else {
+            let x = (r - r_on) / 2.0;
+            let (x2, x3) = (x * x, x * x * x);
+            (1.0 - 10.0 * x3 + 15.0 * x3 * x - 6.0 * x3 * x2, (-30.0 * x2 + 60.0 * x3 - 30.0 * x3 * x) / 2.0)
+        }
+    }
 
     /// Is the transfer term angular (CT-2) or CT-1's pair exponential.
     #[inline]
@@ -280,7 +304,7 @@ impl SeamModel {
             }
         };
         let disp = if self.c6.abs() > budget { (self.c6.abs() / budget).powf(1.0 / 6.0) } else { 0.0 };
-        [
+        let r = [
             exp_reach(self.a, self.b),
             exp_reach(self.p, self.c),
             exp_reach(self.a_oh, self.b_oh),
@@ -290,7 +314,14 @@ impl SeamModel {
             disp,
         ]
         .into_iter()
-        .fold(0.0, f64::max)
+        .fold(0.0, f64::max);
+        // under a declared switch every term IS zero past r_cut (LIQUID-1 Amendment 2)
+        if self.r_cut > 0.0 { r.min(self.r_cut) } else { r }
+    }
+
+    /// The unswitched reach, for the door's report beside the switched one.
+    pub fn reach_unswitched(&self, budget: f64) -> f64 {
+        SeamModel { r_cut: 0.0, ..*self }.reach(budget)
     }
 
     /// FIELD-3's wall alone.
@@ -476,6 +507,25 @@ mod tests {
         // the reach: no term reaches anywhere at zero; one wall reaches ln(A/budget)/b; the
         // dispersion's sixth root; the law's reach is the largest of its terms'
         assert_eq!(SeamModel::NO_WALL.reach(1e-10), 0.0);
+        // LIQUID-1 Amendment 2: the switch is 1 below r_on, 0 at r_cut, C² in between, and
+        // its derivative matches a central difference; the reach is capped at r_cut
+        let sw = SeamModel { a: 948.0, b: 2.4, p_hh: 0.017, c_hh: 1.02, r_cut: 14.0, ..SeamModel::NO_WALL };
+        assert_eq!(sw.switch(11.99), (1.0, 0.0));
+        assert_eq!(sw.switch(14.0), (0.0, 0.0));
+        assert_eq!(sw.switch(15.0), (0.0, 0.0));
+        let (mid, _) = sw.switch(13.0);
+        assert!((mid - 0.5).abs() < 1e-15, "the quintic step's midpoint is one half: {mid}");
+        for r in [12.0001, 12.3, 12.7, 13.0, 13.4, 13.9, 13.9999] {
+            let (_, ds) = sw.switch(r);
+            let h = 1e-6;
+            let fd = (sw.switch(r + h).0 - sw.switch(r - h).0) / (2.0 * h);
+            assert!((ds - fd).abs() < 1e-8, "dS/dr at {r}: {ds} vs {fd}");
+        }
+        // C² at both ends: S' and S'' vanish (S'' by the difference of S' across the joint)
+        assert!(sw.switch(12.0 + 1e-9).1.abs() < 1e-15 && sw.switch(14.0 - 1e-9).1.abs() < 1e-15);
+        assert!((sw.reach_unswitched(1e-10) - (0.017f64 / 1e-10).ln() / 1.02).abs() < 1e-9);
+        assert_eq!(sw.reach(1e-10), 14.0, "the switched reach is r_cut");
+        assert_eq!(SeamModel::NO_WALL.switch(3.0), (1.0, 0.0), "no cutoff: the identity");
         // CT-2: the angular term at m = k = 0 IS the pair term, on any frame
         let pair = SeamModel { p_ct: 1.47488, c_ct: 1.46, ..SeamModel::NO_WALL };
         let (xh, xa, xd, h1, h2) = ([0.3, -0.2, 1.9], [0.0, 0.0, 5.4], [0.1, 0.4, 0.0], [1.4, 0.2, 6.6], [-1.3, -0.3, 6.7]);

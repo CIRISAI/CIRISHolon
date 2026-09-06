@@ -994,8 +994,8 @@ pub const SEAM_REFUSED: u32 = 210;
 /// dispersion `−c6/r⁶` (FIELD-3, FIELD-4), or disable it. Returns 0, or `SEAM_REFUSED + k`
 /// for the named refusals.
 #[no_mangle]
-pub extern "C" fn holon_set_seam(on: u32, a: f64, b: f64, p: f64, c: f64, c6: f64, a_oh: f64, b_oh: f64, a_hh: f64, b_hh: f64, p_hh: f64, c_hh: f64, p_ct: f64, c_ct: f64, m_ct: u32, k_ct: u32, lambda_ct: f64) -> u32 {
-    match sim().set_seam(if on != 0 { Some(seam::SeamModel { a, b, p, c, c6, a_oh, b_oh, a_hh, b_hh, p_hh, c_hh, p_ct, c_ct, m_ct: m_ct as u8, k_ct: k_ct as u8, lambda_ct }) } else { None }) {
+pub extern "C" fn holon_set_seam(on: u32, a: f64, b: f64, p: f64, c: f64, c6: f64, a_oh: f64, b_oh: f64, a_hh: f64, b_hh: f64, p_hh: f64, c_hh: f64, p_ct: f64, c_ct: f64, m_ct: u32, k_ct: u32, lambda_ct: f64, r_cut: f64) -> u32 {
+    match sim().set_seam(if on != 0 { Some(seam::SeamModel { a, b, p, c, c6, a_oh, b_oh, a_hh, b_hh, p_hh, c_hh, p_ct, c_ct, m_ct: m_ct as u8, k_ct: k_ct as u8, lambda_ct, r_cut }) } else { None }) {
         Ok(()) => 0,
         Err(seam::SeamRefusal::AcuityFrameSet) => SEAM_REFUSED + 1,
         Err(seam::SeamRefusal::FarSectorDeclared) => SEAM_REFUSED + 2,

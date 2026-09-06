@@ -3384,6 +3384,12 @@ impl Sim {
                 );
                 // `delta(b, a)` is `a − b`: the vector from j to i
                 let r = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+                // LIQUID-1 Amendment 2: the C² switch on every cross-unit term; past r_cut
+                // the pair is not evaluated at all
+                let (sw, dsw) = model.switch(r);
+                if sw == 0.0 {
+                    continue;
+                }
                 // U(r) and dU/dr for this pair's terms; F_i = −(dU/dr)·(r_i − r_j)/r
                 let (u, du, drop_reaction) = if is_oo {
                     let w = a * (-b * r).exp();
@@ -3421,7 +3427,23 @@ impl Sim {
                                 [dx, dy, dz]
                             };
                             let idx = [hi, oa, od, h1 as usize, h2 as usize];
-                            let (e_ct, gr) = ang_model.ct_angular(rel(hi), [0.0; 3], rel(od), rel(h1 as usize), rel(h2 as usize));
+                            let (e_raw, mut gr) = ang_model.ct_angular(rel(hi), [0.0; 3], rel(od), rel(h1 as usize), rel(h2 as usize));
+                            // the switch on the angular term: S·E, and S'·E along the H–O_a line
+                            let e_ct = sw * e_raw;
+                            if sw != 1.0 {
+                                for g in gr.iter_mut() {
+                                    for c in 0..3 {
+                                        g[c] *= sw;
+                                    }
+                                }
+                                let rh = rel(hi);
+                                let inv = 1.0 / (rh[0] * rh[0] + rh[1] * rh[1] + rh[2] * rh[2]).sqrt().max(1e-9);
+                                for c in 0..3 {
+                                    let du_c = dsw * e_raw * rh[c] * inv;
+                                    gr[0][c] += du_c;
+                                    gr[1][c] -= du_c;
+                                }
+                            }
                             e += e_ct;
                             let drop_new = plant == crate::seam::SeamPlant::DropReactionNew;
                             for (kk, &atom) in idx.iter().enumerate() {
@@ -3445,6 +3467,8 @@ impl Sim {
                     let x = p_hh * (-c_hh * r).exp();
                     (w - x, -b_hh * w + c_hh * x, plant == crate::seam::SeamPlant::DropReactionNew && a_hh == 0.0)
                 };
+                // the switch on the pair terms: S·U, and S'·U + S·U'
+                let (u, du) = if sw == 1.0 { (u, du) } else { (sw * u, dsw * u + sw * du) };
                 e += u;
                 let fm = -du / r;
                 self.a_pair[i].0 += fm * dx;

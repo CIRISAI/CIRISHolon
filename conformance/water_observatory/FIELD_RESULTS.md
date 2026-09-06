@@ -96,3 +96,19 @@ edited into the text above (rule 7: the record stays, marked).
    `field9_harvest.rs` corrected; CT-1's runner validates every file it writes. Entered here
    rather than silently: M-FORMAT-FLOOR's neighbour — a record that cannot be read by the
    format it claims.
+
+4. **The three-body force took the raw coordinate difference under a wrapping boundary
+   (found by LIQUID-1, 2026-09-06).** `Sim::push_side`, which applies a triple's gradient
+   along one side, built its direction from `atoms[b] − atoms[a]` while the triple's energy
+   used the folded (minimum-image) separation. A molecule with one atom wrapped across a
+   face of a periodic cell had the right energy and a force along a vector one box edge
+   long: a water at rest straddling a face heated to 9,246 K in twenty steps, and the
+   128-water box lost a unit at settling frame 82 under two different seam laws — the
+   coincidence that named the scene rather than the law. Fixed by taking `geom.delta` for
+   the direction; the regression gate (`tests/liquid.rs`: a straddling water's forces equal
+   the centre molecule's to `1e-12` and it stays at rest) and the full suite (32 targets, 279
+   passed, the ledger receipt bit-for-bit) say no banked result moved: every banked periodic
+   run was pair-only or had no three-body triple across a face. Diagnostics kept:
+   `examples/liquid_diag.rs`, `examples/straddle_diag.rs`. Entered here because the arms of
+   FIELD-3 through CT-2 ran in open boxes and could not have seen it.
+

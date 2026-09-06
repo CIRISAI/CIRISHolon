@@ -4527,12 +4527,26 @@ impl Sim {
     /// One side's share of a triple's force, applied equal and opposite. `g` is
     /// `dE/dr_ab`, the same convention the pair loop's `slope` carries, so the sign logic
     /// is the one line it already is there and not a second one to keep true.
+    ///
+    /// THE DIRECTION IS THE MINIMUM IMAGE (LIQUID-1, 2026-09-06). This took the raw
+    /// coordinate difference `atoms[b] − atoms[a]` while the triple's energy took the
+    /// minimum-image separation, so a triple with one atom wrapped across a face had the
+    /// right energy and a force along a vector one box edge long: a water molecule at rest
+    /// straddling a face heated to 9,000 K in twenty steps, and the 128-water box lost a
+    /// unit at settling frame 82 on two different laws. Every pair-only periodic result was
+    /// untouched (the pair loop takes `geom.delta`); every periodic result with a
+    /// three-body term across a face was wrong. `geom.delta(a, b)` is `b − a` folded.
     #[inline]
     fn push_side(&mut self, a: usize, b: usize, g: f64, r: f64) {
         let f_over_r = g / r;
-        let fx = f_over_r * (self.atoms[b].x - self.atoms[a].x);
-        let fy = f_over_r * (self.atoms[b].y - self.atoms[a].y);
-        let fz = f_over_r * (self.atoms[b].z - self.atoms[a].z);
+        let geom = self.geom();
+        let (dx, dy, dz) = geom.delta(
+            (self.atoms[a].x, self.atoms[a].y, self.atoms[a].z),
+            (self.atoms[b].x, self.atoms[b].y, self.atoms[b].z),
+        );
+        let fx = f_over_r * dx;
+        let fy = f_over_r * dy;
+        let fz = f_over_r * dz;
         self.a_pair[a].0 += fx;
         self.a_pair[a].1 += fy;
         self.a_pair[a].2 += fz;

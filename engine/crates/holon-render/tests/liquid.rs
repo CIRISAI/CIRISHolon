@@ -370,3 +370,69 @@ fn the_readout_chain_runs_end_to_end_on_the_liquid_box() {
     let au_s_from_lens = AU_TIME_FS * 1.0e-15;
     assert!(((au_s_from_lens - holon_render::sim::AU_TIME_S) / holon_render::sim::AU_TIME_S).abs() < 1e-9);
 }
+
+/// LIQUID-1 (2026-09-06): THE THREE-BODY FORCE UNDER THE MINIMUM IMAGE. A water molecule
+/// straddling a face of the periodic cell must feel the same forces as the same molecule at
+/// the centre, and must not heat from rest. Before the fix `push_side` took the raw
+/// coordinate difference for a triple's force direction while the energy took the folded
+/// separation: a straddling molecule at rest heated to 9,000 K in twenty steps, and the
+/// 128-water box lost a unit at settling frame 82 on two different laws. The door is
+/// bypassed on purpose here (the tables' reach exceeds the half-edge; the test is about
+/// the intra-unit triple, which the seam rule does not touch).
+#[test]
+fn a_water_straddling_a_face_feels_the_centre_molecules_forces_and_does_not_heat() {
+    use holon_chem::elements::by_symbol;
+    use holon_chem::embed::water_centers;
+    use holon_render::channel::Row;
+    let (o, h) = (by_symbol("O").unwrap(), by_symbol("H").unwrap());
+    let l = 29.59363131;
+    let c = water_centers(1.9435738400, 1.6887434037);
+    let build = |shift: [f64; 3]| {
+        let pos: Vec<[f64; 3]> = c.iter().map(|p| [p[0] + shift[0], p[1] + shift[1], p[2] + shift[2]]).collect();
+        let mut s = scene(&[o, h, h], &pos, l, 293.0);
+        for i in 0..s.n {
+            s.atoms[i].vx = 0.0;
+            s.atoms[i].vy = 0.0;
+            s.atoms[i].vz = 0.0;
+        }
+        s.thermostat_on = false;
+        s.boundary = Boundary::Periodic;
+        s.compute_forces();
+        s
+    };
+    let mut centre = build([0.5 * l; 3]);
+    let fc: Vec<(f64, f64, f64)> = (0..3).map(|i| centre.internal_force(i)).collect();
+    for shift in [[0.3, 0.2, 0.1], [0.3, 0.5 * l, 0.5 * l], [0.5 * l, 0.5 * l, l - 0.4]] {
+        let mut s = build(shift);
+        // the wrapped image of the same molecule: fold every atom into the cell first
+        s.step();
+        s.step();
+        let mut w = build(shift);
+        for i in 0..w.n {
+            let (x, y, z) = w.geom().wrap((w.atoms[i].x, w.atoms[i].y, w.atoms[i].z));
+            w.atoms[i].x = x;
+            w.atoms[i].y = y;
+            w.atoms[i].z = z;
+        }
+        w.compute_forces();
+        assert!((w.row(Row::Pair) - centre.row(Row::Pair)).abs() < 1e-12 && (w.row(Row::Three) - centre.row(Row::Three)).abs() < 1e-12, "energy rows under the minimum image");
+        for i in 0..3 {
+            let f = w.internal_force(i);
+            for (a, b) in [(f.0, fc[i].0), (f.1, fc[i].1), (f.2, fc[i].2)] {
+                assert!((a - b).abs() < 1e-12, "atom {i}: force {a:.6e} vs the centre molecule's {b:.6e} (shift {shift:?})");
+            }
+        }
+        // twenty free steps: the straddler's temperature equals the centre molecule's (the
+        // pin geometry is not the tables' exact minimum, so both move a little; before the
+        // fix the straddler read 9,246 K here and the centre 0.000)
+        let mut ref_c = build([0.5 * l; 3]);
+        for _ in 0..20 {
+            w.step();
+            ref_c.step();
+        }
+        let (tw, tc) = (w.temperature(), ref_c.temperature());
+        assert!((tw - tc).abs() <= 1e-9 * tc.max(1e-12) + 1e-12, "a straddling molecule at rest read {tw:.6e} K after 20 steps against the centre molecule's {tc:.6e} (shift {shift:?})");
+        assert!(tw < 0.1, "a molecule at rest heated to {tw:.3} K in 20 steps (shift {shift:?})");
+    }
+    let _ = centre.temperature();
+}

@@ -55,11 +55,121 @@ pub struct SeamModel {
     /// (channel 6, whole) — the donor's O–H against the acceptor's lone pair is the contact.
     pub p_ct: f64,
     pub c_ct: f64,
+    /// CT-2: the bond's alignment on both sides of the transfer term. `m_ct` is the donor
+    /// factor's exponent (`((1 − cos θ_d)/2)^m`, θ_d the O_d–H···O_a angle), `k_ct` the acceptor
+    /// factor's (the two lone-pair alignments `((1 + u·l±)/2)^k`, normalised to 1 on the linear
+    /// dimer), `lambda_ct` the lone-pair angle from the reversed bisector, in RADIANS. At
+    /// `m_ct = k_ct = 0` the term is CT-1's pair exponential, bit for bit.
+    pub m_ct: u8,
+    pub k_ct: u8,
+    pub lambda_ct: f64,
 }
 
 impl SeamModel {
     /// The seam rule with no cross-unit term at all.
-    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0, a_oh: 0.0, b_oh: 0.0, a_hh: 0.0, b_hh: 0.0, p_hh: 0.0, c_hh: 0.0, p_ct: 0.0, c_ct: 0.0 };
+    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0, a_oh: 0.0, b_oh: 0.0, a_hh: 0.0, b_hh: 0.0, p_hh: 0.0, c_hh: 0.0, p_ct: 0.0, c_ct: 0.0, m_ct: 0, k_ct: 0, lambda_ct: 0.0 };
+
+    /// Is the transfer term angular (CT-2) or CT-1's pair exponential.
+    #[inline]
+    pub fn ct_is_angular(&self) -> bool {
+        self.m_ct != 0 || self.k_ct != 0
+    }
+
+    /// THE ANGULAR TRANSFER TERM (CT-2 §0) on one cross-unit H–O pair, with its gradient on
+    /// the five atoms it depends on: `[H, O_a, O_d, h₁, h₂]` — the hydrogen, the acceptor
+    /// oxygen, the hydrogen's own oxygen, and the acceptor unit's two hydrogens (its frame).
+    /// Positions are given RELATIVE to any common origin (the caller passes minimum-image
+    /// deltas from `O_a`, so the term reduces to the minimum image like every other seam term).
+    ///
+    /// ```text
+    /// E = −P·e^{−c r}·f_d(θ_d)·g_a(u)
+    /// f_d = ((1 − cos θ_d)/2)^m,   cos θ_d = (O_d−H)·(O_a−H)/(|O_d−H||O_a−H|)
+    /// g_a = [((1+u·l₊)/2)^k + ((1+u·l₋)/2)^k] / [2((1+cos λ)/2)^k],   u = (H−O_a)/r
+    /// l± = −cos λ·b̂ ± sin λ·n̂,   b̂ = unit(h₁+h₂−2O_a),   n̂ = unit((h₁−O_a)×(h₂−O_a))
+    /// ```
+    ///
+    /// The gradient is analytic, by the chain rule through `r`, `cos θ_d`, `u`, `b̂` and `n̂`;
+    /// the seam suite's G-B3 (a central difference on every atom) is the check.
+    pub fn ct_angular(&self, xh: [f64; 3], xa: [f64; 3], xd: [f64; 3], h1: [f64; 3], h2: [f64; 3]) -> (f64, [[f64; 3]; 5]) {
+        fn sub(a: [f64; 3], b: [f64; 3]) -> [f64; 3] { [a[0] - b[0], a[1] - b[1], a[2] - b[2]] }
+        fn add(a: [f64; 3], b: [f64; 3]) -> [f64; 3] { [a[0] + b[0], a[1] + b[1], a[2] + b[2]] }
+        fn sc(a: [f64; 3], k: f64) -> [f64; 3] { [a[0] * k, a[1] * k, a[2] * k] }
+        fn dot(a: [f64; 3], b: [f64; 3]) -> f64 { a[0] * b[0] + a[1] * b[1] + a[2] * b[2] }
+        fn cross(a: [f64; 3], b: [f64; 3]) -> [f64; 3] { [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]] }
+        fn norm(a: [f64; 3]) -> f64 { dot(a, a).sqrt() }
+        let (m, k) = (self.m_ct as i32, self.k_ct as i32);
+        let (cl, sl) = (self.lambda_ct.cos(), self.lambda_ct.sin());
+        let mut gr = [[0.0f64; 3]; 5];
+        // the pair part
+        let d = sub(xh, xa);
+        let r = norm(d).max(1e-9);
+        let u = sc(d, 1.0 / r);
+        let base = -self.p_ct * (-self.c_ct * r).exp();
+        // the donor factor
+        let a = sub(xd, xh);
+        let b = sub(xa, xh);
+        let (na, nb) = (norm(a).max(1e-9), norm(b).max(1e-9));
+        let cth = (dot(a, b) / (na * nb)).clamp(-1.0, 1.0);
+        let (f, df) = if m == 0 {
+            (1.0, 0.0)
+        } else {
+            let t = 0.5 * (1.0 - cth);
+            (t.powi(m), -0.5 * m as f64 * t.powi(m - 1))
+        };
+        // the acceptor frame and factor
+        let v1 = sub(h1, xa);
+        let v2 = sub(h2, xa);
+        let w = add(v1, v2);
+        let nw = norm(w).max(1e-9);
+        let bh = sc(w, 1.0 / nw);
+        let wn = cross(v1, v2);
+        let nn = norm(wn).max(1e-9);
+        let nh = sc(wn, 1.0 / nn);
+        let (ub, un) = (dot(u, bh), dot(u, nh));
+        let (sp, sm) = (-cl * ub + sl * un, -cl * ub - sl * un);
+        let (g, dgp, dgm) = if k == 0 {
+            (1.0, 0.0, 0.0)
+        } else {
+            let norm_g = 2.0 * (0.5 * (1.0 + cl)).powi(k);
+            let (tp, tm) = (0.5 * (1.0 + sp), 0.5 * (1.0 + sm));
+            ((tp.powi(k) + tm.powi(k)) / norm_g, 0.5 * k as f64 * tp.powi(k - 1) / norm_g, 0.5 * k as f64 * tm.powi(k - 1) / norm_g)
+        };
+        let e = base * f * g;
+        // dE through r: d(base)/dr = −c·base
+        let kr = -self.c_ct * base * f * g;
+        gr[0] = add(gr[0], sc(u, kr));
+        gr[1] = sub(gr[1], sc(u, kr));
+        // dE through cos θ_d
+        if m != 0 {
+            let coef = base * g * df;
+            let dca = sub(sc(b, 1.0 / (na * nb)), sc(a, cth / (na * na)));
+            let dcb = sub(sc(a, 1.0 / (na * nb)), sc(b, cth / (nb * nb)));
+            gr[2] = add(gr[2], sc(dca, coef));
+            gr[1] = add(gr[1], sc(dcb, coef));
+            gr[0] = sub(gr[0], sc(add(dca, dcb), coef));
+        }
+        // dE through u, b̂ and n̂
+        if k != 0 {
+            let (cp, cm) = (base * f * dgp, base * f * dgm);
+            let aa = -cl * (cp + cm);
+            let bb = sl * (cp - cm);
+            let dvu = add(sc(bh, aa), sc(nh, bb));
+            let proj = sc(sub(dvu, sc(u, dot(dvu, u))), 1.0 / r);
+            gr[0] = add(gr[0], proj);
+            gr[1] = sub(gr[1], proj);
+            let dw = sc(sub(u, sc(bh, ub)), aa / nw);
+            gr[3] = add(gr[3], dw);
+            gr[4] = add(gr[4], dw);
+            gr[1] = sub(gr[1], sc(dw, 2.0));
+            let q = sc(sub(u, sc(nh, un)), bb / nn);
+            let dv1 = cross(v2, q);
+            let dv2 = cross(q, v1);
+            gr[3] = add(gr[3], dv1);
+            gr[4] = add(gr[4], dv2);
+            gr[1] = sub(gr[1], add(dv1, dv2));
+        }
+        (e, gr)
+    }
 
     /// The charge-transfer term's energy at a cross-unit H–O separation `r` (CT-1).
     #[inline]
@@ -366,6 +476,43 @@ mod tests {
         // the reach: no term reaches anywhere at zero; one wall reaches ln(A/budget)/b; the
         // dispersion's sixth root; the law's reach is the largest of its terms'
         assert_eq!(SeamModel::NO_WALL.reach(1e-10), 0.0);
+        // CT-2: the angular term at m = k = 0 IS the pair term, on any frame
+        let pair = SeamModel { p_ct: 1.47488, c_ct: 1.46, ..SeamModel::NO_WALL };
+        let (xh, xa, xd, h1, h2) = ([0.3, -0.2, 1.9], [0.0, 0.0, 5.4], [0.1, 0.4, 0.0], [1.4, 0.2, 6.6], [-1.3, -0.3, 6.7]);
+        let (e0, g0) = pair.ct_angular(xh, xa, xd, h1, h2);
+        let r = ((xh[0] - xa[0]).powi(2) + (xh[1] - xa[1]).powi(2) + (xh[2] - xa[2]).powi(2)).sqrt();
+        assert_eq!(e0, pair.charge_transfer(r));
+        assert!(g0[2] == [0.0; 3] && g0[3] == [0.0; 3] && g0[4] == [0.0; 3], "no frame force at m = k = 0");
+        // on the linear dimer of record f_d = g_a = 1 exactly: the angular term equals the pair term
+        let ang = SeamModel { p_ct: 1.47488, c_ct: 1.46, m_ct: 2, k_ct: 2, lambda_ct: 55.0f64.to_radians(), ..SeamModel::NO_WALL };
+        let (r_oh, th) = (1.9435738400f64, 1.6887434037f64);
+        let (s2, c2) = ((0.5 * th).sin(), (0.5 * th).cos());
+        let lin = ([0.0, 0.0, r_oh], [0.0, 0.0, 5.48], [0.0, 0.0, 0.0], [r_oh * s2, 0.0, 5.48 + r_oh * c2], [-r_oh * s2, 0.0, 5.48 + r_oh * c2]);
+        let (e_lin, _) = ang.ct_angular(lin.0, lin.1, lin.2, lin.3, lin.4);
+        assert!((e_lin - ang.charge_transfer(5.48 - r_oh)).abs() < 1e-14, "linear: {e_lin} vs {}", ang.charge_transfer(5.48 - r_oh));
+        // the analytic gradient against a central difference on every coordinate of every atom
+        for (m, k) in [(1u8, 0u8), (0, 1), (2, 2), (4, 4), (1, 4)] {
+            let mm = SeamModel { m_ct: m, k_ct: k, ..ang };
+            let pts = [xh, xa, xd, h1, h2];
+            let (_, g) = mm.ct_angular(pts[0], pts[1], pts[2], pts[3], pts[4]);
+            let h = 1e-6;
+            for i in 0..5 {
+                for c in 0..3 {
+                    let mut pp = pts;
+                    pp[i][c] += h;
+                    let (ep, _) = mm.ct_angular(pp[0], pp[1], pp[2], pp[3], pp[4]);
+                    pp[i][c] -= 2.0 * h;
+                    let (em, _) = mm.ct_angular(pp[0], pp[1], pp[2], pp[3], pp[4]);
+                    let fd = (ep - em) / (2.0 * h);
+                    assert!((g[i][c] - fd).abs() <= 1e-9 * (1.0 + fd.abs()), "m {m} k {k} atom {i} coord {c}: analytic {} vs fd {fd}", g[i][c]);
+                }
+            }
+            // translation invariance: the gradients sum to zero
+            for c in 0..3 {
+                let sum: f64 = (0..5).map(|i| g[i][c]).sum();
+                assert!(sum.abs() < 1e-12, "m {m} k {k}: gradients sum to {sum}");
+            }
+        }
         let w = SeamModel::wall_only(948.0, 2.4);
         assert!((w.reach(1e-10) - (948.0f64 / 1e-10).ln() / 2.4).abs() < 1e-12);
         assert!(w.wall(w.reach(1e-10)) <= 1e-10 * (1.0 + 1e-9));

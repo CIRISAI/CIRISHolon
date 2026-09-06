@@ -12,7 +12,7 @@ fn main() {
     let path = std::env::args().nth(1).unwrap_or_else(|| "../conformance/water_observatory/field7/wall7.json".to_string());
     let t = std::fs::read_to_string(&path).expect("the wall record");
     eprintln!("probe on {path}");
-    let m = SeamModel { a: num(&t, "a"), b: num(&t, "b"), p: num(&t, "p"), c: num(&t, "c"), c6: num(&t, "c6"), a_oh: num(&t, "a_oh"), b_oh: num(&t, "b_oh"), a_hh: num(&t, "a_hh"), b_hh: num(&t, "b_hh"), p_hh: num(&t, "p_hh"), c_hh: num(&t, "c_hh"), p_ct: num(&t, "p_ct"), c_ct: num(&t, "c_ct") };
+    let m = SeamModel { a: num(&t, "a"), b: num(&t, "b"), p: num(&t, "p"), c: num(&t, "c"), c6: num(&t, "c6"), a_oh: num(&t, "a_oh"), b_oh: num(&t, "b_oh"), a_hh: num(&t, "a_hh"), b_hh: num(&t, "b_hh"), p_hh: num(&t, "p_hh"), c_hh: num(&t, "c_hh"), p_ct: num(&t, "p_ct"), c_ct: num(&t, "c_ct"), m_ct: 0, k_ct: 0, lambda_ct: 0.0 };
     for temp in [293.0, 150.0] {
         let (sp, pos) = dimer_positions();
         let mut s = scene(&sp, &pos, 30.0, temp);

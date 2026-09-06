@@ -3341,6 +3341,21 @@ impl Sim {
         // CT-1: the charge-transfer term on cross-unit H–O pairs; plant (ii) flips its sign
         let p_ct = if plant == crate::seam::SeamPlant::FlipChargeTransfer { -model.p_ct } else { model.p_ct };
         let c_ct = model.c_ct;
+        // CT-2: the angular transfer term needs each acceptor unit's two hydrogens (its frame)
+        // and each hydrogen's own oxygen; the pair path below carries the term only when it is
+        // NOT angular, so CT-1's records are bit-identical at m = k = 0
+        let angular = model.ct_is_angular();
+        let ang_model = crate::seam::SeamModel { p_ct, ..model };
+        let mut unit_h: Vec<[u32; 2]> = vec![[crate::seam::FREE; 2]; n];
+        if angular {
+            for h in 0..n {
+                let u = self.unit_of[h];
+                if self.atoms[h].species.z == 1 && u != crate::seam::FREE && u as usize != h {
+                    let slot = &mut unit_h[u as usize];
+                    if slot[0] == crate::seam::FREE { slot[0] = h as u32; } else { slot[1] = h as u32; }
+                }
+            }
+        }
         let geom = self.geom();
         let f = crate::seam::FREE;
         let mut e = 0.0f64;
@@ -3392,8 +3407,37 @@ impl Sim {
                     // it; and the charge-transfer term −p_ct·e^{−c_ct r} (CT-1, channel 6)
                     let x = p * (-c * r).exp();
                     let w = a_oh * (-b_oh * r).exp();
-                    let t = p_ct * (-c_ct * r).exp();
+                    let t = if angular { 0.0 } else { p_ct * (-c_ct * r).exp() };
                     ho += 1;
+                    if angular {
+                        // the five atoms, as minimum-image deltas from the acceptor oxygen
+                        let (hi, oa) = if zi == 1 { (i, j) } else { (j, i) };
+                        let od = self.unit_of[hi] as usize;
+                        let [h1, h2] = unit_h[oa];
+                        if h1 != crate::seam::FREE && h2 != crate::seam::FREE {
+                            let pa = (self.atoms[oa].x, self.atoms[oa].y, self.atoms[oa].z);
+                            let rel = |k: usize| -> [f64; 3] {
+                                let (dx, dy, dz) = geom.delta(pa, (self.atoms[k].x, self.atoms[k].y, self.atoms[k].z));
+                                [dx, dy, dz]
+                            };
+                            let idx = [hi, oa, od, h1 as usize, h2 as usize];
+                            let (e_ct, gr) = ang_model.ct_angular(rel(hi), [0.0; 3], rel(od), rel(h1 as usize), rel(h2 as usize));
+                            e += e_ct;
+                            let drop_new = plant == crate::seam::SeamPlant::DropReactionNew;
+                            for (kk, &atom) in idx.iter().enumerate() {
+                                if drop_new && atom != i {
+                                    continue;
+                                }
+                                self.a_pair[atom].0 -= gr[kk][0];
+                                self.a_pair[atom].1 -= gr[kk][1];
+                                self.a_pair[atom].2 -= gr[kk][2];
+                                // the virial of a many-body term: Σ x·∇E over its atoms, in
+                                // relative coordinates (the gradients sum to zero)
+                                let x = rel(atom);
+                                virial += x[0] * gr[kk][0] + x[1] * gr[kk][1] + x[2] * gr[kk][2];
+                            }
+                        }
+                    }
                     (-x + w - t, c * x - b_oh * w + c_ct * t, plant == crate::seam::SeamPlant::DropReactionNew)
                 } else {
                     // the H–H wall (FIELD-7) and the H–H contact term (FIELD-8)

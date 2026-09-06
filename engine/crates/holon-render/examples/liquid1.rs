@@ -207,6 +207,7 @@ fn load_law(out: &Path) -> Result<Law, String> {
         c_hh: g("c_hh"),
         p_ct: g("p_ct"),
         c_ct: g("c_ct"),
+        ..SeamModel::NO_WALL
     };
     let q_h = holon_render::field::water_charge_at_pin();
     let rmin = |k: &str, default: f64| {

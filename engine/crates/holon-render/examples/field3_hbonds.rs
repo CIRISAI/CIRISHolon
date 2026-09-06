@@ -72,7 +72,7 @@ fn wall_from(out: &Path) -> Result<SeamModel, String> {
         return Err(format!("{}: a = 0", p.display()));
     }
     let opt = |k: &str| { let v = json_num(&t, k); if v.is_finite() { v } else { 0.0 } };
-    let m = SeamModel { a, b, p: opt("p"), c: opt("c"), c6: opt("c6"), a_oh: opt("a_oh"), b_oh: opt("b_oh"), a_hh: opt("a_hh"), b_hh: opt("b_hh"), p_hh: opt("p_hh"), c_hh: opt("c_hh"), p_ct: opt("p_ct"), c_ct: opt("c_ct") };
+    let m = SeamModel { a, b, p: opt("p"), c: opt("c"), c6: opt("c6"), a_oh: opt("a_oh"), b_oh: opt("b_oh"), a_hh: opt("a_hh"), b_hh: opt("b_hh"), p_hh: opt("p_hh"), c_hh: opt("c_hh"), p_ct: opt("p_ct"), c_ct: opt("c_ct"), m_ct: opt("m_ct") as u8, k_ct: opt("k_ct") as u8, lambda_ct: opt("lambda_ct") };
     // FIELD-9 G-B0 (M-EXTRAPOLATED-HOLE as FIELD-8 read it): a law is run only if it is BOUNDED
     // below its fit range — no fall deeper than kT below its value at the class's shortest fit
     // distance, and positive at contact. The record carries its own r_min per class; a record

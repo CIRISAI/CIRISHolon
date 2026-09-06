@@ -1362,7 +1362,7 @@ fn run_fit(out: &Path) {
     );
 
     // ------------------------------------------------ the full law, then G-B0 by the engine
-    let model = SeamModel { a: a_oo, b: b_oo, p: p_ho, c: c_ho, c6, a_oh, b_oh, a_hh, b_hh, p_hh, c_hh, p_ct, c_ct };
+    let model = SeamModel { a: a_oo, b: b_oo, p: p_ho, c: c_ho, c6, a_oh, b_oh, a_hh, b_hh, p_hh, c_hh, p_ct, c_ct, ..SeamModel::NO_WALL };
     let q_h = holon_render::field::water_charge_at_pin();
     let r_min = [r_min_oo, r_min_oh, r_min_hh];
     let bounded = model.bounded(q_h, r_min, KT);

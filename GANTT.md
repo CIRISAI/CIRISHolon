@@ -124,3 +124,5 @@ its row gains the record's location in the same commit.
 
 **Fence triage owed:** two CRATE_ALLOW entries (q-seam, sphere-demo) and two unowned model
 fences (I-5, FENCES.md M2) await the lead's next triage.
+
+**The plan by tier (2026-09-06).** This file stays the build-graph record and the workbench cites its lines; the plan — each tier asked the same four questions, the closure grammar's productions, the next freeze per tier with its kill, and the page pass WB-9 — is `GANTT2.md`.

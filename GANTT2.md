@@ -112,10 +112,47 @@ the basis lane as its second. Kill bands unchanged.
 | the phase | Sc ≫ 1 is the tier's closure ratio: particles trapped while stress passes |
 | dynamics | integer-exact; the price 25.8 s per law at L = 256 |
 
-**Next: FLUID-1 — the two-species carrier.** A lattice gas with bound pairs or a tracer species whose
-diffusion is set apart from the momentum's; its Sc swept; the chart that maps LIQUID-1's D
-onto it and a viscosity the engine does not yet measure (a pressure tensor and its
-autocorrelation — a LIQUID-2 readout). Kill: no two-species law reaches Sc ≥ 100 either.
+**FLUID-1 — FROZEN (a91ccab), the orientation lattice, instrument in build.** Not two species:
+one species whose particles carry a direction, a bond rule READ from CT-2's angular map, a
+bonded pair moving as one, the bond released by the rent clause at a chart set by the dimer's
+measured retention. Asked: Sc against water's 435 (branches at 10 and 100), the bond count and
+the spanning cluster against the liquid box, the block-chart defect W(b) with a closure in the
+carrier. Kill: no closure of a pair reaches Sc ≥ 10 either.
+
+### The edge — the next axis (2026-09-06): a holon is an object with a DEFINED EDGE in space at a time, a resolution, a frame and a relation; holons of one type MERGE as readily as they PART; and the price of a scene is its interaction count, not its molecule count
+
+*Why this is the axis.* A bubble in water, or a drop in air, deforms under forcing and splits
+into smaller closures until each is stable; the largest maintainable closure is where the
+boundary's rent balances the environment's forcing (Hinze 1955, Kolmogorov 1949: the critical
+Weber number). That is the rent clause wearing a surface. No tier of this ladder has a
+measured surface tension, an interface, or a merge/split rule; until one does, no holon has an
+edge and the cube cannot be priced by its interactions. Prior art that makes the first two
+campaigns cheap: a lattice gas with a cohesive rule phase-separates into a dense phase and a
+sparse one with an EMERGENT surface tension (Appert–Zaleski 1990), the immiscible lattice gas
+does the same for two species (Rothman–Keller 1988), and both measure σ by Laplace's law
+(Rothman–Zaleski 1997). FLUID-1's bond rule is a cohesion of that kind, so its carrier may
+already hold one holon of liquid and one of its own vapour without a second species.
+
+| campaign | what it measures | the kills |
+|---|---|---|
+| **EDGE-0 — the edge exists** (on FLUID-1's carrier at its chart, after FLUID-1 reads) | coexistence: the density histogram bimodal, the dense phase bonded; the interface's width finite and stationary; σ read TWICE by independent instruments — Laplace's law (pressure jump against 1/R over a set of droplet radii, one slope) and the capillary spectrum (⟨\|h_k\|²⟩ ∝ 1/(σ k²), the second slope) — the two within a staked band of each other; gravity entered as a momentum bias at collisions and the dense phase settling under it (the air-over-water cube as the stable case, the bubble as the moving one) | no bimodality at the chart (M-EMPTY-SECTOR: a reading, not a zero); no linear Laplace law; the two σ disagreeing beyond the band; an interface whose width grows without bound |
+| **EDGE-1 — merge as readily as part** | two droplets brought to contact coalesce; one droplet under a staked forcing splits at a critical Weber number read in lattice units against Hinze's; at equilibrium the cluster-size distribution's up-rates and down-rates satisfy detailed balance within the noise (Smoluchowski coagulation against fragmentation), which is the exact sense of "as readily" | coalescence refused at contact; breakup with no threshold; hysteresis in the size distribution beyond its floor |
+| **EDGE-2 — the edge at a resolution and a frame** | the holon's boundary as the set of block-chart cells at scale b whose fiber the dynamics splits (node LG's `closed_iff_fiber_invariant`); FLUID-1's W gate is its first reading; the edge's position and width as a function of b, and the relation (bonded / unbonded / interface) as the chart's label | the boundary read at b not converging as b grows; an interior cell reading as edge in the bulk |
+| **ACUITY-0 — the price is the interaction count** | a quiescent scene of N holons costs a price independent of the molecule count inside them (doubling the box at fixed holon count leaves the price within its band); splitting a holon in two moves the price by the added contact, measured; the acuity rule as a PRICE GATE, never a comment | the price scaling with molecules at fixed holon count; a split that costs nothing |
+
+*In three dimensions.* Every instrument above is written first in 2D on the lattice crate's
+FHP torus. No three-dimensional Bravais lattice is isotropic enough for a lattice gas; 3D goes
+through the 24-velocity face-centred hypercubic lattice projected to three dimensions
+(d'Humières, Lallemand and Frisch 1986), and the orientation then has 24 directions, not six.
+That carrier is a build, not a campaign, and it is priced before EDGE-0 is repeated on it. The
+molecular tier is already 3D and already has a boundary at the acuity: the meta-molecule's
+shape at the small end is the closed hydrogen-bond graph (rings of four, five and six, then
+cages: the hexamer's cage, prism and book; the protonated 21-mer's dodecahedron), and the
+reference sets for it are Temelso–Archer–Shields 2011 (n = 2–10), WATER27, and the Cambridge
+Cluster Database; at the large end the shape is variational (Young–Laplace) and the reference
+is the Grace diagram (Clift–Grace–Weber 1978) and Pilch–Erdman 1987 for breakup. Between them,
+hundreds to tens of thousands of molecules, there is no experimental shape dataset — that gap
+is the meta-molecule's own tier and the acuity rule's reason to exist.
 
 ### The cube (1 km) — FENCED by name; goes live as the rungs beneath it certify (WORKBENCH_FSD §11.2)
 

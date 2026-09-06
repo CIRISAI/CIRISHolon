@@ -1,0 +1,77 @@
+=========================================================================
+FLUID-0 — the census's transport character
+freeze:  conformance/mesh/FLUID0_PREREG.md   instrument: holon-lattice::transport
+phase:   gate     out_dir: ../conformance/mesh/fluid0
+params:  L=64 d=0.2 A=0.05 k_index in {1,2} steps=4000 seed=0x464c55494430  k(1)=1.133624603e-1 k(2)=2.267249205e-1
+floors:  R2 >= 0.99 on >= 20 points; window [L, first |M| < 0.1|M(L)|]; monotone tolerance 0.01 of |M(L)|; k-agreement 0.1
+=========================================================================
+
+--- G0: the instrument on FHP-I (both chiralities) ---
+  FHP-I chirality=true  digest c0a3bdebaac97ae5
+    nu  rows k=1                       exit NoDecay         value -                gamma -              R2 -          pts 377   window 64..440 amp 188.9788 -> 18.0582 fired 102538
+    nu  rows k=2                       exit NoDecay         value -                gamma -              R2 -          pts 58    window 64..121 amp 58.0817 -> 3.4879 fired 27930
+    D   colour k=1                     exit NoDecay         value -                gamma -              R2 -          pts 113   window 64..176 amp 25.0503 -> 2.0952 fired 41067
+    D   colour k=2                     exit NoDecay         value -                gamma -              R2 -          pts 13    window 64..76 amp 9.0534 -> 0.3469 fired 17500
+  FHP-I chirality=false  digest 6657ba0491b18add
+    nu  rows k=1                       exit NoDecay         value -                gamma -              R2 -          pts 374   window 64..437 amp 212.2629 -> 13.5490 fired 101998
+    nu  rows k=2                       exit NoDecay         value -                gamma -              R2 -          pts 7     window 64..70 amp 15.2021 -> 0.9538 fired 16197
+    D   colour k=1                     exit NoDecay         value -                gamma -              R2 -          pts 56    window 64..119 amp 32.0540 -> 3.1778 fired 27781
+    D   colour k=2                     exit NoDecay         value -                gamma -              R2 -          pts 10    window 64..73 amp 6.1454 -> 0.4195 fired 17049
+
+  credited comparison, NOT a gate: Boltzmann nu_B(0.2) = 1/(12 d (1-d)^3) - 1/8 = 6.888021e-1
+    chirality=true: nu(k=1) REFUSED , nu/nu_B = -   [Frisch/d'Humieres/Hasslacher/Lallemand/Pomeau/Rivet 1987; Henon 1987 — typed from the literature]
+    chirality=false: nu(k=1) REFUSED , nu/nu_B = -   [Frisch/d'Humieres/Hasslacher/Lallemand/Pomeau/Rivet 1987; Henon 1987 — typed from the literature]
+  G0   FAIL  [8 checks]  chir=true: exits NoDecay/NoDecay/NoDecay/NoDecay fitted=false nu-agree=false D-agree=false; chir=false: exits NoDecay/NoDecay/NoDecay/NoDecay fitted=false nu-agree=false D-agree=false; chiralities agree = false
+
+--- G1: the identity law refuses ---
+    identity nu rows k=1               exit NoDecay         value -                gamma -              R2 -          pts 3937  window 64..4000 amp 314.3957 -> 93.5750 fired 0
+    identity nu rows k=2               exit NoDecay         value -                gamma -              R2 -          pts 3937  window 64..4000 amp 274.0998 -> 274.0998 fired 0
+    identity D colour k=1              exit NoDecay         value -                gamma -              R2 -          pts 29    window 64..92 amp 69.3130 -> 6.4065 fired 0
+    identity D colour k=2              exit TooFewPoints    value -                gamma -              R2 -          pts 11    window 64..74 amp 86.0601 -> 4.3229 fired 0
+  G1   FAIL  [4 checks]  exits NoDecay/NoDecay/NoDecay/TooFewPoints; collisions_fired = 0 (the reason: nothing collides); strict (all four NoDecay) = false; substance (all four refuse, no number entered, zero collisions) = true
+
+--- G3: isotropy on FHP-I (the column leg) ---
+    nu  columns k=1 (transverse)       exit NoDecay         value -                gamma -              R2 -          pts 215   window 64..278 amp 259.7238 -> 22.9749 fired 64777
+    nu  columns k=1 (literal y)        exit NoDecay         value -                gamma -              R2 -          pts 124   window 64..187 amp 233.2668 -> 23.0322 fired 43285
+      the literal-y drive is 25% longitudinal at this leg's wavevector (sqrt3/2, -1/2); reported, never gated
+  G3   FAIL  [1 checks]  columns null vs rows null -> relative undefined (a leg refused)
+
+--- P(i): the colour-blind rule removed ---
+    D  colour k=1 ORDINAL plant        exit TooFewPoints    value -                gamma -              R2 -          pts 3     window 64..66 amp 9.8506 -> 0.5344 fired 15215
+  P(i) FAIL  [1 checks]  carrier D_FHP-I(k=1) = null (floor 0.05, asserted false); blind null vs ordinal null -> change undefined (a leg refused) (stake > 0.2)
+
+--- P(ii): linearity, A doubled ---
+    nu  rows k=1 A=0.10                exit NoDecay         value -                gamma -              R2 -          pts 400   window 64..463 amp 383.7382 -> 36.5712 fired 106534
+  P(ii) FAIL  [1 checks]  carrier nu_FHP-I(k=1) = null (floor 0.05, asserted false); A=0.05 null vs A=0.10 null -> change undefined (a leg refused) (stake <= 0.05)
+
+--- G2: the ledger, exact in every run above ---
+    16 runs, 10672 step-checks, mass/Px/Py/red integer-identical at every step: true
+  G2   PASS  [10672 checks]  16 runs audited at every step, all four integers exact = true
+
+--- P: the price, on the FIRST TEN laws of the enumeration ---
+    law 0   digest 8368214f77995ee5  nu NoDecay/NoDecay  D NoDecay/TooFewPoints  0.5492 s
+    law 1   digest e1fc5ebfda0bd7a7  nu NoDecay/NoDecay  D TooFewPoints/TooFewPoints  0.5490 s
+    law 2   digest ca7c8082edd6d34f  nu NoDecay/NoDecay  D NoDecay/TooFewPoints  0.5500 s
+    law 3   digest df211336a03fda75  nu NoDecay/NoDecay  D NoDecay/TooFewPoints  0.5539 s
+    law 4   digest daa87eb05a1c2bb5  nu NoDecay/NoDecay  D NoDecay/TooFewPoints  0.5505 s
+    law 5   digest ec4874d1ae9c716f  nu NoDecay/NoDecay  D NoDecay/NoDecay  0.5523 s
+    law 6   digest 2ae1e0d22c366607  nu NoDecay/NoDecay  D NoDecay/TooFewPoints  0.5494 s
+    law 7   digest 3d77a55b06532571  nu NoDecay/NoDecay  D NoDecay/NoDecay  0.5514 s
+    law 8   digest e0eaac763d007caf  nu NoDecay/NoDecay  D NoDecay/TooFewPoints  0.5521 s
+    law 9   digest 31f22f238f4c3295  nu NoDecay/NoDecay  D NoDecay/NoDecay  0.5512 s
+    price = 0.550903 s/law over 10 laws; projected census 2538.6 s (band 253.9 .. 25385.6 s)
+    wrote ../conformance/mesh/fluid0/price.json  (before any census line)
+  P    PASS  [10 checks]  0.550903 s/law
+
+  wrote ../conformance/mesh/fluid0/gate.json
+
+=========================================================================
+GATE VERDICT: 5 gate(s) FAILED — reported, not repaired:
+  - G0: chir=true: exits NoDecay/NoDecay/NoDecay/NoDecay fitted=false nu-agree=false D-agree=false; chir=false: exits NoDecay/NoDecay/NoDecay/NoDecay fitted=false nu-agree=false D-agree=false; chiralities agree = false
+  - G1: exits NoDecay/NoDecay/NoDecay/TooFewPoints; collisions_fired = 0 (the reason: nothing collides); strict (all four NoDecay) = false; substance (all four refuse, no number entered, zero collisions) = true
+  - G3: columns null vs rows null -> relative undefined (a leg refused)
+  - P(i): carrier D_FHP-I(k=1) = null (floor 0.05, asserted false); blind null vs ordinal null -> change undefined (a leg refused) (stake > 0.2)
+  - P(ii): carrier nu_FHP-I(k=1) = null (floor 0.05, asserted false); A=0.05 null vs A=0.10 null -> change undefined (a leg refused) (stake <= 0.05)
+FLUID0_PREREG §3: G0 failing says the instrument does not read FHP-I's
+hydrodynamics at this size and density, and the census is NOT run.
+=========================================================================

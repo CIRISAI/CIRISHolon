@@ -1,0 +1,47 @@
+=========================================================================
+FLUID-0 — the census's transport character
+freeze:  conformance/mesh/FLUID0_PREREG.md   instrument: holon-lattice::transport
+phase:   diag     out_dir: ../conformance/mesh/fluid0
+params:  L=64 d=0.2 A=0.05 k_index in {1,2} steps=4000 seed=0x464c55494430  k(1)=1.133624603e-1 k(2)=2.267249205e-1
+floors:  R2 >= 0.99 on >= 20 points; window [L, first |M| < 0.1|M(L)|]; monotone tolerance 0.01 of |M(L)|; k-agreement 0.1
+=========================================================================
+
+  DIAGNOSTIC — not a gate, not in the freeze.
+    shear  A=0.05 k=1                  exit NoDecay         value -                gamma -              R2 -          pts 377   window 64..440 amp 188.9788 -> 18.0582 fired 932722
+    colour A=0.05 k=1                  exit NoDecay         value -                gamma -              R2 -          pts 113   window 64..176 amp 25.0503 -> 2.0952 fired 936332
+    shear  |M(0)| 314.3957  |M(L)| 188.9788  A=0 RMS 28.7500  -> SNR at L = 6.57
+    colour |M(0)| 69.3130  |M(L)| 25.0503  A=0 RMS 21.0056  -> SNR at L = 1.19
+    the window closes at 0.1|M(L)| = 18.8979 (shear) / 2.5050 (colour); a threshold under the noise floor is a coin toss, not a decay.
+
+    256-seed ensemble mean |M(t)| (noise floor divided by 16.0):
+      t          0       8      16      32      64     128     256     400
+      shear   306.52  297.28  287.78  258.91  196.35  133.60   61.67   24.02
+      colour   63.72   53.06   33.09    6.74    0.66    2.01    1.15    0.36
+      the freeze's transient is L = 64 steps; the free-streaming recurrence is at L/k_index = 64 steps
+      shear  k=2 window   16..60   gamma 1.671191e-2  R2 0.953502  nu 3.251079e-1
+      shear  k=2 window   16..75   gamma 1.922160e-2  R2 0.971966  nu 3.739306e-1
+      shear  k=2 window   24..90   gamma 1.751656e-2  R2 0.969077  nu 3.407613e-1
+
+    plain least squares on the ensemble mean, NO floors — a CHARACTERISATION of the two modes, never a reading:
+      shear  window   64..200  gamma 6.422136e-3  R2 0.981491  value 4.997364e-1 link^2/step
+      shear  window   64..300  gamma 6.542311e-3  R2 0.991769  value 5.090878e-1 link^2/step
+      shear  window  100..300  gamma 6.571029e-3  R2 0.988145  value 5.113224e-1 link^2/step
+      shear  window  128..384  gamma 6.525603e-3  R2 0.978295  value 5.077877e-1 link^2/step
+      colour window    4..20   gamma 5.822104e-2  R2 0.978668  value 4.530451e0 link^2/step
+      colour window    8..24   gamma 7.311138e-2  R2 0.989124  value 5.689138e0 link^2/step
+      colour window    8..32   gamma 8.495376e-2  R2 0.985567  value 6.610648e0 link^2/step
+      colour window   16..40   gamma 1.610359e-1  R2 0.859198  value 1.253096e1 link^2/step
+      -> FHP-I characterisation: nu ~ 0.5091, D ~ 5.6891, Sc = nu/D ~ 0.0895 (water's 435); mode lifetimes 1/(nu k^2) ~ 152.9 steps, 1/(D k^2) ~ 13.7 steps
+      nu/nu_B = 0.7391 against the credited Boltzmann 0.6888
+
+    seed ensembles (the SAME instrument, the trace averaged before the fit):
+      seeds 1    shear                              exit NoDecay         value -                gamma -              R2 -          pts 377   window 64..440 amp 188.9788 -> 18.0582 fired 209519
+      seeds 1    colour                             exit NoDecay         value -                gamma -              R2 -          pts 113   window 64..176 amp 25.0503 -> 2.0952 fired 210827
+      seeds 4    shear                              exit LowR2           value -                gamma 6.073807e-3    R2 0.968839   pts 299   window 64..362 amp 234.5798 -> 23.3665 fired 849650
+      seeds 4    colour                             exit TooFewPoints    value -                gamma -              R2 -          pts 12    window 64..75 amp 14.5965 -> 1.0747 fired 852001
+      seeds 16   shear                              exit LowR2           value -                gamma 7.161624e-3    R2 0.985228   pts 291   window 64..354 amp 210.6771 -> 20.7400 fired 3367515
+      seeds 16   colour                             exit NoDecay         value -                gamma -              R2 -          pts 71    window 64..134 amp 7.8319 -> 0.5655 fired 3370155
+      seeds 64   shear                              exit LowR2           value -                gamma 6.260916e-3    R2 0.983876   pts 380   window 64..443 amp 202.5507 -> 20.0916 fired 13514882
+      seeds 64   colour                             exit NoDecay         value -                gamma -              R2 -          pts 102   window 64..165 amp 0.7107 -> 0.0270 fired 13530088
+
+  wrote ../conformance/mesh/fluid0/diag.json

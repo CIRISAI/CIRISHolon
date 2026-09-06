@@ -1,0 +1,26 @@
+{
+  "phase": "diag",
+  "note": "NOT in FLUID0_PREREG; an instrument diagnostic, never a gate",
+  "shear_noise_rms_a0": 2.874998259e1,
+  "colour_noise_rms_a0": 2.100563399e1,
+  "shear": {"value": null, "gamma": null, "k": 1.133624603e-1, "window": [64, 440], "points": 377, "r2": null, "collisions_fired": 932722, "exit": "NoDecay", "start_amplitude": 1.889788114e2, "end_amplitude": 1.805815879e1},
+  "colour": {"value": null, "gamma": null, "k": 1.133624603e-1, "window": [64, 176], "points": 113, "r2": null, "collisions_fired": 936332, "exit": "NoDecay", "start_amplitude": 2.505033688e1, "end_amplitude": 2.095214628e0},
+  "shear_amp_at_l": 1.889788114e2,
+  "colour_amp_at_l": 2.505033688e1,
+  "characterisation": {"seeds": 256, "nu": 5.090877632e-1, "d": 5.689138127e0, "sc": 8.948416295e-2, "nu_over_boltzmann": 7.390914975e-1, "fits": [
+    {"readout": "shear", "window": [64, 200], "gamma": 6.422136386e-3, "r2": 9.814907375e-1, "value": 4.997364174e-1},
+    {"readout": "shear", "window": [64, 300], "gamma": 6.542310975e-3, "r2": 9.917689565e-1, "value": 5.090877632e-1},
+    {"readout": "shear", "window": [100, 300], "gamma": 6.571028762e-3, "r2": 9.881452235e-1, "value": 5.113224283e-1},
+    {"readout": "shear", "window": [128, 384], "gamma": 6.525603239e-3, "r2": 9.782953496e-1, "value": 5.077876563e-1},
+    {"readout": "colour", "window": [4, 20], "gamma": 5.822103511e-2, "r2": 9.786681189e-1, "value": 4.530450578e0},
+    {"readout": "colour", "window": [8, 24], "gamma": 7.311138373e-2, "r2": 9.891236256e-1, "value": 5.689138127e0},
+    {"readout": "colour", "window": [8, 32], "gamma": 8.495375610e-2, "r2": 9.855674943e-1, "value": 6.610648414e0},
+    {"readout": "colour", "window": [16, 40], "gamma": 1.610359383e-1, "r2": 8.591977851e-1, "value": 1.253095824e1}
+  ]},
+  "ensembles": [
+    {"seeds": 1, "shear": {"value": null, "gamma": null, "k": 1.133624603e-1, "window": [64, 440], "points": 377, "r2": null, "collisions_fired": 209519, "exit": "NoDecay", "start_amplitude": 1.889788114e2, "end_amplitude": 1.805815879e1}, "colour": {"value": null, "gamma": null, "k": 1.133624603e-1, "window": [64, 176], "points": 113, "r2": null, "collisions_fired": 210827, "exit": "NoDecay", "start_amplitude": 2.505033688e1, "end_amplitude": 2.095214628e0}},
+    {"seeds": 4, "shear": {"value": null, "gamma": 6.073806758e-3, "k": 1.133624603e-1, "window": [64, 362], "points": 299, "r2": 9.688387913e-1, "collisions_fired": 849650, "exit": "LowR2", "start_amplitude": 2.345797999e2, "end_amplitude": 2.336646718e1}, "colour": {"value": null, "gamma": null, "k": 1.133624603e-1, "window": [64, 75], "points": 12, "r2": null, "collisions_fired": 852001, "exit": "TooFewPoints", "start_amplitude": 1.459648384e1, "end_amplitude": 1.074724948e0}},
+    {"seeds": 16, "shear": {"value": null, "gamma": 7.161624352e-3, "k": 1.133624603e-1, "window": [64, 354], "points": 291, "r2": 9.852281196e-1, "collisions_fired": 3367515, "exit": "LowR2", "start_amplitude": 2.106770830e2, "end_amplitude": 2.074002731e1}, "colour": {"value": null, "gamma": null, "k": 1.133624603e-1, "window": [64, 134], "points": 71, "r2": null, "collisions_fired": 3370155, "exit": "NoDecay", "start_amplitude": 7.831868096e0, "end_amplitude": 5.654914426e-1}},
+    {"seeds": 64, "shear": {"value": null, "gamma": 6.260915710e-3, "k": 1.133624603e-1, "window": [64, 443], "points": 380, "r2": 9.838759947e-1, "collisions_fired": 13514882, "exit": "LowR2", "start_amplitude": 2.025506562e2, "end_amplitude": 2.009159903e1}, "colour": {"value": null, "gamma": null, "k": 1.133624603e-1, "window": [64, 165], "points": 102, "r2": null, "collisions_fired": 13530088, "exit": "NoDecay", "start_amplitude": 7.107455158e-1, "end_amplitude": 2.698792063e-2}}
+  ]
+}

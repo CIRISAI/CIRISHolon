@@ -50,7 +50,8 @@ pub mod isotropy;
 pub mod lattice;
 pub mod probe;
 pub mod state;
+pub mod transport;
 
 pub use chart::{BlockChart, Field};
-pub use lattice::{Lattice, Ledger};
+pub use lattice::{ColourRule, Lattice, Ledger};
 pub use state::{Model, COLLISION_GROUP_ORDER};

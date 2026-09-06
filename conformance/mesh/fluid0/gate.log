@@ -1,0 +1,89 @@
+=========================================================================
+FLUID-0 — the census's transport character
+freeze:  conformance/mesh/FLUID0_PREREG.md + FLUID0_AMENDMENT_1 set A
+instr:   holon-lattice::transport   phase: gate   out_dir: ../conformance/mesh/fluid0
+set A:   L=256 d=0.2 seeds=2 A_shear=0.1 A_colour=1 k_index in {1,2} seed=0x464c55494430
+         k(1)=2.834061507e-2  k(2)=5.668123013e-2   tau=11.4 steps (2D/v^2, measured D)
+window:  opens at 4 tau = 46 steps; closes at the first step under max(0.2|M(t0)|, 12 sigma/sqrt(S))
+         sigma(L=256) shear 114.4808 colour 89.8527 -> floors 971.4018 / 762.4254
+caps:    shear [12000, 3000] colour [1500, 400] by k_index; R2 >= 0.99 on >= 20 points; k-agreement 0.1
+=========================================================================
+
+--- G0: the instrument on FHP-I (both chiralities) ---
+  FHP-I chirality=true  digest c0a3bdebaac97ae5
+    nu  rows k=1                       exit Fitted          value 5.284306e-1      gamma 4.244305e-4    R2 0.997164   pts 3802  window 46..3847 amp 9908.2930 -> 1979.9196 fired 28316213
+    nu  rows k=2                       exit Fitted          value 5.392310e-1      gamma 1.732421e-3    R2 0.997410   pts 906   window 46..951 amp 9530.9465 -> 1906.1765 fired 6994906
+    D   colour k=1                     exit Fitted          value 4.881118e0       gamma 3.920467e-3    R2 0.999951   pts 409   window 46..454 amp 17102.3907 -> 3408.0268 fired 3415981
+    D   colour k=2                     exit Fitted          value 5.125316e0       gamma 1.646642e-2    R2 0.999637   pts 100   window 46..145 amp 10921.8516 -> 2165.2034 fired 1089872
+    (12.22 s)
+  FHP-I chirality=false  digest 6657ba0491b18add
+    nu  rows k=1                       exit Fitted          value 5.270811e-1      gamma 4.233465e-4    R2 0.996795   pts 3756  window 46..3801 amp 9811.5746 -> 1961.2269 fired 27980817
+    nu  rows k=2                       exit Fitted          value 5.213911e-1      gamma 1.675105e-3    R2 0.995957   pts 915   window 46..960 amp 9241.4105 -> 1843.0389 fired 7065491
+    D   colour k=1                     exit Fitted          value 4.778534e0       gamma 3.838073e-3    R2 0.999946   pts 421   window 46..466 amp 17079.4483 -> 3409.9380 fired 3512207
+    D   colour k=2                     exit Fitted          value 5.299006e0       gamma 1.702445e-2    R2 0.999925   pts 96    window 46..141 amp 10857.4087 -> 2142.7894 fired 1062063
+    (12.17 s)
+
+  credited comparison, NOT a gate: Boltzmann nu_B(0.2) = 1/(12 d (1-d)^3) - 1/8 = 6.888021e-1
+    chirality=true: nu(k=1) 5.284306411e-1 , D(k=1) 4.881117700e0 , Sc 1.082601719e-1 , nu/nu_B = 7.671734071e-1   [Frisch/d'Humieres/Hasslacher/Lallemand/Pomeau/Rivet 1987; Henon 1987 — typed from the literature]
+    chirality=false: nu(k=1) 5.270810625e-1 , D(k=1) 4.778534219e0 , Sc 1.103018286e-1 , nu/nu_B = 7.652140945e-1   [Frisch/d'Humieres/Hasslacher/Lallemand/Pomeau/Rivet 1987; Henon 1987 — typed from the literature]
+  G0     PASS  [8 checks]  chir=true: exits Fitted/Fitted/Fitted/Fitted fitted=true nu 5.284306411e-1 vs 5.392310123e-1 agree=true D 4.881117700e0 vs 5.125316154e0 agree=true; chir=false: exits Fitted/Fitted/Fitted/Fitted fitted=true nu 5.270810625e-1 vs 5.213910679e-1 agree=true D 4.778534219e0 vs 5.299006330e0 agree=true; chiralities agree = true
+
+--- G1: the identity law refuses ---
+    identity nu rows k=1               exit NoDecay         value -                gamma -              R2 -          pts 11955 window 46..12000 amp 8113.0248 -> 8993.6934 fired 0
+    identity nu rows k=2               exit NoDecay         value -                gamma -              R2 -          pts 2955  window 46..3000 amp 4662.5106 -> 3668.4840 fired 0
+    identity D colour k=1              exit LowR2           value -                gamma 4.872066e-2    R2 0.956105   pts 32    window 46..77 amp 12130.6909 -> 2409.0802 fired 0
+    identity D colour k=2              exit NoDecay         value -                gamma -              R2 -          pts 39    window 46..84 amp 1733.3100 -> 581.4264 fired 0
+  G1     PASS  [4 checks]  exits NoDecay/NoDecay/LowR2/NoDecay; collisions_fired = 0 (the reason: nothing collides); GATED reading (all four exit SOME refusal, no number entered, zero collisions) = true; the freeze's stricter all-four-NoDecay reading = false
+
+--- G3: isotropy on FHP-I (the column leg) ---
+    nu  columns k=1 (transverse)       exit Fitted          value 5.559327e-1      gamma 4.465199e-4    R2 0.999064   pts 3584  window 46..3629 amp 9777.9900 -> 1953.4223 fired 26684230
+    nu  columns k=1 (literal y)        exit LowR2           value -                gamma 4.389078e-4    R2 0.321432   pts 1667  window 46..1712 amp 10184.8451 -> 2035.3368 fired 12378405
+      the literal-y drive is 25 % longitudinal at this leg's wavevector (sqrt3/2, -1/2); reported, never gated
+  G3     PASS  [1 checks]  columns 5.559327331e-1 vs rows 5.284306411e-1 -> relative 0.049470
+
+--- P(i): the colour-blind rule removed ---
+    D  colour k=1 ORDINAL plant        exit LowR2           value -                gamma 2.567271e-2    R2 0.961043   pts 61    window 46..106 amp 14601.9935 -> 2841.4788 fired 796753
+  P(i)   PASS  [1 checks]  carrier D_FHP-I(k=1) = 4.881117700e0 (floor 0.05, asserted true); blind 4.881117700e0 vs ordinal null -> change undefined (the plant's own reading refused) (stake > 0.2); FIRED BY the REFUSAL prong: the plant's reading refuses where the blind rule fitted; blind exit Fitted (fitted = true), plant exit LowR2, decay rate 2.567270744e-2 against the blind rule's 3.920467182e-3, a factor 6.5484
+
+--- P(ii): linearity, the OTHER shear amplitude ---
+    nu  rows k=1 A=0.05                exit Fitted          value 5.246387e-1      gamma 4.213848e-4    R2 0.996735   pts 3711  window 46..3756 amp 5007.0577 -> 999.7459 fired 28071710
+  P(ii)  PASS  [1 checks]  carrier nu_FHP-I(k=1) (floor 0.05, asserted true); A=0.1 5.284306411e-1 vs A=0.05 5.246386783e-1 -> change 0.007176 (stake <= 0.05)
+
+--- G2: the ledger, exact in every run above ---
+    16 runs (2 members each, every member against its own initial ledger), 35129 step-checks, mass/Px/Py/red integer-identical at every step: true
+  G2     PASS  [35129 checks]  16 runs audited at every step, all four integers exact = true
+
+--- P: the price ---
+  coprime-stride ten (GATED — the amended sample):
+    law 0     digest 8368214f77995ee5  nu NoDecay/NoDecay  D LowR2/NoDecay  32.749 s
+    law 2411  digest b526d2db0c6ec323  nu LowR2/LowR2  D Fitted/Fitted  34.620 s
+    law 214   digest b4f3add940948981  nu LowR2/LowR2  D Fitted/Fitted  33.119 s
+    law 2625  digest 53705caf7da3cc1f  nu LowR2/LowR2  D Fitted/Fitted  35.371 s
+    law 428   digest 43ec2087d266e1db  nu LowR2/LowR2  D Fitted/Fitted  33.446 s
+    law 2839  digest b3d5299bc027a3ff  nu Fitted/Fitted  D Fitted/Fitted  15.784 s
+    law 642   digest 0e194d6efc050349  nu Fitted/Fitted  D Fitted/Fitted  5.682 s
+    law 3053  digest b6ebb2d679770205  nu Fitted/Fitted  D Fitted/Fitted  17.246 s
+    law 856   digest 9ea8e31bc79d63b9  nu Fitted/Fitted  D Fitted/Fitted  15.407 s
+    law 3267  digest 6c9ada42b7f15add  nu LowR2/LowR2  D Fitted/Fitted  34.584 s
+    price 25.8008 s/law -> census 118890 s single core = 33.02 h; on 8 cores 4.13 h
+  first-ten (the freeze's original sample, BIASED, reported not gated):
+    law 0     digest 8368214f77995ee5  nu NoDecay/NoDecay  D LowR2/NoDecay  32.731 s
+    law 1     digest e1fc5ebfda0bd7a7  nu NoDecay/NoDecay  D LowR2/TooFewPoints  32.747 s
+    law 2     digest ca7c8082edd6d34f  nu NoDecay/NoDecay  D LowR2/NoDecay  32.670 s
+    law 3     digest df211336a03fda75  nu NoDecay/NoDecay  D LowR2/TooFewPoints  32.820 s
+    law 4     digest daa87eb05a1c2bb5  nu LowR2/NoDecay  D LowR2/NoDecay  32.774 s
+    law 5     digest ec4874d1ae9c716f  nu NoDecay/NoDecay  D LowR2/TooFewPoints  32.787 s
+    law 6     digest 2ae1e0d22c366607  nu LowR2/NoDecay  D LowR2/TooFewPoints  32.721 s
+    law 7     digest 3d77a55b06532571  nu NoDecay/NoDecay  D LowR2/TooFewPoints  32.842 s
+    law 8     digest e0eaac763d007caf  nu NoDecay/NoDecay  D LowR2/TooFewPoints  32.702 s
+    law 9     digest 31f22f238f4c3295  nu NoDecay/NoDecay  D LowR2/TooFewPoints  32.840 s
+    price 32.7635 s/law -> census 150974 s single core = 41.94 h; on 8 cores 5.24 h
+    wrote ../conformance/mesh/fluid0/price.json  (before any census line)
+  P      PASS  [20 checks]  25.800767 s/law on the GATED coprime-stride ten (stride 2411); 32.763538 s/law on the freeze's first ten, kept beside as the BIASED sample
+
+  wrote ../conformance/mesh/fluid0/gate.json
+
+=========================================================================
+GATE VERDICT: all gates PASS under FLUID0_AMENDMENT_1 set A.
+=========================================================================
+GATE_DONE rc=0

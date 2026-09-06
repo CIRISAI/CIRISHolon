@@ -1,0 +1,9 @@
+{
+  "written_before_the_counted_frames": true, "dry": true,
+  "atoms": 384, "waters": 128,
+  "measured_on_frames": 100,
+  "seconds_per_force_pass": 6.944121070e-1, "k_vectors": 15624, "real_pairs": 37394,
+  "expected_passes": 12000, "expected_seconds": 8.332945284e3,
+  "refused_under": 8.332945284e2, "refused_over": 8.332945284e4,
+  "note": "the price is the whole integrator step, which at these sizes is the force pass; an arm returning under a tenth of it is refused (M-CHEAPER-THAN-ITS-PRICE)"
+}

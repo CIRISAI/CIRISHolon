@@ -1,0 +1,21 @@
+seam law: ../conformance/water_observatory/ct2/wall_ct2.json (a 9.480487e2, b 2.400000, P 2.217404e1, c 2.440000, C6 0.000000e0, A_OH 2.258605e1, b_OH 2.200000, A_HH 1.525046e0, b_HH 1.750000, P_HH 1.697142e-2, c_HH 1.020000, P_CT 1.371043e0, c_CT 1.400000)
+DRY RUN: 2000 settling frames and 10000 counted frames (the freeze's arm is 2000 and 100000).
+SCREEN MAXBOND: T 200 K, charge x1.5, C6 Some(45.0), settle 2000, count 10000, m_ct Some(4) — a DIAGNOSTIC, not a reading
+box: 384 atoms, 128 waters, edge 29.593631 bohr at 0.997 g/cm³, seed 0x4c4951554944
+L0 door (Amendment 2): seam switch r_cut 14.00 bohr (r_on 12.00); unswitched reach 18.5781, switched reach 14.0000; truncation tail 1.2648e-4 Ha over 53280 pairs beyond r_on = 9.8814e-7 per water against the stake 1e-5 → within
+L0 door: tables' reach 20.0000, seam terms' reach 14.0000, legality radius 14.0000 (= max(4, 14.0000)), half-edge 14.7968 → ADMITTED
+L0 door: 128 units, 0 free atoms
+§1 the box's cross-unit energy is -4.770686e-3 hartree per water against kT = 6.333623e-4; under −2kT the liquid is expected to HOLD together, between −2kT and −kT there is NO EXPECTATION, above −kT it is expected to EVAPORATE into the cell — this box: hold
+L2 price: 0.495185 s per force pass at 384 atoms with the lattice sum (15624 wave-vectors, 37399 real pairs); 12000 passes ⇒ 5942.2 s expected
+R1 first O–O peak: r NaN bohr, g NaN → branch (c)  [KILL: position (5.0, 5.6) bohr, height (2.0, 4.0)]
+R2 H-bonds/molecule: NaN → branch (VOID)  [KILL: (3.0, 4.0)]
+R3 self-diffusion: VOID — 0 sampled frames is too few for a lag window (the lens needs at least three lags under max_lag)
+L1 books: columns true, drift peak 1.932e-2 against 7.494e-2 (true), momentum 3.14e-12 / bound 6.23e-9 (true)
+L2 price: 1149.7 s against 5942.2 s expected (true)
+carrier: NaN of first-shell O–O pairs cross a face (floor 0.05) — UNDER THE FLOOR
+plant (i) raw-difference g_OO: first peak None vs None, moved NaN (needs > 0.2)
+plant (ii) open-box H-bonds: NaN against NaN, fell NaN (needs > 0.2)
+VOID at settle frame 1482: pbc_ok is false: the force law's reach is 20.0000 bohr against a half-edge of 14.7968 — a unit has dissolved and the box is judged by the full law again
+wrote arm.void
+WARNING (dry): the carrier reads NaN, under the floor 0.05 — on the counted arm this is an assertion failure.
+done

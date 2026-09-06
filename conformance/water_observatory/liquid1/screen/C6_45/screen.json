@@ -1,0 +1,4 @@
+{
+  "DIAGNOSTIC": "a screen, not a reading; the knobs below are declared, not derived",
+  "label": "C6_45", "temperature_k": 2.930000000e2, "charge_scale": 1.000000000e0, "c6_declared": 4.500000000e1, "settle_frames": 2000, "counted_frames": 10000, "m_ct_override": null
+}

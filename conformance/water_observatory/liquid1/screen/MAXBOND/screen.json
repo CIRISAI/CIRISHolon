@@ -1,0 +1,4 @@
+{
+  "DIAGNOSTIC": "a screen, not a reading; the knobs below are declared, not derived",
+  "label": "MAXBOND", "temperature_k": 2.000000000e2, "charge_scale": 1.500000000e0, "c6_declared": 4.500000000e1, "settle_frames": 2000, "counted_frames": 10000, "m_ct_override": 4, "k_ct_override": 2, "lambda_deg_override": 9.000000000e1, "p_ct_scale": 1.500000000e0, "p_ho_scale": 1.000000000e0, "hbond_angle_readout_deg": null
+}

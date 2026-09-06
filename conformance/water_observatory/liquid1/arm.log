@@ -1,0 +1,67 @@
+seam law: ../conformance/water_observatory/ct2/wall_ct2.json (a 9.480487e2, b 2.400000, P 2.217404e1, c 2.440000, C6 0.000000e0, A_OH 2.258605e1, b_OH 2.200000, A_HH 1.525046e0, b_HH 1.750000, P_HH 1.697142e-2, c_HH 1.020000, P_CT 1.371043e0, c_CT 1.400000)
+box: 384 atoms, 128 waters, edge 29.593631 bohr at 0.997 g/cm³, seed 0x4c4951554944
+L0 door (Amendment 2): seam switch r_cut 14.00 bohr (r_on 12.00); unswitched reach 18.5781, switched reach 14.0000; truncation tail 1.2648e-4 Ha over 53280 pairs beyond r_on = 9.8814e-7 per water against the stake 1e-5 → within
+L0 door: tables' reach 20.0000, seam terms' reach 14.0000, legality radius 14.0000 (= max(4, 14.0000)), half-edge 14.7968 → ADMITTED
+L0 door: 128 units, 0 free atoms
+§1 the box's cross-unit energy is -5.024491e-5 hartree per water against kT = 9.278758e-4; under −2kT the liquid is expected to HOLD together, between −2kT and −kT there is NO EXPECTATION, above −kT it is expected to EVAPORATE into the cell — this box: break
+L2 price: 0.231961 s per force pass at 384 atoms with the lattice sum (15624 wave-vectors, 37397 real pairs); 102000 passes ⇒ 23660.0 s expected
+  frame    2000: T  373.8 K, units 128, H-bonds/molecule 0.708, drift 1.08e-5, 20 readouts
+  frame    4000: T  347.9 K, units 128, H-bonds/molecule 0.775, drift 1.08e-5, 40 readouts
+  frame    6000: T  324.5 K, units 128, H-bonds/molecule 0.827, drift 1.08e-5, 60 readouts
+  frame    8000: T  315.2 K, units 128, H-bonds/molecule 0.844, drift 1.08e-5, 80 readouts
+  frame   10000: T  299.0 K, units 128, H-bonds/molecule 0.882, drift 1.08e-5, 100 readouts
+  frame   12000: T  311.8 K, units 128, H-bonds/molecule 0.906, drift 1.08e-5, 120 readouts
+  frame   14000: T  314.0 K, units 128, H-bonds/molecule 0.934, drift 1.08e-5, 140 readouts
+  frame   16000: T  284.9 K, units 128, H-bonds/molecule 0.958, drift 1.08e-5, 160 readouts
+  frame   18000: T  302.5 K, units 128, H-bonds/molecule 0.980, drift 1.08e-5, 180 readouts
+  frame   20000: T  305.7 K, units 128, H-bonds/molecule 1.002, drift 1.08e-5, 200 readouts
+  frame   22000: T  286.4 K, units 128, H-bonds/molecule 1.020, drift 1.08e-5, 220 readouts
+  frame   24000: T  307.6 K, units 128, H-bonds/molecule 1.036, drift 1.08e-5, 240 readouts
+  frame   26000: T  292.9 K, units 128, H-bonds/molecule 1.045, drift 1.08e-5, 260 readouts
+  frame   28000: T  298.7 K, units 128, H-bonds/molecule 1.055, drift 1.08e-5, 280 readouts
+  frame   30000: T  296.9 K, units 128, H-bonds/molecule 1.066, drift 1.08e-5, 300 readouts
+  frame   32000: T  291.0 K, units 128, H-bonds/molecule 1.077, drift 1.08e-5, 320 readouts
+  frame   34000: T  291.5 K, units 128, H-bonds/molecule 1.086, drift 1.08e-5, 340 readouts
+  frame   36000: T  291.2 K, units 128, H-bonds/molecule 1.096, drift 1.08e-5, 360 readouts
+  frame   38000: T  293.9 K, units 128, H-bonds/molecule 1.106, drift 1.08e-5, 380 readouts
+  frame   40000: T  302.3 K, units 128, H-bonds/molecule 1.113, drift 1.08e-5, 400 readouts
+  frame   42000: T  298.7 K, units 128, H-bonds/molecule 1.118, drift 1.08e-5, 420 readouts
+  frame   44000: T  292.7 K, units 128, H-bonds/molecule 1.122, drift 1.08e-5, 440 readouts
+  frame   46000: T  296.1 K, units 128, H-bonds/molecule 1.127, drift 1.08e-5, 460 readouts
+  frame   48000: T  294.2 K, units 128, H-bonds/molecule 1.131, drift 1.08e-5, 480 readouts
+  frame   50000: T  290.5 K, units 128, H-bonds/molecule 1.134, drift 1.08e-5, 500 readouts
+  frame   52000: T  291.6 K, units 128, H-bonds/molecule 1.138, drift 1.08e-5, 520 readouts
+  frame   54000: T  292.2 K, units 128, H-bonds/molecule 1.142, drift 1.08e-5, 540 readouts
+  frame   56000: T  307.4 K, units 128, H-bonds/molecule 1.146, drift 1.08e-5, 560 readouts
+  frame   58000: T  287.4 K, units 128, H-bonds/molecule 1.152, drift 1.08e-5, 580 readouts
+  frame   60000: T  289.7 K, units 128, H-bonds/molecule 1.154, drift 1.08e-5, 600 readouts
+  frame   62000: T  302.0 K, units 128, H-bonds/molecule 1.158, drift 1.08e-5, 620 readouts
+  frame   64000: T  280.3 K, units 128, H-bonds/molecule 1.160, drift 1.08e-5, 640 readouts
+  frame   66000: T  287.0 K, units 128, H-bonds/molecule 1.160, drift 1.08e-5, 660 readouts
+  frame   68000: T  291.0 K, units 128, H-bonds/molecule 1.161, drift 1.08e-5, 680 readouts
+  frame   70000: T  297.6 K, units 128, H-bonds/molecule 1.162, drift 1.08e-5, 700 readouts
+  frame   72000: T  276.9 K, units 128, H-bonds/molecule 1.164, drift 1.08e-5, 720 readouts
+  frame   74000: T  291.9 K, units 128, H-bonds/molecule 1.165, drift 1.08e-5, 740 readouts
+  frame   76000: T  290.5 K, units 128, H-bonds/molecule 1.167, drift 1.08e-5, 760 readouts
+  frame   78000: T  288.5 K, units 128, H-bonds/molecule 1.168, drift 1.08e-5, 780 readouts
+  frame   80000: T  291.1 K, units 128, H-bonds/molecule 1.170, drift 1.08e-5, 800 readouts
+  frame   82000: T  298.5 K, units 128, H-bonds/molecule 1.172, drift 1.08e-5, 820 readouts
+  frame   84000: T  299.9 K, units 128, H-bonds/molecule 1.173, drift 1.08e-5, 840 readouts
+  frame   86000: T  292.7 K, units 128, H-bonds/molecule 1.174, drift 1.08e-5, 860 readouts
+  frame   88000: T  288.3 K, units 128, H-bonds/molecule 1.176, drift 1.08e-5, 880 readouts
+  frame   90000: T  287.1 K, units 128, H-bonds/molecule 1.177, drift 1.08e-5, 900 readouts
+  frame   92000: T  297.9 K, units 128, H-bonds/molecule 1.179, drift 1.08e-5, 920 readouts
+  frame   94000: T  293.8 K, units 128, H-bonds/molecule 1.181, drift 1.08e-5, 940 readouts
+  frame   96000: T  304.6 K, units 128, H-bonds/molecule 1.182, drift 1.08e-5, 960 readouts
+  frame   98000: T  301.1 K, units 128, H-bonds/molecule 1.184, drift 1.08e-5, 980 readouts
+  frame  100000: T  288.4 K, units 128, H-bonds/molecule 1.184, drift 1.08e-5, 1000 readouts
+R1 first O–O peak: r 5.750 bohr, g 2.203 → branch (c)  [KILL: position (5.0, 5.6) bohr, height (2.0, 4.0)]
+R2 H-bonds/molecule: 1.1843 → branch (b)  [KILL: (3.0, 4.0)]
+R3 self-diffusion: VOID — diffusion refuses (gate: MSD exponent in [0.85, 1.15]): MSD goes as tau^1.64 over this window, not tau^1; there is no diffusive regime here and a straight-line fit would report the slope of a curve as a diffusion constant
+L1 books: columns true, drift peak 1.076e-5 against 1.000e-5 (false), momentum 4.10e-11 / bound 3.01e-7 (true)
+L2 price: 29947.8 s against 23660.0 s expected (true)
+carrier: 0.2599 of first-shell O–O pairs cross a face (floor 0.05) — nonzero
+plant (i) raw-difference g_OO: first peak Some((5.75, 1.6307884903980585)) vs Some((5.75, 2.2031178840211503)), moved 0.260 (needs > 0.2)
+plant (ii) open-box H-bonds: 0.8650 against 1.1843, fell 0.270 (needs > 0.2)
+wrote arm.done
+done

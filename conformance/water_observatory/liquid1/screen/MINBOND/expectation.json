@@ -1,0 +1,8 @@
+{
+  "written_before_any_frame": true, "dry": true, "law_refused_for_counted_arm": false,
+  "units": 128, "staked_units": 128, "void": false,
+  "cross_unit_energy_hartree": 7.159803001e-1, "field_part_hartree": 7.905068559e-3, "seam_part_hartree": 7.080752315e-1,
+  "per_water_hartree": 5.593596095e-3, "kT_293_hartree": 1.108384047e-3, "minus_2kT": -2.216768094e-3, "minus_kT": -1.108384047e-3,
+  "expectation": "break",
+  "sentence": "the box's cross-unit energy is 5.593596e-3 hartree per water against kT = 1.108384e-3; under −2kT the liquid is expected to HOLD together, between −2kT and −kT there is NO EXPECTATION, above −kT it is expected to EVAPORATE into the cell — this box: break"
+}

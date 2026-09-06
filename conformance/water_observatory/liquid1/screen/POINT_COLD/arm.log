@@ -1,0 +1,13 @@
+seam law: ../conformance/water_observatory/ct2/wall_ct2.json (a 9.480487e2, b 2.400000, P 2.217404e1, c 2.440000, C6 0.000000e0, A_OH 2.258605e1, b_OH 2.200000, A_HH 1.525046e0, b_HH 1.750000, P_HH 1.697142e-2, c_HH 1.020000, P_CT 1.371043e0, c_CT 1.400000)
+DRY RUN: 2000 settling frames and 10000 counted frames (the freeze's arm is 2000 and 100000).
+SCREEN POINT_COLD: T 200 K, charge x1, C6 None, settle 2000, count 10000, m_ct Some(4) — a DIAGNOSTIC, not a reading
+box: 384 atoms, 128 waters, edge 29.593631 bohr at 0.997 g/cm³, seed 0x4c4951554944
+L0 door (Amendment 2): seam switch r_cut 14.00 bohr (r_on 12.00); unswitched reach 18.5781, switched reach 14.0000; truncation tail 1.2648e-4 Ha over 53280 pairs beyond r_on = 9.8814e-7 per water against the stake 1e-5 → within
+L0 door: tables' reach 20.0000, seam terms' reach 14.0000, legality radius 14.0000 (= max(4, 14.0000)), half-edge 14.7968 → ADMITTED
+L0 door: 128 units, 0 free atoms
+§1 the box's cross-unit energy is 1.157350e-3 hartree per water against kT = 6.333623e-4; under −2kT the liquid is expected to HOLD together, between −2kT and −kT there is NO EXPECTATION, above −kT it is expected to EVAPORATE into the cell — this box: break
+L2 price: 0.694412 s per force pass at 384 atoms with the lattice sum (15624 wave-vectors, 37394 real pairs); 12000 passes ⇒ 8332.9 s expected
+  frame    2000: T  390.2 K, units 128, H-bonds/molecule 0.839, drift 7.05e-6, 20 readouts
+  frame    4000: T  402.5 K, units 128, H-bonds/molecule 0.956, drift 7.05e-6, 40 readouts
+  frame    6000: T  412.5 K, units 128, H-bonds/molecule 1.057, drift 7.05e-6, 60 readouts
+  frame    8000: T  404.6 K, units 128, H-bonds/molecule 1.136, drift 7.35e-6, 80 readouts

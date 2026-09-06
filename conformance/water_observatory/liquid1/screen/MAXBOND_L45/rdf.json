@@ -1,0 +1,8 @@
+{
+  "dry": true, "law_refused_for_counted_arm": false,
+  "dr_bohr": 1.000000000e-1, "r_max_bohr": 1.479681565e1, "frames": 0, "n_o": 0, "rho_o_bohr3": 0.000000000e0,
+  "r": [],
+  "g": [],
+  "g_plant_raw_differences": [],
+  "plant_cell_bohr": 1.000000000e6
+}

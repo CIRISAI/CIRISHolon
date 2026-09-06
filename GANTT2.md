@@ -84,17 +84,17 @@ an owner to be named and an exit (the pricing) that costs no compute.
 - **ION-1 — the cation half of the rewrite.** H₃O⁺ as a unit the reading may form; its presence from its own density; the seam H₃O⁺·H₂O on a dozen geometries (9.0M determinants, ~12 minutes each on the product-start solver — node C's compute fence, lifted); the hop production under the rent clause. Kills: the shared-proton geometry against Zundel/Eigen; the excess proton's diffusion against experiment (~5× water's). The anion half waits on a basis (I-5).
 - **A basis lane (I-5).** One basis with virtual p on hydrogen and a diffuse function on oxygen: attunement stops reading zero and OH⁻ binds. Priced by the MPS route (channel 3/4 sizing: the closed sector 566 GiB at 20 orbitals on the determinant route; `price_mpo(21) = 1.76` GiB provisional).
 
-### H-bond network — INSTRUMENTED, the first counted arm reading (LIQUID-1, verdict pending at frame ~90,000 of 100,000)
+### H-bond network — READ (LIQUID-1): the first liquid of derived constants — L0 PASS, R1 (c) on position by 0.09 Å, R2 (b) at two thirds of water's bonds, R3 VOID (no diffusive regime in 2.6 ps)
 
 | question | record |
 |---|---|
 | closed | the unit production holds at liquid density: 128 units every pass (L0) |
 | the ledger | the dimer's six channels under Ewald with a C² switch at 14 bohr (Amendment 2); the truncation priced at 1e-6 Ha per water |
-| the bond production | 1.17 distinct bonds per molecule at 293 K (2.3 in experiment's both-ends convention against 3.5); the oxygen shell water-shaped (peak 3.0–3.1 Å, height in band, 3.6–4.0 neighbours in 3.3 Å against 4.5): the neighbours are there and pointed too loosely — the deficit is orientation, majority the law's, a quarter the criterion's (screens) |
-| the phase | above the four-connected percolation threshold (~0.8 distinct bonds); the spanning-cluster fraction is the readout that names it and is not yet in the runner |
-| dynamics | the price 0.23 s per force pass at 384 atoms on one core; the box found the engine's periodic three-body force bug (fixed, correction 4) |
+| the bond production | 1.184 distinct bonds per molecule at 298 K over 100,000 frames (2.37 in experiment's both-ends convention against 3.5); the oxygen shell water-shaped (peak 3.04 Å, height 2.20 in band, n(3.3 Å) 4.20 against 4.5) with the SECOND shell at 6.0 Å — a simple liquid's packing, not a tetrahedral network's: the neighbours are there and pointed too loosely; the screen says direction is the lever, the energy scale is not, the criterion is a minority, and pointing at the family's amplitude dissolves units |
+| the phase | above the four-connected percolation threshold (~0.8 distinct bonds); the spanning-cluster fraction is the readout that names it and is OWED (not in LIQUID-1's runner); no diffusive regime inside 2.6 ps (R3 VOID) — a diffusion coefficient needs a longer arm or stride, priced by the measured MSD exponent |
+| dynamics | the price 0.23 s per force pass at 384 atoms on one core, 29,948 s for the arm; the books closed to one part in 10⁵ (the drift leg 8 % over a fallback bar); the box found the engine's periodic three-body force bug (fixed, correction 4) |
 
-**Next:** LIQUID-1's verdict, then **LIQUID-2** on CT-3's table term with **the spanning-cluster
+**Next:** **LIQUID-2** on CT-3's table term with **the spanning-cluster
 fraction** as a readout and R2's band stated in the lens's own convention (a correction to
 the freeze's letter: the band was typed in the both-ends convention); accommodation at the
 box (FIELD-2's fixed point over 128 units) as its first pre-committed branch, dispersion from

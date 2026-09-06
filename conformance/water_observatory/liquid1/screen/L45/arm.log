@@ -1,0 +1,24 @@
+seam law: ../conformance/water_observatory/ct2/wall_ct2.json (a 9.480487e2, b 2.400000, P 2.217404e1, c 2.440000, C6 0.000000e0, A_OH 2.258605e1, b_OH 2.200000, A_HH 1.525046e0, b_HH 1.750000, P_HH 1.697142e-2, c_HH 1.020000, P_CT 1.371043e0, c_CT 1.400000)
+DRY RUN: 2000 settling frames and 10000 counted frames (the freeze's arm is 2000 and 100000).
+SCREEN L45: T 293 K, charge x1, C6 None, settle 2000, count 10000, m_ct None — a DIAGNOSTIC, not a reading
+box: 384 atoms, 128 waters, edge 29.593631 bohr at 0.997 g/cm³, seed 0x4c4951554944
+L0 door (Amendment 2): seam switch r_cut 14.00 bohr (r_on 12.00); unswitched reach 18.5781, switched reach 14.0000; truncation tail 1.2648e-4 Ha over 53280 pairs beyond r_on = 9.8814e-7 per water against the stake 1e-5 → within
+L0 door: tables' reach 20.0000, seam terms' reach 14.0000, legality radius 14.0000 (= max(4, 14.0000)), half-edge 14.7968 → ADMITTED
+L0 door: 128 units, 0 free atoms
+§1 the box's cross-unit energy is -5.024491e-5 hartree per water against kT = 9.278758e-4; under −2kT the liquid is expected to HOLD together, between −2kT and −kT there is NO EXPECTATION, above −kT it is expected to EVAPORATE into the cell — this box: break
+L2 price: 0.493807 s per force pass at 384 atoms with the lattice sum (15624 wave-vectors, 37397 real pairs); 12000 passes ⇒ 5925.7 s expected
+  frame    2000: T  373.8 K, units 128, H-bonds/molecule 0.963, drift 1.08e-5, 20 readouts
+  frame    4000: T  347.9 K, units 128, H-bonds/molecule 1.049, drift 1.08e-5, 40 readouts
+  frame    6000: T  324.5 K, units 128, H-bonds/molecule 1.110, drift 1.08e-5, 60 readouts
+  frame    8000: T  315.2 K, units 128, H-bonds/molecule 1.147, drift 1.08e-5, 80 readouts
+  frame   10000: T  299.0 K, units 128, H-bonds/molecule 1.196, drift 1.08e-5, 100 readouts
+R1 first O–O peak: r 5.850 bohr, g 2.123 → branch (c)  [KILL: position (5.0, 5.6) bohr, height (2.0, 4.0)]
+R2 H-bonds/molecule: 1.1962 → branch (b)  [KILL: (3.0, 4.0)]
+R3 self-diffusion: VOID — diffusion refuses (gate: MSD exponent in [0.85, 1.15]): MSD goes as tau^1.93 over this window, not tau^1; there is no diffusive regime here and a straight-line fit would report the slope of a curve as a diffusion constant
+L1 books: columns true, drift peak 1.076e-5 against 1.000e-5 (false), momentum 5.24e-12 / bound 3.59e-8 (true)
+L2 price: 5841.0 s against 5925.7 s expected (true)
+carrier: 0.2691 of first-shell O–O pairs cross a face (floor 0.05) — nonzero
+plant (i) raw-difference g_OO: first peak Some((6.050000000000001, 1.514612491273293)) vs Some((5.8500000000000005, 2.123144551146445)), moved 0.287 (needs > 0.2)
+plant (ii) open-box H-bonds: 0.6373 against 1.1962, fell 0.467 (needs > 0.2)
+wrote arm.done
+done

@@ -1,0 +1,15 @@
+{
+  "dry": true, "law_source": "../conformance/water_observatory/ct2/wall_ct2.json", "law_refused_for_counted_arm": false, "law_refusal": null,
+  "is_a_reading": false,
+  "settle_frames": 2000, "counted_frames_staked": 10000, "counted_frames_run": 10000, "frames_run_total": 12000, "readouts": 100,
+  "cell_edge_bohr": 2.959363131e1, "waters": 128, "atoms": 384, "density_g_cm3": 9.970000000e-1, "target_temperature_k": 3.500000000e2, "mean_temperature_k": 3.600384505e2,
+  "l0": {"void": false},
+  "r1": {"first_peak_position_bohr": 6.250000000e0, "first_peak_height": 2.937712255e0, "bin_bohr": 1.000000000e-1, "kill_position_bohr": [5.000000000e0, 5.600000000e0], "kill_height": [2.000000000e0, 4.000000000e0], "branch": "c"},
+  "r2": {"hbonds_per_molecule": 4.535156250e-1, "kill": [3.000000000e0, 4.000000000e0], "branch": "b", "refusal": null},
+  "r3": {"diffusion_cm2_per_s": null, "kill_centre_cm2_per_s": 2.300000000e-5, "kill_factor": 3.000000000e0, "branch": "VOID", "refusal": "diffusion refuses (gate: MSD exponent in [0.85, 1.15]): MSD goes as tau^1.94 over this window, not tau^1; there is no diffusive regime here and a straight-line fit would report the slope of a curve as a diffusion constant", "max_lag_frames": 25, "sampled_frames": 100, "bohr2_per_fs_to_cm2_per_s": 2.800285205e-2, "au_time_s_engine": 2.418884327e-17, "au_time_fs_lens": 2.418884326e-2, "time_units_agree": true},
+  "l1": {"columns_ok": true, "w_ext": -2.058912585e-1, "work_hand": 0.000000000e0, "work_thermostat": -2.058912585e-1, "work_field": 0.000000000e0, "work_seam": 0.000000000e0, "drift_peak": 1.305003858e-5, "drift_bar": 1.000000000e-5, "drift_ok": false, "momentum_residual": 8.154776302e-12, "momentum_bound": 3.681781883e-8, "momentum_ok": true, "k_vectors": 15624, "real_pairs": 37428, "seam_pairs_dropped_total": 878116608, "seam_triples_dropped_total": 56361672047, "seam_oo_pairs": 3723, "seam_ho_pairs": 14432, "seam_transitions": 1, "field_transitions": 1},
+  "l2": {"wall_seconds": 5.817623379e3, "seconds_per_pass": 4.942488041e-1, "expected_passes": 12000, "expected_seconds": 5.930985650e3, "within_0.1x_to_10x": true},
+  "carrier": {"first_shell_bohr": 6.047123599e0, "first_shell_angstrom": 3.200000000e0, "pairs": 12095, "crossing_a_face": 2844, "fraction": 2.351384870e-1, "floor": 5.000000000e-2, "nonzero": true},
+  "plants": {"i_rdf_raw_differences": {"peak_height": 2.077925474e0, "peak_position_bohr": 6.250000000e0, "fractional_move": 2.926722247e-1, "needs": 2.000000000e-1, "fires": true}, "ii_open_box_hbonds": {"per_molecule": 3.422656250e-1, "fractional_fall": 2.453057709e-1, "needs": 2.000000000e-1, "fires": true}},
+  "rdf_refusal": null, "dry_diffusion_path_check": {"cm2_per_s": null, "refusal": "diffusion refuses (gate: MSD exponent in [0.85, 1.15]): MSD goes as tau^1.98 over this window, not tau^1; there is no diffusive regime here and a straight-line fit would report the slope of a curve as a diffusion constant", "max_lag_frames": 2500, "note": "DRY ONLY: the oxygens sampled every frame instead of every hundredth, so the trajectory-and-diffusion path is exercised end to end on a short run. Not a reading."}
+}

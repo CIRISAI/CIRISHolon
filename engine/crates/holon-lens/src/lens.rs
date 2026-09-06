@@ -557,7 +557,14 @@ fn min_image(a: [f64; 3], b: [f64; 3], cell: [f64; 3]) -> [f64; 3] {
 /// **REFUSES exactly where [`hbonds`] refuses** and nowhere else: a scene with no oxygen or
 /// no hydrogen has no hydrogen-bond variable, and a zero there would read as a measured
 /// absence.
+/// The rung-1 criterion under the minimum image (LIQUID-1). A DIAGNOSTIC may ask the same
+/// census at another angle through `hbonds_periodic_with`; this one is the frozen readout.
 pub fn hbonds_periodic(pos: &[[f64; 3]], z: &[u32], cell: [f64; 3]) -> Reading<Vec<HBond>> {
+    hbonds_periodic_with(pos, z, cell, HB_ANGLE_DEG)
+}
+
+/// `hbonds_periodic` with the donor angle as a parameter (degrees). Not a frozen readout.
+pub fn hbonds_periodic_with(pos: &[[f64; 3]], z: &[u32], cell: [f64; 3], angle_deg: f64) -> Reading<Vec<HBond>> {
     let oxygens: Vec<usize> = (0..z.len()).filter(|&i| z[i] == 8).collect();
     let hydrogens: Vec<usize> = (0..z.len()).filter(|&i| z[i] == 1).collect();
     if oxygens.is_empty() || hydrogens.is_empty() {
@@ -572,7 +579,7 @@ pub fn hbonds_periodic(pos: &[[f64; 3]], z: &[u32], cell: [f64; 3]) -> Reading<V
             ),
         );
     }
-    let cos_cut = (HB_ANGLE_DEG * std::f64::consts::PI / 180.0).cos();
+    let cos_cut = (angle_deg * std::f64::consts::PI / 180.0).cos();
     let mut out = Vec::new();
     for &h in &hydrogens {
         // Covalent donor = nearest oxygen UNDER THE MINIMUM IMAGE.

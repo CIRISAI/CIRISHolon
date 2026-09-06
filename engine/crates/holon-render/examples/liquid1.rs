@@ -55,6 +55,32 @@ const SETTLE: usize = 2_000;
 const COUNT: usize = 100_000;
 /// `--dry`: the instruments exercised end to end on 200 counted frames. NOT the arm.
 const DRY_COUNT: usize = 200;
+
+/// A DIAGNOSTIC SCREEN (`--screen <label>`): the freeze's arm with one or more knobs turned —
+/// temperature, a charge scale, a declared C₆, the settling count, the transfer term's
+/// angular exponents. Nothing a screen writes is a reading: every file carries `dry: true`
+/// and `screen.json` names the knobs. Its use is to choose which hypotheses enter LIQUID-2's
+/// freeze as pre-committed branches, not to read water.
+struct Screen {
+    label: String,
+    temp: f64,
+    qscale: f64,
+    c6: Option<f64>,
+    settle: usize,
+    mct: Option<u8>,
+    kct: Option<u8>,
+    lambda_deg: Option<f64>,
+    pctscale: f64,
+    pscale: f64,
+    hbangle: Option<f64>,
+}
+static SCREEN: std::sync::OnceLock<Screen> = std::sync::OnceLock::new();
+fn temp_k() -> f64 {
+    SCREEN.get().map(|x| x.temp).unwrap_or(TEMPERATURE_K)
+}
+fn settle() -> usize {
+    SCREEN.get().map(|x| x.settle).unwrap_or(SETTLE)
+}
 /// §2 L2: the price is measured on the first 100 frames and written before the counted ones.
 const PRICE_FRAMES: usize = 100;
 /// §0: the readouts every 100 frames; the units and `pbc_ok` every frame.
@@ -230,7 +256,7 @@ fn load_law(out: &Path) -> Result<Law, String> {
         }
     };
     let r_min = [rmin("r_min_oo", 4.724), rmin("r_min_oh", 2.78), rmin("r_min_hh", 3.5)];
-    let kt = K_B * TEMPERATURE_K;
+    let kt = K_B * temp_k();
     let refusal = model
         .bounded(q_h, r_min, kt)
         .map(|why| format!("{}: the harvested law is NOT BOUNDED below its fit range — {why} (FIELD-9 G-B0)", p.display()));
@@ -304,11 +330,32 @@ struct Void {
 
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
-    let dry = args.iter().any(|a| a == "--dry");
+    let val = |k: &str| -> Option<String> { args.iter().position(|a| a == k).and_then(|i| args.get(i + 1).cloned()) };
+    let screen_label = val("--screen");
+    if let Some(label) = screen_label.clone() {
+        let sc = Screen {
+            label,
+            temp: val("--temp").and_then(|v| v.parse().ok()).unwrap_or(TEMPERATURE_K),
+            qscale: val("--qscale").and_then(|v| v.parse().ok()).unwrap_or(1.0),
+            c6: val("--c6").and_then(|v| v.parse().ok()),
+            settle: val("--settle").and_then(|v| v.parse().ok()).unwrap_or(SETTLE),
+            mct: val("--mct").and_then(|v| v.parse().ok()),
+            kct: val("--kct").and_then(|v| v.parse().ok()),
+            lambda_deg: val("--lambda").and_then(|v| v.parse().ok()),
+            pctscale: val("--pctscale").and_then(|v| v.parse().ok()).unwrap_or(1.0),
+            pscale: val("--pscale").and_then(|v| v.parse().ok()).unwrap_or(1.0),
+            hbangle: val("--hbangle").and_then(|v| v.parse().ok()),
+        };
+        SCREEN.set(sc).ok();
+    }
+    let dry = args.iter().any(|a| a == "--dry") || screen_label.is_some();
+    // the out directory: the first argument that is neither a flag nor a flag's value
+    let flag_values: Vec<usize> = args.iter().enumerate().filter(|(_, a)| a.starts_with("--") && *a != "--dry").map(|(i, _)| i + 1).collect();
     let out = PathBuf::from(
         args.iter()
-            .find(|a| !a.starts_with("--"))
-            .cloned()
+            .enumerate()
+            .find(|(i, a)| !a.starts_with("--") && !flag_values.contains(i))
+            .map(|(_, a)| a.clone())
             .unwrap_or_else(|| "../conformance/water_observatory/liquid1".to_string()),
     );
 
@@ -332,9 +379,9 @@ fn main() {
         eprintln!("WARNING: this law is REFUSED for a COUNTED arm — {why}");
         eprintln!("WARNING: --dry proceeds anyway. Nothing this run writes is a reading of anything; it is an instrument check.");
     }
-    let count = if dry { DRY_COUNT } else { COUNT };
+    let count = if screen_label.is_some() { val("--count").and_then(|v| v.parse().ok()).unwrap_or(10_000) } else if dry { DRY_COUNT } else { COUNT };
     if dry {
-        eprintln!("DRY RUN: {SETTLE} settling frames and {count} counted frames (the freeze's arm is {SETTLE} and {COUNT}).");
+        eprintln!("DRY RUN: {} settling frames and {count} counted frames (the freeze's arm is {SETTLE} and {COUNT}).", settle());
     }
 
     run(&out, &law, count, dry);
@@ -342,16 +389,31 @@ fn main() {
 
 fn run(out: &Path, law: &Law, count: usize, dry: bool) {
     let t_start = Instant::now();
+    let settle_n = settle();
+    let temp_k_v = temp_k();
+    if let Some(sc) = SCREEN.get() {
+        write(out, "screen.json", format!("{{\n  \"DIAGNOSTIC\": \"a screen, not a reading; the knobs below are declared, not derived\",\n  \"label\": {}, \"temperature_k\": {}, \"charge_scale\": {}, \"c6_declared\": {}, \"settle_frames\": {}, \"counted_frames\": {}, \"m_ct_override\": {}, \"k_ct_override\": {}, \"lambda_deg_override\": {}, \"p_ct_scale\": {}, \"p_ho_scale\": {}, \"hbond_angle_readout_deg\": {}\n}}\n", s(&sc.label), n(sc.temp), n(sc.qscale), sc.c6.map(n).unwrap_or_else(|| "null".to_string()), sc.settle, count, sc.mct.map(|m| m.to_string()).unwrap_or_else(|| "null".to_string()), sc.kct.map(|m| m.to_string()).unwrap_or_else(|| "null".to_string()), sc.lambda_deg.map(n).unwrap_or_else(|| "null".to_string()), n(sc.pctscale), n(sc.pscale), sc.hbangle.map(n).unwrap_or_else(|| "null".to_string())));
+        eprintln!("SCREEN {}: T {} K, charge x{}, C6 {:?}, settle {}, count {}, m_ct {:?} — a DIAGNOSTIC, not a reading", sc.label, sc.temp, sc.qscale, sc.c6, sc.settle, count, sc.mct);
+    }
     let (species, pos, l) = liquid_box(N_CELLS, DENSITY_G_CM3, SEED);
     let cell = [l, l, l];
     eprintln!("box: {} atoms, {N_WATERS} waters, edge {l:.6} bohr at {DENSITY_G_CM3} g/cm³, seed {SEED:#x}", species.len());
 
-    let mut sim: Box<Sim> = scene(&species, &pos, l, TEMPERATURE_K);
+    let mut sim: Box<Sim> = scene(&species, &pos, l, temp_k_v);
     let tables_reach = sim.legality_radius();
-    sim.set_field(true, None).expect("the open box admits the field");
+    let q_override = SCREEN.get().and_then(|x| if x.qscale != 1.0 { Some(holon_render::field::water_charge_at_pin() * x.qscale) } else { None });
+    sim.set_field(true, q_override).expect("the open box admits the field");
     // LIQUID-1 Amendment 2: the law with the declared switch; the unswitched reach is
     // reported beside the switched one
-    let model = SeamModel { r_cut: SEAM_CUTOFF_BOHR, ..law.model };
+    let mut model = SeamModel { r_cut: SEAM_CUTOFF_BOHR, ..law.model };
+    if let Some(x) = SCREEN.get() {
+        if let Some(c6) = x.c6 { model.c6 = c6; }
+        if let Some(m) = x.mct { model.m_ct = m; model.k_ct = 0; }
+        if let Some(k) = x.kct { model.k_ct = k; }
+        if let Some(lam) = x.lambda_deg { model.lambda_ct = lam.to_radians(); }
+        model.p_ct *= x.pctscale;
+        model.p *= x.pscale;
+    }
     sim.set_seam(Some(model)).expect("no acuity frame is installed");
 
     // ---------------------------------------------------------------- door.json (§2 L0)
@@ -469,7 +531,7 @@ fn run(out: &Path, law: &Law, count: usize, dry: bool) {
     let cross_unit = e_field + e_seam;
     let per_water = cross_unit / N_WATERS as f64;
     let units_start = sim.seam_work.units;
-    let kt = K_B * TEMPERATURE_K;
+    let kt = K_B * temp_k();
     let void_empty = units_start < N_WATERS as u64;
     let expectation = if void_empty {
         "VOID"
@@ -560,16 +622,16 @@ fn run(out: &Path, law: &Law, count: usize, dry: bool) {
 
     // ---- the price: the first 100 frames, written BEFORE the counted ones (§2 L2)
     let t_price = Instant::now();
-    for k in 0..PRICE_FRAMES.min(SETTLE) {
+    for k in 0..PRICE_FRAMES.min(settle_n) {
         one_frame!("settle", k);
         if void.is_some() {
             break;
         }
     }
-    let price_seconds = t_price.elapsed().as_secs_f64() / PRICE_FRAMES.min(SETTLE) as f64;
+    let price_seconds = t_price.elapsed().as_secs_f64() / PRICE_FRAMES.min(settle_n) as f64;
     let price_k_vectors = sim.field_work.k_vectors;
     let price_real_pairs = sim.field_work.pairs;
-    let expected_passes = SETTLE + count;
+    let expected_passes = settle_n + count;
     eprintln!(
         "L2 price: {price_seconds:.6} s per force pass at {n_atoms} atoms with the lattice sum ({price_k_vectors} wave-vectors, {price_real_pairs} real pairs); {expected_passes} passes ⇒ {:.1} s expected",
         price_seconds * expected_passes as f64
@@ -579,7 +641,7 @@ fn run(out: &Path, law: &Law, count: usize, dry: bool) {
         "price.json",
         format!(
             "{{\n  \"written_before_the_counted_frames\": true, \"dry\": {dry},\n  \"atoms\": {n_atoms}, \"waters\": {N_WATERS},\n  \"measured_on_frames\": {},\n  \"seconds_per_force_pass\": {}, \"k_vectors\": {price_k_vectors}, \"real_pairs\": {price_real_pairs},\n  \"expected_passes\": {expected_passes}, \"expected_seconds\": {},\n  \"refused_under\": {}, \"refused_over\": {},\n  \"note\": {}\n}}\n",
-            PRICE_FRAMES.min(SETTLE),
+            PRICE_FRAMES.min(settle_n),
             n(price_seconds),
             n(price_seconds * expected_passes as f64),
             n(0.1 * price_seconds * expected_passes as f64),
@@ -590,7 +652,7 @@ fn run(out: &Path, law: &Law, count: usize, dry: bool) {
 
     // ---- the rest of the settling
     if void.is_none() {
-        for k in PRICE_FRAMES.min(SETTLE)..SETTLE {
+        for k in PRICE_FRAMES.min(settle_n)..settle_n {
             one_frame!("settle", k);
             if void.is_some() {
                 break;
@@ -636,7 +698,7 @@ fn run(out: &Path, law: &Law, count: usize, dry: bool) {
                 continue;
             }
             let p = read_pos(&sim);
-            match hbonds_periodic(&p, &z, cell) {
+            match holon_lens::lens::hbonds_periodic_with(&p, &z, cell, SCREEN.get().and_then(|x| x.hbangle).unwrap_or(holon_lens::lens::HB_ANGLE_DEG)) {
                 Ok(v) => hb_sum += v.len() as f64,
                 Err(e) => hb_refusal = Some(format!("{}: {}", e.lens, e.reason)),
             }
@@ -843,7 +905,7 @@ fn run(out: &Path, law: &Law, count: usize, dry: bool) {
             "{{\n\
              \x20 \"dry\": {dry}, \"law_source\": {}, \"law_refused_for_counted_arm\": {}, \"law_refusal\": {},\n\
              \x20 \"is_a_reading\": {},\n\
-             \x20 \"settle_frames\": {SETTLE}, \"counted_frames_staked\": {count}, \"counted_frames_run\": {counted_frames}, \"frames_run_total\": {frames_run}, \"readouts\": {readouts},\n\
+             \x20 \"settle_frames\": {settle_n}, \"counted_frames_staked\": {count}, \"counted_frames_run\": {counted_frames}, \"frames_run_total\": {frames_run}, \"readouts\": {readouts},\n\
              \x20 \"cell_edge_bohr\": {}, \"waters\": {N_WATERS}, \"atoms\": {n_atoms}, \"density_g_cm3\": {}, \"target_temperature_k\": {}, \"mean_temperature_k\": {},\n\
              \x20 \"l0\": {},\n\
              \x20 \"r1\": {{\"first_peak_position_bohr\": {}, \"first_peak_height\": {}, \"bin_bohr\": {}, \"kill_position_bohr\": [{}, {}], \"kill_height\": [{}, {}], \"branch\": {}}},\n\
@@ -861,7 +923,7 @@ fn run(out: &Path, law: &Law, count: usize, dry: bool) {
             !dry && law.refusal.is_none() && void.is_none(),
             n(l),
             n(DENSITY_G_CM3),
-            n(TEMPERATURE_K),
+            n(temp_k_v),
             n(if counted_frames > 0 { temp_sum / counted_frames as f64 } else { f64::NAN }),
             void_json,
             n(r1_pos),

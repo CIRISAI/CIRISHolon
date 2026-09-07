@@ -172,3 +172,25 @@ the map has NO knot between its two azimuth sheets at high tilt, which is exactl
 held-out node sat and where the table's 8 % lives; and the map has no node with a pair donating in
 BOTH directions at once, which a liquid has and the serving rule cannot represent. Neither is a
 defect of the interpolant. Both are gaps in the map, and both are answered by nodes, not by shapes.
+
+
+## Correction (2026-09-07): the per-dimer serving rule is not dynamics-grade, measured in LIQUID-2's instrument phase
+
+CT-3 served one transfer reading per unordered pair of units at the pair's SHORTEST cross-unit
+H···O contact, an argmin, and G-A0 measured the argmin's own discontinuity on one dimer at
+`1.418e-5` hartree per handover, under the `5e-4` floor. In the 128-water box (LIQUID-2's
+labelled screen, `liquid2/DRIFT_NOTE.md`, every file `dry: true`) the served table costs three
+orders of magnitude of energy conservation: drift peak `6.585e-3` hartree at the tables' step
+against `4.720e-6` with channel 6 off on the same box, non-monotone in the step. The cause is
+CONFIRMED as the handover: 3,803 handovers in 2,000 frames, mean absolute jump `9.03e-6` (the
+dimer's order), worst single jump `2.01e-3` (142× CT-3's whole-dimer worst), and the running
+extremum of the SIGNED jump sum `6.361e-3` against the measured drift peak `6.585e-3` — 96.6 %
+of the drift, the same statistic the ledger accumulates; the residual 3.4 % is not claimed and
+names the two untested suspects (the switch on the contact distance while the table's coordinates
+carry `r`; the below-knot tail's gradient). The table's VALUES stand (S1 (a) is a reading on a
+dimer, where no contact changes hands); what does not stand for a liquid is the argmin. The owed
+rule, specified in `DRIFT_NOTE.md` and not built: a partition of unity over the four cross-unit
+contacts, `w_k = e^{−βr_k}/Σ_j e^{−βr_j}`, `β` derived from the map's own shortest-to-second
+contact separations and the table's resolution floor, the gradient analytic on every atom of
+every contact, gated on the served law's drift at the tables' step within 2× of the channel-6-off
+control. LIQUID-2 does not freeze until that gate passes.

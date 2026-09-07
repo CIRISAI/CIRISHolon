@@ -1,0 +1,18 @@
+{
+  "phase": "expectation",
+  "dry": false,
+  "written_before_any_frame": true,
+  "units": 128,
+  "staked_units": 128,
+  "void": false,
+  "cross_unit_energy_hartree": 3.170537918e-1,
+  "field_part_hartree": 1.235166962e-2,
+  "seam_part_hartree": 3.047021222e-1,
+  "per_water_hartree": 2.476982749e-3,
+  "kT_hartree": 9.278757880e-4,
+  "minus_2kT": -1.855751576e-3,
+  "minus_kT": -9.278757880e-4,
+  "liquid1_rule_reading": "break",
+  "liquid1_rule_is_gated": false,
+  "sentence": "the box's cross-unit energy is 2.476983e-3 hartree per water against kT = 9.278758e-4; LIQUID-1's three-band rule reads break. THE RULE IS REPORTED, NOT GATED: LIQUID-1's own arm read the same rule above the minus-kT line, wrote break, and then HELD its 128 units for 100,000 frames, so the rule's break branch is known to be wrong for this box and this law family. What still VOIDS is the EMPTY branch alone: fewer than 128 units at the start."
+}

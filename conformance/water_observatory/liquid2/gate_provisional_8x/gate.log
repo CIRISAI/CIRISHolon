@@ -1,0 +1,72 @@
+phase gate, out /home/emoore/CIRISHolon/conformance/water_observatory/liquid2, observatory /home/emoore/CIRISHolon/conformance/water_observatory
+law /home/emoore/CIRISHolon/conformance/water_observatory/ct3/wall_ct3.json (60 knots at c0 = 1.400000); deepest shape 2.915803, worst knot miss 2.279e-15
+the design, derived before any counted frame
+  LIQUID-1: MSD exponent 1.6400 over [5.2126, 547.3] fs
+  crossover implied      102.47 fs
+  tables' step           1.077481 au = 0.026063 fs
+  this arm's step        8.619848 au = 0.208504 fs  (8x)
+  readout stride         246 frames -> lowest fitted lag 102.58 fs (>= crossover 102.47)
+  max_lag                140 readout frames -> top fitted lag 7180.9 fs
+  wall cap               MSD at the top lag at experiment's D = 35.39 bohr^2 against the lens's cap 54.74 / 1.5
+  sampled frames         560
+  counted frames         137760 -> 28723.5 fs = 28.72 ps (70.1x the 4-crossover floor)
+  drift bar fraction     1.403471e-5 of the thermostat's posted work
+  price ceiling          299478.1 s (10x LIQUID-1's 29947.8 s)
+  ER giant at z = 2.3687  0.8738
+  settling, from LIQUID-1's own log
+    plateau (2nd half)   T 292.61 +- 7.01 K, bonds 1.2329 +- 0.0354
+    band                 +- 21.04 K (3 sd measured); equipartition sigma 12.22 K at 1149 dof
+    LIQUID-1 settled at  T frame 16000, bonds frame 18000 = 469.1 fs; it counted from frame 2000 = 52.1 fs
+    its reported bonds   1.1843 against its own plateau 1.2329: 3.94 % low
+    this criterion on LIQUID-1 fires at frame 26000 = 677.6 fs
+    here: block 250 frames = 52.13 fs, 10 samples, window 5 blocks, floor 2250 frames (physical-time conversion 2250, thermostat frame clock 18000), cap 40000
+    blocks logged by LIQUID-1: 50
+L0 door: unswitched reach 13.3988, table reach 17.2114, switched 13.3988, legality 14.0000, half-edge 14.7968; truncation 7.3139e-8 per water against 1e-5; 128 units, 0 free -> ADMITTED
+L0         PASS       [1 checks, 3 legs]  the box is legal under the seam-aware image rule with CT-3's table served, and the switch's tail is priced
+expectation: the box's cross-unit energy is 2.476983e-3 hartree per water against kT = 9.278758e-4; LIQUID-1's three-band rule reads break. THE RULE IS REPORTED, NOT GATED: LIQUID-1's own arm read the same rule above the minus-kT line, wrote break, and then HELD its 128 units for 100,000 frames, so the rule's break branch is known to be wrong for this box and this law family. What still VOIDS is the EMPTY branch alone: fewer than 128 units at the start.
+price [the counted arm at 384 atoms with the lattice sum and CT-3's table]: 2.335743e1 s over 100 steps = 2.335743e-1 s/step; 140010 steps projected at 32702.733 s; band [0.1, 10] on actual/projected
+  the table term's measured cost: 0.233574 s per pass against LIQUID-1's 0.231961 = 1.0070x
+  settling block    4 at frame   1100: T  347.3 K, bonds 1.0586
+  settling block    8 at frame   2100: T  317.5 K, bonds 1.3680
+  settling block   12 at frame   3100: T  300.7 K, bonds 1.5602
+  settling block   16 at frame   4100: T  299.6 K, bonds 1.5641
+  settling block   20 at frame   5100: T  309.1 K, bonds 1.6016
+  settling block   24 at frame   6100: T  296.4 K, bonds 1.6703
+  settling block   28 at frame   7100: T  288.5 K, bonds 1.6500
+  settling block   32 at frame   8100: T  278.9 K, bonds 1.5984
+  settling block   36 at frame   9100: T  292.6 K, bonds 1.6180
+  settling block   40 at frame  10100: T  297.0 K, bonds 1.5680
+  settling block   44 at frame  11100: T  289.2 K, bonds 1.6031
+  settling block   47 at frame  11850: T  294.7 K, bonds 1.6664  -> SETTLED
+settling: 11850 frames = 2470.8 fs (settled by the criterion), 47 blocks
+plant the radial distribution without the minimum image
+  sector          the first-shell O-O pairs whose minimum-image vector crosses a face
+  carrier         2.439651e-1  (floor 5.000000e-2)
+  analytic reach  2.439651e-1  (removing the minimum image moves EXACTLY the crossing pairs out of the shell, so the first peak's fractional change is at most the crossing fraction itself - the carrier is the reach)
+  stake           2.000000e-1
+  measured        not run
+  stake provenance
+    plants (i) and (ii): the reading must move by a fifth = 2.000000000e-1   DERIVED: the freeze's own number, section 5, LIQUID-1's unchanged
+  verdict         NotRun
+plant pre-check the radial distribution without the minimum image PASS       [1 checks, 2 legs]  sector "the first-shell O-O pairs whose minimum-image vector crosses a face"; carrier 2.439651e-1 (floor 5.000000e-2); stake 2.000000e-1; analytic reach 2.439651e-1 - removing the minimum image moves EXACTLY the crossing pairs out of the shell, so the first peak's fractional change is at most the crossing fraction itself - the carrier is the reach
+plant the bond count without the minimum image
+  sector          the first-shell O-O pairs whose minimum-image vector crosses a face
+  carrier         2.439651e-1  (floor 5.000000e-2)
+  analytic reach  2.439651e-1  (removing the minimum image moves EXACTLY the crossing pairs out of the shell, so the first peak's fractional change is at most the crossing fraction itself - the carrier is the reach)
+  stake           2.000000e-1
+  measured        not run
+  stake provenance
+    plants (i) and (ii): the reading must move by a fifth = 2.000000000e-1   DERIVED: the freeze's own number, section 5, LIQUID-1's unchanged
+  verdict         NotRun
+plant pre-check the bond count without the minimum image PASS       [1 checks, 2 legs]  sector "the first-shell O-O pairs whose minimum-image vector crosses a face"; carrier 2.439651e-1 (floor 5.000000e-2); stake 2.000000e-1; analytic reach 2.439651e-1 - removing the minimum image moves EXACTLY the crossing pairs out of the shell, so the first peak's fractional change is at most the crossing fraction itself - the carrier is the reach
+plant the spanning cluster with the wrap counts zeroed
+  sector          the H-bond edges whose wrap count is not zero
+  carrier         2.663711e-1  (floor 5.000000e-2)
+  analytic reach  1.000000e0  (a winding is exhibited only by an edge with a nonzero wrap count; zeroing every wrap count makes a winding unconstructible, so the spanning fraction can move by its whole range, 1.0)
+  stake           5.000000e-1
+  measured        not run
+  stake provenance
+    plant (iii): the spanning fraction must move by half its whole range = 5.000000000e-1   DERIVED: a fraction's range is [0, 1] and half of it is 0.5; the freeze's own number
+  verdict         NotRun
+plant pre-check the spanning cluster with the wrap counts zeroed PASS       [1 checks, 2 legs]  sector "the H-bond edges whose wrap count is not zero"; carrier 2.663711e-1 (floor 5.000000e-2); stake 5.000000e-1; analytic reach 1.000000e0 - a winding is exhibited only by an edge with a nonzero wrap count; zeroing every wrap count makes a winding unconstructible, so the spanning fraction can move by its whole range, 1.0
+R3price    PASS       [1 checks, 4 legs]  the counted campaign at the pre-committed step, 3 seeds, costs 104835.1 s against the ceiling 299478.1 s (ten times LIQUID-1's own arm); the window is [102.58, 7180.9] fs with the crossover at 102.47 fs

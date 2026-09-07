@@ -73,3 +73,9 @@ holon-closure = { path = "../holon-closure" }
 # mid-refactor, and it was written during exactly such a window.
 [dev-dependencies]
 holon-lens = { path = "../holon-lens" }
+# holon-campaign: the campaign harness (gates, plants, prices, stakes, the record writer).
+# ZERO runtime dependencies, std only, and a DEV-dependency, so it is never linked into the
+# library or the browser artifact and cannot perturb this crate's feature resolution or the
+# isolation gates in `ci-gates.sh` — the same isolation profile, and the same one-way
+# direction, as `holon-lens` above. `examples/liquid2.rs` is its first adopter.
+holon-campaign = { path = "../holon-campaign" }

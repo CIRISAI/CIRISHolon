@@ -1,0 +1,5 @@
+phase screen, out /home/emoore/CIRISHolon/conformance/water_observatory/liquid2, observatory /home/emoore/CIRISHolon/conformance/water_observatory
+law /home/emoore/CIRISHolon/conformance/water_observatory/ct3/wall_ct3.json (60 knots at c0 = 1.400000); deepest shape 2.915803, worst knot miss 2.279e-15
+L0 door: unswitched reach 13.3988, table reach 17.2114, switched 13.3988, legality 14.0000, half-edge 14.7968; truncation 7.3139e-8 per water against 1e-5; 128 units, 0 free -> ADMITTED
+  handovers: 3803 events over 2000 frames = 1.9 per frame; mean |jump| 9.0302e-6 Ha, worst 2.0125e-3; sum |jump| 3.4342e-2; signed sum 4.8585e-3, running peak 6.3611e-3; random walk 5.5688e-4; DRIFT PEAK 6.5847e-3
+screen x1_ct3_handovers: law ct3, dt 1.077481 au (0.026063 fs) = 1 x the tables step, drift peak 6.584682e-3, thermostat -2.571625e-1 Ha, ratio 2.560514e-2 against the bar fraction 1.403471e-5 -> OVER, 0.2453 s/pass, T 423.8 K

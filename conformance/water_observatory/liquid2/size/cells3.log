@@ -1,0 +1,4 @@
+phase size, out ../conformance/water_observatory/liquid2, observatory ../conformance/water_observatory
+law ../conformance/water_observatory/ct3/wall_ct3.json (60 knots at c0 = 1.400000); deepest shape 2.915803, worst knot miss 2.279e-15
+L0 door: unswitched reach 13.3988, table reach 17.2114, switched 13.3988, legality 14.0000, half-edge 11.0976; truncation 1.8668e-8 per water against 1e-5; 54 units, 0 free -> REFUSED
+size 54 waters (3^3 bcc): edge 22.1952 bohr, half-edge 11.0976 against legality 14.0000 -> REFUSED

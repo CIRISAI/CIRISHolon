@@ -1,0 +1,4 @@
+phase screen, out ../conformance/water_observatory/liquid2, observatory ../conformance/water_observatory
+law ../conformance/water_observatory/ct3/wall_ct3.json (60 knots at c0 = 1.400000); deepest shape 2.915803, worst knot miss 2.279e-15
+L0 door: unswitched reach 13.3988, table reach 17.2114, switched 13.3988, legality 14.0000, half-edge 14.7968; truncation 7.3139e-8 per water against 1e-5; 128 units, 0 free -> ADMITTED
+screen x4_ct3: law ct3, dt 4.309924 au (0.104252 fs) = 4 x the tables step, drift peak 4.423219e-3, thermostat -4.279409e-1 Ha, ratio 1.033605e-2 against the bar fraction 1.403471e-5 -> OVER, 0.3961 s/pass, T 347.3 K

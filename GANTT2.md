@@ -103,7 +103,19 @@ added), and the electron's place in the closure grammar (a terminal today; no wa
 | the phase | above the four-connected percolation threshold (~0.8 distinct bonds); the spanning-cluster fraction is the readout that names it and is OWED (not in LIQUID-1's runner); no diffusive regime inside 2.6 ps (R3 VOID) — a diffusion coefficient needs a longer arm or stride, priced by the measured MSD exponent |
 | dynamics | the price 0.23 s per force pass at 384 atoms on one core, 29,948 s for the arm; the books closed to one part in 10⁵ (the drift leg 8 % over a fallback bar); the box found the engine's periodic three-body force bug (fixed, correction 4) |
 
-**Next:** **LIQUID-2** on CT-3's served law (`ct3/wall_ct3.json`, G-B0W PASS) with **the spanning-cluster
+**LIQUID-2 — INSTRUMENT BUILT, NOT FROZEN (`LIQUID2_PREREG_DRAFT.md`, audit ADMITS; `liquid2/DRIFT_NOTE.md`).**
+The runner is on the harness and the closure type; the review's four items are design (settling by
+a measured temperature-and-energy criterion, validated against LIQUID-1's own log where it convicts
+52 fs of settling against 469 fs needed and a 3.9 % low bias in the bond count; three seeds with
+every band read against the seed mean; the size check: 128 waters is the smallest box the law
+admits, 250 pre-committed as a fourth arm, 432 fenced by measured memory; density imposed and
+basis minimal stated in §4). The freeze is HELD by one instrument finding: serving CT-3's table
+per dimer at an ARGMIN contact leaks energy at 1,350× the channel-6-off control, and the cause is
+confirmed as the argmin handovers (96.6 % of the drift by the ledger's own statistic;
+`CT3_RESULTS.md` correction). Owed before the freeze: the partition-of-unity serving rule with β
+derived from the map, gated on drift within 2× of the control at the tables' step.
+
+**Then:** **LIQUID-2** on CT-3's served law (`ct3/wall_ct3.json`, G-B0W PASS) with **the spanning-cluster
 fraction** as a readout and R2's band stated in the lens's own convention (a correction to
 the freeze's letter: the band was typed in the both-ends convention); accommodation at the
 box (FIELD-2's fixed point over 128 units) as its first pre-committed branch, dispersion from

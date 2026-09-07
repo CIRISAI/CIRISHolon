@@ -910,6 +910,7 @@ name = "holon-lattice"
 version = "0.1.0"
 dependencies = [
  "ciris-sim-core",
+ "holon-campaign",
  "holon-closure",
  "holon-mesh",
 ]
@@ -950,6 +951,7 @@ name = "holon-render"
 version = "0.1.0"
 dependencies = [
  "holon",
+ "holon-campaign",
  "holon-chem",
  "holon-closure",
  "holon-lattice",

@@ -604,15 +604,23 @@ const LADDER = [
     band: "fluid element",
     scale: "~µm+",
     lengthM: 1.0e-6,
-    runs: "the carrier that certifies this band is BEING BUILT — and FLUID-0 has now said "
-      + "what it has to be: over all 4,608 collision laws of the single-species lattice gas "
-      + "the Schmidt number runs 0.107 to 0.449 against water's 435, so no carrier without "
-      + "a closure in it can carry the liquid's two transport coefficients at any chart "
-      + "(branch (c), staked before any law was read). FLUID-1 is the exit, frozen and "
-      + "running: the same lattice with an orientation on every particle and a bond rule "
-      + "read off CT-2's measured angular map.",
-    state: "fenced",
-    owner: "GANTT node G, rung 2 — banked NOT CERTIFIED, branch (d) of its own freeze",
+    runs: "THE CARRIER ITSELF, in this page — FLUID-1's orientation lattice, stepping on the "
+      + "same instrument the campaign was read on. Two campaigns have now read this band. "
+      + "FLUID-0 swept all 4,608 collision laws of the single-species lattice gas and found "
+      + "the Schmidt number between 0.107 and 0.449 against water's 435, so no carrier "
+      + "without a closure in it can carry the liquid's two transport coefficients at any "
+      + "chart (branch (c), staked before any law was read). FLUID-1 put a closure in the "
+      + "carrier — every particle carries a direction, a bond forms on the geometry CT-2's "
+      + "measured angular map favours, and the rent clause releases it — and got a factor of "
+      + "two from the tracer side alone. The cell below is that lattice, live.",
+    // THE THIRD STATE, and it is the H-bond band's rule applied here: `measured` means the
+    // band's own physics has been read, with every figure cited, and the node-G closure
+    // certificate is still owed. FLUID-0 and FLUID-1 are READINGS — FLUID-1 banked branch
+    // (c) on S and B, VOID on W by its own freeze's letter — and a reading is not a
+    // certificate. §11.2 still reads FENCED for this band and that stays true, because what
+    // is gated is the certificate; what changed is that there is now something to show.
+    state: "measured",
+    owner: "GANTT node G, rung 2 — FLUID-0 and FLUID-1 banked, NOT certified",
     // FLUID-0'S FINDING, on the face rather than in a footnote, with the kill that made it
     // a finding. The census is a measured NO about a whole family of carriers, which is a
     // stronger statement than the fence it sits inside: what is missing is not compute, it
@@ -642,6 +650,52 @@ const LADDER = [
           + "moves as one and is released by the rent clause. Its Schmidt number, bond "
           + "count, spanning cluster and block-chart defect are the readouts asked of it",
         record: "conformance/mesh/FLUID1_PREREG.md:1" },
+      // ---- FLUID-1, WHICH RAN. Every figure below is on the line it cites, and the cell
+      // under this band is that campaign's own instrument stepping in the browser.
+      { what: "FLUID-1's Schmidt number, at the chart", value: "0.1973 / 0.2086",
+        note: "the two chiralities. A pair bound by the rent clause buys a FACTOR OF TWO "
+          + "over the bond-free carrier and stops there — three decades short of water. "
+          + "Trapping halves the tracer's diffusion and does nothing for the stress: a "
+          + "bonded pair that streams as one carries its momentum with it and transmits "
+          + "none across. S BRANCH (c)",
+        record: "conformance/mesh/FLUID1_RESULTS.md:79" },
+      { what: "the cold control against the no-bond floor", value: "0.3290 / 0.3434 and 0.1083 / 0.1103",
+        note: "with no rent paid at all a bond never breaks and the ratio reaches 0.34; "
+          + "with bonds forbidden the carrier IS FLUID-0, at 0.108. Every bond the rule can "
+          + "hold, held forever, moves the number by a factor of three — and the ceiling of "
+          + "the whole family is still under one",
+        record: "conformance/mesh/FLUID1_RESULTS.md:79" },
+      { what: "bonds per particle, on a lattice ceiling of 1", value: "0.2894",
+        note: "counted once at the donor, which is the convention LIQUID-1's 1.1843 is "
+          + "quoted in — but the lattice's ceiling in that convention is 1 (one donor arm "
+          + "per particle) against the liquid's 2, so the comparable numbers are 29 % of "
+          + "the ceiling against the box's 59 %",
+        record: "conformance/mesh/FLUID1_RESULTS.md:78" },
+      { what: "the bond graph never spans", value: "0/200 steps",
+        note: "the largest component is 7.8e-5 of the particles — pairs and short chains — "
+          + "and no sampled step carries a loop around the torus. A pair is a closure; it "
+          + "is not a network",
+        record: "conformance/mesh/FLUID1_RESULTS.md:78" },
+      { what: "the block chart's defect GROWS with the block — W VOID", value: "0.045, 0.082, 0.086, 0.109",
+        note: "the relative excess over node LG's boundary law W(b) = 1 − (b−2)²/b² at "
+          + "b = 4, 8, 16, 32. It is above at every scale and the gap widens, which the "
+          + "freeze had no letter for — recorded VOID with the reading beside it rather "
+          + "than forced into the nearest branch. Reading: a closure in the carrier makes a "
+          + "block LESS closed than its boundary, because a bond carries a perturbation "
+          + "from the interior to the face",
+        record: "conformance/mesh/FLUID1_RESULTS.md:80" },
+      { what: "instrument finding — the closure must be able to wait", value: "no rest state on FHP-6",
+        note: "a bonded pair refused its joint move has nowhere to stand, so it breaks: "
+          + "36 % of the chart's releases and 100 % of the cold control's are the "
+          + "instrument's own exclusion rather than the rent. A carrier with rest particles "
+          + "lets a blocked pair hold, and the rent clause then sets the lifetime",
+        record: "conformance/mesh/FLUID1_RESULTS.md:105" },
+      { what: "instrument finding — the arm sets the ceiling", value: "capped by the arm, not the rent",
+        note: "one donor arm per particle puts the each-bond-once ceiling at 1 where the "
+          + "liquid's is 2. Two arms — the water's two hydrogens — is the lattice's version "
+          + "of the molecular tier's ceiling, and it is a change to the carrier rather than "
+          + "to the chart",
+        record: "conformance/mesh/FLUID1_RESULTS.md:109" },
     ],
     // A MEASURED FENCE, which is a better fence than the one it replaces: "no certified
     // chart exists" is a state, and a quantified boundary is a fact. Rung 2 spent the
@@ -657,22 +711,29 @@ const LADDER = [
     // extrapolating from them and pre-committed that UNDETERMINED beats a fitted trend.
     // Naming it as undetermined is what keeps this a fence rather than architecture: the
     // successor ROUTES are named even though the distance is not.
-    exit: "FLUID-1 is the exit and it is frozen and running — the orientation lattice, "
-      + "FLUID-0's own branch (c) turned into a carrier: a bond rule read from CT-2's "
-      + "measured angular map at run time, a bonded pair released by the rent clause, and "
-      + "the Schmidt number asked of it again. Beside it, carrier-v2 is in build: "
-      + "trajectory format v2 past the 16-atom cap, genuine-3D "
-      + "≥400-atom scenes on the threaded MD path, dims MEASURED rather than declared. "
-      + "Rung 2's numbers are the requirement it must beat — a 1 µm patch is 5.95e6 atoms "
-      + "against a 12-atom certified scene, and the occupancy and transport conditions "
-      + "scissor: coarse cells hold atoms but nothing crosses their faces, and the only "
-      + "transporting grid averages 0.5 atoms per cell. The DISTANCE is undetermined and "
-      + "pre-committed to be reported that way — two occupancy points five orders from the "
-      + "band, which the freeze forbids extrapolating — so the build is named and the "
-      + "estimate is not.",
+    exit: "EDGE-0 — THE EDGE EXISTS — is the exit, and it is the next campaign on FLUID-1's "
+      + "own carrier at FLUID-1's own chart (GANTT2, '### The edge'). What is owed is not "
+      + "another transport number: FLUID-1 answered the transport question and the answer was "
+      + "a factor of two. What is owed is the EDGE — coexistence read as a bimodal density "
+      + "histogram with the dense phase bonded, an interface whose width is finite and "
+      + "stationary, and the surface tension read TWICE by independent instruments (Laplace's "
+      + "law over a set of droplet radii, and the capillary spectrum) landing inside a staked "
+      + "band of each other. Its kills are staked with it: no bimodality at the chart, no "
+      + "linear Laplace law, the two σ disagreeing beyond the band, or a width that grows "
+      + "without bound. Beside it and independent of it, carrier-v2 is in build for the "
+      + "molecular route: trajectory format v2 past the 16-atom cap, genuine-3D ≥400-atom "
+      + "scenes on the threaded MD path, dims MEASURED rather than declared. Rung 2's numbers "
+      + "are the requirement that route must beat — a 1 µm patch is 5.95e6 atoms against a "
+      + "12-atom certified scene, and the occupancy and transport conditions scissor: coarse "
+      + "cells hold atoms but nothing crosses their faces, and the only transporting grid "
+      + "averages 0.5 atoms per cell. The DISTANCE is undetermined and pre-committed to be "
+      + "reported that way — two occupancy points five orders from the band, which the freeze "
+      + "forbids extrapolating — so the build is named and the estimate is not.",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:378",
-    // The measurement that says the fence is real rather than a gap in the schedule.
-    measuredBy: "conformance/water_observatory/RUNG2_RESULTS.md:214",
+    // FLUID-1's own verdict line: what the band is measured BY today. Rung 2's numbers are
+    // still here — they are the molecular route's requirement — and they are cited through
+    // `positiveCite` below, which is the field for a banked reading that is not a certificate.
+    measuredBy: "conformance/mesh/FLUID1_RESULTS.md:15",
     // AND THE POSITIVE HALF, because a fence is not the whole finding. Hydrodynamics'
     // premise — that momentum is spatially coherent over a cell — was MEASURED REAL at the
     // 5.8 bohr scale (+0.598 median, 7/7 clearing the bar). What is out of reach is the
@@ -682,6 +743,33 @@ const LADDER = [
       + "scrambled control, 7/7 seeds. Hydrodynamics' premise measures real here; it is "
       + "the CERTIFICATE that is out of reach, not the phenomenon.",
     positiveCite: "conformance/water_observatory/RUNG2_RESULTS.md:47",
+    // THE LIVE CELL, AND WHAT IT IS AND IS NOT. The H-bond band's live box is a refusal —
+    // the engine's own boundary door will not admit a 16-water cell — and this one is the
+    // opposite: the instrument runs. So the same discipline has to be applied from the other
+    // side. What is live is the lattice's STRUCTURE and its conserved integers; what is NOT
+    // live, and is never fitted here, is the transport. FLUID-1's Sc was read at L = 256 over
+    // millions of member-steps with a fitted decay per wavevector, and a page that produced a
+    // Schmidt number from a few thousand browser frames would be inventing a measurement.
+    liveDoor: "fluid",
+    liveBox: "THE INSTRUMENT ITSELF, RUNNING — FLUID-1's orientation lattice on the same "
+      + "`OrientationLattice::step` the campaign was read on, with no rule changed and the "
+      + "bond rule PUSHED IN from CT-1's and CT-2's own records rather than typed. The box is "
+      + "this page's own choice and the rule it was chosen by is stated: the largest L whose "
+      + "ENGINE FRAME — one step, the two buffers this page draws from, and the bond graph "
+      + "behind the count — costs under a quarter of a 60 fps budget, measured on the shipped "
+      + "artifact at 0.244 ms a frame at L = 32, 0.743 at 64, 2.953 at 128 and 12.283 at 256. "
+      + "That admits 128 and refuses FLUID-1's own 256 on a MEASURED price, not on an "
+      + "inability — the door builds 256 and would step it. The canvas work on top of those "
+      + "numbers is the browser's and is NOT in them: this box has no browser to measure it "
+      + "on, and saying so is cheaper than a figure nobody took. What is shown live is the "
+      + "structure and the ledger: the bond count, the "
+      + "largest component, whether the graph spans, and every conserved integer with the "
+      + "instrument's own per-step audit as its tick. What is NOT shown, and is not fitted "
+      + "here, is a transport coefficient: FLUID-1's Sc was read at L = 256 over millions of "
+      + "member-steps, it is quoted above as the RECORD it is, and this cell does not "
+      + "re-derive it. The full panel, the amplitude table with the CT record each angle came "
+      + "from, and the no-bond control are in THE FLUID ELEMENT, LIVE card below.",
+    liveBoxCite: "conformance/mesh/FLUID1_RESULTS.md:77",
   },
   {
     band: "H-bond network",
@@ -753,6 +841,7 @@ const LADDER = [
     // The second reason, stated because it is independent of the first: this engine has no
     // door that PLACES atoms, so a page cannot seed sixteen waters even in a legal box —
     // molecules here are formed by the census out of a reset scene, never positioned.
+    liveDoor: "boundary",
     liveBox: "REFUSED BY THE ENGINE'S OWN BOUNDARY DOOR, not by price. A wrapping box is "
       + "legal only while half its shortest edge exceeds the reach of the force law running "
       + "in it; the two numbers are read live below. LIQUID-1's 128-water arm cleared that "
@@ -1470,6 +1559,14 @@ async function boot() {
 
   await loadPreset(State.mixture);
 
+  // THE FLUID ELEMENT BAND'S OWN CELL (WB-10), begun once and stepped every frame after.
+  // It is independent of the molecular preset — a different tier with its own clock, its own
+  // state space and its own warrant (`holon-lattice`'s first law: this tier is NOT a view of
+  // the molecular dynamics and is never composed with it) — so it is begun HERE rather than
+  // inside `loadPreset`, and a preset change does not restart it.
+  await loadFluid(w);
+  renderFluidRule();
+
   // The unit constant, checked against the artifact rather than trusted, and checked HERE
   // rather than earlier: `holon_period` is derived from the loaded curve, so before a
   // preset exists it is zero and the ratio is NaN. Reading a unit out of an engine that
@@ -1545,6 +1642,30 @@ const REQUIRED_EXPORTS = [
   // the boundary door's own two numbers, which is how the H-bond band says why there is no
   // live periodic cell on this page instead of asserting it
   "holon_legality_radius", "holon_half_min_edge",
+  // THE FLUID ELEMENT BAND'S OWN INSTRUMENT (WB-10, `fluid_door.rs` over `holon-lattice`).
+  // FLUID-1's orientation lattice, stepped in the page. REQUIRED rather than pending: the
+  // band is MEASURED and its live cell is the measurement, so a wasm without these doors is
+  // not the engine this page describes — and a band that quietly stopped stepping would look
+  // exactly like a band that had never stepped.
+  //
+  // The rule is PUSHED, never typed: `holon_fluid_amplitude` × 6 and
+  // `holon_fluid_rent_from_retention` take CT-1's and CT-2's own numbers out of the shipped
+  // record, and `holon_fluid_begin` REFUSES until all seven have arrived.
+  "holon_fluid_amplitude", "holon_fluid_rent_from_retention", "holon_fluid_rent",
+  "holon_fluid_amplitude_at", "holon_fluid_p_break", "holon_fluid_rule_ready",
+  "holon_fluid_begin", "holon_fluid_no_bond", "holon_fluid_bonds_enabled",
+  "holon_fluid_step", "holon_fluid_l", "holon_fluid_density", "holon_fluid_steps",
+  "holon_fluid_ledger_mass", "holon_fluid_ledger_px", "holon_fluid_ledger_py",
+  "holon_fluid_ledger_census_total", "holon_fluid_ledger_red", "holon_fluid_ledger_bonds",
+  "holon_fluid_ledger_formed", "holon_fluid_ledger_broken_rent", "holon_fluid_ledger_blocked",
+  "holon_fluid_ledger_collisions", "holon_fluid_ledger_steps_checked",
+  "holon_fluid_ledger_exact", "holon_fluid_ledger_initial",
+  "holon_fluid_bonds_per_particle", "holon_fluid_bonds_per_particle_degree",
+  "holon_fluid_largest_fraction", "holon_fluid_largest", "holon_fluid_spans",
+  "holon_fluid_image_fill", "holon_fluid_image_ptr", "holon_fluid_image_len",
+  "holon_fluid_bonds_fill", "holon_fluid_bonds_ptr", "holon_fluid_bonds_capacity",
+  "holon_fluid_bond_stride",
+  "holon_fluid_dir_axial", "holon_fluid_dir_euclidean",
 ];
 
 /// THE EXPORTS THE FINE BANDS ARE WAITING FOR — declared here and NOT in the list above,
@@ -1940,6 +2061,22 @@ const SHIPPED = {
   },
   water: { file: "tables/s2_water_table.txt", nodes: 105105,
     sha256: "9cb10675aaafe3d0a98486befb506165193a07a7f9a85ade87d75dbd1804a681" },
+  // FLUID-1'S OWN RULE AND ITS OWN SCENE, as the records that carry them. Both are COPIES
+  // of files under `conformance/mesh/fluid1/`, byte for byte — the smoke gate diffs them
+  // against the conformance tree, so the page cannot ship a table the campaign did not
+  // write, and the source path is displayed beside every number they serve.
+  //
+  // Why two files. `amplitude_table.json` carries the bond rule — `A(φ)` at the six lattice
+  // angles, each with the CT record and field it was read from, and the retention that sets
+  // the rent. `run.json` carries the SCENE FLUID-1 ran: its density and its seed. The page
+  // types neither. What the page does choose is the BOX, and it says so and gives the
+  // measurement it chose on.
+  fluidRule: { file: "tables/fluid1_amplitude_table.json",
+    source: "conformance/mesh/fluid1/amplitude_table.json",
+    sha256: "4f18386d97a266f118773a5e47eeea1d6c9f0318d11fbaf8ebd484190e631fa3" },
+  fluidRun: { file: "tables/fluid1_run.json",
+    source: "conformance/mesh/fluid1/run.json",
+    sha256: "3fa2a0da45e623ab3c15972711aa2288bc4581da15ca289628bc7f677d6c613d" },
 };
 
 /// Fetch a pinned artifact and refuse it unless its bytes digest to the pin.
@@ -1998,6 +2135,338 @@ function pushWater(w, bytes) {
   // view taken before it would be detached
   new Uint8Array(w.memory.buffer, ptr, bytes.length).set(bytes);
   return w.holon_water_table_load();
+}
+
+// ------------------------------------------ THE FLUID ELEMENT BAND, RUNNING (WB-10)
+//
+// The band carried a fence and a finding. What it lacked was not a better sentence: it was
+// the instrument on the page. `fluid_door.rs` puts FLUID-1's orientation lattice behind the
+// ABI — the same `OrientationLattice::step` the campaign was read on, no rule changed — and
+// this block drives it.
+//
+// WHAT IS LIVE HERE, AND WHAT IS NOT. Live: the lattice's STRUCTURE and its conserved
+// integers — the bond count, the largest component, whether the graph spans, and mass, both
+// momenta, the tracer count and the per-orientation census, each audited every step by the
+// instrument's own audit and shown with the audit's tick. Not live, and never claimed: the
+// transport coefficients. FLUID-1 read `Sc` at `L = 256` over millions of member-steps with a
+// fitted decay per wavevector; a browser stepping one lattice reads no viscosity and no
+// diffusivity, and the band prints the campaign's numbers as the RECORD they are, cited to
+// their own lines. A page that fitted a Schmidt number out of a few thousand frames and put
+// it beside FLUID-1's would be inventing a measurement, which is the WB-7 lie in new clothes.
+//
+// THE BOX IS THE PAGE'S OWN CHOICE, and the rule it was chosen by is stated because the
+// number is otherwise unfalsifiable. Measured on the SHIPPED artifact under node (the same
+// host `smoke.mjs` runs the page under), `taskset -c 24-31`, on FLUID-1's own density and
+// FLUID-1's own seed — the scene this page actually begins:
+//
+//     L      cells   particles   one step   image + bonds   bond graph   ONE FRAME
+//     32     1,024       1,226    0.140 ms      0.055 ms      0.049 ms    0.244 ms
+//     64     4,096       4,899    0.536 ms      0.151 ms      0.056 ms    0.743 ms
+//     128   16,384      19,514    2.161 ms      0.589 ms      0.203 ms    2.953 ms
+//     256   65,536      78,465    9.086 ms      2.407 ms      0.790 ms   12.283 ms
+//
+// WHAT THE TABLE IS AND IS NOT, because a price with an unstated boundary is not a price.
+// All three columns are the ENGINE's work per frame: the step, the two buffers the page
+// blits and walks, and the union–find behind the bond count and the largest component, which
+// is recomputed once per step and cached inside the door until the next one. The CANVAS work
+// on top of it — one `putImageData`, one scaled `drawImage`, and one path of line segments —
+// is the browser's and is NOT in these numbers, because there is no browser on the box these
+// were measured on. It is bounded rather than guessed: one blit and one stroked path per
+// frame, and the bond loop is arithmetic on a typed array with no call into the engine at all
+// (`FLUID.dirs` holds the six constants the loop needs — asking the door per bond was eleven
+// thousand allocating calls a frame and is the defect that note exists to record).
+//
+// THE RULE: the largest L whose ENGINE FRAME costs under a QUARTER of a 60 fps budget
+// (16.67/4 = 4.17 ms), because this lattice is not the only thing on the page — the molecular
+// scene integrates in the same frame, the rest of the telemetry renders after it, and the
+// canvas work above is unmeasured here. That rule admits 128 at 2.953 ms and refuses 256 at
+// 12.283 ms, and it is a rule with a cut in it rather than a preference: 256 is FLUID-1's own
+// box and the door BUILDS it, so what refuses it here is a measured price and not an
+// inability.
+const FLUID = {
+  /// Chosen by the rule above, on the table above. `holon_fluid_begin` accepts up to 256.
+  l: 128,
+  /// One step per frame. The step is the expensive half and the page's rate readout carries
+  /// its cost like everything else; a batch would make the lattice's clock a multiple of the
+  /// frame rate, which is a second clock nobody asked for.
+  stepsPerFrame: 1,
+  /// Read from `SHIPPED.fluidRun`, never typed. Filled by `loadFluid`.
+  density: NaN, seed: NaN,
+  /// The record's own rows, kept for the panel: `{phi_degrees, amplitude, source}`.
+  table: [],
+  retention: NaN, retentionSource: null,
+  /// What the engine said. `null` until the load runs; a string when it refused.
+  refusal: null,
+  running: false,
+  noBond: false,
+  /// The canvas context, or null where there is none (the gate's DOM stub has no canvas, and
+  /// the lattice must step and ledger there exactly as it does in a browser).
+  ctx: null, image: null,
+  /// THE SIX DIRECTIONS' EUCLIDEAN EMBEDDING, read from the engine ONCE and held.
+  ///
+  /// It is held rather than asked for per bond because `holon_fluid_dir_euclidean` builds the
+  /// embedding on each call, and the bond loop would ask it twice per bond — at L = 128 that
+  /// is over eleven thousand allocating calls a frame to fetch six constants. Caching a
+  /// CONSTANT is safe in a way caching a reading never is: the direction set is `Model::fhp6`'s
+  /// and does not depend on the state, the box or the step, so a cached copy cannot go stale
+  /// the way a cached ledger row would. It is cleared on every `loadFluid` so a rebuilt
+  /// lattice re-reads it from the engine rather than inheriting it.
+  dirs: null,
+};
+
+/// Fetch FLUID-1's two records, push the rule through the doors, and begin the lattice.
+///
+/// Every failure is a REFUSAL WITH A REASON that the panel prints: a digest that does not
+/// match the pin, a record missing a field, a door that would not take a value, or a box the
+/// door refused. None of them takes the page down — the fluid band is one card — and none of
+/// them is allowed to leave the panel showing digits from a previous load.
+async function loadFluid(w) {
+  FLUID.running = false;
+  const rule = await fetchPinned(SHIPPED.fluidRule);
+  if (!rule.ok) { FLUID.refusal = rule.why; return; }
+  const run = await fetchPinned(SHIPPED.fluidRun);
+  if (!run.ok) { FLUID.refusal = run.why; return; }
+  let jr, jn;
+  try {
+    jr = JSON.parse(new TextDecoder().decode(rule.bytes));
+    jn = JSON.parse(new TextDecoder().decode(run.bytes));
+  } catch (e) {
+    FLUID.refusal = `FLUID-1's records did not parse: ${e.message}`;
+    return;
+  }
+  if (!Array.isArray(jr.table) || jr.table.length !== 6 || typeof jr.retention !== "number") {
+    FLUID.refusal = `${SHIPPED.fluidRule.file} does not carry six angles and a retention`;
+    return;
+  }
+  const p = jn.params || {};
+  if (typeof p.density !== "number" || typeof p.seed !== "number") {
+    FLUID.refusal = `${SHIPPED.fluidRun.file} does not carry the run's density and seed`;
+    return;
+  }
+  // THE PUSH. Six angles and one retention, each the record's own value, each refused by
+  // NAME if the door will not take it — and the door refuses to begin until all seven land.
+  for (const row of jr.table) {
+    const code = w.holon_fluid_amplitude(row.phi_index, row.amplitude);
+    if (code !== 0) {
+      FLUID.refusal = `the engine refused A(${row.phi_degrees}°) = ${row.amplitude} with code ${code}`;
+      return;
+    }
+  }
+  const rc = w.holon_fluid_rent_from_retention(jr.retention);
+  if (rc !== 0) {
+    FLUID.refusal = `the engine refused the read retention ${jr.retention} with code ${rc}`;
+    return;
+  }
+  FLUID.table = jr.table;
+  FLUID.retention = jr.retention;
+  FLUID.retentionSource = jr.retention_source || null;
+  FLUID.density = p.density;
+  FLUID.seed = p.seed;
+  // The seed crosses as two 32-bit halves: this page's ABI carries no 64-bit integer, and
+  // splitting it here rather than shortening it is what keeps the scene FLUID-1's own.
+  const lo = p.seed >>> 0;
+  const hi = Math.floor(p.seed / 4294967296) >>> 0;
+  const code = w.holon_fluid_begin(FLUID.l, p.density, lo, hi, 1, 1);
+  if (code !== 0) {
+    FLUID.refusal = `the engine refused an L = ${FLUID.l} lattice at density ${p.density} `
+      + `with code ${code} (${fluidRefusal(code)})`;
+    return;
+  }
+  FLUID.refusal = null;
+  FLUID.noBond = false;
+  // Six constants, read from the engine once the lattice exists (the door serves them off the
+  // live model, so they are NaN before one does).
+  FLUID.dirs = Array.from({ length: 6 }, (_, d) =>
+    [w.holon_fluid_dir_euclidean(d, 0), w.holon_fluid_dir_euclidean(d, 1)]);
+  FLUID.running = true;
+}
+
+/// The door's own refusal codes, named. `fluid_door.rs` bases them at 220 so a fluid refusal
+/// cannot be mistaken for the seam door's block, and the page names them rather than printing
+/// an integer at a reader.
+function fluidRefusal(code) {
+  return {
+    221: "the box is outside the door's range, 8 to 256",
+    222: "the density is not inside (0, 1)",
+    223: "no lattice has been begun",
+    224: "an angle outside 0–5, or an amplitude that is not finite and positive",
+    225: "a retention outside (0, 1), which sets no chart",
+    226: "the bond rule is incomplete — an angle or the retention never arrived",
+  }[code] || "an unrecognised code, reported as itself";
+}
+
+/// The no-bond CONTROL. It rebuilds the same scene with the bond rule off, which is the
+/// control FLUID-1 reports (with bonds forbidden the occupation is `advance_with_colour`'s
+/// bit for bit); it is not a flag flipped under a running configuration, and the door is what
+/// enforces that rather than this file.
+function fluidToggleNoBond() {
+  const w = State.w;
+  if (!w || !FLUID.running) return;
+  const on = FLUID.noBond ? 0 : 1;
+  const code = w.holon_fluid_no_bond(on);
+  if (code !== 0) { FLUID.refusal = `the control was refused with code ${code}`; return; }
+  FLUID.noBond = on === 1;
+}
+
+/// Step the lattice and draw it. Called every frame from `renderTelemetry`.
+///
+/// The DRAWING is guarded on a context and the STEPPING is not, on purpose: under the gate's
+/// DOM stub there is no canvas, and a lattice that only advanced where somebody was looking
+/// would make the gate's ledger check a check about the gate.
+function renderFluid() {
+  const w = State.w;
+  if (!FLUID.running) return;
+  if (!State.paused) w.holon_fluid_step(FLUID.stepsPerFrame);
+
+  const l = w.holon_fluid_l();
+  const bytes = w.holon_fluid_image_fill();
+  const nb = w.holon_fluid_bonds_fill();
+
+  const cv = UI["fluid-canvas"];
+  if (cv && !FLUID.ctx && typeof cv.getContext === "function") FLUID.ctx = cv.getContext("2d");
+  const fctx = FLUID.ctx;
+  if (fctx && bytes > 0) {
+    // The picture is the engine's buffer, blitted. One `putImageData` of L×L pixels rather
+    // than L² fill calls: at L = 128 that is 16,384 cells a frame, and the difference between
+    // a blit and a loop of rectangles is the difference between a live cell and a slideshow.
+    if (!FLUID.image || FLUID.image.width !== l) FLUID.image = fctx.createImageData(l, l);
+    FLUID.image.data.set(new Uint8Array(w.memory.buffer, w.holon_fluid_image_ptr(), bytes));
+    const side = Math.min(cv.width, cv.height);
+    const scale = side / l;
+    fctx.setTransform(1, 0, 0, 1, 0, 0);
+    fctx.clearRect(0, 0, cv.width, cv.height);
+    // Draw the buffer once at 1:1 into a scratch the browser then scales; `putImageData`
+    // ignores the transform, so the scale-up goes through `drawImage` off an offscreen
+    // canvas rather than through a transform that would silently do nothing.
+    if (!FLUID.scratch || FLUID.scratch.width !== l) {
+      FLUID.scratch = document.createElement("canvas");
+      FLUID.scratch.width = l; FLUID.scratch.height = l;
+      FLUID.scratchCtx = FLUID.scratch.getContext("2d");
+    }
+    FLUID.scratchCtx.putImageData(FLUID.image, 0, 0);
+    fctx.imageSmoothingEnabled = false;
+    fctx.drawImage(FLUID.scratch, 0, 0, l, l, 0, 0, l * scale, l * scale);
+
+    // THE BONDS, drawn from the door's own list on the door's own geometry. The lattice is
+    // triangular and the array is square, so the axial coordinates are sheared onto the
+    // screen by the engine's own Euclidean embedding — nothing here knows what a hexagon is.
+    if (nb > 0 && l <= 160) {
+      // THE STRIDE IS THE DOOR'S, not a 3 typed here: a layout that grew a fourth word would
+      // otherwise leave this loop silently reading the wrong field of every bond.
+      const stride = w.holon_fluid_bond_stride();
+      const list = new Uint32Array(w.memory.buffer, w.holon_fluid_bonds_ptr(), stride * nb);
+      fctx.strokeStyle = "rgba(246, 170, 90, 0.75)";
+      fctx.lineWidth = Math.max(1, scale * 0.35);
+      fctx.beginPath();
+      for (let k = 0; k < nb; k++) {
+        const dc = Math.floor(list[stride * k] / 6);
+        // THE LINK DIRECTION IS THE DOOR'S THIRD WORD, and it is NOT `donor % 6`. A slot is
+        // `cell * 6 + dir`, so the donor's slot says which direction the particle is MOVING
+        // in; the bond points along the donor's ORIENTATION, which lives in another plane
+        // and agrees with the slot only by accident. This page drew the first for one
+        // revision — a picture that still looks like a lattice and is wrong — and the fix is
+        // that the instrument serves the number rather than the page deriving it.
+        const delta = list[stride * k + 2];
+        const i = Math.floor(dc / l), j = dc % l;
+        // The embedding is read from `FLUID.dirs`, six constants the engine served once. See
+        // the note on that field: asking the door per bond is eleven thousand allocating
+        // calls a frame at L = 128 to fetch six numbers that cannot change.
+        const [ex, ey] = FLUID.dirs[delta];
+        const x0 = (j + 0.5) * scale, y0 = (i + 0.5) * scale;
+        fctx.moveTo(x0, y0);
+        fctx.lineTo(x0 + ex * scale, y0 + ey * scale);
+      }
+      fctx.stroke();
+    }
+  }
+
+  // THE LEDGER, LIVE, WITH ITS OWN TICK. Every one of these is an integer the instrument's
+  // audit checks at every step, and `holon_fluid_ledger_exact` is that audit — so the tick is
+  // the engine's verdict on its own arithmetic rather than this page's opinion of it.
+  const exact = w.holon_fluid_ledger_exact() === 1;
+  const checked = w.holon_fluid_ledger_steps_checked();
+  const int = (v) => (Number.isFinite(v) ? v.toLocaleString() : "—");
+  const held = (v, v0) => `${int(v)}${Number.isFinite(v0) ? ` · began at ${int(v0)}` : ""}`;
+  put("fluid-mass", held(w.holon_fluid_ledger_mass(), w.holon_fluid_ledger_initial(0)));
+  put("fluid-px", held(w.holon_fluid_ledger_px(), w.holon_fluid_ledger_initial(1)));
+  put("fluid-py", held(w.holon_fluid_ledger_py(), w.holon_fluid_ledger_initial(2)));
+  put("fluid-census", held(w.holon_fluid_ledger_census_total(), w.holon_fluid_ledger_initial(3)));
+  put("fluid-red", held(w.holon_fluid_ledger_red(), w.holon_fluid_ledger_initial(4)));
+  put("fluid-bonds-held", int(w.holon_fluid_ledger_bonds()));
+  put("fluid-formed", int(w.holon_fluid_ledger_formed()));
+  put("fluid-broken-rent", int(w.holon_fluid_ledger_broken_rent()));
+  put("fluid-blocked", int(w.holon_fluid_ledger_blocked()));
+  put("fluid-collisions", int(w.holon_fluid_ledger_collisions()));
+  put("fluid-steps", `${int(w.holon_fluid_steps())} · ${int(checked)} audited`);
+  // THE TICK, as a row of its own rather than only as the card's tag. The tag says whether
+  // the panel's digits are live; this says whether they are EXACT, which is a different claim
+  // and the one the ledger exists to make. A defect here is a defect in the instrument and is
+  // labelled as one, not softened into a fence.
+  put("fluid-verdict", checked > 0
+    ? (exact
+      ? `EXACT over ${int(checked)} audited steps — every one of them an integer identity, `
+        + "not a tolerance"
+      : "A CONSERVED INTEGER MOVED — this is a defect in the instrument, not a reading")
+    : "no step has been audited yet");
+  tag("fluid-exact", exact && checked > 0 ? "live" : "fenced",
+    exact && checked > 0
+      ? `EXACT — mass, both momenta, the tracer count, the per-orientation census and the `
+        + `bond balance formed − broken − blocked = held have every one held at all `
+        + `${int(checked)} audited steps`
+      : checked > 0
+        ? "A CONSERVED INTEGER MOVED. This is a defect in the instrument, not a reading."
+        : "no step has been audited yet");
+
+  // The graph readouts, which are the band's own quantities rather than the ledger's.
+  const bpp = w.holon_fluid_bonds_per_particle();
+  put("fluid-bpp", Number.isFinite(bpp)
+    ? `${bpp.toFixed(4)} counted once (ceiling 1 — one donor arm) · `
+      + `${w.holon_fluid_bonds_per_particle_degree().toFixed(4)} by degree (ceiling 2)`
+    : "—");
+  const frac = w.holon_fluid_largest_fraction();
+  put("fluid-largest", Number.isFinite(frac)
+    ? `${int(w.holon_fluid_largest())} particles, ${fmtSci(frac, 2)} of them — `
+      + (w.holon_fluid_spans() === 1
+        ? "and it SPANS the torus"
+        : "and it does not span: no component carries a loop around the torus")
+    : "—");
+  put("fluid-scene", `L = ${l} · ${int(l * l)} cells · ${int(w.holon_fluid_ledger_mass())} particles · `
+    + `density ${FLUID.density} · seed ${FLUID.seed} · FHP-I, one chirality · `
+    + (w.holon_fluid_bonds_enabled() === 1 ? "bonds ON (the chart)" : "bonds FORBIDDEN (the control)"));
+  const btn = UI["btn-fluid-nobond"];
+  if (btn) btn.textContent = FLUID.noBond ? "bonds forbidden — restore the chart" : "forbid bonds (the control)";
+}
+
+/// The rule, as the engine holds it. Structure, written once — the numbers do not move while
+/// a page is open, and every one of them names the CT record it was read from.
+function renderFluidRule() {
+  const w = State.w;
+  if (!UI["fluid-rule-rows"]) return;
+  if (!FLUID.running) {
+    UI["fluid-rule-rows"].innerHTML =
+      `<div class="rec"><div class="rec-head"><b>NOT RUNNING</b><span>the fluid cell</span></div>`
+      + `<p>${FLUID.refusal || "the load has not run"}</p></div>`;
+    return;
+  }
+  const rows = FLUID.table.map((r) => {
+    const served = w.holon_fluid_amplitude_at(r.phi_index);
+    const p = w.holon_fluid_p_break(r.phi_index);
+    return `<div class="rec"><div class="rec-head"><b>A = ${served.toFixed(6)}</b>`
+      + `<span>φ = ${r.phi_degrees}°</span></div>`
+      + `<p>p_break = ${p.toFixed(6)}, so a bond at this angle is held ${(100 / (1 + p)).toFixed(1)} % `
+      + `of the time it is exposed to the rule. Read as ${r.e_ct_hartree} Ha of charge transfer.</p>`
+      + `<code>${r.source}</code></div>`;
+  });
+  rows.push(`<div class="rec"><div class="rec-head"><b>${FLUID.retention}</b>`
+    + `<span>the retention, READ</span></div>`
+    + `<p>The dimer's own held fraction at the seam. The chart is set from it and from nothing `
+    + `else: E₀/kT = ln(f/(1−f)) = ${w.holon_fluid_rent().toFixed(10)}, which the engine `
+    + `computed — this page pushed the retention and read the rent back.</p>`
+    + `<code>${FLUID.retentionSource || "—"}</code></div>`);
+  UI["fluid-rule-rows"].innerHTML = rows.join("");
+  put("fluid-records", `${SHIPPED.fluidRule.file} (copied from ${SHIPPED.fluidRule.source}) · `
+    + `${SHIPPED.fluidRun.file} (copied from ${SHIPPED.fluidRun.source}) — both pinned by the `
+    + "SHA-256 of their bytes, both diffed against the conformance tree by this page's gate");
 }
 
 async function loadPreset(key, { pay = null } = {}) {
@@ -3671,8 +4140,33 @@ function renderTelemetry() {
     // page's rule is to show the inequality rather than assert its outcome. Both numbers
     // are the engine's own (`holon_legality_radius`, `holon_half_min_edge`), so the line
     // moves with the size axis and a reader can watch the door change its mind.
-    const doorEl = UI[`lad-door-${i}`];
-    if (doorEl) {
+    // TWO BANDS CARRY A LIVE BOX AND THEY ARE NOT THE SAME BOX, so the writer is chosen by
+    // the band's own `liveDoor` rather than by the element existing. Writing the boundary
+    // door's inequality under the fluid band would put the molecular scene's numbers under a
+    // lattice — two true readings making one false sentence, which is the failure a shared
+    // slot invites and the reason this branches on the data instead of on the index.
+    const doorEl = b.liveDoor ? UI[`lad-door-${i}`] : null;
+    if (doorEl && b.liveDoor === "fluid") {
+      // The fluid cell's own line: the box, the work done, and the audit's verdict. Every
+      // number is the door's; nothing here is a constant.
+      if (!FLUID.running) {
+        doorEl.className = "lad-door refused";
+        doorEl.textContent = `THIS CELL is not running: ${FLUID.refusal || "the load has not run"}`;
+      } else {
+        const exact = w.holon_fluid_ledger_exact() === 1;
+        doorEl.className = exact ? "lad-door" : "lad-door refused";
+        doorEl.textContent = `THIS CELL, live: L = ${w.holon_fluid_l()}, `
+          + `${w.holon_fluid_ledger_mass().toLocaleString()} particles, `
+          + `${w.holon_fluid_steps().toLocaleString()} steps taken, `
+          + `${w.holon_fluid_ledger_bonds().toLocaleString()} bonds held at `
+          + `${w.holon_fluid_bonds_per_particle().toFixed(4)} per particle on a ceiling of 1, `
+          + `largest component ${fmtSci(w.holon_fluid_largest_fraction(), 2)} of the particles, `
+          + (w.holon_fluid_spans() === 1 ? "and it SPANS the torus — " : "no component spans — ")
+          + (exact
+            ? `every conserved integer exact over ${w.holon_fluid_ledger_steps_checked().toLocaleString()} audited steps.`
+            : "AND A CONSERVED INTEGER HAS MOVED, which is a defect in the instrument.");
+      }
+    } else if (doorEl) {
       const reach = w.holon_legality_radius();
       const half = w.holon_half_min_edge();
       const legal = half > reach;
@@ -3734,6 +4228,9 @@ function renderTelemetry() {
 
   renderDescent(w, descending, pick);
   renderTierRail(w, viewM);
+  // The fluid element band's own cell: one step of FLUID-1's orientation lattice, drawn, and
+  // its ledger read back. It runs on THIS page's frame and is priced by it — see `FLUID`.
+  renderFluid();
   put("gov-delivered",
     `delivered ${fmtRate(State.rate.fsPerSec)} · ${fmtSci(State.rate.pctRealtime, 2)} % realtime`);
 }
@@ -4397,6 +4894,9 @@ function initHUD() {
   UI["btn-menu"]?.addEventListener("click", () => UI["telemetry-drawer"].classList.toggle("open"));
   UI["close-telemetry"]?.addEventListener("click", () => UI["telemetry-drawer"].classList.remove("open"));
   UI["btn-toggle-manifest"]?.addEventListener("click", () => UI["manifest-modal"].classList.toggle("hidden"));
+  // The fluid cell's control. It rebuilds the scene with bonds forbidden rather than
+  // switching a flag under a running one — see `fluidToggleNoBond` and the door's own note.
+  UI["btn-fluid-nobond"]?.addEventListener("click", () => { fluidToggleNoBond(); renderFluidRule(); });
   UI["btn-close-manifest"]?.addEventListener("click", () => UI["manifest-modal"].classList.add("hidden"));
   UI["btn-play-pause"]?.addEventListener("click", (e) => {
     State.paused = !State.paused;

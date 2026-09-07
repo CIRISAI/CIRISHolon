@@ -33,6 +33,20 @@ holon = { path = "../holon" }
 # by LTO — it is reached from `holon_table_generate` and is meant to be.
 holon-chem = { path = "../holon-chem" }
 
+# FLUID-1'S INSTRUMENT, UNCHANGED. `holon-lattice` is the orientation lattice the fluid
+# element band now RUNS rather than describes: `OrientationLattice::step` is the same motion
+# `conformance/mesh/FLUID1_RESULTS.md` was read on, and `src/fluid_door.rs` drives it through
+# the ABI without touching a rule of it. Its own manifest holds its runtime graph at ONE
+# crate (`ciris-sim-core` with `alloc`), and its eight LIBRARY modules name no `std::fs`, no
+# thread, no clock and no environment — checked by grep over `src/*.rs`, not assumed. The
+# scope of that sentence is load-bearing and an earlier draft got it wrong: `src/bin/lg_run.rs`
+# DOES match the grep. It is a bin target, never linked into a crate that depends on this one,
+# so the conclusion stands and the claim is stated over the files the library compiles rather
+# than over the directory. So this adds nothing to the browser artifact but its own code and
+# cannot perturb the core's feature resolution or `ci-gates.sh`'s isolation gates. Unlike
+# `holon` it is NOT stripped by LTO: it is reached from `holon_fluid_*` and is meant to be.
+holon-lattice = { path = "../holon-lattice" }
+
 # NOTE: no `[profile.release]` here on purpose. A workspace member's profile section is
 # silently ignored by Cargo (only the workspace root's applies), so declaring one would
 # look like it worked and would not. `build-web.sh` sets the size profile through

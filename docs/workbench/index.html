@@ -574,6 +574,101 @@
           </p>
         </div>
 
+        <!-- ------------------------------ the fluid element, live (WB-10) -->
+        <!--
+          FLUID-1's orientation lattice, stepping in this page through `fluid_door.rs`. The
+          card is structure only: the canvas, the row labels and the record paths. Every
+          digit is written per frame by `renderFluid`, and the rule's own rows are written
+          by `renderFluidRule` out of the SHIPPED record — so the amplitude table exists in
+          exactly two places, `conformance/mesh/fluid1/` and the byte-identical copy under
+          `tables/`, and never in this file or in app.js.
+        -->
+        <div class="drawer-card">
+          <div class="card-head">
+            <h4>THE FLUID ELEMENT, LIVE — FLUID-1's ORIENTATION LATTICE (WB-10)</h4>
+            <span class="tag" id="fluid-exact">—</span>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
+          <p class="card-note">
+            This is the band's own instrument, running — not a picture of it. Every particle
+            on the lattice carries a direction; a bond forms when the geometry CT-2's
+            measured angular map favours holds; a bonded pair is a closure that moves as one
+            and the rent clause releases it. <b>Blue is free, orange is bonded</b>, opacity is
+            how full the cell is, and the lines are the live bonds drawn along the donor's own
+            arm. The lattice is triangular and the array is square, so the picture is sheared
+            by the engine's own Euclidean embedding — nothing here knows what a hexagon is.
+          </p>
+          <p class="card-note">
+            <b>What is live, and what is quoted.</b> Live: the structure and the conserved
+            integers below. Quoted, on the band above with the line of the record it came
+            from: FLUID-1's transport numbers. Those were read at L = 256 over millions of
+            member-steps with a fitted decay per wavevector, and this cell does not re-derive
+            them — a Schmidt number fitted from a few thousand browser frames would be a
+            measurement nobody made.
+          </p>
+          <div class="fluid-wrap">
+            <canvas id="fluid-canvas" width="512" height="512" aria-label="the orientation lattice"></canvas>
+          </div>
+          <div class="lad-viewline" id="fluid-scene">—</div>
+          <button class="btn-micro" id="btn-fluid-nobond">forbid bonds (the control)</button>
+          <p class="card-note">
+            <b>The control rebuilds the scene, it does not flip a switch.</b> FLUID-1's no-bond
+            control is a run with bonds forbidden from the first step — and with bonds
+            forbidden the occupation is <code>Lattice::advance_with_colour</code>'s bit for
+            bit, which a lattice carrying bonds formed before a mid-run flip would not be. The
+            door enforces that; this page only asks for it.
+          </p>
+
+          <div class="desc-sec">THE LEDGER — every one an integer, audited at every step</div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>Mass</span><span class="dval" id="fluid-mass">—</span></div>
+            <div class="lrow"><span>Momentum, first axial component</span><span class="dval" id="fluid-px">—</span></div>
+            <div class="lrow"><span>Momentum, second axial component</span><span class="dval" id="fluid-py">—</span></div>
+            <div class="lrow"><span>Orientation census, total</span><span class="dval" id="fluid-census">—</span></div>
+            <div class="lrow"><span>Tracer bits</span><span class="dval" id="fluid-red">—</span></div>
+            <div class="lrow"><span>Bonds held now</span><span class="dval" id="fluid-bonds-held">—</span></div>
+            <div class="lrow"><span>Bonds formed, cumulative</span><span class="dval" id="fluid-formed">—</span></div>
+            <div class="lrow"><span>Released by the rent clause</span><span class="dval" id="fluid-broken-rent">—</span></div>
+            <div class="lrow"><span>Released by the exclusion (blocked)</span><span class="dval" id="fluid-blocked">—</span></div>
+            <div class="lrow"><span>Collisions fired</span><span class="dval" id="fluid-collisions">—</span></div>
+            <div class="lrow"><span>Steps taken</span><span class="dval" id="fluid-steps">—</span></div>
+            <div class="lrow verdict"><span>Every integer exact?</span><span class="dval val" id="fluid-verdict">—</span></div>
+          </div>
+          <p class="card-note">
+            <b>The bond balance is the one that is not obvious.</b> Formed minus released by
+            rent minus released by the exclusion equals held, at every step, exactly — and the
+            two kinds of release are counted apart rather than summed, because FLUID-1's fifth
+            finding is that the exclusion is 36 % of them at the chart and 100 % of them in the
+            cold control. On an FHP-6 torus there is no rest state, so a bonded pair refused
+            its joint move has to break: <b>the lattice, not the rent, is the ceiling on the
+            bond.</b>
+          </p>
+
+          <div class="desc-sec">THE BOND GRAPH — the band's own question</div>
+          <div class="ledger-grid">
+            <div class="lrow"><span>Bonds per particle</span><span class="dval" id="fluid-bpp">—</span></div>
+            <div class="lrow"><span>Largest component</span><span class="dval" id="fluid-largest">—</span></div>
+          </div>
+          <p class="card-note">
+            <b>Spanning is a loop around the torus, not a reach across the box.</b> A component
+            spans when walking its bonds around a cycle returns to the starting cell displaced
+            by a non-zero multiple of L — which is what a percolating network means and, unlike
+            "touches both edges", does not change when the configuration is translated.
+          </p>
+
+          <div class="desc-sec">THE RULE, READ — every angle carries the record it came from</div>
+          <div id="fluid-rule-rows" class="record-rows"></div>
+          <div class="lad-viewline" id="fluid-records">—</div>
+          <p class="card-note">
+            <b>Nothing in this rule was typed.</b> The six amplitudes and the retention are
+            CT-1's and CT-2's own numbers, shipped as a byte-identical copy of the campaign's
+            record, digest-pinned by this page and diffed against the conformance tree by this
+            page's gate. They are PUSHED through the engine's doors one at a time, and the
+            engine refuses to build a lattice until all seven have arrived. The rent is read
+            BACK from the engine after the retention goes in: this page pushed a measured
+            fraction and the engine computed the chart.
+          </p>
+        </div>
+
         <!-- ------------------------------- the ladder's readouts (FSD-W3 §11.2) -->
         <!--
           The numbers the ladder's ends serve. Structure here, digits from app.js — and

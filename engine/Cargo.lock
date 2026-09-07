@@ -939,6 +939,7 @@ version = "0.1.0"
 dependencies = [
  "holon",
  "holon-chem",
+ "holon-lattice",
  "holon-lens",
 ]
 

@@ -44,6 +44,7 @@ pub mod barostat;
 pub mod cells;
 pub mod channel;
 pub mod checkpoint;
+pub mod fluid_door;
 pub mod bank;
 pub mod clock;
 pub mod hadron;

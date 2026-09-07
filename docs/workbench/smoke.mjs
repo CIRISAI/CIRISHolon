@@ -293,6 +293,55 @@ want(pendingGone.length === 0,
 ok(`${pendingLive.length} pending-list exports are live in this artifact, so the fine bands `
   + "flip without an edit to the page");
 
+// THE FLUID DOOR FAMILY, IN THE ARTIFACT'S OWN EXPORT TABLE (WB-10).
+//
+// A SECOND list, deliberately, and not a subset of `REQUIRED_EXPORTS`. That list is what the
+// page CALLS; this is what `fluid_door.rs` SERVES, including the doors the page does not call
+// — the raw occupation and orientation planes, the empty-slot sentinel, the per-orientation
+// census. Those exist for a host that wants the state rather than the picture, and
+// `tests/fluid_door.rs` is built on them. Nothing on the page would notice if LTO stripped
+// them or a rename left them behind, and then the next host to reach for them would find a
+// door that had quietly stopped existing.
+//
+// The names are spelled out rather than matched by prefix on purpose: a prefix test passes on
+// an artifact that exports one `holon_fluid_` symbol, which is the failure it is meant to
+// catch.
+const FLUID_DOORS = [
+  "holon_fluid_amplitude", "holon_fluid_amplitude_at", "holon_fluid_rent_from_retention",
+  "holon_fluid_rent", "holon_fluid_p_break", "holon_fluid_rule_ready",
+  "holon_fluid_begin", "holon_fluid_no_bond", "holon_fluid_bonds_enabled", "holon_fluid_step",
+  "holon_fluid_l", "holon_fluid_density", "holon_fluid_steps",
+  "holon_fluid_ledger_mass", "holon_fluid_ledger_px", "holon_fluid_ledger_py",
+  "holon_fluid_ledger_census_total", "holon_fluid_ledger_census", "holon_fluid_ledger_red",
+  "holon_fluid_ledger_bonds", "holon_fluid_ledger_formed", "holon_fluid_ledger_broken_rent",
+  "holon_fluid_ledger_blocked", "holon_fluid_ledger_collisions",
+  "holon_fluid_ledger_steps_checked", "holon_fluid_ledger_exact", "holon_fluid_ledger_initial",
+  "holon_fluid_bonds_per_particle", "holon_fluid_bonds_per_particle_degree",
+  "holon_fluid_largest_fraction", "holon_fluid_largest", "holon_fluid_spans",
+  "holon_fluid_cells_ptr", "holon_fluid_cells_len",
+  "holon_fluid_orient_ptr", "holon_fluid_orient_len", "holon_fluid_no_orient",
+  "holon_fluid_bonds_fill", "holon_fluid_bonds_ptr", "holon_fluid_bonds_capacity",
+  "holon_fluid_bonds_live", "holon_fluid_bond_stride",
+  "holon_fluid_image_fill", "holon_fluid_image_ptr", "holon_fluid_image_len",
+  "holon_fluid_dir_axial", "holon_fluid_dir_euclidean",
+];
+{
+  const absent = FLUID_DOORS.filter((n) => typeof w[n] !== "function");
+  want(absent.length === 0,
+    `every door of the fluid element band's instrument is in this artifact (${FLUID_DOORS.length})`,
+    absent.length ? `absent: ${absent.join(", ")} — the band is MEASURED on a cell this `
+      + "artifact cannot run" : undefined);
+  // AND THE OTHER DIRECTION, which is the one nothing else here covers: a door added to
+  // `fluid_door.rs` and never listed above would be untested by this gate and invisible to
+  // it. The artifact's export table is enumerable, so the two lists are compared both ways.
+  const inArtifact = Object.keys(w)
+    .filter((n) => n.startsWith("holon_fluid_") && typeof w[n] === "function").sort();
+  const unlisted = inArtifact.filter((n) => !FLUID_DOORS.includes(n));
+  want(unlisted.length === 0,
+    `and this gate's list is the whole family — no fluid door goes unchecked (${inArtifact.length})`,
+    unlisted.length ? `in the artifact and not on the list: ${unlisted.join(", ")}` : undefined);
+}
+
 // ---------------------------------------------------------------- 2. the pure-H boot
 
 w.holon_set_dims(1);
@@ -436,6 +485,34 @@ for (const s of shippedEntries) {
 const waterCanonical = readFileSync(join(repoRoot, "engine/crates/holon-chem/tests/data/s2/s2_water_table.txt"));
 want(sha256Of(waterCanonical) === sha256Of(readFileSync(join(here, "tables/s2_water_table.txt"))),
   "the served (O,H,H) table is the committed one byte for byte");
+
+// A SHIPPED ARTIFACT THAT NAMES ITS SOURCE MUST BE THAT SOURCE, byte for byte (WB-10). The
+// pin above says the served bytes are the ones the page certifies; it says nothing about
+// whether those bytes are the campaign's. FLUID-1's rule and scene are copies of records under
+// `conformance/mesh/fluid1/`, and a copy that has drifted from its original is exactly the
+// third copy of a measurement this arrangement exists to prevent — it would digest to its own
+// pin happily and be wrong. The `source` field is what makes that checkable, so every entry
+// carrying one is diffed against the tree.
+const sourced = shippedMatch
+  ? [...shippedMatch[1].matchAll(/file: "([^"]+)",\s*\n?\s*source: "([^"]+)"/g)]
+    .map((m) => ({ file: m[1], source: m[2] })) : [];
+want(sourced.length >= 2,
+  `at least FLUID-1's two records name the conformance file they were copied from (${sourced.length})`,
+  "a shipped copy with no `source` cannot be diffed against the campaign that wrote it");
+for (const s of sourced) {
+  let served = null, origin = null;
+  try { served = readFileSync(join(here, s.file)); } catch { /* below */ }
+  try { origin = readFileSync(join(repoRoot, s.source)); } catch { /* below */ }
+  if (served === null || origin === null) {
+    no(`${s.file} names ${s.source}, and one of the two is not in the tree`,
+      `served ${served ? "present" : "MISSING"}, source ${origin ? "present" : "MISSING"}`);
+    continue;
+  }
+  want(sha256Of(served) === sha256Of(origin),
+    `${s.file} is ${s.source} byte for byte`,
+    "the served copy has drifted from the record it names — the page would serve numbers the "
+    + "campaign did not write, under a pin that would not notice");
+}
 // the emitter's file names: "HO" for a heteronuclear pair in Z order, "O2" for a homonuclear one
 const shippedPairJson = (za, zb) => {
   const [lo, hi] = za <= zb ? [za, zb] : [zb, za];
@@ -1048,8 +1125,15 @@ if (ladderBlock) {
   // 128-water liquid with every figure cited. So the band shows its readings and does NOT
   // hold a certificate, and the flip law below is untouched: `measured` is not `live`, and
   // the certificate direction is checked on it exactly as it is on a fence.
+  //
+  // "fluid element" joined it at WB-10 for the same reason and on the same terms. §11.2 gates
+  // that band on node G's rung 2, and rung 2 is still uncertified — what FLUID-0 and FLUID-1
+  // added is the band's own physics, read on the campaign's own instrument, with every figure
+  // cited to its line and the instrument now RUNNING in the page. The band therefore shows its
+  // readings and its live cell and does NOT hold a certificate; `measured` is not `live`, and
+  // the certificate direction below is checked on it exactly as it is on a fence.
   const SPEC_STATE = {
-    "the cube": "fenced", "fluid element": "fenced", "H-bond network": "measured",
+    "the cube": "fenced", "fluid element": "measured", "H-bond network": "measured",
     "molecular": "live", "atom": "export-gated", "nucleus": "export-gated",
     "the fold below the atom": "export-gated",
   };
@@ -1615,17 +1699,54 @@ if (ladderBlock) {
 // `State.served` is filled in by hand because `loadPreset` needs the network and this gate
 // has none. Only its SHAPE matters; the two panels under test read none of its fields.
 {
+  // A 2D CONTEXT THAT IS ONLY THE METHODS A BROWSER HAS (WB-10), and it exists because the
+  // stub used to return `null` from `getContext` — which meant every drawing path on this
+  // page was skipped here and tested nowhere but by eye. The fluid cell's picture is a
+  // `createImageData` / `putImageData` / `drawImage` chain over a wasm buffer, and the way
+  // that goes wrong is a `TypeError` inside the frame loop, which the "renders without
+  // throwing" check above catches the moment the block actually runs.
+  //
+  // It implements EXACTLY what the page calls and nothing else, so a call to a method Canvas2D
+  // does not have fails here as `undefined is not a function`, exactly as it would in Chrome.
+  // It is not a rendering test and asserts nothing about pixels — it asserts the code runs and
+  // hands the browser the shapes it says it hands it.
+  const make2d = (canvasEl) => {
+    const calls = [];
+    // The path's points, RESET at each `beginPath` and capped, so what survives is the LAST
+    // frame's first few segments rather than a hundred frames of everything. A recorder with
+    // no cap here holds a million entries by the end of this block.
+    let segs = [];
+    return {
+      _calls: calls, get _segs() { return segs; }, canvas: canvasEl,
+      imageSmoothingEnabled: true, strokeStyle: "", lineWidth: 1, fillStyle: "",
+      createImageData: (cw, ch) => ({ width: cw, height: ch, data: new Uint8ClampedArray(cw * ch * 4) }),
+      putImageData: (img, x, y) => calls.push(["putImageData", img.width, img.height, x, y, img.data.length]),
+      drawImage: (...a) => calls.push(["drawImage", a.length, ...a.slice(1)]),
+      setTransform: () => {}, clearRect: () => {}, fillRect: () => {}, scale: () => {},
+      save: () => {}, restore: () => {}, translate: () => {},
+      beginPath: () => { calls.push(["beginPath"]); segs = []; },
+      moveTo: (x, y) => { if (segs.length < 256) segs.push([x, y]); },
+      lineTo: (x, y) => { if (segs.length < 256) segs.push([x, y]); },
+      arc: () => {}, fill: () => {}, closePath: () => {},
+      stroke: () => calls.push(["stroke"]),
+    };
+  };
   const stub = (() => {
     const store = new Map();
     const el = (id) => {
       const e = {
         id, textContent: "", className: "", title: "", value: "", checked: false,
-        dataset: {}, style: {}, hidden: false,
+        dataset: {}, style: {}, hidden: false, width: 512, height: 512,
         classList: { add() {}, remove() {}, toggle() {}, contains: () => false },
         addEventListener() {}, removeEventListener() {}, setAttribute() {},
         getAttribute: () => null, appendChild() {}, closest: () => null,
         getBoundingClientRect: () => ({ width: 800, height: 600, left: 0, top: 0 }),
-        getContext: () => null, querySelectorAll: () => [], querySelector: () => null,
+        getContext(kind) {
+          if (kind !== "2d") return null;
+          if (!this._ctx) this._ctx = make2d(this);
+          return this._ctx;
+        },
+        querySelectorAll: () => [], querySelector: () => null,
         focus() {}, blur() {}, click() {},
         set innerHTML(v) {
           this._html = String(v);
@@ -1643,6 +1764,13 @@ if (ladderBlock) {
 
   let threw = null;
   let sandbox = null;
+  // How many frames the fluid cell is stepped under the stub. Not a large number and not
+  // meant to be: the property is INTEGER INVARIANCE, which a leak of one particle per
+  // hundred steps breaks as surely as a leak of a thousand, and the instrument's own suite
+  // and `tests/fluid_door.rs` carry the 500-step arms. What this covers that they cannot is
+  // the whole path — the page's fetch, its digest pin, its pushes and its frame loop.
+  const FLUID_GATE_STEPS = 120;
+  let fluidLedger = null;
   try {
     const { store, el } = stub;
     const document = {
@@ -1661,7 +1789,26 @@ if (ladderBlock) {
       navigator: { hardwareConcurrency: 8, userAgent: "smoke" },
       performance, requestAnimationFrame: () => 0, cancelAnimationFrame: () => {},
       setTimeout, clearTimeout, setInterval, clearInterval,
-      fetch: async () => { throw new Error("no network in this gate"); },
+      // A FILE-BACKED `fetch` over the SERVED TREE, and it replaces a stub that threw
+      // (WB-10). The page's shipped-artifact path — fetch, digest, refuse on a mismatch, push
+      // through the doors — was unreachable from this gate for exactly as long as `fetch`
+      // threw, so the one thing the pins exist to protect was tested nowhere but in a
+      // browser. Serving `docs/workbench/` from disk is what a bare checkout serves, so this
+      // exercises the real path including the refusal arms; anything outside the tree is a
+      // 404, which is what it would be over HTTP too.
+      fetch: async (url) => {
+        const rel = String(url).replace(/^\.?\//, "");
+        if (rel.includes("..")) return { ok: false, status: 403 };
+        let buf = null;
+        try { buf = readFileSync(join(here, rel)); } catch { return { ok: false, status: 404 }; }
+        const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
+        return {
+          ok: true, status: 200,
+          arrayBuffer: async () => ab,
+          text: async () => buf.toString("utf8"),
+          json: async () => JSON.parse(buf.toString("utf8")),
+        };
+      },
       URLSearchParams, TextDecoder, TextEncoder, WebAssembly,
       crypto: (await import("node:crypto")).webcrypto,
     };
@@ -1687,6 +1834,65 @@ if (ladderBlock) {
     vm.runInContext("bindUI()", sandbox);
     vm.runInContext("renderStatics()", sandbox);
     vm.runInContext("renderTelemetry()", sandbox);
+
+    // THE FLUID ELEMENT'S CELL, LOADED AND STEPPED THROUGH THE PAGE'S OWN CODE (WB-10).
+    // `loadFluid` fetches FLUID-1's two records off the served tree, checks both digests
+    // against the page's pins, pushes the six amplitudes and the retention through the doors
+    // and begins the lattice — every step of it the page's, none of it re-implemented here.
+    // Then the frame loop runs it, because `renderFluid` is called from `renderTelemetry` and
+    // the property under test is that a LIVE cell keeps its integers, not that a door does.
+    await vm.runInContext("loadFluid(State.w)", sandbox);
+    vm.runInContext("renderFluidRule()", sandbox);
+    for (let i = 0; i < FLUID_GATE_STEPS; i++) vm.runInContext("renderTelemetry()", sandbox);
+    fluidLedger = {
+      running: vm.runInContext("FLUID.running", sandbox),
+      refusal: vm.runInContext("FLUID.refusal", sandbox),
+      l: rw.holon_fluid_l(),
+      steps: rw.holon_fluid_steps(),
+      checked: rw.holon_fluid_ledger_steps_checked(),
+      exact: rw.holon_fluid_ledger_exact(),
+      mass: rw.holon_fluid_ledger_mass(), mass0: rw.holon_fluid_ledger_initial(0),
+      px: rw.holon_fluid_ledger_px(), px0: rw.holon_fluid_ledger_initial(1),
+      py: rw.holon_fluid_ledger_py(), py0: rw.holon_fluid_ledger_initial(2),
+      census: rw.holon_fluid_ledger_census_total(), census0: rw.holon_fluid_ledger_initial(3),
+      red: rw.holon_fluid_ledger_red(), red0: rw.holon_fluid_ledger_initial(4),
+      held: rw.holon_fluid_ledger_bonds(), formed: rw.holon_fluid_ledger_formed(),
+      rent: rw.holon_fluid_ledger_broken_rent(), blocked: rw.holon_fluid_ledger_blocked(),
+      collisions: rw.holon_fluid_ledger_collisions(),
+      bpp: rw.holon_fluid_bonds_per_particle(),
+      rent_e0: rw.holon_fluid_rent(),
+      // THE CONTROL, driven through the page's own handler rather than through the door, so
+      // what is tested is the button a reader presses.
+      beforeControl: rw.holon_fluid_bonds_enabled(),
+    };
+    // THE DRAWN BOND SEGMENTS AND THE BOND LIST THEY CAME FROM, captured together and BEFORE
+    // the control rebuilds the scene — a segment list checked against a bond list from a
+    // different lattice would establish nothing.
+    {
+      const ctx2 = ((stub.store.get("fluid-canvas") || {})._ctx) || { _segs: [] };
+      fluidLedger.segs = ctx2._segs.slice(0, 64);
+      fluidLedger.stride = rw.holon_fluid_bond_stride();
+      const nbLive = rw.holon_fluid_bonds_live();
+      const buf = new Uint32Array(rw.memory.buffer, rw.holon_fluid_bonds_ptr(),
+        fluidLedger.stride * nbLive);
+      fluidLedger.bondHead = Array.from(buf.slice(0, fluidLedger.stride * 32));
+      fluidLedger.dirs = vm.runInContext("FLUID.dirs", sandbox).map((d) => [d[0], d[1]]);
+      // The page's own pixels-per-cell, taken from the canvas the page read it off rather
+      // than from a 512 typed here — a stub whose canvas changed size would otherwise make
+      // every segment below fail for a reason that is not a defect.
+      fluidLedger.scale = Math.min(ctx2.canvas.width, ctx2.canvas.height) / rw.holon_fluid_l();
+    }
+    vm.runInContext("fluidToggleNoBond()", sandbox);
+    vm.runInContext("renderTelemetry()", sandbox);
+    fluidLedger.afterControl = rw.holon_fluid_bonds_enabled();
+    fluidLedger.controlHeld = rw.holon_fluid_ledger_bonds();
+    fluidLedger.controlSteps = rw.holon_fluid_steps();
+    // The two 2D contexts the picture uses, and they are two on purpose: `putImageData`
+    // ignores the transform, so the L x L buffer is written 1:1 into an offscreen canvas and
+    // that canvas is what gets scaled up. Both are collected, because "the blit ran" and "the
+    // scale-up ran" are different failures.
+    fluidLedger.drawScratch = ((vm.runInContext("FLUID.scratchCtx", sandbox) || {})._calls) || [];
+    fluidLedger.drawMain = (((stub.store.get("fluid-canvas") || {})._ctx || {})._calls) || [];
   } catch (e) {
     threw = e;
   }
@@ -1729,6 +1935,161 @@ if (ladderBlock) {
     want(/the law reaches/.test(text("lad-door-2")),
       "the boundary door's own two numbers drew live under the H-bond band",
       `it drew: ${text("lad-door-2").slice(0, 80)}`);
+
+    // ---- THE FLUID ELEMENT'S CELL (WB-10) --------------------------------------
+    //
+    // Two bands carry a live box and they are NOT the same box: index 1 is the fluid
+    // element's running lattice and index 2 is the H-bond band's boundary refusal. Checking
+    // that they drew DIFFERENT lines is the check that the shared slot did not put the
+    // molecular scene's inequality under a lattice — two true readings making one false
+    // sentence, which is what a slot keyed by index rather than by the band invites.
+    want(/THIS CELL, live/.test(text("lad-door-1")),
+      "the fluid band's live cell drew its own line, not the boundary door's",
+      `it drew: ${text("lad-door-1").slice(0, 120)}`);
+    want(!/the law reaches/.test(text("lad-door-1")),
+      "the fluid band does not draw the molecular scene's boundary inequality");
+
+    want(fluidLedger !== null && fluidLedger.running === true,
+      "the page loaded FLUID-1's records, pinned them, pushed the rule and began the lattice",
+      fluidLedger ? `the page refused: ${fluidLedger.refusal}` : "the block threw before it ran");
+
+    if (fluidLedger && fluidLedger.running) {
+      const f = fluidLedger;
+      // THE LEDGER, INTEGER-EXACT OVER N STEPS OF THE LIVE CELL. Equality on the doubles IS
+      // equality on the integers here — every one of these is far inside 2^53 — so a
+      // tolerance would be strictly weaker for no gain, and would pass on a lattice leaking
+      // one particle every hundred steps.
+      want(f.steps === FLUID_GATE_STEPS && f.checked === FLUID_GATE_STEPS,
+        `the live cell stepped once per frame for ${FLUID_GATE_STEPS} frames and audited every step`,
+        `steps ${f.steps}, audited ${f.checked} — the frame loop is not driving the lattice, `
+        + "or the instrument's audit is off");
+      for (const [name, now, began] of [
+        ["mass", f.mass, f.mass0], ["momentum-x", f.px, f.px0], ["momentum-y", f.py, f.py0],
+        ["the orientation census", f.census, f.census0], ["the tracer count", f.red, f.red0],
+      ]) {
+        want(now === began && Number.isFinite(now),
+          `${name} is integer-identical after ${FLUID_GATE_STEPS} live frames (${began})`,
+          `began at ${began} and reads ${now}`);
+      }
+      want(f.formed - f.rent - f.blocked === f.held,
+        `the bond balance closes exactly: ${f.formed} formed − ${f.rent} by rent − ${f.blocked} `
+        + `blocked = ${f.held} held`,
+        `it does not: ${f.formed} − ${f.rent} − ${f.blocked} = ${f.formed - f.rent - f.blocked}, `
+        + `and ${f.held} are held`);
+      want(f.exact === 1,
+        "the instrument's own per-step audit says every conserved integer held");
+      // AND THE WORK IT HELD OVER. A ledger that conserves because nothing happened has not
+      // conserved anything (M-VACUOUS-SUCCESS), and every branch of the bond rule must have
+      // fired for the balance above to mean what it says.
+      want(f.collisions > 0 && f.formed > 0 && f.rent > 0 && f.blocked > 0 && f.held > 0,
+        `the cell did work while conserving: ${f.collisions} collisions, ${f.formed} bonds `
+        + `formed, ${f.rent} released by rent, ${f.blocked} by the exclusion, ${f.held} held`,
+        "a branch of the bond rule never fired, so the invariance above is about a lattice "
+        + "where that branch has not been tested");
+      want(f.bpp > 0 && f.bpp <= 1.0,
+        `bonds per particle sits inside the lattice's own ceiling of 1 (${f.bpp.toFixed(4)})`,
+        "the donor-arm convention caps this at 1; a value above it is a counting error");
+      // THE RENT IS THE ENGINE'S ARITHMETIC ON THE PAGE'S PUSH. The page pushed a measured
+      // retention and read the chart back, so this is the round trip rather than a constant.
+      const retention = JSON.parse(readFileSync(join(here, "tables/fluid1_amplitude_table.json"), "utf8")).retention;
+      want(Math.abs(f.rent_e0 - Math.log(retention / (1 - retention))) < 1e-12,
+        `the rent the engine holds is the read retention's own logit (${f.rent_e0.toFixed(10)})`,
+        "the page pushed a retention and the engine's chart is not the one that retention sets");
+
+      // THE CONTROL, through the page's own handler. It must REBUILD — bonds off, the clock
+      // back at zero, no bond held — because FLUID-1's control is a run with bonds forbidden
+      // from the first step, and a flag flipped under a running lattice is a third thing.
+      want(f.beforeControl === 1 && f.afterControl === 0,
+        "the no-bond control turns the bond rule off through the page's own button");
+      want(f.controlHeld === 0,
+        "the control holds no bond — it rebuilt the scene rather than flipping a flag",
+        `${f.controlHeld} bonds survived the control, which means bonds formed before it was `
+        + "pressed are still there and the control is not FLUID-1's control");
+      want(f.controlSteps === 1,
+        "the control restarted the lattice's clock",
+        `the clock reads ${f.controlSteps} after one frame, so the scene was not rebuilt`);
+    }
+
+    // THE RULE PANEL drew every angle with the CT record it was read from — the property that
+    // makes "nothing was typed" checkable from the outside rather than promised in a comment.
+    const rulePanel = html("fluid-rule-rows");
+    want(/ct2\/node_tilt_R2\.9_t60\.json/.test(rulePanel)
+      && /ct1\/sector_linear_R2\.9\.json/.test(rulePanel),
+      "the fluid rule panel drew its angles with the CT records each was read from",
+      `rendered: ${rulePanel.slice(0, 200)}`);
+    want(/dimer_293_seam\.f/.test(rulePanel),
+      "the retention drew with the field of the record it came from");
+    want(text("fluid-mass").length > 1 && text("fluid-bonds-held").length > 0,
+      "the fluid ledger panel drew its integers",
+      `mass cell: "${text("fluid-mass")}"`);
+    // THE TICK IS A ROW, not only the card's tag: "live" and "exact" are different claims and
+    // the ledger exists to make the second one.
+    want(/^EXACT over /.test(text("fluid-verdict")) && /integer identity/.test(text("fluid-verdict")),
+      "the ledger drew its EXACT tick beside the integers",
+      `it drew: ${text("fluid-verdict")}`);
+    want(/ceiling 1/.test(text("fluid-bpp")),
+      "the bond count drew in its own convention with the ceiling named",
+      `it drew: ${text("fluid-bpp")}`);
+
+    // THE PICTURE'S OWN PATH RAN. Nothing above this line touches it: with `getContext`
+    // returning null — which is what this stub used to do — the whole blit is skipped and the
+    // gate is perfectly happy with a canvas nobody can draw on. What is asserted is the shape
+    // the page hands the browser: an ImageData exactly L x L (four bytes a pixel, one pixel
+    // per CELL — a buffer of the wrong size is the mistake this catches), scaled up through
+    // `drawImage`'s nine-argument form, and the bonds stroked in one path rather than one per
+    // bond. No claim is made about pixels; a gate cannot see those.
+    const drawCalls = (fluidLedger && fluidLedger.drawMain) || [];
+    const put1 = ((fluidLedger && fluidLedger.drawScratch) || [])
+      .find((c) => c[0] === "putImageData");
+    const lFluid = fluidLedger ? fluidLedger.l : 0;
+    want(!!put1 && put1[1] === lFluid && put1[2] === lFluid && put1[5] === lFluid * lFluid * 4,
+      `the cell blitted an ImageData of exactly ${lFluid}x${lFluid} cells, four bytes each`,
+      put1 ? `it blitted ${put1[1]}x${put1[2]} with ${put1[5]} bytes` : "no putImageData ran — "
+        + "the drawing path did not execute at all");
+    const draw = drawCalls.find((c) => c[0] === "drawImage");
+    want(!!draw && draw[1] === 9,
+      "and scaled it up through drawImage's source-and-destination form",
+      draw ? `drawImage took ${draw[1]} arguments` : "drawImage never ran");
+    want(drawCalls.some((c) => c[0] === "stroke") && drawCalls.some((c) => c[0] === "beginPath"),
+      "and stroked the live bonds in one path",
+      "no path was stroked: either no bond is live or the bond-drawing branch did not run");
+
+    // EVERY DRAWN BOND POINTS ALONG THE DONOR'S ORIENTATION, WHICH IS NOT ITS SLOT.
+    //
+    // This is the one check that would have caught the defect it was written for. A slot is
+    // `cell * 6 + dir`, so `donor % 6` is the direction the donor is MOVING in; the bond points
+    // along the donor's ORIENTATION, which lives in a different plane. The page drew the first
+    // for one revision — a picture that still looks like a lattice and is wrong in a way no
+    // count, no ledger and no citation could see. So the segments the page actually stroked are
+    // compared against the link direction the DOOR served for those same bonds, and the two
+    // directions are required to differ on most of them, or the scene cannot tell them apart
+    // and the comparison is vacuous.
+    if (fluidLedger && fluidLedger.running && fluidLedger.segs && fluidLedger.segs.length >= 4) {
+      const { segs, stride, bondHead, dirs, scale } = fluidLedger;
+      const nSeg = Math.min(Math.floor(segs.length / 2), Math.floor(bondHead.length / stride));
+      let wrong = 0, differ = 0;
+      for (let k = 0; k < nSeg; k++) {
+        const [x0, y0] = segs[2 * k], [x1, y1] = segs[2 * k + 1];
+        const served = bondHead[stride * k + 2];
+        const slotDir = bondHead[stride * k] % 6;
+        const want2 = dirs[served];
+        if (Math.abs((x1 - x0) / scale - want2[0]) > 1e-9
+          || Math.abs((y1 - y0) / scale - want2[1]) > 1e-9) wrong += 1;
+        if (served !== slotDir) differ += 1;
+      }
+      want(nSeg >= 8 && wrong === 0,
+        `every one of ${nSeg} drawn bond segments runs along the link direction the door served`,
+        `${wrong} of ${nSeg} segments point somewhere else — the page is deriving the bond's `
+        + "direction instead of reading the one the instrument computed");
+      want(differ * 2 > nSeg,
+        `and the served direction differs from the donor's slot on ${differ} of ${nSeg}, so the `
+        + "check above is not passing by coincidence",
+        "on this scene almost every bond's slot happens to equal its orientation, so drawing "
+        + "either one would look identical and the check establishes nothing");
+    } else {
+      no("the drawn bond segments were captured for checking",
+        "no segment was recorded, so nothing was drawn along any direction");
+    }
   }
 }
 

@@ -131,6 +131,11 @@ anything to select, and only then can R3's window and the campaign's price be de
 3. LIQUID-2's gate re-run at the step the rule then selects; the records now under
    `liquid2/gate_provisional_8x/` are at a provisional step and their README says which of
    their numbers survive it being unchosen.
-4. `beta`'s derivation needs the shortest and second-shortest contact separation at each of
+4. A labelled screen logging BOTH the cross-unit potential energy and the bond count through
+   one settling, to establish whether the network is flat where the energy criterion fires.
+   The equilibration variable was moved off the bond count so that R2 stays a forward
+   prediction, and the corrected criterion fires at `7,100` frames where the withdrawn one
+   fired at `11,850`. **Not run.**
+5. `beta`'s derivation needs the shortest and second-shortest contact separation at each of
    the map's 64 nodes. Those geometries are in `ct1/sector_*.json` and `ct2/gd0_*.json`; the
    number has NOT been extracted here.

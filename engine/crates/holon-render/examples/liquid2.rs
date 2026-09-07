@@ -605,9 +605,26 @@ impl PhaseAccum {
             self.crossing_edges as f64 / self.all_edges as f64
         }
     }
-    fn json(&self) -> String {
+    /// `blind` omits every field from which the BOND COUNT could be recovered — the degree,
+    /// the edge count and the edge total are `2 x` R2's own reading — so the gate phase can
+    /// take plant (iii)'s carrier, which needs this graph, without the campaign having seen
+    /// R2 before its arm. The counted arm writes the full form.
+    fn json(&self, blind: bool) -> String {
+        if blind {
+            return format!(
+                "{{\"blind\": true, \"why\": \"the degree and the edge counts are R2's own reading and are withheld from the gate phase so that R2 stays a forward prediction; the counted arm writes them\", \"frames\": {}, \"spanning_frames\": {}, \"spanning_fraction\": {}, \"largest_component_fraction\": {}, \"union_find_disagreements_with_largest_domain\": {}, \"edges_crossing_a_face_fraction\": {}, \"plant_spanning_fraction_wraps_zeroed\": {}, \"refusal\": {}}}",
+                self.frames,
+                self.spanning,
+                num(self.spanning_fraction()),
+                num(self.largest_fraction()),
+                self.disagreement,
+                num(self.crossing_fraction()),
+                num(self.spanning_fraction_local()),
+                match &self.refusal { Some(w) => format!("{w:?}"), None => "null".to_string() }
+            );
+        }
         format!(
-            "{{\"frames\": {}, \"spanning_frames\": {}, \"spanning_fraction\": {}, \
+            "{{\"blind\": false, \"frames\": {}, \"spanning_frames\": {}, \"spanning_fraction\": {}, \
              \"largest_component_fraction\": {}, \"mean_degree_both_ends\": {}, \
              \"mean_edges\": {}, \"union_find_disagreements_with_largest_domain\": {}, \
              \"edges_total\": {}, \"edges_crossing_a_face\": {}, \"edge_crossing_fraction\": {}, \
@@ -690,9 +707,17 @@ fn mean_sd(v: &[f64]) -> (f64, f64) {
 /// LIQUID-1's blocks and the criterion that runs on LIQUID-2's arm are the SAME code.
 ///
 /// `temps` are every temperature sample in the window and every one must be inside the band.
-/// `blocks` are the window's per-block bond means and their least-squares trend across the
-/// window must be under the window's own scatter: the network has stopped rising within its
-/// own noise.
+/// `blocks` are the window's per-block means of the SETTLING VARIABLE and their least-squares
+/// trend across the window must be under the window's own scatter: the variable has stopped
+/// moving within its own noise.
+///
+/// **THE SETTLING VARIABLE IS NOT A READOUT ANY STAKE READS.** An earlier version of this
+/// criterion used the bond count, which is exactly what R2 reads and what S's graph is built
+/// from, so equilibrating on it would have made R2 a quantity the gate had already seen. The
+/// variable is the CROSS-UNIT potential energy (`Row::Field + Row::Seam`, the same quantity
+/// section 1's expectation is written in): it is the thermodynamically slow part of the
+/// energy, the intramolecular vibration is excluded from it by construction, and R1's
+/// histogram, R2's census, R3's displacement and S's graph none of them read it.
 fn settled_window(temps: &[f64], blocks: &[f64], band: f64) -> bool {
     if temps.is_empty() || blocks.len() < 2 {
         return false;
@@ -760,8 +785,13 @@ fn read_l1_series(path: &str, readout_stride: f64, band: f64, reported: f64) -> 
     let mut fires = blocks.last().map(|x| x.0).unwrap_or(0);
     for k in (SETTLE_WINDOW - 1)..blocks.len() {
         let temps: Vec<f64> = rows[k + 1 - SETTLE_WINDOW..=k].iter().map(|r| r.1).collect();
-        let bs: Vec<f64> = blocks[k + 1 - SETTLE_WINDOW..=k].iter().map(|r| r.1).collect();
-        if settled_window(&temps, &bs, band) {
+        // LIQUID-1's log carries NO energy column, so what can be validated on it is the
+        // TEMPERATURE leg alone. That is enough to place the criterion: the legs are a
+        // CONJUNCTION, so a criterion whose temperature leg first holds at frame F cannot fire
+        // before F, whatever its second leg is. The second leg is validated on this campaign's
+        // own arm instead, and where it fires is recorded there.
+        let flat: Vec<f64> = vec![0.0; SETTLE_WINDOW];
+        if settled_window(&temps, &flat, band) {
             fires = blocks[k].0;
             break;
         }
@@ -780,8 +810,9 @@ fn read_l1_series(path: &str, readout_stride: f64, band: f64, reported: f64) -> 
     }
 }
 
-/// The settling, live: block means of the bond count and every temperature sample, with the
-/// window test above deciding when the counted frames may begin.
+/// The settling, live: block means of the cross-unit potential energy and every temperature
+/// sample, with the window test above deciding when the counted frames may begin. The bond
+/// count is neither sampled nor recorded here, so R2 stays a forward prediction.
 struct Settler {
     band: f64,
     floor_frames: usize,
@@ -830,7 +861,7 @@ impl Settler {
             "[{}]",
             self.series
                 .iter()
-                .map(|(f, t, b)| format!("{{\"frame\": {f}, \"temperature_k\": {}, \"hbonds_per_molecule\": {}}}", num(*t), num(*b)))
+                .map(|(f, t, u)| format!("{{\"frame\": {f}, \"temperature_k\": {}, \"cross_unit_potential_per_water_hartree\": {}}}", num(*t), num(*u)))
                 .collect::<Vec<_>>()
                 .join(", ")
         )
@@ -848,6 +879,7 @@ fn settle(
     d: &Design,
     already_done: usize,
 ) -> (usize, Settler, bool) {
+    let _ = (z, cell);
     let mut s = Settler::new(d.temp_band_k, d.settle_floor_frames);
     let every = (SETTLE_READOUT / SETTLE_SAMPLES).max(1);
     let mut frame = already_done;
@@ -856,16 +888,17 @@ fn settle(
             sim.step_frame(1);
             frame += 1;
             if (k + 1) % every == 0 {
-                let p: Vec<[f64; 3]> = (0..sim.n).map(|i| [sim.atoms[i].x, sim.atoms[i].y, sim.atoms[i].z]).collect();
-                let b = holon_lens::lens::hbonds_periodic(&p, z, cell).map(|v| v.len() as f64 / N_WATERS as f64).unwrap_or(f64::NAN);
-                s.sample(sim.temperature(), b);
+                // the cross-unit potential energy per water: the settling variable, and NOT a
+                // quantity any stake reads
+                let u = (sim.row(Row::Field) + sim.row(Row::Seam)) / N_WATERS as f64;
+                s.sample(sim.temperature(), u);
             }
         }
         let done = s.close_block(frame);
         if let Some((_, tm, bm)) = s.series.last() {
             if s.series.len() % 4 == 0 || done {
                 eprintln!(
-                    "  settling block {:>4} at frame {frame:>6}: T {tm:6.1} K, bonds {bm:.4}{}",
+                    "  settling block {:>4} at frame {frame:>6}: T {tm:6.1} K, cross-unit U {bm:.6e} Ha per water{}",
                     s.series.len(),
                     if done { "  -> SETTLED" } else { "" }
                 );
@@ -1840,7 +1873,7 @@ fn gate_phase(obs: &Path, out: &Path) {
     let mut rec = Record::new("gate")
         .raw("design", d.json())
         .raw("gates", report.json())
-        .raw("phase_on_the_price_frames", ph.json())
+        .raw("phase_on_the_settled_box_blind", ph.json(true))
         .number("carrier_first_shell_crossing_fraction", carrier.fraction())
         .int("carrier_pairs", carrier.pairs as i64)
         .int("carrier_crossing", carrier.crossing as i64)
@@ -2411,7 +2444,7 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
                 ((AU_TIME_FS * 1.0e-15 - holon_render::sim::AU_TIME_S) / holon_render::sim::AU_TIME_S).abs() < 1.0e-9
             ),
         )
-        .raw("s_phase", ph.json())
+        .raw("s_phase", ph.json(false))
         .raw(
             "l1",
             format!(

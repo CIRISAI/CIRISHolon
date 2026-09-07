@@ -234,14 +234,26 @@ a kill.
   2. **The window.** Blocks of `250` frames — `52.126` fs at the pre-committed step, LIQUID-1's
      own 2,000-frame block to four decimals — each holding `10` samples of the temperature and
      of the instantaneous bond count; a window of `5` consecutive blocks.
-  3. **The test.** Every temperature sample in the window inside the band, AND the
-     least-squares trend of the window's block bond means, across the window, under the
-     window's own standard deviation: the network has stopped rising within its own noise.
-  4. **VALIDATED BEFORE FREEZING, on the record it was derived from.** The same function, run
-     on LIQUID-1's own blocks, first fires at that arm's frame **26,000 = `678` fs** — 1.45
-     times the settling actually needed and never earlier, so the criterion neither fires
-     early nor costs an arm. Five-block windows were chosen for that reason; 8 and 10 blocks
-     fire at `1147` and `1199` fs and buy nothing.
+  3. **The test, and its variable is one NO STAKE READS.** Every temperature sample in the
+     window inside the band, AND the least-squares trend of the window's block means of the
+     **cross-unit potential energy** (`Row::Field + Row::Seam` per water, the quantity §1's
+     expectation is already written in), across the window, under the window's own standard
+     deviation. An earlier version used the bond count; that is corrected, because the bond
+     count is exactly what R2 reads and what S's graph is built from, and a criterion that
+     watches a readout has spent it. The cross-unit potential energy is the thermodynamically
+     slow part of the energy with the intramolecular vibration excluded by construction, and
+     R1's histogram, R2's census, R3's displacement and S's graph read none of it.
+  4. **VALIDATED, and the validation is honest about what LIQUID-1's log can carry.** That log
+     has a temperature column and no energy column, so what can be checked against it is the
+     TEMPERATURE leg — and that leg, with this exact 5-block window and this exact band, first
+     holds at LIQUID-1's frame **18,000 = `469` fs**, which is the very frame its bond count
+     settles at. The reference is met exactly at its boundary. The two legs are a CONJUNCTION,
+     so a criterion whose temperature leg first holds at frame `F` cannot fire before `F`
+     whatever its second leg does: adding the energy leg can only move the firing later. The
+     energy leg is therefore validated on THIS campaign's own arm instead of on a log that
+     cannot carry it, and where it fires is recorded in the gate's own settling series.
+     Five-block windows were chosen because 8 and 10 blocks fire at `1147` and `1199` fs on
+     LIQUID-1's own series and buy nothing.
   5. **A floor and a cap.** The settling may not end before LIQUID-1's own measured `469.1` fs
      converted at this arm's step — `2,250` frames — and may not exceed `40,000` frames
      (`8.34` ps, 17.8 times that). Reaching the cap VOIDS the arm with the settling series
@@ -261,13 +273,21 @@ a kill.
      conversions are written to the record so a reader sees the number that was not used.
   Every arm records the settling length it actually used and its whole block series.
 
-  **Measured at the gate, before any seed is released, and reproduced:** the criterion fires at
-  `11,850` frames = `2,470.8` fs over `47` blocks, uncapped, on two independent runs of the
-  gate — the same frame to the frame, as a deterministic box on one seed must be. That is
-  `5.9` times the settling LIQUID-1 gave itself in frames and `47` times it in physical time,
-  and it is `7.92 %` of each seed's total passes — `2,767.9` s per seed, `8,303.7` s across the
-  three.
-  witness: none (a criterion validated on `liquid1/arm.log` and re-run by the same function
+  **Measured at the gate, before any seed is released:** the corrected criterion fires at
+  **`7,100` frames = `1,480.4` fs** over `28` blocks, uncapped, and the whole settling series
+  is in `gate_provisional_8x/gate.json`. That is `3.2` times LIQUID-1's own measured settling
+  in physical time.
+  **AND IT FIRES EARLIER THAN THE WITHDRAWN VARIABLE DID, which is the price of the blindness
+  and is stated rather than hidden.** Watching the bond count, the criterion fired at `11,850`
+  frames; watching the cross-unit energy it fires at `7,100`. The energy flattens before the
+  network does, so a criterion that may not look at the network cannot know how much longer it
+  kept moving. The trade is deliberate — an equilibration gate that watches R2 has spent R2 —
+  and the residual risk is named here: **OWED, a labelled screen that logs BOTH variables
+  through one settling, to establish whether the bond count is flat where the energy criterion
+  fires.** Until that exists this campaign does not claim it is, and the counted arm's own
+  readouts, which sample the bond count every `246` frames, would show a trend if one remained.
+  witness: none (a criterion whose temperature leg is validated on `liquid1/arm.log` and whose
+  energy leg is validated on this campaign's own arm, both re-run by the same function
   on every arm)
 - **N — the readings are over THREE SEEDS and every one carries its spread.** The seeds are
   declared: LIQUID-1's own `0x4c49_5155_4944` and it plus one and plus two, so one arm of this
@@ -288,18 +308,21 @@ a kill.
   the ceiling `2.994781e5` s.
   **The absolute price moves with PLACEMENT by more than the term it is measuring, which is
   why L2's band is a ratio two orders wide and never a wall clock (M-PLACEMENT-LOTTERY).** The
-  same 100 frames of the same box, measured four times: `2.335743e-1` s per pass on an idle
-  host, `2.405220e-1` and `2.482453e-1` with one or two neighbours, and `3.732755e-1` with
-  three of this campaign's own side jobs on neighbouring cores. That is a `60 %` spread on an
-  absolute second count from nothing but what else the host was doing. Against LIQUID-1's own
-  `2.319605779e-1` those are ratios of `1.006957`, `1.036909`, `1.070205` and `1.609219`. **On
+  same 100 frames of the same box, measured five times: `2.335743e-1` s per pass on an idle
+  host, `2.405220e-1`, `2.482453e-1` and `2.601433e-1` with one or two neighbours, and
+  `3.732755e-1` with three of this campaign's own side jobs on neighbouring cores. That is a
+  `60 %` spread on an absolute second count from nothing but what else the host was doing.
+  Against LIQUID-1's own `2.319605779e-1` those are ratios of `1.006957`, `1.036909`,
+  `1.070205`, `1.121498` and `1.609219`. **On
   the idle host channel 6 as a sixty-knot four-dimensional interpolant costs `0.7 %` of a
   384-atom force pass with a lattice sum — and the placement spread is an order of magnitude
   larger than the term itself, so the honest statement is that the table's cost is under the
-  noise floor of any wall-clock measurement this host can make.** The record commits the idle
-  number: `2.335743e-1` s per pass, the campaign projected at `104,835.1` s (29.1 core-hours)
-  for 3 seeds × (11,850 settling + 137,760 counted) against the ceiling `2.994781e5` s.
-  **R3 is LIVE.** Nothing in this freeze gates on the absolute seconds.
+  noise floor of any wall-clock measurement this host can make.** The record now carries
+  `2.601433e-1` s per pass (ratio `1.121498`), the campaign projected at `113,053.1` s
+  (31.4 core-hours) for 3 seeds × (7,100 settling + 137,760 counted) against the ceiling
+  `2.994781e5` s. **R3 is LIVE at the provisional step, and the step is not committed** (§2's
+  rule selects nothing until the serving rule is fixed). Nothing here gates on absolute
+  seconds.
   witness: none (a price, recorded)
 - **R1 — the first oxygen–oxygen peak.** From the counted frames' mean `g_OO(r)`: the position
   of the first maximum and its height. KILL bands, from experiment and declared: position in
@@ -315,15 +338,13 @@ a kill.
   `1.184343750` on this same lens and is cited beside the band wherever it appears; the
   both-ends number is written into the record too, so no reader has to do the division.
   **(a)** in band; **(b)** under; **(c)** over.
-  **R2 IS A CONFIRMATION AND NOT A FORWARD PREDICTION EITHER, for the same structural reason S
-  is, and the freeze says so before the arm.** Gate E's criterion decides that the box has
-  settled by watching the bond count stop rising, so the campaign cannot equilibrate on a
-  measured criterion AND stay blind to R2's own quantity — one of the two has to go, and it is
-  the blindness, because an unequilibrated average is the defect this gate exists to remove.
-  The gate's own settling series is in the record and it is already in the band's
-  neighbourhood while the box is still cooling. What the counted arm adds is a settled box,
-  560 readouts across 28.7 ps, and three seeds with a spread. The band is unchanged, it was
-  set from experiment before any of this ran, and rule 6 does not count R2 as support.
+  **R2 IS A FORWARD PREDICTION AND IS KEPT ONE.** An earlier version of this draft equilibrated
+  on the bond count, which made R2 a quantity the gate had already seen, and said so. That is
+  CORRECTED rather than declared acceptable: gate E's settling variable is now the cross-unit
+  potential energy, no phase of this campaign samples the bond count before the counted arm,
+  and the gate's own graph reading — which it must take for plant (iii)'s carrier — is written
+  in a BLIND form that withholds the degree and the edge counts, since those are `2 x` R2's
+  own number. Nothing this campaign records before its arm carries R2's reading.
   witness: none (the frozen lens under the minimum image)
 - **R3 — self-diffusion, on a window PRICED from LIQUID-1's own exponent.** LIQUID-1's lens
   refused its own reading: MSD went as `τ^1.64` over a window of `[5.2126, 547.3]` fs, so there

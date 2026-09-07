@@ -156,7 +156,7 @@ is the meta-molecule's own tier and the acuity rule's reason to exist.
 
 ### The cube (1 km) — FENCED by name; goes live as the rungs beneath it certify (WORKBENCH_FSD §11.2)
 
-## The page (the .io workbench) — WB-9, one pass after LIQUID-1 reads
+## The page (the .io workbench) — WB-9 DONE (ed27fbc: smoke 431 → 522, pages green; the live 16-water cell MEASURED and refused by the periodic door, not by price; eight six-by-six cells empty for want of a record line, concert's row among them)
 
 The engine on the page is rebuilt from the deployed commit and carries everything above; the
 page's manifest does not. One pass, under the FSD's own rules (no tier fakes; a band runs its

@@ -1,0 +1,18 @@
+{
+  "phase": "amplitude_table",
+  "note": "READ at run time from CT-1's and CT-2's own records; no value here is typed into the crate",
+  "e_ct_rule": "E_exact(total) - E_noCT(total), the tilt records' own e_ct_rule",
+  "records_root": "../conformance",
+  "retention": 5.526000000e-1,
+  "retention_source": "water_observatory/ct2/arms.json:dimer_293_seam.f",
+  "rent_e0_over_kt": 2.111813634e-1,
+  "p_break_phi0": 8.096272168e-1,
+  "table": [
+    {"phi_degrees": 0, "phi_index": 0, "e_ct_hartree": -9.336779900e-3, "amplitude": 1.000000000e0, "source": "water_observatory/ct2/gd0_linear_R2.9.json:e_full (-150.0520630749) - water_observatory/ct1/sector_linear_R2.9.json:e_noct (-150.042726295), the tilt records' own e_ct_rule"},
+    {"phi_degrees": 60, "phi_index": 1, "e_ct_hartree": -1.248493569e-2, "amplitude": 1.337177895e0, "source": "water_observatory/ct2/node_tilt_R2.9_t60.json:e_ct"},
+    {"phi_degrees": 120, "phi_index": 2, "e_ct_hartree": -1.203040790e-2, "amplitude": 1.288496466e0, "source": "water_observatory/ct2/node_tilt_R2.9_t120.json:e_ct"},
+    {"phi_degrees": 180, "phi_index": 3, "e_ct_hartree": -1.325913136e-2, "amplitude": 1.420096811e0, "source": "water_observatory/ct2/node_tilt_R2.9_t180.json:e_ct"},
+    {"phi_degrees": 240, "phi_index": 4, "e_ct_hartree": -1.203040790e-2, "amplitude": 1.288496466e0, "source": "water_observatory/ct2/node_tilt_R2.9_t120.json:e_ct (tilt symmetry: 240 deg is the map's 120 deg)"},
+    {"phi_degrees": 300, "phi_index": 5, "e_ct_hartree": -1.248493569e-2, "amplitude": 1.337177895e0, "source": "water_observatory/ct2/node_tilt_R2.9_t60.json:e_ct (tilt symmetry: 300 deg is the map's 60 deg)"}
+  ]
+}

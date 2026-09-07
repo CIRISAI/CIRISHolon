@@ -96,10 +96,15 @@ contract is checked by the gate that was blind to the render-only modules.
    promotion; R7 is a hard blocker; R9 is the lead's. Rows still unbuilt: R5a, R5b, and
    R6's residual sweep for page-local fences with no register row.
 
-The three coarse bands are FENCED, and a fence is a bug under repair, never content
-(operator's law). Each names its debt, its owner and the build paying it in present tense,
-and the band flips on that build landing a node-G closure certificate — not on the fence
-being well worded. They are not blockers on the site promotion; they ARE the work queue.
+The three coarse bands hold no node-G closure certificate, and a fence is a bug under repair,
+never content (operator's law). Each names its debt, its owner and the build paying it in
+present tense, and a band goes LIVE on that build landing a node-G closure certificate — not
+on the fence being well worded. They are not blockers on the site promotion; they ARE the work
+queue. Two of the three are now MEASURED rather than fenced — the H-bond network at WB-9 on
+LIQUID-1's readouts, the fluid element at WB-10 on FLUID-0's and FLUID-1's, the second one
+running its own instrument in the page. That word is a third state and not a softer fence: the
+certificate direction is gated on a measured band exactly as on a fenced one, and neither of
+the two has earned one.
 
 ## Door queue (bands flip only on node-G closure certificates)
 
@@ -206,3 +211,129 @@ and smoke.mjs, and it RUNS both render passes under a DOM stub, so an exception 
 Smoke: 431 → 522, all green. Five plants confirmed (a syntax error, a refusal drawn as a
 zero, the MEASURED word removed, a reading's cite moved one line, a grid row keyed by a name
 the engine does not serve).
+
+## WB-10 — the fluid element band runs its own instrument (2026-09-06)
+
+**Verdict.** The FLUID ELEMENT band goes from a fence carrying a finding to **MEASURED**, and
+its live cell is FLUID-1's own orientation lattice stepping in the page. The node-G closure
+certificate is untouched and still owed; `measured` is not `live`, and the certificate
+direction is gated on this band exactly as on a fence. §11.2 still reads FENCED for it and
+that stays true — what is gated is the certificate; what changed is that there is now
+something to show.
+
+**The instrument in the wasm.** `holon-lattice` is now a dependency of `holon-render`. It was
+checked wasm-clean before the edit rather than after: `grep` over the whole of its `src/` for
+`std::fs`, `std::thread`, `std::time`, `Instant`, `std::process`, `rayon`, `std::io` and
+`std::env` returns NOTHING, its runtime graph is one crate (`ciris-sim-core` with `alloc`),
+and `cargo check -p holon-render --target wasm32-unknown-unknown` is clean. **No `cfg` gate
+was needed and no rule in the instrument was changed** — the door adds no `pub fn` to
+`holon-lattice` and touches no file in it.
+
+The doors live in a NEW file, `engine/crates/holon-render/src/fluid_door.rs`, reached by a
+single `pub mod fluid_door;` line in `lib.rs` so the lead has one line to merge. **46 doors**,
+refusing the way the seam door does — `0` on success, `FLUID_REFUSED = 220` plus a `k` that
+names the reason, and no door panics (`rent_from_retention` asserts outside `(0,1)` and
+`Lattice::seeded` asserts on a bad `L`, so both are guarded at the door instead of by editing
+the instrument). The rule is PUSHED and never typed: six `holon_fluid_amplitude` calls and one
+`holon_fluid_rent_from_retention`, and `holon_fluid_begin` REFUSES until all seven land. There
+is no default table in the crate and none in the page.
+
+**Gated natively** by `crates/holon-render/tests/fluid_door.rs`, 5 tests: the door-driven
+ledger integer-identical over 500 steps at L = 64 (mass, both momenta, the tracer count, the
+per-orientation census entry by entry, and the bond balance `formed − rent − blocked = held`,
+with every branch of the bond rule asserted to have fired); the no-bond control bit-identical
+to `Lattice::advance_with_colour` over 500 steps in BOTH chiralities, against a referee built
+from the crate's own constructors; every refusal firing by its own name with nothing
+half-applied; the drawn buffers being the lattice (the image's alpha IS the occupancy, every
+listed bond an intact link on the donor's own arm, the six directions embedding at unit
+length); and the absences. Two plants confirmed: a control that flips the flag instead of
+rebuilding, and a `blocked` count short by one.
+
+**THE BOX, AND THE RULE IT WAS CHOSEN BY.** Measured on the shipped artifact under node
+(`taskset -c 24-31`), on FLUID-1's own density and FLUID-1's own seed — the scene the page
+actually begins:
+
+| L | cells | particles | one step | image + bonds | bond graph | ONE FRAME |
+|---|---|---|---|---|---|---|
+| 32 | 1,024 | 1,226 | 0.140 ms | 0.055 ms | 0.049 ms | **0.244 ms** |
+| 64 | 4,096 | 4,899 | 0.536 ms | 0.151 ms | 0.056 ms | **0.743 ms** |
+| 128 | 16,384 | 19,514 | 2.161 ms | 0.589 ms | 0.203 ms | **2.953 ms** |
+| 256 | 65,536 | 78,465 | 9.086 ms | 2.407 ms | 0.790 ms | **12.283 ms** |
+
+**The rule: the largest L whose WHOLE FRAME costs under a quarter of a 60 fps budget
+(16.67/4 = 4.17 ms)**, because this lattice is not the only thing on the page — the molecular
+scene integrates in the same frame and the rest of the telemetry renders after it. That admits
+**L = 128** at 2.953 ms and refuses 256 at 12.283 ms. It is a rule with a cut in it: 256 is
+FLUID-1's own box, the door BUILDS it, and what refuses it here is a measured price and not an
+inability. The page steps ONE step per frame; a batch would give the lattice a clock that is a
+multiple of the frame rate, which is a second clock nobody asked for.
+
+**The band's face** carries FLUID-0's census and FLUID-1's readings, every figure pinned to
+the line of the record it came from and checked in both directions by the gate:
+
+| what | value | line |
+|---|---|---|
+| Schmidt number over 4,608 laws | 0.107 – 0.449 | `conformance/mesh/FLUID0_RESULTS.md:18` |
+| water's Schmidt number — THE KILL | 435 | `conformance/mesh/FLUID0_RESULTS.md:18` |
+| the branch, staked before any law was read | Branch (c) | `conformance/mesh/FLUID0_RESULTS.md:15` |
+| what the census concludes | needs a closure in its carrier | `conformance/mesh/FLUID0_RESULTS.md:76` |
+| FLUID-1's Schmidt number at the chart | 0.1973 / 0.2086 | `conformance/mesh/FLUID1_RESULTS.md:79` |
+| the cold control and the no-bond floor | 0.3290 / 0.3434 and 0.1083 / 0.1103 | `conformance/mesh/FLUID1_RESULTS.md:79` |
+| bonds per particle, ceiling 1 | 0.2894 | `conformance/mesh/FLUID1_RESULTS.md:78` |
+| the graph never spans | 0/200 steps | `conformance/mesh/FLUID1_RESULTS.md:78` |
+| the W excess grows with the block | 0.045, 0.082, 0.086, 0.109 | `conformance/mesh/FLUID1_RESULTS.md:80` |
+| instrument finding — the closure must be able to wait | no rest state on FHP-6 | `conformance/mesh/FLUID1_RESULTS.md:105` |
+| instrument finding — the arm sets the ceiling | capped by the arm, not the rent | `conformance/mesh/FLUID1_RESULTS.md:109` |
+
+`measuredBy` moved to `conformance/mesh/FLUID1_RESULTS.md:15` (FLUID-1's own verdict line) and
+`liveBoxCite` to `:77` (its price row). Rung 2's two figures stay where they were — 5.95e6 and
++0.598, cited to `RUNG2_RESULTS.md`, which is the molecular route's requirement and is checked
+in both directions by the gate that already existed. **The exit is EDGE-0 — the edge exists**,
+on FLUID-1's own carrier at its own chart, with its four staked kills named on the face. (No
+GANTT line is cited: the section is named in prose and the lead renumbers GANTT cites.)
+
+**What is live, and what is quoted.** Live: the lattice's STRUCTURE and its conserved integers
+— bond count, largest component, whether the graph spans, and every audited integer with the
+instrument's own per-step audit as its tick. NOT live and never fitted here: the transport.
+FLUID-1's `Sc` was read at L = 256 over millions of member-steps with a fitted decay per
+wavevector, and a Schmidt number fitted from a few thousand browser frames would be a
+measurement nobody made. The band says so on its face and the door's header says so too.
+
+**The rule's numbers are the campaign's.** `docs/workbench/tables/fluid1_amplitude_table.json`
+and `tables/fluid1_run.json` are byte-identical copies of `conformance/mesh/fluid1/`'s own
+records, digest-pinned in `SHIPPED` and **diffed against the conformance tree by the gate** —
+a new check, because a pin only says the served bytes are the ones the page certifies and says
+nothing about whether they are the campaign's. The page reads the six amplitudes, the
+retention, the density and the seed out of them; it types none of the four. The rent is read
+BACK from the engine after the retention goes in, so what is displayed is the engine's
+arithmetic on the page's push.
+
+**Two gaps in the gate, now closed.** `getContext` returned `null` in the DOM stub, so every
+drawing path on this page was skipped by the gate and tested nowhere but by eye — there is now
+a 2D context stub implementing EXACTLY the methods a browser has, so a call to a method
+Canvas2D lacks fails here as it would in Chrome. And `fetch` THREW in the stub, so the shipped-
+artifact path — fetch, digest, refuse on a mismatch, push through the doors — was unreachable
+from the gate; it is now file-backed over the served tree, which is what a bare checkout
+serves, so `loadFluid` runs end to end under the gate exactly as it runs in a browser.
+
+**Smoke: 522 → 563**, all green. New checks: all 46 fluid doors present in the artifact's
+export table AND the gate's list covering the whole family (both directions, spelled out
+rather than prefix-matched — a prefix test passes on an artifact exporting one symbol); the
+served records byte-identical to the conformance tree; the live cell stepping once per frame
+for 120 frames with every integer identical to its start and the bond balance closing exactly,
+with the work it held over asserted branch by branch; the control rebuilding (bonds off, clock
+at zero, no bond surviving) through the page's own button; the rule panel drawing every angle
+with its CT record; and the picture's own path running with an ImageData exactly L×L. Six
+plants confirmed on the page side: a control that does nothing, a lattice that never steps, a
+served table drifted one digit from its record, an ImageData of the wrong size, an unscaled
+`drawImage`, and (engine side) the two above.
+
+**The artifact grew.** `docs/workbench/holon_render.wasm` 712,848 → 773,856 bytes (+8.6 %),
+which is `holon-lattice`'s code; it is NOT stripped by LTO because `holon_fluid_*` reaches it,
+and that is the point. Rebuilt exactly as `pages.yml` does
+(`HOLON_RENDER_WASM_OUT=… bash engine/crates/holon-render/build-web.sh`), `taskset -c 24-31`.
+
+**Not done, named.** No browser check: the Chrome extension is not connected on this box, so
+the picture has been exercised through a strict 2D-context stub and never seen. The band's
+fenced-band registration in `FENCES.md` is still owed, as the ladder card already says of all
+three coarse bands.

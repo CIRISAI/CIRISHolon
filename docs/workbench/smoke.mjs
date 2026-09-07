@@ -1877,7 +1877,10 @@ if (ladderBlock) {
         fluidLedger.stride * nbLive);
       fluidLedger.bondHead = Array.from(buf.slice(0, fluidLedger.stride * 32));
       fluidLedger.dirs = vm.runInContext("FLUID.dirs", sandbox).map((d) => [d[0], d[1]]);
-      fluidLedger.scale = Math.min(512, 512) / rw.holon_fluid_l();
+      // The page's own pixels-per-cell, taken from the canvas the page read it off rather
+      // than from a 512 typed here — a stub whose canvas changed size would otherwise make
+      // every segment below fail for a reason that is not a defect.
+      fluidLedger.scale = Math.min(ctx2.canvas.width, ctx2.canvas.height) / rw.holon_fluid_l();
     }
     vm.runInContext("fluidToggleNoBond()", sandbox);
     vm.runInContext("renderTelemetry()", sandbox);

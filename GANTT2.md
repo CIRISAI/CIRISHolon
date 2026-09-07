@@ -185,6 +185,49 @@ certified physics or wears its fence with owner and exit; 431 smoke checks and c
 Receipt-gate: the smoke passes with the new bands' cites resolving to the records above;
 `pages.yml` deploys it; the page's manifest names this file's tier rows.
 
+## The external review (2026-09-07) — what it asked, and what the plan does with it
+
+A review of commit 2dd820b (credited, not named) read the water records and the Lean, and
+its assessment is accepted as written: a credible experimental programme with plausible
+novelty in the INTEGRATION (closure witnesses, explicit error budgets, traceable campaigns);
+no quantitatively validated water model and no new physics; one overbroad theorem. Four
+asks, each answered by a record or a named campaign:
+
+1. **Theorem scopes.** CROSS-FACE-1 Theorem 3 claimed an equality where its argument gives a
+   lower bound; the reviewer's counterexample was verified and the correction is in
+   `conformance/omega/CROSSFACE1_RESULTS.md` (the Lean, on `M = λI + (1−λ)Π`, was never
+   wrong). The battery's divergence gate admits `K ≤ 1.05` while `Budget.lean`'s linear
+   budget is proved for `K ≤ 1`: registered as **M-BOUND-HYPOTHESIS-UNMET**, the exit being a
+   certificate stated under the geometric `horizonBudget` at the measured `K` and horizon, or
+   a tightened gate. DEBT, owned by the object contract's next pass.
+2. **Equilibration, seeds, size, uncertainty.** LIQUID-1's 2,000 settling frames were 52 fs and
+   its early readouts sat at 374 K and 348 K against 293 K; one seed, one box. Folded into
+   LIQUID-2's design before its freeze: settling by a measured temperature criterion, at least
+   two seeds with every readout's spread as its uncertainty, a 64-water size check priced, and
+   the freeze stating that density is IMPOSED and the basis minimal.
+3. **Comparison with established models.** Named as **COMPARE-0**: the programme's law against
+   MB-pol (Paesani group) and one classical reference on the SAME held-out dimer geometries and
+   liquid observables, accuracy and cost both measured. Stated honestly in advance: at a
+   minimal basis with no transferred dispersion the programme's law will not win on accuracy;
+   what the comparison measures is the METHOD's cost of a certified reading, and the reading
+   is entered whichever way it falls. After LIQUID-2.
+4. **A certified replacement of fine dynamics by coarse dynamics, with measured error and
+   speedup on an unseen case.** This is the waterbench's goal and it now has a name:
+   **REPLACE-0**. On LIQUID-2's box, the water unit as a CLOSURE (its internal degrees of
+   freedom summarised by the closure type's ledger and rent) run as the coarse dynamics
+   against the fine run on an unseen seed and temperature; error measured on the oxygen
+   shell, the bond count, the spanning fraction and the energy budget under the harness's
+   derived bands; speedup measured as core-seconds per picosecond; the certificate the
+   closure crate's `Edge` and `Rent` were built to carry, read at a stated resolution. Kills:
+   the coarse run's error outside its band on the unseen case; a speedup under 1. Depends on
+   LIQUID-2 read and the molecular grammar wired (the build lane's first debt). CUBE-0 is
+   framed on its result and on nothing else.
+
+What the review says the programme is NOT is kept in the vocabulary: CROSS-FACE's rent is
+displaced probability mass, not thermodynamic energy; unit persistence is not a closure
+certificate (the molecular tier's network certificate stays GATED); an exact solve of a
+minimal-basis Hamiltonian is exact for that Hamiltonian and not for water.
+
 ## The build lane — the closure type and the campaign harness (2026-09-07, `engine/crates/holon-closure`, `holon-campaign`)
 
 Pure engineering, additive, landed with 77 tests: the closure as ONE type (members, the

@@ -170,7 +170,10 @@ fn build(begun: Begin, rules: OrientationRules) -> Fluid {
         start,
         steps: 0,
         image: vec![0u8; n * 4],
-        bonds: vec![0u32; 2 * cap],
+        // Three words a bond (donor, acceptor, link direction), capacity one bond per
+        // particle: a particle holds ONE donor role, so the live bond count can never exceed
+        // the particle count and the buffer never has to grow.
+        bonds: vec![0u32; 3 * cap],
         bond_count: 0,
         graph: None,
     }
@@ -572,27 +575,35 @@ pub extern "C" fn holon_fluid_orient_len() -> u32 {
     read(|x| x.g.orient.len() as u32, 0)
 }
 
-/// Fill the bond buffer with the LIVE bonds and return how many there are: `2n` `u32`s,
-/// `(donor slot, acceptor slot)` per bond, a slot being `cell * 6 + dir`.
+/// Fill the bond buffer with the LIVE bonds and return how many there are: **`3n` `u32`s**,
+/// `(donor slot, acceptor slot, link direction)` per bond, a slot being `cell * 6 + dir`.
 ///
 /// Only bonds whose recorded link IS a link right now are written — `bond_geometry` is the
 /// crate's own test of that, and drawing a bond whose link the dynamics has broken would be
 /// drawing a stale index rather than the state.
+///
+/// THE LINK DIRECTION IS SERVED, NOT LEFT TO THE HOST, and that is the reason for the third
+/// word rather than convenience. A slot is `cell * 6 + dir`, so `donor % 6` is the direction
+/// the donor is MOVING in; the direction the BOND points is the donor's ORIENTATION, which is
+/// a different number living in a different plane. The two are equal only by accident. A host
+/// that had to reach for `orient[donor]` itself would draw the first one about as often as the
+/// second, and the picture would be wrong in a way that still looks like a lattice. This is
+/// `bond_geometry`'s own `delta` — the value the fill already computed to decide the bond is
+/// live — so the host cannot disagree with the instrument about where a bond points.
 #[no_mangle]
 pub extern "C" fn holon_fluid_bonds_fill() -> u32 {
     let mut g = fluid();
     let Some(x) = g.as_mut() else { return 0 };
-    let cap = x.bonds.len() / 2;
+    let cap = x.bonds.len() / 3;
     let mut n = 0usize;
     for b in x.g.bonds.iter() {
         if n >= cap {
             break;
         }
-        if x.g.bond_geometry(b).is_none() {
-            continue;
-        }
-        x.bonds[2 * n] = b.donor;
-        x.bonds[2 * n + 1] = b.acceptor;
+        let Some((delta, _phi)) = x.g.bond_geometry(b) else { continue };
+        x.bonds[3 * n] = b.donor;
+        x.bonds[3 * n + 1] = b.acceptor;
+        x.bonds[3 * n + 2] = delta as u32;
         n += 1;
     }
     x.bond_count = n;
@@ -607,14 +618,23 @@ pub extern "C" fn holon_fluid_bonds_ptr() -> *const u32 {
     }
 }
 
-/// The bond buffer's CAPACITY in pairs — what a host may read without going past the end.
-/// [`holon_fluid_bonds_fill`] returns how many of them are live this frame.
+/// The bond buffer's CAPACITY in bonds — what a host may read without going past the end.
+/// [`holon_fluid_bonds_fill`] returns how many of them are live this frame. Each bond is
+/// THREE `u32`s, so a host reads `3 * capacity` words at most.
 #[no_mangle]
 pub extern "C" fn holon_fluid_bonds_capacity() -> u32 {
-    read(|x| (x.bonds.len() / 2) as u32, 0)
+    read(|x| (x.bonds.len() / 3) as u32, 0)
 }
 
-/// How many pairs the last [`holon_fluid_bonds_fill`] wrote — the part of the buffer that is
+/// The number of `u32` WORDS one bond occupies in the buffer, so a host strides by the door's
+/// own number rather than by a 3 typed into its loop. A layout that grows a fourth word would
+/// otherwise leave every reader silently reading the wrong field.
+#[no_mangle]
+pub extern "C" fn holon_fluid_bond_stride() -> u32 {
+    3
+}
+
+/// How many bonds the last [`holon_fluid_bonds_fill`] wrote — the part of the buffer that is
 /// CURRENT. Reading past it draws bonds that were released steps ago, which is why this is
 /// served rather than left to a host to remember.
 #[no_mangle]

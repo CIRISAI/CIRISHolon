@@ -1664,6 +1664,7 @@ const REQUIRED_EXPORTS = [
   "holon_fluid_largest_fraction", "holon_fluid_largest", "holon_fluid_spans",
   "holon_fluid_image_fill", "holon_fluid_image_ptr", "holon_fluid_image_len",
   "holon_fluid_bonds_fill", "holon_fluid_bonds_ptr", "holon_fluid_bonds_capacity",
+  "holon_fluid_bond_stride",
   "holon_fluid_dir_axial", "holon_fluid_dir_euclidean",
 ];
 
@@ -2350,18 +2351,27 @@ function renderFluid() {
     // triangular and the array is square, so the axial coordinates are sheared onto the
     // screen by the engine's own Euclidean embedding — nothing here knows what a hexagon is.
     if (nb > 0 && l <= 160) {
-      const list = new Uint32Array(w.memory.buffer, w.holon_fluid_bonds_ptr(), 2 * nb);
+      // THE STRIDE IS THE DOOR'S, not a 3 typed here: a layout that grew a fourth word would
+      // otherwise leave this loop silently reading the wrong field of every bond.
+      const stride = w.holon_fluid_bond_stride();
+      const list = new Uint32Array(w.memory.buffer, w.holon_fluid_bonds_ptr(), stride * nb);
       fctx.strokeStyle = "rgba(246, 170, 90, 0.75)";
       fctx.lineWidth = Math.max(1, scale * 0.35);
       fctx.beginPath();
       for (let k = 0; k < nb; k++) {
-        const dc = Math.floor(list[2 * k] / 6);
-        const dd = list[2 * k] % 6;
+        const dc = Math.floor(list[stride * k] / 6);
+        // THE LINK DIRECTION IS THE DOOR'S THIRD WORD, and it is NOT `donor % 6`. A slot is
+        // `cell * 6 + dir`, so the donor's slot says which direction the particle is MOVING
+        // in; the bond points along the donor's ORIENTATION, which lives in another plane
+        // and agrees with the slot only by accident. This page drew the first for one
+        // revision — a picture that still looks like a lattice and is wrong — and the fix is
+        // that the instrument serves the number rather than the page deriving it.
+        const delta = list[stride * k + 2];
         const i = Math.floor(dc / l), j = dc % l;
         // The embedding is read from `FLUID.dirs`, six constants the engine served once. See
         // the note on that field: asking the door per bond is eleven thousand allocating
         // calls a frame at L = 128 to fetch six numbers that cannot change.
-        const [ex, ey] = FLUID.dirs[dd];
+        const [ex, ey] = FLUID.dirs[delta];
         const x0 = (j + 0.5) * scale, y0 = (i + 0.5) * scale;
         fctx.moveTo(x0, y0);
         fctx.lineTo(x0 + ex * scale, y0 + ey * scale);

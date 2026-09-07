@@ -321,7 +321,7 @@ const FLUID_DOORS = [
   "holon_fluid_cells_ptr", "holon_fluid_cells_len",
   "holon_fluid_orient_ptr", "holon_fluid_orient_len", "holon_fluid_no_orient",
   "holon_fluid_bonds_fill", "holon_fluid_bonds_ptr", "holon_fluid_bonds_capacity",
-  "holon_fluid_bonds_live",
+  "holon_fluid_bonds_live", "holon_fluid_bond_stride",
   "holon_fluid_image_fill", "holon_fluid_image_ptr", "holon_fluid_image_len",
   "holon_fluid_dir_axial", "holon_fluid_dir_euclidean",
 ];
@@ -1712,15 +1712,21 @@ if (ladderBlock) {
   // hands the browser the shapes it says it hands it.
   const make2d = (canvasEl) => {
     const calls = [];
+    // The path's points, RESET at each `beginPath` and capped, so what survives is the LAST
+    // frame's first few segments rather than a hundred frames of everything. A recorder with
+    // no cap here holds a million entries by the end of this block.
+    let segs = [];
     return {
-      _calls: calls, canvas: canvasEl,
+      _calls: calls, get _segs() { return segs; }, canvas: canvasEl,
       imageSmoothingEnabled: true, strokeStyle: "", lineWidth: 1, fillStyle: "",
       createImageData: (cw, ch) => ({ width: cw, height: ch, data: new Uint8ClampedArray(cw * ch * 4) }),
       putImageData: (img, x, y) => calls.push(["putImageData", img.width, img.height, x, y, img.data.length]),
       drawImage: (...a) => calls.push(["drawImage", a.length, ...a.slice(1)]),
       setTransform: () => {}, clearRect: () => {}, fillRect: () => {}, scale: () => {},
       save: () => {}, restore: () => {}, translate: () => {},
-      beginPath: () => calls.push(["beginPath"]), moveTo: () => {}, lineTo: () => {},
+      beginPath: () => { calls.push(["beginPath"]); segs = []; },
+      moveTo: (x, y) => { if (segs.length < 256) segs.push([x, y]); },
+      lineTo: (x, y) => { if (segs.length < 256) segs.push([x, y]); },
       arc: () => {}, fill: () => {}, closePath: () => {},
       stroke: () => calls.push(["stroke"]),
     };
@@ -1859,6 +1865,20 @@ if (ladderBlock) {
       // what is tested is the button a reader presses.
       beforeControl: rw.holon_fluid_bonds_enabled(),
     };
+    // THE DRAWN BOND SEGMENTS AND THE BOND LIST THEY CAME FROM, captured together and BEFORE
+    // the control rebuilds the scene — a segment list checked against a bond list from a
+    // different lattice would establish nothing.
+    {
+      const ctx2 = ((stub.store.get("fluid-canvas") || {})._ctx) || { _segs: [] };
+      fluidLedger.segs = ctx2._segs.slice(0, 64);
+      fluidLedger.stride = rw.holon_fluid_bond_stride();
+      const nbLive = rw.holon_fluid_bonds_live();
+      const buf = new Uint32Array(rw.memory.buffer, rw.holon_fluid_bonds_ptr(),
+        fluidLedger.stride * nbLive);
+      fluidLedger.bondHead = Array.from(buf.slice(0, fluidLedger.stride * 32));
+      fluidLedger.dirs = vm.runInContext("FLUID.dirs", sandbox).map((d) => [d[0], d[1]]);
+      fluidLedger.scale = Math.min(512, 512) / rw.holon_fluid_l();
+    }
     vm.runInContext("fluidToggleNoBond()", sandbox);
     vm.runInContext("renderTelemetry()", sandbox);
     fluidLedger.afterControl = rw.holon_fluid_bonds_enabled();
@@ -2030,6 +2050,43 @@ if (ladderBlock) {
     want(drawCalls.some((c) => c[0] === "stroke") && drawCalls.some((c) => c[0] === "beginPath"),
       "and stroked the live bonds in one path",
       "no path was stroked: either no bond is live or the bond-drawing branch did not run");
+
+    // EVERY DRAWN BOND POINTS ALONG THE DONOR'S ORIENTATION, WHICH IS NOT ITS SLOT.
+    //
+    // This is the one check that would have caught the defect it was written for. A slot is
+    // `cell * 6 + dir`, so `donor % 6` is the direction the donor is MOVING in; the bond points
+    // along the donor's ORIENTATION, which lives in a different plane. The page drew the first
+    // for one revision — a picture that still looks like a lattice and is wrong in a way no
+    // count, no ledger and no citation could see. So the segments the page actually stroked are
+    // compared against the link direction the DOOR served for those same bonds, and the two
+    // directions are required to differ on most of them, or the scene cannot tell them apart
+    // and the comparison is vacuous.
+    if (fluidLedger && fluidLedger.running && fluidLedger.segs && fluidLedger.segs.length >= 4) {
+      const { segs, stride, bondHead, dirs, scale } = fluidLedger;
+      const nSeg = Math.min(Math.floor(segs.length / 2), Math.floor(bondHead.length / stride));
+      let wrong = 0, differ = 0;
+      for (let k = 0; k < nSeg; k++) {
+        const [x0, y0] = segs[2 * k], [x1, y1] = segs[2 * k + 1];
+        const served = bondHead[stride * k + 2];
+        const slotDir = bondHead[stride * k] % 6;
+        const want2 = dirs[served];
+        if (Math.abs((x1 - x0) / scale - want2[0]) > 1e-9
+          || Math.abs((y1 - y0) / scale - want2[1]) > 1e-9) wrong += 1;
+        if (served !== slotDir) differ += 1;
+      }
+      want(nSeg >= 8 && wrong === 0,
+        `every one of ${nSeg} drawn bond segments runs along the link direction the door served`,
+        `${wrong} of ${nSeg} segments point somewhere else — the page is deriving the bond's `
+        + "direction instead of reading the one the instrument computed");
+      want(differ * 2 > nSeg,
+        `and the served direction differs from the donor's slot on ${differ} of ${nSeg}, so the `
+        + "check above is not passing by coincidence",
+        "on this scene almost every bond's slot happens to equal its orientation, so drawing "
+        + "either one would look identical and the check establishes nothing");
+    } else {
+      no("the drawn bond segments were captured for checking",
+        "no segment was recorded, so nothing was drawn along any direction");
+    }
   }
 }
 

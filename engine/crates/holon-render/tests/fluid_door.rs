@@ -303,31 +303,57 @@ fn the_drawn_buffers_are_the_lattice_and_not_a_picture_of_one() {
     assert_eq!(
         holon_fluid_bonds_live() as usize,
         n,
-        "the live-pair count and the fill's own return disagree"
+        "the live-bond count and the fill's own return disagree"
     );
-    let bonds = unsafe { std::slice::from_raw_parts(holon_fluid_bonds_ptr(), 2 * n) };
+    let stride = holon_fluid_bond_stride() as usize;
+    assert_eq!(stride, 3, "the buffer's stride changed and this gate reads by the door's number");
+    let bonds = unsafe { std::slice::from_raw_parts(holon_fluid_bonds_ptr(), stride * n) };
     let orient = unsafe { std::slice::from_raw_parts(holon_fluid_orient_ptr(), l * l * 6) };
     assert_eq!(holon_fluid_orient_len() as usize, l * l * 6);
+    // THE THIRD WORD IS THE LINK DIRECTION, and this loop's whole point is that it is not the
+    // donor's slot. A slot is `cell * 6 + dir`, so `donor % 6` is the direction the donor is
+    // MOVING in; the bond points along the donor's ORIENTATION. They agree only by accident,
+    // and a host reaching for the first would draw a picture that still looks like a lattice
+    // and is wrong — so the door serves the second and this gate measures how often the two
+    // differ rather than assuming they do.
+    let mut slot_differs_from_link = 0usize;
     for k in 0..n {
-        let (donor, acceptor) = (bonds[2 * k] as usize, bonds[2 * k + 1] as usize);
+        let (donor, acceptor) = (bonds[stride * k] as usize, bonds[stride * k + 1] as usize);
+        let served = bonds[stride * k + 2] as usize;
         assert!(donor < l * l * 6 && acceptor < l * l * 6, "a slot past the end of the lattice");
         assert_ne!(orient[donor], holon_fluid_no_orient() as u8, "a bond donated by a hole");
         assert_ne!(orient[acceptor], holon_fluid_no_orient() as u8, "a bond accepted by a hole");
         let (dc, dd) = (donor / 6, donor % 6);
         assert_eq!(cells[dc] >> dd & 1, 1, "a bond donated by an empty slot");
+        assert_eq!(
+            served,
+            orient[donor] as usize,
+            "the served link direction is not the donor's orientation"
+        );
+        if served != dd {
+            slot_differs_from_link += 1;
+        }
         // The link is the donor's own arm: the acceptor's cell is the donor's neighbour along
-        // the donor's orientation. That is `bond_geometry`'s rule, checked here on the axial
-        // offsets the door serves rather than on a copy of it.
-        let delta = orient[donor] as usize;
+        // that direction. That is `bond_geometry`'s rule, checked here on the axial offsets the
+        // door serves rather than on a copy of it, and on the SERVED direction rather than on
+        // one this test recomputed — so a door that served the wrong word fails here.
         let (di, dj) = (
-            holon_fluid_dir_axial(delta as u32, 0) as i64,
-            holon_fluid_dir_axial(delta as u32, 1) as i64,
+            holon_fluid_dir_axial(served as u32, 0) as i64,
+            holon_fluid_dir_axial(served as u32, 1) as i64,
         );
         let (i, j) = ((dc / l) as i64, (dc % l) as i64);
         let ii = (i + di).rem_euclid(l as i64) as usize;
         let jj = (j + dj).rem_euclid(l as i64) as usize;
         assert_eq!(ii * l + jj, acceptor / 6, "the bond's link is not the donor's own arm");
     }
+    // The distinction is REAL on this scene rather than merely stated: a run where every bond
+    // happened to have slot == orientation would pass every line above while telling you
+    // nothing about which of the two the door serves.
+    assert!(
+        slot_differs_from_link * 2 > n,
+        "only {slot_differs_from_link} of {n} bonds have a link direction differing from the \
+         donor's slot, so this scene cannot tell the two apart and the check above is vacuous"
+    );
 
     // The Euclidean embedding is the hexagon's, from `isotropy::embed`: six unit vectors.
     for d in 0..6u32 {

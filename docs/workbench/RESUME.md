@@ -230,7 +230,7 @@ was needed and no rule in the instrument was changed** — the door adds no `pub
 `holon-lattice` and touches no file in it.
 
 The doors live in a NEW file, `engine/crates/holon-render/src/fluid_door.rs`, reached by a
-single `pub mod fluid_door;` line in `lib.rs` so the lead has one line to merge. **46 doors**,
+single `pub mod fluid_door;` line in `lib.rs` so the lead has one line to merge. **47 doors**,
 refusing the way the seam door does — `0` on success, `FLUID_REFUSED = 220` plus a `k` that
 names the reason, and no door panics (`rent_from_retention` asserts outside `(0,1)` and
 `Lattice::seeded` asserts on a bad `L`, so both are guarded at the door instead of by editing
@@ -277,6 +277,20 @@ constants, which at L = 128 is over eleven thousand allocating calls into the en
 frame. The six are now read ONCE into `FLUID.dirs` at load — a constant of the direction set,
 not a reading, so a cached copy cannot go stale the way a cached ledger row would — and the
 loop is arithmetic on a typed array with no call into the engine at all.
+
+**And that review found the worse one.** The page was drawing each bond along `donor % 6`.
+A slot is `cell · 6 + dir`, so that is the direction the donor is MOVING in; the bond points
+along the donor's ORIENTATION, which lives in a different plane and agrees with the slot only
+by accident (measured: they differ on 25 of 32 bonds). Every count, every ledger integer and
+every citation was correct while the picture was wrong — and wrong in a way that still looks
+like a lattice, which is exactly the class nothing else on this page could see. THE FIX IS
+NOT A CORRECTED DERIVATION: the bond buffer now carries THREE words per bond — donor,
+acceptor, and `bond_geometry`'s own `delta`, the value the fill already computed to decide the
+bond is live — so the host cannot disagree with the instrument about where a bond points, and
+`holon_fluid_bond_stride` serves the layout so no reader types a 3. **The gate now compares
+the segments the page actually stroked against the direction the door served for those same
+bonds**, and requires the two candidate directions to differ on most of them or reports the
+comparison as vacuous. Planted and confirmed: restoring `donor % 6` fails it, 25 of 32.
 
 **The band's face** carries FLUID-0's census and FLUID-1's readings, every figure pinned to
 the line of the record it came from and checked in both directions by the gate:
@@ -326,7 +340,7 @@ artifact path — fetch, digest, refuse on a mismatch, push through the doors �
 from the gate; it is now file-backed over the served tree, which is what a bare checkout
 serves, so `loadFluid` runs end to end under the gate exactly as it runs in a browser.
 
-**Smoke: 522 → 563**, all green. New checks: all 46 fluid doors present in the artifact's
+**Smoke: 522 → 565**, all green. New checks: all 47 fluid doors present in the artifact's
 export table AND the gate's list covering the whole family (both directions, spelled out
 rather than prefix-matched — a prefix test passes on an artifact exporting one symbol); the
 served records byte-identical to the conformance tree; the live cell stepping once per frame
@@ -338,7 +352,7 @@ plants confirmed on the page side: a control that does nothing, a lattice that n
 served table drifted one digit from its record, an ImageData of the wrong size, an unscaled
 `drawImage`, and (engine side) the two above.
 
-**The artifact grew.** `docs/workbench/holon_render.wasm` 712,848 → 773,856 bytes (+8.6 %),
+**The artifact grew.** `docs/workbench/holon_render.wasm` 712,848 → 773,960 bytes (+8.6 %),
 which is `holon-lattice`'s code; it is NOT stripped by LTO because `holon_fluid_*` reaches it,
 and that is the point. Rebuilt exactly as `pages.yml` does
 (`HOLON_RENDER_WASM_OUT=… bash engine/crates/holon-render/build-web.sh`), `taskset -c 24-31`.

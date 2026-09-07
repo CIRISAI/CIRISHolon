@@ -436,3 +436,69 @@ fn a_water_straddling_a_face_feels_the_centre_molecules_forces_and_does_not_heat
     }
     let _ = centre.temperature();
 }
+
+// ------------------------------------------------------------ THE CLOSURE ADAPTER'S GATE
+//
+// `holon-render::closure` hands this crate's unit reading to `holon-closure`, so that a
+// water unit here, a bonded pair in `holon-lattice` and an H-bond component in `holon-lens`
+// are ONE type. The adapter must reproduce the reading BIT FOR BIT or one rule has become
+// two, and the box to reproduce it on is L0's — the 128-water start box `door.json` records.
+//
+// The test lives HERE rather than in a file of its own for a reason worth stating: this
+// binary already pays for `banked()`, which generates the pair curves and the trimer table,
+// and a second binary that builds this box would pay it again. It also means the state
+// point, the seed and the declared law are declared ONCE in this file instead of twice in
+// two, which is the same fence the adapter itself exists to keep.
+
+/// 128 units on the LIQUID-1 start box, and the same units the existing reading gives.
+#[test]
+fn the_closures_are_the_units_reading_on_the_liquid1_start_box() {
+    use holon_render::closure::{free_atoms, unit_closures, units_from_closures, TIER};
+
+    let (sp, pos, l) = liquid_box(N_CELLS, DENSITY_G_CM3, SEED);
+    let mut s = scene(&sp, &pos, l, 293.0);
+    s.set_field(true, None).expect("the open box admits the field");
+    s.set_seam(Some(declared_law())).expect("no acuity frame");
+
+    let units = s.units_reading();
+    let cs = unit_closures(&s);
+
+    assert_eq!(cs.len(), 128, "128 units on the start box, as door.json records");
+    assert_eq!(TIER, holon_closure::TierId::MOLECULAR);
+    assert!(cs.iter().all(|(_, c)| c.tier == TIER));
+    assert!(cs.iter().all(|(_, c)| c.len() == 3), "a water unit is an oxygen and two hydrogens");
+    assert!(free_atoms(&units[..s.n]).is_empty(), "every atom of the box is inside a unit");
+
+    // BIT FOR BIT: the reading rebuilt from the closures IS the reading.
+    assert_eq!(units_from_closures(s.n, &cs), units[..s.n], "the closures are a different assignment");
+
+    // and each closure's root is the oxygen the reading already names the unit by
+    for (root, c) in &cs {
+        assert_eq!(units[*root as usize], *root, "a root that is not its own unit's root");
+        assert_eq!(sp[*root as usize].z, 8, "a unit rooted on something that is not an oxygen");
+        assert_eq!(c.members().iter().filter(|&&m| sp[m as usize].z == 1).count(), 2);
+        for &m in c.members() {
+            assert_eq!(units[m as usize], *root);
+        }
+    }
+
+    // a closure the adapter built carries no ledger and no rent: the molecular tier's six
+    // channels were measured on the DIMER, and a row filled in here would be a claim nobody
+    // made (`holon_closure::LedgerRow` keeps "measured zero" and "not served" apart)
+    assert!(cs[0].1.ledger.is_empty());
+    assert_eq!(cs[0].1.rent, None);
+}
+
+/// The free-atom case the start box does not exercise, and the one a dissolving unit
+/// produces: a free hydrogen is a unit that came apart, never a closure of one.
+#[test]
+fn a_free_atom_is_reported_and_never_folded_in_as_a_closure_of_one() {
+    use holon_render::closure::{closures_from_units, free_atoms, units_from_closures};
+    let units: Vec<u32> = vec![0, 0, 0, FREE, 4, 4, 4];
+    let cs = closures_from_units(&units);
+    assert_eq!(cs.len(), 2);
+    assert_eq!(cs[0].1.members(), &[0, 1, 2]);
+    assert_eq!(cs[1].1.members(), &[4, 5, 6]);
+    assert_eq!(free_atoms(&units), vec![3]);
+    assert_eq!(units_from_closures(units.len(), &cs), units);
+}

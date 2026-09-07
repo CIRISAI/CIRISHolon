@@ -13,6 +13,8 @@
 //! lenses refuse on them by construction; that is the honest reading and not a gap.
 
 pub mod census;
+/// The H-bond network's phase as the shared closure type (`holon-closure`).
+pub mod closure;
 pub mod field;
 pub mod field_lg;
 pub mod classifier;

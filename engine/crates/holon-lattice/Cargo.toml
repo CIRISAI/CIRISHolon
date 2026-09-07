@@ -18,6 +18,15 @@ description = "FHP-6 / HPP-4 lattice gas as its own closed-tier candidate: exact
 [dependencies]
 ciris-sim-core = { path = "../ciris-sim-core", features = ["alloc"] }
 
+# holon-closure: ONE definition of the closure, shared with holon-render and holon-lens so
+# that a water unit, a bonded pair and an H-bond component are the SAME type. It has ZERO
+# dependencies of its own and no optional features (its manifest says why), so the
+# one-runtime-dep isolation argument above is unchanged in substance: the graph is still
+# only crates that carry no optional feature at all, and this crate still cannot perturb the
+# core's feature resolution or ci-gates.sh's isolation gates. `src/closure.rs` is a thin
+# adapter over `orientation::bond_graph` and `chart::BlockChart`; neither moves.
+holon-closure = { path = "../holon-closure" }
+
 # DEV-only: tests/fchc_control.rs runs holon-mesh's FCHC-24 enumerator so G11's second leg
 # is discharged under this campaign's own invocation rather than cited from another crate's
 # suite. A dev-dependency leaves the library's runtime profile at one crate, so the isolation

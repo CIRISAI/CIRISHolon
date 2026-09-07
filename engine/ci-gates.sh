@@ -381,6 +381,36 @@ cargo test -q --release -p holon-lens 2>/dev/null >/dev/null \
   && ok "holon-lens census/classifier gates pass (plants included)" \
   || no "holon-lens census/classifier gates pass (plants included)"
 
+# holon-closure: ONE definition of the closure -- members, the six-row ledger to each
+# neighbour, the rent, the three productions, the edge at a resolution, the phase. Zero
+# dependencies and pure arithmetic, so the whole suite runs in well under a second and is
+# fully enforced. Its ADAPTERS are gated where they live: holon-lattice's
+# tests/closure_adapter.rs reproduces `orientation::bond_graph` bit for bit on a 500-step
+# L=64 run, holon-render's reproduces `units_reading` on the 128-water LIQUID-1 start box,
+# and holon-lens's unit tests check the shared phase against `largest_domain`. Those three
+# are what make one type one type; this line is the type's own suite.
+n_closure=$(cargo test -q -p holon-closure -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_closure:-0}" -gt 0 ] \
+  && ok "holon-closure reaches $n_closure tests" \
+  || no "holon-closure reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q -p holon-closure 2>/dev/null >/dev/null \
+  && ok "holon-closure: merge/part inverse, the rent clause, the edge, the winding" \
+  || no "holon-closure: merge/part inverse, the rent clause, the edge, the winding"
+
+# holon-campaign: the campaign harness -- gates that name every failing leg, plants whose
+# carrier and analytic reach are checked with no measurement at all, a price written before
+# the counted steps, stakes that carry their provenance, and a record writer that validates
+# its own JSON. Zero dependencies; the suite is arithmetic plus a few temp files. The
+# example is BUILT here as well as tested, because a harness whose one worked example does
+# not compile is documentation, not a harness.
+n_campaign=$(cargo test -q -p holon-campaign -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_campaign:-0}" -gt 0 ] \
+  && ok "holon-campaign reaches $n_campaign tests" \
+  || no "holon-campaign reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q -p holon-campaign --all-targets 2>/dev/null >/dev/null \
+  && ok "holon-campaign: gate/plant/price/stake/record gates pass, example builds" \
+  || no "holon-campaign: gate/plant/price/stake/record gates pass, example builds"
+
 # holon-md: threaded molecular dynamics -- leased workers, chunked evaluation, and the
 # claim that matters is BIT-IDENTITY to the serial run (tests/bit_identity.rs). Release
 # because the identity test propagates real dynamics; still tens of seconds, not hours.

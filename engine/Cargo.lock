@@ -884,6 +884,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "holon-campaign"
+version = "0.1.0"
+
+[[package]]
 name = "holon-chem"
 version = "0.1.0"
 dependencies = [
@@ -894,6 +898,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "holon-closure"
+version = "0.1.0"
+
+[[package]]
 name = "holon-device"
 version = "0.1.0"
 
@@ -902,12 +910,16 @@ name = "holon-lattice"
 version = "0.1.0"
 dependencies = [
  "ciris-sim-core",
+ "holon-closure",
  "holon-mesh",
 ]
 
 [[package]]
 name = "holon-lens"
 version = "0.1.0"
+dependencies = [
+ "holon-closure",
+]
 
 [[package]]
 name = "holon-md"
@@ -939,6 +951,7 @@ version = "0.1.0"
 dependencies = [
  "holon",
  "holon-chem",
+ "holon-closure",
  "holon-lattice",
  "holon-lens",
 ]

@@ -46,6 +46,18 @@ holon-chem = { path = "../holon-chem" }
 # cannot perturb the core's feature resolution or `ci-gates.sh`'s isolation gates. Unlike
 # `holon` it is NOT stripped by LTO: it is reached from `holon_fluid_*` and is meant to be.
 holon-lattice = { path = "../holon-lattice" }
+# holon-closure: ONE definition of the closure, shared with holon-lattice and holon-lens so
+# that a water unit, a bonded lattice pair and an H-bond component are the SAME type.
+# `src/closure.rs` is a thin adapter over `Sim::units_reading` and adds no rule of its own;
+# `sim.rs` is untouched by it.
+#
+# It has ZERO runtime dependencies of its own and no optional features, so like `holon` it
+# cannot perturb the core's feature resolution or the isolation gates. It IS reachable from
+# the library and therefore from the browser artifact, so what it may hold is the same
+# standard as `holon-chem`'s: std-only code and no dependency, which its manifest states as
+# a rule rather than as a fact about today.
+holon-closure = { path = "../holon-closure" }
+
 
 # NOTE: no `[profile.release]` here on purpose. A workspace member's profile section is
 # silently ignored by Cargo (only the workspace root's applies), so declaring one would

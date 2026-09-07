@@ -93,6 +93,22 @@ members = [
   # green suite. Being `no_std` and dependency-free it cannot perturb the core's feature
   # resolution or the isolation gates, and it adds nothing measurable to the wasm bundle.
   "crates/holon-device",
+  # holon-closure: ONE definition of the closure -- members, the six-row ledger to each
+  # neighbour, the rent, the three productions, the edge at a resolution, the phase.
+  # ZERO dependencies (std only), the same isolation profile as q-seam and holon-lens, so
+  # it cannot perturb the core's feature resolution or the isolation gates. It exists
+  # because `holon-render` (a water unit), `holon-lattice` (a bonded pair) and `holon-lens`
+  # (an H-bond component) each already had the object under a different name; all three now
+  # depend on this crate one-way, and each carries a thin adapter whose test reproduces its
+  # own existing readout BIT FOR BIT. A dependency added here would make that graph a cycle
+  # and would also land in holon-render's browser artifact.
+  "crates/holon-closure",
+  # holon-campaign: the campaign harness -- gates that name every failing leg, plants whose
+  # carrier and analytic reach are printed beside the stake, a price written before the
+  # counted steps, stakes that carry their provenance, and a record writer that validates
+  # what it writes. ZERO dependencies (std only), same isolation profile. It is NOT a
+  # dependency of any physics crate: the runners are its adopters, one way.
+  "crates/holon-campaign",
 ]
 
 # Deliberately OUTSIDE the workspace, each for its own reason:

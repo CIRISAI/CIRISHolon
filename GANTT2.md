@@ -185,6 +185,26 @@ certified physics or wears its fence with owner and exit; 431 smoke checks and c
 Receipt-gate: the smoke passes with the new bands' cites resolving to the records above;
 `pages.yml` deploys it; the page's manifest names this file's tier rows.
 
+## The build lane — the closure type and the campaign harness (2026-09-07, `engine/crates/holon-closure`, `holon-campaign`)
+
+Pure engineering, additive, landed with 77 tests: the closure as ONE type (members, the
+six-row ledger to each neighbour with "not served" kept apart from zero, the rent, `merge` and
+`part` as exact inverses on the member set, the three productions as data, the edge at a
+resolution `b` on node LG's fiber rule, the phase as a winding on the torus), with three
+adapters whose tests reproduce their tier's existing readout — the lattice's bond graph and
+the box's unit reading BIT FOR BIT, the lens's largest component equal to `largest_domain`.
+The harness: gates naming every failing leg, plants whose carrier and analytic reach are
+checked BEFORE any measurement (both FLUID-1 plant failures are caught with no run), a price
+that cannot be counted before it is written, stakes carrying their read inputs and
+arithmetic, a record writer that refuses malformed JSON and unlabelled typed stakes.
+
+**Debt, stated plainly:** no tier's real grammar is wired (stating `assign_units`, the seam
+condition and the 1.95-bohr boundary as productions changes behaviour and is a freeze's
+work, not a build's); no adapter sets a rent (CT-2's retention becomes a decay and a payment
+only by a freeze's own arithmetic); `BlockView` has one implementor, the lattice chart; the
+lens phase readout has no caller until LIQUID-2; the plus-flag scan refuses `+` inside prose.
+The next runner (LIQUID-2 or EDGE-0) is the harness's first adopter, by construction.
+
 ## Standing laws — as GANTT.md, plus
 
 **The four questions.** A tier's row is complete when closed / ledger / production / dynamics

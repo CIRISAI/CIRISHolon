@@ -45,6 +45,8 @@ pub mod cells;
 pub mod channel;
 pub mod checkpoint;
 pub mod fluid_door;
+/// The molecular tier's units as the shared closure type (`holon-closure`).
+pub mod closure;
 pub mod bank;
 pub mod clock;
 pub mod hadron;

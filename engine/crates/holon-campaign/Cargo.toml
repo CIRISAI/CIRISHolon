@@ -1,0 +1,18 @@
+[package]
+name = "holon-campaign"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "The campaign harness: gates that name every failing leg, plants with their carrier and analytic reach, a price written before the counted steps, stakes that carry their provenance, and a record writer that validates what it writes"
+
+# ZERO dependencies, std only — the same isolation profile as `q-seam`, `holon-lens` and
+# `holon-closure`, so this crate cannot perturb the core's feature resolution or the
+# isolation gates in `ci-gates.sh`. In particular it carries NO JSON crate: the records this
+# repo writes are assembled line by line by their runners and the validator here is a
+# hand-written strict parser, so what checks a record is subject to exactly the rules the
+# record has to meet and to no library's idea of them.
+#
+# NOTHING depends on this crate in the physics direction. It is a harness the runners adopt,
+# one way, so a break here can never redden a force law.
+[dependencies]

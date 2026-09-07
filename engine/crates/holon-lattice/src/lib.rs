@@ -46,6 +46,7 @@
 //!   already in `holon-mesh::fchc` and not run here.
 
 pub mod chart;
+pub mod closure;
 pub mod isotropy;
 pub mod lattice;
 pub mod orientation;

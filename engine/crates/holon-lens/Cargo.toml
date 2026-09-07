@@ -6,7 +6,14 @@ license = "AGPL-3.0-or-later"
 publish = false
 description = "Trajectory lenses, the closure census, and the blind phase classifier"
 
-# ZERO dependencies, std only — the same isolation profile as q-seam and holon-qasm.
+# ONE dependency, and it is a type: `holon-closure`, so that a water unit, a bonded lattice
+# pair and this crate's H-bond component are the SAME object rather than three. It has ZERO
+# runtime dependencies of its own and no optional features (its manifest says why), so the
+# argument below is untouched in substance — this crate still cannot perturb the workspace's
+# feature resolution or the isolation gates in `ci-gates.sh`, and it still has no path to
+# `holon-render`.
+#
+# Otherwise: std only — the same isolation profile as q-seam and holon-qasm.
 #
 # That is not minimalism for its own sake. This crate is READ BY the census and the
 # classifier and WRITTEN BY an example inside `holon-render`; if it depended on
@@ -14,6 +21,9 @@ description = "Trajectory lenses, the closure census, and the blind phase classi
 # tested while the renderer is mid-refactor. It has been tested exactly that way: this
 # crate's whole suite runs green on a tree where `holon-render` does not compile.
 #
-# It also means the crate cannot perturb the workspace's feature resolution or the
-# isolation gates in `ci-gates.sh`.
+# The direction of the ONE dependency above obeys the same rule: `holon-closure` sits under
+# this crate and under `holon-render`, and depends on neither, so the lens layer is still
+# testable on a tree where the renderer does not compile — which is how it was tested when
+# this dependency was added.
 [dependencies]
+holon-closure = { path = "../holon-closure" }

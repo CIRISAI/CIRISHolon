@@ -1,0 +1,20 @@
+[package]
+name = "holon-closure"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "The closure as an engine type: an object is a lossy view the dynamics never splits, its ledger to its neighbours, its rent, the grammar that rewrites it, its edge at a resolution and its phase"
+
+# ZERO dependencies, std only — the same isolation profile as `q-seam`, `holon-lens` and
+# `holon-qasm`, so this crate cannot perturb the core's feature resolution or the isolation
+# gates in `ci-gates.sh`.
+#
+# THE DEPENDENCY DIRECTION IS THE WHOLE POINT and is stated here where someone adding a
+# dependency will look. `holon-render`, `holon-lattice` and `holon-lens` all depend on THIS
+# crate, one-way, so that the one object each of them already has under a different name
+# (a water unit, a bonded pair, an H-bond component) is the SAME type in all three. A
+# dependency added here on any of the three would make the graph a cycle and the shared
+# type impossible; a dependency added here on anything at all would land in `holon-render`'s
+# browser artifact, which ships to every visitor.
+[dependencies]

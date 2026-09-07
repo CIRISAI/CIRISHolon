@@ -139,3 +139,21 @@ anything to select, and only then can R3's window and the campaign's price be de
 5. `beta`'s derivation needs the shortest and second-shortest contact separation at each of
    the map's 64 nodes. Those geometries are in `ct1/sector_*.json` and `ct2/gd0_*.json`; the
    number has NOT been extracted here.
+
+
+## Correction (2026-09-07, second external review): the smooth rule's force, and the lens
+
+- For `E = Σ_k w_k E_k` with `w_k = e^{−βr_k}/Σ_j e^{−βr_j}` the force is
+  `F = −Σ_k w_k ∇E_k − Σ_k E_k ∇w_k`; the specification above named only the first term. The
+  second is `∇w_k = w_k(−β∇r_k + β Σ_j w_j ∇r_j)` on the atoms of every contact, and the
+  finite-difference gate must run on the RECORDED handover geometries (the liquid's worst
+  cases), on hydrogen permutations, molecular exchange, contact ties and periodic crossings —
+  the table's own nodes would miss the failure this note measured.
+- The diffusion lens's wall-saturation cap (`lens.rs`, written for `Boundary::Walls`) is applied
+  to unwrapped PERIODIC displacements, which do not saturate; the window above was sized to that
+  cap and must not be. The lens becomes boundary-aware, the exponent gate stays, finite-size
+  effects are assessed apart, and the slope fit and the exponent check share one declared lag
+  interval.
+- The step is chosen by NVE runs from identical checkpoints at several steps over EQUAL physical
+  durations, by energy fluctuation and observable convergence — the sweep above varied duration
+  with the step.

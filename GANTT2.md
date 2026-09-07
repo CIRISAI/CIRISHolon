@@ -240,6 +240,61 @@ displaced probability mass, not thermodynamic energy; unit persistence is not a 
 certificate (the molecular tier's network certificate stays GATED); an exact solve of a
 minimal-basis Hamiltonian is exact for that Hamiltonian and not for water.
 
+## The second review (2026-09-07, of 2dd820b…eef0754) — the build order, accepted, each source claim verified
+
+The review's verdict is accepted: credibility improved, quantitative water accuracy not
+established, and the fastest accurate path is to repair CT-3 and the measurement pipeline,
+remove avoidable cost, move the reference comparison earlier, then demonstrate ONE coarse
+replacement. Its five source-based claims were checked against the tree by the lead before
+this section was written, and every one holds:
+
+| claim | verified | where |
+|---|---|---|
+| the smooth serving rule's force must carry BOTH terms, `−Σ w_k ∇E_k − Σ E_k ∇w_k` | yes — `DRIFT_NOTE.md`'s spec named only the first; corrected there | `liquid2/DRIFT_NOTE.md` |
+| `quartet::scene` calls `reset(n)` before installing the real coordinates, and `reset` builds a placeholder configuration and evaluates forces | yes — a plausible source of the cubic peak memory measured at 432 waters; to be instrumented, not assumed | `tests/common/quartet.rs:65`, `sim.rs::reset` |
+| `fenced_triples()` enumerates every atom triple when the seam is active | yes — a cubic count where a census would do; it is bookkeeping, not force | `sim.rs::fenced_triples` |
+| the diffusion lens refuses large displacements by a WALL-saturation cap regardless of boundary, and LIQUID-2 sized its window to that cap on unwrapped periodic positions | yes — the cap is written for `Boundary::Walls` and applied unconditionally; the lens must be boundary-aware, the exponent gate kept, finite-size effects assessed apart | `holon-lens/src/lens.rs:315–351`, `liquid2.rs:155` |
+| the thermostat is Berendsen velocity rescaling | yes — suppressed fluctuations are not canonical sampling; a stochastic-rescaling thermostat (Bussi–Donadio–Parrinello 2007) is the named replacement, with NVE runs for transport sensitivity | `sim.rs:5069` |
+
+**The order, as the review gives it and as the plan now reads:**
+
+1. **CT-3 smooth and conservative FIRST** (the owed serving rule, with both force terms; gated on
+   the recorded handover geometries including the liquid's worst cases, on hydrogen permutations,
+   molecular exchange, contact ties and periodic crossings, and on finite-difference forces at
+   those geometries — the table's own nodes would miss the demonstrated failure); then NVE runs
+   from identical checkpoints at several steps over EQUAL physical durations, the step chosen by
+   energy fluctuation and observable convergence. The present sweep varied duration with the step
+   and its non-quadratic scaling is weaker evidence than the handover accounting.
+2. **Cost before hardware**: instrument the `reset` allocation and give the scene an
+   initialisation that installs the geometry before any force; replace the cubic triple count by
+   census arithmetic preserving its free-atom and diagnostic handling; acceptance is unchanged
+   energies, forces and ledger counts plus measured peak memory and core-seconds per picosecond;
+   re-benchmark the 432-water construction.
+3. **Sampling and diffusion before the LIQUID-2 freeze**: the boundary-aware lens with the slope
+   fit and the exponent check on ONE declared lag interval; equilibration frozen on separate PILOT
+   trajectories discarded from confirmation (so the bond count may be watched there without
+   compromising R2, and never selected on agreement with experiment); autocorrelation-aware
+   uncertainty beside the seed spread; the stochastic-rescaling thermostat validated.
+4. **COMPARE-0 BEFORE the full LIQUID-2**: cheap held-out dimers and small clusters against MB-pol
+   and the classical reference, at the known weaknesses (high tilt between the azimuth sheets,
+   competing donor contacts, donation both ways), scoring TOTAL interaction energies and forces
+   beside the channel errors — the interpolant's error and the Hamiltonian's error measured
+   apart; that reading chooses among more table coverage, a better angular representation,
+   many-body polarisation and a larger basis. Liquid structure, pressure and diffusion under
+   matched conditions after; an NPT density test before any density claim.
+5. **EDGE with an ATTRACTION**, gates in order: persistent slab → stationary bulk densities and
+   width → positive resolved Laplace tension → capillary agreement → viscosity and diffusion;
+   fresh confirmation seeds; the new interaction's momentum transfer in the pressure; if the slab
+   disappears the tension analysis stops. EDGE-0 read "clustering", not coexistence, by this
+   review's word, and the plan adopts the word.
+6. **REPLACE-0, tightly bounded**: intramolecular vibration replaced by an oriented rigid water
+   with the intermolecular law kept, against the repaired flexible model on an unseen seed and
+   temperature; predeclared tolerances on structure, connectivity, energy and transport; total
+   cost including closure detection, certification, reconstruction and refreshes; its own
+   approximation error reported apart from the fine model's disagreement with reference physics;
+   every certificate stating its resolution, horizon and the growth bound that covers its
+   admitted range.
+
 ## The build lane — the closure type and the campaign harness (2026-09-07, `engine/crates/holon-closure`, `holon-campaign`)
 
 Pure engineering, additive, landed with 77 tests: the closure as ONE type (members, the

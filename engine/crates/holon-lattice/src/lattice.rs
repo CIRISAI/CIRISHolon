@@ -521,6 +521,39 @@ impl Lattice {
     pub fn occupancy_distance(a: &[u8], b: &[u8]) -> u64 {
         a.iter().zip(b).map(|(&x, &y)| (x ^ y).count_ones() as u64).sum()
     }
+
+    /// The cell a particle at `cell` moving in direction `dir` reaches — the precomputed
+    /// torus wrap, READ from the same table [`Lattice::advance`] streams on.
+    ///
+    /// Added for `crate::orientation`, which carries a second state beside this one and must
+    /// stream on the SAME wrap rather than a second copy of the arithmetic (a second copy is
+    /// how two objects that must agree come to disagree). Additive: no existing path changes.
+    #[inline]
+    pub fn neighbour_of(&self, cell: usize, dir: usize) -> usize {
+        self.neighbour[cell * self.model.n_dirs() + dir] as usize
+    }
+
+    /// The image `[`Lattice::advance`]`'s collision phase would write at `cell`, for the
+    /// state `s` at `step_index` — the same table and the SAME chirality hash, in one
+    /// expression, so a state beside this one collides identically.
+    ///
+    /// Solid cells are not handled here: this is the collision, not the wall.
+    /// `crate::orientation` refuses a walled lattice at construction, and
+    /// `orientation::tests::the_no_bond_path_is_advance_with_colour` measures the agreement
+    /// over 500 steps rather than asserting it. Additive: no existing path changes.
+    #[inline]
+    pub fn collision_image(&self, cell: usize, s: u8, step_index: u64) -> u8 {
+        match &self.chirality_pair {
+            None => self.collision[s as usize],
+            Some((k, alt)) => {
+                let h = mix64(
+                    k ^ (cell as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15)
+                        ^ step_index.rotate_left(32),
+                );
+                alt[(h & 1) as usize][s as usize]
+            }
+        }
+    }
 }
 
 /// How the colour plane is reassigned at a FIRING collision.
@@ -545,7 +578,12 @@ const COLOUR_SEED_KEY: u64 = 0x436F_6C6F_7572_5364;
 const COLOUR_MIX_KEY: u64 = 0x436F_6C6F_7572_4D78;
 
 /// The colour plane's image of one firing collision `s → t`, red count conserved.
-fn recolour(s: u8, t: u8, q: u8, n: usize, rule: ColourRule, c: usize, step_index: u64) -> u8 {
+///
+/// `pub` so `crate::orientation` carries the colour by the SAME rule rather than a second
+/// copy of it — FLUID-1's no-bond control must be bit-identical to FLUID-0's colour step on
+/// BOTH planes, and two spellings of one rule is how that identity would be lost. Making a
+/// private function public changes no existing behaviour.
+pub fn recolour(s: u8, t: u8, q: u8, n: usize, rule: ColourRule, c: usize, step_index: u64) -> u8 {
     let red = q.count_ones() as usize;
     if red == 0 {
         return 0;

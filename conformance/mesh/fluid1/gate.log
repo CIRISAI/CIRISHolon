@@ -1,0 +1,101 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.04s
+     Running `target/release/examples/fluid1_lattice gate`
+=========================================================================
+FLUID-1 — the orientation lattice: a closure in the carrier
+freeze:  conformance/mesh/FLUID1_PREREG.md (window/floor/size: FLUID0_AMENDMENT_1 set A)
+instr:   holon-lattice::orientation   phase: gate   out_dir: ../conformance/mesh/fluid1
+records: ../conformance
+set A:   L=256 d=0.2 seeds=2 A_shear=0.1 A_colour=1 k_index in {1,2} seed=0x464c55494430
+window:  opens at 4 tau = 46 steps; closes at the first step under max(0.2|M(t0)|, 12 sigma/sqrt(S))
+         floors shear 971.4018 / colour 762.4254; caps shear [12000, 3000] colour [1500, 400]
+
+THE BOND RULE, READ FROM THE MAP (no number below is typed):
+  A(  0 deg) = 1.000000000   E_CT = -0.009336779900 Ha   <- water_observatory/ct2/gd0_linear_R2.9.json:e_full (-150.0520630749) - water_observatory/ct1/sector_linear_R2.9.json:e_noct (-150.042726295), the tilt records' own e_ct_rule
+  A( 60 deg) = 1.337177895   E_CT = -0.012484935694 Ha   <- water_observatory/ct2/node_tilt_R2.9_t60.json:e_ct
+  A(120 deg) = 1.288496466   E_CT = -0.012030407903 Ha   <- water_observatory/ct2/node_tilt_R2.9_t120.json:e_ct
+  A(180 deg) = 1.420096811   E_CT = -0.013259131358 Ha   <- water_observatory/ct2/node_tilt_R2.9_t180.json:e_ct
+  A(240 deg) = 1.288496466   E_CT = -0.012030407903 Ha   <- water_observatory/ct2/node_tilt_R2.9_t120.json:e_ct (tilt symmetry: 240 deg is the map's 120 deg)
+  A(300 deg) = 1.337177895   E_CT = -0.012484935694 Ha   <- water_observatory/ct2/node_tilt_R2.9_t60.json:e_ct (tilt symmetry: 300 deg is the map's 60 deg)
+  retention f = 0.5526 <- water_observatory/ct2/arms.json:dimer_293_seam.f   =>  E0/kT_lat = ln(f/(1-f)) = 0.211181363,  p_break(0 deg) = 0.809627217
+=========================================================================
+
+--- G3: detailed balance of the bond on a held geometry ---
+  phi=  0 deg  held 0.552500  vs 1/(1+p_break) 0.552600  rel 0.000181  break tests 110494  live links in the scene 2
+  phi=120 deg  held 0.568300  vs 1/(1+p_break) 0.567610  rel 0.001214  break tests 56829  live links in the scene 1
+  G3      PASS  [200000 checks, 4 legs]  phi=0: held 0.552500 vs 1/(1+p_break) 0.552600 rel 0.000181 (tests 110494, links 2); phi=120: held 0.568300 vs 1/(1+p_break) 0.567610 rel 0.001214 (tests 56829, links 1); streaming off, 100000 steps each
+
+--- G2: the ledger, exact at every step (16 runs x 500 steps, L=256) ---
+  16 runs, 8000 step-checks in 63.9 s; formed 218139833 broken_rent 139229793 blocked 78546608 (no-vacancy 33651918 / already-claimed 44894690 / no-geometry 0) joint 260565333 hops 135406989
+  G2      PASS  [8000 checks, 117 legs]  16 runs x 500 steps at L=256, mass/Px/Py/red/orientation census/bond balance integer-identical at every step; work: formed 218139833 broken_rent 139229793 blocked 78546608 (no-vacancy 33651918 / already-claimed 44894690) collisions 30245446
+
+--- G0: the rule is the map ---
+  A(  0 deg) = 1.000000000  E_CT = -0.009336779900 Ha   <- water_observatory/ct2/gd0_linear_R2.9.json:e_full (-150.0520630749) - water_observatory/ct1/sector_linear_R2.9.json:e_noct (-150.042726295), the tilt records' own e_ct_rule
+  A( 60 deg) = 1.337177895  E_CT = -0.012484935694 Ha   <- water_observatory/ct2/node_tilt_R2.9_t60.json:e_ct
+  A(120 deg) = 1.288496466  E_CT = -0.012030407903 Ha   <- water_observatory/ct2/node_tilt_R2.9_t120.json:e_ct
+  A(180 deg) = 1.420096811  E_CT = -0.013259131358 Ha   <- water_observatory/ct2/node_tilt_R2.9_t180.json:e_ct
+  A(240 deg) = 1.288496466  E_CT = -0.012030407903 Ha   <- water_observatory/ct2/node_tilt_R2.9_t120.json:e_ct (tilt symmetry: 240 deg is the map's 120 deg)
+  A(300 deg) = 1.337177895  E_CT = -0.012484935694 Ha   <- water_observatory/ct2/node_tilt_R2.9_t60.json:e_ct (tilt symmetry: 300 deg is the map's 60 deg)
+  chart:  f = 0.5526 (READ) -> E0/kT_lat = 0.211181363 -> p_break(0 deg) = 0.809627217, 1/(1+p_break) = 0.552600000
+  held-geometry linear retention 0.552500 vs the READ f 0.5526 -> rel 0.000181
+  the G2 runs' measured p_break(0 deg) 8.095971416e-1 vs the chart's 0.809627217 -> rel 0.000037 (39798746 break tests at phi=0 inside the full lattice)
+  G0      PASS  [39898752 checks, 5 legs]  A = [1.000000, 1.337178, 1.288496, 1.420097, 1.288496, 1.337178] read from CT-1/CT-2; f = 0.5526 read from water_observatory/ct2/arms.json:dimer_293_seam.f; E0/kT_lat = 0.211181363; held-geometry retention 0.552500 vs f -> rel 0.000181; run-measured p_break(0) 8.095971416e-1 vs 0.809627217 -> rel 0.000037
+
+--- G1: the no-bond control is FLUID-0 ---
+  chirality=true digest c0a3bdebaac97ae5
+    nu rows k=1                        exit Fitted          value 5.284306e-1      gamma 4.244305e-4    R2 0.997164   pts 3802  window 46..3847 amp 9908.2930 -> 1979.9196 fired 28316213
+    nu rows k=2                        exit Fitted          value 5.392310e-1      gamma 1.732421e-3    R2 0.997410   pts 906   window 46..951 amp 9530.9465 -> 1906.1765 fired 6994906
+    D  colour k=1                      exit Fitted          value 4.881118e0       gamma 3.920467e-3    R2 0.999951   pts 409   window 46..454 amp 17102.3907 -> 3408.0268 fired 3415981
+    D  colour k=2                      exit Fitted          value 5.125316e0       gamma 1.646642e-2    R2 0.999637   pts 100   window 46..145 amp 10921.8516 -> 2165.2034 fired 1089872
+    nu(k=1)   5.284306411e-1 vs FLUID-0 5.284306411e-1  rel 0.000000000  <- mesh/fluid0/gate.json
+    nu(k=2)   5.392310123e-1 vs FLUID-0 5.392310123e-1  rel 0.000000000  <- mesh/fluid0/gate.json
+    D(k=1)    4.881117700e0 vs FLUID-0 4.881117700e0  rel 0.000000000  <- mesh/fluid0/gate.json
+    D(k=2)    5.125316154e0 vs FLUID-0 5.125316154e0  rel 0.000000000  <- mesh/fluid0/gate.json
+    Sc        1.082601719e-1 vs FLUID-0 1.082601719e-1  rel 0.000000000  <- mesh/fluid0/gate.json
+  chirality=false digest 6657ba0491b18add
+    nu rows k=1                        exit Fitted          value 5.270811e-1      gamma 4.233465e-4    R2 0.996795   pts 3756  window 46..3801 amp 9811.5746 -> 1961.2269 fired 27980817
+    nu rows k=2                        exit Fitted          value 5.213911e-1      gamma 1.675105e-3    R2 0.995957   pts 915   window 46..960 amp 9241.4105 -> 1843.0389 fired 7065491
+    D  colour k=1                      exit Fitted          value 4.778534e0       gamma 3.838073e-3    R2 0.999946   pts 421   window 46..466 amp 17079.4483 -> 3409.9380 fired 3512207
+    D  colour k=2                      exit Fitted          value 5.299006e0       gamma 1.702445e-2    R2 0.999925   pts 96    window 46..141 amp 10857.4087 -> 2142.7894 fired 1062063
+    nu(k=1)   5.270810625e-1 vs FLUID-0 5.270810625e-1  rel 0.000000000  <- mesh/fluid0/gate.json
+    nu(k=2)   5.213910679e-1 vs FLUID-0 5.213910679e-1  rel 0.000000000  <- mesh/fluid0/gate.json
+    D(k=1)    4.778534219e0 vs FLUID-0 4.778534219e0  rel 0.000000000  <- mesh/fluid0/gate.json
+    D(k=2)    5.299006330e0 vs FLUID-0 5.299006330e0  rel 0.000000000  <- mesh/fluid0/gate.json
+    Sc        1.103018286e-1 vs FLUID-0 1.103018286e-1  rel 0.000000000  <- mesh/fluid0/gate.json
+  G1      PASS  [12 checks, 14 legs]  chir=true nu(k=1) 5.284306411e-1 vs 5.284306e-1 rel 0.000000; chir=true nu(k=2) 5.392310123e-1 vs 5.392310e-1 rel 0.000000; chir=true D(k=1) 4.881117700e0 vs 4.881118e0 rel 0.000000; chir=true D(k=2) 5.125316154e0 vs 5.125316e0 rel 0.000000; chir=true Sc 1.082601719e-1 vs 1.082602e-1 rel 0.000000; chir=false nu(k=1) 5.270810625e-1 vs 5.270811e-1 rel 0.000000; chir=false nu(k=2) 5.213910679e-1 vs 5.213911e-1 rel 0.000000; chir=false D(k=1) 4.778534219e0 vs 4.778534e0 rel 0.000000; chir=false D(k=2) 5.299006330e0 vs 5.299006e0 rel 0.000000; chir=false Sc 1.103018286e-1 vs 1.103018e-1 rel 0.000000; 
+
+--- P(i): the acceptor factor flattened ---
+  chart  bonds/particle donor 0.289440 degree 0.578879 largest 0.000078 spanning 0/200
+  plant  bonds/particle donor 0.284384 degree 0.568769 largest 0.000077 spanning 0/200
+  change 0.017465 against the stake 0.2; carrier A(120)-1 = 0.288496
+  the plant's REACH from the freeze's own two read inputs: A in [1, 1.420097] at          E0/kT_lat = 0.211181 gives a per-angle retention in [0.552600, 0.574418], a          spread of 0.037982
+  THE STAKE IS UNREACHABLE BY THE FREEZE'S OWN ARITHMETIC, not by the measurement:              the amplitude table can move the per-angle retention by at most 0.037982 at this              chart, well under the 0.2 stake, and the measured bond-count change              0.017465 sits inside that reach. The carrier IS nonzero in the sector the plant              acts on (A(120)-1 = 0.288496); it is the OBSERVABLE that cannot respond,              because E0/kT_lat = 0.211181 is small enough that a 42 % change in A is an 8 %              change in p_break. The instrument reports FAIL and does not move the target.
+  P(i)    FAIL  [400 checks, 4 legs]  carrier A(120 deg)-1 = 0.288496 (floor 0.2, asserted true); bonds/particle (each bond once) chart 0.289440 vs A=1 plant 0.284384 -> change 0.017465 (stake > 0.2); degree convention 0.578879 vs 0.568769; ANALYTIC reach: A in [1, 1.420097] at E0/kT_lat = 0.211181 moves the per-angle retention only from 0.552600 to 0.574418, a spread of 0.037982, so the stake is unreachable by the freeze's own arithmetic rather than by the measurement
+          FAILING LEGS (1): the bond count moved by more than 0.2
+
+--- P(ii): the rent doubled ---
+  chart   E0/kT_lat 0.211181363  p_break(0) 0.809627217  retention (measured) 0.552500
+  plant   E0/kT_lat 0.422362727  p_break(0) 0.655496230  retention (measured) 0.604200  1/(1+p) 0.604048
+  retention change 0.085568 against the stake 0.2  [break probability change 0.190373; bond count change 0.077771, reported, NOT gated]
+  THE STAKE IS UNREACHABLE BY THE FREEZE'S OWN ARITHMETIC, not by the measurement: the retention is the logistic 1/(1+exp(-E)), so doubling E from 0.211181 moves it from 0.552600 to 0.604048, a change of 0.085173 — the largest a doubling can produce at this chart. The instrument reports FAIL and does not move the target.
+  P(ii)   FAIL  [200000 checks, 3 legs]  carrier: the READ retention 0.5526 in (0,1), asserted true; E0/kT_lat 0.211181363 -> 0.422362727; measured linear retention 0.552500 -> 0.604200, change 0.085568 (stake > 0.2); ANALYTIC bound: the retention is the logistic 1/(1+exp(-E)) and a doubling of E at this chart moves it by exactly 0.085173, so the stake is unreachable by the freeze's own arithmetic rather than by the measurement; reported beside and NOT gated: p_break(0) 0.809627217 -> 0.655496230, change 0.190373; bonds/particle 0.289440 -> 0.313848, change 0.077771
+          FAILING LEGS (1): the linear-bond retention moved by more than 0.2
+
+--- P: the price ---
+  G1 no-bond chirality=true              actual/price = 0.9059   band [0.1, 10]
+  G1 no-bond chirality=false             actual/price = 0.9313   band [0.1, 10]
+  P(i) chart bond census                 actual/price = 1.1797   band [0.1, 10]
+  P(i) flattened bond census             actual/price = 1.1852   band [0.1, 10]
+  P(ii) doubled-rent bond census         actual/price = 1.1566   band [0.1, 10]
+  plain step 0.001248 s   chart step 0.008267 s   MEASURED orientation overhead 6.6256x
+  FLUID-0's price 25.800767 s/law <- mesh/fluid0/price.json:price_seconds_per_law; FLUID-1's projected 170.9445 s/law (4 readings, 2 members)
+  wrote ../conformance/mesh/fluid1/price.json  (before any counted run)
+  P       PASS  [6 checks, 6 legs]  plain 0.001248 s/step, chart 0.008267 s/step, MEASURED overhead 6.6256x; FLUID-0 25.800767 s/law -> FLUID-1 170.9445 s/law
+
+  wrote ../conformance/mesh/fluid1/amplitude_table.json
+  wrote ../conformance/mesh/fluid1/gate.json
+
+=========================================================================
+GATE VERDICT: 2 gate(s) FAILED — reported, not repaired (152.0 s):
+  - P(i): the bond count moved by more than 0.2 — carrier A(120 deg)-1 = 0.288496 (floor 0.2, asserted true); bonds/particle (each bond once) chart 0.289440 vs A=1 plant 0.284384 -> change 0.017465 (stake > 0.2); degree convention 0.578879 vs 0.568769; ANALYTIC reach: A in [1, 1.420097] at E0/kT_lat = 0.211181 moves the per-angle retention only from 0.552600 to 0.574418, a spread of 0.037982, so the stake is unreachable by the freeze's own arithmetic rather than by the measurement
+  - P(ii): the linear-bond retention moved by more than 0.2 — carrier: the READ retention 0.5526 in (0,1), asserted true; E0/kT_lat 0.211181363 -> 0.422362727; measured linear retention 0.552500 -> 0.604200, change 0.085568 (stake > 0.2); ANALYTIC bound: the retention is the logistic 1/(1+exp(-E)) and a doubling of E at this chart moves it by exactly 0.085173, so the stake is unreachable by the freeze's own arithmetic rather than by the measurement; reported beside and NOT gated: p_break(0) 0.809627217 -> 0.655496230, change 0.190373; bonds/particle 0.289440 -> 0.313848, change 0.077771
+=========================================================================

@@ -1,0 +1,27 @@
+{
+  "phase": "price",
+  "params": {"freeze": "conformance/mesh/FLUID1_PREREG.md", "inherits": "FLUID0_AMENDMENT_1 set A (window, floor, size, amplitudes, caps, seed)", "records_root": "../conformance", "l": 256, "density": 2.000000000e-1, "seeds": 2, "a_shear": 1.000000000e-1, "a_colour": 1.000000000e0, "k_index": [1, 2], "k1": 2.834061507e-2, "k2": 5.668123013e-2, "seed": 77293662323760, "tau_steps": 1.140000000e1, "transient_taus": 4.000000000e0, "window_start_steps": 46, "window_end_fraction": 2.000000000e-1, "noise_floor_snr": 1.200000000e1, "floor_shear": 9.714017999e2, "floor_colour": 7.624254417e2, "cap_shear": [12000, 3000], "cap_colour": [1500, 400], "min_r2": 9.900000000e-1, "min_points": 20, "monotone_tolerance_fraction": 1.000000000e-2, "k_agreement_tolerance": 1.000000000e-1, "retention_read": 5.526000000e-1, "retention_source": "water_observatory/ct2/arms.json:dimer_293_seam.f", "rent_e0_over_kt": 2.111813634e-1, "rent_rule": "E0/kT = ln(f/(1-f)), the value at which a linear bond's stationary held fraction 1/(1+p_break) is the READ retention", "p_break_phi0": 8.096272168e-1, "amplitude_table": [
+    {"phi_degrees": 0, "phi_index": 0, "e_ct_hartree": -9.336779900e-3, "amplitude": 1.000000000e0, "source": "water_observatory/ct2/gd0_linear_R2.9.json:e_full (-150.0520630749) - water_observatory/ct1/sector_linear_R2.9.json:e_noct (-150.042726295), the tilt records' own e_ct_rule"},
+    {"phi_degrees": 60, "phi_index": 1, "e_ct_hartree": -1.248493569e-2, "amplitude": 1.337177895e0, "source": "water_observatory/ct2/node_tilt_R2.9_t60.json:e_ct"},
+    {"phi_degrees": 120, "phi_index": 2, "e_ct_hartree": -1.203040790e-2, "amplitude": 1.288496466e0, "source": "water_observatory/ct2/node_tilt_R2.9_t120.json:e_ct"},
+    {"phi_degrees": 180, "phi_index": 3, "e_ct_hartree": -1.325913136e-2, "amplitude": 1.420096811e0, "source": "water_observatory/ct2/node_tilt_R2.9_t180.json:e_ct"},
+    {"phi_degrees": 240, "phi_index": 4, "e_ct_hartree": -1.203040790e-2, "amplitude": 1.288496466e0, "source": "water_observatory/ct2/node_tilt_R2.9_t120.json:e_ct (tilt symmetry: 240 deg is the map's 120 deg)"},
+    {"phi_degrees": 300, "phi_index": 5, "e_ct_hartree": -1.248493569e-2, "amplitude": 1.337177895e0, "source": "water_observatory/ct2/node_tilt_R2.9_t60.json:e_ct (tilt symmetry: 300 deg is the map's 60 deg)"}
+  ], "g3_steps": 100000, "g3_tolerance": 2.000000000e-2, "g0_tolerance": 5.000000000e-2, "g1_tolerance": 5.000000000e-2, "g2_runs": 16, "g2_steps": 500, "bond_warmup": 200, "bond_sample": 100, "plant_i_min_change": 2.000000000e-1, "plant_ii_min_change": 2.000000000e-1, "price_steps": 200, "price_band": [1.000000000e-1, 1.000000000e1], "w_blocks": [4, 8, 16, 32], "w_steps": 1, "w_tolerance": 1.000000000e-1, "b_band_factor": 1.500000000e0, "sc_branch_a": 1.000000000e2, "sc_branch_b": 1.000000000e1, "sc_water": 4.348000000e2, "sc_water_note": "THE KILL, typed from experiment: Kestin/Sokolov/Wakeham 1978 and Krynicki/Green/Sawyer 1978, Mills 1973, as FLUID-0 §1 cites them"},
+  "fluid0_seconds_per_law": 2.580076738e1,
+  "fluid0_source": "mesh/fluid0/price.json:price_seconds_per_law",
+  "plain_seconds_per_step": 1.247803285e-3,
+  "chart_seconds_per_step": 8.267392102e-3,
+  "orientation_overhead": 6.625557251e0,
+  "projected_seconds_per_law": 1.709444614e2,
+  "band_low_seconds_per_law": 1.709444614e1,
+  "band_high_seconds_per_law": 1.709444614e3,
+  "price_steps": 200,
+  "per_run": [
+    {"run": "G1 no-bond chirality=true", "actual_over_price": 9.059383199e-1},
+    {"run": "G1 no-bond chirality=false", "actual_over_price": 9.313299376e-1},
+    {"run": "P(i) chart bond census", "actual_over_price": 1.179684073e0},
+    {"run": "P(i) flattened bond census", "actual_over_price": 1.185215875e0},
+    {"run": "P(ii) doubled-rent bond census", "actual_over_price": 1.156620783e0}
+  ]
+}

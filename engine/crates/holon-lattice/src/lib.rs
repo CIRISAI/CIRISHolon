@@ -48,6 +48,7 @@
 pub mod chart;
 pub mod isotropy;
 pub mod lattice;
+pub mod orientation;
 pub mod probe;
 pub mod state;
 pub mod transport;

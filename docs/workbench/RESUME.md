@@ -260,13 +260,23 @@ actually begins:
 | 128 | 16,384 | 19,514 | 2.161 ms | 0.589 ms | 0.203 ms | **2.953 ms** |
 | 256 | 65,536 | 78,465 | 9.086 ms | 2.407 ms | 0.790 ms | **12.283 ms** |
 
-**The rule: the largest L whose WHOLE FRAME costs under a quarter of a 60 fps budget
+**The rule: the largest L whose ENGINE FRAME costs under a quarter of a 60 fps budget
 (16.67/4 = 4.17 ms)**, because this lattice is not the only thing on the page — the molecular
 scene integrates in the same frame and the rest of the telemetry renders after it. That admits
 **L = 128** at 2.953 ms and refuses 256 at 12.283 ms. It is a rule with a cut in it: 256 is
 FLUID-1's own box, the door BUILDS it, and what refuses it here is a measured price and not an
 inability. The page steps ONE step per frame; a batch would give the lattice a clock that is a
 multiple of the frame rate, which is a second clock nobody asked for.
+
+**What the table does NOT contain, said rather than implied.** The three columns are the
+ENGINE's work. The canvas work on top — one `putImageData`, one scaled `drawImage`, one
+stroked path — is the browser's, and there is no browser on this box to measure it on, so it
+is bounded and named rather than guessed. Reviewing that boundary found a real defect and it
+is fixed: the bond loop was asking `holon_fluid_dir_euclidean` twice per bond for six
+constants, which at L = 128 is over eleven thousand allocating calls into the engine per
+frame. The six are now read ONCE into `FLUID.dirs` at load — a constant of the direction set,
+not a reading, so a cached copy cannot go stale the way a cached ledger row would — and the
+loop is arithmetic on a typed array with no call into the engine at all.
 
 **The band's face** carries FLUID-0's census and FLUID-1's readings, every figure pinned to
 the line of the record it came from and checked in both directions by the gate:

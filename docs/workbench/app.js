@@ -755,11 +755,13 @@ const LADDER = [
       + "`OrientationLattice::step` the campaign was read on, with no rule changed and the "
       + "bond rule PUSHED IN from CT-1's and CT-2's own records rather than typed. The box is "
       + "this page's own choice and the rule it was chosen by is stated: the largest L whose "
-      + "whole frame — one step, the two buffers this page draws from, and the bond graph "
+      + "ENGINE FRAME — one step, the two buffers this page draws from, and the bond graph "
       + "behind the count — costs under a quarter of a 60 fps budget, measured on the shipped "
       + "artifact at 0.244 ms a frame at L = 32, 0.743 at 64, 2.953 at 128 and 12.283 at 256. "
       + "That admits 128 and refuses FLUID-1's own 256 on a MEASURED price, not on an "
-      + "inability — the door builds 256 and would step it. What is shown live is the "
+      + "inability — the door builds 256 and would step it. The canvas work on top of those "
+      + "numbers is the browser's and is NOT in them: this box has no browser to measure it "
+      + "on, and saying so is cheaper than a figure nobody took. What is shown live is the "
       + "structure and the ledger: the bond count, the "
       + "largest component, whether the graph spans, and every conserved integer with the "
       + "instrument's own per-step audit as its tick. What is NOT shown, and is not fitted "
@@ -2162,16 +2164,24 @@ function pushWater(w, bytes) {
 //     128   16,384      19,514    2.161 ms      0.589 ms      0.203 ms    2.953 ms
 //     256   65,536      78,465    9.086 ms      2.407 ms      0.790 ms   12.283 ms
 //
-// All three columns are per FRAME: the step, the two buffers the page blits and walks, and
-// the union–find behind the bond count and the largest component, which is recomputed once
-// per step and cached inside the door until the next one.
+// WHAT THE TABLE IS AND IS NOT, because a price with an unstated boundary is not a price.
+// All three columns are the ENGINE's work per frame: the step, the two buffers the page
+// blits and walks, and the union–find behind the bond count and the largest component, which
+// is recomputed once per step and cached inside the door until the next one. The CANVAS work
+// on top of it — one `putImageData`, one scaled `drawImage`, and one path of line segments —
+// is the browser's and is NOT in these numbers, because there is no browser on the box these
+// were measured on. It is bounded rather than guessed: one blit and one stroked path per
+// frame, and the bond loop is arithmetic on a typed array with no call into the engine at all
+// (`FLUID.dirs` holds the six constants the loop needs — asking the door per bond was eleven
+// thousand allocating calls a frame and is the defect that note exists to record).
 //
-// THE RULE: the largest L whose WHOLE FRAME costs under a QUARTER of a 60 fps budget
+// THE RULE: the largest L whose ENGINE FRAME costs under a QUARTER of a 60 fps budget
 // (16.67/4 = 4.17 ms), because this lattice is not the only thing on the page — the molecular
-// scene integrates in the same frame and the rest of the telemetry renders after it. That
-// rule admits 128 at 2.953 ms and refuses 256 at 12.283 ms, and it is a rule with a cut in it
-// rather than a preference: 256 is FLUID-1's own box and the door BUILDS it, so what refuses
-// it here is a measured price and not an inability.
+// scene integrates in the same frame, the rest of the telemetry renders after it, and the
+// canvas work above is unmeasured here. That rule admits 128 at 2.953 ms and refuses 256 at
+// 12.283 ms, and it is a rule with a cut in it rather than a preference: 256 is FLUID-1's own
+// box and the door BUILDS it, so what refuses it here is a measured price and not an
+// inability.
 const FLUID = {
   /// Chosen by the rule above, on the table above. `holon_fluid_begin` accepts up to 256.
   l: 128,
@@ -2191,6 +2201,16 @@ const FLUID = {
   /// The canvas context, or null where there is none (the gate's DOM stub has no canvas, and
   /// the lattice must step and ledger there exactly as it does in a browser).
   ctx: null, image: null,
+  /// THE SIX DIRECTIONS' EUCLIDEAN EMBEDDING, read from the engine ONCE and held.
+  ///
+  /// It is held rather than asked for per bond because `holon_fluid_dir_euclidean` builds the
+  /// embedding on each call, and the bond loop would ask it twice per bond — at L = 128 that
+  /// is over eleven thousand allocating calls a frame to fetch six constants. Caching a
+  /// CONSTANT is safe in a way caching a reading never is: the direction set is `Model::fhp6`'s
+  /// and does not depend on the state, the box or the step, so a cached copy cannot go stale
+  /// the way a cached ledger row would. It is cleared on every `loadFluid` so a rebuilt
+  /// lattice re-reads it from the engine rather than inheriting it.
+  dirs: null,
 };
 
 /// Fetch FLUID-1's two records, push the rule through the doors, and begin the lattice.
@@ -2253,6 +2273,10 @@ async function loadFluid(w) {
   }
   FLUID.refusal = null;
   FLUID.noBond = false;
+  // Six constants, read from the engine once the lattice exists (the door serves them off the
+  // live model, so they are NaN before one does).
+  FLUID.dirs = Array.from({ length: 6 }, (_, d) =>
+    [w.holon_fluid_dir_euclidean(d, 0), w.holon_fluid_dir_euclidean(d, 1)]);
   FLUID.running = true;
 }
 
@@ -2334,7 +2358,10 @@ function renderFluid() {
         const dc = Math.floor(list[2 * k] / 6);
         const dd = list[2 * k] % 6;
         const i = Math.floor(dc / l), j = dc % l;
-        const ex = w.holon_fluid_dir_euclidean(dd, 0), ey = w.holon_fluid_dir_euclidean(dd, 1);
+        // The embedding is read from `FLUID.dirs`, six constants the engine served once. See
+        // the note on that field: asking the door per bond is eleven thousand allocating
+        // calls a frame at L = 128 to fetch six numbers that cannot change.
+        const [ex, ey] = FLUID.dirs[dd];
         const x0 = (j + 0.5) * scale, y0 = (i + 0.5) * scale;
         fctx.moveTo(x0, y0);
         fctx.lineTo(x0 + ex * scale, y0 + ey * scale);

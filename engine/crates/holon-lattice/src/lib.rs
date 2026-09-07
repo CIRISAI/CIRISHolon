@@ -47,11 +47,13 @@
 
 pub mod chart;
 pub mod closure;
+pub mod edge;
 pub mod isotropy;
 pub mod lattice;
 pub mod orientation;
 pub mod probe;
 pub mod state;
+pub mod surface;
 pub mod transport;
 
 pub use chart::{BlockChart, Field};

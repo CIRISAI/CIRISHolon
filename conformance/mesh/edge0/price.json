@@ -1,0 +1,13 @@
+{
+  "phase": "price",
+  "dry": false,
+  "written_before_the_counted_steps": true,
+  "label": "the EDGE-0 counted runs (150 unaudited + 50 audited steps, the run's own mix)",
+  "measured_on_steps": 200,
+  "seconds_measured": 2.449194390e-1,
+  "seconds_per_step": 1.224597195e-3,
+  "steps_projected": 242274,
+  "seconds_projected": 2.966880608e2,
+  "band_low": 1.000000000e-1,
+  "band_high": 1.000000000e1
+}

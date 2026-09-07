@@ -33,3 +33,12 @@ holon-closure = { path = "../holon-closure" }
 # argument above is untouched.
 [dev-dependencies]
 holon-mesh = { path = "../holon-mesh" }
+
+# DEV-only: EDGE-0's runner (`examples/edge0_lattice.rs`) is the campaign harness's first
+# adopter from this crate — gates that name every failing leg, plants whose carrier and
+# analytic reach are checked before any measurement, a price that must be written before it
+# can be spent, stakes carrying their read inputs, and a record writer that refuses
+# malformed JSON. A dev-dependency leaves the LIBRARY's runtime profile at the two crates
+# above it, so the isolation argument at the top of this file is untouched: nothing in
+# `src/` may depend on it, and nothing does.
+holon-campaign = { path = "../holon-campaign" }

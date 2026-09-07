@@ -99,15 +99,21 @@ pub const N_DIRS: usize = 6;
 
 /// The counter-hash streams, held apart from `lattice.rs`'s three so that a particle's
 /// orientation, its colour and its bond's fate are independent draws.
-const ORIENT_SEED_KEY: u64 = 0x4F72_6965_6E74_5364;
-const ORIENT_MIX_KEY: u64 = 0x4F72_6965_6E74_4D78;
-const BREAK_KEY: u64 = 0x426F_6E64_4272_6B21;
-const MOVER_KEY: u64 = 0x426F_6E64_4D76_7221;
-const GOLDEN: u64 = 0x9E37_79B9_7F4A_7C15;
+///
+/// **`pub` for `crate::edge` and for that reason only.** EDGE-0's carrier must reproduce
+/// this one BIT FOR BIT where the two rules coincide (its G1), and two spellings of one key
+/// is how two objects that must agree come to disagree. Making a private constant visible
+/// changes no behaviour and no existing path reads them from anywhere else.
+pub const ORIENT_SEED_KEY: u64 = 0x4F72_6965_6E74_5364;
+pub const ORIENT_MIX_KEY: u64 = 0x4F72_6965_6E74_4D78;
+pub const BREAK_KEY: u64 = 0x426F_6E64_4272_6B21;
+pub const MOVER_KEY: u64 = 0x426F_6E64_4D76_7221;
+pub const GOLDEN: u64 = 0x9E37_79B9_7F4A_7C15;
 
-/// The crate's convention for a uniform `[0,1)` out of a counter hash.
+/// The crate's convention for a uniform `[0,1)` out of a counter hash. `pub` for
+/// `crate::edge`, for the reason the keys above are.
 #[inline]
-fn unit(h: u64) -> f64 {
+pub fn unit(h: u64) -> f64 {
     (h >> 11) as f64 / ((1u64 << 53) as f64)
 }
 

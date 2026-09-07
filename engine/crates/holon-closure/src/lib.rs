@@ -88,4 +88,4 @@ pub use edge::{BlockView, Edge};
 pub use grammar::{
     BondReading, Crossing, Grammar, Production, ProductionKind, RewriteReading, UnitReading,
 };
-pub use phase::{phase, Phase, PhaseEdge};
+pub use phase::{components, phase, ComponentFinder, Phase, PhaseEdge};

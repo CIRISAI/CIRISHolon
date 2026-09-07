@@ -1,0 +1,2 @@
+  kT_mech (this carrier's own c_s^2, measured) = 0.499091
+price the EDGE-0 counted runs (150 unaudited + 50 audited steps, the run's own mix) PASS       [1 checks, 1 legs]  62.050 s actual against 296.688 s projected from 200 steps at 1.224597e-3 s/step

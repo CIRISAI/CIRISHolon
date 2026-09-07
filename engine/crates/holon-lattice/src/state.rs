@@ -51,6 +51,30 @@ impl Model {
         Self { name: "HPP-4", dirs: vec![[1, 0], [0, 1], [-1, 0], [0, -1]] }
     }
 
+    /// FHP-6 with a SEVENTH slot of zero velocity — the rest particle of FHP-II/III
+    /// (Frisch, d'Humières, Hasslacher, Lallemand, Pomeau & Rivet, *Complex Systems* **1**
+    /// (1987) 649). Added for `crate::edge`; nothing existing constructs it.
+    ///
+    /// **The rest slot is `dirs[6] = [0,0]`, and that is the whole of the change.** Every
+    /// routine on this type is written in terms of `dirs`, so the label, the fibers, the
+    /// census and the collision group follow with no special case: a rest particle adds
+    /// `(1, 0, 0)` to the conserved label, which is why `{rest, d}` and `{d−1, d+1}` land
+    /// in ONE fiber (on the hexagon `c_{d−1} + c_{d+1} = c_d` exactly, in the axial
+    /// integers, so the two configurations carry the same `(N, P)`) and a collision may
+    /// therefore create and destroy rest particles while conserving both momenta exactly.
+    /// That fiber is the whole reason the seventh slot is worth having.
+    ///
+    /// **Two routines on `Model` are NOT defined here and must not be called on it.**
+    /// [`Model::opposite`] assumes a centrally symmetric set listed half a turn apart, and
+    /// `crate::isotropy::embed` keys its hexagonal embedding on `n_dirs() == 6`. Both are
+    /// left untouched — `crate::edge` carries its own opposite (on the six moving slots)
+    /// and its own embedding, and tests both against these on FHP-6.
+    pub fn fhp7() -> Self {
+        let mut dirs = FHP_DIRECTIONS.to_vec();
+        dirs.push([0, 0]);
+        Self { name: "FHP-7 (FHP-II rest slot)", dirs }
+    }
+
     #[inline]
     pub fn n_dirs(&self) -> usize {
         self.dirs.len()
@@ -387,5 +411,39 @@ mod tests {
             assert_ne!(m.label(o), m.label(s));
         }
         assert_eq!(moved, 20, "the fiber move must be available on exactly 20 states");
+    }
+
+    /// The seventh slot's own census, pinned: adding one zero-velocity slot takes FHP-6's
+    /// 53 sectors to 80 and its 20 movable states to 76, and the two dimension-5 fibers are
+    /// the `(N=3, P=0)` ones — the head-on pair plus a rest particle sitting in the same
+    /// fiber as the two three-body triples. The `(2, 0, 1)` fiber `{5, 66}` is FHP-II's own
+    /// rest collision written as a classification rather than as a table: `{d₀, d₂}` and
+    /// `{d₁, rest}` carry the same conserved label, so a law may exchange them.
+    #[test]
+    fn the_rest_slot_opens_the_fibers_that_create_and_destroy_it() {
+        let m = Model::fhp7();
+        assert_eq!(m.n_dirs(), 7);
+        assert_eq!(m.dirs[6], [0, 0], "the seventh slot must carry no momentum");
+        assert_eq!(m.census(), (80, vec![(1, 52), (2, 12), (3, 14), (5, 2)]));
+        assert_eq!(m.movable().len(), 76);
+        // The rest collision, checked by arithmetic on the label and not by naming a table:
+        // for every moving direction d, `{rest, d}` and `{d-1, d+1}` share a fiber.
+        for d in 0..6usize {
+            let rest_and_d = (1u8 << 6) | (1u8 << d);
+            let neighbours = (1u8 << ((d + 5) % 6)) | (1u8 << ((d + 1) % 6));
+            assert_eq!(
+                m.label(rest_and_d),
+                m.label(neighbours),
+                "the rest collision does not conserve at d={d}"
+            );
+            assert_ne!(rest_and_d, neighbours);
+        }
+        // FHP-6's own fibers survive inside it: a state with no rest particle keeps its
+        // moving label, so FHP-I's two acting fibers are still fibers here.
+        let six = Model::fhp6();
+        for f in [vec![9u8, 18, 36], vec![21u8, 42]] {
+            let l = m.label(f[0]);
+            assert!(f.iter().all(|&s| m.label(s) == l && six.label(s) == six.label(f[0])));
+        }
     }
 }

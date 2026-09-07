@@ -101,6 +101,127 @@ fn find(parent: &mut [u32], pot: &mut [Vec<i32>], d: usize, x: u32) -> (u32, Vec
     (root, acc)
 }
 
+/// A reusable union–find over node ids, allocation-free across calls.
+///
+/// # Why it is here and not in the tier
+///
+/// EDGE-0's cluster rule needs the bond graph's COMPONENTS every step, not its largest
+/// component's size, and it needs them without a heap allocation per step. `phase` above
+/// answers a different question (it carries a displacement potential per node so it can
+/// exhibit a winding) and allocates. Rather than let a third union–find grow inside
+/// `holon-lattice`, the partition lives HERE beside the size, and
+/// [`tests::the_finder_and_the_phase_agree_on_the_partition`] measures that the two agree on
+/// the same graph rather than asserting it.
+///
+/// # What it declares
+///
+/// A node is INTRODUCED by [`ComponentFinder::touch`] and is a singleton until united.
+/// [`ComponentFinder::clear`] costs the introduced nodes and not the capacity, which is what
+/// makes it usable on a lattice whose slot count is large and whose bonded slots are few.
+#[derive(Clone, Debug, Default)]
+pub struct ComponentFinder {
+    parent: Vec<u32>,
+    size: Vec<u32>,
+    touched: Vec<u32>,
+}
+
+/// The sentinel for "this node has not been introduced".
+const UNSEEN: u32 = u32::MAX;
+
+impl ComponentFinder {
+    pub fn new() -> ComponentFinder {
+        ComponentFinder::default()
+    }
+
+    /// Make room for ids `0..n`. Existing introductions are dropped.
+    pub fn reset(&mut self, n: usize) {
+        self.clear();
+        if self.parent.len() < n {
+            self.parent.resize(n, UNSEEN);
+            self.size.resize(n, 0);
+        }
+    }
+
+    /// Forget every introduced node, at the cost of the introductions and not the capacity.
+    pub fn clear(&mut self) {
+        for &t in &self.touched {
+            self.parent[t as usize] = UNSEEN;
+            self.size[t as usize] = 0;
+        }
+        self.touched.clear();
+    }
+
+    /// Introduce a node as a singleton, if it is not already introduced.
+    #[inline]
+    pub fn touch(&mut self, x: u32) {
+        if self.parent[x as usize] == UNSEEN {
+            self.parent[x as usize] = x;
+            self.size[x as usize] = 1;
+            self.touched.push(x);
+        }
+    }
+
+    /// The node ids introduced so far, in the order they were introduced.
+    pub fn touched(&self) -> &[u32] {
+        &self.touched
+    }
+
+    /// The representative of `x`'s component, with path compression. `x` must have been
+    /// introduced.
+    pub fn find(&mut self, x: u32) -> u32 {
+        let mut root = x;
+        while self.parent[root as usize] != root {
+            root = self.parent[root as usize];
+        }
+        let mut cur = x;
+        while self.parent[cur as usize] != root {
+            let next = self.parent[cur as usize];
+            self.parent[cur as usize] = root;
+            cur = next;
+        }
+        root
+    }
+
+    /// Unite two components, by size. Both nodes are introduced if they are not already.
+    /// Returns whether the two were in different components.
+    pub fn union(&mut self, a: u32, b: u32) -> bool {
+        self.touch(a);
+        self.touch(b);
+        let (ra, rb) = (self.find(a), self.find(b));
+        if ra == rb {
+            return false;
+        }
+        let (big, small) =
+            if self.size[ra as usize] >= self.size[rb as usize] { (ra, rb) } else { (rb, ra) };
+        self.parent[small as usize] = big;
+        self.size[big as usize] += self.size[small as usize];
+        true
+    }
+
+    /// The size of `x`'s component, in introduced nodes.
+    pub fn size_of(&mut self, x: u32) -> u32 {
+        let r = self.find(x);
+        self.size[r as usize]
+    }
+}
+
+/// The bond graph's PARTITION: the representative of every node's component.
+///
+/// `root[i]` is `i` for a node no edge touched. Node ids outside `0..nodes` are skipped, as
+/// in [`phase`].
+pub fn components<const D: usize>(nodes: usize, edges: &[PhaseEdge<D>]) -> Vec<u32> {
+    let mut f = ComponentFinder::new();
+    f.reset(nodes);
+    for e in edges {
+        if (e.a as usize) < nodes && (e.b as usize) < nodes {
+            f.union(e.a, e.b);
+        }
+    }
+    (0..nodes as u32)
+        .map(|i| if f.parent[i as usize] == UNSEEN { i } else { f.find(i) })
+        .collect()
+}
+
 /// The phase reading of a bond graph over `nodes` closures.
 ///
 /// Node ids are `0..nodes`; an edge naming an id outside that range is SKIPPED and counted
@@ -254,6 +375,55 @@ mod tests {
         assert_eq!(p.edges, 1);
         assert_eq!(p.nodes, 3);
         assert_eq!(p.largest, 2);
+    }
+
+    /// The fence between the two union-finds: on the same graph the partition and the size
+    /// agree, so the cheap one that EDGE-0's cluster rule runs every step cannot drift from
+    /// the one that reports the phase.
+    #[test]
+    fn the_finder_and_the_phase_agree_on_the_partition() {
+        let e: Vec<PhaseEdge<2>> = vec![
+            PhaseEdge::local(0, 1),
+            PhaseEdge::local(1, 2),
+            PhaseEdge { a: 2, b: 0, displacement: [1, 0] },
+            PhaseEdge::local(4, 5),
+            PhaseEdge::local(5, 6),
+            PhaseEdge::local(6, 7),
+            PhaseEdge::local(7, 8),
+            PhaseEdge::local(8, 4),
+        ];
+        let n = 12usize;
+        let root = components(n, &e);
+        assert_eq!(root.len(), n);
+        // Same component iff the same root, and the largest component's size matches phase's.
+        let mut hist = std::collections::BTreeMap::new();
+        for r in &root {
+            *hist.entry(*r).or_insert(0usize) += 1;
+        }
+        let largest = *hist.values().max().unwrap();
+        assert_eq!(largest, phase(n, &e).largest);
+        assert_eq!(hist.len(), 4 + 2, "nodes 3, 9, 10 and 11 are singletons; 0-2 and 4-8 are components");
+        for (a, b) in [(0u32, 1u32), (1, 2), (4, 5), (5, 8)] {
+            assert_eq!(root[a as usize], root[b as usize], "{a} and {b} are joined");
+        }
+        assert_ne!(root[0], root[4], "two components were merged");
+        assert_ne!(root[3], root[0], "an isolated node joined a component");
+    }
+
+    /// `clear` costs the introductions and not the capacity, and leaves the finder usable.
+    #[test]
+    fn the_finder_clears_only_what_it_touched_and_stays_usable() {
+        let mut f = ComponentFinder::new();
+        f.reset(1_000);
+        f.union(10, 11);
+        f.union(11, 12);
+        assert_eq!(f.size_of(10), 3);
+        assert_eq!(f.touched().len(), 3);
+        f.clear();
+        assert_eq!(f.touched().len(), 0);
+        f.union(10, 900);
+        assert_eq!(f.size_of(10), 2, "a cleared finder kept a stale union");
+        assert_eq!(f.find(900), f.find(10));
     }
 
     #[test]

@@ -222,12 +222,20 @@ that stays true — what is gated is the certificate; what changed is that there
 something to show.
 
 **The instrument in the wasm.** `holon-lattice` is now a dependency of `holon-render`. It was
-checked wasm-clean before the edit rather than after: `grep` over the whole of its `src/` for
-`std::fs`, `std::thread`, `std::time`, `Instant`, `std::process`, `rayon`, `std::io` and
-`std::env` returns NOTHING, its runtime graph is one crate (`ciris-sim-core` with `alloc`),
-and `cargo check -p holon-render --target wasm32-unknown-unknown` is clean. **No `cfg` gate
-was needed and no rule in the instrument was changed** — the door adds no `pub fn` to
-`holon-lattice` and touches no file in it.
+checked wasm-clean before the edit rather than after: `grep` over its eight LIBRARY modules
+(`src/*.rs` — `orientation`, `lattice`, `state`, `transport`, `chart`, `isotropy`, `probe`,
+`lib`) for `std::fs`, `std::thread`, `std::time`, `Instant`, `std::process`, `rayon`,
+`std::io` and `std::env` returns NOTHING; its runtime graph is one crate (`ciris-sim-core`
+with `alloc`); and `cargo check -p holon-render --target wasm32-unknown-unknown` is clean.
+**No `cfg` gate was needed and no rule in the instrument was changed** — the door adds no
+`pub fn` to `holon-lattice` and touches no file in it.
+
+*Correction, made against this document's first wording and against commit 0b07abd's message,
+both of which said "the whole of its `src/`".* That is FALSE and the grep says so:
+`src/bin/lg_run.rs` — node LG's campaign runner — matches. It is a BIN target, never linked
+into a crate that depends on this one, so the conclusion about the wasm is untouched; the
+scope of the claim was wrong, not the claim. The unconditional wording is the failure mode,
+not the substance, and the fix is to name the eight files the library actually compiles.
 
 The doors live in a NEW file, `engine/crates/holon-render/src/fluid_door.rs`, reached by a
 single `pub mod fluid_door;` line in `lib.rs` so the lead has one line to merge. **47 doors**,

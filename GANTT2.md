@@ -102,22 +102,22 @@ the freeze's letter: the band was typed in the both-ends convention); accommodat
 box (FIELD-2's fixed point over 128 units) as its first pre-committed branch, dispersion from
 the basis lane as its second. Kill bands unchanged.
 
-### Fluid element — READ (FLUID-0): the single-species lattice gas cannot carry the liquid's two coefficients
+### Fluid element — READ twice (FLUID-0, FLUID-1): no single-species law carries the liquid's two coefficients, and a pair closure buys a factor of two from the tracer side only
 
 | question | record |
 |---|---|
-| closed | node LG: the tier certifies as its own object; its block charts do not close except by conservation (the defect is the boundary fraction, exactly) |
-| the ledger | transport: viscosity and tracer diffusion for all 4,608 REG+ laws; the Schmidt number 0.107–0.449 against water's 435 — no closure in the carrier, no water |
-| the bond production | none: a single-species gas has nothing to trap a particle in |
-| the phase | Sc ≫ 1 is the tier's closure ratio: particles trapped while stress passes |
-| dynamics | integer-exact; the price 25.8 s per law at L = 256 |
+| closed | node LG: the tier certifies as its own object; its block charts do not close except by conservation (the defect is the boundary fraction, exactly) — and with a closure in the carrier the defect sits ABOVE the boundary law at every scale, by a margin that grows with the block (FLUID-1 W, VOID by letter, the reading beside it: bonds carry a perturbation from the interior to the face) |
+| the ledger | transport: viscosity and tracer diffusion for all 4,608 REG+ laws (FLUID-0: Sc 0.107–0.449 against water's 435); with bonds read from the map and held by the rent clause at the dimer's retention, D falls 40 % and ν rises 9 %: Sc 0.108 → 0.20, the cold control 0.34 (FLUID-1 S (c)) |
+| the bond production | a pair, on FHP-6: formed where the donor arm points along the link, released by the rent clause — and by the lattice's exclusion, which on a carrier with no rest particle releases 36 % (chart) to 100 % (cold) of bonds: the closure cannot wait. 0.29 bonds per particle on a ceiling of 1; the graph never spans (B (c)) |
+| the phase | Sc ≫ 1 is the tier's closure ratio: momentum carried ACROSS a network while particles wait. A pair carries its momentum with it and transmits none across; the network's dynamics must be in the carrier |
+| dynamics | integer-exact; FLUID-0 25.8 s per law at L = 256, FLUID-1 6.63× that; the no-bond control bit-identical to FLUID-0 |
 
-**FLUID-1 — FROZEN (a91ccab), the orientation lattice, instrument in build.** Not two species:
+**FLUID-1 — READ (freeze a91ccab; `FLUID1_RESULTS.md`).** Not two species:
 one species whose particles carry a direction, a bond rule READ from CT-2's angular map, a
 bonded pair moving as one, the bond released by the rent clause at a chart set by the dimer's
 measured retention. Asked: Sc against water's 435 (branches at 10 and 100), the bond count and
 the spanning cluster against the liquid box, the block-chart defect W(b) with a closure in the
-carrier. Kill: no closure of a pair reaches Sc ≥ 10 either.
+carrier. Kill: no closure of a pair reaches Sc ≥ 10 either — FIRED as staked, branch (c). Two instrument findings for the next carrier: it must let a closure WAIT (rest particles, FHP-II/III), and the arm count sets the bond ceiling (two arms, the water's two hydrogens).
 
 ### The edge — the next axis (2026-09-06): a holon is an object with a DEFINED EDGE in space at a time, a resolution, a frame and a relation; holons of one type MERGE as readily as they PART; and the price of a scene is its interaction count, not its molecule count
 

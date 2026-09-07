@@ -443,6 +443,71 @@
           </p>
         </div>
 
+        <!-- ------------------------------------- the ledger by channel (WB-9.1) -->
+        <!--
+          STRUCTURE only; every row, both live columns and all six grid cells come from
+          app.js. The six rows are READ OUT OF THE ENGINE (`holon_channel_*`), so this
+          markup names no channel: a channel named here would be a name the page could
+          keep after the engine dropped it.
+        -->
+        <div class="drawer-card">
+          <div class="card-head">
+            <h4>THE LEDGER BY CHANNEL (WB-9.1) — SIX THINGS TWO WHOLES DO TO EACH OTHER</h4>
+            <span class="tag" id="tag-channels">—</span>
+          <button class="btn-micro card-more" aria-expanded="false" title="The card's note">more info ▸</button></div>
+          <p class="card-note">
+            The force law is organised by SECTOR — the near pair table, the far tail, the
+            three-body tables, the clusters, the field, the seam. The physics is organised
+            by CHANNEL: six things two closed wholes do to each other, each with a rate
+            derived from standard theory rather than fitted. These are two different
+            partitions of one energy and they map many-to-many, which is why the value
+            column below is mostly empty.
+          </p>
+          <p class="card-note">
+            <b>"Not served" is the honest answer, and it is not zero.</b> A ledger row's
+            number can hold several channels at once, and then it is a BOUND on each of
+            them and the value of none. The engine hands the page a number only where a row
+            carries one channel wholly and alone; everywhere else it hands back a refusal,
+            and the cell prints the refusal. A zero there would read as "this channel
+            contributes nothing", which is a measurement nobody made.
+          </p>
+          <p class="card-note">
+            <b>The columns are the account's six kinds</b>, and their order is the
+            grounding stack: Premises founds Model, Model derives Facts, Facts modulate
+            Confidence — then Priorities (what we want first) and Manner (how it is
+            written), which are about the instrument rather than about the world. A
+            channel's history walks its row left to right, because a Confidence cannot be
+            set on Facts not yet measured. Each filled cell is a campaign in this
+            repository and carries the line of the record it came from; an EMPTY cell is
+            empty, not a dash and not a sentence written to fill the width.
+          </p>
+          <p class="card-note">
+            <b>The two sixes are not the same six.</b> There are five kinds, not six:
+            Identity fills two rows because it is the only kind with an edge, and an edge
+            has two sides — refusal is which electron is which, sharing is electrons lent
+            across while both stay whole. The equal count is a coincidence and no cell here
+            claims a pairing.
+          </p>
+          <div class="chan-wrap">
+            <table class="chan-table">
+              <thead>
+                <tr>
+                  <th scope="col">channel</th>
+                  <th scope="col">reach, this scene</th>
+                  <th scope="col">value, this scene</th>
+                  <th scope="col">Premises</th>
+                  <th scope="col">Model</th>
+                  <th scope="col">Facts</th>
+                  <th scope="col">Confidence</th>
+                  <th scope="col">Priorities</th>
+                  <th scope="col">Manner</th>
+                </tr>
+              </thead>
+              <tbody id="channel-rows"></tbody>
+            </table>
+          </div>
+        </div>
+
         <!-- ------------------------------------------------ the scale ladder -->
         <div class="drawer-card">
           <div class="card-head">

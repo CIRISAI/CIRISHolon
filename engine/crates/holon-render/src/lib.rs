@@ -1033,6 +1033,133 @@ pub extern "C" fn holon_seam_units() -> u64 {
     sim().seam_work.units
 }
 
+// ---------------------------------------------------- the channel ledger's door (WB-9.1)
+//
+// `channel.rs` is a RECORD — the six things two closed wholes do to each other, each with
+// its kind, its derived rate and the rows that carry it — and `Sim::channel_standing`
+// reads that record against the running scene. Neither was reachable from a host, so the
+// page could name the channels only by retyping them, which is how a page's copy of a
+// record starts disagreeing with the record.
+//
+// FIVE DOORS, and the shape of each is forced by what an honest answer is:
+//
+//   `holon_channel_count`  how many rows the ledger has, so a host walks the record rather
+//                          than a number somebody typed beside it.
+//   `holon_channel_plain`  a POINTER to the channel's plain name as a NUL-terminated C
+//   `holon_channel_kind`   string in this module's static memory, and likewise its kind.
+//                          Strings do not cross the wasm ABI as values; a code plus a
+//                          lookup table on the page would put the words in two places, and
+//                          the words are exactly what the page must not be free to invent.
+//   `holon_channel_reach`  how far the channel reaches in THIS scene, bohr — `+inf` for the
+//                          whole scene, `NaN` where the engine has no row for it.
+//   `holon_channel_value`  the channel's OWN number, and only where the ledger has one.
+//
+// THE VALUE DOOR IS THE ONE WITH A RULE IN IT. `Row::carries` says, per row, which
+// channels are inside that row's number and whether the row IS the channel (`Whole`) or
+// merely contains it (`Folded`). A folded row's number is a bound on the channel and never
+// its value, and a row carrying several channels wholly — the seam row carries exchange,
+// dispersion and charge transfer that way — is not any one of their numbers either. So a
+// channel is SERVED here only by a row that carries it, wholly, ALONE; every other channel
+// returns NaN and the host is expected to say "not served" rather than draw a number that
+// is really some other channel's energy. Today that serves presence (`e_field`) and
+// attunement (`e_far`) and nothing else, and that is a fact about the engine's sectors, not
+// a limitation of this door.
+//
+// `tests/channel_door.rs` gates all five, including the two static name tables against
+// `CHANNELS` itself, so a name changed in the record and not here fails natively.
+
+/// The plain names, NUL-terminated for the pointer door, in `CHANNELS` order. Held beside
+/// the record rather than derived from it because `&'static str` is not NUL-terminated and
+/// a wasm host reading past the end of one name would read the next; gated field-for-field
+/// against `CHANNELS[i].plain` in `tests/channel_door.rs`.
+static CHANNEL_PLAIN_C: [&str; channel::CHANNELS.len()] = [
+    "presence\0",
+    "accommodation\0",
+    "attunement\0",
+    "concert\0",
+    "refusal\0",
+    "sharing\0",
+];
+
+/// The kind each channel changes about the thing it acts on, NUL-terminated, in `CHANNELS`
+/// order. Identity appears twice because it is the only kind with an edge and the edge has
+/// two sides (`channel.rs`; CIRISOntology `PHILOLOGY_BACKPASS.md` Backpass V §1).
+static CHANNEL_KIND_C: [&str; channel::CHANNELS.len()] = [
+    "Circumstances\0",
+    "Structure\0",
+    "Process\0",
+    "Rules\0",
+    "Identity\0",
+    "Identity\0",
+];
+
+/// How many channels the ledger carries.
+#[no_mangle]
+pub extern "C" fn holon_channel_count() -> u32 {
+    channel::CHANNELS.len() as u32
+}
+
+/// A pointer to the channel's plain name, NUL-terminated; null for an index off the end.
+#[no_mangle]
+pub extern "C" fn holon_channel_plain(i: u32) -> *const u8 {
+    match CHANNEL_PLAIN_C.get(i as usize) {
+        Some(s) => s.as_ptr(),
+        None => core::ptr::null(),
+    }
+}
+
+/// A pointer to the channel's kind, NUL-terminated; null for an index off the end.
+#[no_mangle]
+pub extern "C" fn holon_channel_kind(i: u32) -> *const u8 {
+    match CHANNEL_KIND_C.get(i as usize) {
+        Some(s) => s.as_ptr(),
+        None => core::ptr::null(),
+    }
+}
+
+/// How far this channel reaches in the CURRENT scene, bohr: a radius where a sector set
+/// one, `f64::INFINITY` where the sum runs over the whole scene, and `NaN` where this
+/// engine has no row for the channel at all (`channel::Reach::Absent` — induction's state
+/// today, FIELD-2 being named and not built). NaN for an index off the end.
+#[no_mangle]
+pub extern "C" fn holon_channel_reach(i: u32) -> f64 {
+    let s = sim();
+    match s.channel_standing().get(i as usize).map(|st| st.reach) {
+        Some(channel::Reach::Radius { r, .. }) => r,
+        Some(channel::Reach::Scene) => f64::INFINITY,
+        Some(channel::Reach::Absent) | None => f64::NAN,
+    }
+}
+
+/// The channel's OWN energy in the current scene, hartree — the sum of the ledger rows
+/// that carry THIS channel wholly and carry nothing else. `NaN` where no row does, which
+/// is the honest reading for a channel the engine holds only folded into a row with
+/// others: a folded number is a bound, never the channel's value, and the seam row is
+/// three channels' numbers added together rather than any one of them. A host renders the
+/// NaN as "not served"; it must not render it as zero.
+#[no_mangle]
+pub extern "C" fn holon_channel_value(i: u32) -> f64 {
+    use channel::{Carriage, Row};
+    let s = sim();
+    let standing = s.channel_standing();
+    let Some(st) = standing.get(i as usize) else { return f64::NAN };
+    let id = st.channel.id;
+    let mut served = false;
+    let mut total = 0.0;
+    for r in Row::ALL.iter() {
+        let carried = r.carries();
+        if carried.len() == 1 && carried[0].0 == id && carried[0].1 == Carriage::Whole {
+            served = true;
+            total += s.row(*r);
+        }
+    }
+    if served {
+        total
+    } else {
+        f64::NAN
+    }
+}
+
 /// The unit an atom belongs to (its oxygen's index), or `u32::MAX` for a free atom.
 #[no_mangle]
 pub extern "C" fn holon_unit_of(i: u32) -> u32 {

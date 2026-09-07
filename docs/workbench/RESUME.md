@@ -148,3 +148,61 @@ every band. LG certificates confer no band state at all.
 * Plant every check. Five of this lane's own checks passed while establishing nothing
   (empty-string match, existence-not-tracking, indistinguishable failures, a threshold at
   zero, a readout that could not move).
+
+## WB-9 — the ledger by channel, and three bands re-read (2026-09-06)
+
+The page's four WB-9 items, all landed in the working tree (not committed; the lead's).
+
+**The channel doors.** `holon_channel_count / plain / kind / reach / value` sit beside the
+existing doors in `holon-render/src/lib.rs`, over `channel.rs`'s `CHANNELS` and
+`Sim::channel_standing`. The two name doors return POINTERS to NUL-terminated statics —
+strings do not cross the wasm ABI as values, and a code plus a lookup table on the page
+would put the six words in two places, which is exactly what the panel exists not to do.
+Gated by `tests/channel_door.rs`; a name changed in the record and not in the static table
+fails there (planted and confirmed).
+
+**The value door's rule, which is the whole honesty of the panel.** A channel is served a
+number only where a ledger row carries it WHOLLY and carries nothing else. A folded row is a
+bound and never a value; a row carrying several channels wholly — the seam row carries
+exchange, dispersion and charge transfer that way — is not any one of their numbers either.
+Today that serves presence (`e_field`) and attunement (`e_far`) and refuses the other four,
+and the page prints the refusal rather than a zero.
+
+**THE LIVE 16-WATER BOX: MEASURED, AND IT CANNOT BE DONE — not on price.** Measured on the
+shipped artifact, one fresh instance per row, box sized to LIQUID-1's own density
+(30.02 Å³ per water, from its 128-water cell):
+
+| waters | atoms | edge (bohr) | half-edge | law reach | `holon_set_boundary(2)` | ms/frame |
+|---|---|---|---|---|---|---|
+| 16 | 48 | 14.80 | 7.40 | 12.00 | **101 REFUSED** | 0.088 |
+| 32 | 96 | 18.65 | 9.32 | 12.00 | **101 REFUSED** | 0.428 |
+| 68 | 204 | 23.97 | 11.99 | 12.00 | **101 REFUSED** | 1.638 |
+| 108 | 324 | 27.97 | 13.99 | 12.00 | 0 admitted | 4.742 |
+| 128 | 384 | 29.60 | 14.80 | 12.00 | 0 admitted | 8.202 |
+
+A wrapping box is legal only while half its shortest edge exceeds the force law's reach, and
+a 16-water cell at liquid density is half the edge the law needs. The price is NOT the
+obstacle: LIQUID-1's own 128-water cell steps at 8.2 ms per frame on this build. Two
+qualifications on those milliseconds — they are the H-H pair law with no seam and no water
+tables, so they are a FLOOR on the water price; and they are node's V8 on this box, not a
+browser's. Independently of the door, this engine has no export that PLACES atoms, so a page
+could not seed sixteen waters even in a cell the door admits.
+
+The band therefore carries the refusal rather than a live box, and shows the door's own two
+numbers LIVE (`holon_legality_radius` vs `holon_half_min_edge`) instead of asserting it —
+no typed number, and the line moves with the size axis.
+
+**The ladder's third state.** `measured` — the band's physics is read and its node-G
+certificate is still owed. It is not a softer fence and not a flip: the certificate
+direction is gated on it exactly as on a fence, and FSD-W3 §11.2's GATED for the H-bond band
+stays true, because what is gated is the certificate.
+
+**Two gaps in this gate, now closed.** `smoke.mjs` read app.js as TEXT and was perfectly
+happy with a file the browser cannot parse — a dropped brace in a data table left all 431
+checks green while the page threw on its first line. It now runs `node --check` on app.js
+and smoke.mjs, and it RUNS both render passes under a DOM stub, so an exception inside
+`renderStatics` fails the gate instead of silently blanking every panel after it.
+
+Smoke: 431 → 522, all green. Five plants confirmed (a syntax error, a refusal drawn as a
+zero, the MEASURED word removed, a reading's cite moved one line, a grid row keyed by a name
+the engine does not serve).

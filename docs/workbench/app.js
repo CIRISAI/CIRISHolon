@@ -604,9 +604,45 @@ const LADDER = [
     band: "fluid element",
     scale: "~µm+",
     lengthM: 1.0e-6,
-    runs: "the carrier that certifies this band is BEING BUILT",
+    runs: "the carrier that certifies this band is BEING BUILT — and FLUID-0 has now said "
+      + "what it has to be: over all 4,608 collision laws of the single-species lattice gas "
+      + "the Schmidt number runs 0.107 to 0.449 against water's 435, so no carrier without "
+      + "a closure in it can carry the liquid's two transport coefficients at any chart "
+      + "(branch (c), staked before any law was read). FLUID-1 is the exit, frozen and "
+      + "running: the same lattice with an orientation on every particle and a bond rule "
+      + "read off CT-2's measured angular map.",
     state: "fenced",
     owner: "GANTT node G, rung 2 — banked NOT CERTIFIED, branch (d) of its own freeze",
+    // FLUID-0'S FINDING, on the face rather than in a footnote, with the kill that made it
+    // a finding. The census is a measured NO about a whole family of carriers, which is a
+    // stronger statement than the fence it sits inside: what is missing is not compute, it
+    // is a closure in the carrier.
+    readings: [
+      { what: "Schmidt number over 4,608 laws", value: "0.107 – 0.449",
+        note: "median 0.161; the largest in the census is 0.4486. Momentum and particles "
+          + "are carried by the same collisions and no rule in the group pulls them apart",
+        record: "conformance/mesh/FLUID0_RESULTS.md:18" },
+      { what: "water's Schmidt number — THE KILL", value: "435",
+        note: "a thousandfold above the census's largest (0.4486, index 654) and thirtyfold "
+          + "above the lowest band the freeze offered. Water's hundreds say its particles "
+          + "are trapped while stress passes: a network",
+        record: "conformance/mesh/FLUID0_RESULTS.md:18" },
+      { what: "the branch, staked before any law was read", value: "Branch (c)",
+        note: "no single-species collision law carries water's two transport coefficients "
+          + "at once, whatever length and time a chart assigns the lattice",
+        record: "conformance/mesh/FLUID0_RESULTS.md:15" },
+      { what: "what the census concludes", value: "needs a closure in its carrier",
+        note: "a second species, or bound pairs — which is the object contract's own "
+          + "statement of what a tier is. A gas of single particles has nothing to trap a "
+          + "particle in, so no rule in the group can make water's ratio",
+        record: "conformance/mesh/FLUID0_RESULTS.md:76" },
+      { what: "the exit, frozen", value: "FLUID-1",
+        note: "the orientation lattice: every particle carries a direction, a bond forms "
+          + "when the geometry CT-2's map favours holds, a bonded pair is a closure that "
+          + "moves as one and is released by the rent clause. Its Schmidt number, bond "
+          + "count, spanning cluster and block-chart defect are the readouts asked of it",
+        record: "conformance/mesh/FLUID1_PREREG.md:1" },
+    ],
     // A MEASURED FENCE, which is a better fence than the one it replaces: "no certified
     // chart exists" is a state, and a quantified boundary is a fact. Rung 2 spent the
     // compute and came back with numbers rather than a shrug.
@@ -621,7 +657,11 @@ const LADDER = [
     // extrapolating from them and pre-committed that UNDETERMINED beats a fitted trend.
     // Naming it as undetermined is what keeps this a fence rather than architecture: the
     // successor ROUTES are named even though the distance is not.
-    exit: "carrier-v2 is in build: trajectory format v2 past the 16-atom cap, genuine-3D "
+    exit: "FLUID-1 is the exit and it is frozen and running — the orientation lattice, "
+      + "FLUID-0's own branch (c) turned into a carrier: a bond rule read from CT-2's "
+      + "measured angular map at run time, a bonded pair released by the rent clause, and "
+      + "the Schmidt number asked of it again. Beside it, carrier-v2 is in build: "
+      + "trajectory format v2 past the 16-atom cap, genuine-3D "
       + "≥400-atom scenes on the threaded MD path, dims MEASURED rather than declared. "
       + "Rung 2's numbers are the requirement it must beat — a 1 µm patch is 5.95e6 atoms "
       + "against a 12-atom certified scene, and the occupancy and transport conditions "
@@ -647,20 +687,80 @@ const LADDER = [
     band: "H-bond network",
     scale: "~10 nm",
     lengthM: 1.0e-8,
-    runs: "the carrier that certifies this band is BEING BUILT",
-    state: "fenced",
+    runs: "the network MEASURED — 128 waters at liquid density, 100,000 counted frames, "
+      + "the shell and the bond count read by the periodic lens (LIQUID-1). The CERTIFICATE "
+      + "is still owed; the physics is not.",
+    // THE THIRD STATE, and it is a state rather than a softer fence. `fenced` means the
+    // page has nothing to show; `live` means a node-G closure certificate flipped the band.
+    // LIQUID-1 is neither: it MEASURED this band's structure on a banked liquid, so the
+    // readouts exist and are shown with their citations — and no certificate exists, so the
+    // band is not live and the flip law is untouched. FSD-W3 §11.2 still reads GATED for
+    // this band and that is still true: what is gated is the certificate.
+    state: "measured",
     owner: "GANTT node G, rung 1 — banked branch (D), NOT certified",
     // A FENCE IS A BUG UNDER REPAIR, NEVER CONTENT (operator's law). What goes on screen
     // is the DEBT, its OWNER, and THE BUILD PAYING IT, in the present tense. The measured
     // numbers are still here — they are the requirement the build has to beat — but they
     // are the specification of the work, not a display of why refusing was clever.
-    exit: "the physics ladder and the T3 scale-up are the named unblockers; rung 1's "
-      + "readings are the bar that build must clear — 70 chart readings in which the two "
-      + "conditions a certified tier needs are EXACTLY DISJOINT: 36 inside the closure "
-      + "budget and all 36 VOID by anti-vacuity, 32 clearing anti-vacuity and none inside "
-      + "the budget, zero doing both.",
+    exit: "the certificate is what is owed, not the measurement: rung 1's 70 chart readings "
+      + "left the two conditions a certified tier needs EXACTLY DISJOINT — 36 inside the "
+      + "closure budget and all 36 VOID by anti-vacuity, 32 clearing anti-vacuity and none "
+      + "inside the budget, zero doing both — and LIQUID-2 is the build that pays it, "
+      + "carrying the spanning-cluster fraction LIQUID-1 did not read and a diffusion arm "
+      + "long enough to contain a diffusive regime.",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:377",
     measuredBy: "conformance/water_observatory/RUNG1_RESULTS.md:19",
+    // WHAT LIQUID-1 ACTUALLY READ. Each row is a figure and the line of the record it came
+    // from; the gate resolves every one and requires the figure to be ON that line, exactly
+    // as it does for the water story's RECORD block. A band that quotes a measurement
+    // nobody checks is a longer sentence, not a better one.
+    readings: [
+      { what: "first O–O peak", value: "3.04 Å, height 2.20",
+        note: "water-shaped and 3% too far — the position 0.09 Å past experiment's band, "
+          + "the height inside it (R1 branch (c))",
+        record: "conformance/water_observatory/LIQUID1_RESULTS.md:60" },
+      { what: "coordination to 3.3 Å", value: "4.20",
+        note: "against water's ~4.5",
+        record: "conformance/water_observatory/LIQUID1_RESULTS.md:60" },
+      { what: "second shell", value: "6.0 Å",
+        note: "where a close-packed liquid puts it, not at 4.5 Å where a tetrahedral "
+          + "network does — a simple liquid of weakly directional molecules, not yet a "
+          + "network",
+        record: "conformance/water_observatory/LIQUID1_RESULTS.md:60" },
+      { what: "hydrogen bonds per molecule", value: "1.18 on the lens = 2.37 both-ends",
+        note: "two thirds of water's 3.5 in the both-ends convention the experiment counts "
+          + "in (R2 branch (b)); the lens counts each bond once",
+        record: "conformance/water_observatory/LIQUID1_RESULTS.md:61" },
+      { what: "self-diffusion", value: "VOID",
+        note: "the lens refused its own reading — the MSD goes as τ^1.64 over the window, "
+          + "so 2.6 ps contains no diffusive regime. A refusal about the instrument's "
+          + "window, not about the liquid (R3)",
+        record: "conformance/water_observatory/LIQUID1_RESULTS.md:62" },
+      { what: "spanning-cluster fraction", value: "OWED",
+        note: "the bond count sits above the four-connected percolation threshold, so the "
+          + "graph most likely spans — but the fraction was not a readout of this freeze "
+          + "and LIQUID-2 owes it. No number is shown because none was measured",
+        record: "conformance/water_observatory/LIQUID1_RESULTS.md:41" },
+    ],
+    // THE LIVE BOX, AND WHY THERE IS NOT ONE. Not a judgement about speed: the engine's own
+    // BOUNDARY DOOR refuses a cell this small, because a periodic box is legal only when
+    // half its shortest edge exceeds the force law's reach. LIQUID-1's arm cleared that
+    // door at 128 units with a switched reach of 14.00 bohr against a half-edge of 14.80;
+    // a 16-water cell at the same density has half that edge and is refused. The page shows
+    // the door's own two numbers LIVE (`holon_legality_radius` and `holon_half_min_edge`)
+    // rather than asserting the refusal, so a reader watches the inequality that decides it.
+    //
+    // The second reason, stated because it is independent of the first: this engine has no
+    // door that PLACES atoms, so a page cannot seed sixteen waters even in a legal box —
+    // molecules here are formed by the census out of a reset scene, never positioned.
+    liveBox: "REFUSED BY THE ENGINE'S OWN BOUNDARY DOOR, not by price. A wrapping box is "
+      + "legal only while half its shortest edge exceeds the reach of the force law running "
+      + "in it; the two numbers are read live below. LIQUID-1's 128-water arm cleared that "
+      + "door — a switched reach of 14.00 bohr against a half-edge of 14.80 — and a "
+      + "16-water cell at the same density has half that edge, so the door refuses it. "
+      + "Independently: this engine has no door that places atoms, so a page could not seed "
+      + "sixteen waters even in a box the door admits.",
+    liveBoxCite: "conformance/water_observatory/LIQUID1_RESULTS.md:56",
     // The mechanism, which is the display-worthy part: the boundary is ALIGNMENT, not
     // presence and not proximity. That is a result about water, not a note about us.
     positive: "the molecules are there and the proximity is there — two or more separate "
@@ -694,6 +794,57 @@ const LADDER = [
     certNode: "G",
     certifiedBy: "the closure census — OH₂ held 893.8 fs, CERTIFIED-STRICT, past the "
       + "pre-staked 834 fs window",
+    // THE SEAM CAMPAIGNS' STANDING, channel by channel (WB-9.4). This band is where two
+    // closed units meet, and nine campaigns have been measuring exactly what passes between
+    // them. Each row says which channel, what the campaigns did to it, and the record's own
+    // line — so the ledger panel's live values and this history are two views of one thing
+    // rather than two claims that could drift.
+    //
+    // The plain names are the ENGINE'S (`channel.rs`, read through `holon_channel_plain`),
+    // not this file's, which is why the panel below reads them out of the artifact.
+    readings: [
+      { what: "refusal (exchange) — the wall", value: "46 of 48",
+        note: "the exponential wall on atom pairs TRANSFERS from the exact dimer to the "
+          + "dynamics' own range, three classes, fitted where the dynamics go (FIELD-9 "
+          + "S1 branch (b)); the two misses are both in the twist family",
+        record: "conformance/water_observatory/FIELD9_RESULTS.md:54" },
+      { what: "the closure identity's boundary", value: "H···O 1.95 bohr",
+        note: "inside it a hydrogen changes hands and the two units are no longer two — "
+          + "the hard edge of Identity, and the reason a contact term is fitted outside it "
+          + "rather than through it",
+        record: "conformance/water_observatory/FIELD9_RESULTS.md:78" },
+      { what: "sharing (charge transfer) — measured alone", value: "88 % at the minimum",
+        note: "the energy the exact dimer has and the closed sector of the two monomers' "
+          + "own determinants does not: −9.337 mHa of a −10.648 mHa miss at the 2.9 Å "
+          + "node. The ledger's sixth channel, measured by itself for the first time (CT-1)",
+        record: "conformance/water_observatory/CT1_RESULTS.md:22" },
+      { what: "sharing — the angle", value: "BRANCH (c)",
+        note: "the transfer follows the acceptor's PLANE NORMAL, not its lone pairs: it "
+          + "rises ~40% as the acceptor turns away and stays high to 180°, the opposite of "
+          + "the declared family, which the fit answered by choosing no acceptor factor at "
+          + "all (CT-2 S1)",
+        record: "conformance/water_observatory/CT2_RESULTS.md:64" },
+      { what: "the law admitted, for the first time in nine campaigns", value: "G-B0 = None",
+        note: "every class bounded and positive at contact. FIELD-9's harvested law was "
+          + "REFUSED by the same gate — a well 4.3 kT deep inside its own fit floor — and "
+          + "CT-2's is the first the boundedness walk lets the dynamics run on",
+        record: "conformance/water_observatory/CT2_RESULTS.md:67" },
+      { what: "attunement (pair dispersion)", value: "NOT TRANSFERRED, C₆ = 0",
+        note: "read three times, by three campaigns, on the remainder after every other "
+          + "term: the outer line's residue does not decay as a −C₆/r⁶ tail. The channel "
+          + "has a rate and this seam has no number for it",
+        record: "conformance/water_observatory/CT2_RESULTS.md:66" },
+      { what: "forward prediction 1 — CT-1's twisted-and-bent bond", value: "10.9% miss",
+        note: "filed before the solve at −3.675 mHa, solved at −3.314 mHa, against a "
+          + "tolerance of 0.829 mHa. Branch (a): the programme's FIRST seam prediction to "
+          + "land, and the charge-transfer term landed inside its own bar too",
+        record: "conformance/water_observatory/CT1_RESULTS.md:67" },
+      { what: "forward prediction 2 — CT-2's twisted, tilted and bent bond", value: "22.9% miss",
+        note: "filed at −3.725 mHa, solved at −3.031 mHa, against a 25% tolerance. Branch "
+          + "(a) again, at the edge: two of two forward predictions have landed, and this "
+          + "one says the law is right to a quarter, not better",
+        record: "conformance/water_observatory/CT2_RESULTS.md:72" },
+    ],
   },
   {
     // --- THE FINE BANDS. Everything below the molecular band is reached through a PICKED
@@ -735,7 +886,7 @@ const LADDER = [
       + "beside this page with the digest `tests/wasm_law.rs` pinned natively.",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:650",
     buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:681",
-    ganttCite: "GANTT.md:84",
+    ganttCite: "GANTT.md:85",
   },
   {
     band: "nucleus",
@@ -765,7 +916,7 @@ const LADDER = [
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:651",
     declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:680",
     buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:680",
-    ganttCite: "GANTT.md:84",
+    ganttCite: "GANTT.md:85",
   },
   {
     // THE FLOOR, AND IT DRAWS NOW. This was a fence whose stated exit was node GF2's
@@ -831,7 +982,7 @@ const LADDER = [
       + "every sector before solving it (`holon_hadron_dim_for`) and REFUSES above "
       + "`holon_hadron_max_det`: 3,375 determinants at N = 6 B = 1 is instant, 175,616 at "
       + "N = 8 runs, 9.3 million at N = 10 is refused with code 6.",
-    cite: "GANTT.md:75",
+    cite: "GANTT.md:76",
     measuredBy: "TIERS.md:59",
     positive: "the first rung is MEASURED: SCHWINGER-4's residual interaction between two "
       + "screened static pairs decays at the banked meson mass to 0.6% — Fold II's "
@@ -839,6 +990,137 @@ const LADDER = [
     positiveCite: "TIERS.md:59",
   },
 ];
+
+// ------------------------------------------- the ledger by channel (WB-9.1, the six by six)
+//
+// THE ROWS ARE THE ENGINE'S, NOT THIS FILE'S. `channel.rs` is the record — six channels,
+// each with a plain name, the kind of change it makes, a derived rate and the ledger rows
+// that carry it — and the page reads all of it through `holon_channel_count / plain / kind
+// / reach / value`. Nothing about a channel is typed here: a list of six names in this file
+// would be the page inventing the record it claims to display, and it would go stale the
+// day a seventh channel is measured.
+//
+// WHAT "not served" MEANS ON THIS PANEL, because it is the whole honesty of the value
+// column. `Row::carries` says, per ledger row, which channels are inside that row's number
+// and whether the row IS the channel or merely contains it. A folded row's number is a
+// BOUND on the channel and never its value; a row carrying several channels wholly — the
+// seam row carries exchange, dispersion and charge transfer that way — is not any one of
+// their numbers either. So the engine serves a value only where a row carries the channel
+// wholly and alone, and hands back NaN otherwise. The panel writes "not served" for the
+// NaN and never a zero: a zero would read as "this channel contributes nothing", which is
+// a measurement, and no measurement was made.
+//
+// THE COLUMNS are the account's six kinds — the four assertive ones the grounding stack
+// orders (Premises founds Model, Model derives Facts, Facts modulate Confidence), one
+// directive (Priorities) and one carrier (Manner). The grid is CIRISOntology's Backpass V
+// §2 read back onto this repository's own campaigns, and the reading it is drawn to show is
+// that a channel's history walks its row LEFT TO RIGHT: a Confidence cannot be set on Facts
+// not yet measured, under a Model not yet chosen, from Premises not yet fixed.
+//
+// TWO THINGS THE PANEL IS NOT. It is not a pairing: five kinds fill six rows because
+// Identity is the only kind with an edge and an edge has two sides, so the equal count is a
+// coincidence and no cell claims otherwise. And an EMPTY CELL IS EMPTY — a place a campaign
+// could have been right or wrong about one channel in one way and has not yet been. Filling
+// one with a plausible sentence would be the WB-7 lie in a grid's costume.
+const CHANNEL_COLUMNS = ["Premises", "Model", "Facts", "Confidence", "Priorities", "Manner"];
+
+/// The filled cells, keyed by the channel's PLAIN name — the engine's word, so a rename in
+/// `channel.rs` leaves this grid's rows unmatched and the gate says so, rather than the
+/// panel quietly drawing an empty row for a channel that still has a history.
+const CHANNEL_GRID = {
+  presence: {
+    Model: {
+      text: "point charges, and FIELD-4 measured what that costs: the density field is NOT "
+        + "a field at contact, and the charges' missing attraction there is mostly "
+        + "penetration and induction",
+      record: "conformance/water_observatory/FIELD4_RESULTS.md:14",
+    },
+    Facts: {
+      text: "FIELD-1: the embedding field on the census's own rows, counted once — pure "
+        + "hydrogen carries exactly zero and the receipt columns close",
+      record: "conformance/water_observatory/FIELD_RESULTS.md:23",
+    },
+  },
+  accommodation: {
+    Model: {
+      text: "no term of its own: induction is FOLDED into the seam's H–O exponential and "
+        + "into the pair table. FIELD-2 is named and not built, which is why this channel's "
+        + "value reads not served below",
+      record: "engine/crates/holon-render/src/channel.rs:324",
+      // A cite into SOURCE drifts with every edit above it, so it is pinned to text.
+      match: "Row::Seam => &[",
+    },
+  },
+  attunement: {
+    Model: {
+      text: "−C₆/r⁶, the channel's derived leading order (London 1930), carried whole by "
+        + "the far sector and by the seam's O–O pairs",
+      record: "engine/crates/holon-render/src/channel.rs:184",
+      match: "rate: Rate::Power(6.0),",
+    },
+    Facts: {
+      text: "C₆ = 0 — NOT TRANSFERRED, read three times by three campaigns on the "
+        + "remainder after every other term. The channel has a rate and this seam has no "
+        + "number for it",
+      record: "conformance/water_observatory/CT2_RESULTS.md:66",
+    },
+  },
+  refusal: {
+    Premises: {
+      text: "the closure identity's boundary at H···O 1.95 bohr — inside it a hydrogen "
+        + "changes hands and the two units stop being two, so a term fitted through it is "
+        + "fitted through a change of subject",
+      record: "conformance/water_observatory/FIELD9_RESULTS.md:78",
+    },
+    Model: {
+      text: "an exponential wall per atom-pair class, fitted where the dynamics go rather "
+        + "than across the contact — 46 of 48 within tolerance, three classes",
+      record: "conformance/water_observatory/FIELD9_RESULTS.md:54",
+    },
+    Facts: {
+      text: "66 orientations, gathered by FIELD-7 and FIELD-8 and used unchanged by "
+        + "FIELD-9: the data came before the tolerance that reads them",
+      record: "conformance/water_observatory/FIELD9_RESULTS.md:7",
+    },
+    Confidence: {
+      text: "the DRIFT is the tolerance (FIELD-9 D0): the single-class exponent's own "
+        + "spread across the families, declared before the fit. The typed twentieth it "
+        + "replaced would have put 21 readings outside instead of 2",
+      record: "conformance/water_observatory/FIELD9_RESULTS.md:53",
+    },
+    Priorities: {
+      text: "the first-violation-only gate: the boundedness walk reported the first class "
+        + "it met and said nothing of the abyss two lines later. Registered as a misfit and "
+        + "now every class and both legs are named",
+      record: "conformance/water_observatory/CT1_RESULTS.md:44",
+    },
+  },
+  sharing: {
+    Premises: {
+      text: "what CLOSED means: the monomers' OWN determinants, not the orthogonalised "
+        + "ones. The freeze's instrument refuted itself on its unit test before a water "
+        + "node was touched, and the amendment was frozen alone before any reading",
+      record: "conformance/water_observatory/CT1_AMENDMENT_1.md:1",
+    },
+    Model: {
+      text: "a pair exponential first (CT-1), then the angle (CT-2) — and the angle came "
+        + "back the opposite way round: the transfer follows the acceptor's plane normal, "
+        + "not its lone pairs, so the declared family fitted itself away to no acceptor "
+        + "factor at all",
+      record: "conformance/water_observatory/CT2_RESULTS.md:64",
+    },
+    Facts: {
+      text: "thirteen exact records reproduced, then 51 new nodes solved — every one "
+        + "converged, priced, and inside the closure identity",
+      record: "conformance/water_observatory/CT2_RESULTS.md:61",
+    },
+    Confidence: {
+      text: "CT-2's bar, and the law it admitted: G-B0 returns None — every class bounded "
+        + "and positive at contact — for the first time in nine seam campaigns",
+      record: "conformance/water_observatory/CT2_RESULTS.md:67",
+    },
+  },
+};
 
 /// THE ACUITY LAW (§9c): the observer's resolution bounds the allocation, and the seed is
 /// ONE. A band's population is what the current view can actually distinguish — zero while
@@ -1031,6 +1313,60 @@ function fmtEnergy(ha) {
   return `${ha >= 0 ? "+" : ""}${ha.toFixed(6)} Ha`;
 }
 
+/// A NUL-terminated string out of the engine's linear memory, at a pointer one of the name
+/// doors returned.
+///
+/// The walk is BOUNDED and the buffer is re-read on every call, and both are deliberate. A
+/// name whose terminator was lost would otherwise run this loop to the end of memory inside
+/// a frame; and `memory.buffer` is DETACHED and replaced whenever the engine grows its
+/// heap, so a view cached across a call that allocates reads a dead ArrayBuffer. The water
+/// door's own comment records the second hazard for the same reason.
+function cstr(w, ptr) {
+  if (!ptr) return null;
+  const bytes = new Uint8Array(w.memory.buffer);
+  let end = ptr;
+  while (end < bytes.length && end - ptr < 64 && bytes[end] !== 0) end += 1;
+  if (end - ptr >= 64) return null;
+  return new TextDecoder().decode(bytes.subarray(ptr, end));
+}
+
+/// The channel ledger AS THE ENGINE HOLDS IT, one entry per row of `channel.rs`. Every
+/// field is read through a door; nothing here is a constant this file keeps.
+///
+/// `value` and `reach` are returned as they come, NaN included, because the NaN is the
+/// answer: it says the engine has no number of this channel's own, and the panel must say
+/// so in words rather than draw a zero. Converting it here would throw away the only
+/// distinction the value door makes.
+function channelRows(w) {
+  const n = w.holon_channel_count();
+  const rows = [];
+  for (let i = 0; i < n; i++) {
+    rows.push({
+      index: i,
+      plain: cstr(w, w.holon_channel_plain(i)),
+      kind: cstr(w, w.holon_channel_kind(i)),
+      reach: w.holon_channel_reach(i),
+      value: w.holon_channel_value(i),
+    });
+  }
+  return rows;
+}
+
+/// A channel's reach, in the three states the door can report it in. `+inf` is the whole
+/// scene (no cutoff, the sum runs over every tuple), a finite number is a radius in bohr,
+/// and NaN is NOTHING REACHES.
+///
+/// The NaN is worded as the SCENE's state rather than the engine's, because the door
+/// collapses two cases into it and only one of them is about the engine: induction has no
+/// row anywhere (FIELD-2 is named, not built), and the field has a row that is not running
+/// while the field is switched off. "No row in this engine" is true of the first and false
+/// of the second, and the page had it on both until the second was looked at.
+function fmtReach(r) {
+  if (Number.isNaN(r)) return "nothing reaches — this channel's sector is not running here";
+  if (!Number.isFinite(r)) return "the whole scene";
+  return `${r.toFixed(2)} bohr`;
+}
+
 function fmtSci(x, digits = 3) {
   return Number.isFinite(x) ? x.toExponential(digits) : "—";
 }
@@ -1200,6 +1536,15 @@ const REQUIRED_EXPORTS = [
   "holon_bank_table_begin", "holon_bank_table_knot", "holon_bank_table_knot_curvature",
   "holon_bank_table_finish", "holon_water_table_alloc", "holon_water_table_load",
   "holon_water_nodes", "holon_water_peak",
+  // the channel ledger's door (WB-9.1): the six rows READ OUT of `channel.rs` rather than
+  // retyped here, and their standing in the running scene. Required rather than pending —
+  // the panel below has nothing to draw without them, and a page drawing the six channels
+  // from a list in this file is the page inventing the record it claims to display.
+  "holon_channel_count", "holon_channel_plain", "holon_channel_kind",
+  "holon_channel_reach", "holon_channel_value",
+  // the boundary door's own two numbers, which is how the H-bond band says why there is no
+  // live periodic cell on this page instead of asserting it
+  "holon_legality_radius", "holon_half_min_edge",
 ];
 
 /// THE EXPORTS THE FINE BANDS ARE WAITING FOR — declared here and NOT in the list above,
@@ -2945,15 +3290,40 @@ function renderStatics() {
           ? `<span class="lad-fenced" id="lad-state-${i}">FENCED — PENDING</span>`
             + `<span class="lad-detail"><b>owner</b> ${b.owner} · <b>exit</b> ${b.exit}</span>`
             + `<span class="lad-detail" id="lad-liveWhen-${i}">—</span>`
-          : `<span class="lad-fenced">FENCED</span>`
-            + `<span class="lad-detail"><b>owner</b> ${b.owner} · <b>exit</b> ${b.exit}</span>`
-            + (b.positive
-              ? `<span class="lad-detail lad-positive"><b>measured anyway</b> ${b.positive}</span>`
-              : "");
+          // MEASURED is a third state and it is written as one, never as a softer fence.
+          // The band's own physics has been read and the readings are shown with their
+          // citations; the node-G closure certificate has NOT been earned, and the word
+          // says so beside the readings rather than after them. A reader who stops at the
+          // first line must not come away thinking this band is certified.
+          : b.state === "measured"
+            ? `<span class="lad-measured">MEASURED · CERTIFICATE OWED</span>`
+              + `<span class="lad-detail"><b>owner</b> ${b.owner} · <b>exit</b> ${b.exit}</span>`
+              + (b.positive
+                ? `<span class="lad-detail lad-positive"><b>the mechanism</b> ${b.positive}</span>`
+                : "")
+            : `<span class="lad-fenced">FENCED</span>`
+              + `<span class="lad-detail"><b>owner</b> ${b.owner} · <b>exit</b> ${b.exit}</span>`
+              + (b.positive
+                ? `<span class="lad-detail lad-positive"><b>measured anyway</b> ${b.positive}</span>`
+                : "");
       return `<div class="lad ${b.state}" id="lad-row-${i}"><div class="lad-head">`
         + `<b>${b.band}</b><span>${b.scale}</span></div>`
         + `<div class="lad-runs">${b.runs}</div>`
         + `<div class="lad-status">${status}</div>`
+        // THE BAND'S OWN READINGS, each with the line of the record it came from. Rendered
+        // from the data rather than written into the markup for the same reason the water
+        // story is: a figure and its citation that live in two places drift apart, and the
+        // gate can only check the one it can find.
+        + (b.readings
+          ? `<div class="lad-readings">` + b.readings.map((r) =>
+              `<div class="lad-reading"><b>${r.value}</b><span>${r.what}</span>`
+              + `<p>${r.note}</p><code>${r.record}</code></div>`).join("") + `</div>`
+          : "")
+        + (b.liveBox
+          ? `<div class="lad-status"><span class="lad-detail lad-livebox">`
+            + `<b>the live box, and why there is not one</b> ${b.liveBox}`
+            + `<span class="lad-door" id="lad-door-${i}">—</span></span></div>`
+          : "")
         + (b.readout
           ? `<div class="lad-status"><span class="lad-detail lad-readout">`
             + `<b>readout</b> ${b.readout}</span></div>`
@@ -2964,10 +3334,37 @@ function renderStatics() {
         + `${b.positiveCite ? " · " + b.positiveCite : ""}`
         + `${b.readoutCite ? " · " + b.readoutCite : ""}`
         + `${b.declaredCite ? " · " + b.declaredCite : ""}`
+        + `${b.liveBoxCite ? " · " + b.liveBoxCite : ""}`
         + `${b.buildCite ? " · " + b.buildCite : ""}`
         + `${b.ganttCite ? " · " + b.ganttCite : ""}</code></div>`;
     }).join("");
     // The slots were just created, so re-bind before anything writes to them.
+    bindUI();
+  }
+
+  // THE LEDGER BY CHANNEL (WB-9.1). STRUCTURE only: the six rows come out of the artifact
+  // here, and the two live columns are written per frame into the slots below. Rendering
+  // the whole table per frame would rebuild six rows of prose sixty times a second to move
+  // two numbers, and rendering the numbers here would freeze them at the moment a preset
+  // loaded — which is how a live readout becomes a caption.
+  if (UI["channel-rows"]) {
+    const rows = channelRows(w);
+    UI["channel-rows"].innerHTML = rows.map((c) => {
+      const grid = CHANNEL_GRID[c.plain] || {};
+      const cells = CHANNEL_COLUMNS.map((col) => {
+        const cell = grid[col];
+        return cell
+          ? `<td class="chan-cell filled"><span>${cell.text}</span>`
+            + `<code>${cell.record}</code></td>`
+          // An empty cell is EMPTY. No dash that could be read as a measured nothing, and
+          // no sentence invented to fill the width.
+          : `<td class="chan-cell"></td>`;
+      }).join("");
+      return `<tr><th scope="row"><b>${c.plain}</b><span>${c.kind}</span></th>`
+        + `<td class="chan-live" id="chan-reach-${c.index}">—</td>`
+        + `<td class="chan-live" id="chan-value-${c.index}">—</td>`
+        + cells + `</tr>`;
+    }).join("");
     bindUI();
   }
 
@@ -3194,6 +3591,56 @@ function renderTelemetry() {
       ? "every band on the ladder runs its certified chart"
       : `${liveBands} of ${LADDER.length} bands run; the rest carry their debt, owner and `
         + "exit, and each names the build paying it");
+  // THE LEDGER BY CHANNEL's two live columns (WB-9.1), written every frame because both
+  // are properties of THIS scene: the reach follows the sectors that are on, and the value
+  // follows the ledger rows the last force pass filled.
+  //
+  // The value column's rule is the door's: a number where a ledger row carries the channel
+  // wholly AND alone, "not served" where none does. The not-served cell names why, from the
+  // reach the door reported beside it — a channel with no row at all is a different absence
+  // from one whose number is folded in with others, and one sentence for both would hide
+  // the distinction the door exists to make.
+  {
+    const chans = channelRows(w);
+    let served = 0;
+    for (const c of chans) {
+      const reachEl = UI[`chan-reach-${c.index}`];
+      if (reachEl) {
+        reachEl.textContent = fmtReach(c.reach);
+        reachEl.className = Number.isNaN(c.reach) ? "chan-live absent" : "chan-live";
+      }
+      const valEl = UI[`chan-value-${c.index}`];
+      if (!valEl) continue;
+      if (Number.isNaN(c.value)) {
+        valEl.className = "chan-live absent";
+        valEl.textContent = Number.isNaN(c.reach)
+          ? "not served — no ledger row carries this channel in this engine"
+          : "not served — this channel's energy is inside a row it shares, and a shared "
+            + "row's number is a bound, never this channel's value";
+      } else {
+        served += 1;
+        valEl.className = "chan-live";
+        // A SERVED NUMBER BESIDE A REACH THAT SAYS NOTHING REACHES needs its reason, or the
+        // two cells contradict each other on screen. The field's row is exactly zero while
+        // the field is switched off, and that is a true zero about this scene rather than a
+        // channel with no number — so the cell says which.
+        //
+        // The other branch is a DETECTOR, not a verdict: a non-zero row under a sector that
+        // reports no reach is something to go and read the ledger about, and the page says
+        // that rather than guessing which of the two readings is wrong.
+        valEl.textContent = !Number.isNaN(c.reach)
+          ? fmtEnergy(c.value)
+          : c.value === 0
+            ? `${fmtEnergy(c.value)} — the sector is not running in this scene`
+            : `${fmtEnergy(c.value)} — but the sector reports no reach; read the ledger`;
+      }
+    }
+    tag("tag-channels", served === chans.length ? "live" : "fenced",
+      `${served} of ${chans.length} channels have a ledger row of their own; the rest are `
+      + "carried inside rows they share, and the panel says so rather than showing a number "
+      + "that is really some other channel's energy");
+  }
+
   LADDER.forEach((b, i) => {
     // THE FINE BANDS' STATE, written from the artifact every frame rather than from the
     // source. `bandLiveness` is the whole rule and it runs here: name every export the band
@@ -3217,6 +3664,25 @@ function renderTelemetry() {
       // reads a word.
       const rowEl = UI[`lad-row-${i}`];
       if (rowEl) rowEl.className = `lad ${lv.live ? "live" : "export-gated"}`;
+    }
+    // THE BOUNDARY DOOR'S OWN TWO NUMBERS, live, under the band that says why there is no
+    // periodic live box. The refusal is an INEQUALITY — a wrapping box is legal only while
+    // half its shortest edge exceeds the reach of the force law running in it — and this
+    // page's rule is to show the inequality rather than assert its outcome. Both numbers
+    // are the engine's own (`holon_legality_radius`, `holon_half_min_edge`), so the line
+    // moves with the size axis and a reader can watch the door change its mind.
+    const doorEl = UI[`lad-door-${i}`];
+    if (doorEl) {
+      const reach = w.holon_legality_radius();
+      const half = w.holon_half_min_edge();
+      const legal = half > reach;
+      doorEl.className = legal ? "lad-door" : "lad-door refused";
+      doorEl.textContent = `THIS SCENE, live: the law reaches ${reach.toFixed(2)} bohr and `
+        + `half the box's shortest edge is ${half.toFixed(2)} bohr — `
+        + (legal
+          ? "a wrapping box would be legal here."
+          : "a wrapping box is REFUSED here, which is the same inequality that refuses a "
+            + "16-water cell.");
     }
     const pop = acuityPopulation(viewM, b.lengthM);
     const el = UI[`lad-acuity-${i}`];

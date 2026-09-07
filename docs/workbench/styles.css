@@ -1365,3 +1365,90 @@ body, html {
    text over the simulation. */
 .drawer-card:not(.expanded) .card-note { display: none; }
 .card-more { margin-left: auto; font-size: 9px; opacity: 0.8; }
+
+/* --- MEASURED: the ladder's third state (WB-9.2). Not a softer fence and not a live
+   band. `fenced` means there is nothing to show; `live` means a node-G closure
+   certificate flipped the band. A MEASURED band has its physics read and its
+   certificate still owed, so it is amber: the readings are drawn with their citations,
+   the word beside them says the certificate is owed, and the flip law is untouched. */
+.lad.measured { border-left-color: var(--amber, #d8a657); }
+.lad-measured {
+  color: var(--amber, #d8a657);
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.05em;
+}
+
+/* A band's own readings, each with the line of the record it came from — the water
+   story's shape, applied inside a band. */
+.lad-readings { display: flex; flex-direction: column; gap: 7px; margin: 6px 0 4px 0; }
+.lad-reading { border-left: 1px solid var(--border); padding-left: 8px; }
+.lad-reading b { font-family: var(--font-mono); font-size: 11px; color: var(--text-main); }
+.lad-reading span { font-size: 10px; color: var(--text-dim); margin-left: 6px; }
+.lad-reading p { margin: 2px 0 3px 0; font-size: 10px; line-height: 1.5; color: var(--text-muted); }
+.lad-reading code {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  word-break: break-all;
+}
+
+/* The live box's refusal, and the boundary door's own two numbers under it. Rose when
+   the door refuses this scene, muted when it would admit it: the sentence above is
+   about a 16-water cell, and the line below is about the box you are looking at. */
+.lad-livebox { color: var(--text-muted); margin-top: 3px; }
+.lad-door {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.lad-door.refused { color: var(--rose); }
+
+/* --- the ledger by channel (WB-9.1). Nine columns of prose need to scroll inside the
+   card rather than widen the drawer, so the table gets its own overflow box. */
+.chan-wrap { overflow-x: auto; margin-top: 10px; }
+.chan-table {
+  border-collapse: collapse;
+  width: 100%;
+  min-width: 900px;
+  font-size: 10px;
+}
+.chan-table th, .chan-table td {
+  border: 1px solid var(--border);
+  padding: 5px 6px;
+  vertical-align: top;
+  text-align: left;
+}
+.chan-table thead th {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.chan-table tbody th b {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-main);
+}
+.chan-table tbody th span { font-size: 9.5px; color: var(--text-dim); }
+.chan-live { font-size: 10px; color: var(--text-muted); line-height: 1.5; }
+/* NOT SERVED, and not zero. Muted rather than rose: this is the engine reporting the
+   shape of its own ledger, which is a fact about the sectors and not a debt. */
+.chan-live.absent { color: var(--text-dim); font-style: italic; }
+.chan-cell { color: var(--text-dim); }
+.chan-cell.filled { color: var(--text-muted); }
+.chan-cell code {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--text-dim);
+  word-break: break-all;
+}

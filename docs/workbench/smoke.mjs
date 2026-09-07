@@ -113,6 +113,29 @@ function want(cond, what, detail) { cond ? ok(what) : no(what, detail); }
 
 // ---------------------------------------------------------------- 1. the export contract
 
+// ---- 0. THE PAGE PARSES AT ALL --------------------------------------------------------
+//
+// Everything below reads app.js AS TEXT — regexes over the LADDER block, the RECORD block,
+// the export lists. That is deliberate and it has one blind spot big enough to drive a
+// deploy through: a text scan is perfectly happy with a file the browser cannot load. A
+// dropped brace in a data table left every one of these checks green while the page threw
+// on its first line, which is the whole gate passing on a page that does not exist.
+//
+// `node --check` is the cheapest thing that can fail here, and it fails on exactly that.
+// It runs the file through the parser and no further, so nothing executes and no `document`
+// is touched. ENOENT on node itself is reported rather than skipped, for the same reason
+// the RECORD tracking check refuses to skip when git is missing.
+for (const file of ["app.js", "smoke.mjs"]) {
+  try {
+    execFileSync(process.execPath, ["--check", join(here, file)], { stdio: "pipe" });
+    ok(`${file} parses`);
+  } catch (e) {
+    if (e && e.code === "ENOENT") no(`the parse check needs node on PATH (NOT skipped)`);
+    else no(`${file} does not parse — the browser cannot load this page`,
+      String(e.stderr || e.message).split("\n").slice(0, 4).join(" | "));
+  }
+}
+
 const appSource = readFileSync(join(here, "app.js"), "utf8");
 const listMatch = appSource.match(/const REQUIRED_EXPORTS = \[([\s\S]*?)\];/);
 if (!listMatch) {
@@ -1018,8 +1041,15 @@ if (ladderBlock) {
   // not a word's) AND §11.2 says they are LIVE, so the artifact must actually serve them.
   // Failing that second half is what "the page shows a fence where the spec shows a band"
   // looks like from the outside, and nothing else here would say it.
+  //
+  // "measured" is the H-bond band's state since WB-9.2 and it is a REFINEMENT of §11.2's
+  // GATED, not a contradiction of it. §11.2 gates that band on node G's rung 1, and rung 1
+  // is still uncertified — what LIQUID-1 added is the band's own physics, read on a banked
+  // 128-water liquid with every figure cited. So the band shows its readings and does NOT
+  // hold a certificate, and the flip law below is untouched: `measured` is not `live`, and
+  // the certificate direction is checked on it exactly as it is on a fence.
   const SPEC_STATE = {
-    "the cube": "fenced", "fluid element": "fenced", "H-bond network": "fenced",
+    "the cube": "fenced", "fluid element": "fenced", "H-bond network": "measured",
     "molecular": "live", "atom": "export-gated", "nucleus": "export-gated",
     "the fold below the atom": "export-gated",
   };
@@ -1057,7 +1087,11 @@ if (ladderBlock) {
     // the reader an owner and an exit. Scoping this to `state === "fenced"` would have let
     // the two new bands carry a pending state with nobody named, which is the shrug the
     // fence law exists to forbid.
-    if (state === "fenced" || state === "export-gated") {
+    // `measured` is on this list too, and that is the point of it being a state rather than
+    // a flip: a band whose physics is read and whose CERTIFICATE is owed still owes the
+    // reader who owns the debt and what pays it. Leaving it off would let "measured" become
+    // the word a band moves to when nobody wants to write the exit any more.
+    if (state === "fenced" || state === "export-gated" || state === "measured") {
       const hasOwner = /owner:\s*"[^"]+"/.test(whole);
       const hasExit = /exit:\s*"[^"]{40,}"/.test(whole);
       want(hasOwner && hasExit,
@@ -1186,11 +1220,12 @@ if (ladderBlock) {
   // fence now carries them. Numbers on a page are a liability unless they resolve: these
   // are cited to RUNG2_RESULTS.md and read out of it here, exactly like the RECORD block.
   // A fence that quotes a measurement nobody checks is a longer sentence, not a better one.
-  for (const { band, measuredBy, positiveCite, readoutCite, declaredCite, buildCite, ganttCite } of bands) {
+  for (const { block, band, measuredBy, positiveCite, readoutCite, declaredCite, buildCite, ganttCite } of bands) {
     for (const [label, cite] of [
       ["measured exit", measuredBy], ["positive finding", positiveCite],
       ["readout grant", readoutCite], ["declared-input rule", declaredCite],
       ["build row", buildCite], ["GANTT row", ganttCite],
+      ["live-box refusal", (block.match(/liveBoxCite: "([^"]+)"/) || [, null])[1]],
     ]) {
       if (!cite) continue;
       const [relPath, lineNo] = cite.split(":");
@@ -1204,6 +1239,49 @@ if (ladderBlock) {
         no(`band "${band}" ${label} cites ${relPath}, which does not exist`);
       }
     }
+  }
+
+  // ---- A BAND'S READINGS ARE PINNED TO THEIR OWN LINES (WB-9.2/9.3/9.4) -------
+  //
+  // Three bands now carry `readings` — the figures LIQUID-1, FLUID-0 and the seam campaigns
+  // put on their faces — and a figure on a page is a liability unless it resolves. The rule
+  // is the RECORD block's, applied inside a band: the cited file must exist, the cited LINE
+  // must carry the figure, and the check is on the figure rather than on the file, because
+  // a citation that resolves to the right document and the wrong line is how a page keeps
+  // quoting a superseded number while looking checked.
+  //
+  // HOW A VALUE IS MATCHED, and why it is not an equality. A reading's `value` is written
+  // for a reader ("1.18 on the lens = 2.37 both-ends"); the record's line is written for the
+  // freeze ("`1.1843` on the lens ... `2.37`"). So every TOKEN of the value that carries a
+  // digit, or is four characters or more, must appear on the line, case-insensitively. That
+  // catches a figure edited on the page and not in the record, and a citation moved to a
+  // line that does not carry it, without demanding the two be spelled the same.
+  const readingCells = [...ladderBlock[1].matchAll(
+    /\{\s*what:\s*"((?:[^"\\]|\\.)*)",\s*value:\s*"((?:[^"\\]|\\.)*)",[\s\S]*?record:\s*"([^"]+)"/g)];
+  want(readingCells.length >= 18,
+    `the ladder's bands carry their readings as data (${readingCells.length} cells)`,
+    "the three re-read bands (H-bond network, fluid element, molecular) each put their "
+    + "campaign's figures on the face; a page that lost them would look exactly like a page "
+    + "that never had them");
+  for (const [, what, value, record] of readingCells) {
+    const [relPath, lineNo] = record.split(":");
+    let text = null;
+    try { text = readFileSync(join(repoRoot, relPath), "utf8"); } catch { /* below */ }
+    if (text === null) {
+      no(`reading "${what}" cites ${relPath}, which does not exist`,
+        "a published page must not cite an artifact a clean checkout does not have");
+      continue;
+    }
+    const line = (text.split("\n")[Number(lineNo) - 1] ?? "").toLowerCase();
+    const tokens = (value.match(/[A-Za-z0-9][A-Za-z0-9.\-]*/g) || [])
+      .filter((t) => /\d/.test(t) || t.length >= 4);
+    const absent = tokens.filter((t) => !line.includes(t.toLowerCase()));
+    want(absent.length === 0 && tokens.length > 0,
+      `reading "${what}" — "${value}" is on ${record}`,
+      tokens.length === 0
+        ? "the value carries nothing checkable; write it so a token of it is in the record"
+        : `not on line ${lineNo}: ${absent.join(", ")} — the line reads: `
+          + `${(text.split("\n")[Number(lineNo) - 1] ?? "").trim().slice(0, 90)}`);
   }
 
   // The two figures the fluid band's fence rests on, pinned against their artifact. If
@@ -1308,11 +1386,350 @@ if (ladderBlock) {
     `exactly one band is declared LIVE in the source (${live}); ${gated} flip from the artifact`,
     "more than one live band means a coarse chart is being served that this engine does "
     + "not have, which is the tier-faking the ladder exists to forbid");
-  const known = bands.filter((b) => ["live", "fenced", "export-gated"].includes(b.state)).length;
+  const STATES = ["live", "fenced", "export-gated", "measured"];
+  const known = bands.filter((b) => STATES.includes(b.state)).length;
   want(known === bands.length,
-    "every band's state is one of live, fenced or export-gated",
+    `every band's state is one of ${STATES.join(", ")}`,
     `states: ${bands.map((b) => `${b.band}=${b.state}`).join(", ")} — a state the renderer `
     + "does not know renders as a fenced band with no fence, which is a blank row");
+  // AND THE RENDERER KNOWS EACH ONE. The list above is a promise about the data; this is
+  // the check that the promise is kept in the code that draws it. A state with no arm in
+  // the renderer falls through to the fenced arm and draws a fence over a band that is not
+  // fenced — the failure the list alone cannot see, because the list is where it looks
+  // correct. The border colour is checked too: the eye sorts this drawer by colour before
+  // it reads a word, so a state with no rule of its own inherits another state's meaning.
+  const cssSource = readFileSync(join(here, "styles.css"), "utf8");
+  for (const state of STATES) {
+    if (state === "fenced") continue;   // the fall-through arm, by construction
+    want(new RegExp(`b\\.state === "${state}"`).test(appSource),
+      `the ladder renderer has an arm for the "${state}" state`,
+      "every state but the fall-through must be chosen explicitly, or it renders as a fence");
+    want(new RegExp(`\\.lad\\.${state}\\b`).test(cssSource),
+      `the "${state}" state has a border rule of its own`,
+      "a state with no rule inherits another state's colour, and the eye sorts this drawer "
+      + "by colour before it reads a word");
+  }
+  want(/\.lad-measured\b/.test(cssSource),
+    "the MEASURED state has its own word class",
+    "without it a measured band's verdict renders in the fenced rose and reads as a fence, "
+    + "which is the opposite of what LIQUID-1 established");
+}
+
+// ------------------------- 6c0. THE LEDGER BY CHANNEL: the rows are the engine's (WB-9.1)
+//
+// The panel's whole claim is that it displays the engine's own record rather than a copy of
+// it, so the checks are about where each field comes from and what the page does with the
+// one answer that is not a number.
+//
+//   1. The five doors resolve in the ARTIFACT and are on the page's REQUIRED list. On the
+//      pending list instead they would fence the panel forever with nobody told; absent
+//      from both they would be an undeclared call, which section 1 already refuses.
+//   2. Driven on the artifact, the doors hand back six channels with the six plain names
+//      and the five kinds, read through the same NUL walk the page performs. A name door
+//      returning a pointer into the wrong static reads as a neighbour's name, and only
+//      reading the bytes says so.
+//   3. THE VALUE DOOR'S TWO ARMS, both required to be non-empty. Some channel must be
+//      served and some must be refused: a door that answered NaN to everything would draw
+//      a panel of "not served" that looked scrupulous and said nothing, and a door that
+//      answered a number to everything would be handing the page one row's energy under
+//      six labels. And the served arm must agree with an INDEPENDENT export of the same
+//      row — `holon_field_energy` — or the panel could be reading the right channels out
+//      of the wrong rows.
+//   4. The page renders the NaN as words and never as a zero, and the words are checked in
+//      the source: `Number.isNaN` before any formatting, "not served" on the page.
+//   5. Every row of the grid is keyed by a name the ENGINE returns, and every filled cell's
+//      record resolves to a line that exists. A row keyed by a name the engine dropped
+//      would silently render as a channel with no history at all.
+{
+  const CHANNEL_DOORS = ["holon_channel_count", "holon_channel_plain", "holon_channel_kind",
+    "holon_channel_reach", "holon_channel_value"];
+  for (const name of CHANNEL_DOORS) {
+    want(required.includes(name), `${name} is on the page's REQUIRED export list`,
+      "the panel has nothing to draw without it, so its absence must refuse the boot by "
+      + "name rather than fence a row");
+    want(typeof w[name] === "function", `${name} resolves in the shipped artifact`);
+  }
+
+  // A CLEAN ENGINE, because this section throws two switches. The doors' interesting
+  // property is that the reach follows the sectors that are on, and testing that on the
+  // instance every other section shares would leave a field or a seam enabled behind us.
+  const cw = await freshEngine();
+  cw.holon_set_dims(1);
+  cw.holon_set_boundary(0);
+  cw.holon_table_generate(0.6, 12.0, 96);
+  cw.holon_reset(8);
+
+  const cstr = (ptr) => {
+    if (!ptr) return null;
+    const bytes = new Uint8Array(cw.memory.buffer);
+    let end = ptr;
+    while (end < bytes.length && end - ptr < 64 && bytes[end] !== 0) end += 1;
+    return end - ptr >= 64 ? null : new TextDecoder().decode(bytes.subarray(ptr, end));
+  };
+
+  const n = cw.holon_channel_count();
+  want(n === 6, `the ledger carries six channels (${n})`,
+    "five, plus charge transfer appended by CT-1 — the five were not renumbered");
+  const plains = [], kinds = [];
+  for (let i = 0; i < n; i++) {
+    plains.push(cstr(cw.holon_channel_plain(i)));
+    kinds.push(cstr(cw.holon_channel_kind(i)));
+  }
+  want(plains.join(",") === "presence,accommodation,attunement,concert,refusal,sharing",
+    "the six plain names come out of the artifact in the record's order",
+    `read: ${plains.join(", ")}`);
+  want(kinds.join(",") === "Circumstances,Structure,Process,Rules,Identity,Identity",
+    "the kinds come out of the artifact, with Identity twice — the one kind with an edge",
+    `read: ${kinds.join(", ")}`);
+  // OFF THE END REFUSES. A door that read a neighbour here would let the panel grow a
+  // seventh row out of whatever byte followed the sixth name.
+  want(cw.holon_channel_plain(n) === 0 && cw.holon_channel_kind(n) === 0,
+    "an index off the end of the ledger returns a null name pointer");
+  want(Number.isNaN(cw.holon_channel_value(n)) && Number.isNaN(cw.holon_channel_reach(n)),
+    "an index off the end of the ledger returns NaN, not a neighbour's number");
+
+  const values = [...Array(n).keys()].map((i) => cw.holon_channel_value(i));
+  const served = values.filter((v) => !Number.isNaN(v)).length;
+  want(served > 0 && served < n,
+    `the value door has both arms live (${served} served, ${n - served} not)`,
+    "all-served would mean the door is handing one row's energy out under several labels; "
+    + "all-refused would mean the panel is scrupulous and empty, and neither is a reading");
+  want(values[0] === cw.holon_field_energy(),
+    "presence's served value IS the field row, against an independent export of it",
+    `door ${values[0]} vs holon_field_energy ${cw.holon_field_energy()}`);
+  // The seam row carries exchange, dispersion and charge transfer WHOLLY and is therefore
+  // no one of their numbers. This is the property the door exists to enforce, so it is
+  // checked by name rather than left to the count above.
+  want(Number.isNaN(values[4]) && Number.isNaN(values[5]),
+    "refusal and sharing are refused a value: their row is three channels added together",
+    "a shared row's number is a bound on each channel and the value of none");
+  want(Number.isNaN(values[1]) && Number.isNaN(cw.holon_channel_reach(1)),
+    "accommodation has neither value nor reach — FIELD-2 is named, not built");
+
+  // THE REACH MOVES WITH THE SECTORS, in both directions. A reach door that answered the
+  // same sentinel whatever the scene would pass every check above: it names the right
+  // channels and refuses the right values, and reports a constant. So the field is switched
+  // on and off under presence, and the seam under sharing, and BOTH readings are required
+  // to change — a door stuck at "no row" fails the on-reading, one stuck at "the whole
+  // scene" fails the off-reading.
+  want(Number.isNaN(cw.holon_channel_reach(0)), "field off: presence has no row");
+  cw.holon_set_field(1);
+  want(cw.holon_channel_reach(0) === Infinity,
+    "field on: presence reaches the whole scene",
+    `reach reads ${cw.holon_channel_reach(0)}`);
+  cw.holon_set_field(0);
+  want(Number.isNaN(cw.holon_channel_reach(0)), "field off again: the door tracks the switch");
+  want(Number.isNaN(cw.holon_channel_reach(5)), "seam off: sharing has no row");
+  const seamCode = cw.holon_set_seam(1, 948.05, 2.40, 0.0, 2.06, 0.0, 22.586, 2.20, 1.525,
+    1.75, 0.0, 1.0, 1.371043, 1.40, 1, 0, 0.0, 12.0);
+  want(seamCode === 0, `the seam door admits this scene (code ${seamCode})`);
+  want(cw.holon_channel_reach(5) === Infinity,
+    "seam on: sharing reaches the whole scene",
+    `reach reads ${cw.holon_channel_reach(5)}`);
+  want(Number.isNaN(cw.holon_channel_value(5)),
+    "and sharing STILL has no value of its own with the seam on",
+    "having a row and having a number are different things, and the seam row is three "
+    + "channels added together");
+
+  // THE PAGE'S SIDE: the NaN is rendered as words, and no branch turns it into a digit.
+  want(/Number\.isNaN\(c\.value\)/.test(appSource) && /not served/.test(appSource),
+    "the page tests the value door's NaN and writes 'not served' for it",
+    "a NaN formatted as a number would print NaN, and a NaN defaulted to 0 would print a "
+    + "measurement nobody made");
+  want(!/holon_channel_value\([^)]*\)\s*\|\|\s*0/.test(appSource),
+    "the page never defaults a refused channel value to zero");
+  want(/function channelRows\(/.test(appSource) && /w\.holon_channel_plain/.test(appSource),
+    "the panel's rows are read from the artifact, not listed in the page",
+    "a list of six names in app.js is the page inventing the record it claims to display");
+  // AND THE MARKUP HOLDS NO ROWS. The panel's body must be empty in index.html: a row
+  // written into the HTML is a row the page keeps after the engine drops the channel, and
+  // it would look identical to a row the engine served. Explanatory prose in the card may
+  // of course name a channel — what may not exist is a ROW.
+  const htmlChan = readFileSync(join(here, "index.html"), "utf8");
+  want(/<tbody id="channel-rows"><\/tbody>/.test(htmlChan),
+    "the channel panel's body is empty in the markup — every row is the engine's",
+    "a row in the HTML survives the channel it names");
+
+  // ---- THE SIX BY SIX: the columns, the keys, and every filled cell's record ----
+  const gridBlock = appSource.match(/const CHANNEL_GRID = \{([\s\S]*?)\n\};/);
+  want(gridBlock !== null, "the page's CHANNEL_GRID block is where the gate expects it");
+  const colsBlock = appSource.match(/const CHANNEL_COLUMNS = \[([^\]]*)\]/);
+  const columns = colsBlock ? [...colsBlock[1].matchAll(/"([^"]+)"/g)].map((m) => m[1]) : [];
+  want(columns.join(",") === "Premises,Model,Facts,Confidence,Priorities,Manner",
+    "the panel's columns are the account's six kinds, in the grounding stack's order",
+    `columns: ${columns.join(", ")}`);
+  if (gridBlock) {
+    const rowKeys = [...gridBlock[1].matchAll(/^  ([a-z]+): \{/gm)].map((m) => m[1]);
+    const strays = rowKeys.filter((k) => !plains.includes(k));
+    want(strays.length === 0 && rowKeys.length > 0,
+      `every grid row is keyed by a name the engine returns (${rowKeys.length} rows)`,
+      strays.length ? `keyed by names this artifact does not serve: ${strays.join(", ")} — `
+        + "the row would render against no channel at all" : "the grid is empty");
+    // Every cell sits in a real column. A cell under a misspelled column is invisible.
+    const cellCols = [...gridBlock[1].matchAll(/^    ([A-Z][a-z]+): \{/gm)].map((m) => m[1]);
+    const badCols = [...new Set(cellCols)].filter((c) => !columns.includes(c));
+    want(badCols.length === 0 && cellCols.length > 0,
+      `every grid cell sits under one of the six columns (${cellCols.length} cells)`,
+      badCols.length ? `columns that do not exist: ${badCols.join(", ")}` : "no cells");
+    // And every filled cell's record resolves to a line that exists, with the optional
+    // `match` pinned on it where the cite points into source rather than into a freeze.
+    const cells = [...gridBlock[1].matchAll(
+      /record:\s*"([^"]+)"(?:,\s*(?:\/\/[^\n]*\n\s*)*match:\s*"((?:[^"\\]|\\.)*)")?/g)];
+    want(cells.length === cellCols.length,
+      `every grid cell carries a record (${cells.length} of ${cellCols.length})`,
+      "a cell without one is an assertion about a campaign with nothing behind it");
+    for (const [, record, matchText] of cells) {
+      const [relPath, lineNo] = record.split(":");
+      let text = null;
+      try { text = readFileSync(join(repoRoot, relPath), "utf8"); } catch { /* below */ }
+      if (text === null) { no(`grid cell cites ${relPath}, which does not exist`); continue; }
+      const line = text.split("\n")[Number(lineNo) - 1] ?? "";
+      want(line.trim().length > 0, `grid cell cites a real line at ${record}`,
+        `line ${lineNo} of ${relPath} is empty`);
+      if (matchText) {
+        want(line.includes(matchText), `grid cell at ${record} still carries "${matchText}"`,
+          `line ${lineNo} reads: ${line.trim().slice(0, 90)} — a cite into SOURCE drifts `
+          + "with every edit above it, so it is pinned to text and not to a number alone");
+      }
+    }
+  }
+}
+
+// ------------------- 6c0b. THE PAGE ACTUALLY RENDERS — app.js run, not scanned
+//
+// Every check above this line reads app.js as TEXT, and text has one blind spot big enough
+// to deploy through: it cannot tell a panel that renders from a panel whose render throws.
+// `put()` and `tag()` are deliberately tolerant of a missing element so a removed panel
+// cannot take the frame loop down — and that same tolerance means an exception inside
+// `renderStatics` silently takes every panel AFTER it with no error anyone sees.
+//
+// So the page's two render functions are RUN here, on the shipped artifact, under a DOM
+// stub small enough to fit in this file. It is not a rendering test and makes no claim
+// about layout: it asserts that the code runs and writes what it says it writes.
+//
+// THE STUB'S ONE REAL TRICK is that setting `innerHTML` registers the ids the fragment
+// declares, so the per-frame writes into `chan-value-N` and `lad-door-N` are reachable.
+// Without it those writes would land on nothing and every check below would pass on a
+// panel that had rendered no rows at all.
+//
+// `State.served` is filled in by hand because `loadPreset` needs the network and this gate
+// has none. Only its SHAPE matters; the two panels under test read none of its fields.
+{
+  const stub = (() => {
+    const store = new Map();
+    const el = (id) => {
+      const e = {
+        id, textContent: "", className: "", title: "", value: "", checked: false,
+        dataset: {}, style: {}, hidden: false,
+        classList: { add() {}, remove() {}, toggle() {}, contains: () => false },
+        addEventListener() {}, removeEventListener() {}, setAttribute() {},
+        getAttribute: () => null, appendChild() {}, closest: () => null,
+        getBoundingClientRect: () => ({ width: 800, height: 600, left: 0, top: 0 }),
+        getContext: () => null, querySelectorAll: () => [], querySelector: () => null,
+        focus() {}, blur() {}, click() {},
+        set innerHTML(v) {
+          this._html = String(v);
+          for (const m of this._html.matchAll(/\bid="([A-Za-z0-9_-]+)"/g)) el(m[1]);
+        },
+        get innerHTML() { return this._html || ""; },
+      };
+      store.set(id, e);
+      return e;
+    };
+    for (const m of readFileSync(join(here, "index.html"), "utf8")
+      .matchAll(/\bid="([A-Za-z0-9_-]+)"/g)) el(m[1]);
+    return { store, el };
+  })();
+
+  let threw = null;
+  let sandbox = null;
+  try {
+    const { store, el } = stub;
+    const document = {
+      readyState: "complete", body: el("__body"), documentElement: el("__html"),
+      getElementById: (id) => store.get(id) || null,
+      querySelectorAll: (sel) => (sel === "[id]" ? [...store.values()] : []),
+      querySelector: () => null, createElement: () => el(`__t${store.size}`),
+      addEventListener: () => {},
+    };
+    sandbox = {
+      document, console: { log() {}, warn() {}, error() {} },
+      window: { addEventListener() {}, devicePixelRatio: 1, innerWidth: 1200,
+        innerHeight: 800, location: { search: "" },
+        matchMedia: () => ({ matches: false, addEventListener() {} }) },
+      location: { search: "", href: "http://localhost/" },
+      navigator: { hardwareConcurrency: 8, userAgent: "smoke" },
+      performance, requestAnimationFrame: () => 0, cancelAnimationFrame: () => {},
+      setTimeout, clearTimeout, setInterval, clearInterval,
+      fetch: async () => { throw new Error("no network in this gate"); },
+      URLSearchParams, TextDecoder, TextEncoder, WebAssembly,
+      crypto: (await import("node:crypto")).webcrypto,
+    };
+    sandbox.globalThis = sandbox;
+    sandbox.self = sandbox;
+    const vm = await import("node:vm");
+    vm.createContext(sandbox);
+    vm.runInContext(appSource, sandbox, { filename: "app.js" });
+
+    const rw = await freshEngine();
+    rw.holon_set_dims(1);
+    rw.holon_set_boundary(0);
+    rw.holon_set_census_enabled(1);
+    rw.holon_table_generate(0.6, 12.0, 96);
+    rw.holon_reset(8);
+    for (let i = 0; i < 50; i++) rw.holon_step_frame();
+
+    const S = vm.runInContext("State", sandbox);
+    S.w = rw;
+    S.booted = true;
+    S.served = { label: "Pure H", pairs: [], priced: [], fences: [],
+      trimer: { state: "served", detail: "the gate's stub" } };
+    vm.runInContext("bindUI()", sandbox);
+    vm.runInContext("renderStatics()", sandbox);
+    vm.runInContext("renderTelemetry()", sandbox);
+  } catch (e) {
+    threw = e;
+  }
+  want(threw === null, "app.js loads and both render passes run without throwing",
+    threw ? `${threw && threw.message} — ${String(threw && threw.stack).split("\n")[1] || ""}`
+      : undefined);
+
+  if (threw === null) {
+    const text = (id) => (stub.store.get(id) || { textContent: "" }).textContent;
+    const html = (id) => (stub.store.get(id) || { innerHTML: "" }).innerHTML;
+
+    const panel = html("channel-rows");
+    want(/presence/.test(panel) && /sharing/.test(panel),
+      "the ledger panel drew a row for the first and the last channel",
+      `rendered: ${panel.slice(0, 160)}`);
+    want(/FIELD9_RESULTS\.md:78/.test(panel),
+      "a six-by-six cell drew with the line of the record it came from");
+    // THE VALUE COLUMN, both arms, on screen rather than at the door. The door's arms were
+    // checked above; this is the check that the PAGE turns each into the right words.
+    want(/Ha/.test(text("chan-value-0")),
+      `presence draws its number (${text("chan-value-0").slice(0, 60)})`);
+    const refused = text("chan-value-1");
+    want(/not served/.test(refused) && !/NaN/.test(refused) && !/^\+?0\.0/.test(refused),
+      "a refused channel draws 'not served' — not a NaN and not a zero",
+      `it drew: ${refused}`);
+    want(text("chan-reach-1").length > 1 && text("chan-reach-4").length > 1,
+      "the reach column drew for both a channel with a row and one without");
+
+    const lad = html("ladder-rows");
+    want(/MEASURED · CERTIFICATE OWED/.test(lad),
+      "the H-bond band draws MEASURED with its certificate named as owed");
+    for (const [what, cite] of [
+      ["LIQUID-1's readouts", "LIQUID1_RESULTS\\.md:60"],
+      ["FLUID-0's census", "FLUID0_RESULTS\\.md:18"],
+      ["the seam campaigns", "CT2_RESULTS\\.md:72"],
+    ]) {
+      want(new RegExp(cite).test(lad), `${what} drew on the ladder with its cite`);
+    }
+    // The live boundary-door line: the H-bond band is index 2 on the ladder.
+    want(/the law reaches/.test(text("lad-door-2")),
+      "the boundary door's own two numbers drew live under the H-bond band",
+      `it drew: ${text("lad-door-2").slice(0, 80)}`);
+  }
 }
 
 // ------------------------------- 6c1. the fine bands' flip is the ARTIFACT's, not a word's

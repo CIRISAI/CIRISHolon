@@ -1,0 +1,14 @@
+{
+  "node": "twistbent_R2.7_tw20_t85_d0", "family": "twistbent", "kind": "the held-out node: acceptor twisted 20.000000° then tilted 85.000000°, donor bent 0.000000°, at 2.700000 Å",
+  "r_oo_angstrom": 2.700000, "r_oo_bohr": 5.102261, "twist_degrees": 20.000000, "tilt_degrees": 85.000000, "donor_bend_degrees": 0.000000,
+  "units": 2, "units_reading": [0, 0, 0, 3, 3, 3], "units_free_marker": 4294967295,
+  "exact": {"solver": "holon_chem::heitler_london::fci_full_from_product", "e_total": -1.500493310778e2, "davidson_iters": 17, "residual": 6.365643772344e-9, "residual_bar": 1e-8, "converged": true, "capped": false, "n_det": 1002001, "wall_seconds": 146.301183, "cpu_seconds": 2376.130000, "price_expected_core_seconds": 93.500000, "price_admitted": true},
+  "sector": {"e_noct": -1.500279260031e2, "e_hl_undeformed": -1.500260894731e2, "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "closed_sector_gain": -1.836530035547e-3,
+  "sector_dim": 194481, "sector_dim_staked": 194481, "n_det": 1002001, "davidson_iters": 14, "residual": 3.785191089281e-9, "residual_bar": 1e-8, "converged": true, "capped": false,
+  "metric_min_eigenvalue": 9.227157776515e-1, "wall_seconds": 140.424058, "sigma_seconds": 118.218583, "harness_wall_seconds": 140.426300, "cpu_seconds": 2080.200000, "threads": 24,
+  "price_floor_core_seconds_per_sigma": 55, "price_rule": "cpu_seconds >= 0.1 * davidson_iters * 55 (M-CHEAPER-THAN-ITS-PRICE)", "price_expected_core_seconds": 77.000000, "price_admitted": true},
+  "e_a0": -7.502329153129e1, "e_b0": -7.502329153129e1, "de_exact": -2.748015259755e-3, "de_exact_rule": "E_exact(total) - (E_A0 + E_B0)",
+  "e_ct": -2.140507471054e-2, "e_ct_rule": "E_exact(total) - E_noCT(total)", "order_ok": true, "order_tolerance": 1e-10,
+  "cross_oo_bohr": [5.102261], "cross_ho_bohr": [6.000859, 5.089895, 3.158687, 5.669603], "cross_hh_bohr": [4.194390, 3.367226, 6.093379, 6.092098],
+  "threads": 24, "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, 0.0000000000, 1.9435738400], [1.9300704789, 0.0000000000, -0.2287077129]], "acceptor_centers": [[0.0000000000, 0.0000000000, 5.1022605365], [1.3653041118, -1.2427012197, 5.7098110549], [-1.3653041118, -1.3293218362, 4.7197328778]]
+}

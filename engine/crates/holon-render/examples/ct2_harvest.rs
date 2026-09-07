@@ -1898,7 +1898,7 @@ fn run_fit(out: &Path) {
             chh[i * n + g] = -sum_exp(&x.hh, c);
         }
     }
-    let base = SeamModel { a: a_oo, b: b_oo, p: 0.0, c: 0.0, c6: 0.0, a_oh, b_oh, a_hh, b_hh, p_hh: 0.0, c_hh: 0.0, p_ct, c_ct, m_ct: 0, k_ct: 0, lambda_ct: 0.0, r_cut: 0.0 };
+    let base = SeamModel { a: a_oo, b: b_oo, p: 0.0, c: 0.0, c6: 0.0, a_oh, b_oh, a_hh, b_hh, p_hh: 0.0, c_hh: 0.0, p_ct, c_ct, m_ct: 0, k_ct: 0, lambda_ct: 0.0, r_cut: 0.0, ct_table_on: false };
     eprintln!(
         "\nthe two-class contact fit UNDER the gate: {} exponent pairs on 0.50..=4.00 step 0.02 per class, weights 1/max(|ΔE_exact|, {WEIGHT_FLOOR:e})², each amplitude CLAMPED at the largest value `SeamModel::bounded(q_H, r_min, kT)` admits (bisection on [0, P_ls] to {CLAMP_REL:e} relative, the two classes iterated to a fixed point, at most {CLAMP_ROUNDS} rounds).\n  held inside the clamp: FIELD-9's wall; the transfer term at its LINEAR value (m = k = 0 inside `bounded`, which is what the engine's own `bounded` reads); the dispersion at an exact 0 — FIELD-6's rule fits C₆ AFTER both contacts, so it is not yet a coefficient of the law when the clamp runs, and G-B0 below is RUN on the full law with C₆ in.",
         NC * NC
@@ -2076,6 +2076,7 @@ fn run_fit(out: &Path) {
         k_ct: k_ct as u8,
         lambda_ct,
         r_cut: 0.0,
+        ct_table_on: false,
     };
     let bounded = model.bounded(q_h, r_min, KT);
     let g_b0 = bounded.is_none();

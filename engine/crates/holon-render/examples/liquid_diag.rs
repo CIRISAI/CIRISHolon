@@ -20,7 +20,7 @@ fn main() {
     let g = |k: &str| json_num(&t, k);
     let model = SeamModel {
         a: g("a"), b: g("b"), p: g("p"), c: g("c"), c6: g("c6"), a_oh: g("a_oh"), b_oh: g("b_oh"), a_hh: g("a_hh"), b_hh: g("b_hh"),
-        p_hh: g("p_hh"), c_hh: g("c_hh"), p_ct: g("p_ct"), c_ct: g("c_ct"), m_ct: g("m_ct") as u8, k_ct: g("k_ct") as u8, lambda_ct: g("lambda_ct"), r_cut: 14.0,
+        p_hh: g("p_hh"), c_hh: g("c_hh"), p_ct: g("p_ct"), c_ct: g("c_ct"), m_ct: g("m_ct") as u8, k_ct: g("k_ct") as u8, lambda_ct: g("lambda_ct"), r_cut: 14.0, ct_table_on: false,
     };
     let (species, pos, l) = liquid_box(4, 0.997, 0x4c49_5155_4944);
     let z: Vec<u32> = species.iter().map(|s| s.z).collect();

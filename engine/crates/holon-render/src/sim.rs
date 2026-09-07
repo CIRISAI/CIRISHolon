@@ -793,6 +793,10 @@ pub struct Sim {
     /// FIELD-3: the seam — `None` = the engine as it was; `Some` = closure surfaces served
     /// only within units, the wall between them (`crate::seam`).
     pub seam: Option<crate::seam::SeamModel>,
+    /// CT-3: the transfer term as a table over the 64-node map, loaded through the door and
+    /// served when `SeamModel::ct_mode` is `Table`. Empty until one is loaded, and an empty
+    /// table serves exactly nothing.
+    pub ct_table: crate::seam::CtTable,
     pub seam_plant: crate::seam::SeamPlant,
     pub seam_work: crate::seam::SeamWork,
     /// The wall's energy row (exact `0.0` whenever the seam is off).
@@ -926,6 +930,7 @@ impl Sim {
             charge_prev: Vec::new(),
             charge_row: Vec::new(),
             seam: None,
+            ct_table: crate::seam::CtTable::empty(),
             seam_plant: crate::seam::SeamPlant::None,
             seam_work: crate::seam::SeamWork { pairs_dropped: 0, triples_dropped: 0, pairs_dropped_total: 0, triples_dropped_total: 0, oo_pairs: 0, ho_pairs: 0, units: 0, transitions: 0 },
             e_seam: 0.0,
@@ -1940,7 +1945,16 @@ impl Sim {
             let units = self.units_reading();
             let any_free = units[..self.n].iter().any(|&u| u == crate::seam::FREE);
             if !any_free {
-                r = INTRA_UNIT_REACH.max(m.reach(SEAM_REACH_BUDGET));
+                let mut seam_reach = m.reach(SEAM_REACH_BUDGET);
+                // CT-3: in table mode the transfer term's reach is the TABLE's own, from its
+                // deepest knot shape and the exponent it divided out — `m.reach` cannot see it
+                if m.ct_mode() == crate::seam::CtMode::Table {
+                    seam_reach = seam_reach.max(self.ct_table.reach(SEAM_REACH_BUDGET));
+                    if m.r_cut > 0.0 {
+                        seam_reach = seam_reach.min(m.r_cut);
+                    }
+                }
+                r = INTRA_UNIT_REACH.max(seam_reach);
             }
         }
         r
@@ -3344,10 +3358,14 @@ impl Sim {
         // CT-2: the angular transfer term needs each acceptor unit's two hydrogens (its frame)
         // and each hydrogen's own oxygen; the pair path below carries the term only when it is
         // NOT angular, so CT-1's records are bit-identical at m = k = 0
-        let angular = model.ct_is_angular();
+        // CT-3: the three shapes of channel 6 are EXCLUSIVE (`ct_mode`), so exactly one of
+        // these is true and the pair path below carries the term only when neither is
+        let mode = model.ct_mode();
+        let angular = mode == crate::seam::CtMode::Angular;
+        let table = mode == crate::seam::CtMode::Table;
         let ang_model = crate::seam::SeamModel { p_ct, ..model };
         let mut unit_h: Vec<[u32; 2]> = vec![[crate::seam::FREE; 2]; n];
-        if angular {
+        if angular || table {
             for h in 0..n {
                 let u = self.unit_of[h];
                 if self.atoms[h].species.z == 1 && u != crate::seam::FREE && u as usize != h {
@@ -3413,7 +3431,7 @@ impl Sim {
                     // it; and the charge-transfer term −p_ct·e^{−c_ct r} (CT-1, channel 6)
                     let x = p * (-c * r).exp();
                     let w = a_oh * (-b_oh * r).exp();
-                    let t = if angular { 0.0 } else { p_ct * (-c_ct * r).exp() };
+                    let t = if angular || table { 0.0 } else { p_ct * (-c_ct * r).exp() };
                     ho += 1;
                     if angular {
                         // the five atoms, as minimum-image deltas from the acceptor oxygen
@@ -3483,6 +3501,106 @@ impl Sim {
                 // `r * du`, three-body `g · r`) and `pressure()` reads `(2K − w_virial)/3V`.
                 // (FIELD-3's review caught this sector posting `+r·F`.)
                 virial += r * du;
+            }
+        }
+        // CT-3: THE TRANSFER TERM AS A TABLE. ONE reading per UNORDERED pair of units, at that
+        // pair's own contact — the shortest cross-unit H···O over BOTH directions — because
+        // that is what the map measured. `E_CT` is a property of the DIMER: one number per
+        // node, already carrying whatever transfer runs in either direction at that geometry.
+        // Serving it once per ORDERED pair counts it twice, and the harvest measured what that
+        // costs: up to 25 mHa on the twist family, larger than the node's own `E_CT`. The five
+        // atoms it depends on, and their order, are `ct_angular`'s: `[H, O_a, O_d, h₁, h₂]`.
+        //
+        // THE CONTACT IS AN ARGMIN over the four cross-unit H–O pairs, and an argmin is
+        // discontinuous where it ties. The jump across a tie is the difference of the table at
+        // the two coordinate points; the freeze measures it rather than asserting it small.
+        // The family term has no such seam because it sums over pairs; this term does not sum,
+        // because the record does not. What the map cannot say — and so what the table cannot
+        // serve — is a pair donating in BOTH directions at once: no node has one.
+        if table && self.ct_table.is_loaded() {
+            let sign = if plant == crate::seam::SeamPlant::FlipChargeTransfer { -1.0 } else { 1.0 };
+            let drop_new = plant == crate::seam::SeamPlant::DropReactionNew;
+            let mut oxy: Vec<usize> = Vec::new();
+            for o in 0..n {
+                if self.atoms[o].species.z == 8 && self.unit_of[o] == o as u32 {
+                    oxy.push(o);
+                }
+            }
+            for (ia, &ua) in oxy.iter().enumerate() {
+                let [ua1, ua2] = unit_h[ua];
+                if ua1 == crate::seam::FREE || ua2 == crate::seam::FREE {
+                    continue;
+                }
+                for &ub in oxy.iter().skip(ia + 1) {
+                    let [ub1, ub2] = unit_h[ub];
+                    if ub1 == crate::seam::FREE || ub2 == crate::seam::FREE {
+                        continue;
+                    }
+                    // the pair's contact, over BOTH directions: the shortest cross-unit H···O
+                    let mut od = ua;
+                    let mut oa = ub;
+                    let mut hi = ua1 as usize;
+                    let mut rmin = f64::INFINITY;
+                    for (dn, ac, hs) in [(ua, ub, [ua1, ua2]), (ub, ua, [ub1, ub2])] {
+                        let pa = (self.atoms[ac as usize].x, self.atoms[ac as usize].y, self.atoms[ac as usize].z);
+                        for &h in hs.iter() {
+                            let (dx, dy, dz) = geom.delta(pa, (self.atoms[h as usize].x, self.atoms[h as usize].y, self.atoms[h as usize].z));
+                            let d = (dx * dx + dy * dy + dz * dz).sqrt();
+                            if d < rmin {
+                                rmin = d;
+                                hi = h as usize;
+                                od = dn;
+                                oa = ac;
+                            }
+                        }
+                    }
+                    let [a1, a2] = unit_h[oa];
+                    let pa = (self.atoms[oa].x, self.atoms[oa].y, self.atoms[oa].z);
+                    let rel = |k: usize| -> [f64; 3] {
+                        let (dx, dy, dz) = geom.delta(pa, (self.atoms[k].x, self.atoms[k].y, self.atoms[k].z));
+                        [dx, dy, dz]
+                    };
+                    let (sw, dsw) = model.switch(rmin);
+                    if sw == 0.0 {
+                        continue;
+                    }
+                    let idx = [hi, oa, od, a1 as usize, a2 as usize];
+                    let (e_raw, mut gr) = self.ct_table.serve(rel(hi), [0.0; 3], rel(od), rel(a1 as usize), rel(a2 as usize));
+                    let e_raw = sign * e_raw;
+                    for g in gr.iter_mut() {
+                        for c in 0..3 {
+                            g[c] *= sign;
+                        }
+                    }
+                    // the switch on a many-body term: S·E, and S'·E along the H–O_a line
+                    let e_ct = sw * e_raw;
+                    if sw != 1.0 {
+                        for g in gr.iter_mut() {
+                            for c in 0..3 {
+                                g[c] *= sw;
+                            }
+                        }
+                        let rh = rel(hi);
+                        let inv = 1.0 / rmin.max(1e-9);
+                        for c in 0..3 {
+                            let du_c = dsw * e_raw * rh[c] * inv;
+                            gr[0][c] += du_c;
+                            gr[1][c] -= du_c;
+                        }
+                    }
+                    e += e_ct;
+                    ho += 1;
+                    for (kk, &atom) in idx.iter().enumerate() {
+                        if drop_new && atom != hi {
+                            continue;
+                        }
+                        self.a_pair[atom].0 -= gr[kk][0];
+                        self.a_pair[atom].1 -= gr[kk][1];
+                        self.a_pair[atom].2 -= gr[kk][2];
+                        let x = rel(atom);
+                        virial += x[0] * gr[kk][0] + x[1] * gr[kk][1] + x[2] * gr[kk][2];
+                    }
+                }
             }
         }
         self.e_seam = e;

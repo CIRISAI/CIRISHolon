@@ -1,0 +1,10 @@
+{
+  "a": 9.480487358002e2, "b": 2.400000000000e0, "p": 1.764368125500e1, "c": 2.360000000000e0, "c6": 0.000000000000e0, "a_oh": 2.258605362549e1, "b_oh": 2.200000000000e0, "a_hh": 1.525046249564e0, "b_hh": 1.750000000000e0, "p_hh": 7.451162320433e-1, "c_hh": 2.340000000000e0,
+  "p_ct": 0.000000000000e0, "c_ct": 0.000000000000e0, "m_ct": 0, "k_ct": 0, "lambda_ct": 0.000000000000e0, "r_cut": 0.000000000000e0, "ct_table_on": true,
+  "transfer_rule": "channel 6 is the TABLE (ct_table.json), one reading per unordered pair of units at its shortest cross-unit H-O contact; p_ct and c_ct are held at an exact 0 so that nothing serves twice, and c0 below is the exponent the table divides out",
+  "c0_per_bohr": 1.400000000000e0, "table": "ct_table.json", "table_knots": 60,
+  "wall_rule": "FIELD-9's three walls are HELD (via ct2/wall_ct2.json); the two contact terms are CT-3's C1, re-fit on the map's remainder after the table and clamped under the SERVED boundedness walk; the dispersion is an exact 0 (FIELD-6's rule)",
+  "c1_branch": "a", "c1_within": 54, "c1_of": 64, "c1_line_within": 3, "c1_clamped": {"ho": true, "hh": false}, "c1_residual_ratio": 1.656468849293e0,
+  "g_b0w_pass": true, "r_min_oo": 4.724315311564e0, "r_min_oh": 2.780741471564e0, "r_min_hh": 1.314605875619e0, "q_h": 2.313803721151e-1, "kt": 9.278758000000e-4,
+  "wall_source": "../../../conformance/water_observatory/ct2/wall_ct2.json", "gate_source": "gate.json"
+}

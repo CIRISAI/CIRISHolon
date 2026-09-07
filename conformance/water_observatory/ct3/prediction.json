@@ -1,0 +1,16 @@
+{
+  "node": "twistbent_R2.7_tw20_t85_d0", "filed": "BEFORE the solve (CT3_PREREG §2 S1)",
+  "r_oo_angstrom": 2.700000, "twist_degrees": 20.000000, "tilt_degrees": 85.000000, "donor_bend_degrees": 0.000000,
+  "coordinates": {"r": 3.158686696490e0, "cos_theta_d": -1.000000000000e0, "u_dot_b": -8.715574274766e-2, "q": 7.602254749272e-1},
+  "e_ct_table": -2.312787726826e-2, "e_ct_family": -1.711144030063e-2, "gap": 6.016436967628e-3,
+  "family_rule": "CT-2's fitted family P = 1.371043456222e0 , c = 1.400000000000e0 , m = 1, k = 0, on all four cross-unit H-O pairs",
+  "e_total_predicted": -5.330669230027e-3, "e_field": -3.455328856057e-3, "e_seam": -1.875340373970e-3,
+  "tolerance_ct": 5.781969317064e-3, "tolerance_ct_rule": "max(0.25*|E_CT predicted|, 2e-4), CT-2 S2's branch-(b) bar",
+  "tolerance_total": 1.332667307507e-3, "tolerance_total_rule": "max(0.25*|E_total predicted|, 5e-4), CT-2 S2's branch-(a) bar",
+  "loo_band": 2.277118271365e-3, "loo_band_rule": "the table's own WORST leave-one-out miss over its 60 sites; S1 (a) requires the miss inside it",
+  "s2_band": 2.661328694640e-3, "s2_band_absolute": 1.163765205946e-2, "s2_band_fractional": 2.661328694640e-3, "s2_band_rule": "the re-fit law's own worst in-sample miss over the sixty-four, the TIGHTER of absolute and fractional-applied-to-the-predicted-total (gate.json c1.worst_miss and s2_worst_in_sample_fraction)",
+  "s2_comparative_bar": 1.332667307507e-3, "s2_comparative_bar_rule": "CT-2 S2's own letter max(0.25*|dE_exact|, 5e-4), on the PREDICTED total here and on the MEASURED one at read",
+  "law": "../../../conformance/water_observatory/ct3/wall_ct3.json (contacts) + ../../../conformance/water_observatory/ct2/wall_ct2.json (walls)",
+  "cross_oo_bohr": [5.102261], "cross_ho_bohr": [6.000859, 5.089895, 3.158687, 5.669603], "cross_hh_bohr": [4.194390, 3.367226, 6.093379, 6.092098],
+  "donor_centers": [[0.0000000000, 0.0000000000, 0.0000000000], [0.0000000000, 0.0000000000, 1.9435738400], [1.9300704789, 0.0000000000, -0.2287077129]], "acceptor_centers": [[0.0000000000, 0.0000000000, 5.1022605365], [1.3653041118, -1.2427012197, 5.7098110549], [-1.3653041118, -1.3293218362, 4.7197328778]]
+}

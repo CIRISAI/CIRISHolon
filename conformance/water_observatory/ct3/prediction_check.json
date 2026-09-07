@@ -1,0 +1,11 @@
+{
+  "node": "twistbent_R2.7_tw20_t85_d0", "branch": "a",
+  "branch_rule": "(a) the table is nearer than the family AND inside the leave-one-out band; (b) nearer but outside it; (c) the family is nearer — the kill FIRES",
+  "e_ct_measured": -2.140507471054e-2, "e_ct_table_predicted": -2.312787726826e-2, "e_ct_family_predicted": -1.711144030063e-2,
+  "table_miss": 1.722802557720e-3, "family_miss": 4.293634409910e-3, "table_beats_family": true,
+  "loo_band": 2.277118271365e-3, "inside_the_band": true,
+  "tolerance_ct": 5.351268677635e-3, "table_within_tolerance": true, "family_within_tolerance": true,
+  "de_exact_measured": -2.748015259755e-3, "e_total_predicted": -5.330669230027e-3, "total_miss": 2.582653970272e-3, "tolerance_total": 6.870038149387e-4, "total_within": false,
+  "s2": {"branch": "b", "branch_rule": "(a) inside the TIGHTER of the band and the comparative bar; (b) inside the looser only; (c) neither", "miss": 2.582653970272e-3, "band": 2.661328694640e-3, "comparative_bar": 6.870038149387e-4, "tighter": 6.870038149387e-4, "looser": 2.661328694640e-3, "which_is_tighter": "CT-2's comparative bar"},
+  "sector_residual": 3.785191089281e-9, "sector_converged": true, "sector_dim": 194481, "order_ok": true
+}

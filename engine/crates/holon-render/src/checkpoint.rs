@@ -70,7 +70,11 @@ use crate::sim::{Atom, Boundary, Dims, Sim};
 /// (`m_ct`, `k_ct` as f64, `lambda_ct`) follow `seam_c_ct`.
 /// v13 (2026-09-06, LIQUID-1 Amendment 2): the seam switch radius `r_cut` follows
 /// `seam_lambda_ct`.
-pub const CHECKPOINT_VERSION: u32 = 13;
+/// v14 (2026-09-06, CT-3): the transfer term's MODE flag `seam_ct_table_on: u32` follows
+/// `seam_r_cut`. The TABLE itself is not in the checkpoint, for the same reason the pair
+/// tables are not: it is loaded from its record through the door, and a restore into a
+/// process that has not loaded it serves nothing rather than serving a stale table.
+pub const CHECKPOINT_VERSION: u32 = 14;
 
 const MAGIC: [u8; 8] = *b"HOLONCK1";
 
@@ -427,6 +431,7 @@ impl Sim {
         w.f64(self.seam.map_or(0.0, |m| m.k_ct as f64));
         w.f64(self.seam.map_or(0.0, |m| m.lambda_ct));
         w.f64(self.seam.map_or(0.0, |m| m.r_cut));
+        w.u32(self.seam.map_or(0, |m| u32::from(m.ct_table_on)));
         w.f64(self.e_ref);
         w.f64(self.drift_peak);
         w.f64(self.momentum_residual_peak);
@@ -562,6 +567,7 @@ impl Sim {
         let seam_k_ct = r.f64()?;
         let seam_lambda_ct = r.f64()?;
         let seam_r_cut = r.f64()?;
+        let seam_ct_table_on = r.u32()?;
         let e_ref = r.f64()?;
         let drift_peak = r.f64()?;
         let momentum_residual_peak = r.f64()?;
@@ -610,7 +616,7 @@ impl Sim {
         self.work.field = field_col;
         self.work.seam = seam_col;
         self.field = if field_q != 0.0 { Some(crate::field::FieldModel { q_h: field_q }) } else { None };
-        self.seam = if seam_on != 0 { Some(crate::seam::SeamModel { a: seam_a, b: seam_b, p: seam_p, c: seam_c, c6: seam_c6, a_oh: seam_a_oh, b_oh: seam_b_oh, a_hh: seam_a_hh, b_hh: seam_b_hh, p_hh: seam_p_hh, c_hh: seam_c_hh, p_ct: seam_p_ct, c_ct: seam_c_ct, m_ct: seam_m_ct as u8, k_ct: seam_k_ct as u8, lambda_ct: seam_lambda_ct, r_cut: seam_r_cut }) } else { None };
+        self.seam = if seam_on != 0 { Some(crate::seam::SeamModel { a: seam_a, b: seam_b, p: seam_p, c: seam_c, c6: seam_c6, a_oh: seam_a_oh, b_oh: seam_b_oh, a_hh: seam_a_hh, b_hh: seam_b_hh, p_hh: seam_p_hh, c_hh: seam_c_hh, p_ct: seam_p_ct, c_ct: seam_c_ct, m_ct: seam_m_ct as u8, k_ct: seam_k_ct as u8, lambda_ct: seam_lambda_ct, r_cut: seam_r_cut, ct_table_on: seam_ct_table_on != 0 }) } else { None };
         self.seam_assigned = false;
         self.l0 = l0;
         self.p0 = p0;

@@ -67,11 +67,15 @@ pub struct SeamModel {
     /// (bohr); `0.0` means no switch — every record before the amendment is that state, bit
     /// for bit. The switch is 1 up to `r_cut − 2`, the quintic step down to 0 at `r_cut`.
     pub r_cut: f64,
+    /// CT-3: the transfer term is served from the TABLE (`Sim::ct_table`) rather than from
+    /// `p_ct`, `c_ct` and the angular factors. `false` in every record written before CT-3, so
+    /// [`SeamModel::ct_mode`] reads `Pair` or `Angular` on all of them, bit for bit.
+    pub ct_table_on: bool,
 }
 
 impl SeamModel {
     /// The seam rule with no cross-unit term at all.
-    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0, a_oh: 0.0, b_oh: 0.0, a_hh: 0.0, b_hh: 0.0, p_hh: 0.0, c_hh: 0.0, p_ct: 0.0, c_ct: 0.0, m_ct: 0, k_ct: 0, lambda_ct: 0.0, r_cut: 0.0 };
+    pub const NO_WALL: SeamModel = SeamModel { a: 0.0, b: 0.0, p: 0.0, c: 0.0, c6: 0.0, a_oh: 0.0, b_oh: 0.0, a_hh: 0.0, b_hh: 0.0, p_hh: 0.0, c_hh: 0.0, p_ct: 0.0, c_ct: 0.0, m_ct: 0, k_ct: 0, lambda_ct: 0.0, r_cut: 0.0, ct_table_on: false };
 
     /// THE SWITCH (LIQUID-1 Amendment 2): `(S, dS/dr)` at `r` — 1 and 0 with no cutoff or
     /// below `r_on = r_cut − 2`; the quintic C² step `1 − 10x³ + 15x⁴ − 6x⁵`, `x = (r − r_on)/2`,
@@ -93,10 +97,26 @@ impl SeamModel {
         }
     }
 
-    /// Is the transfer term angular (CT-2) or CT-1's pair exponential.
+    /// Is the transfer term the ANGULAR FAMILY's (CT-2) rather than CT-1's pair exponential.
+    /// This is the family's own predicate and it says nothing about CT-3's table; the selector
+    /// across all three shapes is [`SeamModel::ct_mode`].
     #[inline]
     pub fn ct_is_angular(&self) -> bool {
         self.m_ct != 0 || self.k_ct != 0
+    }
+
+    /// WHICH SHAPE CHANNEL 6 IS SERVED AS (CT-3). The table wins when it is switched on,
+    /// because it replaces the family rather than multiplying it; otherwise the exponents
+    /// decide, exactly as they did before this field existed.
+    #[inline]
+    pub fn ct_mode(&self) -> CtMode {
+        if self.ct_table_on {
+            CtMode::Table
+        } else if self.ct_is_angular() {
+            CtMode::Angular
+        } else {
+            CtMode::Pair
+        }
     }
 
     /// THE ANGULAR TRANSFER TERM (CT-2 §0) on one cross-unit H–O pair, with its gradient on
@@ -222,10 +242,20 @@ impl SeamModel {
     /// contact or of the H–H class's −20.7 hartree — a detector that stopped at the mildest
     /// failure and hid the worst (M-FIRST-VIOLATION-ONLY).
     pub fn bounded(&self, q_h: f64, r_min: [f64; 3], kt: f64) -> Option<String> {
+        self.bounded_ct(q_h, r_min, kt, &|r| self.charge_transfer(r))
+    }
+
+    /// THE SAME WALK with the transfer row supplied by the caller (CT-3). The three shapes of
+    /// channel 6 are not the same function of one separation: CT-1's and CT-2's are (CT-2's at
+    /// its linear value, the deepest the family can be), and CT-3's table is not a pair term at
+    /// all, so the walk takes the deepest reading the table can return at each `r`
+    /// ([`CtTable::deepest`]) instead. Passing `charge_transfer` reproduces `bounded` exactly,
+    /// and every caller of record does.
+    pub fn bounded_ct(&self, q_h: f64, r_min: [f64; 3], kt: f64, ct: &dyn Fn(f64) -> f64) -> Option<String> {
         let q_o = -2.0 * q_h;
         let classes: [(&str, &dyn Fn(f64) -> f64); 3] = [
             ("O–O", &|r: f64| self.wall(r) + self.dispersion(r) + q_o * q_o / r),
-            ("H–O", &|r: f64| self.penetration(r) + self.charge_transfer(r) + self.wall_oh(r) + q_h * q_o / r),
+            ("H–O", &|r: f64| self.penetration(r) + ct(r) + self.wall_oh(r) + q_h * q_o / r),
             ("H–H", &|r: f64| self.contact_hh(r) + self.wall_hh(r) + q_h * q_h / r),
         ];
         let mut named: Vec<String> = Vec::new();
@@ -263,9 +293,15 @@ impl SeamModel {
     /// oxygen — walked from 3.0 bohr inward to 0.5 on a 0.05 grid; the first FALL inward is
     /// named, with its class and radius. `None` is a law that rises to contact everywhere.
     pub fn hole(&self, q_h: f64) -> Option<String> {
+        self.hole_ct(q_h, &|r| self.charge_transfer(r))
+    }
+
+    /// The monotone walk with the transfer row supplied by the caller (CT-3), for the same
+    /// reason [`SeamModel::bounded_ct`] takes one.
+    pub fn hole_ct(&self, q_h: f64, ct: &dyn Fn(f64) -> f64) -> Option<String> {
         let q_o = -2.0 * q_h;
         let classes: [(&str, &dyn Fn(f64) -> f64); 3] = [
-            ("H–O", &|r: f64| self.penetration(r) + self.charge_transfer(r) + self.wall_oh(r) + q_h * q_o / r),
+            ("H–O", &|r: f64| self.penetration(r) + ct(r) + self.wall_oh(r) + q_h * q_o / r),
             ("O–O", &|r: f64| self.wall(r) + self.dispersion(r) + q_o * q_o / r),
             ("H–H", &|r: f64| self.contact_hh(r) + self.wall_hh(r) + q_h * q_h / r),
         ];
@@ -361,6 +397,584 @@ impl SeamModel {
         } else {
             let r2 = r * r;
             -self.c6 / (r2 * r2 * r2)
+        }
+    }
+}
+
+// ---------------------------------------------------------------- CT-3: the term as a table
+
+/// Which shape the seam serves for channel 6 (charge transfer).
+///
+/// `Pair` is CT-1's exponential on cross-unit H–O distances; `Angular` is CT-2's declared
+/// family with the bond's alignment on both sides; `Table` is CT-3's — the 64-node map served
+/// directly, with no family in between. The three are exclusive and the selector is
+/// [`SeamModel::ct_mode`]; every record written before CT-3 reads `Pair` or `Angular`, bit for
+/// bit, because `ct_table_on` is `false` in all of them.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum CtMode {
+    /// CT-1: `−P·e^{−c r}` on every cross-unit H–O pair.
+    #[default]
+    Pair,
+    /// CT-2: the same, times the donor and acceptor angular factors.
+    Angular,
+    /// CT-3: the map itself, one reading per ordered pair of units at its contact.
+    Table,
+}
+
+/// The number of knots the transfer table can hold. CT-3's map has 60 distinct sites; the
+/// bound is the next power of two above it, and `finish` refuses more.
+pub const MAX_CT_KNOTS: usize = 128;
+
+/// The table's coordinate count: `(r, cos θ_d, u·b̂, q)`. See [`ct_coords`].
+pub const CT_DIM: usize = 4;
+
+/// Why a transfer table did not load.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CtLoad {
+    Empty,
+    Ok,
+    TooManyKnots,
+    /// Fewer knots than the interpolant's own polynomial tail has coefficients.
+    TooFewKnots,
+    NotFinite,
+    /// An axis whose knots all carry one value: the scaling is undefined and the table would
+    /// be a function of three coordinates wearing four.
+    DegenerateAxis,
+    /// Two knots at the same coordinates. CT-3's map has four such pairs — both poles of the
+    /// acceptor's azimuth — and the LOADER must merge them by the freeze's own rule before
+    /// pushing, because a table cannot hold two values at one site and pretending otherwise
+    /// is how a coordinate degeneracy gets laundered into an interpolation.
+    DuplicateKnot,
+    /// The interpolation matrix is singular to working precision.
+    Singular,
+}
+
+/// THE COORDINATES OF ONE TRANSFER CONTACT, and their gradients on the five atoms that carry
+/// them — `[H, O_a, O_d, h₁, h₂]`, the same five, in the same order, as [`SeamModel::ct_angular`].
+///
+/// ```text
+/// r  = |H − O_a|                                        the contact separation, bohr
+/// c_d = cos θ_d = (O_d−H)·(O_a−H)/(|O_d−H||O_a−H|)      the donor's alignment
+/// p  = u·b̂                                              the acceptor's polar alignment
+/// q  = 2(u·n̂)² + p² − 1                                 the acceptor's azimuth
+/// ```
+///
+/// with `u = (H − O_a)/r`, `b̂ = unit(h₁ + h₂ − 2O_a)` the acceptor's bisector and
+/// `n̂ = unit((h₁−O_a) × (h₂−O_a))` its plane normal — every one of them a definition
+/// [`SeamModel::ct_angular`] already uses, and none of them new.
+///
+/// **Why `cos θ_d` and `p` rather than the angles, and why `q` rather than an azimuth.** The
+/// map puts fifty of its sixty-four nodes at `θ_d = 180°` exactly and every tilt node at an
+/// exact multiple of 30°; `dθ/d cos θ` is singular at `cos θ = ±1`, so a table in the ANGLES
+/// has an infinite force at the geometries the map is densest at. An azimuth `atan2(|u·n̂|,
+/// |u·t̂|)` is worse: it is folded by the acceptor's own symmetry, so it carries absolute
+/// values whose kinks sit exactly on the two sheets the map samples (the tilt family at
+/// `u·t̂ = 0`, the twist family at `u·n̂ = 0`). `q` is the same information with neither
+/// defect: it is smooth everywhere, invariant under both of the acceptor's mirrors and under
+/// relabelling its hydrogens, and it vanishes at both poles by construction — which is where
+/// the azimuth is genuinely undefined and the map's four duplicate sites live.
+/// `q = +1` is the donor on the acceptor's plane NORMAL (CT-2's finding), `q = −1` the donor
+/// in the acceptor's own plane, `q = 0` on the bisector at either end.
+pub fn ct_coords(
+    xh: [f64; 3],
+    xa: [f64; 3],
+    xd: [f64; 3],
+    h1: [f64; 3],
+    h2: [f64; 3],
+) -> ([f64; CT_DIM], [[[f64; 3]; 5]; CT_DIM]) {
+    fn sub(a: [f64; 3], b: [f64; 3]) -> [f64; 3] { [a[0] - b[0], a[1] - b[1], a[2] - b[2]] }
+    fn add(a: [f64; 3], b: [f64; 3]) -> [f64; 3] { [a[0] + b[0], a[1] + b[1], a[2] + b[2]] }
+    fn sc(a: [f64; 3], k: f64) -> [f64; 3] { [a[0] * k, a[1] * k, a[2] * k] }
+    fn dot(a: [f64; 3], b: [f64; 3]) -> f64 { a[0] * b[0] + a[1] * b[1] + a[2] * b[2] }
+    fn cross(a: [f64; 3], b: [f64; 3]) -> [f64; 3] { [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]] }
+    fn norm(a: [f64; 3]) -> f64 { dot(a, a).sqrt() }
+
+    let mut g = [[[0.0f64; 3]; 5]; CT_DIM];
+
+    // (0) the separation
+    let d = sub(xh, xa);
+    let r = norm(d).max(1e-9);
+    let u = sc(d, 1.0 / r);
+    g[0][0] = u;
+    g[0][1] = sc(u, -1.0);
+
+    // (1) the donor's alignment
+    let a = sub(xd, xh);
+    let b = sub(xa, xh);
+    let (na, nb) = (norm(a).max(1e-9), norm(b).max(1e-9));
+    let cd = (dot(a, b) / (na * nb)).clamp(-1.0, 1.0);
+    let dca = sub(sc(b, 1.0 / (na * nb)), sc(a, cd / (na * na)));
+    let dcb = sub(sc(a, 1.0 / (na * nb)), sc(b, cd / (nb * nb)));
+    g[1][2] = dca;
+    g[1][1] = dcb;
+    g[1][0] = sc(add(dca, dcb), -1.0);
+
+    // the acceptor's frame
+    let v1 = sub(h1, xa);
+    let v2 = sub(h2, xa);
+    let w = add(v1, v2);
+    let nw = norm(w).max(1e-9);
+    let bh = sc(w, 1.0 / nw);
+    let wn = cross(v1, v2);
+    let nn = norm(wn).max(1e-9);
+    let nh = sc(wn, 1.0 / nn);
+    let p = dot(u, bh);
+    let un = dot(u, nh);
+
+    // (2) the acceptor's polar alignment `p = u·b̂`
+    // through u: ∂(u·ê)/∂x_H = (ê − (u·ê)u)/r, and the opposite on O_a
+    let du_b = sc(sub(bh, sc(u, p)), 1.0 / r);
+    g[2][0] = du_b;
+    g[2][1] = sc(du_b, -1.0);
+    // through b̂: ∂(u·b̂)/∂w = (u − p b̂)/|w|, with w = h₁ + h₂ − 2 O_a
+    let dw_b = sc(sub(u, sc(bh, p)), 1.0 / nw);
+    g[2][3] = dw_b;
+    g[2][4] = dw_b;
+    g[2][1] = sub(g[2][1], sc(dw_b, 2.0));
+
+    // `un = u·n̂`, the same two routes, with the normal's own chain rule through v₁ × v₂
+    let du_n = sc(sub(nh, sc(u, un)), 1.0 / r);
+    let mut gn = [[0.0f64; 3]; 5];
+    gn[0] = du_n;
+    gn[1] = sc(du_n, -1.0);
+    let qn = sc(sub(u, sc(nh, un)), 1.0 / nn);
+    let dv1 = cross(v2, qn);
+    let dv2 = cross(qn, v1);
+    gn[3] = add(gn[3], dv1);
+    gn[4] = add(gn[4], dv2);
+    gn[1] = sub(gn[1], add(dv1, dv2));
+
+    // (3) the azimuth `q = 2 un² + p² − 1`
+    let qc = 2.0 * un * un + p * p - 1.0;
+    for i in 0..5 {
+        for c in 0..3 {
+            g[3][i][c] = 4.0 * un * gn[i][c] + 2.0 * p * g[2][i][c];
+        }
+    }
+
+    ([r, cd, p, qc], g)
+}
+
+/// THE TRANSFER TERM AS A TABLE (CT-3): the 64-node exact-minus-closed-sector map of CT-2,
+/// served as the charge-transfer term itself.
+///
+/// # The contract
+///
+/// Knots arrive through `begin` / `knot` / `finish`, the way [`crate::table::PotentialTable`]'s
+/// do, so the loader — the harvest runner natively, the JSON door in the browser — is the only
+/// thing that reads a file and the interpolant is built in exactly one place. Each knot is one
+/// node of the map: its four coordinates by [`ct_coords`], and its value the node's own `E_CT`
+/// (the exact total minus the closed-sector total, the records' own rule). Nothing is fitted
+/// and no parameter is chosen: **the interpolant IS the term**, as the Hermite spline IS the
+/// pair potential.
+///
+/// # The rule, declared
+///
+/// The served energy is
+///
+/// ```text
+/// E(y) = −S(ỹ) · exp(−c₀ · r)
+/// S(ỹ) = Σ_i w_i ‖ỹ − x̃_i‖³ + w_n + Σ_j w_{n+1+j} ỹ_j       (the cubic polyharmonic spline)
+/// ỹ_j  = (y_j − lo_j)/(hi_j − lo_j)                          (each axis on its own knot range)
+/// ```
+///
+/// — the **cubic polyharmonic spline with a linear tail**, on the four coordinates scaled to
+/// the box the knots themselves span. Three reasons, each one a thing that was measured rather
+/// than assumed:
+///
+/// * **`ρ³` has no shape parameter.** Every Gaussian, multiquadric or inverse-multiquadric
+///   kernel carries a width that would have to be chosen, and this programme does not type a
+///   number a record does not carry. `ρ³` carries none, and it was also the best of the six
+///   kernels tried on the map's own leave-one-out.
+/// * **It is C² everywhere, knots included.** `‖x‖³` has a continuous Hessian at the origin,
+///   so the force is continuous and differentiable AT the data — where a piecewise-linear
+///   simplex interpolant would put a facet and a plain Shepard weighting would put a flat spot.
+/// * **The exponential prefactor carries the decay.** `c₀` is a knot of the loader's, not the
+///   table's: CT-2's own fitted `c_ct` from `wall_ct2.json`. Dividing it out leaves a shape
+///   function of order one, which is what makes a scattered interpolant honest here; tabling
+///   `E_CT` directly was measured at three times the leave-one-out error, and it also makes
+///   the far field a polynomial rather than a decay.
+///
+/// # What it does not do
+///
+/// It does not extrapolate gracefully and does not pretend to: past the knot box the cubic
+/// grows and only the prefactor and the seam's own switch hold it down. The reach, the
+/// boundedness walk and the switch are the fences, and each is measured rather than assumed.
+#[derive(Clone)]
+pub struct CtTable {
+    x: [[f64; CT_DIM]; MAX_CT_KNOTS],
+    v: [f64; MAX_CT_KNOTS],
+    s: [f64; MAX_CT_KNOTS],
+    w: [f64; MAX_CT_KNOTS + CT_DIM + 1],
+    lo: [f64; CT_DIM],
+    rng: [f64; CT_DIM],
+    n: usize,
+    filling: usize,
+    /// The exponent divided out before interpolation, per bohr — a record value.
+    pub c0: f64,
+    /// THE DECLARED INWARD FENCE (CT-3 §2 G-B0), in bohr; `0.0` is no fence, which is what
+    /// every table loads as. When set, the SHAPE is read at `max(r, r_clamp)` while the
+    /// prefactor `exp(−c₀ r)` keeps running at the true `r` — the spline's own behaviour below
+    /// its innermost knot is replaced by that knot's shape, held. It is a stated fence and not
+    /// a fit: nothing is chosen, the value held is the interpolant's own at the knot floor, and
+    /// it caps the shape exactly the way `reach` caps at `r_cut`. Its price is a force
+    /// discontinuity at `r_clamp` — the energy is continuous, `dS/dr` is not — and the freeze
+    /// measures that jump rather than asserting it small.
+    pub r_clamp: f64,
+    pub status: CtLoad,
+    /// The worst `|E(x_i) − v_i|` over the knots, measured by `finish`. The interpolant is an
+    /// interpolant, so this is a statement about the LINEAR SOLVE's arithmetic and nothing else.
+    pub worst_knot_miss: f64,
+    /// The largest knot shape value. `−deepest_shape·exp(−c₀ r)` is the deepest reading the
+    /// table can return at separation `r` on its own data, and it is what the boundedness walk
+    /// takes for the transfer row rather than the linear value (which is NOT the deepest here,
+    /// as it was for CT-2's family).
+    pub deepest_shape: f64,
+}
+
+impl CtTable {
+    pub const fn empty() -> Self {
+        Self {
+            x: [[0.0; CT_DIM]; MAX_CT_KNOTS],
+            v: [0.0; MAX_CT_KNOTS],
+            s: [0.0; MAX_CT_KNOTS],
+            w: [0.0; MAX_CT_KNOTS + CT_DIM + 1],
+            lo: [0.0; CT_DIM],
+            rng: [0.0; CT_DIM],
+            n: 0,
+            filling: 0,
+            c0: 0.0,
+            r_clamp: 0.0,
+            status: CtLoad::Empty,
+            worst_knot_miss: 0.0,
+            deepest_shape: 0.0,
+        }
+    }
+
+    pub fn is_loaded(&self) -> bool {
+        self.status == CtLoad::Ok && self.n >= CT_DIM + 2
+    }
+
+    pub fn knots(&self) -> usize {
+        self.n
+    }
+
+    pub fn knot_x(&self, i: usize) -> [f64; CT_DIM] {
+        if i < self.n { self.x[i] } else { [0.0; CT_DIM] }
+    }
+
+    pub fn knot_v(&self, i: usize) -> f64 {
+        if i < self.n { self.v[i] } else { 0.0 }
+    }
+
+    /// The knot box, per axis, as `finish` measured it.
+    pub fn axis_range(&self, j: usize) -> (f64, f64) {
+        if j < CT_DIM { (self.lo[j], self.lo[j] + self.rng[j]) } else { (0.0, 0.0) }
+    }
+
+    pub fn begin(&mut self, count: usize, c0: f64) -> bool {
+        if count > MAX_CT_KNOTS {
+            self.status = CtLoad::TooManyKnots;
+            return false;
+        }
+        if count < CT_DIM + 2 {
+            self.status = CtLoad::TooFewKnots;
+            return false;
+        }
+        if !c0.is_finite() || c0 <= 0.0 {
+            self.status = CtLoad::NotFinite;
+            return false;
+        }
+        self.n = 0;
+        self.filling = count;
+        self.c0 = c0;
+        self.worst_knot_miss = 0.0;
+        self.deepest_shape = 0.0;
+        self.status = CtLoad::Empty;
+        true
+    }
+
+    /// One knot: its four coordinates and its `E_CT` in hartree (negative for an attraction).
+    pub fn knot(&mut self, index: usize, y: [f64; CT_DIM], value: f64) -> bool {
+        if index >= self.filling {
+            return false;
+        }
+        if !value.is_finite() || y.iter().any(|c| !c.is_finite()) {
+            self.status = CtLoad::NotFinite;
+            return false;
+        }
+        self.x[index] = y;
+        self.v[index] = value;
+        if index + 1 > self.n {
+            self.n = index + 1;
+        }
+        true
+    }
+
+    pub fn finish(&mut self) -> CtLoad {
+        let n = self.n;
+        if n != self.filling || n < CT_DIM + 2 {
+            self.status = CtLoad::TooFewKnots;
+            return self.status;
+        }
+        for j in 0..CT_DIM {
+            let mut lo = f64::INFINITY;
+            let mut hi = f64::NEG_INFINITY;
+            for i in 0..n {
+                lo = lo.min(self.x[i][j]);
+                hi = hi.max(self.x[i][j]);
+            }
+            if !(hi - lo > 0.0) {
+                self.status = CtLoad::DegenerateAxis;
+                return self.status;
+            }
+            self.lo[j] = lo;
+            self.rng[j] = hi - lo;
+        }
+        for i in 0..n {
+            self.s[i] = -self.v[i] * (self.c0 * self.x[i][0]).exp();
+        }
+        self.deepest_shape = (0..n).fold(f64::NEG_INFINITY, |m, i| m.max(self.s[i]));
+
+        // the saddle system: [A P; Pᵀ 0][w; λ] = [s; 0], A_ij = ‖x̃_i − x̃_j‖³, P = [1 x̃]
+        let m = n + CT_DIM + 1;
+        let mut a = vec![0.0f64; m * m];
+        let mut rhs = vec![0.0f64; m];
+        for i in 0..n {
+            let xi = self.scaled(self.x[i]);
+            for j in 0..n {
+                let xj = self.scaled(self.x[j]);
+                let d2: f64 = (0..CT_DIM).map(|k| (xi[k] - xj[k]) * (xi[k] - xj[k])).sum();
+                if i != j && d2 <= 1e-24 {
+                    self.status = CtLoad::DuplicateKnot;
+                    return self.status;
+                }
+                a[i * m + j] = d2.sqrt() * d2;
+            }
+            a[i * m + n] = 1.0;
+            a[n * m + i] = 1.0;
+            for k in 0..CT_DIM {
+                a[i * m + n + 1 + k] = xi[k];
+                a[(n + 1 + k) * m + i] = xi[k];
+            }
+            rhs[i] = self.s[i];
+        }
+        // Gaussian elimination with partial pivoting; the block is indefinite, so no Cholesky.
+        for c in 0..m {
+            let mut piv = c;
+            for r in (c + 1)..m {
+                if a[r * m + c].abs() > a[piv * m + c].abs() {
+                    piv = r;
+                }
+            }
+            if !(a[piv * m + c].abs() > 1e-300) {
+                self.status = CtLoad::Singular;
+                return self.status;
+            }
+            if piv != c {
+                for k in 0..m {
+                    a.swap(c * m + k, piv * m + k);
+                }
+                rhs.swap(c, piv);
+            }
+            let d = a[c * m + c];
+            for r in (c + 1)..m {
+                let f = a[r * m + c] / d;
+                if f == 0.0 {
+                    continue;
+                }
+                for k in c..m {
+                    a[r * m + k] -= f * a[c * m + k];
+                }
+                rhs[r] -= f * rhs[c];
+            }
+        }
+        for c in (0..m).rev() {
+            let mut acc = rhs[c];
+            for k in (c + 1)..m {
+                acc -= a[c * m + k] * self.w[k];
+            }
+            self.w[c] = acc / a[c * m + c];
+        }
+        if self.w[..m].iter().any(|x| !x.is_finite()) {
+            self.status = CtLoad::Singular;
+            return self.status;
+        }
+        self.status = CtLoad::Ok;
+        let mut worst = 0.0f64;
+        for i in 0..n {
+            worst = worst.max((self.eval(self.x[i]) - self.v[i]).abs());
+        }
+        self.worst_knot_miss = worst;
+        self.status
+    }
+
+    #[inline]
+    fn scaled(&self, y: [f64; CT_DIM]) -> [f64; CT_DIM] {
+        let mut o = [0.0; CT_DIM];
+        for j in 0..CT_DIM {
+            o[j] = (y[j] - self.lo[j]) / self.rng[j];
+        }
+        // the declared inward fence, on the SHAPE's argument only — the prefactor is applied
+        // outside this and keeps running at the true separation
+        if self.r_clamp > 0.0 && y[0] < self.r_clamp {
+            o[0] = (self.r_clamp - self.lo[0]) / self.rng[0];
+        }
+        o
+    }
+
+    /// The innermost knot's separation, in bohr — the value `r_clamp` takes when the fence is
+    /// declared, read off the knots and never chosen.
+    pub fn r_knot_floor(&self) -> f64 {
+        self.lo[0]
+    }
+
+    /// The table's energy at one contact's coordinates.
+    pub fn eval(&self, y: [f64; CT_DIM]) -> f64 {
+        self.eval_grad(y).0
+    }
+
+    /// The energy and its gradient with respect to the four COORDINATES.
+    pub fn eval_grad(&self, y: [f64; CT_DIM]) -> (f64, [f64; CT_DIM]) {
+        if !self.is_loaded() {
+            return (0.0, [0.0; CT_DIM]);
+        }
+        let n = self.n;
+        let ys = self.scaled(y);
+        let mut sv = self.w[n];
+        let mut ds = [0.0f64; CT_DIM];
+        for j in 0..CT_DIM {
+            sv += self.w[n + 1 + j] * ys[j];
+            ds[j] = self.w[n + 1 + j];
+        }
+        for i in 0..n {
+            let xi = self.scaled(self.x[i]);
+            let mut d2 = 0.0;
+            let mut dd = [0.0f64; CT_DIM];
+            for j in 0..CT_DIM {
+                dd[j] = ys[j] - xi[j];
+                d2 += dd[j] * dd[j];
+            }
+            let rho = d2.sqrt();
+            sv += self.w[i] * rho * d2;
+            // ∇‖x‖³ = 3‖x‖ x — continuous at the knot, and zero there
+            let k = 3.0 * self.w[i] * rho;
+            for j in 0..CT_DIM {
+                ds[j] += k * dd[j];
+            }
+        }
+        let ex = (-self.c0 * y[0]).exp();
+        let e = -sv * ex;
+        let mut ge = [0.0f64; CT_DIM];
+        for j in 0..CT_DIM {
+            ge[j] = -(ds[j] / self.rng[j]) * ex;
+        }
+        // below the declared fence the shape does not move with `r`, so neither does its
+        // derivative — the jump this leaves in the force at `r_clamp` is the fence's price
+        if self.r_clamp > 0.0 && y[0] < self.r_clamp {
+            ge[0] = 0.0;
+        }
+        ge[0] += self.c0 * sv * ex;
+        (e, ge)
+    }
+
+    /// The whole term on one contact: its energy and the gradient on `[H, O_a, O_d, h₁, h₂]`.
+    pub fn serve(&self, xh: [f64; 3], xa: [f64; 3], xd: [f64; 3], h1: [f64; 3], h2: [f64; 3]) -> (f64, [[f64; 3]; 5]) {
+        let (y, gy) = ct_coords(xh, xa, xd, h1, h2);
+        let (e, ge) = self.eval_grad(y);
+        let mut g = [[0.0f64; 3]; 5];
+        for j in 0..CT_DIM {
+            for i in 0..5 {
+                for c in 0..3 {
+                    g[i][c] += ge[j] * gy[j][i][c];
+                }
+            }
+        }
+        (e, g)
+    }
+
+    /// The deepest reading the table can return at separation `r`, from its own knots. This is
+    /// what the boundedness walk takes for the transfer row: `−max_i s_i · exp(−c₀ r)`.
+    #[inline]
+    pub fn deepest(&self, r: f64) -> f64 {
+        if !self.is_loaded() { 0.0 } else { -self.deepest_shape * (-self.c0 * r).exp() }
+    }
+
+    /// THE DEEPEST READING THE SERVED TERM CAN RETURN AT SEPARATION `r` — the interpolant
+    /// ITSELF, evaluated at that separation over every angular geometry a real contact can
+    /// present, together with the coordinates that reach it.
+    ///
+    /// This is what the boundedness walk takes, and it is not [`CtTable::deepest`]. That one
+    /// carries the largest knot SHAPE inward under `exp(−c₀ r)`, and the largest shape of this
+    /// map sits at 4.5 bohr where the twist family decays more slowly than the divided-out
+    /// exponent; carrying it to contact describes a term the law does not serve. This one sets
+    /// `r` to the walk's own radius and asks the spline, so the table's behaviour below its
+    /// innermost knot — its linear tail in the scaled box, or the declared fence if `r_clamp`
+    /// is set — is what is walked.
+    ///
+    /// The angular scan respects what a real contact can present, which is NOT the knot box:
+    /// `u` is a unit vector in the acceptor's orthonormal frame, so `(u·n̂)² ≤ 1 − p²` and
+    /// therefore `|q| ≤ 1 − p²`. The box's corners at `|p| = |q| = 1` are unreachable and are
+    /// not walked. `cos θ_d` is scanned over its full physical `[−1, 1]`, which is WIDER than
+    /// the knot box, because a real donor can point anywhere.
+    ///
+    /// A MINIMUM OVER A GRID IS AN UPPER BOUND ON THE TRUE MINIMUM, so this is refined: a
+    /// coarse pass at `n` points per axis, then a fine pass over the coarse cell around the
+    /// best point. The freeze reports both resolutions, because a walk that reads its depth off
+    /// a grid must say how fine the grid was.
+    pub fn deepest_served(&self, r: f64, n: usize) -> (f64, [f64; CT_DIM]) {
+        if !self.is_loaded() {
+            return (0.0, [r, 0.0, 0.0, 0.0]);
+        }
+        let n = n.max(3);
+        let scan = |cd_lo: f64, cd_hi: f64, p_lo: f64, p_hi: f64, s_lo: f64, s_hi: f64| -> (f64, [f64; CT_DIM]) {
+            let mut best = f64::INFINITY;
+            let mut arg = [r, cd_lo, p_lo, 0.0];
+            for i in 0..n {
+                let cd = cd_lo + (cd_hi - cd_lo) * (i as f64) / ((n - 1) as f64);
+                for j in 0..n {
+                    let p = p_lo + (p_hi - p_lo) * (j as f64) / ((n - 1) as f64);
+                    // `s` is (u·n̂)² as a fraction of what the polar angle leaves for it
+                    let room = (1.0 - p * p).max(0.0);
+                    for k in 0..n {
+                        let s = s_lo + (s_hi - s_lo) * (k as f64) / ((n - 1) as f64);
+                        let q = 2.0 * s.clamp(0.0, 1.0) * room + p * p - 1.0;
+                        let y = [r, cd, p, q];
+                        let e = self.eval(y);
+                        if e < best {
+                            best = e;
+                            arg = y;
+                        }
+                    }
+                }
+            }
+            (best, arg)
+        };
+        let (_, a0) = scan(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0);
+        // the fine pass, one coarse cell either side of the coarse winner
+        let d = 2.0 / ((n - 1) as f64);
+        let s0 = {
+            let room = (1.0 - a0[2] * a0[2]).max(1e-12);
+            ((a0[3] - a0[2] * a0[2] + 1.0) / (2.0 * room)).clamp(0.0, 1.0)
+        };
+        let ds = 1.0 / ((n - 1) as f64);
+        scan(
+            (a0[1] - d).max(-1.0),
+            (a0[1] + d).min(1.0),
+            (a0[2] - d).max(-1.0),
+            (a0[2] + d).min(1.0),
+            (s0 - ds).max(0.0),
+            (s0 + ds).min(1.0),
+        )
+    }
+
+    /// How far the table reaches at `budget`, from its own deepest shape and `c₀` — the same
+    /// arithmetic [`SeamModel::reach`] does for an exponential, on the table's own numbers.
+    pub fn reach(&self, budget: f64) -> f64 {
+        if !self.is_loaded() || !(self.deepest_shape.abs() > budget) || !(self.c0 > 0.0) {
+            0.0
+        } else {
+            (self.deepest_shape.abs() / budget).ln() / self.c0
         }
     }
 }
@@ -570,6 +1184,133 @@ mod tests {
         assert!((d.reach(1e-10) - (64.0f64 / 1e-10).powf(1.0 / 6.0)).abs() < 1e-9);
         let both = SeamModel { c6: 64.0, ..w };
         assert_eq!(both.reach(1e-10), w.reach(1e-10).max(d.reach(1e-10)));
+    }
+
+    #[test]
+    fn the_transfer_table_interpolates_its_knots_and_its_force_is_its_derivative() {
+        // five water-dimer-shaped frames, each giving one contact and so one knot. The VALUES
+        // here are a unit test's, not a record's: what is under test is the interpolant and its
+        // gradient, and both are indifferent to what the numbers mean.
+        let (r_oh, th) = (1.9435738400f64, 1.6887434037f64);
+        let (s2, c2) = ((0.5 * th).sin(), (0.5 * th).cos());
+        // `bend` swings the donor's O–H off the axis, so `cos θ_d` is not one value on every
+        // knot — an axis whose knots all agree is refused by `finish`, and rightly
+        let frame = |roo: f64, tilt: f64, twist: f64, bend: f64| -> ([f64; 3], [f64; 3], [f64; 3], [f64; 3], [f64; 3]) {
+            let (st, ct) = (tilt.sin(), tilt.cos());
+            let (sw, cw) = (twist.sin(), twist.cos());
+            let turn = |p: [f64; 3]| -> [f64; 3] {
+                let (x1, y1, z1) = (p[0] * cw - p[1] * sw, p[0] * sw + p[1] * cw, p[2]);
+                [x1, y1 * ct - z1 * st, roo + y1 * st + z1 * ct]
+            };
+            ([r_oh * bend.sin(), 0.0, r_oh * bend.cos()], [0.0, 0.0, roo], [0.0, 0.0, 0.0],
+             turn([r_oh * s2, 0.0, r_oh * c2]), turn([-r_oh * s2, 0.0, r_oh * c2]))
+        };
+        let geoms = [
+            frame(5.48, 0.0, 0.0, 0.0),
+            frame(5.48, 1.0, 0.0, 0.0),
+            frame(5.48, 1.0, 1.2, 0.25),
+            frame(5.86, 0.4, 0.7, 0.0),
+            frame(6.30, 2.2, 0.3, 0.55),
+            frame(5.10, 1.6, 1.5, 0.15),
+            frame(6.60, 0.8, 1.1, 0.40),
+        ];
+        let vals = [-9.3e-3, -1.24e-2, -1.11e-2, -5.4e-3, -2.7e-3, -1.85e-2, -1.1e-3];
+        let mut tbl = CtTable::empty();
+        assert!(tbl.begin(geoms.len(), 1.40));
+        for (i, g) in geoms.iter().enumerate() {
+            let (y, _) = ct_coords(g.0, g.1, g.2, g.3, g.4);
+            assert!(tbl.knot(i, y, vals[i]), "knot {i}");
+        }
+        assert_eq!(tbl.finish(), CtLoad::Ok, "the table loads");
+        assert!(tbl.is_loaded() && tbl.knots() == geoms.len());
+        // THE INTERPOLANT IS THE TERM: it reproduces every knot it was built on
+        assert!(tbl.worst_knot_miss < 1e-14, "knot reproduction {:.3e}", tbl.worst_knot_miss);
+        for (i, g) in geoms.iter().enumerate() {
+            let (e, _) = tbl.serve(g.0, g.1, g.2, g.3, g.4);
+            assert!((e - vals[i]).abs() < 1e-14, "knot {i}: {e} vs {}", vals[i]);
+        }
+        // the deepest reading is the deepest knot's shape, and the reach is that shape's
+        assert!(tbl.deepest_shape > 0.0 && tbl.deepest(3.0) < 0.0);
+        assert!((tbl.reach(1e-10) - (tbl.deepest_shape / 1e-10).ln() / 1.40).abs() < 1e-9);
+        // the analytic gradient against a central difference, on every coordinate of every atom,
+        // at geometries BETWEEN the knots as well as at them
+        for probe in [frame(5.48, 0.0, 0.0, 0.0), frame(5.63, 0.9, 0.55, 0.20), frame(6.05, 1.75, 1.35, 0.45)] {
+            let pts = [probe.0, probe.1, probe.2, probe.3, probe.4];
+            let (_, g) = tbl.serve(pts[0], pts[1], pts[2], pts[3], pts[4]);
+            let h = 1e-6;
+            for i in 0..5 {
+                for c in 0..3 {
+                    let mut pp = pts;
+                    pp[i][c] += h;
+                    let (ep, _) = tbl.serve(pp[0], pp[1], pp[2], pp[3], pp[4]);
+                    pp[i][c] -= 2.0 * h;
+                    let (em, _) = tbl.serve(pp[0], pp[1], pp[2], pp[3], pp[4]);
+                    let fd = (ep - em) / (2.0 * h);
+                    assert!((g[i][c] - fd).abs() <= 1e-8 * (1.0 + fd.abs()), "atom {i} coord {c}: analytic {} vs fd {fd}", g[i][c]);
+                }
+            }
+            // translation invariance: the gradients sum to zero, so the term posts no net force
+            for c in 0..3 {
+                let sum: f64 = (0..5).map(|i| g[i][c]).sum();
+                assert!(sum.abs() < 1e-10, "gradients sum to {sum}");
+            }
+        }
+        // ROTATION INVARIANCE: the energy is a function of four scalars, so turning the whole
+        // frame cannot move it. (A table on `u·n̂` rather than `q` would fail this under a
+        // relabelling of the acceptor's hydrogens; `q` is invariant under that too, below.)
+        let g = frame(5.63, 0.9, 0.55, 0.20);
+        let (e0, _) = tbl.serve(g.0, g.1, g.2, g.3, g.4);
+        let rot = |p: [f64; 3]| -> [f64; 3] {
+            let (s, c) = (0.7f64.sin(), 0.7f64.cos());
+            let (x, y, z) = (p[0], p[1] * c - p[2] * s, p[1] * s + p[2] * c);
+            [x + 3.0, y * c - z * s - 1.0, y * s + z * c + 2.0]
+        };
+        let (e1, _) = tbl.serve(rot(g.0), rot(g.1), rot(g.2), rot(g.3), rot(g.4));
+        assert!((e0 - e1).abs() < 1e-12, "rotation moved the table: {e0} vs {e1}");
+        let (e2, _) = tbl.serve(g.0, g.1, g.2, g.4, g.3);
+        assert!((e0 - e2).abs() < 1e-12, "swapping the acceptor's hydrogens moved the table: {e0} vs {e2}");
+        // the refusals, each by name
+        let mut bad = CtTable::empty();
+        assert!(!bad.begin(MAX_CT_KNOTS + 1, 1.4) && bad.status == CtLoad::TooManyKnots);
+        assert!(!bad.begin(3, 1.4) && bad.status == CtLoad::TooFewKnots);
+        assert!(!bad.begin(7, 0.0) && bad.status == CtLoad::NotFinite);
+        let mut dup = CtTable::empty();
+        assert!(dup.begin(geoms.len(), 1.40));
+        for i in 0..geoms.len() {
+            let g = geoms[if i == 1 { 0 } else { i }];
+            let (y, _) = ct_coords(g.0, g.1, g.2, g.3, g.4);
+            dup.knot(i, y, vals[i]);
+        }
+        assert_eq!(dup.finish(), CtLoad::DuplicateKnot, "two knots at one site are refused, not averaged");
+        assert_eq!(dup.eval([3.5, -1.0, -1.0, 0.0]), 0.0, "a table that did not load serves nothing");
+    }
+
+    #[test]
+    fn the_mode_selects_one_shape_and_the_walk_takes_the_one_it_serves() {
+        let q = 0.231380372;
+        let kt = 9.28e-4;
+        let r_min = [4.724315, 2.780741, 1.314606];
+        // the selector: three shapes, exclusive, and every record before CT-3 reads one of two
+        let pair = SeamModel { p_ct: 1.47488, c_ct: 1.46, ..SeamModel::NO_WALL };
+        assert_eq!(pair.ct_mode(), CtMode::Pair);
+        let ang = SeamModel { m_ct: 1, ..pair };
+        assert_eq!(ang.ct_mode(), CtMode::Angular);
+        assert_eq!(SeamModel { ct_table_on: true, ..ang }.ct_mode(), CtMode::Table, "the table replaces the family, it does not multiply it");
+        assert_eq!(SeamModel { ct_table_on: true, ..pair }.ct_mode(), CtMode::Table);
+        // `bounded_ct` with the pair term IS `bounded`, on CT-2's own admitted law and on CT-1's
+        for m in [
+            SeamModel { a: 948.048736, b: 2.40, p: 22.174044, c: 2.44, a_oh: 22.586054, b_oh: 2.20, a_hh: 1.525046, b_hh: 1.75, p_hh: 0.016971, c_hh: 1.02, p_ct: 1.371043, c_ct: 1.40, m_ct: 1, ..SeamModel::NO_WALL },
+            SeamModel { a: 948.048736, b: 2.40, p: 23.704848, c: 2.44, a_oh: 22.586054, b_oh: 2.20, a_hh: 1.525046, b_hh: 1.75, p_hh: 158.7891, c_hh: 4.00, p_ct: 1.47488, c_ct: 1.46, ..SeamModel::NO_WALL },
+        ] {
+            assert_eq!(m.bounded(q, r_min, kt), m.bounded_ct(q, r_min, kt, &|r| m.charge_transfer(r)));
+            assert_eq!(m.hole(q), m.hole_ct(q, &|r| m.charge_transfer(r)));
+        }
+        // CT-2's law is the admitted one, and a DEEPER transfer row breaks it — which is the
+        // whole reason the walk takes the table's deepest reading rather than its linear one
+        let ct2 = SeamModel { a: 948.048736, b: 2.40, p: 22.174044, c: 2.44, a_oh: 22.586054, b_oh: 2.20, a_hh: 1.525046, b_hh: 1.75, p_hh: 0.016971, c_hh: 1.02, p_ct: 1.371043, c_ct: 1.40, m_ct: 1, ..SeamModel::NO_WALL };
+        assert_eq!(ct2.bounded(q, r_min, kt), None, "CT-2's law is admitted");
+        let deep = ct2.bounded_ct(q, r_min, kt, &|r| -2.92 * (-1.40 * r).exp());
+        assert!(deep.as_deref().map_or(false, |m| m.contains("H–O potential is not positive at contact")), "{deep:?}");
     }
 
     #[test]

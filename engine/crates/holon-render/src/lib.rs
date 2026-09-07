@@ -995,7 +995,8 @@ pub const SEAM_REFUSED: u32 = 210;
 /// for the named refusals.
 #[no_mangle]
 pub extern "C" fn holon_set_seam(on: u32, a: f64, b: f64, p: f64, c: f64, c6: f64, a_oh: f64, b_oh: f64, a_hh: f64, b_hh: f64, p_hh: f64, c_hh: f64, p_ct: f64, c_ct: f64, m_ct: u32, k_ct: u32, lambda_ct: f64, r_cut: f64) -> u32 {
-    match sim().set_seam(if on != 0 { Some(seam::SeamModel { a, b, p, c, c6, a_oh, b_oh, a_hh, b_hh, p_hh, c_hh, p_ct, c_ct, m_ct: m_ct as u8, k_ct: k_ct as u8, lambda_ct, r_cut }) } else { None }) {
+    let ct_table_on = sim().seam.map_or(false, |m| m.ct_table_on);
+    match sim().set_seam(if on != 0 { Some(seam::SeamModel { a, b, p, c, c6, a_oh, b_oh, a_hh, b_hh, p_hh, c_hh, p_ct, c_ct, m_ct: m_ct as u8, k_ct: k_ct as u8, lambda_ct, r_cut, ct_table_on }) } else { None }) {
         Ok(()) => 0,
         Err(seam::SeamRefusal::AcuityFrameSet) => SEAM_REFUSED + 1,
         Err(seam::SeamRefusal::FarSectorDeclared) => SEAM_REFUSED + 2,
@@ -2620,3 +2621,58 @@ pub(crate) fn hadron_elapsed(_t: ()) -> f64 { 0.0 }
 pub(crate) fn hadron_clock() -> std::time::Instant { std::time::Instant::now() }
 #[cfg(not(target_arch = "wasm32"))]
 pub(crate) fn hadron_elapsed(t: std::time::Instant) -> f64 { t.elapsed().as_secs_f64() }
+
+// ------------------------------------------------------------------ CT-3: the transfer table
+//
+// The same three-call shape the pair tables use (`holon_table_begin` / `knot` / `finish`), so
+// the loader is the only thing that reads a file and `CtTable::finish` is the only thing that
+// builds an interpolant. Each knot is one node of CT-2's map: its four coordinates by
+// `seam::ct_coords` and its value the node's own `E_CT` in hartree.
+
+/// Begin a transfer table of `count` knots, dividing out `c0` per bohr before interpolating.
+/// Returns 1 when the table will accept knots.
+#[no_mangle]
+pub extern "C" fn holon_ct_table_begin(count: u32, c0: f64) -> u32 {
+    u32::from(sim().ct_table.begin(count as usize, c0))
+}
+
+/// One knot: `(r, cos θ_d, u·b̂, q)` and the node's `E_CT` in hartree.
+#[no_mangle]
+pub extern "C" fn holon_ct_table_knot(index: u32, r: f64, cos_td: f64, ub: f64, q: f64, e_ct: f64) -> u32 {
+    u32::from(sim().ct_table.knot(index as usize, [r, cos_td, ub, q], e_ct))
+}
+
+/// Build the interpolant. Returns the `CtLoad` discriminant: 1 is `Ok`, anything else names why
+/// the table did not load and leaves the table serving nothing.
+#[no_mangle]
+pub extern "C" fn holon_ct_table_finish() -> u32 {
+    sim().ct_table.finish() as u32
+}
+
+/// The knots the table holds, and the worst arithmetic miss `finish` measured at them.
+#[no_mangle]
+pub extern "C" fn holon_ct_table_knots() -> u32 {
+    sim().ct_table.knots() as u32
+}
+
+#[no_mangle]
+pub extern "C" fn holon_ct_table_worst_knot_miss() -> f64 {
+    sim().ct_table.worst_knot_miss
+}
+
+/// SELECT THE TRANSFER TERM'S SHAPE (CT-3). `on != 0` serves the table and silences the pair and
+/// angular exponentials; `0` restores whichever of those the model's own exponents name. Refused
+/// (returns 0) when the seam is off, or when the table is asked for and none is loaded — a mode
+/// that serves nothing is a lie about the law, not a quiet zero.
+#[no_mangle]
+pub extern "C" fn holon_set_seam_ct_table(on: u32) -> u32 {
+    let want = on != 0;
+    if want && !sim().ct_table.is_loaded() {
+        return 0;
+    }
+    let Some(m) = sim().seam else { return 0 };
+    match sim().set_seam(Some(seam::SeamModel { ct_table_on: want, ..m })) {
+        Ok(()) => 1,
+        Err(_) => 0,
+    }
+}

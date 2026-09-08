@@ -58,6 +58,8 @@ pub mod longrange;
 pub mod nucleus;
 pub mod sim;
 pub mod table;
+/// The thermostat rules: Berendsen, and the canonical stochastic rescaling beside it.
+pub mod thermostat;
 pub mod trimer_bank;
 pub mod waterbox;
 

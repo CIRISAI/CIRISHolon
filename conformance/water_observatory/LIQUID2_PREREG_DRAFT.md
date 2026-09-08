@@ -36,7 +36,18 @@ on the seed mean (gate N); the box SIZE is checked in both directions and both a
 measured (§3a: downward there is no periodic box at all at this law's reach, upward there is
 one and it is pre-committed as a fourth arm); and §4 says plainly what this campaign does not
 do — the density is imposed, and the basis is minimal with no transferred dispersion, so the
-law is exact for its own Hamiltonian and not for water.*
+law is exact for its own Hamiltonian and not for water. And THREE INSTRUMENTS were repaired
+before this draft's next revision, each answering a source claim of the second review of
+2026-09-07 (GANTT2 "The second review", item 3), each additive and each validated here rather
+than in a postmortem: the diffusion lens is now told its BOUNDARY, so the wall-saturation cap
+stops refusing a periodic box that has no walls and the exponent and the slope are read on ONE
+declared lag interval (R3); the settling is FROZEN on `3` pilot trajectories the confirmation
+seeds never see, by Chodera 2016's automated equilibration detection, which discharges gate
+E's own OWED item by measuring the bond count where the criterion fires instead of arguing
+about it (gate E clause 7); every readout carries an autocorrelation-aware standard error
+beside its seed spread (gate N); and the thermostat is now a DECLARED choice with a canonical
+alternative validated at `1.008 ×` the canonical kinetic variance where Berendsen reads
+`3.7e-5` of it (gate T).*
 
 misfits: contacts **M-EMPTY-SECTOR** (twice, and one of them fired at this freeze's own gate:
 the expectation rule keeps its EMPTY branch, and the plants' carrier is measured on the
@@ -271,6 +282,51 @@ a kill.
      LIQUID-1's physical settling and two thirds of its settling in frames — with both legs
      satisfied. A floor of 18,000 would have overridden a measurement with a guard. Both
      conversions are written to the record so a reader sees the number that was not used.
+  7. **THE FLOOR IS FROZEN ON PILOT TRAJECTORIES THE CONFIRMATION NEVER SEES** (the second
+     review's item 3, and the discharge of the OWED item below). Before any confirmation
+     seed runs, `3` PILOT trajectories run on their own declared seeds
+     (`0x50494c4f54300001` and its two successors, disjoint from the confirmation seeds
+     `0x4c4951554944`, `…45` and `…46` by construction and asserted in the runner, not
+     assumed), each of
+     `60` blocks at the same `250`-frame cadence, and each block records FOUR series: the
+     temperature, the cross-unit potential energy, **the bond count and the O–O first peak**.
+     Watching the readouts is free here precisely because these trajectories are thrown
+     away. On each pilot the discard point is **Chodera 2016's** — *John D. Chodera, "A
+     simple method for automated equilibration detection in molecular simulations", J. Chem.
+     Theory Comput. 12 (2016) 1799–1805*, credited and implemented, not adapted: the `t0`
+     that MAXIMISES the number of effectively uncorrelated samples in what remains,
+     `N_eff(t0) = (N − t0)/g(t0)`. The frozen settling is the **maximum** of those `t0`
+     over the pilots — a maximum and not a mean, because the number is a floor and a floor
+     is the slowest pilot's — and it is written once to `liquid2/pilot/settling.json` and
+     read back by the design with its path, its field and its value kept.
+     **What the rule has no room for is the whole reason for it:** no threshold, no window
+     length, no band, no reference plateau, and no look at whether any readout agrees with
+     experiment. It is an argmax over a quantity computed from the series alone, so a
+     settling length chosen this way cannot have been chosen for the answer it gives — which
+     is what LIQUID-1's `52` fs and this draft's own first criterion were both exposed to.
+     The floor in force is the LARGER of this and clause 5's `2,250` frames, and both are
+     written to the record with the one that bound named.
+     **The instrument has been run and priced, and the pilot set that priced it is SHORT.**
+     A demonstration set of `3 × 14` blocks (`3,500` frames each) is in `liquid2/pilot/` and
+     is what the price below is measured on; the freeze's own pilots run at `60` blocks, and
+     every pilot record prints `blocks_run` beside `blocks_declared` so a short set can never
+     be mistaken for the frozen one. What the short set establishes is the instrument and its
+     cost per block, not the settling this campaign will use.
+     **AND IT ALREADY ANSWERED THE OWED QUESTION, in the direction that justified asking it.**
+     On all three demonstration pilots the BOND COUNT's own Chodera `t0` is `9` blocks
+     (`2,250` frames, `469.1` fs — LIQUID-1's own measured settling, arrived at here by a
+     different rule on a different law), while the cross-unit ENERGY's is `7`, `3` and `10`.
+     **On two of the three the energy criterion would have fired before the network had
+     stopped moving**, and on one of them by six blocks. That is the residual risk gate E
+     named, measured rather than argued, and it is what the MAXIMUM rule is for: the frozen
+     floor is `10` blocks = `2,500` frames = `521.3` fs, which covers the bond count's `9` on
+     every pilot. The rule is not changed after seeing this — the maximum was the rule before
+     the pilots ran — and the reading is entered as a caution about ANY single-trajectory
+     energy criterion, this campaign's included. The O–O peak's `t0` is `1` block on all
+     three: the shell is the fast variable and it settles first, which is the control that the
+     four series are not all reading the same thing. Price, measured: `3,500` frames per pilot
+     in `1,784`–`2,058` s on one core each under a loaded host (`0.51`–`0.59` s per frame),
+     three pilots in parallel.
   Every arm records the settling length it actually used and its whole block series.
 
   **Measured at the gate, before any seed is released:** the corrected criterion fires at
@@ -286,6 +342,16 @@ a kill.
   through one settling, to establish whether the bond count is flat where the energy criterion
   fires.** Until that exists this campaign does not claim it is, and the counted arm's own
   readouts, which sample the bond count every `246` frames, would show a trend if one remained.
+  **DISCHARGED by clause 7 above, and by a better instrument than the one owed.** The pilots
+  log the temperature, the cross-unit energy, the bond count AND the O–O first peak through
+  one settling, and each of the four carries its OWN Chodera `t0` in
+  `liquid2/pilot/settling.json`. So the question "is the bond count flat where the energy
+  criterion fires" is answered by measurement, on `3` trajectories, in the record, before any
+  confirmation frame — and R2 is not spent doing it, because the pilot seeds and the
+  confirmation seeds are disjoint and the pilots are discarded. What the freeze commits to in
+  advance is the READING and not the answer: if the bond count's `t0` is materially later than
+  the energy's, the floor is still the energy's maximum (clause 7's rule is fixed) and the
+  discrepancy is reported as a finding about the criterion, in the same breath as the result.
   witness: none (a criterion whose temperature leg is validated on `liquid1/arm.log` and whose
   energy leg is validated on this campaign's own arm, both re-run by the same function
   on every arm)
@@ -298,7 +364,45 @@ a kill.
   branch is. Fewer than two countable seeds VOIDs the campaign's uncertainty claim and the
   reader is told so in the record. A seed whose arm is VOID at any frame, or whose `run.done`
   is absent, is not counted and is named.
-  witness: none (a mean and a spread over at least two independent trajectories)
+  **AND EVERY READOUT ALSO CARRIES ITS OWN AUTOCORRELATION-AWARE ERROR BAR, BESIDE THE SPREAD
+  AND NEVER INSTEAD OF IT** (the second review's item 3). A mean over `560` readouts of a
+  liquid is not a mean over `560` independent draws, and `sd/sqrt(560)` says it is. Each arm
+  therefore reports, per readout series (the bond count, the temperature, the winding
+  indicator and the largest-component fraction), the **statistical inefficiency**
+  `g = 1 + 2 Σ (1 − t/N) C(t)` truncated at the first non-positive `C(t)` (Geyer's
+  initial-positive rule; the `g` and the weighting are Chodera's, after Friedberg–Cameron
+  1970, Swope–Andersen 1982 and Flyvbjerg–Petersen 1989), the effective sample count
+  `N_eff = N/g`, and the standard error `sd/sqrt(N_eff)`. The two quantities answer different
+  questions and both are printed at every branch: the SPREAD says how much the answer depends
+  on where the box started, `SEM` says how much of one trajectory's scatter is real sampling.
+  **Neither is a kill and neither moves a band** — the bands are experiment's and are stated
+  on the seed mean, exactly as above; what these numbers do is stop a precise-looking number
+  from being reported as one. `holon_campaign::uncertainty` computes them, with `g ≈ 1` on
+  white noise and `g = (1+φ)/(1−φ)` on an AR(1) process as its two unit tests.
+  witness: none (a mean and a spread over at least two independent trajectories, and a
+  statistical inefficiency whose two analytic cases are unit-tested in the harness)
+- **T — the thermostat is a DECLARED choice and the ledger does not change with it.** This
+  campaign runs **Berendsen** velocity rescaling (Berendsen, Postma, van Gunsteren, DiNola and
+  Haak, *J. Chem. Phys.* **81** (1984) 3684) at `tau = 2000` au, which is LIQUID-1's, so the
+  two arms are the same box under the same coupling. The second review's fifth source claim is
+  accepted as written — *suppressed fluctuations are not canonical sampling* — and it is
+  answered by an instrument rather than by a change of arm: **stochastic velocity rescaling**
+  (Bussi, Donadio and Parrinello, *J. Chem. Phys.* **126** (2007) 014101) is now a selectable
+  alternative in the engine, wearing the SAME ledger column with the same meaning, and it is
+  VALIDATED before this freeze rather than after: on a harmonic test system of `32` particles
+  (`96` degrees of freedom) the kinetic energy's relative variance reads `2.099e-2` against
+  the canonical `2/N_f = 2.083e-2` (`1.008 ×`), where Berendsen at the same coupling reads
+  `7.81e-7`, which is `3.7e-5` of canonical. **What this campaign claims and does not claim:**
+  every readout here is a MEAN (the peak, the bond count, the diffusion constant, the spanning
+  fraction) and a mean is what Berendsen is good at, so no reading below is invalidated by the
+  suppression; what IS invalidated is any FLUCTUATION — a heat capacity, a compressibility, a
+  variance-based response — and this freeze reports none and pre-commits to reporting none.
+  The engine's default stays Berendsen and is bit-for-bit unchanged (`0` deviates drawn on a
+  Berendsen run, asserted), so every record already in this tree still selects what it
+  selected. The exit for the fluctuation sector is named: the first campaign that reads a
+  variance runs on the stochastic rule and says so in its own freeze.
+  witness: none (a canonical variance measured on a harmonic test system, and a receipt gate
+  that holds under both rules)
 - **L2 — the price.** The force pass at 384 atoms with the lattice sum and the table, measured
   on the first 100 frames and written before the counted ones; the arm's total within `0.1×`
   to `10×` of the projection. The table term's own cost is reported as the ratio of this
@@ -386,14 +490,58 @@ a kill.
      is the measurement, which is L1's bar on the drift the arm actually produced. The `1×`
      arm leaves the toggle OFF, so it is LIQUID-1's own integrator setting exactly. Every
      record prints the step in force at the END of its arm and whether it held to the bit.
-  3. **The window.** The readout stride is the smallest that puts the LOWEST fitted lag of the
-     lens's own `×1.5` ladder at or above `t_c` — which makes the model's effective exponent
-     exactly 1 and leaves roughly a factor of two of margin against the lens's `1.15` ceiling.
-     `max_lag` is the largest lag on that same ladder whose MSD at EXPERIMENT'S OWN diffusion
-     constant stays under the lens's wall-saturation cap `(L/4)² = 54.74` bohr² with a factor
-     of `1.5` to spare — the cap is the second way this reading can be refused and the window
-     is designed to clear it, not hoped through it. The sampled frame count is `4·max_lag`,
-     LIQUID-1's own caller convention, and the counted frame count is the stride times that.
+  3. **The window, and the lens it is read with — REPAIRED, and the repair is the second
+     review's fourth source claim.** The review's words: *"the diffusion lens refuses large
+     displacements by a WALL-saturation cap regardless of boundary, and LIQUID-2 sized its
+     window to that cap on unwrapped periodic positions"*. Verified in the source
+     (`holon-lens/src/lens.rs`, the cap is written for `Boundary::Walls` and was applied
+     unconditionally) and repaired: R3 is now read by `diffusion_periodic`, which is told the
+     boundary and behaves differently for it.
+     * **The wall cap applies under `Boundary::Walls` and nowhere else.** In a walled box a
+       displacement cannot exceed the box and a slope fitted across the saturation is a number
+       about the container; that refusal is kept unchanged. THIS BOX HAS NO WALLS. The cap
+       `(L/4)² = 54.74` bohr² is therefore **NOT BINDING** on this arm, and the window is no
+       longer sized by it. Both numbers stay in the record — the cap and the MSD at the top
+       lag at experiment's own `D` — as a reading that is now REPORTED and not gated.
+     * **The window is what it was, and it is now the crossover and the origin count that
+       set it.** The readout stride is still the smallest that puts the LOWEST fitted lag of
+       the lens's `×1.5` ladder at or above `t_c`, so the fit window is entirely on the
+       diffusive side; `max_lag` is still the value the freeze priced, and the sampled frame
+       count is still `4·max_lag`, LIQUID-1's caller convention. Lifting the cap would ALLOW a
+       longer window; taking it would lengthen the arm and move the price, and this freeze
+       does not spend a review's repair on a bigger arm. The design record carries what the
+       top lag WOULD be with the cap lifted, so the choice is visible.
+     * **ONE declared lag interval.** The exponent and the slope are read on the SAME interval
+       `[2, max_lag]`. The old lens measured its exponent on the `×1.5` ladder up to `max_lag`
+       and then fitted its slope over `1..=max_lag` — two different windows, the second
+       reaching down to lag `1`, which by this freeze's own stride rule is BELOW the crossover
+       by construction. A gate that passes on one window and a number fitted on another is not
+       a gated number, and that is corrected here.
+     * **The slope is a slope.** Above the crossover `MSD = 2 d D τ + b` with `b > 0` the
+       ballistic offset, so the reported `D` is the free-intercept least-squares SLOPE over
+       the interval, with the intercept printed. The through-the-origin value — the old lens's
+       convention — is printed beside it, so the two can be compared on one arm rather than
+       argued about.
+     * **The positions must be UNWRAPPED, and the lens now CHECKS it.** Under `Periodic` it
+       refuses when any single-frame displacement exceeds `L/2 = 14.797` bohr, which is the
+       signature of a face crossing left in the coordinate. The runner accumulates the
+       minimum-image displacement per frame and restarts the accumulator at the end of the
+       settling; this gate is what catches the day that stops being true.
+  3a. **Finite size is NAMED and NOT APPLIED.** A diffusion constant measured in a periodic
+     box is smaller than the infinite-system one by the tracer's hydrodynamic interaction with
+     its own images: `D_∞ − D_PBC = k_B T ξ / (6 π η L)` with `ξ = 2.837297` (Yeh and Hummer,
+     *J. Phys. Chem. B* **108** (2004) 15873). **This freeze does not apply it**, because the
+     correction needs the SHEAR VISCOSITY of this very law and this programme has not measured
+     one — the fluid tier's viscosity is a lattice-gas number on a different carrier (FLUID-0)
+     and is not this law's. What the record carries instead is every input the correction has
+     — the box edge `29.594` bohr, `ξ`, the frames' own mean temperature — and the whole
+     correction DIVIDED BY the viscosity, so a reader with an `η` finishes the arithmetic in
+     one division and nobody has to trust that it was not quietly applied. The record's field
+     is `"yeh_hummer_applied": false`. **The consequence for the kill band is stated in
+     advance**: the correction is POSITIVE, so `D_PBC` under-reads `D_∞`, and a branch (c)
+     — too slow — at 128 waters is not by itself a statement about the law. R3 (c) is
+     therefore pre-committed to be reported with this term's size beside it whenever an `η`
+     exists to size it, and as an unsized caveat when one does not.
   4. **The arm.** The counted physical time must be at least `4 t_c` — the freeze's letter, and
      it is met with room to spare by (3).
   5. **VOID BY PRICE.** If the arm the rule produces costs more than `2.994781e5` s
@@ -402,7 +550,9 @@ a kill.
      nothing about R1, R2 or S changes.
   KILL band, unchanged and from experiment: within a factor of `3` of `2.3e-5` cm²/s.
   **(a)** in band; **(b)** too fast; **(c)** too slow or frozen; **VOID** if the lens refuses
-  on either of its own gates, with the refusal quoted.
+  on any of its own gates, with the refusal quoted — and under this box's `Boundary::Periodic`
+  those gates are the exponent band `[0.85, 1.15]`, the `3`-point floor on the ladder inside
+  the declared interval, and the unwrapping check; the wall cap is not among them.
   witness: none (the lens's reading against a declared band)
 - **S — the spanning cluster, the readout that names the phase, against the Erdős–Rényi giant `0.873790` and a majority `0.5` of frames.** Over the readout frames:
   the fraction whose largest H-bond component WINDS the torus, the mean largest-component
@@ -661,16 +811,35 @@ under `screen/first_pass_dt_reference_units/` with a README: their measurements 
 what was wrong was the unit their knob was reported in (`dt_reference` rather than the step in
 force), which the README converts.
 
-**No physics changed.** `sim.rs`, `seam.rs`, `field.rs`, `lens.rs` and `liquid1.rs` are
-untouched by this campaign; the whole of it is one new example and one DEV-dependency
-(`holon-campaign` added to `holon-render`'s `[dev-dependencies]`, zero runtime dependencies,
-std only, never linked into the library or the browser artifact — the same isolation profile
-and the same one-way direction as `holon-lens` beside it). Every existing test of
-`holon-render`, `holon-campaign` and `holon-closure` passes unchanged.
+**What changed in the engine, and what did not.** The campaign itself is one example and
+one DEV-dependency (`holon-campaign` added to `holon-render`'s `[dev-dependencies]`, zero
+runtime dependencies, std only, never linked into the library or the browser artifact — the
+same isolation profile and the same one-way direction as `holon-lens` beside it). `seam.rs`,
+`field.rs` and `liquid1.rs` are untouched. THREE INSTRUMENTS DID CHANGE, each of them an
+answer to a source claim of the second review, and each of them ADDITIVE — the existing
+callers of record keep the existing behaviour and every existing test of `holon-render`,
+`holon-lens`, `holon-campaign` and `holon-closure` passes unchanged:
+- `holon-lens/src/lens.rs` gains `diffusion_periodic` (the boundary-aware lens, R3 above).
+  **`diffusion` itself is byte-unchanged** and keeps its callers of record, including the
+  refusal LIQUID-1 published; the new function is a second lens beside it and not an edit
+  to the first.
+- `holon-render/src/thermostat.rs` is new and `sim.rs::apply_thermostat` branches on a new
+  `thermostat_kind` field whose default is `Berendsen` (gate T above). The default path
+  draws no random number at all and is bit-for-bit what it was, which is asserted rather
+  than asserted-to-be-obvious: `thermostat_draws() == 0` after a Berendsen run, and two
+  Berendsen runs of one scene are compared bit for bit.
+- `holon-campaign/src/uncertainty.rs` is new: the statistical inefficiency and Chodera's
+  equilibration rule (gates E and N above). It holds no constant and no band, like the rest
+  of the harness.
 
 Runner `holon-render/examples/liquid2.rs`, written on `holon-campaign` and `holon-closure`;
 `liquid1.rs` is untouched and is the reference. Phases `screen`, `size`, `gate`,
-`run --seed k`, `read`; `run` refuses without `gate.done`, writes into `seed<k>/`, and `read`
+`pilot --pilot i` / `pilot --freeze`, `run --seed k`, `read`. **The pilot phase is where gate
+E's floor comes from and it is the one phase whose output is never a readout of this
+campaign**: it writes only into `liquid2/pilot/`, its records say `"is_a_pilot": true` and
+`"no_readout_of_this_campaign_is_taken_from_it": true`, its seeds are disjoint from the
+confirmation seeds, and the only number that leaves it is `settling_frames`. `run` refuses
+without `gate.done`, writes into `seed<k>/`, and `read`
 aggregates every seed that finished, refuses to count anything a screen wrote or any arm that
 is VOID or has no `run.done`, and says how many seeds it counted. The settling criterion is
 ONE function used twice: it decides when LIQUID-2's arm may start counting, and it is the same

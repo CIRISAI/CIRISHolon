@@ -73,7 +73,7 @@ the review's sentence is kept in the vocabulary and it governs every reading bel
 | model | what it is | where its numbers come from |
 |---|---|---|
 | the served law | CT-3's: FIELD-9's three walls and the point charge from `ct2/wall_ct2.json`, C1's re-fit contact terms from `ct3/wall_ct3.json`, the transfer from the table rebuilt out of the map's own records, dispersion an exact `0` | the engine, through `holon-render`'s `compare0_harvest` example; `E(g) − E(acceptor 40 bohr along x)` on the engine's own rows |
-| MB-pol | the Paesani group's many-body potential | MBX, the group's own C++ library (`github.com/paesanilab/MBX`), through its python plugin; the library's energies and gradients, converted by the library's own constants. No MB-pol number is typed by hand |
+| MB-pol | the Paesani group's many-body potential | the group's own code, by whichever of its two distributions runs here; the code's energies and gradients, converted by CODATA constants. No MB-pol number is typed by hand. *Amended 2026-09-08 — see G-R0* |
 | TIP4P/2005 | Abascal & Vega, J. Chem. Phys. **123**, 234505 (2005) | the paper's model-parameter table (`d(OH) = 0.9572` Å, `HOH = 104.52°`, `d(OM) = 0.1546` Å, `q(H) = 0.5564` e, `σ = 3.1589` Å, `ε/k_B = 93.2` K), implemented in `compare0/references.py`; every unit conversion from `scipy.constants` (CODATA), none from memory |
 
 **The rigid model's placement rule, stated and PRICED.** The map's monomer is the minimal-basis
@@ -162,10 +162,21 @@ python beside the records (`conformance/water_observatory/compare0/`).
   REPORTED and does not gate. The translation sum of the analytic forces is reported beside both.
   witness: none (a finite difference on 54 coordinates, and a translation identity)
 - **G-R0 — the reference installs, or its failure is the record.** MB-pol is scored only if
-  MBX imports and its shared library loads; otherwise `available: false` carries the exact
-  failure string and every MB-pol quantity reads VOID. TIP4P/2005 is scored from the paper's
-  table with its citation in the record; a missing citation is a refusal, not a warning.
-  0 numbers may enter from memory.
+  the group's own code runs here; otherwise `available: false` carries the exact failure string
+  and every MB-pol quantity reads VOID. TIP4P/2005 is scored from the paper's table with its
+  citation in the record; a missing citation is a refusal, not a warning. 0 numbers may enter
+  from memory.
+  *Amended 2026-09-08, and the amendment is recorded here rather than in a postmortem:* the
+  freeze named ONE distribution, MBX (`github.com/paesanilab/MBX`), the group's current C++
+  library. MBX did not build on this machine — its three-body degree-4 translation units held
+  `5.7` GiB at `-O2` and were still climbing past `9.4` GiB at `-O1` on a 31 GiB box shared with
+  other lanes, and the build reached 102 of 253 units before it was stopped. MB-pol was
+  therefore taken from the group's OTHER distribution, the OpenMM plugin
+  (`anaconda.org/paesanilab/mbpol 1.1.2` on `openmm 7.2.2`). **The route was changed because the
+  first one would not compile, not because of any number.** The only MB-pol number seen before
+  the amendment was the probe that proved the plugin ran at all — `linear_R2.9`, interaction
+  `−4.2007` kcal/mol — and it is named here so the disclosure is complete. The MBX cross-check
+  is OWED, not refused, and `compare0/REFERENCE_INSTALL.md` is its reproduction route.
   witness: none (an import, a load, and a citation)
 - **G-P1 — the classical reference's force is its own derivative.** Worst ABSOLUTE
   `|analytic net force on the acceptor − central difference of the interaction energy under a

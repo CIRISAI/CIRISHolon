@@ -975,7 +975,7 @@ const LADDER = [
       + "beside this page with the digest `tests/wasm_law.rs` pinned natively.",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:650",
     buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:681",
-    ganttCite: "GANTT.md:87",
+    ganttCite: "GANTT.md:88",
   },
   {
     band: "nucleus",
@@ -1005,7 +1005,7 @@ const LADDER = [
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:651",
     declaredCite: "conformance/water_observatory/WORKBENCH_FSD.md:680",
     buildCite: "conformance/water_observatory/WORKBENCH_FSD.md:680",
-    ganttCite: "GANTT.md:87",
+    ganttCite: "GANTT.md:88",
   },
   {
     // THE FLOOR, AND IT DRAWS NOW. This was a fence whose stated exit was node GF2's
@@ -1071,7 +1071,7 @@ const LADDER = [
       + "every sector before solving it (`holon_hadron_dim_for`) and REFUSES above "
       + "`holon_hadron_max_det`: 3,375 determinants at N = 6 B = 1 is instant, 175,616 at "
       + "N = 8 runs, 9.3 million at N = 10 is refused with code 6.",
-    cite: "GANTT.md:78",
+    cite: "GANTT.md:79",
     measuredBy: "TIERS.md:59",
     positive: "the first rung is MEASURED: SCHWINGER-4's residual interaction between two "
       + "screened static pairs decays at the banked meson mass to 0.6% — Fold II's "

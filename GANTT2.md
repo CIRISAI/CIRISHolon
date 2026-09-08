@@ -217,12 +217,13 @@ asks, each answered by a record or a named campaign:
    LIQUID-2's design before its freeze: settling by a measured temperature criterion, at least
    two seeds with every readout's spread as its uncertainty, a 64-water size check priced, and
    the freeze stating that density is IMPOSED and the basis minimal.
-3. **Comparison with established models.** Named as **COMPARE-0**: the programme's law against
-   MB-pol (Paesani group) and one classical reference on the SAME held-out dimer geometries and
-   liquid observables, accuracy and cost both measured. Stated honestly in advance: at a
-   minimal basis with no transferred dispersion the programme's law will not win on accuracy;
-   what the comparison measures is the METHOD's cost of a certified reading, and the reading
-   is entered whichever way it falls. After LIQUID-2.
+3. **Comparison with established models — COMPARE-0 READ (`COMPARE0_RESULTS.md`).** On the same
+   65 exactly-solved geometries the served law's RMS is 2.10 mHa (in sample) against TIP4P/2005's
+   14.9 (out of sample), 1.36× on the one out-of-sample geometry; the interpolant's leave-one-out
+   error is 0.23 of the law's own; and the Hamiltonian gap to MB-pol is 7.06 mHa RMS with a −3.3 mHa
+   bias, 3.4× the law's error. **The basis branch fires: I-5 is the next lever, not more nodes.**
+   MB-pol came from the paesanilab OpenMM plugin (MBX would not compile here; cross-check owed);
+   exact forces are owed; phase 2 (liquid under matched conditions, NPT density) named, not run.
 4. **A certified replacement of fine dynamics by coarse dynamics, with measured error and
    speedup on an unseen case.** This is the waterbench's goal and it now has a name:
    **REPLACE-0**. On LIQUID-2's box, the water unit as a CLOSURE (its internal degrees of

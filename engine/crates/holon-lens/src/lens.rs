@@ -386,6 +386,350 @@ pub fn diffusion(traj: &Trajectory, max_lag: usize) -> Reading<f64> {
     Ok(sxy / sxx / (2.0 * dims))
 }
 
+// ------------------------------------------- 4a. the BOUNDARY-AWARE diffusion lens
+
+/// The boundary a trajectory was integrated under, as the LENS sees it.
+///
+/// Three cases, the same three `holon_render::sim::Boundary` carries, and a COPY rather
+/// than an import: this crate has no path to `holon-render` on purpose (its manifest says
+/// why), and the caller converts at the call site. The copy is checked in
+/// `holon-render/tests/diffusion_boundary.rs`, which maps every engine boundary onto one
+/// of these and fails if the engine grows a fourth.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LensBoundary {
+    /// Soft quadratic walls on every face. Displacement SATURATES at the box.
+    Walls,
+    /// No container at all. Displacement is unbounded.
+    Open,
+    /// The periodic box. Displacement is unbounded IN THE UNWRAPPED COORDINATE and
+    /// saturates in the wrapped one, which is the whole reason this lens exists.
+    Periodic,
+}
+
+/// Boltzmann's constant, hartree per kelvin — the engine's own `sim::K_B` to every digit.
+/// Repeated rather than imported for the same reason [`LensBoundary`] is.
+pub const K_B_HARTREE_PER_K: f64 = 3.166811563e-6;
+
+/// The Yeh–Hummer self-interaction constant for a CUBIC periodic cell,
+/// `ξ = 2.837297` (Yeh and Hummer, *J. Phys. Chem. B* **108** (2004) 15873, after the
+/// Ewald self-term of Hummer, Gronbech-Jensen and Neumann 1998).
+///
+/// It is a property of the cubic lattice and of nothing in this programme.
+pub const YEH_HUMMER_XI: f64 = 2.837297;
+
+/// ONE declared lag interval, in frames, closed at both ends.
+///
+/// **The exponent and the slope are read on the SAME interval, and that is the point of
+/// the type.** [`diffusion`] measured its exponent on a `×1.5` ladder up to `max_lag` and
+/// then fitted its slope over `1..=max_lag` — two different windows, the second of them
+/// reaching down to lag 1, which on a molecular trajectory is deep in the ballistic
+/// regime. A gate that passes on one window and a number that is fitted on another is not
+/// a gated number.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct LagWindow {
+    pub lo: usize,
+    pub hi: usize,
+}
+
+impl LagWindow {
+    pub fn new(lo: usize, hi: usize) -> Self {
+        LagWindow { lo, hi }
+    }
+}
+
+/// The finite-size context a periodic diffusion constant is read IN — reported beside the
+/// value and never folded into it.
+///
+/// A diffusion constant measured in a periodic box of edge `L` is smaller than the
+/// infinite-system one by the hydrodynamic self-interaction of the tracer with its own
+/// images, `D_∞ − D_PBC = k_B T ξ / (6 π η L)` (Yeh and Hummer 2004; ξ =
+/// [`YEH_HUMMER_XI`]). On a 128-water box that term is not small, and a lens that applied
+/// it would be publishing a number nobody measured: the correction needs the SHEAR
+/// VISCOSITY `η` of the very model whose diffusion is being read, and this programme has
+/// not measured one (the fluid tier's viscosity is a lattice-gas number on a different
+/// carrier, FLUID-0).
+///
+/// So the lens computes everything it has — the box edge, ξ, the temperature the frames
+/// carry, and the whole correction DIVIDED BY the viscosity it does not have — and states
+/// that the correction is NOT APPLIED. `applied` is a field rather than a comment so a
+/// reader of the record can check it.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct FiniteSize {
+    pub boundary: LensBoundary,
+    /// The SHORTEST box edge, bohr. The correction's `L`.
+    pub box_edge_bohr: f64,
+    /// [`YEH_HUMMER_XI`], carried so the record does not have to be trusted to know it.
+    pub xi: f64,
+    /// The mean temperature over the frames the fit used, kelvin, off the frames.
+    pub temperature_k: f64,
+    /// `k_B T ξ / (6 π L)`, in bohr²/fs times one atomic unit of shear viscosity —
+    /// so `correction = this / η_au`. `None` off a periodic box, where the images the
+    /// correction is about do not exist.
+    pub yeh_hummer_over_viscosity: Option<f64>,
+    /// ALWAYS `false`. The lens does not apply it.
+    pub applied: bool,
+    pub note: &'static str,
+}
+
+impl FiniteSize {
+    /// The Yeh–Hummer correction at a shear viscosity the CALLER supplies, in bohr²/fs.
+    /// `None` off a periodic box or at a non-positive viscosity.
+    pub fn yeh_hummer_correction(&self, shear_viscosity_au: f64) -> Option<f64> {
+        if shear_viscosity_au > 0.0 {
+            self.yeh_hummer_over_viscosity.map(|q| q / shear_viscosity_au)
+        } else {
+            None
+        }
+    }
+}
+
+/// What [`diffusion_periodic`] reports: the value, the gate readings that admitted it,
+/// the window it was read on, and the finite-size context it was read in.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct DiffusionReading {
+    /// THE READING: the SLOPE of `MSD` against elapsed time over the declared interval,
+    /// divided by `2 d`. Free intercept, because above the ballistic crossover the MSD is
+    /// `2 d D τ + b` with `b > 0` the ballistic offset, and a line forced through the
+    /// origin over a window that does not reach the origin reports `D` too high.
+    pub d_bohr2_per_fs: f64,
+    /// The same window fitted THROUGH THE ORIGIN, which is [`diffusion`]'s convention.
+    /// Carried so the two lenses can be compared on one arm rather than argued about.
+    pub d_through_origin_bohr2_per_fs: f64,
+    /// The free fit's intercept, bohr². Positive on a real diffusive window; a negative
+    /// one is a window that has not left the crossover and is worth seeing.
+    pub intercept_bohr2: f64,
+    /// The log-log slope over the declared interval. The Einstein relation IS `α = 1`.
+    pub alpha: f64,
+    pub lags: LagWindow,
+    /// The declared interval in femtoseconds, `(t_lo, t_hi)`, off the frames' own clock.
+    pub window_fs: (f64, f64),
+    /// Points on the `×1.5` ladder inside the interval — what the exponent was fitted on.
+    pub ladder_points: usize,
+    /// Lags in the interval — what the slope was fitted on.
+    pub fit_points: usize,
+    pub finite_size: FiniteSize,
+}
+
+/// The shortest box edge of a trajectory, bohr, in its own dimensionality.
+fn shortest_edge(traj: &Trajectory) -> f64 {
+    if traj.header.dims == 2 {
+        traj.header.box_w.min(traj.header.box_h)
+    } else {
+        traj.header.box_w.min(traj.header.box_h).min(traj.header.box_d)
+    }
+}
+
+/// The largest single-frame displacement of any atom over the trajectory, bohr.
+///
+/// The unwrapping check: a WRAPPED periodic coordinate jumps by nearly a box edge the
+/// frame an atom crosses a face, and nothing a liquid does between two readout frames
+/// looks like that.
+fn largest_frame_step(traj: &Trajectory) -> f64 {
+    let mut worst = 0.0f64;
+    for t in 1..traj.frames.len() {
+        let (a, b) = (&traj.frames[t - 1], &traj.frames[t]);
+        for i in 0..a.pos.len().min(b.pos.len()) {
+            worst = worst.max(norm(sub(b.pos[i], a.pos[i])));
+        }
+    }
+    worst
+}
+
+/// THE BOUNDARY-AWARE EINSTEIN DIFFUSION LENS, on ONE declared lag interval.
+///
+/// The second external review's fourth source claim, in its own words: *"the diffusion
+/// lens refuses large displacements by a WALL-saturation cap regardless of boundary, and
+/// LIQUID-2 sized its window to that cap on unwrapped periodic positions"*. Verified, and
+/// this is the repair. Four things change and one does not.
+///
+/// 1. **The wall cap applies ONLY under [`LensBoundary::Walls`].** In a walled box a
+///    displacement cannot exceed the box, so a slope fitted across the saturation is a
+///    number about the container; that refusal is right and it is kept, unchanged, for
+///    walled scenes. In a PERIODIC box there is no wall to saturate against and the
+///    unwrapped displacement is unbounded — the cap there refuses the very measurement the
+///    box was built to make, and LIQUID-2 had been sizing its lag window down to clear a
+///    gate that means nothing on its scene.
+/// 2. **The positions must be UNWRAPPED, and that is now CHECKED rather than assumed.**
+///    Under `Periodic` the lens refuses when any single-frame displacement exceeds half
+///    the shortest edge, which is the signature of a face crossing left in the coordinate.
+///    The caller unwraps (LIQUID-2 accumulates `dd -= L·round(dd/L)` per frame); this gate
+///    is what catches the day somebody forgets.
+/// 3. **ONE interval.** The exponent gate and the slope are both read on `lags`, so the
+///    window the gate passed is the window the number came from. See [`LagWindow`].
+/// 4. **Finite size is REPORTED, never applied.** See [`FiniteSize`]: the box edge, ξ, the
+///    frames' own temperature and the Yeh–Hummer correction per unit viscosity, with
+///    `applied: false`.
+///
+/// What does not change: **the exponent gate**. `MSD = 2 d D τ` is a fit to a LINE and the
+/// Einstein relation is the statement that the exponent is 1, so the log-log slope over
+/// the declared interval is measured and the lens refuses outside
+/// `[`[`DIFFUSION_ALPHA_LO`]`, `[`DIFFUSION_ALPHA_HI`]`]`. That gate is what refused
+/// LIQUID-1's own reading (`τ^1.64` over `[5.2, 547]` fs) and it is untouched here.
+///
+/// [`diffusion`] is left exactly as it stands for its callers of record.
+pub fn diffusion_periodic(
+    traj: &Trajectory,
+    lags: LagWindow,
+    boundary: LensBoundary,
+) -> Reading<DiffusionReading> {
+    let dims = traj.header.dims as f64;
+    let nf = traj.frames.len();
+    if lags.lo < 1 || lags.hi <= lags.lo || lags.hi >= nf {
+        return refuse(
+            "diffusion-periodic",
+            "1 <= lag_lo < lag_hi < n_frames",
+            format!(
+                "the declared interval is [{}, {}] against {nf} frames; a fit needs an \
+                 interval inside the trajectory",
+                lags.lo, lags.hi
+            ),
+        );
+    }
+    let l_min = shortest_edge(traj);
+
+    // (b) THE WALL CAP, under walls and nowhere else.
+    if boundary == LensBoundary::Walls {
+        let cap = (l_min / 4.0).powi(2);
+        let top = msd(traj, lags.hi);
+        if top > cap {
+            return refuse(
+                "diffusion-periodic",
+                "under Walls: MSD(lag_hi) <= (L_min/4)^2",
+                format!(
+                    "MSD at lag {} is {top:.3} bohr^2 against a wall-saturation cap of \
+                     {cap:.3}; in a WALLED box the fit would measure the box, not the fluid",
+                    lags.hi
+                ),
+            );
+        }
+    }
+
+    // (2) THE UNWRAPPING CHECK, under the periodic box and nowhere else.
+    if boundary == LensBoundary::Periodic {
+        let step = largest_frame_step(traj);
+        if step > 0.5 * l_min {
+            return refuse(
+                "diffusion-periodic",
+                "under Periodic: no single-frame displacement exceeds L_min/2",
+                format!(
+                    "some atom moved {step:.3} bohr in one frame against a half-edge of \
+                     {:.3}; these positions are WRAPPED, and an MSD on wrapped coordinates \
+                     saturates at the cell instead of growing. Unwrap them (accumulate the \
+                     minimum-image displacement) and read again",
+                    0.5 * l_min
+                ),
+            );
+        }
+    }
+
+    // (c) ONE interval: the ladder for the exponent, the whole interval for the slope.
+    let mut ladder: Vec<(f64, f64)> = Vec::new();
+    let mut lag = lags.lo;
+    while lag <= lags.hi {
+        let x = mean_lag_fs(traj, lag);
+        let y = msd(traj, lag);
+        if x > 0.0 && y > 0.0 {
+            ladder.push((x.ln(), y.ln()));
+        }
+        let next = (lag as f64 * 1.5).ceil() as usize;
+        lag = if next > lag { next } else { lag + 1 };
+    }
+    if ladder.len() < 3 {
+        return refuse(
+            "diffusion-periodic",
+            "at least 3 points on the x1.5 ladder inside the declared interval",
+            format!(
+                "the interval [{}, {}] carries {} usable ladder points; without three the \
+                 exponent is not measured and the straight-line fit would be unchecked",
+                lags.lo,
+                lags.hi,
+                ladder.len()
+            ),
+        );
+    }
+    let n = ladder.len() as f64;
+    let mx = ladder.iter().map(|p| p.0).sum::<f64>() / n;
+    let my = ladder.iter().map(|p| p.1).sum::<f64>() / n;
+    let num: f64 = ladder.iter().map(|p| (p.0 - mx) * (p.1 - my)).sum();
+    let den: f64 = ladder.iter().map(|p| (p.0 - mx).powi(2)).sum();
+    let alpha = num / den;
+
+    // (a) THE EXPONENT GATE, unchanged in band and now read on the fitted interval.
+    if !alpha.is_finite() || !(DIFFUSION_ALPHA_LO..=DIFFUSION_ALPHA_HI).contains(&alpha) {
+        return refuse(
+            "diffusion-periodic",
+            "MSD exponent in [0.85, 1.15] on the declared interval",
+            format!(
+                "MSD goes as tau^{alpha:.3} over [{}, {}] frames = [{:.3}, {:.3}] fs, not \
+                 tau^1; there is no diffusive regime on the interval the slope would be \
+                 fitted over, and a straight-line fit would report the slope of a curve as \
+                 a diffusion constant",
+                lags.lo,
+                lags.hi,
+                mean_lag_fs(traj, lags.lo),
+                mean_lag_fs(traj, lags.hi)
+            ),
+        );
+    }
+
+    // THE SLOPE, on the same interval: free intercept, and the through-origin value beside
+    // it so the two conventions are visible rather than argued about.
+    let pts: Vec<(f64, f64)> = (lags.lo..=lags.hi)
+        .map(|k| (mean_lag_fs(traj, k), msd(traj, k)))
+        .collect();
+    let m = pts.len() as f64;
+    let sx = pts.iter().map(|p| p.0).sum::<f64>() / m;
+    let sy = pts.iter().map(|p| p.1).sum::<f64>() / m;
+    let sxy: f64 = pts.iter().map(|p| (p.0 - sx) * (p.1 - sy)).sum();
+    let sxx: f64 = pts.iter().map(|p| (p.0 - sx) * (p.0 - sx)).sum();
+    if sxx <= 0.0 {
+        return refuse(
+            "diffusion-periodic",
+            "the declared interval spans a nonzero duration",
+            format!("every lag in [{}, {}] has the same elapsed time", lags.lo, lags.hi),
+        );
+    }
+    let slope = sxy / sxx;
+    let intercept = sy - slope * sx;
+    let (o_xy, o_xx) = pts.iter().fold((0.0f64, 0.0f64), |(a, b), p| (a + p.0 * p.1, b + p.0 * p.0));
+
+    // (d) THE FINITE-SIZE CONTEXT, computed and NOT applied.
+    // the temperature the correction is evaluated at is the trajectory's own, over every
+    // frame it carries — the reading is about the arm, not about a sub-window of it
+    let t_mean = traj.frames.iter().map(|f| f.temperature).sum::<f64>() / nf as f64;
+    let over_eta = if boundary == LensBoundary::Periodic && l_min > 0.0 {
+        // k_B T xi / (6 pi L) is bohr^2 per ATOMIC time unit times one atomic viscosity;
+        // the lens's time axis is femtoseconds, so it converts here and nowhere else.
+        Some(K_B_HARTREE_PER_K * t_mean * YEH_HUMMER_XI
+            / (6.0 * std::f64::consts::PI * l_min)
+            / crate::traj::AU_TIME_FS)
+    } else {
+        None
+    };
+    Ok(DiffusionReading {
+        d_bohr2_per_fs: slope / (2.0 * dims),
+        d_through_origin_bohr2_per_fs: o_xy / o_xx / (2.0 * dims),
+        intercept_bohr2: intercept,
+        alpha,
+        lags,
+        window_fs: (mean_lag_fs(traj, lags.lo), mean_lag_fs(traj, lags.hi)),
+        ladder_points: ladder.len(),
+        fit_points: pts.len(),
+        finite_size: FiniteSize {
+            boundary,
+            box_edge_bohr: l_min,
+            xi: YEH_HUMMER_XI,
+            temperature_k: t_mean,
+            yeh_hummer_over_viscosity: over_eta,
+            applied: false,
+            note: "Yeh-Hummer 2004: D_inf - D_PBC = k_B T xi / (6 pi eta L). NAMED, NOT \
+                   APPLIED - this programme has not measured the shear viscosity of this \
+                   law, and the field carries the correction DIVIDED BY that viscosity so \
+                   a reader with one can finish the arithmetic.",
+        },
+    })
+}
+
 // ---------------------------------------------------------------- 5. H-bond census
 
 /// Luzar–Chandler geometric criterion, in bohr because the engine's unit is bohr.
@@ -941,6 +1285,174 @@ mod tests {
         );
         let e = diffusion(&flight, 200).unwrap_err();
         assert_eq!(e.gate, "MSD exponent in [0.85, 1.15]");
+    }
+
+    // ------------------------------------- the boundary-aware lens (the review's item 3)
+
+    /// A Gaussian deviate from the fixtures' own LCG, so the walk below is a function of
+    /// its stated seed and nothing else.
+    fn gauss(rng: &mut crate::synthetic::Lcg) -> f64 {
+        let u = rng.next().max(1e-12);
+        let v = rng.next();
+        (-2.0 * u.ln()).sqrt() * (std::f64::consts::TAU * v).cos()
+    }
+
+    /// `n_atoms` independent Gaussian random walks in a cubic box of edge `l`, step
+    /// standard deviation `s` bohr per frame per dimension. Positions are UNWRAPPED: the
+    /// walk is allowed to leave the cell, which is what an unwrapping accumulator produces.
+    ///
+    /// The construction fixes the answer: `MSD(τ) = 3 s² k` at lag `k`, and `MSD = 6 D τ`,
+    /// so `D = s² / (2 Δt)` with `Δt` the frame duration in femtoseconds.
+    fn periodic_walk(seed: u64, n_atoms: usize, n_frames: usize, l: f64, s: f64) -> Trajectory {
+        use crate::synthetic::{self, Lcg, Spec};
+        let mut sp = Spec::quench_like(n_frames, vec![8; n_atoms]);
+        sp.dims = 3;
+        sp.dt = 1.0;
+        sp.substeps = 10;
+        sp.box_w = l;
+        sp.box_h = l;
+        sp.box_d = l;
+        sp.seed = seed;
+        let mut rng = Lcg(seed ^ 0xD1B5_4A32_D192_ED03);
+        synthetic::build(sp, move |t, pos, _vel| {
+            if t == 0 {
+                for p in pos.iter_mut() {
+                    *p = [0.5 * l, 0.5 * l, 0.5 * l];
+                }
+            } else {
+                for p in pos.iter_mut() {
+                    for c in 0..3 {
+                        p[c] += s * gauss(&mut rng);
+                    }
+                }
+            }
+            crate::traj::BondSet::empty()
+        })
+    }
+
+    /// The same trajectory with every coordinate folded back into the cell — a WRAPPED
+    /// periodic trajectory, which is what the engine's own atom positions are.
+    fn wrapped(t: &Trajectory, l: f64) -> Trajectory {
+        let mut w = t.clone();
+        for f in w.frames.iter_mut() {
+            for p in f.pos.iter_mut() {
+                for c in 0..3 {
+                    p[c] = p[c].rem_euclid(l);
+                }
+            }
+        }
+        w
+    }
+
+    /// THE REVIEW'S FOURTH SOURCE CLAIM, as a test: on unwrapped positions from a periodic
+    /// box the OLD lens refuses by a wall it does not have, and the new one reads the
+    /// construction's own `D` back.
+    #[test]
+    fn a_periodic_walk_reads_its_own_d_where_the_wall_cap_refused_it() {
+        let (l, s, n_frames) = (30.0f64, 0.30f64, 1200usize);
+        let traj = periodic_walk(0x5741_4c4b, 64, n_frames, l, s);
+        let dt_fs = crate::traj::AU_TIME_FS * 1.0 * 10.0;
+        let d_true = s * s / (2.0 * dt_fs);
+        let win = LagWindow::new(20, 400);
+
+        // (i) the OLD lens, on the very same unwrapped positions, refuses by the wall cap.
+        let old = diffusion(&traj, win.hi).unwrap_err();
+        assert_eq!(
+            old.gate, "MSD(max_lag) <= (L_min/4)^2",
+            "the old lens must refuse these positions by the wall cap: {}",
+            old.reason
+        );
+
+        // (ii) the new lens, told the box is periodic, reads the walk.
+        let r = diffusion_periodic(&traj, win, LensBoundary::Periodic)
+            .unwrap_or_else(|e| panic!("{}: {}", e.gate, e.reason));
+        assert!(
+            (r.d_bohr2_per_fs - d_true).abs() / d_true < 0.10,
+            "D read {:.6} against the construction's {d_true:.6} bohr^2/fs",
+            r.d_bohr2_per_fs
+        );
+        assert!((r.alpha - 1.0).abs() < 0.10, "a walk must read tau^1, read tau^{:.3}", r.alpha);
+        assert_eq!(r.lags, win);
+        assert!(r.ladder_points >= 3 && r.fit_points == win.hi - win.lo + 1);
+
+        // (iii) the finite-size context is REPORTED and NOT applied.
+        assert!(!r.finite_size.applied, "the lens must never apply Yeh-Hummer");
+        assert_eq!(r.finite_size.box_edge_bohr, l);
+        assert_eq!(r.finite_size.xi, YEH_HUMMER_XI);
+        let over = r.finite_size.yeh_hummer_over_viscosity.expect("periodic carries the term");
+        assert!(over > 0.0);
+        // and the correction is the term divided by a viscosity the CALLER supplies
+        let eta = 2.0e-4; // an atomic-unit viscosity, supplied here and nowhere in the lens
+        assert!(
+            (r.finite_size.yeh_hummer_correction(eta).unwrap() - over / eta).abs() < 1e-18,
+            "the correction is the reported term over the caller's viscosity"
+        );
+    }
+
+    /// The WRAPPED positions of the same walk are refused, and refused for the right
+    /// reason: the face crossings are still in the coordinate.
+    #[test]
+    fn wrapped_positions_are_refused_by_name() {
+        let (l, s) = (30.0f64, 0.30f64);
+        let traj = wrapped(&periodic_walk(0x5741_4c4b, 64, 1200, l, s), l);
+        let e = diffusion_periodic(&traj, LagWindow::new(20, 400), LensBoundary::Periodic)
+            .unwrap_err();
+        assert_eq!(e.gate, "under Periodic: no single-frame displacement exceeds L_min/2");
+        assert!(e.reason.contains("WRAPPED"), "the refusal must name the cause: {}", e.reason);
+    }
+
+    /// The exponent gate is kept, and it is what stops a flight.
+    #[test]
+    fn a_ballistic_flight_is_refused_by_the_exponent_gate() {
+        use crate::synthetic::{self, Spec};
+        let n = 16usize;
+        let l = 4000.0;
+        let mut sp = Spec::quench_like(1200, vec![8; n]);
+        sp.dims = 3;
+        sp.dt = 1.0;
+        sp.substeps = 10;
+        sp.box_w = l;
+        sp.box_h = l;
+        sp.box_d = l;
+        let flight = synthetic::build(sp, move |t, pos, _vel| {
+            for (i, p) in pos.iter_mut().enumerate() {
+                let v = 0.01 * (i + 1) as f64;
+                *p = [2000.0 + v * t as f64, 2000.0 - v * t as f64, 2000.0];
+            }
+            crate::traj::BondSet::empty()
+        });
+        let e = diffusion_periodic(&flight, LagWindow::new(20, 400), LensBoundary::Periodic)
+            .unwrap_err();
+        assert_eq!(e.gate, "MSD exponent in [0.85, 1.15] on the declared interval");
+        assert!(e.reason.contains("tau^1.9") || e.reason.contains("tau^2.0"), "{}", e.reason);
+    }
+
+    /// AND THE WALL CAP IS NOT WEAKENED: a WALLED scene whose displacement has run past
+    /// the box is refused exactly as it was.
+    #[test]
+    fn a_walled_walk_is_still_capped() {
+        let (l, s) = (30.0f64, 0.30f64);
+        let traj = periodic_walk(0x5741_4c4b, 64, 1200, l, s);
+        let e =
+            diffusion_periodic(&traj, LagWindow::new(20, 400), LensBoundary::Walls).unwrap_err();
+        assert_eq!(e.gate, "under Walls: MSD(lag_hi) <= (L_min/4)^2");
+        // and an OPEN box has neither gate: it is unbounded and its coordinates never wrap
+        let r = diffusion_periodic(&traj, LagWindow::new(20, 400), LensBoundary::Open)
+            .expect("an open box has no wall to saturate against");
+        assert!(r.finite_size.yeh_hummer_over_viscosity.is_none(), "no images, no correction");
+    }
+
+    /// A short declared interval is refused rather than fitted: three ladder points is the
+    /// floor, and the refusal names it.
+    #[test]
+    fn a_declared_interval_too_short_to_check_is_refused() {
+        let traj = periodic_walk(0x5741_4c4b, 8, 400, 30.0, 0.30);
+        let e = diffusion_periodic(&traj, LagWindow::new(100, 120), LensBoundary::Periodic)
+            .unwrap_err();
+        assert_eq!(
+            e.gate,
+            "at least 3 points on the x1.5 ladder inside the declared interval"
+        );
     }
 
     #[test]

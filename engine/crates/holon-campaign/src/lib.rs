@@ -24,6 +24,8 @@
 //! | [`stake::Stake`] | derived from [`stake::ReadInput`]s with its arithmetic printed, or typed and labelled `kill_from_experiment` — and the record writer refuses an unlabelled typed one |
 //! | [`record::RecordWriter`] | validates JSON on write, refuses any `{:+` output, stamps `dry` and the screen label, writes `.done` markers |
 //! | [`record::Reading`] | reads a record back and REFUSES to count a screen's |
+//! | [`uncertainty::inefficiency`] | the statistical inefficiency `g`, the effective sample count and the standard error a CORRELATED series admits — reported beside the seed spread, never instead of it |
+//! | [`uncertainty::equilibration_start`] | Chodera 2016's automated equilibration detection: the discard point that maximises the effectively uncorrelated sample count |
 //!
 //! # What it refuses to be
 //!
@@ -55,6 +57,8 @@ pub mod plant;
 pub mod price;
 pub mod record;
 pub mod stake;
+/// Autocorrelation-aware uncertainty and Chodera 2016's equilibration rule.
+pub mod uncertainty;
 
 pub use gate::{Gate, Leg, Report, Verdict};
 pub use plant::{Plant, PlantVerdict};
@@ -64,3 +68,4 @@ pub use record::{
     Record, RecordWriter, WriteRefusal,
 };
 pub use stake::{read_input, read_input_after, Provenance, ReadInput, ReadRefusal, Stake};
+pub use uncertainty::{equilibration_start, inefficiency, Equilibration, Ineff};

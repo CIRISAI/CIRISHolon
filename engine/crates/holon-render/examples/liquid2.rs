@@ -5,6 +5,8 @@
 //! ```text
 //! cargo run --release -p holon-render --example liquid2 -- screen [DIR]
 //! cargo run --release -p holon-render --example liquid2 -- gate   [DIR]
+//! cargo run --release -p holon-render --example liquid2 -- pilot  [DIR] --pilot I [--blocks N]
+//! cargo run --release -p holon-render --example liquid2 -- pilot  [DIR] --freeze
 //! cargo run --release -p holon-render --example liquid2 -- run    [DIR]
 //! cargo run --release -p holon-render --example liquid2 -- read   [DIR]
 //! ```
@@ -33,12 +35,14 @@
 //! record this engine wrote, with its citation kept (`holon_campaign::stake::ReadInput`).
 
 use holon_campaign::{
-    is_done, num, read_input_after, read_record, Gate, Plant, Price, Priced, ReadInput, Record,
-    RecordWriter, Report, Stake,
+    equilibration_start, inefficiency, is_done, num, read_input_after, read_record, Gate, Ineff,
+    Plant, Price, Priced, ReadInput, Record, RecordWriter, Report, Stake,
 };
 use holon_closure::Phase;
 use holon_lens::closure::hbond_phase_checked;
-use holon_lens::lens::{diffusion, hbonds, hbonds_periodic, rdf_oo, LensRefusal};
+use holon_lens::lens::{
+    diffusion_periodic, hbonds, hbonds_periodic, rdf_oo, LagWindow, LensBoundary, LensRefusal,
+};
 use holon_lens::traj::{BondSet, Frame, Header, Trajectory, AU_TIME_FS};
 use holon_render::channel::Row;
 use holon_render::seam::{CtLoad, CtTable, SeamModel, CT_DIM};
@@ -92,6 +96,32 @@ const SETTLE_WINDOW: usize = 5;
 /// The cap. Reaching it VOIDS the arm with the settling series recorded: a box that will not
 /// settle is a finding, not something to count anyway.
 const SETTLE_CAP: usize = 40_000;
+
+// ---- THE PILOTS: the settling FROZEN on trajectories the confirmation never sees
+//
+// The second review's item 3, in its own words: *"equilibration frozen on separate PILOT
+// trajectories discarded from confirmation (so the bond count may be watched there without
+// compromising R2, and never selected on agreement with experiment)"*.
+//
+// This is also the discharge of gate E's own OWED item, which asked for "a labelled screen
+// that logs BOTH variables through one settling, to establish whether the bond count is flat
+// where the energy criterion fires". The pilots log FOUR: the temperature, the cross-unit
+// potential energy (the settling variable), the bond count and the O-O first peak. Watching
+// the bond count is free here precisely because these trajectories are thrown away.
+
+/// THE PILOT SEEDS. Declared, and disjoint from [`SEEDS`] by construction — the ASCII of
+/// "PILOT" with a counter, which shares no bit pattern with LIQUID-1's `"LIQUID"` seeds.
+/// `pilot_seeds_are_disjoint_from_the_confirmation_seeds` asserts it rather than trusting
+/// the reading; a pilot that shared a seed with a confirmation arm would put the settling
+/// rule inside the very trajectory it was chosen for.
+const PILOT_SEEDS: [u64; 3] = [0x5049_4c4f_5430_0001, 0x5049_4c4f_5430_0002, 0x5049_4c4f_5430_0003];
+
+/// Blocks per pilot, at the settling cadence above (`SETTLE_READOUT` frames of
+/// `SETTLE_SAMPLES` samples each). Sixty blocks is 15,000 frames, twice the 7,100 the
+/// provisional gate's criterion took, so Chodera's argmax has a plateau to find and not just
+/// a transient to sit on. `--blocks` overrides it for a short pilot set, and every record
+/// prints the number it ran at so a short set is never mistaken for the frozen one.
+const PILOT_BLOCKS: usize = 60;
 
 /// LIQUID-1 Amendment 2's C2 switch on every seam term, `r_on = r_cut - 2`, chosen from the
 /// half-edge 14.797 bohr with 0.8 bohr to spare. Unchanged here.
@@ -691,6 +721,27 @@ struct L1Series {
     plateau_shortfall: f64,
 }
 
+/// One series' autocorrelation-aware uncertainty, as JSON.
+///
+/// The harness computes it (`holon_campaign::uncertainty`, Chodera's `g`); this only says
+/// what a record prints. **It is written BESIDE the seed spread and never instead of it**:
+/// `g` measures how much of ONE trajectory's scatter is real sampling, the spread measures
+/// how much the answer depends on where the box started, and neither substitutes for the
+/// other.
+fn ineff_json(s: &Ineff) -> String {
+    format!(
+        "{{\"n\": {}, \"mean\": {}, \"sd\": {}, \"g\": {}, \"n_eff\": {}, \"sem\": {}, \
+         \"autocorrelation_cut_lag\": {}}}",
+        s.n,
+        num(s.mean),
+        num(s.sd),
+        num(s.g),
+        num(s.n_eff),
+        num(s.sem),
+        s.cut_lag
+    )
+}
+
 fn mean_sd(v: &[f64]) -> (f64, f64) {
     let n = v.len();
     if n == 0 {
@@ -1105,8 +1156,20 @@ struct Design {
     t2_fs: f64,
     physical_fs: f64,
     /// The wall-saturation check, at EXPERIMENT's own diffusion constant.
+    ///
+    /// **REPORTED AND NOT GATED under `Boundary::Periodic`** (R3, the second review's fourth
+    /// source claim). The cap is `diffusion`'s refusal for a WALLED box and
+    /// `diffusion_periodic` applies it only there; this box has no walls, so the cap does not
+    /// bind and the window is not sized by it. Both numbers stay, because "the cap would have
+    /// refused this and no longer does" is worth being able to read.
     wall_cap_bohr2: f64,
     msd_at_top_bohr2: f64,
+    /// What `max_lag` WOULD be with the cap lifted and the PRICE the only limit: the largest
+    /// lag on the lens's own ladder whose arm (3 seeds × settling + `4·max_lag·stride`
+    /// counted, at LIQUID-1's measured per-pass cost) stays inside the price ceiling. The
+    /// freeze does not take it — a review's repair is not a licence to buy a bigger arm — and
+    /// carries it so the choice is visible rather than implied.
+    max_lag_if_cap_lifted: usize,
     /// The drift bar, as a fraction of the thermostat's posted work.
     drift_fraction: f64,
     /// The price ceiling, and LIQUID-1's own arm beside it.
@@ -1119,6 +1182,13 @@ struct Design {
     temp_band_k: f64,
     equipartition_sigma_k: f64,
     settle_floor_frames: usize,
+    /// The floor LIQUID-1's own measured settling converts to at this step — what the floor
+    /// was before the pilots existed, kept whether or not it is the one in force.
+    settle_floor_from_liquid1: usize,
+    /// The floor the PILOTS froze by Chodera's rule, when a pilot set has run. The floor in
+    /// force is the LARGER of the two: the pilots measure this law's own box and LIQUID-1's
+    /// number measures a different law's, and a floor is not a place to take the smaller.
+    settle_floor_from_pilots: Option<ReadInput>,
     l1: L1Series,
     /// The Erdos-Renyi giant component at LIQUID-1's own measured degree.
     er_degree: f64,
@@ -1142,7 +1212,7 @@ fn er_giant(z: f64) -> f64 {
     s
 }
 
-fn design(obs: &Path, dt_tables: f64, l: f64) -> Design {
+fn design(obs: &Path, out: &Path, dt_tables: f64, l: f64) -> Design {
     let arm = obs.join("liquid1").join("arm.json");
     let a = arm.display().to_string();
     let r = |keys: &[&str], f: &str| must(read_input_after(&a, keys, f));
@@ -1237,7 +1307,29 @@ fn design(obs: &Path, dt_tables: f64, l: f64) -> Design {
     // the opposite of what a floor is for. The frame conversion is written to the record so a
     // reader can see both numbers.
     let l1_settle_fs = l1.bond_settled_at as f64 * dt_tables * AU_TIME_FS;
-    let settle_floor = (l1_settle_fs / step_fs).ceil() as usize;
+    let settle_floor_l1 = (l1_settle_fs / step_fs).ceil() as usize;
+    // AND THE PILOTS, when a pilot set has run (the second review's item 3). Their frozen
+    // number is measured on THIS law and THIS box by Chodera's rule on trajectories the
+    // confirmation seeds never see; LIQUID-1's is measured on a different law. The floor in
+    // force is the larger, and BOTH are written to the record so a reader sees which bound.
+    let pilot_in = read_pilot_settling(out);
+    let settle_floor =
+        settle_floor_l1.max(pilot_in.as_ref().map(|v| v.value as usize).unwrap_or(0));
+
+    // WHAT THE WINDOW WOULD BE WITH THE CAP LIFTED. Under `Boundary::Periodic` the lens's
+    // wall cap does not apply, so the only remaining limit on the top lag is what the arm
+    // costs: three seeds of (settling + 4*max_lag*stride) passes at LIQUID-1's own measured
+    // per-pass cost, against this freeze's price ceiling. Reported, never taken.
+    let per_pass = per_pass_in.value;
+    let max_lag_free = *lag_ladder(1_000_000)
+        .iter()
+        .filter(|&&lg| {
+            let count = 4 * lg * stride;
+            (SEEDS.len() as f64) * ((settle_floor + count) as f64) * per_pass
+                <= PRICE_CEILING_MULTIPLE * secs_in.value
+        })
+        .last()
+        .unwrap_or(&2);
 
     let z = 2.0 * hb_in.value;
     Design {
@@ -1268,6 +1360,7 @@ fn design(obs: &Path, dt_tables: f64, l: f64) -> Design {
         physical_fs: physical,
         wall_cap_bohr2: cap,
         msd_at_top_bohr2: msd_top,
+        max_lag_if_cap_lifted: max_lag_free,
         drift_fraction: drift_in.value.abs() / therm_in.value.abs(),
         liquid1_seconds: secs_in.value,
         liquid1_seconds_per_pass: per_pass_in.value,
@@ -1276,6 +1369,8 @@ fn design(obs: &Path, dt_tables: f64, l: f64) -> Design {
         temp_band_k: band,
         equipartition_sigma_k: equipartition,
         settle_floor_frames: settle_floor,
+        settle_floor_from_liquid1: settle_floor_l1,
+        settle_floor_from_pilots: pilot_in,
         l1,
         er_degree: z,
         er_giant: er_giant(z),
@@ -1337,11 +1432,11 @@ impl Design {
              \"sampled_frames\": {}, \"counted_frames\": {}, \"lowest_fitted_lag_fs\": {}, \
              \"top_fitted_lag_fs\": {}, \"counted_physical_fs\": {}, \
              \"counted_physical_over_4_crossover\": {}, \"wall_cap_bohr2\": {}, \
-             \"msd_at_top_lag_at_experiment_d_bohr2\": {}, \"wall_cap_margin\": {}, \
+             \"msd_at_top_lag_at_experiment_d_bohr2\": {}, \"wall_cap_margin\": {}, \"wall_cap_binds_under_periodic\": false, \"wall_cap_rule\": \"the cap is diffusion()'s refusal for Boundary::Walls; diffusion_periodic applies it only there, so on this periodic box it is REPORTED and not gated\", \"max_lag_if_cap_lifted\": {}, \"max_lag_taken\": {}, \"max_lag_rule_if_lifted\": \"the largest ladder lag whose 3-seed arm stays inside the price ceiling; REPORTED, not taken\", \
              \"drift_fraction\": {}, \"liquid1_wall_seconds\": {}, \
              \"liquid1_seconds_per_pass\": {}, \"price_ceiling_seconds\": {}, \
              \"liquid1_hbonds_per_molecule\": {}, \"er_degree\": {}, \"er_giant\": {}, \
-             \"settling\": {{\"temperature_band_k\": {}, \"band_rule\": \"3 x the scatter of LIQUID-1's own temperature readout over the second half of its counted arm\", \"liquid1_plateau_temperature_k\": {}, \"liquid1_plateau_temperature_sd_k\": {}, \"equipartition_sigma_k\": {}, \"equipartition_dof\": {}, \"liquid1_plateau_hbonds\": {}, \"liquid1_plateau_hbonds_sd\": {}, \"liquid1_reported_hbonds\": {}, \"liquid1_reported_under_its_own_plateau\": {}, \"liquid1_temperature_settled_at_frame\": {}, \"liquid1_hbonds_settled_at_frame\": {}, \"liquid1_hbonds_settled_fs\": {}, \"liquid1_settled_only_frames\": 2000, \"this_criterion_on_liquid1_fires_at_frame\": {}, \"this_criterion_on_liquid1_fires_at_fs\": {}, \"readout_frames\": {}, \"samples_per_block\": {}, \"window_blocks\": {}, \"block_fs\": {}, \"floor_frames\": {}, \"floor_from_physical_time\": {}, \"floor_from_the_thermostats_frame_clock\": {}, \"floor_rule\": \"the larger of the two: the network rearranges in physical time and the thermostat is applied once per step\", \"cap_frames\": {}}}}}",
+             \"settling\": {{\"temperature_band_k\": {}, \"band_rule\": \"3 x the scatter of LIQUID-1's own temperature readout over the second half of its counted arm\", \"liquid1_plateau_temperature_k\": {}, \"liquid1_plateau_temperature_sd_k\": {}, \"equipartition_sigma_k\": {}, \"equipartition_dof\": {}, \"liquid1_plateau_hbonds\": {}, \"liquid1_plateau_hbonds_sd\": {}, \"liquid1_reported_hbonds\": {}, \"liquid1_reported_under_its_own_plateau\": {}, \"liquid1_temperature_settled_at_frame\": {}, \"liquid1_hbonds_settled_at_frame\": {}, \"liquid1_hbonds_settled_fs\": {}, \"liquid1_settled_only_frames\": 2000, \"this_criterion_on_liquid1_fires_at_frame\": {}, \"this_criterion_on_liquid1_fires_at_fs\": {}, \"readout_frames\": {}, \"samples_per_block\": {}, \"window_blocks\": {}, \"block_fs\": {}, \"floor_frames\": {}, \"floor_from_physical_time\": {}, \"floor_from_the_thermostats_frame_clock\": {}, \"floor_rule\": \"the larger of the two: the network rearranges in physical time and the thermostat is applied once per step\", \"floor_from_liquid1_frames\": {}, \"floor_from_pilots_frames\": {}, \"floor_from_pilots_source\": {}, \"floor_in_force_is\": {:?}, \"pilot_rule\": \"Chodera 2016 automated equilibration detection on the cross-unit potential energy, maximum over pilots; the pilots run on their own seeds and no confirmation arm sees them\", \"cap_frames\": {}}}}}",
             num(self.alpha),
             num(self.t1_l1_fs),
             num(self.t2_l1_fs),
@@ -1361,6 +1456,8 @@ impl Design {
             num(self.wall_cap_bohr2),
             num(self.msd_at_top_bohr2),
             num(WALL_CAP_MARGIN),
+            self.max_lag_if_cap_lifted,
+            self.max_lag,
             num(self.drift_fraction),
             num(self.liquid1_seconds),
             num(self.liquid1_seconds_per_pass),
@@ -1389,6 +1486,24 @@ impl Design {
             self.settle_floor_frames,
             (self.l1.bond_settled_at as f64 * self.dt_tables_au * AU_TIME_FS / self.step_fs).ceil() as usize,
             self.l1.bond_settled_at,
+            self.settle_floor_from_liquid1,
+            match &self.settle_floor_from_pilots {
+                Some(v) => format!("{}", v.value as usize),
+                None => "null".to_string(),
+            },
+            match &self.settle_floor_from_pilots {
+                Some(v) => format!("{:?}", v.path),
+                None => "null".to_string(),
+            },
+            if self
+                .settle_floor_from_pilots
+                .as_ref()
+                .is_some_and(|v| v.value as usize >= self.settle_floor_from_liquid1)
+            {
+                "the pilots"
+            } else {
+                "LIQUID-1's own measured settling, converted at this step"
+            },
             SETTLE_CAP
         )
     }
@@ -1400,7 +1515,8 @@ impl Design {
         println!("  this arm's step        {:.6} au = {:.6} fs  ({}x)", self.step_au, self.step_fs, STEP_MULT);
         println!("  readout stride         {} frames -> lowest fitted lag {:.2} fs (>= crossover {:.2})", self.stride, self.t1_fs, self.crossover_fs);
         println!("  max_lag                {} readout frames -> top fitted lag {:.1} fs", self.max_lag, self.t2_fs);
-        println!("  wall cap               MSD at the top lag at experiment's D = {:.2} bohr^2 against the lens's cap {:.2} / {:.1}", self.msd_at_top_bohr2, self.wall_cap_bohr2, WALL_CAP_MARGIN);
+        println!("  wall cap               MSD at the top lag at experiment's D = {:.2} bohr^2 against the lens's cap {:.2} / {:.1} -- REPORTED, NOT GATED: this box is periodic and has no wall to saturate against", self.msd_at_top_bohr2, self.wall_cap_bohr2, WALL_CAP_MARGIN);
+        println!("  cap lifted             max_lag would be {} against the {} taken; the price ceiling is the only remaining limit and the freeze does not spend it", self.max_lag_if_cap_lifted, self.max_lag);
         println!("  sampled frames         {}", self.sampled);
         println!("  counted frames         {} -> {:.1} fs = {:.2} ps ({:.1}x the 4-crossover floor)", self.count, self.physical_fs, self.physical_fs / 1000.0, self.physical_fs / (CROSSOVER_MULTIPLE * self.crossover_fs));
         println!("  drift bar fraction     {:.6e} of the thermostat's posted work", self.drift_fraction);
@@ -1413,6 +1529,20 @@ impl Design {
         println!("    its reported bonds   {:.4} against its own plateau {:.4}: {:.2} % low", self.l1.reported_bond, self.l1.bond_plateau, 100.0 * self.l1.plateau_shortfall);
         println!("    this criterion on LIQUID-1 fires at frame {} = {:.1} fs", self.l1.criterion_fires_at, self.l1.criterion_fires_at as f64 * self.dt_tables_au * AU_TIME_FS);
         println!("    here: block {} frames = {:.2} fs, {} samples, window {} blocks, floor {} frames (physical-time conversion {}, thermostat frame clock {}), cap {}", SETTLE_READOUT, SETTLE_READOUT as f64 * self.step_fs, SETTLE_SAMPLES, SETTLE_WINDOW, self.settle_floor_frames, (self.l1.bond_settled_at as f64 * self.dt_tables_au * AU_TIME_FS / self.step_fs).ceil() as usize, self.l1.bond_settled_at, SETTLE_CAP);
+        match &self.settle_floor_from_pilots {
+            Some(v) => println!(
+                "    the floor: {} frames from LIQUID-1, {} frames from the pilots ({}) -> {} in force ({})",
+                self.settle_floor_from_liquid1,
+                v.value as usize,
+                v.path,
+                self.settle_floor_frames,
+                if v.value as usize >= self.settle_floor_from_liquid1 { "the pilots" } else { "LIQUID-1" }
+            ),
+            None => println!(
+                "    the floor: {} frames from LIQUID-1; NO PILOT SET has been frozen (run `pilot --pilot i` then `pilot --freeze`)",
+                self.settle_floor_from_liquid1
+            ),
+        }
         println!("    blocks logged by LIQUID-1: {}", self.l1.blocks.len());
     }
 }
@@ -1728,7 +1858,7 @@ fn gate_phase(obs: &Path, out: &Path) {
     let mut report = Report::new();
     let law = load_law(obs);
     let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, STEP_MULT, SEEDS[0]);
-    let d = design(obs, dt_tables, l);
+    let d = design(obs, out, dt_tables, l);
     d.print();
 
     // ---- L0: the door
@@ -2023,7 +2153,7 @@ fn screen_phase(obs: &Path, out: &Path, step: f64, variant: Variant, label: Opti
             hand.abs_sum, hand.signed_sum, hand.signed_peak, hand.random_walk(), sim.drift_peak
         );
     }
-    let d = design(obs, dt_tables, l);
+    let d = design(obs, out, dt_tables, l);
     let work_thermostat = sim.work.thermostat;
     let bar = d.drift_bar(work_thermostat);
     let ratio = sim.drift_peak / work_thermostat.abs();
@@ -2134,6 +2264,301 @@ fn size_phase(obs: &Path, out: &Path, cells: usize) {
     w.done(&format!("cells{cells}.done"), "one box: its door and its force pass, no arm").expect("the marker writes");
 }
 
+// ------------------------------------------------------- the pilots, and what they freeze
+
+/// One pilot block: the four series, at the settling cadence.
+struct PilotBlock {
+    frame: usize,
+    temperature_k: f64,
+    cross_unit_u: f64,
+    hbonds_per_molecule: f64,
+    oo_peak_bohr: f64,
+}
+
+/// Chodera's reading of one series, as JSON, with the frame and femtosecond conversions the
+/// settling rule actually speaks in.
+fn chodera_json(blocks: &[f64], block_frames: usize, step_fs: f64) -> String {
+    let e = equilibration_start(blocks);
+    let s = inefficiency(&blocks[e.t0.min(blocks.len().saturating_sub(1))..]);
+    format!(
+        "{{\"t0_block\": {}, \"t0_frames\": {}, \"t0_fs\": {}, \"g_blocks\": {}, \
+         \"n_eff\": {}, \"n_eff_at_zero\": {}, \"blocks\": {}, \"scanned\": {}, \
+         \"mean_after_t0\": {}, \"sem_after_t0\": {}}}",
+        e.t0,
+        e.t0 * block_frames,
+        num(e.t0 as f64 * block_frames as f64 * step_fs),
+        num(e.g),
+        num(e.n_eff),
+        num(e.n_eff_at_zero),
+        e.n,
+        e.scanned,
+        num(s.mean),
+        num(s.sem)
+    )
+}
+
+/// ONE PILOT. Its own seed, its own trajectory, and nothing it measures is a readout of this
+/// campaign: what comes out is a settling length and a picture of four variables settling.
+///
+/// It runs `blocks` blocks of [`SETTLE_READOUT`] frames and closes each one with the mean
+/// temperature, the mean cross-unit potential energy per water, the mean bond count and the
+/// O-O first-peak position over that block's own samples. **The bond count and the peak are
+/// logged here and nowhere else before the counted arm**; the confirmation seeds are
+/// [`SEEDS`] and are disjoint from [`PILOT_SEEDS`], so R2 and R1 stay forward predictions.
+fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize) {
+    assert!(
+        PILOT_SEEDS.iter().all(|p| !SEEDS.contains(p)),
+        "a pilot seed collides with a confirmation seed; the settling rule would then be \
+         chosen inside the trajectory it is chosen for"
+    );
+    let seed = *PILOT_SEEDS.get(pilot_index).unwrap_or_else(|| {
+        panic!("pilot {pilot_index} is not one of the {} declared pilots", PILOT_SEEDS.len())
+    });
+    let dir = out.join("pilot");
+    let w = RecordWriter::new(&dir);
+    let law = load_law(obs);
+    let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, STEP_MULT, seed);
+    let d = design(obs, out, dt_tables, l);
+    let dr = door(&law, &mut sim, &pos, l, tables_reach, N_WATERS);
+    if !dr.admitted {
+        w.write_text(
+            &format!("pilot{pilot_index}.void"),
+            &format!("{{\"void\": true, \"why\": {:?}}}\n", dr.refusal.unwrap_or_default()),
+        )
+        .ok();
+        return;
+    }
+    sim.rebase();
+    let n_atoms = sim.n;
+    let z: Vec<u32> = (0..n_atoms).map(|i| sim.atoms[i].species.z).collect();
+    let cell = [l, l, l];
+    let every = (SETTLE_READOUT / SETTLE_SAMPLES).max(1);
+
+    let t0 = Instant::now();
+    let mut series: Vec<PilotBlock> = Vec::with_capacity(blocks);
+    let mut frame = 0usize;
+    let mut void: Option<String> = None;
+    for b in 0..blocks {
+        let mut ts: Vec<f64> = Vec::new();
+        let mut us: Vec<f64> = Vec::new();
+        let mut hb: Vec<f64> = Vec::new();
+        let mut rdf = RdfAccum::new();
+        for k in 0..SETTLE_READOUT {
+            sim.step_frame(1);
+            frame += 1;
+            if (k + 1) % every != 0 {
+                continue;
+            }
+            ts.push(sim.temperature());
+            us.push((sim.row(Row::Field) + sim.row(Row::Seam)) / N_WATERS as f64);
+            let p = read_pos(&sim);
+            if let Ok(v) = hbonds_periodic(&p, &z, cell) {
+                hb.push(v.len() as f64 / N_WATERS as f64);
+            }
+            let _ = rdf.push(&p, &z, l);
+        }
+        if !sim.pbc_ok() || sim.seam_work.units != N_WATERS as u64 {
+            void = Some(format!(
+                "at frame {frame}: units {}, pbc_ok {}",
+                sim.seam_work.units,
+                sim.pbc_ok()
+            ));
+            break;
+        }
+        let (g_mean, _) = rdf.mean();
+        series.push(PilotBlock {
+            frame,
+            temperature_k: mean_sd(&ts).0,
+            cross_unit_u: mean_sd(&us).0,
+            hbonds_per_molecule: mean_sd(&hb).0,
+            oo_peak_bohr: first_peak(&rdf.r, &g_mean).map(|x| x.0).unwrap_or(f64::NAN),
+        });
+        if (b + 1) % 4 == 0 || b + 1 == blocks {
+            eprintln!(
+                "  pilot {pilot_index} block {:>4} at frame {frame:>6}: T {:6.1} K, \
+                 cross-unit U {:.6e} Ha/water, bonds {:.3}, O-O peak {:.3} bohr",
+                b + 1,
+                series[b].temperature_k,
+                series[b].cross_unit_u,
+                series[b].hbonds_per_molecule,
+                series[b].oo_peak_bohr
+            );
+        }
+    }
+    let seconds = t0.elapsed().as_secs_f64();
+    let col = |f: fn(&PilotBlock) -> f64| -> Vec<f64> { series.iter().map(f).collect() };
+    let u = col(|b| b.cross_unit_u);
+    let settling_blocks = equilibration_start(&u).t0;
+    let body = format!(
+        "{{\n  \"phase\": \"pilot\", \"dry\": false, \"is_a_pilot\": true, \
+         \"no_readout_of_this_campaign_is_taken_from_it\": true,\n  \
+         \"pilot_index\": {pilot_index}, \"seed\": \"{seed:#x}\", \
+         \"confirmation_seeds\": [{}],\n  \
+         \"blocks_run\": {}, \"blocks_declared\": {PILOT_BLOCKS}, \"frames\": {frame}, \
+         \"block_frames\": {SETTLE_READOUT}, \"samples_per_block\": {SETTLE_SAMPLES}, \
+         \"block_fs\": {}, \"step_multiple_of_tables_step\": {},\n  \
+         \"seconds\": {}, \"seconds_per_frame\": {},\n  \
+         \"void\": {},\n  \
+         \"settling_variable\": \"cross_unit_potential_per_water_hartree\",\n  \
+         \"chodera_settling_blocks\": {settling_blocks},\n  \
+         \"chodera_settling_frames\": {},\n  \
+         \"chodera\": {{\"cross_unit_potential_per_water\": {}, \"temperature_k\": {}, \
+         \"hbonds_per_molecule\": {}, \"oo_first_peak_bohr\": {}}},\n  \
+         \"series\": [{}]\n}}\n",
+        SEEDS.iter().map(|s| format!("\"{s:#x}\"")).collect::<Vec<_>>().join(", "),
+        series.len(),
+        num(SETTLE_READOUT as f64 * d.step_fs),
+        num(STEP_MULT),
+        num(seconds),
+        num(if frame > 0 { seconds / frame as f64 } else { f64::NAN }),
+        match &void {
+            Some(x) => format!("{x:?}"),
+            None => "null".to_string(),
+        },
+        settling_blocks * SETTLE_READOUT,
+        chodera_json(&u, SETTLE_READOUT, d.step_fs),
+        chodera_json(&col(|b| b.temperature_k), SETTLE_READOUT, d.step_fs),
+        chodera_json(&col(|b| b.hbonds_per_molecule), SETTLE_READOUT, d.step_fs),
+        chodera_json(&col(|b| b.oo_peak_bohr), SETTLE_READOUT, d.step_fs),
+        series
+            .iter()
+            .enumerate()
+            .map(|(i, b)| format!(
+                "{{\"block\": {}, \"frame\": {}, \"temperature_k\": {}, \
+                 \"cross_unit_potential_per_water_hartree\": {}, \"hbonds_per_molecule\": {}, \
+                 \"oo_first_peak_bohr\": {}}}",
+                i + 1,
+                b.frame,
+                num(b.temperature_k),
+                num(b.cross_unit_u),
+                num(b.hbonds_per_molecule),
+                num(b.oo_peak_bohr)
+            ))
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
+    w.write_text(&format!("pilot{pilot_index}.json"), &body).expect("the pilot record writes");
+    w.done(&format!("pilot{pilot_index}.done"), "one pilot trajectory, thrown away after it froze its settling")
+        .expect("the marker writes");
+    println!(
+        "pilot {pilot_index} ({seed:#x}): {} blocks, {frame} frames, {:.1} s; Chodera t0 = \
+         {settling_blocks} blocks = {} frames = {:.1} fs on the cross-unit energy",
+        series.len(),
+        seconds,
+        settling_blocks * SETTLE_READOUT,
+        settling_blocks as f64 * SETTLE_READOUT as f64 * d.step_fs
+    );
+}
+
+/// FREEZE the settling from the pilots that have run: read each `pilot<i>.json` back through
+/// the harness's citation machinery and write `pilot/settling.json`.
+///
+/// **THE RULE, stated once and applied without a knob.**
+/// 1. The settling variable is the CROSS-UNIT POTENTIAL ENERGY per water — gate E's own
+///    variable, and one no stake reads.
+/// 2. Per pilot, the discard point is Chodera 2016's: the `t0` that maximises the number of
+///    effectively uncorrelated samples in what remains. No threshold, no window, no band,
+///    and no look at whether any readout agrees with experiment.
+/// 3. The frozen settling is the **maximum** over pilots of that `t0`. A maximum and not a
+///    mean, because the number is a FLOOR: no confirmation arm may start counting before the
+///    slowest pilot had equilibrated.
+/// 4. The bond count and the O-A peak have their own `t0` recorded beside it, watched and
+///    NOT frozen on — the discharge of gate E's OWED item, bought with trajectories the
+///    confirmation seeds never see.
+fn pilot_freeze(obs: &Path, out: &Path) {
+    let dir = out.join("pilot");
+    let w = RecordWriter::new(&dir);
+    let mut frames: Vec<(usize, ReadInput)> = Vec::new();
+    for i in 0..PILOT_SEEDS.len() {
+        let p = dir.join(format!("pilot{i}.json"));
+        if !p.exists() {
+            continue;
+        }
+        let path = p.display().to_string();
+        match read_input_after(&path, &[], "chodera_settling_frames") {
+            Ok(v) => frames.push((i, v)),
+            Err(e) => eprintln!("pilot {i} is present and unreadable: {e}"),
+        }
+    }
+    if frames.is_empty() {
+        eprintln!("REFUSED: no pilot record to freeze from. Run `pilot --pilot I` first.");
+        std::process::exit(2);
+    }
+    let settling = frames.iter().map(|(_, v)| v.value).fold(0.0f64, f64::max) as usize;
+    // the four watched series' own t0, quoted from each pilot's record so this file needs no
+    // second parse of the series
+    let watched: Vec<String> = frames
+        .iter()
+        .map(|(i, v)| {
+            let p = dir.join(format!("pilot{i}.json"));
+            let t = std::fs::read_to_string(&p).unwrap_or_default();
+            let cut = t.split("\"chodera\":").nth(1).and_then(|s| s.split("\"series\"").next());
+            format!(
+                "{{\"pilot\": {i}, \"settling_frames\": {}, \"chodera\": {}}}",
+                v.value as usize,
+                cut.map(|s| s.trim().trim_end().trim_end_matches(',').to_string())
+                    .unwrap_or_else(|| "null".to_string())
+            )
+        })
+        .collect();
+    // the DESIGN's own step, so the frames convert to femtoseconds in the campaign's units
+    let law = load_law(obs);
+    let (_sim, _pos, l, _reach, dt_tables) = build(&law, STEP_MULT, PILOT_SEEDS[0]);
+    let step_fs = dt_tables * STEP_MULT * AU_TIME_FS;
+    let _ = l;
+    let body = format!(
+        "{{\n  \"phase\": \"pilot-freeze\", \"dry\": false,\n  \
+         \"rule\": \"Chodera 2016 automated equilibration detection on the CROSS-UNIT \
+         POTENTIAL ENERGY per water, per pilot: the discard point t0 that maximises the \
+         effectively uncorrelated sample count (N - t0)/g(t0) of what remains. The frozen \
+         settling is the MAXIMUM of those t0 over the pilots, because the number is a floor \
+         and the floor is the slowest pilot's. No threshold, no window, no band, and no \
+         readout's agreement with experiment enters it.\",\n  \
+         \"credit\": \"John D. Chodera, A simple method for automated equilibration detection \
+         in molecular simulations, J. Chem. Theory Comput. 12 (2016) 1799-1805\",\n  \
+         \"settling_variable\": \"cross_unit_potential_per_water_hartree\",\n  \
+         \"settling_frames\": {settling},\n  \
+         \"settling_fs\": {},\n  \
+         \"block_frames\": {SETTLE_READOUT}, \"samples_per_block\": {SETTLE_SAMPLES}, \
+         \"step_multiple_of_tables_step\": {}, \"step_fs\": {},\n  \
+         \"pilots_counted\": {}, \"pilots_declared\": {},\n  \
+         \"pilot_seeds\": [{}],\n  \"confirmation_seeds\": [{}],\n  \
+         \"seeds_disjoint\": {},\n  \
+         \"watched_but_not_frozen_on\": \"the bond count and the O-O first peak are logged on \
+         the pilots and carry their own t0 below; they are WATCHED and the settling is not \
+         chosen on them, and the confirmation seeds never see these trajectories, so R1 and \
+         R2 stay forward predictions\",\n  \
+         \"per_pilot\": [{}]\n}}\n",
+        num(settling as f64 * step_fs),
+        num(STEP_MULT),
+        num(step_fs),
+        frames.len(),
+        PILOT_SEEDS.len(),
+        PILOT_SEEDS.iter().map(|s| format!("\"{s:#x}\"")).collect::<Vec<_>>().join(", "),
+        SEEDS.iter().map(|s| format!("\"{s:#x}\"")).collect::<Vec<_>>().join(", "),
+        PILOT_SEEDS.iter().all(|p| !SEEDS.contains(p)),
+        watched.join(", ")
+    );
+    w.write_text("settling.json", &body).expect("settling.json writes");
+    w.done("settling.done", "the settling frozen from the pilots by Chodera's rule").expect("the marker writes");
+    println!(
+        "FROZEN from {} pilot(s): settling = {settling} frames = {:.1} fs (the maximum of the \
+         per-pilot Chodera t0 on the cross-unit energy)",
+        frames.len(),
+        settling as f64 * step_fs
+    );
+}
+
+/// What the pilots froze, read back by the design. `None` when no pilot set has run — the
+/// campaign then falls back to LIQUID-1's own measured settling, and the record says which.
+fn read_pilot_settling(out: &Path) -> Option<ReadInput> {
+    let p = out.join("pilot").join("settling.json");
+    if !p.exists() {
+        return None;
+    }
+    read_input_after(&p.display().to_string(), &[], "settling_frames").ok()
+}
+
 // ------------------------------------------------------------------------ the counted arm
 
 fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
@@ -2151,7 +2576,7 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
     }
     eprintln!("seed {seed_index} of {}: {seed:#x}", SEEDS.len());
     let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, STEP_MULT, seed);
-    let d = design(obs, dt_tables, l);
+    let d = design(obs, out, dt_tables, l);
     d.print();
     let dr = door(&law, &mut sim, &pos, l, tables_reach, N_WATERS);
     if !dr.admitted {
@@ -2251,6 +2676,13 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
     let mut traj_frames: Vec<Frame> = Vec::new();
     let mut rdf_refusal: Option<String> = None;
     let mut hb_refusal: Option<String> = None;
+    // THE READOUT SERIES, kept so every readout carries an AUTOCORRELATION-AWARE error bar
+    // beside the seed spread (the second review's item 3). A mean over 560 readouts of a
+    // liquid is not a mean over 560 independent draws, and dividing by sqrt(560) says it is.
+    let mut series_hb: Vec<f64> = Vec::new();
+    let mut series_temp: Vec<f64> = Vec::new();
+    let mut series_span: Vec<f64> = Vec::new();
+    let mut series_largest: Vec<f64> = Vec::new();
 
     if void.is_none() {
         for k in 0..d.count {
@@ -2264,7 +2696,10 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
             }
             let p = read_pos(&sim);
             match hbonds_periodic(&p, &z, cell) {
-                Ok(v) => hb_sum += v.len() as f64,
+                Ok(v) => {
+                    hb_sum += v.len() as f64;
+                    series_hb.push(v.len() as f64 / N_WATERS as f64);
+                }
                 Err(e) => hb_refusal = Some(format!("{}: {}", e.lens, e.reason)),
             }
             match hbonds(&p, &z) {
@@ -2274,7 +2709,14 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
             if let Err(e) = rdf.push(&p, &z, l) {
                 rdf_refusal = Some(format!("{}: {}", e.lens, e.reason));
             }
+            // the per-readout winding and largest-component values, taken as the DELTA of
+            // the accumulator's own counters so there is one graph reading per frame and
+            // not two (`PhaseAccum` is untouched)
+            let (span_before, large_before) = (ph.spanning, ph.largest_sum);
             ph.push(&p, &z, cell);
+            series_span.push((ph.spanning - span_before) as f64);
+            series_largest.push(ph.largest_sum - large_before);
+            series_temp.push(sim.temperature());
             carrier.push(&p, &oxy, l);
             traj_frames.push(Frame {
                 index: k as u64,
@@ -2350,10 +2792,48 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
         },
         frames: traj_frames,
     };
+    // R3 THROUGH THE BOUNDARY-AWARE LENS. The box is `Boundary::Periodic` and the positions
+    // handed over are the unwrapped ones this loop accumulated, so the WALL cap does not
+    // apply (it is written for `Boundary::Walls`, and applying it here was the second
+    // review's fourth source claim); the exponent gate does, and the exponent and the slope
+    // are read on ONE declared interval, `[2, max_lag]` — the lens's own x1.5 ladder inside
+    // the window the freeze priced, whose LOWEST lag the stride was chosen to put at or
+    // above the crossover. The old lens fitted its slope from lag 1, which is below that
+    // crossover by construction.
     let max_lag = (traj.frames.len() / 4).max(2);
-    let (r3, r3_refusal) = match diffusion(&traj, max_lag) {
-        Ok(dd) => (Some(dd * conv), None),
+    let lag_window = LagWindow::new(2, max_lag);
+    let reading = diffusion_periodic(&traj, lag_window, LensBoundary::Periodic);
+    let (r3, r3_refusal) = match &reading {
+        Ok(dd) => (Some(dd.d_bohr2_per_fs * conv), None),
         Err(e) => (None, Some(format!("{} refuses (gate: {}): {}", e.lens, e.gate, e.reason))),
+    };
+    let r3_context = match &reading {
+        Ok(dd) => format!(
+            "{{\"alpha\": {}, \"intercept_bohr2\": {}, \"through_origin_cm2_per_s\": {}, \
+             \"lag_lo\": {}, \"lag_hi\": {}, \"window_fs\": [{}, {}], \"ladder_points\": {}, \
+             \"fit_points\": {}, \"box_edge_bohr\": {}, \"temperature_k\": {}, \
+             \"yeh_hummer_xi\": {}, \"yeh_hummer_over_viscosity_bohr2_per_fs\": {}, \
+             \"yeh_hummer_applied\": {}, \"note\": {:?}}}",
+            num(dd.alpha),
+            num(dd.intercept_bohr2),
+            num(dd.d_through_origin_bohr2_per_fs * conv),
+            dd.lags.lo,
+            dd.lags.hi,
+            num(dd.window_fs.0),
+            num(dd.window_fs.1),
+            dd.ladder_points,
+            dd.fit_points,
+            num(dd.finite_size.box_edge_bohr),
+            num(dd.finite_size.temperature_k),
+            num(dd.finite_size.xi),
+            match dd.finite_size.yeh_hummer_over_viscosity {
+                Some(x) => num(x),
+                None => "null".to_string(),
+            },
+            dd.finite_size.applied,
+            dd.finite_size.note
+        ),
+        Err(_) => "null".to_string(),
     };
 
     let drift_bar = d.drift_bar(sim.work.thermostat);
@@ -2442,6 +2922,25 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
                 num(holon_render::sim::AU_TIME_S),
                 num(AU_TIME_FS),
                 ((AU_TIME_FS * 1.0e-15 - holon_render::sim::AU_TIME_S) / holon_render::sim::AU_TIME_S).abs() < 1.0e-9
+            ),
+        )
+        .raw("r3_lens", r3_context.clone())
+        .raw(
+            "uncertainty",
+            format!(
+                "{{\"rule\": \"statistical inefficiency g = 1 + 2 sum (1 - t/N) C(t), truncated \
+                 at the first non-positive C(t); n_eff = N/g; sem = sd/sqrt(n_eff). Reported \
+                 BESIDE the seed spread, never instead of it\", \"credit\": \"Chodera, J. Chem. \
+                 Theory Comput. 12 (2016) 1799; after Friedberg-Cameron 1970, Swope-Andersen \
+                 1982, Flyvbjerg-Petersen 1989\", \"readout_stride_frames\": {}, \
+                 \"readout_stride_fs\": {}, \"hbonds_per_molecule\": {}, \"temperature_k\": {}, \
+                 \"spanning_indicator\": {}, \"largest_component_fraction\": {}}}",
+                d.stride,
+                num(d.stride as f64 * d.step_fs),
+                ineff_json(&inefficiency(&series_hb)),
+                ineff_json(&inefficiency(&series_temp)),
+                ineff_json(&inefficiency(&series_span)),
+                ineff_json(&inefficiency(&series_largest))
             ),
         )
         .raw("s_phase", ph.json(false))
@@ -2615,9 +3114,63 @@ fn read_phase(out: &Path) {
     let settle = gather("settling used, frames", &[], "settle_frames_used");
     let er = read_input_after(&arms[0].1, &["\"design\""], "er_giant").map(|x| x.value).unwrap_or(f64::NAN);
 
+    // THE AUTOCORRELATION-AWARE BAR, BESIDE THE SPREAD (gate N). Two different questions:
+    // the spread says how much the answer depends on where the box started, the standard
+    // error says how much of one trajectory's own scatter is real sampling. Neither is a
+    // kill and neither moves a band; what they do is stop a precise-looking number from
+    // being reported as one.
+    let u = |name: &str, var: &str, field: &str| -> Across {
+        Across {
+            name: name.to_string(),
+            values: arms
+                .iter()
+                .map(|(_, p)| {
+                    read_input_after(p, &["\"uncertainty\"", var], field)
+                        .map(|x| x.value)
+                        .unwrap_or(f64::NAN)
+                })
+                .collect(),
+        }
+    };
+    let u_r2_g = u("R2 g, samples per independent", "\"hbonds_per_molecule\"", "g");
+    let u_r2_sem = u("R2 sem, one arm", "\"hbonds_per_molecule\"", "sem");
+    let u_r2_neff = u("R2 n_eff, one arm", "\"hbonds_per_molecule\"", "n_eff");
+    let u_span_g = u("S g, samples per independent", "\"spanning_indicator\"", "g");
+    let u_span_sem = u("S sem, one arm", "\"spanning_indicator\"", "sem");
+    /// The standard error of the GRAND mean from the per-arm standard errors:
+    /// `sqrt(sum sem_i^2)/n`. It is the sampling half of the uncertainty and it sits beside
+    /// the seed spread, which is the other half.
+    fn pooled_sem(a: &Across) -> f64 {
+        let v: Vec<f64> = a.values.iter().copied().filter(|x| x.is_finite()).collect();
+        if v.is_empty() {
+            return f64::NAN;
+        }
+        v.iter().map(|x| x * x).sum::<f64>().sqrt() / v.len() as f64
+    }
+    let r2_pooled = pooled_sem(&u_r2_sem);
+    let span_pooled = pooled_sem(&u_span_sem);
+
     for a in [&r1_pos, &r1_h, &r2, &r3, &span, &largest, &degree, &drift, &settle] {
         println!("  {}", a.line());
     }
+    println!("  -- the autocorrelation-aware bar, beside the spread (Chodera's g) --");
+    for a in [&u_r2_g, &u_r2_neff, &u_r2_sem, &u_span_g, &u_span_sem] {
+        println!("  {}", a.line());
+    }
+    println!(
+        "  R2 {:.6e}: seed spread {:.6e}, pooled standard error {:.6e} ({} arms)",
+        r2.mean(),
+        r2.hi() - r2.lo(),
+        r2_pooled,
+        u_r2_sem.n()
+    );
+    println!(
+        "  S  {:.6e}: seed spread {:.6e}, pooled standard error {:.6e} ({} arms)",
+        span.mean(),
+        span.hi() - span.lo(),
+        span_pooled,
+        u_span_sem.n()
+    );
 
     // the branches, on the SEED MEAN, with the spread printed beside it
     let (lo, hi) = r2_band();
@@ -2709,6 +3262,25 @@ fn read_phase(out: &Path) {
                 .int("seeds_counted", arms.len() as i64)
                 .int("seeds_declared", SEEDS.len() as i64)
                 .text("uncertainty_rule", "every readout is the mean across the counted seeds; the spread is min, max, range and the sample standard deviation; a band is met only if it contains the MEAN")
+                .text(
+                    "uncertainty_rule_2",
+                    "BESIDE the spread, and never instead of it: the statistical inefficiency \
+                     g = 1 + 2 sum (1 - t/N) C(t) of each arm's own readout series (Chodera, \
+                     JCTC 12 (2016) 1799), its effective sample count N/g and its standard \
+                     error sd/sqrt(n_eff); the pooled standard error of the grand mean is \
+                     sqrt(sum sem_i^2)/n. The spread says how much the answer depends on where \
+                     the box started; the standard error says how much of one trajectory's \
+                     scatter is real sampling. NEITHER is a kill and NEITHER moves a band",
+                )
+                .raw("r2_statistical_inefficiency_g", u_r2_g.json())
+                .raw("r2_effective_samples_per_arm", u_r2_neff.json())
+                .raw("r2_standard_error_per_arm", u_r2_sem.json())
+                .number("r2_pooled_standard_error", r2_pooled)
+                .number("r2_seed_spread", r2.hi() - r2.lo())
+                .raw("s_statistical_inefficiency_g", u_span_g.json())
+                .raw("s_standard_error_per_arm", u_span_sem.json())
+                .number("s_pooled_standard_error", span_pooled)
+                .number("s_seed_spread", span.hi() - span.lo())
                 .raw("gates", report.json())
                 .raw("r1_position_bohr", r1_pos.json())
                 .raw("r1_height", r1_h.json())
@@ -2752,8 +3324,23 @@ fn main() {
         ),
         "gate" => gate_phase(&obs, &out),
         "size" => size_phase(&obs, &out, val("--cells").and_then(|v| v.parse().ok()).unwrap_or(N_CELLS)),
+        // THE PILOTS. `--pilot I` runs pilot `I` on its own seed (one per process, so a
+        // pilot set runs in parallel on its own cores); `--freeze` reads the pilots back and
+        // writes `pilot/settling.json`. Nothing here is a readout of the campaign.
+        "pilot" => {
+            if args.iter().any(|a| a == "--freeze") {
+                pilot_freeze(&obs, &out)
+            } else {
+                pilot_phase(
+                    &obs,
+                    &out,
+                    val("--pilot").and_then(|v| v.parse().ok()).unwrap_or(0),
+                    val("--blocks").and_then(|v| v.parse().ok()).unwrap_or(PILOT_BLOCKS),
+                )
+            }
+        }
         "run" => run_phase(&obs, &out, val("--seed").and_then(|v| v.parse().ok()).unwrap_or(0)),
         "read" => read_phase(&out),
-        other => panic!("unknown phase {other:?}: screen | size | gate | run | read"),
+        other => panic!("unknown phase {other:?}: screen | size | gate | pilot | run | read"),
     }
 }

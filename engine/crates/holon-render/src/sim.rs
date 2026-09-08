@@ -28,6 +28,7 @@ use crate::bank::{PairBank, MAX_SPECIES};
 use crate::clock::Timescale;
 use crate::holon::HolonLayer;
 use crate::table::PotentialTable;
+use crate::thermostat::{ThermostatKind, ThermostatRng};
 use holon_chem::trimer::TrimerTable;
 use holon_chem::water::WaterTable;
 
@@ -619,6 +620,14 @@ pub struct Sim {
     pub thermostat_on: bool,
     pub target_temperature: f64,
     pub thermostat_tau: f64,
+    /// WHICH RULE sets the rescaling factor. [`ThermostatKind::Berendsen`] by default and
+    /// on every record in this tree; [`ThermostatKind::StochasticRescaling`] is the
+    /// canonical alternative (Bussi–Donadio–Parrinello 2007) and wears the SAME ledger
+    /// column with the same meaning — see `crate::thermostat`.
+    pub thermostat_kind: ThermostatKind,
+    /// The stochastic thermostat's own generator. Touched by nothing else, so a Berendsen
+    /// run leaves `thermostat_draws()` at exactly `0` and is bit-for-bit unchanged.
+    pub thermostat_rng: ThermostatRng,
 
     // --- THE LEDGER ---
     pub e_kin: f64,
@@ -858,6 +867,8 @@ impl Sim {
             thermostat_on: false,
             target_temperature: 300.0,
             thermostat_tau: 2000.0,
+            thermostat_kind: ThermostatKind::Berendsen,
+            thermostat_rng: ThermostatRng::new(0x54_48_45_52_4d_4f_53_54),
             e_kin: 0.0,
             e_pair: 0.0,
             e_three: 0.0,
@@ -5066,23 +5077,74 @@ impl Sim {
     }
 
 
-    /// Berendsen velocity rescaling. Whatever kinetic energy it adds or removes is
-    /// posted to `w_ext` in the same breath, so a thermostatted run is still a closed
-    /// ledger rather than an excused one.
+    /// SELECT the thermostat rule and seed its generator, in one call, so a runner cannot
+    /// select the stochastic thermostat and forget to make it reproducible.
+    ///
+    /// The seed is taken whichever rule is chosen — it costs nothing under Berendsen, and
+    /// a run that switches rules mid-campaign then still has one declared seed to record.
+    pub fn set_thermostat_kind(&mut self, kind: ThermostatKind, seed: u64) {
+        self.thermostat_kind = kind;
+        self.thermostat_rng = ThermostatRng::new(seed);
+    }
+
+    /// Deviates the thermostat's generator has produced. **Exactly `0` after any Berendsen
+    /// run**, which is the check that the default path is untouched.
+    pub fn thermostat_draws(&self) -> u64 {
+        self.thermostat_rng.draws
+    }
+
+    /// Velocity rescaling — Berendsen by default, stochastic (Bussi–Donadio–Parrinello
+    /// 2007) when [`Sim::thermostat_kind`] selects it. Whatever kinetic energy it adds or
+    /// removes is posted to `w_ext` in the same breath, so a thermostatted run is still a
+    /// closed ledger rather than an excused one.
     ///
     /// The rescaling also changes the total momentum (it multiplies every velocity),
     /// and that change is posted to `j_ext` for the same reason.
+    ///
+    /// **The two rules differ in ONE number and in nothing else.** Both produce a single
+    /// factor `λ` applied to every velocity, so the ledger path below — the posting, the
+    /// column, the momentum residual — is one path taken by both, and a receipt does not
+    /// have to be read differently depending on which was selected. The choice of `λ` is
+    /// the whole of the difference and it lives in `crate::thermostat`, with its canonical
+    /// claim tested there and on a harmonic test system in `tests/thermostat.rs`.
+    ///
+    /// **Berendsen draws nothing.** The generator is touched only inside the stochastic
+    /// branch, so a Berendsen run is bit-for-bit what it was before this branch existed and
+    /// `self.thermostat_draws()` is exactly `0` afterwards.
     fn apply_thermostat(&mut self) {
         let t_now = self.temperature();
         if t_now <= 0.0 {
             return;
         }
-        let ratio = self.target_temperature / t_now;
-        let lambda_sq = 1.0 + (self.dt() / self.thermostat_tau) * (ratio - 1.0);
-        if lambda_sq <= 0.0 {
-            return;
-        }
-        let lambda: f64 = lambda_sq.sqrt();
+        let dt_over_tau = self.dt() / self.thermostat_tau;
+        let lambda: f64 = match self.thermostat_kind {
+            ThermostatKind::Berendsen => {
+                match crate::thermostat::berendsen_lambda(t_now, self.target_temperature, dt_over_tau)
+                {
+                    Some(l) => l,
+                    None => return,
+                }
+            }
+            ThermostatKind::StochasticRescaling => {
+                // The SAME degrees of freedom `temperature()` divides by, so the target the
+                // thermostat aims at and the temperature the gates read are one quantity.
+                let n_dof = (self.dims.dof() as usize) * self.n;
+                let k_target = 0.5 * n_dof as f64 * K_B * self.target_temperature;
+                let mut rng = self.thermostat_rng;
+                let l = crate::thermostat::bdp_lambda(
+                    self.e_kin,
+                    k_target,
+                    n_dof,
+                    dt_over_tau,
+                    &mut rng,
+                );
+                self.thermostat_rng = rng;
+                match l {
+                    Some(l) => l,
+                    None => return,
+                }
+            }
+        };
         let before = self.e_kin;
         let (pbx, pby, pbz) = self.momentum();
         for i in 0..self.n {

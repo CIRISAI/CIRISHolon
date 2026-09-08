@@ -88,7 +88,12 @@ pub fn square_positions() -> (Vec<holon_chem::elements::Species>, Vec<[f64; 3]>)
 }
 
 pub fn scene(species: &[holon_chem::elements::Species], pos: &[[f64; 3]], box_edge: f64, temp: f64) -> Box<Sim> {
-    let mut s = quartet::scene(species, pos, false);
+    // PLACED, not reset-then-placed. This scene ends in `rebase()`, which retakes every
+    // baseline the opener's placeholder configuration would have touched, so the two
+    // constructors agree bit for bit here (machine-checked on a 54-water box by
+    // `examples/liquid2.rs::instrument_residual`) — and the placeholder was the whole of this
+    // constructor's peak memory at liquid-box sizes: 6.852 GiB at 750 atoms against 0.445.
+    let mut s = quartet::scene_placed(species, pos, false);
     s.dims = Dims::Three;
     s.boundary = Boundary::Open;
     s.width = box_edge;

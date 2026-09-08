@@ -2134,6 +2134,416 @@ fn size_phase(obs: &Path, out: &Path, cells: usize) {
     w.done(&format!("cells{cells}.done"), "one box: its door and its force pass, no arm").expect("the marker writes");
 }
 
+// ------------------------------------------------------- the cost probe (GANTT2 step 2)
+
+/// A field of `/proc/self/status`, in kibibytes. `VmHWM` is the kernel's own peak resident
+/// set for this process and is MONOTONE for the process's life, so a stage's reading is the
+/// peak the process had reached BY the end of that stage and the DIFFERENCE between two
+/// consecutive readings is the peak that stage created. That monotonicity is exactly why the
+/// probe runs ONE BOX AND ONE ARM PER INVOCATION: two arms in one process would hand the
+/// second one the first one's high-water mark and read it as its own.
+fn proc_status_kib(key: &str) -> f64 {
+    let t = match std::fs::read_to_string("/proc/self/status") {
+        Ok(t) => t,
+        Err(_) => return f64::NAN,
+    };
+    for line in t.lines() {
+        if let Some(rest) = line.strip_prefix(key) {
+            let digits: String = rest.chars().filter(|c| c.is_ascii_digit()).collect();
+            return digits.parse::<f64>().unwrap_or(f64::NAN);
+        }
+    }
+    f64::NAN
+}
+
+fn hwm_gib() -> f64 {
+    proc_status_kib("VmHWM:") / (1024.0 * 1024.0)
+}
+
+fn rss_gib() -> f64 {
+    proc_status_kib("VmRSS:") / (1024.0 * 1024.0)
+}
+
+/// The stage table: what each step of the construction cost in seconds, and where the
+/// process's peak resident set stood when it finished.
+struct Stages {
+    rows: Vec<(String, f64, f64, f64)>,
+}
+
+impl Stages {
+    fn new() -> Stages {
+        let mut s = Stages { rows: Vec::new() };
+        s.rows.push(("start".to_string(), 0.0, hwm_gib(), rss_gib()));
+        s
+    }
+    fn mark<T>(&mut self, name: &str, f: impl FnOnce() -> T) -> T {
+        let t0 = Instant::now();
+        let v = f();
+        let secs = t0.elapsed().as_secs_f64();
+        self.rows.push((name.to_string(), secs, hwm_gib(), rss_gib()));
+        v
+    }
+    fn peak(&self) -> f64 {
+        self.rows.last().map(|r| r.2).unwrap_or(f64::NAN)
+    }
+    fn json(&self) -> String {
+        let mut out = String::from("[");
+        for (i, (name, secs, hwm, rss)) in self.rows.iter().enumerate() {
+            if i > 0 {
+                out.push_str(", ");
+            }
+            let prev = if i == 0 { *hwm } else { self.rows[i - 1].2 };
+            out.push_str(&format!(
+                "{{\"stage\": \"{name}\", \"seconds\": {}, \"peak_rss_gib\": {}, \"peak_rss_created_gib\": {}, \"rss_gib\": {}}}",
+                num(*secs),
+                num(*hwm),
+                num(*hwm - prev),
+                num(*rss)
+            ));
+        }
+        out.push(']');
+        out
+    }
+}
+
+/// The two ways a scene of KNOWN coordinates can be built.
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Arm {
+    /// `quartet::scene`'s path as the second review found it: `reset(n)` first, which lays a
+    /// PLACEHOLDER configuration (a ring or a Fibonacci shell of radius 6 bohr) and evaluates
+    /// the forces on it, and only then installs the real species and coordinates.
+    Placeholder,
+    /// The geometry first: storage, species, coordinates, and then ONE force pass, on the
+    /// configuration the caller actually asked for. Expressed here in the engine's existing
+    /// public API so that the arm can be measured BEFORE it is packaged as `Sim::reset_with`.
+    GeometryFirst,
+}
+
+/// `quartet::scene` and `field2_scenes::scene` unrolled, with a timer and a `/proc` reading
+/// between the steps, and with the opening move switchable between the two arms.
+///
+/// The duplication is what makes this an instrument: the production constructor is one call,
+/// and a probe that could only call it could not say which of its steps carries the cost, nor
+/// price the alternative on the same binary. `cost_phase` therefore holds this against the
+/// production `scene()` on a small box first (`instrument_residual`) and refuses to report if
+/// they disagree on a single bit — a stage table taken on a scene that is not the campaign's
+/// scene would be a measurement of this function.
+fn cost_scene(
+    st: &mut Stages,
+    arm: Arm,
+    species: &[holon_chem::elements::Species],
+    pos: &[[f64; 3]],
+    box_edge: f64,
+    temp: f64,
+) -> Box<Sim> {
+    use holon_render::bank::Host;
+    use holon_render::sim::Dims;
+    use holon_render::{load_pair_table, TABLE_OK};
+    let n = species.len();
+    let b = st.mark("tables", field2_scenes::quartet::banked);
+    let mut s = st.mark("bank_load", || {
+        let mut s = Box::new(Sim::empty());
+        assert_eq!(load_pair_table(&mut s, &b.hh, Host::Native), TABLE_OK);
+        assert_eq!(load_pair_table(&mut s, &b.oh, Host::Native), TABLE_OK);
+        assert_eq!(load_pair_table(&mut s, &b.oo, Host::Native), TABLE_OK);
+        s.trimer = (*b.trimer).clone();
+        s.water = (*b.water).clone();
+        s
+    });
+    match arm {
+        Arm::Placeholder => {
+            // `reset` lays the placeholder AND evaluates the forces on it (`zero_ledger`).
+            st.mark("reset_placeholder", || s.reset(n));
+            // The force half of that call, on the same configuration, isolated: `rebase` IS
+            // `zero_ledger`, so this is the second half of `reset` run again by itself.
+            st.mark("placeholder_force", || s.rebase());
+            st.mark("install_geometry", || {
+                for (i, sp) in species.iter().enumerate() {
+                    assert!(s.set_species(i, *sp));
+                }
+                for (i, c) in pos.iter().enumerate() {
+                    s.atoms[i].x = c[0];
+                    s.atoms[i].y = c[1];
+                    s.atoms[i].z = c[2];
+                    s.atoms[i].vx = 0.0;
+                    s.atoms[i].vy = 0.0;
+                    s.atoms[i].vz = 0.0;
+                }
+            });
+        }
+        Arm::GeometryFirst => {
+            st.mark("reset_with", || assert!(s.reset_with(species, pos), "the bank refused a species"));
+        }
+    }
+    s.many_body_order = 0;
+    // ---- `field2_scenes::scene`'s tail, verbatim
+    st.mark("scene_tail", || {
+        s.dims = Dims::Three;
+        s.boundary = Boundary::Open;
+        s.width = box_edge;
+        s.height = box_edge;
+        s.depth = box_edge;
+        let mut state: u64 = 0x4649_454c_3200;
+        let mut lcg = || {
+            state = state.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            ((state >> 11) as f64) / ((1u64 << 53) as f64)
+        };
+        let (mut px, mut py, mut pz) = (0.0, 0.0, 0.0);
+        for i in 0..n {
+            let m = s.atoms[i].mass();
+            let scale = (K_B * temp / m).sqrt();
+            s.atoms[i].vx = scale * (2.0 * lcg() - 1.0) * 1.7;
+            s.atoms[i].vy = scale * (2.0 * lcg() - 1.0) * 1.7;
+            s.atoms[i].vz = scale * (2.0 * lcg() - 1.0) * 1.7;
+            px += m * s.atoms[i].vx;
+            py += m * s.atoms[i].vy;
+            pz += m * s.atoms[i].vz;
+        }
+        let mtot: f64 = (0..n).map(|i| s.atoms[i].mass()).sum();
+        for i in 0..n {
+            s.atoms[i].vx -= px / mtot;
+            s.atoms[i].vy -= py / mtot;
+            s.atoms[i].vz -= pz / mtot;
+        }
+        s.sync_species();
+        s.adopt_table_timescale();
+        s.thermostat_on = true;
+        s.target_temperature = temp;
+        s.rebase();
+    });
+    s
+}
+
+/// Every float two scenes have to agree on for the arms to be interchangeable: the ledger's
+/// own baselines, the step, the energy, and each atom's coordinates, velocity and force.
+fn scene_bits(s: &Sim) -> Vec<u64> {
+    let mut v = vec![
+        s.n as u64,
+        s.energy().to_bits(),
+        s.ledger().to_bits(),
+        s.dt().to_bits(),
+        s.l0.to_bits(),
+        s.e_ref.to_bits(),
+        s.p0.0.to_bits(),
+        s.p0.1.to_bits(),
+        s.p0.2.to_bits(),
+        s.l0_ang.0.to_bits(),
+        s.l0_ang.1.to_bits(),
+        s.l0_ang.2.to_bits(),
+    ];
+    for i in 0..s.n {
+        let a = &s.atoms[i];
+        let (fx, fy, fz) = s.internal_force(i);
+        for x in [a.x, a.y, a.z, a.vx, a.vy, a.vz, fx, fy, fz] {
+            v.push(x.to_bits());
+        }
+    }
+    v
+}
+
+/// THE INSTRUMENT'S OWN GATE, and the acceptance evidence in one reading.
+///
+/// Three scenes on the smallest box in the size set, compared BIT FOR BIT: the placeholder
+/// arm (the constructor as the second review found it — `reset(n)` first, the coordinates
+/// after), the geometry-first arm (`Sim::reset_with`), and the production `scene()`. The
+/// first pair is the change under test; the second pair is the claim that the probe measures
+/// the campaign's own constructor and not a copy of it that has drifted. Returns the number
+/// of disagreeing floats in each pair.
+fn instrument_residual(cells: usize) -> (usize, usize) {
+    let (species, pos, l) = liquid_box(cells, DENSITY_G_CM3, SEEDS[0]);
+    let mut st = Stages::new();
+    let old = scene_bits(&cost_scene(&mut st, Arm::Placeholder, &species, &pos, l, TEMPERATURE_K));
+    let new = scene_bits(&cost_scene(&mut st, Arm::GeometryFirst, &species, &pos, l, TEMPERATURE_K));
+    let prod = scene_bits(&scene(&species, &pos, l, TEMPERATURE_K));
+    let count = |a: &[u64], b: &[u64]| -> usize {
+        if a.len() != b.len() {
+            return a.len().max(b.len());
+        }
+        a.iter().zip(b.iter()).filter(|(x, y)| x != y).count()
+    };
+    (count(&old, &new), count(&new, &prod))
+}
+
+/// THE COST PROBE. One box, one arm, one process (see `proc_status_kib`).
+///
+/// It prices the three things the second review named: the `reset` call that lays a
+/// placeholder configuration before the real coordinates are known, the force evaluation
+/// inside it, and `fenced_triples`. Everything it reports is a measurement; nothing here
+/// enters a gate or a claim.
+fn cost_phase(obs: &Path, out: &Path, cells: usize, arm: Arm, label: &str) {
+    let w = RecordWriter::new(out.join("size"));
+    let law = load_law(obs);
+    let waters = 2 * cells * cells * cells;
+    // The instrument's own gate first, on the smallest box, so its cost is charged to the
+    // process's baseline rather than to a stage.
+    let (arm_residual, prod_residual) = instrument_residual(3);
+    assert_eq!(prod_residual, 0, "the cost probe's unrolled constructor is not `scene()` bit for bit");
+    assert_eq!(arm_residual, 0, "the two arms do not build the same scene bit for bit");
+
+    let (species, pos, l) = liquid_box(cells, DENSITY_G_CM3, SEEDS[0]);
+    let baseline = hwm_gib();
+    let mut st = Stages::new();
+    let mut sim = cost_scene(&mut st, arm, &species, &pos, l, TEMPERATURE_K);
+    let tables_reach = sim.legality_radius();
+    st.mark("field_and_seam", || {
+        sim.set_field(true, None).expect("the open box admits the field");
+        if law.variant == Variant::Ct3Table {
+            sim.ct_table = law.table.clone();
+        }
+        sim.set_seam(Some(law.model)).expect("no acuity frame is installed");
+    });
+    let dt_ref = sim.timescale.dt_reference;
+    let dt_tables = sim.dt();
+    if STEP_MULT != 1.0 {
+        sim.timescale.allow_dt_growth = true;
+        sim.timescale.set_dt_multiplier(STEP_MULT * dt_tables / dt_ref);
+    }
+    let dt_au = sim.dt();
+    // The door's own move, and the reason it is here: `size_phase` prices its force pass
+    // AFTER `door` has switched the box to `Boundary::Periodic`, so a pass priced under the
+    // open boundary the constructor leaves behind would not be the campaign's pass.
+    let periodic = st.mark("boundary_periodic", || sim.set_boundary(Boundary::Periodic).is_ok());
+    assert!(periodic, "the image rule refused this box; price it at a size the door admits");
+
+    // The fence, both ways, on the same scene: the census that is now on the force path and
+    // the enumeration it replaced, kept as `fenced_triples_enumerated`. One call is the whole
+    // count, so each is repeated and the per-call time reported.
+    const FENCE_CALLS: usize = 5;
+    let mut fenced = 0u64;
+    let fence_secs = {
+        let t0 = Instant::now();
+        for _ in 0..FENCE_CALLS {
+            fenced = sim.fenced_triples();
+        }
+        t0.elapsed().as_secs_f64() / FENCE_CALLS as f64
+    };
+    st.rows.push(("fenced_triples_census".to_string(), fence_secs, hwm_gib(), rss_gib()));
+    let mut fenced_ref = 0u64;
+    let fence_ref_secs = {
+        let t0 = Instant::now();
+        for _ in 0..FENCE_CALLS {
+            fenced_ref = sim.fenced_triples_enumerated();
+        }
+        t0.elapsed().as_secs_f64() / FENCE_CALLS as f64
+    };
+    st.rows.push(("fenced_triples_enumerated".to_string(), fence_ref_secs, hwm_gib(), rss_gib()));
+    assert_eq!(fenced, fenced_ref, "the census and the enumeration disagree on this box");
+
+    sim.rebase();
+    // THE L0 SCENE'S OWN NUMBERS, at the point `gate_phase` reads them (`rebase`, then one
+    // force pass, before any frame): the cross-unit rows this campaign's expectation record
+    // is written from. Reported so the construction change can be held against the banked
+    // `gate_provisional_8x/expectation.json` at the bit, not only against a test's tolerance.
+    sim.compute_forces();
+    let e_field = sim.row(Row::Field);
+    let e_seam = sim.row(Row::Seam);
+    let units_start = sim.seam_work.units;
+    let cross_unit = e_field + e_seam;
+
+    let t0 = Instant::now();
+    for _ in 0..SIZE_PRICE_FRAMES {
+        sim.step_frame(1);
+    }
+    let secs_per_pass = t0.elapsed().as_secs_f64() / SIZE_PRICE_FRAMES as f64;
+    st.rows.push(("force_pass".to_string(), secs_per_pass, hwm_gib(), rss_gib()));
+    let ps_per_pass = dt_au * AU_TIME_FS / 1000.0;
+    let core_seconds_per_ps = secs_per_pass / ps_per_pass;
+    // ARITHMETIC, NOT A MEASUREMENT, and labelled as such in the record: the fence is
+    // evaluated once per `accumulate_three_body` and `accumulate_three_body` once per force
+    // pass, so a pass carrying the enumeration instead of the census costs the pass measured
+    // here plus the difference between the two fence timings, all three of them measured.
+    let secs_per_pass_enumerated = secs_per_pass + (fence_ref_secs - fence_secs);
+    let core_seconds_per_ps_enumerated = secs_per_pass_enumerated / ps_per_pass;
+
+    println!(
+        "cost {waters} waters, arm {label}: peak {:.4} GiB, fence {fenced} in {fence_secs:.6} s \
+         (enumerated {fence_ref_secs:.6} s), force pass {secs_per_pass:.4} s, \
+         {core_seconds_per_ps:.1} core-s per ps",
+        st.peak()
+    );
+    for (name, secs, hwm, rss) in st.rows.iter() {
+        println!("  {name:<20} {secs:>10.4} s   peak {hwm:>8.4} GiB   rss {rss:>8.4} GiB");
+    }
+
+    let rec = Record::new("cost")
+        .text(
+            "rule",
+            "peak resident set (/proc/self/status VmHWM, monotone) and seconds around every step \
+             of the scene construction, around the placeholder force evaluation inside `reset`, \
+             and around `fenced_triples`, for one box and one arm per process. A measurement \
+             only: nothing here enters a gate or a claim.",
+        )
+        .text("arm", label)
+        .int("cells", cells as i64)
+        .int("waters", waters as i64)
+        .int("atoms", 3 * waters as i64)
+        .number("cell_edge_bohr", l)
+        .number("legality_radius_bohr", tables_reach)
+        .int("arm_disagreements", arm_residual as i64)
+        .int("production_disagreements", prod_residual as i64)
+        .number("baseline_peak_rss_gib", baseline)
+        .number("peak_rss_gib", st.peak())
+        .number("fenced_triples_seconds", fence_secs)
+        .number("fenced_triples_enumerated_seconds", fence_ref_secs)
+        .int("fenced_triples", fenced as i64)
+        .int("fenced_triples_enumerated", fenced_ref as i64)
+        .int("fenced_triples_calls", FENCE_CALLS as i64)
+        .number("seconds_per_pass", secs_per_pass)
+        .number("seconds_per_pass_with_enumerated_fence", secs_per_pass_enumerated)
+        .text(
+            "seconds_per_pass_with_enumerated_fence_is",
+            "arithmetic on three measured numbers, not a fourth measurement: the fence is \
+             evaluated once per force pass, so the pass as it stood before the census costs \
+             `seconds_per_pass + (fenced_triples_enumerated_seconds - fenced_triples_seconds)`.",
+        )
+        .int("priced_on_frames", SIZE_PRICE_FRAMES as i64)
+        .int("units_at_start", units_start as i64)
+        .number("field_part_hartree", e_field)
+        .number("seam_part_hartree", e_seam)
+        .number("cross_unit_energy_hartree", cross_unit)
+        .number("per_water_hartree", cross_unit / waters as f64)
+        .int("force_workers", sim.workers() as i64)
+        .number("dt_au", dt_au)
+        .number("picoseconds_per_pass", ps_per_pass)
+        .number("core_seconds_per_picosecond", core_seconds_per_ps)
+        .number("core_seconds_per_picosecond_with_enumerated_fence", core_seconds_per_ps_enumerated)
+        .raw("stages", st.json());
+    w.write(&format!("cost_{label}_cells{cells}.json"), &rec).expect("the cost record writes");
+}
+
+/// Gather the per-box cost records of one arm into the reading the build order asks for.
+/// A gather, not a measurement: every number in it was taken by a `cost` process of its own,
+/// and this only puts the sizes side by side.
+fn cost_merge(out: &Path, arm_label: &str, name: &str) {
+    let w = RecordWriter::new(out.join("size"));
+    let dir = out.join("size");
+    let mut boxes = String::from("[");
+    let mut found = 0usize;
+    for cells in [4usize, 5, 6] {
+        let p = dir.join(format!("cost_{arm_label}_cells{cells}.json"));
+        let Ok(t) = std::fs::read_to_string(&p) else { continue };
+        if found > 0 {
+            boxes.push_str(", ");
+        }
+        boxes.push_str(t.trim());
+        found += 1;
+    }
+    boxes.push(']');
+    assert!(found > 0, "no cost_{arm_label}_cells*.json under {}", dir.display());
+    let rec = Record::new("cost")
+        .text(
+            "rule",
+            "the per-box cost records of one arm, gathered. Every number was taken by its own \
+             process (VmHWM is monotone, so two boxes in one process would read the first \
+             one's peak as the second one's); this record only puts them side by side.",
+        )
+        .text("arm", arm_label)
+        .int("boxes", found as i64)
+        .raw("sizes", boxes);
+    w.write(name, &rec).expect("the merged cost record writes");
+    println!("{name}: {found} boxes of arm {arm_label}");
+}
+
 // ------------------------------------------------------------------------ the counted arm
 
 fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
@@ -2752,8 +3162,16 @@ fn main() {
         ),
         "gate" => gate_phase(&obs, &out),
         "size" => size_phase(&obs, &out, val("--cells").and_then(|v| v.parse().ok()).unwrap_or(N_CELLS)),
+        "cost" => {
+            let placeholder = args.iter().any(|a| a == "--placeholder");
+            let (arm, label) = if placeholder { (Arm::Placeholder, "placeholder") } else { (Arm::GeometryFirst, "geometry_first") };
+            match val("--merge") {
+                Some(name) => cost_merge(&out, label, &name),
+                None => cost_phase(&obs, &out, val("--cells").and_then(|v| v.parse().ok()).unwrap_or(N_CELLS), arm, label),
+            }
+        }
         "run" => run_phase(&obs, &out, val("--seed").and_then(|v| v.parse().ok()).unwrap_or(0)),
         "read" => read_phase(&out),
-        other => panic!("unknown phase {other:?}: screen | size | gate | run | read"),
+        other => panic!("unknown phase {other:?}: screen | size | cost | gate | run | read"),
     }
 }

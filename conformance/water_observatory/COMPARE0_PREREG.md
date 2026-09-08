@@ -167,6 +167,13 @@ python beside the records (`conformance/water_observatory/compare0/`).
   table with its citation in the record; a missing citation is a refusal, not a warning.
   0 numbers may enter from memory.
   witness: none (an import, a load, and a citation)
+- **G-P1 — the classical reference's force is its own derivative.** Worst ABSOLUTE
+  `|analytic net force on the acceptor − central difference of the interaction energy under a
+  rigid translation of that molecule|` at `h = 1e-5` bohr, over every geometry and all three
+  components, bar `1e-8` hartree per bohr. A sign error in a Coulomb force is invisible in the
+  energy and would be invisible in every table this campaign prints, so it is gated and not
+  eyeballed.
+  witness: none (a finite difference on 3 coordinates × 65 geometries)
 - **G-P0 — the placement rule is priced.** The maximum hydrogen movement the remap rule imposes
   is reported per geometry in bohr, and the interaction energy under both rules is reported. If
   the spread between the two rules exceeds `0.25` of TIP4P/2005's own error against the exact on
@@ -223,10 +230,18 @@ sector before the plant is read.
   The energy must move by exactly the Coulomb sum, computed independently by the same routine.
   Sector: the electrostatic sector of the classical reference. Carrier: that Coulomb sum, which
   must be nonzero in that sector (bar `1e-9` hartree) or the plant is VOID.
-- **plant (ii) — MB-pol's two-body sector emptied.** The acceptor is translated `40` bohr along
-  x — the engine's own far reference — and MB-pol's interaction energy must fall below `1e-9`
-  hartree. Sector: MB-pol's two-body sector. Carrier: `E2b` at the node, which must be nonzero
-  in that sector (bar `1e-9` hartree) or the plant is VOID.
+- **plant (ii) — MB-pol's short-range two-body polynomial sector emptied.** The acceptor is
+  translated `40` bohr along x — the engine's own far reference — and MB-pol's `E2b` term must
+  fall below `1e-9` hartree there, because that polynomial is switched off past its own cutoff
+  by construction. Sector: MB-pol's short-range two-body polynomial sector. Carrier: `E2b` at
+  the node, which must be nonzero in that sector (bar `1e-9` hartree) or the plant is VOID.
+  *Corrected before the plant was run, and the correction recorded here rather than in a
+  postmortem:* the plant first said the TOTAL interaction must vanish at 40 bohr. It must not.
+  MB-pol's electrostatics are long-ranged and two water dipoles at 40 bohr are worth of order
+  `1e-5` hartree, so a plant on the total would have failed for a reason that is physics and
+  not a defect. The far total is REPORTED beside the plant instead of being hidden inside its
+  floor. MBX runs at its own example configuration's cutoffs (`twobody 9.0` Å,
+  `threebody 7.0` Å), which every geometry here sits well inside.
 
 ## 6. Discipline
 

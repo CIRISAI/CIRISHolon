@@ -1,0 +1,1296 @@
+{
+ "phase": "references",
+ "served_source": "/home/emoore/CIRISHolon/.claude/worktrees/compare0/conformance/water_observatory/compare0/served.json",
+ "geometries": 65,
+ "constants": {
+  "bohr_radius_angstrom": {
+   "value": 0.529177210544,
+   "source": "scipy.constants.physical_constants['Bohr radius'] (CODATA)"
+  },
+  "hartree_per_kelvin": {
+   "value": 3.1668115634564e-06,
+   "source": "scipy.constants.physical_constants['kelvin-hartree relationship'] (CODATA)"
+  }
+ },
+ "tip4p2005": {
+  "source": "J. L. F. Abascal and C. Vega, 'A general purpose model for the condensed phases of water: TIP4P/2005', J. Chem. Phys. 123, 234505 (2005) -- the model-parameter table (TIP4P/2005 column): d(OH) = 0.9572 A, HOH = 104.52 deg, d(OM) = 0.1546 A, q(H) = 0.5564 e, sigma = 3.1589 A, eps/k_B = 93.2 K.",
+  "parameters": {
+   "d_oh_angstrom": 0.9572,
+   "angle_hoh_degrees": 104.52,
+   "d_om_angstrom": 0.1546,
+   "q_h_e": 0.5564,
+   "sigma_angstrom": 3.1589,
+   "epsilon_over_kb_kelvin": 93.2
+  },
+  "placement_rule": "THE PLACEMENT RULE, stated: where the rigid model's sites go on a node's monomer.\n\n    `centers` is `[O, H1, H2]` in bohr, the record's own atoms.  The map's monomer is the\n    MINIMAL-BASIS relaxed water (O-H 1.943574 bohr, H-O-H 96.76 deg) and TIP4P/2005's is\n    its own (0.9572 A, 104.52 deg), so the two cannot both be honoured.  Two rules are run\n    and both are reported; neither is chosen by its answer.\n\n      \"remap\"  (PRIMARY) the oxygen, the H-O-H bisector and the molecular plane are kept\n               exactly, and the two hydrogens are placed at the MODEL's own bond length and\n               angle in that plane, H1 on the side H1 was on.  The model then runs on the\n               geometry it was parameterised for, and the price is the hydrogens' movement,\n               which this function's caller measures and records.\n\n      \"as_is\"  the record's own hydrogens are used unmoved and only the M site is placed,\n               on the record's own bisector at the model's d(OM).  The model runs on a\n               monomer it was never fitted to.  This is the SENSITIVITY leg: the spread\n               between the two rules is the placement's own cost, measured rather than\n               argued.\n\n    Returns `(sites, charges, oxygen_index, hydrogens_moved_bohr)` with `sites` in bohr.\n    ",
+  "primary_rule": "remap",
+  "force_is_its_own_derivative": {
+   "rule": "worst absolute |analytic net force on the acceptor - central difference of the interaction energy under a rigid translation of that molecule| at h = 1e-5 bohr, over every geometry and all three components",
+   "h_bohr": 1e-05,
+   "bar_hartree_per_bohr": 1e-08,
+   "worst": 1.90635285335361e-11,
+   "at": "linear_R2.3",
+   "pass": true
+  }
+ },
+ "mbpol": {
+  "available": false,
+  "reason_unavailable": "MBX_HOME is not set",
+  "implementation": "MBX (paesanilab/MBX), the Paesani group's own C++ library, through its python plugin; energies and gradients are the library's, converted to atomic units by the library's own conversion constants",
+  "mbx_home": "",
+  "mbx_commit": "",
+  "config": null
+ },
+ "rows": [
+  {
+   "node": "bentdonor_R2.9",
+   "family": "donor",
+   "held_out": false,
+   "tip4p2005_remap": -0.005339938464320043,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0004926431649480347,
+    -0.002853692489208656,
+    0.0012275110919866966
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278973906,
+   "tip4p2005_as_is": -0.007587805927769586,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0013704865235459475,
+    -0.0038402432030226405,
+    9.917916136296251e-05
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "flipped_R3.4",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": 0.005648208015888306,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.0005822121987535355,
+    0.0,
+    0.0027274666358003963
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": 0.00978565759900421,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0007697022812784558,
+    0.0,
+    0.0048220004426990926
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "linear_R2.3",
+   "family": "linear",
+   "held_out": false,
+   "tip4p2005_remap": 0.01907742430792536,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.0008159488428714839,
+    0.0,
+    0.1133018309371948
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878862,
+   "tip4p2005_as_is": 0.010186594688767092,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0023676266230630754,
+    0.0,
+    0.10581092907974353
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "linear_R2.5",
+   "family": "linear",
+   "held_out": false,
+   "tip4p2005_remap": -0.0044503050259019905,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.0001915887181985561,
+    0.0,
+    0.02856803576784032
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": -0.011033225168977201,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0019458345520777204,
+    0.0,
+    0.023620679058875188
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "linear_R2.7",
+   "family": "linear",
+   "held_out": false,
+   "tip4p2005_remap": -0.00974445629811957,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00010303440829530805,
+    0.0,
+    0.004375641469658249
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878862,
+   "tip4p2005_as_is": -0.01477035601415691,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.001600346997020595,
+    0.0,
+    0.0009622876095244717
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "linear_R2.9",
+   "family": "linear",
+   "held_out": false,
+   "tip4p2005_remap": -0.009862659625524073,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00023491660344552266,
+    0.0,
+    -0.002278456483554972
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327887895,
+   "tip4p2005_as_is": -0.013795825426118374,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0013203250907610582,
+    0.0,
+    -0.00471727961707593
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "linear_R3.1",
+   "family": "linear",
+   "held_out": false,
+   "tip4p2005_remap": -0.008655667560948987,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00028491907345492033,
+    0.0,
+    -0.0036672284409283995
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878862,
+   "tip4p2005_as_is": -0.01179705065087766,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.001094128668473048,
+    0.0,
+    -0.00546049148162895
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "linear_R3.4",
+   "family": "linear",
+   "held_out": false,
+   "tip4p2005_remap": -0.006634673677873404,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00028976283128201745,
+    0.0,
+    -0.0032633568052971886
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878862,
+   "tip4p2005_as_is": -0.008948191490500579,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0008333745107917598,
+    0.0,
+    -0.004444730503759747
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "linear_R3.7",
+   "family": "linear",
+   "held_out": false,
+   "tip4p2005_remap": -0.005022776742002827,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0002620439458011,
+    0.0,
+    -0.0024320190289576077
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878862,
+   "tip4p2005_as_is": -0.006779482799613157,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0006425746641913726,
+    0.0,
+    -0.0032442315550284054
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilted45_R3.1",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.008155500635187746,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00020136275942367527,
+    -0.0007539538149060278,
+    -0.003677578751945451
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388328088905,
+   "tip4p2005_as_is": -0.011193179163703909,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.000993596504697751,
+    -0.0009857528542030762,
+    -0.005533727364560516
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilted_R2.9",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.009673598024105362,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00018752160421596194,
+    -0.0005348413280988646,
+    -0.0023465547687332097
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": -0.013584028452738844,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0012724055415232701,
+    -0.0006774510841365954,
+    -0.00484265806726767
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twistbent_R3.2",
+   "family": "twistbent",
+   "held_out": false,
+   "tip4p2005_remap": -0.006570862703327879,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00033045121920416984,
+    -0.001779686646705154,
+    -0.0026638271997297958
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327887895,
+   "tip4p2005_as_is": -0.008842511934715608,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0008870926355077676,
+    -0.002334967074607022,
+    -0.003814018852064012
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twisted_R3.0",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": -0.0048118142138653675,
+   "tip4p2005_remap_force_on_acceptor": [
+    9.203495992046772e-05,
+    -0.004745614271864512,
+    -0.0013472833164151626
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883276648554,
+   "tip4p2005_as_is": -0.008128643719614831,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0004216164009149606,
+    -0.005474563986168517,
+    -0.0038345708121288666
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "dbent_R2.9_d15_a60",
+   "family": "dbent",
+   "held_out": false,
+   "tip4p2005_remap": -0.006300564261006947,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00011810046964086081,
+    -0.003253318947107893,
+    -0.0006556178260345158
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388328158727,
+   "tip4p2005_as_is": -0.009052101343936358,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.001119338707232196,
+    -0.004499553736187736,
+    -0.0026210352737843085
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "dbent_R2.9_d30_a90",
+   "family": "dbent",
+   "held_out": false,
+   "tip4p2005_remap": 0.0010604620417789812,
+   "tip4p2005_remap_force_on_acceptor": [
+    7.760050217344729e-05,
+    -0.004182659949596851,
+    0.004036068024252916
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278973906,
+   "tip4p2005_as_is": 0.001337710172566009,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0007897120255584463,
+    -0.006003696631508002,
+    0.00394272500185356
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "dbent_R2.9_d45_a45",
+   "family": "dbent",
+   "held_out": false,
+   "tip4p2005_remap": 0.00037683236318838964,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.000640195422012568,
+    -0.0030209625445534577,
+    0.004605401188359476
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327587156,
+   "tip4p2005_as_is": 6.473540702575664e-05,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0013281188343908597,
+    -0.004043683734607231,
+    0.004526053239894301
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "donor_R2.9_b15",
+   "family": "donor",
+   "held_out": false,
+   "tip4p2005_remap": -0.008546752931055224,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0003096354078666267,
+    -0.0019094728326225592,
+    -0.0012152868118008656
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388328158727,
+   "tip4p2005_as_is": -0.01196746631074938,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0013330331928512419,
+    -0.0026261548443255404,
+    -0.003229310587551902
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "donor_R2.9_b45",
+   "family": "donor",
+   "held_out": false,
+   "tip4p2005_remap": -0.001677721718649855,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0007107174773714703,
+    -0.002791822793746883,
+    0.0037455380011344533
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327887895,
+   "tip4p2005_as_is": -0.002709042944240292,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0014307048759623355,
+    -0.0036760713191226883,
+    0.0033954032254420244
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "donor_R2.9_b60",
+   "family": "donor",
+   "held_out": false,
+   "tip4p2005_remap": 0.0014385570673242365,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0009214705361478266,
+    -0.0022210959162526156,
+    0.005633704160301359
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278973906,
+   "tip4p2005_as_is": 0.0013567540734774897,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0015104770755101063,
+    -0.002890908235607857,
+    0.005777308895297671
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "donor_R2.9_b90",
+   "family": "donor",
+   "held_out": false,
+   "tip4p2005_remap": 0.005113265429438629,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0012962311352851521,
+    -0.000985758354203845,
+    0.0074611314521806915
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327887895,
+   "tip4p2005_as_is": 0.006141441376134066,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0017101511705185889,
+    -0.001331641287787823,
+    0.008038558035630056
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "donor_R3.1_b15",
+   "family": "donor",
+   "held_out": false,
+   "tip4p2005_remap": -0.0076737834233734925,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00033467313474922085,
+    -0.001356950777876778,
+    -0.002937415996326097
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388328158727,
+   "tip4p2005_as_is": -0.010435171970341162,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0011038363336305348,
+    -0.0018654097488775532,
+    -0.004443489788745196
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "donor_R3.1_b45",
+   "family": "donor",
+   "held_out": false,
+   "tip4p2005_remap": -0.0023937510677149165,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0006133007778216203,
+    -0.002084847165624327,
+    0.0006063823882028266
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878862,
+   "tip4p2005_as_is": -0.0033005413762620395,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0011784679007212626,
+    -0.002761774051110094,
+    0.00029768398918302713
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "donor_R3.1_b60",
+   "family": "donor",
+   "held_out": false,
+   "tip4p2005_remap": 0.00010108692657473384,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.000767219782625279,
+    -0.0017047870576539638,
+    0.002032379057657595
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278973906,
+   "tip4p2005_as_is": -2.2253745206979314e-05,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.001239436951896439,
+    -0.002236482281232499,
+    0.0021133443241647468
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "donor_R3.1_b90",
+   "family": "donor",
+   "held_out": false,
+   "tip4p2005_remap": 0.003159436939016713,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.001049098898854704,
+    -0.000796896333256228,
+    0.0034834321445899215
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878862,
+   "tip4p2005_as_is": 0.003994954714586357,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0013920160095429567,
+    -0.0010835204136228928,
+    0.003931852293456904
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R2.7_t120",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.0011986253285685144,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.0013955110602789757,
+    -0.006775298084846093,
+    0.005525371907413847
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": -0.003538255615818553,
+   "tip4p2005_as_is_force_on_acceptor": [
+    2.1089830885192423e-05,
+    -0.010198015077132635,
+    0.0013517249025436842
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R2.7_t150",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": 0.008050078922922477,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.002576651374824812,
+    -0.007591715167868716,
+    0.01086515166749357
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": 0.01097334957861329,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0011583400721136413,
+    -0.012913377831924186,
+    0.009050851149736035
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R2.7_t180",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": 0.01384749348312253,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.00337447029147353,
+    0.0,
+    0.015137167284562644
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878907,
+   "tip4p2005_as_is": 0.021084760696704313,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0018192328778991874,
+    0.0,
+    0.016305466979808683
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R2.7_t30",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.009598281124216262,
+   "tip4p2005_remap_force_on_acceptor": [
+    3.709617717178584e-05,
+    -0.0006102941202217646,
+    0.0042062658145032294
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": -0.014631110561093535,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0015455753104301013,
+    -0.0007508033364665163,
+    0.0006889486463278124
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R2.7_t60",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.008891823775306201,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.00018250562418760342,
+    -0.0016686514948575713,
+    0.0038179596211976655
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": -0.013858042127144116,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0013439993153326851,
+    -0.002145413861414728,
+    -5.621824786396223e-06
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R2.7_t90",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.006674802595918017,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.0006219431061499137,
+    -0.0037094116407493795,
+    0.003758541683592388
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878907,
+   "tip4p2005_as_is": -0.01111404712404257,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0008836486870456091,
+    -0.005086340098388875,
+    -0.0004811463031512628
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R2.9_t120",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.001966813485172192,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.0007757395821422495,
+    -0.004985268565024802,
+    -0.00017234764656984258
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": -0.0031199239008155855,
+   "tip4p2005_as_is_force_on_acceptor": [
+    2.160001669007476e-05,
+    -0.007578012638043469,
+    -0.002468843354929695
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R2.9_t150",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": 0.005426410138062776,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.0014502061574112783,
+    -0.005246651419789547,
+    0.004271697084661276
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": 0.008621962662866522,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0008762723529857968,
+    -0.008924705999884625,
+    0.004349981492321686
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R2.9_t180",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": 0.009814449651585372,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.0018564861969796705,
+    0.0,
+    0.007483941461044356
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878862,
+   "tip4p2005_as_is": 0.016289672487204226,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0013557257424617998,
+    0.0,
+    0.010009923704704347
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R2.9_t60",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.00888276242591124,
+   "tip4p2005_remap_force_on_acceptor": [
+    3.0958559693705645e-05,
+    -0.0013919568570753217,
+    -0.0024385224884844667
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883279928872,
+   "tip4p2005_as_is": -0.01264264902571094,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0010990498714436043,
+    -0.0018283996537326586,
+    -0.005087369907184926
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R2.9_t90",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.0067324992331013744,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.0002741647312194508,
+    -0.0029124301006508554,
+    -0.002086837542707297
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878907,
+   "tip4p2005_as_is": -0.009870205146118943,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0007143413267144925,
+    -0.004055233956682393,
+    -0.004856736569904589
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R3.1_t120",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.001608887681960658,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.00044658281863003014,
+    -0.003695157859274271,
+    -0.001358876665165619
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": -0.0021066299065699845,
+   "tip4p2005_as_is_force_on_acceptor": [
+    9.960319738650317e-06,
+    -0.005645360803972471,
+    -0.002631518886979496
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R3.1_t150",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": 0.004282611975517603,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.0008713568747897263,
+    -0.003687881105493007,
+    0.0021606326390875147
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": 0.007295671079317001,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0006940981193071336,
+    -0.006243179269505038,
+    0.002922025601077037
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R3.1_t180",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": 0.007624620507144186,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.001101928937467073,
+    0.0,
+    0.004522988724591094
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": 0.013107991768304794,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0010568576208576166,
+    0.0,
+    0.007131135240537677
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R3.1_t30",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.00845213039691689,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00024886549529545333,
+    -0.0004546508024429426,
+    -0.0036814082382597008
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": -0.011554716012404237,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0010519274685960522,
+    -0.0005863759994643946,
+    -0.005504788361001552
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R3.1_t60",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.007657573843725951,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00013056566713975405,
+    -0.0011418815198243914,
+    -0.00362670361921192
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883279928864,
+   "tip4p2005_as_is": -0.010569691888693528,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0009015891185687229,
+    -0.0015212052469235058,
+    -0.0055168175423520455
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R3.1_t90",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.0056742380850567375,
+   "tip4p2005_remap_force_on_acceptor": [
+    -9.517953111093987e-05,
+    -0.002278649599880177,
+    -0.003123802023915538
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878907,
+   "tip4p2005_as_is": -0.007949464416031948,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0005763376621806455,
+    -0.0032053142575369127,
+    -0.004988171847412452
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R3.4_t120",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.0008505803337611473,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.00020965793868272142,
+    -0.0024098871579484415,
+    -0.0011722577275226562
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": -0.0008703692868494983,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -9.84610521726566e-06,
+    -0.003692361186584414,
+    -0.0016925010051933795
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R3.4_t150",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": 0.003377820128122516,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.00046078350551711686,
+    -0.002252518885668364,
+    0.0012384870563515935
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": 0.005882812485959871,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0005178210240797795,
+    -0.003773346771895111,
+    0.0021753061355454587
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R3.4_t30",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.0064351647034468495,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0002638404080180434,
+    -0.00034896079341518993,
+    -0.0032410792399480415
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": -0.008699658776488983,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0007982513091030381,
+    -0.0004581507611808993,
+    -0.004431183095268264
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R3.4_t60",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.005700979221041791,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0001794709343324178,
+    -0.0008422125066996748,
+    -0.0031007321106038994
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883279928864,
+   "tip4p2005_as_is": -0.007757829574421948,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0006756078758347317,
+    -0.0011382762683175836,
+    -0.004293885823493434
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "tilt_R3.4_t90",
+   "family": "tilt",
+   "held_out": false,
+   "tip4p2005_remap": -0.004015915087699662,
+   "tip4p2005_remap_force_on_acceptor": [
+    2.2114150298723064e-05,
+    -0.001588741457680002,
+    -0.002576050693817257
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878907,
+   "tip4p2005_as_is": -0.005480080685763833,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0004188946979699758,
+    -0.0022576173686475283,
+    -0.003656793613802313
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R2.7_t0",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": -0.010116715992446124,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00014420611370713032,
+    0.0,
+    0.0041178050406255745
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878862,
+   "tip4p2005_as_is": -0.015176186031888167,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0014028917190994155,
+    0.0,
+    0.000691463634930646
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R2.7_t120",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": 0.051218318192105594,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.007431701767528687,
+    -0.017358792287227035,
+    0.07732837122878372
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883280372245,
+   "tip4p2005_as_is": 0.07248380053735798,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0017776402052035113,
+    -0.046955114326285755,
+    0.10946228147527014
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R2.7_t180",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": 0.0115657165341983,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00014860671516233595,
+    0.0,
+    0.012898869433513288
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878907,
+   "tip4p2005_as_is": 0.01797522738555285,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.002046499662729772,
+    0.0,
+    0.013407605507248538
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R2.7_t30",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": -0.00905518898380206,
+   "tip4p2005_remap_force_on_acceptor": [
+    7.764630607454788e-05,
+    -0.0024767249123495896,
+    0.004358477751694435
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.185138832803722,
+   "tip4p2005_as_is": -0.014182590810856571,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.001223399144233772,
+    -0.0026279737504828257,
+    0.0007304324173597818
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R2.7_t60",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": -0.0040613767844371595,
+   "tip4p2005_remap_force_on_acceptor": [
+    3.4803182679285245e-05,
+    -0.0077799224908286935,
+    0.006465561062022819
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883276648554,
+   "tip4p2005_as_is": -0.009282621489999532,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0005803619970700833,
+    -0.008580391765960049,
+    0.002009139788072732
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R2.7_t90",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": 0.013549529801626548,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0013520114761669203,
+    -0.02148169807739142,
+    0.02103046666947324
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388328229025,
+   "tip4p2005_as_is": 0.0102197086671377,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0006542027548059907,
+    -0.02749352987827912,
+    0.015230355222476857
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R3.0_t0",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": -0.009576480213122684,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0002584926091745254,
+    0.0,
+    -0.003466393628209559
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": -0.013109908293110317,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.00105215503092002,
+    0.0,
+    -0.005562395423535982
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R3.0_t120",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": 0.024074952153714135,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.001963815947096238,
+    -0.006421796428811936,
+    0.028312520159543914
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883280372245,
+   "tip4p2005_as_is": 0.034012889614904035,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0014955613481399015,
+    -0.015533429998361688,
+    0.040151124982821654
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R3.0_t180",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": 0.007236242195861192,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.00013815277922236643,
+    0.0,
+    0.004500314114377464
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327887895,
+   "tip4p2005_as_is": 0.01269418428474986,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0015911604191102913,
+    0.0,
+    0.006730547374617653
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R3.0_t30",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": -0.008674019496902441,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00019956434478689603,
+    -0.0016593809384495744,
+    -0.003170109877974392
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": -0.012196051181762674,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0009128998834613976,
+    -0.0018321398801852502,
+    -0.005357591141056481
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R3.0_t90",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": 0.0063566928209931595,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00044901518823805046,
+    -0.010564769607616176,
+    0.007288330524893069
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883282290283,
+   "tip4p2005_as_is": 0.005060563309608829,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0005223529796319858,
+    -0.014179742715885438,
+    0.005229354755542044
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R3.4_t0",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": -0.006794526285475472,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0002622073195234309,
+    0.0,
+    -0.0033577956718392997
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883278878862,
+   "tip4p2005_as_is": -0.00912699447443599,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0007305951019008104,
+    0.0,
+    -0.004547697194062509
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R3.4_t120",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": 0.011112276726448461,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.0002843401410793176,
+    -0.002461321786948762,
+    0.009925420713063834
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883276648554,
+   "tip4p2005_as_is": 0.015641125564872238,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.001042938113342639,
+    -0.005375990632680897,
+    0.014047096788167315
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R3.4_t180",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": 0.004930533545627752,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.00025618708594744746,
+    0.0,
+    0.0021648724243625156
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.1851388327589573,
+   "tip4p2005_as_is": 0.008779370998223068,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0011183628494602544,
+    0.0,
+    0.004037168931937594
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R3.4_t30",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": -0.0061030753222038325,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00021369037987190227,
+    -0.0009996516674017665,
+    -0.003104754557961442
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.185138832803722,
+   "tip4p2005_as_is": -0.008383062160058102,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0006303062265719094,
+    -0.0011445499747970052,
+    -0.004321991969306334
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R3.4_t60",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": -0.0034045555985662,
+   "tip4p2005_remap_force_on_acceptor": [
+    9.152900585327416e-05,
+    -0.0025851632995389485,
+    -0.0018375378662608133
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883280372298,
+   "tip4p2005_as_is": -0.005371736599050769,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.00028500550852731993,
+    -0.003103440615130159,
+    -0.0030905152330436697
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twist_R3.4_t90",
+   "family": "twist",
+   "held_out": false,
+   "tip4p2005_remap": 0.0030474746587842994,
+   "tip4p2005_remap_force_on_acceptor": [
+    6.1009175682217144e-05,
+    -0.00469722174009477,
+    0.0025402051927327987
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883282290228,
+   "tip4p2005_as_is": 0.0026313521027087616,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0003607022227786912,
+    -0.006500534476111393,
+    0.0019454116028450492
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twistbent_R3.0_tw90_t30_d20",
+   "family": "twistbent",
+   "held_out": false,
+   "tip4p2005_remap": -0.004899571438755274,
+   "tip4p2005_remap_force_on_acceptor": [
+    0.00033979230345353205,
+    -0.003808704176038143,
+    -0.00043142411915866874
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883276731166,
+   "tip4p2005_as_is": -0.007336245632978217,
+   "tip4p2005_as_is_force_on_acceptor": [
+    0.0009428721692034642,
+    -0.004801614816557018,
+    -0.0018786056650123908
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  },
+  {
+   "node": "twistbent_R2.7_tw20_t85_d0",
+   "family": "twistbent",
+   "held_out": true,
+   "tip4p2005_remap": -0.0062583062806423895,
+   "tip4p2005_remap_force_on_acceptor": [
+    -0.0032927005335233865,
+    -0.004283940688349126,
+    0.004517950928763517
+   ],
+   "tip4p2005_remap_hydrogen_moved_bohr": 0.18513883276248666,
+   "tip4p2005_as_is": -0.011588607941332263,
+   "tip4p2005_as_is_force_on_acceptor": [
+    -0.0021501221459210716,
+    -0.00531619241366809,
+    -0.0003658909091062215
+   ],
+   "tip4p2005_as_is_hydrogen_moved_bohr": 0.0
+  }
+ ],
+ "plants": {
+  "i": {
+   "rule": "TIP4P/2005's charges set to an exact zero: the interaction must move by exactly the Coulomb sum, which is computed here by the same routine with the Lennard-Jones term alone left standing",
+   "node": "twistbent_R2.7_tw20_t85_d0",
+   "sector": "the electrostatic sector of the classical reference",
+   "carrier": -0.010995874965869769,
+   "carrier_nonzero_in_that_sector": true,
+   "energy_full": -0.0062583062806423895,
+   "energy_charges_off": 0.0047375686852273785,
+   "moved": -0.010995874965869769,
+   "miss": 0.0,
+   "fires": true
+  }
+ },
+ "seconds": 0.07027149200439453
+}

@@ -1,0 +1,666 @@
+{
+ "phase": "gate",
+ "campaign": "COMPARE-0",
+ "freeze": "../COMPARE0_PREREG.md (DRAFT)",
+ "no_new_solves": true,
+ "geometries": 65,
+ "map_nodes": 64,
+ "held_out": 1,
+ "engine_gates": {
+  "g_t0": {
+   "pass": true,
+   "rule": "|table(y_i) - value_i| <= 1.000000000000e-12 at every SITE",
+   "worst": 9.992007221626e-16
+  },
+  "g_c1": {
+   "pass": true,
+   "rule": "|engine e_seam - this runner's own channel sum| <= 1.000000000000e-10 on every geometry",
+   "worst": 9.020562075079e-16,
+   "at": "linear_R2.3"
+  },
+  "g_x0": {
+   "pass": true,
+   "rule": "this runner's served total, field, seam and table reading for the held-out node against ct3/gate.json's own filed numbers, <= 1.000000000000e-12",
+   "worst": 2.99239799606e-15,
+   "total": 2.99239799606e-15,
+   "field": 2.589074787895e-16,
+   "seam": 2.242346933135e-15,
+   "table": 2.09554595898e-15,
+   "geometry_worst_bohr": 3.31349891982e-11
+  },
+  "g_f0": {
+   "pass": true,
+   "rule": "THE GATE is the HELD-OUT node, which is not a knot of the table: worst ABSOLUTE |analytic interaction force - central difference of the interaction energy| at h = 1.000000000000e-5 over 6 atoms x 3 coordinates, bar 1.000000000000e-8 hartree per bohr. The relative reading beside it is scaled by the NODE's own largest force component, never by the component being differenced, because a component through zero makes a relative reading meaningless.",
+   "worst_absolute": 2.343126560833e-11,
+   "worst_relative_to_node": 1.808162500819e-09,
+   "at": "twistbent_R2.7_tw20_t85_d0",
+   "knot_leg": {
+    "rule": "the two deepest-transfer MAP nodes, which ARE knots: a central difference at a knot of an r^3 polyharmonic kernel carries that kernel's own third-derivative discontinuity, so this leg is REPORTED and does not gate",
+    "worst_absolute": 7.63907253426e-11,
+    "worst_relative_to_node": 1.962838965322e-09,
+    "at": "linear_R2.5"
+   },
+   "checked": 54,
+   "translation_sum_worst": 1.951563910474e-17
+  }
+ },
+ "law": "../conformance/water_observatory/ct3/wall_ct3.json (contacts) + ../conformance/water_observatory/ct2/wall_ct2.json (walls, charge, c0)",
+ "references": {
+  "mbpol": {
+   "available": false,
+   "reason_unavailable": "MBX_HOME is not set",
+   "implementation": "MBX (paesanilab/MBX), the Paesani group's own C++ library, through its python plugin; energies and gradients are the library's, converted to atomic units by the library's own conversion constants",
+   "mbx_home": "",
+   "mbx_commit": ""
+  },
+  "tip4p2005": {
+   "source": "J. L. F. Abascal and C. Vega, 'A general purpose model for the condensed phases of water: TIP4P/2005', J. Chem. Phys. 123, 234505 (2005) -- the model-parameter table (TIP4P/2005 column): d(OH) = 0.9572 A, HOH = 104.52 deg, d(OM) = 0.1546 A, q(H) = 0.5564 e, sigma = 3.1589 A, eps/k_B = 93.2 K.",
+   "parameters": {
+    "d_oh_angstrom": 0.9572,
+    "angle_hoh_degrees": 104.52,
+    "d_om_angstrom": 0.1546,
+    "q_h_e": 0.5564,
+    "sigma_angstrom": 3.1589,
+    "epsilon_over_kb_kelvin": 93.2
+   },
+   "primary_placement_rule": "remap"
+  },
+  "constants": {
+   "bohr_radius_angstrom": {
+    "value": 0.529177210544,
+    "source": "scipy.constants.physical_constants['Bohr radius'] (CODATA)"
+   },
+   "hartree_per_kelvin": {
+    "value": 3.1668115634564e-06,
+    "source": "scipy.constants.physical_constants['kelvin-hartree relationship'] (CODATA)"
+   }
+  }
+ },
+ "units": "hartree for every energy; hartree per bohr for every force",
+ "by_family": {
+  "dbent": {
+   "served_error": {
+    "n": 3,
+    "rms": 0.0007567401837786603,
+    "max_abs": 0.0011308257595376,
+    "max_at": "dbent_R2.9_d45_a45",
+    "mean_signed": 0.0004273898156333001
+   },
+   "tip4p2005_remap_error": {
+    "n": 3,
+    "rms": 0.0008746613238809889,
+    "max_abs": 0.0011043591235742898,
+    "max_at": "dbent_R2.9_d45_a45",
+    "mean_signed": 0.00018185931961720798
+   },
+   "tip4p2005_as_is_error": {
+    "n": 3,
+    "rms": 0.002224156300274802,
+    "max_abs": 0.0037089284122053586,
+    "max_at": "dbent_R2.9_d15_a60",
+    "mean_signed": -0.000746935983151131
+   },
+   "depth": {
+    "mean_de_exact": -0.0018029492716304001,
+    "deepest": -0.005343172931731
+   },
+   "interpolant": {
+    "n": 3,
+    "rms": 0.0,
+    "max_abs": 0.0,
+    "max_at": "dbent_R2.9_d15_a60",
+    "mean_signed": 0.0
+   },
+   "interpolant_leave_one_out": {
+    "n": 3,
+    "rms": 6.466500249735807e-05,
+    "max_abs": 8.653167646568e-05,
+    "max_at": "dbent_R2.9_d15_a60",
+    "median": 5.073451421143e-05
+   },
+   "ct_family_error": {
+    "n": 3,
+    "rms": 0.0013949203925189347,
+    "max_abs": 0.0023232720539550014,
+    "max_at": "dbent_R2.9_d15_a60",
+    "mean_signed": 0.001008933654403667
+   }
+  },
+  "donor": {
+   "served_error": {
+    "n": 9,
+    "rms": 0.0008947148444994726,
+    "max_abs": 0.0015772691034739998,
+    "max_at": "donor_R2.9_b90",
+    "mean_signed": 0.0006860029938148978
+   },
+   "tip4p2005_remap_error": {
+    "n": 9,
+    "rms": 0.002460290279018398,
+    "max_abs": 0.0038135260585812234,
+    "max_at": "donor_R2.9_b15",
+    "mean_signed": -0.00036702184764094857
+   },
+   "tip4p2005_as_is_error": {
+    "n": 9,
+    "rms": 0.004109591493282357,
+    "max_abs": 0.00723423943827538,
+    "max_at": "donor_R2.9_b15",
+    "mean_signed": -0.0013347474995978716
+   },
+   "depth": {
+    "mean_de_exact": -0.0013907116237767423,
+    "deepest": -0.004733226872474
+   },
+   "interpolant": {
+    "n": 9,
+    "rms": 3.3342270696060414e-16,
+    "max_abs": 1.0000680839006293e-15,
+    "max_at": "bentdonor_R2.9",
+    "mean_signed": -1.133412904425541e-16
+   },
+   "interpolant_leave_one_out": {
+    "n": 9,
+    "rms": 2.202979230965748e-05,
+    "max_abs": 4.172969161804e-05,
+    "max_at": "donor_R2.9_b60",
+    "median": 1.820976639431e-05
+   },
+   "ct_family_error": {
+    "n": 9,
+    "rms": 0.0004088567654310858,
+    "max_abs": 0.0006972153817180003,
+    "max_at": "donor_R3.1_b15",
+    "mean_signed": -0.00037070533776790103
+   }
+  },
+  "linear": {
+   "served_error": {
+    "n": 7,
+    "rms": 0.004457351569627697,
+    "max_abs": 0.011637652059479999,
+    "max_at": "linear_R2.3",
+    "mean_signed": 0.001805849259477714
+   },
+   "tip4p2005_remap_error": {
+    "n": 7,
+    "rms": 0.004631150326378128,
+    "max_abs": 0.006957212505912991,
+    "max_at": "linear_R2.5",
+    "mean_signed": -0.004456368854633784
+   },
+   "tip4p2005_as_is_error": {
+    "n": 7,
+    "rms": 0.009545736651037114,
+    "max_abs": 0.013540132648988202,
+    "max_at": "linear_R2.5",
+    "mean_signed": -0.008977000603066828
+   },
+   "depth": {
+    "mean_de_exact": 0.0008430667657129999,
+    "deepest": -0.005480012319993
+   },
+   "interpolant": {
+    "n": 7,
+    "rms": 5.784421579115451e-07,
+    "max_abs": 1.5181804600000737e-06,
+    "max_at": "linear_R2.7",
+    "mean_signed": -2.4447151915727006e-07
+   },
+   "interpolant_leave_one_out": {
+    "n": 7,
+    "rms": 0.0006384298044433261,
+    "max_abs": 0.001679895621105,
+    "max_at": "linear_R2.3",
+    "median": 3.144957895386e-05
+   },
+   "ct_family_error": {
+    "n": 7,
+    "rms": 0.003051519852400684,
+    "max_abs": 0.007762308603760003,
+    "max_at": "linear_R2.3",
+    "mean_signed": -0.0017811047550030429
+   }
+  },
+  "tilt": {
+   "served_error": {
+    "n": 25,
+    "rms": 0.0015011545138031521,
+    "max_abs": 0.005481105302639996,
+    "max_at": "tilt_R2.7_t180",
+    "mean_signed": -0.0007252423451064319
+   },
+   "tip4p2005_remap_error": {
+    "n": 25,
+    "rms": 0.011205205888772073,
+    "max_abs": 0.03942751273891747,
+    "max_at": "tilt_R2.7_t180",
+    "mean_signed": -0.006512366225889517
+   },
+   "tip4p2005_as_is_error": {
+    "n": 25,
+    "rms": 0.010174268648879466,
+    "max_abs": 0.032190245525335684,
+    "max_at": "tilt_R2.7_t180",
+    "mean_signed": -0.0069683470317977525
+   },
+   "depth": {
+    "mean_de_exact": 0.004748426899540284,
+    "deepest": -0.007083325712586
+   },
+   "interpolant": {
+    "n": 25,
+    "rms": 7.091091944598983e-05,
+    "max_abs": 0.00035453211747000016,
+    "max_at": "tilt_R2.7_t180",
+    "mean_signed": -1.4021584484e-05
+   },
+   "interpolant_leave_one_out": {
+    "n": 25,
+    "rms": 0.00014752486832556646,
+    "max_abs": 0.0005718832580935,
+    "max_at": "tilt_R2.7_t180",
+    "median": 3.463834865558e-05
+   },
+   "ct_family_error": {
+    "n": 25,
+    "rms": 0.0019522578191894088,
+    "max_abs": 0.005820978195780001,
+    "max_at": "tilt_R2.7_t90",
+    "mean_signed": 0.0007736385384980801
+   }
+  },
+  "twist": {
+   "served_error": {
+    "n": 18,
+    "rms": 0.0020349014814935074,
+    "max_abs": 0.005500339190589995,
+    "max_at": "twist_R3.0_t120",
+    "mean_signed": 3.517706453932211e-05
+   },
+   "tip4p2005_remap_error": {
+    "n": 18,
+    "rms": 0.024715038786756415,
+    "max_abs": 0.08761698384009439,
+    "max_at": "twist_R2.7_t120",
+    "mean_signed": -0.013659987835480877
+   },
+   "tip4p2005_as_is_error": {
+    "n": 18,
+    "rms": 0.020521368547112076,
+    "max_abs": 0.06635150149484201,
+    "max_at": "twist_R2.7_t120",
+    "mean_signed": -0.012879629837380863
+   },
+   "depth": {
+    "mean_de_exact": 0.01757632026539966,
+    "deepest": -0.005338559360979
+   },
+   "interpolant": {
+    "n": 18,
+    "rms": 8.357009851490338e-05,
+    "max_abs": 0.00035453211747000016,
+    "max_at": "twist_R2.7_t180",
+    "mean_signed": 1.9569495152333308e-05
+   },
+   "interpolant_leave_one_out": {
+    "n": 18,
+    "rms": 0.0006821612585564728,
+    "max_abs": 0.002277118271365,
+    "max_at": "twist_R2.7_t120",
+    "median": 0.00020917824758
+   },
+   "ct_family_error": {
+    "n": 18,
+    "rms": 0.003439956436673673,
+    "max_abs": 0.00903114854603,
+    "max_at": "twist_R2.7_t90",
+    "mean_signed": -0.0022241128666033888
+   }
+  },
+  "twistbent": {
+   "served_error": {
+    "n": 3,
+    "rms": 0.0015010092675999012,
+    "max_abs": 0.0025826539702719998,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -0.0007290183864983333
+   },
+   "tip4p2005_remap_error": {
+    "n": 3,
+    "rms": 0.0032465528983652097,
+    "max_abs": 0.0035102910208873895,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -0.0032384116358675137
+   },
+   "tip4p2005_as_is_error": {
+    "n": 3,
+    "rms": 0.006775348397869077,
+    "max_abs": 0.008840592681577263,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -0.006584619997967695
+   },
+   "depth": {
+    "mean_de_exact": -0.002671168505041,
+    "deepest": -0.003314264520014
+   },
+   "interpolant": {
+    "n": 3,
+    "rms": 0.0009946605204602164,
+    "max_abs": 0.0017228025577199976,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -0.0005742675192403325
+   },
+   "interpolant_leave_one_out": {
+    "n": 3,
+    "rms": 0.0009991558711494324,
+    "max_abs": 0.001722802557718,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "median": 0.0001639319494784
+   },
+   "ct_family_error": {
+    "n": 3,
+    "rms": 0.0027028764229688165,
+    "max_abs": 0.004293634409910003,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": 0.0006062604915016676
+   }
+  },
+  "ALL": {
+   "served_error": {
+    "n": 65,
+    "rms": 0.002096256814609373,
+    "max_abs": 0.011637652059479999,
+    "max_at": "linear_R2.3",
+    "mean_signed": 6.341762801999719e-06
+   },
+   "tip4p2005_remap_error": {
+    "n": 65,
+    "rms": 0.01486991701264518,
+    "max_abs": 0.08761698384009439,
+    "max_at": "twist_R2.7_t120",
+    "mean_signed": -0.006959328803782303
+   },
+   "tip4p2005_as_is_error": {
+    "n": 65,
+    "rms": 0.013074093420229525,
+    "max_abs": 0.06635150149484201,
+    "max_at": "twist_R2.7_t120",
+    "mean_signed": -0.007736744808138531
+   },
+   "depth": {
+    "mean_de_exact": 0.006385340718179802,
+    "deepest": -0.007083325712586
+   },
+   "interpolant": {
+    "n": 65,
+    "rms": 0.0002225540992849569,
+    "max_abs": 0.0017228025577199976,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -2.650465473406337e-05
+   },
+   "interpolant_leave_one_out": {
+    "n": 65,
+    "rms": 0.0004769337886940342,
+    "max_abs": 0.002277118271365,
+    "max_at": "twist_R2.7_t120",
+    "median": 3.463834865558e-05
+   },
+   "ct_family_error": {
+    "n": 65,
+    "rms": 0.0024891243134370247,
+    "max_abs": 0.00903114854603,
+    "max_at": "twist_R2.7_t90",
+    "mean_signed": -0.0004869471849788523
+   }
+  },
+  "BOUND": {
+   "served_error": {
+    "n": 37,
+    "rms": 0.000673996412543617,
+    "max_abs": 0.0025826539702719998,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -5.955045966271946e-05
+   },
+   "tip4p2005_remap_error": {
+    "n": 37,
+    "rms": 0.0032157665934468387,
+    "max_abs": 0.006467999699418059,
+    "max_at": "twist_R2.7_t30",
+    "mean_signed": -0.0027295705388942926
+   },
+   "tip4p2005_as_is_error": {
+    "n": 37,
+    "rms": 0.0063078196125081094,
+    "max_abs": 0.011595401526472572,
+    "max_at": "twist_R2.7_t30",
+    "mean_signed": -0.005595180205203342
+   },
+   "depth": {
+    "mean_de_exact": -0.003701100836251124,
+    "deepest": -0.007083325712586
+   },
+   "interpolant": {
+    "n": 37,
+    "rms": 0.0002832272193182279,
+    "max_abs": 0.0017228025577199976,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -4.656223128957026e-05
+   },
+   "interpolant_leave_one_out": {
+    "n": 37,
+    "rms": 0.0002947869099106251,
+    "max_abs": 0.001722802557718,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "median": 3.144957895386e-05
+   },
+   "ct_family_error": {
+    "n": 37,
+    "rms": 0.0018077611575439284,
+    "max_abs": 0.005820978195780001,
+    "max_at": "tilt_R2.7_t90",
+    "mean_signed": 0.00028173132188817325
+   }
+  },
+  "UNBOUND": {
+   "served_error": {
+    "n": 28,
+    "rms": 0.0030985076365154843,
+    "max_abs": 0.011637652059479999,
+    "max_at": "linear_R2.3",
+    "mean_signed": 9.34136282018072e-05
+   },
+   "tip4p2005_remap_error": {
+    "n": 28,
+    "rms": 0.022352544877965945,
+    "max_abs": 0.08761698384009439,
+    "max_at": "twist_R2.7_t120",
+    "mean_signed": -0.012548652225241458
+   },
+   "tip4p2005_as_is_error": {
+    "n": 28,
+    "rms": 0.01855339490852967,
+    "max_abs": 0.06635150149484201,
+    "max_at": "twist_R2.7_t120",
+    "mean_signed": -0.010566669462017172
+   },
+   "depth": {
+    "mean_de_exact": 0.01971385277224924,
+    "deepest": 0.000121250136857
+   },
+   "interpolant": {
+    "n": 28,
+    "rms": 9.475870198143563e-05,
+    "max_abs": 0.00035453211747000016,
+    "max_at": "tilt_R2.7_t180",
+    "mean_signed": -6.989231861915484e-19
+   },
+   "interpolant_leave_one_out": {
+    "n": 28,
+    "rms": 0.0006428175868352305,
+    "max_abs": 0.002277118271365,
+    "max_at": "twist_R2.7_t120",
+    "median": 0.0001205144795878
+   },
+   "ct_family_error": {
+    "n": 28,
+    "rms": 0.003172465665706972,
+    "max_abs": 0.00903114854603,
+    "max_at": "twist_R2.7_t90",
+    "mean_signed": -0.0015027009261959934
+   }
+  },
+  "HELD_OUT": {
+   "served_error": {
+    "n": 1,
+    "rms": 0.0025826539702719998,
+    "max_abs": 0.0025826539702719998,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -0.0025826539702719998
+   },
+   "tip4p2005_remap_error": {
+    "n": 1,
+    "rms": 0.0035102910208873895,
+    "max_abs": 0.0035102910208873895,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -0.0035102910208873895
+   },
+   "tip4p2005_as_is_error": {
+    "n": 1,
+    "rms": 0.008840592681577263,
+    "max_abs": 0.008840592681577263,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -0.008840592681577263
+   },
+   "depth": {
+    "mean_de_exact": -0.002748015259755,
+    "deepest": -0.002748015259755
+   },
+   "interpolant": {
+    "n": 1,
+    "rms": 0.0017228025577199976,
+    "max_abs": 0.0017228025577199976,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -0.0017228025577199976
+   },
+   "interpolant_leave_one_out": {
+    "n": 1,
+    "rms": 0.001722802557718,
+    "max_abs": 0.001722802557718,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "median": 0.001722802557718
+   },
+   "ct_family_error": {
+    "n": 1,
+    "rms": 0.004293634409910003,
+    "max_abs": 0.004293634409910003,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": 0.004293634409910003
+   }
+  }
+ },
+ "the_two_errors_kept_apart": {
+  "interpolant_rule": "the CT-3 table against the exact E_CT. In sample it is an exact zero, so the gauge is leave-one-out on the map and the direct miss on the node held out from the table.",
+  "hamiltonian_rule": "MB-pol against the exact FCI/STO-3G interaction energy on the same geometry. This is the minimal basis's own error and no model on this record is charged with it; it is the number the basis lane I-5 must close."
+ },
+ "cost_of_one_reading": {
+  "exact_solve_core_seconds_per_node": {
+   "n": 65,
+   "mean": 3470.595846153846,
+   "min": 2652.5299999999997,
+   "max": 5150.79,
+   "rule": "the records' own exact.cpu_seconds + sector.cpu_seconds; the price of ONE point of the truth this campaign scores against"
+  },
+  "served_law_seconds_all_geometries": 397.009810411,
+  "served_law_cpu_seconds": 499.34,
+  "references_seconds_all_geometries": 0.07027149200439453,
+  "note": "the served law's wall time here is dominated by the engine's scene construction (one Sim per evaluation, twice per geometry for the far reference, and 36 more per finite-difference node), not by the law's arithmetic; it is reported as measured and is not a per-evaluation cost model for the liquid"
+ },
+ "forces": {
+  "exact_forces_present": false,
+  "why": "no record in ct1/, ct2/ or ct3/ carries a force: the exact solves stored energies only. Nothing here is scored against a true force.",
+  "owed": "exact (FCI/STO-3G) forces on at least the held-out node and one node per family, so the served law's force can be scored against truth rather than against another model",
+  "what_is_reported": "the served law's analytic interaction force against MB-pol's, per atom and as the net force on the acceptor; and TIP4P/2005's net force on the acceptor, which is the only force a rigid model on a remapped geometry can be compared on"
+ },
+ "fences": {
+  "in_sample": {
+   "rule": "SIXTY-FOUR of the sixty-five geometries are the served law's OWN fit set: the table is EXACT at every one of them by construction and C1's two contact amplitudes were fitted on their residual. TIP4P/2005 saw none of them. So the all-65 RMS comparison is IN-SAMPLE against OUT-OF-SAMPLE and is not an accuracy claim; the one honest out-of-sample number on this record is the single held-out node.",
+   "served_rms_in_sample": 0.002087757916707514,
+   "served_error_held_out": -0.0025826539702719998,
+   "tip4p2005_remap_error_held_out": -0.0035102910208873895,
+   "held_out_node": "twistbent_R2.7_tw20_t85_d0"
+  },
+  "the_truth_is_sto_3g": "every error here is against a full CI solve in the MINIMAL basis. Both reference models are built for real water, so neither is being scored on what it was made for. The reading that survives this fence is the Hamiltonian gap, and it is reported apart.",
+  "sign_census": {
+   "rule": "how many of the sixty-five the minimal-basis Hamiltonian even binds",
+   "bound": 37,
+   "unbound": 28,
+   "deepest": "tilt_R2.9_t60",
+   "deepest_hartree": -0.007083325712586,
+   "most_repulsive": "twist_R2.7_t120",
+   "most_repulsive_hartree": 0.1388353020322
+  }
+ },
+ "g_p0": {
+  "rule": "the maximum hydrogen movement the remap rule imposes, per geometry, and the interaction energy under BOTH rules. Where the spread between the rules exceeds 0.25 of TIP4P/2005's own error against the exact, the classical reference's number is reported WITH that spread as its bar and no sharper claim is made.",
+  "max_hydrogen_moved_bohr": 0.18513883282290283,
+  "median_abs_spread_hartree": 0.0030376785285161634,
+  "max_abs_spread_hartree": 0.021265482345252384,
+  "geometries_where_the_spread_exceeds_a_quarter_of_the_error": 53,
+  "of": 65,
+  "verdict": "the classical reference's number carries the placement spread as its bar on 53 of 65 geometries"
+ },
+ "g_p1": {
+  "rule": "worst absolute |analytic net force on the acceptor - central difference of the interaction energy under a rigid translation of that molecule| at h = 1e-5 bohr, over every geometry and all three components",
+  "h_bohr": 1e-05,
+  "bar_hartree_per_bohr": 1e-08,
+  "worst": 1.90635285335361e-11,
+  "at": "linear_R2.3",
+  "pass": true
+ },
+ "plants": {
+  "i": {
+   "rule": "TIP4P/2005's charges set to an exact zero: the interaction must move by exactly the Coulomb sum, which is computed here by the same routine with the Lennard-Jones term alone left standing",
+   "node": "twistbent_R2.7_tw20_t85_d0",
+   "sector": "the electrostatic sector of the classical reference",
+   "carrier": -0.010995874965869769,
+   "carrier_nonzero_in_that_sector": true,
+   "energy_full": -0.0062583062806423895,
+   "energy_charges_off": 0.0047375686852273785,
+   "moved": -0.010995874965869769,
+   "miss": 0.0,
+   "fires": true
+  }
+ },
+ "branches": {
+  "rule": "the freeze's \u00a73 order: the FIRST that fires is the choice",
+  "served_rms_all": 0.002096256814609373,
+  "leave_one_out_rms_all": 0.0004769337886940342,
+  "family_share_of_squared_error": {
+   "dbent": 0.006014679847408137,
+   "donor": 0.025223738988994677,
+   "linear": 0.4869108907623373,
+   "tilt": 0.1972370371699816,
+   "twist": 0.2609497886930018,
+   "twistbent": 0.023663864538276506
+  },
+  "family_share_of_geometries": {
+   "dbent": 0.046153846153846156,
+   "donor": 0.13846153846153847,
+   "linear": 0.1076923076923077,
+   "tilt": 0.38461538461538464,
+   "twist": 0.27692307692307694,
+   "twistbent": 0.046153846153846156
+  },
+  "worst_served_error_node": "linear_R2.3",
+  "worst_served_error": 0.011637652059479999,
+  "hamiltonian_gap_rms": null,
+  "1_larger_basis_fires": null,
+  "1_note": "VOID: MB-pol did not run, so the Hamiltonian gap has no number and branch 1 cannot be tested. No later branch may be declared the choice while the first is VOID.",
+  "2_more_table_coverage_fires": false,
+  "3_better_angular_representation_fires": true,
+  "3_concentrated_families": [],
+  "4_many_body_polarisation": "a REFERRAL only; a dimer set cannot see a three-body term",
+  "fired": null
+ }
+}

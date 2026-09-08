@@ -126,6 +126,11 @@ anything to select, and only then can R3's window and the campaign's price be de
 
 ## What is owed, plainly
 
+*Superseded in part by the section **PAID (2026-09-08)** at the end of this note: items 1,
+2 and 5 are now paid and their numbers are there. The "Not built" and "Not run" markings
+below are kept as this list stood when the defect was diagnosed, because a list that
+quietly rewrites itself is not a record.*
+
 1. The smooth serving rule, built and gated as above. **Not built.**
 2. The step sweep re-run under it. **Not run.**
 3. LIQUID-2's gate re-run at the step the rule then selects; the records now under
@@ -157,3 +162,196 @@ anything to select, and only then can R3's window and the campaign's price be de
 - The step is chosen by NVE runs from identical checkpoints at several steps over EQUAL physical
   durations, by energy fluctuation and observable convergence — the sweep above varied duration
   with the step.
+
+
+## PAID (2026-09-08): the smooth serving rule is built, derived, gated, and the drift is closed
+
+*Records under `conformance/water_observatory/ct3/smooth/`, every one `dry: true`. The engine
+change is `seam.rs`'s `CtServe::{Argmin, Blend}` with `CtTable::serve_blend`, and
+`sim.rs::accumulate_seam`'s blend branch; the runner is `examples/ct3_smooth.rs`; the gates are
+`tests/ct3_smooth.rs` and `ct3/smooth/gate.json`. The argmin path is untouched — CT-3's own
+`ct3/gate.json` re-runs field for field, timings aside.*
+
+### The finding, first
+
+**The drift defect is closed.** Same box, same seed, same settling, same 2,000 counted frames,
+same ledger rebase — the three arms now read:
+
+| arm | serving rule | drift peak, Ha | against the channel-6-off control |
+|---|---|---|---|
+| `x1_ct3-noct` (this session) | channel 6 OFF | **4.719994550e-6** | 1.0000 |
+| `drift_ct3-blend` | the BLEND | **4.984881116e-6** | **1.0561** |
+| `x1_ct3` (the note's own arm) | the ARGMIN | 6.584681837e-3 | 1394.6 |
+
+The gate was `2x` the control. The blend comes in at `1.06x` — and **1,321 times** below the
+argmin it replaces. The control was RE-MEASURED here rather than cited and reproduces LIQUID-2's
+own record exactly (`4.71999455e-6`), which is what says this is LIQUID-2's box and not a box
+that resembles it.
+
+### The rule, as built
+
+```text
+E_pair = Σ_k w_k · S(r_k) · E_table(coords_k)          over the FOUR cross-unit H···O contacts
+w_k    = e^{−β r_k} / Σ_j e^{−β r_j}
+−∇E    = −Σ_k w_k ∇Ẽ_k − Σ_k Ẽ_k ∇w_k,   ∇w_k = w_k(−β ∇r_k + β Σ_j w_j ∇r_j)
+```
+
+on all five atoms of all four contacts. Both force terms are carried — the second is the one
+this note's first specification omitted and the second review caught — collected as
+`−β Σ_k w_k (Ẽ_k − E) ∇r_k`, with `∇r_k` on contact `k`'s own hydrogen and acceptor oxygen. The
+switch applies PER CONTACT: a contact at or past `r_cut` contributes an exact zero to the energy
+and to both force terms while still carrying its weight, so the pair is skipped only when every
+contact is out.
+
+`CtServe::Argmin` is the default and the selector lives on the TABLE, so every record written
+before this rule still reads the argmin, bit for bit.
+
+### β, DERIVED — every input a record's, nothing typed
+
+At each of the map's 64 nodes, the shortest and second-shortest cross-unit H···O contact. Over
+four contacts the second's weight is at most `1/(1 + e^{βΔr})`; require it below the table's own
+resolution floor as a fraction of that node's `|E_CT|`, which is `β > ln(|E_CT|/floor − 1)/Δr`:
+
+| | |
+|---|---|
+| the table's resolution floor | `7.090642e-4` Ha — the largest pole spread in `ct3/ct_table.json` |
+| the geometry records' own resolution | `1e-10` bohr — the decimals `ct2/node_*.json` and `ct2/gd0_*.json` print |
+| the smallest REAL separation `Δr_min` | `0.05675989533` bohr at `twist_R3.4_t120` (`\|E_CT\| = 5.494829e-3`, fraction `0.129042101`) — the recipe there gives `33.640917` |
+| the BINDING node (the largest requirement, adopted) | `twist_R2.7_t120`: `Δr = 0.06371274533` bohr, `\|E_CT\| = 2.453586e-2`, fraction `0.0288990973` |
+| **β** | **`55.16353128` per bohr** |
+
+The adopted value is the largest requirement over every node, not the requirement at `Δr_min`,
+so the criterion holds at EVERY node with content and not only at the closest pair of contacts.
+
+**Two things the derivation found that this note did not know.**
+
+1. **The map holds two EXACT ties.** `donor_R2.9_b90` and `donor_R3.1_b90` — the donor bent 90°
+   puts both its hydrogens equidistant from the acceptor's oxygen by the builder's own symmetry.
+   Their measured separations are `6.116e-12` and `5.762e-12` bohr, which is round-off in
+   geometries recorded to ten decimals. **At those two nodes CT-3's argmin is a coin flip**, and
+   no finite `β` satisfies the criterion. They are named in `beta.json` and what the blend does
+   there is MEASURED by gate (a) rather than assumed — their `|E_CT|` (`1.64e-4`, `7.33e-5`) is
+   itself under the table's floor.
+2. **Five nodes where the criterion is vacuous** — `donor_R2.9_b60`, `donor_R3.1_b60`,
+   `twist_R3.4_t60`, `donor_R3.1_b45`, `linear_R3.7` — because the floor already exceeds half
+   the node's own transfer energy. They constrain nothing and are excluded by name.
+
+### The gates
+
+**(a) THE VALUE — PASS.** At every one of the 64 nodes the blend differs from the argmin by less
+than the table's own resolution floor. Worst `1.499839e-5` Ha at `twist_R2.7_t120` (the binding
+node, as the derivation predicts), against the floor `7.090642e-4` — **47× under**.
+
+**(b) THE FORCE — PASS**, 518 geometries, `h = 1e-5`, bar `1e-8` relative:
+
+| class | geometries | worst relative | worst translation residual |
+|---|---|---|---|
+| the map's 64 nodes | 64 | `1.197931e-10` | `2.818926e-18` |
+| LIQUID-2's RECORDED handover geometries | 32 | `3.066621e-10` | `2.602085e-18` |
+| hydrogen permutations of those | 96 | `3.066621e-10` | `4.249187e-18` |
+| molecule exchanges of those | 32 | `3.066621e-10` | `2.561679e-18` |
+| contact TIES | 6 | `4.707751e-12` | `1.085411e-19` |
+| periodic crossings (one box each axis, the wrap INSIDE the difference loop) | 288 | `3.074640e-10` | `3.903128e-18` |
+
+The forces sum to zero everywhere (`4.249187e-18` worst) and a pair read across a face is the
+same pair to `2.693360e-13` relative. The ties are the map's own two plus one bisected on each
+of CT-3's four G-A0 separations; the worst tie residual is `8.881784e-16` bohr, so they are ties
+and not near-ties. The handover geometries are LIQUID-2's own worst cases, dumped by re-running
+the 1× argmin arm (`ct3/smooth/handovers.json`) — the class the note said the map's nodes would
+miss, and the class where the worst force error actually lands.
+
+**(c) THE CONTINUITY — PASS.** CT-3's own G-A0 sweep, the donor turned through a full turn at
+`linear_R2.7/2.9/3.1/3.4`, read at TWO resolutions — because the largest step between adjacent
+samples of a SMOOTH function is `O(dθ)` and halves when the samples double, while a JUMP is the
+same size however finely it is approached. That ratio is the measurement of continuity; the raw
+step at one resolution is not.
+
+| | 3,600 samples | 7,200 samples | ratio |
+|---|---|---|---|
+| the BLEND's largest step | `3.890611e-5` Ha | `1.945313e-5` Ha | **`2.0000`** |
+| the ARGMIN's largest JUMP | `1.573326e-5` Ha | `1.502985e-5` Ha | **`1.0468`** |
+
+The blend halves exactly: it is continuous, and its largest step is the sweep's own resolution,
+18× under the table's floor `7.090642e-4`. The argmin's jump does not shrink, which is what a
+discontinuity is — and that leg is the control on the first, because a sweep too coarse to
+resolve a handover would let the blend pass for the wrong reason. The argmin's largest STEP on
+the same sweep is `3.890611e-5`, identical to the blend's: the two rules share the smooth
+background and differ only in the jump.
+
+**(d) THE DRIFT — PASS.** The table above.
+
+### The step, chosen honestly (`ct3/smooth/nve.json`, `dry: true`)
+
+NVE — thermostat OFF — from ONE settled checkpoint (all four arms report the same checkpoint
+digest, `1149619867449410921` over 20,626 bytes, so they are shown to have started from one
+state rather than four that resemble each other), at 1×, 2×, 4× and 8× the tables' step over
+EQUAL physical durations of `0.1` ps. The previous sweep varied the duration WITH the step,
+which the second review named; this one does not. Durations agree to `1.043e-4` ps against the
+coarsest arm's own frame of `2.085e-4` ps, which is the finest four integer frame counts can be
+made to agree.
+
+| × the tables' step | dt, fs | frames | ps | energy fluctuation RMS, Ha | drift / ps, Ha | O–O first peak, bohr | bonds per water |
+|---|---|---|---|---|---|---|---|
+| **1** | 0.026063 | 3,837 | 0.10000 | **1.601946e-6** | **4.696827e-5** | 6.25 | 1.41955 |
+| 2 | 0.052126 | 1,918 | 0.09998 | 6.397148e-6 | 1.919698e-4 | 6.25 | 1.42041 |
+| 4 | 0.104252 | 959 | 0.09998 | 2.559353e-5 | 7.784843e-4 | 6.25 | 1.41953 |
+| 8 | 0.208504 | 480 | 0.10008 | 1.027272e-4 | 3.158647e-3 | 6.25 | 1.42109 |
+
+**The drift is now QUADRATIC in the step, and that is the whole point.** Each doubling
+multiplies the drift per ps by `4.09`, `4.06`, `4.06` and the fluctuation RMS by `3.99`, `4.00`,
+`4.01` — `(ω dt)²`, a symplectic integrator's own error. This note's opening observation was
+that a **32-fold** change of step moved the argmin's drift by a factor of **6**, and not
+monotonically, which is what said the drift was in the SERVED ENERGY and not in the integration.
+It is now in the integration, where it belongs. That is a second, independent confirmation of
+the diagnosis, and it is a stronger one than the ratio in gate (d), because it is a SHAPE and
+not a single number.
+
+**The rule picks `x1` — the tables' own step, `1.077481` au = `0.026063` fs.** The rule was: the
+largest step whose drift per ps is within `2x` the `1x` run's and whose observables agree with
+the `1x` run within their own spread. `x2` is already `4.09x` the `1x` drift, so nothing above
+`1x` survives the first clause. The observables do not discriminate: the O–O first peak is
+`6.25` bohr on every arm (the RDF's declared `0.1`-bohr bin is coarser than any difference
+between them) and the bond count spans `1.41953` to `1.42109`, a spread of `7.5e-4`, at which
+resolution `x2` and `x8` miss `x1` and `x4` does not — noise, not signal, and it changes no
+verdict. **There is no free step under the smooth rule**, and the provisional `8x` of
+`liquid2/gate_provisional_8x/` is not it.
+
+**Three fences on this screen, in its own words.** (i) It is a SCREEN and every file says
+`dry: true`; it chooses a step and reads nothing about water. (ii) The settling is the screen's
+own 1,000 frames = 26 fs, far short of LIQUID-2's equilibration criterion of 7,100 frames, so
+the arms run at `488` K and read `1.42` bonds per water and an O–O peak at `6.25` bohr — none of
+which is a statement about liquid water, and all of which is the same for all four arms, which
+is what a step comparison needs. (iii) `0.1` ps is a declared duration, not a converged one;
+what it is long enough for is the drift RATE, which is what selects the step.
+
+### What is now paid
+
+1. **The smooth serving rule, built and gated as above. PAID.** `CtServe::Blend`, β derived,
+   gates (a)–(d) all PASS, `ct3/smooth/gate.json` `"admitted": true`, and eight unit tests in
+   `tests/ct3_smooth.rs` including a cheap standing 54-water drift guard.
+2. **The step sweep re-run under it. PAID as a labelled screen** — the table above. It is NVE
+   from ONE settled checkpoint over EQUAL physical durations, which the previous sweep was not,
+   and it selects `x1`.
+3. LIQUID-2's gate re-run at the step the rule selects. **Still owed** — this lane chose the
+   step; it did not re-run LIQUID-2.
+4. The labelled screen logging cross-unit potential energy and bond count through one settling.
+   **Still not run.**
+5. **β's derivation needs the shortest-to-second-shortest separation at each of the map's 64
+   nodes. PAID** — extracted, in `ct3/smooth/beta.json`, with every node's row and its own
+   requirement.
+
+### Two fences this campaign owes its own reader
+
+- **The box is `Boundary::Periodic`, and this lane's first pass left it open.** LIQUID-2 sets
+  the boundary at the END of its own door, after the law and the step; a runner that rebuilds
+  the box has to set it too. The channel-6-off control then read `5.034204065e-6` where the
+  record reads `4.719994550e-6` — a 6.7 % miss that looks like nothing and is a different
+  dynamics. The control is re-measured against the record for exactly this reason, and it is
+  what caught it.
+- **The handover counter is not bit-identical to LIQUID-2's.** Re-running the 1× argmin arm
+  reproduces the TRAJECTORY exactly — drift peak `6.584681837e-3` against the record's
+  `6.584681837e-3`, worst single jump `2.012547255e-3` against the record's
+  `2.012547255e-3` — but this counter registers 3,762 handovers where LIQUID-2's registered
+  3,803. The difference is in the two counters, not in the arm, and it was NOT chased down. The
+  gate needs the worst geometries and the worst one is the same one; nothing here rests on the
+  count.

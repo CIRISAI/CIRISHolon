@@ -1057,7 +1057,7 @@ fn nve_phase(obs: &Path, out: &Path, step: f64, ps: f64) {
 fn nve_collate(dir: &Path, ps: f64) {
     let steps = [1u64, 2, 4, 8];
     let mut rows = Vec::new();
-    let mut read: Vec<(u64, f64, f64, f64, f64, f64, f64, f64, String)> = Vec::new();
+    let mut read: Vec<(u64, f64, f64, f64, f64, f64, f64, f64, String, f64)> = Vec::new();
     for s in steps.iter() {
         let p = dir.join(format!("nve_x{s}.json"));
         let Ok(t) = std::fs::read_to_string(&p) else {
@@ -1074,6 +1074,7 @@ fn nve_collate(dir: &Path, ps: f64) {
             json_num(&t, "checkpoint_digest_low"),
             json_num(&t, "mean_temperature_k"),
             p.display().to_string(),
+            json_num(&t, "step_fs"),
         ));
     }
     if read.is_empty() {
@@ -1082,7 +1083,14 @@ fn nve_collate(dir: &Path, ps: f64) {
     }
     let one = read.iter().find(|r| r.0 == 1).cloned();
     let digests_agree = read.iter().all(|r| r.6 == read[0].6);
-    let durations_agree = read.iter().all(|r| (r.5 - read[0].5).abs() <= 1e-9 * read[0].5.abs().max(1.0));
+    // EQUAL physical durations, to the resolution the steps themselves impose: an arm runs a
+    // whole number of frames, so the coarsest step's own frame is the finest the four can be
+    // made to agree. Anything tighter would be asking for a duration no integer can produce.
+    let lo = read.iter().map(|r| r.5).fold(f64::INFINITY, f64::min);
+    let hi = read.iter().map(|r| r.5).fold(f64::NEG_INFINITY, f64::max);
+    let coarsest_frame_ps = read.iter().map(|r| r.9 / 1000.0).fold(0.0f64, f64::max);
+    let duration_spread = hi - lo;
+    let durations_agree = duration_spread <= coarsest_frame_ps;
     // the observables' own spread across the sweep is what "within their own spread" means:
     // no external tolerance is typed, the sweep supplies its own
     let peaks: Vec<f64> = read.iter().map(|r| r.3).filter(|x| x.is_finite()).collect();
@@ -1144,6 +1152,8 @@ fn nve_collate(dir: &Path, ps: f64) {
         .number("requested_ps", ps)
         .flag("all_arms_started_from_one_checkpoint", digests_agree)
         .flag("equal_physical_durations", durations_agree)
+        .number("physical_ps_spread", duration_spread)
+        .number("coarsest_frame_ps", coarsest_frame_ps)
         .number("oo_first_peak_spread_bohr", peak_sd)
         .number("hbonds_spread", bond_sd)
         .int("step_chosen", chosen as i64)

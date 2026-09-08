@@ -1,0 +1,17 @@
+{
+  "phase": "nve",
+  "dry": true,
+  "screen": "nve",
+  "DIAGNOSTIC": "a screen, not a reading",
+  "what": "the step, chosen honestly: NVE from ONE settled checkpoint at four steps over EQUAL physical durations",
+  "rule": "the largest step whose drift per ps is within 2x the 1x run's and whose observables agree with the 1x run within their own spread across the sweep",
+  "requested_ps": 1.000000000e-1,
+  "all_arms_started_from_one_checkpoint": true,
+  "equal_physical_durations": true,
+  "physical_ps_spread": 1.042520800e-4,
+  "coarsest_frame_ps": 2.085041496e-4,
+  "oo_first_peak_spread_bohr": 0.000000000e0,
+  "hbonds_spread": 7.523867950e-4,
+  "step_chosen": 1,
+  "arms": [{"step_multiple": 1, "physical_ps": 1.000038027e-1, "drift_per_ps": 4.696827035e-5, "energy_fluctuation_rms_hartree": 1.601946259e-6, "oo_first_peak_bohr": 6.250000000e0, "hbonds_per_water_both_ends": 1.419554455e0, "mean_temperature_k": 4.884141273e2, "drift_within_2x_of_1x": true, "oo_peak_within_spread": true, "bonds_within_spread": true, "source": "/home/emoore/CIRISHolon/.claude/worktrees/ct3-smooth/conformance/water_observatory/ct3/smooth/nve_x1.json"}, {"step_multiple": 2, "physical_ps": 9.997773972e-2, "drift_per_ps": 1.919697717e-4, "energy_fluctuation_rms_hartree": 6.397147783e-6, "oo_first_peak_bohr": 6.250000000e0, "hbonds_per_water_both_ends": 1.420414720e0, "mean_temperature_k": 4.884098040e2, "drift_within_2x_of_1x": false, "oo_peak_within_spread": true, "bonds_within_spread": false, "source": "/home/emoore/CIRISHolon/.claude/worktrees/ct3-smooth/conformance/water_observatory/ct3/smooth/nve_x2.json"}, {"step_multiple": 4, "physical_ps": 9.997773972e-2, "drift_per_ps": 7.784842560e-4, "energy_fluctuation_rms_hartree": 2.559353328e-5, "oo_first_peak_bohr": 6.250000000e0, "hbonds_per_water_both_ends": 1.419531250e0, "mean_temperature_k": 4.883912681e2, "drift_within_2x_of_1x": false, "oo_peak_within_spread": true, "bonds_within_spread": true, "source": "/home/emoore/CIRISHolon/.claude/worktrees/ct3-smooth/conformance/water_observatory/ct3/smooth/nve_x4.json"}, {"step_multiple": 8, "physical_ps": 1.000819918e-1, "drift_per_ps": 3.158646800e-3, "energy_fluctuation_rms_hartree": 1.027271637e-4, "oo_first_peak_bohr": 6.250000000e0, "hbonds_per_water_both_ends": 1.421093750e0, "mean_temperature_k": 4.883078751e2, "drift_within_2x_of_1x": false, "oo_peak_within_spread": true, "bonds_within_spread": false, "source": "/home/emoore/CIRISHolon/.claude/worktrees/ct3-smooth/conformance/water_observatory/ct3/smooth/nve_x8.json"}]
+}

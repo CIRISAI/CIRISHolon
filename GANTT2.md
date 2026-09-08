@@ -309,6 +309,57 @@ the instrument, it did not set the settling); the MBX cross-check; exact forces 
    every certificate stating its resolution, horizon and the growth bound that covers its
    admitted range.
 
+## The third review (2026-09-08, of `bfa90e8`) — the integration gap, and what a coarse certificate must carry
+
+**The blocking finding, verified against the tree before this section was written: three of the
+four validated components are not what the campaign selects.** `examples/liquid2.rs` carries
+`STEP_MULT = 8.0` (the step its own NVE scaling refuted), never calls `set_blend`, and selects
+no thermostat kind, while `CtTable`'s default `serve_mode` is `CtServe::Argmin`. Only the
+boundary-aware lens is wired (`diffusion_periodic(..., LensBoundary::Periodic)`). So the drift
+repair, the step reading and the canonical thermostat are all real and none of them describes
+the default LIQUID-2 configuration. Registered as **M-VALIDATED-NOT-WIRED**; the rule it
+carries is that a gate phase must PRINT the configuration it selected beside its verdicts, so
+an unswitched default fails a gate instead of running an arm.
+
+**What a coarse certificate must carry (REPLACE-0's design, tightened).** Fine-scale motion
+carries a momentum flux that survives averaging, so a coarse view can conserve energy exactly
+and still lose the stress that governs the flow; and a bounded total energy is compatible with
+an unbounded local velocity. **Closing the energy ledger therefore cannot by itself certify a
+coarse representation.** REPLACE-0's certificate states, and measures: the observable errors it
+bounds (structure, connectivity, pressure, stress relaxation, transport), the UNRESOLVED STRESS
+it is discarding, and the explicit range of scales and times over which the bound is claimed —
+never a horizon-free statement. This constraint is adopted on the established grounds that make
+it true of any coarse-graining (the Reynolds stress of the unresolved scales; homogenisation's
+non-commuting limits), and it does NOT rest on the September 2026 forced Navier–Stokes blow-up
+announcement that prompted it, which this programme has not audited and does not cite as
+support. That construction is named in §4 below as a possible future stress test, not as
+evidence for anything here.
+
+**The sequence, adopted:**
+
+1. **ONE reproducible LIQUID-2 configuration, before any longer campaign.** Select the smooth
+   blend and its recorded β, the 1× step the NVE runs validated, and the canonical thermostat,
+   by accessors the gate prints. Re-run short independent pilots in PHYSICAL time, measure the
+   effective sample sizes, and RE-MEASURE cost — the published core-seconds per picosecond were
+   taken at the withdrawn 8× step and do not stand. Keep Berendsen as a comparison ARM rather
+   than as an argument: the draft's clause that mean observables are automatically unaffected
+   is too strong, since velocity rescaling can move structural and dynamical properties, and
+   the arm measures whether it did here.
+2. **A small decisive reference experiment BEFORE rebuilding the quantum layer.** Fresh
+   held-out dimers and trimers spanning liquid contacts, the unsampled angular gap, and
+   simultaneous donation; energies AND forces at two basis levels; representative MB-pol cases
+   cross-checked against MBX. That separates basis error, interpolation error and missing
+   many-body terms far more cheaply than enlarging every table, and it answers the reference
+   asymmetry COMPARE-0's correction names.
+3. **One bounded coarse replacement**, against the same microscopic model, measuring pressure,
+   structure, stress relaxation, diffusion and runtime under declared conditions. Whether the
+   replacement preserves the model's behaviour and whether that behaviour is water are two
+   questions and are measured apart.
+4. **The Navier–Stokes construction as a LATER stress test, if at all.** Ordinary flows with
+   known solutions and resolution convergence first; then a finite interval before the
+   announced singularity, asking only whether the engine detects lost resolution and refines.
+   A finite simulation cannot exhibit an infinity, and the freeze would say so.
+
 ## The build lane — the closure type and the campaign harness (2026-09-07, `engine/crates/holon-closure`, `holon-campaign`)
 
 Pure engineering, additive, landed with 77 tests: the closure as ONE type (members, the

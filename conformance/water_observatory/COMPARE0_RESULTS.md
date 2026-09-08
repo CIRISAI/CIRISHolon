@@ -309,3 +309,31 @@ measurement that proves the point rather than an argument for it.
   measured.* Here it does so on 53 of 65 geometries. The shape is general — it will recur
   every time this programme scores a rigid model against a flexible record — and G-P0 is the
   form of the gate that catches it.
+
+
+## Correction (2026-09-08, third external review): two readings of this record were too strong
+
+Both were recomputed by the lead from `compare0/scores.json` and both hold against this
+record's own numbers.
+
+1. **The 28 net-repulsive geometries are not 28 basis failures.** Under FCI/STO-3G 28 of the
+   65 are net repulsive; under MB-pol **26** are, and **25 of the 28 are repulsive under both**.
+   Only **3** change from repulsive under the minimal basis to bound under MB-pol. The map
+   simply contains many repulsive geometries by construction, and the count was being read as
+   a defect. The basis finding rests on the RMS gap and its sign, not on that count.
+2. **The interpolant is not negligible where it is out of sample.** Its leave-one-out RMS over
+   the map, `4.769e-4` Ha, is a quarter of the served law's error, and that is the number §4
+   quotes. At the one geometry the law had never seen, the served law misses by `2.583e-3` Ha
+   of which the table's own miss is `1.723e-3`, two thirds; MB-pol at that same geometry sits
+   `3.76e-5` from the exact solve. An RMS taken over 64 in-sample points cannot license
+   "refining the table buys nothing"; it licenses "the basis is the larger of the two errors in
+   aggregate", which is what branch 1 was staked on.
+3. **The reference asymmetry, stated plainly.** Every model here is scored against
+   FCI/STO-3G, which is the served law's OWN training reference and is not the reference
+   MB-pol or TIP4P/2005 targets. So "the Hamiltonian gap" is the distance between two
+   references and is only an error if MB-pol is taken as truth, which this record does not
+   establish. The `7.1×` over TIP4P/2005 is doubly in-sample: same geometries and same
+   reference. The out-of-sample ratio at the held-out node, `1.36×`, remains the only figure
+   free of both, and it is the one the GANTT row carries.
+
+Owed and restated: the MBX cross-check, and exact forces in some record.

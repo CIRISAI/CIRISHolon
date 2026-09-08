@@ -257,6 +257,19 @@ this section was written, and every one holds:
 | the diffusion lens refuses large displacements by a WALL-saturation cap regardless of boundary, and LIQUID-2 sized its window to that cap on unwrapped periodic positions | yes — the cap is written for `Boundary::Walls` and applied unconditionally; the lens must be boundary-aware, the exponent gate kept, finite-size effects assessed apart | `holon-lens/src/lens.rs:315–351`, `liquid2.rs:155` |
 | the thermostat is Berendsen velocity rescaling | yes — suppressed fluctuations are not canonical sampling; a stochastic-rescaling thermostat (Bussi–Donadio–Parrinello 2007) is the named replacement, with NVE runs for transport sensitivity | `sim.rs:5069` |
 
+**Status (2026-09-08), each step landed on main by its own lane and merged in order:**
+
+| step | landed | the number |
+|---|---|---|
+| 1 smooth, conservative CT-3 | `lane/ct3-smooth`: `CtServe::Blend`, β = 55.16 per bohr derived from the map's contact separations and floor; 518 FD geometries incl. LIQUID-2's recorded handovers, permutations, exchanges, two EXACT ties, periodic crossings, worst 3.1e-10 rel; continuity halves with resolution (argmin's does not) | **drift 4.98e-6 vs the channel-6-off control 4.72e-6 (1.056×; argmin 1,321× worse)**; NVE at equal durations: drift ∝ (ω dt)², 4.0 per doubling — the tables' step is the step, there is no free one |
+| 2 cost | `perf/cost`: `reset_with` (geometry first, no placeholder force pass), `fenced_triples` by census with the enumeration kept as referee; bit-identical energies, forces, ledger, receipt | 250 waters 6.85 → 0.45 GiB, 432 waters OOM → 0.95 GiB (the cubic term was the placeholder's fixed 6-bohr ring, NOT the three-body enumeration — the size README's attribution corrected) |
+| 3 sampling | `lane/sampling-diffusion`: `diffusion_periodic` (wall cap under `Walls` only, one declared interval, unwrapping gate, Yeh–Hummer named not applied), pilots with Chodera 2016's start and `g`/`n_eff`/SEM beside the seed spread, `ThermostatKind::StochasticRescaling` (Bussi 2007) beside Berendsen | the old lens refused a periodic walk the new one reads to 2 %; on three pilots the bond count's start was 9 blocks where the energy's was 7/3/10 — the max rule covers it; Var(K)/⟨K⟩² 1.008× canonical vs Berendsen's 3.7e-5× |
+| 4 COMPARE-0 | `lane/compare0`: READ (`COMPARE0_RESULTS.md`) | the basis branch fires: the Hamiltonian gap to MB-pol (7.06 mHa RMS) is 3.4× the law's error; coverage not close |
+
+Owed before LIQUID-2 freezes: its `gate` re-run at the tables' step on the blended rule; the
+settling screen on energy AND bond count at the campaign's length (the 14-block pilot set priced
+the instrument, it did not set the settling); the MBX cross-check; exact forces in some record.
+
 **The order, as the review gives it and as the plan now reads:**
 
 1. **CT-3 smooth and conservative FIRST** (the owed serving rule, with both force terms; gated on

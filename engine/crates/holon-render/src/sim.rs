@@ -2363,8 +2363,73 @@ impl Sim {
         (after - before).abs()
     }
 
+    /// Place a scene whose SPECIES AND COORDINATES ARE ALREADY KNOWN, and take the ledger's
+    /// baselines on that configuration — no placeholder is ever built and no force is ever
+    /// evaluated on one.
+    ///
+    /// `reset` is the opener for a scene NOBODY HAS PLACED: it has to invent a configuration,
+    /// and it evaluates the forces on what it invented (`zero_ledger`). For a caller that
+    /// already holds the geometry that invention is pure cost, and it is not small. The
+    /// opener puts every atom on a shell of radius 6 bohr WHATEVER the atom count, so at
+    /// liquid-box sizes every atom sits inside every other's three-body cutoff, the cutoff-
+    /// local triple enumeration degenerates to the complete `C(N, 3)`, and the buffers that
+    /// holds are the process's peak. Measured on the water box, one process per size
+    /// (`conformance/water_observatory/liquid2/size/cost_before.json` against
+    /// `cost_after.json`): peak resident set 0.953 GiB at 384 atoms against 0.192, and 6.852
+    /// GiB at 750 atoms against 0.445 — a factor 7.19 across that atom ratio of 1.953 with
+    /// the placeholder, whose cube is 7.45, against 2.31 without it. It is the PLACEHOLDER
+    /// that was cubic, not the physics and not the three-body enumeration: that enumeration
+    /// has been cutoff-local all along and only degenerates when every atom is inside every
+    /// other's cutoff, which is exactly what a 6-bohr shell of 750 atoms is. Construction
+    /// time falls with it, 2.69 s to 0.81 s and 17.17 s to 2.32 s.
+    ///
+    /// This is a SECOND DOOR, not a change to the first: `reset` keeps its placeholder for
+    /// the callers that open on it (the app's headline scene, the quench runners, the gate
+    /// scenes that ask for `n` atoms and no coordinates), bit for bit.
+    ///
+    /// The species are registered in the order `reset` registers them — the storage's own
+    /// default species first, then each atom's in index order — because the bank hands out
+    /// table slots in registration order and a scene that registered them in a different
+    /// order would read a different curve for the same pair.
+    ///
+    /// Returns `false`, having changed nothing beyond the storage size, when the two slices
+    /// disagree in length or the bank refuses a species.
+    pub fn reset_with(&mut self, species: &[Species], positions: &[[f64; 3]]) -> bool {
+        if species.len() != positions.len() {
+            return false;
+        }
+        let n = species.len();
+        self.resize_storage(n);
+        self.seam_assigned = false;
+        if !self.sync_species() {
+            return false;
+        }
+        for i in 0..n {
+            if !self.set_species(i, species[i]) {
+                return false;
+            }
+        }
+        self.grabbed = None;
+        self.thermostat_on = false;
+        for i in 0..n {
+            let a = &mut self.atoms[i];
+            a.x = positions[i][0];
+            a.y = positions[i][1];
+            a.z = positions[i][2];
+            a.vx = 0.0;
+            a.vy = 0.0;
+            a.vz = 0.0;
+        }
+        self.zero_ledger();
+        true
+    }
+
     /// Place `n` atoms and zero the ledger. Deterministic: no RNG, so a reported run can
     /// be re-run byte-for-byte.
+    ///
+    /// This is the opener for a scene with no coordinates yet, and it INVENTS one (see
+    /// below). A caller that already holds the geometry wants [`Sim::reset_with`], which
+    /// installs it before the first force pass.
     pub fn reset(&mut self, n: usize) {
         self.resize_storage(n);
         self.seam_assigned = false;
@@ -4267,47 +4332,73 @@ impl Sim {
     /// is what let the enumeration become cutoff-local without moving the fence incidence
     /// the prereg pins ("the four OOO triples stay HONESTLY FENCED at exactly 4/seed").
     ///
-    /// M-VACUOUS-SUCCESS: `tests/pbc.rs::the_fence_count_survives_going_local` holds the
-    /// two counts against each other on a scene that has both fenced and served triples.
+    /// THE SEAM IS A CENSUS TOO. FIELD-3 drops a cross-unit triple rather than fencing it,
+    /// which the plain census cannot see; but the drop rule is itself a fact about
+    /// MEMBERSHIP, not about position — `seam_drops_triple` fires exactly when all three
+    /// atoms are inside units and not all inside the SAME one. So the triples that survive
+    /// the drop are the ones with at least one FREE member plus the ones wholly inside a
+    /// single unit, and the fence is three censuses:
+    ///
+    /// ```text
+    ///     fenced = [ unserved(all atoms) − unserved(atoms in units) ] + Σ_u unserved(unit u)
+    /// ```
+    ///
+    /// the bracket being the at-least-one-free part by complement (the two are disjoint:
+    /// "wholly inside one unit" already implies "no free member"). The diagnostic control
+    /// `SeamPlant::TriplesAcross` serves the surfaces ACROSS the seam and therefore drops
+    /// nothing, so it takes the plain census, exactly as the enumeration did through
+    /// `seam_drops_triple`'s own first line.
+    ///
+    /// M-VACUOUS-SUCCESS: `tests/t3_scale.rs::the_fence_count_survives_going_local` and
+    /// `tests/fence_census.rs::the_fence_census_is_the_enumeration` hold the census against
+    /// [`Sim::fenced_triples_enumerated`] — the referee kept for exactly this — on scenes
+    /// that have fenced triples, served triples, dropped triples and free atoms.
     pub fn fenced_triples(&self) -> u64 {
         if self.n < 3 {
             return 0;
-        }
-        if !self.trimer.loaded && !self.water.loaded && self.trimers.is_empty() {
-            // R-3 (below) applies before the seam branch too: the seam changes which triples
-            // are dropped, not whether the pre-T3 loop counted anything
-            return 0;
-        }
-        if self.seam.is_some() {
-            // FIELD-3: a cross-unit triple is dropped by the seam rule, not fenced; the census
-            // formula below cannot tell them apart, so the count is enumerated (O(N³), on the
-            // seam's scenes).
-            let mut fenced = 0u64;
-            for a in 0..self.n {
-                for b in (a + 1)..self.n {
-                    for c in (b + 1)..self.n {
-                        let mut z = [self.atoms[a].species.z as u8, self.atoms[b].species.z as u8, self.atoms[c].species.z as u8];
-                        z.sort_unstable();
-                        if self.served(z) || self.seam_drops_triple(a, b, c) {
-                            continue;
-                        }
-                        fenced += 1;
-                    }
-                }
-            }
-            return fenced;
         }
         if !self.trimer.loaded && !self.water.loaded && self.trimers.is_empty() {
             // The pre-T3 loop returned before counting anything in this case, and the
             // fence is a reading of that loop. Preserved deliberately: a scene carrying
             // only an (O,O,H) or ozone surface reports no fence today, and changing that
             // here would move a campaign number for a reason that has nothing to do with
-            // T3. Entered in the DRY-residual register as R-3.
+            // T3. Entered in the DRY-residual register as R-3. It applies before the seam
+            // branch too: the seam changes which triples are dropped, not whether the
+            // pre-T3 loop counted anything.
             return 0;
         }
-        // The census: how many atoms of each nuclear charge.
+        let all = self.unserved_triples(&self.census(0..self.n));
+        if self.seam.is_none() || self.seam_plant == crate::seam::SeamPlant::TriplesAcross {
+            return all;
+        }
+        let f = crate::seam::FREE;
+        let bound = self.unserved_triples(&self.census((0..self.n).filter(|&i| self.unit_of[i] != f)));
+        debug_assert!(bound <= all, "a subset of the atoms cannot fence more triples than all of them");
+        // The members of each unit, gathered by sorting on the unit id rather than by a
+        // scan per unit, so the whole pass is O(N log N) and not O(N · units).
+        let mut members: Vec<usize> = (0..self.n).filter(|&i| self.unit_of[i] != f).collect();
+        members.sort_unstable_by_key(|&i| self.unit_of[i]);
+        let mut within = 0u64;
+        let mut k = 0usize;
+        while k < members.len() {
+            let u = self.unit_of[members[k]];
+            let mut j = k;
+            while j < members.len() && self.unit_of[members[j]] == u {
+                j += 1;
+            }
+            within += self.unserved_triples(&self.census(members[k..j].iter().copied()));
+            k = j;
+        }
+        (all - bound) + within
+    }
+
+    /// The species census of a set of atoms: `(z, count)` ascending, deduplicated. The find
+    /// is linear because the number of DISTINCT nuclear charges in a scene is small and the
+    /// order has to be ascending for the triple loop below to enumerate each composition
+    /// once.
+    fn census(&self, members: impl Iterator<Item = usize>) -> Vec<(u8, u64)> {
         let mut zs: Vec<(u8, u64)> = Vec::new();
-        for i in 0..self.n {
+        for i in members {
             let z = self.atoms[i].species.z as u8;
             match zs.iter_mut().find(|(k, _)| *k == z) {
                 Some(e) => e.1 += 1,
@@ -4315,6 +4406,13 @@ impl Sim {
             }
         }
         zs.sort_unstable();
+        zs
+    }
+
+    /// How many unordered triples a census admits whose COMPOSITION no surface serves.
+    /// `O(species³)`, and it yields the identical number the complete `a < b < c` loop
+    /// yields over the same atoms.
+    fn unserved_triples(&self, zs: &[(u8, u64)]) -> u64 {
         let mut fenced = 0u64;
         for (ia, &(za, na)) in zs.iter().enumerate() {
             for (ib, &(zb, nb)) in zs.iter().enumerate().skip(ia) {
@@ -4334,6 +4432,38 @@ impl Sim {
                         na * nb * nc
                     };
                     fenced += count;
+                }
+            }
+        }
+        fenced
+    }
+
+    /// THE REFEREE: the fence counted by ENUMERATION — the complete `a < b < c` loop with
+    /// the served test and the seam's drop rule applied atom by atom, `O(N³)`.
+    ///
+    /// This is the definition [`Sim::fenced_triples`] has to reproduce, kept so the census
+    /// can be tested against it rather than against a restatement of itself. It is never on
+    /// a campaign's path: measured beside the census on the same scenes
+    /// (`liquid2/size/cost_after.json`), it costs 0.0461 s at 384 atoms, 0.304 s at 750 and
+    /// 0.999 s at 1,296 against the census's 1.3e-5, 2.0e-5 and 2.0e-5 — cubic against flat,
+    /// and at 1,296 atoms more than the force pass it was riding on.
+    pub fn fenced_triples_enumerated(&self) -> u64 {
+        if self.n < 3 {
+            return 0;
+        }
+        if !self.trimer.loaded && !self.water.loaded && self.trimers.is_empty() {
+            return 0;
+        }
+        let mut fenced = 0u64;
+        for a in 0..self.n {
+            for b in (a + 1)..self.n {
+                for c in (b + 1)..self.n {
+                    let mut z = [self.atoms[a].species.z as u8, self.atoms[b].species.z as u8, self.atoms[c].species.z as u8];
+                    z.sort_unstable();
+                    if self.served(z) || self.seam_drops_triple(a, b, c) {
+                        continue;
+                    }
+                    fenced += 1;
                 }
             }
         }

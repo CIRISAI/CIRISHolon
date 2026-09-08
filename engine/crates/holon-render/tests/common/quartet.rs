@@ -51,10 +51,11 @@ fn water_table_text() -> String {
     .expect("the committed water table is readable")
 }
 
-/// A scene of `positions.len()` atoms with the species and coordinates given, at rest,
-/// with the bank and both three-body tables loaded and the four-body sector set as asked.
-pub fn scene(species: &[holon_chem::elements::Species], positions: &[[f64; 3]], de4: bool) -> Box<Sim> {
-    assert_eq!(species.len(), positions.len());
+/// The bank and both three-body tables, loaded, and no atoms yet. The half both constructors
+/// below share. The four-body order is deliberately NOT set here: both constructors set it
+/// after they have placed the scene, because setting it before would put the four-body sector
+/// into the opening force pass, which is not what either of them did.
+fn banked_sim() -> Box<Sim> {
     let b = banked();
     let mut s = Box::new(Sim::empty());
     assert_eq!(load_pair_table(&mut s, &b.hh, Host::Native), TABLE_OK);
@@ -62,6 +63,29 @@ pub fn scene(species: &[holon_chem::elements::Species], positions: &[[f64; 3]], 
     assert_eq!(load_pair_table(&mut s, &b.oo, Host::Native), TABLE_OK);
     s.trimer = (*b.trimer).clone();
     s.water = (*b.water).clone();
+    s
+}
+
+/// A scene of `positions.len()` atoms with the species and coordinates given, at rest,
+/// with the bank and both three-body tables loaded and the four-body sector set as asked.
+///
+/// # Why this one still opens on the placeholder
+///
+/// `reset(n)` lays a placeholder configuration — a ring or shell of radius 6 bohr — and takes
+/// the ledger's baselines (`l0`, `p0`, `e_ref`, the curvature envelope) ON IT, before the real
+/// coordinates arrive. For a scene that is `rebase`d afterwards that is invisible and pure
+/// cost, and [`scene_placed`] is the constructor for those. For a scene that is NOT rebased
+/// it is not invisible: `quartet(false)` is stepped straight from here into the banked
+/// receipt `tests/data/channel_ledger.receipt`, whose `quartet.drift` line is the real scene's
+/// ledger measured against the PLACEHOLDER's `l0`. Moving that is a decision about a banked
+/// record, not about the cost of construction, so this constructor is left exactly as it was
+/// and the dependence is named here rather than discovered by a failing receipt.
+///
+/// The scenes that carry the cost — the liquid boxes, through `field2_scenes::scene` — all
+/// rebase, and they take [`scene_placed`].
+pub fn scene(species: &[holon_chem::elements::Species], positions: &[[f64; 3]], de4: bool) -> Box<Sim> {
+    assert_eq!(species.len(), positions.len());
+    let mut s = banked_sim();
     s.reset(species.len());
     for (i, sp) in species.iter().enumerate() {
         assert!(s.set_species(i, *sp));
@@ -74,6 +98,30 @@ pub fn scene(species: &[holon_chem::elements::Species], positions: &[[f64; 3]], 
         s.atoms[i].vy = 0.0;
         s.atoms[i].vz = 0.0;
     }
+    s.many_body_order = if de4 { 4 } else { 0 };
+    s
+}
+
+/// THE SAME SCENE, PLACED: the species and coordinates installed before any force is
+/// evaluated, so no placeholder configuration is ever built.
+///
+/// Identical to [`scene`] in every float for a caller that `rebase`s afterwards — `rebase` IS
+/// `zero_ledger`, so it retakes every baseline the placeholder had touched — and that identity
+/// is machine-checked on a 54-water box by `examples/liquid2.rs::instrument_residual`, which
+/// builds both and compares coordinates, velocities, forces, energies, `l0`, `p0`, `l0_ang`,
+/// `e_ref` and the step bit for bit.
+///
+/// What it saves is the placeholder itself. The opener puts every atom on a 6-bohr shell
+/// whatever the atom count, so at liquid-box sizes every atom is inside every other's
+/// three-body cutoff and the cutoff-local triple enumeration degenerates to the complete
+/// `C(N, 3)`. Measured, one process per size (`liquid2/size/cost_before.json` against
+/// `cost_after.json`): peak resident set 0.953 GiB and 2.69 s of construction at 384 atoms
+/// against 0.192 GiB and 0.81 s, and 6.852 GiB and 17.17 s at 750 atoms against 0.445 GiB and
+/// 2.32 s. The 432-water box that could not be built at all now builds in 0.947 GiB.
+pub fn scene_placed(species: &[holon_chem::elements::Species], positions: &[[f64; 3]], de4: bool) -> Box<Sim> {
+    assert_eq!(species.len(), positions.len());
+    let mut s = banked_sim();
+    assert!(s.reset_with(species, positions), "the bank refused a species this scene carries");
     s.many_body_order = if de4 { 4 } else { 0 };
     s
 }

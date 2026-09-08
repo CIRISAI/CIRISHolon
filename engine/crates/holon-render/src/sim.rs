@@ -3525,6 +3525,13 @@ impl Sim {
         // THE CONTACT IS AN ARGMIN over the four cross-unit H–O pairs, and an argmin is
         // discontinuous where it ties. The jump across a tie is the difference of the table at
         // the two coordinate points; the freeze measures it rather than asserting it small.
+        //
+        // AND IN A LIQUID IT IS NOT SMALL. LIQUID-2's labelled screen measured 3,803 handovers
+        // in 2,000 frames of a 128-water box and accounted 96.6 % of a drift three orders above
+        // the same box with channel 6 off (`liquid2/DRIFT_NOTE.md`). `CtServe::Blend` is the
+        // declared replacement — the same four contacts WEIGHTED rather than ranked, with the
+        // full two-term force — and it is selected on the TABLE, so every record written under
+        // the argmin still reads the argmin, bit for bit.
         // The family term has no such seam because it sums over pairs; this term does not sum,
         // because the record does not. What the map cannot say — and so what the table cannot
         // serve — is a pair donating in BOTH directions at once: no node has one.
@@ -3545,6 +3552,59 @@ impl Sim {
                 for &ub in oxy.iter().skip(ia + 1) {
                     let [ub1, ub2] = unit_h[ub];
                     if ub1 == crate::seam::FREE || ub2 == crate::seam::FREE {
+                        continue;
+                    }
+                    // THE SMOOTH SERVING RULE (`CtServe::Blend`): the same four contacts, but
+                    // WEIGHTED rather than ranked, so nothing hands over. The origin is unit
+                    // A's oxygen and is fixed for the whole pair — the argmin's origin is the
+                    // ACCEPTOR's oxygen, which is itself a function of the ranking — and the
+                    // virial is taken about that one origin, which is legitimate because the
+                    // pair's gradients sum to zero (translation invariance) unless a plant has
+                    // deliberately broken them.
+                    if self.ct_table.serve_mode() == crate::seam::CtServe::Blend {
+                        let p0 = (self.atoms[ua].x, self.atoms[ua].y, self.atoms[ua].z);
+                        let rel = |k: usize| -> [f64; 3] {
+                            let (dx, dy, dz) = geom.delta(p0, (self.atoms[k].x, self.atoms[k].y, self.atoms[k].z));
+                            [dx, dy, dz]
+                        };
+                        let idx = [
+                            [ua1 as usize, ub, ua, ub1 as usize, ub2 as usize],
+                            [ua2 as usize, ub, ua, ub1 as usize, ub2 as usize],
+                            [ub1 as usize, ua, ub, ua1 as usize, ua2 as usize],
+                            [ub2 as usize, ua, ub, ua1 as usize, ua2 as usize],
+                        ];
+                        let pts = crate::seam::ct_pair_contacts(
+                            [0.0; 3],
+                            [rel(ua1 as usize), rel(ua2 as usize)],
+                            rel(ub),
+                            [rel(ub1 as usize), rel(ub2 as usize)],
+                        );
+                        // past the switch every contact's energy AND both force terms are an
+                        // exact zero, so the pair is skipped rather than weighted to nothing
+                        let mut rmin = f64::INFINITY;
+                        for c in pts.iter() {
+                            let d = [c[0][0] - c[1][0], c[0][1] - c[1][1], c[0][2] - c[1][2]];
+                            rmin = rmin.min((d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt());
+                        }
+                        if model.switch(rmin).0 == 0.0 {
+                            continue;
+                        }
+                        let (e_blend, gb) = self.ct_table.serve_blend(&model, &pts);
+                        e += sign * e_blend;
+                        ho += 1;
+                        for (k, ids) in idx.iter().enumerate() {
+                            for (kk, &atom) in ids.iter().enumerate() {
+                                if drop_new && atom != ids[0] {
+                                    continue;
+                                }
+                                let g = [sign * gb[k][kk][0], sign * gb[k][kk][1], sign * gb[k][kk][2]];
+                                self.a_pair[atom].0 -= g[0];
+                                self.a_pair[atom].1 -= g[1];
+                                self.a_pair[atom].2 -= g[2];
+                                let x = rel(atom);
+                                virial += x[0] * g[0] + x[1] * g[1] + x[2] * g[2];
+                            }
+                        }
                         continue;
                     }
                     // the pair's contact, over BOTH directions: the shortest cross-unit H···O

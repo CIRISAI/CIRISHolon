@@ -1,0 +1,2 @@
+phase handovers, out /home/emoore/CIRISHolon/.claude/worktrees/ct3-smooth/conformance/water_observatory/ct3, observatory /home/emoore/CIRISHolon/.claude/worktrees/ct3-smooth/conformance/water_observatory
+handovers: 3762 events over 2000 frames; mean |jump| 9.128624e-6, worst 2.012547e-3; signed peak 6.361125e-3; DRIFT PEAK 6.584682e-3 against the record's 6.584682e-3

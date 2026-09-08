@@ -1,0 +1,2 @@
+phase nve, out /home/emoore/CIRISHolon/.claude/worktrees/ct3-smooth/conformance/water_observatory/ct3, observatory /home/emoore/CIRISHolon/.claude/worktrees/ct3-smooth/conformance/water_observatory
+nve x1: dt 1.077481 au (0.026063 fs), 3837 frames = 0.1000 ps; fluctuation RMS 1.601946e-6 Ha, drift peak 4.697006e-6, drift/ps 4.696827e-5; O-O peak Some((6.25, 2.4466151966968224)); bonds/water 1.4196; T 488.4 K; 0.4430 s/pass

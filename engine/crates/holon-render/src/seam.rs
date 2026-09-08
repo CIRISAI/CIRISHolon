@@ -421,6 +421,54 @@ pub enum CtMode {
     Table,
 }
 
+/// WHICH SERVING RULE THE TRANSFER TABLE IS READ THROUGH — the argmin the map was harvested
+/// under, or the smooth partition of unity that replaces it.
+///
+/// CT-3 serves ONE reading per unordered pair of units, at the pair's SHORTEST cross-unit
+/// H···O contact. That is an ARGMIN, and an argmin is discontinuous where it ties. CT-3
+/// measured the jump on ONE dimer at `1.418e-5` hartree and fenced it; LIQUID-2's labelled
+/// screen then measured what a 128-water box does with it
+/// (`conformance/water_observatory/liquid2/DRIFT_NOTE.md`): 3,803 handovers in 2,000 frames,
+/// the running extremum of their SIGNED jump sum `6.361e-3` hartree against a measured drift
+/// peak of `6.585e-3` — **96.6 % of the drift**, three orders above the same box with channel
+/// 6 switched off. The values of the table are not what failed; the argmin is.
+///
+/// `Blend` is the declared replacement, and it is a rule and not a smoothing knob:
+///
+/// ```text
+/// E_pair = Σ_k w_k · S(r_k) · E_table(coords_k)          over the FOUR cross-unit H···O contacts
+/// w_k    = e^{−β r_k} / Σ_j e^{−β r_j}                    a partition of unity on the contact distances
+/// ```
+///
+/// with the FULL force — both terms — on every atom of every contact,
+///
+/// ```text
+/// −∇E = −Σ_k w_k ∇Ẽ_k − Σ_k Ẽ_k ∇w_k,   ∇w_k = w_k(−β ∇r_k + β Σ_j w_j ∇r_j)
+/// ```
+///
+/// (the second term is the one the first specification of this rule omitted, and the second
+/// external review caught). `β` is DERIVED from the map's own records and never typed — see
+/// [`CtTable::set_blend`] and `examples/ct3_smooth.rs` — and the switch applies PER CONTACT,
+/// so a contact past `r_cut` contributes an exact zero to the energy and to both force terms
+/// while still carrying its own weight.
+///
+/// `Argmin` is the default and every record written before this rule existed reads it, bit
+/// for bit: [`CtTable::empty`] loads `Argmin` and only [`CtTable::set_blend`] changes it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Default)]
+pub enum CtServe {
+    /// CT-3's own: the pair's shortest cross-unit H···O contact, and nothing else about the
+    /// pair enters. Discontinuous where two contacts tie.
+    #[default]
+    Argmin,
+    /// The partition of unity over all four cross-unit H···O contacts at inverse length `β`.
+    Blend,
+}
+
+/// The number of cross-unit H···O contacts an unordered pair of water units presents: each
+/// unit's two hydrogens against the other unit's oxygen. The argmin ranks these four and the
+/// blend weights them.
+pub const CT_CONTACTS: usize = 4;
+
 /// The number of knots the transfer table can hold. CT-3's map has 60 distinct sites; the
 /// bound is the next power of two above it, and `finish` refuses more.
 pub const MAX_CT_KNOTS: usize = 128;
@@ -555,6 +603,28 @@ pub fn ct_coords(
     ([r, cd, p, qc], g)
 }
 
+/// THE FOUR CROSS-UNIT H···O CONTACTS OF ONE UNORDERED PAIR OF WATER UNITS, in
+/// [`ct_coords`]' own five-atom order `[H, O_a, O_d, h₁, h₂]` — unit A's two hydrogens
+/// donating to unit B's oxygen first, then unit B's two to unit A's.
+///
+/// This is the list the argmin ranks and the list the blend weights, written ONCE so the
+/// engine's `accumulate_seam`, the campaign runner and the gates cannot disagree about which
+/// four they are or which way round each one is. Positions are given relative to any common
+/// origin; the caller passes minimum-image deltas.
+pub fn ct_pair_contacts(
+    o_a: [f64; 3],
+    h_a: [[f64; 3]; 2],
+    o_b: [f64; 3],
+    h_b: [[f64; 3]; 2],
+) -> [[[f64; 3]; 5]; CT_CONTACTS] {
+    [
+        [h_a[0], o_b, o_a, h_b[0], h_b[1]],
+        [h_a[1], o_b, o_a, h_b[0], h_b[1]],
+        [h_b[0], o_a, o_b, h_a[0], h_a[1]],
+        [h_b[1], o_a, o_b, h_a[0], h_a[1]],
+    ]
+}
+
 /// THE TRANSFER TERM AS A TABLE (CT-3): the 64-node exact-minus-closed-sector map of CT-2,
 /// served as the charge-transfer term itself.
 ///
@@ -630,6 +700,14 @@ pub struct CtTable {
     /// takes for the transfer row rather than the linear value (which is NOT the deepest here,
     /// as it was for CT-2's family).
     pub deepest_shape: f64,
+    /// WHICH SERVING RULE (see [`CtServe`]). `Argmin` on every table that has ever loaded;
+    /// only [`CtTable::set_blend`] changes it, and it is deliberately not settable by a bare
+    /// field write, so that the inverse length can never be installed without the rule or the
+    /// rule without a derived inverse length.
+    serve_mode: CtServe,
+    /// The blend's inverse length, per bohr — DERIVED from the map's own records, never typed.
+    /// `0.0` under `Argmin`.
+    beta: f64,
 }
 
 impl CtTable {
@@ -648,7 +726,45 @@ impl CtTable {
             status: CtLoad::Empty,
             worst_knot_miss: 0.0,
             deepest_shape: 0.0,
+            serve_mode: CtServe::Argmin,
+            beta: 0.0,
         }
+    }
+
+    /// The serving rule this table is read through. `Argmin` unless [`CtTable::set_blend`] has
+    /// been called, which is what keeps every record written before the smooth rule existed
+    /// bit-identical.
+    #[inline]
+    pub fn serve_mode(&self) -> CtServe {
+        self.serve_mode
+    }
+
+    /// The blend's inverse length per bohr, `0.0` under `Argmin`.
+    #[inline]
+    pub fn beta(&self) -> f64 {
+        self.beta
+    }
+
+    /// INSTALL THE SMOOTH SERVING RULE at a derived inverse length. Refuses a `β` that is not
+    /// finite and strictly positive, because a zero or negative one is not a partition of
+    /// unity concentrated on the contact — it is the flat mean, or the LONGEST contact.
+    ///
+    /// `β` is not a parameter of this engine and is not chosen here: it comes from the map's
+    /// own shortest-to-second-shortest contact separations against the table's own resolution
+    /// floor (`examples/ct3_smooth.rs`, which prints the arithmetic and every input's path).
+    pub fn set_blend(&mut self, beta: f64) -> bool {
+        if !beta.is_finite() || beta <= 0.0 {
+            return false;
+        }
+        self.serve_mode = CtServe::Blend;
+        self.beta = beta;
+        true
+    }
+
+    /// Back to CT-3's own argmin, and the inverse length with it.
+    pub fn set_argmin(&mut self) {
+        self.serve_mode = CtServe::Argmin;
+        self.beta = 0.0;
     }
 
     pub fn is_loaded(&self) -> bool {
@@ -891,6 +1007,106 @@ impl CtTable {
             }
         }
         (e, g)
+    }
+
+    /// THE SMOOTH SERVING RULE ([`CtServe::Blend`]), on ONE unordered pair of units, with the
+    /// FULL analytic force on every atom of every contact.
+    ///
+    /// `pts[k]` is contact `k`'s five atoms in [`ct_coords`]' own order `[H, O_a, O_d, h₁, h₂]`,
+    /// every position given relative to ONE common origin for the whole pair (the caller
+    /// passes minimum-image deltas, so the term reduces to the minimum image the way every
+    /// other seam term does). The four contacts are the pair's own: each unit's two hydrogens
+    /// against the other unit's oxygen.
+    ///
+    /// ```text
+    /// Ẽ_k = S(r_k) · E_table(coords_k)                the switch applies PER CONTACT
+    /// w_k = e^{−β r_k} / Σ_j e^{−β r_j}               a partition of unity on the contact distances
+    /// E   = Σ_k w_k Ẽ_k
+    /// ∇E  = Σ_k w_k ∇Ẽ_k + Σ_k Ẽ_k ∇w_k
+    ///     = Σ_k w_k ∇Ẽ_k − β Σ_k w_k (Ẽ_k − E) ∇r_k
+    /// ```
+    ///
+    /// — the second line is `∇w_k = w_k(−β ∇r_k + β Σ_j w_j ∇r_j)` summed and collected, and
+    /// it is the term the rule's first specification omitted. `∇r_k` lives on contact `k`'s
+    /// own two atoms: `+u_k` on its hydrogen and `−u_k` on its acceptor oxygen, with
+    /// `u_k = (H_k − O_{a,k})/r_k`.
+    ///
+    /// Returns the pair's energy and `∇E` — the GRADIENT, not the force — laid out per contact
+    /// and per atom, so the caller adds each contact's five contributions into its own atom
+    /// slots (an atom appears in several contacts and the contributions add). The weights are
+    /// formed against the shortest contact so the exponentials cannot overflow, and a contact
+    /// at or past `r_cut` contributes an exact zero to `Ẽ_k` and to `∇Ẽ_k` while still carrying
+    /// its weight.
+    pub fn serve_blend(
+        &self,
+        model: &SeamModel,
+        pts: &[[[f64; 3]; 5]; CT_CONTACTS],
+    ) -> (f64, [[[f64; 3]; 5]; CT_CONTACTS]) {
+        let mut grad = [[[0.0f64; 3]; 5]; CT_CONTACTS];
+        if !self.is_loaded() || self.beta <= 0.0 {
+            return (0.0, grad);
+        }
+        // the contact separations and their unit vectors, `∇r_k`'s own two atoms
+        let mut r = [0.0f64; CT_CONTACTS];
+        let mut u = [[0.0f64; 3]; CT_CONTACTS];
+        let mut rmin = f64::INFINITY;
+        for k in 0..CT_CONTACTS {
+            let d = [pts[k][0][0] - pts[k][1][0], pts[k][0][1] - pts[k][1][1], pts[k][0][2] - pts[k][1][2]];
+            let rk = (d[0] * d[0] + d[1] * d[1] + d[2] * d[2]).sqrt().max(1e-9);
+            r[k] = rk;
+            u[k] = [d[0] / rk, d[1] / rk, d[2] / rk];
+            if rk < rmin {
+                rmin = rk;
+            }
+        }
+        // the partition of unity, formed against the shortest contact
+        let mut w = [0.0f64; CT_CONTACTS];
+        let mut z = 0.0f64;
+        for k in 0..CT_CONTACTS {
+            w[k] = (-self.beta * (r[k] - rmin)).exp();
+            z += w[k];
+        }
+        for k in 0..CT_CONTACTS {
+            w[k] /= z;
+        }
+        // each contact's switched energy and its own gradient
+        let mut et = [0.0f64; CT_CONTACTS];
+        let mut g = [[[0.0f64; 3]; 5]; CT_CONTACTS];
+        for k in 0..CT_CONTACTS {
+            let (sw, dsw) = model.switch(r[k]);
+            if sw == 0.0 {
+                continue;
+            }
+            let (e, ge) = self.serve(pts[k][0], pts[k][1], pts[k][2], pts[k][3], pts[k][4]);
+            et[k] = sw * e;
+            for i in 0..5 {
+                for c in 0..3 {
+                    g[k][i][c] = sw * ge[i][c];
+                }
+            }
+            if dsw != 0.0 {
+                for c in 0..3 {
+                    let d = dsw * e * u[k][c];
+                    g[k][0][c] += d;
+                    g[k][1][c] -= d;
+                }
+            }
+        }
+        let e_pair: f64 = (0..CT_CONTACTS).map(|k| w[k] * et[k]).sum();
+        for k in 0..CT_CONTACTS {
+            // the first term, −Σ w_k ∇Ẽ_k, and the second collected on `∇r_k`
+            let s = -self.beta * w[k] * (et[k] - e_pair);
+            for i in 0..5 {
+                for c in 0..3 {
+                    grad[k][i][c] = w[k] * g[k][i][c];
+                }
+            }
+            for c in 0..3 {
+                grad[k][0][c] += s * u[k][c];
+                grad[k][1][c] -= s * u[k][c];
+            }
+        }
+        (e_pair, grad)
     }
 
     /// The deepest reading the table can return at separation `r`, from its own knots. This is

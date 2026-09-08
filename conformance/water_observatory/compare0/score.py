@@ -62,14 +62,21 @@ def main():
     by_name = {r["node"]: r for r in refs["rows"]}
     mbpol_on = refs["mbpol"]["available"]
 
-    # the exact solves' own price, out of the records the map is made of
+    # the exact solves' own price, out of the records the map is made of. The paths in
+    # served.json are the harvest's own, relative to the engine directory it ran in; they are
+    # re-rooted here on the observatory this scoring lives under, so the price is read from the
+    # SAME record the energy came from and not from a copy.
+    obs = out.parent
     exact_core_seconds = []
     for r in rows:
         tot = 0.0
+        seen = set()
         for key in ("exact_source", "sector_source"):
-            p = pathlib.Path(r[key])
-            if not p.is_file():
+            name = pathlib.Path(r[key])
+            p = obs / pathlib.Path(*name.parts[-2:])
+            if not p.is_file() or str(p) in seen:
                 continue
+            seen.add(str(p))
             d = json.loads(p.read_text())
             for block in ("exact", "sector"):
                 if isinstance(d.get(block), dict):
@@ -155,9 +162,16 @@ def main():
         return [(r["node"], r[key]) for r in rowsel if key in r]
 
     per_family = {}
-    for f in families + ["ALL", "HELD_OUT"]:
+    for f in families + ["ALL", "BOUND", "UNBOUND", "HELD_OUT"]:
         if f == "ALL":
             sel = scored
+        elif f == "BOUND":
+            # the subset the minimal-basis Hamiltonian actually binds -- the only geometries a
+            # water model is normally asked about, kept apart so a large error on a strongly
+            # repulsive node cannot stand in for accuracy on a hydrogen bond
+            sel = [r for r in scored if r["de_exact"] < 0]
+        elif f == "UNBOUND":
+            sel = [r for r in scored if r["de_exact"] >= 0]
         elif f == "HELD_OUT":
             sel = [r for r in scored if r["held_out"]]
         else:
@@ -237,6 +251,40 @@ def main():
                                 "on a remapped geometry can be compared on",
         },
     }
+    # ------------------------------------------------ a cross-check the freeze did not ask for
+    # NOT a gate of COMPARE0_PREREG.md: it was noticed after the freeze and it is reported as a
+    # check that could have failed and did not. CT-3's C1 counted, on these same sixty-four map
+    # nodes, how many of them the re-fit law lands inside CT-2's own S1 tolerance, and named the
+    # ten it misses and the worst of them. This lane rebuilt that law independently, so the
+    # count, the miss LIST and the worst miss are all falsifiable against ct3/gate.json.
+    c1_path = out.parent / "ct3" / "gate.json"
+    cross = None
+    if c1_path.is_file():
+        c1 = json.loads(c1_path.read_text())["c1"]
+        mapn = [r for r in scored if not r["held_out"]]
+        miss = sorted(r["node"] for r in mapn
+                      if abs(r["served_error"]) > max(0.25 * abs(r["de_exact"]), 5e-4))
+        worst = max(mapn, key=lambda r: abs(r["served_error"]))
+        cross = {
+            "rule": "CT-2's own S1 tolerance max(0.25*|dE_exact|, 5e-4) applied to THIS lane's "
+                    "served total on the sixty-four map nodes, against ct3/gate.json's C1 block",
+            "within": len(mapn) - len(miss),
+            "of": len(mapn),
+            "ct3_within": c1["within"],
+            "ct3_of": c1["of"],
+            "count_matches": len(mapn) - len(miss) == c1["within"],
+            "miss_list_matches": miss == sorted(c1["misses"]),
+            "misses": miss,
+            "worst_node": worst["node"],
+            "worst_miss": abs(worst["served_error"]),
+            "ct3_worst_node": c1["worst_node"],
+            "ct3_worst_miss": c1["worst_miss"],
+            "worst_relative_difference": abs(abs(worst["served_error"]) - c1["worst_miss"])
+                                         / max(c1["worst_miss"], 1e-30),
+            "is_a_gate_of_the_freeze": False,
+        }
+    gate["cross_check_against_ct3_c1"] = cross
+
     # ------------------------------------------------------- the fences, before any headline
     held = [r for r in scored if r["held_out"]]
     in_sample = [r for r in scored if not r["held_out"]]
@@ -360,7 +408,7 @@ def main():
 
     print(f"COMPARE-0 gate: {len(scored)} geometries, MB-pol "
           f"{'ON' if mbpol_on else 'OFF: ' + str(refs['mbpol']['reason_unavailable'])}")
-    for f in families + ["ALL", "HELD_OUT"]:
+    for f in families + ["ALL", "BOUND", "UNBOUND", "HELD_OUT"]:
         d = per_family[f]
         n = d["served_error"]["n"] if d["served_error"] else 0
         print(f"{f} (n = {n}, mean depth {d['depth']['mean_de_exact']:.3e} Ha)")

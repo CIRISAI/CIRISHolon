@@ -582,6 +582,33 @@
   "owed": "exact (FCI/STO-3G) forces on at least the held-out node and one node per family, so the served law's force can be scored against truth rather than against another model",
   "what_is_reported": "the served law's analytic interaction force against MB-pol's, per atom and as the net force on the acceptor; and TIP4P/2005's net force on the acceptor, which is the only force a rigid model on a remapped geometry can be compared on"
  },
+ "cross_check_against_ct3_c1": {
+  "rule": "CT-2's own S1 tolerance max(0.25*|dE_exact|, 5e-4) applied to THIS lane's served total on the sixty-four map nodes, against ct3/gate.json's C1 block",
+  "within": 54,
+  "of": 64,
+  "ct3_within": 54,
+  "ct3_of": 64,
+  "count_matches": true,
+  "miss_list_matches": true,
+  "misses": [
+   "dbent_R2.9_d30_a90",
+   "dbent_R2.9_d45_a45",
+   "donor_R2.9_b45",
+   "donor_R2.9_b60",
+   "donor_R2.9_b90",
+   "donor_R3.1_b45",
+   "donor_R3.1_b60",
+   "donor_R3.1_b90",
+   "linear_R2.3",
+   "linear_R2.5"
+  ],
+  "worst_node": "linear_R2.3",
+  "worst_miss": 0.011637652059479999,
+  "ct3_worst_node": "linear_R2.3",
+  "ct3_worst_miss": 0.01163765205946,
+  "worst_relative_difference": 1.718527659389794e-12,
+  "is_a_gate_of_the_freeze": false
+ },
  "fences": {
   "in_sample": {
    "rule": "SIXTY-FOUR of the sixty-five geometries are the served law's OWN fit set: the table is EXACT at every one of them by construction and C1's two contact amplitudes were fitted on their residual. TIP4P/2005 saw none of them. So the all-65 RMS comparison is IN-SAMPLE against OUT-OF-SAMPLE and is not an accuracy claim; the one honest out-of-sample number on this record is the single held-out node.",

@@ -197,6 +197,44 @@ MBX_JSON = """{
 """
 
 
+HARTREE_KJ_PER_MOL = (physical_constants["Hartree energy"][0]
+                      * physical_constants["Avogadro constant"][0] / 1000.0)
+CONSTANT_SOURCE["hartree_kj_per_mol"] = {
+    "value": HARTREE_KJ_PER_MOL,
+    "source": "scipy.constants.physical_constants['Hartree energy'] * ['Avogadro constant'] / 1000 "
+              "(CODATA) -- the only conversion applied to the OpenMM plugin's own numbers",
+}
+
+
+def load_mbpol_openmm(out):
+    """MB-pol as the Paesani group's own OpenMM plugin computed it, if that run happened.
+
+    `mbpol_openmm.py` runs under a python 3.6 environment pinned to the plugin's era and writes
+    its numbers in the plugin's OWN units; the ONLY thing done to them here is the CODATA
+    conversion above.  Nothing about MB-pol is fitted, adjusted or typed anywhere in this file.
+    """
+    p = pathlib.Path(out) / "mbpol_openmm.json"
+    if not p.is_file():
+        return None, f"no {p.name} in {out} (the plugin run did not happen here)"
+    d = json.loads(p.read_text())
+    f_scale = (BOHR_ANGSTROM / 10.0) / HARTREE_KJ_PER_MOL   # kJ/mol/nm -> hartree/bohr
+    rows = {}
+    for r in d["rows"]:
+        rows[r["node"]] = {
+            "mbpol": r["mbpol"] / HARTREE_KJ_PER_MOL,
+            "mbpol_parts": {k: v / HARTREE_KJ_PER_MOL for k, v in r["mbpol_parts"].items()},
+            "mbpol_force": [[c * f_scale for c in row] for row in r["mbpol_force"]],
+        }
+    meta = {k: d[k] for k in d if k != "rows"}
+    meta["hartree_kj_per_mol"] = HARTREE_KJ_PER_MOL
+    for k in ("carrier", "e2b_near", "e2b_far", "energy_near", "energy_far"):
+        meta["plant_ii"][k] = meta["plant_ii"][k] / HARTREE_KJ_PER_MOL
+    meta["plant_ii"]["carrier_nonzero_in_that_sector"] = abs(meta["plant_ii"]["carrier"]) > 1e-9
+    meta["plant_ii"]["fires"] = bool(abs(meta["plant_ii"]["carrier"]) > 1e-9
+                                     and abs(meta["plant_ii"]["e2b_far"]) < 1e-9)
+    return rows, meta
+
+
 def load_mbx():
     """Import MBX's own python module, or return the exact reason it could not be used."""
     home = os.environ.get("MBX_HOME", "")
@@ -260,7 +298,9 @@ def main():
     rows = served["rows"]
     t0 = time.time()
 
-    mbx, mbx_reason = load_mbx()
+    # MB-pol: the OpenMM plugin's precomputed run if it happened, else MBX in process, else VOID
+    plugin_rows, plugin_meta = load_mbpol_openmm(out)
+    mbx, mbx_reason = (None, plugin_meta) if plugin_rows is not None else load_mbx()
     cfg = str(out / "mbx.json")
     if mbx is not None:
         (out / "mbx.json").write_text(MBX_JSON)
@@ -277,15 +317,19 @@ def main():
             "primary_rule": "remap",
         },
         "mbpol": {
-            "available": mbx is not None,
-            "reason_unavailable": mbx_reason,
-            "implementation": "MBX (paesanilab/MBX), the Paesani group's own C++ library, "
-                              "through its python plugin; energies and gradients are the "
-                              "library's, converted to atomic units by the library's own "
-                              "conversion constants",
-            "mbx_home": os.environ.get("MBX_HOME", ""),
-            "mbx_commit": os.environ.get("MBX_COMMIT", ""),
-            "config": json.loads(MBX_JSON) if mbx is not None else None,
+            "available": plugin_rows is not None or mbx is not None,
+            "route": ("the Paesani group's OpenMM plugin, precomputed by mbpol_openmm.py"
+                      if plugin_rows is not None else
+                      ("MBX in process" if mbx is not None else None)),
+            "reason_unavailable": None if (plugin_rows is not None or mbx is not None) else mbx_reason,
+            "plugin": plugin_meta if plugin_rows is not None else None,
+            "mbx": {
+                "implementation": "MBX (paesanilab/MBX), the Paesani group's own C++ library, "
+                                  "through its python plugin",
+                "used": mbx is not None and plugin_rows is None,
+                "mbx_home": os.environ.get("MBX_HOME", ""),
+                "config": json.loads(MBX_JSON) if (mbx is not None and plugin_rows is None) else None,
+            },
         },
         "rows": [],
     }
@@ -301,7 +345,9 @@ def main():
             entry[f"tip4p2005_{rule}"] = float(e)
             entry[f"tip4p2005_{rule}_force_on_acceptor"] = [float(x) for x in f_b]
             entry[f"tip4p2005_{rule}_hydrogen_moved_bohr"] = float(max(moved_a, moved_b))
-        if mbx is not None:
+        if plugin_rows is not None:
+            entry.update(plugin_rows[r["node"]])
+        elif mbx is not None:
             e, force, parts = mbpol_dimer(mbx, cfg, donor, acceptor)
             entry["mbpol"] = float(e)
             entry["mbpol_force"] = [[float(c) for c in row] for row in force]
@@ -369,7 +415,17 @@ def main():
             "fires": bool(abs(coulomb) > 1e-9),
         }
     }
-    if mbx is not None:
+    if plugin_rows is not None:
+        result["plants"]["ii"] = dict(plugin_meta["plant_ii"])
+        result["plants"]["ii"]["rule"] = (
+            "the acceptor moved 40 bohr along x -- the engine's own far reference. MB-pol's "
+            "short-range two-body term must fall below the floor there, because it is switched "
+            "off past its own cutoff by construction. The TOTAL interaction is NOT required to "
+            "vanish: MB-pol's electrostatics are long-ranged and a dipole-dipole tail at 40 bohr "
+            "is real, so the far total is reported beside the plant rather than hidden inside "
+            "its floor.")
+        result["plants"]["ii"]["far_total_is_reported_not_gated"] = True
+    elif mbx is not None:
         far = [[a[0] + 40.0, a[1], a[2]] for a in acceptor]
         e_near, _, parts_near = mbpol_dimer(mbx, cfg, donor, acceptor)
         e_far, _, _ = mbpol_dimer(mbx, cfg, donor, far)
@@ -397,8 +453,9 @@ def main():
 
     result["seconds"] = time.time() - t0
     (out / "references.json").write_text(json.dumps(result, indent=1) + "\n")
+    on = plugin_rows is not None or mbx is not None
     print(f"references.json  {len(rows)} geometries; "
-          f"MB-pol {'ON' if mbx is not None else 'OFF (' + str(mbx_reason) + ')'}")
+          f"MB-pol {result['mbpol']['route'] if on else 'OFF (' + str(mbx_reason) + ')'}")
 
 
 if __name__ == "__main__":

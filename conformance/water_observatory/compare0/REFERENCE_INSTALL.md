@@ -114,10 +114,72 @@ The retry drops the parallelism and the optimisation level on the sources that h
 built. `-O1` is a COMPILE-TIME choice and changes no number the library returns:
 
 ```console
-$ taskset -c 18-23 make -j1 CXXFLAGS="-fopenmp -O1 -std=c++17" && make install
+$ taskset -c 18-23 make -j4 CXXFLAGS="-fopenmp -O1 -std=c++17"
 ```
 
-<!-- RESULT-3 -->
+**Result: PROGRESSING, NOT FINISHED, and stopped deliberately.** At `-O1` each ordinary
+translation unit sat near `1.2` GiB and the build advanced; the one that will not build at any
+sane budget is `potential/3b/poly_3b_A1_B1C2X2_B1C2X2_deg4_grad_v1.cpp`, `1.9` MB of generated
+polynomial, which held `5.7` GiB at `-O2` and was still climbing past `9.4` GiB at `-O1` — it
+was killed by hand rather than left to invite the OOM killer onto another lane's work, and a
+fourth pass was queued to build it alone at `-O0` with GCC's collector told to run eagerly.
+At the point the reading was taken, **102 of 253 translation units had built** (libtool
+compiles each twice, PIC and non-PIC, because `--enable-shared` was asked for), the largest
+remaining unit was `3.4` MB, and 27 of the 151 remaining were over `300` kB. The build was
+then **stopped**: MB-pol had arrived by the route in §3b below, and hours of a shared machine
+for a second implementation of the same physics is not proportionate. **The MBX cross-check is
+OWED, not refused**: everything above is the reproduction route and the tree is on disk in this
+worktree's `scratch/`.
+
+## 3b. MB-pol, through the group's own OpenMM plugin — THIS is the route that supplied it
+
+`paesanilab/mbpol 1.1.2` is the Paesani group's own OpenMM plugin, uploaded 2018-05-09, and it
+is a binary install rather than a build. The reason it was not tried first is in §3 above and
+it was wrong: it needs an OpenMM of its own era, but micromamba supplies one in a minute.
+
+```console
+$ ./bin/micromamba create -y -p ./env36 -c paesanilab -c conda-forge "python=3.6" mbpol
+Linking mbpol-1.1.2-py36hc8697eb_0
+Transaction finished
+$ ldd env36/lib/libOpenMMMBPol.so | grep OpenMM
+	libOpenMM.so => not found
+```
+
+The plugin ships without its OpenMM. The first pairing tried was the newest OpenMM
+`conda-forge` still builds for python 3.6:
+
+```console
+$ ./bin/micromamba install -y -p ./env36 -c conda-forge "openmm=7.5"
+Linking openmm-7.5.1-py36he68983a_1
+$ micromamba run -p ./env36 python mbpol_probe.py
+EXIT=139
+```
+
+**Result: FAILED — SIGSEGV.** A 2018 plugin against a 2021 OpenMM is an ABI mismatch, and it is
+recorded as a segmentation fault and not as "MB-pol does not work here". The pairing that does
+work is the OpenMM of the plugin's own era, from the `omnia` channel:
+
+```console
+$ ./bin/micromamba create -y -p ./env36b -c omnia -c conda-forge -c paesanilab \
+    "python=3.6" "openmm=7.2" mbpol
+Transaction finished
+$ micromamba run -p ./env36b python mbpol_probe.py
+dimer   kcal/mol 6.518560076766001
+mono A  kcal/mol 5.3596147457090195
+mono B  kcal/mol 5.359614745996808
+interaction kcal/mol -4.200669414939827
+```
+
+**Result: OK.** `openmm 7.2.2.dev-32bc79a`. That probe is `linear_R2.9`, the map's own linear
+dimer at 2.9 Å: MB-pol binds it by `−4.201` kcal/mol where the exact minimal-basis solve binds
+it by `−3.44` and TIP4P/2005 by `−6.19`. Three things had to be got right before the number was
+believed and each was measured rather than assumed — the plugin's template needs the massless
+`M` site AND the two O–H bonds; `Context.computeVirtualSites()` must be called or every energy
+reads `nan`; and the forces the state hands back leave a STALE row on the `M` site which must
+be dropped, not redistributed (redistributing it was tried first and broke the translation sum
+by exactly the M rows). `compare0/mbpol_openmm.py` carries all three with their checks:
+translation sum `9.1e-12`, force against a central difference of the energy `6.7e-4` kJ/mol/nm,
+three-body-on-a-dimer exactly `0`, one-body cancelling to `3.6e-15`.
 
 ## 4. TIP4P/2005
 

@@ -122,6 +122,13 @@ def main():
             "served_force": r["served_force"],
             "tip4p2005_remap_force_on_acceptor": ref["tip4p2005_remap_force_on_acceptor"],
         }
+        # the net force on the ACCEPTOR molecule is the one force quantity a rigid model and a
+        # flexible one can both be asked for, so it is recorded whether or not MB-pol ran
+        fs0 = r["served_force"]
+        row["net_force_on_acceptor"] = {
+            "served": [sum(fs0[i][c] for i in range(3, 6)) for c in range(3)],
+            "tip4p2005_remap": ref["tip4p2005_remap_force_on_acceptor"],
+        }
         if mbpol_on:
             row["mbpol"] = ref["mbpol"]
             row["mbpol_error_vs_exact"] = ref["mbpol"] - r["de_exact"]
@@ -137,12 +144,12 @@ def main():
             net_s = [sum(fs[i][c] for i in range(3, 6)) for c in range(3)]
             net_m = [sum(fm[i][c] for i in range(3, 6)) for c in range(3)]
             net_t = ref["tip4p2005_remap_force_on_acceptor"]
-            row["net_force_on_acceptor"] = {
-                "served": net_s, "mbpol": net_m, "tip4p2005_remap": net_t,
+            row["net_force_on_acceptor"].update({
+                "mbpol": net_m,
                 "served_minus_mbpol_norm": math.sqrt(sum((net_s[c] - net_m[c]) ** 2 for c in range(3))),
                 "tip4p2005_minus_mbpol_norm": math.sqrt(sum((net_t[c] - net_m[c]) ** 2 for c in range(3))),
                 "mbpol_norm": math.sqrt(sum(x * x for x in net_m)),
-            }
+            })
         scored.append(row)
 
     (out / "scores.json").write_text(json.dumps(
@@ -202,8 +209,7 @@ def main():
         "engine_gates": {k: served[k] for k in ("g_t0", "g_c1", "g_x0", "g_f0")},
         "law": served["law_source"],
         "references": {
-            "mbpol": {k: refs["mbpol"][k] for k in
-                      ("available", "reason_unavailable", "implementation", "mbx_home", "mbx_commit")},
+            "mbpol": refs["mbpol"],
             "tip4p2005": {"source": refs["tip4p2005"]["source"],
                           "parameters": refs["tip4p2005"]["parameters"],
                           "primary_placement_rule": refs["tip4p2005"]["primary_rule"]},

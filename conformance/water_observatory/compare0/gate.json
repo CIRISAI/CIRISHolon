@@ -47,11 +47,54 @@
  "law": "../conformance/water_observatory/ct3/wall_ct3.json (contacts) + ../conformance/water_observatory/ct2/wall_ct2.json (walls, charge, c0)",
  "references": {
   "mbpol": {
-   "available": false,
-   "reason_unavailable": "MBX_HOME is not set",
-   "implementation": "MBX (paesanilab/MBX), the Paesani group's own C++ library, through its python plugin; energies and gradients are the library's, converted to atomic units by the library's own conversion constants",
-   "mbx_home": "",
-   "mbx_commit": ""
+   "available": true,
+   "route": "the Paesani group's OpenMM plugin, precomputed by mbpol_openmm.py",
+   "reason_unavailable": null,
+   "plugin": {
+    "phase": "mbpol",
+    "implementation": "MB-pol through the Paesani group's own OpenMM plugin (anaconda.org/paesanilab/mbpol 1.1.2, py36, 2018-05-09), on openmm 7.2 from the omnia channel; every energy and force is the plugin's, converted by simtk.unit",
+    "citation": "V. Babin, C. Leforestier, F. Paesani, J. Chem. Theory Comput. 9, 5395 (2013); V. Babin, G. R. Medders, F. Paesani, ibid. 10, 1599 (2014); G. R. Medders, V. Babin, F. Paesani, ibid. 10, 2906 (2014)",
+    "openmm_version": "7.2.2.dev-32bc79a",
+    "xml": "/home/emoore/CIRISHolon/.claude/worktrees/compare0/scratch/env36b/lib/python3.6/site-packages/mbpol-1.0-py3.6-linux-x86_64.egg/mbpol.xml",
+    "units": "kilojoule per mole; kilojoule per mole per nanometre -- the plugin's own, converted by references.py with scipy.constants",
+    "interaction_rule": "E(dimer) - E(monomer A) - E(monomer B), every monomer at ITS OWN geometry in the dimer -- the same definition the exact record uses",
+    "virtual_site_force_worst_before_distribution": 1870.1258336566243,
+    "virtual_site_rule": "this OpenMM hands the M site's force back on the M site: MEASURED, not assumed -- the worst raw M-site component over all geometries is above, in kJ/mol/nm, and it is NOT small. The site is a linear average of its three parents, so the force is distributed by the chain rule F_parent += w_parent * F_M with the weights read out of the System rather than typed from the plugin's XML. The check that this was done right is the translation sum below.",
+    "translation_sum_worst": 9.094947017729282e-12,
+    "force_identification": {
+     "rule": "the plugin's forces arrive as base-class Force proxies -- the class name, isinstance against the plugin's own SWIG classes, and XmlSerializer all fail to tell them apart -- so they are labelled by the order mbpol.xml declares them and the labelling is CHECKED by two facts that must hold",
+     "three_body_on_a_dimer_must_be_zero": 0.0,
+     "one_body_must_cancel_in_the_interaction": 3.552713678800501e-15,
+     "bar_hartree_equivalent_kj_per_mol": 1e-06,
+     "pass": true
+    },
+    "force_is_its_own_derivative": {
+     "rule": "worst absolute |reported interaction force - central difference of the interaction energy| at h = 1e-4 bohr, over 6 atoms x 3 coordinates on the held-out node, in kJ/mol/nm; this is what settles whether the M site's force still needed distributing (it does not)",
+     "h_bohr": 0.0001,
+     "worst": 0.0006719333267533045
+    },
+    "translation_rule": "the worst component of the SUM of the six interaction forces, which a translation-invariant interaction must leave at zero; it would not be zero if the virtual site's force had been dropped or misweighted",
+    "plant_ii": {
+     "node": "twistbent_R2.7_tw20_t85_d0",
+     "sector": "MB-pol's short-range two-body sector",
+     "carrier": 0.021760361582872666,
+     "e2b_near": 0.021760361582872666,
+     "e2b_far": 0.0,
+     "energy_near": -0.0027855993474512576,
+     "energy_far": 1.068463318533051e-06,
+     "floor_hartree": 1e-09,
+     "carrier_nonzero_in_that_sector": true,
+     "fires": true
+    },
+    "seconds": 4.944140911102295,
+    "hartree_kj_per_mol": 2625.499639479163
+   },
+   "mbx": {
+    "implementation": "MBX (paesanilab/MBX), the Paesani group's own C++ library, through its python plugin",
+    "used": false,
+    "mbx_home": "",
+    "config": null
+   }
   },
   "tip4p2005": {
    "source": "J. L. F. Abascal and C. Vega, 'A general purpose model for the condensed phases of water: TIP4P/2005', J. Chem. Phys. 123, 234505 (2005) -- the model-parameter table (TIP4P/2005 column): d(OH) = 0.9572 A, HOH = 104.52 deg, d(OM) = 0.1546 A, q(H) = 0.5564 e, sigma = 3.1589 A, eps/k_B = 93.2 K.",
@@ -73,6 +116,10 @@
    "hartree_per_kelvin": {
     "value": 3.1668115634564e-06,
     "source": "scipy.constants.physical_constants['kelvin-hartree relationship'] (CODATA)"
+   },
+   "hartree_kj_per_mol": {
+    "value": 2625.499639479163,
+    "source": "scipy.constants.physical_constants['Hartree energy'] * ['Avogadro constant'] / 1000 (CODATA) -- the only conversion applied to the OpenMM plugin's own numbers"
    }
   }
  },
@@ -99,6 +146,20 @@
     "max_abs": 0.0037089284122053586,
     "max_at": "dbent_R2.9_d15_a60",
     "mean_signed": -0.000746935983151131
+   },
+   "mbpol_error_vs_exact": {
+    "n": 3,
+    "rms": 0.000658952713520647,
+    "max_abs": 0.0009919178681390554,
+    "max_at": "dbent_R2.9_d30_a90",
+    "mean_signed": 0.0004605056598458276
+   },
+   "served_error_vs_mbpol": {
+    "n": 3,
+    "rms": 0.0004492539738438681,
+    "max_abs": 0.0005875572346073219,
+    "max_at": "dbent_R2.9_d45_a45",
+    "mean_signed": -3.311584421252751e-05
    },
    "depth": {
     "mean_de_exact": -0.0018029492716304001,
@@ -148,6 +209,20 @@
     "max_at": "donor_R2.9_b15",
     "mean_signed": -0.0013347474995978716
    },
+   "mbpol_error_vs_exact": {
+    "n": 9,
+    "rms": 0.0011280922022621064,
+    "max_abs": 0.0018874567944527094,
+    "max_at": "donor_R2.9_b90",
+    "mean_signed": -3.8394687805332544e-05
+   },
+   "served_error_vs_mbpol": {
+    "n": 9,
+    "rms": 0.001017274407572919,
+    "max_abs": 0.0018356319795382343,
+    "max_at": "donor_R3.1_b15",
+    "mean_signed": 0.0007243976816202303
+   },
    "depth": {
     "mean_de_exact": -0.0013907116237767423,
     "deepest": -0.004733226872474
@@ -195,6 +270,20 @@
     "max_abs": 0.013540132648988202,
     "max_at": "linear_R2.5",
     "mean_signed": -0.008977000603066828
+   },
+   "mbpol_error_vs_exact": {
+    "n": 7,
+    "rms": 0.0019167606793548534,
+    "max_abs": 0.0031089608192548836,
+    "max_at": "linear_R2.3",
+    "mean_signed": -0.0016366869891103063
+   },
+   "served_error_vs_mbpol": {
+    "n": 7,
+    "rms": 0.005818800997565989,
+    "max_abs": 0.014746612878734883,
+    "max_at": "linear_R2.3",
+    "mean_signed": 0.0034425362485880203
    },
    "depth": {
     "mean_de_exact": 0.0008430667657129999,
@@ -244,6 +333,20 @@
     "max_at": "tilt_R2.7_t180",
     "mean_signed": -0.0069683470317977525
    },
+   "mbpol_error_vs_exact": {
+    "n": 25,
+    "rms": 0.00480953951042639,
+    "max_abs": 0.016043435182947548,
+    "max_at": "tilt_R2.7_t180",
+    "mean_signed": -0.002931562267475786
+   },
+   "served_error_vs_mbpol": {
+    "n": 25,
+    "rms": 0.003543946105365907,
+    "max_abs": 0.010562329880307551,
+    "max_at": "tilt_R2.7_t180",
+    "mean_signed": 0.002206319922369354
+   },
    "depth": {
     "mean_de_exact": 0.004748426899540284,
     "deepest": -0.007083325712586
@@ -291,6 +394,20 @@
     "max_abs": 0.06635150149484201,
     "max_at": "twist_R2.7_t120",
     "mean_signed": -0.012879629837380863
+   },
+   "mbpol_error_vs_exact": {
+    "n": 18,
+    "rms": 0.012056492028377098,
+    "max_abs": 0.040818913330908646,
+    "max_at": "twist_R2.7_t120",
+    "mean_signed": -0.006969432906930047
+   },
+   "served_error_vs_mbpol": {
+    "n": 18,
+    "rms": 0.011348009163801383,
+    "max_abs": 0.03780529682300865,
+    "max_at": "twist_R2.7_t120",
+    "mean_signed": 0.007004609971469369
    },
    "depth": {
     "mean_de_exact": 0.01757632026539966,
@@ -340,6 +457,20 @@
     "max_at": "twistbent_R2.7_tw20_t85_d0",
     "mean_signed": -0.006584619997967695
    },
+   "mbpol_error_vs_exact": {
+    "n": 3,
+    "rms": 0.0013404408209734674,
+    "max_abs": 0.0020385315094814554,
+    "max_at": "twistbent_R3.2",
+    "mean_signed": -0.0010622218960861403
+   },
+   "served_error_vs_mbpol": {
+    "n": 3,
+    "rms": 0.0020868710539638327,
+    "max_abs": 0.002545069882575742,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": 0.0003332035095878071
+   },
    "depth": {
     "mean_de_exact": -0.002671168505041,
     "deepest": -0.003314264520014
@@ -387,6 +518,20 @@
     "max_abs": 0.06635150149484201,
     "max_at": "twist_R2.7_t120",
     "mean_signed": -0.007736744808138531
+   },
+   "mbpol_error_vs_exact": {
+    "n": 65,
+    "rms": 0.0070586748457688395,
+    "max_abs": 0.040818913330908646,
+    "max_at": "twist_R2.7_t120",
+    "mean_signed": -0.0032668670589904086
+   },
+   "served_error_vs_mbpol": {
+    "n": 65,
+    "rms": 0.006670225213276279,
+    "max_abs": 0.03780529682300865,
+    "max_at": "twist_R2.7_t120",
+    "mean_signed": 0.003273208821792408
    },
    "depth": {
     "mean_de_exact": 0.006385340718179802,
@@ -436,6 +581,20 @@
     "max_at": "twist_R2.7_t30",
     "mean_signed": -0.005595180205203342
    },
+   "mbpol_error_vs_exact": {
+    "n": 37,
+    "rms": 0.0015991208203347928,
+    "max_abs": 0.0026065949597781353,
+    "max_at": "twist_R3.4_t0",
+    "mean_signed": -0.0011270438446413047
+   },
+   "served_error_vs_mbpol": {
+    "n": 37,
+    "rms": 0.0017579281770993159,
+    "max_abs": 0.0027738203078597253,
+    "max_at": "tilt_R3.4_t60",
+    "mean_signed": 0.0010674933849785851
+   },
    "depth": {
     "mean_de_exact": -0.003701100836251124,
     "deepest": -0.007083325712586
@@ -483,6 +642,20 @@
     "max_abs": 0.06635150149484201,
     "max_at": "twist_R2.7_t120",
     "mean_signed": -0.010566669462017172
+   },
+   "mbpol_error_vs_exact": {
+    "n": 28,
+    "rms": 0.010596498670150082,
+    "max_abs": 0.040818913330908646,
+    "max_at": "twist_R2.7_t120",
+    "mean_signed": -0.006094490592237439
+   },
+   "served_error_vs_mbpol": {
+    "n": 28,
+    "rms": 0.00995997751919913,
+    "max_abs": 0.03780529682300865,
+    "max_at": "twist_R2.7_t120",
+    "mean_signed": 0.006187904220439246
    },
    "depth": {
     "mean_de_exact": 0.01971385277224924,
@@ -532,6 +705,20 @@
     "max_at": "twistbent_R2.7_tw20_t85_d0",
     "mean_signed": -0.008840592681577263
    },
+   "mbpol_error_vs_exact": {
+    "n": 1,
+    "rms": 3.75840876962576e-05,
+    "max_abs": 3.75840876962576e-05,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -3.75840876962576e-05
+   },
+   "served_error_vs_mbpol": {
+    "n": 1,
+    "rms": 0.002545069882575742,
+    "max_abs": 0.002545069882575742,
+    "max_at": "twistbent_R2.7_tw20_t85_d0",
+    "mean_signed": -0.002545069882575742
+   },
    "depth": {
     "mean_de_exact": -0.002748015259755,
     "deepest": -0.002748015259755
@@ -573,14 +760,25 @@
   },
   "served_law_seconds_all_geometries": 397.009810411,
   "served_law_cpu_seconds": 499.34,
-  "references_seconds_all_geometries": 0.07027149200439453,
+  "references_seconds_all_geometries": 0.07676291465759277,
   "note": "the served law's wall time here is dominated by the engine's scene construction (one Sim per evaluation, twice per geometry for the far reference, and 36 more per finite-difference node), not by the law's arithmetic; it is reported as measured and is not a per-evaluation cost model for the liquid"
  },
  "forces": {
   "exact_forces_present": false,
   "why": "no record in ct1/, ct2/ or ct3/ carries a force: the exact solves stored energies only. Nothing here is scored against a true force.",
   "owed": "exact (FCI/STO-3G) forces on at least the held-out node and one node per family, so the served law's force can be scored against truth rather than against another model",
-  "what_is_reported": "the served law's analytic interaction force against MB-pol's, per atom and as the net force on the acceptor; and TIP4P/2005's net force on the acceptor, which is the only force a rigid model on a remapped geometry can be compared on"
+  "what_is_reported": "the served law's analytic interaction force against MB-pol's, per atom and as the net force on the acceptor; and TIP4P/2005's net force on the acceptor, which is the only force a rigid model on a remapped geometry can be compared on",
+  "served_vs_mbpol_per_atom_rms": {
+   "rms_over_geometries": 0.006519131847934276,
+   "max": 0.043547999149764496,
+   "max_at": "twist_R2.7_t120",
+   "mbpol_force_rms_over_geometries": 0.00812576617126961
+  },
+  "net_force_on_acceptor": {
+   "served_minus_mbpol_rms": 0.013831964466911343,
+   "tip4p2005_minus_mbpol_rms": 0.016931737919353804,
+   "mbpol_rms": 0.028913311678955507
+  }
  },
  "cross_check_against_ct3_c1": {
   "rule": "CT-2's own S1 tolerance max(0.25*|dE_exact|, 5e-4) applied to THIS lane's served total on the sixty-four map nodes, against ct3/gate.json's C1 block",
@@ -657,6 +855,20 @@
    "moved": -0.010995874965869769,
    "miss": 0.0,
    "fires": true
+  },
+  "ii": {
+   "node": "twistbent_R2.7_tw20_t85_d0",
+   "sector": "MB-pol's short-range two-body sector",
+   "carrier": 0.021760361582872666,
+   "e2b_near": 0.021760361582872666,
+   "e2b_far": 0.0,
+   "energy_near": -0.0027855993474512576,
+   "energy_far": 1.068463318533051e-06,
+   "floor_hartree": 1e-09,
+   "carrier_nonzero_in_that_sector": true,
+   "fires": true,
+   "rule": "the acceptor moved 40 bohr along x -- the engine's own far reference. MB-pol's short-range two-body term must fall below the floor there, because it is switched off past its own cutoff by construction. The TOTAL interaction is NOT required to vanish: MB-pol's electrostatics are long-ranged and a dipole-dipole tail at 40 bohr is real, so the far total is reported beside the plant rather than hidden inside its floor.",
+   "far_total_is_reported_not_gated": true
   }
  },
  "branches": {
@@ -681,13 +893,12 @@
   },
   "worst_served_error_node": "linear_R2.3",
   "worst_served_error": 0.011637652059479999,
-  "hamiltonian_gap_rms": null,
-  "1_larger_basis_fires": null,
-  "1_note": "VOID: MB-pol did not run, so the Hamiltonian gap has no number and branch 1 cannot be tested. No later branch may be declared the choice while the first is VOID.",
+  "hamiltonian_gap_rms": 0.0070586748457688395,
+  "1_larger_basis_fires": true,
   "2_more_table_coverage_fires": false,
   "3_better_angular_representation_fires": true,
   "3_concentrated_families": [],
   "4_many_body_polarisation": "a REFERRAL only; a dimer set cannot see a three-body term",
-  "fired": null
+  "fired": "1 \u2014 a larger basis (the I-5 lane)"
  }
 }

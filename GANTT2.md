@@ -360,6 +360,66 @@ evidence for anything here.
    announced singularity, asking only whether the engine detects lost resolution and refines.
    A finite simulation cannot exhibit an infinity, and the freeze would say so.
 
+## LIQUID-2 at the honest step: the gate REFUSES the campaign at its own price ceiling (2026-09-08)
+
+The integration gap is closed. `liquid2.rs` now selects the blend with its β read from
+`ct3/smooth/beta.json` at run time, the 1× step the NVE runs chose, the stochastic thermostat
+and the periodic lens; a `CONFIG` gate reads all six back FROM THE LIVE OBJECTS and passes 6/6,
+and `gate --demo-unswitched` builds the old default and is REFUSED at 5 of the 6 legs, the
+sixth being the lens that was already wired. That is M-VALIDATED-NOT-WIRED's rule working.
+
+**Then the honest configuration priced the campaign out.** Every physics leg of R3 passes: the
+window opens at the crossover, the counted time is 70 crossovers, the top lag sits under the
+lens's cap. What fails is money.
+
+| | |
+|---|---|
+| counted arm, 3 seeds, at the tables' step | `1,088,624` s |
+| the pre-committed ceiling (ten times LIQUID-1's own arm) | `299,478` s |
+| over by | `3.64×` |
+
+`admits: false`, `gate.done` absent, nothing counted. The two stakes were never reconciled: the
+ARM LENGTH is derived from R3's diffusive window (28.7 ps, 11× LIQUID-1's physical time, times
+three seeds) while the CEILING is derived from LIQUID-1's own wall, and at 8× the step the
+arithmetic happened to fit. At the step the evidence selects, it does not.
+
+**The lead's own error, corrected by the lane:** the brief said the 8× cost numbers overstated
+the price of a picosecond. They understate it. Core-seconds per picosecond is seconds per pass
+divided by picoseconds per pass, and picoseconds per pass IS the step, so a picosecond at 1×
+costs about 8.4× what the banked 8× number says: `10,004` core-s/ps at 128 waters against
+`1,185`, measured with an 8× control re-run in the same mix. The smooth rule itself costs 5.5 %
+of a pass; the rest is the step.
+
+**Three more constants that were only true at 8×**, found while wiring and all of the same
+shape as the misfit: the settling block (typed 250 frames, described as LIQUID-1's 2,000-frame
+block, true only at 8×; now derived), the frozen settling in `pilot/settling.json` (2,500
+frames at 8×; the reader now refuses a settling frozen at another step, and it fired), and the
+settling CAP (40,000 frames, "8.34 ps" at 8× and 1.043 ps at 1×; NAMED, not repaired, with the
+arithmetic that a physical cap is 320,000 frames).
+
+**The pilots were left deliberately unfrozen.** Re-run at 1× matched in physical time, Chodera's
+start read 10 / 0 / 8 blocks with `n_eff` 3.4 / 3.3 / 5.9 of 14: a short instrument at either
+step. The declared 3 × 60-block set is `114,486` core-s, 38 % of the whole campaign's ceiling
+spent on trajectory that is then discarded, on top of an arm already 3.64× over. Freezing a
+settling from the short set would have been freezing a number the set cannot support.
+
+**The decision this forces, and it is the user's.** Nothing here is repaired by moving a stake.
+The options, with what each costs:
+
+1. **Split R3 out.** LIQUID-2 keeps R1, R2 and S on an arm derived from THEIR needs rather than
+   from the diffusive window, which fits the ceiling with room; self-diffusion becomes its own
+   campaign with its own priced ceiling and its own freeze. This moves no stake and fixes the
+   owed defect below, and R3 was already VOID in LIQUID-1.
+2. **Re-derive the ceiling.** Legitimate only by showing the original derivation wrong, not by
+   showing it inconvenient.
+3. **Fewer seeds.** Cuts the uncertainty the review asked for; refused unless the other two are.
+4. **Make the arm cheaper.** Real work, not a freeze decision.
+
+**Owed, named by the lane, not fixed:** the runner derives the COUNTED ARM's length from R3's
+window, so an R3 void by price leaves R1, R2 and S with no arm length of their own. Option 1
+requires that rule; designing it while a freeze stands would have been improvising past a
+pre-committed rule, and the lane refused to.
+
 ## The build lane — the closure type and the campaign harness (2026-09-07, `engine/crates/holon-closure`, `holon-campaign`)
 
 Pure engineering, additive, landed with 77 tests: the closure as ONE type (members, the

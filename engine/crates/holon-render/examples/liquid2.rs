@@ -45,8 +45,9 @@ use holon_lens::lens::{
 };
 use holon_lens::traj::{BondSet, Frame, Header, Trajectory, AU_TIME_FS};
 use holon_render::channel::Row;
-use holon_render::seam::{CtLoad, CtTable, SeamModel, CT_DIM};
+use holon_render::seam::{CtLoad, CtServe, CtTable, SeamModel, CT_DIM};
 use holon_render::sim::{Boundary, Sim, INTRA_UNIT_REACH, SEAM_REACH_BUDGET};
+use holon_render::thermostat::ThermostatKind;
 use holon_render::waterbox::{bohr2_per_fs_to_cm2_per_s, first_peak, liquid_box, BOHR_ANGSTROM};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
@@ -83,7 +84,13 @@ const SIZE_PRICE_FRAMES: usize = 20;
 /// The settling readout cadence, in frames. At the pre-committed step this is `52.126` fs,
 /// which is LIQUID-1's own 2,000-frame block to four decimal places - the criterion below was
 /// VALIDATED on that record's blocks and runs here at the same physical cadence.
-const SETTLE_READOUT: usize = 250;
+/// **DERIVED, not typed** — see [`settle_readout_frames`]: LIQUID-1's own 2,000-frame block
+/// converted at this arm's step multiplier. `250` at the withdrawn `8×`, `2,000` at the
+/// selected `1×`, and the physical length `52.126` fs either way.
+#[allow(non_snake_case)]
+fn SETTLE_READOUT() -> usize {
+    settle_readout_frames(STEP_MULT)
+}
 /// Samples taken inside each settling block (LIQUID-1's blocks held 20).
 const SETTLE_SAMPLES: usize = 10;
 /// The window, in settling blocks. Validated on LIQUID-1's series: a 5-block window first
@@ -129,9 +136,44 @@ const SEAM_CUTOFF_BOHR: f64 = 14.0;
 /// Amendment 2's stake on the truncation, per water, unchanged.
 const TRUNCATION_STAKE_PER_WATER: f64 = 1.0e-5;
 
-/// THE STEP, in multiples of the tables' own step, PRE-COMMITTED BY THE FREEZE and chosen by
-/// the labelled screen of section 2 (the largest whose measured drift stays under the bar).
-const STEP_MULT: f64 = 8.0;
+/// THE STEP, in multiples of the tables' own step, PRE-COMMITTED BY THE FREEZE and SELECTED
+/// BY THE NVE EVIDENCE — `ct3/smooth/nve.json`, `"step_chosen": 1`.
+///
+/// **The `8.0` this constant carried is WITHDRAWN and the reason is a measurement, not a
+/// preference.** Under the argmin serving rule the drift was in the SERVED ENERGY: a 32-fold
+/// change of step moved it by 6 and not monotonically, so no step rule had anything to
+/// select and a provisional `8×` was left standing. Under the smooth rule the drift is back
+/// in the INTEGRATOR, and the NVE sweep from ONE settled checkpoint over EQUAL physical
+/// durations reads `4.09`, `4.06`, `4.06` per doubling on the drift per ps and `3.99`,
+/// `4.00`, `4.01` on the fluctuation RMS — `(ω dt)²`, a symplectic integrator's own error.
+/// The rule (the largest step whose drift per ps is within `2×` the `1×` arm's, observables
+/// agreeing within their own spread) therefore selects `1×` and nothing above it survives
+/// the first clause: `2×` is already `4.09×` the `1×` drift. **There is no free step under
+/// the smooth rule.**
+///
+/// At `1.0` the engine's `allow_dt_growth` toggle is left OFF, so this arm is LIQUID-1's own
+/// integrator setting exactly (`build_sized`), and the step in force is the TABLES' step,
+/// `1.077481` au = `0.026063` fs. The provisional `8×` records stay reachable and unchanged
+/// under `gate_provisional_8x/`, and the screen still runs any step its `--step` names.
+const STEP_MULT: f64 = 1.0;
+
+/// THE SETTLING BLOCK, in LIQUID-1's own frames — a PHYSICAL cadence, converted at this
+/// arm's step and never a frame count inherited across a step change. (The lesson is the
+/// same shape as M-VALIDATED-NOT-WIRED one level down: a constant that is right in its own
+/// regime and silently imported into another is a default nobody chose.)
+///
+/// Gate E's block is documented as *"LIQUID-1's own 2,000-frame block to four decimal
+/// places"*, `52.126` fs, and the criterion was VALIDATED on that record's blocks at that
+/// physical length. The number `250` was that length at the provisional `8×` step. Changing
+/// the step without converting it would leave the criterion reading a window `8×` shorter in
+/// physical time than the one it was validated on, which is the same shape of fault as an
+/// unswitched default. So the block is LIQUID-1's `2,000` frames divided by the step
+/// multiplier — exactly `250` at `8×` (so the banked provisional gate's cadence is
+/// reproduced to the frame) and `2,000` at the selected `1×`.
+const SETTLE_BLOCK_LIQUID1_FRAMES: usize = 2_000;
+fn settle_readout_frames(step_mult: f64) -> usize {
+    ((SETTLE_BLOCK_LIQUID1_FRAMES as f64) / step_mult).round().max(1.0) as usize
+}
 
 /// The price is measured on the first 100 frames and written before the counted ones
 /// (M-CHEAPER-THAN-ITS-PRICE).
@@ -281,6 +323,11 @@ struct Law {
     q_h: f64,
     kt: f64,
     r_min: [f64; 3],
+    /// THE BLEND'S INVERSE LENGTH, READ AT RUN TIME from the smooth lane's own record and
+    /// never typed here (`ct3/smooth/beta.json`, field `beta_per_bohr`). The `ReadInput`
+    /// carries the path and the field with the number, so the configuration block prints
+    /// where beta came from and not only what it is (M-STALE-INSTRUMENT).
+    blend_beta: ReadInput,
     /// `Some` when the SERVED boundedness walk names a fall: no counted arm on this law.
     refusal: Option<String>,
 }
@@ -350,6 +397,12 @@ fn load_variant(obs: &Path, variant: Variant) -> Law {
         }
     };
     let (table, knots) = load_table(&tp);
+    // THE BLEND'S beta, read from the record that DERIVED it. Not a parameter of this
+    // campaign and not a number this file may hold: `examples/ct3_smooth.rs` extracted it
+    // from the map's own shortest-to-second-shortest contact separations against the table's
+    // own resolution floor, at every one of the 64 nodes, and wrote it with its arithmetic.
+    let beta_path = obs.join("ct3").join("smooth").join("beta.json");
+    let blend_beta = must(read_input_after(&beta_path.display().to_string(), &[], "beta_per_bohr"));
     let model = SeamModel {
         a: g("a"),
         b: g("b"),
@@ -426,6 +479,7 @@ fn load_variant(obs: &Path, variant: Variant) -> Law {
         q_h,
         kt,
         r_min,
+        blend_beta,
         refusal,
     }
 }
@@ -452,19 +506,108 @@ fn load_variant(obs: &Path, variant: Variant) -> Law {
 /// step is rung (ii) by construction, the accuracy target is deliberately exceeded, and what
 /// the freeze then measures is the drift the arm actually produced against a bar read off
 /// LIQUID-1's own arm. That is the whole point of the sweep.
-fn build(law: &Law, step_mult: f64, seed: u64) -> (Box<Sim>, Vec<[f64; 3]>, f64, f64, f64) {
-    build_sized(law, step_mult, seed, N_CELLS)
+/// THE SELECTED CONFIGURATION, carried as a value so that no phase can inherit a default it
+/// never chose (**M-VALIDATED-NOT-WIRED**).
+///
+/// The misfit's own words: *a component gated in isolation is not a component the campaign
+/// runs*. Three of the four instruments this campaign validated were reachable and not
+/// reached — the smooth serving rule (`CtServe::Blend`, gated in `ct3/smooth/gate.json`), the
+/// `1x` step (selected by `ct3/smooth/nve.json`), and the canonical thermostat
+/// (`ThermostatKind::StochasticRescaling`, validated in `tests/thermostat.rs`) — while the
+/// boundary-aware lens was the only one wired. Every one of them is a DEFAULT somewhere:
+/// `CtTable::empty` loads `Argmin`, `Sim` loads `Berendsen`, and a step multiplier is just a
+/// number. A default is invisible; a selection is not, so the campaign carries one and the
+/// gate prints what the OBJECTS say it got.
+///
+/// `campaign()` is the freeze's. `screen(step)` is the labelled screen's, and it is
+/// deliberately the OLD configuration - argmin, Berendsen, the step its `--step` names - so
+/// every screen record already in this tree re-runs bit for bit.
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Selection {
+    step_mult: f64,
+    serve: CtServe,
+    thermostat: ThermostatKind,
 }
 
-fn build_sized(law: &Law, step_mult: f64, seed: u64, cells: usize) -> (Box<Sim>, Vec<[f64; 3]>, f64, f64, f64) {
+impl Selection {
+    /// The freeze's configuration: the tables' own step, the smooth serving rule at the
+    /// DERIVED beta, and the canonical thermostat.
+    fn campaign() -> Selection {
+        Selection { step_mult: STEP_MULT, serve: CtServe::Blend, thermostat: ThermostatKind::StochasticRescaling }
+    }
+    /// The labelled screen's, which may turn any knob and whose records enter no gate: the
+    /// serving rule and the thermostat every banked screen arm was taken with.
+    fn screen(step_mult: f64) -> Selection {
+        Selection { step_mult, serve: CtServe::Argmin, thermostat: ThermostatKind::Berendsen }
+    }
+    /// The COMPARISON ARM of gate T: the campaign's configuration in every respect except
+    /// the thermostat, which is LIQUID-1's Berendsen. One knob against the counted arm.
+    fn berendsen_arm() -> Selection {
+        Selection { thermostat: ThermostatKind::Berendsen, ..Selection::campaign() }
+    }
+    /// What an UNSWITCHED default looks like: the step the NVE runs refuted, the serving rule
+    /// `CtTable::empty` loads, and the thermostat `Sim` loads. Used by `--demo-unswitched` to
+    /// show that the CONFIG gate REFUSES it rather than running an arm on it.
+    fn unswitched_default() -> Selection {
+        Selection { step_mult: 8.0, serve: CtServe::Argmin, thermostat: ThermostatKind::Berendsen }
+    }
+    fn name(&self) -> String {
+        format!("{}x, {}, {}", num(self.step_mult), serve_name(self.serve), self.thermostat.name())
+    }
+}
+
+/// The serving rule's name, read off the enum and never spelled at a call site.
+fn serve_name(s: CtServe) -> &'static str {
+    match s {
+        CtServe::Argmin => "argmin",
+        CtServe::Blend => "blend",
+    }
+}
+
+/// The engine's boundary as the diffusion lens sees it. Total and without a wildcard, the
+/// same map `tests/diffusion_boundary.rs` checks case by case; written here so that R3's lens
+/// and the configuration block both READ the box's boundary rather than name one.
+fn lens_boundary(b: Boundary) -> LensBoundary {
+    match b {
+        Boundary::Walls => LensBoundary::Walls,
+        Boundary::Open => LensBoundary::Open,
+        Boundary::Periodic => LensBoundary::Periodic,
+    }
+}
+
+fn build(law: &Law, sel: Selection, seed: u64) -> (Box<Sim>, Vec<[f64; 3]>, f64, f64, f64) {
+    build_sized(law, sel, seed, N_CELLS)
+}
+
+fn build_sized(law: &Law, sel: Selection, seed: u64, cells: usize) -> (Box<Sim>, Vec<[f64; 3]>, f64, f64, f64) {
+    let step_mult = sel.step_mult;
     let (species, pos, l) = liquid_box(cells, DENSITY_G_CM3, seed);
     let mut sim: Box<Sim> = scene(&species, &pos, l, TEMPERATURE_K);
     let tables_reach = sim.legality_radius();
     sim.set_field(true, None).expect("the open box admits the field");
     if law.variant == Variant::Ct3Table {
-        sim.ct_table = law.table.clone();
+        let mut table = law.table.clone();
+        // THE SERVING RULE, SELECTED THROUGH THE ACCESSOR. `CtTable::empty` loads `Argmin`
+        // and only `set_blend` moves it, so a table that was never told reads the old rule -
+        // which is exactly what M-VALIDATED-NOT-WIRED found. `set_blend` refuses a beta that
+        // is not finite and positive; the refusal is a panic here because a campaign that
+        // asked for the smooth rule and did not get it must not run.
+        match sel.serve {
+            CtServe::Blend => assert!(
+                table.set_blend(law.blend_beta.value),
+                "the table refused the derived beta ({})",
+                law.blend_beta.cite()
+            ),
+            CtServe::Argmin => table.set_argmin(),
+        }
+        sim.ct_table = table;
     }
     sim.set_seam(Some(law.model)).expect("no acuity frame is installed");
+    // THE THERMOSTAT, SELECTED THROUGH THE ACCESSOR, and seeded in the same call so a
+    // stochastic arm cannot be irreproducible. Under `Berendsen` the generator is never
+    // drawn from (`thermostat_draws() == 0`, asserted in `tests/thermostat.rs`), so this
+    // call is bit-identical to not making it on every arm the screen runs.
+    sim.set_thermostat_kind(sel.thermostat, seed);
     // THE TABLES' STEP is the step IN FORCE, not `dt_reference`. On this box the exactness
     // hold has already refined the reference by a factor of four before any frame runs
     // (`dt_reference` 4.309924 au, `dt` 1.077481 au), and 1.077481 au is the step LIQUID-1
@@ -932,10 +1075,10 @@ fn settle(
 ) -> (usize, Settler, bool) {
     let _ = (z, cell);
     let mut s = Settler::new(d.temp_band_k, d.settle_floor_frames);
-    let every = (SETTLE_READOUT / SETTLE_SAMPLES).max(1);
+    let every = (SETTLE_READOUT() / SETTLE_SAMPLES).max(1);
     let mut frame = already_done;
     loop {
-        for k in 0..SETTLE_READOUT {
+        for k in 0..SETTLE_READOUT() {
             sim.step_frame(1);
             frame += 1;
             if (k + 1) % every == 0 {
@@ -1479,10 +1622,10 @@ impl Design {
             num(self.l1.bond_settled_at as f64 * self.dt_tables_au * AU_TIME_FS),
             self.l1.criterion_fires_at,
             num(self.l1.criterion_fires_at as f64 * self.dt_tables_au * AU_TIME_FS),
-            SETTLE_READOUT,
+            SETTLE_READOUT(),
             SETTLE_SAMPLES,
             SETTLE_WINDOW,
-            num(SETTLE_READOUT as f64 * self.step_fs),
+            num(SETTLE_READOUT() as f64 * self.step_fs),
             self.settle_floor_frames,
             (self.l1.bond_settled_at as f64 * self.dt_tables_au * AU_TIME_FS / self.step_fs).ceil() as usize,
             self.l1.bond_settled_at,
@@ -1528,7 +1671,7 @@ impl Design {
         println!("    LIQUID-1 settled at  T frame {}, bonds frame {} = {:.1} fs; it counted from frame 2000 = {:.1} fs", self.l1.t_settled_at, self.l1.bond_settled_at, self.l1.bond_settled_at as f64 * self.dt_tables_au * AU_TIME_FS, 2000.0 * self.dt_tables_au * AU_TIME_FS);
         println!("    its reported bonds   {:.4} against its own plateau {:.4}: {:.2} % low", self.l1.reported_bond, self.l1.bond_plateau, 100.0 * self.l1.plateau_shortfall);
         println!("    this criterion on LIQUID-1 fires at frame {} = {:.1} fs", self.l1.criterion_fires_at, self.l1.criterion_fires_at as f64 * self.dt_tables_au * AU_TIME_FS);
-        println!("    here: block {} frames = {:.2} fs, {} samples, window {} blocks, floor {} frames (physical-time conversion {}, thermostat frame clock {}), cap {}", SETTLE_READOUT, SETTLE_READOUT as f64 * self.step_fs, SETTLE_SAMPLES, SETTLE_WINDOW, self.settle_floor_frames, (self.l1.bond_settled_at as f64 * self.dt_tables_au * AU_TIME_FS / self.step_fs).ceil() as usize, self.l1.bond_settled_at, SETTLE_CAP);
+        println!("    here: block {} frames = {:.2} fs, {} samples, window {} blocks, floor {} frames (physical-time conversion {}, thermostat frame clock {}), cap {}", SETTLE_READOUT(), SETTLE_READOUT() as f64 * self.step_fs, SETTLE_SAMPLES, SETTLE_WINDOW, self.settle_floor_frames, (self.l1.bond_settled_at as f64 * self.dt_tables_au * AU_TIME_FS / self.step_fs).ceil() as usize, self.l1.bond_settled_at, SETTLE_CAP);
         match &self.settle_floor_from_pilots {
             Some(v) => println!(
                 "    the floor: {} frames from LIQUID-1, {} frames from the pilots ({}) -> {} in force ({})",
@@ -1853,11 +1996,186 @@ fn read_pos(sim: &Sim) -> Vec<[f64; 3]> {
     (0..sim.n).map(|i| [sim.atoms[i].x, sim.atoms[i].y, sim.atoms[i].z]).collect()
 }
 
+
+// ------------------------------------------------- THE CONFIGURATION BLOCK (M-VALIDATED-NOT-WIRED)
+
+/// WHAT THE CAMPAIGN ACTUALLY SELECTED, read back OUT OF THE OBJECTS after they are built.
+///
+/// **Every field of this struct is a question asked of a live object, never a restatement of
+/// the constant that was supposed to set it.** That is the whole rule the misfit carries: the
+/// serving mode comes from `CtTable::serve_mode()`, beta from `CtTable::beta()`, the step from
+/// `Sim::dt()`, the thermostat from `Sim::thermostat_kind`, the lens boundary from
+/// `Sim::boundary` through the total map `lens_boundary`. A constant that was edited and a
+/// constant that was not look identical in a source file; they do not look identical here.
+///
+/// [`Configuration::gate`] is the leg the misfit asks for: it FAILS if any of them is not the
+/// selected value, so an unswitched default refuses a gate instead of running an arm.
+struct Configuration {
+    serve: CtServe,
+    beta_per_bohr: f64,
+    beta_cite: String,
+    dt_tables_au: f64,
+    step_au: f64,
+    step_fs: f64,
+    step_multiplier: f64,
+    thermostat: ThermostatKind,
+    thermostat_draws_at_selection: u64,
+    boundary: Boundary,
+    lens: LensBoundary,
+    settle_block_frames: usize,
+    settle_block_fs: f64,
+    law_source: String,
+    table_source: String,
+    table_knots: usize,
+    selection_asked_for: Selection,
+}
+
+impl Configuration {
+    /// READ BACK. `dt_tables_au` is the tables' own step as `build_sized` measured it before
+    /// any multiplier was applied, so the multiplier below is a RATIO of two readings and not
+    /// the constant that was handed in.
+    fn read_back(sim: &Sim, law: &Law, dt_tables: f64, sel: Selection) -> Configuration {
+        let step_au = sim.dt();
+        Configuration {
+            serve: sim.ct_table.serve_mode(),
+            beta_per_bohr: sim.ct_table.beta(),
+            beta_cite: law.blend_beta.cite(),
+            dt_tables_au: dt_tables,
+            step_au,
+            step_fs: step_au * AU_TIME_FS,
+            step_multiplier: step_au / dt_tables,
+            thermostat: sim.thermostat_kind,
+            thermostat_draws_at_selection: sim.thermostat_draws(),
+            boundary: sim.boundary,
+            lens: lens_boundary(sim.boundary),
+            settle_block_frames: settle_readout_frames(step_au / dt_tables),
+            settle_block_fs: settle_readout_frames(step_au / dt_tables) as f64 * step_au * AU_TIME_FS,
+            law_source: law.source.clone(),
+            table_source: law.table_source.clone(),
+            table_knots: sim.ct_table.knots(),
+            selection_asked_for: sel,
+        }
+    }
+
+    /// THE MISFIT'S OWN RULE, AS A GATE. Five legs, one per validated component plus the beta
+    /// the smooth rule is worthless without, and each one compares a value READ BACK from an
+    /// object against the value the freeze selected. A default that was never switched fails
+    /// here and the arm does not run.
+    ///
+    /// The step leg is EXACT on the multiplier: `1.0` and nothing near it, because the step
+    /// the NVE runs selected is the tables' own and "near the tables' step" is not a step.
+    /// The beta leg is EXACT on the bits, because a beta that is close to the record's is a
+    /// beta that was typed.
+    fn gate(&self, want: Selection, want_beta: f64, want_boundary: Boundary) -> Gate {
+        Gate::new("CONFIG")
+            .work(6)
+            .detail(format!(
+                "the configuration READ BACK from the objects: serving rule {}, beta {} per bohr, step {} au = {} fs ({}x the tables' {} au), thermostat {}, box {:?} -> lens {:?}, settling block {} frames = {} fs. Every value is an accessor's answer, not a constant restated (M-VALIDATED-NOT-WIRED)",
+                serve_name(self.serve),
+                num(self.beta_per_bohr),
+                num(self.step_au),
+                num(self.step_fs),
+                num(self.step_multiplier),
+                num(self.dt_tables_au),
+                self.thermostat.name(),
+                self.boundary,
+                self.lens,
+                self.settle_block_frames,
+                num(self.settle_block_fs),
+            ))
+            .leg(
+                "the table's serve_mode() reads the SELECTED serving rule",
+                self.serve == want.serve,
+            )
+            .leg_at(
+                "the table's beta() reads the DERIVED beta from ct3/smooth/beta.json, EXACT to the bit",
+                self.beta_per_bohr.to_bits() == want_beta.to_bits(),
+                self.beta_per_bohr,
+            )
+            .leg_at(
+                "the step in force is the SELECTED multiple of the tables' own step, EXACT",
+                self.step_multiplier == want.step_mult,
+                self.step_multiplier,
+            )
+            .leg(
+                "the sim's thermostat_kind reads the SELECTED thermostat",
+                self.thermostat == want.thermostat,
+            )
+            .leg(
+                "the box's boundary is the one the lens is told about, through the total map",
+                self.boundary == want_boundary && self.lens == lens_boundary(want_boundary),
+            )
+            .leg(
+                "what was READ BACK is what was ASKED FOR - the selection did not silently fall through",
+                self.selection_asked_for == want,
+            )
+    }
+
+    fn print(&self) {
+        println!("CONFIGURATION (read back from the objects, not restated):");
+        println!("  serving rule          {}  (CtTable::serve_mode())", serve_name(self.serve));
+        println!("  blend beta            {:.9} per bohr  (CtTable::beta(); {})", self.beta_per_bohr, self.beta_cite);
+        println!(
+            "  step                  {:.9} au = {:.9} fs  ({:.6}x the tables' {:.9} au)  (Sim::dt())",
+            self.step_au, self.step_fs, self.step_multiplier, self.dt_tables_au
+        );
+        println!(
+            "  thermostat            {}  (Sim::thermostat_kind; canonical {}; draws at selection {})",
+            self.thermostat.name(),
+            self.thermostat.is_canonical(),
+            self.thermostat_draws_at_selection
+        );
+        println!("  boundary / lens       {:?} / {:?}  (Sim::boundary through lens_boundary)", self.boundary, self.lens);
+        println!(
+            "  settling block        {} frames = {:.4} fs  (LIQUID-1's 2,000 frames converted at this step)",
+            self.settle_block_frames, self.settle_block_fs
+        );
+        println!("  law                   {}", self.law_source);
+        println!("  table                 {} ({} knots, CtTable::knots())", self.table_source, self.table_knots);
+        println!(
+            "  seeds                 confirmation {}; pilots {}",
+            SEEDS.iter().map(|x| format!("{x:#x}")).collect::<Vec<_>>().join(", "),
+            PILOT_SEEDS.iter().map(|x| format!("{x:#x}")).collect::<Vec<_>>().join(", ")
+        );
+    }
+
+    fn json(&self) -> String {
+        format!(
+            "{{\"read_back_from\": \"the live objects: CtTable::serve_mode/beta/knots, Sim::dt, Sim::thermostat_kind, Sim::boundary, Sim::thermostat_draws - no field here restates a constant (M-VALIDATED-NOT-WIRED)\", \"serve_mode\": \"{}\", \"serve_mode_asked_for\": \"{}\", \"blend_beta_per_bohr\": {}, \"blend_beta_source\": \"{}\", \"blend_beta_field\": \"beta_per_bohr\", \"tables_step_au\": {}, \"step_au\": {}, \"step_fs\": {}, \"step_multiple_of_tables_step\": {}, \"step_multiple_asked_for\": {}, \"step_selected_by\": \"ct3/smooth/nve.json: step_chosen = 1, the largest step whose drift per ps is within 2x the 1x arm's; 2x is already 4.09x it\", \"thermostat\": \"{}\", \"thermostat_asked_for\": \"{}\", \"thermostat_is_canonical\": {}, \"thermostat_credit\": \"{}\", \"thermostat_draws_at_selection\": {}, \"boundary\": \"{:?}\", \"lens_boundary\": \"{:?}\", \"settle_block_frames\": {}, \"settle_block_fs\": {}, \"law_source\": \"{}\", \"table_source\": \"{}\", \"table_knots\": {}, \"confirmation_seeds\": [{}], \"pilot_seeds\": [{}], \"seeds_disjoint\": {}}}",
+            serve_name(self.serve),
+            serve_name(self.selection_asked_for.serve),
+            num(self.beta_per_bohr),
+            self.beta_cite.split(':').next().unwrap_or(""),
+            num(self.dt_tables_au),
+            num(self.step_au),
+            num(self.step_fs),
+            num(self.step_multiplier),
+            num(self.selection_asked_for.step_mult),
+            self.thermostat.name(),
+            self.selection_asked_for.thermostat.name(),
+            self.thermostat.is_canonical(),
+            self.thermostat.credit().replace('"', "'"),
+            self.thermostat_draws_at_selection,
+            self.boundary,
+            self.lens,
+            self.settle_block_frames,
+            num(self.settle_block_fs),
+            self.law_source,
+            self.table_source,
+            self.table_knots,
+            SEEDS.iter().map(|x| format!("\"{x:#x}\"")).collect::<Vec<_>>().join(", "),
+            PILOT_SEEDS.iter().map(|x| format!("\"{x:#x}\"")).collect::<Vec<_>>().join(", "),
+            PILOT_SEEDS.iter().all(|x| !SEEDS.contains(x)),
+        )
+    }
+}
+
 fn gate_phase(obs: &Path, out: &Path) {
     let w = RecordWriter::new(out);
     let mut report = Report::new();
     let law = load_law(obs);
-    let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, STEP_MULT, SEEDS[0]);
+    let sel = Selection::campaign();
+    let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, sel, SEEDS[0]);
     let d = design(obs, out, dt_tables, l);
     d.print();
 
@@ -1877,6 +2195,18 @@ fn gate_phase(obs: &Path, out: &Path) {
         return;
     }
     sim.rebase();
+
+    // ---- CONFIG: WHAT THIS PHASE ACTUALLY SELECTED, read back from the objects
+    //
+    // The misfit's own rule (M-VALIDATED-NOT-WIRED): *the gate phase PRINTS what it actually
+    // selected beside its verdicts, so a default that was never switched fails a gate instead
+    // of running an arm.* It sits after the door because the door is what installs
+    // `Boundary::Periodic`, and the lens's boundary is one of the four components.
+    let cfg = Configuration::read_back(&sim, &law, dt_tables, sel);
+    cfg.print();
+    let g_config = cfg.gate(sel, law.blend_beta.value, Boundary::Periodic);
+    // `Report::gate` prints the line itself, so the verdict is printed once and only once.
+    report.gate(g_config);
 
     // ---- the expectation, before any frame (M-EMPTY-SECTOR)
     sim.compute_forces();
@@ -2001,6 +2331,7 @@ fn gate_phase(obs: &Path, out: &Path) {
     report.gate(g_r3);
 
     let mut rec = Record::new("gate")
+        .raw("configuration", cfg.json())
         .raw("design", d.json())
         .raw("gates", report.json())
         .raw("phase_on_the_settled_box_blind", ph.json(true))
@@ -2092,7 +2423,7 @@ fn screen_phase(obs: &Path, out: &Path, step: f64, variant: Variant, label: Opti
         format!("x{}_{}{}", step as u64, variant.name(), if count_handovers { "_handovers" } else { "" })
     });
     let w = RecordWriter::screen(&dir, &label);
-    let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, step, SEEDS[0]);
+    let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, Selection::screen(step), SEEDS[0]);
     let dr = door(&law, &mut sim, &pos, l, tables_reach, N_WATERS);
     if !dr.admitted {
         w.write_text(
@@ -2223,7 +2554,7 @@ fn size_phase(obs: &Path, out: &Path, cells: usize) {
     let w = RecordWriter::new(out.join("size"));
     let law = load_law(obs);
     let waters = 2 * cells * cells * cells;
-    let (mut sim, pos, l, tables_reach, _dt) = build_sized(&law, STEP_MULT, SEEDS[0], cells);
+    let (mut sim, pos, l, tables_reach, _dt) = build_sized(&law, Selection::campaign(), SEEDS[0], cells);
     let dr = door(&law, &mut sim, &pos, l, tables_reach, waters);
     let half = 0.5 * l;
     let legality = sim.legality_radius();
@@ -2305,7 +2636,7 @@ fn chodera_json(blocks: &[f64], block_frames: usize, step_fs: f64) -> String {
 /// O-O first-peak position over that block's own samples. **The bond count and the peak are
 /// logged here and nowhere else before the counted arm**; the confirmation seeds are
 /// [`SEEDS`] and are disjoint from [`PILOT_SEEDS`], so R2 and R1 stay forward predictions.
-fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize) {
+fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize, pilot_dir: &str) {
     assert!(
         PILOT_SEEDS.iter().all(|p| !SEEDS.contains(p)),
         "a pilot seed collides with a confirmation seed; the settling rule would then be \
@@ -2314,10 +2645,14 @@ fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize) {
     let seed = *PILOT_SEEDS.get(pilot_index).unwrap_or_else(|| {
         panic!("pilot {pilot_index} is not one of the {} declared pilots", PILOT_SEEDS.len())
     });
-    let dir = out.join("pilot");
+    let dir = out.join(pilot_dir);
     let w = RecordWriter::new(&dir);
     let law = load_law(obs);
-    let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, STEP_MULT, seed);
+    // THE PILOTS RUN THE CAMPAIGN'S OWN CONFIGURATION. A settling frozen on a different
+    // serving rule, a different step or a different thermostat is a settling for a different
+    // trajectory, which is the whole of M-VALIDATED-NOT-WIRED one level down.
+    let sel = Selection::campaign();
+    let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, sel, seed);
     let d = design(obs, out, dt_tables, l);
     let dr = door(&law, &mut sim, &pos, l, tables_reach, N_WATERS);
     if !dr.admitted {
@@ -2332,7 +2667,7 @@ fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize) {
     let n_atoms = sim.n;
     let z: Vec<u32> = (0..n_atoms).map(|i| sim.atoms[i].species.z).collect();
     let cell = [l, l, l];
-    let every = (SETTLE_READOUT / SETTLE_SAMPLES).max(1);
+    let every = (SETTLE_READOUT() / SETTLE_SAMPLES).max(1);
 
     let t0 = Instant::now();
     let mut series: Vec<PilotBlock> = Vec::with_capacity(blocks);
@@ -2343,7 +2678,7 @@ fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize) {
         let mut us: Vec<f64> = Vec::new();
         let mut hb: Vec<f64> = Vec::new();
         let mut rdf = RdfAccum::new();
-        for k in 0..SETTLE_READOUT {
+        for k in 0..SETTLE_READOUT() {
             sim.step_frame(1);
             frame += 1;
             if (k + 1) % every != 0 {
@@ -2389,13 +2724,14 @@ fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize) {
     let col = |f: fn(&PilotBlock) -> f64| -> Vec<f64> { series.iter().map(f).collect() };
     let u = col(|b| b.cross_unit_u);
     let settling_blocks = equilibration_start(&u).t0;
+    let block_frames = SETTLE_READOUT();
     let body = format!(
         "{{\n  \"phase\": \"pilot\", \"dry\": false, \"is_a_pilot\": true, \
          \"no_readout_of_this_campaign_is_taken_from_it\": true,\n  \
          \"pilot_index\": {pilot_index}, \"seed\": \"{seed:#x}\", \
          \"confirmation_seeds\": [{}],\n  \
          \"blocks_run\": {}, \"blocks_declared\": {PILOT_BLOCKS}, \"frames\": {frame}, \
-         \"block_frames\": {SETTLE_READOUT}, \"samples_per_block\": {SETTLE_SAMPLES}, \
+         \"block_frames\": {block_frames}, \"samples_per_block\": {SETTLE_SAMPLES}, \
          \"block_fs\": {}, \"step_multiple_of_tables_step\": {},\n  \
          \"seconds\": {}, \"seconds_per_frame\": {},\n  \
          \"void\": {},\n  \
@@ -2407,7 +2743,7 @@ fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize) {
          \"series\": [{}]\n}}\n",
         SEEDS.iter().map(|s| format!("\"{s:#x}\"")).collect::<Vec<_>>().join(", "),
         series.len(),
-        num(SETTLE_READOUT as f64 * d.step_fs),
+        num(SETTLE_READOUT() as f64 * d.step_fs),
         num(STEP_MULT),
         num(seconds),
         num(if frame > 0 { seconds / frame as f64 } else { f64::NAN }),
@@ -2415,11 +2751,11 @@ fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize) {
             Some(x) => format!("{x:?}"),
             None => "null".to_string(),
         },
-        settling_blocks * SETTLE_READOUT,
-        chodera_json(&u, SETTLE_READOUT, d.step_fs),
-        chodera_json(&col(|b| b.temperature_k), SETTLE_READOUT, d.step_fs),
-        chodera_json(&col(|b| b.hbonds_per_molecule), SETTLE_READOUT, d.step_fs),
-        chodera_json(&col(|b| b.oo_peak_bohr), SETTLE_READOUT, d.step_fs),
+        settling_blocks * SETTLE_READOUT(),
+        chodera_json(&u, SETTLE_READOUT(), d.step_fs),
+        chodera_json(&col(|b| b.temperature_k), SETTLE_READOUT(), d.step_fs),
+        chodera_json(&col(|b| b.hbonds_per_molecule), SETTLE_READOUT(), d.step_fs),
+        chodera_json(&col(|b| b.oo_peak_bohr), SETTLE_READOUT(), d.step_fs),
         series
             .iter()
             .enumerate()
@@ -2445,8 +2781,8 @@ fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize) {
          {settling_blocks} blocks = {} frames = {:.1} fs on the cross-unit energy",
         series.len(),
         seconds,
-        settling_blocks * SETTLE_READOUT,
-        settling_blocks as f64 * SETTLE_READOUT as f64 * d.step_fs
+        settling_blocks * SETTLE_READOUT(),
+        settling_blocks as f64 * SETTLE_READOUT() as f64 * d.step_fs
     );
 }
 
@@ -2465,8 +2801,8 @@ fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize) {
 /// 4. The bond count and the O-A peak have their own `t0` recorded beside it, watched and
 ///    NOT frozen on — the discharge of gate E's OWED item, bought with trajectories the
 ///    confirmation seeds never see.
-fn pilot_freeze(obs: &Path, out: &Path) {
-    let dir = out.join("pilot");
+fn pilot_freeze(obs: &Path, out: &Path, pilot_dir: &str) {
+    let dir = out.join(pilot_dir);
     let w = RecordWriter::new(&dir);
     let mut frames: Vec<(usize, ReadInput)> = Vec::new();
     for i in 0..PILOT_SEEDS.len() {
@@ -2503,9 +2839,10 @@ fn pilot_freeze(obs: &Path, out: &Path) {
         .collect();
     // the DESIGN's own step, so the frames convert to femtoseconds in the campaign's units
     let law = load_law(obs);
-    let (_sim, _pos, l, _reach, dt_tables) = build(&law, STEP_MULT, PILOT_SEEDS[0]);
+    let (_sim, _pos, l, _reach, dt_tables) = build(&law, Selection::campaign(), PILOT_SEEDS[0]);
     let step_fs = dt_tables * STEP_MULT * AU_TIME_FS;
     let _ = l;
+    let block_frames = SETTLE_READOUT();
     let body = format!(
         "{{\n  \"phase\": \"pilot-freeze\", \"dry\": false,\n  \
          \"rule\": \"Chodera 2016 automated equilibration detection on the CROSS-UNIT \
@@ -2519,7 +2856,7 @@ fn pilot_freeze(obs: &Path, out: &Path) {
          \"settling_variable\": \"cross_unit_potential_per_water_hartree\",\n  \
          \"settling_frames\": {settling},\n  \
          \"settling_fs\": {},\n  \
-         \"block_frames\": {SETTLE_READOUT}, \"samples_per_block\": {SETTLE_SAMPLES}, \
+         \"block_frames\": {block_frames}, \"samples_per_block\": {SETTLE_SAMPLES}, \
          \"step_multiple_of_tables_step\": {}, \"step_fs\": {},\n  \
          \"pilots_counted\": {}, \"pilots_declared\": {},\n  \
          \"pilot_seeds\": [{}],\n  \"confirmation_seeds\": [{}],\n  \
@@ -2552,11 +2889,50 @@ fn pilot_freeze(obs: &Path, out: &Path) {
 /// What the pilots froze, read back by the design. `None` when no pilot set has run — the
 /// campaign then falls back to LIQUID-1's own measured settling, and the record says which.
 fn read_pilot_settling(out: &Path) -> Option<ReadInput> {
-    let p = out.join("pilot").join("settling.json");
+    // EVERY pilot set under the campaign directory, not one hard-coded name: a set taken at
+    // one step must never land on top of a set taken at another, so each lives in its own
+    // `pilot*` directory and the one whose FROZEN STEP is this arm's is the one that counts.
+    let mut dirs: Vec<PathBuf> = std::fs::read_dir(out)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|e| e.path())
+        .filter(|q| q.is_dir() && q.file_name().and_then(|x| x.to_str()).map(|x| x.starts_with("pilot")).unwrap_or(false))
+        .collect();
+    dirs.sort();
+    for d in dirs {
+        if let Some(v) = read_one_pilot_settling(&d) {
+            return Some(v);
+        }
+    }
+    None
+}
+
+fn read_one_pilot_settling(dir: &Path) -> Option<ReadInput> {
+    let p = dir.join("settling.json");
     if !p.exists() {
         return None;
     }
-    read_input_after(&p.display().to_string(), &[], "settling_frames").ok()
+    let path = p.display().to_string();
+    // A SETTLING IS A NUMBER OF FRAMES AND FRAMES ARE NOT A TIME. The record carries the step
+    // it was frozen at, and a floor frozen at one step read at another is the same fault the
+    // whole of this revision is about: it looks like a measurement and it describes a
+    // different trajectory. So the step is CHECKED, and a mismatch REFUSES the number rather
+    // than converting it — the conversion would be arithmetic on somebody else's argmax, and
+    // Chodera's t0 is not a physical time that can be re-expressed, it is where THAT series
+    // stopped moving.
+    let frozen_at = read_input_after(&path, &[], "step_multiple_of_tables_step").ok()?;
+    if frozen_at.value != STEP_MULT {
+        eprintln!(
+            "REFUSING the frozen settling in {path}: it was frozen at {}x the tables' step and \
+             this arm runs at {}x. A floor in FRAMES does not travel across a step change. \
+             The floor falls back to LIQUID-1's own measured settling converted at this step, \
+             and the record says so.",
+            frozen_at.value, STEP_MULT
+        );
+        return None;
+    }
+    read_input_after(&path, &[], "settling_frames").ok()
 }
 
 // ------------------------------------------------------- the cost probe (GANTT2 step 2)
@@ -2795,9 +3171,18 @@ fn instrument_residual(cells: usize) -> (usize, usize) {
 /// placeholder configuration before the real coordinates are known, the force evaluation
 /// inside it, and `fenced_triples`. Everything it reports is a measurement; nothing here
 /// enters a gate or a claim.
-fn cost_phase(obs: &Path, out: &Path, cells: usize, arm: Arm, label: &str) {
+fn cost_phase(obs: &Path, out: &Path, cells: usize, arm: Arm, label: &str, tag: &str, sel: Selection) {
     let w = RecordWriter::new(out.join("size"));
     let law = load_law(obs);
+    // THE PRICE IS THE SELECTED CONFIGURATION'S PRICE. The records under
+    // `liquid2/size/cost_after.json` were taken at the withdrawn 8x step, and a
+    // core-second-per-picosecond taken at 8x is not the counted arm's: it divides the same
+    // seconds per pass by eight times the physical time. They are superseded, not amended.
+    //
+    // `--selection banked` re-runs the OLD configuration in the SAME mix, which is the fixed
+    // target the re-price needs: seconds per pass move with placement by more than the term
+    // being measured (M-PLACEMENT-LOTTERY), so a 1x reading held against a banked 8x reading
+    // taken on a differently loaded host measures the host as much as the step.
     let waters = 2 * cells * cells * cells;
     // The instrument's own gate first, on the smallest box, so its cost is charged to the
     // process's baseline rather than to a stage.
@@ -2813,15 +3198,21 @@ fn cost_phase(obs: &Path, out: &Path, cells: usize, arm: Arm, label: &str) {
     st.mark("field_and_seam", || {
         sim.set_field(true, None).expect("the open box admits the field");
         if law.variant == Variant::Ct3Table {
-            sim.ct_table = law.table.clone();
+            let mut table = law.table.clone();
+            match sel.serve {
+                CtServe::Blend => assert!(table.set_blend(law.blend_beta.value), "the table refused the derived beta"),
+                CtServe::Argmin => table.set_argmin(),
+            }
+            sim.ct_table = table;
         }
         sim.set_seam(Some(law.model)).expect("no acuity frame is installed");
+        sim.set_thermostat_kind(sel.thermostat, SEEDS[0]);
     });
     let dt_ref = sim.timescale.dt_reference;
     let dt_tables = sim.dt();
-    if STEP_MULT != 1.0 {
+    if sel.step_mult != 1.0 {
         sim.timescale.allow_dt_growth = true;
-        sim.timescale.set_dt_multiplier(STEP_MULT * dt_tables / dt_ref);
+        sim.timescale.set_dt_multiplier(sel.step_mult * dt_tables / dt_ref);
     }
     let dt_au = sim.dt();
     // The door's own move, and the reason it is here: `size_phase` prices its force pass
@@ -2891,6 +3282,11 @@ fn cost_phase(obs: &Path, out: &Path, cells: usize, arm: Arm, label: &str) {
     }
 
     let rec = Record::new("cost")
+        .text("selection", &sel.name())
+        .number("step_multiple_of_tables_step", sel.step_mult)
+        .text("serve_mode", serve_name(sim.ct_table.serve_mode()))
+        .number("blend_beta_per_bohr", sim.ct_table.beta())
+        .text("thermostat", sim.thermostat_kind.name())
         .text(
             "rule",
             "peak resident set (/proc/self/status VmHWM, monotone) and seconds around every step \
@@ -2933,19 +3329,19 @@ fn cost_phase(obs: &Path, out: &Path, cells: usize, arm: Arm, label: &str) {
         .number("core_seconds_per_picosecond", core_seconds_per_ps)
         .number("core_seconds_per_picosecond_with_enumerated_fence", core_seconds_per_ps_enumerated)
         .raw("stages", st.json());
-    w.write(&format!("cost_{label}_cells{cells}.json"), &rec).expect("the cost record writes");
+    w.write(&format!("cost_{label}{tag}_cells{cells}.json"), &rec).expect("the cost record writes");
 }
 
 /// Gather the per-box cost records of one arm into the reading the build order asks for.
 /// A gather, not a measurement: every number in it was taken by a `cost` process of its own,
 /// and this only puts the sizes side by side.
-fn cost_merge(out: &Path, arm_label: &str, name: &str) {
+fn cost_merge(out: &Path, arm_label: &str, name: &str, tag: &str) {
     let w = RecordWriter::new(out.join("size"));
     let dir = out.join("size");
     let mut boxes = String::from("[");
     let mut found = 0usize;
     for cells in [4usize, 5, 6] {
-        let p = dir.join(format!("cost_{arm_label}_cells{cells}.json"));
+        let p = dir.join(format!("cost_{arm_label}{tag}_cells{cells}.json"));
         let Ok(t) = std::fs::read_to_string(&p) else { continue };
         if found > 0 {
             boxes.push_str(", ");
@@ -2971,13 +3367,21 @@ fn cost_merge(out: &Path, arm_label: &str, name: &str) {
 
 // ------------------------------------------------------------------------ the counted arm
 
-fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
+fn run_phase(obs: &Path, out: &Path, seed_index: usize, sel: Selection) {
     if !is_done(out, "gate.done") {
         eprintln!("REFUSED: gate.done is absent. The counted arm runs only behind the gate phase.");
         std::process::exit(2);
     }
     let seed = *SEEDS.get(seed_index).unwrap_or_else(|| panic!("seed index {seed_index} against {} declared seeds", SEEDS.len()));
-    let out = &out.join(format!("seed{seed_index}"));
+    // THE COMPARISON ARM WRITES SOMEWHERE ELSE. Gate T's Berendsen arm is the same box, the
+    // same law, the same step and the same serving rule with ONE knob moved, so it must not
+    // land on top of the counted seed's own directory and be read back as one of the three.
+    // `read` counts `seed<k>/` and nothing else, so this suffix is also what keeps the
+    // comparison out of the seed mean.
+    let out = &out.join(match sel.thermostat {
+        ThermostatKind::StochasticRescaling => format!("seed{seed_index}"),
+        ThermostatKind::Berendsen => format!("seed{seed_index}_berendsen"),
+    });
     let w = RecordWriter::new(out);
     let law = load_law(obs);
     if let Some(why) = &law.refusal {
@@ -2985,7 +3389,7 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
         std::process::exit(2);
     }
     eprintln!("seed {seed_index} of {}: {seed:#x}", SEEDS.len());
-    let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, STEP_MULT, seed);
+    let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, sel, seed);
     let d = design(obs, out, dt_tables, l);
     d.print();
     let dr = door(&law, &mut sim, &pos, l, tables_reach, N_WATERS);
@@ -2994,6 +3398,21 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
         return;
     }
     sim.rebase();
+    // THE CONFIGURATION, READ BACK ON THE COUNTED ARM TOO (M-VALIDATED-NOT-WIRED). The gate
+    // phase prints it and the arm prints it again, because the two are separate processes and
+    // an arm that ran a different configuration from the one the gate admitted is exactly the
+    // fault the misfit names. The counted arm's own selection is whatever `--thermostat`
+    // asked for, so the CONFIG gate here is against THIS arm's selection: the comparison arm
+    // is a declared arm and not a failure.
+    let cfg = Configuration::read_back(&sim, &law, dt_tables, sel);
+    cfg.print();
+    let g_config = cfg.gate(sel, law.blend_beta.value, Boundary::Periodic);
+    println!("{}", g_config.line());
+    assert!(
+        g_config.verdict().admits(),
+        "the counted arm's configuration is not the one it selected: {:?}",
+        g_config.worst_first().iter().map(|x| x.name.clone()).collect::<Vec<_>>()
+    );
     let t_start = Instant::now();
 
     let n_atoms = sim.n;
@@ -3212,7 +3631,9 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize) {
     // crossover by construction.
     let max_lag = (traj.frames.len() / 4).max(2);
     let lag_window = LagWindow::new(2, max_lag);
-    let reading = diffusion_periodic(&traj, lag_window, LensBoundary::Periodic);
+    // The boundary is READ OFF THE BOX and mapped by the total map, never named here: the
+    // day the box is built with a different boundary the lens is told about that one.
+    let reading = diffusion_periodic(&traj, lag_window, lens_boundary(sim.boundary));
     let (r3, r3_refusal) = match &reading {
         Ok(dd) => (Some(dd.d_bohr2_per_fs * conv), None),
         Err(e) => (None, Some(format!("{} refuses (gate: {}): {}", e.lens, e.gate, e.reason))),
@@ -3708,6 +4129,43 @@ fn read_phase(out: &Path) {
 
 // ------------------------------------------------------------------------------- main
 
+/// THE CONFIG GATE'S OWN DEMONSTRATION, and it writes nothing.
+///
+/// A gate is only a gate if it can be shown to refuse. This builds the campaign's box at the
+/// UNSWITCHED DEFAULT - `STEP_MULT` as it stood (`8.0`), the serving rule `CtTable::empty`
+/// loads (`Argmin`) and the thermostat `Sim` loads (`Berendsen`), which is precisely the
+/// configuration the third review found this runner carrying - and prints what
+/// [`Configuration::gate`] says about it against the SELECTED one. Every leg that should
+/// fire, fires, and the arm does not run.
+fn demo_unswitched(obs: &Path, out: &Path) {
+    let _ = out;
+    let law = load_law(obs);
+    let want = Selection::campaign();
+    let bad = Selection::unswitched_default();
+    println!("--demo-unswitched: building at the UNSWITCHED default ({}) against the SELECTED ({})", bad.name(), want.name());
+    let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, bad, SEEDS[0]);
+    let dr = door(&law, &mut sim, &pos, l, tables_reach, N_WATERS);
+    assert!(dr.admitted, "the door refused the demonstration box: {:?}", dr.refusal);
+    let cfg = Configuration::read_back(&sim, &law, dt_tables, bad);
+    cfg.print();
+    // the block as the record would carry it, printed so its JSON can be validated without
+    // paying for a settling first
+    println!("CONFIGURATION-JSON {}", cfg.json());
+    let g = cfg.gate(want, law.blend_beta.value, Boundary::Periodic);
+    println!("{}", g.line());
+    for leg in g.worst_first() {
+        println!("  FAILING LEG  {}", leg.name);
+    }
+    println!(
+        "DEMONSTRATION: the CONFIG gate {} the unswitched default ({} of {} legs failed). \
+         Nothing was written.",
+        if g.verdict().admits() { "ADMITS" } else { "REFUSES" },
+        g.failing_legs().len(),
+        6
+    );
+    assert!(!g.verdict().admits(), "the CONFIG gate ADMITTED an unswitched default: it is not a gate");
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let phase = args.first().cloned().unwrap_or_else(|| "gate".to_string());
@@ -3732,32 +4190,67 @@ fn main() {
             val("--label"),
             args.iter().any(|a| a == "--handovers"),
         ),
-        "gate" => gate_phase(&obs, &out),
+        // `--demo-unswitched` is the CONFIG gate's own demonstration and writes nothing: it
+        // builds the box at the UNSWITCHED default (8x, argmin, Berendsen - the three
+        // defaults M-VALIDATED-NOT-WIRED found) and prints the gate's verdict on it. A gate
+        // that cannot be shown to fail is not a gate.
+        "gate" => {
+            if args.iter().any(|a| a == "--demo-unswitched") {
+                demo_unswitched(&obs, &out)
+            } else {
+                gate_phase(&obs, &out)
+            }
+        }
         "size" => size_phase(&obs, &out, val("--cells").and_then(|v| v.parse().ok()).unwrap_or(N_CELLS)),
         // THE PILOTS. `--pilot I` runs pilot `I` on its own seed (one per process, so a
         // pilot set runs in parallel on its own cores); `--freeze` reads the pilots back and
         // writes `pilot/settling.json`. Nothing here is a readout of the campaign.
         "pilot" => {
+            // `--dir` names the pilot set's directory. The default `pilot` holds the set
+            // taken at the withdrawn 8x step and is not overwritten by a set taken at
+            // another; `read_pilot_settling` looks in every `pilot*` directory and takes the
+            // one frozen at THIS arm's step.
+            let pilot_dir = val("--dir").unwrap_or_else(|| "pilot".to_string());
             if args.iter().any(|a| a == "--freeze") {
-                pilot_freeze(&obs, &out)
+                pilot_freeze(&obs, &out, &pilot_dir)
             } else {
                 pilot_phase(
                     &obs,
                     &out,
                     val("--pilot").and_then(|v| v.parse().ok()).unwrap_or(0),
                     val("--blocks").and_then(|v| v.parse().ok()).unwrap_or(PILOT_BLOCKS),
+                    &pilot_dir,
                 )
             }
         }
         "cost" => {
             let placeholder = args.iter().any(|a| a == "--placeholder");
             let (arm, label) = if placeholder { (Arm::Placeholder, "placeholder") } else { (Arm::GeometryFirst, "geometry_first") };
+            // `--tag` keeps a RE-PRICE off a banked record's name. The cost records under
+            // `liquid2/size/` were taken at the withdrawn 8x step, so the 1x re-measurement
+            // is written beside them and the README says which supersedes which; a re-price
+            // that overwrote them would destroy the comparison it exists to make.
+            let tag = val("--tag").unwrap_or_default();
+            let sel = match val("--selection").as_deref() {
+                None | Some("campaign") => Selection::campaign(),
+                Some("banked") => Selection::unswitched_default(),
+                Some(other) => panic!("unknown selection {other:?}: campaign | banked"),
+            };
             match val("--merge") {
-                Some(name) => cost_merge(&out, label, &name),
-                None => cost_phase(&obs, &out, val("--cells").and_then(|v| v.parse().ok()).unwrap_or(N_CELLS), arm, label),
+                Some(name) => cost_merge(&out, label, &name, &tag),
+                None => cost_phase(&obs, &out, val("--cells").and_then(|v| v.parse().ok()).unwrap_or(N_CELLS), arm, label, &tag, sel),
             }
         }
-        "run" => run_phase(&obs, &out, val("--seed").and_then(|v| v.parse().ok()).unwrap_or(0)),
+        // `--thermostat berendsen` is gate T's DECLARED COMPARISON ARM (one seed), not a
+        // second campaign: it writes into `seed<k>_berendsen/`, which `read` does not count.
+        "run" => {
+            let sel = match val("--thermostat").as_deref() {
+                None | Some("stochastic") | Some("stochastic-rescaling") => Selection::campaign(),
+                Some("berendsen") => Selection::berendsen_arm(),
+                Some(other) => panic!("unknown thermostat {other:?}: stochastic | berendsen"),
+            };
+            run_phase(&obs, &out, val("--seed").and_then(|v| v.parse().ok()).unwrap_or(0), sel)
+        }
         "read" => read_phase(&out),
         other => panic!("unknown phase {other:?}: screen | size | cost | gate | pilot | run | read"),
     }

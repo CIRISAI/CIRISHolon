@@ -83,3 +83,43 @@ blocks reproduce exactly and only the timing differs, and a re-run here read `0.
 against the banked `0.3400` at 128 waters and `0.4872` against `0.6094` at 250 — on a host
 carrying three other lanes, so the improvement is a lower bound and the banked numbers stay as
 the campaign took them.
+
+## The core-seconds per picosecond above are SUPERSEDED (2026-09-08): they were taken at the withdrawn `8x` step
+
+**Every `core-seconds per picosecond` in this directory's table and in `cost_after.json`,
+`cost_before.json` and the `cost_{arm}_cells{n}.json` fragments was measured at
+`STEP_MULT = 8.0`.** That step is withdrawn: under the smooth serving rule the drift is
+quadratic in the step again and `ct3/smooth/nve.json` selects `1x`, the tables' own
+(`"step_chosen": 1`). A core-second per picosecond is `seconds_per_pass / picoseconds_per_pass`,
+and `picoseconds_per_pass` is the STEP — so the `8x` numbers divide the same seconds by eight
+times the physical time.
+
+**The direction, stated plainly, because the review that ordered this re-price had it
+backwards.** The stale numbers do not overstate the cost of a picosecond; they **UNDERSTATE**
+it, by the step ratio. At a fixed cost per force pass, `1x` costs exactly `8x` more per
+picosecond than `8x` does, because a pass buys an eighth of the time.
+
+**RE-MEASURED at the selected configuration** (`cost_geometry_first_1x_cells{4,5}.json`:
+`CtServe::Blend` at the derived beta, `ThermostatKind::StochasticRescaling`, `1x` step, every
+one of them read back out of the objects and written into the record), **with an `8x` CONTROL
+RE-RUN IN THE SAME MIX** (`cost_geometry_first_8xctl_cells{4,5}.json`). The control is the
+point: seconds per pass move with placement by more than the term being measured
+(M-PLACEMENT-LOTTERY), so a `1x` reading held against a record taken on a differently loaded
+host measures the host as much as the step. Held against a control in its own mix, the step is
+the only thing that moved.
+
+| | s/pass, `1x` | s/pass, `8x` control | ratio | core-s/ps, `1x` | core-s/ps, `8x` control | ratio | core-s/ps, BANKED `8x` | `1x` over banked |
+|---|---|---|---|---|---|---|---|---|
+| **128 waters** | `0.2607` | `0.2471` | `1.055` | `10003.6` | `1185.1` | `8.441` | `2183.8` | `4.581` |
+| **250 waters** | `0.5294` | `0.5155` | `1.027` | `20312.1` | `2472.6` | `8.215` | `4274.8` | `4.752` |
+
+The `1x` / `8x`-control ratio on core-seconds per picosecond is the step ratio times whatever
+the blend costs over the argmin at the same step; the `s/pass` ratio in the same row is that
+second factor alone, measured. **The banked column is kept and is not corrected in place**: it
+is what that phase measured at the step it ran, the records stay bit-identical, and this
+section is the conversion. Nothing in `cost_after.json`, `cost_before.json` or the
+`cells{3,4,5,6}.json` size records is edited.
+
+The `1x` records are written by `liquid2 cost --tag _1x`; the control by
+`liquid2 cost --tag _8xctl --selection banked`. Both flags exist so that a re-measurement can
+never land on a banked record's name.

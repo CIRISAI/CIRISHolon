@@ -103,6 +103,12 @@ members = [
   # own existing readout BIT FOR BIT. A dependency added here would make that graph a cycle
   # and would also land in holon-render's browser artifact.
   "crates/holon-closure",
+  # holon-runtime: the EXECUTABLE holon -- the operator contract (state, project, advance,
+  # exchange, reconstruct, clock, validate, refresh, cost) with its validity record kept APART
+  # from holon-closure's rent, and its first and only operator, oriented rigid water (GANTT2,
+  # the fourth review). ZERO dependencies (std only), same isolation profile as holon-closure;
+  # holon-render adopts it one-way, so nothing here lands in the browser artifact by accident.
+  "crates/holon-runtime",
   # holon-campaign: the campaign harness -- gates that name every failing leg, plants whose
   # carrier and analytic reach are printed beside the stake, a price written before the
   # counted steps, stakes that carry their provenance, and a record writer that validates

@@ -4,10 +4,10 @@
 //!
 //! ```text
 //! cargo run --release -p holon-render --example liquid2 -- screen [DIR]
-//! cargo run --release -p holon-render --example liquid2 -- gate   [DIR]
+//! cargo run --release -p holon-render --example liquid2 -- gate   [DIR] [--arm structure|diffusion]
 //! cargo run --release -p holon-render --example liquid2 -- pilot  [DIR] --pilot I [--blocks N]
 //! cargo run --release -p holon-render --example liquid2 -- pilot  [DIR] --freeze
-//! cargo run --release -p holon-render --example liquid2 -- run    [DIR]
+//! cargo run --release -p holon-render --example liquid2 -- run    [DIR] [--arm structure|diffusion] [--seed K]
 //! cargo run --release -p holon-render --example liquid2 -- read   [DIR]
 //! ```
 //!
@@ -100,9 +100,104 @@ const SETTLE_WINDOW: usize = 5;
 /// The settling may not be counted as done before LIQUID-1's own MEASURED settling time in
 /// physical units, converted at this arm's step. That number is DERIVED in `design` from
 /// `liquid1/arm.log` and is deliberately not typed here.
-/// The cap. Reaching it VOIDS the arm with the settling series recorded: a box that will not
-/// settle is a finding, not something to count anyway.
-const SETTLE_CAP: usize = 40_000;
+/// The cap, DERIVED in physical time and never a frame count inherited across a step change
+/// (the fourth review: the typed `40_000` was the provisional 8x gate's cap, 8.34 ps at that
+/// step and 1.04 ps at the selected 1x, and the 1x gate then HIT it - a cap that ends the
+/// settling is not a cap, it is the settling). The provisional cap in the tables' own frames
+/// is `40_000 x 8 = 320_000`, converted at this arm's step exactly as the block is
+/// (`settle_readout_frames`): `40_000` at 8x, so the banked provisional gate reproduces to
+/// the frame, and `320_000` = 8.34 ps at 1x. Reaching it VOIDS a counted arm with the
+/// settling series recorded and FAILS the gate's SETTLE leg: a box that will not settle is a
+/// finding, not something to count anyway.
+const SETTLE_CAP_TABLES_FRAMES: usize = 320_000;
+fn settle_cap_frames(step_mult: f64) -> usize {
+    ((SETTLE_CAP_TABLES_FRAMES as f64) / step_mult).round().max(1.0) as usize
+}
+
+/// WHICH COUNTED ARM. The fourth review's option 1, taken: the counted arm's length was
+/// derived from R3's diffusive window (28.7 ps x 3 seeds) while the ceiling was derived from
+/// LIQUID-1's wall, and the two were only compatible at the withdrawn 8x step. So the campaign
+/// is split: the STRUCTURE arm carries R1, R2 and S on a length derived from THEIR needs, and
+/// the DIFFUSION arm keeps R3's window, its own price and (owed) its own ceiling. The gate
+/// prints which arm it admitted and every counted arm reads that back (the BIND gate).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum ArmKind {
+    Structure,
+    Diffusion,
+}
+impl ArmKind {
+    fn name(self) -> &'static str {
+        match self {
+            ArmKind::Structure => "structure",
+            ArmKind::Diffusion => "diffusion",
+        }
+    }
+    fn code(self) -> i64 {
+        match self {
+            ArmKind::Structure => 1,
+            ArmKind::Diffusion => 2,
+        }
+    }
+    fn parse(s: Option<&str>) -> ArmKind {
+        match s {
+            None | Some("structure") => ArmKind::Structure,
+            Some("diffusion") => ArmKind::Diffusion,
+            Some(o) => panic!("unknown arm {o:?}: structure | diffusion"),
+        }
+    }
+}
+
+/// THE STRUCTURE ARM'S PRECISION, declared before any counted frame: a tenth of each band's
+/// half-width, R2's on the lens ([1.5, 2.0] -> 0.025 bonds per molecule) and R1's in bohr
+/// ([5.0, 5.6] -> 0.03 bohr). The arm is long enough for the pilots' own measured block
+/// variance to resolve the band EDGE at this precision - the fourth review read R2 at
+/// 3.002 / 2.960 / 3.025 both-ends against a lower edge of 3.0, which is exactly where a
+/// reading needs its error bar - and never shorter than LIQUID-1's counted arm in physical
+/// time, so it cannot be read against a record longer than itself.
+const STRUCTURE_PRECISION_FRACTION_OF_HALF_BAND: f64 = 0.1;
+
+/// What the pilots' measured block variance says the structure arm needs. Every number is
+/// read off `pilot<i>.json` at THIS step; the largest block deviation and inefficiency over
+/// the set are taken, because a floor is not a place to take the smaller.
+struct StructurePrecision {
+    r2_sd_block: f64,
+    r2_g: f64,
+    r2_blocks: usize,
+    r1_sd_block: f64,
+    r1_g: f64,
+    r1_blocks: usize,
+    block_frames: usize,
+    frames: usize,
+    pilots: usize,
+    /// The SMALLEST `blocks_run` and the `blocks_declared` over the set: a short pilot set
+    /// (the 14-block instrument set against the declared 60) is read and RECORDED but the
+    /// gate refuses to size an arm on it - GANTT2: "freezing a settling from the short set
+    /// would have been freezing a number the set cannot support", and a variance is no
+    /// different.
+    blocks_run_min: usize,
+    blocks_declared: usize,
+    source: String,
+}
+impl StructurePrecision {
+    fn set_is_short(&self) -> bool {
+        self.blocks_run_min < self.blocks_declared
+    }
+    fn json(&self) -> String {
+        format!(
+            "{{\"r2_sd_block\": {}, \"r2_g_blocks\": {}, \"r2_precision_lens\": {}, \"r2_blocks_needed\": {}, \"r1_sd_block_bohr\": {}, \"r1_g_blocks\": {}, \"r1_precision_bohr\": {}, \"r1_blocks_needed\": {}, \"block_frames\": {}, \"frames\": {}, \"pilots\": {}, \"blocks_run_min\": {}, \"blocks_declared\": {}, \"set_is_short\": {}, \"source\": {:?}, \"rule\": \"blocks = g (s/p)^2 per readout, the larger of R1's and R2's, times the block; s = sem_after_t0 * sqrt(n_eff) and g = g_blocks from each pilot's Chodera record, the largest over the set\"}}",
+            num(self.r2_sd_block), num(self.r2_g), num(structure_precision_r2()), self.r2_blocks,
+            num(self.r1_sd_block), num(self.r1_g), num(structure_precision_r1()), self.r1_blocks,
+            self.block_frames, self.frames, self.pilots, self.blocks_run_min, self.blocks_declared, self.set_is_short(), self.source
+        )
+    }
+}
+fn structure_precision_r2() -> f64 {
+    let (lo, hi) = r2_band();
+    STRUCTURE_PRECISION_FRACTION_OF_HALF_BAND * 0.5 * (hi - lo)
+}
+fn structure_precision_r1() -> f64 {
+    STRUCTURE_PRECISION_FRACTION_OF_HALF_BAND * 0.5 * (KILL_R1_POS.1 - KILL_R1_POS.0)
+}
 
 // ---- THE PILOTS: the settling FROZEN on trajectories the confirmation never sees
 //
@@ -1101,7 +1196,7 @@ fn settle(
         if done {
             return (frame, s, false);
         }
-        if frame >= SETTLE_CAP {
+        if frame >= d.settle_cap_frames {
             return (frame, s, true);
         }
     }
@@ -1332,6 +1427,19 @@ struct Design {
     /// force is the LARGER of the two: the pilots measure this law's own box and LIQUID-1's
     /// number measures a different law's, and a floor is not a place to take the smaller.
     settle_floor_from_pilots: Option<ReadInput>,
+    /// The cap, derived in physical time (`settle_cap_frames`).
+    settle_cap_frames: usize,
+    /// WHICH counted arm this design sizes, and both arms' lengths so the record shows what
+    /// the other would have cost. `count` and `stride` are the selected arm's.
+    arm: ArmKind,
+    count_diffusion: usize,
+    stride_diffusion: usize,
+    count_structure: usize,
+    stride_structure: usize,
+    /// LIQUID-1's counted arm in physical time at this step: the structure arm's floor.
+    structure_floor_from_liquid1: usize,
+    /// The frames the pilots' measured block variance needs, when a set at this step exists.
+    structure_from_pilots: Option<StructurePrecision>,
     l1: L1Series,
     /// The Erdos-Renyi giant component at LIQUID-1's own measured degree.
     er_degree: f64,
@@ -1355,7 +1463,7 @@ fn er_giant(z: f64) -> f64 {
     s
 }
 
-fn design(obs: &Path, out: &Path, dt_tables: f64, l: f64) -> Design {
+fn design(obs: &Path, out: &Path, dt_tables: f64, l: f64, arm_kind: ArmKind) -> Design {
     let arm = obs.join("liquid1").join("arm.json");
     let a = arm.display().to_string();
     let r = |keys: &[&str], f: &str| must(read_input_after(&a, keys, f));
@@ -1459,6 +1567,25 @@ fn design(obs: &Path, out: &Path, dt_tables: f64, l: f64) -> Design {
     let settle_floor =
         settle_floor_l1.max(pilot_in.as_ref().map(|v| v.value as usize).unwrap_or(0));
 
+    // ---- THE STRUCTURE ARM (the fourth review, option 1): sized from R1, R2 and S's needs
+    //
+    // Two lengths, the larger taken. (i) LIQUID-1's own counted arm converted to this step
+    // in PHYSICAL time (100,000 of its frames = 2.606 ps), so the campaign is never read
+    // against a record longer than itself; its readout stride is LIQUID-1's, converted the
+    // same way, so a seed carries the same 1,000 readouts. (ii) What the pilots' measured
+    // block variance needs: with block standard deviation s and statistical inefficiency g
+    // (Chodera 2016, both read off every pilot at THIS step and the largest taken), the
+    // blocks that put the standard error at the declared precision p are g (s/p)^2. S has no
+    // pilot series and rides on the same readouts; that is a FENCE, stated in the record.
+    let stride_structure = (stride_l1 * dt_tables / step_au).round().max(1.0) as usize;
+    let structure_floor_l1 = (counted_l1.value * dt_tables * AU_TIME_FS / step_fs).ceil() as usize;
+    let structure_from_pilots = read_pilot_precision(out, STEP_MULT);
+    let count_structure = structure_floor_l1.max(structure_from_pilots.as_ref().map(|p| p.frames).unwrap_or(0));
+    let (count_selected, stride_selected) = match arm_kind {
+        ArmKind::Structure => (count_structure, stride_structure),
+        ArmKind::Diffusion => (count, stride),
+    };
+
     // WHAT THE WINDOW WOULD BE WITH THE CAP LIFTED. Under `Boundary::Periodic` the lens's
     // wall cap does not apply, so the only remaining limit on the top lag is what the arm
     // costs: three seeds of (settling + 4*max_lag*stride) passes at LIQUID-1's own measured
@@ -1494,10 +1621,10 @@ fn design(obs: &Path, out: &Path, dt_tables: f64, l: f64) -> Design {
         dt_tables_au: dt_tables,
         step_au,
         step_fs,
-        stride,
+        stride: stride_selected,
         max_lag,
         sampled,
-        count,
+        count: count_selected,
         t1_fs: t1,
         t2_fs: t2,
         physical_fs: physical,
@@ -1514,6 +1641,14 @@ fn design(obs: &Path, out: &Path, dt_tables: f64, l: f64) -> Design {
         settle_floor_frames: settle_floor,
         settle_floor_from_liquid1: settle_floor_l1,
         settle_floor_from_pilots: pilot_in,
+        settle_cap_frames: settle_cap_frames(STEP_MULT),
+        arm: arm_kind,
+        count_diffusion: count,
+        stride_diffusion: stride,
+        count_structure,
+        stride_structure,
+        structure_floor_from_liquid1: structure_floor_l1,
+        structure_from_pilots,
         l1,
         er_degree: z,
         er_giant: er_giant(z),
@@ -1579,7 +1714,7 @@ impl Design {
              \"drift_fraction\": {}, \"liquid1_wall_seconds\": {}, \
              \"liquid1_seconds_per_pass\": {}, \"price_ceiling_seconds\": {}, \
              \"liquid1_hbonds_per_molecule\": {}, \"er_degree\": {}, \"er_giant\": {}, \
-             \"settling\": {{\"temperature_band_k\": {}, \"band_rule\": \"3 x the scatter of LIQUID-1's own temperature readout over the second half of its counted arm\", \"liquid1_plateau_temperature_k\": {}, \"liquid1_plateau_temperature_sd_k\": {}, \"equipartition_sigma_k\": {}, \"equipartition_dof\": {}, \"liquid1_plateau_hbonds\": {}, \"liquid1_plateau_hbonds_sd\": {}, \"liquid1_reported_hbonds\": {}, \"liquid1_reported_under_its_own_plateau\": {}, \"liquid1_temperature_settled_at_frame\": {}, \"liquid1_hbonds_settled_at_frame\": {}, \"liquid1_hbonds_settled_fs\": {}, \"liquid1_settled_only_frames\": 2000, \"this_criterion_on_liquid1_fires_at_frame\": {}, \"this_criterion_on_liquid1_fires_at_fs\": {}, \"readout_frames\": {}, \"samples_per_block\": {}, \"window_blocks\": {}, \"block_fs\": {}, \"floor_frames\": {}, \"floor_from_physical_time\": {}, \"floor_from_the_thermostats_frame_clock\": {}, \"floor_rule\": \"the larger of the two: the network rearranges in physical time and the thermostat is applied once per step\", \"floor_from_liquid1_frames\": {}, \"floor_from_pilots_frames\": {}, \"floor_from_pilots_source\": {}, \"floor_in_force_is\": {:?}, \"pilot_rule\": \"Chodera 2016 automated equilibration detection on the cross-unit potential energy, maximum over pilots; the pilots run on their own seeds and no confirmation arm sees them\", \"cap_frames\": {}}}}}",
+             \"settling\": {{\"temperature_band_k\": {}, \"band_rule\": \"3 x the scatter of LIQUID-1's own temperature readout over the second half of its counted arm\", \"liquid1_plateau_temperature_k\": {}, \"liquid1_plateau_temperature_sd_k\": {}, \"equipartition_sigma_k\": {}, \"equipartition_dof\": {}, \"liquid1_plateau_hbonds\": {}, \"liquid1_plateau_hbonds_sd\": {}, \"liquid1_reported_hbonds\": {}, \"liquid1_reported_under_its_own_plateau\": {}, \"liquid1_temperature_settled_at_frame\": {}, \"liquid1_hbonds_settled_at_frame\": {}, \"liquid1_hbonds_settled_fs\": {}, \"liquid1_settled_only_frames\": 2000, \"this_criterion_on_liquid1_fires_at_frame\": {}, \"this_criterion_on_liquid1_fires_at_fs\": {}, \"readout_frames\": {}, \"samples_per_block\": {}, \"window_blocks\": {}, \"block_fs\": {}, \"floor_frames\": {}, \"floor_from_physical_time\": {}, \"floor_from_the_thermostats_frame_clock\": {}, \"floor_rule\": \"the larger of the two: the network rearranges in physical time and the thermostat is applied once per step\", \"floor_from_liquid1_frames\": {}, \"floor_from_pilots_frames\": {}, \"floor_from_pilots_source\": {}, \"floor_in_force_is\": {:?}, \"pilot_rule\": \"Chodera 2016 automated equilibration detection on the cross-unit potential energy, maximum over pilots; the pilots run on their own seeds and no confirmation arm sees them\", \"cap_frames\": {}, \"cap_fs\": {}, \"cap_rule\": \"the provisional 8x gate's 40,000-frame cap in the tables' own frames, 320,000, converted at this step; a cap reached FAILS the gate's SETTLE leg and VOIDS a counted arm\"}}, \"counted_arm\": \"{}\", \"counted_arm_code\": {}, \"counted_frames_diffusion\": {}, \"readout_stride_diffusion\": {}, \"counted_frames_structure\": {}, \"readout_stride_structure\": {}, \"structure_floor_from_liquid1_frames\": {}, \"structure_precision_fraction_of_half_band\": {}, \"structure_from_pilots\": {}, \"structure_rule\": \"the larger of LIQUID-1's counted arm converted to this step in physical time and the frames the pilots' measured block variance needs to put R1's and R2's standard error at the declared precision (g (s/p)^2 blocks, Chodera 2016); S rides on the same readouts - a FENCE, no pilot series exists for it\"}}",
             num(self.alpha),
             num(self.t1_l1_fs),
             num(self.t2_l1_fs),
@@ -1647,7 +1782,20 @@ impl Design {
             } else {
                 "LIQUID-1's own measured settling, converted at this step"
             },
-            SETTLE_CAP
+            self.settle_cap_frames,
+            num(self.settle_cap_frames as f64 * self.step_fs),
+            self.arm.name(),
+            self.arm.code(),
+            self.count_diffusion,
+            self.stride_diffusion,
+            self.count_structure,
+            self.stride_structure,
+            self.structure_floor_from_liquid1,
+            num(STRUCTURE_PRECISION_FRACTION_OF_HALF_BAND),
+            match &self.structure_from_pilots {
+                Some(p) => p.json(),
+                None => "null".to_string(),
+            },
         )
     }
     fn print(&self) {
@@ -1671,7 +1819,24 @@ impl Design {
         println!("    LIQUID-1 settled at  T frame {}, bonds frame {} = {:.1} fs; it counted from frame 2000 = {:.1} fs", self.l1.t_settled_at, self.l1.bond_settled_at, self.l1.bond_settled_at as f64 * self.dt_tables_au * AU_TIME_FS, 2000.0 * self.dt_tables_au * AU_TIME_FS);
         println!("    its reported bonds   {:.4} against its own plateau {:.4}: {:.2} % low", self.l1.reported_bond, self.l1.bond_plateau, 100.0 * self.l1.plateau_shortfall);
         println!("    this criterion on LIQUID-1 fires at frame {} = {:.1} fs", self.l1.criterion_fires_at, self.l1.criterion_fires_at as f64 * self.dt_tables_au * AU_TIME_FS);
-        println!("    here: block {} frames = {:.2} fs, {} samples, window {} blocks, floor {} frames (physical-time conversion {}, thermostat frame clock {}), cap {}", SETTLE_READOUT(), SETTLE_READOUT() as f64 * self.step_fs, SETTLE_SAMPLES, SETTLE_WINDOW, self.settle_floor_frames, (self.l1.bond_settled_at as f64 * self.dt_tables_au * AU_TIME_FS / self.step_fs).ceil() as usize, self.l1.bond_settled_at, SETTLE_CAP);
+        println!("    here: block {} frames = {:.2} fs, {} samples, window {} blocks, floor {} frames (physical-time conversion {}, thermostat frame clock {}), cap {}", SETTLE_READOUT(), SETTLE_READOUT() as f64 * self.step_fs, SETTLE_SAMPLES, SETTLE_WINDOW, self.settle_floor_frames, (self.l1.bond_settled_at as f64 * self.dt_tables_au * AU_TIME_FS / self.step_fs).ceil() as usize, self.l1.bond_settled_at, self.settle_cap_frames);
+        println!(
+            "  counted arm            {}: {} counted frames = {:.3} ps per seed at stride {} (the structure arm {} frames: LIQUID-1's arm at this step {}, the pilots {}; the diffusion arm {} frames at stride {}; cap {} frames = {:.1} fs)",
+            self.arm.name(),
+            self.count,
+            self.count as f64 * self.step_fs / 1000.0,
+            self.stride,
+            self.count_structure,
+            self.structure_floor_from_liquid1,
+            match &self.structure_from_pilots {
+                Some(p) => format!("{} frames from {} pilot(s) in {} (R2 {} blocks, R1 {} blocks)", p.frames, p.pilots, p.source, p.r2_blocks, p.r1_blocks),
+                None => "no pilot set frozen at this step".to_string(),
+            },
+            self.count_diffusion,
+            self.stride_diffusion,
+            self.settle_cap_frames,
+            self.settle_cap_frames as f64 * self.step_fs
+        );
         match &self.settle_floor_from_pilots {
             Some(v) => println!(
                 "    the floor: {} frames from LIQUID-1, {} frames from the pilots ({}) -> {} in force ({})",
@@ -2170,13 +2335,13 @@ impl Configuration {
     }
 }
 
-fn gate_phase(obs: &Path, out: &Path) {
+fn gate_phase(obs: &Path, out: &Path, arm: ArmKind) {
     let w = RecordWriter::new(out);
     let mut report = Report::new();
     let law = load_law(obs);
     let sel = Selection::campaign();
     let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, sel, SEEDS[0]);
-    let d = design(obs, out, dt_tables, l);
+    let d = design(obs, out, dt_tables, l, arm);
     d.print();
 
     // ---- L0: the door
@@ -2300,6 +2465,24 @@ fn gate_phase(obs: &Path, out: &Path) {
         if settle_capped { "CAPPED - the box did not settle" } else { "settled by the criterion" },
         settler.series.len()
     );
+    // THE SETTLING AS A GATE (the fourth review, correction 2): a capped settling VOIDED the
+    // counted arm and only PRINTED here, so the phase probe below ran on a box the campaign's
+    // own rule calls unsettled and the record did not say so. Now it is a leg, and the
+    // probe's record names the box it ran on.
+    let g_settle = Gate::new("SETTLE")
+        .work(1)
+        .detail(format!(
+            "the settling criterion (temperature band {:.2} K and the cross-unit energy over a {}-block window) against its floor {} frames and its cap {} frames = {:.1} fs, the cap derived in physical time",
+            d.temp_band_k, SETTLE_WINDOW, d.settle_floor_frames, d.settle_cap_frames, d.settle_cap_frames as f64 * d.step_fs
+        ))
+        .leg_at("the settling criterion fired inside its physical cap", !settle_capped, settle_used as f64)
+        .leg_at(
+            "the box holds its units and its image rule after settling",
+            sim.pbc_ok() && sim.seam_work.units == N_WATERS as u64,
+            sim.seam_work.units as f64,
+        );
+    println!("{}", g_settle.line());
+    report.gate(g_settle);
     let mut carrier = Carrier::new();
     let mut ph = PhaseAccum::new();
     for _ in 0..CARRIER_FRAMES {
@@ -2316,19 +2499,49 @@ fn gate_phase(obs: &Path, out: &Path) {
 
     // ---- R3: live, or VOID BY PRICE
     let arm_seconds = per_pass * (settle_used + d.count) as f64 * SEEDS.len() as f64;
-    let r3_live = arm_seconds <= d.price_ceiling_seconds;
-    let g_r3 = Gate::new("R3price")
-        .work(1)
-        .detail(format!(
-            "the counted campaign at the pre-committed step, {} seeds, costs {arm_seconds:.1} s against the ceiling {:.1} s (ten times LIQUID-1's own arm); the window is [{:.2}, {:.1}] fs with the crossover at {:.2} fs",
-            SEEDS.len(),
-            d.price_ceiling_seconds, d.t1_fs, d.t2_fs, d.crossover_fs
-        ))
-        .leg_at("the counted campaign, all seeds, is inside the price ceiling", r3_live, arm_seconds)
-        .leg_at("the lowest fitted lag is at or above the crossover", d.t1_fs >= d.crossover_fs, d.t1_fs / d.crossover_fs)
-        .leg_at("the counted physical time is at least four crossovers", d.physical_fs >= CROSSOVER_MULTIPLE * d.crossover_fs, d.physical_fs / (CROSSOVER_MULTIPLE * d.crossover_fs))
-        .leg_at("the top fitted lag's MSD at experiment's D is under the lens's wall cap", d.msd_at_top_bohr2 * WALL_CAP_MARGIN <= d.wall_cap_bohr2, d.msd_at_top_bohr2 / d.wall_cap_bohr2);
-    report.gate(g_r3);
+    let price_live = arm_seconds <= d.price_ceiling_seconds;
+    let r3_live = price_live && d.arm == ArmKind::Diffusion;
+    // THE OTHER ARM'S PRICE, reported beside the admitted one so the split is visible in the
+    // record and not only in the flag that chose it.
+    let other_count = match d.arm {
+        ArmKind::Structure => d.count_diffusion,
+        ArmKind::Diffusion => d.count_structure,
+    };
+    let other_seconds = per_pass * (settle_used + other_count) as f64 * SEEDS.len() as f64;
+    let g_price = match d.arm {
+        ArmKind::Diffusion => Gate::new("R3price")
+            .work(1)
+            .detail(format!(
+                "the DIFFUSION arm at the pre-committed step, {} seeds, costs {arm_seconds:.1} s against the ceiling {:.1} s (ten times LIQUID-1's own arm); the window is [{:.2}, {:.1}] fs with the crossover at {:.2} fs; the structure arm would cost {other_seconds:.1} s",
+                SEEDS.len(),
+                d.price_ceiling_seconds, d.t1_fs, d.t2_fs, d.crossover_fs
+            ))
+            .leg_at("the counted campaign, all seeds, is inside the price ceiling", price_live, arm_seconds)
+            .leg_at("the lowest fitted lag is at or above the crossover", d.t1_fs >= d.crossover_fs, d.t1_fs / d.crossover_fs)
+            .leg_at("the counted physical time is at least four crossovers", d.physical_fs >= CROSSOVER_MULTIPLE * d.crossover_fs, d.physical_fs / (CROSSOVER_MULTIPLE * d.crossover_fs))
+            .leg_at("the top fitted lag's MSD at experiment's D is under the lens's wall cap", d.msd_at_top_bohr2 * WALL_CAP_MARGIN <= d.wall_cap_bohr2, d.msd_at_top_bohr2 / d.wall_cap_bohr2),
+        ArmKind::Structure => Gate::new("Sprice")
+            .work(1)
+            .detail(format!(
+                "the STRUCTURE arm (R1, R2 and S; R3 is its own campaign), {} seeds x ({settle_used} settling + {} counted) frames at {per_pass:.4} s per pass = {arm_seconds:.1} s against the ceiling {:.1} s (ten times LIQUID-1's own arm); the diffusion arm would cost {other_seconds:.1} s",
+                SEEDS.len(),
+                d.count,
+                d.price_ceiling_seconds
+            ))
+            .leg_at("the counted campaign, all seeds, is inside the price ceiling", price_live, arm_seconds)
+            .leg_at(
+                "the arm is no shorter than LIQUID-1's counted arm in physical time",
+                d.count >= d.structure_floor_from_liquid1,
+                d.count as f64 / d.structure_floor_from_liquid1 as f64,
+            )
+            .leg_at("the readout stride is LIQUID-1's, converted at this step", d.stride == d.stride_structure, d.stride as f64)
+            .leg_at(
+                "the pilot set that sized the arm ran its declared blocks, or no pilot set sized it and LIQUID-1's floor is in force",
+                d.structure_from_pilots.as_ref().map(|p| !p.set_is_short()).unwrap_or(true),
+                d.structure_from_pilots.as_ref().map(|p| p.blocks_run_min as f64).unwrap_or(0.0),
+            ),
+    };
+    report.gate(g_price);
 
     let mut rec = Record::new("gate")
         .raw("configuration", cfg.json())
@@ -2343,12 +2556,17 @@ fn gate_phase(obs: &Path, out: &Path) {
         .number("liquid1_seconds_per_pass", d.liquid1_seconds_per_pass)
         .number("table_term_cost_ratio", table_cost_ratio)
         .number("arm_seconds_projected", arm_seconds)
+        .text("counted_arm", d.arm.name())
+        .int("counted_arm_code", d.arm.code())
+        .number("other_arm_seconds_projected", other_seconds)
+        .flag("price_live", price_live)
         .flag("r3_live", r3_live)
+        .flag("phase_probe_on_a_settled_box", !settle_capped)
         .int("settle_frames_used", settle_used as i64)
         .flag("settling_capped", settle_capped)
         .raw("settling_series", settler.json())
         .int("settle_floor_frames", d.settle_floor_frames as i64)
-        .int("settle_cap_frames", SETTLE_CAP as i64)
+        .int("settle_cap_frames", d.settle_cap_frames as i64)
         .int("seeds", SEEDS.len() as i64)
         .int("counted_frames", d.count as i64)
         .int("readout_stride_frames", d.stride as i64)
@@ -2484,7 +2702,7 @@ fn screen_phase(obs: &Path, out: &Path, step: f64, variant: Variant, label: Opti
             hand.abs_sum, hand.signed_sum, hand.signed_peak, hand.random_walk(), sim.drift_peak
         );
     }
-    let d = design(obs, out, dt_tables, l);
+    let d = design(obs, out, dt_tables, l, ArmKind::Structure);
     let work_thermostat = sim.work.thermostat;
     let bar = d.drift_bar(work_thermostat);
     let ratio = sim.drift_peak / work_thermostat.abs();
@@ -2653,7 +2871,7 @@ fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize, pilot_
     // trajectory, which is the whole of M-VALIDATED-NOT-WIRED one level down.
     let sel = Selection::campaign();
     let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, sel, seed);
-    let d = design(obs, out, dt_tables, l);
+    let d = design(obs, out, dt_tables, l, ArmKind::Structure);
     let dr = door(&law, &mut sim, &pos, l, tables_reach, N_WATERS);
     if !dr.admitted {
         w.write_text(
@@ -2888,10 +3106,12 @@ fn pilot_freeze(obs: &Path, out: &Path, pilot_dir: &str) {
 
 /// What the pilots froze, read back by the design. `None` when no pilot set has run — the
 /// campaign then falls back to LIQUID-1's own measured settling, and the record says which.
-fn read_pilot_settling(out: &Path) -> Option<ReadInput> {
-    // EVERY pilot set under the campaign directory, not one hard-coded name: a set taken at
-    // one step must never land on top of a set taken at another, so each lives in its own
-    // `pilot*` directory and the one whose FROZEN STEP is this arm's is the one that counts.
+/// EVERY pilot set under the CAMPAIGN directory, not one hard-coded name: a set taken at one
+/// step must never land on top of a set taken at another, so each lives in its own `pilot*`
+/// directory and the one whose FROZEN STEP is this arm's is the one that counts. The caller
+/// hands in the campaign root; `run_phase` once handed in its seed directory (the fourth
+/// review), which has no pilot set and silently fell back to LIQUID-1's floor.
+fn pilot_dirs(out: &Path) -> Vec<PathBuf> {
     let mut dirs: Vec<PathBuf> = std::fs::read_dir(out)
         .into_iter()
         .flatten()
@@ -2900,7 +3120,109 @@ fn read_pilot_settling(out: &Path) -> Option<ReadInput> {
         .filter(|q| q.is_dir() && q.file_name().and_then(|x| x.to_str()).map(|x| x.starts_with("pilot")).unwrap_or(false))
         .collect();
     dirs.sort();
-    for d in dirs {
+    dirs
+}
+
+/// THE STRUCTURE ARM'S LENGTH FROM THE PILOTS: for every pilot at THIS step, the block
+/// standard deviation `sem_after_t0 * sqrt(n_eff)` and the inefficiency `g_blocks` of R2's
+/// series (bonds per molecule, the lens's count) and R1's (the first O-O peak in bohr), the
+/// largest over the set; then `g (s/p)^2` blocks at the declared precision `p`, the larger of
+/// the two readouts, times the pilots' own block. The first `pilot*` directory with a pilot at
+/// this step is the set; a set at another step is not converted, it is passed over.
+fn read_pilot_precision(out: &Path, step_mult: f64) -> Option<StructurePrecision> {
+    let p2 = structure_precision_r2();
+    let p1 = structure_precision_r1();
+    for d in pilot_dirs(out) {
+        let mut acc = StructurePrecision {
+            r2_sd_block: 0.0,
+            r2_g: 0.0,
+            r2_blocks: 0,
+            r1_sd_block: 0.0,
+            r1_g: 0.0,
+            r1_blocks: 0,
+            block_frames: 0,
+            frames: 0,
+            pilots: 0,
+            blocks_run_min: usize::MAX,
+            blocks_declared: 0,
+            source: d.display().to_string(),
+        };
+        for i in 0..PILOT_SEEDS.len() {
+            let p = d.join(format!("pilot{i}.json"));
+            if !p.exists() {
+                continue;
+            }
+            let path = p.display().to_string();
+            let Ok(at) = read_input_after(&path, &[], "step_multiple_of_tables_step") else { continue };
+            if at.value != step_mult {
+                continue;
+            }
+            let rd = |series: &str, f: &str| -> Option<f64> {
+                let k = format!("\"{series}\"");
+                read_input_after(&path, &["\"chodera\"", &k], f).ok().map(|v| v.value)
+            };
+            let (Some(sem2), Some(neff2), Some(g2)) = (
+                rd("hbonds_per_molecule", "sem_after_t0"),
+                rd("hbonds_per_molecule", "n_eff"),
+                rd("hbonds_per_molecule", "g_blocks"),
+            ) else {
+                continue;
+            };
+            let (Some(sem1), Some(neff1), Some(g1)) = (
+                rd("oo_first_peak_bohr", "sem_after_t0"),
+                rd("oo_first_peak_bohr", "n_eff"),
+                rd("oo_first_peak_bohr", "g_blocks"),
+            ) else {
+                continue;
+            };
+            let Ok(bf) = read_input_after(&path, &[], "block_frames") else { continue };
+            let Ok(run) = read_input_after(&path, &[], "blocks_run") else { continue };
+            let Ok(decl) = read_input_after(&path, &[], "blocks_declared") else { continue };
+            acc.blocks_run_min = acc.blocks_run_min.min(run.value as usize);
+            acc.blocks_declared = acc.blocks_declared.max(decl.value as usize);
+            acc.r2_sd_block = acc.r2_sd_block.max(sem2 * neff2.max(1.0).sqrt());
+            acc.r2_g = acc.r2_g.max(g2.max(1.0));
+            acc.r1_sd_block = acc.r1_sd_block.max(sem1 * neff1.max(1.0).sqrt());
+            acc.r1_g = acc.r1_g.max(g1.max(1.0));
+            acc.block_frames = bf.value as usize;
+            acc.pilots += 1;
+        }
+        if acc.pilots > 0 {
+            acc.r2_blocks = (acc.r2_g * (acc.r2_sd_block / p2).powi(2)).ceil() as usize;
+            acc.r1_blocks = (acc.r1_g * (acc.r1_sd_block / p1).powi(2)).ceil() as usize;
+            acc.frames = acc.r2_blocks.max(acc.r1_blocks) * acc.block_frames;
+            return Some(acc);
+        }
+    }
+    None
+}
+
+/// THE BIND GATE: the counted arm's design against the one the gate admitted, every leg read
+/// back from `gate.json` and compared EXACTLY. A gate.json written before the arm kind existed
+/// reads NaN on that leg and the arm refuses: the gate is re-run, never assumed.
+fn bind_gate(campaign: &Path, d: &Design) -> Gate {
+    let path = campaign.join("gate.json").display().to_string();
+    let rd = |keys: &[&str], f: &str| read_input_after(&path, keys, f).map(|v| v.value).unwrap_or(f64::NAN);
+    let floor = rd(&["\"design\"", "\"settling\""], "floor_frames");
+    let cap = rd(&["\"design\"", "\"settling\""], "cap_frames");
+    let count = rd(&["\"design\""], "counted_frames");
+    let stride = rd(&["\"design\""], "readout_stride_frames");
+    let kind = rd(&["\"design\""], "counted_arm_code");
+    Gate::new("BIND")
+        .work(5)
+        .detail(format!(
+            "the design READ BACK from {path} against this arm's own derivation: floor {floor} / {}, cap {cap} / {}, counted {count} / {}, stride {stride} / {}, arm {kind} / {} ({})",
+            d.settle_floor_frames, d.settle_cap_frames, d.count, d.stride, d.arm.code(), d.arm.name()
+        ))
+        .leg_at("the settle floor is the gate's, EXACT", floor == d.settle_floor_frames as f64, floor)
+        .leg_at("the settle cap is the gate's, EXACT", cap == d.settle_cap_frames as f64, cap)
+        .leg_at("the counted length is the gate's, EXACT", count == d.count as f64, count)
+        .leg_at("the readout stride is the gate's, EXACT", stride == d.stride as f64, stride)
+        .leg_at("the arm kind is the one the gate admitted", kind == d.arm.code() as f64, kind)
+}
+
+fn read_pilot_settling(out: &Path) -> Option<ReadInput> {
+    for d in pilot_dirs(out) {
         if let Some(v) = read_one_pilot_settling(&d) {
             return Some(v);
         }
@@ -3367,7 +3689,7 @@ fn cost_merge(out: &Path, arm_label: &str, name: &str, tag: &str) {
 
 // ------------------------------------------------------------------------ the counted arm
 
-fn run_phase(obs: &Path, out: &Path, seed_index: usize, sel: Selection) {
+fn run_phase(obs: &Path, out: &Path, seed_index: usize, sel: Selection, arm: ArmKind) {
     if !is_done(out, "gate.done") {
         eprintln!("REFUSED: gate.done is absent. The counted arm runs only behind the gate phase.");
         std::process::exit(2);
@@ -3378,6 +3700,7 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize, sel: Selection) {
     // land on top of the counted seed's own directory and be read back as one of the three.
     // `read` counts `seed<k>/` and nothing else, so this suffix is also what keeps the
     // comparison out of the seed mean.
+    let campaign = out;
     let out = &out.join(match sel.thermostat {
         ThermostatKind::StochasticRescaling => format!("seed{seed_index}"),
         ThermostatKind::Berendsen => format!("seed{seed_index}_berendsen"),
@@ -3390,7 +3713,10 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize, sel: Selection) {
     }
     eprintln!("seed {seed_index} of {}: {seed:#x}", SEEDS.len());
     let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, sel, seed);
-    let d = design(obs, out, dt_tables, l);
+    // THE CAMPAIGN ROOT, not this seed's directory (the fourth review): `design` looks for
+    // the frozen pilot set UNDER the directory it is handed, and the seed directory has none,
+    // so the arm was deriving a floor the gate never saw.
+    let d = design(obs, campaign, dt_tables, l, arm);
     d.print();
     let dr = door(&law, &mut sim, &pos, l, tables_reach, N_WATERS);
     if !dr.admitted {
@@ -3412,6 +3738,18 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize, sel: Selection) {
         g_config.verdict().admits(),
         "the counted arm's configuration is not the one it selected: {:?}",
         g_config.worst_first().iter().map(|x| x.name.clone()).collect::<Vec<_>>()
+    );
+    // THE ARM IS BOUND TO THE GATE (the fourth review, WP1): the gate admitted ONE design and
+    // this arm reads that design back from gate.json and refuses to run another. The floor,
+    // the cap, the counted length, the stride and the arm kind must each be EXACT, because
+    // `run_phase` was handing `design` its seed directory and deriving a floor the gate never
+    // saw - M-VALIDATED-NOT-WIRED one level down, printed and never gated.
+    let g_bind = bind_gate(campaign, &d);
+    println!("{}", g_bind.line());
+    assert!(
+        g_bind.verdict().admits(),
+        "the counted arm's design is not the one the gate admitted: {:?}",
+        g_bind.worst_first().iter().map(|x| x.name.clone()).collect::<Vec<_>>()
     );
     let t_start = Instant::now();
 
@@ -3479,7 +3817,7 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize, sel: Selection) {
         void = Some((settle_used, "settle", format!("after settling: units {}, pbc_ok {}", sim.seam_work.units, sim.pbc_ok())));
     }
     if settle_capped && void.is_none() {
-        void = Some((settle_used, "settle", format!("the settling criterion did not fire inside its cap of {SETTLE_CAP} frames; the box did not settle and nothing here is counted")));
+        void = Some((settle_used, "settle", format!("the settling criterion did not fire inside its cap of {} frames = {:.1} fs; the box did not settle and nothing here is counted", d.settle_cap_frames, d.settle_cap_frames as f64 * d.step_fs)));
     }
     println!(
         "settling: {settle_used} frames = {:.1} fs ({}); {} blocks",
@@ -3633,13 +3971,20 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize, sel: Selection) {
     let lag_window = LagWindow::new(2, max_lag);
     // The boundary is READ OFF THE BOX and mapped by the total map, never named here: the
     // day the box is built with a different boundary the lens is told about that one.
-    let reading = diffusion_periodic(&traj, lag_window, lens_boundary(sim.boundary));
+    // R3 IS MEASURED ON THE DIFFUSION ARM ONLY (the fourth review, option 1). The structure
+    // arm's length was never sized for a diffusive window, so a coefficient read off it would
+    // be the slope of a curve - the refusal LIQUID-1 already wrote - and the lens is not asked.
+    let reading = match d.arm {
+        ArmKind::Diffusion => Some(diffusion_periodic(&traj, lag_window, lens_boundary(sim.boundary))),
+        ArmKind::Structure => None,
+    };
     let (r3, r3_refusal) = match &reading {
-        Ok(dd) => (Some(dd.d_bohr2_per_fs * conv), None),
-        Err(e) => (None, Some(format!("{} refuses (gate: {}): {}", e.lens, e.gate, e.reason))),
+        Some(Ok(dd)) => (Some(dd.d_bohr2_per_fs * conv), None),
+        Some(Err(e)) => (None, Some(format!("{} refuses (gate: {}): {}", e.lens, e.gate, e.reason))),
+        None => (None, Some("not measured: this is the STRUCTURE arm and R3 is its own campaign (GANTT2, the fourth review, option 1)".to_string())),
     };
     let r3_context = match &reading {
-        Ok(dd) => format!(
+        Some(Ok(dd)) => format!(
             "{{\"alpha\": {}, \"intercept_bohr2\": {}, \"through_origin_cm2_per_s\": {}, \
              \"lag_lo\": {}, \"lag_hi\": {}, \"window_fs\": [{}, {}], \"ladder_points\": {}, \
              \"fit_points\": {}, \"box_edge_bohr\": {}, \"temperature_k\": {}, \
@@ -3664,7 +4009,7 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize, sel: Selection) {
             dd.finite_size.applied,
             dd.finite_size.note
         ),
-        Err(_) => "null".to_string(),
+        _ => "null".to_string(),
     };
 
     let drift_bar = d.drift_bar(sim.work.thermostat);
@@ -3673,12 +4018,15 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize, sel: Selection) {
         .text("law_source", &law.source)
         .text("table_source", &law.table_source)
         .raw("design", d.json())
+        .text("counted_arm", d.arm.name())
+        .int("counted_arm_code", d.arm.code())
+        .raw("bind", g_bind.json())
         .int("seed_index", seed_index as i64)
         .text("seed", &format!("{seed:#x}"))
         .int("settle_frames_used", settle_used as i64)
         .flag("settling_capped", settle_capped)
         .int("settle_floor_frames", d.settle_floor_frames as i64)
-        .int("settle_cap_frames", SETTLE_CAP as i64)
+        .int("settle_cap_frames", d.settle_cap_frames as i64)
         .number("settle_fs", settle_used as f64 * d.step_fs)
         .raw("settling_series", settler.json())
         .int("counted_frames_staked", d.count as i64)
@@ -4070,7 +4418,7 @@ fn read_phase(out: &Path) {
     report.gate(if r3_live {
         g3.branch(r3_branch).leg_at("the seed mean is in band", band(r3.mean(), lo3, hi3), r3.mean())
     } else {
-        g3.void("the lens refused on every seed, or the arm was VOID BY PRICE; each seed's r3 block carries which")
+        g3.void("the lens refused on every seed, the arm was VOID BY PRICE, or the campaign ran its STRUCTURE arm (R3 is its own campaign); each seed's r3 block carries which")
     });
     report.gate(
         Gate::new("S")
@@ -4198,7 +4546,7 @@ fn main() {
             if args.iter().any(|a| a == "--demo-unswitched") {
                 demo_unswitched(&obs, &out)
             } else {
-                gate_phase(&obs, &out)
+                gate_phase(&obs, &out, ArmKind::parse(val("--arm").as_deref()))
             }
         }
         "size" => size_phase(&obs, &out, val("--cells").and_then(|v| v.parse().ok()).unwrap_or(N_CELLS)),
@@ -4249,7 +4597,13 @@ fn main() {
                 Some("berendsen") => Selection::berendsen_arm(),
                 Some(other) => panic!("unknown thermostat {other:?}: stochastic | berendsen"),
             };
-            run_phase(&obs, &out, val("--seed").and_then(|v| v.parse().ok()).unwrap_or(0), sel)
+            run_phase(
+                &obs,
+                &out,
+                val("--seed").and_then(|v| v.parse().ok()).unwrap_or(0),
+                sel,
+                ArmKind::parse(val("--arm").as_deref()),
+            )
         }
         "read" => read_phase(&out),
         other => panic!("unknown phase {other:?}: screen | size | cost | gate | pilot | run | read"),

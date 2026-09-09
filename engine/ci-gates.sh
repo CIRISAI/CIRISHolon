@@ -397,6 +397,19 @@ cargo test -q -p holon-closure 2>/dev/null >/dev/null \
   && ok "holon-closure: merge/part inverse, the rent clause, the edge, the winding" \
   || no "holon-closure: merge/part inverse, the rent clause, the edge, the winding"
 
+# holon-runtime: the executable holon -- the operator contract and oriented rigid water as
+# its first operator. Zero dependencies and pure arithmetic; the suite checks that projection
+# and reconstruction are inverses on the body's own sites, that the accumulated torque is the
+# finite difference of a site potential under rotation, that the free rotor conserves energy
+# and angular momentum, and that the rigid clock is derived from inertia and stiffness.
+n_runtime=$(cargo test -q -p holon-runtime -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_runtime:-0}" -gt 0 ] \
+  && ok "holon-runtime reaches $n_runtime tests" \
+  || no "holon-runtime reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q -p holon-runtime 2>/dev/null >/dev/null \
+  && ok "holon-runtime: project/reconstruct inverse, torque by finite difference, the free rotor, the rigid clock" \
+  || no "holon-runtime: project/reconstruct inverse, torque by finite difference, the free rotor, the rigid clock"
+
 # holon-campaign: the campaign harness -- gates that name every failing leg, plants whose
 # carrier and analytic reach are checked with no measurement at all, a price written before
 # the counted steps, stakes that carry their provenance, and a record writer that validates

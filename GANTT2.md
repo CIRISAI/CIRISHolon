@@ -420,6 +420,163 @@ window, so an R3 void by price leaves R1, R2 and S with no arm length of their o
 requires that rule; designing it while a freeze stands would have been improvising past a
 pre-committed rule, and the lane refused to.
 
+## The fourth review (2026-09-09, of `0ae7f8c`) — the coarse-water path chosen, the review's own errors recorded, and the counterproposal's runtime accepted with three gates
+
+Two documents, read in order and both verified against the tree: a review recommending
+"one oriented, rigid water molecule per holon; pause further FHP/EDGE experiments", and a
+counterproposal making Holon an EXECUTABLE multiscale runtime with rigid water as its first
+operator. The lead's assessment of the review, and the counterproposal's corrections to that
+assessment, are recorded together so the record carries who was wrong about what.
+
+**The review's claims, checked.** Every number holds: the pilots' block-14 readings, LIQUID-1's
+5.75 bohr = 3.043 Å and 1.184 × 2 = 2.369, the 100-frame probe at 2.606 fs, 1,088,624 / 299,478
+= 3.635×, the 114,486 s pilot set, the NVE ratios 4.09 / 16.57 / 67.25 per doubling, and the
+`run_phase` defect (`liquid2.rs:3381` shadows `out` with the seed directory, `:3393` hands it to
+`design`, `design:1458` → `read_pilot_settling:2895` enumerates `pilot*` UNDER it; `gate_phase:2179`
+and `pilot_phase:2656` pass the campaign root). Four corrections to the review:
+
+1. **R2 is at the band's edge, not inside it.** The same pilot files carry Chodera post-`t0`
+   means: `3.002 / 2.960 / 3.025` both-ends against the pre-committed lower edge `3.0` — one of
+   three below, two on the line. The block-14 values (3.06 / 3.09 / 3.08) flatter R2. The O–O peak
+   runs the other way and is the finding: post-`t0` means `2.827 / 2.827 / 2.869` Å inside
+   [2.65, 2.95], where LIQUID-1's 3.04 Å sat OUTSIDE by 0.09 Å. The structural claim is the peak
+   moving into the band; the bond count "rose from 2.37 to ≈3.0, at the band's lower edge".
+2. **The spanning probe ran on a box the campaign's own rule calls unsettled.** `gate.json`:
+   `settling_capped: true`, 40,100 frames used against a 40,000 cap. `run_phase:3481` VOIDS a
+   counted arm on that condition; `gate_phase:2296` prints "CAPPED - the box did not settle" and
+   continues. 100 consecutive frames at 0.026 fs are one configuration, not 100 samples; and at
+   128 nodes and mean degree ≈3 a RANDOM graph already puts ~0.9 of nodes in one component (the
+   gate's own ER stake at LIQUID-1's lower degree is 0.874). What the probe validates is the
+   winding-sensitive spanning readout and its plant (24.2 % of edges cross a face; wraps zeroed →
+   spanning 0). Credit the instrument, not the component count.
+3. **The FSD does not yet say what the review cites it for.** §11.2 fences the H-bond band to
+   "node G rung 1 / exit: the physics ladder + T3", the fluid band to "the promoted-molecule
+   chart", the cube to "the rungs beneath certify". GANTT2 names REPLACE-0; the FSD must be
+   amended to name the executable operators. (WP7 below.)
+4. **The clock is intramolecular, every input of it** — the fact that makes the review's
+   recommendation stronger than its argument. `clock.rs:158` derives `omega_e` from the BONDED
+   table's curvature at its own minimum and `dt_reference = period/64`; `hold_exactness:251`
+   halves `dt` until `omega_env·dt ≤ 2π/64`, with `omega_env` the largest curvature over the loaded
+   bonded-pair tables at the scene's max relative pair energy (`sim.rs:2614`) and `mu_min` the O–H
+   reduced mass. On this box `dt_reference` 4.3099 au (0.1042 fs) and `dt` 1.0775 au (0.0261 fs):
+   the period read back is 64 × 0.1042 = 6.67 fs ≈ 5,000 cm⁻¹, the minimal-basis O–H stretch.
+   Rigid water removes the quantity the engine derives its clock from. Two consequences: the rigid
+   operator buys NOTHING per pass (same three sites, same law, same lattice sum) — its whole
+   speedup is the step; and any step above 1× today requires `allow_dt_growth = true`
+   (`liquid2.rs:619`), which switches the hold OFF, so the 2/4/8× NVE arms ran outside the
+   engine's own accuracy contract. The rigid operator is the clean route to a larger step: it
+   moves the hold instead of disabling it.
+
+**The lead's own errors, corrected by the counterproposal and recorded here:**
+
+- *"The 5.5 % blend cost has no receipt"* — **wrong.** `liquid2/size/cost_1x.json` records
+  `0.2607229189` s per pass and `cost_8x_control.json` `0.2471082297` (1.0551×); the lead's search
+  looked for the integers 10,004 and 1,185 and the records store `1.000355799e4` and
+  `1.185147779e3`. The counterproposal's qualification also holds: the control's `selection` is
+  `8x, argmin, berendsen` against `1x, blend, stochastic-rescaling`, so three knobs move and the
+  5.5 % is a configuration comparison, attributable to nothing alone.
+- *The kT-per-water drift column (0.011 / 0.046 / 0.19 / 0.75 kT over a 28.7 ps seed)* —
+  **withdrawn.** `ct3_smooth.rs:997` defines `drift_per_ps = sim.drift_peak / ps_run` and
+  `drift_peak` (`sim.rs:5013`) is the running MAXIMUM excursion; a 0.1 ps peak statistic
+  multiplied by 28.7 ps is not a bound. What survives: the RATIOS between steps at equal duration
+  are a measurement of one statistic and show dt² scaling. The NVE arms also carry
+  `energy_fluctuation_rms_hartree` (1.6e-6 → 1.03e-4 Ha for the box; 1.3e-5 → 8.5e-4 kT per water
+  at 1× → 8×), which is the BOUNDED quantity — a fluctuation-based absolute tolerance would admit
+  8× trivially, which is exactly why the step selection leaned on the peak. Neither is a fitted
+  secular slope over a declared duration. The tolerance design (WP1) needs that third quantity
+  before any step is chosen.
+- *The 4× arithmetic (three seeds at 4× land on the ceiling to within 0.5 %)* — **illustrative,
+  not a price.** The cost column is frames × measured s/pass and holds; the settling term is
+  unknown at any step because the criterion CAPPED: 300,849 s with the cap's 40,100 frames,
+  272,120 s (0.91×) with settling held fixed in physical time. Kept as the arithmetic behind
+  option 4, never as a measured 4× campaign.
+
+**The counterproposal, verified and accepted.** Its five source claims hold: `holon.rs:11`
+"touches no dynamical state"; `Closure::merge` returns `ledger: Vec::new(), rent: None`
+(`holon-closure/src/closure.rs:457`) and `part` likewise; the molecular adapter serves no ledger
+row by design (`holon-render/src/closure.rs:35`, tested at `:147`); `acuity.rs:24` counts
+all-coarse skipping with its transition energy NOT posted; `BlockView::position` returns
+`[f64; 2]` (`edge.rs:61`). The decision is taken: **a shared runtime executing the cheapest
+admissible holon representation, rigid water its first operator, a deformable fluid cell its
+second, EDGE kept on the 3D water hierarchy, the FHP/FCHC carrier no longer a dependency.** The
+operator contract — state / project / advance / exchange / reconstruct / clock / validate /
+refresh / cost — with a versioned validity record kept APART from `Rent` until a tier has measured
+rent coefficients (an object-model decision, recorded as one: the closure crate's `Edge` and
+`Rent` were built to carry a certificate, and the refresh budget is a different quantity). HMM
+(E and Engquist) and MS-CG (Noid et al. 2008) are the prior art the bulk operator stands on; the
+H-bond network becomes a measured state and a candidate descriptor, never a rigid dynamical body
+(EDGE-0's own reading).
+
+**Three gates added to the counterproposal's parallelism, and one demonstration re-sized:**
+
+1. **No operator method lands without rigid water calling it; no bulk kernel lands without a
+   PRICED response measurement admitted under a stated ceiling.** The build lane already landed
+   `holon-closure` + `holon-campaign` as "pure engineering, 77 tests" with the debt "no tier's real
+   grammar is wired", and the third review's blocking finding was M-VALIDATED-NOT-WIRED. A
+   finite-volume kernel validated on analytical fixtures with no water table is the FSD's
+   "no tier fakes" at a larger scale. WP4 and WP6 are therefore DOWNSTREAM of WP2's measured step,
+   not beside it, and WP4's `price.json` is written before WP4's kernel.
+2. **EDGE on the water hierarchy is priced out until WP3 delivers an order of magnitude.** A
+   persistent liquid/vapour slab is ~1,000 molecules for nanoseconds. At the measured 10,004
+   core-s/ps for 128 waters, the records' sublinear scaling (250 waters at 1.66× the 128 pass) and
+   an optimistic 20× rigid step, a 1,000-water slab is ~4,000 core-s/ps → ~1,100 core-hours per
+   nanosecond against the largest ceiling this programme has used, 83 core-hours. WP6 is gated on
+   WP2 AND WP3, and its stream is not "can start immediately".
+3. **The streams table's "can start immediately" column is narrowed to what runs without a water
+   table**: configuration and reference bundle, the rigid operator and its clock, the runtime
+   interface, the workbench API, analytical fixtures labelled as such.
+
+**The first demonstration is re-sized.** A molecular region beside coarse fluid cells needs a
+legal molecular region (≥128 waters, ≈30 bohr, the image rule) inside a scene of cells at least
+that size — several legal boxes, LIQUID-2 money before a coarse cell exists, plus a material
+table WP4 has not produced; the molecular–continuum coupling literature (AdResS, HybridMD-class
+schemes) works in exactly that nm-patch regime and is known to be expensive. The cheaper
+demonstration of the SAME claim — the object model decides where fine dynamics can be replaced,
+executes it, and recognises when detail is needed — is **rigid and flexible water in one legal
+box under one law**: a rigid region and a flexible region exchanging forces through the existing
+intermolecular law, the flexible region substepped, a disturbance (a hot spot; a proton-transfer
+candidate at the 1.95-bohr boundary) triggering local re-flexibilisation. Project / advance /
+exchange / reconstruct / refine / cost exercised at one tier boundary, with no unmeasured material
+law, and a speedup proportional to the coarse fraction — the "cost governed by active resolution"
+claim measured directly. That is REPLACE-0's demonstration; the coupled-continuum scene is the
+second, after WP4 has a price.
+
+**WP1, landed on main (the lead, 2026-09-09), in `examples/liquid2.rs`:**
+
+| repair | what it does now | the number it printed on a scratch copy of the campaign |
+|---|---|---|
+| the settling cap | `settle_cap_frames(step)` = 320,000 tables' frames converted at the step (40,000 at 8x exactly, 320,000 = 8.34 ps at 1x); the gate carries a **SETTLE** gate whose first leg FAILS when the cap is reached, and the record says `phase_probe_on_a_settled_box` | cap 320,000 frames = 8,340.2 fs |
+| the campaign root | `run_phase` keeps `campaign` before it shadows `out` with the seed directory and hands `design` the campaign root | the 1x pilot set is FOUND and the frozen 8x settling REFUSED by name |
+| the arm bound to the gate | a **BIND** gate on every counted arm reads floor, cap, counted length, stride and arm kind back from `gate.json` and asserts each EXACT; a gate written before the arm kind existed reads NaN and the arm refuses | — (no gate at this design has run) |
+| the split | `--arm structure` (the default) sizes the counted arm as the larger of LIQUID-1's counted arm in physical time and `g (s/p)^2` blocks from the pilots' Chodera records at a declared precision (a tenth of each band's half-width: 0.025 on the lens for R2, 0.03 bohr for R1), never asks the diffusion lens, and prices under **Sprice**; `--arm diffusion` keeps R3's window and **R3price** unchanged; each gate reports the OTHER arm's price beside its own | **structure 190,000 frames = 4.95 ps per seed at stride 100**, set by R1 (the peak's block deviation needs 95 blocks; R2 needs 5) above LIQUID-1's 100,001-frame floor; diffusion 1,100,960 at stride 1966; on the scratch machine's 0.2167 s per pass, three seeds at the 18,000-frame floor are 135,200 s = 0.45x the ceiling |
+| the short set | the pilots that sized the arm are the 14-block instrument set, and GANTT2 already said a short set cannot support a frozen number; a variance is no different, so **Sprice** carries a leg that refuses a pilot set that did not run its declared blocks | FAILS today (14 of 60); the declared 3 x 60-block set at 1x is the owed run, 114,486 s at the banked pass |
+
+What the structure arm's price depends on is the settling, and nobody knows it: the 1x gate capped at 40,000 without the criterion firing. Under the physical cap the gate may run to 320,000 frames (19 core-hours at the scratch pass) before it says whether the box settles at all; that is the honest cost of the cap and the next gate run is the user's decision. R3's own ceiling is still owed and is a freeze's work.
+
+**WP2, begun on main: `engine/crates/holon-runtime`** (zero dependencies, 20 tests, on
+`ci-gates.sh`). The operator contract as a trait — project / reconstruct / advance / clock /
+dof / kinetic / totals, with `Discarded` (deformation RMS and the internal kinetic energy the
+lift cannot carry) and `Validity` (domain, resolution, horizon, tolerances, evidence
+`InvariantsOnly | Empirical`, kept APART from the closure's rent) and a `Cost` ledger — and
+its first operator, `rigid::RigidWater`: centre, unit quaternion, momentum, body-frame angular
+momentum; the DECLARED lift (bisector / normal / cross, the monomer's own C2v principal frame,
+an asymmetric reference REFUSED as not principal); velocity-Verlet on the centre and the
+Dullweber–Leimkuhler–McLachlan 1-2-3-2-1 free-rotor splitting on the orientation; the clock
+`clock::derive` = the fine clock's own rule (`omega dt <= 2pi/64`, the same halving hold) fed
+the retained modes — `sqrt(k/M)` and `sqrt(k rho^2 / I_min)` under a MEASURED contact
+stiffness. The suite: project and reconstruct are inverses to 1e-12 on a rigid state; a
+stretched bond projects with its deformation recorded and reconstructs to the reference
+bond length; the accumulated torque is the finite difference of a site potential under
+rotation to 1e-6; the free rotor conserves the lab angular momentum to 1e-11 and its energy
+excursion quarters when the step halves; a tethered body conserves total energy to second
+order at the clock's own step; two bodies under a pair force conserve momentum to 1e-11;
+equipartition at six degrees of freedom; and the rigid step at a hydrogen-bond-order
+stiffness is above the fine 1.077481 au, which is the whole reason the operator exists.
+**Nothing is wired**: no adapter reads a `Sim` into `Fine`, no `replace0` runner exists, the
+validity record is `InvariantsOnly`, and the contact stiffness the clock needs is a
+DECLARED input in the tests and a measurement owed from the served law. Those are the next
+lane, in that order, under the rule above.
+
 ## The build lane — the closure type and the campaign harness (2026-09-07, `engine/crates/holon-closure`, `holon-campaign`)
 
 Pure engineering, additive, landed with 77 tests: the closure as ONE type (members, the

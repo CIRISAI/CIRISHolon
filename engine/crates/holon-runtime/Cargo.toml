@@ -1,0 +1,15 @@
+[package]
+name = "holon-runtime"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "The EXECUTABLE holon: the operator contract (state, project, advance, exchange, reconstruct, clock, validate, refresh, cost) and its first operator, oriented rigid water"
+
+# ZERO dependencies, std only — the same isolation profile as `holon-closure` and
+# `holon-campaign`, for the same reason: `holon-render` adopts this crate one-way, and a
+# dependency added here would land in the browser artifact. `holon-closure` is deliberately
+# NOT a dependency either: the closure type carries a ledger and a RENT, and this crate's
+# validity record is a different quantity (a refresh budget is not a binding energy). The two
+# meet in the adapter, where a tier with measured rent coefficients may bind them.
+[dependencies]

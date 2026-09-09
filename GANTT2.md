@@ -585,10 +585,54 @@ are minus the gradient of the ENGINE's energy** under a rigid rotation and trans
 one unit, on all three axes, to the 1e-4 finite-difference tolerance (|F| 9.4e-3 Ha/bohr,
 |τ| 6.3e-3 Ha on unit 0); fifty fine frames leave a recorded worst deformation of 0.078
 bohr and 8.1e-4 Ha of internal kinetic energy per unit; write-back then read is the
-identity across a face. **No `Sim` frame is replaced by an operator step anywhere**: the
-`replace0` runner, the validity record's first `Empirical` entry, and the contact stiffness
-measured off the served law for the clock are the next lane, in that order, under the rule
-above.
+identity across a face. **The replacement RUNS: `examples/replace0.rs`** (on `holon-campaign`; records under
+`conformance/water_observatory/replace0/`). One branch point — LIQUID-2's box under
+LIQUID-2's configuration (the blend at the derived beta read back by a CONFIG gate, the
+engine's own hold with `allow_dt_growth` never touched, the periodic box), settled under the
+stochastic thermostat, then NVE — and from it: the flexible reference at the tables' step;
+the rigid arm, every unit projected through the adapter and driven through the operator with
+the `Sim` as the force oracle (one pass per rigid step, the DLM free-rotor splitting on the
+orientation); and with `--refine` the demonstration the fourth review re-sized. Three things
+MEASURED, nothing typed: (i) the contact stiffness, off the served law itself — the net
+force under a rigid translation of a whole unit and the torque under a rigid rotation about
+its own centre, centrally differenced on a sample of units, so the intramolecular curvature
+never enters (`stiffness.json`, the envelope the clock takes under the fine clock's own
+hold); (ii) the replacement error — the O–O peak, the bond count, the cross-unit potential
+per water and the temperature read at the same physical times on both arms, each with its
+autocorrelation-aware error, and what projection DISCARDED at the branch point recorded,
+never netted out; (iii) the cost, as force passes and core-seconds per picosecond, both
+arms, with every rigid overhead inside. Gates: CONFIG, CLOCK (the rigid step above the fine
+step and under the hold's target, the envelope measured), COST (fewer passes; **the KILL: a
+speedup under 1**), NVE (each arm's peak excursion under a tenth of kT per water), and
+REFINE (the rule tripped and re-coarsened at least once; fewer passes than the flexible arm
+while carrying the refined region; the ACCOUNTED energy — the declared disturbance's injected
+energy subtracted, projection's discards added back, the potential a coarsening moves
+measured with one pass — under the same bar). The validity record stays `InvariantsOnly`:
+promoting it is a freeze's decision on these numbers.
+
+*The smoke, on a scratch copy at 200 settling frames and 400 counted (10.4 fs; the physics
+numbers are those of an unsettled box and are not read — the machinery is):* envelope
+1.238e-2 Ha/bohr² (ω_R 2.79e-3, ω_T 6.14e-4 au⁻¹), **rigid dt 35.15 au = 32.6× the fine
+1.0775 au** at ω·dt = 2π/64 exactly; **speedup 24.6× with every overhead inside** (17 passes
+in 5.9 s = 563 core-s/ps against 401 passes in 144 s = 13,825); NVE both arms (rigid
+excursion 9.3e-7 Ha per water = 0.01 kT); the demonstration ran the whole cycle — the
+disturbance at 2.6 fs, the rule tripped at 3.3 fs, 8 units to fine stepping with the rest held
+rigid by projection (their per-frame discard 1.5e-6 bohr, 2.2e-6 Ha), 6 re-coarsened at 6.5 fs
+(discarded 2.45e-2 bohr rms, 7.1e-4 Ha kinetic, the potential moved 3.1e-4 Ha, all
+ledgered) — 313 passes against 401 with 75 % of the time refined, the accounted excursion
+6.9e-5 Ha per water (0.075 kT) under the bar where the raw one (1.17e-4) is over it, which is
+what the ledger is for. Both arms HEAT on that box (the pinned lattice is still relaxing at
+10 fs; the same released potential goes into 6 rather than 9 degrees of freedom, so the rigid
+arm heats faster) — the reason the first counted run settles for 20,000 frames first. **That
+run is launched** (`replace0/run_detached.sh`, one core): 20,000 settling, 20,000 counted
+(0.52 ps) both arms, the rigid arm twice; its `run.json` is the first replacement-error
+reading on this law and is owed a freeze before any of its numbers is a claim.
+
+Owed, named: the branch point should be the CAMPAIGN's settled checkpoint once the 1×
+gate has one (WP1's reference bundle), not this runner's own settling; a seed and a
+temperature the arms have not seen; the held units' per-frame potential change (unmeasured,
+~1e-6 bohr of reconstruction per frame); R3 on the rigid arm through the lens; and the
+validity record's first `Empirical` entry, by a freeze.
 
 ## The build lane — the closure type and the campaign harness (2026-09-07, `engine/crates/holon-closure`, `holon-campaign`)
 

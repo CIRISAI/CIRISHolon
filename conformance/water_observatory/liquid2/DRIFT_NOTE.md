@@ -355,3 +355,66 @@ what it is long enough for is the drift RATE, which is what selects the step.
   3,803. The difference is in the two counters, not in the arm, and it was NOT chased down. The
   gate needs the worst geometries and the worst one is the same one; nothing here rests on the
   count.
+
+
+## PAID (2026-09-08): item 3 — LIQUID-2's gate re-run at the step the rule selects — and the three things that had to be fixed first
+
+*Records: `liquid2/gate.json`, `liquid2/price.json`, `liquid2/door.json`,
+`liquid2/expectation.json`, `liquid2/pilot_1x/`, `liquid2/size/cost_*_1x_*` and
+`cost_*_8xctl_*`. `LIQUID2_PREREG_DRAFT.md` carries the design; this is the note's ledger entry.*
+
+**The gate could not simply be re-run, and that is the finding.** The step this lane selected,
+the serving rule this lane built and the thermostat the second review asked for were all
+REACHABLE from `examples/liquid2.rs` and none of them was what it SELECTED: the runner carried
+`STEP_MULT = 8.0`, never called `CtTable::set_blend`, and set no `ThermostatKind`, while
+`CtServe::Argmin` is the default `CtTable::empty` loads. Registered as
+**M-VALIDATED-NOT-WIRED**. All four components are now chosen through the accessor that sets
+them, the beta is READ from `ct3/smooth/beta.json` at run time and never typed, and a new gate
+**CONFIG** reads every one of them back OUT OF THE OBJECTS and fails unless it is the selected
+value. `liquid2 gate --demo-unswitched` builds the box at the unswitched default and shows the
+gate refusing it, `5` of `6` legs failing — the sixth is the lens boundary, the one component
+that was already wired.
+
+**Two more frames-are-not-a-time faults of the same shape, found on the way and repaired.**
+(i) The settling BLOCK was a typed `250` frames documented as *"LIQUID-1's own 2,000-frame
+block"* — true at `8x` and false at any other step; it is now derived from LIQUID-1's `2,000`
+frames at the multiplier in force, giving exactly `250` at `8x` and `2,000` at `1x`, `52.126` fs
+either way. (ii) `pilot/settling.json` holds a settling of `2,500` FRAMES frozen at `8x`;
+`read_pilot_settling` now reads the step out of the record and REFUSES a settling frozen at
+another step rather than converting somebody else's argmax, and `pilot --dir` keeps a set taken
+at one step off a set taken at another.
+
+**The gate at `1x` on the blend, run.** The configuration block reads `blend` at
+`55.16353128` per bohr, `1.077480986` au = `0.0260630187` fs at exactly `1.0x`,
+`stochastic-rescaling`, `Periodic` box through a `Periodic` lens — every one of them an accessor's
+answer. **CONFIG PASSES 6/6, L0 PASSES, the three plant pre-checks PASS.** The price is
+`0.318015` s per pass.
+
+**And the honest step costs what it costs — three readings, all of them the same shape.**
+
+1. **R3 is VOID BY PRICE.** R3's window is fixed in FEMTOSECONDS by the crossover, so at `1x`
+   the counted arm is `1,100,960` frames per seed where at the provisional `8x` it was
+   `137,760`. Three seeds price at `1,088,624` s against the freeze's ceiling `299,478.1` s —
+   `3.64x` over — and gate `R3price` FAILED on that leg, so `gate.done` is absent and no
+   counted arm starts. That is a statement about the step and the crossover, not about the
+   liquid.
+2. **The settling CAPPED.** `40,100` frames = `1045.1` fs over `20` blocks,
+   `settling_capped: true`. The cap is `40,000` FRAMES — `8.34` ps at `8x` and
+   `1.043` ps at `1x`, the SAME inherited-constant fault one more time. It is NOT
+   repaired here: a physical `8.34` ps cap would be `320,000` frames at `1x`, `28` core-hours
+   for one settling. The temperature was arriving rather than stuck — the last block reads
+   `295.3` K against a target of `293` — but the criterion is a conjunction over a five-block
+   window and the window still held an out-of-band sample.
+3. **The settling is left UNFROZEN.** Three pilots were re-run at the selected configuration
+   into `pilot_1x/`, matched to the `8x` demonstration set in PHYSICAL time (`14` blocks of
+   `2,000` frames = `729.8` fs, the same `52.126` fs block), at
+   `0.3218`–`0.3224` s per frame. Chodera's `t0` on the settling variable reads
+   `10` / `0` / `8` blocks with effective sample counts of
+   `3.36`, `3.27`, `5.88` out of `14` — a short instrument at either step, as
+   this campaign already said of the `8x` set. The freeze's own declared set is `3 x 60` blocks
+   = `360,000` frames = `114,486` core-seconds, `38 %` of the whole campaign
+   ceiling on trajectories that are thrown away. `pilot --freeze` was deliberately not run.
+
+**Item 4 of the list above — the labelled screen logging BOTH the cross-unit energy and the
+bond count through one settling — is discharged at `1x` by `pilot_1x/`**, which logs four
+series and carries each one's own `t0`.

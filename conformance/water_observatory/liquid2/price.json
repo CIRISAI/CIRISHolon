@@ -1,0 +1,13 @@
+{
+  "phase": "price",
+  "dry": false,
+  "written_before_the_counted_steps": true,
+  "label": "the counted arm at 384 atoms with the lattice sum and CT-3's table",
+  "measured_on_steps": 100,
+  "seconds_measured": 3.180154162e1,
+  "seconds_per_step": 3.180154162e-1,
+  "steps_projected": 1118960,
+  "seconds_projected": 3.558465301e5,
+  "band_low": 1.000000000e-1,
+  "band_high": 1.000000000e1
+}

@@ -1,10 +1,19 @@
 # DRAFT pre-registration (NOT FROZEN) — LIQUID-2: the periodic liquid on CT-3's served law — the transfer term as the map itself, the spanning cluster as the readout that names the phase, and the three corrections LIQUID-1 owed carried as design rather than as prose
 
-*DRAFT, 2026-09-07. NOT FROZEN AND NOT COMMITTABLE AS A FREEZE: its step is UNCHOSEN, because
-the labelled screen that was to choose it found an instrument defect first (§2a), and the
-lead's ruling is that a counted arm does not run on a law that leaks energy 1,300 times its own
-control. What follows is the design, complete, with the one hole named in the one place it
-sits. Before any counted frame. LIQUID-1 ran the same box at
+*DRAFT, 2026-09-07, revised 2026-09-08. STILL NOT FROZEN, and the reason has changed. The
+step is no longer unchosen: the instrument defect the labelled screen found (§2a) was
+diagnosed, repaired and gated in its own lane, and the NVE sweep under the repaired rule
+SELECTS `1x` — the tables' own step — which is now what this runner carries. What remains
+unfrozen is the SETTLING, and §2's gate E clause 7 says with arithmetic why: at `1x` a pilot
+set long enough to freeze a settling by Chodera's rule costs more than the counted campaign
+is allowed, and this draft leaves the floor unfrozen rather than freeze a short one. **What
+is new in this revision, and it is the third review's blocking finding
+(M-VALIDATED-NOT-WIRED):** three of the four instruments this campaign validated were
+reachable and not reached — the runner carried `STEP_MULT = 8.0`, never called `set_blend`,
+and selected no thermostat kind, while `CtTable`'s default `serve_mode` is `CtServe::Argmin`.
+All four are now SELECTED BY ACCESSOR and the gate phase PRINTS what the objects say it got,
+under a new gate **CONFIG** that fails if any of them is not the selected value. Before any
+counted frame. LIQUID-1 ran the same box at
 the same state point on CT-2's law and read a liquid that is water-shaped in its shell and
 under-connected in its bonds: R1 (c) on position by 0.09 Å, R2 (b) at two thirds of water's
 bonds, R3 VOID because 2.6 ps contains no diffusive regime. It also wrote down, in its own
@@ -26,9 +35,13 @@ this engine wrote with its citation kept, or a KILL from experiment named as one
 appears. And the labelled screen that this freeze uses to choose its step found something the
 freeze then had to carry rather than choose around: serving channel 6 as the table costs three
 orders of magnitude of energy conservation against two single-knob controls that agree with
-each other to 3.5 %. L1's drift leg is therefore PRE-COMMITTED TO FAIL, its bar is not moved,
-and the failure is pre-registered as a reading about the transfer term's SERVING RULE rather
-than about the integrator (§2a). Four further things this freeze carries that LIQUID-1 did
+each other to 3.5 %. **That is now REPAIRED rather than carried** — the argmin is replaced by
+a declared continuous serving rule whose beta is derived from the map's own records, gated at
+`ct3/smooth/gate.json` and closing the drift to `1.06x` the channel-6-off control, and the
+step sweep re-run under it puts the drift back in the integrator where `(omega dt)^2` lives
+and selects `1x` (§2a, `liquid2/DRIFT_NOTE.md`'s PAID section). L1's drift leg is no longer
+pre-committed to fail; its bar is unmoved and the arm now has a law that can be asked to
+meet it. Four further things this freeze carries that LIQUID-1 did
 not: the box is EQUILIBRATED by a measured criterion and not by a frame count (gate E, and
 LIQUID-1's own log says its 52 fs of settling cost it 3.9 % of its headline bond count); the
 readings are over THREE SEEDS with the spread printed as the uncertainty and a band met only
@@ -86,19 +99,41 @@ measured retention and it is not this freeze's subject); **M-HOMOG**, **M-BARE-C
 charges are on units and come from the monomer's own density; the density is the one uniform
 thing and it is the state point); **M-COND-PROBE** (the switch and the criterion are fixed
 functions of a separation, not probes conditioned on the state); **M-DEVICE-CLASS**,
-**M-IDLE-CALIBRATED-TIMEOUT**, **M-ONE-MODEL-DELTA**, **M-PROVENANCE-OVERREACH**. Not
-contacted: the rest of the registry.
+**M-IDLE-CALIBRATED-TIMEOUT**, **M-ONE-MODEL-DELTA**, **M-PROVENANCE-OVERREACH**;
+**M-VALIDATED-NOT-WIRED** (the third review's blocking finding, and the reason for gate
+CONFIG: the smooth serving rule, the `1x` step and the canonical thermostat were all
+validated in their own lanes and none of them was what this runner selected. Every one is now
+chosen through the accessor that sets it — `CtTable::set_blend` at the beta read from
+`ct3/smooth/beta.json`, `Timescale::set_dt_multiplier` left at the tables' own step,
+`Sim::set_thermostat_kind` — and the gate phase reads all four back OUT OF THE OBJECTS and
+prints them beside its verdicts; `liquid2 gate --demo-unswitched` builds the box at the
+unswitched default and shows the gate refusing it). Not contacted: the rest of the registry.
 
 ## 0. What is built and measured
 
-**FIRST, THE HOLE, because it decides what the rest of this document is for.** Serving channel
+**FIRST, THE HOLE — DIAGNOSED, FIXED, GATED, AND NOW ACTUALLY SELECTED.** The paragraph below
+is kept in the tense it was written in, because a list that quietly rewrites itself is not a
+record, and the two things that closed it are stated here in front of it. **(1) The defect is
+repaired**: the argmin is replaced by a declared continuous serving rule at a beta derived from
+the map's own records, gated four ways in `ct3/smooth/gate.json`, and the drift comes in at
+`1.0561×` the channel-6-off control against a gate of `2×` — `1,321×` below the argmin it
+replaces — with the step sweep under it quadratic in the step to three doublings and selecting
+`1×`. **(2) The campaign now SELECTS the repair**, which did not follow from (1) and is the
+third review's blocking finding: `CtServe::Argmin` is the default `CtTable::empty` loads, this
+runner never called `set_blend`, carried `STEP_MULT = 8.0` and set no thermostat kind, so three
+of four validated components were reachable and not reached (**M-VALIDATED-NOT-WIRED**). All
+four are now chosen through their accessors, and gate CONFIG reads them back off the objects
+and refuses anything else. What follows is the hole as it stood.
+
+Serving channel
 6 as CT-3's table costs three orders of magnitude of energy conservation, measured against two
 single-knob controls on the same box at the same step: CT-2's law reads a drift peak of
 `4.883551e-6`, CT-3's law with channel 6 switched OFF reads `4.719995e-6` — the two agreeing to
 `3.5 %` — and CT-3's law with the table served reads `6.584682e-3`, which is `1348×` the first
 and `1395×` the second. The step does not buy it back: across a 32-fold change the drift moves
 by 6 and not monotonically, where an integrator's own error would move by 1024. **This is an
-instrument defect and this draft does not freeze around it.** Its suspect was named and then
+instrument defect and this draft does not freeze around it.** (It no longer has to: see the two
+paragraphs above and §2a's PAID section.) Its suspect was named and then
 CONFIRMED by measurement: the transfer term is served ONCE per unordered pair of units at that
 pair's SHORTEST cross-unit H···O contact, an argmin is discontinuous where it ties, and a
 labelled screen counting every handover in the liquid reads `3,803` of them over 2,000 frames
@@ -110,8 +145,9 @@ CONTINUOUS serving rule — a partition of unity over the four cross-unit contac
 `w_k = e^{−β r_k} / Σ_j e^{−β r_j}`, with `β` derived from the map's own records and the
 gradient analytic on all five atoms of all four contacts — and the gate on it is that the
 served law's drift at `1×` comes within `2×` of the channel-6-off control. Everything below is
-built and measured; §2a and `liquid2/DRIFT_NOTE.md` carry this in full, and the step rule in
-§2 is left selecting nothing until it is fixed.
+built and measured; §2a and `liquid2/DRIFT_NOTE.md` carry this in full. The step rule in §2 was
+left selecting nothing until the serving rule was fixed; it is fixed, and the rule now selects
+`1×` (R3 clause 2).
 
 ## 0. What is built and measured
 
@@ -196,6 +232,65 @@ a kill.
 
 ## 2. Gates
 
+- **CONFIG — the campaign runs what the campaign selected, and the gate PRINTS it.** This is
+  the third review's blocking finding turned into a leg (**M-VALIDATED-NOT-WIRED**), and the
+  rule it carries is the misfit's own: *the freeze names the configuration by the ACCESSORS
+  that select it, and the gate phase PRINTS what it actually selected beside its verdicts, so
+  a default that was never switched fails a gate instead of running an arm.*
+  The four components, each validated in its own lane and each now SELECTED:
+
+  | component | selected by | the value, and the record that chose it |
+  |---|---|---|
+  | the serving rule | `CtTable::set_blend(beta)` | `CtServe::Blend` — `ct3/smooth/gate.json`, gates (a)–(d) PASS, drift `1.0561x` the channel-6-off control against a gate of `2x` |
+  | the blend's inverse length | the same call, at a beta READ AT RUN TIME | `ct3/smooth/beta.json`, field `beta_per_bohr` — never typed in the runner, and the path and the field are printed beside the number |
+  | the step | `Timescale::set_dt_multiplier` under `allow_dt_growth`, left OFF at `1x` | `1x` the tables' own step, `1.077481` au = `0.026063` fs — `ct3/smooth/nve.json`, `"step_chosen": 1` |
+  | the thermostat | `Sim::set_thermostat_kind(kind, seed)` | `ThermostatKind::StochasticRescaling` (Bussi–Donadio–Parrinello 2007), validated at `1.008x` the canonical kinetic variance |
+  | the lens | `diffusion_periodic(.., lens_boundary(sim.boundary))` | `LensBoundary::Periodic`, read off the box rather than named |
+
+  **THE CONFIGURATION BLOCK.** The `gate` phase writes a `configuration` block into
+  `gate.json` and prints it: the serve mode from `CtTable::serve_mode()`, beta from
+  `CtTable::beta()`, the step in au and fs and its multiplier from `Sim::dt()` against the
+  tables' step the builder measured, the thermostat from `Sim::thermostat_kind`, the boundary
+  from `Sim::boundary` through the total map `lens_boundary`, the settling block in frames and
+  fs, the confirmation and pilot seeds, and the law's and the table's own paths. **Every field
+  is an accessor's answer.** Not one of them restates the constant that was supposed to set it,
+  because a constant that was edited and a constant that was not look identical in a source
+  file and do not look identical here.
+  The gate's six legs, each FAILING if the read-back value is not the selected one — the serve
+  mode; beta EXACT TO THE BIT against `beta.json` (a beta that is merely close to the record's
+  is a beta that was typed); the step multiplier EXACT (`1.0` and nothing near it, because
+  "near the tables' step" is not a step); the thermostat kind; the boundary and the lens
+  agreeing through the total map; and the read-back selection equalling the one asked for.
+  **DEMONSTRATED TO FIRE.** `liquid2 gate --demo-unswitched` builds this campaign's own box at
+  the UNSWITCHED DEFAULT — `8x`, `CtServe::Argmin`, `ThermostatKind::Berendsen`, which is
+  exactly what the third review found the runner carrying — and the gate REFUSES it, `5` of
+  `6` legs failing (the sixth is the lens boundary, which was the one component that WAS
+  wired). It writes nothing, and it asserts its own refusal, so a gate that stopped refusing
+  would stop the demonstration.
+  **MEASURED AT THE GATE, 2026-09-08 — the block exactly as `gate.json` carries it and the
+  gate phase printed it:**
+
+  | field | read back from | value |
+  |---|---|---|
+  | serving rule | `CtTable::serve_mode()` | `blend` (asked for `blend`) |
+  | blend beta, per bohr | `CtTable::beta()` | `55.16353128` — from `ct3/smooth/beta.json`, field `beta_per_bohr` |
+  | step | `Sim::dt()` | `1.077480986` au = `0.0260630187` fs, `1.0x` the tables' `1.077480986` au (asked for `1.0x`) |
+  | thermostat | `Sim::thermostat_kind` | `stochastic-rescaling`, canonical `true`, `0` deviates drawn at selection |
+  | boundary / lens | `Sim::boundary` through `lens_boundary` | `Periodic` / `Periodic` |
+  | settling block | derived at the step in force | `2,000` frames = `52.1260374` fs |
+  | law / table | the loader's own paths | `ct3/wall_ct3.json` / `ct3/ct_table.json` (60 knots) |
+  | seeds | declared | confirmation `0x4c4951554944, 0x4c4951554945, 0x4c4951554946`; pilots `0x50494c4f54300001, 0x50494c4f54300002, 0x50494c4f54300003`; disjoint `true` |
+
+  **CONFIG PASS, 6 of 6 legs.** L0 PASSES with it (truncation tail `7.31e-8` hartree per water
+  against the `1e-5` stake, 128 units, the served walk returning `None`) and all three plant
+  pre-checks PASS on the settled box (carriers `0.2533` and `0.2425` against a floor of `0.05`).
+  **The gate as a whole REFUSES and `gate.done` is absent**, on `R3price`: the counted campaign
+  at the selected step costs `1,088,624` s against the ceiling `299,478.1` s. The counted arm
+  therefore cannot start, which is the pre-committed VOID BY PRICE arriving one level up from
+  where clause 5 put it — named in L2 rather than worked around.
+
+  witness: none (six equality legs on values read back from live objects, and a demonstration
+  that asserts the gate refuses an unswitched default)
 - **L0 — the law is admissible, the box is legal, and it stays so.** The served boundedness
   walk returns `None` (EXACT: `None`, not "small"); `set_boundary(Periodic)` admits the cell
   under the seam-aware rule with the table's reach in it; the truncation tail is
@@ -327,6 +422,81 @@ a kill.
      four series are not all reading the same thing. Price, measured: `3,500` frames per pilot
      in `1,784`–`2,058` s on one core each under a loaded host (`0.51`–`0.59` s per frame),
      three pilots in parallel.
+
+     **RE-RUN AT THE SELECTED CONFIGURATION, AND THE SETTLING IS LEFT UNFROZEN (2026-09-08).**
+     The demonstration set above ran at the withdrawn `8x` step. A settling is a number of
+     FRAMES and frames are not a time, so that number does not travel: `read_pilot_settling`
+     now READS the step a settling was frozen at out of its own record and **REFUSES** one
+     frozen at another step rather than converting it — Chodera's `t0` is not a physical time
+     that can be re-expressed, it is where THAT series stopped moving. The refusal fires on
+     this campaign's own banked `pilot/settling.json` (`2,500` frames at `8x`) and the gate's
+     log carries it verbatim. A matched set was therefore re-run at the selected configuration
+     — the blend at the derived beta, the `1x` step, stochastic rescaling — into `pilot_1x/`,
+     on the SAME three pilot seeds and at **the same PHYSICAL length**: the settling block is
+     LIQUID-1's own 2,000 frames converted at this arm's step, so a block is `52.126` fs at
+     `1x` (`2,000` frames) exactly as it was at `8x` (`250` frames), and `14` blocks is
+     `729.8` fs on both. Measured: `28,000` frames per pilot at
+     `0.3218`–`0.3224` s per frame on one core each under a loaded host, three pilots in
+     parallel, `27,048` core-seconds for the set.
+
+| series | `t0`, pilot 0 / 1 / 2, in blocks | `g` (blocks) | `n_eff` | the MAXIMUM rule's floor |
+|---|---|---|---|---|
+| cross-unit energy — **the settling variable** | `10` / `0` / `8` | `1.190`, `4.285`, `1.021` | `3.36`, `3.27`, `5.88` | `10` blocks = `20,000` frames = `521.3` fs |
+| temperature | `8` / `3` / `2` | `1.000`, `1.772`, `2.778` | `6.00`, `6.21`, `4.32` | `8` blocks = `16,000` frames = `417.0` fs |
+| bond count — WATCHED, never frozen on | `10` / `9` / `8` | `1.000`, `1.114`, `1.000` | `4.00`, `4.49`, `6.00` | `10` blocks = `20,000` frames = `521.3` fs |
+| O–O first peak — WATCHED | `1` / `2` / `0` | `1.000`, `1.000`, `1.000` | `13.00`, `12.00`, `14.00` | `2` blocks = `4,000` frames = `104.3` fs |
+
+     **The two sets side by side. The reading is that this instrument is short at EITHER step**,
+     and the numbers say how short: the settling variable's own effective sample count after
+     its discard point is `3.27` at worst out of `14` blocks, and one pilot's argmax sits at
+     `10` of `14` — Chodera's rule maximises `(N - t0)/g(t0)` over the series it is given, and a
+     series whose argmax sits most of the way along it has not been shown a plateau. That was
+     already true of the `8x` demonstration set and this draft said so; it is equally true here.
+
+| series | `t0` at the withdrawn `8x` | `t0` at the selected `1x` |
+|---|---|---|
+| cross-unit energy — **the settling variable** | `7` / `3` / `10` | `10` / `0` / `8` |
+| temperature | `9` / `9` / `8` | `8` / `3` / `2` |
+| bond count — WATCHED, never frozen on | `9` / `9` / `9` | `10` / `9` / `8` |
+| O–O first peak — WATCHED | `1` / `1` / `1` | `1` / `2` / `0` |
+
+     **THE DEFENSIBLE SET IS UNAFFORDABLE AT `1x`, and here is the arithmetic.** The freeze's
+     own declaration is `3` pilots of `60` blocks. At `1x` a block is `2,000` frames, so the
+     declared set is `3 x 60 x 2,000 = 360,000` frames. At the gate's own measured
+     `0.318015` s per pass that is **`114,486` core-seconds = `31.8` core-hours**, which is
+     `38 %` of this campaign's WHOLE price ceiling (`299,478.1` s, ten times LIQUID-1's
+     own arm) — spent on trajectories that are thrown away, before a single counted frame. And
+     the counted campaign it would be paying for does not fit either: at `1x` the same physical
+     window is `1,100,960` counted frames per seed, and `3` seeds price at `1,088,624` s,
+     **`3.64 x` the ceiling** (R3 clause 5, and gate `R3price` FAILED on exactly that leg).
+     **So the settling is NOT FROZEN, and `pilot --freeze` was deliberately not run.** Freezing
+     a settling on a set this draft has already called short would be freezing the short one.
+     **OWED, and named:** a pilot set long enough for Chodera's argmax to sit on a plateau at
+     `1x` — `32` core-hours of discarded trajectory — or a counted arm short enough that the
+     settling it needs is one this host can price.
+
+  **CLAUSE 5's CAP FIRED AT `1x`, AND THE CAP IS ITSELF A FRAME COUNT INHERITED FROM `8x`
+  (measured at the gate, 2026-09-08).** The gate ran the criterion on the selected
+  configuration and **the box did not settle inside the cap**: `40,100` frames =
+  `1045.1` fs over `20` blocks, `settling_capped: true`, with the whole
+  block series in `gate.json`. By clause 5's own letter that VOIDS an arm, and it is a finding
+  rather than something to count anyway. Two things are said about it plainly:
+  * **The cap is `40,000` FRAMES**, and this draft described it as *"`8.34` ps, 17.8 times
+    [LIQUID-1's `469.1` fs]"* — which it is at `8x` and is not at `1x`, where `40,000` frames is
+    `1.043` ps. That is the same fault as the settling BLOCK and the frozen
+    settling: a constant that is right in its own regime and silently imported into another.
+    The block and the frozen settling are repaired in this revision; **the CAP is NOT**, and
+    that is deliberate — repairing it to a physical `8.34` ps would make the cap `320,000`
+    frames at `1x`, which at the gate's own `0.318015` s per pass is `28` core-hours for ONE
+    settling. The cap is left as it stands, named as inherited, and the arm it voids is not
+    re-run around it.
+  * **The temperature was arriving, not stuck.** The last block reads `295.3` K against the
+    target `293` K and the band `+- 21.04`; the block before it read `322.5` K. The criterion is
+    a CONJUNCTION over a 5-block window, so a window that still contains an out-of-band sample
+    does not fire however close the last block is. Nothing here says the box cannot settle; it
+    says it did not settle inside `40,000` frames, and that `40,000` frames at this step is an
+    eighth of the physical time the cap was declared as.
+
   Every arm records the settling length it actually used and its whole block series.
 
   **Measured at the gate, before any seed is released:** the corrected criterion fires at
@@ -381,28 +551,59 @@ a kill.
   white noise and `g = (1+φ)/(1−φ)` on an AR(1) process as its two unit tests.
   witness: none (a mean and a spread over at least two independent trajectories, and a
   statistical inefficiency whose two analytic cases are unit-tested in the harness)
-- **T — the thermostat is a DECLARED choice and the ledger does not change with it.** This
-  campaign runs **Berendsen** velocity rescaling (Berendsen, Postma, van Gunsteren, DiNola and
-  Haak, *J. Chem. Phys.* **81** (1984) 3684) at `tau = 2000` au, which is LIQUID-1's, so the
-  two arms are the same box under the same coupling. The second review's fifth source claim is
-  accepted as written — *suppressed fluctuations are not canonical sampling* — and it is
-  answered by an instrument rather than by a change of arm: **stochastic velocity rescaling**
-  (Bussi, Donadio and Parrinello, *J. Chem. Phys.* **126** (2007) 014101) is now a selectable
-  alternative in the engine, wearing the SAME ledger column with the same meaning, and it is
-  VALIDATED before this freeze rather than after: on a harmonic test system of `32` particles
-  (`96` degrees of freedom) the kinetic energy's relative variance reads `2.099e-2` against
-  the canonical `2/N_f = 2.083e-2` (`1.008 ×`), where Berendsen at the same coupling reads
-  `7.81e-7`, which is `3.7e-5` of canonical. **What this campaign claims and does not claim:**
-  every readout here is a MEAN (the peak, the bond count, the diffusion constant, the spanning
-  fraction) and a mean is what Berendsen is good at, so no reading below is invalidated by the
-  suppression; what IS invalidated is any FLUCTUATION — a heat capacity, a compressibility, a
-  variance-based response — and this freeze reports none and pre-commits to reporting none.
+- **T — the thermostat is a DECLARED choice, SELECTED by accessor, and Berendsen is a
+  pre-committed COMPARISON ARM rather than an argument.** This campaign runs **stochastic
+  velocity rescaling** (Bussi, Donadio and Parrinello, *J. Chem. Phys.* **126** (2007) 014101)
+  at LIQUID-1's coupling `tau = 2000` au, selected through `Sim::set_thermostat_kind` and read
+  back by gate CONFIG. It is VALIDATED before this freeze rather than after: on a harmonic
+  test system of `32` particles (`96` degrees of freedom) the kinetic energy's relative
+  variance reads `2.099e-2` against the canonical `2/N_f = 2.083e-2` (`1.008 ×`), where
+  Berendsen at the same coupling reads `7.81e-7`, which is `3.7e-5` of canonical. The second
+  review's fifth source claim is accepted as written — *suppressed fluctuations are not
+  canonical sampling* — and this revision accepts it as the ARM and not only as the
+  instrument.
+  **THE CLAUSE THAT IS WITHDRAWN, and why.** An earlier version of this gate said: *every
+  readout here is a MEAN and a mean is what Berendsen is good at, so no reading below is
+  invalidated by the suppression*. **That is too strong and it is withdrawn.** Velocity
+  rescaling can move structural and dynamical properties, not only variances — see Braun,
+  Moosavi and Smit, *Anomalous effects of velocity rescaling algorithms: the flying ice cube
+  effect revisited*, **J. Chem. Theory Comput. 14 (2018) 5262–5272** (arXiv:1805.02295), which
+  measures deterministic rescaling draining kinetic energy out of the internal degrees of
+  freedom and into rigid-body motion, and reports the consequences in structure and in
+  transport. A campaign that reads a shell position, a bond census, a diffusion constant and a
+  spanning fraction cannot assert in advance that none of them moved. So the assertion is
+  replaced by a MEASUREMENT.
+  **THE COMPARISON ARM, DECLARED HERE AND BEFORE ANY COUNTED FRAME.** One arm, one seed
+  (`SEEDS[0]`, LIQUID-1's own), the campaign's configuration in every other respect — the same
+  law, the same served table under the same blend at the same beta, the same `1x` step, the
+  same box, the same settling criterion, the same readouts — with the thermostat, and only the
+  thermostat, moved to **Berendsen** (Berendsen, Postma, van Gunsteren, DiNola and Haak,
+  *J. Chem. Phys.* **81** (1984) 3684). It is run as `liquid2 run --seed 0 --thermostat
+  berendsen`, writes into `seed0_berendsen/`, and is NEVER counted into the seed mean: `read`
+  enumerates `seed<k>/` and nothing else, so the comparison cannot leak into R1, R2, R3 or S.
+  Its readouts are reported BESIDE the stochastic arm's, in the same table, with the
+  stochastic arm's own three-seed spread printed between them.
+  **THE BRANCH, pre-committed.** For each readout the comparison is against the STOCHASTIC
+  ARM'S OWN SEED SPREAD, which is the only scale this campaign has for "the same answer":
+  * **(a)** every readout of the Berendsen arm lies inside the stochastic arm's seed range —
+    the thermostat did not move this campaign's readings at this box, this state point and
+    this arm length, and the reading is reported as such and as nothing more (three seeds is a
+    range and not a tolerance).
+  * **(b)** a readout of the Berendsen arm lies OUTSIDE the stochastic arm's seed range — the
+    thermostat moved a reading that is not a variance, which is the effect Braun et al.
+    describe. The campaign then reports the stochastic arm's number as the campaign's number,
+    names the readout that moved and by how many seed ranges, and states that any comparison
+    with LIQUID-1 — which ran Berendsen — carries that difference. It is a finding about the
+    instrument and it kills no claim of this freeze by itself.
+  * **VOID** if the Berendsen arm does not finish or is VOID at any frame, with the frame
+    named. One arm cannot be a spread, and this branch is a comparison and not a gate: it
+    moves no band and it is not support for anything (rule 6).
   The engine's default stays Berendsen and is bit-for-bit unchanged (`0` deviates drawn on a
   Berendsen run, asserted), so every record already in this tree still selects what it
-  selected. The exit for the fluctuation sector is named: the first campaign that reads a
+  selected. The exit for the fluctuation sector is unchanged: the first campaign that reads a
   variance runs on the stochastic rule and says so in its own freeze.
-  witness: none (a canonical variance measured on a harmonic test system, and a receipt gate
-  that holds under both rules)
+  witness: none (a canonical variance measured on a harmonic test system, a receipt gate that
+  holds under both rules, and one comparison arm reported beside the counted seeds)
 - **L2 — the price.** The force pass at 384 atoms with the lattice sum and the table, measured
   on the first 100 frames and written before the counted ones; the arm's total within `0.1×`
   to `10×` of the projection. The table term's own cost is reported as the ratio of this
@@ -421,12 +622,43 @@ a kill.
   the idle host channel 6 as a sixty-knot four-dimensional interpolant costs `0.7 %` of a
   384-atom force pass with a lattice sum — and the placement spread is an order of magnitude
   larger than the term itself, so the honest statement is that the table's cost is under the
-  noise floor of any wall-clock measurement this host can make.** The record now carries
-  `2.601433e-1` s per pass (ratio `1.121498`), the campaign projected at `113,053.1` s
-  (31.4 core-hours) for 3 seeds × (7,100 settling + 137,760 counted) against the ceiling
-  `2.994781e5` s. **R3 is LIVE at the provisional step, and the step is not committed** (§2's
-  rule selects nothing until the serving rule is fixed). Nothing here gates on absolute
-  seconds.
+  noise floor of any wall-clock measurement this host can make.**
+  **RE-PRICED AT THE SELECTED CONFIGURATION, and the published core-seconds per picosecond are
+  SUPERSEDED (2026-09-08).** Every `core_seconds_per_picosecond` under `liquid2/size/` was
+  measured at the withdrawn `8x` step, and that quantity is `seconds_per_pass` divided by the
+  picoseconds a pass buys — which IS the step. **The direction, stated plainly because the
+  review that ordered this re-price had it backwards: the stale numbers do not overstate what
+  a picosecond costs, they UNDERSTATE it by the step ratio**, since a `1x` pass buys an eighth
+  of the time an `8x` pass buys. Re-measured at the blend, `1x` and the stochastic thermostat
+  (`size/cost_geometry_first_1x_cells{4,5}.json`) **with an `8x` CONTROL RE-RUN IN THE SAME
+  MIX** (`_8xctl`), because seconds per pass move with placement by more than the term being
+  measured and a `1x` reading held against a differently-loaded host's record measures the
+  host:
+
+  | | s/pass, `1x` | s/pass, `8x` control | ratio | core-s/ps, `1x` | core-s/ps, `8x` control | ratio |
+  |---|---|---|---|---|---|---|
+  | 128 waters | `0.2607` | `0.2471` | `1.055` | `10003.6` | `1185.1` | `8.441` |
+  | 250 waters | `0.5294` | `0.5155` | `1.027` | `20312.1` | `2472.6` | `8.215` |
+
+  The `core-s/ps` ratio is the step ratio times whatever the blend costs over the argmin at
+  the same step; the `s/pass` ratio in the same row IS that second factor, measured, and it is
+  the honest size of the smooth rule's own cost. The banked `8x` records are kept unedited —
+  they are what that phase measured at the step it ran — and `size/README.md` carries the
+  conversion.
+  **THE GATE'S OWN PRICE AT `1x`, and R3's branch.** The gate measures `0.318015` s per pass on
+  its first 100 frames (ratio `1.3710` against LIQUID-1's own `2.319606e-1`, on a host
+  carrying this campaign's own side jobs — M-PLACEMENT-LOTTERY, and nothing gates on absolute
+  seconds). The window R3 prices is fixed in FEMTOSECONDS by the crossover, so at `1x` it is
+  `1,100,960` counted frames per seed instead of `137,760`, and `3` seeds of
+  (`40,100` settling + `1,100,960` counted) prices at **`1,088,624` s against the ceiling
+  `299,478.1` s — `3.64 x` over.** **R3 is therefore VOID BY PRICE at the selected
+  step**, by the rule clause 5 pre-committed before the step was chosen, with the price
+  printed and the reason: *"a statement about the step and the crossover, not about the
+  liquid"*. Nothing about R1, R2 or S changes by that clause's own letter — **but a second
+  thing is now owed and is named here rather than assumed away**: this runner derives the
+  COUNTED ARM's length from R3's window, so an R3 that is void by price leaves R1, R2 and S
+  without an arm length of their own. A counted arm for the three that do not need the
+  diffusive window is not designed in this draft and is not improvised into it.
   witness: none (a price, recorded)
 - **R1 — the first oxygen–oxygen peak.** From the counted frames' mean `g_OO(r)`: the position
   of the first maximum and its height. KILL bands, from experiment and declared: position in
@@ -459,26 +691,52 @@ a kill.
      `α = 1 + ln(t_c/t₁)/ln(t₂/t₁)`, hence `t_c = t₁·(t₂/t₁)^{α−1}`. The model returns `t₁` at
      `α = 1` and `t₂` at `α = 2`, which are the two facts a crossover estimate has to get
      right. On LIQUID-1's numbers `t_c = 102.47` fs.
-  2. **The step, and it is UNCHOSEN.** THE TABLES' STEP IS THE ONE IN FORCE, and that needed
-     measuring rather than assuming: `adopt_table_timescale` derives `dt_reference = 4.309924`
-     au from the O-H curve and the exactness hold refines it by a factor of four before any
-     frame runs, so the step this box actually integrates at is `1.077481` au (`0.026063` fs)
-     — which is the `1.08` au LIQUID-1 reported and the unit the sweep speaks in. The screen
-     sweeps `1×, 2×, 4×, 8×` of THAT on short settled arms of EQUAL length, and the rule is
-     the one this draft was written with: **the largest step whose measured drift stays under
-     L1's bar.**
-     **THAT RULE SELECTS NOTHING, and the draft leaves it selecting nothing.** No step clears
-     the bar — not by a little and not because of the step. Over a 32-fold change of step the
-     drift moves by a factor of 6 and NOT monotonically (`6.585e-3`, `2.509e-3`, `4.423e-3`,
-     `7.428e-3`, `1.612e-2`, `1.388e-2` at 1, 2, 4, 8, 16 and 32 times the tables' step),
-     where an integrator's step error would move by `32² = 1024`. An earlier version of this
-     draft amended the rule to "the largest step under twice the `1×` arm's own", which
-     selects `8×`; **that amendment is WITHDRAWN**, on the ruling that a bar is not widened
-     around a defect and that the drift is an instrument fault to be found and fixed before
-     any freeze. The step is therefore not pre-committed here, R3's window and price cannot be
-     derived until it is, and the gate records already in the tree were taken at a provisional
-     `8×` and are filed under `gate_provisional_8x/` with a README saying which of their
-     numbers survive the step being unchosen. The step is set by
+  2. **The step, and it is CHOSEN — `1×`, the tables' own, selected by the NVE evidence.**
+     THE TABLES' STEP IS THE ONE IN FORCE, and that needed measuring rather than assuming:
+     `adopt_table_timescale` derives `dt_reference = 4.309924` au from the O-H curve and the
+     exactness hold refines it by a factor of four before any frame runs, so the step this box
+     actually integrates at is `1.077481` au (`0.026063` fs) — which is the `1.08` au
+     LIQUID-1 reported and the unit the sweep speaks in.
+     **THE HISTORY, kept because a rule that once selected nothing is part of the record.**
+     Under the ARGMIN serving rule no step cleared L1's bar and none of them was the reason: a
+     32-fold change of step moved the drift by 6, NOT monotonically (`6.585e-3`, `2.509e-3`,
+     `4.423e-3`, `7.428e-3`, `1.612e-2`, `1.388e-2` at 1, 2, 4, 8, 16 and 32 times the tables'
+     step) where an integrator's own error would move it by `32² = 1024`. An earlier version
+     of this draft amended the rule to "the largest step under twice the `1×` arm's own",
+     which selects `8×`; that amendment was WITHDRAWN, on the ruling that a bar is not widened
+     around a defect. The gate records taken at that provisional `8×` are filed under
+     `gate_provisional_8x/` with a README saying which of their numbers survive it being
+     unchosen, and they stay there.
+     **THE SELECTION, and the evidence is a SHAPE and not a single number**
+     (`ct3/smooth/nve.json`, `dry: true`). Under the smooth serving rule the drift is back in
+     the integrator, and an NVE sweep — thermostat OFF — from ONE settled checkpoint (all four
+     arms report the same checkpoint digest `1149619867449410921` over 20,626 bytes) at `1×`,
+     `2×`, `4×` and `8×` over EQUAL physical durations of `0.1` ps reads:
+
+     | × the tables' step | dt, fs | drift / ps, Ha | fluctuation RMS, Ha | O–O first peak, bohr | bonds per water |
+     |---|---|---|---|---|---|
+     | **1** | 0.026063 | **4.696827e-5** | **1.601946e-6** | 6.25 | 1.41955 |
+     | 2 | 0.052126 | 1.919698e-4 | 6.397148e-6 | 6.25 | 1.42041 |
+     | 4 | 0.104252 | 7.784843e-4 | 2.559353e-5 | 6.25 | 1.41953 |
+     | 8 | 0.208504 | 3.158647e-3 | 1.027272e-4 | 6.25 | 1.42109 |
+
+     Each doubling multiplies the drift per ps by `4.09`, `4.06`, `4.06` and the fluctuation
+     RMS by `3.99`, `4.00`, `4.01` — `(ω dt)²`, a symplectic integrator's own error, which is
+     the second and stronger confirmation that the argmin was the fault. **The rule — the
+     largest step whose drift per ps is within `2×` the `1×` arm's and whose observables agree
+     with the `1×` arm inside their own spread — therefore selects `1×`**: `2×` is already
+     `4.09×` the `1×` drift, so nothing above `1×` survives the first clause, and the
+     observables do not discriminate (the O–O peak is `6.25` bohr on every arm at the RDF's
+     declared `0.1`-bohr bin, and the bond count spans `7.5e-4`). **There is no free step under
+     the smooth rule.** `STEP_MULT = 1.0` is what the runner carries, gate CONFIG reads the
+     step back off `Sim::dt()` and fails unless the multiplier is EXACTLY `1`, and the
+     withdrawn `8.0` is reachable only through the labelled screen's own `--step`.
+     **AND THE PRICE MOVES WITH IT, which is a consequence and not a surprise.** A counted
+     frame at `1×` covers an eighth of the physical time it covered at `8×`, so the window
+     this section prices — `4 · max_lag · stride` frames at a stride fixed in FEMTOSECONDS by
+     the crossover — is eight times as many frames for the same physical arm. What that does
+     to R3's price ceiling is measured by the gate and reported by clause 5 below, not argued
+     here. The step is set by
      `Timescale::set_dt_multiplier` under `allow_dt_growth` — the engine's rung (ii), its own
      explicit toggle — and NOT by writing `dt`. That is a finding of building this runner and
      it is recorded here: `Timescale::hold_exactness` rewrites `dt` from `dt_reference` every
@@ -627,7 +885,30 @@ represent."* The remaining `3.4 %` is unaccounted and is left to the two other s
 switch applied on the contact distance while the table's coordinates carry `r`, and the
 below-knot tail's gradient — neither of which was tested.
 
-**What this draft does about it: it stops.** An earlier version of this section said the law
+**AND IT WAS FIXED, in its own lane, before this revision** (`liquid2/DRIFT_NOTE.md`, the
+section PAID; records under `ct3/smooth/`, every one `dry: true`). The argmin is replaced by a
+declared continuous serving rule — a partition of unity over the four cross-unit H···O contacts
+at inverse length `β`, both force terms carried, `β` DERIVED from the map's own
+shortest-to-second-shortest contact separations against the table's own resolution floor at
+every one of its 64 nodes and adopted at the LARGEST requirement (`55.16353128` per bohr, the
+binding node `twist_R2.7_t120`). Its four gates all PASS: the value differs from the argmin by
+less than the table's own floor at every node (worst `1.499839e-5` against `7.090642e-4`, 47×
+under); the analytic force matches finite differences to `3.07e-10` relative over 518
+geometries including LIQUID-2's own recorded handovers, hydrogen permutations, molecular
+exchanges, contact ties and periodic crossings; the largest step of the blend HALVES exactly
+when the sweep's resolution doubles (`2.0000`) where the argmin's jump does not (`1.0468`),
+which is what continuity is; and **the drift comes in at `4.984881116e-6` against the
+channel-6-off control's re-measured `4.719994550e-6` — `1.0561×`, against a gate of `2×`, and
+`1,321×` below the argmin it replaces.** The `1×`/`2×`/`4×`/`8×` NVE sweep under it is
+quadratic in the step to three doublings and SELECTS `1×` (R3 clause 2).
+**AND, AS OF THIS REVISION, THE CAMPAIGN ACTUALLY SELECTS IT.** That did not follow from the
+repair and it is the third review's blocking finding: `CtServe::Argmin` is the default that
+`CtTable::empty` loads, and this runner never called `set_blend`, so the repair was reachable
+and not reached. It is now selected through the accessor, at the `β` read from
+`ct3/smooth/beta.json` at run time, and gate CONFIG reads the mode and the `β` back off the
+table and fails unless they are the selected ones.
+
+**What this draft did about it at the time: it stopped.** An earlier version of this section said the law
 would not be changed, the bar would not be moved and the arm would not be cancelled — L1's
 drift leg pre-committed to FAIL and read as a statement about the serving rule. **That is
 withdrawn.** A counted arm does not run on a law that leaks energy 1,300 times its own control,
@@ -814,11 +1095,17 @@ force), which the README converts.
 **What changed in the engine, and what did not.** The campaign itself is one example and
 one DEV-dependency (`holon-campaign` added to `holon-render`'s `[dev-dependencies]`, zero
 runtime dependencies, std only, never linked into the library or the browser artifact — the
-same isolation profile and the same one-way direction as `holon-lens` beside it). `seam.rs`,
-`field.rs` and `liquid1.rs` are untouched. THREE INSTRUMENTS DID CHANGE, each of them an
-answer to a source claim of the second review, and each of them ADDITIVE — the existing
-callers of record keep the existing behaviour and every existing test of `holon-render`,
-`holon-lens`, `holon-campaign` and `holon-closure` passes unchanged:
+same isolation profile and the same one-way direction as `holon-lens` beside it). `field.rs`
+and `liquid1.rs` are untouched. FOUR INSTRUMENTS DID CHANGE, each of them an answer to a
+source claim of a review, and each of them ADDITIVE — the existing callers of record keep the
+existing behaviour and every existing test of `holon-render`, `holon-lens`, `holon-campaign`
+and `holon-closure` passes unchanged:
+- `holon-render/src/seam.rs` gains `CtServe::{Argmin, Blend}`, `CtTable::{set_blend,
+  set_argmin, serve_mode, beta}` and `CtTable::serve_blend`, with `sim.rs::accumulate_seam`
+  branching on the mode (the smooth serving rule, §2a). **`Argmin` is the DEFAULT and the
+  selector lives on the TABLE**, so every record written before the rule existed reads the
+  argmin bit for bit — which is also exactly why the campaign had to be made to SELECT the
+  blend rather than inherit it (gate CONFIG, M-VALIDATED-NOT-WIRED).
 - `holon-lens/src/lens.rs` gains `diffusion_periodic` (the boundary-aware lens, R3 above).
   **`diffusion` itself is byte-unchanged** and keeps its callers of record, including the
   refusal LIQUID-1 published; the new function is a second lens beside it and not an edit
@@ -833,8 +1120,17 @@ callers of record keep the existing behaviour and every existing test of `holon-
   of the harness.
 
 Runner `holon-render/examples/liquid2.rs`, written on `holon-campaign` and `holon-closure`;
-`liquid1.rs` is untouched and is the reference. Phases `screen`, `size`, `gate`,
-`pilot --pilot i` / `pilot --freeze`, `run --seed k`, `read`. **The pilot phase is where gate
+`liquid1.rs` is untouched and is the reference. Phases `screen`, `size`, `cost`, `gate`
+(`gate --demo-unswitched` for gate CONFIG's own demonstration, which writes nothing),
+`pilot --pilot i [--dir D]` / `pilot --freeze [--dir D]`, `run --seed k [--thermostat
+berendsen]`, `read`. **Three of those flags exist so that a re-measurement never lands on a
+banked record**: `cost --tag`/`--selection` (the `1×` re-price beside the `8×` bank, and the
+`8×` control re-run in the same mix), `pilot --dir` (a pilot set taken at one step never
+overwrites a set taken at another, and `read_pilot_settling` REFUSES a settling frozen at a
+different step rather than converting somebody else's argmax), and `run --thermostat` (gate
+T's comparison arm, into `seed<k>_berendsen/`, which `read` does not enumerate). The labelled
+screen keeps the OLD configuration — argmin, Berendsen, its own `--step` — so every screen
+record already in this tree re-runs bit for bit. **The pilot phase is where gate
 E's floor comes from and it is the one phase whose output is never a readout of this
 campaign**: it writes only into `liquid2/pilot/`, its records say `"is_a_pilot": true` and
 `"no_readout_of_this_campaign_is_taken_from_it": true`, its seeds are disjoint from the

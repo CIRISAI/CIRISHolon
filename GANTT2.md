@@ -572,10 +572,23 @@ excursion quarters when the step halves; a tethered body conserves total energy 
 order at the clock's own step; two bodies under a pair force conserve momentum to 1e-11;
 equipartition at six degrees of freedom; and the rigid step at a hydrogen-bond-order
 stiffness is above the fine 1.077481 au, which is the whole reason the operator exists.
-**Nothing is wired**: no adapter reads a `Sim` into `Fine`, no `replace0` runner exists, the
-validity record is `InvariantsOnly`, and the contact stiffness the clock needs is a
-DECLARED input in the tests and a measurement owed from the served law. Those are the next
-lane, in that order, under the rule above.
+**The adapter is wired, the replacement is not.** `holon-render/src/rigid_adapter.rs`
+(the shape of `closure.rs`: thin, over readings the engine already makes, `sim.rs`
+untouched) names a unit's three atoms from `units_reading`, reads them as `Fine` with the
+hydrogens unwrapped around their oxygen by the box's own minimum image, reads the last
+pass's internal-plus-external force on each as `SiteForces`, and writes a `Fine` back
+through the engine's setters; units with a hydrogen count other than two are returned
+apart so an H₃O⁺ or an OH⁻ cannot be rigidified by accident. `tests/rigid_adapter.rs`, on
+the 128-water box under FIELD-9's law: all 128 units project with 6e-15 bohr deformation
+at the start box and reconstruct to 1e-9; **the operator's accumulated torque and net force
+are minus the gradient of the ENGINE's energy** under a rigid rotation and translation of
+one unit, on all three axes, to the 1e-4 finite-difference tolerance (|F| 9.4e-3 Ha/bohr,
+|τ| 6.3e-3 Ha on unit 0); fifty fine frames leave a recorded worst deformation of 0.078
+bohr and 8.1e-4 Ha of internal kinetic energy per unit; write-back then read is the
+identity across a face. **No `Sim` frame is replaced by an operator step anywhere**: the
+`replace0` runner, the validity record's first `Empirical` entry, and the contact stiffness
+measured off the served law for the clock are the next lane, in that order, under the rule
+above.
 
 ## The build lane — the closure type and the campaign harness (2026-09-07, `engine/crates/holon-closure`, `holon-campaign`)
 

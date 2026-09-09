@@ -57,6 +57,11 @@ holon-lattice = { path = "../holon-lattice" }
 # standard as `holon-chem`'s: std-only code and no dependency, which its manifest states as
 # a rule rather than as a fact about today.
 holon-closure = { path = "../holon-closure" }
+# holon-runtime: the EXECUTABLE holon (GANTT2, the fourth review) -- the operator contract
+# and oriented rigid water. `src/rigid_adapter.rs` reads a `Sim`'s water units into the
+# operator's `Fine` state and writes them back; `sim.rs` is untouched by it. ZERO runtime
+# dependencies of its own, same isolation profile as holon-closure.
+holon-runtime = { path = "../holon-runtime" }
 
 
 # NOTE: no `[profile.release]` here on purpose. A workspace member's profile section is

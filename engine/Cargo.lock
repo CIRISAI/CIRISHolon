@@ -956,6 +956,7 @@ dependencies = [
  "holon-closure",
  "holon-lattice",
  "holon-lens",
+ "holon-runtime",
 ]
 
 [[package]]

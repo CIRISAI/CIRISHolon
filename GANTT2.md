@@ -632,7 +632,18 @@ the first and reused by the rest), each parked under `replace0/` by what it taug
 | 1 `first_unmatched/` | as built | 5.59e-2 Ha/bohr² → **16.54 au = 15.35×** the fine step | **15.6×** (14,447 → 926 core-s/ps) | rigid 5.8e-7 Ha/water | FAIL: 85 % refined, spontaneous trips | the rigid modes AS PROJECTED read 446 K against the fine box's 319 K; projection discarded only 0.41 kT/water of vibrational kinetic energy against 1.5 at equipartition |
 | 2 `second_pin_geometry/` | momenta rescaled to the 3N reading; HOT 8, the disturbance declared in the rule's units; the physical event clock; the bundle | same | **17.0×** (15,236 → 896) | rigid 3.5e-7 | FAIL on the accounted energy (0.34 kT/water) | matched to 319 K at t = 0, the rigid arm was at 386 K by its first readout with energy conserved to 3e-5 Ha: ~0.7 kT/water of potential released in 13 fs |
 | 3 `third_mean_geometry_matched3n/` | the lift's reference geometry the liquid's own mean at the branch (O–H **1.964** vs the pin's 1.944 bohr, H–O–H 1.659 vs 1.689 rad), measured through the box's image | 5.61e-2 → 16.82 au | **17.0×** (15,236 → 904) | rigid 2.8e-7 | **PASS**: 22.5 % refined, 3.96× while carrying the refined region, the accounted energy under the bar | the liquid IS elongated and REFINE's ledger closes once held units snap to the liquid mean — but the plain arm still heats 319 → 394 K in one readout: the snap was never the cause |
-| 4 (running) | no rescaling; the flexible arm's units PROJECTED at every readout and their rigid-mode temperature carried beside the 3N reading; the temperature error taken on that | — | — | — | — | the smoke on the scratch box: rigid 504 K against the flexible arm's rigid-mode 501 K (**+3 K**) where the 3N comparison read +128 K |
+| 4 `run.json` (live) | no rescaling; the flexible arm's units PROJECTED at every readout and their rigid-mode temperature carried beside the 3N reading; the temperature error taken on that | 5.61e-2 → 16.82 au | **12.8×** (14,952 → 1,171; the same 1,321 passes took 611 s against run 3's 471 s on a loaded machine — the pass count is the number, the seconds are the day's) | rigid 4.6e-7 | **PASS**: 32.5 % refined, 2.85× while carrying it | **the first fair reading**, second half of 0.52 ps, rigid − flexible: rigid-mode T **+17 ± 9 K** (487 vs 470; the flexible bath itself climbs 461 → 492 K over the run while its vibrations hold 0.44 → 0.49 kT/water); cross-unit U **+0.005 kT/water** (−7.741 vs −7.746 mHa, sem 0.05); bonds **+0.044 ± 0.015** on the lens (1.541 vs 1.497); O–O peak **−0.048 ± 0.04 bohr** (5.155 vs 5.202) |
+
+What run 4 says, within its own limits (one seed, 0.52 ps, a branch point that is itself still
+relaxing — both arms heat, the flexible box's 3N reading 335 → 358 K): at the bath
+temperature the rigid replacement reproduces the model's cross-unit energy to a half-percent
+of kT, its bond count to 3 %, and its first-shell position within one standard error, at a
+step 15.6× the fine one and a measured cost 13–17× lower with every overhead counted, holding
+energy to 5e-7 Ha per water. The +17 K is the one difference outside its error and has a
+candidate cause the record can test: the rigid arm has no vibrational sink for the potential
+the box is still releasing. All of it is owed the freeze that would make it a claim: an
+unseen seed and temperature, a settled branch point (the campaign's, when the gate has one),
+predeclared tolerances, and R3 through the lens on the rigid arm.
 
 **The finding under runs 1–3, stated plainly: the flexible reference is not equilibrated
 between its modes.** Its intermolecular bath sits near 440 K and its O–H stretches near

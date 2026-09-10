@@ -4,7 +4,7 @@
 //!
 //! ```text
 //! cargo run --release -p holon-render --example replace0 -- stiffness [DIR]
-//! cargo run --release -p holon-render --example replace0 -- run [DIR] --frames N [--settle M] [--readouts R] [--refine] [--reuse]
+//! cargo run --release -p holon-render --example replace0 -- run [DIR] --frames N [--settle M] [--readouts R] [--refine] [--reuse] [--match-3n]
 //! ```
 //!
 //! Three things are measured and nothing is assumed:
@@ -220,6 +220,16 @@ struct Obs {
     /// quantity an NVE arm must conserve. Zero on the flexible arm and on a rigid arm with no
     /// refinement.
     ledger_adjust: f64,
+    /// THE RIGID MODES' OWN TEMPERATURE: on the rigid arm the arm's temperature itself; on the
+    /// flexible arm every unit projected at the readout and its six retained modes read - the
+    /// like-for-like comparator, because a flexible box whose vibrations have not equilibrated
+    /// carries its 3N temperature as the average of a hot intermolecular bath and cold
+    /// stretches (run 3: 440 K against 319 K), and a rigid replacement inherits the bath.
+    rigid_mode_temperature_k: f64,
+    /// The vibrational kinetic energy per water in kT at 293 K (the internal kinetic energy the
+    /// projection discards): the flexible model's mode split, in one number. Zero on the
+    /// rigid arm.
+    vibrational_kinetic_per_water_kt: f64,
 }
 
 impl Obs {
@@ -228,9 +238,11 @@ impl Obs {
     }
     fn json(&self) -> String {
         format!(
-            "{{\"t_fs\": {}, \"temperature_k\": {}, \"energy_hartree\": {}, \"ledger_adjust_hartree\": {}, \"energy_accounted_hartree\": {}, \"cross_unit_per_water_hartree\": {}, \"bonds_per_water\": {}, \"oo_first_peak_bohr\": {}}}",
+            "{{\"t_fs\": {}, \"temperature_k\": {}, \"rigid_mode_temperature_k\": {}, \"vibrational_kinetic_per_water_kt\": {}, \"energy_hartree\": {}, \"ledger_adjust_hartree\": {}, \"energy_accounted_hartree\": {}, \"cross_unit_per_water_hartree\": {}, \"bonds_per_water\": {}, \"oo_first_peak_bohr\": {}}}",
             num(self.t_fs),
             num(self.temperature_k),
+            num(self.rigid_mode_temperature_k),
+            num(self.vibrational_kinetic_per_water_kt),
             num(self.energy),
             num(self.ledger_adjust),
             num(self.accounted()),
@@ -241,7 +253,7 @@ impl Obs {
     }
 }
 
-fn observe(sim: &Sim, z: &[u32], l: f64, t_fs: f64, temperature_k: f64, energy: f64, ledger_adjust: f64) -> Obs {
+fn observe(sim: &Sim, z: &[u32], l: f64, t_fs: f64, temperature_k: f64, energy: f64, ledger_adjust: f64, rigid_mode_temperature_k: f64, vibrational_kinetic_per_water_kt: f64) -> Obs {
     let p = read_pos(sim);
     let cell = [l, l, l];
     let bonds = hbonds_periodic(&p, z, cell).map(|v| v.len() as f64 / N_WATERS as f64).unwrap_or(f64::NAN);
@@ -254,7 +266,24 @@ fn observe(sim: &Sim, z: &[u32], l: f64, t_fs: f64, temperature_k: f64, energy: 
         bonds_per_water: bonds,
         peak_bohr: peak,
         ledger_adjust,
+        rigid_mode_temperature_k,
+        vibrational_kinetic_per_water_kt,
     }
+}
+
+/// The fine box's mode split at this instant: every unit projected, its six retained modes'
+/// temperature and the vibrational kinetic energy per water in kT. Projection reads; it
+/// writes nothing back.
+fn mode_split(sim: &Sim, units: &[UnitMembers], body: &Body) -> (f64, f64) {
+    let mut ke_rigid = 0.0;
+    let mut ke_vib = 0.0;
+    for m in units {
+        let (w, d) = RigidWater::project(&fine_of(sim, m, body)).expect("a unit projects at a readout");
+        ke_rigid += w.kinetic();
+        ke_vib += d.internal_kinetic;
+    }
+    let n = units.len().max(1) as f64;
+    (2.0 * ke_rigid / (6.0 * n * K_B), ke_vib / n / (K_B * TEMPERATURE_K))
 }
 
 fn series_json(s: &[Obs]) -> String {
@@ -415,17 +444,20 @@ fn excursion_of(s: &[Obs], f: impl Fn(&Obs) -> f64) -> (f64, f64, f64) {
 }
 
 /// THE FLEXIBLE REFERENCE: the engine's own integrator at the tables' step, NVE.
-fn run_flexible(sim: &mut Sim, z: &[u32], l: f64, frames: usize, stride: usize) -> ArmResult {
+fn run_flexible(sim: &mut Sim, z: &[u32], l: f64, frames: usize, stride: usize, units: &[UnitMembers], body: &Body) -> ArmResult {
     let t0 = Instant::now();
     let dt = sim.dt();
     let mut series = Vec::new();
     sim.compute_forces();
-    series.push(observe(sim, z, l, 0.0, sim.temperature(), sim.energy(), 0.0));
+    let (tr, vib) = mode_split(sim, units, body);
+    series.push(observe(sim, z, l, 0.0, sim.temperature(), sim.energy(), 0.0, tr, vib));
     for k in 0..frames {
         sim.step_frame(1);
         if (k + 1) % stride == 0 {
-            series.push(observe(sim, z, l, (k + 1) as f64 * dt * AU_TIME_FS, sim.temperature(), sim.energy(), 0.0));
-            eprintln!("  flexible frame {:>7}: T {:6.1} K, E {:.6} Ha, bonds {:.3}, peak {:.2}", k + 1, series.last().unwrap().temperature_k, series.last().unwrap().energy, series.last().unwrap().bonds_per_water, series.last().unwrap().peak_bohr);
+            let (tr, vib) = mode_split(sim, units, body);
+            series.push(observe(sim, z, l, (k + 1) as f64 * dt * AU_TIME_FS, sim.temperature(), sim.energy(), 0.0, tr, vib));
+            let o = series.last().unwrap();
+            eprintln!("  flexible frame {:>7}: T {:6.1} K (rigid modes {:6.1} K, vibrations {:.2} kT/water), E {:.6} Ha, bonds {:.3}, peak {:.2}", k + 1, o.temperature_k, o.rigid_mode_temperature_k, o.vibrational_kinetic_per_water_kt, o.energy, o.bonds_per_water, o.peak_bohr);
         }
     }
     ArmResult { series, passes: frames as u64 + 1, seconds: t0.elapsed().as_secs_f64(), physical_fs: frames as f64 * dt * AU_TIME_FS, steps: frames as u64, dt_au: dt }
@@ -494,7 +526,7 @@ struct RigidRun {
 }
 
 /// THE RIGID ARM, and with `refine` the demonstration.
-fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, frames: usize, stride: usize, refine: bool, match_k: f64) -> RigidRun {
+fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, frames: usize, stride: usize, refine: bool, match_k: Option<f64>) -> RigidRun {
     let t0 = Instant::now();
     let dt_f = sim.dt();
     let (projected, other) = project_all(sim, body).expect("every unit projects at the branch point");
@@ -524,13 +556,23 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
     // to the fine box's own temperature and the kinetic energy removed is written down.
     let t_projected = rigid_temperature(&bodies);
     let ke_before = rigid_kinetic(&bodies);
-    let s = (match_k / t_projected).sqrt();
-    for b in bodies.iter_mut() {
-        b.w.p = scale(b.w.p, s);
-        b.w.l_body = scale(b.w.l_body, s);
-    }
-    let kinetic_removed = ke_before - rigid_kinetic(&bodies);
-    eprintln!("  rigid modes as projected: {t_projected:.1} K; rescaled to the fine box's {match_k:.1} K, removing {kinetic_removed:.3e} Ha");
+    let (t_matched, kinetic_removed) = match match_k {
+        Some(t) => {
+            let s = (t / t_projected).sqrt();
+            for b in bodies.iter_mut() {
+                b.w.p = scale(b.w.p, s);
+                b.w.l_body = scale(b.w.l_body, s);
+            }
+            let removed = ke_before - rigid_kinetic(&bodies);
+            eprintln!("  rigid modes as projected: {t_projected:.1} K; rescaled to {t:.1} K, removing {removed:.3e} Ha");
+            (t, removed)
+        }
+        None => {
+            eprintln!("  rigid modes as projected: {t_projected:.1} K; kept - the rigid arm inherits the fine box's intermolecular bath as it is");
+            (t_projected, 0.0)
+        }
+    };
+    let match_k = t_matched;
     for b in bodies.iter() {
         write_back(sim, &b.m, &b.w.reconstruct());
     }
@@ -541,7 +583,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
     }
     let mut series = Vec::new();
     let e = rigid_kinetic(&bodies) + potential(sim);
-    series.push(observe(sim, z, l, 0.0, rigid_temperature(&bodies), e, 0.0));
+    series.push(observe(sim, z, l, 0.0, rigid_temperature(&bodies), e, 0.0, rigid_temperature(&bodies), 0.0));
     // THE LEDGER: injected by the declared disturbance, discarded by projection
     let mut injected = 0.0f64;
     let mut discarded_cum = 0.0f64;
@@ -622,7 +664,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
             }
             if refined.is_empty() {
                 let e = rigid_kinetic(&bodies) + potential(sim);
-                series.push(observe(sim, z, l, (r + 1) as f64 * period * AU_TIME_FS, rigid_temperature(&bodies), e, discarded_cum - injected));
+                series.push(observe(sim, z, l, (r + 1) as f64 * period * AU_TIME_FS, rigid_temperature(&bodies), e, discarded_cum - injected, rigid_temperature(&bodies), 0.0));
                 let o = series.last().unwrap();
                 eprintln!("  rigid readout {:>4} at {:8.1} fs: T {:6.1} K, E {:.6} Ha, bonds {:.3}, peak {:.2}", r + 1, o.t_fs, o.temperature_k, o.energy, o.bonds_per_water, o.peak_bohr);
                 continue;
@@ -689,7 +731,18 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
         }
         let dof = 6.0 * (n - refined.len()) as f64 + 9.0 * refined.len() as f64;
         let t_fs = (r + 1) as f64 * period * AU_TIME_FS;
-        series.push(observe(sim, z, l, t_fs, 2.0 * ke / (dof * K_B), ke + potential(sim), discarded_cum - injected));
+        // the rigid-mode temperature over ALL units at this readout: the held ones as they are,
+        // the refined ones projected (a reading, not a write)
+        let mut ke_modes = 0.0;
+        for u in 0..n {
+            if refined.contains(&u) {
+                let (w, _) = RigidWater::project(&fine_of(sim, &bodies[u].m, body)).expect("projects");
+                ke_modes += w.kinetic();
+            } else {
+                ke_modes += bodies[u].w.kinetic();
+            }
+        }
+        series.push(observe(sim, z, l, t_fs, 2.0 * ke / (dof * K_B), ke + potential(sim), discarded_cum - injected, 2.0 * ke_modes / (6.0 * n as f64 * K_B), 0.0));
         let o = series.last().unwrap();
         eprintln!("  FINE  readout {:>4} at {:8.1} fs: T {:6.1} K, E {:.6} Ha, bonds {:.3}, peak {:.2}; {} refined, held units discarded {:.2e} bohr / {:.2e} Ha per frame", r + 1, o.t_fs, o.temperature_k, o.energy, o.bonds_per_water, o.peak_bohr, refined.len(), held_def / frames_this as f64 / (n - refined.len()).max(1) as f64, held_ke / frames_this as f64);
         if !coarsen.is_empty() {
@@ -743,9 +796,9 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
 /// The flexible arm's series as text, one readout per line, with a header naming the frames
 /// and stride it was taken at so a run at another length cannot reuse it.
 fn write_flexible_series(path: &Path, f: &ArmResult, frames: usize, stride: usize) {
-    let mut t = format!("# flexible {frames} {stride} {} {} {} {} {}\n", f.passes, f.seconds, f.physical_fs, f.steps, f.dt_au);
+    let mut t = format!("# flexible2 {frames} {stride} {} {} {} {} {}\n", f.passes, f.seconds, f.physical_fs, f.steps, f.dt_au);
     for o in &f.series {
-        t.push_str(&format!("{} {} {} {} {} {}\n", o.t_fs, o.temperature_k, o.energy, o.cross_unit_per_water, o.bonds_per_water, o.peak_bohr));
+        t.push_str(&format!("{} {} {} {} {} {} {} {}\n", o.t_fs, o.temperature_k, o.energy, o.cross_unit_per_water, o.bonds_per_water, o.peak_bohr, o.rigid_mode_temperature_k, o.vibrational_kinetic_per_water_kt));
     }
     std::fs::write(path, t).expect("flexible.series writes");
 }
@@ -754,14 +807,14 @@ fn read_flexible_series(path: &Path, frames: usize, stride: usize) -> Option<Arm
     let t = std::fs::read_to_string(path).ok()?;
     let mut lines = t.lines();
     let head: Vec<&str> = lines.next()?.split_whitespace().collect();
-    if head.len() != 9 || head[1] != "flexible" || head[2].parse::<usize>().ok()? != frames || head[3].parse::<usize>().ok()? != stride {
+    if head.len() != 9 || head[1] != "flexible2" || head[2].parse::<usize>().ok()? != frames || head[3].parse::<usize>().ok()? != stride {
         return None;
     }
     let mut series = Vec::new();
     for line in lines {
         let v: Vec<f64> = line.split_whitespace().filter_map(|x| x.parse().ok()).collect();
-        if v.len() == 6 {
-            series.push(Obs { t_fs: v[0], temperature_k: v[1], energy: v[2], cross_unit_per_water: v[3], bonds_per_water: v[4], peak_bohr: v[5], ledger_adjust: 0.0 });
+        if v.len() == 8 {
+            series.push(Obs { t_fs: v[0], temperature_k: v[1], energy: v[2], cross_unit_per_water: v[3], bonds_per_water: v[4], peak_bohr: v[5], ledger_adjust: 0.0, rigid_mode_temperature_k: v[6], vibrational_kinetic_per_water_kt: v[7] });
         }
     }
     Some(ArmResult { series, passes: head[4].parse().ok()?, seconds: head[5].parse().ok()?, physical_fs: head[6].parse().ok()?, steps: head[7].parse().ok()?, dt_au: head[8].parse().ok()? })
@@ -807,7 +860,7 @@ fn stiffness_phase(obs: &Path, out: &Path, settle_frames: usize) {
     w.done("stiffness.done", "the contact stiffness measured off the served law under rigid motions").expect("done");
 }
 
-fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readouts: usize, refine: bool, reuse: bool) {
+fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readouts: usize, refine: bool, reuse: bool, match_3n: bool) {
     let w = RecordWriter::new(out);
     let law = load_law(obs);
     let (mut sim, l) = build(&law);
@@ -888,7 +941,7 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
             eprintln!("the flexible arm: {frames} frames at the tables' step, a readout every {stride}");
             sim.restore(&branch).expect("the branch restores");
             sim.thermostat_on = false;
-            let f = run_flexible(&mut sim, &z, l, frames, stride);
+            let f = run_flexible(&mut sim, &z, l, frames, stride, &units_at_branch, &body);
             write_flexible_series(&series_path, &f, frames, stride);
             f
         }
@@ -896,12 +949,13 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
     eprintln!("the rigid arm{}", if refine { " with the refinement demonstration" } else { "" });
     sim.restore(&branch).expect("the branch restores");
     sim.thermostat_on = false;
-    let rigid = run_rigid(&mut sim, &z, l, &body, k_envelope, frames, stride, false, t_branch);
+    let match_k = if match_3n { Some(t_branch) } else { None };
+    let rigid = run_rigid(&mut sim, &z, l, &body, k_envelope, frames, stride, false, match_k);
     let demo = if refine {
         eprintln!("the rigid arm WITH the refinement demonstration, from the same branch point");
         sim.restore(&branch).expect("the branch restores");
         sim.thermostat_on = false;
-        Some(run_rigid(&mut sim, &z, l, &body, k_envelope, frames, stride, true, t_branch))
+        Some(run_rigid(&mut sim, &z, l, &body, k_envelope, frames, stride, true, match_k))
     } else {
         None
     };
@@ -917,6 +971,9 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
     };
     let (ft, fu, fb, fp) = sum(&flex.series);
     let (rt, ru, rb, rp) = sum(&rigid.result.series);
+    let ftr = half_summary(&flex.series, |o| o.rigid_mode_temperature_k);
+    let rtr = half_summary(&rigid.result.series, |o| o.rigid_mode_temperature_k);
+    let fvib = half_summary(&flex.series, |o| o.vibrational_kinetic_per_water_kt);
     let kt = K_B * TEMPERATURE_K;
     let (_, fe_peak, _) = energy_excursion(&flex.series);
     let (_, re_peak, _) = energy_excursion(&rigid.result.series);
@@ -959,7 +1016,8 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
     }
 
     println!("REPLACEMENT ERROR (second half, rigid - flexible; each with its own SEM):");
-    println!("  temperature      {:8.2} K   - {:8.2} K   = {:+.2} K  (sem {:.2} / {:.2}; note the arms count 6 and 9 dof per unit)", rt.0, ft.0, rt.0 - ft.0, rt.1, ft.1);
+    println!("  temperature      {:8.2} K   - {:8.2} K   = {:+.2} K  (sem {:.2} / {:.2}; the arms count 6 and 9 dof per unit - NOT the comparator)", rt.0, ft.0, rt.0 - ft.0, rt.1, ft.1);
+    println!("  RIGID-MODE T     {:8.2} K   - {:8.2} K   = {:+.2} K  (sem {:.2} / {:.2}; the flexible arm's units projected at every readout - the comparator; its vibrations hold {:.2} kT/water of kinetic energy against 1.5 at equipartition)", rtr.0, ftr.0, rtr.0 - ftr.0, rtr.1, ftr.1, fvib.0);
     println!("  cross-unit U     {:.6e} - {:.6e} = {:+.3e} Ha/water = {:+.3} kT (sem {:.1e} / {:.1e})", ru.0, fu.0, ru.0 - fu.0, (ru.0 - fu.0) / kt, ru.1, fu.1);
     println!("  bonds per water  {:.4} - {:.4} = {:+.4} (sem {:.4} / {:.4})", rb.0, fb.0, rb.0 - fb.0, rb.1, fb.1);
     println!("  O-O first peak   {:.3} - {:.3} = {:+.3} bohr (sem {:.3} / {:.3})", rp.0, fp.0, rp.0 - fp.0, rp.1, fp.1);
@@ -1003,14 +1061,15 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
         .number("rigid_temperature_as_projected_k", rigid.t_projected_k)
         .number("rigid_temperature_matched_k", rigid.t_matched_k)
         .number("kinetic_removed_by_matching_hartree", rigid.kinetic_removed_by_matching)
-        .text("temperature_matching_rule", "the rigid modes are read as projected (the diagnostic of the fine box's equipartition), then every body's momenta are rescaled so the six-dof temperature equals the fine box's own 3N reading at the branch; the kinetic energy removed is recorded and is NOT part of the arm's energy ledger, which starts after it")
+        .flag("matched_to_3n", match_3n)
+        .text("temperature_matching_rule", "DEFAULT, no rescaling: the rigid modes are read as projected and KEPT, because the fine box's intermolecular bath is what a rigid replacement inherits and its 3N temperature averages that bath with vibrations that have not equilibrated (runs 2 and 3: rescaling to the 3N reading relaxed back within one readout with energy conserved). --match-3n rescales to the 3N reading and records the kinetic energy removed, which is NOT part of the arm's energy ledger")
         .flag("branch_reused", reuse)
         .raw("flexible", flex.json("flexible"))
         .raw("rigid", rigid.result.json("rigid"))
         .number("speedup_core_seconds_per_ps", speedup)
         .raw("rigid_refine", demo.as_ref().map(|d| d.result.json("rigid_refine")).unwrap_or_else(|| "null".to_string()))
         .number("speedup_refine_core_seconds_per_ps", demo.as_ref().map(|d| flex.core_seconds_per_ps() / d.result.core_seconds_per_ps()).unwrap_or(f64::NAN))
-        .raw("replacement_error_second_half", format!("{{{}, {}, {}, {}}}", triple("temperature_k", ft, rt), triple("cross_unit_per_water_hartree", fu, ru), triple("bonds_per_water", fb, rb), triple("oo_first_peak_bohr", fp, rp)))
+        .raw("replacement_error_second_half", format!("{{{}, {}, {}, {}, {}, \"flexible_vibrational_kinetic_per_water_kt\": {}, \"comparator\": \"rigid_mode_temperature_k: the flexible arm's units projected at every readout and their six retained modes read, against the rigid arm's own; temperature_k is the 3N reading on the flexible arm and the 6-dof reading on the rigid arm and compares different things\"}}", triple("temperature_k", ft, rt), triple("rigid_mode_temperature_k", ftr, rtr), triple("cross_unit_per_water_hartree", fu, ru), triple("bonds_per_water", fb, rb), triple("oo_first_peak_bohr", fp, rp), num(fvib.0)))
         .flag("refine", refine)
         .raw("refine_events", format!("[{events}]"))
         .int("fine_frames_while_refined", demo.as_ref().map(|d| d.fine_frames_while_refined as i64).unwrap_or(0))
@@ -1056,6 +1115,7 @@ fn main() {
             val("--readouts").and_then(|v| v.parse().ok()).unwrap_or(40),
             args.iter().any(|a| a == "--refine"),
             args.iter().any(|a| a == "--reuse"),
+            args.iter().any(|a| a == "--match-3n"),
         ),
         other => panic!("unknown phase {other:?}: stiffness | run"),
     }

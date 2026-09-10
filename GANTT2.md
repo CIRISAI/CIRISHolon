@@ -623,10 +623,31 @@ ledgered) — 313 passes against 401 with 75 % of the time refined, the accounte
 6.9e-5 Ha per water (0.075 kT) under the bar where the raw one (1.17e-4) is over it, which is
 what the ledger is for. Both arms HEAT on that box (the pinned lattice is still relaxing at
 10 fs; the same released potential goes into 6 rather than 9 degrees of freedom, so the rigid
-arm heats faster) — the reason the first counted run settles for 20,000 frames first. **That
-run is launched** (`replace0/run_detached.sh`, one core): 20,000 settling, 20,000 counted
-(0.52 ps) both arms, the rigid arm twice; its `run.json` is the first replacement-error
-reading on this law and is owed a freeze before any of its numbers is a claim.
+arm heats faster) — the reason the first counted run settles for 20,000 frames first. **The counted runs (2026-09-09/10, 20,000 settling frames, 20,000 counted = 0.52 ps, both
+arms, the rigid arm twice; one core; the bundle `branch.ckpt` + `flexible.series` written by
+the first and reused by the rest), each parked under `replace0/` by what it taught:**
+
+| run | what changed | envelope → rigid step | speedup (all overheads) | NVE | REFINE | what it taught |
+|---|---|---|---|---|---|---|
+| 1 `first_unmatched/` | as built | 5.59e-2 Ha/bohr² → **16.54 au = 15.35×** the fine step | **15.6×** (14,447 → 926 core-s/ps) | rigid 5.8e-7 Ha/water | FAIL: 85 % refined, spontaneous trips | the rigid modes AS PROJECTED read 446 K against the fine box's 319 K; projection discarded only 0.41 kT/water of vibrational kinetic energy against 1.5 at equipartition |
+| 2 `second_pin_geometry/` | momenta rescaled to the 3N reading; HOT 8, the disturbance declared in the rule's units; the physical event clock; the bundle | same | **17.0×** (15,236 → 896) | rigid 3.5e-7 | FAIL on the accounted energy (0.34 kT/water) | matched to 319 K at t = 0, the rigid arm was at 386 K by its first readout with energy conserved to 3e-5 Ha: ~0.7 kT/water of potential released in 13 fs |
+| 3 `third_mean_geometry_matched3n/` | the lift's reference geometry the liquid's own mean at the branch (O–H **1.964** vs the pin's 1.944 bohr, H–O–H 1.659 vs 1.689 rad), measured through the box's image | 5.61e-2 → 16.82 au | **17.0×** (15,236 → 904) | rigid 2.8e-7 | **PASS**: 22.5 % refined, 3.96× while carrying the refined region, the accounted energy under the bar | the liquid IS elongated and REFINE's ledger closes once held units snap to the liquid mean — but the plain arm still heats 319 → 394 K in one readout: the snap was never the cause |
+| 4 (running) | no rescaling; the flexible arm's units PROJECTED at every readout and their rigid-mode temperature carried beside the 3N reading; the temperature error taken on that | — | — | — | — | the smoke on the scratch box: rigid 504 K against the flexible arm's rigid-mode 501 K (**+3 K**) where the 3N comparison read +128 K |
+
+**The finding under runs 1–3, stated plainly: the flexible reference is not equilibrated
+between its modes.** Its intermolecular bath sits near 440 K and its O–H stretches near
+150 K, and the thermostat's 3N reading (319 K) is their average — a 5,000 cm⁻¹ classical
+stretch equilibrates with the bath slowly, the pinned lattice's relaxation heated the bath,
+and stochastic rescaling scales every velocity alike. A rigid replacement inherits the bath;
+rescaling it to the average lets the configuration relax back (runs 2 and 3), and comparing
+its temperature to the 3N reading compares different things. Two consequences for the
+campaign, not only for REPLACE-0: the settling criterion reads T and U and cannot see a
+mode split, so the gate's box may be "settled" with cold vibrations — the flexible arm's
+projected series in run 4's bundle is the first instrument that reads it; and a fair
+replacement error is read on the rigid modes' own temperature, which run 4 does. The
+replacement error on structure is already in hand at matched bath temperature (run 1: bonds
+−0.016 ± 0.014, the peak −0.038 ± 0.04 bohr; run 3 at +110 K: +0.066, −0.029), and is
+owed a freeze before any of it is a claim.
 
 Owed, named: the branch point should be the CAMPAIGN's settled checkpoint once the 1×
 gate has one (WP1's reference bundle), not this runner's own settling; a seed and a

@@ -35,7 +35,8 @@ use holon_campaign::{inefficiency, num, read_input_after, Gate, Record, RecordWr
 use holon_lens::lens::{hbonds_periodic, rdf_oo};
 use holon_render::channel::Row;
 use holon_render::checkpoint::Checkpoint;
-use holon_render::rigid_adapter::{fine_of, project_all, reference_body, site_forces_of, unit_members, write_back, UnitMembers};
+use holon_render::rigid_adapter::{fine_of, mean_monomer_geometry, project_all, reference_body, reference_body_from, site_forces_of, unit_members, write_back, UnitMembers};
+use holon_render::field::{WATER_PIN_R_BOHR, WATER_PIN_THETA_RAD};
 use holon_render::seam::{CtLoad, CtServe, CtTable, SeamModel, CT_DIM};
 use holon_render::sim::{Boundary, Sim};
 use holon_render::thermostat::ThermostatKind;
@@ -849,7 +850,16 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
         ck
     };
     let t_branch = sim.temperature();
-    let body = reference_body().expect("the pinned monomer is principal");
+    // THE LIFT'S REFERENCE GEOMETRY IS THE LIQUID'S OWN MEAN AT THE BRANCH, measured and
+    // recorded beside the pin it is not. (The first matched run carried the pin and released
+    // ~0.7 kT per water on the snap.)
+    let (units_at_branch, _) = unit_members(&sim.units_reading());
+    let geom = mean_monomer_geometry(&sim, &units_at_branch);
+    let body = reference_body_from(geom.r_oh_bohr, geom.theta_rad).expect("the mean monomer is principal");
+    eprintln!(
+        "reference geometry at the branch: O-H {:.5} +/- {:.5} bohr, H-O-H {:.5} +/- {:.5} rad over {} units (the pin: {:.5} bohr, {:.5} rad)",
+        geom.r_oh_bohr, geom.r_oh_sd_bohr, geom.theta_rad, geom.theta_sd_rad, geom.units, WATER_PIN_R_BOHR, WATER_PIN_THETA_RAD
+    );
 
     // the stiffness, measured on the branch state unless a record already exists
     let stiff_path = out.join("stiffness.json");
@@ -989,6 +999,7 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
         .number("discarded_at_branch_internal_kinetic_hartree", rigid.discarded_at_branch.1)
         .number("discarded_at_branch_internal_kinetic_per_water_kt", rigid.discarded_at_branch.1 / N_WATERS as f64 / kt)
         .number("branch_temperature_k_3n", t_branch)
+        .raw("reference_geometry", format!("{{\"rule\": \"the liquid's own mean monomer at the branch point, measured through the box's minimum image over every water unit; the lift's body is built from it, not from the gas-phase pin\", \"r_oh_bohr\": {}, \"r_oh_sd_bohr\": {}, \"theta_rad\": {}, \"theta_sd_rad\": {}, \"units\": {}, \"pin_r_oh_bohr\": {}, \"pin_theta_rad\": {}}}", num(geom.r_oh_bohr), num(geom.r_oh_sd_bohr), num(geom.theta_rad), num(geom.theta_sd_rad), geom.units, num(WATER_PIN_R_BOHR), num(WATER_PIN_THETA_RAD)))
         .number("rigid_temperature_as_projected_k", rigid.t_projected_k)
         .number("rigid_temperature_matched_k", rigid.t_matched_k)
         .number("kinetic_removed_by_matching_hartree", rigid.kinetic_removed_by_matching)

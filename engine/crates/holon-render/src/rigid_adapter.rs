@@ -24,9 +24,59 @@ use holon_runtime::{Discarded, Operator, Refusal};
 /// engine's (`M_H`; oxygen's `mass_me()`). The arrangement is immaterial — the operator fits a
 /// fine state by its own declared frame — the geometry and the masses are what count.
 pub fn reference_body() -> Result<Body, Refusal> {
-    let (s, c) = (0.5 * WATER_PIN_THETA_RAD).sin_cos();
-    let r = WATER_PIN_R_BOHR;
+    reference_body_from(WATER_PIN_R_BOHR, WATER_PIN_THETA_RAD)
+}
+
+/// A reference body at a DECLARED geometry - the liquid's own mean O-H length and H-O-H
+/// angle, measured at a branch point, is the one a rigid replacement of the liquid should
+/// carry (REPLACE-0's first matched run: snapping every monomer to the gas-phase pin released
+/// ~0.7 kT per water of potential, because the liquid's donor O-H bonds are longer than the
+/// pin's and every hydrogen bond was weakened at once). Masses the engine's.
+pub fn reference_body_from(r_oh_bohr: f64, theta_rad: f64) -> Result<Body, Refusal> {
+    let (s, c) = (0.5 * theta_rad).sin_cos();
+    let r = r_oh_bohr;
     Body::from_monomer([[0.0, 0.0, 0.0], [r * c, r * s, 0.0], [r * c, -r * s, 0.0]], [OXYGEN.mass_me(), M_H, M_H])
+}
+
+/// The scene's MEAN monomer geometry over its water units: the mean O-H length over both
+/// bonds of every unit and the mean H-O-H angle, with their standard deviations, read
+/// through the box's own minimum image. A measurement, for a record and for
+/// [`reference_body_from`]; the pin is not consulted.
+pub fn mean_monomer_geometry(sim: &Sim, units: &[UnitMembers]) -> MonomerGeometry {
+    let g = sim.geom();
+    let at = |i: usize| (sim.atoms[i].x, sim.atoms[i].y, sim.atoms[i].z);
+    let mut r = Vec::with_capacity(2 * units.len());
+    let mut th = Vec::with_capacity(units.len());
+    for m in units {
+        let o = at(m.o);
+        let d1 = g.delta(o, at(m.h[0]));
+        let d2 = g.delta(o, at(m.h[1]));
+        let r1 = (d1.0 * d1.0 + d1.1 * d1.1 + d1.2 * d1.2).sqrt();
+        let r2 = (d2.0 * d2.0 + d2.1 * d2.1 + d2.2 * d2.2).sqrt();
+        r.push(r1);
+        r.push(r2);
+        let cos = (d1.0 * d2.0 + d1.1 * d2.1 + d1.2 * d2.2) / (r1 * r2);
+        th.push(cos.clamp(-1.0, 1.0).acos());
+    }
+    let stat = |v: &[f64]| {
+        let n = v.len().max(1) as f64;
+        let mean = v.iter().sum::<f64>() / n;
+        let var = v.iter().map(|x| (x - mean) * (x - mean)).sum::<f64>() / n;
+        (mean, var.sqrt())
+    };
+    let (r_mean, r_sd) = stat(&r);
+    let (t_mean, t_sd) = stat(&th);
+    MonomerGeometry { r_oh_bohr: r_mean, r_oh_sd_bohr: r_sd, theta_rad: t_mean, theta_sd_rad: t_sd, units: units.len() }
+}
+
+/// See [`mean_monomer_geometry`].
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct MonomerGeometry {
+    pub r_oh_bohr: f64,
+    pub r_oh_sd_bohr: f64,
+    pub theta_rad: f64,
+    pub theta_sd_rad: f64,
+    pub units: usize,
 }
 
 /// One water unit's atoms, by the engine's own indices: the oxygen root and its two hydrogens

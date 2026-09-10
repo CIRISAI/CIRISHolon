@@ -4,7 +4,7 @@
 //!
 //! ```text
 //! cargo run --release -p holon-render --example replace0 -- stiffness [DIR]
-//! cargo run --release -p holon-render --example replace0 -- run [DIR] --frames N [--settle M] [--readouts R] [--refine]
+//! cargo run --release -p holon-render --example replace0 -- run [DIR] --frames N [--settle M] [--readouts R] [--refine] [--reuse]
 //! ```
 //!
 //! Three things are measured and nothing is assumed:
@@ -34,6 +34,7 @@
 use holon_campaign::{inefficiency, num, read_input_after, Gate, Record, RecordWriter, Report};
 use holon_lens::lens::{hbonds_periodic, rdf_oo};
 use holon_render::channel::Row;
+use holon_render::checkpoint::Checkpoint;
 use holon_render::rigid_adapter::{fine_of, project_all, reference_body, site_forces_of, unit_members, write_back, UnitMembers};
 use holon_render::seam::{CtLoad, CtServe, CtTable, SeamModel, CT_DIM};
 use holon_render::sim::{Boundary, Sim};
@@ -71,11 +72,13 @@ const STIFFNESS_DELTA_RAD: f64 = 2.0e-3;
 /// `HOT` times its equipartition share is outside the supported domain and is refined with
 /// every unit whose oxygen is within `BUFFER_BOHR`; a refined unit re-coarsens when its
 /// projected kinetic energy has stayed under `HOT / 2` of that share for `HYSTERESIS`
-/// consecutive readouts. The disturbance scales the chosen unit's momenta by `DISTURB`.
-const HOT: f64 = 6.0;
+/// consecutive readouts. The disturbance SETS the chosen unit's kinetic energy to
+/// `DISTURB_SHARE` times its equipartition share, in the rule's own units, so it trips the
+/// rule by construction and by a declared margin rather than by luck of the unit's momentum.
+const HOT: f64 = 8.0;
 const BUFFER_BOHR: f64 = 6.5;
 const HYSTERESIS: usize = 3;
-const DISTURB: f64 = 4.0;
+const DISTURB_SHARE: f64 = 12.0;
 
 // ------------------------------------------------------------------ the law (LIQUID-2's)
 
@@ -477,10 +480,20 @@ struct RigidRun {
     fine_frames_while_refined: u64,
     physical_fs_refined: f64,
     hot_unit: Option<usize>,
+    /// The rigid modes' temperature AS PROJECTED from the fine state, before any matching:
+    /// the diagnostic that says whether the fine box was equipartitioned between its
+    /// vibrations and its rigid modes (the first counted run: 446 K against the box's 319 K -
+    /// the vibrations were cold, the projection kept their angular momentum as rotation).
+    t_projected_k: f64,
+    /// The temperature the rigid momenta were rescaled to (the fine box's own 3N reading at
+    /// the branch), and the kinetic energy that rescaling removed. A DECLARED step: the
+    /// coarse state is initialised at the fine state's temperature on its retained modes.
+    t_matched_k: f64,
+    kinetic_removed_by_matching: f64,
 }
 
 /// THE RIGID ARM, and with `refine` the demonstration.
-fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, frames: usize, stride: usize, refine: bool) -> RigidRun {
+fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, frames: usize, stride: usize, refine: bool, match_k: f64) -> RigidRun {
     let t0 = Instant::now();
     let dt_f = sim.dt();
     let (projected, other) = project_all(sim, body).expect("every unit projects at the branch point");
@@ -502,8 +515,23 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
     );
     let mut bodies: Vec<Flying> = Vec::with_capacity(n);
     for (m, w, _) in projected {
-        write_back(sim, &m, &w.reconstruct());
         bodies.push(Flying { m, w, f: SiteForces::default() });
+    }
+    // TEMPERATURE MATCHING, declared and recorded: the rigid modes as projected carry
+    // whatever the fine state's velocities put on them - including the angular momentum of
+    // its vibrations - so their temperature is read first, then every momentum is rescaled
+    // to the fine box's own temperature and the kinetic energy removed is written down.
+    let t_projected = rigid_temperature(&bodies);
+    let ke_before = rigid_kinetic(&bodies);
+    let s = (match_k / t_projected).sqrt();
+    for b in bodies.iter_mut() {
+        b.w.p = scale(b.w.p, s);
+        b.w.l_body = scale(b.w.l_body, s);
+    }
+    let kinetic_removed = ke_before - rigid_kinetic(&bodies);
+    eprintln!("  rigid modes as projected: {t_projected:.1} K; rescaled to the fine box's {match_k:.1} K, removing {kinetic_removed:.3e} Ha");
+    for b in bodies.iter() {
+        write_back(sim, &b.m, &b.w.reconstruct());
     }
     sim.compute_forces();
     let mut passes = 1u64;
@@ -542,16 +570,19 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
     };
     let disturb_at = readouts / 4;
     let mut steps = 0u64;
+    // the physical clock, advanced by every rigid step and every fine frame
+    let mut t_au = 0.0f64;
 
     for r in 0..readouts {
         let t_start_fs = r as f64 * period * AU_TIME_FS;
         if refine && r == disturb_at {
             let u = hot_unit.unwrap();
             let before = bodies[u].w.kinetic();
-            bodies[u].w.p = scale(bodies[u].w.p, DISTURB);
-            bodies[u].w.l_body = scale(bodies[u].w.l_body, DISTURB);
+            let s = (DISTURB_SHARE * share / before.max(1e-300)).sqrt();
+            bodies[u].w.p = scale(bodies[u].w.p, s);
+            bodies[u].w.l_body = scale(bodies[u].w.l_body, s);
             injected += bodies[u].w.kinetic() - before;
-            events.push(RefineEvent { t_fs: t_start_fs, what: format!("disturbance: unit {u}'s momenta scaled by {DISTURB}"), units: 1, discarded_deformation_rms: 0.0, discarded_internal_kinetic: 0.0 });
+            events.push(RefineEvent { t_fs: t_start_fs, what: format!("disturbance: unit {u}'s kinetic energy set to {DISTURB_SHARE} times its equipartition share (from {:.2e} Ha)", before), units: 1, discarded_deformation_rms: 0.0, discarded_internal_kinetic: 0.0 });
             eprintln!("  DISTURBANCE at {t_start_fs:.1} fs: unit {u} kinetic {:.3e} Ha against the share {:.3e}", bodies[u].w.kinetic(), share);
         }
         if refined.is_empty() {
@@ -560,6 +591,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
                 rigid_step(sim, &mut bodies, dt_r);
                 passes += 1;
                 steps += 1;
+                t_au += dt_r;
                 if refine {
                     let hot: Vec<usize> = (0..n).filter(|&u| bodies[u].w.kinetic() > HOT * share).collect();
                     if !hot.is_empty() {
@@ -579,7 +611,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
                         for &u in &set {
                             quiet[u] = 0;
                         }
-                        let t_fs = (steps as f64 * dt_r) * AU_TIME_FS;
+                        let t_fs = t_au * AU_TIME_FS;
                         eprintln!("  REFINE at {t_fs:.1} fs: {} hot, {} units to fine stepping (buffer {BUFFER_BOHR} bohr)", hot.len(), set.len());
                         events.push(RefineEvent { t_fs, what: format!("refine: {} hot unit(s), first shell of {}", hot.len(), set.len()), units: set.len(), discarded_deformation_rms: 0.0, discarded_internal_kinetic: 0.0 });
                         refined = set;
@@ -606,6 +638,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
             sim.step_frame(1);
             passes += 1;
             fine_frames += 1;
+            t_au += dt_f;
             for u in 0..n {
                 if refined.contains(&u) {
                     continue;
@@ -698,7 +731,39 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
         fine_frames_while_refined: fine_frames,
         physical_fs_refined: fs_refined,
         hot_unit,
+        t_projected_k: t_projected,
+        t_matched_k: match_k,
+        kinetic_removed_by_matching: kinetic_removed,
     }
+}
+
+// ------------------------------------------------------------------ the reference bundle
+
+/// The flexible arm's series as text, one readout per line, with a header naming the frames
+/// and stride it was taken at so a run at another length cannot reuse it.
+fn write_flexible_series(path: &Path, f: &ArmResult, frames: usize, stride: usize) {
+    let mut t = format!("# flexible {frames} {stride} {} {} {} {} {}\n", f.passes, f.seconds, f.physical_fs, f.steps, f.dt_au);
+    for o in &f.series {
+        t.push_str(&format!("{} {} {} {} {} {}\n", o.t_fs, o.temperature_k, o.energy, o.cross_unit_per_water, o.bonds_per_water, o.peak_bohr));
+    }
+    std::fs::write(path, t).expect("flexible.series writes");
+}
+
+fn read_flexible_series(path: &Path, frames: usize, stride: usize) -> Option<ArmResult> {
+    let t = std::fs::read_to_string(path).ok()?;
+    let mut lines = t.lines();
+    let head: Vec<&str> = lines.next()?.split_whitespace().collect();
+    if head.len() != 9 || head[1] != "flexible" || head[2].parse::<usize>().ok()? != frames || head[3].parse::<usize>().ok()? != stride {
+        return None;
+    }
+    let mut series = Vec::new();
+    for line in lines {
+        let v: Vec<f64> = line.split_whitespace().filter_map(|x| x.parse().ok()).collect();
+        if v.len() == 6 {
+            series.push(Obs { t_fs: v[0], temperature_k: v[1], energy: v[2], cross_unit_per_water: v[3], bonds_per_water: v[4], peak_bohr: v[5], ledger_adjust: 0.0 });
+        }
+    }
+    Some(ArmResult { series, passes: head[4].parse().ok()?, seconds: head[5].parse().ok()?, physical_fs: head[6].parse().ok()?, steps: head[7].parse().ok()?, dt_au: head[8].parse().ok()? })
 }
 
 // ------------------------------------------------------------------ the phases
@@ -741,7 +806,7 @@ fn stiffness_phase(obs: &Path, out: &Path, settle_frames: usize) {
     w.done("stiffness.done", "the contact stiffness measured off the served law under rigid motions").expect("done");
 }
 
-fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readouts: usize, refine: bool) {
+fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readouts: usize, refine: bool, reuse: bool) {
     let w = RecordWriter::new(out);
     let law = load_law(obs);
     let (mut sim, l) = build(&law);
@@ -758,11 +823,32 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
         .leg("the box is periodic", sim.boundary == Boundary::Periodic);
     report.gate(g_config);
 
-    eprintln!("settling {settle_frames} frames under the stochastic thermostat, then NVE from the branch point");
-    settle(&mut sim, settle_frames);
-    sim.thermostat_on = false;
-    sim.compute_forces();
-    let branch = sim.checkpoint();
+    // THE REFERENCE BUNDLE (WP1): the branch checkpoint and the flexible arm's series are
+    // written beside the record and REUSED by a later run of the rigid arms, so an operator
+    // change does not pay for the settling and the reference again. A reused flexible series
+    // is the same trajectory to the bit (the checkpoint restores it), and the record says
+    // which it was.
+    let ck_path = out.join("branch.ckpt");
+    let reuse = reuse && ck_path.exists();
+    let branch = if reuse {
+        let bytes = std::fs::read(&ck_path).expect("branch.ckpt reads");
+        let ck = Checkpoint { bytes };
+        sim.restore(&ck).expect("the branch checkpoint restores into the same box");
+        sim.thermostat_on = false;
+        sim.compute_forces();
+        eprintln!("branch point REUSED from {} (digest {:#x})", ck_path.display(), ck.digest());
+        ck
+    } else {
+        eprintln!("settling {settle_frames} frames under the stochastic thermostat, then NVE from the branch point");
+        settle(&mut sim, settle_frames);
+        sim.thermostat_on = false;
+        sim.compute_forces();
+        let ck = sim.checkpoint();
+        std::fs::write(&ck_path, &ck.bytes).expect("branch.ckpt writes");
+        eprintln!("branch point WRITTEN to {} (digest {:#x})", ck_path.display(), ck.digest());
+        ck
+    };
+    let t_branch = sim.temperature();
     let body = reference_body().expect("the pinned monomer is principal");
 
     // the stiffness, measured on the branch state unless a record already exists
@@ -782,19 +868,30 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
 
     let stride = (frames / readouts).max(1);
     let frames = stride * (frames / stride);
-    eprintln!("the flexible arm: {frames} frames at the tables' step, a readout every {stride}");
-    sim.restore(&branch).expect("the branch restores");
-    sim.thermostat_on = false;
-    let flex = run_flexible(&mut sim, &z, l, frames, stride);
+    let series_path = out.join("flexible.series");
+    let flex = match (reuse, read_flexible_series(&series_path, frames, stride)) {
+        (true, Some(f)) => {
+            eprintln!("the flexible arm REUSED from {} ({} readouts)", series_path.display(), f.series.len());
+            f
+        }
+        _ => {
+            eprintln!("the flexible arm: {frames} frames at the tables' step, a readout every {stride}");
+            sim.restore(&branch).expect("the branch restores");
+            sim.thermostat_on = false;
+            let f = run_flexible(&mut sim, &z, l, frames, stride);
+            write_flexible_series(&series_path, &f, frames, stride);
+            f
+        }
+    };
     eprintln!("the rigid arm{}", if refine { " with the refinement demonstration" } else { "" });
     sim.restore(&branch).expect("the branch restores");
     sim.thermostat_on = false;
-    let rigid = run_rigid(&mut sim, &z, l, &body, k_envelope, frames, stride, false);
+    let rigid = run_rigid(&mut sim, &z, l, &body, k_envelope, frames, stride, false, t_branch);
     let demo = if refine {
         eprintln!("the rigid arm WITH the refinement demonstration, from the same branch point");
         sim.restore(&branch).expect("the branch restores");
         sim.thermostat_on = false;
-        Some(run_rigid(&mut sim, &z, l, &body, k_envelope, frames, stride, true))
+        Some(run_rigid(&mut sim, &z, l, &body, k_envelope, frames, stride, true, t_branch))
     } else {
         None
     };
@@ -891,6 +988,12 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
         .number("discarded_at_branch_deformation_rms_bohr", rigid.discarded_at_branch.0)
         .number("discarded_at_branch_internal_kinetic_hartree", rigid.discarded_at_branch.1)
         .number("discarded_at_branch_internal_kinetic_per_water_kt", rigid.discarded_at_branch.1 / N_WATERS as f64 / kt)
+        .number("branch_temperature_k_3n", t_branch)
+        .number("rigid_temperature_as_projected_k", rigid.t_projected_k)
+        .number("rigid_temperature_matched_k", rigid.t_matched_k)
+        .number("kinetic_removed_by_matching_hartree", rigid.kinetic_removed_by_matching)
+        .text("temperature_matching_rule", "the rigid modes are read as projected (the diagnostic of the fine box's equipartition), then every body's momenta are rescaled so the six-dof temperature equals the fine box's own 3N reading at the branch; the kinetic energy removed is recorded and is NOT part of the arm's energy ledger, which starts after it")
+        .flag("branch_reused", reuse)
         .raw("flexible", flex.json("flexible"))
         .raw("rigid", rigid.result.json("rigid"))
         .number("speedup_core_seconds_per_ps", speedup)
@@ -941,6 +1044,7 @@ fn main() {
             settle_frames,
             val("--readouts").and_then(|v| v.parse().ok()).unwrap_or(40),
             args.iter().any(|a| a == "--refine"),
+            args.iter().any(|a| a == "--reuse"),
         ),
         other => panic!("unknown phase {other:?}: stiffness | run"),
     }

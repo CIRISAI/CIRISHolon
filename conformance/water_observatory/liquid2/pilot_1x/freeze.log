@@ -1,0 +1,3 @@
+phase pilot, out /home/emoore/CIRISHolon/conformance/water_observatory/liquid2, observatory /home/emoore/CIRISHolon/conformance/water_observatory
+law /home/emoore/CIRISHolon/conformance/water_observatory/ct3/wall_ct3.json (60 knots at c0 = 1.400000); deepest shape 2.915803, worst knot miss 2.279e-15
+FROZEN from 3 pilot(s): settling = 86000 frames = 2241.4 fs (the maximum of the per-pilot Chodera t0 on the cross-unit energy)

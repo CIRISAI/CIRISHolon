@@ -1,0 +1,20 @@
+phase pilot, out /home/emoore/CIRISHolon/conformance/water_observatory/liquid2, observatory /home/emoore/CIRISHolon/conformance/water_observatory
+law /home/emoore/CIRISHolon/conformance/water_observatory/ct3/wall_ct3.json (60 knots at c0 = 1.400000); deepest shape 2.915803, worst knot miss 2.279e-15
+REFUSING the frozen settling in /home/emoore/CIRISHolon/conformance/water_observatory/liquid2/pilot/settling.json: it was frozen at 8x the tables' step and this arm runs at 1x. A floor in FRAMES does not travel across a step change. The floor falls back to LIQUID-1's own measured settling converted at this step, and the record says so.
+L0 door: unswitched reach 13.3988, table reach 17.2114, switched 13.3988, legality 14.0000, half-edge 14.7968; truncation 7.3533e-8 per water against 1e-5; 128 units, 0 free -> ADMITTED
+  pilot 1 block    4 at frame   8000: T  363.9 K, cross-unit U -4.654544e-3 Ha/water, bonds 1.121, O-O peak 5.350 bohr
+  pilot 1 block    8 at frame  16000: T  341.0 K, cross-unit U -6.815861e-3 Ha/water, bonds 1.365, O-O peak 5.350 bohr
+  pilot 1 block   12 at frame  24000: T  325.8 K, cross-unit U -7.774515e-3 Ha/water, bonds 1.481, O-O peak 5.350 bohr
+  pilot 1 block   16 at frame  32000: T  305.2 K, cross-unit U -8.401350e-3 Ha/water, bonds 1.533, O-O peak 5.150 bohr
+  pilot 1 block   20 at frame  40000: T  285.1 K, cross-unit U -8.550500e-3 Ha/water, bonds 1.555, O-O peak 5.250 bohr
+  pilot 1 block   24 at frame  48000: T  308.6 K, cross-unit U -8.848137e-3 Ha/water, bonds 1.567, O-O peak 5.250 bohr
+  pilot 1 block   28 at frame  56000: T  279.3 K, cross-unit U -9.433327e-3 Ha/water, bonds 1.648, O-O peak 5.250 bohr
+  pilot 1 block   32 at frame  64000: T  278.5 K, cross-unit U -9.584471e-3 Ha/water, bonds 1.631, O-O peak 5.350 bohr
+  pilot 1 block   36 at frame  72000: T  289.7 K, cross-unit U -9.619317e-3 Ha/water, bonds 1.704, O-O peak 5.450 bohr
+  pilot 1 block   40 at frame  80000: T  293.4 K, cross-unit U -1.011312e-2 Ha/water, bonds 1.705, O-O peak 5.150 bohr
+  pilot 1 block   44 at frame  88000: T  287.1 K, cross-unit U -1.028269e-2 Ha/water, bonds 1.716, O-O peak 5.150 bohr
+  pilot 1 block   48 at frame  96000: T  269.0 K, cross-unit U -1.027756e-2 Ha/water, bonds 1.738, O-O peak 5.250 bohr
+  pilot 1 block   52 at frame 104000: T  296.0 K, cross-unit U -1.033151e-2 Ha/water, bonds 1.752, O-O peak 5.150 bohr
+  pilot 1 block   56 at frame 112000: T  282.4 K, cross-unit U -1.037133e-2 Ha/water, bonds 1.709, O-O peak 5.250 bohr
+  pilot 1 block   60 at frame 120000: T  286.2 K, cross-unit U -1.032942e-2 Ha/water, bonds 1.740, O-O peak 5.150 bohr
+pilot 1 (0x50494c4f54300002): 60 blocks, 120000 frames, 46338.7 s; Chodera t0 = 43 blocks = 86000 frames = 2241.4 fs on the cross-unit energy

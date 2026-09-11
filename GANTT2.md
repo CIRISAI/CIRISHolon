@@ -666,6 +666,61 @@ temperature the arms have not seen; the held units' per-frame potential change (
 ~1e-6 bohr of reconstruction per frame); R3 on the rigid arm through the lens; and the
 validity record's first `Empirical` entry, by a freeze.
 
+## LIQUID-2's gate ADMITS, and the counted arms are running (2026-09-11)
+
+Under `LIQUID2_AMENDMENT_1.md` the gate settled **by its criterion, not by its cap**, at
+`102,100` frames = `2.661` ps, and every leg passed: L0, CONFIG 6/6 read back from the live
+objects, **SETTLE**, all three plant pre-checks, and **Sprice**. `gate.done` is written and
+the three confirmation seeds are counting behind it.
+
+**The amendment's case, confirmed by measurement rather than by its own arithmetic.** The new
+instrument (`settling_sample_scatter`) reports what the band was actually applied to over the
+settled half of the run:
+
+| | |
+|---|---|
+| samples | `255` |
+| their mean | `294.11` K (target `293`) |
+| their scatter | **`10.05` K** |
+| the band in force | `36.67` K = **`3.65 sigma`** of that scatter |
+| fraction the band admitted | **`1.000`** |
+| **worst single deviation** | **`33.61` K** |
+
+The last row is the whole finding, and it is empirical: a sample of a settled, equilibrated
+box sat `33.6` K from the target, **outside the frozen band of `21.04` K**. The old criterion
+would have vetoed this settling too, exactly as it vetoed `6.47` ps of the previous run. The
+new SETTLE leg — the band must be at least three times the scatter of the samples it is
+applied to — passed at `3.65`, so the criterion is on the record as not asking for a quieter
+box than this thermostat makes.
+
+One number is worth keeping for the next thermostat question: the measured scatter `10.05` K
+is about `18 %` BELOW the analytic canonical `12.22` K the band is derived from. The band is
+therefore conservative, which is the safe direction for a band, and the empirical leg checks
+it either way; why a canonical thermostat's box scatters below its analytic figure (a finite
+relaxation time on the sampling cadence is the obvious candidate, the mode split REPLACE-0
+found is another) is NOT settled here and is not needed for this gate.
+
+**The phase probe, this time on a box that settled.** The fourth review's correction was that
+the previous probe ran on a capped box a counted arm would have voided. This one does not:
+`spanning_fraction 1.0` and `largest_component_fraction 1.0` over its 100 frames, the
+wraps-zeroed plant taking spanning to `0.0`, union-find agreeing with `largest_domain` on
+every frame, `0.2437` of edges crossing a face. The probe's own limits stand unchanged — 100
+consecutive frames are `2.6` fs and one configuration, not 100 samples — and it remains a
+reading of the instrument, with R2 and S withheld from the gate so they stay forward
+predictions.
+
+**The price, and what the split bought.** The structure arm is `3 x (102,100 settling +
+100,001 counted)` frames at `0.3516` s per pass = **`213,178` s against the `299,478` s
+ceiling, `0.712x`** — inside, with room, where the undivided campaign was `3.64x` over. The
+diffusion arm at the same settling would cost `1,269,000` s, `4.24x` the ceiling, so R3 stays
+priced out and stays its own campaign with its own ceiling still owed. That is option 1 of the
+four, working.
+
+**BIND passed 5/5 on the counted arms** — floor `86,000`, cap `320,000`, counted `100,001`,
+the stride and the arm kind, each read back from `gate.json` and compared exactly. The defect
+the fourth review found in `run_phase` would have had the arm derive its own floor from a
+directory with no pilot set; the arm now refuses to run a design the gate did not admit.
+
 ## M-BAND-FROM-A-SUPPRESSED-SCATTER: the settling criterion cannot fire under the thermostat the campaign selected (2026-09-11)
 
 The gate ran 124 settling blocks — **248,100 frames = 6.47 ps**, 22 hours on one core, past

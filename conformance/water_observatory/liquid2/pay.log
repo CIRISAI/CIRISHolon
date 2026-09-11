@@ -1,0 +1,10 @@
+pay: 2026-09-09T11:59:38-05:00 pid 376322 bin /home/emoore/CIRISHolon/engine/target/release/examples/liquid2 out /home/emoore/CIRISHolon/conformance/water_observatory/liquid2
+pay: pilot 0 on core 24 pid 376327
+pay: pilot 1 on core 25 pid 376328
+pay: pilot 2 on core 26 pid 376329
+pay: pilot 0 exit 0 at 2026-09-10T00:57:47-05:00
+pay: pilot 1 exit 0 at 2026-09-10T00:57:47-05:00
+pay: pilot 2 exit 0 at 2026-09-10T00:58:28-05:00
+pay: freeze exit 0 at 2026-09-10T00:59:13-05:00
+pay: gate exit 101 at 2026-09-11T03:04:12-05:00
+conformance/water_observatory/liquid2_pay.sh: line 51: echo: write error: No space left on device

@@ -1,0 +1,11 @@
+CONFIG     PASS       [4 checks, 4 legs]  serve_mode Blend, beta 5.516353128e1 (/home/emoore/CIRISHolon/conformance/water_observatory/ct3/smooth/beta.json), step 1.077480986e0 au (the engine's hold, allow_dt_growth false), boundary Periodic
+CLOCK      PASS       [3 checks, 3 legs]  the rigid clock from the MEASURED envelope 5.6073e-2 Ha/bohr^2: dt 16.8240 au against the fine 1.0775 au, omega*dt 0.0982 under the hold's 2pi/64 = 0.0982
+COST       PASS       [2 checks, 2 legs]  flexible 20001 passes in 7794.1 s = 14952 core-s/ps; rigid 1321 passes in 610.6 s = 1171 core-s/ps (every overhead inside); speedup 12.76x
+NVE        PASS       [2 checks, 2 legs]  each arm's peak energy excursion per water over the run against a tenth of kT (9.279e-5 Ha): flexible 1.033e-8, rigid 4.562e-7
+REFINE     PASS       [3 checks, 3 legs]  the demonstration: 8 events, 6500 fine frames while refined, 169.4 of 521.3 fs refined (32.5 %); 7444 passes in 2734.3 s = 5246 core-s/ps against the flexible 14952; energy excursion per water raw 2.080e-4, ACCOUNTED (injected subtracted, discards added back) 8.796e-5 against the bar 9.279e-5
+REPLACEMENT ERROR (second half, rigid - flexible; each with its own SEM):
+  temperature        486.99 K   -   341.82 K   = +145.17 K  (sem 5.82 / 4.37; the arms count 6 and 9 dof per unit - NOT the comparator)
+  RIGID-MODE T       486.99 K   -   469.92 K   = +17.07 K  (sem 5.82 / 6.89; the flexible arm's units projected at every readout - the comparator; its vibrations hold 0.46 kT/water of kinetic energy against 1.5 at equipartition)
+  cross-unit U     -7.741193e-3 - -7.745545e-3 = +4.352e-6 Ha/water = +0.005 kT (sem 5.5e-5 / 4.2e-5)
+  bonds per water  1.5406 - 1.4970 = +0.0435 (sem 0.0113 / 0.0104)
+  O-O first peak   5.155 - 5.202 = -0.048 bohr (sem 0.028 / 0.029)

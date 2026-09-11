@@ -1,0 +1,13 @@
+CONFIG     PASS       [4 checks, 4 legs]  serve_mode Blend, beta 5.516353128e1 (/home/emoore/CIRISHolon/conformance/water_observatory/ct3/smooth/beta.json), step 1.077480986e0 au (the engine's hold, allow_dt_growth false), boundary Periodic
+CLOCK      PASS       [3 checks, 3 legs]  the rigid clock from the MEASURED envelope 5.5926e-2 Ha/bohr^2: dt 16.5408 au against the fine 1.0775 au, omega*dt 0.0982 under the hold's 2pi/64 = 0.0982
+COST       PASS       [2 checks, 2 legs]  flexible 20001 passes in 7530.8 s = 14447 core-s/ps; rigid 1321 passes in 482.8 s = 926 core-s/ps (every overhead inside); speedup 15.60x
+NVE        PASS       [2 checks, 2 legs]  each arm's peak energy excursion per water over the run against a tenth of kT (9.279e-5 Ha): flexible 1.033e-8, rigid 5.831e-7
+REFINE     FAIL       [3 checks, 3 legs]  the demonstration: 10 events, 17000 fine frames while refined, 443.1 of 521.3 fs refined (85.0 %); 17268 passes in 7097.9 s = 13617 core-s/ps against the flexible 14447; energy excursion per water raw 1.038e-3, ACCOUNTED (injected subtracted, discards added back) 9.812e-4 against the bar 9.279e-5
+           FAILING LEGS (1), worst first:
+             the ACCOUNTED energy holds to a tenth of kT per water = 1.057460e0
+REPLACEMENT ERROR (second half, rigid - flexible; each with its own SEM):
+  temperature        473.60 K   -   341.82 K   = +131.78 K  (sem 3.80 / 4.37; note the arms count 6 and 9 dof per unit)
+  cross-unit U     -7.148436e-3 - -7.745545e-3 = +5.971e-4 Ha/water = +0.644 kT (sem 3.6e-5 / 4.2e-5)
+  bonds per water  1.4810 - 1.4970 = -0.0160 (sem 0.0099 / 0.0104)
+  O-O first peak   5.164 - 5.202 = -0.038 bohr (sem 0.024 / 0.029)
+REFUSED REFINE: FAIL — the demonstration: 10 events, 17000 fine frames while refined, 443.1 of 521.3 fs refined (85.0 %); 17268 passes in 7097.9 s = 13617 core-s/ps against the flexible 14447; energy excursion per water raw 1.038e-3, ACCOUNTED (injected subtracted, discards added back) 9.812e-4 against the bar 9.279e-5 [the ACCOUNTED energy holds to a tenth of kT per water]

@@ -1,0 +1,13 @@
+CONFIG     PASS       [4 checks, 4 legs]  serve_mode Blend, beta 5.516353128e1 (/home/emoore/CIRISHolon/conformance/water_observatory/ct3/smooth/beta.json), step 1.077480986e0 au (the engine's hold, allow_dt_growth false), boundary Periodic
+CLOCK      PASS       [3 checks, 3 legs]  the rigid clock from the MEASURED envelope 5.5926e-2 Ha/bohr^2: dt 16.5408 au against the fine 1.0775 au, omega*dt 0.0982 under the hold's 2pi/64 = 0.0982
+COST       PASS       [2 checks, 2 legs]  flexible 20001 passes in 7941.9 s = 15236 core-s/ps; rigid 1321 passes in 467.0 s = 896 core-s/ps (every overhead inside); speedup 17.01x
+NVE        PASS       [2 checks, 2 legs]  each arm's peak energy excursion per water over the run against a tenth of kT (9.279e-5 Ha): flexible 1.033e-8, rigid 3.549e-7
+REFINE     FAIL       [3 checks, 3 legs]  the demonstration: 5 events, 5000 fine frames while refined, 130.3 of 521.3 fs refined (25.0 %); 6005 passes in 2178.9 s = 4180 core-s/ps against the flexible 15236; energy excursion per water raw 2.390e-4, ACCOUNTED (injected subtracted, discards added back) 3.196e-4 against the bar 9.279e-5
+           FAILING LEGS (1), worst first:
+             the ACCOUNTED energy holds to a tenth of kT per water = 3.443935e-1
+REPLACEMENT ERROR (second half, rigid - flexible; each with its own SEM):
+  temperature        424.15 K   -   341.82 K   = +82.33 K  (sem 2.98 / 4.37; note the arms count 6 and 9 dof per unit)
+  cross-unit U     -7.881579e-3 - -7.745545e-3 = -1.360e-4 Ha/water = -0.147 kT (sem 2.8e-5 / 4.2e-5)
+  bonds per water  1.5510 - 1.4970 = +0.0539 (sem 0.0069 / 0.0104)
+  O-O first peak   5.188 - 5.202 = -0.014 bohr (sem 0.029 / 0.029)
+REFUSED REFINE: FAIL — the demonstration: 5 events, 5000 fine frames while refined, 130.3 of 521.3 fs refined (25.0 %); 6005 passes in 2178.9 s = 4180 core-s/ps against the flexible 15236; energy excursion per water raw 2.390e-4, ACCOUNTED (injected subtracted, discards added back) 3.196e-4 against the bar 9.279e-5 [the ACCOUNTED energy holds to a tenth of kT per water]

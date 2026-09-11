@@ -1,0 +1,178 @@
+phase run, out /home/emoore/CIRISHolon/conformance/water_observatory/replace0, observatory /home/emoore/CIRISHolon/conformance/water_observatory
+settling 20000 frames under the stochastic thermostat, then NVE from the branch point
+  settling frame    500: T  390.3 K, cross-unit U 1.839427e-4 Ha/water
+  settling frame   1000: T  477.7 K, cross-unit U -1.894341e-3 Ha/water
+  settling frame   1500: T  442.7 K, cross-unit U -1.686068e-3 Ha/water
+  settling frame   2000: T  392.8 K, cross-unit U -1.523736e-3 Ha/water
+  settling frame   2500: T  420.0 K, cross-unit U -2.069303e-3 Ha/water
+  settling frame   3000: T  397.2 K, cross-unit U -2.738307e-3 Ha/water
+  settling frame   3500: T  380.6 K, cross-unit U -2.625596e-3 Ha/water
+  settling frame   4000: T  405.0 K, cross-unit U -3.012919e-3 Ha/water
+  settling frame   4500: T  386.3 K, cross-unit U -3.465986e-3 Ha/water
+  settling frame   5000: T  382.9 K, cross-unit U -3.488197e-3 Ha/water
+  settling frame   5500: T  365.1 K, cross-unit U -3.774243e-3 Ha/water
+  settling frame   6000: T  371.1 K, cross-unit U -4.078080e-3 Ha/water
+  settling frame   6500: T  388.5 K, cross-unit U -4.389851e-3 Ha/water
+  settling frame   7000: T  358.0 K, cross-unit U -4.544102e-3 Ha/water
+  settling frame   7500: T  375.7 K, cross-unit U -4.785849e-3 Ha/water
+  settling frame   8000: T  379.4 K, cross-unit U -5.098594e-3 Ha/water
+  settling frame   8500: T  351.4 K, cross-unit U -5.109410e-3 Ha/water
+  settling frame   9000: T  344.5 K, cross-unit U -5.007947e-3 Ha/water
+  settling frame   9500: T  356.6 K, cross-unit U -5.536160e-3 Ha/water
+  settling frame  10000: T  338.8 K, cross-unit U -5.417845e-3 Ha/water
+  settling frame  10500: T  349.1 K, cross-unit U -5.710559e-3 Ha/water
+  settling frame  11000: T  333.3 K, cross-unit U -5.787135e-3 Ha/water
+  settling frame  11500: T  334.2 K, cross-unit U -5.859656e-3 Ha/water
+  settling frame  12000: T  302.4 K, cross-unit U -5.674766e-3 Ha/water
+  settling frame  12500: T  317.6 K, cross-unit U -6.100297e-3 Ha/water
+  settling frame  13000: T  344.1 K, cross-unit U -6.273341e-3 Ha/water
+  settling frame  13500: T  342.9 K, cross-unit U -6.469883e-3 Ha/water
+  settling frame  14000: T  332.9 K, cross-unit U -6.487773e-3 Ha/water
+  settling frame  14500: T  350.4 K, cross-unit U -6.835483e-3 Ha/water
+  settling frame  15000: T  319.5 K, cross-unit U -6.507519e-3 Ha/water
+  settling frame  15500: T  338.6 K, cross-unit U -6.724454e-3 Ha/water
+  settling frame  16000: T  352.7 K, cross-unit U -6.993235e-3 Ha/water
+  settling frame  16500: T  343.4 K, cross-unit U -6.919501e-3 Ha/water
+  settling frame  17000: T  339.3 K, cross-unit U -6.966663e-3 Ha/water
+  settling frame  17500: T  348.3 K, cross-unit U -7.358748e-3 Ha/water
+  settling frame  18000: T  334.6 K, cross-unit U -7.252392e-3 Ha/water
+  settling frame  18500: T  325.3 K, cross-unit U -7.245862e-3 Ha/water
+  settling frame  19000: T  324.0 K, cross-unit U -7.103016e-3 Ha/water
+  settling frame  19500: T  344.9 K, cross-unit U -7.607616e-3 Ha/water
+  settling frame  20000: T  319.3 K, cross-unit U -7.419123e-3 Ha/water
+branch point WRITTEN to /home/emoore/CIRISHolon/conformance/water_observatory/replace0/branch.ckpt (digest 0x15ff2dffcef4c33f)
+stiffness envelope MEASURED on the branch state: 5.5926e-2 Ha/bohr^2 (97 passes, 34.4 s)
+the flexible arm: 20000 frames at the tables' step, a readout every 500
+  flexible frame     500: T  334.8 K, E -36.880374 Ha, bonds 1.422, peak 5.15
+  flexible frame    1000: T  342.4 K, E -36.880374 Ha, bonds 1.508, peak 5.25
+  flexible frame    1500: T  345.1 K, E -36.880374 Ha, bonds 1.531, peak 5.35
+  flexible frame    2000: T  345.5 K, E -36.880373 Ha, bonds 1.594, peak 5.25
+  flexible frame    2500: T  356.8 K, E -36.880374 Ha, bonds 1.508, peak 4.95
+  flexible frame    3000: T  341.5 K, E -36.880374 Ha, bonds 1.492, peak 5.05
+  flexible frame    3500: T  364.7 K, E -36.880374 Ha, bonds 1.562, peak 5.35
+  flexible frame    4000: T  359.3 K, E -36.880374 Ha, bonds 1.492, peak 5.35
+  flexible frame    4500: T  368.0 K, E -36.880374 Ha, bonds 1.539, peak 5.35
+  flexible frame    5000: T  354.7 K, E -36.880374 Ha, bonds 1.539, peak 5.35
+  flexible frame    5500: T  349.4 K, E -36.880375 Ha, bonds 1.586, peak 5.35
+  flexible frame    6000: T  341.1 K, E -36.880374 Ha, bonds 1.539, peak 5.25
+  flexible frame    6500: T  363.3 K, E -36.880375 Ha, bonds 1.562, peak 4.95
+  flexible frame    7000: T  335.1 K, E -36.880375 Ha, bonds 1.484, peak 5.15
+  flexible frame    7500: T  339.4 K, E -36.880374 Ha, bonds 1.508, peak 5.35
+  flexible frame    8000: T  342.0 K, E -36.880375 Ha, bonds 1.531, peak 5.15
+  flexible frame    8500: T  327.5 K, E -36.880374 Ha, bonds 1.531, peak 5.15
+  flexible frame    9000: T  326.2 K, E -36.880375 Ha, bonds 1.461, peak 5.25
+  flexible frame    9500: T  336.4 K, E -36.880375 Ha, bonds 1.516, peak 5.25
+  flexible frame   10000: T  343.0 K, E -36.880374 Ha, bonds 1.523, peak 5.15
+  flexible frame   10500: T  348.4 K, E -36.880374 Ha, bonds 1.547, peak 5.15
+  flexible frame   11000: T  360.1 K, E -36.880375 Ha, bonds 1.477, peak 4.95
+  flexible frame   11500: T  342.9 K, E -36.880374 Ha, bonds 1.477, peak 5.05
+  flexible frame   12000: T  346.7 K, E -36.880374 Ha, bonds 1.484, peak 5.25
+  flexible frame   12500: T  357.2 K, E -36.880374 Ha, bonds 1.484, peak 5.25
+  flexible frame   13000: T  366.9 K, E -36.880374 Ha, bonds 1.523, peak 5.25
+  flexible frame   13500: T  334.2 K, E -36.880374 Ha, bonds 1.547, peak 5.35
+  flexible frame   14000: T  348.9 K, E -36.880374 Ha, bonds 1.555, peak 5.25
+  flexible frame   14500: T  336.8 K, E -36.880374 Ha, bonds 1.531, peak 5.05
+  flexible frame   15000: T  327.2 K, E -36.880374 Ha, bonds 1.461, peak 5.15
+  flexible frame   15500: T  348.8 K, E -36.880374 Ha, bonds 1.477, peak 5.25
+  flexible frame   16000: T  326.9 K, E -36.880374 Ha, bonds 1.453, peak 5.05
+  flexible frame   16500: T  326.0 K, E -36.880374 Ha, bonds 1.453, peak 5.35
+  flexible frame   17000: T  340.4 K, E -36.880374 Ha, bonds 1.469, peak 5.15
+  flexible frame   17500: T  343.4 K, E -36.880374 Ha, bonds 1.477, peak 5.25
+  flexible frame   18000: T  329.4 K, E -36.880374 Ha, bonds 1.539, peak 5.25
+  flexible frame   18500: T  332.0 K, E -36.880374 Ha, bonds 1.492, peak 5.35
+  flexible frame   19000: T  338.5 K, E -36.880374 Ha, bonds 1.492, peak 5.05
+  flexible frame   19500: T  322.4 K, E -36.880374 Ha, bonds 1.453, peak 5.35
+  flexible frame   20000: T  358.2 K, E -36.880374 Ha, bonds 1.523, peak 5.35
+the rigid arm with the refinement demonstration
+rigid clock: omega_T 1.305e-3, omega_R 5.935e-3 au^-1; dt 16.5408 au admitted (15.35x the fine 1.0775); 33 steps per readout at dt 16.3255 au
+  rigid modes as projected: 446.0 K; rescaled to the fine box's 319.3 K, removing 1.540e-1 Ha
+  rigid branch: T 319.3 K on 6 dof/unit, E -37.098544 Ha; discarded 4.398e-2 bohr rms, 4.898e-2 Ha internal KE
+  rigid readout    1 at     13.0 fs: T  386.5 K, E -37.098568 Ha, bonds 1.430, peak 5.15
+  rigid readout    2 at     26.1 fs: T  395.7 K, E -37.098552 Ha, bonds 1.523, peak 5.25
+  rigid readout    3 at     39.1 fs: T  407.3 K, E -37.098566 Ha, bonds 1.570, peak 5.35
+  rigid readout    4 at     52.1 fs: T  408.8 K, E -37.098563 Ha, bonds 1.594, peak 5.25
+  rigid readout    5 at     65.2 fs: T  410.4 K, E -37.098562 Ha, bonds 1.508, peak 5.35
+  rigid readout    6 at     78.2 fs: T  422.4 K, E -37.098577 Ha, bonds 1.531, peak 5.35
+  rigid readout    7 at     91.2 fs: T  450.3 K, E -37.098559 Ha, bonds 1.594, peak 5.25
+  rigid readout    8 at    104.3 fs: T  448.8 K, E -37.098563 Ha, bonds 1.562, peak 5.35
+  rigid readout    9 at    117.3 fs: T  447.5 K, E -37.098563 Ha, bonds 1.586, peak 5.25
+  rigid readout   10 at    130.3 fs: T  441.4 K, E -37.098563 Ha, bonds 1.609, peak 5.35
+  rigid readout   11 at    143.3 fs: T  431.4 K, E -37.098561 Ha, bonds 1.586, peak 4.95
+  rigid readout   12 at    156.4 fs: T  452.1 K, E -37.098557 Ha, bonds 1.633, peak 5.15
+  rigid readout   13 at    169.4 fs: T  433.6 K, E -37.098558 Ha, bonds 1.594, peak 5.05
+  rigid readout   14 at    182.4 fs: T  468.7 K, E -37.098589 Ha, bonds 1.602, peak 5.35
+  rigid readout   15 at    195.5 fs: T  421.8 K, E -37.098561 Ha, bonds 1.562, peak 5.15
+  rigid readout   16 at    208.5 fs: T  427.2 K, E -37.098570 Ha, bonds 1.531, peak 5.25
+  rigid readout   17 at    221.5 fs: T  444.4 K, E -37.098587 Ha, bonds 1.562, peak 5.15
+  rigid readout   18 at    234.6 fs: T  438.8 K, E -37.098578 Ha, bonds 1.531, peak 5.35
+  rigid readout   19 at    247.6 fs: T  401.2 K, E -37.098555 Ha, bonds 1.570, peak 5.15
+  rigid readout   20 at    260.6 fs: T  434.3 K, E -37.098581 Ha, bonds 1.570, peak 5.15
+  rigid readout   21 at    273.7 fs: T  408.5 K, E -37.098555 Ha, bonds 1.516, peak 5.15
+  rigid readout   22 at    286.7 fs: T  450.6 K, E -37.098571 Ha, bonds 1.547, peak 5.25
+  rigid readout   23 at    299.7 fs: T  430.1 K, E -37.098559 Ha, bonds 1.555, peak 5.15
+  rigid readout   24 at    312.8 fs: T  431.0 K, E -37.098560 Ha, bonds 1.609, peak 4.95
+  rigid readout   25 at    325.8 fs: T  417.5 K, E -37.098558 Ha, bonds 1.570, peak 5.25
+  rigid readout   26 at    338.8 fs: T  429.8 K, E -37.098556 Ha, bonds 1.531, peak 5.25
+  rigid readout   27 at    351.9 fs: T  424.6 K, E -37.098542 Ha, bonds 1.516, peak 5.15
+  rigid readout   28 at    364.9 fs: T  429.3 K, E -37.098553 Ha, bonds 1.523, peak 5.35
+  rigid readout   29 at    377.9 fs: T  414.2 K, E -37.098548 Ha, bonds 1.508, peak 5.25
+  rigid readout   30 at    390.9 fs: T  420.9 K, E -37.098548 Ha, bonds 1.578, peak 5.05
+  rigid readout   31 at    404.0 fs: T  418.0 K, E -37.098546 Ha, bonds 1.547, peak 5.25
+  rigid readout   32 at    417.0 fs: T  421.1 K, E -37.098544 Ha, bonds 1.602, peak 5.15
+  rigid readout   33 at    430.0 fs: T  390.8 K, E -37.098538 Ha, bonds 1.523, peak 4.95
+  rigid readout   34 at    443.1 fs: T  434.8 K, E -37.098567 Ha, bonds 1.539, peak 5.35
+  rigid readout   35 at    456.1 fs: T  427.1 K, E -37.098549 Ha, bonds 1.547, peak 5.15
+  rigid readout   36 at    469.1 fs: T  432.0 K, E -37.098555 Ha, bonds 1.562, peak 5.05
+  rigid readout   37 at    482.2 fs: T  434.8 K, E -37.098554 Ha, bonds 1.516, peak 5.35
+  rigid readout   38 at    495.2 fs: T  434.7 K, E -37.098549 Ha, bonds 1.547, peak 5.25
+  rigid readout   39 at    508.2 fs: T  427.3 K, E -37.098542 Ha, bonds 1.555, peak 5.05
+  rigid readout   40 at    521.3 fs: T  395.6 K, E -37.098538 Ha, bonds 1.609, peak 5.45
+the rigid arm WITH the refinement demonstration, from the same branch point
+rigid clock: omega_T 1.305e-3, omega_R 5.935e-3 au^-1; dt 16.5408 au admitted (15.35x the fine 1.0775); 33 steps per readout at dt 16.3255 au
+  rigid modes as projected: 446.0 K; rescaled to the fine box's 319.3 K, removing 1.540e-1 Ha
+  rigid branch: T 319.3 K on 6 dof/unit, E -37.098544 Ha; discarded 4.398e-2 bohr rms, 4.898e-2 Ha internal KE
+  rigid readout    1 at     13.0 fs: T  386.5 K, E -37.098568 Ha, bonds 1.430, peak 5.15
+  rigid readout    2 at     26.1 fs: T  395.7 K, E -37.098552 Ha, bonds 1.523, peak 5.25
+  rigid readout    3 at     39.1 fs: T  407.3 K, E -37.098566 Ha, bonds 1.570, peak 5.35
+  rigid readout    4 at     52.1 fs: T  408.8 K, E -37.098563 Ha, bonds 1.594, peak 5.25
+  rigid readout    5 at     65.2 fs: T  410.4 K, E -37.098562 Ha, bonds 1.508, peak 5.35
+  rigid readout    6 at     78.2 fs: T  422.4 K, E -37.098577 Ha, bonds 1.531, peak 5.35
+  rigid readout    7 at     91.2 fs: T  450.3 K, E -37.098559 Ha, bonds 1.594, peak 5.25
+  rigid readout    8 at    104.3 fs: T  448.8 K, E -37.098563 Ha, bonds 1.562, peak 5.35
+  rigid readout    9 at    117.3 fs: T  447.5 K, E -37.098563 Ha, bonds 1.586, peak 5.25
+  rigid readout   10 at    130.3 fs: T  441.4 K, E -37.098563 Ha, bonds 1.609, peak 5.35
+  DISTURBANCE at 130.3 fs: unit 84 kinetic 3.340e-2 Ha against the share 2.784e-3
+  REFINE at 130.7 fs: 1 hot, 6 units to fine stepping (buffer 6.5 bohr)
+  FINE  readout   11 at    143.3 fs: T  437.4 K, E -37.067954 Ha, bonds 1.570, peak 4.95; 6 refined, held units discarded 2.56e-6 bohr / 7.93e-6 Ha per frame
+  FINE  readout   12 at    156.4 fs: T  454.2 K, E -37.067976 Ha, bonds 1.625, peak 5.15; 6 refined, held units discarded 2.52e-6 bohr / 7.82e-6 Ha per frame
+  FINE  readout   13 at    169.4 fs: T  434.5 K, E -37.067990 Ha, bonds 1.586, peak 5.05; 6 refined, held units discarded 2.59e-6 bohr / 8.12e-6 Ha per frame
+  COARSEN at 169.4 fs: 4 unit(s) back to rigid (2 still refined); discarded 3.042e-2 bohr rms, 2.753e-4 Ha kinetic, potential moved -2.305e-4 Ha
+  FINE  readout   14 at    182.4 fs: T  478.6 K, E -37.068375 Ha, bonds 1.570, peak 5.05; 2 refined, held units discarded 2.56e-6 bohr / 8.12e-6 Ha per frame
+  FINE  readout   15 at    195.5 fs: T  423.7 K, E -37.068352 Ha, bonds 1.539, peak 5.15; 2 refined, held units discarded 2.56e-6 bohr / 8.28e-6 Ha per frame
+  COARSEN at 195.5 fs: 1 unit(s) back to rigid (1 still refined); discarded 2.662e-2 bohr rms, 1.591e-4 Ha kinetic, potential moved -1.901e-4 Ha
+  FINE  readout   16 at    208.5 fs: T  437.6 K, E -37.068664 Ha, bonds 1.516, peak 5.25; 1 refined, held units discarded 2.51e-6 bohr / 7.92e-6 Ha per frame
+  FINE  readout   17 at    221.5 fs: T  457.8 K, E -37.068632 Ha, bonds 1.570, peak 5.15; 1 refined, held units discarded 2.54e-6 bohr / 8.11e-6 Ha per frame
+  FINE  readout   18 at    234.6 fs: T  448.2 K, E -37.068630 Ha, bonds 1.555, peak 5.35; 1 refined, held units discarded 2.54e-6 bohr / 8.08e-6 Ha per frame
+  FINE  readout   19 at    247.6 fs: T  413.3 K, E -37.068644 Ha, bonds 1.586, peak 4.95; 1 refined, held units discarded 2.49e-6 bohr / 7.90e-6 Ha per frame
+  FINE  readout   20 at    260.6 fs: T  434.6 K, E -37.068668 Ha, bonds 1.531, peak 5.25; 1 refined, held units discarded 2.51e-6 bohr / 7.93e-6 Ha per frame
+  COARSEN at 260.6 fs: 1 unit(s) back to rigid (0 still refined); discarded 4.685e-2 bohr rms, 2.326e-4 Ha kinetic, potential moved +4.884e-4 Ha
+  rigid readout   21 at    273.7 fs: T  431.2 K, E -37.068128 Ha, bonds 1.523, peak 5.35
+  rigid readout   22 at    286.7 fs: T  456.9 K, E -37.068135 Ha, bonds 1.547, peak 5.25
+  rigid readout   23 at    299.7 fs: T  439.5 K, E -37.068116 Ha, bonds 1.555, peak 5.15
+  rigid readout   24 at    312.8 fs: T  432.2 K, E -37.068133 Ha, bonds 1.516, peak 5.15
+  rigid readout   25 at    325.8 fs: T  439.2 K, E -37.068133 Ha, bonds 1.539, peak 5.15
+  rigid readout   26 at    338.8 fs: T  441.6 K, E -37.068142 Ha, bonds 1.555, peak 5.15
+  rigid readout   27 at    351.9 fs: T  418.5 K, E -37.068129 Ha, bonds 1.477, peak 5.15
+  rigid readout   28 at    364.9 fs: T  449.8 K, E -37.068149 Ha, bonds 1.523, peak 5.25
+  rigid readout   29 at    377.9 fs: T  421.3 K, E -37.068144 Ha, bonds 1.484, peak 5.25
+  rigid readout   30 at    390.9 fs: T  419.9 K, E -37.068142 Ha, bonds 1.562, peak 5.05
+  rigid readout   31 at    404.0 fs: T  423.8 K, E -37.068140 Ha, bonds 1.617, peak 4.95
+  rigid readout   32 at    417.0 fs: T  421.4 K, E -37.068153 Ha, bonds 1.602, peak 5.25
+  rigid readout   33 at    430.0 fs: T  417.1 K, E -37.068142 Ha, bonds 1.578, peak 5.25
+  rigid readout   34 at    443.1 fs: T  442.8 K, E -37.068152 Ha, bonds 1.609, peak 5.25
+  rigid readout   35 at    456.1 fs: T  451.1 K, E -37.068160 Ha, bonds 1.562, peak 5.25
+  rigid readout   36 at    469.1 fs: T  426.1 K, E -37.068126 Ha, bonds 1.531, peak 5.25
+  rigid readout   37 at    482.2 fs: T  456.6 K, E -37.068152 Ha, bonds 1.492, peak 5.25
+  rigid readout   38 at    495.2 fs: T  430.2 K, E -37.068152 Ha, bonds 1.539, peak 5.25
+  rigid readout   39 at    508.2 fs: T  421.9 K, E -37.068143 Ha, bonds 1.523, peak 5.25
+  rigid readout   40 at    521.3 fs: T  410.8 K, E -37.068117 Ha, bonds 1.523, peak 5.15

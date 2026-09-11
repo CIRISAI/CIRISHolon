@@ -666,6 +666,68 @@ temperature the arms have not seen; the held units' per-frame potential change (
 ~1e-6 bohr of reconstruction per frame); R3 on the rigid arm through the lens; and the
 validity record's first `Empirical` entry, by a freeze.
 
+## M-BAND-FROM-A-SUPPRESSED-SCATTER: the settling criterion cannot fire under the thermostat the campaign selected (2026-09-11)
+
+The gate ran 124 settling blocks — **248,100 frames = 6.47 ps**, 22 hours on one core, past
+the pilots' frozen floor of 86,000 frames and two thirds of the way to the physical cap —
+and its criterion never fired. It then died at exit 101 when the machine's root filesystem
+filled from unrelated work (`pay.KILLED` could not be written; `gate.log` truncated
+mid-line). **The crash is incidental. The criterion is the finding, and it is the same fault
+this whole revision is about, one level down again: a constant measured in one regime and
+silently imported into another.**
+
+`settled_window` has two legs. The U leg is a trend test and is satisfiable. The temperature
+leg requires **every one of the window's 50 samples** to sit inside a band of `21.04` K
+around 293 K. That band is `3 x 7.01` K, three times the scatter of **LIQUID-1's own
+temperature readout** — and LIQUID-1 ran **Berendsen**, which suppresses temperature
+fluctuation. The campaign runs **stochastic rescaling**, chosen precisely because it does
+not: its fluctuation is canonical, and the design's own analytic figure for this box is
+`equipartition_sigma_k = 12.22` K. The gate record already carried both numbers side by side
+and chose the measured one, with the note "the measured scatter is SMALLER than the analytic
+one, as a thermostatted box's must be" — correct under Berendsen, and wrong under the
+thermostat the campaign now selects.
+
+So the band that was meant to be three sigma **is 1.72 sigma of the scatter the box actually
+has**, and the "every sample" rule compounds it exponentially:
+
+| | |
+|---|---|
+| P(one sample in band), mean exactly on 293 K | `0.9147` |
+| P(all 50 in band) — the leg, per window | **`1.2e-2`** |
+| the same at a 3-sigma band | `0.87` |
+| P(all 50) with the mean 5 K off target (the pilots' settled means are 294.9, 289.1, 284.8 K) | `2.7e-3` |
+
+The gate tested about 82 overlapping windows past its floor, roughly 16 independent ones, so
+zero passes is exactly what the arithmetic predicts. **The box was equilibrated and the
+criterion could not say so**: the pilots' own settled block means scatter at 7.4-8.8 K, above
+the 7.01 K that set the band, and their frozen `t0` came from Chodera's automated detection
+on U — a different rule, which worked.
+
+**Nothing is repaired here and no stake is moved.** This is a pre-committed criterion inside
+a standing freeze, and redesigning it while the freeze stands would be improvising past a
+pre-committed rule — the thing the lane refused to do when R3 priced out. The options, with
+what each costs and what each gives up:
+
+1. **Re-derive the band from the configuration in force**, as `settle_readout_frames` and
+   `settle_cap_frames` already re-derive the block and the cap at the step in force: the band
+   becomes three times THIS arm's own measured scatter, or three times the analytic
+   equipartition sigma the design already computes (36.7 K). Cheapest, and the same shape of
+   repair as the two already made; it is still a change to a frozen criterion's letter.
+2. **Test the MEAN, not every sample.** A canonical ensemble's instantaneous temperature
+   fluctuates by physics, and "is the box at its target" is a question about the mean and its
+   error, not about every draw. Principled, and a larger change to the criterion's letter.
+3. **Keep the criterion and let the cap decide**, recording that the box did not settle by
+   this rule at this thermostat. Honest, costs another 21 core-hours per gate run, and the
+   arm's own settling would then VOID every counted seed for the same reason.
+4. **Re-run under Berendsen**, where the band is the scatter it was derived from — and give
+   up the canonical sampling the second review asked for. Refused on its face; stated for
+   completeness.
+
+Registered as **M-BAND-FROM-A-SUPPRESSED-SCATTER**. The rule it carries, the third one of
+this shape: *a criterion's band is part of its configuration, and a band derived under one
+thermostat, step or law does not travel to another any more than a floor in frames does.*
+The decision is the user's; the lane has not taken one.
+
 ## The build lane — the closure type and the campaign harness (2026-09-07, `engine/crates/holon-closure`, `holon-campaign`)
 
 Pure engineering, additive, landed with 77 tests: the closure as ONE type (members, the

@@ -197,6 +197,36 @@ certified physics or wears its fence with owner and exit; 431 smoke checks and c
 Receipt-gate: the smoke passes with the new bands' cites resolving to the records above;
 `pages.yml` deploys it; the page's manifest names this file's tier rows.
 
+## The page audited against the plan it cites (2026-09-11) — two fences were promising work that had already changed
+
+A fence names the build paying it off *in the present tense*, which makes a fence a claim with
+a shelf life. Two on the live page had expired, and both were found by reading the page
+against `GANTT2.md` rather than by anything failing:
+
+| band | what the page said | what is true |
+|---|---|---|
+| H-bond network | LIQUID-2 pays this fence "carrying the spanning-cluster fraction **and a diffusion arm long enough to contain a diffusive regime**" | the diffusion arm was priced at `4.66x` its own ceiling and SPLIT OUT; LIQUID-2 carries the spanning fraction and nothing about self-diffusion |
+| fluid element | "EDGE-0 — THE EDGE EXISTS — is the exit, **and it is the next campaign**" | EDGE-0 RAN (`EDGE0_RESULTS.md`, freeze `151fc79`): coexistence real and DISPERSED, the scenes evaporate in 100 steps, and the lattice route is paused at that finding |
+
+Both are corrected, with what replaced them: the H-bond band now states the split and the
+`0.71x` it bought; the fluid-element band states EDGE-0's actual reading, the instrument
+findings that stand, the diagnosis (the next cohesion is an ATTRACTION, not a constraint on
+displacement), and that the route now carrying the band is molecular — a deformable bulk cell
+whose constitutive response is MEASURED from the water beneath it, *a measurement that is not
+made and which the band does not claim*. The cube band now names the rung its own plan names:
+CUBE-0 framed on REPLACE-0's result and on nothing else.
+
+**REPLACE-0's figures are deliberately NOT on the page.** Both of the page's content registers
+— `readings` on a `live` band and on a `measured` one — mean *a frozen campaign read this*,
+and REPLACE-0 has no freeze, one seed and `0.52` ps. Quoting it would invent a fourth state on
+a page whose whole discipline is that there are exactly three. It is NAMED as the build in
+flight, which is what the page's own law asks of a fence, and its figures go up when it
+freezes. `smoke.mjs`: 565 checks, all passing.
+
+**The rule this adds, and it is cheap:** a fence is re-read whenever the campaign it names
+reports. Two of these went stale because a campaign finished and the page kept its promise
+from before the result.
+
 ## The external review (2026-09-07) — what it asked, and what the plan does with it
 
 A review of commit 2dd820b (credited, not named) read the water records and the Lean, and

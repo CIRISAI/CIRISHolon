@@ -583,10 +583,13 @@ const LADDER = [
       + "a live readout",
     state: "fenced",
     owner: "GANTT node G",
-    exit: "this face goes live as the rungs beneath it certify — rung 1's carrier and "
-      + "rung 2's carrier-v2 are both in build, and this face is their composition. A "
-      + "kilometre of water is ~3×10³¹ molecules; the acuity law is why that is a scale "
-      + "to stand in front of rather than a number to simulate.",
+    exit: "this face goes live as the rungs beneath it certify, and the plan now names which "
+      + "rung: CUBE-0 is framed on REPLACE-0's result and on nothing else — one bounded "
+      + "replacement of fine dynamics by coarse dynamics, its error and its speedup MEASURED "
+      + "on a case it has not seen. That build is in flight and unfrozen; when it freezes, "
+      + "its figures belong on this ladder and not before. A kilometre of water is ~3×10³¹ "
+      + "molecules; the acuity law is why that is a scale to stand in front of rather than a "
+      + "number to simulate.",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:379",
     // ONE THING THIS BAND SERVES WHILE ITS DYNAMICS ARE FENCED, and §11.2 grants it by
     // name: the hydrostatic column, ρ g h. It is not a dynamics readout and is never
@@ -711,16 +714,20 @@ const LADDER = [
     // extrapolating from them and pre-committed that UNDETERMINED beats a fitted trend.
     // Naming it as undetermined is what keeps this a fence rather than architecture: the
     // successor ROUTES are named even though the distance is not.
-    exit: "EDGE-0 — THE EDGE EXISTS — is the exit, and it is the next campaign on FLUID-1's "
-      + "own carrier at FLUID-1's own chart (GANTT2, '### The edge'). What is owed is not "
-      + "another transport number: FLUID-1 answered the transport question and the answer was "
-      + "a factor of two. What is owed is the EDGE — coexistence read as a bimodal density "
-      + "histogram with the dense phase bonded, an interface whose width is finite and "
-      + "stationary, and the surface tension read TWICE by independent instruments (Laplace's "
-      + "law over a set of droplet radii, and the capillary spectrum) landing inside a staked "
-      + "band of each other. Its kills are staked with it: no bimodality at the chart, no "
-      + "linear Laplace law, the two σ disagreeing beyond the band, or a width that grows "
-      + "without bound. Beside it and independent of it, carrier-v2 is in build for the "
+    exit: "EDGE-0 RAN, and it read THE CLUSTER CARRIER HAS TWO DENSITIES AND NO EDGE — this "
+      + "row said it was the next campaign and that is out of date. Coexistence is real and "
+      + "the cluster rule's alone (branch (a)), but DISPERSED: slab and droplet scenes "
+      + "evaporate inside 100 steps, so Laplace's law, the interface width and the two-σ "
+      + "agreement were read on scenes that did not hold, and the droplet's lifetime is the "
+      + "number. The instrument findings stand — the dip cannot gate a minority phase, a zero "
+      + "control band voids — and so does the diagnosis: the next cohesion must be an "
+      + "ATTRACTION (Appert–Zaleski's non-local momentum exchange), not a constraint on "
+      + "displacement. The lattice route is PAUSED at that finding rather than repeated, "
+      + "because a 3D lattice gas needs the 24-velocity FCHC carrier built first, and the "
+      + "route now carrying this band is molecular: a deformable bulk cell whose "
+      + "constitutive response is MEASURED from the water beneath it. That measurement is "
+      + "not made and this band does not claim it. Beside it and independent of it, "
+      + "carrier-v2 is in build for the "
       + "molecular route: trajectory format v2 past the 16-atom cap, genuine-3D ≥400-atom "
       + "scenes on the threaded MD path, dims MEASURED rather than declared. Rung 2's numbers "
       + "are the requirement that route must beat — a 1 µm patch is 5.95e6 atoms against a "
@@ -793,9 +800,13 @@ const LADDER = [
     exit: "the certificate is what is owed, not the measurement: rung 1's 70 chart readings "
       + "left the two conditions a certified tier needs EXACTLY DISJOINT — 36 inside the "
       + "closure budget and all 36 VOID by anti-vacuity, 32 clearing anti-vacuity and none "
-      + "inside the budget, zero doing both — and LIQUID-2 is the build that pays it, "
-      + "carrying the spanning-cluster fraction LIQUID-1 did not read and a diffusion arm "
-      + "long enough to contain a diffusive regime.",
+      + "inside the budget, zero doing both — and LIQUID-2 is the build that pays it. Its "
+      + "gate ADMITS and its three confirmation seeds are counting: it carries the "
+      + "spanning-cluster fraction LIQUID-1 did not read. It does NOT carry the diffusion "
+      + "arm this row used to promise — that arm was priced at 4.66× its own ceiling and "
+      + "SPLIT OUT, so self-diffusion is its own campaign with its own ceiling still owed. "
+      + "The split is what brought the rest inside: 0.71× the ceiling for the structure arm "
+      + "where the undivided campaign was 3.64× over.",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:377",
     measuredBy: "conformance/water_observatory/RUNG1_RESULTS.md:19",
     // WHAT LIQUID-1 ACTUALLY READ. Each row is a figure and the line of the record it came
@@ -822,7 +833,10 @@ const LADDER = [
       { what: "self-diffusion", value: "VOID",
         note: "the lens refused its own reading — the MSD goes as τ^1.64 over the window, "
           + "so 2.6 ps contains no diffusive regime. A refusal about the instrument's "
-          + "window, not about the liquid (R3)",
+          + "window, not about the liquid (R3). LIQUID-2 sized an arm that would contain "
+          + "one — 28.7 ps a seed — and REFUSED IT ON PRICE at 4.66× its ceiling, so it is "
+          + "split out as its own campaign. What changes that arithmetic is a cheaper "
+          + "dynamics rather than a bigger budget, and one is being measured (REPLACE-0)",
         record: "conformance/water_observatory/LIQUID1_RESULTS.md:62" },
       { what: "spanning-cluster fraction", value: "OWED",
         note: "the bond count sits above the four-connected percolation threshold, so the "

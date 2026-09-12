@@ -782,9 +782,10 @@ const LADDER = [
     band: "H-bond network",
     scale: "~10 nm",
     lengthM: 1.0e-8,
-    runs: "the network MEASURED — 128 waters at liquid density, 100,000 counted frames, "
-      + "the shell and the bond count read by the periodic lens (LIQUID-1). The CERTIFICATE "
-      + "is still owed; the physics is not.",
+    runs: "the network MEASURED — 128 waters at liquid density, 100,000 counted frames a "
+      + "seed on THREE seeds, the shell, the bond count and the spanning cluster read by the "
+      + "periodic lens (LIQUID-2, on CT-3's served law). The CERTIFICATE is still owed; the "
+      + "physics is not.",
     // THE THIRD STATE, and it is a state rather than a softer fence. `fenced` means the
     // page has nothing to show; `live` means a node-G closure certificate flipped the band.
     // LIQUID-1 is neither: it MEASURED this band's structure on a banked liquid, so the
@@ -814,10 +815,17 @@ const LADDER = [
     // as it does for the water story's RECORD block. A band that quotes a measurement
     // nobody checks is a longer sentence, not a better one.
     readings: [
-      { what: "first O–O peak", value: "3.04 Å, height 2.20",
-        note: "water-shaped and 3% too far — the position 0.09 Å past experiment's band, "
-          + "the height inside it (R1 branch (c))",
-        record: "conformance/water_observatory/LIQUID1_RESULTS.md:60" },
+      { what: "first O–O peak", value: "2.778 Å",
+        note: "INSIDE experiment's band [2.65, 2.95] Å on the seed mean over three seeds "
+          + "(R1 branch (a)). LIQUID-1 read 3.04 Å on a different served law — outside the "
+          + "band by 0.09 Å — so the peak moved in. All three seeds report the same bin "
+          + "because the histogram's bin is 0.1 bohr: the zero spread is the instrument's "
+          + "floor, not a precision claim",
+        record: "conformance/water_observatory/LIQUID2_RESULTS.md:21" },
+      { what: "first O–O peak height", value: "3.075",
+        note: "inside the band [2.0, 4.0]; the seed spread is 0.0887 and it is the figure "
+          + "here that carries information, the position's being bin-limited",
+        record: "conformance/water_observatory/LIQUID2_RESULTS.md:21" },
       { what: "coordination to 3.3 Å", value: "4.20",
         note: "against water's ~4.5",
         record: "conformance/water_observatory/LIQUID1_RESULTS.md:60" },
@@ -826,11 +834,17 @@ const LADDER = [
           + "network does — a simple liquid of weakly directional molecules, not yet a "
           + "network",
         record: "conformance/water_observatory/LIQUID1_RESULTS.md:60" },
-      { what: "hydrogen bonds per molecule", value: "1.18 on the lens = 2.37 both-ends",
-        note: "two thirds of water's 3.5 in the both-ends convention the experiment counts "
-          + "in (R2 branch (b)); the lens counts each bond once",
-        record: "conformance/water_observatory/LIQUID1_RESULTS.md:61" },
+      { what: "hydrogen bonds per molecule", value: "3.375",
+        note: "both-ends, the convention experiment's 3.5 is counted in — 96% of it, inside "
+          + "the pre-committed band [3.0, 4.0] on three seeds (R2 branch (a)). The lens "
+          + "counts each bond once and reads 1.688. LIQUID-1 read 2.37 both-ends, two "
+          + "thirds of experiment, on one seed and 52 fs of settling",
+        record: "conformance/water_observatory/LIQUID2_RESULTS.md:22" },
       { what: "self-diffusion", value: "VOID",
+        // LIQUID-2 did not repair this and did not pretend to: R3 was split out of the
+        // campaign on price before the gate ran, so the arm that would contain a diffusive
+        // regime was never counted. The row stays VOID with LIQUID-1's citation because
+        // LIQUID-1 is still the only campaign that tried.
         note: "the lens refused its own reading — the MSD goes as τ^1.64 over the window, "
           + "so 2.6 ps contains no diffusive regime. A refusal about the instrument's "
           + "window, not about the liquid (R3). LIQUID-2 sized an arm that would contain "
@@ -838,11 +852,22 @@ const LADDER = [
           + "split out as its own campaign. What changes that arithmetic is a cheaper "
           + "dynamics rather than a bigger budget, and one is being measured (REPLACE-0)",
         record: "conformance/water_observatory/LIQUID1_RESULTS.md:62" },
-      { what: "spanning-cluster fraction", value: "OWED",
-        note: "the bond count sits above the four-connected percolation threshold, so the "
-          + "graph most likely spans — but the fraction was not a readout of this freeze "
-          + "and LIQUID-2 owes it. No number is shown because none was measured",
-        record: "conformance/water_observatory/LIQUID1_RESULTS.md:41" },
+      { what: "spanning-cluster fraction", value: "1.0000",
+        note: "every one of 3,000 sampled frames carries a hydrogen-bond path that winds the "
+          + "periodic cell, with the largest component at 0.99825 and a mean degree of "
+          + "3.3753 — against the Erdős–Rényi giant of 0.8738 a RANDOM graph of LIQUID-1's "
+          + "density would give (S branch (a)). This is the readout LIQUID-1 owed and did "
+          + "not take; the plant that zeroes the wrap counts takes it to 0.0, so the "
+          + "instrument is reading winding and not merely connectivity",
+        record: "conformance/water_observatory/LIQUID2_RESULTS.md:23" },
+      { what: "the books, and the one leg that FAILED", value: "4.9–8.6 times BETTER",
+        note: "the drift leg failed on all three arms — and the absolute drift is this much "
+          + "better than LIQUID-1's, which is the reference the bar came from. The bar is a "
+          + "fraction of the THERMOSTAT'S WORK, and a box settled by a measured criterion "
+          + "leaves the thermostat almost nothing to do, so the bar tightened 8–60× and "
+          + "three arms with better books than the reference failed it. Registered as "
+          + "M-BAR-AGAINST-A-WORKING-THERMOSTAT; no repair is made in a results file",
+        record: "conformance/water_observatory/LIQUID2_RESULTS.md:76" },
     ],
     // THE LIVE BOX, AND WHY THERE IS NOT ONE. Not a judgement about speed: the engine's own
     // BOUNDARY DOOR refuses a cell this small, because a periodic box is legal only when

@@ -2,3 +2,7 @@ arms: 2026-09-11T18:52:30-05:00 pid 371668; 54 GiB free against a floor of 8
 arms: seed 0 on core 24 pid 371677
 arms: seed 1 on core 25 pid 371678
 arms: seed 2 on core 26 pid 371679
+arms: seed 0 exit 0 at 2026-09-12T15:30:03-05:00
+arms: seed 1 exit 0 at 2026-09-12T15:30:03-05:00
+arms: seed 2 exit 0 at 2026-09-12T15:30:03-05:00
+arms: read exit 0 at 2026-09-12T15:30:03-05:00

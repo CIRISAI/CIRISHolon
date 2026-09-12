@@ -1,0 +1,23 @@
+  R1 first O-O peak, bohr                mean   5.250000e0   sd  0.000000e0   spread  0.000000e0   over 3 seeds
+  R1 first O-O peak height               mean   3.075070e0   sd 5.018618e-2   spread 8.869428e-2   over 3 seeds
+  R2 bonds per molecule, lens            mean   1.687646e0   sd 2.047506e-3   spread 3.632812e-3   over 3 seeds
+  R3 diffusion, cm2/s                    mean          NaN   sd         NaN   spread        -inf   over 0 seeds
+  S spanning fraction                    mean   1.000000e0   sd  0.000000e0   spread  0.000000e0   over 3 seeds
+  S largest component fraction           mean  9.982500e-1   sd 4.887029e-4   spread 9.218750e-4   over 3 seeds
+  S mean degree, both ends               mean   3.375292e0   sd 4.095012e-3   spread 7.265625e-3   over 3 seeds
+  L1 drift over thermostat work          mean  5.614056e-5   sd 4.188381e-5   spread 8.366119e-5   over 3 seeds
+  settling used, frames                  mean   9.343333e4   sd  7.571878e3   spread  1.400000e4   over 3 seeds
+  -- the autocorrelation-aware bar, beside the spread (Chodera's g) --
+  R2 g, samples per independent          mean   5.856062e1   sd  2.526723e1   spread  4.427518e1   over 3 seeds
+  R2 n_eff, one arm                      mean   1.896153e1   sd  6.555270e0   spread  1.161359e1   over 3 seeds
+  R2 sem, one arm                        mean  9.164911e-3   sd 1.440780e-3   spread 2.839734e-3   over 3 seeds
+  S g, samples per independent           mean   1.000000e0   sd  0.000000e0   spread  0.000000e0   over 3 seeds
+  S sem, one arm                         mean   0.000000e0   sd  0.000000e0   spread  0.000000e0   over 3 seeds
+  R2 1.687646e0: seed spread 3.632812e-3, pooled standard error 5.334775e-3 (3 arms)
+  S  1.000000e0: seed spread 0.000000e0, pooled standard error 0.000000e0 (3 arms)
+R1         BRANCH(a)  [3 checks, 2 legs]  the first oxygen-oxygen peak against experiment's band, on the seed mean; position spread 0.000000e0 bohr, height spread 8.869428e-2 over 3 seeds
+R2         BRANCH(a)  [3 checks, 1 legs]  bonds per molecule ON THE LENS'S OWN each-bond-once count, band [1.5, 2] (experiment's 3.5 both-ends is 1.75 here); LIQUID-1 read 1.184343750e0 on a box it settled for 52 fs; seed spread 3.632812e-3 over 3 seeds
+R3         VOID       [3 checks, 0 legs]  self-diffusion against a factor of 3 of 2.3e-5 cm^2/s on the window the freeze priced; seed spread -inf
+           VOID: the lens refused on every seed, the arm was VOID BY PRICE, or the campaign ran its STRUCTURE arm (R3 is its own campaign); each seed's r3 block carries which
+S          BRANCH(a)  [3 checks, 2 legs]  the spanning cluster: (a) a majority of sampled frames wind AND the largest component is at least the Erdos-Renyi giant 0.873777 at LIQUID-1's own degree; (b) giant but not winding; (c) no giant. Spreads: spanning 0.000000e0, largest 9.218750e-4
+R1 (a)  R2 (a)  R3 (v)  S (a)   on 3 seeds

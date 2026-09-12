@@ -1,0 +1,66 @@
+phase run, out /home/emoore/CIRISHolon/conformance/water_observatory/liquid2, observatory /home/emoore/CIRISHolon/conformance/water_observatory
+law /home/emoore/CIRISHolon/conformance/water_observatory/ct3/wall_ct3.json (60 knots at c0 = 1.400000); deepest shape 2.915803, worst knot miss 2.279e-15
+seed 1 of 3: 0x4c4951554945
+REFUSING the frozen settling in /home/emoore/CIRISHolon/conformance/water_observatory/liquid2/pilot/settling.json: it was frozen at 8x the tables' step and this arm runs at 1x. A floor in FRAMES does not travel across a step change. The floor falls back to LIQUID-1's own measured settling converted at this step, and the record says so.
+L0 door: unswitched reach 13.3988, table reach 17.2114, switched 13.3988, legality 14.0000, half-edge 14.7968; truncation 7.2476e-8 per water against 1e-5; 128 units, 0 free -> ADMITTED
+  settling block    4 at frame   8100: T  353.2 K, cross-unit U -4.769618e-3 Ha per water
+  settling block    8 at frame  16100: T  311.5 K, cross-unit U -6.976521e-3 Ha per water
+  settling block   12 at frame  24100: T  305.4 K, cross-unit U -7.880458e-3 Ha per water
+  settling block   16 at frame  32100: T  282.2 K, cross-unit U -8.354401e-3 Ha per water
+  settling block   20 at frame  40100: T  295.4 K, cross-unit U -8.573339e-3 Ha per water
+  settling block   24 at frame  48100: T  291.6 K, cross-unit U -9.315753e-3 Ha per water
+  settling block   28 at frame  56100: T  306.4 K, cross-unit U -8.826931e-3 Ha per water
+  settling block   32 at frame  64100: T  291.8 K, cross-unit U -9.243749e-3 Ha per water
+  settling block   36 at frame  72100: T  288.4 K, cross-unit U -9.352847e-3 Ha per water
+  settling block   40 at frame  80100: T  281.8 K, cross-unit U -9.536445e-3 Ha per water
+  settling block   44 at frame  88100: T  293.4 K, cross-unit U -9.459910e-3 Ha per water  -> SETTLED
+  frame     2000: T  300.4 K, units 128, bonds/molecule 1.677, spanning 1.000, largest 0.998, drift 4.93e-7, 20 readouts
+  frame     4000: T  315.9 K, units 128, bonds/molecule 1.665, spanning 1.000, largest 0.998, drift 7.23e-7, 40 readouts
+  frame     6000: T  310.2 K, units 128, bonds/molecule 1.658, spanning 1.000, largest 0.999, drift 7.23e-7, 60 readouts
+  frame     8000: T  304.6 K, units 128, bonds/molecule 1.658, spanning 1.000, largest 0.999, drift 7.23e-7, 80 readouts
+  frame    10000: T  292.3 K, units 128, bonds/molecule 1.656, spanning 1.000, largest 0.999, drift 7.23e-7, 100 readouts
+  frame    12000: T  319.4 K, units 128, bonds/molecule 1.660, spanning 1.000, largest 0.999, drift 7.23e-7, 120 readouts
+  frame    14000: T  315.0 K, units 128, bonds/molecule 1.658, spanning 1.000, largest 0.999, drift 7.23e-7, 140 readouts
+  frame    16000: T  281.0 K, units 128, bonds/molecule 1.653, spanning 1.000, largest 0.999, drift 7.23e-7, 160 readouts
+  frame    18000: T  286.7 K, units 128, bonds/molecule 1.653, spanning 1.000, largest 0.999, drift 7.23e-7, 180 readouts
+  frame    20000: T  279.6 K, units 128, bonds/molecule 1.654, spanning 1.000, largest 0.999, drift 7.23e-7, 200 readouts
+  frame    22000: T  275.7 K, units 128, bonds/molecule 1.655, spanning 1.000, largest 0.999, drift 7.23e-7, 220 readouts
+  frame    24000: T  316.8 K, units 128, bonds/molecule 1.655, spanning 1.000, largest 0.999, drift 1.15e-6, 240 readouts
+  frame    26000: T  293.0 K, units 128, bonds/molecule 1.659, spanning 1.000, largest 0.999, drift 1.15e-6, 260 readouts
+  frame    28000: T  304.8 K, units 128, bonds/molecule 1.662, spanning 1.000, largest 0.999, drift 1.15e-6, 280 readouts
+  frame    30000: T  319.0 K, units 128, bonds/molecule 1.663, spanning 1.000, largest 0.999, drift 1.15e-6, 300 readouts
+  frame    32000: T  296.6 K, units 128, bonds/molecule 1.665, spanning 1.000, largest 0.999, drift 1.15e-6, 320 readouts
+  frame    34000: T  284.4 K, units 128, bonds/molecule 1.668, spanning 1.000, largest 0.999, drift 1.15e-6, 340 readouts
+  frame    36000: T  293.8 K, units 128, bonds/molecule 1.670, spanning 1.000, largest 0.999, drift 1.15e-6, 360 readouts
+  frame    38000: T  293.4 K, units 128, bonds/molecule 1.671, spanning 1.000, largest 0.999, drift 1.15e-6, 380 readouts
+  frame    40000: T  305.4 K, units 128, bonds/molecule 1.672, spanning 1.000, largest 0.999, drift 1.15e-6, 400 readouts
+  frame    42000: T  281.7 K, units 128, bonds/molecule 1.671, spanning 1.000, largest 0.998, drift 1.15e-6, 420 readouts
+  frame    44000: T  287.8 K, units 128, bonds/molecule 1.670, spanning 1.000, largest 0.998, drift 1.15e-6, 440 readouts
+  frame    46000: T  298.3 K, units 128, bonds/molecule 1.671, spanning 1.000, largest 0.998, drift 1.15e-6, 460 readouts
+  frame    48000: T  295.2 K, units 128, bonds/molecule 1.673, spanning 1.000, largest 0.998, drift 1.15e-6, 480 readouts
+  frame    50000: T  300.0 K, units 128, bonds/molecule 1.674, spanning 1.000, largest 0.998, drift 1.15e-6, 500 readouts
+  frame    52000: T  300.3 K, units 128, bonds/molecule 1.676, spanning 1.000, largest 0.998, drift 1.15e-6, 520 readouts
+  frame    54000: T  305.1 K, units 128, bonds/molecule 1.678, spanning 1.000, largest 0.998, drift 1.15e-6, 540 readouts
+  frame    56000: T  286.2 K, units 128, bonds/molecule 1.678, spanning 1.000, largest 0.998, drift 1.15e-6, 560 readouts
+  frame    58000: T  313.3 K, units 128, bonds/molecule 1.678, spanning 1.000, largest 0.999, drift 1.15e-6, 580 readouts
+  frame    60000: T  296.6 K, units 128, bonds/molecule 1.678, spanning 1.000, largest 0.999, drift 1.15e-6, 600 readouts
+  frame    62000: T  307.7 K, units 128, bonds/molecule 1.679, spanning 1.000, largest 0.999, drift 1.15e-6, 620 readouts
+  frame    64000: T  282.0 K, units 128, bonds/molecule 1.679, spanning 1.000, largest 0.999, drift 1.15e-6, 640 readouts
+  frame    66000: T  286.5 K, units 128, bonds/molecule 1.680, spanning 1.000, largest 0.999, drift 1.23e-6, 660 readouts
+  frame    68000: T  298.8 K, units 128, bonds/molecule 1.682, spanning 1.000, largest 0.999, drift 1.23e-6, 680 readouts
+  frame    70000: T  312.6 K, units 128, bonds/molecule 1.683, spanning 1.000, largest 0.999, drift 1.23e-6, 700 readouts
+  frame    72000: T  269.8 K, units 128, bonds/molecule 1.684, spanning 1.000, largest 0.999, drift 1.23e-6, 720 readouts
+  frame    74000: T  278.7 K, units 128, bonds/molecule 1.684, spanning 1.000, largest 0.998, drift 1.23e-6, 740 readouts
+  frame    76000: T  293.5 K, units 128, bonds/molecule 1.684, spanning 1.000, largest 0.998, drift 1.23e-6, 760 readouts
+  frame    78000: T  279.2 K, units 128, bonds/molecule 1.685, spanning 1.000, largest 0.998, drift 1.23e-6, 780 readouts
+  frame    80000: T  277.5 K, units 128, bonds/molecule 1.685, spanning 1.000, largest 0.998, drift 1.40e-6, 800 readouts
+  frame    82000: T  295.8 K, units 128, bonds/molecule 1.686, spanning 1.000, largest 0.998, drift 1.40e-6, 820 readouts
+  frame    84000: T  274.9 K, units 128, bonds/molecule 1.686, spanning 1.000, largest 0.999, drift 1.40e-6, 840 readouts
+  frame    86000: T  303.5 K, units 128, bonds/molecule 1.687, spanning 1.000, largest 0.998, drift 1.40e-6, 860 readouts
+  frame    88000: T  304.4 K, units 128, bonds/molecule 1.687, spanning 1.000, largest 0.999, drift 1.42e-6, 880 readouts
+  frame    90000: T  276.3 K, units 128, bonds/molecule 1.687, spanning 1.000, largest 0.999, drift 1.42e-6, 900 readouts
+  frame    92000: T  288.3 K, units 128, bonds/molecule 1.688, spanning 1.000, largest 0.999, drift 1.42e-6, 920 readouts
+  frame    94000: T  282.9 K, units 128, bonds/molecule 1.689, spanning 1.000, largest 0.999, drift 1.42e-6, 940 readouts
+  frame    96000: T  292.9 K, units 128, bonds/molecule 1.690, spanning 1.000, largest 0.999, drift 1.42e-6, 960 readouts
+  frame    98000: T  285.0 K, units 128, bonds/molecule 1.690, spanning 1.000, largest 0.999, drift 1.42e-6, 980 readouts
+  frame   100000: T  292.2 K, units 128, bonds/molecule 1.690, spanning 1.000, largest 0.999, drift 1.42e-6, 1000 readouts

@@ -1,0 +1,40 @@
+the design, derived before any counted frame
+  LIQUID-1: MSD exponent 1.6400 over [5.2126, 547.3] fs
+  crossover implied      102.47 fs
+  tables' step           1.077481 au = 0.026063 fs
+  this arm's step        1.077481 au = 0.026063 fs  (1x)
+  readout stride         100 frames -> lowest fitted lag 102.48 fs (>= crossover 102.47)
+  max_lag                140 readout frames -> top fitted lag 7173.6 fs
+  wall cap               MSD at the top lag at experiment's D = 35.35 bohr^2 against the lens's cap 54.74 / 1.5 -- REPORTED, NOT GATED: this box is periodic and has no wall to saturate against
+  cap lifted             max_lag would be 41 against the 140 taken; the price ceiling is the only remaining limit and the freeze does not spend it
+  sampled frames         560
+  counted frames         100001 -> 28694.3 fs = 28.69 ps (70.0x the 4-crossover floor)
+  drift bar fraction     1.403471e-5 of the thermostat's posted work
+  price ceiling          299478.1 s (10x LIQUID-1's 29947.8 s)
+  ER giant at z = 2.3687  0.8738
+  settling, from LIQUID-1's own log
+    plateau (2nd half)   T 292.61 +- 7.01 K, bonds 1.2329 +- 0.0354
+    band                 +- 21.04 K (3 sd measured); equipartition sigma 12.22 K at 1149 dof
+    LIQUID-1 settled at  T frame 16000, bonds frame 18000 = 469.1 fs; it counted from frame 2000 = 52.1 fs
+    its reported bonds   1.1843 against its own plateau 1.2329: 3.94 % low
+    this criterion on LIQUID-1 fires at frame 18000 = 469.1 fs
+    the band: 36.67 K in force (stochastic-rescaling = 3 x 12.22 K), against LIQUID-1's own 21.04 K (3 x its Berendsen readout scatter 7.01 K, kept for the validation on ITS log)
+    here: block 2000 frames = 52.13 fs, 10 samples, window 5 blocks, floor 86000 frames (physical-time conversion 18000, thermostat frame clock 18000), cap 320000
+  counted arm            structure: 100001 counted frames = 2.606 ps per seed at stride 100 (the structure arm 100001 frames: LIQUID-1's arm at this step 100001, the pilots 36000 frames from 3 pilot(s) in /home/emoore/CIRISHolon/conformance/water_observatory/liquid2/pilot_1x (R2 4 blocks, R1 18 blocks); the diffusion arm 1100960 frames at stride 1966; cap 320000 frames = 8340.2 fs)
+    the floor: 18000 frames from LIQUID-1, 86000 frames from the pilots (/home/emoore/CIRISHolon/conformance/water_observatory/liquid2/pilot_1x/settling.json) -> 86000 in force (the pilots)
+    blocks logged by LIQUID-1: 50
+CONFIGURATION (read back from the objects, not restated):
+  serving rule          blend  (CtTable::serve_mode())
+  blend beta            55.163531280 per bohr  (CtTable::beta(); /home/emoore/CIRISHolon/conformance/water_observatory/ct3/smooth/beta.json:beta_per_bohr = 5.516353128e1)
+  step                  1.077480986 au = 0.026063019 fs  (1.000000x the tables' 1.077480986 au)  (Sim::dt())
+  thermostat            stochastic-rescaling  (Sim::thermostat_kind; canonical true; draws at selection 0)
+  boundary / lens       Periodic / Periodic  (Sim::boundary through lens_boundary)
+  settling block        2000 frames = 52.1260 fs  (LIQUID-1's 2,000 frames converted at this step)
+  law                   /home/emoore/CIRISHolon/conformance/water_observatory/ct3/wall_ct3.json
+  table                 /home/emoore/CIRISHolon/conformance/water_observatory/ct3/ct_table.json (60 knots, CtTable::knots())
+  seeds                 confirmation 0x4c4951554944, 0x4c4951554945, 0x4c4951554946; pilots 0x50494c4f54300001, 0x50494c4f54300002, 0x50494c4f54300003
+CONFIG     PASS       [6 checks, 6 legs]  the configuration READ BACK from the objects: serving rule blend, beta 5.516353128e1 per bohr, step 1.077480986e0 au = 2.606301870e-2 fs (1.000000000e0x the tables' 1.077480986e0 au), thermostat stochastic-rescaling, box Periodic -> lens Periodic, settling block 2000 frames = 5.212603740e1 fs. Every value is an accessor's answer, not a constant restated (M-VALIDATED-NOT-WIRED)
+BIND       PASS       [5 checks, 5 legs]  the design READ BACK from /home/emoore/CIRISHolon/conformance/water_observatory/liquid2/gate.json against this arm's own derivation: floor 86000 / 86000, cap 320000 / 320000, counted 100001 / 100001, stride 100 / 100, arm 1 / 1 (structure)
+price [the counted arm at 384 atoms with the lattice sum and CT-3's table]: 3.533575e1 s over 100 steps = 3.533575e-1 s/step; 186001 steps projected at 65724.852 s; band [0.1, 10] on actual/projected
+settling: 90100 frames = 2348.3 fs (settled by the criterion); 45 blocks
+wall 69633.2 s over 190101 frames

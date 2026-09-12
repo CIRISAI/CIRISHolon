@@ -93,7 +93,7 @@ added), and the electron's place in the closure grammar (a terminal today; no wa
 - **ION-1 — the cation half of the rewrite.** H₃O⁺ as a unit the reading may form; its presence from its own density; the seam H₃O⁺·H₂O on a dozen geometries (9.0M determinants, ~12 minutes each on the product-start solver — node C's compute fence, lifted); the hop production under the rent clause. Kills: the shared-proton geometry against Zundel/Eigen; the excess proton's diffusion against experiment (~5× water's). The anion half waits on a basis (I-5).
 - **A basis lane (I-5).** One basis with virtual p on hydrogen and a diffuse function on oxygen: attunement stops reading zero and OH⁻ binds. Priced by the MPS route (channel 3/4 sizing: the closed sector 566 GiB at 20 orbitals on the determinant route; `price_mpo(21) = 1.76` GiB provisional).
 
-### H-bond network — READ (LIQUID-1): the first liquid of derived constants — L0 PASS, R1 (c) on position by 0.09 Å, R2 (b) at two thirds of water's bonds, R3 VOID (no diffusive regime in 2.6 ps)
+### H-bond network — READ TWICE. LIQUID-1: the first liquid of derived constants (R1 (c), R2 (b), R3 VOID). **LIQUID-2 (2026-09-12, `LIQUID2_RESULTS.md`): R1 (a), R2 (a), S (a) on three seeds — the peak inside experiment's band, the bonds at 96 % of experiment's count, and the network SPANNING in every sampled frame. R3 void by design (split out on price); L1's drift leg failed on a bar that punishes a settled box.**
 
 | question | record |
 |---|---|
@@ -750,6 +750,44 @@ four, working.
 the stride and the arm kind, each read back from `gate.json` and compared exactly. The defect
 the fourth review found in `run_phase` would have had the arm derive its own floor from a
 directory with no pilot set; the arm now refuses to run a design the gate did not admit.
+
+## LIQUID-2 READ (2026-09-12) — three forward predictions, three seeds, all in band; and a bar that punishes a settled box
+
+`LIQUID2_RESULTS.md`. Three arms behind an admitted gate, `212,407` core-seconds against a
+`299,478`-second ceiling, each arm's design bound to the gate's by BIND 5/5.
+
+| | seed mean over three seeds | the band, pre-committed before the run | branch |
+|---|---|---|---|
+| **R1** first O–O peak | `5.25` bohr = **`2.778` Å**, height **`3.075`** | `[5.0, 5.6]` bohr, height `[2.0, 4.0]` | **(a)** |
+| **R2** bonds per molecule | **`1.6876`** lens = **`3.375`** both-ends | `[1.5, 2.0]` lens; experiment `3.5` | **(a)** |
+| **S** spanning fraction | **`1.0000`**; largest component `0.99825`; degree `3.3753` | a majority winding AND the largest at or above the ER giant `0.8738` | **(a)** |
+| **R3** self-diffusion | not measured | — | **VOID**, by the split |
+
+**What moved against LIQUID-1**: the first peak from `3.04` Å — *outside* experiment's band by
+`0.09` Å — to `2.778` Å inside it; the bond count from `2.37` both-ends (two thirds of
+experiment) to `3.375` (96 % of it); and the spanning fraction from OWED to `1.0000`, which is
+the readout LIQUID-1 could not take and the one the page has carried as a debt since. R2's
+pooled standard error `5.335e-3` sits above the seed spread `3.633e-3` at `g = 58.6` and
+`n_eff = 19.0`, so the seeds' agreement is not finer than the arms can resolve.
+
+**What it is not**, in the campaign's own words: not a validated water model. Every band is
+this programme's own around an experimental number, the law is a minimal-basis fit whose gap
+to MB-pol is `3.4x` its own error, the density is IMPOSED, and no certificate flips any tier.
+
+**M-BAR-AGAINST-A-WORKING-THERMOSTAT.** L1's books close — `columns_ok` on every arm, momentum
+residual `2.06e-11` against a bound of `2.98e-7` — and its DRIFT leg failed on all three, by
+`1.11x`, `3.83x` and `7.07x`. The absolute drift is **`4.9`–`8.6` times BETTER than LIQUID-1's**.
+What moved is the denominator: the bar is `1.4035e-5 x |thermostat work|`, LIQUID-1's
+thermostat did `0.767` hartree of work counting on a box settled for `52` fs, and LIQUID-2's
+did `0.013`–`0.091` because its box was settled by a measured criterion first. **The bar
+tightened `8`–`60x` and three arms with better books than the reference failed it.** The
+stake's own fence saw the arm-length direction of this and not the settling direction. No
+repair is made in a results file; the candidates are named there and belong in an amendment.
+
+That is the third constant this season that did not travel, and the first that punishes the
+campaign for doing what a review asked. The pattern is now: the `8x` step constants, the
+unswitched defaults, the band from a suppressed scatter, a gate that passed below the
+crossover, and a bar against a quantity that shrinks when the work gets better.
 
 ## The transport instrument, and a gate that had to be hardened twice (2026-09-11)
 

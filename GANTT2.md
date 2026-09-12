@@ -782,7 +782,17 @@ thermostat did `0.767` hartree of work counting on a box settled for `52` fs, an
 did `0.013`–`0.091` because its box was settled by a measured criterion first. **The bar
 tightened `8`–`60x` and three arms with better books than the reference failed it.** The
 stake's own fence saw the arm-length direction of this and not the settling direction. No
-repair is made in a results file; the candidates are named there and belong in an amendment.
+repair is made in a results file; the candidates are named there and belong in an amendment —
+and `LIQUID2_AMENDMENT_2.md` is that amendment, written the same day. **The obvious repair was
+REJECTED by this season's own rule**: stating the drift against `kT` per water, the scale at
+which it could corrupt a reading, would be met with a factor of about five thousand to spare,
+and a leg that cannot fail is not a leg. What is adopted keeps the ratio and gives it a FLOOR
+— LIQUID-1's own absolute drift rate, `3.2266e-8` Ha per water per ps, multiplied out by this
+arm's waters and counted time — so the leg reads: no counted arm may drift worse in absolute
+terms than the reference did, and an arm whose thermostat is working hard may spend more in
+proportion to that work. The three banked arms PASS at `0.116`, `0.132` and `0.205` of it, on
+arithmetic over numbers they already recorded (no arm re-run, none needed); an arm drifting
+`2.0e-5` Ha still FAILS by `1.86x`, so the margin is measured and not manufactured.
 
 That is the third constant this season that did not travel, and the first that punishes the
 campaign for doing what a review asked. The pattern is now: the `8x` step constants, the

@@ -93,6 +93,34 @@ fn SETTLE_READOUT() -> usize {
 }
 /// Samples taken inside each settling block (LIQUID-1's blocks held 20).
 const SETTLE_SAMPLES: usize = 10;
+
+/// THE TEMPERATURE BAND, DERIVED FROM THE THERMOSTAT IN FORCE
+/// (**M-BAND-FROM-A-SUPPRESSED-SCATTER**, `LIQUID2_AMENDMENT_1.md`, 2026-09-11).
+///
+/// The criterion's temperature leg asks every sample of its window to sit inside `3 sigma` of
+/// the target. `sigma` is the temperature's OWN fluctuation, and that is a property of the
+/// THERMOSTAT, not of the box: Berendsen suppresses it (LIQUID-1's own readout scattered at
+/// `7.01` K where this box's analytic canonical figure is `12.22` K), stochastic rescaling
+/// does not — being canonical is the whole reason it was selected. The freeze's band was
+/// `3 x 7.01 = 21.04` K, validated on LIQUID-1's Berendsen log, and applied unchanged to a
+/// canonically fluctuating arm it is `1.72 sigma`, where the leg's own arithmetic gives
+/// `P(all 50 samples inside) = 1.2e-2` per window against `0.87` at the three sigma intended.
+/// The gate ran `6.47` ps and never fired.
+///
+/// So the band is derived here the way the block and the cap already are — from the
+/// configuration in force — and a band is a property of the TRAJECTORY IT IS APPLIED TO: this
+/// function serves the live criterion on THIS arm, while LIQUID-1's own `3 x 7.01` K is kept
+/// for the validation that runs on LIQUID-1's log, so that derivation does not move by a bit.
+fn settle_band_k(thermostat: ThermostatKind, equipartition_sigma_k: f64, liquid1_measured_sd_k: f64) -> f64 {
+    3.0 * match thermostat {
+        // canonical by construction: the analytic figure IS the scatter, and the design
+        // already derives it from `3N - 3` and the target temperature
+        ThermostatKind::StochasticRescaling => equipartition_sigma_k,
+        // suppressed by an unmeasured factor: only a measurement of THAT thermostat's own
+        // arm can say by how much, and LIQUID-1's is the one this programme has
+        ThermostatKind::Berendsen => liquid1_measured_sd_k,
+    }
+}
 /// The window, in settling blocks. Validated on LIQUID-1's series: a 5-block window first
 /// fires at its frame 26,000 = 678 fs, against a measured settling of 469 fs - late enough
 /// not to fire early and not so late that it costs an arm.
@@ -1155,6 +1183,32 @@ impl Settler {
                 .join(", ")
         )
     }
+
+    /// WHAT THE BAND IS BEING APPLIED TO, measured by the run that applies it
+    /// (M-BAND-FROM-A-SUPPRESSED-SCATTER): the temperature samples' own scatter over the
+    /// second half of the settling, and the fraction of them the band admits. The criterion's
+    /// own assumption is then a number in its own record instead of an inference from another
+    /// campaign's thermostat, and a band that is again too tight says so in the file rather
+    /// than in a wall-clock bill.
+    fn sample_scatter(&self) -> (usize, f64, f64, f64, f64) {
+        let n = self.temps.len();
+        if n < 4 {
+            return (n, f64::NAN, f64::NAN, f64::NAN, f64::NAN);
+        }
+        let tail = &self.temps[n / 2..];
+        let (m, sd) = mean_sd(tail);
+        let inb = tail.iter().filter(|x| (**x - TEMPERATURE_K).abs() <= self.band).count() as f64 / tail.len() as f64;
+        let worst = tail.iter().map(|x| (x - TEMPERATURE_K).abs()).fold(0.0, f64::max);
+        (tail.len(), m, sd, inb, worst)
+    }
+
+    fn scatter_json(&self) -> String {
+        let (n, m, sd, inb, worst) = self.sample_scatter();
+        format!(
+            "{{\"samples\": {n}, \"mean_k\": {}, \"sd_k\": {}, \"fraction_inside_the_band\": {}, \"worst_deviation_k\": {}, \"band_k\": {}, \"band_in_sd\": {}, \"over\": \"the second half of the settling's own temperature samples - the quantity the band is applied to\"}}",
+            num(m), num(sd), num(inb), num(worst), num(self.band), num(self.band / sd)
+        )
+    }
 }
 
 /// THE SETTLING, RUN. One routine for the gate and for every seed's arm, so the criterion
@@ -1169,7 +1223,7 @@ fn settle(
     already_done: usize,
 ) -> (usize, Settler, bool) {
     let _ = (z, cell);
-    let mut s = Settler::new(d.temp_band_k, d.settle_floor_frames);
+    let mut s = Settler::new(d.temp_band_here_k, d.settle_floor_frames);
     let every = (SETTLE_READOUT() / SETTLE_SAMPLES).max(1);
     let mut frame = already_done;
     loop {
@@ -1410,6 +1464,9 @@ struct Design {
     max_lag_if_cap_lifted: usize,
     /// The drift bar, as a fraction of the thermostat's posted work.
     drift_fraction: f64,
+    /// LIQUID-1's own absolute drift rate, hartree per water per picosecond: the FLOOR under
+    /// the bar above (`LIQUID2_AMENDMENT_2.md`). Derived from its record, never typed.
+    liquid1_drift_per_water_per_ps: f64,
     /// The price ceiling, and LIQUID-1's own arm beside it.
     liquid1_seconds: f64,
     liquid1_seconds_per_pass: f64,
@@ -1417,7 +1474,12 @@ struct Design {
     /// LIQUID-1's bond count, cited beside R2's restated band.
     liquid1_hbonds: f64,
     /// The equilibration criterion, every number of it off LIQUID-1's own arm.
+    /// LIQUID-1's own band, `3 x` the scatter of ITS readout: kept for the validation that
+    /// runs on LIQUID-1's log, and it is not the band this arm's criterion uses.
     temp_band_k: f64,
+    /// THE BAND IN FORCE on this arm, from the thermostat it selects (`settle_band_k`).
+    temp_band_here_k: f64,
+    thermostat_here: ThermostatKind,
     equipartition_sigma_k: f64,
     settle_floor_frames: usize,
     /// The floor LIQUID-1's own measured settling converts to at this step — what the floor
@@ -1463,7 +1525,7 @@ fn er_giant(z: f64) -> f64 {
     s
 }
 
-fn design(obs: &Path, out: &Path, dt_tables: f64, l: f64, arm_kind: ArmKind) -> Design {
+fn design(obs: &Path, out: &Path, dt_tables: f64, l: f64, arm_kind: ArmKind, thermostat: ThermostatKind) -> Design {
     let arm = obs.join("liquid1").join("arm.json");
     let a = arm.display().to_string();
     let r = |keys: &[&str], f: &str| must(read_input_after(&a, keys, f));
@@ -1480,6 +1542,7 @@ fn design(obs: &Path, out: &Path, dt_tables: f64, l: f64, arm_kind: ArmKind) -> 
     // LIQUID-1's own lag window, in femtoseconds. Its readout stride is its counted frames
     // over its readouts; its step is the tables' step, which this engine derives again from
     // the same curve and the same box (`adopt_table_timescale`).
+    let counted_l1_frames = counted_l1.value;
     let stride_l1 = (counted_l1.value / readouts_l1.value).round();
     let ladder_l1 = lag_ladder(max_lag_l1.value as usize);
     let low_l1 = *ladder_l1.first().unwrap_or(&2) as f64;
@@ -1632,11 +1695,19 @@ fn design(obs: &Path, out: &Path, dt_tables: f64, l: f64, arm_kind: ArmKind) -> 
         msd_at_top_bohr2: msd_top,
         max_lag_if_cap_lifted: max_lag_free,
         drift_fraction: drift_in.value.abs() / therm_in.value.abs(),
+        // LIQUID-1's drift over LIQUID-1's own waters and LIQUID-1's own counted time. Its
+        // box is this box (128 waters, the same cell) and its step is the tables' step, so
+        // the counted time is its counted frames at that step.
+        liquid1_drift_per_water_per_ps: drift_in.value.abs()
+            / N_WATERS as f64
+            / (counted_l1_frames * dt_tables * AU_TIME_FS / 1000.0),
         liquid1_seconds: secs_in.value,
         liquid1_seconds_per_pass: per_pass_in.value,
         price_ceiling_seconds: PRICE_CEILING_MULTIPLE * secs_in.value,
         liquid1_hbonds: hb_in.value,
         temp_band_k: band,
+        temp_band_here_k: settle_band_k(thermostat, equipartition, probe.t_plateau_sd),
+        thermostat_here: thermostat,
         equipartition_sigma_k: equipartition,
         settle_floor_frames: settle_floor,
         settle_floor_from_liquid1: settle_floor_l1,
@@ -1656,8 +1727,30 @@ fn design(obs: &Path, out: &Path, dt_tables: f64, l: f64, arm_kind: ArmKind) -> 
 }
 
 impl Design {
+    /// THE DRIFT BAR, WITH A FLOOR (`LIQUID2_AMENDMENT_2.md`, **M-BAR-AGAINST-A-WORKING-THERMOSTAT**).
+    ///
+    /// The frozen bar is a fraction of the THERMOSTAT'S WORK, and that quantity is not a
+    /// property of the arm being tested: a box settled by a measured criterion leaves the
+    /// thermostat almost nothing to do, so the bar collapses exactly when the campaign does
+    /// the thing the review asked for. LIQUID-2's three arms drifted `4.9`–`8.6x` BETTER than
+    /// LIQUID-1 in absolute terms and failed a bar derived from LIQUID-1 by up to `7.07x`.
+    ///
+    /// So the ratio is kept where it has meaning and given a floor where it does not: the
+    /// floor is LIQUID-1's OWN absolute drift rate — its `drift_peak` over its own waters and
+    /// its own counted picoseconds — multiplied back out by this arm's. The leg then reads:
+    /// no counted arm may drift worse in absolute terms than the reference did, and an arm
+    /// whose thermostat is working hard may spend more in proportion to that work.
+    ///
+    /// FENCE, carried from the amendment: `drift_peak` is an EXTREMUM and this scales it
+    /// linearly in counted time, which is the forgiving direction and grows more forgiving
+    /// with arm length. Honest for an arm of the reference's length (LIQUID-2's is, to one
+    /// frame); RE-DERIVE it rather than extrapolate for an arm materially longer.
     fn drift_bar(&self, work_thermostat: f64) -> f64 {
-        self.drift_fraction * work_thermostat.abs()
+        (self.drift_fraction * work_thermostat.abs()).max(self.drift_floor())
+    }
+    /// LIQUID-1's own drift rate, per water per picosecond, multiplied out by this arm.
+    fn drift_floor(&self) -> f64 {
+        self.liquid1_drift_per_water_per_ps * N_WATERS as f64 * (self.count as f64 * self.step_fs / 1000.0)
     }
     fn stakes(&self) -> Vec<Stake> {
         let i = &self.inputs;
@@ -1711,10 +1804,10 @@ impl Design {
              \"top_fitted_lag_fs\": {}, \"counted_physical_fs\": {}, \
              \"counted_physical_over_4_crossover\": {}, \"wall_cap_bohr2\": {}, \
              \"msd_at_top_lag_at_experiment_d_bohr2\": {}, \"wall_cap_margin\": {}, \"wall_cap_binds_under_periodic\": false, \"wall_cap_rule\": \"the cap is diffusion()'s refusal for Boundary::Walls; diffusion_periodic applies it only there, so on this periodic box it is REPORTED and not gated\", \"max_lag_if_cap_lifted\": {}, \"max_lag_taken\": {}, \"max_lag_rule_if_lifted\": \"the largest ladder lag whose 3-seed arm stays inside the price ceiling; REPORTED, not taken\", \
-             \"drift_fraction\": {}, \"liquid1_wall_seconds\": {}, \
+             \"drift_fraction\": {}, \"drift_floor_hartree\": {}, \"liquid1_drift_per_water_per_ps\": {}, \"drift_bar_rule\": \"max(fraction x |thermostat work|, LIQUID-1's own absolute drift rate x this arm's waters x its counted ps) - LIQUID2_AMENDMENT_2.md, M-BAR-AGAINST-A-WORKING-THERMOSTAT\", \"liquid1_wall_seconds\": {}, \
              \"liquid1_seconds_per_pass\": {}, \"price_ceiling_seconds\": {}, \
              \"liquid1_hbonds_per_molecule\": {}, \"er_degree\": {}, \"er_giant\": {}, \
-             \"settling\": {{\"temperature_band_k\": {}, \"band_rule\": \"3 x the scatter of LIQUID-1's own temperature readout over the second half of its counted arm\", \"liquid1_plateau_temperature_k\": {}, \"liquid1_plateau_temperature_sd_k\": {}, \"equipartition_sigma_k\": {}, \"equipartition_dof\": {}, \"liquid1_plateau_hbonds\": {}, \"liquid1_plateau_hbonds_sd\": {}, \"liquid1_reported_hbonds\": {}, \"liquid1_reported_under_its_own_plateau\": {}, \"liquid1_temperature_settled_at_frame\": {}, \"liquid1_hbonds_settled_at_frame\": {}, \"liquid1_hbonds_settled_fs\": {}, \"liquid1_settled_only_frames\": 2000, \"this_criterion_on_liquid1_fires_at_frame\": {}, \"this_criterion_on_liquid1_fires_at_fs\": {}, \"readout_frames\": {}, \"samples_per_block\": {}, \"window_blocks\": {}, \"block_fs\": {}, \"floor_frames\": {}, \"floor_from_physical_time\": {}, \"floor_from_the_thermostats_frame_clock\": {}, \"floor_rule\": \"the larger of the two: the network rearranges in physical time and the thermostat is applied once per step\", \"floor_from_liquid1_frames\": {}, \"floor_from_pilots_frames\": {}, \"floor_from_pilots_source\": {}, \"floor_in_force_is\": {:?}, \"pilot_rule\": \"Chodera 2016 automated equilibration detection on the cross-unit potential energy, maximum over pilots; the pilots run on their own seeds and no confirmation arm sees them\", \"cap_frames\": {}, \"cap_fs\": {}, \"cap_rule\": \"the provisional 8x gate's 40,000-frame cap in the tables' own frames, 320,000, converted at this step; a cap reached FAILS the gate's SETTLE leg and VOIDS a counted arm\"}}, \"counted_arm\": \"{}\", \"counted_arm_code\": {}, \"counted_frames_diffusion\": {}, \"readout_stride_diffusion\": {}, \"counted_frames_structure\": {}, \"readout_stride_structure\": {}, \"structure_floor_from_liquid1_frames\": {}, \"structure_precision_fraction_of_half_band\": {}, \"structure_from_pilots\": {}, \"structure_rule\": \"the larger of LIQUID-1's counted arm converted to this step in physical time and the frames the pilots' measured block variance needs to put R1's and R2's standard error at the declared precision (g (s/p)^2 blocks, Chodera 2016); S rides on the same readouts - a FENCE, no pilot series exists for it\"}}",
+             \"settling\": {{\"temperature_band_k\": {}, \"band_rule\": \"3 x the fluctuation the THERMOSTAT IN FORCE has: the analytic canonical sigma under stochastic rescaling, LIQUID-1's measured readout scatter under Berendsen (M-BAND-FROM-A-SUPPRESSED-SCATTER, LIQUID2_AMENDMENT_1.md). The band applied to LIQUID-1's OWN log, for the validation that runs there, is liquid1_temperature_band_k and is unchanged\", \"thermostat_in_force\": \"{}\", \"liquid1_temperature_band_k\": {}, \"liquid1_plateau_temperature_k\": {}, \"liquid1_plateau_temperature_sd_k\": {}, \"equipartition_sigma_k\": {}, \"equipartition_dof\": {}, \"liquid1_plateau_hbonds\": {}, \"liquid1_plateau_hbonds_sd\": {}, \"liquid1_reported_hbonds\": {}, \"liquid1_reported_under_its_own_plateau\": {}, \"liquid1_temperature_settled_at_frame\": {}, \"liquid1_hbonds_settled_at_frame\": {}, \"liquid1_hbonds_settled_fs\": {}, \"liquid1_settled_only_frames\": 2000, \"this_criterion_on_liquid1_fires_at_frame\": {}, \"this_criterion_on_liquid1_fires_at_fs\": {}, \"readout_frames\": {}, \"samples_per_block\": {}, \"window_blocks\": {}, \"block_fs\": {}, \"floor_frames\": {}, \"floor_from_physical_time\": {}, \"floor_from_the_thermostats_frame_clock\": {}, \"floor_rule\": \"the larger of the two: the network rearranges in physical time and the thermostat is applied once per step\", \"floor_from_liquid1_frames\": {}, \"floor_from_pilots_frames\": {}, \"floor_from_pilots_source\": {}, \"floor_in_force_is\": {:?}, \"pilot_rule\": \"Chodera 2016 automated equilibration detection on the cross-unit potential energy, maximum over pilots; the pilots run on their own seeds and no confirmation arm sees them\", \"cap_frames\": {}, \"cap_fs\": {}, \"cap_rule\": \"the provisional 8x gate's 40,000-frame cap in the tables' own frames, 320,000, converted at this step; a cap reached FAILS the gate's SETTLE leg and VOIDS a counted arm\"}}, \"counted_arm\": \"{}\", \"counted_arm_code\": {}, \"counted_frames_diffusion\": {}, \"readout_stride_diffusion\": {}, \"counted_frames_structure\": {}, \"readout_stride_structure\": {}, \"structure_floor_from_liquid1_frames\": {}, \"structure_precision_fraction_of_half_band\": {}, \"structure_from_pilots\": {}, \"structure_rule\": \"the larger of LIQUID-1's counted arm converted to this step in physical time and the frames the pilots' measured block variance needs to put R1's and R2's standard error at the declared precision (g (s/p)^2 blocks, Chodera 2016); S rides on the same readouts - a FENCE, no pilot series exists for it\"}}",
             num(self.alpha),
             num(self.t1_l1_fs),
             num(self.t2_l1_fs),
@@ -1737,12 +1830,16 @@ impl Design {
             self.max_lag_if_cap_lifted,
             self.max_lag,
             num(self.drift_fraction),
+            num(self.drift_floor()),
+            num(self.liquid1_drift_per_water_per_ps),
             num(self.liquid1_seconds),
             num(self.liquid1_seconds_per_pass),
             num(self.price_ceiling_seconds),
             num(self.liquid1_hbonds),
             num(self.er_degree),
             num(self.er_giant),
+            num(self.temp_band_here_k),
+            self.thermostat_here.name(),
             num(self.temp_band_k),
             num(self.l1.t_plateau),
             num(self.l1.t_plateau_sd),
@@ -1819,6 +1916,14 @@ impl Design {
         println!("    LIQUID-1 settled at  T frame {}, bonds frame {} = {:.1} fs; it counted from frame 2000 = {:.1} fs", self.l1.t_settled_at, self.l1.bond_settled_at, self.l1.bond_settled_at as f64 * self.dt_tables_au * AU_TIME_FS, 2000.0 * self.dt_tables_au * AU_TIME_FS);
         println!("    its reported bonds   {:.4} against its own plateau {:.4}: {:.2} % low", self.l1.reported_bond, self.l1.bond_plateau, 100.0 * self.l1.plateau_shortfall);
         println!("    this criterion on LIQUID-1 fires at frame {} = {:.1} fs", self.l1.criterion_fires_at, self.l1.criterion_fires_at as f64 * self.dt_tables_au * AU_TIME_FS);
+        println!(
+            "    the band: {:.2} K in force ({} = 3 x {:.2} K), against LIQUID-1's own {:.2} K (3 x its Berendsen readout scatter {:.2} K, kept for the validation on ITS log)",
+            self.temp_band_here_k,
+            self.thermostat_here.name(),
+            self.temp_band_here_k / 3.0,
+            self.temp_band_k,
+            self.temp_band_k / 3.0
+        );
         println!("    here: block {} frames = {:.2} fs, {} samples, window {} blocks, floor {} frames (physical-time conversion {}, thermostat frame clock {}), cap {}", SETTLE_READOUT(), SETTLE_READOUT() as f64 * self.step_fs, SETTLE_SAMPLES, SETTLE_WINDOW, self.settle_floor_frames, (self.l1.bond_settled_at as f64 * self.dt_tables_au * AU_TIME_FS / self.step_fs).ceil() as usize, self.l1.bond_settled_at, self.settle_cap_frames);
         println!(
             "  counted arm            {}: {} counted frames = {:.3} ps per seed at stride {} (the structure arm {} frames: LIQUID-1's arm at this step {}, the pilots {}; the diffusion arm {} frames at stride {}; cap {} frames = {:.1} fs)",
@@ -2341,7 +2446,7 @@ fn gate_phase(obs: &Path, out: &Path, arm: ArmKind) {
     let law = load_law(obs);
     let sel = Selection::campaign();
     let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, sel, SEEDS[0]);
-    let d = design(obs, out, dt_tables, l, arm);
+    let d = design(obs, out, dt_tables, l, arm, sel.thermostat);
     d.print();
 
     // ---- L0: the door
@@ -2472,10 +2577,16 @@ fn gate_phase(obs: &Path, out: &Path, arm: ArmKind) {
     let g_settle = Gate::new("SETTLE")
         .work(1)
         .detail(format!(
-            "the settling criterion (temperature band {:.2} K and the cross-unit energy over a {}-block window) against its floor {} frames and its cap {} frames = {:.1} fs, the cap derived in physical time",
-            d.temp_band_k, SETTLE_WINDOW, d.settle_floor_frames, d.settle_cap_frames, d.settle_cap_frames as f64 * d.step_fs
+            "the settling criterion (temperature band {:.2} K = 3 x the {} thermostat's own fluctuation, and the cross-unit energy's trend over a {}-block window) against its floor {} frames and its cap {} frames = {:.1} fs, both derived in physical time; the samples the band was applied to scattered at {:.2} K with {:.3} of them inside it (M-BAND-FROM-A-SUPPRESSED-SCATTER)",
+            d.temp_band_here_k, d.thermostat_here.name(), SETTLE_WINDOW, d.settle_floor_frames, d.settle_cap_frames, d.settle_cap_frames as f64 * d.step_fs,
+            settler.sample_scatter().2, settler.sample_scatter().3
         ))
         .leg_at("the settling criterion fired inside its physical cap", !settle_capped, settle_used as f64)
+        .leg_at(
+            "the band is at least three times the scatter of the samples it was applied to - the criterion is not asking for a quieter box than this thermostat makes",
+            settler.sample_scatter().2.is_nan() || d.temp_band_here_k >= 3.0 * settler.sample_scatter().2,
+            d.temp_band_here_k / settler.sample_scatter().2,
+        )
         .leg_at(
             "the box holds its units and its image rule after settling",
             sim.pbc_ok() && sim.seam_work.units == N_WATERS as u64,
@@ -2565,6 +2676,7 @@ fn gate_phase(obs: &Path, out: &Path, arm: ArmKind) {
         .int("settle_frames_used", settle_used as i64)
         .flag("settling_capped", settle_capped)
         .raw("settling_series", settler.json())
+        .raw("settling_sample_scatter", settler.scatter_json())
         .int("settle_floor_frames", d.settle_floor_frames as i64)
         .int("settle_cap_frames", d.settle_cap_frames as i64)
         .int("seeds", SEEDS.len() as i64)
@@ -2702,7 +2814,7 @@ fn screen_phase(obs: &Path, out: &Path, step: f64, variant: Variant, label: Opti
             hand.abs_sum, hand.signed_sum, hand.signed_peak, hand.random_walk(), sim.drift_peak
         );
     }
-    let d = design(obs, out, dt_tables, l, ArmKind::Structure);
+    let d = design(obs, out, dt_tables, l, ArmKind::Structure, Selection::screen(step).thermostat);
     let work_thermostat = sim.work.thermostat;
     let bar = d.drift_bar(work_thermostat);
     let ratio = sim.drift_peak / work_thermostat.abs();
@@ -2871,7 +2983,7 @@ fn pilot_phase(obs: &Path, out: &Path, pilot_index: usize, blocks: usize, pilot_
     // trajectory, which is the whole of M-VALIDATED-NOT-WIRED one level down.
     let sel = Selection::campaign();
     let (mut sim, pos, l, tables_reach, dt_tables) = build(&law, sel, seed);
-    let d = design(obs, out, dt_tables, l, ArmKind::Structure);
+    let d = design(obs, out, dt_tables, l, ArmKind::Structure, sel.thermostat);
     let dr = door(&law, &mut sim, &pos, l, tables_reach, N_WATERS);
     if !dr.admitted {
         w.write_text(
@@ -3716,7 +3828,7 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize, sel: Selection, arm: Arm
     // THE CAMPAIGN ROOT, not this seed's directory (the fourth review): `design` looks for
     // the frozen pilot set UNDER the directory it is handed, and the seed directory has none,
     // so the arm was deriving a floor the gate never saw.
-    let d = design(obs, campaign, dt_tables, l, arm);
+    let d = design(obs, campaign, dt_tables, l, arm, sel.thermostat);
     d.print();
     let dr = door(&law, &mut sim, &pos, l, tables_reach, N_WATERS);
     if !dr.admitted {
@@ -4029,6 +4141,7 @@ fn run_phase(obs: &Path, out: &Path, seed_index: usize, sel: Selection, arm: Arm
         .int("settle_cap_frames", d.settle_cap_frames as i64)
         .number("settle_fs", settle_used as f64 * d.step_fs)
         .raw("settling_series", settler.json())
+        .raw("settling_sample_scatter", settler.scatter_json())
         .int("counted_frames_staked", d.count as i64)
         .int("counted_frames_run", counted as i64)
         .int("frames_run_total", frames_run as i64)

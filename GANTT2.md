@@ -751,6 +751,52 @@ the stride and the arm kind, each read back from `gate.json` and compared exactl
 the fourth review found in `run_phase` would have had the arm derive its own floor from a
 directory with no pilot set; the arm now refuses to run a design the gate did not admit.
 
+## The transport instrument, and a gate that had to be hardened twice (2026-09-11)
+
+REPLACE-0 measured the replacement error on structure and energy and NOT on dynamics, which
+is the gap between "the coarse operator reproduces the model's liquid" and "the coarse
+operator may be trusted to measure transport nobody can afford to measure finely". The
+instrument for it is in `replace0.rs`: both arms accumulate the oxygens' unwrapped walk on
+the campaign's own rule, at the same physical times, and the MSD is read on the lens's own
+lag ladder. **No diffusion constant is claimed** — naming one needs a diffusive regime this
+window does not contain, which is LIQUID-1's own refusal — and what is claimed is whether the
+two walks agree.
+
+**A correction to the lead's own pricing, made before it cost anything.** The brief said the
+transport step costs `0.70x` of a ceiling. That was the RIGID arm alone; the comparison needs
+the flexible arm too, and at R3's 28.7 ps that is 119 core-hours a seed. The error was
+quoting the cheap half of a two-armed experiment. It also conflated two questions that have
+very different prices:
+
+| the question | what it needs | the price, one seed |
+|---|---|---|
+| does the coarse operator WALK like the fine model? | an MSD comparison over a window both arms afford — no diffusive regime | ~5 ps: `21` core-h flexible + `1.6` rigid |
+| what is this model's self-diffusion? | the diffusive regime, 28.7 ps | affordable on the rigid arm alone (`0.70x` a ceiling), and meaningless until the first passes |
+
+**The gate was hardened twice, and both faults are the same fault this season keeps finding.**
+
+1. **It passed vacuously.** On the smoke window it read ONE lag at `tau = 3` fs, worst
+   departure `0.038`, PASS. Below the ballistic-to-diffusive crossover every walk goes as
+   `t^2`, so two arms agree there whatever their dynamics: the gate was measuring nothing and
+   saying PASS. Two anti-vacuity legs added — the window must reach past the crossover (CITED,
+   read from LIQUID-2's gate, which derives it from LIQUID-1's measured exponent, not typed
+   here) and the ladder must carry at least four lags.
+2. **It vanished.** Under `--reuse` the gate disappeared entirely, because the reference
+   bundle carried the flexible arm's series and not its walk and the code emitted no gate when
+   a walk was missing. **A gate that can vanish is worse than one that fails**, because a
+   missing gate reads as a campaign that never asked the question. The bundle now carries
+   `flexible.walk`, and an absent walk VOIDs the gate with its reason printed.
+
+Verified in three cases: reuse without a walk VOIDs; a fresh short run FAILS both anti-vacuity
+legs; reuse with a walk brings the gate back and it fails the same legs, because the smoke
+window is still short. The tolerance — the coarse walk within a fifth of the fine one at every
+lag — is DECLARED and has not been met by anything yet.
+
+**The rule, the fourth of this season's shape:** *a gate is only as good as what it refuses.
+Ask of every leg what would make it pass while measuring nothing, and of every gate what
+happens when its input is absent.* The step constants, the unswitched defaults, the band from
+a suppressed scatter and this both looked like working checks and were checking nothing.
+
 ## M-BAND-FROM-A-SUPPRESSED-SCATTER: the settling criterion cannot fire under the thermostat the campaign selected (2026-09-11)
 
 The gate ran 124 settling blocks — **248,100 frames = 6.47 ps**, 22 hours on one core, past

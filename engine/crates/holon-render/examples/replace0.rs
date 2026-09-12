@@ -300,6 +300,114 @@ fn half_summary(s: &[Obs], f: impl Fn(&Obs) -> f64) -> (f64, f64, f64) {
     (i.mean, i.sem, i.g)
 }
 
+// ------------------------------------------------------------------ transport: the MSD both arms carry
+
+/// THE LAG LADDER the MSD is read on: the lens's own x1.5 ladder, so an MSD compared here and
+/// a diffusion constant read by `holon-lens` later sit on the same lags.
+fn lag_ladder(max_lag: usize) -> Vec<usize> {
+    let mut v = Vec::new();
+    let mut k = 2usize;
+    while k <= max_lag {
+        v.push(k);
+        k = ((k as f64) * 1.5).ceil() as usize;
+    }
+    v
+}
+
+/// THE OXYGENS' UNWRAPPED WALK, accumulated by both arms at the readout cadence and on the
+/// same rule as the campaign's (`liquid2.rs`): each readout's minimum-image displacement from
+/// the last, summed, so a molecule that leaves the cell keeps walking instead of jumping back.
+///
+/// Why this lives here rather than being read off `holon-lens`: the lens returns a diffusion
+/// CONSTANT and the exponent it fitted, not the MSD curve, and the question REPLACE-0 has to
+/// answer first is whether the two arms' curves agree AT ALL over a window both can afford —
+/// which is a different and much cheaper question than what either arm's `D` is. A diffusive
+/// regime is not needed to compare two walks; it is needed only to name a constant.
+struct Walk {
+    prev: Vec<[f64; 3]>,
+    unwrapped: Vec<[f64; 3]>,
+    /// one entry per readout: every oxygen's unwrapped position
+    frames: Vec<Vec<[f64; 3]>>,
+    l: f64,
+}
+
+impl Walk {
+    fn new(pos: &[[f64; 3]], l: f64) -> Walk {
+        Walk { prev: pos.to_vec(), unwrapped: pos.to_vec(), frames: Vec::new(), l }
+    }
+    /// Advance the unwrapping with this frame's wrapped positions; does NOT record.
+    fn advance(&mut self, now: &[[f64; 3]]) {
+        for a in 0..now.len() {
+            for c in 0..3 {
+                let mut d = now[a][c] - self.prev[a][c];
+                d -= self.l * (d / self.l).round();
+                self.unwrapped[a][c] += d;
+            }
+        }
+        self.prev = now.to_vec();
+    }
+    /// Record the current unwrapped positions as a readout.
+    fn record(&mut self) {
+        self.frames.push(self.unwrapped.clone());
+    }
+    /// Mean squared displacement at each lag of the ladder, bohr², averaged over every
+    /// oxygen and every time origin.
+    fn msd(&self, ladder: &[usize]) -> Vec<(usize, f64)> {
+        let nf = self.frames.len();
+        let mut out = Vec::new();
+        for &lag in ladder {
+            if lag >= nf {
+                break;
+            }
+            let mut sum = 0.0;
+            let mut n = 0usize;
+            for t in 0..(nf - lag) {
+                for a in 0..self.frames[t].len() {
+                    let d = sub(self.frames[t + lag][a], self.frames[t][a]);
+                    sum += dot(d, d);
+                    n += 1;
+                }
+            }
+            if n > 0 {
+                out.push((lag, sum / n as f64));
+            }
+        }
+        out
+    }
+}
+
+/// Both arms' MSD on one ladder, with the ratio at every lag and the log-log slope of each.
+fn transport_json(fl: &[(usize, f64)], rg: &[(usize, f64)], lag_fs: f64, crossover_fs: f64) -> String {
+    let slope = |m: &[(usize, f64)]| -> f64 {
+        if m.len() < 2 {
+            return f64::NAN;
+        }
+        let (x, y): (Vec<f64>, Vec<f64>) = m.iter().map(|(l, v)| ((*l as f64).ln(), v.ln())).unzip();
+        let n = x.len() as f64;
+        let mx = x.iter().sum::<f64>() / n;
+        let my = y.iter().sum::<f64>() / n;
+        let num: f64 = x.iter().zip(&y).map(|(a, b)| (a - mx) * (b - my)).sum();
+        let den: f64 = x.iter().map(|a| (a - mx) * (a - mx)).sum();
+        num / den
+    };
+    let rows: Vec<String> = fl
+        .iter()
+        .zip(rg.iter())
+        .map(|((l, f), (_, r))| {
+            format!("{{\"lag\": {l}, \"tau_fs\": {}, \"msd_flexible_bohr2\": {}, \"msd_rigid_bohr2\": {}, \"ratio\": {}}}", num(*l as f64 * lag_fs), num(*f), num(*r), num(r / f))
+        })
+        .collect();
+    format!(
+        "{{\"rule\": \"mean squared displacement of the oxygens' unwrapped walk, every time origin and every oxygen, on the lens's own x1.5 lag ladder; the arms are read at the SAME physical times so the ladders coincide. A diffusion CONSTANT is not claimed here and the exponent says why one is not: naming a constant needs a diffusive regime, which neither arm's window contains, and comparing two walks does not.\", \"loglog_slope_flexible\": {}, \"loglog_slope_rigid\": {}, \"crossover_fs\": {}, \"top_tau_fs\": {}, \"reaches_past_the_crossover\": {}, \"ladder\": [{}]}}",
+        num(slope(fl)),
+        num(slope(rg)),
+        num(crossover_fs),
+        num(fl.last().map(|(l, _)| *l as f64 * lag_fs).unwrap_or(0.0)),
+        fl.last().map(|(l, _)| *l as f64 * lag_fs).unwrap_or(0.0) >= crossover_fs,
+        rows.join(", ")
+    )
+}
+
 // ------------------------------------------------------------------ the stiffness
 
 struct Stiffness {
@@ -393,6 +501,8 @@ fn measure_stiffness(sim: &mut Sim, units: &[UnitMembers], body: &Body) -> Stiff
 
 struct ArmResult {
     series: Vec<Obs>,
+    /// The oxygens' unwrapped walk at the readout cadence, when the arm kept one.
+    walk: Option<Walk>,
     passes: u64,
     seconds: f64,
     physical_fs: f64,
@@ -444,23 +554,28 @@ fn excursion_of(s: &[Obs], f: impl Fn(&Obs) -> f64) -> (f64, f64, f64) {
 }
 
 /// THE FLEXIBLE REFERENCE: the engine's own integrator at the tables' step, NVE.
-fn run_flexible(sim: &mut Sim, z: &[u32], l: f64, frames: usize, stride: usize, units: &[UnitMembers], body: &Body) -> ArmResult {
+fn run_flexible(sim: &mut Sim, z: &[u32], l: f64, frames: usize, stride: usize, units: &[UnitMembers], body: &Body, oxy: &[usize]) -> ArmResult {
     let t0 = Instant::now();
     let dt = sim.dt();
     let mut series = Vec::new();
+    let read_oxy = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].x, s.atoms[i].y, s.atoms[i].z]).collect() };
+    let mut walk = Walk::new(&read_oxy(sim), l);
+    walk.record();
     sim.compute_forces();
     let (tr, vib) = mode_split(sim, units, body);
     series.push(observe(sim, z, l, 0.0, sim.temperature(), sim.energy(), 0.0, tr, vib));
     for k in 0..frames {
         sim.step_frame(1);
+        walk.advance(&read_oxy(sim));
         if (k + 1) % stride == 0 {
+            walk.record();
             let (tr, vib) = mode_split(sim, units, body);
             series.push(observe(sim, z, l, (k + 1) as f64 * dt * AU_TIME_FS, sim.temperature(), sim.energy(), 0.0, tr, vib));
             let o = series.last().unwrap();
             eprintln!("  flexible frame {:>7}: T {:6.1} K (rigid modes {:6.1} K, vibrations {:.2} kT/water), E {:.6} Ha, bonds {:.3}, peak {:.2}", k + 1, o.temperature_k, o.rigid_mode_temperature_k, o.vibrational_kinetic_per_water_kt, o.energy, o.bonds_per_water, o.peak_bohr);
         }
     }
-    ArmResult { series, passes: frames as u64 + 1, seconds: t0.elapsed().as_secs_f64(), physical_fs: frames as f64 * dt * AU_TIME_FS, steps: frames as u64, dt_au: dt }
+    ArmResult { series, passes: frames as u64 + 1, seconds: t0.elapsed().as_secs_f64(), physical_fs: frames as f64 * dt * AU_TIME_FS, steps: frames as u64, dt_au: dt, walk: Some(walk) }
 }
 
 /// One rigid unit in flight, with the last force the law left on its sites.
@@ -526,7 +641,7 @@ struct RigidRun {
 }
 
 /// THE RIGID ARM, and with `refine` the demonstration.
-fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, frames: usize, stride: usize, refine: bool, match_k: Option<f64>) -> RigidRun {
+fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, frames: usize, stride: usize, refine: bool, match_k: Option<f64>, oxy: &[usize]) -> RigidRun {
     let t0 = Instant::now();
     let dt_f = sim.dt();
     let (projected, other) = project_all(sim, body).expect("every unit projects at the branch point");
@@ -581,6 +696,9 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
     for b in bodies.iter_mut() {
         b.f = site_forces_of(sim, &b.m);
     }
+    let read_oxy = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].x, s.atoms[i].y, s.atoms[i].z]).collect() };
+    let mut walk = Walk::new(&read_oxy(sim), l);
+    walk.record();
     let mut series = Vec::new();
     let e = rigid_kinetic(&bodies) + potential(sim);
     series.push(observe(sim, z, l, 0.0, rigid_temperature(&bodies), e, 0.0, rigid_temperature(&bodies), 0.0));
@@ -632,6 +750,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
             // THE RIGID STEP, and the validity rule checked on every step
             for _ in 0..k_r {
                 rigid_step(sim, &mut bodies, dt_r);
+                walk.advance(&read_oxy(sim));
                 passes += 1;
                 steps += 1;
                 t_au += dt_r;
@@ -663,6 +782,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
                 }
             }
             if refined.is_empty() {
+                walk.record();
                 let e = rigid_kinetic(&bodies) + potential(sim);
                 series.push(observe(sim, z, l, (r + 1) as f64 * period * AU_TIME_FS, rigid_temperature(&bodies), e, discarded_cum - injected, rigid_temperature(&bodies), 0.0));
                 let o = series.last().unwrap();
@@ -682,6 +802,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
             passes += 1;
             fine_frames += 1;
             t_au += dt_f;
+            walk.advance(&read_oxy(sim));
             for u in 0..n {
                 if refined.contains(&u) {
                     continue;
@@ -742,6 +863,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
                 ke_modes += bodies[u].w.kinetic();
             }
         }
+        walk.record();
         series.push(observe(sim, z, l, t_fs, 2.0 * ke / (dof * K_B), ke + potential(sim), discarded_cum - injected, 2.0 * ke_modes / (6.0 * n as f64 * K_B), 0.0));
         let o = series.last().unwrap();
         eprintln!("  FINE  readout {:>4} at {:8.1} fs: T {:6.1} K, E {:.6} Ha, bonds {:.3}, peak {:.2}; {} refined, held units discarded {:.2e} bohr / {:.2e} Ha per frame", r + 1, o.t_fs, o.temperature_k, o.energy, o.bonds_per_water, o.peak_bohr, refined.len(), held_def / frames_this as f64 / (n - refined.len()).max(1) as f64, held_ke / frames_this as f64);
@@ -775,7 +897,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
     }
     let physical_fs = readouts as f64 * period * AU_TIME_FS;
     RigidRun {
-        result: ArmResult { series, passes, seconds: t0.elapsed().as_secs_f64(), physical_fs, steps, dt_au: dt_r },
+        result: ArmResult { series, passes, seconds: t0.elapsed().as_secs_f64(), physical_fs, steps, dt_au: dt_r, walk: Some(walk) },
         discarded_at_branch: (def_rms, ke_int),
         clock_dt_au: clock.dt,
         clock_omega_dt: clock.omega_dt,
@@ -795,6 +917,39 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
 
 /// The flexible arm's series as text, one readout per line, with a header naming the frames
 /// and stride it was taken at so a run at another length cannot reuse it.
+/// The walk's own file beside the series: one line per readout, every oxygen's unwrapped
+/// position. Without it a `--reuse` run has no flexible walk and the TRANSPORT gate has
+/// nothing to compare — which is how it silently disappeared the first time it was reused.
+fn write_flexible_walk(path: &Path, w: &Walk) {
+    let mut t = format!("# walk {} {}\n", w.frames.len(), w.l);
+    for f in &w.frames {
+        let row: Vec<String> = f.iter().flat_map(|p| p.iter().map(|x| format!("{x}"))).collect();
+        t.push_str(&row.join(" "));
+        t.push('\n');
+    }
+    std::fs::write(path, t).expect("flexible.walk writes");
+}
+
+fn read_flexible_walk(path: &Path, readouts: usize) -> Option<Walk> {
+    let t = std::fs::read_to_string(path).ok()?;
+    let mut lines = t.lines();
+    let head: Vec<&str> = lines.next()?.split_whitespace().collect();
+    if head.len() != 4 || head[1] != "walk" || head[2].parse::<usize>().ok()? != readouts {
+        return None;
+    }
+    let l: f64 = head[3].parse().ok()?;
+    let mut frames = Vec::new();
+    for line in lines {
+        let v: Vec<f64> = line.split_whitespace().filter_map(|x| x.parse().ok()).collect();
+        if v.len() % 3 != 0 || v.is_empty() {
+            return None;
+        }
+        frames.push(v.chunks(3).map(|c| [c[0], c[1], c[2]]).collect::<Vec<[f64; 3]>>());
+    }
+    let prev = frames.last()?.clone();
+    Some(Walk { prev: prev.clone(), unwrapped: prev, frames, l })
+}
+
 fn write_flexible_series(path: &Path, f: &ArmResult, frames: usize, stride: usize) {
     let mut t = format!("# flexible2 {frames} {stride} {} {} {} {} {}\n", f.passes, f.seconds, f.physical_fs, f.steps, f.dt_au);
     for o in &f.series {
@@ -817,7 +972,7 @@ fn read_flexible_series(path: &Path, frames: usize, stride: usize) -> Option<Arm
             series.push(Obs { t_fs: v[0], temperature_k: v[1], energy: v[2], cross_unit_per_water: v[3], bonds_per_water: v[4], peak_bohr: v[5], ledger_adjust: 0.0, rigid_mode_temperature_k: v[6], vibrational_kinetic_per_water_kt: v[7] });
         }
     }
-    Some(ArmResult { series, passes: head[4].parse().ok()?, seconds: head[5].parse().ok()?, physical_fs: head[6].parse().ok()?, steps: head[7].parse().ok()?, dt_au: head[8].parse().ok()? })
+    Some(ArmResult { series, passes: head[4].parse().ok()?, seconds: head[5].parse().ok()?, physical_fs: head[6].parse().ok()?, steps: head[7].parse().ok()?, dt_au: head[8].parse().ok()?, walk: None })
 }
 
 // ------------------------------------------------------------------ the phases
@@ -865,6 +1020,7 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
     let law = load_law(obs);
     let (mut sim, l) = build(&law);
     let z: Vec<u32> = (0..sim.n).map(|i| sim.atoms[i].species.z).collect();
+    let oxy: Vec<usize> = (0..sim.n).filter(|&i| z[i] == 8).collect();
     let mut report = Report::new();
 
     // CONFIG, read back from the objects (M-VALIDATED-NOT-WIRED's rule)
@@ -933,16 +1089,25 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
     let frames = stride * (frames / stride);
     let series_path = out.join("flexible.series");
     let flex = match (reuse, read_flexible_series(&series_path, frames, stride)) {
-        (true, Some(f)) => {
-            eprintln!("the flexible arm REUSED from {} ({} readouts)", series_path.display(), f.series.len());
+        (true, Some(mut f)) => {
+            f.walk = read_flexible_walk(&out.join("flexible.walk"), f.series.len());
+            eprintln!(
+                "the flexible arm REUSED from {} ({} readouts; its walk {})",
+                series_path.display(),
+                f.series.len(),
+                if f.walk.is_some() { "came with it" } else { "is ABSENT - the transport gate will VOID rather than vanish" }
+            );
             f
         }
         _ => {
             eprintln!("the flexible arm: {frames} frames at the tables' step, a readout every {stride}");
             sim.restore(&branch).expect("the branch restores");
             sim.thermostat_on = false;
-            let f = run_flexible(&mut sim, &z, l, frames, stride, &units_at_branch, &body);
+            let f = run_flexible(&mut sim, &z, l, frames, stride, &units_at_branch, &body, &oxy);
             write_flexible_series(&series_path, &f, frames, stride);
+            if let Some(w) = &f.walk {
+                write_flexible_walk(&out.join("flexible.walk"), w);
+            }
             f
         }
     };
@@ -950,12 +1115,12 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
     sim.restore(&branch).expect("the branch restores");
     sim.thermostat_on = false;
     let match_k = if match_3n { Some(t_branch) } else { None };
-    let rigid = run_rigid(&mut sim, &z, l, &body, k_envelope, frames, stride, false, match_k);
+    let rigid = run_rigid(&mut sim, &z, l, &body, k_envelope, frames, stride, false, match_k, &oxy);
     let demo = if refine {
         eprintln!("the rigid arm WITH the refinement demonstration, from the same branch point");
         sim.restore(&branch).expect("the branch restores");
         sim.thermostat_on = false;
-        Some(run_rigid(&mut sim, &z, l, &body, k_envelope, frames, stride, true, match_k))
+        Some(run_rigid(&mut sim, &z, l, &body, k_envelope, frames, stride, true, match_k, &oxy))
     } else {
         None
     };
@@ -1022,6 +1187,74 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
     println!("  bonds per water  {:.4} - {:.4} = {:+.4} (sem {:.4} / {:.4})", rb.0, fb.0, rb.0 - fb.0, rb.1, fb.1);
     println!("  O-O first peak   {:.3} - {:.3} = {:+.3} bohr (sem {:.3} / {:.3})", rp.0, fp.0, rp.0 - fp.0, rp.1, fp.1);
 
+    // ---- TRANSPORT: the two walks on one ladder. A diffusion CONSTANT is not claimed and the
+    // gate says why: naming one needs a diffusive regime, which this window does not contain
+    // (LIQUID-1 refused its own D for exactly that reason over a longer window). What IS
+    // claimed is whether the coarse operator's molecules walk like the fine model's over the
+    // times both arms can afford — the question that has to pass before the rigid arm is
+    // trusted to measure transport nobody can afford to measure finely.
+    // THE CROSSOVER, cited and not typed: below it both arms are ballistic and agree by
+    // construction, so a comparison whose window stops short of it is a comparison of two
+    // parabolas. LIQUID-2's gate derives it from LIQUID-1's own measured MSD exponent.
+    let crossover_fs = read_input_after(&obs.join("liquid2").join("gate.json").display().to_string(), &["\"design\""], "crossover_fs")
+        .map(|v| v.value)
+        .unwrap_or(f64::NAN);
+    let (transport, g_transport) = match (&flex.walk, &rigid.result.walk) {
+        (Some(fw), Some(rw)) => {
+            let top = (fw.frames.len() / 4).max(2);
+            let ladder = lag_ladder(top);
+            let (fm, rm) = (fw.msd(&ladder), rw.msd(&ladder));
+            let lag_fs = stride as f64 * flex.dt_au * AU_TIME_FS;
+            let worst = fm.iter().zip(rm.iter()).map(|((_, f), (_, r))| (r / f - 1.0).abs()).fold(0.0f64, f64::max);
+            let top_fs = fm.last().map(|(l, _)| *l as f64 * lag_fs).unwrap_or(0.0);
+            println!(
+                "TRANSPORT (the oxygens' walk, {} lags to tau = {top_fs:.0} fs against the crossover {crossover_fs:.0} fs): worst |MSD_rigid/MSD_flexible - 1| = {worst:.3}{}",
+                fm.len(),
+                if top_fs < crossover_fs { "  -- BELOW THE CROSSOVER: both arms are ballistic here and agree by construction" } else { "" }
+            );
+            let g = Gate::new("TRANSPORT")
+                .work(4)
+                .detail(format!(
+                    "the oxygens' unwrapped walk on {} lags of the lens's own ladder, to tau = {top_fs:.0} fs against the crossover's {crossover_fs:.0} fs, read at the same physical times on both arms; worst MSD ratio departure {worst:.3}. NO diffusion constant is claimed: this window contains no diffusive regime and naming one would be the slope of a curve",
+                    fm.len()
+                ))
+                .leg_at("both arms carried a walk on the same ladder", fm.len() == rm.len() && !fm.is_empty(), fm.len() as f64)
+                // ANTI-VACUITY, and it is the leg that makes the tolerance mean something:
+                // below the crossover every walk is ballistic, r ~ t, so two arms agree there
+                // whatever their dynamics. A window that stops short of it passes this gate by
+                // construction, which is not a pass. The smoke set found exactly that - one lag
+                // at tau = 3 fs, worst departure 0.038 - and it is a vacuous reading, not a
+                // result about the operator.
+                .leg_at(
+                    "the walk reaches past the crossover the liquid's own measured exponent implies, so the comparison is not of two ballistic parabolas",
+                    top_fs >= crossover_fs,
+                    top_fs / crossover_fs,
+                )
+                .leg_at("the ladder carries at least four lags - a curve, not a coincidence", fm.len() >= 4, fm.len() as f64)
+                .leg_at("the coarse walk is within a fifth of the fine one at every lag - a DECLARED tolerance, not a fitted one", worst <= 0.2, worst);
+            (transport_json(&fm, &rm, lag_fs, crossover_fs), Some(g))
+        }
+        // A GATE THAT CAN VANISH IS WORSE THAN ONE THAT FAILS. The first `--reuse` run lost
+        // this gate entirely, because the bundle carried the flexible arm's series and not its
+        // walk, and a missing gate reads as a campaign that never asked the question.
+        _ => (
+            "null".to_string(),
+            Some(
+                Gate::new("TRANSPORT")
+                    .work(4)
+                    .void(format!(
+                        "no walk to compare: flexible {}, rigid {}. A reused bundle written before flexible.walk existed carries no walk; re-run without --reuse, or beside a bundle that has one",
+                        if flex.walk.is_some() { "has one" } else { "ABSENT" },
+                        if rigid.result.walk.is_some() { "has one" } else { "ABSENT" }
+                    )),
+            ),
+        ),
+    };
+    if let Some(g) = g_transport {
+        println!("{}", g.line());
+        report.gate(g);
+    }
+
     let validity = Validity::invariants_only("rigid-water", 1);
     let events = demo
         .as_ref()
@@ -1076,6 +1309,7 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
         .number("physical_fs_refined", demo.as_ref().map(|d| d.physical_fs_refined).unwrap_or(0.0))
         .int("hot_unit", demo.as_ref().and_then(|d| d.hot_unit).map(|u| u as i64).unwrap_or(-1))
         .text("held_reconstruction_potential_change", "UNMEASURED: a held unit's per-frame reconstruction moves its sites by ~1e-6 bohr and its potential by an amount no pass was spent to read; the kinetic part is ledgered")
+        .raw("transport", transport)
         .raw("validity", validity.json())
         .raw("gates", report.json())
         .flag("admits", report.admits());

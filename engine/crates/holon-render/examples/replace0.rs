@@ -4,7 +4,7 @@
 //!
 //! ```text
 //! cargo run --release -p holon-render --example replace0 -- stiffness [DIR]
-//! cargo run --release -p holon-render --example replace0 -- run [DIR] --frames N [--settle M] [--readouts R] [--refine] [--reuse] [--match-3n]
+//! cargo run --release -p holon-render --example replace0 -- run [DIR] --frames N [--settle M] [--readouts R] [--seed K] [--refine] [--reuse] [--match-3n]
 //! ```
 //!
 //! Three things are measured and nothing is assumed:
@@ -57,8 +57,11 @@ const N_CELLS: usize = 4;
 const N_WATERS: usize = 2 * N_CELLS * N_CELLS * N_CELLS;
 const DENSITY_G_CM3: f64 = 0.997;
 const TEMPERATURE_K: f64 = 293.0;
-/// The ASCII of "REPLACE0": disjoint from every LIQUID and PILOT seed by its letters.
-const SEED: u64 = 0x5245_504c_4143_4530;
+/// The ASCII of "REPLACE0", and its successors: disjoint from every LIQUID and PILOT seed by
+/// their letters. `--seed k` picks one; each writes its own directory and its own bundle,
+/// because a branch point is a property of its seed and reusing one across seeds would be
+/// comparing two arms of the same trajectory and calling them independent.
+const SEEDS: [u64; 3] = [0x5245_504c_4143_4530, 0x5245_504c_4143_4531, 0x5245_504c_4143_4532];
 const SEAM_CUTOFF_BOHR: f64 = 14.0;
 const RDF_DR: f64 = 0.1;
 const AU_TIME_FS: f64 = 0.024_188_843_265_857;
@@ -180,15 +183,15 @@ fn observatory(out: &Path) -> PathBuf {
 /// LIQUID-2's box under LIQUID-2's configuration: the blend at the derived beta, the tables'
 /// step (the engine's own hold, `allow_dt_growth` never touched), the stochastic thermostat
 /// for the settling, the periodic boundary.
-fn build(law: &Law) -> (Box<Sim>, f64) {
-    let (sp, pos, l) = liquid_box(N_CELLS, DENSITY_G_CM3, SEED);
+fn build(law: &Law, seed: u64) -> (Box<Sim>, f64) {
+    let (sp, pos, l) = liquid_box(N_CELLS, DENSITY_G_CM3, seed);
     let mut sim = scene(&sp, &pos, l, TEMPERATURE_K);
     sim.set_field(true, None).expect("the open box admits the field");
     let mut table = law.table.clone();
     assert!(table.set_blend(law.beta), "the table refused the derived beta");
     sim.ct_table = table;
     sim.set_seam(Some(law.model)).expect("no acuity frame is installed");
-    sim.set_thermostat_kind(ThermostatKind::StochasticRescaling, SEED);
+    sim.set_thermostat_kind(ThermostatKind::StochasticRescaling, seed);
     sim.set_boundary(Boundary::Periodic).expect("the periodic box");
     sim.thermostat_on = true;
     (sim, l)
@@ -986,10 +989,10 @@ fn settle(sim: &mut Sim, frames: usize) {
     }
 }
 
-fn stiffness_phase(obs: &Path, out: &Path, settle_frames: usize) {
+fn stiffness_phase(obs: &Path, out: &Path, settle_frames: usize, seed: u64) {
     let w = RecordWriter::new(out);
     let law = load_law(obs);
-    let (mut sim, _l) = build(&law);
+    let (mut sim, _l) = build(&law, seed);
     settle(&mut sim, settle_frames);
     sim.thermostat_on = false;
     sim.compute_forces();
@@ -1015,10 +1018,10 @@ fn stiffness_phase(obs: &Path, out: &Path, settle_frames: usize) {
     w.done("stiffness.done", "the contact stiffness measured off the served law under rigid motions").expect("done");
 }
 
-fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readouts: usize, refine: bool, reuse: bool, match_3n: bool) {
+fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readouts: usize, refine: bool, reuse: bool, match_3n: bool, seed: u64) {
     let w = RecordWriter::new(out);
     let law = load_law(obs);
-    let (mut sim, l) = build(&law);
+    let (mut sim, l) = build(&law, seed);
     let z: Vec<u32> = (0..sim.n).map(|i| sim.atoms[i].species.z).collect();
     let oxy: Vec<usize> = (0..sim.n).filter(|&i| z[i] == 8).collect();
     let mut report = Report::new();
@@ -1272,7 +1275,7 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
         .text("law_source", &law.law_source)
         .text("table_source", &law.table_source)
         .text("beta_source", &law.beta_source)
-        .text("seed", &format!("{SEED:#x}"))
+        .text("seed", &format!("{seed:#x}"))
         .int("waters", N_WATERS as i64)
         .number("cell_edge_bohr", l)
         .number("density_g_cm3", DENSITY_G_CM3)
@@ -1339,8 +1342,11 @@ fn main() {
     let obs = observatory(&out);
     eprintln!("phase {phase}, out {}, observatory {}", out.display(), obs.display());
     let settle_frames = val("--settle").and_then(|v| v.parse().ok()).unwrap_or(2_000);
+    let seed_index: usize = val("--seed").and_then(|v| v.parse().ok()).unwrap_or(0);
+    let seed = *SEEDS.get(seed_index).unwrap_or_else(|| panic!("seed index {seed_index} against {} declared seeds", SEEDS.len()));
+    eprintln!("seed {seed_index} of {}: {seed:#x}", SEEDS.len());
     match phase.as_str() {
-        "stiffness" => stiffness_phase(&obs, &out, settle_frames),
+        "stiffness" => stiffness_phase(&obs, &out, settle_frames, seed),
         "run" => run_phase(
             &obs,
             &out,
@@ -1350,6 +1356,7 @@ fn main() {
             args.iter().any(|a| a == "--refine"),
             args.iter().any(|a| a == "--reuse"),
             args.iter().any(|a| a == "--match-3n"),
+            seed,
         ),
         other => panic!("unknown phase {other:?}: stiffness | run"),
     }

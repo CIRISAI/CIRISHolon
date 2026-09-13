@@ -1,0 +1,516 @@
+phase run, out /home/emoore/CIRISHolon/conformance/water_observatory/replace0/transport_seed1, observatory ../conformance/water_observatory
+seed 1 of 3: 0x5245504c41434531
+settling 102100 frames under the stochastic thermostat, then NVE from the branch point
+  settling frame    500: T  398.6 K, cross-unit U -6.790817e-4 Ha/water
+  settling frame   1000: T  448.0 K, cross-unit U -2.386176e-3 Ha/water
+  settling frame   1500: T  402.4 K, cross-unit U -2.103215e-3 Ha/water
+  settling frame   2000: T  375.0 K, cross-unit U -2.125876e-3 Ha/water
+  settling frame   2500: T  370.6 K, cross-unit U -2.253361e-3 Ha/water
+  settling frame   3000: T  354.8 K, cross-unit U -2.596342e-3 Ha/water
+  settling frame   3500: T  383.0 K, cross-unit U -3.206777e-3 Ha/water
+  settling frame   4000: T  386.4 K, cross-unit U -3.226672e-3 Ha/water
+  settling frame   4500: T  343.4 K, cross-unit U -3.332171e-3 Ha/water
+  settling frame   5000: T  352.0 K, cross-unit U -3.556385e-3 Ha/water
+  settling frame   5500: T  365.3 K, cross-unit U -3.891713e-3 Ha/water
+  settling frame   6000: T  369.0 K, cross-unit U -4.171664e-3 Ha/water
+  settling frame   6500: T  376.0 K, cross-unit U -4.601016e-3 Ha/water
+  settling frame   7000: T  328.8 K, cross-unit U -4.303146e-3 Ha/water
+  settling frame   7500: T  359.0 K, cross-unit U -4.861356e-3 Ha/water
+  settling frame   8000: T  351.8 K, cross-unit U -5.084406e-3 Ha/water
+  settling frame   8500: T  316.4 K, cross-unit U -4.889183e-3 Ha/water
+  settling frame   9000: T  345.5 K, cross-unit U -5.413595e-3 Ha/water
+  settling frame   9500: T  329.9 K, cross-unit U -5.460209e-3 Ha/water
+  settling frame  10000: T  316.6 K, cross-unit U -5.610312e-3 Ha/water
+  settling frame  10500: T  328.7 K, cross-unit U -6.124112e-3 Ha/water
+  settling frame  11000: T  330.8 K, cross-unit U -6.228213e-3 Ha/water
+  settling frame  11500: T  338.7 K, cross-unit U -6.458363e-3 Ha/water
+  settling frame  12000: T  337.5 K, cross-unit U -6.433667e-3 Ha/water
+  settling frame  12500: T  333.6 K, cross-unit U -6.380740e-3 Ha/water
+  settling frame  13000: T  339.6 K, cross-unit U -6.785865e-3 Ha/water
+  settling frame  13500: T  344.8 K, cross-unit U -6.910529e-3 Ha/water
+  settling frame  14000: T  302.5 K, cross-unit U -6.413609e-3 Ha/water
+  settling frame  14500: T  334.6 K, cross-unit U -6.812025e-3 Ha/water
+  settling frame  15000: T  318.7 K, cross-unit U -6.759970e-3 Ha/water
+  settling frame  15500: T  302.5 K, cross-unit U -6.635060e-3 Ha/water
+  settling frame  16000: T  314.7 K, cross-unit U -7.007483e-3 Ha/water
+  settling frame  16500: T  318.8 K, cross-unit U -7.068597e-3 Ha/water
+  settling frame  17000: T  304.5 K, cross-unit U -6.994649e-3 Ha/water
+  settling frame  17500: T  315.3 K, cross-unit U -7.269242e-3 Ha/water
+  settling frame  18000: T  315.7 K, cross-unit U -7.512989e-3 Ha/water
+  settling frame  18500: T  309.7 K, cross-unit U -7.433265e-3 Ha/water
+  settling frame  19000: T  330.1 K, cross-unit U -7.665069e-3 Ha/water
+  settling frame  19500: T  335.0 K, cross-unit U -7.755716e-3 Ha/water
+  settling frame  20000: T  305.7 K, cross-unit U -7.347744e-3 Ha/water
+  settling frame  20500: T  342.7 K, cross-unit U -7.883230e-3 Ha/water
+  settling frame  21000: T  328.1 K, cross-unit U -7.641718e-3 Ha/water
+  settling frame  21500: T  323.7 K, cross-unit U -7.719526e-3 Ha/water
+  settling frame  22000: T  312.6 K, cross-unit U -7.424165e-3 Ha/water
+  settling frame  22500: T  328.4 K, cross-unit U -7.724952e-3 Ha/water
+  settling frame  23000: T  326.8 K, cross-unit U -8.003283e-3 Ha/water
+  settling frame  23500: T  327.9 K, cross-unit U -7.844939e-3 Ha/water
+  settling frame  24000: T  316.9 K, cross-unit U -7.839125e-3 Ha/water
+  settling frame  24500: T  315.2 K, cross-unit U -7.767366e-3 Ha/water
+  settling frame  25000: T  343.8 K, cross-unit U -8.081402e-3 Ha/water
+  settling frame  25500: T  336.6 K, cross-unit U -8.258926e-3 Ha/water
+  settling frame  26000: T  333.6 K, cross-unit U -8.304165e-3 Ha/water
+  settling frame  26500: T  307.8 K, cross-unit U -8.068178e-3 Ha/water
+  settling frame  27000: T  304.5 K, cross-unit U -7.958368e-3 Ha/water
+  settling frame  27500: T  318.1 K, cross-unit U -8.310862e-3 Ha/water
+  settling frame  28000: T  316.6 K, cross-unit U -8.226618e-3 Ha/water
+  settling frame  28500: T  311.3 K, cross-unit U -8.287841e-3 Ha/water
+  settling frame  29000: T  304.5 K, cross-unit U -8.302038e-3 Ha/water
+  settling frame  29500: T  345.3 K, cross-unit U -8.784841e-3 Ha/water
+  settling frame  30000: T  305.1 K, cross-unit U -8.256664e-3 Ha/water
+  settling frame  30500: T  316.2 K, cross-unit U -8.330402e-3 Ha/water
+  settling frame  31000: T  339.9 K, cross-unit U -8.672191e-3 Ha/water
+  settling frame  31500: T  300.9 K, cross-unit U -8.253766e-3 Ha/water
+  settling frame  32000: T  320.7 K, cross-unit U -8.683284e-3 Ha/water
+  settling frame  32500: T  295.0 K, cross-unit U -8.274225e-3 Ha/water
+  settling frame  33000: T  303.6 K, cross-unit U -8.331249e-3 Ha/water
+  settling frame  33500: T  308.4 K, cross-unit U -8.478827e-3 Ha/water
+  settling frame  34000: T  296.9 K, cross-unit U -8.126499e-3 Ha/water
+  settling frame  34500: T  292.2 K, cross-unit U -8.144763e-3 Ha/water
+  settling frame  35000: T  295.0 K, cross-unit U -8.330650e-3 Ha/water
+  settling frame  35500: T  289.7 K, cross-unit U -8.265841e-3 Ha/water
+  settling frame  36000: T  300.1 K, cross-unit U -8.463401e-3 Ha/water
+  settling frame  36500: T  313.8 K, cross-unit U -8.618733e-3 Ha/water
+  settling frame  37000: T  282.0 K, cross-unit U -8.292583e-3 Ha/water
+  settling frame  37500: T  307.2 K, cross-unit U -8.604946e-3 Ha/water
+  settling frame  38000: T  305.0 K, cross-unit U -8.577734e-3 Ha/water
+  settling frame  38500: T  305.7 K, cross-unit U -8.563777e-3 Ha/water
+  settling frame  39000: T  299.9 K, cross-unit U -8.821879e-3 Ha/water
+  settling frame  39500: T  273.7 K, cross-unit U -8.332392e-3 Ha/water
+  settling frame  40000: T  294.0 K, cross-unit U -8.602825e-3 Ha/water
+  settling frame  40500: T  278.8 K, cross-unit U -8.299680e-3 Ha/water
+  settling frame  41000: T  302.9 K, cross-unit U -8.619092e-3 Ha/water
+  settling frame  41500: T  286.5 K, cross-unit U -8.194104e-3 Ha/water
+  settling frame  42000: T  309.9 K, cross-unit U -8.460003e-3 Ha/water
+  settling frame  42500: T  316.1 K, cross-unit U -8.539996e-3 Ha/water
+  settling frame  43000: T  300.0 K, cross-unit U -8.584428e-3 Ha/water
+  settling frame  43500: T  301.7 K, cross-unit U -8.389037e-3 Ha/water
+  settling frame  44000: T  319.5 K, cross-unit U -8.639025e-3 Ha/water
+  settling frame  44500: T  308.3 K, cross-unit U -8.501845e-3 Ha/water
+  settling frame  45000: T  310.9 K, cross-unit U -8.551474e-3 Ha/water
+  settling frame  45500: T  326.4 K, cross-unit U -8.612338e-3 Ha/water
+  settling frame  46000: T  302.1 K, cross-unit U -8.409448e-3 Ha/water
+  settling frame  46500: T  296.7 K, cross-unit U -8.582470e-3 Ha/water
+  settling frame  47000: T  305.4 K, cross-unit U -8.644278e-3 Ha/water
+  settling frame  47500: T  291.1 K, cross-unit U -8.689886e-3 Ha/water
+  settling frame  48000: T  289.2 K, cross-unit U -8.695465e-3 Ha/water
+  settling frame  48500: T  289.1 K, cross-unit U -8.646419e-3 Ha/water
+  settling frame  49000: T  298.0 K, cross-unit U -8.754092e-3 Ha/water
+  settling frame  49500: T  292.9 K, cross-unit U -8.789931e-3 Ha/water
+  settling frame  50000: T  298.7 K, cross-unit U -8.749608e-3 Ha/water
+  settling frame  50500: T  296.0 K, cross-unit U -8.671295e-3 Ha/water
+  settling frame  51000: T  290.2 K, cross-unit U -8.708293e-3 Ha/water
+  settling frame  51500: T  296.7 K, cross-unit U -8.618386e-3 Ha/water
+  settling frame  52000: T  292.6 K, cross-unit U -8.507176e-3 Ha/water
+  settling frame  52500: T  297.9 K, cross-unit U -8.526709e-3 Ha/water
+  settling frame  53000: T  297.3 K, cross-unit U -8.499260e-3 Ha/water
+  settling frame  53500: T  297.0 K, cross-unit U -8.353998e-3 Ha/water
+  settling frame  54000: T  295.2 K, cross-unit U -8.280184e-3 Ha/water
+  settling frame  54500: T  316.4 K, cross-unit U -8.756368e-3 Ha/water
+  settling frame  55000: T  315.3 K, cross-unit U -8.806826e-3 Ha/water
+  settling frame  55500: T  299.3 K, cross-unit U -8.620166e-3 Ha/water
+  settling frame  56000: T  297.5 K, cross-unit U -8.697029e-3 Ha/water
+  settling frame  56500: T  314.4 K, cross-unit U -8.763473e-3 Ha/water
+  settling frame  57000: T  316.4 K, cross-unit U -8.971105e-3 Ha/water
+  settling frame  57500: T  308.9 K, cross-unit U -8.871413e-3 Ha/water
+  settling frame  58000: T  319.5 K, cross-unit U -9.201316e-3 Ha/water
+  settling frame  58500: T  318.6 K, cross-unit U -9.192682e-3 Ha/water
+  settling frame  59000: T  298.6 K, cross-unit U -9.046871e-3 Ha/water
+  settling frame  59500: T  310.2 K, cross-unit U -9.262779e-3 Ha/water
+  settling frame  60000: T  298.3 K, cross-unit U -9.082124e-3 Ha/water
+  settling frame  60500: T  303.2 K, cross-unit U -9.052703e-3 Ha/water
+  settling frame  61000: T  291.2 K, cross-unit U -8.857667e-3 Ha/water
+  settling frame  61500: T  295.4 K, cross-unit U -9.000085e-3 Ha/water
+  settling frame  62000: T  307.4 K, cross-unit U -8.790210e-3 Ha/water
+  settling frame  62500: T  311.1 K, cross-unit U -9.052207e-3 Ha/water
+  settling frame  63000: T  302.2 K, cross-unit U -8.968540e-3 Ha/water
+  settling frame  63500: T  306.4 K, cross-unit U -9.047972e-3 Ha/water
+  settling frame  64000: T  318.2 K, cross-unit U -9.297009e-3 Ha/water
+  settling frame  64500: T  308.3 K, cross-unit U -8.937805e-3 Ha/water
+  settling frame  65000: T  290.0 K, cross-unit U -8.791210e-3 Ha/water
+  settling frame  65500: T  287.7 K, cross-unit U -8.850085e-3 Ha/water
+  settling frame  66000: T  279.4 K, cross-unit U -8.795699e-3 Ha/water
+  settling frame  66500: T  286.0 K, cross-unit U -9.108329e-3 Ha/water
+  settling frame  67000: T  285.1 K, cross-unit U -9.082828e-3 Ha/water
+  settling frame  67500: T  298.3 K, cross-unit U -9.025404e-3 Ha/water
+  settling frame  68000: T  290.8 K, cross-unit U -8.983348e-3 Ha/water
+  settling frame  68500: T  304.1 K, cross-unit U -9.075184e-3 Ha/water
+  settling frame  69000: T  303.9 K, cross-unit U -9.076605e-3 Ha/water
+  settling frame  69500: T  288.3 K, cross-unit U -8.867311e-3 Ha/water
+  settling frame  70000: T  332.1 K, cross-unit U -9.258190e-3 Ha/water
+  settling frame  70500: T  298.2 K, cross-unit U -8.904161e-3 Ha/water
+  settling frame  71000: T  293.7 K, cross-unit U -8.998736e-3 Ha/water
+  settling frame  71500: T  316.1 K, cross-unit U -9.156037e-3 Ha/water
+  settling frame  72000: T  315.0 K, cross-unit U -9.147768e-3 Ha/water
+  settling frame  72500: T  295.1 K, cross-unit U -8.976806e-3 Ha/water
+  settling frame  73000: T  284.4 K, cross-unit U -8.827256e-3 Ha/water
+  settling frame  73500: T  307.8 K, cross-unit U -9.235687e-3 Ha/water
+  settling frame  74000: T  305.9 K, cross-unit U -9.152016e-3 Ha/water
+  settling frame  74500: T  304.5 K, cross-unit U -9.207703e-3 Ha/water
+  settling frame  75000: T  280.8 K, cross-unit U -8.928905e-3 Ha/water
+  settling frame  75500: T  299.2 K, cross-unit U -9.311121e-3 Ha/water
+  settling frame  76000: T  290.8 K, cross-unit U -9.359241e-3 Ha/water
+  settling frame  76500: T  291.8 K, cross-unit U -9.432416e-3 Ha/water
+  settling frame  77000: T  294.3 K, cross-unit U -9.486516e-3 Ha/water
+  settling frame  77500: T  279.3 K, cross-unit U -9.291743e-3 Ha/water
+  settling frame  78000: T  301.0 K, cross-unit U -9.427140e-3 Ha/water
+  settling frame  78500: T  298.3 K, cross-unit U -9.367961e-3 Ha/water
+  settling frame  79000: T  288.6 K, cross-unit U -9.464802e-3 Ha/water
+  settling frame  79500: T  296.1 K, cross-unit U -9.502067e-3 Ha/water
+  settling frame  80000: T  285.3 K, cross-unit U -9.439675e-3 Ha/water
+  settling frame  80500: T  296.7 K, cross-unit U -9.652534e-3 Ha/water
+  settling frame  81000: T  288.1 K, cross-unit U -9.652270e-3 Ha/water
+  settling frame  81500: T  311.7 K, cross-unit U -9.900932e-3 Ha/water
+  settling frame  82000: T  280.4 K, cross-unit U -9.507329e-3 Ha/water
+  settling frame  82500: T  298.4 K, cross-unit U -9.637269e-3 Ha/water
+  settling frame  83000: T  298.7 K, cross-unit U -9.587700e-3 Ha/water
+  settling frame  83500: T  295.6 K, cross-unit U -9.563273e-3 Ha/water
+  settling frame  84000: T  297.0 K, cross-unit U -9.708992e-3 Ha/water
+  settling frame  84500: T  283.1 K, cross-unit U -9.615572e-3 Ha/water
+  settling frame  85000: T  310.8 K, cross-unit U -1.001946e-2 Ha/water
+  settling frame  85500: T  297.7 K, cross-unit U -9.916628e-3 Ha/water
+  settling frame  86000: T  288.2 K, cross-unit U -9.568899e-3 Ha/water
+  settling frame  86500: T  314.0 K, cross-unit U -9.733564e-3 Ha/water
+  settling frame  87000: T  271.1 K, cross-unit U -9.183447e-3 Ha/water
+  settling frame  87500: T  284.8 K, cross-unit U -9.427609e-3 Ha/water
+  settling frame  88000: T  286.8 K, cross-unit U -9.365124e-3 Ha/water
+  settling frame  88500: T  295.2 K, cross-unit U -9.415962e-3 Ha/water
+  settling frame  89000: T  302.1 K, cross-unit U -9.472203e-3 Ha/water
+  settling frame  89500: T  306.1 K, cross-unit U -9.292142e-3 Ha/water
+  settling frame  90000: T  290.8 K, cross-unit U -9.138401e-3 Ha/water
+  settling frame  90500: T  309.3 K, cross-unit U -9.420217e-3 Ha/water
+  settling frame  91000: T  303.6 K, cross-unit U -9.222217e-3 Ha/water
+  settling frame  91500: T  318.8 K, cross-unit U -9.472820e-3 Ha/water
+  settling frame  92000: T  304.0 K, cross-unit U -9.269860e-3 Ha/water
+  settling frame  92500: T  299.8 K, cross-unit U -9.225867e-3 Ha/water
+  settling frame  93000: T  306.1 K, cross-unit U -9.446386e-3 Ha/water
+  settling frame  93500: T  284.6 K, cross-unit U -9.297093e-3 Ha/water
+  settling frame  94000: T  265.7 K, cross-unit U -8.986818e-3 Ha/water
+  settling frame  94500: T  272.7 K, cross-unit U -9.307551e-3 Ha/water
+  settling frame  95000: T  289.5 K, cross-unit U -9.302241e-3 Ha/water
+  settling frame  95500: T  293.5 K, cross-unit U -9.369287e-3 Ha/water
+  settling frame  96000: T  284.0 K, cross-unit U -9.398181e-3 Ha/water
+  settling frame  96500: T  287.6 K, cross-unit U -9.364784e-3 Ha/water
+  settling frame  97000: T  265.4 K, cross-unit U -9.141766e-3 Ha/water
+  settling frame  97500: T  295.1 K, cross-unit U -9.478327e-3 Ha/water
+  settling frame  98000: T  285.6 K, cross-unit U -9.204850e-3 Ha/water
+  settling frame  98500: T  290.8 K, cross-unit U -9.380330e-3 Ha/water
+  settling frame  99000: T  296.6 K, cross-unit U -9.350125e-3 Ha/water
+  settling frame  99500: T  279.0 K, cross-unit U -9.178250e-3 Ha/water
+  settling frame 100000: T  283.4 K, cross-unit U -9.243890e-3 Ha/water
+  settling frame 100500: T  294.0 K, cross-unit U -9.367139e-3 Ha/water
+  settling frame 101000: T  292.4 K, cross-unit U -9.343233e-3 Ha/water
+  settling frame 101500: T  277.6 K, cross-unit U -9.245052e-3 Ha/water
+  settling frame 102000: T  299.1 K, cross-unit U -9.408677e-3 Ha/water
+  settling frame 102100: T  302.9 K, cross-unit U -9.414943e-3 Ha/water
+branch point WRITTEN to /home/emoore/CIRISHolon/conformance/water_observatory/replace0/transport_seed1/branch.ckpt (digest 0xd784640fbd7ea0ec)
+reference geometry at the branch: O-H 1.96641 +/- 0.02302 bohr, H-O-H 1.66792 +/- 0.04312 rad over 128 units (the pin: 1.94357 bohr, 1.68874 rad)
+stiffness envelope MEASURED on the branch state: 6.8592e-2 Ha/bohr^2 (97 passes, 34.9 s)
+the flexible arm: 115050 frames at the tables' step, a readout every 767
+  flexible frame     767: T  302.6 K (rigid modes  402.8 K, vibrations 0.54 kT/water), E -37.160810 Ha, bonds 1.617, peak 5.25
+  flexible frame    1534: T  292.3 K (rigid modes  392.0 K, vibrations 0.49 kT/water), E -37.160810 Ha, bonds 1.648, peak 5.15
+  flexible frame    2301: T  286.3 K (rigid modes  379.9 K, vibrations 0.52 kT/water), E -37.160810 Ha, bonds 1.570, peak 5.15
+  flexible frame    3068: T  282.0 K (rigid modes  378.6 K, vibrations 0.47 kT/water), E -37.160810 Ha, bonds 1.555, peak 5.15
+  flexible frame    3835: T  281.4 K (rigid modes  369.4 K, vibrations 0.56 kT/water), E -37.160810 Ha, bonds 1.539, peak 5.15
+  flexible frame    4602: T  262.3 K (rigid modes  348.2 K, vibrations 0.47 kT/water), E -37.160810 Ha, bonds 1.586, peak 5.15
+  flexible frame    5369: T  296.0 K (rigid modes  387.6 K, vibrations 0.59 kT/water), E -37.160811 Ha, bonds 1.625, peak 5.25
+  flexible frame    6136: T  276.5 K (rigid modes  373.6 K, vibrations 0.44 kT/water), E -37.160810 Ha, bonds 1.570, peak 5.15
+  flexible frame    6903: T  270.0 K (rigid modes  350.6 K, vibrations 0.57 kT/water), E -37.160810 Ha, bonds 1.562, peak 5.15
+  flexible frame    7670: T  278.6 K (rigid modes  370.6 K, vibrations 0.49 kT/water), E -37.160810 Ha, bonds 1.578, peak 5.25
+  flexible frame    8437: T  295.1 K (rigid modes  389.6 K, vibrations 0.55 kT/water), E -37.160810 Ha, bonds 1.586, peak 5.25
+  flexible frame    9204: T  283.8 K (rigid modes  377.7 K, vibrations 0.51 kT/water), E -37.160810 Ha, bonds 1.609, peak 5.15
+  flexible frame    9971: T  289.3 K (rigid modes  384.4 K, vibrations 0.53 kT/water), E -37.160810 Ha, bonds 1.594, peak 5.15
+  flexible frame   10738: T  291.8 K (rigid modes  390.0 K, vibrations 0.52 kT/water), E -37.160810 Ha, bonds 1.656, peak 5.05
+  flexible frame   11505: T  285.1 K (rigid modes  380.6 K, vibrations 0.51 kT/water), E -37.160810 Ha, bonds 1.617, peak 5.35
+  flexible frame   12272: T  282.9 K (rigid modes  372.7 K, vibrations 0.55 kT/water), E -37.160810 Ha, bonds 1.641, peak 5.05
+  flexible frame   13039: T  295.5 K (rigid modes  391.6 K, vibrations 0.54 kT/water), E -37.160810 Ha, bonds 1.727, peak 5.15
+  flexible frame   13806: T  302.3 K (rigid modes  402.6 K, vibrations 0.53 kT/water), E -37.160810 Ha, bonds 1.680, peak 5.25
+  flexible frame   14573: T  291.5 K (rigid modes  385.2 K, vibrations 0.54 kT/water), E -37.160810 Ha, bonds 1.609, peak 5.25
+  flexible frame   15340: T  304.6 K (rigid modes  406.8 K, vibrations 0.52 kT/water), E -37.160809 Ha, bonds 1.586, peak 5.35
+  flexible frame   16107: T  288.2 K (rigid modes  381.7 K, vibrations 0.52 kT/water), E -37.160810 Ha, bonds 1.609, peak 5.05
+  flexible frame   16874: T  288.5 K (rigid modes  382.0 K, vibrations 0.52 kT/water), E -37.160809 Ha, bonds 1.648, peak 5.25
+  flexible frame   17641: T  294.6 K (rigid modes  389.5 K, vibrations 0.55 kT/water), E -37.160810 Ha, bonds 1.680, peak 5.35
+  flexible frame   18408: T  295.8 K (rigid modes  388.5 K, vibrations 0.59 kT/water), E -37.160810 Ha, bonds 1.625, peak 5.05
+  flexible frame   19175: T  302.6 K (rigid modes  405.0 K, vibrations 0.52 kT/water), E -37.160810 Ha, bonds 1.680, peak 5.25
+  flexible frame   19942: T  289.5 K (rigid modes  381.3 K, vibrations 0.57 kT/water), E -37.160810 Ha, bonds 1.609, peak 5.35
+  flexible frame   20709: T  298.7 K (rigid modes  406.2 K, vibrations 0.46 kT/water), E -37.160809 Ha, bonds 1.656, peak 5.25
+  flexible frame   21476: T  320.3 K (rigid modes  429.1 K, vibrations 0.55 kT/water), E -37.160810 Ha, bonds 1.617, peak 5.15
+  flexible frame   22243: T  302.8 K (rigid modes  408.2 K, vibrations 0.49 kT/water), E -37.160810 Ha, bonds 1.562, peak 5.25
+  flexible frame   23010: T  324.0 K (rigid modes  433.6 K, vibrations 0.56 kT/water), E -37.160810 Ha, bonds 1.672, peak 5.15
+  flexible frame   23777: T  315.0 K (rigid modes  424.1 K, vibrations 0.52 kT/water), E -37.160810 Ha, bonds 1.695, peak 5.25
+  flexible frame   24544: T  312.4 K (rigid modes  415.6 K, vibrations 0.56 kT/water), E -37.160810 Ha, bonds 1.688, peak 5.15
+  flexible frame   25311: T  313.1 K (rigid modes  415.7 K, vibrations 0.56 kT/water), E -37.160810 Ha, bonds 1.633, peak 5.15
+  flexible frame   26078: T  311.6 K (rigid modes  417.8 K, vibrations 0.54 kT/water), E -37.160809 Ha, bonds 1.688, peak 4.95
+  flexible frame   26845: T  315.2 K (rigid modes  418.1 K, vibrations 0.57 kT/water), E -37.160809 Ha, bonds 1.727, peak 5.15
+  flexible frame   27612: T  314.8 K (rigid modes  423.4 K, vibrations 0.51 kT/water), E -37.160809 Ha, bonds 1.695, peak 5.35
+  flexible frame   28379: T  307.7 K (rigid modes  402.5 K, vibrations 0.61 kT/water), E -37.160810 Ha, bonds 1.648, peak 5.25
+  flexible frame   29146: T  300.7 K (rigid modes  401.6 K, vibrations 0.53 kT/water), E -37.160810 Ha, bonds 1.688, peak 5.25
+  flexible frame   29913: T  323.1 K (rigid modes  429.5 K, vibrations 0.60 kT/water), E -37.160810 Ha, bonds 1.672, peak 5.25
+  flexible frame   30680: T  301.5 K (rigid modes  400.8 K, vibrations 0.55 kT/water), E -37.160810 Ha, bonds 1.695, peak 5.15
+  flexible frame   31447: T  327.2 K (rigid modes  432.8 K, vibrations 0.61 kT/water), E -37.160810 Ha, bonds 1.719, peak 5.35
+  flexible frame   32214: T  307.3 K (rigid modes  411.2 K, vibrations 0.53 kT/water), E -37.160809 Ha, bonds 1.664, peak 5.25
+  flexible frame   32981: T  323.2 K (rigid modes  424.8 K, vibrations 0.64 kT/water), E -37.160809 Ha, bonds 1.641, peak 5.25
+  flexible frame   33748: T  306.8 K (rigid modes  411.1 K, vibrations 0.51 kT/water), E -37.160809 Ha, bonds 1.633, peak 5.15
+  flexible frame   34515: T  313.1 K (rigid modes  408.3 K, vibrations 0.65 kT/water), E -37.160810 Ha, bonds 1.695, peak 5.35
+  flexible frame   35282: T  298.7 K (rigid modes  401.9 K, vibrations 0.50 kT/water), E -37.160809 Ha, bonds 1.633, peak 5.15
+  flexible frame   36049: T  324.8 K (rigid modes  424.6 K, vibrations 0.67 kT/water), E -37.160810 Ha, bonds 1.672, peak 5.35
+  flexible frame   36816: T  296.4 K (rigid modes  397.0 K, vibrations 0.52 kT/water), E -37.160809 Ha, bonds 1.641, peak 5.25
+  flexible frame   37583: T  314.0 K (rigid modes  412.0 K, vibrations 0.62 kT/water), E -37.160810 Ha, bonds 1.680, peak 5.15
+  flexible frame   38350: T  288.5 K (rigid modes  383.3 K, vibrations 0.52 kT/water), E -37.160809 Ha, bonds 1.664, peak 5.25
+  flexible frame   39117: T  294.8 K (rigid modes  383.3 K, vibrations 0.63 kT/water), E -37.160809 Ha, bonds 1.656, peak 5.25
+  flexible frame   39884: T  288.3 K (rigid modes  380.0 K, vibrations 0.56 kT/water), E -37.160809 Ha, bonds 1.664, peak 5.25
+  flexible frame   40651: T  319.6 K (rigid modes  418.7 K, vibrations 0.64 kT/water), E -37.160810 Ha, bonds 1.758, peak 5.15
+  flexible frame   41418: T  270.9 K (rigid modes  357.7 K, vibrations 0.51 kT/water), E -37.160809 Ha, bonds 1.680, peak 4.95
+  flexible frame   42185: T  312.1 K (rigid modes  407.5 K, vibrations 0.64 kT/water), E -37.160809 Ha, bonds 1.688, peak 5.15
+  flexible frame   42952: T  307.3 K (rigid modes  408.6 K, vibrations 0.55 kT/water), E -37.160809 Ha, bonds 1.656, peak 5.15
+  flexible frame   43719: T  311.7 K (rigid modes  408.5 K, vibrations 0.61 kT/water), E -37.160809 Ha, bonds 1.688, peak 5.15
+  flexible frame   44486: T  317.9 K (rigid modes  418.6 K, vibrations 0.61 kT/water), E -37.160810 Ha, bonds 1.648, peak 5.15
+  flexible frame   45253: T  313.9 K (rigid modes  412.5 K, vibrations 0.61 kT/water), E -37.160809 Ha, bonds 1.672, peak 5.15
+  flexible frame   46020: T  292.8 K (rigid modes  381.7 K, vibrations 0.61 kT/water), E -37.160809 Ha, bonds 1.703, peak 5.15
+  flexible frame   46787: T  317.9 K (rigid modes  421.5 K, vibrations 0.59 kT/water), E -37.160809 Ha, bonds 1.672, peak 5.25
+  flexible frame   47554: T  294.8 K (rigid modes  389.2 K, vibrations 0.56 kT/water), E -37.160809 Ha, bonds 1.641, peak 5.15
+  flexible frame   48321: T  308.5 K (rigid modes  403.2 K, vibrations 0.62 kT/water), E -37.160809 Ha, bonds 1.680, peak 5.15
+  flexible frame   49088: T  297.3 K (rigid modes  392.9 K, vibrations 0.57 kT/water), E -37.160809 Ha, bonds 1.656, peak 5.25
+  flexible frame   49855: T  306.9 K (rigid modes  399.5 K, vibrations 0.63 kT/water), E -37.160810 Ha, bonds 1.680, peak 5.35
+  flexible frame   50622: T  296.2 K (rigid modes  387.4 K, vibrations 0.60 kT/water), E -37.160809 Ha, bonds 1.664, peak 5.25
+  flexible frame   51389: T  291.7 K (rigid modes  379.1 K, vibrations 0.61 kT/water), E -37.160810 Ha, bonds 1.672, peak 5.35
+  flexible frame   52156: T  307.2 K (rigid modes  399.2 K, vibrations 0.63 kT/water), E -37.160810 Ha, bonds 1.633, peak 5.25
+  flexible frame   52923: T  285.6 K (rigid modes  371.2 K, vibrations 0.60 kT/water), E -37.160809 Ha, bonds 1.617, peak 5.05
+  flexible frame   53690: T  296.4 K (rigid modes  383.0 K, vibrations 0.66 kT/water), E -37.160810 Ha, bonds 1.688, peak 5.15
+  flexible frame   54457: T  305.0 K (rigid modes  398.1 K, vibrations 0.62 kT/water), E -37.160809 Ha, bonds 1.656, peak 5.35
+  flexible frame   55224: T  296.8 K (rigid modes  385.6 K, vibrations 0.62 kT/water), E -37.160809 Ha, bonds 1.602, peak 5.25
+  flexible frame   55991: T  295.6 K (rigid modes  386.9 K, vibrations 0.60 kT/water), E -37.160809 Ha, bonds 1.602, peak 5.25
+  flexible frame   56758: T  308.1 K (rigid modes  404.1 K, vibrations 0.62 kT/water), E -37.160809 Ha, bonds 1.688, peak 5.25
+  flexible frame   57525: T  287.7 K (rigid modes  371.2 K, vibrations 0.62 kT/water), E -37.160809 Ha, bonds 1.719, peak 5.15
+  flexible frame   58292: T  290.5 K (rigid modes  372.8 K, vibrations 0.65 kT/water), E -37.160809 Ha, bonds 1.594, peak 5.25
+  flexible frame   59059: T  310.5 K (rigid modes  409.0 K, vibrations 0.60 kT/water), E -37.160809 Ha, bonds 1.719, peak 5.25
+  flexible frame   59826: T  299.5 K (rigid modes  386.4 K, vibrations 0.64 kT/water), E -37.160809 Ha, bonds 1.656, peak 5.25
+  flexible frame   60593: T  322.5 K (rigid modes  428.1 K, vibrations 0.58 kT/water), E -37.160809 Ha, bonds 1.695, peak 5.25
+  flexible frame   61360: T  319.3 K (rigid modes  415.6 K, vibrations 0.67 kT/water), E -37.160810 Ha, bonds 1.680, peak 5.15
+  flexible frame   62127: T  308.3 K (rigid modes  402.6 K, vibrations 0.61 kT/water), E -37.160809 Ha, bonds 1.734, peak 5.15
+  flexible frame   62894: T  324.1 K (rigid modes  420.4 K, vibrations 0.67 kT/water), E -37.160810 Ha, bonds 1.688, peak 5.25
+  flexible frame   63661: T  321.5 K (rigid modes  423.1 K, vibrations 0.61 kT/water), E -37.160809 Ha, bonds 1.711, peak 5.15
+  flexible frame   64428: T  317.6 K (rigid modes  414.7 K, vibrations 0.64 kT/water), E -37.160810 Ha, bonds 1.703, peak 5.05
+  flexible frame   65195: T  325.3 K (rigid modes  431.6 K, vibrations 0.60 kT/water), E -37.160810 Ha, bonds 1.734, peak 5.05
+  flexible frame   65962: T  309.2 K (rigid modes  405.7 K, vibrations 0.61 kT/water), E -37.160810 Ha, bonds 1.719, peak 5.15
+  flexible frame   66729: T  332.8 K (rigid modes  441.2 K, vibrations 0.61 kT/water), E -37.160810 Ha, bonds 1.742, peak 5.15
+  flexible frame   67496: T  321.7 K (rigid modes  421.4 K, vibrations 0.63 kT/water), E -37.160809 Ha, bonds 1.703, peak 5.05
+  flexible frame   68263: T  310.5 K (rigid modes  405.2 K, vibrations 0.64 kT/water), E -37.160809 Ha, bonds 1.703, peak 5.05
+  flexible frame   69030: T  313.5 K (rigid modes  411.5 K, vibrations 0.63 kT/water), E -37.160809 Ha, bonds 1.672, peak 5.15
+  flexible frame   69797: T  305.4 K (rigid modes  398.0 K, vibrations 0.63 kT/water), E -37.160809 Ha, bonds 1.617, peak 5.15
+  flexible frame   70564: T  307.6 K (rigid modes  403.1 K, vibrations 0.62 kT/water), E -37.160809 Ha, bonds 1.648, peak 5.05
+  flexible frame   71331: T  304.8 K (rigid modes  397.8 K, vibrations 0.63 kT/water), E -37.160809 Ha, bonds 1.602, peak 5.15
+  flexible frame   72098: T  308.5 K (rigid modes  406.1 K, vibrations 0.61 kT/water), E -37.160809 Ha, bonds 1.641, peak 5.35
+  flexible frame   72865: T  311.9 K (rigid modes  407.1 K, vibrations 0.63 kT/water), E -37.160809 Ha, bonds 1.664, peak 5.25
+  flexible frame   73632: T  299.2 K (rigid modes  385.9 K, vibrations 0.65 kT/water), E -37.160810 Ha, bonds 1.664, peak 5.15
+  flexible frame   74399: T  306.6 K (rigid modes  399.5 K, vibrations 0.64 kT/water), E -37.160810 Ha, bonds 1.664, peak 5.15
+  flexible frame   75166: T  310.8 K (rigid modes  403.9 K, vibrations 0.64 kT/water), E -37.160810 Ha, bonds 1.664, peak 5.25
+  flexible frame   75933: T  311.6 K (rigid modes  410.0 K, vibrations 0.61 kT/water), E -37.160810 Ha, bonds 1.672, peak 5.25
+  flexible frame   76700: T  316.3 K (rigid modes  418.5 K, vibrations 0.60 kT/water), E -37.160810 Ha, bonds 1.641, peak 5.25
+  flexible frame   77467: T  296.1 K (rigid modes  385.0 K, vibrations 0.62 kT/water), E -37.160810 Ha, bonds 1.641, peak 5.05
+  flexible frame   78234: T  322.3 K (rigid modes  422.8 K, vibrations 0.65 kT/water), E -37.160810 Ha, bonds 1.672, peak 5.25
+  flexible frame   79001: T  292.4 K (rigid modes  380.9 K, vibrations 0.60 kT/water), E -37.160809 Ha, bonds 1.648, peak 4.95
+  flexible frame   79768: T  314.3 K (rigid modes  409.3 K, vibrations 0.65 kT/water), E -37.160810 Ha, bonds 1.711, peak 5.35
+  flexible frame   80535: T  293.6 K (rigid modes  383.3 K, vibrations 0.60 kT/water), E -37.160809 Ha, bonds 1.641, peak 5.35
+  flexible frame   81302: T  306.5 K (rigid modes  398.8 K, vibrations 0.65 kT/water), E -37.160810 Ha, bonds 1.656, peak 5.15
+  flexible frame   82069: T  314.5 K (rigid modes  416.2 K, vibrations 0.59 kT/water), E -37.160809 Ha, bonds 1.695, peak 5.35
+  flexible frame   82836: T  290.3 K (rigid modes  378.0 K, vibrations 0.60 kT/water), E -37.160809 Ha, bonds 1.672, peak 5.05
+  flexible frame   83603: T  317.2 K (rigid modes  416.4 K, vibrations 0.65 kT/water), E -37.160810 Ha, bonds 1.672, peak 5.25
+  flexible frame   84370: T  312.5 K (rigid modes  409.0 K, vibrations 0.63 kT/water), E -37.160809 Ha, bonds 1.633, peak 5.25
+  flexible frame   85137: T  308.5 K (rigid modes  402.1 K, vibrations 0.63 kT/water), E -37.160810 Ha, bonds 1.695, peak 5.35
+  flexible frame   85904: T  314.4 K (rigid modes  409.0 K, vibrations 0.65 kT/water), E -37.160810 Ha, bonds 1.625, peak 5.15
+  flexible frame   86671: T  315.3 K (rigid modes  409.5 K, vibrations 0.66 kT/water), E -37.160810 Ha, bonds 1.617, peak 5.15
+  flexible frame   87438: T  314.4 K (rigid modes  411.7 K, vibrations 0.63 kT/water), E -37.160810 Ha, bonds 1.664, peak 5.15
+  flexible frame   88205: T  309.6 K (rigid modes  401.0 K, vibrations 0.65 kT/water), E -37.160810 Ha, bonds 1.664, peak 5.15
+  flexible frame   88972: T  317.7 K (rigid modes  417.8 K, vibrations 0.62 kT/water), E -37.160810 Ha, bonds 1.719, peak 5.15
+  flexible frame   89739: T  324.6 K (rigid modes  423.5 K, vibrations 0.66 kT/water), E -37.160810 Ha, bonds 1.688, peak 5.15
+  flexible frame   90506: T  331.1 K (rigid modes  439.8 K, vibrations 0.61 kT/water), E -37.160810 Ha, bonds 1.711, peak 5.45
+  flexible frame   91273: T  322.6 K (rigid modes  416.0 K, vibrations 0.71 kT/water), E -37.160810 Ha, bonds 1.672, peak 5.25
+  flexible frame   92040: T  298.1 K (rigid modes  390.7 K, vibrations 0.59 kT/water), E -37.160810 Ha, bonds 1.664, peak 5.15
+  flexible frame   92807: T  309.1 K (rigid modes  398.9 K, vibrations 0.69 kT/water), E -37.160810 Ha, bonds 1.711, peak 5.15
+  flexible frame   93574: T  306.3 K (rigid modes  400.5 K, vibrations 0.62 kT/water), E -37.160810 Ha, bonds 1.641, peak 5.25
+  flexible frame   94341: T  321.4 K (rigid modes  415.4 K, vibrations 0.70 kT/water), E -37.160810 Ha, bonds 1.641, peak 5.25
+  flexible frame   95108: T  314.6 K (rigid modes  412.6 K, vibrations 0.63 kT/water), E -37.160810 Ha, bonds 1.664, peak 5.15
+  flexible frame   95875: T  319.0 K (rigid modes  414.5 K, vibrations 0.67 kT/water), E -37.160810 Ha, bonds 1.672, peak 5.15
+  flexible frame   96642: T  293.7 K (rigid modes  377.3 K, vibrations 0.65 kT/water), E -37.160810 Ha, bonds 1.641, peak 5.05
+  flexible frame   97409: T  302.4 K (rigid modes  389.3 K, vibrations 0.66 kT/water), E -37.160810 Ha, bonds 1.602, peak 5.25
+  flexible frame   98176: T  318.0 K (rigid modes  413.6 K, vibrations 0.66 kT/water), E -37.160810 Ha, bonds 1.656, peak 5.15
+  flexible frame   98943: T  300.1 K (rigid modes  388.3 K, vibrations 0.65 kT/water), E -37.160810 Ha, bonds 1.680, peak 5.25
+  flexible frame   99710: T  299.6 K (rigid modes  383.6 K, vibrations 0.69 kT/water), E -37.160810 Ha, bonds 1.648, peak 5.15
+  flexible frame  100477: T  318.0 K (rigid modes  418.5 K, vibrations 0.62 kT/water), E -37.160810 Ha, bonds 1.695, peak 5.15
+  flexible frame  101244: T  293.2 K (rigid modes  373.7 K, vibrations 0.70 kT/water), E -37.160810 Ha, bonds 1.641, peak 5.25
+  flexible frame  102011: T  299.5 K (rigid modes  395.3 K, vibrations 0.56 kT/water), E -37.160809 Ha, bonds 1.664, peak 5.05
+  flexible frame  102778: T  311.6 K (rigid modes  400.2 K, vibrations 0.71 kT/water), E -37.160810 Ha, bonds 1.617, peak 5.15
+  flexible frame  103545: T  304.8 K (rigid modes  395.1 K, vibrations 0.66 kT/water), E -37.160810 Ha, bonds 1.672, peak 5.25
+  flexible frame  104312: T  312.5 K (rigid modes  403.9 K, vibrations 0.68 kT/water), E -37.160810 Ha, bonds 1.664, peak 5.25
+  flexible frame  105079: T  312.1 K (rigid modes  405.2 K, vibrations 0.66 kT/water), E -37.160810 Ha, bonds 1.602, peak 5.15
+  flexible frame  105846: T  311.4 K (rigid modes  410.3 K, vibrations 0.60 kT/water), E -37.160809 Ha, bonds 1.641, peak 5.35
+  flexible frame  106613: T  305.1 K (rigid modes  396.6 K, vibrations 0.64 kT/water), E -37.160809 Ha, bonds 1.672, peak 5.25
+  flexible frame  107380: T  301.4 K (rigid modes  388.8 K, vibrations 0.66 kT/water), E -37.160810 Ha, bonds 1.602, peak 5.15
+  flexible frame  108147: T  293.4 K (rigid modes  375.7 K, vibrations 0.66 kT/water), E -37.160810 Ha, bonds 1.625, peak 5.15
+  flexible frame  108914: T  303.9 K (rigid modes  393.3 K, vibrations 0.66 kT/water), E -37.160810 Ha, bonds 1.664, peak 5.25
+  flexible frame  109681: T  299.7 K (rigid modes  389.7 K, vibrations 0.63 kT/water), E -37.160809 Ha, bonds 1.664, peak 5.25
+  flexible frame  110448: T  291.5 K (rigid modes  375.0 K, vibrations 0.64 kT/water), E -37.160809 Ha, bonds 1.688, peak 5.25
+  flexible frame  111215: T  292.9 K (rigid modes  374.9 K, vibrations 0.67 kT/water), E -37.160809 Ha, bonds 1.703, peak 5.25
+  flexible frame  111982: T  304.6 K (rigid modes  392.0 K, vibrations 0.69 kT/water), E -37.160810 Ha, bonds 1.711, peak 5.25
+  flexible frame  112749: T  318.1 K (rigid modes  414.5 K, vibrations 0.66 kT/water), E -37.160810 Ha, bonds 1.672, peak 5.25
+  flexible frame  113516: T  326.1 K (rigid modes  420.6 K, vibrations 0.70 kT/water), E -37.160810 Ha, bonds 1.750, peak 5.35
+  flexible frame  114283: T  296.2 K (rigid modes  383.4 K, vibrations 0.63 kT/water), E -37.160809 Ha, bonds 1.672, peak 5.15
+  flexible frame  115050: T  313.5 K (rigid modes  404.3 K, vibrations 0.69 kT/water), E -37.160810 Ha, bonds 1.656, peak 5.25
+the rigid arm
+rigid clock: omega_T 1.445e-3, omega_R 6.490e-3 au^-1; dt 15.1282 au admitted (14.04x the fine 1.0775); 55 steps per readout at dt 15.0260 au
+  rigid modes as projected: 408.0 K; kept - the rigid arm inherits the fine box's intermolecular bath as it is
+  rigid branch: T 408.0 K on 6 dof/unit, E -37.270239 Ha; discarded 3.989e-2 bohr rms, 5.777e-2 Ha internal KE
+  rigid readout    1 at     20.0 fs: T  404.3 K, E -37.270242 Ha, bonds 1.617, peak 5.25
+  rigid readout    2 at     40.0 fs: T  395.2 K, E -37.270240 Ha, bonds 1.641, peak 5.15
+  rigid readout    3 at     60.0 fs: T  381.1 K, E -37.270235 Ha, bonds 1.578, peak 5.15
+  rigid readout    4 at     80.0 fs: T  379.0 K, E -37.270240 Ha, bonds 1.555, peak 5.15
+  rigid readout    5 at    100.0 fs: T  365.8 K, E -37.270238 Ha, bonds 1.539, peak 5.15
+  rigid readout    6 at    119.9 fs: T  347.1 K, E -37.270228 Ha, bonds 1.555, peak 5.05
+  rigid readout    7 at    139.9 fs: T  383.5 K, E -37.270231 Ha, bonds 1.617, peak 5.25
+  rigid readout    8 at    159.9 fs: T  378.2 K, E -37.270236 Ha, bonds 1.578, peak 5.25
+  rigid readout    9 at    179.9 fs: T  349.3 K, E -37.270229 Ha, bonds 1.578, peak 5.15
+  rigid readout   10 at    199.9 fs: T  383.6 K, E -37.270244 Ha, bonds 1.617, peak 5.15
+  rigid readout   11 at    219.9 fs: T  391.8 K, E -37.270241 Ha, bonds 1.609, peak 5.35
+  rigid readout   12 at    239.9 fs: T  374.5 K, E -37.270236 Ha, bonds 1.617, peak 5.35
+  rigid readout   13 at    259.9 fs: T  387.2 K, E -37.270233 Ha, bonds 1.617, peak 5.15
+  rigid readout   14 at    279.9 fs: T  414.5 K, E -37.270242 Ha, bonds 1.664, peak 5.25
+  rigid readout   15 at    299.9 fs: T  396.5 K, E -37.270249 Ha, bonds 1.594, peak 5.25
+  rigid readout   16 at    319.8 fs: T  383.5 K, E -37.270240 Ha, bonds 1.641, peak 5.15
+  rigid readout   17 at    339.8 fs: T  390.5 K, E -37.270239 Ha, bonds 1.617, peak 5.15
+  rigid readout   18 at    359.8 fs: T  416.8 K, E -37.270243 Ha, bonds 1.641, peak 5.25
+  rigid readout   19 at    379.8 fs: T  393.5 K, E -37.270240 Ha, bonds 1.609, peak 5.15
+  rigid readout   20 at    399.8 fs: T  396.1 K, E -37.270233 Ha, bonds 1.695, peak 5.15
+  rigid readout   21 at    419.8 fs: T  416.2 K, E -37.270237 Ha, bonds 1.695, peak 5.45
+  rigid readout   22 at    439.8 fs: T  399.3 K, E -37.270234 Ha, bonds 1.570, peak 5.15
+  rigid readout   23 at    459.8 fs: T  382.7 K, E -37.270222 Ha, bonds 1.680, peak 5.25
+  rigid readout   24 at    479.8 fs: T  371.0 K, E -37.270215 Ha, bonds 1.641, peak 5.25
+  rigid readout   25 at    499.8 fs: T  395.9 K, E -37.270232 Ha, bonds 1.664, peak 5.15
+  rigid readout   26 at    519.7 fs: T  430.2 K, E -37.270242 Ha, bonds 1.680, peak 5.05
+  rigid readout   27 at    539.7 fs: T  390.6 K, E -37.270226 Ha, bonds 1.680, peak 5.15
+  rigid readout   28 at    559.7 fs: T  361.9 K, E -37.270218 Ha, bonds 1.594, peak 5.35
+  rigid readout   29 at    579.7 fs: T  414.4 K, E -37.270240 Ha, bonds 1.656, peak 5.15
+  rigid readout   30 at    599.7 fs: T  394.4 K, E -37.270233 Ha, bonds 1.648, peak 5.15
+  rigid readout   31 at    619.7 fs: T  402.3 K, E -37.270228 Ha, bonds 1.664, peak 5.15
+  rigid readout   32 at    639.7 fs: T  395.0 K, E -37.270227 Ha, bonds 1.594, peak 5.15
+  rigid readout   33 at    659.7 fs: T  413.7 K, E -37.270239 Ha, bonds 1.633, peak 5.15
+  rigid readout   34 at    679.7 fs: T  351.0 K, E -37.270217 Ha, bonds 1.617, peak 5.15
+  rigid readout   35 at    699.7 fs: T  415.5 K, E -37.270228 Ha, bonds 1.656, peak 5.15
+  rigid readout   36 at    719.7 fs: T  366.3 K, E -37.270213 Ha, bonds 1.617, peak 5.25
+  rigid readout   37 at    739.6 fs: T  398.5 K, E -37.270223 Ha, bonds 1.609, peak 5.35
+  rigid readout   38 at    759.6 fs: T  385.8 K, E -37.270221 Ha, bonds 1.648, peak 5.25
+  rigid readout   39 at    779.6 fs: T  370.1 K, E -37.270217 Ha, bonds 1.648, peak 5.15
+  rigid readout   40 at    799.6 fs: T  367.7 K, E -37.270220 Ha, bonds 1.617, peak 4.95
+  rigid readout   41 at    819.6 fs: T  383.9 K, E -37.270219 Ha, bonds 1.641, peak 5.15
+  rigid readout   42 at    839.6 fs: T  368.9 K, E -37.270220 Ha, bonds 1.586, peak 5.15
+  rigid readout   43 at    859.6 fs: T  415.6 K, E -37.270240 Ha, bonds 1.680, peak 5.15
+  rigid readout   44 at    879.6 fs: T  380.1 K, E -37.270223 Ha, bonds 1.617, peak 4.95
+  rigid readout   45 at    899.6 fs: T  387.8 K, E -37.270223 Ha, bonds 1.609, peak 5.25
+  rigid readout   46 at    919.6 fs: T  384.5 K, E -37.270228 Ha, bonds 1.602, peak 5.25
+  rigid readout   47 at    939.5 fs: T  395.7 K, E -37.270230 Ha, bonds 1.633, peak 5.15
+  rigid readout   48 at    959.5 fs: T  411.8 K, E -37.270232 Ha, bonds 1.602, peak 5.25
+  rigid readout   49 at    979.5 fs: T  395.5 K, E -37.270224 Ha, bonds 1.633, peak 5.35
+  rigid readout   50 at    999.5 fs: T  420.6 K, E -37.270233 Ha, bonds 1.664, peak 5.25
+  rigid readout   51 at   1019.5 fs: T  406.2 K, E -37.270234 Ha, bonds 1.625, peak 5.05
+  rigid readout   52 at   1039.5 fs: T  387.8 K, E -37.270233 Ha, bonds 1.609, peak 5.25
+  rigid readout   53 at   1059.5 fs: T  422.5 K, E -37.270252 Ha, bonds 1.688, peak 5.15
+  rigid readout   54 at   1079.5 fs: T  426.0 K, E -37.270251 Ha, bonds 1.648, peak 5.25
+  rigid readout   55 at   1099.5 fs: T  390.9 K, E -37.270240 Ha, bonds 1.664, peak 5.15
+  rigid readout   56 at   1119.5 fs: T  415.4 K, E -37.270247 Ha, bonds 1.672, peak 5.25
+  rigid readout   57 at   1139.4 fs: T  442.9 K, E -37.270250 Ha, bonds 1.664, peak 5.25
+  rigid readout   58 at   1159.4 fs: T  409.0 K, E -37.270240 Ha, bonds 1.641, peak 5.15
+  rigid readout   59 at   1179.4 fs: T  399.9 K, E -37.270255 Ha, bonds 1.672, peak 5.25
+  rigid readout   60 at   1199.4 fs: T  422.7 K, E -37.270259 Ha, bonds 1.656, peak 5.35
+  rigid readout   61 at   1219.4 fs: T  407.6 K, E -37.270243 Ha, bonds 1.641, peak 5.25
+  rigid readout   62 at   1239.4 fs: T  424.4 K, E -37.270248 Ha, bonds 1.695, peak 5.15
+  rigid readout   63 at   1259.4 fs: T  437.7 K, E -37.270254 Ha, bonds 1.625, peak 5.05
+  rigid readout   64 at   1279.4 fs: T  411.7 K, E -37.270246 Ha, bonds 1.688, peak 5.25
+  rigid readout   65 at   1299.4 fs: T  441.7 K, E -37.270273 Ha, bonds 1.672, peak 5.25
+  rigid readout   66 at   1319.4 fs: T  413.3 K, E -37.270253 Ha, bonds 1.719, peak 5.25
+  rigid readout   67 at   1339.4 fs: T  399.7 K, E -37.270247 Ha, bonds 1.664, peak 5.15
+  rigid readout   68 at   1359.3 fs: T  415.8 K, E -37.270254 Ha, bonds 1.711, peak 5.15
+  rigid readout   69 at   1379.3 fs: T  368.2 K, E -37.270232 Ha, bonds 1.703, peak 5.15
+  rigid readout   70 at   1399.3 fs: T  408.3 K, E -37.270250 Ha, bonds 1.672, peak 5.35
+  rigid readout   71 at   1419.3 fs: T  392.1 K, E -37.270254 Ha, bonds 1.586, peak 5.35
+  rigid readout   72 at   1439.3 fs: T  402.3 K, E -37.270250 Ha, bonds 1.656, peak 5.15
+  rigid readout   73 at   1459.3 fs: T  419.5 K, E -37.270253 Ha, bonds 1.695, peak 5.25
+  rigid readout   74 at   1479.3 fs: T  408.5 K, E -37.270248 Ha, bonds 1.633, peak 5.25
+  rigid readout   75 at   1499.3 fs: T  398.0 K, E -37.270260 Ha, bonds 1.656, peak 5.25
+  rigid readout   76 at   1519.3 fs: T  411.3 K, E -37.270263 Ha, bonds 1.695, peak 5.25
+  rigid readout   77 at   1539.3 fs: T  395.3 K, E -37.270258 Ha, bonds 1.641, peak 5.15
+  rigid readout   78 at   1559.2 fs: T  390.5 K, E -37.270243 Ha, bonds 1.656, peak 5.35
+  rigid readout   79 at   1579.2 fs: T  404.2 K, E -37.270229 Ha, bonds 1.609, peak 5.25
+  rigid readout   80 at   1599.2 fs: T  402.2 K, E -37.270239 Ha, bonds 1.656, peak 5.25
+  rigid readout   81 at   1619.2 fs: T  421.8 K, E -37.270235 Ha, bonds 1.625, peak 5.15
+  rigid readout   82 at   1639.2 fs: T  394.3 K, E -37.270236 Ha, bonds 1.617, peak 5.25
+  rigid readout   83 at   1659.2 fs: T  410.9 K, E -37.270241 Ha, bonds 1.656, peak 4.95
+  rigid readout   84 at   1679.2 fs: T  385.6 K, E -37.270229 Ha, bonds 1.664, peak 5.25
+  rigid readout   85 at   1699.2 fs: T  411.2 K, E -37.270241 Ha, bonds 1.680, peak 5.25
+  rigid readout   86 at   1719.2 fs: T  367.9 K, E -37.270231 Ha, bonds 1.578, peak 4.95
+  rigid readout   87 at   1739.2 fs: T  392.2 K, E -37.270242 Ha, bonds 1.602, peak 5.25
+  rigid readout   88 at   1759.1 fs: T  371.1 K, E -37.270224 Ha, bonds 1.594, peak 5.25
+  rigid readout   89 at   1779.1 fs: T  387.0 K, E -37.270233 Ha, bonds 1.547, peak 5.15
+  rigid readout   90 at   1799.1 fs: T  362.8 K, E -37.270225 Ha, bonds 1.617, peak 5.35
+  rigid readout   91 at   1819.1 fs: T  386.7 K, E -37.270237 Ha, bonds 1.586, peak 5.35
+  rigid readout   92 at   1839.1 fs: T  397.4 K, E -37.270237 Ha, bonds 1.633, peak 5.35
+  rigid readout   93 at   1859.1 fs: T  399.2 K, E -37.270229 Ha, bonds 1.648, peak 5.15
+  rigid readout   94 at   1879.1 fs: T  397.6 K, E -37.270226 Ha, bonds 1.633, peak 5.05
+  rigid readout   95 at   1899.1 fs: T  393.0 K, E -37.270232 Ha, bonds 1.648, peak 5.05
+  rigid readout   96 at   1919.1 fs: T  401.9 K, E -37.270244 Ha, bonds 1.586, peak 5.25
+  rigid readout   97 at   1939.1 fs: T  400.5 K, E -37.270246 Ha, bonds 1.680, peak 5.25
+  rigid readout   98 at   1959.1 fs: T  431.2 K, E -37.270258 Ha, bonds 1.688, peak 5.15
+  rigid readout   99 at   1979.0 fs: T  398.6 K, E -37.270241 Ha, bonds 1.656, peak 5.15
+  rigid readout  100 at   1999.0 fs: T  387.5 K, E -37.270236 Ha, bonds 1.695, peak 5.35
+  rigid readout  101 at   2019.0 fs: T  393.0 K, E -37.270242 Ha, bonds 1.688, peak 5.25
+  rigid readout  102 at   2039.0 fs: T  409.2 K, E -37.270249 Ha, bonds 1.680, peak 5.25
+  rigid readout  103 at   2059.0 fs: T  381.7 K, E -37.270231 Ha, bonds 1.664, peak 5.25
+  rigid readout  104 at   2079.0 fs: T  401.8 K, E -37.270253 Ha, bonds 1.664, peak 5.35
+  rigid readout  105 at   2099.0 fs: T  395.9 K, E -37.270239 Ha, bonds 1.703, peak 5.25
+  rigid readout  106 at   2119.0 fs: T  401.6 K, E -37.270246 Ha, bonds 1.688, peak 5.35
+  rigid readout  107 at   2139.0 fs: T  420.4 K, E -37.270252 Ha, bonds 1.695, peak 5.05
+  rigid readout  108 at   2159.0 fs: T  394.5 K, E -37.270248 Ha, bonds 1.695, peak 5.25
+  rigid readout  109 at   2178.9 fs: T  384.9 K, E -37.270246 Ha, bonds 1.688, peak 5.05
+  rigid readout  110 at   2198.9 fs: T  410.2 K, E -37.270252 Ha, bonds 1.656, peak 5.35
+  rigid readout  111 at   2218.9 fs: T  411.3 K, E -37.270250 Ha, bonds 1.695, peak 5.35
+  rigid readout  112 at   2238.9 fs: T  430.9 K, E -37.270255 Ha, bonds 1.695, peak 5.25
+  rigid readout  113 at   2258.9 fs: T  389.1 K, E -37.270241 Ha, bonds 1.664, peak 5.15
+  rigid readout  114 at   2278.9 fs: T  392.5 K, E -37.270239 Ha, bonds 1.680, peak 5.25
+  rigid readout  115 at   2298.9 fs: T  423.4 K, E -37.270251 Ha, bonds 1.680, peak 5.35
+  rigid readout  116 at   2318.9 fs: T  397.0 K, E -37.270246 Ha, bonds 1.641, peak 5.35
+  rigid readout  117 at   2338.9 fs: T  416.5 K, E -37.270255 Ha, bonds 1.617, peak 5.25
+  rigid readout  118 at   2358.9 fs: T  396.9 K, E -37.270254 Ha, bonds 1.633, peak 5.05
+  rigid readout  119 at   2378.8 fs: T  385.0 K, E -37.270248 Ha, bonds 1.641, peak 5.15
+  rigid readout  120 at   2398.8 fs: T  419.1 K, E -37.270251 Ha, bonds 1.695, peak 5.15
+  rigid readout  121 at   2418.8 fs: T  408.1 K, E -37.270255 Ha, bonds 1.664, peak 5.25
+  rigid readout  122 at   2438.8 fs: T  412.5 K, E -37.270253 Ha, bonds 1.648, peak 5.15
+  rigid readout  123 at   2458.8 fs: T  423.0 K, E -37.270261 Ha, bonds 1.664, peak 5.35
+  rigid readout  124 at   2478.8 fs: T  401.2 K, E -37.270256 Ha, bonds 1.664, peak 5.25
+  rigid readout  125 at   2498.8 fs: T  427.7 K, E -37.270251 Ha, bonds 1.648, peak 5.15
+  rigid readout  126 at   2518.8 fs: T  400.9 K, E -37.270245 Ha, bonds 1.625, peak 5.25
+  rigid readout  127 at   2538.8 fs: T  412.4 K, E -37.270245 Ha, bonds 1.594, peak 5.25
+  rigid readout  128 at   2558.8 fs: T  397.6 K, E -37.270248 Ha, bonds 1.602, peak 5.25
+  rigid readout  129 at   2578.8 fs: T  414.9 K, E -37.270258 Ha, bonds 1.664, peak 5.25
+  rigid readout  130 at   2598.7 fs: T  389.4 K, E -37.270247 Ha, bonds 1.609, peak 5.15
+  rigid readout  131 at   2618.7 fs: T  414.2 K, E -37.270250 Ha, bonds 1.609, peak 5.05
+  rigid readout  132 at   2638.7 fs: T  389.8 K, E -37.270247 Ha, bonds 1.602, peak 5.15
+  rigid readout  133 at   2658.7 fs: T  395.9 K, E -37.270246 Ha, bonds 1.609, peak 5.25
+  rigid readout  134 at   2678.7 fs: T  381.7 K, E -37.270245 Ha, bonds 1.602, peak 5.25
+  rigid readout  135 at   2698.7 fs: T  388.0 K, E -37.270244 Ha, bonds 1.656, peak 5.15
+  rigid readout  136 at   2718.7 fs: T  402.6 K, E -37.270252 Ha, bonds 1.719, peak 5.05
+  rigid readout  137 at   2738.7 fs: T  400.9 K, E -37.270244 Ha, bonds 1.656, peak 5.15
+  rigid readout  138 at   2758.7 fs: T  416.2 K, E -37.270247 Ha, bonds 1.664, peak 5.05
+  rigid readout  139 at   2778.7 fs: T  401.4 K, E -37.270243 Ha, bonds 1.695, peak 5.35
+  rigid readout  140 at   2798.6 fs: T  403.1 K, E -37.270241 Ha, bonds 1.680, peak 5.35
+  rigid readout  141 at   2818.6 fs: T  374.6 K, E -37.270242 Ha, bonds 1.672, peak 5.05
+  rigid readout  142 at   2838.6 fs: T  410.2 K, E -37.270255 Ha, bonds 1.695, peak 5.15
+  rigid readout  143 at   2858.6 fs: T  404.3 K, E -37.270250 Ha, bonds 1.656, peak 5.25
+  rigid readout  144 at   2878.6 fs: T  383.9 K, E -37.270258 Ha, bonds 1.617, peak 5.35
+  rigid readout  145 at   2898.6 fs: T  398.3 K, E -37.270261 Ha, bonds 1.594, peak 5.15
+  rigid readout  146 at   2918.6 fs: T  391.9 K, E -37.270256 Ha, bonds 1.602, peak 5.05
+  rigid readout  147 at   2938.6 fs: T  425.0 K, E -37.270267 Ha, bonds 1.617, peak 5.15
+  rigid readout  148 at   2958.6 fs: T  410.1 K, E -37.270267 Ha, bonds 1.594, peak 5.25
+  rigid readout  149 at   2978.6 fs: T  405.6 K, E -37.270267 Ha, bonds 1.633, peak 5.35
+  rigid readout  150 at   2998.6 fs: T  407.1 K, E -37.270270 Ha, bonds 1.586, peak 5.15

@@ -1,0 +1,13 @@
+CONFIG     PASS       [4 checks, 4 legs]  serve_mode Blend, beta 5.516353128e1 (../conformance/water_observatory/ct3/smooth/beta.json), step 1.077480986e0 au (the engine's hold, allow_dt_growth false), boundary Periodic
+CLOCK      PASS       [3 checks, 3 legs]  the rigid clock from the MEASURED envelope 6.3973e-2 Ha/bohr^2: dt 15.7241 au against the fine 1.0775 au, omega*dt 0.0982 under the hold's 2pi/64 = 0.0982
+COST       PASS       [2 checks, 2 legs]  flexible 115051 passes in 42165.1 s = 14062 core-s/ps; rigid 7951 passes in 2851.6 s = 951 core-s/ps (every overhead inside); speedup 14.79x
+NVE        PASS       [2 checks, 2 legs]  each arm's peak energy excursion per water over the run against a tenth of kT (9.279e-5 Ha): flexible 8.753e-9, rigid 3.024e-7
+REPLACEMENT ERROR (second half, rigid - flexible; each with its own SEM):
+  temperature        407.00 K   -   309.76 K   = +97.23 K  (sem 4.61 / 2.92; the arms count 6 and 9 dof per unit - NOT the comparator)
+  RIGID-MODE T       407.00 K   -   400.21 K   = +6.79 K  (sem 4.61 / 3.12; the flexible arm's units projected at every readout - the comparator; its vibrations hold 0.67 kT/water of kinetic energy against 1.5 at equipartition)
+  cross-unit U     -9.470606e-3 - -9.723574e-3 = +2.530e-4 Ha/water = +0.273 kT (sem 4.4e-5 / 5.1e-5)
+  bonds per water  1.6749 - 1.6760 = -0.0011 (sem 0.0069 / 0.0058)
+  O-O first peak   5.204 - 5.200 = +0.004 bohr (sem 0.012 / 0.011)
+TRANSPORT (the oxygens' walk, 7 lags to tau = 540 fs against the crossover 102 fs): worst |MSD_rigid/MSD_flexible - 1| = 0.061
+TRANSPORT  PASS       [4 checks, 4 legs]  the oxygens' unwrapped walk on 7 lags of the lens's own ladder, to tau = 540 fs against the crossover's 102 fs, read at the same physical times on both arms; worst MSD ratio departure 0.061. NO diffusion constant is claimed: this window contains no diffusive regime and naming one would be the slope of a curve
+TRANSPORT  PASS       [4 checks, 4 legs]  the oxygens' unwrapped walk on 7 lags of the lens's own ladder, to tau = 540 fs against the crossover's 102 fs, read at the same physical times on both arms; worst MSD ratio departure 0.061. NO diffusion constant is claimed: this window contains no diffusive regime and naming one would be the slope of a curve

@@ -1,0 +1,7 @@
+transport: 2026-09-12T17:36:27-05:00 pid 458209; 55 GiB free against a floor of 8
+transport: seed 0 on core 24 pid 458219
+transport: seed 1 on core 25 pid 458221
+transport: seed 2 on core 26 pid 458223
+transport: seed 0 exit 0 at 2026-09-13T16:31:03-05:00
+transport: seed 1 exit 0 at 2026-09-13T16:35:53-05:00
+transport: seed 2 exit 0 at 2026-09-13T16:35:53-05:00

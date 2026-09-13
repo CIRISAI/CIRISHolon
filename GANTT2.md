@@ -799,6 +799,39 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## REPLACE-0's TRANSPORT read on three seeds (2026-09-13): the gate passes, and the agreement DECAYS with lag
+
+Three seeds, each its own branch point, `~3` ps counted on both arms, `~66` core-hours.
+`replace0/README.md`, `transport_seed0..2/`.
+
+**PASS on all three** — worst MSD departure `0.103` / `0.059` / `0.061` against the `0.2`
+declared before the run, 7 lags to `540` fs (about 5 crossovers), speedup `14.85x` / `14.27x` /
+`14.79x` with every overhead inside, NVE holding on both arms.
+
+**The ladder matters more than the verdict.** The ratio is monotone in lag on every seed:
+`1.011` below `100` fs, crossing `1.0` near `160` fs, `0.897` at `540` fs. The rigid molecules
+are slightly faster than the fine model's at short times and `10 %` slower by the end of the
+window, **and the worst departure is at the LAST lag on every seed** — the signature of a
+trend the window truncated, not of a discrepancy it resolved. Both arms are still
+sub-diffusive there (slopes `1.18`–`1.27`).
+
+**So the next tier's inputs are not yet measurable on this operator, and that is now a
+measurement rather than a caution.** A bulk fluid cell's constitutive response is viscosity
+and stress relaxation, which live at picoseconds and beyond — precisely where this reading
+says the agreement is getting worse. What the gate licenses is the sub-picosecond motion it
+tested. The next question is whether the departure SATURATES or keeps growing, and it is
+cheap: the walks are already on disk, so extending the lag ladder costs a re-run of the rigid
+arm alone.
+
+**The replacement error, three seeds:** cross-unit potential `+0.325 ± 0.099` kT per water,
+bonds `−0.0125 ± 0.0106` on the lens, O–O peak `−0.0044 ± 0.0267` bohr, rigid-mode temperature
+`+3.35 ± 4.87` K. Structure and temperature agree within the seed spread (the earlier `+17` K
+was one seed on a shorter branch); the energy does not — the rigid arm is **less bound by
+about `3.4 %` of its cross-unit energy on every seed, with a spread smaller than the effect**.
+Physically coherent: a flexible molecule stretches toward the partner it donates to and a body
+frozen at the liquid's mean geometry cannot, so it loses the adaptive part of the binding.
+A property of the lift that any use of this operator inherits, and now a number.
+
 ## The transport instrument, and a gate that had to be hardened twice (2026-09-11)
 
 REPLACE-0 measured the replacement error on structure and energy and NOT on dynamics, which

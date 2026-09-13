@@ -47,6 +47,60 @@ while its O–H stretches hold 0.44 → 0.49 kT per water. A rigid replacement i
 and has no vibrational sink for the potential the box is still releasing. That is a candidate
 cause with a test, not a conclusion.
 
+## TRANSPORT, three seeds (2026-09-13): the walks agree, and the agreement is DECAYING with time
+
+`transport_seed0..2/`, each its own branch point and bundle, `~3` ps counted on both arms from
+it, `~22` hours a seed on one core. The question: does the coarse operator's water WALK like
+the fine model's? It is the question that gates every use of this operator for transport,
+because REPLACE-0 had measured structure and energy and never motion.
+
+**The gate PASSES on all three seeds** — worst departure `0.103`, `0.059`, `0.061` against a
+tolerance of `0.2` declared before the run, on 7 lags reaching `540` fs, about 5 crossovers.
+Speedup `14.85x`, `14.27x`, `14.79x` with every overhead inside. NVE holds on both arms.
+
+**But read the ladder rather than the verdict** (seed 0; the other two have the same shape):
+
+| τ, fs | MSD flexible, bohr² | MSD rigid | ratio |
+|---|---|---|---|
+| 40.0 | 0.2576 | 0.2603 | **1.011** |
+| 60.0 | 0.4883 | 0.4938 | 1.011 |
+| 100.0 | 0.9866 | 0.9964 | 1.010 |
+| 159.9 | 1.8449 | 1.8412 | 0.998 |
+| 239.9 | 2.9760 | 2.9248 | 0.983 |
+| 359.8 | 4.3615 | 4.1516 | 0.952 |
+| 539.7 | 6.0460 | 5.4204 | **0.897** |
+
+The departure is not noise and it is not flat. It is **monotone in lag**: the rigid molecules
+walk `1 %` FASTER than the fine model's below `100` fs, cross over near `160` fs, and are
+`10 %` SLOWER by `540` fs — and the worst departure sits at the LAST lag on every seed, which
+is the signature of a trend the window truncated rather than a discrepancy the window
+resolved. Both arms are still sub-diffusive there (log-log slopes `1.18`–`1.27`, where `1` is
+diffusive), so neither has reached the regime a diffusion constant would be read in.
+
+**What that licenses and what it does not.** It licenses the operator for the sub-picosecond
+motion it was measured on. It does NOT license viscosity, stress relaxation or self-diffusion,
+which live at picoseconds and beyond — exactly where this reading says the agreement is
+getting worse. A constitutive response for a bulk fluid cell is made of precisely those
+quantities, so **the honest state of the next tier up is: its inputs are not yet measurable on
+this operator, and the reason is measured rather than assumed.**
+
+## The replacement error, three seeds
+
+| | rigid − flexible, mean ± spread |
+|---|---|
+| cross-unit potential | **`+0.325 ± 0.099` kT per water** |
+| bonds per water (lens) | `−0.0125 ± 0.0106` |
+| O–O first peak | `−0.0044 ± 0.0267` bohr |
+| rigid-mode temperature | `+3.35 ± 4.87` K |
+
+The structure and the temperature agree within their spread across seeds; the earlier `+17` K
+was one seed on a shorter branch. The ENERGY does not: the rigid arm is systematically **less
+bound, by about `3.4 %` of its own cross-unit energy**, on all three seeds and with a spread
+smaller than the effect. That is physically coherent rather than surprising — a flexible
+molecule stretches toward the partner it donates to, and a body frozen at the liquid's MEAN
+geometry cannot, so it loses exactly the adaptive part of the binding. It is a property of the
+lift, not a bug in it, and any use of this operator inherits it.
+
 ## Owed before any of this is a claim
 
 An unseen seed and a nearby temperature; a settled branch point (the campaign's, when the

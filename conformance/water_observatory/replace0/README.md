@@ -47,6 +47,18 @@ while its O–H stretches hold 0.44 → 0.49 kT per water. A rigid replacement i
 and has no vibrational sink for the potential the box is still releasing. That is a candidate
 cause with a test, not a conclusion.
 
+## CORRECTION: the decay below is ONE SEED
+
+The section that follows reports the MSD ratio decaying monotonically with lag and calls it a
+property of the operator. It is seed 0's. Read to `1,239` fs the three seeds give `0.809`,
+`0.913`, `1.131` — seed 2 rises. Against the seed spread, no lag past `40` fs carries a
+resolved difference: the mean ratio stays in `[0.951, 1.022]` while the spread grows from
+`0.015` to `0.322`. **This data does not resolve whether the coarse operator's long-time
+dynamics differ from the fine model's**, and the gate that passed it compares arms within a
+seed without ever asking whether the difference exceeds the scatter between seeds. The
+structural and energy readings below are unaffected — their spreads are smaller than their
+effects. Kept unedited beneath so the error stays legible.
+
 ## TRANSPORT, three seeds (2026-09-13): the walks agree, and the agreement is DECAYING with time
 
 `transport_seed0..2/`, each its own branch point and bundle, `~3` ps counted on both arms from

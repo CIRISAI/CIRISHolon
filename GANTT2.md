@@ -799,6 +799,51 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## CORRECTION (2026-09-13, same day): the transport "decay" was ONE SEED's trajectory, and the lead reported it as a finding
+
+**The section below overstates its evidence and is corrected here rather than edited, so the
+error stays legible.** It reports the MSD ratio falling monotonically with lag — `1.011` at
+`40` fs to `0.897` at `540` fs — and calls that a property of the coarse operator. It is a
+property of **seed 0**. Extending the ladder to `1,239` fs on all three seeds gives top-lag
+ratios of `0.809`, `0.913` and **`1.131`**: seed 2 goes the OTHER WAY.
+
+Against the seed-to-seed spread, at every lag past `40` fs:
+
+| τ, fs | seed 0 | seed 1 | seed 2 | mean | spread | |
+|---|---|---|---|---|---|---|
+| 40 | 1.011 | 1.026 | 1.019 | `1.019` | `0.015` | the one departure that exceeds the spread |
+| 240 | 0.983 | 1.003 | 0.994 | `0.993` | `0.021` | inside |
+| 540 | 0.897 | 0.941 | 1.061 | `0.966` | `0.165` | inside |
+| 1239 | 0.809 | 0.913 | 1.131 | `0.951` | `0.322` | inside |
+
+**There is no measured dynamical difference between the arms in this data**, beyond a ~`2 %`
+speed-up at `40` fs. The mean ratio never leaves `[0.951, 1.022]` while the spread grows to
+`0.322`. What the run measured is that three seeds of `3` ps cannot resolve the question.
+
+**The instrument's flaw, and it is this season's own pattern with the lead on the wrong side
+of it:** the TRANSPORT gate compares two arms WITHIN one seed and never asks whether that
+difference exceeds the scatter BETWEEN seeds. A per-seed "worst departure" of `0.103` looks
+like a reading and is a draw from a distribution whose width at that lag is `0.165`. The gate
+was hardened twice against vacuous passes and once against vanishing, and it still had no leg
+for *is this difference bigger than the noise* — which is the same question, one level up.
+
+**The lead's own error, stated plainly:** the ladder printed in the monitor was seed 0's, the
+trend in it was real for that seed, and it was written into the record as the operator's
+behaviour before the other two ladders were read the same way. The three-seed table above took
+one command on data already on disk.
+
+**What this does to the tier answer.** The conclusion stands and its REASON changes: the next
+tier's inputs are not yet measurable on this operator, not because the agreement was shown to
+decay, but because **three seeds of 3 ps cannot resolve whether it decays at all**. Resolving
+a `10 %` dynamical difference against a spread of `0.165` at `540` fs needs about an order of
+magnitude more sampling — thirty seeds, or ten times the trajectory, or both. That is the
+honest price of the question, and it is larger than the `66` core-hours already spent on it.
+
+**What still stands from the run**, because it was resolved against the spread: the speedup
+(`14.3`–`14.9x`), NVE on both arms, the structural agreement, and the energy — the rigid arm
+less bound by `+0.325 ± 0.099` kT per water, a spread smaller than the effect on all three
+seeds.
+
 ## REPLACE-0's TRANSPORT read on three seeds (2026-09-13): the gate passes, and the agreement DECAYS with lag
 
 Three seeds, each its own branch point, `~3` ps counted on both arms, `~66` core-hours.

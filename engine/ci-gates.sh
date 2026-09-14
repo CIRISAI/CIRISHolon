@@ -397,6 +397,18 @@ cargo test -q -p holon-closure 2>/dev/null >/dev/null \
   && ok "holon-closure: merge/part inverse, the rent clause, the edge, the winding" \
   || no "holon-closure: merge/part inverse, the rent clause, the edge, the winding"
 
+# THE TOY'S WALL. `docs/play/` is a water game and the observatory is an instrument; the whole
+# value of the instrument is that its numbers trace. This gate fails the build if the toy ever
+# cites a record, if any record ever cites the toy, if the page loses its banner, or if its
+# invented layer stops being called invented. It caught one breach on the day it was written.
+if command -v node >/dev/null 2>&1; then
+  node ../docs/play/wall.mjs >/dev/null 2>&1 \
+    && ok "the toy's wall holds: docs/play cites no record and no record cites it" \
+    || no "the toy's wall is breached (node docs/play/wall.mjs for the named failure)"
+else
+  ok "the toy's wall: skipped, no node on this host"
+fi
+
 # holon-runtime: the executable holon -- the operator contract and oriented rigid water as
 # its first operator. Zero dependencies and pure arithmetic; the suite checks that projection
 # and reconstruction are inverses on the body's own sites, that the accumulated torque is the

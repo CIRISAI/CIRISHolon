@@ -1,0 +1,30 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Acuity Sandbox — a water toy</title>
+<link rel="stylesheet" href="styles.css">
+<body>
+<div id="banner">
+  <strong>A TOY.</strong> No claim to physics is made anywhere on this page.
+  The <em>blobs</em> are invented and obey nothing. The <em>molecules</em> in the focus ring
+  are run by the real engine under a real law, and even they are a dozen molecules in a
+  vacuum, which is not water.
+  <a href="../workbench/">The instrument that does make claims is here.</a>
+</div>
+<canvas id="stage"></canvas>
+<div id="hud">
+  <div class="row"><span>focus</span><b id="h-focus">—</b></div>
+  <div class="row"><span>molecules, real</span><b id="h-real">0</b></div>
+  <div class="row"><span>blobs, invented</span><b id="h-blobs">0</b></div>
+  <div class="row sep"><span>force pass</span><b id="h-pass">— ms</b></div>
+  <div class="row"><span>physics advanced</span><b id="h-fs">0.0 fs/s</b></div>
+  <div class="row"><span>render</span><b id="h-fps">— fps</b></div>
+  <div class="row sep"><span>engine</span><b id="h-engine">booting</b></div>
+</div>
+<div id="legend">
+  <b>the point of the toy:</b> the cost is governed by <em>where you look</em>.
+  Drag the focus ring. Molecules inside it are real and expensive; everything outside is a
+  blob and nearly free. Scroll to resize the ring and watch the cost follow it.
+</div>
+<script type="module" src="app.js"></script>
+</body>

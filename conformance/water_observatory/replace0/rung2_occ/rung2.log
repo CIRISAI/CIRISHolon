@@ -1,0 +1,727 @@
+# RUNG 2 — the fluid-element chart
+# stakes: RUNG2_PREREG.md @ aee5317
+# dp = 1.321126 au (frozen 1.3211)
+# de = 0.000950043 Ha (frozen 0.0009500435)
+# bars: admissible occ >= 100, cells >= 4, fluct <= 0.1; transport >= 0.05; informative >= 200; beta = 0.02; separation >= 0.05
+
+===== ARM flexible (3 trajectories) =====
+
+-- seed 0x5245504c41434530  n=128 dims=3 frames=151 box=29.6x29.6 species=[8]
+   G9a species/arity constant: true
+   G9b |p| first=0.000000e0 last=0.000000e0   G9c Ek first=0.000000e0 last=0.000000e0  [ledger leg UNDISCHARGED: the dump carries no forces]
+   grid 1x1 cells=1 occ=128.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 occ=64.000 fluct=0.039 transport=0.5733  G2 admissible: NO
+      Spatial Occ coll=1498 fire=988 D_A=0.659546 info=150 distinct=9 | D_B=0.466667 cov=1.000 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (13,16) (13,18) (13,36)
+      Spatial Mom coll=1498 fire=988 D_A=0.659546 info=150 distinct=9 | D_B=0.466667 cov=1.000 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (0,2) (0,26) (0,34)
+      Spatial Ene coll=1498 fire=988 D_A=0.659546 info=150 distinct=9 | D_B=0.466667 cov=1.000 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (13,16) (13,18) (13,36)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=1323 fire=833 D_A=0.629630 info=149 distinct=12 | D_B=0.854167 cov=0.640 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (0,34) (0,39) (0,41)
+      BlindLabel Mom coll=1323 fire=833 D_A=0.629630 info=149 distinct=12 | D_B=0.854167 cov=0.640 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (16,18) (16,21) (16,24)
+      BlindLabel Ene coll=1323 fire=833 D_A=0.629630 info=149 distinct=12 | D_B=0.854167 cov=0.640 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (2,33) (2,51) (2,52)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=1498 fire=988 D_A=0.659546 info=150 distinct=9 | D_B=0.466667 cov=1.000 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (13,16) (13,18) (13,36)
+      GlobalRelabel Mom coll=1498 fire=988 D_A=0.659546 info=150 distinct=9 | D_B=0.466667 cov=1.000 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (1,20) (1,120) (1,121)
+      GlobalRelabel Ene coll=1498 fire=988 D_A=0.659546 info=150 distinct=9 | D_B=0.466667 cov=1.000 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (3,8) (3,12) (3,68)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 occ=32.000 fluct=0.069 transport=0.8200  G2 admissible: NO
+      Spatial Occ coll=77 fire=71 D_A=0.922078 info=93 distinct=95 | D_B=1.000000 cov=0.040 | refines=true | VoidWorkCount(93)
+         witnesses (listing capped at 10, count above is exact): (2,19) (2,26) (2,28)
+      Spatial Mom coll=77 fire=71 D_A=0.922078 info=93 distinct=95 | D_B=1.000000 cov=0.040 | refines=true | VoidWorkCount(93)
+         witnesses (listing capped at 10, count above is exact): (2,19) (2,26) (2,28)
+      Spatial Ene coll=77 fire=71 D_A=0.922078 info=93 distinct=95 | D_B=1.000000 cov=0.040 | refines=true | VoidWorkCount(93)
+         witnesses (listing capped at 10, count above is exact): (12,64) (73,74) (78,79)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=68 fire=62 D_A=0.911765 info=73 distinct=105 | D_B=1.000000 cov=0.013 | refines=true | VoidWorkCount(73)
+         witnesses (listing capped at 10, count above is exact): (31,32) (48,49) (48,52)
+      BlindLabel Mom coll=68 fire=62 D_A=0.911765 info=73 distinct=105 | D_B=1.000000 cov=0.013 | refines=true | VoidWorkCount(73)
+         witnesses (listing capped at 10, count above is exact): (90,91) (98,99) (101,105)
+      BlindLabel Ene coll=68 fire=62 D_A=0.911765 info=73 distinct=105 | D_B=1.000000 cov=0.013 | refines=true | VoidWorkCount(73)
+         witnesses (listing capped at 10, count above is exact): (16,17) (26,28) (26,102)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=77 fire=71 D_A=0.922078 info=93 distinct=95 | D_B=1.000000 cov=0.040 | refines=true | VoidWorkCount(93)
+         witnesses (listing capped at 10, count above is exact): (2,19) (2,26) (2,28)
+      GlobalRelabel Mom coll=77 fire=71 D_A=0.922078 info=93 distinct=95 | D_B=1.000000 cov=0.040 | refines=true | VoidWorkCount(93)
+         witnesses (listing capped at 10, count above is exact): (38,59) (54,55) (78,79)
+      GlobalRelabel Ene coll=77 fire=71 D_A=0.922078 info=93 distinct=95 | D_B=1.000000 cov=0.040 | refines=true | VoidWorkCount(93)
+         witnesses (listing capped at 10, count above is exact): (10,11) (31,32) (34,66)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 occ=16.000 fluct=0.109 transport=0.9467  G2 admissible: NO
+      Spatial Occ coll=9 fire=9 D_A=1.000000 info=18 distinct=141 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(18)
+         witnesses (listing capped at 10, count above is exact): (3,4) (5,6) (16,17)
+      Spatial Mom coll=9 fire=9 D_A=1.000000 info=18 distinct=141 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(18)
+         witnesses (listing capped at 10, count above is exact): (3,4) (5,6) (16,17)
+      Spatial Ene coll=9 fire=9 D_A=1.000000 info=18 distinct=141 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(18)
+         witnesses (listing capped at 10, count above is exact): (3,4) (5,6) (16,17)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=9 fire=9 D_A=1.000000 info=18 distinct=141 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(18)
+         witnesses (listing capped at 10, count above is exact): (3,4) (5,6) (16,17)
+      BlindLabel Mom coll=9 fire=9 D_A=1.000000 info=18 distinct=141 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(18)
+         witnesses (listing capped at 10, count above is exact): (3,4) (5,6) (16,17)
+      BlindLabel Ene coll=9 fire=9 D_A=1.000000 info=18 distinct=141 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(18)
+         witnesses (listing capped at 10, count above is exact): (3,4) (5,6) (16,17)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=9 fire=9 D_A=1.000000 info=18 distinct=141 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(18)
+         witnesses (listing capped at 10, count above is exact): (3,4) (5,6) (16,17)
+      GlobalRelabel Mom coll=9 fire=9 D_A=1.000000 info=18 distinct=141 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(18)
+         witnesses (listing capped at 10, count above is exact): (3,4) (5,6) (16,17)
+      GlobalRelabel Ene coll=9 fire=9 D_A=1.000000 info=18 distinct=141 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(18)
+         witnesses (listing capped at 10, count above is exact): (3,4) (5,6) (16,17)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 occ=5.333 fluct=0.244 transport=1.0000  G2 admissible: NO
+      Spatial Occ coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      Spatial Ene coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      BlindLabel Ene coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      GlobalRelabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      GlobalRelabel Ene coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x5245504c41434531  n=128 dims=3 frames=151 box=29.6x29.6 species=[8]
+   G9a species/arity constant: true
+   G9b |p| first=0.000000e0 last=0.000000e0   G9c Ek first=0.000000e0 last=0.000000e0  [ledger leg UNDISCHARGED: the dump carries no forces]
+   grid 1x1 cells=1 occ=128.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 occ=64.000 fluct=0.035 transport=0.6000  G2 admissible: NO
+      Spatial Occ coll=1733 fire=1126 D_A=0.649740 info=149 distinct=10 | D_B=0.734375 cov=0.853 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (7,18) (7,19) (7,68)
+      Spatial Mom coll=1733 fire=1126 D_A=0.649740 info=149 distinct=10 | D_B=0.734375 cov=0.853 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (0,2) (0,9) (0,35)
+      Spatial Ene coll=1733 fire=1126 D_A=0.649740 info=149 distinct=10 | D_B=0.734375 cov=0.853 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (0,2) (0,9) (0,35)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=1088 fire=732 D_A=0.672794 info=150 distinct=13 | D_B=0.609375 cov=0.853 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (10,15) (10,16) (10,134)
+      BlindLabel Mom coll=1088 fire=732 D_A=0.672794 info=150 distinct=13 | D_B=0.609375 cov=0.853 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (10,15) (10,16) (10,134)
+      BlindLabel Ene coll=1088 fire=732 D_A=0.672794 info=150 distinct=13 | D_B=0.609375 cov=0.853 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (3,6) (3,77) (3,85)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=1733 fire=1126 D_A=0.649740 info=149 distinct=10 | D_B=0.734375 cov=0.853 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (7,18) (7,19) (7,68)
+      GlobalRelabel Mom coll=1733 fire=1126 D_A=0.649740 info=149 distinct=10 | D_B=0.734375 cov=0.853 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (8,11) (8,14) (8,17)
+      GlobalRelabel Ene coll=1733 fire=1126 D_A=0.649740 info=149 distinct=10 | D_B=0.734375 cov=0.853 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (7,18) (7,19) (7,68)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 occ=32.000 fluct=0.063 transport=0.9467  G2 admissible: NO
+      Spatial Occ coll=60 fire=57 D_A=0.950000 info=73 distinct=108 | D_B=1.000000 cov=0.133 | refines=true | VoidWorkCount(73)
+         witnesses (listing capped at 10, count above is exact): (11,149) (12,17) (12,46)
+      Spatial Mom coll=60 fire=57 D_A=0.950000 info=73 distinct=108 | D_B=1.000000 cov=0.133 | refines=true | VoidWorkCount(73)
+         witnesses (listing capped at 10, count above is exact): (4,5) (11,149) (28,31)
+      Spatial Ene coll=60 fire=57 D_A=0.950000 info=73 distinct=108 | D_B=1.000000 cov=0.133 | refines=true | VoidWorkCount(73)
+         witnesses (listing capped at 10, count above is exact): (9,34) (9,94) (11,149)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=51 fire=50 D_A=0.980392 info=69 distinct=111 | D_B=1.000000 cov=0.053 | refines=true | VoidWorkCount(69)
+         witnesses (listing capped at 10, count above is exact): (11,13) (18,26) (18,27)
+      BlindLabel Mom coll=51 fire=50 D_A=0.980392 info=69 distinct=111 | D_B=1.000000 cov=0.053 | refines=true | VoidWorkCount(69)
+         witnesses (listing capped at 10, count above is exact): (8,9) (11,13) (29,133)
+      BlindLabel Ene coll=51 fire=50 D_A=0.980392 info=69 distinct=111 | D_B=1.000000 cov=0.053 | refines=true | VoidWorkCount(69)
+         witnesses (listing capped at 10, count above is exact): (8,9) (11,13) (74,88)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=60 fire=57 D_A=0.950000 info=73 distinct=108 | D_B=1.000000 cov=0.133 | refines=true | VoidWorkCount(73)
+         witnesses (listing capped at 10, count above is exact): (0,2) (0,73) (2,73)
+      GlobalRelabel Mom coll=60 fire=57 D_A=0.950000 info=73 distinct=108 | D_B=1.000000 cov=0.133 | refines=true | VoidWorkCount(73)
+         witnesses (listing capped at 10, count above is exact): (0,2) (0,73) (2,73)
+      GlobalRelabel Ene coll=60 fire=57 D_A=0.950000 info=73 distinct=108 | D_B=1.000000 cov=0.133 | refines=true | VoidWorkCount(73)
+         witnesses (listing capped at 10, count above is exact): (4,5) (18,51) (21,124)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 occ=16.000 fluct=0.105 transport=0.9733  G2 admissible: NO
+      Spatial Occ coll=7 fire=6 D_A=0.857143 info=11 distinct=144 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(11)
+         witnesses (listing capped at 10, count above is exact): (0,2) (22,23) (29,30)
+      Spatial Mom coll=7 fire=6 D_A=0.857143 info=11 distinct=144 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(11)
+         witnesses (listing capped at 10, count above is exact): (0,2) (22,23) (29,30)
+      Spatial Ene coll=7 fire=6 D_A=0.857143 info=11 distinct=144 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(11)
+         witnesses (listing capped at 10, count above is exact): (0,2) (22,23) (29,30)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=5 fire=4 D_A=0.800000 info=7 distinct=146 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(7)
+         witnesses (listing capped at 10, count above is exact): (0,2) (22,23) (91,92)
+      BlindLabel Mom coll=5 fire=4 D_A=0.800000 info=7 distinct=146 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(7)
+         witnesses (listing capped at 10, count above is exact): (0,2) (22,23) (91,92)
+      BlindLabel Ene coll=5 fire=4 D_A=0.800000 info=7 distinct=146 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(7)
+         witnesses (listing capped at 10, count above is exact): (0,2) (22,23) (91,92)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=7 fire=6 D_A=0.857143 info=11 distinct=144 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(11)
+         witnesses (listing capped at 10, count above is exact): (0,2) (22,23) (29,30)
+      GlobalRelabel Mom coll=7 fire=6 D_A=0.857143 info=11 distinct=144 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(11)
+         witnesses (listing capped at 10, count above is exact): (0,2) (22,23) (29,30)
+      GlobalRelabel Ene coll=7 fire=6 D_A=0.857143 info=11 distinct=144 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(11)
+         witnesses (listing capped at 10, count above is exact): (0,2) (22,23) (29,30)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 occ=5.333 fluct=0.231 transport=1.0000  G2 admissible: NO
+      Spatial Occ coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      Spatial Ene coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      BlindLabel Ene coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      GlobalRelabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      GlobalRelabel Ene coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x5245504c41434532  n=128 dims=3 frames=151 box=29.6x29.6 species=[8]
+   G9a species/arity constant: true
+   G9b |p| first=0.000000e0 last=0.000000e0   G9c Ek first=0.000000e0 last=0.000000e0  [ledger leg UNDISCHARGED: the dump carries no forces]
+   grid 1x1 cells=1 occ=128.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 occ=64.000 fluct=0.030 transport=0.6867  G2 admissible: NO
+      Spatial Occ coll=1756 fire=1213 D_A=0.690774 info=149 distinct=10 | D_B=0.614286 cov=0.933 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (5,7) (5,23) (5,43)
+      Spatial Mom coll=1756 fire=1213 D_A=0.690774 info=149 distinct=10 | D_B=0.614286 cov=0.933 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (27,28) (27,32) (27,46)
+      Spatial Ene coll=1756 fire=1213 D_A=0.690774 info=149 distinct=10 | D_B=0.614286 cov=0.933 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (5,7) (5,23) (5,43)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=1589 fire=1063 D_A=0.668974 info=150 distinct=10 | D_B=0.605634 cov=0.947 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (12,14) (12,25) (12,30)
+      BlindLabel Mom coll=1589 fire=1063 D_A=0.668974 info=150 distinct=10 | D_B=0.605634 cov=0.947 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (12,14) (12,25) (12,30)
+      BlindLabel Ene coll=1589 fire=1063 D_A=0.668974 info=150 distinct=10 | D_B=0.605634 cov=0.947 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (13,41) (13,74) (13,104)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=1756 fire=1213 D_A=0.690774 info=149 distinct=10 | D_B=0.614286 cov=0.933 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (0,4) (0,10) (0,20)
+      GlobalRelabel Mom coll=1756 fire=1213 D_A=0.690774 info=149 distinct=10 | D_B=0.614286 cov=0.933 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (11,15) (11,26) (11,77)
+      GlobalRelabel Ene coll=1756 fire=1213 D_A=0.690774 info=149 distinct=10 | D_B=0.614286 cov=0.933 | refines=true | VoidWorkCount(149)
+         witnesses (listing capped at 10, count above is exact): (47,48) (47,58) (47,115)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 occ=32.000 fluct=0.058 transport=0.8933  G2 admissible: NO
+      Spatial Occ coll=97 fire=86 D_A=0.886598 info=88 distinct=94 | D_B=1.000000 cov=0.320 | refines=true | VoidWorkCount(88)
+         witnesses (listing capped at 10, count above is exact): (14,37) (26,76) (26,100)
+      Spatial Mom coll=97 fire=86 D_A=0.886598 info=88 distinct=94 | D_B=1.000000 cov=0.320 | refines=true | VoidWorkCount(88)
+         witnesses (listing capped at 10, count above is exact): (0,75) (16,77) (16,112)
+      Spatial Ene coll=97 fire=86 D_A=0.886598 info=88 distinct=94 | D_B=1.000000 cov=0.320 | refines=true | VoidWorkCount(88)
+         witnesses (listing capped at 10, count above is exact): (14,37) (15,81) (16,77)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=50 fire=45 D_A=0.900000 info=60 distinct=114 | D_B=1.000000 cov=0.040 | refines=true | VoidWorkCount(60)
+         witnesses (listing capped at 10, count above is exact): (17,19) (25,26) (28,149)
+      BlindLabel Mom coll=50 fire=45 D_A=0.900000 info=60 distinct=114 | D_B=1.000000 cov=0.040 | refines=true | VoidWorkCount(60)
+         witnesses (listing capped at 10, count above is exact): (38,136) (38,140) (51,52)
+      BlindLabel Ene coll=50 fire=45 D_A=0.900000 info=60 distinct=114 | D_B=1.000000 cov=0.040 | refines=true | VoidWorkCount(60)
+         witnesses (listing capped at 10, count above is exact): (17,19) (31,32) (33,35)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=97 fire=86 D_A=0.886598 info=88 distinct=94 | D_B=1.000000 cov=0.320 | refines=true | VoidWorkCount(88)
+         witnesses (listing capped at 10, count above is exact): (6,7) (29,83) (31,32)
+      GlobalRelabel Mom coll=97 fire=86 D_A=0.886598 info=88 distinct=94 | D_B=1.000000 cov=0.320 | refines=true | VoidWorkCount(88)
+         witnesses (listing capped at 10, count above is exact): (1,2) (6,7) (31,32)
+      GlobalRelabel Ene coll=97 fire=86 D_A=0.886598 info=88 distinct=94 | D_B=1.000000 cov=0.320 | refines=true | VoidWorkCount(88)
+         witnesses (listing capped at 10, count above is exact): (26,76) (26,100) (27,49)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 occ=16.000 fluct=0.108 transport=0.9933  G2 admissible: NO
+      Spatial Occ coll=2 fire=2 D_A=1.000000 info=4 distinct=148 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(4)
+         witnesses (listing capped at 10, count above is exact): (8,9) (56,57)
+      Spatial Mom coll=2 fire=2 D_A=1.000000 info=4 distinct=148 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(4)
+         witnesses (listing capped at 10, count above is exact): (8,9) (56,57)
+      Spatial Ene coll=2 fire=2 D_A=1.000000 info=4 distinct=148 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(4)
+         witnesses (listing capped at 10, count above is exact): (8,9) (56,57)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (8,9)
+      BlindLabel Mom coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (8,9)
+      BlindLabel Ene coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (8,9)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=2 fire=2 D_A=1.000000 info=4 distinct=148 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(4)
+         witnesses (listing capped at 10, count above is exact): (8,9) (56,57)
+      GlobalRelabel Mom coll=2 fire=2 D_A=1.000000 info=4 distinct=148 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(4)
+         witnesses (listing capped at 10, count above is exact): (8,9) (56,57)
+      GlobalRelabel Ene coll=2 fire=2 D_A=1.000000 info=4 distinct=148 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(4)
+         witnesses (listing capped at 10, count above is exact): (8,9) (56,57)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 occ=5.333 fluct=0.240 transport=1.0000  G2 admissible: NO
+      Spatial Occ coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      Spatial Ene coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      BlindLabel Ene coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      GlobalRelabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      GlobalRelabel Ene coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      GlobalRelabel G8 weak (monotone counts): true
+
+===== ARM rigid (3 trajectories) =====
+
+-- seed 0x5245504c41434530  n=128 dims=3 frames=151 box=29.6x29.6 species=[8]
+   G9a species/arity constant: true
+   G9b |p| first=0.000000e0 last=0.000000e0   G9c Ek first=0.000000e0 last=0.000000e0  [ledger leg UNDISCHARGED: the dump carries no forces]
+   grid 1x1 cells=1 occ=128.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 occ=64.000 fluct=0.036 transport=0.6800  G2 admissible: NO
+      Spatial Occ coll=1504 fire=1115 D_A=0.741356 info=150 distinct=10 | D_B=0.611111 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (3,8) (3,10) (3,32)
+      Spatial Mom coll=1504 fire=1115 D_A=0.741356 info=150 distinct=10 | D_B=0.611111 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (3,8) (3,10) (3,32)
+      Spatial Ene coll=1504 fire=1115 D_A=0.741356 info=150 distinct=10 | D_B=0.611111 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (45,46) (45,57) (45,68)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=1656 fire=1169 D_A=0.705918 info=150 distinct=10 | D_B=0.694444 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (2,27) (2,47) (2,60)
+      BlindLabel Mom coll=1656 fire=1169 D_A=0.705918 info=150 distinct=10 | D_B=0.694444 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (0,28) (0,37) (0,42)
+      BlindLabel Ene coll=1656 fire=1169 D_A=0.705918 info=150 distinct=10 | D_B=0.694444 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (1,53) (1,54) (1,130)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=1504 fire=1115 D_A=0.741356 info=150 distinct=10 | D_B=0.611111 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (0,2) (0,19) (0,109)
+      GlobalRelabel Mom coll=1504 fire=1115 D_A=0.741356 info=150 distinct=10 | D_B=0.611111 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (1,23) (1,24) (1,31)
+      GlobalRelabel Ene coll=1504 fire=1115 D_A=0.741356 info=150 distinct=10 | D_B=0.611111 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (0,2) (0,19) (0,109)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 occ=32.000 fluct=0.067 transport=0.8667  G2 admissible: NO
+      Spatial Occ coll=67 fire=62 D_A=0.925373 info=86 distinct=100 | D_B=0.888889 cov=0.120 | refines=true | VoidWorkCount(86)
+         witnesses (listing capped at 10, count above is exact): (37,39) (37,42) (37,43)
+      Spatial Mom coll=67 fire=62 D_A=0.925373 info=86 distinct=100 | D_B=0.888889 cov=0.120 | refines=true | VoidWorkCount(86)
+         witnesses (listing capped at 10, count above is exact): (23,24) (37,39) (37,42)
+      Spatial Ene coll=67 fire=62 D_A=0.925373 info=86 distinct=100 | D_B=0.888889 cov=0.120 | refines=true | VoidWorkCount(86)
+         witnesses (listing capped at 10, count above is exact): (14,70) (25,27) (29,30)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=86 fire=83 D_A=0.965116 info=83 distinct=99 | D_B=1.000000 cov=0.187 | refines=true | VoidWorkCount(83)
+         witnesses (listing capped at 10, count above is exact): (2,125) (2,134) (2,135)
+      BlindLabel Mom coll=86 fire=83 D_A=0.965116 info=83 distinct=99 | D_B=1.000000 cov=0.187 | refines=true | VoidWorkCount(83)
+         witnesses (listing capped at 10, count above is exact): (6,107) (23,24) (34,136)
+      BlindLabel Ene coll=86 fire=83 D_A=0.965116 info=83 distinct=99 | D_B=1.000000 cov=0.187 | refines=true | VoidWorkCount(83)
+         witnesses (listing capped at 10, count above is exact): (37,57) (39,40) (42,43)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=67 fire=62 D_A=0.925373 info=86 distinct=100 | D_B=0.888889 cov=0.120 | refines=true | VoidWorkCount(86)
+         witnesses (listing capped at 10, count above is exact): (3,4) (3,7) (4,7)
+      GlobalRelabel Mom coll=67 fire=62 D_A=0.925373 info=86 distinct=100 | D_B=0.888889 cov=0.120 | refines=true | VoidWorkCount(86)
+         witnesses (listing capped at 10, count above is exact): (10,15) (11,64) (68,133)
+      GlobalRelabel Ene coll=67 fire=62 D_A=0.925373 info=86 distinct=100 | D_B=0.888889 cov=0.120 | refines=true | VoidWorkCount(86)
+         witnesses (listing capped at 10, count above is exact): (12,66) (36,65) (73,79)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 occ=16.000 fluct=0.112 transport=0.9400  G2 admissible: NO
+      Spatial Occ coll=11 fire=11 D_A=1.000000 info=22 distinct=139 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(22)
+         witnesses (listing capped at 10, count above is exact): (3,4) (16,17) (39,42)
+      Spatial Mom coll=11 fire=11 D_A=1.000000 info=22 distinct=139 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(22)
+         witnesses (listing capped at 10, count above is exact): (3,4) (16,17) (39,42)
+      Spatial Ene coll=11 fire=11 D_A=1.000000 info=22 distinct=139 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(22)
+         witnesses (listing capped at 10, count above is exact): (3,4) (16,17) (39,42)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=10 fire=10 D_A=1.000000 info=20 distinct=140 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(20)
+         witnesses (listing capped at 10, count above is exact): (3,4) (16,17) (30,32)
+      BlindLabel Mom coll=10 fire=10 D_A=1.000000 info=20 distinct=140 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(20)
+         witnesses (listing capped at 10, count above is exact): (3,4) (16,17) (30,32)
+      BlindLabel Ene coll=10 fire=10 D_A=1.000000 info=20 distinct=140 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(20)
+         witnesses (listing capped at 10, count above is exact): (3,4) (16,17) (30,32)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=11 fire=11 D_A=1.000000 info=22 distinct=139 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(22)
+         witnesses (listing capped at 10, count above is exact): (3,4) (39,42) (60,61)
+      GlobalRelabel Mom coll=11 fire=11 D_A=1.000000 info=22 distinct=139 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(22)
+         witnesses (listing capped at 10, count above is exact): (3,4) (16,17) (39,42)
+      GlobalRelabel Ene coll=11 fire=11 D_A=1.000000 info=22 distinct=139 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(22)
+         witnesses (listing capped at 10, count above is exact): (3,4) (16,17) (39,42)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 occ=5.333 fluct=0.232 transport=0.9933  G2 admissible: NO
+      Spatial Occ coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (17,18)
+      Spatial Mom coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (17,18)
+      Spatial Ene coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (17,18)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (17,18)
+      BlindLabel Mom coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (17,18)
+      BlindLabel Ene coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (17,18)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (17,18)
+      GlobalRelabel Mom coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (17,18)
+      GlobalRelabel Ene coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (17,18)
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x5245504c41434531  n=128 dims=3 frames=151 box=29.6x29.6 species=[8]
+   G9a species/arity constant: true
+   G9b |p| first=0.000000e0 last=0.000000e0   G9c Ek first=0.000000e0 last=0.000000e0  [ledger leg UNDISCHARGED: the dump carries no forces]
+   grid 1x1 cells=1 occ=128.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 occ=64.000 fluct=0.035 transport=0.6867  G2 admissible: NO
+      Spatial Occ coll=1520 fire=1038 D_A=0.682895 info=150 distinct=10 | D_B=0.769231 cov=0.693 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (7,10) (7,15) (7,84)
+      Spatial Mom coll=1520 fire=1038 D_A=0.682895 info=150 distinct=10 | D_B=0.769231 cov=0.693 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (48,137) (62,85) (62,87)
+      Spatial Ene coll=1520 fire=1038 D_A=0.682895 info=150 distinct=10 | D_B=0.769231 cov=0.693 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (4,6) (4,18) (4,61)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=1230 fire=847 D_A=0.688618 info=148 distinct=11 | D_B=0.870370 cov=0.720 | refines=true | VoidWorkCount(148)
+         witnesses (listing capped at 10, count above is exact): (3,6) (3,44) (6,44)
+      BlindLabel Mom coll=1230 fire=847 D_A=0.688618 info=148 distinct=11 | D_B=0.870370 cov=0.720 | refines=true | VoidWorkCount(148)
+         witnesses (listing capped at 10, count above is exact): (3,6) (3,44) (6,44)
+      BlindLabel Ene coll=1230 fire=847 D_A=0.688618 info=148 distinct=11 | D_B=0.870370 cov=0.720 | refines=true | VoidWorkCount(148)
+         witnesses (listing capped at 10, count above is exact): (11,18) (11,63) (11,68)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=1520 fire=1038 D_A=0.682895 info=150 distinct=10 | D_B=0.769231 cov=0.693 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (4,6) (4,18) (4,61)
+      GlobalRelabel Mom coll=1520 fire=1038 D_A=0.682895 info=150 distinct=10 | D_B=0.769231 cov=0.693 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (4,6) (4,18) (4,61)
+      GlobalRelabel Ene coll=1520 fire=1038 D_A=0.682895 info=150 distinct=10 | D_B=0.769231 cov=0.693 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (0,2) (0,16) (0,39)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 occ=32.000 fluct=0.067 transport=0.9133  G2 admissible: NO
+      Spatial Occ coll=58 fire=56 D_A=0.965517 info=76 distinct=107 | D_B=1.000000 cov=0.147 | refines=true | VoidWorkCount(76)
+         witnesses (listing capped at 10, count above is exact): (10,109) (28,30) (29,43)
+      Spatial Mom coll=58 fire=56 D_A=0.965517 info=76 distinct=107 | D_B=1.000000 cov=0.147 | refines=true | VoidWorkCount(76)
+         witnesses (listing capped at 10, count above is exact): (16,24) (22,25) (22,26)
+      Spatial Ene coll=58 fire=56 D_A=0.965517 info=76 distinct=107 | D_B=1.000000 cov=0.147 | refines=true | VoidWorkCount(76)
+         witnesses (listing capped at 10, count above is exact): (3,145) (22,25) (22,26)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=37 fire=35 D_A=0.945946 info=55 distinct=120 | D_B=1.000000 cov=0.013 | refines=true | VoidWorkCount(55)
+         witnesses (listing capped at 10, count above is exact): (4,5) (28,30) (28,68)
+      BlindLabel Mom coll=37 fire=35 D_A=0.945946 info=55 distinct=120 | D_B=1.000000 cov=0.013 | refines=true | VoidWorkCount(55)
+         witnesses (listing capped at 10, count above is exact): (0,2) (0,6) (2,6)
+      BlindLabel Ene coll=37 fire=35 D_A=0.945946 info=55 distinct=120 | D_B=1.000000 cov=0.013 | refines=true | VoidWorkCount(55)
+         witnesses (listing capped at 10, count above is exact): (0,2) (0,6) (2,6)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=58 fire=56 D_A=0.965517 info=76 distinct=107 | D_B=1.000000 cov=0.147 | refines=true | VoidWorkCount(76)
+         witnesses (listing capped at 10, count above is exact): (29,43) (29,44) (32,33)
+      GlobalRelabel Mom coll=58 fire=56 D_A=0.965517 info=76 distinct=107 | D_B=1.000000 cov=0.147 | refines=true | VoidWorkCount(76)
+         witnesses (listing capped at 10, count above is exact): (9,14) (10,109) (28,30)
+      GlobalRelabel Ene coll=58 fire=56 D_A=0.965517 info=76 distinct=107 | D_B=1.000000 cov=0.147 | refines=true | VoidWorkCount(76)
+         witnesses (listing capped at 10, count above is exact): (3,145) (7,110) (10,109)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 occ=16.000 fluct=0.107 transport=0.9600  G2 admissible: NO
+      Spatial Occ coll=7 fire=6 D_A=0.857143 info=11 distinct=144 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(11)
+         witnesses (listing capped at 10, count above is exact): (0,2) (4,5) (25,26)
+      Spatial Mom coll=7 fire=6 D_A=0.857143 info=11 distinct=144 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(11)
+         witnesses (listing capped at 10, count above is exact): (0,2) (4,5) (25,26)
+      Spatial Ene coll=7 fire=6 D_A=0.857143 info=11 distinct=144 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(11)
+         witnesses (listing capped at 10, count above is exact): (0,2) (4,5) (25,26)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=8 fire=7 D_A=0.875000 info=13 distinct=143 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(13)
+         witnesses (listing capped at 10, count above is exact): (0,2) (4,5) (25,26)
+      BlindLabel Mom coll=8 fire=7 D_A=0.875000 info=13 distinct=143 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(13)
+         witnesses (listing capped at 10, count above is exact): (0,2) (4,5) (25,26)
+      BlindLabel Ene coll=8 fire=7 D_A=0.875000 info=13 distinct=143 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(13)
+         witnesses (listing capped at 10, count above is exact): (0,2) (4,5) (25,26)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=7 fire=6 D_A=0.857143 info=11 distinct=144 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(11)
+         witnesses (listing capped at 10, count above is exact): (0,2) (4,5) (25,26)
+      GlobalRelabel Mom coll=7 fire=6 D_A=0.857143 info=11 distinct=144 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(11)
+         witnesses (listing capped at 10, count above is exact): (0,2) (4,5) (25,26)
+      GlobalRelabel Ene coll=7 fire=6 D_A=0.857143 info=11 distinct=144 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(11)
+         witnesses (listing capped at 10, count above is exact): (0,2) (4,5) (25,26)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 occ=5.333 fluct=0.243 transport=1.0000  G2 admissible: NO
+      Spatial Occ coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      Spatial Ene coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      BlindLabel Ene coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      GlobalRelabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      GlobalRelabel Ene coll=0 fire=0 D_A=n/a info=0 distinct=150 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(0)
+      GlobalRelabel G8 weak (monotone counts): true
+
+-- seed 0x5245504c41434532  n=128 dims=3 frames=151 box=29.6x29.6 species=[8]
+   G9a species/arity constant: true
+   G9b |p| first=0.000000e0 last=0.000000e0   G9c Ek first=0.000000e0 last=0.000000e0  [ledger leg UNDISCHARGED: the dump carries no forces]
+   grid 1x1 cells=1 occ=128.000 fluct=0.000 transport=0.0000  G2 admissible: NO
+      Spatial Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x1 cells=2 occ=64.000 fluct=0.028 transport=0.6333  G2 admissible: NO
+      Spatial Occ coll=2195 fire=1414 D_A=0.644191 info=150 distinct=9 | D_B=0.555556 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (0,4) (0,9) (0,81)
+      Spatial Mom coll=2195 fire=1414 D_A=0.644191 info=150 distinct=9 | D_B=0.555556 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (5,7) (15,24) (22,31)
+      Spatial Ene coll=2195 fire=1414 D_A=0.644191 info=150 distinct=9 | D_B=0.555556 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (10,14) (10,49) (10,69)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=1684 fire=1110 D_A=0.659145 info=150 distinct=10 | D_B=0.603175 cov=0.840 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (10,23) (10,25) (10,68)
+      BlindLabel Mom coll=1684 fire=1110 D_A=0.659145 info=150 distinct=10 | D_B=0.603175 cov=0.840 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (5,7) (5,11) (5,35)
+      BlindLabel Ene coll=1684 fire=1110 D_A=0.659145 info=150 distinct=10 | D_B=0.603175 cov=0.840 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (5,7) (5,11) (5,35)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=2195 fire=1414 D_A=0.644191 info=150 distinct=9 | D_B=0.555556 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (10,14) (10,49) (10,69)
+      GlobalRelabel Mom coll=2195 fire=1414 D_A=0.644191 info=150 distinct=9 | D_B=0.555556 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (10,14) (10,49) (10,69)
+      GlobalRelabel Ene coll=2195 fire=1414 D_A=0.644191 info=150 distinct=9 | D_B=0.555556 cov=0.960 | refines=true | VoidWorkCount(150)
+         witnesses (listing capped at 10, count above is exact): (10,14) (10,49) (10,69)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 2x2 cells=4 occ=32.000 fluct=0.069 transport=0.9133  G2 admissible: NO
+      Spatial Occ coll=74 fire=70 D_A=0.945946 info=85 distinct=99 | D_B=0.941176 cov=0.227 | refines=true | VoidWorkCount(85)
+         witnesses (listing capped at 10, count above is exact): (6,51) (10,102) (30,33)
+      Spatial Mom coll=74 fire=70 D_A=0.945946 info=85 distinct=99 | D_B=0.941176 cov=0.227 | refines=true | VoidWorkCount(85)
+         witnesses (listing capped at 10, count above is exact): (30,33) (30,133) (30,147)
+      Spatial Ene coll=74 fire=70 D_A=0.945946 info=85 distinct=99 | D_B=0.941176 cov=0.227 | refines=true | VoidWorkCount(85)
+         witnesses (listing capped at 10, count above is exact): (3,4) (3,105) (4,105)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=39 fire=33 D_A=0.846154 info=48 distinct=122 | D_B=0.600000 cov=0.067 | refines=true | VoidWorkCount(48)
+         witnesses (listing capped at 10, count above is exact): (15,17) (37,38) (37,84)
+      BlindLabel Mom coll=39 fire=33 D_A=0.846154 info=48 distinct=122 | D_B=0.600000 cov=0.067 | refines=true | VoidWorkCount(48)
+         witnesses (listing capped at 10, count above is exact): (6,10) (6,71) (10,71)
+      BlindLabel Ene coll=39 fire=33 D_A=0.846154 info=48 distinct=122 | D_B=0.600000 cov=0.067 | refines=true | VoidWorkCount(48)
+         witnesses (listing capped at 10, count above is exact): (6,10) (6,71) (10,71)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=74 fire=70 D_A=0.945946 info=85 distinct=99 | D_B=1.000000 cov=0.227 | refines=true | VoidWorkCount(85)
+         witnesses (listing capped at 10, count above is exact): (0,80) (27,28) (27,149)
+      GlobalRelabel Mom coll=74 fire=70 D_A=0.945946 info=85 distinct=99 | D_B=1.000000 cov=0.227 | refines=true | VoidWorkCount(85)
+         witnesses (listing capped at 10, count above is exact): (25,69) (30,33) (30,133)
+      GlobalRelabel Ene coll=74 fire=70 D_A=0.945946 info=85 distinct=99 | D_B=1.000000 cov=0.227 | refines=true | VoidWorkCount(85)
+         witnesses (listing capped at 10, count above is exact): (0,80) (1,2) (3,4)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 4x2 cells=8 occ=16.000 fluct=0.112 transport=0.9533  G2 admissible: NO
+      Spatial Occ coll=8 fire=8 D_A=1.000000 info=16 distinct=142 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(16)
+         witnesses (listing capped at 10, count above is exact): (8,9) (27,28) (36,37)
+      Spatial Mom coll=8 fire=8 D_A=1.000000 info=16 distinct=142 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(16)
+         witnesses (listing capped at 10, count above is exact): (8,9) (27,28) (36,37)
+      Spatial Ene coll=8 fire=8 D_A=1.000000 info=16 distinct=142 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(16)
+         witnesses (listing capped at 10, count above is exact): (8,9) (27,28) (36,37)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=9 fire=9 D_A=1.000000 info=18 distinct=141 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(18)
+         witnesses (listing capped at 10, count above is exact): (8,9) (21,22) (27,28)
+      BlindLabel Mom coll=9 fire=9 D_A=1.000000 info=18 distinct=141 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(18)
+         witnesses (listing capped at 10, count above is exact): (8,9) (21,22) (27,28)
+      BlindLabel Ene coll=9 fire=9 D_A=1.000000 info=18 distinct=141 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(18)
+         witnesses (listing capped at 10, count above is exact): (8,9) (21,22) (27,28)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=8 fire=8 D_A=1.000000 info=16 distinct=142 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(16)
+         witnesses (listing capped at 10, count above is exact): (8,9) (27,28) (36,37)
+      GlobalRelabel Mom coll=8 fire=8 D_A=1.000000 info=16 distinct=142 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(16)
+         witnesses (listing capped at 10, count above is exact): (8,9) (27,28) (36,37)
+      GlobalRelabel Ene coll=8 fire=8 D_A=1.000000 info=16 distinct=142 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(16)
+         witnesses (listing capped at 10, count above is exact): (8,9) (27,28) (36,37)
+      GlobalRelabel G8 weak (monotone counts): true
+   grid 6x4 cells=24 occ=5.333 fluct=0.234 transport=0.9933  G2 admissible: NO
+      Spatial Occ coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (61,62)
+      Spatial Mom coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (61,62)
+      Spatial Ene coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (61,62)
+      Spatial G8 weak (monotone counts): true
+      BlindLabel Occ coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (61,62)
+      BlindLabel Mom coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (61,62)
+      BlindLabel Ene coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (61,62)
+      BlindLabel G8 weak (monotone counts): true
+      BlindIndex Occ coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Mom coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex Ene coll=11175 fire=0 D_A=0.000000 info=150 distinct=1 | D_B=0.000000 cov=1.000 | refines=true | VoidVacuous("no transport: the chart is frozen")
+      BlindIndex G8 weak (monotone counts): true
+      GlobalRelabel Occ coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (61,62)
+      GlobalRelabel Mom coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (61,62)
+      GlobalRelabel Ene coll=1 fire=1 D_A=1.000000 info=2 distinct=149 | D_B=n/a cov=0.000 | refines=true | VoidWorkCount(2)
+         witnesses (listing capped at 10, count above is exact): (61,62)
+      GlobalRelabel G8 weak (monotone counts): true
+
+===== COST (PREREG G11, work units, never wall clock) =====
+frames read:       906
+chart evaluations: 54360

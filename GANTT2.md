@@ -799,6 +799,34 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## The named mover, read at zero compute (2026-09-16): the fluid-element chart on the 3D carrier, occupancy rung
+
+`replace0/rung2_occ/RUNG2_OCC_ON_THE_3D_CARRIER.md`. The operator's question — *is the 300×
+a classical cost for comparison or a cost on the object?* — was the right one. It is the
+former: ~59,000 core-hours is Green–Kubo viscosity on the flexible model, a classical
+reference instrument. The object's price for a tier is rule 1's battery, a short-time
+closure test on trajectories that exist. So the frozen `rung2` instrument was pointed,
+unchanged, at REPLACE-0's banked oxygen walks — both arms, three seeds — through a declared
+v1 adapter (bonds empty, velocities zero, columns for cells; only the `Occ` rung is a reading).
+
+| | |
+|---|---|
+| G2 admissibility (≥100 per cell, ≥4 cells, fluct ≤ 0.10) | **NO on every grid, by arithmetic** — 128 oxygens admit one cell at 100 each; the smallest admissible box is ≥ 400 waters |
+| 1×1, the whole box | closed and VOID-vacuous, as the freeze demands |
+| 2×1, the first dynamic chart | `D_A` = 0.62–0.74 on every arm and seed, 30× the β = 0.02 budget; `VoidWorkCount` at 149–150 informative against 200 |
+| finer grids | collisions vanish; nothing to read |
+| rigid vs flexible | the same defect within seed spread (0.689 vs 0.667): the coarse self is as open as the fine self on the one chart readable |
+
+**Rung 1's disjointness reproduces on the 3D carrier**: every dynamic chart out of budget,
+the only closed chart vacuous. Fence: VOID by work count, not `NotClosed`, at 151 readouts.
+**Staked before any longer run:** at ≥ 200 informative transitions the 2×1 verdict is
+`NotClosed`. And the size fence is now a number: **no 128-water box can host a
+fluid-element chart the freeze admits.** That, not viscosity, is why the tier is not
+buildable here — measured at the object's own price, which was zero.
+
+What each further rung costs is tabled in the record; rung 1 on the 3D carrier is blocked on
+trajectory format v2 (the 16-atom cap), which is engine work.
+
 ## CORRECTION (2026-09-13, same day): the transport "decay" was ONE SEED's trajectory, and the lead reported it as a finding
 
 **The section below overstates its evidence and is corrected here rather than edited, so the

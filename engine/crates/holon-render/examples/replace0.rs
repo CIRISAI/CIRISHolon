@@ -66,6 +66,19 @@ const SEAM_CUTOFF_BOHR: f64 = 14.0;
 const RDF_DR: f64 = 0.1;
 const AU_TIME_FS: f64 = 0.024_188_843_265_857;
 
+/// THE TOP LAG, as a divisor of the readout count — the MSD is read to `readouts / TOP_LAG_DIV`.
+///
+/// The first transport reading used `4`, and on all three seeds the departure was MONOTONE in
+/// lag and WORST AT THE LAST LAG (`1.011` below 100 fs, `0.897` at 540 fs). That is the
+/// signature of a trend the window truncated rather than a discrepancy it resolved, so the
+/// question it leaves — does the departure saturate or keep growing? — is answered by reading
+/// further out on the SAME trajectories, and the walks are already on disk.
+///
+/// `2` is the conventional half-trajectory limit: at lag `N/2` there are `N/2` time origins,
+/// correlated but standard. DECLARED here before the re-read rather than discovered by
+/// extending until something failed; the value in force is written into every record.
+const TOP_LAG_DIV: usize = 2;
+
 /// The stiffness sample: every `STIFFNESS_EVERY`-th unit in oxygen order.
 const STIFFNESS_EVERY: usize = 16;
 /// The rigid displacement and rotation the stiffness is differenced over.
@@ -331,12 +344,19 @@ struct Walk {
     unwrapped: Vec<[f64; 3]>,
     /// one entry per readout: every oxygen's unwrapped position
     frames: Vec<Vec<[f64; 3]>>,
+    /// one entry per readout: every oxygen's velocity at that readout — banked so the
+    /// fluid-element chart's MOMENTUM and ENERGY rungs can be read (RUNG2_AMENDMENT_1.md:
+    /// the density field alone does not determine its own next value, and the freeze's
+    /// ladder puts momentum next for exactly that reason). On the rigid arm these are the
+    /// reconstructed site velocities `v_com + ω × r`, which `write_back` puts into the
+    /// atoms and the adapter's own test pins.
+    vels: Vec<Vec<[f64; 3]>>,
     l: f64,
 }
 
 impl Walk {
     fn new(pos: &[[f64; 3]], l: f64) -> Walk {
-        Walk { prev: pos.to_vec(), unwrapped: pos.to_vec(), frames: Vec::new(), l }
+        Walk { prev: pos.to_vec(), unwrapped: pos.to_vec(), frames: Vec::new(), vels: Vec::new(), l }
     }
     /// Advance the unwrapping with this frame's wrapped positions; does NOT record.
     fn advance(&mut self, now: &[[f64; 3]]) {
@@ -349,9 +369,10 @@ impl Walk {
         }
         self.prev = now.to_vec();
     }
-    /// Record the current unwrapped positions as a readout.
-    fn record(&mut self) {
+    /// Record the current unwrapped positions, and the velocities handed in, as a readout.
+    fn record(&mut self, vel: &[[f64; 3]]) {
         self.frames.push(self.unwrapped.clone());
+        self.vels.push(vel.to_vec());
     }
     /// Mean squared displacement at each lag of the ladder, bohr², averaged over every
     /// oxygen and every time origin.
@@ -401,7 +422,8 @@ fn transport_json(fl: &[(usize, f64)], rg: &[(usize, f64)], lag_fs: f64, crossov
         })
         .collect();
     format!(
-        "{{\"rule\": \"mean squared displacement of the oxygens' unwrapped walk, every time origin and every oxygen, on the lens's own x1.5 lag ladder; the arms are read at the SAME physical times so the ladders coincide. A diffusion CONSTANT is not claimed here and the exponent says why one is not: naming a constant needs a diffusive regime, which neither arm's window contains, and comparing two walks does not.\", \"loglog_slope_flexible\": {}, \"loglog_slope_rigid\": {}, \"crossover_fs\": {}, \"top_tau_fs\": {}, \"reaches_past_the_crossover\": {}, \"ladder\": [{}]}}",
+        "{{\"rule\": \"mean squared displacement of the oxygens' unwrapped walk, every time origin and every oxygen, on the lens's own x1.5 lag ladder; the arms are read at the SAME physical times so the ladders coincide. A diffusion CONSTANT is not claimed here and the exponent says why one is not: naming a constant needs a diffusive regime, which neither arm's window contains, and comparing two walks does not.\", \"top_lag_divisor\": {}, \"loglog_slope_flexible\": {}, \"loglog_slope_rigid\": {}, \"crossover_fs\": {}, \"top_tau_fs\": {}, \"reaches_past_the_crossover\": {}, \"ladder\": [{}]}}",
+        TOP_LAG_DIV,
         num(slope(fl)),
         num(slope(rg)),
         num(crossover_fs),
@@ -562,8 +584,9 @@ fn run_flexible(sim: &mut Sim, z: &[u32], l: f64, frames: usize, stride: usize, 
     let dt = sim.dt();
     let mut series = Vec::new();
     let read_oxy = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].x, s.atoms[i].y, s.atoms[i].z]).collect() };
+    let read_oxy_v = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].vx, s.atoms[i].vy, s.atoms[i].vz]).collect() };
     let mut walk = Walk::new(&read_oxy(sim), l);
-    walk.record();
+    walk.record(&read_oxy_v(sim));
     sim.compute_forces();
     let (tr, vib) = mode_split(sim, units, body);
     series.push(observe(sim, z, l, 0.0, sim.temperature(), sim.energy(), 0.0, tr, vib));
@@ -571,7 +594,7 @@ fn run_flexible(sim: &mut Sim, z: &[u32], l: f64, frames: usize, stride: usize, 
         sim.step_frame(1);
         walk.advance(&read_oxy(sim));
         if (k + 1) % stride == 0 {
-            walk.record();
+            walk.record(&read_oxy_v(sim));
             let (tr, vib) = mode_split(sim, units, body);
             series.push(observe(sim, z, l, (k + 1) as f64 * dt * AU_TIME_FS, sim.temperature(), sim.energy(), 0.0, tr, vib));
             let o = series.last().unwrap();
@@ -700,8 +723,9 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
         b.f = site_forces_of(sim, &b.m);
     }
     let read_oxy = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].x, s.atoms[i].y, s.atoms[i].z]).collect() };
+    let read_oxy_v = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].vx, s.atoms[i].vy, s.atoms[i].vz]).collect() };
     let mut walk = Walk::new(&read_oxy(sim), l);
-    walk.record();
+    walk.record(&read_oxy_v(sim));
     let mut series = Vec::new();
     let e = rigid_kinetic(&bodies) + potential(sim);
     series.push(observe(sim, z, l, 0.0, rigid_temperature(&bodies), e, 0.0, rigid_temperature(&bodies), 0.0));
@@ -785,7 +809,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
                 }
             }
             if refined.is_empty() {
-                walk.record();
+                walk.record(&read_oxy_v(sim));
                 let e = rigid_kinetic(&bodies) + potential(sim);
                 series.push(observe(sim, z, l, (r + 1) as f64 * period * AU_TIME_FS, rigid_temperature(&bodies), e, discarded_cum - injected, rigid_temperature(&bodies), 0.0));
                 let o = series.last().unwrap();
@@ -866,7 +890,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
                 ke_modes += bodies[u].w.kinetic();
             }
         }
-        walk.record();
+        walk.record(&read_oxy_v(sim));
         series.push(observe(sim, z, l, t_fs, 2.0 * ke / (dof * K_B), ke + potential(sim), discarded_cum - injected, 2.0 * ke_modes / (6.0 * n as f64 * K_B), 0.0));
         let o = series.last().unwrap();
         eprintln!("  FINE  readout {:>4} at {:8.1} fs: T {:6.1} K, E {:.6} Ha, bonds {:.3}, peak {:.2}; {} refined, held units discarded {:.2e} bohr / {:.2e} Ha per frame", r + 1, o.t_fs, o.temperature_k, o.energy, o.bonds_per_water, o.peak_bohr, refined.len(), held_def / frames_this as f64 / (n - refined.len()).max(1) as f64, held_ke / frames_this as f64);
@@ -924,13 +948,21 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
 /// position. Without it a `--reuse` run has no flexible walk and the TRANSPORT gate has
 /// nothing to compare — which is how it silently disappeared the first time it was reused.
 fn write_flexible_walk(path: &Path, w: &Walk) {
-    let mut t = format!("# walk {} {}\n", w.frames.len(), w.l);
-    for f in &w.frames {
-        let row: Vec<String> = f.iter().flat_map(|p| p.iter().map(|x| format!("{x}"))).collect();
-        t.push_str(&row.join(" "));
-        t.push('\n');
+    let dump = |rows: &Vec<Vec<[f64; 3]>>, tag: &str| -> String {
+        let mut t = format!("# {tag} {} {}\n", rows.len(), w.l);
+        for f in rows {
+            let row: Vec<String> = f.iter().flat_map(|p| p.iter().map(|x| format!("{x}"))).collect();
+            t.push_str(&row.join(" "));
+            t.push('\n');
+        }
+        t
+    };
+    std::fs::write(path, dump(&w.frames, "walk")).expect("the walk writes");
+    // velocities beside it, same layout, own header tag; absent on bundles written before
+    // this existed, and the reader treats absence as "no velocities", never as zeros
+    if w.vels.len() == w.frames.len() {
+        std::fs::write(path.with_extension("vwalk"), dump(&w.vels, "vwalk")).expect("the vwalk writes");
     }
-    std::fs::write(path, t).expect("flexible.walk writes");
 }
 
 fn read_flexible_walk(path: &Path, readouts: usize) -> Option<Walk> {
@@ -950,7 +982,26 @@ fn read_flexible_walk(path: &Path, readouts: usize) -> Option<Walk> {
         frames.push(v.chunks(3).map(|c| [c[0], c[1], c[2]]).collect::<Vec<[f64; 3]>>());
     }
     let prev = frames.last()?.clone();
-    Some(Walk { prev: prev.clone(), unwrapped: prev, frames, l })
+    let vels = std::fs::read_to_string(path.with_extension("vwalk"))
+        .ok()
+        .and_then(|t| {
+            let mut ls = t.lines();
+            let h: Vec<&str> = ls.next()?.split_whitespace().collect();
+            if h.len() != 4 || h[1] != "vwalk" || h[2].parse::<usize>().ok()? != readouts {
+                return None;
+            }
+            let mut v = Vec::new();
+            for line in ls {
+                let r: Vec<f64> = line.split_whitespace().filter_map(|x| x.parse().ok()).collect();
+                if r.len() % 3 != 0 || r.is_empty() {
+                    return None;
+                }
+                v.push(r.chunks(3).map(|c| [c[0], c[1], c[2]]).collect::<Vec<[f64; 3]>>());
+            }
+            Some(v)
+        })
+        .unwrap_or_default();
+    Some(Walk { prev: prev.clone(), unwrapped: prev, frames, vels, l })
 }
 
 fn write_flexible_series(path: &Path, f: &ArmResult, frames: usize, stride: usize) {
@@ -1202,9 +1253,13 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
     let crossover_fs = read_input_after(&obs.join("liquid2").join("gate.json").display().to_string(), &["\"design\""], "crossover_fs")
         .map(|v| v.value)
         .unwrap_or(f64::NAN);
+    // the rigid walk is banked too, so a later re-read of the ladder needs no arm at all
+    if let Some(w) = &rigid.result.walk {
+        write_flexible_walk(&out.join("rigid.walk"), w);
+    }
     let (transport, g_transport) = match (&flex.walk, &rigid.result.walk) {
         (Some(fw), Some(rw)) => {
-            let top = (fw.frames.len() / 4).max(2);
+            let top = (fw.frames.len() / TOP_LAG_DIV).max(2);
             let ladder = lag_ladder(top);
             let (fm, rm) = (fw.msd(&ladder), rw.msd(&ladder));
             let lag_fs = stride as f64 * flex.dt_au * AU_TIME_FS;

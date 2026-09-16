@@ -85,3 +85,57 @@ Species/arity constant on every file (G9a). Transport fraction ≥ 0.57 on every
 No weight in `OBJECT.md` moves on a VOID reading. What moves B against C is the same chart
 at ≥ 200 informative transitions, and its expected grade is written above so the run can be
 judged against it.
+
+
+---
+
+## Read again under `RUNG2_AMENDMENT_1.md` (2026-09-16, same day, same six files)
+
+`rung2 --amend1`; log `rung2_amend1.log`. Same frames, same bars, the density field read both
+ways on every grid of the derived 3D ladder. The self-check (`refines(exact, binned)`) did not
+fire on any grid, arm or seed.
+
+| grid | cells | ⟨n⟩ | Δn | arm | D_A exact (mean ± spread, 3 seeds) | D_A Poisson | informative, Poisson | verdict |
+|---|---|---|---|---|---|---|---|---|
+| 1×1×1 | 1 | 128 | 11.3 | flexible | 0.000 ± 0.000 | **0.000 ± 0.000** | 150, 150, 150 | VoidVacuous |
+| 1×1×1 | 1 | 128 | 11.3 | rigid | 0.000 ± 0.000 | **0.000 ± 0.000** | 150, 150, 150 | VoidVacuous |
+| 2×1×1 | 2 | 64 | 8.0 | flexible | 0.667 ± 0.041 | **0.257 ± 0.215** | 150, 150, 150 | VoidWorkCount |
+| 2×1×1 | 2 | 64 | 8.0 | rigid | 0.689 ± 0.097 | **0.353 ± 0.122** | 150, 150, 150 | VoidWorkCount |
+| 2×2×1 | 4 | 32 | 5.7 | flexible | 0.920 ± 0.063 | **0.557 ± 0.224** | 147, 146, 142 | VoidWorkCount |
+| 2×2×1 | 4 | 32 | 5.7 | rigid | 0.946 ± 0.040 | **0.585 ± 0.031** | 146, 148, 144 | VoidWorkCount |
+| 2×2×2 | 8 | 16 | 4.0 | flexible | 0.938 ± 0.188 | **0.817 ± 0.089** | 115, 97, 102 | VoidWorkCount |
+| 2×2×2 | 8 | 16 | 4.0 | rigid | 1.000 ± 0.000 | **0.693 ± 0.293** | 126, 104, 110 | VoidWorkCount |
+| 4×2×2 | 16 | 8 | 2.8 | flexible | 1.000 (2 seeds) | **0.856 ± 0.162** | 53, 40, 22 | VoidWorkCount |
+| 4×2×2 | 16 | 8 | 2.8 | rigid | 1.000 ± 0.000 | **0.830 ± 0.110** | 52, 26, 23 | VoidWorkCount |
+| 4×4×2 | 32 | 4 | 2.0 | flexible | 1.000 (1 seeds) | **1.000 (2 seeds)** | 8, 0, 4 | VoidWorkCount |
+| 4×4×2 | 32 | 4 | 2.0 | rigid | 1.000 (1 seeds) | **1.000 ± 0.000** | 8, 2, 4 | VoidWorkCount |
+
+**A2 and A3 reproduce the freeze.** Every `Exact` line at `1×1×1`, `2×1×1` and `2×2×1` is the
+morning's frozen reading number for number (seed 0: collisions `11,175 / 1,498 / 77`) — the
+column grids of the freeze are the `n_z = 1` grids of the amendment, bit for bit.
+
+**A1 did what it was for, and not more.** Binning at `Δn = √⟨n⟩` collected `3`–`40×` the
+collisions (`1,498 → 5,626` at `2×1×1`; `77 → 2,708` at `2×2×1`) and drove the informative
+count to the frame limit: at `2×1×1` and `2×2×1` the Poisson chart has `142`–`150`
+informative transitions where `151` frames allow at most `150`. **G4's `200` is now bounded
+by the frame count and by nothing about the chart** — which is what the amendment set out
+to make true. The defect fell by about `2.5×` (`0.667 → 0.257` flexible, `0.689 → 0.353`
+rigid at `2×1×1`) and sits `13`–`18×` above `β = 0.02`. The staked expectation — `NotClosed`
+at `≥ 200` informative — stands with margin, for the binned chart as for the exact one.
+
+**The arms agree within the seed spread on every grid** (`2×1×1`: difference `0.095` inside
+spreads of `0.215` / `0.122`; `2×2×1`: `0.028` inside `0.224` / `0.031`). No dynamical
+difference between the rigid and flexible density fields is resolved, and none is claimed.
+
+**What the number means.** On the coarsest dynamic chart — which half of the box holds more
+molecules, read to one Poisson deviation — a quarter to a third of the frame pairs with the
+same reading go to different readings. The density field does not determine its own next
+value. That is not a surprise and it is not a failure of the box: it is the reason the
+freeze's ladder puts the **momentum** field next (§2.4, `v2 = occupancy + binned momentum`).
+Density alone is an incomplete chart of a fluid; density with momentum is the one the
+continuum equations are written in. **The next read is the `Mom` rung, and it needs
+velocities banked** — which no run to date has done.
+
+**Every verdict remains VOID by work count** because `151` frames cannot carry `200`
+transitions. That is a length, not a defect, and the run that banks velocities will be long
+enough to clear it.

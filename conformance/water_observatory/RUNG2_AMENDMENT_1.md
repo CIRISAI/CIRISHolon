@@ -15,8 +15,11 @@ form** (G5: two frames with identical readings must have identical successors).
 
 Those three together cannot certify anything. At `⟨n⟩ = 100` a cell's occupancy wanders over
 `±20` values; four such cells have `~10^5` distinct exact readings, against a few hundred
-frames. Readings never repeat, the collision count is zero, and the verdict is
-`VoidNoCollisions` **by counting, at any box size, on any dynamics**. The trend is already in
+frames. Readings all but never repeat, and the verdict is **VOID by counting — no collisions, or
+far too few to meet G4's 200 — at any box size, on any dynamics.** (Plant PA-1 sharpened
+this sentence: a frame-to-frame-correlated walk repeats a few readings, 73 in 600 frames,
+so "none" overstated it; "below the work count" is exact and is the grade the real 2×1 chart
+received.) The trend is already in
 the record: on the 3D carrier (`replace0/rung2_occ/`, read 2026-09-16) collisions fall
 `1,498 → 77 → 9 → 0` as occupancy goes `64 → 32 → 16 → 5`. The freeze's G2 (large cells) and
 G4 (`≥ 200` informative transitions) pull against each other at the exact-occupancy rung.
@@ -98,7 +101,7 @@ and taught nothing.
 
 | plant | carrier | must |
 |---|---|---|
-| **PA-1** | a synthetic 400-atom random walk in a `2×2×1` grid | on the **exact** chart: `VoidNoCollisions` — the fault, exhibited; on the **binned** chart: collisions `> 0` and G4 met |
+| **PA-1** | a synthetic 400-atom random walk in a `2×2×1` grid | on the **exact** chart: VOID by counting (`VoidNoCollisions` or `VoidWorkCount`) — the fault, exhibited; on the **binned** chart: collisions `> 0` and G4 met on the same frames |
 | **PA-2** | P-2's closed-by-construction trajectory | `CertifiedStrict` on the binned chart too — binning does not manufacture a defect |
 | **PA-3** | P-3's hidden-variable trajectory | `NotClosed` on the binned chart — binning does not hide one |
 | **PA-4** | any `dims = 2` trajectory | the `(n_x, n_y, 1)` chart's readings are **bit-identical** to the freeze's `(n_x, n_y)` — backward compatibility, exact |

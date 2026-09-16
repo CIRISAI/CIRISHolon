@@ -122,6 +122,71 @@ pub const FROZEN_GRIDS: [Grid; 5] = [
     Grid { nx: 6, ny: 4 },
 ];
 
+// ------------------------------------------------------------- RUNG2_AMENDMENT_1.md
+//
+// Three changes to the freeze's letter, each derived from the freeze's own constants and
+// declared in `conformance/water_observatory/RUNG2_AMENDMENT_1.md` before any read. The
+// frozen path above and below is UNCHANGED: [`Grid`], [`cell_series`] and [`readings`] keep
+// their signatures and are now thin wrappers over the general forms with `n_z = 1` and
+// `Density::Exact`, so the freeze's chart is reproduced bit for bit (plant PA-4).
+
+/// A2 — a cell grid with its third axis. `n_z = 1` on a `dims = 2` carrier IS the freeze's
+/// grid; on a `dims = 3` carrier a cell is a box, not a column through the box.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct Grid3 {
+    pub nx: usize,
+    pub ny: usize,
+    pub nz: usize,
+}
+
+impl Grid3 {
+    pub fn cells(&self) -> usize {
+        self.nx * self.ny * self.nz
+    }
+}
+
+impl From<Grid> for Grid3 {
+    fn from(g: Grid) -> Grid3 {
+        Grid3 { nx: g.nx, ny: g.ny, nz: 1 }
+    }
+}
+
+/// A1 — how the density field is read.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Density {
+    /// The freeze: exact integer occupancy. Right at `N = 12`, where occupancies `0–12`
+    /// repeat; empty of collisions by counting at the occupancy G2 demands.
+    Exact,
+    /// The amendment: occupancy binned at `Δn = √⟨n⟩`, one Poisson standard deviation —
+    /// the resolution G2 itself defines a fluid element by (`1/√N ≤ 0.10`). Parameter-free
+    /// (`⟨n⟩ = N_species / cells` is arithmetic), and parallel to `Δp` and `Δe`.
+    Poisson,
+}
+
+/// A3 — the grid ladder derived from the carrier: `2^k` cells while `⟨n⟩ ≥ 1`, each doubling
+/// splitting the longest remaining axis. Reproduces the freeze's first four grids at
+/// `N = 12`, `dims = 2` (plant PA-6). `2^0` is G3's vacuity control, as `(1,1)` was.
+pub fn doubling_ladder(n_atoms: usize, dims: u32) -> Vec<Grid3> {
+    let mut out = Vec::new();
+    let mut g = Grid3 { nx: 1, ny: 1, nz: 1 };
+    loop {
+        if g.cells() == 0 || (n_atoms as f64) / (g.cells() as f64) < 1.0 {
+            break;
+        }
+        out.push(g);
+        // split the longest axis; ties go x, then y, then z — a stated order, not a choice
+        let axes: [(usize, usize); 3] = [(g.nx, 0), (g.ny, 1), (g.nz, 2)];
+        let live = if dims >= 3 { 3 } else { 2 };
+        let (_, which) = axes[..live].iter().copied().fold((usize::MAX, 0), |best, (n, i)| if n < best.0 { (n, i) } else { best });
+        match which {
+            0 => g.nx *= 2,
+            1 => g.ny *= 2,
+            _ => g.nz *= 2,
+        }
+    }
+    out
+}
+
 /// The chart ladder of PREREG §2.4. Each rung REFINES the one before, which is what makes
 /// `refinement_removes_collisions` applicable and [`ladder_monotone`] meaningful.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -216,12 +281,23 @@ pub fn cell_series(
     grid: Grid,
     kind: Kind,
 ) -> Result<Vec<Vec<usize>>, Refusal> {
+    cell_series3(traj, grid.into(), kind)
+}
+
+/// The general form (RUNG2_AMENDMENT_1 A2). With `n_z = 1` this is [`cell_series`] to the
+/// bit: the third coordinate is neither read nor checked, so a `dims = 2` carrier whose `z`
+/// is anything at all reads exactly as the freeze read it.
+pub fn cell_series3(
+    traj: &Trajectory,
+    grid: Grid3,
+    kind: Kind,
+) -> Result<Vec<Vec<usize>>, Refusal> {
     if grid.cells() == 0 {
         return Err(Refusal::EmptyGrid);
     }
     let n = traj.header.n_atoms;
-    let (w, h) = (traj.header.box_w, traj.header.box_h);
-    let (cw, ch) = (w / grid.nx as f64, h / grid.ny as f64);
+    let (w, h, d) = (traj.header.box_w, traj.header.box_h, traj.header.box_d);
+    let (cw, ch, cd) = (w / grid.nx as f64, h / grid.ny as f64, d / grid.nz as f64);
     let perms = match kind {
         Kind::Spatial => None,
         Kind::BlindIndex => None,
@@ -247,7 +323,16 @@ pub fn cell_series(
                     }
                     let ix = ((x / cw) as usize).min(grid.nx - 1);
                     let iy = ((y / ch) as usize).min(grid.ny - 1);
-                    let c = iy * grid.nx + ix;
+                    let iz = if grid.nz > 1 {
+                        let z = f.pos[a][2];
+                        if !(z >= 0.0 && z <= d) {
+                            return Err(Refusal::AtomOutsideBox { frame: fi, atom: a, x: z, y: f64::NAN });
+                        }
+                        ((z / cd) as usize).min(grid.nz - 1)
+                    } else {
+                        0
+                    };
+                    let c = (iz * grid.ny + iy) * grid.nx + ix;
                     match &perms {
                         Some(p) => p[a][c],
                         None => c,
@@ -273,12 +358,34 @@ pub fn readings(
     rung: Rung,
     kind: Kind,
 ) -> Result<Vec<Reading>, Refusal> {
-    let cells = cell_series(traj, grid, kind)?;
+    readings3(traj, grid.into(), rung, kind, Density::Exact)
+}
+
+/// The general form (RUNG2_AMENDMENT_1 A1 + A2). With `n_z = 1` and `Density::Exact` this
+/// is [`readings`] to the bit. Under `Density::Poisson` each species' occupancy is binned at
+/// `floor(n / √(N_species / cells))`; the momentum and energy fields are binned exactly as
+/// the freeze binned them, unchanged.
+pub fn readings3(
+    traj: &Trajectory,
+    grid: Grid3,
+    rung: Rung,
+    kind: Kind,
+    density: Density,
+) -> Result<Vec<Reading>, Refusal> {
+    let cells = cell_series3(traj, grid, kind)?;
     let n = traj.header.n_atoms;
     let nc = grid.cells();
     let mut species: Vec<u32> = traj.header.z.clone();
     species.sort_unstable();
     species.dedup();
+    // A1: one Poisson scale per species, from arithmetic the header fixes.
+    let dn: Vec<f64> = species
+        .iter()
+        .map(|z| {
+            let n_s = traj.header.z.iter().filter(|q| *q == z).count();
+            ((n_s as f64) / (nc as f64)).sqrt().max(1.0)
+        })
+        .collect();
     let masses: Vec<f64> = traj
         .header
         .z
@@ -309,7 +416,14 @@ pub fn readings(
                 }
             }
         }
-        let mut r: Reading = occ;
+        let mut r: Reading = match density {
+            Density::Exact => occ,
+            Density::Poisson => occ
+                .iter()
+                .enumerate()
+                .map(|(k, o)| ((*o as f64) / dn[k % species.len()]).floor() as i64)
+                .collect(),
+        };
         if rung >= Rung::Mom {
             for c in 0..nc {
                 r.push((px[c] / dp).floor() as i64);
@@ -923,6 +1037,179 @@ mod tests {
             assert!(!a.witnesses.is_empty(), "a firing must exhibit its witness pair");
         }
         assert!(ladder_monotone(&counts), "G8: collisions must not grow up the ladder");
+    }
+
+    // ------------------------------------------- RUNG2_AMENDMENT_1.md's plants, PA-1..PA-6
+
+    /// A 3D header for the amendment's carriers: a cube, so a cell can be a box.
+    fn header3(n: usize, z: Vec<u32>, edge: f64) -> Header {
+        Header { seed: 7, n_atoms: n, dims: 3, substeps: 64, n_frames: 0, dt: 1.0, box_w: edge, box_h: edge, box_d: edge, z }
+    }
+
+    /// A random walk of `n` atoms in a cube — a carrier with no structure to close on,
+    /// whose only job is to POPULATE the grid at a stated occupancy.
+    fn random_walk3(n: usize, edge: f64, frames: usize, seed: u64) -> Trajectory {
+        let mut s = seed;
+        let mut next = move || {
+            s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            ((s >> 11) as f64) / ((1u64 << 53) as f64)
+        };
+        let mut pos: Vec<[f64; 3]> = (0..n).map(|_| [next() * edge, next() * edge, next() * edge]).collect();
+        let mut out = Vec::with_capacity(frames);
+        for i in 0..frames {
+            for p in pos.iter_mut() {
+                for c in 0..3 {
+                    // a step of ~3% of the edge, reflected at the walls so R1 never fires
+                    let mut v = p[c] + (next() - 0.5) * 0.06 * edge;
+                    if v < 0.0 { v = -v; }
+                    if v > edge { v = 2.0 * edge - v; }
+                    p[c] = v.clamp(0.0, edge);
+                }
+            }
+            out.push(frame(i as u64, pos.clone(), vec![[0.0; 3]; n]));
+        }
+        Trajectory { header: header3(n, vec![8; n], edge), frames: out }
+    }
+
+    /// PA-1 — the fault, exhibited, and the repair, exhibited beside it. 400 atoms in a
+    /// 2×2×1 grid is exactly G2's admissibility bar (100 per cell, 4 cells). On the
+    /// freeze's EXACT chart the readings never repeat and the verdict is
+    /// `VoidNoCollisions` by counting; on the amendment's Poisson chart the same frames
+    /// collide and the work count is met. Nothing about the carrier changed between the
+    /// two lines — only how its density was read.
+    #[test]
+    fn pa1_exact_occupancy_has_no_collisions_at_the_bar_and_the_poisson_bin_does() {
+        let traj = random_walk3(400, 40.0, 600, 0x5041_3031);
+        let grid = Grid3 { nx: 2, ny: 2, nz: 1 };
+        let cs = cell_series3(&traj, grid, Kind::Spatial).unwrap();
+        let (occ, fluct) = occupancy_stats(&cs, grid.cells());
+        assert!(occ >= prereg::ADMISSIBLE_OCCUPANCY - 1e-9, "the plant must sit AT the bar, occ {occ}");
+        assert!(fluct <= 0.2, "a random walk's fluctuation is Poisson-ish, got {fluct}");
+        let t = transport_fraction(&cs);
+        assert!(t > prereg::MIN_TRANSPORT, "the plant must transport, got {t}");
+        let exact = leg_a(&readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Exact).unwrap());
+        // The fault, stated exactly: at admissible occupancy the exact chart is VOID — no
+        // collisions, or too few to meet G4. A correlated walk repeats a few readings
+        // frame-to-frame (73 here), so "none" would overstate it; "below the work count by
+        // counting" is the claim, and it is the grade the real 2×1 chart got.
+        assert!(
+            matches!(grade(true, t, &exact), Verdict::VoidNoCollisions | Verdict::VoidWorkCount(_)),
+            "the freeze's exact chart at admissible occupancy must be VOID by counting — \
+             the fault the amendment exists for (collisions {}, informative {})",
+            exact.collisions,
+            exact.informative
+        );
+        let binned = leg_a(&readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Poisson).unwrap());
+        assert!(binned.collisions > 0, "the Poisson-binned chart must collide");
+        assert!(
+            binned.informative >= prereg::MIN_INFORMATIVE,
+            "and meet G4 on the same frames the exact chart could not: {}",
+            binned.informative
+        );
+        // A random walk has no structure to close on, so this is NOT a certification —
+        // and the plant says so by asserting only that a verdict other than VOID exists.
+        assert!(matches!(grade(true, t, &binned), Verdict::NotClosed | Verdict::CertifiedBudgeted | Verdict::CertifiedStrict));
+    }
+
+    /// PA-2 — binning does not MANUFACTURE a defect: P-2's chart, closed by construction,
+    /// certifies strict on the Poisson chart exactly as it does on the exact one.
+    #[test]
+    fn pa2_a_chart_closed_by_construction_still_certifies_under_the_poisson_bin() {
+        let n = 4;
+        let ncell = 4;
+        let cw = 34.6 / ncell as f64;
+        let frames: Vec<Frame> = (0..600)
+            .map(|i| {
+                let pos: Vec<[f64; 3]> = (0..n).map(|a| { let c = (a + i as usize) % ncell; [(c as f64 + 0.5) * cw, 10.0, 0.0] }).collect();
+                frame(i as u64, pos, vec![[0.0; 3]; n])
+            })
+            .collect();
+        let traj = Trajectory { header: header(n, vec![1; n]), frames };
+        let grid = Grid3 { nx: 4, ny: 1, nz: 1 };
+        let t = transport_fraction(&cell_series3(&traj, grid, Kind::Spatial).unwrap());
+        let a = leg_a(&readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Poisson).unwrap());
+        assert!(a.informative >= prereg::MIN_INFORMATIVE);
+        assert_eq!(grade(true, t, &a), Verdict::CertifiedStrict, "binning must not manufacture a defect");
+    }
+
+    /// PA-3 — binning does not HIDE a defect: P-3's hidden variable still fires on the
+    /// Poisson chart at every rung.
+    #[test]
+    fn pa3_a_hidden_variable_still_fires_under_the_poisson_bin() {
+        let n = 4;
+        let ncell = 4;
+        let cw = 34.6 / ncell as f64;
+        let mut cells: Vec<usize> = (0..n).collect();
+        let mut s: u64 = 0xDEAD_BEEF;
+        let mut frames = Vec::new();
+        for i in 0..1200u64 {
+            let pos: Vec<[f64; 3]> = cells.iter().map(|&c| [(c as f64 + 0.5) * cw, 10.0, 0.0]).collect();
+            frames.push(frame(i, pos, vec![[0.0; 3]; n]));
+            for c in cells.iter_mut() {
+                s = s.wrapping_mul(6364136223846793005).wrapping_add(1);
+                *c = if (s >> 60) & 1 == 1 { (*c + 1) % ncell } else { (*c + ncell - 1) % ncell };
+            }
+        }
+        let traj = Trajectory { header: header(n, vec![1; n]), frames };
+        let grid = Grid3 { nx: 4, ny: 1, nz: 1 };
+        let t = transport_fraction(&cell_series3(&traj, grid, Kind::Spatial).unwrap());
+        for rung in LADDER {
+            let a = leg_a(&readings3(&traj, grid, rung, Kind::Spatial, Density::Poisson).unwrap());
+            assert!(a.firing > 0, "the hidden variable must still fire at {rung:?} under the bin");
+            assert_eq!(grade(true, t, &a), Verdict::NotClosed);
+        }
+    }
+
+    /// PA-4 — backward compatibility, EXACT: on a `dims = 2` carrier the `(n_x, n_y, 1)`
+    /// chart under `Density::Exact` is the freeze's chart bit for bit, for every frozen
+    /// grid, every rung and every control kind. The wrappers guarantee it by construction;
+    /// this is the test that would catch the construction changing.
+    #[test]
+    fn pa4_the_frozen_chart_is_reproduced_bit_for_bit() {
+        let n = 12;
+        let mut s: u64 = 0xA4;
+        let mut next = move || { s = s.wrapping_mul(6364136223846793005).wrapping_add(1); ((s >> 11) as f64) / ((1u64 << 53) as f64) };
+        let frames: Vec<Frame> = (0..300).map(|i| {
+            let pos: Vec<[f64; 3]> = (0..n).map(|_| [next() * 34.6, next() * 20.8, next() * 5.0]).collect();
+            let vel: Vec<[f64; 3]> = (0..n).map(|_| [(next() - 0.5) * 4.0, (next() - 0.5) * 4.0, (next() - 0.5) * 4.0]).collect();
+            frame(i as u64, pos, vel)
+        }).collect();
+        let traj = Trajectory { header: header(n, vec![1; n]), frames };
+        for grid in FROZEN_GRIDS {
+            for rung in LADDER {
+                for kind in [Kind::Spatial, Kind::BlindLabel, Kind::BlindIndex, Kind::GlobalRelabel] {
+                    let frozen = readings(&traj, grid, rung, kind).unwrap();
+                    let amended = readings3(&traj, grid.into(), rung, kind, Density::Exact).unwrap();
+                    assert_eq!(frozen, amended, "grid {grid:?} rung {rung:?} kind {kind:?}: the freeze's chart moved");
+                }
+            }
+        }
+    }
+
+    /// PA-5 — the self-check: the exact chart REFINES the binned one on every trajectory.
+    /// A violation convicts the binning, never the trajectory.
+    #[test]
+    fn pa5_exact_refines_poisson() {
+        let traj = random_walk3(200, 30.0, 400, 0x5041_3035);
+        for grid in doubling_ladder(200, 3) {
+            let exact = readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Exact).unwrap();
+            let binned = readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Poisson).unwrap();
+            assert!(refines(&exact, &binned), "grid {grid:?}: exact occupancy must refine its own bin");
+        }
+    }
+
+    /// PA-6 — the derived ladder's first four grids are the freeze's first four, cell for
+    /// cell, at the freeze's own `N = 12`, `dims = 2`.
+    #[test]
+    fn pa6_the_doubling_ladder_reproduces_the_freeze() {
+        let ladder = doubling_ladder(12, 2);
+        let frozen: Vec<Grid3> = FROZEN_GRIDS[..4].iter().map(|g| (*g).into()).collect();
+        assert_eq!(ladder, frozen, "the first four grids must be the freeze's; the fifth (6×4) is not on a doubling ladder and is kept in the frozen mode");
+        // and in 3D it makes boxes, not columns
+        let l3 = doubling_ladder(128, 3);
+        assert_eq!(l3.len(), 8, "128 waters: 2^0 .. 2^7 cells");
+        assert_eq!(l3[3], Grid3 { nx: 2, ny: 2, nz: 2 }, "the third doubling splits z");
+        assert!(l3.iter().all(|g| g.nz >= 1) && l3[7].cells() == 128);
     }
 
     // ------------------------------------------------------- P-6 / P-7: the pair

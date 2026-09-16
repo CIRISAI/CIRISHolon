@@ -4,8 +4,14 @@
 //! this file existed. Every threshold printed below is one of its constants.
 //!
 //! ```text
-//! cargo run --release -p holon-lens --example rung2 -- <traj-dir> [arm ...]
+//! cargo run --release -p holon-lens --example rung2 -- <traj-dir> [arm ...] [--amend1]
 //! ```
+//!
+//! `--amend1` runs `RUNG2_AMENDMENT_1.md`'s chart INSTEAD of the frozen one: the grid ladder
+//! derived from the carrier (A3), cells with a third axis (A2), and the density field
+//! read BOTH ways on every grid — the freeze's exact occupancy and the amendment's
+//! Poisson bin — so the two verdicts sit side by side on identical frames. Without the
+//! flag this file is the freeze's driver, unchanged.
 //!
 //! G1 (digest identity) is NOT performed here: this crate has zero dependencies and
 //! therefore no sha256. The digests are verified by `sha256sum -c` against
@@ -18,7 +24,9 @@ use std::collections::HashSet;
 use std::path::PathBuf;
 
 fn main() {
-    let args: Vec<String> = std::env::args().skip(1).collect();
+    let mut args: Vec<String> = std::env::args().skip(1).collect();
+    let amend1 = args.iter().any(|a| a == "--amend1");
+    args.retain(|a| a != "--amend1");
     if args.is_empty() {
         eprintln!("usage: rung2 <traj-dir> [arm ...]");
         std::process::exit(2);
@@ -107,6 +115,10 @@ fn main() {
                 Err(e) => println!("   drift REFUSED — {e:?}"),
             }
 
+            if amend1 {
+                amended_read(&traj, &mut chart_evals);
+                continue;
+            }
             for grid in FROZEN_GRIDS {
                 let cs = match cell_series(&traj, grid, Kind::Spatial) {
                     Ok(c) => c,
@@ -210,8 +222,94 @@ fn main() {
         }
     }
 
+    if amend1 {
+        println!("\n# RUNG2_AMENDMENT_1.md was in force for every grid above: derived ladder, 3D cells, density read exact AND Poisson-binned side by side");
+    }
     println!("\n===== COST (PREREG G11, work units, never wall clock) =====");
     println!("frames read:       {frames_read}");
     println!("chart evaluations: {chart_evals}");
     let _ = HashSet::<u8>::new();
+}
+
+
+/// RUNG2_AMENDMENT_1.md's reading of one trajectory. Every bar is the freeze's; what is
+/// amended is the grid ladder, the cell's third axis, and that the density field is read
+/// both ways on every grid. The exact line is the control, the Poisson line is the reading,
+/// and both are graded by the SAME `grade`.
+fn amended_read(traj: &Trajectory, chart_evals: &mut u64) {
+    let h = &traj.header;
+    let ladder = doubling_ladder(h.n_atoms, h.dims);
+    println!(
+        "   amendment 1: ladder of {} grids derived from N={} dims={}: {}",
+        ladder.len(),
+        h.n_atoms,
+        h.dims,
+        ladder.iter().map(|g| format!("{}x{}x{}", g.nx, g.ny, g.nz)).collect::<Vec<_>>().join(" ")
+    );
+    for grid in ladder {
+        let cs = match cell_series3(traj, grid, Kind::Spatial) {
+            Ok(c) => c,
+            Err(e) => {
+                println!("   grid {}x{}x{}: REFUSED — {e:?}", grid.nx, grid.ny, grid.nz);
+                continue;
+            }
+        };
+        let (mean_occ, fluct) = occupancy_stats(&cs, grid.cells());
+        let transport = transport_fraction(&cs);
+        let g2 = mean_occ >= prereg::ADMISSIBLE_OCCUPANCY
+            && grid.cells() >= prereg::ADMISSIBLE_CELLS
+            && fluct <= prereg::ADMISSIBLE_FLUCTUATION;
+        let dn = ((h.n_atoms as f64) / (grid.cells() as f64)).sqrt().max(1.0);
+        println!(
+            "   grid {}x{}x{} cells={} occ={:.3} fluct={:.3} transport={:.4} dn={:.2}  G2 admissible: {}",
+            grid.nx, grid.ny, grid.nz, grid.cells(), mean_occ, fluct, transport, dn,
+            if g2 { "YES" } else { "NO" }
+        );
+        for kind in [Kind::Spatial, Kind::BlindLabel, Kind::BlindIndex, Kind::GlobalRelabel] {
+            let tr_k = match cell_series3(traj, grid, kind) {
+                Ok(c) => transport_fraction(&c),
+                Err(e) => {
+                    println!("      {kind:?}: REFUSED — {e:?}");
+                    continue;
+                }
+            };
+            for density in [Density::Exact, Density::Poisson] {
+                let mut prev: Option<Vec<Reading>> = None;
+                for rung in LADDER {
+                    let r = match readings3(traj, grid, rung, kind, density) {
+                        Ok(r) => r,
+                        Err(e) => {
+                            println!("      {kind:?} {density:?} {rung:?}: REFUSED — {e:?}");
+                            continue;
+                        }
+                    };
+                    *chart_evals += r.len() as u64;
+                    let a = leg_a(&r);
+                    let b = leg_b(&r);
+                    let refines_ok = match &prev { None => true, Some(p) => refines(&r, p) };
+                    let v = grade(grid.cells() >= prereg::MIN_CELLS, tr_k, &a);
+                    let d = a.defect().map(|x| format!("{x:.6}")).unwrap_or_else(|| "n/a".into());
+                    let db = b.defect().map(|x| format!("{x:.6}")).unwrap_or_else(|| "n/a".into());
+                    println!(
+                        "      {kind:?} {density:?} {rung:?} coll={} fire={} D_A={d} info={} distinct={} | D_B={db} cov={:.3} | refines={} | {v:?}",
+                        a.collisions, a.firing, a.informative, a.distinct, b.coverage(), refines_ok
+                    );
+                    if density == Density::Poisson && rung == Rung::Occ && !a.witnesses.is_empty() {
+                        let w: Vec<String> = a.witnesses.iter().take(3).map(|(i, j)| format!("({i},{j})")).collect();
+                        println!("         witnesses (listing capped at {WITNESS_CAP}, count above is exact): {}", w.join(" "));
+                    }
+                    prev = Some(r);
+                }
+            }
+            // PA-5 in the field: the exact chart must refine its own bin on this trajectory.
+            if let (Ok(e), Ok(b)) = (
+                readings3(traj, grid, Rung::Occ, kind, Density::Exact),
+                readings3(traj, grid, Rung::Occ, kind, Density::Poisson),
+            ) {
+                if !refines(&e, &b) {
+                    println!("      {kind:?} SELF-CHECK FIRED: exact occupancy does not refine its Poisson bin — the instrument is convicted on this grid");
+                }
+            }
+        }
+    }
 }

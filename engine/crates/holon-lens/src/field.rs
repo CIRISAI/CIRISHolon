@@ -157,10 +157,17 @@ pub enum Density {
     /// The freeze: exact integer occupancy. Right at `N = 12`, where occupancies `0–12`
     /// repeat; empty of collisions by counting at the occupancy G2 demands.
     Exact,
-    /// The amendment: occupancy binned at `Δn = √⟨n⟩`, one Poisson standard deviation —
+    /// Amendment 1: occupancy binned at `Δn = √⟨n⟩`, one Poisson standard deviation —
     /// the resolution G2 itself defines a fluid element by (`1/√N ≤ 0.10`). Parameter-free
-    /// (`⟨n⟩ = N_species / cells` is arithmetic), and parallel to `Δp` and `Δe`.
+    /// (`⟨n⟩ = N_species / cells` is arithmetic), and parallel to `Δp` and `Δe`. The
+    /// momentum and energy bins stay the freeze's per-atom ones.
     Poisson,
+    /// Amendment 2 (`RUNG2_AMENDMENT_2.md`): Amendment 1's rule applied to every field —
+    /// `Δ_cell = √⟨n⟩ · Δ_atom` with `Δ_atom` the freeze's own `1`, `Δp`, `Δe`. A cell's
+    /// field is known to within `√⟨n⟩` of the resolution the freeze gave one atom's. At the
+    /// density rung this IS `Poisson` (plant PB-4); at the momentum and energy rungs it is
+    /// what lets two frames share a reading at all (plant PB-1).
+    CellScale,
 }
 
 /// A3 — the grid ladder derived from the carrier: `2^k` cells while `⟨n⟩ ≥ 1`, each doubling
@@ -392,7 +399,19 @@ pub fn readings3(
         .iter()
         .map(|z| mass_me(*z))
         .collect::<Result<_, _>>()?;
-    let (dp, de) = (dp_au(), de_ha());
+    // RUNG2_AMENDMENT_2: the per-cell momentum and energy scales. `⟨n⟩` here is the cell's
+    // total occupancy over all species, because those two fields are sums over every atom
+    // in the cell. ROUNDED to an integer multiple of the freeze's bin, and the reason is a
+    // theorem about `floor`: a coarse bin is a union of fine bins only when the bin ratio
+    // is an integer, so `refines(Poisson, CellScale)` — plant PB-2, the self-check — holds
+    // exactly only then. (The density field needs no rounding: its underlying value is an
+    // integer, and `floor(n / Δ)` is a function of `n` for any `Δ`, which is why PA-5 held
+    // at unrounded `√⟨n⟩` and why A1's density rule is kept as written.)
+    let cell_scale = match density {
+        Density::CellScale => ((n as f64) / (nc as f64)).sqrt().round().max(1.0),
+        _ => 1.0,
+    };
+    let (dp, de) = (dp_au() * cell_scale, de_ha() * cell_scale);
 
     let mut out = Vec::with_capacity(traj.frames.len());
     for (fi, f) in traj.frames.iter().enumerate() {
@@ -418,7 +437,7 @@ pub fn readings3(
         }
         let mut r: Reading = match density {
             Density::Exact => occ,
-            Density::Poisson => occ
+            Density::Poisson | Density::CellScale => occ
                 .iter()
                 .enumerate()
                 .map(|(k, o)| ((*o as f64) / dn[k % species.len()]).floor() as i64)
@@ -1210,6 +1229,137 @@ mod tests {
         assert_eq!(l3.len(), 8, "128 waters: 2^0 .. 2^7 cells");
         assert_eq!(l3[3], Grid3 { nx: 2, ny: 2, nz: 2 }, "the third doubling splits z");
         assert!(l3.iter().all(|g| g.nz >= 1) && l3[7].cells() == 128);
+    }
+
+    // ------------------------------------------- RUNG2_AMENDMENT_2.md's plants, PB-1..PB-4
+
+    /// A random walk whose atoms also carry THERMAL velocities at `T_target`, so the
+    /// momentum and energy rungs read something. The walk's positions and its velocities
+    /// are independent streams — a carrier with no structure to close on, whose only job
+    /// is to populate every field of the chart at a stated occupancy.
+    ///
+    /// The atoms are HYDROGEN, deliberately. The freeze's `Δp` is one hydrogen's thermal
+    /// momentum, so for independent hydrogens a cell's momentum spread is `√⟨n⟩ · Δp` by
+    /// the plain statistics of a sum — the scale Amendment 2 declares, with nothing else
+    /// assumed. (For independent OXYGENS it would be `4×` wider; that real water's oxygen
+    /// cells nonetheless fluctuate at `√⟨n⟩ · Δp` is a property of the liquid — momenta
+    /// anticorrelated by conservation and carried collectively — which the FIELD reading
+    /// checks and this plant does not. The first draft of this plant used independent
+    /// oxygens, reached 2 informative transitions at the momentum rung, and taught that
+    /// distinction the hard way.)
+    fn thermal_walk3(n: usize, edge: f64, frames: usize, seed: u64) -> Trajectory {
+        let mut s = seed;
+        let mut next = move || {
+            s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            ((s >> 11) as f64) / ((1u64 << 53) as f64)
+        };
+        // Box–Muller for a thermal velocity component of a HYDROGEN at T_target
+        let sigma_v = (K_B * T_TARGET / (H_MASS_U * M_E_PER_U)).sqrt();
+        let mut gauss = move || {
+            let (u1, u2) = (next().max(1e-12), next());
+            (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()
+        };
+        let mut pos: Vec<[f64; 3]> = (0..n).map(|_| [gauss().abs() % 1.0 * edge, gauss().abs() % 1.0 * edge, gauss().abs() % 1.0 * edge]).collect();
+        let mut out = Vec::with_capacity(frames);
+        for i in 0..frames {
+            let vel: Vec<[f64; 3]> = (0..n).map(|_| [gauss() * sigma_v, gauss() * sigma_v, gauss() * sigma_v]).collect();
+            for p in pos.iter_mut() {
+                for c in 0..3 {
+                    let mut v = p[c] + gauss() * 0.02 * edge;
+                    if v < 0.0 { v = -v; }
+                    if v > edge { v = 2.0 * edge - v; }
+                    p[c] = v.clamp(0.0, edge);
+                }
+            }
+            out.push(frame(i as u64, pos.clone(), vel));
+        }
+        Trajectory { header: header3(n, vec![1; n], edge), frames: out }
+    }
+
+    /// PB-1 — the fault and the repair at the momentum rung. Under Amendment 1 alone the
+    /// momentum field is binned at one atom's thermal momentum and a cell of a hundred
+    /// oxygens almost never repeats a reading; under Amendment 2 the same frames collide
+    /// and meet G4.
+    #[test]
+    fn pb1_the_momentum_rung_is_void_under_a1_and_reads_under_a2() {
+        let traj = thermal_walk3(200, 30.0, 600, 0x5042_3031);
+        let grid = Grid3 { nx: 2, ny: 1, nz: 1 };
+        let t = transport_fraction(&cell_series3(&traj, grid, Kind::Spatial).unwrap());
+        assert!(t > prereg::MIN_TRANSPORT);
+        let a1 = leg_a(&readings3(&traj, grid, Rung::Mom, Kind::Spatial, Density::Poisson).unwrap());
+        assert!(
+            matches!(grade(true, t, &a1), Verdict::VoidNoCollisions | Verdict::VoidWorkCount(_)),
+            "under A1 alone the momentum rung must be VOID by counting (collisions {}, informative {})",
+            a1.collisions, a1.informative
+        );
+        let a2 = leg_a(&readings3(&traj, grid, Rung::Mom, Kind::Spatial, Density::CellScale).unwrap());
+        assert!(a2.collisions > 0, "under A2 the momentum rung must collide");
+        assert!(a2.informative >= prereg::MIN_INFORMATIVE, "and meet G4: {}", a2.informative);
+        // The energy rung is one field finer and the amendment stakes nothing about its
+        // work count on this carrier — only that it collides, where under A1 it did not.
+        let e1 = leg_a(&readings3(&traj, grid, Rung::Ene, Kind::Spatial, Density::Poisson).unwrap());
+        let e2 = leg_a(&readings3(&traj, grid, Rung::Ene, Kind::Spatial, Density::CellScale).unwrap());
+        assert!(e2.collisions > e1.collisions, "the energy rung must collide more under A2 ({} vs {})", e2.collisions, e1.collisions);
+    }
+
+    /// PB-2 — the self-check: the finer chart refines the coarser at every rung. A
+    /// violation convicts the scaling, never the trajectory.
+    #[test]
+    fn pb2_poisson_refines_cell_scale_at_every_rung() {
+        let traj = thermal_walk3(200, 30.0, 400, 0x5042_3032);
+        for grid in doubling_ladder(200, 3) {
+            for rung in LADDER {
+                let fine = readings3(&traj, grid, rung, Kind::Spatial, Density::Poisson).unwrap();
+                let coarse = readings3(&traj, grid, rung, Kind::Spatial, Density::CellScale).unwrap();
+                assert!(refines(&fine, &coarse), "grid {grid:?} rung {rung:?}: A1's chart must refine A2's");
+            }
+        }
+    }
+
+    /// PB-3 — the wider bin hides nothing: P-3's hidden variable, its atoms given thermal
+    /// velocities, still fires at every rung under `CellScale`.
+    #[test]
+    fn pb3_a_hidden_variable_still_fires_under_cell_scale() {
+        let n = 4;
+        let ncell = 4;
+        let cw = 34.6 / ncell as f64;
+        let mut cells: Vec<usize> = (0..n).collect();
+        let mut s: u64 = 0xDEAD_BEEF;
+        let sigma_v = (K_B * T_TARGET / (H_MASS_U * M_E_PER_U)).sqrt();
+        let mut frames = Vec::new();
+        for i in 0..1200u64 {
+            let pos: Vec<[f64; 3]> = cells.iter().map(|&c| [(c as f64 + 0.5) * cw, 10.0, 0.0]).collect();
+            // velocities: a deterministic function of the cell, so the chart's momentum
+            // field carries no more than its density field does and the hidden bit stays hidden
+            let vel: Vec<[f64; 3]> = cells.iter().map(|&c| [sigma_v * (c as f64 - 1.5), 0.0, 0.0]).collect();
+            frames.push(frame(i, pos, vel));
+            for c in cells.iter_mut() {
+                s = s.wrapping_mul(6364136223846793005).wrapping_add(1);
+                *c = if (s >> 60) & 1 == 1 { (*c + 1) % ncell } else { (*c + ncell - 1) % ncell };
+            }
+        }
+        let traj = Trajectory { header: header(n, vec![1; n]), frames };
+        let grid = Grid3 { nx: 4, ny: 1, nz: 1 };
+        let t = transport_fraction(&cell_series3(&traj, grid, Kind::Spatial).unwrap());
+        for rung in LADDER {
+            let a = leg_a(&readings3(&traj, grid, rung, Kind::Spatial, Density::CellScale).unwrap());
+            assert!(a.firing > 0, "the hidden variable must still fire at {rung:?} under CellScale");
+            assert_eq!(grade(true, t, &a), Verdict::NotClosed);
+        }
+    }
+
+    /// PB-4 — at the density rung the two amendments are the same rule: `CellScale` and
+    /// `Poisson` readings are equal exactly.
+    #[test]
+    fn pb4_cell_scale_equals_poisson_at_the_density_rung() {
+        let traj = thermal_walk3(128, 29.6, 300, 0x5042_3034);
+        for grid in doubling_ladder(128, 3) {
+            for kind in [Kind::Spatial, Kind::BlindLabel, Kind::GlobalRelabel] {
+                let a1 = readings3(&traj, grid, Rung::Occ, kind, Density::Poisson).unwrap();
+                let a2 = readings3(&traj, grid, Rung::Occ, kind, Density::CellScale).unwrap();
+                assert_eq!(a1, a2, "grid {grid:?} kind {kind:?}: at the Occ rung A2 must equal A1");
+            }
+        }
     }
 
     // ------------------------------------------------------- P-6 / P-7: the pair

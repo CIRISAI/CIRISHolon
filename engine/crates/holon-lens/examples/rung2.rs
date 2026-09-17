@@ -223,7 +223,7 @@ fn main() {
     }
 
     if amend1 {
-        println!("\n# RUNG2_AMENDMENT_1.md was in force for every grid above: derived ladder, 3D cells, density read exact AND Poisson-binned side by side");
+        println!("\n# RUNG2_AMENDMENT_1.md and RUNG2_AMENDMENT_2.md were in force for every grid above: derived ladder, 3D cells, every field read Exact (the freeze), Poisson (A1: density binned) and CellScale (A2: all three fields binned) side by side");
     }
     println!("\n===== COST (PREREG G11, work units, never wall clock) =====");
     println!("frames read:       {frames_read}");
@@ -273,7 +273,7 @@ fn amended_read(traj: &Trajectory, chart_evals: &mut u64) {
                     continue;
                 }
             };
-            for density in [Density::Exact, Density::Poisson] {
+            for density in [Density::Exact, Density::Poisson, Density::CellScale] {
                 let mut prev: Option<Vec<Reading>> = None;
                 for rung in LADDER {
                     let r = match readings3(traj, grid, rung, kind, density) {

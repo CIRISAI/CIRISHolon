@@ -35,6 +35,11 @@ another.
 > **`Δ_cell = √⟨n⟩ · Δ_atom`** for every field of the chart, where `⟨n⟩ = N_atoms / cells`
 > is exact arithmetic and `Δ_atom` is the freeze's own per-atom resolution:
 > `1` for occupancy, `Δp = √(m_H k_B T)` for momentum, `Δe = k_B T` for energy.
+> **For the two continuous fields the factor is `round(√⟨n⟩)`**, an integer — found
+> necessary by plant PB-2 and stated here before the reading: a coarse `floor` bin is a
+> union of fine `floor` bins only when the bin ratio is an integer, so the refinement
+> self-check holds exactly only then. The density field keeps A1's unrounded rule, because
+> its underlying value is an integer and `floor(n / Δ)` is a function of `n` for any `Δ`.
 
 A1 was this rule at `Δ_atom = 1`. Stated for all three fields it reads: *a cell's field is
 known to within `√⟨n⟩` of the resolution the freeze gave one atom's* — the statistical
@@ -60,6 +65,23 @@ above was chosen for being A1's rule; that it also matches the measured spread i
 it usable, and if a future carrier's spread departs from it by more than a factor of two the
 departure is a finding about that carrier, reported beside the reading, not a reason to move
 the bin.
+
+## What the plants taught before this was read
+
+Two plants failed on their first run and both failures were the plant's, corrected before a
+trajectory was read:
+
+- **PB-1's first carrier drew independent OXYGEN velocities**, whose cell momentum
+  fluctuates `4×` wider than `√⟨n⟩ · Δp`, and reached two informative transitions. That
+  is the coincidence named above from the other side: the rule matches real water's oxygen
+  cells because the liquid anticorrelates them, and an independent-oxygen gas is not water.
+  The plant's carrier is now hydrogen, for which `√⟨n⟩ · Δp` is the plain statistics of a
+  sum and nothing else is assumed; whether water's oxygens fluctuate at that scale is the
+  field reading's job, and it was checked there.
+- **PB-2 fired at the momentum rung** at unrounded `√⟨n⟩`, which is the theorem about
+  `floor` stated in the rule box. The rounding was added for it.
+- PB-1 also asserted G4 at the ENERGY rung, which this amendment never staked; the
+  assertion is withdrawn to what was staked (collisions increase).
 
 ## What changes and what does not
 

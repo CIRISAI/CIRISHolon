@@ -1,0 +1,166 @@
+# RUNG 2 — the fluid-element chart
+# stakes: RUNG2_PREREG.md @ aee5317
+# dp = 1.321126 au (frozen 1.3211)
+# de = 0.000950043 Ha (frozen 0.0009500435)
+# bars: admissible occ >= 100, cells >= 4, fluct <= 0.1; transport >= 0.05; informative >= 200; beta = 0.02; separation >= 0.05
+# RUNG2_AMENDMENT_5: cadence tau = a / c_s (c_s = 1497 m/s, CRC), fields averaged over the window, bins = held-out sigma of the averaged fields on the SAME arm's other seeds; readout spacing 20.00 fs
+
+===== ARM rigid — seed0.traj =====
+-- seed 0x5245504c41434530  n=432 dims=3 frames=251
+   grid 2x1x1 cells=2 tau=785 fs window=39 frames -> 6 windows | held-out sigma(n,p,e)=(1.020, 34.67, 8.61e-3) from 2 seed(s) | own (1.258, 19.36, 7.12e-3) NOT used
+      A5 Spatial Occ windows=6 coll=1 fire=1 D_A=1.0000 info=2 distinct=4 | VoidWorkCount(2)
+      A5 Spatial Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=6 coll=1 fire=1 D_A=1.0000 info=2 distinct=4 | VoidWorkCount(2)
+      A5 BlindLabel Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION
+      A5 length: 2 informative in 6 windows -> G4 needs ~600 windows = 471 ps at this cadence
+   grid 2x2x1 cells=4 tau=785 fs window=39 frames -> 6 windows | held-out sigma(n,p,e)=(1.305, 25.41, 5.43e-3) from 2 seed(s) | own (1.246, 22.90, 4.77e-3) NOT used
+      A5 Spatial Occ windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 Spatial Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 2x2x2 cells=8 tau=785 fs window=39 frames -> 6 windows | held-out sigma(n,p,e)=(1.231, 17.15, 3.60e-3) from 2 seed(s) | own (0.913, 16.23, 3.14e-3) NOT used
+      A5 Spatial Occ windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 Spatial Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 4x2x2 cells=16 tau=392 fs window=20 frames -> 12 windows | held-out sigma(n,p,e)=(1.222, 15.30, 3.04e-3) from 2 seed(s) | own (1.137, 15.82, 2.98e-3) NOT used
+      A5 Spatial Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 Spatial Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 4x4x2 cells=32 tau=392 fs window=20 frames -> 12 windows | held-out sigma(n,p,e)=(0.942, 9.83, 2.13e-3) from 2 seed(s) | own (0.981, 10.71, 2.05e-3) NOT used
+      A5 Spatial Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 Spatial Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 4x4x4 cells=64 tau=392 fs window=20 frames -> 12 windows | held-out sigma(n,p,e)=(0.737, 6.48, 1.54e-3) from 2 seed(s) | own (0.775, 6.89, 1.55e-3) NOT used
+      A5 Spatial Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 Spatial Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 8x4x4 cells=128 tau=196 fs window=10 frames -> 25 windows | held-out sigma(n,p,e)=(0.707, 5.71, 1.39e-3) from 2 seed(s) | own (0.733, 5.88, 1.46e-3) NOT used
+      A5 Spatial Occ windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 Spatial Mom windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 8x8x4 cells=256 tau=196 fs window=10 frames -> 25 windows | held-out sigma(n,p,e)=(0.554, 3.74, 1.00e-3) from 2 seed(s) | own (0.563, 3.85, 1.07e-3) NOT used
+      A5 Spatial Occ windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 Spatial Mom windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+
+===== ARM rigid — seed1.traj =====
+-- seed 0x5245504c41434531  n=432 dims=3 frames=251
+   grid 2x1x1 cells=2 tau=785 fs window=39 frames -> 6 windows | held-out sigma(n,p,e)=(1.282, 29.86, 8.28e-3) from 2 seed(s) | own (0.612, 31.55, 7.86e-3) NOT used
+      A5 Spatial Occ windows=6 coll=4 fire=3 D_A=0.7500 info=5 distinct=2 | VoidWorkCount(5)
+      A5 Spatial Mom windows=6 coll=1 fire=1 D_A=1.0000 info=2 distinct=4 | VoidWorkCount(2)
+      A5 BlindLabel Occ windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+      A5 length: 5 informative in 6 windows -> G4 needs ~240 windows = 188 ps at this cadence
+   grid 2x2x1 cells=4 tau=785 fs window=39 frames -> 6 windows | held-out sigma(n,p,e)=(1.243, 25.24, 5.02e-3) from 2 seed(s) | own (1.368, 23.27, 5.59e-3) NOT used
+      A5 Spatial Occ windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 Spatial Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=6 coll=1 fire=1 D_A=1.0000 info=2 distinct=4 | VoidWorkCount(2)
+      A5 BlindLabel Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 2x2x2 cells=8 tau=785 fs window=39 frames -> 6 windows | held-out sigma(n,p,e)=(1.119, 17.19, 3.43e-3) from 2 seed(s) | own (1.167, 16.14, 3.49e-3) NOT used
+      A5 Spatial Occ windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 Spatial Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 4x2x2 cells=16 tau=392 fs window=20 frames -> 12 windows | held-out sigma(n,p,e)=(1.162, 15.85, 2.96e-3) from 2 seed(s) | own (1.258, 14.71, 3.14e-3) NOT used
+      A5 Spatial Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 Spatial Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 4x4x2 cells=32 tau=392 fs window=20 frames -> 12 windows | held-out sigma(n,p,e)=(0.959, 10.35, 2.07e-3) from 2 seed(s) | own (0.949, 9.68, 2.18e-3) NOT used
+      A5 Spatial Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 Spatial Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 4x4x4 cells=64 tau=392 fs window=20 frames -> 12 windows | held-out sigma(n,p,e)=(0.752, 6.69, 1.54e-3) from 2 seed(s) | own (0.746, 6.48, 1.56e-3) NOT used
+      A5 Spatial Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 Spatial Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 8x4x4 cells=128 tau=196 fs window=10 frames -> 25 windows | held-out sigma(n,p,e)=(0.721, 5.79, 1.42e-3) from 2 seed(s) | own (0.704, 5.72, 1.39e-3) NOT used
+      A5 Spatial Occ windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 Spatial Mom windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 8x8x4 cells=256 tau=196 fs window=10 frames -> 25 windows | held-out sigma(n,p,e)=(0.558, 3.79, 1.03e-3) from 2 seed(s) | own (0.556, 3.75, 1.01e-3) NOT used
+      A5 Spatial Occ windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 Spatial Mom windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+
+===== ARM rigid — seed2.traj =====
+-- seed 0x5245504c41434532  n=432 dims=3 frames=251
+   grid 2x1x1 cells=2 tau=785 fs window=39 frames -> 6 windows | held-out sigma(n,p,e)=(0.989, 26.18, 7.50e-3) from 2 seed(s) | own (1.306, 37.53, 9.31e-3) NOT used
+      A5 Spatial Occ windows=6 coll=1 fire=1 D_A=1.0000 info=2 distinct=4 | VoidWorkCount(2)
+      A5 Spatial Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=6 coll=1 fire=1 D_A=1.0000 info=2 distinct=4 | VoidWorkCount(2)
+      A5 BlindLabel Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION
+      A5 length: 2 informative in 6 windows -> G4 needs ~600 windows = 471 ps at this cadence
+   grid 2x2x1 cells=4 tau=785 fs window=39 frames -> 6 windows | held-out sigma(n,p,e)=(1.308, 23.08, 5.20e-3) from 2 seed(s) | own (1.240, 27.38, 5.26e-3) NOT used
+      A5 Spatial Occ windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 Spatial Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 2x2x2 cells=8 tau=785 fs window=39 frames -> 6 windows | held-out sigma(n,p,e)=(1.048, 16.18, 3.32e-3) from 2 seed(s) | own (1.292, 18.10, 3.70e-3) NOT used
+      A5 Spatial Occ windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 Spatial Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=6 coll=0 fire=0 D_A=n/a info=0 distinct=5 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 4x2x2 cells=16 tau=392 fs window=20 frames -> 12 windows | held-out sigma(n,p,e)=(1.199, 15.27, 3.06e-3) from 2 seed(s) | own (1.186, 15.88, 2.95e-3) NOT used
+      A5 Spatial Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 Spatial Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 4x4x2 cells=32 tau=392 fs window=20 frames -> 12 windows | held-out sigma(n,p,e)=(0.966, 10.21, 2.12e-3) from 2 seed(s) | own (0.935, 9.98, 2.08e-3) NOT used
+      A5 Spatial Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 Spatial Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 4x4x4 cells=64 tau=392 fs window=20 frames -> 12 windows | held-out sigma(n,p,e)=(0.761, 6.69, 1.55e-3) from 2 seed(s) | own (0.727, 6.49, 1.53e-3) NOT used
+      A5 Spatial Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 Spatial Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=12 coll=0 fire=0 D_A=n/a info=0 distinct=11 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 8x4x4 cells=128 tau=196 fs window=10 frames -> 25 windows | held-out sigma(n,p,e)=(0.719, 5.80, 1.43e-3) from 2 seed(s) | own (0.709, 5.71, 1.38e-3) NOT used
+      A5 Spatial Occ windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 Spatial Mom windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+   grid 8x8x4 cells=256 tau=196 fs window=10 frames -> 25 windows | held-out sigma(n,p,e)=(0.560, 3.80, 1.04e-3) from 2 seed(s) | own (0.552, 3.73, 9.96e-4) NOT used
+      A5 Spatial Occ windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 Spatial Mom windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 BlindLabel Occ windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 BlindLabel Mom windows=25 coll=0 fire=0 D_A=n/a info=0 distinct=24 | VoidWorkCount(0)
+      A5 G7 at Occ: undecidable (a chart has no collisions)
+
+===== COST (PREREG G11, work units, never wall clock) =====
+frames read:       753
+chart evaluations: 1248

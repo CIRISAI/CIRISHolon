@@ -278,13 +278,14 @@ impl Obs {
 fn observe(sim: &Sim, z: &[u32], l: f64, t_fs: f64, temperature_k: f64, energy: f64, ledger_adjust: f64, rigid_mode_temperature_k: f64, vibrational_kinetic_per_water_kt: f64) -> Obs {
     let p = read_pos(sim);
     let cell = [l, l, l];
-    let bonds = hbonds_periodic(&p, z, cell).map(|v| v.len() as f64 / N_WATERS as f64).unwrap_or(f64::NAN);
+    let n_waters = z.iter().filter(|&&q| q == 8).count() as f64;
+    let bonds = hbonds_periodic(&p, z, cell).map(|v| v.len() as f64 / n_waters).unwrap_or(f64::NAN);
     let peak = rdf_oo(&p, z, cell, RDF_DR, 0.5 * l).ok().and_then(|r| first_peak(&r.r, &r.g)).map(|(r, _)| r).unwrap_or(f64::NAN);
     Obs {
         t_fs,
         temperature_k,
         energy,
-        cross_unit_per_water: (sim.row(Row::Field) + sim.row(Row::Seam)) / N_WATERS as f64,
+        cross_unit_per_water: (sim.row(Row::Field) + sim.row(Row::Seam)) / n_waters,
         bonds_per_water: bonds,
         peak_bohr: peak,
         ledger_adjust,

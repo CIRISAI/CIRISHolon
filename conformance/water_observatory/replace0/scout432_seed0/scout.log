@@ -1,0 +1,4 @@
+NVE        PASS       [1 checks, 1 legs]  the rigid arm's peak energy excursion per water over 5.0 ps against a tenth of kT (9.279e-5 Ha)
+SETTLED    PASS       [1 checks, 1 legs]  the production temperature on the rigid modes against the target 293 K: mean 320.2 K
+NVE        PASS       [1 checks, 1 legs]  the rigid arm's peak energy excursion per water over 5.0 ps against a tenth of kT (9.279e-5 Ha)
+SETTLED    PASS       [1 checks, 1 legs]  the production temperature on the rigid modes against the target 293 K: mean 320.2 K

@@ -1,0 +1,32 @@
+phase scout, out /home/emoore/CIRISHolon/conformance/water_observatory/replace0/scout432_seed2, observatory ../conformance/water_observatory
+seed 2 of 3: 0x5245504c41434532
+scout: 432 waters (1296 atoms) at n_cells = 6, box 44.3904 bohr, seed 0x5245504c41434532
+scout: fine settle 3000 frames under the stochastic thermostat (78.2 fs)
+  settling frame    500: T  372.9 K, cross-unit U -1.228306e-3 Ha/water
+  settling frame   1000: T  466.5 K, cross-unit U -7.275471e-3 Ha/water
+  settling frame   1500: T  436.1 K, cross-unit U -7.058078e-3 Ha/water
+  settling frame   2000: T  398.2 K, cross-unit U -6.698133e-3 Ha/water
+  settling frame   2500: T  399.4 K, cross-unit U -7.679064e-3 Ha/water
+  settling frame   3000: T  368.7 K, cross-unit U -9.072402e-3 Ha/water
+scout: reference geometry O-H 1.95609 +/- 0.03583 bohr, H-O-H 1.67391 +/- 0.05089 rad over 432 units; fine T 368.7 K
+scout: stiffness envelope READ from /home/emoore/CIRISHolon/conformance/water_observatory/replace0/transport_seed0/stiffness.json: 6.4190e-2 Ha/bohr^2 (an intensive property of the monomer, declared)
+scout: rigid clock dt 15.5812 au (14.46x fine); readout every 20 fs = 54 rigid steps at dt 15.3116 au
+scout: rigid modes as projected 522.6 K; rigid settle 3000 steps (1111.1 fs) with rescaling to 293 K every 10 steps
+  rigid settle step    500: T  293.0 K, U/water -2.940963e-1 Ha
+  rigid settle step   1000: T  293.0 K, U/water -2.956417e-1 Ha
+  rigid settle step   1500: T  293.0 K, U/water -2.960485e-1 Ha
+  rigid settle step   2000: T  293.0 K, U/water -2.964849e-1 Ha
+  rigid settle step   2500: T  293.0 K, U/water -2.967287e-1 Ha
+  rigid settle step   3000: T  293.0 K, U/water -2.969797e-1 Ha
+scout: production 250 readouts x 20 fs = 5.0 ps, NVE from T 293.0 K, E -127.092684 Ha
+  scout readout     25 at     500.0 fs: T  292.1 K, E -127.092690 Ha (peak excursion 4.60e-8/water), bonds 6.078, peak 5.25; 3490 core-s/ps
+  scout readout     50 at    1000.0 fs: T  301.4 K, E -127.092684 Ha (peak excursion 4.60e-8/water), bonds 6.164, peak 5.25; 3492 core-s/ps
+  scout readout     75 at    1500.0 fs: T  289.3 K, E -127.092664 Ha (peak excursion 5.09e-8/water), bonds 6.062, peak 5.35; 3495 core-s/ps
+  scout readout    100 at    2000.0 fs: T  298.8 K, E -127.092676 Ha (peak excursion 5.28e-8/water), bonds 6.078, peak 5.15; 3532 core-s/ps
+  scout readout    125 at    2500.0 fs: T  319.3 K, E -127.092677 Ha (peak excursion 5.28e-8/water), bonds 6.203, peak 5.25; 3578 core-s/ps
+  scout readout    150 at    3000.0 fs: T  308.7 K, E -127.092683 Ha (peak excursion 5.28e-8/water), bonds 6.133, peak 5.15; 3566 core-s/ps
+  scout readout    175 at    3500.0 fs: T  315.1 K, E -127.092653 Ha (peak excursion 8.54e-8/water), bonds 6.195, peak 5.25; 3650 core-s/ps
+  scout readout    200 at    4000.0 fs: T  308.1 K, E -127.092637 Ha (peak excursion 1.17e-7/water), bonds 6.227, peak 5.15; 3632 core-s/ps
+  scout readout    225 at    4500.0 fs: T  315.7 K, E -127.092647 Ha (peak excursion 1.29e-7/water), bonds 6.133, peak 5.15; 3617 core-s/ps
+  scout readout    250 at    5000.0 fs: T  319.1 K, E -127.092648 Ha (peak excursion 1.64e-7/water), bonds 6.188, peak 5.25; 3606 core-s/ps
+scout: done in 26289 s; production 3606 core-s/ps

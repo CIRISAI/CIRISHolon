@@ -799,6 +799,33 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## The fluid element read at its own time — Amendment 5, the scout phase, and the 432-water pilot (2026-09-18)
+
+`RUNG2_AMENDMENT_5.md`: a fluid element is read every `τ = a/c_s` (water's sound speed as an
+external constant), its fields the AVERAGE over that window, its bins the held-out spread of
+the averaged fields — the fourth scale in this instrument fixed outside the physics of the
+cell and the first in time. The cadence sets the trajectory length: G4's 200 transitions is
+~250 windows, and the lead's earlier "800 waters, ~25 core-hours" was a 3 ps run carried to a
+bigger box that would have bought six windows. Instrument built (48 plants; PE-3's first draft
+claimed a fast hidden variable's defect falls under averaging — it does not, variance falls
+and it still fires — corrected in the plant and the amendment). `replace0 scout` runs a `2n³`
+box on the rigid operator from lattice to walk, appending the walk at every readout; its
+settle ends by LIQUID-2's criterion after a 128-water smoke heated 293 → 511 K from a
+74 fs settle.
+
+**The 432-water pilot** (`replace0/scout432_pilot/SCOUT432_PILOT.md`): three seeds, 5 ps,
+NVE and SETTLED pass, **3,609 core-s/ps measured**. G2 admissible for the first time
+(108 per cell at `2×2×1`). Instantaneously: no separation on any file under either bin,
+`D_A` 0.87–0.94, and at `2×1×1` the defect RISES with cell occupancy (0.66–0.70 at 216 per
+cell against 0.47–0.53 at 64) — the cadence fault on the exit `N*`'s own axis. At the
+cadence: six windows, VOID by count as staked; the held-out spreads stable to ±5 % across
+seeds. One diagnostic bug found and fixed: `observe` normalised by the 128-water constant,
+so the pilot's series overstates bonds and energy per water by 3.375; the walks are unaffected.
+
+**The full run is priced and NOT launched:** 196 ps a seed at the measured rate is 197
+core-hours, ~8.5 days of three cores in parallel (six seeds cost the same wall). The operator
+decides.
+
 ## Two liquid bins compared (2026-09-17, later the same day): branch (e) does not depend on the bin, and the finite-cell correction to S(0) is measured
 
 The operator's question — *why not both and compare?* — became `RUNG2_AMENDMENT_4.md`: route

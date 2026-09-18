@@ -358,24 +358,24 @@ fn amendment4_read(root: &Path, arms: &[String], frames_read: &mut u64, chart_ev
     let dims = files.first().map(|f| f.2.header.dims).unwrap_or(3);
     let ladder = doubling_ladder(n_atoms, dims);
     // the calibration pool: σ(n) per (seed, grid) on the flexible arms
-    let mut sigma: Vec<(u64, Grid3, f64)> = Vec::new();
+    // per (arm, seed, grid): a file is calibrated on the OTHER seeds of its OWN arm
+    let mut sigma: Vec<(String, u64, Grid3, f64)> = Vec::new();
     for (arm, _, t) in &files {
-        if arm != "flexible" { continue; }
         for grid in &ladder {
             if let Ok(cs) = cell_series3(t, *grid, Kind::Spatial) {
-                sigma.push((t.header.seed, *grid, occupancy_sigma(&cs, grid.cells())));
+                sigma.push((arm.clone(), t.header.seed, *grid, occupancy_sigma(&cs, grid.cells())));
             }
         }
     }
     println!("# RUNG2_AMENDMENT_4: density bin for a liquid — route (i) External S(0)={WATER_S0} vs route (ii) Calibrated on held-out seeds; momentum/energy per Amendment 3");
-    println!("# calibration pool (flexible arms, 2-cell grid): {}", sigma.iter().filter(|s| s.1.cells() == 2).map(|s| format!("seed …{:x} sigma(n)={:.2}", s.0 & 0xff, s.2)).collect::<Vec<_>>().join("; "));
+    println!("# calibration pool (per arm, other seeds): {}", sigma.iter().filter(|s| s.2.cells() == 2).map(|s| format!("{} seed …{:x} 2-cell sigma(n)={:.2}", s.0, s.1 & 0xff, s.3)).collect::<Vec<_>>().join("; "));
     for (arm, path, traj) in &files {
         let h = &traj.header;
         println!("\n===== ARM {arm} — {} =====", path.file_name().unwrap().to_string_lossy());
         println!("-- seed 0x{:016x}  n={} dims={} frames={}", h.seed, h.n_atoms, h.dims, traj.frames.len());
         for grid in &ladder {
             // PD-4: the calibration comes from OTHER seeds only, and there must be at least one
-            let held_out: Vec<f64> = sigma.iter().filter(|s| s.0 != h.seed && s.1 == *grid).map(|s| s.2).collect();
+            let held_out: Vec<f64> = sigma.iter().filter(|s| s.0 == *arm && s.1 != h.seed && s.2 == *grid).map(|s| s.3).collect();
             if held_out.is_empty() {
                 println!("   grid {}x{}x{}: route (ii) REFUSED — no held-out seed to calibrate on", grid.nx, grid.ny, grid.nz);
                 continue;

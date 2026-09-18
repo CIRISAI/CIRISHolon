@@ -79,6 +79,6 @@ same verdict at a larger size. **The scout is 432 waters, on the rigid operator,
 |---|---|
 | **PE-1** | at window `1` the averaged chart equals the instantaneous chart bit for bit, every rung, grid and kind — the freeze is the `τ = one frame` case |
 | **PE-2** | P-2's closed-by-construction chart, window-averaged over any `w` that divides its period, still `CertifiedStrict` — averaging manufactures no defect |
-| **PE-3** | a hidden variable that flips faster than the window is INVISIBLE to the averaged chart (its firings fall, stated as the expected loss of resolution, not a pass); one that flips slower still fires |
+| **PE-3** | a hidden variable that flips faster than the window is BLURRED by the averaged chart (its spread falls by more than half) and STILL FIRES — averaging removes variance, not unpredictability; one that flips slower still fires. *(First written as "its firings fall"; the plant read 0.91 against 0.86 and corrected the sentence, not the instrument.)* |
 | **PE-4** | on a zero-sum thermal carrier the averaged momentum's spread falls as `1/√w` — the averaging is doing what A5.2 says |
 | **PE-5** | `refines(instantaneous, averaged)` fails and is NOT asserted: an average is not a coarsening of a frame, and the ladder self-check applies within a cadence, never across two |

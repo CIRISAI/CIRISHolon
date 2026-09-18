@@ -186,6 +186,26 @@ pub enum Density {
     /// momentum and energy as `Derived`. The value is the pooled `σ` for the whole carrier;
     /// per-species it scales as `√(N_s / N)`.
     Calibrated(f64),
+    /// Amendment 5, A5.3: every field binned at its own HELD-OUT fluctuation of the
+    /// WINDOW-AVERAGED field — absolute per-cell bins for occupancy, momentum (per
+    /// component) and kinetic energy, measured on other seeds at the same grid and window.
+    /// Only meaningful through [`readings_windowed`]; under [`readings3`] it is refused.
+    Calibrated3 { n: f64, p: f64, e: f64 },
+}
+
+/// Water's speed of sound at 25 °C, CRC: `1497 m s⁻¹`, in bohr per femtosecond. An external
+/// protocol constant (RUNG2_AMENDMENT_5.md A5.1), entering as `T_TARGET` and `WATER_S0` do.
+pub const WATER_CS_BOHR_PER_FS: f64 = 1497.0 * 1e-15 / 5.29177210903e-11;
+
+/// A5.1 — the cadence of a chart: its smallest cell edge over the sound speed, in fs.
+pub fn cadence_fs(traj: &Trajectory, grid: Grid3) -> f64 {
+    let h = &traj.header;
+    let mut a = h.box_w / grid.nx as f64;
+    a = a.min(h.box_h / grid.ny as f64);
+    if grid.nz > 1 {
+        a = a.min(h.box_d / grid.nz as f64);
+    }
+    a / WATER_CS_BOHR_PER_FS
 }
 
 /// Water's structure factor at zero wavevector, `S(0) = ρ k_B T κ_T`, from CRC constants at
@@ -386,6 +406,166 @@ pub fn cell_series3(
     Ok(out)
 }
 
+/// One frame's fields over the cells, before any binning (RUNG2_AMENDMENT_5.md A5.2): the
+/// quantities the chart averages over its window. Occupancy is `f64` because an average of
+/// integers is not one.
+#[derive(Clone, Debug, PartialEq)]
+pub struct CellFields {
+    /// `cells × species`, species in ascending nuclear charge.
+    pub occ: Vec<f64>,
+    /// per cell, three components; the freeze read two and a `dims = 2` chart still does.
+    pub p: Vec<[f64; 3]>,
+    /// per cell, kinetic only (PREREG §2.2 refuses the potential as a field).
+    pub ek: Vec<f64>,
+}
+
+/// The instantaneous fields of every frame.
+pub fn fields3(traj: &Trajectory, grid: Grid3, kind: Kind) -> Result<Vec<CellFields>, Refusal> {
+    let cells = cell_series3(traj, grid, kind)?;
+    let n = traj.header.n_atoms;
+    let nc = grid.cells();
+    let mut species: Vec<u32> = traj.header.z.clone();
+    species.sort_unstable();
+    species.dedup();
+    let masses: Vec<f64> = traj.header.z.iter().map(|z| mass_me(*z)).collect::<Result<_, _>>()?;
+    let mut out = Vec::with_capacity(traj.frames.len());
+    for (fi, f) in traj.frames.iter().enumerate() {
+        let mut occ = vec![0.0f64; nc * species.len()];
+        let mut p = vec![[0.0f64; 3]; nc];
+        let mut ek = vec![0.0f64; nc];
+        for a in 0..n {
+            let c = cells[fi][a];
+            let si = species.iter().position(|z| *z == traj.header.z[a]).unwrap();
+            occ[c * species.len() + si] += 1.0;
+            let m = masses[a];
+            for k in 0..3 {
+                p[c][k] += m * f.vel[a][k];
+            }
+            ek[c] += 0.5 * m * (f.vel[a][0] * f.vel[a][0] + f.vel[a][1] * f.vel[a][1] + f.vel[a][2] * f.vel[a][2]);
+        }
+        out.push(CellFields { occ, p, ek });
+    }
+    Ok(out)
+}
+
+/// A5.2 — non-overlapping windows of `w` frames, each field averaged; a trailing partial
+/// window is dropped, never padded.
+pub fn window_mean(fields: &[CellFields], w: usize) -> Vec<CellFields> {
+    let w = w.max(1);
+    let mut out = Vec::with_capacity(fields.len() / w);
+    for block in fields.chunks_exact(w) {
+        let mut acc = CellFields { occ: vec![0.0; block[0].occ.len()], p: vec![[0.0; 3]; block[0].p.len()], ek: vec![0.0; block[0].ek.len()] };
+        for f in block {
+            for (a, b) in acc.occ.iter_mut().zip(&f.occ) { *a += b; }
+            for (a, b) in acc.p.iter_mut().zip(&f.p) { for k in 0..3 { a[k] += b[k]; } }
+            for (a, b) in acc.ek.iter_mut().zip(&f.ek) { *a += b; }
+        }
+        let inv = 1.0 / w as f64;
+        for a in acc.occ.iter_mut() { *a *= inv; }
+        for a in acc.p.iter_mut() { for k in 0..3 { a[k] *= inv; } }
+        for a in acc.ek.iter_mut() { *a *= inv; }
+        out.push(acc);
+    }
+    out
+}
+
+/// The pooled standard deviations of the three fields over cells and frames — what A5.3
+/// calibrates on, measured on trajectories OTHER than the one graded. Momentum is pooled
+/// over the components a `dims`-dimensional chart reads.
+pub fn field_sigmas(fields: &[CellFields], components: usize) -> (f64, f64, f64) {
+    let sd = |v: &[f64]| -> f64 {
+        if v.len() < 2 { return 0.0; }
+        let m = v.iter().sum::<f64>() / v.len() as f64;
+        (v.iter().map(|x| (x - m) * (x - m)).sum::<f64>() / v.len() as f64).sqrt()
+    };
+    // occupancy: deviation from each cell-species' own mean, pooled
+    let ns = fields.first().map(|f| f.occ.len()).unwrap_or(0);
+    let mut dn = Vec::new();
+    for k in 0..ns {
+        let col: Vec<f64> = fields.iter().map(|f| f.occ[k]).collect();
+        let m = col.iter().sum::<f64>() / col.len().max(1) as f64;
+        dn.extend(col.iter().map(|x| x - m));
+    }
+    let p: Vec<f64> = fields.iter().flat_map(|f| f.p.iter().flat_map(move |c| c[..components].to_vec())).collect();
+    let nc = fields.first().map(|f| f.ek.len()).unwrap_or(0);
+    let mut de = Vec::new();
+    for c in 0..nc {
+        let col: Vec<f64> = fields.iter().map(|f| f.ek[c]).collect();
+        let m = col.iter().sum::<f64>() / col.len().max(1) as f64;
+        de.extend(col.iter().map(|x| x - m));
+    }
+    (sd(&dn), sd(&p), sd(&de))
+}
+
+/// A5 — the chart read at a cadence: fields averaged over `window` frames, then binned.
+/// `window = 1` with a two-component grid is [`readings3`] bit for bit (plant PE-1); on
+/// `n_z > 1` the third momentum component is read (A5.4). Bins: `Calibrated3` uses its
+/// absolute held-out σ per field; every other `Density` uses the same bins `readings3`
+/// would — which for an averaged field are too wide by `~√window`, so the driver prints
+/// them only as the instantaneous control.
+pub fn readings_windowed(
+    traj: &Trajectory,
+    grid: Grid3,
+    rung: Rung,
+    kind: Kind,
+    density: Density,
+    window: usize,
+) -> Result<Vec<Reading>, Refusal> {
+    let fields = window_mean(&fields3(traj, grid, kind)?, window);
+    let n = traj.header.n_atoms;
+    let nc = grid.cells();
+    let mut species: Vec<u32> = traj.header.z.clone();
+    species.sort_unstable();
+    species.dedup();
+    let masses: Vec<f64> = traj.header.z.iter().map(|z| mass_me(*z)).collect::<Result<_, _>>()?;
+    let comps = if grid.nz > 1 { 3 } else { 2 };
+    let (dn, dp, de): (Vec<f64>, f64, f64) = match density {
+        Density::Calibrated3 { n: sn, p: sp, e: se } => (vec![sn.max(1e-12); species.len()], sp.max(1e-12), se.max(1e-12)),
+        _ => {
+            let dn: Vec<f64> = species
+                .iter()
+                .map(|z| {
+                    let n_s = traj.header.z.iter().filter(|q| *q == z).count() as f64;
+                    let n_bar = n_s / (nc as f64);
+                    match density {
+                        Density::Exact => 1.0,
+                        Density::External => (WATER_S0 * n_bar * (1.0 - n_bar / n_s).max(0.0)).sqrt().max(1.0),
+                        Density::Calibrated(sigma) => (sigma * (n_s / n as f64).sqrt()).max(1.0),
+                        _ => n_bar.sqrt().max(1.0),
+                    }
+                })
+                .collect();
+            let (kp, ke) = match density {
+                Density::CellScale => { let k = ((n as f64) / (nc as f64)).sqrt().round().max(1.0) as usize; (k, k) }
+                Density::Derived | Density::External | Density::Calibrated(_) => {
+                    let m_bar = masses.iter().sum::<f64>() / (n as f64);
+                    derived_multiples((n as f64) / (nc as f64), n as f64, m_bar)
+                }
+                _ => (1, 1),
+            };
+            (dn, dp_au() * kp as f64, de_ha() * ke as f64)
+        }
+    };
+    let mut out = Vec::with_capacity(fields.len());
+    for f in &fields {
+        let mut r: Reading = f.occ.iter().enumerate().map(|(k, o)| (o / dn[k % species.len()]).floor() as i64).collect();
+        if rung >= Rung::Mom {
+            for c in 0..nc {
+                for k in 0..comps {
+                    r.push((f.p[c][k] / dp).floor() as i64);
+                }
+            }
+        }
+        if rung >= Rung::Ene {
+            for c in 0..nc {
+                r.push((f.ek[c] / de).floor() as i64);
+            }
+        }
+        out.push(r);
+    }
+    Ok(out)
+}
+
 /// The chart's readings, one per frame.
 ///
 /// Field order is fixed and documented so a reimplementation is bit-identical: for each
@@ -448,6 +628,10 @@ pub fn readings3(
     // exactly only then. (The density field needs no rounding: its underlying value is an
     // integer, and `floor(n / Δ)` is a function of `n` for any `Δ`, which is why PA-5 held
     // at unrounded `√⟨n⟩` and why A1's density rule is kept as written.)
+    if let Density::Calibrated3 { .. } = density {
+        // an averaged-field bin has no meaning on an instantaneous chart
+        return Err(Refusal::TooFewFrames { have: 0, need: 1 });
+    }
     let (kp, ke) = match density {
         Density::CellScale => {
             let k = ((n as f64) / (nc as f64)).sqrt().round().max(1.0) as usize;
@@ -485,7 +669,7 @@ pub fn readings3(
         }
         let mut r: Reading = match density {
             Density::Exact => occ,
-            Density::Poisson | Density::CellScale | Density::Derived | Density::External | Density::Calibrated(_) => occ
+            Density::Poisson | Density::CellScale | Density::Derived | Density::External | Density::Calibrated(_) | Density::Calibrated3 { .. } => occ
                 .iter()
                 .enumerate()
                 .map(|(k, o)| ((*o as f64) / dn[k % species.len()]).floor() as i64)
@@ -1616,6 +1800,125 @@ mod tests {
                 }
             }
         }
+    }
+
+    // ------------------------------------------- RUNG2_AMENDMENT_5.md's plants, PE-1..PE-5
+
+    /// PE-1 — at window 1 the averaged chart IS the instantaneous one: bit for bit on every
+    /// two-component grid, and on a 3D grid identical once the third momentum component
+    /// A5.4 adds is stripped.
+    #[test]
+    fn pe1_window_one_is_the_instantaneous_chart() {
+        let t2 = {
+            let n = 12; let mut s: u64 = 0xE1;
+            let mut next = move || { s = s.wrapping_mul(6364136223846793005).wrapping_add(1); ((s >> 11) as f64) / ((1u64 << 53) as f64) };
+            let frames: Vec<Frame> = (0..200).map(|i| frame(i as u64,
+                (0..n).map(|_| [next() * 34.6, next() * 20.8, 0.0]).collect(),
+                (0..n).map(|_| [(next() - 0.5) * 4.0, (next() - 0.5) * 4.0, (next() - 0.5) * 4.0]).collect())).collect();
+            Trajectory { header: header(n, vec![1; n]), frames }
+        };
+        for grid in FROZEN_GRIDS {
+            for rung in LADDER {
+                for d in [Density::Exact, Density::Poisson, Density::Derived] {
+                    let a = readings3(&t2, grid.into(), rung, Kind::Spatial, d).unwrap();
+                    let b = readings_windowed(&t2, grid.into(), rung, Kind::Spatial, d, 1).unwrap();
+                    assert_eq!(a, b, "2D grid {grid:?} {rung:?} {d:?}");
+                }
+            }
+        }
+        let t3 = zero_sum_thermal_walk3(128, 29.6, 200, 0x5045_3031);
+        let g = Grid3 { nx: 2, ny: 2, nz: 2 };
+        let a = readings3(&t3, g, Rung::Mom, Kind::Spatial, Density::Derived).unwrap();
+        let b = readings_windowed(&t3, g, Rung::Mom, Kind::Spatial, Density::Derived, 1).unwrap();
+        let nc = g.cells();
+        for (ra, rb) in a.iter().zip(&b) {
+            assert_eq!(rb.len(), ra.len() + nc, "A5.4 adds exactly one component per cell");
+            assert_eq!(&ra[..nc], &rb[..nc], "occupancy identical");
+            for c in 0..nc { assert_eq!(&ra[nc + 2 * c..nc + 2 * c + 2], &rb[nc + 3 * c..nc + 3 * c + 2], "x,y identical in cell {c}"); }
+        }
+    }
+
+    /// PE-2 — P-2's closed-by-construction chart, averaged over a window dividing its
+    /// period (4), still certifies strict: averaging manufactures no defect.
+    #[test]
+    fn pe2_averaging_a_closed_chart_manufactures_no_defect() {
+        let n = 4; let ncell = 4; let cw = 34.6 / ncell as f64;
+        let frames: Vec<Frame> = (0..2400).map(|i| {
+            let pos: Vec<[f64; 3]> = (0..n).map(|a| { let c = (a + i as usize) % ncell; [(c as f64 + 0.5) * cw, 10.0, 0.0] }).collect();
+            frame(i as u64, pos, vec![[0.0; 3]; n])
+        }).collect();
+        let traj = Trajectory { header: header(n, vec![1; n]), frames };
+        let grid = Grid3 { nx: 4, ny: 1, nz: 1 };
+        let t = transport_fraction(&cell_series3(&traj, grid, Kind::Spatial).unwrap());
+        for w in [1usize, 2] {
+            let r = readings_windowed(&traj, grid, Rung::Occ, Kind::Spatial, Density::Calibrated3 { n: 0.5, p: 1.0, e: 1.0 }, w).unwrap();
+            let a = leg_a(&r);
+            assert!(a.informative >= prereg::MIN_INFORMATIVE, "w={w}: informative {}", a.informative);
+            assert_eq!(grade(true, t, &a), Verdict::CertifiedStrict, "w={w}");
+        }
+    }
+
+    /// PE-3 — what a window does and does not do to a hidden variable. A variable flipping
+    /// FASTER than the window is BLURRED (its averaged chart has more collisions — the
+    /// spread falls) and STILL FIRES (the collision form measures unpredictability, which
+    /// averaging does not remove — the variable is still hidden). One flipping slower still
+    /// fires too. The first draft asserted the fast variable's DEFECT falls under the window;
+    /// it does not (0.91 against 0.86 instantaneous), and the amendment's PE-3 row was
+    /// corrected to say what this test says: variance falls, firing does not.
+    #[test]
+    fn pe3_the_window_blurs_a_fast_hidden_variable_and_hides_none() {
+        let n = 4; let ncell = 4; let cw = 34.6 / ncell as f64;
+        let make = |flip_every: u64| -> Trajectory {
+            let mut cells: Vec<usize> = (0..n).collect();
+            let mut s: u64 = 0xDEAD_BEEF; let mut frames = Vec::new();
+            for i in 0..4000u64 {
+                let pos: Vec<[f64; 3]> = cells.iter().map(|&c| [(c as f64 + 0.5) * cw, 10.0, 0.0]).collect();
+                frames.push(frame(i, pos, vec![[0.0; 3]; n]));
+                if (i + 1) % flip_every == 0 {
+                    for c in cells.iter_mut() {
+                        s = s.wrapping_mul(6364136223846793005).wrapping_add(1);
+                        *c = if (s >> 60) & 1 == 1 { (*c + 1) % ncell } else { (*c + ncell - 1) % ncell };
+                    }
+                }
+            }
+            Trajectory { header: header(n, vec![1; n]), frames }
+        };
+        let grid = Grid3 { nx: 4, ny: 1, nz: 1 };
+        let w = 8usize;
+        let d = Density::Calibrated3 { n: 0.5, p: 1.0, e: 1.0 };
+        let fast_t = make(1);
+        let f_inst = fields3(&fast_t, grid, Kind::Spatial).unwrap();
+        let (s_inst, _, _) = field_sigmas(&f_inst, 2);
+        let (s_avg, _, _) = field_sigmas(&window_mean(&f_inst, w), 2);
+        assert!(s_avg < 0.5 * s_inst, "the window must blur a fast variable: σ {s_avg:.3} vs {s_inst:.3}");
+        let fast = leg_a(&readings_windowed(&fast_t, grid, Rung::Occ, Kind::Spatial, d, w).unwrap());
+        assert!(fast.firing > 0, "and the fast hidden variable must STILL fire — averaging removes variance, not unpredictability");
+        let slow = leg_a(&readings_windowed(&make(64), grid, Rung::Occ, Kind::Spatial, d, w).unwrap());
+        assert!(slow.firing > 0, "a variable flipping every 64 frames must still fire through an 8-frame window");
+    }
+
+    /// PE-4 — the averaging is doing what A5.2 says: on a zero-sum thermal carrier the
+    /// averaged momentum's spread falls as `1/√w`.
+    #[test]
+    fn pe4_averaged_momentum_spread_falls_as_root_window() {
+        let traj = zero_sum_thermal_walk3(128, 29.6, 2000, 0x5045_3034);
+        let grid = Grid3 { nx: 2, ny: 1, nz: 1 };
+        let f = fields3(&traj, grid, Kind::Spatial).unwrap();
+        let (_, s1, _) = field_sigmas(&f, 2);
+        let (_, s16, _) = field_sigmas(&window_mean(&f, 16), 2);
+        let ratio = s1 / s16;
+        assert!((ratio / 4.0 - 1.0).abs() < 0.2, "σ(w=1)/σ(w=16) = {ratio:.2}, expected ≈ 4");
+    }
+
+    /// PE-5 — `refines` across cadences is NOT a self-check: an average is not a coarsening
+    /// of a frame. Recorded as a test that the relation FAILS, so nobody adds the assertion.
+    #[test]
+    fn pe5_refines_across_cadences_is_not_asserted() {
+        let traj = zero_sum_thermal_walk3(128, 29.6, 400, 0x5045_3035);
+        let grid = Grid3 { nx: 2, ny: 1, nz: 1 };
+        let inst = readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Exact).unwrap();
+        let avg = readings_windowed(&traj, grid, Rung::Occ, Kind::Spatial, Density::Calibrated3 { n: 1.0, p: 1.0, e: 1.0 }, 4).unwrap();
+        assert_ne!(inst.len(), avg.len(), "different cadences have different lengths; refines() is not even defined across them");
     }
 
     // ------------------------------------------------------- P-6 / P-7: the pair

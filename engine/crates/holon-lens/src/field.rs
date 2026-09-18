@@ -152,7 +152,7 @@ impl From<Grid> for Grid3 {
 }
 
 /// A1 — how the density field is read.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum Density {
     /// The freeze: exact integer occupancy. Right at `N = 12`, where occupancies `0–12`
     /// repeat; empty of collisions by counting at the occupancy G2 demands.
@@ -177,7 +177,21 @@ pub enum Density {
     /// Density keeps Amendment 1's `√⟨n⟩`. Used as the nearest integer multiple of the
     /// freeze's per-atom bins so the freeze's chart refines this one exactly (PC-3).
     Derived,
+    /// Amendment 4, route (i): density at a LIQUID's fluctuation, `√(S(0) ⟨n⟩ (1 − ⟨n⟩/N))`
+    /// with water's structure factor at zero wavevector as a declared external constant
+    /// ([`WATER_S0`]); momentum and energy as `Derived`.
+    External,
+    /// Amendment 4, route (ii): density at `σ(n)` MEASURED on held-out seeds of the same
+    /// liquid at the same grid (never on the file being graded — the driver refuses that);
+    /// momentum and energy as `Derived`. The value is the pooled `σ` for the whole carrier;
+    /// per-species it scales as `√(N_s / N)`.
+    Calibrated(f64),
 }
+
+/// Water's structure factor at zero wavevector, `S(0) = ρ k_B T κ_T`, from CRC constants at
+/// 25 °C: `κ_T = 45.24e-11 Pa⁻¹`, `ρ = 997.05 kg m⁻³`, `T = 298.15 K`. An external protocol
+/// constant, entering as `T_TARGET` does (RUNG2_AMENDMENT_4.md, route (i)).
+pub const WATER_S0: f64 = 0.0621;
 
 /// Amendment 3's two continuous bins as multiples of the freeze's, for a cell of `n_bar`
 /// atoms on a carrier of `n_total` atoms of mean mass `m_bar` (electron masses). Public so
@@ -404,12 +418,20 @@ pub fn readings3(
     let mut species: Vec<u32> = traj.header.z.clone();
     species.sort_unstable();
     species.dedup();
-    // A1: one Poisson scale per species, from arithmetic the header fixes.
+    // A1: one Poisson scale per species, from arithmetic the header fixes. Amendment 4's
+    // two routes replace the Poisson variance by a liquid's: `S(0)⟨n⟩(1−⟨n⟩/N)` (External)
+    // or a held-out measured `σ²` scaled to the species (Calibrated). No bin is below 1:
+    // a fraction of an atom is not a resolution.
     let dn: Vec<f64> = species
         .iter()
         .map(|z| {
-            let n_s = traj.header.z.iter().filter(|q| *q == z).count();
-            ((n_s as f64) / (nc as f64)).sqrt().max(1.0)
+            let n_s = traj.header.z.iter().filter(|q| *q == z).count() as f64;
+            let n_bar = n_s / (nc as f64);
+            match density {
+                Density::External => (WATER_S0 * n_bar * (1.0 - n_bar / n_s).max(0.0)).sqrt().max(1.0),
+                Density::Calibrated(sigma) => (sigma * (n_s / n as f64).sqrt()).max(1.0),
+                _ => n_bar.sqrt().max(1.0),
+            }
         })
         .collect();
     let masses: Vec<f64> = traj
@@ -431,7 +453,7 @@ pub fn readings3(
             let k = ((n as f64) / (nc as f64)).sqrt().round().max(1.0) as usize;
             (k, k)
         }
-        Density::Derived => {
+        Density::Derived | Density::External | Density::Calibrated(_) => {
             let m_bar = masses.iter().sum::<f64>() / (n as f64);
             derived_multiples((n as f64) / (nc as f64), n as f64, m_bar)
         }
@@ -463,7 +485,7 @@ pub fn readings3(
         }
         let mut r: Reading = match density {
             Density::Exact => occ,
-            Density::Poisson | Density::CellScale | Density::Derived => occ
+            Density::Poisson | Density::CellScale | Density::Derived | Density::External | Density::Calibrated(_) => occ
                 .iter()
                 .enumerate()
                 .map(|(k, o)| ((*o as f64) / dn[k % species.len()]).floor() as i64)
@@ -718,6 +740,13 @@ pub fn occupancy_stats(cells: &[Vec<usize>], ncells: usize) -> (f64, f64) {
     let var = (sumsq / count as f64 - mean * mean).max(0.0);
     let rel = if mean > 0.0 { var.sqrt() / mean } else { 0.0 };
     (mean, rel)
+}
+
+/// The pooled standard deviation of cell occupancy over cells and frames — the quantity
+/// Amendment 4's route (ii) calibrates on, measured on a trajectory OTHER than the one graded.
+pub fn occupancy_sigma(cells: &[Vec<usize>], ncells: usize) -> f64 {
+    let (mean, rel) = occupancy_stats(cells, ncells);
+    mean * rel
 }
 
 /// Species totals are constant across every frame (PREREG G9a) — the ONE field of the
@@ -1406,7 +1435,17 @@ mod tests {
             let (u1, u2) = (next().max(1e-12), next());
             (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()
         };
-        let mut pos: Vec<[f64; 3]> = (0..n).map(|_| [gauss().abs() % 1.0 * edge, gauss().abs() % 1.0 * edge, gauss().abs() % 1.0 * edge]).collect();
+        // UNIFORM initial positions, from their own stream. The first draft used
+        // `|gauss| mod 1`, which is not uniform: the atoms started clumped, the walk is slow,
+        // and the half-box count drifted for the whole run — plant PD-2 read a spread 2.3×
+        // binomial and caught it. A carrier used to check a fluctuation formula has to be
+        // stationary from frame zero.
+        let mut u = seed ^ 0x9E37_79B9_7F4A_7C15;
+        let mut uniform = move || {
+            u = u.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            ((u >> 11) as f64) / ((1u64 << 53) as f64)
+        };
+        let mut pos: Vec<[f64; 3]> = (0..n).map(|_| [uniform() * edge, uniform() * edge, uniform() * edge]).collect();
         let mut out = Vec::with_capacity(frames);
         for i in 0..frames {
             let mut vel: Vec<[f64; 3]> = (0..n).map(|_| [gauss() * sigma_v, gauss() * sigma_v, gauss() * sigma_v]).collect();
@@ -1528,6 +1567,54 @@ mod tests {
             let a = readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Poisson).unwrap();
             let b = readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Derived).unwrap();
             assert_eq!(a, b, "grid {grid:?}");
+        }
+    }
+
+    // ------------------------------------------- RUNG2_AMENDMENT_4.md's plants, PD-1..PD-4
+
+    /// PD-1 — the routes are A1 at a different scale and nothing else: with `σ = √⟨n⟩`,
+    /// `Calibrated` equals `Poisson` at the density rung exactly.
+    #[test]
+    fn pd1_calibrated_at_the_poisson_scale_is_poisson() {
+        let traj = zero_sum_thermal_walk3(128, 29.6, 300, 0x5044_3031);
+        for grid in doubling_ladder(128, 3) {
+            let sigma = (128.0 / grid.cells() as f64).sqrt();
+            let a = readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Poisson).unwrap();
+            let b = readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Calibrated(sigma)).unwrap();
+            assert_eq!(a, b, "grid {grid:?}");
+        }
+    }
+
+    /// PD-2 — on a zero-sum thermal carrier the measured `σ(n)` IS the finite-population
+    /// Poisson value, so `Calibrated` at that σ reproduces `External` at `S(0) = 1`: the
+    /// two routes coincide on the carrier where the liquid correction is absent.
+    #[test]
+    fn pd2_the_routes_coincide_where_the_liquid_correction_is_absent() {
+        let traj = zero_sum_thermal_walk3(128, 29.6, 1500, 0x5044_3032);
+        let grid = Grid3 { nx: 2, ny: 1, nz: 1 };
+        let cs = cell_series3(&traj, grid, Kind::Spatial).unwrap();
+        let sigma = occupancy_sigma(&cs, grid.cells());
+        let expect = (64.0f64 * 0.5).sqrt();   // S(0) = 1 with the finite-population factor
+        assert!((sigma / expect - 1.0).abs() < 0.15, "measured {sigma:.2} vs binomial {expect:.2}");
+        let a = readings3(&traj, grid, Rung::Mom, Kind::Spatial, Density::Calibrated(sigma)).unwrap();
+        let b = readings3(&traj, grid, Rung::Mom, Kind::Spatial, Density::Derived).unwrap();
+        // the momentum and energy fields are Derived under every Amendment-4 route
+        assert_eq!(a.iter().map(|r| &r[2..]).collect::<Vec<_>>(), b.iter().map(|r| &r[2..]).collect::<Vec<_>>(),
+                   "momentum/energy fields must be Amendment 3's under route (ii)");
+    }
+
+    /// PD-3 — the self-check under both routes.
+    #[test]
+    fn pd3_exact_refines_both_routes() {
+        let traj = zero_sum_thermal_walk3(128, 29.6, 400, 0x5044_3033);
+        for grid in doubling_ladder(128, 3) {
+            for rung in LADDER {
+                let fine = readings3(&traj, grid, rung, Kind::Spatial, Density::Exact).unwrap();
+                for d in [Density::External, Density::Calibrated(2.3)] {
+                    let coarse = readings3(&traj, grid, rung, Kind::Spatial, d).unwrap();
+                    assert!(refines(&fine, &coarse), "grid {grid:?} rung {rung:?} {d:?}");
+                }
+            }
         }
     }
 

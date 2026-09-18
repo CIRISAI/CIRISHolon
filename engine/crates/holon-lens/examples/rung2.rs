@@ -21,12 +21,13 @@
 use holon_lens::field::*;
 use holon_lens::traj::Trajectory;
 use std::collections::HashSet;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 fn main() {
     let mut args: Vec<String> = std::env::args().skip(1).collect();
     let amend1 = args.iter().any(|a| a == "--amend1");
-    args.retain(|a| a != "--amend1");
+    let amend4 = args.iter().any(|a| a == "--amend4");
+    args.retain(|a| a != "--amend1" && a != "--amend4");
     if args.is_empty() {
         eprintln!("usage: rung2 <traj-dir> [arm ...]");
         std::process::exit(2);
@@ -57,6 +58,13 @@ fn main() {
     // The cost model of PREREG G11, counted rather than timed.
     let mut frames_read: u64 = 0;
     let mut chart_evals: u64 = 0;
+    if amend4 {
+        amendment4_read(&root, &arms, &mut frames_read, &mut chart_evals);
+        println!("\n===== COST (PREREG G11, work units, never wall clock) =====");
+        println!("frames read:       {frames_read}");
+        println!("chart evaluations: {chart_evals}");
+        return;
+    }
 
     for arm in &arms {
         let dir = root.join(arm);
@@ -310,6 +318,89 @@ fn amended_read(traj: &Trajectory, chart_evals: &mut u64) {
             ) {
                 if !refines(&e, &b) {
                     println!("      {kind:?} SELF-CHECK FIRED: exact occupancy does not refine its Poisson bin — the instrument is convicted on this grid");
+                }
+            }
+        }
+    }
+}
+
+
+/// RUNG2_AMENDMENT_4.md: the density bin for a liquid, two declared routes read side by side
+/// on identical frames. Route (i) `External` uses water's `S(0)`; route (ii) `Calibrated`
+/// uses `σ(n)` measured on the FLEXIBLE arms of the seeds NOT being graded, at the same grid,
+/// pooled in quadrature. A calibration with no held-out seed is REFUSED (plant PD-4).
+/// Momentum and energy are Amendment 3's under both routes.
+fn amendment4_read(root: &Path, arms: &[String], frames_read: &mut u64, chart_evals: &mut u64) {
+    let mut files: Vec<(String, PathBuf, Trajectory)> = Vec::new();
+    for arm in arms {
+        let dir = root.join(arm);
+        let mut paths: Vec<PathBuf> = match std::fs::read_dir(&dir) {
+            Ok(rd) => rd.filter_map(|e| e.ok().map(|e| e.path())).filter(|p| p.extension().map(|e| e == "traj").unwrap_or(false)).collect(),
+            Err(e) => { println!("ARM {arm}: REFUSED — {e}"); continue; }
+        };
+        paths.sort();
+        for p in paths {
+            match Trajectory::read(&p) {
+                Ok(t) => { *frames_read += t.frames.len() as u64; files.push((arm.clone(), p, t)); }
+                Err(e) => println!("  {} REFUSED — {e}", p.display()),
+            }
+        }
+    }
+    let n_atoms = files.first().map(|f| f.2.header.n_atoms).unwrap_or(0);
+    let dims = files.first().map(|f| f.2.header.dims).unwrap_or(3);
+    let ladder = doubling_ladder(n_atoms, dims);
+    // the calibration pool: σ(n) per (seed, grid) on the flexible arms
+    let mut sigma: Vec<(u64, Grid3, f64)> = Vec::new();
+    for (arm, _, t) in &files {
+        if arm != "flexible" { continue; }
+        for grid in &ladder {
+            if let Ok(cs) = cell_series3(t, *grid, Kind::Spatial) {
+                sigma.push((t.header.seed, *grid, occupancy_sigma(&cs, grid.cells())));
+            }
+        }
+    }
+    println!("# RUNG2_AMENDMENT_4: density bin for a liquid — route (i) External S(0)={WATER_S0} vs route (ii) Calibrated on held-out seeds; momentum/energy per Amendment 3");
+    println!("# calibration pool (flexible arms, 2-cell grid): {}", sigma.iter().filter(|s| s.1.cells() == 2).map(|s| format!("seed …{:x} sigma(n)={:.2}", s.0 & 0xff, s.2)).collect::<Vec<_>>().join("; "));
+    for (arm, path, traj) in &files {
+        let h = &traj.header;
+        println!("\n===== ARM {arm} — {} =====", path.file_name().unwrap().to_string_lossy());
+        println!("-- seed 0x{:016x}  n={} dims={} frames={}", h.seed, h.n_atoms, h.dims, traj.frames.len());
+        for grid in &ladder {
+            // PD-4: the calibration comes from OTHER seeds only, and there must be at least one
+            let held_out: Vec<f64> = sigma.iter().filter(|s| s.0 != h.seed && s.1 == *grid).map(|s| s.2).collect();
+            if held_out.is_empty() {
+                println!("   grid {}x{}x{}: route (ii) REFUSED — no held-out seed to calibrate on", grid.nx, grid.ny, grid.nz);
+                continue;
+            }
+            let cal = (held_out.iter().map(|x| x * x).sum::<f64>() / held_out.len() as f64).sqrt().max(1.0);
+            let cs = match cell_series3(traj, *grid, Kind::Spatial) { Ok(c) => c, Err(e) => { println!("   grid: REFUSED — {e:?}"); continue; } };
+            let (mean_occ, fluct) = occupancy_stats(&cs, grid.cells());
+            let n_bar = h.n_atoms as f64 / grid.cells() as f64;
+            let dn_ext = (WATER_S0 * n_bar * (1.0 - n_bar / h.n_atoms as f64)).sqrt().max(1.0);
+            let own = occupancy_sigma(&cs, grid.cells());
+            println!(
+                "   grid {}x{}x{} cells={} occ={:.2} fluct={:.3} | own sigma(n)={:.2} (NOT used) | dn(i) External={:.2}  dn(ii) Calibrated={:.2} from {} held-out seed(s) | ratio (ii)/(i)={:.2}",
+                grid.nx, grid.ny, grid.nz, grid.cells(), mean_occ, fluct, own, dn_ext, cal, held_out.len(), cal / dn_ext
+            );
+            for (label, density) in [("(i) External", Density::External), ("(ii) Calibrated", Density::Calibrated(cal))] {
+                let mut occ_defects: Vec<(Kind, Option<f64>)> = Vec::new();
+                for kind in [Kind::Spatial, Kind::BlindLabel] {
+                    let tr_k = match cell_series3(traj, *grid, kind) { Ok(c) => transport_fraction(&c), Err(_) => 0.0 };
+                    for rung in [Rung::Occ, Rung::Mom] {
+                        let r = match readings3(traj, *grid, rung, kind, density) { Ok(r) => r, Err(e) => { println!("      {label} {kind:?} {rung:?}: REFUSED — {e:?}"); continue; } };
+                        *chart_evals += r.len() as u64;
+                        let a = leg_a(&r);
+                        let v = grade(grid.cells() >= prereg::MIN_CELLS, tr_k, &a);
+                        let d = a.defect().map(|x| format!("{x:.4}")).unwrap_or_else(|| "n/a".into());
+                        println!("      {label:15} {kind:?} {rung:?} coll={} fire={} D_A={d} info={} distinct={} | {v:?}", a.collisions, a.firing, a.informative, a.distinct);
+                        if rung == Rung::Occ { occ_defects.push((kind, a.defect())); }
+                    }
+                }
+                let sp = occ_defects.iter().find(|k| k.0 == Kind::Spatial).and_then(|k| k.1);
+                let bl = occ_defects.iter().find(|k| k.0 == Kind::BlindLabel).and_then(|k| k.1);
+                match (sp, bl) {
+                    (Some(ds), Some(db)) => println!("      {label:15} G7 at Occ: blind − spatial = {:+.4} (needs ≥ +0.05) → {}", db - ds, if db - ds >= prereg::MIN_SEPARATION { "SEPARATED" } else { "NO SEPARATION (branch e)" }),
+                    _ => println!("      {label:15} G7 at Occ: undecidable (a chart has no collisions)"),
                 }
             }
         }

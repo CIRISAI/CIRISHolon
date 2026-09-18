@@ -799,6 +799,28 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## Two liquid bins compared (2026-09-17, later the same day): branch (e) does not depend on the bin, and the finite-cell correction to S(0) is measured
+
+The operator's question — *why not both and compare?* — became `RUNG2_AMENDMENT_4.md`: route
+(i) water's `S(0) = 0.0621` from CRC constants as an external protocol constant, route (ii)
+`σ(n)` measured on the seeds NOT being graded (three-fold hold-out, the LIQUID-2-from-LIQUID-1
+precedent), read side by side on the same six files at zero compute.
+
+- **The routes agree on G7 at every graded grid: 0 of 6 files separated at `2×1×1` and
+  `2×2×1` under either.** With the density field resolved at the liquid's own fluctuation
+  (9–11 distinct readings where Amendment 1 gave 3) the scrambled chart is still as closed
+  as the spatial one. The bin was the mechanism on the 16th; it is ruled out as the cause.
+  **Branch (e) stands, and it is robust to the bin.**
+- **`Δn(ii)/Δn(i)` = 1.57, 1.65, 1.74** at 64, 32, 16 per cell — the liquid's cells fluctuate
+  more than the `k → 0` structure factor says, growing as the cell shrinks: the finite-cell
+  correction to `S(0)` at this box, measured.
+- **Density `D_A` at `2×1×1`: 0.47–0.53 under both routes, both arms** — 23–40× β, robust to
+  bin and arm, published as data under (e).
+- The first separation appears at eight cells under route (ii), 3 of 6 files, where the work
+  count is not met. The grids that grade have too few cells for spatial structure to beat a
+  random partition; the grid where it begins to has too few transitions. Both move the same
+  way with a larger box.
+
 ## The fluid-element chart with momentum (2026-09-17): the first graded verdicts on the 3D carrier, and G7 says they are not readings
 
 `replace0/rung2_mom/RUNG2_MOM_ON_THE_3D_CARRIER.md`. Three amendments to the frozen rung-2

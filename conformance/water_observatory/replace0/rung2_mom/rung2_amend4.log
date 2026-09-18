@@ -1,0 +1,557 @@
+# RUNG 2 — the fluid-element chart
+# stakes: RUNG2_PREREG.md @ aee5317
+# dp = 1.321126 au (frozen 1.3211)
+# de = 0.000950043 Ha (frozen 0.0009500435)
+# bars: admissible occ >= 100, cells >= 4, fluct <= 0.1; transport >= 0.05; informative >= 200; beta = 0.02; separation >= 0.05
+# RUNG2_AMENDMENT_4: density bin for a liquid — route (i) External S(0)=0.0621 vs route (ii) Calibrated on held-out seeds; momentum/energy per Amendment 3
+# calibration pool (flexible arms, 2-cell grid): seed …30 sigma(n)=2.49; seed …31 sigma(n)=2.20; seed …32 sigma(n)=1.90
+
+===== ARM flexible — seed0.traj =====
+-- seed 0x5245504c41434530  n=128 dims=3 frames=301
+   grid 1x1x1 cells=1 occ=128.00 fluct=0.000 | own sigma(n)=0.00 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    Spatial Mom coll=17 fire=17 D_A=1.0000 info=34 distinct=283 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    BlindLabel Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    BlindLabel Mom coll=17 fire=17 D_A=1.0000 info=34 distinct=283 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated Spatial Mom coll=17 fire=17 D_A=1.0000 info=34 distinct=283 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated BlindLabel Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated BlindLabel Mom coll=17 fire=17 D_A=1.0000 info=34 distinct=283 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x1x1 cells=2 occ=64.00 fluct=0.039 | own sigma(n)=2.49 (NOT used) | dn(i) External=1.41  dn(ii) Calibrated=2.06 from 2 held-out seed(s) | ratio (ii)/(i)=1.46
+      (i) External    Spatial Occ coll=6163 fire=3017 D_A=0.4895 info=300 distinct=9 | NotClosed
+      (i) External    Spatial Mom coll=85 fire=84 D_A=0.9882 info=112 distinct=235 | VoidWorkCount(112)
+      (i) External    BlindLabel Occ coll=5442 fire=2582 D_A=0.4745 info=300 distinct=11 | NotClosed
+      (i) External    BlindLabel Mom coll=83 fire=80 D_A=0.9639 info=102 distinct=240 | VoidWorkCount(102)
+      (i) External    G7 at Occ: blind − spatial = -0.0151 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=6163 fire=3017 D_A=0.4895 info=300 distinct=9 | NotClosed
+      (ii) Calibrated Spatial Mom coll=85 fire=84 D_A=0.9882 info=112 distinct=235 | VoidWorkCount(112)
+      (ii) Calibrated BlindLabel Occ coll=5430 fire=2582 D_A=0.4755 info=300 distinct=12 | NotClosed
+      (ii) Calibrated BlindLabel Mom coll=83 fire=80 D_A=0.9639 info=102 distinct=240 | VoidWorkCount(102)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0140 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x2x1 cells=4 occ=32.00 fluct=0.069 | own sigma(n)=2.21 (NOT used) | dn(i) External=1.22  dn(ii) Calibrated=1.92 from 2 held-out seed(s) | ratio (ii)/(i)=1.57
+      (i) External    Spatial Occ coll=478 fire=352 D_A=0.7364 info=258 distinct=109 | NotClosed
+      (i) External    Spatial Mom coll=4 fire=4 D_A=1.0000 info=8 distinct=296 | VoidWorkCount(8)
+      (i) External    BlindLabel Occ coll=405 fire=277 D_A=0.6840 info=238 distinct=132 | NotClosed
+      (i) External    BlindLabel Mom coll=3 fire=3 D_A=1.0000 info=6 distinct=297 | VoidWorkCount(6)
+      (i) External    G7 at Occ: blind − spatial = -0.0525 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=1282 fire=802 D_A=0.6256 info=282 distinct=66 | NotClosed
+      (ii) Calibrated Spatial Mom coll=4 fire=4 D_A=1.0000 info=8 distinct=296 | VoidWorkCount(8)
+      (ii) Calibrated BlindLabel Occ coll=840 fire=476 D_A=0.5667 info=264 distinct=93 | NotClosed
+      (ii) Calibrated BlindLabel Mom coll=4 fire=4 D_A=1.0000 info=8 distinct=296 | VoidWorkCount(8)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0589 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x2x2 cells=8 occ=16.00 fluct=0.113 | own sigma(n)=1.80 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.72 from 2 held-out seed(s) | ratio (ii)/(i)=1.72
+      (i) External    Spatial Occ coll=103 fire=80 D_A=0.7767 info=139 distinct=222 | VoidWorkCount(139)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=102 fire=78 D_A=0.7647 info=133 distinct=224 | VoidWorkCount(133)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = -0.0120 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=211 fire=139 D_A=0.6588 info=197 distinct=175 | VoidWorkCount(197)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=142 fire=104 D_A=0.7324 info=163 distinct=203 | VoidWorkCount(163)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0736 (needs ≥ +0.05) → SEPARATED
+   grid 4x2x2 cells=16 occ=8.00 fluct=0.176 | own sigma(n)=1.41 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.37 from 2 held-out seed(s) | ratio (ii)/(i)=1.37
+      (i) External    Spatial Occ coll=47 fire=42 D_A=0.8936 info=74 distinct=260 | VoidWorkCount(74)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=45 fire=40 D_A=0.8889 info=70 distinct=262 | VoidWorkCount(70)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = -0.0047 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=58 fire=52 D_A=0.8966 info=88 distinct=252 | VoidWorkCount(88)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=52 fire=46 D_A=0.8846 info=81 distinct=256 | VoidWorkCount(81)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0119 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x4x2 cells=32 occ=4.00 fluct=0.265 | own sigma(n)=1.06 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.10 from 2 held-out seed(s) | ratio (ii)/(i)=1.10
+      (i) External    Spatial Occ coll=27 fire=26 D_A=0.9630 info=48 distinct=275 | VoidWorkCount(48)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=27 fire=26 D_A=0.9630 info=48 distinct=275 | VoidWorkCount(48)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=27 fire=26 D_A=0.9630 info=48 distinct=275 | VoidWorkCount(48)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=27 fire=26 D_A=0.9630 info=48 distinct=275 | VoidWorkCount(48)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x4x4 cells=64 occ=2.00 fluct=0.405 | own sigma(n)=0.81 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=16 fire=15 D_A=0.9375 info=29 distinct=285 | VoidWorkCount(29)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=16 fire=15 D_A=0.9375 info=29 distinct=285 | VoidWorkCount(29)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=16 fire=15 D_A=0.9375 info=29 distinct=285 | VoidWorkCount(29)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=16 fire=15 D_A=0.9375 info=29 distinct=285 | VoidWorkCount(29)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 8x4x4 cells=128 occ=1.00 fluct=0.681 | own sigma(n)=0.68 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=3 fire=3 D_A=1.0000 info=6 distinct=297 | VoidWorkCount(6)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=3 fire=3 D_A=1.0000 info=6 distinct=297 | VoidWorkCount(6)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=3 fire=3 D_A=1.0000 info=6 distinct=297 | VoidWorkCount(6)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=3 fire=3 D_A=1.0000 info=6 distinct=297 | VoidWorkCount(6)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+
+===== ARM flexible — seed1.traj =====
+-- seed 0x5245504c41434531  n=128 dims=3 frames=301
+   grid 1x1x1 cells=1 occ=128.00 fluct=0.000 | own sigma(n)=0.00 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    Spatial Mom coll=17 fire=17 D_A=1.0000 info=34 distinct=283 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    BlindLabel Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    BlindLabel Mom coll=17 fire=17 D_A=1.0000 info=34 distinct=283 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated Spatial Mom coll=17 fire=17 D_A=1.0000 info=34 distinct=283 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated BlindLabel Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated BlindLabel Mom coll=17 fire=17 D_A=1.0000 info=34 distinct=283 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x1x1 cells=2 occ=64.00 fluct=0.034 | own sigma(n)=2.20 (NOT used) | dn(i) External=1.41  dn(ii) Calibrated=2.21 from 2 held-out seed(s) | ratio (ii)/(i)=1.57
+      (i) External    Spatial Occ coll=6975 fire=3528 D_A=0.5058 info=300 distinct=9 | NotClosed
+      (i) External    Spatial Mom coll=99 fire=95 D_A=0.9596 info=127 distinct=226 | VoidWorkCount(127)
+      (i) External    BlindLabel Occ coll=5860 fire=2423 D_A=0.4135 info=300 distinct=11 | NotClosed
+      (i) External    BlindLabel Mom coll=58 fire=57 D_A=0.9828 info=101 distinct=247 | VoidWorkCount(101)
+      (i) External    G7 at Occ: blind − spatial = -0.0923 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=11120 fire=4179 D_A=0.3758 info=300 distinct=5 | NotClosed
+      (ii) Calibrated Spatial Mom coll=146 fire=142 D_A=0.9726 info=159 distinct=204 | VoidWorkCount(159)
+      (ii) Calibrated BlindLabel Occ coll=8165 fire=2988 D_A=0.3660 info=300 distinct=8 | NotClosed
+      (ii) Calibrated BlindLabel Mom coll=86 fire=83 D_A=0.9651 info=122 distinct=232 | VoidWorkCount(122)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0099 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x2x1 cells=4 occ=32.00 fluct=0.063 | own sigma(n)=2.01 (NOT used) | dn(i) External=1.22  dn(ii) Calibrated=2.03 from 2 held-out seed(s) | ratio (ii)/(i)=1.66
+      (i) External    Spatial Occ coll=371 fire=297 D_A=0.8005 info=247 distinct=128 | NotClosed
+      (i) External    Spatial Mom coll=1 fire=1 D_A=1.0000 info=2 distinct=299 | VoidWorkCount(2)
+      (i) External    BlindLabel Occ coll=337 fire=259 D_A=0.7685 info=237 distinct=139 | NotClosed
+      (i) External    BlindLabel Mom coll=2 fire=2 D_A=1.0000 info=4 distinct=298 | VoidWorkCount(4)
+      (i) External    G7 at Occ: blind − spatial = -0.0320 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=1073 fire=762 D_A=0.7102 info=278 distinct=74 | NotClosed
+      (ii) Calibrated Spatial Mom coll=3 fire=3 D_A=1.0000 info=6 distinct=297 | VoidWorkCount(6)
+      (ii) Calibrated BlindLabel Occ coll=832 fire=557 D_A=0.6695 info=271 distinct=86 | NotClosed
+      (ii) Calibrated BlindLabel Mom coll=1 fire=1 D_A=1.0000 info=2 distinct=299 | VoidWorkCount(2)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0407 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x2x2 cells=8 occ=16.00 fluct=0.109 | own sigma(n)=1.75 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.74 from 2 held-out seed(s) | ratio (ii)/(i)=1.74
+      (i) External    Spatial Occ coll=70 fire=59 D_A=0.8429 info=106 distinct=242 | VoidWorkCount(106)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=72 fire=59 D_A=0.8194 info=105 distinct=242 | VoidWorkCount(105)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = -0.0234 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=144 fire=116 D_A=0.8056 info=153 distinct=206 | VoidWorkCount(153)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=120 fire=89 D_A=0.7417 info=146 distinct=215 | VoidWorkCount(146)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0639 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x2x2 cells=16 occ=8.00 fluct=0.174 | own sigma(n)=1.39 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.38 from 2 held-out seed(s) | ratio (ii)/(i)=1.38
+      (i) External    Spatial Occ coll=33 fire=30 D_A=0.9091 info=57 distinct=270 | VoidWorkCount(57)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=33 fire=30 D_A=0.9091 info=57 distinct=270 | VoidWorkCount(57)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=49 fire=42 D_A=0.8571 info=77 distinct=258 | VoidWorkCount(77)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=40 fire=36 D_A=0.9000 info=68 distinct=264 | VoidWorkCount(68)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0429 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x4x2 cells=32 occ=4.00 fluct=0.269 | own sigma(n)=1.08 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.09 from 2 held-out seed(s) | ratio (ii)/(i)=1.09
+      (i) External    Spatial Occ coll=15 fire=15 D_A=1.0000 info=30 distinct=285 | VoidWorkCount(30)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=15 fire=15 D_A=1.0000 info=30 distinct=285 | VoidWorkCount(30)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=15 fire=15 D_A=1.0000 info=30 distinct=285 | VoidWorkCount(30)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=15 fire=15 D_A=1.0000 info=30 distinct=285 | VoidWorkCount(30)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x4x4 cells=64 occ=2.00 fluct=0.408 | own sigma(n)=0.82 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=7 fire=7 D_A=1.0000 info=14 distinct=293 | VoidWorkCount(14)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=7 fire=7 D_A=1.0000 info=14 distinct=293 | VoidWorkCount(14)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=7 fire=7 D_A=1.0000 info=14 distinct=293 | VoidWorkCount(14)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=7 fire=7 D_A=1.0000 info=14 distinct=293 | VoidWorkCount(14)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 8x4x4 cells=128 occ=1.00 fluct=0.675 | own sigma(n)=0.68 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: undecidable (a chart has no collisions)
+      (ii) Calibrated Spatial Occ coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: undecidable (a chart has no collisions)
+
+===== ARM flexible — seed2.traj =====
+-- seed 0x5245504c41434532  n=128 dims=3 frames=301
+   grid 1x1x1 cells=1 occ=128.00 fluct=0.000 | own sigma(n)=0.00 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    Spatial Mom coll=29 fire=29 D_A=1.0000 info=41 distinct=277 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    BlindLabel Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    BlindLabel Mom coll=29 fire=29 D_A=1.0000 info=41 distinct=277 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated Spatial Mom coll=29 fire=29 D_A=1.0000 info=41 distinct=277 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated BlindLabel Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated BlindLabel Mom coll=29 fire=29 D_A=1.0000 info=41 distinct=277 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x1x1 cells=2 occ=64.00 fluct=0.030 | own sigma(n)=1.90 (NOT used) | dn(i) External=1.41  dn(ii) Calibrated=2.35 from 2 held-out seed(s) | ratio (ii)/(i)=1.67
+      (i) External    Spatial Occ coll=7419 fire=4014 D_A=0.5410 info=299 distinct=11 | NotClosed
+      (i) External    Spatial Mom coll=72 fire=72 D_A=1.0000 info=107 distinct=242 | VoidWorkCount(107)
+      (i) External    BlindLabel Occ coll=7879 fire=3922 D_A=0.4978 info=300 distinct=9 | NotClosed
+      (i) External    BlindLabel Mom coll=68 fire=67 D_A=0.9853 info=99 distinct=245 | VoidWorkCount(99)
+      (i) External    G7 at Occ: blind − spatial = -0.0433 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=7657 fire=4063 D_A=0.5306 info=299 distinct=9 | NotClosed
+      (ii) Calibrated Spatial Mom coll=76 fire=76 D_A=1.0000 info=112 distinct=239 | VoidWorkCount(112)
+      (ii) Calibrated BlindLabel Occ coll=6885 fire=3680 D_A=0.5345 info=300 distinct=8 | NotClosed
+      (ii) Calibrated BlindLabel Mom coll=61 fire=60 D_A=0.9836 info=88 distinct=251 | VoidWorkCount(88)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0039 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x2x1 cells=4 occ=32.00 fluct=0.057 | own sigma(n)=1.83 (NOT used) | dn(i) External=1.22  dn(ii) Calibrated=2.11 from 2 held-out seed(s) | ratio (ii)/(i)=1.73
+      (i) External    Spatial Occ coll=487 fire=388 D_A=0.7967 info=246 distinct=120 | NotClosed
+      (i) External    Spatial Mom coll=3 fire=3 D_A=1.0000 info=6 distinct=297 | VoidWorkCount(6)
+      (i) External    BlindLabel Occ coll=302 fire=223 D_A=0.7384 info=219 distinct=153 | NotClosed
+      (i) External    BlindLabel Mom coll=1 fire=1 D_A=1.0000 info=2 distinct=299 | VoidWorkCount(2)
+      (i) External    G7 at Occ: blind − spatial = -0.0583 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=1504 fire=1025 D_A=0.6815 info=273 distinct=76 | NotClosed
+      (ii) Calibrated Spatial Mom coll=3 fire=3 D_A=1.0000 info=6 distinct=297 | VoidWorkCount(6)
+      (ii) Calibrated BlindLabel Occ coll=672 fire=422 D_A=0.6280 info=259 distinct=104 | NotClosed
+      (ii) Calibrated BlindLabel Mom coll=1 fire=1 D_A=1.0000 info=2 distinct=299 | VoidWorkCount(2)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0535 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x2x2 cells=8 occ=16.00 fluct=0.105 | own sigma(n)=1.68 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.77 from 2 held-out seed(s) | ratio (ii)/(i)=1.77
+      (i) External    Spatial Occ coll=72 fire=58 D_A=0.8056 info=98 distinct=244 | VoidWorkCount(98)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=73 fire=59 D_A=0.8082 info=96 distinct=245 | VoidWorkCount(96)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0027 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=133 fire=99 D_A=0.7444 info=148 distinct=210 | VoidWorkCount(148)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=117 fire=92 D_A=0.7863 info=145 distinct=215 | VoidWorkCount(145)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0420 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x2x2 cells=16 occ=8.00 fluct=0.168 | own sigma(n)=1.35 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.40 from 2 held-out seed(s) | ratio (ii)/(i)=1.40
+      (i) External    Spatial Occ coll=33 fire=29 D_A=0.8788 info=54 distinct=271 | VoidWorkCount(54)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=33 fire=29 D_A=0.8788 info=54 distinct=271 | VoidWorkCount(54)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=44 fire=39 D_A=0.8864 info=65 distinct=264 | VoidWorkCount(65)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=39 fire=34 D_A=0.8718 info=63 distinct=266 | VoidWorkCount(63)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0146 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x4x2 cells=32 occ=4.00 fluct=0.281 | own sigma(n)=1.12 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.07 from 2 held-out seed(s) | ratio (ii)/(i)=1.07
+      (i) External    Spatial Occ coll=20 fire=18 D_A=0.9000 info=34 distinct=282 | VoidWorkCount(34)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=20 fire=18 D_A=0.9000 info=34 distinct=282 | VoidWorkCount(34)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=20 fire=18 D_A=0.9000 info=34 distinct=282 | VoidWorkCount(34)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=20 fire=18 D_A=0.9000 info=34 distinct=282 | VoidWorkCount(34)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x4x4 cells=64 occ=2.00 fluct=0.427 | own sigma(n)=0.85 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=14 fire=13 D_A=0.9286 info=25 distinct=287 | VoidWorkCount(25)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=14 fire=13 D_A=0.9286 info=25 distinct=287 | VoidWorkCount(25)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=14 fire=13 D_A=0.9286 info=25 distinct=287 | VoidWorkCount(25)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=14 fire=13 D_A=0.9286 info=25 distinct=287 | VoidWorkCount(25)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 8x4x4 cells=128 occ=1.00 fluct=0.723 | own sigma(n)=0.72 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=2 fire=2 D_A=1.0000 info=4 distinct=298 | VoidWorkCount(4)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=2 fire=2 D_A=1.0000 info=4 distinct=298 | VoidWorkCount(4)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=2 fire=2 D_A=1.0000 info=4 distinct=298 | VoidWorkCount(4)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=2 fire=2 D_A=1.0000 info=4 distinct=298 | VoidWorkCount(4)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+
+===== ARM rigid — seed0.traj =====
+-- seed 0x5245504c41434530  n=128 dims=3 frames=301
+   grid 1x1x1 cells=1 occ=128.00 fluct=0.000 | own sigma(n)=0.00 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    Spatial Mom coll=34 fire=34 D_A=1.0000 info=60 distinct=269 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    BlindLabel Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    BlindLabel Mom coll=34 fire=34 D_A=1.0000 info=60 distinct=269 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated Spatial Mom coll=34 fire=34 D_A=1.0000 info=60 distinct=269 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated BlindLabel Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated BlindLabel Mom coll=34 fire=34 D_A=1.0000 info=60 distinct=269 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x1x1 cells=2 occ=64.00 fluct=0.032 | own sigma(n)=2.02 (NOT used) | dn(i) External=1.41  dn(ii) Calibrated=2.06 from 2 held-out seed(s) | ratio (ii)/(i)=1.46
+      (i) External    Spatial Occ coll=6841 fire=3591 D_A=0.5249 info=299 distinct=11 | NotClosed
+      (i) External    Spatial Mom coll=123 fire=115 D_A=0.9350 info=125 distinct=223 | VoidWorkCount(125)
+      (i) External    BlindLabel Occ coll=6225 fire=3418 D_A=0.5491 info=300 distinct=10 | NotClosed
+      (i) External    BlindLabel Mom coll=157 fire=138 D_A=0.8790 info=138 distinct=212 | VoidWorkCount(138)
+      (i) External    G7 at Occ: blind − spatial = +0.0242 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=6841 fire=3591 D_A=0.5249 info=299 distinct=11 | NotClosed
+      (ii) Calibrated Spatial Mom coll=123 fire=115 D_A=0.9350 info=125 distinct=223 | VoidWorkCount(125)
+      (ii) Calibrated BlindLabel Occ coll=6225 fire=3418 D_A=0.5491 info=300 distinct=10 | NotClosed
+      (ii) Calibrated BlindLabel Mom coll=157 fire=138 D_A=0.8790 info=138 distinct=212 | VoidWorkCount(138)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0242 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x2x1 cells=4 occ=32.00 fluct=0.055 | own sigma(n)=1.75 (NOT used) | dn(i) External=1.22  dn(ii) Calibrated=1.92 from 2 held-out seed(s) | ratio (ii)/(i)=1.57
+      (i) External    Spatial Occ coll=427 fire=342 D_A=0.8009 info=258 distinct=118 | NotClosed
+      (i) External    Spatial Mom coll=4 fire=4 D_A=1.0000 info=8 distinct=296 | VoidWorkCount(8)
+      (i) External    BlindLabel Occ coll=397 fire=309 D_A=0.7783 info=251 distinct=125 | NotClosed
+      (i) External    BlindLabel Mom coll=3 fire=3 D_A=1.0000 info=6 distinct=297 | VoidWorkCount(6)
+      (i) External    G7 at Occ: blind − spatial = -0.0226 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=1284 fire=899 D_A=0.7002 info=284 distinct=67 | NotClosed
+      (ii) Calibrated Spatial Mom coll=5 fire=5 D_A=1.0000 info=10 distinct=295 | VoidWorkCount(10)
+      (ii) Calibrated BlindLabel Occ coll=923 fire=618 D_A=0.6696 info=271 distinct=82 | NotClosed
+      (ii) Calibrated BlindLabel Mom coll=3 fire=3 D_A=1.0000 info=6 distinct=297 | VoidWorkCount(6)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0306 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x2x2 cells=8 occ=16.00 fluct=0.108 | own sigma(n)=1.73 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.72 from 2 held-out seed(s) | ratio (ii)/(i)=1.72
+      (i) External    Spatial Occ coll=64 fire=58 D_A=0.9062 info=103 distinct=245 | VoidWorkCount(103)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=52 fire=49 D_A=0.9423 info=95 distinct=251 | VoidWorkCount(95)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0361 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=150 fire=120 D_A=0.8000 info=157 distinct=204 | VoidWorkCount(157)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=87 fire=77 D_A=0.8851 info=133 distinct=227 | VoidWorkCount(133)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0851 (needs ≥ +0.05) → SEPARATED
+   grid 4x2x2 cells=16 occ=8.00 fluct=0.171 | own sigma(n)=1.37 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.37 from 2 held-out seed(s) | ratio (ii)/(i)=1.37
+      (i) External    Spatial Occ coll=32 fire=32 D_A=1.0000 info=61 distinct=269 | VoidWorkCount(61)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=30 fire=29 D_A=0.9667 info=57 distinct=271 | VoidWorkCount(57)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = -0.0333 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=40 fire=38 D_A=0.9500 info=71 distinct=263 | VoidWorkCount(71)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=35 fire=33 D_A=0.9429 info=64 distinct=267 | VoidWorkCount(64)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0071 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x4x2 cells=32 occ=4.00 fluct=0.261 | own sigma(n)=1.05 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.10 from 2 held-out seed(s) | ratio (ii)/(i)=1.10
+      (i) External    Spatial Occ coll=17 fire=17 D_A=1.0000 info=34 distinct=283 | VoidWorkCount(34)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=14 fire=14 D_A=1.0000 info=28 distinct=286 | VoidWorkCount(28)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=17 fire=17 D_A=1.0000 info=34 distinct=283 | VoidWorkCount(34)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=15 fire=15 D_A=1.0000 info=30 distinct=285 | VoidWorkCount(30)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x4x4 cells=64 occ=2.00 fluct=0.414 | own sigma(n)=0.83 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=6 fire=6 D_A=1.0000 info=12 distinct=294 | VoidWorkCount(12)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=6 fire=6 D_A=1.0000 info=12 distinct=294 | VoidWorkCount(12)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=6 fire=6 D_A=1.0000 info=12 distinct=294 | VoidWorkCount(12)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=6 fire=6 D_A=1.0000 info=12 distinct=294 | VoidWorkCount(12)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 8x4x4 cells=128 occ=1.00 fluct=0.703 | own sigma(n)=0.70 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=2 fire=2 D_A=1.0000 info=4 distinct=298 | VoidWorkCount(4)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=2 fire=2 D_A=1.0000 info=4 distinct=298 | VoidWorkCount(4)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=2 fire=2 D_A=1.0000 info=4 distinct=298 | VoidWorkCount(4)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=2 fire=2 D_A=1.0000 info=4 distinct=298 | VoidWorkCount(4)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+
+===== ARM rigid — seed1.traj =====
+-- seed 0x5245504c41434531  n=128 dims=3 frames=301
+   grid 1x1x1 cells=1 occ=128.00 fluct=0.000 | own sigma(n)=0.00 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    Spatial Mom coll=19 fire=19 D_A=1.0000 info=35 distinct=282 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    BlindLabel Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    BlindLabel Mom coll=19 fire=19 D_A=1.0000 info=35 distinct=282 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated Spatial Mom coll=19 fire=19 D_A=1.0000 info=35 distinct=282 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated BlindLabel Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated BlindLabel Mom coll=19 fire=19 D_A=1.0000 info=35 distinct=282 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x1x1 cells=2 occ=64.00 fluct=0.027 | own sigma(n)=1.73 (NOT used) | dn(i) External=1.41  dn(ii) Calibrated=2.21 from 2 held-out seed(s) | ratio (ii)/(i)=1.57
+      (i) External    Spatial Occ coll=7674 fire=4073 D_A=0.5308 info=300 distinct=9 | NotClosed
+      (i) External    Spatial Mom coll=142 fire=137 D_A=0.9648 info=139 distinct=214 | VoidWorkCount(139)
+      (i) External    BlindLabel Occ coll=6812 fire=3328 D_A=0.4885 info=299 distinct=10 | NotClosed
+      (i) External    BlindLabel Mom coll=114 fire=108 D_A=0.9474 info=126 distinct=224 | VoidWorkCount(126)
+      (i) External    G7 at Occ: blind − spatial = -0.0422 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=12074 fire=4608 D_A=0.3816 info=300 distinct=6 | NotClosed
+      (ii) Calibrated Spatial Mom coll=207 fire=196 D_A=0.9469 info=161 distinct=194 | VoidWorkCount(161)
+      (ii) Calibrated BlindLabel Occ coll=10201 fire=3749 D_A=0.3675 info=300 distinct=7 | NotClosed
+      (ii) Calibrated BlindLabel Mom coll=139 fire=133 D_A=0.9568 info=148 distinct=211 | VoidWorkCount(148)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0141 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x2x1 cells=4 occ=32.00 fluct=0.063 | own sigma(n)=2.03 (NOT used) | dn(i) External=1.22  dn(ii) Calibrated=2.03 from 2 held-out seed(s) | ratio (ii)/(i)=1.66
+      (i) External    Spatial Occ coll=362 fire=291 D_A=0.8039 info=234 distinct=136 | NotClosed
+      (i) External    Spatial Mom coll=4 fire=4 D_A=1.0000 info=8 distinct=296 | VoidWorkCount(8)
+      (i) External    BlindLabel Occ coll=333 fire=264 D_A=0.7928 info=237 distinct=139 | NotClosed
+      (i) External    BlindLabel Mom coll=1 fire=1 D_A=1.0000 info=2 distinct=299 | VoidWorkCount(2)
+      (i) External    G7 at Occ: blind − spatial = -0.0111 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=1079 fire=707 D_A=0.6552 info=275 distinct=77 | NotClosed
+      (ii) Calibrated Spatial Mom coll=5 fire=5 D_A=1.0000 info=10 distinct=295 | VoidWorkCount(10)
+      (ii) Calibrated BlindLabel Occ coll=843 fire=590 D_A=0.6999 info=269 distinct=83 | NotClosed
+      (ii) Calibrated BlindLabel Mom coll=1 fire=1 D_A=1.0000 info=2 distinct=299 | VoidWorkCount(2)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0446 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x2x2 cells=8 occ=16.00 fluct=0.107 | own sigma(n)=1.71 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.74 from 2 held-out seed(s) | ratio (ii)/(i)=1.74
+      (i) External    Spatial Occ coll=59 fire=52 D_A=0.8814 info=95 distinct=249 | VoidWorkCount(95)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=60 fire=52 D_A=0.8667 info=92 distinct=250 | VoidWorkCount(92)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = -0.0147 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=160 fire=116 D_A=0.7250 info=167 distinct=199 | VoidWorkCount(167)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=111 fire=92 D_A=0.8288 info=139 distinct=220 | VoidWorkCount(139)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.1038 (needs ≥ +0.05) → SEPARATED
+   grid 4x2x2 cells=16 occ=8.00 fluct=0.175 | own sigma(n)=1.40 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.38 from 2 held-out seed(s) | ratio (ii)/(i)=1.38
+      (i) External    Spatial Occ coll=42 fire=37 D_A=0.8810 info=69 distinct=263 | VoidWorkCount(69)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=44 fire=37 D_A=0.8409 info=68 distinct=263 | VoidWorkCount(68)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = -0.0400 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=51 fire=45 D_A=0.8824 info=84 distinct=255 | VoidWorkCount(84)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=55 fire=45 D_A=0.8182 info=81 distinct=255 | VoidWorkCount(81)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0642 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x4x2 cells=32 occ=4.00 fluct=0.275 | own sigma(n)=1.10 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.09 from 2 held-out seed(s) | ratio (ii)/(i)=1.09
+      (i) External    Spatial Occ coll=18 fire=18 D_A=1.0000 info=36 distinct=282 | VoidWorkCount(36)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=18 fire=18 D_A=1.0000 info=36 distinct=282 | VoidWorkCount(36)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=18 fire=18 D_A=1.0000 info=36 distinct=282 | VoidWorkCount(36)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=18 fire=18 D_A=1.0000 info=36 distinct=282 | VoidWorkCount(36)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x4x4 cells=64 occ=2.00 fluct=0.414 | own sigma(n)=0.83 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=12 fire=12 D_A=1.0000 info=24 distinct=288 | VoidWorkCount(24)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=12 fire=12 D_A=1.0000 info=24 distinct=288 | VoidWorkCount(24)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=12 fire=12 D_A=1.0000 info=24 distinct=288 | VoidWorkCount(24)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=12 fire=12 D_A=1.0000 info=24 distinct=288 | VoidWorkCount(24)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 8x4x4 cells=128 occ=1.00 fluct=0.682 | own sigma(n)=0.68 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=4 fire=4 D_A=1.0000 info=8 distinct=296 | VoidWorkCount(8)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=4 fire=4 D_A=1.0000 info=8 distinct=296 | VoidWorkCount(8)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=4 fire=4 D_A=1.0000 info=8 distinct=296 | VoidWorkCount(8)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=4 fire=4 D_A=1.0000 info=8 distinct=296 | VoidWorkCount(8)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+
+===== ARM rigid — seed2.traj =====
+-- seed 0x5245504c41434532  n=128 dims=3 frames=301
+   grid 1x1x1 cells=1 occ=128.00 fluct=0.000 | own sigma(n)=0.00 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    Spatial Mom coll=27 fire=27 D_A=1.0000 info=54 distinct=273 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    BlindLabel Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    BlindLabel Mom coll=27 fire=27 D_A=1.0000 info=54 distinct=273 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated Spatial Mom coll=27 fire=27 D_A=1.0000 info=54 distinct=273 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated BlindLabel Occ coll=44850 fire=0 D_A=0.0000 info=300 distinct=1 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated BlindLabel Mom coll=27 fire=27 D_A=1.0000 info=54 distinct=273 | VoidVacuous("fewer than 2 cells: the fields are the invariants")
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x1x1 cells=2 occ=64.00 fluct=0.034 | own sigma(n)=2.20 (NOT used) | dn(i) External=1.41  dn(ii) Calibrated=2.35 from 2 held-out seed(s) | ratio (ii)/(i)=1.67
+      (i) External    Spatial Occ coll=6968 fire=3657 D_A=0.5248 info=299 distinct=10 | NotClosed
+      (i) External    Spatial Mom coll=79 fire=73 D_A=0.9241 info=116 distinct=236 | VoidWorkCount(116)
+      (i) External    BlindLabel Occ coll=5220 fire=2746 D_A=0.5261 info=298 distinct=13 | NotClosed
+      (i) External    BlindLabel Mom coll=97 fire=93 D_A=0.9588 info=119 distinct=229 | VoidWorkCount(119)
+      (i) External    G7 at Occ: blind − spatial = +0.0012 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=7528 fire=3747 D_A=0.4977 info=299 distinct=9 | NotClosed
+      (ii) Calibrated Spatial Mom coll=86 fire=80 D_A=0.9302 info=127 distinct=230 | VoidWorkCount(127)
+      (ii) Calibrated BlindLabel Occ coll=5996 fire=3014 D_A=0.5027 info=298 distinct=13 | NotClosed
+      (ii) Calibrated BlindLabel Mom coll=101 fire=97 D_A=0.9604 info=127 distinct=225 | VoidWorkCount(127)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0049 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x2x1 cells=4 occ=32.00 fluct=0.072 | own sigma(n)=2.30 (NOT used) | dn(i) External=1.22  dn(ii) Calibrated=2.11 from 2 held-out seed(s) | ratio (ii)/(i)=1.73
+      (i) External    Spatial Occ coll=458 fire=349 D_A=0.7620 info=242 distinct=125 | NotClosed
+      (i) External    Spatial Mom coll=3 fire=3 D_A=1.0000 info=6 distinct=297 | VoidWorkCount(6)
+      (i) External    BlindLabel Occ coll=315 fire=218 D_A=0.6921 info=218 distinct=152 | NotClosed
+      (i) External    BlindLabel Mom coll=2 fire=2 D_A=1.0000 info=4 distinct=298 | VoidWorkCount(4)
+      (i) External    G7 at Occ: blind − spatial = -0.0699 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=868 fire=616 D_A=0.7097 info=266 distinct=84 | NotClosed
+      (ii) Calibrated Spatial Mom coll=4 fire=4 D_A=1.0000 info=8 distinct=296 | VoidWorkCount(8)
+      (ii) Calibrated BlindLabel Occ coll=686 fire=450 D_A=0.6560 info=263 distinct=93 | NotClosed
+      (ii) Calibrated BlindLabel Mom coll=3 fire=3 D_A=1.0000 info=6 distinct=297 | VoidWorkCount(6)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0537 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 2x2x2 cells=8 occ=16.00 fluct=0.111 | own sigma(n)=1.78 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.77 from 2 held-out seed(s) | ratio (ii)/(i)=1.77
+      (i) External    Spatial Occ coll=74 fire=64 D_A=0.8649 info=106 distinct=241 | VoidWorkCount(106)
+      (i) External    Spatial Mom coll=2 fire=2 D_A=1.0000 info=4 distinct=298 | VoidWorkCount(4)
+      (i) External    BlindLabel Occ coll=77 fire=65 D_A=0.8442 info=101 distinct=242 | VoidWorkCount(101)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = -0.0207 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=124 fire=95 D_A=0.7661 info=151 distinct=211 | VoidWorkCount(151)
+      (ii) Calibrated Spatial Mom coll=2 fire=2 D_A=1.0000 info=4 distinct=298 | VoidWorkCount(4)
+      (ii) Calibrated BlindLabel Occ coll=132 fire=99 D_A=0.7500 info=152 distinct=209 | VoidWorkCount(152)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = -0.0161 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x2x2 cells=16 occ=8.00 fluct=0.180 | own sigma(n)=1.44 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.40 from 2 held-out seed(s) | ratio (ii)/(i)=1.40
+      (i) External    Spatial Occ coll=35 fire=32 D_A=0.9143 info=56 distinct=270 | VoidWorkCount(56)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=37 fire=33 D_A=0.8919 info=57 distinct=269 | VoidWorkCount(57)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = -0.0224 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=61 fire=47 D_A=0.7705 info=78 distinct=256 | VoidWorkCount(78)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=52 fire=46 D_A=0.8846 info=77 distinct=258 | VoidWorkCount(77)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.1141 (needs ≥ +0.05) → SEPARATED
+   grid 4x4x2 cells=32 occ=4.00 fluct=0.273 | own sigma(n)=1.09 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.07 from 2 held-out seed(s) | ratio (ii)/(i)=1.07
+      (i) External    Spatial Occ coll=19 fire=18 D_A=0.9474 info=30 distinct=284 | VoidWorkCount(30)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=19 fire=18 D_A=0.9474 info=30 distinct=284 | VoidWorkCount(30)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=19 fire=18 D_A=0.9474 info=30 distinct=284 | VoidWorkCount(30)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=19 fire=18 D_A=0.9474 info=30 distinct=284 | VoidWorkCount(30)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 4x4x4 cells=64 occ=2.00 fluct=0.416 | own sigma(n)=0.83 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=8 fire=8 D_A=1.0000 info=16 distinct=292 | VoidWorkCount(16)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=8 fire=8 D_A=1.0000 info=16 distinct=292 | VoidWorkCount(16)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=8 fire=8 D_A=1.0000 info=16 distinct=292 | VoidWorkCount(16)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=8 fire=8 D_A=1.0000 info=16 distinct=292 | VoidWorkCount(16)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+   grid 8x4x4 cells=128 occ=1.00 fluct=0.712 | own sigma(n)=0.71 (NOT used) | dn(i) External=1.00  dn(ii) Calibrated=1.00 from 2 held-out seed(s) | ratio (ii)/(i)=1.00
+      (i) External    Spatial Occ coll=1 fire=1 D_A=1.0000 info=2 distinct=299 | VoidWorkCount(2)
+      (i) External    Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    BlindLabel Occ coll=1 fire=1 D_A=1.0000 info=2 distinct=299 | VoidWorkCount(2)
+      (i) External    BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (i) External    G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+      (ii) Calibrated Spatial Occ coll=1 fire=1 D_A=1.0000 info=2 distinct=299 | VoidWorkCount(2)
+      (ii) Calibrated Spatial Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated BlindLabel Occ coll=1 fire=1 D_A=1.0000 info=2 distinct=299 | VoidWorkCount(2)
+      (ii) Calibrated BlindLabel Mom coll=0 fire=0 D_A=n/a info=0 distinct=300 | VoidWorkCount(0)
+      (ii) Calibrated G7 at Occ: blind − spatial = +0.0000 (needs ≥ +0.05) → NO SEPARATION (branch e)
+
+===== COST (PREREG G11, work units, never wall clock) =====
+frames read:       1806
+chart evaluations: 115584

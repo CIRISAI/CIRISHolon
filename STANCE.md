@@ -1,6 +1,6 @@
 # The CIRISHolon stance — claims at the strength the evidence carries
 
-*2026-08-28, updated 2026-08-30. Four statuses, per the seed's epistemology: **proved**
+*2026-08-28, updated 2026-08-30 and 2026-09-18. Four statuses, per the seed's epistemology: **proved**
 (machine-checked here), **measured** (exact instrument, record cited),
 **wager** (a chosen position, not a result — with its own separable
 kill), **open** (named, unclaimed). A claim with no kill is not a claim.
@@ -118,6 +118,66 @@ IterationCap at 1200 — the record's one true budget case; H1 → folded,
 SELECTOR-6 closed with four of five predictions confirmed and the fifth
 reported fired.)*
 
+## Measured, added 2026-09-18 (the water observatory: a liquid, a coarse operator, and the fluid-element tier's measured NO)
+
+*Scope, stated first because it is narrower than every section above: these
+are NOT exact finite models. The carrier is a minimal-basis (STO-3G) water
+on classical nuclei at an IMPOSED density, closure is statistical over
+staked windows with declared budgets, and the law's gap to MB-pol is 3.4×
+its own error (COMPARE-0). Every band is this programme's own around an
+experimental number. What is measured here is measured at that strength.*
+
+- **A liquid whose structure lands in experimental bands on pre-committed
+  predictions, three seeds** (LIQUID-2, `LIQUID2_RESULTS.md`): first O–O
+  peak 2.778 Å inside [2.65, 2.95] where LIQUID-1 sat outside; hydrogen
+  bonds 3.375 both-ends against experiment's 3.5; the network SPANNING
+  the cell in every sampled frame (largest component 0.998 against the
+  Erdős–Rényi giant 0.874). R3 (self-diffusion) VOID by design — split
+  out on price and still owed. Kill: each stake's own frozen band; the
+  seeds' agreement is not finer than the arms resolve (pooled SE above
+  seed spread). Fence: not a validated water model — see the scope line.
+- **A coarse operator with its replacement error measured** (REPLACE-0,
+  unfrozen — a build, not a campaign, and it is banked at that strength):
+  rigid water on the same law, 14.6× cheaper per picosecond with every
+  overhead inside, structure and short-time motion within seed spread of
+  the fine model, and the ENERGY not: less bound by 0.325 ± 0.099 kT per
+  water on every seed — a rigid body frozen at the liquid's mean geometry
+  loses the adaptive part of its binding. Under the object's rule 1 it is
+  an executable `h` at the molecular tier and NOT a tier: its dynamics
+  past 40 fs are unresolved against seed spread (three seeds of 3 ps cannot
+  say whether the agreement decays). Kill: a frozen REPLACE-1 at an unseen
+  seed and temperature missing its staked tolerances.
+- **The fluid-element tier on the 3D carrier is VOID by no separation,
+  and the verdict is robust to the density bin** (rung 2 under Amendments
+  1–4, `replace0/rung2_mom/`). With the instrument's every scale derived or
+  held out — density at the liquid's fluctuation by two independent routes
+  that agree, momentum and energy at the cell's equilibrium fluctuation —
+  the position-blind chart is as closed as the spatial one on every grid
+  with enough transitions to grade (0 of 6 files separated at two and four
+  cells, under either bin). Where graded regardless: density `D_A` ≈ 0.5,
+  density + momentum ≈ 0.94, against β = 0.02. No admissible cell exists at
+  128 waters (G2 needs ≥ 400; the first cube 800), and the half-box momentum
+  is not a slow variable at 10 fs. This is rung 1's disjointness reproduced
+  on the 3D carrier, and it is a measured NO in the same sense FLUID-0's and
+  EDGE-0's were. Kill (a promotion): a carrier on which G7 separates AND a
+  dynamic chart lands inside β — the first such reading would move this
+  entry to a closure. Two small numbers ride with it: the finite-cell
+  correction to water's `S(0)` at this box, 1.6–1.7× and growing as cells
+  shrink; and the momentum bin of a cell is `√(⟨n⟩ m̄ k_B T (1−⟨n⟩/N))` to
+  within the model's rigid-mode heating.
+- **Every constant is a price measured in a regime — measured seven times
+  in eleven days**, on the instrument rather than the physics: an 8× step
+  in a frame count, validated components none of which the campaign
+  selected, a settling band from a Berendsen scatter under a canonical
+  thermostat, a drift bar against a thermostat's work, a transport gate
+  comparing within seeds and not between them, a density bin for a gas on
+  a liquid, a momentum bin for one hydrogen on a cell of sixty-four — and
+  one of the lead's own, a scale calibrated on an unrelaxed box and the
+  correct physics written off as the error, corrected the same day with
+  the wrong text kept legible. Not a claim about the world; a measured
+  property of this programme's instruments, and the reason each of the
+  three entries above carries its scope on its face.
+
 ## Wagers (positions we now choose to hold, each with its kill)
 
 - **W1 — the law is substrate-general.** The cross-face rent law holds on
@@ -168,6 +228,18 @@ limit of the deficit ladder; 3+1 constraints; deriving the dynamics FROM
 closure (the ADM remainder, precisely worded); the informed-rent object
 with its corrected restriction (information, not symmetry).
 
+Added 2026-09-18, from the water observatory, each with the measurement
+that would close it: **whether density + momentum closes at ANY cell size
+on this model** (no dynamic chart has landed inside β on either carrier;
+an 800-water scout on the coarse operator is ~25 core-hours and would say
+which way `D_A` moves with cell size); **the readout cadence of a fluid
+element** (10 fs asks the coarse law to predict thermal jitter — a cell's
+own relaxation time is the candidate, and it is a scale to derive before a
+larger box, not after); **this model's self-diffusion** (R3, refused by
+LIQUID-1, priced out of LIQUID-2, unresolved by REPLACE-0 — ~2,500
+core-hours on both arms); **the node-G closure certificate** for the
+H-bond tier, which no reading provides.
+
 ## Credits and priority (2026-08-28)
 
 The narrowed originality claim of conformance/omega/PRIOR_ART_CONVERGENCE.md
@@ -187,8 +259,9 @@ where confirmed, is corroboration that the underlying object is real.
 
 ## The one-paragraph position
 
-On exact finite models — the only regime where every claim above lives —
-the Ω structure is no longer a proposal: its closure defect is an order
+On exact finite models — the regime where every claim above but the
+water observatory's lives, and that section carries its narrower scope on
+its face — the Ω structure is no longer a proposal: its closure defect is an order
 parameter (proved + measured), its maintenance cost is a law that
 predicts across domains (measured, thrice), its identity is act-relative
 with the extension mechanism itself derived (proved + exhausted), and its

@@ -1517,20 +1517,50 @@ fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_
     sim.compute_forces();
     for b in bodies.iter_mut() { b.f = site_forces_of(&sim, &b.m); }
     let mut passes = 1u64;
-    // 4. the rigid settle: velocity rescaling to T_target on the six retained modes every 10 steps
+    // 4. the rigid settle: velocity rescaling to T_target on the six retained modes every 10
+    // steps, ENDED BY A CRITERION and not by a count. The 128-water smoke settled 74 fs and
+    // heated from 293 to 511 K in production; the pilot's fine settle ended with the
+    // cross-unit potential still falling. So: block means of the potential per water over
+    // 500-step blocks, and the settle ends when the last five blocks' least-squares trend is
+    // under their own scatter — LIQUID-2's settled_window rule in the same shape — after a
+    // FLOOR of `settle_rigid` steps and before a CAP of ten times it. Reaching the cap is
+    // recorded and the SETTLED gate then judges the production temperature as before.
     let t_proj = rigid_temperature(&bodies);
-    eprintln!("scout: rigid modes as projected {t_proj:.1} K; rigid settle {settle_rigid} steps ({:.1} fs) with rescaling to {TEMPERATURE_K} K every 10 steps", settle_rigid as f64 * dt_r * AU_TIME_FS);
-    for step in 0..settle_rigid {
+    let cap = settle_rigid * 10;
+    eprintln!("scout: rigid modes as projected {t_proj:.1} K; rigid settle by criterion (5 x 500-step blocks of U/water, trend under scatter), floor {settle_rigid} steps ({:.1} fs), cap {cap}", settle_rigid as f64 * dt_r * AU_TIME_FS);
+    let mut blocks: Vec<f64> = Vec::new();
+    let mut acc = 0.0f64;
+    let mut step = 0usize;
+    let mut settled_by_criterion = false;
+    while step < cap {
         rigid_step(&mut sim, &mut bodies, dt_r);
         passes += 1;
-        if (step + 1) % 10 == 0 {
+        step += 1;
+        acc += potential(&sim) / n_w as f64;
+        if step % 10 == 0 {
             let s = (TEMPERATURE_K / rigid_temperature(&bodies).max(1e-9)).sqrt();
             for b in bodies.iter_mut() { b.w.p = scale(b.w.p, s); b.w.l_body = scale(b.w.l_body, s); }
         }
-        if (step + 1) % 500 == 0 || step + 1 == settle_rigid {
-            eprintln!("  rigid settle step {:>6}: T {:6.1} K, U/water {:.6e} Ha", step + 1, rigid_temperature(&bodies), potential(&sim) / n_w as f64);
+        if step % 500 == 0 {
+            blocks.push(acc / 500.0);
+            acc = 0.0;
+            eprintln!("  rigid settle block {:>4} (step {:>6}): T {:6.1} K, U/water {:.6e} Ha", blocks.len(), step, rigid_temperature(&bodies), blocks.last().unwrap());
+            if step >= settle_rigid && blocks.len() >= 5 {
+                let w = &blocks[blocks.len() - 5..];
+                let my = w.iter().sum::<f64>() / 5.0;
+                let sd = (w.iter().map(|b| (b - my) * (b - my)).sum::<f64>() / 4.0).sqrt();
+                let num: f64 = w.iter().enumerate().map(|(i, b)| (i as f64 - 2.0) * (b - my)).sum();
+                let den: f64 = (0..5).map(|i| (i as f64 - 2.0) * (i as f64 - 2.0)).sum();
+                if (num / den).abs() * 4.0 <= sd {
+                    settled_by_criterion = true;
+                    eprintln!("scout: rigid settle SETTLED by criterion at step {step} ({:.1} fs)", step as f64 * dt_r * AU_TIME_FS);
+                    break;
+                }
+            }
         }
     }
+    if !settled_by_criterion { eprintln!("scout: rigid settle reached the CAP of {cap} steps without meeting the criterion"); }
+    let settle_rigid_used = step;
     let t_settled = rigid_temperature(&bodies);
     // 5. NVE production, walk and velocities appended at every readout
     let read_oxy = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].x, s.atoms[i].y, s.atoms[i].z]).collect() };
@@ -1596,7 +1626,9 @@ fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_
         .number("deformation_rms_at_projection_bohr", def_rms)
         .number("rigid_dt_au", dt_r)
         .int("rigid_steps_per_readout", k_r as i64)
-        .int("settle_rigid_steps", settle_rigid as i64)
+        .int("settle_rigid_floor_steps", settle_rigid as i64)
+        .int("settle_rigid_steps_used", settle_rigid_used as i64)
+        .flag("settle_rigid_by_criterion", settled_by_criterion)
         .number("rigid_temperature_after_settle_k", t_settled)
         .number("production_temperature_mean_k", t_mean)
         .int("readouts", readouts as i64)

@@ -1,5 +1,21 @@
 # RUNG 2 — AMENDMENT 2: Amendment 1's rule applied to the momentum and energy fields
 
+> **CORRECTION, 2026-09-17, on the first real reading under this amendment — the calibration
+> below is WRONG, and the error is the lead's.** The rule `Δ_cell = √⟨n⟩ · Δp` was checked
+> against a smoke bundle whose half-box momentum spread was `11.7` au and found to match
+> within `10 %`. The smoke was a hot, unsettled box of `2.4` ps whose slowest momentum mode
+> had not relaxed; on the three settled seeds the same spread is **`36–44` au, `3.4–4.2×`
+> the bin**, and the momentum rung read `6–11` informative transitions — VOID, exactly as
+> under Amendment 1. Worse: the section "Checked, not fitted" records the independent-oxygen
+> formula as *"`3–4×` too wide … a bin that wide would have passed the momentum field
+> vacuously."* **That formula was right.** With the finite-population correction for
+> conserved momentum it matches the settled data to `1.1–1.3×`, and the residual is the
+> carrier's known rigid-mode heating (`REPLACE-0`: oxygen kinetic temperature `≈ 375` K
+> against `T_target = 300`). The lead calibrated a rule on an unrepresentative box and
+> wrote the correct physics off as the error — while writing an amendment about scales
+> derived in the wrong regime. `RUNG2_AMENDMENT_3.md` carries the repair; this document is
+> kept as written beneath this note so the error stays legible.
+
 *Written 2026-09-16, committed alone, BEFORE any velocity-carrying trajectory is read under
 it. Amends `RUNG2_PREREG.md` §2.3 in one place: the momentum and energy bins are scaled to the
 cell by the same `√⟨n⟩` that `RUNG2_AMENDMENT_1.md` A1 applied to the density field.

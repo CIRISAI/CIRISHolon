@@ -223,7 +223,7 @@ fn main() {
     }
 
     if amend1 {
-        println!("\n# RUNG2_AMENDMENT_1.md and RUNG2_AMENDMENT_2.md were in force for every grid above: derived ladder, 3D cells, every field read Exact (the freeze), Poisson (A1: density binned) and CellScale (A2: all three fields binned) side by side");
+        println!("\n# RUNG2_AMENDMENT_1/2/3.md were in force for every grid above: derived ladder, 3D cells, every field read Exact (the freeze), Poisson (A1), CellScale (A2, superseded, kept as the control) and Derived (A3) side by side");
     }
     println!("\n===== COST (PREREG G11, work units, never wall clock) =====");
     println!("frames read:       {frames_read}");
@@ -260,9 +260,11 @@ fn amended_read(traj: &Trajectory, chart_evals: &mut u64) {
             && grid.cells() >= prereg::ADMISSIBLE_CELLS
             && fluct <= prereg::ADMISSIBLE_FLUCTUATION;
         let dn = ((h.n_atoms as f64) / (grid.cells() as f64)).sqrt().max(1.0);
+        let m_bar = h.z.iter().map(|z| mass_me(*z).unwrap_or(0.0)).sum::<f64>() / h.n_atoms as f64;
+        let (kp, ke) = derived_multiples(h.n_atoms as f64 / grid.cells() as f64, h.n_atoms as f64, m_bar);
         println!(
-            "   grid {}x{}x{} cells={} occ={:.3} fluct={:.3} transport={:.4} dn={:.2}  G2 admissible: {}",
-            grid.nx, grid.ny, grid.nz, grid.cells(), mean_occ, fluct, transport, dn,
+            "   grid {}x{}x{} cells={} occ={:.3} fluct={:.3} transport={:.4} dn={:.2} derived: dp={}x{:.4} de={}x{:.3e}  G2 admissible: {}",
+            grid.nx, grid.ny, grid.nz, grid.cells(), mean_occ, fluct, transport, dn, kp, dp_au(), ke, de_ha(),
             if g2 { "YES" } else { "NO" }
         );
         for kind in [Kind::Spatial, Kind::BlindLabel, Kind::BlindIndex, Kind::GlobalRelabel] {
@@ -273,7 +275,7 @@ fn amended_read(traj: &Trajectory, chart_evals: &mut u64) {
                     continue;
                 }
             };
-            for density in [Density::Exact, Density::Poisson, Density::CellScale] {
+            for density in [Density::Exact, Density::Poisson, Density::CellScale, Density::Derived] {
                 let mut prev: Option<Vec<Reading>> = None;
                 for rung in LADDER {
                     let r = match readings3(traj, grid, rung, kind, density) {

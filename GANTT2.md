@@ -799,6 +799,42 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## The fluid-element chart with momentum (2026-09-17): the first graded verdicts on the 3D carrier, and G7 says they are not readings
+
+`replace0/rung2_mom/RUNG2_MOM_ON_THE_3D_CARRIER.md`. Three amendments to the frozen rung-2
+instrument in two days, each committed alone, each with plants that fire, and the last two
+each found necessary by the reading under the one before — the record of that is in
+`RUNG2_AMENDMENT_1/2/3.md`, including the correction at the head of Amendment 2, where the
+lead calibrated a scale on an unrepresentative box and wrote the correct physics off as the
+error. The momentum run (three seeds, 300 readouts, velocities banked, `~66` core-hours)
+then read:
+
+- **Density at `2×1×1`: `D_A` 0.17–0.20, 300 informative, three seeds, both arms —
+  `NotClosed`, 8–10× β.** The first graded fluid-element verdict on the 3D carrier, as
+  staked on 09-16.
+- **Density + momentum: `D_A ≈ 0.94`.** The half-box momentum decorrelates within a 10 fs
+  readout at 128 waters — the incoherent thermal sum, not the hydrodynamic mode. G4 reached
+  on one seed and missed by 5–15 % on the rest.
+- **G7: the position-blind chart is as closed or MORE closed than the spatial one on five
+  of six**, and within 0.005 at the momentum rung. **Branch (e): VOID, no separation** —
+  the freeze's own rule, and it outranks the two lines above. Nothing is concluded about the
+  tier's closure; the numbers are on the record as data.
+
+**The control found the fault the VOIDs had not.** Amendment 1's `Δn = √⟨n⟩` is the Poisson
+spread of independent particles; a liquid's half-box count fluctuates at `√(S(0)⟨n⟩)`,
+`S(0) ≈ 0.06`, so the bin is `3.2×` the measured `σ(n) = 2.5` and the spatial chart has
+three distinct readings in 300 frames. The blind control scrambles atoms across cells,
+destroys the liquid's anticorrelation, and gets its Poisson spread back — resolved at its
+own scale where the spatial chart is not. G7 compared charts of unequal resolution. The
+third scale in this instrument derived for one regime and applied to another, and the first
+caught by a control.
+
+**Repair needs a decision, not a run.** A liquid's density bin needs `S(0)`, a property of
+the model: declare water's experimental value as an external constant (as `T_target` is),
+or measure `σ(n)` on a separate calibration trajectory (as LIQUID-2's band came from
+LIQUID-1). Binning at the graded trajectory's own spread is fitting and is refused. The
+operator's call; nothing further is spent until it is made.
+
 ## The named mover, read at zero compute (2026-09-16): the fluid-element chart on the 3D carrier, occupancy rung
 
 `replace0/rung2_occ/RUNG2_OCC_ON_THE_3D_CARRIER.md`. The operator's question — *is the 300×

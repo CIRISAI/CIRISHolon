@@ -166,8 +166,27 @@ pub enum Density {
     /// `Δ_cell = √⟨n⟩ · Δ_atom` with `Δ_atom` the freeze's own `1`, `Δp`, `Δe`. A cell's
     /// field is known to within `√⟨n⟩` of the resolution the freeze gave one atom's. At the
     /// density rung this IS `Poisson` (plant PB-4); at the momentum and energy rungs it is
-    /// what lets two frames share a reading at all (plant PB-1).
+    /// what lets two frames share a reading at all (plant PB-1). **Superseded by `Derived`:
+    /// its scale was calibrated on an unrepresentative box (the correction at the head of
+    /// `RUNG2_AMENDMENT_2.md`) and is kept as the printed control.**
     CellScale,
+    /// Amendment 3 (`RUNG2_AMENDMENT_3.md`): the two continuous bins DERIVED as one standard
+    /// deviation of the cell's field at equilibrium for `⟨n⟩` independent thermal atoms of
+    /// the carrier's own mean mass — `Δp = √(⟨n⟩ m̄ k_B T (1 − ⟨n⟩/N))` per component, with
+    /// the finite-population factor of a conserved total momentum, and `Δe = √(3⟨n⟩/2) k_B T`.
+    /// Density keeps Amendment 1's `√⟨n⟩`. Used as the nearest integer multiple of the
+    /// freeze's per-atom bins so the freeze's chart refines this one exactly (PC-3).
+    Derived,
+}
+
+/// Amendment 3's two continuous bins as multiples of the freeze's, for a cell of `n_bar`
+/// atoms on a carrier of `n_total` atoms of mean mass `m_bar` (electron masses). Public so
+/// a record can print the derivation beside the reading.
+pub fn derived_multiples(n_bar: f64, n_total: f64, m_bar: f64) -> (usize, usize) {
+    let var_p = n_bar * m_bar * K_B * T_TARGET * (1.0 - n_bar / n_total).max(0.0);
+    let dp_cell = var_p.sqrt();
+    let de_cell = (1.5 * n_bar).sqrt() * K_B * T_TARGET;
+    ((dp_cell / dp_au()).round().max(1.0) as usize, (de_cell / de_ha()).round().max(1.0) as usize)
 }
 
 /// A3 — the grid ladder derived from the carrier: `2^k` cells while `⟨n⟩ ≥ 1`, each doubling
@@ -407,11 +426,18 @@ pub fn readings3(
     // exactly only then. (The density field needs no rounding: its underlying value is an
     // integer, and `floor(n / Δ)` is a function of `n` for any `Δ`, which is why PA-5 held
     // at unrounded `√⟨n⟩` and why A1's density rule is kept as written.)
-    let cell_scale = match density {
-        Density::CellScale => ((n as f64) / (nc as f64)).sqrt().round().max(1.0),
-        _ => 1.0,
+    let (kp, ke) = match density {
+        Density::CellScale => {
+            let k = ((n as f64) / (nc as f64)).sqrt().round().max(1.0) as usize;
+            (k, k)
+        }
+        Density::Derived => {
+            let m_bar = masses.iter().sum::<f64>() / (n as f64);
+            derived_multiples((n as f64) / (nc as f64), n as f64, m_bar)
+        }
+        _ => (1, 1),
     };
-    let (dp, de) = (dp_au() * cell_scale, de_ha() * cell_scale);
+    let (dp, de) = (dp_au() * kp as f64, de_ha() * ke as f64);
 
     let mut out = Vec::with_capacity(traj.frames.len());
     for (fi, f) in traj.frames.iter().enumerate() {
@@ -437,7 +463,7 @@ pub fn readings3(
         }
         let mut r: Reading = match density {
             Density::Exact => occ,
-            Density::Poisson | Density::CellScale => occ
+            Density::Poisson | Density::CellScale | Density::Derived => occ
                 .iter()
                 .enumerate()
                 .map(|(k, o)| ((*o as f64) / dn[k % species.len()]).floor() as i64)
@@ -1359,6 +1385,149 @@ mod tests {
                 let a2 = readings3(&traj, grid, Rung::Occ, kind, Density::CellScale).unwrap();
                 assert_eq!(a1, a2, "grid {grid:?} kind {kind:?}: at the Occ rung A2 must equal A1");
             }
+        }
+    }
+
+    // ------------------------------------------- RUNG2_AMENDMENT_3.md's plants, PC-1..PC-5
+
+    /// `N` independent thermal OXYGENS at `T_target`, walking, with the total momentum
+    /// removed every frame — the zero-sum thermal sample the formula is the statistics of.
+    /// Amendment 2's plant used hydrogens to dodge a mass it had got wrong; this one uses
+    /// the carrier's own species because the formula now carries the mass.
+    fn zero_sum_thermal_walk3(n: usize, edge: f64, frames: usize, seed: u64) -> Trajectory {
+        let mut s = seed;
+        let mut next = move || {
+            s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407);
+            ((s >> 11) as f64) / ((1u64 << 53) as f64)
+        };
+        let m = O_MASS_U * M_E_PER_U;
+        let sigma_v = (K_B * T_TARGET / m).sqrt();
+        let mut gauss = move || {
+            let (u1, u2) = (next().max(1e-12), next());
+            (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos()
+        };
+        let mut pos: Vec<[f64; 3]> = (0..n).map(|_| [gauss().abs() % 1.0 * edge, gauss().abs() % 1.0 * edge, gauss().abs() % 1.0 * edge]).collect();
+        let mut out = Vec::with_capacity(frames);
+        for i in 0..frames {
+            let mut vel: Vec<[f64; 3]> = (0..n).map(|_| [gauss() * sigma_v, gauss() * sigma_v, gauss() * sigma_v]).collect();
+            for c in 0..3 {
+                let mean = vel.iter().map(|v| v[c]).sum::<f64>() / n as f64;
+                for v in vel.iter_mut() { v[c] -= mean; }
+            }
+            for p in pos.iter_mut() {
+                for c in 0..3 {
+                    let mut v = p[c] + gauss() * 0.02 * edge;
+                    if v < 0.0 { v = -v; }
+                    if v > edge { v = 2.0 * edge - v; }
+                    p[c] = v.clamp(0.0, edge);
+                }
+            }
+            out.push(frame(i as u64, pos.clone(), vel));
+        }
+        Trajectory { header: header3(n, vec![8; n], edge), frames: out }
+    }
+
+    /// PC-1 — the formula is the physics of its own carrier: the measured spread of the
+    /// cell momentum and energy on a zero-sum thermal sample lands within 15 % of the
+    /// derived bins. This is the check Amendment 2 did against the wrong box, made a test.
+    ///
+    /// The energy spread is measured CONDITIONAL ON OCCUPANCY — with the occupancy's mean
+    /// contribution `(3/2) k_B T · n_cell` removed — because occupancy is its own field of
+    /// the chart and the continuous fields are resolved at their fluctuation given it. The
+    /// first draft of this plant measured the raw spread and read `1.28×`: on a Poisson
+    /// carrier the occupancy's wandering adds `(3/2 k_B T)² · Var(n)` to the cell energy's
+    /// variance, a third of the thermal term at `⟨n⟩ = 64`. Momentum has no such term
+    /// (its per-atom mean is zero), which is why it passed unconditioned.
+    #[test]
+    fn pc1_the_derived_bins_match_their_own_carriers_measured_spread() {
+        let n = 128;
+        let traj = zero_sum_thermal_walk3(n, 29.6, 2000, 0x5043_3031);
+        let m = O_MASS_U * M_E_PER_U;
+        let grid = Grid3 { nx: 2, ny: 1, nz: 1 };
+        let cells = cell_series3(&traj, grid, Kind::Spatial).unwrap();
+        let (mut px, mut ek) = (Vec::new(), Vec::new());
+        for (fi, f) in traj.frames.iter().enumerate() {
+            let (mut p, mut e, mut occ) = (0.0, 0.0, 0usize);
+            for a in 0..n {
+                if cells[fi][a] == 0 {
+                    p += m * f.vel[a][0];
+                    e += 0.5 * m * (f.vel[a][0].powi(2) + f.vel[a][1].powi(2) + f.vel[a][2].powi(2));
+                    occ += 1;
+                }
+            }
+            px.push(p);
+            ek.push(e - 1.5 * K_B * T_TARGET * occ as f64);   // conditional on occupancy
+        }
+        let sd = |v: &[f64]| { let mu = v.iter().sum::<f64>() / v.len() as f64; (v.iter().map(|x| (x - mu).powi(2)).sum::<f64>() / v.len() as f64).sqrt() };
+        let (kp, ke) = derived_multiples(n as f64 / 2.0, n as f64, m);
+        let (rp, re) = (sd(&px) / (kp as f64 * dp_au()), sd(&ek) / (ke as f64 * de_ha()));
+        assert!((rp - 1.0).abs() < 0.15, "momentum: measured/derived = {rp:.3} (k = {kp})");
+        assert!((re - 1.0).abs() < 0.15, "energy: measured/derived = {re:.3} (k = {ke})");
+    }
+
+    /// PC-2 — VOID by counting under the freeze's per-atom bin; collides and meets G4 under
+    /// `Derived`, on the same frames.
+    #[test]
+    fn pc2_the_momentum_rung_reads_under_derived() {
+        let traj = zero_sum_thermal_walk3(128, 29.6, 600, 0x5043_3032);
+        let grid = Grid3 { nx: 2, ny: 1, nz: 1 };
+        let t = transport_fraction(&cell_series3(&traj, grid, Kind::Spatial).unwrap());
+        assert!(t > prereg::MIN_TRANSPORT);
+        let a1 = leg_a(&readings3(&traj, grid, Rung::Mom, Kind::Spatial, Density::Poisson).unwrap());
+        assert!(matches!(grade(true, t, &a1), Verdict::VoidNoCollisions | Verdict::VoidWorkCount(_)), "under the per-atom bin: VOID (informative {})", a1.informative);
+        let a3 = leg_a(&readings3(&traj, grid, Rung::Mom, Kind::Spatial, Density::Derived).unwrap());
+        assert!(a3.collisions > 0 && a3.informative >= prereg::MIN_INFORMATIVE, "under Derived: collisions {} informative {}", a3.collisions, a3.informative);
+    }
+
+    /// PC-3 — the freeze's chart refines this one at every rung and grid: the self-check.
+    #[test]
+    fn pc3_exact_refines_derived_at_every_rung() {
+        let traj = zero_sum_thermal_walk3(128, 29.6, 400, 0x5043_3033);
+        for grid in doubling_ladder(128, 3) {
+            for rung in LADDER {
+                let fine = readings3(&traj, grid, rung, Kind::Spatial, Density::Exact).unwrap();
+                let coarse = readings3(&traj, grid, rung, Kind::Spatial, Density::Derived).unwrap();
+                assert!(refines(&fine, &coarse), "grid {grid:?} rung {rung:?}: the freeze's chart must refine Amendment 3's");
+            }
+        }
+    }
+
+    /// PC-4 — the wider bin hides nothing: the hidden variable still fires under `Derived`.
+    #[test]
+    fn pc4_a_hidden_variable_still_fires_under_derived() {
+        let n = 4;
+        let ncell = 4;
+        let cw = 34.6 / ncell as f64;
+        let mut cells: Vec<usize> = (0..n).collect();
+        let mut s: u64 = 0xDEAD_BEEF;
+        let sigma_v = (K_B * T_TARGET / (H_MASS_U * M_E_PER_U)).sqrt();
+        let mut frames = Vec::new();
+        for i in 0..1200u64 {
+            let pos: Vec<[f64; 3]> = cells.iter().map(|&c| [(c as f64 + 0.5) * cw, 10.0, 0.0]).collect();
+            let vel: Vec<[f64; 3]> = cells.iter().map(|&c| [sigma_v * (c as f64 - 1.5), 0.0, 0.0]).collect();
+            frames.push(frame(i, pos, vel));
+            for c in cells.iter_mut() {
+                s = s.wrapping_mul(6364136223846793005).wrapping_add(1);
+                *c = if (s >> 60) & 1 == 1 { (*c + 1) % ncell } else { (*c + ncell - 1) % ncell };
+            }
+        }
+        let traj = Trajectory { header: header(n, vec![1; n]), frames };
+        let grid = Grid3 { nx: 4, ny: 1, nz: 1 };
+        let t = transport_fraction(&cell_series3(&traj, grid, Kind::Spatial).unwrap());
+        for rung in LADDER {
+            let a = leg_a(&readings3(&traj, grid, rung, Kind::Spatial, Density::Derived).unwrap());
+            assert!(a.firing > 0 && grade(true, t, &a) == Verdict::NotClosed, "{rung:?} must still fire under Derived");
+        }
+    }
+
+    /// PC-5 — at the density rung Amendment 3 IS Amendment 1.
+    #[test]
+    fn pc5_derived_equals_poisson_at_the_density_rung() {
+        let traj = zero_sum_thermal_walk3(128, 29.6, 300, 0x5043_3035);
+        for grid in doubling_ladder(128, 3) {
+            let a = readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Poisson).unwrap();
+            let b = readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Derived).unwrap();
+            assert_eq!(a, b, "grid {grid:?}");
         }
     }
 

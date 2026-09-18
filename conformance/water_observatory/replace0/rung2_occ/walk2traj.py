@@ -22,9 +22,11 @@ def walk(p, tag):
     return float(h[3]),[[float(x) for x in ln.split()] for ln in L[1:]]
 SRC=sys.argv[3] if len(sys.argv)>3 else "transport_seed"
 NS=int(sys.argv[4]) if len(sys.argv)>4 else 3
+ARMS=sys.argv[6].split(",") if len(sys.argv)>6 else ["flexible","rigid"]
 for k in range(NS):
-    for arm in ("flexible","rigid"):
+    for arm in ARMS:
         base=f"{B}/{SRC}{k}/{arm}"
+        if not os.path.exists(base+".walk"): print(f"{arm}/seed{k}: no walk, skipped"); continue
         l,fr=walk(base+".walk","walk"); n=len(fr[0])//3
         vw=base+".vwalk"; has_v=os.path.exists(vw)
         vel=walk(vw,"vwalk")[1] if has_v else None

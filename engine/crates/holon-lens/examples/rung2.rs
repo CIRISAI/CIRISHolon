@@ -442,12 +442,14 @@ fn amendment5_read(root: &Path, arms: &[String], frames_read: &mut u64, chart_ev
     let dims = first.2.header.dims;
     let readout_fs = first.2.header.dt * 0.024188843265857;
     let ladder = doubling_ladder(n_atoms, dims);
-    println!("# RUNG2_AMENDMENT_5: cadence tau = a / c_s (c_s = 1497 m/s, CRC), fields averaged over the window, bins = held-out sigma of the averaged fields; readout spacing {readout_fs:.2} fs");
+    println!("# RUNG2_AMENDMENT_5: cadence tau = a / c_s (c_s = 1497 m/s, CRC), fields averaged over the window, bins = held-out sigma of the averaged fields on the SAME arm's other seeds; readout spacing {readout_fs:.2} fs");
     // per (seed, grid): the averaged fields' sigmas on the flexible arm — the calibration pool
-    struct Cal { seed: u64, grid: Grid3, window: usize, sig: (f64, f64, f64), windows: usize }
+    // The pool is every file of the SAME ARM as the one graded, from OTHER seeds: a flexible
+    // file is calibrated on other flexible seeds, a rigid one on other rigid seeds — so a
+    // scout run on the operator alone still has a hold-out, and no file ever sees its own σ.
+    struct Cal { arm: String, seed: u64, grid: Grid3, window: usize, sig: (f64, f64, f64), windows: usize }
     let mut pool: Vec<Cal> = Vec::new();
     for (arm, _, t) in &files {
-        if arm != "flexible" { continue; }
         for grid in &ladder {
             if grid.cells() < 2 { continue; }
             let tau = cadence_fs(t, *grid);
@@ -455,7 +457,7 @@ fn amendment5_read(root: &Path, arms: &[String], frames_read: &mut u64, chart_ev
             if let Ok(f) = fields3(t, *grid, Kind::Spatial) {
                 let avg = window_mean(&f, window);
                 let comps = if grid.nz > 1 { 3 } else { 2 };
-                pool.push(Cal { seed: t.header.seed, grid: *grid, window, sig: field_sigmas(&avg, comps), windows: avg.len() });
+                pool.push(Cal { arm: arm.clone(), seed: t.header.seed, grid: *grid, window, sig: field_sigmas(&avg, comps), windows: avg.len() });
             }
         }
     }
@@ -467,7 +469,7 @@ fn amendment5_read(root: &Path, arms: &[String], frames_read: &mut u64, chart_ev
             if grid.cells() < 2 { continue; }
             let tau = cadence_fs(traj, *grid);
             let window = ((tau / readout_fs).round() as usize).max(1);
-            let held: Vec<&Cal> = pool.iter().filter(|c| c.seed != h.seed && c.grid == *grid).collect();
+            let held: Vec<&Cal> = pool.iter().filter(|c| c.arm == *arm && c.seed != h.seed && c.grid == *grid).collect();
             if held.is_empty() { println!("   grid {}x{}x{}: REFUSED — no held-out seed to calibrate on", grid.nx, grid.ny, grid.nz); continue; }
             let q = |f: &dyn Fn(&Cal) -> f64| (held.iter().map(|c| f(c).powi(2)).sum::<f64>() / held.len() as f64).sqrt();
             let cal = Density::Calibrated3 { n: q(&|c| c.sig.0), p: q(&|c| c.sig.1), e: q(&|c| c.sig.2) };

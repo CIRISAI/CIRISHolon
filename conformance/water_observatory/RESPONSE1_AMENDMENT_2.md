@@ -71,6 +71,48 @@ The in-run null (the last window of the aligned cycle, relaxed, `D_cont ≥ 0.8`
 driven `D_cont` within `0.1` of its relaxed) and the blind partition are read on the same
 grid and the same aligned averages.
 
+## A4 — the midpoint law's own floor, and the grid it forces (found on building, same day)
+
+The continuity leg predicts a face's flux as the mean of its two cells' momenta, and a
+cell's momentum is the cell average of the field. On a single mode at `k = 2π/L` read on
+`n` cells along the wave those two steps scale the prediction by `sinc(π/n) · cos(π/n)`, so
+an EXACT fluid reads
+
+> **`D_disc(n) = 1 − sinc(π/n) cos(π/n)` = `0.363` at 4 cells, `0.100` at 8, `0.026` at 16**
+
+(plant PR-12, the exact continuum wave at zero noise, to 5 %). **On `4×1×1` the stake
+`D ≤ 0.2` is under the leg's own floor for a perfect fluid.** R1 is therefore read on
+**`8×1×1`** (54 molecules a cell — the leg's admission is three cells on the split axis and
+twenty transitions, not G2's hundred, which gates the occupancy chart's binning), where the
+spatial floor is `0.100`; `4×1×1` is read beside it with its floor printed. The faces are the
+same full cross-sections, so the coherent crossings per face are unchanged; the cadence
+halves (`τ = 196` fs, `20` readouts), so the per-cycle signal-to-noise falls to `≈ 0.85`, and
+the floor over three seeds is `√((D_disc² s² + 1)/(s² + 1))` at `s ≈ 5`: **`≈ 0.22` at
+50 m/s** — the stake as written sits AT its floor on the 50 m/s arms; the 200 m/s control
+(`s ≈ 12`, floor `≈ 0.13`) is where it can be met with margin.
+
+## A5 — the window-mean form of the leg cannot read a driven transient (found on building)
+
+Amendment 6's leg compares consecutive WINDOW MEANS of the occupancy against the midpoint
+of the two windows' mean momenta. That assumes the fields vary slowly over a window. The
+driven density on the L arm rises in `1/λ₂ = 1/(ν_l k²) ≈ 40` fs — ten times faster than
+the cell's cadence — because at `L = 2.35` nm the longitudinal mode is overdamped
+(`Γ/ω ≈ 3.4`): the box is in the regime where the viscous time is SHORTER than the sound
+time, the opposite of hydrodynamics. On the exact overdamped response the window-mean leg
+reads **`D = 1.30` on 4 cells and `1.66` on 8 at zero noise** (PR-12) — an exact fluid
+convicted by the leg's time-differencing. **The driven read uses the INTEGRAL form**: the
+occupancy difference between two readouts a window apart against the face flux integrated
+over every readout between them (trapezoid; the same spatial interpolation). It has no
+temporal error beyond the readout spacing and reads the spatial floor on the same
+transient (`0.360`, `0.095`). The read is over the **first two windows** of the aligned cycle
+(the prereg's choice, now with its reason: pooling relaxed, noise-only windows into an RMS
+ratio can only raise it — PR-9 shows twelve cycles' lead windows pooled read `0.64`
+against one cycle's `0.57`, and the twelve aligned `0.27` at `s = 4.0` against a floor of
+`0.26`). The noise for `s` is read from the **position-blind partition** over the same
+windows (the same molecules, scrambled labels, no coherent part), because the eight-window
+cycles do not relax (`16 %` of the peak remains at the cycle's end) and a tail-based noise
+would be inflated by signal.
+
 ## Plants added
 
 | plant | must |
@@ -78,6 +120,7 @@ grid and the same aligned averages.
 | **PR-9** | synthetic occupancy and momentum fields on `4×1×1` with a coherent standing-wave flux at signal-to-noise `s = 1.2` per window-cell, Poisson noise, twelve cycles of alternating sign: `D_cont` on the raw pooled windows within `0.1` of `1/√(1 + s²)` (it does NOT fall with `W`); on the aligned average within `0.1` of `1/√(1 + 12 s²)` |
 | **PR-10** | the same carrier with the flux zeroed (no drive): aligned `D_cont ≥ 0.8` — the alignment manufactures no closure |
 | **PR-11** | `2×2×1` requested for R1: REFUSED by `continuity_admits`, by name |
+| **PR-12** | the exact continuum standing wave, cell-averaged at zero noise: the window-mean leg reads `1 − sinc(π/n) cos(π/n)` to 5 % on 4 and 8 cells under a slow decay, reads `> 1` on the overdamped transient at the cell cadence, and the integral form reads the spatial floor on that transient |
 
 ## The correction to FLUID_ELEMENT_RESPONSE.md
 

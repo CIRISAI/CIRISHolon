@@ -770,6 +770,142 @@ pub fn align_cycles(series: &[f64], cycles: usize, relax: usize, first: usize) -
     Aligned { mean, per_cycle, noise, noise_per_cycle, tail_sigma, tail_sigma_mean }
 }
 
+/// The sign-aligned average of the FIELDS over a run's kick cycles (RESPONSE1_AMENDMENT_2
+/// A2): each cell's occupancy departure from its time mean and its momentum, multiplied
+/// by the cycle's sign `(−1)^c` and averaged over the cycles that fit; the time-mean
+/// occupancy is added back so the result is a physical occupancy series of one cycle's
+/// length. Continuity is linear, so the averaged fields obey it iff each cycle's do, and
+/// the shot noise falls as `1/√C`. `first` is the index of the first cycle's first readout.
+pub fn align_fields(fields: &[CellFields], cycles: usize, relax: usize, first: usize) -> (Vec<CellFields>, usize) {
+    let nc = fields.first().map(|f| f.occ.len()).unwrap_or(0);
+    let np = fields.first().map(|f| f.p.len()).unwrap_or(0);
+    let mut mean_occ = vec![0.0f64; nc];
+    for f in fields { for (m, o) in mean_occ.iter_mut().zip(&f.occ) { *m += o; } }
+    for m in mean_occ.iter_mut() { *m /= fields.len().max(1) as f64; }
+    let mut out: Vec<CellFields> = (0..relax).map(|_| CellFields { occ: vec![0.0; nc], p: vec![[0.0; 3]; np], ek: vec![0.0; np] }).collect();
+    let mut used = 0usize;
+    for c in 0..cycles {
+        let start = first + c * relax;
+        if start + relax > fields.len() { break; }
+        let sign = if c % 2 == 0 { 1.0 } else { -1.0 };
+        for i in 0..relax {
+            let f = &fields[start + i];
+            for (a, (o, m)) in out[i].occ.iter_mut().zip(f.occ.iter().zip(&mean_occ)) { *a += sign * (o - m); }
+            for (a, b) in out[i].p.iter_mut().zip(&f.p) { for k in 0..3 { a[k] += sign * b[k]; } }
+            for (a, b) in out[i].ek.iter_mut().zip(&f.ek) { *a += b; }
+        }
+        used += 1;
+    }
+    let inv = 1.0 / used.max(1) as f64;
+    for o in out.iter_mut() {
+        for (a, m) in o.occ.iter_mut().zip(&mean_occ) { *a = *a * inv + m; }
+        for a in o.p.iter_mut() { for k in 0..3 { a[k] *= inv; } }
+        for a in o.ek.iter_mut() { *a *= inv; }
+    }
+    (out, used)
+}
+
+/// The driven continuity read's signal-to-noise and floor (RESPONSE1_AMENDMENT_2 A2), on
+/// the INSTANTANEOUS fields with the integral form's own differencing: the RMS over cells
+/// of the occupancy change across each of the first `lead` windows of `w` readouts (signal
+/// plus noise) against the same over the last `lead` windows (relaxed: noise), and
+/// `s = √(lead²/tail² − 1)`, `D_floor = 1/√(1 + s²)`. Returns `(s, floor)`; NaN with fewer
+/// than `2·lead + 1` windows.
+pub fn driven_floor(fields: &[CellFields], w: usize, lead: usize) -> (f64, f64) {
+    let w = w.max(1);
+    let windows = fields.len().saturating_sub(1) / w;
+    if windows < 2 * lead + 1 || lead == 0 { return (f64::NAN, f64::NAN); }
+    let rms = |range: std::ops::Range<usize>| -> f64 {
+        let (mut s, mut n) = (0.0, 0usize);
+        for k in range {
+            let (a, b) = (&fields[k * w], &fields[(k + 1) * w]);
+            let nc = a.p.len().max(1);
+            let per = a.occ.len() / nc;
+            for c in 0..nc {
+                let d: f64 = (0..per).map(|sp| b.occ[c * per + sp] - a.occ[c * per + sp]).sum();
+                s += d * d; n += 1;
+            }
+        }
+        (s / n.max(1) as f64).sqrt()
+    };
+    let sig = rms(0..lead);
+    let noise = rms((windows - lead)..windows).max(1e-300);
+    let s = (sig * sig / (noise * noise) - 1.0).max(0.0).sqrt();
+    (s, 1.0 / (1.0 + s * s).sqrt())
+}
+
+/// The driven read's signal-to-noise from the PLACEBO (RESPONSE1_AMENDMENT_2 A2, as read on
+/// the arms): the position-blind partition sees the same molecules with scrambled labels, so
+/// its observed occupancy changes over the same windows are the shot noise with no coherent
+/// part; `s = √(rms_obs(spatial)² / rms_obs(blind)² − 1)`. Independent of whether the cycle's
+/// tail has relaxed, which the eight-window cycles' has not (16 % of the peak remains).
+pub fn driven_floor_from_blind(spatial: &Continuity, blind: &Continuity) -> (f64, f64) {
+    let r = spatial.rms_observed / blind.rms_observed.max(1e-300);
+    let s = (r * r - 1.0).max(0.0).sqrt();
+    (s, 1.0 / (1.0 + s * s).sqrt())
+}
+
+/// The continuity leg in its INTEGRAL form (RESPONSE1_AMENDMENT_2 A5): the occupancy
+/// difference between two readouts `w` apart against the time-INTEGRATED face flux over
+/// every readout between them (trapezoid in time, the same midpoint face interpolation in
+/// space). The window-mean form of [`continuity`] assumes the fields vary slowly over a
+/// window; a driven density transient faster than the cadence (the overdamped rise,
+/// `~40` fs against `τ = 392` fs at 432 waters) breaks that assumption and reads `D > 1`
+/// on an EXACT fluid (plant PR-12). The integral form has no temporal discretisation error
+/// beyond the readout spacing and keeps the spatial floor `1 − sinc(π/n) cos(π/n)`.
+pub fn continuity_integral(fields: &[CellFields], grid: Grid3, box_edges: [f64; 3], m_bar: f64, dt_au: f64, w: usize) -> Continuity {
+    let nc = grid.cells();
+    let dims = [grid.nx, grid.ny, grid.nz];
+    let edge = [box_edges[0] / grid.nx as f64, box_edges[1] / grid.ny as f64, box_edges[2] / grid.nz as f64];
+    let idx = |ix: usize, iy: usize, iz: usize| (iz * grid.ny + iy) * grid.nx + ix;
+    let coords = |c: usize| (c % grid.nx, (c / grid.nx) % grid.ny, c / (grid.nx * grid.ny));
+    let w = w.max(1);
+    let (mut so, mut sr, mut n, mut windows) = (0.0f64, 0.0f64, 0usize, 0usize);
+    let mut k = 0;
+    while k + w < fields.len() {
+        let (a, b) = (&fields[k], &fields[k + w]);
+        let ns = a.occ.len() / nc.max(1);
+        for c in 0..nc {
+            let obs: f64 = (0..ns).map(|s| b.occ[c * ns + s] - a.occ[c * ns + s]).sum();
+            let (ix, iy, iz) = coords(c);
+            let mut integral = 0.0;
+            for i in k..k + w {
+                let (f0, f1) = (&fields[i], &fields[i + 1]);
+                for axis in 0..3 {
+                    if dims[axis] < 2 { continue; }
+                    for dir in [-1i64, 1i64] {
+                        let mut q = [ix as i64, iy as i64, iz as i64];
+                        q[axis] = (q[axis] + dir).rem_euclid(dims[axis] as i64);
+                        let d = idx(q[0] as usize, q[1] as usize, q[2] as usize);
+                        let p_face_0 = 0.5 * (f0.p[c][axis] + f0.p[d][axis]);
+                        let p_face_1 = 0.5 * (f1.p[c][axis] + f1.p[d][axis]);
+                        integral += (dir as f64) * 0.5 * (p_face_0 + p_face_1) / edge[axis];
+                    }
+                }
+            }
+            let pred = -(dt_au / m_bar) * integral;
+            so += obs * obs;
+            sr += (obs - pred) * (obs - pred);
+            n += 1;
+        }
+        windows += 1;
+        k += w;
+    }
+    let nf = n.max(1) as f64;
+    Continuity { windows_compared: windows, rms_observed: (so / nf).sqrt(), rms_residual: (sr / nf).sqrt() }
+}
+
+/// The midpoint continuity law's own floor on a single mode at `k = 2π/L` read on `n` cells
+/// along the wave (RESPONSE1_AMENDMENT_2 A4): the cell average of the mode is the mode times
+/// `sinc(π/n)`, the face value interpolated as the mean of two neighbours is the face's
+/// value times `cos(π/n)`, so the predicted flux is `sinc(π/n) cos(π/n)` of the true one and
+/// `D_cont = 1 − sinc(π/n) cos(π/n)` at zero noise: `0.363` at 4 cells, `0.100` at 8, `0.026`
+/// at 16. Plant PR-12 reads it back on the exact continuum wave.
+pub fn continuity_spatial_floor(n_cells_along_wave: usize) -> f64 {
+    let a = std::f64::consts::PI / n_cells_along_wave.max(1) as f64;
+    1.0 - (a.sin() / a) * a.cos()
+}
+
 /// A density mode that starts at zero and rises before it decays (RESPONSE1_AMENDMENT_1 A3).
 #[derive(Clone, Debug, PartialEq)]
 pub struct RiseDecay {
@@ -2515,6 +2651,132 @@ mod tests {
         }
         let fast = r.fast.expect("the rise is resolved (peak >= 3 readouts) so λ₂ must be read");
         assert!((fast / l2 - 1.0).abs() < 0.10, "λ₂ {fast:.3e} vs {l2:.3e}");
+    }
+
+    /// The exact continuum carrier for PR-9/10/12 (RESPONSE1_AMENDMENT_2): the linearised
+    /// hydrodynamic response to a velocity kick, overdamped — `u(x,t) = u0 sin(kx) ·
+    /// (λ₂ e^{−λ₂ t} − λ₁ e^{−λ₁ t})/(λ₂ − λ₁)` whose net displacement is zero, so the density
+    /// continuity gives it, `δn = −n̄ k u0 cos(kx) (e^{−λ₁ t} − e^{−λ₂ t})/(λ₂ − λ₁)`, rises and
+    /// returns (Amendment 1 A3's form). Cycles alternate sign and SUPERPOSE (the response is
+    /// linear; nothing is reset at a cycle boundary), cell-averaged on `nx` cells per
+    /// readout; `λ` in inverse readouts. `sigma` is an occupancy shot noise per WINDOW-cell
+    /// (constant within a window of `w` readouts, so window averaging does not thin it) and
+    /// `sigma_p` the same on the momentum side. `m̄ = 1`, `edge = L/nx`.
+    #[allow(clippy::too_many_arguments)]
+    fn continuum_carrier(nx: usize, l: f64, n_bar: f64, u0: f64, lam1: f64, lam2: f64, cycles: usize, relax: usize, w: usize, sigma: f64, sigma_p: f64, seed: u64) -> Vec<CellFields> {
+        let mut s = seed;
+        let mut next = move || { s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407); ((s >> 11) as f64) / ((1u64 << 53) as f64) - 0.5 };
+        let k = 2.0 * std::f64::consts::PI / l;
+        let edge = l / nx as f64;
+        let mut out = Vec::new();
+        let mut noise_occ = vec![0.0; nx]; let mut noise_p = vec![0.0; nx];
+        for c in 0..cycles {
+            for i in 0..relax {
+                if i % w == 0 { for cidx in 0..nx { noise_occ[cidx] = sigma * 3.46 * next(); noise_p[cidx] = sigma_p * 3.46 * next(); } }
+                // superpose every cycle so far
+                let (mut vel, mut dis) = (0.0, 0.0);   // the mode's velocity and displacement amplitudes
+                for cp in 0..=c {
+                    let sign = if cp % 2 == 0 { 1.0 } else { -1.0 };
+                    let t = ((c - cp) * relax + i) as f64;
+                    vel += sign * (lam2 * (-lam2 * t).exp() - lam1 * (-lam1 * t).exp()) / (lam2 - lam1);
+                    dis += sign * ((-lam1 * t).exp() - (-lam2 * t).exp()) / (lam2 - lam1);
+                }
+                let mut occ = vec![0.0; nx]; let mut p = vec![[0.0; 3]; nx];
+                for cidx in 0..nx {
+                    let (a, b) = (cidx as f64 * edge, (cidx as f64 + 1.0) * edge);
+                    // ∫_cell n dx = n̄ edge − n̄ u0 dis ∫ k cos(kx) dx ; ∫_cell n̄ u dx = n̄ u0 vel ∫ sin(kx) dx
+                    occ[cidx] = n_bar * edge - n_bar * u0 * dis * ((k * b).sin() - (k * a).sin()) + noise_occ[cidx];
+                    p[cidx][0] = n_bar * u0 * vel * (-((k * b).cos() - (k * a).cos()) / k) + noise_p[cidx];
+                }
+                out.push(CellFields { occ, p, ek: vec![0.0; nx] });
+            }
+        }
+        out
+    }
+
+    /// PR-12 (Amendment 2) — the midpoint law's spatial floor: the exact continuum wave at
+    /// zero noise reads `D_cont = 1 − sinc(π/n) cos(π/n)` to 1 % on 4, 8 and 16 cells.
+    #[test]
+    fn pr12_the_midpoint_laws_spatial_floor_is_read_back_on_the_exact_wave() {
+        let (relax, w) = (320usize, 40usize);
+        for nx in [4usize, 8, 16] {
+            let graded = nx <= 8;   // the grids R1 is read on; 16 is printed (the formula's residual grows as the floor shrinks)
+            // slow decay (λ₁ = 1/(200 windows)) isolates the spatial floor; the realistic cadence
+            // (λ₁ = 1/(4.3 windows), λ₂ = 40 λ₁) is printed beside it
+            let slow = continuum_carrier(nx, 4.0, 100.0, 1e-3, 1.0 / (200.0 * w as f64), 40.0 / (200.0 * w as f64), 1, relax, w, 0.0, 0.0, 1);
+            let d = continuity(&window_mean(&slow, w), Grid3 { nx, ny: 1, nz: 1 }, [4.0, 1.0, 1.0], 1.0, w as f64).defect().unwrap();
+            let real = continuum_carrier(nx, 4.0, 100.0, 1e-3, 1.0 / (4.3 * w as f64), 40.0 / (4.3 * w as f64), 1, relax, w, 0.0, 0.0, 1);
+            let d_real = continuity(&window_mean(&real, w), Grid3 { nx, ny: 1, nz: 1 }, [4.0, 1.0, 1.0], 1.0, w as f64).defect().unwrap();
+            let d_int = continuity_integral(&real, Grid3 { nx, ny: 1, nz: 1 }, [4.0, 1.0, 1.0], 1.0, 1.0, w).defect().unwrap();
+            let floor = continuity_spatial_floor(nx);
+            eprintln!("PR-12 n={nx}: window-mean law D {d:.4} (slow decay) vs derived spatial floor {floor:.4}; at the realistic cadence {d_real:.4} (window-mean) and {d_int:.4} (integral form)");
+            if !graded { continue; }
+            assert!((d - floor).abs() < 0.05 * floor, "n={nx}: D {d:.4} vs derived floor {floor:.4}");
+            assert!(d_real > 1.0, "the window-mean law must FAIL on the fast transient at the cell cadence: {d_real:.3}");
+            assert!((d_int - floor).abs() < 0.05 * floor, "integral form at the realistic cadence: D {d_int:.4} vs spatial floor {floor:.4}");
+        }
+    }
+
+    /// PR-9 (Amendment 2) — `D_cont` on raw pooled windows does NOT fall with the window
+    /// count and sits at `√((D_disc² s² + 1)/(s² + 1))`; on the cycle-aligned average `s`
+    /// becomes `√C s`, and `D` falls toward the spatial floor.
+    #[test]
+    fn pr9_the_continuity_defect_falls_with_aligned_cycles_not_with_pooled_windows() {
+        // sixteen windows a cycle so the tail the noise is read from is relaxed (e^{−14/4.3} = 4 %
+        // of the peak); the arms' eight-window cycles read their noise from the blind partition
+        let (nx, cycles, relax, w) = (8usize, 12usize, 640usize, 40usize);
+        let grid = Grid3 { nx, ny: 1, nz: 1 };
+        let boxe = [4.0, 1.0, 1.0];
+        let (lam1, lam2) = (1.0 / (4.3 * w as f64), 40.0 / (4.3 * w as f64));
+        // size the noise from the quiet carrier: the RMS window-to-window occupancy change over
+        // the first two windows, divided by the target s = 1.2
+        let quiet = continuum_carrier(nx, 4.0, 100.0, 1e-3, lam1, lam2, 1, relax, w, 0.0, 0.0, 1);
+        let sig_rms = { let (mut s2, mut n) = (0.0, 0); for k in 0..2 { for c in 0..nx { let d = quiet[(k + 1) * w].occ[c] - quiet[k * w].occ[c]; s2 += d * d; n += 1; } } (s2 / n as f64).sqrt() };
+        let sigma = sig_rms / 1.2 / 2f64.sqrt();   // a window-to-window difference of two independent noises has √2 the per-window SD
+        let noisy = continuum_carrier(nx, 4.0, 100.0, 1e-3, lam1, lam2, cycles, relax, w, sigma, 0.0, 0x5052_3039);
+        let d_disc = continuity_spatial_floor(nx);
+        // raw pooled windows: one cycle and twelve cycles must read the SAME D within noise
+        // the driven read is over the LEAD windows of a cycle (the prereg's "first two"): pooling
+        // relaxed, noise-only windows into an RMS ratio can only raise it
+        let lead = 2usize;
+        let d_one = continuity_integral(&noisy[..=lead * w], grid, boxe, 1.0, 1.0, w).defect().unwrap();
+        // twelve cycles' lead windows pooled (equal counts per cycle, so the ratio of summed squares)
+        let (mut so, mut sr) = (0.0, 0.0);
+        for c in 0..cycles { let k = continuity_integral(&noisy[c * relax..=c * relax + lead * w], grid, boxe, 1.0, 1.0, w); so += k.rms_observed * k.rms_observed; sr += k.rms_residual * k.rms_residual; }
+        let d_raw = (sr / so).sqrt();
+        let (s_one, _) = driven_floor(&noisy[..relax], w, lead);
+        let floor_raw = ((d_disc * d_disc * s_one * s_one + 1.0) / (s_one * s_one + 1.0)).sqrt();
+        let (aligned, used) = align_fields(&noisy, cycles, relax, 0);
+        assert_eq!(used, cycles);
+        let d_al = continuity_integral(&aligned[..=lead * w], grid, boxe, 1.0, 1.0, w).defect().unwrap();
+        let (s_al, _) = driven_floor(&aligned, w, lead);
+        let floor_al = ((d_disc * d_disc * s_al * s_al + 1.0) / (s_al * s_al + 1.0)).sqrt();
+        eprintln!("PR-9 (n={nx}, D_disc {d_disc:.3}): one cycle D {d_one:.3} (s {s_one:.2}, floor {floor_raw:.3}); twelve cycles' lead windows pooled D {d_raw:.3}; aligned D {d_al:.3} (s {s_al:.2}, floor {floor_al:.3})");
+        assert!(s_one > 0.6 && s_one < 2.5, "the carrier must sit near s ≈ 1.2 per window-cell: {s_one:.2}");
+        assert!((d_raw - d_one).abs() < 0.15, "pooling windows must not lower D: one cycle {d_one:.3}, twelve {d_raw:.3}");
+        assert!((d_raw - floor_raw).abs() < 0.1, "raw D {d_raw:.3} vs its floor {floor_raw:.3}");
+        assert!((d_al - floor_al).abs() < 0.1, "aligned D {d_al:.3} vs its floor {floor_al:.3}");
+        assert!(d_al < 0.6 * d_raw, "alignment must lower D: {d_al:.3} vs {d_raw:.3}");
+        assert!(s_al > 2.0 * s_one, "alignment must raise s by about √12: {s_al:.2} vs {s_one:.2}");
+    }
+
+    /// PR-10 (Amendment 2) — no drive: the aligned `D_cont` stays at the floor (≥ 0.8); the
+    /// alignment manufactures no closure.
+    #[test]
+    fn pr10_alignment_manufactures_no_closure_without_a_drive() {
+        let (cycles, relax, window) = (12usize, 320usize, 40usize);
+        let fields = continuum_carrier(4, 4.0, 100.0, 0.0, 1.0 / (4.3 * window as f64), 40.0 / (4.3 * window as f64), cycles, relax, window, 2.0, 2.0, 0x5052_303a);
+        let grid = Grid3 { nx: 4, ny: 1, nz: 1 };
+        let (aligned, _) = align_fields(&fields, cycles, relax, 0);
+        let d = continuity_integral(&aligned[..=2 * window], grid, [4.0, 1.0, 1.0], 1.0, 1.0, window).defect().unwrap();
+        assert!(d >= 0.8, "undriven aligned D must sit at its floor: {d:.3}");
+    }
+
+    /// PR-11 (Amendment 2) — the prereg's `2×2×1` is refused for the continuity leg by name.
+    #[test]
+    fn pr11_the_preregs_grid_is_refused_by_name() {
+        assert!(continuity_admits(Grid3 { nx: 2, ny: 2, nz: 1 }).is_err());
+        assert!(continuity_admits(Grid3 { nx: 4, ny: 1, nz: 1 }).is_ok());
     }
 
     // ------------------------------------------------------- P-6 / P-7: the pair

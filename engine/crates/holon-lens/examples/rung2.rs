@@ -674,6 +674,49 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
             } else {
                 println!("   {}: the aligned current mode did not read on this seed", if axis == 1 { "R3" } else { "longitudinal current" });
             }
+            // R1 / R1′ (Amendment 2): the continuity leg in its integral form on the cycle-aligned
+            // fields, 8×1×1 graded and 4×1×1 beside it, the first two windows of the aligned cycle,
+            // the noise from the blind partition, the floor printed; the in-run null on the last window
+            {
+                let m_bar = h.z.iter().map(|z| mass_me(*z).unwrap_or(0.0)).sum::<f64>() / h.n_atoms as f64;
+                let boxe = [h.box_w, h.box_h, h.box_d];
+                let label = if axis == 0 { "R1 " } else { "R1′" };
+                for nx in [8usize, 4] {
+                    let grid = Grid3 { nx, ny: 1, nz: 1 };
+                    if let Err(why) = continuity_admits(grid) { println!("   {label} grid {nx}x1x1: REFUSED — {why}"); continue; }
+                    let tau = cadence_fs(&traj, grid);
+                    let w = ((tau / dt_fs).round() as usize).max(1);
+                    let lead = 2usize;
+                    let d_disc = continuity_spatial_floor(nx);
+                    let (Ok(fs_sp), Ok(fs_bl)) = (fields3(&traj, grid, Kind::Spatial), fields3(&traj, grid, Kind::BlindLabel)) else { println!("   {label} grid {nx}x1x1: fields REFUSED"); continue; };
+                    let (al_sp, used) = align_fields(&fs_sp, cycles, relax, 1);
+                    let (al_bl, _) = align_fields(&fs_bl, cycles, relax, 1);
+                    if used == 0 || relax < (lead + 1) * w + 1 { println!("   {label} grid {nx}x1x1: no complete cycle or too few windows (relax {relax}, window {w})"); continue; }
+                    let c_sp = continuity_integral(&al_sp[..=lead * w], grid, boxe, m_bar, h.dt, w);
+                    let c_bl = continuity_integral(&al_bl[..=lead * w], grid, boxe, m_bar, h.dt, w);
+                    let (s, _) = driven_floor_from_blind(&c_sp, &c_bl);
+                    let floor = ((d_disc * d_disc * s * s + 1.0) / (s * s + 1.0)).sqrt();
+                    let (d_sp, d_bl) = (c_sp.defect().unwrap_or(f64::NAN), c_bl.defect().unwrap_or(f64::NAN));
+                    // the in-run null: the last window of the aligned cycle, relaxed
+                    let tail_start = relax - w - 1;
+                    let d_tail = continuity_integral(&al_sp[tail_start..], grid, boxe, m_bar, h.dt, w).defect().unwrap_or(f64::NAN);
+                    let graded = nx == 8;
+                    println!("   {label} grid {nx}x1x1 (τ {tau:.0} fs, window {w}, {used} cycles aligned, lead {lead} windows): D_cont spatial {d_sp:.3}  blind {d_bl:.3}  separation {:+.3} | s {s:.2}, floor √((D_disc² s² + 1)/(s² + 1)) = {floor:.3} (D_disc {d_disc:.3}) | relaxed last window {d_tail:.3}{}",
+                        d_bl - d_sp, if graded { "" } else { "  [beside the graded grid]" });
+                    if graded {
+                        if axis == 0 {
+                            let sep = d_bl - d_sp >= 0.05;
+                            let verdict = if d_sp <= 0.2 && sep { "MET (D ≤ 0.2 and separated)" }
+                                else if !sep { "separation FAILS — branch (c): the chart does not beat its placebo under drive" }
+                                else if d_sp <= floor + 0.05 { "AT FLOOR (over 0.2 but within 0.05 of the stated floor; not a kill — the arithmetic, not the fluid)" }
+                                else { "KILL as staked: D over 0.2 and over its floor by more than 0.05" };
+                            println!("        R1 verdict on this seed: {verdict}; null (relaxed ≥ 0.8): {}", if d_tail >= 0.8 { "holds" } else { "FAILS — the tail is not relaxed or the leg reads the tail" });
+                        } else {
+                            println!("        R1′ verdict: driven {d_sp:.3} vs relaxed {d_tail:.3}, |Δ| = {:.3} (stake < 0.1): {}", (d_sp - d_tail).abs(), if (d_sp - d_tail).abs() < 0.1 { "continuity sees nothing under shear, as it must" } else { "FIRES — the leg is reading momentum, not flux" });
+                        }
+                    }
+                }
+            }
             // R2, the density mode on the L arm: cos quadrature, fitted from its peak (A3); its null is the sin quadrature
             if axis == 0 {
                 let rho = align_cycles(&sp.rho_cos, cycles, relax, 1);

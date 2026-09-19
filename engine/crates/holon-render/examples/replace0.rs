@@ -1438,18 +1438,21 @@ fn main() {
             args.iter().any(|a| a == "--match-3n"),
             seed,
         ),
-        other => panic!("unknown phase {other:?}: stiffness | run | scout"),
+        "plant-kick" => plant_kick(&obs, val("--cells").and_then(|v| v.parse().ok()).unwrap_or(6), seed, val("--kick-mps").and_then(|v| v.parse().ok()).unwrap_or(50.0)),
+        other => panic!("unknown phase {other:?}: stiffness | run | scout | plant-kick"),
     }
     let _ = (add, Discarded::default());
 }
 
 
-/// THE KICK (RESPONSE1_PREREG.md §2): a velocity increment `Δv_axis = v_d sin(2π x_com / L)`
-/// on every rigid body — `axis = 0` (x) is the longitudinal arm, `axis = 1` (y) the
-/// transverse. A pure momentum change: no position moves, the total momentum stays zero by
-/// the symmetry of `sin` on a periodic box, and the kinetic energy rises by exactly
-/// `Σ ½ M v_d² sin²(k x)` which the record carries. `v_d` in atomic units of velocity.
-/// Returns (Δp_total, ΔKE) so plant PR-4 can check both.
+/// THE KICK (RESPONSE1_PREREG.md §2): a velocity increment `Δv_axis = v_d (sin(2π x_com / L)
+/// − ⟨sin⟩)` on every rigid body — `axis = 0` (x) is the longitudinal arm, `axis = 1` (y)
+/// the transverse. A pure momentum change: no position moves, the total momentum change is
+/// zero EXACTLY because the mean of `sin` over the bodies is subtracted ("by the symmetry of
+/// `sin`" is the continuum's truth and the first smoke read `4.44` au on 128 discrete
+/// positions), and the kinetic energy rises by `Σ ½ M v_d² (sin(k x) − ⟨sin⟩)²` on a
+/// stationary box, which the record carries. `v_d` in atomic units of velocity.
+/// Returns (Δp_total, ΔKE); plant PR-4 (`plant-kick`) checks both on the arms' own box.
 fn kick_bodies(bodies: &mut [Flying], l: f64, axis: usize, v_d: f64) -> ([f64; 3], f64) {
     let k = 2.0 * std::f64::consts::PI / l;
     // "Zero total momentum by the symmetry of sin" is true in the continuum and false on N
@@ -1511,6 +1514,49 @@ fn append_walk_rows(base: &Path, w: &Walk) {
 /// What a reading on this box is: a reading of the OPERATOR's liquid. The amendment's fence
 /// is that one fine-model seed at this size is owed before any closure is called the
 /// model's.
+/// Metres per second to atomic units of velocity (one au = 2.187 691 263 × 10⁶ m/s).
+const MPS_TO_AU: f64 = 1.0 / 2.187_691_263_e6;
+
+/// PLANT PR-4 (RESPONSE1_PREREG.md §4): the kick applied in the runner to a STATIONARY box —
+/// the arms' own box (`build_n` at `cells`, projected to rigid bodies, every momentum zeroed).
+/// Must: total momentum change zero to `1e-12` au on every component, for both arms; the
+/// kinetic energy up by `½ M v_d² Σ (sin(k x_i) − ⟨sin⟩)²` to `1e-9` relative; every body's
+/// centre of mass and orientation unchanged to the bit. Prints PASS or panics with the number.
+fn plant_kick(obs: &Path, cells: usize, seed: u64, v_d_mps: f64) {
+    let law = load_law(obs);
+    let (mut sim, l) = build_n(&law, seed, cells);
+    sim.thermostat_on = false;
+    sim.compute_forces();
+    let (units, other) = unit_members(&sim.units_reading());
+    assert!(other.is_empty(), "non-water units in the built box: {other:?}");
+    let geom = mean_monomer_geometry(&sim, &units);
+    let body = reference_body_from(geom.r_oh_bohr, geom.theta_rad).expect("the mean monomer is principal");
+    let (projected, other) = project_all(&sim, &body).expect("every unit projects");
+    assert!(other.is_empty());
+    let v_d = v_d_mps * MPS_TO_AU;
+    let k = 2.0 * std::f64::consts::PI / l;
+    for axis in 0..2 {
+        let mut bodies: Vec<Flying> = projected.iter().map(|(m, w, _)| Flying { m: *m, w: *w, f: SiteForces::default() }).collect();
+        for b in bodies.iter_mut() { b.w.p = [0.0; 3]; b.w.l_body = [0.0; 3]; }
+        let before: Vec<([f64; 3], [f64; 4])> = bodies.iter().map(|b| (b.w.com, b.w.q)).collect();
+        let n = bodies.len() as f64;
+        let mean_sin = bodies.iter().map(|b| (k * b.w.com[0]).sin()).sum::<f64>() / n;
+        let expected_dke: f64 = bodies.iter().map(|b| { let s = (k * b.w.com[0]).sin() - mean_sin; 0.5 * b.w.body.mass * v_d * v_d * s * s }).sum();
+        let (dp, dke) = kick_bodies(&mut bodies, l, axis, v_d);
+        let p_total = bodies.iter().fold([0.0f64; 3], |a, b| add(a, b.w.p));
+        let ke_after = rigid_kinetic(&bodies);
+        let worst_dp = dp.iter().chain(p_total.iter()).fold(0.0f64, |a, &x| a.max(x.abs()));
+        let rel = ((dke - expected_dke) / expected_dke).abs();
+        let rel_after = ((ke_after - expected_dke) / expected_dke).abs();
+        let moved = bodies.iter().zip(before.iter()).filter(|(b, (c, q))| b.w.com != *c || b.w.q != *q).count();
+        eprintln!("plant PR-4 axis {axis}: {} bodies, v_d {v_d_mps} m/s; |dp| worst {worst_dp:.3e} au (returned and summed); dKE {dke:.9e} vs 1/2 M v_d^2 sum (sin - mean)^2 = {expected_dke:.9e} Ha, rel {rel:.2e} (KE after {rel_after:.2e}); bodies moved {moved}", bodies.len());
+        assert!(worst_dp <= 1e-12, "PR-4 FAILS: total momentum change {worst_dp:.3e} au on axis {axis}");
+        assert!(rel <= 1e-9 && rel_after <= 1e-9, "PR-4 FAILS: dKE off by {rel:.2e} relative on axis {axis}");
+        assert!(moved == 0, "PR-4 FAILS: {moved} bodies moved under a pure momentum kick");
+    }
+    println!("plant PR-4 PASS: {} waters at n_cells = {cells}, v_d {v_d_mps} m/s, both arms", projected.len());
+}
+
 fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_rigid: usize, readouts: usize, readout_fs: f64, stiffness: Option<String>, seed: u64, workers: usize, kick: Option<Kick>) {
     let t0 = Instant::now();
     let w = RecordWriter::new(out);
@@ -1658,12 +1704,13 @@ fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: u
     let mut e_peak = 0.0f64;
     let mut series = Vec::new();
     series.push(observe(sim, &z, l, 0.0, t_settled, e0, 0.0, t_settled, 0.0));
-    eprintln!("scout: production {readouts_planned} readouts x {readout_fs} fs = {:.1} ps, NVE from T {t_settled:.1} K, E {e0:.6} Ha", readouts_planned as f64 * readout_fs / 1000.0);
-    let tp = Instant::now();
     // RESPONSE-1's cycles: the readout count is overridden by cycles × relax when a kick is
-    // declared, so the walk's length is the protocol's and not a second parameter.
-    const MPS_TO_AU: f64 = 1.0 / 2.187_691_263_e6;
-    let readouts = match kick { Some(k) if k.cycles > 0 => k.cycles * k.relax_readouts, _ => readouts };
+    // declared (`readouts_planned`), so the walk's length is the protocol's and not a second
+    // parameter.
+    let readouts = readouts_planned;
+    eprintln!("scout: production {readouts} readouts x {readout_fs} fs = {:.1} ps, NVE from T {t_settled:.1} K, E {e0:.6} Ha{}", readouts as f64 * readout_fs / 1000.0,
+        match kick { Some(k) if k.cycles > 0 => format!(" — {} kick cycles of {} readouts, {} on axis {} at {} m/s", k.cycles, k.relax_readouts, if k.axis == 0 { "longitudinal" } else { "transverse" }, k.axis, k.v_d_mps), _ => String::new() });
+    let tp = Instant::now();
     let mut kick_log: Vec<String> = Vec::new();
     let mut e0 = e0;
     for r in 0..readouts {

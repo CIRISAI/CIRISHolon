@@ -1,0 +1,9 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 3.81s
+plant PR-4 axis 0: 432 bodies, v_d 50 m/s; |dp| worst 3.469e-14 au (returned and summed); dKE 1.852902411e-3 vs 1/2 M v_d^2 sum (sin - mean)^2 = 1.852902411e-3 Ha, rel 0.00e0 (KE after 0.00e0); bodies moved 0
+plant PR-4 axis 1: 432 bodies, v_d 50 m/s; |dp| worst 3.469e-14 au (returned and summed); dKE 1.852902411e-3 vs 1/2 M v_d^2 sum (sin - mean)^2 = 1.852902411e-3 Ha, rel 0.00e0 (KE after 0.00e0); bodies moved 0
+plant PR-4 PASS: 432 waters at n_cells = 6, v_d 50 m/s, both arms
+plant PR-4 axis 0: 432 bodies, v_d 200 m/s; |dp| worst 1.388e-13 au (returned and summed); dKE 2.964643857e-2 vs 1/2 M v_d^2 sum (sin - mean)^2 = 2.964643857e-2 Ha, rel 0.00e0 (KE after 0.00e0); bodies moved 0
+plant PR-4 axis 1: 432 bodies, v_d 200 m/s; |dp| worst 1.388e-13 au (returned and summed); dKE 2.964643857e-2 vs 1/2 M v_d^2 sum (sin - mean)^2 = 2.964643857e-2 Ha, rel 0.00e0 (KE after 0.00e0); bodies moved 0
+plant PR-4 PASS: 432 waters at n_cells = 6, v_d 200 m/s, both arms
+
+[exited with code 0]

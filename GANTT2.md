@@ -799,6 +799,29 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## The fence re-read through the object (2026-09-19): the price was of a signal that is not there
+
+`conformance/water_observatory/FLUID_ELEMENT_RESPONSE.md` — theory and a staked proposal,
+not a result. Computed from the banked walks: over one sound-crossing window a 108-molecule
+cell has `~7` thermal crossings per face (noise `2.7`) and its own coherent drift carries
+`0.56` — the signal is five times below the noise, so `D_cont = 1` at equilibrium is
+ARITHMETIC. The 10,000-water price was the price of pulling a signal that is not there out of
+noise by count; the derived floor `D = 1/√(½ f N_cell)` makes the equilibrium exit `N*`
+(left UNDETERMINED by `RUNG2_RESULTS.md` §6) a formula: `~37,000` per cell for `β`, a
+150,000-water box. The fence was an underestimate and the wrong experiment.
+
+On the 11+1: the fluid element lives on `{Facts, Circumstances, Process}`; the shot noise is
+the Record — the forgotten Identities — leaking back through the faces. The 0:1:0:1 walk is
+the commuting square as a plaquette on (scale, time); at equilibrium its holonomy is the
+whole motion. Rule 4 names the other case: a DRIVEN mode organises divergence into the live
+axes. A 50 m/s standing wave (0.6 % of thermal KE) gives signal-to-noise 9 over 50 windows
+at 432 waters, and its decay is move 4's rent — the viscosity, from the same loop. Closure
+is also the licence to decompose: one cell certified under coarse neighbours composes by
+`viewClosed_comp`, so the per-cell cost does not grow with the lattice.
+
+**RESPONSE-1 is staked and priced at 24 core-hours a seed** — a hundredth of the fence —
+and not run; the GF1 instrument is being built in parallel.
+
 ## Two closures on the QVM lane and one correction on the water lane (2026-09-19)
 
 **The Clifford bake-off re-staked with its spread** (`conformance/qasm/BAKEOFF_PREREG.md`):

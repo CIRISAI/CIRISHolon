@@ -170,3 +170,26 @@ evaluation. The reader `examples/gf1_read.rs` now prints `m2_nl` with its per-sw
 (`--nl-sweeps`, 0 to skip) and reports a refused secondary reading as JSON null with the refusal
 named, so a ladder point at `χ = 11` still banks its `m2` where `sre2_local_min`'s
 environment stack (`29.4 GB` at `N = 16, χ = 11`) is refused.
+
+### The lead's reading of C1, and what the ladder reads (2026-09-19, before the ladder)
+
+C1 is accepted and extended: on the Schwinger vacuum at `x = 4, N = 12, χ = 6` the identity
+frame is a strict local minimum of `M₂` in the JOINT twelve-angle space, not only along
+each axis — the Hessian's eigenvalues run from `+0.57` to `+43` and thirty-two random joint
+perturbations at `ε` from `0.02` to `0.2` all raise `M₂` (`examples/gf1_saddle.rs`,
+`gf1_saddle_x4_N12_chi6.log`). So `M₂^nl = M₂` on this vacuum is the state's property under
+the whole product group, to the resolution of a local test. **§A2's own vacuity clause fires
+by theorem**: the local frame removes nothing from a real vacuum of definite parity, so
+Fold III's "area-law of non-local magic" has no quantity distinct from `M₂` to be true of,
+and branch (b) of the prereg is entered ON THAT FINDING — the fold's magic clause, as
+written, is not a claim about a bounded quantity but about `M₂` itself, which S1 measures.
+Whether Fold III is rewritten around `M₂/N` or kept dead is the object's call, not this
+campaign's; the ladder does not wait on it.
+
+**The ladder reads S1, S2 and S4**, banking `M₂`, `M₂/N` and `M₂^box(10)` at every point that
+passes A3, and `M₂^nl ≡ M₂` by C1 with no descent run (`--nl-sweeps 0`); `M₂^loc` is skipped
+where its environment stack is refused at `χ = 11`. Cost re-derived from C2's measurements:
+`8.8` s per site at `χ = 11`, so the 24 points are under two hours on two lanes, each lane
+under the 8.6 GB lease. Points are read at the smallest `χ ∈ {6, 8, 11}` passing the variance
+gate; a point failing at `χ = 11` is REFUSED and banked as a reading about the vacuum's bond
+dimension, per A1.

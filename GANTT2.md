@@ -799,6 +799,42 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## RESPONSE-1 running on eight arms, and GF1 corrected before its first vacuum (2026-09-19, afternoon)
+
+**RESPONSE-1.** Instrument built and its five plants fired: PR-1/2/3/5 in `holon-lens`
+(`fit_relaxation`: dead-tail window, rebound classifier, Gauss-Newton overdamped, one
+envelope point per half-period — each a fix the plants forced), PR-4 in the runner itself
+(`replace0 plant-kick`) on the arms' own 432-water box, both axes, 50 and 200 m/s: momentum
+change `3.5e-14` au, energy exact, no body moved. The kick needed its mean subtracted — "zero
+by the symmetry of sin" is the continuum's truth and the first smoke read `4.44` au on 128
+discrete positions — declared in the prereg before any arm. The 128-water smoke (three
+transverse cycles at 200 m/s, the pre-subtraction binary) shows energy conserved across the
+kick to the ledger's digit, the rescale removing 7× the kick's energy on a box whose rigid
+settle hit its cap (the arms settle by criterion at 3000-step floor). **Launched 10:46 CDT:**
+`replace0_response1.sh` — L and T at 50 m/s on seeds 0, 1, 2 and one seed of each at 200 as
+the nonlinearity control, twelve cycles of 314 readouts at 10 fs, three eight-worker groups
+(the third waits for the smoke's cores). `~4.3` h wall an arm; three rounds on two groups,
+two on the third: **done in the small hours of 2026-09-20.** Read order when they land: R1′
+and R4 first (the reader's convictions), then R1, R2, R3; the fine-model seed at the same kick
+is owed before any closure is called the model's.
+
+**GF1.** The subagent's instrument merged (`526befb`; six plants pass on main in 654 s) and it
+found two errors in the prereg, both the lead's, both prepended as a CORRECTION: the cost was
+written as `O(N·4·χ⁴)` — the SIZE of the Pauli MPS, whose norm is the purity identically —
+where the fourth powers need four replicas, `χ⁸` memory and `64χ⁹` time, so the exact
+instrument reads `χ ≤ 11` and the staked `χ = 40/64` ladder cannot be read exactly; and
+`M₂^loc` as staked is `M₂` itself, since the stabilizer Rényi entropy is invariant under
+every Clifford including local ones — S3 as instrumented was the stake §0 said known physics
+falsifies. `GF1_AMENDMENT_1.md`: the non-local magic is the minimum of `M₂` over CONTINUOUS
+single-site rotations (one angle per site on a real MPS, golden-section coordinate descent,
+three sweeps), so a product state reads zero and a GHZ state does not; S3 re-staked on its
+slope in `N` with the kill unchanged and the case that would make it vacuous stated; the
+variance gate declared at `10⁻³` per site; the ladder re-sized to `χ ≤ 11` with a refusal
+where a point needs more; under a day on sixteen threads. **The minimiser and plants P3′,
+P7–P9 are not yet built; the ladder is not run.** The same fault as `LIQUID2_AMENDMENT_2`:
+a scaling remembered rather than derived, and a quantity assumed to vary that a theorem
+holds fixed — the eighth instance on the list.
+
 ## The fence re-read through the object (2026-09-19): the price was of a signal that is not there
 
 `conformance/water_observatory/FLUID_ELEMENT_RESPONSE.md` — theory and a staked proposal,

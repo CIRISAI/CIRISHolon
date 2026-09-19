@@ -88,3 +88,25 @@ cross per window, and a ratio of counts that small cannot resolve a flux. The co
 and the named law agree, from opposite sides, that 432 waters is below the fluid element —
 and the named law says what size would let it speak: hundreds of crossings per face per
 window, thousands of molecules per cell.
+
+
+---
+
+## The threaded executor, measured (2026-09-18/19, `threading_smoke_2026-09-18.txt`)
+
+`holon-md`'s worker pool installed around the scout's rigid loop, same physics, same seed,
+serial against eight workers pinned to eight cores:
+
+| box | serial | 8 workers | speedup | walk + velocities |
+|---|---|---|---|---|
+| 128 waters | 835 s | 385 s | **2.2×** | bit-identical |
+| 432 waters | 3,471 core-s/ps | 2,171 core-s/ps | **1.6×** | bit-identical |
+
+Bit identity holds, which is the executor contract doing its job. The speedup does not:
+the pool covers the pair and triple sectors, and at 432 waters the serial sectors — the
+seam's unit assignment, the Ewald field, the far and many-body terms — are most of the pass.
+Amdahl, measured. **The 09-18 estimate "a full 8× from threading" was wrong by 5×**, and
+every price that used it moves: the fluid-element box at ten thousand waters is not `~600`
+core-hours a seed on eight cores but of order `3,000`, and the honest route to it is not
+more workers on this executor but threading the serial sectors — engine work with its own
+bit-identity gate — or a machine with more of them.

@@ -1,0 +1,7 @@
+128 w=1 exit 0 wall 834.94 s
+128 w=8 exit 0 wall 384.60 s
+128: walk BIT-IDENTICAL serial vs 8
+128: vwalk BIT-IDENTICAL
+432 w=1 exit 0 wall 2221.64 s rate 3471 core-s/ps
+432 w=8 exit 0 wall 1314.09 s rate 2171 core-s/ps
+432: walk BIT-IDENTICAL

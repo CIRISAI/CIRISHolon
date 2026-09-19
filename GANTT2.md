@@ -799,6 +799,23 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## Two closures on the QVM lane and one correction on the water lane (2026-09-19)
+
+**The Clifford bake-off re-staked with its spread** (`conformance/qasm/BAKEOFF_PREREG.md`):
+the stance's "ahead of stim 7/7" rested on one circuit per size. Five circuits per size,
+the verdict on the WORST: ahead at 7/7, worst ratio 0.81, scatter under the lead at 7/7 —
+on a quiet local core (load 0.08), the CI dispatch under the same prereg owed as the citable
+run. **GF1 preregistered** (`conformance/crystal/GF1_PREREG.md`): the magic price of the
+Schwinger vacuum, with the reading of Fold III that known physics already falsifies (total
+magic is extensive for any gapped ground state) named and set aside, and the fold staked
+instead on the non-local magic's slope in volume — the part the strata's price rests on.
+Instrument named and priced (one to two days, under 40 core-hours of reading), not built.
+
+**The threaded executor gives 1.6× at 432 waters on eight cores**, bit-identical
+(`scout432_pilot/threading_smoke_2026-09-18.txt`). The pool covers pair and triple sectors;
+the seam, field and far sectors are serial and dominate at this size. The 09-18 estimate of
+"a full 8×" was wrong by 5× and every price that used it moves by the same factor.
+
 ## The named-law leg (Amendment 6, 2026-09-18): built, taught three lessons by its plants, and shot-noise-limited on every liquid this machine can run
 
 `RUNG2_AMENDMENT_6.md`: a second leg beside the collision form, against CONTINUITY — the one

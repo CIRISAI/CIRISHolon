@@ -902,7 +902,10 @@ const LADDER = [
     band: "molecular",
     scale: "~nm",
     lengthM: 3.0e-10,
-    runs: "the live engine, full physics ladder",
+    runs: "the live engine, full physics ladder — and the ONE CRITERION this whole ladder "
+      + "is written in, earned here for the first time: a molecule is a Closed view of its "
+      + "atoms' dynamics, certified by a pre-staked window, and the same criterion is the "
+      + "one that REFUSES every tier above it so far",
     state: "live",
     cite: "conformance/water_observatory/WORKBENCH_FSD.md:376",
     // THE CERTIFICATE, not the specification. `cite` above points at the FSD line that
@@ -931,6 +934,34 @@ const LADDER = [
     // The plain names are the ENGINE'S (`channel.rs`, read through `holon_channel_plain`),
     // not this file's, which is why the panel below reads them out of the artifact.
     readings: [
+      // THE COMPRESSION CLAIM, on the face of the band it was earned on. Physics as usually
+      // written reaches a fluid from charges and masses through five separate hand-offs
+      // (Born–Oppenheimer, force fields, projection operators, fluctuating hydrodynamics,
+      // Navier–Stokes), each with its own ad-hoc validity rule. This ladder uses ONE:
+      // `Closed v T ≔ ∃h, v∘T = h∘v` within a budget, with a witness pair as the failure.
+      // The rows below are that single criterion issuing a certificate at this tier and a
+      // refusal at the next two — the same instrument, three tiers, which is the whole
+      // point of the programme and the thing a reader should be able to see here.
+      { what: "THE CERTIFICATE — a molecule is a closed view of its atoms", value: "893.8 fs",
+        note: "OH₂ held CERTIFIED-STRICT for 893.8 fs against a window of 834 fs staked "
+          + "before the instrument existed; no fitted potential anywhere. The one criterion "
+          + "this ladder is written in, passed at this tier",
+        record: "conformance/water_observatory/CENSUS_RESULTS.md:23" },
+      { what: "its control — look-alike groupings reaching the window", value: "0.000/111",
+        note: "of 111 candidate groupings that were not a molecule, none held the window: "
+          + "the certificate is about the molecule and not about the test",
+        record: "conformance/water_observatory/CENSUS_RESULTS.md:822" },
+      { what: "the SAME criterion, one tier up (H-bond network)", value: "0",
+        note: "of 70 chart readings, those both dynamic and inside the closure budget: "
+          + "none. In-budget charts and dynamic charts came out exactly disjoint — the "
+          + "criterion refused, and the refusal is the network band's fence",
+        record: "conformance/water_observatory/RUNG1_RESULTS.md:25" },
+      { what: "the SAME criterion, two tiers up (fluid element, 3D carrier)", value: "0 of 6",
+        note: "files on which the spatial chart beat a scrambled control at two and four "
+          + "cells, under either of two declared density bins: none. VOID by the freeze's "
+          + "own placebo — the criterion refused again, and the price of the next test is on "
+          + "the record",
+        record: "conformance/water_observatory/replace0/rung2_mom/RUNG2_MOM_ON_THE_3D_CARRIER.md:119" },
       { what: "refusal (exchange) — the wall", value: "46 of 48",
         note: "the exponential wall on atom pairs TRANSFERS from the exact dimer to the "
           + "dynamics' own range, three classes, fitted where the dynamics go (FIELD-9 "

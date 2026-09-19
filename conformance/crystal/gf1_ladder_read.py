@@ -9,7 +9,7 @@ Assembles every admitted point, then:
 """
 import json, glob, os, sys
 D = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), "gf1_ladder")
-XS = [0.25, 1.0, 4.0, 16.0]; NS = [8, 12, 16, 24, 32, 48]
+XS = [0.015625, 0.0625, 0.25, 1.0, 4.0, 16.0]; NS = [8, 12, 16, 24, 32, 48]
 pts = {}
 for x in XS:
     for n in NS:
@@ -38,10 +38,14 @@ for x in XS:
     verdict[('S1', x)] = ok
     print(f"x={x:g}: per-site differences " + ", ".join(f"{d[0]:.5f}@N{d[1]}" for d in diffs) + f"; spread from N=16 up {100*spread:.1f} % -> {'CONVERGED, c(x) = %.5f' % from16[-1][0] if ok else 'REFUSED (not constant to 10 %)'}")
 print("\n## S2 - the density at strong coupling")
-row = [(n, pts[(0.25, n)]) for n in NS if pts.get((0.25, n))]
-if row:
-    n, d = row[-1]; ok = d['m2_per_site'] < 0.05; verdict['S2'] = ok
-    print(f"x=0.25, N={n}: M2/N = {d['m2_per_site']:.5f} vs 0.05 -> {'MET' if ok else 'KILL: the strong-coupling vacuum is not near its stabilizer fixed point'}")
+for x in [0.25, 0.0625, 0.015625]:
+    row = [(n, pts[(x, n)]) for n in NS if pts.get((x, n))]
+    if not row: continue
+    n, d = row[-1]; ok = d['m2_per_site'] < 0.05
+    if x == 0.25: verdict['S2'] = ok
+    label = "the prereg's stake" if x == 0.25 else ("branch (c)'s extension" if x == 0.0625 else "a LABELLED EXTRA, not a gate")
+    print(f"x={x:g}, N={n}: M2/N = {d['m2_per_site']:.5f} vs 0.05 -> {'under' if ok else 'OVER'} ({label})")
+if 'S2' in verdict and not verdict['S2']: print("S2 at x=0.25: KILL as staked; branch (c): the ladder is extended to x = 0.0625 before any verdict")
 print("\n## S4 - the price of a ten-site box at every coupling")
 for x in XS:
     row = [(n, pts[(x, n)]) for n in NS if n >= 12 and pts.get((x, n))]

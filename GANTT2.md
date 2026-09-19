@@ -855,6 +855,23 @@ P7–P9 are not yet built; the ladder is not run.** The same fault as `LIQUID2_A
 a scaling remembered rather than derived, and a quantity assumed to vary that a theorem
 holds fixed — the eighth instance on the list.
 
+**And the ninth, the same afternoon, on the amendment itself.** A subagent built §A2's
+minimiser (`9c87a8e`, merged `f254106`): the line search is exact in three evaluations —
+each site's `2^{−M₂}(θ)` is one sinusoid of period `π/4` since `R_y(π/4)` is a Clifford —
+and P3′, P7, P9 fire. But on any REAL state of definite parity every fibre
+`(⟨X_j P_r⟩, ⟨Y_j P_r⟩, ⟨Z_j P_r⟩)` already lies on an axis, so the identity is each site's
+minimum over all of `SU(2)` and the descent never moves; the Schwinger vacuum has definite
+charge, hence parity, and reads `M₂ = M₂^nl = 3.886893106248` at `x = 4, N = 12`. The
+lead's check: the Hessian in the joint twelve-angle space is positive definite (`+0.57` to
+`+43`) — a strict local minimum, not a saddle. **§A2's own vacuity clause fires by theorem:
+branch (b), Fold III's area-law clause has no quantity distinct from `M₂`.** Whether the
+fold is rewritten around `M₂/N` or kept dead is the object's call. The ladder for S1, S2,
+S4 launched 12:50 CDT on the desktop's P-cores (`gf1_ladder.sh`, two lanes, smallest
+`χ ∈ {6, 8, 11}` passing the gate; under two hours). Also measured: one exact `M₂` at
+`N = 16, χ = 11` is `141` s, so `N = 48` is seven minutes a reading, not A1's "seconds"; P8's
+three-sweep convergence clause fails on a random MPS (linear convergence at ratio `0.65`,
+not order-trapped) and is asserted as written and ignored.
+
 ## The fence re-read through the object (2026-09-19): the price was of a signal that is not there
 
 `conformance/water_observatory/FLUID_ELEMENT_RESPONSE.md` — theory and a staked proposal,

@@ -115,7 +115,7 @@ certified under one family of boundary histories, graded on another it has not s
 |---|---|
 | 1 — existence is closure | the cell exists iff `(n̄, p̄)` under a drive closes to within `β`; testable at 432 |
 | 2 — realised from first principles | the drive is a velocity kick on the real law; no fit anywhere |
-| 3 — priced defect, derived shape | `D_floor = 1/√(½ f N_cell)` at equilibrium; `≈ 1/(s√W)` under a drive of signal-to-noise `s` — a law, not a fit |
+| 3 — priced defect, derived shape | `D_floor = 1/√(½ f N_cell)` at equilibrium; under a drive of signal-to-noise `s` per window-cell, `1/√(1 + s²)` on pooled windows and `1/√(1 + C s²)` on a `C`-cycle aligned average — a law, not a fit. *(Corrected 2026-09-19, `RESPONSE1_AMENDMENT_2.md`: this row first read `≈ 1/(s√W)`, as if pooling raw windows lowered an RMS ratio; it sharpens it. The 24 core-hour price stands, reached by aligning cycles.)* |
 | 4 — persistence is rent | the driven mode DECAYS; the 0:1:0:1 walk (drive, propagate, release, relax) returns to equilibrium minus the energy dissipated — that holonomy IS the rent, and its rate `Γ = (4η/3 + ζ + …) k²/2ρ` is the viscosity |
 | 5 — the books | the kick's energy in, the dissipation out, on the engine's own `w_ext` ledger |
 | the join | a shared pattern (the mode) whose closure pays its own rent (the damping) — Fold-shaped, at the fluid tier |

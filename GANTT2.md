@@ -1267,6 +1267,12 @@ The next runner (LIQUID-2 or EDGE-0) is the harness's first adopter, by construc
 **The four questions.** A tier's row is complete when closed / ledger / production / dynamics
 each have a record or a named fence with owner and exit.
 
+**Fast and slow (2026-09-19, `FAST_AND_SLOW.md`).** Fast is a compressible Record, slow an
+incompressible one; the fast side renders the slow side by three moves — derive the zeros
+(nulls, never stakes), price the omissions (each a tier with a measured price), measure
+the residue once on the smallest cell and compose by `viewClosed_comp` — and the
+composition lemma for STATISTICAL closure is owed.
+
 **The screen law (2026-09-06).** A labelled screen (`--screen`, every file `dry: true`, the
 knobs declared) may turn any knob to choose which hypotheses a freeze pre-commits as
 branches; nothing a screen writes enters a gate or a claim.

@@ -872,6 +872,18 @@ S4 launched 12:50 CDT on the desktop's P-cores (`gf1_ladder.sh`, two lanes, smal
 three-sweep convergence clause fails on a random MPS (linear convergence at ratio `0.65`,
 not order-trapped) and is asserted as written and ignored.
 
+**GF1 READ, 13:10 CDT (`GF1_RESULTS.md`, `2bb93eb`; banked in STANCE, GANTT, OBJECT
+`8904c2b`).** The ladder took 31 minutes on two lanes, not two hours: every point below
+`x = 16` admits at `χ ≤ 8`. S1: `c(x) = 0.00141, 0.0216, 0.210, 0.421, 0.437` at
+`x = 1/64 … 4`, converged in volume to `0.0–3.7 %`; `≈ 5.7 x²` near the fixed point. S2:
+KILLED as staked at `x = 0.25` (`0.207` against `0.05`), branch (c) taken to `x = 1/16`
+(`0.021`, met) with `1/64` as a labelled extra — the bar was set at the wrong coupling.
+S3: retired. S4: the ten-site box carries `0.013` to `3.98` bits at every coupling,
+volume-independent — the price clause measured six hundred times under its stake.
+`x = 16`: every `N ≥ 16` refused at `χ = 11` by under a factor of four in variance — the
+weak-coupling vacuum is outside the exact instrument's lease. Fold III keeps its price
+and loses its area-law sentence to a theorem; what it says next is OPEN for the owner.
+
 ## The fence re-read through the object (2026-09-19): the price was of a signal that is not there
 
 `conformance/water_observatory/FLUID_ELEMENT_RESPONSE.md` — theory and a staked proposal,

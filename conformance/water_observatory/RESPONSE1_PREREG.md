@@ -42,8 +42,13 @@ At the start of each cycle every body receives a velocity increment, by arm:
 > quantities must agree with the `50` arm within their spread, or the `50` arm is reported
 > as the reading and the `200` as the departure.
 
-The kick is a pure velocity increment on the rigid bodies' momenta (no position change);
-total momentum stays zero by symmetry of `sin`. **Cycles:** kick, `3.14` ps of NVE (four
+The kick is a pure velocity increment on the rigid bodies' momenta (no position change),
+**with the mean of `sin(k x)` over the bodies subtracted so the total momentum change is
+exactly zero** — "zero by the symmetry of `sin`" is true in the continuum and the first
+smoke read `Δp = 4.44` au on 128 discrete positions; the subtraction is the standard step
+and is declared here before any arm runs. The kinetic energy rises by `½ M v_d² ⟨sin²⟩`,
+which is `5 %` of the thermal kinetic energy at `200 m/s` and `0.3 %` at `50` (§2's "10 %"
+and "0.6 %" were the `sin = 1` figures; the smoke read `0.076 kT` per water at `200`). **Cycles:** kick, `3.14` ps of NVE (four
 windows of `τ = 785` fs at `2×2×1`), rescale the rigid momenta to `T_target` (a DECLARED
 step, the same rescaling the settle uses — the dissipated kick energy is removed so twelve
 cycles do not heat the box by `7 %`), kick again with the sign flipped. **Twelve cycles per
@@ -89,7 +94,7 @@ cycles and seeds with the spread:
 | **PR-1** | a synthetic damped standing wave `ρ_k(t) = A e^{−λt}` on random positions | the reader returns `λ` to `2 %` and classifies it overdamped |
 | **PR-2** | a synthetic underdamped wave `A e^{−Γt} cos(ωt)` | period to `2 %`, `Γ` to `5 %`, classified underdamped |
 | **PR-3** | a transverse current mode `j_k = A e^{−Γ_s t}` on thermal velocities (`σ` = the thermal scale) | `Γ_s` to `5 %` when `A ≥ 3σ_noise`; REFUSED with the reason when `A < σ_noise` |
-| **PR-4** | the kick itself, applied in the runner to a stationary box | total momentum zero to `1e−12`; kinetic energy up by `½ m N v_d²/2` to `1e−9` (the `sin²` average); every body's COM unchanged |
+| **PR-4** | the kick itself, applied in the runner to a stationary box | total momentum change zero to `1e−12` AFTER the mean subtraction (the first smoke read `4.44` au before it); kinetic energy up by `½ M Σ (sin(kx_i) − ⟨sin⟩)² v_d²` to `1e−9`; every body's COM unchanged |
 | **PR-5** | the scrambled partition of PR-1's carrier | mode amplitude under `0.1` of the spatial one |
 
 ## 5. The branches

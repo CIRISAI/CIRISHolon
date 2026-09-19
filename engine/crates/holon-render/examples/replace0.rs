@@ -1452,10 +1452,15 @@ fn main() {
 /// Returns (Δp_total, ΔKE) so plant PR-4 can check both.
 fn kick_bodies(bodies: &mut [Flying], l: f64, axis: usize, v_d: f64) -> ([f64; 3], f64) {
     let k = 2.0 * std::f64::consts::PI / l;
+    // "Zero total momentum by the symmetry of sin" is true in the continuum and false on N
+    // discrete positions — the first smoke read Δp_total = 4.44 au at 128 waters. The mean
+    // of sin(k x) over the bodies is subtracted, so the kick is the pure mode with the
+    // centre-of-mass component removed EXACTLY: a declared step, the standard one.
+    let mean_sin = bodies.iter().map(|b| (k * b.w.com[0]).sin()).sum::<f64>() / bodies.len().max(1) as f64;
     let mut dp = [0.0f64; 3];
     let mut dke = 0.0f64;
     for b in bodies.iter_mut() {
-        let dv = v_d * (k * b.w.com[0]).sin();
+        let dv = v_d * ((k * b.w.com[0]).sin() - mean_sin);
         let m = b.w.body.mass;
         let ke0 = b.w.kinetic();
         b.w.p[axis] += m * dv;
@@ -1653,7 +1658,7 @@ fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: u
     let mut e_peak = 0.0f64;
     let mut series = Vec::new();
     series.push(observe(sim, &z, l, 0.0, t_settled, e0, 0.0, t_settled, 0.0));
-    eprintln!("scout: production {readouts} readouts x {readout_fs} fs = {:.1} ps, NVE from T {t_settled:.1} K, E {e0:.6} Ha", readouts as f64 * readout_fs / 1000.0);
+    eprintln!("scout: production {readouts_planned} readouts x {readout_fs} fs = {:.1} ps, NVE from T {t_settled:.1} K, E {e0:.6} Ha", readouts_planned as f64 * readout_fs / 1000.0);
     let tp = Instant::now();
     // RESPONSE-1's cycles: the readout count is overridden by cycles × relax when a kick is
     // declared, so the walk's length is the protocol's and not a second parameter.

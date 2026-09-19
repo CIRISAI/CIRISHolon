@@ -1293,8 +1293,10 @@ each have a record or a named fence with owner and exit.
 **Fast and slow (2026-09-19, `FAST_AND_SLOW.md`).** Fast is a compressible Record, slow an
 incompressible one; the fast side renders the slow side by three moves — derive the zeros
 (nulls, never stakes), price the omissions (each a tier with a measured price), measure
-the residue once on the smallest cell and compose by `viewClosed_comp` — and the
-composition lemma for STATISTICAL closure is owed.
+the residue once on the smallest cell and compose by `viewClosed_comp`. The composition
+lemma for STATISTICAL closure is proved (`StatClosure.lean`, 2026-09-19): pooling is the
+mediant, the horizon is Minkowski, neither needs independence; locality at radius one on
+the cell graph is the hypothesis Leg B tests.
 
 **The screen law (2026-09-06).** A labelled screen (`--screen`, every file `dry: true`, the
 knobs declared) may turn any knob to choose which hypotheses a freeze pre-commits as

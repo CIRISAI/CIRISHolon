@@ -72,10 +72,16 @@ of measuring the noise; the residue costs one percent of that.
 
 ## 3. What this does not buy, said now
 
-- **Composition is proved for exact closure.** For statistical closure (`D ≤ β`) the
-  certificates compose only if the cells' noises are independent or the budgets add; that
-  is a lemma OWED, not a theorem held, and RESPONSE-1's read on one cell is not yet a read
-  on a lattice of them.
+- **Composition is now proved for statistical closure too** (`lean/CIRISHolon/StatClosure.lean`,
+  the same day): the pooled defect of a lattice is a weighted mean of its cells' and at most
+  the worst cell's — no independence needed, it is the ratio's arithmetic — and in the RMS
+  seminorm `n` steps of the coarse law alone drift by at most `n·ε` when the law is
+  non-expansive, by Minkowski, again without independence (which would buy `√n` and is not
+  claimed). What the theorems do NOT discharge is locality itself: that a cell certified
+  under its box's true neighbours behaves the same under coarse ones. That is
+  `LipDependsWithin` at radius one on the cell graph, and Leg B's held-out boundary
+  histories are its test. RESPONSE-1's read on one cell is a read on a lattice of them
+  exactly when that test passes.
 - **The residue is not a zero of anything.** A viscosity or a diffusion constant must be
   measured once; negation removes what surrounds it, not it. And at the wavevectors a
   432-water box admits the transverse mode is near water's onset of propagating shear

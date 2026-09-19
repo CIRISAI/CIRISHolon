@@ -7,7 +7,18 @@ kill), **open** (named, unclaimed). A claim with no kill is not a claim.
 This document exists because "open by design" was under-claiming: the
 evidence now carries positions, and positions must be stated plainly.*
 
-## Proved (machine-checked in lean/CIRISHolon, 25 files, sorry-free)
+## Proved (machine-checked in lean/CIRISHolon, 31 files, sorry-free)
+
+*Added 2026-09-19, `StatClosure.lean` — the composition of STATISTICAL closure
+certificates, owed by `FAST_AND_SLOW.md` §3: (i) the lattice's pooled defect
+is a weighted mean of its cells' and so at most the worst cell's, with no
+assumption on how the cells' residuals correlate (the mediant); (ii) in the
+RMS seminorm, running the coarse law alone for `n` steps drifts from the truth
+by at most the geometric budget of `Budget.lean`, linear `n·ε` for a
+non-expansive law — Minkowski, needing no independence of the residuals. What
+remains a HYPOTHESIS, tested and not proved: that a cell certified under its
+box's true neighbours behaves the same under coarse ones (`LipDependsWithin`
+at radius one on the cell graph, Leg B's held-out boundary histories).*
 
 The merge law; the closure/collision theorems and δ = ½ derived; the
 derivation template (inheritance, uniqueness — "derives, not fits" IS

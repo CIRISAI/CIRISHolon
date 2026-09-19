@@ -5,6 +5,7 @@ import CIRISHolon.Transport
 import CIRISHolon.Tier
 import CIRISHolon.Mixing
 import CIRISHolon.Budget
+import CIRISHolon.StatClosure
 import CIRISHolon.Stabilizer
 import CIRISHolon.MergeLaw
 import CIRISHolon.Boundaries

@@ -217,7 +217,14 @@ new primitive. WAGER with three separable kills; no hadron has been computed.*
   vector-meson mass. **READ, branch (a):** the rate at the gap to 0.6 % on both columns
   (`SCHWINGER4_RESULTS.md`).
 - **GF1 — the magic price of gauge vacua:** if the log-price grows with volume, Fold III dies.
-  **OPEN**, prereg owed.
+  **READ 2026-09-19** (`GF1_RESULTS.md`): the price clause is measured — a ten-site box of the
+  Schwinger vacuum carries under four bits of magic at every coupling read, volume-independent
+  — and the magic density `c(x)` is a converged function of the coupling (`≈ 5.7 x²` near the
+  fixed point, `0.44` at `x = 1–4`). But the "area-law" clause names no quantity: the non-local
+  magic, over local Cliffords or over any product of single-site unitaries, IS `M₂` on a real
+  vacuum of definite parity, by theorem — and `M₂` is extensive, `c(x) N`. **The clause is
+  OPEN for rewording around `c(x)` and the box price, or kept dead as written**; the fold's
+  owner decides. The weak-coupling vacuum (`x = 16`) is outside the exact instrument's lease.
 - **GF2 — the Σ(1080) hadron box** against the proton, neutron, pion and the deuteron: if the
   derived NN table misses its referees, Fold I's "forced, not fitted" dies. **GATED.** Its 1+1D
   rehearsal (GF2a, E7 → E14) met the exact colour-lane referee on all six N = 8 sectors at a χ

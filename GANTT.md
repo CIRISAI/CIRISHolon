@@ -32,7 +32,7 @@ EMBED-1  the embedding field (read) ─▶ SEAM-1 exact cores inside it (read) �
 H   dE5 audit (done: the bare ladder does not terminate) ─▶ MPS seam (re-shaped by EMBED/SEAM)
 G   Upward closures (rungs 1, 2 measured, not certified) ◀── OOO cert · dE4 table · B1 · the field
 LG  Continuum-native lattice tier (launched) — never composed through viewClosed_comp with G
-GF0 (read a) ─▶ GF1 (open) ─▶ GF2 the Σ(1080) hadron box (gated) ─▶ NUC nuclear tier (gated)
+GF0 (read a) ─▶ GF1 (read; S3 retired) ─▶ GF2 the Σ(1080) hadron box (gated) ─▶ NUC nuclear tier (gated)
 W   the waterbench zoom ladder (up) ─▶ W2 gauge vacuum in the browser ─▶ L6 chiral leptons (open)
 ```
 
@@ -81,7 +81,7 @@ W   the waterbench zoom ladder (up) ─▶ W2 gauge vacuum in the browser ─▶
 | # | node | deps | status | record |
 |---|---|---|---|---|
 | GF0 | SCHWINGER-4: two screened pairs' residual interaction decays at the banked vector-meson mass | — | READ: branch (a) on both columns, rate at the gap to 0.6 %; Python cross-check to 1e-10 | SCHWINGER4_RESULTS.md |
-| GF1 | The magic price of gauge vacua across the coupling; the kill is a volume law | exact tiers | OPEN · prereg owed | — |
+| GF1 | The magic price of gauge vacua across the coupling; the kill is a volume law | exact tiers | **READ 2026-09-19** (`GF1_RESULTS.md`): `c(x)` converged at five couplings, `≈ 5.7 x²` near the fixed point; the ten-site box under four bits at every coupling (S4 met); S2 killed as staked at `x = 0.25`, met at `x = 1/16` on branch (c); S3 RETIRED — the non-local magic is `M₂` itself by theorem; `x = 16` refused past `N = 12` by χ | Fold III's area-law clause: OPEN, the object's call |
 | GF2 | The Σ(1080) hadron box with staggered quarks; referees p, n, π and the deuteron | GF0 (a), GF1, the QVM split | GATED; its 1+1D rehearsal (E7 → E14) met the exact referee on all six N = 8 sectors and was closed as prior art at volume (Silvi 2019; Hayata 2023) | GF2A_QCD2_RESULTS.md |
 | NUC | The nuclear tier on A's machinery from GF2's derived tables | GF2, A | GATED | — |
 

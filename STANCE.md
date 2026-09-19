@@ -183,6 +183,39 @@ experimental number. What is measured here is measured at that strength.*
   property of this programme's instruments, and the reason each of the
   three entries above carries its scope on its face.
 
+## Measured, added 2026-09-19 (GF1: the magic price of gauge vacua)
+
+*Scope: the lattice Schwinger model under Jordan–Wigner, real MPS at
+`χ ≤ 11` (the exact Pauli-replica instrument's lease), open chains
+`N ≤ 48`, six couplings; the stabilizer 2-Rényi entropy `M₂` read exactly
+against a brute referee. `GF1_RESULTS.md`.*
+
+- **The magic density of the confined vacuum is a converged function of the
+  coupling.** `c(x) = M₂/N` converges in volume to `0.0 %` at
+  `x = 1/64, 1/16, 1/4`, `0.1 %` at `x = 1`, `3.7 %` at `x = 4`:
+  `0.00141, 0.0216, 0.210, 0.421, 0.437` bits per site. It leaves the
+  stabilizer fixed point as `≈ 5.7 x²` — second order in the hopping — and
+  saturates near `0.44` between `x = 1` and `4`. At `x = 16` the variance
+  gate refuses every `N ≥ 16` at `χ = 11`: the weak-coupling vacuum is
+  outside the exact instrument's lease, by under a factor of four in
+  variance and a factor `χ⁸` in cost.
+- **A ten-site box of the vacuum carries under four bits of magic at every
+  coupling read** (`0.013` to `3.98`), volume-independent to the digits at
+  strong coupling and to a few percent at `x = 1, 4`: Fold III's price
+  clause, measured, six hundred times under its own stake.
+- **Fold III's area-law clause names no quantity.** The non-local magic —
+  the minimum of `M₂` over local Cliffords (the prereg) and over continuous
+  single-site rotations (Amendment 1) — is `M₂` itself on any real state of
+  definite parity: per site by theorem (every Pauli fibre already lies on an
+  axis), jointly by a positive-definite Hessian on the vacuum. Twice the
+  lead staked a quantity a theorem holds fixed; twice the instrument's
+  plants said so before a vacuum was read. What the fold says next is the
+  object's call, recorded OPEN.
+- **The S2 bar was set at the wrong coupling**: `M₂/N < 0.05` at `x = 0.25`
+  killed as staked (`0.207`); branch (c), written for exactly this, extended
+  the ladder to `x = 1/16` where the density is `0.021`. The `x²` law says the
+  bar is crossed at `x ≈ 0.09`.
+
 ## Wagers (positions we now choose to hold, each with its kill)
 
 - **W1 — the law is substrate-general.** The cross-face rent law holds on
@@ -244,6 +277,13 @@ larger box, not after); **this model's self-diffusion** (R3, refused by
 LIQUID-1, priced out of LIQUID-2, unresolved by REPLACE-0 — ~2,500
 core-hours on both arms); **the node-G closure certificate** for the
 H-bond tier, which no reading provides.
+
+Added 2026-09-19, from GF1: **what Fold III's area-law sentence should say**,
+now that its quantity is `M₂` itself and extensive — rewritten around the
+converged density `c(x)` and the volume-independent box price, or kept dead
+as written; **the weak-coupling vacuum's magic** (`x = 16` past `N = 12`),
+which needs a compressed Pauli MPS or perfect Pauli sampling, named and not
+built.
 
 ## Credits and priority (2026-08-28)
 

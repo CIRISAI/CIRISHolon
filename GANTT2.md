@@ -813,10 +813,30 @@ kick to the ledger's digit, the rescale removing 7× the kick's energy on a box 
 settle hit its cap (the arms settle by criterion at 3000-step floor). **Launched 10:46 CDT:**
 `replace0_response1.sh` — L and T at 50 m/s on seeds 0, 1, 2 and one seed of each at 200 as
 the nonlinearity control, twelve cycles of 314 readouts at 10 fs, three eight-worker groups
-(the third waits for the smoke's cores). `~4.3` h wall an arm; three rounds on two groups,
-two on the third: **done in the small hours of 2026-09-20.** Read order when they land: R1′
-and R4 first (the reader's convictions), then R1, R2, R3; the fine-model seed at the same kick
-is owed before any closure is called the model's.
+(the third waits for the smoke's cores). The box is an i9-13900HX: cores 8–15 are four
+P-cores with their hyperthreads, 16–31 are sixteen E-cores, so group A runs about twice as
+fast as B and C and the pilot's price (measured on E-cores 24–26) was the slow one. Arms
+finish from mid-afternoon; the six 50 m/s arms by about 22:00, **the last control in the
+small hours of 2026-09-20.** Read order when they land: R1′ and R4/R4′ first (the reader's
+convictions), then R1, R2, R3; the fine-model seed at the same kick is owed before any
+closure is called the model's.
+
+**Amendment 1 (`RESPONSE1_AMENDMENT_1.md`), from the smoke read end to end.** The reader
+was reading the quadrature the kick does not drive: §3 wrote `j_k` with `cos(kx)` and §2
+kicks with `sin(kx)`, so the smoke's "in band" viscosity was a fit to thermal noise at
+amplitude `0.00` (a two-decimal print hid it) and R4 "fired" on the ratio of two noises.
+Now: the sin quadrature is the driven current, the cos the density's response, the
+undriven quadrature of each a null R4′; the response is the sign-aligned average over a
+seed's cycles (per-cycle SNR at 50 m/s is `2.0`, under PR-3's bar — refused correctly);
+the density mode starts at zero and rises before it decays, fitted from its peak, with its
+per-cycle SNR `0.3` at 50 m/s declared (R2 likely refuses at 50; the 200 m/s control is where
+`λ₁` is readable). Built, the tail-mean baseline inflated the smoke's amplitude by 40 % —
+its 600-fs cycles do not relax, every tail at `−0.3` of the kick — so the baseline is the
+physical zero and each tail's relaxation is reported; the rebound is the finding to expect
+at `k = 0.27 Å⁻¹`, near the onset of water's propagating shear modes, and an underdamped
+R3 is named a shear wave with `ρΓ/k²` the k-dependent viscosity. Plants PR-6/7/8 pass;
+the smoke re-reads at SNR 12.7, R4 `0.022`, R4′ at noise: the chain is proven and the smoke
+is not a reading.
 
 **GF1.** The subagent's instrument merged (`526befb`; six plants pass on main in 654 s) and it
 found two errors in the prereg, both the lead's, both prepended as a CORRECTION: the cost was

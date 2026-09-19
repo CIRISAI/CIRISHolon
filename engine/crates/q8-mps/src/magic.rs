@@ -34,6 +34,46 @@
 //! Clifford group), so the staked `M₂^loc` equals `M₂` to the rounding of a re-ordered
 //! four-term sum. The minimiser reports that honestly; it does not manufacture a difference.
 //!
+//! **The non-local minimiser** (`sre2_nonlocal_min`) is Amendment 1 §A2's
+//! (`conformance/crystal/GF1_AMENDMENT_1.md`): `M₂` minimised over products of CONTINUOUS
+//! single-site real rotations `R_y(θ_j)`, by coordinate descent from the identity frame with
+//! every evaluation the exact `sre2`. Building it found four things the amendment has wrong,
+//! stated in its `Correction on building` and here. (0) THE ONE THAT MATTERS FOR THE LADDER: on
+//! a real state of definite parity, `Π_j Z_j|ψ⟩ = ±|ψ⟩`, the identity frame is every site's own
+//! minimum and the descent never moves — `M₂^nl = M₂` by symmetry. Proof: `⟨P⟩ ≠ 0` needs `P` to
+//! commute with `Π Z`, i.e. an even count of `X`/`Y`; for any rest-string `P_r`, `X_j P_r` and
+//! `Z_j P_r` differ by one in that count, so at most one of `⟨X_j P_r⟩`, `⟨Z_j P_r⟩` is non-zero,
+//! and every pair's term below is `¼ r⁴ cos(8θ)` with phase zero. The Jordan–Wigner Schwinger
+//! vacuum has definite charge `Σ Z_j`, hence definite parity: the amendment's re-staked S3 will
+//! read `M₂^nl = M₂` at every ladder point, by the vacuum's symmetry and not its physics — the
+//! prereg's "quantity assumed to vary that a theorem holds fixed", a second time. Measured on
+//! the vacuum at `x = 4, N = 12, χ = 6` and on a parity-projected random MPS (six descents from
+//! random frames all converge back down toward the identity's value, none below it; a joint
+//! two-angle scan on the two-site tilted GHZ finds nothing lower). Nor is the real frame the
+//! limitation: for a real state every string with an odd count of `Y` reads zero, so with
+//! parity each fibre `(⟨X_j P_r⟩, ⟨Y_j P_r⟩, ⟨Z_j P_r⟩)` has at most one non-zero entry and lies
+//! on an axis already, and `Σ_a (Rv)_a⁴ ≤ |v|⁴` with equality only on an axis — the identity is
+//! each site's minimum over ALL of `SU(2)`. Jointly, on even-parity real random states at
+//! `N = 4`, thousands of random `SU(2)^N` frames and a descent over every angle find nothing
+//! below the identity (an unprojected real state is lowered by `0.37` under `R_y` alone). On
+//! such a state the local frame has nothing to remove: `M₂^nl = M₂` is the state's property.
+//! (1) The per-site landscape is not a function
+//! to be searched: with the other sites fixed, `2^{−M₂}(θ_j) = a + r cos(8θ_j − φ)` EXACTLY (each
+//! `⟨P⟩` with `P_j ∈ {X, Z}` turns as `cos(2θ − δ)` or `sin(2θ − δ)` and the two fourth powers sum
+//! to `¾ + ¼ cos(8θ − 4δ)`), so its minimiser is known in closed form from three readings. The
+//! amendment's golden-section search on `[0, π)` is a unimodal method on FOUR periods of that
+//! sinusoid (`R_y(π/4) = HZ` is a Clifford, so the period is `π/4`); it is kept only as the
+//! referee `sre2_nonlocal_min_golden`. The true cost is `3` evaluations per site per sweep, not
+//! `~20`. (2) The amendment's P3′ row, "`M₂` itself is `0.415 N`" for H-type states "rotated by
+//! random single-site unitaries", holds for random Cliffords (P3's draw) and not for random
+//! angles: `M₂` of `R_y(α)|H⟩` is `−log₂(1 − ¼ cos² 4α)`, zero at `α = π/8`. Under a random
+//! continuous frame the product's `M₂` is the sum of those, and only `M₂^nl = 0` survives as
+//! the stake. (3) §A2's "a GHZ state's [M₂^nl] is not zero: its magic is in the entanglement"
+//! contradicts its own P7 row and the theorem: GHZ is a stabilizer state, `M₂ = 0`, and
+//! `M₂^nl ≤ M₂`. What the sentence reaches for is a state whose entanglement is NOT a stabilizer
+//! state's — `cos(π/8)|0…0⟩ + sin(π/8)|1…1⟩`, Schmidt coefficients no local frame can change — and
+//! that is P7's control.
+//!
 //! Nothing here touches `dmrg.rs`, `variance.rs` or `schwinger.rs`.
 
 use crate::mps::{self, TensorSite};
@@ -81,6 +121,8 @@ pub enum MagicError {
     ComplexClifford { index: usize },
     /// `sre2_box`: the box is longer than the chain.
     BoxTooLong { box_len: usize, n: usize },
+    /// `sre2_nonlocal_min_ordered`: the site order is not a permutation of `0..N`.
+    SiteOrder { len: usize, n: usize },
 }
 
 impl std::fmt::Display for MagicError {
@@ -111,6 +153,9 @@ impl std::fmt::Display for MagicError {
                 write!(f, "Clifford {index} has a complex matrix and cannot rotate a real tensor")
             }
             MagicError::BoxTooLong { box_len, n } => write!(f, "a box of {box_len} sites on a chain of {n}"),
+            MagicError::SiteOrder { len, n } => {
+                write!(f, "a site order of {len} entries is not a permutation of the {n} sites")
+            }
         }
     }
 }
@@ -683,6 +728,217 @@ pub fn sre2_local_min_trace(tensors: &[TensorSite], sweeps: usize) -> Result<(Ve
     Ok((trace, best.1))
 }
 
+// ------------------------------------------------------------------ the non-local magic (Amendment 1, §A2)
+
+/// The real single-site rotation `R_y(θ) = [[cos θ, −sin θ], [sin θ, cos θ]]` — `exp(−iθY)`, the
+/// Bloch sphere turned about `Y` by `2θ`, so `R_y(π/8)|0⟩` is the H-type state and `R_y(π/4)|0⟩`
+/// is `|+⟩` — contracted into a site's physical leg: `A'^s = Σ_{s'} R[s][s'] A^{s'}`. On a real
+/// state this is the whole of `SO(2)`, the continuous local frame Amendment 1 §A2 minimises over;
+/// `R_y(θ + π) = −R_y(θ)` is the same state, so `[0, π)` is every frame there is.
+pub fn apply_ry(site: &TensorSite, theta: f64) -> TensorSite {
+    let (c, s) = (theta.cos(), theta.sin());
+    let mut out = TensorSite::zeros(site.chi_l, site.chi_r);
+    for l in 0..site.chi_l {
+        for r in 0..site.chi_r {
+            let (a0, a1) = (site.get(0, l, r), site.get(1, l, r));
+            out.set(0, l, r, c * a0 - s * a1);
+            out.set(1, l, r, s * a0 + c * a1);
+        }
+    }
+    out
+}
+
+/// The period of `M₂` in any one site's `R_y` angle, `π/4`: `R_y(π/4) = HZ` sends
+/// `X ↦ Z, Z ↦ −X, Y ↦ Y` — a Clifford — and `M₂` is Clifford-invariant. The amendment's `[0, π)`
+/// holds four copies of this fundamental domain, and every angle this module reports is reduced
+/// into it.
+pub const RY_PERIOD: f64 = std::f64::consts::FRAC_PI_4;
+
+/// What the non-local minimiser returns.
+#[derive(Debug, Clone, PartialEq)]
+pub struct NonlocalMagic {
+    /// `M₂^nl`: the minimum of `M₂` over every frame evaluated. The identity frame is evaluated
+    /// first, so this never exceeds `m2_identity`.
+    pub m2: f64,
+    /// `M₂` of the state as given — `sre2`'s own reading, the first evaluation.
+    pub m2_identity: f64,
+    /// The frame the minimum was found in: `R_y(angles[j])` applied to site `j` AS GIVEN (not
+    /// cumulative), each in `[0, RY_PERIOD)` for the exact line search; the golden-section
+    /// referee reports the angle it evaluated, in `[0, π)`.
+    pub angles: Vec<f64>,
+    /// Entry `s` is the running minimum after `s` full sweeps; entry 0 is `m2_identity`.
+    pub per_sweep: Vec<f64>,
+    /// Calls to `sre2` made, the identity frame's included.
+    pub evaluations: usize,
+    /// The site order the sweeps ran in.
+    pub order: Vec<usize>,
+}
+
+/// An angle reduced into `[0, RY_PERIOD)`, and snapped to `0` from within `10⁻¹²` below the
+/// period: a rounding-level negative (`−10⁻¹⁶`, the fitted minimiser of a site already at its
+/// minimum) would otherwise come back as `π/4 − 10⁻¹⁶` and be reported as a quarter turn. The
+/// snap moves the frame by under `10⁻¹²` rad, `10⁻²⁴` in `M₂`, and is applied BEFORE the
+/// evaluation, so the reported angle is exactly the evaluated one.
+fn reduce_angle(theta: f64) -> f64 {
+    let r = theta.rem_euclid(RY_PERIOD);
+    if r >= RY_PERIOD - 1e-12 { 0.0 } else { r }
+}
+
+#[derive(Clone, Copy)]
+enum LineSearch {
+    /// The exact line search: two readings beside the current one fit the sinusoid, the third is
+    /// at its maximiser. Three evaluations per site per sweep.
+    Sinusoid,
+    /// Amendment 1 §A2's line search as written: golden section on `[0, π)`, stopping when the
+    /// bracket is under `tol` radians.
+    Golden { tol: f64 },
+}
+
+/// **M₂^nl, the non-local magic** — Amendment 1 §A2: `min_{θ_1..θ_N} M₂( ⊗_j R_y(θ_j) |ψ⟩ )` by
+/// coordinate descent from the identity frame, sites in index order, `sweeps` full sweeps, every
+/// evaluation the exact [`sre2`] of the rotated chain (the rotation is contracted into one site's
+/// physical leg; nothing else is rebuilt). Refuses exactly what `sre2` refuses, the `χ ≤ 11`
+/// lease included, before any evaluation.
+///
+/// **The line search is exact, not golden-section, and this is the finding.** With every other
+/// site fixed, each `⟨P⟩` with `P_j ∈ {X, Z}` is `r cos(2θ_j − δ)` or `−r sin(2θ_j − δ)` (the
+/// Bloch vector turned in the `XZ` plane) and the two fourth powers sum to
+/// `r⁴(¾ + ¼ cos(8θ_j − 4δ))`; strings with `P_j ∈ {I, Y}` do not move. So
+///
+/// ```text
+/// 2^{−M₂(θ_j)} = a + r · cos(8 θ_j − φ),   EXACTLY, for every site of every real MPS
+/// ```
+///
+/// — one sinusoid of period `π/4`, which is also what `R_y(π/4) = HZ` being a Clifford says.
+/// Its three unknowns are fixed by three readings — the current frame's, and two more at
+/// `θ_j + π/16` and `θ_j + π/8` — and its maximiser `θ* = (φ mod 2π)/8` is then known in closed
+/// form. The third evaluation is AT `θ*`, and it is that exact reading, not the fit, that is
+/// compared and banked: the site moves only to the strictly lowest of the four frames evaluated
+/// (current, two samples, `θ*`), so the running value is monotone and is the minimum over
+/// everything evaluated. The amendment's golden-section search on `[0, π)` is a unimodal method
+/// on four full periods of a sinusoid: it can settle on a period's boundary rather than its
+/// minimum, and measured (`tests/gf1_plants.rs`, the referee) it spends 19 evaluations per line
+/// search to land `10⁻⁵` above the exact search at a `10⁻³` bracket and 34 to land beside it at
+/// `10⁻⁶`, where three are exact. It is kept as [`sre2_nonlocal_min_golden`], the referee.
+///
+/// Cost: `1 + 3 N · sweeps` evaluations of `sre2`, each `64 χ⁹` per site over `N` sites —
+/// `O(N²)` per sweep. Memory: `sre2`'s own. Deterministic: serial, the same order every time.
+/// The descent is coordinate descent and converges linearly where it moves at all: at `N = 12,
+/// χ = 6` on a random MPS the sweeps buy `1.28, 1.4 × 10⁻², 7 × 10⁻⁴, 2.3 × 10⁻⁴, …`, so "three
+/// sweeps" is not a convergence criterion; read `per_sweep` and stop on it. On a state of
+/// definite parity it does not move at all (module doc, finding (0)).
+pub fn sre2_nonlocal_min(tensors: &[TensorSite], sweeps: usize) -> Result<NonlocalMagic, MagicError> {
+    let order: Vec<usize> = (0..tensors.len()).collect();
+    nonlocal_min_impl(tensors, sweeps, &order, LineSearch::Sinusoid)
+}
+
+/// [`sre2_nonlocal_min`] with the sites visited in `order`, which must be a permutation of
+/// `0..N` (P8's reversed order, or any other); a malformed order is refused by name.
+pub fn sre2_nonlocal_min_ordered(
+    tensors: &[TensorSite],
+    sweeps: usize,
+    order: &[usize],
+) -> Result<NonlocalMagic, MagicError> {
+    nonlocal_min_impl(tensors, sweeps, order, LineSearch::Sinusoid)
+}
+
+/// Amendment 1 §A2's line search AS WRITTEN — golden section on `θ_j ∈ [0, π)` until the bracket
+/// is under `tol` radians, the site moved only to a strictly lower frame — with the same descent
+/// as [`sre2_nonlocal_min`]. Kept as that reader's referee, not as an instrument: see the module
+/// doc for why the landscape makes it the wrong tool, and `tests/gf1_plants.rs` for what it reads
+/// beside the exact search.
+pub fn sre2_nonlocal_min_golden(tensors: &[TensorSite], sweeps: usize, tol: f64) -> Result<NonlocalMagic, MagicError> {
+    let order: Vec<usize> = (0..tensors.len()).collect();
+    nonlocal_min_impl(tensors, sweeps, &order, LineSearch::Golden { tol })
+}
+
+fn nonlocal_min_impl(
+    tensors: &[TensorSite],
+    sweeps: usize,
+    order: &[usize],
+    ls: LineSearch,
+) -> Result<NonlocalMagic, MagicError> {
+    check(tensors)?;
+    let (price, lease) = (price_bytes(tensors), lease_bytes());
+    if price > lease {
+        return Err(MagicError::Price { bytes: price, lease_bytes: lease });
+    }
+    let n = tensors.len();
+    let mut seen = vec![false; n];
+    if order.len() != n || !order.iter().all(|&j| j < n && !std::mem::replace(&mut seen[j], true)) {
+        return Err(MagicError::SiteOrder { len: order.len(), n });
+    }
+
+    let mut work: Vec<TensorSite> = tensors.to_vec();
+    let mut evaluations = 0usize;
+    // M₂ of the working frame with site j re-rotated to θ (from the site as given).
+    let mut eval = |work: &mut [TensorSite], j: usize, theta: f64| -> Result<f64, MagicError> {
+        work[j] = apply_ry(&tensors[j], theta);
+        evaluations += 1;
+        sre2(work)
+    };
+
+    let m2_identity = eval(&mut work, 0, 0.0)?;
+    let mut cur = m2_identity;
+    let mut angles = vec![0.0f64; n];
+    let mut per_sweep = vec![cur];
+    for _ in 0..sweeps {
+        for &j in order {
+            let th_c = angles[j];
+            // The frames evaluated at this site, the current one first; the strictly lowest wins
+            // (a tie keeps the earlier), so the running value never rises.
+            let mut cands: Vec<(f64, f64)> = vec![(th_c, cur)];
+            match ls {
+                LineSearch::Sinusoid => {
+                    // 2^{−M₂} = a + r cos(8(θ − θ_c) + u): the current reading is a + r cos u, the
+                    // one at +π/16 is a − r sin u, the one at +π/8 is a − r cos u.
+                    let th1 = reduce_angle(th_c + RY_PERIOD / 4.0);
+                    let th2 = reduce_angle(th_c + RY_PERIOD / 2.0);
+                    let m1 = eval(&mut work, j, th1)?;
+                    let m2 = eval(&mut work, j, th2)?;
+                    let (s0, s1, s2) = ((-cur).exp2(), (-m1).exp2(), (-m2).exp2());
+                    let a = 0.5 * (s0 + s2);
+                    let (r_cos_u, r_sin_u) = (0.5 * (s0 - s2), a - s1);
+                    let u = r_sin_u.atan2(r_cos_u);
+                    let th_star = reduce_angle(th_c - u / 8.0);
+                    let m_star = eval(&mut work, j, th_star)?;
+                    cands.extend([(th1, m1), (th2, m2), (th_star, m_star)]);
+                }
+                LineSearch::Golden { tol } => {
+                    let g = 0.5 * (5.0f64.sqrt() - 1.0);
+                    let (mut lo, mut hi) = (0.0f64, std::f64::consts::PI);
+                    let (mut c, mut d) = (hi - g * (hi - lo), lo + g * (hi - lo));
+                    let (mut fc, mut fd) = (eval(&mut work, j, c)?, eval(&mut work, j, d)?);
+                    cands.extend([(c, fc), (d, fd)]);
+                    while hi - lo > tol {
+                        if fc < fd {
+                            hi = d;
+                            d = c;
+                            fd = fc;
+                            c = hi - g * (hi - lo);
+                            fc = eval(&mut work, j, c)?;
+                            cands.push((c, fc));
+                        } else {
+                            lo = c;
+                            c = d;
+                            fc = fd;
+                            d = lo + g * (hi - lo);
+                            fd = eval(&mut work, j, d)?;
+                            cands.push((d, fd));
+                        }
+                    }
+                }
+            }
+            let (th_new, m_new) = cands.iter().copied().fold(cands[0], |b, c| if c.1 < b.1 { c } else { b });
+            angles[j] = th_new;
+            cur = m_new;
+            work[j] = apply_ry(&tensors[j], th_new);
+        }
+        per_sweep.push(cur);
+    }
+    Ok(NonlocalMagic { m2: cur, m2_identity, angles, per_sweep, evaluations, order: order.to_vec() })
+}
+
 // ------------------------------------------------------------------ carriers for the plants
 
 /// A product state as a `χ = 1` MPS, one `(ψ₀, ψ₁)` per site (not normalised here).
@@ -711,6 +967,38 @@ pub fn ghz_mps(n: usize) -> Vec<TensorSite> {
                 t.set(s, l, r, if j == 0 { h } else { 1.0 });
             }
             t
+        })
+        .collect()
+}
+
+/// The even-parity part `(1 + Π_j Z_j)|ψ⟩` of a chain as an MPS of doubled bonds (not
+/// normalised): two copies of every site tensor, block-diagonal, the second with `Z` absorbed,
+/// summed at the ends. A carrier for the parity theorem in the module doc — any real state with
+/// `Π_j Z_j|ψ⟩ = ±|ψ⟩`, which a Jordan–Wigner vacuum of definite charge is.
+pub fn even_parity_mps(tensors: &[TensorSite]) -> Vec<TensorSite> {
+    let n = tensors.len();
+    tensors
+        .iter()
+        .enumerate()
+        .map(|(j, t)| {
+            let (cl, cr) = (t.chi_l, t.chi_r);
+            let (first, last) = (j == 0, j + 1 == n);
+            let mut o = TensorSite::zeros(if first { 1 } else { 2 * cl }, if last { 1 } else { 2 * cr });
+            for s in 0..2 {
+                let z = if s == 0 { 1.0 } else { -1.0 };
+                for l in 0..cl {
+                    for r in 0..cr {
+                        let v = t.get(s, l, r);
+                        for copy in 0..2 {
+                            let w = if copy == 0 { v } else { z * v };
+                            let ll = if first { 0 } else { l + copy * cl };
+                            let rr = if last { 0 } else { r + copy * cr };
+                            o.set(s, ll, rr, o.get(s, ll, rr) + w);
+                        }
+                    }
+                }
+            }
+            o
         })
         .collect()
 }
@@ -848,6 +1136,123 @@ mod tests {
         }
         assert!(matches!(sre2(&random_mps(16, 12, 1)), Err(MagicError::Price { .. })));
         assert!(matches!(sre2_local_min(&big, 1), Err(MagicError::Price { .. })));
+    }
+
+    /// `R_y(π/4)` is `HZ`, a Clifford: on a random MPS `M₂` is unchanged by it at any site, and
+    /// `R_y(π/8)` (a non-Clifford, the H-type rotation) changes it — so `RY_PERIOD` is `π/4` and
+    /// not less.
+    #[test]
+    fn ry_by_a_quarter_turn_is_the_clifford_hz_and_by_an_eighth_is_not() {
+        let t = random_mps(6, 3, 21);
+        let m2 = sre2(&t).unwrap();
+        for j in [0usize, 2, 5] {
+            let mut r = t.clone();
+            r[j] = apply_ry(&t[j], RY_PERIOD);
+            // Z is index 3 and H index 21 of `clifford_group()`; index 20 is [[h,−h],[h,h]] itself.
+            let hz = apply_real_clifford(&apply_real_clifford(&t[j], 3).unwrap(), 21).unwrap();
+            let g20 = apply_real_clifford(&t[j], 20).unwrap();
+            for ((x, y), z) in r[j].data.iter().zip(&hz.data).zip(&g20.data) {
+                let tol = 1e-14 * (1.0 + x.abs());
+                assert!((x - y).abs() < tol && (x - z).abs() < tol, "R_y(π/4) is HZ: {x} vs {y} vs {z}");
+            }
+            let m2_hz = sre2(&r).unwrap();
+            assert!((m2 - m2_hz).abs() < 1e-12, "site {j}: {m2} vs {m2_hz}");
+            r[j] = apply_ry(&t[j], RY_PERIOD / 2.0);
+            assert!((m2 - sre2(&r).unwrap()).abs() > 1e-4, "an eighth turn is not a Clifford");
+        }
+    }
+
+    /// The landscape theorem the exact line search rests on: `2^{−M₂}(θ_j) = a + r cos(8θ_j − φ)`
+    /// with the other sites fixed. Three readings fix the sinusoid; sixteen more at other angles
+    /// agree with it to rounding, including at its predicted maximiser.
+    #[test]
+    fn one_sites_landscape_is_a_single_sinusoid_in_eight_theta() {
+        let t = random_mps(7, 4, 22);
+        let read = |j: usize, th: f64| -> f64 {
+            let mut r = t.clone();
+            r[j] = apply_ry(&t[j], th);
+            (-sre2(&r).unwrap()).exp2()
+        };
+        for j in [0usize, 3, 6] {
+            let (s0, s1, s2) = (read(j, 0.0), read(j, RY_PERIOD / 4.0), read(j, RY_PERIOD / 2.0));
+            let a = 0.5 * (s0 + s2);
+            let (rc, rs) = (0.5 * (s0 - s2), a - s1);
+            let (r, u) = ((rc * rc + rs * rs).sqrt(), rs.atan2(rc));
+            assert!(r > 1e-4, "site {j}: a flat landscape would not test the fit ({r:.3e})");
+            for k in 0..16 {
+                let th = std::f64::consts::PI * k as f64 / 16.0 + 0.0123;
+                let predicted = a + r * (8.0 * th + u).cos();
+                let got = read(j, th);
+                assert!((got - predicted).abs() < 1e-13, "site {j}, θ = {th}: {got} vs {predicted}");
+            }
+            let th_star = (-u / 8.0).rem_euclid(RY_PERIOD);
+            assert!((read(j, th_star) - (a + r)).abs() < 1e-13, "site {j}: the maximiser");
+        }
+    }
+
+    /// The parity theorem: on a real state with `Π_j Z_j|ψ⟩ = ±|ψ⟩`, every site's sinusoid
+    /// `a + r cos(8θ − φ)` has `φ = 0` — the identity frame is each site's own minimum — so the
+    /// descent from the identity never moves and `M₂^nl = M₂`. The carrier is the even-parity
+    /// part of a random MPS; the SAME random MPS before projection has generic phases (the
+    /// theorem is not vacuous), and its parity expectation is measured, not assumed.
+    #[test]
+    fn on_a_parity_symmetric_state_the_identity_frame_is_every_sites_minimum() {
+        let base = random_mps(5, 2, 77);
+        let even = even_parity_mps(&base);
+        let z_all: Vec<(usize, Op2)> = (0..5).map(|j| (j, PAULI_REAL[PAULI_Z])).collect();
+        let parity = |t: &[TensorSite]| observables::expectation(t, &z_all) / observables::norm_squared(t);
+        assert!((parity(&even) - 1.0).abs() < 1e-12, "even parity: {}", parity(&even));
+        assert!(parity(&base).abs() < 0.9, "the unprojected state has no definite parity: {}", parity(&base));
+        let phase = |t: &[TensorSite], j: usize| -> (f64, f64) {
+            let read = |th: f64| {
+                let mut r = t.to_vec();
+                r[j] = apply_ry(&t[j], th);
+                (-sre2(&r).unwrap()).exp2()
+            };
+            let (s0, s1, s2) = (read(0.0), read(RY_PERIOD / 4.0), read(RY_PERIOD / 2.0));
+            let a = 0.5 * (s0 + s2);
+            let (rc, rs) = (0.5 * (s0 - s2), a - s1);
+            ((rc * rc + rs * rs).sqrt(), rs.atan2(rc))
+        };
+        let mut generic = 0;
+        for j in 0..5 {
+            let (r, u) = phase(&even, j);
+            assert!(r > 1e-4 && u.abs() < 1e-10, "site {j}: r {r:.3e}, phase {u:.3e}");
+            let (_, u_base) = phase(&base, j);
+            generic += (u_base.abs() > 1e-2) as usize;
+        }
+        assert!(generic >= 3, "the unprojected phases are generic: {generic} of 5");
+        let m2 = sre2(&even).unwrap();
+        let nl = sre2_nonlocal_min(&even, 2).unwrap();
+        assert!((nl.m2 - m2).abs() < 1e-12, "the frame removes nothing: {} vs {m2}", nl.m2);
+        assert!(nl.angles.iter().all(|&a| a.min(RY_PERIOD - a) < 1e-8), "{:?}", nl.angles);
+    }
+
+    /// The identity frame's evaluation IS `sre2`'s reading, `M₂^nl` never exceeds it, a run of
+    /// three sweeps is the prefix of a run of four, the count is `1 + 3N·sweeps`, and a
+    /// malformed site order is refused by name.
+    #[test]
+    fn the_nonlocal_minimiser_is_deterministic_monotone_and_refuses_a_bad_order() {
+        let t = random_mps(6, 3, 23);
+        let m2 = sre2(&t).unwrap();
+        let three = sre2_nonlocal_min(&t, 3).unwrap();
+        let four = sre2_nonlocal_min(&t, 4).unwrap();
+        assert_eq!(three.m2_identity, m2);
+        assert_eq!(three.per_sweep[0], m2);
+        assert!(three.m2 <= m2);
+        assert_eq!(three.per_sweep, four.per_sweep[..4]);
+        assert!(three.per_sweep.windows(2).all(|w| w[1] <= w[0]));
+        assert_eq!(three.evaluations, 1 + 3 * 6 * 3);
+        assert_eq!(four.evaluations, 1 + 3 * 6 * 4);
+        assert!(three.angles.iter().all(|&a| (0.0..RY_PERIOD).contains(&a)));
+        let again = sre2_nonlocal_min(&t, 3).unwrap();
+        assert_eq!(three, again, "deterministic");
+        let fwd: Vec<usize> = (0..6).collect();
+        assert_eq!(sre2_nonlocal_min_ordered(&t, 3, &fwd).unwrap(), three);
+        assert!(matches!(sre2_nonlocal_min_ordered(&t, 1, &[0, 1, 2]), Err(MagicError::SiteOrder { len: 3, n: 6 })));
+        assert!(matches!(sre2_nonlocal_min_ordered(&t, 1, &[0, 1, 2, 3, 4, 4]), Err(MagicError::SiteOrder { .. })));
+        assert!(matches!(sre2_nonlocal_min_ordered(&t, 1, &[0, 1, 2, 3, 4, 6]), Err(MagicError::SiteOrder { .. })));
+        assert!(matches!(sre2_nonlocal_min(&random_mps(16, 12, 1), 1), Err(MagicError::Price { .. })));
     }
 
     #[test]

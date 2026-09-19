@@ -16,7 +16,7 @@ point() {  # point CORES X N
   for chi in 6 8 11; do
     local f="$OUT/x${x}_N${n}_chi${chi}.json"
     [ -s "$f" ] || taskset -c "$cores" "$BIN" --x "$x" --n "$n" --chi "$chi" --sweeps 0 --nl-sweeps 0 --box 10 > "$f" 2> "$f.err" || { echo "x=$x N=$n chi=$chi: reader exited nonzero" >> "$OUT/ladder.log"; continue; }
-    local v; v=$(python3 -c "import json,sys; d=json.load(open('$f')); print(d.get('variance_per_site', d.get('variance',{}).get('per_site','nan')))" 2>/dev/null)
+    local v; v=$(python3 -c "import json,sys; d=json.load(open('$f')); print(d['variance_per_site'])" 2>/dev/null)
     local pass; pass=$(python3 -c "print(1 if float('$v') <= $GATE else 0)" 2>/dev/null || echo 0)
     echo "$(date -Is) x=$x N=$n chi=$chi variance/site=$v $([ "$pass" = 1 ] && echo ADMITTED || echo refused)" >> "$OUT/ladder.log"
     [ "$pass" = 1 ] && { echo "$chi" > "$OUT/x${x}_N${n}.admitted"; return 0; }

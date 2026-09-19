@@ -37,6 +37,17 @@ are recorded in the upstream preregs: echoes cannot gauge Clifford mutants,
 phase mutants need pinned witnesses, and the distribution mode must never be
 used as a timing path (it enumerates measurement branches).
 
+**The bake-off, re-staked with its spread (2026-09-19, `BAKEOFF_PREREG.md`).** The
+2026-08-27 quiet-runner runs behind "ahead of stim 7/7" timed one circuit per size and
+five repetitions of it — seven single readings. The harness now runs five independent
+circuits per size and the prereg stakes the claim on the WORST circuit (S1) and requires
+the circuit-to-circuit spread to sit under the lead (S2). Local reading on a pinned core at
+load average 0.08 (`bakeoff_local_2026-09-19.log`, `bakeoff_results.json`): **S1 met at
+7/7 sizes, worst ratio anywhere 0.808; S2 met at 7/7**, spreads 0.05–0.12 against leads
+0.19–0.44. The lead is narrower on this host than on the CI runner (means 0.56–0.77
+against 0.50–0.68), which is why the venue is in the record; the CI dispatch under the
+same prereg is the citable run and is owed.
+
 Named next steps: the Bravyi–Gosset rank reduction (2^{~0.48t}); the
 contextuality/cost link is NOT posable on qubit circuits with the current
 instruments (see upstream scope note) — the magic-contextuality equivalence

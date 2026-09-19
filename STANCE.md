@@ -21,8 +21,12 @@ randomizer at minimal instances.
 
 ## Measured (exact instruments, plants firing, records in conformance/)
 
-- The tier ladder: ahead of stim 7/7; the exact ring tower complete;
-  refusal-or-exact everywhere. Kill: any silently wrong exact value.
+- The tier ladder: ahead of stim 7/7 — re-staked 2026-09-19 on five
+  circuits per size with the spread beside the lead: ahead on the WORST
+  circuit at 7/7, worst ratio 0.81, scatter under the lead at 7/7
+  (`conformance/qasm/BAKEOFF_PREREG.md`); the exact ring tower complete;
+  refusal-or-exact everywhere. Kill: any silently wrong exact value; any
+  size at which one circuit's ratio reaches 1.0.
 - The gravity sequence on finite groups: curvature, dressed charge,
   endogenous reciprocity, the response-function light cone, mass = the
   puncture CLASS (not the angle — the label degenerates at 2O), the

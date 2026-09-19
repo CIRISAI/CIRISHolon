@@ -1,0 +1,10 @@
+bake-off: holon flat-sampler vs stim 1.16.0, 5 circuits per size, medians of 5 per circuit, engine-only timing both sides; load average 0.08 (a CI runner is ~0; a loaded host is not the citable venue)
+n=   64  ours/stim mean  0.619  worst  0.650  spread  0.069  S1 ahead  S2 separates
+n=  128  ours/stim mean  0.761  worst  0.785  spread  0.068  S1 ahead  S2 separates
+n=  256  ours/stim mean  0.561  worst  0.608  spread  0.075  S1 ahead  S2 separates
+n=  512  ours/stim mean  0.727  worst  0.792  spread  0.116  S1 ahead  S2 separates
+n= 1024  ours/stim mean  0.768  worst  0.808  spread  0.065  S1 ahead  S2 separates
+n= 2048  ours/stim mean  0.768  worst  0.802  spread  0.066  S1 ahead  S2 separates
+n= 4096  ours/stim mean  0.732  worst  0.756  spread  0.048  S1 ahead  S2 separates
+wrote /home/emoore/CIRISHolon/conformance/qasm/bakeoff_results.json
+VERDICT (BAKEOFF_PREREG.md): S1 ahead on the WORST circuit at 7/7 sizes (on the mean at 7/7); S2 spread under the lead at 7/7; worst ratio anywhere 0.808

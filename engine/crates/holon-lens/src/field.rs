@@ -675,6 +675,157 @@ pub fn modes(traj: &Trajectory, axis: usize, kind: Kind) -> Result<(Vec<f64>, Ve
     Ok((rho, cur))
 }
 
+/// Both quadratures of both modes at `k = 2π/L` along x (RESPONSE1_AMENDMENT_1 A1): the
+/// kick of §2 is a `sin(k x)` velocity mode, so the DRIVEN current mode is `cur_sin` and the
+/// density's response to it is `rho_cos` (`∂_t ρ = −ρ₀ ∂_x u`); `cur_cos` and `rho_sin` are
+/// the undriven quadratures, read as the null R4′. [`modes`] is the cos pair of this.
+#[derive(Clone, Debug, Default, PartialEq)]
+pub struct Modes {
+    pub rho_cos: Vec<f64>,
+    pub rho_sin: Vec<f64>,
+    pub cur_cos: Vec<f64>,
+    pub cur_sin: Vec<f64>,
+}
+
+/// Every quadrature of the two modes per frame; see [`Modes`].
+pub fn modes_both(traj: &Trajectory, axis: usize, kind: Kind) -> Result<Modes, Refusal> {
+    let l = traj.header.box_w;
+    let k = 2.0 * std::f64::consts::PI / l;
+    let n = traj.header.n_atoms;
+    let signs: Vec<f64> = match kind {
+        Kind::Spatial => vec![1.0; n],
+        _ => {
+            let perms = label_perms(n, 2, CONTROL_SEED, true);
+            (0..n).map(|a| if perms[a][0] == 0 { 1.0 } else { -1.0 }).collect()
+        }
+    };
+    let mut m = Modes::default();
+    for f in &traj.frames {
+        let (mut rc, mut rs, mut cc, mut cs) = (0.0, 0.0, 0.0, 0.0);
+        for a in 0..n {
+            let x = f.pos[a][0].rem_euclid(l);
+            let (sn, co) = (k * x).sin_cos();
+            let v = f.vel[a][axis];
+            rc += signs[a] * co; rs += signs[a] * sn;
+            cc += signs[a] * co * v; cs += signs[a] * sn * v;
+        }
+        m.rho_cos.push(rc); m.rho_sin.push(rs); m.cur_cos.push(cc); m.cur_sin.push(cs);
+    }
+    Ok(m)
+}
+
+/// The sign-aligned average of a mode over a run's kick cycles (RESPONSE1_AMENDMENT_1 A2).
+#[derive(Clone, Debug, PartialEq)]
+pub struct Aligned {
+    /// the aligned mean, one value per readout of a cycle, baseline the tail mean
+    pub mean: Vec<f64>,
+    /// each cycle's sign-aligned, baseline-subtracted segment (the same length)
+    pub per_cycle: Vec<Vec<f64>>,
+    /// the aligned mean's noise: the SD of its relaxed tail (the last quarter)
+    pub noise: f64,
+    /// the mean of the per-cycle tail SDs — a single cycle's noise
+    pub noise_per_cycle: f64,
+    /// each cycle's relaxed-tail mean in units of its standard error: a cycle whose tail
+    /// mean is beyond 3 has NOT relaxed by its end (the smoke's 600-fs cycles at 128 waters
+    /// read −0.3 of the kick in the tail, a rebound), and the reader says so
+    pub tail_sigma: Vec<f64>,
+    /// the aligned mean's tail mean in units of its standard error
+    pub tail_sigma_mean: f64,
+}
+
+/// Align `cycles` cycles of `relax` readouts of `series`, the first cycle's first readout at
+/// index `first` (the walk's row 0 is the pre-kick state, so `first = 1`), cycle `c` carrying
+/// the sign `(−1)^c` of §2's sign flip. The baseline is the PHYSICAL zero — both modes have
+/// zero mean at equilibrium (uniform density; zero total momentum with velocities
+/// uncorrelated with positions) — and each cycle's relaxed-tail mean is reported in units
+/// of its standard error as the relaxation check, not subtracted (Amendment 1's correction
+/// on building: the smoke's tails were NOT relaxed, and subtracting them inflated the kick
+/// amplitude by 40 %). Cycles that do not fit in the series are dropped.
+pub fn align_cycles(series: &[f64], cycles: usize, relax: usize, first: usize) -> Aligned {
+    let mut per_cycle: Vec<Vec<f64>> = Vec::new();
+    let mut sds = Vec::new();
+    let mut tail_sigma = Vec::new();
+    let tail_stats = |tail: &[f64]| -> (f64, f64) {
+        let m = tail.iter().sum::<f64>() / tail.len() as f64;
+        let sd = (tail.iter().map(|v| (v - m).powi(2)).sum::<f64>() / tail.len() as f64).sqrt();
+        (m, sd)
+    };
+    for c in 0..cycles {
+        let start = first + c * relax;
+        let end = start + relax;
+        if end > series.len() || relax < 8 { break; }
+        let sign = if c % 2 == 0 { 1.0 } else { -1.0 };
+        let (m, sd) = tail_stats(&series[end - relax / 4..end]);
+        sds.push(sd);
+        tail_sigma.push(m.abs() / (sd / ((relax / 4) as f64).sqrt()).max(1e-300));
+        per_cycle.push(series[start..end].iter().map(|v| sign * v).collect());
+    }
+    let n = per_cycle.len();
+    let mean: Vec<f64> = if n == 0 { Vec::new() } else { (0..relax).map(|i| per_cycle.iter().map(|c| c[i]).sum::<f64>() / n as f64).collect() };
+    let (noise, tail_sigma_mean) = if n == 0 { (f64::NAN, f64::NAN) } else {
+        let (m, sd) = tail_stats(&mean[relax - relax / 4..]);
+        (sd, m.abs() / (sd / ((relax / 4) as f64).sqrt()).max(1e-300))
+    };
+    let noise_per_cycle = if n == 0 { f64::NAN } else { sds.iter().sum::<f64>() / n as f64 };
+    Aligned { mean, per_cycle, noise, noise_per_cycle, tail_sigma, tail_sigma_mean }
+}
+
+/// A density mode that starts at zero and rises before it decays (RESPONSE1_AMENDMENT_1 A3).
+#[derive(Clone, Debug, PartialEq)]
+pub struct RiseDecay {
+    /// index of the peak of `|y|`, where the slow fit begins
+    pub peak: usize,
+    /// the fit from the peak, the prereg's exponential, `lambda` = `λ₁`
+    pub slow: Relaxation,
+    /// `λ₂` from the two-exponential form `A (e^{−λ₁t} − e^{−λ₂t})`, when the rise is
+    /// resolved (three or more readouts before the peak) and the fit converged
+    pub fast: Option<f64>,
+}
+
+/// Fit `y` from its peak (A3). The classifier of [`fit_relaxation`] is not applied to the
+/// rise: the segment handed to it begins at the peak. With the rise resolved, Gauss–Newton on
+/// `A (e^{−λ₁t} − e^{−λ₂t})` over the whole segment, seeded from the peak fit, gives `λ₂`.
+pub fn fit_rise_decay(y: &[f64], dt: f64, noise: f64) -> RiseDecay {
+    let half = (y.len() / 2).max(1);
+    let peak = (0..half).fold(0usize, |b, i| if y[i].abs() > y[b].abs() { i } else { b });
+    let slow = fit_relaxation(&y[peak..], dt, noise);
+    let fast = match (&slow, peak >= 3) {
+        (Relaxation::Overdamped { lambda, amplitude, .. }, true) => {
+            let (mut l1, mut l2, mut a) = (*lambda, 1.0 / (peak as f64 * dt), *amplitude);
+            let ts: Vec<f64> = (0..y.len()).map(|i| i as f64 * dt).collect();
+            let mut ok = false;
+            for _ in 0..50 {
+                let (mut jtj, mut jtr) = ([[0.0f64; 3]; 3], [0.0f64; 3]);
+                for (i, &t) in ts.iter().enumerate() {
+                    let (e1, e2) = ((-l1 * t).exp(), (-l2 * t).exp());
+                    let r = y[i] - a * (e1 - e2);
+                    let j = [e1 - e2, -a * t * e1, a * t * e2];
+                    for p in 0..3 { jtr[p] += j[p] * r; for q in 0..3 { jtj[p][q] += j[p] * j[q]; } }
+                }
+                let Some(d) = solve3(jtj, jtr) else { break };
+                a += d[0]; l1 += d[1]; l2 += d[2];
+                if d.iter().zip([a, l1, l2]).all(|(x, v)| x.abs() < 1e-10 * v.abs().max(1e-300)) { ok = true; break; }
+            }
+            if ok && l2 > l1 && l1 > 0.0 { Some(l2) } else { None }
+        }
+        _ => None,
+    };
+    RiseDecay { peak, slow, fast }
+}
+
+fn solve3(m: [[f64; 3]; 3], b: [f64; 3]) -> Option<[f64; 3]> {
+    let det = m[0][0] * (m[1][1] * m[2][2] - m[1][2] * m[2][1]) - m[0][1] * (m[1][0] * m[2][2] - m[1][2] * m[2][0]) + m[0][2] * (m[1][0] * m[2][1] - m[1][1] * m[2][0]);
+    if det.abs() < 1e-300 || !det.is_finite() { return None; }
+    let mut x = [0.0; 3];
+    for c in 0..3 {
+        let mut mc = m;
+        for r in 0..3 { mc[r][c] = b[r]; }
+        let dc = mc[0][0] * (mc[1][1] * mc[2][2] - mc[1][2] * mc[2][1]) - mc[0][1] * (mc[1][0] * mc[2][2] - mc[1][2] * mc[2][0]) + mc[0][2] * (mc[1][0] * mc[2][1] - mc[1][1] * mc[2][0]);
+        x[c] = dc / det;
+    }
+    Some(x)
+}
+
 /// How a driven mode came back: its fit and its class.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Relaxation {
@@ -2291,6 +2442,79 @@ mod tests {
         let (rb, _) = modes(&traj, 0, Kind::BlindLabel).unwrap();
         assert!(rs[0].abs() > 100.0, "the spatial mode must see the wave: {}", rs[0]);
         assert!(rb[0].abs() < 0.1 * rs[0].abs(), "the scrambled partition must not: blind {} vs spatial {}", rb[0], rs[0]);
+    }
+
+    /// PR-6 (Amendment 1) — thermal velocities on random positions, kicked by §2's rule:
+    /// the sin reader returns the kick amplitude to 2 %; the cos reader, the undriven
+    /// quadrature, returns under 3σ. (The reader as first built read cos against a sin
+    /// kick and fitted noise for one run.)
+    #[test]
+    fn pr6_the_driven_quadrature_carries_the_kick_and_the_other_does_not() {
+        let (n, edge) = (432usize, 44.39);
+        let k = 2.0 * std::f64::consts::PI / edge;
+        let mut s: u64 = 0x5052_3036;
+        let mut next = move || { s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407); ((s >> 11) as f64) / ((1u64 << 53) as f64) };
+        let pos: Vec<[f64; 3]> = (0..n).map(|_| [next() * edge, next() * edge, next() * edge]).collect();
+        // thermal velocities of scale σ_v; the kick sized so v_d N/2 = 4 σ with σ = σ_v √(N/2)
+        let sigma_v = 1.7e-4;
+        let sigma = sigma_v * (n as f64 / 2.0).sqrt();
+        let v_d = 4.0 * sigma / (n as f64 / 2.0);
+        let mean_sin = pos.iter().map(|p| (k * p[0]).sin()).sum::<f64>() / n as f64;
+        let mut vel: Vec<[f64; 3]> = (0..n).map(|_| [0.0, sigma_v * 3.46 * (next() - 0.5), 0.0]).collect();
+        let thermal: Vec<f64> = vel.iter().map(|v| v[1]).collect();
+        for (i, p) in pos.iter().enumerate() { vel[i][1] += v_d * ((k * p[0]).sin() - mean_sin); }
+        let traj = Trajectory { header: header3(n, vec![8; n], edge), frames: vec![frame(0, pos.clone(), vel)] };
+        let m = modes_both(&traj, 1, Kind::Spatial).unwrap();
+        let expected: f64 = pos.iter().map(|p| { let sn = (k * p[0]).sin(); v_d * (sn - mean_sin) * sn }).sum();
+        let thermal_sin: f64 = pos.iter().zip(&thermal).map(|(p, v)| v * (k * p[0]).sin()).sum();
+        assert!(((m.cur_sin[0] - thermal_sin) / expected - 1.0).abs() < 1e-9, "sin reader {} vs kick {expected} (+ thermal {thermal_sin})", m.cur_sin[0]);
+        assert!((expected / (v_d * n as f64 / 2.0) - 1.0).abs() < 0.02, "the kick's own projection is v_d N/2 to 2 %: {expected} vs {}", v_d * n as f64 / 2.0);
+        assert!(m.cur_cos[0].abs() < 3.0 * sigma, "the cos quadrature must carry no kick: {} vs 3σ {}", m.cur_cos[0], 3.0 * sigma);
+        // the kick's own projection is 4σ by construction; the thermal draw on this seed is
+        // −0.5σ, so the noisy total is what a single cycle at SNR 4 looks like (A2)
+        assert!((m.cur_sin[0] - thermal_sin).abs() > 3.0 * sigma, "the sin quadrature must carry it: {} vs 3σ {}", m.cur_sin[0] - thermal_sin, 3.0 * sigma);
+    }
+
+    /// PR-7 (Amendment 1) — twelve cycles of alternating sign at SNR 2 each: the aligned
+    /// average reads λ to 5 % while at least nine of the twelve per-cycle fits refuse.
+    #[test]
+    fn pr7_the_aligned_average_reads_what_single_cycles_refuse() {
+        let (lam, dt, relax, cycles, noise) = (1.0 / 140.0, 10.0, 314usize, 12usize, 1.0);
+        let a = 2.0 * noise;   // SNR 2 per cycle
+        let mut series = vec![0.0];   // the pre-kick row
+        let mut s: u64 = 0x5052_3037;
+        let mut next = move || { s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407); ((s >> 11) as f64) / ((1u64 << 53) as f64) - 0.5 };
+        for c in 0..cycles {
+            let sign = if c % 2 == 0 { 1.0 } else { -1.0 };
+            for i in 0..relax { series.push(sign * a * (-lam * i as f64 * dt).exp() + noise * 3.46 * next()); }
+        }
+        let al = align_cycles(&series, cycles, relax, 1);
+        assert_eq!(al.per_cycle.len(), cycles);
+        let refused = al.per_cycle.iter().filter(|c| matches!(fit_relaxation(c, dt, al.noise_per_cycle), Relaxation::Refused { .. })).count();
+        assert!(refused >= 9, "at SNR 2 most cycles must refuse: {refused} of {cycles}");
+        match fit_relaxation(&al.mean, dt, al.noise) {
+            Relaxation::Overdamped { lambda, .. } => assert!((lambda / lam - 1.0).abs() < 0.05, "aligned λ {lambda:.3e} vs {lam:.3e} (noise {:.3})", al.noise),
+            other => panic!("the aligned average must read: {other:?} (noise {:.3})", al.noise),
+        }
+    }
+
+    /// PR-8 (Amendment 1) — a density mode that rises then decays, `e^{−λ₁t} − e^{−λ₂t}`
+    /// with `λ₂ = 40 λ₁` and noise a tenth of the peak: λ₁ to 5 % from the peak, λ₂ from
+    /// the two-exponential form to 10 %, and the series is NOT classified underdamped.
+    #[test]
+    fn pr8_a_rising_density_mode_reads_its_slow_rate_from_the_peak() {
+        let (l1, dt): (f64, f64) = (1.0 / 1700.0, 10.0);
+        let l2: f64 = 40.0 * l1;
+        let a: f64 = 10.0;
+        let peak = a * ((-l1 * 40.0).exp() - (-l2 * 40.0).exp());
+        let y = synth_series(|t| a * ((-l1 * t).exp() - (-l2 * t).exp()), 314, dt, 0.1 * peak, 0x5052_3038);
+        let r = fit_rise_decay(&y, dt, 0.1 * peak);
+        match r.slow {
+            Relaxation::Overdamped { lambda, .. } => assert!((lambda / l1 - 1.0).abs() < 0.05, "λ₁ {lambda:.3e} vs {l1:.3e} from peak {}", r.peak),
+            ref other => panic!("expected overdamped from the peak, got {other:?} (peak {})", r.peak),
+        }
+        let fast = r.fast.expect("the rise is resolved (peak >= 3 readouts) so λ₂ must be read");
+        assert!((fast / l2 - 1.0).abs() < 0.10, "λ₂ {fast:.3e} vs {l2:.3e}");
     }
 
     // ------------------------------------------------------- P-6 / P-7: the pair

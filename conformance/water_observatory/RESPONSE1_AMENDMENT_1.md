@@ -97,3 +97,25 @@ Amplitudes and noises print in scientific notation. A print that showed `0.00` a
 
 R1, R1′, R3, R4 and the branches are unchanged. R4′ is added to branch (e). R2's
 expected refusal at 50 m/s is declared. No number in §5 moves.
+
+### Correction on building (2026-09-19, same day, before any arm is read)
+
+A2 said "baseline the tail's MEAN". Built that way and run on the smoke, the aligned kick
+amplitude read `8.3e-3` au against the direct projection's `5.8e-3` — because the smoke's
+600-fs cycles at 128 waters do NOT relax: every tail sits at `−0.3` of its kick (11–18
+standard errors from zero), a rebound of the opposite sign, and subtracting it inflated
+the amplitude by 40 %. **The baseline is the physical zero** — both modes have zero mean at
+equilibrium (uniform density; zero total momentum with velocities uncorrelated with
+positions) — **and each cycle's tail mean is REPORTED in units of its standard error as the
+relaxation check**: a tail beyond 3 SE means the cycle has not returned by its end, and the
+reader says so on every line. With that, the smoke reads: aligned amplitude `6.3e-3` au
+(SNR 12.7 over three cycles), R4 `0.022`, R4′ at noise, per-cycle `Γ_s` from `4.9e12` to
+`1.2e13` /s — the chain is proven and the smoke is not a reading (128 waters, unrelaxed).
+
+The rebound itself is a finding to expect: at `k = 0.40 Å⁻¹` (128 waters) and `0.27 Å⁻¹`
+(432) water's transverse current is at the onset of propagating shear modes (MD literature
+puts it near `0.3 Å⁻¹`). **If the aligned mode on the 432-water arms classifies UNDERDAMPED,
+R3 reports `ρΓ/k²` as the k-dependent viscosity with the band applied as staked and `ω/k`
+as the shear-wave speed with no band; the classification is the finding**, and the
+hydrodynamic `η` would need the larger box §0 already named. The 3.14-ps cycles of the arms
+hold three to six periods of such a wave, so the tail check will say whether it relaxed.

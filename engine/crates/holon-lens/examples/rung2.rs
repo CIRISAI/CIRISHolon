@@ -596,8 +596,20 @@ fn amendment6_read(root: &Path, arms: &[String], frames_read: &mut u64) {
 /// the last (relaxed, the in-run null); the scrambled partition's mode amplitude is the
 /// placebo's placebo. Pooled over cycles with the spread; the stakes graded in place.
 fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax: usize, frames_read: &mut u64) {
+    // RESPONSE1_AMENDMENT_1: the driven current mode is the SIN quadrature (the kick is a sin
+    // velocity mode), the density response is the COS one; the undriven quadrature of each
+    // is the null R4′; the response is the sign-aligned average over cycles and the
+    // per-cycle fits that pass are the spread; the density is fitted from its peak.
     let axis = if arm == "T" { 1 } else { 0 };
-    let bohr = 5.29177210903e-11; let au_t = 2.4188843265857e-17; let m_o_kg = 15.9949146196 * 1.66053906660e-27;
+    let bohr = 5.29177210903e-11;
+    let fmt = |r: &Relaxation, k: f64| -> String {
+        match r {
+            Relaxation::Overdamped { lambda, amplitude, residual, points } => format!("OVERDAMPED  λ = {lambda:.3e} /s (τ = {:.0} fs)  A = {amplitude:.3e}  resid {residual:.2e}  pts {points}", 1e15 / lambda),
+            Relaxation::Underdamped { gamma, omega, amplitude, .. } => format!("UNDERDAMPED Γ = {gamma:.3e} /s  ω = {omega:.3e} /s (period {:.0} fs, c_s = ω/k = {:.0} m/s)  A = {amplitude:.3e}", 2.0 * std::f64::consts::PI / omega * 1e15, omega / k),
+            Relaxation::Refused { amplitude, noise } => format!("REFUSED — kick amplitude {amplitude:.3e} under 3 x noise {noise:.3e}"),
+        }
+    };
+    let rate = |r: &Relaxation| -> Option<f64> { match r { Relaxation::Overdamped { lambda, .. } => Some(*lambda), Relaxation::Underdamped { gamma, .. } => Some(*gamma), _ => None } };
     for dir_arm in arms {
         let dir = root.join(dir_arm);
         let mut paths: Vec<PathBuf> = match std::fs::read_dir(&dir) {
@@ -605,51 +617,82 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
             Err(e) => { println!("ARM {dir_arm}: REFUSED — {e}"); continue; }
         };
         paths.sort();
-        println!("\n===== RESPONSE-1 arm {arm} on {dir_arm} ({} trajectories): {cycles} cycles x {relax} readouts =====", paths.len());
+        println!("\n===== RESPONSE-1 arm {arm} on {dir_arm} ({} trajectories): {cycles} cycles x {relax} readouts; Amendment 1's read =====", paths.len());
+        let mut seed_rates: Vec<f64> = Vec::new();
         for path in &paths {
             let traj = match Trajectory::read(path) { Ok(t) => t, Err(e) => { println!("  {} REFUSED — {e}", path.display()); continue; } };
             *frames_read += traj.frames.len() as u64;
             let h = &traj.header;
             let dt_fs = h.dt * 0.024188843265857;
+            let dt_s = dt_fs * 1e-15;
             let l_m = h.box_w * bohr; let k = 2.0 * std::f64::consts::PI / l_m;
-            let (rho, cur) = modes(&traj, axis, Kind::Spatial).unwrap();
-            let (rho_b, cur_b) = modes(&traj, axis, Kind::BlindLabel).unwrap();
-            let series: &Vec<f64> = if axis == 0 { &rho } else { &cur };
-            let series_b: &Vec<f64> = if axis == 0 { &rho_b } else { &cur_b };
+            let sp = modes_both(&traj, axis, Kind::Spatial).unwrap();
+            let bl = modes_both(&traj, axis, Kind::BlindLabel).unwrap();
             println!("-- {}  seed 0x{:016x} n={} readouts={} dt={dt_fs:.1} fs  k=2π/L={k:.3e} /m", path.file_name().unwrap().to_string_lossy(), h.seed, h.n_atoms, traj.frames.len());
-            let mut rates: Vec<f64> = Vec::new(); let mut classes: Vec<&str> = Vec::new(); let mut blind_ratio: Vec<f64> = Vec::new();
-            for c in 0..cycles {
-                let start = 1 + c * relax; let end = (start + relax).min(series.len());
-                if end <= start + 4 { break; }
-                let seg: Vec<f64> = series[start..end].iter().map(|v| v - series[end - 1]).collect();   // relative to the relaxed tail
-                let tail = &series[(end - relax / 4).max(start)..end];
-                let mean_t = tail.iter().sum::<f64>() / tail.len() as f64;
-                let noise = (tail.iter().map(|v| (v - mean_t).powi(2)).sum::<f64>() / tail.len() as f64).sqrt().max(1e-12);
-                let fit = fit_relaxation(&seg, dt_fs * 1e-15, noise);
-                let a_sp = seg[0].abs(); let a_bl = (series_b[start] - series_b[end - 1]).abs();
-                blind_ratio.push(a_bl / a_sp.max(1e-12));
-                match &fit {
-                    Relaxation::Overdamped { lambda, amplitude, residual, points } => { rates.push(*lambda); classes.push("overdamped"); println!("   cycle {c:2}: OVERDAMPED  λ = {lambda:.3e} /s (τ = {:.0} fs)  A = {amplitude:.2}  resid {residual:.2}  pts {points} | blind/spatial amplitude {:.3}", 1e15 / lambda, a_bl / a_sp.max(1e-12)); }
-                    Relaxation::Underdamped { gamma, omega, amplitude, .. } => { rates.push(*gamma); classes.push("underdamped"); println!("   cycle {c:2}: UNDERDAMPED Γ = {gamma:.3e} /s  ω = {omega:.3e} /s (period {:.0} fs, c_s = ω/k = {:.0} m/s)  A = {amplitude:.2} | blind/spatial {:.3}", 2.0 * std::f64::consts::PI / omega * 1e15, omega / k, a_bl / a_sp.max(1e-12)); }
-                    Relaxation::Refused { amplitude, noise } => { classes.push("refused"); println!("   cycle {c:2}: REFUSED — kick amplitude {amplitude:.2} under 3 x noise {noise:.2}"); }
+            // the driven current mode (both arms), its null, and the blind partition's version
+            let cur = align_cycles(&sp.cur_sin, cycles, relax, 1);
+            let cur_null = align_cycles(&sp.cur_cos, cycles, relax, 1);
+            let cur_bl = align_cycles(&bl.cur_sin, cycles, relax, 1);
+            if cur.per_cycle.is_empty() { println!("   no complete cycle in {} readouts; nothing read", traj.frames.len()); continue; }
+            let c_used = cur.per_cycle.len();
+            let unrelaxed = cur.tail_sigma.iter().filter(|s| **s > 3.0).count();
+            println!("   {c_used} cycles aligned; current mode noise per cycle {:.3e} au, aligned {:.3e} au; kick amplitude aligned {:.3e} au (SNR {:.1}); tails relaxed: {} of {c_used} (aligned tail mean {:.1} SE){}",
+                cur.noise_per_cycle, cur.noise, cur.mean[0], cur.mean[0].abs() / cur.noise, c_used - unrelaxed, cur.tail_sigma_mean, if unrelaxed > 0 { " — UNRELAXED cycles: the mode has not returned to zero by the cycle's end; the fit's window is what it is and the rebound is a finding" } else { "" });
+            let per: Vec<Relaxation> = cur.per_cycle.iter().map(|c| fit_relaxation(c, dt_s, cur.noise_per_cycle)).collect();
+            for (c, r) in per.iter().enumerate() { println!("   cycle {c:2}: {}  | tail mean {:.1} SE", fmt(r, k), cur.tail_sigma[c]); }
+            let passed: Vec<f64> = per.iter().filter_map(rate).collect();
+            let fit = fit_relaxation(&cur.mean, dt_s, cur.noise);
+            println!("   ALIGNED current mode j_k^s: {}", fmt(&fit, k));
+            // the spread: per-cycle fits when three or more pass, else leave-one-cycle-out
+            let (spread, spread_from) = if passed.len() >= 3 {
+                (passed.iter().cloned().fold(f64::MIN, f64::max) - passed.iter().cloned().fold(f64::MAX, f64::min), format!("{} per-cycle fits", passed.len()))
+            } else {
+                let mut loo = Vec::new();
+                for drop in 0..c_used {
+                    let mean: Vec<f64> = (0..relax).map(|i| cur.per_cycle.iter().enumerate().filter(|(j, _)| *j != drop).map(|(_, c)| c[i]).sum::<f64>() / (c_used - 1).max(1) as f64).collect();
+                    if let Some(r) = rate(&fit_relaxation(&mean, dt_s, cur.noise * ((c_used as f64) / (c_used as f64 - 1.0).max(1.0)).sqrt())) { loo.push(r); }
                 }
-            }
-            if !rates.is_empty() {
-                let mean = rates.iter().sum::<f64>() / rates.len() as f64;
-                let spread = rates.iter().cloned().fold(f64::MIN, f64::max) - rates.iter().cloned().fold(f64::MAX, f64::min);
-                let over = classes.iter().filter(|c| **c == "overdamped").count();
+                (if loo.len() >= 2 { loo.iter().cloned().fold(f64::MIN, f64::max) - loo.iter().cloned().fold(f64::MAX, f64::min) } else { f64::NAN }, format!("leave-one-out over {} of {c_used} cycles", loo.len()))
+            };
+            // R4 and R4′ on the aligned amplitudes
+            let a_sp = cur.mean[0].abs();
+            let r4 = cur_bl.mean[0].abs() / a_sp.max(1e-300);
+            let r4p = cur_null.mean[0].abs();
+            println!("   R4:  blind/spatial aligned kick amplitude {r4:.3} (stake < 0.1): {}", if r4 < 0.1 { "no mode on the scrambled partition" } else { "FIRES — the scrambled partition carries the mode" });
+            println!("   R4′: undriven quadrature j_k^c aligned amplitude {r4p:.3e} au vs 3σ {:.3e}: {}", 3.0 * cur_null.noise, if r4p < 3.0 * cur_null.noise { "at noise, as it must be" } else { "FIRES — the undriven quadrature carries a kick" });
+            if let Some(g) = rate(&fit) {
+                seed_rates.push(g);
                 if axis == 1 {
                     let rho_kg = h.n_atoms as f64 * 18.01528 * 1.66053906660e-27 / l_m.powi(3);
-                    let eta = rho_kg * mean / (k * k);
-                    let eta_lo = rho_kg * (mean - spread / 2.0) / (k * k); let eta_hi = rho_kg * (mean + spread / 2.0) / (k * k);
-                    println!("   R3: Γ_s = {mean:.3e} ± {spread:.2e} /s over {} cycles ({over} overdamped) -> η = ρ Γ_s / k² = {:.3e} Pa s  [{:.2e}, {:.2e}]  stake [2.0e-4, 3.0e-3]: {}", rates.len(), eta, eta_lo, eta_hi, if eta >= 2.0e-4 && eta <= 3.0e-3 { "IN BAND" } else { "OUTSIDE" });
+                    let eta = rho_kg * g / (k * k);
+                    let (lo, hi) = (rho_kg * (g - spread / 2.0) / (k * k), rho_kg * (g + spread / 2.0) / (k * k));
+                    let kind = if matches!(fit, Relaxation::Underdamped { .. }) { " (UNDERDAMPED: a shear wave at this k — ρΓ/k² is the k-dependent viscosity, ω/k its speed; the classification is the finding)" } else { "" };
+                    println!("   R3:  Γ_s = {g:.3e} ± {spread:.2e} /s ({spread_from}) -> η = ρ Γ_s / k² = {eta:.3e} Pa s  [{lo:.2e}, {hi:.2e}]  stake [2.0e-4, 3.0e-3]: {}{kind}", if eta >= 2.0e-4 && eta <= 3.0e-3 { "IN BAND" } else { "OUTSIDE — the model's viscosity is the reading and the band the finding" });
                 } else {
-                    println!("   R2: {over}/{} cycles overdamped; mean rate λ = {mean:.3e} ± {spread:.2e} /s (τ = {:.0} fs) = c_s²/ν_l if overdamped", rates.len(), 1e15 / mean);
+                    println!("   longitudinal current j_k^s: rate {g:.3e} ± {spread:.2e} /s ({spread_from}) = ν_l k² if overdamped -> ν_l = {:.3e} m²/s (no band; the fast mode of A3)", g / (k * k));
                 }
-                let bmean = blind_ratio.iter().sum::<f64>() / blind_ratio.len() as f64;
-                println!("   R4: blind/spatial kick amplitude, mean {bmean:.3} over cycles  (stake < 0.1): {}", if bmean < 0.1 { "no mode on the scrambled partition" } else { "FIRES — the scrambled partition carries the mode" });
+            } else {
+                println!("   {}: the aligned current mode did not read on this seed", if axis == 1 { "R3" } else { "longitudinal current" });
             }
-            let _ = (m_o_kg, au_t);
+            // R2, the density mode on the L arm: cos quadrature, fitted from its peak (A3); its null is the sin quadrature
+            if axis == 0 {
+                let rho = align_cycles(&sp.rho_cos, cycles, relax, 1);
+                let rho_null = align_cycles(&sp.rho_sin, cycles, relax, 1);
+                let rho_bl = align_cycles(&bl.rho_cos, cycles, relax, 1);
+                let rd = fit_rise_decay(&rho.mean, dt_s, rho.noise);
+                let peak_v = rho.mean[rd.peak];
+                println!("   density mode ρ_k^c: noise per cycle {:.3e}, aligned {:.3e} counts; peak {:.3e} at readout {} ({:.0} fs), SNR {:.1}", rho.noise_per_cycle, rho.noise, peak_v, rd.peak, rd.peak as f64 * dt_fs, peak_v.abs() / rho.noise);
+                println!("   R2:  from the peak: {}{}", fmt(&rd.slow, k), match rd.fast { Some(l2) => format!("; two-exponential λ₂ = {l2:.3e} /s -> ν_l = λ₂/k² = {:.3e} m²/s (no band)", l2 / (k * k)), None => String::new() });
+                if let Relaxation::Overdamped { lambda, .. } = rd.slow { println!("        λ₁ = {lambda:.3e} /s = c_s²/ν_l if overdamped (no band; A3 said 50 m/s likely refuses)"); }
+                let r4d = rho_bl.mean[rd.peak].abs() / peak_v.abs().max(1e-300);
+                println!("   R4 (density): blind/spatial at the peak {r4d:.3} (stake < 0.1): {}", if r4d < 0.1 { "no mode on the scrambled partition" } else if peak_v.abs() < 3.0 * rho.noise { "not read — the spatial peak is itself under 3σ" } else { "FIRES" });
+                println!("   R4′ (density): undriven ρ_k^s at the peak {:.3e} vs 3σ {:.3e}: {}", rho_null.mean[rd.peak].abs(), 3.0 * rho_null.noise, if rho_null.mean[rd.peak].abs() < 3.0 * rho_null.noise { "at noise" } else { "FIRES" });
+            }
+        }
+        if seed_rates.len() >= 2 {
+            let m = seed_rates.iter().sum::<f64>() / seed_rates.len() as f64;
+            let sp = seed_rates.iter().cloned().fold(f64::MIN, f64::max) - seed_rates.iter().cloned().fold(f64::MAX, f64::min);
+            println!("   POOLED over {} seeds: rate {m:.3e} /s, seed spread {sp:.2e} /s ({:.0} %)", seed_rates.len(), 100.0 * sp / m);
         }
     }
 }

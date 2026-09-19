@@ -1,0 +1,53 @@
+gf1 ladder: 2026-09-19T12:39:37-05:00 lanes 3061512 (0-3) 3061513 (4-7)
+2026-09-19T12:39:37-05:00 x=0.25 N=8 chi=6 variance/site=4.367413e-12 ADMITTED
+2026-09-19T12:39:37-05:00 x=0.25 N=12 chi=6 variance/site=6.418995e-12 ADMITTED
+2026-09-19T12:39:37-05:00 x=0.25 N=16 chi=6 variance/site=7.447577e-12 ADMITTED
+2026-09-19T12:39:46-05:00 x=0.25 N=24 chi=6 variance/site=8.465155e-12 ADMITTED
+2026-09-19T12:39:49-05:00 x=0.25 N=32 chi=6 variance/site=8.982842e-12 ADMITTED
+2026-09-19T12:39:53-05:00 x=1 N=12 chi=6 variance/site=1.39225e-06 ADMITTED
+2026-09-19T12:40:02-05:00 x=1 N=24 chi=6 variance/site=1.869831e-06 ADMITTED
+2026-09-19T12:40:05-05:00 x=0.25 N=48 chi=6 variance/site=9.496348e-12 ADMITTED
+2026-09-19T12:40:06-05:00 x=1 N=8 chi=6 variance/site=9.475878e-07 ADMITTED
+2026-09-19T12:40:12-05:00 x=1 N=16 chi=6 variance/site=1.630037e-06 ADMITTED
+2026-09-19T12:40:22-05:00 x=1 N=48 chi=6 variance/site=2.109725e-06 ADMITTED
+2026-09-19T12:40:23-05:00 x=4 N=8 chi=6 variance/site=0.0003991852 ADMITTED
+2026-09-19T12:40:25-05:00 x=1 N=32 chi=6 variance/site=1.989778e-06 ADMITTED
+2026-09-19T12:40:27-05:00 x=4 N=12 chi=6 variance/site=0.0008282652 ADMITTED
+2026-09-19T12:40:29-05:00 x=4 N=16 chi=6 variance/site=0.001070519 refused
+2026-09-19T12:40:33-05:00 x=4 N=24 chi=6 variance/site=0.001325219 refused
+2026-09-19T12:41:03-05:00 x=4 N=16 chi=8 variance/site=0.0001907974 ADMITTED
+2026-09-19T12:41:05-05:00 x=0.0625 N=8 chi=6 variance/site=4.404165e-16 ADMITTED [extension]
+2026-09-19T12:41:09-05:00 x=0.0625 N=12 chi=6 variance/site=1.046616e-16 ADMITTED [extension]
+2026-09-19T12:41:12-05:00 x=4 N=32 chi=6 variance/site=0.001456678 refused
+2026-09-19T12:41:14-05:00 x=0.0625 N=16 chi=6 variance/site=-8.323962e-17 ADMITTED [extension]
+2026-09-19T12:41:19-05:00 x=0.0625 N=24 chi=6 variance/site=-5.421011e-17 ADMITTED [extension]
+2026-09-19T12:41:27-05:00 x=0.0625 N=32 chi=6 variance/site=6.462929e-16 ADMITTED [extension]
+2026-09-19T12:41:28-05:00 x=4 N=24 chi=8 variance/site=0.0002374789 ADMITTED
+2026-09-19T12:41:39-05:00 x=0.0625 N=48 chi=6 variance/site=-5.136227e-16 ADMITTED [extension]
+2026-09-19T12:41:40-05:00 x=4 N=48 chi=6 variance/site=0.001588923 refused
+2026-09-19T12:41:41-05:00 x=0.015625 N=8 chi=6 variance/site=-1.31954e-17 ADMITTED [extension]
+2026-09-19T12:41:46-05:00 x=0.015625 N=12 chi=6 variance/site=-2.585265e-17 ADMITTED [extension]
+2026-09-19T12:41:53-05:00 x=0.015625 N=16 chi=6 variance/site=2.686714e-17 ADMITTED [extension]
+2026-09-19T12:42:04-05:00 x=0.015625 N=24 chi=6 variance/site=1.10919e-17 ADMITTED [extension]
+2026-09-19T12:42:19-05:00 x=0.015625 N=32 chi=6 variance/site=-2.012953e-17 ADMITTED [extension]
+2026-09-19T12:42:42-05:00 x=0.015625 N=48 chi=6 variance/site=3.339907e-17 ADMITTED [extension]
+2026-09-19T12:43:07-05:00 x=4 N=32 chi=8 variance/site=0.0002367342 ADMITTED
+2026-09-19T12:43:10-05:00 x=16 N=12 chi=6 variance/site=0.05423576 refused
+2026-09-19T12:43:30-05:00 x=16 N=12 chi=8 variance/site=0.01011466 refused
+2026-09-19T12:43:34-05:00 x=4 N=48 chi=8 variance/site=0.0002424642 ADMITTED
+2026-09-19T12:43:35-05:00 x=16 N=8 chi=6 variance/site=0.01589542 refused
+2026-09-19T12:43:42-05:00 x=16 N=8 chi=8 variance/site=0.00215751 refused
+2026-09-19T12:44:04-05:00 x=16 N=8 chi=11 variance/site=0.0001342581 ADMITTED
+2026-09-19T12:44:08-05:00 x=16 N=16 chi=6 variance/site=0.09377854 refused
+2026-09-19T12:44:40-05:00 x=16 N=16 chi=8 variance/site=0.0184579 refused
+2026-09-19T12:45:53-05:00 x=16 N=12 chi=11 variance/site=0.0007037769 ADMITTED
+2026-09-19T12:45:58-05:00 x=16 N=24 chi=6 variance/site=0.1081991 refused
+2026-09-19T12:46:49-05:00 x=16 N=24 chi=8 variance/site=0.03107914 refused
+2026-09-19T12:48:29-05:00 x=16 N=16 chi=11 variance/site=0.001268174 refused
+2026-09-19T12:48:36-05:00 x=16 N=32 chi=6 variance/site=0.123177 refused
+2026-09-19T12:49:43-05:00 x=16 N=32 chi=8 variance/site=0.0393631 refused
+2026-09-19T12:52:48-05:00 x=16 N=24 chi=11 variance/site=0.001999617 refused
+2026-09-19T12:52:59-05:00 x=16 N=48 chi=6 variance/site=0.1388471 refused
+2026-09-19T12:54:42-05:00 x=16 N=48 chi=8 variance/site=0.0578283 refused
+2026-09-19T12:58:04-05:00 x=16 N=32 chi=11 variance/site=0.00247526 refused
+2026-09-19T13:07:22-05:00 x=16 N=48 chi=11 variance/site=0.003270797 refused

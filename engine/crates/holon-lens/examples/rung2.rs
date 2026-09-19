@@ -28,7 +28,8 @@ fn main() {
     let amend1 = args.iter().any(|a| a == "--amend1");
     let amend4 = args.iter().any(|a| a == "--amend4");
     let amend5 = args.iter().any(|a| a == "--amend5");
-    args.retain(|a| a != "--amend1" && a != "--amend4" && a != "--amend5");
+    let amend6 = args.iter().any(|a| a == "--amend6");
+    args.retain(|a| a != "--amend1" && a != "--amend4" && a != "--amend5" && a != "--amend6");
     if args.is_empty() {
         eprintln!("usage: rung2 <traj-dir> [arm ...]");
         std::process::exit(2);
@@ -59,6 +60,12 @@ fn main() {
     // The cost model of PREREG G11, counted rather than timed.
     let mut frames_read: u64 = 0;
     let mut chart_evals: u64 = 0;
+    if amend6 {
+        amendment6_read(&root, &arms, &mut frames_read);
+        println!("\n===== COST (PREREG G11, work units, never wall clock) =====");
+        println!("frames read:       {frames_read}");
+        return;
+    }
     if amend5 {
         amendment5_read(&root, &arms, &mut frames_read, &mut chart_evals);
         println!("\n===== COST (PREREG G11, work units, never wall clock) =====");
@@ -506,6 +513,65 @@ fn amendment5_read(root: &Path, arms: &[String], frames_read: &mut u64, chart_ev
             if inf > 0 && inf < prereg::MIN_INFORMATIVE {
                 let need_windows = (prereg::MIN_INFORMATIVE as f64 / (inf as f64 / nwin.max(1) as f64)).ceil();
                 println!("      A5 length: {inf} informative in {nwin} windows -> G4 needs ~{need_windows:.0} windows = {:.0} ps at this cadence", need_windows * tau / 1000.0);
+            }
+        }
+    }
+}
+
+
+/// RUNG2_AMENDMENT_6.md: the continuity leg, read at Amendment 5's cadence on every grid of
+/// the derived ladder with more than one cell. Prints `D_cont` for the spatial chart and the
+/// position-blind control, the G7-form separation, and the window count — VOID by count is
+/// said, and the absolute number is printed beside it either way.
+fn amendment6_read(root: &Path, arms: &[String], frames_read: &mut u64) {
+    for arm in arms {
+        let dir = root.join(arm);
+        let mut paths: Vec<PathBuf> = match std::fs::read_dir(&dir) {
+            Ok(rd) => rd.filter_map(|e| e.ok().map(|e| e.path())).filter(|p| p.extension().map(|e| e == "traj").unwrap_or(false)).collect(),
+            Err(e) => { println!("ARM {arm}: REFUSED — {e}"); continue; }
+        };
+        paths.sort();
+        println!("\n===== ARM {arm} ({} trajectories) — continuity leg =====", paths.len());
+        for path in &paths {
+            let traj = match Trajectory::read(path) { Ok(t) => t, Err(e) => { println!("  {} REFUSED — {e}", path.display()); continue; } };
+            *frames_read += traj.frames.len() as u64;
+            let h = &traj.header;
+            let readout_au = h.dt;
+            let readout_fs = readout_au * 0.024188843265857;
+            let m_bar = h.z.iter().map(|z| mass_me(*z).unwrap_or(0.0)).sum::<f64>() / h.n_atoms as f64;
+            println!("-- {}  seed 0x{:016x} n={} frames={} readout {readout_fs:.1} fs", path.file_name().unwrap().to_string_lossy(), h.seed, h.n_atoms, traj.frames.len());
+            for grid in doubling_ladder(h.n_atoms, h.dims) {
+                if grid.cells() < 2 { continue; }
+                if let Err(why) = continuity_admits(grid) {
+                    println!("   grid {}x{}x{}: REFUSED for the continuity leg — {why}", grid.nx, grid.ny, grid.nz);
+                    continue;
+                }
+                let tau = cadence_fs(&traj, grid);
+                let window = ((tau / readout_fs).round() as usize).max(1);
+                let boxe = [h.box_w, h.box_h, h.box_d];
+                let mut d: Vec<(Kind, Option<f64>, usize)> = Vec::new();
+                for kind in [Kind::Spatial, Kind::BlindLabel] {
+                    match fields3(&traj, grid, kind) {
+                        Ok(f) => {
+                            let avg = window_mean(&f, window);
+                            let c = continuity(&avg, grid, boxe, m_bar, window as f64 * readout_au);
+                            d.push((kind, c.defect(), c.windows_compared));
+                        }
+                        Err(e) => println!("   grid {}x{}x{} {kind:?}: REFUSED — {e:?}", grid.nx, grid.ny, grid.nz),
+                    }
+                }
+                let sp = d.iter().find(|x| x.0 == Kind::Spatial); let bl = d.iter().find(|x| x.0 == Kind::BlindLabel);
+                if let (Some((_, Some(ds), nw)), Some((_, Some(db), _))) = (sp, bl) {
+                    let enough = *nw >= 20;
+                    println!(
+                        "   grid {}x{}x{} tau={:.0} fs window={} -> {} transitions | D_cont spatial={:.3} blind={:.3} | blind − spatial = {:+.3} (needs ≥ +0.05) → {}{}",
+                        grid.nx, grid.ny, grid.nz, tau, window, nw, ds, db, db - ds,
+                        if db - ds >= prereg::MIN_SEPARATION { "SEPARATED" } else { "no separation" },
+                        if enough { "" } else { "  [VOID by count: fewer than 20 transitions; the number is printed, not graded]" }
+                    );
+                } else {
+                    println!("   grid {}x{}x{}: undecidable (no density change in a window)", grid.nx, grid.ny, grid.nz);
+                }
             }
         }
     }

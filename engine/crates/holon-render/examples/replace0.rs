@@ -1419,6 +1419,7 @@ fn main() {
             val("--readout-fs").and_then(|v| v.parse().ok()).unwrap_or(20.0),
             val("--stiffness"),
             seed,
+            val("--workers").and_then(|v| v.parse().ok()).unwrap_or(1),
         ),
         "run" => run_phase(
             &obs,
@@ -1467,11 +1468,35 @@ fn append_walk_rows(base: &Path, w: &Walk) {
 /// What a reading on this box is: a reading of the OPERATOR's liquid. The amendment's fence
 /// is that one fine-model seed at this size is owed before any closure is called the
 /// model's.
-fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_rigid: usize, readouts: usize, readout_fs: f64, stiffness: Option<String>, seed: u64) {
+fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_rigid: usize, readouts: usize, readout_fs: f64, stiffness: Option<String>, seed: u64, workers: usize) {
     let t0 = Instant::now();
     let w = RecordWriter::new(out);
     let law = load_law(obs);
     let (mut sim, l) = build_n(&law, seed, cells);
+    // THE WORKERS. `holon-md`'s pool evaluates the pair and triple sectors on `workers`
+    // threads; the accumulation order is fixed by the executor contract, so the answer is
+    // the serial answer to the bit (`tests/t3_parallel.rs`), and the smoke below checks the
+    // walk files against a serial run. A refused lease REFUSES the run rather than quietly
+    // going serial: a price measured under a different worker count than the record claims
+    // is not a price. The seam, field and far sectors stay serial; the measured speedup is
+    // what it is and is printed, never assumed.
+    let mut pool = if workers > 1 {
+        match holon_md::WorkerPool::new(workers) {
+            Ok(p) => { eprintln!("scout: worker pool of {} leased", p.workers()); Some(p) }
+            Err(e) => panic!("scout: worker lease REFUSED for {workers} workers: {e:?}"),
+        }
+    } else { None };
+    let sim_ref = &mut sim;
+    let run = |sim: &mut Sim| scout_body(sim, obs, out, &w, cells, settle_fine, settle_rigid, readouts, readout_fs, stiffness.clone(), seed, workers, l, t0);
+    match pool.as_mut() {
+        Some(p) => { holon_md::with_pool(sim_ref, p, run); }
+        None => { run(sim_ref); }
+    }
+    if let Some(p) = pool { let _ledger = p.retire(); }
+}
+
+#[allow(clippy::too_many_arguments)]
+fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: usize, settle_fine: usize, settle_rigid: usize, readouts: usize, readout_fs: f64, stiffness: Option<String>, seed: u64, workers: usize, l: f64, t0: Instant) {
     let z: Vec<u32> = (0..sim.n).map(|i| sim.atoms[i].species.z).collect();
     let oxy: Vec<usize> = (0..sim.n).filter(|&i| z[i] == 8).collect();
     let n_w = oxy.len();
@@ -1480,13 +1505,13 @@ fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_
     // 1. the fine settle, for the reference geometry and a liquid-like start
     let dt_f = sim.dt();
     eprintln!("scout: fine settle {settle_fine} frames under the stochastic thermostat ({:.1} fs)", settle_fine as f64 * dt_f * AU_TIME_FS);
-    settle(&mut sim, settle_fine);
+    settle(sim, settle_fine);
     sim.thermostat_on = false;
     sim.compute_forces();
     let t_fine = sim.temperature();
     let (units, other) = unit_members(&sim.units_reading());
     assert!(other.is_empty(), "non-water units after the fine settle: {other:?}");
-    let geom = mean_monomer_geometry(&sim, &units);
+    let geom = mean_monomer_geometry(sim, &units);
     let body = reference_body_from(geom.r_oh_bohr, geom.theta_rad).expect("the mean monomer is principal");
     eprintln!("scout: reference geometry O-H {:.5} +/- {:.5} bohr, H-O-H {:.5} +/- {:.5} rad over {} units; fine T {t_fine:.1} K", geom.r_oh_bohr, geom.r_oh_sd_bohr, geom.theta_rad, geom.theta_sd_rad, geom.units);
     // 2. the stiffness envelope: read (declared intensive) or measured here
@@ -1497,14 +1522,14 @@ fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_
             (v.value, p)
         }
         None => {
-            let s = measure_stiffness(&mut sim, &units, &body);
+            let s = measure_stiffness(sim, &units, &body);
             eprintln!("scout: stiffness envelope MEASURED on this box: {:.4e} Ha/bohr^2 ({} passes)", s.k_envelope, s.passes);
             sim.compute_forces();
             (s.k_envelope, "measured on this box".to_string())
         }
     };
     // 3. projection and the rigid clock at the readout cadence
-    let (projected, other) = project_all(&sim, &body).expect("every unit projects");
+    let (projected, other) = project_all(sim, &body).expect("every unit projects");
     assert!(other.is_empty());
     let def_rms = (projected.iter().map(|(_, _, d)| d.deformation_rms * d.deformation_rms).sum::<f64>() / n_w as f64).sqrt();
     let env = StiffnessEnvelope { k_max: k_envelope };
@@ -1514,9 +1539,9 @@ fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_
     let dt_r = period / k_r as f64;
     eprintln!("scout: rigid clock dt {:.4} au ({:.2}x fine); readout every {readout_fs} fs = {k_r} rigid steps at dt {dt_r:.4} au", clock.dt, clock.dt / dt_f);
     let mut bodies: Vec<Flying> = projected.into_iter().map(|(m, w, _)| Flying { m, w, f: SiteForces::default() }).collect();
-    for b in bodies.iter() { write_back(&mut sim, &b.m, &b.w.reconstruct()); }
+    for b in bodies.iter() { write_back(sim, &b.m, &b.w.reconstruct()); }
     sim.compute_forces();
-    for b in bodies.iter_mut() { b.f = site_forces_of(&sim, &b.m); }
+    for b in bodies.iter_mut() { b.f = site_forces_of(sim, &b.m); }
     let mut passes = 1u64;
     // 4. the rigid settle: velocity rescaling to T_target on the six retained modes every 10
     // steps, ENDED BY A CRITERION and not by a count. The 128-water smoke settled 74 fs and
@@ -1534,10 +1559,10 @@ fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_
     let mut step = 0usize;
     let mut settled_by_criterion = false;
     while step < cap {
-        rigid_step(&mut sim, &mut bodies, dt_r);
+        rigid_step(sim, &mut bodies, dt_r);
         passes += 1;
         step += 1;
-        acc += potential(&sim) / n_w as f64;
+        acc += potential(sim) / n_w as f64;
         if step % 10 == 0 {
             let s = (TEMPERATURE_K / rigid_temperature(&bodies).max(1e-9)).sqrt();
             for b in bodies.iter_mut() { b.w.p = scale(b.w.p, s); b.w.l_body = scale(b.w.l_body, s); }
@@ -1569,27 +1594,27 @@ fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_
     let base = out.join("rigid");
     std::fs::write(base.with_extension("walk"), format!("# walk {} {l}\n", readouts + 1)).expect("walk header");
     std::fs::write(base.with_extension("vwalk"), format!("# vwalk {} {l}\n", readouts + 1)).expect("vwalk header");
-    let mut walk = Walk::new(&read_oxy(&sim), l);
-    walk.record(&read_oxy_v(&sim));
+    let mut walk = Walk::new(&read_oxy(sim), l);
+    walk.record(&read_oxy_v(sim));
     append_walk_rows(&base, &walk);
-    let e0 = rigid_kinetic(&bodies) + potential(&sim);
+    let e0 = rigid_kinetic(&bodies) + potential(sim);
     let mut e_peak = 0.0f64;
     let mut series = Vec::new();
-    series.push(observe(&sim, &z, l, 0.0, t_settled, e0, 0.0, t_settled, 0.0));
+    series.push(observe(sim, &z, l, 0.0, t_settled, e0, 0.0, t_settled, 0.0));
     eprintln!("scout: production {readouts} readouts x {readout_fs} fs = {:.1} ps, NVE from T {t_settled:.1} K, E {e0:.6} Ha", readouts as f64 * readout_fs / 1000.0);
     let tp = Instant::now();
     for r in 0..readouts {
         for _ in 0..k_r {
-            rigid_step(&mut sim, &mut bodies, dt_r);
-            walk.advance(&read_oxy(&sim));
+            rigid_step(sim, &mut bodies, dt_r);
+            walk.advance(&read_oxy(sim));
             passes += 1;
         }
-        walk.record(&read_oxy_v(&sim));
+        walk.record(&read_oxy_v(sim));
         append_walk_rows(&base, &walk);
-        let e = rigid_kinetic(&bodies) + potential(&sim);
+        let e = rigid_kinetic(&bodies) + potential(sim);
         e_peak = e_peak.max((e - e0).abs());
         let t_fs = (r + 1) as f64 * readout_fs;
-        series.push(observe(&sim, &z, l, t_fs, rigid_temperature(&bodies), e, 0.0, rigid_temperature(&bodies), 0.0));
+        series.push(observe(sim, &z, l, t_fs, rigid_temperature(&bodies), e, 0.0, rigid_temperature(&bodies), 0.0));
         if (r + 1) % 25 == 0 || r + 1 == readouts {
             let o = series.last().unwrap();
             let rate = tp.elapsed().as_secs_f64() / ((r + 1) as f64 * readout_fs / 1000.0);
@@ -1616,6 +1641,7 @@ fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_
     for g in report.gates() { println!("{}", g.line()); }
     let rec = Record::new("scout")
         .int("cells", cells as i64)
+        .int("workers", workers as i64)
         .int("waters", n_w as i64)
         .number("box_edge_bohr", l)
         .text("seed", &format!("{seed:#x}"))

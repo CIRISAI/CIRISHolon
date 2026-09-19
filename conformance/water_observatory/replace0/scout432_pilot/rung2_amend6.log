@@ -1,0 +1,37 @@
+# RUNG 2 — the fluid-element chart
+# stakes: RUNG2_PREREG.md @ aee5317
+# dp = 1.321126 au (frozen 1.3211)
+# de = 0.000950043 Ha (frozen 0.0009500435)
+# bars: admissible occ >= 100, cells >= 4, fluct <= 0.1; transport >= 0.05; informative >= 200; beta = 0.02; separation >= 0.05
+
+===== ARM rigid (3 trajectories) — continuity leg =====
+-- seed0.traj  seed 0x5245504c41434530 n=432 frames=251 readout 20.0 fs
+   grid 2x1x1: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 2x2x1: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 2x2x2: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 4x2x2: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 4x4x2: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 4x4x4 tau=392 fs window=20 -> 11 transitions | D_cont spatial=1.017 blind=1.023 | blind − spatial = +0.006 (needs ≥ +0.05) → no separation  [VOID by count: fewer than 20 transitions; the number is printed, not graded]
+   grid 8x4x4 tau=196 fs window=10 -> 24 transitions | D_cont spatial=0.992 blind=1.011 | blind − spatial = +0.019 (needs ≥ +0.05) → no separation
+   grid 8x8x4 tau=196 fs window=10 -> 24 transitions | D_cont spatial=0.996 blind=1.015 | blind − spatial = +0.019 (needs ≥ +0.05) → no separation
+-- seed1.traj  seed 0x5245504c41434531 n=432 frames=251 readout 20.0 fs
+   grid 2x1x1: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 2x2x1: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 2x2x2: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 4x2x2: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 4x4x2: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 4x4x4 tau=392 fs window=20 -> 11 transitions | D_cont spatial=1.010 blind=1.019 | blind − spatial = +0.008 (needs ≥ +0.05) → no separation  [VOID by count: fewer than 20 transitions; the number is printed, not graded]
+   grid 8x4x4 tau=196 fs window=10 -> 24 transitions | D_cont spatial=0.991 blind=1.013 | blind − spatial = +0.022 (needs ≥ +0.05) → no separation
+   grid 8x8x4 tau=196 fs window=10 -> 24 transitions | D_cont spatial=0.998 blind=1.018 | blind − spatial = +0.021 (needs ≥ +0.05) → no separation
+-- seed2.traj  seed 0x5245504c41434532 n=432 frames=251 readout 20.0 fs
+   grid 2x1x1: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 2x2x1: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 2x2x2: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 4x2x2: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 4x4x2: REFUSED for the continuity leg — an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically
+   grid 4x4x4 tau=392 fs window=20 -> 11 transitions | D_cont spatial=1.015 blind=1.025 | blind − spatial = +0.011 (needs ≥ +0.05) → no separation  [VOID by count: fewer than 20 transitions; the number is printed, not graded]
+   grid 8x4x4 tau=196 fs window=10 -> 24 transitions | D_cont spatial=0.997 blind=1.011 | blind − spatial = +0.013 (needs ≥ +0.05) → no separation
+   grid 8x8x4 tau=196 fs window=10 -> 24 transitions | D_cont spatial=1.001 blind=1.017 | blind − spatial = +0.016 (needs ≥ +0.05) → no separation
+
+===== COST (PREREG G11, work units, never wall clock) =====
+frames read:       753

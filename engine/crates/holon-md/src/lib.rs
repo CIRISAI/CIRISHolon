@@ -357,6 +357,21 @@ pub fn run_frames(
     (pool, progress)
 }
 
+/// Run an arbitrary closure with the force evaluation on `pool` — the same discipline as
+/// [`run_frames`] (install the handle, run, remove it, pay) for callers whose loop is not
+/// `step_frame`: a rigid-body integrator calls `compute_forces` itself. The pool is
+/// borrowed, so the caller keeps its ledger; a panic inside leaves the executor installed,
+/// which is the honest failure, as above.
+pub fn with_pool<R>(sim: &mut Sim, pool: &mut WorkerPool, f: impl FnOnce(&mut Sim) -> R) -> R {
+    pool.reset_progress();
+    let boxed: Box<dyn ForceExecutor + Send + Sync> = Box::new(PoolHandle::new(pool));
+    sim.set_executor(Some(boxed));
+    let r = f(sim);
+    sim.set_executor(None);
+    pool.pay();
+    r
+}
+
 /// A borrow of a pool, boxed for the engine's executor slot.
 ///
 /// The engine's seam takes an owned `Box<dyn ForceExecutor>` because it must survive across

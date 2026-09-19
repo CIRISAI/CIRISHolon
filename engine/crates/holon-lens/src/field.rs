@@ -566,6 +566,78 @@ pub fn readings_windowed(
     Ok(out)
 }
 
+/// RUNG2_AMENDMENT_6.md — the continuity leg. For consecutive window-averaged fields `k`
+/// and `k+1` of a chart of `grid` cells on a periodic box, the finite-volume prediction of
+/// each cell's occupancy change from the momentum crossing its faces, against the observed
+/// change, as an RMS ratio: `0` means the momentum field accounts for every particle that
+/// changed cells, `1` means it accounts for none.
+///
+/// `Δn_c^pred = −(τ/m̄) Σ_faces (P̄_face · n̂) / a_axis`, the face momentum the mean of the two
+/// adjacent cells' momenta at the two windows' midpoint (`½(P(k) + P(k+1))`, then `½` across
+/// the face) — the standard finite-volume closure, no parameter. Faces exist only on axes
+/// with more than one cell (a `dims = 2` chart sums four, PF-4); periodic faces wrap.
+pub struct Continuity {
+    pub windows_compared: usize,
+    pub rms_observed: f64,
+    pub rms_residual: f64,
+}
+
+impl Continuity {
+    pub fn defect(&self) -> Option<f64> {
+        if self.rms_observed > 0.0 { Some(self.rms_residual / self.rms_observed) } else { None }
+    }
+}
+
+/// Whether the finite-volume closure can carry information on this grid. On an axis of
+/// exactly TWO periodic cells the `+` and `−` faces border the same neighbour and a central
+/// face flux cancels identically — the leg reads `D_cont = 1` on every carrier, including
+/// exact advection (plant PF-1 found it). The leg needs at least three cells on every split
+/// axis, and a grid that does not have them is REFUSED rather than read.
+pub fn continuity_admits(grid: Grid3) -> Result<(), &'static str> {
+    for n in [grid.nx, grid.ny, grid.nz] {
+        if n == 2 { return Err("an axis of two periodic cells: opposite faces border the same cell and the central flux cancels identically"); }
+    }
+    if [grid.nx, grid.ny, grid.nz].iter().all(|&n| n < 2) { return Err("no split axis: no faces"); }
+    Ok(())
+}
+
+pub fn continuity(fields: &[CellFields], grid: Grid3, box_edges: [f64; 3], m_bar: f64, tau_au: f64) -> Continuity {
+    let nc = grid.cells();
+    let dims = [grid.nx, grid.ny, grid.nz];
+    let edge = [box_edges[0] / grid.nx as f64, box_edges[1] / grid.ny as f64, box_edges[2] / grid.nz as f64];
+    let idx = |ix: usize, iy: usize, iz: usize| (iz * grid.ny + iy) * grid.nx + ix;
+    let coords = |c: usize| (c % grid.nx, (c / grid.nx) % grid.ny, c / (grid.nx * grid.ny));
+    let (mut so, mut sr, mut n) = (0.0f64, 0.0f64, 0usize);
+    for k in 0..fields.len().saturating_sub(1) {
+        let (a, b) = (&fields[k], &fields[k + 1]);
+        let ns = a.occ.len() / nc.max(1);
+        for c in 0..nc {
+            // total occupancy over species: continuity is about particles, not species
+            let obs: f64 = (0..ns).map(|s| b.occ[c * ns + s] - a.occ[c * ns + s]).sum();
+            let (ix, iy, iz) = coords(c);
+            let mut flux = 0.0;
+            for axis in 0..3 {
+                if dims[axis] < 2 { continue; }
+                for dir in [-1i64, 1i64] {
+                    let mut q = [ix as i64, iy as i64, iz as i64];
+                    q[axis] = (q[axis] + dir).rem_euclid(dims[axis] as i64);
+                    let d = idx(q[0] as usize, q[1] as usize, q[2] as usize);
+                    let p_mid_c = 0.5 * (a.p[c][axis] + b.p[c][axis]);
+                    let p_mid_d = 0.5 * (a.p[d][axis] + b.p[d][axis]);
+                    let p_face = 0.5 * (p_mid_c + p_mid_d);
+                    flux += (dir as f64) * p_face / edge[axis];
+                }
+            }
+            let pred = -(tau_au / m_bar) * flux;
+            so += obs * obs;
+            sr += (obs - pred) * (obs - pred);
+            n += 1;
+        }
+    }
+    let nf = n.max(1) as f64;
+    Continuity { windows_compared: fields.len().saturating_sub(1), rms_observed: (so / nf).sqrt(), rms_residual: (sr / nf).sqrt() }
+}
+
 /// The chart's readings, one per frame.
 ///
 /// Field order is fixed and documented so a reimplementation is bit-identical: for each
@@ -1919,6 +1991,108 @@ mod tests {
         let inst = readings3(&traj, grid, Rung::Occ, Kind::Spatial, Density::Exact).unwrap();
         let avg = readings_windowed(&traj, grid, Rung::Occ, Kind::Spatial, Density::Calibrated3 { n: 1.0, p: 1.0, e: 1.0 }, 4).unwrap();
         assert_ne!(inst.len(), avg.len(), "different cadences have different lengths; refines() is not even defined across them");
+    }
+
+    // ------------------------------------------- RUNG2_AMENDMENT_6.md's plants, PF-1..PF-4
+
+    /// Particles carried by a small-amplitude STANDING WAVE, `v_x = (ξ ω) sin(kx) cos(ωt)` with
+    /// `k = 2π/L`, displacement amplitude `ξ` a fraction of a cell, stepped exactly with the
+    /// velocity recorded. Continuity holds by construction, the flux has a signal (the
+    /// density oscillates at the nodes), and — the point — the density stays SMOOTH for ever,
+    /// so the finite-volume closure's error is a discretisation error that converges.
+    ///
+    /// Two carriers came before this one and both taught something: a divergence-free flow
+    /// at uniform density (continuity predicts zero; the reading of 1.0 was correct), and a
+    /// compressive flow run long enough to form caustics (`k A t ≈ 16`), whose sub-cell density
+    /// structure no closure resolves at any grid — `D_cont` sat at 0.3 for 4, 8 and 16 cells.
+    fn standing_wave3(n: usize, edge: f64, frames: usize, xi: f64, period_frames: usize, dt: f64, seed: u64) -> Trajectory {
+        let mut u = seed;
+        let mut next = move || { u = u.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407); ((u >> 11) as f64) / ((1u64 << 53) as f64) };
+        let mut pos: Vec<[f64; 3]> = (0..n).map(|_| [next() * edge, next() * edge, next() * edge]).collect();
+        let k = 2.0 * std::f64::consts::PI / edge;
+        let omega = 2.0 * std::f64::consts::PI / (period_frames as f64 * dt);
+        let mut out = Vec::with_capacity(frames);
+        for i in 0..frames {
+            let t = i as f64 * dt;
+            let vel: Vec<[f64; 3]> = pos.iter().map(|p| [xi * omega * (k * p[0]).sin() * (omega * t).cos(), 0.0, 0.0]).collect();
+            out.push(frame(i as u64, pos.clone(), vel.clone()));
+            for (p, v) in pos.iter_mut().zip(&vel) { p[0] = (p[0] + v[0] * dt).rem_euclid(edge); }
+        }
+        Trajectory { header: header3(n, vec![8; n], edge), frames: out }
+    }
+
+    /// PF-1 — a standing wave: the momentum field accounts for the density change, and the
+    /// closure CONVERGES with the grid where it can. "Where it can" is the third thing this
+    /// plant taught: on ANY particle carrier the crossings through a face in a window are a
+    /// count, so `D_cont` has a shot-noise floor of about `1/√(crossings)`, and refining the
+    /// grid RAISES it (at 16,000 particles the reading went 0.42 → 0.46 → 0.69 with the grid).
+    /// A million particles put the floor at a few percent on the coarse grids, and there the
+    /// discretisation error shows and falls. The same floor bounds the leg's power on a
+    /// liquid, and the amendment says so.
+    #[test]
+    fn pf1_a_standing_wave_converges_under_continuity() {
+        let (n, edge, dt) = (1_000_000, 40.0, 1.0);
+        let m = O_MASS_U * M_E_PER_U;
+        let traj = standing_wave3(n, edge, 160, 1.0, 80, dt, 0x5046_3031);
+        let w = 8usize;
+        let mut ds = Vec::new();
+        for nx in [4usize, 8] {
+            let grid = Grid3 { nx, ny: 3, nz: 3 };
+            let f = fields3(&traj, grid, Kind::Spatial).unwrap();
+            ds.push(continuity(&window_mean(&f, w), grid, [edge; 3], m, w as f64 * dt).defect().unwrap());
+        }
+        eprintln!("PF-1 D_cont at 4/8 cells per wavelength, 1e6 particles: {:.3} / {:.3}", ds[0], ds[1]);
+        assert!(ds[1] < ds[0], "the closure must improve from 4 to 8 cells per wavelength above the shot-noise floor: {ds:?}");
+        assert!(ds[1] < 0.15, "and be under 0.15 at eight cells per wavelength: {:.3}", ds[1]);
+    }
+
+    /// PF-2 — random walkers whose velocities are uncorrelated with their displacement: the
+    /// momentum field explains nothing, and the blind chart does no worse.
+    #[test]
+    fn pf2_random_walkers_fail_continuity_and_do_not_separate() {
+        let (n, edge) = (2000, 40.0);
+        let m = O_MASS_U * M_E_PER_U;
+        let traj = zero_sum_thermal_walk3(n, edge, 400, 0x5046_3032);
+        let grid = Grid3 { nx: 4, ny: 4, nz: 4 };
+        let w = 4usize;
+        let tau = w as f64 * 826.0;
+        let fs = fields3(&traj, grid, Kind::Spatial).unwrap();
+        let fb = fields3(&traj, grid, Kind::BlindLabel).unwrap();
+        let ds = continuity(&window_mean(&fs, w), grid, [edge; 3], m, tau).defect().unwrap();
+        let db = continuity(&window_mean(&fb, w), grid, [edge; 3], m, tau).defect().unwrap();
+        assert!(ds > 0.7, "walkers: D_cont = {ds:.3}, expected near 1");
+        assert!((db - ds).abs() < 0.3, "and no separation from the blind chart: {ds:.3} vs {db:.3}");
+    }
+
+    /// PF-3 — the control loses on the carrier the real chart passes.
+    #[test]
+    fn pf3_the_scrambled_control_fails_where_advection_passes() {
+        let (n, edge, _dt) = (200_000, 40.0, 1.0);
+        let m = O_MASS_U * M_E_PER_U;
+        let traj = standing_wave3(n, edge, 160, 1.0, 80, 1.0, 0x5046_3033);
+        let grid = Grid3 { nx: 8, ny: 3, nz: 3 };
+        let w = 8usize;
+        let dt = 1.0;
+        let ds = continuity(&window_mean(&fields3(&traj, grid, Kind::Spatial).unwrap(), w), grid, [edge; 3], m, w as f64 * dt).defect().unwrap();
+        let db = continuity(&window_mean(&fields3(&traj, grid, Kind::BlindLabel).unwrap(), w), grid, [edge; 3], m, w as f64 * dt).defect().unwrap();
+        assert!(db - ds >= prereg::MIN_SEPARATION, "G7-form separation on advection: spatial {ds:.3} blind {db:.3}");
+        assert!(db > 0.7, "the scrambled control must fail: {db:.3}");
+    }
+
+    /// PF-4 — a `dims = 2` chart sums four faces: with `n_z = 1` the z-faces contribute
+    /// nothing, exactly, whatever the z-momentum.
+    #[test]
+    fn pf4_a_2d_chart_sums_four_faces() {
+        let (n, edge, dt) = (1000, 40.0, 5.0);
+        let m = O_MASS_U * M_E_PER_U;
+        let traj = standing_wave3(n, edge, 100, 1.0, 80, dt, 0x5046_3034);
+        let grid = Grid3 { nx: 4, ny: 4, nz: 1 };
+        let f = window_mean(&fields3(&traj, grid, Kind::Spatial).unwrap(), 4);
+        let a = continuity(&f, grid, [edge; 3], m, 20.0);
+        let mut g = f.clone();
+        for w in g.iter_mut() { for c in w.p.iter_mut() { c[2] += 1e6; } }
+        let b = continuity(&g, grid, [edge; 3], m, 20.0);
+        assert_eq!(a.rms_residual.to_bits(), b.rms_residual.to_bits(), "z-momentum must not enter a 2D chart's continuity");
     }
 
     // ------------------------------------------------------- P-6 / P-7: the pair

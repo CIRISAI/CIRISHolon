@@ -66,3 +66,25 @@ of wall on one core each**, plus the criterion settle (floor 1.1 ps, cap 11 ps: 
 Three seeds in parallel: **about 8.5 days of three cores.** Six seeds on six cores costs the
 same wall and halves the hold-out's uncertainty; the machine has the cores when other work
 allows. Walk files: `10,001` rows × 432 oxygens, ~`250` MB per file, `1.5` GB for three seeds.
+
+
+---
+
+## The continuity leg on the pilot (Amendment 6, 2026-09-18, zero compute)
+
+Read at Amendment 5's cadence on every grid the leg admits (three or more cells per split
+axis). `rung2 --amend6`, log `rung2_amend6.log`.
+
+| grid | `⟨n⟩` | `τ` | transitions | `D_cont` spatial (3 seeds) | blind | separation | shot-noise floor, est. |
+|---|---|---|---|---|---|---|---|
+| 4×4×4 | 6.75 | 392 fs | 11 | 1.017, 1.010, 1.015 | 1.02 | +0.01 | ~0.7 |
+| 8×4×4 | 3.4 | 196 fs | 24 | 0.992, 0.991, 0.997 | 1.01 | +0.02 | ~0.8 |
+| 8×8×4 | 1.7 | 196 fs | 24 | 0.996, 0.998, 1.001 | 1.02 | +0.02 | ~0.9 |
+
+The momentum field predicts the density field's motion **no better than a scrambled one**, on
+every seed and every admissible grid, and every reading sits at the shot-noise floor for its
+crossing count. The leg has no power at this size: a face on this box sees a few molecules
+cross per window, and a ratio of counts that small cannot resolve a flux. The collision form
+and the named law agree, from opposite sides, that 432 waters is below the fluid element —
+and the named law says what size would let it speak: hundreds of crossings per face per
+window, thousands of molecules per cell.

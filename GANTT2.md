@@ -799,6 +799,25 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## The named-law leg (Amendment 6, 2026-09-18): built, taught three lessons by its plants, and shot-noise-limited on every liquid this machine can run
+
+`RUNG2_AMENDMENT_6.md`: a second leg beside the collision form, against CONTINUITY — the one
+equation of the tier's law with no constitutive input. `D_cont` = the fraction of each cell's
+density change the momentum crossing its faces fails to predict, graded by G7's form against
+the position-blind control. Built with four plants, three of which failed first and each
+failure was the plant's: a two-cell periodic axis makes opposite faces the same cell and the
+flux cancels identically (now REFUSED); a divergence-free flow at uniform density predicts
+zero and reads 1.0 correctly; and **the crossings through a face are a count, so the leg has
+a shot-noise floor `~1/√(crossings)` that RISES with grid refinement** — the positive plant
+needs a million particles to show the closure converge (`0.38 → 0.15`).
+
+On the 432 pilot: `D_cont` = 0.99–1.02 on every admissible grid and seed, no separation from
+the scrambled chart, every reading at its floor. **The named law and the collision form agree
+from opposite sides that 432 waters is below the fluid element**, and the named law prices
+the fix: hundreds of crossings per face per window, thousands of molecules per cell. The
+cheap leg does not escape the size fence. What it changes is the plan for the box: the next
+carrier is sized by crossings per face, not by G2's occupancy alone.
+
 ## The fluid element read at its own time — Amendment 5, the scout phase, and the 432-water pilot (2026-09-18)
 
 `RUNG2_AMENDMENT_5.md`: a fluid element is read every `τ = a/c_s` (water's sound speed as an

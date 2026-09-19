@@ -78,6 +78,10 @@ holon-runtime = { path = "../holon-runtime" }
 # mid-refactor, and it was written during exactly such a window.
 [dev-dependencies]
 holon-lens = { path = "../holon-lens" }
+# holon-md: the THREADED force executor (`WorkerPool`), so `examples/replace0.rs`'s scout can
+# run the same physics on N cores. A dev-dependency cycle (holon-md depends on this crate)
+# is permitted by Cargo and never reaches the library or the browser artifact.
+holon-md = { path = "../holon-md" }
 # holon-campaign: the campaign harness (gates, plants, prices, stakes, the record writer).
 # ZERO runtime dependencies, std only, and a DEV-dependency, so it is never linked into the
 # library or the browser artifact and cannot perturb this crate's feature resolution or the

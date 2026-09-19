@@ -41,6 +41,47 @@ The blind control here is exactly what it was for the collision form: the same c
 membership scrambled by the fixed per-atom permutation, so momentum and density no longer
 belong to the same region.
 
+## A fence the first plant found, before any reading was trusted
+
+Plant PF-1 — exact advection, on which continuity holds by construction — read
+`D_cont = 1.000` on a `2×2×2` grid, the same number every real file gave. The cause is exact:
+**on an axis of two periodic cells the `+` and `−` faces border the same neighbour, and a
+central face flux cancels identically.** The leg carries no information there. It needs at
+least **three cells on every split axis**, and the instrument REFUSES a grid without them
+rather than printing a number. Consequence, stated plainly: G2 admissibility (`≥ 100` per
+cell) and this leg cannot both hold below `3×3×3 × 100 ≈ 2,700` waters. On the 432-water
+scout the leg reads on `4×4×4` (`6.75` per cell — a fluctuating chart, but a testable
+flux), and the collision form reads on `2×2×1`; the two legs sit on different grids until
+the box is an order of magnitude larger, and the record says so.
+
+## A second thing the plants taught: what the leg's number means on a liquid
+
+PF-1's first carrier was a divergence-free flow at uniform density — on which continuity
+predicts ZERO change in every cell, the observed change is discreteness noise from particles
+near faces, and `D_cont = 1` is the correct reading. The positive plant is now a COMPRESSIBLE
+flow, where the flux has a signal. The lesson for the liquid: the momentum a cell's chart can
+use to predict its density change is the coherent, hydrodynamic part of the cell's momentum;
+the thermal part sums to noise. An equilibrium liquid whose chart does not resolve that part
+reads `D_cont ≈ 1` — not because the leg is broken but because, at that cell size and cadence,
+there is no fluid element to see. That is the same question the collision form asks, from
+the named law's side, and it is why the two are reported together.
+
+## The third thing the plants taught, and it bounds the leg's power on every liquid
+
+On any particle carrier the crossings through a face in a window are a COUNT, so `D_cont` has
+a shot-noise floor of about `1/√(crossings per face per window)` — and refining the grid
+RAISES it (16,000 particles on a smooth standing wave read `0.42 → 0.46 → 0.69` with the
+grid). The positive plant needs a million particles to put the floor under the discretisation
+error, and there the closure converges (`0.38 → 0.15` from four to eight cells per wavelength).
+
+For a liquid this is the leg's power limit. At 432 waters on `4×4×4` a face sees a few
+crossings per window, and the floor is near `0.7`; a reading of `1.0` there is a reading
+**at the floor**, and says the chart's momentum field carries no more of the flux than
+noise does — which is the honest answer at that size, not an instrument failure. To grade a
+fluid element by continuity to `10 %` needs of order a hundred crossings per face per
+window: thousands of molecules per cell, tens of thousands in the box. **The named-law leg
+does not escape the size fence; it prices it differently.**
+
 ## What it can and cannot say
 
 - It **can** say whether the chart's momentum field predicts its density field's motion —

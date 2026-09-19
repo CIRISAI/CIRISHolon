@@ -1,5 +1,24 @@
 # GF1 — the magic price of a gauge vacuum: PREREGISTRATION
 
+> **CORRECTION, 2026-09-19, on building the instrument — two errors in this prereg, both the
+> lead's, both found by the plants before any vacuum was read.** (1) **The cost is wrong by
+> `χ⁴`.** §2 prices the Pauli-replica contraction at `O(N · 4 · χ⁴)` and calls `χ ≤ 64`
+> feasible. `4χ⁴` per site is the SIZE of the Pauli MPS; its norm is `Σ_P ⟨P⟩² = 2^N`, the
+> purity, identically. The fourth powers need four replicas: `χ⁸` memory, `64 χ⁹` time per
+> site. Built exactly, the instrument admits `χ ≤ 11` under an 8 GiB lease and refuses
+> above by name; the staked ladder at `χ = 40, 64` cannot be read exactly. (2) **`M₂^loc` as
+> staked is identically `M₂`.** The stabilizer Rényi entropy is invariant under the whole
+> Clifford group, including products of single-site Cliffords — each site's 24 candidates
+> permute the same four channel weights, and the fourth power kills the signs. So S3, the
+> stake this prereg called "Fold III's own sentence made falsifiable," is as instrumented
+> the stake §0 itself says known physics falsifies. The non-local magic that prices a
+> stabilizer-rank simulation is the minimum over CONTINUOUS local unitaries, not local
+> Cliffords, and needs a different minimiser. (3) No variance-gate threshold existed in the
+> repo; plant P6 declared `≤ 10⁻³` per site and passed at `|ΔM₂| = 6.9 × 10⁻⁴` across χ. The
+> repair is `GF1_AMENDMENT_1.md`; this document is kept as written beneath this note. The
+> lesson is the same one as `LIQUID2_AMENDMENT_2.md`'s: a scaling remembered rather than
+> derived, and a quantity assumed to vary that a theorem holds fixed.
+
 *Written 2026-09-19, committed alone, BEFORE the instrument is built and before any state is
 read under it. Discharges "GF1 — OPEN · prereg owed" (`GANTT.md`, `OBJECT.md` Fold III). The
 form is rung 2's: what is staked, what would kill it, the plants that must fire, the branches

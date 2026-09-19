@@ -7,6 +7,7 @@
 pub mod dmrg;
 pub mod eigen;
 pub mod lanczos;
+pub mod magic;
 pub mod mpo;
 pub mod mps;
 pub mod observables;

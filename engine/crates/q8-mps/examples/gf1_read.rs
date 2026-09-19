@@ -1,8 +1,8 @@
 //! GF1's reader: one MPS in, its magic out as JSON on stdout.
 //!
 //! ```text
-//! gf1_read --ckpt PATH [--sweeps 3] [--box 10]          # a Q8SYMCK1 checkpoint (the crate's own format)
-//! gf1_read --x 4 --n 16 --chi 8 [--dmrg-sweeps 60] [--tol 1e-11] [--sweeps 3] [--box 10]
+//! gf1_read --ckpt PATH [--sweeps 3] [--nl-sweeps 3] [--box 10]          # a Q8SYMCK1 checkpoint (the crate's own format)
+//! gf1_read --x 4 --n 16 --chi 8 [--dmrg-sweeps 60] [--tol 1e-11] [--sweeps 3] [--nl-sweeps 3] [--box 10]
 //! ```
 //!
 //! The crate's only banked-state format is `symmetric::SweepCheckpoint` (`Q8SYMCK1`, written by
@@ -15,10 +15,12 @@
 //!
 //! Printed: `n`, `chi` (the largest bond), `m2`, `m2_loc` (the local-Clifford minimum after
 //! `--sweeps` sweeps — equal to `m2` to rounding, by Clifford invariance; see `magic.rs`),
-//! `m2_per_site`, `m2_box` (the mixed-state `M₂` of the first `--box` sites) and the price
-//! bound `2^{m2_box}`, plus the wall time of each reading.
+//! `m2_nl` (Amendment 1's non-local magic after `--nl-sweeps` sweeps of `sre2_nonlocal_min`,
+//! with every sweep's minimum, the frame and the evaluation count; `--nl-sweeps 0` skips it —
+//! it costs `1 + 3N·sweeps` exact readings), `m2_per_site`, `m2_box` (the mixed-state `M₂` of
+//! the first `--box` sites) and the price bound `2^{m2_box}`, plus the wall time of each reading.
 
-use q8_mps::magic::{sre2, sre2_box, sre2_local_min};
+use q8_mps::magic::{sre2, sre2_box, sre2_local_min, sre2_nonlocal_min};
 use q8_mps::mps::TensorSite;
 use std::time::Instant;
 
@@ -27,7 +29,7 @@ fn main() {
     let mut ckpt: Option<String> = None;
     let (mut n, mut x, mut chi) = (0usize, 0.0f64, 8usize);
     let (mut dmrg_sweeps, mut tol) = (60usize, 1e-11f64);
-    let (mut sweeps, mut box_len) = (3usize, 10usize);
+    let (mut sweeps, mut nl_sweeps, mut box_len) = (3usize, 3usize, 10usize);
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
@@ -38,6 +40,7 @@ fn main() {
             "--dmrg-sweeps" => { dmrg_sweeps = args[i + 1].parse().expect("--dmrg-sweeps"); i += 1; }
             "--tol" => { tol = args[i + 1].parse().expect("--tol"); i += 1; }
             "--sweeps" => { sweeps = args[i + 1].parse().expect("--sweeps"); i += 1; }
+            "--nl-sweeps" => { nl_sweeps = args[i + 1].parse().expect("--nl-sweeps"); i += 1; }
             "--box" => { box_len = args[i + 1].parse().expect("--box"); i += 1; }
             other => panic!("unknown argument {other}"),
         }
@@ -79,17 +82,47 @@ fn main() {
     let t0 = Instant::now();
     let m2 = sre2(&tensors).unwrap_or_else(|e| panic!("sre2: {e}"));
     let t_m2 = t0.elapsed().as_secs_f64();
+    // The secondary readings are reported as JSON null with the refusal named when the instrument
+    // refuses them (the local-Clifford minimiser keeps a stack of right environments and is priced
+    // above `sre2` — refused at χ = 11 where `sre2` is admitted), so a ladder point still banks
+    // its `m2`.
     let t0 = Instant::now();
-    let (m2_loc, frame) = sre2_local_min(&tensors, sweeps).unwrap_or_else(|e| panic!("sre2_local_min: {e}"));
+    let loc = match sre2_local_min(&tensors, sweeps) {
+        Ok((m2_loc, frame)) => format!("\"m2_loc\":{m2_loc:.12},\"m2_loc_sweeps\":{sweeps},\"m2_loc_frame\":{frame:?}"),
+        Err(e) => format!("\"m2_loc\":null,\"m2_loc_refused\":\"{e}\""),
+    };
     let t_loc = t0.elapsed().as_secs_f64();
     let t0 = Instant::now();
-    let m2_box = sre2_box(&tensors, box_len).unwrap_or_else(|e| panic!("sre2_box: {e}"));
+    let bx = match sre2_box(&tensors, box_len) {
+        Ok(m2_box) => format!("\"box\":{box_len},\"m2_box\":{m2_box:.12},\"price_bound_box\":{:.6e}", m2_box.exp2()),
+        Err(e) => format!("\"box\":{box_len},\"m2_box\":null,\"m2_box_refused\":\"{e}\""),
+    };
     let t_box = t0.elapsed().as_secs_f64();
+    // Amendment 1's M₂^nl: JSON null when skipped, else the reading with its per-sweep record.
+    let t0 = Instant::now();
+    let nl = if nl_sweeps == 0 {
+        "\"m2_nl\":null".to_string()
+    } else {
+        match sre2_nonlocal_min(&tensors, nl_sweeps) {
+            Ok(r) => {
+                let per_sweep: Vec<String> = r.per_sweep.iter().map(|v| format!("{v:.12}")).collect();
+                let angles: Vec<String> = r.angles.iter().map(|a| format!("{a:.9}")).collect();
+                format!(
+                    "\"m2_nl\":{:.12},\"m2_nl_sweeps\":{nl_sweeps},\"m2_nl_per_sweep\":[{}],\"m2_nl_angles\":[{}],\"m2_nl_evaluations\":{}",
+                    r.m2,
+                    per_sweep.join(","),
+                    angles.join(","),
+                    r.evaluations
+                )
+            }
+            Err(e) => format!("\"m2_nl\":null,\"m2_nl_refused\":\"{e}\""),
+        }
+    };
+    let t_nl = t0.elapsed().as_secs_f64();
 
     println!(
-        "{{{source},\"n\":{n},\"chi\":{chi_max},\"m2\":{m2:.12},\"m2_loc\":{m2_loc:.12},\"m2_loc_sweeps\":{sweeps},\"m2_loc_frame\":{frame:?},\"m2_per_site\":{:.12},\"box\":{box_len},\"m2_box\":{m2_box:.12},\"price_bound_box\":{:.6e},\"seconds_m2\":{t_m2:.2},\"seconds_m2_loc\":{t_loc:.2},\"seconds_m2_box\":{t_box:.2},\"threads\":{}}}",
+        "{{{source},\"n\":{n},\"chi\":{chi_max},\"m2\":{m2:.12},{loc},{nl},\"m2_per_site\":{:.12},{bx},\"seconds_m2\":{t_m2:.2},\"seconds_m2_loc\":{t_loc:.2},\"seconds_m2_box\":{t_box:.2},\"seconds_m2_nl\":{t_nl:.2},\"threads\":{}}}",
         m2 / n as f64,
-        m2_box.exp2(),
         q8_mps::mps::threads()
     );
 }

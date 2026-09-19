@@ -821,6 +821,29 @@ small hours of 2026-09-20.** Read order when they land: R1′ and R4/R4′ first
 convictions), then R1, R2, R3; the fine-model seed at the same kick is owed before any
 closure is called the model's.
 
+**Re-laid out 14:08 CDT.** The arms measured at `101 %` of one CPU each: the pool buys
+nothing at 432 waters, and the prereg's `2,171 core-s/ps` was wall seconds — an arm is `26`
+hours on a P-core, not `2.9` (the eleventh instance; correction prepended to §6). The three
+running arms kept, their queues stopped, the other five launched single-worker one per
+P-core (`replace0_response1_b.sh`): **all eight in flight; the 50 m/s arms and both
+controls expected Monday 2026-09-21 afternoon**, the waiting reader unchanged.
+
+**Amendment 2 (`RESPONSE1_AMENDMENT_2.md`), the zeros derived while they run.** R1 as staked
+was unreadable three ways: its `2×2×1` grid is refused by Amendment 6's own plant, and the
+ladder has no admitted grid above seven molecules a cell; `D_cont` is an RMS ratio that
+pooling windows does not lower (`FLUID_ELEMENT_RESPONSE` §5's `1/(s√W)` was wrong — the
+tenth instance), so at 50 m/s the stake failed by arithmetic at `≈ 0.64`; and the continuity
+read was never built. Built and planted (PR-9 to PR-12, 154 tests): the read on the
+sign-aligned fields over cycles on `8×1×1` along the wave; the midpoint law's own spatial
+floor `1 − sinc(π/n) cos(π/n)` (`0.363` on four cells — under which the stake sat for a
+perfect fluid — `0.100` on eight); and the finding that the window-mean leg convicts an
+EXACT fluid on the driven transient (`D = 1.3–1.7` at zero noise) because the overdamped
+rise is ten times faster than the cell's cadence — the integral-in-time form reads the
+spatial floor instead. The floor over three seeds at 50 m/s is `≈ 0.22`: the stake sits at
+its floor on the 50 m/s arms and can be met with margin only on the 200 m/s control. The
+smoke's transverse null reads `0.996` driven against `1.045` relaxed: continuity sees
+nothing under shear.
+
 **Amendment 1 (`RESPONSE1_AMENDMENT_1.md`), from the smoke read end to end.** The reader
 was reading the quadrature the kick does not drive: §3 wrote `j_k` with `cos(kx)` and §2
 kicks with `sin(kx)`, so the smoke's "in band" viscosity was a fit to thermal noise at

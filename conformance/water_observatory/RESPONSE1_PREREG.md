@@ -116,6 +116,19 @@ cycles and seeds with the spread:
 
 ## 6. Cost, before the kernel
 
+> **CORRECTION 2026-09-19 14:15 CDT, the arms three hours in.** The figure below, `2,171
+> core-s/ps on eight workers`, is the WALL seconds per picosecond of an eight-worker run
+> (the pilot's `3,609` single-core divided by the measured `1.66×`), not core-seconds — and
+> on the arms the pool bought nothing at all: each eight-worker arm ran at `101 %` of one
+> CPU, the rigid operator's serial sectors dominating. So an arm is `~26` hours of wall for
+> its 38 ps on a P-core (`41` min/ps measured), `~38` on an E-core, not `2.9`; the eight arms
+> in three sequential groups would have landed Wednesday. Re-laid out at 14:08: the three
+> running arms kept, their queues stopped, the other five launched single-worker one per
+> P-core (`replace0_response1_b.sh`) — all eight in flight, the six 50 m/s arms expected by
+> Monday 2026-09-21 afternoon and the controls the same day. The eleventh instance of a
+> price taken from the wrong regime: wall time written as core time, and a speedup measured
+> once at one size assumed for the campaign.
+
 Twelve cycles of `3.14` ps = `38` ps per seed at `2,171` core-s/ps on eight workers:
 **`23` core-hours a seed, `2.9` hours of wall on eight cores.** Two arms × three seeds +
 two nonlinearity controls = eight runs, `~185` core-hours, one day of wall on eight cores

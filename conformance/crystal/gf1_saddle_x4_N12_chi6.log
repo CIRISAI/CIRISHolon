@@ -1,0 +1,11 @@
+    Finished `release` profile [optimized + debuginfo] target(s) in 0.49s
+vacuum x=4 N=12 chi=6: E -26.1737588626  M2 3.886893106248
+  eps 0.02: 8 random joint perturbations; min ΔM2 = +4.064e-3  (all higher)  (10s)
+  eps 0.05: 8 random joint perturbations; min ΔM2 = +3.002e-2  (all higher)  (10s)
+  eps 0.10: 8 random joint perturbations; min ΔM2 = +7.719e-2  (all higher)  (10s)
+  eps 0.20: 8 random joint perturbations; min ΔM2 = +3.171e-1  (all higher)  (10s)
+  Hessian at the identity (159s): diagonal ["+11.526", "+11.526", "+11.526", "+11.526", "+11.526", "+11.526", "+11.526", "+11.526", "+11.526", "+11.526", "+11.526", "+11.526"]
+  eigenvalues: ["+5.745e-1", "+6.082e-1", "+1.091e0", "+1.466e0", "+1.966e0", "+2.592e0", "+1.103e1", "+1.296e1", "+1.564e1", "+1.995e1", "+2.775e1", "+4.268e1"]
+  verdict: positive definite — the identity is a strict local minimum in the joint space
+
+[exited with code 0]

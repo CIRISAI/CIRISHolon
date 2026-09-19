@@ -1,0 +1,9 @@
+x=0.015625: two-qubit M2 numeric 0.001408  formula -log2(1-1/4 sin^2 4θ) 0.001408  leading 4x^2/ln2 0.001409
+x=0.0625: two-qubit M2 numeric 0.022190  formula -log2(1-1/4 sin^2 4θ) 0.022190  leading 4x^2/ln2 0.022542
+x=0.25: two-qubit M2 numeric 0.273015  formula -log2(1-1/4 sin^2 4θ) 0.273015  leading 4x^2/ln2 0.360674
+N=6 x=0.015625: first-order vacuum M2 = 0.007034; per link 0.001407; 4x^2/ln2 = 0.001409
+N=6 x=0.0625: first-order vacuum M2 = 0.110084; per link 0.022017; 4x^2/ln2 = 0.022542
+N=8 x=0.015625: first-order vacuum M2 = 0.009845; per link 0.001406; 4x^2/ln2 = 0.001409
+N=8 x=0.0625: first-order vacuum M2 = 0.153520; per link 0.021931; 4x^2/ln2 = 0.022542
+
+[exited with code 0]

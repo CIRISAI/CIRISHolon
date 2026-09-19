@@ -89,6 +89,26 @@ converges with the surrounding volume. It is not the sentence Fold III wrote.
 7. The ladder launcher's gate — a default expression evaluated on a float, so every point
    read "refused" for one minute before the fix (`8ca0169`); no point was banked under it.
 
+## 4′. The `x²` law, derived after the read (2026-09-19, the same afternoon)
+
+At strong coupling the vacuum is the staggered stabilizer state and the hopping creates one
+pair across a link at electric cost `1`, so to first order `|ψ⟩ = |vac⟩ − x Σ_n |pair_n⟩`. On
+one link that is `|01⟩ − x|10⟩`, whose stabilizer Rényi entropy is EXACTLY
+`M₂ = −log₂(1 − ¼ sin² 4θ)` with `tan θ = x` (the non-zero Pauli expectations are `ZZ = −1`,
+`Z₁ = −Z₂ = cos 2θ`, `XX = YY = sin 2θ`). Hence, per link,
+
+> **`c(x) = (4 / ln 2) x² + O(x⁴) = 5.7708 x²`.**
+
+Brute-force SRE on the first-order vacuum at `N = 6, 8` gives `0.001406–0.001407` per link
+at `x = 1/64` against the ladder's **`0.00141`** (`5.775 x²`, agreement to `0.3 %`), and
+`0.02193` at `x = 1/16` against the ladder's `0.02161` (second order, `1.5 %`); at `x = 1/4`
+first order is `30 %` high and perturbation theory has ended (`gf1_x2_law.py`,
+`gf1_ladder/x2_law_check.log`). So the strong-coupling density is a theorem's number, S2's
+bar is crossed at `x = √(0.05/5.77) = 0.093`, and the prereg's bar at `x = 0.25` was set
+where the first-order state already carries four times it. **The measurement rendered by
+the fast side** (`FAST_AND_SLOW.md` §2, negation's cousin: a stake that a derivation prices
+before it is run).
+
 ## 4. Branch
 
 S1 read at five couplings, refused at one; S2 killed as staked, met on the extension; S3

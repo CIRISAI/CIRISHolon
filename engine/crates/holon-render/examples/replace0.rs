@@ -1420,6 +1420,12 @@ fn main() {
             val("--stiffness"),
             seed,
             val("--workers").and_then(|v| v.parse().ok()).unwrap_or(1),
+            match val("--kick").as_deref() {
+                Some("longitudinal") | Some("L") => Some(Kick { axis: 0, v_d_mps: val("--kick-mps").and_then(|v| v.parse().ok()).unwrap_or(50.0), cycles: val("--kick-cycles").and_then(|v| v.parse().ok()).unwrap_or(12), relax_readouts: val("--kick-relax").and_then(|v| v.parse().ok()).unwrap_or(314) }),
+                Some("transverse") | Some("T") => Some(Kick { axis: 1, v_d_mps: val("--kick-mps").and_then(|v| v.parse().ok()).unwrap_or(50.0), cycles: val("--kick-cycles").and_then(|v| v.parse().ok()).unwrap_or(12), relax_readouts: val("--kick-relax").and_then(|v| v.parse().ok()).unwrap_or(314) }),
+                Some(other) => panic!("--kick {other:?}: longitudinal | transverse"),
+                None => None,
+            },
         ),
         "run" => run_phase(
             &obs,
@@ -1437,6 +1443,38 @@ fn main() {
     let _ = (add, Discarded::default());
 }
 
+
+/// THE KICK (RESPONSE1_PREREG.md §2): a velocity increment `Δv_axis = v_d sin(2π x_com / L)`
+/// on every rigid body — `axis = 0` (x) is the longitudinal arm, `axis = 1` (y) the
+/// transverse. A pure momentum change: no position moves, the total momentum stays zero by
+/// the symmetry of `sin` on a periodic box, and the kinetic energy rises by exactly
+/// `Σ ½ M v_d² sin²(k x)` which the record carries. `v_d` in atomic units of velocity.
+/// Returns (Δp_total, ΔKE) so plant PR-4 can check both.
+fn kick_bodies(bodies: &mut [Flying], l: f64, axis: usize, v_d: f64) -> ([f64; 3], f64) {
+    let k = 2.0 * std::f64::consts::PI / l;
+    let mut dp = [0.0f64; 3];
+    let mut dke = 0.0f64;
+    for b in bodies.iter_mut() {
+        let dv = v_d * (k * b.w.com[0]).sin();
+        let m = b.w.body.mass;
+        let ke0 = b.w.kinetic();
+        b.w.p[axis] += m * dv;
+        dp[axis] += m * dv;
+        dke += b.w.kinetic() - ke0;
+    }
+    (dp, dke)
+}
+
+/// Rescale the rigid momenta to `T_target` on the six retained modes — the settle's own
+/// step, used between kick cycles so twelve cycles do not heat the box by the dissipated
+/// drive energy (RESPONSE1_PREREG.md §2, a declared step). Returns the kinetic energy
+/// removed (or added), so the record can say how much the drive cost each cycle.
+fn rescale_rigid(bodies: &mut [Flying]) -> f64 {
+    let ke0 = rigid_kinetic(bodies);
+    let s = (TEMPERATURE_K / rigid_temperature(bodies).max(1e-9)).sqrt();
+    for b in bodies.iter_mut() { b.w.p = scale(b.w.p, s); b.w.l_body = scale(b.w.l_body, s); }
+    ke0 - rigid_kinetic(bodies)
+}
 
 /// Append one readout's rows to a walk file: the last recorded positions and velocities.
 fn append_walk_rows(base: &Path, w: &Walk) {
@@ -1468,7 +1506,7 @@ fn append_walk_rows(base: &Path, w: &Walk) {
 /// What a reading on this box is: a reading of the OPERATOR's liquid. The amendment's fence
 /// is that one fine-model seed at this size is owed before any closure is called the
 /// model's.
-fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_rigid: usize, readouts: usize, readout_fs: f64, stiffness: Option<String>, seed: u64, workers: usize) {
+fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_rigid: usize, readouts: usize, readout_fs: f64, stiffness: Option<String>, seed: u64, workers: usize, kick: Option<Kick>) {
     let t0 = Instant::now();
     let w = RecordWriter::new(out);
     let law = load_law(obs);
@@ -1487,7 +1525,7 @@ fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_
         }
     } else { None };
     let sim_ref = &mut sim;
-    let run = |sim: &mut Sim| scout_body(sim, obs, out, &w, cells, settle_fine, settle_rigid, readouts, readout_fs, stiffness.clone(), seed, workers, l, t0);
+    let run = |sim: &mut Sim| scout_body(sim, obs, out, &w, cells, settle_fine, settle_rigid, readouts, readout_fs, stiffness.clone(), seed, workers, l, t0, kick);
     match pool.as_mut() {
         Some(p) => { holon_md::with_pool(sim_ref, p, run); }
         None => { run(sim_ref); }
@@ -1496,7 +1534,20 @@ fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_
 }
 
 #[allow(clippy::too_many_arguments)]
-fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: usize, settle_fine: usize, settle_rigid: usize, readouts: usize, readout_fs: f64, stiffness: Option<String>, seed: u64, workers: usize, l: f64, t0: Instant) {
+/// The drive of RESPONSE-1, when the scout carries one.
+#[derive(Clone, Copy, Debug)]
+struct Kick {
+    /// 0 = longitudinal (Δv_x), 1 = transverse (Δv_y)
+    axis: usize,
+    /// metres per second, as the prereg states it
+    v_d_mps: f64,
+    /// kick cycles; 0 means no kick
+    cycles: usize,
+    /// readouts of NVE after each kick before the rescale and the next kick
+    relax_readouts: usize,
+}
+
+fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: usize, settle_fine: usize, settle_rigid: usize, readouts: usize, readout_fs: f64, stiffness: Option<String>, seed: u64, workers: usize, l: f64, t0: Instant, kick: Option<Kick>) {
     let z: Vec<u32> = (0..sim.n).map(|i| sim.atoms[i].species.z).collect();
     let oxy: Vec<usize> = (0..sim.n).filter(|&i| z[i] == 8).collect();
     let n_w = oxy.len();
@@ -1592,8 +1643,9 @@ fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: u
     let read_oxy = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].x, s.atoms[i].y, s.atoms[i].z]).collect() };
     let read_oxy_v = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].vx, s.atoms[i].vy, s.atoms[i].vz]).collect() };
     let base = out.join("rigid");
-    std::fs::write(base.with_extension("walk"), format!("# walk {} {l}\n", readouts + 1)).expect("walk header");
-    std::fs::write(base.with_extension("vwalk"), format!("# vwalk {} {l}\n", readouts + 1)).expect("vwalk header");
+    let readouts_planned = match kick { Some(k) if k.cycles > 0 => k.cycles * k.relax_readouts, _ => readouts };
+    std::fs::write(base.with_extension("walk"), format!("# walk {} {l}\n", readouts_planned + 1)).expect("walk header");
+    std::fs::write(base.with_extension("vwalk"), format!("# vwalk {} {l}\n", readouts_planned + 1)).expect("vwalk header");
     let mut walk = Walk::new(&read_oxy(sim), l);
     walk.record(&read_oxy_v(sim));
     append_walk_rows(&base, &walk);
@@ -1603,7 +1655,29 @@ fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: u
     series.push(observe(sim, &z, l, 0.0, t_settled, e0, 0.0, t_settled, 0.0));
     eprintln!("scout: production {readouts} readouts x {readout_fs} fs = {:.1} ps, NVE from T {t_settled:.1} K, E {e0:.6} Ha", readouts as f64 * readout_fs / 1000.0);
     let tp = Instant::now();
+    // RESPONSE-1's cycles: the readout count is overridden by cycles × relax when a kick is
+    // declared, so the walk's length is the protocol's and not a second parameter.
+    const MPS_TO_AU: f64 = 1.0 / 2.187_691_263_e6;
+    let readouts = match kick { Some(k) if k.cycles > 0 => k.cycles * k.relax_readouts, _ => readouts };
+    let mut kick_log: Vec<String> = Vec::new();
+    let mut e0 = e0;
     for r in 0..readouts {
+        if let Some(k) = kick {
+            if k.cycles > 0 && r % k.relax_readouts == 0 {
+                let cycle = r / k.relax_readouts;
+                let removed = if cycle > 0 { rescale_rigid(&mut bodies) } else { 0.0 };
+                let sign = if cycle % 2 == 0 { 1.0 } else { -1.0 };
+                let (dp, dke) = kick_bodies(&mut bodies, l, k.axis, sign * k.v_d_mps * MPS_TO_AU);
+                // the bodies' momenta changed, so the atoms' velocities must follow before the next pass
+                for b in bodies.iter() { write_back(sim, &b.m, &b.w.reconstruct()); }
+                e0 = rigid_kinetic(&bodies) + potential(sim);
+                let line = format!("{{\"cycle\": {cycle}, \"t_fs\": {}, \"sign\": {sign}, \"dp_total_au\": [{}, {}, {}], \"dke_hartree\": {}, \"dke_per_water_kt\": {}, \"rescale_removed_hartree\": {}}}",
+                    num(r as f64 * readout_fs), num(dp[0]), num(dp[1]), num(dp[2]), num(dke), num(dke / (n_w as f64 * K_B * TEMPERATURE_K)), num(removed));
+                eprintln!("  KICK cycle {cycle} at {:.0} fs: axis {} sign {sign:+.0} v_d {} m/s; dp_total {:.2e} au, dKE {:.3e} Ha = {:.4} kT/water; rescale removed {:.3e} Ha",
+                    r as f64 * readout_fs, k.axis, k.v_d_mps, dp.iter().map(|x| x.abs()).fold(0.0, f64::max), dke, dke / (n_w as f64 * K_B * TEMPERATURE_K), removed);
+                kick_log.push(line);
+            }
+        }
         for _ in 0..k_r {
             rigid_step(sim, &mut bodies, dt_r);
             walk.advance(&read_oxy(sim));
@@ -1659,6 +1733,7 @@ fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: u
         .number("rigid_temperature_after_settle_k", t_settled)
         .number("production_temperature_mean_k", t_mean)
         .int("readouts", readouts as i64)
+        .raw("kick", match kick { Some(k) if k.cycles > 0 => format!("{{\"axis\": {}, \"v_d_mps\": {}, \"cycles\": {}, \"relax_readouts\": {}, \"log\": [{}]}}", k.axis, num(k.v_d_mps), k.cycles, k.relax_readouts, kick_log.join(", ")), _ => "null".to_string() })
         .number("readout_fs", readout_fs)
         .number("production_ps", ps)
         .number("energy_peak_excursion_per_water_hartree", e_peak / n_w as f64)

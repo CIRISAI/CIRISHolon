@@ -638,6 +638,134 @@ pub fn continuity(fields: &[CellFields], grid: Grid3, box_edges: [f64; 3], m_bar
     Continuity { windows_compared: fields.len().saturating_sub(1), rms_observed: (so / nf).sqrt(), rms_residual: (sr / nf).sqrt() }
 }
 
+// ------------------------------------------------------------ RESPONSE1_PREREG.md's modes
+//
+// The density and transverse-current modes at `k = 2π/L` along x, one number per readout,
+// read from the oxygens' positions and velocities; and the fit of a mode's time series to
+// a relaxation, classified overdamped or underdamped by the data and not by assumption.
+
+/// `ρ_k(t) = Σ_j cos(k x_j)` and `j_k(t) = Σ_j v_{axis,j} cos(k x_j)` per frame, for the
+/// chart's atoms (or, with `perm`, a position-blind relabelling — plant R4).
+pub fn modes(traj: &Trajectory, axis: usize, kind: Kind) -> Result<(Vec<f64>, Vec<f64>), Refusal> {
+    let l = traj.header.box_w;
+    let k = 2.0 * std::f64::consts::PI / l;
+    let n = traj.header.n_atoms;
+    // BlindLabel: the same per-atom scramble the charts use, here as a per-atom sign so
+    // the mode is read on a partition with no spatial meaning
+    let signs: Vec<f64> = match kind {
+        Kind::Spatial => vec![1.0; n],
+        _ => {
+            let perms = label_perms(n, 2, CONTROL_SEED, true);
+            (0..n).map(|a| if perms[a][0] == 0 { 1.0 } else { -1.0 }).collect()
+        }
+    };
+    let mut rho = Vec::with_capacity(traj.frames.len());
+    let mut cur = Vec::with_capacity(traj.frames.len());
+    for f in &traj.frames {
+        let (mut r, mut c) = (0.0, 0.0);
+        for a in 0..n {
+            let x = f.pos[a][0].rem_euclid(l);
+            let w = signs[a] * (k * x).cos();
+            r += w;
+            c += w * f.vel[a][axis];
+        }
+        rho.push(r);
+        cur.push(c);
+    }
+    Ok((rho, cur))
+}
+
+/// How a driven mode came back: its fit and its class.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Relaxation {
+    /// `A e^{−λ t}`: the rate, the amplitude, the residual RMS over the fit, points used.
+    Overdamped { lambda: f64, amplitude: f64, residual: f64, points: usize },
+    /// `A e^{−Γ t} cos(ω t + φ)`: rate, angular frequency, amplitude, residual, points.
+    Underdamped { gamma: f64, omega: f64, amplitude: f64, residual: f64, points: usize },
+    /// Nothing to fit: the initial amplitude is under the stated noise (PR-3's refusal).
+    Refused { amplitude: f64, noise: f64 },
+}
+
+/// Fit one cycle's mode series `y(t)` from its kick. Classification is by the data: if the
+/// series changes sign within the first two e-folds of its envelope it is underdamped and
+/// fitted as a damped cosine; otherwise it is fitted as a pure exponential on the log of
+/// the absolute value over the first two e-folds. `noise` is the series' RMS before the
+/// kick (or on the relaxed tail), and a kick under `3 noise` is REFUSED rather than fitted.
+pub fn fit_relaxation(y: &[f64], dt: f64, noise: f64) -> Relaxation {
+    let a0 = y.first().copied().unwrap_or(0.0);
+    if a0.abs() < 3.0 * noise || y.len() < 4 {
+        return Relaxation::Refused { amplitude: a0.abs(), noise };
+    }
+    // The window: up to the LAST index at which |y| is still above the noise (so a cosine's
+    // dips through zero do not end it — the first draft cut at the first dip and read every
+    // underdamped mode as overdamped), capped at the first two e-folds of the RUNNING
+    // MAXIMUM of |y| read backwards.
+    // The window ends where the signal stays dead: the first index after which |y| is under
+    // 2 noise for five consecutive points (a stray noise excursion does not reopen it).
+    let dead = 2.0 * noise;
+    let mut cut = y.len();
+    for i in 3..y.len().saturating_sub(4) {
+        if y[i..i + 5].iter().all(|v| v.abs() < dead) { cut = i; break; }
+    }
+    let cut = cut.max(4).min(y.len());
+    // Underdamped means a SIGNIFICANT rebound of the opposite sign — beyond 4 noise and a
+    // tenth of the kick — not a zero crossing in the tail, which noise makes freely.
+    let rebound = y[..cut].iter().any(|v| v.signum() != a0.signum() && v.abs() > (4.0 * noise).max(0.1 * a0.abs()));
+    if !rebound {
+        // Gauss–Newton on y = A e^{-λ t} directly (the log-linear fit is biased shallow
+        // where the tail meets the noise); seeded from the log fit on points above 3 noise.
+        let seed_pts: Vec<(f64, f64)> = y[..cut].iter().enumerate().filter(|(_, v)| v.abs() > 3.0 * noise).map(|(i, v)| (i as f64 * dt, v.abs().ln())).collect();
+        if seed_pts.len() < 3 { return Relaxation::Refused { amplitude: a0.abs(), noise }; }
+        let n = seed_pts.len() as f64;
+        let (sx, sy) = (seed_pts.iter().map(|p| p.0).sum::<f64>(), seed_pts.iter().map(|p| p.1).sum::<f64>());
+        let (sxx, sxy) = (seed_pts.iter().map(|p| p.0 * p.0).sum::<f64>(), seed_pts.iter().map(|p| p.0 * p.1).sum::<f64>());
+        let mut lam = -(n * sxy - sx * sy) / (n * sxx - sx * sx);
+        let mut amp = ((sy - (-lam) * sx) / n).exp() * a0.signum();
+        let ts: Vec<f64> = (0..cut).map(|i| i as f64 * dt).collect();
+        for _ in 0..30 {
+            // residual r_i = y_i − A e^{−λ t_i}; J = [e^{−λt}, −A t e^{−λt}]
+            let (mut jtj, mut jtr) = ([[0.0f64; 2]; 2], [0.0f64; 2]);
+            for (i, &t) in ts.iter().enumerate() {
+                let e = (-lam * t).exp(); let r = y[i] - amp * e;
+                let j = [e, -amp * t * e];
+                for p in 0..2 { jtr[p] += j[p] * r; for q in 0..2 { jtj[p][q] += j[p] * j[q]; } }
+            }
+            let det = jtj[0][0] * jtj[1][1] - jtj[0][1] * jtj[1][0];
+            if det.abs() < 1e-300 { break; }
+            let da = (jtr[0] * jtj[1][1] - jtr[1] * jtj[0][1]) / det;
+            let dl = (jtj[0][0] * jtr[1] - jtj[1][0] * jtr[0]) / det;
+            amp += da; lam += dl;
+            if da.abs() < 1e-12 * amp.abs().max(1e-300) && dl.abs() < 1e-12 * lam.abs().max(1e-300) { break; }
+        }
+        let resid = (ts.iter().enumerate().map(|(i, &t)| (y[i] - amp * (-lam * t).exp()).powi(2)).sum::<f64>() / cut as f64).sqrt();
+        Relaxation::Overdamped { lambda: lam, amplitude: amp, residual: resid, points: cut }
+    } else {
+        let zeros: Vec<f64> = y[..cut].windows(2).enumerate().filter(|(_, w)| w[0] * w[1] < 0.0)
+            .map(|(i, w)| (i as f64 + w[0] / (w[0] - w[1])) * dt).collect();
+        let omega = if zeros.len() >= 2 { std::f64::consts::PI / ((zeros[zeros.len() - 1] - zeros[0]) / (zeros.len() - 1) as f64) } else { std::f64::consts::PI / (2.0 * zeros[0]) };
+        // ONE envelope point per half-period: the maximum of |y| between consecutive zero
+        // crossings. (Every local maximum was the first draft, and at late times noise makes
+        // local maxima all over the cosine's flanks, below the envelope — Γ read 15 % high.)
+        let mut bounds: Vec<usize> = vec![0];
+        bounds.extend(y[..cut].windows(2).enumerate().filter(|(_, w)| w[0] * w[1] < 0.0).map(|(i, _)| i + 1));
+        bounds.push(cut);
+        let mut ext: Vec<(f64, f64)> = Vec::new();
+        for seg in bounds.windows(2) {
+            if seg[1] <= seg[0] { continue; }
+            let (i_max, v_max) = (seg[0]..seg[1]).map(|i| (i, y[i].abs())).fold((seg[0], 0.0), |b, x| if x.1 > b.1 { x } else { b });
+            if v_max > 3.0 * noise { ext.push((i_max as f64 * dt, v_max.ln())); }
+        }
+        let n = ext.len() as f64;
+        let (gamma, resid) = if ext.len() >= 2 {
+            let (sx, sy) = (ext.iter().map(|p| p.0).sum::<f64>(), ext.iter().map(|p| p.1).sum::<f64>());
+            let (sxx, sxy) = (ext.iter().map(|p| p.0 * p.0).sum::<f64>(), ext.iter().map(|p| p.0 * p.1).sum::<f64>());
+            let g = (n * sxy - sx * sy) / (n * sxx - sx * sx); let b = (sy - g * sx) / n;
+            (-g, (ext.iter().map(|p| (p.1 - (b + g * p.0)).powi(2)).sum::<f64>() / n).sqrt())
+        } else { (f64::NAN, f64::NAN) };
+        Relaxation::Underdamped { gamma, omega, amplitude: a0, residual: resid, points: ext.len() }
+    }
+}
+
 /// The chart's readings, one per frame.
 ///
 /// Field order is fixed and documented so a reimplementation is bit-identical: for each
@@ -2093,6 +2221,76 @@ mod tests {
         for w in g.iter_mut() { for c in w.p.iter_mut() { c[2] += 1e6; } }
         let b = continuity(&g, grid, [edge; 3], m, 20.0);
         assert_eq!(a.rms_residual.to_bits(), b.rms_residual.to_bits(), "z-momentum must not enter a 2D chart's continuity");
+    }
+
+    // ------------------------------------------- RESPONSE1_PREREG.md's plants, PR-1..PR-5
+
+    /// A synthetic mode series on random positions: `N` atoms placed so that `ρ_k(t)`
+    /// follows a given law exactly (a fraction of the atoms are displaced along the wave),
+    /// with thermal velocities of stated scale for the current mode's noise.
+    fn synth_series(law: impl Fn(f64) -> f64, frames: usize, dt: f64, noise: f64, seed: u64) -> Vec<f64> {
+        let mut s = seed;
+        let mut next = move || { s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407); ((s >> 11) as f64) / ((1u64 << 53) as f64) - 0.5 };
+        (0..frames).map(|i| law(i as f64 * dt) + noise * 3.46 * next()).collect()   // uniform(-0.5,0.5)*3.46 has sd 1
+    }
+
+    /// PR-1 — an overdamped mode is read back to 2 %.
+    #[test]
+    fn pr1_an_overdamped_mode_reads_its_rate() {
+        let (a, lam, dt) = (20.0, 1.0 / 1716.0, 10.0);
+        let y = synth_series(|t| a * (-lam * t).exp(), 600, dt, 0.2, 0x5052_3031);
+        match fit_relaxation(&y, dt, 0.2) {
+            Relaxation::Overdamped { lambda, amplitude, .. } => {
+                assert!((lambda / lam - 1.0).abs() < 0.02, "λ {lambda:.3e} vs {lam:.3e}");
+                assert!((amplitude / a - 1.0).abs() < 0.05);
+            }
+            other => panic!("expected overdamped, got {other:?}"),
+        }
+    }
+
+    /// PR-2 — an underdamped mode: period to 2 %, Γ to 5 %.
+    #[test]
+    fn pr2_an_underdamped_mode_reads_period_and_envelope() {
+        let (a, g, w, dt) = (20.0, 1.0 / 2000.0, 2.0 * std::f64::consts::PI / 500.0, 5.0);
+        let y = synth_series(|t| a * (-g * t).exp() * (w * t).cos(), 1200, dt, 0.05, 0x5052_3032);
+        match fit_relaxation(&y, dt, 0.05) {
+            Relaxation::Underdamped { gamma, omega, .. } => {
+                assert!((omega / w - 1.0).abs() < 0.02, "ω {omega:.4e} vs {w:.4e}");
+                assert!((gamma / g - 1.0).abs() < 0.05, "Γ {gamma:.3e} vs {g:.3e}");
+            }
+            other => panic!("expected underdamped, got {other:?}"),
+        }
+    }
+
+    /// PR-3 — a transverse current mode on thermal noise: read to 5 % when the kick is
+    /// three times the noise; REFUSED with the reason when it is under the noise.
+    #[test]
+    fn pr3_a_current_mode_reads_or_refuses_by_its_noise() {
+        let (g, dt, noise) = (1.0 / 140.0, 10.0, 1.0);
+        let strong = synth_series(|t| 6.0 * (-g * t).exp(), 200, dt, noise, 0x5052_3033);
+        match fit_relaxation(&strong, dt, noise) {
+            Relaxation::Overdamped { lambda, .. } => assert!((lambda / g - 1.0).abs() < 0.05, "Γ_s {lambda:.3e} vs {g:.3e}"),
+            other => panic!("expected a read, got {other:?}"),
+        }
+        let weak = synth_series(|t| 0.5 * (-g * t).exp(), 200, dt, noise, 0x5052_3034);
+        assert!(matches!(fit_relaxation(&weak, dt, noise), Relaxation::Refused { .. }), "a kick under the noise must refuse");
+    }
+
+    /// PR-5 — the scrambled partition of a coherent wave carries no mode: the blind ρ_k is
+    /// under a tenth of the spatial one.
+    #[test]
+    fn pr5_the_scrambled_partition_has_no_mode() {
+        let (n, edge) = (2000, 40.0);
+        let k = 2.0 * std::f64::consts::PI / edge;
+        // atoms displaced along a standing wave of the density: x = u + A sin(k u)
+        let mut s: u64 = 0x5052_3035;
+        let mut next = move || { s = s.wrapping_mul(6364136223846793005).wrapping_add(1442695040888963407); ((s >> 11) as f64) / ((1u64 << 53) as f64) };
+        let pos: Vec<[f64; 3]> = (0..n).map(|_| { let u = next() * edge; [(u - 3.0 * (k * u).sin()).rem_euclid(edge), next() * edge, next() * edge] }).collect();
+        let traj = Trajectory { header: header3(n, vec![8; n], edge), frames: vec![frame(0, pos, vec![[0.0; 3]; n])] };
+        let (rs, _) = modes(&traj, 0, Kind::Spatial).unwrap();
+        let (rb, _) = modes(&traj, 0, Kind::BlindLabel).unwrap();
+        assert!(rs[0].abs() > 100.0, "the spatial mode must see the wave: {}", rs[0]);
+        assert!(rb[0].abs() < 0.1 * rs[0].abs(), "the scrambled partition must not: blind {} vs spatial {}", rb[0], rs[0]);
     }
 
     // ------------------------------------------------------- P-6 / P-7: the pair

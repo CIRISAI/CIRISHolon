@@ -29,6 +29,12 @@ fn main() {
     let amend4 = args.iter().any(|a| a == "--amend4");
     let amend5 = args.iter().any(|a| a == "--amend5");
     let amend6 = args.iter().any(|a| a == "--amend6");
+    let response = args.iter().position(|a| a == "--response").map(|i| args.get(i + 1).cloned().unwrap_or_default());
+    let response_cycles: usize = args.iter().position(|a| a == "--cycles").and_then(|i| args.get(i + 1)).and_then(|v| v.parse().ok()).unwrap_or(12);
+    let response_relax: usize = args.iter().position(|a| a == "--relax").and_then(|i| args.get(i + 1)).and_then(|v| v.parse().ok()).unwrap_or(314);
+    if let Some(i) = args.iter().position(|a| a == "--response") { args.drain(i..(i + 2).min(args.len())); }
+    if let Some(i) = args.iter().position(|a| a == "--cycles") { args.drain(i..(i + 2).min(args.len())); }
+    if let Some(i) = args.iter().position(|a| a == "--relax") { args.drain(i..(i + 2).min(args.len())); }
     args.retain(|a| a != "--amend1" && a != "--amend4" && a != "--amend5" && a != "--amend6");
     if args.is_empty() {
         eprintln!("usage: rung2 <traj-dir> [arm ...]");
@@ -60,6 +66,12 @@ fn main() {
     // The cost model of PREREG G11, counted rather than timed.
     let mut frames_read: u64 = 0;
     let mut chart_evals: u64 = 0;
+    if let Some(arm) = response {
+        response1_read(&root, &arms, &arm, response_cycles, response_relax, &mut frames_read);
+        println!("\n===== COST (PREREG G11, work units, never wall clock) =====");
+        println!("frames read:       {frames_read}");
+        return;
+    }
     if amend6 {
         amendment6_read(&root, &arms, &mut frames_read);
         println!("\n===== COST (PREREG G11, work units, never wall clock) =====");
@@ -573,6 +585,71 @@ fn amendment6_read(root: &Path, arms: &[String], frames_read: &mut u64) {
                     println!("   grid {}x{}x{}: undecidable (no density change in a window)", grid.nx, grid.ny, grid.nz);
                 }
             }
+        }
+    }
+}
+
+
+/// RESPONSE1_PREREG.md: the driven reads. `arm` is "L" or "T"; the trajectory is `cycles`
+/// kicks each followed by `relax` readouts. Per cycle: the mode (ρ_k for L, j_k for T) is
+/// fitted from the kick; the continuity leg is read on the first two windows (the drive) and
+/// the last (relaxed, the in-run null); the scrambled partition's mode amplitude is the
+/// placebo's placebo. Pooled over cycles with the spread; the stakes graded in place.
+fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax: usize, frames_read: &mut u64) {
+    let axis = if arm == "T" { 1 } else { 0 };
+    let bohr = 5.29177210903e-11; let au_t = 2.4188843265857e-17; let m_o_kg = 15.9949146196 * 1.66053906660e-27;
+    for dir_arm in arms {
+        let dir = root.join(dir_arm);
+        let mut paths: Vec<PathBuf> = match std::fs::read_dir(&dir) {
+            Ok(rd) => rd.filter_map(|e| e.ok().map(|e| e.path())).filter(|p| p.extension().map(|e| e == "traj").unwrap_or(false)).collect(),
+            Err(e) => { println!("ARM {dir_arm}: REFUSED — {e}"); continue; }
+        };
+        paths.sort();
+        println!("\n===== RESPONSE-1 arm {arm} on {dir_arm} ({} trajectories): {cycles} cycles x {relax} readouts =====", paths.len());
+        for path in &paths {
+            let traj = match Trajectory::read(path) { Ok(t) => t, Err(e) => { println!("  {} REFUSED — {e}", path.display()); continue; } };
+            *frames_read += traj.frames.len() as u64;
+            let h = &traj.header;
+            let dt_fs = h.dt * 0.024188843265857;
+            let l_m = h.box_w * bohr; let k = 2.0 * std::f64::consts::PI / l_m;
+            let (rho, cur) = modes(&traj, axis, Kind::Spatial).unwrap();
+            let (rho_b, cur_b) = modes(&traj, axis, Kind::BlindLabel).unwrap();
+            let series: &Vec<f64> = if axis == 0 { &rho } else { &cur };
+            let series_b: &Vec<f64> = if axis == 0 { &rho_b } else { &cur_b };
+            println!("-- {}  seed 0x{:016x} n={} readouts={} dt={dt_fs:.1} fs  k=2π/L={k:.3e} /m", path.file_name().unwrap().to_string_lossy(), h.seed, h.n_atoms, traj.frames.len());
+            let mut rates: Vec<f64> = Vec::new(); let mut classes: Vec<&str> = Vec::new(); let mut blind_ratio: Vec<f64> = Vec::new();
+            for c in 0..cycles {
+                let start = 1 + c * relax; let end = (start + relax).min(series.len());
+                if end <= start + 4 { break; }
+                let seg: Vec<f64> = series[start..end].iter().map(|v| v - series[end - 1]).collect();   // relative to the relaxed tail
+                let tail = &series[(end - relax / 4).max(start)..end];
+                let mean_t = tail.iter().sum::<f64>() / tail.len() as f64;
+                let noise = (tail.iter().map(|v| (v - mean_t).powi(2)).sum::<f64>() / tail.len() as f64).sqrt().max(1e-12);
+                let fit = fit_relaxation(&seg, dt_fs * 1e-15, noise);
+                let a_sp = seg[0].abs(); let a_bl = (series_b[start] - series_b[end - 1]).abs();
+                blind_ratio.push(a_bl / a_sp.max(1e-12));
+                match &fit {
+                    Relaxation::Overdamped { lambda, amplitude, residual, points } => { rates.push(*lambda); classes.push("overdamped"); println!("   cycle {c:2}: OVERDAMPED  λ = {lambda:.3e} /s (τ = {:.0} fs)  A = {amplitude:.2}  resid {residual:.2}  pts {points} | blind/spatial amplitude {:.3}", 1e15 / lambda, a_bl / a_sp.max(1e-12)); }
+                    Relaxation::Underdamped { gamma, omega, amplitude, .. } => { rates.push(*gamma); classes.push("underdamped"); println!("   cycle {c:2}: UNDERDAMPED Γ = {gamma:.3e} /s  ω = {omega:.3e} /s (period {:.0} fs, c_s = ω/k = {:.0} m/s)  A = {amplitude:.2} | blind/spatial {:.3}", 2.0 * std::f64::consts::PI / omega * 1e15, omega / k, a_bl / a_sp.max(1e-12)); }
+                    Relaxation::Refused { amplitude, noise } => { classes.push("refused"); println!("   cycle {c:2}: REFUSED — kick amplitude {amplitude:.2} under 3 x noise {noise:.2}"); }
+                }
+            }
+            if !rates.is_empty() {
+                let mean = rates.iter().sum::<f64>() / rates.len() as f64;
+                let spread = rates.iter().cloned().fold(f64::MIN, f64::max) - rates.iter().cloned().fold(f64::MAX, f64::min);
+                let over = classes.iter().filter(|c| **c == "overdamped").count();
+                if axis == 1 {
+                    let rho_kg = h.n_atoms as f64 * 18.01528 * 1.66053906660e-27 / l_m.powi(3);
+                    let eta = rho_kg * mean / (k * k);
+                    let eta_lo = rho_kg * (mean - spread / 2.0) / (k * k); let eta_hi = rho_kg * (mean + spread / 2.0) / (k * k);
+                    println!("   R3: Γ_s = {mean:.3e} ± {spread:.2e} /s over {} cycles ({over} overdamped) -> η = ρ Γ_s / k² = {:.3e} Pa s  [{:.2e}, {:.2e}]  stake [2.0e-4, 3.0e-3]: {}", rates.len(), eta, eta_lo, eta_hi, if eta >= 2.0e-4 && eta <= 3.0e-3 { "IN BAND" } else { "OUTSIDE" });
+                } else {
+                    println!("   R2: {over}/{} cycles overdamped; mean rate λ = {mean:.3e} ± {spread:.2e} /s (τ = {:.0} fs) = c_s²/ν_l if overdamped", rates.len(), 1e15 / mean);
+                }
+                let bmean = blind_ratio.iter().sum::<f64>() / blind_ratio.len() as f64;
+                println!("   R4: blind/spatial kick amplitude, mean {bmean:.3} over cycles  (stake < 0.1): {}", if bmean < 0.1 { "no mode on the scrambled partition" } else { "FIRES — the scrambled partition carries the mode" });
+            }
+            let _ = (m_o_kg, au_t);
         }
     }
 }

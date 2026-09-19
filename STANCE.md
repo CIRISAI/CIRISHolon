@@ -23,8 +23,9 @@ randomizer at minimal instances.
 
 - The tier ladder: ahead of stim 7/7 — re-staked 2026-09-19 on five
   circuits per size with the spread beside the lead: ahead on the WORST
-  circuit at 7/7, worst ratio 0.81, scatter under the lead at 7/7
-  (`conformance/qasm/BAKEOFF_PREREG.md`); the exact ring tower complete;
+  circuit at 7/7, worst ratio 0.76 on the quiet CI runner, scatter under
+  the lead at 7/7 and narrowing with size as the lead widens
+  (`conformance/qasm/BAKEOFF_PREREG.md`, CI run 35448424648); the exact ring tower complete;
   refusal-or-exact everywhere. Kill: any silently wrong exact value; any
   size at which one circuit's ratio reaches 1.0.
 - The gravity sequence on finite groups: curvature, dressed charge,

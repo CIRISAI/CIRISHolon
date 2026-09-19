@@ -44,9 +44,12 @@ circuits per size and the prereg stakes the claim on the WORST circuit (S1) and 
 the circuit-to-circuit spread to sit under the lead (S2). Local reading on a pinned core at
 load average 0.08 (`bakeoff_local_2026-09-19.log`, `bakeoff_results.json`): **S1 met at
 7/7 sizes, worst ratio anywhere 0.808; S2 met at 7/7**, spreads 0.05–0.12 against leads
-0.19–0.44. The lead is narrower on this host than on the CI runner (means 0.56–0.77
-against 0.50–0.68), which is why the venue is in the record; the CI dispatch under the
-same prereg is the citable run and is owed.
+0.19–0.44. **The citable run, CI dispatch 35448424648 on the quiet runner
+(`bakeoff_results_ci_2026-09-19.json`): S1 7/7, worst ratio anywhere 0.758; S2 7/7.** The
+lead WIDENS with size (means 0.61 → 0.44 from n = 64 to 4096) while the circuit-to-circuit
+scatter NARROWS (0.07 → 0.03) — the signature of a lead that is the algorithm's and not the
+draw's. The local host's narrower lead (0.56–0.77) is the host, which is why the venue is
+in the record.
 
 Named next steps: the Bravyi–Gosset rank reduction (2^{~0.48t}); the
 contextuality/cost link is NOT posable on qubit circuits with the current

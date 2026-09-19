@@ -206,9 +206,17 @@ new primitive. WAGER with three separable kills; no hadron has been computed.*
   Yukawa in the pion mass, so the hadron expansion converges exponentially and its defect is
   derivable from the gap — the shape `W(b)` and `C/R⁹` take elsewhere.
 - **Fold III — the only priced object is one hadron in its own grain.** Both confined fixed
-  points are stabilizer states (`vacuumConfig`, the toric code), so the interacting vacuum in
-  a hadron-sized box is low-magic and area-law, priced exactly by the strata this engine
-  owns; finite subgroups of SU(3) as link groups are prior art (Petcher–Weingarten 1980,
+  points are stabilizer states (`vacuumConfig`, the toric code), and the interacting vacuum's
+  magic is EXTENSIVE with a converged density `c(x)`: zero at the fixed points, leaving them
+  as `x²` (`≈ 5.7 x²` in the Schwinger rehearsal), saturating near `0.44` bits per site at
+  physical coupling. The magic INSIDE a box of fixed size is independent of the volume around
+  it, so a hadron-sized box of `L` sites is priced at `2^{c(x) L}` stabilizer terms — exactly,
+  by the strata this engine owns, and affordably only for boxes of a few dozen sites. *(Reworded
+  2026-09-19 on GF1's read, the owner's call; the locked text said "low-magic and area-law,
+  priced exactly", and its area-law clause named no quantity — the non-local magic is `M₂`
+  itself on any real vacuum of definite parity, by theorem. The price clause was measured and
+  kept; the adjectives were wrong at physical coupling and are gone. `GF1_RESULTS.md`.)*
+  Finite subgroups of SU(3) as link groups are prior art (Petcher–Weingarten 1980,
   Bhanot–Rebbi 1981, Alexandru et al. 2019); Floquet gauge steps at the grain are Clifford
   (`Grain.lean`); staggered quarks suffice (Nielsen–Ninomiya is chiral-only, `LEPTON_LADDER.md`).
 
@@ -222,9 +230,9 @@ new primitive. WAGER with three separable kills; no hadron has been computed.*
   — and the magic density `c(x)` is a converged function of the coupling (`≈ 5.7 x²` near the
   fixed point, `0.44` at `x = 1–4`). But the "area-law" clause names no quantity: the non-local
   magic, over local Cliffords or over any product of single-site unitaries, IS `M₂` on a real
-  vacuum of definite parity, by theorem — and `M₂` is extensive, `c(x) N`. **The clause is
-  OPEN for rewording around `c(x)` and the box price, or kept dead as written**; the fold's
-  owner decides. The weak-coupling vacuum (`x = 16`) is outside the exact instrument's lease.
+  vacuum of definite parity, by theorem — and `M₂` is extensive, `c(x) N`. **Fold III reworded
+  the same day around `c(x)` and the box price** (the owner: "this is just clarity"). The
+  weak-coupling vacuum (`x = 16`) is outside the exact instrument's lease.
 - **GF2 — the Σ(1080) hadron box** against the proton, neutron, pion and the deuteron: if the
   derived NN table misses its referees, Fold I's "forced, not fitted" dies. **GATED.** Its 1+1D
   rehearsal (GF2a, E7 → E14) met the exact colour-lane referee on all six N = 8 sectors at a χ

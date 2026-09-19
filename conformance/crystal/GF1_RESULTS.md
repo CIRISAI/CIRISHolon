@@ -23,9 +23,9 @@ carries under four bits of magic at every coupling read, and the magic density `
 banked function of the coupling, converged in volume to a tenth of a percent below `x = 4`.
 **What the fold loses.** Its "area-law" clause, as written, names no quantity: on the very
 states it is for, the local frame removes nothing, so the non-local magic IS `M₂`, which is
-extensive — `c(x) N` — at every coupling. The extensive density is the finding; whether
-Fold III is rewritten around `c(x)` or kept dead as written is the object's call
-(`OBJECT.md` Fold III), recorded here as OPEN. **What the instrument cannot do.** Read the
+extensive — `c(x) N` — at every coupling. The extensive density is the finding. **Fold III
+was reworded the same day** around `c(x)` and the box price, the owner's call ("of course
+re-write; this is just clarity"), the locked text kept legible beside it (`OBJECT.md`). **What the instrument cannot do.** Read the
 weak-coupling vacuum: at `x = 16` the variance gate admits only `N ≤ 12` at `χ = 11`, the
 exact instrument's lease. The two exits (a compressed Pauli MPS; perfect Pauli sampling)
 are named in A1 and not built.
@@ -96,4 +96,4 @@ vacuous by theorem; S4 met. **The prereg's branch (a) needs S2, S3, S4 — it is
 Branch (b) is entered on S3's vacuity (not on a slope); branch (c) was entered and
 discharged; S1's refusal at `x = 16` is a refusal, not (d), since it is the bond dimension
 and not the volume that refused.** Fold III's price clause stands measured; its area-law
-clause has no quantity; the object's owner decides what the fold says next.
+clause had no quantity and was reworded the same day.

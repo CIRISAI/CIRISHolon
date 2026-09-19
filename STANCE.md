@@ -209,8 +209,8 @@ against a brute referee. `GF1_RESULTS.md`.*
   definite parity: per site by theorem (every Pauli fibre already lies on an
   axis), jointly by a positive-definite Hessian on the vacuum. Twice the
   lead staked a quantity a theorem holds fixed; twice the instrument's
-  plants said so before a vacuum was read. What the fold says next is the
-  object's call, recorded OPEN.
+  plants said so before a vacuum was read. Fold III was reworded the same
+  day around `c(x)` and the box price (`OBJECT.md`).
 - **The S2 bar was set at the wrong coupling**: `M₂/N < 0.05` at `x = 0.25`
   killed as staked (`0.207`); branch (c), written for exactly this, extended
   the ladder to `x = 1/16` where the density is `0.021`. The `x²` law says the
@@ -278,12 +278,10 @@ LIQUID-1, priced out of LIQUID-2, unresolved by REPLACE-0 — ~2,500
 core-hours on both arms); **the node-G closure certificate** for the
 H-bond tier, which no reading provides.
 
-Added 2026-09-19, from GF1: **what Fold III's area-law sentence should say**,
-now that its quantity is `M₂` itself and extensive — rewritten around the
-converged density `c(x)` and the volume-independent box price, or kept dead
-as written; **the weak-coupling vacuum's magic** (`x = 16` past `N = 12`),
-which needs a compressed Pauli MPS or perfect Pauli sampling, named and not
-built.
+Added 2026-09-19, from GF1: **the weak-coupling vacuum's magic** (`x = 16`
+past `N = 12`), which needs a compressed Pauli MPS or perfect Pauli sampling,
+named and not built. (Fold III's area-law sentence was reworded the same
+day around `c(x)` and the box price, `OBJECT.md`; not open.)
 
 ## Credits and priority (2026-08-28)
 

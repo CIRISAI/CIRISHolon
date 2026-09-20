@@ -742,6 +742,15 @@ pub struct Aligned {
 /// on building: the smoke's tails were NOT relaxed, and subtracting them inflated the kick
 /// amplitude by 40 %). Cycles that do not fit in the series are dropped.
 pub fn align_cycles(series: &[f64], cycles: usize, relax: usize, first: usize) -> Aligned {
+    // RESPONSE1_AMENDMENT_3 A4: the baseline is the series' mean over the WHOLE run. For the
+    // current modes that mean is zero to noise, so this is Amendment 1's physical zero; for
+    // a density mode it is the frozen long-wavelength pattern VIEW-SEARCH-1 found (this box
+    // does not rearrange in 40 ps), and a blind density partition carries a static random
+    // offset of ~15 counts which an ODD cycle count leaks into the aligned mean as offset/C
+    // (the L0 partial's density R4 "fired" on exactly that: 2.3 counts at 7 cycles).
+    let mean_all = series.iter().sum::<f64>() / series.len().max(1) as f64;
+    let series: Vec<f64> = series.iter().map(|v| v - mean_all).collect();
+    let series = &series[..];
     let mut per_cycle: Vec<Vec<f64>> = Vec::new();
     let mut sds = Vec::new();
     let mut tail_sigma = Vec::new();

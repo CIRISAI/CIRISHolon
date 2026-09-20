@@ -6,15 +6,15 @@
 
 ===== RESPONSE-1 arm T on rigid (1 trajectories): 12 cycles x 314 readouts; Amendment 1's read =====
 -- seed0.traj  seed 0x5245504c41434530 n=432 readouts=1271 dt=10.0 fs  k=2π/L=2.675e9 /m
-   4 cycles aligned; current mode noise per cycle 1.788e-3 au, aligned 7.850e-4 au; kick amplitude aligned 1.948e-2 au (SNR 24.8); tails relaxed: 2 of 4 (aligned tail mean 16.0 SE) — UNRELAXED cycles: the mode has not returned to zero by the cycle's end; the fit's window is what it is and the rebound is a finding
-   cycle  0: OVERDAMPED  λ = 5.585e12 /s (τ = 179 fs)  A = 2.026e-2  resid 1.28e-3  pts 26  | tail mean 2.3 SE
-   cycle  1: OVERDAMPED  λ = 4.242e12 /s (τ = 236 fs)  A = 2.544e-2  resid 2.05e-3  pts 31  | tail mean 1.4 SE
-   cycle  2: OVERDAMPED  λ = 4.489e12 /s (τ = 223 fs)  A = 1.924e-2  resid 1.09e-3  pts 29  | tail mean 16.4 SE
-   cycle  3: OVERDAMPED  λ = 3.989e12 /s (τ = 251 fs)  A = 2.144e-2  resid 1.35e-3  pts 28  | tail mean 6.6 SE
+   4 cycles aligned; current mode noise per cycle 1.788e-3 au, aligned 7.850e-4 au; kick amplitude aligned 1.948e-2 au (SNR 24.8); tails relaxed: 1 of 4 (aligned tail mean 16.0 SE) — UNRELAXED cycles: the mode has not returned to zero by the cycle's end; the fit's window is what it is and the rebound is a finding
+   cycle  0: OVERDAMPED  λ = 5.664e12 /s (τ = 177 fs)  A = 2.010e-2  resid 1.29e-3  pts 26  | tail mean 3.4 SE
+   cycle  1: OVERDAMPED  λ = 4.199e12 /s (τ = 238 fs)  A = 2.560e-2  resid 2.04e-3  pts 31  | tail mean 2.6 SE
+   cycle  2: OVERDAMPED  λ = 4.454e12 /s (τ = 224 fs)  A = 1.897e-2  resid 1.06e-3  pts 28  | tail mean 17.2 SE
+   cycle  3: OVERDAMPED  λ = 3.942e12 /s (τ = 254 fs)  A = 2.161e-2  resid 1.34e-3  pts 28  | tail mean 5.9 SE
    ALIGNED current mode j_k^s: OVERDAMPED  λ = 4.915e12 /s (τ = 203 fs)  A = 2.204e-2  resid 1.60e-3  pts 32
    R4:  blind/spatial aligned kick amplitude 0.081; blind 1.569e-3 au vs max(0.1 × spatial, 3σ_blind) = 3.927e-3: no mode on the scrambled partition
    R4′: undriven quadrature j_k^c aligned amplitude 2.070e-3 au vs 3σ 2.226e-3: at noise, as it must be
-   R3:  Γ_s = 4.915e12 ± 1.60e12 /s (4 per-cycle fits) -> η = ρ Γ_s / k² = 6.849e-4 Pa s  [5.74e-4, 7.96e-4]  stake [2.0e-4, 3.0e-3]: IN BAND
+   R3:  Γ_s = 4.915e12 ± 1.72e12 /s (4 per-cycle fits) -> η = ρ Γ_s / k² = 6.849e-4 Pa s  [5.65e-4, 8.05e-4]  stake [2.0e-4, 3.0e-3]: IN BAND
    R1′ grid 8x1x1 (τ 196 fs, window 20, 4 cycles aligned, lead 2 windows): D_cont spatial 1.017  blind 1.017  separation -0.000 | s 0.91 (blind 0.51, tail 0.91), floor √((D_disc² s² + 1)/(s² + 1)) = 0.744 (D_disc 0.100) | relaxed last window 0.999
         R1′ verdict: driven 1.017 vs relaxed 0.999, |Δ| = 0.018 vs max(0.1, 2 SE = 0.235): continuity sees nothing under shear, as it must
    R1′ grid 4x1x1 (τ 392 fs, window 39, 4 cycles aligned, lead 2 windows): D_cont spatial 0.815  blind 1.012  separation +0.197 | s 1.59 (blind 0.00, tail 1.59), floor √((D_disc² s² + 1)/(s² + 1)) = 0.615 (D_disc 0.363) | relaxed last window 0.988  [beside the graded grid]

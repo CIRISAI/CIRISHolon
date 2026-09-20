@@ -34,3 +34,16 @@ can be met only on the 200 m/s longitudinal control, which was one seed. **Seeds
 graded on the three-seed 200 m/s aligned average with the 50 m/s arms reported at their
 floors, the nonlinearity control now reading the other way: the 50 m/s arms must agree with
 the 200 within their spread on R3, R4′ and the mode shapes.
+
+## A4 — the density mode's baseline is the run mean (found on building, the same hour)
+
+Amendment 1 set every mode's baseline to the physical zero. That is right for the current
+modes (zero total momentum, no static current) and wrong for a density mode on this box,
+which does not rearrange in 40 ps: the mode carries a frozen long-wavelength offset
+(VIEW-SEARCH-1 §3, `1–2` counts on the spatial mode; `~15` counts on a random-sign blind
+partition, `√(N/2)`), and an ODD number of aligned cycles leaks it into the aligned mean as
+offset/C. The L0 partial's density R4 fired on exactly that: `2.3` counts of blind at seven
+cycles against a whole-cycle sd of `0.56`. **Every mode is aligned about its mean over the
+whole run.** For the currents this changes nothing to noise; for the density it removes the
+frozen pattern from both partitions. The thirteenth instance: a zero that is a theorem's
+constant for one field and a glass's offset for the other.

@@ -36,6 +36,18 @@ quantity the next view must carry (`viewClosed_comp`: closed views compose). Mea
 dispersion energy, harvested to a `1e-12` floor (`EMBED2_RESULTS.md`). This is the same fact
 the ladder of tables has always used: a table is a harvested residual.
 
+**The view is found, not named** (measured 2026-09-20, `VIEW_SEARCH_RESULTS.md`). The object
+at dimension `k` is the top-`k` singular subspace of the tier's transfer operator at the
+tier's cadence, with `k` the smallest dimension whose defect is within the budget — the
+variational principle for Markov processes (Wu & Noé 2020), adopted. Run on the liquid with
+no chart named, the search returned the long-wavelength density and current modes to
+`R² ≥ 0.99`: the charts this program had staked by hand were its answer, and the cell chart
+it had staked most was `70–78 %` of the bound. Two human choices remain — the dictionary and
+the cadence — and both are graded by the same bound. The search proposes; the certificate
+(held-out data, the time-shuffled placebo, the nulls, composition by locality) disposes, and
+it is the same certificate that existed before the search did. *(Locked 2026-09-20 at the
+owner's order; the earlier text above, in which every view was named first, is kept.)*
+
 ## The shape, stated four times
 
 The object is one shape wearing four sets of clothes. Each is machine-checked where it says
@@ -61,6 +73,8 @@ to `2e-12`. A reading, marked as one: it adds no primitive and names no new kill
 
 1. **Closure is certified, not assumed.** A tier ships with its battery: construction premise,
    budget (coarse divergence growth ratio ≤ 1.05 over its rise epoch), witness-pair hunt.
+   *Added 2026-09-20:* and the certified view is the search's optimum, not the stake's guess
+   (rule 11).
 2. **Exact closure is not expected; budgets are.** The claim is never "zero leak"; it is
    "non-expanding leak within the stated budget" (`Budget.lean`).
 3. **Charts declare their conditioning** (`sum_perturb_le`, `sum_perturb_attained`,
@@ -114,6 +128,17 @@ physics and the layer refuses to invent it (`engine/RESOURCE_DESIGN.md` §11).
 declarations for every exposed aggregate; per-conserved-quantity gates with planted-mutation
 sensitivity (a gate that cannot fire on a plant is refused); for quantum strata, the retract
 test and the QASM suite to the stratum's declared boundary.
+
+11. **The view is searched before it is staked** (2026-09-20, `VIEW_SEARCH_PREREG.md`,
+    `StatClosure.lean`). No chart is preregistered on a tier until the variational search on
+    a DECLARED dictionary has been run at the tier's cadence on banked data; a named chart is
+    banked with its fraction of the bound beside it; the dictionary and the cadence are
+    stated as the two choices that remain. The certificate is separate from the search —
+    held out by seed, the time-shuffled placebo (a position-blind one carries single-particle
+    velocity memory and is not a null), the nulls, and composition: the pooled defect of a
+    lattice is at most its worst cell's and `n` steps of the coarse law drift by at most
+    `n·ε` (proved, no independence assumed); locality on the cell graph is the hypothesis
+    the held-out boundary histories test. Measured once, on one tier, for linear views.
 
 ## The maximal steelman — five moves and the join, each with its kill
 
@@ -299,15 +324,22 @@ one carrier and one basis; its dependence on the field a core sits in is unmeasu
 next freeze. Every constant is a PRICE measured in a regime; the arithmetic-regime law is what
 keeps a price from becoming a wall.
 
+- **That the liquid carrier is water above the molecule tier.** Its phase at the imposed
+  293 K and density is UNMEASURED: it does not rearrange its longest-wavelength density in
+  40 ps and no campaign has read a diffusion constant on it; a minimal-basis water binds too
+  strongly (COMPARE-0), so at 293 K it is likely supercooled relative to its own melting
+  point. Every fluid reading is of a driven element of THIS model's liquid until a
+  temperature scan on its own diffusion says otherwise (2026-09-20).
+
 ## Where the weight sits — the lead's calibrated read
 
 *Mutually exclusive readings of what a holon most likely IS; probabilities sum to one.*
 
 | reading | p | what moves it |
 |---|---|---|
-| **A.** The full thesis: closure + paid rent IS thinghood at every tier, and the books are physical | 0.36 | Moves 1–4 stand; Move 5's dead legs and "the only exact closures are conservation fibers" cap it |
-| **B.** Right account of objects, but a frame-selection principle is missing (`exists_closed_view` makes closure cheap) | 0.20 | ACUITY-B measured the allocation half; rung 1's alignment finding is the frame puzzle still unsolved; `frames_are_not_gauge` cuts against full relativism |
-| **C.** Thinghood is primarily CONSERVATION; rent is thermodynamics repackaged | 0.28 | the only exact closures are fibers; the exact label fixed what the budgeted sector could not |
+| **A.** The full thesis: closure + paid rent IS thinghood at every tier, and the books are physical | 0.40 (0.36 before 2026-09-20) | Moves 1–4 stand; Move 5's dead legs and "the only exact closures are conservation fibers" cap it |
+| **B.** Right account of objects, but a frame-selection principle is missing (`exists_closed_view` makes closure cheap) | 0.10 (0.20 before 2026-09-20: the missing principle has a candidate — the view is the variational optimum at the tier's cadence, measured once to find the staked charts unprompted; B keeps the weight of "once, one tier, linear views") | ACUITY-B measured the allocation half; rung 1's alignment finding is the frame puzzle still unsolved; `frames_are_not_gauge` cuts against full relativism |
+| **C.** Thinghood is primarily CONSERVATION; rent is thermodynamics repackaged | 0.34 (0.28 before 2026-09-20: the search's slowest closed directions ARE the conserved densities at the longest wavelength — hydrodynamics — which is C's claim read off the data as much as A's) | the only exact closures are fibers; the exact label fixed what the budgeted sector could not |
 | **D.** Closure is observer-indexed with no observer-free fact | 0.08 | `FrameOrder.lean` (frames are an order) and the certified molecule's 0/111 controls cut against it |
 | **E.** The world-level rent is metaphor; the dead cosmology legs are the tell | 0.08 | the rate surviving on hardware and the design-knowing repair cut against it |
 

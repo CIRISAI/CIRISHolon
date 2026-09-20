@@ -194,6 +194,35 @@ experimental number. What is measured here is measured at that strength.*
   property of this programme's instruments, and the reason each of the
   three entries above carries its scope on its face.
 
+## Measured, added 2026-09-20 (VIEW-SEARCH-1: the closed view found, not named)
+
+*Scope: LINEAR views in a declared dictionary (2×2×2 cell fields and
+first-harmonic Fourier modes), scored by the variational principle for
+Markov processes — Wu & Noé 2020, adopted and credited, not invented —
+held out by seed, on the banked equilibrium walks of the liquid carrier
+(128 and 432 waters, 5–6 ps, both operators). `VIEW_SEARCH_RESULTS.md`,
+with its amendment's six corrections on building.*
+
+- **The search finds the closed view without a chart being named.** The six
+  slowest closed directions of the liquid are the first-harmonic density
+  modes with a transverse-current admixture, `R² ≥ 0.99`, on every
+  carrier. The charts this program staked by hand (RUNG-2, RESPONSE-1)
+  were the search's answer; the cell chart it staked most is `70–78 %` of
+  the bound with momenta and `27–45 %` without.
+- **The equilibrium shear rent of the model, from walks already on disk:**
+  `η = 1.4–1.9 × 10⁻⁴` Pa s at `k = 0.40 Å⁻¹` (rigid and flexible agree —
+  the omission costs nothing on the rent) and `4.4–5.8 × 10⁻⁴` at `0.27`;
+  the driven arms' first partial reads (`3.1, 4.0, 6.8 × 10⁻⁴`) bracket it.
+  The density mode oscillates at `~1.6` ps at 432 waters, `c_s ≈ 1470` m/s.
+- **The carrier is a glass on 40 ps.** Each seed's longest-wavelength
+  density pattern is frozen for its whole run; the box has never shown a
+  diffusion constant. The liquid's phase at 293 K on this model is
+  unmeasured (`OBJECT.md`, "what the record does not license").
+- **A position-blind placebo is not a null**: it carries single-particle
+  velocity memory, `0.3–0.4` of the bound; the time-shuffled placebo reads
+  `0.04`. S4 fired as written and was re-staked as a separation the same
+  day, the wrong premise kept legible — the twelfth instance.
+
 ## Measured, added 2026-09-19 (GF1: the magic price of gauge vacua)
 
 *Scope: the lattice Schwinger model under Jordan–Wigner, real MPS at
@@ -270,6 +299,15 @@ against a brute referee. `GF1_RESULTS.md`.*
   list below and its kill retires fired-empty. Fence: QED₂ licenses the
   machinery, not 3+1D. (`conformance/crystal/SCHWINGER3_RESULTS.md`.)
 
+- **W4 — closed views are VARIATIONAL (2026-09-20).** On every tier this
+  engine hosts, exact or thermal, the search's optimum at the tier's
+  cadence coincides with the tier's object within the budget, and the
+  certificate of one cell composes across cells by locality. *Kill: a tier
+  whose search optimum is non-local on the cell graph, or a named object
+  with a standing certificate that the search does not find.* Measured
+  once, on one tier, for linear views; the nonlinear case and the second
+  tier are the next two reads.
+
 ## Open (named, unclaimed, no shame in the list)
 
 Theorem 2's general mechanization; T1's general converse; the continuum
@@ -288,6 +326,16 @@ larger box, not after); **this model's self-diffusion** (R3, refused by
 LIQUID-1, priced out of LIQUID-2, unresolved by REPLACE-0 — ~2,500
 core-hours on both arms); **the node-G closure certificate** for the
 H-bond tier, which no reading provides.
+
+Added 2026-09-20, from the search: **the model's own phase diagram** — its
+diffusion and density-pattern persistence against temperature, the
+cheapest and most consequential open item (a few core-hours at 128 waters;
+until it is read, "water" is a name the carrier has not earned above the
+molecule tier); **locality on the cell graph** (the one hypothesis the
+composition theorems leave, Leg B's test); **the second tier under the
+search** (the exact tiers: does the search find the molecule's closed view
+from its own trajectory?); **the reasoning-trace dictionary** — the transfer
+target named, nothing claimed.
 
 Added 2026-09-20, from VIEW-SEARCH-1: **the driven `η(k)` and `c_s` against
 the equilibrium reads** (`1.4–1.9 × 10⁻⁴` Pa s at `0.40 Å⁻¹`, `4.4–5.8 × 10⁻⁴` at
@@ -313,7 +361,10 @@ converged on the core objects — lens/view, idempotence defect/closure
 defect, ledgered maintenance, and a measured repair-collapses-the-defect
 result that is maintenance-creates-what-it-maintains from the other side;
 see conformance/omega/PRIOR_ART_CONVERGENCE.md for the two-way map and
-the now-unblocked cross-validation protocol. What this stance claims as its own is the SYNTHESIS as
+the now-unblocked cross-validation protocol. The variational search for closed views is Wu & Noé's (VAMP, 2020) with
+TICA and Markov-state models before it, adopted whole on 2026-09-20; the
+program's contribution there is the certificate around it, not the score.
+What this stance claims as its own is the SYNTHESIS as
 one continuously extending, kill-disciplined instrument — and convergence,
 where confirmed, is corroboration that the underlying object is real.
 
@@ -329,4 +380,8 @@ geometry sequence carries discrete general relativity through the densest
 finite rungs (measured, advance-staked). We now WAGER, with separable
 kills, that this does not stop: that the receipt format survives every
 larger evaluation by lawful extension. That is a position, not a proof —
-which is exactly what a stance is for.
+which is exactly what a stance is for. And as of 2026-09-20 the object is
+FOUND rather than named: the closed view is the optimum of a variational
+search on the trajectory, computable in seconds, graded against its own
+bound; what costs is the trajectory, never the finding. Measured once —
+the wager is that it holds everywhere the square does.

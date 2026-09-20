@@ -56,7 +56,11 @@ use field2_scenes::{scene, K_B};
 const N_CELLS: usize = 4;
 const N_WATERS: usize = 2 * N_CELLS * N_CELLS * N_CELLS;
 const DENSITY_G_CM3: f64 = 0.997;
-const TEMPERATURE_K: f64 = 293.0;
+/// The campaign's temperature, 293 K unless `--temperature-k` overrides it (TSCAN-1,
+/// 2026-09-20: the model's own phase against T). Read through `temperature_k()`.
+const TEMPERATURE_K_DEFAULT: f64 = 293.0;
+static TEMPERATURE_K_SET: std::sync::OnceLock<f64> = std::sync::OnceLock::new();
+fn temperature_k() -> f64 { *TEMPERATURE_K_SET.get().unwrap_or(&TEMPERATURE_K_DEFAULT) }
 /// The ASCII of "REPLACE0", and its successors: disjoint from every LIQUID and PILOT seed by
 /// their letters. `--seed k` picks one; each writes its own directory and its own bundle,
 /// because a branch point is a property of its seed and reusing one across seeds would be
@@ -204,7 +208,7 @@ fn build(law: &Law, seed: u64) -> (Box<Sim>, f64) {
 /// fluid-element scout (RUNG2_AMENDMENT_5.md) is `n = 6`, the first admissible size.
 fn build_n(law: &Law, seed: u64, n_cells: usize) -> (Box<Sim>, f64) {
     let (sp, pos, l) = liquid_box(n_cells, DENSITY_G_CM3, seed);
-    let mut sim = scene(&sp, &pos, l, TEMPERATURE_K);
+    let mut sim = scene(&sp, &pos, l, temperature_k());
     sim.set_field(true, None).expect("the open box admits the field");
     let mut table = law.table.clone();
     assert!(table.set_blend(law.beta), "the table refused the derived beta");
@@ -306,7 +310,7 @@ fn mode_split(sim: &Sim, units: &[UnitMembers], body: &Body) -> (f64, f64) {
         ke_vib += d.internal_kinetic;
     }
     let n = units.len().max(1) as f64;
-    (2.0 * ke_rigid / (6.0 * n * K_B), ke_vib / n / (K_B * TEMPERATURE_K))
+    (2.0 * ke_rigid / (6.0 * n * K_B), ke_vib / n / (K_B * temperature_k()))
 }
 
 fn series_json(s: &[Obs]) -> String {
@@ -742,7 +746,7 @@ fn run_rigid(sim: &mut Sim, z: &[u32], l: f64, body: &Body, k_envelope: f64, fra
     eprintln!("  rigid branch: T {:.1} K on 6 dof/unit, E {:.6} Ha; discarded {:.3e} bohr rms, {:.3e} Ha internal KE", series[0].temperature_k, e, def_rms, ke_int);
 
     // the demonstration's state
-    let share = 3.0 * K_B * TEMPERATURE_K;
+    let share = 3.0 * K_B * temperature_k();
     let mut refined: Vec<usize> = Vec::new();
     let mut quiet: Vec<usize> = vec![0; n];
     let mut events = Vec::new();
@@ -1200,7 +1204,7 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
     let ftr = half_summary(&flex.series, |o| o.rigid_mode_temperature_k);
     let rtr = half_summary(&rigid.result.series, |o| o.rigid_mode_temperature_k);
     let fvib = half_summary(&flex.series, |o| o.vibrational_kinetic_per_water_kt);
-    let kt = K_B * TEMPERATURE_K;
+    let kt = K_B * temperature_k();
     let (_, fe_peak, _) = energy_excursion(&flex.series);
     let (_, re_peak, _) = energy_excursion(&rigid.result.series);
     let bar = 0.1 * kt;
@@ -1341,7 +1345,7 @@ fn run_phase(obs: &Path, out: &Path, frames: usize, settle_frames: usize, readou
         .int("waters", N_WATERS as i64)
         .number("cell_edge_bohr", l)
         .number("density_g_cm3", DENSITY_G_CM3)
-        .number("settle_temperature_k", TEMPERATURE_K)
+        .number("settle_temperature_k", temperature_k())
         .int("settle_frames", settle_frames as i64)
         .int("frames", frames as i64)
         .int("readout_stride_frames", stride as i64)
@@ -1403,6 +1407,7 @@ fn main() {
     );
     let obs = observatory(&out);
     eprintln!("phase {phase}, out {}, observatory {}", out.display(), obs.display());
+    if let Some(t) = val("--temperature-k").and_then(|v| v.parse::<f64>().ok()) { TEMPERATURE_K_SET.set(t).expect("set once"); eprintln!("temperature {t} K (override; the campaign default is {TEMPERATURE_K_DEFAULT})"); }
     let settle_frames = val("--settle").and_then(|v| v.parse().ok()).unwrap_or(2_000);
     let seed_index: usize = val("--seed").and_then(|v| v.parse().ok()).unwrap_or(0);
     let seed = *SEEDS.get(seed_index).unwrap_or_else(|| panic!("seed index {seed_index} against {} declared seeds", SEEDS.len()));
@@ -1438,6 +1443,7 @@ fn main() {
             args.iter().any(|a| a == "--match-3n"),
             seed,
         ),
+        "atomwalk" => atomwalk_phase(&obs, &out, val("--cells").and_then(|v| v.parse().ok()).unwrap_or(2), settle_frames, val("--frames").and_then(|v| v.parse().ok()).unwrap_or(80_000), val("--stride").and_then(|v| v.parse().ok()).unwrap_or(38), seed),
         "plant-kick" => plant_kick(&obs, val("--cells").and_then(|v| v.parse().ok()).unwrap_or(6), seed, val("--kick-mps").and_then(|v| v.parse().ok()).unwrap_or(50.0)),
         other => panic!("unknown phase {other:?}: stiffness | run | scout | plant-kick"),
     }
@@ -1479,7 +1485,7 @@ fn kick_bodies(bodies: &mut [Flying], l: f64, axis: usize, v_d: f64) -> ([f64; 3
 /// removed (or added), so the record can say how much the drive cost each cycle.
 fn rescale_rigid(bodies: &mut [Flying]) -> f64 {
     let ke0 = rigid_kinetic(bodies);
-    let s = (TEMPERATURE_K / rigid_temperature(bodies).max(1e-9)).sqrt();
+    let s = (temperature_k() / rigid_temperature(bodies).max(1e-9)).sqrt();
     for b in bodies.iter_mut() { b.w.p = scale(b.w.p, s); b.w.l_body = scale(b.w.l_body, s); }
     ke0 - rigid_kinetic(bodies)
 }
@@ -1514,6 +1520,46 @@ fn append_walk_rows(base: &Path, w: &Walk) {
 /// What a reading on this box is: a reading of the OPERATOR's liquid. The amendment's fence
 /// is that one fine-model seed at this size is owed before any closure is called the
 /// model's.
+/// MOLSEARCH-1 (2026-09-20): the fine model's ALL-ATOM walk — every atom's position and
+/// velocity every `stride` frames after a thermostatted settle, NVE — so the variational
+/// search can be run at the molecule tier on the model's own trajectory. Writes
+/// `atoms.walk`/`atoms.vwalk` in the oxygen walks' format (header `# awalk ROWS L`, then
+/// `# z ...` with the nuclear charges), positions unwrapped.
+fn atomwalk_phase(obs: &Path, out: &Path, cells: usize, settle_frames: usize, frames: usize, stride: usize, seed: u64) {
+    use std::io::Write;
+    let law = load_law(obs);
+    let (mut sim, l) = build_n(&law, seed, cells);
+    let n = sim.n;
+    eprintln!("atomwalk: {n} atoms at n_cells = {cells}, box {l:.4} bohr, seed {seed:#x}; settle {settle_frames}, then {frames} NVE frames, a row every {stride} ({:.3} fs)", stride as f64 * sim.dt() * AU_TIME_FS);
+    settle(&mut sim, settle_frames);
+    sim.thermostat_on = false;
+    sim.compute_forces();
+    std::fs::create_dir_all(out).expect("out dir");
+    let rows = frames / stride + 1;
+    let z: Vec<String> = (0..n).map(|i| sim.atoms[i].species.z.to_string()).collect();
+    let mut w = std::io::BufWriter::new(std::fs::File::create(out.join("atoms.walk")).expect("walk"));
+    let mut v = std::io::BufWriter::new(std::fs::File::create(out.join("atoms.vwalk")).expect("vwalk"));
+    writeln!(w, "# awalk {rows} {l}\n# z {}", z.join(" ")).unwrap();
+    writeln!(v, "# avwalk {rows} {l}\n# dt_fs {}", stride as f64 * sim.dt() * AU_TIME_FS).unwrap();
+    let mut prev = read_pos(&sim); let mut unwrapped = prev.clone();
+    let write_row = |w: &mut std::io::BufWriter<std::fs::File>, v: &mut std::io::BufWriter<std::fs::File>, sim: &Sim, unwrapped: &[[f64; 3]]| {
+        let mut a = String::new(); let mut b = String::new();
+        for i in 0..n { let at = &sim.atoms[i]; a.push_str(&format!("{} {} {} ", unwrapped[i][0], unwrapped[i][1], unwrapped[i][2])); b.push_str(&format!("{} {} {} ", at.vx, at.vy, at.vz)); }
+        writeln!(w, "{}", a.trim_end()).unwrap(); writeln!(v, "{}", b.trim_end()).unwrap();
+    };
+    write_row(&mut w, &mut v, &sim, &unwrapped);
+    let t0 = Instant::now(); let e0 = sim.energy();
+    for f in 1..=frames {
+        sim.step_frame(1);
+        let now = read_pos(&sim);
+        for i in 0..n { for c in 0..3 { let mut d = now[i][c] - prev[i][c]; d -= l * (d / l).round(); unwrapped[i][c] += d; } }
+        prev = now;
+        if f % stride == 0 { write_row(&mut w, &mut v, &sim, &unwrapped); }
+        if f % 10_000 == 0 { eprintln!("  atomwalk frame {f:>7}: T {:6.1} K, E drift {:.2e} Ha/atom, {:.0} s", sim.temperature(), (sim.energy() - e0).abs() / n as f64, t0.elapsed().as_secs_f64()); }
+    }
+    eprintln!("atomwalk: done, {rows} rows in {:.0} s; E drift {:.2e} Ha/atom", t0.elapsed().as_secs_f64(), (sim.energy() - e0).abs() / n as f64);
+}
+
 /// Metres per second to atomic units of velocity (one au = 2.187 691 263 × 10⁶ m/s).
 const MPS_TO_AU: f64 = 1.0 / 2.187_691_263_e6;
 
@@ -1666,7 +1712,7 @@ fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: u
         step += 1;
         acc += potential(sim) / n_w as f64;
         if step % 10 == 0 {
-            let s = (TEMPERATURE_K / rigid_temperature(&bodies).max(1e-9)).sqrt();
+            let s = (temperature_k() / rigid_temperature(&bodies).max(1e-9)).sqrt();
             for b in bodies.iter_mut() { b.w.p = scale(b.w.p, s); b.w.l_body = scale(b.w.l_body, s); }
         }
         if step % 500 == 0 {
@@ -1724,9 +1770,9 @@ fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: u
                 for b in bodies.iter() { write_back(sim, &b.m, &b.w.reconstruct()); }
                 e0 = rigid_kinetic(&bodies) + potential(sim);
                 let line = format!("{{\"cycle\": {cycle}, \"t_fs\": {}, \"sign\": {sign}, \"dp_total_au\": [{}, {}, {}], \"dke_hartree\": {}, \"dke_per_water_kt\": {}, \"rescale_removed_hartree\": {}}}",
-                    num(r as f64 * readout_fs), num(dp[0]), num(dp[1]), num(dp[2]), num(dke), num(dke / (n_w as f64 * K_B * TEMPERATURE_K)), num(removed));
+                    num(r as f64 * readout_fs), num(dp[0]), num(dp[1]), num(dp[2]), num(dke), num(dke / (n_w as f64 * K_B * temperature_k())), num(removed));
                 eprintln!("  KICK cycle {cycle} at {:.0} fs: axis {} sign {sign:+.0} v_d {} m/s; dp_total {:.2e} au, dKE {:.3e} Ha = {:.4} kT/water; rescale removed {:.3e} Ha",
-                    r as f64 * readout_fs, k.axis, k.v_d_mps, dp.iter().map(|x| x.abs()).fold(0.0, f64::max), dke, dke / (n_w as f64 * K_B * TEMPERATURE_K), removed);
+                    r as f64 * readout_fs, k.axis, k.v_d_mps, dp.iter().map(|x| x.abs()).fold(0.0, f64::max), dke, dke / (n_w as f64 * K_B * temperature_k()), removed);
                 kick_log.push(line);
             }
         }
@@ -1754,15 +1800,15 @@ fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: u
     report.gate(
         Gate::new("NVE")
             .work(1)
-            .detail(format!("the rigid arm's peak energy excursion per water over {ps:.1} ps against a tenth of kT ({:.3e} Ha)", 0.1 * K_B * TEMPERATURE_K))
-            .leg_at("energy holds", e_peak / n_w as f64 <= 0.1 * K_B * TEMPERATURE_K, e_peak / n_w as f64),
+            .detail(format!("the rigid arm's peak energy excursion per water over {ps:.1} ps against a tenth of kT ({:.3e} Ha)", 0.1 * K_B * temperature_k()))
+            .leg_at("energy holds", e_peak / n_w as f64 <= 0.1 * K_B * temperature_k(), e_peak / n_w as f64),
     );
     let t_mean = series[1..].iter().map(|o| o.temperature_k).sum::<f64>() / series.len().saturating_sub(1).max(1) as f64;
     report.gate(
         Gate::new("SETTLED")
             .work(1)
-            .detail(format!("the production temperature on the rigid modes against the target {TEMPERATURE_K} K: mean {t_mean:.1} K"))
-            .leg_at("within 10 percent of the target", (t_mean / TEMPERATURE_K - 1.0).abs() <= 0.10, t_mean),
+            .detail(format!("the production temperature on the rigid modes against the target {} K: mean {t_mean:.1} K", temperature_k()))
+            .leg_at("within 10 percent of the target", (t_mean / temperature_k() - 1.0).abs() <= 0.10, t_mean),
     );
     for g in report.gates() { println!("{}", g.line()); }
     let rec = Record::new("scout")

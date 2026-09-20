@@ -29,7 +29,7 @@ pooled() {  # pooled TAG AXIS SEEDS...
   taskset -c 0-3 "$RUNG2" "$S/pooled_$tag" rigid --response "$axis" --cycles 12 --relax 314 > "$BASE/response1_pooled_$tag.txt" 2>&1
   echo "$(date -Is) pooled $tag over seeds $* -> response1_pooled_$tag.txt" >> "$S/reads.log"
 }
-( read_arm L 0 L; read_arm L 1 L; read_arm L 2 L; pooled L L 0 1 2; read_arm L200 0 L ) &
+( read_arm L 0 L; read_arm L 1 L; read_arm L 2 L; pooled L L 0 1 2; read_arm L200 0 L; read_arm L200 1 L; read_arm L200 2 L; pooled L200 L 0 1 2 ) &
 ( read_arm T 0 T; read_arm T 1 T; read_arm T 2 T; pooled T T 0 1 2; read_arm T200 0 T ) &
 wait
 echo 0 > "$S/reads.DONE"

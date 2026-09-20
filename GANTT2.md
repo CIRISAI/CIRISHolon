@@ -799,6 +799,35 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## RESPONSE-1: five arms killed by a disk-full event at 09:02, banked partial and relaunched; the partial arms read (2026-09-20, morning)
+
+At 09:02:32–42 CDT five of the eight arms panicked on a walk append (`No space left on
+device`) — a transient fill outside this tree (207 GiB free by 09:59; the culprit not
+identified). Their walks were trimmed to complete rows and banked as
+`response1_*_partial/` (4–7 complete cycles each: L0 7, T1 4, L2 6, T2 6, T200 4), and the
+five relaunched fresh on distinct P-cores under `replace0_response1_c.sh`, whose watchdog
+SIGSTOPs every arm under 12 GiB free and resumes above it; the three survivors (T0, L1, L200,
+at 15–20 ps) re-pinned to P-cores. **ETA: survivors Sunday night, the relaunched five
+Tuesday 2026-09-22.**
+
+**The partial arms, read under Amendments 1 and 2 — preliminary, not graded.** R3 on the
+transverse arms: `η = 3.1 × 10⁻⁴` (T1, 4 cycles), `4.0 × 10⁻⁴` (T2, 6 cycles), `6.8 × 10⁻⁴`
+(the 200 m/s control, 4 cycles) Pa s — all in band, and bracketing VIEW-SEARCH-1's
+equilibrium `4.4–5.8 × 10⁻⁴` at the same `k`: the driven and the equilibrium rent agree
+within their spreads on the first look. The aligned current mode reads at SNR 4–6 per arm
+at 50 m/s (Amendment 1's arithmetic said 7 for twelve cycles) and 25 on the control; every
+arm's undriven quadrature is at noise (R4′ holds); R1′ holds on T2 and the control
+(`|Δ| = 0.01, 0.02`) and fires marginally on T1 (`0.13` against `0.1`, four cycles). R1 on
+the L arms at `8×1×1`: `D_cont = 0.74` (L0, separation `+0.26`, every tail relaxed) and
+`0.85` (L2, `+0.13`) — under one, separated from the blind, above the stake, and the floor
+estimate from the blind partition read `s = 0` because the per-frame re-scramble makes the
+placebo's occupancy changes larger than the physical crossings; the tail-based `s` is now
+printed beside it and the larger taken (`57eb8f0` → this commit). The density mode on the
+L arms peaks at `120–130` fs at SNR 5 and its decay from the peak reads `λ₁ ≈ 4 × 10¹²` /s
+(`τ ≈ 240` fs) — the overdamped form fits, where the equilibrium autocorrelation crossed
+zero at 400 fs: the two reads disagree on R2's branch and the full arms decide it. R4 on
+the density at the peak is noise-limited at 4–7 cycles (blind/spatial `0.26`, `1.07`).
+
 ## The closed view as a search (2026-09-20): scored against its variational bound on walks already on disk
 
 `VIEW_SEARCH_PREREG.md` (alone), `view_search.py` (VAMP-2, Wu & Noé 2020 — adopted, not

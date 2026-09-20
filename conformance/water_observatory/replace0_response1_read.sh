@@ -12,7 +12,7 @@ W2T="$BASE/rung2_occ/walk2traj.py"
 S="$BASE/response1_traj"; mkdir -p "$S"
 read_arm() {  # read_arm TAG SEED AXIS
   local tag=$1 seed=$2 axis=$3 dir="$BASE/response1_${tag}_seed$seed"
-  until [ -f "$dir/run.done" ]; do sleep 120; done
+  until [ "$(cat "$dir/run.done" 2>/dev/null)" = "0" ]; do sleep 120; done
   local out="$S/${tag}_seed$seed"; mkdir -p "$out"
   # walk2traj expects {B}/{SRC}{k}/{arm}.walk; point it at one seed by a symlink tree
   # (walk2traj stamps SEEDS[k] from the directory index, so the tree names the seed's index)

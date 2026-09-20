@@ -1,0 +1,124 @@
+phase scout, out /home/emoore/CIRISHolon/conformance/water_observatory/replace0/response1_T_seed2, observatory ../conformance/water_observatory
+seed 2 of 3: 0x5245504c41434532
+scout: 432 waters (1296 atoms) at n_cells = 6, box 44.3904 bohr, seed 0x5245504c41434532
+scout: fine settle 3000 frames under the stochastic thermostat (78.2 fs)
+  settling frame    500: T  372.9 K, cross-unit U -1.228306e-3 Ha/water
+  settling frame   1000: T  466.5 K, cross-unit U -7.275471e-3 Ha/water
+  settling frame   1500: T  436.1 K, cross-unit U -7.058078e-3 Ha/water
+  settling frame   2000: T  398.2 K, cross-unit U -6.698133e-3 Ha/water
+  settling frame   2500: T  399.4 K, cross-unit U -7.679064e-3 Ha/water
+  settling frame   3000: T  368.7 K, cross-unit U -9.072402e-3 Ha/water
+scout: reference geometry O-H 1.95609 +/- 0.03583 bohr, H-O-H 1.67391 +/- 0.05089 rad over 432 units; fine T 368.7 K
+scout: stiffness envelope READ from /home/emoore/CIRISHolon/conformance/water_observatory/replace0/transport_seed0/stiffness.json: 6.4190e-2 Ha/bohr^2 (an intensive property of the monomer, declared)
+scout: rigid clock dt 15.5812 au (14.46x fine); readout every 10 fs = 27 rigid steps at dt 15.3116 au
+scout: rigid modes as projected 522.6 K; rigid settle by criterion (5 x 500-step blocks of U/water, trend under scatter), floor 3000 steps (1111.1 fs), cap 30000
+  rigid settle block    1 (step    500): T  293.0 K, U/water -2.920906e-1 Ha
+  rigid settle block    2 (step   1000): T  293.0 K, U/water -2.948864e-1 Ha
+  rigid settle block    3 (step   1500): T  293.0 K, U/water -2.958312e-1 Ha
+  rigid settle block    4 (step   2000): T  293.0 K, U/water -2.963231e-1 Ha
+  rigid settle block    5 (step   2500): T  293.0 K, U/water -2.966069e-1 Ha
+  rigid settle block    6 (step   3000): T  293.0 K, U/water -2.967550e-1 Ha
+  rigid settle block    7 (step   3500): T  293.0 K, U/water -2.967384e-1 Ha
+  rigid settle block    8 (step   4000): T  293.0 K, U/water -2.968356e-1 Ha
+  rigid settle block    9 (step   4500): T  293.0 K, U/water -2.970673e-1 Ha
+  rigid settle block   10 (step   5000): T  293.0 K, U/water -2.971769e-1 Ha
+  rigid settle block   11 (step   5500): T  293.0 K, U/water -2.970412e-1 Ha
+  rigid settle block   12 (step   6000): T  293.0 K, U/water -2.969884e-1 Ha
+scout: rigid settle SETTLED by criterion at step 6000 (2222.2 fs)
+scout: production 3768 readouts x 10 fs = 37.7 ps, NVE from T 293.0 K, E -127.116907 Ha — 12 kick cycles of 314 readouts, transverse on axis 1 at 50 m/s
+  KICK cycle 0 at 0 fs: axis 1 sign +1 v_d 50 m/s; dp_total 1.11e-13 au, dKE 2.312e-3 Ha = 0.0058 kT/water; rescale removed 0.000e0 Ha
+  scout readout     25 at     250.0 fs: T  290.0 K, E -127.114625 Ha (peak excursion 1.13e-7/water), bonds 1.794, peak 5.25; 3494 core-s/ps
+  scout readout     50 at     500.0 fs: T  304.2 K, E -127.114631 Ha (peak excursion 1.33e-7/water), bonds 1.815, peak 5.25; 3270 core-s/ps
+  scout readout     75 at     750.0 fs: T  306.3 K, E -127.114626 Ha (peak excursion 1.33e-7/water), bonds 1.799, peak 5.25; 3096 core-s/ps
+  scout readout    100 at    1000.0 fs: T  313.8 K, E -127.114643 Ha (peak excursion 1.33e-7/water), bonds 1.833, peak 5.25; 3012 core-s/ps
+  scout readout    125 at    1250.0 fs: T  304.5 K, E -127.114632 Ha (peak excursion 1.64e-7/water), bonds 1.817, peak 5.25; 2977 core-s/ps
+  scout readout    150 at    1500.0 fs: T  320.3 K, E -127.114631 Ha (peak excursion 1.64e-7/water), bonds 1.808, peak 5.25; 2919 core-s/ps
+  scout readout    175 at    1750.0 fs: T  315.3 K, E -127.114639 Ha (peak excursion 1.64e-7/water), bonds 1.829, peak 5.15; 2894 core-s/ps
+  scout readout    200 at    2000.0 fs: T  322.1 K, E -127.114653 Ha (peak excursion 1.64e-7/water), bonds 1.815, peak 5.15; 2867 core-s/ps
+  scout readout    225 at    2250.0 fs: T  317.3 K, E -127.114641 Ha (peak excursion 1.64e-7/water), bonds 1.812, peak 5.25; 2868 core-s/ps
+  scout readout    250 at    2500.0 fs: T  331.0 K, E -127.114634 Ha (peak excursion 1.64e-7/water), bonds 1.847, peak 5.25; 2887 core-s/ps
+  scout readout    275 at    2750.0 fs: T  313.7 K, E -127.114630 Ha (peak excursion 1.64e-7/water), bonds 1.840, peak 5.05; 2886 core-s/ps
+  scout readout    300 at    3000.0 fs: T  322.2 K, E -127.114632 Ha (peak excursion 1.64e-7/water), bonds 1.822, peak 5.25; 2890 core-s/ps
+  KICK cycle 1 at 3140 fs: axis 1 sign -1 v_d 50 m/s; dp_total 3.84e-14 au, dKE 2.669e-3 Ha = 0.0067 kT/water; rescale removed 5.524e-2 Ha
+  scout readout    325 at    3250.0 fs: T  302.0 K, E -127.167190 Ha (peak excursion 1.64e-7/water), bonds 1.808, peak 5.25; 2907 core-s/ps
+  scout readout    350 at    3500.0 fs: T  309.0 K, E -127.167190 Ha (peak excursion 1.64e-7/water), bonds 1.824, peak 5.25; 2916 core-s/ps
+  scout readout    375 at    3750.0 fs: T  314.0 K, E -127.167194 Ha (peak excursion 1.64e-7/water), bonds 1.838, peak 5.15; 2939 core-s/ps
+  scout readout    400 at    4000.0 fs: T  316.9 K, E -127.167199 Ha (peak excursion 1.64e-7/water), bonds 1.843, peak 5.15; 2941 core-s/ps
+  scout readout    425 at    4250.0 fs: T  311.0 K, E -127.167189 Ha (peak excursion 1.64e-7/water), bonds 1.831, peak 5.25; 2943 core-s/ps
+  scout readout    450 at    4500.0 fs: T  313.4 K, E -127.167189 Ha (peak excursion 1.64e-7/water), bonds 1.840, peak 5.25; 2945 core-s/ps
+  scout readout    475 at    4750.0 fs: T  305.4 K, E -127.167182 Ha (peak excursion 1.64e-7/water), bonds 1.812, peak 5.25; 2939 core-s/ps
+  scout readout    500 at    5000.0 fs: T  313.4 K, E -127.167183 Ha (peak excursion 1.64e-7/water), bonds 1.838, peak 5.25; 2943 core-s/ps
+  scout readout    525 at    5250.0 fs: T  324.1 K, E -127.167203 Ha (peak excursion 1.64e-7/water), bonds 1.838, peak 5.15; 2932 core-s/ps
+  scout readout    550 at    5500.0 fs: T  302.0 K, E -127.167188 Ha (peak excursion 1.64e-7/water), bonds 1.831, peak 5.25; 2957 core-s/ps
+  scout readout    575 at    5750.0 fs: T  322.8 K, E -127.167199 Ha (peak excursion 1.64e-7/water), bonds 1.815, peak 5.25; 2972 core-s/ps
+  scout readout    600 at    6000.0 fs: T  317.3 K, E -127.167176 Ha (peak excursion 1.64e-7/water), bonds 1.826, peak 5.25; 2979 core-s/ps
+  scout readout    625 at    6250.0 fs: T  312.2 K, E -127.167175 Ha (peak excursion 1.64e-7/water), bonds 1.819, peak 5.25; 2973 core-s/ps
+  KICK cycle 2 at 6280 fs: axis 1 sign +1 v_d 50 m/s; dp_total 2.22e-15 au, dKE 1.600e-3 Ha = 0.0040 kT/water; rescale removed 8.197e-2 Ha
+  scout readout    650 at    6500.0 fs: T  304.3 K, E -127.247542 Ha (peak excursion 1.64e-7/water), bonds 1.868, peak 5.25; 2971 core-s/ps
+  scout readout    675 at    6750.0 fs: T  312.8 K, E -127.247558 Ha (peak excursion 1.64e-7/water), bonds 1.845, peak 5.15; 2986 core-s/ps
+  scout readout    700 at    7000.0 fs: T  300.9 K, E -127.247532 Ha (peak excursion 1.64e-7/water), bonds 1.840, peak 5.25; 2979 core-s/ps
+  scout readout    725 at    7250.0 fs: T  305.9 K, E -127.247544 Ha (peak excursion 1.64e-7/water), bonds 1.859, peak 5.15; 2983 core-s/ps
+  scout readout    750 at    7500.0 fs: T  306.2 K, E -127.247553 Ha (peak excursion 1.64e-7/water), bonds 1.826, peak 5.15; 2982 core-s/ps
+  scout readout    775 at    7750.0 fs: T  316.5 K, E -127.247562 Ha (peak excursion 1.64e-7/water), bonds 1.847, peak 5.25; 2983 core-s/ps
+  scout readout    800 at    8000.0 fs: T  320.4 K, E -127.247562 Ha (peak excursion 1.64e-7/water), bonds 1.833, peak 5.25; 2977 core-s/ps
+  scout readout    825 at    8250.0 fs: T  314.9 K, E -127.247548 Ha (peak excursion 1.64e-7/water), bonds 1.833, peak 5.25; 2967 core-s/ps
+  scout readout    850 at    8500.0 fs: T  325.9 K, E -127.247552 Ha (peak excursion 1.64e-7/water), bonds 1.852, peak 5.25; 2959 core-s/ps
+  scout readout    875 at    8750.0 fs: T  316.3 K, E -127.247545 Ha (peak excursion 1.64e-7/water), bonds 1.847, peak 5.25; 2949 core-s/ps
+  scout readout    900 at    9000.0 fs: T  322.5 K, E -127.247564 Ha (peak excursion 1.64e-7/water), bonds 1.847, peak 5.25; 2946 core-s/ps
+  scout readout    925 at    9250.0 fs: T  316.4 K, E -127.247555 Ha (peak excursion 1.64e-7/water), bonds 1.882, peak 5.15; 2948 core-s/ps
+  KICK cycle 3 at 9420 fs: axis 1 sign -1 v_d 50 m/s; dp_total 7.49e-15 au, dKE 3.681e-3 Ha = 0.0092 kT/water; rescale removed 1.256e-1 Ha
+  scout readout    950 at    9500.0 fs: T  292.9 K, E -127.369439 Ha (peak excursion 1.64e-7/water), bonds 1.863, peak 5.15; 2940 core-s/ps
+  scout readout    975 at    9750.0 fs: T  301.5 K, E -127.369447 Ha (peak excursion 1.64e-7/water), bonds 1.854, peak 5.25; 2931 core-s/ps
+  scout readout   1000 at   10000.0 fs: T  310.9 K, E -127.369454 Ha (peak excursion 1.64e-7/water), bonds 1.891, peak 5.25; 2923 core-s/ps
+  scout readout   1025 at   10250.0 fs: T  305.3 K, E -127.369454 Ha (peak excursion 1.64e-7/water), bonds 1.866, peak 5.25; 2928 core-s/ps
+  scout readout   1050 at   10500.0 fs: T  311.0 K, E -127.369449 Ha (peak excursion 1.64e-7/water), bonds 1.856, peak 5.25; 2928 core-s/ps
+  scout readout   1075 at   10750.0 fs: T  307.9 K, E -127.369439 Ha (peak excursion 1.64e-7/water), bonds 1.859, peak 5.25; 2929 core-s/ps
+  scout readout   1100 at   11000.0 fs: T  309.4 K, E -127.369466 Ha (peak excursion 1.64e-7/water), bonds 1.843, peak 5.15; 2924 core-s/ps
+  scout readout   1125 at   11250.0 fs: T  312.2 K, E -127.369450 Ha (peak excursion 1.64e-7/water), bonds 1.877, peak 5.25; 2919 core-s/ps
+  scout readout   1150 at   11500.0 fs: T  312.5 K, E -127.369455 Ha (peak excursion 1.64e-7/water), bonds 1.852, peak 5.25; 2921 core-s/ps
+  scout readout   1175 at   11750.0 fs: T  300.1 K, E -127.369432 Ha (peak excursion 1.64e-7/water), bonds 1.868, peak 5.25; 2919 core-s/ps
+  scout readout   1200 at   12000.0 fs: T  301.9 K, E -127.369464 Ha (peak excursion 1.64e-7/water), bonds 1.875, peak 5.15; 2921 core-s/ps
+  scout readout   1225 at   12250.0 fs: T  307.0 K, E -127.369456 Ha (peak excursion 1.64e-7/water), bonds 1.875, peak 5.25; 2917 core-s/ps
+  scout readout   1250 at   12500.0 fs: T  318.9 K, E -127.369461 Ha (peak excursion 1.64e-7/water), bonds 1.866, peak 5.25; 2908 core-s/ps
+  KICK cycle 4 at 12560 fs: axis 1 sign +1 v_d 50 m/s; dp_total 6.96e-14 au, dKE 7.350e-4 Ha = 0.0018 kT/water; rescale removed 3.359e-2 Ha
+  scout readout   1275 at   12750.0 fs: T  305.9 K, E -127.402310 Ha (peak excursion 1.64e-7/water), bonds 1.859, peak 5.25; 2899 core-s/ps
+  scout readout   1300 at   13000.0 fs: T  305.0 K, E -127.402330 Ha (peak excursion 1.64e-7/water), bonds 1.873, peak 5.15; 2891 core-s/ps
+  scout readout   1325 at   13250.0 fs: T  299.3 K, E -127.402308 Ha (peak excursion 1.64e-7/water), bonds 1.873, peak 5.25; 2882 core-s/ps
+  scout readout   1350 at   13500.0 fs: T  311.7 K, E -127.402343 Ha (peak excursion 1.64e-7/water), bonds 1.877, peak 5.15; 2874 core-s/ps
+  scout readout   1375 at   13750.0 fs: T  311.1 K, E -127.402343 Ha (peak excursion 1.64e-7/water), bonds 1.861, peak 5.25; 2867 core-s/ps
+  scout readout   1400 at   14000.0 fs: T  304.5 K, E -127.402323 Ha (peak excursion 1.64e-7/water), bonds 1.859, peak 5.35; 2859 core-s/ps
+  scout readout   1425 at   14250.0 fs: T  298.5 K, E -127.402347 Ha (peak excursion 1.64e-7/water), bonds 1.889, peak 5.25; 2852 core-s/ps
+  scout readout   1450 at   14500.0 fs: T  320.4 K, E -127.402345 Ha (peak excursion 1.64e-7/water), bonds 1.875, peak 5.25; 2845 core-s/ps
+  scout readout   1475 at   14750.0 fs: T  320.2 K, E -127.402354 Ha (peak excursion 1.64e-7/water), bonds 1.884, peak 5.15; 2838 core-s/ps
+  scout readout   1500 at   15000.0 fs: T  317.9 K, E -127.402363 Ha (peak excursion 1.64e-7/water), bonds 1.882, peak 5.25; 2832 core-s/ps
+  scout readout   1525 at   15250.0 fs: T  320.6 K, E -127.402362 Ha (peak excursion 1.64e-7/water), bonds 1.877, peak 5.25; 2826 core-s/ps
+  scout readout   1550 at   15500.0 fs: T  311.5 K, E -127.402346 Ha (peak excursion 1.64e-7/water), bonds 1.877, peak 5.25; 2819 core-s/ps
+  KICK cycle 5 at 15700 fs: axis 1 sign -1 v_d 50 m/s; dp_total 2.08e-13 au, dKE 3.120e-4 Ha = 0.0008 kT/water; rescale removed 7.058e-2 Ha
+  scout readout   1575 at   15750.0 fs: T  308.2 K, E -127.472618 Ha (peak excursion 1.64e-7/water), bonds 1.870, peak 5.25; 2813 core-s/ps
+  scout readout   1600 at   16000.0 fs: T  312.1 K, E -127.472613 Ha (peak excursion 1.64e-7/water), bonds 1.896, peak 5.25; 2808 core-s/ps
+  scout readout   1625 at   16250.0 fs: T  301.5 K, E -127.472604 Ha (peak excursion 1.64e-7/water), bonds 1.898, peak 5.25; 2802 core-s/ps
+  scout readout   1650 at   16500.0 fs: T  307.8 K, E -127.472607 Ha (peak excursion 1.64e-7/water), bonds 1.889, peak 5.25; 2797 core-s/ps
+  scout readout   1675 at   16750.0 fs: T  298.7 K, E -127.472603 Ha (peak excursion 1.64e-7/water), bonds 1.884, peak 5.25; 2792 core-s/ps
+  scout readout   1700 at   17000.0 fs: T  299.7 K, E -127.472596 Ha (peak excursion 1.64e-7/water), bonds 1.875, peak 5.15; 2787 core-s/ps
+  scout readout   1725 at   17250.0 fs: T  310.8 K, E -127.472614 Ha (peak excursion 1.64e-7/water), bonds 1.868, peak 5.15; 2782 core-s/ps
+  scout readout   1750 at   17500.0 fs: T  310.8 K, E -127.472611 Ha (peak excursion 1.64e-7/water), bonds 1.887, peak 5.25; 2777 core-s/ps
+  scout readout   1775 at   17750.0 fs: T  305.3 K, E -127.472613 Ha (peak excursion 1.64e-7/water), bonds 1.866, peak 5.15; 2773 core-s/ps
+  scout readout   1800 at   18000.0 fs: T  298.3 K, E -127.472590 Ha (peak excursion 1.64e-7/water), bonds 1.877, peak 5.15; 2768 core-s/ps
+  scout readout   1825 at   18250.0 fs: T  303.9 K, E -127.472578 Ha (peak excursion 1.64e-7/water), bonds 1.868, peak 5.25; 2764 core-s/ps
+  scout readout   1850 at   18500.0 fs: T  306.3 K, E -127.472616 Ha (peak excursion 1.64e-7/water), bonds 1.898, peak 5.25; 2760 core-s/ps
+  scout readout   1875 at   18750.0 fs: T  299.8 K, E -127.472600 Ha (peak excursion 1.64e-7/water), bonds 1.896, peak 5.25; 2756 core-s/ps
+  KICK cycle 6 at 18840 fs: axis 1 sign +1 v_d 50 m/s; dp_total 5.56e-14 au, dKE 6.015e-4 Ha = 0.0015 kT/water; rescale removed 1.032e-1 Ha
+  scout readout   1900 at   19000.0 fs: T  293.0 K, E -127.575267 Ha (peak excursion 1.64e-7/water), bonds 1.900, peak 5.25; 2752 core-s/ps
+  scout readout   1925 at   19250.0 fs: T  295.9 K, E -127.575273 Ha (peak excursion 1.64e-7/water), bonds 1.891, peak 5.15; 2748 core-s/ps
+  scout readout   1950 at   19500.0 fs: T  292.0 K, E -127.575271 Ha (peak excursion 1.64e-7/water), bonds 1.912, peak 5.25; 2744 core-s/ps
+  scout readout   1975 at   19750.0 fs: T  301.5 K, E -127.575289 Ha (peak excursion 1.64e-7/water), bonds 1.873, peak 5.25; 2740 core-s/ps
+  scout readout   2000 at   20000.0 fs: T  295.3 K, E -127.575283 Ha (peak excursion 1.64e-7/water), bonds 1.877, peak 5.25; 2737 core-s/ps
+  scout readout   2025 at   20250.0 fs: T  293.4 K, E -127.575249 Ha (peak excursion 1.64e-7/water), bonds 1.880, peak 5.25; 2733 core-s/ps
+  scout readout   2050 at   20500.0 fs: T  298.3 K, E -127.575255 Ha (peak excursion 1.64e-7/water), bonds 1.896, peak 5.25; 2730 core-s/ps
+  scout readout   2075 at   20750.0 fs: T  303.2 K, E -127.575258 Ha (peak excursion 1.64e-7/water), bonds 1.889, peak 5.25; 2726 core-s/ps
+  scout readout   2100 at   21000.0 fs: T  291.3 K, E -127.575255 Ha (peak excursion 1.64e-7/water), bonds 1.896, peak 5.25; 2723 core-s/ps
+  scout readout   2125 at   21250.0 fs: T  298.4 K, E -127.575259 Ha (peak excursion 1.64e-7/water), bonds 1.896, peak 5.25; 2720 core-s/ps
+
+thread 'main' (3158478) panicked at crates/holon-render/examples/replace0.rs:1497:40:
+walk row: Os { code: 28, kind: StorageFull, message: "No space left on device" }
+note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace

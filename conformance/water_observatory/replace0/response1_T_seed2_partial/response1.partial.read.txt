@@ -1,0 +1,25 @@
+# RUNG 2 — the fluid-element chart
+# stakes: RUNG2_PREREG.md @ aee5317
+# dp = 1.321126 au (frozen 1.3211)
+# de = 0.000950043 Ha (frozen 0.0009500435)
+# bars: admissible occ >= 100, cells >= 4, fluct <= 0.1; transport >= 0.05; informative >= 200; beta = 0.02; separation >= 0.05
+
+===== RESPONSE-1 arm T on rigid (1 trajectories): 12 cycles x 314 readouts; Amendment 1's read =====
+-- seed2.traj  seed 0x5245504c41434532 n=432 readouts=2132 dt=10.0 fs  k=2π/L=2.675e9 /m
+   6 cycles aligned; current mode noise per cycle 2.239e-3 au, aligned 7.401e-4 au; kick amplitude aligned 4.545e-3 au (SNR 6.1); tails relaxed: 1 of 6 (aligned tail mean 5.9 SE) — UNRELAXED cycles: the mode has not returned to zero by the cycle's end; the fit's window is what it is and the rebound is a finding
+   cycle  0: REFUSED — kick amplitude 5.514e-3 under 3 x noise 2.239e-3  | tail mean 16.6 SE
+   cycle  1: REFUSED — kick amplitude 4.456e-3 under 3 x noise 2.239e-3  | tail mean 1.9 SE
+   cycle  2: REFUSED — kick amplitude 4.793e-3 under 3 x noise 2.239e-3  | tail mean 5.7 SE
+   cycle  3: OVERDAMPED  λ = 1.423e12 /s (τ = 703 fs)  A = 7.914e-3  resid 7.39e-4  pts 28  | tail mean 5.1 SE
+   cycle  4: REFUSED — kick amplitude 2.152e-3 under 3 x noise 2.239e-3  | tail mean 6.7 SE
+   cycle  5: REFUSED — kick amplitude 2.365e-3 under 3 x noise 2.239e-3  | tail mean 8.5 SE
+   ALIGNED current mode j_k^s: OVERDAMPED  λ = 2.834e12 /s (τ = 353 fs)  A = 5.382e-3  resid 3.62e-4  pts 28
+   R4:  blind/spatial aligned kick amplitude 0.044 (stake < 0.1): no mode on the scrambled partition
+   R4′: undriven quadrature j_k^c aligned amplitude 4.488e-4 au vs 3σ 1.745e-3: at noise, as it must be
+   R3:  Γ_s = 2.834e12 ± 1.19e12 /s (leave-one-out over 6 of 6 cycles) -> η = ρ Γ_s / k² = 3.950e-4 Pa s  [3.12e-4, 4.78e-4]  stake [2.0e-4, 3.0e-3]: IN BAND
+   R1′ grid 8x1x1 (τ 196 fs, window 20, 6 cycles aligned, lead 2 windows): D_cont spatial 0.958  blind 1.032  separation +0.074 | s 0.00, floor √((D_disc² s² + 1)/(s² + 1)) = 1.000 (D_disc 0.100) | relaxed last window 0.968
+        R1′ verdict: driven 0.958 vs relaxed 0.968, |Δ| = 0.010 (stake < 0.1): continuity sees nothing under shear, as it must
+   R1′ grid 4x1x1 (τ 392 fs, window 39, 6 cycles aligned, lead 2 windows): D_cont spatial 0.907  blind 1.097  separation +0.189 | s 0.00, floor √((D_disc² s² + 1)/(s² + 1)) = 1.000 (D_disc 0.363) | relaxed last window 0.838  [beside the graded grid]
+
+===== COST (PREREG G11, work units, never wall clock) =====
+frames read:       2132

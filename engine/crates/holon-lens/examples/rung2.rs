@@ -694,14 +694,22 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
                     if used == 0 || relax < (lead + 1) * w + 1 { println!("   {label} grid {nx}x1x1: no complete cycle or too few windows (relax {relax}, window {w})"); continue; }
                     let c_sp = continuity_integral(&al_sp[..=lead * w], grid, boxe, m_bar, h.dt, w);
                     let c_bl = continuity_integral(&al_bl[..=lead * w], grid, boxe, m_bar, h.dt, w);
-                    let (s, _) = driven_floor_from_blind(&c_sp, &c_bl);
+                    let (s_b, _) = driven_floor_from_blind(&c_sp, &c_bl);
+                    // the blind partition is re-scrambled per frame, so its observed occupancy
+                    // changes are LARGER than the physical crossings and s_b is an underestimate
+                    // (the first partial arms read s_b = 0 with D = 0.74 and a separation of
+                    // +0.26); the tail-based estimate is printed beside it and the LARGER of the
+                    // two s (the smaller floor) is the one graded against, since both are lower
+                    // bounds on the signal
+                    let (s_t, _) = driven_floor(&al_sp, w, lead);
+                    let s = if s_t.is_finite() { s_b.max(s_t) } else { s_b };
                     let floor = ((d_disc * d_disc * s * s + 1.0) / (s * s + 1.0)).sqrt();
                     let (d_sp, d_bl) = (c_sp.defect().unwrap_or(f64::NAN), c_bl.defect().unwrap_or(f64::NAN));
                     // the in-run null: the last window of the aligned cycle, relaxed
                     let tail_start = relax - w - 1;
                     let d_tail = continuity_integral(&al_sp[tail_start..], grid, boxe, m_bar, h.dt, w).defect().unwrap_or(f64::NAN);
                     let graded = nx == 8;
-                    println!("   {label} grid {nx}x1x1 (τ {tau:.0} fs, window {w}, {used} cycles aligned, lead {lead} windows): D_cont spatial {d_sp:.3}  blind {d_bl:.3}  separation {:+.3} | s {s:.2}, floor √((D_disc² s² + 1)/(s² + 1)) = {floor:.3} (D_disc {d_disc:.3}) | relaxed last window {d_tail:.3}{}",
+                    println!("   {label} grid {nx}x1x1 (τ {tau:.0} fs, window {w}, {used} cycles aligned, lead {lead} windows): D_cont spatial {d_sp:.3}  blind {d_bl:.3}  separation {:+.3} | s {s:.2} (blind {s_b:.2}, tail {s_t:.2}), floor √((D_disc² s² + 1)/(s² + 1)) = {floor:.3} (D_disc {d_disc:.3}) | relaxed last window {d_tail:.3}{}",
                         d_bl - d_sp, if graded { "" } else { "  [beside the graded grid]" });
                     if graded {
                         if axis == 0 {

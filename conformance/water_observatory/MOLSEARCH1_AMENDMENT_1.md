@@ -28,3 +28,12 @@ rigid operator cannot omit. S2′: the cross-block Frobenius norm of the whitene
 restricted to its own sector's rank where the two sectors are separate: reported both ways).
 PM-1 is re-read on the theorem: stretches at `σ ≈ 1`, rotors at `e^{−50/200} = 0.78`, every
 singular function in one subspace, cross-block norm at noise.
+
+## A2 — the carrier is 128 waters, not 16 (found on launching)
+
+The prereg's 16-water box (`n_cells = 2`, half-edge `7.4` bohr) is REFUSED by the periodic
+gate: the law's reach is `14` bohr, and a box whose half-edge is under it sees its own
+images. The smallest admitted box is `n_cells = 4`, 128 waters, 384 atoms — the walk is
+1,000 settle frames then 40,000 NVE frames (`1.05` ps) at a row every `1.0` fs, 128
+molecules × 1,000 rows as the ensemble, held out in four folds of 32 molecules. The
+prereg's 16 × 2,000 was a price set without the gate; the gate was right.

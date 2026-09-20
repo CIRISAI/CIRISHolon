@@ -799,6 +799,25 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## The closed view as a search (2026-09-20): scored against its variational bound on walks already on disk
+
+`VIEW_SEARCH_PREREG.md` (alone), `view_search.py` (VAMP-2, Wu & Noé 2020 — adopted, not
+invented; plants PV-1..4), `VIEW_SEARCH_AMENDMENT_1.md` (six corrections on building, the
+wrong text kept), `VIEW_SEARCH_RESULTS.md`. Under a minute of compute. **The six slowest
+closed directions of a 128- or 432-water box are the first-harmonic density modes with a
+transverse-current admixture (`R² ≥ 0.99`), found by the search with no chart named** — the
+RUNG-2/RESPONSE-1 charts were its answer; the cell chart is `70–78 %` of the bound with
+momenta, `27–45 %` without. From the same walks, the model's equilibrium shear rent:
+`η = 1.4–1.9 × 10⁻⁴` Pa s at 128 waters (rigid and flexible agree — the omission costs
+nothing on the rent) and `4.4–5.8 × 10⁻⁴` at 432, `k`-dependent as the shear-wave onset
+predicts; the density mode OSCILLATES (period `~1.6` ps at 432, `c_s ≈ 1470` m/s, in R2's
+band), so R2's branch is the oscillatory one. S4 as written FIRED — a scrambled partition
+carries single-particle velocity memory, real and non-spatial (`0.3–0.4` of the bound; the
+time-shuffled placebo `0.04`) — branch (e) as written, (a) as amended with S4 a separation
+(`+0.36–0.42`). Each seed's density modes sit `1–2` counts off zero for their whole 6 ps:
+the box is a glass on that time. The twelfth instance: a placebo staked on a premise
+(“no spatial structure ⇒ no closed structure”) that the fast side could have refuted.
+
 ## RESPONSE-1 running on eight arms, and GF1 corrected before its first vacuum (2026-09-19, afternoon)
 
 **RESPONSE-1.** Instrument built and its five plants fired: PR-1/2/3/5 in `holon-lens`

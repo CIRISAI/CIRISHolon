@@ -289,6 +289,12 @@ LIQUID-1, priced out of LIQUID-2, unresolved by REPLACE-0 — ~2,500
 core-hours on both arms); **the node-G closure certificate** for the
 H-bond tier, which no reading provides.
 
+Added 2026-09-20, from VIEW-SEARCH-1: **the driven `η(k)` and `c_s` against
+the equilibrium reads** (`1.4–1.9 × 10⁻⁴` Pa s at `0.40 Å⁻¹`, `4.4–5.8 × 10⁻⁴` at
+`0.27`; the density mode oscillating at `~1.6` ps), which the RESPONSE-1 arms
+give on Monday; **nonlinear views** — the search's bound is linear in its
+dictionary, and a chart closed only under a nonlinear law is under-scored.
+
 Added 2026-09-19, from GF1: **the weak-coupling vacuum's magic** (`x = 16`
 past `N = 12`), which needs a compressed Pauli MPS or perfect Pauli sampling,
 named and not built. (Fold III's area-law sentence was reworded the same

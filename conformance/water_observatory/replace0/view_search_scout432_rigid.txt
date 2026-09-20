@@ -1,0 +1,111 @@
+# VIEW-SEARCH-1 on scout432_seed* / rigid: 3 seeds, 432 oxygens, L = 44.390 bohr, 251 frames at 20.0 fs; dictionary dim 55
+# removed by per-seed centring - the density modes' static offsets (counts) per seed, against the mode's within-seed sd:
+#   seed 0: offsets [ 1.78  0.2   2.48 -1.54  1.25 -0.02]  sd [2.43 2.52 2.28 2.38 2.6  3.04]
+#   seed 1: offsets [-2.22  1.93 -0.5  -1.44 -2.19 -2.53]  sd [1.5  1.98 2.28 2.04 2.69 2.54]
+#   seed 2: offsets [ 1.82 -2.04  0.32  2.71 -1.38  0.22]  sd [2.68 1.91 2.49 2.63 2.23 2.34]
+# direct mode autocorrelations per seed (mean over the three axes' modes):
+#   seed 0: transverse acf [0.9  0.91 0.87 0.84 0.82 0.74] at [20.0, 40.0, 60.0, 80.0, 100.0, 140.0] fs -> Γ_s 3.55 /ps, η = ρΓ_s/k² = 4.95e-04 Pa s | density acf [ 0.99  0.97  0.93  0.88  0.82  0.67  0.43  0.08 -0.1  -0.06] -> first zero at 400 fs, period ≈ 1600 fs, c_s ≈ ω/k = 1468 m/s
+#   seed 1: transverse acf [0.9  0.91 0.87 0.85 0.82 0.75] at [20.0, 40.0, 60.0, 80.0, 100.0, 140.0] fs -> Γ_s 3.15 /ps, η = ρΓ_s/k² = 4.38e-04 Pa s | density acf [0.99 0.96 0.92 0.87 0.81 0.66 0.44 0.16 0.05 0.05] -> first zero at nan fs, period ≈ nan fs, c_s ≈ ω/k = nan m/s
+#   seed 2: transverse acf [0.9  0.91 0.87 0.84 0.81 0.72] at [20.0, 40.0, 60.0, 80.0, 100.0, 140.0] fs -> Γ_s 4.16 /ps, η = ρΓ_s/k² = 5.79e-04 Pa s | density acf [ 0.99  0.97  0.92  0.87  0.81  0.66  0.42  0.09 -0.05 -0.04] -> first zero at 400 fs, period ≈ 1600 fs, c_s ≈ ω/k = 1468 m/s
+
+== lag 20 fs (1 frames) ==
+   dictionary top σ (in-sample, all seeds): [0.999 0.999 0.999 0.998 0.997 0.989 0.968 0.955]
+   implied timescales, fs:                [23302. 18126. 14634. 10626.  7766.  1756.   617.   432.]
+   σ_1 = 0.999  t =  23302 fs | R² on Fourier 1.00 (transverse 0.31, density 1.00, longitudinal 0.02)
+   σ_2 = 0.999  t =  18126 fs | R² on Fourier 1.00 (transverse 0.27, density 1.00, longitudinal 0.06)
+   σ_3 = 0.999  t =  14634 fs | R² on Fourier 1.00 (transverse 0.21, density 0.99, longitudinal 0.07)
+   σ_4 = 0.998  t =  10626 fs | R² on Fourier 1.00 (transverse 0.12, density 0.99, longitudinal 0.08)
+   σ_5 = 0.997  t =   7766 fs | R² on Fourier 1.00 (transverse 0.23, density 0.99, longitudinal 0.03)
+   σ_6 = 0.989  t =   1756 fs | R² on Fourier 0.99 (transverse 0.25, density 0.93, longitudinal 0.10)
+   S1: mean R² of top-6 on Fourier = 1.00 (stake ≥ 0.7; kill < 0.5)
+   S2: leading mode transverse weight 0.31; η from t₁ = 5.98e-06 Pa s; transverse subspace's own t₁ per seed -> η = 1.65e-04, 1.90e-04, 1.35e-04 Pa s (band [2e-4, 3e-3])
+   view                                 k  held-out   bound_k  fraction  in-sample      D
+   cells 2x2x2 occ+mom                 31    16.498    17.713     0.931     17.707  0.684
+   cells 2x2x2 occ only                 7     4.605     6.736     0.684      4.700  0.585
+   fourier all                         24    15.069    15.015     1.004     17.435  0.610
+   fourier density                      6     5.891     5.982     0.985      5.846  0.135
+   fourier transverse current          12     6.993     9.469     0.739      8.166  0.646
+   fourier longitudinal current         6     4.299     5.982     0.719      4.398  0.532
+   blind cells 2x2x2 (placebo)         31    10.744    17.713     0.607     10.346  0.808
+
+== lag 40 fs (2 frames) ==
+   dictionary top σ (in-sample, all seeds): [0.998 0.998 0.997 0.996 0.995 0.982 0.97  0.951]
+   implied timescales, fs:                [20354. 16965. 12475.  9854.  7527.  2262.  1316.   792.]
+   σ_1 = 0.998  t =  20354 fs | R² on Fourier 1.00 (transverse 0.26, density 0.99, longitudinal 0.03)
+   σ_2 = 0.998  t =  16965 fs | R² on Fourier 1.00 (transverse 0.30, density 0.98, longitudinal 0.08)
+   σ_3 = 0.997  t =  12475 fs | R² on Fourier 1.00 (transverse 0.19, density 0.98, longitudinal 0.08)
+   σ_4 = 0.996  t =   9854 fs | R² on Fourier 1.00 (transverse 0.18, density 0.97, longitudinal 0.11)
+   σ_5 = 0.995  t =   7527 fs | R² on Fourier 1.00 (transverse 0.25, density 0.96, longitudinal 0.04)
+   σ_6 = 0.982  t =   2262 fs | R² on Fourier 0.99 (transverse 0.36, density 0.81, longitudinal 0.12)
+   S1: mean R² of top-6 on Fourier = 1.00 (stake ≥ 0.7; kill < 0.5)
+   S2: leading mode transverse weight 0.26; η from t₁ = 6.85e-06 Pa s; transverse subspace's own t₁ per seed -> η = 7.16e-05, 1.05e-04, 7.20e-05 Pa s (band [2e-4, 3e-3])
+   view                                 k  held-out   bound_k  fraction  in-sample      D
+   cells 2x2x2 occ+mom                 31    11.874    16.391     0.724     11.947  0.785
+   cells 2x2x2 occ only                 7     3.151     6.723     0.469      3.232  0.742
+   fourier all                         24    15.435    14.164     1.090     17.637  0.597
+   fourier density                      6     5.599     5.926     0.945      5.526  0.259
+   fourier transverse current          12     7.438     9.479     0.785      8.483  0.617
+   fourier longitudinal current         6     3.924     5.926     0.662      3.963  0.588
+   blind cells 2x2x2 (placebo)         31     4.201    16.391     0.256      2.733  0.930
+
+== lag 100 fs (5 frames) ==
+   dictionary top σ (in-sample, all seeds): [0.99  0.989 0.985 0.983 0.977 0.961 0.944 0.92 ]
+   implied timescales, fs:                [9665. 8679. 6459. 5682. 4278. 2513. 1748. 1195.]
+   σ_1 = 0.990  t =   9665 fs | R² on Fourier 1.00 (transverse 0.30, density 0.90, longitudinal 0.11)
+   σ_2 = 0.989  t =   8679 fs | R² on Fourier 1.00 (transverse 0.26, density 0.90, longitudinal 0.15)
+   σ_3 = 0.985  t =   6459 fs | R² on Fourier 1.00 (transverse 0.22, density 0.85, longitudinal 0.16)
+   σ_4 = 0.983  t =   5682 fs | R² on Fourier 1.00 (transverse 0.21, density 0.89, longitudinal 0.17)
+   σ_5 = 0.977  t =   4278 fs | R² on Fourier 1.00 (transverse 0.39, density 0.80, longitudinal 0.20)
+   σ_6 = 0.961  t =   2513 fs | R² on Fourier 0.99 (transverse 0.40, density 0.62, longitudinal 0.20)
+   S1: mean R² of top-6 on Fourier = 0.99 (stake ≥ 0.7; kill < 0.5)
+   S2: leading mode transverse weight 0.30; η from t₁ = 1.44e-05 Pa s; transverse subspace's own t₁ per seed -> η = 4.59e-05, 6.69e-05, 6.46e-05 Pa s (band [2e-4, 3e-3])
+   view                                 k  held-out   bound_k  fraction  in-sample      D
+   cells 2x2x2 occ+mom                 31    10.254    14.734     0.696      7.955  0.818
+   cells 2x2x2 occ only                 7     1.622     5.932     0.273      1.484  0.877
+   fourier all                         24    13.540    12.182     1.111     14.257  0.660
+   fourier density                      6     4.102     5.338     0.769      3.900  0.562
+   fourier transverse current          12     6.265     7.608     0.823      6.852  0.691
+   fourier longitudinal current         6     1.473     5.338     0.276      1.238  0.869
+   blind cells 2x2x2 (placebo)         31     4.126    14.734     0.280      2.160  0.931
+   S3: Fourier-all fraction 1.11 (stake ≥ 0.8); cells fraction at its k 0.70 — cells BELOW Fourier
+   S4: placebo fraction 0.280 (stake < 0.1): FIRES — see the note on single-particle velocity memory
+
+== lag 200 fs (10 frames) ==
+   dictionary top σ (in-sample, all seeds): [0.95  0.938 0.934 0.922 0.909 0.897 0.88  0.865]
+   implied timescales, fs:                [3921. 3150. 2912. 2472. 2085. 1834. 1562. 1380.]
+   σ_1 = 0.950  t =   3921 fs | R² on Fourier 0.98 (transverse 0.66, density 0.54, longitudinal 0.15)
+   σ_2 = 0.938  t =   3150 fs | R² on Fourier 0.97 (transverse 0.30, density 0.67, longitudinal 0.33)
+   σ_3 = 0.934  t =   2912 fs | R² on Fourier 0.95 (transverse 0.62, density 0.35, longitudinal 0.30)
+   σ_4 = 0.922  t =   2472 fs | R² on Fourier 0.95 (transverse 0.22, density 0.58, longitudinal 0.39)
+   σ_5 = 0.909  t =   2085 fs | R² on Fourier 0.96 (transverse 0.59, density 0.26, longitudinal 0.29)
+   σ_6 = 0.897  t =   1834 fs | R² on Fourier 0.93 (transverse 0.34, density 0.45, longitudinal 0.36)
+   S1: mean R² of top-6 on Fourier = 0.96 (stake ≥ 0.7; kill < 0.5)
+   S2: leading mode transverse weight 0.66; η from t₁ = 3.55e-05 Pa s; transverse subspace's own t₁ per seed -> η = 3.52e-05, 5.01e-05, 4.87e-05 Pa s (band [2e-4, 3e-3])
+   view                                 k  held-out   bound_k  fraction  in-sample      D
+   cells 2x2x2 occ+mom                 31    10.061    13.644     0.737      6.944  0.822
+   cells 2x2x2 occ only                 7     1.038     2.737     0.379      0.601  0.923
+   fourier all                         24    12.708    10.479     1.213     11.493  0.686
+   fourier density                      6     2.281     2.386     0.956      1.558  0.787
+   fourier transverse current          12     5.266     5.402     0.975      4.606  0.749
+   fourier longitudinal current         6     1.024     2.386     0.429      0.548  0.911
+   blind cells 2x2x2 (placebo)         31     3.887    13.644     0.285      2.087  0.935
+
+== lag 400 fs (20 frames) ==
+   dictionary top σ (in-sample, all seeds): [0.914 0.904 0.896 0.886 0.859 0.852 0.834 0.807]
+   implied timescales, fs:                [4438. 3946. 3626. 3315. 2637. 2504. 2201. 1868.]
+   σ_1 = 0.914  t =   4438 fs | R² on Fourier 0.93 (transverse 0.64, density 0.18, longitudinal 0.07)
+   σ_2 = 0.904  t =   3946 fs | R² on Fourier 0.96 (transverse 0.83, density 0.25, longitudinal 0.10)
+   σ_3 = 0.896  t =   3626 fs | R² on Fourier 0.91 (transverse 0.39, density 0.54, longitudinal 0.08)
+   σ_4 = 0.886  t =   3315 fs | R² on Fourier 0.88 (transverse 0.62, density 0.41, longitudinal 0.08)
+   σ_5 = 0.859  t =   2637 fs | R² on Fourier 0.83 (transverse 0.52, density 0.16, longitudinal 0.11)
+   σ_6 = 0.852  t =   2504 fs | R² on Fourier 0.83 (transverse 0.42, density 0.24, longitudinal 0.13)
+   S1: mean R² of top-6 on Fourier = 0.89 (stake ≥ 0.7; kill < 0.5)
+   S2: leading mode transverse weight 0.64; η from t₁ = 3.14e-05 Pa s; transverse subspace's own t₁ per seed -> η = 2.76e-05, 1.96e-05, 2.55e-05 Pa s (band [2e-4, 3e-3])
+   view                                 k  held-out   bound_k  fraction  in-sample      D
+   cells 2x2x2 occ+mom                 31    10.389    13.563     0.766      6.981  0.815
+   cells 2x2x2 occ only                 7     1.129     2.022     0.558      0.695  0.916
+   fourier all                         24    12.262    10.166     1.206      9.921  0.699
+   fourier density                      6     2.091     1.378     1.517      1.063  0.807
+   fourier transverse current          12     5.123     4.664     1.098      3.758  0.757
+   fourier longitudinal current         6     1.295     1.378     0.939      0.978  0.886
+   blind cells 2x2x2 (placebo)         31     3.885    13.563     0.286      1.859  0.935

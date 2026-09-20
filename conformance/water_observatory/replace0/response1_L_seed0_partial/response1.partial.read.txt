@@ -15,7 +15,7 @@
    cycle  5: REFUSED — kick amplitude 6.125e-3 under 3 x noise 2.052e-3  | tail mean 1.1 SE
    cycle  6: REFUSED — kick amplitude 4.687e-3 under 3 x noise 2.052e-3  | tail mean 2.5 SE
    ALIGNED current mode j_k^s: OVERDAMPED  λ = 7.032e12 /s (τ = 142 fs)  A = 5.450e-3  resid 4.89e-4  pts 12
-   R4:  blind/spatial aligned kick amplitude 0.070 (stake < 0.1): no mode on the scrambled partition
+   R4:  blind/spatial aligned kick amplitude 0.070; blind 3.548e-4 au vs max(0.1 × spatial, 3σ_blind) = 3.146e-3: no mode on the scrambled partition
    R4′: undriven quadrature j_k^c aligned amplitude 9.981e-4 au vs 3σ 3.923e-3: at noise, as it must be
    longitudinal current j_k^s: rate 7.032e12 ± 2.51e12 /s (leave-one-out over 7 of 7 cycles) = ν_l k² if overdamped -> ν_l = 9.829e-7 m²/s (no band; the fast mode of A3)
    R1  grid 8x1x1 (τ 196 fs, window 20, 7 cycles aligned, lead 2 windows): D_cont spatial 0.740  blind 1.003  separation +0.263 | s 0.58 (blind 0.00, tail 0.58), floor √((D_disc² s² + 1)/(s² + 1)) = 0.867 (D_disc 0.100) | relaxed last window 0.922
@@ -24,7 +24,8 @@
    density mode ρ_k^c: noise per cycle 1.164e0, aligned 4.692e-1 counts; peak -2.149e0 at readout 13 (130 fs), SNR 4.6
    R2:  from the peak: OVERDAMPED  λ = 4.231e12 /s (τ = 236 fs)  A = -2.366e0  resid 1.54e-1  pts 14
         λ₁ = 4.231e12 /s = c_s²/ν_l if overdamped (no band; A3 said 50 m/s likely refuses)
-   R4 (density): blind/spatial at the peak 1.070 (stake < 0.1): FIRES
+   R4 (density): blind/spatial at the peak 1.070; blind 2.300e0 vs max(0.1 × spatial, 3 sd_blind) = 1.685e0 (blind whole-cycle sd 5.617e-1): FIRES
+   R2 (both forms): damped cosine Γ = 1.435e12 /s, ω = 4.537e11 /s (period 13848 fs, c_s = ω/k = 170 m/s), resid 6.666e-1 | exponential from the peak resid 1.542e-1 -> OVERDAMPED (exponential from the peak better by > 10 %)
    R4′ (density): undriven ρ_k^s at the peak 2.333e-1 vs 3σ 2.551e0: at noise
 
 ===== COST (PREREG G11, work units, never wall clock) =====

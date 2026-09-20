@@ -658,7 +658,13 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
             let a_sp = cur.mean[0].abs();
             let r4 = cur_bl.mean[0].abs() / a_sp.max(1e-300);
             let r4p = cur_null.mean[0].abs();
-            println!("   R4:  blind/spatial aligned kick amplitude {r4:.3} (stake < 0.1): {}", if r4 < 0.1 { "no mode on the scrambled partition" } else { "FIRES — the scrambled partition carries the mode" });
+            // Amendment 3 A1: a noise allowance. The placebo has no dynamics, so its noise is
+            // its fluctuation over the WHOLE aligned cycle, not its last quarter (a tail can
+            // sit low by chance: on the L0 partial the density blind's tail read 0.24 against
+            // a whole-cycle sd of 1.9, and a 2.3-count value at the peak "fired" against it)
+            let sd_all = |v: &[f64]| { let m = v.iter().sum::<f64>() / v.len() as f64; (v.iter().map(|x| (x - m).powi(2)).sum::<f64>() / v.len() as f64).sqrt() };
+            let r4_bar = (0.1 * a_sp).max(3.0 * sd_all(&cur_bl.mean));
+            println!("   R4:  blind/spatial aligned kick amplitude {r4:.3}; blind {:.3e} au vs max(0.1 × spatial, 3σ_blind) = {r4_bar:.3e}: {}", cur_bl.mean[0].abs(), if cur_bl.mean[0].abs() < r4_bar { "no mode on the scrambled partition" } else { "FIRES — the scrambled partition carries the mode" });
             println!("   R4′: undriven quadrature j_k^c aligned amplitude {r4p:.3e} au vs 3σ {:.3e}: {}", 3.0 * cur_null.noise, if r4p < 3.0 * cur_null.noise { "at noise, as it must be" } else { "FIRES — the undriven quadrature carries a kick" });
             if let Some(g) = rate(&fit) {
                 seed_rates.push(g);
@@ -720,7 +726,15 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
                                 else { "KILL as staked: D over 0.2 and over its floor by more than 0.05" };
                             println!("        R1 verdict on this seed: {verdict}; null (relaxed ≥ 0.8): {}", if d_tail >= 0.8 { "holds" } else { "FAILS — the tail is not relaxed or the leg reads the tail" });
                         } else {
-                            println!("        R1′ verdict: driven {d_sp:.3} vs relaxed {d_tail:.3}, |Δ| = {:.3} (stake < 0.1): {}", (d_sp - d_tail).abs(), if (d_sp - d_tail).abs() < 0.1 { "continuity sees nothing under shear, as it must" } else { "FIRES — the leg is reading momentum, not flux" });
+                            // Amendment 3 A1: the allowance is max(0.1, 2 SE) with the SE from leave-one-cycle-out
+                            let mut loo = Vec::new();
+                            for skip in 0..used {
+                                let (al, _) = align_fields_skip(&fs_sp, cycles, relax, 1, skip);
+                                if let Some(d) = continuity_integral(&al[..=lead * w], grid, boxe, m_bar, h.dt, w).defect() { loo.push(d); }
+                            }
+                            let se = if loo.len() >= 2 { let m = loo.iter().sum::<f64>() / loo.len() as f64; ((loo.iter().map(|d| (d - m).powi(2)).sum::<f64>() / (loo.len() - 1) as f64).sqrt() * ((loo.len() - 1) as f64).sqrt()) } else { f64::NAN };
+                            let bar = if se.is_finite() { (2.0 * se).max(0.1) } else { 0.1 };
+                            println!("        R1′ verdict: driven {d_sp:.3} vs relaxed {d_tail:.3}, |Δ| = {:.3} vs max(0.1, 2 SE = {:.3}): {}", (d_sp - d_tail).abs(), 2.0 * se, if (d_sp - d_tail).abs() < bar { "continuity sees nothing under shear, as it must" } else { "FIRES — the leg is reading momentum, not flux" });
                         }
                     }
                 }
@@ -736,7 +750,13 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
                 println!("   R2:  from the peak: {}{}", fmt(&rd.slow, k), match rd.fast { Some(l2) => format!("; two-exponential λ₂ = {l2:.3e} /s -> ν_l = λ₂/k² = {:.3e} m²/s (no band)", l2 / (k * k)), None => String::new() });
                 if let Relaxation::Overdamped { lambda, .. } = rd.slow { println!("        λ₁ = {lambda:.3e} /s = c_s²/ν_l if overdamped (no band; A3 said 50 m/s likely refuses)"); }
                 let r4d = rho_bl.mean[rd.peak].abs() / peak_v.abs().max(1e-300);
-                println!("   R4 (density): blind/spatial at the peak {r4d:.3} (stake < 0.1): {}", if r4d < 0.1 { "no mode on the scrambled partition" } else if peak_v.abs() < 3.0 * rho.noise { "not read — the spatial peak is itself under 3σ" } else { "FIRES" });
+                let r4d_bar = (0.1 * peak_v.abs()).max(3.0 * sd_all(&rho_bl.mean));
+                println!("   R4 (density): blind/spatial at the peak {r4d:.3}; blind {:.3e} vs max(0.1 × spatial, 3 sd_blind) = {r4d_bar:.3e} (blind whole-cycle sd {:.3e}): {}", rho_bl.mean[rd.peak].abs(), sd_all(&rho_bl.mean), if rho_bl.mean[rd.peak].abs() < r4d_bar { "no mode on the scrambled partition" } else if peak_v.abs() < 3.0 * rho.noise { "not read — the spatial peak is itself under 3σ" } else { "FIRES" });
+                // Amendment 3 A2: both forms, the residual chooses
+                let (g_c, w_c, res_c) = fit_damped_cosine(&rho.mean, dt_s, rd.peak);
+                let res_o = match rd.slow { Relaxation::Overdamped { residual, .. } => residual, _ => f64::NAN };
+                let choice = if res_o.is_nan() { "overdamped form not fitted" } else if res_c < 0.9 * res_o { "OSCILLATORY (damped cosine better by > 10 %)" } else if res_o < 0.9 * res_c { "OVERDAMPED (exponential from the peak better by > 10 %)" } else { "UNDECIDED (residuals within 10 %); both banked" };
+                println!("   R2 (both forms): damped cosine Γ = {g_c:.3e} /s, ω = {w_c:.3e} /s (period {:.0} fs, c_s = ω/k = {:.0} m/s), resid {res_c:.3e} | exponential from the peak resid {res_o:.3e} -> {choice}", 2.0 * std::f64::consts::PI / w_c * 1e15, w_c / k);
                 println!("   R4′ (density): undriven ρ_k^s at the peak {:.3e} vs 3σ {:.3e}: {}", rho_null.mean[rd.peak].abs(), 3.0 * rho_null.noise, if rho_null.mean[rd.peak].abs() < 3.0 * rho_null.noise { "at noise" } else { "FIRES" });
             }
         }

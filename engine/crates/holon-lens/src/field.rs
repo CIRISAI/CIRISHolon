@@ -805,6 +805,82 @@ pub fn align_fields(fields: &[CellFields], cycles: usize, relax: usize, first: u
     (out, used)
 }
 
+/// [`align_fields`] with one cycle left out (RESPONSE1_AMENDMENT_3 A1: the leave-one-out
+/// spread of a driven `D` is R1′'s noise allowance).
+pub fn align_fields_skip(fields: &[CellFields], cycles: usize, relax: usize, first: usize, skip: usize) -> (Vec<CellFields>, usize) {
+    // rebuild the field list without the skipped cycle's block, keeping the sign pattern:
+    // cycle c's sign is (−1)^c, so the cycles after the skipped one must keep their own sign;
+    // done by negating them once when the skipped cycle's index parity would flip theirs
+    let mut kept: Vec<CellFields> = fields[..first].to_vec();
+    for c in 0..cycles {
+        let start = first + c * relax;
+        if start + relax > fields.len() { break; }
+        if c == skip { continue; }
+        let flip = c > skip;   // after removal this cycle sits one slot earlier: its sign flips
+        for f in &fields[start..start + relax] {
+            if flip { kept.push(CellFields { occ: f.occ.clone(), p: f.p.iter().map(|v| [-v[0], -v[1], -v[2]]).collect(), ek: f.ek.clone() }); }
+            else { kept.push(f.clone()); }
+        }
+    }
+    // a flipped momentum with an unflipped occupancy departure breaks the pairing; instead
+    // flip nothing and align with the skipped cycle's slot removed by index arithmetic
+    let _ = kept;
+    let mut per: Vec<&[CellFields]> = Vec::new();
+    for c in 0..cycles {
+        let start = first + c * relax;
+        if start + relax > fields.len() { break; }
+        if c != skip { per.push(&fields[start..start + relax]); }
+    }
+    let nc = fields.first().map(|f| f.occ.len()).unwrap_or(0);
+    let np = fields.first().map(|f| f.p.len()).unwrap_or(0);
+    let mut mean_occ = vec![0.0f64; nc];
+    for f in fields { for (m, o) in mean_occ.iter_mut().zip(&f.occ) { *m += o; } }
+    for m in mean_occ.iter_mut() { *m /= fields.len().max(1) as f64; }
+    let mut out: Vec<CellFields> = (0..relax).map(|_| CellFields { occ: vec![0.0; nc], p: vec![[0.0; 3]; np], ek: vec![0.0; np] }).collect();
+    let mut used = 0usize;
+    for (j, block) in per.iter().enumerate() {
+        let c = if j < skip { j } else { j + 1 };
+        let sign = if c % 2 == 0 { 1.0 } else { -1.0 };
+        for i in 0..relax {
+            let f = &block[i];
+            for (a, (o, m)) in out[i].occ.iter_mut().zip(f.occ.iter().zip(&mean_occ)) { *a += sign * (o - m); }
+            for (a, b) in out[i].p.iter_mut().zip(&f.p) { for k in 0..3 { a[k] += sign * b[k]; } }
+        }
+        used += 1;
+    }
+    let inv = 1.0 / used.max(1) as f64;
+    for o in out.iter_mut() {
+        for (a, m) in o.occ.iter_mut().zip(&mean_occ) { *a = *a * inv + m; }
+        for a in o.p.iter_mut() { for k in 0..3 { a[k] *= inv; } }
+    }
+    (out, used)
+}
+
+/// A damped cosine `A e^{−Γt} cos(ωt) + B e^{−Γt} sin(ωt)` fitted to `y` by a grid over
+/// `(Γ, ω)` with the linear pair solved exactly at each point (RESPONSE1_AMENDMENT_3 A2).
+/// Returns `(gamma, omega, residual RMS over y[from..])`; the residual is evaluated from
+/// `from` so it compares with the overdamped fit taken from the peak.
+pub fn fit_damped_cosine(y: &[f64], dt: f64, from: usize) -> (f64, f64, f64) {
+    let n = y.len();
+    let t: Vec<f64> = (0..n).map(|i| i as f64 * dt).collect();
+    let (mut best, mut bg, mut bw) = (f64::INFINITY, 0.0, 0.0);
+    let w_max = std::f64::consts::PI / dt / 2.0;
+    let w_min = 2.0 * std::f64::consts::PI / (8.0 * n as f64 * dt);
+    for iw in 0..120 {
+        let w = w_min * (w_max / w_min).powf(iw as f64 / 119.0);
+        for ig in 0..60 {
+            let g = w * 10f64.powf(-2.0 + 2.5 * ig as f64 / 59.0);   // Γ/ω from 0.01 to 3
+            let (mut aa, mut ab, mut bb, mut ay, mut by) = (0.0, 0.0, 0.0, 0.0, 0.0);
+            for i in 0..n { let e = (-g * t[i]).exp(); let (c, s_) = ((w * t[i]).cos() * e, (w * t[i]).sin() * e); aa += c * c; ab += c * s_; bb += s_ * s_; ay += c * y[i]; by += s_ * y[i]; }
+            let det = aa * bb - ab * ab; if det.abs() < 1e-300 { continue; }
+            let a = (ay * bb - by * ab) / det; let b = (aa * by - ab * ay) / det;
+            let r = (from..n).map(|i| { let e = (-g * t[i]).exp(); (y[i] - a * e * (w * t[i]).cos() - b * e * (w * t[i]).sin()).powi(2) }).sum::<f64>() / (n - from).max(1) as f64;
+            if r < best { best = r; bg = g; bw = w; }
+        }
+    }
+    (bg, bw, best.sqrt())
+}
+
 /// The driven continuity read's signal-to-noise and floor (RESPONSE1_AMENDMENT_2 A2), on
 /// the INSTANTANEOUS fields with the integral form's own differencing: the RMS over cells
 /// of the occupancy change across each of the first `lead` windows of `w` readouts (signal

@@ -14,7 +14,7 @@
    cycle  4: REFUSED — kick amplitude 1.208e-3 under 3 x noise 2.677e-3  | tail mean 2.6 SE
    cycle  5: REFUSED — kick amplitude 7.442e-3 under 3 x noise 2.677e-3  | tail mean 0.9 SE
    ALIGNED current mode j_k^s: OVERDAMPED  λ = 9.742e12 /s (τ = 103 fs)  A = 6.144e-3  resid 2.01e-4  pts 7
-   R4:  blind/spatial aligned kick amplitude 0.137 (stake < 0.1): FIRES — the scrambled partition carries the mode
+   R4:  blind/spatial aligned kick amplitude 0.137; blind 8.279e-4 au vs max(0.1 × spatial, 3σ_blind) = 3.071e-3: no mode on the scrambled partition
    R4′: undriven quadrature j_k^c aligned amplitude 2.027e-4 au vs 3σ 4.136e-3: at noise, as it must be
    longitudinal current j_k^s: rate 9.742e12 ± 8.91e11 /s (leave-one-out over 4 of 6 cycles) = ν_l k² if overdamped -> ν_l = 1.362e-6 m²/s (no band; the fast mode of A3)
    R1  grid 8x1x1 (τ 196 fs, window 20, 6 cycles aligned, lead 2 windows): D_cont spatial 0.847  blind 0.973  separation +0.126 | s 0.55 (blind 0.00, tail 0.55), floor √((D_disc² s² + 1)/(s² + 1)) = 0.876 (D_disc 0.100) | relaxed last window 1.020
@@ -23,7 +23,8 @@
    density mode ρ_k^c: noise per cycle 1.594e0, aligned 9.202e-1 counts; peak -5.007e0 at readout 12 (120 fs), SNR 5.4
    R2:  from the peak: OVERDAMPED  λ = 3.966e12 /s (τ = 252 fs)  A = -5.548e0  resid 2.91e-1  pts 21
         λ₁ = 3.966e12 /s = c_s²/ν_l if overdamped (no band; A3 said 50 m/s likely refuses)
-   R4 (density): blind/spatial at the peak 0.259 (stake < 0.1): FIRES
+   R4 (density): blind/spatial at the peak 0.259; blind 1.295e0 vs max(0.1 × spatial, 3 sd_blind) = 1.979e0 (blind whole-cycle sd 6.596e-1): no mode on the scrambled partition
+   R2 (both forms): damped cosine Γ = 6.316e12 /s, ω = 6.440e12 /s (period 976 fs, c_s = ω/k = 2408 m/s), resid 8.123e-1 | exponential from the peak resid 2.911e-1 -> OVERDAMPED (exponential from the peak better by > 10 %)
    R4′ (density): undriven ρ_k^s at the peak 1.359e0 vs 3σ 1.987e0: at noise
 
 ===== COST (PREREG G11, work units, never wall clock) =====

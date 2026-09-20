@@ -14,12 +14,12 @@
    cycle  4: REFUSED — kick amplitude 2.152e-3 under 3 x noise 2.239e-3  | tail mean 6.7 SE
    cycle  5: REFUSED — kick amplitude 2.365e-3 under 3 x noise 2.239e-3  | tail mean 8.5 SE
    ALIGNED current mode j_k^s: OVERDAMPED  λ = 2.834e12 /s (τ = 353 fs)  A = 5.382e-3  resid 3.62e-4  pts 28
-   R4:  blind/spatial aligned kick amplitude 0.044 (stake < 0.1): no mode on the scrambled partition
+   R4:  blind/spatial aligned kick amplitude 0.044; blind 2.011e-4 au vs max(0.1 × spatial, 3σ_blind) = 3.039e-3: no mode on the scrambled partition
    R4′: undriven quadrature j_k^c aligned amplitude 4.488e-4 au vs 3σ 1.745e-3: at noise, as it must be
    R3:  Γ_s = 2.834e12 ± 1.19e12 /s (leave-one-out over 6 of 6 cycles) -> η = ρ Γ_s / k² = 3.950e-4 Pa s  [3.12e-4, 4.78e-4]  stake [2.0e-4, 3.0e-3]: IN BAND
-   R1′ grid 8x1x1 (τ 196 fs, window 20, 6 cycles aligned, lead 2 windows): D_cont spatial 0.958  blind 1.032  separation +0.074 | s 0.00, floor √((D_disc² s² + 1)/(s² + 1)) = 1.000 (D_disc 0.100) | relaxed last window 0.968
-        R1′ verdict: driven 0.958 vs relaxed 0.968, |Δ| = 0.010 (stake < 0.1): continuity sees nothing under shear, as it must
-   R1′ grid 4x1x1 (τ 392 fs, window 39, 6 cycles aligned, lead 2 windows): D_cont spatial 0.907  blind 1.097  separation +0.189 | s 0.00, floor √((D_disc² s² + 1)/(s² + 1)) = 1.000 (D_disc 0.363) | relaxed last window 0.838  [beside the graded grid]
+   R1′ grid 8x1x1 (τ 196 fs, window 20, 6 cycles aligned, lead 2 windows): D_cont spatial 0.958  blind 1.032  separation +0.074 | s 1.07 (blind 0.00, tail 1.07), floor √((D_disc² s² + 1)/(s² + 1)) = 0.688 (D_disc 0.100) | relaxed last window 0.968
+        R1′ verdict: driven 0.958 vs relaxed 0.968, |Δ| = 0.010 vs max(0.1, 2 SE = 0.043): continuity sees nothing under shear, as it must
+   R1′ grid 4x1x1 (τ 392 fs, window 39, 6 cycles aligned, lead 2 windows): D_cont spatial 0.907  blind 1.097  separation +0.189 | s 2.38 (blind 0.00, tail 2.38), floor √((D_disc² s² + 1)/(s² + 1)) = 0.513 (D_disc 0.363) | relaxed last window 0.838  [beside the graded grid]
 
 ===== COST (PREREG G11, work units, never wall clock) =====
 frames read:       2132

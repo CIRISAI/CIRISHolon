@@ -687,7 +687,7 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
                 let m_bar = h.z.iter().map(|z| mass_me(*z).unwrap_or(0.0)).sum::<f64>() / h.n_atoms as f64;
                 let boxe = [h.box_w, h.box_h, h.box_d];
                 let label = if axis == 0 { "R1 " } else { "R1′" };
-                for nx in [8usize, 4] {
+                for nx in [16usize, 8, 4] {   // 16 beside the graded 8 (diagnostic: does the excess fall with the spatial floor?)
                     let grid = Grid3 { nx, ny: 1, nz: 1 };
                     if let Err(why) = continuity_admits(grid) { println!("   {label} grid {nx}x1x1: REFUSED — {why}"); continue; }
                     let tau = cadence_fs(&traj, grid);
@@ -714,6 +714,10 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
                     let tail_c = continuity_integral(&al_sp[relax - 1 - lead * w..], grid, boxe, m_bar, h.dt, w);
                     let (s, floor) = driven_floor_two_sided(&c_sp, &tail_c, d_disc);
                     let (d_sp, d_bl) = (c_sp.defect().unwrap_or(f64::NAN), c_bl.defect().unwrap_or(f64::NAN));
+                    // the residual decomposed: the excess of the read over its floor as a fraction of the signal power
+                    let s2 = (c_sp.rms_observed.powi(2) - tail_c.rms_observed.powi(2)).max(0.0);
+                    let excess = c_sp.rms_residual.powi(2) - floor * floor * c_sp.rms_observed.powi(2);
+                    println!("        residual budget: observed² {:.3e} = signal² {:.3e} + noise² {:.3e}; residual² {:.3e} of which floor {:.3e} and EXCESS {:.3e} = {}", c_sp.rms_observed.powi(2), s2, tail_c.rms_observed.powi(2), c_sp.rms_residual.powi(2), floor * floor * c_sp.rms_observed.powi(2), excess, if s2 > 0.05 * tail_c.rms_observed.powi(2) { format!("{:.0} % of the signal power", 100.0 * excess / s2) } else { "(no resolvable signal at this grid: the lead windows' RMS is not above the tail's)".to_string() });
                     // the in-run null: the last window of the aligned cycle, relaxed
                     let tail_start = relax - w - 1;
                     let d_tail = continuity_integral(&al_sp[tail_start..], grid, boxe, m_bar, h.dt, w).defect().unwrap_or(f64::NAN);

@@ -55,3 +55,41 @@ The sixteenth instance is a trajectory assumed where the data is a tree — the 
 staking a chart before searching for it: the prereg named the object (a chain) and the data
 had a different one. The direct ordering check that killed S1 cost one line and should
 have preceded the prereg.
+
+## 5. Re-read under Amendment 1 — on the real chains (appended 2026-09-21)
+
+`accord_traces.jsonl` carries the lineage (`action_result.follow_up_thought_id`): 207
+chains with every row usable, 444 parent→child transitions, depth incrementing by one on
+98.6 % of them (S1 `0.998`, the links are real). Plants: PR-B `3.3 × 10⁻³` (after the
+complementary one-hot was dropped), PR-A's re-paired null at `0.16` of the bound.
+`reason_search0b.py`, `reason_search0b_read.txt`.
+
+| view | k | held-out | bound | fraction | re-paired null | real / null |
+|---|---|---|---|---|---|---|
+| depth alone | 1 | 0.998 | 0.83 | 1.21 | 0.010 | 105 |
+| DMA sector (plausibility, alignment, k_eff, risk) | 4 | 1.58 | 2.60 | 0.61 | 0.18 | **8.9** |
+| process sector (depth, tokens, SPEAK) | 3 | 1.76 | 2.34 | 0.75 | 0.10 | 18 |
+| the dictionary | 7 | 3.26 | 3.26 | 1.00 | 0.53 | 6.2 |
+
+Blocks: cross `‖K_PD‖/‖K‖ = 0.35`; `‖K_{P→D}‖ = 0.44`, `‖K_{D→P}‖ = 0.41`, ratio **1.06**.
+
+| stake | verdict |
+|---|---|
+| S1 the counter is closed | MET (`0.998`) |
+| S2 two blocks, cross `< 0.2` | between (`0.35`): coupled, not separable |
+| S3 the DMA sector is closed above its null by `≥ 3×` | **MET, `8.9×`** |
+| S4 process drives the readings by `≥ 2×` | **undecided, `1.06`** — and the void read's `5×` was an artefact of sibling pairs |
+
+**What it says.** On real parent→child chains the conscience readings are STATE, not
+readouts: the four DMA numbers predict their own next values nine times above a null that
+keeps every marginal, and they feed the next thought's process exactly as much as the
+process feeds them (`0.44` against `0.41`). The void read's "readouts, not state" came from
+pooling siblings, and is withdrawn. The two sectors are not separable at one thought
+(`0.35`): the H3ERE loop is one coupled object at this cadence, with three closed
+directions — a tokens-with-risk mode (`σ = 0.91`), the depth counter (`0.87`), and a
+plausibility-with-depth mode (`0.74`). The 11+1 kinds are not in this dictionary, so
+nothing here is a reading of the taxonomy; it is the first search on a reasoning
+pipeline's own trajectory that survived its plants.
+
+**Branch:** (a) on S1, S3; S2 and S4 between/undecided, reported. The eighteenth instance
+for the ledger: the parent link was one field name away in a file already on disk.

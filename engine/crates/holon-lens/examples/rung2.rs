@@ -708,15 +708,18 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
                     // two s (the smaller floor) is the one graded against, since both are lower
                     // bounds on the signal
                     let (s_t, _) = driven_floor(&al_sp, w, lead);
-                    let s = if s_t.is_finite() { s_b.max(s_t) } else { s_b };
-                    let floor = ((d_disc * d_disc * s * s + 1.0) / (s * s + 1.0)).sqrt();
+                    let s1 = if s_t.is_finite() { s_b.max(s_t) } else { s_b };
+                    let floor1 = ((d_disc * d_disc * s1 * s1 + 1.0) / (s1 * s1 + 1.0)).sqrt();
+                    // Amendment 4: the two-sided floor, noises read on the relaxed last two windows
+                    let tail_c = continuity_integral(&al_sp[relax - 1 - lead * w..], grid, boxe, m_bar, h.dt, w);
+                    let (s, floor) = driven_floor_two_sided(&c_sp, &tail_c, d_disc);
                     let (d_sp, d_bl) = (c_sp.defect().unwrap_or(f64::NAN), c_bl.defect().unwrap_or(f64::NAN));
                     // the in-run null: the last window of the aligned cycle, relaxed
                     let tail_start = relax - w - 1;
                     let d_tail = continuity_integral(&al_sp[tail_start..], grid, boxe, m_bar, h.dt, w).defect().unwrap_or(f64::NAN);
                     let graded = nx == 8;
-                    println!("   {label} grid {nx}x1x1 (τ {tau:.0} fs, window {w}, {used} cycles aligned, lead {lead} windows): D_cont spatial {d_sp:.3}  blind {d_bl:.3}  separation {:+.3} | s {s:.2} (blind {s_b:.2}, tail {s_t:.2}), floor √((D_disc² s² + 1)/(s² + 1)) = {floor:.3} (D_disc {d_disc:.3}) | relaxed last window {d_tail:.3}{}",
-                        d_bl - d_sp, if graded { "" } else { "  [beside the graded grid]" });
+                    println!("   {label} grid {nx}x1x1 (τ {tau:.0} fs, window {w}, {used} cycles aligned, lead {lead} windows): D_cont spatial {d_sp:.3}  blind {d_bl:.3}  separation {:+.3} | s {s:.2} (one-sided s {s1:.2}: blind {s_b:.2}, tail {s_t:.2}), floor two-sided {floor:.3} (one-sided {floor1:.3}; D_disc {d_disc:.3}; σ_o {:.3e}, σ_p {:.3e}) | relaxed last window {d_tail:.3}{}",
+                        d_bl - d_sp, tail_c.rms_observed, tail_c.rms_predicted, if graded { "" } else { "  [beside the graded grid]" });
                     if graded {
                         if axis == 0 {
                             let sep = d_bl - d_sp >= 0.05;

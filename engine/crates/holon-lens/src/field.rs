@@ -580,6 +580,9 @@ pub struct Continuity {
     pub windows_compared: usize,
     pub rms_observed: f64,
     pub rms_residual: f64,
+    /// RMS of the PREDICTED change (RESPONSE1_AMENDMENT_4): on relaxed windows this is the
+    /// prediction side's own shot noise, which the floor must carry too.
+    pub rms_predicted: f64,
 }
 
 impl Continuity {
@@ -607,7 +610,7 @@ pub fn continuity(fields: &[CellFields], grid: Grid3, box_edges: [f64; 3], m_bar
     let edge = [box_edges[0] / grid.nx as f64, box_edges[1] / grid.ny as f64, box_edges[2] / grid.nz as f64];
     let idx = |ix: usize, iy: usize, iz: usize| (iz * grid.ny + iy) * grid.nx + ix;
     let coords = |c: usize| (c % grid.nx, (c / grid.nx) % grid.ny, c / (grid.nx * grid.ny));
-    let (mut so, mut sr, mut n) = (0.0f64, 0.0f64, 0usize);
+    let (mut so, mut sr, mut sp, mut n) = (0.0f64, 0.0f64, 0.0f64, 0usize);
     for k in 0..fields.len().saturating_sub(1) {
         let (a, b) = (&fields[k], &fields[k + 1]);
         let ns = a.occ.len() / nc.max(1);
@@ -631,11 +634,12 @@ pub fn continuity(fields: &[CellFields], grid: Grid3, box_edges: [f64; 3], m_bar
             let pred = -(tau_au / m_bar) * flux;
             so += obs * obs;
             sr += (obs - pred) * (obs - pred);
+            sp += pred * pred;
             n += 1;
         }
     }
     let nf = n.max(1) as f64;
-    Continuity { windows_compared: fields.len().saturating_sub(1), rms_observed: (so / nf).sqrt(), rms_residual: (sr / nf).sqrt() }
+    Continuity { windows_compared: fields.len().saturating_sub(1), rms_observed: (so / nf).sqrt(), rms_residual: (sr / nf).sqrt(), rms_predicted: (sp / nf).sqrt() }
 }
 
 // ------------------------------------------------------------ RESPONSE1_PREREG.md's modes
@@ -919,6 +923,21 @@ pub fn driven_floor(fields: &[CellFields], w: usize, lead: usize) -> (f64, f64) 
     (s, 1.0 / (1.0 + s * s).sqrt())
 }
 
+/// The two-sided driven floor (RESPONSE1_AMENDMENT_4): with the signal `S` and the observed
+/// and predicted noises `σ_o, σ_p` read from the RELAXED windows of the same aligned cycle,
+/// `D_floor² = (D_disc² S² + σ_o² + σ_p²) / (S² + σ_o²)`, `S² = obs_lead² − σ_o²`. Amendment 2
+/// carried only `σ_o`; the prediction side's shot noise (the momentum field integrated over a
+/// window) is of the same order and was dropped on building — the first full 200 m/s arm
+/// read `D = 0.74` against a one-sided floor of `0.48` and would have been KILLED on it.
+/// Returns `(s, floor)` with `s = S/σ_o`.
+pub fn driven_floor_two_sided(lead: &Continuity, tail: &Continuity, d_disc: f64) -> (f64, f64) {
+    let (so, sp) = (tail.rms_observed, tail.rms_predicted);
+    let s2 = (lead.rms_observed * lead.rms_observed - so * so).max(0.0);
+    let s = if so > 0.0 { (s2).sqrt() / so } else { f64::NAN };
+    let floor = ((d_disc * d_disc * s2 + so * so + sp * sp) / (s2 + so * so).max(1e-300)).sqrt();
+    (s, floor)
+}
+
 /// The driven read's signal-to-noise from the PLACEBO (RESPONSE1_AMENDMENT_2 A2, as read on
 /// the arms): the position-blind partition sees the same molecules with scrambled labels, so
 /// its observed occupancy changes over the same windows are the shot noise with no coherent
@@ -945,7 +964,7 @@ pub fn continuity_integral(fields: &[CellFields], grid: Grid3, box_edges: [f64; 
     let idx = |ix: usize, iy: usize, iz: usize| (iz * grid.ny + iy) * grid.nx + ix;
     let coords = |c: usize| (c % grid.nx, (c / grid.nx) % grid.ny, c / (grid.nx * grid.ny));
     let w = w.max(1);
-    let (mut so, mut sr, mut n, mut windows) = (0.0f64, 0.0f64, 0usize, 0usize);
+    let (mut so, mut sr, mut sp, mut n, mut windows) = (0.0f64, 0.0f64, 0.0f64, 0usize, 0usize);
     let mut k = 0;
     while k + w < fields.len() {
         let (a, b) = (&fields[k], &fields[k + w]);
@@ -971,13 +990,14 @@ pub fn continuity_integral(fields: &[CellFields], grid: Grid3, box_edges: [f64; 
             let pred = -(dt_au / m_bar) * integral;
             so += obs * obs;
             sr += (obs - pred) * (obs - pred);
+            sp += pred * pred;
             n += 1;
         }
         windows += 1;
         k += w;
     }
     let nf = n.max(1) as f64;
-    Continuity { windows_compared: windows, rms_observed: (so / nf).sqrt(), rms_residual: (sr / nf).sqrt() }
+    Continuity { windows_compared: windows, rms_observed: (so / nf).sqrt(), rms_residual: (sr / nf).sqrt(), rms_predicted: (sp / nf).sqrt() }
 }
 
 /// The midpoint continuity law's own floor on a single mode at `k = 2π/L` read on `n` cells

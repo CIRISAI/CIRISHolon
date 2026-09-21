@@ -301,14 +301,26 @@ against a brute referee. `GF1_RESULTS.md`.*
   list below and its kill retires fired-empty. Fence: QED₂ licenses the
   machinery, not 3+1D. (`conformance/crystal/SCHWINGER3_RESULTS.md`.)
 
-- **W4 — closed views are VARIATIONAL (2026-09-20).** On every tier this
-  engine hosts, exact or thermal, the search's optimum at the tier's
-  cadence coincides with the tier's object within the budget, and the
-  certificate of one cell composes across cells by locality. *Kill: a tier
-  whose search optimum is non-local on the cell graph, or a named object
-  with a standing certificate that the search does not find.* Measured
-  once, on one tier, for linear views; the nonlinear case and the second
-  tier are the next two reads.
+- **W4 — closed views are VARIATIONAL, and the object is the closed sector
+  the tier above CARRIES (2026-09-20, reworded 2026-09-21).** On every tier
+  this engine hosts, exact or thermal, the search at the tier's cadence
+  returns the closed sectors and their coupling; the tier's object is one of
+  those sectors — the one whose quantities the next view carries — and it is
+  licensed exactly when its coupling to the sectors dropped is within the
+  budget; the certificate of one cell composes across cells by locality.
+  *Kill: a tier whose object is not a closed sector of the search (a mixed
+  direction the tier above carries), a tier whose search optimum is
+  non-local on the cell graph, or a coupling to a dropped sector that is
+  not within budget.* **What the first wording got wrong, and the molecule
+  tier corrected (`MOLSEARCH1_RESULTS.md`, provisional on a 396 K walk):**
+  the object is NOT the search's top rank. The molecule is two decoupled
+  closed sectors (cross-coupling 2 % at 5 fs); the vibrations are the MORE
+  closed one (threefold at 50 fs) and carry nothing the fluid reads; the
+  rigid unit is the less closed one and is the object because mass and
+  momentum sum into the fluid's fields. Closed and object are two
+  properties: the search decides the first, the rent — what the next view
+  needs — decides the second. Measured on two tiers, for linear views; the
+  nonlinear case is the next read.
 
 ## Open (named, unclaimed, no shame in the list)
 
@@ -388,7 +400,9 @@ finite rungs (measured, advance-staked). We now WAGER, with separable
 kills, that this does not stop: that the receipt format survives every
 larger evaluation by lawful extension. That is a position, not a proof —
 which is exactly what a stance is for. And as of 2026-09-20 the object is
-FOUND rather than named: the closed view is the optimum of a variational
-search on the trajectory, computable in seconds, graded against its own
-bound; what costs is the trajectory, never the finding. Measured once —
-the wager is that it holds everywhere the square does.
+FOUND rather than named: the search on the trajectory returns the closed
+sectors and their coupling in seconds, graded against its own bound, and
+the tier's object is the sector the next view carries — closure is found,
+relevance is paid (2026-09-21, the molecule tier). What costs is the
+trajectory, never the finding. Measured on two tiers — the wager is that
+it holds everywhere the square does.

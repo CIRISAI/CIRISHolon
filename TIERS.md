@@ -6,6 +6,30 @@ a target is not scaffolded — it's a wish. Statuses are honest: ASSUMED means
 
 ---
 
+## THE TIERS UNDER THE SEARCH — what a tier's object is, measured on two rungs (2026-09-20/21)
+
+Two campaigns turned the ladder's premise into an algorithm and then corrected the
+algorithm's first wording. `VIEW_SEARCH_RESULTS.md` (fluid rung): a variational search on
+the liquid's trajectory, with no chart named, returns the long-wavelength density and
+current modes as the closed directions — the charts the ladder had staked by hand — and
+grades the cell chart at `70–78 %` of the bound. `MOLSEARCH1_RESULTS.md` (molecule rung,
+provisional on a 396 K walk): the same search on the fine model's all-atom trajectory
+returns TWO closed sectors, vibrations and rigid modes, decoupled to `2 %` at the molecule's
+cadence — and the vibrations are the more closed sector while the rigid unit is the object.
+
+**The rule the ladder now runs on (OBJECT.md rule 11 and the paragraph "closed is not
+object"):** at each rung the search finds the closed sectors and their coupling; the rung's
+object is the sector whose quantities the rung above carries; it is licensed when its
+coupling to the dropped sectors is within the budget. On this ladder, rung by rung:
+
+| rung | closed sectors the search finds | the object (what the rung above carries) | dropped, at a measured price |
+|---|---|---|---|
+| molecule | vibrations; rigid modes (block-diagonal, 2 %) | the rigid unit — mass, momentum, orientation | vibrations: REPLACE-0's `+0.325 kT`/water, dynamics unresolved past 40 fs |
+| H-bond network | (not yet searched) | the bond graph the liquid rung reads | — |
+| fluid element | long-wavelength density and current modes | `(n̄, p̄)` per cell, `70–78 %` of the bound; the modes, at the bound | single-particle velocity memory (0.3–0.4 of the bound, carried by no field) |
+
+Each row's "object" column is now a measurement, not a naming. The statuses below stand.
+
 ## FOUR PHYSICS, ONE OBJECT TEST — consolidated status, 2026-09-03
 
 *The ladder's premise was that one contract — an OBJECT is a lossy summary the dynamics

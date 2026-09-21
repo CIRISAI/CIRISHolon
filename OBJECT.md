@@ -48,6 +48,19 @@ the cadence — and both are graded by the same bound. The search proposes; the 
 it is the same certificate that existed before the search did. *(Locked 2026-09-20 at the
 owner's order; the earlier text above, in which every view was named first, is kept.)*
 
+**Closed is not object** (measured 2026-09-21 at the molecule tier, `MOLSEARCH1_RESULTS.md`,
+provisional on a 396 K walk; locked at the owner's order). The search returns the closed
+SECTORS of a tier and their coupling — for a water molecule, two: the vibrations and the
+rigid modes, block-diagonal to 2 % at the molecule's cadence. The vibrations are the more
+closed sector by threefold at the liquid's cadence and carry nothing the fluid tier reads;
+the rigid modes are the less closed and are the object, because mass and momentum sum into
+the fluid's fields. **So the tier's object is the closed sector whose quantities the next
+view carries, and it is licensed when its coupling to the dropped sectors is within the
+budget** — REPLACE-0's price, measured, was that coupling. Closure is what the search
+decides; which closed sector is the object is what the rent decides (the join, the +1: the
+part the local pieces do not generate). Rule 11's search finds the candidates; the tier
+above chooses among them; nothing is named by hand.
+
 ## The shape, stated four times
 
 The object is one shape wearing four sets of clothes. Each is machine-checked where it says
@@ -341,7 +354,7 @@ keeps a price from becoming a wall.
 |---|---|---|
 | **A.** The full thesis: closure + paid rent IS thinghood at every tier, and the books are physical | 0.40 (0.36 before 2026-09-20) | Moves 1–4 stand; Move 5's dead legs and "the only exact closures are conservation fibers" cap it |
 | **B.** Right account of objects, but a frame-selection principle is missing (`exists_closed_view` makes closure cheap) | 0.10 (0.20 before 2026-09-20: the missing principle has a candidate — the view is the variational optimum at the tier's cadence, measured once to find the staked charts unprompted; B keeps the weight of "once, one tier, linear views") | ACUITY-B measured the allocation half; rung 1's alignment finding is the frame puzzle still unsolved; `frames_are_not_gauge` cuts against full relativism |
-| **C.** Thinghood is primarily CONSERVATION; rent is thermodynamics repackaged | 0.34 (0.28 before 2026-09-20: the search's slowest closed directions ARE the conserved densities at the longest wavelength — hydrodynamics — which is C's claim read off the data as much as A's) | the only exact closures are fibers; the exact label fixed what the budgeted sector could not |
+| **C.** Thinghood is primarily CONSERVATION; rent is thermodynamics repackaged | 0.34 (unchanged 2026-09-21: the molecule tier says the object is the sector the next view carries — mass and momentum, conserved quantities — which C reads as conservation selecting and A reads as rent selecting; the tie is not broken) (0.28 before 2026-09-20: the search's slowest closed directions ARE the conserved densities at the longest wavelength — hydrodynamics — which is C's claim read off the data as much as A's) | the only exact closures are fibers; the exact label fixed what the budgeted sector could not |
 | **D.** Closure is observer-indexed with no observer-free fact | 0.08 | `FrameOrder.lean` (frames are an order) and the certified molecule's 0/111 controls cut against it |
 | **E.** The world-level rent is metaphor; the dead cosmology legs are the tell | 0.08 | the rate surviving on hardware and the design-knowing repair cut against it |
 

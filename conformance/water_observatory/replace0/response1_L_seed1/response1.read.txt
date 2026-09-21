@@ -1,0 +1,37 @@
+# RUNG 2 — the fluid-element chart
+# stakes: RUNG2_PREREG.md @ aee5317
+# dp = 1.321126 au (frozen 1.3211)
+# de = 0.000950043 Ha (frozen 0.0009500435)
+# bars: admissible occ >= 100, cells >= 4, fluct <= 0.1; transport >= 0.05; informative >= 200; beta = 0.02; separation >= 0.05
+
+===== RESPONSE-1 arm L on rigid (1 trajectories): 12 cycles x 314 readouts; Amendment 1's read =====
+-- seed1.traj  seed 0x5245504c41434531 n=432 readouts=3769 dt=10.0 fs  k=2π/L=2.675e9 /m
+   12 cycles aligned; current mode noise per cycle 2.457e-3 au, aligned 6.146e-4 au; kick amplitude aligned 5.754e-3 au (SNR 9.4); tails relaxed: 11 of 12 (aligned tail mean 1.6 SE) — UNRELAXED cycles: the mode has not returned to zero by the cycle's end; the fit's window is what it is and the rebound is a finding
+   cycle  0: REFUSED — kick amplitude 1.246e-3 under 3 x noise 2.457e-3  | tail mean 0.0 SE
+   cycle  1: REFUSED — kick amplitude 6.580e-3 under 3 x noise 2.457e-3  | tail mean 1.2 SE
+   cycle  2: REFUSED — kick amplitude 4.876e-3 under 3 x noise 2.457e-3  | tail mean 0.3 SE
+   cycle  3: REFUSED — kick amplitude 4.737e-3 under 3 x noise 2.457e-3  | tail mean 1.6 SE
+   cycle  4: REFUSED — kick amplitude 6.211e-3 under 3 x noise 2.457e-3  | tail mean 0.2 SE
+   cycle  5: REFUSED — kick amplitude 3.703e-3 under 3 x noise 2.457e-3  | tail mean 0.7 SE
+   cycle  6: REFUSED — kick amplitude 8.021e-3 under 3 x noise 2.457e-3  | tail mean 1.6 SE
+   cycle  7: OVERDAMPED  λ = 4.623e12 /s (τ = 216 fs)  A = 1.261e-2  resid 1.19e-3  pts 14  | tail mean 1.7 SE
+   cycle  8: REFUSED — kick amplitude 4.984e-3 under 3 x noise 2.457e-3  | tail mean 3.5 SE
+   cycle  9: REFUSED — kick amplitude 6.602e-3 under 3 x noise 2.457e-3  | tail mean 0.9 SE
+   cycle 10: REFUSED — kick amplitude 7.036e-3 under 3 x noise 2.457e-3  | tail mean 0.1 SE
+   cycle 11: REFUSED — kick amplitude 4.723e-3 under 3 x noise 2.457e-3  | tail mean 1.0 SE
+   ALIGNED current mode j_k^s: OVERDAMPED  λ = 1.038e13 /s (τ = 96 fs)  A = 6.000e-3  resid 2.42e-4  pts 11
+   R4:  blind/spatial aligned kick amplitude 0.071; blind 4.096e-4 au vs max(0.1 × spatial, 3σ_blind) = 1.989e-3: no mode on the scrambled partition
+   R4′: undriven quadrature j_k^c aligned amplitude 1.848e-4 au vs 3σ 9.854e-4: at noise, as it must be
+   longitudinal current j_k^s: rate 1.038e13 ± 3.34e12 /s (leave-one-out over 12 of 12 cycles) = ν_l k² if overdamped -> ν_l = 1.451e-6 m²/s (no band; the fast mode of A3)
+   R1  grid 8x1x1 (τ 196 fs, window 20, 12 cycles aligned, lead 2 windows): D_cont spatial 0.846  blind 0.917  separation +0.071 | s 0.95 (one-sided s 1.18: blind 0.59, tail 1.18), floor two-sided 0.737 (one-sided 0.651; D_disc 0.100; σ_o 9.186e-1, σ_p 1.558e-1) | relaxed last window 1.022
+        R1 verdict on this seed: KILL as staked: D over 0.2 and over its floor by more than 0.05; null (relaxed ≥ 0.8): holds
+   R1  grid 4x1x1 (τ 392 fs, window 39, 12 cycles aligned, lead 2 windows): D_cont spatial 0.765  blind 0.961  separation +0.196 | s 0.78 (one-sided s 1.24: blind 1.24, tail 0.61), floor two-sided 0.822 (one-sided 0.689; D_disc 0.363; σ_o 8.271e-1, σ_p 6.836e-2) | relaxed last window 0.954  [beside the graded grid]
+   density mode ρ_k^c: noise per cycle 1.505e0, aligned 4.690e-1 counts; peak -2.653e0 at readout 13 (130 fs), SNR 5.7
+   R2:  from the peak: OVERDAMPED  λ = 5.528e12 /s (τ = 181 fs)  A = -2.933e0  resid 1.60e-1  pts 15
+        λ₁ = 5.528e12 /s = c_s²/ν_l if overdamped (no band; A3 said 50 m/s likely refuses)
+   R4 (density): blind/spatial at the peak 0.174; blind 4.619e-1 vs max(0.1 × spatial, 3 sd_blind) = 1.050e0 (blind whole-cycle sd 3.499e-1): no mode on the scrambled partition
+   R2 (both forms): damped cosine Γ = 8.387e10 /s, ω = 2.501e11 /s (period 25120 fs, c_s = ω/k = 94 m/s), resid 5.720e-1 | exponential from the peak resid 1.603e-1 -> OVERDAMPED (exponential from the peak better by > 10 %)
+   R4′ (density): undriven ρ_k^s at the peak 5.157e-1 vs 3σ 3.874e-1: FIRES
+
+===== COST (PREREG G11, work units, never wall clock) =====
+frames read:       3769

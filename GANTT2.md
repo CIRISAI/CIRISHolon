@@ -799,6 +799,35 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## The first full arms, the molecule tier confirmed, and the search reaching the reasoning pipeline (2026-09-21)
+
+**Fluid.** Two full arms read (`RESPONSE1_RESULTS.md`): the 200 m/s control oscillates at
+`~720` fs (`c_s ≈ 3,200` m/s) and the 50 m/s seed relaxes overdamped (`c_s ≈ 2,800` from
+`√(λ₁λ₂)/k`) — the control is outside linear response and R2's branch on the linear arm is
+overdamped; the model's sound speed is twice water's. R1 KILLS on both seeds as staked
+(`D = 0.735, 0.846` over two-sided floors of `0.60, 0.74`; placebo beaten by `+0.35, +0.07`):
+Amendment 4 added the prediction side's noise to the floor and the verdict did not move.
+Nulls hold but one (the undriven density quadrature at `4σ` on one seed). Eight arms still
+running; disk fell to 41 GiB under other sessions' builds and my debug cache (14 GiB) was
+cleared.
+
+**Molecule.** MOLSEARCH-1 confirmed at 299 K (purity `0.98–1.00`, cross-block `0.019`, rigid
+view `0.09` of the bound at 50 fs); OBJECT, STANCE, TIERS de-provisioned.
+
+**Reasoning.** REASON-SEARCH-0 (`conformance/reasoning/`): the H3ERE harness streams full
+per-thought traces (99 fields: the DMA readings, the conscience result, the action, the
+child thought created); the released `trace_context.jsonl` drops the lineage and the first
+read was VOID — thoughts within a task are a forest (depth increments on 21 % of
+consecutive pairs) — but `accord_traces.jsonl` carries `follow_up_thought_id`, and on its
+444 real parent→child transitions: the depth counter closed (`0.998`), **the conscience
+readings are STATE — closed `8.9×` above a marginal-preserving null and feeding the next
+thought's process as much as it feeds them (`0.44` vs `0.41`)**, the two sectors coupled
+(`0.35`), three closed directions (tokens-with-risk `0.91`, depth `0.87`,
+plausibility-with-depth `0.74`). The void read's "readouts, not state" withdrawn. The
+seventeenth and eighteenth instances: a chain assumed where the data is a forest; the
+parent link one field name away in a file already on disk. The 11+1 search still needs the
+encoder pass.
+
 ## TSCAN-1 read, and the glass retracted (2026-09-20, evening)
 
 `TSCAN1_RESULTS.md`: the rigid operator at 128 waters diffuses — `D = 5.4, 7.7 × 10⁻¹⁰` m²/s at

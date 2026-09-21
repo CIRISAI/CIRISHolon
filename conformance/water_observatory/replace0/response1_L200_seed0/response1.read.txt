@@ -1,0 +1,37 @@
+# RUNG 2 — the fluid-element chart
+# stakes: RUNG2_PREREG.md @ aee5317
+# dp = 1.321126 au (frozen 1.3211)
+# de = 0.000950043 Ha (frozen 0.0009500435)
+# bars: admissible occ >= 100, cells >= 4, fluct <= 0.1; transport >= 0.05; informative >= 200; beta = 0.02; separation >= 0.05
+
+===== RESPONSE-1 arm L on rigid (1 trajectories): 12 cycles x 314 readouts; Amendment 1's read =====
+-- seed0.traj  seed 0x5245504c41434530 n=432 readouts=3769 dt=10.0 fs  k=2π/L=2.675e9 /m
+   12 cycles aligned; current mode noise per cycle 2.398e-3 au, aligned 4.858e-4 au; kick amplitude aligned 1.866e-2 au (SNR 38.4); tails relaxed: 10 of 12 (aligned tail mean 4.6 SE) — UNRELAXED cycles: the mode has not returned to zero by the cycle's end; the fit's window is what it is and the rebound is a finding
+   cycle  0: OVERDAMPED  λ = 7.272e12 /s (τ = 138 fs)  A = 2.104e-2  resid 1.14e-3  pts 14  | tail mean 0.5 SE
+   cycle  1: UNDERDAMPED Γ = 8.406e11 /s  ω = 1.187e13 /s (period 529 fs, c_s = ω/k = 4437 m/s)  A = 1.977e-2  | tail mean 4.0 SE
+   cycle  2: OVERDAMPED  λ = 1.303e13 /s (τ = 77 fs)  A = 2.054e-2  resid 9.72e-4  pts 9  | tail mean 1.6 SE
+   cycle  3: OVERDAMPED  λ = 1.422e13 /s (τ = 70 fs)  A = 2.274e-2  resid 1.32e-3  pts 11  | tail mean 0.7 SE
+   cycle  4: OVERDAMPED  λ = 7.798e12 /s (τ = 128 fs)  A = 1.405e-2  resid 9.03e-4  pts 10  | tail mean 0.6 SE
+   cycle  5: OVERDAMPED  λ = 1.167e13 /s (τ = 86 fs)  A = 2.433e-2  resid 1.72e-3  pts 11  | tail mean 0.1 SE
+   cycle  6: OVERDAMPED  λ = 8.003e12 /s (τ = 125 fs)  A = 2.119e-2  resid 1.23e-3  pts 15  | tail mean 6.2 SE
+   cycle  7: OVERDAMPED  λ = 1.184e13 /s (τ = 84 fs)  A = 1.913e-2  resid 6.84e-4  pts 10  | tail mean 1.1 SE
+   cycle  8: OVERDAMPED  λ = 1.031e13 /s (τ = 97 fs)  A = 2.177e-2  resid 1.02e-3  pts 13  | tail mean 0.1 SE
+   cycle  9: OVERDAMPED  λ = 8.252e12 /s (τ = 121 fs)  A = 1.917e-2  resid 8.86e-4  pts 13  | tail mean 2.3 SE
+   cycle 10: OVERDAMPED  λ = 2.740e13 /s (τ = 36 fs)  A = 2.776e-2  resid 6.37e-3  pts 42  | tail mean 2.6 SE
+   cycle 11: OVERDAMPED  λ = 9.464e12 /s (τ = 106 fs)  A = 1.944e-2  resid 8.76e-4  pts 11  | tail mean 1.6 SE
+   ALIGNED current mode j_k^s: UNDERDAMPED Γ = 2.245e12 /s  ω = 8.548e12 /s (period 735 fs, c_s = ω/k = 3196 m/s)  A = 1.866e-2
+   R4:  blind/spatial aligned kick amplitude 0.011; blind 1.970e-4 au vs max(0.1 × spatial, 3σ_blind) = 2.454e-3: no mode on the scrambled partition
+   R4′: undriven quadrature j_k^c aligned amplitude 5.154e-5 au vs 3σ 2.814e-3: at noise, as it must be
+   longitudinal current j_k^s: rate 2.245e12 ± 2.66e13 /s (12 per-cycle fits) = ν_l k² if overdamped -> ν_l = 3.138e-7 m²/s (no band; the fast mode of A3)
+   R1  grid 8x1x1 (τ 196 fs, window 20, 12 cycles aligned, lead 2 windows): D_cont spatial 0.735  blind 1.086  separation +0.350 | s 1.89 (blind 1.89, tail 1.75), floor √((D_disc² s² + 1)/(s² + 1)) = 0.476 (D_disc 0.100) | relaxed last window 0.976
+        R1 verdict on this seed: KILL as staked: D over 0.2 and over its floor by more than 0.05; null (relaxed ≥ 0.8): holds
+   R1  grid 4x1x1 (τ 392 fs, window 39, 12 cycles aligned, lead 2 windows): D_cont spatial 0.857  blind 0.909  separation +0.052 | s 0.43 (blind 0.43, tail 0.00), floor √((D_disc² s² + 1)/(s² + 1)) = 0.930 (D_disc 0.363) | relaxed last window 0.989  [beside the graded grid]
+   density mode ρ_k^c: noise per cycle 1.503e0, aligned 5.505e-1 counts; peak -9.408e0 at readout 14 (140 fs), SNR 17.1
+   R2:  from the peak: OVERDAMPED  λ = 6.453e12 /s (τ = 155 fs)  A = -1.088e1  resid 8.76e-1  pts 20
+        λ₁ = 6.453e12 /s = c_s²/ν_l if overdamped (no band; A3 said 50 m/s likely refuses)
+   R4 (density): blind/spatial at the peak 0.124; blind 1.162e0 vs max(0.1 × spatial, 3 sd_blind) = 2.039e0 (blind whole-cycle sd 6.798e-1): no mode on the scrambled partition
+   R2 (both forms): damped cosine Γ = 2.710e12 /s, ω = 8.912e12 /s (period 705 fs, c_s = ω/k = 3332 m/s), resid 4.998e-1 | exponential from the peak resid 8.760e-1 -> OSCILLATORY (damped cosine better by > 10 %)
+   R4′ (density): undriven ρ_k^s at the peak 6.957e-1 vs 3σ 1.481e0: at noise
+
+===== COST (PREREG G11, work units, never wall clock) =====
+frames read:       3769

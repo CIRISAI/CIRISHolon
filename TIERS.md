@@ -13,7 +13,7 @@ algorithm's first wording. `VIEW_SEARCH_RESULTS.md` (fluid rung): a variational 
 the liquid's trajectory, with no chart named, returns the long-wavelength density and
 current modes as the closed directions — the charts the ladder had staked by hand — and
 grades the cell chart at `70–78 %` of the bound. `MOLSEARCH1_RESULTS.md` (molecule rung,
-provisional on a 396 K walk): the same search on the fine model's all-atom trajectory
+at 396 K and confirmed at 299 K): the same search on the fine model's all-atom trajectory
 returns TWO closed sectors, vibrations and rigid modes, decoupled to `2 %` at the molecule's
 cadence — and the vibrations are the more closed sector while the rigid unit is the object.
 

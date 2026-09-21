@@ -51,3 +51,23 @@ The rigid modes' velocity decorrelation time `~30` fs at 396 K; the vibrational 
 `~100` fs; the cross-block coupling growing with lag from `0.02` at 5 fs to `0.25` at 100 fs —
 the channel by which vibrational energy equilibrates, and the reason a 26 fs settle left the
 first walk at 555 K.
+
+## 3. The third walk, at 299 K — the read stands (appended 2026-09-21 11:20 CDT)
+
+Settled 40,000 frames to 300.0 K, NVE from 298.9 K (inside the gate), 527 rows × 128
+molecules (`molsearch1/molsearch.read.txt`):
+
+| lag | purity of top-6 | cross-block | rigid / bound at `k = 6` | own top σ rigid / internal |
+|---|---|---|---|---|
+| 5 fs | 0.98–1.00 | **0.019** | 0.99 | — |
+| 10 | 0.94–1.00 | 0.031 | 0.72 | — |
+| 20 | 0.77–0.98 | 0.061 | 0.63 | — |
+| **50** | 0.89–1.00 | **0.165** | **0.09** | **rigid ≪ internal 0.56** |
+| 100 | 0.68–0.99 | 0.244 | 0.12 | — |
+
+S1 KILLED (`0.01`), S2 between (`0.564`), S3 KILLED (`0.09`) as written; S1′ met at every lag
+for the directions that carry signal, S2′ met at the molecule's cadence (`0.02–0.06`) and
+between at 50 fs — the same picture as at 396 K to the second digit. **The provisional label
+comes off: the molecule is two decoupled closed sectors, the vibrations are the more closed,
+the rigid unit is the object because the fluid carries it.** Branch (b) as written, (a) as
+amended.

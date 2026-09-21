@@ -312,7 +312,7 @@ against a brute referee. `GF1_RESULTS.md`.*
   direction the tier above carries), a tier whose search optimum is
   non-local on the cell graph, or a coupling to a dropped sector that is
   not within budget.* **What the first wording got wrong, and the molecule
-  tier corrected (`MOLSEARCH1_RESULTS.md`, provisional on a 396 K walk):**
+  tier corrected (`MOLSEARCH1_RESULTS.md`, at 396 K and confirmed at 299 K):**
   the object is NOT the search's top rank. The molecule is two decoupled
   closed sectors (cross-coupling 2 % at 5 fs); the vibrations are the MORE
   closed one (threefold at 50 fs) and carry nothing the fluid reads; the
@@ -347,13 +347,12 @@ activation energy at a quarter of water's mobility; what stays open is its
 Stokes–Einstein violation (`~5×` at `k = 0.27 Å⁻¹`) and whether `η(k → 0)`
 closes it; **locality on the cell graph** (the one hypothesis the
 composition theorems leave, Leg B's test); **the second tier under the
-search** — READ preliminarily 2026-09-21 on a 396 K walk the gate refuses
+search** — READ 2026-09-21 at 396 K and confirmed at 299 K
 (`MOLSEARCH1_RESULTS.md`): the molecule is two decoupled closed sectors
 (cross-coupling 2 % at 5 fs), and the rigid unit is the LESS closed one — the
 vibrations out-close it threefold at 50 fs; **W4 as worded is false there in
 its naive reading**: the object is a search-found closed sector SELECTED by
-what the tier above carries, not the search's top rank; W4 is reworded once
-the 293 K walk confirms; **the reasoning-trace dictionary** — the transfer
+what the tier above carries, not the search's top rank; W4 reworded; **the reasoning-trace dictionary** — the transfer
 target named, nothing claimed.
 
 Added 2026-09-20, from VIEW-SEARCH-1: **the driven `η(k)` and `c_s` against

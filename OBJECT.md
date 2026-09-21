@@ -49,7 +49,7 @@ it is the same certificate that existed before the search did. *(Locked 2026-09-
 owner's order; the earlier text above, in which every view was named first, is kept.)*
 
 **Closed is not object** (measured 2026-09-21 at the molecule tier, `MOLSEARCH1_RESULTS.md`,
-provisional on a 396 K walk; locked at the owner's order). The search returns the closed
+at 396 K and CONFIRMED at 299 K the same day; locked at the owner's order). The search returns the closed
 SECTORS of a tier and their coupling — for a water molecule, two: the vibrations and the
 rigid modes, block-diagonal to 2 % at the molecule's cadence. The vibrations are the more
 closed sector by threefold at the liquid's cadence and carry nothing the fluid tier reads;

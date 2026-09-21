@@ -61,6 +61,22 @@ decides; which closed sector is the object is what the rent decides (the join, t
 part the local pieces do not generate). Rule 11's search finds the candidates; the tier
 above chooses among them; nothing is named by hand.
 
+**The residual is the value — measured at the fluid tier** (2026-09-21, `RESPONSE1_AMENDMENT_5.md`;
+locked at the owner's order). The `(n̄, p̄)` cell chart of the liquid, driven at the longest
+wavelength and read by exact number conservation, leaks a third of its signal at slabs one
+molecular diameter wide, above every floor the arithmetic names — a transfer function of
+`0.45` at one diameter, `0.2` at half, `1` at two. The leak is the momentum density's
+molecular layering: the molecules that cross a face are those within half a rattle
+amplitude of it, and their coherent motion is not the slab's mean. Putting the momentum ON
+THE FACES (within `0.25 Å`) restores the amplitude to `1.05` and takes the defect from `0.735`
+to `0.164`, inside the budget, on the 200 m/s control; lagging the slab momentum never helps.
+**The closed coarse chart of a liquid at molecular slab widths is the staggered one — density
+in cells, momentum on faces — and the reason finite-volume hydrodynamics always chose it is
+now a measured price on this model.** Three rules met at once: the gap was the value; the
+next view carried exactly what leaked; and the view that closes carries more of the Record
+(it predicts half the thermal crossings the cell chart cannot). Staked forward as R1″ on the
+arms still running.
+
 ## The shape, stated four times
 
 The object is one shape wearing four sets of clothes. Each is machine-checked where it says

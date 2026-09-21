@@ -26,9 +26,12 @@ coupling to the dropped sectors is within the budget. On this ladder, rung by ru
 |---|---|---|---|
 | molecule | vibrations; rigid modes (block-diagonal, 2 %) | the rigid unit — mass, momentum, orientation | vibrations: REPLACE-0's `+0.325 kT`/water, dynamics unresolved past 40 fs |
 | H-bond network | (not yet searched) | the bond graph the liquid rung reads | — |
-| fluid element | long-wavelength density and current modes | `(n̄, p̄)` per cell, `70–78 %` of the bound; the modes, at the bound | single-particle velocity memory (0.3–0.4 of the bound, carried by no field) |
+| fluid element | long-wavelength density and current modes | **the STAGGERED chart — density in cells, momentum on the faces within `0.25 Å`** (`D = 0.164` on the 200 m/s control at 8 cells); the cell chart `(n̄, p̄)` at `70–78 %` of the bound leaks a third of its signal at one-diameter slabs | the momentum density's molecular layering (transfer `0.45` at one diameter, `0.2` at half); single-particle velocity memory (0.3–0.4 of the bound, carried by no field) |
 
-Each row's "object" column is now a measurement, not a naming. The statuses below stand.
+Each row's "object" column is now a measurement, not a naming, and the fluid row records
+the first residual on this ladder that named its own successor: the cell chart's leak was
+the layering, and the chart that carries it closes (`RESPONSE1_AMENDMENT_5.md`, staked
+forward as R1″ on the arms still running). The statuses below stand.
 
 ## FOUR PHYSICS, ONE OBJECT TEST — consolidated status, 2026-09-03
 

@@ -194,6 +194,33 @@ experimental number. What is measured here is measured at that strength.*
   property of this programme's instruments, and the reason each of the
   three entries above carries its scope on its face.
 
+## Measured, added 2026-09-21 (RESPONSE-1: the residual dialled to known physics)
+
+*Scope: the rigid operator's liquid, 432 waters, driven at `k = 2π/L`; two full
+longitudinal arms (50 and 200 m/s, twelve cycles each); read by exact number
+conservation on the sign-aligned fields. `RESPONSE1_RESULTS.md`,
+`RESPONSE1_AMENDMENT_5.md`.*
+
+- **The cell chart `(n̄, p̄)` does not close within its budget at one
+  molecular diameter, and the leak is a measured transfer function**: the
+  slab-mean momentum predicts the coherent crossings at amplitude `0.45`
+  at one diameter, `0.2` at half, `1` at two — above the discretisation and
+  both shot-noise floors, the same fraction at two amplitudes four times
+  apart. R1 as staked kills on both seeds.
+- **The leak is the momentum density's molecular layering, and the chart
+  that closes is the staggered one.** Momentum read on the faces (molecules
+  within `0.25 Å`) restores the amplitude to `1.05` and takes `D` from `0.735`
+  to `0.164` at 8 cells on the 200 m/s control (`R² = 0.97`); lagging the slab
+  momentum never helps, so it is not a memory. Generalized hydrodynamics
+  from the flux side; finite-volume's own choice, with its reason measured.
+- **The linear and nonlinear arms differ in kind.** At 50 m/s the density
+  and current relax overdamped; at 200 m/s both oscillate at `~720` fs. The
+  control is outside linear response. The model's sound speed is
+  `2,800–3,300` m/s, twice water's.
+- **Process:** the lead inferred "not spatial" from a sinusoid's floor before
+  the test and was wrong (the nineteenth instance); Amendment 4 added the
+  prediction side's noise to the floor and the verdict did not move.
+
 ## Measured, added 2026-09-20 (VIEW-SEARCH-1: the closed view found, not named)
 
 *Scope: LINEAR views in a declared dictionary (2×2×2 cell fields and
@@ -403,5 +430,8 @@ FOUND rather than named: the search on the trajectory returns the closed
 sectors and their coupling in seconds, graded against its own bound, and
 the tier's object is the sector the next view carries — closure is found,
 relevance is paid (2026-09-21, the molecule tier). What costs is the
-trajectory, never the finding. Measured on two tiers — the wager is that
-it holds everywhere the square does.
+trajectory, never the finding. And when a found view leaks, the leak names
+the next one: the liquid's cell chart leaked a third of its signal at one
+molecular diameter, and the chart that carries the leak — momentum on the
+faces — closes (2026-09-21). Measured on two tiers and one residual — the
+wager is that it holds everywhere the square does.

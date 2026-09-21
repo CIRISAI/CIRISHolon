@@ -111,3 +111,9 @@ pilot, at zero compute. Expected and stated now: the pilot's six windows are too
 graded reading and the number will be reported as VOID by count with the absolute `D_cont`
 beside it; the 128-water run at `2×1×1` has enough windows at half the cadence to grade
 G7-form separation, and whether it separates is the reading and is not predicted.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-PLANT-OBS, M-PLANT-SECTOR — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

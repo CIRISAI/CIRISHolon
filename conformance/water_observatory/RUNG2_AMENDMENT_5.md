@@ -82,3 +82,9 @@ same verdict at a larger size. **The scout is 432 waters, on the rigid operator,
 | **PE-3** | a hidden variable that flips faster than the window is BLURRED by the averaged chart (its spread falls by more than half) and STILL FIRES — averaging removes variance, not unpredictability; one that flips slower still fires. *(First written as "its firings fall"; the plant read 0.91 against 0.86 and corrected the sentence, not the instrument.)* |
 | **PE-4** | on a zero-sum thermal carrier the averaged momentum's spread falls as `1/√w` — the averaging is doing what A5.2 says |
 | **PE-5** | `refines(instantaneous, averaged)` fails and is NOT asserted: an average is not a coarsening of a frame, and the ladder self-check applies within a cadence, never across two |
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-CHEAPER-THAN-ITS-PRICE, M-PLANT-OBS, M-PLANT-SECTOR, M-VOLUME-SCALE — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

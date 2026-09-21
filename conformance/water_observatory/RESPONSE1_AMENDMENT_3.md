@@ -47,3 +47,9 @@ cycles against a whole-cycle sd of `0.56`. **Every mode is aligned about its mea
 whole run.** For the currents this changes nothing to noise; for the density it removes the
 frozen pattern from both partitions. The thirteenth instance: a zero that is a theorem's
 constant for one field and a glass's offset for the other.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-COND-PROBE, M-PLANT-OBS — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

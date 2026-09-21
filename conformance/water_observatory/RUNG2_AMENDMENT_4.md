@@ -57,3 +57,9 @@ spatial and blind `D_A`, and G7's separation under each.
 | **PD-2** | on a zero-sum thermal carrier (`S(0) = 1` by construction) `External` with `S(0) = 1` reproduces `Derived` bit for bit |
 | **PD-3** | `refines(Exact, External)` and `refines(Exact, Calibrated)` at every rung — the self-check |
 | **PD-4** | `Calibrated(σ)` with a σ from a DIFFERENT seed than the one graded, asserted in the driver: a calibration drawn from the graded file is refused, not warned |
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-PLANT-OBS, M-PLANT-SECTOR — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

@@ -128,3 +128,9 @@ Its §5 row "priced defect, derived shape: `≈ 1/(s√W)` under a drive" is wro
 corrected in place to `1/√(1 + s²)` on pooled windows, `1/√(1 + C s²)` on a `C`-cycle
 aligned average, with a pointer here. Its 24-core-hour price stands: the signal is there,
 but it is reached by aligning cycles, not by pooling windows.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-CHEAPER-THAN-ITS-PRICE, M-PLANT-OBS, M-PLANT-SECTOR — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

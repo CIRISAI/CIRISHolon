@@ -20,3 +20,9 @@ m/s the response is not linear — the driven density and current oscillate at `
 period) — and a steepened wave carries a second harmonic whose midpoint floor is `0.36`, not
 `0.10`. If the 50 m/s arms read the equilibrium period, the control is outside linear
 response and R1 is graded on the 50 m/s arms at their floor.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-PLANT-OBS — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

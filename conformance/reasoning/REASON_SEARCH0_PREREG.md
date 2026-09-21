@@ -57,3 +57,9 @@ pass over the wild conversation set, ~2 GPU-hours or a day of CPU, is REASON-SEA
 price, and its stakes (Manner decoupled; the deep seven a slower sector; deep→Facts
 one-way; probability view over argmax) are set in the conversation of 2026-09-21 and will
 be preregistered when the data exists.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-DEVICE-CLASS, M-PLANT-OBS, M-PLANT-SECTOR — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

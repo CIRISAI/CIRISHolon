@@ -43,3 +43,9 @@ Correctness (that is the conformance suite: 650 circuits, error 0.0 against qisk
 magic tier (its own head-to-head, `holon-magic-h2h`, and its own open door, Bravyi–Gosset);
 anything about stim's absolute speed on other hardware. It tests one sentence in the stance
 at the strength that sentence is written.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-HOMOG, M-PLANT-OBS — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

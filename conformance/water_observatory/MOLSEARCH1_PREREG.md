@@ -38,3 +38,9 @@ matches the imposed one to `10⁻⁹`.
 (b) S1 or S3 fails: the rigid unit is not the closed view at 50 fs; the singular functions
 are printed and the tier's object is read off them. (c) S2 fails: a slow vibration exists;
 REPLACE-0's price is re-read at the molecule's cadence. (e) a plant fails: nothing read.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-PLANT-OBS, M-PLANT-SECTOR — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

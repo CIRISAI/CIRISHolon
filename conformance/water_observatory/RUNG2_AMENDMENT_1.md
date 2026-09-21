@@ -119,3 +119,9 @@ NO on every grid (128 waters admit no admissible cell); the `2×1×1` binned cha
 more collisions than the exact one and its `D_A` is reported beside the exact `0.62–0.74`;
 the `2×2×1` and `2×2×2` binned charts reach G4 where the exact ones did not. Whether any of
 them is inside `β` is the reading, and it is not predicted.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-MAINTENANCE-LENS, M-PLANT-OBS, M-PLANT-SECTOR, M-STALE-INSTRUMENT — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

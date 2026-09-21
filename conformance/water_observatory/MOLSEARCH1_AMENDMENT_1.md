@@ -46,3 +46,9 @@ as `molsearch1_hot_555K/` (270 rows) and not read. The walk is relaunched with 1
 frames (260 fs, five time constants) and 20,000 NVE frames (0.5 ps, 500 rows × 128
 molecules), and the temperature at the start of NVE is printed and must be within 10 % of
 293 K or the walk is refused. The same fault as the scout pilot's warm boxes, one tier down.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-BARE-CHARGE, M-PLANT-OBS, M-PLANT-SECTOR — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

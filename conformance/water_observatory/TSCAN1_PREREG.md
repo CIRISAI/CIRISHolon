@@ -33,3 +33,9 @@ glass at 293 K and a scan at `T*` is the next fluid campaign. (b) S1 killed: not
 the frozen pattern is investigated as a finite-size or operator artefact. (c) S2 killed:
 the operator is the cause; the flexible scan is owed. (d) a point refused on temperature:
 reported, the others read.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-PLANT-OBS, M-PLANT-SECTOR — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

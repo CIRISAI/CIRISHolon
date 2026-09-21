@@ -119,3 +119,9 @@ R3 reports `ρΓ/k²` as the k-dependent viscosity with the band applied as stak
 as the shear-wave speed with no band; the classification is the finding**, and the
 hydrodynamic `η` would need the larger box §0 already named. The 3.14-ps cycles of the arms
 hold three to six periods of such a wave, so the tail check will say whether it relaxed.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-PLANT-OBS, M-PLANT-SECTOR — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

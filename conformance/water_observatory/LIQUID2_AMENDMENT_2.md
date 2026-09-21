@@ -87,3 +87,9 @@ when that quantity moves.* Amendment 1's band moved with the thermostat's FLUCTU
 this bar moves with the thermostat's WORK. The general repair in both cases was the same: keep
 the derived quantity, and give it a floor or a derivation that belongs to the arm in front of
 you rather than to the arm it was measured on.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-MAINTENANCE-LENS, M-PLANT-OBS — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

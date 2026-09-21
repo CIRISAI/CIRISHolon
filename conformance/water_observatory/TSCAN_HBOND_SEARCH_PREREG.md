@@ -33,3 +33,9 @@ momentum CHANGE over 50 fs (the force the network exerts) with held-out `R²` at
 re-paired null (kill `< 1.5×`: the network carries nothing the momentum law needs, and the
 rung is a structural readout as RUNG-1 found, not an object of the fluid). **Plants:** lag
 0; the re-paired null; a synthetic ensemble with a planted bond→force coupling read to 20 %.
+
+---
+*Audit footer, added 2026-09-21 for `Audit/prereg_audit.py` after CI read red since 2026-09-19; no stake, gate, plant or number above moved.*
+witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
+**misfits:** M-PLANT-OBS, M-PLANT-SECTOR — the registered ids this text contacts by keyword, cited at the audit's demand.
+Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.

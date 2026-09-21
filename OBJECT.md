@@ -36,46 +36,66 @@ quantity the next view must carry (`viewClosed_comp`: closed views compose). Mea
 dispersion energy, harvested to a `1e-12` floor (`EMBED2_RESULTS.md`). This is the same fact
 the ladder of tables has always used: a table is a harvested residual.
 
-**The view is found, not named** (measured 2026-09-20, `VIEW_SEARCH_RESULTS.md`). The object
-at dimension `k` is the top-`k` singular subspace of the tier's transfer operator at the
-tier's cadence, with `k` the smallest dimension whose defect is within the budget — the
-variational principle for Markov processes (Wu & Noé 2020), adopted. Run on the liquid with
-no chart named, the search returned the long-wavelength density and current modes to
-`R² ≥ 0.99`: the charts this program had staked by hand were its answer, and the cell chart
-it had staked most was `70–78 %` of the bound. Two human choices remain — the dictionary and
-the cadence — and both are graded by the same bound. The search proposes; the certificate
-(held-out data, the time-shuffled placebo, the nulls, composition by locality) disposes, and
-it is the same certificate that existed before the search did. *(Locked 2026-09-20 at the
-owner's order; the earlier text above, in which every view was named first, is kept.)*
+## The procedure, as arithmetic — the one fold the three measurements share (2026-09-21, locked at the owner's order)
 
-**Closed is not object** (measured 2026-09-21 at the molecule tier, `MOLSEARCH1_RESULTS.md`,
-at 396 K and CONFIRMED at 299 K the same day; locked at the owner's order). The search returns the closed
-SECTORS of a tier and their coupling — for a water molecule, two: the vibrations and the
-rigid modes, block-diagonal to 2 % at the molecule's cadence. The vibrations are the more
-closed sector by threefold at the liquid's cadence and carry nothing the fluid tier reads;
-the rigid modes are the less closed and are the object, because mass and momentum sum into
-the fluid's fields. **So the tier's object is the closed sector whose quantities the next
-view carries, and it is licensed when its coupling to the dropped sectors is within the
-budget** — REPLACE-0's price, measured, was that coupling. Closure is what the search
-decides; which closed sector is the object is what the rent decides (the join, the +1: the
-part the local pieces do not generate). Rule 11's search finds the candidates; the tier
-above chooses among them; nothing is named by hand.
+*Provenance, line by line: `Closed` and composition are PROVED (`Object.lean`, `StatClosure.lean`);
+the bound is ADOPTED (the variational principle for Markov processes, Wu & Noé 2020, with TICA and
+Markov-state models before it) and credited; relevance and the +1 are DEFINED here and MEASURED
+on three rungs. The prose that preceded this section on 2026-09-20/21 is folded into the instance
+table below; nothing it claimed has moved.*
 
-**The residual is the value — measured at the fluid tier** (2026-09-21, `RESPONSE1_AMENDMENT_5.md`;
-locked at the owner's order). The `(n̄, p̄)` cell chart of the liquid, driven at the longest
-wavelength and read by exact number conservation, leaks a third of its signal at slabs one
-molecular diameter wide, above every floor the arithmetic names — a transfer function of
-`0.45` at one diameter, `0.2` at half, `1` at two. The leak is the momentum density's
-molecular layering: the molecules that cross a face are those within half a rattle
-amplitude of it, and their coherent motion is not the slab's mean. Putting the momentum ON
-THE FACES (within `0.25 Å`) restores the amplitude to `1.05` and takes the defect from `0.735`
-to `0.164`, inside the budget, on the 200 m/s control; lagging the slab momentum never helps.
-**The closed coarse chart of a liquid at molecular slab widths is the staggered one — density
-in cells, momentum on faces — and the reason finite-volume hydrodynamics always chose it is
-now a measured price on this model.** Three rules met at once: the gap was the value; the
-next view carried exactly what leaked; and the view that closes carries more of the Record
-(it predicts half the thermal crossings the cell chart cannot). Staked forward as R1″ on the
-arms still running.
+```
+SETTING
+  X            the fine state space; T : X → X the step; τ the cadence (a lag)
+  Φ : X → R^d  the dictionary — DECLARED, one of the two human choices (τ is the other)
+  a view       v = Wᵀ Φ,  W ∈ R^{d×k};   its law h = least squares  v(x) ↦ v(T x)
+               [Closed v T ≔ ∃ h, v∘T = h∘v]
+
+CLOSURE  (adopted)
+  C₀₀ = E[Φ Φᵀ],  C₀τ = E[Φ (Φ∘T)ᵀ],  Cττ = E[(Φ∘T)(Φ∘T)ᵀ]         ridge on the diagonals
+  K   = C₀₀^{-½} C₀τ Cττ^{-½},   singular values σ₁ ≥ σ₂ ≥ …
+  score(v) = Σᵢ σᵢ(K_v)²           K_v the same construction on v's own coordinates
+  bound(k) = Σ_{i≤k} σᵢ(K)²        attained by the top-k left singular subspace of K
+  D_v²     = 1 − score(v)/k        the relative residual of v's law, whitened;  closed within budget: D_v ≤ β
+  fraction(v) = score(v)/bound(k), HELD OUT (train covariances; the test data's own)
+  sectors  blocks A, B of Φ with ‖K_AB‖/‖K‖ < ε are decoupled — each closed on its own
+  null     the time-shuffled (or cross-chain re-paired) Φ: score → 0
+
+RELEVANCE  (defined; the level above declares it)
+  the level above carries Q (conserved densities) under a law L(Q, J) = 0
+     e.g. continuity   ΔN_c = − Σ_{faces f of c} dir_f ∫_window J_f dt
+  for each representation R of J in the dictionary:
+     ρ_R = held-out R² of L's prediction of ΔQ from R;   α_R = ⟨ΔQ·pred_R⟩ / ⟨pred_R²⟩
+  carrier of J = argmax_R ρ_R          (NOT argmax closure — the two rank oppositely on the fluid)
+
+THE OBJECT at scale (a, τ)
+  (Q, M, J):  Q the densities the level above carries;  M the search's closed sector that
+              carries the momentum law;  J the flux the conservation law selects
+  the +1      J ∉ I(M), I the reconstruction of faces from slabs: ‖J − I(M)‖/‖J‖ is the part the
+              local pieces do not generate, counted once — measured as 1 − α_{I(M)}
+  the price   of dropping a sector = ‖K_AB‖/‖K‖;   of a coarser chart = 1 − α
+
+COMPOSITION  (proved; locality on the cell graph is the hypothesis Leg B tests)
+  pooled D² over cells = Σ O_c D_c² / Σ O_c ≤ max_c D_c²
+  ‖Tⁿx − hⁿx‖ ≤ ε Σ_{i<n} Kⁱ ≤ n ε   for a non-expansive law
+```
+
+| rung | Φ, τ | the search found | the law selected | fraction of the bound / price |
+|---|---|---|---|---|
+| molecule (`MOLSEARCH1_RESULTS.md`) | internal coordinates and rates, COM and angular velocity; 5–100 fs | two sectors, cross `0.02`; the vibrations the MORE closed | the rigid unit — mass and momentum are what the fluid carries | rigid view `0.09` of the bound at 50 fs; price `0.02` |
+| fluid, the chart (`VIEW_SEARCH_RESULTS.md`) | cell fields and first-harmonic modes; 100 fs | the density and current modes, at the bound, no chart named | the cell chart, because it sums to the fields | cell chart `0.70–0.78` |
+| fluid, the flux (`RESPONSE1_AMENDMENT_5.md`, `auto_dictionary.py`) | occupancies, slab, face and lagged momenta; 200 fs | the occupancy pattern and the LAGGED slab drift; slab at `1.00` of the bound | the `0.25 Å` face flux: `ρ = 0.69` against the slab's `0.07`, monotone in the face width | face view `0.78–0.85` of the bound; price of reconstructing it from slabs `0.55` at one diameter, `0.8` at half, `0` at two |
+
+**What the table says in one line.** Closure is found by the search; the object is the closed
+sector the level above carries; the two rankings can oppose each other within one tier, and
+when they do the law decides (the fluid's flux: the bound ranked the slab first and the
+conservation law ranked it last). The residual of a chart names its successor: the cell chart's
+leak was the layering, and the chart that carries the leak closes (`D 0.735 → 0.164` on the
+200 m/s control). **Two gaps the formula exposes, open:** relevance is defined per conservation
+law — a level whose law is a CONSTRAINT rather than a conservation (the reasoning tier: the
+covenant, the coherence ratchet's target) needs `ρ` redefined as the carrier's held-out
+prediction of constraint satisfaction, and that is the A3+ tier's object; and whether the
+selected carrier must also sit within closure budget is open — the fluid says no (`0.78`).
 
 ## The shape, stated four times
 
@@ -102,8 +122,7 @@ to `2e-12`. A reading, marked as one: it adds no primitive and names no new kill
 
 1. **Closure is certified, not assumed.** A tier ships with its battery: construction premise,
    budget (coarse divergence growth ratio ≤ 1.05 over its rise epoch), witness-pair hunt.
-   *Added 2026-09-20:* and the certified view is the search's optimum, not the stake's guess
-   (rule 11).
+   *Added 2026-09-20:* and the certified view is found and selected, never guessed (rule 11).
 2. **Exact closure is not expected; budgets are.** The claim is never "zero leak"; it is
    "non-expanding leak within the stated budget" (`Budget.lean`).
 3. **Charts declare their conditioning** (`sum_perturb_le`, `sum_perturb_attained`,
@@ -158,16 +177,10 @@ declarations for every exposed aggregate; per-conserved-quantity gates with plan
 sensitivity (a gate that cannot fire on a plant is refused); for quantum strata, the retract
 test and the QASM suite to the stratum's declared boundary.
 
-11. **The view is searched before it is staked** (2026-09-20, `VIEW_SEARCH_PREREG.md`,
-    `StatClosure.lean`). No chart is preregistered on a tier until the variational search on
-    a DECLARED dictionary has been run at the tier's cadence on banked data; a named chart is
-    banked with its fraction of the bound beside it; the dictionary and the cadence are
-    stated as the two choices that remain. The certificate is separate from the search —
-    held out by seed, the time-shuffled placebo (a position-blind one carries single-particle
-    velocity memory and is not a null), the nulls, and composition: the pooled defect of a
-    lattice is at most its worst cell's and `n` steps of the coarse law drift by at most
-    `n·ε` (proved, no independence assumed); locality on the cell graph is the hypothesis
-    the held-out boundary histories test. Measured once, on one tier, for linear views.
+11. **The view is searched before it is staked, and the level above selects it** — "The
+    procedure, as arithmetic" above: search on a declared dictionary at the tier's cadence,
+    a named chart banked with its fraction of the bound, the carrier of each law chosen by
+    `ρ`, the certificate (held out, the time-shuffled null, composition) separate from both.
 
 ## The maximal steelman — five moves and the join, each with its kill
 
@@ -303,6 +316,11 @@ emergent object; "exact-first" is about arithmetic and formulation, never afford
 *Kept so the next fold is found by looking here first. Every entry is one square in different
 clothes; a candidate fold that cannot be written as entries composed is the signal to look
 harder, not to add a primitive.*
+
+- **2026-09-21 — search, select, price.** Five prose statements of 09-20/21 ("found, not
+  named"; "closed is not object"; "the residual is the value"; rule 11's long form; W4's first
+  wording) folded into "The procedure, as arithmetic": one formula block, one instance table.
+  The +1 is the flux the slabs cannot reconstruct; the join is the law the level above owes.
 
 | entry | witness |
 |---|---|

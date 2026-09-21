@@ -53,9 +53,11 @@ walks: numbers to `20–30 %`, sharpened by the arms.
 
 Each seed's density modes sit `1–2` counts off zero for its whole 5–6 ps against a sd of
 `1.4–2.7` — a frozen long-wavelength pattern; the box does not rearrange on that time. The
-search, uncentred, read those as 20 ps modes. They are Held rather than Closed views of a
-liquid that is, on 6 ps, a glass — consistent with LIQUID-1's refused diffusion and worth
-one line in the model's record.
+search, uncentred, read those as 20 ps modes. They are Held rather than Closed views on
+6 ps. *(Corrected 2026-09-20 evening: NOT a glass. `TSCAN-1` read `D = 6.5 × 10⁻¹⁰` m²/s
+at 312 K; `r = 0.4–0.65` on 5 ps is a mode with `τ_c ≈ 1–2` ps, and the diffusive relaxation
+of this wavelength is `95–215` ps for this model, `27–61` for water. The offset is what any
+liquid shows here. The fifteenth instance.)*
 
 ## 4. Branch
 

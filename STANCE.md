@@ -214,10 +214,12 @@ with its amendment's six corrections on building.*
   the omission costs nothing on the rent) and `4.4–5.8 × 10⁻⁴` at `0.27`;
   the driven arms' first partial reads (`3.1, 4.0, 6.8 × 10⁻⁴`) bracket it.
   The density mode oscillates at `~1.6` ps at 432 waters, `c_s ≈ 1470` m/s.
-- **The carrier is a glass on 40 ps.** Each seed's longest-wavelength
-  density pattern is frozen for its whole run; the box has never shown a
-  diffusion constant. The liquid's phase at 293 K on this model is
-  unmeasured (`OBJECT.md`, "what the record does not license").
+- **The carrier is a liquid, not a glass** (corrected the same evening,
+  `TSCAN1_RESULTS.md`): `D = 6.5 × 10⁻¹⁰` m²/s at 312–317 K, a quarter of
+  water's, Arrhenius with water's `19` kJ/mol to 526 K. The morning's
+  "frozen for 40 ps" read a 5 ps offset as a phase; its arithmetic says
+  `τ_c ≈ 1–2` ps, and any liquid's longest-wavelength density mode at this
+  box size relaxes on tens of picoseconds. The fifteenth instance, kept.
 - **A position-blind placebo is not a null**: it carries single-particle
   velocity memory, `0.3–0.4` of the bound; the time-shuffled placebo reads
   `0.04`. S4 fired as written and was re-staked as a separation the same
@@ -327,11 +329,11 @@ LIQUID-1, priced out of LIQUID-2, unresolved by REPLACE-0 — ~2,500
 core-hours on both arms); **the node-G closure certificate** for the
 H-bond tier, which no reading provides.
 
-Added 2026-09-20, from the search: **the model's own phase diagram** — its
-diffusion and density-pattern persistence against temperature, the
-cheapest and most consequential open item (a few core-hours at 128 waters;
-until it is read, "water" is a name the carrier has not earned above the
-molecule tier); **locality on the cell graph** (the one hypothesis the
+Added 2026-09-20, from the search: ~~the model's own phase diagram~~ — READ
+the same evening (`TSCAN1_RESULTS.md`): a diffusing liquid with water's
+activation energy at a quarter of water's mobility; what stays open is its
+Stokes–Einstein violation (`~5×` at `k = 0.27 Å⁻¹`) and whether `η(k → 0)`
+closes it; **locality on the cell graph** (the one hypothesis the
 composition theorems leave, Leg B's test); **the second tier under the
 search** (the exact tiers: does the search find the molecule's closed view
 from its own trajectory?); **the reasoning-trace dictionary** — the transfer

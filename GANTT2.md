@@ -799,6 +799,20 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## TSCAN-1 read, and the glass retracted (2026-09-20, evening)
+
+`TSCAN1_RESULTS.md`: the rigid operator at 128 waters diffuses — `D = 5.4, 7.7 × 10⁻¹⁰` m²/s at
+312–317 K (a quarter of water's), `2.1–2.5 × 10⁻⁹` at 360, `4.5–4.8` at 400–412, `1.1–1.3 × 10⁻⁸`
+at 514–526; Arrhenius with **`E_a = 19.0` kJ/mol**, water's barrier at a third of its
+mobility. S1 neither met nor killed, S2 met. **The morning's "glass on 40 ps" was wrong** —
+a 5 ps offset read as a phase when its own arithmetic (`r ≈ √(τ_c/T)`) says `τ_c ≈ 1–2` ps and
+the diffusive time of that wavelength is `95–215` ps for this model and `27–61` for water;
+retracted in OBJECT, STANCE and VIEW_SEARCH_RESULTS with the note kept (the fifteenth
+instance). New: Stokes–Einstein `Dη/T` at `~0.13` of water's at `k = 0.27 Å⁻¹`, carried as a
+reading. MOLSEARCH-1's first walk entered NVE at 555 K after a 26 fs settle under a 48 fs
+thermostat and was relaunched with a 260 fs settle (A3). The machine slept ~10 h in the
+day; every arm survived it.
+
 ## RESPONSE-1: five arms killed by a disk-full event at 09:02, banked partial and relaunched; the partial arms read (2026-09-20, morning)
 
 At 09:02:32–42 CDT five of the eight arms panicked on a walk append (`No space left on

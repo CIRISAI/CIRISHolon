@@ -324,12 +324,14 @@ one carrier and one basis; its dependence on the field a core sits in is unmeasu
 next freeze. Every constant is a PRICE measured in a regime; the arithmetic-regime law is what
 keeps a price from becoming a wall.
 
-- **That the liquid carrier is water above the molecule tier.** Its phase at the imposed
-  293 K and density is UNMEASURED: it does not rearrange its longest-wavelength density in
-  40 ps and no campaign has read a diffusion constant on it; a minimal-basis water binds too
-  strongly (COMPARE-0), so at 293 K it is likely supercooled relative to its own melting
-  point. Every fluid reading is of a driven element of THIS model's liquid until a
-  temperature scan on its own diffusion says otherwise (2026-09-20).
+- **That the liquid carrier is water above the molecule tier.** MEASURED 2026-09-20 evening
+  (`TSCAN1_RESULTS.md`): it is a LIQUID that diffuses, `D = 6.5 × 10⁻¹⁰` m²/s at 312–317 K —
+  a quarter of water's — with water's activation energy (`19.0` kJ/mol, Arrhenius over
+  312–526 K). Not a glass: the morning's "does not rearrange in 40 ps" was the lead's
+  overreach from a 5 ps offset whose own arithmetic says `τ_c ≈ 1–2` ps, retracted the same
+  day (the fifteenth instance). Every fluid reading is of a driven element of a liquid
+  three to four times more sluggish than water at the same temperature, with a
+  Stokes–Einstein ratio `~0.13` of water's at `k = 0.27 Å⁻¹`.
 
 ## Where the weight sits — the lead's calibrated read
 

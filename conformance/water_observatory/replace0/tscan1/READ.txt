@@ -1,0 +1,23 @@
+T293_seed0: exit 0 | scout: rigid settle SETTLED by criterion at step 9000 (3333.3 fs)
+T293_seed1: exit 0 | scout: rigid settle SETTLED by criterion at step 6000 (2222.2 fs)
+T350_seed0: exit 0 | scout: rigid settle SETTLED by criterion at step 7500 (2777.8 fs)
+T350_seed1: exit 0 | scout: rigid settle SETTLED by criterion at step 5000 (1851.9 fs)
+T400_seed0: exit 0 | scout: rigid settle SETTLED by criterion at step 4000 (1481.5 fs)
+T400_seed1: exit 0 | scout: rigid settle SETTLED by criterion at step 4500 (1666.7 fs)
+T500_seed0: exit 0 | scout: rigid settle SETTLED by criterion at step 4000 (1481.5 fs)
+T500_seed1: exit 0 | scout: rigid settle SETTLED by criterion at step 4000 (1481.5 fs)
+# TSCAN-1 read
+#  T(K) seed  T_rigid(K)  D (m^2/s)  linearity  r=|offset|/sd  MSD(2.5ps) A^2
+   293 0     311.6   5.355e-10   0.982    0.65    1.37
+   293 1     317.3   7.743e-10   0.983    0.40    1.69
+   350 0     356.4   2.132e-09   0.985    0.66    3.73
+   350 1     362.0   2.547e-09   0.993    0.33    4.33
+   400 0     399.8   4.538e-09   0.994    0.29    7.31
+   400 1     412.2   4.778e-09   0.992    0.55    7.79
+   500 0     513.8   1.125e-08   0.997    0.38    16.85
+   500 1     526.2   1.257e-08   0.995    0.13    18.28
+
+S1: D(293) = 6.55e-10 vs 0.3e-9 (kill >= 1.0e-9): between - neither met nor killed
+S2: D(500)/D(293) = 18.2 (needs > 5) and r(500) = 0.26 (needs < 0.5): MET
+
+[exited with code 0]

@@ -1,0 +1,63 @@
+# REASON-SEARCH-0 (all consecutive-id pairs within a task): 368 tasks, 4548 transitions, dictionary 10
+
+== lag 1 thought(s): 4548 pairs; dictionary top σ [0.662 0.431 0.385 0.346 0.337 0.31 ]
+   σ_1 = 0.662: depth -1.12, act_SPEAK -0.29, act_TASK_COMPLETE +0.21
+   σ_2 = 0.431: log_tok +1.32, act_TASK_COMPLETE +1.04, act_PONDER -0.54
+   σ_3 = 0.385: act_TASK_COMPLETE -1.25, act_SPEAK -1.16, plaus +0.93
+   view                     k  held-out   bound_k  fraction
+   depth alone              1     0.378     0.425     0.890
+   DMA sector               4     0.511     0.752     0.680
+   process sector           6     0.995     1.051     0.946
+   action one-hot           3     0.344     0.671     0.513
+   DMA sector time-shuffled within task: 0.147 (ratio real/shuffled 3.49)
+   blocks (depth removed): cross ‖K_PD‖/‖K‖ = 0.282; ‖K_{P→D}‖ = 0.295, ‖K_{D→P}‖ = 0.055, ratio P→D / D→P = 5.38
+   ordering check: depth increments by exactly one on 952/4548 = 0.209 of within-task transitions (S1's kill clause 'not ordered' is refuted directly if this is near 1; per-task centring, added on building, is what removes a counter's closure from the pooled linear law)
+   S1 depth alone ≥ 0.9 (kill < 0.5): 0.378 -> KILL
+   S2 cross-block < 0.2 (kill ≥ 0.4): 0.282 -> between
+   S3 DMA real/shuffled ≥ 3 (kill < 1.5): 3.49 -> MET
+   S4 P→D / D→P ≥ 2 (kill ≤ 0.5): 5.38 -> MET
+
+== lag 2 thought(s): 4180 pairs; dictionary top σ [0.549 0.293 0.233 0.202 0.186 0.167]
+   σ_1 = 0.549: depth -1.08, act_TASK_COMPLETE +0.60, plaus -0.16
+   σ_2 = 0.293: act_SPEAK -3.59, act_TASK_COMPLETE -3.02, act_PONDER -2.43
+   σ_3 = 0.233: align +0.72, act_PONDER +0.66, plaus +0.48
+   view                     k  held-out   bound_k  fraction
+   depth alone              1     0.245     0.292     0.841
+   DMA sector               4     0.184     0.451     0.408
+   process sector           6     0.568     0.574     0.989
+   action one-hot           3     0.189     0.400     0.474
+   DMA sector time-shuffled within task: 0.205 (ratio real/shuffled 0.90)
+   blocks (depth removed): cross ‖K_PD‖/‖K‖ = 0.632; ‖K_{P→D}‖ = 0.619, ‖K_{D→P}‖ = 0.129, ratio P→D / D→P = 4.81
+
+
+#### LABELLED EXTRA (on building): only parent->child links, consecutive ids with depth + 1 - the chain the prereg assumed; 21 % of the pairs
+# REASON-SEARCH-0 (chain links only): 368 tasks, 4548 transitions, dictionary 10
+
+== lag 1 thought(s): 959 pairs; dictionary top σ [0.848 0.704 0.611 0.542 0.494 0.436]
+   σ_1 = 0.848: depth +0.79, act_TASK_COMPLETE -0.60, act_SPEAK +0.53
+   σ_2 = 0.704: depth +0.55, act_SPEAK -0.46, act_TASK_COMPLETE +0.20
+   σ_3 = 0.611: act_TASK_COMPLETE +1.30, log_tok +1.18, align +0.66
+   view                     k  held-out   bound_k  fraction
+   depth alone              1     1.000     0.700     1.429
+   DMA sector               4     1.058     1.775     0.596
+   process sector           6     2.008     2.372     0.846
+   action one-hot           3     0.589     1.419     0.416
+   DMA sector time-shuffled within task: 1.777 (ratio real/shuffled 0.60)
+   blocks (depth removed): cross ‖K_PD‖/‖K‖ = 0.306; ‖K_{P→D}‖ = 0.523, ‖K_{D→P}‖ = 0.202, ratio P→D / D→P = 2.59
+   ordering check: depth increments by exactly one on 952/4548 = 0.209 of within-task transitions (S1's kill clause 'not ordered' is refuted directly if this is near 1; per-task centring, added on building, is what removes a counter's closure from the pooled linear law)
+   S1 depth alone ≥ 0.9 (kill < 0.5): 1.000 -> MET
+   S2 cross-block < 0.2 (kill ≥ 0.4): 0.306 -> between
+   S3 DMA real/shuffled ≥ 3 (kill < 1.5): 0.60 -> KILL
+   S4 P→D / D→P ≥ 2 (kill ≤ 0.5): 2.59 -> MET
+
+== lag 2 thought(s): 4180 pairs; dictionary top σ [0.549 0.293 0.233 0.202 0.186 0.167]
+   σ_1 = 0.549: depth -1.08, act_TASK_COMPLETE +0.60, plaus -0.16
+   σ_2 = 0.293: act_SPEAK -3.59, act_TASK_COMPLETE -3.02, act_PONDER -2.43
+   σ_3 = 0.233: align +0.72, act_PONDER +0.66, plaus +0.48
+   view                     k  held-out   bound_k  fraction
+   depth alone              1     0.245     0.292     0.841
+   DMA sector               4     0.184     0.451     0.408
+   process sector           6     0.568     0.574     0.989
+   action one-hot           3     0.189     0.400     0.474
+   DMA sector time-shuffled within task: 0.205 (ratio real/shuffled 0.90)
+   blocks (depth removed): cross ‖K_PD‖/‖K‖ = 0.632; ‖K_{P→D}‖ = 0.619, ‖K_{D→P}‖ = 0.129, ratio P→D / D→P = 4.81

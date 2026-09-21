@@ -37,3 +37,13 @@ three-seed averages exist; per-arm rows are readings of one seed. The five parti
 4. **One null fired marginally** (the undriven density quadrature on L seed 1 at `4σ` against
    a `3σ` bar). Under Amendment 3 a null fires against noise; at SNR 5.7 on the density this
    is at the edge and is carried as such, not as a conviction, pending the other seeds.
+
+## The closure test on the two arms (2026-09-21 evening; `RESPONSE1_AMENDMENT_5.md`)
+
+Predicting each cell's aligned occupancy change from the momentum of the molecules within
+`0.25 Å` of its faces, instead of the slab means, returns the amplitude fidelity to `1` and
+takes `D` from `0.735` to **`0.164`** on the 200 m/s control at 8 cells (`R² = 0.97`), and from
+`0.846` to `0.492` on the 50 m/s seed; lagging the slab momentum never helps. The residual
+R1 measured is the momentum density's molecular layering at one-diameter slabs, and the
+closed chart is the staggered one. R1 as staked still KILLS; R1″ is staked on the remaining
+arms with `h` fixed.

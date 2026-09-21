@@ -799,6 +799,20 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## The residual named: the momentum belongs on the faces (2026-09-21, evening)
+
+On the two full longitudinal arms, predicting the aligned occupancy change from the
+molecules within `0.25 Å` of each face instead of the slab means restores the amplitude
+fidelity (`α = 1.05`) and takes `D` from `0.735` to **`0.164`** at 8 cells on the 200 m/s
+control (`R² 0.97`), `0.846 → 0.492` at 50 m/s; lagging the slab momentum never helps
+(`r1_closure_test.py`, `RESPONSE1_AMENDMENT_5.md`). The third of the signal the `(n̄, p̄)`
+chart leaks is the momentum density's molecular layering at one-diameter slabs —
+generalized hydrodynamics from the flux side — and the closed chart is the staggered one
+finite-volume hydrodynamics always used. R1 as staked kills; R1″ (the face chart, `h` fixed,
+`D ≤ 0.2` on the three-seed 200 m/s average) is staked on the eight arms still to land. The
+nineteenth instance: "not spatial" inferred from a sinusoid's floor, when the structure is
+the layering that refinement exposes.
+
 ## The first full arms, the molecule tier confirmed, and the search reaching the reasoning pipeline (2026-09-21)
 
 **Fluid.** Two full arms read (`RESPONSE1_RESULTS.md`): the 200 m/s control oscillates at

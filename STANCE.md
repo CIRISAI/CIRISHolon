@@ -335,8 +335,13 @@ activation energy at a quarter of water's mobility; what stays open is its
 Stokes–Einstein violation (`~5×` at `k = 0.27 Å⁻¹`) and whether `η(k → 0)`
 closes it; **locality on the cell graph** (the one hypothesis the
 composition theorems leave, Leg B's test); **the second tier under the
-search** (the exact tiers: does the search find the molecule's closed view
-from its own trajectory?); **the reasoning-trace dictionary** — the transfer
+search** — READ preliminarily 2026-09-21 on a 396 K walk the gate refuses
+(`MOLSEARCH1_RESULTS.md`): the molecule is two decoupled closed sectors
+(cross-coupling 2 % at 5 fs), and the rigid unit is the LESS closed one — the
+vibrations out-close it threefold at 50 fs; **W4 as worded is false there in
+its naive reading**: the object is a search-found closed sector SELECTED by
+what the tier above carries, not the search's top rank; W4 is reworded once
+the 293 K walk confirms; **the reasoning-trace dictionary** — the transfer
 target named, nothing claimed.
 
 Added 2026-09-20, from VIEW-SEARCH-1: **the driven `η(k)` and `c_s` against

@@ -1,0 +1,26 @@
+phase atomwalk, out /home/emoore/CIRISHolon/conformance/water_observatory/replace0/molsearch1, observatory ../conformance/water_observatory
+seed 0 of 3: 0x5245504c41434530
+atomwalk: 384 atoms at n_cells = 4, box 29.5936 bohr, seed 0x5245504c41434530; settle 10000, then 20000 NVE frames, a row every 38 (0.990 fs)
+  settling frame    500: T  390.3 K, cross-unit U 1.839427e-4 Ha/water
+  settling frame   1000: T  477.7 K, cross-unit U -1.894341e-3 Ha/water
+  settling frame   1500: T  442.7 K, cross-unit U -1.686068e-3 Ha/water
+  settling frame   2000: T  392.8 K, cross-unit U -1.523736e-3 Ha/water
+  settling frame   2500: T  420.0 K, cross-unit U -2.069303e-3 Ha/water
+  settling frame   3000: T  397.2 K, cross-unit U -2.738307e-3 Ha/water
+  settling frame   3500: T  380.6 K, cross-unit U -2.625596e-3 Ha/water
+  settling frame   4000: T  405.0 K, cross-unit U -3.012919e-3 Ha/water
+  settling frame   4500: T  386.3 K, cross-unit U -3.465986e-3 Ha/water
+  settling frame   5000: T  382.9 K, cross-unit U -3.488197e-3 Ha/water
+  settling frame   5500: T  365.1 K, cross-unit U -3.774243e-3 Ha/water
+  settling frame   6000: T  371.1 K, cross-unit U -4.078080e-3 Ha/water
+  settling frame   6500: T  388.5 K, cross-unit U -4.389851e-3 Ha/water
+  settling frame   7000: T  358.0 K, cross-unit U -4.544102e-3 Ha/water
+  settling frame   7500: T  375.7 K, cross-unit U -4.785849e-3 Ha/water
+  settling frame   8000: T  379.4 K, cross-unit U -5.098594e-3 Ha/water
+  settling frame   8500: T  351.4 K, cross-unit U -5.109410e-3 Ha/water
+  settling frame   9000: T  344.5 K, cross-unit U -5.007947e-3 Ha/water
+  settling frame   9500: T  356.6 K, cross-unit U -5.536160e-3 Ha/water
+  settling frame  10000: T  338.8 K, cross-unit U -5.417845e-3 Ha/water
+  atomwalk frame   10000: T  372.0 K, E drift 6.42e-10 Ha/atom, 4822 s
+  atomwalk frame   20000: T  396.5 K, E drift 7.00e-11 Ha/atom, 9317 s
+atomwalk: done, 527 rows in 9317 s; E drift 7.00e-11 Ha/atom

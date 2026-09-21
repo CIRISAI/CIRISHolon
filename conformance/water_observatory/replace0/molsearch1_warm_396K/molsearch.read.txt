@@ -1,0 +1,14 @@
+# MOLSEARCH-1 on /home/emoore/CIRISHolon/conformance/water_observatory/replace0/molsearch1_warm_396K: 527 rows at 0.990 fs, 384 atoms, 128 molecules
+    A1: purity of top-6 singular functions ['1.00', '0.99', '1.00', '1.00', '0.98', '0.99'] (S1' stake: every one ≥ 0.9; kill: any < 0.7) | cross-block ‖K_RI‖/‖K‖ = 0.024 (S2' stake < 0.1; kill ≥ 0.3)
+lag   5.0 fs: dictionary σ [0.981 0.972 0.971 0.969 0.958 0.95 ] | top-3 R² rigid ['0.00', '0.99', '1.00'] internal ['1.00', '0.02', '0.01'] | rigid view held-out 4.94/bound 4.61 = 1.07; internal 3.98/4.61 = 0.86 | own top σ: rigid 0.972 internal 0.981
+    A1: purity of top-6 singular functions ['0.72', '0.83', '0.76', '0.65', '0.73', '1.00'] (S1' stake: every one ≥ 0.9; kill: any < 0.7) | cross-block ‖K_RI‖/‖K‖ = 0.021 (S2' stake < 0.1; kill ≥ 0.3)
+lag  10.0 fs: dictionary σ [0.918 0.91  0.908 0.906 0.902 0.827] | top-3 R² rigid ['0.31', '0.83', '0.76'] internal ['0.72', '0.18', '0.19'] | rigid view held-out 3.46/bound 4.50 = 0.77; internal 4.27/4.50 = 0.95 | own top σ: rigid 0.912 internal 0.915
+    A1: purity of top-6 singular functions ['0.98', '0.82', '0.86', '0.53', '0.53', '0.89'] (S1' stake: every one ≥ 0.9; kill: any < 0.7) | cross-block ‖K_RI‖/‖K‖ = 0.052 (S2' stake < 0.1; kill ≥ 0.3)
+lag  20.0 fs: dictionary σ [0.791 0.732 0.726 0.719 0.714 0.695] | top-3 R² rigid ['0.04', '0.19', '0.86'] internal ['0.98', '0.82', '0.13'] | rigid view held-out 1.55/bound 2.48 = 0.62; internal 3.43/2.48 = 1.38 | own top σ: rigid 0.728 internal 0.788
+    A1: purity of top-6 singular functions ['1.00', '1.00', '0.93', '0.96', '0.58', '0.63'] (S1' stake: every one ≥ 0.9; kill: any < 0.7) | cross-block ‖K_RI‖/‖K‖ = 0.151 (S2' stake < 0.1; kill ≥ 0.3)
+lag  50.0 fs: dictionary σ [0.618 0.587 0.287 0.23  0.196 0.174] | top-3 R² rigid ['0.00', '0.00', '0.08'] internal ['1.00', '1.00', '0.93'] | rigid view held-out 0.12/bound 1.13 = 0.11; internal 2.17/1.13 = 1.92 | own top σ: rigid 0.184 internal 0.617
+  S1: top-3 weight in the rigid subspace 0.03 (stake ≥ 0.9, kill < 0.7): KILL
+  S2: internal view's own top σ at 50 fs 0.617 (stake < 0.5, kill ≥ 0.8): between
+  S3: rigid view fraction of the bound 0.11 (stake ≥ 0.8, kill < 0.6): KILL
+    A1: purity of top-6 singular functions ['0.99', '0.99', '0.96', '0.89', '0.91', '0.75'] (S1' stake: every one ≥ 0.9; kill: any < 0.7) | cross-block ‖K_RI‖/‖K‖ = 0.251 (S2' stake < 0.1; kill ≥ 0.3)
+lag 100.0 fs: dictionary σ [0.403 0.274 0.263 0.244 0.16  0.117] | top-3 R² rigid ['0.00', '0.01', '0.03'] internal ['0.99', '0.99', '0.96'] | rigid view held-out 0.07/bound 0.61 = 0.12; internal 1.35/0.61 = 2.21 | own top σ: rigid 0.119 internal 0.400

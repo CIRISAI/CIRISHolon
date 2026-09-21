@@ -65,6 +65,15 @@ def search(feats, dt, lags_fs, label=""):
             return np.mean(sc_),np.mean(bd)
         rs,rb=ho(RIGID,6); is_,ib=ho(INTERNAL,6)
         s_int=koopman(allF[:,INTERNAL],lag)["s"][0]; s_rig=koopman(allF[:,RIGID],lag)["s"][0]
+        # Amendment 1: purity of each top-6 singular function (S1') and the cross-block norm (S2')
+        pur=[]
+        for i in range(6):
+            v=m["W0"]@m["U"][:,i]; pur.append(max(r2_on_subspace(v,allF,RIGID), r2_on_subspace(v,allF,INTERNAL)))
+        # the whitened Koopman in the standardised feature basis: K_feat = W0^-1 K Wt^-1 -> use the regression matrix C00^-1 C0t on standardised features
+        (mean,scale),C00,C0t,Ctt=__import__('view_search').covs(allF,lag)
+        Kreg=np.linalg.solve(C00+1e-6*np.trace(C00)/len(C00)*np.eye(len(C00)),C0t)
+        cross=np.sqrt(np.linalg.norm(Kreg[np.ix_(RIGID,INTERNAL)],'fro')**2+np.linalg.norm(Kreg[np.ix_(INTERNAL,RIGID)],'fro')**2)/np.linalg.norm(Kreg,'fro')
+        print(f"    A1: purity of top-6 singular functions {[f'{x:.2f}' for x in pur]} (S1' stake: every one ≥ 0.9; kill: any < 0.7) | cross-block ‖K_RI‖/‖K‖ = {cross:.3f} (S2' stake < 0.1; kill ≥ 0.3)")
         print(f"{label}lag {tau:5.1f} fs: dictionary σ {np.array2string(s[:6],precision=3)} | top-3 R² rigid {[f'{a:.2f}' for a,b in w]} internal {[f'{b:.2f}' for a,b in w]} | rigid view held-out {rs:.2f}/bound {rb:.2f} = {rs/rb:.2f}; internal {is_:.2f}/{ib:.2f} = {is_/ib:.2f} | own top σ: rigid {s_rig:.3f} internal {s_int:.3f}")
         if abs(tau-50)<1e-9:
             wr=np.mean([a for a,b in w])

@@ -1,0 +1,6 @@
+phase atomwalk, out ../conformance/water_observatory/replace0/molsearch1, observatory ../conformance/water_observatory
+seed 0 of 3: 0x5245504c41434530
+atomwalk: 384 atoms at n_cells = 4, box 29.5936 bohr, seed 0x5245504c41434530; settle 1000, then 40000 NVE frames, a row every 38 (0.990 fs)
+  settling frame    500: T  390.3 K, cross-unit U 1.839427e-4 Ha/water
+  settling frame   1000: T  477.7 K, cross-unit U -1.894341e-3 Ha/water
+  atomwalk frame   10000: T  555.2 K, E drift 7.14e-9 Ha/atom, 5204 s

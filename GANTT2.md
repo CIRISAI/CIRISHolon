@@ -799,6 +799,19 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## Two more searches on data already on disk (2026-09-21, night)
+
+`TSCAN_HBOND_SEARCH_RESULTS.md`. **Temperature:** the fluid's closed sectors are the
+long-wavelength modes at 312, 360, 406 and 520 K alike (top-6 in the Fourier subspace
+`0.97–0.98`; Fourier chart `1.20–1.23` of the bound, cell chart `0.66–0.72` throughout) — the
+object is not a property of one temperature; and Stokes–Einstein decouples on cooling,
+`Dη/T` at `0.09` of water's at 312 K rising to `0.72` at 520 K, the supercooled signature
+quantified. **The network:** bond counts are decoupled from the molecules' motion (cross
+`0.007`), turn over on `~120` fs, and carry NOTHING the momentum law needs beyond the
+velocity itself (increment `0.000` against a plant's `+0.395`): S3 killed, the network is a
+closed sector the fluid does not carry — the procedure's first "no". A 5 ps all-atom walk
+launched for the diffusive tail. The procedure has now run on six carriers.
+
 ## The residual named: the momentum belongs on the faces (2026-09-21, evening)
 
 On the two full longitudinal arms, predicting the aligned occupancy change from the

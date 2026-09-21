@@ -1,0 +1,8 @@
+# HBOND-SEARCH-1 on conformance/water_observatory/replace0/molsearch1_warm_396K: 128 molecules x 527 rows at 0.99 fs; mean bonds donated 1.40, accepted 1.40
+   lag   5 fs: dictionary σ [0.984 0.983 0.982 0.863 0.818] | own top σ: bonds 0.864, velocity 0.984, internal 0.488 | bond-velocity cross 0.007 (B→V 0.005, V→B 0.014)
+   S2 bond-velocity decoupled at 5 fs (cross < 0.2, kill ≥ 0.4): 0.007 -> MET
+   lag  20 fs: dictionary σ [0.805 0.783 0.767 0.573 0.557] | own top σ: bonds 0.562, velocity 0.804, internal 0.572 | bond-velocity cross 0.033 (B→V 0.023, V→B 0.046)
+   lag  50 fs: dictionary σ [0.652 0.401 0.358 0.292 0.276] | own top σ: bonds 0.393, velocity 0.357, internal 0.651 | bond-velocity cross 0.109 (B→V 0.043, V→B 0.063)
+   lag 100 fs: dictionary σ [0.468 0.306 0.147 0.129 0.116] | own top σ: bonds 0.302, velocity 0.128, internal 0.467 | bond-velocity cross 0.179 (B→V 0.044, V→B 0.051)
+   S1 bond state closed at 100 fs (own σ ≥ 0.5, kill < 0.2): 0.302 -> between
+   S3 Δv over 50 fs: R² from bonds+velocity 0.350, velocity alone 0.351, bonds alone -0.001, re-paired null -0.000; bonds' increment over velocity -0.001; bonds alone / null -1.3 -> KILL

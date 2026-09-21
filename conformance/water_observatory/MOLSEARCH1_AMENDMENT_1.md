@@ -37,3 +37,12 @@ images. The smallest admitted box is `n_cells = 4`, 128 waters, 384 atoms — th
 1,000 settle frames then 40,000 NVE frames (`1.05` ps) at a row every `1.0` fs, 128
 molecules × 1,000 rows as the ensemble, held out in four folds of 32 molecules. The
 prereg's 16 × 2,000 was a price set without the gate; the gate was right.
+
+## A3 — the fine settle was shorter than the thermostat's own time constant (found on the first walk)
+
+The first walk settled 1,000 fine frames (26 fs) under a thermostat whose time constant is
+2,000 au (48 fs) and entered NVE at 555 K — a hot box, not the campaign's 293 K; it is kept
+as `molsearch1_hot_555K/` (270 rows) and not read. The walk is relaunched with 10,000 settle
+frames (260 fs, five time constants) and 20,000 NVE frames (0.5 ps, 500 rows × 128
+molecules), and the temperature at the start of NVE is printed and must be within 10 % of
+293 K or the walk is refused. The same fault as the scout pilot's warm boxes, one tier down.

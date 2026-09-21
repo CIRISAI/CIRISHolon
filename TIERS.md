@@ -17,8 +17,7 @@ at 396 K and confirmed at 299 K): the same search on the fine model's all-atom t
 returns TWO closed sectors, vibrations and rigid modes, decoupled to `2 %` at the molecule's
 cadence — and the vibrations are the more closed sector while the rigid unit is the object.
 
-**The rule the ladder now runs on (OBJECT.md rule 11 and the paragraph "closed is not
-object"):** at each rung the search finds the closed sectors and their coupling; the rung's
+**The rule the ladder now runs on (`OBJECT.md`, "The procedure, as arithmetic"):** at each rung the search finds the closed sectors and their coupling; the rung's
 object is the sector whose quantities the rung above carries; it is licensed when its
 coupling to the dropped sectors is within the budget. On this ladder, rung by rung:
 

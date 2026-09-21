@@ -328,26 +328,20 @@ against a brute referee. `GF1_RESULTS.md`.*
   list below and its kill retires fired-empty. Fence: QED₂ licenses the
   machinery, not 3+1D. (`conformance/crystal/SCHWINGER3_RESULTS.md`.)
 
-- **W4 — closed views are VARIATIONAL, and the object is the closed sector
-  the tier above CARRIES (2026-09-20, reworded 2026-09-21).** On every tier
-  this engine hosts, exact or thermal, the search at the tier's cadence
-  returns the closed sectors and their coupling; the tier's object is one of
-  those sectors — the one whose quantities the next view carries — and it is
-  licensed exactly when its coupling to the sectors dropped is within the
-  budget; the certificate of one cell composes across cells by locality.
-  *Kill: a tier whose object is not a closed sector of the search (a mixed
-  direction the tier above carries), a tier whose search optimum is
-  non-local on the cell graph, or a coupling to a dropped sector that is
-  not within budget.* **What the first wording got wrong, and the molecule
-  tier corrected (`MOLSEARCH1_RESULTS.md`, at 396 K and confirmed at 299 K):**
-  the object is NOT the search's top rank. The molecule is two decoupled
-  closed sectors (cross-coupling 2 % at 5 fs); the vibrations are the MORE
-  closed one (threefold at 50 fs) and carry nothing the fluid reads; the
-  rigid unit is the less closed one and is the object because mass and
-  momentum sum into the fluid's fields. Closed and object are two
-  properties: the search decides the first, the rent — what the next view
-  needs — decides the second. Measured on two tiers, for linear views; the
-  nonlinear case is the next read.
+- **W4 — search, select, price holds everywhere the square does (2026-09-20,
+  reworded 09-21; the formula is `OBJECT.md` "The procedure, as arithmetic").**
+  On every tier this engine hosts, exact or thermal, the search at the tier's
+  cadence returns the closed sectors and their coupling; the tier's object is
+  the sector the level above carries, selected by the law it owes (`ρ`), not
+  by closure rank; it is licensed when its coupling to the dropped sectors is
+  within budget; and one cell's certificate composes by locality. *Kill: a
+  tier whose object is a mixed direction of the search; a carrier the law
+  selects that the level above cannot use; a non-local optimum on the cell
+  graph; a coupling to a dropped sector outside budget.* Measured on three
+  rungs (molecule; the fluid's chart; the fluid's flux, where closure and law
+  ranked the candidates in opposite orders and the law was right). Open:
+  the constraint case (reasoning — the coherence ratchet's target), and
+  nonlinear views.
 
 ## Open (named, unclaimed, no shame in the list)
 

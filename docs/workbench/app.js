@@ -1142,11 +1142,11 @@ const LADDER = [
       + "`holon_hadron_max_det`: 3,375 determinants at N = 6 B = 1 is instant, 175,616 at "
       + "N = 8 runs, 9.3 million at N = 10 is refused with code 6.",
     cite: "GANTT.md:79",
-    measuredBy: "TIERS.md:59",
+    measuredBy: "TIERS.md:85",
     positive: "the first rung is MEASURED: SCHWINGER-4's residual interaction between two "
       + "screened static pairs decays at the banked meson mass to 0.6% — Fold II's "
       + "first measurement below the atom, 1+1D only.",
-    positiveCite: "TIERS.md:59",
+    positiveCite: "TIERS.md:85",
   },
 ];
 

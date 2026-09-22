@@ -85,3 +85,25 @@ Circuits other than Clifford; the magic tier's branch sums (already meshed); the
 witness: none (an engineering campaign; its gates are bit-identity and measured wall, its plants convict a corrupted shard)
 **misfits:** M-PLACEMENT-LOTTERY, M-CHEAPER-THAN-ITS-PRICE, M-PLANT-OBS, M-PLANT-SECTOR, M-PARITY-PROTECT, M-HOMOG, M-DEVICE-CLASS, M-IDLE-CALIBRATED-TIMEOUT — contacted by keyword, cited.
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier (a shard, a fold order, a random stream, the unsharded engine), and the sector the plant acts on is nonzero in that carrier by construction.
+
+---
+### Amendment 1, on building the harness (2026-09-21, before any sharded timing; stakes unchanged, one placement corrected)
+
+1. **The staked P-core placement was wrong by a factor of two.** Cores 8–15 are FOUR physical
+   P-cores with their SMT siblings (`thread_siblings_list`: 8/9, 10/11, 12/13, 14/15); the
+   lead knew this from the arms' own layout and wrote `S = 8` on them anyway — the
+   twenty-first instance. G3's P-core arm runs on eight PHYSICAL P-cores `0,2,4,6,8,10,12,14`
+   once the fluid arms release them; `8–15` is kept as a labelled SMT control. The E-core arm
+   (`16–23`, eight distinct cores) stands.
+2. **G3's comparison class is declared.** A sharded arm against single-threaded stim is a
+   wall-clock claim with eight cores against one; the banked table's row carries that class,
+   and the one-core-vs-one-core row (`S = 1`) is beside it as before.
+3. **A flag the binary ignores must refuse, not pass.** The harness refuses any `S ≠ 1` the
+   binary has not echoed back, and G1 is read only on echoed runs — a pre-`--shards` binary
+   would otherwise pass G1 trivially and time one engine four times.
+4. **G4 is measurement against measurement** (VmHWM at every `(d, S)` against `S = 1` at the
+   same `d`, two sources cross-checked), not against the analytic model, which understated
+   the d = 221 peak by 50 % once. The worst ratio anywhere is reported beside the endpoint.
+5. §5's "the harness exists" was false in the sense that mattered: no shard axis, no RSS
+   ratio, a single-core pin; it was written new. `mesh_quiet.sh` is not launched by the
+   agent; the lead launches it.

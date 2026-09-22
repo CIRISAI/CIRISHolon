@@ -158,6 +158,38 @@ the hour). Both remaining items need a window and neither may be forced.
    stim 1.16.0 lives in a venv under this session's scratchpad; recreate with
    `python3 -m venv <dir> && <dir>/bin/pip install stim` if it is gone.
 
+## MESH-CLIFFORD-1 (2026-09-21) — the G3/G4 instrument is built and STOOD DOWN
+
+Freeze `MESH_CLIFFORD_PREREG.md` (5c259f9). The cut is `holon::mesh` over
+contiguous qubit COLUMNS of the `ColAdaptive` tableau; the engine's `--shards S`
+is a separate delegate's work. The measurement side is built:
+
+- `mesh_h2h.py` — G3 and G4. Per `(d, S)`: the sharded arm's wall (median, min,
+  spread), stim on the identical circuit, peak RSS from two independent sources
+  and its ratio to `S = 1`, the shard-crossing fraction, and G1's cross-check
+  standing inside the timing loop (no `(d, S)` is TIMED whose measurement-record
+  hash differs from that `d`'s `S = 1`). It also refuses any `S != 1` the binary
+  has not echoed back — the flagship's `arg()` ignores unknown flags, so a
+  pre-`--shards` binary given `--shards 8` would otherwise hand back the `S = 1`
+  engine wearing an `S = 8` label, and G1 would pass it. `--selftest` grades
+  three synthetic tables; `--exercise-refusal` drives the memory-skip path.
+- `mesh_quiet.sh` — the waiter. Loadavg AND >= 14 GB MemAvailable, then TWO
+  calibrations: single-core `d = 101` against this box's own banked quiet
+  records (0.763 s P, 1.371 s E), and a CONCURRENT one, one copy per core of
+  the set, gated on the slowest — `run_when_quiet.sh`'s one-core gate cannot
+  tell "my core is free" from "eight cores are free", which is the only
+  question an eight-shard sweep asks. **NOT LAUNCHED. The lead launches it**
+  (`cd conformance/bigqvm && setsid nohup ./mesh_quiet.sh > mesh_quiet_waiter.log 2>&1 &`)
+  when P-cores 8-15 and E-cores 16-23 are free; other campaigns hold them.
+- `mesh_h2h_dryrun_S1.json` — the protocol validation against the pre-`--shards`
+  binary, `d = 21,45`, `S = 1`, cores 21-27, `citable: false`. NOT a reading.
+- `MESH_CLIFFORD_RESULTS.md` — the skeleton, with §4 recording what building the
+  instrument found that the freeze could not have known. The load-bearing one:
+  **P-cores 8-15 is FOUR physical cores** (SMT pairs 8/9, 10/11, 12/13, 14/15),
+  so the staked `S = 8` on that set runs two shards per physical core, while
+  E-cores 16-23 are eight distinct cores. The two staked placements are not the
+  same experiment at `S = 8`.
+
 ## The standing caveat on every ratio here
 
 Every timing in this lane was taken on a box at load 33–41 with siblings

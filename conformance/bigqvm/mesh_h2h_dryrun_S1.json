@@ -1,0 +1,290 @@
+{
+ "harness": "conformance/bigqvm/mesh_h2h.py",
+ "prereg": "conformance/bigqvm/MESH_CLIFFORD_PREREG.md",
+ "gates": [
+  "G3",
+  "G4",
+  "G1 cross-check",
+  "G2 crossing fraction (number only)"
+ ],
+ "protocol_validation": true,
+ "citable": false,
+ "note": "PROTOCOL VALIDATION - NOT A READING. See MESH_CLIFFORD_RESULTS.md section 2",
+ "binary": "/home/emoore/CIRISHolon/.claude/worktrees/agent-a13b859e81a17e393/engine/target/release/examples/surface_flagship",
+ "binary_sha256": "22386766534574293c0719860011cb97119d3d7926777b311afea093678b7cc6",
+ "binary_mtime": 1790037156.578549,
+ "stim_version": "1.16.0",
+ "cores": "21-27",
+ "reps": 3,
+ "rounds": 3,
+ "seed": 1,
+ "d_requested": [
+  21,
+  45
+ ],
+ "shards_requested": [
+  1
+ ],
+ "max_load": 8.0,
+ "load_gate": {
+  "passed": false,
+  "over_at": [
+   "start",
+   "end"
+  ],
+  "loadavg_start": [
+   12.15771484375,
+   17.9833984375,
+   17.078125
+  ],
+  "loadavg_end": [
+   12.15771484375,
+   17.9833984375,
+   17.078125
+  ]
+ },
+ "conditions_start": {
+  "when": "at launch",
+  "wallclock": "2026-09-21T19:47:08-0500",
+  "loadavg": [
+   12.15771484375,
+   17.9833984375,
+   17.078125
+  ],
+  "n_p_class": 16,
+  "n_e_class": 16,
+  "affinity": [
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27
+  ],
+  "clock_pinned": [
+   {
+    "cpu": 21,
+    "cur_ghz": 0.8,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.20512820512820512
+   },
+   {
+    "cpu": 22,
+    "cur_ghz": 0.8,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.20512820512820512
+   },
+   {
+    "cpu": 23,
+    "cur_ghz": 0.8,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.20512820512820512
+   },
+   {
+    "cpu": 24,
+    "cur_ghz": 3.100035,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.7948807692307692
+   }
+  ],
+  "clock_p_class": {
+   "cpu": 0,
+   "cur_ghz": 3.700037,
+   "max_ghz": 5.2,
+   "frac_of_advertised": 0.711545576923077
+  },
+  "clock_e_class": {
+   "cpu": 16,
+   "cur_ghz": 3.200124,
+   "max_ghz": 3.9,
+   "frac_of_advertised": 0.8205446153846154
+  },
+  "mem_available_gb": 14.505809783935547
+ },
+ "conditions_end": {
+  "when": "at exit",
+  "wallclock": "2026-09-21T19:47:09-0500",
+  "loadavg": [
+   12.15771484375,
+   17.9833984375,
+   17.078125
+  ],
+  "n_p_class": 16,
+  "n_e_class": 16,
+  "affinity": [
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27
+  ],
+  "clock_pinned": [
+   {
+    "cpu": 21,
+    "cur_ghz": 2.989393,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.7665110256410257
+   },
+   {
+    "cpu": 22,
+    "cur_ghz": 0.8,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.20512820512820512
+   },
+   {
+    "cpu": 23,
+    "cur_ghz": 0.8,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.20512820512820512
+   },
+   {
+    "cpu": 24,
+    "cur_ghz": 3.188821,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.8176464102564103
+   }
+  ],
+  "clock_p_class": {
+   "cpu": 0,
+   "cur_ghz": 3.508147,
+   "max_ghz": 5.2,
+   "frac_of_advertised": 0.6746436538461539
+  },
+  "clock_e_class": {
+   "cpu": 16,
+   "cur_ghz": 3.09993,
+   "max_ghz": 3.9,
+   "frac_of_advertised": 0.7948538461538461
+  },
+  "mem_available_gb": 14.293445587158203
+ },
+ "loadavg_start": [
+  12.15771484375,
+  17.9833984375,
+  17.078125
+ ],
+ "loadavg_end": [
+  12.15771484375,
+  17.9833984375,
+  17.078125
+ ],
+ "rows": [
+  {
+   "d": 21,
+   "n": 881,
+   "shards_requested": 1,
+   "shards_echoed": null,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 1320,
+   "wall": {
+    "median_s": 0.002034,
+    "min_s": 0.002016,
+    "max_s": 0.00204,
+    "spread": 1.011904761904762,
+    "all_s": [
+     0.00204,
+     0.002034,
+     0.002016
+    ]
+   },
+   "crossing_cx": null,
+   "total_cx": null,
+   "crossing_fraction": null,
+   "record_hash": null,
+   "hash_verdict": "UNAVAILABLE",
+   "peak_rss_bytes": 3215360,
+   "peak_rss_bytes_self": 3215360,
+   "peak_rss_bytes_time_v": 3092480,
+   "peak_rss_disagreement": 0.03821656050955414,
+   "peak_rss_flag": null
+  },
+  {
+   "d": 45,
+   "n": 4049,
+   "shards_requested": 1,
+   "shards_echoed": null,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 6072,
+   "wall": {
+    "median_s": 0.043492,
+    "min_s": 0.041776,
+    "max_s": 0.044564,
+    "spread": 1.0667368824205286,
+    "all_s": [
+     0.041776,
+     0.043492,
+     0.044564
+    ]
+   },
+   "crossing_cx": null,
+   "total_cx": null,
+   "crossing_fraction": null,
+   "record_hash": null,
+   "hash_verdict": "UNAVAILABLE",
+   "peak_rss_bytes": 19742720,
+   "peak_rss_bytes_self": 19742720,
+   "peak_rss_bytes_time_v": 19619840,
+   "peak_rss_disagreement": 0.006224066390041493,
+   "peak_rss_flag": null
+  }
+ ],
+ "stim_rows": [
+  {
+   "d": 21,
+   "n": 881,
+   "timed": true,
+   "wall": {
+    "median_s": 0.0016494140727445483,
+    "min_s": 0.0015361880650743842,
+    "max_s": 0.0016574111068621278,
+    "spread": 1.0789115893709758,
+    "all_s": [
+     0.0016574111068621278,
+     0.0016494140727445483,
+     0.0015361880650743842
+    ]
+   }
+  },
+  {
+   "d": 45,
+   "n": 4049,
+   "timed": true,
+   "wall": {
+    "median_s": 0.027545723016373813,
+    "min_s": 0.027076901984401047,
+    "max_s": 0.03031892201397568,
+    "spread": 1.1197337875449103,
+    "all_s": [
+     0.027545723016373813,
+     0.027076901984401047,
+     0.03031892201397568
+    ]
+   }
+  }
+ ],
+ "verdict": {
+  "G1_crosscheck": {
+   "verdict": "UNAVAILABLE",
+   "why": "the binary reports no record hash; 2 arm(s) unchecked. G1 stands on the engine's own gate alone."
+  },
+  "G2_crossing": {
+   "verdict": "NOT MEASURED",
+   "why": "the binary reports no crossing count"
+  },
+  "G3_headtohead": {
+   "verdict": "NOT GRADED",
+   "why": "the stake row is d=221, S=8 against S=1; S=8 and S=1 absent AT d=221 in this run"
+  },
+  "G4_memory": {
+   "verdict": "NOT GRADED",
+   "why": "no distance in this run carries both S=1 and S=8 with a peak RSS"
+  }
+ }
+}

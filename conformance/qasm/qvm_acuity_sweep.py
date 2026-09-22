@@ -224,6 +224,14 @@ def main():
             "",
         ]
     md += [
+        "> **A row reading `evaluated = 0`, `k/N = 0.000`, `value = 0` is the machine working,",
+        "> not failing.** `|⟨y|C|0⟩| ~ 2^{-n/2}` is `10^{-3}` at `n = 20`, so at `eps = 1e-1`",
+        "> the whole amplitude is already inside the acuity and the budget correctly stops",
+        "> before evaluating a single branch, returning `0` with a certificate that covers it.",
+        "> The `eps` ladder is ABSOLUTE where a relative one (`eps x 2^{-n/2}`) would have made",
+        "> the three rungs mean the same thing at every `n`; that is a property of the prereg's",
+        "> §1, recorded in both halves' notes, not of the budget.",
+        "",
         "| n | t | t_eff | eps | N_pred | evaluated | k/N | budgeted wall (s) | "
         "full-sum wall (s) | statevector wall (s) | max abs err | max remainder | "
         "removed (marginal) | cone |",

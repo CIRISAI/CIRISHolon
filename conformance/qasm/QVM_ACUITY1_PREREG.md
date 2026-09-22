@@ -187,6 +187,15 @@ the bound is `2|a|R + R²` per leg, which is what the driver reports, and the
 marginal arm of the sweep reports the sector, the price and the removed count,
 and says so.
 
+And one thing the ε ladder does to the AMPLITUDE arm, which the sweep's table
+now carries a legend for: `|⟨y|C|0⟩| ~ 2^{−n/2}` is `10⁻³` at `n = 20`, so at
+`ε = 10⁻¹` the whole amplitude is already inside the acuity and a correct
+budget stops before evaluating one branch — a row reading `evaluated = 0`,
+`k/N = 0.000`, `value = 0` is the machine working. §1's ladder is ABSOLUTE
+where a relative one (`ε · 2^{−n/2}`) would have made the three rungs mean the
+same thing at every `n`; that is a property of the prereg, not of the budget,
+and the hard half's notes say it from the other side.
+
 **8. Where the cheap part's time actually goes — and one number S5 should
 expect.** `locate` costs `0.2–0.6 ms` on a 400-gate circuit. The branch
 source's CONSTRUCTION dominates the branch sum: at `n = 20, t = 28` the two
@@ -198,16 +207,16 @@ is near `t = 24`. The driver reports the walls separately
 (`wall_locate_s`, `wall_source_s`, `wall_sum_s`, `wall_referee_s`) so the sweep
 cannot report one and mean another. Whole sweep, 450 runs over
 `n ∈ {12,16,20} × t ∈ {8…28} × 5 seeds × (ε = 0 plus 3 acuities)` plus the
-marginal arm and both referees: `223 s` on cores 21–27, worst
+marginal arm and both referees: `214 s` on cores 21–27, worst
 `|value − referee|` anywhere `1.5 × 10⁻¹⁶`, 332 T gates removed across the
 90 marginal instances.
 
 **9. S5's exponent is TWO numbers and the table now prints both.** The BRANCH
 count follows `expected_branches` exactly — `12, 36, 108, 324, 972, 2916` at
 `t = 8 … 28`, a fitted slope of `0.3962` per T against the published `0.3963`,
-gap `−0.0001`. The WALL slope on this machine is `0.4531 / 0.4633 / 0.4554` at
+gap `−0.0001`. The WALL slope on this machine is `0.459 / 0.460 / 0.457` at
 `n = 12 / 16 / 20`, which against the published rate would read as a gap of
-`+0.057 … +0.067` — OUTSIDE the prereg's `0.05`. But that excess is not the
+`+0.061 … +0.064` — OUTSIDE the prereg's `0.05`. But that excess is not the
 decomposition's rate: it is the per-branch cost, which grows with `t` because
 each branch evolves an affine state `n + t` wide.
 `conformance/qasm/qvm_acuity_sweep.py` reports the branch slope, the wall

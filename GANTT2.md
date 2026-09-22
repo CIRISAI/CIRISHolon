@@ -799,6 +799,19 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## RESPONSE-1: the first graded reads (2026-09-22, morning)
+
+Three full transverse arms (`RESPONSE1_RESULTS.md`): **R3 branch (a)** — `η(0.27 Å⁻¹) =
+4.4 × 10⁻⁴ Pa s`, spread `[3.9, 5.0]`, overdamped on every seed, in band and equal to the
+equilibrium read; **R1′ holds on two of three** and fires on seed 0 by `0.03`, seed-specific,
+so branch (e) is not entered and the 36-cycle cross-seed average is owed as a reader change.
+Two of three 50 m/s longitudinal arms read: R1 `0.846` over floor `0.737` (seed 1) and
+`0.836` at floor `0.860` (seed 2); the third lands today, the two extra 200 m/s seeds
+tonight. The waiting reader had never run (a `local` line expanding the variable it was
+assigning) — every arm so far was read by hand; fixed. CI: the cheap-part's `n = 20` grid
+took the Rust job past its 75-minute timeout twice; ignored by default with its result
+banked.
+
 ## The general QVM's claim, measured on Clifford+T (2026-09-22)
 
 `conformance/qasm/QVM_ACUITY1_RESULTS.md`, branch (a). Two Opus agents in parallel, one

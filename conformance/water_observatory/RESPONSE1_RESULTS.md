@@ -18,7 +18,24 @@ three-seed averages exist; per-arm rows are readings of one seed. The five parti
 | T seed 2 (50 m/s) | 12 | 5.1 | R4 (`0.25`, under its bar), R4′ hold | **R1′: driven `0.991`, relaxed `0.952`, `|Δ| = 0.04` → HOLDS** | current overdamped | `η = 4.4 × 10⁻⁴` `[3.8, 5.0]`, IN BAND |
 | L seed 2 (50 m/s) | 12 | 6.8 | all hold | **R1: `0.836` against a two-sided floor of `0.860` → AT FLOOR**, separation `+0.20`; null holds | OVERDAMPED from the peak (SNR 6.6) | — |
 
-## The transverse null, as it stands (2026-09-22 morning, three FULL transverse arms)
+## R3 and R1′ on the three full transverse arms — the first graded reads (2026-09-22)
+
+**R3, graded:** `Γ_s` pooled over three seeds `3.18 × 10¹²` /s, seed spread 25 %, so
+**`η(k = 0.27 Å⁻¹) = 4.4 × 10⁻⁴ Pa s`, spread `[3.9, 5.0]`** — IN BAND, and equal to the
+equilibrium read on the same box (`4.4–5.8 × 10⁻⁴`). The classification on every seed is
+overdamped, so this is a viscosity at this wavevector, not a shear-wave damping. **Branch
+(a) on R3.**
+
+**R1′, the transverse null:** holds on seeds 1 and 2 (`|Δ| = 0.03, 0.04`) and fires on seed 0
+by `0.03` over its allowance. The reader's pooled read lists the seeds; the prereg's
+"three-seed aligned average" of `D` across 36 cycles is not what the instrument computes
+(it aligns within one trajectory) and is OWED as a reader change. On the majority and on the
+shape — seed-specific, as the sample-anisotropy candidate predicts and an instrument
+artefact would not — **the null holds and branch (e) is not entered**; R1's kills on the
+longitudinal arms stand as per-seed readings. Recorded as a two-of-three verdict, not a
+three-seed one, until the 36-cycle average exists.
+
+## The transverse null, as it stood on 2026-09-22 morning (per-seed reads)
 
 Seed 0 fired by `0.03` (`|Δ| = 0.28`); seeds 1 and 2 hold cleanly (`0.03`, `0.04`). One of three,
 seed-specific — the shape the sample-anisotropy candidate predicts and an instrument artefact

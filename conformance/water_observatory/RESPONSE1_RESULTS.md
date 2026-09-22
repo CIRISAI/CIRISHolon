@@ -18,6 +18,30 @@ three-seed averages exist; per-arm rows are readings of one seed. The five parti
 | T seed 2 (50 m/s) | 12 | 5.1 | R4 (`0.25`, under its bar), R4′ hold | **R1′: driven `0.991`, relaxed `0.952`, `|Δ| = 0.04` → HOLDS** | current overdamped | `η = 4.4 × 10⁻⁴` `[3.8, 5.0]`, IN BAND |
 | L seed 2 (50 m/s) | 12 | 6.8 | all hold | **R1: `0.836` against a two-sided floor of `0.860` → AT FLOOR**, separation `+0.20`; null holds | OVERDAMPED from the peak (SNR 6.6) | — |
 
+| L seed 0 (50 m/s) | 12 | 6.4 | all hold | **R1: `0.650`**, separation `+0.34`; the floor estimate reads `1.02` (the lead RMS sat under the tail's: an unreliable floor, not a reading) | OVERDAMPED from the peak | — |
+| T200 seed 0 (control) | 12 | 12.9 | R4 holds; **R4′ FIRES** (undriven quadrature `1.06 × 10⁻³` vs `3σ = 0.85 × 10⁻³`) — the second nonlinearity at 200 m/s | R1′ holds (`|Δ| = 0.16` vs `0.17`) | overdamped | `η = 5.8 × 10⁻⁴` `[3.9, 7.7]`, IN BAND |
+
+## R1 graded on the three 50 m/s longitudinal seeds (2026-09-22, midday): BRANCH (b), the chart is OPEN under drive
+
+| seed | `D_cont` at 8 cells | separation from the blind | two-sided floor |
+|---|---|---|---|
+| 0 | 0.650 | +0.34 | 1.02 (unreliable: lead RMS under tail RMS) |
+| 1 | 0.846 | +0.07 | 0.74 → over by 0.11 |
+| 2 | 0.836 | +0.20 | 0.86 → at floor |
+
+The `(n̄, p̄)` cell chart does not close within `β = 0.2` on any seed (mean `D = 0.78`), and
+it separates from the position-blind chart on every seed (`+0.07` to `+0.34`, the stake
+`≥ 0.05`). That is the prereg's **branch (b)** as written: *"R1 fails on `D ≤ 0.2` but
+separates from the blind → the chart is OPEN under drive."* Its in-run null holds on every
+seed. The pooled longitudinal current rate is `1.03 × 10¹³` /s (seed spread 39 %), the fast
+mode `ν_l = 1.2 × 10⁻⁶` m²/s, no band.
+
+**The staggered chart on the same three seeds** (`r1_closure_test.py`, face momentum at
+`0.25 Å`, 8 cells): `D = 0.482, 0.492, 0.489` — the same number on three seeds to a percent,
+`R² = 0.77–0.79`, amplitude fidelity `0.92–1.24` — against the cell chart's `0.65–0.85`. At
+50 m/s the face chart sits at its own shot-noise floor (per-seed `s ≈ 1`); R1″ is graded on
+the three 200 m/s seeds, where seed 0 read `0.164`, and the other two land tonight.
+
 ## R3 and R1′ on the three full transverse arms — the first graded reads (2026-09-22)
 
 **R3, graded:** `Γ_s` pooled over three seeds `3.18 × 10¹²` /s, seed spread 25 %, so

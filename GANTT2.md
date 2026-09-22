@@ -799,6 +799,16 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## RESPONSE-1: R1 graded — branch (b), the cell chart is OPEN under drive (2026-09-22, midday)
+
+Three 50 m/s longitudinal seeds: `D = 0.65, 0.85, 0.84` at 8 cells, none within `β = 0.2`,
+every seed separated from the blind (`+0.07` to `+0.34`), every in-run null holding — the
+prereg's branch (b) as written. The staggered chart on the same seeds reads `0.48, 0.49,
+0.49`, the same to a percent, at its own shot-noise floor at 50 m/s; R1″ is graded tonight
+on the 200 m/s seeds (seed 0: `0.164`). The 200 m/s transverse control: `η = 5.8 × 10⁻⁴` in
+band, R1′ holds, and R4′ FIRES — the undriven quadrature carries a kick at 200 m/s, the
+second sign that the control is outside linear response. Pooled: `ν_l = 1.2 × 10⁻⁶` m²/s.
+
 ## RESPONSE-1: the first graded reads (2026-09-22, morning)
 
 Three full transverse arms (`RESPONSE1_RESULTS.md`): **R3 branch (a)** — `η(0.27 Å⁻¹) =

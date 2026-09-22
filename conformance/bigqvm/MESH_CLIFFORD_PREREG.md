@@ -81,6 +81,92 @@ cores while they run).
 
 Circuits other than Clifford; the magic tier's branch sums (already meshed); the GPU.
 
+### Notes on building
+
+*Appended 2026-09-21 by the engine build (`engine/crates/holon/src/sharded.rs`,
+`tests/mesh_clifford_plants.rs`, `--shards`/`--layout` on `surface_flagship`). No stake,
+gate, kill or branch above is changed; these are the places §1 could not be implemented as
+written, and what was implemented instead. Bit-identity was held as the non-negotiable gate
+throughout: G1 passes at `S ∈ {1,2,4,8}` on every circuit run.*
+
+1. **The boundary is snapped to 64 columns.** §1's `[s·n/S, (s+1)·n/S)` is exact for the
+   COLUMN planes (a column is its own contiguous words) and impossible for the ROWSUM,
+   which §1 also requires: the row-major reference packs a row's `n` qubits 64 to a word,
+   so a boundary inside a word would put two shards in one `u64`, and the rowsum could then
+   be split only with an atomic (§1 forbids one) or a read-modify-write race (wrong).
+   Interior boundaries are therefore rounded up to the next multiple of 64 — at `d = 141,
+   S = 8` that moves a boundary by at most 63 of 4970 columns. A boundary that collapses
+   under the rounding is DROPPED and the shard count actually run is reported, never the
+   one requested (`n = 300, S = 8` runs 5 shards, and says so).
+
+2. **§1's "single-qubit gates … shard-local, no communication" is true of the planes and
+   false of the sign register.** `r` is indexed by ROW, not by column: every gate, including
+   every single-qubit gate, writes it. It works out — no gate READS it, so it is a
+   write-only XOR accumulator, which is a ledger under `merge`'s law: each shard folds its
+   own gates into a PRIVATE partial and the parent XORs the partials in shard order. §1
+   states the fold clause only for the rowsum's phase bit; it is needed for the gate phase
+   too, and the implementation closes that gap rather than inventing a different cut.
+
+3. **Gates have to be BUFFERED, which §1 does not say.** One gate touches one shard, so the
+   gate phase's parallelism is across GATES, not inside one. Gates are therefore deferred
+   and cut into LAYERS — maximal runs of consecutive gates with pairwise disjoint columns —
+   and a layer is executed by `S` threads. Inside a layer every gate reads and writes only
+   its own columns, so neither the order nor the thread assignment is observable; the
+   layering is a pure function of the gate stream. A layer too small to pay for the spawn
+   runs on the calling thread, which cannot change an answer.
+
+4. **G2 is KILLED on the flagship's own qubit numbering, and no choice of boundary saves
+   it.** §1 asks for "boundaries chosen on the code's row structure so that crossing pairs
+   are a minority". Measured, with contiguous column ranges over the numbering
+   `surface.rs` has always used (all `d²` data, then all `d²−1` ancillas):
+
+   | d | S=2 | S=4 | S=8 |
+   |---|---|---|---|
+   | 21 | 0.983 | 1.000 | 1.000 |
+   | 45 | 0.988 | 1.000 | 1.000 |
+
+   Every CX in the extraction schedule joins a data qubit to an ancilla, and those live in
+   two disjoint halves of the index space, so a contiguous range almost never holds both.
+   The code's row structure is not IN the numbering, so no boundary can be chosen on it; it
+   has to be put there. `SurfaceCode::banded` does that — band `i` is data row `i` followed
+   by the ancillas of the plaquettes it tops, `≈ 2d−1` consecutive qubits — and it is a
+   RENAMING (same stabilizers, same schedule, same syndromes in the same order, same
+   record hash, `verify_commuting`/`verify_schedule` both run on it). With it:
+
+   | d | S=2 | S=4 | S=8 |
+   |---|---|---|---|
+   | 21 | 0.025 | 0.074 | 0.171 |
+   | 45 | 0.011 | 0.034 | 0.079 |
+   | 141 | — | — | **0.0249** (5898 / 236880, measured on a 3-round run) |
+
+   all below the 0.25 the gate names, and `≈ (S−1)/(2d)` as the band geometry predicts.
+   This IS branch (c) — "the boundaries are re-derived from the schedule; nothing timed" —
+   carried out, with the one correction that what had to be re-derived was the numbering,
+   since the boundaries alone cannot express the structure. Both numberings are kept and
+   both are gated: G1 holds on each, and `--layout` selects which the flagship runs.
+
+5. **The rowsum split — the mechanism §1 stakes the cut on — rarely fires on THIS
+   workload.** A surface-code collapse cascade has a measured mean of ~5 rows, and five
+   rows at `n = 39761` is ~3000 word-operations, less than a thread spawn: at `d = 141,
+   S = 8`, 69 of 9940 cascades were large enough to thread. The decomposition is exact and
+   gated (it is what P2 tests), and it will matter on circuits whose cascades are wide —
+   but on the flagship the parallel work is the gate layers and the row→column transpose,
+   not the rowsum. G3 should be read knowing that.
+
+6. **One direction of the transpose does not decompose over this chart.** Column→row
+   (`store_to_packed`) would have every shard writing different WORDS of the same rows —
+   a partition of each row's allocation, not of the tableau's — so it stays on the calling
+   thread. Row→column (`load_from_packed`, the end of every dirty batch) is exactly the
+   chart's own direction and is threaded. A ROW cut would parallelize the other direction
+   trivially, and a row cut is not the chart this campaign froze.
+
+7. **Sizes run.** G1's circuits are `d ∈ {21, 45}` (bench, 3 rounds, seeds 1–3, both
+   numberings) and random Clifford at `n ∈ {256, 1024}` (five seeds, depth `20n`, every
+   qubit measured), all four shard counts, in `cargo test --release -p holon`. `d = 141`
+   is an `#[ignore]`d test plus a by-hand flagship run (the number in the table above);
+   `d = 221` and `n = 4096` were NOT run — the box is shared and this build was given
+   `d ≤ 141` and cores 21–27. Those two rows of §2's list remain owed to G1.
+
 ---
 witness: none (an engineering campaign; its gates are bit-identity and measured wall, its plants convict a corrupted shard)
 **misfits:** M-PLACEMENT-LOTTERY, M-CHEAPER-THAN-ITS-PRICE, M-PLANT-OBS, M-PLANT-SECTOR, M-PARITY-PROTECT, M-HOMOG, M-DEVICE-CLASS, M-IDLE-CALIBRATED-TIMEOUT — contacted by keyword, cited.

@@ -12,17 +12,113 @@
 //!                 else — the exact shape `--stim` emits, so the head-to-head
 //!                 runs on the identical circuit.
 //!
+//! And, since MESH-CLIFFORD-1, one tableau cut across cores:
+//!
+//!   --shards S    run the column-sharded engine (`holon::sharded`) with S
+//!                 contiguous column shards. S = 1 (the default) is the
+//!                 EXISTING unsharded engine, byte for byte the path every
+//!                 banked number in this lane was taken on.
+//!   --sharded     force the sharded engine even at S = 1 — the honest
+//!                 baseline for "what did the cut cost me at S = 1?", which
+//!                 is a different question from "what did S = 8 buy?".
+//!   --layout banded
+//!                 number the qubits in BANDS (data row i, then the ancillas
+//!                 of the plaquettes it tops) instead of all-data-then-all-
+//!                 ancilla. Same code, same circuit, renamed qubits — and the
+//!                 difference between a cut that crosses 0.97 of its CX gates
+//!                 and one that crosses 0.02 of them. See the prereg's notes.
+//!
+//! Every run prints the shard count it ACTUALLY used, the crossing count and
+//! fraction, and a digest of the measurement record, so a harness comparing
+//! shard counts can prove it compared what it thinks it compared.
+//!
 //! Reproduce:
 //!   cargo run --release --example surface_flagship -- --d 221 --rounds 3
 //!   cargo run --release --example surface_flagship -- --d 221 --mode bench \
 //!       --stim /tmp/sc221.stim
+//!   cargo run --release --example surface_flagship -- --d 141 --mode bench \
+//!       --shards 8 --layout banded
 //!
 //! The machine is shared. Every run states its working set before allocating
 //! and REFUSES if MemAvailable cannot carry it with 2 GB left over.
 
 use holon::coladaptive::ColAdaptive;
+use holon::sharded::{crossing_count, record_hash, MeshStats, ShardCut, ShardedColAdaptive};
 use holon::surface::{Kind, SurfaceCode};
 use std::time::Instant;
+
+/// The two engines behind one set of calls, so the demo and the benchmark are
+/// the same program at every shard count. `--shards 1` without `--sharded` is
+/// `Unsharded`, and that arm never touches a line of the new code.
+enum Engine {
+    Unsharded(Box<ColAdaptive>),
+    Sharded(Box<ShardedColAdaptive>),
+}
+
+impl Engine {
+    fn h(&mut self, q: usize) {
+        match self {
+            Engine::Unsharded(a) => a.h(q),
+            Engine::Sharded(a) => a.h(q),
+        }
+    }
+    fn x_gate(&mut self, q: usize) {
+        match self {
+            Engine::Unsharded(a) => a.x_gate(q),
+            Engine::Sharded(a) => a.x_gate(q),
+        }
+    }
+    fn cx(&mut self, c: usize, t: usize) {
+        match self {
+            Engine::Unsharded(a) => a.cx(c, t),
+            Engine::Sharded(a) => a.cx(c, t),
+        }
+    }
+    /// The gate phase's own barrier: the sharded engine buffers gates into
+    /// column-disjoint layers, so "the gates are done" is a statement someone
+    /// has to make before the clock is read.
+    fn flush(&mut self) {
+        if let Engine::Sharded(a) = self {
+            a.flush();
+        }
+    }
+    fn begin_batch(&mut self) {
+        match self {
+            Engine::Unsharded(a) => a.begin_batch(),
+            Engine::Sharded(a) => a.begin_batch(),
+        }
+    }
+    fn measure(&mut self, q: usize) -> (bool, bool) {
+        match self {
+            Engine::Unsharded(a) => a.measure(q),
+            Engine::Sharded(a) => a.measure(q),
+        }
+    }
+    fn end_batch(&mut self) {
+        match self {
+            Engine::Unsharded(a) => a.end_batch(),
+            Engine::Sharded(a) => a.end_batch(),
+        }
+    }
+    fn z_string_value(&mut self, qubits: &[usize]) -> Option<bool> {
+        match self {
+            Engine::Unsharded(a) => a.z_string_value(qubits),
+            Engine::Sharded(a) => a.z_string_value(qubits),
+        }
+    }
+    fn stats(&self) -> holon::coladaptive::ScanStats {
+        match self {
+            Engine::Unsharded(a) => a.stats,
+            Engine::Sharded(a) => a.stats,
+        }
+    }
+    fn mesh(&self) -> Option<MeshStats> {
+        match self {
+            Engine::Unsharded(_) => None,
+            Engine::Sharded(a) => Some(a.mesh),
+        }
+    }
+}
 
 fn mem_available() -> u64 {
     let s = std::fs::read_to_string("/proc/meminfo").unwrap_or_default();
@@ -57,7 +153,7 @@ fn working_set_bytes(n: usize) -> u64 {
 /// One full syndrome-extraction round: the four-step schedule on the column
 /// engine, then the whole ancilla batch measured through one transpose, then
 /// the deferred resets. Returns the syndrome and the phase timings.
-fn round(a: &mut ColAdaptive, code: &SurfaceCode) -> (Vec<bool>, f64, f64) {
+fn round(a: &mut Engine, code: &SurfaceCode) -> (Vec<bool>, f64, f64) {
     let t0 = Instant::now();
     for s in &code.stabs {
         if s.kind == Kind::X {
@@ -79,6 +175,7 @@ fn round(a: &mut ColAdaptive, code: &SurfaceCode) -> (Vec<bool>, f64, f64) {
             a.h(s.ancilla);
         }
     }
+    a.flush();
     let gate_s = t0.elapsed().as_secs_f64();
 
     let t1 = Instant::now();
@@ -87,18 +184,23 @@ fn round(a: &mut ColAdaptive, code: &SurfaceCode) -> (Vec<bool>, f64, f64) {
     a.end_batch();
     let meas_s = t1.elapsed().as_secs_f64();
 
-    // Deferred resets — exact, see coladaptive.rs's header.
+    // Deferred resets — exact, see coladaptive.rs's header. Flushed here so
+    // that the sharded engine charges them where the unsharded one does
+    // (outside both timers), not to the next round's gate phase.
     for (k, s) in code.stabs.iter().enumerate() {
         if syn[k] {
             a.x_gate(s.ancilla);
         }
     }
+    a.flush();
     (syn, gate_s, meas_s)
 }
 
 /// Per data qubit, the Z-plaquettes an X error there would light.
+/// (Indexed by QUBIT, not by grid position: under `--layout banded` a data
+/// qubit's index is not bounded by `d²`.)
 fn z_signatures(code: &SurfaceCode) -> Vec<Vec<usize>> {
-    let mut sig = vec![Vec::new(); code.n_data()];
+    let mut sig = vec![Vec::new(); code.n];
     for (k, s) in code.stabs.iter().enumerate() {
         if s.kind == Kind::Z {
             for q in s.sched.iter().flatten() {
@@ -186,14 +288,25 @@ fn main() {
     let n_err: usize = arg(&args, "--errors", 3);
     let stim_path: String = arg(&args, "--stim", String::new());
     let json_path: String = arg(&args, "--json", String::new());
+    let want_shards: usize = arg(&args, "--shards", 1);
+    let layout: String = arg(&args, "--layout", "natural".to_string());
+    let force_sharded = args.iter().any(|a| a == "--sharded");
     let no_guard = args.iter().any(|a| a == "--no-guard");
     // Test hook, symmetric to --no-guard: refuse unconditionally, so the
     // harness's per-size skip path can be EXERCISED rather than assumed. A
     // fallback nothing ever runs is an untested claim.
     let force_refuse = args.iter().any(|a| a == "--force-refuse");
 
+    assert!(
+        layout == "natural" || layout == "banded",
+        "--layout must be natural or banded"
+    );
     let build = Instant::now();
-    let code = SurfaceCode::new(d);
+    let code = if layout == "banded" {
+        SurfaceCode::banded(d)
+    } else {
+        SurfaceCode::new(d)
+    };
     let build_s = build.elapsed().as_secs_f64();
     let n = code.n;
 
@@ -203,7 +316,50 @@ fn main() {
         eprintln!("wrote stim circuit: {stim_path} ({} bytes)", s.len());
     }
 
-    let need = working_set_bytes(n);
+    // ---- the cut, declared before anything runs on it ----
+    //
+    // The shard count is echoed as the one ACTUALLY used: `ShardCut` snaps
+    // boundaries to the row-major word grain and drops any range that
+    // collapses, so a request for 8 shards on a small code is honestly
+    // reported as fewer. A harness that timed a requested S it never got
+    // would be timing a fiction.
+    let cut = ShardCut::new(n, want_shards);
+    let shards = cut.shards();
+    let step_pairs: Vec<Vec<(usize, usize)>> = (0..4)
+        .map(|t| {
+            code.stabs
+                .iter()
+                .filter_map(|s| {
+                    s.sched[t].map(|q| match s.kind {
+                        Kind::Z => (q, s.ancilla),
+                        Kind::X => (s.ancilla, q),
+                    })
+                })
+                .collect()
+        })
+        .collect();
+    let per_step: Vec<(u64, u64)> = step_pairs
+        .iter()
+        .map(|p| crossing_count(&cut, p.iter().copied()))
+        .collect();
+    // Per ROUND: `--mode qec` runs four of them whatever `--rounds` says, so
+    // the total is scaled by the rounds actually run, at report time.
+    let (crossing_per_round, total_per_round) =
+        per_step.iter().fold((0u64, 0u64), |(a, b), (c, t)| (a + c, b + t));
+    // The exchange buffer is the ONLY memory the cut adds, and its size is a
+    // property of the schedule, not of the run: one CX time step is one gate
+    // layer, so the peak is the worst step's crossing count × four columns.
+    let exchange_model = if shards > 1 {
+        per_step.iter().map(|(c, _)| *c).max().unwrap_or(0)
+            * 4
+            * (2 * n as u64).div_ceil(64)
+            * 8
+    } else {
+        0
+    };
+
+
+    let need = working_set_bytes(n) + exchange_model;
     let avail = mem_available();
     eprintln!(
         "surface code d={d}: n={n} qubits ({} data + {} ancilla), {} stabilizers",
@@ -212,8 +368,10 @@ fn main() {
         code.stabs.len()
     );
     eprintln!(
-        "working set {:.2} GB (column engine + row-major reference), MemAvailable {:.2} GB",
+        "working set {:.2} GB (column engine + row-major reference + {:.3} MB of \
+         column-exchange buffers), MemAvailable {:.2} GB",
         need as f64 / 1e9,
+        exchange_model as f64 / 1e6,
         avail as f64 / 1e9
     );
     if force_refuse {
@@ -231,21 +389,42 @@ fn main() {
     }
 
     let alloc = Instant::now();
-    let mut a = ColAdaptive::new(n, seed);
+    let mut a = if shards > 1 || force_sharded {
+        Engine::Sharded(Box::new(ShardedColAdaptive::new(n, seed, want_shards)))
+    } else {
+        Engine::Unsharded(Box::new(ColAdaptive::new(n, seed)))
+    };
     let alloc_s = alloc.elapsed().as_secs_f64();
     eprintln!("allocated in {alloc_s:.3} s");
+    eprintln!(
+        "  engine {} — layout {layout}, cut [{}]",
+        match a {
+            Engine::Unsharded(_) => "coladaptive (unsharded)",
+            Engine::Sharded(_) => "sharded (column shards)",
+        },
+        cut.bounds
+            .windows(2)
+            .map(|w| format!("{}..{}", w[0], w[1]))
+            .collect::<Vec<_>>()
+            .join(", ")
+    );
 
     let mut gate_total = 0.0;
     let mut meas_total = 0.0;
     let mut round_times = Vec::new();
     let mut checks: Vec<(String, bool)> = Vec::new();
+    // THE RECORD: every outcome bit, in circuit order. Its digest is what a
+    // harness compares across shard counts, so it is over the bits and
+    // nothing else — no timing, no thread count, no S.
+    let mut record: Vec<bool> = Vec::new();
     let t_all = Instant::now();
 
     if mode == "bench" {
         // Matched to `--stim`: R rounds, nothing else.
         for r in 0..rounds {
             let t = Instant::now();
-            let (_syn, g, m) = round(&mut a, &code);
+            let (syn, g, m) = round(&mut a, &code);
+            record.extend_from_slice(&syn);
             gate_total += g;
             meas_total += m;
             let el = t.elapsed().as_secs_f64();
@@ -255,6 +434,7 @@ fn main() {
     } else {
         // ---- round 1: establish the codestate ----
         let (s1, g, m) = round(&mut a, &code);
+        record.extend_from_slice(&s1);
         gate_total += g;
         meas_total += m;
         round_times.push(g + m);
@@ -274,6 +454,7 @@ fn main() {
 
         // ---- round 2: a noiseless repeat must reproduce round 1 exactly ----
         let (s2, g, m) = round(&mut a, &code);
+        record.extend_from_slice(&s2);
         gate_total += g;
         meas_total += m;
         round_times.push(g + m);
@@ -299,6 +480,7 @@ fn main() {
 
         // ---- round 3: the errors must show up, exactly where they are ----
         let (s3, g, m) = round(&mut a, &code);
+        record.extend_from_slice(&s3);
         gate_total += g;
         meas_total += m;
         round_times.push(g + m);
@@ -324,6 +506,7 @@ fn main() {
 
         // ---- round 4: back in the codespace ----
         let (s4, g, m) = round(&mut a, &code);
+        record.extend_from_slice(&s4);
         gate_total += g;
         meas_total += m;
         round_times.push(g + m);
@@ -339,7 +522,7 @@ fn main() {
     }
 
     let wall = t_all.elapsed().as_secs_f64();
-    let st = a.stats;
+    let st = a.stats();
     let total_meas = st.deterministic + st.random;
     let gate_ops = rounds_gate_ops(&code) * round_times.len();
 
@@ -371,6 +554,56 @@ fn main() {
     );
     eprintln!("  peak RSS {:.3} GB", peak_rss() as f64 / 1e9);
 
+    // ---- THE CUT'S OWN LINE, printed whatever S is ----
+    //
+    // The engine's counters are the authority when it ran sharded; the
+    // analytic count (schedule × cut, computed before allocation) is the
+    // authority when it did not, and the two are asserted equal when both
+    // exist. A crossing fraction that depended on the run would not be a
+    // property of the cut.
+    let mesh = a.mesh();
+    let rounds_run = round_times.len() as u64;
+    let (crossing_cx, total_cx) =
+        (crossing_per_round * rounds_run, total_per_round * rounds_run);
+    let (crossing_cx, total_cx) = match mesh {
+        Some(m) if m.cx_total > 0 => {
+            assert_eq!(
+                (m.cx_crossing, m.cx_total),
+                (crossing_cx, total_cx),
+                "the engine's crossing count and the cut's disagree"
+            );
+            (m.cx_crossing, m.cx_total)
+        }
+        _ => (crossing_cx, total_cx),
+    };
+    let frac = if total_cx == 0 {
+        0.0
+    } else {
+        crossing_cx as f64 / total_cx as f64
+    };
+    let exchange_bytes = mesh.map_or(0, |m| m.exchange_peak_bytes);
+    eprintln!(
+        "  shards S={shards}  crossing {crossing_cx}/{total_cx} = {frac:.5}  \
+         (layout {layout}, exchange peak {:.3} MB)",
+        exchange_bytes as f64 / 1e6
+    );
+    if let Some(m) = mesh {
+        eprintln!(
+            "  mesh: {} gate layers ({} threaded), {} rowsum cascades ({} threaded), \
+             {:.3} GB exchanged",
+            m.layers,
+            m.layers_parallel,
+            m.rowsums_parallel + m.rowsums_serial,
+            m.rowsums_parallel,
+            (m.exchange_words * 8) as f64 / 1e9
+        );
+    }
+    let rec_hash = record_hash(&record);
+    eprintln!(
+        "  record hash: {rec_hash:016x}  (fnv1a64 over {} outcome bits, circuit order)",
+        record.len()
+    );
+
     let all_ok = checks.iter().all(|(_, ok)| *ok);
     if !checks.is_empty() {
         eprintln!();
@@ -380,6 +613,12 @@ fn main() {
     }
 
     // ---- the Qiskit Result schema, extras under metadata ----
+    let engine_name = match a {
+        Engine::Unsharded(_) => "coladaptive (column-major gates, row-major rowsums)",
+        Engine::Sharded(_) => {
+            "sharded (column-major gates cut into column shards, rowsums folded over shards)"
+        }
+    };
     let checks_json = checks
         .iter()
         .map(|(k, v)| format!("\"{k}\": {v}"))
@@ -397,8 +636,14 @@ fn main() {
          \"memory_slots\": {}}}, \
          \"data\": {{\"memory\": []}}, \
          \"metadata\": {{\"exact\": true, \"tier\": \"clifford-adaptive\", \
-         \"engine\": \"coladaptive (column-major gates, row-major rowsums)\", \
+         \"engine\": \"{engine_name}\", \
          \"mode\": \"{mode}\", \"seed\": {seed}, \"distance\": {d}, \
+         \"layout\": \"{layout}\", \
+         \"shards\": {{\"count\": {shards}, \"requested\": {want_shards}, \
+         \"crossing_cx\": {crossing_cx}, \"total_cx\": {total_cx}, \
+         \"crossing_fraction\": {frac:.6}, \"exchange_peak_bytes\": {exchange_bytes}}}, \
+         \"record_hash\": \"fnv1a64:{rec_hash:016x}\", \
+         \"record_bits\": {}, \
          \"n_data\": {}, \"n_ancilla\": {}, \"rounds\": {}, \
          \"measurements\": {{\"total\": {total_meas}, \"deterministic\": {}, \
          \"random\": {}, \"scan_fast\": {}, \"scan_fallback\": {}, \
@@ -409,6 +654,7 @@ fn main() {
          \"working_set_bytes\": {need}, \"peak_rss_bytes\": {}, \
          \"verification\": {{{checks_json}}}}}}}]}}",
         code.stabs.len(),
+        record.len(),
         code.n_data(),
         code.stabs.len(),
         round_times.len(),

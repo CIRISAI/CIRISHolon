@@ -743,7 +743,12 @@ fn s1_n16() {
     s1_prereg(16);
 }
 
+/// `#[ignore]`d 2026-09-22: the `n = 20` grid needs a 2^20 statevector per instance and took the
+/// CI job past its 75-minute timeout (run 35681801681, cancelled twice); its result is banked in
+/// `conformance/qasm/QVM_ACUITY1_RESULTS.md` (27 instances, worst change 2.6e-15). Run by hand:
+/// `cargo test --release -p holon --test qvm_acuity_cheap s1_n20 -- --ignored`.
 #[test]
+#[ignore = "the n = 20 statevector grid; banked in QVM_ACUITY1_RESULTS.md, run by hand"]
 fn s1_n20() {
     s1_prereg(20);
 }

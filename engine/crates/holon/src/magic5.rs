@@ -265,6 +265,34 @@ impl Magic5Plan {
         )
     }
 
+    /// Branch `b`'s exact coefficient and the F₂-dimension of the state the
+    /// tail attaches — computed WITHOUT evolving the branch, which is what
+    /// lets a remainder be priced before any work is done.
+    ///
+    /// The second number is the bound's whole content: [`load`](Self::load)
+    /// attaches UNNORMALISED blocks (`γ = 1` on a support of `2^k`, see
+    /// [`StabTerm`]), so `‖φ_b‖ = 2^{k/2}`; everything applied afterwards —
+    /// the decomposition's Clifford frames, then the circuit — is unitary and
+    /// moves no norm. Hence `|⟨y|φ_b⟩| ≤ 2^{k/2}` for every `y`.
+    pub fn coeff_and_rank(&self, b: u64) -> (Cyc, usize) {
+        let coeffs = magic5_coeffs();
+        let mut rest = b;
+        let mut coeff = Cyc::ONE;
+        for _ in &self.rounds {
+            let d = (rest % MAGIC5_RANK as u64) as usize;
+            rest /= MAGIC5_RANK as u64;
+            coeff = coeff.mul(coeffs[d]);
+        }
+        let mut k = 0usize;
+        for (_, terms) in &self.tail {
+            let d = (rest % terms.len() as u64) as usize;
+            rest /= terms.len() as u64;
+            coeff = coeff.mul(terms[d].coeff);
+            k += terms[d].cols.len();
+        }
+        (coeff, k)
+    }
+
     /// Write branch `b`'s magic-register state into `st` — which must be a
     /// fresh `|0…0⟩` affine state at least `base + t` wide — and return the
     /// branch's exact coefficient.
@@ -436,6 +464,39 @@ impl Magic5Source {
         (coeff, st)
     }
 
+    /// The gadget's exact prefactor `2^{t/2}`, the one
+    /// [`run_branch`](Self::run_branch) seeds every branch with.
+    fn gadget_coeff(&self) -> Cyc {
+        Cyc { c: [1, 0, 0, 0], m: -(self.t as i32) }
+    }
+
+    /// THE CERTIFIED per-branch bound: `|coeff_b · γ_b|`.
+    ///
+    /// An affine state's amplitude is `γ·i^p` on its support and exactly `0`
+    /// off it, so `|amplitude_of(b, y)|` is EXACTLY this number or exactly
+    /// zero, for every `y`. It is therefore the tightest bound a branch can
+    /// carry short of the query itself — and it does not depend on `y`, so
+    /// one affine evolution per branch buys it for every amplitude the
+    /// observable needs.
+    ///
+    /// Cost: free when the branch is cached (the constructor caches up to
+    /// `CACHE_MAX` branches), one branch evolution otherwise. Compare
+    /// [`BranchSource::branch_bound`], which costs nothing at all and is
+    /// looser by the branch's `2^{rank/2}`.
+    pub fn scalar_bound(&self, branch: u64) -> f64 {
+        assert!(branch < self.n_branches(), "branch index out of range");
+        if let Some((coeff, st)) = self.cache.get(branch as usize) {
+            return scalar_mag(*coeff, st);
+        }
+        let (coeff, st) = self.run_branch(branch);
+        scalar_mag(coeff, &st)
+    }
+
+    /// [`scalar_bound`](Self::scalar_bound) for every branch, in branch order.
+    pub fn scalar_bounds(&self) -> Vec<f64> {
+        (0..self.n_branches()).map(|b| self.scalar_bound(b)).collect()
+    }
+
     fn amp_ext(&self, coeff: Cyc, st: &Affine, y: &[bool]) -> Cyc {
         let mut y_ext = vec![false; self.n_ext];
         y_ext[..self.n].copy_from_slice(y);
@@ -448,9 +509,37 @@ impl Magic5Source {
     }
 }
 
+/// `|coeff · γ|` of an evolved branch, rounded UP: a bound that is one ulp
+/// optimistic is a bound that lied.
+fn scalar_mag(coeff: Cyc, st: &Affine) -> f64 {
+    if st.is_zero() {
+        return 0.0;
+    }
+    let (re, im) = coeff.mul(st.gamma()).to_complex();
+    crate::acuity::nudge_up(re.hypot(im))
+}
+
 impl BranchSource for Magic5Source {
     fn n_branches(&self) -> u64 {
         self.plan.n_branches()
+    }
+
+    /// The A-PRIORI bound: `|coeff_b| · 2^{k_b/2}`, from
+    /// [`Magic5Plan::coeff_and_rank`] alone — no branch is evaluated, so this
+    /// is a price that can be quoted before the run.
+    ///
+    /// It is the decomposition's own normalised coefficient sum and nothing
+    /// more: `|⟨y|φ_b⟩| ≤ ‖φ_b‖`. That inequality is tight only for a state
+    /// concentrated on one basis vector, and a Clifford+T circuit's output is
+    /// the opposite — spread over `2^{rank}` of them — so this bound runs
+    /// `2^{rank/2}` (`10³`–`10⁵` at this campaign's sizes) above the truth
+    /// and does not truncate. [`Magic5Source::scalar_bound`] is the one that
+    /// does; the gap between them is measured in `tests/qvm_acuity_hard.rs`.
+    fn branch_bound(&self, branch: u64) -> f64 {
+        assert!(branch < self.n_branches(), "branch index out of range");
+        let (c, k) = self.plan.coeff_and_rank(branch);
+        let (re, im) = self.gadget_coeff().mul(c).to_complex();
+        crate::acuity::nudge_up(re.hypot(im) * 2f64.powf(k as f64 / 2.0))
     }
 
     fn amplitude_of(&self, branch: u64, y: &[bool]) -> Cyc {

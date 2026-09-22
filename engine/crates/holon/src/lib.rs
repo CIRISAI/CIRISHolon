@@ -13,6 +13,7 @@
 //! both credited), tier 2 ledger ring (exact Z[ω]). Conformance referees:
 //! the certified holon-qasm tiers (QASM-1/2 records) as dev-dependencies.
 
+pub mod acuity;
 pub mod adaptive;
 pub mod affine;
 pub mod cyclo;
@@ -54,6 +55,22 @@ pub trait BranchSource: Sync {
     /// coeff_b · ⟨y|φ_b⟩, exact. Cheap to call per (branch, y).
     fn amplitude_of(&self, branch: u64, y: &[bool]) -> ledger::Cyc;
     fn n_qubits(&self) -> usize;
+
+    /// An a-priori UPPER BOUND on `|amplitude_of(branch, y)|`, valid for
+    /// EVERY `y` of this source's width — the one number
+    /// [`acuity::budgeted_amplitude`](crate::acuity::budgeted_amplitude)
+    /// needs to certify a remainder without evaluating a branch.
+    ///
+    /// It is a bound and never an estimate: a source that returns a number
+    /// smaller than some `|amplitude_of(b, y)|` breaks the certificate, and
+    /// `tests/qvm_acuity_hard.rs` is where that is made to pay.
+    ///
+    /// The default is `f64::INFINITY`, which is honest for a source that has
+    /// not derived one: the budget then never truncates and the acuity is met
+    /// by evaluating every branch. It is never wrong, only slow.
+    fn branch_bound(&self, _branch: u64) -> f64 {
+        f64::INFINITY
+    }
 }
 
 use plane::BitPlane;

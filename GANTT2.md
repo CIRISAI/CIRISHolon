@@ -799,6 +799,22 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## The general QVM's claim, measured on Clifford+T (2026-09-22)
+
+`conformance/qasm/QVM_ACUITY1_RESULTS.md`, branch (a). Two Opus agents in parallel, one
+per half, merged the same night. The cheap sector is FOUND: each gate's unitary read out of
+the engine and the tableau view's closure tested by Pauli conjugation — CZ, √X and a phased
+H come out cheap, Toffoli and controlled-S hard — and the observable's light cone removes
+76 T-gates on the grid at a worst change of `2.6 × 10⁻¹⁵`. The price is printed before the
+run and equals the executed count at `ε = 0` exactly. The budgeted sum's certificate held on
+all 450 runs against two referees (worst `R_k/error` 29; the planted wrong branch breaks
+it; the synthetic bound is attained exactly). The branch-count exponent is `0.3962` against
+the published `0.396`; the wall carries the gadget's `0.066` on top. The mesh pays on the
+branch sum (`0.27 ×` at four shards, bit-identical) where it did not on the tableau. Two
+prereg faults: an absolute acuity ladder where the observable scales as `2^{−n/2}` (so
+`ε = 0.1` is met by `0` at `n = 20`, correctly), and an eight-shard stake on a seven-core
+range. MESH-CLIFFORD-1's window stays deferred: the profile first.
+
 ## Two more searches on data already on disk (2026-09-21, night)
 
 `TSCAN_HBOND_SEARCH_RESULTS.md`. **Temperature:** the fluid's closed sectors are the

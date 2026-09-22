@@ -194,6 +194,34 @@ experimental number. What is measured here is measured at that strength.*
   property of this programme's instruments, and the reason each of the
   three entries above carries its scope on its face.
 
+## Measured, added 2026-09-22 (QVM-ACUITY-1: the general QVM's claim on Clifford+T)
+
+*Scope: random Clifford+T circuits, `n ≤ 24`, `t ≤ 28`, one amplitude or one
+four-qubit marginal, exact `Z[ω]` arithmetic; the decomposition is
+Kissinger–van de Wetering–Vilmart's Magic5FromCat on Bravyi–Gosset, ported
+with credit. `conformance/qasm/QVM_ACUITY1_RESULTS.md`.*
+
+- **The cheap part is found, not named.** The closure test the object is
+  built on, applied to each gate's unitary by Pauli conjugation, returns the
+  Clifford sector — and classifies unitaries the gate table cannot spell;
+  the observable's light cone removes the T-gates it cannot see (76 on the
+  grid, worst change `2.6 × 10⁻¹⁵`, one dropped kept gate moves it by `10⁻²`).
+- **The hard part is priced before it runs**, and the price equals the
+  executed count exactly at `ε = 0`; the count's exponent is `0.3962`
+  against the published `0.396`.
+- **Only enough of it is done, with a certificate that held on every one
+  of 450 runs**: `|value − referee| ≤ R_k ≤ ε` against a full exact sum and
+  an independent statevector; a planted wrong branch breaks it; the
+  remainder bound is attained exactly on a synthetic carrier. The prereg's
+  own a-priori bound was vacuous; the exact per-branch bound truncates.
+- **The mesh pays on the branch sum** (`0.27 ×` at four shards, bit-identical)
+  and not on the tableau (MESH-CLIFFORD-1: bit-identical at every shard
+  count, but the parallelised section is one percent of the work). Where
+  the cores go is now a measurement.
+- **Process:** an absolute acuity ladder where the observable scales as
+  `2^{−n/2}`, and an eight-shard stake on a seven-core range — both the
+  lead's, both recorded in the prereg's notes, no stake moved.
+
 ## Measured, added 2026-09-21 (RESPONSE-1: the residual dialled to known physics)
 
 *Scope: the rigid operator's liquid, 432 waters, driven at `k = 2π/L`; two full

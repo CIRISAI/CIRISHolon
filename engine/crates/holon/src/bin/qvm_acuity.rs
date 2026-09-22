@@ -55,9 +55,8 @@
 
 use holon::affine::Gate;
 use holon::magic::Circuit;
-use holon::magic5::Magic5Source;
 use holon::sector::{
-    self, referee, AcuityBackend, Budgeted, FullSum, ObsValue, Observable, Sector,
+    self, referee, AcuityBackend, Budgeted, ObsValue, Observable, Sector,
 };
 use std::time::Instant;
 
@@ -100,13 +99,25 @@ use std::time::Instant;
 //
 // Nothing else changes; the sweep's `backend` column then reads the real name
 // and its two wall columns stop being the same measurement.
-fn backend() -> Box<dyn AcuityBackend> {
-    Box::new(FullSum)
+/// The real backend (merged 2026-09-22): the budgeted branch sum with its certified
+/// remainder, on the certified source whose per-branch bound is the one that truncates.
+struct Acuity;
+impl AcuityBackend for Acuity {
+    fn name(&self) -> &'static str { "acuity::budgeted_amplitude" }
+    fn budgeted_amplitude(&self, src: &dyn holon::BranchSource, y: &[bool], eps: f64, shards: usize) -> Budgeted {
+        let b = holon::acuity::budgeted_amplitude(src, y, eps, shards);
+        Budgeted { value_f64: b.value_f64, remainder: b.remainder, evaluated: b.evaluated, total: b.total }
+    }
 }
 
-/// The branch source for the located circuit. See MERGE POINT above.
-fn make_source(c: &Circuit, _y: &[bool]) -> impl holon::BranchSource {
-    Magic5Source::new(c)
+fn backend() -> Box<dyn AcuityBackend> {
+    Box::new(Acuity)
+}
+
+/// The branch source for the located circuit: the CERTIFIED one (the a-priori coefficient
+/// bound is vacuous; the per-branch scalar bound is what makes the budget bite).
+fn make_source(c: &Circuit, y: &[bool]) -> impl holon::BranchSource {
+    holon::acuity::certified_source_for(c, y)
 }
 
 // ---------------------------------------------------------------------------

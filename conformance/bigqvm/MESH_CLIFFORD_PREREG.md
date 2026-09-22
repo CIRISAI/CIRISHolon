@@ -12,13 +12,13 @@ a sum. This freezes the cut, its gates, its plants, its head-to-head and its kil
 destabilizer product row-major. **The shard is a contiguous range of qubit columns.** With
 `S` shards over `n` qubits, shard `s` owns columns `[s·n/S, (s+1)·n/S)`.
 
-- **Single-qubit gates** (H, S, S†, X, Z) act on one column: shard-local, no communication.
-- **CX(c, t)** acts on two columns. Within a shard: local. Across shards: the two columns
+- Single-qubit gates (H, S, S†, X, Z) act on one column: shard-local, no communication.
+- CX(c, t) acts on two columns. Within a shard: local. Across shards: the two columns
   are exchanged for the duration of the gate (a copy of `2n/64` words each way), then
   written back. The surface code's four-step schedule fixes which pairs cross; the shard
   boundaries are chosen on the code's row structure so that crossing pairs are a minority,
   and their count is REPORTED per round.
-- **Measurement of `Z_q`.** The determinism scan is a read of column `q`: shard-local. The
+- Measurement of `Z_q`. The determinism scan is a read of column `q`: shard-local. The
   rowsum, when the outcome is random, is a row operation across ALL columns: each shard
   applies its column range of the rowsum in parallel, and the phase bit is a FOLD over
   shards of each shard's partial product, in shard order, under `holon::merge`'s law. The
@@ -83,5 +83,5 @@ Circuits other than Clifford; the magic tier's branch sums (already meshed); the
 
 ---
 witness: none (an engineering campaign; its gates are bit-identity and measured wall, its plants convict a corrupted shard)
-**misfits:** M-PLACEMENT-LOTTERY, M-CHEAPER-THAN-ITS-PRICE, M-PLANT-OBS, M-PLANT-SECTOR — contacted by keyword, cited.
+**misfits:** M-PLACEMENT-LOTTERY, M-CHEAPER-THAN-ITS-PRICE, M-PLANT-OBS, M-PLANT-SECTOR, M-PARITY-PROTECT, M-HOMOG, M-DEVICE-CLASS, M-IDLE-CALIBRATED-TIMEOUT — contacted by keyword, cited.
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier (a shard, a fold order, a random stream, the unsharded engine), and the sector the plant acts on is nonzero in that carrier by construction.

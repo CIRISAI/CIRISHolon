@@ -582,9 +582,17 @@ fn main() {
         crossing_cx as f64 / total_cx as f64
     };
     let exchange_bytes = mesh.map_or(0, |m| m.exchange_peak_bytes);
+    // `shards.count` is 1 for BOTH `--shards 1` (the untouched engine) and
+    // `--sharded --shards 1` (the cut's own overhead at one shard), so the
+    // count alone cannot tell a harness which arm it just timed. `on_cut`
+    // says it in one machine-readable bit rather than leaving the answer in
+    // the prose of the engine string — the same silent-flag trap `--shards`
+    // and `--layout` each sprang once already.
+    let on_cut = mesh.is_some();
     eprintln!(
         "  shards S={shards}  crossing {crossing_cx}/{total_cx} = {frac:.5}  \
-         (layout {layout}, exchange peak {:.3} MB)",
+         (layout {layout}, engine {}, exchange peak {:.3} MB)",
+        if on_cut { "sharded" } else { "unsharded" },
         exchange_bytes as f64 / 1e6
     );
     if let Some(m) = mesh {
@@ -640,6 +648,7 @@ fn main() {
          \"mode\": \"{mode}\", \"seed\": {seed}, \"distance\": {d}, \
          \"layout\": \"{layout}\", \
          \"shards\": {{\"count\": {shards}, \"requested\": {want_shards}, \
+         \"on_cut\": {on_cut}, \
          \"crossing_cx\": {crossing_cx}, \"total_cx\": {total_cx}, \
          \"crossing_fraction\": {frac:.6}, \"exchange_peak_bytes\": {exchange_bytes}}}, \
          \"record_hash\": \"fnv1a64:{rec_hash:016x}\", \

@@ -14,7 +14,26 @@ three-seed averages exist; per-arm rows are readings of one seed. The five parti
 
 | T seed 0 (50 m/s, transverse) | 12 | 8.7 | R4 (`0.17` of spatial, under its `3σ` bar), R4′ hold | **R1′: driven `0.759`, relaxed `1.036`, `|Δ| = 0.28` against `max(0.1, 2 SE) = 0.25` → FIRES by `0.03`**; separation from the blind `+0.24` | current OVERDAMPED, `λ = 3.6 × 10¹²` /s (`τ = 279` fs); 7 of 12 tails unrelaxed | **`η = 5.0 × 10⁻⁴` Pa s** `[4.2, 5.8]`, IN BAND — equal to the equilibrium read at this `k` |
 
-## The transverse null, as it stands (2026-09-21, three transverse reads)
+| T seed 1 (50 m/s) | 12 | 13.0 | R4 (`0.11`), R4′ hold | **R1′: driven `0.966`, relaxed `0.996`, `|Δ| = 0.03` → HOLDS** | current overdamped | `η = 3.9 × 10⁻⁴` `[1.3, 6.5]`, IN BAND |
+| T seed 2 (50 m/s) | 12 | 5.1 | R4 (`0.25`, under its bar), R4′ hold | **R1′: driven `0.991`, relaxed `0.952`, `|Δ| = 0.04` → HOLDS** | current overdamped | `η = 4.4 × 10⁻⁴` `[3.8, 5.0]`, IN BAND |
+| L seed 2 (50 m/s) | 12 | 6.8 | all hold | **R1: `0.836` against a two-sided floor of `0.860` → AT FLOOR**, separation `+0.20`; null holds | OVERDAMPED from the peak (SNR 6.6) | — |
+
+## The transverse null, as it stands (2026-09-22 morning, three FULL transverse arms)
+
+Seed 0 fired by `0.03` (`|Δ| = 0.28`); seeds 1 and 2 hold cleanly (`0.03`, `0.04`). One of three,
+seed-specific — the shape the sample-anisotropy candidate predicts and an instrument artefact
+would not (an artefact would fire on every seed by a similar amount). The three-seed pooled
+read is the graded one and is being produced by the reader; if it holds, branch (e) is not
+entered and R1's kills on the longitudinal arms stand. The viscosity on the three full
+transverse arms: `5.0, 3.9, 4.4 × 10⁻⁴` Pa s, all in band, all within the equilibrium read.
+
+## R1 on the 50 m/s longitudinal arms, two of three
+
+Seed 1: `0.846` over a floor of `0.737` (kill on the seed); seed 2: `0.836` at a floor of `0.860`
+(at floor). The graded R1 is the three-seed average, seed 0 landing today; the staggered
+chart's R1″ is graded on the three 200 m/s seeds, two of which land tonight.
+
+## The transverse null, as it stood on 2026-09-21 (one full transverse read)
 
 The null R1′ says continuity must see NOTHING under a shear kick. On the full T seed 0 it
 fires by `0.03` over its allowance: the slab-momentum chart predicts `42 %` of the aligned

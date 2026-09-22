@@ -1,0 +1,41 @@
+# RUNG 2 — the fluid-element chart
+# stakes: RUNG2_PREREG.md @ aee5317
+# dp = 1.321126 au (frozen 1.3211)
+# de = 0.000950043 Ha (frozen 0.0009500435)
+# bars: admissible occ >= 100, cells >= 4, fluct <= 0.1; transport >= 0.05; informative >= 200; beta = 0.02; separation >= 0.05
+
+===== RESPONSE-1 arm L on rigid (1 trajectories): 12 cycles x 314 readouts; Amendment 1's read =====
+-- seed2.traj  seed 0x5245504c41434532 n=432 readouts=3769 dt=10.0 fs  k=2π/L=2.675e9 /m
+   12 cycles aligned; current mode noise per cycle 2.402e-3 au, aligned 8.690e-4 au; kick amplitude aligned 5.906e-3 au (SNR 6.8); tails relaxed: 9 of 12 (aligned tail mean 1.2 SE) — UNRELAXED cycles: the mode has not returned to zero by the cycle's end; the fit's window is what it is and the rebound is a finding
+   cycle  0: OVERDAMPED  λ = 7.112e12 /s (τ = 141 fs)  A = 9.437e-3  resid 4.69e-4  pts 11  | tail mean 1.4 SE
+   cycle  1: REFUSED — kick amplitude 4.106e-3 under 3 x noise 2.402e-3  | tail mean 0.5 SE
+   cycle  2: OVERDAMPED  λ = 7.491e12 /s (τ = 133 fs)  A = 8.342e-3  resid 8.95e-4  pts 7  | tail mean 3.5 SE
+   cycle  3: REFUSED — kick amplitude 6.564e-3 under 3 x noise 2.402e-3  | tail mean 4.5 SE
+   cycle  4: REFUSED — kick amplitude 1.220e-3 under 3 x noise 2.402e-3  | tail mean 2.6 SE
+   cycle  5: REFUSED — kick amplitude 7.429e-3 under 3 x noise 2.402e-3  | tail mean 1.0 SE
+   cycle  6: REFUSED — kick amplitude 8.633e-3 under 3 x noise 2.402e-3  | tail mean 2.5 SE
+   cycle  7: REFUSED — kick amplitude 3.597e-3 under 3 x noise 2.402e-3  | tail mean 1.0 SE
+   cycle  8: REFUSED — kick amplitude 7.326e-3 under 3 x noise 2.402e-3  | tail mean 0.4 SE
+   cycle  9: REFUSED — kick amplitude 2.395e-3 under 3 x noise 2.402e-3  | tail mean 2.5 SE
+   cycle 10: REFUSED — kick amplitude 4.559e-3 under 3 x noise 2.402e-3  | tail mean 1.4 SE
+   cycle 11: OVERDAMPED  λ = 3.453e12 /s (τ = 290 fs)  A = 8.040e-3  resid 2.50e-4  pts 5  | tail mean 3.2 SE
+   ALIGNED current mode j_k^s: OVERDAMPED  λ = 1.227e13 /s (τ = 82 fs)  A = 6.010e-3  resid 2.11e-4  pts 8
+   R4:  blind/spatial aligned kick amplitude 0.032; blind 1.885e-4 au vs max(0.1 × spatial, 3σ_blind) = 2.190e-3: no mode on the scrambled partition
+   R4′: undriven quadrature j_k^c aligned amplitude 8.715e-5 au vs 3σ 2.303e-3: at noise, as it must be
+   longitudinal current j_k^s: rate 1.227e13 ± 4.04e12 /s (3 per-cycle fits) = ν_l k² if overdamped -> ν_l = 1.715e-6 m²/s (no band; the fast mode of A3)
+        residual budget: observed² 8.030e-1 = signal² 1.589e-1 + noise² 6.441e-1; residual² 7.413e-1 of which floor 6.649e-1 and EXCESS 7.646e-2 = 48 % of the signal power
+   R1  grid 16x1x1 (τ 98 fs, window 10, 12 cycles aligned, lead 2 windows): D_cont spatial 0.961  blind 1.008  separation +0.047 | s 0.50 (one-sided s 0.81: blind 0.81, tail 0.77), floor two-sided 0.910 (one-sided 0.775; D_disc 0.026; σ_o 8.026e-1, σ_p 1.438e-1) | relaxed last window 1.063  [beside the graded grid]
+        residual budget: observed² 1.219e0 = signal² 3.689e-1 + noise² 8.498e-1; residual² 8.512e-1 of which floor 9.024e-1 and EXCESS -5.119e-2 = -14 % of the signal power
+   R1  grid 8x1x1 (τ 196 fs, window 20, 12 cycles aligned, lead 2 windows): D_cont spatial 0.836  blind 1.031  separation +0.196 | s 0.66 (one-sided s 1.20: blind 0.00, tail 1.20), floor two-sided 0.860 (one-sided 0.646; D_disc 0.100; σ_o 9.219e-1, σ_p 2.212e-1) | relaxed last window 0.974
+        R1 verdict on this seed: AT FLOOR (over 0.2 but within 0.05 of the stated floor; not a kill — the arithmetic, not the fluid); null (relaxed ≥ 0.8): holds
+        residual budget: observed² 1.179e0 = signal² 0.000e0 + noise² 1.517e0; residual² 1.241e0 of which floor 1.263e0 and EXCESS -2.270e-2 = (no resolvable signal at this grid: the lead windows' RMS is not above the tail's)
+   R1  grid 4x1x1 (τ 392 fs, window 39, 12 cycles aligned, lead 2 windows): D_cont spatial 1.026  blind 0.845  separation -0.181 | s 0.00 (one-sided s 0.80: blind 0.80, tail 0.00), floor two-sided 1.035 (one-sided 0.813; D_disc 0.363; σ_o 1.232e0, σ_p 3.301e-1) | relaxed last window 1.272  [beside the graded grid]
+   density mode ρ_k^c: noise per cycle 1.475e0, aligned 5.306e-1 counts; peak -3.504e0 at readout 12 (120 fs), SNR 6.6
+   R2:  from the peak: OVERDAMPED  λ = 5.415e12 /s (τ = 185 fs)  A = -3.858e0  resid 1.94e-1  pts 18
+        λ₁ = 5.415e12 /s = c_s²/ν_l if overdamped (no band; A3 said 50 m/s likely refuses)
+   R4 (density): blind/spatial at the peak 0.201; blind 7.050e-1 vs max(0.1 × spatial, 3 sd_blind) = 1.463e0 (blind whole-cycle sd 4.876e-1): no mode on the scrambled partition
+   R2 (both forms): damped cosine Γ = 2.304e12 /s, ω = 7.576e12 /s (period 829 fs, c_s = ω/k = 2832 m/s), resid 5.247e-1 | exponential from the peak resid 1.940e-1 -> OVERDAMPED (exponential from the peak better by > 10 %)
+   R4′ (density): undriven ρ_k^s at the peak 5.168e-1 vs 3σ 1.524e0: at noise
+
+===== COST (PREREG G11, work units, never wall clock) =====
+frames read:       3769

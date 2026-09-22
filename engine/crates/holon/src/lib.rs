@@ -38,6 +38,7 @@ pub mod simplify;
 pub mod sliced;
 pub mod surface;
 pub mod coladaptive;
+pub mod sharded;
 pub mod coltableau;
 pub mod tableau;
 pub mod zx;

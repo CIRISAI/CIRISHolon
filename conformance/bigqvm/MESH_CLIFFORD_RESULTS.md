@@ -238,3 +238,21 @@ the first quiet window measures it) — contacted by keyword, cited.
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier (a
 shard, a fold order, a random stream, the unsharded engine), and the sector the
 plant acts on is nonzero in that carrier by construction.
+
+
+## Read so far (2026-09-22, before any quiet-window timing)
+
+G1 PASS at `S = 1, 2, 4, 8` (record, digest and final tableau identical to the unsharded engine
+and the row-major reference: surface code `d = 21, 45` three seeds; random Clifford `n = 256,
+1024` five seeds; `d = 141` the same hash on all paths). G2 KILLED on the flagship's qubit
+numbering (`0.98–1.00` of CX gates cross at every `S`) and MET after branch (c) was carried
+out on the numbering: banded, `0.025` at `d = 141, S = 8`. Plants P1–P4 fire. First look on
+seven E-cores at `d = 141`: `6.21 → 5.80` s (unsharded → `S = 1`), `4.38` s at `S = 8`, `0.74 ×`,
+with `S = 4` and `S = 8` tied — because the cross-shard rowsum the cut parallelises fires on
+`69` of `9,940` cascades: the section is one percent of the work. **G3's quiet window is
+DEFERRED** rather than run: it would measure that the cut is aimed at the wrong section. The
+next step is the profile (gate streaming, scans, rowsums, rebuilds, exchanges at `S = 1` and
+`8`), then a re-aimed cut with the same bit-identity plants, then the window with the
+comparison class declared (an adaptive-circuit claim, eight cores against one). The QVM's
+claim itself — cheap part located, hard part priced, only enough of it done — is
+`conformance/qasm/QVM_ACUITY1_PREREG.md`, where the mesh's home is the branch sum.

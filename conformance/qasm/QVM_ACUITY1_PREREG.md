@@ -88,5 +88,5 @@ noise; anything above `n = 24`, where the referee is gone and only the certifica
 
 ---
 witness: `Closed` (Object.lean), `tableau_not_closed_under_rotation` and `tableau_closed_under_hadamard` (Stabilizer.lean) for S1's sector; none for S2–S5 (measured gates)
-**misfits:** M-PLANT-OBS, M-PLANT-SECTOR, M-CHEAPER-THAN-ITS-PRICE, M-TRUNCATION-AS-ERRORBAR, M-DEVICE-CLASS, M-PLACEMENT-LOTTERY, M-HOMOG, M-PARITY-PROTECT, M-VACUOUS-SUCCESS, M-FLOOR-UNSTAKED — contacted by keyword, cited.
+**misfits:** M-PLANT-OBS, M-PLANT-SECTOR, M-CHEAPER-THAN-ITS-PRICE, M-TRUNCATION-AS-ERRORBAR, M-DEVICE-CLASS, M-PLACEMENT-LOTTERY, M-HOMOG, M-PARITY-PROTECT, M-VACUOUS-SUCCESS, M-FLOOR-UNSTAKED, M-MAINTENANCE-LENS — contacted by keyword, cited.
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier (a Clifford circuit, a light-cone-disjoint circuit, a synthetic branch set, a planted branch, a shard), and the sector the plant acts on is nonzero in that carrier by construction.

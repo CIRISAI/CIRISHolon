@@ -12,6 +12,24 @@ three-seed averages exist; per-arm rows are readings of one seed. The five parti
 | L200 seed 0 (control) | 12 | 38 | all hold | **0.735, +0.35, floor 0.60 → KILL on this seed** (over the floor by 0.14) | OSCILLATORY: period 705–735 fs, `c_s ≈ 3,200–3,300` m/s, `Γ ≈ 2.2–2.7 × 10¹²` /s — outside R2's band | — |
 | L seed 1 (50 m/s) | 12 | 9.4 | R4, R4′, density R4 hold; **density R4′ fires marginally** (`0.52` vs `3σ = 0.39`) | **0.846, +0.07, floor 0.74 → KILL on this seed** (over by 0.11) | OVERDAMPED: current `λ₂ = 1.04 × 10¹³` /s (`ν_l = 1.45 × 10⁻⁶` m²/s), density from the peak `λ₁ = 5.5 × 10¹²` /s; `c_s = √(λ₁λ₂)/k ≈ 2,800` m/s, `Γ/ω ≈ 1.05` | — |
 
+| T seed 0 (50 m/s, transverse) | 12 | 8.7 | R4 (`0.17` of spatial, under its `3σ` bar), R4′ hold | **R1′: driven `0.759`, relaxed `1.036`, `|Δ| = 0.28` against `max(0.1, 2 SE) = 0.25` → FIRES by `0.03`**; separation from the blind `+0.24` | current OVERDAMPED, `λ = 3.6 × 10¹²` /s (`τ = 279` fs); 7 of 12 tails unrelaxed | **`η = 5.0 × 10⁻⁴` Pa s** `[4.2, 5.8]`, IN BAND — equal to the equilibrium read at this `k` |
+
+## The transverse null, as it stands (2026-09-21, three transverse reads)
+
+The null R1′ says continuity must see NOTHING under a shear kick. On the full T seed 0 it
+fires by `0.03` over its allowance: the slab-momentum chart predicts `42 %` of the aligned
+occupancy-change power in the two windows after the kick and none in the relaxed tail. On
+the partial arms it held on T seed 2 and the 200 m/s control (`|Δ| = 0.01, 0.02`) and fired
+marginally on T seed 1 (`0.13` on four cycles). By symmetry a transverse kick has no
+first-order longitudinal response in an isotropic liquid, and sign alignment cancels the
+second-order (Reynolds-stress) one — so a sign-locked longitudinal flow after a transverse
+kick can only come from the sample's own anisotropy, the `1/√N ≈ 5 %` off-diagonal stress of
+one 432-molecule configuration, persisting across cycles because the configuration
+rearranges on tens of picoseconds. That is a candidate, not a finding. **If R1′ fires on the
+three-seed transverse average, branch (e) is entered: the reader is convicted of reading
+momentum rather than flux, and R1's kills on the longitudinal arms are voided with it.**
+The two remaining transverse arms decide this before anything else is graded.
+
 ## What two arms already say
 
 1. **The 200 m/s control is outside linear response.** At 50 m/s the driven density and

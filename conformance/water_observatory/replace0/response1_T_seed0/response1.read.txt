@@ -1,0 +1,35 @@
+# RUNG 2 — the fluid-element chart
+# stakes: RUNG2_PREREG.md @ aee5317
+# dp = 1.321126 au (frozen 1.3211)
+# de = 0.000950043 Ha (frozen 0.0009500435)
+# bars: admissible occ >= 100, cells >= 4, fluct <= 0.1; transport >= 0.05; informative >= 200; beta = 0.02; separation >= 0.05
+
+===== RESPONSE-1 arm T on rigid (1 trajectories): 12 cycles x 314 readouts; Amendment 1's read =====
+-- seed0.traj  seed 0x5245504c41434530 n=432 readouts=3769 dt=10.0 fs  k=2π/L=2.675e9 /m
+   12 cycles aligned; current mode noise per cycle 2.089e-3 au, aligned 5.705e-4 au; kick amplitude aligned 4.967e-3 au (SNR 8.7); tails relaxed: 5 of 12 (aligned tail mean 7.0 SE) — UNRELAXED cycles: the mode has not returned to zero by the cycle's end; the fit's window is what it is and the rebound is a finding
+   cycle  0: REFUSED — kick amplitude 3.679e-3 under 3 x noise 2.089e-3  | tail mean 1.2 SE
+   cycle  1: REFUSED — kick amplitude 4.035e-3 under 3 x noise 2.089e-3  | tail mean 4.9 SE
+   cycle  2: OVERDAMPED  λ = 1.493e12 /s (τ = 670 fs)  A = 7.647e-3  resid 7.41e-4  pts 18  | tail mean 1.1 SE
+   cycle  3: OVERDAMPED  λ = 2.621e12 /s (τ = 382 fs)  A = 1.522e-2  resid 1.33e-3  pts 37  | tail mean 0.4 SE
+   cycle  4: REFUSED — kick amplitude 5.149e-3 under 3 x noise 2.089e-3  | tail mean 9.6 SE
+   cycle  5: REFUSED — kick amplitude 4.087e-3 under 3 x noise 2.089e-3  | tail mean 3.9 SE
+   cycle  6: REFUSED — kick amplitude 3.883e-3 under 3 x noise 2.089e-3  | tail mean 3.6 SE
+   cycle  7: REFUSED — kick amplitude 6.104e-3 under 3 x noise 2.089e-3  | tail mean 1.0 SE
+   cycle  8: REFUSED — kick amplitude 3.696e-3 under 3 x noise 2.089e-3  | tail mean 4.4 SE
+   cycle  9: OVERDAMPED  λ = 1.914e12 /s (τ = 522 fs)  A = 5.862e-3  resid 8.07e-4  pts 29  | tail mean 1.9 SE
+   cycle 10: REFUSED — kick amplitude 3.008e-3 under 3 x noise 2.089e-3  | tail mean 5.3 SE
+   cycle 11: REFUSED — kick amplitude 5.547e-3 under 3 x noise 2.089e-3  | tail mean 13.8 SE
+   ALIGNED current mode j_k^s: OVERDAMPED  λ = 3.586e12 /s (τ = 279 fs)  A = 5.856e-3  resid 4.29e-4  pts 33
+   R4:  blind/spatial aligned kick amplitude 0.172; blind 8.561e-4 au vs max(0.1 × spatial, 3σ_blind) = 2.147e-3: no mode on the scrambled partition
+   R4′: undriven quadrature j_k^c aligned amplitude 1.275e-3 au vs 3σ 1.553e-3: at noise, as it must be
+   R3:  Γ_s = 3.586e12 ± 1.13e12 /s (3 per-cycle fits) -> η = ρ Γ_s / k² = 4.997e-4 Pa s  [4.21e-4, 5.78e-4]  stake [2.0e-4, 3.0e-3]: IN BAND
+        residual budget: observed² 4.232e-1 = signal² 0.000e0 + noise² 5.825e-1; residual² 4.639e-1 of which floor 4.376e-1 and EXCESS 2.637e-2 = (no resolvable signal at this grid: the lead windows' RMS is not above the tail's)
+   R1′ grid 16x1x1 (τ 98 fs, window 10, 12 cycles aligned, lead 2 windows): D_cont spatial 1.047  blind 0.981  separation -0.066 | s 0.00 (one-sided s 0.36: blind 0.00, tail 0.36), floor two-sided 1.017 (one-sided 0.940; D_disc 0.026; σ_o 7.632e-1, σ_p 1.408e-1) | relaxed last window 1.047  [beside the graded grid]
+        residual budget: observed² 4.913e-1 = signal² 0.000e0 + noise² 1.236e0; residual² 2.832e-1 of which floor 5.098e-1 and EXCESS -2.267e-1 = (no resolvable signal at this grid: the lead windows' RMS is not above the tail's)
+   R1′ grid 8x1x1 (τ 196 fs, window 20, 12 cycles aligned, lead 2 windows): D_cont spatial 0.759  blind 0.995  separation +0.236 | s 0.00 (one-sided s 0.55: blind 0.00, tail 0.55), floor two-sided 1.019 (one-sided 0.878; D_disc 0.100; σ_o 1.112e0, σ_p 2.159e-1) | relaxed last window 1.036
+        R1′ verdict: driven 0.759 vs relaxed 1.036, |Δ| = 0.277 vs max(0.1, 2 SE = 0.252): FIRES — the leg is reading momentum, not flux
+        residual budget: observed² 4.705e-1 = signal² 0.000e0 + noise² 1.057e0; residual² 2.698e-1 of which floor 5.594e-1 and EXCESS -2.896e-1 = (no resolvable signal at this grid: the lead windows' RMS is not above the tail's)
+   R1′ grid 4x1x1 (τ 392 fs, window 39, 12 cycles aligned, lead 2 windows): D_cont spatial 0.757  blind 1.032  separation +0.275 | s 0.00 (one-sided s 0.00: blind 0.00, tail 0.00), floor two-sided 1.090 (one-sided 1.000; D_disc 0.363; σ_o 1.028e0, σ_p 4.470e-1) | relaxed last window 1.101  [beside the graded grid]
+
+===== COST (PREREG G11, work units, never wall clock) =====
+frames read:       3769

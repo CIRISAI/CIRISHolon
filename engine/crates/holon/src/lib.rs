@@ -34,6 +34,7 @@ pub mod real;
 pub mod residue;
 pub mod run;
 pub mod sample;
+pub mod sector;
 pub mod simd;
 pub mod simplify;
 pub mod sliced;

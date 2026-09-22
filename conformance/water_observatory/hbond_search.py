@@ -35,12 +35,13 @@ def read(feats, dt, label=""):
     print(f"# HBOND-SEARCH-1{label}: {n} molecules x {T} rows at {dt:.2f} fs; mean bonds donated {np.mean([f[:,0].mean() for f in feats]):.2f}, accepted {np.mean([f[:,1].mean() for f in feats]):.2f}")
     folds = [[i for i in range(n) if i % 4 == j] for j in range(4)]
     def pairs(fs, lag): return np.concatenate([f[:-lag] for f in fs]), np.concatenate([f[lag:] for f in fs])
-    for tau in (5, 20, 50, 100):
+    EXTRA_LAGS = tuple(int(x) for x in os.environ.get("HBOND_EXTRA_LAGS","").split(",") if x)   # labelled extra: beyond the prereg's 100 fs, on the 5 ps walk only
+    for tau in (5, 20, 50, 100) + EXTRA_LAGS:
         lag = max(1, int(round(tau / dt)))
         A, B = pairs(feats, lag); m = vamp(A, B)
         s_bond = vamp(A, B, BOND)["s"][0]; s_vel = vamp(A, B, VEL)["s"][0]; s_int = vamp(A, B, INT)["s"][0]
         cross, kbv, kvb = blocks(A, B, BOND, VEL)
-        print(f"   lag {tau:3d} fs: dictionary σ {np.array2string(m['s'][:5], precision=3)} | own top σ: bonds {s_bond:.3f}, velocity {s_vel:.3f}, internal {s_int:.3f} | bond-velocity cross {cross:.3f} (B→V {kbv:.3f}, V→B {kvb:.3f})")
+        print(f"   lag {tau:4d} fs{' [EXTRA, beyond the prereg]' if tau > 100 else ''}: dictionary σ {np.array2string(m['s'][:5], precision=3)} | own top σ: bonds {s_bond:.3f}, velocity {s_vel:.3f}, internal {s_int:.3f} | bond-velocity cross {cross:.3f} (B→V {kbv:.3f}, V→B {kvb:.3f})")
         if tau == 100: print(f"   S1 bond state closed at 100 fs (own σ ≥ 0.5, kill < 0.2): {s_bond:.3f} -> {'MET' if s_bond >= 0.5 else ('KILL' if s_bond < 0.2 else 'between')}")
         if tau == 5: print(f"   S2 bond-velocity decoupled at 5 fs (cross < 0.2, kill ≥ 0.4): {cross:.3f} -> {'MET' if cross < 0.2 else ('KILL' if cross >= 0.4 else 'between')}")
     # S3: the bond state predicts the momentum change over 50 fs (held out by molecule) vs a re-paired null

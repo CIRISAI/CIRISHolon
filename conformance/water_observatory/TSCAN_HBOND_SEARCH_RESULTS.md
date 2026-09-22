@@ -59,3 +59,17 @@ The temperature search is the first time a rung's object was shown invariant acr
 thermodynamic scan. The network search is the first time the procedure declined to promote
 a closed sector to an object because the level above does not carry it — the same rule that
 selected the rigid unit over the vibrations, now returning "no" instead of "which".
+
+## HBOND-SEARCH-1 on the 5 ps walk (appended 2026-09-22 evening)
+
+128 waters, 5,001 rows at 1 fs, NVE from 294 K (drifting to 305–327 K over the run — a warm
+box, inside the 10 % gate for most of it and noted). S2 MET again, harder: bond–velocity
+cross-block `0.002` at 5 fs. S1 between again: the bond state's own `σ` is `0.46` at 100 fs, and
+the labelled extra beyond the prereg shows the tail the half-picosecond walks could not:
+`0.34` at 200 fs, `0.19` at 500 fs, `0.08` at 1 ps — a bond-count memory of `~350` fs, not the
+picosecond of the literature's intact-bond correlation, because a COUNT forgets which
+partner was lost. **S3 KILLED as on the short walks**: the bonds' increment to predicting
+the momentum change beyond the velocity itself is `+0.000` (velocity alone `0.399`). The
+reader's printed ratio "`19.1`" is `0.000 / −0.000` and is an artefact of the ratio, not a
+reading; the increment is the statistic the plant validated. The verdict stands: the
+network is a closed sector the fluid does not carry.

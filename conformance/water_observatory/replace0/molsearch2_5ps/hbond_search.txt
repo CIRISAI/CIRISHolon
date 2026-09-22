@@ -1,0 +1,11 @@
+# HBOND-SEARCH-1 on conformance/water_observatory/replace0/molsearch2_5ps: 128 molecules x 5001 rows at 0.99 fs; mean bonds donated 1.66, accepted 1.66
+   lag    5 fs: dictionary σ [0.981 0.98  0.98  0.896 0.843] | own top σ: bonds 0.896, velocity 0.981, internal 0.690 | bond-velocity cross 0.002 (B→V 0.002, V→B 0.004)
+   S2 bond-velocity decoupled at 5 fs (cross < 0.2, kill ≥ 0.4): 0.002 -> MET
+   lag   20 fs: dictionary σ [0.754 0.746 0.741 0.679 0.674] | own top σ: bonds 0.679, velocity 0.754, internal 0.674 | bond-velocity cross 0.013 (B→V 0.014, V→B 0.015)
+   lag   50 fs: dictionary σ [0.733 0.537 0.424 0.41  0.221] | own top σ: bonds 0.537, velocity 0.220, internal 0.733 | bond-velocity cross 0.065 (B→V 0.035, V→B 0.035)
+   lag  100 fs: dictionary σ [0.473 0.462 0.29  0.109 0.097] | own top σ: bonds 0.462, velocity 0.109, internal 0.473 | bond-velocity cross 0.059 (B→V 0.020, V→B 0.027)
+   S1 bond state closed at 100 fs (own σ ≥ 0.5, kill < 0.2): 0.462 -> between
+   lag  200 fs [EXTRA, beyond the prereg]: dictionary σ [0.665 0.342 0.172 0.102 0.069] | own top σ: bonds 0.341, velocity 0.072, internal 0.665 | bond-velocity cross 0.109 (B→V 0.035, V→B 0.025)
+   lag  500 fs [EXTRA, beyond the prereg]: dictionary σ [0.186 0.047 0.044 0.026 0.01 ] | own top σ: bonds 0.186, velocity 0.026, internal 0.044 | bond-velocity cross 0.141 (B→V 0.013, V→B 0.024)
+   lag 1000 fs [EXTRA, beyond the prereg]: dictionary σ [0.08  0.025 0.021 0.019 0.013] | own top σ: bonds 0.077, velocity 0.022, internal 0.020 | bond-velocity cross 0.318 (B→V 0.023, V→B 0.015)
+   S3 Δv over 50 fs: R² from bonds+velocity 0.399, velocity alone 0.399, bonds alone 0.000, re-paired null -0.000; bonds' increment over velocity +0.000; bonds alone / null 19.1 -> MET

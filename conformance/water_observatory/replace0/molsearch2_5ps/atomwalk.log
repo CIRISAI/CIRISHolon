@@ -1,0 +1,103 @@
+phase atomwalk, out /home/emoore/CIRISHolon/conformance/water_observatory/replace0/molsearch2_5ps, observatory ../conformance/water_observatory
+seed 1 of 3: 0x5245504c41434531
+atomwalk: 384 atoms at n_cells = 4, box 29.5936 bohr, seed 0x5245504c41434531; settle 40000, then 190000 NVE frames, a row every 38 (0.990 fs)
+  settling frame    500: T  398.6 K, cross-unit U -6.790817e-4 Ha/water
+  settling frame   1000: T  448.0 K, cross-unit U -2.386176e-3 Ha/water
+  settling frame   1500: T  402.4 K, cross-unit U -2.103215e-3 Ha/water
+  settling frame   2000: T  375.0 K, cross-unit U -2.125876e-3 Ha/water
+  settling frame   2500: T  370.6 K, cross-unit U -2.253361e-3 Ha/water
+  settling frame   3000: T  354.8 K, cross-unit U -2.596342e-3 Ha/water
+  settling frame   3500: T  383.0 K, cross-unit U -3.206777e-3 Ha/water
+  settling frame   4000: T  386.4 K, cross-unit U -3.226672e-3 Ha/water
+  settling frame   4500: T  343.4 K, cross-unit U -3.332171e-3 Ha/water
+  settling frame   5000: T  352.0 K, cross-unit U -3.556385e-3 Ha/water
+  settling frame   5500: T  365.3 K, cross-unit U -3.891713e-3 Ha/water
+  settling frame   6000: T  369.0 K, cross-unit U -4.171664e-3 Ha/water
+  settling frame   6500: T  376.0 K, cross-unit U -4.601016e-3 Ha/water
+  settling frame   7000: T  328.8 K, cross-unit U -4.303146e-3 Ha/water
+  settling frame   7500: T  359.0 K, cross-unit U -4.861356e-3 Ha/water
+  settling frame   8000: T  351.8 K, cross-unit U -5.084406e-3 Ha/water
+  settling frame   8500: T  316.4 K, cross-unit U -4.889183e-3 Ha/water
+  settling frame   9000: T  345.5 K, cross-unit U -5.413595e-3 Ha/water
+  settling frame   9500: T  329.9 K, cross-unit U -5.460209e-3 Ha/water
+  settling frame  10000: T  316.6 K, cross-unit U -5.610312e-3 Ha/water
+  settling frame  10500: T  328.7 K, cross-unit U -6.124112e-3 Ha/water
+  settling frame  11000: T  330.8 K, cross-unit U -6.228213e-3 Ha/water
+  settling frame  11500: T  338.7 K, cross-unit U -6.458363e-3 Ha/water
+  settling frame  12000: T  337.5 K, cross-unit U -6.433667e-3 Ha/water
+  settling frame  12500: T  333.6 K, cross-unit U -6.380740e-3 Ha/water
+  settling frame  13000: T  339.6 K, cross-unit U -6.785865e-3 Ha/water
+  settling frame  13500: T  344.8 K, cross-unit U -6.910529e-3 Ha/water
+  settling frame  14000: T  302.5 K, cross-unit U -6.413609e-3 Ha/water
+  settling frame  14500: T  334.6 K, cross-unit U -6.812025e-3 Ha/water
+  settling frame  15000: T  318.7 K, cross-unit U -6.759970e-3 Ha/water
+  settling frame  15500: T  302.5 K, cross-unit U -6.635060e-3 Ha/water
+  settling frame  16000: T  314.7 K, cross-unit U -7.007483e-3 Ha/water
+  settling frame  16500: T  318.8 K, cross-unit U -7.068597e-3 Ha/water
+  settling frame  17000: T  304.5 K, cross-unit U -6.994649e-3 Ha/water
+  settling frame  17500: T  315.3 K, cross-unit U -7.269242e-3 Ha/water
+  settling frame  18000: T  315.7 K, cross-unit U -7.512989e-3 Ha/water
+  settling frame  18500: T  309.7 K, cross-unit U -7.433265e-3 Ha/water
+  settling frame  19000: T  330.1 K, cross-unit U -7.665069e-3 Ha/water
+  settling frame  19500: T  335.0 K, cross-unit U -7.755716e-3 Ha/water
+  settling frame  20000: T  305.7 K, cross-unit U -7.347744e-3 Ha/water
+  settling frame  20500: T  342.7 K, cross-unit U -7.883230e-3 Ha/water
+  settling frame  21000: T  328.1 K, cross-unit U -7.641718e-3 Ha/water
+  settling frame  21500: T  323.7 K, cross-unit U -7.719526e-3 Ha/water
+  settling frame  22000: T  312.6 K, cross-unit U -7.424165e-3 Ha/water
+  settling frame  22500: T  328.4 K, cross-unit U -7.724952e-3 Ha/water
+  settling frame  23000: T  326.8 K, cross-unit U -8.003283e-3 Ha/water
+  settling frame  23500: T  327.9 K, cross-unit U -7.844939e-3 Ha/water
+  settling frame  24000: T  316.9 K, cross-unit U -7.839125e-3 Ha/water
+  settling frame  24500: T  315.2 K, cross-unit U -7.767366e-3 Ha/water
+  settling frame  25000: T  343.8 K, cross-unit U -8.081402e-3 Ha/water
+  settling frame  25500: T  336.6 K, cross-unit U -8.258926e-3 Ha/water
+  settling frame  26000: T  333.6 K, cross-unit U -8.304165e-3 Ha/water
+  settling frame  26500: T  307.8 K, cross-unit U -8.068178e-3 Ha/water
+  settling frame  27000: T  304.5 K, cross-unit U -7.958368e-3 Ha/water
+  settling frame  27500: T  318.1 K, cross-unit U -8.310862e-3 Ha/water
+  settling frame  28000: T  316.6 K, cross-unit U -8.226618e-3 Ha/water
+  settling frame  28500: T  311.3 K, cross-unit U -8.287841e-3 Ha/water
+  settling frame  29000: T  304.5 K, cross-unit U -8.302038e-3 Ha/water
+  settling frame  29500: T  345.3 K, cross-unit U -8.784841e-3 Ha/water
+  settling frame  30000: T  305.1 K, cross-unit U -8.256664e-3 Ha/water
+  settling frame  30500: T  316.2 K, cross-unit U -8.330402e-3 Ha/water
+  settling frame  31000: T  339.9 K, cross-unit U -8.672191e-3 Ha/water
+  settling frame  31500: T  300.9 K, cross-unit U -8.253766e-3 Ha/water
+  settling frame  32000: T  320.7 K, cross-unit U -8.683284e-3 Ha/water
+  settling frame  32500: T  295.0 K, cross-unit U -8.274225e-3 Ha/water
+  settling frame  33000: T  303.6 K, cross-unit U -8.331249e-3 Ha/water
+  settling frame  33500: T  308.4 K, cross-unit U -8.478827e-3 Ha/water
+  settling frame  34000: T  296.9 K, cross-unit U -8.126499e-3 Ha/water
+  settling frame  34500: T  292.2 K, cross-unit U -8.144763e-3 Ha/water
+  settling frame  35000: T  295.0 K, cross-unit U -8.330650e-3 Ha/water
+  settling frame  35500: T  289.7 K, cross-unit U -8.265841e-3 Ha/water
+  settling frame  36000: T  300.1 K, cross-unit U -8.463401e-3 Ha/water
+  settling frame  36500: T  313.8 K, cross-unit U -8.618733e-3 Ha/water
+  settling frame  37000: T  282.0 K, cross-unit U -8.292583e-3 Ha/water
+  settling frame  37500: T  307.2 K, cross-unit U -8.604946e-3 Ha/water
+  settling frame  38000: T  305.0 K, cross-unit U -8.577734e-3 Ha/water
+  settling frame  38500: T  305.7 K, cross-unit U -8.563777e-3 Ha/water
+  settling frame  39000: T  299.9 K, cross-unit U -8.821879e-3 Ha/water
+  settling frame  39500: T  273.7 K, cross-unit U -8.332392e-3 Ha/water
+  settling frame  40000: T  294.0 K, cross-unit U -8.602825e-3 Ha/water
+  atomwalk frame   10000: T  294.3 K, E drift 1.51e-9 Ha/atom, 4627 s
+  atomwalk frame   20000: T  289.1 K, E drift 2.42e-9 Ha/atom, 8972 s
+  atomwalk frame   30000: T  300.6 K, E drift 2.67e-10 Ha/atom, 13309 s
+  atomwalk frame   40000: T  302.1 K, E drift 5.27e-10 Ha/atom, 17616 s
+  atomwalk frame   50000: T  318.7 K, E drift 1.81e-9 Ha/atom, 21876 s
+  atomwalk frame   60000: T  314.9 K, E drift 7.22e-10 Ha/atom, 25948 s
+  atomwalk frame   70000: T  324.3 K, E drift 2.44e-10 Ha/atom, 30013 s
+  atomwalk frame   80000: T  315.0 K, E drift 3.93e-11 Ha/atom, 34073 s
+  atomwalk frame   90000: T  305.3 K, E drift 9.87e-10 Ha/atom, 37960 s
+  atomwalk frame  100000: T  326.6 K, E drift 3.57e-9 Ha/atom, 41672 s
+  atomwalk frame  110000: T  317.0 K, E drift 2.25e-9 Ha/atom, 45347 s
+  atomwalk frame  120000: T  308.4 K, E drift 2.08e-9 Ha/atom, 49039 s
+  atomwalk frame  130000: T  315.6 K, E drift 4.00e-9 Ha/atom, 52873 s
+  atomwalk frame  140000: T  313.8 K, E drift 3.07e-9 Ha/atom, 56623 s
+  atomwalk frame  150000: T  327.6 K, E drift 3.68e-9 Ha/atom, 60427 s
+  atomwalk frame  160000: T  327.2 K, E drift 2.10e-9 Ha/atom, 64200 s
+  atomwalk frame  170000: T  317.8 K, E drift 3.31e-9 Ha/atom, 68045 s
+  atomwalk frame  180000: T  330.8 K, E drift 3.12e-9 Ha/atom, 71827 s
+  atomwalk frame  190000: T  304.7 K, E drift 5.81e-9 Ha/atom, 75518 s
+atomwalk: done, 5001 rows in 75518 s; E drift 5.81e-9 Ha/atom

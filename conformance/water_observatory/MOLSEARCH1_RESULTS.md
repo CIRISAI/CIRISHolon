@@ -71,3 +71,11 @@ between at 50 fs — the same picture as at 396 K to the second digit. **The pro
 comes off: the molecule is two decoupled closed sectors, the vibrations are the more closed,
 the rigid unit is the object because the fluid carries it.** Branch (b) as written, (a) as
 amended.
+
+## 4. The 5 ps walk (appended 2026-09-22): the same picture at ten times the data
+
+5,001 rows at 1 fs from 294 K: purity of the top-6 singular functions `0.99–1.00` at every lag
+to 100 fs, cross-block `0.009` at 5 fs rising to `0.023` at 100 fs; the rigid view at `0.05`
+of the bound at 50 fs; the internal view's own `σ` `0.80` at 50 fs. As written S1, S2, S3 are
+KILLED; as amended S1′ and S2′ are MET at every lag. Two decoupled closed sectors, the
+vibrations the more closed, the rigid unit the object — now on three walks.

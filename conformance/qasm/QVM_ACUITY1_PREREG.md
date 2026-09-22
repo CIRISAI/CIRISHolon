@@ -90,3 +90,66 @@ noise; anything above `n = 24`, where the referee is gone and only the certifica
 witness: `Closed` (Object.lean), `tableau_not_closed_under_rotation` and `tableau_closed_under_hadamard` (Stabilizer.lean) for S1's sector; none for S2–S5 (measured gates)
 **misfits:** M-PLANT-OBS, M-PLANT-SECTOR, M-CHEAPER-THAN-ITS-PRICE, M-TRUNCATION-AS-ERRORBAR, M-DEVICE-CLASS, M-PLACEMENT-LOTTERY, M-HOMOG, M-PARITY-PROTECT, M-VACUOUS-SUCCESS, M-FLOOR-UNSTAKED, M-MAINTENANCE-LENS — contacted by keyword, cited.
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier (a Clifford circuit, a light-cone-disjoint circuit, a synthetic branch set, a planted branch, a shard), and the sector the plant acts on is nonzero in that carrier by construction.
+
+---
+
+### Notes on building
+
+*Appended by the HARD-PART build (S2–S5, PQ-3–PQ-5; `engine/crates/holon/src/acuity.rs`,
+`tests/qvm_acuity_hard.rs`) after the code existed and the numbers came in. No stake is
+moved here; these are the places where the frozen text and the machine disagree, named so
+the reading is not quietly adjusted later.*
+
+1. **§3's "the sum of the remaining coefficients" is a true bound and a VACUOUS one.**
+   Derived honestly from `magic5`: its terms are unnormalised (`γ = 1` on a support of
+   `2^k`), so `|⟨y|φ_b⟩| ≤ ‖φ_b‖ = 2^{k/2}` and the a-priori bound is
+   `|coeff_b|·2^{k/2}` with the gadget's `2^{t/2}` inside `coeff_b`. That makes
+   `R_0 ≈ 61` at `t = 8` and it grows like `2^{t/2}` — never below any `ε` in the ladder,
+   so the executed fraction under it is `1.000` at every `(n, t, ε)` measured. The reason
+   is structural, not a bug: the bound knows only the NORM of a branch, while the
+   observable is one amplitude of an `n`-qubit state and is `2^{−n/2}` sized, so the bound
+   runs `2^{rank/2}` above the truth. The truncation this campaign actually measures comes
+   from a second, tighter bound the build adds — `|coeff_b·γ_b|`, exact because an affine
+   state's amplitude is `γ·i^p` on its support and `0` off it, `y`-independent, one branch
+   evolution to compute. Both are implemented, both are reported, and S3's certificate
+   holds under either. A future freeze should say WHICH bound a reported executed fraction
+   was taken under; this one does not distinguish them.
+2. **The `ε` ladder is not on the observable's scale.** `|⟨y|C|0⟩| ~ 2^{−n/2}` — `4·10⁻³`
+   at `n = 16`, `10⁻³` at `n = 20` — so `ε = 10⁻¹` is a demand that the answer `0` already
+   meets, and the budget correctly returns `k = 0` branches with a certificate of `5·10⁻²`.
+   That is the machine working, not failing, but "executed fraction at `ε = 10⁻¹`" is not
+   a measurement of anything at `n ≥ 16` unless the ladder is read relative to `2^{−n/2}`.
+   §1 fixes `ε` absolutely and should have fixed it relative.
+3. **S4's `S = 8` clause and §5's "spare E-cores 21–27" are inconsistent.** Seven cores are
+   pinned, so `S = 8` over-subscribes them and the ideal floor is `1/7 = 0.143`, not
+   `0.125`. Measured (min of 25, `ε = 0`, cores 21–27, box otherwise loaded):
+   `n = 24, t = 24, N = 972` → `S=2 0.53`, `S=4 0.272`, `S=7 0.298`, `S=8 0.248`;
+   `n = 20, t = 20, N = 324` → `S=2 0.54`, `S=4 0.277`, `S=7 0.333`, `S=8 0.311`.
+   The `S = 4 ≤ 0.35` clause is MET; the `S = 8 ≤ 0.2` clause is NOT met and the kill
+   (`worse than 0.5×`) is NOT triggered, so branch (c) is the reading of that one clause
+   and the profile is the finding: `0.248` is `1.7×` off the seven-core floor.
+4. **S5 does not say whether the measured exponent is the WALL's or the BRANCH COUNT's,
+   and they differ by more than the band.** Over `t = 8…28` at `n = 12` (20n Clifford
+   gates, full `ε = 0` sum, medians): the branch-count exponent is `0.3962` — the published
+   `0.396` to four figures, gap `0.0000` — and the wall exponent is `0.4622`, gap `0.0659`,
+   OUTSIDE the `0.05` band. The gap is accounted for exactly: the per-branch cost is not
+   constant in `t`, because the gadget widens the register to `n + t` qubits and adds `t`
+   CX gates, and its own fitted exponent is `0.0659`, with
+   `0.3962 + 0.0659 = 0.4622` identically. So branch (d) fires on the wall reading and does
+   not fire on the branch-count reading, and the honest sentence is: **the decomposition
+   realises the published rate; the implementation's wall carries an extra `2^{0.066 t}`
+   that is the gadget's register growth, not the decomposition's.**
+5. **PQ-4 as written is satisfied by any nonzero disagreement**, because at `ε = 0` the
+   remainder is `0`, so "the disagreement exceeds `R_k`" costs nothing. The build therefore
+   also runs the plant at `ε ∈ {10⁻², 10⁻³, 10⁻⁴}` where `R_k > 0` and the plant is inside
+   the evaluated prefix (`t = 12, ε = 10⁻²`: disagreement `2.34·10⁻²` against `R_k`
+   `7.81·10⁻³`). Also: a sign flip on a branch whose affine support misses `y` plants
+   NOTHING — that branch contributes exactly zero — so the plant's carrier has to be chosen
+   (the first branch in the declared order that is live at `y`), which is what §3's
+   carrier-sector statement demands and what a first pass gets wrong.
+6. **S2's kill has one silent escape.** The stopping rule is "the first `k` with
+   `R_k ≤ ε`", so at `ε = 0` it executes every branch only because every `magic5` branch
+   bound is strictly positive. A decomposition with a zero-coefficient branch would give
+   `N_exec < N_pred` at `ε = 0` with nothing wrong: the skipped branches contribute exactly
+   zero. Measured here, `N_exec = N_pred` at `t ∈ {8, 12, 16, 20}` under both bounds, so
+   the escape is named and not taken.

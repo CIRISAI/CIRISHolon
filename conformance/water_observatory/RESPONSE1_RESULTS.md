@@ -9,9 +9,9 @@ three-seed averages exist; per-arm rows are readings of one seed. The five parti
 
 | stake | staked | read on three seeds | verdict |
 |---|---|---|---|
-| **R1** cell chart `(n̄, p̄)` closes under drive | `D ≤ 0.2` at 8 cells, separated from the blind; null holds | `D = 0.65, 0.85, 0.84`; separation `+0.07` to `+0.34`; nulls hold | **branch (b): OPEN under drive** — the chart leaks a third of the signal at one molecular diameter |
+| **R1** cell chart `(n̄, p̄)` closes under drive | `D ≤ 0.2` at 8 cells, separated from the blind; null holds | `D = 0.65, 0.85, 0.84`; on the graded 36-cycle average `0.622` vs floor `0.492`, separation `+0.30`; nulls hold | **branch (b): OPEN under drive** — the chart leaks a third of the signal at one molecular diameter, clearly above its floor |
 | **R1″** face chart (`h = 0.25 Å`) closes at 200 m/s | `D ≤ 0.2`, `α ∈ [0.8, 1.25]`; kill `D > 0.3` | `D = 0.164, 0.302, 0.269`, **mean `0.245`**; `α = 1.05, 1.00, 1.12`; `R² = 0.97, 0.91, 0.94`; relaxed windows `0.63–0.76` | **BETWEEN** — not met, not killed; three times closer than the cell chart, at the right amplitude |
-| **R1′** continuity sees nothing under shear (cell chart) | `\|Δ\| ≤ max(0.1, 2 SE)` | holds on seeds 1, 2 (`0.03, 0.04`); fires on seed 0 by `0.03` | **holds, two of three**; seed-specific |
+| **R1′** continuity sees nothing under shear (cell chart) | `\|Δ\| ≤ max(0.1, 2 SE)` | on the graded 36-cycle average: driven `0.929`, relaxed `0.989`, `\|Δ\| = 0.06` vs `0.15` (per seed: holds on 1, 2; fires on 0 by `0.03`) | **HOLDS on the graded statistic**; branch (e) not entered |
 | R1″'s null (face chart on the transverse arms) | driven within `0.1` of relaxed | `\|Δ\| = 0.24, 0.03, 0.11`; three-seed average `0.035`; the 200 m/s control `0.12` | **holds on the average**; seed 0 fires again |
 | **R2** density mode | damped cosine vs overdamped, both forms | overdamped on every 50 m/s seed; OSCILLATORY on the 200 m/s seed 0 (`Γ = 2.7 × 10¹²`, `c_s = 3.3` km/s) with the other two not fitting the overdamped form | **overdamped in the linear regime**; the 200 m/s arms are outside it |
 | **R3** shear rent | `η` in `[2, 30] × 10⁻⁴` Pa s | `η(0.27 Å⁻¹) = 4.4 × 10⁻⁴`, spread `[3.9, 5.0]`, overdamped on every seed | **branch (a)** — equal to the equilibrium read |
@@ -146,6 +146,7 @@ R1 measured is the momentum density's molecular layering at one-diameter slabs, 
 closed chart is the staggered one. R1 as staked still KILLS; R1″ is staked on the remaining
 arms with `h` fixed.
 
+<<<<<<< HEAD
 ## `ν_l` against a band stated AFTER the reading (2026-09-23) — a comparison, not a stake
 
 The pooled longitudinal rate on the three 50 m/s seeds is `1.03 × 10¹³` /s (spread 39 %), which
@@ -160,3 +161,33 @@ be. Two caveats that keep this a comparison: at `k = 0.27 Å⁻¹` the mode is p
 (`ω = c_s k` with `c_s = 3.3` km/s on the 200 m/s seed), so `Γ` is a sound damping and the
 factor between `Γ` and `ν_l k²` is a convention the reader fixed at one; and the
 hydrodynamic `ν_l` is `k`-dependent at this `k`. A frozen band belongs in the next campaign.
+=======
+## The three-seed aligned average (2026-09-23, the reader change owed)
+
+`rung2 --response` now pools, when it is given more than one trajectory: every trajectory's
+sign-aligned cycles (the signs `(−1)^c` per trajectory as the per-seed read assigns them, not
+re-derived) are averaged into ONE aligned cycle, each cycle weighted equally (36 cycles, 12 per
+seed), and the same continuity read is run on it: integral form, the two lead windows against
+the relaxed last, 8×1×1 graded with 16 and 4 beside, both floors of Amendments 2 and 4. R4/R4′
+are read on the pooled aligned modes. The per-seed lines are unchanged (the old reads diff
+clean; only `POOLED …` lines are added). Check: two copies of one trajectory pooled reproduce
+that trajectory's per-seed `D`, `s`, floors and R4/R4′ to the printed digit. **R1′'s SE on the
+pool is the leave-one-cycle-out jackknife over all 36 cycles** (each cycle of each seed dropped
+in turn, the other 35 kept, `D` re-read; `SE = sd(D₋ᵢ) · √(n − 1)`, the per-seed estimator of
+Amendment 3 A1 carried to the pool). Outputs: `replace0/response1_pooled_{L,T,L200}.txt`.
+
+| stake | pooled read (36 cycles) | against the stake as written | per-seed verdict in the table |
+|---|---|---|---|
+| **R1**, arm L 50 m/s, 8×1×1 | `D = 0.622`, blind `0.923`, separation `+0.301`; `s = 2.00`, two-sided floor `0.492` (one-sided `0.519`); relaxed last window `0.872` | `D > 0.2` and over its floor by `0.130` (> 0.05): **KILL as staked on `D ≤ 0.2`, not at floor; separated → branch (b), open under drive**; null holds | **unchanged**: branch (b). The pool sharpens it: per seed one of three sat at its floor; on the graded average the excess over the floor is real (`18 %` of the signal power) |
+| R1 on the 200 m/s control (Amendment 3 A3's grading arm) | `D = 0.310`, blind `1.086`, separation `+0.776`; `s = 2.89`, floor `0.342` (one-sided `0.303`); relaxed `0.921` | **AT FLOOR** (over `0.2`, within `0.05` of both floors); separated; null holds | seed 0's per-seed KILL (`0.735` over `0.60`) does **not** survive pooling: on 36 cycles the cell chart reads at its floor at 200 m/s |
+| **R1′**, arm T 50 m/s, 8×1×1 | driven `0.929`, relaxed `0.989`, `|Δ| = 0.060`; `2 SE = 0.150` (jackknife over 36) | `|Δ| < max(0.1, 2 SE)`: **HOLDS** | **changes from "holds, two of three" to HOLDS on the graded statistic**; seed 0's firing is inside the pooled noise; branch (e) is not entered |
+| **R4 / R4′**, current mode | L: blind/spatial `0.016`, R4′ `2.8e-4` vs `3σ = 1.6e-3`; T: `0.020`, `4.2e-4` vs `6.0e-4`; L200: `0.013`, `1.7e-4` vs `8.3e-4` | hold on all three pooled arms | unchanged (hold) |
+| R4 / R4′, density mode (L arms) | L: blind/spatial at the peak `0.207` under its `3σ` bar, R4′ `0.30` vs `1.05`; L200: `0.003`, `0.27` vs `0.44` | hold | **L seed 1's marginal density R4′ does not survive pooling** |
+
+The T200 control is one seed and is not pooled; its R4′ firing stands as read. Amendment 2's
+advance arithmetic for the three-seed 50 m/s floor (`s ≈ 5–7`, floor `≈ 0.14–0.22`) is not
+what the pool reads: `s = 2.0`, floor `0.49` — the signal-to-noise per window-cell at 8 cells
+was over-priced by a factor of about three. **Still owed:** the face chart R1″ (`0.245` in the
+verdict table) is the MEAN of three per-seed `D` from `r1_closure_test.py`, not the aligned
+average; that script was not changed here.
+>>>>>>> worktree-agent-aa7c745c4a4b3221b

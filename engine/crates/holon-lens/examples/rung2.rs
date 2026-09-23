@@ -619,6 +619,11 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
         paths.sort();
         println!("\n===== RESPONSE-1 arm {arm} on {dir_arm} ({} trajectories): {cycles} cycles x {relax} readouts; Amendment 1's read =====", paths.len());
         let mut seed_rates: Vec<f64> = Vec::new();
+        // the three-seed aligned average (RESPONSE1_AMENDMENT_2 A2, "the pooled read over three
+        // seeds is the same average over thirty-six cycles"): each trajectory's sign-aligned
+        // fields and modes are kept, exactly as the per-trajectory read built them, and pooled
+        // after the loop weighted equally per cycle
+        let mut pool: Vec<PoolTraj> = Vec::new();
         for path in &paths {
             let traj = match Trajectory::read(path) { Ok(t) => t, Err(e) => { println!("  {} REFUSED — {e}", path.display()); continue; } };
             *frames_read += traj.frames.len() as u64;
@@ -680,6 +685,8 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
             } else {
                 println!("   {}: the aligned current mode did not read on this seed", if axis == 1 { "R3" } else { "longitudinal current" });
             }
+            let mut pool_grids: Vec<PoolGrid> = Vec::new();
+            let pool_meta: Option<(f64, [f64; 3], f64)>;
             // R1 / R1′ (Amendment 2): the continuity leg in its integral form on the cycle-aligned
             // fields, 8×1×1 graded and 4×1×1 beside it, the first two windows of the aligned cycle,
             // the noise from the blind partition, the floor printed; the in-run null on the last window
@@ -744,8 +751,11 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
                             println!("        R1′ verdict: driven {d_sp:.3} vs relaxed {d_tail:.3}, |Δ| = {:.3} vs max(0.1, 2 SE = {:.3}): {}", (d_sp - d_tail).abs(), 2.0 * se, if (d_sp - d_tail).abs() < bar { "continuity sees nothing under shear, as it must" } else { "FIRES — the leg is reading momentum, not flux" });
                         }
                     }
+                    pool_grids.push(PoolGrid { nx, w, tau, fs_sp: if graded { fs_sp } else { Vec::new() }, al_sp, al_bl, used });
                 }
+                pool_meta = Some((m_bar, boxe, h.dt));
             }
+            let mut pool_rho: Option<[Aligned; 3]> = None;
             // R2, the density mode on the L arm: cos quadrature, fitted from its peak (A3); its null is the sin quadrature
             if axis == 0 {
                 let rho = align_cycles(&sp.rho_cos, cycles, relax, 1);
@@ -765,6 +775,10 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
                 let choice = if res_o.is_nan() { "overdamped form not fitted" } else if res_c < 0.9 * res_o { "OSCILLATORY (damped cosine better by > 10 %)" } else if res_o < 0.9 * res_c { "OVERDAMPED (exponential from the peak better by > 10 %)" } else { "UNDECIDED (residuals within 10 %); both banked" };
                 println!("   R2 (both forms): damped cosine Γ = {g_c:.3e} /s, ω = {w_c:.3e} /s (period {:.0} fs, c_s = ω/k = {:.0} m/s), resid {res_c:.3e} | exponential from the peak resid {res_o:.3e} -> {choice}", 2.0 * std::f64::consts::PI / w_c * 1e15, w_c / k);
                 println!("   R4′ (density): undriven ρ_k^s at the peak {:.3e} vs 3σ {:.3e}: {}", rho_null.mean[rd.peak].abs(), 3.0 * rho_null.noise, if rho_null.mean[rd.peak].abs() < 3.0 * rho_null.noise { "at noise" } else { "FIRES" });
+                pool_rho = Some([rho, rho_null, rho_bl]);
+            }
+            if let Some(meta) = pool_meta {
+                pool.push(PoolTraj { n_atoms: h.n_atoms, dt_s, meta, grids: pool_grids, cur: [cur, cur_null, cur_bl], rho: pool_rho });
             }
         }
         if seed_rates.len() >= 2 {
@@ -772,5 +786,175 @@ fn response1_read(root: &Path, arms: &[String], arm: &str, cycles: usize, relax:
             let sp = seed_rates.iter().cloned().fold(f64::MIN, f64::max) - seed_rates.iter().cloned().fold(f64::MAX, f64::min);
             println!("   POOLED over {} seeds: rate {m:.3e} /s, seed spread {sp:.2e} /s ({:.0} %)", seed_rates.len(), 100.0 * sp / m);
         }
+        if pool.len() >= 2 { response1_pooled(&pool, axis, cycles, relax); }
+    }
+}
+
+/// One trajectory's sign-aligned fields on one continuity grid, as the per-trajectory read
+/// built them (`align_fields`, the cycle signs `(−1)^c` per trajectory, not re-derived).
+struct PoolGrid {
+    nx: usize,
+    w: usize,
+    tau: f64,
+    /// the instantaneous spatial fields, kept on the graded grid only (R1′'s leave-one-out)
+    fs_sp: Vec<CellFields>,
+    al_sp: Vec<CellFields>,
+    al_bl: Vec<CellFields>,
+    used: usize,
+}
+
+/// What the pooled read needs from one trajectory.
+struct PoolTraj {
+    n_atoms: usize,
+    dt_s: f64,
+    /// (m̄, box edges, dt in au)
+    meta: (f64, [f64; 3], f64),
+    grids: Vec<PoolGrid>,
+    /// the current mode: driven (sin), undriven (cos), blind
+    cur: [Aligned; 3],
+    /// the density mode (arm L): driven (cos), undriven (sin), blind
+    rho: Option<[Aligned; 3]>,
+}
+
+/// The equal-weight-per-cycle average of aligned fields from several trajectories: each
+/// part is an `align_fields` output over `used` cycles, so the `used`-weighted mean of the
+/// parts is the mean over every cycle of every part. Occupancy is carried as the aligned
+/// departure plus each part's own time mean; the weighted mean of those means is a
+/// constant in time, which the continuity leg (occupancy DIFFERENCES) does not see.
+fn pool_fields(parts: &[(&[CellFields], usize)]) -> (Vec<CellFields>, usize) {
+    let total: usize = parts.iter().map(|p| p.1).sum();
+    let len = parts.iter().map(|p| p.0.len()).min().unwrap_or(0);
+    let Some(first) = parts.iter().find(|p| p.1 > 0 && !p.0.is_empty()).map(|p| &p.0[0]) else { return (Vec::new(), 0) };
+    let (nc, np) = (first.occ.len(), first.p.len());
+    let mut out: Vec<CellFields> = (0..len).map(|_| CellFields { occ: vec![0.0; nc], p: vec![[0.0; 3]; np], ek: vec![0.0; np] }).collect();
+    for (fields, used) in parts {
+        if *used == 0 { continue; }
+        let wgt = *used as f64 / total as f64;
+        for (o, f) in out.iter_mut().zip(fields.iter()) {
+            for (a, b) in o.occ.iter_mut().zip(&f.occ) { *a += wgt * b; }
+            for (a, b) in o.p.iter_mut().zip(&f.p) { for k in 0..3 { a[k] += wgt * b[k]; } }
+            for (a, b) in o.ek.iter_mut().zip(&f.ek) { *a += wgt * b; }
+        }
+    }
+    (out, total)
+}
+
+/// The per-cycle segments of several trajectories' aligned modes pooled into one aligned
+/// mean with `align_cycles`' own statistics (noise = the SD of the pooled mean's last quarter).
+fn pool_aligned(parts: &[&Aligned], relax: usize) -> Aligned {
+    let per_cycle: Vec<Vec<f64>> = parts.iter().flat_map(|a| a.per_cycle.iter().cloned()).collect();
+    let tail_sigma: Vec<f64> = parts.iter().flat_map(|a| a.tail_sigma.iter().cloned()).collect();
+    let n = per_cycle.len();
+    let mean: Vec<f64> = if n == 0 { Vec::new() } else { (0..relax).map(|i| per_cycle.iter().map(|c| c[i]).sum::<f64>() / n as f64).collect() };
+    let tail_stats = |tail: &[f64]| -> (f64, f64) {
+        let m = tail.iter().sum::<f64>() / tail.len() as f64;
+        let sd = (tail.iter().map(|v| (v - m).powi(2)).sum::<f64>() / tail.len() as f64).sqrt();
+        (m, sd)
+    };
+    let (noise, tail_sigma_mean) = if n == 0 { (f64::NAN, f64::NAN) } else {
+        let (m, sd) = tail_stats(&mean[relax - relax / 4..]);
+        (sd, m.abs() / (sd / ((relax / 4) as f64).sqrt()).max(1e-300))
+    };
+    let noise_per_cycle = if n == 0 { f64::NAN } else { parts.iter().map(|a| a.noise_per_cycle * a.per_cycle.len() as f64).sum::<f64>() / n as f64 };
+    Aligned { mean, per_cycle, noise, noise_per_cycle, tail_sigma, tail_sigma_mean }
+}
+
+/// The three-seed aligned average RESPONSE1_AMENDMENT_2 A2 stakes R1 and R1′ on: every
+/// trajectory's sign-aligned cycles pooled into one average, weighted equally per cycle,
+/// then the same continuity read (integral form, lead two windows against the relaxed last,
+/// the same floors) and the same nulls R4/R4′ on the pooled modes. R1′'s SE is the
+/// leave-one-cycle-out (jackknife) spread over ALL pooled cycles, the per-trajectory form
+/// of Amendment 3 A1 carried to the pool.
+fn response1_pooled(pool: &[PoolTraj], axis: usize, cycles: usize, relax: usize) {
+    let n_tr = pool.len();
+    let counts: Vec<usize> = pool.iter().map(|t| t.cur[0].per_cycle.len()).collect();
+    let n_cyc: usize = counts.iter().sum();
+    println!("\n   ===== POOLED: the {n_tr}-trajectory aligned average (RESPONSE1_AMENDMENT_2 A2), {n_cyc} cycles (per trajectory {counts:?}), each cycle weighted equally, signs as aligned per trajectory =====");
+    let (m_bar, boxe, dt_au) = pool[0].meta;
+    if pool.iter().any(|t| t.n_atoms != pool[0].n_atoms || t.meta.1 != boxe || (t.meta.2 - dt_au).abs() > 1e-9 * dt_au.abs()) {
+        println!("   POOLED: REFUSED — the trajectories differ in size, box or readout spacing; an aligned average over them is not one field");
+        return;
+    }
+    let label = if axis == 0 { "R1 " } else { "R1′" };
+    let lead = 2usize;
+    for nx in [16usize, 8, 4] {
+        let grid = Grid3 { nx, ny: 1, nz: 1 };
+        let gs: Vec<&PoolGrid> = pool.iter().filter_map(|t| t.grids.iter().find(|g| g.nx == nx)).collect();
+        if gs.len() != n_tr { println!("   POOLED {label} grid {nx}x1x1: not read on every trajectory ({} of {n_tr}); not pooled", gs.len()); continue; }
+        let (w, tau) = (gs[0].w, gs[0].tau);
+        if gs.iter().any(|g| g.w != w) { println!("   POOLED {label} grid {nx}x1x1: REFUSED — the trajectories' windows differ"); continue; }
+        let (al_sp, used) = pool_fields(&gs.iter().map(|g| (&g.al_sp[..], g.used)).collect::<Vec<_>>());
+        let (al_bl, _) = pool_fields(&gs.iter().map(|g| (&g.al_bl[..], g.used)).collect::<Vec<_>>());
+        if used == 0 || relax < (lead + 1) * w + 1 || al_sp.len() < relax { println!("   POOLED {label} grid {nx}x1x1: no complete cycle or too few windows"); continue; }
+        let d_disc = continuity_spatial_floor(nx);
+        let c_sp = continuity_integral(&al_sp[..=lead * w], grid, boxe, m_bar, dt_au, w);
+        let c_bl = continuity_integral(&al_bl[..=lead * w], grid, boxe, m_bar, dt_au, w);
+        let (s_b, _) = driven_floor_from_blind(&c_sp, &c_bl);
+        let (s_t, _) = driven_floor(&al_sp, w, lead);
+        let s1 = if s_t.is_finite() { s_b.max(s_t) } else { s_b };
+        let floor1 = ((d_disc * d_disc * s1 * s1 + 1.0) / (s1 * s1 + 1.0)).sqrt();
+        let tail_c = continuity_integral(&al_sp[relax - 1 - lead * w..], grid, boxe, m_bar, dt_au, w);
+        let (s, floor) = driven_floor_two_sided(&c_sp, &tail_c, d_disc);
+        let (d_sp, d_bl) = (c_sp.defect().unwrap_or(f64::NAN), c_bl.defect().unwrap_or(f64::NAN));
+        let s2 = (c_sp.rms_observed.powi(2) - tail_c.rms_observed.powi(2)).max(0.0);
+        let excess = c_sp.rms_residual.powi(2) - floor * floor * c_sp.rms_observed.powi(2);
+        println!("        POOLED residual budget: observed² {:.3e} = signal² {:.3e} + noise² {:.3e}; residual² {:.3e} of which floor {:.3e} and EXCESS {:.3e} = {}", c_sp.rms_observed.powi(2), s2, tail_c.rms_observed.powi(2), c_sp.rms_residual.powi(2), floor * floor * c_sp.rms_observed.powi(2), excess, if s2 > 0.05 * tail_c.rms_observed.powi(2) { format!("{:.0} % of the signal power", 100.0 * excess / s2) } else { "(no resolvable signal at this grid: the lead windows' RMS is not above the tail's)".to_string() });
+        let tail_start = relax - w - 1;
+        let d_tail = continuity_integral(&al_sp[tail_start..], grid, boxe, m_bar, dt_au, w).defect().unwrap_or(f64::NAN);
+        let graded = nx == 8;
+        println!("   POOLED {label} grid {nx}x1x1 (τ {tau:.0} fs, window {w}, {used} cycles aligned over {n_tr} trajectories, lead {lead} windows): D_cont spatial {d_sp:.3}  blind {d_bl:.3}  separation {:+.3} | s {s:.2} (one-sided s {s1:.2}: blind {s_b:.2}, tail {s_t:.2}), floor two-sided {floor:.3} (one-sided {floor1:.3}; D_disc {d_disc:.3}; σ_o {:.3e}, σ_p {:.3e}) | relaxed last window {d_tail:.3}{}",
+            d_bl - d_sp, tail_c.rms_observed, tail_c.rms_predicted, if graded { "" } else { "  [beside the graded grid]" });
+        if !graded { continue; }
+        if axis == 0 {
+            let sep = d_bl - d_sp >= 0.05;
+            let verdict = if d_sp <= 0.2 && sep { "MET (D ≤ 0.2 and separated) — branch (a) on R1".to_string() }
+                else if !sep { "separation FAILS — branch (c): the chart does not beat its placebo under drive".to_string() }
+                else if d_sp <= floor + 0.05 { format!("AT FLOOR (over 0.2 but within 0.05 of the stated floor {floor:.3}; not a kill — the arithmetic, not the fluid); separated → branch (b), open under drive, at its floor") }
+                else { format!("KILL as staked: D over 0.2 and over its floor {floor:.3} by {:.3} (> 0.05); separated by {:+.3} (≥ +0.05) → branch (b): open under drive, not at floor", d_sp - floor, d_bl - d_sp) };
+            println!("        POOLED R1 verdict on the {used}-cycle aligned average: {verdict}; null (relaxed ≥ 0.8): {}", if d_tail >= 0.8 { "holds" } else { "FAILS — the tail is not relaxed or the leg reads the tail" });
+        } else {
+            // the SE: leave ONE cycle out of the pooled average (every cycle of every
+            // trajectory in turn, the others kept), the jackknife spread of the driven D —
+            // the same estimator as the per-trajectory Amendment 3 A1 read, over all cycles
+            let mut loo = Vec::new();
+            for (ti, g) in gs.iter().enumerate() {
+                for skip in 0..g.used {
+                    let (al_skip, u_skip) = align_fields_skip(&g.fs_sp, cycles, relax, 1, skip);
+                    let mut parts: Vec<(&[CellFields], usize)> = Vec::new();
+                    for (tj, o) in gs.iter().enumerate() { if tj == ti { parts.push((&al_skip[..], u_skip)); } else { parts.push((&o.al_sp[..], o.used)); } }
+                    let (al, _) = pool_fields(&parts);
+                    if let Some(d) = continuity_integral(&al[..=lead * w], grid, boxe, m_bar, dt_au, w).defect() { loo.push(d); }
+                }
+            }
+            let se = if loo.len() >= 2 { let m = loo.iter().sum::<f64>() / loo.len() as f64; (loo.iter().map(|d| (d - m).powi(2)).sum::<f64>() / (loo.len() - 1) as f64).sqrt() * ((loo.len() - 1) as f64).sqrt() } else { f64::NAN };
+            let bar = if se.is_finite() { (2.0 * se).max(0.1) } else { 0.1 };
+            println!("        POOLED R1′ verdict on the {used}-cycle aligned average: driven {d_sp:.3} vs relaxed {d_tail:.3}, |Δ| = {:.3} vs max(0.1, 2 SE = {:.3}) (SE jackknife over {} leave-one-cycle-out averages): {}", (d_sp - d_tail).abs(), 2.0 * se, loo.len(), if (d_sp - d_tail).abs() < bar { "HOLDS — continuity sees nothing under shear, as it must" } else { "FIRES — the leg is reading momentum, not flux" });
+        }
+    }
+    // R4 and R4′ on the pooled aligned current mode
+    let sd_all = |v: &[f64]| { let m = v.iter().sum::<f64>() / v.len() as f64; (v.iter().map(|x| (x - m).powi(2)).sum::<f64>() / v.len() as f64).sqrt() };
+    let cur = pool_aligned(&pool.iter().map(|t| &t.cur[0]).collect::<Vec<_>>(), relax);
+    let cur_null = pool_aligned(&pool.iter().map(|t| &t.cur[1]).collect::<Vec<_>>(), relax);
+    let cur_bl = pool_aligned(&pool.iter().map(|t| &t.cur[2]).collect::<Vec<_>>(), relax);
+    if cur.mean.is_empty() { return; }
+    println!("   POOLED current mode: {} cycles; noise per cycle {:.3e} au, aligned {:.3e} au; kick amplitude aligned {:.3e} au (SNR {:.1})", cur.per_cycle.len(), cur.noise_per_cycle, cur.noise, cur.mean[0], cur.mean[0].abs() / cur.noise);
+    let a_sp = cur.mean[0].abs();
+    let r4 = cur_bl.mean[0].abs() / a_sp.max(1e-300);
+    let r4_bar = (0.1 * a_sp).max(3.0 * sd_all(&cur_bl.mean));
+    println!("   POOLED R4:  blind/spatial aligned kick amplitude {r4:.3}; blind {:.3e} au vs max(0.1 × spatial, 3σ_blind) = {r4_bar:.3e}: {}", cur_bl.mean[0].abs(), if cur_bl.mean[0].abs() < r4_bar { "no mode on the scrambled partition" } else { "FIRES — the scrambled partition carries the mode" });
+    let r4p = cur_null.mean[0].abs();
+    println!("   POOLED R4′: undriven quadrature j_k^c aligned amplitude {r4p:.3e} au vs 3σ {:.3e}: {}", 3.0 * cur_null.noise, if r4p < 3.0 * cur_null.noise { "at noise, as it must be" } else { "FIRES — the undriven quadrature carries a kick" });
+    // the density versions on the L arm, at the pooled aligned density's own peak
+    if axis == 0 && pool.iter().all(|t| t.rho.is_some()) {
+        let rho = pool_aligned(&pool.iter().map(|t| &t.rho.as_ref().unwrap()[0]).collect::<Vec<_>>(), relax);
+        let rho_null = pool_aligned(&pool.iter().map(|t| &t.rho.as_ref().unwrap()[1]).collect::<Vec<_>>(), relax);
+        let rho_bl = pool_aligned(&pool.iter().map(|t| &t.rho.as_ref().unwrap()[2]).collect::<Vec<_>>(), relax);
+        let rd = fit_rise_decay(&rho.mean, pool[0].dt_s, rho.noise);
+        let peak_v = rho.mean[rd.peak];
+        println!("   POOLED density mode ρ_k^c: aligned noise {:.3e} counts; peak {:.3e} at readout {}, SNR {:.1}", rho.noise, peak_v, rd.peak, peak_v.abs() / rho.noise);
+        let r4d = rho_bl.mean[rd.peak].abs() / peak_v.abs().max(1e-300);
+        let r4d_bar = (0.1 * peak_v.abs()).max(3.0 * sd_all(&rho_bl.mean));
+        println!("   POOLED R4 (density): blind/spatial at the peak {r4d:.3}; blind {:.3e} vs max(0.1 × spatial, 3 sd_blind) = {r4d_bar:.3e} (blind whole-cycle sd {:.3e}): {}", rho_bl.mean[rd.peak].abs(), sd_all(&rho_bl.mean), if rho_bl.mean[rd.peak].abs() < r4d_bar { "no mode on the scrambled partition" } else if peak_v.abs() < 3.0 * rho.noise { "not read — the spatial peak is itself under 3σ" } else { "FIRES" });
+        println!("   POOLED R4′ (density): undriven ρ_k^s at the peak {:.3e} vs 3σ {:.3e}: {}", rho_null.mean[rd.peak].abs(), 3.0 * rho_null.noise, if rho_null.mean[rd.peak].abs() < 3.0 * rho_null.noise { "at noise" } else { "FIRES" });
     }
 }

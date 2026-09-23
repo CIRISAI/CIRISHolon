@@ -98,5 +98,20 @@
    R4′ (density): undriven ρ_k^s at the peak 4.083e-1 vs 3σ 9.454e-1: at noise
    POOLED over 3 seeds: rate 2.023e12 /s, seed spread 5.47e11 /s (27 %)
 
+   ===== POOLED: the 3-trajectory aligned average (RESPONSE1_AMENDMENT_2 A2), 36 cycles (per trajectory [12, 12, 12]), each cycle weighted equally, signs as aligned per trajectory =====
+        POOLED residual budget: observed² 5.587e-1 = signal² 4.130e-1 + noise² 1.457e-1; residual² 3.671e-1 of which floor 1.572e-1 and EXCESS 2.099e-1 = 51 % of the signal power
+   POOLED R1  grid 16x1x1 (τ 98 fs, window 10, 36 cycles aligned over 3 trajectories, lead 2 windows): D_cont spatial 0.811  blind 0.941  separation +0.130 | s 1.68 (one-sided s 1.79: blind 1.79, tail 1.60), floor two-sided 0.530 (one-sided 0.488; D_disc 0.026; σ_o 3.817e-1, σ_p 1.060e-1) | relaxed last window 0.987  [beside the graded grid]
+        POOLED residual budget: observed² 2.758e0 = signal² 2.464e0 + noise² 2.941e-1; residual² 2.653e-1 of which floor 3.230e-1 and EXCESS -5.766e-2 = -2 % of the signal power
+   POOLED R1  grid 8x1x1 (τ 196 fs, window 20, 36 cycles aligned over 3 trajectories, lead 2 windows): D_cont spatial 0.310  blind 1.086  separation +0.776 | s 2.89 (one-sided s 3.33: blind 3.33, tail 2.42), floor two-sided 0.342 (one-sided 0.303; D_disc 0.100; σ_o 5.423e-1, σ_p 6.663e-2) | relaxed last window 0.921
+        POOLED R1 verdict on the 36-cycle aligned average: AT FLOOR (over 0.2 but within 0.05 of the stated floor 0.342; not a kill — the arithmetic, not the fluid); separated → branch (b), open under drive, at its floor; null (relaxed ≥ 0.8): holds
+        POOLED residual budget: observed² 1.935e0 = signal² 1.165e0 + noise² 7.699e-1; residual² 7.334e-1 of which floor 9.286e-1 and EXCESS -1.952e-1 = -17 % of the signal power
+   POOLED R1  grid 4x1x1 (τ 392 fs, window 39, 36 cycles aligned over 3 trajectories, lead 2 windows): D_cont spatial 0.616  blind 1.014  separation +0.398 | s 1.23 (one-sided s 2.06: blind 2.06, tail 1.55), floor two-sided 0.693 (one-sided 0.545; D_disc 0.363; σ_o 8.774e-1, σ_p 7.028e-2) | relaxed last window 0.970  [beside the graded grid]
+   POOLED current mode: 36 cycles; noise per cycle 2.429e-3 au, aligned 2.668e-4 au; kick amplitude aligned 1.981e-2 au (SNR 74.2)
+   POOLED R4:  blind/spatial aligned kick amplitude 0.013; blind 2.646e-4 au vs max(0.1 × spatial, 3σ_blind) = 1.981e-3: no mode on the scrambled partition
+   POOLED R4′: undriven quadrature j_k^c aligned amplitude 1.685e-4 au vs 3σ 8.326e-4: at noise, as it must be
+   POOLED density mode ρ_k^c: aligned noise 1.520e-1 counts; peak -1.028e1 at readout 15, SNR 67.6
+   POOLED R4 (density): blind/spatial at the peak 0.003; blind 3.316e-2 vs max(0.1 × spatial, 3 sd_blind) = 1.028e0 (blind whole-cycle sd 2.770e-1): no mode on the scrambled partition
+   POOLED R4′ (density): undriven ρ_k^s at the peak 2.675e-1 vs 3σ 4.449e-1: at noise
+
 ===== COST (PREREG G11, work units, never wall clock) =====
 frames read:       11307

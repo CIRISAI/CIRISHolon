@@ -70,6 +70,7 @@
 //! separate, and conflating them would be a fast wrong answer.
 
 use crate::coltableau::ColTableau;
+use crate::phase::{Phase, PhaseProfile};
 use crate::tableau::{PackedTableau, PauliRow};
 
 /// Where a measurement's determinism question was answered.
@@ -127,6 +128,8 @@ pub struct ColAdaptive {
     rng: u64,
     pub seed: u64,
     pub stats: ScanStats,
+    /// The phase timer (MESH-CLIFFORD-1's profile). Off unless enabled.
+    pub prof: PhaseProfile,
 }
 
 fn splitmix(state: &mut u64) -> bool {
@@ -151,7 +154,13 @@ impl ColAdaptive {
             rng: seed,
             seed,
             stats: ScanStats::default(),
+            prof: PhaseProfile::default(),
         }
+    }
+
+    /// Turn the phase timer on or off. It cannot change an answer.
+    pub fn set_profiling(&mut self, on: bool) {
+        self.prof.enabled = on;
     }
 
     #[inline]
@@ -161,32 +170,44 @@ impl ColAdaptive {
 
     pub fn h(&mut self, q: usize) {
         self.assert_unitary_phase();
+        let t = self.prof.start();
         self.col.h(q);
+        self.prof.stop(Phase::Gate1q, t);
         self.packed_valid = false;
     }
     pub fn s(&mut self, q: usize) {
         self.assert_unitary_phase();
+        let t = self.prof.start();
         self.col.s(q);
+        self.prof.stop(Phase::Gate1q, t);
         self.packed_valid = false;
     }
     pub fn sdg(&mut self, q: usize) {
         self.assert_unitary_phase();
+        let t = self.prof.start();
         self.col.sdg(q);
+        self.prof.stop(Phase::Gate1q, t);
         self.packed_valid = false;
     }
     pub fn x_gate(&mut self, q: usize) {
         self.assert_unitary_phase();
+        let t = self.prof.start();
         self.col.x_gate(q);
+        self.prof.stop(Phase::Gate1q, t);
         self.packed_valid = false;
     }
     pub fn z_gate(&mut self, q: usize) {
         self.assert_unitary_phase();
+        let t = self.prof.start();
         self.col.z_gate(q);
+        self.prof.stop(Phase::Gate1q, t);
         self.packed_valid = false;
     }
     pub fn cx(&mut self, c: usize, t: usize) {
         self.assert_unitary_phase();
+        let t0 = self.prof.start();
         self.col.cx(c, t);
+        self.prof.stop(Phase::CxLocal, t0);
         self.packed_valid = false;
     }
 
@@ -210,7 +231,9 @@ impl ColAdaptive {
         assert!(self.in_batch, "no batch open");
         if self.dirty {
             let packed = self.packed.as_ref().expect("dirty without a reference");
+            let t = self.prof.start();
             self.col.load_from_packed(packed);
+            self.prof.stop(Phase::TransposeR2C, t);
             self.mirror_x_valid = true;
             self.mirror_full_valid = true;
             self.dirty = false;
@@ -227,10 +250,13 @@ impl ColAdaptive {
         }
         debug_assert!(!self.dirty, "reference stale while it is authoritative");
         let n = self.n;
+        let t = self.prof.start();
         let buf = self
             .packed
             .get_or_insert_with(|| PackedTableau::new(n));
+        let t = self.prof.stop(Phase::ReferenceAlloc, t);
         self.col.store_to_packed(buf);
+        self.prof.stop(Phase::TransposeC2R, t);
         self.packed_valid = true;
         self.stats.transposes += 1;
     }
@@ -242,6 +268,7 @@ impl ColAdaptive {
         let n = self.n;
 
         // ---- the determinism question, column-side where it is cheap ----
+        let t_scan = self.prof.start();
         let pivot = if self.mirror_x_valid {
             self.stats.scan_fast += 1;
             self.col.first_x_row_in(q, n, 2 * n)
@@ -264,6 +291,7 @@ impl ColAdaptive {
             let mut hits = Vec::new();
             self.col.x_rows_in(q, 0, n, &mut hits);
             if hits.len() <= 1 {
+                self.prof.stop(Phase::Scan, t_scan);
                 self.stats.deterministic += 1;
                 self.stats.product_terms += hits.len() as u64;
                 self.stats.single_term += 1;
@@ -275,6 +303,7 @@ impl ColAdaptive {
             }
         }
 
+        self.prof.stop(Phase::Scan, t_scan);
         // Everything below needs actual rows.
         self.ensure_packed();
         let packed = self.packed.as_mut().expect("reference materialized");
@@ -289,7 +318,9 @@ impl ColAdaptive {
             // contiguous words. The mirror is then PATCHED rather than
             // abandoned, which is what keeps the rest of the batch fast.
             Some(p) => {
+                let t = self.prof.start();
                 let outcome = splitmix(&mut self.rng);
+                let t = self.prof.stop(Phase::Rng, t);
                 let pivot_row = packed.rows[p].clone();
                 let pw = pivot_row.x.popcount() as u64;
                 self.stats.pivot_weight += pw;
@@ -364,6 +395,7 @@ impl ColAdaptive {
                 let mut flip2 = old_destab_x;
                 flip2.xor_assign(&pivot_row.x);
                 let patch_cost = pivot_row.x.popcount() * 2 + flip2.popcount();
+                let t = self.prof.stop(Phase::RowsumSerial, t);
 
                 match mask {
                     Some(m) if patch_cost <= PATCH_BUDGET => {
@@ -395,6 +427,7 @@ impl ColAdaptive {
                         self.stats.mirror_dropped += 1;
                     }
                 }
+                self.prof.stop(Phase::MirrorPatch, t);
                 // Z and signs are NOT patched, so the sign shortcut stands
                 // down until the next full rebuild.
                 self.mirror_full_valid = false;
@@ -404,6 +437,7 @@ impl ColAdaptive {
             }
             // ---- DETERMINISTIC: read-only, so the mirror survives ----
             None => {
+                let t = self.prof.start();
                 let mut scratch = PauliRow::identity(n);
                 let mut terms = 0u64;
                 if self.mirror_x_valid {
@@ -425,6 +459,7 @@ impl ColAdaptive {
                 }
                 self.stats.deterministic += 1;
                 self.stats.product_terms += terms;
+                self.prof.stop(Phase::DetProduct, t);
                 (scratch.r % 4 == 2, true)
             }
         }
@@ -525,8 +560,11 @@ impl ColAdaptive {
 
         // Several terms: reuse the one reference buffer, never a second.
         if !self.packed_valid {
+            let t = self.prof.start();
             let buf = self.packed.get_or_insert_with(|| PackedTableau::new(n));
+            let t = self.prof.stop(Phase::ReferenceAlloc, t);
             self.col.store_to_packed(buf);
+            self.prof.stop(Phase::TransposeC2R, t);
             self.packed_valid = true;
             self.stats.transposes += 1;
         }

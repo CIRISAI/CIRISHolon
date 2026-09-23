@@ -28,6 +28,16 @@
 //!                 difference between a cut that crosses 0.97 of its CX gates
 //!                 and one that crosses 0.02 of them. See the prereg's notes.
 //!
+//!   --profile     turn on the engines' phase timer (`holon::phase`): wall
+//!                 split into gate streaming (single-qubit / in-shard CX /
+//!                 cross-shard CX with its exchange), scans, rowsums, the two
+//!                 transposes, the mirror patch, the random draws and the rest,
+//!                 printed on stderr and under `profile_seconds` in the JSON.
+//!   --transpose-parallel
+//!                 the re-aim the profile pointed at: the column→row
+//!                 transpose (42–57 % of wall at d = 141) cut by ROW BLOCKS
+//!                 over the S threads. Sharded engine only; bit-identical.
+//!
 //! Every run prints the shard count it ACTUALLY used, the crossing count and
 //! fraction, and a digest of the measurement record, so a harness comparing
 //! shard counts can prove it compared what it thinks it compared.
@@ -43,6 +53,7 @@
 //! and REFUSES if MemAvailable cannot carry it with 2 GB left over.
 
 use holon::coladaptive::ColAdaptive;
+use holon::phase::{PhaseProfile, N_PHASES, PHASE_NAMES};
 use holon::sharded::{crossing_count, record_hash, MeshStats, ShardCut, ShardedColAdaptive};
 use holon::surface::{Kind, SurfaceCode};
 use std::time::Instant;
@@ -110,6 +121,18 @@ impl Engine {
         match self {
             Engine::Unsharded(a) => a.stats,
             Engine::Sharded(a) => a.stats,
+        }
+    }
+    fn set_profiling(&mut self, on: bool) {
+        match self {
+            Engine::Unsharded(a) => a.set_profiling(on),
+            Engine::Sharded(a) => a.set_profiling(on),
+        }
+    }
+    fn prof(&self) -> PhaseProfile {
+        match self {
+            Engine::Unsharded(a) => a.prof,
+            Engine::Sharded(a) => a.prof,
         }
     }
     fn mesh(&self) -> Option<MeshStats> {
@@ -296,6 +319,8 @@ fn main() {
     // harness's per-size skip path can be EXERCISED rather than assumed. A
     // fallback nothing ever runs is an untested claim.
     let force_refuse = args.iter().any(|a| a == "--force-refuse");
+    let profile = args.iter().any(|a| a == "--profile");
+    let transpose_parallel = args.iter().any(|a| a == "--transpose-parallel");
 
     assert!(
         layout == "natural" || layout == "banded",
@@ -394,6 +419,15 @@ fn main() {
     } else {
         Engine::Unsharded(Box::new(ColAdaptive::new(n, seed)))
     };
+    a.set_profiling(profile);
+    if let Engine::Sharded(e) = &mut a {
+        e.set_parallel_transpose(transpose_parallel);
+    }
+    // Echoed, never assumed: the flag is only ON if the sharded engine took it.
+    let transpose_parallel = transpose_parallel && matches!(a, Engine::Sharded(_));
+    if transpose_parallel {
+        eprintln!("  transpose-parallel: column→row transpose cut by row blocks over {shards} threads");
+    }
     let alloc_s = alloc.elapsed().as_secs_f64();
     eprintln!("allocated in {alloc_s:.3} s");
     eprintln!(
@@ -606,6 +640,31 @@ fn main() {
             (m.exchange_words * 8) as f64 / 1e9
         );
     }
+    // ---- the phase profile: where the wall went ----
+    let profile_json = if profile {
+        let pr = a.prof();
+        let attributed = pr.total_seconds();
+        let other = wall - attributed;
+        eprintln!();
+        eprintln!("  phase profile (wall {wall:.3} s):");
+        let mut fields = Vec::new();
+        for (k, name) in PHASE_NAMES.iter().enumerate().take(N_PHASES) {
+            let sec = pr.seconds(k);
+            eprintln!(
+                "    {name:<22} {sec:9.4} s  {:6.2}%  ({} spans)",
+                100.0 * sec / wall,
+                pr.calls[k]
+            );
+            fields.push(format!("\"{name}\": {sec:.6}"));
+        }
+        eprintln!("    {:<22} {other:9.4} s  {:6.2}%", "other", 100.0 * other / wall);
+        fields.push(format!("\"other\": {other:.6}"));
+        fields.push(format!("\"wall\": {wall:.6}"));
+        format!("{{{}}}", fields.join(", "))
+    } else {
+        "null".to_string()
+    };
+
     let rec_hash = record_hash(&record);
     eprintln!(
         "  record hash: {rec_hash:016x}  (fnv1a64 over {} outcome bits, circuit order)",
@@ -648,7 +707,7 @@ fn main() {
          \"mode\": \"{mode}\", \"seed\": {seed}, \"distance\": {d}, \
          \"layout\": \"{layout}\", \
          \"shards\": {{\"count\": {shards}, \"requested\": {want_shards}, \
-         \"on_cut\": {on_cut}, \
+         \"on_cut\": {on_cut}, \"transpose_parallel\": {transpose_parallel}, \
          \"crossing_cx\": {crossing_cx}, \"total_cx\": {total_cx}, \
          \"crossing_fraction\": {frac:.6}, \"exchange_peak_bytes\": {exchange_bytes}}}, \
          \"record_hash\": \"fnv1a64:{rec_hash:016x}\", \
@@ -660,6 +719,7 @@ fn main() {
          \"timing_seconds\": {{\"build\": {build_s:.6}, \"alloc\": {alloc_s:.6}, \
          \"gates\": {gate_total:.6}, \"measure\": {meas_total:.6}, \"wall\": {wall:.6}, \
          \"per_round\": [{rt}]}}, \
+         \"profile_seconds\": {profile_json}, \
          \"working_set_bytes\": {need}, \"peak_rss_bytes\": {}, \
          \"verification\": {{{checks_json}}}}}}}]}}",
         code.stabs.len(),

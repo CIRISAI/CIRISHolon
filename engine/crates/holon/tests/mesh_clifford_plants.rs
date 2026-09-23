@@ -136,8 +136,13 @@ fn bench_rounds_sharded(
     rounds: usize,
     seed: u64,
     shards: usize,
+    reaim: bool,
 ) -> (Vec<bool>, PackedTableau, ShardedColAdaptive) {
     let mut a = ShardedColAdaptive::new(code.n, seed, shards);
+    // The profile's re-aim (row-block-parallel column→row transpose) and the
+    // phase timer itself: neither may move a bit.
+    a.set_parallel_transpose(reaim);
+    a.set_profiling(reaim);
     let mut record = Vec::new();
     for _ in 0..rounds {
         for s in &code.stabs {
@@ -221,7 +226,9 @@ fn bench_rounds_unsharded(code: &SurfaceCode, rounds: usize, seed: u64) -> (Vec<
 /// unsharded engine's — which `coladaptive.rs`'s own conformance module gates
 /// against the row-major reference, so identity here is identity with the
 /// reference. Both numberings are run: the cut must not depend on which
-/// qubits happen to sit where, only its CROSSING COUNT may.
+/// qubits happen to sit where, only its CROSSING COUNT may. Every arm is run
+/// twice: as built, and with the 2026-09-23 re-aim (`set_parallel_transpose`)
+/// and the phase timer both ON.
 #[test]
 fn g1_surface_code_is_bit_identical_across_shard_counts() {
     for d in [21usize, 45] {
@@ -232,9 +239,9 @@ fn g1_surface_code_is_bit_identical_across_shard_counts() {
             for seed in 1..=3u64 {
                 let (want_rec, want_tab) = bench_rounds_unsharded(&code, 3, seed);
                 let want_hash = record_hash(&want_rec);
-                for shards in SHARDS {
-                    let (rec, tab, eng) = bench_rounds_sharded(&code, 3, seed, shards);
-                    let what = format!("d={d} {layout} seed={seed} S={shards}");
+                for (shards, reaim) in SHARDS.iter().flat_map(|&s| [(s, false), (s, true)]) {
+                    let (rec, tab, eng) = bench_rounds_sharded(&code, 3, seed, shards, reaim);
+                    let what = format!("d={d} {layout} seed={seed} S={shards} reaim={reaim}");
                     assert_eq!(rec, want_rec, "{what}: measurement record differs");
                     assert_eq!(record_hash(&rec), want_hash, "{what}: record digest differs");
                     same_tableau(&tab, &want_tab, &what);
@@ -272,16 +279,18 @@ fn g1_random_clifford_circuits_are_bit_identical_across_shard_counts() {
             let want_tab = refr.to_packed();
             let want_hash = record_hash(&want_rec);
 
-            for shards in SHARDS {
+            for (shards, reaim) in SHARDS.iter().flat_map(|&s| [(s, false), (s, true)]) {
                 let mut a = ShardedColAdaptive::new(n, seed, shards);
                 a.set_parallel_min_work(0);
+                a.set_parallel_transpose(reaim);
+                a.set_profiling(reaim);
                 for &g in &circuit {
                     apply_sharded(&mut a, g);
                 }
                 a.begin_batch();
                 let rec: Vec<bool> = (0..n).map(|q| a.measure(q).0).collect();
                 a.end_batch();
-                let what = format!("n={n} seed={seed} S={shards}");
+                let what = format!("n={n} seed={seed} S={shards} reaim={reaim}");
                 assert_eq!(rec, want_rec, "{what}: measurement record differs");
                 assert_eq!(record_hash(&rec), want_hash, "{what}: record digest differs");
                 same_tableau(&a.to_packed(), &want_tab, &what);
@@ -299,8 +308,10 @@ fn g1_sharded_engine_matches_the_row_major_reference() {
     for n in [64usize, 256] {
         for seed in 0..3u64 {
             let circuit = random_clifford(n, 8 * n, seed);
-            for shards in SHARDS {
+            for (shards, reaim) in SHARDS.iter().flat_map(|&s| [(s, false), (s, true)]) {
                 let mut a = ShardedColAdaptive::new(n, seed, shards);
+                a.set_parallel_transpose(reaim);
+                a.set_profiling(reaim);
                 let mut refr = PackedTableau::new(n);
                 for &g in &circuit {
                     apply_sharded(&mut a, g);
@@ -321,7 +332,7 @@ fn g1_sharded_engine_matches_the_row_major_reference() {
                         }
                     })
                     .collect();
-                let what = format!("n={n} seed={seed} S={shards} vs PackedTableau");
+                let what = format!("n={n} seed={seed} S={shards} reaim={reaim} vs PackedTableau");
                 assert_eq!(got, want, "{what}: outcome streams differ");
                 same_tableau(&a.to_packed(), &refr, &what);
             }
@@ -383,7 +394,7 @@ fn g2_crossing_fraction_is_declared_and_bounded() {
         // The engine's own counter must agree with the chart's arithmetic.
         let cut = ShardCut::new(banded.n, 8);
         let (c, t) = crossing_count(&cut, round_pairs(&banded));
-        let (_rec, _tab, eng) = bench_rounds_sharded(&banded, 1, 1, 8);
+        let (_rec, _tab, eng) = bench_rounds_sharded(&banded, 1, 1, 8, false);
         assert_eq!(
             (eng.mesh.cx_crossing, eng.mesh.cx_total),
             (c, t),
@@ -416,7 +427,7 @@ fn g2_crossing_fraction_at_d141_s8_is_under_a_quarter() {
     );
     assert!(frac < 0.25, "d=141 S=8: crossing fraction {frac} ≥ 0.25");
     // ...and the same number off a real run, not only off the schedule.
-    let (_rec, _tab, eng) = bench_rounds_sharded(&code, 1, 1, 8);
+    let (_rec, _tab, eng) = bench_rounds_sharded(&code, 1, 1, 8, false);
     assert_eq!((eng.mesh.cx_crossing, eng.mesh.cx_total), (c, t));
 }
 

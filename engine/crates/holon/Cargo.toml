@@ -2,7 +2,15 @@
 name = "holon"
 version = "0.1.0"
 edition = "2021"
-description = "THE holon: one recursive data object for every tier. Planes, ledger, chart, certificate, arena. Zero runtime deps."
+description = "THE holon: one recursive data object for every tier. Planes, ledger, chart, certificate, arena. One runtime dep: holon-device (no_std, zero-dep, one enum)."
+
+# holon-device: `no_std`, ZERO dependencies, no features, one enum — the ONE definition of
+# the device class (RESOURCE_DESIGN D0). `holon::acuity`'s budgeted result carries it,
+# because a workload gated on bit-identity declares its class (QVM-GPUFOLD-1 G2). It brings
+# nothing with it and has no features to unify, so the "holon cannot perturb the core's
+# feature resolution" reasoning in holon-render's and holon-tables' manifests still holds.
+[dependencies]
+holon-device = { path = "../holon-device" }
 
 [dev-dependencies]
 holon-qasm = { path = "../holon-qasm" }

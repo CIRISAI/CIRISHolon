@@ -65,6 +65,7 @@
 //! only sums them, rounding every addition UP (see [`nudge_up`]) so that f64
 //! arithmetic cannot make the certificate a fraction of an ulp too small.
 
+use crate::affine::Affine;
 use crate::ledger::Cyc;
 use crate::magic::Circuit;
 use crate::magic5::{expected_branches, Magic5Source};
@@ -72,6 +73,11 @@ use crate::merge::{self, MergeLedger};
 use crate::mesh;
 use crate::BranchSource;
 use core::ops::Range;
+
+/// The device class, re-exported from its ONE definition (`holon-device`,
+/// RESOURCE_DESIGN D0). A [`Budgeted`] carries one: the budgeted sum is gated on
+/// bit-identity, so what produced it is part of the artifact (QVM-GPUFOLD-1 G2).
+pub use holon_device::DeviceClass;
 
 /// The declared evaluation order, carried in every [`Budgeted`] so a result
 /// cannot be read without it.
@@ -108,6 +114,51 @@ pub struct Budgeted {
     pub total: u64,
     /// [`ORDER`], carried with the number.
     pub order: &'static str,
+    /// The arithmetic that folded the prefix — declared by the [`FoldBackend`]
+    /// the caller chose, never inferred. Every entry point without a backend
+    /// argument is the CPU mesh and says so.
+    pub device: DeviceClass,
+}
+
+/// A result asked to stand as a class it was not produced in, or a table that
+/// mixes classes. REFUSED is the only answer: two classes may agree to any
+/// tolerance and still be different artifacts (M-DEVICE-CLASS).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ClassRefused {
+    pub wanted: DeviceClass,
+    pub carried: DeviceClass,
+}
+
+impl std::fmt::Display for ClassRefused {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "refused: a {} artifact cannot stand as a {} artifact — the device class is part \
+             of the artifact, not of the schedule",
+            self.carried, self.wanted
+        )
+    }
+}
+
+impl Budgeted {
+    /// This result, IF it was produced in class `want`; refused otherwise.
+    pub fn require_class(&self, want: DeviceClass) -> Result<&Budgeted, ClassRefused> {
+        if self.device == want {
+            Ok(self)
+        } else {
+            Err(ClassRefused { wanted: want, carried: self.device })
+        }
+    }
+}
+
+/// The one class of a bit-gated table, or a refusal naming the first row of
+/// another class. An empty table has no class: `Ok(None)`.
+pub fn single_class(rows: &[Budgeted]) -> Result<Option<DeviceClass>, ClassRefused> {
+    let Some(first) = rows.first() else { return Ok(None) };
+    for r in rows {
+        r.require_class(first.device)?;
+    }
+    Ok(Some(first.device))
 }
 
 impl Budgeted {
@@ -279,6 +330,7 @@ pub fn budgeted_amplitude_with<S: BranchSource + ?Sized>(
         evaluated: k as u64,
         total: plan.n_branches(),
         order: ORDER,
+        device: DeviceClass::Cpu,
     }
 }
 
@@ -301,6 +353,178 @@ pub fn budgeted_amplitude_priced<S: BranchSource + ?Sized>(
     let out = budgeted_amplitude_with(src, &plan, y, eps, shards);
     eprintln!("{}", out.executed_line());
     out
+}
+
+// ------------------------------------------------------------ the fold backend
+//
+// QVM-GPUFOLD-1. The stopping decision is `plan.stop_at(ε)`, a pure function
+// of the plan: it is made HERE, on the host, before any backend is touched, and
+// is therefore identical whichever backend folds the prefix. The backend's only
+// job is `Σ_{p < k} amplitude(order[p], y)`, and the class it does that job in
+// is declared by the caller and carried by the result — never detected, never
+// fallen back from. A device that cannot fold says so as an error; it does not
+// quietly become the host (M-DEVICE-CLASS: the artifact would change class
+// without anyone having chosen it).
+
+/// The branches of a source as exact affine states — what a device needs to
+/// fold a prefix without calling back into [`BranchSource::amplitude_of`].
+///
+/// The contract, which the device's tests check against the mesh rather than
+/// trust: `amplitude_of(b, y)` equals, in value,
+/// `weight_b · state_b.amplitude(y ++ 0^{w − n})` with `w = register_width()`.
+pub trait AffineBranches: BranchSource {
+    /// The width `w ≥ n_qubits()` of the register the branch states live on.
+    fn register_width(&self) -> usize;
+    /// Branch `b`'s exact weight and evolved state.
+    fn affine_branch(&self, branch: u64) -> (Cyc, Affine);
+}
+
+impl AffineBranches for Magic5Source {
+    fn register_width(&self) -> usize {
+        Magic5Source::register_width(self)
+    }
+    fn affine_branch(&self, branch: u64) -> (Cyc, Affine) {
+        self.branch_state(branch)
+    }
+}
+
+impl<S: AffineBranches> AffineBranches for Bounded<S> {
+    fn register_width(&self) -> usize {
+        self.inner.register_width()
+    }
+    fn affine_branch(&self, branch: u64) -> (Cyc, Affine) {
+        self.inner.affine_branch(branch)
+    }
+}
+
+/// The plant carries into the affine view: the flipped branch's WEIGHT is
+/// negated, so a device folding descriptors sees exactly the term
+/// [`SignFlip::amplitude_of`] reports.
+impl<S: AffineBranches + ?Sized> AffineBranches for SignFlip<'_, S> {
+    fn register_width(&self) -> usize {
+        self.inner.register_width()
+    }
+    fn affine_branch(&self, branch: u64) -> (Cyc, Affine) {
+        let (w, st) = self.inner.affine_branch(branch);
+        if branch == self.branch {
+            (Cyc { c: [-w.c[0], -w.c[1], -w.c[2], -w.c[3]], m: w.m }, st)
+        } else {
+            (w, st)
+        }
+    }
+}
+
+/// A device's failure to fold, with the class it was declared in. An error,
+/// never a fallback.
+#[derive(Clone, Debug)]
+pub struct DeviceFoldError {
+    pub class: DeviceClass,
+    pub why: String,
+}
+
+impl std::fmt::Display for DeviceFoldError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} fold failed: {}", self.class, self.why)
+    }
+}
+
+impl std::error::Error for DeviceFoldError {}
+
+/// A fold of a budgeted prefix executed outside the host mesh — implemented
+/// where the device lives (`holon-gpu`, outside this workspace), so this crate
+/// names the contract and takes no device dependency.
+///
+/// An implementation is built for ONE source (it holds that source's branches
+/// in whatever form its device wants); [`budgeted_amplitude_on`] checks the
+/// branch and qubit counts against the plan and the source it is handed.
+pub trait DeviceFold {
+    /// The class this fold's arithmetic is — declared, and carried by every
+    /// result it produces.
+    fn class(&self) -> DeviceClass;
+    fn n_branches(&self) -> u64;
+    fn n_qubits(&self) -> usize;
+    /// `Σ_{p} amplitude(prefix[p], y)` over the listed branch indices, exactly.
+    /// An empty prefix folds to `Cyc::empty()`, as the mesh's does.
+    fn fold_prefix(&self, prefix: &[u64], y: &[bool]) -> Result<Cyc, DeviceFoldError>;
+}
+
+/// Which arithmetic folds the prefix. Chosen by the caller; there is no
+/// `Auto`, on purpose.
+#[derive(Clone, Copy)]
+pub enum FoldBackend<'a> {
+    /// [`crate::mesh::fold_amplitude`] across `shards` OS threads. Class `Cpu`.
+    CpuMesh { shards: usize },
+    /// A declared device fold. Class: whatever it declares.
+    Device(&'a dyn DeviceFold),
+}
+
+impl FoldBackend<'_> {
+    pub fn class(&self) -> DeviceClass {
+        match self {
+            FoldBackend::CpuMesh { .. } => DeviceClass::Cpu,
+            FoldBackend::Device(d) => d.class(),
+        }
+    }
+}
+
+/// The fold of the plan's first `k` positions at `y`, on `backend`. The
+/// budget is not consulted: `k` is the caller's.
+pub fn fold_prefix_on<S: BranchSource + ?Sized>(
+    src: &S,
+    plan: &BudgetPlan,
+    k: usize,
+    y: &[bool],
+    backend: FoldBackend<'_>,
+) -> Result<Cyc, DeviceFoldError> {
+    assert_eq!(y.len(), src.n_qubits(), "acuity: |y| must be the source's qubit count");
+    assert_eq!(
+        plan.n_branches(),
+        src.n_branches(),
+        "acuity: the plan was built for a different source"
+    );
+    let prefix = &plan.order[..k];
+    match backend {
+        FoldBackend::CpuMesh { shards } => {
+            Ok(mesh::fold_amplitude(&Prefix::new(src, prefix), y, shards))
+        }
+        FoldBackend::Device(d) => {
+            assert_eq!(
+                d.n_branches(),
+                src.n_branches(),
+                "acuity: the device fold was built for a different source (branch count)"
+            );
+            assert_eq!(
+                d.n_qubits(),
+                src.n_qubits(),
+                "acuity: the device fold was built for a different source (qubit count)"
+            );
+            d.fold_prefix(prefix, y)
+        }
+    }
+}
+
+/// [`budgeted_amplitude_with`] on an explicitly chosen backend. The stop
+/// `k = plan.stop_at(ε)` and the certificate `R_k` are computed on the host
+/// from the plan alone, so they are the same numbers on every backend; the
+/// result carries the backend's class.
+pub fn budgeted_amplitude_on<S: BranchSource + ?Sized>(
+    src: &S,
+    plan: &BudgetPlan,
+    y: &[bool],
+    eps: f64,
+    backend: FoldBackend<'_>,
+) -> Result<Budgeted, DeviceFoldError> {
+    let k = plan.stop_at(eps);
+    let value = fold_prefix_on(src, plan, k, y, backend)?;
+    Ok(Budgeted {
+        value,
+        value_f64: value.to_complex(),
+        remainder: plan.remainder(k),
+        evaluated: k as u64,
+        total: plan.n_branches(),
+        order: ORDER,
+        device: backend.class(),
+    })
 }
 
 // ------------------------------------------------------------- the shard fold
@@ -364,6 +588,7 @@ pub fn budgeted_amplitude_sharded<S: BranchSource + ?Sized>(
         evaluated: k as u64,
         total: plan.n_branches(),
         order: ORDER,
+        device: DeviceClass::Cpu,
     };
     (budgeted, ShardFold { ranges, partials, value })
 }

@@ -169,7 +169,7 @@ throughout: G1 passes at `S ∈ {1,2,4,8}` on every circuit run.*
 
 ---
 witness: none (an engineering campaign; its gates are bit-identity and measured wall, its plants convict a corrupted shard)
-**misfits:** M-PLACEMENT-LOTTERY, M-CHEAPER-THAN-ITS-PRICE, M-PLANT-OBS, M-PLANT-SECTOR, M-PARITY-PROTECT, M-HOMOG, M-DEVICE-CLASS, M-IDLE-CALIBRATED-TIMEOUT — contacted by keyword, cited.
+**misfits:** M-PLACEMENT-LOTTERY, M-CHEAPER-THAN-ITS-PRICE, M-PLANT-OBS, M-PLANT-SECTOR, M-PARITY-PROTECT, M-HOMOG, M-DEVICE-CLASS, M-IDLE-CALIBRATED-TIMEOUT, M-STALE-INSTRUMENT — contacted by keyword, cited.
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier (a shard, a fold order, a random stream, the unsharded engine), and the sector the plant acts on is nonzero in that carrier by construction.
 
 ---
@@ -193,3 +193,24 @@ Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier (a shar
 5. §5's "the harness exists" was false in the sense that mattered: no shard axis, no RSS
    ratio, a single-core pin; it was written new. `mesh_quiet.sh` is not launched by the
    agent; the lead launches it.
+
+---
+### Amendment 2 (2026-09-23, after the profile, before the quiet window; stakes unchanged, one section added)
+
+1. **The deferral is withdrawn.** The lead set G3's quiet window aside on 2026-09-22 because the
+   first look said the cut did not pay; the prereg's branch (b) was written for exactly that
+   reading and a frozen gate is read, not set aside on the lead's expectation. The window runs
+   as staked, when the box is quiet (the harness's load gate stands).
+2. **What the profile found, and the re-aim it licenses.** The section the cut parallelised was
+   a third of the wall; the column-to-row transpose that builds the row-major reference was
+   `42–57 %` and serial. It is now cut by row blocks under `--transpose-parallel` (disjoint
+   outputs, no fold, no exchange; the record hash unchanged on every run; G1's tests run each
+   arm both ways). **G3 is read in two arms:** the cut as frozen (`--shards S`) and the cut with
+   the re-aim (`--shards S --transpose-parallel`), each against `S = 1` and against stim,
+   with the stake (`≤ 0.5 ×` at `d = 221, S = 8`) applied to each and both rows banked. The
+   frozen cut's row is the campaign's reading; the re-aimed row is the reading of this
+   amendment.
+3. The remaining serial work after the re-aim (the transpose's residue, the reference's
+   first-touch allocation, the multi-term products) and whether round 3 needs the whole
+   reference at all are named in the results document as the next freeze's question, not
+   this campaign's.

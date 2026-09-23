@@ -208,8 +208,15 @@ class_is_quiet() {
   return 0
 }
 
+# Amendment 2: every sweep runs TWO arms - the cut as frozen (banded numbering, branch (c))
+# and the cut with the re-aim (--transpose-parallel) - into two JSONs, both banked.
 sweep() {
   local set=$1 out=$2 label=$3 rc
+  sweep_arm "$set" "$out" "$label frozen" "--layout banded" || return $?
+  sweep_arm "$set" "${out%.json}_reaim.json" "$label re-aim" "--layout banded --transpose-parallel"
+}
+sweep_arm() {
+  local set=$1 out=$2 label=$3 eargs=$4 rc
   # NOT inside a { ... } >> LOG block: `$?` after a group is the group's exit
   # status, so the harness's own rc — the thing the whole window gate turns on
   # — would be silently replaced by the last echo's. The redirect goes on the
@@ -218,7 +225,8 @@ sweep() {
   nice -n 5 "$STIMPY" "$H2H" "$BIN" \
       --d "$DS" --shards "$SHARDS" --reps "$REPS" --rounds "$ROUNDS" --seed "$SEED" \
       --cores "$set" --max-load "$SWEEP_LOAD_MAX" --tmpdir /tmp --out "$out" \
-      --note "MESH-CLIFFORD-1 G3/G4 quiet-window waiter - $label cores $set" >> "$LOG" 2>&1
+      --engine-args "$eargs" \
+      --note "MESH-CLIFFORD-1 G3/G4 quiet-window waiter - $label cores $set ($eargs)" >> "$LOG" 2>&1
   rc=$?
   echo "--- $label rc=$rc ---" >> "$LOG"
   return $rc

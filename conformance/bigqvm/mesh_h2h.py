@@ -320,6 +320,10 @@ def run_engine(args, d, S):
     cmd += ["taskset", "-c", args.cores]
     cmd += [args.binary, "--d", str(d), "--mode", "bench", "--rounds", str(args.rounds),
             "--seed", str(args.seed), "--shards", str(S), "--json", tmpjson]
+    # Amendment 2: the engine's numbering and the re-aim are the arm's identity, passed
+    # through verbatim and echoed into the table's header.
+    if getattr(args, "engine_args", ""):
+        cmd += args.engine_args.split()
     if getattr(args, "exercise_refusal", False):
         # The binary's own test hook, symmetric to --no-guard: refuse
         # unconditionally, so the per-size SKIP path below is exercised rather
@@ -661,6 +665,9 @@ def build_parser():
                     help="run the stim arm on the identical circuit (default on)")
     ap.add_argument("--no-stim", dest="stim", action="store_false")
     ap.add_argument("--out", default=os.path.join(HERE, "mesh_h2h.json"))
+    ap.add_argument("--engine-args", default="--layout banded",
+                    help="extra flags for every engine run (Amendment 2: '--layout banded' is the "
+                         "cut as frozen after branch (c); add '--transpose-parallel' for the re-aim)")
     ap.add_argument("--tmpdir", default="/tmp")
     ap.add_argument("--max-load", type=float, default=8.0,
                     help="refuse to write a citable table if the 1-min loadavg exceeds this "
@@ -913,6 +920,7 @@ def main():
         "binary_sha256": sha256_file(args.binary),
         "binary_mtime": os.path.getmtime(args.binary),
         "stim_version": stim_version,
+        "engine_args": getattr(args, "engine_args", ""),
         "cores": cores_raw,
         "reps": args.reps, "rounds": args.rounds, "seed": args.seed,
         "d_requested": ds, "shards_requested": ss,

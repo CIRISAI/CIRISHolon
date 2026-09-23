@@ -256,3 +256,120 @@ next step is the profile (gate streaming, scans, rowsums, rebuilds, exchanges at
 comparison class declared (an adaptive-circuit claim, eight cores against one). The QVM's
 claim itself — cheap part located, hard part priced, only enough of it done — is
 `conformance/qasm/QVM_ACUITY1_PREREG.md`, where the mesh's home is the branch sum.
+
+## The profile (2026-09-23)
+
+*Instrument: `holon::phase` (new), a monotonic phase timer inside both engines (`ColAdaptive`,
+`ShardedColAdaptive`), off by default, switched on by the flagship's `--profile`, printed on
+stderr and under `profile_seconds` in the JSON. It uses `Instant` around whole phases (one
+clock pair per gate on the serial path, one per phase per thread inside a threaded layer),
+no per-word work. A threaded gate layer is one span of calling-thread wall, split among
+single-qubit / in-shard CX / crossing CX in proportion to the threads' own busy time;
+crossing CX includes the gather and scatter copies. `other` is wall minus everything
+attributed (flagship loop, gate buffering, `begin_batch`). Driver
+`conformance/bigqvm/mesh_profile.py`; raw runs (every repetition's full flagship JSON, the
+command, loadavg at both ends) in `profile_d{141,45}_{unsharded,S1,S8,S8_transpose_parallel}.json`
+and the timers-off arms in `*_noprof.json`. Circuit `--mode bench --rounds 3 --seed 1
+--layout banded`; 3 repetitions per arm, arms interleaved and rotated per repetition;
+`taskset -c 21-27` (seven E-cores, distinct physical cores; S = 8 is eight threads on seven
+cores). NOT a quiet window: 1-minute loadavg 13–23 through the d = 141 runs (other lanes on
+cores 0–20), which is why d = 141 walls spread ±20 %. Medians below. Record hash identical on
+every run of every arm: `5f13aa4623a61769` (d = 141), `db043ccbca6fc498` (d = 45).*
+
+### d = 141 (n = 39,761), median of 3
+
+| phase | unsharded s | % | S=1 (cut) s | % | S=8 s | % | S=1→S=8 | S=8 + re-aim s | % |
+|---|---|---|---|---|---|---|---|---|---|
+| gate: single-qubit | 0.236 | 4.4 | 0.258 | 4.4 | 0.135 | 3.0 | 1.92× | 0.147 | 5.4 |
+| gate: CX in-shard | 1.018 | 18.8 | 1.104 | 18.7 | 0.484 | 10.7 | 2.28× | 0.546 | 19.9 |
+| gate: CX cross-shard + exchange | — | — | — | — | 0.123 | 2.7 | — | 0.124 | 4.5 |
+| gate: layering / sign fold | — | — | — | — | 0.009 | 0.2 | — | 0.009 | 0.3 |
+| determinism scan | 0.103 | 1.9 | 0.138 | 2.3 | 0.139 | 3.1 | 1.00× | 0.146 | 5.3 |
+| rowsum, serial (+ cascade setup) | 0.192 | 3.5 | 0.243 | 4.1 | 0.166 | 3.7 | 1.46× | 0.187 | 6.8 |
+| rowsum, in-shard partials | — | — | — | — | 0.046 | 1.0 | — | 0.075 | 2.7 |
+| rowsum, cross-shard fold | — | — | — | — | 0.001 | 0.0 | — | 0.001 | 0.0 |
+| deterministic multi-term products | 0.217 | 4.0 | 0.253 | 4.3 | 0.242 | 5.4 | 1.04× | 0.267 | 9.7 |
+| **transpose col→row (reference build)** | **2.475** | **45.7** | **2.497** | **42.3** | **2.579** | **57.1** | **0.97×** | **0.653** | **23.8** |
+| transpose row→col (end-of-batch rebuild) | 0.977 | 18.0 | 1.019 | 17.3 | 0.270 | 6.0 | 3.78× | 0.302 | 11.0 |
+| reference first-touch alloc | 0.308 | 5.7 | 0.321 | 5.4 | 0.306 | 6.8 | 1.05× | 0.324 | 11.8 |
+| mirror patch | 0.015 | 0.3 | 0.020 | 0.3 | 0.024 | 0.5 | 0.83× | 0.023 | 0.8 |
+| random-bit draws | 0.0002 | 0.0 | 0.0002 | 0.0 | 0.0002 | 0.0 | — | 0.0003 | 0.0 |
+| other | 0.019 | 0.4 | 0.021 | 0.4 | 0.011 | 0.2 | — | 0.013 | 0.5 |
+| **wall** | **5.419** | | **5.898** | | **4.515** | | **1.31×** | **2.742** | |
+
+Walls per repetition (s): unsharded 5.42 / 7.44 / 5.18; S=1 5.90 / 7.01 / 5.01; S=8 4.49 /
+4.52 / 5.59; **S=8 + re-aim 2.70 / 2.74 / 3.32**. The two col→row transposes per run are one
+in round 1 (the coins' cascades need rows) and one in round 3 (multi-term deterministic
+products); the one row→col is round 1's end-of-batch rebuild.
+
+### d = 45 (n = 4,049), median of 3
+
+| phase | unsharded s | % | S=1 (cut) s | % | S=8 s | % | S=1→S=8 | S=8 + re-aim s | % |
+|---|---|---|---|---|---|---|---|---|---|
+| gate: single-qubit | 0.0008 | 2.4 | 0.0008 | 2.3 | 0.0017 | 4.8 | 0.46× | 0.0020 | 7.6 |
+| gate: CX in-shard | 0.0034 | 9.8 | 0.0032 | 9.0 | 0.0028 | 7.8 | 1.14× | 0.0027 | 10.7 |
+| gate: CX cross-shard + exchange | — | — | — | — | 0.0016 | 4.4 | — | 0.0016 | 6.1 |
+| gate: layering / sign fold | — | — | — | — | 0.0005 | 1.5 | — | 0.0005 | 2.0 |
+| determinism scan | 0.0010 | 3.0 | 0.0012 | 3.5 | 0.0013 | 3.6 | 0.95× | 0.0013 | 5.0 |
+| rowsum, serial (+ cascade setup) | 0.0019 | 5.7 | 0.0020 | 5.5 | 0.0016 | 4.5 | 1.23× | 0.0016 | 6.3 |
+| rowsum, in-shard partials | — | — | — | — | 0.0023 | 6.5 | — | 0.0020 | 8.0 |
+| rowsum, cross-shard fold | — | — | — | — | 0.0000 | 0.1 | — | 0.0000 | 0.1 |
+| deterministic multi-term products | 0.0022 | 6.5 | 0.0023 | 6.4 | 0.0023 | 6.5 | 0.97× | 0.0024 | 9.4 |
+| **transpose col→row** | **0.0134** | **39.1** | **0.0136** | **38.6** | **0.0141** | **39.5** | **0.97×** | **0.0044** | **17.2** |
+| transpose row→col | 0.0064 | 18.6 | 0.0066 | 18.7 | 0.0022 | 6.0 | 3.06× | 0.0021 | 8.3 |
+| reference first-touch alloc | 0.0037 | 10.7 | 0.0035 | 9.8 | 0.0037 | 10.5 | 0.93× | 0.0036 | 14.2 |
+| mirror patch | 0.0002 | 0.5 | 0.0002 | 0.6 | 0.0002 | 0.6 | — | 0.0002 | 0.9 |
+| random-bit draws | 0.0000 | 0.1 | 0.0000 | 0.1 | 0.0000 | 0.1 | — | 0.0000 | 0.1 |
+| other | 0.0012 | 3.6 | 0.0015 | 4.3 | 0.0010 | 2.7 | — | 0.0010 | 3.8 |
+| **wall** | **0.0343** | | **0.0353** | | **0.0357** | | **0.99×** | **0.0257** | |
+
+### Timer overhead
+
+Timers on against timers off, same binary, interleaved: at **d = 45** the median wall is
+**+4.4 %** unsharded (0.0343 against 0.0329 s; +5.2 % min to min) and **+2.2 %** at S = 8
+(+1.6 % min to min). That is the one clock pair per gate on the serial path, which at d = 45 is
+a real fraction of a 64-word gate; the phase SHARES are what is read, and those are unaffected
+to that precision. At **d = 141 the overhead is below the box's noise**: timers-on was the
+FASTER arm on the median at every S (0.86–0.93×), because the ±20 % run-to-run spread from
+the other lanes swamps a sub-percent cost. Stated as measured: not resolvable at d = 141 on a
+loaded box, ≤ 5 % at d = 45.
+
+### The answer
+
+**After the mirror patch the column→row transpose dominates, and it is not shard-parallel:
+2.5 s of 5.4–5.9 s at S = 1 (42–46 %), 2.6 s of 4.5 s at S = 8 (57 %), S = 1 → 8 speedup
+0.97×.** It is the one direction note 6 left on the calling thread, and it runs twice per
+3-round run (round 1 for the coins' cascades, round 3 for the multi-term deterministic
+products). Its serial companions are the reference's first-touch allocation (0.31 s, once per
+run) and the deterministic multi-term products (0.24 s): together the serial reference work
+is 3.1 s of S = 8's 4.5 s — which is why S = 4 and S = 8 tied. What the cut does parallelise
+does speed up: gate streaming 1.9–2.3× (0.73 s at S = 8 including 0.12 s of exchange), the
+row→col rebuild 3.8×, and the rowsum 1.5× — but those were a third of the wall. **The
+determinism scan is NOT the re-aim**: it is indeed serial across the round's ancillas (1.00×),
+but it is 0.10–0.14 s, 2–3 % of wall — each scan is one contiguous ~10 KB column read with an
+early exit, and 59,640 of them cost less than one transpose. Scanning all of a round's
+ancilla columns across shards at once could win at most ~0.12 s of 4.5 s, so `--scan-parallel`
+was NOT built. **The cheap re-aim is the transpose itself, cut by ROW BLOCKS instead of by the
+column chart**: every thread reads the whole (shared, read-only) column tableau and writes a
+contiguous run of 64-row blocks of the row-major reference — output-disjoint, so it needs no
+fold and no exchange, and each output word is produced by the same 64×64 block transpose from
+the same input words. Built behind `--transpose-parallel`
+(`ShardedColAdaptive::set_parallel_transpose`): the transpose goes 2.58 → 0.65 s (3.95×) and
+**d = 141, S = 8 wall 4.52 → 2.74 s median (min 4.49 → 2.70)**, which is **0.46×** the S = 1
+cut path (5.90 s) and **0.51×** the unsharded engine (5.42 s) — the first S = 8 number past
+G3's staked 0.5× of S = 1, on E-cores on a loaded box and not in the window, so not a G3
+reading. At d = 45, 0.0357 → 0.0257 s (0.72× of S = 1). **Bit-identity held**: the record hash
+is unchanged on every re-aimed run, and the G1 tests in `tests/mesh_clifford_plants.rs` now run
+every arm twice, as built and with the re-aim AND the phase timer on (`d ∈ {21, 45}` both
+numberings seeds 1–3, random Clifford `n ∈ {256, 1024}`, and the row-major-reference floor, at
+S ∈ {1, 2, 4, 8}) — 19 passed, 1 ignored (the d = 141 G2 test, as before). What remains serial
+after the re-aim, and is the next profile's target: the transpose's own remaining 0.65 s
+(23.8 %; the tile nest is now bandwidth-bound on seven cores), the reference's first-touch
+allocation (0.32 s, 11.8 %, parallelisable by the same row blocks or amortised by keeping the
+buffer), and the multi-term products (0.27 s, 9.7 %). The question worth asking before the
+window is not "which cut" but whether round 3 needs the whole reference at all: it transposes
+39,761 × 79,522 bits to serve 19,880 multi-term products of a few rows each (0.24 s of
+product against 1.3 s of transpose) — a cheaper route to those rows would remove the second
+transpose, and that is a design question for a freeze, not a flag.
+The prereg is not amended by any of this; §1's column chart is unchanged and the re-aim is an
+addition beside it, so G3 must name which engine it times.

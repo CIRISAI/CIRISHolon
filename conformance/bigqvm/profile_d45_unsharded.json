@@ -1,0 +1,380 @@
+{
+ "distance": 45,
+ "arm": "unsharded",
+ "cores": "21-27",
+ "reps": [
+  {
+   "rep": 0,
+   "loadavg_start": [
+    "10.55",
+    "15.98",
+    "12.54"
+   ],
+   "loadavg_end": [
+    "10.55",
+    "15.98",
+    "12.54"
+   ],
+   "started_unix": 1790181791.4126306,
+   "result": {
+    "backend_name": "cirisholon",
+    "backend_version": "0.1.0",
+    "success": true,
+    "results": [
+     {
+      "shots": 1,
+      "status": "DONE",
+      "header": {
+       "name": "rotated_surface_code_d45",
+       "n_qubits": 4049,
+       "memory_slots": 2024
+      },
+      "data": {
+       "memory": []
+      },
+      "metadata": {
+       "exact": true,
+       "tier": "clifford-adaptive",
+       "engine": "coladaptive (column-major gates, row-major rowsums)",
+       "mode": "bench",
+       "seed": 1,
+       "distance": 45,
+       "layout": "banded",
+       "shards": {
+        "count": 1,
+        "requested": 1,
+        "on_cut": false,
+        "transpose_parallel": false,
+        "crossing_cx": 0,
+        "total_cx": 23760,
+        "crossing_fraction": 0.0,
+        "exchange_peak_bytes": 0
+       },
+       "record_hash": "fnv1a64:db043ccbca6fc498",
+       "record_bits": 6072,
+       "n_data": 2025,
+       "n_ancilla": 2024,
+       "rounds": 3,
+       "measurements": {
+        "total": 6072,
+        "deterministic": 5060,
+        "random": 1012,
+        "scan_fast": 6072,
+        "scan_fallback": 0,
+        "product_terms_mean": 2.1739
+       },
+       "timing_seconds": {
+        "build": 0.102433,
+        "alloc": 0.003322,
+        "gates": 0.0049,
+        "measure": 0.028923,
+        "wall": 0.034036,
+        "per_round": [
+         0.022134,
+         0.002169,
+         0.009704
+        ]
+       },
+       "profile_seconds": {
+        "gate_1q": 0.000835,
+        "cx_in_shard": 0.003381,
+        "cx_cross_shard": 0.0,
+        "gate_layering": 0.0,
+        "scan": 0.001012,
+        "rowsum_serial": 0.001939,
+        "rowsum_partial": 0.0,
+        "rowsum_fold": 0.0,
+        "det_product": 0.002244,
+        "transpose_col_to_row": 0.013238,
+        "transpose_row_to_col": 0.006379,
+        "reference_alloc": 0.003579,
+        "mirror_patch": 0.000181,
+        "rng": 1.9e-05,
+        "other": 0.001227,
+        "wall": 0.034036
+       },
+       "working_set_bytes": 16519920,
+       "peak_rss_bytes": 20041728,
+       "verification": {}
+      }
+     }
+    ]
+   },
+   "stderr_tail": [
+    "  6072 measurements: 5060 deterministic, 1012 random; scan fast 6072 / fallback 0",
+    "  destabilizer product terms: 11000 total, mean 2.17; single-term 3036 (60.0%)",
+    "  transposes 2; cascade terms mean 5.7; pivot X-weight mean 1.5 max 2",
+    "  throughput: 356891 qubit-rounds/s, 178401 measurements/s, 6087568 gate-ops/s",
+    "  peak RSS 0.020 GB",
+    "  shards S=1  crossing 0/23760 = 0.00000  (layout banded, engine unsharded, exchange peak 0.000 MB)",
+    "",
+    "  phase profile (wall 0.034 s):",
+    "    gate_1q                   0.0008 s    2.45%  (7623 spans)",
+    "    cx_in_shard               0.0034 s    9.93%  (23760 spans)",
+    "    cx_cross_shard            0.0000 s    0.00%  (0 spans)",
+    "    gate_layering             0.0000 s    0.00%  (0 spans)",
+    "    scan                      0.0010 s    2.97%  (6072 spans)",
+    "    rowsum_serial             0.0019 s    5.70%  (1012 spans)",
+    "    rowsum_partial            0.0000 s    0.00%  (0 spans)",
+    "    rowsum_fold               0.0000 s    0.00%  (0 spans)",
+    "    det_product               0.0022 s    6.59%  (2024 spans)",
+    "    transpose_col_to_row      0.0132 s   38.90%  (2 spans)",
+    "    transpose_row_to_col      0.0064 s   18.74%  (1 spans)",
+    "    reference_alloc           0.0036 s   10.52%  (2 spans)",
+    "    mirror_patch              0.0002 s    0.53%  (1012 spans)",
+    "    rng                       0.0000 s    0.06%  (1012 spans)",
+    "    other                     0.0012 s    3.61%",
+    "  record hash: db043ccbca6fc498  (fnv1a64 over 6072 outcome bits, circuit order)"
+   ]
+  },
+  {
+   "rep": 1,
+   "loadavg_start": [
+    "9.86",
+    "15.75",
+    "12.48"
+   ],
+   "loadavg_end": [
+    "9.86",
+    "15.75",
+    "12.48"
+   ],
+   "started_unix": 1790181792.9812357,
+   "result": {
+    "backend_name": "cirisholon",
+    "backend_version": "0.1.0",
+    "success": true,
+    "results": [
+     {
+      "shots": 1,
+      "status": "DONE",
+      "header": {
+       "name": "rotated_surface_code_d45",
+       "n_qubits": 4049,
+       "memory_slots": 2024
+      },
+      "data": {
+       "memory": []
+      },
+      "metadata": {
+       "exact": true,
+       "tier": "clifford-adaptive",
+       "engine": "coladaptive (column-major gates, row-major rowsums)",
+       "mode": "bench",
+       "seed": 1,
+       "distance": 45,
+       "layout": "banded",
+       "shards": {
+        "count": 1,
+        "requested": 1,
+        "on_cut": false,
+        "transpose_parallel": false,
+        "crossing_cx": 0,
+        "total_cx": 23760,
+        "crossing_fraction": 0.0,
+        "exchange_peak_bytes": 0
+       },
+       "record_hash": "fnv1a64:db043ccbca6fc498",
+       "record_bits": 6072,
+       "n_data": 2025,
+       "n_ancilla": 2024,
+       "rounds": 3,
+       "measurements": {
+        "total": 6072,
+        "deterministic": 5060,
+        "random": 1012,
+        "scan_fast": 6072,
+        "scan_fallback": 0,
+        "product_terms_mean": 2.1739
+       },
+       "timing_seconds": {
+        "build": 0.102532,
+        "alloc": 0.003219,
+        "gates": 0.004864,
+        "measure": 0.029312,
+        "wall": 0.034373,
+        "per_round": [
+         0.022393,
+         0.002175,
+         0.009777
+        ]
+       },
+       "profile_seconds": {
+        "gate_1q": 0.000813,
+        "cx_in_shard": 0.003356,
+        "cx_cross_shard": 0.0,
+        "gate_layering": 0.0,
+        "scan": 0.001034,
+        "rowsum_serial": 0.001941,
+        "rowsum_partial": 0.0,
+        "rowsum_fold": 0.0,
+        "det_product": 0.002233,
+        "transpose_col_to_row": 0.013435,
+        "transpose_row_to_col": 0.006455,
+        "reference_alloc": 0.003683,
+        "mirror_patch": 0.000179,
+        "rng": 1.9e-05,
+        "other": 0.001225,
+        "wall": 0.034373
+       },
+       "working_set_bytes": 16519920,
+       "peak_rss_bytes": 20008960,
+       "verification": {}
+      }
+     }
+    ]
+   },
+   "stderr_tail": [
+    "  6072 measurements: 5060 deterministic, 1012 random; scan fast 6072 / fallback 0",
+    "  destabilizer product terms: 11000 total, mean 2.17; single-term 3036 (60.0%)",
+    "  transposes 2; cascade terms mean 5.7; pivot X-weight mean 1.5 max 2",
+    "  throughput: 353385 qubit-rounds/s, 176649 measurements/s, 6132814 gate-ops/s",
+    "  peak RSS 0.020 GB",
+    "  shards S=1  crossing 0/23760 = 0.00000  (layout banded, engine unsharded, exchange peak 0.000 MB)",
+    "",
+    "  phase profile (wall 0.034 s):",
+    "    gate_1q                   0.0008 s    2.36%  (7623 spans)",
+    "    cx_in_shard               0.0034 s    9.76%  (23760 spans)",
+    "    cx_cross_shard            0.0000 s    0.00%  (0 spans)",
+    "    gate_layering             0.0000 s    0.00%  (0 spans)",
+    "    scan                      0.0010 s    3.01%  (6072 spans)",
+    "    rowsum_serial             0.0019 s    5.65%  (1012 spans)",
+    "    rowsum_partial            0.0000 s    0.00%  (0 spans)",
+    "    rowsum_fold               0.0000 s    0.00%  (0 spans)",
+    "    det_product               0.0022 s    6.50%  (2024 spans)",
+    "    transpose_col_to_row      0.0134 s   39.08%  (2 spans)",
+    "    transpose_row_to_col      0.0065 s   18.78%  (1 spans)",
+    "    reference_alloc           0.0037 s   10.72%  (2 spans)",
+    "    mirror_patch              0.0002 s    0.52%  (1012 spans)",
+    "    rng                       0.0000 s    0.05%  (1012 spans)",
+    "    other                     0.0012 s    3.56%",
+    "  record hash: db043ccbca6fc498  (fnv1a64 over 6072 outcome bits, circuit order)"
+   ]
+  },
+  {
+   "rep": 2,
+   "loadavg_start": [
+    "9.86",
+    "15.75",
+    "12.48"
+   ],
+   "loadavg_end": [
+    "9.86",
+    "15.75",
+    "12.48"
+   ],
+   "started_unix": 1790181793.6881824,
+   "result": {
+    "backend_name": "cirisholon",
+    "backend_version": "0.1.0",
+    "success": true,
+    "results": [
+     {
+      "shots": 1,
+      "status": "DONE",
+      "header": {
+       "name": "rotated_surface_code_d45",
+       "n_qubits": 4049,
+       "memory_slots": 2024
+      },
+      "data": {
+       "memory": []
+      },
+      "metadata": {
+       "exact": true,
+       "tier": "clifford-adaptive",
+       "engine": "coladaptive (column-major gates, row-major rowsums)",
+       "mode": "bench",
+       "seed": 1,
+       "distance": 45,
+       "layout": "banded",
+       "shards": {
+        "count": 1,
+        "requested": 1,
+        "on_cut": false,
+        "transpose_parallel": false,
+        "crossing_cx": 0,
+        "total_cx": 23760,
+        "crossing_fraction": 0.0,
+        "exchange_peak_bytes": 0
+       },
+       "record_hash": "fnv1a64:db043ccbca6fc498",
+       "record_bits": 6072,
+       "n_data": 2025,
+       "n_ancilla": 2024,
+       "rounds": 3,
+       "measurements": {
+        "total": 6072,
+        "deterministic": 5060,
+        "random": 1012,
+        "scan_fast": 6072,
+        "scan_fallback": 0,
+        "product_terms_mean": 2.1739
+       },
+       "timing_seconds": {
+        "build": 0.102499,
+        "alloc": 0.003416,
+        "gates": 0.004863,
+        "measure": 0.029202,
+        "wall": 0.03428,
+        "per_round": [
+         0.022493,
+         0.002159,
+         0.009597
+        ]
+       },
+       "profile_seconds": {
+        "gate_1q": 0.000831,
+        "cx_in_shard": 0.003346,
+        "cx_cross_shard": 0.0,
+        "gate_layering": 0.0,
+        "scan": 0.001008,
+        "rowsum_serial": 0.00196,
+        "rowsum_partial": 0.0,
+        "rowsum_fold": 0.0,
+        "det_product": 0.002224,
+        "transpose_col_to_row": 0.013415,
+        "transpose_row_to_col": 0.006328,
+        "reference_alloc": 0.00373,
+        "mirror_patch": 0.000182,
+        "rng": 1.9e-05,
+        "other": 0.001239,
+        "wall": 0.03428
+       },
+       "working_set_bytes": 16519920,
+       "peak_rss_bytes": 20000768,
+       "verification": {}
+      }
+     }
+    ]
+   },
+   "stderr_tail": [
+    "  6072 measurements: 5060 deterministic, 1012 random; scan fast 6072 / fallback 0",
+    "  destabilizer product terms: 11000 total, mean 2.17; single-term 3036 (60.0%)",
+    "  transposes 2; cascade terms mean 5.7; pivot X-weight mean 1.5 max 2",
+    "  throughput: 354345 qubit-rounds/s, 177128 measurements/s, 6133919 gate-ops/s",
+    "  peak RSS 0.020 GB",
+    "  shards S=1  crossing 0/23760 = 0.00000  (layout banded, engine unsharded, exchange peak 0.000 MB)",
+    "",
+    "  phase profile (wall 0.034 s):",
+    "    gate_1q                   0.0008 s    2.42%  (7623 spans)",
+    "    cx_in_shard               0.0033 s    9.76%  (23760 spans)",
+    "    cx_cross_shard            0.0000 s    0.00%  (0 spans)",
+    "    gate_layering             0.0000 s    0.00%  (0 spans)",
+    "    scan                      0.0010 s    2.94%  (6072 spans)",
+    "    rowsum_serial             0.0020 s    5.72%  (1012 spans)",
+    "    rowsum_partial            0.0000 s    0.00%  (0 spans)",
+    "    rowsum_fold               0.0000 s    0.00%  (0 spans)",
+    "    det_product               0.0022 s    6.49%  (2024 spans)",
+    "    transpose_col_to_row      0.0134 s   39.13%  (2 spans)",
+    "    transpose_row_to_col      0.0063 s   18.46%  (1 spans)",
+    "    reference_alloc           0.0037 s   10.88%  (2 spans)",
+    "    mirror_patch              0.0002 s    0.53%  (1012 spans)",
+    "    rng                       0.0000 s    0.05%  (1012 spans)",
+    "    other                     0.0012 s    3.61%",
+    "  record hash: db043ccbca6fc498  (fnv1a64 over 6072 outcome bits, circuit order)"
+   ]
+  }
+ ],
+ "command": "taskset -c 21-27 /home/emoore/CIRISHolon/.claude/worktrees/agent-a08e308e3f7247e6e/engine/target/release/examples/surface_flagship --d 45 --mode bench --rounds 3 --seed 1 --layout banded --shards 1 --profile"
+}

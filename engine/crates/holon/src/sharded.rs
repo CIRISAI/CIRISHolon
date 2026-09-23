@@ -65,6 +65,7 @@
 //! plus the four plants.
 
 use crate::coladaptive::ScanStats;
+use crate::phase::{Phase, PhaseProfile};
 use crate::tableau::{PackedTableau, PauliRow};
 
 /// THE CHART: `[0, n)` cut into contiguous, gap-free, ascending column ranges,
@@ -344,6 +345,9 @@ pub struct ShardedColAdaptive {
     exchange: Vec<u64>,
     /// Layers smaller than this (gates × words) run on the calling thread.
     par_min_work: usize,
+    /// The re-aim (`--transpose-parallel`): cut the column→row transpose by
+    /// row blocks across `S` threads. Off by default; bit-identical either way.
+    par_store: bool,
     packed: Option<PackedTableau>,
     packed_valid: bool,
     in_batch: bool,
@@ -358,6 +362,8 @@ pub struct ShardedColAdaptive {
     pub seed: u64,
     pub stats: ScanStats,
     pub mesh: MeshStats,
+    /// The phase timer (MESH-CLIFFORD-1's profile). Off unless enabled.
+    pub prof: PhaseProfile,
 }
 
 impl ShardedColAdaptive {
@@ -379,6 +385,7 @@ impl ShardedColAdaptive {
             stamp: 0,
             exchange: Vec::new(),
             par_min_work: 4096,
+            par_store: false,
             packed: None,
             packed_valid: false,
             in_batch: false,
@@ -391,6 +398,7 @@ impl ShardedColAdaptive {
             seed,
             stats: ScanStats::default(),
             mesh: MeshStats { shards: s, ..Default::default() },
+            prof: PhaseProfile::default(),
         };
         for i in 0..n {
             e.x[i * words + (i >> 6)] |= 1 << (i & 63); // destabilizer i = X_i
@@ -429,6 +437,17 @@ impl ShardedColAdaptive {
     /// circuits; it cannot change an answer either way.
     pub fn set_parallel_min_work(&mut self, w: usize) {
         self.par_min_work = w;
+    }
+
+    /// Turn the phase timer on or off. It cannot change an answer.
+    pub fn set_profiling(&mut self, on: bool) {
+        self.prof.enabled = on;
+    }
+
+    /// The re-aim: run the column→row transpose on `S` threads, cut by row
+    /// blocks rather than by the column chart. It cannot change an answer.
+    pub fn set_parallel_transpose(&mut self, on: bool) {
+        self.par_store = on;
     }
 
     // ---- the gate phase: buffer, then layer ----
@@ -477,6 +496,7 @@ impl ShardedColAdaptive {
             self.run_serial(&ops);
         } else {
             let mut i = 0usize;
+            let mut t = self.prof.start();
             while i < ops.len() {
                 self.stamp += 1;
                 let stamp = self.stamp;
@@ -494,9 +514,12 @@ impl ShardedColAdaptive {
                     j += 1;
                 }
                 self.mesh.layers += 1;
+                self.prof.stop(Phase::GateLayering, t);
                 self.run_layer(&ops[i..j]);
+                t = self.prof.start();
                 i = j;
             }
+            self.prof.stop(Phase::GateLayering, t);
         }
         let mut ops = ops;
         ops.clear();
@@ -509,6 +532,7 @@ impl ShardedColAdaptive {
     fn run_serial(&mut self, ops: &[Op]) {
         let w = self.words;
         for &op in ops {
+            let t = self.prof.start();
             match op {
                 Op::H(q) => {
                     // Two planes, two allocations: no aliasing to prove.
@@ -533,6 +557,14 @@ impl ShardedColAdaptive {
                     k_cx(xc, xt, zc, zt, &mut self.r);
                 }
             }
+            if t.is_some() {
+                let ph = match op {
+                    Op::Cx(c, t) if self.cut.shard_of(c) != self.cut.shard_of(t) => Phase::CxCross,
+                    Op::Cx(..) => Phase::CxLocal,
+                    _ => Phase::Gate1q,
+                };
+                self.prof.stop(ph, t);
+            }
         }
     }
 
@@ -547,6 +579,7 @@ impl ShardedColAdaptive {
             return;
         }
         self.mesh.layers_parallel += 1;
+        let t = self.prof.start();
 
         // ---- who does what: a pure function of the layer ----
         let mut local: Vec<Vec<Op>> = vec![Vec::new(); s];
@@ -567,6 +600,15 @@ impl ShardedColAdaptive {
                 }
             }
         }
+
+        // Single-qubit gates first, then in-shard CX, so a thread can time
+        // the two kinds with one clock pair each. Inside a layer every gate
+        // owns its columns and the sign partial is an XOR, so the order is
+        // unobservable (the same argument that lets the layer be threaded).
+        for l in local.iter_mut() {
+            l.sort_by_key(|op| matches!(op, Op::Cx(..)));
+        }
+        let t = self.prof.stop(Phase::GateLayering, t);
 
         // ---- gather: one copy each way, and it is counted ----
         let need = cross.len() * 4 * words;
@@ -607,21 +649,40 @@ impl ShardedColAdaptive {
         let xs = split_cols(&mut self.x, &bounds, words);
         let zs = split_cols(&mut self.z, &bounds, words);
         let rps: Vec<&mut Vec<u64>> = self.rpart.iter_mut().collect();
+        let t = self.prof.stop(Phase::CxCross, t);
+        let timing = t.is_some();
+        // Per-thread busy nanoseconds on (single-qubit, in-shard CX, crossing CX).
+        let mut busy: Vec<[u64; 3]> = vec![[0u64; 3]; s];
+        let busy_slots: Vec<&mut [u64; 3]> = busy.iter_mut().collect();
 
         std::thread::scope(|scope| {
-            for (((((xs_s, zs_s), rp), ops_s), ex_s), s_idx) in xs
+            for ((((((xs_s, zs_s), rp), ops_s), ex_s), s_idx), busy_s) in xs
                 .into_iter()
                 .zip(zs)
                 .zip(rps)
                 .zip(local)
                 .zip(ex_slices)
                 .zip(0..s)
+                .zip(busy_slots)
             {
                 let lo = bounds[s_idx];
                 let n_cross = assigned[s_idx];
                 scope.spawn(move || {
                     let rp = rp.as_mut_slice();
+                    let lap = |from: Option<std::time::Instant>, slot: &mut u64| {
+                        from.map(|f| {
+                            let now = std::time::Instant::now();
+                            *slot += now.duration_since(f).as_nanos() as u64;
+                            now
+                        })
+                    };
+                    let mut tk = if timing { Some(std::time::Instant::now()) } else { None };
+                    let mut in_cx = false;
                     for op in &ops_s {
+                        if !in_cx && matches!(op, Op::Cx(..)) {
+                            tk = lap(tk, &mut busy_s[0]);
+                            in_cx = true;
+                        }
                         match *op {
                             Op::H(q) => {
                                 let o = (q - lo) * words;
@@ -650,6 +711,7 @@ impl ShardedColAdaptive {
                             }
                         }
                     }
+                    tk = lap(tk, &mut busy_s[usize::from(in_cx)]);
                     // ...and the crossing gates, on the exchanged copies.
                     for g in 0..n_cross {
                         let b = g * 4 * words;
@@ -658,9 +720,28 @@ impl ShardedColAdaptive {
                         let (zc, zt) = zpart.split_at_mut(words);
                         k_cx(xc, xt, zc, zt, rp);
                     }
+                    lap(tk, &mut busy_s[2]);
                 });
             }
         });
+        if let Some(t0) = t {
+            // Split the region's calling-thread wall in proportion to what the
+            // threads were busy doing; spawn/join slack follows the same split.
+            let region = t0.elapsed().as_nanos() as u64;
+            let tot = busy
+                .iter()
+                .fold([0u64; 3], |a, b| [a[0] + b[0], a[1] + b[1], a[2] + b[2]]);
+            let sum = tot[0] + tot[1] + tot[2];
+            match ((region * tot[0]).checked_div(sum), (region * tot[1]).checked_div(sum)) {
+                (Some(a), Some(b)) => {
+                    self.prof.add_ns(Phase::Gate1q, a);
+                    self.prof.add_ns(Phase::CxLocal, b);
+                    self.prof.add_ns(Phase::CxCross, region - a - b);
+                }
+                _ => self.prof.add_ns(Phase::GateLayering, region),
+            }
+        }
+        let t = self.prof.start();
 
         // ---- scatter the exchanged columns back ----
         for (k, &(c, t)) in cross.iter().enumerate() {
@@ -672,6 +753,8 @@ impl ShardedColAdaptive {
             self.z[xt..xt + words].copy_from_slice(&self.exchange[b + 3 * words..b + 4 * words]);
         }
 
+        let t = self.prof.stop(Phase::CxCross, t);
+
         // ---- the fold: XOR the partials in the DECLARED order, then clear ----
         for &si in &self.fold_order {
             for (dst, src) in self.r.iter_mut().zip(&self.rpart[si]) {
@@ -681,6 +764,7 @@ impl ShardedColAdaptive {
                 *w = 0;
             }
         }
+        self.prof.stop(Phase::GateLayering, t);
     }
 
     // ---- the column reads: every one of them is shard-local ----
@@ -769,47 +853,43 @@ impl ShardedColAdaptive {
     /// Column-major → row-major. This direction does NOT decompose over the
     /// column cut: every shard would write different WORDS of the same rows,
     /// which is a partition of each row's allocation rather than of the
-    /// tableau's, so it stays on the calling thread. (A ROW cut would
-    /// parallelize it trivially, and a row cut is not the chart this campaign
-    /// froze.) It is rare by design — a batch that never needs a row never
-    /// calls it.
+    /// tableau's, so by default it stays on the calling thread. It is rare by
+    /// design — a batch that never needs a row never calls it — but the
+    /// profile of 2026-09-23 measured it at 42–57 % of the flagship's wall at
+    /// `d = 141`, the largest single phase, so `set_parallel_transpose(true)`
+    /// (`--transpose-parallel`) re-aims it: the OUTPUT is cut by ROW BLOCKS
+    /// (64 rows each, the transpose's own grain) into `S` contiguous runs,
+    /// every thread reads the whole shared column tableau and writes only its
+    /// own rows. Each output word is still produced by exactly the same
+    /// 64×64 block transpose from exactly the same input words, so the result
+    /// is the same bits whichever thread writes them; G1 is run with it on.
     fn store_to_packed(&self, out: &mut PackedTableau) {
-        let n = self.n;
-        let nrows = 2 * n;
-        let nq_words = n.div_ceil(64);
-        let mut bx = [0u64; 64];
-        let mut bz = [0u64; 64];
-        for qb0 in (0..nq_words).step_by(TILE) {
-            for rb0 in (0..self.words).step_by(TILE) {
-                for qb in qb0..nq_words.min(qb0 + TILE) {
-                    for rb in rb0..self.words.min(rb0 + TILE) {
-                        for i in 0..64 {
-                            let q = qb * 64 + i;
-                            if q < n {
-                                bx[63 - i] = self.x[q * self.words + rb];
-                                bz[63 - i] = self.z[q * self.words + rb];
-                            } else {
-                                bx[63 - i] = 0;
-                                bz[63 - i] = 0;
-                            }
-                        }
-                        transpose64(&mut bx);
-                        transpose64(&mut bz);
-                        let base = rb * 64;
-                        for j in 0..64 {
-                            let row = base + j;
-                            if row < nrows {
-                                out.rows[row].x.words[qb] = bx[63 - j];
-                                out.rows[row].z.words[qb] = bz[63 - j];
-                            }
-                        }
-                    }
+        let s = self.cut.shards();
+        if !self.par_store || s == 1 {
+            store_rows(&self.x, &self.z, &self.r, self.n, self.words, &mut out.rows, 0);
+            return;
+        }
+        let words = self.words;
+        let (x, z, r, n) = (&self.x, &self.z, &self.r, self.n);
+        // Row blocks `[i·words/S, (i+1)·words/S)`, 64 rows each: contiguous,
+        // gap-free, and a pure function of (n, S).
+        let mut rest: &mut [PauliRow] = &mut out.rows[..];
+        let mut at = 0usize;
+        std::thread::scope(|scope| {
+            for i in 0..s {
+                let rb_hi = (i + 1) * words / s;
+                let row_hi = (rb_hi * 64).min(2 * n);
+                let take = std::mem::take(&mut rest);
+                let (mine, tail) = take.split_at_mut(row_hi - at);
+                rest = tail;
+                let row_lo = at;
+                at = row_hi;
+                if mine.is_empty() {
+                    continue;
                 }
+                scope.spawn(move || store_rows(x, z, r, n, words, mine, row_lo));
             }
-        }
-        for (row, pr) in out.rows.iter_mut().enumerate() {
-            pr.r = ((self.r[row >> 6] >> (row & 63) & 1) as u8) * 2;
-        }
+        });
     }
 
     /// Row-major → column-major, and THIS one is the chart's own direction:
@@ -978,7 +1058,9 @@ impl ShardedColAdaptive {
         assert!(self.in_batch, "no batch open");
         if self.dirty {
             let packed = self.packed.take().expect("dirty without a reference");
+            let t = self.prof.start();
             self.load_from_packed(&packed);
+            self.prof.stop(Phase::TransposeR2C, t);
             self.packed = Some(packed);
             self.mirror_x_valid = true;
             self.mirror_full_valid = true;
@@ -993,11 +1075,14 @@ impl ShardedColAdaptive {
         }
         debug_assert!(!self.dirty, "reference stale while it is authoritative");
         let n = self.n;
+        let t = self.prof.start();
         if self.packed.is_none() {
             self.packed = Some(PackedTableau::new(n));
         }
         let mut buf = self.packed.take().expect("just ensured");
+        let t = self.prof.stop(Phase::ReferenceAlloc, t);
         self.store_to_packed(&mut buf);
+        self.prof.stop(Phase::TransposeC2R, t);
         self.packed = Some(buf);
         self.packed_valid = true;
         self.stats.transposes += 1;
@@ -1026,6 +1111,7 @@ impl ShardedColAdaptive {
         let n = self.n;
 
         // ---- the determinism question: a read of column q, shard-local ----
+        let t_scan = self.prof.start();
         let pivot = if self.mirror_x_valid {
             self.stats.scan_fast += 1;
             self.first_x_row_in(q, n, 2 * n)
@@ -1040,6 +1126,7 @@ impl ShardedColAdaptive {
             let mut hits = Vec::new();
             self.x_rows_in(q, 0, n, &mut hits);
             if hits.len() <= 1 {
+                self.prof.stop(Phase::Scan, t_scan);
                 self.stats.deterministic += 1;
                 self.stats.product_terms += hits.len() as u64;
                 self.stats.single_term += 1;
@@ -1051,12 +1138,15 @@ impl ShardedColAdaptive {
             }
         }
 
+        self.prof.stop(Phase::Scan, t_scan);
         self.ensure_packed();
 
         match pivot {
             // ---- RANDOM: the coin, then the rowsum cascade across shards ----
             Some(p) => {
+                let t = self.prof.start();
                 let outcome = self.next_bit();
+                let t_setup = self.prof.stop(Phase::Rng, t);
                 let mut packed = self.packed.take().expect("reference materialized");
                 let pivot_row = packed.rows[p].clone();
                 let pw = pivot_row.x.popcount() as u64;
@@ -1093,7 +1183,9 @@ impl ShardedColAdaptive {
                 }
                 self.stats.cascade_terms += idxs.len() as u64;
                 self.mesh.rowsum_rows += idxs.len() as u64;
+                self.prof.stop(Phase::RowsumSerial, t_setup);
                 self.rowsum(&mut packed, &idxs, &pivot_row);
+                let t = self.prof.start();
 
                 let old_destab_x = packed.rows[p - n].x.clone();
                 packed.rows[p - n] = pivot_row.clone();
@@ -1112,6 +1204,7 @@ impl ShardedColAdaptive {
                 let mut flip2 = old_destab_x;
                 flip2.xor_assign(&pivot_row.x);
                 let patch_cost = pivot_row.x.popcount() * 2 + flip2.popcount();
+                let t = self.prof.stop(Phase::RowsumSerial, t);
 
                 match mask {
                     Some(m) if patch_cost <= PATCH_BUDGET => {
@@ -1140,6 +1233,7 @@ impl ShardedColAdaptive {
                         self.stats.mirror_dropped += 1;
                     }
                 }
+                self.prof.stop(Phase::MirrorPatch, t);
                 self.mirror_full_valid = false;
                 self.dirty = true;
                 self.stats.random += 1;
@@ -1147,6 +1241,7 @@ impl ShardedColAdaptive {
             }
             // ---- DETERMINISTIC: read-only, so the mirror survives ----
             None => {
+                let t = self.prof.start();
                 let packed = self.packed.as_ref().expect("reference materialized");
                 let mut scratch = PauliRow::identity(n);
                 let mut terms = 0u64;
@@ -1167,6 +1262,7 @@ impl ShardedColAdaptive {
                 }
                 self.stats.deterministic += 1;
                 self.stats.product_terms += terms;
+                self.prof.stop(Phase::DetProduct, t);
                 (scratch.r % 4 == 2, true)
             }
         }
@@ -1191,12 +1287,15 @@ impl ShardedColAdaptive {
         }
         if s == 1 || idxs.len() * rw < self.par_min_work {
             self.mesh.rowsums_serial += 1;
+            let t = self.prof.start();
             for &i in idxs {
                 packed.rows[i].mul_assign(pivot_row);
             }
+            self.prof.stop(Phase::RowsumSerial, t);
             return;
         }
         self.mesh.rowsums_parallel += 1;
+        let t = self.prof.start();
 
         // Disjoint `&mut` to each updated row, then each row's words cut at
         // the chart's boundaries: S slices per row, none overlapping.
@@ -1265,6 +1364,7 @@ impl ShardedColAdaptive {
             }
         });
 
+        let t = self.prof.stop(Phase::RowsumPartial, t);
         // ---- the fold, in the DECLARED shard order, on the parent ----
         for (k, &i) in idxs.iter().enumerate() {
             let (mut plus, mut minus) = (0u64, 0u64);
@@ -1277,6 +1377,7 @@ impl ShardedColAdaptive {
             let row = &mut packed.rows[i];
             row.r = (row.r + pivot_row.r + g) % 4;
         }
+        self.prof.stop(Phase::RowsumFold, t);
     }
 
     /// The value of the Pauli-Z STRING `∏_q Z_q`, if the state determines it
@@ -1320,11 +1421,14 @@ impl ShardedColAdaptive {
             _ => {}
         }
         if !self.packed_valid {
+            let t = self.prof.start();
             if self.packed.is_none() {
                 self.packed = Some(PackedTableau::new(n));
             }
             let mut buf = self.packed.take().expect("just ensured");
+            let t = self.prof.stop(Phase::ReferenceAlloc, t);
             self.store_to_packed(&mut buf);
+            self.prof.stop(Phase::TransposeC2R, t);
             self.packed = Some(buf);
             self.packed_valid = true;
             self.stats.transposes += 1;
@@ -1335,6 +1439,59 @@ impl ShardedColAdaptive {
             scratch.mul_assign(&packed.rows[i + n]);
         }
         Some(scratch.r % 4 == 2)
+    }
+}
+
+/// Column-major → row-major for the rows `[row_lo, row_lo + rows.len())`
+/// (`row_lo` a multiple of 64): `coltableau::store_to_packed`'s blocked nest,
+/// restricted to the row blocks this slice owns. Called on the whole range it
+/// IS the serial transpose; called per row block it is the re-aimed one.
+fn store_rows(
+    x: &[u64],
+    z: &[u64],
+    r: &[u64],
+    n: usize,
+    words: usize,
+    rows: &mut [PauliRow],
+    row_lo: usize,
+) {
+    debug_assert_eq!(row_lo % 64, 0);
+    let nq_words = n.div_ceil(64);
+    let row_hi = row_lo + rows.len();
+    let (rb_lo, rb_hi) = (row_lo / 64, row_hi.div_ceil(64));
+    let mut bx = [0u64; 64];
+    let mut bz = [0u64; 64];
+    for qb0 in (0..nq_words).step_by(TILE) {
+        for rb0 in (rb_lo..rb_hi).step_by(TILE) {
+            for qb in qb0..nq_words.min(qb0 + TILE) {
+                for rb in rb0..rb_hi.min(rb0 + TILE) {
+                    for i in 0..64 {
+                        let q = qb * 64 + i;
+                        if q < n {
+                            bx[63 - i] = x[q * words + rb];
+                            bz[63 - i] = z[q * words + rb];
+                        } else {
+                            bx[63 - i] = 0;
+                            bz[63 - i] = 0;
+                        }
+                    }
+                    transpose64(&mut bx);
+                    transpose64(&mut bz);
+                    let base = rb * 64;
+                    for j in 0..64 {
+                        let row = base + j;
+                        if row < row_hi {
+                            rows[row - row_lo].x.words[qb] = bx[63 - j];
+                            rows[row - row_lo].z.words[qb] = bz[63 - j];
+                        }
+                    }
+                }
+            }
+        }
+    }
+    for (k, pr) in rows.iter_mut().enumerate() {
+        let row = row_lo + k;
+        pr.r = ((r[row >> 6] >> (row & 63) & 1) as u8) * 2;
     }
 }
 

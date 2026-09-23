@@ -23,8 +23,12 @@
    R4:  blind/spatial aligned kick amplitude 0.011; blind 1.970e-4 au vs max(0.1 × spatial, 3σ_blind) = 2.454e-3: no mode on the scrambled partition
    R4′: undriven quadrature j_k^c aligned amplitude 5.154e-5 au vs 3σ 2.814e-3: at noise, as it must be
    longitudinal current j_k^s: rate 2.245e12 ± 2.66e13 /s (12 per-cycle fits) = ν_l k² if overdamped -> ν_l = 3.138e-7 m²/s (no band; the fast mode of A3)
+        residual budget: observed² 9.371e-1 = signal² 5.855e-1 + noise² 3.516e-1; residual² 7.531e-1 of which floor 3.730e-1 and EXCESS 3.801e-1 = 65 % of the signal power
+   R1  grid 16x1x1 (τ 98 fs, window 10, 12 cycles aligned, lead 2 windows): D_cont spatial 0.896  blind 0.974  separation +0.077 | s 1.29 (one-sided s 1.11: blind 0.66, tail 1.11), floor two-sided 0.631 (one-sided 0.671; D_disc 0.026; σ_o 5.929e-1, σ_p 1.451e-1) | relaxed last window 0.992  [beside the graded grid]
+        residual budget: observed² 3.119e0 = signal² 2.070e0 + noise² 1.049e0; residual² 1.687e0 of which floor 1.116e0 and EXCESS 5.707e-1 = 28 % of the signal power
    R1  grid 8x1x1 (τ 196 fs, window 20, 12 cycles aligned, lead 2 windows): D_cont spatial 0.735  blind 1.086  separation +0.350 | s 1.41 (one-sided s 1.89: blind 1.89, tail 1.75), floor two-sided 0.598 (one-sided 0.476; D_disc 0.100; σ_o 1.024e0, σ_p 2.167e-1) | relaxed last window 0.976
         R1 verdict on this seed: KILL as staked: D over 0.2 and over its floor by more than 0.05; null (relaxed ≥ 0.8): holds
+        residual budget: observed² 1.210e0 = signal² 0.000e0 + noise² 2.375e0; residual² 8.885e-1 of which floor 1.236e0 and EXCESS -3.473e-1 = (no resolvable signal at this grid: the lead windows' RMS is not above the tail's)
    R1  grid 4x1x1 (τ 392 fs, window 39, 12 cycles aligned, lead 2 windows): D_cont spatial 0.857  blind 0.909  separation +0.052 | s 0.00 (one-sided s 0.43: blind 0.43, tail 0.00), floor two-sided 1.011 (one-sided 0.930; D_disc 0.363; σ_o 1.541e0, σ_p 2.248e-1) | relaxed last window 0.989  [beside the graded grid]
    density mode ρ_k^c: noise per cycle 1.503e0, aligned 5.505e-1 counts; peak -9.408e0 at readout 14 (140 fs), SNR 17.1
    R2:  from the peak: OVERDAMPED  λ = 6.453e12 /s (τ = 155 fs)  A = -1.088e1  resid 8.76e-1  pts 20

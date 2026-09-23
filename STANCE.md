@@ -194,6 +194,30 @@ experimental number. What is measured here is measured at that strength.*
   property of this programme's instruments, and the reason each of the
   three entries above carries its scope on its face.
 
+## Measured, added 2026-09-23 (QVM-ACUITY-2: the dictionary of views — the general claim refused as staked)
+
+*Scope: eighty Clifford+T circuits in four unlabelled families at `n ≤ 20`, four
+views (tableau, stabilizer-rank sum, a certified MPS built for the campaign,
+dense), a dense referee on every instance. `conformance/qasm/QVM_ACUITY2_RESULTS.md`.*
+
+- **What held:** the search's selection lands within `2 ×` of the hand-picked
+  method on 77 of 80 instances; the certificate never lied on 80 of 80 (the
+  MPS view's discarded weight, the sum's remainder); revealing the family
+  label changed nothing on 80 of 80.
+- **What was refused, as staked:** the Clifford+T family's label was wrong —
+  at `n ≤ 20` the dense vector is the cheapest method and the search said so
+  (ACUITY-1 had measured the crossing); the brickwork family cannot show the
+  budget biting because depth-6 CX bricks cap the bond at 8; and the stakes
+  left out the search's own cost, which is `112 ×` stim's run on the Clifford
+  family. **The general claim, "one procedure within `2 ×` of the state of the
+  art per family," stands only where the run is expensive enough to pay for
+  the search — which at `n ≤ 20` it is not.** The next test lives past the
+  referee.
+- **Process:** two prereg faults (a probe that could not see depth; a
+  certificate that bounded the squared error) were amended alone before the
+  read; the frozen probe was run beside the amended one and would have
+  violated S3 on 52 of 60 instances — a plant that fired on the prereg itself.
+
 ## Measured, added 2026-09-22 (QVM-ACUITY-1: the general QVM's claim on Clifford+T)
 
 *Scope: random Clifford+T circuits, `n ≤ 24`, `t ≤ 28`, one amplitude or one

@@ -373,3 +373,33 @@ product against 1.3 s of transpose) — a cheaper route to those rows would remo
 transpose, and that is a design question for a freeze, not a flag.
 The prereg is not amended by any of this; §1's column chart is unchanged and the re-aim is an
 addition beside it, so G3 must name which engine it times.
+
+## G3 READ on the E-class window (2026-09-23, 13:45–15:20 CDT): the cut as frozen is BRANCH (b); the re-aim clears the stake on a table the load gate refused
+
+E-cores 16–23 (eight physical, no SMT sibling), banded numbering, `d ∈ {45, 141, 221}`,
+`S ∈ {1, 2, 4, 8}`, five repetitions, stim 1.16.0 on the identical circuit, both core
+classes' calibrations passed at the window's opening (load `2.5`). `mesh_h2h_ecore.json`
+(citable) and `mesh_h2h_ecore_reaim.not-citable-load10.json` (kept, NOT citable).
+
+**Arm 1 — the cut as frozen (`--layout banded`), CITABLE.** G1 PASS (twelve `(d, S)` arms carry
+the `S = 1` record hash bit for bit); G2 MET (worst crossing `0.079`); G4 MET (peak RSS at
+`d = 221`, `S = 8` is `1.009 ×` `S = 1`; worst anywhere `1.07`). **G3 KILLED as staked:** at
+`d = 221`, `S = 8` reads `25.35` s against `31.08` s at `S = 1` (`0.82 ×`) and `35.78` s for stim
+(`0.71 ×`), spreads overlapping. **Branch (b): the cut is correct and does not pay on this box.**
+The reason is the profile's: the section it parallelised was a third of the wall.
+
+**Arm 2 — the re-aim (`--transpose-parallel`), NOT CITABLE on this pass.** The same twelve arms
+bit-identical, G2 and G4 as above, and at `d = 221`, `S = 8`: `13.29` s against `32.23` s at
+`S = 1` (`0.41 ×`) and `35.93` s for stim (`0.37 ×`), spreads disjoint on both — the stake's
+letter. But the one-minute load rose from `3.5` to `9.7` during the arm (another session's
+builds, unpinned), the harness refused to write the table as the prereg demands, and the
+waiter is retrying the class. Until a pass holds its window, the re-aim's row is a first
+look and Amendment 2's reading is OWED, not banked.
+
+| E-class, d = 221, S = 8 | vs S = 1 | vs stim | spreads |
+|---|---|---|---|
+| cut as frozen (citable) | 0.82 × | 0.71 × | overlap → KILL, branch (b) |
+| with the re-aim (load-refused) | 0.41 × | 0.37 × | disjoint → would MEET |
+
+The comparison class, as Amendment 1 declared it: eight cores against single-threaded stim.
+The one-core row beside it is unchanged from the banked quiet table (`S = 1` at parity).

@@ -1,0 +1,665 @@
+{
+ "harness": "conformance/bigqvm/mesh_h2h.py",
+ "prereg": "conformance/bigqvm/MESH_CLIFFORD_PREREG.md",
+ "gates": [
+  "G3",
+  "G4",
+  "G1 cross-check",
+  "G2 crossing fraction (number only)"
+ ],
+ "protocol_validation": false,
+ "citable": true,
+ "note": "MESH-CLIFFORD-1 G3/G4 quiet-window waiter - E-core frozen cores 16-23 (--layout banded)",
+ "binary": "/home/emoore/CIRISHolon/engine/target/release/examples/surface_flagship",
+ "binary_sha256": "770bf5ca4b0c48a811a01e96e8c775c4674cb31dc027fcf7c624600c29531b22",
+ "binary_mtime": 1790182266.0366704,
+ "stim_version": "1.16.0",
+ "engine_args": "--layout banded",
+ "cores": "16-23",
+ "reps": 5,
+ "rounds": 3,
+ "seed": 1,
+ "d_requested": [
+  45,
+  141,
+  221
+ ],
+ "shards_requested": [
+  1,
+  2,
+  4,
+  8
+ ],
+ "max_load": 8.0,
+ "load_gate": {
+  "passed": true,
+  "over_at": [],
+  "loadavg_start": [
+   2.5341796875,
+   3.630859375,
+   4.3544921875
+  ],
+  "loadavg_end": [
+   3.4609375,
+   3.86962890625,
+   5.814453125
+  ]
+ },
+ "conditions_start": {
+  "when": "at launch",
+  "wallclock": "2026-09-23T13:45:08-0500",
+  "loadavg": [
+   2.5341796875,
+   3.630859375,
+   4.3544921875
+  ],
+  "n_p_class": 16,
+  "n_e_class": 16,
+  "affinity": [
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23
+  ],
+  "clock_pinned": [
+   {
+    "cpu": 16,
+    "cur_ghz": 3.768859,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.9663741025641026
+   },
+   {
+    "cpu": 17,
+    "cur_ghz": 0.8,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.20512820512820512
+   },
+   {
+    "cpu": 18,
+    "cur_ghz": 0.8,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.20512820512820512
+   },
+   {
+    "cpu": 19,
+    "cur_ghz": 3.902246,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 1.0005758974358974
+   }
+  ],
+  "clock_p_class": {
+   "cpu": 0,
+   "cur_ghz": 0.799711,
+   "max_ghz": 5.2,
+   "frac_of_advertised": 0.15379057692307693
+  },
+  "clock_e_class": {
+   "cpu": 16,
+   "cur_ghz": 3.768859,
+   "max_ghz": 3.9,
+   "frac_of_advertised": 0.9663741025641026
+  },
+  "mem_available_gb": 19.875808715820312
+ },
+ "conditions_end": {
+  "when": "at exit",
+  "wallclock": "2026-09-23T14:37:11-0500",
+  "loadavg": [
+   3.4609375,
+   3.86962890625,
+   5.814453125
+  ],
+  "n_p_class": 16,
+  "n_e_class": 16,
+  "affinity": [
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23
+  ],
+  "clock_pinned": [
+   {
+    "cpu": 16,
+    "cur_ghz": 2.74762,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.7045179487179487
+   },
+   {
+    "cpu": 17,
+    "cur_ghz": 3.294455,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.8447320512820513
+   },
+   {
+    "cpu": 18,
+    "cur_ghz": 0.8,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.20512820512820512
+   },
+   {
+    "cpu": 19,
+    "cur_ghz": 0.8,
+    "max_ghz": 3.9,
+    "frac_of_advertised": 0.20512820512820512
+   }
+  ],
+  "clock_p_class": {
+   "cpu": 0,
+   "cur_ghz": 0.95062,
+   "max_ghz": 5.2,
+   "frac_of_advertised": 0.18281153846153847
+  },
+  "clock_e_class": {
+   "cpu": 16,
+   "cur_ghz": 2.74762,
+   "max_ghz": 3.9,
+   "frac_of_advertised": 0.7045179487179487
+  },
+  "mem_available_gb": 25.1932373046875
+ },
+ "loadavg_start": [
+  2.5341796875,
+  3.630859375,
+  4.3544921875
+ ],
+ "loadavg_end": [
+  3.4609375,
+  3.86962890625,
+  5.814453125
+ ],
+ "rows": [
+  {
+   "d": 45,
+   "n": 4049,
+   "shards_requested": 1,
+   "shards_echoed": 1,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 6072,
+   "wall": {
+    "median_s": 0.033621,
+    "min_s": 0.032861,
+    "max_s": 0.037325,
+    "spread": 1.1358449225525697,
+    "all_s": [
+     0.03517,
+     0.037325,
+     0.033008,
+     0.032861,
+     0.033621
+    ]
+   },
+   "crossing_cx": 0,
+   "total_cx": 23760,
+   "crossing_fraction": 0.0,
+   "record_hash": "fnv1a64:db043ccbca6fc498",
+   "hash_verdict": "MATCHES",
+   "peak_rss_bytes": 20045824,
+   "peak_rss_bytes_self": 20045824,
+   "peak_rss_bytes_time_v": 19890176,
+   "peak_rss_disagreement": 0.007764609726195341,
+   "peak_rss_flag": null
+  },
+  {
+   "d": 45,
+   "n": 4049,
+   "shards_requested": 2,
+   "shards_echoed": 2,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 6072,
+   "wall": {
+    "median_s": 0.033488,
+    "min_s": 0.032671,
+    "max_s": 0.03555,
+    "spread": 1.0881209635456521,
+    "all_s": [
+     0.033721,
+     0.032671,
+     0.03555,
+     0.03298,
+     0.033488
+    ]
+   },
+   "crossing_cx": 267,
+   "total_cx": 23760,
+   "crossing_fraction": 0.011237,
+   "record_hash": "fnv1a64:db043ccbca6fc498",
+   "hash_verdict": "MATCHES",
+   "peak_rss_bytes": 20819968,
+   "peak_rss_bytes_self": 20819968,
+   "peak_rss_bytes_time_v": 20615168,
+   "peak_rss_disagreement": 0.00983671060397403,
+   "peak_rss_flag": null
+  },
+  {
+   "d": 45,
+   "n": 4049,
+   "shards_requested": 4,
+   "shards_echoed": 4,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 6072,
+   "wall": {
+    "median_s": 0.031795,
+    "min_s": 0.031529,
+    "max_s": 0.032052,
+    "spread": 1.0165879032002283,
+    "all_s": [
+     0.031795,
+     0.031529,
+     0.031801,
+     0.031777,
+     0.032052
+    ]
+   },
+   "crossing_cx": 798,
+   "total_cx": 23760,
+   "crossing_fraction": 0.033586,
+   "record_hash": "fnv1a64:db043ccbca6fc498",
+   "hash_verdict": "MATCHES",
+   "peak_rss_bytes": 20992000,
+   "peak_rss_bytes_self": 20992000,
+   "peak_rss_bytes_time_v": 20615168,
+   "peak_rss_disagreement": 0.01795121951219512,
+   "peak_rss_flag": null
+  },
+  {
+   "d": 45,
+   "n": 4049,
+   "shards_requested": 8,
+   "shards_echoed": 8,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 6072,
+   "wall": {
+    "median_s": 0.034472,
+    "min_s": 0.033171,
+    "max_s": 0.035772,
+    "spread": 1.0784118657863797,
+    "all_s": [
+     0.033171,
+     0.033904,
+     0.034472,
+     0.034787,
+     0.035772
+    ]
+   },
+   "crossing_cx": 1866,
+   "total_cx": 23760,
+   "crossing_fraction": 0.078535,
+   "record_hash": "fnv1a64:db043ccbca6fc498",
+   "hash_verdict": "MATCHES",
+   "peak_rss_bytes": 21495808,
+   "peak_rss_bytes_self": 21495808,
+   "peak_rss_bytes_time_v": 21139456,
+   "peak_rss_disagreement": 0.016577743902439025,
+   "peak_rss_flag": null
+  },
+  {
+   "d": 141,
+   "n": 39761,
+   "shards_requested": 1,
+   "shards_echoed": 1,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 59640,
+   "wall": {
+    "median_s": 4.963566,
+    "min_s": 4.863568,
+    "max_s": 5.452727,
+    "spread": 1.1211371980406155,
+    "all_s": [
+     4.863568,
+     4.893191,
+     4.963566,
+     5.24201,
+     5.452727
+    ]
+   },
+   "crossing_cx": 0,
+   "total_cx": 236880,
+   "crossing_fraction": 0.0,
+   "record_hash": "fnv1a64:5f13aa4623a61769",
+   "hash_verdict": "MATCHES",
+   "peak_rss_bytes": 1595957248,
+   "peak_rss_bytes_self": 1595957248,
+   "peak_rss_bytes_time_v": 1595613184,
+   "peak_rss_disagreement": 0.00021558472222935136,
+   "peak_rss_flag": null
+  },
+  {
+   "d": 141,
+   "n": 39761,
+   "shards_requested": 2,
+   "shards_echoed": 2,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 59640,
+   "wall": {
+    "median_s": 4.453985,
+    "min_s": 4.193889,
+    "max_s": 5.502647,
+    "spread": 1.3120630994287161,
+    "all_s": [
+     4.193889,
+     4.203076,
+     4.453985,
+     4.715996,
+     5.502647
+    ]
+   },
+   "crossing_cx": 846,
+   "total_cx": 236880,
+   "crossing_fraction": 0.003571,
+   "record_hash": "fnv1a64:5f13aa4623a61769",
+   "hash_verdict": "MATCHES",
+   "peak_rss_bytes": 1603063808,
+   "peak_rss_bytes_self": 1603063808,
+   "peak_rss_bytes_time_v": 1603063808,
+   "peak_rss_disagreement": 0.0,
+   "peak_rss_flag": null
+  },
+  {
+   "d": 141,
+   "n": 39761,
+   "shards_requested": 4,
+   "shards_echoed": 4,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 59640,
+   "wall": {
+    "median_s": 3.847212,
+    "min_s": 3.79074,
+    "max_s": 4.549188,
+    "spread": 1.200079140220643,
+    "all_s": [
+     3.79074,
+     3.797498,
+     3.847212,
+     4.341753,
+     4.549188
+    ]
+   },
+   "crossing_cx": 2529,
+   "total_cx": 236880,
+   "crossing_fraction": 0.010676,
+   "record_hash": "fnv1a64:5f13aa4623a61769",
+   "hash_verdict": "MATCHES",
+   "peak_rss_bytes": 1610539008,
+   "peak_rss_bytes_self": 1610539008,
+   "peak_rss_bytes_time_v": 1610539008,
+   "peak_rss_disagreement": 0.0,
+   "peak_rss_flag": null
+  },
+  {
+   "d": 141,
+   "n": 39761,
+   "shards_requested": 8,
+   "shards_echoed": 8,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 59640,
+   "wall": {
+    "median_s": 3.613789,
+    "min_s": 3.584184,
+    "max_s": 4.395417,
+    "spread": 1.2263368733301638,
+    "all_s": [
+     3.584184,
+     3.604756,
+     3.613789,
+     3.815077,
+     4.395417
+    ]
+   },
+   "crossing_cx": 5898,
+   "total_cx": 236880,
+   "crossing_fraction": 0.024899,
+   "record_hash": "fnv1a64:5f13aa4623a61769",
+   "hash_verdict": "MATCHES",
+   "peak_rss_bytes": 1622401024,
+   "peak_rss_bytes_self": 1622401024,
+   "peak_rss_bytes_time_v": 1622138880,
+   "peak_rss_disagreement": 0.00016157780728816897,
+   "peak_rss_flag": null
+  },
+  {
+   "d": 221,
+   "n": 97681,
+   "shards_requested": 1,
+   "shards_echoed": 1,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 146520,
+   "wall": {
+    "median_s": 31.077734,
+    "min_s": 30.864879,
+    "max_s": 35.836285,
+    "spread": 1.1610699980388712,
+    "all_s": [
+     35.836285,
+     31.077734,
+     31.063666,
+     30.864879,
+     31.218108
+    ]
+   },
+   "crossing_cx": 0,
+   "total_cx": 583440,
+   "crossing_fraction": 0.0,
+   "record_hash": "fnv1a64:398ae6f5f68a7f8a",
+   "hash_verdict": "MATCHES",
+   "peak_rss_bytes": 9571905536,
+   "peak_rss_bytes_self": 9571905536,
+   "peak_rss_bytes_time_v": 9571602432,
+   "peak_rss_disagreement": 3.166600410545464e-05,
+   "peak_rss_flag": null
+  },
+  {
+   "d": 221,
+   "n": 97681,
+   "shards_requested": 2,
+   "shards_echoed": 2,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 146520,
+   "wall": {
+    "median_s": 27.583423,
+    "min_s": 27.117576,
+    "max_s": 33.599622,
+    "spread": 1.2390348606379862,
+    "all_s": [
+     33.599622,
+     28.682296,
+     27.117576,
+     27.583423,
+     27.210256
+    ]
+   },
+   "crossing_cx": 1326,
+   "total_cx": 583440,
+   "crossing_fraction": 0.002273,
+   "record_hash": "fnv1a64:398ae6f5f68a7f8a",
+   "hash_verdict": "MATCHES",
+   "peak_rss_bytes": 9595682816,
+   "peak_rss_bytes_self": 9595682816,
+   "peak_rss_bytes_time_v": 9595658240,
+   "peak_rss_disagreement": 2.561151767023976e-06,
+   "peak_rss_flag": null
+  },
+  {
+   "d": 221,
+   "n": 97681,
+   "shards_requested": 4,
+   "shards_echoed": 4,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 146520,
+   "wall": {
+    "median_s": 25.457077,
+    "min_s": 25.134071,
+    "max_s": 43.437769,
+    "spread": 1.7282424721407053,
+    "all_s": [
+     43.437769,
+     26.258032,
+     25.134071,
+     25.342815,
+     25.457077
+    ]
+   },
+   "crossing_cx": 3969,
+   "total_cx": 583440,
+   "crossing_fraction": 0.006803,
+   "record_hash": "fnv1a64:398ae6f5f68a7f8a",
+   "hash_verdict": "MATCHES",
+   "peak_rss_bytes": 9618341888,
+   "peak_rss_bytes_self": 9618341888,
+   "peak_rss_bytes_time_v": 9618239488,
+   "peak_rss_disagreement": 1.064632565491937e-05,
+   "peak_rss_flag": null
+  },
+  {
+   "d": 221,
+   "n": 97681,
+   "shards_requested": 8,
+   "shards_echoed": 8,
+   "timed": true,
+   "rounds": 3,
+   "seed": 1,
+   "measurements": 146520,
+   "wall": {
+    "median_s": 25.353155,
+    "min_s": 24.701885,
+    "max_s": 45.412095,
+    "spread": 1.8384060568657008,
+    "all_s": [
+     25.353155,
+     24.701885,
+     25.768084,
+     45.412095,
+     24.753342
+    ]
+   },
+   "crossing_cx": 9255,
+   "total_cx": 583440,
+   "crossing_fraction": 0.015863,
+   "record_hash": "fnv1a64:398ae6f5f68a7f8a",
+   "hash_verdict": "MATCHES",
+   "peak_rss_bytes": 9661669376,
+   "peak_rss_bytes_self": 9661669376,
+   "peak_rss_bytes_time_v": 9661427712,
+   "peak_rss_disagreement": 2.50126547075088e-05,
+   "peak_rss_flag": null
+  }
+ ],
+ "stim_rows": [
+  {
+   "d": 45,
+   "n": 4049,
+   "timed": true,
+   "wall": {
+    "median_s": 0.021962818000247353,
+    "min_s": 0.02138180700058001,
+    "max_s": 0.024020749000555952,
+    "spread": 1.1234199710017192,
+    "all_s": [
+     0.021962818000247353,
+     0.022008671001458424,
+     0.02138180700058001,
+     0.024020749000555952,
+     0.021460838999701082
+    ]
+   }
+  },
+  {
+   "d": 141,
+   "n": 39761,
+   "timed": true,
+   "wall": {
+    "median_s": 5.336350628998844,
+    "min_s": 5.320012183001381,
+    "max_s": 6.312945058998594,
+    "spread": 1.1866410906294262,
+    "all_s": [
+     5.320012183001381,
+     5.336350628998844,
+     5.320649563000188,
+     5.3529042629998,
+     6.312945058998594
+    ]
+   }
+  },
+  {
+   "d": 221,
+   "n": 97681,
+   "timed": true,
+   "wall": {
+    "median_s": 35.78027063199988,
+    "min_s": 35.53948738100007,
+    "max_s": 36.62260942499961,
+    "spread": 1.030476580384741,
+    "all_s": [
+     36.62260942499961,
+     35.78027063199988,
+     35.60153714899934,
+     36.20061500600059,
+     35.53948738100007
+    ]
+   }
+  }
+ ],
+ "verdict": {
+  "G1_crosscheck": {
+   "verdict": "PASS",
+   "why": "12 (d,S) arm(s) carry the S=1 record hash bit for bit"
+  },
+  "G2_crossing": {
+   "verdict": "MET",
+   "why": "crossing fraction < 0.25 at every S>=8, d>=141 measured",
+   "max_seen": 0.078535
+  },
+  "G3_headtohead": {
+   "verdict": "KILL",
+   "stake": "d=221, S=8: wall <= 0.5x S=1 AND <= 0.5x stim, spreads not overlapping",
+   "ratio_to_s1_median": 0.8157980565764544,
+   "ratio_to_stim_median": 0.7085791849021273,
+   "spreads_disjoint_vs_s1": false,
+   "spreads_disjoint_vs_stim": false,
+   "why": "S=8 median 25.3532s is 0.816x S=1 (31.0777s) and 0.709x stim (35.7803s)",
+   "branch": "(b) the cut does not pay on this box; the bandwidth wall is the finding, banked as such"
+  },
+  "G4_memory": {
+   "verdict": "MET",
+   "why": "d=221: peak RSS S=8 9.662 GB against S=1 9.572 GB = 1.0094x",
+   "graded_at_d": 221,
+   "rss_ratio": 1.009377844323933,
+   "ceiling": 1.25,
+   "worst_ratio_anywhere": {
+    "ratio": 1.0723334695545566,
+    "d": 45,
+    "shards": 8
+   }
+  }
+ }
+}

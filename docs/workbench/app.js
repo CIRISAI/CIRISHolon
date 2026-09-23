@@ -623,7 +623,7 @@ const LADDER = [
     // certificate. §11.2 still reads FENCED for this band and that stays true, because what
     // is gated is the certificate; what changed is that there is now something to show.
     state: "measured",
-    owner: "GANTT node G, rung 2 — FLUID-0 and FLUID-1 banked, NOT certified",
+    owner: "GANTT node G, rung 2 — FLUID-0, FLUID-1 and the water observatory's RESPONSE-1 banked, NOT certified",
     // FLUID-0'S FINDING, on the face rather than in a footnote, with the kill that made it
     // a finding. The census is a measured NO about a whole family of carriers, which is a
     // stronger statement than the fence it sits inside: what is missing is not compute, it
@@ -699,6 +699,34 @@ const LADDER = [
           + "of the molecular tier's ceiling, and it is a change to the carrier rather than "
           + "to the chart",
         record: "conformance/mesh/FLUID1_RESULTS.md:109" },
+      // ---- THE WATER OBSERVATORY'S OWN LIQUID (September 2026): 432 rigid waters on the
+      // committed operator, read by the search-then-select procedure and by a driven
+      // response campaign. Every figure below is on the line it cites; none is a certificate.
+      { what: "what the search returned, unprompted", value: "long-wavelength modes on its own",
+        note: "a dictionary of every cell chart at every lag, searched for its closed "
+          + "directions: the top ones are the box's own Fourier modes, which nobody named. "
+          + "The hand-named cell chart is 70–78 % of the bound",
+        record: "conformance/water_observatory/VIEW_SEARCH_RESULTS.md:1" },
+      { what: "self-diffusion of the operator's liquid", value: "6.5 × 10⁻¹⁰",
+        note: "m²/s at 311–317 K — a quarter of water's at that temperature, Arrhenius with "
+          + "water's activation energy. The carrier is a liquid that diffuses; it is a "
+          + "sluggish one",
+        record: "conformance/water_observatory/TSCAN1_RESULTS.md:1" },
+      { what: "the driven shear rent, three seeds", value: "4.4 × 10⁻⁴",
+        note: "Pa s at k = 0.27 Å⁻¹, spread [3.9, 5.0], overdamped on every seed, equal to "
+          + "the equilibrium read. RESPONSE-1's R3, branch (a): the rent is a number with "
+          + "a spread",
+        record: "conformance/water_observatory/RESPONSE1_RESULTS.md:68" },
+      { what: "does the cell chart close under drive?", value: "0.65, 0.85, 0.84",
+        note: "the closure defect D at one molecular diameter on three seeds, against a "
+          + "budget of 0.2 — and separated from the position-blind chart on every seed. "
+          + "Branch (b) as frozen: the chart is OPEN under drive by a third of the signal",
+        record: "conformance/water_observatory/RESPONSE1_RESULTS.md:12" },
+      { what: "the successor chart the law chose", value: "0.245",
+        note: "the face-centred momentum chart, picked by the conservation law over the "
+          + "closure score, reads D = 0.164 / 0.302 / 0.269 at 200 m/s — three times closer, "
+          + "at the right amplitude, and BETWEEN the stake (0.2) and the kill (0.3)",
+        record: "conformance/water_observatory/RESPONSE1_RESULTS.md:13" },
     ],
     // A MEASURED FENCE, which is a better fence than the one it replaces: "no certified
     // chart exists" is a state, and a quantified boundary is a fact. Rung 2 spent the
@@ -868,6 +896,18 @@ const LADDER = [
           + "three arms with better books than the reference failed it. Registered as "
           + "M-BAR-AGAINST-A-WORKING-THERMOSTAT; no repair is made in a results file",
         record: "conformance/water_observatory/LIQUID2_RESULTS.md:76" },
+      // ---- THE NETWORK UNDER THE SEARCH (September 2026, three walks to 5 ps)
+      { what: "is the network a sector the fluid carries?", value: "a closed sector the fluid does not carry",
+        note: "the bond state is its own closed sector, decoupled from the molecules' "
+          + "motion at a cross-block of 0.002, and it adds exactly nothing to predicting the "
+          + "momentum change beyond the velocity itself. A bond COUNT forgets about 350 fs "
+          + "after it changes",
+        record: "conformance/water_observatory/TSCAN_HBOND_SEARCH_RESULTS.md:75" },
+      { what: "the molecule itself, under the same search", value: "two decoupled closed",
+        note: "sectors: the vibrations (the more closed) and the rigid unit (the object, "
+          + "because the fluid carries it). Purity 1.00 of the top directions at every lag, "
+          + "on three walks",
+        record: "conformance/water_observatory/MOLSEARCH1_RESULTS.md:1" },
     ],
     // THE LIVE BOX, AND WHY THERE IS NOT ONE. Not a judgement about speed: the engine's own
     // BOUNDARY DOOR refuses a cell this small, because a periodic box is legal only when

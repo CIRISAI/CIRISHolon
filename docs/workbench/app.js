@@ -722,10 +722,11 @@ const LADDER = [
           + "budget of 0.2 — and separated from the position-blind chart on every seed. "
           + "Branch (b) as frozen: the chart is OPEN under drive by a third of the signal",
         record: "conformance/water_observatory/RESPONSE1_RESULTS.md:12" },
-      { what: "the successor chart the law chose", value: "0.245",
+      { what: "the successor chart the law chose", value: "0.180",
         note: "the face-centred momentum chart, picked by the conservation law over the "
-          + "closure score, reads D = 0.164 / 0.302 / 0.269 at 200 m/s — three times closer, "
-          + "at the right amplitude, and BETWEEN the stake (0.2) and the kill (0.3)",
+          + "closure score, reads D = 0.180 ± 0.058 on the 36-cycle aligned average at "
+          + "200 m/s (the cell chart: 0.31) — at the right amplitude, and MET as staked by a "
+          + "third of one standard error; the stake carries no significance clause",
         record: "conformance/water_observatory/RESPONSE1_RESULTS.md:13" },
     ],
     // A MEASURED FENCE, which is a better fence than the one it replaces: "no certified

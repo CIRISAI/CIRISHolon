@@ -10,9 +10,9 @@ three-seed averages exist; per-arm rows are readings of one seed. The five parti
 | stake | staked | read on three seeds | verdict |
 |---|---|---|---|
 | **R1** cell chart `(n̄, p̄)` closes under drive | `D ≤ 0.2` at 8 cells, separated from the blind; null holds | `D = 0.65, 0.85, 0.84`; on the graded 36-cycle average `0.622` vs floor `0.492`, separation `+0.30`; nulls hold | **branch (b): OPEN under drive** — the chart leaks a third of the signal at one molecular diameter, clearly above its floor |
-| **R1″** face chart (`h = 0.25 Å`) closes at 200 m/s | `D ≤ 0.2`, `α ∈ [0.8, 1.25]`; kill `D > 0.3` | `D = 0.164, 0.302, 0.269`, **mean `0.245`**; `α = 1.05, 1.00, 1.12`; `R² = 0.97, 0.91, 0.94`; relaxed windows `0.63–0.76` | **BETWEEN** — not met, not killed; three times closer than the cell chart, at the right amplitude |
+| **R1″** face chart (`h = 0.25 Å`) closes at 200 m/s | `D ≤ 0.2`, `α ∈ [0.8, 1.25]`; kill `D > 0.3` | on the graded 36-cycle aligned average: **`D = 0.180`, SE `0.058`**, `α = 1.03`, `R² = 0.97`, relaxed `0.689` (per seed `0.164, 0.302, 0.269`, whose mean `0.245` was the earlier, wrong statistic) | **MET as staked**, by `0.02` — a third of one SE; the stake carries no significance clause |
 | **R1′** continuity sees nothing under shear (cell chart) | `\|Δ\| ≤ max(0.1, 2 SE)` | on the graded 36-cycle average: driven `0.929`, relaxed `0.989`, `\|Δ\| = 0.06` vs `0.15` (per seed: holds on 1, 2; fires on 0 by `0.03`) | **HOLDS on the graded statistic**; branch (e) not entered |
-| R1″'s null (face chart on the transverse arms) | driven within `0.1` of relaxed | `\|Δ\| = 0.24, 0.03, 0.11`; three-seed average `0.035`; the 200 m/s control `0.12` | **holds on the average**; seed 0 fires again |
+| R1″'s null (face chart on the transverse arms) | driven within `0.1` of relaxed | on the 36-cycle aligned average: driven `0.438`, relaxed `0.575`, `\|Δ\| = 0.137` against a FLAT `0.1` (no SE term in Amendment 5; `2 SE = 0.56`); per seed `0.24, 0.03, 0.11` | **FIRES as written**, inside its own noise; the flat threshold is the amendment's fault, recorded |
 | **R2** density mode | damped cosine vs overdamped, both forms | overdamped on every 50 m/s seed; OSCILLATORY on the 200 m/s seed 0 (`Γ = 2.7 × 10¹²`, `c_s = 3.3` km/s) with the other two not fitting the overdamped form | **overdamped in the linear regime**; the 200 m/s arms are outside it |
 | **R3** shear rent | `η` in `[2, 30] × 10⁻⁴` Pa s | `η(0.27 Å⁻¹) = 4.4 × 10⁻⁴`, spread `[3.9, 5.0]`, overdamped on every seed | **branch (a)** — equal to the equilibrium read |
 | R4, R4′ | no mode on the scrambled partition; undriven quadrature at noise | hold on every linear arm; **R4′ FIRES on the 200 m/s transverse control** | hold; the control is nonlinear by two independent signs |
@@ -20,7 +20,7 @@ three-seed averages exist; per-arm rows are readings of one seed. The five parti
 **In one sentence:** the driven shear rent is a number with a spread; the cell chart is open
 under drive by a third of the signal on every seed; the staggered chart the object's own law
 chose closes three times better at the right amplitude but not within budget on three seeds;
-and a finite sample's anisotropy shows in one seed of three on both continuity nulls. **Owed
+the cell chart's continuity null holds on the graded average while the face chart's fires by `0.04` on a flat threshold inside its own noise. **Owed
 before any of this is the model's rather than the operator's:** the fine-model seed at the same
 kick (Amendment 2), the 36-cycle cross-seed aligned average (the reader aligns within one
 trajectory), and the 200 m/s longitudinal `ν_l = 1.4 × 10⁻⁶` m²/s (corrected 2026-09-23: 1.2 was seed 0, not the pool) given a band.

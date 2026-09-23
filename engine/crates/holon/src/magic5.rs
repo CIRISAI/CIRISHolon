@@ -464,6 +464,25 @@ impl Magic5Source {
         (coeff, st)
     }
 
+    /// Branch `b`'s exact weight and its evolved affine state on the
+    /// `n + t`-wide register — the pair [`BranchSource::amplitude_of`] reads,
+    /// handed out whole so a device can fold the branch without calling back.
+    /// `amplitude_of(b, y)` is `weight · state.amplitude(y ++ 0^t)` in value.
+    /// Cached branches are cloned; others are evolved on the spot.
+    pub fn branch_state(&self, branch: u64) -> (Cyc, Affine) {
+        assert!(branch < self.n_branches(), "branch index out of range");
+        match self.cache.get(branch as usize) {
+            Some((c, st)) => (*c, st.clone()),
+            None => self.run_branch(branch),
+        }
+    }
+
+    /// The register the branch states live on: `n + t` (the circuit's wires
+    /// plus one gadget ancilla per T). A query `y` is padded with zeros to it.
+    pub fn register_width(&self) -> usize {
+        self.n_ext
+    }
+
     /// The gadget's exact prefactor `2^{t/2}`, the one
     /// [`run_branch`](Self::run_branch) seeds every branch with.
     fn gadget_coeff(&self) -> Cyc {

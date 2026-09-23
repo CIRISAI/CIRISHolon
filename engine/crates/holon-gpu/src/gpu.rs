@@ -322,6 +322,27 @@ impl GpuBatch {
     /// overrides, because the determinism test's whole content is that the
     /// answer does not move when it changes.
     pub fn fold(&self, f: &GpuFolder, y: u64, shape: Shape) -> Result<Cyc, GpuError> {
+        self.fold_inner(f, y, shape, false).map(|(c, _)| c)
+    }
+
+    /// [`Self::fold`], plus the KERNEL's own time in milliseconds from a pair of
+    /// CUDA events recorded on the stream around the launch — so a wall clock
+    /// taken around this call can be split into the kernel and the round trip
+    /// (launch overhead, the device-to-host copy of the block partials, the
+    /// host's lane sum). The events add two stream records; the value path is
+    /// the same code as [`Self::fold`]'s, not a copy of it.
+    pub fn fold_timed(&self, f: &GpuFolder, y: u64, shape: Shape) -> Result<(Cyc, f32), GpuError> {
+        self.fold_inner(f, y, shape, true)
+            .map(|(c, ms)| (c, ms.expect("timing was requested")))
+    }
+
+    fn fold_inner(
+        &self,
+        f: &GpuFolder,
+        y: u64,
+        shape: Shape,
+        timed: bool,
+    ) -> Result<(Cyc, Option<f32>), GpuError> {
         let grid = shape.check()?;
         let want = 9 * grid as usize; // 8 limb lanes + the per-block rank flag
         let mut sc = self.scratch.borrow_mut();
@@ -342,6 +363,8 @@ impl GpuBatch {
 
         let n = self.n as u32;
         let b = self.b as u32;
+        let timing_flag = Some(cudarc::driver::sys::CUevent_flags::CU_EVENT_DEFAULT);
+        let t0 = if timed { Some(f.stream.record_event(timing_flag)?) } else { None };
         let mut builder = f.stream.launch_builder(&f.fold[self.variant]);
         builder
             .arg(&self.rrow)
@@ -361,6 +384,7 @@ impl GpuBatch {
                 shared_mem_bytes: 0,
             })
         }?;
+        let t1 = if timed { Some(f.stream.record_event(timing_flag)?) } else { None };
 
         // Split the borrow: the device buffer and the host landing pad are
         // different fields, and the copy needs one of each.
@@ -368,6 +392,10 @@ impl GpuBatch {
         let dev = sc.dev.as_ref().expect("allocated above");
         let parts = &mut sc.host[..want];
         f.stream.memcpy_dtoh(dev, parts)?;
+        let kernel_ms = match (t0, t1) {
+            (Some(a), Some(b)) => Some(a.elapsed_ms(&b)?),
+            _ => None,
+        };
 
         let g = grid as usize;
         if parts[8 * g..9 * g].iter().any(|&v| v != 0) {
@@ -386,7 +414,50 @@ impl GpuBatch {
             }
             *slot = acc;
         }
-        Ok(ring::from_lanes(c, self.m_common))
+        Ok((ring::from_lanes(c, self.m_common), kernel_ms))
+    }
+
+    /// The resident base lanes, read back: `8 * b` limbs in the upload's
+    /// strided layout (`[(2p + hi) * b + i]` for lane `p` of branch `i`). For
+    /// the CPU twin's audit of what is actually on the card.
+    pub fn read_base(&self, f: &GpuFolder) -> Result<Vec<u64>, GpuError> {
+        Ok(f.stream.clone_dtoh(&self.base)?)
+    }
+
+    /// What [`Self::read_base`] must return for `descs` — the host's own
+    /// alignment to `m_common` in the same layout, computed afresh.
+    pub fn expected_base(&self, descs: &[AffineDesc]) -> Vec<u64> {
+        assert_eq!(descs.len(), self.b, "expected_base: not this batch's descriptors");
+        let b = self.b;
+        let mut out = vec![0u64; 8 * b];
+        for (i, d) in descs.iter().enumerate() {
+            let c = ring::align_to(d.base, self.m_common);
+            for (p, &v) in c.iter().enumerate() {
+                let uv = v as u128;
+                out[(2 * p) * b + i] = uv as u64;
+                out[(2 * p + 1) * b + i] = (uv >> 64) as u64;
+            }
+        }
+        out
+    }
+
+    /// THE PLANT HOOK (QVM-GPUFOLD-1 PG-1): overwrite ONE resident limb —
+    /// `limb` in `0..8` is lane `limb / 2`, the low word when even — of branch
+    /// `branch` with `value`, on the device, after upload. Nothing on the host
+    /// changes; only an audit against the host's twin can see it.
+    pub fn plant_base_limb(
+        &mut self,
+        f: &GpuFolder,
+        branch: usize,
+        limb: usize,
+        value: u64,
+    ) -> Result<(), GpuError> {
+        assert!(branch < self.b && limb < 8, "plant out of range");
+        let at = limb * self.b + branch;
+        let mut view = self.base.slice_mut(at..at + 1);
+        f.stream.memcpy_htod(&[value], &mut view)?;
+        f.stream.synchronize()?;
+        Ok(())
     }
 
     /// The per-branch rotation codes, for conformance rather than for use: a sum

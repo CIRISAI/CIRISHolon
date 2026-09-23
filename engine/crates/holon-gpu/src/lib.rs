@@ -32,6 +32,9 @@
 //! `[workspace]` table; `ci-gates.sh` cannot reach it, deliberately, because its
 //! tests need a CUDA device. See `Cargo.toml`'s header.
 
+/// The budgeted prefix on the device: `holon::acuity::DeviceFold` for the GPU
+/// and for its CPU twin (QVM-GPUFOLD-1).
+pub mod acuity;
 pub mod cpu;
 pub mod desc;
 /// The device-class provider for `holon-chem`'s determinant solve (RESOURCE_DESIGN

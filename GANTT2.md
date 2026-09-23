@@ -799,6 +799,20 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## The fine-model seed is running, and the mesh window is armed (2026-09-23, afternoon)
+
+RESPONSE-1's owed fine-model seed (`RESPONSE1_AMENDMENT_6.md`): `--kick-arm flexible` built,
+PR-4 passing on the fine arm, one longitudinal seed at 50 m/s launched on P-cores 0–15 with
+eight workers at `0.80` wall-s/frame — **about 14 days**, not the prereg's 150 core-hours,
+which was the 128-water serial price carried to 432 waters unscaled. A single-worker probe
+read `1.15` s/frame, so the pool buys `1.4 ×` and stays. η cannot come from this arm (R3 is
+transverse): a fine transverse seed is owed beside it. The reader now grades the 36-cycle
+three-seed average: R1′ HOLDS on it; R1 stays branch (b) above its floor. MESH-CLIFFORD-1's
+profile found the serial transpose (42–57 % of wall), re-aimed it by row blocks (`0.51 ×` the
+unsharded engine at d = 141, bit-identical), and Amendment 2 withdraws the lead's deferral:
+the window runs as staked in two arms; the E-class sweep is armed (`CLASSES=E`) and the
+P-class waits for the fine seed to release its cores.
+
 ## RESPONSE-1 closed: all ten arms read (2026-09-23)
 
 R1″ on the three 200 m/s seeds: `D = 0.164, 0.302, 0.269`, mean **`0.245`** — BETWEEN the

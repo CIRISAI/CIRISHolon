@@ -244,24 +244,34 @@ while [ "$waited" -lt "$MAX_WAIT" ]; do
   m=$(avail_gb)
   if awk "BEGIN{exit !($l < $LOAD_MAX)}" && awk "BEGIN{exit !($m >= $MEM_MIN_GB)}"; then
     # The cheap pre-filter passed. Now ask the machine, not /proc.
-    if class_is_quiet "$PCORES" "$CAL_BEST_P" "P-class" && \
-       class_is_quiet "$ECORES" "$CAL_BEST_E" "E-class"; then
-      echo "[$(date -Is)] WINDOW OPEN (load $l, MemAvailable ${m} GB) — running both sweeps"
+    # CLASSES (default PE): which core classes this invocation sweeps. `E` alone is for
+    # the days the P-cores are held by a long arm (2026-09-23: the fine-model seed on 0-15);
+    # the P sweep is then a second invocation with CLASSES=P once they are free.
+    CLASSES=${CLASSES:-PE}
+    quiet_p=0; quiet_e=0
+    case "$CLASSES" in *P*) class_is_quiet "$PCORES" "$CAL_BEST_P" "P-class" && quiet_p=1;; *) quiet_p=1;; esac
+    case "$CLASSES" in *E*) class_is_quiet "$ECORES" "$CAL_BEST_E" "E-class" && quiet_e=1;; *) quiet_e=1;; esac
+    if [ "$quiet_p" = 1 ] && [ "$quiet_e" = 1 ]; then
+      echo "[$(date -Is)] WINDOW OPEN (load $l, MemAvailable ${m} GB) — running sweeps: $CLASSES"
 
       # P FIRST: the prereg stakes G3 on P-cores, so the staked table gets the
       # freshest part of the window. E follows as the reproducibility arm.
+      rcp=0; rce=0
+      case "$CLASSES" in *P*)
       sweep "$PCORES" "$OUT_P" "P-core"; rcp=$?
-      echo "[$(date -Is)] P-core sweep rc=$rcp $([ "$rcp" -eq 3 ] && echo '(load gate refused: the window broke)')"
+      echo "[$(date -Is)] P-core sweep rc=$rcp $([ "$rcp" -eq 3 ] && echo '(load gate refused: the window broke)')";; esac
+      case "$CLASSES" in *E*)
       sweep "$ECORES" "$OUT_E" "E-core"; rce=$?
-      echo "[$(date -Is)] E-core sweep rc=$rce $([ "$rce" -eq 3 ] && echo '(load gate refused: the window broke)')"
+      echo "[$(date -Is)] E-core sweep rc=$rce $([ "$rce" -eq 3 ] && echo '(load gate refused: the window broke)')";; esac
 
       if [ "$rcp" -eq 0 ] && [ "$rce" -eq 0 ]; then
-        echo "[$(date -Is)] BOTH SWEEPS HELD THEIR WINDOW — the tables are citable" | tee -a "$LOG"
+        echo "[$(date -Is)] THE SWEEPS RUN ($CLASSES) HELD THEIR WINDOW — the tables are citable" | tee -a "$LOG"
         {
           date -Is
-          echo "pcore $OUT_P"
-          echo "ecore $OUT_E"
-        } > "$HERE/mesh_quiet.DONE"
+          echo "classes $CLASSES"
+          case "$CLASSES" in *P*) echo "pcore $OUT_P";; esac
+          case "$CLASSES" in *E*) echo "ecore $OUT_E";; esac
+        } > "$HERE/mesh_quiet.$CLASSES.DONE"
         exit 0
       fi
       echo "[$(date -Is)] a sweep did not hold its window (P rc=$rcp, E rc=$rce); the data it kept is beside the output under .not-citable-*, and this will retry" | tee -a "$LOG"

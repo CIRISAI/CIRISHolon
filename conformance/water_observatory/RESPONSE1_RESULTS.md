@@ -188,3 +188,32 @@ what the pool reads: `s = 2.0`, floor `0.49` — the signal-to-noise per window-
 was over-priced by a factor of about three. **Still owed:** the face chart R1″ (`0.245` in the
 verdict table) is the MEAN of three per-seed `D` from `r1_closure_test.py`, not the aligned
 average; that script was not changed here.
+
+## R1″ on the three-seed aligned average (2026-09-23, the reader change owed)
+
+`r1_closure_test.py` now takes several arm directories: each arm's table prints as before (the
+single-directory output re-run on `response1_L200_seed0` diffs clean against its committed
+`r1_closure_test.txt`), then a POOLED table: every arm's sign-aligned per-cycle fields (the
+signs `(−1)^c` per arm as the per-arm read assigns them, not re-derived) averaged with equal
+weight per cycle (36 cycles, 12 per seed), the same closures read on the pool, and for the face
+chart at `h = 0.25 Å`, 8 cells, the leave-one-cycle-out jackknife over all 36 cycles
+(`SE = sd(D₋ᵢ) · √(n − 1)`, the estimator rung2's pooled R1′ uses). Check: seed 0 pooled with
+itself reproduces its per-seed table to the printed digit (`D = 0.164`, `α = 1.05`). Run on core
+29. Outputs: `replace0/r1pp_pooled_{L200,L,T}.txt`.
+
+| R1″ read | pooled (36 cycles), face chart `h = 0.25 Å`, 8 cells | against Amendment 5 as written |
+|---|---|---|
+| **200 m/s longitudinal (graded)** | `D_lead = 0.180`, jackknife SE `0.058`; `D_tail = 0.689`; `α = 1.03`; `R² = 0.97`. Sensitivity `h = 0.5 Å`: `D = 0.215`, `α = 1.02` | `D ≤ 0.2` and `α ∈ [0.8, 1.25]`: **MET** — by `0.020`, a third of one SE |
+| 50 m/s longitudinal (reported) | `D_lead = 0.315`, SE `0.087`; `D_tail = 0.595`; `α = 1.11`; `R² = 0.91` (cell chart on the same pool: `0.622`) | reported, not graded; this script computes no floor, so "at its floor" is carried by rung2's pooled R1 floor for the cell chart (`0.492`), which is not the face chart's |
+| transverse null (graded) | driven `D_lead = 0.438`, relaxed `D_tail = 0.575`, `|Δ| = 0.137`, jackknife SE of `|Δ|` `0.278` | `|Δ| ≤ 0.1`: **FIRES** by `0.037` as written — the stake has no SE term; `2 SE = 0.56` would hold it under R1′'s `max(0.1, 2 SE)` form, which Amendment 5 did not adopt |
+
+The pooled 200 m/s `D = 0.180` is not the mean of the per-seed reads (`0.245`): averaging the
+aligned fields before forming `D` removes the per-seed incoherent residual, which a mean of
+per-seed `D` keeps. The same arithmetic makes the transverse `|Δ|` `0.137`, not the `0.035`
+(a difference of per-seed means) in the verdict table. The cell chart's own 200 m/s pooled
+`D = 0.310` on this script agrees with rung2's pooled `0.310`.
+
+**The verdict table's R1″ row changes:** BETWEEN → **MET** on the staked statistic
+(`0.180 ± 0.058`, `α = 1.03`); and R1″'s null row changes from "holds on the average (`0.035`)"
+to **FIRES as written** on the pooled aligned average (`0.137` vs `0.1`, inside its own SE
+`0.28`). The lead edits the table.

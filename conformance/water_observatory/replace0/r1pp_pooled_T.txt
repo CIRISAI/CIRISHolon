@@ -1,0 +1,145 @@
+# conformance/water_observatory/replace0/response1_T_seed0: 3769 rows, 432 oxygens, L = 44.39 bohr = 23.5 A
+
+== 4 cells (slab 5.87 A, window 390 fs): aligned lead-window obs RMS 0.686, tail RMS 1.028 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    2.19   0.60   0.757   0.996
+   C slab-mean lagged 30 fs       2.33   0.47   0.827   1.006
+   C slab-mean lagged 50 fs       1.99   0.29   0.882   1.012
+   C slab-mean lagged 100 fs      0.67   0.03   0.990   1.021
+   B face h=0.25 A                0.63   0.87   0.652   0.473
+   B face h=0.5 A                 0.55   0.84   0.853   0.741
+   B face h=1.0 A                 0.69   0.65   0.692   1.015
+   B face h=2.0 A                 1.24   0.86   0.416   0.969
+
+== 8 cells (slab 2.94 A, window 200 fs): aligned lead-window obs RMS 0.701, tail RMS 1.112 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    2.38   0.64   0.759   1.034
+   C slab-mean lagged 30 fs       1.80   0.26   0.891   1.038
+   C slab-mean lagged 50 fs       0.53   0.03   0.997   1.039
+   C slab-mean lagged 100 fs     -0.25   0.01   1.115   1.015
+   B face h=0.25 A                0.90   0.51   0.704   0.463
+   B face h=0.5 A                 0.99   0.50   0.710   0.778
+   B face h=1.0 A                 1.35   0.62   0.652   1.010
+   B face h=2.0 A                 1.98   0.75   0.657   1.023
+
+== 16 cells (slab 1.47 A, window 100 fs): aligned lead-window obs RMS 0.651, tail RMS 0.763 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                   -0.46   0.01   1.047   0.989
+   C slab-mean lagged 30 fs      -0.89   0.05   1.091   1.025
+   C slab-mean lagged 50 fs      -0.83   0.05   1.101   1.039
+   C slab-mean lagged 100 fs     -0.19   0.00   1.034   1.055
+   B face h=0.25 A                1.02   0.43   0.757   0.586
+   B face h=0.5 A                 0.72   0.12   0.945   0.771
+   B face h=1.0 A                 0.67   0.04   0.984   0.939
+   B face h=2.0 A                 0.71   0.02   0.992   1.005
+
+# conformance/water_observatory/replace0/response1_T_seed1: 3769 rows, 432 oxygens, L = 44.39 bohr = 23.5 A
+
+== 4 cells (slab 5.87 A, window 390 fs): aligned lead-window obs RMS 1.187, tail RMS 1.194 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    3.37   0.05   0.988   1.037
+   C slab-mean lagged 30 fs       5.02   0.26   0.952   1.046
+   C slab-mean lagged 50 fs       5.00   0.36   0.932   1.049
+   C slab-mean lagged 100 fs      4.56   0.53   0.891   1.038
+   B face h=0.25 A                1.43   0.94   0.381   0.404
+   B face h=0.5 A                 1.64   0.92   0.471   0.697
+   B face h=1.0 A                 3.77   0.79   0.797   0.962
+   B face h=2.0 A                -0.18   0.00   1.025   0.984
+
+== 8 cells (slab 2.94 A, window 200 fs): aligned lead-window obs RMS 0.775, tail RMS 0.872 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    1.39   0.07   0.966   1.008
+   C slab-mean lagged 30 fs       1.42   0.06   0.970   1.025
+   C slab-mean lagged 50 fs       1.26   0.05   0.975   1.041
+   C slab-mean lagged 100 fs      1.80   0.13   0.948   1.041
+   B face h=0.25 A                0.87   0.53   0.694   0.719
+   B face h=0.5 A                 0.19   0.02   1.164   0.974
+   B face h=1.0 A                -0.26   0.02   1.171   0.965
+   B face h=2.0 A                -0.01   0.00   1.041   0.965
+
+== 16 cells (slab 1.47 A, window 100 fs): aligned lead-window obs RMS 0.678, tail RMS 0.995 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    1.72   0.11   0.955   0.997
+   C slab-mean lagged 30 fs       0.89   0.04   0.979   1.018
+   C slab-mean lagged 50 fs       0.22   0.00   1.018   1.034
+   C slab-mean lagged 100 fs      0.25   0.00   1.009   1.023
+   B face h=0.25 A                1.14   0.65   0.601   0.712
+   B face h=0.5 A                 1.19   0.25   0.869   0.921
+   B face h=1.0 A                 1.18   0.11   0.943   0.993
+   B face h=2.0 A                -0.43   0.00   1.016   1.019
+
+# conformance/water_observatory/replace0/response1_T_seed2: 3769 rows, 432 oxygens, L = 44.39 bohr = 23.5 A
+
+== 4 cells (slab 5.87 A, window 390 fs): aligned lead-window obs RMS 1.233, tail RMS 1.238 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    2.69   0.23   0.929   0.885
+   C slab-mean lagged 30 fs       2.08   0.15   0.942   0.898
+   C slab-mean lagged 50 fs       1.60   0.10   0.954   0.920
+   C slab-mean lagged 100 fs      0.81   0.04   0.983   0.991
+   B face h=0.25 A                1.05   0.79   0.455   0.430
+   B face h=0.5 A                 1.19   0.72   0.549   0.655
+   B face h=1.0 A                 0.95   0.29   0.844   0.796
+   B face h=2.0 A                 0.71   0.07   0.968   0.910
+
+== 8 cells (slab 2.94 A, window 200 fs): aligned lead-window obs RMS 1.032, tail RMS 0.811 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    1.16   0.02   0.991   0.950
+   C slab-mean lagged 30 fs       2.80   0.14   0.959   0.948
+   C slab-mean lagged 50 fs       2.75   0.14   0.957   0.935
+   C slab-mean lagged 100 fs     -0.36   0.00   1.016   0.940
+   B face h=0.25 A                1.26   0.88   0.400   0.510
+   B face h=0.5 A                 1.62   0.84   0.529   0.703
+   B face h=1.0 A                 1.86   0.30   0.873   1.000
+   B face h=2.0 A                 0.97   0.04   0.980   0.969
+
+== 16 cells (slab 1.47 A, window 100 fs): aligned lead-window obs RMS 0.709, tail RMS 0.840 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                   -0.92   0.02   1.039   1.029
+   C slab-mean lagged 30 fs      -1.04   0.04   1.055   0.993
+   C slab-mean lagged 50 fs      -0.58   0.02   1.049   0.986
+   C slab-mean lagged 100 fs      0.14   0.00   1.021   1.003
+   B face h=0.25 A                1.11   0.71   0.541   0.695
+   B face h=0.5 A                 1.13   0.45   0.743   0.839
+   B face h=1.0 A                 1.68   0.25   0.888   0.942
+   B face h=2.0 A                -3.05   0.22   1.081   1.032
+
+# POOLED over 3 arms: conformance/water_observatory/replace0/response1_T_seed0 conformance/water_observatory/replace0/response1_T_seed1 conformance/water_observatory/replace0/response1_T_seed2
+# every arm's aligned per-cycle fields (each arm's own signs, not re-derived), equal weight per cycle
+
+== POOLED 4 cells (slab 5.87 A, window 390 fs, 36 cycles): aligned lead-window obs RMS 0.347, tail RMS 0.511 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    1.47   0.27   0.872   1.060
+   C slab-mean lagged 30 fs       0.88   0.07   0.964   1.109
+   C slab-mean lagged 50 fs       0.32   0.01   1.017   1.135
+   C slab-mean lagged 100 fs     -0.89   0.08   1.129   1.152
+   B face h=0.25 A                0.46   0.44   1.092   0.515
+   B face h=0.5 A                 0.55   0.47   0.921   0.798
+   B face h=1.0 A                 0.39   0.13   1.094   1.100
+   B face h=2.0 A                 0.67   0.14   0.946   1.000
+
+== POOLED 8 cells (slab 2.94 A, window 200 fs, 36 cycles): aligned lead-window obs RMS 0.445, tail RMS 0.705 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    2.79   0.23   0.929   1.007
+   C slab-mean lagged 30 fs       3.91   0.47   0.889   1.011
+   C slab-mean lagged 50 fs       2.80   0.37   0.884   1.010
+   C slab-mean lagged 100 fs      0.76   0.05   0.979   1.003
+   B face h=0.25 A                0.89   0.82   0.438   0.575
+   B face h=0.5 A                 0.96   0.47   0.729   0.823
+   B face h=1.0 A                 1.04   0.18   0.907   0.966
+   B face h=2.0 A                 0.93   0.04   0.981   0.983
+
+== POOLED 16 cells (slab 1.47 A, window 100 fs, 36 cycles): aligned lead-window obs RMS 0.414, tail RMS 0.581 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                   -0.74   0.02   1.038   0.981
+   C slab-mean lagged 30 fs      -0.19   0.00   1.030   0.999
+   C slab-mean lagged 50 fs       0.20   0.00   1.015   1.018
+   C slab-mean lagged 100 fs      1.68   0.10   0.955   1.046
+   B face h=0.25 A                1.37   0.72   0.575   0.686
+   B face h=0.5 A                 1.08   0.28   0.847   0.908
+   B face h=1.0 A                 1.36   0.14   0.932   0.975
+   B face h=2.0 A                -1.24   0.03   1.030   1.006
+
+# R1'' on the pool (face chart h = 0.25 A, 8 cells, integral form, 36 cycles):
+#   D_lead = 0.438 (jackknife SE 0.262, leave-one-cycle-out over 36), D_tail = 0.575, alpha = 0.89, R2 = 0.82
+#   stake (Amendment 5; grades the 200 m/s longitudinal pool): D <= 0.2 MET / 0.2 < D <= 0.3 BETWEEN / D > 0.3 KILL; alpha 0.89 in [0.8, 1.25] -> KILL
+#   null (Amendment 5; grades the transverse pool): |D_lead - D_tail| = 0.137 (jackknife SE 0.278) vs 0.1 -> FIRES

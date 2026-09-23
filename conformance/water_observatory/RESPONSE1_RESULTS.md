@@ -145,3 +145,32 @@ takes `D` from `0.735` to **`0.164`** on the 200 m/s control at 8 cells (`R² = 
 R1 measured is the momentum density's molecular layering at one-diameter slabs, and the
 closed chart is the staggered one. R1 as staked still KILLS; R1″ is staked on the remaining
 arms with `h` fixed.
+
+## The three-seed aligned average (2026-09-23, the reader change owed)
+
+`rung2 --response` now pools, when it is given more than one trajectory: every trajectory's
+sign-aligned cycles (the signs `(−1)^c` per trajectory as the per-seed read assigns them, not
+re-derived) are averaged into ONE aligned cycle, each cycle weighted equally (36 cycles, 12 per
+seed), and the same continuity read is run on it: integral form, the two lead windows against
+the relaxed last, 8×1×1 graded with 16 and 4 beside, both floors of Amendments 2 and 4. R4/R4′
+are read on the pooled aligned modes. The per-seed lines are unchanged (the old reads diff
+clean; only `POOLED …` lines are added). Check: two copies of one trajectory pooled reproduce
+that trajectory's per-seed `D`, `s`, floors and R4/R4′ to the printed digit. **R1′'s SE on the
+pool is the leave-one-cycle-out jackknife over all 36 cycles** (each cycle of each seed dropped
+in turn, the other 35 kept, `D` re-read; `SE = sd(D₋ᵢ) · √(n − 1)`, the per-seed estimator of
+Amendment 3 A1 carried to the pool). Outputs: `replace0/response1_pooled_{L,T,L200}.txt`.
+
+| stake | pooled read (36 cycles) | against the stake as written | per-seed verdict in the table |
+|---|---|---|---|
+| **R1**, arm L 50 m/s, 8×1×1 | `D = 0.622`, blind `0.923`, separation `+0.301`; `s = 2.00`, two-sided floor `0.492` (one-sided `0.519`); relaxed last window `0.872` | `D > 0.2` and over its floor by `0.130` (> 0.05): **KILL as staked on `D ≤ 0.2`, not at floor; separated → branch (b), open under drive**; null holds | **unchanged**: branch (b). The pool sharpens it: per seed one of three sat at its floor; on the graded average the excess over the floor is real (`18 %` of the signal power) |
+| R1 on the 200 m/s control (Amendment 3 A3's grading arm) | `D = 0.310`, blind `1.086`, separation `+0.776`; `s = 2.89`, floor `0.342` (one-sided `0.303`); relaxed `0.921` | **AT FLOOR** (over `0.2`, within `0.05` of both floors); separated; null holds | seed 0's per-seed KILL (`0.735` over `0.60`) does **not** survive pooling: on 36 cycles the cell chart reads at its floor at 200 m/s |
+| **R1′**, arm T 50 m/s, 8×1×1 | driven `0.929`, relaxed `0.989`, `|Δ| = 0.060`; `2 SE = 0.150` (jackknife over 36) | `|Δ| < max(0.1, 2 SE)`: **HOLDS** | **changes from "holds, two of three" to HOLDS on the graded statistic**; seed 0's firing is inside the pooled noise; branch (e) is not entered |
+| **R4 / R4′**, current mode | L: blind/spatial `0.016`, R4′ `2.8e-4` vs `3σ = 1.6e-3`; T: `0.020`, `4.2e-4` vs `6.0e-4`; L200: `0.013`, `1.7e-4` vs `8.3e-4` | hold on all three pooled arms | unchanged (hold) |
+| R4 / R4′, density mode (L arms) | L: blind/spatial at the peak `0.207` under its `3σ` bar, R4′ `0.30` vs `1.05`; L200: `0.003`, `0.27` vs `0.44` | hold | **L seed 1's marginal density R4′ does not survive pooling** |
+
+The T200 control is one seed and is not pooled; its R4′ firing stands as read. Amendment 2's
+advance arithmetic for the three-seed 50 m/s floor (`s ≈ 5–7`, floor `≈ 0.14–0.22`) is not
+what the pool reads: `s = 2.0`, floor `0.49` — the signal-to-noise per window-cell at 8 cells
+was over-priced by a factor of about three. **Still owed:** the face chart R1″ (`0.245` in the
+verdict table) is the MEAN of three per-seed `D` from `r1_closure_test.py`, not the aligned
+average; that script was not changed here.

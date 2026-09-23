@@ -82,5 +82,17 @@
    R1′ grid 4x1x1 (τ 392 fs, window 39, 12 cycles aligned, lead 2 windows): D_cont spatial 0.929  blind 1.048  separation +0.119 | s 0.00 (one-sided s 0.95: blind 0.00, tail 0.95), floor two-sided 1.015 (one-sided 0.768; D_disc 0.363; σ_o 1.238e0, σ_p 2.137e-1) | relaxed last window 0.870  [beside the graded grid]
    POOLED over 3 seeds: rate 3.181e12 /s, seed spread 7.85e11 /s (25 %)
 
+   ===== POOLED: the 3-trajectory aligned average (RESPONSE1_AMENDMENT_2 A2), 36 cycles (per trajectory [12, 12, 12]), each cycle weighted equally, signs as aligned per trajectory =====
+        POOLED residual budget: observed² 1.717e-1 = signal² 0.000e0 + noise² 3.372e-1; residual² 1.852e-1 of which floor 1.753e-1 and EXCESS 9.895e-3 = (no resolvable signal at this grid: the lead windows' RMS is not above the tail's)
+   POOLED R1′ grid 16x1x1 (τ 98 fs, window 10, 36 cycles aligned over 3 trajectories, lead 2 windows): D_cont spatial 1.038  blind 0.990  separation -0.048 | s 0.00 (one-sided s 0.00: blind 0.00, tail 0.00), floor two-sided 1.010 (one-sided 1.000; D_disc 0.026; σ_o 5.807e-1, σ_p 8.366e-2) | relaxed last window 1.020  [beside the graded grid]
+        POOLED residual budget: observed² 1.976e-1 = signal² 0.000e0 + noise² 4.975e-1; residual² 1.707e-1 of which floor 2.040e-1 and EXCESS -3.326e-2 = (no resolvable signal at this grid: the lead windows' RMS is not above the tail's)
+   POOLED R1′ grid 8x1x1 (τ 196 fs, window 20, 36 cycles aligned over 3 trajectories, lead 2 windows): D_cont spatial 0.929  blind 1.027  separation +0.097 | s 0.00 (one-sided s 0.68: blind 0.00, tail 0.68), floor two-sided 1.016 (one-sided 0.830; D_disc 0.100; σ_o 7.053e-1, σ_p 1.266e-1) | relaxed last window 0.989
+        POOLED R1′ verdict on the 36-cycle aligned average: driven 0.929 vs relaxed 0.989, |Δ| = 0.060 vs max(0.1, 2 SE = 0.150) (SE jackknife over 36 leave-one-cycle-out averages): HOLDS — continuity sees nothing under shear, as it must
+        POOLED residual budget: observed² 1.202e-1 = signal² 0.000e0 + noise² 2.616e-1; residual² 9.138e-2 of which floor 1.391e-1 and EXCESS -4.776e-2 = (no resolvable signal at this grid: the lead windows' RMS is not above the tail's)
+   POOLED R1′ grid 4x1x1 (τ 392 fs, window 39, 36 cycles aligned over 3 trajectories, lead 2 windows): D_cont spatial 0.872  blind 1.032  separation +0.160 | s 0.00 (one-sided s 0.00: blind 0.00, tail 0.00), floor two-sided 1.076 (one-sided 1.000; D_disc 0.363; σ_o 5.114e-1, σ_p 2.032e-1) | relaxed last window 0.981  [beside the graded grid]
+   POOLED current mode: 36 cycles; noise per cycle 1.909e-3 au, aligned 4.883e-4 au; kick amplitude aligned 4.451e-3 au (SNR 9.1)
+   POOLED R4:  blind/spatial aligned kick amplitude 0.020; blind 9.120e-5 au vs max(0.1 × spatial, 3σ_blind) = 1.433e-3: no mode on the scrambled partition
+   POOLED R4′: undriven quadrature j_k^c aligned amplitude 4.170e-4 au vs 3σ 5.971e-4: at noise, as it must be
+
 ===== COST (PREREG G11, work units, never wall clock) =====
 frames read:       11307

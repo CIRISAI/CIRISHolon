@@ -146,7 +146,6 @@ R1 measured is the momentum density's molecular layering at one-diameter slabs, 
 closed chart is the staggered one. R1 as staked still KILLS; R1″ is staked on the remaining
 arms with `h` fixed.
 
-<<<<<<< HEAD
 ## `ν_l` against a band stated AFTER the reading (2026-09-23) — a comparison, not a stake
 
 The pooled longitudinal rate on the three 50 m/s seeds is `1.03 × 10¹³` /s (spread 39 %), which
@@ -161,7 +160,6 @@ be. Two caveats that keep this a comparison: at `k = 0.27 Å⁻¹` the mode is p
 (`ω = c_s k` with `c_s = 3.3` km/s on the 200 m/s seed), so `Γ` is a sound damping and the
 factor between `Γ` and `ν_l k²` is a convention the reader fixed at one; and the
 hydrodynamic `ν_l` is `k`-dependent at this `k`. A frozen band belongs in the next campaign.
-=======
 ## The three-seed aligned average (2026-09-23, the reader change owed)
 
 `rung2 --response` now pools, when it is given more than one trajectory: every trajectory's
@@ -190,4 +188,3 @@ what the pool reads: `s = 2.0`, floor `0.49` — the signal-to-noise per window-
 was over-priced by a factor of about three. **Still owed:** the face chart R1″ (`0.245` in the
 verdict table) is the MEAN of three per-seed `D` from `r1_closure_test.py`, not the aligned
 average; that script was not changed here.
->>>>>>> worktree-agent-aa7c745c4a4b3221b

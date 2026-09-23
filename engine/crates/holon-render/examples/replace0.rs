@@ -1431,6 +1431,7 @@ fn main() {
                 Some(other) => panic!("--kick {other:?}: longitudinal | transverse"),
                 None => None,
             },
+            kick_arm_flexible(val("--kick-arm")),
         ),
         "run" => run_phase(
             &obs,
@@ -1444,7 +1445,10 @@ fn main() {
             seed,
         ),
         "atomwalk" => atomwalk_phase(&obs, &out, val("--cells").and_then(|v| v.parse().ok()).unwrap_or(2), settle_frames, val("--frames").and_then(|v| v.parse().ok()).unwrap_or(80_000), val("--stride").and_then(|v| v.parse().ok()).unwrap_or(38), seed),
-        "plant-kick" => plant_kick(&obs, val("--cells").and_then(|v| v.parse().ok()).unwrap_or(6), seed, val("--kick-mps").and_then(|v| v.parse().ok()).unwrap_or(50.0)),
+        "plant-kick" => {
+            let (cells, mps) = (val("--cells").and_then(|v| v.parse().ok()).unwrap_or(6), val("--kick-mps").and_then(|v| v.parse().ok()).unwrap_or(50.0));
+            if kick_arm_flexible(val("--kick-arm")) { plant_kick_fine(&obs, cells, seed, mps) } else { plant_kick(&obs, cells, seed, mps) }
+        }
         other => panic!("unknown phase {other:?}: stiffness | run | scout | plant-kick"),
     }
     let _ = (add, Discarded::default());
@@ -1603,7 +1607,7 @@ fn plant_kick(obs: &Path, cells: usize, seed: u64, v_d_mps: f64) {
     println!("plant PR-4 PASS: {} waters at n_cells = {cells}, v_d {v_d_mps} m/s, both arms", projected.len());
 }
 
-fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_rigid: usize, readouts: usize, readout_fs: f64, stiffness: Option<String>, seed: u64, workers: usize, kick: Option<Kick>) {
+fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_rigid: usize, readouts: usize, readout_fs: f64, stiffness: Option<String>, seed: u64, workers: usize, kick: Option<Kick>, fine_arm: bool) {
     let t0 = Instant::now();
     let w = RecordWriter::new(out);
     let law = load_law(obs);
@@ -1622,7 +1626,7 @@ fn scout_phase(obs: &Path, out: &Path, cells: usize, settle_fine: usize, settle_
         }
     } else { None };
     let sim_ref = &mut sim;
-    let run = |sim: &mut Sim| scout_body(sim, obs, out, &w, cells, settle_fine, settle_rigid, readouts, readout_fs, stiffness.clone(), seed, workers, l, t0, kick);
+    let run = |sim: &mut Sim| scout_body(sim, obs, out, &w, cells, settle_fine, settle_rigid, readouts, readout_fs, stiffness.clone(), seed, workers, l, t0, kick, fine_arm);
     match pool.as_mut() {
         Some(p) => { holon_md::with_pool(sim_ref, p, run); }
         None => { run(sim_ref); }
@@ -1644,7 +1648,7 @@ struct Kick {
     relax_readouts: usize,
 }
 
-fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: usize, settle_fine: usize, settle_rigid: usize, readouts: usize, readout_fs: f64, stiffness: Option<String>, seed: u64, workers: usize, l: f64, t0: Instant, kick: Option<Kick>) {
+fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: usize, settle_fine: usize, settle_rigid: usize, readouts: usize, readout_fs: f64, stiffness: Option<String>, seed: u64, workers: usize, l: f64, t0: Instant, kick: Option<Kick>, fine_arm: bool) {
     let z: Vec<u32> = (0..sim.n).map(|i| sim.atoms[i].species.z).collect();
     let oxy: Vec<usize> = (0..sim.n).filter(|&i| z[i] == 8).collect();
     let n_w = oxy.len();
@@ -1736,6 +1740,14 @@ fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: u
     if !settled_by_criterion { eprintln!("scout: rigid settle reached the CAP of {cap} steps without meeting the criterion"); }
     let settle_rigid_used = step;
     let t_settled = rigid_temperature(&bodies);
+    // RESPONSE1_AMENDMENT_6.md: `--kick-arm flexible` branches HERE, after the rigid settle,
+    // and never returns to the rigid production below; with the default (`rigid`) nothing
+    // above or below this line changes.
+    if fine_arm {
+        let settled = RigidSettled { steps_used: settle_rigid_used, by_criterion: settled_by_criterion, t_settled, t_projected: t_proj, dt_r, k_envelope, k_source, def_rms, passes };
+        fine_kicked_arm(sim, out, w, cells, &z, &oxy, &units, &body, &bodies, l, dt_f, t_fine, &geom_json(&geom), settle_fine, settle_rigid, settled, readout_fs, seed, workers, t0, kick);
+        return;
+    }
     // 5. NVE production, walk and velocities appended at every readout
     let read_oxy = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].x, s.atoms[i].y, s.atoms[i].z]).collect() };
     let read_oxy_v = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].vx, s.atoms[i].vy, s.atoms[i].vz]).collect() };
@@ -1843,4 +1855,389 @@ fn scout_body(sim: &mut Sim, _obs: &Path, out: &Path, w: &RecordWriter, cells: u
     w.write("scout.json", &rec).expect("scout.json writes");
     std::fs::write(out.join("scout.done"), format!("{seconds:.1}\n")).ok();
     eprintln!("scout: done in {seconds:.0} s; production {:.0} core-s/ps", prod_s / ps);
+}
+
+// ------------------------------------------------------------------ the fine-model arm (RESPONSE1_AMENDMENT_6.md)
+
+/// `--kick-arm flexible|rigid`: which integrator the scout's kicked production runs on. The
+/// default is `rigid`, so every launcher written before Amendment 6 is the same command.
+fn kick_arm_flexible(v: Option<String>) -> bool {
+    match v.as_deref() {
+        None | Some("rigid") => false,
+        Some("flexible") | Some("fine") => true,
+        Some(other) => panic!("--kick-arm {other:?}: flexible | rigid"),
+    }
+}
+
+/// What the rigid settle left, handed to the fine arm for its record.
+struct RigidSettled {
+    steps_used: usize,
+    by_criterion: bool,
+    t_settled: f64,
+    t_projected: f64,
+    dt_r: f64,
+    k_envelope: f64,
+    k_source: String,
+    def_rms: f64,
+    passes: u64,
+}
+
+fn geom_json(g: &holon_render::rigid_adapter::MonomerGeometry) -> String {
+    format!("{{\"r_oh_bohr\": {}, \"r_oh_sd_bohr\": {}, \"theta_rad\": {}, \"theta_sd_rad\": {}, \"units\": {}}}", num(g.r_oh_bohr), num(g.r_oh_sd_bohr), num(g.theta_rad), num(g.theta_sd_rad), g.units)
+}
+
+/// The fine box's kinetic energy summed from the atoms' own velocities — fresh after a kick
+/// or a rescale, where the engine's `e_kin` column is the last step's.
+fn fine_kinetic(sim: &Sim) -> f64 {
+    (0..sim.n).map(|i| { let a = &sim.atoms[i]; 0.5 * a.mass() * (a.vx * a.vx + a.vy * a.vy + a.vz * a.vz) }).sum()
+}
+
+/// The fine box's temperature on the engine's own degrees of freedom (`dims.dof()` per atom,
+/// the count `Sim::temperature` and the stochastic thermostat divide by), from `fine_kinetic`.
+fn fine_temperature(sim: &Sim) -> f64 {
+    2.0 * fine_kinetic(sim) / (sim.dims.dof() * sim.n as f64 * K_B)
+}
+
+/// Each unit's mass-weighted centre of mass along x, read the way the operator's projection
+/// reads it (`fine_of`: the oxygen where the box keeps it, each hydrogen at its minimum image),
+/// and the unit's total mass.
+fn unit_com_x(sim: &Sim, m: &UnitMembers, body: &Body) -> (f64, f64) {
+    let f = fine_of(sim, m, body);
+    let mt: f64 = f.sites.mass.iter().sum();
+    ((0..3).map(|k| f.sites.mass[k] * f.sites.pos[k][0]).sum::<f64>() / mt, mt)
+}
+
+/// THE KICK ON THE FINE MODEL (Amendment 6): the rigid arm's increment, unit by unit — every
+/// water's centre of mass gets `Δv_axis = v_d (sin(2π x_com / L) − ⟨sin⟩)`, delivered as the
+/// SAME velocity increment on each of its three atoms, so the unit's momentum changes by
+/// `M Δv` and its internal (vibrational and rotational) velocities about the centre of mass
+/// are untouched. The slab pattern is the rigid arm's: the same `x_com` (mass-weighted, the
+/// projection's own minimum-image read) and the same mean subtraction over units. Returns
+/// `(Δp_total, ΔKE)` summed over atoms.
+fn kick_fine(sim: &mut Sim, units: &[UnitMembers], body: &Body, l: f64, axis: usize, v_d: f64) -> ([f64; 3], f64) {
+    let k = 2.0 * std::f64::consts::PI / l;
+    let com: Vec<f64> = units.iter().map(|m| unit_com_x(sim, m, body).0).collect();
+    let mean_sin = com.iter().map(|x| (k * x).sin()).sum::<f64>() / units.len().max(1) as f64;
+    let mut dp = [0.0f64; 3];
+    let mut dke = 0.0f64;
+    for (m, x) in units.iter().zip(com.iter()) {
+        let dv = v_d * ((k * x).sin() - mean_sin);
+        for &i in [m.o, m.h[0], m.h[1]].iter() {
+            let a = &sim.atoms[i];
+            let mut v = [a.vx, a.vy, a.vz];
+            let ma = a.mass();
+            let ke0 = 0.5 * ma * (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+            v[axis] += dv;
+            dp[axis] += ma * dv;
+            dke += 0.5 * ma * (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]) - ke0;
+            sim.set_velocity_3d(i, v[0], v[1], v[2]);
+        }
+    }
+    (dp, dke)
+}
+
+/// Rescale every atom's velocity by ONE factor so the SIX RETAINED MODES of the projected units
+/// read `T_target` — the fine model's counterpart of `rescale_rigid`, on the same modes. The
+/// projection is linear in the velocities, so one factor `s` scales every unit's centre-of-mass
+/// and rotational kinetic energy by `s²` exactly and the rigid-mode temperature lands on the
+/// target; the vibrations are scaled by the same factor and otherwise left to themselves. The
+/// target is the rigid modes' and not the 3N temperature because the fine model does not
+/// equipartition into its stretches on these times (the `Obs` comment's "like-for-like
+/// comparator"; the 128-water smoke of Amendment 6 read 491 K on the rigid modes at 294 K on
+/// 3N after a 3N-thermostatted settle), and the operator's liquid is held at 293 K on these six
+/// modes. Returns the kinetic energy removed.
+fn rescale_fine(sim: &mut Sim, units: &[UnitMembers], body: &Body) -> f64 {
+    let ke0 = fine_kinetic(sim);
+    let s = (temperature_k() / mode_split(sim, units, body).0.max(1e-9)).sqrt();
+    for i in 0..sim.n {
+        let a = &sim.atoms[i];
+        let (vx, vy, vz) = (a.vx * s, a.vy * s, a.vz * s);
+        sim.set_velocity_3d(i, vx, vy, vz);
+    }
+    ke0 - fine_kinetic(sim)
+}
+
+/// SEED THE VIBRATIONS at the hand-off (Amendment 6, (1)). The rigid state written back to the
+/// atoms carries no internal motion, and the fine model's stretches and bend exchange energy with
+/// the rigid modes too slowly to fill on the settle's times (the 432-water probe: the 3N
+/// temperature held at `~200 K` with the rigid modes at 293 K). So each unit's three internal
+/// degrees of freedom are drawn thermally: every atom gets a Gaussian velocity at `2 T_target`,
+/// the draw's rigid part (the operator's own projection of it, at the unit's positions, which ARE
+/// the rigid body's at the hand-off) is removed, and the remainder — mass-orthogonal to every
+/// rigid motion, so the rigid modes' temperature is unchanged — is added. `2 T` because the
+/// sites sit at the body's reference geometry with no vibrational potential energy: the internal
+/// kinetic energy `≈ 3 kT` per water shares itself between kinetic and potential within a period,
+/// leaving `≈ 3/2 kT` kinetic, equipartition. Deterministic in `seed` (a splitmix64 stream and
+/// Box–Muller). Returns the internal kinetic energy added, hartree.
+fn seed_vibrations(sim: &mut Sim, units: &[UnitMembers], body: &Body, seed: u64) -> f64 {
+    let mut st = seed ^ 0x5649_4252_4154_4531; // "VIBRATE1"
+    let mut next = || { st = st.wrapping_add(0x9E37_79B9_7F4A_7C15); let mut z = st; z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9); z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB); ((z ^ (z >> 31)) >> 11) as f64 / (1u64 << 53) as f64 };
+    let mut gauss = || { let u1 = next().max(1e-300); let u2 = next(); (-2.0 * u1.ln()).sqrt() * (2.0 * std::f64::consts::PI * u2).cos() };
+    let kt2 = 2.0 * K_B * temperature_k();
+    let mut added = 0.0;
+    for m in units {
+        let mut f = fine_of(sim, m, body);
+        for k in 0..3 { let sd = (kt2 / f.sites.mass[k]).sqrt(); f.sites.vel[k] = [sd * gauss(), sd * gauss(), sd * gauss()]; }
+        let (w, _) = RigidWater::project(&f).expect("a unit projects at the hand-off");
+        let back = w.reconstruct();
+        for (k, &i) in [m.o, m.h[0], m.h[1]].iter().enumerate() {
+            let dv = sub(f.sites.vel[k], back.sites.vel[k]);
+            let a = &sim.atoms[i];
+            let v = add([a.vx, a.vy, a.vz], dv);
+            added += 0.5 * f.sites.mass[k] * dot(dv, dv);
+            sim.set_velocity_3d(i, v[0], v[1], v[2]);
+        }
+    }
+    added
+}
+
+/// PLANT PR-4 ON THE FINE ARM: the fine kick applied to the arms' own box with every atom at
+/// rest. Must: total momentum (returned and summed over atoms) zero to `1e-12` au on every
+/// component; ΔKE = `½ M v_d² Σ (sin(k x_com) − ⟨sin⟩)²` to `1e-9` relative (summed and
+/// re-read from the atoms); every atom's position unchanged to the bit; every unit's
+/// velocity increment the same on its three atoms (no internal velocity created); and the
+/// slab pattern the rigid arm's — each unit's `x_com` equal to the projected rigid body's
+/// centre of mass to `1e-10` bohr.
+fn plant_kick_fine(obs: &Path, cells: usize, seed: u64, v_d_mps: f64) {
+    let law = load_law(obs);
+    let (mut sim, l) = build_n(&law, seed, cells);
+    sim.thermostat_on = false;
+    sim.compute_forces();
+    let (units, other) = unit_members(&sim.units_reading());
+    assert!(other.is_empty(), "non-water units in the built box: {other:?}");
+    let geom = mean_monomer_geometry(&sim, &units);
+    let body = reference_body_from(geom.r_oh_bohr, geom.theta_rad).expect("the mean monomer is principal");
+    let (projected, _) = project_all(&sim, &body).expect("every unit projects");
+    let worst_com = units.iter().zip(projected.iter()).map(|(m, (pm, w, _))| {
+        assert_eq!((m.o, m.h), (pm.o, pm.h), "unit order differs between unit_members and project_all");
+        let d = unit_com_x(&sim, m, &body).0 - w.com[0];
+        (d - l * (d / l).round()).abs()
+    }).fold(0.0f64, f64::max);
+    let v_d = v_d_mps * MPS_TO_AU;
+    let k = 2.0 * std::f64::consts::PI / l;
+    for axis in 0..2 {
+        for i in 0..sim.n { sim.set_velocity_3d(i, 0.0, 0.0, 0.0); }
+        let before = read_pos(&sim);
+        let com: Vec<(f64, f64)> = units.iter().map(|m| unit_com_x(&sim, m, &body)).collect();
+        let mean_sin = com.iter().map(|(x, _)| (k * x).sin()).sum::<f64>() / units.len() as f64;
+        let expected_dke: f64 = com.iter().map(|(x, mt)| { let s = (k * x).sin() - mean_sin; 0.5 * mt * v_d * v_d * s * s }).sum();
+        let (dp, dke) = kick_fine(&mut sim, &units, &body, l, axis, v_d);
+        let p_total = (0..sim.n).fold([0.0f64; 3], |a, i| { let at = &sim.atoms[i]; add(a, scale([at.vx, at.vy, at.vz], at.mass())) });
+        let worst_dp = dp.iter().chain(p_total.iter()).fold(0.0f64, |a, &x| a.max(x.abs()));
+        let rel = ((dke - expected_dke) / expected_dke).abs();
+        let rel_after = ((fine_kinetic(&sim) - expected_dke) / expected_dke).abs();
+        let moved = read_pos(&sim).iter().zip(before.iter()).filter(|(a, b)| a != b).count();
+        let internal = units.iter().map(|m| {
+            let v = |i: usize| [sim.atoms[i].vx, sim.atoms[i].vy, sim.atoms[i].vz];
+            let (o, h1, h2) = (v(m.o), v(m.h[0]), v(m.h[1]));
+            (0..3).map(|c| (o[c] - h1[c]).abs().max((o[c] - h2[c]).abs())).fold(0.0f64, f64::max)
+        }).fold(0.0f64, f64::max);
+        eprintln!("plant PR-4 (fine) axis {axis}: {} units, {} atoms, v_d {v_d_mps} m/s; |dp| worst {worst_dp:.3e} au (returned and summed over atoms); dKE {dke:.9e} vs 1/2 M v_d^2 sum (sin - mean)^2 = {expected_dke:.9e} Ha, rel {rel:.2e} (KE after {rel_after:.2e}); atoms moved {moved}; worst intra-unit velocity difference {internal:.3e} au; worst |x_com(fine) - com(rigid)| {worst_com:.3e} bohr", units.len(), sim.n);
+        assert!(worst_dp <= 1e-12, "PR-4 (fine) FAILS: total momentum change {worst_dp:.3e} au on axis {axis}");
+        assert!(rel <= 1e-9 && rel_after <= 1e-9, "PR-4 (fine) FAILS: dKE off by {rel:.2e} relative on axis {axis}");
+        assert!(moved == 0, "PR-4 (fine) FAILS: {moved} atoms moved under a pure momentum kick");
+        assert!(internal == 0.0, "PR-4 (fine) FAILS: the kick created internal velocity {internal:.3e} au");
+        assert!(worst_com <= 1e-10, "PR-4 (fine) FAILS: the fine slab pattern departs from the rigid by {worst_com:.3e} bohr");
+    }
+    println!("plant PR-4 PASS (fine arm): {} waters, {} atoms at n_cells = {cells}, v_d {v_d_mps} m/s, both arms", units.len(), sim.n);
+}
+
+/// THE FINE-MODEL SEED (RESPONSE1_PREREG.md §1, owed; RESPONSE1_AMENDMENT_6.md). Entered from
+/// `scout_body` after the rigid settle, so the box, the fine settle, the reference geometry and
+/// the rigid settle are the rigid arm's of the same seed, bit for bit. Then:
+///
+/// 1. the settled rigid state is written back to the atoms (positions as the last pass left
+///    them, velocities the reconstructed site velocities at the full step), and the internal
+///    degrees of freedom the rigid state does not carry are seeded thermally
+///    (`seed_vibrations`);
+/// 2. a FINE settle BY THE RIGID SETTLE'S OWN RULE in the same physical time — velocity
+///    rescaling to `T_target` on the six retained modes (`rescale_fine`) every `10 × dt_r`
+///    (as fine frames), blocks of `500 × dt_r`, the last five blocks' trend under their
+///    scatter, floor `settle_rigid × dt_r`, cap ten times it — so the fine model's own liquid
+///    is reached at the operator's temperature on the operator's modes, the vibrations
+///    filling from the rigid state's zero as they will;
+/// 3. NVE production on the engine's own integrator at its own step, the kick of `kick_fine`
+///    at every cycle start, `rescale_fine` between cycles, the oxygens' unwrapped positions and
+///    velocities appended to `flexible.walk`/`flexible.vwalk` every `stride` frames, `stride`
+///    the whole number of fine frames nearest the readout cadence (the fine step is the
+///    tables' hold and is not changed to hit 10 fs; the actual cadence is recorded and the
+///    reader is handed it).
+#[allow(clippy::too_many_arguments)]
+fn fine_kicked_arm(sim: &mut Sim, out: &Path, w: &RecordWriter, cells: usize, z: &[u32], oxy: &[usize], units: &[UnitMembers], body: &Body, bodies: &[Flying], l: f64, dt_f: f64, t_fine: f64, geom: &str, settle_fine: usize, settle_rigid: usize, rs: RigidSettled, readout_fs: f64, seed: u64, workers: usize, t0: Instant, kick: Option<Kick>) {
+    let n_w = oxy.len();
+    let kk = match kick { Some(k) if k.cycles > 0 => k, _ => panic!("--kick-arm flexible is the kicked arm: --kick L|T with cycles > 0 is required") };
+    // 1. the settled rigid state onto the atoms
+    for b in bodies.iter() { write_back(sim, &b.m, &b.w.reconstruct()); }
+    let t_rm_before = mode_split(sim, units, body).0;
+    let vib_added = seed_vibrations(sim, units, body, seed);
+    let (t_rm_after, vib_kt) = mode_split(sim, units, body);
+    eprintln!("scout (FINE ARM): vibrations seeded at 2 x {} K: {:.4} kT/water internal kinetic added ({vib_kt:.4} read back by projection); rigid modes {t_rm_before:.3} K before, {t_rm_after:.3} K after; 3N {:.1} K",
+        temperature_k(), vib_added / (n_w as f64 * K_B * temperature_k()), fine_temperature(sim));
+    sim.compute_forces();
+    let mut passes = rs.passes + 1;
+    // 2. the fine settle by the rigid criterion in physical time
+    let block = ((500.0 * rs.dt_r / dt_f).round() as usize).max(1);
+    let floor = (settle_rigid as f64 * rs.dt_r / dt_f).ceil() as usize;
+    let cap = floor * 10;
+    let every = ((10.0 * rs.dt_r / dt_f).round() as usize).max(1);
+    sim.thermostat_on = false;
+    eprintln!("scout (FINE ARM): rigid state written back at {:.1} K on 3N, {:.1} K on the rigid modes (vibrations seeded); fine settle by the rigid rule: rescale to {} K on the six retained modes every {every} frames, blocks of {block} frames ({:.1} fs), floor {floor} frames ({:.1} fs), cap {cap}",
+        fine_temperature(sim), mode_split(sim, units, body).0, temperature_k(), block as f64 * dt_f * AU_TIME_FS, floor as f64 * dt_f * AU_TIME_FS);
+    let mut blocks: Vec<f64> = Vec::new();
+    let (mut acc, mut frame, mut by_criterion) = (0.0f64, 0usize, false);
+    let ts = Instant::now();
+    while frame < cap {
+        sim.step_frame(1);
+        passes += 1;
+        frame += 1;
+        acc += potential(sim) / n_w as f64;
+        if frame % every == 0 { rescale_fine(sim, units, body); }
+        if frame % 500 == 0 && blocks.is_empty() && frame < block {
+            eprintln!("  fine settle frame {frame:>7}: T {:6.1} K on 3N; {:.3} wall-s/frame", sim.temperature(), ts.elapsed().as_secs_f64() / frame as f64);
+        }
+        if frame % block == 0 {
+            blocks.push(acc / block as f64);
+            acc = 0.0;
+            let (tr, vib) = mode_split(sim, units, body);
+            eprintln!("  fine settle block {:>4} (frame {:>7}, {:8.1} fs): T {:6.1} K (rigid modes {:6.1} K, vibrations {:.3} kT/water), U/water {:.6e} Ha; {:.3} wall-s/frame",
+                blocks.len(), frame, frame as f64 * dt_f * AU_TIME_FS, sim.temperature(), tr, vib, blocks.last().unwrap(), ts.elapsed().as_secs_f64() / frame as f64);
+            if frame >= floor && blocks.len() >= 5 {
+                let b = &blocks[blocks.len() - 5..];
+                let my = b.iter().sum::<f64>() / 5.0;
+                let sd = (b.iter().map(|x| (x - my) * (x - my)).sum::<f64>() / 4.0).sqrt();
+                let slope: f64 = b.iter().enumerate().map(|(i, x)| (i as f64 - 2.0) * (x - my)).sum::<f64>() / 10.0;
+                if slope.abs() * 4.0 <= sd {
+                    by_criterion = true;
+                    eprintln!("scout (FINE ARM): fine settle SETTLED by criterion at frame {frame} ({:.1} fs)", frame as f64 * dt_f * AU_TIME_FS);
+                    break;
+                }
+            }
+        }
+    }
+    if !by_criterion { eprintln!("scout (FINE ARM): fine settle reached the CAP of {cap} frames without meeting the criterion"); }
+    let fine_settle_frames = frame;
+    let fine_settle_s = ts.elapsed().as_secs_f64();
+    sim.compute_forces();
+    passes += 1;
+    let t_fine_settled = fine_temperature(sim);
+    // 3. NVE production with the kick
+    let stride = ((readout_fs / (dt_f * AU_TIME_FS)).round() as usize).max(1);
+    let readout_fs_actual = stride as f64 * dt_f * AU_TIME_FS;
+    let read_oxy = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].x, s.atoms[i].y, s.atoms[i].z]).collect() };
+    let read_oxy_v = |s: &Sim| -> Vec<[f64; 3]> { oxy.iter().map(|&i| [s.atoms[i].vx, s.atoms[i].vy, s.atoms[i].vz]).collect() };
+    let base = out.join("flexible");
+    let readouts = kk.cycles * kk.relax_readouts;
+    std::fs::write(base.with_extension("walk"), format!("# walk {} {l}\n", readouts + 1)).expect("walk header");
+    std::fs::write(base.with_extension("vwalk"), format!("# vwalk {} {l}\n", readouts + 1)).expect("vwalk header");
+    let mut walk = Walk::new(&read_oxy(sim), l);
+    walk.record(&read_oxy_v(sim));
+    append_walk_rows(&base, &walk);
+    let mut e0 = fine_kinetic(sim) + potential(sim);
+    let mut e_peak = 0.0f64;
+    let mut series = Vec::new();
+    let (tr0, vib0) = mode_split(sim, units, body);
+    series.push(observe(sim, z, l, 0.0, t_fine_settled, e0, 0.0, tr0, vib0));
+    eprintln!("scout (FINE ARM): production {readouts} readouts x {stride} fine frames = {readout_fs_actual:.5} fs (asked {readout_fs}) = {:.2} ps, NVE from T {t_fine_settled:.1} K, E {e0:.6} Ha — {} kick cycles of {} readouts, {} on axis {} at {} m/s",
+        readouts as f64 * readout_fs_actual / 1000.0, kk.cycles, kk.relax_readouts, if kk.axis == 0 { "longitudinal" } else { "transverse" }, kk.axis, kk.v_d_mps);
+    let tp = Instant::now();
+    let mut kick_log: Vec<String> = Vec::new();
+    for r in 0..readouts {
+        if r % kk.relax_readouts == 0 {
+            let cycle = r / kk.relax_readouts;
+            let removed = if cycle > 0 { rescale_fine(sim, units, body) } else { 0.0 };
+            let sign = if cycle % 2 == 0 { 1.0 } else { -1.0 };
+            let (dp, dke) = kick_fine(sim, units, body, l, kk.axis, sign * kk.v_d_mps * MPS_TO_AU);
+            e0 = fine_kinetic(sim) + potential(sim);
+            let line = format!("{{\"cycle\": {cycle}, \"t_fs\": {}, \"sign\": {sign}, \"dp_total_au\": [{}, {}, {}], \"dke_hartree\": {}, \"dke_per_water_kt\": {}, \"rescale_removed_hartree\": {}}}",
+                num(r as f64 * readout_fs_actual), num(dp[0]), num(dp[1]), num(dp[2]), num(dke), num(dke / (n_w as f64 * K_B * temperature_k())), num(removed));
+            eprintln!("  KICK (fine) cycle {cycle} at {:.0} fs: axis {} sign {sign:+.0} v_d {} m/s; dp_total {:.2e} au, dKE {:.3e} Ha = {:.4} kT/water; rescale removed {:.3e} Ha",
+                r as f64 * readout_fs_actual, kk.axis, kk.v_d_mps, dp.iter().map(|x| x.abs()).fold(0.0, f64::max), dke, dke / (n_w as f64 * K_B * temperature_k()), removed);
+            kick_log.push(line);
+        }
+        for _ in 0..stride {
+            sim.step_frame(1);
+            walk.advance(&read_oxy(sim));
+            passes += 1;
+        }
+        walk.record(&read_oxy_v(sim));
+        append_walk_rows(&base, &walk);
+        // the files are the record; the in-memory copies are dropped after each append
+        walk.frames.clear();
+        walk.vels.clear();
+        let e = sim.energy();
+        e_peak = e_peak.max((e - e0).abs());
+        let t_fs = (r + 1) as f64 * readout_fs_actual;
+        let (tr, vib) = mode_split(sim, units, body);
+        series.push(observe(sim, z, l, t_fs, sim.temperature(), e, 0.0, tr, vib));
+        if (r + 1) % 25 == 0 || r + 1 == readouts {
+            let o = series.last().unwrap();
+            let rate = tp.elapsed().as_secs_f64() / ((r + 1) as f64 * readout_fs_actual / 1000.0);
+            eprintln!("  fine readout {:>6} at {:9.1} fs: T {:6.1} K (rigid modes {:6.1} K, vibrations {:.3} kT/water), E {:.6} Ha (peak excursion {:.2e}/water), bonds {:.3}, peak {:.2}; {rate:.0} wall-s/ps, ETA {:.1} h",
+                r + 1, o.t_fs, o.temperature_k, o.rigid_mode_temperature_k, o.vibrational_kinetic_per_water_kt, o.energy, e_peak / n_w as f64, o.bonds_per_water, o.peak_bohr, rate * (readouts - r - 1) as f64 * readout_fs_actual / 1000.0 / 3600.0);
+        }
+    }
+    let seconds = t0.elapsed().as_secs_f64();
+    let prod_s = tp.elapsed().as_secs_f64();
+    let ps = readouts as f64 * readout_fs_actual / 1000.0;
+    let mut report = Report::new();
+    report.gate(
+        Gate::new("NVE")
+            .work(1)
+            .detail(format!("the fine arm's peak energy excursion per water within a cycle over {ps:.1} ps against a tenth of kT ({:.3e} Ha)", 0.1 * K_B * temperature_k()))
+            .leg_at("energy holds", e_peak / n_w as f64 <= 0.1 * K_B * temperature_k(), e_peak / n_w as f64),
+    );
+    let t_mean = series[1..].iter().map(|o| o.rigid_mode_temperature_k).sum::<f64>() / series.len().saturating_sub(1).max(1) as f64;
+    let t_mean_3n = series[1..].iter().map(|o| o.temperature_k).sum::<f64>() / series.len().saturating_sub(1).max(1) as f64;
+    report.gate(
+        Gate::new("SETTLED")
+            .work(1)
+            .detail(format!("the production temperature on the six retained modes (the operator's) against the target {} K: mean {t_mean:.1} K (3N: {t_mean_3n:.1} K)", temperature_k()))
+            .leg_at("within 10 percent of the target", (t_mean / temperature_k() - 1.0).abs() <= 0.10, t_mean),
+    );
+    for g in report.gates() { println!("{}", g.line()); }
+    let rec = Record::new("scout")
+        .text("kick_arm", "flexible")
+        .int("cells", cells as i64)
+        .int("workers", workers as i64)
+        .int("waters", n_w as i64)
+        .number("box_edge_bohr", l)
+        .text("seed", &format!("{seed:#x}"))
+        .int("settle_fine_frames", settle_fine as i64)
+        .number("fine_temperature_after_settle_k", t_fine)
+        .raw("reference_geometry", geom.to_string())
+        .number("k_envelope_hartree_per_bohr2", rs.k_envelope)
+        .text("k_envelope_source", &rs.k_source)
+        .number("deformation_rms_at_projection_bohr", rs.def_rms)
+        .number("rigid_modes_as_projected_k", rs.t_projected)
+        .number("rigid_dt_au", rs.dt_r)
+        .int("settle_rigid_floor_steps", settle_rigid as i64)
+        .int("settle_rigid_steps_used", rs.steps_used as i64)
+        .flag("settle_rigid_by_criterion", rs.by_criterion)
+        .number("rigid_temperature_after_settle_k", rs.t_settled)
+        .number("fine_dt_au", dt_f)
+        .number("vibrations_seeded_kt_per_water", vib_added / (n_w as f64 * K_B * temperature_k()))
+        .int("fine_settle2_block_frames", block as i64)
+        .int("fine_settle2_floor_frames", floor as i64)
+        .int("fine_settle2_frames_used", fine_settle_frames as i64)
+        .flag("fine_settle2_by_criterion", by_criterion)
+        .number("fine_settle2_seconds", fine_settle_s)
+        .number("fine_temperature_after_settle2_k", t_fine_settled)
+        .number("production_temperature_mean_k", t_mean)
+        .number("production_temperature_3n_mean_k", t_mean_3n)
+        .int("fine_settle2_rescale_every_frames", every as i64)
+        .int("readouts", readouts as i64)
+        .int("fine_frames_per_readout", stride as i64)
+        .raw("kick", format!("{{\"arm\": \"flexible\", \"axis\": {}, \"v_d_mps\": {}, \"cycles\": {}, \"relax_readouts\": {}, \"log\": [{}]}}", kk.axis, num(kk.v_d_mps), kk.cycles, kk.relax_readouts, kick_log.join(", ")))
+        .number("readout_fs_asked", readout_fs)
+        .number("readout_fs", readout_fs_actual)
+        .number("production_ps", ps)
+        .number("energy_peak_excursion_per_water_hartree", e_peak / n_w as f64)
+        .int("passes", passes as i64)
+        .number("seconds_total", seconds)
+        .number("wall_seconds_per_ps_production", prod_s / ps)
+        .raw("gates", report.json())
+        .raw("series", format!("[{}]", series.iter().map(|o| o.json()).collect::<Vec<_>>().join(", ")));
+    w.write("scout.json", &rec).expect("scout.json writes");
+    std::fs::write(out.join("scout.done"), format!("{seconds:.1}\n")).ok();
+    eprintln!("scout (FINE ARM): done in {seconds:.0} s; production {:.0} wall-s/ps", prod_s / ps);
 }

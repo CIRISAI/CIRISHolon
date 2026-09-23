@@ -1,0 +1,34 @@
+# conformance/water_observatory/replace0/response1_T_seed1: 3769 rows, 432 oxygens, L = 44.39 bohr = 23.5 A
+
+== 4 cells (slab 5.87 A, window 390 fs): aligned lead-window obs RMS 1.187, tail RMS 1.194 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    3.37   0.05   0.988   1.037
+   C slab-mean lagged 30 fs       5.02   0.26   0.952   1.046
+   C slab-mean lagged 50 fs       5.00   0.36   0.932   1.049
+   C slab-mean lagged 100 fs      4.56   0.53   0.891   1.038
+   B face h=0.25 A                1.43   0.94   0.381   0.404
+   B face h=0.5 A                 1.64   0.92   0.471   0.697
+   B face h=1.0 A                 3.77   0.79   0.797   0.962
+   B face h=2.0 A                -0.18   0.00   1.025   0.984
+
+== 8 cells (slab 2.94 A, window 200 fs): aligned lead-window obs RMS 0.775, tail RMS 0.872 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    1.39   0.07   0.966   1.008
+   C slab-mean lagged 30 fs       1.42   0.06   0.970   1.025
+   C slab-mean lagged 50 fs       1.26   0.05   0.975   1.041
+   C slab-mean lagged 100 fs      1.80   0.13   0.948   1.041
+   B face h=0.25 A                0.87   0.53   0.694   0.719
+   B face h=0.5 A                 0.19   0.02   1.164   0.974
+   B face h=1.0 A                -0.26   0.02   1.171   0.965
+   B face h=2.0 A                -0.01   0.00   1.041   0.965
+
+== 16 cells (slab 1.47 A, window 100 fs): aligned lead-window obs RMS 0.678, tail RMS 0.995 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    1.72   0.11   0.955   0.997
+   C slab-mean lagged 30 fs       0.89   0.04   0.979   1.018
+   C slab-mean lagged 50 fs       0.22   0.00   1.018   1.034
+   C slab-mean lagged 100 fs      0.25   0.00   1.009   1.023
+   B face h=0.25 A                1.14   0.65   0.601   0.712
+   B face h=0.5 A                 1.19   0.25   0.869   0.921
+   B face h=1.0 A                 1.18   0.11   0.943   0.993
+   B face h=2.0 A                -0.43   0.00   1.016   1.019

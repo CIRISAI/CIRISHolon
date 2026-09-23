@@ -5,6 +5,26 @@
 three-seed averages exist; per-arm rows are readings of one seed. The five partial arms
 (4–7 cycles) are in `RESPONSE1_AMENDMENT_3.md` and are superseded by their full re-runs.*
 
+## VERDICT (2026-09-23, all ten arms landed and read)
+
+| stake | staked | read on three seeds | verdict |
+|---|---|---|---|
+| **R1** cell chart `(n̄, p̄)` closes under drive | `D ≤ 0.2` at 8 cells, separated from the blind; null holds | `D = 0.65, 0.85, 0.84`; separation `+0.07` to `+0.34`; nulls hold | **branch (b): OPEN under drive** — the chart leaks a third of the signal at one molecular diameter |
+| **R1″** face chart (`h = 0.25 Å`) closes at 200 m/s | `D ≤ 0.2`, `α ∈ [0.8, 1.25]`; kill `D > 0.3` | `D = 0.164, 0.302, 0.269`, **mean `0.245`**; `α = 1.05, 1.00, 1.12`; `R² = 0.97, 0.91, 0.94`; relaxed windows `0.63–0.76` | **BETWEEN** — not met, not killed; three times closer than the cell chart, at the right amplitude |
+| **R1′** continuity sees nothing under shear (cell chart) | `\|Δ\| ≤ max(0.1, 2 SE)` | holds on seeds 1, 2 (`0.03, 0.04`); fires on seed 0 by `0.03` | **holds, two of three**; seed-specific |
+| R1″'s null (face chart on the transverse arms) | driven within `0.1` of relaxed | `\|Δ\| = 0.24, 0.03, 0.11`; three-seed average `0.035`; the 200 m/s control `0.12` | **holds on the average**; seed 0 fires again |
+| **R2** density mode | damped cosine vs overdamped, both forms | overdamped on every 50 m/s seed; OSCILLATORY on the 200 m/s seed 0 (`Γ = 2.7 × 10¹²`, `c_s = 3.3` km/s) with the other two not fitting the overdamped form | **overdamped in the linear regime**; the 200 m/s arms are outside it |
+| **R3** shear rent | `η` in `[2, 30] × 10⁻⁴` Pa s | `η(0.27 Å⁻¹) = 4.4 × 10⁻⁴`, spread `[3.9, 5.0]`, overdamped on every seed | **branch (a)** — equal to the equilibrium read |
+| R4, R4′ | no mode on the scrambled partition; undriven quadrature at noise | hold on every linear arm; **R4′ FIRES on the 200 m/s transverse control** | hold; the control is nonlinear by two independent signs |
+
+**In one sentence:** the driven shear rent is a number with a spread; the cell chart is open
+under drive by a third of the signal on every seed; the staggered chart the object's own law
+chose closes three times better at the right amplitude but not within budget on three seeds;
+and a finite sample's anisotropy shows in one seed of three on both continuity nulls. **Owed
+before any of this is the model's rather than the operator's:** the fine-model seed at the same
+kick (Amendment 2), the 36-cycle cross-seed aligned average (the reader aligns within one
+trajectory), and the 200 m/s longitudinal `ν_l = 1.2 × 10⁻⁶` m²/s given a band.
+
 ## Arms read so far
 
 | arm | cycles | SNR (current) | nulls (R4, R4′, density R4, density R4′) | R1 at 8×1×1: D, separation, two-sided floor | R2 / longitudinal current | R3 |

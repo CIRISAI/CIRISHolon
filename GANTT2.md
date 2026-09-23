@@ -799,6 +799,17 @@ campaign for doing what a review asked. The pattern is now: the `8x` step consta
 unswitched defaults, the band from a suppressed scatter, a gate that passed below the
 crossover, and a bar against a quantity that shrinks when the work gets better.
 
+## RESPONSE-1 closed: all ten arms read (2026-09-23)
+
+R1″ on the three 200 m/s seeds: `D = 0.164, 0.302, 0.269`, mean **`0.245`** — BETWEEN the
+stake (`≤ 0.2`) and the kill (`> 0.3`), `α` in band on every seed, `R²` `0.91–0.97`, the relaxed
+windows at `0.63–0.76`. The face chart's transverse null holds on the three-seed average
+(`0.035`) with seed 0 firing (`0.24`) as it did on R1′. R2 at 200 m/s: seed 0 oscillatory
+(`c_s = 3.3` km/s), the others not fitting the overdamped form — the control is outside
+linear response, as Amendment 3 said it would be read. Verdict table at the top of
+`RESPONSE1_RESULTS.md`. Owed: the fine-model seed, the cross-seed aligned average, a band
+for `ν_l`.
+
 ## RESPONSE-1: R1 graded — branch (b), the cell chart is OPEN under drive (2026-09-22, midday)
 
 Three 50 m/s longitudinal seeds: `D = 0.65, 0.85, 0.84` at 8 cells, none within `β = 0.2`,

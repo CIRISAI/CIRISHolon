@@ -2,7 +2,8 @@
 """SLOW-1 (SLOW1_PREREG.md): the search on an open question - the slow variable of a sluggish liquid.
 
 Dictionary per molecule per readout, from the rigid walk's OXYGEN positions and velocities:
-  STRUCT  q (Errington-Debenedetti, four nearest O), n33 / n50 (O within 3.3 / 5.0 A), nb (O-O < 3.5 A)
+  STRUCT  q (Errington-Debenedetti, four nearest O), n33 / n50 (O within 3.3 / 5.0 A), nb (O-O < 3.5 A),
+          s2 (Piaggi-Parrinello local pair excess entropy) and s2w (weighted by exp(r/xi); SLOW1_AMENDMENT_1.md)
   HIST    h1 h2 h5 h10: |r(t) - r(t - D)|, D in {1, 2, 5, 10} ps (backward, known at t)
   MOM     vx vy vz (the control that must NOT be slow)
   MODE    cos/sin(2 pi x_a / L), a = x, y, z (the first-harmonic density-mode phase; reported)
@@ -19,12 +20,14 @@ sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, "..", "reasoning
 from reason_search0b import vamp, blocks, heldout
 
 BOHR_A = 0.529177210903
-STRUCT = [0, 1, 2, 3]; HIST = [4, 5, 6, 7]; MOM = [8, 9, 10]; MODE = [11, 12, 13, 14, 15, 16]
-NAMES = ["q", "n33", "n50", "nb", "h1", "h2", "h5", "h10", "vx", "vy", "vz", "cx", "sx", "cy", "sy", "cz", "sz"]
+STRUCT = [0, 1, 2, 3, 17, 18]; HIST = [4, 5, 6, 7]; MOM = [8, 9, 10]; MODE = [11, 12, 13, 14, 15, 16]
+NAMES = ["q", "n33", "n50", "nb", "h1", "h2", "h5", "h10", "vx", "vy", "vz", "cx", "sx", "cy", "sy", "cz", "sz", "s2", "s2w"]
 LAGS_PS = [0.1, 0.5, 1, 2, 5, 10, 20]; HIST_PS = [1, 2, 5, 10]; HORIZON_PS = 5.0; SECTOR_LAGS_PS = [1, 2, 5]
 # S3 candidates (STRUCT column groups) and S2 candidates (those plus each history column)
-S3_CANDS = {"q": [0], "density": [1, 2], "bond count": [3]}
-S2_CANDS = dict(S3_CANDS, **{"h1": [4], "h2": [5], "h5": [6], "h10": [7]})
+# S3_POS indexes positions inside STRUCT (q n33 n50 nb s2 s2w [planted]); S2_CANDS indexes dictionary columns
+S3_POS = {"q": [0], "s2": [4], "s2w": [5], "density": [1, 2], "bond count": [3]}; S3_CANDS = S3_POS
+S2_CANDS = {"q": [0], "s2": [17], "s2w": [18], "density": [1, 2], "bond count": [3], "h1": [4], "h2": [5], "h5": [6], "h10": [7]}
+S2_RM, S2_SIG, S2_DR = 7.5, 0.15, 0.03   # SLOW1_AMENDMENT_1.md: r_m, the Gaussian width, the radial grid (A)
 
 # ---------------------------------------------------------------- loading and the dictionary
 def load(d, max_readouts=None):
@@ -63,16 +66,56 @@ def structure(P, L):
         out[t, :, 1] = (r < 3.3).sum(1); out[t, :, 2] = (r < 5.0).sum(1); out[t, :, 3] = (r < 3.5).sum(1)
     return out
 
+def _g_frames(P, L, frames):
+    """per-molecule smoothed g_i(r) on the grid for the given frames: (len(frames), n, nr), and the grid."""
+    T, n, _ = P.shape; rho = n / L ** 3; edges = np.arange(0, S2_RM + 4 * S2_SIG + S2_DR, S2_DR); nb_ = len(edges) - 1
+    rc = 0.5 * (edges[1:] + edges[:-1]); kx = np.arange(-int(4 * S2_SIG / S2_DR), int(4 * S2_SIG / S2_DR) + 1) * S2_DR
+    ker = np.exp(-kx ** 2 / (2 * S2_SIG ** 2)); ker /= ker.sum() * S2_DR   # unit area per neighbour, density per A
+    out = np.zeros((len(frames), n, nb_))
+    for k, t in enumerate(frames):
+        X = P[t] % L; d = X[None, :, :] - X[:, None, :]; d -= L * np.round(d / L); r = np.sqrt((d ** 2).sum(2)); np.fill_diagonal(r, np.inf)
+        ii, jj = np.nonzero(r < edges[-1]); b = (r[ii, jj] / S2_DR).astype(int)
+        h = np.bincount(ii * nb_ + b, minlength=n * nb_).reshape(n, nb_).astype(float)
+        hs = np.zeros_like(h); m = len(kx) // 2
+        for q_, kv in enumerate(ker):
+            sh = q_ - m
+            if sh >= 0: hs[:, sh:] += kv * h[:, :nb_ - sh]
+            else: hs[:, :sh] += kv * h[:, -sh:]
+        out[k] = hs / (4 * math.pi * rho * rc ** 2)
+    return out, rc, rho
+
+def xi_of(P, L):
+    """the decay length of the envelope of |g(r) - 1| on this walk's pooled g: least squares of
+    ln|g - 1| at its local maxima beyond the first peak, out to r_m (SLOW1_AMENDMENT_1.md)."""
+    T = P.shape[0]; fr = list(range(0, T, max(1, T // 100)))
+    g, rc, _ = _g_frames(P, L, fr); g = g.mean((0, 1)); a = np.abs(g - 1); keep = rc <= S2_RM
+    i1 = int(np.argmax(g)); pk = [i for i in range(i1 + 1, len(a) - 1) if keep[i] and a[i] >= a[i - 1] and a[i] >= a[i + 1] and a[i] > 1e-3]
+    if len(pk) < 2: return float("inf"), pk
+    sl = np.polyfit(rc[pk], np.log(a[pk]), 1)[0]; return (-1.0 / sl if sl < 0 else float("inf")), [round(float(rc[i]), 2) for i in pk]
+
+def pair_entropy(P, L, xi, chunk=50):
+    """(T, n, 2): s2 and s2w per molecule per readout, units of k_B."""
+    T, n, _ = P.shape; out = np.zeros((T, n, 2))
+    for c0 in range(0, T, chunk):
+        fr = list(range(c0, min(T, c0 + chunk))); g, rc, rho = _g_frames(P, L, fr); keep = rc <= S2_RM
+        gg = g[:, :, keep]; r = rc[keep]; w = np.exp(r / xi) if np.isfinite(xi) else np.ones_like(r)
+        with np.errstate(divide="ignore", invalid="ignore"): gl = np.where(gg > 0, gg * np.log(gg), 0.0)
+        integ = (gl - gg + 1) * r ** 2
+        out[c0:c0 + len(fr), :, 0] = -2 * math.pi * rho * integ.sum(2) * S2_DR
+        out[c0:c0 + len(fr), :, 1] = -2 * math.pi * rho * (integ * w).sum(2) * S2_DR
+    return out
+
 def dictionary(P, V, L, hist_rd):
-    """(n molecules) list of (T, 17) arrays; HIST is NaN where t < its lag."""
-    T, n, _ = P.shape; S = structure(P, L); F = np.full((T, n, 17), np.nan)
+    """(n molecules) list of (T, 19) arrays; HIST is NaN where t < its lag. Returns (feats, xi, xi_peaks)."""
+    T, n, _ = P.shape; S = structure(P, L); F = np.full((T, n, 19), np.nan)
+    xi, pk = xi_of(P, L); F[:, :, 17:19] = pair_entropy(P, L, xi)
     F[:, :, 0:4] = S
     for j, h in enumerate(hist_rd):
         if h < T: F[h:, :, 4 + j] = np.linalg.norm(P[h:] - P[:-h], axis=2)
     F[:, :, 8:11] = V
     X = (P % L) * 2 * math.pi / L
     for a in range(3): F[:, :, 11 + 2 * a] = np.cos(X[:, :, a]); F[:, :, 12 + 2 * a] = np.sin(X[:, :, a])
-    return [F[:, i, :] for i in range(n)]
+    return [F[:, i, :] for i in range(n)], xi, pk
 
 # ---------------------------------------------------------------- the search
 def pairs(feats, lag, cols, t0=0):
@@ -105,8 +148,8 @@ def read_arm(d, scale, max_readouts=None, label="", synth=None, verbose=True):
         P, V, L, dt_fs, meta = synth["P"], synth["V"], synth["L"], synth["dt_fs"], {}
     T, n, _ = P.shape; rd = lambda ps: max(1, int(round(ps * scale * 1000 / dt_fs)))
     hist_rd = [rd(h) for h in HIST_PS]; H = rd(HORIZON_PS); lags = [(ps, rd(ps)) for ps in LAGS_PS]
-    feats = dictionary(P, V, L, hist_rd)
-    if synth is not None:   # the planted column is appended to STRUCT's place: STRUCT gains a fifth column
+    feats, xi, xi_pk = dictionary(P, V, L, hist_rd)
+    if synth is not None:   # the planted column is appended (dictionary column 19): STRUCT gains a seventh column
         feats = [np.column_stack([f, synth["planted"][:, i]]) for i, f in enumerate(feats)]
     Tk = meta.get("production_temperature_mean_k")
     say(f"## {label or d}: {n} molecules x {T} readouts at {dt_fs:g} fs = {(T - 1) * dt_fs / 1000:.2f} ps; box {L:.3f} A"
@@ -116,8 +159,8 @@ def read_arm(d, scale, max_readouts=None, label="", synth=None, verbose=True):
         tt = np.array([l * dt_fs * 1e-15 for l, _ in msd]); mm = np.array([m for _, m in msd]) * 1e-20
         D = np.polyfit(tt, mm, 1)[0] / 6; say(f"   D from the O MSD over {0.5*scale:g}-{2.5*scale:g} ps: {D:.2e} m^2/s")
     mean_cols = np.nanmean(np.concatenate(feats), 0)
-    say("   dictionary means: " + ", ".join(f"{NAMES[j]} {mean_cols[j]:.3f}" for j in range(8)) + (f", planted {mean_cols[17]:.3f}" if synth is not None else ""))
-    st = STRUCT + ([17] if synth is not None else [])
+    say("   dictionary means: " + ", ".join(f"{NAMES[j]} {mean_cols[j]:.3f}" for j in list(range(8)) + [17, 18]) + (f", planted {mean_cols[19]:.3f}" if synth is not None else "") + f"; xi = {xi:.3f} A from |g-1| maxima at {xi_pk} A")
+    st = STRUCT + ([19] if synth is not None else [])
     res = dict(label=label or d, lags={}, n=n, T=T)
     # lag-0 check
     A = np.concatenate([f[:, st] for f in feats]); e0 = np.abs(vamp(A, A)["s"] - 1).max(); res["lag0"] = e0
@@ -150,7 +193,7 @@ def read_arm(d, scale, max_readouts=None, label="", synth=None, verbose=True):
     fall = np.concatenate(fcol); Sall = np.concatenate([f[:, st] for f in feats])
     corr = [float(np.corrcoef(fall, Sall[:, j])[0, 1]) for j in range(len(st))]
     load_ = {c: r2_fit(Sall[:, cols], fall) for c, cols in S3_CANDS.items()}
-    if synth is not None: load_["planted"] = r2_fit(Sall[:, [4]], fall)
+    if synth is not None: load_["planted"] = r2_fit(Sall[:, [6]], fall)
     wn = w / np.abs(w).sum()
     stnames = [NAMES[j] for j in STRUCT] + (["planted"] if synth is not None else [])
     res.update(loading=load_, weights=dict(zip(stnames, wn)), corr=dict(zip(stnames, corr)))

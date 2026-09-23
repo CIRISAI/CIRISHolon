@@ -44,6 +44,7 @@ pub mod sharded;
 pub mod phase;
 pub mod coltableau;
 pub mod tableau;
+pub mod views;
 pub mod zx;
 pub mod transport;
 pub mod tune;

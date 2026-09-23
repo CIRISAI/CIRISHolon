@@ -23,7 +23,7 @@ chose closes three times better at the right amplitude but not within budget on 
 and a finite sample's anisotropy shows in one seed of three on both continuity nulls. **Owed
 before any of this is the model's rather than the operator's:** the fine-model seed at the same
 kick (Amendment 2), the 36-cycle cross-seed aligned average (the reader aligns within one
-trajectory), and the 200 m/s longitudinal `ν_l = 1.2 × 10⁻⁶` m²/s given a band.
+trajectory), and the 200 m/s longitudinal `ν_l = 1.4 × 10⁻⁶` m²/s (corrected 2026-09-23: 1.2 was seed 0, not the pool) given a band.
 
 ## Arms read so far
 
@@ -54,7 +54,7 @@ it separates from the position-blind chart on every seed (`+0.07` to `+0.34`, th
 `≥ 0.05`). That is the prereg's **branch (b)** as written: *"R1 fails on `D ≤ 0.2` but
 separates from the blind → the chart is OPEN under drive."* Its in-run null holds on every
 seed. The pooled longitudinal current rate is `1.03 × 10¹³` /s (seed spread 39 %), the fast
-mode `ν_l = 1.2 × 10⁻⁶` m²/s, no band.
+mode `ν_l = 1.4 × 10⁻⁶` m²/s (corrected 2026-09-23: 1.2 was seed 0, not the pool), no band.
 
 **The staggered chart on the same three seeds** (`r1_closure_test.py`, face momentum at
 `0.25 Å`, 8 cells): `D = 0.482, 0.492, 0.489` — the same number on three seeds to a percent,
@@ -145,3 +145,18 @@ takes `D` from `0.735` to **`0.164`** on the 200 m/s control at 8 cells (`R² = 
 R1 measured is the momentum density's molecular layering at one-diameter slabs, and the
 closed chart is the staggered one. R1 as staked still KILLS; R1″ is staked on the remaining
 arms with `h` fixed.
+
+## `ν_l` against a band stated AFTER the reading (2026-09-23) — a comparison, not a stake
+
+The pooled longitudinal rate on the three 50 m/s seeds is `1.03 × 10¹³` /s (spread 39 %), which
+the reader writes as `ν_l = Γ/k² = 1.44 × 10⁻⁶` m²/s (the per-seed values `1.15, 1.45, 1.72`;
+the `1.2` quoted earlier was seed 0). No band was frozen for it. The hydrodynamic
+identification is `ν_l = (4/3 η + ζ)/ρ`; with the operator's own `η = 4.4 × 10⁻⁴` Pa s and
+`ρ ≈ 10³` kg/m³, the band over a bulk-to-shear ratio `ζ/η ∈ [0, 2.7]` (the upper end water's
+measured ratio, `ζ ≈ 2.4` mPa s against `0.89` at 25 °C, Holmes–Parker–Povey 2011) is
+`[0.6, 1.8] × 10⁻⁶` m²/s. The reading sits inside it and implies `ζ/η ≈ 1.9` for the rigid
+operator — smaller than water's, as a molecule with no internal relaxation channel should
+be. Two caveats that keep this a comparison: at `k = 0.27 Å⁻¹` the mode is propagating
+(`ω = c_s k` with `c_s = 3.3` km/s on the 200 m/s seed), so `Γ` is a sound damping and the
+factor between `Γ` and `ν_l k²` is a convention the reader fixed at one; and the
+hydrodynamic `ν_l` is `k`-dependent at this `k`. A frozen band belongs in the next campaign.

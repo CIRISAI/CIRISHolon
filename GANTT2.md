@@ -818,7 +818,7 @@ prereg's branch (b) as written. The staggered chart on the same seeds reads `0.4
 0.49`, the same to a percent, at its own shot-noise floor at 50 m/s; R1″ is graded tonight
 on the 200 m/s seeds (seed 0: `0.164`). The 200 m/s transverse control: `η = 5.8 × 10⁻⁴` in
 band, R1′ holds, and R4′ FIRES — the undriven quadrature carries a kick at 200 m/s, the
-second sign that the control is outside linear response. Pooled: `ν_l = 1.2 × 10⁻⁶` m²/s.
+second sign that the control is outside linear response. Pooled: `ν_l = 1.4 × 10⁻⁶` m²/s (corrected 2026-09-23: 1.2 was seed 0, not the pool).
 
 ## RESPONSE-1: the first graded reads (2026-09-22, morning)
 

@@ -194,7 +194,7 @@ experimental number. What is measured here is measured at that strength.*
   property of this programme's instruments, and the reason each of the
   three entries above carries its scope on its face.
 
-## Measured, added 2026-09-23 (QVM-ACUITY-2: the dictionary of views — the general claim refused as staked)
+## Measured, added 2026-09-23 (QVM-ACUITY-2: the dictionary of views — two stakes VOIDED by the prereg's own errors, one finding standing)
 
 *Scope: eighty Clifford+T circuits in four unlabelled families at `n ≤ 20`, four
 views (tableau, stabilizer-rank sum, a certified MPS built for the campaign,
@@ -204,15 +204,16 @@ dense), a dense referee on every instance. `conformance/qasm/QVM_ACUITY2_RESULTS
   method on 77 of 80 instances; the certificate never lied on 80 of 80 (the
   MPS view's discarded weight, the sum's remainder); revealing the family
   label changed nothing on 80 of 80.
-- **What was refused, as staked:** the Clifford+T family's label was wrong —
+- **What the prereg got wrong, and voids:** the Clifford+T family's label was wrong —
   at `n ≤ 20` the dense vector is the cheapest method and the search said so
   (ACUITY-1 had measured the crossing); the brickwork family cannot show the
-  budget biting because depth-6 CX bricks cap the bond at 8; and the stakes
-  left out the search's own cost, which is `112 ×` stim's run on the Clifford
-  family. **The general claim, "one procedure within `2 ×` of the state of the
-  art per family," stands only where the run is expensive enough to pay for
-  the search — which at `n ≤ 20` it is not.** The next test lives past the
-  referee.
+  budget biting because depth-6 CX bricks cap the bond at 8. Both stakes tested the lead's labels, not the search (the
+  twenty-second and twenty-third instances of a constant assumed for a
+  regime): VOID, not killed. **The one finding that stands against the claim:**
+  the stakes left out the search's own cost, `0.7–8` ms to pick runs of
+  `40 µs–2 ms` — `112 ×` stim on the Clifford family. The selection is right;
+  at `n ≤ 20` it costs more than the run it selects. The next test lives past
+  the referee, where the run pays for the search.
 - **Process:** two prereg faults (a probe that could not see depth; a
   certificate that bounded the squared error) were amended alone before the
   read; the frozen probe was run beside the amended one and would have

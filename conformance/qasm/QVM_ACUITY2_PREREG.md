@@ -105,3 +105,55 @@ Beating any named tool; `n > 20` (no referee); noise; matchgates and Pauli propa
 witness: `Closed` (Object.lean), `tableau_not_closed_under_rotation` and `tableau_closed_under_hadamard` (Stabilizer.lean) for the TABLEAU view's closure; the MPS view's certificate is Verstraete–Cirac's discarded-weight bound, credited; S1–S5 are measured gates
 **misfits:** M-PLANT-OBS, M-PLANT-SECTOR, M-CHEAPER-THAN-ITS-PRICE, M-TRUNCATION-AS-ERRORBAR, M-DEVICE-CLASS, M-PLACEMENT-LOTTERY, M-HOMOG, M-PARITY-PROTECT, M-VACUOUS-SUCCESS, M-FLOOR-UNSTAKED, M-MAINTENANCE-LENS, M-COND-PROBE, M-STALE-INSTRUMENT — contacted by keyword, cited.
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier (a Clifford circuit with a removable T, a saturated brickwork, a state with a known Schmidt spectrum, a planted price, the label-revealed run), and the sector the plant acts on is nonzero in that carrier by construction.
+
+---
+
+### Notes on building
+
+*Appended 2026-09-23 by the build (`holon::views`, `qvm_acuity2`, `tests/qvm_acuity2_plants.rs`,
+`qvm_acuity2_sweep.py`) after the code existed and the campaign had run. Nothing above is moved.
+Items 1–2 were repaired in `QVM_ACUITY2_AMENDMENT_1.md`, committed alone before the campaign seed
+ran. The rest are where the frozen text and the machine disagree, named so the reading is not
+quietly adjusted later. The read is in `QVM_ACUITY2_RESULTS.md`.*
+
+1. **The MPS probe as frozen cannot see depth.** A `2n`-gate prefix is about 1.3 brickwork layers
+   and discards nothing, so the linear projection is `0` and the probe closes at `χ = 2`.
+   - PQ-2's own carrier: the probe closes at `n = 12, 16, 20`, where the whole circuit at `χ = 2`
+     certifies `2.0–3.4`.
+   - On the campaign, graded beside the amended probe: S3 is violated on 52 of the 60
+     non-Clifford instances.
+   - So a plant fails under the frozen text, which is branch (e). Amendment 1 repeats the probe at
+     cadence `2n` through the whole circuit.
+   - The frozen probe's other flaw: a linear projection of an entanglement that saturates is not
+     a bound of any kind.
+2. **"The summed discarded weight" does not bound the 2-norm error.** It bounds the squared error.
+   `Σ√w` does bound the 2-norm error, by the triangle inequality, given canonical form and no
+   renormalisation. PQ-3 reads it at `1.00–1.83×` the true error.
+3. **The label for family T is wrong at this `n`.** The sum is not the cheapest known method at
+   `n ≤ 20` and `t ≤ 20`: the `2^n` vector is, on 15 of 20 instances, as ACUITY-1 had already
+   measured (the crossing near `t = 24` at `n = 20`).
+   - S1 therefore stakes the search against a label rather than against the walls, and is killed
+     on T while S2 shows those picks were the fastest by hand.
+   - A marginal costs the sum `2^{|L|−4}` legs, so no marginal can ever label T correctly at these
+     depths.
+4. **Family L cannot show decay.** A CX brick has operator Schmidt rank 2, so six entangling
+   layers cap every bond at 8. A `χ = 64` cap then costs exactly what the acuity's `χ` costs
+   (S4 ratio 1.01).
+   - Depth counted over ALL layers could not carry `t ≥ 40` at `n = 12`, so "depth ≤ 6" had to
+     mean entangling layers.
+   - The decay S4 wants needs bricks of operator Schmidt rank 4, or a relative acuity loose enough
+     to license a truncation. `10⁻¹·2^{−n/2}` on an amplitude licenses none.
+5. **The prices omit the search.** Every closure test, run on every instance, costs `0.7–8` ms
+   (median). The views it selects cost `40 µs – 2 ms`, so the procedure is `112×` stim on C.
+   - S2 and S5 as written compare view walls, and both are graded that way.
+   - A freeze that means "one procedure within 2×" must price and stake the search itself.
+6. **§1's MPS price `n·G·χ³` is the worst case.** The measured cost is per swap-routed two-site op,
+   and below `χ ≈ 36` it is dominated by per-op overhead (`c_m0 = 7.7 µs`, against
+   `c_m3·χ³ = 0.7 µs` at `χ = 16`).
+7. **S3 as written is violated by any `f64` referee against an exact view.** The inequality reads
+   `|value − referee| ≤ 0`. It is read with the referee's `10⁻¹²` floor.
+8. **"All four views by hand" needs a rule for a view that is not closed.** The rule used: the
+   tableau is not run on a T-bearing circuit; the MPS view by hand is the smallest
+   `χ ∈ {2…64}` that reaches `ε`; the sum is capped by a killed child process.
+   - Without the child process the sum's construction could not honour the 60 s cap.
+   - Without the `χ` search the MPS view has no by-hand wall on the deep families.

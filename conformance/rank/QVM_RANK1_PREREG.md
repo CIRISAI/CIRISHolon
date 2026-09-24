@@ -146,3 +146,53 @@ and the mathematics disagree, named before any search is read.*
    therefore ALSO run over declared invariant subclasses that it can decide completely
    (term sets invariant under a subgroup `K` of `S₇ × H^{⊗k}` — the ansatz stabrank lists as
    "not done" for subgroups other than `S_m`), each reported with its own exact coverage.
+
+### Notes on building (the instrument and G2)
+
+*Appended 2026-09-24 ~11:30 CDT, after G2 was read and before the seven-copy shot was read. No
+stake is moved.*
+
+6. **"The pipeline" at m = 6 is not the annealer the prereg names.** The declared local search
+   (Pauli, Clifford and single-state moves on six terms, float residual, exact acceptance, plus
+   the pivot-completion snap) found a rank-4 witness of `|H⟩^4` in 0.1 s and did NOT find a
+   rank-6 witness of `|H⟩^6` in 10 minutes on seven cores (4.7·10⁸ moves, best residual
+   1.67·10⁻²) — stabrank's own annealer never produced that cell either (their witness is the
+   QPG construction). A second route, the slice-lift tower (harvest rank-6 decompositions of
+   `|H⟩^5` by annealing — 146 classes in 13.6 min — and lift each one qubit up, completely and
+   exactly), also found nothing at m = 6 in its 13.6 minutes. What recovered it is a third
+   mechanism the prereg does not list, built from its own Galois note (item 3): **the V-split**.
+   Anneal triples toward `span ∩ V ≠ 0` (a smooth objective, `1 − λ_max(B†P_S B)`), complete
+   every good pair exactly (the triple's third state lies in `span(pair, a, b)`, found by
+   `complete_pivot`), and join two triples whose members of `V` are independent. It found a
+   rank-6 witness of `|H⟩^6` in 330 s, accepted by stabrank's verifier (`verified`, symbolic).
+   Cumulative wall to the m = 6 control, all three routes counted: ≈ 29 minutes, inside the
+   hour. G2's letter ("the same pipeline, told nothing") holds for the pipeline as built; it
+   does not hold for the annealer alone, and that is recorded rather than smoothed.
+7. **Every member line is rational.** A decomposition's span is `σ`-stable (`√2 ↦ −√2`), so a
+   sub-tuple's span meets `V` in a `σ`-stable subspace; a line in `V` is `σ`-stable iff its
+   direction `α a + β b` has `β/α ∈ ℚ(i)`. The QPG witness is two triples meeting `V` along
+   `5a + 7b` and `7a + 10b` — consecutive convergents of `√2` (`qpg_witness_is_a_v_split`).
+8. **The exhaustive branch is the slice lift, not five-tuples.** At `(m, r) = (7, 6)` every term
+   is visible on both slices of every qubit (Fact 1, `χ(H⁶) = 6`), the slice terms are
+   independent, so the coefficients are forced, and the other slice is `Σ c_j μ_j P_j a_j`
+   (stabrank PR 87's structure lemma). `lift` decides EVERY extension of a given rank-6
+   decomposition of `|H⟩^6` to `|H⟩^7` exactly (meet-in-the-middle over `256³` half-sums, two
+   functionals, exact confirmation) in ~30 s; its completeness is planted on the QPG witness
+   (`lift_recovers_the_qpg_witness_from_its_slice`: every one of its six slices lifts back to
+   it, uniquely). G3's coverage is therefore stated as "these rank-6 classes of `|H⟩^6` do not
+   extend", which is exact for each class and makes no claim about the classes not found.
+   The prereg's five-tuple orbit enumeration is built and planted (PR-3) but is not the
+   search at m = 7 (item 5). The pivot completion that replaces the residual test (item 2) is
+   exact and complete per pivot set with `rank(P, a, b) = r`, and every witness has such a
+   subset (its terms' images span `span/V`); at m = 4 it enumerates every canonical pivot
+   pair (1,921,914) in 97.6 s and finds **23** rank-4 classes of `|H⟩^4` — exactly PR 88's
+   count of "the 23 symmetry classes of the stored rank-4 list".
+9. **The device carries acceptance, not search.** Neither the float least-squares objective
+   nor the completion scan is a branch fold, so the GPU does what `holon-gpu`'s fold does: the
+   exact residual `Σ α_j s_j − den·v` of every decomposition the campaign holds (the 36 known
+   ones and every one the campaign writes), at every `y`, against `cpu::fold_packed`. The
+   search runs on the CPU (`std::thread`, cores 21–27), not on `holon::mesh` — its fold
+   is for amplitudes, not for this shape.
+10. **A seven-copy read happened before G2 passed**, once: the QPG witness's lift to `|H⟩^7`
+    was run as a smoke test of `lift` at 10:56 CDT (0 lifts, 30.5 s). It is re-run inside the
+    shot and reported there; nothing was tuned on it.

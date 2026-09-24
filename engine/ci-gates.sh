@@ -266,7 +266,7 @@ cargo build -q -p holon-swarm --release 2>/dev/null \
 # holon: THE recursive data object (planes/ledger/chart/certificate/arena).
 # Its tiers certify against the QASM-suite reference tiers; the recursion,
 # conditioning, and ledger-ring tests are the design lock's standing evidence.
-cargo test -q -p holon 2>/dev/null >/dev/null \
+cargo test -q -p holon --release 2>/dev/null >/dev/null \
   && ok "holon object: tier conformance, ledger ring, conditioning, recursion" \
   || no "holon object: tier conformance, ledger ring, conditioning, recursion"
 

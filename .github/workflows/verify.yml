@@ -44,7 +44,7 @@ jobs:
     # per-crate gates and the two artifact gates are independent) or the long poles want
     # profiling. A timeout that cancels a green run teaches everyone to ignore the
     # workflow, which is the state this raise is undoing.
-    timeout-minutes: 75
+    timeout-minutes: 120
     defaults:
       run:
         working-directory: engine

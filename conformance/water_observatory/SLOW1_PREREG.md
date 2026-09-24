@@ -177,3 +177,32 @@ separate campaign on a carrier that has earned that name.
 witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
 **misfits:** M-PLANT-OBS, M-PLANT-SECTOR, M-HOMOG, M-PLACEMENT-LOTTERY — the registered ids this text contacts by keyword, cited at the audit's demand. M-PLANT-OBS: every plant was re-derived for THIS reader and is run on it before the read. M-HOMOG: "local" here is a molecule's neighbourhood count, not a spatial-locality claim about a graph family. M-PLACEMENT-LOTTERY: all arms on one core class, prices compared only within it.
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.
+
+### On launching (2026-09-23 20:40 CDT; appended after the freeze, no stake, gate, plant or number above moved)
+
+`slow1.sh` launched detached (`setsid nohup`) at **16:53 CDT** from the worktree with
+`SLOW1_ROOT=/home/emoore/CIRISHolon`, so the main checkout's committed binary and data tree are
+used. Four scout processes, each pinned by `taskset` to one E-core: **T293_seed0 pid 1262913 on
+core 16, T293_seed1 pid 1262918 on 17, T293_seed2 pid 1262922 on 18, T400_seed0 pid 1262927 on
+19**; the price watcher on core 20. All four are 250 waters (box 36.992 bohr = 19.58 Å).
+
+**The measured price** at readout 100, the scout's own `core-s/ps` (`replace0/slow1/slow1.eta`):
+**2,142 / 2,146 / 2,133** at 293 K and **2,117** at 400 K. That is **1.23–1.24 days per 50 ps on
+one core**, within the cost section's `2,000–2,600` estimate. **The 5-day ceiling is HELD, and
+the arms run the full 50 ps.** A timing of the rigid settle's blocks (500 steps in ~391 s,
+≈ 2,110 core-s/ps) agreed in advance. Production began 18:15 (400 K) and ~19:15–19:30 (293 K),
+so the **ETA is ~00:00–01:30 CDT on 2026-09-25**, with `slow1.DONE` written when all four end.
+
+**Settles, as recorded:** T400_seed0 SETTLED by criterion at step 4,500. T293_seed0 and seed1
+SETTLED at step 9,000. **T293_seed2 reached the CAP of 10,000 steps without meeting the
+criterion.** The scout records this, and its SETTLED gate then judges the production
+temperature, as `replace0.rs` declares. This is noted for the read and not acted on here.
+Early production temperatures on the rigid modes are 293–317 K (293 K arms) and 409–416 K
+(400 K arm): the familiar warm drift, to be judged at the end against the 10 % gate.
+
+**Before the read:** `SLOW1_AMENDMENT_1.md` (`473f655`, committed alone while the arms were
+still in their fine settle) added `s2` and `s2w` to STRUCT and named them in S3's re-finding
+clause. The reader (`slow1_search.py`) and its dry run on the TSCAN-1 walks
+(`replace0/slow1/dryrun_tscan1.txt`, NOT A READING) are committed. PS-3 PASSES there.
+PS-4 FAILS on the two 5 ps 293 K walks, which is the short-walk offset the plant exists to
+catch, so the reader refuses S1 on them.

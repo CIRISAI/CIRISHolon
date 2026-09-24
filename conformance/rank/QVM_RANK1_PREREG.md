@@ -99,3 +99,50 @@ Any other magic state or orbit; the qutrit cells; a lower bound at seven copies.
 witness: `lanes_shardedFold_invariant` (the fold's schedule-independence, `holon-gpu`) for G4; the stabilizer-ness test's correctness is `tableau_closed_under_hadamard`'s engineering face (Stabilizer.lean) — the amplitude form of a stabilizer state; G1–G3 are computational
 **misfits:** M-PLANT-OBS, M-PLANT-SECTOR, M-CHEAPER-THAN-ITS-PRICE, M-DEVICE-CLASS, M-PLACEMENT-LOTTERY, M-VACUOUS-SUCCESS, M-VALIDATED-NOT-WIRED, M-PARITY-PROTECT, M-HOMOG, M-FLOOR-UNSTAKED, M-COND-PROBE, M-STALE-INSTRUMENT, M-IDLE-CALIBRATED-TIMEOUT, M-MAINTENANCE-LENS — contacted by keyword, cited.
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier (a perturbed witness, the three-qubit dictionary, the m = 3, 4 enumerations, the known witnesses, a flipped lane), and the sector the plant acts on is nonzero in that carrier by construction.
+
+### Notes on building
+
+*Appended 2026-09-24 by the QVM-RANK-1 run, after reading the field (`STABRANK_STATE.md`) and
+before the instrument existed. No stake is moved; these are the places where the frozen text
+and the mathematics disagree, named before any search is read.*
+
+1. **The ring in §1 is too small for odd m.** `|H⟩^{⊗m} = cos^m(π/8)·(|0⟩+(√2−1)|1⟩)^{⊗m}` and
+   `cos(π/8) = √(2+√2)/2 ∉ Q(ζ₈)`; for m = 7 no decomposition has all `c_i ∈ ℤ[ζ₈, 1/2]`. Nor
+   is `1/2` the only denominator the rescaled problem needs: the coefficients of the rescaled
+   target `a + √2 b` live in `Q(ζ₈)` with arbitrary odd denominators in general. The
+   instrument therefore works on the rescaled target (entries in `ℤ[√2]`, stabilizer states
+   unnormalised over `ℤ[i]`) and accepts by an integer identity `Σ α_i s_i = D·(a+√2 b)` with
+   `α_i ∈ ℤ[ζ₈]` (the `Cyc` ring, `m = 0`) and `D ∈ ℤ`; the emitted witness carries
+   `cos⁷(π/8)·α_i/D·2^{k_i/2}` as its SymPy coefficients. Exactness is unchanged; the
+   ring's name was wrong.
+2. **"Project and test the residual for stabilizer-ness" is not the complete test.** If
+   `ψ = Σ_{i≤5} c_i s_i + c_6 s_6`, the residual of `ψ` after orthogonal projection onto
+   `span(s_1..s_5)` is `c_6 (I−P) s_6`, which is a stabilizer state only when `s_6 ⊥` that
+   span. The complete statement is: a sixth state exists iff `U = span(s_1..s_5, ψ)` contains
+   a stabilizer state outside `span(s_1..s_5)` — a dictionary query, not a single test.
+   The instrument implements the complete form (pivot tuples, then a scan of the dictionary
+   for states lying in the pivot span plus the target — PR #24's quotient form), keeps the
+   residual test as the cheap special case, and reports both.
+3. **The Galois filter for qubit H is a tuple filter.** PR 16's argument for qubits (every
+   unnormalised stabilizer state is a `ℤ[i]` vector; `√2 ↦ −√2` fixes them and maps the
+   target to `|H^⊥⟩^{⊗m}`) says the span of any decomposition contains
+   `V_m = span(|H⟩^{⊗m}, |H^⊥⟩^{⊗m})`. It removes no single state from the dictionary. As a
+   tuple filter it is strong: for rank 6, every five of the six terms satisfy
+   `rank(s_1..s_5, a, b) ≤ 6`, and a four-tuple pivot fixes the whole 6-dimensional span
+   `span(s_1..s_4, a, b)` in which the remaining two terms must lie.
+4. **The dual-distance filter has a premise, and PR-4 as written would fail it for the right
+   reason.** "Every term's direction space has dual distance ≥ 3" is PR 87's property at
+   `(m, r) = (6, 5)` and, since `χ(H⁵) = 6` (filed 2026-09-24), at `(7, 6)`. The known rank-6
+   witness of `|H⟩^6` has a `k = 1` and a `k = 2` term and violates it, as it may — a pair slice
+   of a rank-6 decomposition of `|H⟩^6` need only see `χ(H⁴) = 4` terms. The instrument
+   implements the general slice-visibility filter (at a `j`-qubit slice point at least
+   `χ(H^{m−j})` terms are visible, board values), which reduces to dual distance ≥ 3 per term
+   at `(7, 6)`; PR-4 is run with each filter under its own premise at `m = 4` and `m = 6`.
+5. **Five-tuple coverage at m = 7 over the full dictionary is ≈ 0 by arithmetic, not by
+   effort.** The seven-qubit dictionary has 81,284,860,800 states; the full-support states
+   alone (all pass the dual-distance filter) number `2^35 ≈ 3.4·10¹⁰`, so the
+   symmetry-reduced five-tuple space is of order `10⁴⁸`. G3's "fraction decided" over that
+   space is reported exactly and will be of order `10⁻⁴⁰`. The exhaustive branch is
+   therefore ALSO run over declared invariant subclasses that it can decide completely
+   (term sets invariant under a subgroup `K` of `S₇ × H^{⊗k}` — the ansatz stabrank lists as
+   "not done" for subgroups other than `S_m`), each reported with its own exact coverage.

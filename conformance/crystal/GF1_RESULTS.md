@@ -117,3 +117,16 @@ Branch (b) is entered on S3's vacuity (not on a slope); branch (c) was entered a
 discharged; S1's refusal at `x = 16` is a refusal, not (d), since it is the bond dimension
 and not the volume that refused.** Fold III's price clause stands measured; its area-law
 clause had no quantity and was reworded the same day.
+
+## Prior art, found 2026-09-24 (a re-finding, recorded)
+
+The extensive magic density is not new: *Non-stabilizerness in U(1) lattice gauge theory*
+(arXiv 2409.01789, Phys. Rev. B 111, L081102, 2025) reports that the ground state's
+nonstabilizerness "is always extensive with volume" across the phase diagram, with
+discontinuities in its derivatives at criticality rather than a peak; and *Learning magic in
+the Schwinger model* (arXiv 2508.09640) reads `M₂` on neural-network ground states at
+`N = 15–31` with magic increasing with the coupling. GF1's ladder is therefore a re-finding
+of the extensive density on an exact instrument at `N ≤ 48`, with the coupling curve
+`c(x)` and the ten-site box price as its own numbers. The fold's area-law clause was wrong
+for a reason the literature already had. The lead did not search before freezing;
+recorded here as the instance it is.

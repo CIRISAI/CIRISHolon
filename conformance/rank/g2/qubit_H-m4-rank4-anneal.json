@@ -1,0 +1,29 @@
+{
+  "schema_version": "0.1",
+  "orbit": "qubit_H",
+  "m": 4,
+  "direction": "upper",
+  "rank": 4,
+  "provenance": {
+    "author": "QVM-RANK-1 (CIRISHolon)",
+    "reference": "CIRISHolon conformance/rank (QVM-RANK-1)",
+    "method": "annealing (Pauli/Clifford/single-state moves) with exact Z[i] Bareiss acceptance and pivot-completion snap",
+    "date": "2026-09-24T15:50:05Z",
+    "github": [],
+    "compute": {"cpu_hours": 0.0001, "wall_clock_hours": 0.0000, "runs": 1, "hardware": "x86_64 Linux, cores 21-27 (taskset)"}
+  },
+  "witness": {
+    "terms": [
+      {"k": 2, "x0": [0, 0, 0, 0], "W": [[1, 1, 1, 0], [0, 0, 0, 1]], "Q": [[0, 1], [0, 0]], "l": [0, 0]},
+      {"k": 4, "x0": [0, 0, 0, 0], "W": [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, 1]], "Q": [[0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 1], [0, 0, 0, 0]], "l": [0, 0, 0, 2]},
+      {"k": 2, "x0": [0, 0, 0, 0], "W": [[1, 1, 1, 0], [0, 0, 0, 1]], "Q": [[0, 1], [0, 0]], "l": [2, 0]},
+      {"k": 3, "x0": [0, 0, 0, 1], "W": [[1, 0, 0, 1], [0, 1, 0, 1], [0, 0, 1, 1]], "Q": [[0, 1, 1], [0, 0, 1], [0, 0, 0]], "l": [2, 2, 2]}
+    ],
+    "coeffs": [
+      "cos(pi/8)**4*((-8) + (0)*I + sqrt(2)*((6) + (0)*I))*2**(2/2)/1",
+      "cos(pi/8)**4*((3) + (0)*I + sqrt(2)*((-2) + (0)*I))*2**(4/2)/1",
+      "cos(pi/8)**4*((6) + (0)*I + sqrt(2)*((-4) + (0)*I))*2**(2/2)/1",
+      "cos(pi/8)**4*((4) + (0)*I + sqrt(2)*((-3) + (0)*I))*2**(3/2)/1"
+    ]
+  }
+}

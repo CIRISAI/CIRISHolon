@@ -687,6 +687,63 @@ fn cmd_vsplit(args: &[String]) {
     }
 }
 
+fn fmt_dir(d: &(Gi, Gi)) -> String {
+    let f = |g: &Gi| if g.im == 0 { format!("{}", g.re) } else { format!("{}{:+}i", g.re, g.im) };
+    format!("({},{})", f(&d.0), f(&d.1))
+}
+
+/// The census of members of V of stabilizer rank <= 3 at M qubits, and the chain test:
+/// a sub-tuple of <= 3 terms of a rank-6 decomposition of |H>^7 whose span meets V_7 along d
+/// forces d, T(d), T^2(d) to be member directions of rank <= 3 at m = 5 (module docs).
+fn cmd_census(args: &[String]) {
+    let m: usize = args[0].parse().unwrap();
+    let outdir = args[1].clone();
+    std::fs::create_dir_all(&outdir).unwrap();
+    let t0 = Instant::now();
+    let dict = enumerate_all(m);
+    let reps = orbit_reps(&dict, m);
+    eprintln!("census m={m}: {} states, {} orbit representatives ({:.1} s)", dict.len(), reps.len(), t0.elapsed().as_secs_f64());
+    let hits = member_census(m, &dict, &reps, 20260924);
+    let mut by_rank: [std::collections::BTreeSet<(Gi, Gi)>; 4] = Default::default();
+    let mut txt = String::new();
+    for h in &hits {
+        // close under the group's action on V (odd Hadamard subsets)
+        by_rank[h.rank].insert(h.dir);
+        by_rank[h.rank].insert(odd_h_dir(h.dir));
+        txt.push_str(&dec_text(&h.terms, &format!("member:rank={}:dir={}", h.rank, fmt_dir(&h.dir))));
+    }
+    std::fs::write(format!("{outdir}/census_m{m}.txt"), txt).unwrap();
+    let mut le3: std::collections::BTreeSet<(Gi, Gi)> = std::collections::BTreeSet::new();
+    for r in 1..=3 {
+        for d in &by_rank[r] {
+            le3.insert(*d);
+        }
+        let v: Vec<String> = by_rank[r].iter().map(fmt_dir).collect();
+        println!("census m={m}: rank-{r} member directions ({}): {}", v.len(), v.join(" "));
+    }
+    let mut chains = Vec::new();
+    for d in &le3 {
+        let t1 = slice_t(*d);
+        let t2 = slice_t(t1);
+        let two = le3.contains(&t1);
+        let three = two && le3.contains(&t2);
+        if two {
+            chains.push(format!("{} -> {} -> {} [{}]", fmt_dir(d), fmt_dir(&t1), fmt_dir(&t2), if three { "d,T,T^2 all members" } else { "d,T members; T^2 not" }));
+        }
+    }
+    println!("census m={m}: directions with d and T(d) both rank<=3 members: {}", chains.len());
+    for c in &chains {
+        println!("  {c}");
+    }
+    let full: Vec<&String> = chains.iter().filter(|c| c.contains("all members")).collect();
+    println!(
+        "census m={m}: chains d, T(d), T^2(d) all of rank <= 3: {} -> {}",
+        full.len(),
+        if full.is_empty() { "NO split (<=3 + rest) decomposition of rank 6 exists two qubits up (m+2) with property P" } else { "chain(s) exist; the split is not excluded by this test" }
+    );
+    println!("census m={m}: wall {:.1} s", t0.elapsed().as_secs_f64());
+}
+
 fn main() {
     let args: Vec<String> = std::env::args().collect();
     match args.get(1).map(|s| s.as_str()) {
@@ -695,6 +752,7 @@ fn main() {
         Some("lift") => cmd_lift(&args[2..]),
         Some("tower") => cmd_tower(&args[2..]),
         Some("vsplit") => cmd_vsplit(&args[2..]),
+        Some("census") => cmd_census(&args[2..]),
         _ => {
             eprintln!("usage: qvm_rank1 anneal M RANK THREADS MINUTES OUTDIR [--filter] [--galois] [--moves N] [--seeds FILE] | exhaust4 OUTDIR");
             std::process::exit(2);

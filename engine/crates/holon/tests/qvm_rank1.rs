@@ -284,3 +284,75 @@ fn qpg_witness_is_a_v_split() {
     }
     assert!(dirs.len() >= 2);
 }
+
+/// stabrank's stored list of 30 rank-4 decompositions of |H>^4 falls into the classes the
+/// exhaustive pivot completion counts (23, PR 88's number) under S4 x H^(subset).
+#[test]
+fn stored_rank4_list_classes_under_the_full_group() {
+    let ks = known();
+    let g4 = symmetry_group(4);
+    let mut keys = std::collections::HashSet::new();
+    let mut n = 0;
+    for (_, _, src, terms) in ks.iter().filter(|k| k.0 == 4 && k.1 == 4 && k.2.contains("m4_rank4.json")) {
+        let _ = src;
+        keys.insert(canonical_set_key(terms, &g4));
+        n += 1;
+    }
+    eprintln!("stored rank-4 list: {n} decompositions, {} classes under S4 x H^(subset)", keys.len());
+    assert_eq!(n, 30);
+    assert_eq!(keys.len(), 23, "the exhaustive pivot completion (qvm_rank1 exhaust4) also finds 23");
+}
+
+/// The member census at m = 4 is planted on the QPG directions: its two member lines at m = 6,
+/// 5a+7b and 7a+10b, and their slices T(d) = (2,3), (3,4), are rank <= 3 member directions two
+/// and one qubits down, as the chain argument requires of any all-visible member.
+#[test]
+fn census_m4_contains_the_qpg_chain() {
+    let dict = enumerate_all(4);
+    let reps = orbit_reps(&dict, 4);
+    assert_eq!(reps.len(), 246, "orbit reps = PR-3's orbit count");
+    let hits = member_census(4, &dict, &reps, 1);
+    let mut dirs = std::collections::HashSet::new();
+    for h in &hits {
+        assert!(meets_v_exact(&h.terms));
+        dirs.insert(h.dir);
+        dirs.insert(odd_h_dir(h.dir));
+    }
+    let g = |a: i128, b: i128| norm_dir((Gi::new(a, 0), Gi::new(b, 0)));
+    for d in [g(5, 7), g(7, 10), g(2, 3), g(3, 4)] {
+        assert!(dirs.contains(&d), "missing {d:?}");
+    }
+    assert_eq!(slice_t(g(5, 7)), g(2, 3));
+    assert_eq!(slice_t(g(7, 10)), g(3, 4));
+}
+
+/// `lift_member` is complete on a real member: each QPG triple (a rank-3 member of V_6),
+/// sliced on its top qubit, lifts back to itself along its own direction.
+#[test]
+fn lift_member_recovers_the_qpg_triples() {
+    let ks = known();
+    let (_, _, _, terms) = ks.iter().find(|k| k.0 == 6).unwrap();
+    for tri in [[0usize, 1, 2], [3, 4, 5]] {
+        let t: Vec<Stab> = tri.iter().map(|&i| terms[i].clone()).collect();
+        let d = norm_dir(vmember_direction(&t));
+        let slice: Vec<Stab> = t
+            .iter()
+            .map(|s| {
+                let ph = s.phases();
+                Stab::from_phases(5, &ph[..32]).expect("full along qubit 5")
+            })
+            .collect();
+        assert!(meets_v_exact(&slice));
+        assert_eq!(norm_dir(vmember_direction(&slice)), d, "the 0-slice keeps the direction");
+        let lifts = lift_member(&slice, d);
+        let mut want = t.clone();
+        want.sort();
+        let hit = lifts.iter().any(|l| {
+            let mut x = l.clone();
+            x.sort();
+            x == want
+        });
+        eprintln!("QPG triple {tri:?} direction {d:?}: {} lifts of its slice", lifts.len());
+        assert!(hit);
+    }
+}

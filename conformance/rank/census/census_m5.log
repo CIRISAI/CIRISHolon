@@ -1,0 +1,9 @@
+census m=5: 2423520 states, 1581 orbit representatives (364.9 s)
+census m=5: rank-1 member directions (0): 
+census m=5: rank-2 member directions (0): 
+census m=5: rank-3 member directions (8): (2,3) (2+5i,3+7i) (3,4) (3+7i,4+10i) (5,7) (5+2i,7+3i) (7,10) (7+3i,10+4i)
+census m=5: directions with d and T(d) both rank<=3 members: 2
+  (5,7) -> (2,3) -> (1,1) [d,T members; T^2 not]
+  (7,10) -> (3,4) -> (1,2) [d,T members; T^2 not]
+census m=5: chains d, T(d), T^2(d) all of rank <= 3: 0 -> NO split (<=3 + rest) decomposition of rank 6 exists two qubits up (m+2) with property P
+census m=5: wall 2528.4 s

@@ -29,12 +29,13 @@ const SHAPES: [Shape; 3] = [
 fn decompositions() -> Vec<KnownDec> {
     let root = concat!(env!("CARGO_MANIFEST_DIR"), "/../../../conformance/rank");
     let mut out = parse_known(&std::fs::read_to_string(format!("{root}/known/qubit_H_known.txt")).unwrap());
-    for sub in ["g2", "shot"] {
+    for sub in ["g2", "g2/vsplit", "g2/exhaust4", "shot"] {
         let Ok(rd) = std::fs::read_dir(format!("{root}/{sub}")) else { continue };
         let mut paths: Vec<_> = rd.filter_map(|e| e.ok()).map(|e| e.path()).collect();
         paths.sort();
         for p in paths {
-            if p.to_string_lossy().ends_with(".dec.txt") {
+            let name = p.to_string_lossy();
+            if name.ends_with(".dec.txt") || name.ends_with("classes6.txt") {
                 out.extend(parse_known(&std::fs::read_to_string(&p).unwrap()));
             }
         }

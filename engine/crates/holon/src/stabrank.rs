@@ -2226,3 +2226,293 @@ pub fn vmember_direction(terms: &[Stab]) -> (Gi, Gi) {
     // Σ x_j s_j + x_a a + x_b b = 0  ⇒  member = −(x_a a + x_b b)
     (kern[r].neg(), kern[r + 1].neg())
 }
+
+// ================================================ the census of small members of V ====
+
+/// A rational direction `α a + β b` of `V`, normalised as a projective point over `ℚ(i)`:
+/// Gaussian-integer components with no common rational factor, and the unit fixed so the first
+/// nonzero component has `re > 0, im ≥ 0`.
+pub fn norm_dir(d: (Gi, Gi)) -> (Gi, Gi) {
+    let (mut a, mut b) = d;
+    let g = gcd(gcd(a.re, a.im), gcd(b.re, b.im));
+    assert!(g != 0, "zero direction");
+    a = Gi::new(a.re / g, a.im / g);
+    b = Gi::new(b.re / g, b.im / g);
+    let lead = if a.is_zero() { b } else { a };
+    for e in 0..4u8 {
+        let l = lead.mul_unit(e);
+        if l.re > 0 && l.im >= 0 {
+            return (a.mul_unit(e), b.mul_unit(e));
+        }
+    }
+    unreachable!()
+}
+
+/// The slice map on directions: a member `α a_m + β b_m` restricts on the new qubit's `1`
+/// slice to the direction `(β − α, 2α − β)` at `m − 1` (and to `(α, β)` on the `0` slice).
+pub fn slice_t(d: (Gi, Gi)) -> (Gi, Gi) {
+    norm_dir((d.1.sub(d.0), d.0.scale(2).sub(d.1)))
+}
+
+/// The symmetry group's action on directions: Hadamards on an odd subset send `|H^⊥⟩^m` to its
+/// negative, i.e. `(α, β) ↦ (β, 2α)`; permutations and even subsets fix `V` pointwise.
+pub fn odd_h_dir(d: (Gi, Gi)) -> (Gi, Gi) {
+    norm_dir((d.1, d.0.scale(2)))
+}
+
+/// One member found by the census: its rank (1, 2 or 3), its direction, and its tuple.
+#[derive(Clone, Debug)]
+pub struct CensusHit {
+    pub rank: usize,
+    pub dir: (Gi, Gi),
+    pub terms: Vec<Stab>,
+}
+
+/// Orbit representatives (a superset is fine; completeness is what matters) of the `n`-qubit
+/// dictionary under `S_n × H^{subset}`: keep a state iff it is least (in `Stab` order) among
+/// the `S_n`-canonical forms of its Hadamard images.
+pub fn orbit_reps(dict: &[Stab], n: usize) -> Vec<usize> {
+    let mut perms = Vec::new();
+    let mut p: Vec<u8> = (0..n as u8).collect();
+    permutations(&mut p, 0, &mut perms);
+    let s_canon = |s: &Stab| -> Stab { perms.iter().map(|pm| s.permute(pm)).min().unwrap() };
+    let mut out = Vec::new();
+    for (i, s) in dict.iter().enumerate() {
+        let c = s_canon(s);
+        if c != *s {
+            continue;
+        }
+        let least = (1..(1u32 << n)).all(|h| s_canon(&s.hadamard(h)) >= c);
+        if least {
+            out.push(i);
+        }
+    }
+    out
+}
+
+/// Every member of `V_n` of stabilizer rank `≤ 3` spanned by dictionary states, up to the
+/// symmetry (pivots over orbit representatives; every triple contains a pivot's orbit, and the
+/// direction set is closed under the group afterwards by the caller). For each pivot `s₁`:
+/// states in `span(s₁, a, b)` are rank-2 partners; otherwise two states whose residuals off
+/// `span(s₁, a, b)` are parallel make a triple with `dim span(s₁,s₂,s₃,a,b) ≤ 4`. Parallel
+/// residuals are matched by projective keys on a random functional (two passes, so no pair
+/// hides on the functional's small set), every candidate decided exactly.
+pub fn member_census(n: usize, dict: &[Stab], pivots: &[usize], seed: u64) -> Vec<CensusHit> {
+    let mut hits: Vec<CensusHit> = Vec::new();
+    let mut seen_dirs: std::collections::HashSet<(usize, (Gi, Gi))> = std::collections::HashSet::new();
+    member_scan(n, dict, pivots, seed, &mut |terms: Vec<Stab>| {
+        if !meets_v_exact(&terms) {
+            return;
+        }
+        let dir = norm_dir(vmember_direction(&terms));
+        if seen_dirs.insert((terms.len(), dir)) {
+            hits.push(CensusHit { rank: terms.len(), dir, terms });
+        }
+    });
+    hits
+}
+
+/// The scan behind [`member_census`]: every candidate tuple (rank-1 states in `V`, rank-2 pairs,
+/// parallel-residual triples) is handed to `on`, undecided; the caller decides exactly.
+pub fn member_scan(n: usize, dict: &[Stab], pivots: &[usize], seed: u64, on: &mut dyn FnMut(Vec<Stab>)) {
+    let size = 1usize << n;
+    let (a, b) = target_ab(n);
+    let bv = v_basis(n);
+    let mut rng = Rng::new(seed);
+    let f: Vec<C64> = (0..size).map(|_| C64 { re: rng.f64() - 0.5, im: rng.f64() - 0.5 }).collect();
+    let f2: Vec<C64> = (0..size).map(|_| C64 { re: rng.f64() - 0.5, im: rng.f64() - 0.5 }).collect();
+    let g: Vec<C64> = (0..size).map(|_| C64 { re: rng.f64() - 0.5, im: rng.f64() - 0.5 }).collect();
+    let phs: Vec<Vec<u8>> = dict.iter().map(|s| s.phases()).collect();
+    // rank 1: a stabilizer state inside V
+    for s in dict {
+        let c = phases_to_c64(&s.phases());
+        let mut proj = 0.0;
+        for bq in &bv {
+            let mut d = C64::default();
+            for i in 0..size {
+                d = d.add(bq[i].conj().mul(c[i]));
+            }
+            proj += d.norm2();
+        }
+        if proj > 1.0 - 1e-9 {
+            on(vec![s.clone()]);
+        }
+    }
+    for &pi in pivots {
+        let s1 = &dict[pi];
+        // orthonormal basis of U0 = span(s1, a, b)
+        let mut q: Vec<Vec<C64>> = Vec::new();
+        let raw = [
+            phases_to_c64(&phs[pi]),
+            a.iter().map(|&x| C64 { re: x as f64, im: 0.0 }).collect::<Vec<_>>(),
+            b.iter().map(|&x| C64 { re: x as f64, im: 0.0 }).collect::<Vec<_>>(),
+        ];
+        for c in raw.iter() {
+            let mut v = c.clone();
+            for _ in 0..2 {
+                for bq in &q {
+                    let mut d = C64::default();
+                    for i in 0..size {
+                        d = d.add(bq[i].conj().mul(v[i]));
+                    }
+                    for i in 0..size {
+                        v[i] = v[i].sub(bq[i].mul(d));
+                    }
+                }
+            }
+            let nr = v.iter().map(|x| x.norm2()).sum::<f64>().sqrt();
+            if nr < 1e-9 {
+                continue; // s1 in V: rank 1, recorded above
+            }
+            for x in &mut v {
+                *x = x.scale(1.0 / nr);
+            }
+            q.push(v);
+        }
+        if q.len() < 3 {
+            continue;
+        }
+        // keys: (pass, key_g) for each state's residual normalised by f (or f2)
+        let mut keys: Vec<(u8, f64, f64, u32)> = Vec::with_capacity(dict.len());
+        let mut r = vec![C64::default(); size];
+        for (j, ph) in phs.iter().enumerate() {
+            if j == pi {
+                continue;
+            }
+            let cnt = ph.iter().filter(|&&e| e != ABSENT).count() as f64;
+            let sc = 1.0 / cnt.sqrt();
+            for (i, &e) in ph.iter().enumerate() {
+                r[i] = if e == ABSENT { C64::default() } else { UNITS[e as usize].scale(sc) };
+            }
+            for bq in &q {
+                let mut d = C64::default();
+                for i in 0..size {
+                    d = d.add(bq[i].conj().mul(r[i]));
+                }
+                for i in 0..size {
+                    r[i] = r[i].sub(bq[i].mul(d));
+                }
+            }
+            let nr2: f64 = r.iter().map(|x| x.norm2()).sum();
+            if nr2 < 1e-12 {
+                // s_j in span(s1, a, b): a rank-2 member (or s_j ∝ s1, impossible: distinct rays)
+                on(vec![s1.clone(), dict[j].clone()]);
+                continue;
+            }
+            let nr = nr2.sqrt();
+            let dot = |w: &[C64]| -> C64 { (0..size).fold(C64::default(), |acc, i| acc.add(w[i].mul(r[i]))) };
+            let cf = dot(&f);
+            let (pass, c) = if cf.norm2().sqrt() > 0.02 * nr { (0u8, cf) } else { (1u8, dot(&f2)) };
+            // key = g·(r / c)
+            let kg = dot(&g).div(c);
+            keys.push((pass, kg.re, kg.im, j as u32));
+        }
+        keys.sort_unstable_by(|x, y| (x.0, x.1).partial_cmp(&(y.0, y.1)).unwrap());
+        let tol = 1e-7;
+        for i in 0..keys.len() {
+            let mut k = i + 1;
+            while k < keys.len() && keys[k].0 == keys[i].0 && keys[k].1 - keys[i].1 <= tol {
+                if (keys[k].2 - keys[i].2).abs() <= tol {
+                    let t = vec![s1.clone(), dict[keys[i].3 as usize].clone(), dict[keys[k].3 as usize].clone()];
+                    on(t);
+                }
+                k += 1;
+            }
+        }
+    }
+}
+
+/// The exact vector `α a_n + β b_n` of a direction, as floats.
+pub fn dir_vector(n: usize, d: (Gi, Gi)) -> Vec<C64> {
+    let (a, b) = target_ab(n);
+    a.iter()
+        .zip(&b)
+        .map(|(&x, &y)| d.0.to_c64().scale(x as f64).add(d.1.to_c64().scale(y as f64)))
+        .collect()
+}
+
+/// Every lift of a member tuple one qubit up with ALL terms visible on both slices: the tuple
+/// `terms` (independent, `span ∋ w_d`, `w_d = α a + β b`) becomes `s_j = |0⟩t_j + |1⟩μ_j P_j t_j`
+/// whose span meets `V_{n+1}` along the same `d`. The `0`-slice fixes the coefficients `x`
+/// (`Σ x_j t_j = w_d`); the `1`-slice must be `w_{T(d)}` at the SAME scale:
+/// `Σ x_j μ_j P_j t_j = α(2b − a) + β(a − b)`. The last term is solved for, the others
+/// enumerated; every candidate is confirmed exactly (member of `V`, direction `d`).
+pub fn lift_member(terms: &[Stab], d: (Gi, Gi)) -> Vec<Vec<Stab>> {
+    let n = terms[0].n as usize;
+    let size = 1usize << n;
+    let r = terms.len();
+    let w0 = dir_vector(n, d);
+    let w1 = dir_vector(n, (d.1.sub(d.0), d.0.scale(2).sub(d.1)));
+    // x from the 0-slice by least squares (exact membership was established upstream)
+    let cols: Vec<Vec<C64>> = terms
+        .iter()
+        .map(|s| s.phases().iter().map(|&e| if e == ABSENT { C64::default() } else { UNITS[e as usize] }).collect())
+        .collect();
+    let x = lstsq(&cols, &w0);
+    let cands: Vec<Vec<Vec<u8>>> = terms.iter().map(|s| pauli_orbit(&s.phases())).collect();
+    let tovec = |ph: &[u8]| -> Vec<C64> { ph.iter().map(|&e| if e == ABSENT { C64::default() } else { UNITS[e as usize] }).collect() };
+    let last = r - 1;
+    // index of the last term's candidates by their phase vector
+    let last_index: std::collections::HashMap<&Vec<u8>, usize> = cands[last].iter().enumerate().map(|(i, p)| (p, i)).collect();
+    let mut out = Vec::new();
+    let counts: Vec<usize> = cands.iter().map(|c| c.len()).collect();
+    let total: usize = counts[..last].iter().product();
+    for code in 0..total {
+        let mut c = code;
+        let mut picks = vec![0usize; r];
+        let mut resid = w1.clone();
+        for j in 0..last {
+            picks[j] = c % counts[j];
+            c /= counts[j];
+            let v = tovec(&cands[j][picks[j]]);
+            for i in 0..size {
+                resid[i] = resid[i].sub(x[j].mul(v[i]));
+            }
+        }
+        // resid must be x_last · (a unit phase vector on the last term's orbit)
+        let mut ph = vec![ABSENT; size];
+        let mut ok = true;
+        for i in 0..size {
+            let q = resid[i].div(x[last]);
+            if q.norm2() < 1e-6 {
+                continue;
+            }
+            if (q.norm2() - 1.0).abs() > 1e-6 {
+                ok = false;
+                break;
+            }
+            ph[i] = if q.re > 0.7 { 0 } else if q.im > 0.7 { 1 } else if q.re < -0.7 { 2 } else if q.im < -0.7 { 3 } else { ok = false; break };
+        }
+        if !ok {
+            continue;
+        }
+        let Some(&pl) = last_index.get(&ph) else { continue };
+        picks[last] = pl;
+        let lifted: Vec<Stab> = (0..r)
+            .map(|j| {
+                let mut p = terms[j].phases();
+                p.extend_from_slice(&cands[j][picks[j]]);
+                Stab::from_phases(n + 1, &p).expect("controlled-Pauli lift is a stabilizer state")
+            })
+            .collect();
+        if meets_v_exact(&lifted) && norm_dir(vmember_direction(&lifted)) == norm_dir(d) {
+            out.push(lifted);
+        }
+    }
+    out
+}
+
+/// Least squares `cols · x ≈ y` (normal equations, small r).
+fn lstsq(cols: &[Vec<C64>], y: &[C64]) -> Vec<C64> {
+    let r = cols.len();
+    let mut g = vec![vec![C64::default(); r]; r];
+    let mut h = vec![C64::default(); r];
+    for i in 0..r {
+        for j in 0..r {
+            g[i][j] = cols[i].iter().zip(&cols[j]).fold(C64::default(), |acc, (p, q)| acc.add(p.conj().mul(*q)));
+        }
+        h[i] = cols[i].iter().zip(y).fold(C64::default(), |acc, (p, q)| acc.add(p.conj().mul(*q)));
+    }
+    let inv = invert(&g);
+    (0..r).map(|i| (0..r).fold(C64::default(), |acc, j| acc.add(inv[i][j].mul(h[j])))).collect()
+}

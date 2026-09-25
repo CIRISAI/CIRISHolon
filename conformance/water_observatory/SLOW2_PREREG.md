@@ -306,3 +306,15 @@ crashes only, and its numbers were not used.
    bounded by that dimension and not by STRUCT's six. SLOW-1's STRUCT σ₁ is the six-column
    value. The two are compared as closure of the arm's output, which is what the lead's
    "own σ₁ at τ*" asks.
+
+**After the read (2026-09-25, appended; no stake moved):**
+
+6. **The reader's branch rule, as first run,** put any F plant failure ahead of the branch
+   and printed "(e)". This prereg's (e) is a plant failure *on the arm a branch would read*.
+   It was corrected to this text and re-read from the saved JSON. No number changed, and
+   the branch is (c) with the integration kill firing. See `SLOW2_RESULTS.md` §2.
+7. **A 40-molecule, 3-epoch code-path run** (NOT A READING) printed numbers before the full
+   run. No setting was changed after it was seen.
+8. **λ = 10 was chosen for scale, without a plant on the choice.** PS-3 shows the carried
+   term at that weight trades the slow variable for an overfit predictor. A carried
+   objective's weight should be frozen only after PS-3 has been run on it.

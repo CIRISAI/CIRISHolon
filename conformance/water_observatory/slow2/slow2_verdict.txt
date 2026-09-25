@@ -1,0 +1,19 @@
+
+# ARMS (mean [min, max] over training seeds for D, E, F)
+A SLOW-1 search                    sigma1 0.331 | inc_Z +0.0424 | inc_q +0.0109 [+0.0109, +0.0109] | 400K inc_q +0.0001 | load q 0.836 | plants PASS
+B TICA                             sigma1 0.331 | inc_Z +0.0423 | inc_q +0.0108 [+0.0108, +0.0108] | 400K inc_q +0.0001 | load q 0.839 | plants PASS
+C VAMP                             sigma1 0.331 | inc_Z +0.0424 | inc_q +0.0109 [+0.0109, +0.0109] | 400K inc_q +0.0001 | load q 0.836 | plants PASS
+D VAMPnet                          sigma1 0.498 | inc_Z +0.0428 | inc_q +0.0128 [+0.0121, +0.0139] | 400K inc_q +0.0007 | load q 0.192 | plants PASS
+E SPIB                             sigma1 0.293 | inc_Z +0.0069 | inc_q +0.0022 [+0.0005, +0.0033] | 400K inc_q +0.0001 | load q 0.046 | plants FAIL: PS-3 (0.254)
+F integrated lam=10 (STAKE)        sigma1 0.496 | inc_Z +0.0297 | inc_q +0.0076 [+0.0072, +0.0083] | 400K inc_q +0.0005 | load q 0.065 | plants FAIL: PS-3 (0.684)
+F integrated lam=0                 sigma1 0.498 | inc_Z +0.0428 | inc_q +0.0128 [+0.0121, +0.0139] | 400K inc_q +0.0007 | load q 0.192 | plants FAIL: PS-3 (0.684)
+F integrated lam=1                 sigma1 0.498 | inc_Z +0.0438 | inc_q +0.0137 [+0.0135, +0.0138] | 400K inc_q +0.0007 | load q 0.174 | plants FAIL: PS-3 (0.684)
+F integrated lam=100               sigma1 0.441 | inc_Z +0.0288 | inc_q +0.0079 [+0.0073, +0.0090] | 400K inc_q +0.0004 | load q 0.131 | plants FAIL: PS-3 (0.684)
+   |cos| of the leading directions in STRUCT (standardised): A-B 0.9999, A-C 1.0000, B-C 1.0000
+C1: TICA f1 loads 0.839 on q, VAMP 0.836 -> MET: SLOW-1s search added nothing over TICA on this problem
+C2: best learned arm D VAMPnet: inc_q +0.0128 [+0.0121, +0.0139] (bar >= 0.02), PS-2 max -0.0005, 400 K +0.0007 (bar <= 0.005) -> NOT MET
+C3: F +0.0076 vs SPIB +0.0022: MET; |difference| 0.0054 vs combined spread 0.0038 -> separated
+Integration kill: FIRES (; F plant failures: PS-3 (0.684))
+   E SPIB: NOT READ (plant failure: PS-3 (0.254))
+   F integrated lam=10 (STAKE): NOT READ (plant failure: PS-3 (0.684))
+BRANCH: (c) no learned arm meets C2: tetrahedral order is all the structure carries on this operator at these lags; the integration kill fires (PS-3 (0.684))

@@ -1,0 +1,4 @@
+c6-seed-qpg lifts=0 secs=32.0 window_hits=43858787 float_matches=0
+c6-seed-g2 lifts=0 secs=32.4 window_hits=44165306 float_matches=0
+c6-3 lifts=0 secs=27.2 window_hits=43907363 float_matches=0
+c6-4 lifts=0 secs=25.7 window_hits=43965225 float_matches=0

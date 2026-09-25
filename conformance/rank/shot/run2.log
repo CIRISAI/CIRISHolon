@@ -1,0 +1,2 @@
+resume: 0 m5 classes, 4 m6 classes, 4 already lifted to m7, 0 queued
+2026-09-24T17:44:52Z t=0.00h | m5: 0 classes (0 anneal hits, 0 moves) | m6: 4 classes (0 from lifts of m5 [0 lifts], 0 from direct anneal [0 hits, 0 moves]) | m7 lift branch: 4/4 m6 classes lifted exactly, 0 lifts, 0 s | m7 anneal: 0 restarts, 0 moves, 0 snaps, best residual inf | v6: 0 members, 0 joins, 0 moves | v7: 0 members (by size [0, 0, 0]), 0 joins, 0 moves, best inf | witness: false

@@ -196,3 +196,11 @@ stake is moved.*
 10. **A seven-copy read happened before G2 passed**, once: the QPG witness's lift to `|H⟩^7`
     was run as a smoke test of `lift` at 10:56 CDT (0 lifts, 30.5 s). It is re-run inside the
     shot and reported there; nothing was tuned on it.
+11. **Mid-run reallocation, recorded (no stake moved).** The shot started 11:28 CDT with
+    v6 2 + l7 2 + v7 2 + a7 1. At shot-wall 1.27 h the member census of `V_5` (rank ≤ 3: eight
+    directions, no rank-1 or rank-2 member, no chain `d, T d, T² d`) proved the v7 branch's
+    joins can never succeed (every split of `|H⟩^⊗7` is excluded), so the tower was restarted
+    from its checkpoints with v7 dropped: h5 5 + v6 1 + l7 1 + a7 1 (`shot/run3.log`,
+    `rank1_progress.log` marks both restarts). The m = 5 harvest (h5) never reaches the slices
+    of the known m = 6 classes (they are splits; the annealer finds only non-split classes),
+    which is why its saturation is NOT evidence of completeness.

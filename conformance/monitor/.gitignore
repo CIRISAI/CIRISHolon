@@ -1,0 +1,4 @@
+*
+!.gitignore
+!lanes_monitor.sh
+!slow1_autoread.sh

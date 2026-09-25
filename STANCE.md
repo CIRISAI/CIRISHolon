@@ -460,6 +460,28 @@ What this stance claims as its own is the SYNTHESIS as
 one continuously extending, kill-disciplined instrument — and convergence,
 where confirmed, is corroboration that the underlying object is real.
 
+## Corrected 2026-09-25 — the philological backpass (`OBJECT.md`, CORRECTION of the same date)
+
+- **A tier is a Closed view the tier above CARRIES.** Closure alone is not thinghood: the
+  hydrogen-bond network is closed and uncarried (three walks); a learned coordinate slower
+  than tetrahedral order carries less (`SLOW2_RESULTS.md`). Move 1 reads "existence is
+  closure; thinghood is closure the level above carries."
+- **The search is TICA.** On the same inputs it returns our direction to `10⁻⁴` (`SLOW2`, C1).
+  "Found rather than named" is retired as a distinction; the selection by the level above,
+  the plants and the frozen stakes are what is ours. After five carriers and one head-to-head
+  the instrument re-finds and has not discovered; our integration of a learned dictionary
+  was killed by its own planted-variable plant (`SLOW2`) and, fixed and frozen, awaits fresh
+  seeds (`SLOW3_PREREG.md`, expected branch (c)).
+- **Price is not rent.** A certificate's charge (`2^{M₂}`, a remainder, a discarded weight) is a
+  price; what persistence pays is rent; nothing this month tested rent.
+- **The weights:** A and B merged into A′ at 0.55 with the selection principle as the named
+  unknown; C 0.32; D 0.08; E 0.05. The operational reading carried at the evidence's strength:
+  a holon is a certified sufficient statistic at an acuity.
+- **The hunt:** `SELECT-1`, the selection principle as arithmetic applied blind to the closed
+  sectors already on disk, with the network as the plant it must reject; costs no trajectory.
+- **Two re-findings with prior art found late** (`GF1`: PRB 2025; `SLOW1`: tetrahedral order)
+  — the search of the literature is now the first step of every freeze, before the stakes.
+
 ## The one-paragraph position
 
 On exact finite models — the regime where every claim above but the
@@ -482,3 +504,11 @@ the next one: the liquid's cell chart leaked a third of its signal at one
 molecular diameter, and the chart that carries the leak — momentum on the
 faces — closes (2026-09-21). Measured on two tiers and one residual — the
 wager is that it holds everywhere the square does.
+
+*Appended 2026-09-25.* Read the paragraph above with its corrections: the object is found by
+the standard slow-mode search and selected by the level above; closure is cheap and carriage
+is the tier; the wager that search-select-price "holds everywhere the square does" is intact
+as arithmetic and has, after five carriers, re-found the known object each time and
+discovered none. That is a validated instrument and not yet a discovering one; the one
+freeze that could change the sentence is the selection principle stated as arithmetic and
+tested blind.

@@ -36,6 +36,66 @@ quantity the next view must carry (`viewClosed_comp`: closed views compose). Mea
 dispersion energy, harvested to a `1e-12` floor (`EMBED2_RESULTS.md`). This is the same fact
 the ladder of tables has always used: a table is a harvested residual.
 
+## CORRECTION 2026-09-25 — the philological backpass (the owner's order; locked text above and below kept legible)
+
+*After five carriers, one head-to-head (`SLOW2_RESULTS.md`) and two re-findings with prior art
+found late (`GF1_RESULTS.md`, `SLOW1_RESULTS.md`), four terms above no longer carry what they
+were written to carry. Each is corrected here, dated, beside the sentence it corrects.*
+
+1. **"A tier is a Closed view of the tier below. That is the entire definition."** It is not the
+   entire definition, and the record says so twice: the hydrogen-bond network is a Closed
+   view the fluid does not carry (`TSCAN_HBOND_SEARCH_RESULTS.md`, three walks, increment
+   exactly zero), and a learned coordinate slower than tetrahedral order carries less of the
+   mobility than tetrahedral order does (`SLOW2_RESULTS.md`). Closure is cheap, as
+   `exists_closed_view` always said. **Corrected: a tier is a Closed view of the tier below THAT
+   THE TIER ABOVE CARRIES** — one its conservation law cannot remove within its budget (design
+   rule 11). Move 1 below, "Existence IS closure", reads henceforth "existence is closure;
+   thinghood is closure the level above carries": the theorem proves the first half; the
+   second is measured, separately, on the fluid (the face chart chosen by the momentum law
+   over the closure score, `RESPONSE1_AMENDMENT_5.md`) and on the network (rejected by the same
+   law). The steelman's Move 1 is not dead; it was over-read.
+2. **"The object is FOUND rather than named."** True as arithmetic, false as a distinction. The
+   search that finds the closed sectors is TICA/VAMP (Pérez-Hernández–Noé 2013, Wu–Noé 2020):
+   on the same features, lags and target it returns the same direction as ours to `10⁻⁴`
+   (`SLOW2_RESULTS.md`, C1). **Corrected: the object is found by the standard slow-mode search
+   and SELECTED by the level above.** What is ours is the selection, the plants, the stakes
+   frozen before the run, and the closed-versus-carried split measured as two numbers. The
+   search added nothing over TICA on any carrier where the comparison was run.
+3. **"Rent."** The word does two jobs above: the maintenance flux persistence pays (Move 4,
+   `rent_closed_form`) and, since the QVM campaigns, the computational price of the hard part.
+   The second is a COST, not a rent; nothing this month tested the first. **Corrected: PRICE for
+   what a certificate charges (`2^{M₂}`, the remainder, the discarded weight); RENT for what
+   persistence pays.** Where "rent" appears in a QVM record it means price.
+4. **The calibrated read** ("Where the weight sits", below) was written on 2026-09-21. Readings A
+   and B are not rivals: B is A with one named unknown — the selection principle — and the
+   month's evidence is that closure is cheap and selection is the whole game. **Corrected table
+   (the 2026-09-21 table kept beside it):**
+
+   | reading | p | what moved it |
+   |---|---|---|
+   | **A′.** The thesis, with the selection principle as its named open item: closure the level above carries, paid rent, physical books | **0.55** (A 0.40 + B 0.10 merged, raised) | the network and the slow-but-uncarried coordinate are direct evidence that closure alone is not thinghood; the face chart is one measurement that the law above selects; the principle has a candidate and no test |
+   | **C.** Thinghood is primarily conservation; rent is thermodynamics repackaged | 0.32 | the face chart was chosen by the conservation law and was right — C and A′ read that the same way; the tie stands |
+   | **D.** Closure is observer-indexed with no observer-free fact | 0.08 | cadence and sample dependence (one seed of three breaks isotropy at one-cycle cadence) is the acuity law, not observer relativity |
+   | **E.** The world-level rent is metaphor | 0.05 | untouched; the QVM's "price" is not rent |
+
+   **The operational reading, at the strength the evidence carries** (not a rival row; the
+   sentence every measurement this month supports): *a holon is a certified sufficient
+   statistic at an acuity — the smallest closed view the level above cannot remove within its
+   budget, with a price for what it drops.* Under it the tools are TICA, SPIB and Mori–Zwanzig
+   with a stricter discipline, and the instrument, after five carriers, re-finds and has not
+   discovered.
+
+**The known unknown, named as a hunt.** A′ and C differ on one thing: whether "the level above
+carries it" is a fact about conservation alone or about paid maintenance. And A′ itself owes
+the selection principle as ARITHMETIC: a rule that, given the closed sectors of a tier and the
+law of the tier above, names the object BEFORE the tier above is run — measured once (the face
+chart) and asserted everywhere else. The freeze that would settle it (`SELECT-1`, not yet
+written): state the rule (carried ⇔ not removable within the level-above budget under its
+law), apply it blind to the six closed sectors already on disk (the two molecule sectors, the
+network, the cell and face charts, the VAMPnet's coordinate) and to the Clifford light cone,
+with the network and the uncarried coordinate as the plants it must REJECT and the face chart
+and the light cone as the ones it must KEEP; kill: one wrong call. It costs no trajectory.
+
 ## The procedure, as arithmetic — the one fold the three measurements share (2026-09-21, locked at the owner's order)
 
 *Provenance, line by line: `Closed` and composition are PROVED (`Object.lean`, `StatClosure.lean`);
@@ -380,7 +440,7 @@ keeps a price from becoming a wall.
   three to four times more sluggish than water at the same temperature, with a
   Stokes–Einstein ratio `~0.13` of water's at `k = 0.27 Å⁻¹`.
 
-## Where the weight sits — the lead's calibrated read
+## Where the weight sits — the lead's calibrated read (2026-09-21; SUPERSEDED by the corrected table in the CORRECTION of 2026-09-25 above, kept legible here)
 
 *Mutually exclusive readings of what a holon most likely IS; probabilities sum to one.*
 

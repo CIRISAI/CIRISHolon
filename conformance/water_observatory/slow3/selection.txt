@@ -1,0 +1,25 @@
+# PS-3 screen on the synthetic (fit i mod 4 != 0, read i mod 4 == 0), torch seeds 0, 1, 2
+  PS-3 F lam=0.3     : cubic R^2 by seed [0.924, 0.92, 0.923] (linear [0.923, 0.919, 0.921]) -> ADMISSIBLE [34 s]
+  PS-3 F lam=1       : cubic R^2 by seed [0.885, 0.859, 0.894] (linear [0.884, 0.859, 0.892]) -> not admissible [60 s]
+  PS-3 F lam=3       : cubic R^2 by seed [0.744, 0.63, 0.702] (linear [0.741, 0.629, 0.7]) -> not admissible [86 s]
+  PS-3 F lam=0       : cubic R^2 by seed [0.925, 0.932, 0.923] (linear [0.923, 0.93, 0.92]) -> ADMISSIBLE [100 s]
+  PS-3 SPIB S1       : cubic R^2 by seed [0.716, 0.44, 0.894] (linear [0.712, 0.44, 0.865]) -> not admissible  states [2, 2, 2] [140 s]
+  PS-3 SPIB S2       : cubic R^2 by seed [0.732, 0.763, 0.858] (linear [0.727, 0.762, 0.84]) -> not admissible  states [2, 2, 2] [164 s]
+  PS-3 SPIB S3       : cubic R^2 by seed [0.01, 0.74, 0.722] (linear [0.009, 0.722, 0.719]) -> not admissible  states [5, 2, 2] [190 s]
+  PS-3 SPIB S4       : cubic R^2 by seed [0.022, 0.003, 0.81] (linear [0.003, 0.002, 0.81]) -> not admissible  states [2, 4, 2] [214 s]
+  PS-3 D VAMPnet     : cubic R^2 by seed [0.935, 0.938, 0.934] (linear [0.934, 0.936, 0.932]) -> ADMISSIBLE [222 s]
+# 2-fold CV on TRAIN (train on seed a, read on seed b): R^2(Z + q + F) - R^2(Z + q), the stake's statistic
+  CV F lam=0.3     : inc_q mean +0.0147 [+0.0132, +0.0152] | fold 0->1 +0.0144 1->0 +0.0151 | inc_Z +0.0415 | PS2 max -0.0002 | sigma1 0.448 | load q 0.171 [354 s]
+  CV F lam=1       : inc_q mean +0.0100 [+0.0080, +0.0109] | fold 0->1 +0.0097 1->0 +0.0103 | inc_Z +0.0368 | PS2 max -0.0002 | sigma1 0.457 | load q 0.103 [482 s]
+  CV F lam=3       : inc_q mean +0.0065 [+0.0041, +0.0090] | fold 0->1 +0.0048 1->0 +0.0083 | inc_Z +0.0323 | PS2 max -0.0001 | sigma1 0.462 | load q 0.095 [621 s]
+  CV F lam=0       : inc_q mean +0.0142 [+0.0133, +0.0154] | fold 0->1 +0.0144 1->0 +0.0140 | inc_Z +0.0409 | PS2 max -0.0002 | sigma1 0.444 | load q 0.178 [707 s]
+  CV SPIB S1       : inc_q mean +0.0025 [+0.0005, +0.0067] | fold 0->1 +0.0012 1->0 +0.0039 | inc_Z +0.0102 | PS2 max -0.0000 | sigma1 0.227 | load q 0.107 [953 s]
+  CV SPIB S2       : inc_q mean +0.0045 [+0.0002, +0.0087] | fold 0->1 +0.0058 1->0 +0.0032 | inc_Z +0.0184 | PS2 max -0.0000 | sigma1 0.279 | load q 0.183 [1104 s]
+  CV SPIB S3       : inc_q mean +0.0039 [+0.0002, +0.0100] | fold 0->1 +0.0009 1->0 +0.0069 | inc_Z +0.0099 | PS2 max -0.0001 | sigma1 0.259 | load q 0.052 [1408 s]
+  CV SPIB S4       : inc_q mean +0.0072 [+0.0024, +0.0118] | fold 0->1 +0.0062 1->0 +0.0081 | inc_Z +0.0220 | PS2 max -0.0001 | sigma1 0.384 | load q 0.164 [1660 s]
+  CV D VAMPnet     : inc_q mean +0.0145 [+0.0140, +0.0159] | fold 0->1 +0.0143 1->0 +0.0148 | inc_Z +0.0415 | PS2 max -0.0002 | sigma1 0.451 | load q 0.176 [1721 s]
+# SELECTION F: F lam=0.3: PS-3 min 0.920 adm, CV +0.0147 | F lam=1: PS-3 min 0.859 NOT adm, CV +0.0100 | F lam=3: PS-3 min 0.630 NOT adm, CV +0.0065
+   -> admissible ['F lam=0.3']; highest CV +0.0147; within 0.0005 of it ['F lam=0.3'] -> F lam=0.3
+# SELECTION SPIB: SPIB S1: PS-3 min 0.440 NOT adm, CV +0.0025 | SPIB S2: PS-3 min 0.732 NOT adm, CV +0.0045 | SPIB S3: PS-3 min 0.010 NOT adm, CV +0.0039 | SPIB S4: PS-3 min 0.003 NOT adm, CV +0.0072
+   -> NO SPIB variant admissible: SPIB-fixed NOT READ (G3). Frozen for the record: highest CV, SPIB S4
+SELECT EXIT 0

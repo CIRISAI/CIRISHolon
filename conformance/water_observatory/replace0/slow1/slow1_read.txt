@@ -1,0 +1,93 @@
+## T293_seed0 (293 K arm): 250 molecules x 2501 readouts at 20 fs = 50.00 ps; box 19.575 A; rigid-mode T 303.7 K; time scale x1
+   D from the O MSD over 0.5-2.5 ps: 4.76e-10 m^2/s
+   dictionary means: q 0.742, n33 4.147, n50 17.551, nb 4.689, h1 0.813, h2 0.937, h5 1.209, h10 1.567, s2 -3.218, s2w -32.413; xi = 2.045 A from |g-1| maxima at [3.31, 4.37, 5.59, 6.64] A
+   lag 0: max |sigma - 1| on STRUCT = 8.1e-03 (reported, < 1e-2)
+   lag    0.1 ps (   5 rd): STRUCT sigma [0.612 0.518 0.471 0.286 0.243 0.086] | MOM own sigma1 0.105 | cross STRUCT-MOM 0.011, -MODE 0.034, -HIST 0.049 | held-out f 0.375 | time-shuffled sigma1 0.099
+   lag    0.5 ps (  25 rd): STRUCT sigma [0.409 0.31  0.245 0.113 0.073 0.035] | MOM own sigma1 0.009 | cross STRUCT-MOM 0.023, -MODE 0.050, -HIST 0.198 | held-out f 0.168 | time-shuffled sigma1 0.101
+   lag      1 ps (  50 rd): STRUCT sigma [0.349 0.272 0.195 0.084 0.06  0.025] | MOM own sigma1 0.006 | cross STRUCT-MOM 0.027, -MODE 0.054, -HIST 0.239 | held-out f 0.122 | time-shuffled sigma1 0.100
+   lag      2 ps ( 100 rd): STRUCT sigma [0.273 0.215 0.148 0.058 0.039 0.016] | MOM own sigma1 0.006 | cross STRUCT-MOM 0.054, -MODE 0.060, -HIST 0.352 | held-out f 0.074 | time-shuffled sigma1 0.101
+   lag      5 ps ( 250 rd): STRUCT sigma [0.15  0.128 0.07  0.025 0.016 0.008] | MOM own sigma1 0.008 | cross STRUCT-MOM 0.066, -MODE 0.071, -HIST 0.388 | held-out f 0.021 | time-shuffled sigma1 0.100
+   lag     10 ps ( 500 rd): STRUCT sigma [0.087 0.054 0.032 0.012 0.001 0.   ] | MOM own sigma1 0.007 | cross STRUCT-MOM 0.114, -MODE 0.086, -HIST 0.812 | held-out f 0.007 | time-shuffled sigma1 0.100
+   lag     20 ps (1000 rd): STRUCT sigma [0.053 0.016 0.01  0.006 0.005 0.001] | MOM own sigma1 0.010 | cross STRUCT-MOM 0.238, -MODE 0.101, -HIST 0.690 | held-out f 0.002 | time-shuffled sigma1 0.101
+   SECTOR at tau* = 1 ps (sigma1 0.349): weights (L1-normalised, standardised cols) q -0.41, n33 -0.10, n50 -0.04, nb +0.11, s2 +0.20, s2w -0.13
+      corr(f, col): q -0.93, n33 -0.18, n50 -0.18, nb +0.25, s2 +0.36, s2w +0.16 | S3 loading (R^2 of f on the candidate): q 0.863, s2 0.128, s2w 0.027, density 0.066, bond count 0.063
+   S2 target |r(t+5 ps) - r(t)| over 1751 origins x 250: R^2 velocity alone -0.0028; velocity+f 0.0359 (carry +0.0387)
+      per candidate c: R^2(Z+c) -> R^2(Z+c+f), increment: q 0.0261->0.0369 +0.0108; s2 0.0049->0.0361 +0.0312; s2w -0.0012->0.0358 +0.0371; density 0.0013->0.0379 +0.0366; bond count 0.0055->0.0376 +0.0321; h1 0.0168->0.0451 +0.0284; h2 0.0185->0.0468 +0.0283; h5 0.0131->0.0445 +0.0314; h10 0.0070->0.0413 +0.0343
+      S2 statistic min_c increment = +0.0283 (at h2); excluded as re-found: q; missing candidates (history longer than the walk allows): none
+   PS-2 re-paired null (STRUCT from molecule i+n/2): increment beyond velocity -0.0004 (bar <= 0.01) -> PASS
+   PS-1 MOM own sigma1 at 1 ps = 0.006 (bar < 0.2) -> PASS
+   PS-4 time-shuffled STRUCT sigma1, max over lags >= 1 ps = 0.101 (bar < 0.2) -> PASS
+   alpha_2(t) max 0.637 at 4.360 ps (searched to 20.00 ps); tau* = 1 ps; ratio 4.36 -> inconsistent (within 2x)
+## T293_seed1 (293 K arm): 250 molecules x 2501 readouts at 20 fs = 50.00 ps; box 19.575 A; rigid-mode T 316.5 K; time scale x1
+   D from the O MSD over 0.5-2.5 ps: 6.84e-10 m^2/s
+   dictionary means: q 0.734, n33 4.139, n50 17.524, nb 4.705, h1 0.880, h2 1.040, h5 1.398, h10 1.843, s2 -3.188, s2w -29.908; xi = 2.105 A from |g-1| maxima at [3.31, 4.37, 5.56, 6.71] A
+   lag 0: max |sigma - 1| on STRUCT = 8.5e-03 (reported, < 1e-2)
+   lag    0.1 ps (   5 rd): STRUCT sigma [0.609 0.504 0.431 0.276 0.234 0.074] | MOM own sigma1 0.099 | cross STRUCT-MOM 0.014, -MODE 0.027, -HIST 0.047 | held-out f 0.371 | time-shuffled sigma1 0.058
+   lag    0.5 ps (  25 rd): STRUCT sigma [0.378 0.271 0.208 0.094 0.063 0.03 ] | MOM own sigma1 0.008 | cross STRUCT-MOM 0.031, -MODE 0.039, -HIST 0.188 | held-out f 0.142 | time-shuffled sigma1 0.060
+   lag      1 ps (  50 rd): STRUCT sigma [0.301 0.222 0.157 0.06  0.049 0.018] | MOM own sigma1 0.007 | cross STRUCT-MOM 0.031, -MODE 0.043, -HIST 0.228 | held-out f 0.090 | time-shuffled sigma1 0.056
+   lag      2 ps ( 100 rd): STRUCT sigma [0.215 0.157 0.093 0.036 0.027 0.01 ] | MOM own sigma1 0.005 | cross STRUCT-MOM 0.046, -MODE 0.048, -HIST 0.337 | held-out f 0.045 | time-shuffled sigma1 0.058
+   lag      5 ps ( 250 rd): STRUCT sigma [0.095 0.074 0.026 0.013 0.009 0.001] | MOM own sigma1 0.007 | cross STRUCT-MOM 0.089, -MODE 0.051, -HIST 0.335 | held-out f 0.009 | time-shuffled sigma1 0.059
+   lag     10 ps ( 500 rd): STRUCT sigma [0.044 0.033 0.013 0.007 0.004 0.002] | MOM own sigma1 0.006 | cross STRUCT-MOM 0.265, -MODE 0.061, -HIST 0.778 | held-out f 0.001 | time-shuffled sigma1 0.060
+   lag     20 ps (1000 rd): STRUCT sigma [0.022 0.017 0.012 0.007 0.004 0.001] | MOM own sigma1 0.003 | cross STRUCT-MOM 0.428, -MODE 0.082, -HIST 0.702 | held-out f 0.000 | time-shuffled sigma1 0.057
+   SECTOR at tau* = 1 ps (sigma1 0.301): weights (L1-normalised, standardised cols) q -0.42, n33 -0.08, n50 -0.13, nb +0.10, s2 +0.17, s2w -0.10
+      corr(f, col): q -0.90, n33 -0.15, n50 -0.37, nb +0.25, s2 +0.39, s2w +0.22 | S3 loading (R^2 of f on the candidate): q 0.817, s2 0.150, s2w 0.048, density 0.163, bond count 0.064
+   S2 target |r(t+5 ps) - r(t)| over 1751 origins x 250: R^2 velocity alone -0.0001; velocity+f 0.0385 (carry +0.0386)
+      per candidate c: R^2(Z+c) -> R^2(Z+c+f), increment: q 0.0272->0.0390 +0.0118; s2 0.0069->0.0385 +0.0316; s2w 0.0021->0.0385 +0.0364; density 0.0079->0.0393 +0.0315; bond count 0.0079->0.0400 +0.0321; h1 0.0199->0.0484 +0.0285; h2 0.0217->0.0499 +0.0283; h5 0.0120->0.0439 +0.0319; h10 0.0037->0.0395 +0.0358
+      S2 statistic min_c increment = +0.0283 (at h2); excluded as re-found: q; missing candidates (history longer than the walk allows): none
+   PS-2 re-paired null (STRUCT from molecule i+n/2): increment beyond velocity -0.0002 (bar <= 0.01) -> PASS
+   PS-1 MOM own sigma1 at 1 ps = 0.007 (bar < 0.2) -> PASS
+   PS-4 time-shuffled STRUCT sigma1, max over lags >= 1 ps = 0.060 (bar < 0.2) -> PASS
+   alpha_2(t) max 0.558 at 4.800 ps (searched to 20.00 ps); tau* = 1 ps; ratio 4.80 -> inconsistent (within 2x)
+## T293_seed2 (293 K arm): 250 molecules x 2501 readouts at 20 fs = 50.00 ps; box 19.575 A; rigid-mode T 314.1 K; time scale x1
+   D from the O MSD over 0.5-2.5 ps: 5.05e-10 m^2/s
+   dictionary means: q 0.739, n33 4.148, n50 17.552, nb 4.697, h1 0.816, h2 0.948, h5 1.233, h10 1.598, s2 -3.224, s2w -27.871; xi = 2.173 A from |g-1| maxima at [3.31, 4.37, 5.59, 6.67] A
+   lag 0: max |sigma - 1| on STRUCT = 8.9e-03 (reported, < 1e-2)
+   lag    0.1 ps (   5 rd): STRUCT sigma [0.606 0.523 0.449 0.284 0.244 0.083] | MOM own sigma1 0.101 | cross STRUCT-MOM 0.011, -MODE 0.016, -HIST 0.044 | held-out f 0.366 | time-shuffled sigma1 0.079
+   lag    0.5 ps (  25 rd): STRUCT sigma [0.399 0.314 0.233 0.108 0.077 0.04 ] | MOM own sigma1 0.005 | cross STRUCT-MOM 0.029, -MODE 0.023, -HIST 0.192 | held-out f 0.157 | time-shuffled sigma1 0.077
+   lag      1 ps (  50 rd): STRUCT sigma [0.332 0.275 0.183 0.078 0.058 0.03 ] | MOM own sigma1 0.006 | cross STRUCT-MOM 0.022, -MODE 0.026, -HIST 0.229 | held-out f 0.107 | time-shuffled sigma1 0.079
+   lag      2 ps ( 100 rd): STRUCT sigma [0.249 0.219 0.133 0.047 0.037 0.02 ] | MOM own sigma1 0.005 | cross STRUCT-MOM 0.040, -MODE 0.030, -HIST 0.319 | held-out f 0.059 | time-shuffled sigma1 0.081
+   lag      5 ps ( 250 rd): STRUCT sigma [0.14  0.122 0.065 0.019 0.012 0.007] | MOM own sigma1 0.004 | cross STRUCT-MOM 0.055, -MODE 0.038, -HIST 0.369 | held-out f 0.017 | time-shuffled sigma1 0.077
+   lag     10 ps ( 500 rd): STRUCT sigma [0.07  0.058 0.022 0.011 0.01  0.002] | MOM own sigma1 0.006 | cross STRUCT-MOM 0.124, -MODE 0.047, -HIST 0.763 | held-out f 0.003 | time-shuffled sigma1 0.082
+   lag     20 ps (1000 rd): STRUCT sigma [3.268e-02 2.096e-02 8.688e-03 7.367e-03 8.308e-04 7.429e-05] | MOM own sigma1 0.009 | cross STRUCT-MOM 0.371, -MODE 0.056, -HIST 0.770 | held-out f 0.000 | time-shuffled sigma1 0.078
+   SECTOR at tau* = 1 ps (sigma1 0.332): weights (L1-normalised, standardised cols) q -0.42, n33 -0.09, n50 -0.02, nb +0.13, s2 +0.20, s2w -0.14
+      corr(f, col): q -0.94, n33 -0.14, n50 -0.14, nb +0.30, s2 +0.32, s2w +0.14 | S3 loading (R^2 of f on the candidate): q 0.880, s2 0.101, s2w 0.019, density 0.039, bond count 0.088
+   S2 target |r(t+5 ps) - r(t)| over 1751 origins x 250: R^2 velocity alone -0.0043; velocity+f 0.0353 (carry +0.0396)
+      per candidate c: R^2(Z+c) -> R^2(Z+c+f), increment: q 0.0274->0.0359 +0.0085; s2 0.0048->0.0364 +0.0315; s2w -0.0010->0.0361 +0.0371; density 0.0023->0.0397 +0.0374; bond count 0.0037->0.0363 +0.0326; h1 0.0206->0.0488 +0.0282; h2 0.0190->0.0479 +0.0289; h5 0.0120->0.0442 +0.0322; h10 0.0029->0.0390 +0.0361
+      S2 statistic min_c increment = +0.0282 (at h1); excluded as re-found: q; missing candidates (history longer than the walk allows): none
+   PS-2 re-paired null (STRUCT from molecule i+n/2): increment beyond velocity -0.0005 (bar <= 0.01) -> PASS
+   PS-1 MOM own sigma1 at 1 ps = 0.006 (bar < 0.2) -> PASS
+   PS-4 time-shuffled STRUCT sigma1, max over lags >= 1 ps = 0.082 (bar < 0.2) -> PASS
+   alpha_2(t) max 0.547 at 3.900 ps (searched to 20.00 ps); tau* = 1 ps; ratio 3.90 -> inconsistent (within 2x)
+## T400_seed0 (400 K arm): 250 molecules x 2501 readouts at 20 fs = 50.00 ps; box 19.575 A; rigid-mode T 417.0 K; time scale x1
+   D from the O MSD over 0.5-2.5 ps: 5.86e-09 m^2/s
+   dictionary means: q 0.603, n33 4.211, n50 16.848, nb 5.134, h1 1.749, h2 2.443, h5 3.853, h10 5.404, s2 -2.958, s2w -2.958; xi = inf A from |g-1| maxima at [3.46, 4.12, 5.41, 6.67] A
+   lag 0: max |sigma - 1| on STRUCT = 1.0e+00 (reported, < 1e-2)
+   lag    0.1 ps (   5 rd): STRUCT sigma [4.697e-01 4.226e-01 3.500e-01 1.770e-01 3.947e-02 8.832e-17] | MOM own sigma1 0.097 | cross STRUCT-MOM 0.014, -MODE 0.010, -HIST 0.028 | held-out f 0.221 | time-shuffled sigma1 0.011
+   lag    0.5 ps (  25 rd): STRUCT sigma [1.593e-01 8.243e-02 4.035e-02 1.177e-02 2.786e-03 1.840e-18] | MOM own sigma1 0.010 | cross STRUCT-MOM 0.075, -MODE 0.016, -HIST 0.111 | held-out f 0.025 | time-shuffled sigma1 0.011
+   lag      1 ps (  50 rd): STRUCT sigma [6.811e-02 3.184e-02 7.495e-03 1.006e-03 6.596e-04 5.750e-19] | MOM own sigma1 0.004 | cross STRUCT-MOM 0.143, -MODE 0.018, -HIST 0.134 | held-out f 0.005 | time-shuffled sigma1 0.009
+   lag      2 ps ( 100 rd): STRUCT sigma [1.749e-02 8.225e-03 5.551e-03 9.157e-04 5.563e-04 2.300e-19] | MOM own sigma1 0.003 | cross STRUCT-MOM 0.515, -MODE 0.020, -HIST 0.159 | held-out f 0.000 | time-shuffled sigma1 0.011
+   lag      5 ps ( 250 rd): STRUCT sigma [5.381e-03 5.185e-03 3.058e-03 2.402e-03 3.187e-04 6.133e-19] | MOM own sigma1 0.004 | cross STRUCT-MOM 0.743, -MODE 0.023, -HIST 0.128 | held-out f 0.000 | time-shuffled sigma1 0.011
+   lag     10 ps ( 500 rd): STRUCT sigma [9.095e-03 5.782e-03 5.092e-03 3.830e-03 2.475e-03 3.067e-19] | MOM own sigma1 0.005 | cross STRUCT-MOM 0.632, -MODE 0.028, -HIST 0.601 | held-out f 0.000 | time-shuffled sigma1 0.010
+   lag     20 ps (1000 rd): STRUCT sigma [1.167e-02 7.972e-03 4.127e-03 1.703e-03 7.479e-04 7.666e-20] | MOM own sigma1 0.005 | cross STRUCT-MOM 0.638, -MODE 0.059, -HIST 0.686 | held-out f 0.000 | time-shuffled sigma1 0.012
+   SECTOR at tau* = 1 ps (sigma1 0.068): weights (L1-normalised, standardised cols) q -0.46, n33 -0.16, n50 -0.28, nb +0.05, s2 +0.02, s2w +0.02
+      corr(f, col): q -0.84, n33 -0.32, n50 -0.53, nb -0.01, s2 +0.15, s2w +0.15 | S3 loading (R^2 of f on the candidate): q 0.711, s2 0.022, s2w 0.022, density 0.386, bond count 0.000
+   S2 target |r(t+5 ps) - r(t)| over 1751 origins x 250: R^2 velocity alone -0.0036; velocity+f -0.0021 (carry +0.0014)
+      per candidate c: R^2(Z+c) -> R^2(Z+c+f), increment: q -0.0022->-0.0021 +0.0002; s2 -0.0036->-0.0021 +0.0015; s2w -0.0036->-0.0021 +0.0015; density -0.0034->-0.0021 +0.0013; bond count -0.0035->-0.0020 +0.0015; h1 -0.0039->-0.0024 +0.0014; h2 -0.0040->-0.0025 +0.0015; h5 -0.0035->-0.0021 +0.0014; h10 -0.0028->-0.0014 +0.0014
+      S2 statistic min_c increment = +0.0002 (at q); missing candidates (history longer than the walk allows): none
+   PS-2 re-paired null (STRUCT from molecule i+n/2): increment beyond velocity +0.0001 (bar <= 0.01) -> PASS
+   PS-1 MOM own sigma1 at 1 ps = 0.004 (bar < 0.2) -> PASS
+   PS-4 time-shuffled STRUCT sigma1, max over lags >= 1 ps = 0.012 (bar < 0.2) -> PASS
+   alpha_2(t) max 0.180 at 0.760 ps (searched to 20.00 ps); tau* = 1 ps; ratio 0.76 -> consistent (within 2x)
+
+# VERDICT TABLE
+S1 closure: per 293 K seed, lags >= 1 ps with sigma1 >= 0.5 and cross-MOM < 0.2: [[], [], []] -> between
+S2 carried: min_c increment at 293 K [0.0283, 0.0283, 0.0282] (mean +0.0283); 400 K +0.0002; carry beyond velocity alone 293 [0.0387, 0.0386, 0.0396], 400 +0.0014 -> between
+S3 T293_seed0 (293 K arm): loading q 0.863, s2 0.128, s2w 0.027, density 0.066, bond count 0.063 -> RE-FINDING; weights q -0.41, n33 -0.10, n50 -0.04, nb +0.11, s2 +0.20, s2w -0.13; alpha2 peak 4.360 ps vs tau* 1 ps
+S3 T293_seed1 (293 K arm): loading q 0.817, s2 0.150, s2w 0.048, density 0.163, bond count 0.064 -> RE-FINDING; weights q -0.42, n33 -0.08, n50 -0.13, nb +0.10, s2 +0.17, s2w -0.10; alpha2 peak 4.800 ps vs tau* 1 ps
+S3 T293_seed2 (293 K arm): loading q 0.880, s2 0.101, s2w 0.019, density 0.039, bond count 0.088 -> RE-FINDING; weights q -0.42, n33 -0.09, n50 -0.02, nb +0.13, s2 +0.20, s2w -0.14; alpha2 peak 3.900 ps vs tau* 1 ps
+S3 T400_seed0 (400 K arm): loading q 0.711, s2 0.022, s2w 0.022, density 0.386, bond count 0.000 -> partial; weights q -0.46, n33 -0.16, n50 -0.28, nb +0.05, s2 +0.02, s2w +0.02; alpha2 peak 0.760 ps vs tau* 1 ps
+BRANCH: none of (a)-(e) cleanly: S1 between, S2 between, S3 per 293 K seed ['RE-FINDING', 'RE-FINDING', 'RE-FINDING']
+plants T293_seed0 (293 K arm): PS-1 0.006 (PASS), PS-2 -0.0004 (PASS), PS-4 0.101 (PASS), lag-0 8.1e-03
+plants T293_seed1 (293 K arm): PS-1 0.007 (PASS), PS-2 -0.0002 (PASS), PS-4 0.060 (PASS), lag-0 8.5e-03
+plants T293_seed2 (293 K arm): PS-1 0.006 (PASS), PS-2 -0.0005 (PASS), PS-4 0.082 (PASS), lag-0 8.9e-03
+plants T400_seed0 (400 K arm): PS-1 0.004 (PASS), PS-2 +0.0001 (PASS), PS-4 0.012 (PASS), lag-0 1.0e+00

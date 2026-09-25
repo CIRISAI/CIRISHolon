@@ -1,0 +1,61 @@
+# PS-1 data: MOM own sigma1 at 1 ps {'T293_seed2': 0.0059830319690853204, 'T400_seed0': 0.004339259955285698}
+# R0 (84 rich columns in the ridge, beyond velocity and q; no stake): {'T293_seed2': 0.019373124951647308, 'T400_seed0': 0.0005614196609266542}
+# LINEAR ARMS A, B, C (fitted on TRAIN, frozen)
+  A SLOW-1 search seed None: HELD-OUT sigma1(1ps) 0.331 inc_Z +0.0424 inc_q +0.0109 inc_S -0.0000 inc_SH -0.0000 | load q 0.836 STRUCT6 1.000 MOM 0.0000 | PS2 -0.0005 || 400K sigma1 0.066 inc_q +0.0001 inc_Z +0.0015 PS2 +0.0001 load q 0.851 [20 s]
+  PS-3 A SLOW-1 search: planted on (f1, f1^2, f1^3) R^2 1.000 (linear 1.000) -> PASS
+  PS-4 A SLOW-1 search: time-shuffled own sigma1 {1: 0.079, 2: 0.080, 5: 0.076, 10: 0.081, 20: 0.077} max 0.081 -> PASS
+  A SLOW-1 search refitted on 400 K itself (no stake): sigma1 0.067 inc_q +0.0001 load q 0.713
+  B TICA seed None: HELD-OUT sigma1(1ps) 0.331 inc_Z +0.0423 inc_q +0.0108 inc_S -0.0000 inc_SH -0.0000 | load q 0.839 STRUCT6 1.000 MOM 0.0000 | PS2 -0.0005 || 400K sigma1 0.066 inc_q +0.0001 inc_Z +0.0015 PS2 +0.0001 load q 0.852 [37 s]
+  PS-3 B TICA: planted on (f1, f1^2, f1^3) R^2 1.000 (linear 1.000) -> PASS
+  PS-4 B TICA: time-shuffled own sigma1 {1: 0.079, 2: 0.080, 5: 0.076, 10: 0.080, 20: 0.077} max 0.080 -> PASS
+  B TICA refitted on 400 K itself (no stake): sigma1 0.068 inc_q +0.0002 load q 0.708
+  C VAMP seed None: HELD-OUT sigma1(1ps) 0.331 inc_Z +0.0424 inc_q +0.0109 inc_S -0.0000 inc_SH -0.0000 | load q 0.836 STRUCT6 1.000 MOM 0.0000 | PS2 -0.0005 || 400K sigma1 0.066 inc_q +0.0001 inc_Z +0.0015 PS2 +0.0001 load q 0.850 [52 s]
+  PS-3 C VAMP: planted on (f1, f1^2, f1^3) R^2 1.000 (linear 1.000) -> PASS
+  PS-4 C VAMP: time-shuffled own sigma1 {1: 0.079, 2: 0.080, 5: 0.076, 10: 0.081, 20: 0.077} max 0.081 -> PASS
+  C VAMP refitted on 400 K itself (no stake): sigma1 0.067 inc_q +0.0001 load q 0.713
+# NETS on cuda: 180400 fitting rows x 84 inputs; 20 epochs
+  D VAMPnet seed 0: HELD-OUT sigma1(1ps) 0.502 inc_Z +0.0424 inc_q +0.0124 inc_S +0.0062 inc_SH +0.0044 | load q 0.197 STRUCT6 0.397 MOM 0.0001 | PS2 -0.0005 || 400K sigma1 0.081 inc_q +0.0007 inc_Z +0.0019 PS2 +0.0001 load q 0.112 [92 s]
+  D VAMPnet seed 1: HELD-OUT sigma1(1ps) 0.494 inc_Z +0.0443 inc_q +0.0139 inc_S +0.0062 inc_SH +0.0044 | load q 0.193 STRUCT6 0.401 MOM 0.0000 | PS2 -0.0005 || 400K sigma1 0.078 inc_q +0.0007 inc_Z +0.0019 PS2 +0.0001 load q 0.112 [115 s]
+  D VAMPnet seed 2: HELD-OUT sigma1(1ps) 0.498 inc_Z +0.0417 inc_q +0.0121 inc_S +0.0060 inc_SH +0.0043 | load q 0.185 STRUCT6 0.389 MOM 0.0000 | PS2 -0.0005 || 400K sigma1 0.075 inc_q +0.0006 inc_Z +0.0018 PS2 +0.0001 load q 0.098 [137 s]
+  E SPIB seed 0: HELD-OUT sigma1(1ps) 0.346 inc_Z +0.0102 inc_q +0.0033 inc_S +0.0023 inc_SH +0.0017 | load q 0.069 STRUCT6 0.271 MOM 0.0000 | PS2 +0.0003 || 400K sigma1 0.013 inc_q +0.0001 inc_Z +0.0002 PS2 -0.0000 load q 0.031 [173 s]
+    SPIB seed 0: final states 2
+  E SPIB seed 1: HELD-OUT sigma1(1ps) 0.153 inc_Z +0.0005 inc_q +0.0005 inc_S +0.0006 inc_SH +0.0004 | load q 0.001 STRUCT6 0.101 MOM 0.0000 | PS2 +0.0001 || 400K sigma1 0.013 inc_q +0.0001 inc_Z +0.0002 PS2 -0.0000 load q 0.037 [202 s]
+    SPIB seed 1: final states 2
+  E SPIB seed 2: HELD-OUT sigma1(1ps) 0.380 inc_Z +0.0101 inc_q +0.0030 inc_S +0.0022 inc_SH +0.0017 | load q 0.068 STRUCT6 0.288 MOM 0.0000 | PS2 +0.0003 || 400K sigma1 0.019 inc_q +0.0002 inc_Z +0.0006 PS2 -0.0001 load q 0.050 [234 s]
+    SPIB seed 2: final states 2
+  F integrated lam=10 (STAKE) seed 0: HELD-OUT sigma1(1ps) 0.495 inc_Z +0.0314 inc_q +0.0083 inc_S +0.0037 inc_SH +0.0027 | load q 0.061 STRUCT6 0.358 MOM 0.0000 | PS2 -0.0001 || 400K sigma1 0.053 inc_q +0.0005 inc_Z +0.0014 PS2 +0.0001 load q 0.023 [269 s]
+  F integrated lam=10 (STAKE) seed 1: HELD-OUT sigma1(1ps) 0.496 inc_Z +0.0285 inc_q +0.0072 inc_S +0.0035 inc_SH +0.0025 | load q 0.063 STRUCT6 0.355 MOM 0.0000 | PS2 -0.0001 || 400K sigma1 0.051 inc_q +0.0004 inc_Z +0.0013 PS2 +0.0001 load q 0.025 [304 s]
+  F integrated lam=10 (STAKE) seed 2: HELD-OUT sigma1(1ps) 0.498 inc_Z +0.0292 inc_q +0.0074 inc_S +0.0035 inc_SH +0.0025 | load q 0.071 STRUCT6 0.358 MOM 0.0000 | PS2 -0.0001 || 400K sigma1 0.052 inc_q +0.0005 inc_Z +0.0014 PS2 +0.0001 load q 0.029 [340 s]
+  F integrated lam=0 seed 0: HELD-OUT sigma1(1ps) 0.502 inc_Z +0.0424 inc_q +0.0124 inc_S +0.0062 inc_SH +0.0044 | load q 0.197 STRUCT6 0.397 MOM 0.0001 | PS2 -0.0005 || 400K sigma1 0.081 inc_q +0.0007 inc_Z +0.0019 PS2 +0.0001 load q 0.112 [362 s]
+  F integrated lam=0 seed 1: HELD-OUT sigma1(1ps) 0.494 inc_Z +0.0443 inc_q +0.0139 inc_S +0.0062 inc_SH +0.0044 | load q 0.193 STRUCT6 0.401 MOM 0.0000 | PS2 -0.0005 || 400K sigma1 0.078 inc_q +0.0007 inc_Z +0.0019 PS2 +0.0001 load q 0.112 [383 s]
+  F integrated lam=0 seed 2: HELD-OUT sigma1(1ps) 0.498 inc_Z +0.0417 inc_q +0.0121 inc_S +0.0060 inc_SH +0.0043 | load q 0.185 STRUCT6 0.389 MOM 0.0000 | PS2 -0.0005 || 400K sigma1 0.075 inc_q +0.0006 inc_Z +0.0018 PS2 +0.0001 load q 0.098 [403 s]
+  F integrated lam=1 seed 0: HELD-OUT sigma1(1ps) 0.500 inc_Z +0.0441 inc_q +0.0138 inc_S +0.0064 inc_SH +0.0045 | load q 0.189 STRUCT6 0.398 MOM 0.0000 | PS2 -0.0005 || 400K sigma1 0.081 inc_q +0.0007 inc_Z +0.0020 PS2 +0.0001 load q 0.124 [439 s]
+  F integrated lam=1 seed 1: HELD-OUT sigma1(1ps) 0.496 inc_Z +0.0439 inc_q +0.0138 inc_S +0.0058 inc_SH +0.0041 | load q 0.166 STRUCT6 0.390 MOM 0.0000 | PS2 -0.0004 || 400K sigma1 0.077 inc_q +0.0007 inc_Z +0.0019 PS2 +0.0001 load q 0.091 [474 s]
+  F integrated lam=1 seed 2: HELD-OUT sigma1(1ps) 0.498 inc_Z +0.0433 inc_q +0.0135 inc_S +0.0062 inc_SH +0.0044 | load q 0.166 STRUCT6 0.379 MOM 0.0000 | PS2 -0.0005 || 400K sigma1 0.074 inc_q +0.0007 inc_Z +0.0018 PS2 +0.0001 load q 0.095 [508 s]
+  F integrated lam=100 seed 0: HELD-OUT sigma1(1ps) 0.448 inc_Z +0.0274 inc_q +0.0074 inc_S +0.0028 inc_SH +0.0020 | load q 0.064 STRUCT6 0.332 MOM 0.0000 | PS2 -0.0000 || 400K sigma1 0.044 inc_q +0.0003 inc_Z +0.0011 PS2 +0.0001 load q 0.017 [544 s]
+  F integrated lam=100 seed 1: HELD-OUT sigma1(1ps) 0.406 inc_Z +0.0309 inc_q +0.0090 inc_S +0.0031 inc_SH +0.0022 | load q 0.194 STRUCT6 0.407 MOM 0.0000 | PS2 -0.0004 || 400K sigma1 0.048 inc_q +0.0006 inc_Z +0.0015 PS2 +0.0000 load q 0.140 [580 s]
+  F integrated lam=100 seed 2: HELD-OUT sigma1(1ps) 0.470 inc_Z +0.0281 inc_q +0.0073 inc_S +0.0032 inc_SH +0.0023 | load q 0.134 STRUCT6 0.374 MOM 0.0000 | PS2 -0.0002 || 400K sigma1 0.051 inc_q +0.0004 inc_Z +0.0012 PS2 +0.0001 load q 0.071 [621 s]
+# PLANTS PS-3 and PS-4 for the nets (training seed 0)
+  PS-3 D VAMPnet: planted on (f1, f1^2, f1^3) R^2 0.935 (linear 0.934) -> PASS
+  PS-3 E SPIB: planted on (f1, f1^2, f1^3) R^2 0.254 (linear 0.253) -> FAIL
+  PS-3 F integrated: planted on (f1, f1^2, f1^3) R^2 0.684 (linear 0.681) -> FAIL
+  PS-4 D VAMPnet: time-shuffled own sigma1 {1: 0.057, 2: 0.058, 5: 0.059, 10: 0.059, 20: 0.059} max 0.059 -> PASS
+  PS-4 E SPIB: time-shuffled own sigma1 {1: 0.073, 2: 0.075, 5: 0.075, 10: 0.076, 20: 0.076} max 0.076 -> PASS
+  PS-4 F integrated: time-shuffled own sigma1 {1: 0.086, 2: 0.084, 5: 0.086, 10: 0.087, 20: 0.087} max 0.087 -> PASS
+
+# ARMS (mean [min, max] over training seeds for D, E, F)
+A SLOW-1 search                    sigma1 0.331 | inc_Z +0.0424 | inc_q +0.0109 [+0.0109, +0.0109] | 400K inc_q +0.0001 | load q 0.836 | plants PASS
+B TICA                             sigma1 0.331 | inc_Z +0.0423 | inc_q +0.0108 [+0.0108, +0.0108] | 400K inc_q +0.0001 | load q 0.839 | plants PASS
+C VAMP                             sigma1 0.331 | inc_Z +0.0424 | inc_q +0.0109 [+0.0109, +0.0109] | 400K inc_q +0.0001 | load q 0.836 | plants PASS
+D VAMPnet                          sigma1 0.498 | inc_Z +0.0428 | inc_q +0.0128 [+0.0121, +0.0139] | 400K inc_q +0.0007 | load q 0.192 | plants PASS
+E SPIB                             sigma1 0.293 | inc_Z +0.0069 | inc_q +0.0022 [+0.0005, +0.0033] | 400K inc_q +0.0001 | load q 0.046 | plants FAIL: PS-3 (0.254)
+F integrated lam=10 (STAKE)        sigma1 0.496 | inc_Z +0.0297 | inc_q +0.0076 [+0.0072, +0.0083] | 400K inc_q +0.0005 | load q 0.065 | plants FAIL: PS-3 (0.684)
+F integrated lam=0                 sigma1 0.498 | inc_Z +0.0428 | inc_q +0.0128 [+0.0121, +0.0139] | 400K inc_q +0.0007 | load q 0.192 | plants FAIL: PS-3 (0.684)
+F integrated lam=1                 sigma1 0.498 | inc_Z +0.0438 | inc_q +0.0137 [+0.0135, +0.0138] | 400K inc_q +0.0007 | load q 0.174 | plants FAIL: PS-3 (0.684)
+F integrated lam=100               sigma1 0.441 | inc_Z +0.0288 | inc_q +0.0079 [+0.0073, +0.0090] | 400K inc_q +0.0004 | load q 0.131 | plants FAIL: PS-3 (0.684)
+   |cos| of the leading directions in STRUCT (standardised): A-B 0.9999, A-C 1.0000, B-C 1.0000
+C1: TICA f1 loads 0.839 on q, VAMP 0.836 -> MET: SLOW-1s search added nothing over TICA on this problem
+C2: best learned arm D VAMPnet: inc_q +0.0128 [+0.0121, +0.0139] (bar >= 0.02), PS-2 max -0.0005, 400 K +0.0007 (bar <= 0.005) -> NOT MET
+C3: F +0.0076 vs SPIB +0.0022: MET; |difference| 0.0054 vs combined spread 0.0038 -> separated
+Integration kill: FIRES (; F plant failures: PS-3 (0.684))
+BRANCH: (e) a plant fails on F: PS-3 (0.684)

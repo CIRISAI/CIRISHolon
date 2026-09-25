@@ -754,8 +754,18 @@ fn the_cheap_halfs_seam_is_what_it_says_it_is() {
     assert_eq!(out.order, acuity::ORDER);
     let state = statevector_amplitude(&c, &y);
     assert!(dist(out.value_f64, state) <= out.remainder + F64_EXIT);
-    // 4. the marginal: one plan, many y — the plan does not depend on y.
+    // 4. one plan, many `y` — the plan does not depend on `y`, which is the
+    //    whole reason the observable's sixteen legs cost one sort.
+    //
+    //    These are sixteen AMPLITUDES, one per setting of the first four
+    //    qubits, each refereed separately against the statevector. They are
+    //    deliberately NOT the marginal probability: the cheap half measured
+    //    that at this depth the four-qubit marginal is exactly 1/16 on almost
+    //    every instance and no T gate moves it, so a test that summed these
+    //    legs would be checking a constant. The liveness count below is what
+    //    says this one is not.
     let plan = BudgetPlan::of(&src);
+    let mut live = 0;
     for basis in 0..16u32 {
         let mut yy = y.clone();
         for (q, b) in yy.iter_mut().enumerate().take(4) {
@@ -763,8 +773,12 @@ fn the_cheap_halfs_seam_is_what_it_says_it_is() {
         }
         let o = acuity::budgeted_amplitude_with(&src, &plan, &yy, 1e-3, 4);
         let s = statevector_amplitude(&c, &yy);
-        assert!(dist(o.value_f64, s) <= o.remainder + F64_EXIT, "marginal leg {basis}");
+        assert!(dist(o.value_f64, s) <= o.remainder + F64_EXIT, "leg {basis}");
+        if s.0.hypot(s.1) > 1e-9 {
+            live += 1;
+        }
     }
+    assert!(live >= 4, "only {live} of 16 legs carry any amplitude — a vacuous check");
     // 5. `cyc_eq` on the exact value, for a caller that wants the ring.
     let full = budgeted_amplitude(&src, &y, 0.0, 1);
     assert!(cyc_eq(full.value, mesh::fold_amplitude(&src, &y, 8)));

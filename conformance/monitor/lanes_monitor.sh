@@ -31,6 +31,13 @@ while true; do
     [ ! -f $d/run.done ] && stale $d/scout.err 3600 && ev "slow_stale_$a" "SLOW-1 arm $a STALLED: no output for over an hour"
   done
   [ -f $OBS/slow1/slow1_read.DONE ] && ev slow_read "SLOW-1 READ WRITTEN: $OBS/slow1/slow1_read.txt"
+  # SLOW-3 (fresh seeds 3 and 4, cores 16 and 17)
+  for a in T293_seed3 T293_seed4; do
+    d=$OBS/slow3/$a; echo "SLOW-3 $a: $(grep -oE 'readout +[0-9]+' $d/scout.err 2>/dev/null | tail -1) done=$(cat $d/run.done 2>/dev/null)"
+    [ -f $d/run.done ] && [ "$(cat $d/run.done)" != "0" ] && ev "slow3_fail_$a" "SLOW-3 arm $a EXITED NONZERO: $(cat $d/run.done)"
+    [ ! -f $d/run.done ] && stale $d/scout.err 3600 && ev "slow3_stale_$a" "SLOW-3 arm $a STALLED: no output for over an hour"
+  done
+  [ "$(cat $OBS/slow3/T293_seed3/run.done 2>/dev/null)" = "0" ] && [ "$(cat $OBS/slow3/T293_seed4/run.done 2>/dev/null)" = "0" ] && ev slow3_done "SLOW-3 ARMS DONE: $OBS/slow3/T293_seed3 and T293_seed4 run.done 0"
   # fine seeds
   for a in L T; do
     d=$OBS/response1_fine_${a}_seed0; echo "fine_$a: $(grep -oE 'readout +[0-9]+' $d/scout.err 2>/dev/null | tail -1) done=$(cat $d/run.done 2>/dev/null)"

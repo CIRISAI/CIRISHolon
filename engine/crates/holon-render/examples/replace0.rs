@@ -65,7 +65,7 @@ fn temperature_k() -> f64 { *TEMPERATURE_K_SET.get().unwrap_or(&TEMPERATURE_K_DE
 /// their letters. `--seed k` picks one; each writes its own directory and its own bundle,
 /// because a branch point is a property of its seed and reusing one across seeds would be
 /// comparing two arms of the same trajectory and calling them independent.
-const SEEDS: [u64; 3] = [0x5245_504c_4143_4530, 0x5245_504c_4143_4531, 0x5245_504c_4143_4532];
+const SEEDS: [u64; 5] = [0x5245_504c_4143_4530, 0x5245_504c_4143_4531, 0x5245_504c_4143_4532, 0x5245_504c_4143_4533, 0x5245_504c_4143_4534]; // 3, 4: SLOW-3 fresh seeds (SLOW3_PREREG.md)
 const SEAM_CUTOFF_BOHR: f64 = 14.0;
 const RDF_DR: f64 = 0.1;
 const AU_TIME_FS: f64 = 0.024_188_843_265_857;

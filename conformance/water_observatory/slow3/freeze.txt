@@ -1,0 +1,14 @@
+  frozen D seed 0 [19 s] {}
+  frozen D seed 1 [31 s] {}
+  frozen D seed 2 [42 s] {}
+  frozen D PS-4 (time-shuffled TRAIN) [54 s]
+  frozen F seed 0 [90 s] {}
+  frozen F seed 1 [127 s] {}
+  frozen F seed 2 [164 s] {}
+  frozen F PS-4 (time-shuffled TRAIN) [201 s]
+  frozen SPIB seed 0 [239 s] {'final_states': 4, 'collapsed': True, 'refinements_done': 4, 'initial_occupied': 50}
+  frozen SPIB seed 1 [354 s] {'final_states': 2, 'collapsed': True, 'refinements_done': 4, 'initial_occupied': 50}
+  frozen SPIB seed 2 [471 s] {'final_states': 2, 'collapsed': True, 'refinements_done': 5, 'initial_occupied': 50}
+  frozen SPIB PS-4 (time-shuffled TRAIN) [493 s]
+# FROZEN: 24 files, manifest sha256 cd88af246afbf485d3b77c4ef6c4596cb56fe36ec75754dfc2e900dac71e5382 [493 s]
+FREEZE EXIT 0

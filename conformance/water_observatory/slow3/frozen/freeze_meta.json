@@ -1,0 +1,61 @@
+{
+ "lam": 0.3,
+ "spib_variant": "S4",
+ "spib_K_beta": [
+  50,
+  0.001
+ ],
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "arms": {
+  "D": {
+   "0": {},
+   "1": {},
+   "2": {},
+   "ps4": {}
+  },
+  "F": {
+   "0": {},
+   "1": {},
+   "2": {},
+   "ps4": {}
+  },
+  "SPIB": {
+   "0": {
+    "final_states": 4,
+    "collapsed": true,
+    "refinements_done": 4,
+    "initial_occupied": 50
+   },
+   "1": {
+    "final_states": 2,
+    "collapsed": true,
+    "refinements_done": 4,
+    "initial_occupied": 50
+   },
+   "2": {
+    "final_states": 2,
+    "collapsed": true,
+    "refinements_done": 5,
+    "initial_occupied": 50
+   },
+   "ps4": {
+    "final_states": 2,
+    "collapsed": true,
+    "refinements_done": 2,
+    "initial_occupied": 50
+   }
+  }
+ },
+ "env": {
+  "torch": "2.14.0+cu130",
+  "deeptime": "0.4.5",
+  "numpy": "2.5.3",
+  "device": "cuda",
+  "gpu": "NVIDIA GeForce RTX 4090 Laptop GPU",
+  "selection_sha256": "202214fcc5e581802191eafd52f420be355b3e5887a2a1efa4f29ff1095048bd"
+ }
+}

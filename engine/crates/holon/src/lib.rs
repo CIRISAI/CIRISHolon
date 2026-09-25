@@ -37,6 +37,7 @@ pub mod sample;
 pub mod sector;
 pub mod simd;
 pub mod simplify;
+pub mod stabrank;
 pub mod sliced;
 pub mod surface;
 pub mod coladaptive;

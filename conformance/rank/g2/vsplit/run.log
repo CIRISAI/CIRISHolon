@@ -1,0 +1,3 @@
+2026-09-24T16:14:23Z vsplit m=6 rank=6 sizes=[3] t=0.00h | members of V harvested: 0 | joins tested: 0 | anneal restarts 0 moves 0 best inf | witness: false
+2026-09-24T16:19:53Z vsplit m=6 rank=6 sizes=[3] t=0.09h | members of V harvested: 9 | joins tested: 8 | anneal restarts 5088 moves 508472753 best 0.000e0 | witness: true
+WITNESS m=6 rank=6 found in 330.0 s -> conformance/rank/g2/vsplit/qubit_H-m6-rank6-vsplit.json

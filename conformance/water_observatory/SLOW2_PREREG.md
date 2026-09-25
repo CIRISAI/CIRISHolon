@@ -253,3 +253,56 @@ witness: none (a measured campaign: its gates are numeric, and its closure algeb
 - M-BASE-RATE-OMITTED: `q`'s own carry is printed beside every increment.
 
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant (the planted column carries the OU log-mobility by construction; the re-paired and time-shuffled nulls act on the arm's own output and input, which are nonzero on every real walk).
+
+### Notes on building (2026-09-25; appended after the freeze and BEFORE the read of any real walk; no stake, bar, λ or plant moves)
+
+These were found building `slow2_compare.py` and running its plants on the PS-3 carrier (the
+synthetic), which the plants section says runs first. No arm had been read on HELD-OUT or
+CONTROL when this note was written. A code-path run on a 40-molecule subset was checked for
+crashes only, and its numbers were not used.
+
+1. **SPIB's own convergence rule never fires at these settings.** The package refines when the
+   epoch's training-loss change stays under `tolerance = 10⁻³` for `patience + 1` epochs. On
+   the synthetic, the change stayed at 3–5 × 10⁻³ for more than 2,000 epochs, with no
+   refinement, and the package has no epoch cap. **Built:** the package's own `fit`, with
+   `tolerance = ∞` and `patience = 4`, which makes its rule a fixed schedule: a refinement
+   every 5 epochs, 8 refinements, 45 epochs. The package code is unchanged. The prereg's
+   "patience 2, tolerance 10⁻³" could not terminate, and this is the bounded reading of the
+   same rule.
+2. **SPIB can collapse to one state, and the package then raises** ("Only one metastable
+   state is found!"). **Built:** the error is caught, the collapse is recorded (refinements
+   completed, epochs), and the encoder's `z_mean` as trained at that moment is read as E's
+   output. A collapsed SPIB is still read, and the collapse is printed beside its numbers.
+3. **SPIB's input normalisation** uses TRAIN's moments, the same `Std` object as the other
+   nets, as the prereg says. The first draft used the fitting molecules' moments.
+4. **PS-3 dry run on the synthetic, all arms at the frozen settings (training seed 0):**
+
+   | arm | PS-3 score | result | note |
+   |---|---|---|---|
+   | A, B, C | 0.9999 | PASS | |
+   | D (VAMPnet via deeptime) | 0.935 | PASS | |
+   | E (SPIB) | 0.254 | **FAIL** | collapsed to one state after 2 refinements, 15 epochs; k-means on the 85 standardised columns does not split on the one planted column, and SPIB merges the fast labels |
+   | **F (λ = 10)** | **0.684** | **FAIL** | |
+
+   **Diagnostics for F, no stake:**
+
+   | F run | PS-3 score |
+   |---|---|
+   | λ = 0 through F's training code | 0.935, identical to D's deeptime `partial_fit` |
+   | λ = 1 | 0.920 |
+   | λ = 10, trained 90 epochs (the step count the real training reaches, about 1,900) | 0.860 |
+   | λ = 100 | 0.595 |
+
+   The λ = 0 row confirms the two training codes agree. At λ ≥ 10 the carried term pulls
+   the output away from the planted slow column, toward a predictor of the next-5-ps
+   displacement that is not the slow variable. Training as long as the real run does not
+   rescue it.
+   **Consequence, stated before the read:** by the frozen rule, F fails PS-3, so the
+   **integration kill fires**, and E fails PS-3, so **E is not read**. The real run
+   repeats these plants with the same seeds. The stake numbers of E and F are still
+   computed and printed as NOT READ. λ = 1 is reported, as declared, and is not promoted
+   to the stake.
+5. **"Own σ₁" of a 2-D output** is at most the VAMP of a 2-column dictionary, so it is
+   bounded by that dimension and not by STRUCT's six. SLOW-1's STRUCT σ₁ is the six-column
+   value. The two are compared as closure of the arm's output, which is what the lead's
+   "own σ₁ at τ*" asks.

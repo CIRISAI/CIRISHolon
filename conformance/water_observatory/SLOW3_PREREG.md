@@ -349,3 +349,49 @@ witness: none (a measured campaign: its gates are numeric, its closure algebra i
 - M-STALE-INSTRUMENT: the Python environment is session-keyed. The weights, the manifest and the instrument are committed, and the package versions are recorded.
 
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier and sector in its own row. Each sector is nonzero in its carrier by construction: the planted column carries the OU log-mobility, and the re-paired and time-shuffled nulls act on the arm's own output and input, which are nonzero on every real walk.
+
+### Notes on building (2026-09-25; appended after the freeze of this text and BEFORE any fresh walk exists; no stake, bar, grid or plant moves)
+
+1. **The binary.** Covered in §Carrier. The first launch panicked on `--seed 3`, and nothing
+   was written; the log is kept. Separately, a `replace0_slow3 scout --help` run was started
+   by mistake: the binary has no `--help`, so it began a default scout. It ran unpinned for
+   about two minutes before it was killed, and it wrote no output. It may have touched a core
+   outside 16–20 for those two minutes. The provenance re-run (`slow3_provenance.sh`, core
+   18) is still in its settle as this is written, and its result is reported at the read.
+2. **A 1-epoch, 1-seed code-path smoke (NOT A SELECTION)** ran on the synthetic and TRAIN only.
+   It found two crashes, both fixed in `c6133cb` before the real selection:
+   - the last partial batch can leave a cross-fit cell empty;
+   - a per-fold print was wrong.
+3. **The selection (`slow3/selection.txt`, `selection.json`), run once as declared:**
+
+   | candidate | PS-3 by torch seed | admissible | CV beyond velocity and `q` (2 folds × 3 seeds) |
+   |---|---|---|---|
+   | **F-fixed λ = 0.3** | 0.924, 0.920, 0.923 | **yes** | **+0.0147** [+0.0132, +0.0152] |
+   | F-fixed λ = 1 | 0.885, 0.859, 0.894 | no | +0.0100 |
+   | F-fixed λ = 3 | 0.744, 0.630, 0.702 | no | +0.0065 |
+   | F-fixed λ = 0 (reported) | 0.925, 0.932, 0.923 | (n/a) | +0.0142 |
+   | D (reported) | 0.935, 0.938, 0.934 | (n/a) | +0.0145 |
+   | SPIB S1 (K 20, β 10⁻²) | 0.716, 0.440, 0.894 | no | +0.0025 |
+   | SPIB S2 (K 20, β 10⁻³) | 0.732, 0.763, 0.858 | no | +0.0045 |
+   | SPIB S3 (K 50, β 10⁻²) | 0.010, 0.740, 0.722 | no | +0.0039 |
+   | SPIB S4 (K 50, β 10⁻³) | 0.022, 0.003, 0.810 | no | +0.0072 |
+
+   - **λ = 0.3 is selected**, the only admissible λ.
+   - **No SPIB variant is admissible.** Every variant still collapses to 2–5 states on the
+     synthetic, even from TICA-space labels. By step 4 of the rule, S4 (the highest CV) is
+     frozen for the record and **SPIB-fixed is NOT READ**. G3 will print "SPIB-fixed not
+     read", and branch (a) cannot be declared.
+   - The carried term hurts more as λ grows, on both screens: PS-3 falls and the CV falls.
+4. **Said before the read, from TRAIN only.**
+   - No candidate's CV increment reaches +0.02. F-fixed at λ = 0.3 (+0.0147) is D (+0.0145)
+     within the torch-seed spread.
+   - A dry pass of the frozen models through the read code, on TRAIN walks standing in for
+     the fresh ones, is in-sample and NOT A READING. It printed F-fixed +0.0182, D +0.0166
+     and R0 +0.0218.
+   - **The expectation on the fresh seeds is therefore branch (c).** It is written here so
+     that the read cannot be framed after the fact. No stake moves.
+5. **Frozen.** The models are in `slow3/frozen/` (24 files: D, F-fixed λ = 0.3 and SPIB-fixed
+   S4 × torch seeds 0–2, their `f1` maps, the three PS-4 models, and TRAIN's
+   standardisation), with `MANIFEST.sha256`. The manifest's own sha256 is
+   `cd88af246afbf485d3b77c4ef6c4596cb56fe36ec75754dfc2e900dac71e5382`. The read
+   (`slow3_read.sh`) checks every file against the manifest before it uses it.

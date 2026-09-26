@@ -152,3 +152,20 @@ campaigns); one core class, no price compared across classes.
 witness: none (a measured campaign: its gates are numeric and its closure algebra is `Closed` and `StatClosure.lean`, cited in words above; no gate is a Lean theorem of its own)
 **misfits:** M-PLANT-OBS, M-PLANT-SECTOR, M-PLACEMENT-LOTTERY, M-FLOOR-UNSTAKED — the registered ids this text contacts. M-PLANT-OBS: every plant is re-derived for THIS reader and run on it before the read (PO-1 on the reader's own loader). M-PLANT-SECTOR: PO-4 acts on `ρ_k`, the carrier's own density mode. M-PLACEMENT-LOTTERY: all reads on cores 16–20, one class. M-FLOOR-UNSTAKED: the resolution floor at long lags is named (§6.3) and PO-3 measures it.
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier in its own row, and the sector the plant acts on is nonzero in that carrier by construction of the plant.
+
+### Notes on building and reading (2026-09-25, appended after the freeze; no stake, gate, plant or number above moved)
+
+- The reader was committed as `186b9ad`, unchanged since this freeze. The read and the plant scan
+  were first run before that commit, in the same session. They were re-run from the committed
+  files after a rate-limit interruption, and the outputs are byte-identical
+  (`replace0/order1/order1_read.txt`).
+- **PO-4 FAILED on the carrier of record**: increment `+0.0462` against `0.05`. Its other legs
+  passed: ratio `0.88`, loading `0.931`, null `+0.0002`. **Branch (e) as written.** The amplitude
+  `0.7` had been set on the synthetic carrier (§6.2), where it read `+0.12`. A post-freeze
+  amplitude scan on the same carrier is labelled NOT a plant of record
+  (`order1_plant_scan.txt`: `0.5 → +0.020`, `0.85 → +0.067`, `1.0 → +0.087`, `1.5` fails O1's
+  ratio). It is reported in `ORDER1_RESULTS.md` §2 as the instrument's sensitivity and moves no
+  verdict.
+- Reported, not graded: O1 between (`σ₁` at 1 ps `0.310 / 0.293 / 0.360`, ratio `≥ 0.95`); O2 at
+  kill level (increments `−0.0007` to `−0.0126`); O3 one time on every seed, with the mixture
+  clause split by noise. Had PO-4 fired, the branch would have been (d).

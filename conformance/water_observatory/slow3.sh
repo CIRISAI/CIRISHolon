@@ -11,7 +11,7 @@
 # engine/crates/holon-render/examples/replace0.rs. Installed as replace0/slow3/replace0_slow3
 # (sha256 29cb57c9b92fb2e7...). slow3_provenance.sh checks it against SLOW-1's seed-0 walk, row for row.
 set -u
-ROOT="${SLOW3_ROOT:-/home/emoore/CIRISHolon}"; BASE="$ROOT/conformance/water_observatory/replace0"
+ROOT="${SLOW3_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"; BASE="$ROOT/conformance/water_observatory/replace0"
 BIN="$BASE/slow3/replace0_slow3"; STIFF="$BASE/transport_seed0/stiffness.json"
 [ -x "$BIN" ] || { echo "slow3: no binary at $BIN"; exit 2; }
 cd "$ROOT/engine" || exit 2; OUT="$BASE/slow3"; mkdir -p "$OUT"

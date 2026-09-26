@@ -4,7 +4,7 @@
 # T293_seed4_crashed_diskfull/). Same binary, flags and core as slow3.sh, plus the fine launcher's
 # disk watchdog: SIGSTOP under 12 GiB free, SIGCONT when it recovers - a paused arm loses nothing.
 set -u
-ROOT=/home/emoore/CIRISHolon; BASE="$ROOT/conformance/water_observatory/replace0"
+ROOT="${CIRISHOLON_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"; BASE="$ROOT/conformance/water_observatory/replace0"
 BIN="$BASE/slow3/replace0_slow3"; STIFF="$BASE/transport_seed0/stiffness.json"
 d="$BASE/slow3/T293_seed4"; mkdir -p "$d"; FLOOR_GIB=12
 free_gib() { df -BG --output=avail "$BASE" | tail -1 | tr -dc '0-9'; }

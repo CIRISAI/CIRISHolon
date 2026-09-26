@@ -5,7 +5,7 @@
 # crashed, stopped writing, found a witness, or the disk ran low. The lead waits on
 # events.log's line count, not on a clock.
 set -u
-ROOT=/home/emoore/CIRISHolon
+ROOT="${CIRISHOLON_ROOT:-$(cd "$(dirname "$0")/../.." && pwd)}"
 M=$ROOT/conformance/monitor; S=$M/status.txt; E=$M/events.log; touch "$E"
 RANK=$ROOT/.claude/worktrees/agent-abf64e2822d6ca5a5/conformance/rank
 OBS=$ROOT/conformance/water_observatory/replace0

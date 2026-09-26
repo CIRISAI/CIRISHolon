@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """ORDER-1 (ORDER1_PREREG.md): the order parameter, hunted blind on walks already on disk.
 
@@ -285,7 +286,7 @@ def run_plant(W, scale, label, say=print):
 
 # ---------------------------------------------------------------- PO-1: the VIEW-SEARCH-1 regression
 PO1_BANKED = {"fourier all": (13.238, 12.163), "fourier density": (4.945, 5.648), "cells 2x2x2 occ+mom": (11.767, 15.119)}
-def po1(base="/home/emoore/CIRISHolon/conformance/water_observatory/replace0"):
+def po1(base=os.path.join(os.path.dirname(os.path.abspath(__file__)), "replace0")):
     data = []
     for k in range(3):
         P, V, L, dt_fs, _ = S1.load(f"{base}/transport_seed{k}")

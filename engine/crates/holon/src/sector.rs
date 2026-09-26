@@ -49,11 +49,27 @@
 //! where everything off the declared qubit set is traced out. This is a
 //! property of the observables the prereg declares, not a weakness of the
 //! search; the numbers are reported per instance either way.
+//!
+//! # 3. The removal IS the removability gate (REPLACE-1, G4)
+//!
+//! The cone decides; the decision is taken by `holon_closure::removable`, the
+//! same function that decides what the fluid-element tier carries. Every hard
+//! gate is a CANDIDATE, the observable is the TARGET, and the cone is the
+//! PRICE CERTIFICATE: a gate outside it carries a proven bound of `0` on the
+//! change it can make, a gate inside it carries no bound at all. The gate
+//! drops at budget [`REMOVAL_BUDGET`] `= 10⁻¹²` — QVM-ACUITY-1's S1 stake — so
+//! "removed" here and "dropped" there are one decision with two kinds of
+//! receipt ([`light_cone_admission`] returns it).
 
 use crate::affine::Gate;
 use crate::ledger::Cyc;
 use crate::magic::Circuit;
 use crate::BranchSource;
+use holon_closure::removable::{self, Admission, Certificate};
+
+/// The budget the light-cone removal drops at: QVM-ACUITY-1's S1 stake (a removed
+/// gate may change the observable by at most `10⁻¹²`), as REPLACE-1's G4 states it.
+pub const REMOVAL_BUDGET: f64 = 1e-12;
 
 /// A complex number in the FLOAT lane. The exact path is [`Cyc`]; floats
 /// appear here only in the referee and in the closure test's linear algebra,
@@ -446,9 +462,17 @@ pub fn width(circuit: &[Gate], observable: &Observable) -> usize {
     from_gates.max(observable.min_width())
 }
 
-/// LOCATE. Two searches, in this order: the closure test over every gate,
-/// then the backward light cone of the observable.
-pub fn locate(circuit: &[Gate], observable: &Observable) -> Sector {
+/// The two searches' raw findings: which gates are hard (search one), which
+/// sit inside the observable's backward cone (search two), and the cone itself.
+struct Searched {
+    n: usize,
+    clifford: Vec<Gate>,
+    is_hard: Vec<bool>,
+    keep: Vec<bool>,
+    cone: Vec<bool>,
+}
+
+fn search(circuit: &[Gate], observable: &Observable) -> Searched {
     let n = width(circuit, observable);
 
     // --- search one: where does the tableau view stay Closed? ---
@@ -477,22 +501,63 @@ pub fn locate(circuit: &[Gate], observable: &Observable) -> Sector {
             keep[i] = true;
         }
     }
+    Searched { n, clifford, is_hard, keep, cone }
+}
+
+/// The hard gates put to the removability gate: candidates named by their
+/// circuit position, the cone as each one's price certificate, budget
+/// [`REMOVAL_BUDGET`].
+fn admission_of(circuit: &[Gate], s: &Searched) -> Admission {
+    let at: Vec<usize> = (0..circuit.len()).filter(|&i| s.is_hard[i]).collect();
+    let names: Vec<String> = at.iter().map(|i| i.to_string()).collect();
+    let certs: Vec<Certificate> = at
+        .iter()
+        .map(|&i| {
+            if s.keep[i] {
+                Certificate::Unbounded { why: "inside the observable's backward light cone".to_string() }
+            } else {
+                Certificate::Bound {
+                    change: 0.0,
+                    why: "outside the observable's backward light cone: it cancels against its own adjoint"
+                        .to_string(),
+                }
+            }
+        })
+        .collect();
+    removable::admit_certified(&names, &certs, REMOVAL_BUDGET)
+}
+
+/// The removal as the gate decided it: every hard gate's price certificate
+/// and verdict (the `dropped` names are the circuit positions [`locate`]
+/// reports as `removed`).
+pub fn light_cone_admission(circuit: &[Gate], observable: &Observable) -> Admission {
+    admission_of(circuit, &search(circuit, observable))
+}
+
+/// LOCATE. Two searches, in this order: the closure test over every gate,
+/// then the backward light cone of the observable — and the removal they
+/// license taken by the removability gate (section 3 of the module header).
+pub fn locate(circuit: &[Gate], observable: &Observable) -> Sector {
+    let s = search(circuit, observable);
+    let adm = admission_of(circuit, &s);
+    let dropped: std::collections::BTreeSet<usize> =
+        adm.dropped.iter().map(|name| name.parse().expect("a candidate is named by its position")).collect();
 
     let mut hard = Vec::new();
     let mut removed = Vec::new();
     for (i, g) in circuit.iter().enumerate() {
-        if !is_hard[i] {
+        if !s.is_hard[i] {
             continue;
         }
-        if keep[i] {
-            hard.push((i, *g));
-        } else {
+        if dropped.contains(&i) {
             removed.push((i, *g));
+        } else {
+            hard.push((i, *g));
         }
     }
-    let light_cone: Vec<usize> = (0..n).filter(|&q| cone[q]).collect();
+    let light_cone: Vec<usize> = (0..s.n).filter(|&q| s.cone[q]).collect();
     let t_eff = hard.len();
-    Sector { clifford, hard, removed, t_eff, light_cone, keep, n_qubits: n }
+    Sector { clifford: s.clifford, hard, removed, t_eff, light_cone, keep: s.keep, n_qubits: s.n }
 }
 
 // ---------------------------------------------------------------------------
@@ -890,6 +955,49 @@ mod tests {
         assert_eq!(s.removed.len(), 0);
         assert_eq!(s.light_cone, (0..6).collect::<Vec<_>>());
         assert_eq!(s.t_eff, 4);
+    }
+
+    /// REPLACE-1 G4: the removal taken through `removable` is the removal the
+    /// cone's own loop took before (the pre-REPLACE-1 body of `locate`, kept
+    /// here verbatim as the reference), gate for gate, on marginals where it
+    /// bites — and every removed gate carries a certified price of 0 within
+    /// the 1e-12 budget while every kept one carries none.
+    #[test]
+    fn the_light_cone_removal_is_the_removability_gate() {
+        fn reference_removed(circuit: &[Gate], obs: &Observable) -> Vec<usize> {
+            let n = width(circuit, obs);
+            let mut cone = vec![false; n];
+            for q in obs.support(n) {
+                cone[q] = true;
+            }
+            let mut keep = vec![false; circuit.len()];
+            for i in (0..circuit.len()).rev() {
+                let s = support(circuit[i]);
+                if s.iter().any(|&q| cone[q]) {
+                    for q in s {
+                        cone[q] = true;
+                    }
+                    keep[i] = true;
+                }
+            }
+            (0..circuit.len()).filter(|&i| !closure_of(circuit[i]).is_closed() && !keep[i]).collect()
+        }
+        let mut total = 0usize;
+        for (n, t, seed, depth) in [(8usize, 8usize, 1u64, 2usize), (12, 12, 2, 2), (12, 8, 3, 20), (16, 16, 4, 2)] {
+            let c = random_instance_depth(n, t, seed, depth * n);
+            let obs = Observable::Marginal { qubits: vec![0, 1, 2, 3], bits: vec![false; 4] };
+            let got: Vec<usize> = locate(&c.gates, &obs).removed.iter().map(|(i, _)| *i).collect();
+            assert_eq!(got, reference_removed(&c.gates, &obs), "n={n} t={t} seed={seed}");
+            let adm = light_cone_admission(&c.gates, &obs);
+            assert_eq!(adm.budget, REMOVAL_BUDGET);
+            for p in &adm.prices {
+                let dropped = adm.dropped.contains(&p.name);
+                assert_eq!(dropped, p.increment == 0.0, "{p}");
+                assert!(dropped || p.increment.is_infinite());
+            }
+            total += got.len();
+        }
+        assert!(total > 0, "the comparison must include removals, or it compares nothing");
     }
 
     #[test]

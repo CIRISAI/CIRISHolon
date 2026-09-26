@@ -22,6 +22,10 @@ pub mod lens;
 pub mod network;
 pub mod partition;
 pub mod quenchlog;
+/// REPLACE-1: the fluid element's cell and staggered charts behind one interface.
+pub mod staggered;
 pub mod synthetic;
 pub mod traj;
 pub mod traj2;
+/// REPLACE-1: the walks on disk and the SLOW-1 / ORDER-1 / HBOND dictionaries, read by the engine.
+pub mod walk;

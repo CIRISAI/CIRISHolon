@@ -2,7 +2,7 @@
 name = "holon"
 version = "0.1.0"
 edition = "2021"
-description = "THE holon: one recursive data object for every tier. Planes, ledger, chart, certificate, arena. One runtime dep: holon-device (no_std, zero-dep, one enum)."
+description = "THE holon: one recursive data object for every tier. Planes, ledger, chart, certificate, arena. Two runtime deps, both zero-dep: holon-device (no_std, one enum) and holon-closure (std, the closure type and the removability gate)."
 
 # holon-device: `no_std`, ZERO dependencies, no features, one enum — the ONE definition of
 # the device class (RESOURCE_DESIGN D0). `holon::acuity`'s budgeted result carries it,
@@ -11,6 +11,11 @@ description = "THE holon: one recursive data object for every tier. Planes, ledg
 # feature resolution" reasoning in holon-render's and holon-tables' manifests still holds.
 [dependencies]
 holon-device = { path = "../holon-device" }
+# holon-closure: std-only, ZERO dependencies, no features (its manifest says why). `sector`'s
+# light-cone removal is the removability gate's certified form (REPLACE-1 G4): a T-gate outside
+# the observable's backward cone is dropped by `removable::admit_certified` at budget 1e-12,
+# the cone as its price certificate. It brings nothing with it and unifies no features.
+holon-closure = { path = "../holon-closure" }
 
 [dev-dependencies]
 holon-qasm = { path = "../holon-qasm" }

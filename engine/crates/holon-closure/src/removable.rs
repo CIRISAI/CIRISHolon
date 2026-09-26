@@ -796,6 +796,17 @@ pub struct Admission {
     pub prices: Vec<Price>,
     /// the jackknife SE of each candidate's increment, in candidate order
     pub se: Vec<f64>,
+    /// ORDERED admission only (empty for the marginal one): the removals in the order the gate
+    /// took them, each with the price it cost at that step
+    pub order: Vec<Step>,
+}
+
+/// One step of ordered admission: the candidate removed, the price of removing it from the set
+/// that was then standing, and the set left standing after it.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Step {
+    pub price: Price,
+    pub remaining: Vec<String>,
 }
 
 impl Admission {
@@ -807,7 +818,107 @@ impl Admission {
         let carried = prices.iter().filter(|p| p.verdict == Verdict::Carried).map(|p| p.name.clone()).collect();
         let dropped = prices.iter().filter(|p| p.verdict != Verdict::Carried).map(|p| p.name.clone()).collect();
         let se = prices.iter().map(|p| p.se).collect();
-        Admission { budget, carried, dropped, prices, se }
+        Admission { budget, carried, dropped, prices, se, order: Vec::new() }
+    }
+
+    /// The one-at-a-time admission, kept for the record (REPLACE-1 Amendment 1): each candidate
+    /// against the kept set plus EVERY other candidate. It drops each of two redundant blocks —
+    /// the defect the amendment names. Identical to [`admit`] with the other candidates folded
+    /// into the kept set.
+    pub fn marginal(base: &[Unit], candidates: &[Candidate], q: &Question, nulls: &Nulls, budget: f64) -> Admission {
+        let all: Vec<usize> = (0..candidates.len()).collect();
+        let prices = (0..candidates.len())
+            .map(|b| {
+                let us = with_blocks(base, candidates, &all, Some(b));
+                let mut p = price_of(&us, &candidates[b], q, nulls);
+                p.verdict = verdict_of(p.increment, p.null_max(), budget);
+                p
+            })
+            .collect();
+        Admission::from_prices(budget, prices)
+    }
+
+    /// THE TIER'S ADMISSION (REPLACE-1 Amendment 1): backward elimination with a joint price.
+    /// Starting from the full dictionary (with `base` always kept), repeatedly remove the
+    /// candidate whose removal from the set then standing costs the LEAST, and stop when the
+    /// cheapest removal would cost more than `budget`. The survivors are carried, each with the
+    /// price of removing it from the final set; of a set of mutually redundant blocks exactly
+    /// one survives, and its price is the price of removing the whole set. Ties (prices within
+    /// `10⁻¹²`) go to the candidate declared FIRST. The kept columns are assembled in name
+    /// order, so the arithmetic does not depend on the order the dictionary was declared in.
+    /// The stopping rule reads the price alone; the nulls are read at every step and reported.
+    pub fn ordered(base: &[Unit], candidates: &[Candidate], q: &Question, nulls: &Nulls, budget: f64) -> Admission {
+        let mut alive: Vec<usize> = (0..candidates.len()).collect();
+        let mut order = Vec::new();
+        loop {
+            if alive.is_empty() {
+                return Admission { budget, carried: Vec::new(), dropped: order.iter().map(|s: &Step| s.price.name.clone()).collect(), prices: order.iter().map(|s| s.price.clone()).collect(), se: order.iter().map(|s| s.price.se).collect(), order };
+            }
+            let now: Vec<Price> = alive
+                .iter()
+                .map(|&b| price_of(&with_blocks(base, candidates, &alive, Some(b)), &candidates[b], q, nulls))
+                .collect();
+            let mut k = 0;
+            for j in 1..now.len() {
+                if now[j].increment < now[k].increment - 1e-12 {
+                    k = j;
+                }
+            }
+            if now[k].increment > budget {
+                let mut prices: Vec<Price> = order.iter().map(|s: &Step| s.price.clone()).collect();
+                let mut carried = Vec::new();
+                let mut dropped: Vec<String> = order.iter().map(|s| s.price.name.clone()).collect();
+                for mut p in now {
+                    p.verdict = verdict_of(p.increment, p.null_max(), budget);
+                    if p.verdict == Verdict::Carried {
+                        carried.push(p.name.clone());
+                    } else {
+                        dropped.push(p.name.clone());
+                    }
+                    prices.push(p);
+                }
+                let se = prices.iter().map(|p| p.se).collect();
+                return Admission { budget, carried, dropped, prices, se, order };
+            }
+            let mut p = now[k].clone();
+            p.verdict = Verdict::Dropped;
+            alive.remove(k);
+            order.push(Step { price: p, remaining: alive.iter().map(|&i| candidates[i].name.clone()).collect() });
+        }
+    }
+}
+
+/// The units with the standing candidate blocks (all of `set` but `except`) appended to the kept
+/// columns, in NAME order.
+fn with_blocks(base: &[Unit], candidates: &[Candidate], set: &[usize], except: Option<usize>) -> Vec<Unit> {
+    let mut idx: Vec<usize> = set.iter().copied().filter(|&i| Some(i) != except).collect();
+    idx.sort_by(|&a, &b| candidates[a].name.cmp(&candidates[b].name));
+    base.iter()
+        .enumerate()
+        .map(|(u, un)| {
+            let mut kept = un.kept.clone();
+            for &i in &idx {
+                kept = kept.hcat(&candidates[i].cols[u]);
+            }
+            Unit { kept, target: un.target.clone() }
+        })
+        .collect()
+}
+
+/// A candidate's measured price over a kept set, with its nulls (verdict left to the caller).
+fn price_of(units: &[Unit], c: &Candidate, q: &Question, nulls: &Nulls) -> Price {
+    let r = increment(units, &c.cols, q);
+    Price {
+        name: c.name.clone(),
+        increment: r.increment,
+        se: r.se,
+        null_shift: if nulls.shift { Some(null_shift(units, &c.cols, q)) } else { None },
+        null_swap: nulls.swap.as_ref().map(|s| null_swap(units, &c.cols, s, q)),
+        r2_kept: r.r2_kept,
+        r2_with: r.r2_with,
+        redundant: r.redundant,
+        basis: "measured".to_string(),
+        verdict: Verdict::Dropped,
     }
 }
 
@@ -825,21 +936,7 @@ fn verdict_of(increment: f64, null: Option<f64>, budget: f64) -> Verdict {
 pub fn admit(units: &[Unit], candidates: &[Candidate], q: &Question, nulls: &Nulls, budget: f64) -> Admission {
     let mut prices = Vec::with_capacity(candidates.len());
     for c in candidates {
-        let r = increment(units, &c.cols, q);
-        let ns = if nulls.shift { Some(null_shift(units, &c.cols, q)) } else { None };
-        let nw = nulls.swap.as_ref().map(|s| null_swap(units, &c.cols, s, q));
-        let mut p = Price {
-            name: c.name.clone(),
-            increment: r.increment,
-            se: r.se,
-            null_shift: ns,
-            null_swap: nw,
-            r2_kept: r.r2_kept,
-            r2_with: r.r2_with,
-            redundant: r.redundant.clone(),
-            basis: "measured".to_string(),
-            verdict: Verdict::Dropped,
-        };
+        let mut p = price_of(units, c, q, nulls);
         p.verdict = verdict_of(p.increment, p.null_max(), budget);
         prices.push(p);
     }
@@ -1269,6 +1366,33 @@ mod tests {
         assert!(refuse_drop(&adm, "carried", 1.0).is_ok());
         assert!(refuse_drop(&adm, "unrelated", 0.02).is_ok());
         assert!(refuse_drop(&adm, "never priced", 1.0).is_err());
+    }
+
+    /// Amendment 1's defect and its repair on the synthetic: two affine copies of a carried
+    /// column are EACH removable given the other (marginal drops both); ordered admission keeps
+    /// exactly one, at the column's own price; the unrelated column goes first.
+    #[test]
+    fn ordered_admission_keeps_one_of_two_copies_at_the_columns_price() {
+        let (us, car, unr, _) = synth(3, 12, 400);
+        let copy: Vec<Mat> = car.cols.iter().map(|m| Mat { rows: m.rows, cols: 1, data: m.data.iter().map(|v| 2.0 * v - 1.0).collect() }).collect();
+        let dict = [Candidate::new("carried", car.cols.clone()), Candidate::new("carried copy", copy), unr.clone()];
+        let qq = q(Folds::Units { k: 4 }, Ridge::HBOND);
+        let nulls = Nulls { shift: false, swap: None };
+        let m = Admission::marginal(&us, &dict, &qq, &nulls, 0.02);
+        assert!(m.carried.is_empty(), "marginal drops both copies: {:?}", m.carried);
+        let o = Admission::ordered(&us, &dict, &qq, &nulls, 0.02);
+        assert_eq!(o.carried.len(), 1);
+        let single = admit(&us, std::slice::from_ref(&car), &qq, &nulls, 0.02).prices[0].increment;
+        let kept = o.price(&o.carried[0]).unwrap().increment;
+        assert!((kept - single).abs() < 1e-12, "{kept} vs {single}");
+        // determinism, and independence of the declared order (the two copies tie at exactly 0:
+        // the tie goes to the one declared first, so it is the one REMOVED first)
+        let o2 = Admission::ordered(&us, &dict, &qq, &nulls, 0.02);
+        assert_eq!(o, o2);
+        let rev = [dict[2].clone(), dict[1].clone(), dict[0].clone()];
+        let o3 = Admission::ordered(&us, &rev, &qq, &nulls, 0.02);
+        assert_eq!(o3.carried, vec!["carried".to_string()]);
+        assert_eq!(o.carried, vec!["carried copy".to_string()]);
     }
 
     #[test]

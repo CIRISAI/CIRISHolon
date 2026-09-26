@@ -17,7 +17,7 @@
 
 use holon::sector::{self, referee, Observable};
 use holon_closure::removable::{
-    self, admit, refuse_drop, Candidate, Folds, Horizon, Mat, Nulls, NumpyPcg64, Question, Ridge, Swap, Verdict,
+    self, admit, refuse_drop, Admission, Candidate, Folds, Horizon, Mat, Nulls, NumpyPcg64, Question, Ridge, Swap, Verdict,
 };
 use holon_lens::staggered::{self, FluidChart};
 use holon_lens::walk::{self, RigidWalk, C_LS, C_Q, C_STRUCT};
@@ -122,6 +122,54 @@ fn g5_refuses_by_name_and_the_defect_rises_by_the_price() {
     let full = walk::units(&ch, &[8, 9, 0, 1, 2, 3], &C_LS);
     let rise = removable::closure_r2(&full, &fluid_q(50)) - removable::closure_r2(&us, &fluid_q(50));
     assert!((rise - p.increment).abs() < 1e-12, "defect rise {rise} vs price {}", p.increment);
+}
+
+/// Amendment 1's PR-6: two exact copies of a carried column. ORDERED admission keeps exactly one
+/// and prices its removal at the single column's price; MARGINAL admission drops both (the defect).
+#[test]
+fn pr6_ordered_keeps_one_copy_and_marginal_drops_both() {
+    let (h, q) = synthetic_carrier(23);
+    let (hp, qp) = walk::plant_po4(&h, &q, 250.0, 50, 0.05, 1.0, 7);
+    let ch = walk::order_chains(&hp, &[qp]);
+    let base = walk::units(&ch, &C_LS, &C_LS);
+    let a = walk::cand(&ch, &[8, 9]);
+    let b: Vec<Mat> = a.iter().map(|m| Mat { rows: m.rows, cols: m.cols, data: m.data.iter().map(|v| 2.0 * v - 1.0).collect() }).collect();
+    let dict = [Candidate::new("A", a.clone()), Candidate::new("B", b)];
+    let nulls = Nulls { shift: true, swap: Some(Swap::Derange { shift: 2 }) };
+    let single = admit(&base, &[Candidate::new("A", a)], &fluid_q(50), &nulls, BETA).prices[0].increment;
+    assert!(single > 0.05, "the planted column must be carried on its own: {single}");
+    let o = Admission::ordered(&base, &dict, &fluid_q(50), &nulls, BETA);
+    assert_eq!(o.carried.len(), 1, "{:?}", o.carried);
+    assert_eq!(o.order.len(), 1);
+    assert_eq!(o.order[0].price.increment, 0.0, "the first copy goes at exactly zero");
+    assert!((o.price(&o.carried[0]).unwrap().increment - single).abs() < 1e-12);
+    let m = Admission::marginal(&base, &dict, &fluid_q(50), &nulls, BETA);
+    assert!(m.carried.is_empty(), "marginal admission drops both copies: {:?}", m.carried);
+}
+
+/// Amendment 1's PR-7: the removal order is deterministic and does not depend on the order the
+/// dictionary was declared in (no ties on this carrier).
+#[test]
+fn pr7_removal_order_is_deterministic_and_free_of_declared_order() {
+    let (h, q) = synthetic_carrier(24);
+    let (hp, qp) = walk::plant_po4(&h, &q, 250.0, 50, 0.05, 1.0, 8);
+    let ch = walk::order_chains(&hp, &[qp, q]);
+    let base: Vec<_> = ch.iter().map(|c| holon_closure::removable::Unit { kept: Mat::zeros(c.rows, 0), target: c.select_cols(&C_LS) }).collect();
+    let dict = || vec![Candidate::new("hydrodynamic", walk::cand(&ch, &C_LS)), Candidate::new("planted", walk::cand(&ch, &[8, 9])), Candidate::new("Q", walk::cand(&ch, &[10, 11]))];
+    let nulls = Nulls { shift: false, swap: None };
+    let o = Admission::ordered(&base, &dict(), &fluid_q(50), &nulls, BETA);
+    assert_eq!(o, Admission::ordered(&base, &dict(), &fluid_q(50), &nulls, BETA));
+    let names = |a: &Admission| (a.order.iter().map(|s| s.price.name.clone()).collect::<Vec<_>>(), a.carried.clone());
+    for k in 1..3 {
+        let mut d = dict();
+        d.rotate_left(k);
+        let r = Admission::ordered(&base, &d, &fluid_q(50), &nulls, BETA);
+        assert_eq!(names(&r), names(&o), "rotation {k}");
+    }
+    let mut d = dict();
+    d.reverse();
+    assert_eq!(names(&Admission::ordered(&base, &d, &fluid_q(50), &nulls, BETA)), names(&o));
+    assert!(o.carried.contains(&"planted".to_string()) && o.order.iter().any(|s| s.price.name == "Q"), "{:?} {:?}", o.carried, names(&o));
 }
 
 fn reference_removed(circuit: &[holon::affine::Gate], obs: &Observable) -> Vec<usize> {

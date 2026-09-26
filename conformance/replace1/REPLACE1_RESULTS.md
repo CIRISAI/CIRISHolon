@@ -193,3 +193,58 @@ question of it.
 ---
 witness: `Closed` (Object.lean) and `StatClosure.lean`, cited in words; the gate's numbers are measured against banked reads
 **misfits:** M-JOINT-PASS-REGION (G2 × G3a; recurs in the freeze that cites it), M-VACUOUS-SUCCESS (G2's 5 ps drops), M-PLANT-OBS (PR-1 re-derived; fires at `+0.104`), M-PLANT-SECTOR — contacted, cited.
+
+## Re-read under Amendment 1
+
+*2026-09-26. Amendment `REPLACE1_AMENDMENT_1.md` (frozen alone, `a99b690`). Instrument:
+`Admission::ordered` in `holon-closure::removable` (backward elimination: remove the candidate
+whose removal from the standing set costs least, stop when the cheapest removal exceeds `β`;
+ties within `10⁻¹²` go to the first-declared; kept columns assembled in name order so the
+arithmetic does not depend on declared order; the stop reads the price, the nulls are read at
+every step and reported). `Admission::marginal` is the one-at-a-time record. The read is
+`replace1_read_amend1.txt` (`examples/replace1 -- --only a1`). Declared in code before the
+read: G3a's dictionary is `[(ρ, j_L), (n33, n50, nb), (q, s2)]` in that order with nothing
+kept outside it; G3a's nulls are the time shift and the chain two over (another axis); G3b's
+dictionary is `[process sector, conscience block]`. PR-6 and PR-7 are also in CI on the
+synthetic carrier.*
+
+| stake | as amended | read | verdict |
+|---|---|---|---|
+| **G3a** | survivors ∋ hydrodynamic or count block; removing the survivor REFUSED at `≥ 0.04`; `(q, s2)` removed at `≤ 0.01` | all three seeds: `(ρ, j_L)` survives alone, REFUSED at **`+0.0622 / +0.0390 / +0.1039`**; `(q, s2)` removed at `−0.0015 / −0.0017 / −0.0030` | **not killed; the `≥ 0.04` bar missed on seed 1 by `0.001`** |
+| **G3b** | conscience block survives, removal price `≥ 0.02`, null `≤ 0.005` | survives (`β = 0.01`); removal price **`+0.0164 ± 0.0081`**, swapped null `−0.0013` | **not killed; the `≥ 0.02` bar missed** |
+| **PR-6** | ordered keeps one of two copies at the column's price; marginal drops both | ordered removes copy A at `0.0000` and keeps B at `+0.1041`, the single column's price, to `10⁻¹²`; marginal drops both at `0.0000` | PASS |
+| **PR-7** | removal order deterministic, independent of declared order (ties excepted) | re-run bit-identical; declared, reversed and rotated dictionaries give the same order, survivors and step prices (to `10⁻¹²`) | PASS |
+| **G4 amplitude clause** | as ACUITY-1 measured it | 25 of 27 under ACUITY-1's four-gate method, 27 of 27 with every kept T; 150 of 248 gate by gate. Dated correction added to `QVM_ACUITY1_RESULTS.md` | reported |
+| **BRANCH** | | | **none of (a)/(c)/(e) cleanly**: no kill fires and both plants pass, but a bar is missed on each half of G3. The lead's call. |
+
+**Removal orders, with each step's price** (nulls shifted / swapped):
+
+| seed | step 1 | step 2 | survivor (removal price) |
+|---|---|---|---|
+| T293_seed0 | `(q, s2)` `−0.0015` (`−0.0024 / −0.0047`) | counts `−0.0010` (`−0.0019 / −0.0045`) | `(ρ, j_L)` **`+0.0622 ± 0.0153`** (`−0.0005 / −0.0036`) |
+| T293_seed1 | counts `−0.0031` (`−0.0025 / −0.0035`) | `(q, s2)` `−0.0017` (`−0.0005 / −0.0050`) | `(ρ, j_L)` **`+0.0390 ± 0.0073`** (`−0.0066 / −0.0048`) |
+| T293_seed2 | `(q, s2)` `−0.0030` (`−0.0052 / −0.0055`) | counts `+0.0033` (`−0.0027 / −0.0087`) | `(ρ, j_L)` **`+0.1039 ± 0.0195`** (`−0.0094 / −0.0104`) |
+| chains | none removed | — | process sector `+0.3902 ± 0.0178` (null `−0.0139`); conscience block **`+0.0164 ± 0.0081`** (null `−0.0013`) |
+
+The marginal record, beside it: `(ρ, j_L)` `+0.0087 / +0.0094 / +0.0091`, counts
+`+0.0002 / −0.0031 / +0.0045`, `(q, s2)` `−0.0015 / +0.0003 / −0.0030`, all dropped. Ordered
+admission repairs exactly the defect the amendment names. The hydrodynamic block is carried on
+every seed, the count block goes second or first, and nothing on this carrier is left in a
+redundant pair.
+
+**What is wrong in the amendment.**
+1. **G3a's `≥ 0.04` bar was set from the numbers it grades.** The survivor's price after both
+   other blocks are removed is, by construction, the "nothing kept" increment already in §1's
+   diagnostic table: `+0.0622 / +0.0390 / +0.1039`. §3 of these results rounded that range to
+   "`+0.04 … +0.10`". That rounding is **my error**, and the amendment took its lower end as the
+   bar. Seed 1 then misses by the rounding. The bar tests nothing the read had not already
+   shown.
+2. **G3b's `≥ 0.02` price bar sits above the price already read.** With the process sector the
+   only other block, ordered and marginal admission compute the same number, `+0.0164`, which
+   was in the first read. The declared `β = 0.01` makes the block survive, and the price bar
+   then fails it on a number that was known before the freeze.
+3. **The branches do not cover "survives but a bar is missed"**, which is what both halves read.
+   The kill lines ("both blocks removed"; "the conscience block removed") do not fire.
+4. **G3a states no null and does not say how a null enters the stopping rule.** The build stops
+   on the price alone and reports the time-shifted and chain-two-over nulls at every step. Every
+   null read is `≤ 0.0139` in magnitude, so the choice changes nothing here.

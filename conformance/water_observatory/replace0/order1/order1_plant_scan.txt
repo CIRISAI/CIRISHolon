@@ -1,0 +1,30 @@
+# PO-4 on T293_seed0 at amplitude 0.5 (POST-FREEZE sensitivity scan, NOT the plant of record): a complex OU field per k-vector (5 ps), driving rho_k with 1 ps latency at one sd; planted Q with noise 0.05 of its variance
+   lag      1 ps (  50 rd): Q sigma [0.691 0.691] | minus H: sigma1 0.657 (ratio 0.95) | time-shuffled 0.008
+   lag      2 ps ( 100 rd): Q sigma [0.528 0.527] | minus H: sigma1 0.501 (ratio 0.95) | time-shuffled 0.006
+   O2 tau 1 ps: R^2 of (rho, jL)(t+tau): H 0.0466 -> H+Q 0.0665, increment +0.0199 (rho +0.0401, jL +0.0001; H alone rho 0.095, jL -0.001) | null, Q shifted T/2: -0.0013
+   O2 tau 5 ps: R^2 of (rho, jL)(t+tau): H -0.0120 -> H+Q -0.0179, increment -0.0059 (rho -0.0118, jL +0.0001; H alone rho -0.023, jL -0.001) | null, Q shifted T/2: +0.0030
+PO-4: O1 legs (sigma1 >= 0.3 and ratio >= 0.7 at a lag >= 1 ps) met; loading of Q's top closed direction at 1 ps on the planted Z: R^2 0.931 (bar >= 0.9); O2 increment 1 ps +0.0199, 5 ps -0.0059 (bar >= 0.05 at one tau); null -0.0013, +0.0030 (bar <= 0.01) -> FAIL
+# PO-4 on T293_seed0 at amplitude 0.7 (POST-FREEZE sensitivity scan, NOT the plant of record): a complex OU field per k-vector (5 ps), driving rho_k with 1 ps latency at one sd; planted Q with noise 0.05 of its variance
+   lag      1 ps (  50 rd): Q sigma [0.691 0.691] | minus H: sigma1 0.606 (ratio 0.88) | time-shuffled 0.008
+   lag      2 ps ( 100 rd): Q sigma [0.528 0.527] | minus H: sigma1 0.467 (ratio 0.88) | time-shuffled 0.006
+   O2 tau 1 ps: R^2 of (rho, jL)(t+tau): H 0.0561 -> H+Q 0.1023, increment +0.0462 (rho +0.0935, jL +0.0000; H alone rho 0.114, jL -0.001) | null, Q shifted T/2: +0.0002
+   O2 tau 5 ps: R^2 of (rho, jL)(t+tau): H -0.0136 -> H+Q -0.0171, increment -0.0035 (rho -0.0070, jL +0.0001; H alone rho -0.026, jL -0.001) | null, Q shifted T/2: +0.0032
+PO-4: O1 legs (sigma1 >= 0.3 and ratio >= 0.7 at a lag >= 1 ps) met; loading of Q's top closed direction at 1 ps on the planted Z: R^2 0.931 (bar >= 0.9); O2 increment 1 ps +0.0462, 5 ps -0.0035 (bar >= 0.05 at one tau); null +0.0002, +0.0032 (bar <= 0.01) -> FAIL
+# PO-4 on T293_seed0 at amplitude 0.85 (POST-FREEZE sensitivity scan, NOT the plant of record): a complex OU field per k-vector (5 ps), driving rho_k with 1 ps latency at one sd; planted Q with noise 0.05 of its variance
+   lag      1 ps (  50 rd): Q sigma [0.691 0.691] | minus H: sigma1 0.561 (ratio 0.81) | time-shuffled 0.008
+   lag      2 ps ( 100 rd): Q sigma [0.528 0.527] | minus H: sigma1 0.435 (ratio 0.83) | time-shuffled 0.006
+   O2 tau 1 ps: R^2 of (rho, jL)(t+tau): H 0.0664 -> H+Q 0.1333, increment +0.0669 (rho +0.1358, jL +0.0000; H alone rho 0.135, jL -0.000) | null, Q shifted T/2: +0.0008
+   O2 tau 5 ps: R^2 of (rho, jL)(t+tau): H -0.0157 -> H+Q -0.0168, increment -0.0011 (rho -0.0023, jL +0.0001; H alone rho -0.030, jL -0.001) | null, Q shifted T/2: +0.0029
+PO-4: O1 legs (sigma1 >= 0.3 and ratio >= 0.7 at a lag >= 1 ps) met; loading of Q's top closed direction at 1 ps on the planted Z: R^2 0.931 (bar >= 0.9); O2 increment 1 ps +0.0669, 5 ps -0.0011 (bar >= 0.05 at one tau); null +0.0008, +0.0029 (bar <= 0.01) -> PASS
+# PO-4 on T293_seed0 at amplitude 1 (POST-FREEZE sensitivity scan, NOT the plant of record): a complex OU field per k-vector (5 ps), driving rho_k with 1 ps latency at one sd; planted Q with noise 0.05 of its variance
+   lag      1 ps (  50 rd): Q sigma [0.691 0.691] | minus H: sigma1 0.514 (ratio 0.74) | time-shuffled 0.008
+   lag      2 ps ( 100 rd): Q sigma [0.528 0.527] | minus H: sigma1 0.403 (ratio 0.76) | time-shuffled 0.006
+   O2 tau 1 ps: R^2 of (rho, jL)(t+tau): H 0.0784 -> H+Q 0.1650, increment +0.0866 (rho +0.1761, jL -0.0000; H alone rho 0.160, jL -0.000) | null, Q shifted T/2: +0.0011
+   O2 tau 5 ps: R^2 of (rho, jL)(t+tau): H -0.0182 -> H+Q -0.0167, increment +0.0015 (rho +0.0028, jL +0.0001; H alone rho -0.035, jL -0.001) | null, Q shifted T/2: +0.0024
+PO-4: O1 legs (sigma1 >= 0.3 and ratio >= 0.7 at a lag >= 1 ps) met; loading of Q's top closed direction at 1 ps on the planted Z: R^2 0.931 (bar >= 0.9); O2 increment 1 ps +0.0866, 5 ps +0.0015 (bar >= 0.05 at one tau); null +0.0011, +0.0024 (bar <= 0.01) -> PASS
+# PO-4 on T293_seed0 at amplitude 1.5 (POST-FREEZE sensitivity scan, NOT the plant of record): a complex OU field per k-vector (5 ps), driving rho_k with 1 ps latency at one sd; planted Q with noise 0.05 of its variance
+   lag      1 ps (  50 rd): Q sigma [0.691 0.691] | minus H: sigma1 0.368 (ratio 0.53) | time-shuffled 0.008
+   lag      2 ps ( 100 rd): Q sigma [0.528 0.527] | minus H: sigma1 0.305 (ratio 0.58) | time-shuffled 0.006
+   O2 tau 1 ps: R^2 of (rho, jL)(t+tau): H 0.1207 -> H+Q 0.2569, increment +0.1362 (rho +0.2785, jL -0.0001; H alone rho 0.247, jL -0.000) | null, Q shifted T/2: +0.0007
+   O2 tau 5 ps: R^2 of (rho, jL)(t+tau): H -0.0267 -> H+Q -0.0172, increment +0.0095 (rho +0.0189, jL +0.0001; H alone rho -0.052, jL -0.001) | null, Q shifted T/2: +0.0001
+PO-4: O1 legs (sigma1 >= 0.3 and ratio >= 0.7 at a lag >= 1 ps) NOT met; loading of Q's top closed direction at 1 ps on the planted Z: R^2 0.931 (bar >= 0.9); O2 increment 1 ps +0.1362, 5 ps +0.0095 (bar >= 0.05 at one tau); null +0.0007, +0.0001 (bar <= 0.01) -> FAIL

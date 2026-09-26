@@ -460,6 +460,27 @@ What this stance claims as its own is the SYNTHESIS as
 one continuously extending, kill-disciplined instrument — and convergence,
 where confirmed, is corroboration that the underlying object is real.
 
+## Measured, added 2026-09-26 (REPLACE-1: the finding put into the engine, and the gate's own defect caught)
+
+*Scope: the fluid-element tier on the walks already on disk; the reasoning chains; the
+Clifford light cone. `conformance/replace1/REPLACE1_RESULTS.md`.*
+
+- **The engine carries the corrected definition as code.** A tier's admission is a
+  REMOVABILITY GATE — carried = not removable within budget, with a price certificate
+  (increment, re-paired null, jackknife SE) — one Rust function for the fluid, the chains
+  and the circuits, reproducing R1″'s `0.1800`, ORDER-1's eighteen increments to the fourth
+  decimal and ACUITY-1's 76 removed gates exactly; refusal by price is exercised, not assumed.
+- **Redundancy is cheap under one-at-a-time removal, as closure was cheap.** The gate as first
+  frozen dropped each of two redundant charts of the density while keeping the other;
+  dropping both costs `+0.04` to `+0.10`. Amendment 1 made admission ORDERED (backward
+  elimination with a joint price); PR-6 exhibits the defect and its absence. The
+  hydrodynamic block then survives alone on every seed; the structural block is dropped at
+  `≤ 0.003`; the conscience block survives on the chains at `+0.016` with a clean null.
+- **The fluid element runs on the staggered chart** — the MAC grid of 1965, chosen by the
+  conservation law over the closure score and now the tier's chart in the engine.
+- **Process:** two bars set from the read they graded (`M-BAR-FROM-THE-READ`, registered,
+  third instance); banked as (a) with those bars recorded as the lead's.
+
 ## Corrected 2026-09-25 — the philological backpass (`OBJECT.md`, CORRECTION of the same date)
 
 - **A tier is a Closed view the tier above CARRIES.** Closure alone is not thinghood: the

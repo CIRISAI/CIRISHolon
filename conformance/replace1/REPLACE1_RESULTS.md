@@ -248,3 +248,19 @@ redundant pair.
 4. **G3a states no null and does not say how a null enters the stopping rule.** The build stops
    on the price alone and reports the time-shifted and chain-two-over nulls at every step. Every
    null read is `≤ 0.0139` in magnitude, so the choice changes nothing here.
+
+
+## The lead's verdict (2026-09-26): BANKED AS (a), with G3's two bars recorded as the lead's
+
+G1, G2, G4, G5 MET to the digit against the bank; every plant fires, including PR-6 (the
+defect exhibited under marginal admission and absent under ordered) and PR-7 (determinism).
+G3 in substance: the hydrodynamic block survives ordered admission ALONE on every seed and is
+refused at `+0.062 / +0.039 / +0.104`; `(q, s2)` is removed at `≤ 0.003`; the count block never
+survives; on the chains the conscience block survives at `+0.016` with a null of `−0.001`. The
+two bars missed — `≥ 0.04` on seed 1 by `0.001`, `≥ 0.02` on the chains by `0.004` — were set
+by the lead from a rounded quotation of the first read and from a number already read:
+`M-BAR-FROM-THE-READ`, registered with this verdict as its third instance. They grade the
+lead's rounding, not the gate. The engine is banked: the fluid-element tier runs on the
+staggered chart with ORDERED admission and a price certificate, and the QVM's light-cone
+removal is the same function. What is owed: the next freeze that uses the gate sets its bars
+from a prior stake or a plant, never from a read.

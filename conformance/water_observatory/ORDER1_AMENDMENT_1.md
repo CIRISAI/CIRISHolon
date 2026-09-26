@@ -45,5 +45,5 @@ freeze. ORDER-1 is its origin.
 
 ---
 witness: none (a measured campaign; numeric gates; closure algebra `Closed` and `StatClosure.lean`, cited in words)
-**misfits:** M-PLANT-OBS, M-PLANT-SECTOR, M-PLACEMENT-LOTTERY, M-FLOOR-UNSTAKED, M-JOINT-PASS-REGION — the registered ids this text contacts. M-PLANT-OBS is the occurrence this amendment repairs; M-JOINT-PASS-REGION is registered by it.
+**misfits:** M-PLANT-OBS, M-PLANT-SECTOR, M-PLACEMENT-LOTTERY, M-FLOOR-UNSTAKED, M-JOINT-PASS-REGION, M-MAINTENANCE-LENS, M-STALE-INSTRUMENT — the registered ids this text contacts. M-PLANT-OBS is the occurrence this amendment repairs; M-JOINT-PASS-REGION is registered by it.
 Carrier-sector statement (M-PLANT-SECTOR): the plant acts on `ρ_k` of `T293_seed0`, the carrier's own density modes, nonzero in that carrier by construction.

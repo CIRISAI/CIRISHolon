@@ -1,0 +1,127 @@
+# Arm D (the collective dipole): REFUSED by name - the rigid walks carry oxygen positions and velocities only (3 x 250 columns per readout); no hydrogen, no orientation.
+# PO-1: the hydrodynamic sector as ORDER-1 builds it (slow1_search.load, Angstrom) on the 128-water rigid transport walks, VIEW-SEARCH-1's held-out read at 100 fs
+PO-1 fourier all           : held-out 13.238 (banked 13.238), bound 12.163 (banked 12.163) -> PASS
+PO-1 fourier density       : held-out 4.945 (banked 4.945), bound 5.648 (banked 5.648) -> PASS
+PO-1 cells 2x2x2 occ+mom   : held-out 11.767 (banked 11.767), bound 15.119 (banked 15.119) -> PASS
+PO-1 -> PASS
+
+# PO-4 on T293_seed0 (293 K arm): a complex OU field per k-vector (5 ps), driving rho_k with 1 ps latency at one sd; planted Q with noise 0.05 of its variance
+## PO-4 T293_seed0 (293 K arm): 2501 readouts at 20 fs = 50.00 ps; rigid-mode T 303.7 K
+   lag    0.1 ps (   5 rd): Q sigma [0.903 0.903] | minus H: sigma1 0.861 (ratio 0.95) | time-shuffled 0.004
+   lag    0.5 ps (  25 rd): Q sigma [0.8 0.8] | minus H: sigma1 0.679 (ratio 0.85) | time-shuffled 0.008
+   lag      1 ps (  50 rd): Q sigma [0.691 0.691] | minus H: sigma1 0.514 (ratio 0.74) | time-shuffled 0.008
+   lag      2 ps ( 100 rd): Q sigma [0.528 0.527] | minus H: sigma1 0.403 (ratio 0.76) | time-shuffled 0.006
+   lag      5 ps ( 250 rd): Q sigma [0.177 0.176] | minus H: sigma1 0.110 (ratio 0.62) | time-shuffled 0.014
+   lag     10 ps ( 500 rd): Q sigma [0.027 0.026] | minus H: sigma1 0.008 (ratio 0.28) | time-shuffled 0.008
+   lag     20 ps (1000 rd): Q sigma [0.161 0.161] | minus H: sigma1 0.131 (ratio 0.81) | time-shuffled 0.021
+   O2 tau 1 ps: R^2 of (rho, jL)(t+tau): H 0.0784 -> H+Q 0.1650, increment +0.0866 (rho +0.1761, jL -0.0000; H alone rho 0.160, jL -0.000) | null, Q shifted T/2: +0.0011
+   O2 tau 5 ps: R^2 of (rho, jL)(t+tau): H -0.0182 -> H+Q -0.0167, increment +0.0015 (rho +0.0028, jL +0.0001; H alone rho -0.035, jL -0.001) | null, Q shifted T/2: +0.0024
+   O3 ACF(Q_k) at 0.1/0.5/1/2/5/10/20 ps: 0.903, 0.796, 0.683, 0.514, 0.155, -0.024, -0.092
+      fit on [0.5, 20] ps: single tau 2.433 ps (amp 1.080, rms 0.0977); double 0.001 e^(-t/2.431) + 1.079 e^(-t/2.433) (SS 1.87e+00 vs 1.87e+00); KWW tau 3.526 beta 1.58 -> one time
+PO-4: O1 legs (sigma1 >= 0.3 and ratio >= 0.7 at a lag >= 1 ps) met; loading of Q's top closed direction at 1 ps on the planted Z: R^2 0.931 (bar >= 0.9); O2 increment 1 ps +0.0866, 5 ps +0.0015 (bar >= 0.05 at one tau); null +0.0011, +0.0024 (bar <= 0.01) -> PASS
+
+## T293_seed0 (293 K arm): 2501 readouts at 20 fs = 50.00 ps; rigid-mode T 303.7 K
+   <q> = 0.7423, sd per molecule 0.1587; density-mode static offsets removed (counts): [-0.59  1.24  1.17 -0.95  0.54  0.36]
+   equal-time corr(rho_k, Q_k) per column [-0.296 -0.232 -0.117 -0.252 -0.219  0.034] (mean -0.180; the two-state sign is NEGATIVE)
+   equal-time R^2 of Q_k on its own k-vector's hydrodynamic sector: 0.0380; on it plus K_k: 0.0386
+   lag    0.1 ps (   5 rd): Q sigma [0.615 0.615] | minus H: sigma1 0.598 (ratio 0.97) | time-shuffled 0.010 | minus H+K 0.592 | own sigma1: (rho,jL) 0.974, K 0.169, Q0 0.535 | literal 30-col: Q sigma1 0.778, ratio 0.94 | joint (H,Q) top [0.974 0.974 0.786 0.786]; Q-dominant direction #7 sigma 0.599, R^2 on Q 0.95, on rho 0.00, on jL 0.00
+   lag    0.5 ps (  25 rd): Q sigma [0.381 0.381] | minus H: sigma1 0.378 (ratio 0.99) | time-shuffled 0.004 | minus H+K 0.374 | own sigma1: (rho,jL) 0.448, K 0.122, Q0 0.431 | literal 30-col: Q sigma1 0.652, ratio 0.88 | joint (H,Q) top [0.465 0.465 0.433 0.433]; Q-dominant direction none
+   lag      1 ps (  50 rd): Q sigma [0.31 0.31] | minus H: sigma1 0.305 (ratio 0.98) | time-shuffled 0.013 | minus H+K 0.302 | own sigma1: (rho,jL) 0.353, K 0.056, Q0 0.383 | literal 30-col: Q sigma1 0.612, ratio 0.88 | joint (H,Q) top [0.384 0.384 0.293 0.293]; Q-dominant direction #3 sigma 0.293, R^2 on Q 0.73, on rho 0.22, on jL 0.00
+   lag      2 ps ( 100 rd): Q sigma [0.203 0.203] | minus H: sigma1 0.209 (ratio 1.03) | time-shuffled 0.005 | minus H+K 0.207 | own sigma1: (rho,jL) 0.212, K 0.006, Q0 0.359 | literal 30-col: Q sigma1 0.534, ratio 0.82 | joint (H,Q) top [0.266 0.266 0.21  0.21 ]; Q-dominant direction #3 sigma 0.210, R^2 on Q 0.61, on rho 0.23, on jL 0.01
+   lag      5 ps ( 250 rd): Q sigma [0.073 0.073] | minus H: sigma1 0.083 (ratio 1.13) | time-shuffled 0.017 | minus H+K 0.082 | own sigma1: (rho,jL) 0.088, K 0.003, Q0 0.159 | literal 30-col: Q sigma1 0.414, ratio 0.74 | joint (H,Q) top [0.145 0.145 0.142 0.142]; Q-dominant direction none
+   lag     10 ps ( 500 rd): Q sigma [0.035 0.034] | minus H: sigma1 0.037 (ratio 1.05) | time-shuffled 0.018 | minus H+K 0.037 | own sigma1: (rho,jL) 0.156, K 0.014, Q0 0.132 | literal 30-col: Q sigma1 0.315, ratio 0.81 | joint (H,Q) top [0.205 0.204 0.144 0.144]; Q-dominant direction none
+   lag     20 ps (1000 rd): Q sigma [0.082 0.078] | minus H: sigma1 0.093 (ratio 1.13) | time-shuffled 0.006 | minus H+K 0.092 | own sigma1: (rho,jL) 0.072, K 0.052, Q0 0.039 | literal 30-col: Q sigma1 0.498, ratio 0.87 | joint (H,Q) top [0.232 0.232 0.155 0.155]; Q-dominant direction #5 sigma 0.055, R^2 on Q 0.54, on rho 0.06, on jL 0.01
+   O2 tau 1 ps: R^2 of (rho, jL)(t+tau): H 0.0513 -> H+Q 0.0481, increment -0.0032 (rho -0.0063, jL -0.0001; H alone rho 0.104, jL -0.001) | null, Q shifted T/2: -0.0008 | beyond (rho,jL)+K -0.0031; K's own increment -0.0005 | literal 30-col increment -0.0330
+   O2 tau 5 ps: R^2 of (rho, jL)(t+tau): H -0.0144 -> H+Q -0.0270, increment -0.0126 (rho -0.0238, jL -0.0016; H alone rho -0.028, jL -0.001) | null, Q shifted T/2: -0.0148 | beyond (rho,jL)+K -0.0127; K's own increment -0.0018 | literal 30-col increment -0.0718
+   O3 ACF(Q_k) at 0.1/0.5/1/2/5/10/20 ps: 0.614, 0.377, 0.306, 0.199, 0.066, 0.026, -0.053
+      fit on [0.5, 20] ps: single tau 2.501 ps (amp 0.458, rms 0.0671); double 0.340 e^(-t/2.501) + 0.118 e^(-t/2.502) (SS 8.84e-01 vs 8.84e-01); KWW tau 2.745 beta 1.08 -> one time
+      per-molecule q ACF (self) at 0.1/0.5/1/2/5/10/20 ps: 0.548, 0.324, 0.259, 0.177, 0.051, -0.016, -0.078
+      self fit: single tau 2.198 ps (rms 0.0426); double 0.422/2.198 + 0.000/3.065 -> one time; KWW tau 2.995 beta 1.40
+      tau(Q_k) / tau(q self) = 1.14
+      alpha relaxation: F_s(k = 2.2 A^-1, t) falls below 1/e at 3.70 ps
+## T293_seed1 (293 K arm): 2501 readouts at 20 fs = 50.00 ps; rigid-mode T 316.5 K
+   <q> = 0.7337, sd per molecule 0.1625; density-mode static offsets removed (counts): [ 0.28 -0.63  0.55  1.    0.43  1.18]
+   equal-time corr(rho_k, Q_k) per column [-0.103 -0.141 -0.144  0.013 -0.007 -0.262] (mean -0.107; the two-state sign is NEGATIVE)
+   equal-time R^2 of Q_k on its own k-vector's hydrodynamic sector: 0.0123; on it plus K_k: 0.0132
+   lag    0.1 ps (   5 rd): Q sigma [0.602 0.602] | minus H: sigma1 0.597 (ratio 0.99) | time-shuffled 0.004 | minus H+K 0.603 | own sigma1: (rho,jL) 0.973, K 0.182, Q0 0.497 | literal 30-col: Q sigma1 0.787, ratio 0.97 | joint (H,Q) top [0.973 0.973 0.769 0.769]; Q-dominant direction #7 sigma 0.597, R^2 on Q 0.98, on rho 0.00, on jL 0.00
+   lag    0.5 ps (  25 rd): Q sigma [0.4 0.4] | minus H: sigma1 0.403 (ratio 1.01) | time-shuffled 0.025 | minus H+K 0.406 | own sigma1: (rho,jL) 0.418, K 0.128, Q0 0.346 | literal 30-col: Q sigma1 0.674, ratio 0.94 | joint (H,Q) top [0.446 0.446 0.402 0.402]; Q-dominant direction none
+   lag      1 ps (  50 rd): Q sigma [0.293 0.293] | minus H: sigma1 0.305 (ratio 1.04) | time-shuffled 0.017 | minus H+K 0.306 | own sigma1: (rho,jL) 0.287, K 0.038, Q0 0.306 | literal 30-col: Q sigma1 0.609, ratio 0.93 | joint (H,Q) top [0.361 0.361 0.268 0.268]; Q-dominant direction none
+   lag      2 ps ( 100 rd): Q sigma [0.242 0.242] | minus H: sigma1 0.250 (ratio 1.03) | time-shuffled 0.002 | minus H+K 0.250 | own sigma1: (rho,jL) 0.160, K 0.021, Q0 0.201 | literal 30-col: Q sigma1 0.526, ratio 0.93 | joint (H,Q) top [0.287 0.286 0.149 0.149]; Q-dominant direction #1 sigma 0.287, R^2 on Q 0.78, on rho 0.12, on jL 0.00
+   lag      5 ps ( 250 rd): Q sigma [0.153 0.153] | minus H: sigma1 0.163 (ratio 1.07) | time-shuffled 0.006 | minus H+K 0.162 | own sigma1: (rho,jL) 0.079, K 0.009, Q0 0.073 | literal 30-col: Q sigma1 0.467, ratio 0.87 | joint (H,Q) top [0.204 0.204 0.118 0.117]; Q-dominant direction #1 sigma 0.204, R^2 on Q 0.55, on rho 0.16, on jL 0.02
+   lag     10 ps ( 500 rd): Q sigma [0.06  0.059] | minus H: sigma1 0.066 (ratio 1.10) | time-shuffled 0.024 | minus H+K 0.067 | own sigma1: (rho,jL) 0.166, K 0.010, Q0 0.063 | literal 30-col: Q sigma1 0.420, ratio 0.78 | joint (H,Q) top [0.199 0.197 0.104 0.103]; Q-dominant direction #5 sigma 0.093, R^2 on Q 0.54, on rho 0.02, on jL 0.01
+   lag     20 ps (1000 rd): Q sigma [0.061 0.061] | minus H: sigma1 0.062 (ratio 1.00) | time-shuffled 0.021 | minus H+K 0.063 | own sigma1: (rho,jL) 0.164, K 0.010, Q0 0.028 | literal 30-col: Q sigma1 0.423, ratio 0.87 | joint (H,Q) top [0.212 0.211 0.154 0.153]; Q-dominant direction #7 sigma 0.092, R^2 on Q 0.71, on rho 0.04, on jL 0.16
+   O2 tau 1 ps: R^2 of (rho, jL)(t+tau): H 0.0299 -> H+Q 0.0292, increment -0.0007 (rho -0.0019, jL +0.0005; H alone rho 0.063, jL -0.003) | null, Q shifted T/2: +0.0001 | beyond (rho,jL)+K -0.0007; K's own increment -0.0017 | literal 30-col increment -0.0608
+   O2 tau 5 ps: R^2 of (rho, jL)(t+tau): H -0.0148 -> H+Q -0.0196, increment -0.0049 (rho -0.0083, jL -0.0016; H alone rho -0.026, jL -0.004) | null, Q shifted T/2: -0.0022 | beyond (rho,jL)+K -0.0049; K's own increment -0.0012 | literal 30-col increment -0.1351
+   O3 ACF(Q_k) at 0.1/0.5/1/2/5/10/20 ps: 0.603, 0.397, 0.289, 0.238, 0.117, -0.005, -0.053
+      fit on [0.5, 20] ps: single tau 3.113 ps (amp 0.457, rms 0.0285); double 0.457 e^(-t/3.113) + 0.000 e^(-t/3.156) (SS 1.60e-01 vs 1.60e-01); KWW tau 4.353 beta 1.54 -> one time
+      per-molecule q ACF (self) at 0.1/0.5/1/2/5/10/20 ps: 0.560, 0.318, 0.236, 0.149, 0.029, -0.022, -0.053
+      self fit: single tau 1.908 ps (rms 0.0331); double 0.000/1.907 + 0.412/1.908 -> one time; KWW tau 2.453 beta 1.29
+      tau(Q_k) / tau(q self) = 1.63
+      alpha relaxation: F_s(k = 2.2 A^-1, t) falls below 1/e at 2.40 ps
+## T293_seed2 (293 K arm): 2501 readouts at 20 fs = 50.00 ps; rigid-mode T 314.1 K
+   <q> = 0.7393, sd per molecule 0.1599; density-mode static offsets removed (counts): [-0.16  0.13  0.06 -0.38 -0.42  0.22]
+   equal-time corr(rho_k, Q_k) per column [-0.095 -0.045 -0.444 -0.172 -0.158 -0.154] (mean -0.178; the two-state sign is NEGATIVE)
+   equal-time R^2 of Q_k on its own k-vector's hydrodynamic sector: 0.0402; on it plus K_k: 0.0429
+   lag    0.1 ps (   5 rd): Q sigma [0.621 0.621] | minus H: sigma1 0.601 (ratio 0.97) | time-shuffled 0.011 | minus H+K 0.612 | own sigma1: (rho,jL) 0.975, K 0.152, Q0 0.549 | literal 30-col: Q sigma1 0.764, ratio 0.92 | joint (H,Q) top [0.975 0.975 0.76  0.76 ]; Q-dominant direction #7 sigma 0.604, R^2 on Q 0.95, on rho 0.00, on jL 0.01
+   lag    0.5 ps (  25 rd): Q sigma [0.441 0.441] | minus H: sigma1 0.421 (ratio 0.96) | time-shuffled 0.010 | minus H+K 0.425 | own sigma1: (rho,jL) 0.514, K 0.079, Q0 0.438 | literal 30-col: Q sigma1 0.640, ratio 0.83 | joint (H,Q) top [0.534 0.534 0.418 0.418]; Q-dominant direction #3 sigma 0.418, R^2 on Q 0.61, on rho 0.06, on jL 0.01
+   lag      1 ps (  50 rd): Q sigma [0.36 0.36] | minus H: sigma1 0.341 (ratio 0.95) | time-shuffled 0.010 | minus H+K 0.343 | own sigma1: (rho,jL) 0.426, K 0.012, Q0 0.380 | literal 30-col: Q sigma1 0.589, ratio 0.85 | joint (H,Q) top [0.451 0.451 0.328 0.328]; Q-dominant direction #3 sigma 0.328, R^2 on Q 0.66, on rho 0.15, on jL 0.01
+   lag      2 ps ( 100 rd): Q sigma [0.246 0.246] | minus H: sigma1 0.227 (ratio 0.92) | time-shuffled 0.012 | minus H+K 0.227 | own sigma1: (rho,jL) 0.351, K 0.006, Q0 0.295 | literal 30-col: Q sigma1 0.533, ratio 0.74 | joint (H,Q) top [0.372 0.372 0.223 0.223]; Q-dominant direction #3 sigma 0.223, R^2 on Q 0.81, on rho 0.05, on jL 0.00
+   lag      5 ps ( 250 rd): Q sigma [0.067 0.067] | minus H: sigma1 0.068 (ratio 1.01) | time-shuffled 0.033 | minus H+K 0.070 | own sigma1: (rho,jL) 0.153, K 0.018, Q0 0.066 | literal 30-col: Q sigma1 0.401, ratio 0.81 | joint (H,Q) top [0.192 0.191 0.107 0.107]; Q-dominant direction none
+   lag     10 ps ( 500 rd): Q sigma [0.121 0.12 ] | minus H: sigma1 0.111 (ratio 0.92) | time-shuffled 0.009 | minus H+K 0.112 | own sigma1: (rho,jL) 0.146, K 0.025, Q0 0.073 | literal 30-col: Q sigma1 0.583, ratio 0.70 | joint (H,Q) top [0.195 0.195 0.118 0.118]; Q-dominant direction none
+   lag     20 ps (1000 rd): Q sigma [0.084 0.084] | minus H: sigma1 0.081 (ratio 0.96) | time-shuffled 0.015 | minus H+K 0.080 | own sigma1: (rho,jL) 0.143, K 0.027, Q0 0.001 | literal 30-col: Q sigma1 0.514, ratio 0.71 | joint (H,Q) top [0.227 0.224 0.121 0.12 ]; Q-dominant direction #3 sigma 0.121, R^2 on Q 0.56, on rho 0.14, on jL 0.10
+   O2 tau 1 ps: R^2 of (rho, jL)(t+tau): H 0.0543 -> H+Q 0.0510, increment -0.0033 (rho -0.0060, jL -0.0007; H alone rho 0.112, jL -0.001) | null, Q shifted T/2: -0.0047 | beyond (rho,jL)+K -0.0036; K's own increment +0.0001 | literal 30-col increment -0.0657
+   O2 tau 5 ps: R^2 of (rho, jL)(t+tau): H -0.0695 -> H+Q -0.0784, increment -0.0089 (rho -0.0181, jL -0.0000; H alone rho -0.136, jL -0.006) | null, Q shifted T/2: -0.0144 | beyond (rho,jL)+K -0.0090; K's own increment -0.0014 | literal 30-col increment -0.0144
+   O3 ACF(Q_k) at 0.1/0.5/1/2/5/10/20 ps: 0.622, 0.442, 0.360, 0.247, 0.007, -0.115, 0.006
+      fit on [0.5, 20] ps: single tau 1.693 ps (amp 0.672, rms 0.0603); double 0.000 e^(-t/1.692) + 0.672 e^(-t/1.693) (SS 7.12e-01 vs 7.12e-01); KWW tau 2.809 beta 1.94 -> one time
+      per-molecule q ACF (self) at 0.1/0.5/1/2/5/10/20 ps: 0.547, 0.321, 0.249, 0.164, 0.051, -0.017, -0.065
+      self fit: single tau 2.272 ps (rms 0.0364); double 0.555/0.070 + 0.397/2.272 -> one time; KWW tau 2.849 beta 1.25
+      tau(Q_k) / tau(q self) = 0.75
+      alpha relaxation: F_s(k = 2.2 A^-1, t) falls below 1/e at 3.60 ps
+
+## T400_seed0 (400 K arm): 2501 readouts at 20 fs = 50.00 ps; rigid-mode T 417.0 K
+   <q> = 0.6031, sd per molecule 0.1960; density-mode static offsets removed (counts): [ 0.1  -0.1   0.04 -0.43 -0.27 -0.09]
+   equal-time corr(rho_k, Q_k) per column [-0.037  0.21   0.073  0.08   0.001  0.012] (mean +0.057; the two-state sign is NEGATIVE)
+   equal-time R^2 of Q_k on its own k-vector's hydrodynamic sector: 0.0117; on it plus K_k: 0.0120
+   lag    0.1 ps (   5 rd): Q sigma [0.504 0.504] | minus H: sigma1 0.497 (ratio 0.98) | time-shuffled 0.008 | minus H+K 0.491 | own sigma1: (rho,jL) 0.977, K 0.195, Q0 0.291 | literal 30-col: Q sigma1 0.629, ratio 0.93 | joint (H,Q) top [0.977 0.977 0.799 0.799]; Q-dominant direction #7 sigma 0.500, R^2 on Q 0.68, on rho 0.03, on jL 0.27
+   lag    0.5 ps (  25 rd): Q sigma [0.243 0.243] | minus H: sigma1 0.227 (ratio 0.93) | time-shuffled 0.009 | minus H+K 0.223 | own sigma1: (rho,jL) 0.150, K 0.102, Q0 0.003 | literal 30-col: Q sigma1 0.397, ratio 0.83 | joint (H,Q) top [0.296 0.296 0.166 0.166]; Q-dominant direction #1 sigma 0.296, R^2 on Q 0.77, on rho 0.25, on jL 0.02
+   lag      1 ps (  50 rd): Q sigma [0.159 0.159] | minus H: sigma1 0.152 (ratio 0.96) | time-shuffled 0.012 | minus H+K 0.151 | own sigma1: (rho,jL) 0.102, K 0.053, Q0 0.031 | literal 30-col: Q sigma1 0.351, ratio 0.85 | joint (H,Q) top [0.204 0.204 0.123 0.123]; Q-dominant direction #1 sigma 0.204, R^2 on Q 0.68, on rho 0.31, on jL 0.01
+   lag      2 ps ( 100 rd): Q sigma [0.085 0.085] | minus H: sigma1 0.081 (ratio 0.95) | time-shuffled 0.022 | minus H+K 0.079 | own sigma1: (rho,jL) 0.040, K 0.021, Q0 0.034 | literal 30-col: Q sigma1 0.311, ratio 0.85 | joint (H,Q) top [0.142 0.142 0.123 0.123]; Q-dominant direction none
+   lag      5 ps ( 250 rd): Q sigma [0.055 0.055] | minus H: sigma1 0.053 (ratio 0.96) | time-shuffled 0.011 | minus H+K 0.051 | own sigma1: (rho,jL) 0.066, K 0.037, Q0 0.049 | literal 30-col: Q sigma1 0.292, ratio 0.83 | joint (H,Q) top [0.154 0.153 0.069 0.068]; Q-dominant direction none
+   lag     10 ps ( 500 rd): Q sigma [0.011 0.011] | minus H: sigma1 0.010 (ratio 0.86) | time-shuffled 0.012 | minus H+K 0.009 | own sigma1: (rho,jL) 0.058, K 0.051, Q0 0.066 | literal 30-col: Q sigma1 0.331, ratio 0.98 | joint (H,Q) top [0.16  0.16  0.079 0.078]; Q-dominant direction none
+   lag     20 ps (1000 rd): Q sigma [0.054 0.054] | minus H: sigma1 0.047 (ratio 0.87) | time-shuffled 0.016 | minus H+K 0.047 | own sigma1: (rho,jL) 0.085, K 0.030, Q0 0.025 | literal 30-col: Q sigma1 0.409, ratio 0.78 | joint (H,Q) top [0.197 0.196 0.128 0.127]; Q-dominant direction none
+   O2 tau 1 ps: R^2 of (rho, jL)(t+tau): H -0.0013 -> H+Q -0.0017, increment -0.0004 (rho -0.0002, jL -0.0007; H alone rho -0.006, jL 0.003) | null, Q shifted T/2: -0.0022 | beyond (rho,jL)+K -0.0002; K's own increment +0.0005 | literal 30-col increment -0.0356
+   O2 tau 5 ps: R^2 of (rho, jL)(t+tau): H -0.0035 -> H+Q -0.0033, increment +0.0001 (rho +0.0006, jL -0.0003; H alone rho -0.006, jL -0.001) | null, Q shifted T/2: -0.0054 | beyond (rho,jL)+K +0.0001; K's own increment -0.0008 | literal 30-col increment -0.0301
+   O3 ACF(Q_k) at 0.1/0.5/1/2/5/10/20 ps: 0.504, 0.243, 0.154, 0.084, -0.014, -0.007, -0.011
+      fit on [0.5, 20] ps: single tau 1.227 ps (amp 0.367, rms 0.0472); double 0.062 e^(-t/1.226) + 0.305 e^(-t/1.227) (SS 4.37e-01 vs 4.37e-01); KWW tau 2.003 beta 1.62 -> one time
+      per-molecule q ACF (self) at 0.1/0.5/1/2/5/10/20 ps: 0.422, 0.126, 0.045, 0.005, -0.008, -0.012, -0.005
+      self fit: single tau 0.480 ps (rms 0.0104); double 0.000/0.058 + 0.358/0.480 -> one time; KWW tau 0.588 beta 1.15
+      tau(Q_k) / tau(q self) = 2.55
+      alpha relaxation: F_s(k = 2.2 A^-1, t) falls below 1/e at 0.40 ps
+
+# PO-2: re-paired nulls on the (rho, jL) increment
+PO-2 T293_seed0 (293 K arm) tau 1 ps: time-shifted -0.0008, seed-swapped -0.0001 (bar <= 0.01) -> PASS
+PO-2 T293_seed0 (293 K arm) tau 5 ps: time-shifted -0.0148, seed-swapped -0.0066 (bar <= 0.01) -> PASS
+PO-2 T293_seed1 (293 K arm) tau 1 ps: time-shifted +0.0001, seed-swapped -0.0035 (bar <= 0.01) -> PASS
+PO-2 T293_seed1 (293 K arm) tau 5 ps: time-shifted -0.0022, seed-swapped +0.0049 (bar <= 0.01) -> PASS
+PO-2 T293_seed2 (293 K arm) tau 1 ps: time-shifted -0.0047, seed-swapped -0.0026 (bar <= 0.01) -> PASS
+PO-2 T293_seed2 (293 K arm) tau 5 ps: time-shifted -0.0144, seed-swapped -0.0008 (bar <= 0.01) -> PASS
+   seed-held-out (rho, jL) increment (reported) tau 1 ps: [-0.0008, -0.0029, -0.0018]
+   seed-held-out (rho, jL) increment (reported) tau 5 ps: [-0.001, -0.0001, -0.0016]
+PO-3 T293_seed0 (293 K arm): time-shuffled Q sigma1, max over lags >= 1 ps 0.018 (bar < 0.1) -> PASS
+PO-3 T293_seed1 (293 K arm): time-shuffled Q sigma1, max over lags >= 1 ps 0.024 (bar < 0.1) -> PASS
+PO-3 T293_seed2 (293 K arm): time-shuffled Q sigma1, max over lags >= 1 ps 0.033 (bar < 0.1) -> PASS
+PO-3 T400_seed0 (400 K arm): time-shuffled Q sigma1, max over lags >= 1 ps 0.022 (bar < 0.1) -> PASS
+PO-5: Q's own sigma1 at 1 ps, 400 K 0.159 < min over 293 K 0.293 -> PASS
+plants: PO-1 PASS, PO-2 PASS, PO-3 PASS, PO-4 PASS, PO-5 PASS
+
+# VERDICT TABLE
+O1 closed: per 293 K seed, lags >= 1 ps with own sigma1 >= 0.3 and residual ratio >= 0.7: [[1.0], [], [1.0]] -> between
+   T293_seed0 (293 K arm): sigma1 / ratio at 0.1 ps 0.615/0.97; 0.5 ps 0.381/0.99; 1 ps 0.310/0.98; 2 ps 0.203/1.03; 5 ps 0.073/1.13; 10 ps 0.035/1.05; 20 ps 0.082/1.13
+   T293_seed1 (293 K arm): sigma1 / ratio at 0.1 ps 0.602/0.99; 0.5 ps 0.400/1.01; 1 ps 0.293/1.04; 2 ps 0.242/1.03; 5 ps 0.153/1.07; 10 ps 0.060/1.10; 20 ps 0.061/1.00
+   T293_seed2 (293 K arm): sigma1 / ratio at 0.1 ps 0.621/0.97; 0.5 ps 0.441/0.96; 1 ps 0.360/0.95; 2 ps 0.246/0.92; 5 ps 0.067/1.01; 10 ps 0.121/0.92; 20 ps 0.084/0.96
+   T400_seed0 (400 K arm): sigma1 / ratio at 0.1 ps 0.504/0.98; 0.5 ps 0.243/0.93; 1 ps 0.159/0.96; 2 ps 0.085/0.95; 5 ps 0.055/0.96; 10 ps 0.011/0.86; 20 ps 0.054/0.87
+O2 carried: (rho, jL) increment at 293 K 1 ps [-0.0032, -0.0007, -0.0033] (mean -0.0024); 5 ps [-0.0126, -0.0049, -0.0089] (mean -0.0088) | 400 K 1 ps -0.0004, 5 ps +0.0001 -> KILL
+O3 T293_seed0 (293 K arm): tau(Q) 2.501 ps vs q self 2.198 ps, alpha 3.70 ps; one time; Q-dominant direction at 1 ps R^2 on rho 0.217 (mixture) -> DIRECTION
+O3 T293_seed1 (293 K arm): tau(Q) 3.113 ps vs q self 1.908 ps, alpha 2.40 ps; one time; Q-dominant direction at 1 ps R^2 on rho nan (not a mixture) -> RE-FINDING
+O3 T293_seed2 (293 K arm): tau(Q) 1.693 ps vs q self 2.272 ps, alpha 3.60 ps; one time; Q-dominant direction at 1 ps R^2 on rho 0.154 (not a mixture) -> RE-FINDING
+BRANCH: (d) O2 killed - closed, not carried

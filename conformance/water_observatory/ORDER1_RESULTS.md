@@ -1,4 +1,4 @@
-# ORDER-1 — READ: branch (e) as written. PO-4, the planted carried field, came in at `+0.046` against its bar of `0.05`, so nothing is graded. Reported beside the verdict: the first-harmonic tetrahedral-order field closes at about `q`'s own memory and lies outside the hydrodynamic span, and it is NOT carried. Its increment to the next longitudinal state is `−0.001` to `−0.013` on every 293 K seed, where a planted field at half the density's sd reads `+0.020`. Arm D was refused: the walk carries no orientation.
+# ORDER-1 — READ under Amendment 1: BRANCH (d), closed and not carried. The first-harmonic tetrahedral-order field closes (σ₁ `0.29–0.36` at 1 ps, outside the hydrodynamic span) and adds nothing to the next density and current state (increments `≤ 0` on every seed); one relaxation time, the two-state sign weak — the relaxing structural mode of generalized hydrodynamics, the network's shape at the collective level. (The first read was branch (e) by a plant calibrated off the carrier of record; that read is kept below.)
 
 *2026-09-25. Prior art `ORDER1_PRIOR_ART.md` (`0880b6c`), prereg `ORDER1_PREREG.md` (frozen
 alone, `e53a803`), reader `order1_search.py` with `order1_read.sh` (committed `186b9ad`,
@@ -89,3 +89,32 @@ A walk that banks orientations, hydrogens or per-molecule energies. That would a
 ---
 witness: none (a measured campaign; numeric gates; closure algebra `Closed` and `StatClosure.lean`, cited in words)
 **misfits:** M-PLANT-OBS, M-PLANT-SECTOR, M-PLACEMENT-LOTTERY, M-FLOOR-UNSTAKED. M-PLANT-OBS: the plant of record failed on its carrier after passing on a synthetic one. This is the registry's shape again, a plant calibrated off the observable's own carrier. M-FLOOR-UNSTAKED: the resolution (`~0.005` in `R²`) is read from the nulls' spread and reported, not staked.
+
+
+## 6. The re-read under Amendment 1 (2026-09-26): BRANCH (d)
+
+`ORDER1_AMENDMENT_1.md` (committed alone, `e12f7df`, audit-passing at `28bc82d`) set the plant of
+record's amplitude by a rule on the carrier of record — unit amplitude relative to the density's
+own fluctuation — and moved no stake. The committed reader (`186b9ad`) was re-run on the same
+walks with only `ORDER1_PLANT_AMP=1.0`; output `replace0/order1/order1_read_amend1.txt`.
+
+**The plants, all five:** PO-1 PASS (VIEW-SEARCH's numbers reproduced); PO-2 PASS (re-paired
+nulls `−0.015` to `+0.005`); PO-3 PASS (time-shuffled σ₁ `≤ 0.033`); **PO-4 PASS** (loading `0.931`,
+increment **`+0.0866`** at 1 ps against `0.05`, null `+0.0001`); PO-5 PASS (`0.159` at 400 K
+against `≥ 0.293` at 293 K).
+
+**The stakes' lines are byte-identical to the first read** (the verdict table's O1, O2, O3 rows
+and every per-seed line: `diff` empty), as the amendment said they must be:
+
+| stake | read | verdict |
+|---|---|---|
+| **O1** closed | σ₁ at 1 ps `0.310 / 0.293 / 0.360`, residual ratio `0.95–1.04`; seed 1 misses `0.3` by `0.007` | between |
+| **O2** carried | increments at 1 ps `−0.0032 / −0.0007 / −0.0033`, at 5 ps `−0.0126 / −0.0049 / −0.0089`; 400 K `≈ 0` | **KILL** |
+| **O3** | one relaxation time on every seed (`2.50 / 3.11 / 1.69` ps against the molecule's `2.20 / 1.91 / 2.27` and α `2.4–3.7`); seed 0 "mixture" at `0.217` on a bar at noise level | re-finding on two seeds |
+
+**Branch (d): closed, not carried** — O2's kill. The order parameter of this liquid, coarse-grained
+to the box's longest wavelength, is a closed view the hydrodynamic tier does not carry: the
+hydrogen-bond network's shape again, and the relaxing structural mode in kind. SLOW-1's small
+carried increment lives in single-molecule mobility and does not reach the collective modes.
+The misfit occurrence (M-PLANT-OBS, fifth) and the candidate id it raised (M-JOINT-PASS-REGION)
+are in `conformance/gravity/MISFITS.md`.

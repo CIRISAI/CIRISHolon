@@ -1,0 +1,29 @@
+# REPLACE-1 — the fluid-element tier on the staggered chart, with a removability gate
+# engine read (holon-closure::removable, holon-lens::staggered/walk, holon::sector); walks /home/emoore/CIRISHolon/conformance/water_observatory/replace0
+# T293_seed0: 250 waters x 2501 readouts at 20 fs = 50.00 ps, box 19.575 A, <q> 0.7423; dictionary built in 13.9 s
+# T293_seed1: 250 waters x 2501 readouts at 20 fs = 50.00 ps, box 19.575 A, <q> 0.7337; dictionary built in 16.0 s
+# T293_seed2: 250 waters x 2501 readouts at 20 fs = 50.00 ps, box 19.575 A, <q> 0.7393; dictionary built in 15.9 s
+# T400_seed0: 250 waters x 2501 readouts at 20 fs = 50.00 ps, box 19.575 A, <q> 0.6031; dictionary built in 17.4 s
+
+## RE-READ UNDER AMENDMENT 1 — admission is ORDERED (backward elimination with a joint price)
+   G3a: SLOW-1 293 K, target (rho_k, jL_k) at 1 ps, beta 0.02, nothing kept outside the dictionary; declared order: hydrodynamic, count block, (q, s2); nulls: time-shifted, and the chain two over (another axis)
+   T293_seed0 ORDERED: remove 'structural (q, s2)' at -0.0015 (nulls -0.0024 / -0.0047); remove 'count block (n33, n50, nb)' at -0.0010 (nulls -0.0019 / -0.0045) | 'hydrodynamic (rho, jL)' survives, removal price +0.0622 +/- 0.0153 (nulls -0.0005 / -0.0036) Carried
+   T293_seed0 marginal (the record): 'hydrodynamic (rho, jL)' +0.0087 Dropped; 'count block (n33, n50, nb)' +0.0002 Dropped; 'structural (q, s2)' -0.0015 Dropped
+   T293_seed0: REFUSED: dropping 'hydrodynamic (rho, jL)' costs the level above +0.0622 against a budget of +0.0200
+   T293_seed1 ORDERED: remove 'count block (n33, n50, nb)' at -0.0031 (nulls -0.0025 / -0.0035); remove 'structural (q, s2)' at -0.0017 (nulls -0.0005 / -0.0050) | 'hydrodynamic (rho, jL)' survives, removal price +0.0390 +/- 0.0073 (nulls -0.0066 / -0.0048) Carried
+   T293_seed1 marginal (the record): 'hydrodynamic (rho, jL)' +0.0094 Dropped; 'count block (n33, n50, nb)' -0.0031 Dropped; 'structural (q, s2)' +0.0003 Dropped
+   T293_seed1: REFUSED: dropping 'hydrodynamic (rho, jL)' costs the level above +0.0390 against a budget of +0.0200
+   T293_seed2 ORDERED: remove 'structural (q, s2)' at -0.0030 (nulls -0.0052 / -0.0055); remove 'count block (n33, n50, nb)' at +0.0033 (nulls -0.0027 / -0.0087) | 'hydrodynamic (rho, jL)' survives, removal price +0.1039 +/- 0.0195 (nulls -0.0094 / -0.0104) Carried
+   T293_seed2 marginal (the record): 'hydrodynamic (rho, jL)' +0.0091 Dropped; 'count block (n33, n50, nb)' +0.0045 Dropped; 'structural (q, s2)' -0.0030 Dropped
+   T293_seed2: REFUSED: dropping 'hydrodynamic (rho, jL)' costs the level above +0.1039 against a budget of +0.0200
+   G3b: 207 chains, target = the next thought's process sector, lag 1 thought, beta 0.01, the partner-swapped (permutation) null only; declared order: process sector, conscience block
+   G3b ORDERED: 'process sector' survives, removal price +0.3902 +/- 0.0178 (nulls - / -0.0139) Carried; 'conscience (DMA) block' survives, removal price +0.0164 +/- 0.0081 (nulls - / -0.0013) Carried
+   G3b marginal (the record): 'process sector' +0.3902 Carried; 'conscience (DMA) block' +0.0164 Carried
+   PR-6 on T293_seed0 (kept (rho, jL); two exact copies of the PO-4 field): ORDERED remove 'planted A' at +0.0000 (nulls -0.0008 / -0.0015) | 'planted B = 2A - 1' survives, removal price +0.1041 +/- 0.0127 (nulls +0.0035 / -0.0056) Carried | marginal 'planted A' +0.0000 Dropped; 'planted B = 2A - 1' +0.0000 Dropped | the single column's price +0.1041 -> PASS
+   PR-7 on T293_seed0: re-run bit-identical true; removal order and survivors, declared (["structural (q, s2)", "count block (n33, n50, nb)"], ["hydrodynamic (rho, jL)"]), reversed (["structural (q, s2)", "count block (n33, n50, nb)"], ["hydrodynamic (rho, jL)"]), rotated (["structural (q, s2)", "count block (n33, n50, nb)"], ["hydrodynamic (rho, jL)"]); step prices equal to 1e-12 across the three -> PASS
+
+# VERDICT TABLE UNDER AMENDMENT 1
+G3a (ordered) | read: T293_seed0: survivors ["hydrodynamic (rho, jL)"], (q, s2) removed at -0.0015 | T293_seed1: survivors ["hydrodynamic (rho, jL)"], (q, s2) removed at -0.0017 | T293_seed2: survivors ["hydrodynamic (rho, jL)"], (q, s2) removed at -0.0030 -> BETWEEN (not killed; a bar missed)
+G3b (ordered) | read: conscience block survives with removal price +0.0164 +/- 0.0081, null -0.0013 (bars: price >= 0.02, null <= 0.005) -> BETWEEN (survives; a bar missed)
+plants: PR-6 PASS, PR-7 PASS
+BRANCH (Amendment 1): none of (a)/(c)/(e) cleanly: G3a BETWEEN (not killed; a bar missed), G3b BETWEEN (survives; a bar missed)

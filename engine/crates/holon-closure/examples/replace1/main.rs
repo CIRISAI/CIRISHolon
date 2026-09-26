@@ -82,7 +82,7 @@ fn main() {
     if run("pr5") || run("g1") {
         charts(&walks, &mut out);
     }
-    let need_slow = ["g2", "g3", "g5", "plants"].iter().any(|s| run(s));
+    let need_slow = ["g2", "g3", "g5", "plants", "a1"].iter().any(|s| run(s));
     let feats: Vec<(String, OrderFeatures)> = if need_slow {
         ["T293_seed0", "T293_seed1", "T293_seed2", "T400_seed0"]
             .iter()
@@ -124,6 +124,10 @@ fn main() {
     }
     if run("g4") {
         g4(&mut out);
+    }
+    if only.as_ref().is_some_and(|o| o.iter().any(|x| x == "a1")) {
+        amend1(&feats, &chains_path);
+        return;
     }
 
     println!("\n# VERDICT TABLE");
@@ -836,4 +840,182 @@ fn plants(feats: &[(String, OrderFeatures)], out: &mut Out) {
     println!("   PR-4: the time-shuffled dictionary admits nothing (<= 0.01 on every candidate) -> {}", if pr4 { "PASS" } else { "FAIL" });
     out.plants_ok.push(("PR-4".into(), pr4));
     out.row("PR-1..4 plants", "see the plant lines", format!("PR-1 {}", pr1_line.join("; ")), if pr1 && joint && pr2 && pr3 && pr4 { "PLANTS PASS" } else { "PLANT FAILS" });
+}
+
+// ---------------------------------------------------------------------------------------------
+// The re-read under Amendment 1: ORDERED admission (backward elimination with a joint price).
+// Run with `--only a1`; it prints its own verdict table and branch.
+// ---------------------------------------------------------------------------------------------
+
+fn order_line(a: &Admission) -> String {
+    let steps: Vec<String> = a
+        .order
+        .iter()
+        .map(|s| format!("remove '{}' at {:+.4} (nulls {} / {})", s.price.name, s.price.increment, fmt_opt(s.price.null_shift), fmt_opt(s.price.null_swap)))
+        .collect();
+    let surv: Vec<String> = a
+        .prices
+        .iter()
+        .skip(a.order.len())
+        .map(|p| format!("'{}' survives, removal price {:+.4} +/- {:.4} (nulls {} / {}) {:?}", p.name, p.increment, p.se, fmt_opt(p.null_shift), fmt_opt(p.null_swap), p.verdict))
+        .collect();
+    let sep = if steps.is_empty() || surv.is_empty() { "" } else { " | " };
+    format!("{}{sep}{}", steps.join("; "), surv.join("; "))
+}
+
+fn empty_base(chains: &[Mat], target: &[usize]) -> Vec<Unit> {
+    chains.iter().map(|c| Unit { kept: Mat::zeros(c.rows, 0), target: c.select_cols(target) }).collect()
+}
+
+fn fluid_dict(ch: &[Mat]) -> Vec<Candidate> {
+    let counts: Vec<usize> = (12..18).collect();
+    let qs2: Vec<usize> = (8..12).collect();
+    vec![
+        Candidate::new("hydrodynamic (rho, jL)", walk::cand(ch, &C_LS)),
+        Candidate::new("count block (n33, n50, nb)", walk::cand(ch, &counts)),
+        Candidate::new("structural (q, s2)", walk::cand(ch, &qs2)),
+    ]
+}
+
+fn marginal_line(m: &Admission) -> String {
+    m.prices.iter().map(|p| format!("'{}' {:+.4} {:?}", p.name, p.increment, p.verdict)).collect::<Vec<_>>().join("; ")
+}
+
+fn amend1(feats: &[(String, OrderFeatures)], chains_path: &str) {
+    println!("\n## RE-READ UNDER AMENDMENT 1 — admission is ORDERED (backward elimination with a joint price)");
+    let mut rows: Vec<(String, String, String)> = Vec::new();
+    let nulls = Nulls { shift: true, swap: Some(Swap::Derange { shift: 2 }) };
+    let hc = ["hydrodynamic (rho, jL)", "count block (n33, n50, nb)"];
+    // G3a
+    println!("   G3a: SLOW-1 293 K, target (rho_k, jL_k) at 1 ps, beta {BETA}, nothing kept outside the dictionary; declared order: hydrodynamic, count block, (q, s2); nulls: time-shifted, and the chain two over (another axis)");
+    let (mut g3a_ok, mut g3a_kill) = (true, false);
+    let mut g3a_line = Vec::new();
+    let mut seed0: Option<(Vec<Mat>, Admission)> = None;
+    for (name, f) in feats.iter().take(3) {
+        let ch = chains_of(f);
+        let q = fluid_q(rd(1.0, f.dt_fs));
+        let base = empty_base(&ch, &C_LS);
+        let dict = fluid_dict(&ch);
+        let o = Admission::ordered(&base, &dict, &q, &nulls, BETA);
+        let m = Admission::marginal(&base, &dict, &q, &nulls, BETA);
+        println!("   {name} ORDERED: {}", order_line(&o));
+        println!("   {name} marginal (the record): {}", marginal_line(&m));
+        let surv: Vec<&String> = o.carried.iter().filter(|c| hc.contains(&c.as_str())).collect();
+        let mut refused_ok = !surv.is_empty();
+        for c in &surv {
+            match refuse_drop(&o, c, BETA) {
+                Err(r) => {
+                    println!("   {name}: {r}");
+                    refused_ok &= r.price >= 0.04;
+                }
+                Ok(_) => refused_ok = false,
+            }
+        }
+        let qs2_step = o.order.iter().find(|s| s.price.name == "structural (q, s2)").map(|s| s.price.increment);
+        g3a_kill |= surv.is_empty();
+        g3a_ok &= refused_ok && qs2_step.is_some_and(|v| v <= 0.01);
+        g3a_line.push(format!(
+            "{name}: survivors {:?}, (q, s2) removed at {}",
+            o.carried,
+            qs2_step.map_or("never".into(), |v| format!("{v:+.4}"))
+        ));
+        if seed0.is_none() {
+            seed0 = Some((ch, o));
+        }
+    }
+    let g3a_v = if g3a_kill { "KILL" } else if g3a_ok { "MET" } else { "BETWEEN (not killed; a bar missed)" };
+    rows.push(("G3a (ordered)".into(), g3a_line.join(" | "), g3a_v.into()));
+    // G3b
+    let (mut g3b_line, mut g3b_v) = ("chains unreadable".to_string(), "NOT READ".to_string());
+    if let Ok(ch) = chains::load(chains_path) {
+        let mats: Vec<Mat> = ch.iter().map(|c| Mat::from_rows(c)).collect();
+        let base: Vec<Unit> = mats.iter().map(|m| Unit { kept: Mat::zeros(m.rows, 0), target: m.select_cols(&[4, 5, 6]) }).collect();
+        let dict = vec![
+            Candidate::new("process sector", mats.iter().map(|m| m.select_cols(&[4, 5, 6])).collect()),
+            Candidate::new("conscience (DMA) block", mats.iter().map(|m| m.select_cols(&[0, 1, 2, 3])).collect()),
+        ];
+        let q = Question { lag: 1, horizon: Horizon::Future, folds: Folds::Units { k: 4 }, ridge: Ridge::ORDER1 };
+        let nn = Nulls { shift: false, swap: Some(Swap::Permute { seed: 0 }) };
+        let o = Admission::ordered(&base, &dict, &q, &nn, 0.01);
+        let m = Admission::marginal(&base, &dict, &q, &nn, 0.01);
+        println!("   G3b: {} chains, target = the next thought's process sector, lag 1 thought, beta 0.01, the partner-swapped (permutation) null only; declared order: process sector, conscience block", mats.len());
+        println!("   G3b ORDERED: {}", order_line(&o));
+        println!("   G3b marginal (the record): {}", marginal_line(&m));
+        let p = o.price("conscience (DMA) block").expect("priced");
+        let removed = o.order.iter().any(|s| s.price.name == "conscience (DMA) block");
+        let null = p.null_swap.expect("swap null");
+        g3b_line = format!(
+            "conscience block {} with removal price {:+.4} +/- {:.4}, null {:+.4} (bars: price >= 0.02, null <= 0.005)",
+            if removed { "REMOVED" } else { "survives" },
+            p.increment,
+            p.se,
+            null
+        );
+        g3b_v = if removed {
+            "KILL".into()
+        } else if p.increment >= 0.02 && null <= 0.005 {
+            "MET".into()
+        } else {
+            "BETWEEN (survives; a bar missed)".into()
+        };
+    }
+    rows.push(("G3b (ordered)".into(), g3b_line, g3b_v));
+    // PR-6 on the carrier of record
+    let (name0, f0) = &feats[0];
+    let dt = f0.dt_fs;
+    let (hp, qp) = walk::plant_po4(&f0.h, &f0.fields[0], 5000.0 / dt, rd(1.0, dt), 0.05, 1.0, 5);
+    let pch = walk::order_chains(&hp, &[qp]);
+    let base = walk::units(&pch, &C_LS, &C_LS);
+    let a = walk::cand(&pch, &[8, 9]);
+    let b: Vec<Mat> = a.iter().map(|m| Mat { rows: m.rows, cols: m.cols, data: m.data.iter().map(|v| 2.0 * v - 1.0).collect() }).collect();
+    let dict = vec![Candidate::new("planted A", a.clone()), Candidate::new("planted B = 2A - 1", b)];
+    let q1 = fluid_q(rd(1.0, dt));
+    let o = Admission::ordered(&base, &dict, &q1, &nulls, BETA);
+    let m = Admission::marginal(&base, &dict, &q1, &nulls, BETA);
+    let single = admit(&base, &[Candidate::new("planted", a)], &q1, &nulls, BETA).prices[0].increment;
+    let kept_price = o.carried.first().and_then(|c| o.price(c)).map_or(f64::NAN, |p| p.increment);
+    let pr6 = o.carried.len() == 1 && (kept_price - single).abs() < 1e-12 && m.carried.is_empty();
+    println!(
+        "   PR-6 on {name0} (kept (rho, jL); two exact copies of the PO-4 field): ORDERED {} | marginal {} | the single column's price {single:+.4} -> {}",
+        order_line(&o),
+        marginal_line(&m),
+        if pr6 { "PASS" } else { "FAIL" }
+    );
+    // PR-7: determinism, and independence of the declared order, on G3a's seed-0 dictionary
+    let (ch0, o0) = seed0.expect("seed 0 read");
+    let base0 = empty_base(&ch0, &C_LS);
+    let q = fluid_q(rd(1.0, dt));
+    let again = Admission::ordered(&base0, &fluid_dict(&ch0), &q, &nulls, BETA);
+    let mut rev = fluid_dict(&ch0);
+    rev.reverse();
+    let reversed = Admission::ordered(&base0, &rev, &q, &nulls, BETA);
+    let mut rot = fluid_dict(&ch0);
+    rot.rotate_left(1);
+    let rotated = Admission::ordered(&base0, &rot, &q, &nulls, BETA);
+    let names = |a: &Admission| (a.order.iter().map(|s| s.price.name.clone()).collect::<Vec<_>>(), a.carried.clone());
+    let same_prices = |a: &Admission| a.order.iter().zip(&o0.order).all(|(x, y)| (x.price.increment - y.price.increment).abs() < 1e-12);
+    let pr7 = again == o0 && names(&reversed) == names(&o0) && names(&rotated) == names(&o0) && same_prices(&reversed) && same_prices(&rotated);
+    println!(
+        "   PR-7 on {name0}: re-run bit-identical {}; removal order and survivors, declared {:?}, reversed {:?}, rotated {:?}; step prices equal to 1e-12 across the three -> {}",
+        again == o0,
+        names(&o0),
+        names(&reversed),
+        names(&rotated),
+        if pr7 { "PASS" } else { "FAIL" }
+    );
+    println!("\n# VERDICT TABLE UNDER AMENDMENT 1");
+    for (st, r, v) in &rows {
+        println!("{st} | read: {r} -> {v}");
+    }
+    println!("plants: PR-6 {}, PR-7 {}", if pr6 { "PASS" } else { "FAIL" }, if pr7 { "PASS" } else { "FAIL" });
+    let branch = if !(pr6 && pr7) {
+        "(e) a plant fails".to_string()
+    } else if rows.iter().any(|r| r.2.starts_with("KILL")) {
+        "(c) G3 still killed".to_string()
+    } else if rows.iter().all(|r| r.2 == "MET") {
+        "(a) G3 met under ordered admission, PR-6 and PR-7 firing".to_string()
+    } else {
+        format!("none of (a)/(c)/(e) cleanly: G3a {}, G3b {}", rows[0].2, rows[1].2)
+    };
+    println!("BRANCH (Amendment 1): {branch}");
 }

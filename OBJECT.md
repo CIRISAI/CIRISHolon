@@ -85,6 +85,19 @@ were written to carry. Each is corrected here, dated, beside the sentence it cor
    with a stricter discipline, and the instrument, after five carriers, re-finds and has not
    discovered.
 
+5. **Move 4's join was MEASURED on the fluid this month and I did not count it** (2026-09-25,
+   later the same day). RESPONSE-1's R3: the driven shear rent — the decay of a driven closed
+   mode — reads `η = 4.4 × 10⁻⁴` Pa s, equal to the equilibrium read on the same box: the
+   maintenance rate of a driven closure is the equilibrium price, the fluctuation–dissipation
+   relation in the object's clothes, and the physics face of "the rate is not a free
+   parameter". And R1: the Record — what the cell chart cannot generate — leaked through the
+   faces and the faces carried it (`0.18` on the graded average). The 5 + 1's join held on
+   water; the 11 was never in play there (no trajectory of oxygens distinguishes a Fact from a
+   Process) and is in play only on the reasoning carrier, where the kinds are native and the
+   test waits on thought text. **The weak carried direction — the non-conserved variable the
+   level above carries anyway (tetrahedral order; the conscience sector) — is the ORDER
+   PARAMETER, Landau's, and its blind hunt on the other tiers is `ORDER-1` (frozen 2026-09-25).**
+
 **The known unknown, named as a hunt.** A′ and C differ on one thing: whether "the level above
 carries it" is a fact about conservation alone or about paid maintenance. And A′ itself owes
 the selection principle as ARITHMETIC: a rule that, given the closed sectors of a tier and the

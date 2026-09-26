@@ -18,3 +18,13 @@ description = "The closure as an engine type: an object is a lossy view the dyna
 # type impossible; a dependency added here on anything at all would land in `holon-render`'s
 # browser artifact, which ships to every visitor.
 [dependencies]
+
+# DEV-dependencies only, for REPLACE-1's driver (`examples/replace1.rs`) and its plants
+# (`tests/replace1_plants.rs`): the driver reads the walks through `holon-lens` and puts the
+# circuit case (G4) to `holon::sector`. Neither is a runtime dependency — nothing here ships in
+# `holon-render`'s artifact, and the direction above (`holon-lens` and `holon` depend on THIS
+# crate) is unchanged; a dev-dependency cycle is how cargo lets a crate's own tests exercise
+# its dependents.
+[dev-dependencies]
+holon-lens = { path = "../holon-lens" }
+holon = { path = "../holon" }

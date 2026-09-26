@@ -79,6 +79,7 @@ pub mod closure;
 pub mod edge;
 pub mod grammar;
 pub mod phase;
+pub mod removable;
 
 pub use closure::{
     Channel, Closure, ClosureId, ClosureRefusal, Ledger, LedgerRow, MergeRefusal,
@@ -89,3 +90,7 @@ pub use grammar::{
     BondReading, Crossing, Grammar, Production, ProductionKind, RewriteReading, UnitReading,
 };
 pub use phase::{components, phase, ComponentFinder, Phase, PhaseEdge};
+pub use removable::{
+    admit, admit_certified, refuse_drop, Admission, Candidate, Certificate, Folds, Horizon, Nulls,
+    Price, Question, Refusal, Ridge, Swap, Unit, Verdict,
+};

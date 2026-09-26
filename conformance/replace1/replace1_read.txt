@@ -1,0 +1,292 @@
+# REPLACE-1 — the fluid-element tier on the staggered chart, with a removability gate
+# engine read (holon-closure::removable, holon-lens::staggered/walk, holon::sector); walks /home/emoore/CIRISHolon/conformance/water_observatory/replace0
+
+## PR-5 and G1 — the cell chart and the staggered chart through one interface (holon_lens::staggered)
+# response1_L200_seed0: 3769 rows, 432 oxygens, L = 44.39 bohr = 23.5 A (2.0 s)
+== 4 cells (slab 5.87 A, window 390 fs): aligned lead-window obs RMS 1.100, tail RMS 1.541 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    1.25   0.28   0.857   1.000
+   C slab-mean lagged 30 fs       2.23   0.17   0.940   0.988
+   C slab-mean lagged 50 fs      -0.68   0.02   1.038   0.981
+   C slab-mean lagged 100 fs     -0.75   0.25   1.446   0.970
+   B face h=0.25 A                1.05   0.82   0.429   0.295
+   B face h=0.5 A                 1.15   0.86   0.393   0.466
+   B face h=1.0 A                 0.99   0.56   0.662   0.881
+   B face h=2.0 A                 0.81   0.51   0.722   1.008
+
+== 8 cells (slab 2.94 A, window 200 fs): aligned lead-window obs RMS 1.766, tail RMS 1.024 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    0.89   0.47   0.735   1.003
+   C slab-mean lagged 30 fs       0.83   0.44   0.758   0.993
+   C slab-mean lagged 50 fs       0.84   0.44   0.760   0.997
+   C slab-mean lagged 100 fs      1.04   0.40   0.776   1.048
+   B face h=0.25 A                1.05   0.97   0.164   0.632
+   B face h=0.5 A                 1.14   0.91   0.328   0.756
+   B face h=1.0 A                 1.05   0.71   0.541   0.834
+   B face h=2.0 A                 0.89   0.55   0.676   0.931
+
+== 16 cells (slab 1.47 A, window 100 fs): aligned lead-window obs RMS 0.968, tail RMS 0.593 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    0.89   0.20   0.896   1.053
+   C slab-mean lagged 30 fs       0.84   0.15   0.925   1.018
+   C slab-mean lagged 50 fs       0.67   0.08   0.968   1.014
+   C slab-mean lagged 100 fs     -0.14   0.00   1.153   0.995
+   B face h=0.25 A                1.01   0.79   0.460   0.626
+   B face h=0.5 A                 0.95   0.57   0.657   0.856
+   B face h=1.0 A                 1.10   0.40   0.777   0.953
+   B face h=2.0 A                 0.82   0.16   0.921   1.074
+
+PR-5: 33 of 33 lines of the per-arm table identical to the banked r1_closure_test.txt (to the printed digit) -> PASS
+# response1_L200_seed1: 3769 rows, 432 oxygens, L = 44.39 bohr = 23.5 A (2.2 s)
+== 4 cells (slab 5.87 A, window 390 fs): aligned lead-window obs RMS 2.322, tail RMS 1.848 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    2.54   0.85   0.678   0.874
+   C slab-mean lagged 30 fs       4.45   0.82   0.821   0.875
+   C slab-mean lagged 50 fs       7.16   0.52   0.929   0.882
+   C slab-mean lagged 100 fs     -3.00   0.77   1.263   0.906
+   B face h=0.25 A                1.07   0.88   0.350   0.251
+   B face h=0.5 A                 1.26   0.86   0.423   0.346
+   B face h=1.0 A                 1.52   0.92   0.438   0.634
+   B face h=2.0 A                 1.83   0.91   0.529   0.756
+
+== 8 cells (slab 2.94 A, window 200 fs): aligned lead-window obs RMS 1.971, tail RMS 0.773 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    1.12   0.75   0.511   0.964
+   C slab-mean lagged 30 fs       1.05   0.71   0.541   0.980
+   C slab-mean lagged 50 fs       1.07   0.69   0.560   0.980
+   C slab-mean lagged 100 fs      1.33   0.60   0.665   0.983
+   B face h=0.25 A                1.00   0.91   0.302   0.705
+   B face h=0.5 A                 0.97   0.84   0.403   0.739
+   B face h=1.0 A                 1.00   0.80   0.448   0.884
+   B face h=2.0 A                 1.06   0.77   0.482   0.893
+
+== 16 cells (slab 1.47 A, window 100 fs): aligned lead-window obs RMS 0.929, tail RMS 0.755 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    0.80   0.19   0.905   0.996
+   C slab-mean lagged 30 fs       0.85   0.19   0.903   1.014
+   C slab-mean lagged 50 fs       0.78   0.14   0.934   1.028
+   C slab-mean lagged 100 fs      0.07   0.00   1.127   1.085
+   B face h=0.25 A                1.14   0.76   0.505   0.739
+   B face h=0.5 A                 1.06   0.54   0.679   0.888
+   B face h=1.0 A                 1.03   0.37   0.793   0.893
+   B face h=2.0 A                 0.75   0.16   0.927   1.079
+
+# response1_L200_seed2: 3769 rows, 432 oxygens, L = 44.39 bohr = 23.5 A (2.1 s)
+== 4 cells (slab 5.87 A, window 390 fs): aligned lead-window obs RMS 1.371, tail RMS 0.688 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    2.07   0.71   0.695   1.084
+   C slab-mean lagged 30 fs       2.91   0.09   0.973   1.034
+   C slab-mean lagged 50 fs      -3.43   0.59   1.180   1.012
+   C slab-mean lagged 100 fs     -1.06   0.74   1.746   1.027
+   B face h=0.25 A                1.26   0.96   0.291   0.684
+   B face h=0.5 A                 1.34   0.94   0.351   0.710
+   B face h=1.0 A                 1.54   0.76   0.579   1.050
+   B face h=2.0 A                 1.25   0.47   0.739   1.253
+
+== 8 cells (slab 2.94 A, window 200 fs): aligned lead-window obs RMS 2.203, tail RMS 0.494 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    1.14   0.68   0.571   1.102
+   C slab-mean lagged 30 fs       1.10   0.67   0.576   1.180
+   C slab-mean lagged 50 fs       1.13   0.66   0.590   1.212
+   C slab-mean lagged 100 fs      1.32   0.55   0.693   1.241
+   B face h=0.25 A                1.12   0.94   0.269   0.756
+   B face h=0.5 A                 1.19   0.87   0.384   0.926
+   B face h=1.0 A                 1.10   0.72   0.533   1.219
+   B face h=2.0 A                 1.04   0.68   0.563   1.099
+
+== 16 cells (slab 1.47 A, window 100 fs): aligned lead-window obs RMS 1.262, tail RMS 0.631 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    0.94   0.17   0.909   1.000
+   C slab-mean lagged 30 fs       0.93   0.15   0.922   1.042
+   C slab-mean lagged 50 fs       0.87   0.12   0.940   1.098
+   C slab-mean lagged 100 fs      0.25   0.01   1.050   1.141
+   B face h=0.25 A                1.09   0.74   0.517   0.832
+   B face h=0.5 A                 1.13   0.59   0.643   1.016
+   B face h=1.0 A                 1.31   0.42   0.774   1.018
+   B face h=2.0 A                 0.76   0.11   0.950   0.979
+
+
+# POOLED over 3 arms (each arm's own signs, equal weight per cycle)
+== POOLED 4 cells (slab 5.87 A, window 390 fs, 36 cycles): aligned lead-window obs RMS 1.391, tail RMS 0.877 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    2.14   0.87   0.616   0.979
+   C slab-mean lagged 30 fs       5.49   0.78   0.862   0.968
+   C slab-mean lagged 50 fs      -4.58   0.17   1.040   0.961
+   C slab-mean lagged 100 fs     -1.54   0.84   1.564   0.954
+   B face h=0.25 A                1.14   0.94   0.275   0.228
+   B face h=0.5 A                 1.25   0.95   0.300   0.355
+   B face h=1.0 A                 1.37   0.92   0.382   0.762
+   B face h=2.0 A                 1.37   0.87   0.436   0.930
+
+== POOLED 8 cells (slab 2.94 A, window 200 fs, 36 cycles): aligned lead-window obs RMS 1.661, tail RMS 0.542 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    1.06   0.91   0.310   0.977
+   C slab-mean lagged 30 fs       1.01   0.88   0.342   0.987
+   C slab-mean lagged 50 fs       1.03   0.87   0.368   0.998
+   C slab-mean lagged 100 fs      1.27   0.76   0.523   1.040
+   B face h=0.25 A                1.03   0.97   0.180   0.689
+   B face h=0.5 A                 1.02   0.95   0.215   0.763
+   B face h=1.0 A                 1.00   0.92   0.275   0.890
+   B face h=2.0 A                 0.99   0.91   0.300   0.916
+
+== POOLED 16 cells (slab 1.47 A, window 100 fs, 36 cycles): aligned lead-window obs RMS 0.747, tail RMS 0.382 counts
+   closure                       alpha     R2  D_lead  D_tail
+   A slab-mean                    0.88   0.35   0.811   1.032
+   C slab-mean lagged 30 fs       0.91   0.32   0.828   1.032
+   C slab-mean lagged 50 fs       0.85   0.24   0.874   1.045
+   C slab-mean lagged 100 fs      0.11   0.01   1.166   1.088
+   B face h=0.25 A                1.03   0.82   0.423   0.618
+   B face h=0.5 A                 1.04   0.73   0.525   0.860
+   B face h=1.0 A                 1.03   0.53   0.688   0.922
+   B face h=2.0 A                 0.83   0.30   0.846   1.067
+
+   pooled tables: 33 of 33 lines identical to the banked r1pp_pooled_L200.txt
+   floor, 4 cells, A slab-mean       : D_lead 0.616 against the two-sided floor 0.693 (s 1.23; D_disc 0.3634) -> excess -0.077
+   floor, 4 cells, B face h=0.25 A   : D_lead 0.275 against the two-sided floor 0.820 (s 1.23; D_disc 0.0007) -> excess -0.545
+   floor, 8 cells, A slab-mean       : D_lead 0.310 against the two-sided floor 0.342 (s 2.89; D_disc 0.0997) -> excess -0.032
+   floor, 8 cells, B face h=0.25 A   : D_lead 0.180 against the two-sided floor 0.385 (s 2.89; D_disc 0.0007) -> excess -0.205
+   floor, 16 cells, A slab-mean       : D_lead 0.811 against the two-sided floor 0.530 (s 1.68; D_disc 0.0255) -> excess +0.280
+   floor, 16 cells, B face h=0.25 A   : D_lead 0.423 against the two-sided floor 0.657 (s 1.68; D_disc 0.0007) -> excess -0.234
+# R1'' from the engine (face chart h = 0.25 A, 8 cells, integral form, 36 cycles): D_lead = 0.180 (jackknife SE 0.058), D_tail = 0.689, alpha = 1.03, R2 = 0.97; |D_lead - D_tail| = 0.509 (SE 0.170); the cell chart on the same pool 0.310
+# T293_seed0: 250 waters x 2501 readouts at 20 fs = 50.00 ps, box 19.575 A, <q> 0.7423; dictionary built in 13.6 s
+# T293_seed1: 250 waters x 2501 readouts at 20 fs = 50.00 ps, box 19.575 A, <q> 0.7337; dictionary built in 14.1 s
+# T293_seed2: 250 waters x 2501 readouts at 20 fs = 50.00 ps, box 19.575 A, <q> 0.7393; dictionary built in 14.2 s
+# T400_seed0: 250 waters x 2501 readouts at 20 fs = 50.00 ps, box 19.575 A, <q> 0.6031; dictionary built in 16.5 s
+
+## Plants on the carrier of record (T293_seed0); target (rho, jL), kept (rho, jL), budget 0.02
+   PR-1 at 1 ps: planted: increment +0.1041 ± 0.0127 (R² 0.0943 → 0.1985) | null shifted +0.0035 swapped -0.0056 -> Carried
+   PR-1 at 5 ps: planted: increment +0.0034 ± 0.0107 (R² -0.0360 → -0.0326) | null shifted -0.0252 swapped -0.0344 -> Dropped
+   PR-1: ADMITTED with increment >= 0.05 and nulls <= 0.01 at one lag -> PASS; joint pass region (carried at beta 0.02 AND refused at beta 0, 1 ps) -> exhibited
+   PR-2 at 1 ps: planted, partner-swapped: increment -0.0056 ± 0.0050 (R² 0.0943 → 0.0887) | null shifted -0.0025 swapped — -> Dropped
+   PR-2 at 5 ps: planted, partner-swapped: increment -0.0344 ± 0.0164 (R² -0.0360 → -0.0704) | null shifted -0.0221 swapped — -> Dropped
+   PR-2: DROPPED with increment <= 0.01 -> PASS
+   PR-3 at 1 ps: linear copy of kept columns: increment +0.0000 ± 0.0000 (R² 0.0943 → 0.0943) | null shifted — swapped — | redundant cols [0, 1] -> Dropped
+   PR-3 at 5 ps: linear copy of kept columns: increment +0.0000 ± 0.0000 (R² -0.0360 → -0.0360) | null shifted — swapped — | redundant cols [0, 1] -> Dropped
+   PR-3: DROPPED with increment in [0, 1e-10] -> PASS
+   PR-4 at 1 ps: planted: increment -0.0003 ± 0.0001 (R² -0.0007 → -0.0010) | null shifted -0.0001 swapped — -> Dropped
+   PR-4 at 1 ps: Q: increment -0.0002 ± 0.0002 (R² -0.0007 → -0.0009) | null shifted -0.0002 swapped — -> Dropped
+   PR-4 at 1 ps: structural block: increment -0.0010 ± 0.0003 (R² -0.0007 → -0.0017) | null shifted -0.0006 swapped — -> Dropped
+   PR-4 at 1 ps: hydrodynamic block: increment -0.0003 ± 0.0002 (R² -0.0014 → -0.0017) | null shifted -0.0002 swapped — -> Dropped
+   PR-4 at 5 ps: planted: increment -0.0001 ± 0.0000 (R² -0.0008 → -0.0009) | null shifted +0.0001 swapped — -> Dropped
+   PR-4 at 5 ps: Q: increment -0.0006 ± 0.0002 (R² -0.0008 → -0.0013) | null shifted -0.0007 swapped — -> Dropped
+   PR-4 at 5 ps: structural block: increment -0.0008 ± 0.0003 (R² -0.0008 → -0.0016) | null shifted -0.0017 swapped — -> Dropped
+   PR-4 at 5 ps: hydrodynamic block: increment -0.0005 ± 0.0004 (R² -0.0011 → -0.0016) | null shifted -0.0002 swapped — -> Dropped
+   PR-4: the time-shuffled dictionary admits nothing (<= 0.01 on every candidate) -> PASS
+
+## G2 — the drops: target (rho_k, jL_k) at the lag, kept (rho, jL), budget 0.02; ORDER-1's statistic (5 time blocks, ridge 1e-3 N, standardised target, pooled)
+   T293_seed0   1 ps ( 50 rd) Q (ORDER-1's column)         R2 0.0513 -> 0.0481, increment -0.0032 +/- 0.0036 | null shifted -0.0008 swapped -0.0001 -> Dropped | banked -0.0032 / -0.0008 / -0.0001, worst |diff| 0.0000
+   T293_seed0   1 ps ( 50 rd) structural block             R2 0.0513 -> 0.0488, increment -0.0025 +/- 0.0031 | null shifted -0.0037 swapped -0.0049 -> Dropped
+   T293_seed0   1 ps ( 50 rd)   s2 alone                   R2 0.0513 -> 0.0510, increment -0.0002 +/- 0.0012 | null shifted -0.0019 swapped -0.0014 -> Dropped
+   T293_seed0   1 ps ( 50 rd)   n33 alone                  R2 0.0513 -> 0.0511, increment -0.0002 +/- 0.0005 | null shifted -0.0004 swapped -0.0018 -> Dropped
+   T293_seed0   1 ps ( 50 rd)   n50 alone                  R2 0.0513 -> 0.0511, increment -0.0001 +/- 0.0002 | null shifted -0.0014 swapped -0.0017 -> Dropped
+   T293_seed0   1 ps ( 50 rd)   nb alone                   R2 0.0513 -> 0.0506, increment -0.0007 +/- 0.0006 | null shifted -0.0006 swapped -0.0022 -> Dropped
+   T293_seed0   5 ps (250 rd) Q (ORDER-1's column)         R2 -0.0144 -> -0.0270, increment -0.0126 +/- 0.0109 | null shifted -0.0148 swapped -0.0066 -> Dropped | banked -0.0126 / -0.0148 / -0.0066, worst |diff| 0.0000
+   T293_seed0   5 ps (250 rd) structural block             R2 -0.0144 -> -0.0267, increment -0.0123 +/- 0.0073 | null shifted -0.0246 swapped -0.0102 -> Dropped
+   T293_seed0   5 ps (250 rd)   s2 alone                   R2 -0.0144 -> -0.0193, increment -0.0049 +/- 0.0019 | null shifted -0.0136 swapped -0.0039 -> Dropped
+   T293_seed0   5 ps (250 rd)   n33 alone                  R2 -0.0144 -> -0.0136, increment +0.0008 +/- 0.0009 | null shifted -0.0041 swapped +0.0020 -> Dropped
+   T293_seed0   5 ps (250 rd)   n50 alone                  R2 -0.0144 -> -0.0149, increment -0.0005 +/- 0.0016 | null shifted +0.0010 swapped -0.0042 -> Dropped
+   T293_seed0   5 ps (250 rd)   nb alone                   R2 -0.0144 -> -0.0168, increment -0.0024 +/- 0.0006 | null shifted -0.0113 swapped +0.0027 -> Dropped
+   T293_seed1   1 ps ( 50 rd) Q (ORDER-1's column)         R2 0.0299 -> 0.0292, increment -0.0007 +/- 0.0045 | null shifted +0.0001 swapped -0.0035 -> Dropped | banked -0.0007 / +0.0001 / -0.0035, worst |diff| 0.0000
+   T293_seed1   1 ps ( 50 rd) structural block             R2 0.0299 -> 0.0252, increment -0.0048 +/- 0.0040 | null shifted -0.0045 swapped -0.0128 -> Dropped
+   T293_seed1   1 ps ( 50 rd)   s2 alone                   R2 0.0299 -> 0.0285, increment -0.0014 +/- 0.0015 | null shifted +0.0002 swapped -0.0030 -> Dropped
+   T293_seed1   1 ps ( 50 rd)   n33 alone                  R2 0.0299 -> 0.0296, increment -0.0003 +/- 0.0007 | null shifted -0.0011 swapped -0.0057 -> Dropped
+   T293_seed1   1 ps ( 50 rd)   n50 alone                  R2 0.0299 -> 0.0272, increment -0.0027 +/- 0.0012 | null shifted -0.0021 swapped -0.0048 -> Dropped
+   T293_seed1   1 ps ( 50 rd)   nb alone                   R2 0.0299 -> 0.0277, increment -0.0023 +/- 0.0017 | null shifted -0.0019 swapped -0.0043 -> Dropped
+   T293_seed1   5 ps (250 rd) Q (ORDER-1's column)         R2 -0.0148 -> -0.0196, increment -0.0049 +/- 0.0014 | null shifted -0.0022 swapped +0.0049 -> Dropped | banked -0.0049 / -0.0022 / +0.0049, worst |diff| 0.0000
+   T293_seed1   5 ps (250 rd) structural block             R2 -0.0148 -> -0.0251, increment -0.0104 +/- 0.0014 | null shifted -0.0039 swapped -0.0040 -> Dropped
+   T293_seed1   5 ps (250 rd)   s2 alone                   R2 -0.0148 -> -0.0168, increment -0.0021 +/- 0.0008 | null shifted -0.0048 swapped +0.0015 -> Dropped
+   T293_seed1   5 ps (250 rd)   n33 alone                  R2 -0.0148 -> -0.0166, increment -0.0019 +/- 0.0008 | null shifted +0.0034 swapped -0.0025 -> Dropped
+   T293_seed1   5 ps (250 rd)   n50 alone                  R2 -0.0148 -> -0.0186, increment -0.0038 +/- 0.0015 | null shifted +0.0008 swapped -0.0121 -> Dropped
+   T293_seed1   5 ps (250 rd)   nb alone                   R2 -0.0148 -> -0.0152, increment -0.0005 +/- 0.0002 | null shifted -0.0019 swapped +0.0025 -> Dropped
+   T293_seed2   1 ps ( 50 rd) Q (ORDER-1's column)         R2 0.0543 -> 0.0510, increment -0.0033 +/- 0.0009 | null shifted -0.0047 swapped -0.0026 -> Dropped | banked -0.0033 / -0.0047 / -0.0026, worst |diff| 0.0000
+   T293_seed2   1 ps ( 50 rd) structural block             R2 0.0543 -> 0.0546, increment +0.0003 +/- 0.0021 | null shifted -0.0077 swapped -0.0064 -> Dropped
+   T293_seed2   1 ps ( 50 rd)   s2 alone                   R2 0.0543 -> 0.0527, increment -0.0015 +/- 0.0007 | null shifted -0.0006 swapped -0.0023 -> Dropped
+   T293_seed2   1 ps ( 50 rd)   n33 alone                  R2 0.0543 -> 0.0546, increment +0.0003 +/- 0.0008 | null shifted -0.0029 swapped +0.0005 -> Dropped
+   T293_seed2   1 ps ( 50 rd)   n50 alone                  R2 0.0543 -> 0.0577, increment +0.0034 +/- 0.0023 | null shifted +0.0006 swapped +0.0014 -> Dropped
+   T293_seed2   1 ps ( 50 rd)   nb alone                   R2 0.0543 -> 0.0535, increment -0.0008 +/- 0.0012 | null shifted -0.0041 swapped -0.0008 -> Dropped
+   T293_seed2   5 ps (250 rd) Q (ORDER-1's column)         R2 -0.0695 -> -0.0784, increment -0.0089 +/- 0.0028 | null shifted -0.0144 swapped -0.0008 -> Dropped | banked -0.0089 / -0.0144 / -0.0008, worst |diff| 0.0000
+   T293_seed2   5 ps (250 rd) structural block             R2 -0.0695 -> -0.0770, increment -0.0076 +/- 0.0018 | null shifted -0.0183 swapped -0.0018 -> Dropped
+   T293_seed2   5 ps (250 rd)   s2 alone                   R2 -0.0695 -> -0.0684, increment +0.0011 +/- 0.0030 | null shifted -0.0042 swapped -0.0024 -> Dropped
+   T293_seed2   5 ps (250 rd)   n33 alone                  R2 -0.0695 -> -0.0698, increment -0.0004 +/- 0.0003 | null shifted -0.0015 swapped +0.0015 -> Dropped
+   T293_seed2   5 ps (250 rd)   n50 alone                  R2 -0.0695 -> -0.0674, increment +0.0020 +/- 0.0021 | null shifted -0.0023 swapped -0.0014 -> Dropped
+   T293_seed2   5 ps (250 rd)   nb alone                   R2 -0.0695 -> -0.0697, increment -0.0002 +/- 0.0008 | null shifted +0.0001 swapped +0.0033 -> Dropped
+   T400_seed0   1 ps (reported) Q: increment -0.0004, null shifted -0.0022 -> Dropped (ORDER-1 banked -0.0004)
+   T400_seed0   5 ps (reported) Q: increment +0.0001, null shifted -0.0054 -> Dropped (ORDER-1 banked +0.0001)
+
+   the NETWORK block (H-bond counts donated/accepted) cannot be built on the SLOW-1 walks, which carry oxygens only;
+   it is read on HBOND-SEARCH-1's own all-atom carriers against HBOND's own target (Delta vcom over 50 fs, kept vcom, molecule folds, HBOND's ridge):
+   molsearch1: 128 molecules x 527 rows at 0.99 fs, mean bonds donated 1.67; R2 velocity alone 0.3992, + bonds 0.3991, increment -0.0001 +/- 0.0005 (banked -0.000, |diff| 0.0001) | null shifted -0.0006 swapped -0.0011 -> Dropped (0.7 s)
+   molsearch1_warm_396K: 128 molecules x 527 rows at 0.99 fs, mean bonds donated 1.40; R2 velocity alone 0.3510, + bonds 0.3502, increment -0.0008 +/- 0.0003 (banked -0.001, |diff| 0.0002) | null shifted -0.0001 swapped -0.0002 -> Dropped (0.7 s)
+   molsearch2_5ps: 128 molecules x 5001 rows at 0.99 fs, mean bonds donated 1.66; R2 velocity alone 0.3988, + bonds 0.3988, increment +0.0000 +/- 0.0001 (banked +0.000, |diff| 0.0000) | null shifted -0.0002 swapped -0.0001 -> Dropped (7.3 s)
+
+## G3 (fluid) — the hydrodynamic block (rho, jL) as a CANDIDATE against its own next state, the structural block kept; graded at 1 ps, 0.1 and 5 ps reported
+   T293_seed0 0.1 ps (  5 rd): R2 structural alone 0.3295 -> + (rho, jL) 0.5490, increment +0.2195 +/- 0.0084 | null shifted +0.0000 swapped -0.0023 -> Carried
+   T293_seed0   1 ps ( 50 rd): R2 structural alone 0.0400 -> + (rho, jL) 0.0488, increment +0.0087 +/- 0.0051 | null shifted -0.0010 swapped -0.0057 -> Dropped  [graded]
+   T293_seed0   5 ps (250 rd): R2 structural alone -0.0204 -> + (rho, jL) -0.0267, increment -0.0063 +/- 0.0030 | null shifted -0.0066 swapped +0.0013 -> Dropped
+   T293_seed1 0.1 ps (  5 rd): R2 structural alone 0.3198 -> + (rho, jL) 0.5534, increment +0.2336 +/- 0.0059 | null shifted -0.0038 swapped -0.0025 -> Carried
+   T293_seed1   1 ps ( 50 rd): R2 structural alone 0.0157 -> + (rho, jL) 0.0252, increment +0.0094 +/- 0.0039 | null shifted -0.0045 swapped -0.0059 -> Dropped  [graded]
+   T293_seed1   5 ps (250 rd): R2 structural alone -0.0229 -> + (rho, jL) -0.0251, increment -0.0022 +/- 0.0012 | null shifted +0.0069 swapped -0.0027 -> Dropped
+   T293_seed2 0.1 ps (  5 rd): R2 structural alone 0.3306 -> + (rho, jL) 0.5318, increment +0.2012 +/- 0.0103 | null shifted -0.0038 swapped -0.0023 -> Carried
+   T293_seed2   1 ps ( 50 rd): R2 structural alone 0.0455 -> + (rho, jL) 0.0546, increment +0.0091 +/- 0.0016 | null shifted -0.0029 swapped -0.0027 -> Dropped  [graded]
+   T293_seed2   5 ps (250 rd): R2 structural alone -0.0781 -> + (rho, jL) -0.0770, increment +0.0010 +/- 0.0023 | null shifted -0.0012 swapped +0.0013 -> Dropped
+   diagnostics at 1 ps (reported, not graded): the hydrodynamic block's increment with other kept sets
+      T293_seed0: nothing kept: +0.0622 (R2 kept -0.0110) Carried | Q kept: +0.0617 (R2 kept -0.0136) Carried | Q+s2 kept: +0.0588 (R2 kept -0.0102) Carried | n33+n50+nb kept: +0.0130 (R2 kept 0.0372) Dropped
+      T293_seed1: nothing kept: +0.0390 (R2 kept -0.0091) Carried | Q kept: +0.0426 (R2 kept -0.0133) Carried | Q+s2 kept: +0.0434 (R2 kept -0.0151) Carried | n33+n50+nb kept: +0.0070 (R2 kept 0.0178) Dropped
+      T293_seed2: nothing kept: +0.1039 (R2 kept -0.0496) Carried | Q kept: +0.0996 (R2 kept -0.0487) Carried | Q+s2 kept: +0.1014 (R2 kept -0.0513) Carried | n33+n50+nb kept: +0.0111 (R2 kept 0.0465) Dropped
+
+## G3 (chains) — the conscience (DMA) block on reason_search0b's parent->child transitions
+   207 chains, 444 parent->child transitions (2.1 s); length counts 2..8+: [107, 45, 12, 15, 19, 8, 1]
+   depth alone      k=1  held-out 0.998  re-paired null 0.010  real/null 104.77   (banked 0.998 / 0.010 = 99.80)
+   DMA sector       k=4  held-out 1.576  re-paired null 0.177  real/null 8.90   (banked 1.576 / 0.177 = 8.90)
+   process sector   k=3  held-out 1.757  re-paired null 0.096  real/null 18.36   (banked 1.757 / 0.096 = 18.30)
+   all              k=7  held-out 3.260  re-paired null 0.530  real/null 6.15   (banked 3.260 / 0.530 = 6.15)
+   removable: target = next thought's process sector, kept = this thought's process sector: conscience (DMA) block: increment +0.0164 ± 0.0081 (R² 0.5458 → 0.5622) | null shifted +0.0160 swapped -0.0013 -> Dropped
+
+## G5 — refusal by price, on the hydrodynamic block's 1 ps admission
+   T293_seed0: budget 0: REFUSED: dropping 'hydrodynamic block' costs the level above +0.0087 against a budget of +0.0000
+   T293_seed0: budget 0.0500: DROPPED at price +0.0087; closure defect toward (rho, jL)(t + 1 ps) 0.9512 -> 0.9600, rise +0.0087 (the price +0.0087)
+   T293_seed1: budget 0: REFUSED: dropping 'hydrodynamic block' costs the level above +0.0094 against a budget of +0.0000
+   T293_seed1: budget 0.0500: DROPPED at price +0.0094; closure defect toward (rho, jL)(t + 1 ps) 0.9748 -> 0.9843, rise +0.0094 (the price +0.0094)
+   T293_seed2: budget 0: REFUSED: dropping 'hydrodynamic block' costs the level above +0.0091 against a budget of +0.0000
+   T293_seed2: budget 0.0500: DROPPED at price +0.0091; closure defect toward (rho, jL)(t + 1 ps) 0.9454 -> 0.9545, rise +0.0091 (the price +0.0091)
+
+## G4 — holon::sector's light-cone removal through removable::admit_certified (budget 1e-12), on QVM-ACUITY-1's grid (n 12/16/20, t 8/12/16, seeds 1-3, depth 20n; marginal on qubits 0-3)
+   n 12 t  8 seed 1: removed  1 (reference  1, gate  1) | worst change dropping removed 6.94e-17 | best kept-T amplitude move, ACUITY-1's budget 1.89e-2, every kept T 1.89e-2 (0.0 s)
+   n 12 t  8 seed 2: removed  2 (reference  2, gate  2) | worst change dropping removed 4.16e-17 | best kept-T amplitude move, ACUITY-1's budget 2.39e-2, every kept T 2.39e-2 (0.0 s)
+   n 12 t  8 seed 3: removed  1 (reference  1, gate  1) | worst change dropping removed 1.39e-17 | best kept-T amplitude move, ACUITY-1's budget 2.04e-2, every kept T 2.04e-2 (0.0 s)
+   n 12 t 12 seed 1: removed  3 (reference  3, gate  3) | worst change dropping removed 2.78e-17 | best kept-T amplitude move, ACUITY-1's budget 1.94e-2, every kept T 1.94e-2 (0.0 s)
+   n 12 t 12 seed 2: removed  4 (reference  4, gate  4) | worst change dropping removed 5.55e-17 | best kept-T amplitude move, ACUITY-1's budget 2.21e-2, every kept T 2.21e-2 (0.0 s)
+   n 12 t 12 seed 3: removed  2 (reference  2, gate  2) | worst change dropping removed 6.94e-17 | best kept-T amplitude move, ACUITY-1's budget 1.91e-2, every kept T 1.91e-2 (0.0 s)
+   n 12 t 16 seed 1: removed  4 (reference  4, gate  4) | worst change dropping removed 2.78e-17 | best kept-T amplitude move, ACUITY-1's budget 2.04e-2, every kept T 2.04e-2 (0.0 s)
+   n 12 t 16 seed 2: removed  3 (reference  3, gate  3) | worst change dropping removed 1.39e-17 | best kept-T amplitude move, ACUITY-1's budget 2.04e-2, every kept T 2.04e-2 (0.0 s)
+   n 12 t 16 seed 3: removed  1 (reference  1, gate  1) | worst change dropping removed 2.78e-17 | best kept-T amplitude move, ACUITY-1's budget 1.97e-2, every kept T 1.97e-2 (0.0 s)
+   n 16 t  8 seed 1: removed  3 (reference  3, gate  3) | worst change dropping removed 1.39e-16 | best kept-T amplitude move, ACUITY-1's budget 5.10e-3, every kept T 5.10e-3 (0.2 s)
+   n 16 t  8 seed 2: removed  1 (reference  1, gate  1) | worst change dropping removed 0.00e0 | best kept-T amplitude move, ACUITY-1's budget 5.52e-3, every kept T 5.52e-3 (0.2 s)
+   n 16 t  8 seed 3: removed  3 (reference  3, gate  3) | worst change dropping removed 0.00e0 | best kept-T amplitude move, ACUITY-1's budget 4.73e-3, every kept T 4.73e-3 (0.2 s)
+   n 16 t 12 seed 1: removed  3 (reference  3, gate  3) | worst change dropping removed 1.43e-15 | best kept-T amplitude move, ACUITY-1's budget 7.52e-3, every kept T 7.52e-3 (0.3 s)
+   n 16 t 12 seed 2: removed  0 (reference  0, gate  0) | worst change dropping removed 0.00e0 | best kept-T amplitude move, ACUITY-1's budget 7.81e-3, every kept T 7.81e-3 (0.3 s)
+   n 16 t 12 seed 3: removed  6 (reference  6, gate  6) | worst change dropping removed 8.88e-16 | best kept-T amplitude move, ACUITY-1's budget 1.95e-3, every kept T 1.95e-3 (0.3 s)
+   n 16 t 16 seed 1: removed  3 (reference  3, gate  3) | worst change dropping removed 1.19e-15 | best kept-T amplitude move, ACUITY-1's budget 7.07e-3, every kept T 7.07e-3 (0.4 s)
+   n 16 t 16 seed 2: removed  3 (reference  3, gate  3) | worst change dropping removed 2.78e-17 | best kept-T amplitude move, ACUITY-1's budget 1.16e-2, every kept T 1.16e-2 (0.4 s)
+   n 16 t 16 seed 3: removed  7 (reference  7, gate  7) | worst change dropping removed 2.55e-15 | best kept-T amplitude move, ACUITY-1's budget 6.95e-3, every kept T 6.95e-3 (0.4 s)
+   n 20 t  8 seed 1: removed  2 (reference  2, gate  2) | worst change dropping removed 1.39e-17 | best kept-T amplitude move, ACUITY-1's budget 1.20e-3, every kept T 1.20e-3 (4.4 s)
+   n 20 t  8 seed 2: removed  1 (reference  1, gate  1) | worst change dropping removed 4.16e-17 | best kept-T amplitude move, ACUITY-1's budget 1.69e-3, every kept T 1.69e-3 (4.6 s)
+   n 20 t  8 seed 3: removed  2 (reference  2, gate  2) | worst change dropping removed 0.00e0 | best kept-T amplitude move, ACUITY-1's budget 2.59e-3, every kept T 2.59e-3 (4.4 s)
+   n 20 t 12 seed 1: removed  4 (reference  4, gate  4) | worst change dropping removed 2.64e-16 | best kept-T amplitude move, ACUITY-1's budget 1.28e-3, every kept T 1.80e-3 (6.7 s)
+   n 20 t 12 seed 2: removed  2 (reference  2, gate  2) | worst change dropping removed 1.11e-16 | best kept-T amplitude move, ACUITY-1's budget 8.36e-4, every kept T 1.28e-3 (8.7 s)
+   n 20 t 12 seed 3: removed  3 (reference  3, gate  3) | worst change dropping removed 0.00e0 | best kept-T amplitude move, ACUITY-1's budget 3.13e-3, every kept T 3.13e-3 (6.1 s)
+   n 20 t 16 seed 1: removed  6 (reference  6, gate  6) | worst change dropping removed 9.71e-17 | best kept-T amplitude move, ACUITY-1's budget 2.50e-3, every kept T 2.50e-3 (7.9 s)
+   n 20 t 16 seed 2: removed  1 (reference  1, gate  1) | worst change dropping removed 4.16e-17 | best kept-T amplitude move, ACUITY-1's budget 2.16e-3, every kept T 2.16e-3 (8.0 s)
+   n 20 t 16 seed 3: removed  5 (reference  5, gate  5) | worst change dropping removed 2.08e-16 | best kept-T amplitude move, ACUITY-1's budget 2.74e-18, every kept T 3.66e-3 (8.2 s)
+
+# VERDICT TABLE
+G1 the chart | staked: 36-cycle pooled D <= 0.2, alpha in [0.8, 1.25], engine = banked 0.180 to 0.01 | read: D = 0.1800 (banked 0.180, |diff| 0.0000), SE 0.058 (banked 0.058), alpha 1.029, R2 0.97; cell chart 0.310 (banked 0.310) -> MET
+PR-1..4 plants | staked: see the plant lines | read: PR-1 1 ps +0.1041 (nulls +0.0035 / -0.0056); 5 ps +0.0034 (nulls -0.0252 / -0.0344) -> PLANTS PASS
+G2 the drops | staked: structural and network blocks DROPPED at beta 0.02, increments and nulls <= 0.01, = ORDER-1 / HBOND to 0.005 | read: Q increments (s0 1,5 ps; s1; s2) [-0.0032, -0.0126, -0.0007, -0.0049, -0.0033, -0.0089]; structural block [-0.0025, -0.0123, -0.0048, -0.0104, +0.0003, -0.0076]; network block [-0.0001, -0.0008, +0.0000]; max increment +0.0003, max null +0.0049; worst |engine - banked| 0.0002 -> MET
+G3a the keeps (fluid) | staked: the hydrodynamic block CARRIED against its own next state, the others kept | read: increments at 1 ps per 293 K seed [+0.0087, +0.0094, +0.0091] against beta 0.02 -> KILL
+G3b the keeps (chains) | staked: conscience block CARRIED toward the next process sector; banked 8.9x above null to 10 % | read: DMA real/null 8.90 (banked 8.90, -0.0 %); gate increment +0.0164 +/- 0.0081, nulls +0.0160 / -0.0013 -> Dropped -> KILL
+G5 refusal by price | staked: budget below the carried block's increment: REFUSED by name with the price; above it: dropped and the defect rises by the price | read: refusal fired on 3 of 3 seeds; worst |defect rise - price| 0.0e0 -> MET
+G4 the circuit case | staked: removed set identical (kill: any difference); 76 removed, worst change 2.6e-15; kept gates move the amplitude > 1e-3 | read: 27 instances, 76 removed (banked 76), removed-set differences 0, worst change 2.55e-15 (banked 2.6e-15); best kept T moves the amplitude > 1e-3 on 25 of 27 under ACUITY-1's n = 20 budget of four (weakest 2.74e-18), on 27 of 27 trying every kept T; 150 of 248 kept T gates individually > 1e-3 -> MET
+plants: PR-5 PASS, PR-1 PASS, PR-2 PASS, PR-3 PASS, PR-4 PASS
+BRANCH: (c) G2 or G3 killed - the removability statistic does not reproduce the banked reads
+# wall 142.3 s

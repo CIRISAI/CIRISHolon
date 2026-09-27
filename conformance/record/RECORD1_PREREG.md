@@ -298,3 +298,49 @@ cited.
 Carrier-sector statement (M-PLANT-SECTOR): every plant names its carrier (the blind file,
 the coded corpus, the S2(a) checker with two appended codes), and the sector the plant acts
 on is nonzero in that carrier by construction.
+
+### Notes on building (2026-09-26; appended after the codes (`60899f6`) and the read; no stake, bar, plant or branch above moves)
+
+The read is `record1_read.txt`; the verdict, branch (b), is `RECORD1_RESULTS.md`. Where this
+text and the build disagree:
+
+1. **S1 was staked where one coder can hardly fail it.** A forced-choice coder with five
+   tie-breaks refuses only when no tie-break applies, so "inseparable" was never going to be
+   coded by the rule's own author. S1 read `264/264`, but 188 of those entries (71 %) had a
+   named defensible runner-up. The informative number was the contested rate and its pairs,
+   and the prereg reported them only "beside". A freeze of this shape should stake coverage
+   at two coders or stake the contested rate. M-VACUOUS-SUCCESS, on the stake the brief put
+   first.
+2. **SPLIT was applied only when the co-equal changes differ in kind.** The text says SPLIT
+   for "two or more independent, co-equal changes". Where several co-equal changes share one
+   kind (FLUID-0's three gate letters, VIEW-SEARCH-1's two plant parameters), the coder coded
+   the kind. That convention was not written here. Under the letter at most two more entries
+   would move to SPLIT (G3b's closure statistic beside its missing budget, and MOLSEARCH-1's
+   run-on paragraph). The defect rate would stay under `0.03`.
+3. **The extractor overlapped three times.** A section block ran on into the next paragraph:
+   - MOLSEARCH-1's first clause carries the second clause's paragraph;
+   - SATURATION-2's item 3 absorbed the next unnumbered sentence (coded SPLIT);
+   - RESPONSE-1 Amendment 5's "What it means" carries the staggered-chart bullet, which is
+     also its own entry.
+
+   One change is therefore in the corpus twice. The two readings of it were coded Facts and
+   Structure. They sit in one document, so they make no transition with each other, but each
+   pairs with the neighbouring documents, so that change carries double weight in two of
+   RESPONSE-1's document pairs.
+4. **The date order inside the BRIDGE-era campaigns is arbitrary.** Those rows carry their
+   registration date (2026-08-28), not their event date, so their documents tie on date and
+   fall back to line order. The permutation null is indifferent to any fixed order, so S3 is
+   not biased by this. But "succession" means less on those campaigns than on the dated ones.
+5. **The git reversal pattern is lexical.** Three of its five hits are words: this prereg's
+   own "undone", a physics "restores", and a test named "restored". It cannot see a reversal
+   whose message does not announce one. Its one substantive hit (`05a965c`) is a restoration,
+   adjudicated in the results.
+6. **PL-3's mirror clause was vacuous in the first build.** It filtered the real codes to the
+   consistent ones and then asked whether any was inconsistent. It was fixed after the first
+   read to test the two consistent mirror codes explicitly. The verdict did not move.
+7. **Reported after the first read, labelled there and never graded:** the diagonal against a
+   global permutation (it separates campaign composition from succession) and the contested
+   boundary pairs.
+8. **The builder's prediction was wrong on its specifics.** The commonest sites are Rules and
+   Model, not Facts and Rules, and Identity is not rare. The Record rate was `0.77`, not four
+   in five.

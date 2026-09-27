@@ -627,6 +627,421 @@ def build_blind():
     print(f"blind: {len(items)} items ({len(corpus)} corpus + {len(PL1)} PL-1) -> {BLIND.relative_to(ROOT)}")
 
 
+# ------------------------------------------------------------------------------------------
+# STATISTICS — written after the freeze (8975be1) and after the codes (60899f6)
+# ------------------------------------------------------------------------------------------
+N_DRAWS = 10_000
+SEED_NULL = 20260926
+SEED_PL2 = 11
+
+STACK = {"Premises", "Model", "Facts", "Confidence"}
+CARRIER = {"Structure", "Manner", "Circumstances"}
+
+
+def operational_overlay():
+    """LEG A section 4.3: cells FORBIDDEN under some channel and ALLOWED under none (71)."""
+    cells = set()
+    for i in KINDS:
+        for j in KINDS:
+            if i == j:
+                continue
+            if i in STACK and j not in STACK:
+                cells.add((i, j))                       # grounding never leaves the stack (28)
+            if i in CARRIER or j in CARRIER:
+                cells.add((i, j))                       # carrier inert under mention (54)
+            if j == "Identity":
+                cells.add((i, j))                       # Identity's absorption column (10)
+    assert len(cells) == 73, len(cells)
+    cells -= {("Structure", "Manner"), ("Circumstances", "Manner")}  # absorption allows these
+    return cells
+
+
+OVERLAY = operational_overlay()
+# the successional register (TRANSITION_MAP_PREREG NOTE A1.1): Record-axis cells only; no
+# kind -> kind cell is among them, so on a kind sequence this set is empty by construction
+SUCCESSIONAL_FORBIDDEN = set()
+
+
+def sha(path):
+    return hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+
+
+def load():
+    corpus = {json.loads(l)["id"]: json.loads(l) for l in open(CORPUS)}
+    key = json.loads(BLIND_KEY.read_text())
+    codes = [json.loads(l) for l in open(CODES)]
+    assert len(codes) == len(key) == len(corpus) + len(PL1), (len(codes), len(key), len(corpus))
+    by_src = {}
+    for c in codes:
+        by_src[key[c["bid"]]] = c
+    return corpus, key, by_src
+
+
+def coded_one_kind(c):
+    return c["status"] == "CHANGE" and c["kind"] in KINDS and c["separable"]
+
+
+def campaign_docs(corpus, kinds_of):
+    """campaign -> ordered list of documents -> list of kinds of included entries."""
+    docs = collections.defaultdict(lambda: collections.defaultdict(list))
+    order = {}
+    for eid, r in corpus.items():
+        k = kinds_of.get(eid)
+        if k is None:
+            continue
+        docs[r["campaign"]][r["doc"]].append(k)
+        key = (r["date"], r["file"], r["line"])
+        order[(r["campaign"], r["doc"])] = min(order.get((r["campaign"], r["doc"]), key), key)
+    out = {}
+    for camp, dd in docs.items():
+        seq = sorted(dd, key=lambda d: order[(camp, d)])
+        out[camp] = [dd[d] for d in seq]
+    return out
+
+
+def transitions(seqs):
+    T = collections.Counter()
+    for camp, docs in seqs.items():
+        for a, b in zip(docs, docs[1:]):
+            for i in a:
+                for j in b:
+                    T[(i, j)] += 1
+    return T
+
+
+def entry_transitions(corpus, kinds_of):
+    seq = collections.defaultdict(list)
+    for eid, r in sorted(corpus.items(), key=lambda kv: (kv[1]["date"], kv[1]["file"], kv[1]["line"])):
+        k = kinds_of.get(eid)
+        if k is not None:
+            seq[r["campaign"]].append(k)
+    T = collections.Counter()
+    for camp, ks in seq.items():
+        for a, b in zip(ks, ks[1:]):
+            T[(a, b)] += 1
+    return T, seq
+
+
+def diag(T):
+    return sum(v for (i, j), v in T.items() if i == j)
+
+
+def occ(T, cells):
+    return sum(v for c, v in T.items() if c in cells)
+
+
+def permutation_null(seqs, draws, seed):
+    """Kinds permuted across the entries of each campaign; every document keeps its size."""
+    rng = random.Random(seed)
+    Ds, Os = [], []
+    flat = {c: [k for d in docs for k in d] for c, docs in seqs.items()}
+    sizes = {c: [len(d) for d in docs] for c, docs in seqs.items()}
+    for _ in range(draws):
+        new = {}
+        for c in seqs:
+            ks = flat[c][:]
+            rng.shuffle(ks)
+            docs, at = [], 0
+            for s in sizes[c]:
+                docs.append(ks[at:at + s])
+                at += s
+            new[c] = docs
+        T = transitions(new)
+        Ds.append(diag(T))
+        Os.append(occ(T, OVERLAY))
+    return Ds, Os
+
+
+def entry_null(seq, draws, seed):
+    rng = random.Random(seed)
+    Ds = []
+    for _ in range(draws):
+        d = 0
+        for ks in seq.values():
+            ks = ks[:]
+            rng.shuffle(ks)
+            d += sum(1 for a, b in zip(ks, ks[1:]) if a == b)
+        Ds.append(d)
+    return Ds
+
+
+def mean_sd(xs):
+    m = sum(xs) / len(xs)
+    v = sum((x - m) ** 2 for x in xs) / (len(xs) - 1)
+    return m, v ** 0.5
+
+
+def s3_read(seqs):
+    T = transitions(seqs)
+    D = diag(T)
+    O = occ(T, OVERLAY)
+    F = occ(T, SUCCESSIONAL_FORBIDDEN)
+    Ds, Os = permutation_null(seqs, N_DRAWS, SEED_NULL)
+    mD, sD = mean_sd(Ds)
+    mO, sO = mean_sd(Os)
+    p = (1 + sum(1 for x in Ds if x >= D)) / (1 + len(Ds))
+    total = sum(T.values())
+    eff = sum(1 for docs in seqs.values() if len(docs) >= 2)
+    if F > 0:
+        verdict = "KILLED (forbidden cell occupied)"
+    elif D <= mD:
+        verdict = "KILLED (diagonal at or below the null mean)"
+    elif p <= 0.05:
+        verdict = "MET"
+    else:
+        verdict = "UNRESOLVED"
+    return dict(T=T, D=D, total=total, O=O, F=F, null_D=(mD, sD), null_O=(mO, sO), p=p,
+                eff_campaigns=eff, verdict=verdict)
+
+
+def git_reversal_search():
+    out = git("log", "--since=2026-08-26", "--until=2026-09-27", "--format=%H%x1f%ad%x1f%s%x1f%b%x1e", "--date=short")
+    pat = re.compile(r"revert|restor|reinstat|undo|back out|roll ?back|un-?retract", re.I)
+    hits = []
+    for rec in out.split("\x1e"):
+        f = rec.strip("\n").split("\x1f")
+        if len(f) < 4:
+            continue
+        h, d, subj, body = f[0].strip(), f[1], f[2], f[3]
+        if pat.search(subj) or "This reverts commit" in body:
+            hits.append((h[:7], d, subj))
+    return hits
+
+
+def stats():
+    corpus, key, by_src = load()
+    lines_out = []
+    say = lines_out.append
+    res = {}
+
+    ids = list(corpus)
+    codes = {e: by_src[e] for e in ids}
+    say("RECORD-1 read")
+    say(f"  corpus  {CORPUS.name} sha256 {sha(CORPUS)}  entries {len(ids)}")
+    say(f"  codes   {CODES.name} sha256 {sha(CODES)}  codes {len(by_src)} (corpus {len(codes)}, PL-1 {len(PL1)})")
+    say(f"  key     {BLIND_KEY.name} sha256 {sha(BLIND_KEY)}")
+    st = collections.Counter(c["status"] for c in codes.values())
+    say(f"  status  {dict(st)}")
+
+    # ---------------- S1 ----------------
+    defects = [e for e in ids if codes[e]["status"] != "CHANGE"]
+    change = [e for e in ids if codes[e]["status"] == "CHANGE"]
+    one = [e for e in change if coded_one_kind(codes[e])]
+    nofit = [e for e in change if codes[e]["kind"] == "NO-FIT"]
+    insep = [e for e in change if not codes[e]["separable"]]
+    contested = [e for e in one if codes[e]["alt"]]
+    cov = len(one) / len(change)
+    strict = len(one) / len(ids)
+    defect_rate = len(defects) / len(ids)
+    if defect_rate > 0.10:
+        s1 = "VOID (corpus defects over 10 %)"
+    elif insep or cov < 0.85:
+        s1 = "KILLED"
+    elif cov >= 0.95:
+        s1 = "MET"
+    else:
+        s1 = "NOT MET (between 85 % and 95 %)"
+    say("")
+    say(f"S1 coverage: {len(one)}/{len(change)} CHANGE entries take exactly one kind = {cov:.4f}  -> {s1}")
+    say(f"   corpus defects {len(defects)}/{len(ids)} = {defect_rate:.4f} (cap 0.10); strict reading {len(one)}/{len(ids)} = {strict:.4f}")
+    say(f"   NO-FIT {len(nofit)}; inseparable {len(insep)}; contested (runner-up named, separated) {len(contested)}/{len(one)} = {len(contested)/len(one):.3f}")
+    for e in defects:
+        say(f"   defect {e} [{codes[e]['status']}] {corpus[e]['text'][:150]}")
+    for e in nofit + insep:
+        say(f"   residue {e} {corpus[e]['text'][:150]}")
+    res["S1"] = dict(verdict=s1, coverage=cov, one=len(one), change=len(change), defects=defects,
+                     defect_rate=defect_rate, strict=strict, nofit=nofit, inseparable=insep,
+                     contested=len(contested))
+
+    # ---------------- S2 ----------------
+    def inconsistent(c):
+        return (c["record"] and c["warrant_class"] != "external") or (not c["record"] and c["warrant_class"] != "internal")
+    s2a_exc = [e for e in ids if inconsistent(codes[e])]
+    rev = [e for e in ids if codes[e]["reverses"]]
+    rev_kill = [e for e in rev if not codes[e]["record"]]
+    hits = git_reversal_search()
+    n_true = sum(1 for e in ids if codes[e]["record"])
+    say("")
+    say(f"S2(a) Record flag against the warrant's class: {len(s2a_exc)} exceptions over {len(ids)} codes"
+        f" (Record = TRUE on {n_true}/{len(ids)} = {n_true/len(ids):.3f})")
+    say(f"S2(b)(i) coded reversals: {len(rev)}; reversals whose own warrant is internal: {len(rev_kill)}")
+    for e in rev:
+        c = codes[e]
+        say(f"   {e} record={c['record']} undoes: {c['reverses']}")
+    say(f"S2(b)(ii) git subjects/bodies matching the reversal pattern, 2026-08-26..2026-09-26: {len(hits)}")
+    for h in hits:
+        say(f"   {h[0]} {h[1]} {h[2][:170]}")
+    say("S2(b)(iii) every Record-TRUE entry's text stands at HEAD: VACUOUS BY CONSTRUCTION (the corpus is read from HEAD)")
+    res["S2"] = dict(a_exceptions=s2a_exc, record_true=n_true, reversals=rev, reversal_kills=rev_kill,
+                     git_hits=hits)
+
+    # ---------------- S3 ----------------
+    kinds_of = {e: codes[e]["kind"] for e in ids if coded_one_kind(codes[e])}
+    seqs = campaign_docs(corpus, kinds_of)
+    r3 = s3_read(seqs)
+    Te, eseq = entry_transitions(corpus, kinds_of)
+    De = diag(Te)
+    eDs = entry_null(eseq, N_DRAWS, SEED_NULL)
+    emD, esD = mean_sd(eDs)
+    ep = (1 + sum(1 for x in eDs if x >= De)) / (1 + len(eDs))
+    say("")
+    say(f"S3 (documents, all pairs): transitions {r3['total']}, diagonal D = {r3['D']} "
+        f"({r3['D']/r3['total']:.3f}); null {r3['null_D'][0]:.1f} +- {r3['null_D'][1]:.1f}; "
+        f"one-sided p = {r3['p']:.4f}; campaigns with >= 2 documents: {r3['eff_campaigns']}")
+    say(f"   S3(a) successional forbidden cells occupied: {r3['F']} (VACUOUS BY CONSTRUCTION, section 4)")
+    say(f"   S3 -> {r3['verdict']}")
+    say(f"   operational overlay (71 cells, reported, not graded): occupancy {r3['O']} "
+        f"({r3['O']/r3['total']:.3f}); null {r3['null_O'][0]:.1f} +- {r3['null_O'][1]:.1f}")
+    say(f"   entry-level (labelled, not graded): transitions {sum(Te.values())}, diagonal {De}, "
+        f"null {emD:.1f} +- {esD:.1f}, p = {ep:.4f}")
+    diag_by_kind = {k: r3["T"].get((k, k), 0) for k in KINDS}
+    say(f"   diagonal by kind: {diag_by_kind}")
+    top_off = sorted(((v, c) for c, v in r3["T"].items() if c[0] != c[1]), reverse=True)[:8]
+    say(f"   largest off-diagonal cells: " + "; ".join(f"{c[0]}->{c[1]} {v}" for v, c in top_off))
+    # reported, not graded (added after the first read, labelled): the diagonal against a
+    # GLOBAL permutation (kinds shuffled across all campaigns), which separates campaign
+    # composition from succession inside a campaign
+    grng = random.Random(SEED_NULL)
+    ges = list(kinds_of)
+    gks = [kinds_of[e] for e in ges]
+    gD = []
+    for _ in range(2000):
+        gks2 = gks[:]
+        grng.shuffle(gks2)
+        gD.append(diag(transitions(campaign_docs(corpus, dict(zip(ges, gks2))))))
+    gm, gs = mean_sd(gD)
+    say(f"   [reported after the first read, not graded] diagonal against a GLOBAL permutation "
+        f"(2,000 draws): null {gm:.1f} +- {gs:.1f}; D = {r3['D']} is {(r3['D']-gm)/gs:.1f} sd above it "
+        f"-> kinds cluster by campaign, not by succession within one")
+    res_global = (gm, gs)
+    per_camp = {c: len(d) for c, d in seqs.items() if len(d) >= 2}
+    say(f"   documents per campaign (>= 2): {per_camp}")
+    res["S3"] = dict(verdict=r3["verdict"], D=r3["D"], total=r3["total"], null=r3["null_D"], p=r3["p"],
+                     overlay=r3["O"], overlay_null=r3["null_O"], forbidden=r3["F"],
+                     eff_campaigns=r3["eff_campaigns"], entry=dict(D=De, total=sum(Te.values()),
+                                                                   null=(emD, esD), p=ep),
+                     T={f"{i}->{j}": v for (i, j), v in sorted(r3["T"].items())},
+                     global_null=res_global)
+    # reported, not graded (added after the first read, labelled): the coder's contested
+    # boundaries, kind -> runner-up, and whether each crosses a Surface.lean block
+    BLOCK = {k: b for b, ks in (("assertive", ["Facts", "Confidence", "Model", "Premises"]),
+                                ("directive", ["Rules", "Priorities", "Process"]),
+                                ("declaration", ["Identity"]),
+                                ("carrier", ["Manner", "Structure", "Circumstances"])) for k in ks}
+    pairs = collections.Counter(tuple(sorted((codes[e]["kind"], codes[e]["alt"]))) for e in kinds_of if codes[e]["alt"])
+    within = sum(v for (a, b), v in pairs.items() if BLOCK[a] == BLOCK[b])
+    say(f"   [reported, not graded] contested boundaries (kind with a named runner-up), unordered: " +
+        "; ".join(f"{a}/{b} {v}" for (a, b), v in pairs.most_common(10)))
+    say(f"   within one Surface.lean block: {within} of {sum(pairs.values())}")
+    res["S1"]["contested_pairs"] = {f"{a}/{b}": v for (a, b), v in pairs.most_common()}
+    res["S1"]["contested_within_block"] = within
+
+    # ---------------- S4 ----------------
+    say("")
+    hist = collections.Counter(kinds_of.values())
+    rhist = collections.Counter(codes[e]["root"] for e in kinds_of if codes[e]["root"])
+    say("S4 site-kind histogram (corpus, one kind): " + ", ".join(f"{k} {hist.get(k, 0)}" for k in KINDS))
+    say("   root-kind histogram:                    " + ", ".join(f"{k} {rhist.get(k, 0)}" for k in KINDS))
+    for src in ("amendment", "notes", "misfit", "doc"):
+        es = [e for e in kinds_of if corpus[e]["src"] == src]
+        h = collections.Counter(kinds_of[e] for e in es)
+        rt = sum(1 for e in es if codes[e]["record"])
+        say(f"   {src:9s} n={len(es):3d} Record-TRUE {rt/len(es):.3f}  " +
+            ", ".join(f"{k} {v}" for k, v in h.most_common()))
+    say("   Record-TRUE rate per kind (base rate "
+        f"{sum(1 for e in kinds_of if codes[e]['record'])/len(kinds_of):.3f}): " +
+        ", ".join(f"{k} {sum(1 for e in kinds_of if kinds_of[e]==k and codes[e]['record'])}/{hist.get(k,0)}"
+                  for k in KINDS if hist.get(k)))
+    mixed = [k for k in KINDS if hist.get(k) and 0 < sum(1 for e in kinds_of if kinds_of[e] == k and codes[e]["record"]) < hist[k]]
+    say(f"   kinds carrying both Record values: {len(mixed)} of {sum(1 for k in KINDS if hist.get(k))} present"
+        f" -> the Record flag is {'NOT ' if mixed else ''}a function of the kind on this corpus")
+    mis = [e for e in kinds_of if corpus[e]["src"] == "misfit"]
+    mh = collections.Counter(kinds_of[e] for e in mis)
+    mr = collections.Counter(codes[e]["root"] for e in mis if codes[e]["root"])
+    top2 = [k for k, _ in mh.most_common(2)]
+    rtop2 = [k for k, _ in mr.most_common(2)]
+    guess_site = set(top2) == {"Premises", "Rules"}
+    guess_root = set(rtop2) == {"Premises", "Rules"}
+    say(f"   misfit occurrences (n={len(mis)}) site: " + ", ".join(f"{k} {v}" for k, v in mh.most_common()))
+    say(f"   misfit occurrences root: " + ", ".join(f"{k} {v}" for k, v in mr.most_common()))
+    say(f"   the lead's guess (Premises and Rules the top two): site {'HOLDS' if guess_site else 'FAILS'} "
+        f"(top two {top2}); root {'HOLDS' if guess_root else 'FAILS'} (top two {rtop2})")
+    top_all = [k for k, _ in hist.most_common(2)]
+    rare = sorted(hist, key=lambda k: hist[k])[:3]
+    say(f"   the builder's prediction: Facts and Rules the commonest sites -> top two {top_all}; "
+        f"Manner, Priorities, Identity rare -> rarest three {rare} (Manner {hist.get('Manner',0)}, "
+        f"Priorities {hist.get('Priorities',0)}, Identity {hist.get('Identity',0)})")
+    res["S4"] = dict(hist=dict(hist), root=dict(rhist), misfit_site=dict(mh), misfit_root=dict(mr),
+                     guess_site=guess_site, guess_root=guess_root, mixed_record_kinds=mixed)
+
+    # ---------------- plants ----------------
+    say("")
+    pl1 = []
+    for n, (k, t) in enumerate(PL1):
+        c = by_src[f"PL1-{n+1:02d}"]
+        pl1.append((k, c["kind"], c["kind"] == k))
+    n_ok = sum(1 for x in pl1 if x[2])
+    pl1_pass = n_ok >= 20
+    say(f"PL-1: {n_ok}/22 synthetic entries coded to their written kind (must >= 20) -> {'PASS' if pl1_pass else 'FAIL'}")
+    for k, got, ok in pl1:
+        if not ok:
+            say(f"   miss: written {k}, coded {got}")
+    # PL-2: kinds permuted across ALL coded corpus entries
+    rng = random.Random(SEED_PL2)
+    es = list(kinds_of)
+    ks = [kinds_of[e] for e in es]
+    rng.shuffle(ks)
+    shuffled = dict(zip(es, ks))
+    r2 = s3_read(campaign_docs(corpus, shuffled))
+    pl2_d = r2["p"] > 0.05 and abs(r2["D"] - r2["null_D"][0]) <= 3 * r2["null_D"][1]
+    pl2_o = abs(r2["O"] - r2["null_O"][0]) <= 3 * r2["null_O"][1]
+    pl2_pass = pl2_d and pl2_o and r2["F"] == 0
+    say(f"PL-2: shuffled kinds: D = {r2['D']} against null {r2['null_D'][0]:.1f} +- {r2['null_D'][1]:.1f}, "
+        f"p = {r2['p']:.4f}; overlay {r2['O']} against {r2['null_O'][0]:.1f} +- {r2['null_O'][1]:.1f}; "
+        f"forbidden {r2['F']} -> {'PASS' if pl2_pass else 'FAIL'}")
+    # PL-3: the checker refuses the two inconsistent synthetic codes and nothing consistent
+    synth = [dict(record=rec, warrant_class=wc) for _, rec, wc, _ in PL3]
+    flagged = [inconsistent(c) for c in synth]
+    # the consistent mirror codes must NOT be flagged (the first build tested this clause against
+    # the real codes after filtering them to the consistent ones, which could not fail; fixed
+    # after the first read and labelled in the results)
+    mirrors = [dict(record=True, warrant_class="external"), dict(record=False, warrant_class="internal")]
+    false_flags = [m for m in mirrors if inconsistent(m)]
+    pl3_pass = all(flagged) and not false_flags
+    say(f"PL-3: synthetic inconsistent codes flagged {sum(flagged)}/2; consistent mirror codes flagged "
+        f"{len(false_flags)}/2 -> {'PASS' if pl3_pass else 'FAIL'}")
+    res["plants"] = dict(PL1=dict(ok=n_ok, passed=pl1_pass, misses=[x for x in pl1 if not x[2]]),
+                         PL2=dict(D=r2["D"], null=r2["null_D"], p=r2["p"], overlay=r2["O"],
+                                  overlay_null=r2["null_O"], passed=pl2_pass),
+                         PL3=dict(passed=pl3_pass))
+
+    # ---------------- branch ----------------
+    s2_kill = bool(s2a_exc) and False  # S2(a) exceptions are reported; the kill is S2(b)
+    s2b_kill = bool(rev_kill)
+    if not (pl1_pass and pl2_pass and pl3_pass):
+        branch = "(e) a plant fails"
+    elif s1.startswith("VOID"):
+        branch = "VOID (S1 corpus-defect cap)"
+    elif s2b_kill:
+        branch = "(d) S2 killed"
+    elif s1 == "KILLED":
+        branch = "(c) S1 killed"
+    elif r3["verdict"].startswith("KILLED"):
+        branch = "(b) S1 met, S3 killed" if s1 == "MET" else "S1 not met, S3 killed"
+    elif r3["verdict"] == "UNRESOLVED":
+        branch = "(b') S1 met, S3 unresolved" if s1 == "MET" else "S1 not met, S3 unresolved"
+    elif s1 == "MET" and not s2a_exc:
+        branch = "(a) S1-S3 met (S3 on the diagonal; S3(a) vacuous by construction)"
+    else:
+        branch = "not (a): S1 " + s1 + ", S2(a) exceptions " + str(len(s2a_exc))
+    say("")
+    say(f"BRANCH: {branch}")
+    res["branch"] = branch
+    READ_TXT.write_text("\n".join(lines_out) + "\n")
+    READ_JSON.write_text(json.dumps(res, indent=1, default=str))
+    print("\n".join(lines_out))
+
+
 if __name__ == "__main__":
     cmd = sys.argv[1] if len(sys.argv) > 1 else "help"
     if cmd == "corpus":
@@ -634,7 +1049,7 @@ if __name__ == "__main__":
     elif cmd == "blind":
         build_blind()
     elif cmd == "stats":
-        # written after RECORD1_PREREG.md is committed and after RECORD1_CODES.jsonl exists
-        sys.exit("stats: not yet built (the statistics are written after the freeze)")
+        # written after RECORD1_PREREG.md (8975be1) and RECORD1_CODES.jsonl (60899f6) were committed
+        stats()
     else:
         print(__doc__)

@@ -1,0 +1,271 @@
+{
+ "S1": {
+  "verdict": "MET",
+  "coverage": 1.0,
+  "one": 264,
+  "change": 264,
+  "defects": [
+   "R1-A030",
+   "R1-N006",
+   "R1-N056",
+   "R1-N088",
+   "R1-N090"
+  ],
+  "defect_rate": 0.01858736059479554,
+  "strict": 0.9814126394052045,
+  "nofit": [],
+  "inseparable": [],
+  "contested": 188,
+  "contested_pairs": {
+   "Facts/Premises": 18,
+   "Model/Rules": 16,
+   "Premises/Rules": 15,
+   "Identity/Rules": 12,
+   "Facts/Model": 11,
+   "Model/Premises": 11,
+   "Confidence/Facts": 11,
+   "Confidence/Rules": 8,
+   "Confidence/Identity": 8,
+   "Identity/Model": 7,
+   "Facts/Structure": 7,
+   "Process/Rules": 5,
+   "Model/Structure": 5,
+   "Confidence/Model": 5,
+   "Rules/Structure": 5,
+   "Facts/Rules": 5,
+   "Model/Process": 4,
+   "Facts/Identity": 4,
+   "Identity/Premises": 3,
+   "Identity/Structure": 3,
+   "Confidence/Premises": 3,
+   "Model/Priorities": 2,
+   "Priorities/Rules": 2,
+   "Process/Structure": 2,
+   "Manner/Rules": 2,
+   "Confidence/Manner": 2,
+   "Confidence/Priorities": 2,
+   "Manner/Process": 1,
+   "Premises/Structure": 1,
+   "Manner/Model": 1,
+   "Premises/Process": 1,
+   "Circumstances/Confidence": 1,
+   "Circumstances/Rules": 1,
+   "Manner/Premises": 1,
+   "Facts/Manner": 1,
+   "Identity/Manner": 1,
+   "Circumstances/Process": 1
+  },
+  "contested_within_block": 66
+ },
+ "S2": {
+  "a_exceptions": [],
+  "record_true": 207,
+  "reversals": [
+   "R1-A083"
+  ],
+  "reversal_kills": [],
+  "git_hits": [
+   [
+    "8975be1",
+    "2026-09-26",
+    "RECORD-1 prereg, alone: does the 11+1 classify this programme's own record of corrections, is the Record axis one-way on it, and does a kind persist across successive corrections? S1 coverage (95 %, kill 85 % or one inseparable pair), S2 no Record-forced change undone from inside the artifact, S3 the diagonal against the order-permutation null (the forbidden successional cells are Record-axis only and declared vacuous here by construction), S4 the histogram and the lead's Premises-and-Rules guess; plants PL-1 (22, two per kind), PL-2, PL-3; one coder, blind file, agreement not read"
+   ],
+   [
+    "9273777",
+    "2026-09-21",
+    "RESPONSE-1 Amendment 5: the residual is the molecular layering - the face-centred momentum (molecules within 0.25 A of a face) restores the amplitude fidelity to 1.05 and takes D from 0.735 to 0.164 at 8 cells on the 200 m/s control (R2 0.97), lagging never helps; R1 as staked kills, R1'' (the staggered chart, h fixed) staked on the eight arms to land; the 'not spatial' inference of 1b892e1 corrected (nineteenth instance)"
+   ],
+   [
+    "165ca21",
+    "2026-09-11",
+    "The transport instrument, and a gate hardened twice. Both arms now accumulate the oxygens' unwrapped walk on the campaign's own rule at matched physical times, the MSD is read on the lens's own ladder, and NO diffusion constant is claimed because this window holds no diffusive regime. The gate passed vacuously on its first smoke - one lag at tau 3 fs, below the crossover where every walk is ballistic and two arms agree whatever their dynamics - so it gained anti-vacuity legs: the window must reach past the crossover, CITED from LIQUID-2's gate rather than typed, and the ladder must carry four lags. It then VANISHED under --reuse because the bundle carried the flexible series and not its walk, and a missing gate reads as a campaign that never asked the question - so the bundle carries flexible.walk and an absent walk VOIDs the gate with its reason. Verified in three cases: void, fail, restored. Also recorded: the lead's own pricing correction, 0.70x of a ceiling was the rigid arm alone and the comparison needs both, which separates the cheap MSD question from the expensive diffusion-constant one"
+   ],
+   [
+    "05a965c",
+    "2026-08-30",
+    "Restore RULE-B at HEAD to the refutation's own blob: the rewrite crashed on six of eight checkable cases and read tags"
+   ],
+   [
+    "ca7d39c",
+    "2026-08-29",
+    "fix(unified-ui): restore missing statement tokenization in parseOpenQASM"
+   ]
+  ]
+ },
+ "S3": {
+  "verdict": "KILLED (diagonal at or below the null mean)",
+  "D": 74,
+  "total": 314,
+  "null": [
+   77.5101,
+   6.406731039325829
+  ],
+  "p": 0.7437256274372562,
+  "overlay": 140,
+  "overlay_null": [
+   133.9617,
+   11.064722134676124
+  ],
+  "forbidden": 0,
+  "eff_campaigns": 29,
+  "entry": {
+   "D": 59,
+   "total": 194,
+   "null": [
+    45.298,
+    4.154337715230337
+   ],
+   "p": 0.0015998400159984002
+  },
+  "T": {
+   "Circumstances->Circumstances": 1,
+   "Circumstances->Facts": 1,
+   "Confidence->Confidence": 2,
+   "Confidence->Facts": 3,
+   "Confidence->Identity": 1,
+   "Confidence->Manner": 2,
+   "Confidence->Model": 1,
+   "Confidence->Rules": 4,
+   "Confidence->Structure": 1,
+   "Facts->Confidence": 3,
+   "Facts->Facts": 3,
+   "Facts->Identity": 3,
+   "Facts->Manner": 3,
+   "Facts->Model": 9,
+   "Facts->Process": 1,
+   "Facts->Rules": 12,
+   "Facts->Structure": 1,
+   "Identity->Confidence": 2,
+   "Identity->Facts": 2,
+   "Identity->Model": 4,
+   "Identity->Rules": 5,
+   "Identity->Structure": 2,
+   "Manner->Facts": 1,
+   "Manner->Model": 4,
+   "Manner->Premises": 2,
+   "Manner->Rules": 2,
+   "Model->Circumstances": 8,
+   "Model->Confidence": 1,
+   "Model->Facts": 11,
+   "Model->Identity": 3,
+   "Model->Model": 33,
+   "Model->Premises": 7,
+   "Model->Rules": 31,
+   "Model->Structure": 1,
+   "Premises->Confidence": 1,
+   "Premises->Facts": 2,
+   "Premises->Identity": 2,
+   "Premises->Manner": 2,
+   "Premises->Model": 1,
+   "Premises->Premises": 2,
+   "Premises->Rules": 9,
+   "Priorities->Rules": 1,
+   "Process->Circumstances": 1,
+   "Process->Facts": 1,
+   "Process->Model": 2,
+   "Process->Premises": 2,
+   "Rules->Confidence": 3,
+   "Rules->Facts": 10,
+   "Rules->Identity": 4,
+   "Rules->Model": 11,
+   "Rules->Premises": 9,
+   "Rules->Process": 1,
+   "Rules->Rules": 33,
+   "Rules->Structure": 1,
+   "Structure->Circumstances": 1,
+   "Structure->Confidence": 5,
+   "Structure->Facts": 11,
+   "Structure->Manner": 8,
+   "Structure->Model": 1,
+   "Structure->Process": 1,
+   "Structure->Rules": 19
+  },
+  "global_null": [
+   49.3465,
+   7.134345603739477
+  ]
+ },
+ "S4": {
+  "hist": {
+   "Premises": 25,
+   "Rules": 66,
+   "Model": 61,
+   "Identity": 23,
+   "Facts": 26,
+   "Process": 4,
+   "Manner": 4,
+   "Structure": 17,
+   "Confidence": 30,
+   "Priorities": 3,
+   "Circumstances": 5
+  },
+  "root": {
+   "Premises": 121,
+   "Model": 55,
+   "Rules": 18,
+   "Facts": 11,
+   "Process": 6,
+   "Manner": 5,
+   "Structure": 16,
+   "Identity": 18,
+   "Circumstances": 12,
+   "Confidence": 2
+  },
+  "misfit_site": {
+   "Premises": 10,
+   "Rules": 15,
+   "Identity": 9,
+   "Confidence": 18,
+   "Model": 6,
+   "Structure": 6,
+   "Facts": 7
+  },
+  "misfit_root": {
+   "Premises": 45,
+   "Rules": 2,
+   "Identity": 3,
+   "Model": 8,
+   "Process": 2,
+   "Manner": 2,
+   "Structure": 6,
+   "Circumstances": 3
+  },
+  "guess_site": false,
+  "guess_root": false,
+  "mixed_record_kinds": [
+   "Rules",
+   "Manner",
+   "Identity",
+   "Confidence",
+   "Facts",
+   "Model",
+   "Structure",
+   "Premises"
+  ]
+ },
+ "plants": {
+  "PL1": {
+   "ok": 22,
+   "passed": true,
+   "misses": []
+  },
+  "PL2": {
+   "D": 39,
+   "null": [
+    47.8604,
+    4.938091768591538
+   ],
+   "p": 0.9636036396360363,
+   "overlay": 139,
+   "overlay_null": [
+    132.0261,
+    11.846714871867455
+   ],
+   "passed": true
+  },
+  "PL3": {
+   "passed": true
+  }
+ },
+ "branch": "(b) S1 met, S3 killed"
+}

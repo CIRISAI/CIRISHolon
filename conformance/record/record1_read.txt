@@ -1,0 +1,56 @@
+RECORD-1 read
+  corpus  RECORD1_CORPUS.jsonl sha256 17366bf04af76e49fbf1d860bb7db3458b6510d74c7e6bcd20266f0f222f6732  entries 269
+  codes   RECORD1_CODES.jsonl sha256 d08f14b75e30870e81c1e4b9e016490078d0869faf50a525fde82a26c52c6047  codes 291 (corpus 269, PL-1 22)
+  key     RECORD1_BLIND_KEY.json sha256 fdc1760e9de32e12a414e58c05dda6445f39161ede12ba98eecdd47bb5decb8e
+  status  {'CHANGE': 264, 'SPLIT': 2, 'NOT-A-CHANGE': 3}
+
+S1 coverage: 264/264 CHANGE entries take exactly one kind = 1.0000  -> MET
+   corpus defects 5/269 = 0.0186 (cap 0.10); strict reading 264/269 = 0.9814
+   NO-FIT 0; inseparable 0; contested (runner-up named, separated) 188/264 = 0.712
+   defect R1-A030 [SPLIT] 7. **The campaign seed is 2026**; the scouts ran seed 1 and are not read. stim's column on family C is `TableauSimulator.do` plus peek/postselect of t
+   defect R1-N006 [SPLIT] 3. **A conservation gate passed on a box that never moved**, and a spin gate would have fired on correct physics. Both now assert the thing they assum
+   defect R1-N056 [NOT-A-CHANGE] 7. **Every member line is rational.** A decomposition's span is `σ`-stable (`√2 ↦ −√2`), so a sub-tuple's span meets `V` in a `σ`-stable subspace; a l
+   defect R1-N088 [NOT-A-CHANGE] 3. **The selection (`slow3/selection.txt`, `selection.json`), run once as declared:** | candidate | PS-3 by torch seed | admissible | CV beyond veloci
+   defect R1-N090 [NOT-A-CHANGE] 5. **Frozen.** The models are in `slow3/frozen/` (24 files: D, F-fixed λ = 0.3 and SPIB-fixed S4 × torch seeds 0–2, their `f1` maps, the three PS-4 mo
+
+S2(a) Record flag against the warrant's class: 0 exceptions over 269 codes (Record = TRUE on 207/269 = 0.770)
+S2(b)(i) coded reversals: 1; reversals whose own warrant is internal: 0
+   R1-A083 record=True undoes: RUNG2_AMENDMENT_2 'Checked, not fitted': the independent-oxygen formula recorded as '3-4x too wide'
+S2(b)(ii) git subjects/bodies matching the reversal pattern, 2026-08-26..2026-09-26: 5
+   8975be1 2026-09-26 RECORD-1 prereg, alone: does the 11+1 classify this programme's own record of corrections, is the Record axis one-way on it, and does a kind persist across successive cor
+   9273777 2026-09-21 RESPONSE-1 Amendment 5: the residual is the molecular layering - the face-centred momentum (molecules within 0.25 A of a face) restores the amplitude fidelity to 1.05 and
+   165ca21 2026-09-11 The transport instrument, and a gate hardened twice. Both arms now accumulate the oxygens' unwrapped walk on the campaign's own rule at matched physical times, the MSD is
+   05a965c 2026-08-30 Restore RULE-B at HEAD to the refutation's own blob: the rewrite crashed on six of eight checkable cases and read tags
+   ca7d39c 2026-08-29 fix(unified-ui): restore missing statement tokenization in parseOpenQASM
+S2(b)(iii) every Record-TRUE entry's text stands at HEAD: VACUOUS BY CONSTRUCTION (the corpus is read from HEAD)
+
+S3 (documents, all pairs): transitions 314, diagonal D = 74 (0.236); null 77.5 +- 6.4; one-sided p = 0.7437; campaigns with >= 2 documents: 29
+   S3(a) successional forbidden cells occupied: 0 (VACUOUS BY CONSTRUCTION, section 4)
+   S3 -> KILLED (diagonal at or below the null mean)
+   operational overlay (71 cells, reported, not graded): occupancy 140 (0.446); null 134.0 +- 11.1
+   entry-level (labelled, not graded): transitions 194, diagonal 59, null 45.3 +- 4.2, p = 0.0016
+   diagonal by kind: {'Priorities': 0, 'Rules': 33, 'Manner': 0, 'Identity': 0, 'Confidence': 2, 'Facts': 3, 'Circumstances': 1, 'Process': 0, 'Model': 33, 'Structure': 0, 'Premises': 2}
+   largest off-diagonal cells: Model->Rules 31; Structure->Rules 19; Facts->Rules 12; Structure->Facts 11; Rules->Model 11; Model->Facts 11; Rules->Facts 10; Rules->Premises 9
+   [reported after the first read, not graded] diagonal against a GLOBAL permutation (2,000 draws): null 49.3 +- 7.1; D = 74 is 3.5 sd above it -> kinds cluster by campaign, not by succession within one
+   documents per campaign (>= 2): {'GF2A': 4, 'QVM_ACUITY2': 2, 'REASON_SEARCH0': 2, 'REPLACE1': 3, 'CT1': 2, 'FIELD1': 3, 'LIQUID1': 2, 'LIQUID2': 3, 'ORDER1': 2, 'RESPONSE1': 7, 'RUNG2': 7, 'VIEW_SEARCH': 2, 'MIXTURES1': 2, 'SATURATION3': 3, 'MESH_CLIFFORD': 2, 'QVM_RANK1': 2, 'SLOW2': 2, 'BRIDGE1': 3, 'BRIDGE5': 2, 'BRIDGE6': 3, 'BRIDGE3': 2, 'CI_RECORD': 3, 'CLOSURE3': 2, 'SELECTOR5': 5, 'ELEMENTS3': 4, 'SELECTOR6': 2, 'RESOURCE1': 2, 'BIGQVM': 8, 'OBJECT': 6}
+   [reported, not graded] contested boundaries (kind with a named runner-up), unordered: Facts/Premises 18; Model/Rules 16; Premises/Rules 15; Identity/Rules 12; Facts/Model 11; Model/Premises 11; Confidence/Facts 11; Confidence/Rules 8; Confidence/Identity 8; Identity/Model 7
+   within one Surface.lean block: 66 of 188
+
+S4 site-kind histogram (corpus, one kind): Priorities 3, Rules 66, Manner 4, Identity 23, Confidence 30, Facts 26, Circumstances 5, Process 4, Model 61, Structure 17, Premises 25
+   root-kind histogram:                    Priorities 0, Rules 18, Manner 5, Identity 18, Confidence 2, Facts 11, Circumstances 12, Process 6, Model 55, Structure 16, Premises 121
+   amendment n= 96 Record-TRUE 0.677  Rules 36, Model 36, Premises 6, Identity 6, Facts 4, Process 3, Structure 3, Manner 2
+   notes     n= 88 Record-TRUE 0.727  Model 19, Rules 15, Facts 11, Confidence 9, Premises 9, Structure 8, Identity 6, Circumstances 5, Priorities 3, Manner 2, Process 1
+   misfit    n= 71 Record-TRUE 0.915  Confidence 18, Rules 15, Premises 10, Identity 9, Facts 7, Model 6, Structure 6
+   doc       n=  9 Record-TRUE 0.889  Facts 4, Confidence 3, Identity 2
+   Record-TRUE rate per kind (base rate 0.765): Priorities 3/3, Rules 47/66, Manner 1/4, Identity 14/23, Confidence 28/30, Facts 22/26, Circumstances 5/5, Process 4/4, Model 41/61, Structure 16/17, Premises 21/25
+   kinds carrying both Record values: 8 of 11 present -> the Record flag is NOT a function of the kind on this corpus
+   misfit occurrences (n=71) site: Confidence 18, Rules 15, Premises 10, Identity 9, Facts 7, Model 6, Structure 6
+   misfit occurrences root: Premises 45, Model 8, Structure 6, Identity 3, Circumstances 3, Rules 2, Process 2, Manner 2
+   the lead's guess (Premises and Rules the top two): site FAILS (top two ['Confidence', 'Rules']); root FAILS (top two ['Premises', 'Model'])
+   the builder's prediction: Facts and Rules the commonest sites -> top two ['Rules', 'Model']; Manner, Priorities, Identity rare -> rarest three ['Priorities', 'Process', 'Manner'] (Manner 4, Priorities 3, Identity 23)
+
+PL-1: 22/22 synthetic entries coded to their written kind (must >= 20) -> PASS
+PL-2: shuffled kinds: D = 39 against null 47.9 +- 4.9, p = 0.9636; overlay 139 against 132.0 +- 11.8; forbidden 0 -> PASS
+PL-3: synthetic inconsistent codes flagged 2/2; consistent mirror codes flagged 0/2 -> PASS
+
+BRANCH: (b) S1 met, S3 killed

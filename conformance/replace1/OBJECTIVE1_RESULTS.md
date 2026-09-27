@@ -158,3 +158,27 @@ at every budget (`+0.0018`, `+0.0015`).
 ---
 witness: `Closed` (Object.lean) and `StatClosure.lean`, cited in words; the survivor sets are measured
 **misfits:** M-VACUOUS-SUCCESS (the undefined cells; PI-2 read entirely on them), M-BAR-FROM-THE-READ (§4 of the prereg: Q1's and Q3's cells decided by banked numbers, stated before the run), M-PLANT-OBS (PI-3's amplitude re-derived and wrong), M-PLANT-SECTOR, M-JOINT-PASS-REGION (PI-1 exhibits both outcomes; PI-3 does not resolve its window) — contacted, cited.
+
+## The lead's reading (2026-09-26): the metaphysical question answered by a window, not a yes or no
+
+By the letter, (e): PI-3's price (`+0.0069 ± 0.0076`) sat inside its own error bar, so the plant
+that was to exhibit a change inside the sweep could not; that is `M-BAR-FROM-THE-READ`'s
+sibling (a plant priced by a model rather than on the carrier, M-PLANT-OBS's sixth occurrence)
+and is recorded, not re-run. Beside the letter, the grid says one thing on every defined cell,
+three seeds, every lag at which the target is predictable: **the fluid element's carried set is
+the hydrodynamic block or nothing. No budget and no cadence ever makes it something else.** The
+budget decides WHETHER the tier is carried — the set empties exactly at the hydrodynamic
+block's own price, `+0.039` on the weakest seed — never WHAT it carries. The invariance holds
+for every budget between the dropped blocks' prices (`≤ 0.0033`) and the carried block's
+(`≥ 0.039`): a window of one decade, on this box, at this wavelength, and the two edges of the
+window are physical numbers (what structure costs to drop; what hydrodynamics costs to drop),
+not choices. On the chains the conscience block's price (`+0.016`) lies inside the sweep and the
+carried set changes with the budget as staked: level-relative, as predicted.
+
+So the position the record supports is sharpened, not settled: **a tier's content is
+objective inside a window whose edges are the prices of its carried and dropped sectors, and
+observer-relative outside it.** Where the window is wide (the fluid: a decade), the level is
+a fact about the liquid; where it is narrow or empty (the chains: the conscience block's price
+is one SE from its null), the observer's budget is part of what the tier is. That is a
+measurable notion of how objective a level is — the width of its window — and it is the
+first number on this record that bears on the metaphysics rather than on the method.

@@ -229,3 +229,31 @@ shows the frame doing its job.
 
 witness: none (a measured campaign; the Lean it tests is the sibling seed's, `record_not_site_generated` and `repairable_does_not_factor`, cited as the object under test)
 **misfits:** M-VACUOUS-SUCCESS (S1 at one coder, S2(a), S3(a) and PL-3's first build, each named), M-TAG-AS-PROPERTY (the `05a965c` regression), M-BASE-RATE-OMITTED (every per-kind Record rate is printed beside its base rate), M-ONE-MODEL-DELTA (the diagonal is graded against one null; the global permutation is reported beside it), M-FOREIGN-DOMAIN-CORROBORATION (nothing transfers to LEG C), M-PLANT-OBS, M-PLANT-SECTOR (the plants ran on the carrier of record), M-HOMOG (contacted by the word "artifact-local"), M-MAINTENANCE-LENS (contacted by the word "repair"), M-COND-PROBE (contacted by "inside the artifact"), M-PLACEMENT-LOTTERY (`taskset`; no timing read), M-PROVENANCE-OVERREACH (the key's sha256), M-STALE-INSTRUMENT (the instrument is committed with this document). These are the registered ids this text contacts, cited.
+
+## The second coder, and the agreement stake read (2026-09-26, the lead)
+
+A second agent coded the same 291 blind entries under §2's rule, opening only the rule, the
+blind file and one Lean comment block (`RECORD1_CODES_CODER2.jsonl`, `cd21d4e`). Its blindness
+was imperfect in one declared way: the merge commit's SUBJECT, visible in its starting
+context, stated the first coder's summary statistics (the 71 % runner-up rate, the Premises
+root count, the zero reversals). It saw no per-entry code, and its own numbers differ from
+those subjects on every one of them. Recorded; the agreement below is read with that caveat.
+
+| statistic | value |
+|---|---|
+| kind agreement, raw / Cohen's κ (269 real entries) | **0.599 / 0.515** |
+| agreement counting either coder's declared runner-up | 0.877 |
+| Record-flag agreement, raw / κ | **0.885 / 0.718** (coder 1 TRUE 0.77, coder 2 TRUE 0.67) |
+| the second coder's plants (22 synthetic entries of written kind) | **22 / 22** |
+| the disagreement's shape | 47 of the 108 disagreements are the second coder's `Rules` against the first's `Confidence` (18), `Structure`, `Identity`, `Facts`, `Model` (6 each) — one coder codes the obligation the correction adopts, the other the content that failed |
+
+**What this changes in the verdict.** S1 as staked (coverage) stands: both coders assign
+every entry exactly one kind, both find the plants, and no entry is NO-FIT for either. But
+the partition is shared only at κ = 0.52 — moderate — and at 0.88 with runner-ups, so the
+eleven are a usable taxonomy whose boundaries between the adopted rule and the failed content
+are one reader's convention. The Record axis is more robust than the kinds (κ = 0.72): "was
+this forced from outside" is a sharper question than "which of eleven kinds is it". Branch (b)
+stands; the honest sentence for the 11 + 1 on its native carrier is: **the +1 is sharp, the 11
+are a convention with a moderate inter-reader agreement, and the succession rules are
+absent.** The next freeze that uses the eleven states the coding convention (rule adopted vs
+content failed) as part of the definition, since that one choice is half the disagreement.

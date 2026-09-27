@@ -14,7 +14,7 @@ tree:
 > recurs: AN ALLOWLIST ENTRY IS LEGITIMATE ONLY WHEN THE BREAK HAS AN OWNER AND AN
 > EXIT; WITHOUT BOTH IT IS SUPPRESSION.
 >
-> — `engine/ci-gates.sh:566-568`, echoed in `TIERS.md:178`
+> — `engine/ci-gates.sh:566-568`, echoed in `TIERS_ARCHIVE_2026-09-26.md:178`
 > ("allowlisted WITH owner and exit criteria, not hidden")
 
 And its physics-side twin, `OBJECT.md`'s law 9:

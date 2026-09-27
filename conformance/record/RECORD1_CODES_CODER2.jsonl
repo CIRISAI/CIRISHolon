@@ -1,0 +1,291 @@
+{"bid": "B001", "kind": "Premises", "record": true, "runner_up": "Rules", "reason": "the G2 network block was taken to apply to oxygen-only walks and does not; the build found it"}
+{"bid": "B002", "kind": "Facts", "record": true, "runner_up": "Confidence", "reason": "a claimed measured count (27 of 27, every gate) is replaced by the re-measured 25 of 27 and 150 of 248"}
+{"bid": "B003", "kind": "Model", "record": true, "runner_up": "Process", "reason": "the fine arm's thermostat target and vibrational seeding (the applied rule) are declared, forced by the smoke's 491 K reading"}
+{"bid": "B004", "kind": "Confidence", "record": true, "runner_up": "Rules", "reason": "what a one-model defect measurement earns is scoped down to 'worse than that model'; external review"}
+{"bid": "B005", "kind": "Rules", "record": true, "runner_up": "Facts", "reason": "an enforcement obligation (cite a commit or pin bytes) is added after a cited neighbour's file was overwritten"}
+{"bid": "B006", "kind": "Model", "record": true, "runner_up": "Facts", "reason": "the gate's own derivation of the exit reason is replaced by the solver's reported exit; the reported outcome follows"}
+{"bid": "B007", "kind": "Premises", "record": true, "runner_up": "Model", "reason": "the dual-distance filter is recognised as resting on a premise valid only at (6,5)/(7,6); the known witness violates it"}
+{"bid": "B008", "kind": "Rules", "record": true, "runner_up": "Structure", "reason": "a CI gate and a follow-from-outside obligation are added after session-keyed paths died"}
+{"bid": "B009", "kind": "Process", "record": true, "runner_up": "Rules", "reason": "the by-hand procedure (child-process kill, chi ladder, median timing) is specified, driven by an uninterruptible construction"}
+{"bid": "B010", "kind": "Facts", "record": true, "runner_up": "Structure", "reason": "a measured expectation (branch sum slower than 2^n at t=28, crossing near t=24) is stated from the build's timings"}
+{"bid": "B011", "kind": "Premises", "record": false, "runner_up": "none", "reason": "the assumption that thermostat scatter is independent of the thermostat is dropped; no outside warrant named"}
+{"bid": "B012", "kind": "Model", "record": true, "runner_up": "Premises", "reason": "the bin-width formula applied per species (S(0) from CRC constants) is declared as the applied rule"}
+{"bid": "B013", "kind": "Facts", "record": true, "runner_up": "Identity", "reason": "the claim that the sum is the cheapest method at n<=20 is shown false by ACUITY-1's walls"}
+{"bid": "B014", "kind": "Model", "record": false, "runner_up": "Confidence", "reason": "the truncation bound used is supplemented by a tighter exact bound; the vacuity follows from the bound's own derivation"}
+{"bid": "B015", "kind": "Rules", "record": false, "runner_up": "none", "reason": "a prohibition (budget exhaustion must VOID, never score) is added, caught pre-run by reasoning"}
+{"bid": "B016", "kind": "Rules", "record": false, "runner_up": "Process", "reason": "a new exact resumability gate is added; an identity of the instrument with itself"}
+{"bid": "B017", "kind": "Structure", "record": false, "runner_up": "Facts", "reason": "the crate dependency graph changes (holon gains holon-device); the manifest's claim follows"}
+{"bid": "B018", "kind": "Premises", "record": true, "runner_up": "Facts", "reason": "the assumption that one term substitution breaks parity-homogeneity is dropped; confirmed on another run"}
+{"bid": "B019", "kind": "Confidence", "record": true, "runner_up": "NOT-A-CHANGE", "reason": "an independent earlier finding corroborates the lens, strengthening how the claim is held"}
+{"bid": "B020", "kind": "Structure", "record": false, "runner_up": "Process", "reason": "the architecture places acceptance on the GPU and search on CPU threads"}
+{"bid": "B021", "kind": "Model", "record": true, "runner_up": "Rules", "reason": "the baseline estimator (tail mean) is replaced by the physical zero, forced by the smoke's unrelaxed tails"}
+{"bid": "B022", "kind": "Identity", "record": true, "runner_up": "Manner", "reason": "the definition of the 'cold' query is split into three costs with different amortisation, revealed by the measured decode cost"}
+{"bid": "B023", "kind": "Rules", "record": false, "runner_up": "Confidence", "reason": "a verdict clause is found vacuous under a condition, by the clause's own logic"}
+{"bid": "B024", "kind": "Premises", "record": false, "runner_up": "Structure", "reason": "the ring the coefficients were taken to live in does not hold for odd m; follows from cos(pi/8) not in Q(zeta8)"}
+{"bid": "B025", "kind": "Rules", "record": true, "runner_up": "Premises", "reason": "the staked grid must be replaced because the instrument refuses it; PF-1's finding and the ladder force it"}
+{"bid": "B026", "kind": "Rules", "record": true, "runner_up": "Confidence", "reason": "a bar placed on the known answer's edge is re-staked, forced by SLOW-1's read"}
+{"bid": "B027", "kind": "Model", "record": true, "runner_up": "Priorities", "reason": "the fitted dictionary form is replaced by the per-k chain form after over-fitting was caught in building"}
+{"bid": "B028", "kind": "Process", "record": true, "runner_up": "Rules", "reason": "the settle length is lengthened and the walk relaunched after the first walk entered NVE hot"}
+{"bid": "B029", "kind": "Rules", "record": true, "runner_up": "Facts", "reason": "G4's amplitude clause is re-read to what ACUITY-1 measured, after a re-measurement"}
+{"bid": "B030", "kind": "Confidence", "record": true, "runner_up": "Identity", "reason": "t_eff is downgraded to an upper bound, not tight, after a test failure showed the cone incomplete"}
+{"bid": "B031", "kind": "Model", "record": true, "runner_up": "Process", "reason": "the instrument's parameterisation is re-derived after it failed its own gate G0 on the probe's measurements"}
+{"bid": "B032", "kind": "Rules", "record": false, "runner_up": "none", "reason": "a plant's failure now VOIDs the arms it gates: a verdict rule added"}
+{"bid": "B033", "kind": "Rules", "record": true, "runner_up": "Process", "reason": "a refusal gate (unechoed S!=1 is refused) is added, forced by the binary's arg() behaviour"}
+{"bid": "B034", "kind": "Premises", "record": true, "runner_up": "Facts", "reason": "the assumption that one term substitution breaks parity-homogeneity is dropped (founding occurrence)"}
+{"bid": "B035", "kind": "Facts", "record": true, "runner_up": "Premises", "reason": "the working-set explanation and the 3.5x ratio are withdrawn on true quiet baselines"}
+{"bid": "B036", "kind": "Confidence", "record": true, "runner_up": "Premises", "reason": "a head-to-head verdict and a record are retracted as placement-dependent, not shown false"}
+{"bid": "B037", "kind": "Rules", "record": false, "runner_up": "Identity", "reason": "the row must carry its comparison class (an obligation); stim being single-threaded is known, not read"}
+{"bid": "B038", "kind": "Rules", "record": true, "runner_up": "none", "reason": "an obligation (verifiers assert their work count) is added after zero checks passed under a banner"}
+{"bid": "B039", "kind": "Circumstances", "record": false, "runner_up": "Process", "reason": "the seed that happened to be used for the campaign versus the scouts is declared"}
+{"bid": "B040", "kind": "Rules", "record": false, "runner_up": "none", "reason": "a pass bar is re-staked from 0.5 to 0.3"}
+{"bid": "B041", "kind": "Facts", "record": true, "runner_up": "none", "reason": "a reported value is replaced by the correct value read from the run"}
+{"bid": "B042", "kind": "Model", "record": false, "runner_up": "Process", "reason": "a floor quantity computed by a translation test is added to the instrument"}
+{"bid": "B043", "kind": "Circumstances", "record": true, "runner_up": "none", "reason": "a machine event (memory reaper) ended the run early"}
+{"bid": "B044", "kind": "Model", "record": true, "runner_up": "Structure", "reason": "the MPS solver is replaced by a charge-sectored one because the penalised arm stuck"}
+{"bid": "B045", "kind": "Process", "record": false, "runner_up": "none", "reason": "the order of plants and arms is permuted"}
+{"bid": "B046", "kind": "Premises", "record": false, "runner_up": "none", "reason": "the equilibrium assumption the reads composed over is dropped"}
+{"bid": "B047", "kind": "Model", "record": false, "runner_up": "none", "reason": "the fit form used to extract the rate is replaced"}
+{"bid": "B048", "kind": "Rules", "record": true, "runner_up": "NOT-A-CHANGE", "reason": "the definedness rule is shown to read the wrong R^2 on seed 0 data; stated without regrading"}
+{"bid": "B049", "kind": "Structure", "record": false, "runner_up": "none", "reason": "the result file's format changes, same fields"}
+{"bid": "B050", "kind": "Model", "record": true, "runner_up": "Premises", "reason": "the momentum-bin rule is replaced by the finite-population formula after the settled seeds' reading"}
+{"bid": "B051", "kind": "Structure", "record": true, "runner_up": "Premises", "reason": "the read is moved to the companion file and field that carries the parent links; the first read was voided"}
+{"bid": "B052", "kind": "Rules", "record": true, "runner_up": "Process", "reason": "what R1 is graded on becomes the three-seed 200 m/s average, and two seeds are launched, forced by the floors read"}
+{"bid": "B053", "kind": "Model", "record": false, "runner_up": "Rules", "reason": "the continuity-defect formula applied to the leg is declared; no outside source named"}
+{"bid": "B054", "kind": "Rules", "record": true, "runner_up": "none", "reason": "an obligation on where a bar may come from is added after three instances of bars set from reads"}
+{"bid": "B055", "kind": "Rules", "record": false, "runner_up": "Model", "reason": "R1's grid is re-staked to 8x1x1 because the leg's own analytic floor exceeds the stake at 4 cells"}
+{"bid": "B056", "kind": "Process", "record": true, "runner_up": "Circumstances", "reason": "the tower is restarted mid-run with a branch dropped after a census proved its joins impossible"}
+{"bid": "B057", "kind": "Model", "record": false, "runner_up": "Structure", "reason": "the CPU side folds cached amplitudes instead of the source; same law, the harness states how"}
+{"bid": "B058", "kind": "Rules", "record": false, "runner_up": "Identity", "reason": "a verdict clause is found to stake on the wrong kind of statistic and to freeze no budget, from the prereg's own text"}
+{"bid": "B059", "kind": "Circumstances", "record": true, "runner_up": "none", "reason": "a panicked launch and a mistaken unpinned run are recorded as incidental machine events"}
+{"bid": "B060", "kind": "Facts", "record": false, "runner_up": "Manner", "reason": "the formula glossing a right number is replaced by the correct geometric one"}
+{"bid": "B061", "kind": "Rules", "record": true, "runner_up": "Structure", "reason": "launch headers must record build exit status and label inferred fields, after a stale provenance claim"}
+{"bid": "B062", "kind": "Rules", "record": true, "runner_up": "Structure", "reason": "energies must be written at full precision and floors measured in-process, after EMBED-3 found what the format hid"}
+{"bid": "B063", "kind": "Rules", "record": true, "runner_up": "Identity", "reason": "a tag-shuffle plant is required after a verdict was reproduced from metadata alone"}
+{"bid": "B064", "kind": "Rules", "record": true, "runner_up": "Model", "reason": "R4 and R1' bars gain a noise allowance after they fired on noise in the cycles read"}
+{"bid": "B065", "kind": "Rules", "record": false, "runner_up": "Process", "reason": "the grid list is replaced by a doubling rule stated before data, so it is not a free parameter on other carriers"}
+{"bid": "B066", "kind": "Rules", "record": true, "runner_up": "Confidence", "reason": "an obligation to name what code a result exercises before cross-domain credit"}
+{"bid": "B067", "kind": "Rules", "record": true, "runner_up": "Model", "reason": "the drift bar is re-staked to max(ratio, absolute reference drift) after the arms failed the ratio bar"}
+{"bid": "B068", "kind": "Facts", "record": true, "runner_up": "Process", "reason": "the commit named as the cause is replaced after a parent-versus-commit test"}
+{"bid": "B069", "kind": "Identity", "record": false, "runner_up": "Facts", "reason": "'own sigma1' of a 2-D output is declared not to be SLOW-1's six-column sigma1"}
+{"bid": "B070", "kind": "Facts", "record": false, "runner_up": "NOT-A-CHANGE", "reason": "a proved statement that every member line is rational is recorded; derived, not read"}
+{"bid": "B071", "kind": "Rules", "record": true, "runner_up": "Premises", "reason": "a NO-HOLE gate and a void rule are added after the dimer fell into the extrapolated hole"}
+{"bid": "B072", "kind": "Rules", "record": true, "runner_up": "Model", "reason": "a freeze must carry a per-operator invariance argument after a Fourier kernel fired B3"}
+{"bid": "B073", "kind": "Rules", "record": false, "runner_up": "Identity", "reason": "R3's eta comparison is ruled not owed on the L arm; the prereg's 'one seed' is re-read as one per axis"}
+{"bid": "B074", "kind": "Model", "record": false, "runner_up": "Facts", "reason": "the floor's implementation is brought into line with the amendment's own two-sided derivation"}
+{"bid": "B075", "kind": "Model", "record": false, "runner_up": "Process", "reason": "the normalisation's moments are switched to TRAIN's as the prereg already said"}
+{"bid": "B076", "kind": "Model", "record": true, "runner_up": "Process", "reason": "per-seed centring is added to the estimator after static offsets were seen in the data"}
+{"bid": "B077", "kind": "Model", "record": false, "runner_up": "Manner", "reason": "the marginal's error bound is derived separately from the amplitude's, with a legend for zero-evaluated rows"}
+{"bid": "B078", "kind": "Facts", "record": true, "runner_up": "Confidence", "reason": "the class statement ('<= 5 s a point') is replaced after the solve measured 6.47 s and run-to-run spread"}
+{"bid": "B079", "kind": "Identity", "record": false, "runner_up": "Confidence", "reason": "the plant is re-described as a null of the whole procedure, not a test of invariance, by the rule's own logic"}
+{"bid": "B080", "kind": "Rules", "record": true, "runner_up": "Model", "reason": "S3's inequality gains a referee floor tau after the f64 referee read ~1e-17, not 0"}
+{"bid": "B081", "kind": "Rules", "record": true, "runner_up": "Identity", "reason": "device class must be declared part of the artifact after GPU and CPU differed bitwise"}
+{"bid": "B082", "kind": "Rules", "record": true, "runner_up": "Priorities", "reason": "Q4's order clause is shown to grade noise-level orderings on the data read"}
+{"bid": "B083", "kind": "Rules", "record": true, "runner_up": "none", "reason": "a plant must be re-derived per instrument and pre-checked on the carrier of record"}
+{"bid": "B084", "kind": "Model", "record": false, "runner_up": "Rules", "reason": "the certificate must use the geometric budget at measured K, since the gate admits K above the theorem's hypothesis (an internal inconsistency)"}
+{"bid": "B085", "kind": "Model", "record": false, "runner_up": "Structure", "reason": "the orientation generator and measure are pinned, filling an omission"}
+{"bid": "B086", "kind": "Rules", "record": true, "runner_up": "Identity", "reason": "the price gate is re-staked on cpu_seconds rather than wall"}
+{"bid": "B087", "kind": "Rules", "record": true, "runner_up": "Process", "reason": "G3's lag, beta and null are re-staked; at 5 ps nothing predicts"}
+{"bid": "B088", "kind": "Facts", "record": true, "runner_up": "Model", "reason": "three successive mechanism claims and their founding ratio are withdrawn against true baselines"}
+{"bid": "B089", "kind": "Confidence", "record": true, "runner_up": "Priorities", "reason": "the credence table over readings is revised on the month's evidence"}
+{"bid": "B090", "kind": "Premises", "record": true, "runner_up": "Facts", "reason": "the assumption that pinning substitutes for quiet is dropped after a pinned run drew a slow mode"}
+{"bid": "B091", "kind": "Rules", "record": true, "runner_up": "none", "reason": "an obligation (verifiers assert work count) with a new occurrence"}
+{"bid": "B092", "kind": "Process", "record": false, "runner_up": "none", "reason": "the commit order of amendment and reader change is fixed"}
+{"bid": "B093", "kind": "Model", "record": false, "runner_up": "Facts", "reason": "the certificate formula is replaced (sum of sqrt w, not sum of w), by the inequality's own form"}
+{"bid": "B094", "kind": "Confidence", "record": true, "runner_up": "Facts", "reason": "a reported transport decay is downgraded to one seed's draw after the three-seed table"}
+{"bid": "B095", "kind": "Rules", "record": false, "runner_up": "none", "reason": "a forward-prediction stake (variance monotone, ratio >= 10) is added"}
+{"bid": "B096", "kind": "Premises", "record": true, "runner_up": "Identity", "reason": "the freeze fixed density where the transferred protocol controls spacing; the assumption does not cross 2D to 3D"}
+{"bid": "B097", "kind": "Premises", "record": true, "runner_up": "Identity", "reason": "stakes taking slowness as closure are shown false by PM-1's read and by theorem"}
+{"bid": "B098", "kind": "Rules", "record": false, "runner_up": "Identity", "reason": "the stakes read the tier's admission on only one of the two named walks"}
+{"bid": "B099", "kind": "Identity", "record": false, "runner_up": "Premises", "reason": "the molecule tier's object is re-declared as two uncoupled closed sectors"}
+{"bid": "B100", "kind": "Rules", "record": false, "runner_up": "none", "reason": "two of the prereg's own clauses are found in tension"}
+{"bid": "B101", "kind": "Circumstances", "record": true, "runner_up": "none", "reason": "the smoke ran on an unoverridden default seed: an incidental token"}
+{"bid": "B102", "kind": "Rules", "record": true, "runner_up": "Premises", "reason": "a grid-scaling obligation per coupling, from prior art in the programme's own sweep"}
+{"bid": "B103", "kind": "Rules", "record": true, "runner_up": "none", "reason": "a criterion must be isomorphism-invariant with a staked regression list, after A4 and Delta(12) split"}
+{"bid": "B104", "kind": "NOT-A-CHANGE", "record": true, "runner_up": "Circumstances", "reason": "a code-path run's numbers were seen; no setting changed, recorded only"}
+{"bid": "B105", "kind": "Rules", "record": true, "runner_up": "Premises", "reason": "the population rule must be declared and gated against an external count after the census covered <15%"}
+{"bid": "B106", "kind": "Rules", "record": true, "runner_up": "Confidence", "reason": "an obligation to name what code a result exercises before cross-domain credit"}
+{"bid": "B107", "kind": "Facts", "record": false, "runner_up": "Structure", "reason": "the claim 'single-qubit gates need no communication' is false of the sign register; the fold clause is extended"}
+{"bid": "B108", "kind": "Facts", "record": true, "runner_up": "NOT-A-CHANGE", "reason": "the closed chart is found to be the staggered one, not the cell chart, on the control's read"}
+{"bid": "B109", "kind": "Premises", "record": true, "runner_up": "Rules", "reason": "the held quantity changes from density to the census protocol's spacing after arm A exploded"}
+{"bid": "B110", "kind": "Premises", "record": true, "runner_up": "Process", "reason": "the carrier's size is replaced (16 to 128 waters) because the periodic gate refused the prereg's box"}
+{"bid": "B111", "kind": "Circumstances", "record": true, "runner_up": "Process", "reason": "what sizes ran and which stayed owed, given the shared box and the cores allotted"}
+{"bid": "B112", "kind": "Rules", "record": true, "runner_up": "none", "reason": "every selection claim must carry the base rate and a permutation null"}
+{"bid": "B113", "kind": "Confidence", "record": true, "runner_up": "none", "reason": "a finding is downgraded to unresolved at three seeds, the means unchanged"}
+{"bid": "B114", "kind": "Rules", "record": true, "runner_up": "Premises", "reason": "a locality stake must separate dynamical from kinematic correlation"}
+{"bid": "B115", "kind": "Model", "record": false, "runner_up": "Priorities", "reason": "the response estimator becomes the cycle-aligned average, per-cycle fits demoted to spread, by the prereg's own SNR arithmetic"}
+{"bid": "B116", "kind": "Rules", "record": true, "runner_up": "Manner", "reason": "every row must report n and spread, after min-of-draws rows hid instability"}
+{"bid": "B117", "kind": "Structure", "record": false, "runner_up": "Process", "reason": "one transpose direction stays on the calling thread because it does not partition under the chart"}
+{"bid": "B118", "kind": "Manner", "record": false, "runner_up": "NOT-A-CHANGE", "reason": "a missing branch label is noted as a skip, not a loss"}
+{"bid": "B119", "kind": "NOT-A-CHANGE", "record": true, "runner_up": "Priorities", "reason": "the declared selection is run once and its result recorded"}
+{"bid": "B120", "kind": "Rules", "record": true, "runner_up": "Premises", "reason": "check the ring scale before staking dynamics, after the probe thermalized in one step"}
+{"bid": "B121", "kind": "Rules", "record": true, "runner_up": "none", "reason": "a new stake R1'' with kill and null is added beside R1, h fixed by the test read"}
+{"bid": "B122", "kind": "Identity", "record": true, "runner_up": "Premises", "reason": "the definition of a tier gains 'that the tier above carries', after the network and SLOW-2 records"}
+{"bid": "B123", "kind": "Facts", "record": false, "runner_up": "Model", "reason": "the 'glass on 40 ps' claim is retracted by the reading's own arithmetic"}
+{"bid": "B124", "kind": "Facts", "record": true, "runner_up": "Confidence", "reason": "the claimed pass at R_HI=14 is replaced by the 5x re-sweep reading above the stake"}
+{"bid": "B125", "kind": "Rules", "record": true, "runner_up": "Model", "reason": "the settle band is derived from the thermostat in force and a scatter leg is added"}
+{"bid": "B126", "kind": "Facts", "record": true, "runner_up": "Identity", "reason": "the claim that the object is found by our search is replaced: TICA/VAMP returns it (prior art)"}
+{"bid": "B127", "kind": "Premises", "record": true, "runner_up": "Facts", "reason": "the eight P-cpus were taken as eight cores; thread_siblings_list shows four"}
+{"bid": "B128", "kind": "Rules", "record": true, "runner_up": "Model", "reason": "the plant's must is found unstakeable at this carrier's resolution after the read fell below both models"}
+{"bid": "B129", "kind": "Model", "record": true, "runner_up": "Rules", "reason": "the per-cell bin rule applied to all fields, with rounding forced by plant PB-2"}
+{"bid": "B130", "kind": "Model", "record": true, "runner_up": "Rules", "reason": "S2's estimator switches from in-sample singular values to the autocorrelation fit after the bias was seen"}
+{"bid": "B131", "kind": "Rules", "record": true, "runner_up": "Model", "reason": "a refined view's own collisions must be enumerated, after v_pair fired on review"}
+{"bid": "B132", "kind": "Model", "record": false, "runner_up": "none", "reason": "the noise-floor formula is replaced by the two-sided one"}
+{"bid": "B133", "kind": "Structure", "record": false, "runner_up": "Process", "reason": "gates are buffered into layers so a layer runs across threads"}
+{"bid": "B134", "kind": "Model", "record": true, "runner_up": "Rules", "reason": "the truncation keeps a state per charge block and the ladder starts at the label count, after chi=32 converged in the wrong sector"}
+{"bid": "B135", "kind": "Rules", "record": true, "runner_up": "Structure", "reason": "kind must be in the cache key and a mismatch must raise, after a counter over the wrong predicate"}
+{"bid": "B136", "kind": "Rules", "record": true, "runner_up": "none", "reason": "a freeze must name its configuration by accessors and print what it selected, after external review found unwired defaults"}
+{"bid": "B137", "kind": "Identity", "record": true, "runner_up": "Rules", "reason": "the amplitude's y is re-declared as the referee's argmax after 0^n read exactly zero"}
+{"bid": "B138", "kind": "Rules", "record": true, "runner_up": "none", "reason": "a plant's carrier must be nonzero in the plant's sector"}
+{"bid": "B139", "kind": "Rules", "record": false, "runner_up": "Process", "reason": "the reader's branch rule is corrected to the prereg's own text"}
+{"bid": "B140", "kind": "Priorities", "record": false, "runner_up": "Manner", "reason": "CPU time becomes the primary quoted column, wall beside it"}
+{"bid": "B141", "kind": "Facts", "record": true, "runner_up": "Premises", "reason": "the lag at which the target is predictable is replaced by 1-2 ps from the reads"}
+{"bid": "B142", "kind": "Model", "record": true, "runner_up": "Rules", "reason": "the bin width is calibrated as the held-out seeds' measured spread"}
+{"bid": "B143", "kind": "Model", "record": false, "runner_up": "Process", "reason": "the exhaustive search at m=7 is the slice lift, not five-tuple enumeration, by the structure lemma"}
+{"bid": "B144", "kind": "Facts", "record": true, "runner_up": "NOT-A-CHANGE", "reason": "the closed chart is found to be the staggered one on the control's read"}
+{"bid": "B145", "kind": "Facts", "record": true, "runner_up": "none", "reason": "the stated thread count is replaced by the one the run used"}
+{"bid": "B146", "kind": "Rules", "record": true, "runner_up": "Premises", "reason": "a kill grace sized from idle timings is made self-calibrating after it convicted live workers"}
+{"bid": "B147", "kind": "Rules", "record": false, "runner_up": "none", "reason": "a variance gate threshold is declared, from the plant's own threshold"}
+{"bid": "B148", "kind": "Facts", "record": true, "runner_up": "Premises", "reason": "a stated upper bound is replaced by stabrank's prior-art value"}
+{"bid": "B149", "kind": "Model", "record": false, "runner_up": "Process", "reason": "the line search is replaced by the exact closed-form minimiser, by derivation"}
+{"bid": "B150", "kind": "Model", "record": false, "runner_up": "Rules", "reason": "the stiffness bound's computation becomes per-atom with a local cap, as the worst-case count could not fail"}
+{"bid": "B151", "kind": "Model", "record": false, "runner_up": "Structure", "reason": "the legality radius under the seam is computed as max(4, min(reach, r_cut)), the term being zero past r_cut"}
+{"bid": "B152", "kind": "Model", "record": true, "runner_up": "Facts", "reason": "the cost model n*G*chi^3 is replaced by measured per-op overhead below chi ~ 36"}
+{"bid": "B153", "kind": "Premises", "record": false, "runner_up": "Rules", "reason": "S1's removal clause was taken to bite on amplitudes; by construction the cone is the whole register"}
+{"bid": "B154", "kind": "Process", "record": false, "runner_up": "Rules", "reason": "the exhaustive branch is also run over invariant subclasses because full coverage is ~0 by arithmetic"}
+{"bid": "B155", "kind": "Facts", "record": true, "runner_up": "Premises", "reason": "a stated price (core-s/ps) is shown to be wall seconds; the arm is 26 h, not 2.9"}
+{"bid": "B156", "kind": "Premises", "record": true, "runner_up": "Facts", "reason": "prices carried from another regime (128 waters, operator) are replaced by a measurement on 432 waters"}
+{"bid": "B157", "kind": "Rules", "record": true, "runner_up": "Model", "reason": "a freeze meaning 'one procedure within 2x' must price and stake the search, measured to dominate"}
+{"bid": "B158", "kind": "Model", "record": true, "runner_up": "Rules", "reason": "R2 fits both forms and the residual decides, after the driven density and the autocorrelation disagreed"}
+{"bid": "B159", "kind": "Model", "record": false, "runner_up": "SPLIT", "reason": "the chart's cadence, window, bins and third component are declared together as one reading rule"}
+{"bid": "B160", "kind": "Rules", "record": true, "runner_up": "Confidence", "reason": "an obligation to name what code a result exercises; a same-commit port is not verification"}
+{"bid": "B161", "kind": "Rules", "record": true, "runner_up": "SPLIT", "reason": "gate letters are corrected (any refusal exit, drive direction) and two gate legs added, forced by FHP-I reads"}
+{"bid": "B162", "kind": "Process", "record": true, "runner_up": "Rules", "reason": "the ladder is re-sized to the exact instrument's reach, chi <= 11"}
+{"bid": "B163", "kind": "Process", "record": true, "runner_up": "Circumstances", "reason": "a smoke read ran before its gate passed; it is re-run inside the shot"}
+{"bid": "B164", "kind": "Rules", "record": false, "runner_up": "Facts", "reason": "a clause and the pinned cores are inconsistent; the ideal floor is 1/7, not 1/8"}
+{"bid": "B165", "kind": "Confidence", "record": false, "runner_up": "Rules", "reason": "a thinning 'proof of selection' is withdrawn as a theorem about conjunctions, not a finding"}
+{"bid": "B166", "kind": "Rules", "record": false, "runner_up": "Model", "reason": "a truncation-tail stake is declared with a VOID at the door"}
+{"bid": "B167", "kind": "Model", "record": true, "runner_up": "Premises", "reason": "the carried term's weight is re-chosen after lambda=10 failed PS-3 on the synthetic"}
+{"bid": "B168", "kind": "Rules", "record": false, "runner_up": "Process", "reason": "the plant's condition is found vacuous at eps=0 and re-run where R_k > 0, with its carrier chosen, by its own logic"}
+{"bid": "B169", "kind": "Model", "record": false, "runner_up": "Premises", "reason": "the floor formula D ~ 1/(s sqrt W) is replaced by a W-independent one, by arithmetic"}
+{"bid": "B170", "kind": "Rules", "record": true, "runner_up": "Structure", "reason": "every terminating instrument must record and read why it stopped"}
+{"bid": "B171", "kind": "Model", "record": true, "runner_up": "Premises", "reason": "the product start is replaced by a seeded random labelled MPS after the sweep returned exactly zero"}
+{"bid": "B172", "kind": "Process", "record": false, "runner_up": "Structure", "reason": "the models are frozen under a manifest checked before use"}
+{"bid": "B173", "kind": "Model", "record": true, "runner_up": "Rules", "reason": "the price and floor of the exact instrument are derived and measured; points needing chi > 11 are refused"}
+{"bid": "B174", "kind": "Model", "record": false, "runner_up": "Facts", "reason": "the residual test is replaced by the complete dictionary-span test, by the algebra"}
+{"bid": "B175", "kind": "Identity", "record": false, "runner_up": "Rules", "reason": "non-local magic is defined so a theorem does not hold it fixed, and S3 re-staked on it"}
+{"bid": "B176", "kind": "Rules", "record": true, "runner_up": "Model", "reason": "probe the resource, not the holder, after the disk-full window"}
+{"bid": "B177", "kind": "Premises", "record": true, "runner_up": "Facts", "reason": "the chain structure assumed of the data (a chain, not a forest) is dropped and a void read's gloss withdrawn"}
+{"bid": "B178", "kind": "Identity", "record": false, "runner_up": "Rules", "reason": "the dry run is declared an instrument check, not a campaign reading"}
+{"bid": "B179", "kind": "Rules", "record": true, "runner_up": "Structure", "reason": "prior records reachable only through proof-carrying doors, after an import truncated a log"}
+{"bid": "B180", "kind": "Model", "record": false, "runner_up": "Rules", "reason": "the density bin is set at its Poisson scale, derived from the freeze's own G2"}
+{"bid": "B181", "kind": "Structure", "record": true, "runner_up": "Rules", "reason": "the qubit numbering is re-laid out (banded) after G2 was killed on the flagship's numbering"}
+{"bid": "B182", "kind": "Circumstances", "record": true, "runner_up": "none", "reason": "a host reboot interrupted the arm; restarted from checkpoint"}
+{"bid": "B183", "kind": "Identity", "record": false, "runner_up": "Rules", "reason": "'converged' is redefined as the solver's own exit reason"}
+{"bid": "B184", "kind": "Process", "record": true, "runner_up": "Premises", "reason": "the plant's cut point is moved to the first nonzero prefix after the first rung folded to zero"}
+{"bid": "B185", "kind": "Identity", "record": false, "runner_up": "Model", "reason": "'equals the tableau tier's to the bit' is given an exact reading on |a|^2"}
+{"bid": "B186", "kind": "Premises", "record": false, "runner_up": "Identity", "reason": "family L was taken to be able to show decay; Schmidt-rank arithmetic caps it"}
+{"bid": "B187", "kind": "Premises", "record": true, "runner_up": "Facts", "reason": "the carried risk (round-trip spread from SATURATION-3) does not hold here; the kernel is the wall"}
+{"bid": "B188", "kind": "Identity", "record": false, "runner_up": "Structure", "reason": "a cell on a 3D carrier is declared a box, as the freeze's own text meant"}
+{"bid": "B189", "kind": "Confidence", "record": false, "runner_up": "none", "reason": "the error bar is widened to the seed-to-seed spread, the slope unchanged"}
+{"bid": "B190", "kind": "Rules", "record": true, "runner_up": "Process", "reason": "plant sizes and tolerances are re-set after PV-1's sampling error exceeded its tolerance"}
+{"bid": "B191", "kind": "Confidence", "record": true, "runner_up": "Manner", "reason": "a short record's repeated loadavg is not evidence the window held, from the kernel's update period"}
+{"bid": "B192", "kind": "Rules", "record": true, "runner_up": "none", "reason": "a generated artifact must be refused when its wall cannot close against its priced cost"}
+{"bid": "B193", "kind": "Identity", "record": true, "runner_up": "Rules", "reason": "S5's measured exponent is split into the wall's and the branch count's, which differ by more than the band"}
+{"bid": "B194", "kind": "Rules", "record": true, "runner_up": "Confidence", "reason": "G3's lag is found vacuous at 5 ps on the reads"}
+{"bid": "B195", "kind": "Rules", "record": true, "runner_up": "Identity", "reason": "check whether a bar ranks rather than separates before reading it"}
+{"bid": "B196", "kind": "Premises", "record": true, "runner_up": "Facts", "reason": "pinning to a P-core was taken to define a reproducible condition; SMT sibling load shows it does not"}
+{"bid": "B197", "kind": "Model", "record": true, "runner_up": "Structure", "reason": "two computed feature columns are added, one after prior art, one our own weight"}
+{"bid": "B198", "kind": "Structure", "record": false, "runner_up": "none", "reason": "a function moves between crates and the dependency graph changes"}
+{"bid": "B199", "kind": "Model", "record": true, "runner_up": "Premises", "reason": "the instrument's sector mask is replaced after it refuted itself on the unit test"}
+{"bid": "B200", "kind": "Rules", "record": true, "runner_up": "none", "reason": "a plant must be re-derived per instrument and pre-checked on the carrier of record"}
+{"bid": "B201", "kind": "Rules", "record": true, "runner_up": "Process", "reason": "plants are added and one re-staked where the successor passes, after A1.5's plant was voided at chi=64"}
+{"bid": "B202", "kind": "Facts", "record": true, "runner_up": "Model", "reason": "the staked R^-6 tail is replaced by the measured -5.01 and its reason"}
+{"bid": "B203", "kind": "Facts", "record": true, "runner_up": "Structure", "reason": "the cost claim 'nothing new needed' is false of the harness and the waiter, as their code shows"}
+{"bid": "B204", "kind": "Structure", "record": true, "runner_up": "Process", "reason": "the driver's fallback is re-routed because holon-qasm is only a dev-dependency in the manifest"}
+{"bid": "B205", "kind": "Priorities", "record": false, "runner_up": "none", "reason": "the momentum field becomes the primary reading, density secondary"}
+{"bid": "B206", "kind": "Rules", "record": true, "runner_up": "Premises", "reason": "the plant's amplitude is set by a rule on the carrier, not carried over, turning an ungraded read into a verdict"}
+{"bid": "B207", "kind": "Rules", "record": true, "runner_up": "Identity", "reason": "a conservation null must be staked on the quantity the law constrains"}
+{"bid": "B208", "kind": "Model", "record": false, "runner_up": "Rules", "reason": "the driven and undriven quadratures are derived from continuity; the undriven one added as a null"}
+{"bid": "B209", "kind": "Process", "record": true, "runner_up": "Model", "reason": "the pipeline that found the m=6 witness is a third route (V-split), not the annealer the prereg names"}
+{"bid": "B210", "kind": "Manner", "record": false, "runner_up": "none", "reason": "a print format changes, numbers unchanged"}
+{"bid": "B211", "kind": "Model", "record": false, "runner_up": "Identity", "reason": "the Galois argument is applied as a tuple filter, not a state filter"}
+{"bid": "B212", "kind": "Rules", "record": true, "runner_up": "Structure", "reason": "a multi-sector gate must name every violating sector, after CT-1's gate under-reported"}
+{"bid": "B213", "kind": "Process", "record": false, "runner_up": "Manner", "reason": "selections are printed before any view executes"}
+{"bid": "B214", "kind": "Identity", "record": false, "runner_up": "none", "reason": "what counts as 'a molecule' is redefined"}
+{"bid": "B215", "kind": "Model", "record": true, "runner_up": "Premises", "reason": "the observable must be a separated gauge-invariant one; loop marginals were blind"}
+{"bid": "B216", "kind": "Rules", "record": false, "runner_up": "none", "reason": "a successor clause with a posability floor and a void branch is staked"}
+{"bid": "B217", "kind": "Model", "record": false, "runner_up": "Process", "reason": "admission is computed by ordered backward elimination with a joint price"}
+{"bid": "B218", "kind": "Rules", "record": true, "runner_up": "none", "reason": "remedies must be measured before shipping, after an unmeasured remedy was corrected"}
+{"bid": "B219", "kind": "Rules", "record": true, "runner_up": "Confidence", "reason": "a non-monotone monotone quantity convicts the measurement, after an impossible ordering was read"}
+{"bid": "B220", "kind": "Premises", "record": false, "runner_up": "Facts", "reason": "P3's value holds under random Cliffords, not random unitaries, by the closed form"}
+{"bid": "B221", "kind": "Rules", "record": false, "runner_up": "Premises", "reason": "closure must be staked universally or on a moving carrier; a fixed point makes the trajectory gate vacuous by invariance"}
+{"bid": "B222", "kind": "Facts", "record": true, "runner_up": "none", "reason": "a quoted value (0.62) is replaced by the graded pool's 0.310"}
+{"bid": "B223", "kind": "Premises", "record": true, "runner_up": "Facts", "reason": "the mechanism the cut is staked on rarely fires on this workload, as measured"}
+{"bid": "B224", "kind": "Rules", "record": false, "runner_up": "none", "reason": "a kill and the fine arm's gates are staked"}
+{"bid": "B225", "kind": "Rules", "record": true, "runner_up": "Process", "reason": "the regime is accepted and re-banking carries one cause line, after a kernel change turned three gates red"}
+{"bid": "B226", "kind": "Model", "record": true, "runner_up": "Premises", "reason": "the density mode's baseline becomes the run mean after a frozen offset fired R4"}
+{"bid": "B227", "kind": "Manner", "record": true, "runner_up": "none", "reason": "print format changes after a fixed-decimal print hid an error"}
+{"bid": "B228", "kind": "Rules", "record": true, "runner_up": "none", "reason": "plot existing points on the hypothesised axis before staking, after a stake failed in a gap"}
+{"bid": "B229", "kind": "Model", "record": false, "runner_up": "Premises", "reason": "the momentum half must be built from invariant correlators, forced by gauge invariance"}
+{"bid": "B230", "kind": "Premises", "record": false, "runner_up": "Rules", "reason": "G4's assumption that exchange buffers are the only addition is dropped; all (d,S) reported"}
+{"bid": "B231", "kind": "Model", "record": true, "runner_up": "Process", "reason": "the labelled split gains density-matrix mixing after the warm ladder inherited its lowest rung's basin"}
+{"bid": "B232", "kind": "Premises", "record": true, "runner_up": "Model", "reason": "a defect metric on a lens that hides the repaired variable cannot measure repair; verified on their exhibit"}
+{"bid": "B233", "kind": "Priorities", "record": true, "runner_up": "Facts", "reason": "the least-contended readings become the ones quoted after contention flattered the device"}
+{"bid": "B234", "kind": "Facts", "record": false, "runner_up": "Identity", "reason": "a sentence contradicting P7's row and the theorem is corrected"}
+{"bid": "B235", "kind": "Rules", "record": false, "runner_up": "Facts", "reason": "a prose theorem stated as equality is corrected to the inequality its bound gives, an internal inconsistency"}
+{"bid": "B236", "kind": "Model", "record": true, "runner_up": "none", "reason": "the held-out score becomes Wu & Noe's validation score after the prior form read 3-5x k"}
+{"bid": "B237", "kind": "Rules", "record": false, "runner_up": "Model", "reason": "an admission door is a sufficient condition (wall minus one), not a max over successes"}
+{"bid": "B238", "kind": "Rules", "record": false, "runner_up": "Process", "reason": "an exact gate with per-sector chi ceilings is declared"}
+{"bid": "B239", "kind": "Rules", "record": false, "runner_up": "Process", "reason": "the derivative and legality gates are extended to cover the switch"}
+{"bid": "B240", "kind": "Model", "record": true, "runner_up": "Identity", "reason": "a post-step operator is a conditioned probe; reciprocity needs the operator inside T (external review)"}
+{"bid": "B241", "kind": "Rules", "record": true, "runner_up": "none", "reason": "a human rule to follow every scratch citation from outside, after a lost instrument; a blanket gate measured and rejected"}
+{"bid": "B242", "kind": "NOT-A-CHANGE", "record": true, "runner_up": "Facts", "reason": "an expectation is written down before the read; no stake moves"}
+{"bid": "B243", "kind": "Confidence", "record": true, "runner_up": "Rules", "reason": "a truncation measure is downgraded from error bar to self-consistency reading, after four orders of drift"}
+{"bid": "B244", "kind": "Rules", "record": true, "runner_up": "none", "reason": "the plant is re-staked as a two-arm discrimination"}
+{"bid": "B245", "kind": "Facts", "record": true, "runner_up": "Model", "reason": "the amendment's stated reason (walls set the bound) is shown wrong by the open-box run"}
+{"bid": "B246", "kind": "Manner", "record": false, "runner_up": "none", "reason": "a heading and voice change; no claim moves"}
+{"bid": "B247", "kind": "Rules", "record": true, "runner_up": "Premises", "reason": "G1 under walls is voided and re-staked on the open box after the plant could not fire"}
+{"bid": "B248", "kind": "Confidence", "record": true, "runner_up": "Premises", "reason": "G1's pass is scoped to the parity-uniform regime it actually contacted"}
+{"bid": "B249", "kind": "Model", "record": false, "runner_up": "Process", "reason": "the price formulas per view with constants calibrated once per run"}
+{"bid": "B250", "kind": "Identity", "record": false, "runner_up": "Rules", "reason": "K_k is declared not a proxy for the heat mode, which these walks cannot test"}
+{"bid": "B251", "kind": "Structure", "record": false, "runner_up": "Rules", "reason": "shard boundaries are snapped to 64-column words because the row packing forbids a split word"}
+{"bid": "B252", "kind": "Model", "record": false, "runner_up": "Rules", "reason": "two unit conversions are computed through the lens's constants and cross-checked, not typed"}
+{"bid": "B253", "kind": "Premises", "record": true, "runner_up": "Rules", "reason": "a probe's carrier was taken not to be an eigenstate of the perturbation; the freeze must name which vacuum"}
+{"bid": "B254", "kind": "Model", "record": true, "runner_up": "Rules", "reason": "a bare charged pair must be dressed with a Wilson line and verified invariant"}
+{"bid": "B255", "kind": "Model", "record": true, "runner_up": "Premises", "reason": "a conjugacy-class observable cannot see orientation; the observable used is replaced"}
+{"bid": "B256", "kind": "Premises", "record": true, "runner_up": "Rules", "reason": "contention was taken as noise; measured as a signed bias, the standard becomes quiet-and-pinned"}
+{"bid": "B257", "kind": "Rules", "record": true, "runner_up": "none", "reason": "a plant must be re-derived per instrument and pre-checked on the carrier of record"}
+{"bid": "B258", "kind": "Rules", "record": true, "runner_up": "Premises", "reason": "S4 is re-staked as a spatial-vs-blind separation after the blind placebo scored a real closed direction"}
+{"bid": "B259", "kind": "Model", "record": false, "runner_up": "Structure", "reason": "a C2 switch is applied to the seam terms (prior-art truncation, credited)"}
+{"bid": "B260", "kind": "Rules", "record": false, "runner_up": "Model", "reason": "the convergence criterion is replaced because a pure a/N tail cannot reach it, by the freeze's own fit form"}
+{"bid": "B261", "kind": "Identity", "record": false, "runner_up": "Manner", "reason": "'rent' is split into price (a certificate's charge) and rent (what persistence pays)"}
+{"bid": "B262", "kind": "Circumstances", "record": true, "runner_up": "Structure", "reason": "a smoke hit two crashes, fixed before the selection"}
+{"bid": "B263", "kind": "Rules", "record": true, "runner_up": "none", "reason": "any map called dynamics must be verified bijective, after the refined step collapsed"}
+{"bid": "B264", "kind": "Rules", "record": false, "runner_up": "Premises", "reason": "the re-staked S3 is held fixed by a parity symmetry and asks what S1 asks, by proof"}
+{"bid": "B265", "kind": "Confidence", "record": true, "runner_up": "Model", "reason": "the two-time and KWW fits are downgraded to artefacts of the window and noise"}
+{"bid": "B266", "kind": "Rules", "record": false, "runner_up": "Premises", "reason": "the absolute epsilon ladder is found off the observable's scale; it should have been relative"}
+{"bid": "B267", "kind": "Premises", "record": true, "runner_up": "Rules", "reason": "the staked marginal was taken to be sensitive; it is a constant at that depth, so a family is added"}
+{"bid": "B268", "kind": "Model", "record": true, "runner_up": "Circumstances", "reason": "SPIB's convergence settings could not terminate and it collapses on this input"}
+{"bid": "B269", "kind": "Rules", "record": false, "runner_up": "none", "reason": "a gate clause kills another by construction; the joint pass region was never exhibited"}
+{"bid": "B270", "kind": "Facts", "record": true, "runner_up": "Confidence", "reason": "a measured join result that went uncounted is added to the tally"}
+{"bid": "B271", "kind": "Facts", "record": true, "runner_up": "Process", "reason": "the claim that the continuity read existed is false; the function read modes only"}
+{"bid": "B272", "kind": "Model", "record": true, "runner_up": "Facts", "reason": "the envelope's finite difference is replaced by one-branch sampling and the kink measured, after the h-signature of a jump"}
+{"bid": "B273", "kind": "Model", "record": false, "runner_up": "none", "reason": "the per-cell bin formulas gain carrier mass and a finite-population factor, by equilibrium statistics"}
+{"bid": "B274", "kind": "Rules", "record": true, "runner_up": "Confidence", "reason": "an obligation to name what code a result exercises; a swept commit is not a second source"}
+{"bid": "B275", "kind": "SPLIT", "record": true, "runner_up": "Rules", "reason": "gates now assert their assumptions, and separately a published number's convention is named"}
+{"bid": "B276", "kind": "Facts", "record": false, "runner_up": "Rules", "reason": "a prediction section omitted a kill its own banked number implied"}
+{"bid": "B277", "kind": "Process", "record": false, "runner_up": "Identity", "reason": "the instance grid left open is fixed, with 'depth' defined as entangling layers"}
+{"bid": "B278", "kind": "Rules", "record": true, "runner_up": "none", "reason": "a CI reproducibility gate must import every instrument, after verdicts were claimed without committed files"}
+{"bid": "B279", "kind": "Model", "record": true, "runner_up": "Premises", "reason": "the leg's window-mean form is replaced by the integral form after the transient convicted an exact fluid"}
+{"bid": "B280", "kind": "Rules", "record": true, "runner_up": "Model", "reason": "G4 is graded measurement against measurement, as the model understated a peak by 50%"}
+{"bid": "B281", "kind": "Rules", "record": false, "runner_up": "Confidence", "reason": "an escape from S2's kill is named, and not taken on the data"}
+{"bid": "B282", "kind": "Rules", "record": true, "runner_up": "none", "reason": "a pre-arm exact-zero measurement VOIDs its arms, after an empty sector became a prediction"}
+{"bid": "B283", "kind": "Premises", "record": true, "runner_up": "Model", "reason": "the parity sector was taken to carry observables; it is protected and reads constants"}
+{"bid": "B284", "kind": "Model", "record": false, "runner_up": "Rules", "reason": "R2's fit form is derived from the linearised response with an expected refusal stated"}
+{"bid": "B285", "kind": "Rules", "record": true, "runner_up": "Process", "reason": "chi per N is staked from the label-count growth the results file showed"}
+{"bid": "B286", "kind": "Model", "record": true, "runner_up": "Process", "reason": "features are standardised before whitening after a ridge swallowed momentum directions (PV-3)"}
+{"bid": "B287", "kind": "Rules", "record": true, "runner_up": "Confidence", "reason": "state the placement rule and never quote a reference's error below its placement spread"}
+{"bid": "B288", "kind": "Circumstances", "record": false, "runner_up": "Rules", "reason": "the seed the harness holds for G3 is declared, the freeze having named none"}
+{"bid": "B289", "kind": "Rules", "record": true, "runner_up": "Model", "reason": "the sweep-count stop is replaced by a per-sweep gain criterion after sweeps failed to converge"}
+{"bid": "B290", "kind": "Model", "record": true, "runner_up": "Rules", "reason": "the MPS probe is re-read as repeated at cadence after the frozen prefix probe was blind to depth"}
+{"bid": "B291", "kind": "Identity", "record": true, "runner_up": "none", "reason": "the definition of a water unit is replaced by the engine's own pair bond verdict"}

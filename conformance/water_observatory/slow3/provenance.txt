@@ -1,0 +1,1 @@
+rows 1-21 of rigid.walk and rigid.vwalk identical to SLOW-1 seed 0 (the header's row count differs by construction: 21 vs 2501)

@@ -1,0 +1,51 @@
+# SLOW-3 READ: lam = 0.3, SPIB variant S4 [50, 0.001]
+# PS-1 data: MOM own sigma1 at 1 ps {'T293_seed3': 0.004909524240471978, 'T293_seed4': 0.006539177824538207, 'T400_seed0': 0.004339259955285698}
+  PS-4 D on shuffled T293_seed3: own sigma1 {1: 0.073, 2: 0.072, 5: 0.073, 10: 0.075, 20: 0.073} max 0.075 -> PASS
+  PS-4 D on shuffled T293_seed4: own sigma1 {1: 0.047, 2: 0.045, 5: 0.047, 10: 0.050, 20: 0.049} max 0.050 -> PASS
+  PS-4 F on shuffled T293_seed3: own sigma1 {1: 0.088, 2: 0.091, 5: 0.092, 10: 0.088, 20: 0.091} max 0.092 -> PASS
+  PS-4 F on shuffled T293_seed4: own sigma1 {1: 0.059, 2: 0.058, 5: 0.060, 10: 0.059, 20: 0.059} max 0.060 -> PASS
+  PS-4 SPIB on shuffled T293_seed3: own sigma1 {1: 0.012, 2: 0.012, 5: 0.016, 10: 0.014, 20: 0.014} max 0.016 -> PASS
+  PS-4 SPIB on shuffled T293_seed4: own sigma1 {1: 0.011, 2: 0.010, 5: 0.012, 10: 0.014, 20: 0.011} max 0.014 -> PASS
+  D seed 0 T293_seed3: sigma1 0.496 inc_Z +0.0425 inc_q +0.0124 inc_S +0.0053 | load q 0.184 MOM 0.0000 | PS2 +0.0002 [23 s]
+  D seed 0 T293_seed4: sigma1 0.442 inc_Z +0.0305 inc_q +0.0104 inc_S +0.0056 | load q 0.186 MOM 0.0000 | PS2 -0.0001 [26 s]
+  D seed 0 T400_seed0: sigma1 0.081 inc_Z +0.0019 inc_q +0.0007 inc_S +0.0005 | load q 0.112 MOM 0.0001 | PS2 +0.0001 [30 s]
+  D seed 1 T293_seed3: sigma1 0.489 inc_Z +0.0442 inc_q +0.0138 inc_S +0.0053 | load q 0.182 MOM 0.0000 | PS2 +0.0002 [33 s]
+  D seed 1 T293_seed4: sigma1 0.435 inc_Z +0.0318 inc_q +0.0116 inc_S +0.0058 | load q 0.182 MOM 0.0000 | PS2 -0.0000 [36 s]
+  D seed 1 T400_seed0: sigma1 0.078 inc_Z +0.0019 inc_q +0.0007 inc_S +0.0005 | load q 0.112 MOM 0.0000 | PS2 +0.0001 [39 s]
+  D seed 2 T293_seed3: sigma1 0.493 inc_Z +0.0418 inc_q +0.0121 inc_S +0.0053 | load q 0.174 MOM 0.0000 | PS2 +0.0002 [43 s]
+  D seed 2 T293_seed4: sigma1 0.439 inc_Z +0.0304 inc_q +0.0106 inc_S +0.0057 | load q 0.174 MOM 0.0000 | PS2 -0.0000 [46 s]
+  D seed 2 T400_seed0: sigma1 0.075 inc_Z +0.0018 inc_q +0.0006 inc_S +0.0005 | load q 0.098 MOM 0.0000 | PS2 +0.0001 [49 s]
+  F seed 0 T293_seed3: sigma1 0.492 inc_Z +0.0438 inc_q +0.0134 inc_S +0.0053 | load q 0.180 MOM 0.0000 | PS2 +0.0002 [52 s]
+  F seed 0 T293_seed4: sigma1 0.439 inc_Z +0.0313 inc_q +0.0112 inc_S +0.0057 | load q 0.184 MOM 0.0000 | PS2 -0.0001 [56 s]
+  F seed 0 T400_seed0: sigma1 0.077 inc_Z +0.0019 inc_q +0.0007 inc_S +0.0005 | load q 0.112 MOM 0.0001 | PS2 +0.0001 [59 s]
+  F seed 1 T293_seed3: sigma1 0.485 inc_Z +0.0445 inc_q +0.0141 inc_S +0.0050 | load q 0.172 MOM 0.0000 | PS2 +0.0002 [62 s]
+  F seed 1 T293_seed4: sigma1 0.431 inc_Z +0.0320 inc_q +0.0118 inc_S +0.0058 | load q 0.176 MOM 0.0000 | PS2 -0.0000 [66 s]
+  F seed 1 T400_seed0: sigma1 0.076 inc_Z +0.0019 inc_q +0.0006 inc_S +0.0005 | load q 0.101 MOM 0.0001 | PS2 +0.0001 [69 s]
+  F seed 2 T293_seed3: sigma1 0.488 inc_Z +0.0432 inc_q +0.0132 inc_S +0.0055 | load q 0.178 MOM 0.0000 | PS2 +0.0002 [72 s]
+  F seed 2 T293_seed4: sigma1 0.436 inc_Z +0.0311 inc_q +0.0111 inc_S +0.0058 | load q 0.180 MOM 0.0000 | PS2 -0.0000 [75 s]
+  F seed 2 T400_seed0: sigma1 0.078 inc_Z +0.0019 inc_q +0.0007 inc_S +0.0005 | load q 0.112 MOM 0.0000 | PS2 +0.0001 [79 s]
+  SPIB seed 0 T293_seed3: sigma1 0.465 inc_Z +0.0197 inc_q +0.0041 inc_S +0.0025 | load q 0.128 MOM 0.0000 | PS2 +0.0001 [82 s]
+  SPIB seed 0 T293_seed4: sigma1 0.415 inc_Z +0.0168 inc_q +0.0049 inc_S +0.0033 | load q 0.126 MOM 0.0000 | PS2 -0.0002 [85 s]
+  SPIB seed 0 T400_seed0: sigma1 0.051 inc_Z +0.0008 inc_q +0.0003 inc_S +0.0003 | load q 0.056 MOM 0.0000 | PS2 +0.0000 [88 s]
+  SPIB seed 1 T293_seed3: sigma1 0.451 inc_Z +0.0063 inc_q +0.0014 inc_S +0.0013 | load q 0.048 MOM 0.0000 | PS2 +0.0002 [92 s]
+  SPIB seed 1 T293_seed4: sigma1 0.401 inc_Z +0.0070 inc_q +0.0026 inc_S +0.0022 | load q 0.048 MOM 0.0000 | PS2 -0.0001 [95 s]
+  SPIB seed 1 T400_seed0: sigma1 0.048 inc_Z +0.0004 inc_q +0.0002 inc_S +0.0002 | load q 0.007 MOM 0.0000 | PS2 +0.0001 [98 s]
+  SPIB seed 2 T293_seed3: sigma1 0.175 inc_Z +0.0071 inc_q +0.0006 inc_S +0.0007 | load q 0.104 MOM 0.0000 | PS2 -0.0001 [102 s]
+  SPIB seed 2 T293_seed4: sigma1 0.163 inc_Z +0.0078 inc_q +0.0018 inc_S +0.0013 | load q 0.113 MOM 0.0000 | PS2 -0.0001 [105 s]
+  SPIB seed 2 T400_seed0: sigma1 0.018 inc_Z +0.0003 inc_q +0.0001 inc_S +0.0001 | load q 0.052 MOM 0.0000 | PS2 -0.0001 [108 s]
+# R0 (84 SHELL columns in the ridge, beyond velocity and q): {'T293_seed3': 0.021250676917931366, 'T293_seed4': 0.015062242432841988, 'T400_seed0': 0.0005614196623579537}
+# q's own carry beyond velocity (base rate): {'T293_seed3': 0.031607143742801186, 'T293_seed4': 0.020734762251298722, 'T400_seed0': 0.001338976598969921}
+
+# ARMS on TEST (mean over the fresh seeds of the mean over torch seeds 0, 1, 2) and CONTROL
+D VAMPnet (reference)        inc_q +0.0118 [+0.0104, +0.0138] per seed T293_seed3 +0.0128, T293_seed4 +0.0109 | inc_Z +0.0369 | 400K inc_q +0.0007 | plants PASS
+F-fixed lam=0.3              inc_q +0.0125 [+0.0111, +0.0141] per seed T293_seed3 +0.0136, T293_seed4 +0.0114 | inc_Z +0.0377 | 400K inc_q +0.0007 | plants PASS
+SPIB-fixed S4                inc_q +0.0026 [+0.0006, +0.0049] per seed T293_seed3 +0.0020, T293_seed4 +0.0031 | inc_Z +0.0108 | 400K inc_q +0.0002 | plants FAIL: PS-3 [0.022, 0.003, 0.81]
+A SLOW-1 search (no stake)   inc_q +0.0097 | R0 +0.0182 (per seed T293_seed3 +0.0213, T293_seed4 +0.0151) | q carry +0.0262 | 400K R0 +0.0006
+G1 plants on F-fixed: MET
+G2a F-fixed inc_q +0.0125 >= +0.02: NOT MET (min over seed x torch seed +0.0111)
+G2b F-fixed +0.0125 >= D +0.0118: MET (tied within the spread)
+G3 F-fixed +0.0125 >= SPIB-fixed +0.0026: SPIB-fixed NOT READ (PS-3 [0.022, 0.003, 0.81]); by the letter >=
+G4 F-fixed +0.0125 >= R0 - 0.005 = +0.0132: NOT MET
+Kill: FIRES
+BRANCH: (c) the carried structure beyond q is below +0.02 on this operator at these lags, now on fresh data
+READ EXIT 0

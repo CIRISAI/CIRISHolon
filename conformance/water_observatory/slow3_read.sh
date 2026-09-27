@@ -6,8 +6,8 @@
 set -u
 W="$(cd "$(dirname "$0")" && pwd)"; cd "$W"
 PY="${SLOW3_PY:-python3}"   # the read needs torch + deeptime on this interpreter (a venv is fine; pass it in SLOW3_PY)
-C="${SLOW3_CACHE:-$(cd "$(dirname "$0")" && pwd)/slow3/cache}"
-OBS="$(cd "$(dirname "$0")" && pwd)/replace0"
+C="${SLOW3_CACHE:-$W/slow3/cache}"
+OBS="$W/replace0"
 for s in 3 4; do [ "$(cat $OBS/slow3/T293_seed$s/run.done 2>/dev/null)" = "0" ] || { echo "slow3_read: T293_seed$s has no run.done = 0; not reading"; exit 2; }; done
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 CUBLAS_WORKSPACE_CONFIG=:4096:8
 mkdir -p "$C"

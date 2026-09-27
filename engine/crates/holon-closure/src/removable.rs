@@ -807,6 +807,10 @@ pub struct Admission {
 pub struct Step {
     pub price: Price,
     pub remaining: Vec<String>,
+    /// the price of removing EVERY candidate then standing, the removed one included, in
+    /// standing order (OBJECTIVE-1: so that a divergence in removal order can be read against
+    /// the SEs of the two prices that decided it)
+    pub alternatives: Vec<Price>,
 }
 
 impl Admission {
@@ -883,7 +887,7 @@ impl Admission {
             let mut p = now[k].clone();
             p.verdict = Verdict::Dropped;
             alive.remove(k);
-            order.push(Step { price: p, remaining: alive.iter().map(|&i| candidates[i].name.clone()).collect() });
+            order.push(Step { price: p, remaining: alive.iter().map(|&i| candidates[i].name.clone()).collect(), alternatives: now });
         }
     }
 }
@@ -1393,6 +1397,39 @@ mod tests {
         let o3 = Admission::ordered(&us, &rev, &qq, &nulls, 0.02);
         assert_eq!(o3.carried, vec!["carried".to_string()]);
         assert_eq!(o.carried, vec!["carried copy".to_string()]);
+    }
+
+    /// OBJECTIVE-1: the budget only chooses where the removal path stops. The path at `β = +∞`
+    /// removes every candidate, each step records the price of every standing candidate (the
+    /// removed one among them, at the step's price), and the survivors at any finite `β` are
+    /// exactly the candidates whose running-maximum step price exceeds `β`.
+    #[test]
+    fn the_budget_only_chooses_where_the_path_stops() {
+        let (us, car, unr, _) = synth(3, 12, 400);
+        let dict = [car.clone(), unr.clone()];
+        let qq = q(Folds::Units { k: 4 }, Ridge::HBOND);
+        let nulls = Nulls { shift: false, swap: None };
+        let path = Admission::ordered(&us, &dict, &qq, &nulls, f64::INFINITY);
+        assert_eq!(path.order.len(), dict.len());
+        assert!(path.carried.is_empty());
+        let mut run = f64::NEG_INFINITY;
+        let mut star = Vec::new();
+        for s in &path.order {
+            let me = s.alternatives.iter().find(|a| a.name == s.price.name).expect("the removed candidate is among the standing");
+            assert_eq!(me.increment, s.price.increment);
+            assert!(s.alternatives.iter().all(|a| a.increment >= s.price.increment - 1e-12), "the removed one is the cheapest");
+            run = run.max(s.price.increment);
+            star.push((s.price.name.clone(), run));
+        }
+        let top = star.last().unwrap().1;
+        for beta in [-1.0, 0.0, 0.005, 0.02, 0.5 * top, top + 1e-9, 10.0] {
+            let o = Admission::ordered(&us, &dict, &qq, &nulls, beta);
+            let mut got: Vec<String> = o.prices.iter().skip(o.order.len()).map(|p| p.name.clone()).collect();
+            got.sort();
+            let mut want: Vec<String> = star.iter().filter(|(_, b)| *b > beta).map(|(n, _)| n.clone()).collect();
+            want.sort();
+            assert_eq!(got, want, "beta {beta}");
+        }
     }
 
     #[test]

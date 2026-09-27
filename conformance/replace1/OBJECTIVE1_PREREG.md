@@ -151,3 +151,39 @@ REGRESSION (ridge penalty, fold count) — a third observer's knob, named here a
 ---
 witness: `Closed` (Object.lean) and `StatClosure.lean` for the certificate's composition; the survivor sets are measured
 **misfits:** M-VACUOUS-SUCCESS, M-BAR-FROM-THE-READ, M-JOINT-PASS-REGION, M-PLANT-OBS, M-PLANT-SECTOR, M-PLACEMENT-LOTTERY, M-STALE-INSTRUMENT, M-COND-PROBE — contacted, cited. M-VACUOUS-SUCCESS: a cell whose target is unpredictable (full-dictionary `R² ≤ 0`) is UNDEFINED and never graded, and PI-2 is read at every cell regardless. M-BAR-FROM-THE-READ: no bar here is set from a read; §4 lists every place where a banked number already decides a cell, and PI-3's amplitude is set from PR-1's banked plant price. M-JOINT-PASS-REGION: PI-1 (survives on `[0.005, 0.05]`, dropped at `0.2`) and PI-3 (changes inside the sweep) exhibit both outcomes the sweep grades on the carrier of record. M-PLANT-OBS: PI-1..PI-3 are re-derived with the engine's own plant (`walk::plant_po4`), not replayed. M-PLACEMENT-LOTTERY: the pin is stated; nothing graded depends on it. M-STALE-INSTRUMENT: the instrument is `Admission::ordered` at the commit that banked REPLACE-1 (`979984f`), extended only to record the prices of the candidates not removed. M-COND-PROBE: contacted by keyword only ("inside the sweep"); no operator is applied after a step, the gate reads the walks as run.
+
+---
+
+### Notes on building
+
+*Appended by the build (2026-09-26) after the code existed and the numbers came in. No stake is
+moved here. The read is `objective1_read.txt`; the verdict is `OBJECTIVE1_RESULTS.md`.*
+
+**Where the code lives.** `engine/crates/holon-closure/examples/objective1/main.rs` (the sweep;
+it takes REPLACE-1's chains reader by `#[path]`, and its dictionaries, question and nulls are
+copied from `examples/replace1` unchanged). One engine change: `removable::Step` gains
+`alternatives` — the price of every candidate standing at that step, the removed one included —
+which is what Q4's tie rule needs. `Admission::ordered`'s decisions are untouched (every
+REPLACE-1 test passes unchanged). A new unit test, `the_budget_only_chooses_where_the_path_stops`,
+checks §4.1's arithmetic in CI: survivors at any `β` equal the path's running-maximum rule.
+
+**Declared in code before the read:**
+- `β = +∞` for the path (`Admission::ordered` with `f64::INFINITY` removes every block).
+- `β*` of a block = the running maximum of the step prices up to its removal (§1).
+- "Survivor set" = the blocks NOT removed, whatever their verdict. A survivor whose null exceeds
+  `β` is `Unresolved` in the gate's verdict, but it was not removed; none occurred.
+- Q4's tie rule reads the path's step (`β = +∞`), which is the cell's step, since a cell's
+  order is a prefix of its path (checked on every cell).
+- PI-1 and PI-3's dictionary on the planted carrier is `{H, C, S, planted}`, all on the planted
+  walk (the density columns carry the field), nulls as the fluid's; plant seed 5 for both.
+- PI-2 reads the full sweep (four lags, four budgets).
+- The chains' "lag" column prints `0 ps`; it is lag 1 thought.
+
+**Where the frozen text and the machine disagree** (in the results as "what the prereg got wrong"):
+1. PI-3's amplitude arithmetic over-predicted its price by about 2×: read `+0.0069 ± 0.0076`
+   against a predicted `+0.012` to `+0.018`. Neither model survives the read.
+2. §4 listed Q1's advance kill at `(seed 1, 1 ps, β 0.05)` but not that the same banked
+   number kills Q4's survivor-set clause at the same cell (seeds 0 and 2 keep `{H}`).
+3. The definedness rule reads the FULL dictionary's `R²`, which the two dropped blocks drag
+   below the hydrodynamic block's own: seed 0 at 2 ps is UNDEFINED at `−0.0030` while `H`
+   alone, over nothing kept, is priced at `+0.0199`.

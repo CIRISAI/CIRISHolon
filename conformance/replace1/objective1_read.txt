@@ -1,0 +1,325 @@
+# OBJECTIVE-1 — the carried set of ordered admission across budget and cadence
+# instrument: holon-closure::removable::Admission::ordered (REPLACE-1 Amendment 1), dictionaries as examples/replace1 builds them; walks /home/emoore/CIRISHolon/conformance/water_observatory/replace0
+# T400_seed0: 250 waters x 2501 readouts at 20 fs, <q> 0.6031; dictionary built in 15.0 s
+# T293_seed0: 250 waters x 2501 readouts at 20 fs, <q> 0.7423; dictionary built in 17.8 s
+# T293_seed1: 250 waters x 2501 readouts at 20 fs, <q> 0.7337; dictionary built in 18.2 s
+# T293_seed2: 250 waters x 2501 readouts at 20 fs, <q> 0.7393; dictionary built in 19.1 s
+
+## The fluid: dictionary {H = (rho, jL), C = (n33, n50, nb), S = (q, s2)}, target (rho_k, jL_k) at the lag, nulls time-shifted / chain two over
+   T293_seed0 lag 0.5 ps: full-dictionary R² +0.0922 -> DEFINED
+      step 1: remove S at -0.0035 ± 0.0028 (nulls -0.0003 / -0.0042); standing prices [H +0.0257±0.0030, C -0.0025±0.0011, S -0.0035±0.0028]
+      step 2: remove C at -0.0022 ± 0.0012 (nulls -0.0016 / -0.0024); standing prices [H +0.0280±0.0026, C -0.0022±0.0012]
+      step 3: remove H at +0.1078 ± 0.0101 (nulls +0.0005 / +0.0003); standing prices [H +0.1078±0.0101]
+      beta*: S -0.0035, C -0.0022, H +0.1078
+      beta 0.005: survivors {H}      order [S > C] | path check ok
+      beta 0.01 : survivors {H}      order [S > C] | path check ok
+      beta 0.02 : survivors {H}      order [S > C] | path check ok
+      beta 0.05 : survivors {H}      order [S > C] | path check ok
+   T293_seed0 lag 1 ps: full-dictionary R² +0.0488 -> DEFINED
+      step 1: remove S at -0.0015 ± 0.0028 (nulls -0.0024 / -0.0047); standing prices [H +0.0087±0.0051, C +0.0002±0.0009, S -0.0015±0.0028]
+      step 2: remove C at -0.0010 ± 0.0005 (nulls -0.0019 / -0.0045); standing prices [H +0.0130±0.0071, C -0.0010±0.0005]
+      step 3: remove H at +0.0622 ± 0.0153 (nulls -0.0005 / -0.0036); standing prices [H +0.0622±0.0153]
+      beta*: S -0.0015, C -0.0010, H +0.0622
+      beta 0.005: survivors {H}      order [S > C] | path check ok
+      beta 0.01 : survivors {H}      order [S > C] | path check ok
+      beta 0.02 : survivors {H}      order [S > C] | path check ok
+      beta 0.05 : survivors {H}      order [S > C] | path check ok
+   T293_seed0 lag 2 ps: full-dictionary R² -0.0030 -> UNDEFINED (not graded)
+      step 1: remove S at -0.0068 ± 0.0014 (nulls -0.0090 / -0.0066); standing prices [H +0.0013±0.0023, C -0.0042±0.0008, S -0.0068±0.0014]
+      step 2: remove C at -0.0054 ± 0.0008 (nulls -0.0059 / -0.0053); standing prices [H +0.0040±0.0036, C -0.0054±0.0008]
+      step 3: remove H at +0.0199 ± 0.0090 (nulls -0.0026 / -0.0011); standing prices [H +0.0199±0.0090]
+      beta*: S -0.0068, C -0.0054, H +0.0199
+      beta 0.005: survivors {H}      order [S > C] | path check ok
+      beta 0.01 : survivors {H}      order [S > C] | path check ok
+      beta 0.02 : survivors {}       order [S > C > H] | path check ok
+      beta 0.05 : survivors {}       order [S > C > H] | path check ok
+   T293_seed0 lag 5 ps: full-dictionary R² -0.0267 -> UNDEFINED (not graded)
+      step 1: remove S at -0.0095 ± 0.0081 (nulls -0.0208 / -0.0109); standing prices [H -0.0063±0.0030, C +0.0022±0.0026, S -0.0095±0.0081]
+      step 2: remove H at -0.0052 ± 0.0021 (nulls -0.0074 / +0.0081); standing prices [H -0.0052±0.0021, C -0.0028±0.0012]
+      step 3: remove C at -0.0073 ± 0.0045 (nulls -0.0118 / +0.0034); standing prices [C -0.0073±0.0045]
+      beta*: S -0.0095, H -0.0052, C -0.0052
+      beta 0.005: survivors {}       order [S > H > C] | path check ok
+      beta 0.01 : survivors {}       order [S > H > C] | path check ok
+      beta 0.02 : survivors {}       order [S > H > C] | path check ok
+      beta 0.05 : survivors {}       order [S > H > C] | path check ok
+   T293_seed1 lag 0.5 ps: full-dictionary R² +0.0807 -> DEFINED
+      step 1: remove C at -0.0025 ± 0.0014 (nulls -0.0031 / -0.0019); standing prices [H +0.0278±0.0049, C -0.0025±0.0014, S -0.0015±0.0018]
+      step 2: remove S at -0.0020 ± 0.0026 (nulls -0.0008 / -0.0016); standing prices [H +0.0972±0.0165, S -0.0020±0.0026]
+      step 3: remove H at +0.0942 ± 0.0138 (nulls -0.0081 / -0.0007); standing prices [H +0.0942±0.0138]
+      beta*: C -0.0025, S -0.0020, H +0.0942
+      beta 0.005: survivors {H}      order [C > S] | path check ok
+      beta 0.01 : survivors {H}      order [C > S] | path check ok
+      beta 0.02 : survivors {H}      order [C > S] | path check ok
+      beta 0.05 : survivors {H}      order [C > S] | path check ok
+   T293_seed1 lag 1 ps: full-dictionary R² +0.0252 -> DEFINED
+      step 1: remove C at -0.0031 ± 0.0008 (nulls -0.0025 / -0.0035); standing prices [H +0.0094±0.0039, C -0.0031±0.0008, S +0.0003±0.0025]
+      step 2: remove S at -0.0017 ± 0.0042 (nulls -0.0005 / -0.0050); standing prices [H +0.0434±0.0084, S -0.0017±0.0042]
+      step 3: remove H at +0.0390 ± 0.0073 (nulls -0.0066 / -0.0048); standing prices [H +0.0390±0.0073]
+      beta*: C -0.0031, S -0.0017, H +0.0390
+      beta 0.005: survivors {H}      order [C > S] | path check ok
+      beta 0.01 : survivors {H}      order [C > S] | path check ok
+      beta 0.02 : survivors {H}      order [C > S] | path check ok
+      beta 0.05 : survivors {}       order [C > S > H] | path check ok
+   T293_seed1 lag 2 ps: full-dictionary R² -0.0098 -> UNDEFINED (not graded)
+      step 1: remove C at -0.0039 ± 0.0010 (nulls +0.0005 / -0.0085); standing prices [H +0.0021±0.0024, C -0.0039±0.0010, S -0.0018±0.0014]
+      step 2: remove S at -0.0014 ± 0.0029 (nulls +0.0022 / -0.0044); standing prices [H +0.0064±0.0053, S -0.0014±0.0029]
+      step 3: remove H at +0.0047 ± 0.0052 (nulls -0.0012 / -0.0077); standing prices [H +0.0047±0.0052]
+      beta*: C -0.0039, S -0.0014, H +0.0047
+      beta 0.005: survivors {}       order [C > S > H] | path check ok
+      beta 0.01 : survivors {}       order [C > S > H] | path check ok
+      beta 0.02 : survivors {}       order [C > S > H] | path check ok
+      beta 0.05 : survivors {}       order [C > S > H] | path check ok
+   T293_seed1 lag 5 ps: full-dictionary R² -0.0251 -> UNDEFINED (not graded)
+      step 1: remove S at -0.0047 ± 0.0011 (nulls -0.0056 / -0.0090); standing prices [H -0.0022±0.0012, C -0.0040±0.0008, S -0.0047±0.0011]
+      step 2: remove C at -0.0057 ± 0.0013 (nulls -0.0042 / -0.0116); standing prices [H -0.0024±0.0015, C -0.0057±0.0013]
+      step 3: remove H at -0.0014 ± 0.0017 (nulls +0.0070 / -0.0090); standing prices [H -0.0014±0.0017]
+      beta*: S -0.0047, C -0.0047, H -0.0014
+      beta 0.005: survivors {}       order [S > C > H] | path check ok
+      beta 0.01 : survivors {}       order [S > C > H] | path check ok
+      beta 0.02 : survivors {}       order [S > C > H] | path check ok
+      beta 0.05 : survivors {}       order [S > C > H] | path check ok
+   T293_seed2 lag 0.5 ps: full-dictionary R² +0.1081 -> DEFINED
+      step 1: remove S at -0.0016 ± 0.0019 (nulls -0.0021 / -0.0071); standing prices [H +0.0296±0.0035, C +0.0017±0.0019, S -0.0016±0.0019]
+      step 2: remove C at +0.0007 ± 0.0016 (nulls -0.0043 / -0.0068); standing prices [H +0.0331±0.0049, C +0.0007±0.0016]
+      step 3: remove H at +0.1547 ± 0.0256 (nulls -0.0128 / -0.0080); standing prices [H +0.1547±0.0256]
+      beta*: S -0.0016, C +0.0007, H +0.1547
+      beta 0.005: survivors {H}      order [S > C] | path check ok
+      beta 0.01 : survivors {H}      order [S > C] | path check ok
+      beta 0.02 : survivors {H}      order [S > C] | path check ok
+      beta 0.05 : survivors {H}      order [S > C] | path check ok
+   T293_seed2 lag 1 ps: full-dictionary R² +0.0546 -> DEFINED
+      step 1: remove S at -0.0030 ± 0.0008 (nulls -0.0052 / -0.0055); standing prices [H +0.0091±0.0016, C +0.0045±0.0027, S -0.0030±0.0008]
+      step 2: remove C at +0.0033 ± 0.0022 (nulls -0.0027 / -0.0087); standing prices [H +0.0111±0.0016, C +0.0033±0.0022]
+      step 3: remove H at +0.1039 ± 0.0195 (nulls -0.0094 / -0.0104); standing prices [H +0.1039±0.0195]
+      beta*: S -0.0030, C +0.0033, H +0.1039
+      beta 0.005: survivors {H}      order [S > C] | path check ok
+      beta 0.01 : survivors {H}      order [S > C] | path check ok
+      beta 0.02 : survivors {H}      order [S > C] | path check ok
+      beta 0.05 : survivors {H}      order [S > C] | path check ok
+   T293_seed2 lag 2 ps: full-dictionary R² +0.0093 -> DEFINED
+      step 1: remove S at -0.0025 ± 0.0024 (nulls -0.0040 / -0.0069); standing prices [H +0.0054±0.0016, C -0.0023±0.0013, S -0.0025±0.0024]
+      step 2: remove C at -0.0030 ± 0.0016 (nulls -0.0082 / -0.0135); standing prices [H +0.0062±0.0011, C -0.0030±0.0016]
+      step 3: remove H at +0.0734 ± 0.0141 (nulls -0.0155 / -0.0127); standing prices [H +0.0734±0.0141]
+      beta*: S -0.0025, C -0.0025, H +0.0734
+      beta 0.005: survivors {H}      order [S > C] | path check ok
+      beta 0.01 : survivors {H}      order [S > C] | path check ok
+      beta 0.02 : survivors {H}      order [S > C] | path check ok
+      beta 0.05 : survivors {H}      order [S > C] | path check ok
+   T293_seed2 lag 5 ps: full-dictionary R² -0.0770 -> UNDEFINED (not graded)
+      step 1: remove S at -0.0075 ± 0.0033 (nulls -0.0157 / -0.0031); standing prices [H +0.0010±0.0023, C -0.0011±0.0018, S -0.0075±0.0033]
+      step 2: remove H at -0.0004 ± 0.0022 (nulls -0.0009 / -0.0219); standing prices [H -0.0004±0.0022, C -0.0000±0.0022]
+      step 3: remove C at +0.0091 ± 0.0026 (nulls -0.0049 / -0.0212); standing prices [C +0.0091±0.0026]
+      beta*: S -0.0075, H -0.0004, C +0.0091
+      beta 0.005: survivors {C}      order [S > H] | path check ok
+      beta 0.01 : survivors {}       order [S > H > C] | path check ok
+      beta 0.02 : survivors {}       order [S > H > C] | path check ok
+      beta 0.05 : survivors {}       order [S > H > C] | path check ok
+   T400_seed0 lag 0.5 ps: full-dictionary R² +0.0068 -> DEFINED
+      step 1: remove S at -0.0001 ± 0.0011 (nulls -0.0002 / -0.0023); standing prices [H +0.0014±0.0019, C +0.0010±0.0016, S -0.0001±0.0011]
+      step 2: remove H at +0.0012 ± 0.0020 (nulls -0.0039 / -0.0007); standing prices [H +0.0012±0.0020, C +0.0029±0.0032]
+      step 3: remove C at +0.0092 ± 0.0044 (nulls -0.0028 / -0.0022); standing prices [C +0.0092±0.0044]
+      beta*: S -0.0001, H +0.0012, C +0.0092
+      beta 0.005: survivors {C}      order [S > H] | path check ok
+      beta 0.01 : survivors {}       order [S > H > C] | path check ok
+      beta 0.02 : survivors {}       order [S > H > C] | path check ok
+      beta 0.05 : survivors {}       order [S > H > C] | path check ok
+   T400_seed0 lag 1 ps: full-dictionary R² -0.0043 -> UNDEFINED (not graded)
+      step 1: remove C at -0.0022 ± 0.0012 (nulls -0.0038 / -0.0033); standing prices [H +0.0022±0.0015, C -0.0022±0.0012, S -0.0010±0.0017]
+      step 2: remove S at -0.0008 ± 0.0013 (nulls -0.0044 / -0.0033); standing prices [H +0.0017±0.0016, S -0.0008±0.0013]
+      step 3: remove H at +0.0022 ± 0.0018 (nulls -0.0010 / -0.0030); standing prices [H +0.0022±0.0018]
+      beta*: C -0.0022, S -0.0008, H +0.0022
+      beta 0.005: survivors {}       order [C > S > H] | path check ok
+      beta 0.01 : survivors {}       order [C > S > H] | path check ok
+      beta 0.02 : survivors {}       order [C > S > H] | path check ok
+      beta 0.05 : survivors {}       order [C > S > H] | path check ok
+   T400_seed0 lag 2 ps: full-dictionary R² -0.0132 -> UNDEFINED (not graded)
+      step 1: remove H at -0.0042 ± 0.0021 (nulls -0.0009 / -0.0040); standing prices [H -0.0042±0.0021, C -0.0021±0.0015, S -0.0022±0.0017]
+      step 2: remove C at -0.0029 ± 0.0015 (nulls -0.0028 / -0.0025); standing prices [C -0.0029±0.0015, S -0.0022±0.0017]
+      step 3: remove S at -0.0020 ± 0.0024 (nulls -0.0051 / -0.0070); standing prices [S -0.0020±0.0024]
+      beta*: H -0.0042, C -0.0029, S -0.0020
+      beta 0.005: survivors {}       order [H > C > S] | path check ok
+      beta 0.01 : survivors {}       order [H > C > S] | path check ok
+      beta 0.02 : survivors {}       order [H > C > S] | path check ok
+      beta 0.05 : survivors {}       order [H > C > S] | path check ok
+   T400_seed0 lag 5 ps: full-dictionary R² -0.0050 -> UNDEFINED (not graded)
+      step 1: remove C at -0.0014 ± 0.0028 (nulls -0.0047 / -0.0025); standing prices [H -0.0013±0.0013, C -0.0014±0.0028, S -0.0008±0.0012]
+      step 2: remove H at -0.0008 ± 0.0017 (nulls +0.0001 / -0.0040); standing prices [H -0.0008±0.0017, S -0.0002±0.0014]
+      step 3: remove S at +0.0004 ± 0.0015 (nulls -0.0054 / -0.0012); standing prices [S +0.0004±0.0015]
+      beta*: C -0.0014, H -0.0008, S +0.0004
+      beta 0.005: survivors {}       order [C > H > S] | path check ok
+      beta 0.01 : survivors {}       order [C > H > S] | path check ok
+      beta 0.02 : survivors {}       order [C > H > S] | path check ok
+      beta 0.05 : survivors {}       order [C > H > S] | path check ok
+
+## The grid (survivor set per cell; U = undefined, full-dictionary R² <= 0)
+| seed | lag | R² full | beta 0.005 | 0.01 | 0.02 | 0.05 |
+|---|---|---|---|---|---|---|
+| T293_seed0 | 0.5 ps | +0.0922 | {H} | {H} | {H} | {H} |
+| T293_seed0 | 1 ps | +0.0488 | {H} | {H} | {H} | {H} |
+| T293_seed0 | 2 ps | -0.0030 | U {H} | U {H} | U {} | U {} |
+| T293_seed0 | 5 ps | -0.0267 | U {} | U {} | U {} | U {} |
+| T293_seed1 | 0.5 ps | +0.0807 | {H} | {H} | {H} | {H} |
+| T293_seed1 | 1 ps | +0.0252 | {H} | {H} | {H} | {} |
+| T293_seed1 | 2 ps | -0.0098 | U {} | U {} | U {} | U {} |
+| T293_seed1 | 5 ps | -0.0251 | U {} | U {} | U {} | U {} |
+| T293_seed2 | 0.5 ps | +0.1081 | {H} | {H} | {H} | {H} |
+| T293_seed2 | 1 ps | +0.0546 | {H} | {H} | {H} | {H} |
+| T293_seed2 | 2 ps | +0.0093 | {H} | {H} | {H} | {H} |
+| T293_seed2 | 5 ps | -0.0770 | U {C} | U {} | U {} | U {} |
+| T400_seed0 | 0.5 ps | +0.0068 | {C} | {} | {} | {} |
+| T400_seed0 | 1 ps | -0.0043 | U {} | U {} | U {} | U {} |
+| T400_seed0 | 2 ps | -0.0132 | U {} | U {} | U {} | U {} |
+| T400_seed0 | 5 ps | -0.0050 | U {} | U {} | U {} | U {} |
+every cell agrees with its (seed, lag) path: true
+
+## The chains: dictionary {process sector, conscience (DMA) block}, target = next thought's process sector, lag 1 thought, permutation null
+   207 chains
+   chains lag 0 ps: full-dictionary R² +0.5622 -> DEFINED
+      step 1: remove DMA at +0.0164 ± 0.0081 (nulls - / -0.0013); standing prices [proc +0.3902±0.0178, DMA +0.0164±0.0081]
+      step 2: remove proc at +0.5754 ± 0.0269 (nulls - / -0.0163); standing prices [proc +0.5754±0.0269]
+      beta*: DMA +0.0164, proc +0.5754
+      beta 0.005: survivors {DMA,proc} order [] | path check ok
+      beta 0.01 : survivors {DMA,proc} order [] | path check ok
+      beta 0.02 : survivors {proc}   order [DMA] | path check ok
+      beta 0.005: survivors' removal prices proc +0.3902 ± 0.0178 (null -0.0139) Carried; DMA +0.0164 ± 0.0081 (null -0.0013) Carried
+      beta 0.01: survivors' removal prices proc +0.3902 ± 0.0178 (null -0.0139) Carried; DMA +0.0164 ± 0.0081 (null -0.0013) Carried
+      beta 0.02: survivors' removal prices proc +0.5754 ± 0.0269 (null -0.0163) Carried
+
+## Plants on T293_seed0 (PO-4 field: 5 ps memory, 1 ps latency, noise 0.05, plant seed 5), dictionary {H, C, S, P} on the planted carrier
+   PI-1 (amplitude 1) lag 0.5 ps: full-dictionary R² +0.2059 -> DEFINED
+      step 1: remove S at -0.0026 ± 0.0013 (nulls -0.0009 / -0.0032); standing prices [H +0.0534±0.0049, C -0.0010±0.0013, S -0.0026±0.0013, P +0.0308±0.0033]
+      step 2: remove C at -0.0004 ± 0.0012 (nulls -0.0016 / -0.0018); standing prices [H +0.0537±0.0039, C -0.0004±0.0012, P +0.0332±0.0037]
+      step 3: remove P at +0.0432 ± 0.0075 (nulls +0.0013 / -0.0004); standing prices [H +0.1113±0.0090, P +0.0432±0.0075]
+      step 4: remove H at +0.1915 ± 0.0206 (nulls +0.0044 / -0.0100); standing prices [H +0.1915±0.0206]
+      beta*: S -0.0026, C -0.0004, P +0.0432, H +0.1915
+      beta 0.005: survivors {H,P}    order [S > C] | path check ok
+      beta 0.01 : survivors {H,P}    order [S > C] | path check ok
+      beta 0.02 : survivors {H,P}    order [S > C] | path check ok
+      beta 0.05 : survivors {H}      order [S > C > P] | path check ok
+      beta 0.2  : survivors {}       order [S > C > P > H] | path check ok
+   PI-1 (amplitude 1) lag 1 ps: full-dictionary R² +0.1992 -> DEFINED
+      step 1: remove S at -0.0002 ± 0.0021 (nulls -0.0014 / -0.0034); standing prices [H +0.0066±0.0031, C +0.0020±0.0017, S -0.0002±0.0021, P +0.0965±0.0087]
+      step 2: remove C at +0.0009 ± 0.0016 (nulls -0.0018 / -0.0025); standing prices [H +0.0081±0.0039, C +0.0009±0.0016, P +0.0958±0.0096]
+      step 3: remove H at +0.0410 ± 0.0091 (nulls -0.0015 / -0.0065); standing prices [H +0.0410±0.0091, P +0.1041±0.0127]
+      step 4: remove P at +0.1837 ± 0.0321 (nulls +0.0064 / -0.0002); standing prices [P +0.1837±0.0321]
+      beta*: S -0.0002, C +0.0009, H +0.0410, P +0.1837
+      beta 0.005: survivors {H,P}    order [S > C] | path check ok
+      beta 0.01 : survivors {H,P}    order [S > C] | path check ok
+      beta 0.02 : survivors {H,P}    order [S > C] | path check ok
+      beta 0.05 : survivors {P}      order [S > C > H] | path check ok
+      beta 0.2  : survivors {}       order [S > C > H > P] | path check ok
+   PI-1 at 1 ps: planted beta* +0.1837; survives at beta [0.005, 0.01, 0.02, 0.05, 0.2] = [true, true, true, true, false], must [true, true, true, true, false] -> PASS
+   PI-1 (amplitude 1) lag 2 ps: full-dictionary R² +0.0773 -> DEFINED
+      step 1: remove S at -0.0040 ± 0.0011 (nulls -0.0076 / -0.0057); standing prices [H +0.0037±0.0037, C -0.0029±0.0024, S -0.0040±0.0011, P +0.0532±0.0093]
+      step 2: remove C at -0.0051 ± 0.0013 (nulls -0.0079 / -0.0036); standing prices [H +0.0047±0.0040, C -0.0051±0.0013, P +0.0528±0.0106]
+      step 3: remove H at +0.0159 ± 0.0065 (nulls -0.0077 / -0.0062); standing prices [H +0.0159±0.0065, P +0.0590±0.0157]
+      step 4: remove P at +0.0968 ± 0.0275 (nulls +0.0015 / -0.0103); standing prices [P +0.0968±0.0275]
+      beta*: S -0.0040, C -0.0040, H +0.0159, P +0.0968
+      beta 0.005: survivors {H,P}    order [S > C] | path check ok
+      beta 0.01 : survivors {H,P}    order [S > C] | path check ok
+      beta 0.02 : survivors {P}      order [S > C > H] | path check ok
+      beta 0.05 : survivors {P}      order [S > C > H] | path check ok
+      beta 0.2  : survivors {}       order [S > C > H > P] | path check ok
+   PI-1 (amplitude 1) lag 5 ps: full-dictionary R² -0.0502 -> UNDEFINED (not graded)
+      step 1: remove C at -0.0075 ± 0.0084 (nulls -0.0008 / -0.0005); standing prices [H -0.0069±0.0027, C -0.0075±0.0084, S -0.0070±0.0045, P +0.0054±0.0082]
+      step 2: remove S at -0.0101 ± 0.0043 (nulls -0.0139 / -0.0087); standing prices [H -0.0052±0.0042, S -0.0101±0.0043, P +0.0032±0.0095]
+      step 3: remove H at -0.0054 ± 0.0047 (nulls -0.0161 / +0.0031); standing prices [H -0.0054±0.0047, P +0.0034±0.0107]
+      step 4: remove P at +0.0052 ± 0.0107 (nulls -0.0233 / -0.0373); standing prices [P +0.0052±0.0107]
+      beta*: C -0.0075, S -0.0075, H -0.0054, P +0.0052
+      beta 0.005: survivors {P}      order [C > S > H] | path check ok
+      beta 0.01 : survivors {}       order [C > S > H > P] | path check ok
+      beta 0.02 : survivors {}       order [C > S > H > P] | path check ok
+      beta 0.05 : survivors {}       order [C > S > H > P] | path check ok
+      beta 0.2  : survivors {}       order [C > S > H > P] | path check ok
+   PI-3 (amplitude 0.25) lag 0.5 ps: full-dictionary R² +0.0988 -> DEFINED
+      step 1: remove S at -0.0037 ± 0.0026 (nulls -0.0004 / -0.0045); standing prices [H +0.0294±0.0032, C -0.0023±0.0010, S -0.0037±0.0026, P +0.0027±0.0028]
+      step 2: remove C at -0.0017 ± 0.0010 (nulls -0.0020 / -0.0024); standing prices [H +0.0314±0.0019, C -0.0017±0.0010, P +0.0027±0.0029]
+      step 3: remove P at +0.0018 ± 0.0036 (nulls +0.0002 / +0.0031); standing prices [H +0.1155±0.0098, P +0.0018±0.0036]
+      step 4: remove H at +0.1137 ± 0.0073 (nulls +0.0014 / -0.0029); standing prices [H +0.1137±0.0073]
+      beta*: S -0.0037, C -0.0017, P +0.0018, H +0.1137
+      beta 0.005: survivors {H}      order [S > C > P] | path check ok
+      beta 0.01 : survivors {H}      order [S > C > P] | path check ok
+      beta 0.02 : survivors {H}      order [S > C > P] | path check ok
+      beta 0.05 : survivors {H}      order [S > C > P] | path check ok
+      beta 0.2  : survivors {}       order [S > C > P > H] | path check ok
+   PI-3 (amplitude 0.25) lag 1 ps: full-dictionary R² +0.0585 -> DEFINED
+      step 1: remove S at -0.0012 ± 0.0028 (nulls -0.0021 / -0.0043); standing prices [H +0.0096±0.0048, C +0.0001±0.0010, S -0.0012±0.0028, P +0.0082±0.0072]
+      step 2: remove C at -0.0010 ± 0.0004 (nulls -0.0022 / -0.0036); standing prices [H +0.0135±0.0062, C -0.0010±0.0004, P +0.0067±0.0073]
+      step 3: remove P at +0.0069 ± 0.0076 (nulls +0.0006 / -0.0002); standing prices [H +0.0666±0.0140, P +0.0069±0.0076]
+      step 4: remove H at +0.0657 ± 0.0136 (nulls -0.0004 / -0.0046); standing prices [H +0.0657±0.0136]
+      beta*: S -0.0012, C -0.0010, P +0.0069, H +0.0657
+      beta 0.005: survivors {H,P}    order [S > C] | path check ok
+      beta 0.01 : survivors {H}      order [S > C > P] | path check ok
+      beta 0.02 : survivors {H}      order [S > C > P] | path check ok
+      beta 0.05 : survivors {H}      order [S > C > P] | path check ok
+      beta 0.2  : survivors {}       order [S > C > P > H] | path check ok
+   PI-3 at 1 ps: planted beta* +0.0069; survives at beta [0.005, 0.01, 0.02, 0.05, 0.2] = [true, false, false, false, false], must [true, true, false, false, false] -> FAIL
+   PI-3 (amplitude 0.25) lag 2 ps: full-dictionary R² +0.0035 -> DEFINED
+      step 1: remove S at -0.0058 ± 0.0012 (nulls -0.0087 / -0.0059); standing prices [H +0.0049±0.0036, C -0.0028±0.0015, S -0.0058±0.0012, P +0.0030±0.0062]
+      step 2: remove C at -0.0044 ± 0.0010 (nulls -0.0063 / -0.0034); standing prices [H +0.0071±0.0045, C -0.0044±0.0010, P +0.0020±0.0067]
+      step 3: remove P at +0.0015 ± 0.0076 (nulls -0.0009 / -0.0041); standing prices [H +0.0254±0.0071, P +0.0015±0.0076]
+      step 4: remove H at +0.0236 ± 0.0083 (nulls -0.0044 / -0.0025); standing prices [H +0.0236±0.0083]
+      beta*: S -0.0058, C -0.0044, P +0.0015, H +0.0236
+      beta 0.005: survivors {H}      order [S > C > P] | path check ok
+      beta 0.01 : survivors {H}      order [S > C > P] | path check ok
+      beta 0.02 : survivors {H}      order [S > C > P] | path check ok
+      beta 0.05 : survivors {}       order [S > C > P > H] | path check ok
+      beta 0.2  : survivors {}       order [S > C > P > H] | path check ok
+   PI-3 (amplitude 0.25) lag 5 ps: full-dictionary R² -0.0218 -> UNDEFINED (not graded)
+      step 1: remove S at -0.0071 ± 0.0046 (nulls -0.0192 / -0.0099); standing prices [H -0.0063±0.0023, C +0.0015±0.0038, S -0.0071±0.0046, P +0.0068±0.0086]
+      step 2: remove H at -0.0054 ± 0.0018 (nulls -0.0076 / +0.0088); standing prices [H -0.0054±0.0018, C -0.0027±0.0015, P +0.0054±0.0090]
+      step 3: remove C at -0.0068 ± 0.0035 (nulls -0.0087 / +0.0051); standing prices [C -0.0068±0.0035, P +0.0086±0.0093]
+      step 4: remove P at +0.0056 ± 0.0090 (nulls -0.0086 / -0.0202); standing prices [P +0.0056±0.0090]
+      beta*: S -0.0071, H -0.0054, C -0.0054, P +0.0056
+      beta 0.005: survivors {P}      order [S > H > C] | path check ok
+      beta 0.01 : survivors {}       order [S > H > C > P] | path check ok
+      beta 0.02 : survivors {}       order [S > H > C > P] | path check ok
+      beta 0.05 : survivors {}       order [S > H > C > P] | path check ok
+      beta 0.2  : survivors {}       order [S > H > C > P] | path check ok
+   PI-2 (shuffled dictionary) lag 0.5 ps: full-dictionary R² -0.0111 -> UNDEFINED (not graded)
+      step 1: remove H at -0.0007 ± 0.0002 (nulls -0.0004 / -0.0003); standing prices [H -0.0007±0.0002, C -0.0007±0.0005, S -0.0001±0.0002]
+      step 2: remove C at -0.0004 ± 0.0007 (nulls -0.0003 / -0.0006); standing prices [C -0.0004±0.0007, S -0.0002±0.0003]
+      step 3: remove S at -0.0000 ± 0.0003 (nulls -0.0002 / -0.0001); standing prices [S -0.0000±0.0003]
+      beta*: H -0.0007, C -0.0004, S -0.0000
+      beta 0.005: survivors {}       order [H > C > S] | path check ok
+      beta 0.01 : survivors {}       order [H > C > S] | path check ok
+      beta 0.02 : survivors {}       order [H > C > S] | path check ok
+      beta 0.05 : survivors {}       order [H > C > S] | path check ok
+   PI-2 (shuffled dictionary) lag 1 ps: full-dictionary R² -0.0113 -> UNDEFINED (not graded)
+      step 1: remove C at -0.0003 ± 0.0003 (nulls +0.0002 / -0.0003); standing prices [H -0.0003±0.0001, C -0.0003±0.0003, S +0.0002±0.0002]
+      step 2: remove H at -0.0002 ± 0.0001 (nulls -0.0000 / -0.0006); standing prices [H -0.0002±0.0001, S +0.0003±0.0003]
+      step 3: remove S at +0.0002 ± 0.0003 (nulls -0.0004 / +0.0002); standing prices [S +0.0002±0.0003]
+      beta*: C -0.0003, H -0.0002, S +0.0002
+      beta 0.005: survivors {}       order [C > H > S] | path check ok
+      beta 0.01 : survivors {}       order [C > H > S] | path check ok
+      beta 0.02 : survivors {}       order [C > H > S] | path check ok
+      beta 0.05 : survivors {}       order [C > H > S] | path check ok
+   PI-2 (shuffled dictionary) lag 2 ps: full-dictionary R² -0.0120 -> UNDEFINED (not graded)
+      step 1: remove C at -0.0008 ± 0.0005 (nulls -0.0007 / -0.0005); standing prices [H -0.0003±0.0002, C -0.0008±0.0005, S -0.0002±0.0003]
+      step 2: remove S at -0.0003 ± 0.0004 (nulls -0.0006 / -0.0005); standing prices [H -0.0003±0.0001, S -0.0003±0.0004]
+      step 3: remove H at -0.0002 ± 0.0001 (nulls -0.0005 / -0.0007); standing prices [H -0.0002±0.0001]
+      beta*: C -0.0008, S -0.0003, H -0.0002
+      beta 0.005: survivors {}       order [C > S > H] | path check ok
+      beta 0.01 : survivors {}       order [C > S > H] | path check ok
+      beta 0.02 : survivors {}       order [C > S > H] | path check ok
+      beta 0.05 : survivors {}       order [C > S > H] | path check ok
+   PI-2 (shuffled dictionary) lag 5 ps: full-dictionary R² -0.0068 -> UNDEFINED (not graded)
+      step 1: remove S at -0.0012 ± 0.0004 (nulls -0.0001 / -0.0005); standing prices [H -0.0006±0.0004, C -0.0001±0.0004, S -0.0012±0.0004]
+      step 2: remove H at -0.0007 ± 0.0004 (nulls +0.0003 / -0.0007); standing prices [H -0.0007±0.0004, C -0.0002±0.0004]
+      step 3: remove C at -0.0002 ± 0.0004 (nulls -0.0006 / -0.0006); standing prices [C -0.0002±0.0004]
+      beta*: S -0.0012, H -0.0007, C -0.0002
+      beta 0.005: survivors {}       order [S > H > C] | path check ok
+      beta 0.01 : survivors {}       order [S > H > C] | path check ok
+      beta 0.02 : survivors {}       order [S > H > C] | path check ok
+      beta 0.05 : survivors {}       order [S > H > C] | path check ok
+   PI-2: nothing kept at any beta and lag -> PASS (largest step price +0.0002)
+
+# VERDICT TABLE
+Q1 (invariance, fluid 293 K) | T293_seed0: 8 defined cells, survivor sets {"{H}"} | T293_seed1: 8 defined cells, survivor sets {"{H}", "{}"}; cells not {H}: (1 ps, 0.05) {} | T293_seed2: 12 defined cells, survivor sets {"{H}"} -> KILL
+Q2 (400 K, reported) | 0.5 ps R² +0.0068 defined: 0.005 {C}, 0.01 {}, 0.02 {}, 0.05 {} | 1 ps R² -0.0043 UNDEFINED: 0.005 {}, 0.01 {}, 0.02 {}, 0.05 {} | 2 ps R² -0.0132 UNDEFINED: 0.005 {}, 0.01 {}, 0.02 {}, 0.05 {} | 5 ps R² -0.0050 UNDEFINED: 0.005 {}, 0.01 {}, 0.02 {}, 0.05 {}
+Q3 (chains) | R² full +0.5622; beta 0.005 {DMA,proc}, beta 0.01 {DMA,proc}, beta 0.02 {proc} -> AS STAKED (level-relative)
+Q4 (seeds) | 0.5 ps, beta 0.005: survivors {H} / {H} / {H} agree; T293_seed0 vs T293_seed1 diverge at step 1 (S vs C) -> tie [T293_seed0: S -0.0035 vs C -0.0025, |d| 0.0010 vs SE 0.0030; T293_seed1: S -0.0015 vs C -0.0025, |d| 0.0010 vs SE 0.0023]; T293_seed1 vs T293_seed2 diverge at step 1 (C vs S) -> NOT a tie [T293_seed1: C -0.0025 vs S -0.0015, |d| 0.0010 vs SE 0.0023; T293_seed2: C +0.0017 vs S -0.0016, |d| 0.0033 vs SE 0.0027] | 0.5 ps, beta 0.01: survivors {H} / {H} / {H} agree; T293_seed0 vs T293_seed1 diverge at step 1 (S vs C) -> tie [T293_seed0: S -0.0035 vs C -0.0025, |d| 0.0010 vs SE 0.0030; T293_seed1: S -0.0015 vs C -0.0025, |d| 0.0010 vs SE 0.0023]; T293_seed1 vs T293_seed2 diverge at step 1 (C vs S) -> NOT a tie [T293_seed1: C -0.0025 vs S -0.0015, |d| 0.0010 vs SE 0.0023; T293_seed2: C +0.0017 vs S -0.0016, |d| 0.0033 vs SE 0.0027] | 0.5 ps, beta 0.02: survivors {H} / {H} / {H} agree; T293_seed0 vs T293_seed1 diverge at step 1 (S vs C) -> tie [T293_seed0: S -0.0035 vs C -0.0025, |d| 0.0010 vs SE 0.0030; T293_seed1: S -0.0015 vs C -0.0025, |d| 0.0010 vs SE 0.0023]; T293_seed1 vs T293_seed2 diverge at step 1 (C vs S) -> NOT a tie [T293_seed1: C -0.0025 vs S -0.0015, |d| 0.0010 vs SE 0.0023; T293_seed2: C +0.0017 vs S -0.0016, |d| 0.0033 vs SE 0.0027] | 0.5 ps, beta 0.05: survivors {H} / {H} / {H} agree; T293_seed0 vs T293_seed1 diverge at step 1 (S vs C) -> tie [T293_seed0: S -0.0035 vs C -0.0025, |d| 0.0010 vs SE 0.0030; T293_seed1: S -0.0015 vs C -0.0025, |d| 0.0010 vs SE 0.0023]; T293_seed1 vs T293_seed2 diverge at step 1 (C vs S) -> NOT a tie [T293_seed1: C -0.0025 vs S -0.0015, |d| 0.0010 vs SE 0.0023; T293_seed2: C +0.0017 vs S -0.0016, |d| 0.0033 vs SE 0.0027] | 1 ps, beta 0.005: survivors {H} / {H} / {H} agree; T293_seed0 vs T293_seed1 diverge at step 1 (S vs C) -> NOT a tie [T293_seed0: S -0.0015 vs C +0.0002, |d| 0.0017 vs SE 0.0030; T293_seed1: S +0.0003 vs C -0.0031, |d| 0.0034 vs SE 0.0027]; T293_seed1 vs T293_seed2 diverge at step 1 (C vs S) -> NOT a tie [T293_seed1: C -0.0031 vs S +0.0003, |d| 0.0034 vs SE 0.0027; T293_seed2: C +0.0045 vs S -0.0030, |d| 0.0075 vs SE 0.0028] | 1 ps, beta 0.01: survivors {H} / {H} / {H} agree; T293_seed0 vs T293_seed1 diverge at step 1 (S vs C) -> NOT a tie [T293_seed0: S -0.0015 vs C +0.0002, |d| 0.0017 vs SE 0.0030; T293_seed1: S +0.0003 vs C -0.0031, |d| 0.0034 vs SE 0.0027]; T293_seed1 vs T293_seed2 diverge at step 1 (C vs S) -> NOT a tie [T293_seed1: C -0.0031 vs S +0.0003, |d| 0.0034 vs SE 0.0027; T293_seed2: C +0.0045 vs S -0.0030, |d| 0.0075 vs SE 0.0028] | 1 ps, beta 0.02: survivors {H} / {H} / {H} agree; T293_seed0 vs T293_seed1 diverge at step 1 (S vs C) -> NOT a tie [T293_seed0: S -0.0015 vs C +0.0002, |d| 0.0017 vs SE 0.0030; T293_seed1: S +0.0003 vs C -0.0031, |d| 0.0034 vs SE 0.0027]; T293_seed1 vs T293_seed2 diverge at step 1 (C vs S) -> NOT a tie [T293_seed1: C -0.0031 vs S +0.0003, |d| 0.0034 vs SE 0.0027; T293_seed2: C +0.0045 vs S -0.0030, |d| 0.0075 vs SE 0.0028] | 1 ps, beta 0.05: survivors {H} / {} / {H} DIFFER; T293_seed0 vs T293_seed1 diverge at step 1 (S vs C) -> NOT a tie [T293_seed0: S -0.0015 vs C +0.0002, |d| 0.0017 vs SE 0.0030; T293_seed1: S +0.0003 vs C -0.0031, |d| 0.0034 vs SE 0.0027]; T293_seed1 vs T293_seed2 diverge at step 1 (C vs S) -> NOT a tie [T293_seed1: C -0.0031 vs S +0.0003, |d| 0.0034 vs SE 0.0027; T293_seed2: C +0.0045 vs S -0.0030, |d| 0.0075 vs SE 0.0028] | 2 ps: not defined on all three seeds (R² -0.0030 / -0.0098 / +0.0093) - not graded | 5 ps: not defined on all three seeds (R² -0.0267 / -0.0251 / -0.0770) - not graded -> KILL
+plants: PI-1 PASS, PI-2 PASS, PI-3 FAIL
+cells agree with paths: true
+BRANCH: (e) a plant fails - nothing is read
+# wall 101.3 s

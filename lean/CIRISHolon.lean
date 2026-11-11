@@ -33,3 +33,4 @@ import CIRISHolon.SceneCert
 import CIRISHolon.ScenePopulation
 import CIRISHolon.Ladder
 import CIRISHolon.SceneCharge
+import CIRISHolon.SceneRhythm

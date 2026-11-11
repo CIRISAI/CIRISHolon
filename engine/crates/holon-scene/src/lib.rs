@@ -11,6 +11,7 @@
 //! | [`tree`] | `ScenePopulation.pop_comp`, `Ladder.zoom_consistent`, `Ladder.vacuum_generates_vacuum` |
 //! | [`edges`] | `ScenePopulation.edgeView_comp`, `edgeView_total`, `Ladder.outflow_commutes` |
 //! | [`verdict`] | `SceneCert.verdict_certified_iff`, `unresolved_ignores_match` |
+//! | [`rhythm`] | `SceneRhythm.Continuity`, `continuity_coarse`, `source_is_the_defect` |
 //! | [`dist`] | the cost of a coupling in one dimension, exact: `SceneCert.cost` |
 //! | [`sums`] | the checker for sums a consumer emits, one JSON object per line |
 //!
@@ -24,6 +25,7 @@
 pub mod apportion;
 pub mod dist;
 pub mod edges;
+pub mod rhythm;
 pub mod seed;
 pub mod sums;
 pub mod tree;

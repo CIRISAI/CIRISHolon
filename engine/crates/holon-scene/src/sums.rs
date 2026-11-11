@@ -15,6 +15,9 @@
 //! two holons sharing a side report the same count for the same seed. Every violation is
 //! returned, not the first.
 //!
+//! A line may carry `"bin": k` (a time bin). It is then one bin of a rhythm row, and the
+//! check is the same: in that bin the children sum to the parent.
+//!
 //! Integers only: a number with a fraction, an exponent or a sign is a parse error, because a
 //! count that is not an integer is not a count. The parser is hand-written for this one flat
 //! shape so that the crate keeps its zero dependencies.
@@ -150,7 +153,7 @@ pub fn parse_line(text: &str) -> Result<Line, String> {
             match (key.as_str(), p.value()?) {
                 ("kind", Val::Str(s)) => kind = Some(s),
                 ("children", Val::Arr(a)) => children = Some(a),
-                ("id" | "level" | "seed" | "parent" | "side" | "peer", Val::Int(n)) => {
+                ("id" | "level" | "seed" | "parent" | "side" | "peer" | "bin", Val::Int(n)) => {
                     if ints.insert(key.clone(), n).is_some() {
                         return Err(format!("field \"{key}\" appears twice"));
                     }
@@ -303,6 +306,14 @@ mod tests {
     fn a_positive_parent_with_no_children_breaks_the_law() {
         let r = check(r#"{"id": 1, "level": 0, "seed": 0, "kind": "people", "parent": 5, "children": []}"#);
         assert!(matches!(r.violations[0], Violation::Section { parent: 5, children: 0, .. }));
+    }
+
+    #[test]
+    fn a_rhythm_line_is_checked_in_its_bin() {
+        let good = r#"{"id": 7, "level": 1, "seed": 2, "bin": 33, "kind": "presence.people", "parent": 900, "children": [610, 120, 90, 80]}"#;
+        assert_eq!(check(good).violations, vec![]);
+        let bad = good.replace("610", "611");
+        assert!(matches!(check(&bad).violations[0], Violation::Section { parent: 900, children: 901, .. }));
     }
 
     #[test]

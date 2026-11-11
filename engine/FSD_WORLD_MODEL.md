@@ -341,3 +341,27 @@ licence on either public source); exchanges and cables (restricted or paid); tow
 
 **Not in this tranche by design:** anything with non-commercial, no-derivatives or
 no-redistribution terms.
+
+## §11 One stack: a scene is what is computed and what is drawn **[today, in part]**
+
+*Added 2026-11-11 at the lead's word: "a single stack that computes and renders scenes, used
+for research and for rendering, because they are the same thing", and "dogfooding at fractal
+scale".*
+
+1. **One object.** A scene is holons with populations, the relationships among them, their
+   rhythms and their verdicts. An instrument reads it and a renderer draws it. Nothing is
+   converted between the two uses, so nothing can be true in a figure and false in a result.
+2. **The same call at every scale.** A region's streets, a street's households, a fluid
+   cell's molecules, a lattice's charges: `children(...)` has one shape (§10.3), and a
+   rhythm has one type (`holon-scene::rhythm::Series`) whether its bins are hours of a week
+   or steps of a quantum evolution. **[today]** for the type and its checker; the twin's
+   hourly rows and ANOMALY-0's charge series are its first two consumers by design.
+3. **The verdict is drawn.** Certified, refused and unresolved are visible states of what is
+   on screen, not footnotes. A tile, a cell or a curve that is unresolved looks unresolved.
+4. **Dogfooding, at every tier.** The engine's own campaigns emit scenes in this format and
+   are rendered by the same code a consumer uses. A campaign whose result cannot be drawn
+   from its own record has not finished banking. **[proposed]**: FERMION-0's exchange
+   processes and KINK-0's field profiles as the first two rendered records, on the
+   workbench the record already has.
+5. **What this rules out.** A renderer-only path (geometry that no population pays for), an
+   instrument-only format (numbers no page can show), and a figure made by hand.

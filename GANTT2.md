@@ -9,46 +9,6 @@ season: every tier is asked the same four questions (what is closed, what the le
 between closures, what production rewrites a closure, what runs the tier's dynamics), and a
 tier's row is complete when all four have a record or a named fence.*
 
-## 2026-11-11 — the generated world: a theory, an engine crate, a first exact read, and three things held
-
-*One day's work on issue #3 (scene certificates), with the CEWP twin as the worked example.
-Records cited; nothing below changes a tier's status.*
-
-- **Theory, proved** (`lean/CIRISHolon/`, audit 1258 declarations clean): `SceneCert` (the
-  certificate for a generated scene is an exact section law and a statistical match, and
-  neither gives the other); `ScenePopulation` (children sum to the parent; the same law on
-  pairs for relationships; the coarse edge does not fix the wiring; two parents must hold the
-  same total); `Ladder` (any depth of generators is one; zoom is consistent; a generated scene
-  under a certified tier moves as its parent does; the outflow law; the floor); `SceneCharge`
-  (for a count that can cancel the vacuum can pair, and no charge comes alone).
-- **Engine** (`engine/crates/holon-scene`, 39 tests, zero dependencies, integers only, builds
-  for wasm32, gated in `ci-gates.sh`): apportionment, seeds, the tree, the edge quotient, the
-  verdict, exact one-dimensional W1, and a checker for sums a consumer emits.
-- **Stated** (`engine/FSD_WORLD_MODEL.md`): the world model as ladder, references, generators
-  and certificates; one call for a consumer; four row types; a prior-art screen with every
-  part credited and the assembly not found; six risks adopted from the literature.
-- **Read** (`conformance/crystal/FERMION0_RESULTS.md`): branch (a) as amended. On the toric
-  code a fermion is a closed view of a vacuum holding none; the parts' coarse counts and
-  fluxes fix the exchange sign up to one bit per bound pair, on the relationship; 6,061
-  circuits, engine and stim in agreement on all. A re-finding, staked as one. Two amendments
-  before any circuit existed, both the author's own errors in the freeze.
-- **Convergence** (`conformance/omega/PRIOR_ART_CONVERGENCE.md`, the 2026-11-11 section): Six
-  Birds re-read; the section law found there under the same name; a stacking theorem since
-  October; two of this record's sentences about it corrected downward.
-- **Checked and unchanged:** DESI DR3 is not released as of 2026-11-11; the calibrated table
-  in `OBJECT.md` is not touched.
-- **Owed, each with what closes it:**
-  - STREETREF-1 (`conformance/scene/STREETREF1_PREREG_DRAFT.md`): held for the twin's final
-    density classes, region rule and in-cell weights. A betweenness reading is owed in its
-    observables before it is frozen.
-  - SCENE-1 on water (`conformance/water_observatory/SCENE1_PREREG_DRAFT.md`): on hold at the
-    lead's word.
-  - The first reference tranche (FSD §10.5): each a freeze of its own.
-  - Read before any adjacent claim: Bevins (arXiv 2610.17500) against `PRIOR_ART.md`'s
-    stabilizer-rank line; "Magic of discrete lattice gauge theories" (arXiv 2601.15842) before
-    GF2; Foundations VIII's lumpability theorem before `Ladder.meets_tier` is described.
-  - RANK-1's two exclusions and second six-copy class, still not sent to stabrank.
-
 ## The vocabulary this plan is written in
 
 | | plain name | physics name | kind | rate | what it does between two closed wholes |
@@ -1523,3 +1483,46 @@ the cell graph is the hypothesis Leg B tests.
 **The screen law (2026-09-06).** A labelled screen (`--screen`, every file `dry: true`, the
 knobs declared) may turn any knob to choose which hypotheses a freeze pre-commits as
 branches; nothing a screen writes enters a gate or a claim.
+
+## 2026-11-11 — the generated world: a theory, an engine crate, a first exact read, and three things held
+
+*One day's work on issue #3 (scene certificates), with the CEWP twin as the worked example.
+Records cited; nothing below changes a tier's status.*
+
+- **Theory, proved** (`lean/CIRISHolon/`, audit 1258 declarations clean): `SceneCert` (the
+  certificate for a generated scene is an exact section law and a statistical match, and
+  neither gives the other); `ScenePopulation` (children sum to the parent; the same law on
+  pairs for relationships; the coarse edge does not fix the wiring; two parents must hold the
+  same total); `Ladder` (any depth of generators is one; zoom is consistent; a generated scene
+  under a certified tier moves as its parent does; the outflow law; the floor); `SceneCharge`
+  (for a count that can cancel the vacuum can pair, and no charge comes alone).
+- **Engine** (`engine/crates/holon-scene`, 39 tests, zero dependencies, integers only, builds
+  for wasm32, gated in `ci-gates.sh`): apportionment, seeds, the tree, the edge quotient, the
+  verdict, exact one-dimensional W1, and a checker for sums a consumer emits.
+- **Stated** (`engine/FSD_WORLD_MODEL.md`): the world model as ladder, references, generators
+  and certificates; one call for a consumer; four row types; a prior-art screen with every
+  part credited and the assembly not found; six risks adopted from the literature.
+- **Read** (`conformance/crystal/FERMION0_RESULTS.md`): branch (a) as amended. On the toric
+  code a fermion is a closed view of a vacuum holding none; the parts' coarse counts and
+  fluxes fix the exchange sign up to one bit per bound pair, on the relationship; 6,061
+  circuits, engine and stim in agreement on all. A re-finding, staked as one. Two amendments
+  before any circuit existed, both the author's own errors in the freeze.
+- **Convergence** (`conformance/omega/PRIOR_ART_CONVERGENCE.md`, the 2026-11-11 section): Six
+  Birds re-read; the section law found there under the same name; a stacking theorem since
+  October; two of this record's sentences about it corrected downward.
+- **Checked and unchanged:** DESI DR3 is not released as of 2026-11-11; the calibrated table
+  in `OBJECT.md` is not touched.
+- **Owed, each with what closes it:**
+  - STREETREF-1 (`conformance/scene/STREETREF1_PREREG_DRAFT.md`): held for the twin's final
+    density classes, region rule and in-cell weights. A betweenness reading is owed in its
+    observables before it is frozen.
+  - SCENE-1 on water (`conformance/water_observatory/SCENE1_PREREG_DRAFT.md`): on hold at the
+    lead's word.
+  - The first reference tranche (FSD §10.5): each a freeze of its own.
+  - Read before any adjacent claim: Bevins (arXiv 2610.17500) against `PRIOR_ART.md`'s
+    stabilizer-rank line; "Magic of discrete lattice gauge theories" (arXiv 2601.15842) before
+    GF2; Foundations VIII's lumpability theorem before `Ladder.meets_tier` is described.
+  - RANK-1's two exclusions and second six-copy class, still not sent to stabrank.
+
+*(Placed at the end, not near the top, so that no earlier line number in this file moves:
+`conformance/record/record1.py` cites this file by line.)*

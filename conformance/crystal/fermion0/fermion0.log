@@ -1,0 +1,25 @@
+# FERMION-0 run, steps=['g0', 'plants', 's1', 's2', 's3', 's45'], stim 1.16.0, L=12, seed 20261111
+P-ORDER  X on qubit 0 measured into c[0] prints '001': register is last bit first; the reader names the flipped bit: 1 of 1  FIRES
+G0       vacuum: 290 of 290 stabilizers and loops read +1, determined  MET
+P-TRIVIAL product state, S3's 500 processes: 0 signs reported, 500 refused  FIRES
+P-OPEN   50 words that do not close: 50 refused  FIRES
+S1       Gauss: interior product = boundary loop = the count inside, 4000 of 4000  MET
+P-ONE    one syndrome bit flipped by hand: the parity checker reports 1 odd state of 1  FIRES
+S2       2,000 random Pauli products: 0 with an odd count; 2000 create at least one pair  MET
+S3       e exchanged with e: 100 read +1, 0 read the other sign, 0 refused
+S3       m exchanged with m: 100 read +1, 0 read the other sign, 0 refused
+S3       eps exchanged with eps: 100 read -1, 0 read the other sign, 0 refused
+S3       full braid of e around m: 100 read -1, 0 read the other sign, 0 refused
+S3       twist of eps: 100 read -1, 0 read the other sign, 0 refused
+S3       500 of 500  MET
+c=2  kinds (exchanges, twist): [((1, 0), 250), ((1, 1), 250), ((2, 0), 250), ((2, 1), 250)]; odd exchanges 500
+P-LABEL  c=2: with the label read as boson, P-whole is right on 500 of 1000  FIRES
+S4       c=2: 500 of 500 pairs have identical coarse histories step by step; 500 of 500 have opposite signs  MET
+S5       c=2: P-whole 1000/1000, P-parts 500/1000, P-whole-bare 500/1000, P-parts = P-whole-bare on 1000/1000  MET
+c=3  kinds (exchanges, twist): [((1, 0), 250), ((1, 1), 250), ((2, 0), 250), ((2, 1), 250)]; odd exchanges 500
+P-LABEL  c=3: with the label read as boson, P-whole is right on 500 of 1000  FIRES  (reported; the plant is staked at c=2)
+S4       c=3: 500 of 500 pairs have identical coarse histories step by step; 500 of 500 have opposite signs  MET
+S5       c=3: P-whole 1000/1000, P-parts 500/1000, P-whole-bare 500/1000, P-parts = P-whole-bare on 1000/1000  MET
+S6       lattice resolution: P-fine right on 2000 of 2000  MET
+P-REFEREE engine and stim agree on 6061 of 6061 circuits  FIRES
+# engine seconds 322.1

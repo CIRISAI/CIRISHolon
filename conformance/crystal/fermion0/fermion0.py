@@ -9,7 +9,7 @@ classical register) and stim's tableau simulator (exact per-ancilla expectation)
 usage: fermion0.py <holon-qasm binary> <out dir> [step ...]
 steps: time g0 plants s1 s2 s3 s45 all
 """
-import json, os, random, subprocess, sys, time
+import hashlib, json, os, random, subprocess, sys, time
 import stim
 
 L = 12
@@ -187,6 +187,12 @@ class Runner:
                 ok = ok and abs(p1 - want) < 1e-9
         if ok: self.agree += 1
         else: self.disagree.append(self.n)
+        # one line per circuit: its digest, its sign ancilla as the referee reads it, the digest of
+        # every ancilla's reading, how many were undetermined, and whether the engine agreed
+        cd = hashlib.sha256(to_qasm(nq, ops, ancillas).encode()).hexdigest()[:16]
+        rd = hashlib.sha256(",".join(str(ref[a]) for a in ancillas).encode()).hexdigest()[:16]
+        with open(os.path.join(self.outdir, "outcomes.tsv"), "a") as f:
+            f.write(f"{self.n}\t{cd}\t{ref[ancillas[0]]}\t{rd}\t{len(und)}\t{int(ok)}\n")
         return ref
 
 ALL_ANC = [SIGN] + [SYN0 + i for i in range(2 * NV)]
@@ -350,10 +356,6 @@ def main():
     say(f"# FERMION-0 run, steps={steps}, stim {stim.__version__}, L={L}, seed {SEED}")
 
     # P-ORDER always runs: every later reading depends on it.
-    d = R.engine(3, [("x", 1)], [0, 1, 2])
-    key = next(iter(d))
-    if len(d) != 1 or key not in ("010",):
-        if len(d) == 1 and key in ("010",): pass
     d2 = R.engine(3, [("x", 0)], [0, 1, 2]); k2 = next(iter(d2))
     if len(d2) != 1 or k2 not in ("100", "001"): raise SystemExit(f"P-ORDER unreadable: {d2}")
     R.rev = (k2 == "001")

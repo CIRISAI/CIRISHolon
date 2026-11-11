@@ -1,0 +1,15 @@
+[package]
+name = "holon-scene"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-or-later"
+publish = false
+description = "The generated world as engine types: exact apportionment, seeded random access, the population and edge section laws, the ladder, the verdict, and a checker for sums emitted by a consumer"
+
+# ZERO dependencies, std only, integers only — the same isolation profile as `holon-closure`
+# and `q-seam`, so this crate cannot perturb the core's feature resolution or the isolation
+# gates in `ci-gates.sh`, and it compiles to wasm32 unchanged. Every function here is the
+# executable face of a theorem in `lean/CIRISHolon/{SceneCert,ScenePopulation,Ladder}.lean`;
+# the module headers name which. A consumer (the CEWP twin is the first) depends on THIS
+# crate, one-way.
+[dependencies]

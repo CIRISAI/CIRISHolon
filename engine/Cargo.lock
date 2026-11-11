@@ -985,6 +985,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "holon-scene"
+version = "0.1.0"
+
+[[package]]
 name = "holon-swarm"
 version = "0.1.0"
 dependencies = [

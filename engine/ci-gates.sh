@@ -397,6 +397,23 @@ cargo test -q -p holon-closure 2>/dev/null >/dev/null \
   && ok "holon-closure: merge/part inverse, the rent clause, the edge, the winding" \
   || no "holon-closure: merge/part inverse, the rent clause, the edge, the winding"
 
+# holon-scene: the generated world as engine types (issue #3). Exact apportionment, seeded
+# random access, the population and edge section laws on random trees and graphs, the verdict
+# over every input, exact one-dimensional W1, and the checker for sums a consumer emits. Each
+# test is a theorem of lean/CIRISHolon/{SceneCert,ScenePopulation,Ladder}.lean run on data.
+# Zero dependencies and integers only, so the suite runs in well under a second; the wasm32
+# build is gated because the first consumer (the CEWP twin) runs it in a browser.
+n_scene=$(cargo test -q -p holon-scene -- --list 2>/dev/null | grep -c ': test$')
+[ "${n_scene:-0}" -gt 0 ] \
+  && ok "holon-scene reaches $n_scene tests" \
+  || no "holon-scene reaches 0 tests (gate 9's disease: passing without covering anything)"
+cargo test -q -p holon-scene 2>/dev/null >/dev/null \
+  && ok "holon-scene: the section law, zoom, the edge law, the floor, the verdict, the sums checker" \
+  || no "holon-scene: the section law, zoom, the edge law, the floor, the verdict, the sums checker"
+cargo build -q -p holon-scene --target wasm32-unknown-unknown 2>/dev/null >/dev/null \
+  && ok "holon-scene builds for wasm32-unknown-unknown" \
+  || no "holon-scene builds for wasm32-unknown-unknown"
+
 # THE TOY'S WALL. `docs/play/` is a water game and the observatory is an instrument; the whole
 # value of the instrument is that its numbers trace. This gate fails the build if the toy ever
 # cites a record, if any record ever cites the toy, if the page loses its banner, or if its

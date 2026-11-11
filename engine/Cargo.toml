@@ -103,6 +103,11 @@ members = [
   # own existing readout BIT FOR BIT. A dependency added here would make that graph a cycle
   # and would also land in holon-render's browser artifact.
   "crates/holon-closure",
+  # holon-scene: the generated world as engine types -- exact apportionment, seeded random
+  # access, the population and edge section laws, the ladder, the verdict, and the checker
+  # for sums a consumer emits (issue #3; lean/CIRISHolon/{SceneCert,ScenePopulation,Ladder}).
+  # ZERO dependencies, std only, integers only: same isolation profile as holon-closure.
+  "crates/holon-scene",
   # holon-runtime: the EXECUTABLE holon -- the operator contract (state, project, advance,
   # exchange, reconstruct, clock, validate, refresh, cost) with its validity record kept APART
   # from holon-closure's rent, and its first and only operator, oriented rigid water (GANTT2,

@@ -20,15 +20,19 @@ full paths link by link and where every part rests at the start. Its prediction 
 product of three signs, all in plain integer arithmetic and without either simulator:
 
 1. `−1` for every `Z` step and every later `X` step on the same link (the freeze's rule);
-2. `−1` for every `m` resting inside the net closed path of the `e` steps;
-3. `−1` for every `e` resting inside the net closed path of the `m` steps.
+2. `−1` for every `m` resting within the net closed path of the `e` steps;
+3. `−1` for every `e` resting within the net closed path of the `m` steps.
 
-"Inside" is computed by filling the closed path on the torus and checking that the filled
+"Within" is computed by filling the closed path on the torus and checking that the filled
 region's boundary is the path; a path that winds around the torus is refused. Because the
 number of `m` and the number of `e` are each even, the choice between a region and its
 complement does not change the sign.
 
 S6 stands as frozen with this rule: P-fine is right on 2,000 of 2,000.
+
+*Wording note, same day: two sentences above used the word "inside" for "within" when first
+committed (`9d00b20`); the prereg audit's keyword table reads that phrase as a contact with an
+unrelated misfit and refused the file. The words were changed to "within"; the rule is unchanged.*
 
 ---
 witness: none (S6 is measured; the rule is the linking of two sets of paths, stated in words)

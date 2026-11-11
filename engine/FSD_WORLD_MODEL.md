@@ -229,3 +229,115 @@ The world model is accepted, rung by rung, when for that rung:
 5. the consumer's own result is reported beside the verdicts of the scene it ran on.
 
 No rung is accepted on the exact half alone.
+
+## §10 The registry, the shape of the call, and the first tranche **[proposed]**
+
+*Added 2026-11-11 after the twin's lead relayed the lead's instruction on couplings: "the
+holon ask should be everything we want, not just what we use today." The twin will deliver
+its list in three parts: (A) what its models read from a scene today, (B) what it models on
+invented inputs that a certified scene should supply, (C) what the mesh will want that
+nothing models yet. This section is designed against all three so that the call does not
+change shape when B and C arrive. A is the first set of certificates owed.*
+
+### 10.1 Four types of row, and nothing else
+
+Everything a consumer can ask for is one of four types. The first three are the twin's own
+typing; the fourth is what its B and C lists need and the first three cannot say.
+
+| type | what it is | the law it obeys | examples from A, B, C |
+|---|---|---|---|
+| **population** | a count of a kind inside a holon | children sum to the parent, for every seed (`pop`) | people, households, devices by class, buildings, storeys, towers, gathering places |
+| **relationship** | a count on a pair of objects | fine edges sum to the coarse edge; read on the lowest holon holding both ends (`edgeView`) | household to street, household to access network, device to device in radio range, AS to AS, cable between metros, social tie, room membership, commute flow, shared power region |
+| **attribute** | a value on one object | none exact; statistical only | access rate, NAT class, router behaviour, material class, building height, line of sight, energy budget, latency, loss |
+| **rhythm** | a population or relationship indexed by time bin | the law of its base type holds IN EVERY BIN | who is home when, phones on Wi-Fi or cellular by hour, daily mobility, seasonal and event load |
+
+Two consequences worth stating once:
+
+- **Movement is the edge law in time.** People who leave home are somewhere. In every time
+  bin the people across all places sum to the people, and a commute flow is a relationship
+  between two places whose row sums are the origin's residents. Nothing new is needed
+  beyond `pop`, `edgeView` and `outflow_commutes`, applied per bin.
+- **An object with several parents is ordinary.** A household has a geographic parent and
+  an access-network parent; a device adds a carrier; a building adds a power region. Each
+  parent holds the same total (`two_parents_agree`), and the generator draws the joint
+  table whose marginals they are.
+
+### 10.2 The registry
+
+Kinds, relationships, attributes and rhythms are NAMES in a registry, not fields in a
+struct. Each entry carries: name, type, tier, unit, the consumer that reads it (or
+"decoration"), the reference that stands behind it (or none), and its envelope classes. The
+twin's `couplings.json` is the first registry file; this repository keeps the same file
+with the reference and envelope columns filled.
+
+A name with no generator returns `unresolved: no generator`. A name with a generator and no
+reference returns `unresolved: no reference`. So the registry can hold all of A, B and C
+from the first day, and what changes over time is which rows stop being unresolved.
+
+### 10.3 The call
+
+```
+children(id, population, class, seed, want)
+
+  id          the holon
+  population  { kind: count }                       what it was generated under
+  class       { region, density, terrain, ... }     its envelope coordinates
+  seed        integer
+  want        [ registry names ]                    what the consumer reads
+
+returns
+  children    [ { id, kind, population: { kind: count }, attributes: { name: value } } ]
+  edges       [ { from, to, kind, count } ]         among the children
+  ports       [ { peer, kind, count } ]             to holons outside, agreed by pair seed
+  rhythms     [ { name, bins: [ count or value per bin ] } ]
+  verdicts    [ { name, consumer, verdict, reason, reference, budget } ]
+```
+
+- The return carries one entry in `verdicts` for every name in `want`, always. A consumer
+  cannot receive a number without the word that says whether to trust it.
+- `children` may hold several kinds of object at once (streets and intersections; buildings
+  and gathering places). A kind is a registry name.
+- Everything is integer except attribute values, which carry their unit from the registry.
+- The shape is the same at every tier. A region's children are cells; a household's are
+  devices; the fields do not change.
+
+### 10.4 Object kinds the registry must be able to name
+
+From the three lists, by tier. Kinds marked (C) have no model anywhere yet.
+
+- **Geography:** region, cell, district, street, intersection, building (storeys, material
+  class (C)), dwelling, gathering place (C).
+- **People:** household, person.
+- **Devices:** phone, laptop, home node, hosted server, serve seat, runner; capability and
+  energy class (C).
+- **Access:** access link (technology, rate, loss, contention), router (NAT behaviour,
+  IPv6), radio neighbourhood per building (C).
+- **Network:** access network (ISP or carrier, with market share), tower and its backhaul
+  (C), exchange, IXP, AS, cable.
+- **Failure domains:** power region, network region, disaster and censorship exposure (C).
+
+### 10.5 The first reference tranche, for the lead's approval by name
+
+Chosen from the licence check of 2026-11-11 (publisher pages only; nothing fetched): free
+to use, and bearing on list A or the first rows of B. Each becomes its own freeze, with its
+licence sentence recorded and only statistics kept, as STREETREF-1 does.
+
+| reference | what it stands behind | licence as read | note |
+|---|---|---|---|
+| STREETREF-1 (OpenStreetMap, sampled) | streets, intersections, buildings along streets | ODbL; reading recorded | approved; held for the twin's class rules |
+| GHSL built-up surface, height, volume; settlement classes (R2023A) | building density and storeys per cell; the settlement class, including the village | CC BY 4.0 read for built-up surface; the others carry the publisher's reuse-with-acknowledgment statement | same publisher as the population grid; coarse grids exist, so it is small |
+| Land-cover fractional layers (tree and built-up cover), collection 3 | the in-cell weights; trees as decoration with a real density | CC BY 4.0 | same product the twin already ships one class from |
+| Microsoft building footprints, sampled tiles | footprint size, nearest-building distance; a second source for buildings | CDLA Permissive 2.0 | two sources is what lets building completeness be argued |
+| World Bank indicators mirroring ITU | phones and fixed broadband per 100 people, by country | CC BY 4.0 as stated on the indicator pages | country grain only; the source is ITU, whose own terms differ |
+| RouteViews | the AS graph | CC BY 4.0, with a revocation clause | relationships between ASes would be inferred here, not imported |
+| Gridfinder | power regions for failure domains | CC BY 4.0 | includes OpenStreetMap lines; check the share-alike reach before publishing |
+| American Time Use Survey | who is home when | public domain | one country; the envelope is that country until another survey is added |
+
+**Named gaps the free list does not fill:** persons per household (the UN table's terms
+forbid redistribution and derivatives); measured access rates (the open source needs a
+cloud account; the convenient one is non-commercial); NAT and IPv6 behaviour (no stated
+licence on either public source); exchanges and cables (restricted or paid); towers
+(share-alike). Each stays `unresolved: no reference` until the lead decides on it.
+
+**Not in this tranche by design:** anything with non-commercial, no-derivatives or
+no-redistribution terms.

@@ -417,3 +417,22 @@ back, the speaking half, the constant prefix, many calls for one decision) are w
 a network might be cheaper; whether it still decides as the pipeline does is the
 cross-harness comparison, and the conscience finding says most of the stopping it would
 have to reproduce is done by stages after action selection.
+
+## CORRECTION 2026-11-12, from the lead as relayed by the RATCHET session: the part-of-speech work is the map, not a wrong turn
+
+The correction above ("a kind is a type of CHANGE, not a type of token") called the
+part-of-speech and token-category work a drift. That over-corrected. The RATCHET session
+asked the lead whether to retire those stakes, and relays his answer: "No, the part of
+speech stakes are the map, the work you just did is how to track motion across the map to
+see how responses are formed from inputs so we can optimize."
+
+- **The map.** Which category of token is carried where, by site and layer (VOCAB-1 and
+  the loop's cells; here, the measurement grid in the explorer). It stays, and it resumes.
+- **The motion.** One-change pairs, edits and the agent's block regimes, traced as
+  movement over that map. This is where a kind applies: a kind still labels a change,
+  never a token.
+- **What was wrong before** was reading the map as if it were the kinds, not drawing it.
+- **What follows for the explorer:** the map and a change's wake belong in 1 picture, the
+  grid as ground and the wake over it, in shared coordinates: a pair's difference
+  projected onto the mapped category directions at each layer. Those projections do not
+  exist yet (the RATCHET session's next step), so the explorer still shows 2 views.

@@ -370,3 +370,16 @@ first action selections. Traces at the level without prompt text.
 - **The battery never exercises six of the ten verbs, and never REJECT.** Part B's ten-verb
   question cannot be answered from battery runs alone, and no battery run has yet shown
   the agent refusing.
+
+## Capture of prompts and generations in safety runs, 2026-11-12 (as the CIRISAgent session reports)
+
+- **The lead's ruling to that session, as it relays it:** the capture file is the route;
+  full traces proper wait on the substrate fixing its scrubber.
+- **In the 2.21.0 release PR** (CIRISAgent#1352, head `702e28421`): the battery captures each
+  model call as a row with the messages as sent, the parsed result, the RAW completion
+  text as the provider returned it (the last one when a re-ask happened; empty if the
+  service handed none over), ids for thought and task, model, endpoint, agent version and
+  the prompt hash. A failed call is a row with its messages, the error and no reply.
+- **Tested by unit tests only so far.** The PR's own battery run will be the first to
+  exercise it; the artifact will be named `safety-battery-llm-calls-<run>-<lang>`.
+- The renderer for Part A's items is being written with the fixed settings agreed.

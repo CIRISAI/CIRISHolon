@@ -148,3 +148,39 @@ waiting over 8 hours:
   here. Both are far above what a survey of ownership would give, and both come from how
   the device generator's phones per household are shared among its adults. Unchecked,
   and it moves each share in this file.
+
+## A dated note, 2026-11-12: the long waits are the addressee asleep, and "no phone" is a defect
+
+Eric's objection: a message that reaches a person's laptop shows on their phone as soon as
+the phone is on, so waits of many hours do not add up. A diagnosis on the same generated
+population (`examples/mesh0_dig.rs`, seed 20261112, 100,000 households, 617,334 messages;
+output in `tables/mesh0/mesh0_dig.jsonl`). Exploratory: no stake was set on any of it.
+
+- **In this campaign "the phone is on" was coded as "the person is awake".** A real phone
+  stays on overnight and takes the message while its owner sleeps. So the waits in this
+  file are the time until a PERSON can read, and they were written up as a delay of
+  delivery. That wording was wrong; the objection is right.
+- **The waits over 8 hours are nights.** 0.142 of messages are held. Of the held, 0.231
+  wait over 8 hours, and 0.810 of those were sent between 20:00 and 04:00 to someone
+  already asleep (sent at 21:00 the mean wait is 9.6 hours; sent at 09:00 it is 2.5).
+  0.74 of held messages are read between 05:00 and 11:00. No mesh can shorten these.
+- **What the mesh itself adds is small.** With any holder that is on (a laptop, a home
+  node, a seat) it adds 0 hours by construction: the message is there when the addressee
+  wakes. With no holder, the sender's phone must be awake at the same hour as the
+  addressee's, and among held messages that adds 0 hours for 0.787, 1 hour for 0.064,
+  2 to 3 for 0.085, 4 to 8 for 0.052, over 8 for 0.011, and never within 48 hours for
+  0.0004.
+- **The measure a viability test should use** is the hours a message waits BEYOND the
+  addressee's own next waking hour. On that measure a holder scores 0 and two phones alone
+  are late by over 8 hours for about 0.0015 of all messages (0.142 x 0.011).
+- **"Adults with no phone" at 0.196 is a defect in how phones are handed out, and it is
+  confirmed.** The device generator gives 0.994 phones per adult in all (0.860 held by
+  adults, the rest by children), which is what its reference fixes: a mean. It draws 0, 1
+  or 2 for each person independently, and that spread has no reference. The result: 0.281
+  of adults who live alone have no phone, and 0.404 of people over 64 who live alone.
+  This campaign drops those adults as addressees and senders, so each share in this file
+  was measured on phone holders only, with older people under-counted. Unfixed here; a
+  fix needs a reference for ownership by age, which is a fetch and is not approved.
+- **Still open against the twin:** its median of 2.1 hours against 4 here. Untested
+  guesses: this campaign counts whole hours, and the chain's nights run long in the tail
+  (hours asleep at quartiles 7, 9, 11 against the diaries' 8, 9, 10).

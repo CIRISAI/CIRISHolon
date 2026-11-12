@@ -137,3 +137,47 @@ The set cannot be balanced over ten verbs with derived truth. It splits in two:
 
 The sizing above applies to each part separately. Part A's power comes from scenarios per
 rule; Part B's from captures. Neither is the ten-verb balanced set first asked for.
+
+## ANSWER 2, 2026-11-12, the CIRISAgent session: the real shape of the step
+
+As it reported from the 2.21 branch code and two safety runs; where it had not verified
+something it said so.
+
+- **Ten verbs:** observe, speak, tool, reject, ponder, defer, memorize, recall, forget,
+  task_complete. They appear in the prompt three times in two fixed orders. A template
+  may permit a subset.
+- **Two stages.** Stage 1 is shown the task, the current thought and the SUMMARIES OF FOUR
+  PRIOR EVALUATORS, and returns the verb as JSON. Five verbs (tool, defer, memorize,
+  recall, forget) then have a second pass that fills in details and may switch verb.
+  Afterwards a conscience may reject the choice and stage 1 runs again with guidance.
+- **No measured prior exists.** Two runs of one battery: 9 speak, 9 task_complete, 1
+  ponder each; none of the other seven verbs. The natural prior must be a stated
+  parameter, not a measured fact.
+- **Costs** (its reading, partly the lead's rulings): deferral on a hard question is the
+  floor; cheap confusions are speak against ponder and anything against defer; expensive
+  ones are forget or tool chosen wrongly, memorize to identity scope wrongly, speak where
+  a rule required refusal or deferral, task_complete when a reply is owed. No numeric
+  cost table exists.
+- **The prompt:** one real call was about 110,000 characters, of which about 65,000 is
+  ethics text that is IDENTICAL in each call. What varies: the task, the thought, its
+  depth, ponder notes, the four summaries, a snapshot, the tool list, optional blocks.
+- **The 14 captured prompts are not available:** not located, and it would not send them
+  out even redacted. The format description above stands in for them.
+- **Capturing more:** a manually dispatched workflow runs the agent on a corpus of probe
+  questions with a paid provider key and seals one trace per thought. No user data, so no
+  consent question. NOT VERIFIED: that the fullest trace level holds the stage-1 prompt
+  as sent. It spends provider money, so each campaign is the lead's to approve.
+- **What would fool an early-exit head:** a varying prefix (the real one is constant);
+  shuffled or partial verb lists; "tools listed" correlating with the answer being tool;
+  retry and last-attempt blocks, and thought depth, each of which predicts a verb in
+  production; items that give only a user's message, since the real step mostly READS A
+  VERDICT OFF THE EVALUATORS' SUMMARIES; multi-token verb names.
+
+## What that does to the design
+
+- An item is not a user's message. It is the variable part of a stage-1 call: a task, a
+  thought, FOUR EVALUATOR SUMMARIES, and the optional blocks. For Part A, the deciding
+  fact must be carried the way production carries it (in the summaries and the thought),
+  and the cues listed above must appear under each outcome or under none.
+- Part B has no source yet: no prior, no captures in hand, and a capture workflow whose
+  output is unverified for this purpose and costs money per run.

@@ -138,3 +138,35 @@ real task exist. No theory of the network can be tested for H3ERE without task d
 stream and the writes by use against by spread at equal rank (its stake: use wins at each
 rank and each block); looking-back stages cut by weight rank against by data spread;
 attn1's constant push folded into a constant; the clock's removal as a curiosity.
+
+## ADDITION 2026-11-12: the largest fold is outside the network (from the CIRISAgent session's account of the step)
+
+A theory, like the rest; nothing here is measured by this session.
+
+The step this is all for does not run once on a short input. As that session describes
+it from the code: one thought goes through four evaluators, then action selection, then
+for five of the ten verbs a second pass, then consciences that may send it round again.
+Each call carries about 110,000 characters, of which about 65,000 are the same ethics
+text each time. And action selection itself mostly reads a verdict off the evaluators'
+summaries.
+
+On a phone that is where the time goes, before any question of layers:
+
+- **F5, the constant prefix.** Tens of thousands of tokens that never change are read, or
+  held in memory as a cache, on each call. A purpose-built model carries that text in its
+  weights and is given only what varies. *Kill:* a model tuned to act without the prefix
+  does not match the same model with it, on the verb chosen, within the budget set for
+  agreement between two runs of the full model.
+- **F6, many calls for one decision.** If action selection mostly reads the evaluators'
+  verdicts, then the evaluators are where the judgment is, and the selection is a small
+  reader of structured verdicts. A purpose-built path makes it a small head over typed
+  evaluator outputs, not a full generation. *Kill:* a head given only the four summaries
+  (no task, no thought) agrees with the full step far less often than the full step
+  agrees with itself across runs.
+- **F3 restated once more:** cutting the speaking half applies within each call that only
+  has to DECIDE (the evaluators' verdicts, the verb), and not to the call that has to
+  write the reply.
+
+If F5 and F6 hold they are worth more than every fold inside the network put together,
+because they remove whole passes and most of each pass's input. They need real stage-1
+calls to test, and none are in hand.

@@ -683,7 +683,6 @@
    "scout": "same model: 3 to 30 (laptop 3 to 10, phone 10 to 30; never measured like for like). As served (a small device model against a hosted frontier model): 0.3 to 5. Frontier models and training cannot move to homes at all."
   }
  },
- "written_before": "the lead's statement that AI in the scenario is a mix across tiers placed by the market; the scout's AI rows compare a device with a data centre and do not yet give energy by tier",
  "businesses": {
   "how_the_constitution_models_a_business": "an affiliation: 'a room that acts as one voice', a body on the network that runs nodes it owns ('a node is a device or server you own'); one of the five circles",
   "case_A_central": {
@@ -696,5 +695,80 @@
    "basis": "web search results, not read at source: IEA cooling shares 7 % against over 30 %; Uptime 2025 average PUE 1.54; utilisation about 65 % cloud against 12 to 18 % on premises (2014, as quoted by a vendor)"
   },
   "not_found": "any split of a hyperscale operator's capacity or energy between its own consumer services and its business customers"
+ },
+ "ai_as_a_mix_across_tiers": {
+  "the_leads_definition": "a mixture of on-device, edge, prosumer, office appliance, servers, etc. - the market optimizes",
+  "energy_by_tier": [
+   {
+    "tier": "phone",
+    "value": "0.58 to 0.76",
+    "unit": "J per token",
+    "model": "about 3 billion parameters",
+    "basis": "measured, whole phone",
+    "year": 2024
+   },
+   {
+    "tier": "laptop",
+    "value": "0.09 to 0.25",
+    "unit": "J per token",
+    "model": "3 to 9 billion",
+    "basis": "power assumed, not measured"
+   },
+   {
+    "tier": "consumer graphics card",
+    "value": "0.27 to 0.32",
+    "unit": "J per token",
+    "model": "about 1 billion",
+    "basis": "card only"
+   },
+   {
+    "tier": "hosted, batched",
+    "value": "0.15 to 0.21",
+    "unit": "J per token",
+    "model": "about 32 billion",
+    "basis": "measured"
+   },
+   {
+    "tier": "hosted, in production",
+    "value": "0.24",
+    "unit": "Wh per median prompt",
+    "basis": "one operator's disclosure, 2025; fell 33 times in a year"
+   },
+   {
+    "tier": "office appliance or on-premises server",
+    "value": "not found",
+    "note": "no measured J per token or idle draw for a single-GPU office box was found; at low load it cannot batch and sits near the laptop"
+   }
+  ],
+  "same_model_laptop_against_data_centre": {
+   "one_request_at_a_time": "the data centre is 1.6 to 2.3 times better per joule",
+   "batching_64_requests": "a further 11 to 20 times",
+   "together": "about 18 to 46 times against a batched data centre (the scout's arithmetic on the two factors)",
+   "source": "Saad-Falcon et al., arXiv 2511.07885, November 2025, read by the scout",
+   "correction": "the scout's first report said no like-for-like measurement existed and gave 'laptop 3 to 10'; that was wrong and is corrected in its report"
+  },
+  "what_decides_efficiency": "model size and how full the machine is, not where it sits",
+  "routing": {
+   "finding": "sending easy queries to small local models saves 48 to 80 % of energy against sending everything to a frontier model, and the saving comes from model size, not hardware",
+   "capability": "local models answer 71 to 89 % of single-turn queries correctly (23 % in 2023)",
+   "share_of_inference_on_devices_today": "no source measures it"
+  },
+  "what_vanishes": {
+   "requested_generative_inference_share_of_ai_electricity": "about 5 to 20 % (the scout's bound from operators' own figures)",
+   "share_of_ai_electricity_that_vanishes": "0.2 to 0.6, the scout's estimate, unsourceable",
+   "note": "the often-quoted 'inference is 60 to 90 %' figures are from 2019 to 2021 and are mostly ranking inference"
+  },
+  "agents": {
+   "tokens_per_task": "an agent about 4 times chat; multi-agent about 15 times (one provider, June 2025, read)",
+   "suggested_multiples": [
+    1,
+    2,
+    5,
+    15
+   ],
+   "note": "per person per day is unmeasured; energy rises less than tokens because agent traffic is mostly input"
+  },
+  "zero_data_retention": "prompts and responses are not stored after processing; metadata, safety exceptions and in-memory caching remain; by default API data is not trained on. On the hosted tier it removes almost no energy: what vanishes is the platforms' own ranking, advertising and training.",
+  "suggested_inputs": "energy per token by tier with model size and a utilisation term; the local share swept from 0 to 0.8; the vanish share of AI 0.2 to 0.6; the agent multiple 1, 2, 5, 15"
  }
 }

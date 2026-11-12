@@ -9,6 +9,8 @@ Two cautions, carried beside every figure:
 - **Kind of figure.** AVG = long-run average allocation. MARG = marginal. CAP = capacity or provisioning. In a FULL-REPLACEMENT thought experiment the long-run average is the right kind for the BASELINE (the estate is not built at all). It is not automatically the right kind for the EDGE side: there the question is marginal draw on devices already on, plus the whole draw of anything added.
 - **A constant is a price in a regime.** Year, system, and rate of movement are given. Two figures in this report moved by more than an order of magnitude inside the period the literature covers (data-centre energy per delivered bit: 77x between a 2016 model and a 2020 measurement; hosted energy per AI prompt: 33x in twelve months at one operator).
 
+**AMENDMENT, 2026-11-11, same day: item 4 of the brief was re-pointed twice by the lead.** AI inference in the scenario is a MIX across tiers (phone, prosumer machine, office appliance, on-premises server, hosted model with zero retention) and "the market optimizes". The amended item 4 is at the end of this file under "AMENDMENT: item 4, AI as a mix across tiers". It supersedes section 4b, headline finding 7 and the 4b row of table (b), and it carries one dated CORRECTION of a statement in 4b. Sections 0 to 3 and 4a stand.
+
 ---
 
 ## Headline findings
@@ -388,3 +390,168 @@ Least trusted:
 - **Feldmann et al. 2010** (author's copy at gsmaragd.github.io/publications/CTTE2010/CTTE2010.pdf) and **Nedevschi et al., NSDI 2008**: named in the brief; the first seen only as an abstract summary, the second not retrieved.
 - **MLPerf Mobile and MLPerf Client power results**, and the analyst notes the IEA cites for the AI share (Goldman Sachs, Deloitte, Gartner, Schneider Electric, SemiAnalysis): not opened.
 - **Sandvine's sample**: neither edition states which networks, in which countries, its shares are drawn from.
+
+---
+
+# AMENDMENT: item 4, AI as a mix across tiers
+
+Added 2026-11-11 after two messages from the lead. The scenario's AI is "a mixture of on-device, edge, prosumer, office appliance, servers, etc... - the market optimizes". Same marking convention and cautions as above.
+
+## CORRECTION (dated 2026-11-11, not a quiet fix)
+
+Section 4b says of the same-model comparison between a device and a data centre: "Nobody has published this comparison like for like; it is my estimate from measured endpoints", and gives "laptop 3 to 10". **Both are wrong.** The comparison has been published (Saad-Falcon et al., below), and it gives 1.6 to 2.3 with neither side batching and, once the data centre batches, about 18 to 46 `[my arithmetic on their two factors]`. My "3 to 10" for a laptop was too low at the top and missed that the answer is set by batching, not by the chip. The phone figure (10 to 30) remains my estimate; no like-for-like phone measurement was found.
+
+## Amended headline findings (replace finding 7)
+
+A. **Where a model runs matters less than how big it is and how full the machine is.** Same model, laptop against data-centre accelerator, one request at a time: the data centre is 1.6 to 2.3 times better per joule. Let the data centre batch 64 requests and it gains another 11 to 20 times. A machine that serves one person or one office cannot batch across users, wherever it sits. So an office appliance or on-premises server at low load is nearer the laptop's efficiency than the hosted model's.
+B. **The saving from a mix comes from sending easy work to small models, not from moving it to the edge.** In the one published simulation, routing 80 % of queries to small local models cuts energy 64 to 80 % against sending everything to a frontier model, and the authors state "The dominant effect is the reduction in model size, not a hardware efficiency advantage."
+C. **No one has measured the share of inference run on devices.** What exists is capability (local models answer 71 to 89 % of single-turn chat and reasoning queries correctly, up from 23 % in 2023) and analyst counts of capable hardware shipped (about a third of phones and of PCs in 2025).
+D. **Inference people explicitly ask for is a small part of AI electricity today: of the order of 5 to 20 % `[author's estimate]`.** One operator's whole chat product comes to about 0.3 TWh a year on its own per-prompt figure, against 62 TWh for accelerated servers worldwide in 2024. The often-quoted "inference is 60 to 90 %" figures count ranking and recommendation inference and predate generative AI.
+E. **Agents multiply tokens per task by about 4 (one operator's statement), multi-agent systems by about 15; a coding agent multiplies tokens per person per day by far more.** The team's 1, 2 and 5 covers the single-agent case only. Energy rises less than tokens, because agent traffic is mostly input.
+F. **"Zero data retention" in the providers' own terms removes stored prompts and responses. It does not remove metadata, abuse-screening exceptions or in-memory caching, and hosted API traffic is already not trained on by default.** So for the hosted tier it removes almost no energy; what vanishes is the platforms' own ranking, advertising and training on harvested data (finding D's remainder).
+
+## A1. Energy per unit of inference, by tier
+
+| Tier | Hardware, year | Model it ran | Value | Scope of the measurement | Device already on? | Basis | Source, how read |
+|---|---|---|---|---|---|---|---|
+| Phone | Galaxy S23, iPhone 14 Pro; 2022-2023; phone GPU, **not the neural processor** | 3 billion parameters, 4-bit | 0.58 to 0.76 J/token (0.16 to 0.21 mWh); 490 to 590 prompts per battery | whole phone at the battery, 8.5 to 13.8 W sustained | yes, in use; the figure is the phone's whole draw while generating, not the increment | measured | Laskaridis et al., MobiCom 2024, arXiv 2403.12844, read |
+| Phone, ceiling | 2024 flagships | 10 billion at 15 tokens/s; 3 billion at 30 to 45 | no energy figure | - | - | vendor claims | IEA 2025, Box 2.3, read |
+| Phone or laptop neural processor | 2023-2024 | small vision and image models | 0.5 W (phone), 1 to 5 W (laptop) | chip power, not energy per task | - | early studies | IEA 2025, section 2.4.1, read |
+| Small board | Raspberry Pi 4 | 0.5 billion | 2.61 J/token | not stated | - | measured, as cited | cited in Kannan et al.; original `[not confirmed]` |
+| Laptop (prosumer) | Apple M4 Pro, 2025-2026 | 3 to 9 billion, 4-bit | 0.09 to 0.25 J/token | **system power ASSUMED 10 W**; measured chip package 0.47 W | assumed on | measured speed, assumed power | Kannan et al., arXiv 2608.28667 (preprint), read |
+| Laptop (prosumer), same model as cloud | Apple M4 Max, 2025 | 8 to 120 billion | 1.6 to 2.3 times WORSE per joule than a data-centre accelerator (B200) on the same models, both at batch 1; 6.5 to 7.4 times worse than a purpose-built inference chip | accelerator power only on both sides | - | measured, 3 to 5 runs per cell | Saad-Falcon et al. (Stanford, Together AI), "Intelligence per Watt", arXiv 2511.07885, November 2025, read |
+| Desktop, consumer graphics card | RTX 4060 Ti 16 GB, 2026 | 1 billion: 0.27 to 0.32 J/token; 7 billion: up to 4.4 times that `[search summary for the multiple]` | graphics card only (nvidia-smi), batch 1 | not counted: the rest of the PC | measured | Zähl and Hennig, arXiv 2608.00008 (preprint), abstract read |
+| Desktop, older cards | two RTX 3090, 2023 | 13 billion | 12 to 19 J/token | cards only | - | one person's blog | `[search summary]`; do not use |
+| Office or home appliance | workstation card (RTX 6000 Ada), mini-PC, small GPU box | - | **no published joules per token found.** Vendor data points only: a 25 W module "capable of 67 trillion operations per second" | - | - | vendor claim via the IEA | IEA 2025, Box 2.3, read |
+| On-premises or hosted accelerator, one request at a time | H100-class | 7 billion | about 4 J/token | an estimate (400 W / 100 tokens a second), not a measurement | - | author's estimate in the source | Kannan et al., read |
+| Hosted accelerator, batched | B200 node, vLLM, batch 128 to 512; 2025-2026 | 32 billion | 0.15 to 0.21 J/token; 95 J (0.026 Wh) per 627-token reply; with reasoning 0.31 J/token and 2,192 J per reply | steady-state energy of the GPU node; no cooling, no idle capacity | - | measured | Chung et al., arXiv 2601.22076, read |
+| Effect of batching alone | B200, batch 64 against batch 1 | same models | 11 to 20 times more work per joule | accelerator | - | measured | Saad-Falcon et al., App. E.9, read |
+| Hosted frontier model, in production | Google fleet, May 2025 | not disclosed | 0.24 Wh per median text prompt (accelerators 0.14, host 0.06, idle capacity 0.02, overhead 0.02) | everything inside the data centre | - | operator-measured | Elsworth et al., arXiv 2508.15734, read |
+| MLPerf Inference and MLPerf Client power | - | - | not retrieved | - | - | - | `[not confirmed]` |
+
+**Where sizes are not comparable, and how the literature handles it.** Three ways, and they give different answers:
+1. *Same model, different hardware* (Saad-Falcon et al.): the data centre wins by 1.6 to 2.3 unbatched and by roughly 18 to 46 batched `[my arithmetic: 1.6-2.3 x 11-20; accelerator scope; multiply the data-centre side by about 1.7 for Google's measured overheads, leaving 10 to 27]`. This is the only like-for-like comparison found, and it is for a laptop, not a phone.
+2. *Same model, lower precision*: phone and laptop figures are all for 4-bit versions; MELT reports "a non-negligible accuracy cost". The hosted figures are for full or 16-bit precision. No source prices the accuracy difference in energy.
+3. *Smaller model for an easier task*: the IEA ("smaller and more efficient versions of their cloud-based counterparts ... trade-offs between efficiency and accuracy") and Saad-Falcon et al. (accuracy per joule, with a judged right-or-wrong for each query). This is the honest form for a market that "optimizes": the unit is a correctly answered query, not a token.
+
+**The tiers in one line each `[my reading of the table]`:** phone, about 0.6 to 0.8 J/token for a 3-billion model, cannot run more than about 10 billion; laptop, about 0.1 to 0.25 J/token for 3 to 9 billion, can run up to about 120 billion slowly; consumer graphics card, about 0.3 to 1.4 J/token for 1 to 7 billion (card only); hosted and batched, about 0.15 to 0.2 J/token for a model four to ten times larger. Per token the tiers are within one order of magnitude of each other only because the small tiers run small models.
+
+**What is missing for the office-appliance and on-premises tiers:** any measured figure, and above all idle draw. A hosted accelerator's advantage is that it is busy. A box serving one household or one office is idle most of the day; its energy is then its idle watts times 8,760 hours, the same structure as the storage box in section 3.3. No source gave the idle draw of a single-GPU inference box.
+
+## A2. How the mix stands and moves
+
+| Evidence | Value | Kind | Year | Source, how read | What it is NOT |
+|---|---|---|---|---|---|
+| Where AI energy is today | "Most AI-related energy demand currently comes from large, centralised cloud and hyperscale data centres – both for training and inference"; "Some inference tasks are already conducted on user devices, as well as hybrid approaches where initial processing is done on the device and the final request is sent to a data centre" | agency statement | 2025 | IEA 2025, section 2.4.1, read | no share given |
+| Share of queries a local model answers correctly | 88.7 % with the best local model per query; 71.3 % with one model on one laptop | measured on 1 million real single-turn chat and reasoning queries, 20+ models, 8 accelerators | 2025 | Saad-Falcon et al., read | single-turn; capability, not use. Their multi-turn agent tests are in an appendix I did not read |
+| Its movement | 23.2 % (2023), 48.7 % (2024), 71.3 % (2025); accuracy per watt up 5.3 times in two years (3.1 from models, 1.7 from hardware) | measured | 2023-2025 | same | |
+| What routing saves | all queries to a 235-billion model in the cloud (batch 16) against routing: perfect router -80.4 % energy; 80 %-accurate router -64.3 %; 60 %-accurate -48.4 %. 80.7 % of queries go local | simulation over 80.2 million queries in 24 hours | 2025 | same | "The dominant effect is the reduction in model size, not a hardware efficiency advantage": the same routing to small models INSIDE a data centre would save more |
+| Phones able to run generative models | about 30 % of smartphone sales in the first half of 2025 (15 % a year before); about one in three shipments in 2025 | ANALYST estimate (Counterpoint) | 2025 | `[search summary]` | capable hardware sold, not inference run on it |
+| "AI PCs" | 31 % of the PC market in 2025 (15.6 % in 2024), about 78 million units; 55 % FORECAST for 2026. The same firm's 2024 forecast for 2025 was 43 % | ANALYST estimate and forecast (Gartner) | 2025 | `[search summary]` | defined by the presence of a neural processor; a forecast that already missed once |
+| Device replacement | the IEA warns on-device AI "could accelerate device replacement cycles" (average smartphone replacement 3.5 years) | agency statement | 2025 | IEA 2025, read | embodied energy, outside this report |
+| Share of inference run on devices | **not found, measured or estimated, in any source I would cite** | - | - | - | one blog forecast (60 % by 2029) is opinion |
+
+**What routes where:** the only evidence is the simulation above (easy single-turn queries local, the hard fifth hosted) and the IEA's list of reasons to run locally (latency, poor connectivity, large local data such as video, privacy). No usage study of what people actually run locally was found.
+
+**Direction:** capability on devices is rising fast (threefold in two years on the one measured series) and capable hardware is about a third of new sales. Whether use follows is not measured.
+
+## A3. Of AI energy, inference people ask for against the rest
+
+No operator publishes this split. What can be said:
+
+- **The often-quoted inference shares, with their sources and years.** Google: inference 3/5, training 2/5 of ML energy (2019-2021; in `SCOUT_UPSTREAM.md`). Meta: 70 % of AI power capacity is inference (2021; same). "Inference is 80 to 90 %" and "90 percent of the cost" trace to vendor and cloud-provider statements of about 2019 and are about cost or compute, not energy `[search summary; originals not read]`. LBNL (2024, read): training "has dominated" to date and inference "could dramatically exceed training"; its model takes training servers as busy 80 % of the time and inference servers 40 %. **All of these predate generative AI at scale or model it, and in all of them "inference" is mostly ranking, recommendation, search and advertising inference, not requests a person typed.** At Meta in 2019 recommendation was over 79 % of AI inference cycles (section 2.4).
+- **Meta, fourth-quarter 2025 call** (28 January 2026; transcript read at https://s21.q4cdn.com/399680738/files/doc_financials/2025/q4/META-Q4-2025-Earnings-Call-Transcript.pdf): "demands for compute resources across the company have increased even faster than our supply"; the advertising retrieval and ranking models are being scaled up in "data, complexity and compute". No share of compute by use is stated. Earlier calls describe hardware bought for generative training as reusable for ranking and recommendation `[search summary]`.
+- **A bound from the operators' own per-prompt figures `[my arithmetic]`.** 2.5 billion prompts a day `[search summary: OpenAI to the press, July 2025]` at 0.34 Wh is 0.85 GWh a day, **0.31 TWh a year**. Google's stated 1.3 quadrillion tokens a month across all its products `[search summary, October 2025]` at 0.15 to 0.4 J per token and 1.7 for overheads is about 1 to 3 TWh a year, against Google's 32 TWh total. Against 62 TWh for accelerated servers worldwide in 2024, requested generative inference across all operators is plausibly 3 to 12 TWh: **5 to 20 % of AI electricity** `[author's estimate]`. Weaknesses: the per-prompt figures are a median and an unexplained average for text; images, video, reasoning and coding agents cost far more per request; the token figure mixes input and output; the years do not line up.
+- **So the remainder, 80 to 95 %, is training and experimentation, ranking and advertising models, business and scientific use, and capacity held idle.** Of that remainder, what VANISHES in the scenario is ranking and advertising and training on retained user data; frontier-model training on public data and business AI do not. No source separates them. Bracket for the share of AI electricity that vanishes: **0.2 to 0.6** `[author's estimate]`: the low end if most accelerated capacity is now generative training and business use, the high end if consumer platforms' ranking still dominates as it did before 2023.
+- Kind: AVG. Rate: this is the fastest-moving split in the report; requested inference grew several-fold in 2025 on the operators' own counts.
+
+## A4. AI's share of data-centre electricity, by source and definition
+
+Section 4a stands. The definitions side by side:
+
+| Source | Definition of "AI" | Share | Year |
+|---|---|---|---|
+| IEA 2025 | electricity of accelerated servers, as a proxy; no cooling overhead | 15 % of data-centre electricity (24 % of server electricity) | 2024, world |
+| IEA 2025, Base Case | same | grows 30 % a year against 15 % for the total: about 17 % (2025), 19 % (2026), 32 % (2030) `[my arithmetic]` | scenario |
+| LBNL 2024 | "AI servers" (accelerated, plus non-accelerated servers used for AI) | over 40 of 176 TWh, 23 %, servers only | 2023, US |
+| Google (Patterson et al.) | all machine learning, training and inference | 10 to 15 % of the company's energy | 2019-2021 |
+| Bitkom / Borderstep | AI and high-performance computing | 15 % of capacity; about 40 % by 2030 | 2024, Germany |
+| Analysts (Goldman Sachs and others) | various, mostly generative | named by the IEA as the spread of its Figure 2.5; not read | 2024 |
+
+None is "generative only" and none is "consumer only".
+
+## A5. Demand per person with agents, and what "zero data retention" means
+
+**Demand:**
+
+| Evidence | Value | Kind | Year | Source, how read | What it is NOT |
+|---|---|---|---|---|---|
+| Tokens, agent against chat | "agents typically use about 4× more tokens than chat interactions, and multi-agent systems use about 15× more tokens than chats" | operator statement | June 2025 | Anthropic engineering post, https://www.anthropic.com/engineering/multi-agent-research-system , read | one operator, per task, research tasks; not per person per day |
+| Tokens per request, a router's whole traffic | average prompt "roughly fourfold from around 1.5K to over 6K"; completions "from about 150 to 400 tokens"; programming requests "routinely exceed 20K input tokens" and are 3 to 4 times general-purpose prompts | measured from request metadata over 100 trillion tokens | early 2024 to late 2025 | Aubakirova et al. (OpenRouter and a16z), arXiv 2601.10088, read | per request, not per person; a router's users are developers |
+| Chat baseline | about 3 prompts per weekly user per day (2.5 billion a day over 800 million) | `[my arithmetic on search summaries]` | mid-2025 | press reports of operator statements | users and prompts are from different months |
+| A coding agent, per person | "around $13 per developer per active day ... below $30 per active day for 90% of users"; suggested rate limits 10,000 to 300,000 tokens per minute per user by team size | operator documentation; dollars | current | https://code.claude.com/docs/en/costs , read | dollars, not tokens; enterprise deployments; no method |
+| One operator's token throughput | 480 trillion a month (May 2025), 980 trillion (July), 1.3 quadrillion (October) | operator statements | 2025 | `[search summary]` | all products, input plus output |
+
+- **What supports a value of the team's multiple:** 1 is not supported for agent use by anything found. **4 is the one stated typical multiple per task** (single agent), and the router's traffic independently shows a fourfold rise in tokens per request as agent use spread. 15 is stated for multi-agent systems. So 1, 2 and 5 brackets a single agent; add 15.
+- **Per person per day the multiple can be far larger** than per task, because an agent runs many tasks unattended. A chat user at 3 prompts a day uses a few thousand tokens; $13 a day of a coding agent is millions of tokens at any current price `[my arithmetic; prices assumed]`. That is a developer, not a household, and nothing found measures a household's agent.
+- **Energy rises less than tokens.** Agent traffic is input-heavy (6,000 in to 400 out on the router), and input tokens cost much less energy than generated ones (decoding dominates; Chung et al.; and repeated context is cached). No source gives the energy multiple; it is below the token multiple by an unsourced factor.
+
+**"Zero data retention" in the providers' own terms** (documentation pages read 2026-11-11):
+
+| Provider | What it means | What is still kept or excepted | Training |
+|---|---|---|---|
+| OpenRouter (router), https://openrouter.ai/docs/features/zdr | "no routine storage of prompts or responses after processing, apart from the CSAM exception" | "in-memory caching of prompts is *not* considered 'retaining' data"; a separate "Safety Retention" tier may keep prompts and responses to investigate abuse; what the router itself logs as metadata is not stated on the page | providers that do not retain "are also unable to train on your data" |
+| Anthropic, https://platform.claude.com/docs/en/build-with-claude/zero-data-retention and its privacy article of 1 July 2026 | "does not store customer prompts or responses at rest after the API response is returned"; without it, inputs and outputs are deleted "within 30 days" | flagged content up to 2 years and safety classification scores up to 7 years; batch, files and several agent features are not eligible; some model families require 30-day retention `[this row partly from a summary of the page's tail]` | "never used for model training without your express permission" |
+| OpenAI, https://developers.openai.com/api/docs/guides/your-data | "excludes customer content from abuse monitoring logs"; without it, such logs are "retained for up to 30 days" | stateful endpoints (files, threads, batches, fine-tuning) keep data "Until deleted"; flagged images kept for review; a safety exception can suspend it | "As of March 1, 2023, data sent to the OpenAI API is not used to train or improve OpenAI models (unless you explicitly opt in...)" |
+
+- **What vanishes under these terms:** stored prompts and responses, and with them any later training or profiling on that content.
+- **What does not:** metadata. The router's own usage study was built on "timing, model and provider identifiers, token usage, geographic routing, and usage context" without touching content. Abuse and child-safety exceptions. Transient caching.
+- **Consequence for energy `[my reading]`:** retention of text is a negligible storage load, and hosted API traffic is already not trained on by default. So applying zero retention to the hosted tier removes close to no data-centre energy by itself. The energy that vanishes in the scenario is the consumer platforms' own (A3), not the hosted model tier's.
+
+## Rows to add to table (a) (they replace the "4b AI energy" rows where the sub-component matches)
+
+| input | sub-component | value or range | unit | basis | year | source | how read | what it is not |
+|---|---|---|---|---|---|---|---|---|
+| 4 tier | phone, 3 bn model, 4-bit | 0.58 to 0.76 | J/token | measured, whole phone | 2022-2023 | Laskaridis et al., arXiv 2403.12844 | read | phone GPU not neural processor; total draw, not increment |
+| 4 tier | laptop, 3-9 bn, 4-bit | 0.09 to 0.25 | J/token | speed measured, 10 W ASSUMED | 2025-2026 | Kannan et al., arXiv 2608.28667 | read (preprint) | power assumed |
+| 4 tier | laptop vs data-centre accelerator, same model, batch 1 | 1.6 to 2.3 (6.5 to 7.4 against a purpose-built chip) | ratio, laptop worse | measured, accelerator scope | 2025 | Saad-Falcon et al., arXiv 2511.07885 | read | no cooling or idle on the data-centre side; laptop, not phone |
+| 4 tier | batching gain in the data centre | 11 to 20 | ratio, batch 64 vs 1 | measured | 2025 | same, App. E.9 | read | needs many concurrent users |
+| 4 tier | laptop vs batched data centre, same model | 18 to 46 (10 to 27 after data-centre overheads) | ratio | derived | 2025 | derived | scout's arithmetic | product of two measured factors |
+| 4 tier | desktop graphics card, 1 bn model | 0.27 to 0.32 | J/token | measured, card only, batch 1 | 2026 | Zähl and Hennig, arXiv 2608.00008 | abstract read (preprint) | excludes the rest of the PC |
+| 4 tier | office appliance / on-premises single GPU | not found | - | - | - | - | - | idle draw is the missing number |
+| 4 tier | hosted, batched, 32 bn open model | 0.15 to 0.21 | J/token | measured, GPU node | 2025-2026 | Chung et al., arXiv 2601.22076 | read | no cooling or idle capacity |
+| 4 tier | hosted frontier, production | 0.24 | Wh per median text prompt | operator-measured, full boundary | May 2025 | Google, arXiv 2508.15734 | read | fell 33-fold in a year |
+| 4 mix | queries a local model answers correctly | 71.3 (one model) to 88.7 (best local per query); 23.2 in 2023 | % of single-turn queries | measured, 1 M queries | 2025 | Saad-Falcon et al. | read | capability, not use |
+| 4 mix | energy saved by routing easy queries to small local models | 48 to 80 | % vs all-to-frontier | simulation | 2025 | same | read | saving is from model size, not location |
+| 4 mix | capable phones; "AI PCs" | about 30 % of phone sales; 31 % of PCs (55 % forecast 2026) | % | ANALYST | 2025 | Counterpoint; Gartner | search summary | hardware sold, not inference run |
+| 4 mix | share of inference run on devices | not found | - | - | - | - | - | - |
+| 4 split | requested generative inference, of AI electricity | 5 to 20 | % | AUTHOR'S ESTIMATE from operator per-prompt and volume figures | 2024-2025 | derived | scout's arithmetic | mismatched years; text prompts only |
+| 4 split | AI electricity that vanishes (ranking, ads, training on retained data) | 0.2 to 0.6 | fraction of AI electricity | AUTHOR'S ESTIMATE | 2024-2025 | derived | scout's estimate | no source separates it |
+| 4 demand | tokens, agent vs chat, per task | about 4 (multi-agent about 15) | ratio | operator statement | June 2025 | Anthropic engineering post | read at source | one operator; per task |
+| 4 demand | tokens per request, router traffic | prompt 1.5K to over 6K; completion 150 to 400 | tokens | measured, metadata | 2024 to 2025 | OpenRouter study, arXiv 2601.10088 | read | developers' traffic |
+| 4 demand | coding agent per developer | about 13 (under 30 for 90 %) | USD per active day | operator documentation | current | Claude Code documentation | read at source | dollars; not households |
+| 4 retention | zero data retention | prompts and responses not stored after processing; metadata, safety exceptions and in-memory caching remain; API data not trained on by default | - | provider documentation | 2026 | OpenRouter, Anthropic, OpenAI | read at source (one page's tail by summary) | removes close to no energy on the hosted tier |
+
+## Item 4 in table (b), replaced
+
+| Input | Team's guess | Scout's range | Move? |
+|---|---|---|---|
+| 4b, as it was (device costs 3 times) | 3 (1 to 10) | same model: 2 unbatched, 18 to 46 against a batched data centre (laptop, measured factors); phone not measured like for like | **Drop the single multiple.** Carry per-tier J/token with model size, and a batching or utilisation term for every tier that serves few users. |
+| Mix across tiers | not yet an input | up to about 80 % of single-turn queries can be served locally (capability); actual share unmeasured | carry as a swept input, 0 to 0.8 local; the saving it yields is from model size |
+| Share of AI electricity that vanishes | not yet an input | 0.2 to 0.6 `[author's estimate]` | carry as a range; unsourceable |
+| Agent demand multiple | 1, 2, 5 | 4 per task (stated), 15 multi-agent; per person unmeasured and possibly much higher | **add 15; treat 1 as "no agents"**; energy multiple is below the token multiple |
+
+## Trust, for the amendment
+
+Most trusted: the same-model laptop-against-accelerator ratios and the batching gain (Saad-Falcon et al.: measured, repeated, scope stated); the providers' retention terms (their own pages); the 4-times and 15-times token statement as a statement (it is one operator's and unexplained).
+Least trusted: my 5 to 20 % for requested inference (mismatched years, text prompts only) and my 0.2 to 0.6 for what vanishes; every analyst shipment share (search summaries); the consumer-graphics-card figures (card-only scope, preprints, and two versions of one abstract that disagree).
+
+## For a human to open, for the amendment
+
+- **MLPerf Inference and MLPerf Client power results** (mlcommons.org): the standard like-for-like source for the tiers; not retrieved.
+- **Saad-Falcon et al., appendices E.8, E.9 and E.12**: absolute joules per query by accelerator, and the multi-turn agent results; I read the summary statements, not every table.
+- **A measured idle and loaded draw for a single-GPU inference box** (a workstation card, a mini-PC cluster): nothing found; this decides the office-appliance tier.
+- **Meta's 2024 to 2026 call transcripts** (investor.atmeta.com) for any statement of compute share by use; one transcript read, none found.
+- **The original 2019 "80 to 90 % inference" statements** (a chip vendor's and a cloud provider's): seen only second-hand.
+- **Counterpoint and Gartner releases** on capable phones and PCs: search summaries only.
+- **OpenRouter's privacy and logging page**: what the router itself stores as metadata is not on the page read.

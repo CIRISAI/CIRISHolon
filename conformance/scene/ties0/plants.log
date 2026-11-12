@@ -1,0 +1,8 @@
+P-UNIFORM    PASS
+P-CENTROID   PASS
+P-REACH      PASS
+P-DIAG       PASS
+P-FLOOR      PASS
+_floor_rung_median_miss 0.016452794377161357
+P-LEAK       PASS
+P-NOISE      PASS

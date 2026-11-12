@@ -1720,3 +1720,23 @@ Records cited; nothing below changes a tier's status.*
   successor's reviewer.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-12 — PRESENCEGEN-2: a person's day by the hour ships, the chain as the one to use
+
+- **Shipped** (`engine/crates/holon-scene/src/presence.rs`, `conformance/scene/PRESENCEGEN2_RESULTS.md`,
+  tables under `conformance/scene/tables/presencegen2/`): `world::presence::day`, two
+  generators with their verdicts, and the share employed by age band.
+- **KILLED (S1):** a chain with one bit (has the person left home today) is within budget
+  on the lengths of spells away; the frame earns nothing over it.
+- **MET (S6):** keying the hours at home on the hours until leaving repairs the fill that
+  failed the first gate (asleep in the hour before leaving 0.206 against 0.221; one chain
+  at home 0.381).
+- **KILLED (S3):** a Saturday out is not a weekday out; tables pooled over day types give
+  Saturday within budget in 5 of 24 hours.
+- **KILLED (S4):** the move home after 2020 is not one knob. Changing the share of each
+  kind of day closes about half the miss (9 of 24 hours); the rest is inside the kinds.
+- **A fault in the freeze:** the branches named two different things to ship. Both ship as
+  calls with verdicts; the reading is mine and marked so.
+- **Spent:** 2024, for this question.
+
+*(Placed at the end, as above.)*

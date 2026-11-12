@@ -24,6 +24,8 @@ use crate::verdict::Verdict;
 pub use crate::household;
 /// Devices in a household (DEVICEGEN-1): `world::devices::generate`.
 pub use crate::devices;
+/// A person's day by the hour (PRESENCEGEN-2): `world::presence::day`.
+pub use crate::presence;
 
 /// The four types of row (FSD section 10.1).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

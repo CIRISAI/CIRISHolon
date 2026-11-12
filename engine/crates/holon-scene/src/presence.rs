@@ -1,5 +1,5 @@
-//! Where a person is in each hour of a day (PRESENCEGEN-1,
-//! `conformance/scene/PRESENCEGEN1_PREREG.md`).
+//! Where a person is in each hour of a day (PRESENCEGEN-1 and its successor PRESENCEGEN-2,
+//! `conformance/scene/PRESENCEGEN2_PREREG.md`, `conformance/scene/PRESENCEGEN2_RESULTS.md`).
 //!
 //! Two generators over the six states of PRESENCE-0. `Chain`: a chain over the state and
 //! one bit (has the person left home today). `Frame`: a kind of day is drawn, then the
@@ -10,7 +10,8 @@
 //! Slot `s` of a day is clock hour `(4 + s) mod 24`. States: 0 home asleep, 1 home awake,
 //! 2 workplace or school, 3 elsewhere awake, 4 elsewhere asleep, 5 travelling.
 
-use crate::devices::Tables;
+use crate::devices::{Call, Tables};
+use crate::verdict::Verdict;
 use crate::seed::Stream;
 
 pub const KIND_HOME: u8 = 0;
@@ -283,6 +284,64 @@ pub fn day_with(t: &Tables, g: Generator, seed: u64, employed: bool, day_type: u
     out
 }
 
+/// The notice that must travel with anything produced from the compiled-in tables.
+pub const NOTICE_US: &str = "Source: U.S. Bureau of Labor Statistics, American Time Use Survey, 2003-2024 multi-year microdata files. A derived work; not endorsed by the Bureau.";
+
+/// The compiled-in tables: United States, diaries of 2022 to 2024.
+pub fn us_2022_2024() -> Tables<'static> {
+    Tables { rows: crate::presence_tables::ROWS }
+}
+
+/// One day of one person aged 15 or over, from the compiled-in tables, with the verdict on
+/// the generator asked for (PRESENCEGEN-2, scored on the diaries of 2024). A verdict is a
+/// statement about many generated days, never about one. Nobody under 15 has a diary: a
+/// child gets no day from this function.
+///
+/// - `Chain`: within budget on each reading, and the one that carries day types by hour.
+/// - `FrameCountdown`: returns a kind of day and takes the `week_same_kind` knob. Its tables
+///   are pooled over day types; Saturday's hours are missed and the call says so.
+/// - `Frame`: refused (its days are too awake; PRESENCEGEN-1's gate).
+/// - `FrameBand`: its keyed tables are not compiled in.
+pub fn day(g: Generator, seed: u64, employed: bool, day_type: u8, person_seed: u64, week_same_kind: bool, in_country: bool) -> (Day, Call) {
+    let d = day_with(&us_2022_2024(), g, seed, employed, day_type, person_seed, week_same_kind);
+    let (verdict, reason) = if !in_country {
+        (Verdict::Unresolved, "outside the country read (United States, 2022 to 2024)")
+    } else {
+        match (g, day_type.min(3)) {
+            (Generator::Chain, _) => (Verdict::Certified, "scored on the diaries of 2024 within budget: spells away, three far-apart hours, hours asleep, sleep before leaving; hours by day type reproduced"),
+            (Generator::FrameCountdown, 0) => (Verdict::Certified, "scored on the diaries of 2024 within budget: spells away, three far-apart hours, hours asleep, sleep before leaving; Monday to Thursday"),
+            (Generator::FrameCountdown, 2) => (Verdict::Refused, "tables pooled over day types: Saturday's hours at home awake are within budget in 11 of 24"),
+            (Generator::FrameCountdown, _) => (Verdict::Unresolved, "tables pooled over day types; Friday and Sunday were not read apart"),
+            (Generator::Frame, _) => (Verdict::Refused, "one chain at home for everyone: awake 0.645 of the day against 0.623"),
+            (Generator::FrameBand, _) => (Verdict::Unresolved, "the tables for this key are not compiled in"),
+        }
+    };
+    (d, Call { verdict, reason })
+}
+
+/// The share employed, in parts per million, by age band: 0 = 15 to 24, 1 = 25 to 64,
+/// 2 = 65 and over. For a caller that holds ages and not employment.
+pub fn employed_ppm(age_band: u8) -> u32 {
+    get(&us_2022_2024(), key(T_EMPLOYED, 0, (age_band as u32).min(2), 0, 0)).map(|r| r[0]).unwrap_or(0)
+}
+
+/// A number folding 1,000 fixed calls of each shipped generator. One value on every target.
+pub fn digest() -> u64 {
+    use crate::seed::mix;
+    let t = us_2022_2024();
+    let mut dg = 0u64;
+    for g in [Generator::Chain, Generator::FrameCountdown] {
+        for i in 0..1000u64 {
+            let d = day_with(&t, g, mix(i), i % 2 == 0, (i % 4) as u8, mix(i / 5), i % 3 == 0);
+            for x in d.states.iter() {
+                dg = mix(dg ^ *x as u64);
+            }
+            dg = mix(dg ^ d.kind as u64 ^ ((d.place_changes as u64) << 8));
+        }
+    }
+    dg
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -469,5 +528,25 @@ mod tests {
             assert_eq!(d.states.len(), 24);
         }
         assert!(seen > 100);
+    }
+
+    /// The shipped tables: one state per hour, a day at home never leaves, and the verdicts.
+    #[test]
+    fn the_shipped_tables_hold_the_law() {
+        for i in 0..4000u64 {
+            for g in [Generator::Chain, Generator::FrameCountdown] {
+                let (d, _) = day(g, mix(i), i % 2 == 0, (i % 4) as u8, 0, false, true);
+                assert!(d.states.iter().all(|&s| s <= 5));
+                if d.kind == KIND_HOME {
+                    assert!(d.states.iter().all(|&s| s <= 1));
+                }
+            }
+        }
+        assert_eq!(day(Generator::Chain, 1, true, 2, 0, false, true).1.verdict, Verdict::Certified);
+        assert_eq!(day(Generator::FrameCountdown, 1, true, 2, 0, false, true).1.verdict, Verdict::Refused);
+        assert_eq!(day(Generator::Frame, 1, true, 0, 0, false, true).1.verdict, Verdict::Refused);
+        assert_eq!(day(Generator::Chain, 1, true, 0, 0, false, false).1.verdict, Verdict::Unresolved);
+        assert!(employed_ppm(1) > employed_ppm(0) && employed_ppm(0) > employed_ppm(2));
+        assert_eq!(digest(), 2016341816221085133, "one digest on every target");
     }
 }

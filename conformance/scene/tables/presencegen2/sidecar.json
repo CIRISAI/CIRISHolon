@@ -1,0 +1,44 @@
+{
+ "reference": "PRESENCEGEN-2 (the generators' tables, United States 2022 to 2024)",
+ "version": 1,
+ "table": "presence_tables_us2022_2024.txt",
+ "bytes": 91320,
+ "sha256": "a4d20cab953e7cd798fb14738e5414c61ae98efd5d066dff6d65886d801e5677",
+ "format": "one row per line: key then shares in parts per million. key = (((table*2 + employed)*8 + x)*32 + slot)*16 + from. Slot s is clock hour (4+s) mod 24. States: 0 home asleep, 1 home awake, 2 workplace or school, 3 elsewhere awake, 4 elsewhere asleep, 5 travelling. Tables: 1 kind of day by day type (x); 2 the chain's 4 a.m. state by day type; 3 the chain (x = day type or 4 for all, slot or 24 for all, from = state*2 + has-left); 4, 5 at home over everyone (initial, chain); 6 hour first left by kind (14 cells: hour 0, hour 1, two-hour bins, none); 7 hours away less one by kind and first-left cell (slot; 31 pooled); 8, 9 the plain frame's fill; 10 changes of place by kind; 11 share employed by age band (x: 0 = 15-24, 1 = 25-64, 2 = 65+); 13 at home keyed (x: 0..5 hours until leaving less one, capped; 6 no outing; 7 after the frame); 15 its 4 a.m. state; 16 state on return by two-hour bin (31 pooled); 17, 18 the fill within the frame, six states. Day type: 0 Monday to Thursday, 1 Friday, 2 Saturday, 3 Sunday.",
+ "serves_registry_rows": [
+  "presence.people"
+ ],
+ "generator": "holon_scene::world::presence::day (engine/crates/holon-scene/src/presence.rs); the compiled-in rows are this file",
+ "preregistration": "conformance/scene/PRESENCEGEN2_PREREG.md",
+ "results": "conformance/scene/PRESENCEGEN2_RESULTS.md",
+ "sources": [
+  {
+   "name": "American Time Use Survey, 2003-2024 multi-year microdata files (diaries of 2022 to 2024)",
+   "publisher": "U.S. Bureau of Labor Statistics",
+   "licence": "public domain",
+   "notice": "Source: U.S. Bureau of Labor Statistics, American Time Use Survey, 2003-2024 multi-year microdata files. A derived work; not endorsed by the Bureau."
+  }
+ ],
+ "envelope": {
+  "country": "United States",
+  "years": "2022 to 2024",
+  "persons": "aged 15 or over",
+  "note": "scored on 2024 with tables fitted on 2022 and 2023; the shipped tables are fitted on all three years"
+ },
+ "verdicts": {
+  "chain": "certified: within budget on spells away, three far-apart hours, hours asleep and sleep before leaving; hours by day type reproduced",
+  "frame_countdown": "certified Monday to Thursday; refused Saturday (tables pooled over day types); unresolved Friday and Sunday",
+  "frame_plain": "refused: awake 0.645 of the day against 0.623",
+  "another_year_by_changing_kind_shares": "refused (S4): 9 of 24 hours",
+  "a_persons_week": "unresolved: one diary day per person",
+  "household_joint": "unresolved: members drawn independently",
+  "any_other_country": "unresolved"
+ },
+ "limits": [
+  "a state is read at one seeded minute of each hour; a spell under an hour may be missed",
+  "nobody under 15",
+  "2024 is spent for this question",
+  "0.16 of generated days borrow at least one row from a coarser table"
+ ],
+ "digest_native_and_wasm32": "2016341816221085133"
+}

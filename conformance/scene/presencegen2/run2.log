@@ -1,0 +1,241 @@
+plants: {"P-HEAP": true, "P-MEAN": true, "_mean_spell_truth_chain": [5.756555153707052, 5.766280916723394], "P-LATE": true, "_late_8h_truth_and_generators": [0.5400268336314848, {"chain": 0.41079930543886184, "frame": 0.5334341397849462, "band": 0.5334341397849462, "countdown": 0.5334341397849462}], "P-CHAIN": true, "P-SELECT": true, "_select_awake_generated_minus_planted": {"frame": 0.026368055555555547, "band": 0.0027300347222222188, "countdown": 0.0033741319444444695}, "_select_asleep_in_hour_before_leaving_planted_0": {"frame": 0.40419701699618454, "band": 0.1391605966007631, "countdown": 0.0}, "P-RETURN": true, "_return_worst_bin_miss": {"band": 0.004393138339664593, "countdown": 0.004393138339664593}, "_return_planted_share_asleep_by_bin": [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.153, 0.296, 0.45, 0.59, 0.907, 0.0], "P-NAP": true, "_nap_hours_share_and_days_planted_then_generated": [[0.016916666666666667, 0.1015], {"band": [0.01684375, 0.1010625], "countdown": [0.01684375, 0.1010625]}], "P-FIRST": true, "_first_elsewhere_asleep_at_4_planted_then_generated": [0.10333333333333333, {"frame": 0.026270833333333334, "band": 0.1033125, "countdown": 0.1033125}], "P-S3-START": true, "_s3_start_awake_share_of_generated_saturdays_with_no_outing": {"band": 1.0, "countdown": 1.0}}
+choice: {"sums": {"band": 0.21428059105822886, "countdown": 0.09072796336817068}, "chosen": "countdown", "across_years": {"band fitted 2022 scored 2023": {"largest_miss_home_asleep": 0.03559937205395464, "asleep_in_hour_before_leaving": [0.20345421683928958, 0.2743170814787241], "choice_term": 0.10646223669338914, "hours_within": {"home asleep": 23, "home awake": 24, "elsewhere asleep": 24}}, "countdown fitted 2022 scored 2023": {"largest_miss_home_asleep": 0.03558281698898752, "asleep_in_hour_before_leaving": [0.20345421683928958, 0.20727923680462493], "choice_term": 0.03940783695432287, "hours_within": {"home asleep": 23, "home awake": 24, "elsewhere asleep": 24}}, "band fitted 2023 scored 2022": {"largest_miss_home_asleep": 0.025138297688544087, "asleep_in_hour_before_leaving": [0.18947500952319074, 0.2721550661994864], "choice_term": 0.10781835436483972, "hours_within": {"home asleep": 24, "home awake": 24, "elsewhere asleep": 24}}, "countdown fitted 2023 scored 2022": {"largest_miss_home_asleep": 0.025114290788718463, "asleep_in_hour_before_leaving": [0.18947500952319074, 0.2156808451483201], "choice_term": 0.05132012641384781, "hours_within": {"home asleep": 24, "home awake": 24, "elsewhere asleep": 24}}}} G0c True
+G0: {"largest_difference_seeded_minute": 0.00021262746610355154, "awake_share_diaries": 0.6230161403113667, "awake_share": {"chain": 0.6228776507625208, "frame": 0.645191360074252, "countdown": 0.6278559924040182}, "digests_native": {"chain": "14749253884558628932", "frame": "15326273429910942540", "countdown": "313339957338630522"}, "reproduction_three_states_by_hour": {"chain": {"home asleep": {"largest_miss": 0.0044792124918111575, "hours_within_0.02": 24}, "home awake": {"largest_miss": 0.006369007797047077, "hours_within_0.02": 24}, "elsewhere asleep": {"largest_miss": 0.002456056015549976, "hours_within_0.02": 24}}, "frame": {"home asleep": {"largest_miss": 0.04456163523528245, "hours_within_0.02": 16}, "home awake": {"largest_miss": 0.053925305623583664, "hours_within_0.02": 16}, "elsewhere asleep": {"largest_miss": 0.04696189578365135, "hours_within_0.02": 21}}, "countdown": {"home asleep": {"largest_miss": 0.00721362349828214, "hours_within_0.02": 24}, "home awake": {"largest_miss": 0.020782083403851237, "hours_within_0.02": 23}, "elsewhere asleep": {"largest_miss": 0.015463910600427747, "hours_within_0.02": 24}}}, "pass": true, "chain_pass": true}
+{
+ "scores": {
+  "diaries_2024": {
+   "spells_2h_or_less": 0.3429408806973692,
+   "spells_8h_or_more": 0.32812163109630643,
+   "mean_spell_away": 5.800502176282306,
+   "stays_home": 0.1921484342417261,
+   "home_at_9_14_18": 0.3375718234109009,
+   "hours_away_quartiles": [
+    4.0,
+    8.0,
+    11.0
+   ],
+   "awake_share": 0.6230287999414983,
+   "employed_no_workplace_hour": 0.500781570957001,
+   "employed_six_or_more_workplace_hours": 0.40736723466002256,
+   "asleep_in_hour_before_leaving": 0.2207961461840172,
+   "hours_asleep_quartiles": [
+    8.0,
+    9.0,
+    10.0
+   ],
+   "home_asleep_at_7_among_leaving_10_or_later": 0.6121825017860041
+  },
+  "gap": {
+   "spells_2h_or_less": 0.015240083304499445,
+   "spells_8h_or_more": 0.014812711001917486,
+   "home_at_9_14_18": 0.014279045752437443,
+   "asleep_in_hour_before_leaving": 0.017419394294845215,
+   "home_asleep_at_7_among_leaving_10_or_later": 0.025107395056419853,
+   "hours_away_quartiles": [
+    1.0,
+    0.9824233077220613,
+    0.0
+   ],
+   "hours_asleep_quartiles": [
+    0.0,
+    0.0,
+    0.0
+   ]
+  },
+  "diaries_scored": 7669,
+  "chain": {
+   "spells_2h_or_less": 0.32390041638917,
+   "spells_8h_or_more": 0.3302437554186296,
+   "mean_spell_away": 5.8768315534987465,
+   "stays_home": 0.21163579785966552,
+   "home_at_9_14_18": 0.3468101698880215,
+   "hours_away_quartiles": [
+    4.0,
+    8.0,
+    11.0
+   ],
+   "awake_share": 0.6217815741379843,
+   "employed_no_workplace_hour": 0.47668002869101783,
+   "employed_six_or_more_workplace_hours": 0.3773356653552134,
+   "asleep_in_hour_before_leaving": 0.1981140492153714,
+   "hours_asleep_quartiles": [
+    7.0,
+    9.0,
+    11.0
+   ],
+   "home_asleep_at_7_among_leaving_10_or_later": 0.5989563129498782,
+   "fallback_share_of_days": 0.14641539515418472,
+   "clipped_share_of_days": 0.0,
+   "hourly_shares_largest_miss": 0.05772791499341057,
+   "hourly_shares_mean_miss": 0.00842543260055282
+  },
+  "frame": {
+   "spells_2h_or_less": 0.3248506955625253,
+   "spells_8h_or_more": 0.35873870669405666,
+   "mean_spell_away": 6.0177891053587045,
+   "stays_home": 0.21111279874765176,
+   "home_at_9_14_18": 0.34922522209837203,
+   "hours_away_quartiles": [
+    4.0,
+    8.0,
+    11.0
+   ],
+   "awake_share": 0.6454875520363833,
+   "employed_no_workplace_hour": 0.5135614762697043,
+   "employed_six_or_more_workplace_hours": 0.3928787467345396,
+   "asleep_in_hour_before_leaving": 0.38096315940022313,
+   "hours_asleep_quartiles": [
+    7.0,
+    8.0,
+    10.0
+   ],
+   "home_asleep_at_7_among_leaving_10_or_later": 0.4613331003220918,
+   "fallback_share_of_days": 0.15474511460266846,
+   "clipped_share_of_days": 0.009857415079345662,
+   "hourly_shares_largest_miss": 0.1697936204577019,
+   "hourly_shares_mean_miss": 0.019298354591682762
+  },
+  "countdown": {
+   "spells_2h_or_less": 0.32264445931571584,
+   "spells_8h_or_more": 0.3618932737469773,
+   "mean_spell_away": 6.067837868789697,
+   "stays_home": 0.21111279874765176,
+   "home_at_9_14_18": 0.3498869052841715,
+   "hours_away_quartiles": [
+    4.0,
+    8.0,
+    11.0
+   ],
+   "awake_share": 0.6280479357193417,
+   "employed_no_workplace_hour": 0.5107890249620903,
+   "employed_six_or_more_workplace_hours": 0.3985626056140365,
+   "asleep_in_hour_before_leaving": 0.2063610454402681,
+   "hours_asleep_quartiles": [
+    7.0,
+    9.0,
+    11.0
+   ],
+   "home_asleep_at_7_among_leaving_10_or_later": 0.617460849515425,
+   "fallback_share_of_days": 0.15979467601695105,
+   "clipped_share_of_days": 0.009857415079345662,
+   "hourly_shares_largest_miss": 0.09645545774126041,
+   "hourly_shares_mean_miss": 0.014186655152572954,
+   "flagged_by_group": {
+    "before 0": 0.02677610460358302,
+    "before 1": 0.03133749143119614,
+    "before 2": 0.03365795261739509,
+    "before 3": 0.03896585350518823,
+    "before 4": 0.05171530268863474,
+    "before 5": 0.02776283009035587,
+    "no outing": 0.0,
+    "after": 0.011147796706220054
+   }
+  }
+ },
+ "S1": {
+  "within_budget": {
+   "chain": {
+    "spells_2h_or_less": true,
+    "spells_8h_or_more": true
+   },
+   "frame": {
+    "spells_2h_or_less": true,
+    "spells_8h_or_more": true
+   },
+   "countdown": {
+    "spells_2h_or_less": true,
+    "spells_8h_or_more": true
+   }
+  },
+  "outcome": "killed"
+ },
+ "S2": {
+  "within": {
+   "chain": true,
+   "frame": true,
+   "countdown": true
+  },
+  "g4_better_than_chain_by": -0.003076735396149999,
+  "kill_condition_also_holds": true,
+  "outcome": "met"
+ },
+ "S6": {
+  "within": {
+   "chain": {
+    "asleep_in_hour_before_leaving": true,
+    "hours_asleep_quartiles": true,
+    "home_asleep_at_7_among_leaving_10_or_later": true
+   },
+   "frame": {
+    "asleep_in_hour_before_leaving": false,
+    "hours_asleep_quartiles": true,
+    "home_asleep_at_7_among_leaving_10_or_later": false
+   },
+   "countdown": {
+    "asleep_in_hour_before_leaving": true,
+    "hours_asleep_quartiles": true,
+    "home_asleep_at_7_among_leaving_10_or_later": true
+   }
+  },
+  "outcome": "met"
+ },
+ "S3": {
+  "frame": {
+   "hours_within_0.03": 7,
+   "largest_miss": 0.17543121701731063
+  },
+  "countdown": {
+   "hours_within_0.03": 5,
+   "largest_miss": 0.0941530579148368
+  },
+  "with_tables_pooled_over_day_types_hours_within": 11,
+  "outcome": "killed"
+ },
+ "S4": {
+  "with_kind_shares_2022_2023": {
+   "hours_within_0.03": 9,
+   "largest_miss": 0.06150098505251511
+  },
+  "with_kind_shares_2015_2019_too": {
+   "hours_within_0.03": 6,
+   "largest_miss": 0.11508588751516224
+  },
+  "kind_shares_2015_2019": {
+   "home": 0.12701703037128984,
+   "work, early start": 0.348780937724997,
+   "work, later start": 0.039525080963798635,
+   "out": 0.4846769509399146
+  },
+  "kind_shares_2022_2023": {
+   "home": 0.18387439355639254,
+   "work, early start": 0.30075568972696454,
+   "work, later start": 0.03179227648723073,
+   "out": 0.4835776402294122
+  },
+  "diaries_2015_2019": 50649,
+  "outcome": "killed"
+ },
+ "added_after_the_first_read": {
+  "chain": {
+   "S4_reading_on_own_tables_hours_within": 24,
+   "S4_reading_on_own_tables_largest_miss": 0.01870363127978697,
+   "S3_reading_on_own_tables_hours_within": 20,
+   "S3_reading_on_own_tables_largest_miss": 0.04462855357012496
+  },
+  "frame": {
+   "S4_reading_on_own_tables_hours_within": 23,
+   "S4_reading_on_own_tables_largest_miss": 0.0404289855366089,
+   "S3_reading_on_own_tables_hours_within": 7,
+   "S3_reading_on_own_tables_largest_miss": 0.13175786862072925
+  },
+  "countdown": {
+   "S4_reading_on_own_tables_hours_within": 23,
+   "S4_reading_on_own_tables_largest_miss": 0.03496355704041221,
+   "S3_reading_on_own_tables_hours_within": 11,
+   "S3_reading_on_own_tables_largest_miss": 0.07235193956140107
+  }
+ },
+ "branch": "(a): the frame ships with the countdown fill",
+ "asleep_awake_split": "certified",
+ "thin_groups": []
+}

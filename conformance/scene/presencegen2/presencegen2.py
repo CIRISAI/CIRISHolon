@@ -526,6 +526,7 @@ def run(raw, binary, out_dir):
     s2 = {g: bool(within(g, "home_at_9_14_18") and qwithin(g, "hours_away_quartiles")) for g in ("chain", "frame", g4)}
     better = abs(res["chain"]["home_at_9_14_18"] - truth["home_at_9_14_18"]) - abs(res[g4]["home_at_9_14_18"] - truth["home_at_9_14_18"])
     log["S2"] = {"within": s2, "g4_better_than_chain_by": float(better),
+                 "kill_condition_also_holds": bool(s2["chain"] and better <= gaps["home_at_9_14_18"]),
                  "outcome": "met" if s2[g4] else ("killed" if (s2["chain"] and better <= gaps["home_at_9_14_18"]) else "neither")}
     s6r = {g: {"asleep_in_hour_before_leaving": bool(within(g, "asleep_in_hour_before_leaving")), "hours_asleep_quartiles": bool(qwithin(g, "hours_asleep_quartiles")),
                "home_asleep_at_7_among_leaving_10_or_later": bool(within(g, "home_asleep_at_7_among_leaving_10_or_later"))} for g in ("chain", "frame", g4)}
@@ -556,14 +557,26 @@ def run(raw, binary, out_dir):
     m4 = sco & mth
     b = hourly(S[m4], w[m4], [0, 1])
     s4 = {}
-    for name, ks in (("kind_shares_2022_2023", newfit), ("kind_shares_2015_2019_too", old)):
+    for name, ks in (("with_kind_shares_2022_2023", newfit), ("with_kind_shares_2015_2019_too", old)):
         rows4, _ = fit(C, old, ks)
         tp4 = os.path.join(out_dir, "tables_s4_%s.txt" % name)
         write_tables(rows4, tp4)
         G = run_gen(binary, tp4, g4, D, m4)
         a = hourly(G["S"], G["w"], [0, 1])
         s4[name] = {"hours_within_0.03": int((np.abs(a - b) <= BUDGET).sum()), "largest_miss": float(np.abs(a - b).max())}
-    n4 = s4["kind_shares_2022_2023"]["hours_within_0.03"]
+    n4 = s4["with_kind_shares_2022_2023"]["hours_within_0.03"]
+    # Added after the first read (2026-11-12), labelled so; no verdict reads these. The same reading with
+    # each generator on its own FIT tables, to tell a miss of the regime from a miss of the generator.
+    base = {}
+    for which in ("chain", "frame", g4):
+        mm = gens[which]["dt"] == 0
+        a = hourly(gens[which]["S"][mm], gens[which]["w"][mm], [0, 1])
+        ms = gens[which]["dt"] == 2
+        a1 = hourly(gens[which]["S"][ms], gens[which]["w"][ms], [1])
+        b1 = hourly(S[sco & sat], w[sco & sat], [1])
+        base[which] = {"S4_reading_on_own_tables_hours_within": int((np.abs(a - b) <= BUDGET).sum()), "S4_reading_on_own_tables_largest_miss": float(np.abs(a - b).max()),
+                       "S3_reading_on_own_tables_hours_within": int((np.abs(a1 - b1) <= BUDGET).sum()), "S3_reading_on_own_tables_largest_miss": float(np.abs(a1 - b1).max())}
+    log["added_after_the_first_read"] = base
     kshare = lambda X, m: {KINDS[k]: float(X["w"][m & (X["kind"] == k)].sum() / X["w"][m].sum()) for k in range(4)}
     log["S4"] = dict(s4, kind_shares_2015_2019=kshare(Dold, np.ones(n_old, dtype=bool)), kind_shares_2022_2023=kshare(D, fitm), diaries_2015_2019=n_old,
                      outcome="met" if n4 >= 18 else ("killed" if n4 < 12 else "neither"))
@@ -595,7 +608,7 @@ def run(raw, binary, out_dir):
     write_tables(rows_all, os.path.join(out_dir, "tables_all.txt"))
     log["all_tables"] = dict(info_all, rows=len(rows_all))
     save()
-    print(json.dumps({k: log[k] for k in ("scores", "S1", "S2", "S6", "S3", "S4", "branch", "asleep_awake_split", "thin_groups")}, indent=1, default=float))
+    print(json.dumps({k: log[k] for k in ("scores", "S1", "S2", "S6", "S3", "S4", "added_after_the_first_read", "branch", "asleep_awake_split", "thin_groups")}, indent=1, default=float))
     return 0
 
 

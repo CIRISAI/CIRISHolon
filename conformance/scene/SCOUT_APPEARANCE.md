@@ -45,6 +45,14 @@ The renderer is top-down and orthographic. That decides most of what follows.
   2. tree canopy share and crown size by land-cover class and climate zone;
   3. roof tone by region or climate zone;
   4. a ground palette by land-cover class and climate zone.
+- **Two precisions from the twin's lead after reading this section (2026-11-12):** the
+  warmth figure tints roofs everywhere but ground only where land cover is missing; and
+  land cover is used only below about 400 m per pixel. It confirmed the rest as stated.
+- **What the twin can take is a REDUCTION, a few kilobytes:** per density class and key,
+  the parameters its generator needs (footprint width and depth ranges, a storey
+  distribution, the attached share, setback, street spacing). A raster of 1 to 2 GB
+  cannot ship to a browser. It would build a table door into its kernel, a climate-zone
+  grid at 1/8°, and the tree rule, in that order, once the lead has named the sources.
 - **The seam.** Its importer refuses any key named for a coordinate or a real feature and
   requires `holds_no_real_feature`. It can key on country, one of 9 regions, density
   class and land-cover class; it has no climate-zone grid; and tables that change

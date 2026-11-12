@@ -487,3 +487,24 @@ template's push and does not cover the pushed case; the preregistration is to sa
   tokens, items about 22,840). Left before the freeze: the rule for reading the model's
   own verb at the answer position, and the agent session's comparison of the render with
   a real captured call.
+
+## The "as deployed" arm has been run, 2026-11-12 (the CIRISAgent session, as it reports)
+
+The lead approved the paid run to that session directly. All 1,620 items went through
+the four evaluators and action selection on the safety battery's model through its
+provider: five calls an item, no errors, 12.74 dollars by the reported figure.
+
+- Output: `/home/emoore/blindverb1-a1-run-2026-11-12/` (local, 484 MB): results and call
+  rows split by input file, a manifest, digests, and a note recording that a full disk
+  stopped the first invocation at the thirtieth held-back item and the run was resumed.
+- Checked by that session on fit and explore alone: each of 840 action-selection prompts
+  equals the default-template render apart from the four summaries. It did not open or
+  check the held-back or reserve outputs.
+- **So the full model's own verb on each held-back and reserve item now exists on disk.**
+  Those files are under the same rule as the items: unread until the one named test
+  opens them.
+- **The lead's rulings on the text-against-agent gaps,** as that session relays them, are
+  filed against the agent: a lethal action must raise a deferral (CIRISAgent#1353, for
+  2.21.1); recognising one step from a lethal act is open design (#1354). How the first
+  changes the scoring of the lethal-action item is for the Constitution and RATCHET
+  sessions to settle before the test freezes.

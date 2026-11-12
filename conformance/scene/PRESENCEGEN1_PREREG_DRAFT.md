@@ -1,5 +1,7 @@
 # PRESENCEGEN-1 — the third generator Holon ships for the twin to call: where a person is in each hour of a day, drawn so that a tile's people add up to the measured table AND a person's day looks like a day. PREREGISTRATION (DRAFT)
 
+*REVIEWED 2026-11-12 (`PRESENCEGEN1_REVIEW.md`): fixed in `PRESENCEGEN1_PREREG.md`, which replaces this text. Kept as written.*
+
 *DRAFT of 2026-11-12. NOT FROZEN; to be attacked by a second reader first. It builds on
 `PRESENCE0_RESULTS.md`. Nothing below is built or computed. It needs the approved US time
 diaries fetched again, through a browser as before.*

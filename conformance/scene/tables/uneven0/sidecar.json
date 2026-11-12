@@ -1,0 +1,47 @@
+{
+ "reference": "UNEVEN-0",
+ "version": 1,
+ "table": "transition_table.json",
+ "bytes": 8059,
+ "sha256": "54adb3d65bafe208372822f282003b423afa0ec8c1928d2190675562a20d0847",
+ "serves_registry_rows": [
+  "households per leaf (the in-cell weights: how a cell's people divide over tiles of each density class)"
+ ],
+ "preregistration": "conformance/scene/UNEVEN0_PREREG.md at b796a92",
+ "extractor": "conformance/scene/uneven0/uneven0.py at 6613ef5",
+ "results": "conformance/scene/UNEVEN0_RESULTS.md",
+ "sources": [
+  {
+   "name": "GHS-POP R2023A, epoch 2020, WGS84, 30 arc-seconds",
+   "publisher": "European Commission, Joint Research Centre",
+   "licence": "CC BY 4.0",
+   "file_sha256": "630f8b250246bdb9b49e2e1e7b72d572cba9e30d1d53998a13015161c4735e43",
+   "notice": "GHS-POP R2023A, European Commission, Joint Research Centre; Schiavina, Freire, Carioli and MacManus (2023), doi:10.2905/2FF68A52-5B5B-4A22-8F40-C41DA8332CFE; CC BY 4.0."
+  }
+ ],
+ "keys": {
+  "cell": "1/8 degree; a 30 arc-second pixel goes whole to the cell holding its centre: column floor((lon+180)*8) mod 2880, row floor((90-lat)*8); grid origin as the file states it (-180.0079159 E, 89.0995832 N)",
+  "cell_class": "1 village, 2 suburban, 3 terraced, 4 apartment blocks, 5 dense fabric: lower bounds 0, 250, 1500, 6000, 12000 people per km2 of the cell's whole area; cells under 1 per km2 are not read (twin/globe a29e87d)",
+  "tile_class": "0 empty (under 1 per km2 of the tile's own area), then the five"
+ },
+ "envelope": {
+  "regions": "world, not split by region (the twin's region table is not yet published as data)",
+  "classes": "all five cell classes; the smallest holds 121 cells",
+  "epoch": 2020,
+  "grain": "about 0.9, 1.9 and 3.7 km; nothing below about 1 km is resolved"
+ },
+ "law": "each of the four share vectors in a row sums to 1,000,000 within 300 parts (the 'each cell once' means were accumulated in single precision; a consumer should renormalise); the table is consumed as weights for an exact apportionment, whose output obeys the section law",
+ "checker": "python3 -c \"import json;d=json.load(open('transition_table.json'));assert all(abs(sum(r[k])-10**6)<=300 for r in d['rows'] for k in ('tiles_each_cell_once','people_each_cell_once','tiles_by_people','people_by_people'))\"  and, on the consumer's apportioned output, cargo run -p holon-scene --example check_sums -- <file.jsonl>",
+ "verdict": {
+  "all_rows": "unresolved",
+  "reason": "this is a reading of the reference, not a certificate: no generator has been scored against it, and it carries no budget and no consumer. A generator that uses these weights is unscored until its own tiles are compared with the grid.",
+  "budget": null
+ },
+ "limits": [
+  "a lower bound on unevenness: the file is a resampling of the publisher's equal-area grid and nothing below about 1 km is seen",
+  "the fine grid is itself a model (census counts spread over built-up area)",
+  "coastal cells read as uneven because sea pixels hold nobody and the cell class uses whole area"
+ ],
+ "holds_no_real_feature": "This table holds no coordinate, id, name or tag of any real feature. It holds 15 rows of counts and shares by class.",
+ "edge_columns": "pixel column 0 holds 18.81 people and lands in cell column 2879; pixel column 43201 holds 0.00 and lands in cell column 0. The file's two extra columns do not double-count."
+}

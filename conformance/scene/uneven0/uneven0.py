@@ -220,7 +220,7 @@ def run(tif, gd, out):
             m = cls == c_; n = int(m.sum()); w = ppl[m]
             row = {"cells": n, "people": float(w.sum())}
             if n:
-                row["tiles_each_cell_once"] = T[m].mean(0).tolist(); row["people_each_cell_once"] = P[m].mean(0).tolist()
+                row["tiles_each_cell_once"] = T[m].mean(0, dtype=np.float64).tolist(); row["people_each_cell_once"] = P[m].mean(0, dtype=np.float64).tolist()
                 row["tiles_by_people"] = (T[m] * w[:, None]).sum(0).__truediv__(w.sum()).tolist()
                 row["people_by_people"] = (P[m] * w[:, None]).sum(0).__truediv__(w.sum()).tolist()
             tables[g][NAMES[c_]] = row

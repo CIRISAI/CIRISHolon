@@ -1,0 +1,617 @@
+{
+ "reference": "UNEVEN-0",
+ "version": 1,
+ "unit": "parts per million",
+ "tile_classes": [
+  "empty",
+  "village",
+  "suburban",
+  "terraced",
+  "apartment blocks",
+  "dense fabric"
+ ],
+ "cell_classes": [
+  "village",
+  "suburban",
+  "terraced",
+  "apartment blocks",
+  "dense fabric"
+ ],
+ "grains_pixels": [
+  1,
+  2,
+  4
+ ],
+ "grain_km_about": [
+  0.9,
+  1.9,
+  3.7
+ ],
+ "rows": [
+  {
+   "grain": 1,
+   "cell_class": 1,
+   "cell_class_name": "village",
+   "cells": 315283,
+   "people": 1999416951,
+   "tiles_each_cell_once": [
+    662838,
+    304219,
+    29179,
+    3482,
+    225,
+    33
+   ],
+   "people_each_cell_once": [
+    4523,
+    564636,
+    314415,
+    100190,
+    13237,
+    3092
+   ],
+   "tiles_by_people": [
+    462970,
+    438055,
+    86085,
+    11744,
+    979,
+    166
+   ],
+   "people_by_people": [
+    687,
+    294497,
+    409624,
+    232228,
+    48469,
+    14494
+   ]
+  },
+  {
+   "grain": 1,
+   "cell_class": 2,
+   "cell_class_name": "suburban",
+   "cells": 35868,
+   "people": 3321336825,
+   "tiles_each_cell_once": [
+    226467,
+    409551,
+    276240,
+    74584,
+    9791,
+    3359
+   ],
+   "people_each_cell_once": [
+    33,
+    73840,
+    351423,
+    354357,
+    129258,
+    91090
+   ],
+   "tiles_by_people": [
+    203850,
+    376999,
+    303926,
+    96270,
+    13772,
+    5183
+   ],
+   "people_by_people": [
+    25,
+    56889,
+    321764,
+    360730,
+    144805,
+    115787
+   ]
+  },
+  {
+   "grain": 1,
+   "cell_class": 3,
+   "cell_class_name": "terraced",
+   "cells": 3911,
+   "people": 1649748633,
+   "tiles_each_cell_once": [
+    120489,
+    236696,
+    270983,
+    249844,
+    79113,
+    42878
+   ],
+   "people_each_cell_once": [
+    3,
+    8838,
+    94366,
+    339586,
+    250814,
+    306393
+   ],
+   "tiles_by_people": [
+    117323,
+    224576,
+    258827,
+    249533,
+    93333,
+    56409
+   ],
+   "people_by_people": [
+    3,
+    7488,
+    80507,
+    302767,
+    256991,
+    352245
+   ]
+  },
+  {
+   "grain": 1,
+   "cell_class": 4,
+   "cell_class_name": "apartment blocks",
+   "cells": 362,
+   "people": 498597300,
+   "tiles_each_cell_once": [
+    67587,
+    118343,
+    140381,
+    214856,
+    209466,
+    249368
+   ],
+   "people_each_cell_once": [
+    0,
+    1264,
+    13898,
+    98656,
+    235539,
+    650642
+   ],
+   "tiles_by_people": [
+    68816,
+    117007,
+    136478,
+    207619,
+    205192,
+    264888
+   ],
+   "people_by_people": [
+    0,
+    1192,
+    12983,
+    91489,
+    222829,
+    671506
+   ]
+  },
+  {
+   "grain": 1,
+   "cell_class": 5,
+   "cell_class_name": "dense fabric",
+   "cells": 121,
+   "people": 364931594,
+   "tiles_each_cell_once": [
+    39045,
+    59578,
+    84408,
+    148650,
+    146299,
+    522020
+   ],
+   "people_each_cell_once": [
+    0,
+    309,
+    4038,
+    32883,
+    85853,
+    876917
+   ],
+   "tiles_by_people": [
+    40181,
+    58460,
+    82617,
+    142451,
+    132788,
+    543504
+   ],
+   "people_by_people": [
+    0,
+    281,
+    3670,
+    28902,
+    72973,
+    894174
+   ]
+  },
+  {
+   "grain": 2,
+   "cell_class": 1,
+   "cell_class_name": "village",
+   "cells": 315283,
+   "people": 1999416951,
+   "tiles_each_cell_once": [
+    518199,
+    447943,
+    31231,
+    2537,
+    81,
+    5
+   ],
+   "people_each_cell_once": [
+    10198,
+    719733,
+    220352,
+    47063,
+    2675,
+    185
+   ],
+   "tiles_by_people": [
+    305824,
+    584532,
+    99511,
+    9695,
+    412,
+    26
+   ],
+   "people_by_people": [
+    1162,
+    419728,
+    411731,
+    153145,
+    13213,
+    1023
+   ]
+  },
+  {
+   "grain": 2,
+   "cell_class": 2,
+   "cell_class_name": "suburban",
+   "cells": 35868,
+   "people": 3321336825,
+   "tiles_each_cell_once": [
+    123537,
+    432483,
+    360874,
+    72917,
+    8238,
+    1952
+   ],
+   "people_each_cell_once": [
+    29,
+    93907,
+    443877,
+    327911,
+    97700,
+    36576
+   ],
+   "tiles_by_people": [
+    111722,
+    380523,
+    395769,
+    96461,
+    12194,
+    3331
+   ],
+   "people_by_people": [
+    21,
+    69163,
+    411985,
+    343967,
+    119348,
+    55516
+   ]
+  },
+  {
+   "grain": 2,
+   "cell_class": 3,
+   "cell_class_name": "terraced",
+   "cells": 3911,
+   "people": 1649748633,
+   "tiles_each_cell_once": [
+    66799,
+    205670,
+    319962,
+    291983,
+    79435,
+    36151
+   ],
+   "people_each_cell_once": [
+    2,
+    8279,
+    118006,
+    392805,
+    246901,
+    234006
+   ],
+   "tiles_by_people": [
+    67164,
+    194927,
+    300753,
+    291987,
+    96459,
+    48710
+   ],
+   "people_by_people": [
+    2,
+    6951,
+    99094,
+    353664,
+    261579,
+    278711
+   ]
+  },
+  {
+   "grain": 2,
+   "cell_class": 4,
+   "cell_class_name": "apartment blocks",
+   "cells": 362,
+   "people": 498597300,
+   "tiles_each_cell_once": [
+    42887,
+    95649,
+    140107,
+    240780,
+    240824,
+    239753
+   ],
+   "people_each_cell_once": [
+    0,
+    999,
+    14120,
+    114322,
+    276416,
+    594144
+   ],
+   "tiles_by_people": [
+    44640,
+    96172,
+    136024,
+    229931,
+    236999,
+    256234
+   ],
+   "people_by_people": [
+    0,
+    964,
+    13180,
+    104824,
+    262338,
+    618694
+   ]
+  },
+  {
+   "grain": 2,
+   "cell_class": 5,
+   "cell_class_name": "dense fabric",
+   "cells": 121,
+   "people": 364931594,
+   "tiles_each_cell_once": [
+    23373,
+    42949,
+    76911,
+    156534,
+    159969,
+    540263
+   ],
+   "people_each_cell_once": [
+    0,
+    223,
+    3626,
+    34774,
+    96634,
+    864743
+   ],
+   "tiles_by_people": [
+    24632,
+    42703,
+    74923,
+    151032,
+    143128,
+    563582
+   ],
+   "people_by_people": [
+    0,
+    211,
+    3292,
+    30923,
+    80979,
+    884596
+   ]
+  },
+  {
+   "grain": 4,
+   "cell_class": 1,
+   "cell_class_name": "village",
+   "cells": 315283,
+   "people": 1999416951,
+   "tiles_each_cell_once": [
+    368610,
+    598311,
+    32100,
+    976,
+    0,
+    0
+   ],
+   "people_each_cell_once": [
+    16194,
+    834002,
+    140662,
+    9401,
+    0,
+    0
+   ],
+   "tiles_by_people": [
+    166285,
+    714457,
+    114479,
+    4780,
+    0,
+    0
+   ],
+   "people_by_people": [
+    1433,
+    561674,
+    390613,
+    46280,
+    0,
+    0
+   ]
+  },
+  {
+   "grain": 4,
+   "cell_class": 2,
+   "cell_class_name": "suburban",
+   "cells": 35868,
+   "people": 3321336825,
+   "tiles_each_cell_once": [
+    54912,
+    402775,
+    463005,
+    74646,
+    4424,
+    240
+   ],
+   "people_each_cell_once": [
+    18,
+    106411,
+    554517,
+    302469,
+    34044,
+    2536
+   ],
+   "tiles_by_people": [
+    49329,
+    338772,
+    500077,
+    103013,
+    8263,
+    547
+   ],
+   "people_by_people": [
+    13,
+    74855,
+    515228,
+    344596,
+    59554,
+    5754
+   ]
+  },
+  {
+   "grain": 4,
+   "cell_class": 3,
+   "cell_class_name": "terraced",
+   "cells": 3911,
+   "people": 1649748633,
+   "tiles_each_cell_once": [
+    29495,
+    146611,
+    351274,
+    363174,
+    82875,
+    26570
+   ],
+   "people_each_cell_once": [
+    1,
+    6486,
+    137674,
+    474354,
+    246932,
+    134552
+   ],
+   "tiles_by_people": [
+    30183,
+    137406,
+    323231,
+    366250,
+    104511,
+    38419
+   ],
+   "people_by_people": [
+    1,
+    5413,
+    113490,
+    432332,
+    271969,
+    176795
+   ]
+  },
+  {
+   "grain": 4,
+   "cell_class": 4,
+   "cell_class_name": "apartment blocks",
+   "cells": 362,
+   "people": 498597300,
+   "tiles_each_cell_once": [
+    19567,
+    55249,
+    123389,
+    279063,
+    285279,
+    237454
+   ],
+   "people_each_cell_once": [
+    0,
+    613,
+    13053,
+    136199,
+    319927,
+    530208
+   ],
+   "tiles_by_people": [
+    20443,
+    56373,
+    119283,
+    266853,
+    280747,
+    256301
+   ],
+   "people_by_people": [
+    0,
+    595,
+    12164,
+    124915,
+    304784,
+    557542
+   ]
+  },
+  {
+   "grain": 4,
+   "cell_class": 5,
+   "cell_class_name": "dense fabric",
+   "cells": 121,
+   "people": 364931594,
+   "tiles_each_cell_once": [
+    9470,
+    23244,
+    53202,
+    146866,
+    171488,
+    595730
+   ],
+   "people_each_cell_once": [
+    0,
+    120,
+    2814,
+    34146,
+    104395,
+    858526
+   ],
+   "tiles_by_people": [
+    9674,
+    23826,
+    51122,
+    140284,
+    152389,
+    622704
+   ],
+   "people_by_people": [
+    0,
+    114,
+    2492,
+    30079,
+    85901,
+    881414
+   ]
+  }
+ ]
+}

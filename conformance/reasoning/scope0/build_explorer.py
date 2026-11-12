@@ -103,7 +103,7 @@ details.more > .inner { display: flex; flex-direction: column; gap: 16px; margin
 <div class="wrap">
   <header>
     <h1>Kindscope</h1>
-    <p class="lede">A small language model reading a story, drawn so you can walk around it. The model reads one letter at a time and passes it up through 13 stages; each stage adds something. Drag to turn it. Switch what the height shows: how much each stage adds, or how much breaks if you take that stage out. They are not the same, and that is the first thing this model teaches. Pick a finding below to see where in the model it lives.</p>
+    <p class="lede">A small language model reading a story, drawn so you can walk around it. The model reads one letter at a time and passes it up through 13 stages; each stage adds something. Drag to turn it. Click a block to see which earlier characters the looking-back stages draw on there. Switch what the height shows: how much each stage adds, or how much breaks if you take that stage out. They are not the same, and that is the first thing this model teaches. Pick a finding below to see where in the model it lives.</p>
   </header>
   <section class="panel">
     <canvas id="scene" aria-label="the model reading a story, in three dimensions: letters left to right, stages front to back, height is how much each stage added"></canvas>
@@ -282,13 +282,13 @@ function profile(l, rows, sel) {
 }
 // ---------------------------------------------------------------- the model in three dimensions
 const FOUND = [
-  { t: "It takes in one letter", s: "The first stage holds only the letter itself. Everything after is built on top of it.", st: [0], how: "how the model is built" },
-  { t: "It looks back, then recognises the word", s: "The first looking-back stage blurs the word (0.59 of what it adds is the word). The next stage recognises the word from its last few letters and writes it down sharply (0.84).", st: [1, 2], how: "tested, and it held" },
-  { t: "It does that twice", s: "The second pair repeats it: the word blurs again (0.45), then is written back (0.80). The word is rebuilt at each stage, not stored once.", st: [3, 4], how: "tested, and it held" },
-  { t: "Early on it decides what kind of word comes next", s: "In the first three rewriting stages the model marks whether an adjective or a noun is coming. Nudging that mark changes what it writes, on stories it had never seen (9 of 9 cases).", st: [2, 4, 6], how: "tested, and it held" },
-  { t: "Late on it turns that into a guess at the next letter", s: "The last stages convert what it knows into the next letter. The final stage alone does about half of all the adding.", st: [8, 10, 12], how: "tested, and it held" },
-  { t: "The stage that adds most is not the one that matters most", s: "The last stage adds the most, but take it out and the model loses little (0.5). Take out the first rewriting stage, which adds far less, and it loses eight times as much (4.1); the first looking-back stage, 2.2. Everything later is built on those two. Switch the height to \u201cwhat breaks without it\u201d to see it.", st: [1, 2, 12], how: "measured, with no prediction made first" },
-  { t: "What an outside reader finds is not what the model uses", s: "A reader trained to spot the kind of word finds it along one direction. The model writes it along another, about as unrelated as two random directions (82 to 90 degrees). Reading the model from outside can mislead.", st: [2, 4, 6, 8, 10, 12], how: "seen while exploring" },
+  { t: "It takes in one character and its place in the story", s: "The first stage holds only the character (a letter, a space, a punctuation mark) and where it sits. Everything after is built on top of it.", st: [0], how: "how the model is built" },
+  { t: "It looks back, then recognises the word", s: "The first looking-back stage mixes in what came before: only 59% of how its output varies is down to which word it is. The next stage recognises the word from its last few letters and writes it consistently (84%).", st: [1, 2], how: "tested, and it held" },
+  { t: "The same pattern repeats in the next pair", s: "In the next pair of stages the figures are 45%, then 80%. Whether the word is rebuilt at every stage, and never stored once, is suspected and not tested: only these first two pairs were measured.", st: [3, 4], how: "suspected" },
+  { t: "Early on there is a lever for “adjective or noun next”", s: "In the first three rewriting stages, pushing along one direction changes which kind of word comes next, whatever its first letter (9 of 9 cases, on stories the model had never seen). Whether the model pulls that lever itself while reading is not yet known.", st: [2, 4, 6], how: "tested, and it held" },
+  { t: "Late on, the same push is just a guess at the next letter", s: "By the last stage, the direction that makes adjectives likelier is almost purely a forecast of the next letter: pushing “next letter is l” raises every word starting with l, adjective or not. That it comes from the early lever was not tested.", st: [8, 10, 12], how: "tested, and it held" },
+  { t: "The stage that adds most is not the one that matters most", s: "The last stage adds the most, but take it out and the model loses little (0.5). Take out the first rewriting stage, which adds far less, and it loses eight times as much (4.1); the first looking-back stage, 2.2. Everything later is built on those two. Switch the height to “what breaks without it” to see it.", st: [1, 2, 12], how: "measured, with no prediction made first" },
+  { t: "What an outside reader finds is not what the model uses", s: "A reader trained from outside finds “an adjective comes next” along one direction. The direction that actually moves it is as unrelated as two random directions (82 to 90 degrees), and removing the reader’s direction costs the model nothing.", st: [2, 4, 6, 8, 10, 12], how: "measured as planned, no prediction staked" },
 ];
 const S3 = { item: 0, win: 13, yaw: -0.62, pitch: 0.52, hi: null, spin: false, hover: null, tops: [], mode: "adds" };
 const COST = n => (TR.knock_out_cost[n] ? TR.knock_out_cost[n].realised : null), COSTMAX = Math.max(...Object.values(TR.knock_out_cost).map(v => v.realised));
@@ -324,18 +324,36 @@ function scene() {
     poly([E, F, G, H], hot ? mix(c, ink, .45) : shade(0, bg));
     S3.tops.push({ k: b.k, i: b.i, pts: [E, F, G, H, A, B, C, D] });
   }
+  let arcsOut = 0, arcsIn = 0;
+  if (S3.pick != null && S3.pick >= win && S3.pick < win + NX) {
+    const pi = S3.pick - win; g.lineCap = "round";
+    for (let k = 0; k < K; k++) {
+      const n = it.writes[k]; if (!n.startsWith("attn")) continue;
+      const z = (k - K / 2) * dz + .75, hk = S3.mode === "adds" ? HH * it.write_norm[S3.pick][k] / mx : 0.3;
+      for (const [j, wgt] of it.looks_back_at[n][S3.pick]) {
+        if (j === S3.pick) continue;
+        if (j < win) { arcsOut++; continue; }
+        arcsIn++;
+        const a = P((pi - NX / 2) * dx + .4, hk, z), b = P((j - win - NX / 2) * dx + .4, 0.2, z), m = P(((pi + j - win) / 2 - NX / 2) * dx + .4, hk + 2 + Math.abs(pi - (j - win)) * 0.22, z);
+        g.beginPath(); g.moveTo(a[0], a[1]); g.quadraticCurveTo(m[0], m[1], b[0], b[1]);
+        g.strokeStyle = css("--ink"); g.globalAlpha = Math.min(1, 0.25 + wgt * 2.2); g.lineWidth = 1 + wgt * 9; g.stroke(); g.globalAlpha = 1;
+      }
+    }
+  }
+  S3.arcNote = S3.pick == null ? "" : " Lines show, for the picked character, the earlier characters each looking-back stage draws on most (thicker is more)." + (arcsOut ? " " + arcsOut + " of them reach back before this window." : "");
   g.font = "11px " + css("--mono"); g.fillStyle = css("--ink2"); g.textBaseline = "middle";
   const front = cy0 > 0 ? -K / 2 * dz - 1.2 : (K / 2) * dz + 0.6;
   g.textAlign = "center";
-  for (let i = 0; i < NX; i++) { const c = it.bytes[win + i], ch = c === 10 ? "↵" : c === 32 ? "·" : (c > 32 && c < 127 ? String.fromCharCode(c) : "□"), p = P((i - NX / 2) * dx + .4, 0, front); g.fillStyle = S3.hover && S3.hover.i === i ? css("--ink") : css("--ink2"); g.fillText(ch, p[0], p[1]); }
+  for (let i = 0; i < NX; i++) { const c = it.bytes[win + i], ch = c === 10 ? "↵" : c === 32 ? "·" : (c > 32 && c < 127 ? String.fromCharCode(c) : "□"), p = P((i - NX / 2) * dx + .4, 0, front); g.fillStyle = (S3.hover && S3.hover.i === i) || S3.pick === win + i ? css("--ink") : css("--ink2"); if (S3.pick === win + i) { g.font = "bold 13px " + css("--mono"); } g.fillText(ch, p[0], p[1]); g.font = "11px " + css("--mono"); }
   const side = sy0 < 0 ? -NX / 2 * dx - 1.4 : NX / 2 * dx + 1.4; g.textAlign = sy0 < 0 ? "right" : "left";
   for (let k = 0; k < K; k++) { const n = it.writes[k], p = P(side, 0, (k - K / 2) * dz + .75); g.fillStyle = S3.hi && S3.hi.includes(k) ? css("--ink") : css("--ink3"); g.fillText((k + 1) + "  " + (n === "embed" ? NAMES.embed : NAMES[n.slice(0, -1)]), p[0], p[1]); }
   const share = it.write_norm.reduce((a, r) => a + r[K - 1] * r[K - 1], 0) / it.write_norm.reduce((a, r) => a + r.reduce((u, v) => u + v * v, 0), 0);
-  FOUND[4].live = "In this story the final stage does " + Math.round(share * 100) + " % of all the adding.";
+  FOUND[5].live = "In this story the final stage accounts for " + Math.round(share * 100) + "% of the squared size of all the writes.";
   const f = S3.sel != null ? FOUND[S3.sel] : null, hv = S3.hover;
   $("s3say").textContent = hv && S3.mode !== "adds" ? "Stage " + (hv.k + 1) + " (" + stageWord(it.writes[hv.k]) + "): " + (COST(it.writes[hv.k]) === null ? "it was not taken out in the experiment." : "without it the model is " + COST(it.writes[hv.k]).toFixed(2) + " worse at the next letter. Reading its contribution off directly would have predicted " + TR.knock_out_cost[it.writes[hv.k]].direct.toFixed(2) + ".")
     : hv ? "Letter “" + (it.bytes[win + hv.i] === 32 ? "space" : it.bytes[win + hv.i] === 10 ? "new line" : String.fromCharCode(it.bytes[win + hv.i])) + "”, stage " + (hv.k + 1) + " (" + stageWord(it.writes[hv.k]) + "): it added " + it.write_norm[win + hv.i][hv.k].toFixed(1) + ", against " + mx.toFixed(1) + " for the largest block in this story."
     : f ? f.s + (f.live ? " " + f.live : "")
+    : S3.pick != null ? "Picked: character " + S3.pick + ", \u201c" + (it.bytes[S3.pick] === 32 ? "space" : it.bytes[S3.pick] === 10 ? "new line" : String.fromCharCode(it.bytes[S3.pick])) + "\u201d." + S3.arcNote + " Click it again to clear."
     : S3.mode === "adds" ? "Letters run left to right, the 13 stages run front to back, and the story is read one letter at a time. Tall blocks are where a stage added a lot. The back row, the last stage, towers over the rest. That does not make it the stage that matters most: switch the height to see."
     : "Now the height is what breaks when a stage is taken out, measured for each stage as a whole (so it is the same along the story). The two stages at the front carry almost everything: without the first rewriting stage the model is 4.1 worse at the next letter, against 0.5 for the last stage. The first stage has no bar because it was not taken out.";
 }
@@ -347,7 +365,10 @@ function s3init() {
   for (const m of ["adds", "cost"]) $("s3h-" + m).onclick = () => { S3.mode = m; $("s3h-adds").setAttribute("aria-pressed", m === "adds"); $("s3h-cost").setAttribute("aria-pressed", m === "cost"); scene(); };
   let drag = null;
   cv.onpointerdown = e => { drag = [e.clientX, e.clientY, S3.yaw, S3.pitch]; try { cv.setPointerCapture(e.pointerId); } catch (x) {} };
-  cv.onpointerup = () => { drag = null; };
+  cv.onpointerup = e => {
+    const moved = drag && (Math.abs(e.clientX - drag[0]) + Math.abs(e.clientY - drag[1]) > 5); drag = null;
+    if (!moved && S3.hover) { const it = TR.items[S3.item], NXn = (cv.clientWidth || 900) < 560 ? 28 : 44, w0 = Math.min(S3.win, it.positions - NXn), p = w0 + S3.hover.i; S3.pick = S3.pick === p ? null : p; S3.sel = null; S3.hi = null; $("s3found").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", "false")); S3.hover = null; scene(); }
+  };
   cv.onpointermove = e => {
     if (drag) { S3.yaw = drag[2] + (e.clientX - drag[0]) * 0.008; S3.pitch = Math.max(0.12, Math.min(1.35, drag[3] + (e.clientY - drag[1]) * 0.006)); S3.hover = null; scene(); return; }
     const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; let hit = null;
@@ -412,7 +433,7 @@ for (const [id, m] of Object.entries(T.models)) {
   b.onclick = () => { state.model = id; state.sel = null; render(); }; $("models").appendChild(b);
 }
 if (state.layer) state.model = layerOf(state.layer).model;
-$("foot").textContent = "The model is GoldWorm v6, a small public model of 2.76 million parameters that reads children\u2019s stories one letter at a time. The findings are the RATCHET session\u2019s experiments, stated here in plain words by the CIRISHolon session; \u201ctested, and it held\u201d means a prediction was written down before the experiment and came true. SCOPE-0, version " + SIDE.version + ": " + T.rows.length + " readings copied from result files of the RATCHET kindscope series (commit " + SIDE.ratchet + ") and of the earlier hand-over bundle. Nothing was measured or re-derived to draw this page. Which experiments feed each view was chosen by the CIRISHolon session and corrected once by the session that owns the instrument.";
+$("foot").textContent = "The model is GoldWorm v6, a small public model of 2.76 million parameters that reads children\u2019s stories one character at a time. Every finding here is about this one model; none is a claim about any other. The findings are the RATCHET session\u2019s experiments, stated here in plain words by the CIRISHolon session; \u201ctested, and it held\u201d means a prediction was written down before the experiment and came true. SCOPE-0, version " + SIDE.version + ": " + T.rows.length + " readings copied from result files of the RATCHET kindscope series (commit " + SIDE.ratchet + ") and of the earlier hand-over bundle. Nothing was measured or re-derived to draw this page. Which experiments feed each view was chosen by the CIRISHolon session and corrected once by the session that owns the instrument.";
 s3init(); render(); passView();
 try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { scene(); render(); passView(); }); new MutationObserver(() => { scene(); render(); passView(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] }); } catch (e) {}
 </script>

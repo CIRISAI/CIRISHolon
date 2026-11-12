@@ -62,7 +62,9 @@ def main():
             # readings are kept ONLY at the sites their directions were fitted on; elsewhere the projection means nothing
             readings = {name: {L: [(sig(z[L][name][i]) if fitted[i] and z[L][name][i] is not None else None) for i in range(P)] for L in sorted(z)}
                         for name in ("probe", "write", "resid", "next_byte_forecast")}
-            items.append({"item": it["item"], "source": rd["source"], "bytes": rd["bytes"], "positions": P, "writes": names,
+            att = json.loads(show(it["trace"].replace(".trace", ".attention.json")))["layers"]
+            wiring = {L: [[[int(j), sig(w, 3)] for j, w in row] for row in att[L]["top5_mean_over_heads"]] for L in sorted(att)}
+            items.append({"item": it["item"], "looks_back_at": wiring, "source": rd["source"], "bytes": rd["bytes"], "positions": P, "writes": names,
                           "conserved": first, "c4_max_abs_logit_residual": max(rd["c4_max_abs_logit_residual"]),
                           "write_norm": norms, "fitted_site": fitted, "readings_after_mlp": readings, "next_byte_logprob_true": [sig(x) for x in rd["next_byte_logprob_true"]],
                           "trace_sha256": it["trace_sha256"]})
@@ -76,12 +78,13 @@ def main():
                        "write": "along the direction the model WRITES it with; positive points toward an adjective next",
                        "resid": "along the part of the writing direction that is not a next-byte forecast",
                        "next_byte_forecast": "along the forecast direction of the byte that actually comes next, when it is one of the 16 fitted",
+                       "looks_back_at": "for each looking-back (attention) stage and position: the five earlier positions it draws on most, with the weight averaged over the stage's 4 heads (the series' export)",
                        "knock_out_cost": "CAL-1 R1: mean change in the true next byte's log-probability (nats) when that block's write is zeroed, beside what its direct attribution predicted",
                        "next_byte_logprob_true": "log-probability the model gave the byte that came next (nats)"}}
     os.makedirs(out, exist_ok=True)
     body = json.dumps(table, separators=(",", ":")).encode()
     open(os.path.join(out, "scope_traces.json"), "wb").write(body)
-    json.dump({"reference": "SCOPE-0 traces (one prompt passing through a model)", "version": 2, "changes": "version 2 (2026-11-12), on the instrument owner's corrections: readings were drawn at every byte though their directions mean something only at the sites they were fitted on, and were raw projections not comparable across layers; they are now z-scores kept at fitted sites alone; the third direction was mislabelled; the knock-out cost of each block is added, because the length of a write is not how much it matters", "table": "scope_traces.json", "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest(),
+    json.dump({"reference": "SCOPE-0 traces (one prompt passing through a model)", "version": 3, "changes": "version 3 (2026-11-12): what each looking-back stage draws on is added (top five sources per position). Version 2 (2026-11-12), on the instrument owner's corrections: readings were drawn at every byte though their directions mean something only at the sites they were fitted on, and were raw projections not comparable across layers; they are now z-scores kept at fitted sites alone; the third direction was mislabelled; the knock-out cost of each block is added, because the length of a write is not how much it matters", "table": "scope_traces.json", "bytes": len(body), "sha256": hashlib.sha256(body).hexdigest(),
                "items": len(items), "refused": refused, "provenance": {"ratchet_commit": commit, "traces": {str(i["item"]): i["trace_sha256"] for i in items}},
                "check": "each item passed holon-closure's trace_check at tolerance 0 before it was written; an item that does not conserve is refused and listed",
                "verdict": {"all_rows": "unresolved", "reason": "readings of another session's instrument on eight unseen stories; nothing scored here"},

@@ -1,14 +1,14 @@
 {
  "reference": "SCOPE-0 traces (one prompt passing through a model)",
- "version": 2,
- "changes": "version 2 (2026-11-12), on the instrument owner's corrections: readings were drawn at every byte though their directions mean something only at the sites they were fitted on, and were raw projections not comparable across layers; they are now z-scores kept at fitted sites alone; the third direction was mislabelled; the knock-out cost of each block is added, because the length of a write is not how much it matters",
+ "version": 3,
+ "changes": "version 3 (2026-11-12): what each looking-back stage draws on is added (top five sources per position). Version 2 (2026-11-12), on the instrument owner's corrections: readings were drawn at every byte though their directions mean something only at the sites they were fitted on, and were raw projections not comparable across layers; they are now z-scores kept at fitted sites alone; the third direction was mislabelled; the knock-out cost of each block is added, because the length of a write is not how much it matters",
  "table": "scope_traces.json",
- "bytes": 453815,
- "sha256": "7167e6974fd07e71a5a4571ccd9bd651c9dd14d8502eddd3b19ab64c26223ce7",
+ "bytes": 1212780,
+ "sha256": "05bec4202adeb137f8fa9a8dc5d14569dc5aef30afc17bf3156d37e529d2ed6c",
  "items": 8,
  "refused": [],
  "provenance": {
-  "ratchet_commit": "aaee5cd",
+  "ratchet_commit": "a54170e",
   "traces": {
    "0": "db1660644fb5b4b5743e598ed278ef546fd44a230691011dbecb52695868f614",
    "1": "2919a7af7f87e3c42f60cc14085a9db1f30c42019e54d7348d78dd35596db28b",

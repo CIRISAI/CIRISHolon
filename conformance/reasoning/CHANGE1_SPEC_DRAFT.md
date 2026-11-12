@@ -201,3 +201,31 @@ disagreement is the reason to label these blind as well.
 
 The text-edit set above then covers the eight kinds an edit can be, and this table the
 rest.
+
+### The Constitution session on the same reading (2026-11-12; its map is informative, and classifies claim families, not experimental arms)
+
+Its own map (CC 1.13.4, "the kinds-of-change map (informative — shared with RATCHET)") is
+consistent with the reading, and names three of the rows in terms:
+
+- **Process** names "`method` (the H3ERE pipeline)" and `conscience`. So an evaluator's
+  summary present against withheld, a step of the pipeline that ran or did not, is
+  Process. NOT also Structure: that row is about who is connected to and independent of
+  whom among parties, not which stage feeds which inside one agent.
+- **Model** names "`provenance` (which model is running)". A fine-tune is Model.
+- **Premises** names "the principle families themselves". The ethics text in the prefix is
+  those families in the agent's hands; present against absent is Premises.
+- **Identity** does not name a template; "who the agent takes itself to be" is a fair
+  reading and not a quotation, and a template also carries Rules and Manner, so it is a
+  compound change.
+- **Confidence** does not name a threshold: it is Confidence when what moves is how sure the
+  agent must be before it acts alone, and Rules when what moves is a line the text fixes.
+
+Its conclusion, in the Constitution's own words that unassisted labelling "does not
+surface Model or Premises; they need instruments, not labels": the deep kinds do not
+need text pairs; they are tested by varying the agent over the same items, and Part A is
+already the item set for it. "What can a smaller agent do without" is a Process, Model or
+Premises change by this map. Its one addition: an arm should change ONE of those at a
+time where it can, since the arms are not independent (withholding the ethics text also
+shortens the prompt; a fine-tune can change Manner as well as Model).
+
+Its seed check of the website's correction stories is running, by a fresh reader.

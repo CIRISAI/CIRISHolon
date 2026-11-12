@@ -1,5 +1,7 @@
 # HOUSEGEN-1 — the first generator Holon ships for the twin to call: households in a leaf, sizes drawn from a certified table by country and density class, summing to the leaf's people for every seed. PREREGISTRATION (DRAFT)
 
+*REVIEWED 2026-11-11 (`HOUSEGEN1_REVIEW.md`): three faults, fixed in `HOUSEGEN1_PREREG.md`, which replaces this text. Kept as written.*
+
 *DRAFT of 2026-11-11. NOT FROZEN; to be attacked by a second reader first. The division of
 labour is the twin session's proposal of the same day, which it reports the lead approved
 there: Holon builds the generator and produces both sides of each comparison; the twin

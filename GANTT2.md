@@ -1799,3 +1799,18 @@ Records cited; nothing below changes a tier's status.*
 - **Not changed:** any version-3 row, which row is latest, the kind, the trust (B).
 
 *(Placed at the end, as above.)*
+
+### CONNECT-0 — home connectivity by place: one table of six written (2026-11-12)
+
+- **Written:** US states, 2024 (ACS B28002). Any access at home 95.46 % of households, a
+  paid cable, fibre or DSL line 76.53 %, cellular only 12.60 %. The gap between "has
+  internet" and "has a line" runs 12.76 to 33.13 points by state.
+- **NEITHER (S2b):** that gap is not one number (10th to 90th percentile 7.93 points
+  apart; the bar was 5, the kill over 8).
+- **Refused by its own rule:** Eurostat. The file reads 94.76 for the EU where the page
+  read 94.7, and the bar was "rounds to 94.7". Very probably the right series; not
+  written without the lead's word and a dated amendment.
+- **Not obtained:** ITU (the site refuses this machine; no browser). No world table.
+- **For MESH-0:** a ceiling for hosting in one country. Its input stays unresolved.
+
+*(Placed at the end, as above.)*

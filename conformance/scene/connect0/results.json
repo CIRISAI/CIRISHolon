@@ -1,0 +1,113 @@
+{
+ "plants": {
+  "P-FLAG": true,
+  "P-GROUP": true,
+  "P-DUP": true,
+  "P-BLANK": true,
+  "P-SHARE": true,
+  "P-SEL": true,
+  "P-ACS": true,
+  "P-KIND": null,
+  "P-K4": null
+ },
+ "units": {
+  "itu_K1": "not obtained",
+  "itu_K3": "not obtained",
+  "itu_K4": "not obtained",
+  "eurostat_countries": "(r): R2 reads misread",
+  "eurostat_regions": "not written: the country table is not written",
+  "acs_2024": "(a): written"
+ },
+ "not_run": {
+  "S1": "ITU K1 not written",
+  "S3": "ITU K1 not written",
+  "P-KIND": "no ITU file",
+  "P-K4": "no ITU file"
+ },
+ "files": {
+  "isoc_ci_in_h.tsv": {
+   "bytes": 114735,
+   "sha256": "4fed29fe3485ac7e5493e99d4d1b7ac7ae666d08582947b38b4c338186303538"
+  },
+  "isoc_r_iacc_h.tsv": {
+   "bytes": 52448,
+   "sha256": "2f507eb428a1a6063355be5b77461561076a5eb0cbcf33ac123c98058f261b3e"
+  },
+  "b28002.dat": {
+   "bytes": 1150958,
+   "sha256": "ac6ff542ba9778fce91895dd6c611e0cb22be32696b124e063d93f5e4d73e8e2"
+  }
+ },
+ "R2": {
+  "eu27_2025": "94.76",
+  "members_present": 27,
+  "member_min_max": [
+   "87.91",
+   "99.28"
+  ],
+  "neighbours_2025": {
+   "geo=EA": "94.55",
+   "geo=EU27_2007": null,
+   "geo=EU28": null,
+   "hhtyp=A1": "90.17",
+   "hhtyp=A1_DCH": "97.13",
+   "hhtyp=A2": "94.64",
+   "hhtyp=A2_DCH": "99.16",
+   "hhtyp=ALL_DCH": "98.86",
+   "hhtyp=ALL_NDCH": "93.50",
+   "hhtyp=A_GE3": "98.14",
+   "hhtyp=A_GE3_DCH": "98.93",
+   "hhtyp=HHI_Q1": null,
+   "hhtyp=HHI_Q2": null,
+   "hhtyp=HHI_Q3": null,
+   "hhtyp=HHI_Q4": null,
+   "hhtyp=HH_DEG1": "96.04",
+   "hhtyp=HH_DEG2": "94.54",
+   "hhtyp=HH_DEG3": "92.81",
+   "hhtyp=HH_NO1": null,
+   "hhtyp=HH_O1": null
+  },
+  "a_neighbour_also_rounds_to_94.7": [],
+  "eu27_2023_printed_no_verdict": "93.09",
+  "reading": "misread"
+ },
+ "R3": {
+  "areas": 52,
+  "failing": [],
+  "met": true
+ },
+ "S2": {
+  "states_with_gap_over_5": 52,
+  "of": 52,
+  "reading": "met (a reproduction)"
+ },
+ "S2b": {
+  "p10": 16.09,
+  "p90": 24.02,
+  "p90_less_p10": 7.93,
+  "reading": "neither",
+  "smallest_gap": [
+   "New Hampshire",
+   12.76
+  ],
+  "largest_gap": [
+   "Puerto Rico",
+   33.13
+  ],
+  "median_gap": 19.18
+ },
+ "cellular_only_share": {
+  "lowest": 8.84,
+  "median": 12.23,
+  "highest": 25.8
+ },
+ "printed_acs": {
+  "fifty_states_and_dc_summed": {
+   "K1": 95.46,
+   "any_subscription": 93.32,
+   "K2": 76.53,
+   "cellular_only": 12.6,
+   "no_access": 4.54
+  }
+ }
+}

@@ -1,0 +1,68 @@
+{
+ "reference": "CONNECT-0 (home connectivity; tables of priors)",
+ "version": 1,
+ "table": "acs_b28002_states.json",
+ "bytes": 66382,
+ "sha256": "e7161ac5b258d8148f1ecaa4600d82ced463885c578acae3b534a719bc4b969e",
+ "rows": 52,
+ "kind": "households by presence and type of internet subscription, US states, the District of Columbia and Puerto Rico, 2024 (one year; a sample survey with margins)",
+ "kinds_in_this_table": {
+  "K1": "any access at home: lines 002 + 012 over 001",
+  "K2": "a paid cable, fibre or DSL line: line 007 over 001; satellite (009) is not in it; where fixed wireless is counted is not known"
+ },
+ "source": {
+  "publisher": "U.S. Census Bureau",
+  "citation": "U.S. Census Bureau, \"Presence and Types of Internet Subscriptions in Household,\" American Community Survey, ACS 1-Year Estimates Detailed Tables, Table B28002, 2024, https://www2.census.gov/programs-surveys/acs/summary_file/2024/table-based-SF/data/1YRData/acsdt1y2024-b28002.dat, accessed on 2026-11-12.",
+  "file_bytes": 1150958,
+  "file_sha256": "ac6ff542ba9778fce91895dd6c611e0cb22be32696b124e063d93f5e4d73e8e2",
+  "licence": "no licence text attached; the Bureau asks to be cited as the source",
+  "changed": "52 state-level rows selected from 8,106 areas; shares computed from the counts; counts and their margins unaltered",
+  "endorsement": "none implied; this is not a Census Bureau product"
+ },
+ "holds_no_real_feature": true,
+ "verdict": {
+  "all_rows": "unresolved",
+  "reason": "a table of priors; R3 (identities among the counts) met for 52 of 52; nothing scored against another source"
+ },
+ "stakes": {
+  "R3": {
+   "areas": 52,
+   "failing": [],
+   "met": true
+  },
+  "S2": {
+   "states_with_gap_over_5": 52,
+   "of": 52,
+   "reading": "met (a reproduction)"
+  },
+  "S2b": {
+   "p10": 16.09,
+   "p90": 24.02,
+   "p90_less_p10": 7.93,
+   "reading": "neither",
+   "smallest_gap": [
+    "New Hampshire",
+    12.76
+   ],
+   "largest_gap": [
+    "Puerto Rico",
+    33.13
+   ],
+   "median_gap": 19.18
+  },
+  "cellular_only_share": {
+   "lowest": 8.84,
+   "median": 12.23,
+   "highest": 25.8
+  },
+  "fifty_states_and_dc": {
+   "K1": 95.46,
+   "any_subscription": 93.32,
+   "K2": 76.53,
+   "cellular_only": 12.6,
+   "no_access": 4.54
+  }
+ },
+ "what_mesh0_may_take": "K2 for a state as a CEILING on 'a host that is on', never as its value; not the US gap for another country; a subscription says nothing of a public address, uptime or power",
+ "not_in_this_folder": "Eurostat's two tables (R2 read misread by the frozen rule; see CONNECT0_RESULTS.md) and ITU's three indicators (not obtained)"
+}

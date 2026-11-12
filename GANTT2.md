@@ -1594,3 +1594,33 @@ Records cited; nothing below changes a tier's status.*
   in the crate; the US rows' transfer from tract to tile.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-11 to 12 — fields for the twin's two theories: what they read, a power table, and DEVICES-0
+
+- **The lead's direction:** flesh out the generator's fields and find data so the CEWP team
+  can test the locality dividend and power savings; and his correction that power savings
+  is a DELTA from the status quo ("people use phones regardless"). All datasets on the
+  list approved; browser use allowed.
+- **What the two theories read** (`conformance/scene/TWIN_THEORY_INPUTS.md`): the 92 % is
+  0.65 + 0.30 × 0.90 on its own inputs; the power figure sums a sourceless device table
+  against every data-centre workload. Field order agreed with the twin: ties by kind and
+  distance; presence by hour; devices; uplink; power as a table; buildings.
+- **POWER-0** (`conformance/scene/tables/power0/`, version 3, a table of priors): measured
+  home gateways (9.1 W idle in France over 36 models; 13.8 W for new US gateways, flat for
+  eleven years); fixed network 20 kWh per subscription a year, under 10 on fibre; a radio
+  wake-up 12.76 J on LTE against 0.04 J on Wi-Fi (one 2012 handset). CORRECTION the same
+  day: the first per-line baseload was several times too high for fibre.
+- **Found on the way:** the product's idle round every 30 s, on a carrier network, would
+  keep a phone's radio in its tail about 39 % of the time by that measurement. The twin's
+  session filed it against the product.
+- **DEVICES-0** (`conformance/scene/DEVICES0_RESULTS.md`, table under
+  `conformance/scene/tables/devices0_us/`): smartphones 0.813 per person and 0.999 per
+  adult (the twin's 1.0 per person refused); a table fitted in 2020 KILLED against 2024;
+  the building matters for fixed devices (KILLED the stake that it would not); have-nots
+  cluster (2.9 times independence).
+- **Drafted, with reviewers:** PRESENCE-0 (US time diaries), TIES-0 (connectedness index
+  between areas). **Frozen and parked:** HOUSEGEN-2.
+- **Scouts' reports** filed (`SCOUT_RHYTHM_TIES.md`, `SCOUT_DEVICES_POWER.md`). No single
+  source gives ties by kind and distance; four kinds have none.
+
+*(Placed at the end, as above.)*

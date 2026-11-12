@@ -1,0 +1,54 @@
+{
+ "reference": "DEVICES-0 (United States)",
+ "version": 1,
+ "table": "device_table.json",
+ "bytes": 22910,
+ "sha256": "e4869380d2133be1ed532a0e15cb13d497f7050102924eb72bbc845eed5a6620",
+ "serves_registry_rows": [
+  "devices per household by kind (household.devices)",
+  "what a household already has that is on all day and could host (for the energy delta)"
+ ],
+ "preregistration": "conformance/scene/DEVICES0_PREREG.md",
+ "extractor": "conformance/scene/devices0/devices0.py",
+ "results": "conformance/scene/DEVICES0_RESULTS.md",
+ "sources": [
+  {
+   "name": "Residential Energy Consumption Survey, public-use microdata 2020 (v7) and 2024 (v1, preliminary household characteristics)",
+   "publisher": "U.S. Energy Information Administration",
+   "licence": "public domain",
+   "file_sha256": "conformance/scene/devices0/raw_file_sha256.txt",
+   "notice": "Source: U.S. Energy Information Administration, Residential Energy Consumption Survey 2020 and 2024 public-use microdata. A derived work; not endorsed by the agency."
+  }
+ ],
+ "keys": {
+  "unit": "a household (occupied primary residence), United States",
+  "household_size": "members, pooled upward where a cell's relative standard error exceeded 7.5 %",
+  "year": "2020 unless marked; a pandemic year"
+ },
+ "envelope": {
+  "country": "United States",
+  "year": 2020,
+  "note": "a table fitted in 2020 was REFUSED against 2024 for smartphones in one-person households and laptops in the largest: device counts need a year"
+ },
+ "budgets": {
+  "count_per_household": "15 % of the reference",
+  "share_with_none": 0.05,
+  "whose": "the campaign author's, after review"
+ },
+ "errors": "the agency's jackknife over 60 replicate weights; 'se' is one standard error",
+ "declared_not_measured": "power state and can-host per kind are declared attributes; the survey does not say which devices are on, and never asks about a router",
+ "verdict": {
+  "twin_phones_per_person_1.0": "refused (0.813 per person; 0.999 per adult 18 and over)",
+  "twin_laptops_per_person_0.5": "certified (0.576)",
+  "twin_devices_per_person_2.25": "certified (2.15 phones, laptops, desktops and tablets)",
+  "scope": "the twin's figures are world figures; these verdicts are about the United States"
+ },
+ "limits": [
+  "devices 'used', self-reported",
+  "members top-coded at 7",
+  "nothing outside the United States",
+  "counts differ by building type at equal household size (set-top boxes, desktops, televisions, smart speakers), which this table's rows do not carry; see housing_contrast",
+  "have-nots cluster: kinds must not be drawn independently (ratio 2.9)"
+ ],
+ "holds_no_real_feature": "no household, person or place; rows of weighted means and shares"
+}

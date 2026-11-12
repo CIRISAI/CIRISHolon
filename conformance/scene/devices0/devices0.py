@@ -241,7 +241,7 @@ def run(raw, out_dir):
 
     def stop(why):
         log["branch"] = "(e): " + why
-        json.dump(log, open(os.path.join(out_dir, "results.json"), "w"), indent=1)
+        json.dump(log, open(os.path.join(out_dir, "results.json"), "w"), indent=1, default=lambda o: o.item())
         print("BRANCH (e):", why)
         return 1
     if not all(log["plants"].values()):
@@ -374,14 +374,14 @@ def run(raw, out_dir):
     log["S8_variance_over_mean"] = s8
     log["attributes"] = ATTR
     log["branch"] = "(a)"
-    json.dump(log, open(os.path.join(out_dir, "results.json"), "w"), indent=1)
+    json.dump(log, open(os.path.join(out_dir, "results.json"), "w"), indent=1, default=lambda o: o.item())
     pub = {"kinds": {k: {x: table[k][x] for x in ("groups", "mean", "se", "none", "none_se", "records", "resolved")} for k in KINDS},
            "declared_attributes": ATTR, "budgets": {"count": B_COUNT, "share_with_none": B_NONE},
            "three_rates": {k: {"per_adult_18_64": v["rates_adult_senior_child"][0], "per_adult_65_plus": v["rates_adult_senior_child"][1],
                                "per_child": v["rates_adult_senior_child"][2], "se": v["rates_se"]} for k, v in s2.items()},
            "per_person": s1, "already_there": s6, "have_nots_cluster": log["S7"], "variance_over_mean": s8,
            "year_2024_against_2020": s4, "housing_contrast": log["S5"]}
-    json.dump(pub, open(os.path.join(out_dir, "device_table.json"), "w"), indent=1)
+    json.dump(pub, open(os.path.join(out_dir, "device_table.json"), "w"), indent=1, default=lambda o: o.item())
     print(json.dumps({k: log[k] for k in ("S1", "S2_outcome", "S3_outcome", "S4", "S7")}, indent=1))
     for k in KINDS:
         t = table[k]

@@ -1,0 +1,141 @@
+plants: {'P-EQUAL': True, 'P-SHIFT': True, 'P-WEIGHT': np.True_, 'P-REPLICATE': np.True_, 'P-POOL': True, 'P-RATES': True, 'P-CLUSTER': np.True_, 'P-TOPCODE': True}
+G0: {"2020": {"records": 18496, "missing_columns": [], "weighted_households": 123529025.00075468, "total_over_stated": 1.0002350202490258, "persons_per_household_top_coded": 2.439867159676868, "members_equal_parts_below_top_code": 1.0, "pass": true}, "2024": {"records": 16676, "missing_columns": [], "weighted_households": 132536834.72999999, "total_over_stated": 1.000277997962264, "persons_per_household_top_coded": 2.328778057652954, "members_equal_parts_below_top_code": 1.0, "pass": true}}
+{
+ "S1": {
+  "smartphones per person": {
+   "reference": 0.8130321399094614,
+   "se": 0.003752270810627165,
+   "twin": 1.0,
+   "verdict": "refused"
+  },
+  "laptops per person": {
+   "reference": 0.575797091266828,
+   "se": 0.004263778260486073,
+   "twin": 0.5,
+   "verdict": "certified"
+  },
+  "phones, laptops, desktops and tablets per person": {
+   "reference": 2.1475747151067246,
+   "se": 0.009599507868532645,
+   "twin": 2.25,
+   "verdict": "certified"
+  },
+  "smartphones per adult 18 and over": {
+   "reference": 0.9988289696821112,
+   "se": 0.005072203204933451
+  }
+ },
+ "S2_outcome": "neither",
+ "S3_outcome": "killed",
+ "S4": {
+  "smartphone": {
+   "y2020": 1.9500292325742272,
+   "y2024": 2.114119549790157,
+   "relative_change": 0.08414761916123426,
+   "se_of_change": 0.009238137210894814
+  },
+  "other mobile phone": {
+   "y2020": 0.2801761882698176,
+   "y2024": 0.22856337969525314,
+   "relative_change": -0.18421554270293616,
+   "se_of_change": 0.03190881155646163
+  },
+  "laptop": {
+   "y2020": 1.3761883362707976,
+   "y2024": 1.2970959459701592,
+   "relative_change": -0.05747206847789699,
+   "se_of_change": 0.010741939274023452
+  },
+  "desktop": {
+   "y2020": 0.5224146656077626,
+   "y2024": 0.4928979380945867,
+   "relative_change": -0.056500572162990426,
+   "se_of_change": 0.017331088480979997
+  },
+  "tablet": {
+   "y2020": 1.0082996603450285,
+   "y2024": 0.9898066493533499,
+   "relative_change": -0.01834078867521427,
+   "se_of_change": 0.013707390913172282
+  },
+  "television": {
+   "y2020": 2.2886498358334,
+   "y2024": 2.148116532811361,
+   "relative_change": -0.06140445813147499,
+   "se_of_change": 0.007612820609757241
+  },
+  "set-top box": {
+   "y2020": 1.2075474381688953,
+   "y2024": 0.7217556472121432,
+   "relative_change": -0.4022962374823126,
+   "se_of_change": 0.012720926793837056
+  },
+  "streaming device": {
+   "y2020": 1.0687428091374993,
+   "y2024": 1.4236975138601906,
+   "relative_change": 0.33212359576870343,
+   "se_of_change": 0.01804761218812419
+  },
+  "games console": {
+   "y2020": 0.48635000544703194,
+   "y2024": 0.5867031190869304,
+   "relative_change": 0.20633928758293774,
+   "se_of_change": 0.02222371955248907
+  },
+  "smart speaker": {
+   "y2020": 0.636995622525338,
+   "y2024": 0.7513089334965138,
+   "relative_change": 0.1794569804388706,
+   "se_of_change": 0.024012917788718634
+  }
+ },
+ "S7": {
+  "ratio": 2.8752559118360765,
+  "se": 0.03947229814046408,
+  "share_neither": 0.08714643096872311,
+  "share_no_computer": 0.11135543280767303,
+  "share_no_fixed_broadband": 0.27218343473027634,
+  "outcome": "met"
+ }
+}
+smartphone         ['1', '2', '3', '4', '5', '6', '7 or more'] mean [0.88, 1.73, 2.48, 3.03, 3.58, 3.79, 4.24] none [0.23, 0.11, 0.06, 0.04, 0.04, 0.07, 0.09] rse% [1.3, 0.6, 1.0, 0.9, 1.5, 2.6, 4.2]
+other mobile phone ['1', '2', '3', '4 or more'] mean [0.21, 0.26, 0.3, 0.39] none [0.8, 0.82, 0.83, 0.83] rse% [3.4, 3.0, 5.8, 4.6]
+laptop             ['1', '2', '3', '4', '5', '6', '7 or more'] mean [0.68, 1.21, 1.74, 2.18, 2.39, 2.53, 2.62] none [0.43, 0.25, 0.15, 0.1, 0.08, 0.13, 0.14] rse% [1.8, 1.1, 1.6, 1.4, 2.3, 3.8, 5.4]
+desktop            ['1', '2', '3', '4', '5 or more'] mean [0.31, 0.55, 0.62, 0.67, 0.7] none [0.73, 0.55, 0.53, 0.52, 0.54] rse% [3.1, 1.8, 2.3, 3.0, 3.9]
+tablet             ['1', '2', '3', '4', '5', '6', '7 or more'] mean [0.47, 0.95, 1.24, 1.54, 1.74, 1.99, 1.68] none [0.6, 0.39, 0.31, 0.26, 0.24, 0.24, 0.3] rse% [2.4, 1.3, 2.2, 1.9, 3.6, 5.7, 6.5]
+television         ['1', '2', '3', '4', '5', '6', '7 or more'] mean [1.58, 2.27, 2.66, 2.79, 3.17, 3.23, 3.25] none [0.06, 0.02, 0.02, 0.02, 0.01, 0.03, 0.07] rse% [0.8, 0.8, 1.0, 1.1, 1.9, 2.8, 4.2]
+set-top box        ['1', '2', '3', '4', '5 or more'] mean [0.9, 1.4, 1.29, 1.18, 1.27] none [0.45, 0.38, 0.47, 0.51, 0.5] rse% [2.1, 1.6, 2.8, 2.7, 4.0]
+streaming device   ['1', '2', '3', '4', '5', '6', '7 or more'] mean [0.62, 0.98, 1.38, 1.54, 1.61, 1.85, 1.45] none [0.59, 0.45, 0.33, 0.3, 0.27, 0.28, 0.37] rse% [2.2, 1.7, 2.0, 2.1, 3.2, 5.4, 7.4]
+games console      ['1', '2', '3', '4', '5', '6', '7 or more'] mean [0.16, 0.32, 0.72, 0.95, 1.18, 1.16, 1.01] none [0.86, 0.75, 0.48, 0.38, 0.29, 0.33, 0.41] rse% [4.9, 3.0, 2.2, 2.3, 3.2, 4.6, 7.2]
+smart speaker      ['1', '2', '3', '4', '5 or more'] mean [0.34, 0.58, 0.8, 0.99, 1.01] none [0.8, 0.69, 0.61, 0.56, 0.58] rse% [4.5, 2.6, 3.4, 3.8, 4.1]
+S2 smartphone [0.933, 0.668, 0.517] [(1, -0.076, 0.023, 'certified'), (2, -0.061, 0.011, 'certified'), (3, -0.015, 0.016, 'certified'), (4, 0.022, 0.017, 'certified'), (5, 0.032, 0.028, 'certified'), (6, 0.156, 0.074, 'unresolved')]
+S2 laptop [0.648, 0.396, 0.418] [(1, -0.218, 0.025, 'refused'), (2, -0.107, 0.018, 'certified'), (3, -0.022, 0.026, 'certified'), (4, 0.018, 0.026, 'certified'), (5, 0.12, 0.047, 'unresolved'), (6, 0.293, 0.117, 'refused')]
+S2 tablet [0.389, 0.43, 0.41] [(1, -0.13, 0.043, 'unresolved'), (2, -0.143, 0.022, 'unresolved'), (3, -0.032, 0.036, 'certified'), (4, 0.037, 0.03, 'certified'), (5, 0.144, 0.071, 'unresolved'), (6, 0.266, 0.182, 'unresolved')]
+S3 smartphone [('1', 0.88, 1.22, 'refused'), ('2', 1.73, 1.95, 'certified'), ('3', 2.48, 2.68, 'certified'), ('4', 3.03, 3.16, 'certified'), ('5', 3.58, 3.7, 'certified'), ('6', 3.79, 4.05, 'certified'), ('7 or more', 4.24, 4.87, 'unresolved')]
+S3 other mobile phone [('1', 0.21, 0.19, 'unresolved'), ('2', 0.26, 0.2, 'refused'), ('3', 0.3, 0.24, 'unresolved'), ('4 or more', 0.39, 0.34, 'unresolved')]
+S3 laptop [('1', 0.68, 0.84, 'unresolved'), ('2', 1.21, 1.26, 'certified'), ('3', 1.74, 1.61, 'certified'), ('4', 2.18, 1.86, 'unresolved'), ('5', 2.39, 2.02, 'unresolved'), ('6', 2.53, 1.88, 'refused'), ('7 or more', 2.62, 1.77, 'refused')]
+S3 desktop [('1', 0.31, 0.35, 'unresolved'), ('2', 0.55, 0.52, 'certified'), ('3', 0.62, 0.56, 'unresolved'), ('4', 0.67, 0.6, 'unresolved'), ('5 or more', 0.7, 0.68, 'certified')]
+S3 tablet [('1', 0.47, 0.61, 'refused'), ('2', 0.95, 0.97, 'certified'), ('3', 1.24, 1.14, 'unresolved'), ('4', 1.54, 1.45, 'certified'), ('5', 1.74, 1.61, 'unresolved'), ('6', 1.99, 1.82, 'unresolved'), ('7 or more', 1.68, 2.06, 'unresolved')]
+S3 television [('1', 1.58, 1.63, 'certified'), ('2', 2.27, 2.11, 'certified'), ('3', 2.66, 2.45, 'certified'), ('4', 2.79, 2.69, 'certified'), ('5', 3.17, 3.04, 'certified'), ('6', 3.23, 3.09, 'certified'), ('7 or more', 3.25, 3.42, 'unresolved')]
+S3 set-top box [('1', 0.9, 0.67, 'refused'), ('2', 1.4, 0.86, 'refused'), ('3', 1.29, 0.64, 'refused'), ('4', 1.18, 0.6, 'refused'), ('5 or more', 1.27, 0.69, 'refused')]
+S3 streaming device [('1', 0.62, 1.01, 'refused'), ('2', 0.98, 1.41, 'refused'), ('3', 1.38, 1.7, 'unresolved'), ('4', 1.54, 1.91, 'unresolved'), ('5', 1.61, 2.01, 'unresolved'), ('6', 1.85, 2.0, 'unresolved'), ('7 or more', 1.45, 1.89, 'unresolved')]
+S3 games console [('1', 0.16, 0.25, 'refused'), ('2', 0.32, 0.44, 'refused'), ('3', 0.72, 0.9, 'unresolved'), ('4', 0.95, 1.11, 'unresolved'), ('5', 1.18, 1.22, 'certified'), ('6', 1.16, 1.27, 'unresolved'), ('7 or more', 1.01, 1.54, 'unresolved')]
+S3 smart speaker [('1', 0.34, 0.5, 'refused'), ('2', 0.58, 0.72, 'unresolved'), ('3', 0.8, 0.96, 'unresolved'), ('4', 0.99, 1.06, 'unresolved'), ('5 or more', 1.01, 1.09, 'unresolved')]
+S5 killed 4 4 {'detached': 12319, 'five_or_more_units': 2439, 'rural': 4081}
+   smartphone         housing -0.03 ±0.03   urban/rural -0.06 ±0.02
+   other mobile phone housing +0.02 ±0.17   urban/rural +0.22 ±0.11
+   laptop             housing -0.00 ±0.05   urban/rural -0.19 ±0.03
+   desktop            housing -0.45 ±0.09   urban/rural -0.09 ±0.06
+   tablet             housing -0.25 ±0.06   urban/rural -0.03 ±0.04
+   television         housing -0.36 ±0.03   urban/rural +0.05 ±0.02
+   set-top box        housing -0.60 ±0.08   urban/rural +0.08 ±0.05
+   streaming device   housing -0.18 ±0.08   urban/rural -0.15 ±0.05
+   games console      housing -0.00 ±0.09   urban/rural -0.04 ±0.07
+   smart speaker      housing -0.30 ±0.10   urban/rural -0.29 ±0.08
+S6 1 {'fixed_broadband': 0.609, 'cellular_data_only': 0.16, 'no_internet': 0.162, 'has_desktop': 0.274, 'no_laptop_desktop_or_tablet': 0.228, 'weekdays_someone_home_mean': 3.787, 'someone_home_all_five_weekdays': 0.652, 'nobody_home_any_weekday': 0.136, 'main_tv_hours_weekday': 6.487}
+S6 2 {'fixed_broadband': 0.745, 'cellular_data_only': 0.149, 'no_internet': 0.055, 'has_desktop': 0.447, 'no_laptop_desktop_or_tablet': 0.089, 'weekdays_someone_home_mean': 4.28, 'someone_home_all_five_weekdays': 0.767, 'nobody_home_any_weekday': 0.062, 'main_tv_hours_weekday': 6.715}
+S6 3 {'fixed_broadband': 0.795, 'cellular_data_only': 0.137, 'no_internet': 0.026, 'has_desktop': 0.47, 'no_laptop_desktop_or_tablet': 0.059, 'weekdays_someone_home_mean': 4.263, 'someone_home_all_five_weekdays': 0.77, 'nobody_home_any_weekday': 0.068, 'main_tv_hours_weekday': 6.401}
+S6 4 {'fixed_broadband': 0.819, 'cellular_data_only': 0.121, 'no_internet': 0.013, 'has_desktop': 0.475, 'no_laptop_desktop_or_tablet': 0.036, 'weekdays_someone_home_mean': 4.339, 'someone_home_all_five_weekdays': 0.793, 'nobody_home_any_weekday': 0.053, 'main_tv_hours_weekday': 6.098}
+S6 5 or more {'fixed_broadband': 0.781, 'cellular_data_only': 0.146, 'no_internet': 0.019, 'has_desktop': 0.459, 'no_laptop_desktop_or_tablet': 0.038, 'weekdays_someone_home_mean': 4.582, 'someone_home_all_five_weekdays': 0.857, 'nobody_home_any_weekday': 0.03, 'main_tv_hours_weekday': 7.103}
+S6 all {'fixed_broadband': 0.728, 'cellular_data_only': 0.146, 'no_internet': 0.071, 'has_desktop': 0.408, 'no_laptop_desktop_or_tablet': 0.111, 'weekdays_someone_home_mean': 4.177, 'someone_home_all_five_weekdays': 0.747, 'nobody_home_any_weekday': 0.079, 'main_tv_hours_weekday': 6.563}
+S8 {'smartphone': {'1': 0.37, '2': 0.35, '3': 0.41, '4': 0.47, '5 or more': 0.82}, 'other mobile phone': {'1': 0.91, '2': 1.44, '3': 1.99, '4': 2.59, '5 or more': 3.3}, 'laptop': {'1': 0.65, '2': 0.77, '3': 0.82, '4': 0.88, '5 or more': 1.18}, 'desktop': {'1': 0.98, '2': 0.91, '3': 1.02, '4': 1.14, '5 or more': 1.43}, 'tablet': {'1': 0.81, '2': 0.94, '3': 1.03, '4': 1.17, '5 or more': 1.43}, 'television': {'1': 0.54, '2': 0.64, '3': 0.64, '4': 0.74, '5 or more': 0.84}, 'set-top box': {'1': 1.4, '2': 1.7, '3': 2.07, '4': 2.26, '5 or more': 2.21}, 'streaming device': {'1': 1.36, '2': 1.55, '3': 1.5, '4': 1.5, '5 or more': 1.7}, 'games console': {'1': 1.13, '2': 1.16, '3': 1.01, '4': 1.01, '5 or more': 1.1}, 'smart speaker': {'1': 2.19, '2': 2.26, '3': 2.2, '4': 2.4, '5 or more': 2.72}}

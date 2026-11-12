@@ -1,0 +1,22 @@
+plants: {'P-EQUAL': True, 'P-SHIFT': True, 'P-WEIGHT': np.True_, 'P-REPLICATE': np.True_, 'P-POOL': True, 'P-RATES': True, 'P-CLUSTER': np.True_, 'P-TOPCODE': True}
+G0: {"2020": {"records": 18496, "missing_columns": [], "weighted_households": 123529025.00075468, "total_over_stated": 1.0002350202490258, "persons_per_household_top_coded": 2.439867159676868, "members_equal_parts_below_top_code": 1.0, "pass": true}, "2024": {"records": 16676, "missing_columns": [], "weighted_households": 132536834.72999999, "total_over_stated": 1.000277997962264, "persons_per_household_top_coded": 2.328778057652954, "members_equal_parts_below_top_code": 1.0, "pass": true}}
+Traceback (most recent call last):
+  File "/home/emoore/CIRISHolon/conformance/scene/devices0/devices0.py", line 408, in <module>
+    sys.exit(run(sys.argv[2], sys.argv[3]))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/emoore/CIRISHolon/conformance/scene/devices0/devices0.py", line 377, in run
+    json.dump(log, open(os.path.join(out_dir, "results.json"), "w"), indent=1)
+  File "/usr/lib/python3.12/json/__init__.py", line 179, in dump
+    for chunk in iterable:
+  File "/usr/lib/python3.12/json/encoder.py", line 432, in _iterencode
+    yield from _iterencode_dict(o, _current_indent_level)
+  File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  File "/usr/lib/python3.12/json/encoder.py", line 406, in _iterencode_dict
+    yield from chunks
+  File "/usr/lib/python3.12/json/encoder.py", line 439, in _iterencode
+    o = _default(o)
+        ^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type bool is not JSON serializable

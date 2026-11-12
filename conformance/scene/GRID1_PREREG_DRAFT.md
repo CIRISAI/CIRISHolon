@@ -1,5 +1,8 @@
 # GRID-1 — DRAFT, not frozen. One dataset read into GRID-0's table: Ember's yearly electricity data, for country rows of one kind in place of the rows now rated C. PREREGISTRATION
 
+*REVIEWED 2026-11-12 (`GRID1_REVIEW.md`): freeze with named fixes. Kept as written; the
+freeze is `GRID1_PREREG.md`.*
+
 *Draft of 2026-11-12, for one adversarial review. The fetch was approved by the lead on
 2026-11-12 ("Approved, proceed", after this dataset alone was put to them by name). The
 other twelve datasets listed in `SCOUT_GRID.md` are not approved and are not fetched. At

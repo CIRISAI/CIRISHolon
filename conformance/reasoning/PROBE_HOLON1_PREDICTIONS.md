@@ -66,3 +66,42 @@ be a conservation law, the candidate object (the taxonomy) failed the closure te
 the carried test only when asked for and only late. It is evidence about the taxonomy, and
 about whether a reasoning model is cut along it; it is not evidence between the two leading
 readings of what an object is.
+
+## CORRECTION 2026-11-11, the lead's, the same day: this is a reading of what the model FAILS to do
+
+The section "What it says" above ends: "the taxonomy looks like ours, not the model's … it
+went against the hope." That sentence is this session's and it reads the result the wrong way
+round. The lead's words: *"we are not looking at what the model DOES, we are looking at what
+it is FAILING TO DO."* The text above is kept; this is how the same numbers are to be read.
+
+- **The information is there and is not used.** Unasked, the kind is decodable from the state
+  at 0.65 to 0.73 by the middle layers, and deleting it changes what the model says by 0.004
+  nats. Asked, the state holds the kind at 0.84 while the model's own answer is right 0.56 to
+  0.57 of the time. In both conditions the model holds more than it acts on. That gap is the
+  measurement: 0.84 held against 0.57 said when asked; decodable against unused when not.
+- **In this record's vocabulary** the kind is a view the level above does not CARRY. For
+  matter that is a verdict on the view (the hydrogen-bond network: closed, not carried, not a
+  tier), because the level above is given by nature. In a built system the level above is
+  what we are building. "Not carried" is then a deficit of the system, and what the theory
+  says about a deficit is that carrying has a price and somebody has to pay it.
+- **Asking is paying.** When the prompt asks for the kind, the model builds it and passes it
+  up one channel from about layer 24, and removing it there costs the answer. The
+  scaffolding around the model (a prompt that asks, a pipeline stage that names the kind and
+  feeds it forward) is the maintenance that makes the view carried. That is a description of
+  what the agent stack already does, with a number on why it is needed.
+- **So the question changes** from "is the taxonomy the model's own object" to three that
+  have consequences:
+  1. **Where is it dropped?** By layer, the gap between what is decodable and what the next
+     layers use. The asked run puts the loss late: held at 0.84 from layer 16, said at 0.57.
+  2. **Does carrying it help?** Copy the kind direction from the asked run into the unasked
+     run at the layer where it is dropped, and measure the item's own task. If the answer
+     improves, the model is failing to use something it has and that matters; if it does
+     not, the kind is not what the task needed.
+  3. **What is the smallest thing that carries it?** A head that reads the kind where it is
+     first decodable and feeds it forward. That is a candidate for the per-task micro-model:
+     not a cut along what the model already carries, but the piece that carries what it
+     drops.
+
+What does not change: the closure test (P2) was killed, and that stands as a fact about
+the layer dynamics. The scores in the table stand. Only the sentence about whose taxonomy it
+is was a reading, and it was premature.

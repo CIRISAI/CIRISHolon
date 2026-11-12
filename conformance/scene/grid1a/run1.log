@@ -1,0 +1,57 @@
+{
+ "plants": {
+  "P-YEARS": true,
+  "P-NODUP": true,
+  "P-KEEP4": true,
+  "P-ONELATEST": true,
+  "P-EDITION": true,
+  "P-ABSENT": true,
+  "P-SAME": true,
+  "P-GRID1": true
+ },
+ "file": {
+  "bytes": 16120810,
+  "sha256": "08932763076fa781634371dd1b75d8156f76592710c7e984836ed56a663d5688",
+  "same_as_recorded": true,
+  "stamp": "Tue, 03 Nov 2026 19:06:27 GMT"
+ },
+ "branch": "(a): version 4 written",
+ "R2": {
+  "compared": 700,
+  "mode": "same file",
+  "unequal": 0,
+  "first_unequal": [],
+  "absent_in_later_edition": [],
+  "met": true
+ },
+ "P-KEEP4_on_the_merge": true,
+ "P-ONELATEST_on_the_merge": true,
+ "printed": {
+  "new_rows": 1856,
+  "editions": [
+   "file stamped 2026-11-03; data page says last updated 2026-11-11"
+  ],
+  "places": 224,
+  "with_2019_and_2024": 208,
+  "without_2024": [
+   "Central African Republic",
+   "Comoros",
+   "Dominica",
+   "Falkland Islands (Malvinas)",
+   "Faroe Islands",
+   "French Guiana",
+   "Guadeloupe",
+   "Lesotho",
+   "Martinique",
+   "Reunion",
+   "Saint Pierre and Miquelon",
+   "Sao Tome and Principe",
+   "Ukraine",
+   "Vanuatu",
+   "Virgin Islands (British)",
+   "Virgin Islands (U.S.)"
+  ],
+  "later_year_in_later_edition": [],
+  "areas_in_the_file_not_written": []
+ }
+}

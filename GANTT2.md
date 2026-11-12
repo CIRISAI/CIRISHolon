@@ -1787,3 +1787,15 @@ Records cited; nothing below changes a tier's status.*
 - **Not read:** reachability, time zones, rooms, media. Nothing here says a mesh works.
 
 *(Placed at the end, as above.)*
+
+### GRID-1A — the Ember file read again for a year series (2026-11-12)
+
+- **Why:** version 3 held each place's latest year, 2019 and 2014; a map for 2024 could be
+  served for 113 of 224 places. Dated CORRECTION in `GRID1_RESULTS.md` (my advice to the
+  twin to "use 2024" was wrong for that table).
+- **Read:** the same edition (digest equal). R2 met, 700 of 700 exact. Branch (a).
+- **Built:** `tables/grid0` version 4, 2,827 rows: a row for each year from 2014 to each
+  place's latest. 208 places have 2019 and 2024 both; 16 have no 2024 in the file.
+- **Not changed:** any version-3 row, which row is latest, the kind, the trust (B).
+
+*(Placed at the end, as above.)*

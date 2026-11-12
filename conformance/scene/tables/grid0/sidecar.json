@@ -1,19 +1,19 @@
 {
  "reference": "GRID-0 (a table of priors)",
- "version": 3,
+ "version": 4,
  "table": "grid_table.json",
- "bytes": 1178832,
- "sha256": "818fb0ab99ee8b2aa6b10566fea4cf1bd35910525182c1dbc492e326151198c0",
- "rows": 971,
+ "bytes": 3467868,
+ "sha256": "fd6ed588c8360abfb5c1ab9c55d0c11ae3c71012dc61f282ae674d877afb006f",
+ "rows": 2827,
  "trust": {
-  "B": 838,
+  "B": 2694,
   "A": 93,
   "C": 40
  },
  "serves_registry_rows": [
   "grid.carbon_intensity (the twin's Power map: gCO2 per person-year added or saved, by place)"
  ],
- "provenance": "conformance/scene/SCOUT_GRID.md (documentation only: published pages and PDFs; no dataset was downloaded; each row says how it was read); version 3 adds 700 rows read from one dataset under GRID-1 (conformance/scene/GRID1_PREREG.md, GRID1_RESULTS.md)",
+ "provenance": "conformance/scene/SCOUT_GRID.md (documentation only: published pages and PDFs; no dataset was downloaded; each row says how it was read); version 3 adds 700 rows read from one dataset under GRID-1 (conformance/scene/GRID1_PREREG.md, GRID1_RESULTS.md); version 4 adds 1,856 rows from the same file under GRID-1A (conformance/scene/GRID1A_AMENDMENT.md, GRID1A_RESULTS.md): a row for each year from 2014 to each place's latest",
  "verdict": {
   "all_rows": "unresolved",
   "reason": "priors gathered from documents; nothing scored. Web pages were read through a fetch tool's extraction, not raw; 52 US state rows were transcribed by eye and are rated B for it"
@@ -54,5 +54,30 @@
   "S1a": "met: 5 of 5 secondhand rows 'said to be Ember' for 2025 are within 5 % of the file (Indonesia the farthest, 680 against 705.3)",
   "S2": "KILLED: the file's life-cycle figure is lower than the official direct figure in 2 of 5 places in doubt (South Africa 2024: 717 against 994; Germany 2025: 334 against 344, a near kind). Life-cycle is not the higher figure across sources; a legend must not say so",
   "S3": "209 countries and territories and 15 groupings have a row; p90 over p10 among the 99 whose latest year is 2024 is 5.8; all 12 countries that had only rows rated C now have a row rated B"
+ },
+ "year_series": {
+  "from": 2014,
+  "rule": "one row for each year from 2014 to the place's latest year with an intensity; one edition (file stamped 2026-11-03, sha256 08932763...5688, read again 2026-11-12 and found the same)",
+  "places_with_2019_and_2024": 208,
+  "places_without_2024": [
+   "Central African Republic",
+   "Comoros",
+   "Dominica",
+   "Falkland Islands (Malvinas)",
+   "Faroe Islands",
+   "French Guiana",
+   "Guadeloupe",
+   "Lesotho",
+   "Martinique",
+   "Reunion",
+   "Saint Pierre and Miquelon",
+   "Sao Tome and Principe",
+   "Ukraine",
+   "Vanuatu",
+   "Virgin Islands (British)",
+   "Virgin Islands (U.S.)"
+  ],
+  "latest_for_place": "unchanged from version 3; no row added by GRID-1A is marked latest",
+  "warning": "a year series is one publisher's method; a change of method between editions can sit inside a series drawn across editions, so filter on edition before year"
  }
 }

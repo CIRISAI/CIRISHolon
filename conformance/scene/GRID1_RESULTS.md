@@ -69,3 +69,12 @@ difference of kind cannot explain. This run does not say which is right. Both ro
 - An average rate times a change in load is an attribution, not emissions avoided.
 - The kind is generation-based and life-cycle. It says nothing of imports or of the
   marginal plant.
+
+## CORRECTION 2026-11-12: "use 2024" could not be served by version 3
+
+After this result I advised the twin's lead, in a message and in no file, to draw its map
+for 2024. Version 3 held a 2024 row for 113 of 224 places only: it wrote each place's
+latest year and the years 2019 and 2014, and 95 places have 2025 as their latest. The
+advice was wrong for the table as it stood. GRID-1A (`GRID1A_RESULTS.md`) reads the same
+file again and adds a row for each year from 2014; 208 places now have 2024 and 2019
+both, and 16 have no 2024 in the file at all. A consumer chooses its year and says it.

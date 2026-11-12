@@ -1,5 +1,7 @@
 # TIES-0 (Germany and the United States) — what share of a place's friendship ties lie within its own area, within 25, 50 and 200 km, in the country and abroad, from a connectedness index between areas; and whether a law fitted on half the places predicts the rest. PREREGISTRATION (DRAFT)
 
+*REVIEWED 2026-11-11 (`TIES0_REVIEW.md`): REDESIGN. Not to be frozen. `TIES0_PREREG_DRAFT2.md` replaces it. Kept as written.*
+
 *DRAFT of 2026-11-11. NOT FROZEN; to be attacked by a second reader first. The dataset was
 approved by the lead ("approved all data sources"). Nothing has been fetched or computed.
 Data facts are from `SCOUT_RHYTHM_TIES.md` (documentation only).*

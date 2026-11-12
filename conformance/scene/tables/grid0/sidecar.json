@@ -1,19 +1,19 @@
 {
  "reference": "GRID-0 (a table of priors)",
- "version": 2,
+ "version": 3,
  "table": "grid_table.json",
- "bytes": 266963,
- "sha256": "e960afcd9382cfd7e2c7adf95d0dc5fec5d335d723a12206c0a14a65293a9d86",
- "rows": 271,
+ "bytes": 1178832,
+ "sha256": "818fb0ab99ee8b2aa6b10566fea4cf1bd35910525182c1dbc492e326151198c0",
+ "rows": 971,
  "trust": {
-  "B": 138,
+  "B": 838,
   "A": 93,
   "C": 40
  },
  "serves_registry_rows": [
   "grid.carbon_intensity (the twin's Power map: gCO2 per person-year added or saved, by place)"
  ],
- "provenance": "conformance/scene/SCOUT_GRID.md (documentation only: published pages and PDFs; no dataset was downloaded; each row says how it was read)",
+ "provenance": "conformance/scene/SCOUT_GRID.md (documentation only: published pages and PDFs; no dataset was downloaded; each row says how it was read); version 3 adds 700 rows read from one dataset under GRID-1 (conformance/scene/GRID1_PREREG.md, GRID1_RESULTS.md)",
  "verdict": {
   "all_rows": "unresolved",
   "reason": "priors gathered from documents; nothing scored. Web pages were read through a fetch tool's extraction, not raw; 52 US state rows were transcribed by eye and are rated B for it"
@@ -23,8 +23,36 @@
  "shares_by_source": "as published; several are partial and do not sum to 100",
  "disagreements": "rows that disagree for one place and year are both kept and never averaged (Ember against IEA for 2025; Ember's own editions for the United States 2023: 369 and 393)",
  "moves": "world about -1.5 % a year (2015 to 2025); United States average -4.1 % a year and non-baseload -0.8 % a year (2018 to 2023); not always down (South Africa +5.5 % in 2024)",
- "licences": "values are facts quoted with their sources; each row carries the licence as read, and the report lists the licences that could not be read",
+ "licences": "rows read from documents are facts quoted with their sources, each with its licence as read. The 700 rows with read = dataset are an extract of Ember's database under CC BY 4.0 and are covered by the attribution block, not by 'facts quoted'",
  "holds_no_real_feature": "no person, household or building; places are countries, grid subregions, states and provinces",
  "datasets_not_fetched_needing_approval": "listed in SCOUT_GRID.md; the first (Ember Yearly Electricity Data, CC BY 4.0) would replace most trust-C country rows, the third (EPA eGRID2023 workbooks, public domain) would check the transcribed state rows",
- "changes": "version 2 (2026-11-12): wording only, no value changed. 42 fields carried a drafting mark ('[my reading ...]') that a consumer publishing the text verbatim would show; they now read '(the scout's reading ...)' or '(as summarised; the licence page was not read at source)'. Reported by the twin."
+ "changes": "version 2 (2026-11-12): wording only, no value changed. 42 fields carried a drafting mark ('[my reading ...]') that a consumer publishing the text verbatim would show; they now read '(the scout's reading ...)' or '(as summarised; the licence page was not read at source)'. Reported by the twin. Version 3 (2026-11-12): 700 rows added from Ember's yearly electricity data under GRID-1; four kinds of field added to version-2 rows by a frozen rule; no version-2 value changed.",
+ "attribution": {
+  "creator": "Ember",
+  "title": "Yearly electricity data – Global (CSV)",
+  "file": "https://files.ember-energy.org/public-downloads/generation/outputs/release_generation_yearly_global.csv",
+  "data_page": "https://ember-energy.org/data/yearly-electricity-data/",
+  "edition": "file stamped 2026-11-03; data page says last updated 2026-11-11; fetched 2026-11-12",
+  "file_sha256": "08932763076fa781634371dd1b75d8156f76592710c7e984836ed56a663d5688",
+  "licence": "CC BY 4.0, https://creativecommons.org/licenses/by/4.0/",
+  "licence_as_read": "'Ember content is released under a Creative Commons Attribution Licence (CC-BY-4.0)' (https://ember-energy.org/creative-commons/, read 2026-11-12). The page asks for credit and gives no form of words; none is invented here",
+  "changes": "a selection of years and areas; two names reconciled to this table's (EU written as EU-27, Latin America and Caribbean as Latin America; the name as published is kept on each row); values not altered; shares as given, aggregated sources left out",
+  "no_endorsement": "no endorsement by Ember is implied",
+  "to_consumers": "wherever these rows are drawn or republished, show the credit to Ember and the licence link"
+ },
+ "added_fields": {
+  "superseded_by": "on a version-2 row rated C whose kind says it is Ember's figure: the same place and year, read at source",
+  "map_alternative": "on any other version-2 row rated C of a place that has a new row: a different kind or year; the named row is the one to draw on a one-kind map",
+  "same_series_as / disagrees_with": "on an Ember row read on a page, where the file gives the same place and year; the difference is stated when over 0.5 g",
+  "none_of_these": "says the old value was wrong; no value, kind or trust of a version-2 row changed, and no row rated A carries any",
+  "year_lag": "file_latest_year (2024, the latest year with an intensity for at least half the file's countries) less the row's year, on a place's latest row: -1 means the place has 2025 (94 countries and territories), 0 means 2024 is its latest (99), positive means older (16). A one-year map must filter on year, not on 'latest'",
+  "provisional": "empty on every row: the file has no column marking an estimated year, so a 2025 value may be an estimate and this table cannot say",
+  "small_system": "generation under 1 TWh in that year (50 countries and territories)"
+ },
+ "grid1_readings": {
+  "R1": "met: 20 of 21 rows read on Ember's pages are within 2 % or 1 g of the file; Latin America differs by 2.0 % (247 on the page, 252.1 in the file under the name 'Latin America and Caribbean')",
+  "S1a": "met: 5 of 5 secondhand rows 'said to be Ember' for 2025 are within 5 % of the file (Indonesia the farthest, 680 against 705.3)",
+  "S2": "KILLED: the file's life-cycle figure is lower than the official direct figure in 2 of 5 places in doubt (South Africa 2024: 717 against 994; Germany 2025: 334 against 344, a near kind). Life-cycle is not the higher figure across sources; a legend must not say so",
+  "S3": "209 countries and territories and 15 groupings have a row; p90 over p10 among the 99 whose latest year is 2024 is 5.8; all 12 countries that had only rows rated C now have a row rated B"
+ }
 }

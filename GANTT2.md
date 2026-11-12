@@ -1755,3 +1755,16 @@ Records cited; nothing below changes a tier's status.*
 - **Verdict:** every row unresolved; nothing scored.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-12 — GRID-1: one dataset read into the grid table; life-cycle is not reliably above direct
+
+- **Merged** (`conformance/scene/tables/grid0/` version 3, `conformance/scene/GRID1_RESULTS.md`):
+  700 rows from Ember's yearly electricity data (CC BY 4.0, approved by name), 209
+  countries and territories of one kind, with an attribution block.
+- **Met (R1, S1a):** the file agrees with Ember's own pages in 20 of 21 rows and with the
+  five secondhand rows that claimed to be Ember.
+- **KILLED (S2):** the life-cycle figure is lower than the official direct figure in 2 of 5
+  places in doubt (South Africa 717 against 994). A legend must not order the two kinds.
+- **Carried:** the file marks no year as estimated; 2025 exists for under half the countries.
+
+*(Placed at the end, as above.)*

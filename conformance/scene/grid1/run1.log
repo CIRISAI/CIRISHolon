@@ -1,0 +1,994 @@
+{
+ "plants": {
+  "P-UNIT": true,
+  "P-AGG": true,
+  "P-GAP": true,
+  "P-EST": true,
+  "P-SHARE": true,
+  "P-NAME": true,
+  "P-DUP": true,
+  "P-ID": true,
+  "P-UNITCHK": true,
+  "P-KEEP": true,
+  "P-LONG": true
+ },
+ "R1": {
+  "rows": [
+   {
+    "id": "ember-2025-world",
+    "place": "World",
+    "year": 2025,
+    "table": 458.0,
+    "file": 460.12,
+    "difference_percent": -0.46,
+    "difference_g": -2.12
+   },
+   {
+    "id": "ember-2025-china",
+    "place": "China",
+    "year": 2025,
+    "table": 525.0,
+    "file": 528.28,
+    "difference_percent": -0.62,
+    "difference_g": -3.28
+   },
+   {
+    "id": "ember-2025-united-states",
+    "place": "United States",
+    "year": 2025,
+    "table": 384.0,
+    "file": 384.4,
+    "difference_percent": -0.1,
+    "difference_g": -0.4
+   },
+   {
+    "id": "ember-2025-eu-27",
+    "place": "EU-27",
+    "year": 2025,
+    "table": 210.0,
+    "file": 210.95,
+    "difference_percent": -0.45,
+    "difference_g": -0.95
+   },
+   {
+    "id": "ember-2025-india",
+    "place": "India",
+    "year": 2025,
+    "table": 670.0,
+    "file": 670.97,
+    "difference_percent": -0.14,
+    "difference_g": -0.97
+   },
+   {
+    "id": "ember-2025-russia",
+    "place": "Russia",
+    "year": 2025,
+    "table": 450.0,
+    "file": 446.91,
+    "difference_percent": 0.69,
+    "difference_g": 3.09
+   },
+   {
+    "id": "ember-2025-japan",
+    "place": "Japan",
+    "year": 2025,
+    "table": 477.0,
+    "file": 473.74,
+    "difference_percent": 0.69,
+    "difference_g": 3.26
+   },
+   {
+    "id": "ember-2025-brazil",
+    "place": "Brazil",
+    "year": 2025,
+    "table": 110.0,
+    "file": 109.22,
+    "difference_percent": 0.72,
+    "difference_g": 0.78
+   },
+   {
+    "id": "ember-2025-asia",
+    "place": "Asia",
+    "year": 2025,
+    "table": 544.0,
+    "file": 547.77,
+    "difference_percent": -0.69,
+    "difference_g": -3.77
+   },
+   {
+    "id": "ember-2025-latin-america",
+    "place": "Latin America",
+    "year": 2025,
+    "table": 247.0,
+    "file": 252.08,
+    "difference_percent": -2.02,
+    "difference_g": -5.08
+   },
+   {
+    "id": "ember-2024-world",
+    "place": "World",
+    "year": 2024,
+    "table": 473.0,
+    "file": 473.04,
+    "difference_percent": -0.01,
+    "difference_g": -0.04
+   },
+   {
+    "id": "ember-2024-china",
+    "place": "China",
+    "year": 2024,
+    "table": 560.0,
+    "file": 558.97,
+    "difference_percent": 0.19,
+    "difference_g": 1.03
+   },
+   {
+    "id": "ember-2024-united-states",
+    "place": "United States",
+    "year": 2024,
+    "table": 384.0,
+    "file": 383.81,
+    "difference_percent": 0.05,
+    "difference_g": 0.19
+   },
+   {
+    "id": "ember-2024-eu-27",
+    "place": "EU-27",
+    "year": 2024,
+    "table": 213.0,
+    "file": 211.63,
+    "difference_percent": 0.65,
+    "difference_g": 1.37
+   },
+   {
+    "id": "ember-2024-india",
+    "place": "India",
+    "year": 2024,
+    "table": 708.0,
+    "file": 707.13,
+    "difference_percent": 0.12,
+    "difference_g": 0.87
+   },
+   {
+    "id": "ember-2024-russia",
+    "place": "Russia",
+    "year": 2024,
+    "table": 449.0,
+    "file": 443.52,
+    "difference_percent": 1.24,
+    "difference_g": 5.48
+   },
+   {
+    "id": "ember-2024-japan",
+    "place": "Japan",
+    "year": 2024,
+    "table": 482.0,
+    "file": 484.34,
+    "difference_percent": -0.48,
+    "difference_g": -2.34
+   },
+   {
+    "id": "ember-2024-brazil",
+    "place": "Brazil",
+    "year": 2024,
+    "table": 103.0,
+    "file": 101.81,
+    "difference_percent": 1.17,
+    "difference_g": 1.19
+   },
+   {
+    "id": "ember-2015-world",
+    "place": "World",
+    "year": 2015,
+    "table": 533.0,
+    "file": 534.04,
+    "difference_percent": -0.2,
+    "difference_g": -1.04
+   },
+   {
+    "id": "ember-2023-united-states-rev",
+    "place": "United States",
+    "year": 2023,
+    "table": 393.0,
+    "file": 392.9,
+    "difference_percent": 0.03,
+    "difference_g": 0.1
+   },
+   {
+    "id": "ember-2007-united-states",
+    "place": "United States",
+    "year": 2007,
+    "table": 598.0,
+    "file": 598.48,
+    "difference_percent": -0.08,
+    "difference_g": -0.48
+   }
+  ],
+  "outside_2_percent_or_1_g": [
+   "ember-2025-latin-america"
+  ],
+  "reading": "met",
+  "earlier_method_rows_no_verdict": [
+   {
+    "id": "ember-2023-world-ed2024",
+    "place": "World",
+    "year": 2023,
+    "table": 480.0,
+    "file": 485.62,
+    "difference_percent": -1.16,
+    "difference_g": -5.62
+   },
+   {
+    "id": "ember-2023-china-ed2024",
+    "place": "China",
+    "year": 2023,
+    "table": 581.0,
+    "file": 586.37,
+    "difference_percent": -0.92,
+    "difference_g": -5.37
+   },
+   {
+    "id": "ember-2023-united-states-ed2024",
+    "place": "United States",
+    "year": 2023,
+    "table": 369.0,
+    "file": 392.9,
+    "difference_percent": -6.08,
+    "difference_g": -23.9
+   },
+   {
+    "id": "ember-2023-india-ed2024",
+    "place": "India",
+    "year": 2023,
+    "table": 713.0,
+    "file": 714.22,
+    "difference_percent": -0.17,
+    "difference_g": -1.22
+   },
+   {
+    "id": "ember-2023-eu-27-ed2024",
+    "place": "EU-27",
+    "year": 2023,
+    "table": 244.0,
+    "file": 236.01,
+    "difference_percent": 3.39,
+    "difference_g": 7.99
+   },
+   {
+    "id": "ember-2023-russia-ed2024",
+    "place": "Russia",
+    "year": 2023,
+    "table": 441.0,
+    "file": 446.57,
+    "difference_percent": -1.25,
+    "difference_g": -5.57
+   },
+   {
+    "id": "ember-2023-japan-ed2024",
+    "place": "Japan",
+    "year": 2023,
+    "table": 485.0,
+    "file": 492.6,
+    "difference_percent": -1.54,
+    "difference_g": -7.6
+   }
+  ]
+ },
+ "S1a": {
+  "against_2025": [
+   {
+    "id": "gc-ember2025-norway",
+    "place": "Norway",
+    "year": 2025,
+    "table": 28.0,
+    "file": 28.05,
+    "difference_percent": -0.18,
+    "difference_g": -0.05
+   },
+   {
+    "id": "gc-ember2025-sweden",
+    "place": "Sweden",
+    "year": 2025,
+    "table": 35.0,
+    "file": 35.39,
+    "difference_percent": -1.1,
+    "difference_g": -0.39
+   },
+   {
+    "id": "gc-ember2025-canada",
+    "place": "Canada",
+    "year": 2025,
+    "table": 191.0,
+    "file": 191.59,
+    "difference_percent": -0.31,
+    "difference_g": -0.59
+   },
+   {
+    "id": "gc-ember2025-mexico",
+    "place": "Mexico",
+    "year": 2025,
+    "table": 474.0,
+    "file": 481.44,
+    "difference_percent": -1.55,
+    "difference_g": -7.44
+   },
+   {
+    "id": "gc-ember2025-indonesia",
+    "place": "Indonesia",
+    "year": 2025,
+    "table": 680.0,
+    "file": 705.33,
+    "difference_percent": -3.59,
+    "difference_g": -25.33
+   }
+  ],
+  "against_2024_printed": [
+   {
+    "id": "gc-ember2025-norway",
+    "place": "Norway",
+    "year": 2024,
+    "table": 28.0,
+    "file": 29.64,
+    "difference_percent": -5.54,
+    "difference_g": -1.64
+   },
+   {
+    "id": "gc-ember2025-sweden",
+    "place": "Sweden",
+    "year": 2024,
+    "table": 35.0,
+    "file": 34.89,
+    "difference_percent": 0.3,
+    "difference_g": 0.11
+   },
+   {
+    "id": "gc-ember2025-canada",
+    "place": "Canada",
+    "year": 2024,
+    "table": 191.0,
+    "file": 184.76,
+    "difference_percent": 3.37,
+    "difference_g": 6.24
+   },
+   {
+    "id": "gc-ember2025-mexico",
+    "place": "Mexico",
+    "year": 2024,
+    "table": 474.0,
+    "file": 489.75,
+    "difference_percent": -3.21,
+    "difference_g": -15.75
+   },
+   {
+    "id": "gc-ember2025-indonesia",
+    "place": "Indonesia",
+    "year": 2024,
+    "table": 680.0,
+    "file": 710.37,
+    "difference_percent": -4.27,
+    "difference_g": -30.37
+   }
+  ],
+  "within_2025": 5,
+  "within_2024": 5,
+  "outcome": "met"
+ },
+ "S1b_no_verdict": [
+  {
+   "id": "statista-ember-2023-poland",
+   "place": "Poland",
+   "year": 2023,
+   "table": 662.0,
+   "file": 650.85,
+   "difference_percent": 1.71,
+   "difference_g": 11.15
+  },
+  {
+   "id": "statista-ember-2023-sweden",
+   "place": "Sweden",
+   "year": 2023,
+   "table": 41.0,
+   "file": 38.44,
+   "difference_percent": 6.66,
+   "difference_g": 2.56
+  },
+  {
+   "id": "statista-ember-2023-france",
+   "place": "France",
+   "year": 2023,
+   "table": 56.0,
+   "file": 53.29,
+   "difference_percent": 5.09,
+   "difference_g": 2.71
+  }
+ ],
+ "S2": {
+  "reproduction": [
+   {
+    "id": "egrid2023-us-total",
+    "place": "United States",
+    "year": 2023,
+    "table": 348.0,
+    "file": 392.9,
+    "difference_percent": -11.43,
+    "difference_g": -44.9,
+    "file_minus_official_g": 44.9,
+    "file_is_lower": false
+   },
+   {
+    "id": "fr-rte-2025-direct",
+    "place": "France",
+    "year": 2025,
+    "table": 19.6,
+    "file": 41.22,
+    "difference_percent": -52.45,
+    "difference_g": -21.62,
+    "file_minus_official_g": 21.62,
+    "file_is_lower": false
+   }
+  ],
+  "in_doubt": [
+   {
+    "id": "ca-nir-2023-canada-gen",
+    "place": "Canada",
+    "year": 2023,
+    "table": 100.0,
+    "file": 177.46,
+    "difference_percent": -43.65,
+    "difference_g": -77.46,
+    "file_minus_official_g": 77.46,
+    "file_is_lower": false
+   },
+   {
+    "id": "za-dffe-2024-dggef",
+    "place": "South Africa",
+    "year": 2024,
+    "table": 994.0,
+    "file": 717.43,
+    "difference_percent": 38.55,
+    "difference_g": 276.57,
+    "file_minus_official_g": -276.57,
+    "file_is_lower": true
+   },
+   {
+    "id": "cn-mee-2022-national",
+    "place": "China",
+    "year": 2022,
+    "table": 536.6,
+    "file": 589.97,
+    "difference_percent": -9.05,
+    "difference_g": -53.37,
+    "file_minus_official_g": 53.37,
+    "file_is_lower": false
+   },
+   {
+    "id": "in-cea-fy2022-23-avg-incl-res",
+    "place": "India",
+    "year": 2023,
+    "table": 716.0,
+    "file": 714.22,
+    "difference_percent": 0.25,
+    "difference_g": 1.78,
+    "file_minus_official_g": -1.78,
+    "file_is_lower": false
+   },
+   {
+    "id": "de-uba-2025-co2-strommix",
+    "place": "Germany",
+    "year": 2025,
+    "table": 344.0,
+    "file": 334.12,
+    "difference_percent": 2.96,
+    "difference_g": 9.88,
+    "file_minus_official_g": -9.88,
+    "file_is_lower": true
+   }
+  ],
+  "file_lower_in": 2,
+  "outcome": "killed"
+ },
+ "P-KEEP_on_the_real_merge": true,
+ "S3": {
+  "file_latest_year": 2024,
+  "new_rows": 700,
+  "countries_with_a_row": 209,
+  "at_lag_zero": 99,
+  "lagging": [
+   [
+    "Argentina",
+    2025
+   ],
+   [
+    "Armenia",
+    2025
+   ],
+   [
+    "Australia",
+    2025
+   ],
+   [
+    "Austria",
+    2025
+   ],
+   [
+    "Azerbaijan",
+    2025
+   ],
+   [
+    "Bangladesh",
+    2025
+   ],
+   [
+    "Belarus",
+    2025
+   ],
+   [
+    "Belgium",
+    2025
+   ],
+   [
+    "Bolivia",
+    2025
+   ],
+   [
+    "Bosnia Herzegovina",
+    2025
+   ],
+   [
+    "Brazil",
+    2025
+   ],
+   [
+    "Bulgaria",
+    2025
+   ],
+   [
+    "Cambodia",
+    2025
+   ],
+   [
+    "Canada",
+    2025
+   ],
+   [
+    "Central African Republic",
+    2023
+   ],
+   [
+    "Chile",
+    2025
+   ],
+   [
+    "China",
+    2025
+   ],
+   [
+    "Colombia",
+    2025
+   ],
+   [
+    "Comoros",
+    2023
+   ],
+   [
+    "Costa Rica",
+    2025
+   ],
+   [
+    "Croatia",
+    2025
+   ],
+   [
+    "Cyprus",
+    2025
+   ],
+   [
+    "Czechia",
+    2025
+   ],
+   [
+    "Denmark",
+    2025
+   ],
+   [
+    "Dominica",
+    2023
+   ],
+   [
+    "Dominican Republic",
+    2025
+   ],
+   [
+    "Ecuador",
+    2025
+   ],
+   [
+    "Egypt",
+    2025
+   ],
+   [
+    "El Salvador",
+    2025
+   ],
+   [
+    "Estonia",
+    2025
+   ],
+   [
+    "Ethiopia",
+    2025
+   ],
+   [
+    "Falkland Islands (Malvinas)",
+    2023
+   ],
+   [
+    "Faroe Islands",
+    2023
+   ],
+   [
+    "Finland",
+    2025
+   ],
+   [
+    "France",
+    2025
+   ],
+   [
+    "French Guiana",
+    2023
+   ],
+   [
+    "Georgia",
+    2025
+   ],
+   [
+    "Germany",
+    2025
+   ],
+   [
+    "Greece",
+    2025
+   ],
+   [
+    "Guadeloupe",
+    2023
+   ],
+   [
+    "Hungary",
+    2025
+   ],
+   [
+    "Iceland",
+    2025
+   ],
+   [
+    "India",
+    2025
+   ],
+   [
+    "Indonesia",
+    2025
+   ],
+   [
+    "Iran",
+    2025
+   ],
+   [
+    "Ireland",
+    2025
+   ],
+   [
+    "Israel",
+    2025
+   ],
+   [
+    "Italy",
+    2025
+   ],
+   [
+    "Japan",
+    2025
+   ],
+   [
+    "Kazakhstan",
+    2025
+   ],
+   [
+    "Kenya",
+    2025
+   ],
+   [
+    "Kosovo",
+    2025
+   ],
+   [
+    "Kuwait",
+    2025
+   ],
+   [
+    "Kyrgyzstan",
+    2025
+   ],
+   [
+    "Latvia",
+    2025
+   ],
+   [
+    "Lesotho",
+    2022
+   ],
+   [
+    "Lithuania",
+    2025
+   ],
+   [
+    "Luxembourg",
+    2025
+   ],
+   [
+    "Malaysia",
+    2025
+   ],
+   [
+    "Malta",
+    2025
+   ],
+   [
+    "Martinique",
+    2023
+   ],
+   [
+    "Mexico",
+    2025
+   ],
+   [
+    "Moldova",
+    2025
+   ],
+   [
+    "Mongolia",
+    2025
+   ],
+   [
+    "Montenegro",
+    2025
+   ],
+   [
+    "Morocco",
+    2025
+   ],
+   [
+    "Netherlands",
+    2025
+   ],
+   [
+    "New Zealand",
+    2025
+   ],
+   [
+    "Nigeria",
+    2025
+   ],
+   [
+    "North Macedonia",
+    2025
+   ],
+   [
+    "Norway",
+    2025
+   ],
+   [
+    "Oman",
+    2025
+   ],
+   [
+    "Pakistan",
+    2025
+   ],
+   [
+    "Paraguay",
+    2025
+   ],
+   [
+    "Peru",
+    2025
+   ],
+   [
+    "Poland",
+    2025
+   ],
+   [
+    "Portugal",
+    2025
+   ],
+   [
+    "Puerto Rico",
+    2025
+   ],
+   [
+    "Reunion",
+    2023
+   ],
+   [
+    "Romania",
+    2025
+   ],
+   [
+    "Russia",
+    2025
+   ],
+   [
+    "Saint Pierre and Miquelon",
+    2023
+   ],
+   [
+    "Sao Tome and Principe",
+    2023
+   ],
+   [
+    "Saudi Arabia",
+    2025
+   ],
+   [
+    "Serbia",
+    2025
+   ],
+   [
+    "Singapore",
+    2025
+   ],
+   [
+    "Slovakia",
+    2025
+   ],
+   [
+    "Slovenia",
+    2025
+   ],
+   [
+    "South Africa",
+    2025
+   ],
+   [
+    "South Korea",
+    2025
+   ],
+   [
+    "Spain",
+    2025
+   ],
+   [
+    "Sri Lanka",
+    2025
+   ],
+   [
+    "Sweden",
+    2025
+   ],
+   [
+    "Switzerland",
+    2025
+   ],
+   [
+    "Taiwan (China)",
+    2025
+   ],
+   [
+    "Tajikistan",
+    2025
+   ],
+   [
+    "Thailand",
+    2025
+   ],
+   [
+    "The Philippines",
+    2025
+   ],
+   [
+    "Tunisia",
+    2025
+   ],
+   [
+    "T\u00fcrkiye",
+    2025
+   ],
+   [
+    "Ukraine",
+    2022
+   ],
+   [
+    "United Arab Emirates",
+    2025
+   ],
+   [
+    "United Kingdom",
+    2025
+   ],
+   [
+    "United States",
+    2025
+   ],
+   [
+    "Uruguay",
+    2025
+   ],
+   [
+    "Uzbekistan",
+    2025
+   ],
+   [
+    "Vanuatu",
+    2023
+   ],
+   [
+    "Viet Nam",
+    2025
+   ],
+   [
+    "Virgin Islands (British)",
+    2023
+   ],
+   [
+    "Virgin Islands (U.S.)",
+    2023
+   ]
+  ],
+  "provisional": 0,
+  "small_systems": 50,
+  "p10_p90_at_lag_zero": [
+   117.172,
+   681.257
+  ],
+  "ratio_p90_to_p10": 5.814162086505308,
+  "lowest_and_highest_at_lag_zero_not_small": [
+   [
+    "Bhutan",
+    23.7
+   ],
+   [
+    "Nepal",
+    24.0
+   ],
+   [
+    "Albania",
+    24.7
+   ],
+   [
+    "Brunei Darussalam",
+    893.0
+   ],
+   [
+    "Bahrain",
+    902.5
+   ],
+   [
+    "Turkmenistan",
+    1306.2
+   ]
+  ],
+  "of_the_12_with_only_C_rows_now_at_B": [
+   "Australia",
+   "Indonesia",
+   "Italy",
+   "Kenya",
+   "Mexico",
+   "Netherlands",
+   "Nigeria",
+   "Norway",
+   "Poland",
+   "South Korea",
+   "Spain",
+   "Sweden"
+  ],
+  "shares_partial": 0,
+  "fields_added_to_version_2_rows": {
+   "superseded_by": 8,
+   "map_alternative": 32,
+   "same_series_as": 28,
+   "disagrees_with": 23
+  }
+ },
+ "branch": "(a): merged as version 3"
+}

@@ -1694,3 +1694,20 @@ Records cited; nothing below changes a tier's status.*
   than its table has cells, and a combined flag no reading supported.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-12 — PRESENCEGEN-1: the gate failed, nothing ships
+
+- **Branch (e)** (`conformance/scene/PRESENCEGEN1_RESULTS.md`): the frame's generated days
+  are awake 0.645 of the time against 0.623 in the diaries (budget 0.01); the chain's are
+  0.623. The stakes were not read and 2024 was not opened.
+- **Before the parse** a plant failed (a two-hour cell straddling the eight-hour line) and
+  the freeze took a dated CORRECTION, committed alone.
+- **Why:** one chain for sleep at home, fitted over people about to leave and applied to
+  people who stay; returns set awake where 0.107 are asleep; no sleep at home between
+  outings.
+- **Stands:** a seeded minute per hour reads a diary to the fourth decimal; the hour's
+  start overstates travel by a fifth.
+- **Next:** a successor with the fill at home keyed on its place in the day, frozen
+  before 2024 is opened.
+
+*(Placed at the end, as above.)*

@@ -509,7 +509,36 @@ def run(raw, binary, out_dir):
     return 0
 
 
+def diagnose(raw, binary, out_dir):
+    """After a failed gate: where the frame's awake hours come from. Fit years only; 2024 is not loaded."""
+    D = load(raw, [2022, 2023])
+    w, S = D["w"], D["samp"].astype(int)
+    allm = np.ones(len(w), dtype=bool)
+    fr = [frame_of(s) for s in S]
+    inside = np.zeros(S.shape, dtype=bool)
+    for i, f in enumerate(fr):
+        if f:
+            inside[i, f[0]:f[1]] = True
+    tot = 24 * w.sum()
+    out = {"diaries": int(len(w)),
+           "home_asleep_within_the_frame_share_of_person_hours": float((w[:, None] * (inside & (S == 0))).sum() / tot),
+           "home_awake_within_the_frame_share_of_person_hours": float((w[:, None] * (inside & (S == 1))).sum() / tot),
+           "days_with_home_sleep_within_the_frame": float((w * (inside & (S == 0)).any(1)).sum() / w.sum()),
+           "asleep_in_the_hour_after_last_home": float(sum(w[i] for i, f in enumerate(fr) if f and f[1] < 24 and S[i, f[1]] == 0)
+                                                       / sum(w[i] for i, f in enumerate(fr) if f and f[1] < 24))}
+    Sg, wg, _, _, _, _, _ = run_gen(binary, os.path.join(out_dir, "tables_fit.txt"), "frame", D, allm, seeds_per=5)
+    for name, states in (("home_asleep", [0]), ("home_awake", [1]), ("elsewhere_asleep", [4])):
+        a, b = hourly(Sg, wg, states), hourly(S, w, states)
+        out[name + "_frame_minus_diaries_mean"] = float((a - b).mean())
+        out[name + "_frame_minus_diaries_by_slot"] = [round(float(x), 4) for x in a - b]
+    json.dump(out, open(os.path.join(out_dir, "diagnosis.json"), "w"), indent=1)
+    print(json.dumps(out, indent=1))
+    return 0
+
+
 if __name__ == "__main__":
+    if sys.argv[1] == "diagnose":
+        sys.exit(diagnose(sys.argv[2], sys.argv[3], sys.argv[4]))
     if sys.argv[1] == "plants":
         r = plants(sys.argv[2])
         for k, v in r.items():

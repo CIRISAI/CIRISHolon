@@ -204,3 +204,30 @@ smaller than a head: reading the answer at layer 28 instead of the end. On these
 that would take the model's own accuracy from 0.56 to 0.65 overall and Priorities from 0.20
 to 1.00. It has to be tested on the sealed items under a frozen design before it is
 believed; ten items is a direction.
+
+## Fourth round, 2026-11-11: one block does it, the names are suppressed, and a caveat on Priorities
+
+As reported by the agent session, from saved states; not re-derived here.
+
+- **The trace (this session's prediction HOLDS, sharply).** For the 8 Priorities items that
+  are lost, the model's own probability on the correct name is 0.84 at layer 28 and 0.02 at
+  layer 29; on the name finally said, 0.07 then 0.95. All 8 flip at that one step and never
+  return. Premises (12 lost) is a two-step version: 0.69, then 0.39, hovering to layer 32,
+  then 0.02. One block does most of it, and it is the block whose write had the highest
+  kind share earlier.
+- **Where the lost answers go (this session's prediction FAILS).** Not to the commonest
+  kinds and not to the first or last option. Of 23 items right at layer 28 and wrong at the
+  end: Manner 5, Facts 4, Structure 4, Rules 3, Process 3, Circumstances 2, Identity 1,
+  Model 1. What does show: at the end the model NEVER says Premises (0 picks of 124, against
+  19 at layer 28) and says Priorities 3 times (14 at layer 28). It reads as SUPPRESSION of
+  particular names, the items scattering to whatever is next best. Net of the last six
+  layers: 23 lost, 12 gained.
+- **A caveat that weakens the Priorities row above.** In layers 17 to 23, before the output
+  stage can read anything, it picks one name for 66 to 100 % of all items, and that name is
+  Priorities. So "reads Priorities at 1.00 at layer 28" is partly a leftover default: at
+  layer 28 Priorities is picked 14 times with a precision of 0.71. Premises has no such
+  default and is the CLEAN case of "translated, then lost".
+- **The early exit, in sample:** 0.645 at layer 28 against 0.556 at the end. Layer 28 is the
+  maximum of a curve that was looked at, so the 0.09 is biased upward. The test on the
+  sealed items (exit fixed at 28, this session's two lines as stated) has not been run and
+  waits on the lead's word given to that session directly.

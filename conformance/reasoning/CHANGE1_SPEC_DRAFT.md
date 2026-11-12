@@ -156,3 +156,48 @@ the right-hand column are right is for the RATCHET and Constitution sessions to 
   different meaning, and what separates them is whether the claim was true when made: a
   difference of Confidence or Facts about the earlier claim, not a kind of its own. They
   are a test in their own right and are reported as such.
+
+## REVISION 2, 2026-11-12: the deep half is a table of the agent's own blocks, one removed at a time
+
+The RATCHET session confirms the reading from its page's words (a change to a part of the
+agent is a change with a kind; "what does varying this break?" asked of each part is the
+folding question), with two cautions, and reports that no table of blocks to kinds exists.
+
+**Evidence already on some rows, as it reports:**
+- Premises (the whole values document swapped), from its TORQUE campaign: about one
+  verdict in eight moved (12.9 % by verdict agreement), on the full pipeline and an ethics
+  benchmark, not on Part A.
+- Process (a conscience allowed to override): the conscience replaced the model's
+  selection in 669 of 2,389 thoughts; without it the model chose ponder 10 times and
+  defer 5 times in 1,587.
+- Process or Structure (summaries present / withheld) and Identity with Rules and Manner
+  (template / none): on disk for the 1,620 items, not yet read.
+
+**Caution 1: the existing arms are COMPOUND.** The default template changes the identity
+text, a deferral block, domain knowledge, the verb list and the user message's wording
+at once. That arm is "Identity with Rules and Manner", not one kind. To put a kind on a
+row, an arm has to remove ONE block.
+
+**Caution 2: the kind of an agent-side change is a label too.** Its own first guess for
+"summaries withheld" was Circumstances; this session's was Process or Structure. That
+disagreement is the reason to label these blind as well.
+
+**The table to build, as the design of the deep half:**
+
+- **Rows:** the blocks of the action-selection prompt and the stages of the pipeline, as
+  the agent's renderer and manifest name them (the ethics text; the template's identity
+  text; its deferral block; its domain knowledge; the verb list and schemas; each
+  evaluator's summary; each conscience; the second pass).
+- **One arm per row:** that block removed, or that stage skipped, and nothing else. The
+  renderer makes prompt arms with no model call.
+- **Columns:** the kind or kinds each removal changes, labelled blind by the Constitution
+  session's fresh readers from a plain description of the block and of what is removed.
+- **The reading:** on the same items, on how many does the verb chosen move, against a
+  floor where nothing was removed. Staked per row before it is run: a block whose removal
+  moves the verb on no more items than the floor is one a purpose-built network need not
+  carry, FOR THIS TASK AND THESE ITEMS.
+- **Where it runs:** on the calibrated Gemma, where a run costs nothing; on the deployed
+  model each arm spends provider money and is the lead's to approve.
+
+The text-edit set above then covers the eight kinds an edit can be, and this table the
+rest.

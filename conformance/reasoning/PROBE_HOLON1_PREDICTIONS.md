@@ -147,3 +147,60 @@ for a family, a verb and a standing, whether a transition is enabled and whether
 confirmed before it is signed. Items rendered from those tables would carry their labels by
 lookup, so no two labellers can disagree, and would have a correct next act as their task
 outcome. The cost is that they are generated from a template and are not the curated items.
+
+## Third round, 2026-11-11: the reruns, the matched control, and the gap by kind
+
+As reported by the agent session; designs frozen there first; not re-derived here. Per-kind
+figures rest on 10 to 12 items each, and the "said" column had been seen in an earlier run.
+
+**What sits under everything else.** Late in the network, when the model is asked, the kind
+subspace IS most of the loud directions: at layers 20 to 28 the eleven loudest directions
+outside it reach only 23 to 32 % of its variance, and any control matched to it in variance
+overlaps it by 56 to 75 %. A variance-matched control that is disjoint from the kinds cannot
+be built at that depth.
+
+| | this session's prediction | reported | score |
+|---|---|---|---|
+| **R3** | a variance-matched shuffled-label subspace removed at layer 24 leaves asked accuracy at 0.60 or above | 0.30 (the kind subspace: 0.15; clean: 0.82). The control shares 75 % of the kind subspace. A disjoint control with 27 % of the variance leaves 0.82 | **FAILED**, and uninformative: the two cannot be pulled apart there |
+| **R1** | sustained removal from layer 16 drops asked accuracy to 0.30 or below while the control stays at 0.70 or above | kind 0.09; control 0.12 | **FAILED on the control**: removing any matched loud subspace at every layer destroys the answer |
+| **R2** | recovery after one-shot removal is monotone, half back within 4 layers; a constant lag would be the "maintained" reading | monotone, more than half back by 4 layers at each depth; slower and incomplete when removed at layer 20 | **HOLDS**, and favours consolidation over a constant-rate repair |
+| **R4** | not asked, with a matched control: decoration | removal is no larger than the matched control (p = 0.29, 0.81, 0.23); medians 0.004 against 0.004–0.005 | **HOLDS: decoration by the frozen rule.** The earlier "pass" was the variance mismatch |
+
+With the matched control the asked-for effect at layers 20 to 28 is still there and much
+smaller than first reported: a margin of 0.08 to 0.17 over the control, not 0.55.
+
+**The gap by kind, asked** (held = what a probe reads from the state at layer 25; head = what
+the model's own output stage reads at layer 28; said = its answer):
+
+| kind | held | head at 28 | said |
+|---|---|---|---|
+| Premises | 0.85 | 0.83 | **0.00** |
+| Priorities (the axiotic kind) | 0.88 | **1.00** | **0.20** |
+| Circumstances | 0.99 | 0.10 | 0.20 |
+| Model | 0.90 | 0.00 | 0.30 |
+| Confidence | 0.77 | 0.30 | 0.20 |
+| Record | 0.80 | | 0.60 |
+| Facts | 0.90 | | 0.80 |
+| Identity | 1.00 | | 0.92 |
+| Process | 0.90 | | 0.90 |
+| Rules | 0.89 | | 0.90 |
+| Structure | 0.67 | | 0.70 |
+| Manner | 0.89 | | 1.00 |
+
+This session predicted that Priorities would have the largest gap and be among the three
+worst unprompted. Half holds: its gap is the third largest (behind Premises and
+Circumstances); unprompted it is not among the worst (0.82).
+
+**Two different failures, which nobody predicted.** Circumstances, Model and Confidence are
+never translated: the output stage cannot read them at layer 28 either. Priorities and
+Premises ARE translated (1.00 and 0.83 at layer 28) and are then lost in the last six layers
+(0.20 and 0.00 said). For the kind that says who goes first, the model has the right answer
+in words five layers from the end and says something else.
+
+**What that suggests, not yet run.** (1) Where the lost answers go: the confusion of said
+against head-at-28 for Priorities and Premises. If they go to the commonest kinds, the last
+layers are overriding a correct reading with a default. (2) The smallest carrier may be
+smaller than a head: reading the answer at layer 28 instead of the end. On these figures
+that would take the model's own accuracy from 0.56 to 0.65 overall and Priorities from 0.20
+to 1.00. It has to be tested on the sealed items under a frozen design before it is
+believed; ten items is a direction.

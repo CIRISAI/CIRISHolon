@@ -1,0 +1,21 @@
+# PILOT at x=5, m/g in {1.2, 0.1}: not the campaign's point; sources bars only
+G0  N=12 x=4 massless Q=0: -26.1743157050 against the engine's typed referee -26.1743157050: |diff| = 2.6e-11  MET
+PILOT N=12 x=5.0 m/g=1.2 alpha=0.0: dE-=+6.287064 dE+=+8.581310 gap-=3.581273 dist-=0.5467 dist+=1.7535 Ec=+0.0001 monotone=True gauss=1.8e-15
+PILOT N=14 x=5.0 m/g=1.2 alpha=0.0: dE-=+6.287051 dE+=+8.581425 gap-=3.580712 dist-=0.5468 dist+=1.7530 Ec=+0.0000 monotone=True gauss=1.3e-15
+PILOT N=16 x=5.0 m/g=1.2 alpha=0.0: dE-=+6.287050 dE+=+8.581435 gap-=3.580661 dist-=0.5468 dist+=1.7530 Ec=+0.0000 monotone=True gauss=5.3e-15
+PILOT N=18 x=5.0 m/g=1.2 alpha=0.0: dE-=+6.287050 dE+=+8.581435 gap-=3.580656 dist-=0.5468 dist+=1.7530 Ec=+0.0000 monotone=True gauss=1.0e-14
+PILOT N=12 x=5.0 m/g=1.2 alpha=0.5: dE-=+5.121050 dE+=+10.039611 gap-=0.951121 dist-=3.2746 dist+=1.2829 Ec=+0.4864 monotone=True gauss=2.2e-15
+PILOT N=14 x=5.0 m/g=1.2 alpha=0.5: dE-=+5.076076 dE+=+10.039630 gap-=0.746070 dist-=3.9824 dist+=1.2829 Ec=+0.4863 monotone=True gauss=1.0e-15
+PILOT N=16 x=5.0 m/g=1.2 alpha=0.5: dE-=+5.044400 dE+=+10.039632 gap-=0.600052 dist-=4.7084 dist+=1.2829 Ec=+0.4863 monotone=True gauss=1.8e-15
+PILOT N=18 x=5.0 m/g=1.2 alpha=0.5: dE-=+5.021131 dE+=+10.039632 gap-=0.492772 dist-=5.4508 dist+=1.2829 Ec=+0.4863 monotone=True gauss=4.8e-15
+PILOT N=12 x=5.0 m/g=0.1 alpha=0.0: dE-=+1.870102 dE+=+4.959347 gap-=3.810828 dist-=1.9229 dist+=2.6422 Ec=+0.0385 monotone=True gauss=2.0e-15
+PILOT N=14 x=5.0 m/g=0.1 alpha=0.0: dE-=+1.844855 dE+=+4.995422 gap-=3.723291 dist-=1.9591 dist+=2.6495 Ec=+0.0263 monotone=True gauss=1.8e-15
+PILOT N=16 x=5.0 m/g=0.1 alpha=0.0: dE-=+1.833077 dE+=+5.012916 gap-=3.675314 dist-=1.9768 dist+=2.6487 Ec=+0.0180 monotone=True gauss=4.4e-15
+PILOT N=18 x=5.0 m/g=0.1 alpha=0.0: dE-=+1.827572 dE+=+5.021190 gap-=3.648992 dist-=1.9853 dist+=2.6471 Ec=+0.0123 monotone=True gauss=1.8e-14
+PILOT N=12 x=5.0 m/g=0.1 alpha=0.5: dE-=-0.491396 dE+=+7.273933 gap-=2.853258 dist-=3.0486 dist+=2.1804 Ec=+0.3498 monotone=True gauss=1.9e-15
+PILOT N=14 x=5.0 m/g=0.1 alpha=0.5: dE-=-0.668394 dE+=+7.336067 gap-=2.589055 dist-=3.4402 dist+=2.2634 Ec=+0.3154 monotone=True gauss=1.3e-15
+PILOT N=16 x=5.0 m/g=0.1 alpha=0.5: dE-=-0.796231 dE+=+7.375728 gap-=2.386437 dist-=3.7939 dist+=2.3459 Ec=+0.2832 monotone=True gauss=5.6e-15
+PILOT N=18 x=5.0 m/g=0.1 alpha=0.5: dE-=-0.890769 dE+=+7.402973 gap-=2.227435 dist-=4.1081 dist+=2.4257 Ec=+0.2559 monotone=True gauss=9.7e-15
+PILOT pinned left-half background 0.55: X-=8.1824
+PILOT pinned left-half background 0.45: X-=12.7548
+PILOT unpinned: X-=11.5492

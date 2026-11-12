@@ -105,3 +105,45 @@ it is FAILING TO DO."* The text above is kept; this is how the same numbers are 
 What does not change: the closure test (P2) was killed, and that stands as a fact about
 the layer dynamics. The scores in the table stand. Only the sentence about whose taxonomy it
 is was a reading, and it was premature.
+
+## Second round, 2026-11-11: where the kind is dropped (F1), and one coarsening (D)
+
+As reported by the agent session; both designs frozen there before the runs; not re-derived here.
+
+**F1, where it is dropped. This session's prediction was false at every layer.** The
+prediction: read through the model's own output head, the kind stays within 0.10 of the
+probe until about layer 28 and falls after. Reported, asked prompt:
+
+| layers | what the state holds (probe) | what the model's own head can read | 
+|---|---|---|
+| 0–23 | rising to 0.85 by layer 16 | at chance, 0.07–0.14 |
+| 24 | 0.85 | 0.36 |
+| 25 | | 0.48 |
+| 27 | | 0.57 |
+| 28 | | 0.65, the peak |
+| 34 (last) | | 0.56, the model's own answer |
+
+So the kind is held from layer 16 in a form the output head cannot read. Translation into a
+form the head can read begins at layer 24, the same layer where removal begins to cost,
+reaches three quarters of what is held, and then loses another 0.09 before the end. The gap
+is never under 0.22. **It holds 0.85, its head can read at best 0.65, it says 0.56.** This
+supports the lead's reading (a deficit) more directly than anything before it.
+
+**D, thing or account** (the two-way coarsening of the eleven that `FamilyModel.lean` proves
+follows from the kind). Decodable at 0.82 to 0.87, far above a random two-way split of the
+items (0.55 to 0.61). But against the right null, random groupings of the KINDS into two
+sets of the same sizes, it sits at or below the median from layer 13 on. Any grouping of
+decodable kinds is decodable; this one is no better than a random one. The model's geometry
+does not prefer this coarsening.
+
+**Not run, and why.** The Constitution's candidates A to C need each item mapped to a family
+and a verb by two blind labellers, with agreement reported first. The patching test (does
+carrying the kind help the task) needs items with a task outcome other than the kind itself:
+something that is right or wrong when the taxonomy is never mentioned. The curated items
+carry none.
+
+**A source for both, proposed here and not yet built.** The Constitution's own tables decide,
+for a family, a verb and a standing, whether a transition is enabled and whether it must be
+confirmed before it is signed. Items rendered from those tables would carry their labels by
+lookup, so no two labellers can disagree, and would have a correct next act as their task
+outcome. The cost is that they are generated from a template and are not the curated items.

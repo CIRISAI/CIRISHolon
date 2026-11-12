@@ -127,3 +127,29 @@ witness: none (R, S1–S5 are measured)
 - M-PROVENANCE-OVERREACH: file digests are recorded; tables carry the survey's notice and years.
 - M-FLOOR-UNSTAKED: P-BORROW is the plant for thin rows; the fallback share is printed per state.
 - M-VACUOUS-SUCCESS: §"What would make a stake vacuous".
+
+## CORRECTION 2026-11-12, before the parse: the hours away are held in one-hour cells
+
+**What failed.** P-LATE, run on the generators as frozen and on synthetic days alone, before
+any diary was parsed. On a carrier whose working days are 8 to 10 hours away, G3 put
+`0.445` of spells at eight hours or more against `0.539` planted (G1: `0.412`). The plant
+asks G3 to be within `0.02`.
+
+**Why.** The freeze holds the hours until last home in two-hour cells and draws evenly
+within a cell. The cell for 7 and 8 hours straddles S1's eight-hour line, so half of the
+days of exactly 8 hours come back as 7. The stake's line and the table's cell edge were
+chosen apart, and no two-hour grid holds both of S1's lines (2|3 and 7|8) on an edge.
+
+**Amendment.** The hours until last home are held in one-hour cells (24), still one table
+per kind and employed-or-not, still conditioned on the two-hour bin of the hour first left,
+with the same fallback under 30 diaries. The hour first left stays in two-hour bins.
+Nothing else in the freeze changes: stakes, budgets, kills, plants, branches, the split
+of years and the seeds are as frozen.
+
+**After the amendment, same carrier.** G3 `0.533` against `0.539`; G1 `0.412`. P-HEAP,
+P-MEAN and P-CHAIN pass as before.
+
+**What this costs.** A table with 24 cells per row in place of 12 is thinner per cell; the
+share of generated days that use the fallback is printed, as frozen. The amendment was
+made knowing the plant's result and nothing of the diaries; the raw files were fetched
+and their digests checked, and no row of them had been read by the scoring script.

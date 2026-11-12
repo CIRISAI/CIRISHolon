@@ -1,0 +1,7097 @@
+{
+ "what": "SCOPE-0: what has been measured of two language models, site by site, copied from result files and never computed here",
+ "models": {
+  "goldworm-v6": {
+   "title": "GoldWorm v6 (2.76 M parameters, byte level)",
+   "layers": 6,
+   "components": [
+    "embed",
+    "attn",
+    "mlp"
+   ],
+   "frame": "closed",
+   "frame_reason": "CAL-1: the writes sum to the final state (relative error 0.0) and rebuild the logits to 2.3e-5"
+  },
+  "gemma-4-e2b-q4": {
+   "title": "Gemma 4 E2B (4-bit file of the hand-over)",
+   "layers": 35,
+   "components": [
+    "state",
+    "attn",
+    "mlp",
+    "ple"
+   ],
+   "frame": "not closed",
+   "frame_reason": "the hand-over's attribution fails its additivity check (relative error 1.19); the file rescales the stream at each layer; a calibration (CAL-G) is frozen and not run"
+  }
+ },
+ "layers": [
+  {
+   "id": "gw.identity",
+   "model": "goldworm-v6",
+   "title": "Word identity",
+   "kind": "share of a write's variance explained by the word's form (eta squared), at a word's last byte",
+   "unit": "share",
+   "domain": [
+    0,
+    1
+   ],
+   "null": "the same with forms shuffled, 95th percentile",
+   "question": "Where is the word written?"
+  },
+  {
+   "id": "gw.read.pos",
+   "model": "goldworm-v6",
+   "title": "Part of speech, readable",
+   "kind": "accuracy of a linear probe for the part of speech (10 classes) on words not seen in fitting",
+   "unit": "accuracy",
+   "domain": [
+    0,
+    1
+   ],
+   "null": "the same probe on shuffled labels, 95th percentile",
+   "question": "Where can a reader find the category?"
+  },
+  {
+   "id": "gw.parallax",
+   "model": "goldworm-v6",
+   "title": "Reading against writing",
+   "kind": "angle between the direction a probe reads adjective-or-noun from and the direction the model writes it with",
+   "unit": "degrees",
+   "domain": [
+    0,
+    90
+   ],
+   "null": "two random directions in 192 dimensions: 81.9 to 98.1 degrees (95 %)",
+   "question": "Is what a reader finds what the model uses?"
+  },
+  {
+   "id": "gw.push.write",
+   "model": "goldworm-v6",
+   "title": "Pushed along the writing direction",
+   "kind": "change in log-odds of an adjective after a determiner when the layer's state is pushed along the WRITING direction at half the write's norm",
+   "unit": "nats",
+   "domain": [
+    -0.6,
+    0.6
+   ],
+   "null": "zero; the interval is beside each value",
+   "question": "Does pushing where the model writes move the behaviour?"
+  },
+  {
+   "id": "gw.push.read",
+   "model": "goldworm-v6",
+   "title": "Pushed along the reading direction",
+   "kind": "the same push along the probe's READING direction at half the write's norm",
+   "unit": "nats",
+   "domain": [
+    -0.6,
+    0.6
+   ],
+   "null": "zero; the interval is beside each value",
+   "question": "Does pushing where a reader looks move the behaviour?"
+  },
+  {
+   "id": "gw.knock",
+   "model": "goldworm-v6",
+   "title": "Does attribution predict a knock-out?",
+   "kind": "correlation, over positions, between a write's direct (linear) attribution to the answer and the realised change when that write is knocked out",
+   "unit": "correlation",
+   "domain": [
+    -1,
+    1
+   ],
+   "null": "none stored",
+   "question": "Can the effect of removing a block be read off without removing it?"
+  },
+  {
+   "id": "gm.read.kind",
+   "model": "gemma-4-e2b-q4",
+   "title": "The kind, readable",
+   "kind": "accuracy of a linear probe for the twelve kinds on the layer's state, asked prompt, cross-validated",
+   "unit": "accuracy",
+   "domain": [
+    0,
+    1
+   ],
+   "null": "chance is 1/12; no shuffled probe is stored in this file",
+   "question": "Where can a reader find the kind?"
+  },
+  {
+   "id": "gm.lens.kind",
+   "model": "gemma-4-e2b-q4",
+   "title": "The kind, said",
+   "kind": "accuracy of the model's OWN head applied to the layer's state (the twelve kind names)",
+   "unit": "accuracy",
+   "domain": [
+    0,
+    1
+   ],
+   "null": "chance is 1/12",
+   "question": "From where could the model itself say the kind?"
+  },
+  {
+   "id": "gm.closure",
+   "model": "gemma-4-e2b-q4",
+   "title": "Is the kind view closed?",
+   "kind": "what the full state adds (R squared) to the kind view's prediction of its own next write, asked prompt",
+   "unit": "R squared added",
+   "domain": [
+    0,
+    0.15
+   ],
+   "null": "the same for a view built from shuffled labels",
+   "question": "Does the kind predict its own next step, or does it need the rest?"
+  },
+  {
+   "id": "gm.remove",
+   "model": "gemma-4-e2b-q4",
+   "title": "Removed, is it rebuilt?",
+   "kind": "final-layer probe accuracy after the kind subspace is removed at this layer, asked prompt",
+   "unit": "accuracy",
+   "domain": [
+    0,
+    1
+   ],
+   "null": "the same after removing a variance-matched subspace disjoint from the kinds (control B)",
+   "question": "From which layer on is the kind carried and not rebuilt?"
+  },
+  {
+   "id": "gm.attrib",
+   "model": "gemma-4-e2b-q4",
+   "title": "Who pushes the answer (uncalibrated)",
+   "kind": "direct attribution of the answer margin to each block's write, items of kind Premises",
+   "unit": "logit units",
+   "domain": [
+    -15,
+    15
+   ],
+   "null": "none; the frame does not close",
+   "question": "Which block pushes the answer toward or away from the right name?"
+  }
+ ],
+ "standings": {
+  "preregistered": "measured under a preregistration, with an interval or a null beside it",
+  "exploratory": "measured while exploring, or provisional by the series' own label; a lead, not a finding",
+  "void": "a number exists but its instrument does not hold here (the frame does not close, or the stake's plant failed); drawn as void, never as a value"
+ },
+ "rows": [
+  {
+   "layer": "gw.identity",
+   "site": {
+    "layer": 0,
+    "component": "embed",
+    "position": "last"
+   },
+   "value": 0.9992989383255816,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled forms, 95th percentile",
+    "value": 0.014340683842972633
+   },
+   "standing": "preregistered",
+   "stake": "held",
+   "category": null,
+   "source": {
+    "experiment": "MLP0-1",
+    "file": "mlp0_1_result.json",
+    "key": "M1.wte",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null
+  },
+  {
+   "layer": "gw.identity",
+   "site": {
+    "layer": 0,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.5894956288142286,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled forms, 95th percentile",
+    "value": 0.014158231475969956
+   },
+   "standing": "preregistered",
+   "stake": "held",
+   "category": null,
+   "source": {
+    "experiment": "MLP0-1",
+    "file": "mlp0_1_result.json",
+    "key": "M1.attn0",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null
+  },
+  {
+   "layer": "gw.identity",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.843512456396058,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled forms, 95th percentile",
+    "value": 0.013815438047799524
+   },
+   "standing": "preregistered",
+   "stake": "held",
+   "category": null,
+   "source": {
+    "experiment": "MLP0-1",
+    "file": "mlp0_1_result.json",
+    "key": "M1.mlp0",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null
+  },
+  {
+   "layer": "gw.identity",
+   "site": {
+    "layer": 1,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.44979392878417374,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled forms, 95th percentile",
+    "value": 0.014593488043096068
+   },
+   "standing": "preregistered",
+   "stake": "held",
+   "category": null,
+   "source": {
+    "experiment": "MLP0-1",
+    "file": "mlp0_1_result.json",
+    "key": "M1.attn1",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null
+  },
+  {
+   "layer": "gw.identity",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.8049914315553851,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled forms, 95th percentile",
+    "value": 0.013744816235387243
+   },
+   "standing": "preregistered",
+   "stake": "held",
+   "category": null,
+   "source": {
+    "experiment": "MLP0-1",
+    "file": "mlp0_1_result.json",
+    "key": "M1.mlp1",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 0,
+    "component": "embed",
+    "position": "last"
+   },
+   "value": 0.3148148148148148,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.1937245655965377
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/embed",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 0,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.6507936507936508,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19670886893611525
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/attn0",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.6111111111111112,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19631483754279438
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/mlp0",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 1,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.6693121693121693,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19584975130805501
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/attn1",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.6904761904761905,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19674439635682447
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/mlp1",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 2,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.7354497354497355,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19754214844002324
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/attn2",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.7380952380952381,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19470318454880176
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/mlp2",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 3,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.7857142857142857,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19702861572249855
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/attn3",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 3,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.798941798941799,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19673147729474838
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/mlp3",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 4,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.8227513227513228,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.20000645953103804
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/attn4",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 4,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.828042328042328,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.2000710548414185
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/mlp4",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 5,
+    "component": "attn",
+    "position": "last"
+   },
+   "value": 0.8306878306878307,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.20047800529681542
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/attn5",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 5,
+    "component": "mlp",
+    "position": "last"
+   },
+   "value": 0.843915343915344,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19774885343324075
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.last/mlp5",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 0,
+    "component": "embed",
+    "position": "first"
+   },
+   "value": 0.42063492063492064,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19230023900264842
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/embed",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 0,
+    "component": "attn",
+    "position": "first"
+   },
+   "value": 0.5132275132275133,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19559782959757122
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/attn0",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": "first"
+   },
+   "value": 0.544973544973545,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19818164201278987
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/mlp0",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 1,
+    "component": "attn",
+    "position": "first"
+   },
+   "value": 0.5952380952380952,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.2003197467863833
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/attn1",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": "first"
+   },
+   "value": 0.6031746031746031,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.1987016342613526
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/mlp1",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 2,
+    "component": "attn",
+    "position": "first"
+   },
+   "value": 0.6084656084656085,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.2017311543181965
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/attn2",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": "first"
+   },
+   "value": 0.6084656084656085,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.1995704411859699
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/mlp2",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 3,
+    "component": "attn",
+    "position": "first"
+   },
+   "value": 0.6851851851851852,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.20433434532652928
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/attn3",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 3,
+    "component": "mlp",
+    "position": "first"
+   },
+   "value": 0.6904761904761905,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19935404689619535
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/mlp3",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 4,
+    "component": "attn",
+    "position": "first"
+   },
+   "value": 0.708994708994709,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.20231897164265872
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/attn4",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 4,
+    "component": "mlp",
+    "position": "first"
+   },
+   "value": 0.6931216931216931,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.2027162328014986
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/mlp4",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 5,
+    "component": "attn",
+    "position": "first"
+   },
+   "value": 0.7142857142857143,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.2007234674762612
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/attn5",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 5,
+    "component": "mlp",
+    "position": "first"
+   },
+   "value": 0.7222222222222222,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.20108197144887277
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.first/mlp5",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 0,
+    "component": "embed",
+    "position": "pre"
+   },
+   "value": 0.3888888888888889,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.18968412893223952
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/embed",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 0,
+    "component": "attn",
+    "position": "pre"
+   },
+   "value": 0.4365079365079365,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19669594987403916
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/attn0",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": "pre"
+   },
+   "value": 0.5105820105820106,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.2027162328014986
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/mlp0",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 1,
+    "component": "attn",
+    "position": "pre"
+   },
+   "value": 0.5291005291005291,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.2012176216006718
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/attn1",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": "pre"
+   },
+   "value": 0.5211640211640212,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.19835604935081713
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/mlp1",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 2,
+    "component": "attn",
+    "position": "pre"
+   },
+   "value": 0.5264550264550265,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.1996253471997933
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/attn2",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": "pre"
+   },
+   "value": 0.5634920634920635,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.20097215942122598
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/mlp2",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 3,
+    "component": "attn",
+    "position": "pre"
+   },
+   "value": 0.58994708994709,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.20167947806989212
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/attn3",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 3,
+    "component": "mlp",
+    "position": "pre"
+   },
+   "value": 0.5925925925925926,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.20250952780828113
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/mlp3",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 4,
+    "component": "attn",
+    "position": "pre"
+   },
+   "value": 0.6137566137566137,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.20381758284348556
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/attn4",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 4,
+    "component": "mlp",
+    "position": "pre"
+   },
+   "value": 0.6243386243386243,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.2030941153672243
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/mlp4",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 5,
+    "component": "attn",
+    "position": "pre"
+   },
+   "value": 0.6190476190476191,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.20167947806989212
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/attn5",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.read.pos",
+   "site": {
+    "layer": 5,
+    "component": "mlp",
+    "position": "pre"
+   },
+   "value": 0.6190476190476191,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "shuffled labels, 95th percentile",
+    "value": 0.20239971578063432
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "VOCAB-1",
+    "file": "vocab1_result.json",
+    "key": "cells.pre/mlp5",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "provisional: the series marks this run unconverged; majority class 0.190"
+  },
+  {
+   "layer": "gw.parallax",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 87.31312738040904,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "random pair in 192 dimensions, 95 % band",
+    "value": [
+     81.9,
+     98.1
+    ]
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "parallax_deg.0",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "descriptive; the random band is from the series' notes, not this file"
+  },
+  {
+   "layer": "gw.parallax",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 85.92319489448309,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "random pair in 192 dimensions, 95 % band",
+    "value": [
+     81.9,
+     98.1
+    ]
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "parallax_deg.1",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "descriptive; the random band is from the series' notes, not this file"
+  },
+  {
+   "layer": "gw.parallax",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 89.77740884286456,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "random pair in 192 dimensions, 95 % band",
+    "value": [
+     81.9,
+     98.1
+    ]
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "parallax_deg.2",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "descriptive; the random band is from the series' notes, not this file"
+  },
+  {
+   "layer": "gw.parallax",
+   "site": {
+    "layer": 3,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 84.65745805577103,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "random pair in 192 dimensions, 95 % band",
+    "value": [
+     81.9,
+     98.1
+    ]
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "parallax_deg.3",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "descriptive; the random band is from the series' notes, not this file"
+  },
+  {
+   "layer": "gw.parallax",
+   "site": {
+    "layer": 4,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 82.12979298911152,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "random pair in 192 dimensions, 95 % band",
+    "value": [
+     81.9,
+     98.1
+    ]
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "parallax_deg.4",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "descriptive; the random band is from the series' notes, not this file"
+  },
+  {
+   "layer": "gw.parallax",
+   "site": {
+    "layer": 5,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 82.14831666922362,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "random pair in 192 dimensions, 95 % band",
+    "value": [
+     81.9,
+     98.1
+    ]
+   },
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "parallax_deg.5",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "descriptive; the random band is from the series' notes, not this file"
+  },
+  {
+   "layer": "gw.push.read",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.009979972993274714,
+   "interval": [
+    -0.004534315972142215,
+    0.024281050053494194
+   ],
+   "n": 250,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "edits.0/read/0.5.T_adj",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null
+  },
+  {
+   "layer": "gw.push.write",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.0899538893980316,
+   "interval": [
+    0.04289153145643464,
+    0.12957670146801398
+   ],
+   "n": 250,
+   "null": null,
+   "standing": "preregistered",
+   "stake": "failed",
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "edits.0/write/0.5.T_adj",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "the stake (writing beats reading at every layer) failed; the measurement stands"
+  },
+  {
+   "layer": "gw.push.read",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.008285933728297095,
+   "interval": [
+    -0.005737931720088959,
+    0.0220656200647496
+   ],
+   "n": 250,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "edits.1/read/0.5.T_adj",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null
+  },
+  {
+   "layer": "gw.push.write",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.07841234090364924,
+   "interval": [
+    0.03643426631440414,
+    0.12146455697456403
+   ],
+   "n": 250,
+   "null": null,
+   "standing": "preregistered",
+   "stake": "failed",
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "edits.1/write/0.5.T_adj",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "the stake (writing beats reading at every layer) failed; the measurement stands"
+  },
+  {
+   "layer": "gw.push.read",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": null
+   },
+   "value": -0.009025050840984476,
+   "interval": [
+    -0.023730060350234804,
+    0.006967540206504423
+   ],
+   "n": 250,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "edits.2/read/0.5.T_adj",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null
+  },
+  {
+   "layer": "gw.push.write",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.09514597029404831,
+   "interval": [
+    0.049889322839258385,
+    0.143933059532632
+   ],
+   "n": 250,
+   "null": null,
+   "standing": "preregistered",
+   "stake": "failed",
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "edits.2/write/0.5.T_adj",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "the stake (writing beats reading at every layer) failed; the measurement stands"
+  },
+  {
+   "layer": "gw.push.read",
+   "site": {
+    "layer": 3,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.0030691665633967202,
+   "interval": [
+    -0.013303931049566948,
+    0.020080322919803027
+   ],
+   "n": 250,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "edits.3/read/0.5.T_adj",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null
+  },
+  {
+   "layer": "gw.push.write",
+   "site": {
+    "layer": 3,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.032540722094909144,
+   "interval": [
+    -0.02740046416490559,
+    0.09500237425018837
+   ],
+   "n": 250,
+   "null": null,
+   "standing": "preregistered",
+   "stake": "failed",
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "edits.3/write/0.5.T_adj",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "the stake (writing beats reading at every layer) failed; the measurement stands"
+  },
+  {
+   "layer": "gw.push.read",
+   "site": {
+    "layer": 4,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.0270335738349022,
+   "interval": [
+    0.012565979757745973,
+    0.04125341419888144
+   ],
+   "n": 250,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "edits.4/read/0.5.T_adj",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null
+  },
+  {
+   "layer": "gw.push.write",
+   "site": {
+    "layer": 4,
+    "component": "mlp",
+    "position": null
+   },
+   "value": -0.04049378641218936,
+   "interval": [
+    -0.12905210229099992,
+    0.04736923706452892
+   ],
+   "n": 250,
+   "null": null,
+   "standing": "preregistered",
+   "stake": "failed",
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "edits.4/write/0.5.T_adj",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "the stake (writing beats reading at every layer) failed; the measurement stands"
+  },
+  {
+   "layer": "gw.push.read",
+   "site": {
+    "layer": 5,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.01752078507324768,
+   "interval": [
+    -0.008623417755763075,
+    0.047903801728008115
+   ],
+   "n": 250,
+   "null": null,
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "edits.5/read/0.5.T_adj",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": null
+  },
+  {
+   "layer": "gw.push.write",
+   "site": {
+    "layer": 5,
+    "component": "mlp",
+    "position": null
+   },
+   "value": -0.5445230609155406,
+   "interval": [
+    -0.7278880374989223,
+    -0.3660899080381536
+   ],
+   "n": 250,
+   "null": null,
+   "standing": "preregistered",
+   "stake": "failed",
+   "category": null,
+   "source": {
+    "experiment": "EDIT-2",
+    "file": "edit2_result.json",
+    "key": "edits.5/write/0.5.T_adj",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "the stake (writing beats reading at every layer) failed; the measurement stands"
+  },
+  {
+   "layer": "gw.knock",
+   "site": {
+    "layer": 0,
+    "component": "attn",
+    "position": null
+   },
+   "value": 0.017907704963236366,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "CAL-1",
+    "file": "cal1_result_tanh.json",
+    "key": "R1.attn0",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "measured, not gated; mean realised change 2.21 nats against 0.031 predicted"
+  },
+  {
+   "layer": "gw.knock",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.03939922573551865,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "CAL-1",
+    "file": "cal1_result_tanh.json",
+    "key": "R1.mlp0",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "measured, not gated; mean realised change 4.12 nats against 0.076 predicted"
+  },
+  {
+   "layer": "gw.knock",
+   "site": {
+    "layer": 1,
+    "component": "attn",
+    "position": null
+   },
+   "value": 0.06529973987217577,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "CAL-1",
+    "file": "cal1_result_tanh.json",
+    "key": "R1.attn1",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "measured, not gated; mean realised change 0.10 nats against 0.024 predicted"
+  },
+  {
+   "layer": "gw.knock",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.08925240255821082,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "CAL-1",
+    "file": "cal1_result_tanh.json",
+    "key": "R1.mlp1",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "measured, not gated; mean realised change 0.14 nats against 0.038 predicted"
+  },
+  {
+   "layer": "gw.knock",
+   "site": {
+    "layer": 2,
+    "component": "attn",
+    "position": null
+   },
+   "value": 0.016514041097660775,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "CAL-1",
+    "file": "cal1_result_tanh.json",
+    "key": "R1.attn2",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "measured, not gated; mean realised change 0.17 nats against 0.045 predicted"
+  },
+  {
+   "layer": "gw.knock",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.09133939973567443,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "CAL-1",
+    "file": "cal1_result_tanh.json",
+    "key": "R1.mlp2",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "measured, not gated; mean realised change 0.20 nats against 0.062 predicted"
+  },
+  {
+   "layer": "gw.knock",
+   "site": {
+    "layer": 3,
+    "component": "attn",
+    "position": null
+   },
+   "value": 0.0613345461290158,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "CAL-1",
+    "file": "cal1_result_tanh.json",
+    "key": "R1.attn3",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "measured, not gated; mean realised change 0.20 nats against 0.052 predicted"
+  },
+  {
+   "layer": "gw.knock",
+   "site": {
+    "layer": 3,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.18840633346629188,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "CAL-1",
+    "file": "cal1_result_tanh.json",
+    "key": "R1.mlp3",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "measured, not gated; mean realised change 0.27 nats against 0.083 predicted"
+  },
+  {
+   "layer": "gw.knock",
+   "site": {
+    "layer": 4,
+    "component": "attn",
+    "position": null
+   },
+   "value": 0.2558346983689005,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "CAL-1",
+    "file": "cal1_result_tanh.json",
+    "key": "R1.attn4",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "measured, not gated; mean realised change 0.27 nats against 0.076 predicted"
+  },
+  {
+   "layer": "gw.knock",
+   "site": {
+    "layer": 4,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.43533706590047244,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "CAL-1",
+    "file": "cal1_result_tanh.json",
+    "key": "R1.mlp4",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "measured, not gated; mean realised change 0.32 nats against 0.170 predicted"
+  },
+  {
+   "layer": "gw.knock",
+   "site": {
+    "layer": 5,
+    "component": "attn",
+    "position": null
+   },
+   "value": 0.7595476507546053,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "CAL-1",
+    "file": "cal1_result_tanh.json",
+    "key": "R1.attn5",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "measured, not gated; mean realised change 0.32 nats against 0.172 predicted"
+  },
+  {
+   "layer": "gw.knock",
+   "site": {
+    "layer": 5,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.9184067813211975,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "exploratory",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "CAL-1",
+    "file": "cal1_result_tanh.json",
+    "key": "R1.mlp5",
+    "provenance": "CIRISAI/RATCHET at deef52d43645"
+   },
+   "note": "measured, not gated; mean realised change 0.48 nats against 0.580 predicted"
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 0,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.3046,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[0].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 0,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.0967741935483871,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[0].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 1,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.2564666666666667,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[1].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 1,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[1].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 2,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.27699999999999997,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[2].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 2,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[2].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 3,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.3016666666666667,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[3].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 3,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[3].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 4,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.2788,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[4].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 4,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[4].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 5,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.4112666666666667,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[5].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 5,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.0967741935483871,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[5].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 6,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.4642666666666666,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[6].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 6,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[6].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 7,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.4898,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[7].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 7,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[7].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 8,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.5543333333333333,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[8].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 8,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[8].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 9,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.4754,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[9].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 9,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[9].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 10,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.5223333333333333,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[10].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 10,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[10].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 11,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.5388,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[11].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 11,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.0967741935483871,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[11].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 12,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.5578000000000001,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[12].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 12,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.0967741935483871,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[12].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 13,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.7128666666666668,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[13].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 13,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[13].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 14,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.6851999999999999,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[14].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 14,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[14].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 15,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8158,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[15].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 15,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[15].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 16,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8448,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[16].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 16,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[16].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 17,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8544666666666667,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[17].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 17,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.07258064516129033,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[17].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 18,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8271999999999999,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[18].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 18,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.12903225806451613,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[18].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 19,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8126000000000001,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[19].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 19,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.13709677419354838,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[19].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 20,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8241333333333334,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[20].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 20,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[20].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 21,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8319333333333334,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[21].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 21,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.11290322580645161,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[21].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 22,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8400666666666666,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[22].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 22,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08064516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[22].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 23,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8577333333333335,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[23].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 23,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.13709677419354838,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[23].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 24,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8563333333333334,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[24].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 24,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.3629032258064516,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[24].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 25,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8740000000000001,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[25].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 25,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.47580645161290325,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[25].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 26,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8738666666666667,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[26].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 26,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.5080645161290323,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[26].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 27,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8659333333333334,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[27].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 27,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.5645161290322581,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[27].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 28,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8676666666666667,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[28].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 28,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.6451612903225806,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[28].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 29,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.848,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[29].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 29,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.5887096774193549,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[29].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 30,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8382666666666667,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[30].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 30,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.5725806451612904,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[30].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 31,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8351333333333334,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[31].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 31,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.5645161290322581,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[31].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 32,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8381333333333333,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[32].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 32,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.5645161290322581,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[32].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 33,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8318000000000001,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[33].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 33,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.5241935483870968,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[33].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.read.kind",
+   "site": {
+    "layer": 34,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8301333333333332,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[34].probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.lens.kind",
+   "site": {
+    "layer": 34,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.5564516129032258,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "chance",
+    "value": 0.08333333333333333
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 3",
+    "file": "f1.json",
+    "key": "[34].lens",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": null
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 0,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.046234579372656626,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.05357423540583173
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[0].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.72 against 0.69)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 1,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.030274126033983828,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.02523369322768665
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[1].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.87 against 0.88)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 2,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.01990438787523574,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.02082236492548173
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[2].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.91 against 0.90)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 3,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.06341720916273474,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.04438373432797993
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[3].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.64 against 0.72)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 4,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.13509985660260548,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.0781038282053117
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[4].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.59 against 0.69)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 5,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.09291577083265035,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.07537163352925147
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[5].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.67 against 0.71)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 6,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.07869235728662416,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.046546108297851996
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[6].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.76 against 0.83)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 7,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08712657913875699,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.07137341876321313
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[7].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.75 against 0.79)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 8,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.07353567882924794,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.06585712155902745
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[8].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.74 against 0.76)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 9,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08710025528232834,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.06828202034767217
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[9].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.77 against 0.82)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 10,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.07382885036894182,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.05402496177813787
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[10].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.81 against 0.85)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 11,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.07581707520472158,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.06300330981126234
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[11].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.78 against 0.82)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 12,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.036701809465322865,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.02445628700768865
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[12].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.90 against 0.93)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 13,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.1135342654770396,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.09253853618976293
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[13].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.69 against 0.74)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 14,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.09137856986287118,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.08905007351322414
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[14].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.71 against 0.71)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 15,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.05981156468354598,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.09198513891512106
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[15].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.81 against 0.76)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 16,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.031331148978554824,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.05497173575788272
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[16].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.87 against 0.81)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 17,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.05452445920174431,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.08045267125700639
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[17].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.84 against 0.79)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 18,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.041192138746435014,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.05968510218010292
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[18].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.82 against 0.78)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 19,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.12686511898327835,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.12067881561219274
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[19].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.69 against 0.69)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 20,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.11071144880631367,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.14614676763378842
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[20].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.75 against 0.69)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 21,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.07005581189989663,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.06789983107784803
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[21].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.87 against 0.87)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 22,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.05774422582675309,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.10145808160127257
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[22].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.84 against 0.76)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 23,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.04429399172587101,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.08679148395639158
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[23].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.82 against 0.76)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 24,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.062471595829213356,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.11693942301413474
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[24].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.75 against 0.66)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 25,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.05969770532714308,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.11276762070562718
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[25].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.35 against 0.34)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 26,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.11944922854052803,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.16814958615621894
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[26].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.47 against 0.39)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 27,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.0884435995281384,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.13090542951962658
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[27].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.74 against 0.65)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 28,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.0899579988021908,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.1581980124584229
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[28].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.70 against 0.63)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 29,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.07291814189308699,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.12347670865079019
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[29].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.82 against 0.76)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 30,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.025213500218903673,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.04608117631483977
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[30].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.93 against 0.89)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 31,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.08569015831699622,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.16134258419718028
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[31].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.73 against 0.64)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 32,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.0958190607304984,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.14194754282804734
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[32].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.76 against 0.69)"
+  },
+  {
+   "layer": "gm.closure",
+   "site": {
+    "layer": 33,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.03095907773651818,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a view from shuffled labels",
+    "value": 0.07468056420056668
+   },
+   "standing": "preregistered",
+   "stake": "killed",
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 P2",
+    "file": "holon_obs.json",
+    "key": "asked.P2[33].inc",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "the view predicts its own write no better than a shuffled one (0.91 against 0.85)"
+  },
+  {
+   "layer": "gm.remove",
+   "site": {
+    "layer": 8,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8145161290322581,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a variance-matched subspace disjoint from the kinds removed instead (control B)",
+    "value": 0.8306451612903226
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 1",
+    "file": "holon_int2.json",
+    "key": "asked-8.kind.probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "clean 0.815; control B removed 0.63 of the variance the kind subspace did"
+  },
+  {
+   "layer": "gm.remove",
+   "site": {
+    "layer": 12,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.7983870967741935,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a variance-matched subspace disjoint from the kinds removed instead (control B)",
+    "value": 0.8225806451612904
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 1",
+    "file": "holon_int2.json",
+    "key": "asked-12.kind.probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "clean 0.815; control B removed 0.74 of the variance the kind subspace did"
+  },
+  {
+   "layer": "gm.remove",
+   "site": {
+    "layer": 14,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8306451612903226,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a variance-matched subspace disjoint from the kinds removed instead (control B)",
+    "value": 0.8225806451612904
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 1",
+    "file": "holon_int2.json",
+    "key": "asked-14.kind.probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "clean 0.823; control B removed 0.70 of the variance the kind subspace did"
+  },
+  {
+   "layer": "gm.remove",
+   "site": {
+    "layer": 16,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.8306451612903226,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a variance-matched subspace disjoint from the kinds removed instead (control B)",
+    "value": 0.8185483870967742
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 1",
+    "file": "holon_int2.json",
+    "key": "asked-16.kind.probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "clean 0.815; control B removed 0.48 of the variance the kind subspace did"
+  },
+  {
+   "layer": "gm.remove",
+   "site": {
+    "layer": 20,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.6854838709677419,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a variance-matched subspace disjoint from the kinds removed instead (control B)",
+    "value": 0.8266129032258065
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 1",
+    "file": "holon_int2.json",
+    "key": "asked-20.kind.probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "clean 0.815; control B removed 0.29 of the variance the kind subspace did"
+  },
+  {
+   "layer": "gm.remove",
+   "site": {
+    "layer": 24,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.1693548387096774,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a variance-matched subspace disjoint from the kinds removed instead (control B)",
+    "value": 0.8185483870967742
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 1",
+    "file": "holon_int2.json",
+    "key": "asked-24.kind.probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "clean 0.815; control B removed 0.26 of the variance the kind subspace did"
+  },
+  {
+   "layer": "gm.remove",
+   "site": {
+    "layer": 28,
+    "component": "state",
+    "position": null
+   },
+   "value": 0.12096774193548387,
+   "interval": null,
+   "n": null,
+   "null": {
+    "kind": "a variance-matched subspace disjoint from the kinds removed instead (control B)",
+    "value": 0.7903225806451613
+   },
+   "standing": "preregistered",
+   "stake": null,
+   "category": null,
+   "source": {
+    "experiment": "PROBE-HOLON-1 amendment 1",
+    "file": "holon_int2.json",
+    "key": "asked-28.kind.probe",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "clean 0.815; control B removed 0.32 of the variance the kind subspace did"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 3,
+    "component": "attn",
+    "position": null
+   },
+   "value": -14.42921017652417,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 3 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 14,
+    "component": "attn",
+    "position": null
+   },
+   "value": -13.159290323839125,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 14 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 24,
+    "component": "ple",
+    "position": null
+   },
+   "value": -9.634183360233326,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 24 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 8,
+    "component": "mlp",
+    "position": null
+   },
+   "value": -9.178128340394943,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 8 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 12,
+    "component": "attn",
+    "position": null
+   },
+   "value": -8.521192987285655,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 12 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 1,
+    "component": "mlp",
+    "position": null
+   },
+   "value": -8.385691551996993,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 1 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 13,
+    "component": "mlp",
+    "position": null
+   },
+   "value": -8.18256185650876,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 13 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 5,
+    "component": "mlp",
+    "position": null
+   },
+   "value": -7.842441241510026,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 5 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 4,
+    "component": "attn",
+    "position": null
+   },
+   "value": -7.381342471068142,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 4 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 10,
+    "component": "attn",
+    "position": null
+   },
+   "value": -7.029522268479418,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 10 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 33,
+    "component": "ple",
+    "position": null
+   },
+   "value": -6.554468411468581,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 33 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 15,
+    "component": "attn",
+    "position": null
+   },
+   "value": -5.912836565734994,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 15 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 22,
+    "component": "ple",
+    "position": null
+   },
+   "value": -5.662783785321935,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 22 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 10,
+    "component": "ple",
+    "position": null
+   },
+   "value": -4.888537215140604,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 10 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 12,
+    "component": "ple",
+    "position": null
+   },
+   "value": -4.399162823207099,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 12 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 9,
+    "component": "attn",
+    "position": null
+   },
+   "value": -4.242380514599269,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 9 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 3,
+    "component": "mlp",
+    "position": null
+   },
+   "value": -4.220218810477293,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 3 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 34,
+    "component": "attn",
+    "position": null
+   },
+   "value": -4.111806634394101,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 34 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 17,
+    "component": "attn",
+    "position": null
+   },
+   "value": -3.977398083540976,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 17 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 26,
+    "component": "attn",
+    "position": null
+   },
+   "value": -3.678348828203923,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 26 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 30,
+    "component": "attn",
+    "position": null
+   },
+   "value": -3.4494122774270153,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 30 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 28,
+    "component": "ple",
+    "position": null
+   },
+   "value": -3.08410927268185,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 28 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 33,
+    "component": "attn",
+    "position": null
+   },
+   "value": -2.9520201479101895,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 33 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 2,
+    "component": "mlp",
+    "position": null
+   },
+   "value": -2.9055738511769014,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 2 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 0,
+    "component": "ple",
+    "position": null
+   },
+   "value": -2.8090435425826055,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 0 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 5,
+    "component": "ple",
+    "position": null
+   },
+   "value": -2.3383316607430253,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 5 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 23,
+    "component": "ple",
+    "position": null
+   },
+   "value": -2.1426895638103693,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 23 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 1,
+    "component": "attn",
+    "position": null
+   },
+   "value": -1.864907592933421,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 1 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 32,
+    "component": "attn",
+    "position": null
+   },
+   "value": -1.6870251769668014,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 32 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 26,
+    "component": "ple",
+    "position": null
+   },
+   "value": -1.6760841191470004,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 26 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 11,
+    "component": "attn",
+    "position": null
+   },
+   "value": -1.6073535934043133,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 11 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 32,
+    "component": "ple",
+    "position": null
+   },
+   "value": -1.4906616586608201,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 32 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 27,
+    "component": "attn",
+    "position": null
+   },
+   "value": -1.2456907191250992,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 27 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 9,
+    "component": "mlp",
+    "position": null
+   },
+   "value": -0.9549767706761688,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 9 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 16,
+    "component": "attn",
+    "position": null
+   },
+   "value": -0.8179128361970278,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 16 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 18,
+    "component": "mlp",
+    "position": null
+   },
+   "value": -0.7585276009858734,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 18 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 31,
+    "component": "attn",
+    "position": null
+   },
+   "value": -0.7473513375991048,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 31 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 13,
+    "component": "ple",
+    "position": null
+   },
+   "value": -0.7251201555223296,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 13 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 27,
+    "component": "ple",
+    "position": null
+   },
+   "value": -0.7164833314403974,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 27 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 19,
+    "component": "ple",
+    "position": null
+   },
+   "value": -0.4376390452833841,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 19 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 4,
+    "component": "ple",
+    "position": null
+   },
+   "value": -0.3715445358920904,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 4 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 29,
+    "component": "ple",
+    "position": null
+   },
+   "value": -0.013821699441451655,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 29 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 8,
+    "component": "attn",
+    "position": null
+   },
+   "value": 0.10322093239119723,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 8 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 25,
+    "component": "ple",
+    "position": null
+   },
+   "value": 0.13059075446744162,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 25 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 30,
+    "component": "ple",
+    "position": null
+   },
+   "value": 0.17690390952593069,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 30 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 2,
+    "component": "attn",
+    "position": null
+   },
+   "value": 0.2796321826575026,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 2 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 32,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.3422823720529538,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 32 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 2,
+    "component": "ple",
+    "position": null
+   },
+   "value": 0.34395509193483736,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 2 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 3,
+    "component": "ple",
+    "position": null
+   },
+   "value": 0.39069809421005064,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 3 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 31,
+    "component": "ple",
+    "position": null
+   },
+   "value": 0.78945622838202,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 31 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 30,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.8560309966939661,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 30 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 31,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.8654138576599962,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 31 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 14,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 0.9753601554057582,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 14 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 22,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 1.1681804200481756,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 22 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 27,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 1.9410464698915115,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 27 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 5,
+    "component": "attn",
+    "position": null
+   },
+   "value": 1.95675738973707,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 5 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 6,
+    "component": "ple",
+    "position": null
+   },
+   "value": 2.011340168380276,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 6 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 6,
+    "component": "attn",
+    "position": null
+   },
+   "value": 2.1251354019399646,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 6 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 1,
+    "component": "ple",
+    "position": null
+   },
+   "value": 2.151020171177684,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 1 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 21,
+    "component": "ple",
+    "position": null
+   },
+   "value": 2.2407553627013233,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 21 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 20,
+    "component": "attn",
+    "position": null
+   },
+   "value": 2.4859204842549723,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 20 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 17,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 2.978527056304717,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 17 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 15,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 3.0833538961661837,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 15 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 20,
+    "component": "ple",
+    "position": null
+   },
+   "value": 3.291468967455458,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 20 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 7,
+    "component": "attn",
+    "position": null
+   },
+   "value": 3.377587818170389,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 7 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 10,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 3.5707263345933633,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 10 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 9,
+    "component": "ple",
+    "position": null
+   },
+   "value": 4.175476070475566,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 9 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 16,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 4.215614641758486,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 16 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 0,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 4.367323089577165,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 0 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 33,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 4.555345712892641,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 33 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 18,
+    "component": "ple",
+    "position": null
+   },
+   "value": 5.10147131772344,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 18 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 24,
+    "component": "attn",
+    "position": null
+   },
+   "value": 5.218618279925662,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 24 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 11,
+    "component": "ple",
+    "position": null
+   },
+   "value": 5.291507160180565,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 11 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 8,
+    "component": "ple",
+    "position": null
+   },
+   "value": 6.524589844463912,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 8 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 23,
+    "component": "attn",
+    "position": null
+   },
+   "value": 6.595311682934202,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 23 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 28,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 7.557964477181613,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 28 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 13,
+    "component": "attn",
+    "position": null
+   },
+   "value": 8.198462561493423,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 13 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 22,
+    "component": "attn",
+    "position": null
+   },
+   "value": 8.721746424625035,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 22 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 34,
+    "component": "ple",
+    "position": null
+   },
+   "value": 8.93151203759195,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 34 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 34,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 9.329720109273847,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 34 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 24,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 9.59573431738937,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 24 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 12,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 11.204948942938495,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 12 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 14,
+    "component": "ple",
+    "position": null
+   },
+   "value": 11.712397519240625,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 14 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 29,
+    "component": "attn",
+    "position": null
+   },
+   "value": 11.784670343851667,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 29 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 0,
+    "component": "attn",
+    "position": null
+   },
+   "value": 12.024918938085307,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 0 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 25,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 12.203030159784925,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 25 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 19,
+    "component": "attn",
+    "position": null
+   },
+   "value": 12.309840644928054,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 19 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 7,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 12.871846315854476,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 7 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 21,
+    "component": "attn",
+    "position": null
+   },
+   "value": 13.15196993025792,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 21 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 28,
+    "component": "attn",
+    "position": null
+   },
+   "value": 13.858050949374274,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 28 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 18,
+    "component": "attn",
+    "position": null
+   },
+   "value": 15.523694262648576,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 18 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 17,
+    "component": "ple",
+    "position": null
+   },
+   "value": 15.880739531628855,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 17 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 15,
+    "component": "ple",
+    "position": null
+   },
+   "value": 16.345466590455004,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 15 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 29,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 16.4099786598261,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 29 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 6,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 16.474201722950173,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 6 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 11,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 17.628079687848544,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 11 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 20,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 20.725070509536064,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 20 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 7,
+    "component": "ple",
+    "position": null
+   },
+   "value": 21.118738049693246,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 7 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 4,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 21.41965938013122,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 4 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 16,
+    "component": "ple",
+    "position": null
+   },
+   "value": 24.200536328193895,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 16 ple].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 26,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 24.209118330747856,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 26 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 21,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 26.57114165511234,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 21 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 19,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 28.510780455014288,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 19 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 23,
+    "component": "mlp",
+    "position": null
+   },
+   "value": 29.327139700826695,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 23 mlp].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  },
+  {
+   "layer": "gm.attrib",
+   "site": {
+    "layer": 25,
+    "component": "attn",
+    "position": null
+   },
+   "value": 31.338786585778816,
+   "interval": null,
+   "n": null,
+   "null": null,
+   "standing": "void",
+   "stake": null,
+   "category": "Premises",
+   "source": {
+    "experiment": "scope.py attribution",
+    "file": "attrib_Premises.json",
+    "key": "[layer 25 attn].direct",
+    "provenance": "kindscope hand-over bundle of 2026-11-11 (not a repository; sha256 in the sidecar)"
+   },
+   "note": "void: the frame does not close on this file, so these do not sum to the answer"
+  }
+ ]
+}

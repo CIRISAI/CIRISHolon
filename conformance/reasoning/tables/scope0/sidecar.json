@@ -1,0 +1,77 @@
+{
+ "reference": "SCOPE-0 (what has been measured of two language models, by site)",
+ "version": 1,
+ "table": "scope_table.json",
+ "bytes": 178708,
+ "sha256": "b4dfce70c697b344f4e6a0a2fcc85f5e5075679dbdf80de24a81f954930b707a",
+ "rows": 290,
+ "rows_by_layer_and_standing": {
+  "gw.identity": {
+   "preregistered": 5
+  },
+  "gw.read.pos": {
+   "exploratory": 39
+  },
+  "gw.parallax": {
+   "exploratory": 6
+  },
+  "gw.push.read": {
+   "preregistered": 6
+  },
+  "gw.push.write": {
+   "preregistered": 6
+  },
+  "gw.knock": {
+   "exploratory": 12
+  },
+  "gm.read.kind": {
+   "preregistered": 35
+  },
+  "gm.lens.kind": {
+   "preregistered": 35
+  },
+  "gm.closure": {
+   "preregistered": 34
+  },
+  "gm.remove": {
+   "preregistered": 7
+  },
+  "gm.attrib": {
+   "void": 105
+  }
+ },
+ "serves": [
+  "a model explorer: one exact kind of reading per map; a cell with no row is drawn as not measured"
+ ],
+ "provenance": {
+  "ratchet_commit": "deef52d43645",
+  "files": {
+   "RATCHET:experiments/kindscope/mlp0_1_result.json": "0683fac526459e4a161a905f5f3fd75a9658bbcd1b2fc252f29209c1d3f8dd34",
+   "RATCHET:experiments/kindscope/vocab1_result.json": "f65524448f02205a1114539f904018a54c56573e02eb8fea93f197aec8786b15",
+   "RATCHET:experiments/kindscope/edit2_result.json": "8f0b226e0b444b7f30b046a645e7cc34b5aa983c0513efff2bd2e1fc09275e40",
+   "RATCHET:experiments/kindscope/cal1_result_tanh.json": "11ff245798c63468c7119dea5fd808a1cfde1428a723012b37ca6965b7344d6c",
+   "handoff:f1.json": "bb4d58fb8ccfc1c8624b0207d12e020db2f69d5d4adbd0a777188f20a0df78eb",
+   "handoff:holon_obs.json": "beeec366e01e9cebe47f40cf9f0801e275307a47eeb2e4872d232da6874dd21f",
+   "handoff:holon_int2.json": "06e468d3397caa26a71dfb8a8e933b97caa9bc132c22b6ce1392092d45d8fc2a",
+   "handoff:attrib_Premises.json": "35ca16055f08f543dd2d1d4dc5350c53cdc898fd6bcda26293cf316ffaacdde4"
+  }
+ },
+ "verdict": {
+  "all_rows": "unresolved",
+  "reason": "copied readings of other sessions' experiments; nothing here was re-derived or scored by this repository"
+ },
+ "law": "a cell is a reading in a regime: its model, file, prompt, position and kind are part of the value. No cell is carried to a neighbouring site, to another model, or to another kind of reading.",
+ "standings": {
+  "preregistered": "measured under a preregistration, with an interval or a null beside it",
+  "exploratory": "measured while exploring, or provisional by the series' own label; a lead, not a finding",
+  "void": "a number exists but its instrument does not hold here (the frame does not close, or the stake's plant failed); drawn as void, never as a value"
+ },
+ "holds_no_real_feature": "no person or place; sites are layers and blocks of two public model files, values are aggregate statistics over prompts",
+ "limits": [
+  "two models, one checkpoint and one quantisation each",
+  "GoldWorm rows are English children's stories at byte level; Gemma rows are 124 curated items",
+  "intervals are 95 % intervals as stored; no file stores a standard error",
+  "the hand-over bundle is not under version control; its files are pinned by digest alone",
+  "which experiments a layer draws on was chosen by the CIRISHolon session; the RATCHET session owns the instrument and has not yet confirmed this selection"
+ ]
+}

@@ -1814,3 +1814,15 @@ Records cited; nothing below changes a tier's status.*
 - **For MESH-0:** a ceiling for hosting in one country. Its input stays unresolved.
 
 *(Placed at the end, as above.)*
+
+### CONNECT-0B — the Eurostat tables written under a second amendment (2026-11-12)
+
+- **Three bars for one table.** The frozen one refused it on a rounding (94.76 against a
+  page's 94.7). A post-hoc one refused it too, and its claim was false. The third, set
+  before its comparison on the publisher's named-country statements, held 4 of 4.
+- **Written:** household internet access at home for 38 European countries, 2014 to 2025,
+  and for 349 regions; the regional table's national rows match the country table 38 of
+  38. Denominator: households with a member aged 16 to 74.
+- **Not tested:** the household-type selection (it rests on the file's label).
+
+*(Placed at the end, as above.)*

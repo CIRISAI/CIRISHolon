@@ -58,3 +58,25 @@ table of any kind exists from this campaign.
   uptime, or of a machine left running.
 - The US gap is not to be carried to another country.
 - Shares are from a sample survey; the margins in the table are for counts.
+
+## Later the same day: the Eurostat tables are written, under a second amendment
+
+- **CONNECT-0A** (a bar set after the value was seen) also refused the table, and its
+  claim to be "known met" was a misreading of mine, corrected in that file.
+- **CONNECT-0B** was committed before its comparison. It checks the file against what
+  Eurostat's own article says by name: the 2 highest members in 2025 (Luxembourg 99.07,
+  Netherlands 99.28; the article says 99), the 2 lowest (Croatia 87.91, Greece 88.73; it
+  says 88 and 89), and the largest ten-year increase (Bulgaria, 33.68 points; it says
+  34). 4 of 4 items held.
+- **R2b met, as frozen and unread until now:** the regional table's national rows equal
+  the country table within 0.1 for 38 of 38 countries.
+- **Written:** `tables/connect0/eurostat_household_internet.json` (455 rows, 38 countries
+  and groupings, 2014 to 2025; 10 breaks in series, 2 estimates flagged) and
+  `eurostat_household_internet_regions.json` (3,557 rows, 349 regions in 35 countries,
+  NUTS level 1 or 2; 64 rows of low reliability; 316 regions reach 2025).
+- **What the check does not test:** that "all households" was selected and not "two
+  adults"; a page figure cannot tell them apart. That rests on the file's label.
+- **The honest count:** three bars were set for this table. The first two refused it;
+  the third could have failed and did not. Whoever uses the table should know that.
+- Its denominator is households with a member aged 16 to 74. It is "has internet at
+  home", a shared phone included. It is not a fixed line.

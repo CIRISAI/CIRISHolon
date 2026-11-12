@@ -1,0 +1,163 @@
+{
+ "plants": {
+  "P-FLAG": true,
+  "P-GROUP": true,
+  "P-DUP": true,
+  "P-BLANK": true,
+  "P-SHARE": true,
+  "P-SEL": true,
+  "P-ACS": true,
+  "P-KIND": null,
+  "P-K4": null
+ },
+ "amended_after_the_value_was_seen": true,
+ "R2": {
+  "eu27_2025": "94.76",
+  "members_present": 27,
+  "member_min_max": [
+   "87.91",
+   "99.28"
+  ],
+  "neighbours_2025": {
+   "geo=EA": "94.55",
+   "geo=EU27_2007": null,
+   "geo=EU28": null,
+   "hhtyp=A1": "90.17",
+   "hhtyp=A1_DCH": "97.13",
+   "hhtyp=A2": "94.64",
+   "hhtyp=A2_DCH": "99.16",
+   "hhtyp=ALL_DCH": "98.86",
+   "hhtyp=ALL_NDCH": "93.50",
+   "hhtyp=A_GE3": "98.14",
+   "hhtyp=A_GE3_DCH": "98.93",
+   "hhtyp=HHI_Q1": null,
+   "hhtyp=HHI_Q2": null,
+   "hhtyp=HHI_Q3": null,
+   "hhtyp=HHI_Q4": null,
+   "hhtyp=HH_DEG1": "96.04",
+   "hhtyp=HH_DEG2": "94.54",
+   "hhtyp=HH_DEG3": "92.81",
+   "hhtyp=HH_NO1": null,
+   "hhtyp=HH_O1": null
+  },
+  "a_neighbour_also_rounds_to_94.7": [],
+  "eu27_2023_printed_no_verdict": "93.09",
+  "R2_prime_of_0A": {
+   "neighbours_within_0.1": [
+    "hhtyp=A2"
+   ],
+   "met": false,
+   "note": "CONNECT-0A's check; read not met; kept for the record"
+  },
+  "R2_double_prime": {
+   "items": {
+    "1_eu_within_0.1": true,
+    "2_highest_two_NL_LU_at_99": true,
+    "3_lowest_two_HR_EL_at_88_89": true,
+    "4_BG_largest_increase_at_34": true
+   },
+   "seen": {
+    "highest_two": [
+     [
+      "LU",
+      "99.07"
+     ],
+     [
+      "NL",
+      "99.28"
+     ]
+    ],
+    "lowest_two": [
+     [
+      "HR",
+      "87.91"
+     ],
+     [
+      "EL",
+      "88.73"
+     ]
+    ],
+    "largest_increase": [
+     "BG",
+     "33.68"
+    ],
+    "members_with_2015_and_2025": 27
+   },
+   "met": true
+  },
+  "reading_as_frozen": "misread"
+ },
+ "printed_countries": {
+  "rows": 455,
+  "countries": 38,
+  "years": [
+   2014,
+   2025
+  ],
+  "flagged_estimated": 2,
+  "breaks": 10,
+  "low_reliability": 0,
+  "countries_with_2025": 36,
+  "p10_p90_2025": [
+   88.73,
+   99.07
+  ],
+  "lowest_2025": [
+   "HR",
+   87.91
+  ],
+  "highest_2025": [
+   "XK",
+   99.35
+  ]
+ },
+ "units": {
+  "eurostat_countries": "(a): written under R2'' (CONNECT-0B)",
+  "eurostat_regions": "(a): written"
+ },
+ "R2b": {
+  "countries_compared": 38,
+  "within_0.1": 38,
+  "not_within": [],
+  "met": true
+ },
+ "printed_regions": {
+  "rows": 3557,
+  "regions": 349,
+  "by_nuts_level": {
+   "1": 124,
+   "2": 225
+  },
+  "countries": 35,
+  "latest_year": 2025,
+  "regions_with_latest_year": 316,
+  "low_reliability": 64,
+  "widest_within_country_spread_nuts2_latest": [
+   [
+    "SI",
+    20.05,
+    4
+   ],
+   [
+    "LT",
+    17.79,
+    3
+   ],
+   [
+    "FR",
+    13.18,
+    26
+   ],
+   [
+    "IE",
+    12.93,
+    5
+   ],
+   [
+    "PT",
+    9.5,
+    12
+   ]
+  ]
+ }
+}

@@ -3,7 +3,7 @@
 
   connect0a.py RAW_DIR OUT_DIR
 
-Uses CONNECT-0's extractor and row rules unchanged. R2' was set after the value was seen.
+Uses CONNECT-0's extractor and row rules unchanged. R2' (CONNECT-0A) read not met. R2'' (CONNECT-0B) is on named-country statements stated before comparison.
 """
 import collections
 import hashlib
@@ -33,13 +33,25 @@ def main(raw, out):
     eu = Decimal(r2["eu27_2025"])
     near = sorted(k for k, v in r2["neighbours_2025"].items() if v and abs(Decimal(v) - Decimal("94.7")) <= Decimal("0.1"))
     lo, hi = (Decimal(x) for x in r2["member_min_max"])
-    r2["R2_prime"] = {"difference_from_94.7": str(abs(eu - Decimal("94.7"))), "neighbours_within_0.1": near,
-                      "met": abs(eu - Decimal("94.7")) <= Decimal("0.1") and not near and r2["members_present"] == 27 and lo <= eu <= hi,
-                      "note": "known to be met before this run; a record, not a test"}
+    r2["R2_prime_of_0A"] = {"neighbours_within_0.1": near, "met": abs(eu - Decimal("94.7")) <= Decimal("0.1") and not near, "note": "CONNECT-0A's check; read not met; kept for the record"}
+    tot = country["TOTAL"]
+    v25 = {m: tot[m][2025][0] for m in c.EU27 if 2025 in tot.get(m, {})}
+    order = sorted(v25, key=lambda m: v25[m])
+    rnd = lambda x: int(x.quantize(Decimal("1"), rounding="ROUND_HALF_UP"))
+    inc = {m: tot[m][2025][0] - tot[m][2015][0] for m in c.EU27 if 2025 in tot.get(m, {}) and 2015 in tot.get(m, {})}
+    top = max(inc, key=lambda m: inc[m])
+    items = {"1_eu_within_0.1": abs(eu - Decimal("94.7")) <= Decimal("0.1"),
+             "2_highest_two_NL_LU_at_99": set(order[-2:]) == {"NL", "LU"} and all(rnd(v25[m]) == 99 for m in ("NL", "LU")),
+             "3_lowest_two_HR_EL_at_88_89": set(order[:2]) == {"HR", "EL"} and rnd(v25["HR"]) == 88 and rnd(v25["EL"]) == 89,
+             "4_BG_largest_increase_at_34": top == "BG" and rnd(inc["BG"]) == 34}
+    r2["R2_double_prime"] = {"items": items, "seen": {"highest_two": [(m, str(v25[m])) for m in order[-2:]], "lowest_two": [(m, str(v25[m])) for m in order[:2]],
+                                                       "largest_increase": [top, str(inc[top])], "members_with_2015_and_2025": len(inc)},
+                             "met": items["1_eu_within_0.1"] and sum(items[k] for k in list(items)[1:]) >= 2}
     r2["reading_as_frozen"] = r2.pop("reading")
     log["R2"] = r2
-    if not r2["R2_prime"]["met"]:
-        log["branch"] = "(r): R2' not met"
+    if not r2["R2_double_prime"]["met"]:
+        log["branch"] = "(r): R2'' not met; no further bar"
+        json.dump(log, open(os.path.join(out, "results_0b.json"), "w"), indent=1)
         print(json.dumps(log, indent=1))
         return 1
     rows = c.euro_rows(country["TOTAL"], "isoc_ci_in_h", False)
@@ -51,7 +63,7 @@ def main(raw, out):
                                 "flagged_estimated": sum(1 for r in rows if r["estimated"] is True), "breaks": sum(1 for r in rows if r["break_in_series"]), "low_reliability": sum(1 for r in rows if r["low_reliability"]),
                                 "countries_with_2025": len(lat), "p10_p90_2025": [lat[math.ceil(0.1 * len(lat)) - 1], lat[math.ceil(0.9 * len(lat)) - 1]],
                                 "lowest_2025": min(by.items(), key=lambda kv: kv[1]), "highest_2025": max(by.items(), key=lambda kv: kv[1])}
-    log["units"] = {"eurostat_countries": "(a): written under R2'"}
+    log["units"] = {"eurostat_countries": "(a): written under R2'' (CONNECT-0B)"}
     regional = c.eurostat(open(os.path.join(raw, "isoc_r_iacc_h.tsv"), encoding="utf-8"), {"unit": "PC_HH"})
     log["R2b"] = c.r2b(country, regional)
     if not log["R2b"]["met"]:
@@ -74,7 +86,7 @@ def main(raw, out):
                                   "low_reliability": sum(1 for r in rr if r["low_reliability"]),
                                   "widest_within_country_spread_nuts2_latest": [(k, round(d, 2), n) for d, k, n in wide[:5]]}
         log["units"]["eurostat_regions"] = "(a): written"
-    json.dump(log, open(os.path.join(out, "results_0a.json"), "w"), indent=1)
+    json.dump(log, open(os.path.join(out, "results_0b.json"), "w"), indent=1)
     print(json.dumps(log, indent=1))
     return 0
 

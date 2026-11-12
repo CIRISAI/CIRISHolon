@@ -1,0 +1,56 @@
+{
+ "reference": "CONNECT-0 (home connectivity; tables of priors), Eurostat tables",
+ "version": 1,
+ "tables": {
+  "eurostat_household_internet.json": {
+   "bytes": 251716,
+   "sha256": "768fa50a41551536e1aeb15f7407e000bc030c93b4b7528968bb8c4e7d7586e3",
+   "rows": 455
+  },
+  "eurostat_household_internet_regions.json": {
+   "bytes": 2241415,
+   "sha256": "0a5677cd15204353eaebe316e3996b285e4f8dae9c6af4a415ee53fb5418dd1e",
+   "rows": 3557
+  }
+ },
+ "kind": "K1: percentage of households with internet access at home, all forms of internet use; DENOMINATOR: private households with at least one member aged 16 to 74 (not all households)",
+ "source": {
+  "publisher": "Eurostat",
+  "datasets": {
+   "isoc_ci_in_h": "Households - level of internet access",
+   "isoc_r_iacc_h": "Households with access to the internet at home"
+  },
+  "citation": "Source: Eurostat, datasets isoc_ci_in_h and isoc_r_iacc_h (https://ec.europa.eu/eurostat/databrowser/view/isoc_ci_in_h/default/table, https://ec.europa.eu/eurostat/databrowser/view/isoc_r_iacc_h/default/table), accessed 2026-11-12.",
+  "file_sha256": {
+   "isoc_ci_in_h.tsv": "4fed29fe3485ac7e5493e99d4d1b7ac7ae666d08582947b38b4c338186303538",
+   "isoc_r_iacc_h.tsv": "2f507eb428a1a6063355be5b77461561076a5eb0cbcf33ac123c98058f261b3e"
+  },
+  "licence": "Reuse authorised provided the source is acknowledged (Eurostat copyright notice, https://ec.europa.eu/eurostat/help/copyright-notice)",
+  "changed": "rows selected (percentage of households, all household types, years from 2014); flags carried as fields; values unaltered",
+  "disclaimer": "This table was adapted from Eurostat data. Eurostat has no responsibility for the adaptation or for any use made of it."
+ },
+ "holds_no_real_feature": true,
+ "reading_check": {
+  "as_frozen": "CONNECT-0 R2 refused the table: the file reads 94.76 for the EU-27 in 2025 and the bar was 'rounds to 94.7'",
+  "first_amendment": "CONNECT-0A, set after the value was seen, also read not met (its claim to be known met was false; corrected there)",
+  "accepted_under": "CONNECT-0B, committed before its comparison: the publisher's article names the 2 highest members (Netherlands, Luxembourg, 99), the 2 lowest (Croatia 88, Greece 89) and the largest ten-year increase (Bulgaria, 34); the file gives each. 4 of 4 items held",
+  "what_it_does_not_test": "the household-type selection: a page figure cannot tell 'all households' (94.76) from 'two adults' (94.64). The selection rests on the file's label TOTAL",
+  "R2b": {
+   "countries_compared": 38,
+   "within_0.1": 38,
+   "not_within": [],
+   "met": true
+  }
+ },
+ "notes": [
+  "no change over time is computed across a break in series (series_segment increments at each break)",
+  "regional rows carry different latest years; 316 of 349 regions have 2025",
+  "national rows of the regional file are not written; use the country table",
+  "K1 counts a home online by a shared phone; it is not a fixed line and not a host that is on",
+  "do not join this column with ITU's or the ACS's without stating the denominator"
+ ],
+ "verdict": {
+  "all_rows": "unresolved",
+  "reason": "tables of priors; a reading check, not a score"
+ }
+}

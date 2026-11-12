@@ -67,6 +67,18 @@ table.rows { border-collapse: collapse; font-size: 12px; font-variant-numeric: t
 table.rows th, table.rows td { text-align: left; padding: 2px 10px 2px 0; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--bg); padding: 4px 8px; border-radius: 3px; font-family: var(--mono); font-size: 11px; z-index: 20; max-width: 260px; }
 .foot { color: var(--ink3); font-size: 12px; max-width: 90ch; }
+#scene { width: 100%; height: 540px; display: block; touch-action: none; cursor: grab; border-radius: 4px; background: var(--bg); }
+#scene:active { cursor: grabbing; }
+.found { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 8px; margin-top: 12px; }
+.found button { font: inherit; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 10px 12px; text-align: left; cursor: pointer; display: flex; flex-direction: column; gap: 4px; }
+.found button[aria-pressed="true"] { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
+.found button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.found b { font-weight: 600; } .found span { color: var(--ink2); } .found em { font-style: normal; font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink3); }
+.ctl { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; margin: 8px 0; color: var(--ink2); }
+.ctl input[type=range] { width: 220px; max-width: 100%; }
+.say { font-size: 16px; max-width: 70ch; margin: 10px 0 0; min-height: 3em; }
+details.more > summary { font-weight: 600; font-size: 15px; padding: 6px 0; }
+details.more > .inner { display: flex; flex-direction: column; gap: 16px; margin-top: 10px; }
 .bytes { display: flex; flex-wrap: wrap; gap: 1px; font-family: var(--mono); font-size: 13px; line-height: 1; margin: 8px 0; }
 .bytes button { font: inherit; color: var(--ink); border: 0; border-radius: 2px; padding: 4px 0; width: 1.05em; text-align: center; cursor: pointer; }
 .bytes button.cur { box-shadow: 0 0 0 2px var(--ink); position: relative; z-index: 1; }
@@ -80,8 +92,21 @@ table.rows th, table.rows td { text-align: left; padding: 2px 10px 2px 0; border
 <div class="wrap">
   <header>
     <h1>Kindscope</h1>
-    <p class="lede">What has been measured inside two language models, site by site. Pick a model and one kind of reading. A site nobody measured is drawn empty: nothing is filled in between layers, carried from one model to the other, or averaged across kinds.</p>
+    <p class="lede">A small language model reading a story, drawn so you can walk around it. The model reads one letter at a time and passes it up through 13 stages; each stage adds something. The height of each block is how much that stage added at that letter. Drag to turn it. Pick a finding below to see where in the model it lives.</p>
   </header>
+  <section class="panel">
+    <canvas id="scene" aria-label="the model reading a story, in three dimensions: letters left to right, stages front to back, height is how much each stage added"></canvas>
+    <div class="ctl">
+      <span id="s3items" class="row"></span>
+      <label>Move along the story <input type="range" id="s3win" min="0" max="208" value="13"></label>
+      <button class="chip" id="s3spin" aria-pressed="false">Turn slowly</button>
+      <span><i style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--s1);vertical-align:-2px"></i> a stage that looks back at earlier letters &nbsp; <i style="display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--s2);vertical-align:-2px"></i> a stage that rewrites what it has</span>
+    </div>
+    <p class="say" id="s3say"></p>
+    <div class="found" id="s3found"></div>
+  </section>
+  <details class="more"><summary>The measurements behind this, cell by cell</summary><div class="inner">
+  <p class="lede" style="margin:0">Pick a model and one kind of reading. A site nobody measured is drawn empty: nothing is filled in between layers, carried from one model to the other, or averaged across kinds.</p>
   <div class="row" id="models"><span class="lab">Model</span></div>
   <div class="frame" id="frame"></div>
   <div class="row" id="layers"><span class="lab">Reading</span></div>
@@ -114,6 +139,7 @@ table.rows th, table.rows td { text-align: left; padding: 2px 10px 2px 0; border
     </div>
     <div class="ok" id="okline"></div>
   </section>
+  </div></details>
   <p class="foot" id="foot"></p>
 </div>
 <div class="tip" id="tip" hidden></div>
@@ -242,6 +268,82 @@ function profile(l, rows, sel) {
   svg.innerHTML = s;
   svg.setAttribute("aria-label", l.title + " by depth for " + sel.site.component);
 }
+// ---------------------------------------------------------------- the model in three dimensions
+const FOUND = [
+  { t: "It takes in one letter", s: "The first stage holds only the letter itself. Everything after is built on top of it.", st: [0], how: "how the model is built" },
+  { t: "It looks back, then recognises the word", s: "The first looking-back stage blurs the word (0.59 of what it adds is the word). The next stage recognises the word from its last few letters and writes it down sharply (0.84).", st: [1, 2], how: "tested, and it held" },
+  { t: "It does that twice", s: "The second pair repeats it: the word blurs again (0.45), then is written back (0.80). The word is rebuilt at each stage, not stored once.", st: [3, 4], how: "tested, and it held" },
+  { t: "Early on it decides what kind of word comes next", s: "In the first three rewriting stages the model marks whether an adjective or a noun is coming. Nudging that mark changes what it writes, on stories it had never seen (9 of 9 cases).", st: [2, 4, 6], how: "tested, and it held" },
+  { t: "Late on it turns that into a guess at the next letter", s: "The last stages convert what it knows into the next letter. The final stage alone does about half of all the adding.", st: [8, 10, 12], how: "tested, and it held" },
+  { t: "What an outside reader finds is not what the model uses", s: "A reader trained to spot the kind of word finds it along one direction. The model writes it along another, about as unrelated as two random directions (82 to 90 degrees). Reading the model from outside can mislead.", st: [2, 4, 6, 8, 10, 12], how: "seen while exploring" },
+];
+const S3 = { item: 0, win: 13, yaw: -0.62, pitch: 0.52, hi: null, spin: false, hover: null, tops: [] };
+const NAMES = { embed: "takes in the letter", attn: "looks back", mlp: "rewrites" };
+function stageWord(n) { return n === "embed" ? "stage 1, the letter" : (n.startsWith("attn") ? "looking back, round " : "rewriting, round ") + (n === "embed" ? "" : (+n.slice(-1) + 1)); }
+function scene() {
+  const cv = $("scene"), it = TR.items[S3.item], dpr = Math.min(2, window.devicePixelRatio || 1), Wp = cv.clientWidth || 900, Hp = cv.clientHeight || 540;
+  if (cv.width !== Math.round(Wp * dpr)) { cv.width = Math.round(Wp * dpr); cv.height = Math.round(Hp * dpr); }
+  const g = cv.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, Wp, Hp);
+  const NX = Wp < 560 ? 28 : 44, K = it.writes.length, mx = Math.max(...it.write_norm.map(r => Math.max(...r)));
+  const win = Math.min(S3.win, it.positions - NX), dx = 1, dz = 2.3, HH = 9;
+  const cy0 = Math.cos(S3.yaw), sy0 = Math.sin(S3.yaw), cp = Math.cos(S3.pitch), sp = Math.sin(S3.pitch), sc = Math.min(Wp / (NX * 1.25), Hp / 34);
+  const P = (x, y, z) => { const xr = x * cy0 - z * sy0, zr = x * sy0 + z * cy0; return [Wp / 2 + sc * xr, Hp * 0.62 - sc * (y * cp - zr * sp), zr * cp + y * sp]; };
+  const col = { embed: hex(css("--ink3")), attn: hex(css("--s1")), mlp: hex(css("--s2")) }, bg = hex(css("--bg")), ink = hex(css("--ink"));
+  const bars = [];
+  for (let k = 0; k < K; k++) for (let i = 0; i < NX; i++) {
+    const x = (i - NX / 2) * dx, z = (k - K / 2) * dz, h = Math.max(0.05, HH * it.write_norm[win + i][k] / mx);
+    bars.push({ k, i, x, z, h, d: P(x + .4, h / 2, z + .8)[2] });
+  }
+  bars.sort((a, b) => b.d - a.d);
+  S3.tops = [];
+  const poly = (pts, fill) => { g.beginPath(); pts.forEach((p, j) => j ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fillStyle = fill; g.fill(); };
+  for (const b of bars) {
+    const n = it.writes[b.k], kind = n === "embed" ? "embed" : n.slice(0, -1), base = col[kind];
+    const dim = S3.hi && !S3.hi.includes(b.k), hot = S3.hover && S3.hover.k === b.k && S3.hover.i === b.i;
+    const c = dim ? base.map((v, j) => Math.round(v + (bg[j] - v) * 0.8)) : base;
+    const x0 = b.x, x1 = b.x + .8, z0 = b.z, z1 = b.z + 1.5, h = b.h;
+    const A = P(x0, 0, z0), B = P(x1, 0, z0), C = P(x1, 0, z1), D = P(x0, 0, z1), E = P(x0, h, z0), F = P(x1, h, z0), G = P(x1, h, z1), H = P(x0, h, z1);
+    const shade = (t, toward) => mix(c, toward, t);
+    if (sy0 < 0) poly([B, C, G, F], shade(.38, bg)); else poly([A, D, H, E], shade(.38, bg));
+    poly(cy0 > 0 ? [A, B, F, E] : [D, C, G, H], shade(.22, bg));
+    poly([E, F, G, H], hot ? mix(c, ink, .45) : shade(0, bg));
+    S3.tops.push({ k: b.k, i: b.i, pts: [E, F, G, H, A, B, C, D] });
+  }
+  g.font = "11px " + css("--mono"); g.fillStyle = css("--ink2"); g.textBaseline = "middle";
+  const front = cy0 > 0 ? -K / 2 * dz - 1.2 : (K / 2) * dz + 0.6;
+  g.textAlign = "center";
+  for (let i = 0; i < NX; i++) { const c = it.bytes[win + i], ch = c === 10 ? "↵" : c === 32 ? "·" : (c > 32 && c < 127 ? String.fromCharCode(c) : "□"), p = P((i - NX / 2) * dx + .4, 0, front); g.fillStyle = S3.hover && S3.hover.i === i ? css("--ink") : css("--ink2"); g.fillText(ch, p[0], p[1]); }
+  const side = sy0 < 0 ? -NX / 2 * dx - 1.4 : NX / 2 * dx + 1.4; g.textAlign = sy0 < 0 ? "right" : "left";
+  for (let k = 0; k < K; k++) { const n = it.writes[k], p = P(side, 0, (k - K / 2) * dz + .75); g.fillStyle = S3.hi && S3.hi.includes(k) ? css("--ink") : css("--ink3"); g.fillText((k + 1) + "  " + (n === "embed" ? NAMES.embed : NAMES[n.slice(0, -1)]), p[0], p[1]); }
+  const share = it.write_norm.reduce((a, r) => a + r[K - 1] * r[K - 1], 0) / it.write_norm.reduce((a, r) => a + r.reduce((u, v) => u + v * v, 0), 0);
+  FOUND[4].live = "In this story the final stage does " + Math.round(share * 100) + " % of all the adding.";
+  const f = S3.sel != null ? FOUND[S3.sel] : null, hv = S3.hover;
+  $("s3say").textContent = hv ? "Letter “" + (it.bytes[win + hv.i] === 32 ? "space" : it.bytes[win + hv.i] === 10 ? "new line" : String.fromCharCode(it.bytes[win + hv.i])) + "”, stage " + (hv.k + 1) + " (" + stageWord(it.writes[hv.k]) + "): it added " + it.write_norm[win + hv.i][hv.k].toFixed(1) + ", against " + mx.toFixed(1) + " for the largest block in this story."
+    : f ? f.s + (f.live ? " " + f.live : "") : "Letters run left to right, the 13 stages run front to back, and the story is read one letter at a time. Tall blocks are where a stage added a lot. The back row, the last stage, towers over the rest: that is where the next letter is decided.";
+}
+function s3init() {
+  const cv = $("scene");
+  TR.items.forEach((it, i) => { const b = document.createElement("button"); b.className = "chip"; b.id = "s3item-" + i; b.textContent = "Story " + (i + 1); b.setAttribute("aria-pressed", i === 0); b.onclick = () => { S3.item = i; $("s3items").querySelectorAll("button").forEach((x, j) => x.setAttribute("aria-pressed", j === i)); scene(); }; $("s3items").appendChild(b); });
+  FOUND.forEach((f, i) => { const b = document.createElement("button"); b.id = "found-" + i; b.setAttribute("aria-pressed", "false"); b.innerHTML = "<em>" + esc(f.how) + "</em><b>" + esc(f.t) + "</b>"; b.onclick = () => { const on = S3.sel === i; S3.sel = on ? null : i; S3.hi = on ? null : f.st; $("s3found").querySelectorAll("button").forEach((x, j) => x.setAttribute("aria-pressed", !on && j === i)); scene(); }; $("s3found").appendChild(b); });
+  $("s3win").oninput = e => { S3.win = +e.target.value; scene(); };
+  let drag = null;
+  cv.onpointerdown = e => { drag = [e.clientX, e.clientY, S3.yaw, S3.pitch]; try { cv.setPointerCapture(e.pointerId); } catch (x) {} };
+  cv.onpointerup = () => { drag = null; };
+  cv.onpointermove = e => {
+    if (drag) { S3.yaw = drag[2] + (e.clientX - drag[0]) * 0.008; S3.pitch = Math.max(0.12, Math.min(1.35, drag[3] + (e.clientY - drag[1]) * 0.006)); S3.hover = null; scene(); return; }
+    const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top; let hit = null;
+    const inside = (q, px, py) => { let c = false; for (let i = 0, j = q.length - 1; i < q.length; j = i++) if (((q[i][1] > py) !== (q[j][1] > py)) && (px < (q[j][0] - q[i][0]) * (py - q[i][1]) / (q[j][1] - q[i][1]) + q[i][0])) c = !c; return c; };
+    for (let n = S3.tops.length - 1; n >= 0 && !hit; n--) { const t = S3.tops[n], xs = t.pts.map(p => p[0]), ys = t.pts.map(p => p[1]); if (x >= Math.min(...xs) && x <= Math.max(...xs) && y >= Math.min(...ys) && y <= Math.max(...ys) && (inside(t.pts.slice(0, 4), x, y) || inside([t.pts[0], t.pts[1], t.pts[5], t.pts[4]], x, y) || inside([t.pts[1], t.pts[2], t.pts[6], t.pts[5]], x, y) || inside([t.pts[3], t.pts[0], t.pts[4], t.pts[7]], x, y) || inside([t.pts[2], t.pts[3], t.pts[7], t.pts[6]], x, y))) hit = { k: t.k, i: t.i }; }
+    if ((hit && (!S3.hover || hit.k !== S3.hover.k || hit.i !== S3.hover.i)) || (!hit && S3.hover)) { S3.hover = hit; scene(); }
+  };
+  cv.onpointerleave = () => { if (S3.hover) { S3.hover = null; scene(); } };
+  let still = false; try { still = matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (x) {}
+  $("s3spin").hidden = still;
+  $("s3spin").onclick = () => { S3.spin = !S3.spin; $("s3spin").setAttribute("aria-pressed", S3.spin); if (S3.spin) tick(); };
+  function tick() { if (!S3.spin) return; if (!drag) { S3.yaw += 0.004; scene(); } requestAnimationFrame(tick); }
+  try { addEventListener("resize", scene); } catch (x) {}
+  scene();
+}
 let tr = { item: 0, pos: 40 };
 function passView() {
   const it = TR.items[tr.item], P = it.positions;
@@ -286,7 +388,7 @@ for (const [id, m] of Object.entries(T.models)) {
   b.onclick = () => { state.model = id; state.sel = null; render(); }; $("models").appendChild(b);
 }
 if (state.layer) state.model = layerOf(state.layer).model;
-$("foot").textContent = "SCOPE-0, version " + SIDE.version + ": " + T.rows.length + " readings copied from result files of the RATCHET kindscope series (commit " + SIDE.ratchet + ") and of the earlier hand-over bundle. Nothing was measured or re-derived to draw this page. Which experiments feed each view was chosen by the CIRISHolon session and corrected once by the session that owns the instrument.";
-render(); passView();
-try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { render(); passView(); }); new MutationObserver(() => { render(); passView(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] }); } catch (e) {}
+$("foot").textContent = "The model is GoldWorm v6, a small public model of 2.76 million parameters that reads children\u2019s stories one letter at a time. The findings are the RATCHET session\u2019s experiments, stated here in plain words by the CIRISHolon session; \u201ctested, and it held\u201d means a prediction was written down before the experiment and came true. SCOPE-0, version " + SIDE.version + ": " + T.rows.length + " readings copied from result files of the RATCHET kindscope series (commit " + SIDE.ratchet + ") and of the earlier hand-over bundle. Nothing was measured or re-derived to draw this page. Which experiments feed each view was chosen by the CIRISHolon session and corrected once by the session that owns the instrument.";
+s3init(); render(); passView();
+try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => { scene(); render(); passView(); }); new MutationObserver(() => { scene(); render(); passView(); }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] }); } catch (e) {}
 </script>

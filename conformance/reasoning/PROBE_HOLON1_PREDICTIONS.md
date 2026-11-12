@@ -269,3 +269,21 @@ the difference from the model's own final answer with a paired bootstrap 95 % in
   calls 106 of 238 one kind and none another). The fix transfers to unseen items written
   the same way and is unverified on real ones. The guard, policy, story and confirm sets,
   which have outcomes, are where "does it help" can be answered.
+
+## RATCHET-1 (2026-11-11, as reported by the agent session; the lead's direction to it)
+
+The lead redirected that session from the outcome tests to editing weights, one kind per
+step ("a ratchet"). As reported; not re-derived here.
+
+- Held-out curated, the SECOND read of that set, with the pass line written knowing its
+  baseline: said `0.460` to `0.548`, +0.089 [+0.032, +0.145]. Its own line was +0.10:
+  missed narrowly. 12 items gained, 1 lost.
+- Priorities 1 of 10 to 9 of 10. Premises 0 of 12 to 0 of 12: the step rule took the
+  smallest change that passed in floating point, and 4-bit quantisation did not reproduce
+  it. A fault of the step rule, by that session's account, not evidence it cannot be done.
+- It ends below the 12 × 12 recalibration (`0.62`), which touches no weight.
+- 5 embedding rows differ, 2,678 bytes. 24 of 24 ordinary prompts keep their top word; the
+  stronger side-effect check was weak because the edited tokens are capitalised forms that
+  running text does not use. On unlabelled real revisions 18 of 238 answers change.
+- The outcome-test design (PROBE-OUTCOME-1) is parked unfrozen with this session's attack
+  accepted; no blind item has been read.

@@ -132,3 +132,23 @@ the mean's budget.
 - The certificate's error floor should be split into one for certifying and one for
   refusing before the next campaign uses it.
 - The European campaign inherits the shape but not the blocks, the bands or the margins.
+
+## Addendum, 2026-11-11: the twin's histogram over real leaves (as the twin session reports it)
+
+Not scored here; recorded because it answers the caveat above. The twin emitted the same
+histogram from the page's own path over every leaf under twelve places (twin/hhsize
+`165e0bc`, `docs/geo/household_hist_real.json`, digest `5526d2d6…`, recomputed here).
+
+- 356,507 households in 16,041 leaves: mean `2.500001`, one-person share `0.1806`. Real
+  leaves sit close to 2.5 people per household (2.44 to 2.60), so the synthetic file that
+  was scored stands for the page. The verdicts above are not changed by it.
+- 98 % of those households are in dense-fabric leaves. The US reference resolves village,
+  suburban and terraced. The two barely overlap, which is a second reason the verdicts are
+  outside the envelope for the twin's own leaves.
+- **By units per building the twin's rule is flat:** `2.45` in single units, `2.51` in 2 to
+  4, `2.51` in 5 or more. The census moves `0.84` across the same bands. That is the
+  plainest statement of what the next generator has to add.
+- Two cautions from the twin's code for such a generator: in dense fabric a building's unit
+  count is a by-product of plot count, not yet a building type; and the apportionment
+  rescales every drawn size after the draw, so a per-type shape survives only up to that
+  rescaling. Persons should be apportioned by type within the leaf, not drawn and rescaled.

@@ -1,0 +1,19 @@
+{
+ "reference": "POWER-0 (a table of priors)",
+ "version": 1,
+ "table": "power_table.json",
+ "bytes": 10621,
+ "sha256": "9decc6436915511a71460856018e776c46941adc7d267470378bfa52ae9cd7a9",
+ "serves_registry_rows": [
+  "device.energy (the twin's energy delta: per class and state, with a would-be-on-anyway flag and a year)"
+ ],
+ "provenance": "conformance/scene/SCOUT_DEVICES_POWER.md (documentation only; each row says whether it was read on the publisher's page, is the scout's reading of the source, or is a search summary)",
+ "verdict": {
+  "all_rows": "unresolved",
+  "reason": "priors gathered from documents; no generator and no measurement has been scored against them; several are regulatory targets or model inputs, not measured draw"
+ },
+ "law": "each row is a price in a regime: its year and basis are part of the value; none should be carried to another regime without saying so",
+ "warning": "network energy is mostly baseload per line. Pricing traffic kept local at an average kWh per GB would overstate the saving by a large factor; use the baseload and traffic-dependent rows, in a short-run and a long-run regime.",
+ "licences": "values are facts quoted with their sources; the EU Code of Conduct is CC BY 4.0 (European Commission, Joint Research Centre)",
+ "holds_no_real_feature": "no person, household or place"
+}

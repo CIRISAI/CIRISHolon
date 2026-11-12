@@ -1,0 +1,56 @@
+{
+ "plants": {
+  "P-FLAG": true,
+  "P-GROUP": true,
+  "P-DUP": true,
+  "P-BLANK": true,
+  "P-SHARE": true,
+  "P-SEL": true,
+  "P-ACS": true,
+  "P-KIND": null,
+  "P-K4": null
+ },
+ "amended_after_the_value_was_seen": true,
+ "R2": {
+  "eu27_2025": "94.76",
+  "members_present": 27,
+  "member_min_max": [
+   "87.91",
+   "99.28"
+  ],
+  "neighbours_2025": {
+   "geo=EA": "94.55",
+   "geo=EU27_2007": null,
+   "geo=EU28": null,
+   "hhtyp=A1": "90.17",
+   "hhtyp=A1_DCH": "97.13",
+   "hhtyp=A2": "94.64",
+   "hhtyp=A2_DCH": "99.16",
+   "hhtyp=ALL_DCH": "98.86",
+   "hhtyp=ALL_NDCH": "93.50",
+   "hhtyp=A_GE3": "98.14",
+   "hhtyp=A_GE3_DCH": "98.93",
+   "hhtyp=HHI_Q1": null,
+   "hhtyp=HHI_Q2": null,
+   "hhtyp=HHI_Q3": null,
+   "hhtyp=HHI_Q4": null,
+   "hhtyp=HH_DEG1": "96.04",
+   "hhtyp=HH_DEG2": "94.54",
+   "hhtyp=HH_DEG3": "92.81",
+   "hhtyp=HH_NO1": null,
+   "hhtyp=HH_O1": null
+  },
+  "a_neighbour_also_rounds_to_94.7": [],
+  "eu27_2023_printed_no_verdict": "93.09",
+  "R2_prime": {
+   "difference_from_94.7": "0.06",
+   "neighbours_within_0.1": [
+    "hhtyp=A2"
+   ],
+   "met": false,
+   "note": "known to be met before this run; a record, not a test"
+  },
+  "reading_as_frozen": "misread"
+ },
+ "branch": "(r): R2' not met"
+}

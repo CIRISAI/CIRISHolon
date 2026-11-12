@@ -48,3 +48,18 @@ witness: none (a table of priors)
 
 - M-BAR-FROM-THE-READ: this amendment IS a bar set after the read; it says so, and claims no test for R2′.
 - M-PROVENANCE-OVERREACH: same files by digest; the sidecar carries the amendment.
+
+## CORRECTION 2026-11-12, after the run: this amendment's own claim was false, and its check was not met
+
+I wrote above that R2′ was "known to be met", with the nearest neighbour at 94.55. That
+was a misreading of my own printout. The household type "two adults" reads 94.64 for the
+EU in 2025, which is within 0.1 of 94.7. R2′ required that no neighbour be so. The run
+(`connect0/run_0a.log`) read R2′ as NOT met and wrote nothing. The Eurostat tables remain
+unwritten. R2b was not reached and is still unread.
+
+Two things follow. First, a page figure of 1 decimal cannot tell "all households" from
+"two adults" in this table; CONNECT-0's freeze had it right in only REPORTING a neighbour
+that also matched, and I made it fatal here without cause. Second, I have now set two
+bars for this table and both refused it. A third is written as CONNECT-0B, committed
+alone, on statements of the publisher's own article that name countries, which I have
+not compared with the file.

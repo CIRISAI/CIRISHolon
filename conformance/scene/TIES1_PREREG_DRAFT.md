@@ -1,5 +1,7 @@
 # TIES-1 (United States, 2008) — a person's closest ties by kind and by how far away they live, from "same house" outward, and how often each is contacted by each means: the bridge from ties to messages. PREREGISTRATION (DRAFT)
 
+*REVIEWED 2026-11-11 (`TIES1_REVIEW.md`): fixed in `TIES1_PREREG.md`, which replaces this text. Kept as written.*
+
 *DRAFT of 2026-11-11. NOT FROZEN; to be attacked by a second reader first. The lead approved
 the dataset by name ("pew, sure") and registered for it himself; the file is on this
 machine. Read so far: the questionnaire and the data file's column names. NOT read: any

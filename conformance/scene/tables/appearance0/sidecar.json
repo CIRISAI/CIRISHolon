@@ -1,0 +1,387 @@
+{
+ "reference": "APPEARANCE-0 (a climate class per cell; a key, not an appearance)",
+ "version": 1,
+ "key": "cell",
+ "grid": {
+  "columns": 2880,
+  "rows": 1440,
+  "cell_degrees": 0.125,
+  "order": "flat index = r * 2880 + c; row 0 northernmost, r = floor((90 - lat) / 0.125); column 0 at longitude -180",
+  "bytes_per_cell": 1
+ },
+ "files": {
+  "koppen_1991_2020_cell.bin.gz": {
+   "bytes_packed": 114114,
+   "sha256_packed": "08258b2ffa1e494695edf5970dd2ba5725dfdb8cc225c030f8e5ddc6de54c336",
+   "bytes_unpacked": 4147200,
+   "sha256_unpacked": "a28bd4e389355b81c2782e06d29a5fa2c7d83c2058b70484fbe578e524ee6267"
+  },
+  "koppen_1991_2020_cell_share.bin.gz": {
+   "bytes_packed": 349880,
+   "sha256_packed": "f33d6f0881ecb80effc89412c789fa99df7d08d65182ad3491d0a98745665d64",
+   "bytes_unpacked": 4147200,
+   "sha256_unpacked": "73b417c48f28fe3929284a44a82183111041b734a5b101f893a8929fbaf0273c"
+  },
+  "koppen_1991_2020_cell_classed.bin.gz": {
+   "bytes_packed": 155577,
+   "sha256_packed": "48619b8a42bdfb8469b4d7d700f2eeefe96f46e8863d6b7251247a499b7ea308",
+   "bytes_unpacked": 4147200,
+   "sha256_unpacked": "5d44cfa580b1587fc29880716e35f724e8829194f4ff2e5c5a182485d0bf3883"
+  }
+ },
+ "meaning": {
+  "koppen_1991_2020_cell.bin.gz": "class code 1 to 30; 0 = no class. The class holding the most of the cell's classed 1 km pixels; a tie goes to the lower code",
+  "koppen_1991_2020_cell_share.bin.gz": "the majority's share of the cell's classed pixels, round-half-up of 255 * k / n",
+  "koppen_1991_2020_cell_classed.bin.gz": "count of classed 1 km pixels in the cell, 0 to 225"
+ },
+ "legend": {
+  "1": {
+   "symbol": "Af",
+   "name": "Tropical, rainforest",
+   "source_map_colour_not_an_appearance": [
+    0,
+    0,
+    255
+   ]
+  },
+  "2": {
+   "symbol": "Am",
+   "name": "Tropical, monsoon",
+   "source_map_colour_not_an_appearance": [
+    0,
+    120,
+    255
+   ]
+  },
+  "3": {
+   "symbol": "Aw",
+   "name": "Tropical, savannah",
+   "source_map_colour_not_an_appearance": [
+    70,
+    170,
+    250
+   ]
+  },
+  "4": {
+   "symbol": "BWh",
+   "name": "Arid, desert, hot",
+   "source_map_colour_not_an_appearance": [
+    255,
+    0,
+    0
+   ]
+  },
+  "5": {
+   "symbol": "BWk",
+   "name": "Arid, desert, cold",
+   "source_map_colour_not_an_appearance": [
+    255,
+    150,
+    150
+   ]
+  },
+  "6": {
+   "symbol": "BSh",
+   "name": "Arid, steppe, hot",
+   "source_map_colour_not_an_appearance": [
+    245,
+    165,
+    0
+   ]
+  },
+  "7": {
+   "symbol": "BSk",
+   "name": "Arid, steppe, cold",
+   "source_map_colour_not_an_appearance": [
+    255,
+    220,
+    100
+   ]
+  },
+  "8": {
+   "symbol": "Csa",
+   "name": "Temperate, dry summer, hot summer",
+   "source_map_colour_not_an_appearance": [
+    255,
+    255,
+    0
+   ]
+  },
+  "9": {
+   "symbol": "Csb",
+   "name": "Temperate, dry summer, warm summer",
+   "source_map_colour_not_an_appearance": [
+    200,
+    200,
+    0
+   ]
+  },
+  "10": {
+   "symbol": "Csc",
+   "name": "Temperate, dry summer, cold summer",
+   "source_map_colour_not_an_appearance": [
+    150,
+    150,
+    0
+   ]
+  },
+  "11": {
+   "symbol": "Cwa",
+   "name": "Temperate, dry winter, hot summer",
+   "source_map_colour_not_an_appearance": [
+    150,
+    255,
+    150
+   ]
+  },
+  "12": {
+   "symbol": "Cwb",
+   "name": "Temperate, dry winter, warm summer",
+   "source_map_colour_not_an_appearance": [
+    100,
+    200,
+    100
+   ]
+  },
+  "13": {
+   "symbol": "Cwc",
+   "name": "Temperate, dry winter, cold summer",
+   "source_map_colour_not_an_appearance": [
+    50,
+    150,
+    50
+   ]
+  },
+  "14": {
+   "symbol": "Cfa",
+   "name": "Temperate, no dry season, hot summer",
+   "source_map_colour_not_an_appearance": [
+    200,
+    255,
+    80
+   ]
+  },
+  "15": {
+   "symbol": "Cfb",
+   "name": "Temperate, no dry season, warm summer",
+   "source_map_colour_not_an_appearance": [
+    100,
+    255,
+    80
+   ]
+  },
+  "16": {
+   "symbol": "Cfc",
+   "name": "Temperate, no dry season, cold summer",
+   "source_map_colour_not_an_appearance": [
+    50,
+    200,
+    0
+   ]
+  },
+  "17": {
+   "symbol": "Dsa",
+   "name": "Cold, dry summer, hot summer",
+   "source_map_colour_not_an_appearance": [
+    255,
+    0,
+    255
+   ]
+  },
+  "18": {
+   "symbol": "Dsb",
+   "name": "Cold, dry summer, warm summer",
+   "source_map_colour_not_an_appearance": [
+    200,
+    0,
+    200
+   ]
+  },
+  "19": {
+   "symbol": "Dsc",
+   "name": "Cold, dry summer, cold summer",
+   "source_map_colour_not_an_appearance": [
+    150,
+    50,
+    150
+   ]
+  },
+  "20": {
+   "symbol": "Dsd",
+   "name": "Cold, dry summer, very cold winter",
+   "source_map_colour_not_an_appearance": [
+    150,
+    100,
+    150
+   ]
+  },
+  "21": {
+   "symbol": "Dwa",
+   "name": "Cold, dry winter, hot summer",
+   "source_map_colour_not_an_appearance": [
+    170,
+    175,
+    255
+   ]
+  },
+  "22": {
+   "symbol": "Dwb",
+   "name": "Cold, dry winter, warm summer",
+   "source_map_colour_not_an_appearance": [
+    90,
+    120,
+    220
+   ]
+  },
+  "23": {
+   "symbol": "Dwc",
+   "name": "Cold, dry winter, cold summer",
+   "source_map_colour_not_an_appearance": [
+    75,
+    80,
+    180
+   ]
+  },
+  "24": {
+   "symbol": "Dwd",
+   "name": "Cold, dry winter, very cold winter",
+   "source_map_colour_not_an_appearance": [
+    50,
+    0,
+    135
+   ]
+  },
+  "25": {
+   "symbol": "Dfa",
+   "name": "Cold, no dry season, hot summer",
+   "source_map_colour_not_an_appearance": [
+    0,
+    255,
+    255
+   ]
+  },
+  "26": {
+   "symbol": "Dfb",
+   "name": "Cold, no dry season, warm summer",
+   "source_map_colour_not_an_appearance": [
+    55,
+    200,
+    255
+   ]
+  },
+  "27": {
+   "symbol": "Dfc",
+   "name": "Cold, no dry season, cold summer",
+   "source_map_colour_not_an_appearance": [
+    0,
+    125,
+    125
+   ]
+  },
+  "28": {
+   "symbol": "Dfd",
+   "name": "Cold, no dry season, very cold winter",
+   "source_map_colour_not_an_appearance": [
+    0,
+    70,
+    95
+   ]
+  },
+  "29": {
+   "symbol": "ET",
+   "name": "Polar, tundra",
+   "source_map_colour_not_an_appearance": [
+    178,
+    178,
+    178
+   ]
+  },
+  "30": {
+   "symbol": "EF",
+   "name": "Polar, frost",
+   "source_map_colour_not_an_appearance": [
+    102,
+    102,
+    102
+   ]
+  }
+ },
+ "period": "1991 to 2020 (other periods and scenarios exist in the archive and were not read)",
+ "warning": "class not 0 does not mean land: a cell with 1 classed pixel in 225 has a class (18,604 cells have under 23). The twin's own land mask decides. The classes are a model's output from gridded climate data, not observations at a place",
+ "source": {
+  "citation": "Beck, H. E., T. R. McVicar, N. Vergopolan, A. Berg, N. J. Lutsko, A. Dufour, Z. Zeng, X. Jiang, A. I. J. M. van Dijk, and D. G. Miralles. High-resolution (1 km) Köppen-Geiger maps for 1901–2099 based on constrained CMIP6 projections, Scientific Data 10, 724 (2023).",
+  "record": "https://doi.org/10.6084/m9.figshare.21789074 (version 2, the edition corrected in January 2026)",
+  "file": "koppen_geiger_tif.zip, 130,618,411 bytes, md5 7fc2f5a15d4f5fe0ce59c9a9b502aa09; raster 1991_2020/koppen_geiger_0p00833333.tif",
+  "licence": "CC BY 4.0, https://creativecommons.org/licenses/by/4.0/",
+  "changed": "reduced from 1 km pixels to one majority class per 1/8 degree cell; class codes unaltered",
+  "endorsement": "none implied"
+ },
+ "holds_no_real_feature": true,
+ "single_class_fair": true,
+ "stakes": {
+  "R1": {
+   "met_of_12": 12,
+   "misses": []
+  },
+  "R2": {
+   "classed_cells_rows_0_to_1199": 1029489,
+   "share": 0.2979,
+   "met": true,
+   "share_rows_1200_to_1439_no_verdict": 0.5694
+  },
+  "R3": {
+   "north_30_to_60": 0.5213,
+   "south_30_to_60": 0.0542,
+   "met": true
+  },
+  "S1": {
+   "share_of_classed_cells_with_majority_under_0.8": 0.0892,
+   "reading": "met",
+   "by_main_group": {
+    "A": 0.083,
+    "B": 0.0885,
+    "C": 0.1838,
+    "D": 0.1423,
+    "E": 0.0347
+   },
+   "share_with_0.2_or_more_outside_the_majority_group": 0.041
+  }
+ },
+ "cells_by_class": {
+  "Af": 40841,
+  "Am": 27738,
+  "Aw": 99051,
+  "BWh": 125213,
+  "BWk": 35388,
+  "BSh": 48385,
+  "BSk": 51214,
+  "Csa": 12443,
+  "Csb": 6978,
+  "Csc": 12,
+  "Cwa": 23393,
+  "Cwb": 8804,
+  "Cwc": 11,
+  "Cfa": 41035,
+  "Cfb": 24641,
+  "Cfc": 1241,
+  "Dsa": 2297,
+  "Dsb": 5749,
+  "Dsc": 18234,
+  "Dsd": 125,
+  "Dwa": 7613,
+  "Dwb": 12777,
+  "Dwc": 23954,
+  "Dwd": 2957,
+  "Dfa": 17120,
+  "Dfb": 87164,
+  "Dfc": 171483,
+  "Dfd": 1501,
+  "ET": 98231,
+  "EF": 427476
+ },
+ "ties": 403,
+ "verdict": {
+  "all_cells": "unresolved",
+  "reason": "a reduction of a published map; reading checks met; nothing scored against observations"
+ }
+}

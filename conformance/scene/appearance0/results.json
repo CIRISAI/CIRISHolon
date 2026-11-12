@@ -1,0 +1,242 @@
+{
+ "plants": {
+  "P-ORIENT": true,
+  "P-MAJOR": true,
+  "P-TIE": true,
+  "P-SEA": true,
+  "P-WRAP": true,
+  "P-LEGEND": true
+ },
+ "R1": {
+  "met_of_12": 12,
+  "places": [
+   {
+    "place": "Singapore",
+    "cell": 2044190,
+    "class": "Af",
+    "allowed": [
+     "Af"
+    ],
+    "met": true
+   },
+   {
+    "place": "Manaus",
+    "cell": 2143679,
+    "class": "Af",
+    "allowed": [
+     "Af",
+     "Am"
+    ],
+    "met": true
+   },
+   {
+    "place": "Cairo",
+    "cell": 1381209,
+    "class": "BWh",
+    "allowed": [
+     "BWh"
+    ],
+    "met": true
+   },
+   {
+    "place": "Riyadh",
+    "cell": 1505173,
+    "class": "BWh",
+    "allowed": [
+     "BWh"
+    ],
+    "met": true
+   },
+   {
+    "place": "Phoenix",
+    "cell": 1302303,
+    "class": "BWh",
+    "allowed": [
+     "BWh",
+     "BSh"
+    ],
+    "met": true
+   },
+   {
+    "place": "Madrid",
+    "cell": 1141890,
+    "class": "BSk",
+    "allowed": [
+     "BSk",
+     "Csa"
+    ],
+    "met": true
+   },
+   {
+    "place": "Rome",
+    "cell": 1107460,
+    "class": "Csa",
+    "allowed": [
+     "Csa"
+    ],
+    "met": true
+   },
+   {
+    "place": "London",
+    "cell": 885598,
+    "class": "Cfb",
+    "allowed": [
+     "Cfb"
+    ],
+    "met": true
+   },
+   {
+    "place": "Sydney",
+    "cell": 2853849,
+    "class": "Cfa",
+    "allowed": [
+     "Cfa",
+     "Cfb"
+    ],
+    "met": true
+   },
+   {
+    "place": "Moscow",
+    "cell": 790860,
+    "class": "Dfb",
+    "allowed": [
+     "Dfb"
+    ],
+    "met": true
+   },
+   {
+    "place": "Yakutsk",
+    "cell": 644717,
+    "class": "Dfc",
+    "allowed": [
+     "Dfc",
+     "Dfd",
+     "Dwc",
+     "Dwd"
+    ],
+    "met": true
+   },
+   {
+    "place": "Nuuk",
+    "cell": 594306,
+    "class": "ET",
+    "allowed": [
+     "ET"
+    ],
+    "met": true
+   }
+  ],
+  "reading": "met"
+ },
+ "R2": {
+  "classed_cells_rows_0_to_1199": 1029489,
+  "share": 0.2979,
+  "met": true,
+  "share_rows_1200_to_1439_no_verdict": 0.5694
+ },
+ "R3": {
+  "north_30_to_60": 0.5213,
+  "south_30_to_60": 0.0542,
+  "met": true
+ },
+ "S1": {
+  "share_of_classed_cells_with_majority_under_0.8": 0.0892,
+  "reading": "met",
+  "by_main_group": {
+   "A": 0.083,
+   "B": 0.0885,
+   "C": 0.1838,
+   "D": 0.1423,
+   "E": 0.0347
+  },
+  "share_with_0.2_or_more_outside_the_majority_group": 0.041
+ },
+ "printed": {
+  "classed_cells": 1423069,
+  "share_of_all_cells": 0.3431,
+  "cells_by_class": {
+   "Af": 40841,
+   "Am": 27738,
+   "Aw": 99051,
+   "BWh": 125213,
+   "BWk": 35388,
+   "BSh": 48385,
+   "BSk": 51214,
+   "Csa": 12443,
+   "Csb": 6978,
+   "Csc": 12,
+   "Cwa": 23393,
+   "Cwb": 8804,
+   "Cwc": 11,
+   "Cfa": 41035,
+   "Cfb": 24641,
+   "Cfc": 1241,
+   "Dsa": 2297,
+   "Dsb": 5749,
+   "Dsc": 18234,
+   "Dsd": 125,
+   "Dwa": 7613,
+   "Dwb": 12777,
+   "Dwc": 23954,
+   "Dwd": 2957,
+   "Dfa": 17120,
+   "Dfb": 87164,
+   "Dfc": 171483,
+   "Dfd": 1501,
+   "ET": 98231,
+   "EF": 427476
+  },
+  "five_largest": [
+   [
+    "EF",
+    427476
+   ],
+   [
+    "Dfc",
+    171483
+   ],
+   [
+    "BWh",
+    125213
+   ],
+   [
+    "Aw",
+    99051
+   ],
+   [
+    "ET",
+    98231
+   ]
+  ],
+  "share_by_main_group": {
+   "A": 0.1178,
+   "B": 0.1828,
+   "C": 0.0833,
+   "D": 0.2466,
+   "E": 0.3694
+  },
+  "ties": 403,
+  "cells_with_under_23_classed_pixels": 18604
+ },
+ "files": {
+  "koppen_1991_2020_cell.bin.gz": {
+   "bytes_packed": 114114,
+   "sha256_packed": "08258b2ffa1e494695edf5970dd2ba5725dfdb8cc225c030f8e5ddc6de54c336",
+   "bytes_unpacked": 4147200,
+   "sha256_unpacked": "a28bd4e389355b81c2782e06d29a5fa2c7d83c2058b70484fbe578e524ee6267"
+  },
+  "koppen_1991_2020_cell_share.bin.gz": {
+   "bytes_packed": 349880,
+   "sha256_packed": "f33d6f0881ecb80effc89412c789fa99df7d08d65182ad3491d0a98745665d64",
+   "bytes_unpacked": 4147200,
+   "sha256_unpacked": "73b417c48f28fe3929284a44a82183111041b734a5b101f893a8929fbaf0273c"
+  },
+  "koppen_1991_2020_cell_classed.bin.gz": {
+   "bytes_packed": 155577,
+   "sha256_packed": "48619b8a42bdfb8469b4d7d700f2eeefe96f46e8863d6b7251247a499b7ea308",
+   "bytes_unpacked": 4147200,
+   "sha256_unpacked": "5d44cfa580b1587fc29880716e35f724e8829194f4ff2e5c5a182485d0bf3883"
+  }
+ },
+ "branch": "(a): the three grids are written"
+}

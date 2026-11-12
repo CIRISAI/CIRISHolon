@@ -1826,3 +1826,13 @@ Records cited; nothing below changes a tier's status.*
 - **Not tested:** the household-type selection (it rests on the file's label).
 
 *(Placed at the end, as above.)*
+
+### APPEARANCE-0 — a climate class for each cell of the twin's grid (2026-11-12)
+
+- **Built:** `tables/appearance0`: a Köppen-Geiger class (Beck et al., 1991 to 2020, CC BY
+  4.0) for each 1/8° cell, with the majority's share and the classed-pixel count.
+- **MET:** 12 of 12 known places; land north of 60°S 0.298; north against south 0.521 to
+  0.054; one class per cell misleads in 0.089 of cells (bar 0.15).
+- **It is a key, not an appearance.** The first table the twin's renderer can join on.
+
+*(Placed at the end, as above.)*

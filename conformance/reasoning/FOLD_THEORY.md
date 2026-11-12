@@ -400,3 +400,20 @@ kinds would be labelled by the Constitution session with the RATCHET series' def
   the mined real pairs. Before any model sees them as changes, each needs a before and
   an after as two texts (or a counterpart in which only the kind of change differs) and
   its ending cut; the kind labels are the Constitution session's.
+
+## Where a purpose-built model sits, in the agent's own research harness (2026-11-12)
+
+The agent's research harness (`FSD/RESEARCH_PROMPT_OVERRIDES.md` §10.2 on its main branch)
+classifies each block of the prompt by what varying it does, in the same eleven kinds
+under other names, and says of one class that it cannot be varied inside one harness at
+all: `axiomatic`, "the decomposition premise itself: that ethical reasoning decomposes
+into" the separate evaluators, which "is the cross-harness variable".
+
+That is the phone goal stated in the programme's own terms. A single small network that
+makes the decision without four evaluators and four consciences is not a fold inside the
+pipeline; it is a change of PREMISES, to be compared with the pipeline as one harness
+against another on the same items and outcomes. The folds listed above (thin looking
+back, the speaking half, the constant prefix, many calls for one decision) are ways such
+a network might be cheaper; whether it still decides as the pipeline does is the
+cross-harness comparison, and the conscience finding says most of the stopping it would
+have to reproduce is done by stages after action selection.

@@ -229,3 +229,49 @@ time where it can, since the arms are not independent (withholding the ethics te
 shortens the prompt; a fine-tune can change Manner as well as Model).
 
 Its seed check of the website's correction stories is running, by a fresh reader.
+
+## CORRECTION 2026-11-12: the table and the instrument for the deep half ALREADY EXIST, in the agent's research harness
+
+Revision 2 above proposed building a table of the agent's blocks with one removed at a
+time. The lead told the RATCHET session that the table "exists in the research harness",
+and it does; neither that session nor this one had looked in the agent's repository. Read
+here from the agent's main branch: `FSD/RESEARCH_PROMPT_OVERRIDES.md` §10 to §13.
+
+**What exists there:**
+- **Eleven classes of prompt block, each defined by an operational test: what varying it
+  does.** Under philosophers' names; the RATCHET session reads them against the plain
+  ones as axiotic = Priorities, deontic = Rules, pragmatic = Manner, ontological =
+  Identity, epistemic = Confidence, empirical = Facts, contingent = Circumstances,
+  procedural = Process, nomological = Model, structural = Structure, axiomatic =
+  Premises (to be confirmed by the Constitution session).
+- **Each composed block carries a block id, a class and a disposition** (vary, hold, not
+  applicable, refuse). A block the manifest does not resolve stops the run. The
+  inventory can be dumped with no model call, and the CIRISAgent session lists 33
+  guidance strings beside the ethics text, the header, the answer format and the rest.
+- **Replacement, not ablation.** Its own first sentence on the point: blanking a block
+  "does not produce a value-neutral agent — it produces an agent whose values are the
+  base model's prior, unstated and unmeasured. Replacement makes the counterfactual
+  explicit and therefore checkable." So "remove one block" in revision 2 was the wrong
+  operation by a design that had already been reviewed and corrected once.
+- **A bar for labelling stricter than this draft's:** two independent annotators, Cohen's
+  kappa 0.8 or more overall AND on each pair of classes whose handling differs.
+- **Known irreducibles, named there:** the deferral policy is priorities content sitting
+  in a structural site, and "any regime declaring an action-tier" outcome "refuses while
+  it remains unrouted"; and the language guidance is four classes in one string.
+
+**What that changes here:**
+- The deep half of this set is not a new table. It is one regime per class DECLARED IN
+  THAT HARNESS, on Part A's items, by its rules.
+- The harness's own rule says the deferral block confounds any reading of an action-tier
+  outcome under the default template. The early-exit test reads exactly that (defer or
+  not), so its write-up has to name the block as a confound.
+- For the phone goal the harness has already said where a purpose-built model sits: its
+  class `axiomatic` is "the decomposition premise itself: that ethical reasoning
+  decomposes into" the evaluators, which "cannot vary in-runtime" and "is the
+  cross-harness variable". A single small network that does not run four evaluators and
+  four consciences is, in the harness's own terms, a change of PREMISES, and can only be
+  compared across harnesses.
+
+**Not known yet, asked of the CIRISAgent session:** whether a version of the block
+classification has passed the kappa bar (so that it can be cited), and which of the
+existing regime manifests cover the arms listed above.

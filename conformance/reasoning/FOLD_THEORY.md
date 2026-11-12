@@ -170,3 +170,35 @@ On a phone that is where the time goes, before any question of layers:
 If F5 and F6 hold they are worth more than every fold inside the network put together,
 because they remove whole passes and most of each pass's input. They need real stage-1
 calls to test, and none are in hand.
+
+## FOLD-1, 2026-11-12: the first folds put to removal (the RATCHET session's run, as it reports)
+
+RATCHET `b368f28`, `FOLD1_RESULTS.md`. On GoldWorm, one checkpoint, single runs. **The
+campaign is VOID by its own letter** (a plant failed) and its staked prediction failed
+regardless. What follows is what was measured, at that strength.
+
+- **Why it is void, and what that teaches.** At one site, collapsing the stream to its
+  average cost LESS (+2.99) than keeping 8 directions of it (+3.02 chosen by spread,
+  +3.37 by use). Keeping part of the state builds states the model never sees, so cost
+  does not fall steadily as more is kept. Registered there as
+  KS-PARTIAL-WORSE-THAN-COLLAPSE. **For this theory: a fold has to be checked by removal
+  at the very size it will be built at; a cost measured at another size says nothing.**
+- **"Rank by use, never by spread" (this file's CORRECTION, point 2) was too strong.** Use
+  wins for gentle cuts (keeping 32 or 64 of 192: 10 of 12 sites each, the others tied)
+  and at middle and late stages. SPREAD wins for deep cuts early (the first three stages
+  and the last, keeping 8 or 16): early on, the loud directions are position and which
+  character it is, and the model needs them. The rule that stands: rank by use for gentle
+  cuts, check spread for deep early ones, and measure either way.
+- **Three folds held by removal:**
+  - a looking-back stage's write cut to 16 directions of 192 costs 0.04 or less per stage,
+    by any route (F2, on this model);
+  - the second looking-back stage replaced by its average write costs 0.016: the whole
+    stage folds into a constant;
+  - the stream kept at 64 directions of 192 costs 0.1 or less at each site, with
+    directions chosen by use.
+- **The clock plane removed after the first look back costs 0.109,** under the 0.3 bar set
+  above. F1 stays withdrawn for the phone goal all the same: the target family never
+  puts a clock in the stream.
+
+These are costs on predicting the next character of children's stories. For the target
+they are hypotheses to measure again on Gemma, at the real prompt's length.

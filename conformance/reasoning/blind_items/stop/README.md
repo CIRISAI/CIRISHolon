@@ -49,3 +49,19 @@ and every way an answer could leak, is `WRITER_NOTES.md`. The specification is
   file does not list as a slot for it.
 - In S07 and S08 the clause "where x is 0.5 or more / under 0.5" is not shown; only the
   value is.
+
+## The Constitution session's ruling on the items, 2026-11-12
+
+Both departures stand and nothing is regenerated. It read each deciding-fact paraphrase in
+`stop_fill.py` against its truth and found none that changes a deciding fact.
+
+- **S03's extra phrase** does not change its truth: the rule turns on the size of the gain
+  and on whether the cost is negligible, not on where the gain falls.
+- **Showing only the value in S07 and S08** is inside its derivation: 0.5 is the rule's own
+  number, not a fact of the situation. Its two conditions were checked on the generated
+  values (ranges only): each S07 value is 0.50 or more (0.50 to 4.76; 0.50 itself is
+  required, the clause says "at least"), and each S08 value lies above 0 and under 0.50
+  (0.05 to 0.45).
+- **One observation it adds, not a fault:** S11 states that the agent was given authority
+  to decide and S17 does not. Truth is unaffected, but a reader could learn "authority
+  stated" as a cue; S17 is reported with the lethal pair, as built.

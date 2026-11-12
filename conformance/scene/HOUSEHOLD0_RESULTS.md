@@ -152,3 +152,13 @@ histogram from the page's own path over every leaf under twelve places (twin/hhs
   count is a by-product of plot count, not yet a building type; and the apportionment
   rescales every drawn size after the draw, so a per-type shape survives only up to that
   rescaling. Persons should be apportioned by type within the leaf, not drawn and rescaled.
+
+## CORRECTION of scope, 2026-11-11 (after the German campaign was read)
+
+The line above, "density class is a weak key", holds for US households pooled by census
+tract in this survey and is NOT a general statement. On Germany's 1 km grid a rule per
+density class puts 42.7 % of held-out households within both budgets against 5.7 % for one
+national rule (`HOUSEHOLD0_DE_RESULTS.md`). Which of country, unit (tract against tile) and
+source (sample against full count) makes the difference is not separated by the two
+campaigns. The sidecar's limit line says "weak key" without this bound; it is left as
+published at version 1 and read with this note.

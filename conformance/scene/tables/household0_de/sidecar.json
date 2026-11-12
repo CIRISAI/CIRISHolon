@@ -1,0 +1,51 @@
+{
+ "reference": "HOUSEHOLD-0 (Germany)",
+ "version": 1,
+ "table": "household_table.json",
+ "bytes": 17785,
+ "sha256": "f4a2a9c53d65cfe3c47e772adda66fe406b9ef96fee214247add560822d5b6e8",
+ "serves_registry_rows": [
+  "persons per household (size distribution of households by the density class of a 1 km tile)",
+  "households per building, dwellings per building, buildings by type and size (by the same class)"
+ ],
+ "preregistration": "conformance/scene/HOUSEHOLD0_DE_PREREG.md at 745fe78",
+ "extractor": "conformance/scene/household0_de/household0_de.py",
+ "results": "conformance/scene/HOUSEHOLD0_DE_RESULTS.md",
+ "sources": [
+  {
+   "name": "Zensus 2022, Ergebnisse in Gitterzellen, 1 km and 10 km: Groesse des privaten Haushalts; Durchschnittliche Haushaltsgroesse; Bevoelkerungszahl; Wohnungen nach Gebaeudetyp (Groesse); Gebaeude mit Wohnraum nach Gebaeudetyp (Groesse)",
+   "publisher": "Statistische Aemter des Bundes und der Laender",
+   "licence": "Datenlizenz Deutschland - Namensnennung - Version 2.0 (dl-de/by-2-0)",
+   "file_sha256": "conformance/scene/household0_de/raw_file_sha256.txt",
+   "notice": "Source: Statistische Aemter des Bundes und der Laender, Zensus 2022, Ergebnisse in Gitterzellen; Data licence Germany - attribution - Version 2.0 (dl-de/by-2-0), www.govdata.de/dl-de/by-2-0; https://www.destatis.de/DE/Themen/Gesellschaft-Umwelt/Bevoelkerung/Zensus2022/_inhalt.html; data changed: aggregated by density class by the author."
+  }
+ ],
+ "keys": {
+  "unit": "a 1 km cell of the national grid (EPSG:3035)",
+  "class": "1 village, 2 suburban, 3 terraced, 4 apartment blocks, 5 dense fabric: lower bounds 0, 250, 1500, 6000, 12000 by the census population count of the cell (twin/globe classes.json)",
+  "blocks": "50 km squares; hold-out by three of six contiguous bands, seed 20261113"
+ },
+ "envelope": {
+  "country": "Germany",
+  "date": "15 May 2022",
+  "population": "private households; communal accommodation is outside it",
+  "key": "the density of a 1 km tile as this census counts it, not as the twin's population grid does",
+  "classes_resolved": "village, suburban, terraced by block count; apartment blocks and dense fabric are unresolved (effective blocks 25 and 8) and their rows are readings only"
+ },
+ "budgets": {"persons_per_household": "5 % of the reference value", "one_person_share": 0.03, "whose": "the campaign author's, stated before any file was read"},
+ "law": "each row's shares sum to 1,000,000 within 4 parts; the village row is published as 1, 2, 3 and 4-or-more because its 5 and 6+ columns failed the disclosure check",
+ "checker": "python3 -c \"import json;d=json.load(open('household_table.json'));assert all(abs(sum(r['shares_ppm'])-10**6)<=4 for r in d['rows'].values())\"",
+ "verdict": {
+  "generator": "TWIN-SIZE-0: the twin's own emitted histogram, twin/hhsize b939214, sha256 438568abd0258d56bad0d2e286c98e3e03d855848969465af79914971bb0a418",
+  "households_per_leaf": "refused nationally (2.500 against 2.042) and in village, suburban and terraced; unresolved in the two densest classes",
+  "household_composition": "refused nationally (one-person share 0.182 against 0.434) and in village, suburban and terraced; unresolved in the two densest classes",
+  "the_family": "refused: with its mean and spread refitted to the national values the rule gives 0.26 two-person households where the census has 0.35 to 0.37"
+ },
+ "limits": [
+  "counts are perturbed by a cell-key method; in village cells every size column is 1.4 to 5.4 % below the 10 km file and the residual mean of the 6+ band reads 9.5 where 6 to 8 is possible",
+  "households are partly constructed by the census (one per occupied dwelling; unmatched register persons placed by statistical criteria)",
+  "household size and building size are two margins; no joint is published",
+  "the building reading has no generator scored against it"
+ ],
+ "holds_no_real_feature": "This table holds no coordinate, cell id, name or tag of any real place. It holds rows of counts and shares by class."
+}

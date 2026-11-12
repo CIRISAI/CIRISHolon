@@ -1,0 +1,1044 @@
+plants: {'P-EQUAL': True, 'P-SHIFT': True, 'P-MEAN': True, 'P-THIN': True, 'P-NEFF': True, 'P-FLOOR-SPLIT': True, 'P-CKM': True, 'P-CKM-BIAS': True, 'P-DASH': True, 'P-COMMA': True, 'P-MISLABEL': True, 'P-FAMILY': True, 'P-TOP13': True}
+G0: {'parts_over_total_1km': 0.9979325237016888, 'parts_over_total_10km': 0.9999973406922427, 'total_1km_over_10km': 0.9996387815051856, 'persons_per_household': 2.0416940483480044, 'residual_mean_6plus': 7.399489267551156, 'cells_1km': 196428, 'cells_10km': 3819, 'households': 40221501.0, 'pass': True}
+{
+ "cells": {
+  "no_population_row": 840,
+  "households_in_cells_without_population_row": 2821.0,
+  "no_mean": 303,
+  "households_without_mean_share": 2.3295997829618543e-05,
+  "bracketed_mean": 55722,
+  "communal_share_of_people": 0.005998128095794475,
+  "population_over_households": 2.054060774744472
+ },
+ "bands": {
+  "FIT": [
+   0,
+   1,
+   3
+  ],
+  "SCORE": [
+   2,
+   4,
+   5
+  ],
+  "households_share_FIT": 0.6434207166957792
+ },
+ "column_check": {
+  "village": {
+   "ten_km_cells": 837,
+   "ratios_1_2_3_4_5_6plus_5plus_4plus": [
+    0.9857588627028752,
+    0.9853018635435212,
+    0.9781024373971696,
+    0.981146909445414,
+    0.9622632697382247,
+    0.9462614657648476,
+    0.9569004331692775,
+    0.9729962474491527
+   ],
+   "state": "tail pooled twice",
+   "bands_published": [
+    "1",
+    "2",
+    "3",
+    "4+"
+   ]
+  },
+  "suburban": {
+   "ten_km_cells": 2022,
+   "ratios_1_2_3_4_5_6plus_5plus_4plus": [
+    0.9966264057165283,
+    0.9960225902214149,
+    0.9941262107058073,
+    0.993551377836108,
+    0.9878305665313608,
+    0.9834343830519738,
+    0.9863747388777244,
+    0.9912344713397905
+   ],
+   "state": "checked",
+   "bands_published": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6+"
+   ]
+  },
+  "terraced": {
+   "ten_km_cells": 929,
+   "ratios_1_2_3_4_5_6plus_5plus_4plus": [
+    0.9994110413892656,
+    0.9990093909224238,
+    0.9985353567042837,
+    0.9982582050462427,
+    0.9976359685403098,
+    0.9944776705211356,
+    0.996534782325763,
+    0.9976773267937659
+   ],
+   "state": "checked",
+   "bands_published": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6+"
+   ]
+  },
+  "apartment blocks": {
+   "ten_km_cells": 27,
+   "ratios_1_2_3_4_5_6plus_5plus_4plus": [
+    1.0000433174839474,
+    0.9999386493982352,
+    1.0002421033942896,
+    0.9999065023705545,
+    0.9997117532607912,
+    0.9990377290405357,
+    0.9994592321095956,
+    0.9997537419677556
+   ],
+   "state": "checked",
+   "bands_published": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6+"
+   ]
+  },
+  "dense fabric": {
+   "ten_km_cells": 3,
+   "ratios_1_2_3_4_5_6plus_5plus_4plus": null,
+   "state": "unchecked",
+   "bands_published": [
+    "1",
+    "2",
+    "3",
+    "4",
+    "5",
+    "6+"
+   ]
+  }
+ },
+ "S1_summary": {
+  "nation_mean": "refused",
+  "nation_p1": "refused",
+  "expectation": "stands",
+  "refused_on_both": true
+ },
+ "resolved": [
+  "village",
+  "suburban",
+  "terraced"
+ ],
+ "S3": {
+  "largest_mean_difference": 0.27369910101985195,
+  "largest_p1_difference": 0.13247707089962107,
+  "mean_bar": 0.1020864193293226,
+  "outcome": "met"
+ },
+ "S5": {
+  "mean": {
+   "village": {
+    "germany": 2.2689960282939934,
+    "us": 2.537,
+    "us_moved_by_difference": 2.2036796180861966,
+    "us_moved_by_ratio": 2.1996909417968413,
+    "sign_vs_suburban": {
+     "germany": 1,
+     "us": 1
+    }
+   },
+   "suburban": {
+    "germany": 2.173679618086197,
+    "us": 2.507,
+    "us_moved_by_difference": 2.173679618086197,
+    "us_moved_by_ratio": 2.173679618086197,
+    "sign_vs_suburban": {
+     "germany": 0,
+     "us": 0
+    }
+   },
+   "terraced": {
+    "germany": 1.9952969272741414,
+    "us": 2.586,
+    "us_moved_by_difference": 2.2526796180861965,
+    "us_moved_by_ratio": 2.2421761038575605,
+    "sign_vs_suburban": {
+     "germany": -1,
+     "us": 1
+    }
+   }
+  },
+  "p1": {
+   "village": {
+    "germany": 0.32336557028166435,
+    "us": 0.255,
+    "us_moved_by_difference": 0.3291829473398362,
+    "us_moved_by_ratio": 0.3213742160409061,
+    "us_moved_by_log_odds": 0.32492279619246417,
+    "sign_vs_suburban": {
+     "germany": -1,
+     "us": -1
+    }
+   },
+   "suburban": {
+    "germany": 0.3591829473398362,
+    "us": 0.285,
+    "us_moved_by_difference": 0.3591829473398362,
+    "us_moved_by_ratio": 0.3591829473398362,
+    "us_moved_by_log_odds": 0.35918294733983624,
+    "sign_vs_suburban": {
+     "germany": 0,
+     "us": 0
+    }
+   },
+   "terraced": {
+    "germany": 0.4558426411812854,
+    "us": 0.3,
+    "us_moved_by_difference": 0.3741829473398362,
+    "us_moved_by_ratio": 0.37808731298930126,
+    "us_moved_by_log_odds": 0.3760339228753042,
+    "sign_vs_suburban": {
+     "germany": 1,
+     "us": 1
+    }
+   }
+  }
+ }
+}
+S2_bands {
+ "FIT-NATION-1": {
+  "mean": 2.0858557252959433,
+  "p1": 0.42052949535864415
+ },
+ "FIT-CLASS-1": {
+  "village": {
+   "mean": 2.3089930187954746,
+   "p1": 0.32270503594200955,
+   "n_eff_fit": 78.43620510289533,
+   "n_eff_score": 73.8558121944269
+  },
+  "suburban": {
+   "mean": 2.210665162198039,
+   "p1": 0.35245746528167565,
+   "n_eff_fit": 67.80566904540032,
+   "n_eff_score": 57.208628736409416
+  },
+  "terraced": {
+   "mean": 2.045412611438519,
+   "p1": 0.43817402518714205,
+   "n_eff_fit": 33.84191620410822,
+   "n_eff_score": 27.814891352518668
+  },
+  "apartment blocks": {
+   "mean": 1.8565127427002264,
+   "p1": 0.547846817303529,
+   "n_eff_fit": 16.927794764128976,
+   "n_eff_score": 8.347635931701896
+  },
+  "dense fabric": {
+   "mean": 1.7395413599758742,
+   "p1": 0.6034362399615776,
+   "n_eff_fit": 8.853552093972393,
+   "n_eff_score": 3.1971559227744573
+  }
+ },
+ "floors": {
+  "1000": {
+   "units": 188,
+   "coverage_of_score_households": 0.4203518490475917,
+   "share_within_class_rule": 0.4261564834540501,
+   "share_within_national_rule": 0.0569280068603069,
+   "difference": 0.3692284765937432,
+   "outcome": "met",
+   "per_class": {
+    "village": {
+     "units": 95,
+     "within_class_rule": 0.36484180999187826,
+     "within_national_rule": 0.009622092845496729
+    },
+    "suburban": {
+     "units": 93,
+     "within_class_rule": 0.45233261772731564,
+     "within_national_rule": 0.077123596060259
+    }
+   }
+  },
+  "5000": {
+   "units": 164,
+   "coverage_of_score_households": 0.41599225763187175,
+   "share_within_class_rule": 0.4274040490396879,
+   "share_within_national_rule": 0.056913539559419926,
+   "difference": 0.37049050948026796,
+   "outcome": "met",
+   "per_class": {
+    "village": {
+     "units": 78,
+     "within_class_rule": 0.36728574076450377,
+     "within_national_rule": 0.008895162325163608
+    },
+    "suburban": {
+     "units": 86,
+     "within_class_rule": 0.4525216499522491,
+     "within_national_rule": 0.07697575472219628
+    }
+   }
+  },
+  "20000": {
+   "units": 110,
+   "coverage_of_score_households": 0.3595784819438193,
+   "share_within_class_rule": 0.45707106303196854,
+   "share_within_national_rule": 0.06281012560275265,
+   "difference": 0.39426093742921586,
+   "outcome": "met",
+   "per_class": {
+    "village": {
+     "units": 44,
+     "within_class_rule": 0.38838873242687016,
+     "within_national_rule": 0.0
+    },
+    "suburban": {
+     "units": 66,
+     "within_class_rule": 0.47827501938935246,
+     "within_national_rule": 0.08220118514236162
+    }
+   }
+  }
+ },
+ "S1b": {
+  "fit": {
+   "p": 2.0858557252959433,
+   "s": 2.0999999999999996,
+   "p1_miss": 0.0008712244973846373,
+   "zero_person_share": 8.998200359928014e-05
+  },
+  "family_shares_2_3_4_5plus": [
+   0.2617376524695061,
+   0.17977904419116178,
+   0.08765246950609878,
+   0.04934013197360528
+  ],
+  "per_class": {
+   "village": {
+    "reference_shares_2_3_4_5plus": [
+     0.3672141120234275,
+     0.1523555469707894,
+     0.10532286953949205,
+     0.05101959824404529
+    ],
+    "largest_error": 0.10547645955392143
+   },
+   "suburban": {
+    "reference_shares_2_3_4_5plus": [
+     0.3528247632496502,
+     0.13874369507417963,
+     0.09606509087581151,
+     0.04075458528204955
+    ],
+    "largest_error": 0.09108711078014409
+   }
+  },
+  "outcome": "killed"
+ },
+ "classes_used": [
+  "village",
+  "suburban"
+ ]
+}
+S2_interleaved {
+ "FIT-NATION-1": {
+  "mean": 2.035201330967536,
+  "p1": 0.4357283887249619
+ },
+ "FIT-CLASS-1": {
+  "village": {
+   "mean": 2.270973468101059,
+   "p1": 0.32266308440404956,
+   "n_eff_fit": 86.94219840161865,
+   "n_eff_score": 59.27405105055287
+  },
+  "suburban": {
+   "mean": 2.166943503086096,
+   "p1": 0.3591629844530836,
+   "n_eff_fit": 66.65610121993852,
+   "n_eff_score": 50.16193525946479
+  },
+  "terraced": {
+   "mean": 1.9976859267978873,
+   "p1": 0.4527196993166078,
+   "n_eff_fit": 32.38735946236977,
+   "n_eff_score": 24.779756275689135
+  },
+  "apartment blocks": {
+   "mean": 1.8029954203096017,
+   "p1": 0.5665528055482695,
+   "n_eff_fit": 16.174601861864122,
+   "n_eff_score": 8.700129578079647
+  },
+  "dense fabric": {
+   "mean": 1.737868370990019,
+   "p1": 0.6147651414797282,
+   "n_eff_fit": 4.7064405362489845,
+   "n_eff_score": 4.309672888958585
+  }
+ },
+ "floors": {
+  "1000": {
+   "units": 141,
+   "coverage_of_score_households": 0.4217686873983375,
+   "share_within_class_rule": 0.6373478575571994,
+   "share_within_national_rule": 0.030590503159945822,
+   "difference": 0.6067573543972535,
+   "outcome": "met",
+   "per_class": {
+    "village": {
+     "units": 70,
+     "within_class_rule": 0.5661271288411699,
+     "within_national_rule": 0.0
+    },
+    "suburban": {
+     "units": 71,
+     "within_class_rule": 0.6600877098470096,
+     "within_national_rule": 0.040357652919136316
+    }
+   }
+  },
+  "5000": {
+   "units": 130,
+   "coverage_of_score_households": 0.42012430709410714,
+   "share_within_class_rule": 0.6392099784956984,
+   "share_within_national_rule": 0.030409768606218288,
+   "difference": 0.60880020988948,
+   "outcome": "met",
+   "per_class": {
+    "village": {
+     "units": 64,
+     "within_class_rule": 0.5690244344102855,
+     "within_national_rule": 0.0
+    },
+    "suburban": {
+     "units": 66,
+     "within_class_rule": 0.661448437502892,
+     "within_national_rule": 0.040045177170475336
+    }
+   }
+  },
+  "20000": {
+   "units": 108,
+   "coverage_of_score_households": 0.39959084369575704,
+   "share_within_class_rule": 0.6543140712927724,
+   "share_within_national_rule": 0.031972411695967116,
+   "difference": 0.6223416595968053,
+   "outcome": "met",
+   "per_class": {
+    "village": {
+     "units": 47,
+     "within_class_rule": 0.6011095366347288,
+     "within_national_rule": 0.0
+    },
+    "suburban": {
+     "units": 61,
+     "within_class_rule": 0.6684535011196725,
+     "within_national_rule": 0.04046927525238093
+    }
+   }
+  }
+ },
+ "S1b": {
+  "fit": {
+   "p": 2.035201330967536,
+   "s": 2.0999999999999996,
+   "p1_miss": 0.0029888678237283695,
+   "zero_person_share": 0.00015996800639872026
+  },
+  "family_shares_2_3_4_5plus": [
+   0.26281743651269746,
+   0.17035592881423714,
+   0.08304839032193562,
+   0.04490101979604079
+  ],
+  "per_class": {
+   "village": {
+    "reference_shares_2_3_4_5plus": [
+     0.3519007911492859,
+     0.15357222788331493,
+     0.11290919386395977,
+     0.057255557828543066
+    ],
+    "largest_error": 0.08908335463658845
+   },
+   "suburban": {
+    "reference_shares_2_3_4_5plus": [
+     0.33822298759666775,
+     0.14352336516073136,
+     0.10849326341041592,
+     0.050548214487892845
+    ],
+    "largest_error": 0.07540555108397029
+   }
+  },
+  "outcome": "killed"
+ },
+ "classes_used": [
+  "village",
+  "suburban"
+ ]
+}
+rows {
+ "nation": {
+  "cells": 195588,
+  "households": 40136495.0,
+  "bands": [
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6+"
+  ],
+  "shares_ppm": [
+   434010,
+   305330,
+   124260,
+   91074,
+   29674,
+   15652
+  ],
+  "one_person_share": 0.43400964633309413,
+  "persons_per_household": 2.041728386586451,
+  "population_over_households": 2.054060774744472,
+  "residual_mean_6plus": 7.397698711469435,
+  "households_without_mean_share": 8.20514248602888e-07,
+  "parts_over_total": 0.9979565465599567,
+  "mean_method": "ok"
+ },
+ "village": {
+  "cells": 139114,
+  "households": 3771759.0,
+  "bands": [
+   "1",
+   "2",
+   "3",
+   "4+"
+  ],
+  "shares_ppm": [
+   323366,
+   352901,
+   152510,
+   171224
+  ],
+  "one_person_share": 0.32336557028166435,
+  "persons_per_household": 2.2689960282939934,
+  "population_over_households": 2.2620822850938134,
+  "residual_mean_6plus": 9.49465941077126,
+  "households_without_mean_share": 7.785562763833258e-06,
+  "parts_over_total": 0.9788422141517655,
+  "mean_method": "ok",
+  "n_eff_blocks": 146.17696406067765,
+  "gap_95": {
+   "mean": 0.036402309379904026,
+   "p1": 0.007868076290404398
+  }
+ },
+ "suburban": {
+  "cells": 42257,
+  "households": 12012249.0,
+  "bands": [
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6+"
+  ],
+  "shares_ppm": [
+   359183,
+   341645,
+   142815,
+   107543,
+   33116,
+   15698
+  ],
+  "one_person_share": 0.3591829473398362,
+  "persons_per_household": 2.173679618086197,
+  "population_over_households": 2.1866665012870476,
+  "residual_mean_6plus": 6.8226368037841905,
+  "households_without_mean_share": 2.4973432430133077e-07,
+  "parts_over_total": 0.9999569624514454,
+  "mean_method": "ok",
+  "n_eff_blocks": 116.55470463141918,
+  "gap_95": {
+   "mean": 0.02953676638056361,
+   "p1": 0.006810727629489999
+  }
+ },
+ "terraced": {
+  "cells": 12915,
+  "households": 17856616.0,
+  "bands": [
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6+"
+  ],
+  "shares_ppm": [
+   455843,
+   297435,
+   117192,
+   85794,
+   28514,
+   15223
+  ],
+  "one_person_share": 0.4558426411812854,
+  "persons_per_household": 1.9952969272741414,
+  "population_over_households": 2.013740361488661,
+  "residual_mean_6plus": 7.048101582933887,
+  "households_without_mean_share": 0.0,
+  "parts_over_total": 0.999985159782383,
+  "mean_method": "ok",
+  "n_eff_blocks": 56.066968357167795,
+  "gap_95": {
+   "mean": 0.0447691093093524,
+   "p1": 0.015786929528424688
+  }
+ },
+ "apartment blocks": {
+  "cells": 1111,
+  "households": 4821425.0,
+  "bands": [
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6+"
+  ],
+  "shares_ppm": [
+   563113,
+   239883,
+   95242,
+   64334,
+   22982,
+   14446
+  ],
+  "one_person_share": 0.56311318749125,
+  "persons_per_household": 1.8120493970555904,
+  "population_over_households": 1.8207983672588948,
+  "residual_mean_6plus": 7.695341631850228,
+  "households_without_mean_share": 0.0,
+  "parts_over_total": 1.0000176299534984,
+  "mean_method": "ok",
+  "n_eff_blocks": 24.830905669690207
+ },
+ "dense fabric": {
+  "cells": 191,
+  "households": 1674446.0,
+  "bands": [
+   "1",
+   "2",
+   "3",
+   "4",
+   "5",
+   "6+"
+  ],
+  "shares_ppm": [
+   615463,
+   210298,
+   86439,
+   55289,
+   18435,
+   14075
+  ],
+  "one_person_share": 0.6154626664580405,
+  "persons_per_household": 1.7285800704368772,
+  "population_over_households": 1.7256497374891528,
+  "residual_mean_6plus": 8.513517057026489,
+  "households_without_mean_share": 0.0,
+  "parts_over_total": 1.000023291828092,
+  "mean_method": "ok",
+  "n_eff_blocks": 8.124061898105607
+ }
+}
+S1 {
+ "nation": {
+  "n_eff": 71.55348593016012,
+  "blocks": 190,
+  "households": 40136495.0,
+  "mean": {
+   "generator": 2.5,
+   "reference": 2.0417283865864517,
+   "difference": 0.4582716134135483,
+   "budget": 0.1020864193293226,
+   "gap_95": 0.05090491999193444,
+   "verdict": "refused",
+   "reason": "outside budget by more than the gap",
+   "witness": "persons per household"
+  },
+  "p1": {
+   "generator": 0.18241935161296774,
+   "reference": 0.43400964633309413,
+   "difference": -0.2515902947201264,
+   "budget": 0.03,
+   "gap_95": 0.025004996584044443,
+   "verdict": "refused",
+   "reason": "outside budget by more than the gap",
+   "witness": "one-person share"
+  }
+ },
+ "village": {
+  "n_eff": 146.17696406067765,
+  "blocks": 190,
+  "households": 3771759.0,
+  "mean": {
+   "generator": 2.5,
+   "reference": 2.2689960282939934,
+   "difference": 0.23100397170600662,
+   "budget": 0.11344980141469968,
+   "gap_95": 0.036402309379904026,
+   "verdict": "refused",
+   "reason": "outside budget by more than the gap",
+   "witness": "persons per household"
+  },
+  "p1": {
+   "generator": 0.18241935161296774,
+   "reference": 0.32336557028166435,
+   "difference": -0.1409462186686966,
+   "budget": 0.03,
+   "gap_95": 0.007868076290404398,
+   "verdict": "refused",
+   "reason": "outside budget by more than the gap",
+   "witness": "one-person share"
+  }
+ },
+ "suburban": {
+  "n_eff": 116.55470463141918,
+  "blocks": 184,
+  "households": 12012249.0,
+  "mean": {
+   "generator": 2.5,
+   "reference": 2.1736796180861973,
+   "difference": 0.32632038191380275,
+   "budget": 0.10868398090430986,
+   "gap_95": 0.02953676638056361,
+   "verdict": "refused",
+   "reason": "outside budget by more than the gap",
+   "witness": "persons per household"
+  },
+  "p1": {
+   "generator": 0.18241935161296774,
+   "reference": 0.3591829473398362,
+   "difference": -0.17676359572686845,
+   "budget": 0.03,
+   "gap_95": 0.006810727629489999,
+   "verdict": "refused",
+   "reason": "outside budget by more than the gap",
+   "witness": "one-person share"
+  }
+ },
+ "terraced": {
+  "n_eff": 56.066968357167795,
+  "blocks": 169,
+  "households": 17856616.0,
+  "mean": {
+   "generator": 2.5,
+   "reference": 1.995296927274141,
+   "difference": 0.504703072725859,
+   "budget": 0.09976484636370705,
+   "gap_95": 0.0447691093093524,
+   "verdict": "refused",
+   "reason": "outside budget by more than the gap",
+   "witness": "persons per household"
+  },
+  "p1": {
+   "generator": 0.18241935161296774,
+   "reference": 0.4558426411812854,
+   "difference": -0.2734232895683177,
+   "budget": 0.03,
+   "gap_95": 0.015786929528424688,
+   "verdict": "refused",
+   "reason": "outside budget by more than the gap",
+   "witness": "one-person share"
+  }
+ },
+ "apartment blocks": {
+  "n_eff": 24.830905669690207,
+  "blocks": 86,
+  "households": 4821425.0,
+  "mean": {
+   "verdict": "unresolved",
+   "reason": "effective blocks under 30"
+  },
+  "p1": {
+   "verdict": "unresolved",
+   "reason": "effective blocks under 30"
+  }
+ },
+ "dense fabric": {
+  "n_eff": 8.124061898105607,
+  "blocks": 25,
+  "households": 1674446.0,
+  "mean": {
+   "verdict": "unresolved",
+   "reason": "effective blocks under 30"
+  },
+  "p1": {
+   "verdict": "unresolved",
+   "reason": "effective blocks under 30"
+  }
+ }
+}
+S6 {
+ "national_1km_over_10km": {
+  "dwellings": [
+   0.9992984126583495,
+   0.9975660030682302,
+   0.9990884287653385,
+   0.9997656479041827,
+   0.9989345649059573,
+   1.0003193614095587,
+   1.000177754917571,
+   0.9998307524249717,
+   0.9999485560233583,
+   0.9998442000303178,
+   0.9974728276424626
+  ],
+  "buildings": [
+   0.9984809058985917,
+   0.9953753128371506,
+   0.9982747912497412,
+   0.999230647493232,
+   0.993940324416579,
+   0.9963115437562742,
+   0.9984005177858702,
+   0.9972800519068056,
+   0.9989769515760696,
+   0.9972257537614401,
+   0.9857971252853284
+  ],
+  "columns": [
+   "total",
+   "FreiEFH",
+   "EFH_DHH",
+   "EFH_Reihenhaus",
+   "Freist_ZFH",
+   "ZFH_DHH",
+   "ZFH_Reihenhaus",
+   "MFH_3bis6Wohnungen",
+   "MFH_7bis12Wohnungen",
+   "MFH_13undmehrWohnungen",
+   "AndererGebaeudetyp"
+  ],
+  "note": "1 km sums are over cells that have a household row; the 10 km sums are over all 10 km cells"
+ },
+ "nation": {
+  "buildings": 19924858.0,
+  "dwellings": 43073131.0,
+  "building_shares_ppm": [
+   433885,
+   110623,
+   107685,
+   106180,
+   15329,
+   13504,
+   114757,
+   46327,
+   11918,
+   39794
+  ],
+  "dwelling_shares_ppm": [
+   200684,
+   51099,
+   49725,
+   97144,
+   14036,
+   12281,
+   214661,
+   187299,
+   121293,
+   51779
+  ],
+  "dwellings_per_building": 2.1617785682588053,
+  "dwellings_per_building_13plus": 22.05238028900343,
+  "alarm_13plus_under_13": false,
+  "households_per_building": 2.0185177731254096
+ },
+ "village": {
+  "buildings": 3140213.0,
+  "dwellings": 4259454.0,
+  "building_shares_ppm": [
+   635430,
+   70034,
+   28752,
+   130914,
+   8955,
+   4033,
+   50659,
+   4822,
+   748,
+   65653
+  ],
+  "dwelling_shares_ppm": [
+   466512,
+   51365,
+   21127,
+   192546,
+   13188,
+   5963,
+   134833,
+   29084,
+   12452,
+   72930
+  ],
+  "dwellings_per_building": 1.3564220006732028,
+  "dwellings_per_building_13plus": 22.88845654993515,
+  "alarm_13plus_under_13": false,
+  "households_per_building": 1.2270779084093977
+ },
+ "suburban": {
+  "buildings": 8164861.0,
+  "dwellings": 12982173.0,
+  "building_shares_ppm": [
+   526203,
+   110707,
+   77023,
+   126894,
+   14083,
+   9414,
+   83218,
+   16230,
+   2714,
+   33516
+  ],
+  "dwelling_shares_ppm": [
+   330921,
+   69626,
+   48442,
+   157493,
+   17504,
+   11660,
+   200296,
+   86852,
+   36481,
+   40725
+  ],
+  "dwellings_per_building": 1.5900053901713698,
+  "dwellings_per_building_13plus": 21.3778319342901,
+  "alarm_13plus_under_13": false,
+  "households_per_building": 1.47127624095499
+ },
+ "terraced": {
+  "buildings": 7591336.0,
+  "dwellings": 19034602.0,
+  "building_shares_ppm": [
+   301126,
+   135049,
+   168936,
+   84633,
+   19934,
+   19986,
+   157439,
+   64330,
+   14015,
+   34552
+  ],
+  "dwelling_shares_ppm": [
+   120083,
+   53852,
+   67375,
+   66555,
+   15754,
+   15681,
+   261475,
+   223367,
+   125266,
+   50592
+  ],
+  "dwellings_per_building": 2.5074113436686245,
+  "dwellings_per_building_13plus": 22.412597403818136,
+  "alarm_13plus_under_13": false,
+  "households_per_building": 2.352271194424802
+ },
+ "apartment blocks": {
+  "buildings": 857799.0,
+  "dwellings": 5063213.0,
+  "building_shares_ppm": [
+   85825,
+   60166,
+   152992,
+   30349,
+   11987,
+   28096,
+   253102,
+   249557,
+   78681,
+   49245
+  ],
+  "dwelling_shares_ppm": [
+   14541,
+   10204,
+   25923,
+   10106,
+   4042,
+   9329,
+   186840,
+   376049,
+   298710,
+   64257
+  ],
+  "dwellings_per_building": 5.9025634210345315,
+  "dwellings_per_building_13plus": 22.413815077730188,
+  "alarm_13plus_under_13": false,
+  "households_per_building": 5.620594101881676
+ },
+ "dense fabric": {
+  "buildings": 170649.0,
+  "dwellings": 1733689.0,
+  "building_shares_ppm": [
+   19776,
+   9050,
+   52626,
+   6438,
+   2408,
+   19143,
+   191261,
+   416099,
+   225805,
+   57394
+  ],
+  "dwelling_shares_ppm": [
+   1947,
+   897,
+   5190,
+   1234,
+   451,
+   3705,
+   85283,
+   380353,
+   461639,
+   59299
+  ],
+  "dwellings_per_building": 10.159385639529091,
+  "dwellings_per_building_13plus": 20.763126491646776,
+  "alarm_13plus_under_13": false,
+  "households_per_building": 9.81199421033818
+ },
+ "categories": [
+  "FreiEFH",
+  "EFH_DHH",
+  "EFH_Reihenhaus",
+  "Freist_ZFH",
+  "ZFH_DHH",
+  "ZFH_Reihenhaus",
+  "MFH_3bis6Wohnungen",
+  "MFH_7bis12Wohnungen",
+  "MFH_13undmehrWohnungen",
+  "AndererGebaeudetyp"
+ ]
+}

@@ -1548,3 +1548,27 @@ Records cited; nothing below changes a tier's status.*
   keyed on building type and tenure, stated and scored on its own freeze.
 
 *(Placed at the end, as above.)*
+
+### 2026-11-11, later still — HOUSEHOLD-0 (Germany), and a correction of scope to the US reading
+
+- **Issued** (`conformance/scene/HOUSEHOLD0_DE_RESULTS.md`, table and sidecar under
+  `conformance/scene/tables/household0_de/`): the twin's household rule against Germany's
+  2022 census on its 1 km grid. Refused on both consumers (2.500 against 2.042 persons;
+  one-person share 0.182 against 0.434).
+- **Killed, not forecast:** the rule's family. With its mean and spread refitted to the
+  national values it gives 0.26 two-person households where the census has 0.35 to 0.37.
+- **Met, not forecast:** density class is a strong key on tiles. A rule per class puts
+  42.7 % of held-out households within both budgets; one national rule, 5.7 %.
+- **CORRECTION of scope:** the US line "density class is a weak key" is not general. Dated
+  note added to `HOUSEHOLD0_RESULTS.md`. Country, unit and source are not separated.
+- **The disclosure check fired** in the village class (the 5 and 6+ columns 4 to 5 % low
+  against the 10 km file); that row is published with a pooled tail.
+- **The first reference for households per building:** 1.23 in village tiles to 9.81 in
+  dense fabric; buildings of 13 or more dwellings hold about 22 each.
+- **The review** (`HOUSEHOLD0_DE_REVIEW.md`) replaced a disclosure check that could not see
+  tail bias, demoted the US-shape stake to a reading, and split the error floor.
+- **A fault of this session:** the verify run failed on one gate for ten commits (three
+  citations in `engine/FSD_WORLD_MODEL.md` that the cross-reference gate cannot resolve)
+  and was not checked. Corrected the same day.
+
+*(Placed at the end, as above.)*

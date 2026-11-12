@@ -1,5 +1,7 @@
 # TIES-0 (Germany) — how far friendship ties reach between areas, from a connectedness index: what is identified, a check of the index's own conventions, and whether a law fitted between areas predicts ties within one. PREREGISTRATION (SECOND DRAFT)
 
+*REVIEWED a second time 2026-11-11 (`TIES0_REVIEW.md`): four fixes, applied in `TIES0_PREREG.md`, which replaces this text. Kept as written.*
+
 *SECOND DRAFT of 2026-11-11, after `TIES0_REVIEW.md` (REDESIGN). NOT FROZEN; it goes back to
 the same reader first. The dataset was approved by the lead. Nothing has been fetched or
 computed.*

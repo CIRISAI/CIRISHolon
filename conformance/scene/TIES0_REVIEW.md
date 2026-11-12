@@ -47,3 +47,27 @@ on the sub-kilometre number do not.
 **What the author took.** The "smallest honest version": Germany and Europe only, from the
 14 MB file. The US county file is left for a later freeze. A second draft
 (`TIES0_PREREG_DRAFT2.md`) goes back to the same reader before any freeze.
+
+## Second pass on the second draft, 2026-11-11: freeze after four named fixes
+
+*Same reader, one synthetic script (`ties0/review_synthetic_second_pass.py`).*
+
+1. **The kernel stake was decided by a parameter its fit could not see.** Pairs more than
+   25 km apart cannot see the kernel's floor: a floor of 0.2 km and one of 6 km fit them
+   equally well. Yet the floor moves the kernel's mean over a 13 km disc by a factor of
+   4.5, so a true own share of `0.35` would read `0.46` to `0.67`. **Fix:** the exponent
+   and one term per area from off-diagonal pairs; the floor, one number, from the FIT
+   areas' own indices; predict the SCORE areas' own shares. That asks whether one inner
+   scale explains own shares from a 4 km city to a 35 km district.
+2. **The convention check's "near 0.5 or 2" was the reviewer's own error.** Under the
+   other convention the ratio varies by parent. The right pair of statistics is given, to
+   be read at the fitted tilt and only on parents whose off-diagonal part is large.
+3. **Two kills could not fire.** Unit size alone moves the exponent by about `0.13`
+   between the two grains, never `0.6`; and dense areas are populous cities whose own
+   share rises with their own population mechanically.
+4. **The gap rule had no object:** no stake named a miss against a budget.
+
+Also: regions that are a single unit at all three levels fix the scale with no assumption
+and measure the privacy noise; the tilt can be fitted twice (a free replication); pairs of
+overlapping areas (a city within its ring district) must be left out of kernel fits;
+foreign Europe assumes equal reach across countries and is the weakest band.
